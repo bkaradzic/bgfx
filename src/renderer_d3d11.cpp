@@ -5505,13 +5505,19 @@ namespace bgfx { namespace d3d11
 				const uint32_t srcZ = blit.m_srcZ;
 				const uint32_t dstZ = blit.m_dstZ;
 
+				const uint32_t srcMip = srcZ * src.m_numMips + blit.m_srcMip;
+				const uint32_t dstMip = dstZ * dst.m_numMips + blit.m_dstMip;
+
+				BX_ASSERT(srcMip < src.m_numMips, "Src mip outside range.");
+				BX_ASSERT(dstMip < dst.m_numMips, "Dst mip outside range.");
+
 				deviceCtx->CopySubresourceRegion(dst.m_ptr
-					, dstZ*dst.m_numMips+blit.m_dstMip
+					, dstMip
 					, blit.m_dstX
 					, blit.m_dstY
 					, 0
 					, src.m_ptr
-					, srcZ*src.m_numMips+blit.m_srcMip
+					, srcMip
 					, depthStencil ? NULL : &box
 					);
 			}
