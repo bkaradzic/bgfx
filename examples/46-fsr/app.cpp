@@ -62,6 +62,62 @@ namespace
 
 	bgfx::VertexLayout PosTexCoord0Vertex::ms_layout;
 
+	void screenSpaceTriangle(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f, float _offsetX = 0.0f, float _offsetY = 0.0f)
+	{
+		if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout))
+		{
+			bgfx::TransientVertexBuffer vb;
+			bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_layout);
+			PosTexCoord0Vertex* vertex = (PosTexCoord0Vertex*)vb.data;
+
+			const float minx = -_width - _offsetX;
+			const float maxx = _width - _offsetX;
+			const float miny = 0.0f - _offsetY;
+			const float maxy = _height * 2.0f - _offsetY;
+
+			const float texelHalfW = _texelHalf / _textureWidth;
+			const float texelHalfH = _texelHalf / _textureHeight;
+			const float minu = -1.0f + texelHalfW;
+			const float maxu = 1.0f + texelHalfW;
+
+			const float zz = 0.0f;
+
+			float minv = texelHalfH;
+			float maxv = 2.0f + texelHalfH;
+
+			if (_originBottomLeft)
+			{
+				float temp = minv;
+				minv = maxv;
+				maxv = temp;
+
+				minv -= 1.0f;
+				maxv -= 1.0f;
+			}
+
+			vertex[0].m_x = minx;
+			vertex[0].m_y = miny;
+			vertex[0].m_z = zz;
+			vertex[0].m_u = minu;
+			vertex[0].m_v = minv;
+
+			vertex[1].m_x = maxx;
+			vertex[1].m_y = miny;
+			vertex[1].m_z = zz;
+			vertex[1].m_u = maxu;
+			vertex[1].m_v = minv;
+
+			vertex[2].m_x = maxx;
+			vertex[2].m_y = maxy;
+			vertex[2].m_z = zz;
+			vertex[2].m_u = maxu;
+			vertex[2].m_v = maxv;
+
+			bgfx::setVertexBuffer(0, &vb);
+		}
+	}
+
+
 	struct Vec4
 	{
 		float x;
@@ -217,65 +273,15 @@ namespace
 			bgfx::destroy(m_texture);
 		}
 
+		void drawToScreen(bgfx::ViewId& view)
+		{
+
+		}
+
 		uint32_t m_width;
 		uint32_t m_height;
 		bgfx::TextureHandle m_texture;
 	};
-
-	void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f, float _offsetX = 0.0f, float _offsetY = 0.0f)
-	{
-		if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout))
-		{
-			bgfx::TransientVertexBuffer vb;
-			bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_layout);
-			PosTexCoord0Vertex *vertex = (PosTexCoord0Vertex *)vb.data;
-
-			const float minx = -_width - _offsetX;
-			const float maxx = _width - _offsetX;
-			const float miny = 0.0f - _offsetY;
-			const float maxy = _height * 2.0f - _offsetY;
-
-			const float texelHalfW = _texelHalf / _textureWidth;
-			const float texelHalfH = _texelHalf / _textureHeight;
-			const float minu = -1.0f + texelHalfW;
-			const float maxu = 1.0f + texelHalfW;
-
-			const float zz = 0.0f;
-
-			float minv = texelHalfH;
-			float maxv = 2.0f + texelHalfH;
-
-			if (_originBottomLeft)
-			{
-				float temp = minv;
-				minv = maxv;
-				maxv = temp;
-
-				minv -= 1.0f;
-				maxv -= 1.0f;
-			}
-
-			vertex[0].m_x = minx;
-			vertex[0].m_y = miny;
-			vertex[0].m_z = zz;
-			vertex[0].m_u = minu;
-			vertex[0].m_v = minv;
-
-			vertex[1].m_x = maxx;
-			vertex[1].m_y = miny;
-			vertex[1].m_z = zz;
-			vertex[1].m_u = maxu;
-			vertex[1].m_v = minv;
-
-			vertex[2].m_x = maxx;
-			vertex[2].m_y = maxy;
-			vertex[2].m_z = zz;
-			vertex[2].m_u = maxu;
-			vertex[2].m_v = maxv;
-
-			bgfx::setVertexBuffer(0, &vb);
-		}
-	}
 
 	void vec2Set(float *_v, float _x, float _y)
 	{
@@ -525,7 +531,7 @@ namespace
 					bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
 					bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
 					bgfx::setTexture(0, s_color, srcTexture, BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
-					screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
+					screenSpaceTriangle(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 					bgfx::submit(view, m_copyLinearToGammaProgram);
 				}
 
@@ -540,7 +546,7 @@ namespace
 
 					bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_ALWAYS | BGFX_STATE_BLEND_ALPHA);
 					bgfx::setTexture(0, s_color, m_magnifierWidget.m_texture);
-					screenSpaceQuad(float(m_magnifierWidget.m_width), float(m_magnifierWidget.m_height), m_texelHalf, caps->originBottomLeft, scaleX, scaleY, offsetX, offsetY);
+					screenSpaceTriangle(float(m_magnifierWidget.m_width), float(m_magnifierWidget.m_height), m_texelHalf, caps->originBottomLeft, scaleX, scaleY, offsetX, offsetY);
 					bgfx::submit(view, m_copyLinearToGammaProgram);
 				}
 				++view;
@@ -817,7 +823,7 @@ namespace
 			bgfx::setViewFrameBuffer(view, m_magnifierTexture.m_buffer);
 			bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
 			bgfx::setTexture(0, s_color, srcTexture, BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
-			screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft, scaleX, scaleY, offsetX, offsetY);
+			screenSpaceTriangle(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft, scaleX, scaleY, offsetX, offsetY);
 			bgfx::submit(view, m_copyLinearToGammaProgram);
 			++view;
 		}
