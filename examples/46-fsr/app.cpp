@@ -16,6 +16,8 @@
 #include <cmath>
 #include <algorithm>
 
+#include "fsr.h"
+
 namespace
 {
 
@@ -117,51 +119,6 @@ namespace
 		}
 	}
 
-	struct Vec4
-	{
-		float x;
-		float y;
-		float z;
-		float w;
-	};
-
-	struct FsrUniforms
-	{
-		enum
-		{
-			NumVec4 = 3
-		};
-
-		void init()
-		{
-			u_params = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, NumVec4);
-		};
-
-		void submit() const
-		{
-			bgfx::setUniform(u_params, m_params, NumVec4);
-		}
-
-		void destroy()
-		{
-			bgfx::destroy(u_params);
-		}
-
-		union
-		{
-			struct
-			{
-				Vec4 ViewportSizeRcasAttenuation;
-				Vec4 SrcSize;
-				Vec4 DstSize;
-			};
-
-			uint32_t m_params[NumVec4 * 4];
-		};
-
-		bgfx::UniformHandle u_params;
-	};
-
 	struct ModelUniforms
 	{
 		enum
@@ -219,29 +176,17 @@ namespace
 		bgfx::ProgramHandle m_forwardProgram;
 		bgfx::ProgramHandle m_gridProgram;
 		bgfx::ProgramHandle m_copyLinearToGammaProgram;
-		bgfx::ProgramHandle m_fsrBilinear16Program;
-		bgfx::ProgramHandle m_fsrBilinear32Program;
-		bgfx::ProgramHandle m_fsrEasu16Program;
-		bgfx::ProgramHandle m_fsrEasu32Program;
-		bgfx::ProgramHandle m_fsrRcas16Program;
-		bgfx::ProgramHandle m_fsrRcas32Program;
 
 		// Shader uniforms
-		FsrUniforms m_fsrUniforms;
 		ModelUniforms m_modelUniforms;
 
 		// Uniforms to indentify texture samplers
 		bgfx::UniformHandle s_albedo;
 		bgfx::UniformHandle s_color;
 		bgfx::UniformHandle s_normal;
-		bgfx::UniformHandle s_fsrInputTexture;
 
 		bgfx::FrameBufferHandle m_frameBuffer;
 		bgfx::TextureHandle m_frameBufferTex[FRAMEBUFFER_RENDER_TARGETS];
-		bgfx::TextureHandle m_fsrEasuTexture16F;
-		bgfx::TextureHandle m_fsrRcasTexture16F;
-		bgfx::TextureHandle m_fsrEasuTexture32F;
-		bgfx::TextureHandle m_fsrRcasTexture32F;
 
 		Mesh *m_meshes[BX_COUNTOF(s_meshPaths)];
 		bgfx::TextureHandle m_groundTexture;
@@ -259,13 +204,10 @@ namespace
 
 		// UI parameters
 		bool m_renderNativeResolution = false;
-		bool m_applyFsr = true;
-		bool m_applyFsrRcas = true;
-		float m_superSamplingFactor = 2.0f;
-		float m_rcasAttenuation = 0.2f;
 		bool m_animateScene = false;
-		bool m_fsr16Bit = false;
 		int32_t m_antiAliasingSetting = 2;
+
+		Fsr m_fsr;
 	};
 
 	struct RenderTarget
@@ -428,26 +370,17 @@ namespace
 			bgfx::setDebug(m_state.m_debug);
 
 			// Create uniforms for screen passes and models
-			m_state.m_fsrUniforms.init();
 			m_state.m_modelUniforms.init();
 
 			// Create texture sampler uniforms (used when we bind textures)
 			m_state.s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler);
 			m_state.s_color = bgfx::createUniform("s_color", bgfx::UniformType::Sampler);
 			m_state.s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Sampler);
-			m_state.s_fsrInputTexture = bgfx::createUniform("InputTexture", bgfx::UniformType::Sampler);
 
 			// Create program from shaders.
 			m_state.m_forwardProgram = loadProgram("vs_fsr_forward", "fs_fsr_forward");
 			m_state.m_gridProgram = loadProgram("vs_fsr_forward", "fs_fsr_forward_grid");
 			m_state.m_copyLinearToGammaProgram = loadProgram("vs_fsr_screenquad", "fs_fsr_copy_linear_to_gamma");
-
-			m_state.m_fsrBilinear16Program = bgfx::createProgram(loadShader("cs_fsr_bilinear_16"), true);
-			m_state.m_fsrBilinear32Program = bgfx::createProgram(loadShader("cs_fsr_bilinear_32"), true);
-			m_state.m_fsrEasu16Program = bgfx::createProgram(loadShader("cs_fsr_easu_16"), true);
-			m_state.m_fsrEasu32Program = bgfx::createProgram(loadShader("cs_fsr_easu_32"), true);
-			m_state.m_fsrRcas16Program = bgfx::createProgram(loadShader("cs_fsr_rcas_16"), true);
-			m_state.m_fsrRcas32Program = bgfx::createProgram(loadShader("cs_fsr_rcas_32"), true);
 
 			// Load some meshes
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_meshPaths); ++ii)
@@ -482,10 +415,14 @@ namespace
 			m_magnifierWidget.setPosition(m_state.m_width * 0.5f, m_state.m_height * 0.5f);
 
 			imguiCreate();
+
+			m_state.m_fsr.init(_width, _height);
 		}
 
 		int32_t shutdown() override
 		{
+			m_state.m_fsr.destroy();
+
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_meshPaths); ++ii)
 			{
 				meshUnload(m_state.m_meshes[ii]);
@@ -497,14 +434,7 @@ namespace
 			bgfx::destroy(m_state.m_forwardProgram);
 			bgfx::destroy(m_state.m_gridProgram);
 			bgfx::destroy(m_state.m_copyLinearToGammaProgram);
-			bgfx::destroy(m_state.m_fsrBilinear16Program);
-			bgfx::destroy(m_state.m_fsrBilinear32Program);
-			bgfx::destroy(m_state.m_fsrEasu16Program);
-			bgfx::destroy(m_state.m_fsrEasu32Program);
-			bgfx::destroy(m_state.m_fsrRcas16Program);
-			bgfx::destroy(m_state.m_fsrRcas32Program);
 
-			m_state.m_fsrUniforms.destroy();
 			m_state.m_modelUniforms.destroy();
 
 			m_magnifierWidget.destroy();
@@ -512,7 +442,6 @@ namespace
 			bgfx::destroy(m_state.s_albedo);
 			bgfx::destroy(m_state.s_color);
 			bgfx::destroy(m_state.s_normal);
-			bgfx::destroy(m_state.s_fsrInputTexture);
 
 			destroyFramebuffers();
 
@@ -552,8 +481,7 @@ namespace
 
 				if (m_state.m_size[0] != (int32_t)m_state.m_width || m_state.m_size[1] != (int32_t)m_state.m_height)
 				{
-					destroyFramebuffers();
-					createFramebuffers();
+					resize();
 				}
 
 				// update animation time
@@ -583,7 +511,7 @@ namespace
 					bgfx::setViewName(view, "forward scene");
 					bgfx::setViewClear(view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x7fb8ffff, 1.0f, 0);
 
-					float const viewScale = m_state.m_renderNativeResolution ? 1.0f : 1.0f / m_state.m_superSamplingFactor;
+					float const viewScale = m_state.m_renderNativeResolution ? 1.0f : 1.0f / m_state.m_fsr.m_config.m_superSamplingFactor;
 					bgfx::setViewRect(view, 0, 0, uint16_t(ceilf(m_state.m_size[0] * viewScale)), uint16_t(ceilf(m_state.m_size[1] * viewScale)));
 					bgfx::setViewTransform(view, m_state.m_view, m_state.m_proj);
 					bgfx::setViewFrameBuffer(view, m_state.m_frameBuffer);
@@ -598,10 +526,9 @@ namespace
 				// optionally run FSR
 				if (!m_state.m_renderNativeResolution)
 				{
-					// TODO: refactor into separate class
 					// TODO: Fix OpenGL Support
 					// TODO: Fix Vulkan Support
-					view = computeFsr(view, m_state.m_frameBufferTex[FRAMEBUFFER_RT_COLOR]);
+					view = m_state.m_fsr.computeFsr(view, m_state.m_frameBufferTex[FRAMEBUFFER_RT_COLOR]);
 				}
 
 				// render result to screen
@@ -609,14 +536,7 @@ namespace
 					bgfx::TextureHandle srcTexture = m_state.m_frameBufferTex[FRAMEBUFFER_RT_COLOR];
 					if (!m_state.m_renderNativeResolution)
 					{
-						if (m_state.m_applyFsr && m_state.m_applyFsrRcas)
-						{
-							srcTexture = m_state.m_fsr16Bit ? m_state.m_fsrRcasTexture16F : m_state.m_fsrRcasTexture32F;
-						}
-						else
-						{
-							srcTexture = m_state.m_fsr16Bit ? m_state.m_fsrEasuTexture16F : m_state.m_fsrEasuTexture32F;
-						}
+						srcTexture = m_state.m_fsr.getResultTexture();
 					}
 
 					m_magnifierWidget.updateContent(view, m_state, caps, srcTexture);
@@ -666,8 +586,7 @@ namespace
 																					 "16x\0"
 																					 "\0"))
 					{
-						destroyFramebuffers();
-						createFramebuffers();
+						resize();
 					}
 
 					ImGui::Checkbox("Render native resolution", &m_state.m_renderNativeResolution);
@@ -678,7 +597,7 @@ namespace
 
 					if (!m_state.m_renderNativeResolution)
 					{
-						ImGui::SliderFloat("Super sampling", &m_state.m_superSamplingFactor, 1.0f, 2.0f);
+						ImGui::SliderFloat("Super sampling", &m_state.m_fsr.m_config.m_superSamplingFactor, 1.0f, 2.0f);
 						if (ImGui::IsItemHovered())
 						{
 							ImGui::BeginTooltip();
@@ -689,7 +608,7 @@ namespace
 
 						ImGui::Separator();
 
-						ImGui::Checkbox("Use 16 Bit", &m_state.m_fsr16Bit);
+						ImGui::Checkbox("Use 16 Bit", &m_state.m_fsr.m_config.m_fsr16Bit);
 						if (ImGui::IsItemHovered())
 						{
 							ImGui::BeginTooltip();
@@ -699,19 +618,19 @@ namespace
 							ImGui::EndTooltip();
 						}
 
-						ImGui::Checkbox("Apply FSR", &m_state.m_applyFsr);
+						ImGui::Checkbox("Apply FSR", &m_state.m_fsr.m_config.m_applyFsr);
 						if (ImGui::IsItemHovered())
 							ImGui::SetTooltip("Compare between FSR and bilinear interpolation of source image.");
 
-						if (m_state.m_applyFsr)
+						if (m_state.m_fsr.m_config.m_applyFsr)
 						{
-							ImGui::Checkbox("Apply FSR sharpening", &m_state.m_applyFsrRcas);
+							ImGui::Checkbox("Apply FSR sharpening", &m_state.m_fsr.m_config.m_applyFsrRcas);
 							if (ImGui::IsItemHovered())
 								ImGui::SetTooltip("Apply the FSR RCAS sharpening pass.");
 
-							if (m_state.m_applyFsrRcas)
+							if (m_state.m_fsr.m_config.m_applyFsrRcas)
 							{
-								ImGui::SliderFloat("Sharpening attenuation", &m_state.m_rcasAttenuation, 0.01f, 2.0f);
+								ImGui::SliderFloat("Sharpening attenuation", &m_state.m_fsr.m_config.m_rcasAttenuation, 0.01f, 2.0f);
 								if (ImGui::IsItemHovered())
 									ImGui::SetTooltip("Lower value means sharper.");
 							}
@@ -799,48 +718,11 @@ namespace
 			}
 		}
 
-		bgfx::ViewId computeFsr(bgfx::ViewId _pass, bgfx::TextureHandle _colorTexture)
+		void resize()
 		{
-			bgfx::ViewId view = _pass;
-
-			// This value is the image region dimension that each thread group of the FSR shader operates on
-			static constexpr int threadGroupWorkRegionDim = 16;
-			int const dispatchX = (m_state.m_width + (threadGroupWorkRegionDim - 1)) / threadGroupWorkRegionDim;
-			int const dispatchY = (m_state.m_height + (threadGroupWorkRegionDim - 1)) / threadGroupWorkRegionDim;
-			bgfx::TextureFormat::Enum const format = m_state.m_fsr16Bit ? bgfx::TextureFormat::RGBA16F : bgfx::TextureFormat::RGBA32F;
-			bgfx::TextureHandle fsrEasuTexture = m_state.m_fsr16Bit ? m_state.m_fsrEasuTexture16F : m_state.m_fsrEasuTexture32F;
-
-			// EASU pass (upscale)
-			{
-				bgfx::ProgramHandle program = m_state.m_fsr16Bit ? m_state.m_fsrEasu16Program : m_state.m_fsrEasu32Program;
-
-				if (!m_state.m_applyFsr)
-				{
-					program = m_state.m_fsrBilinear32Program;
-				}
-
-				bgfx::setViewName(view, "fsr easu");
-				m_state.m_fsrUniforms.submit();
-				bgfx::setTexture(0, m_state.s_fsrInputTexture, _colorTexture);
-				bgfx::setImage(1, fsrEasuTexture, 0, bgfx::Access::Write, format);
-				bgfx::dispatch(view, program, dispatchX, dispatchY, 1);
-				++view;
-			}
-
-			// RCAS pass (sharpening)
-			if (m_state.m_applyFsrRcas)
-			{
-				bgfx::ProgramHandle program = m_state.m_fsr16Bit ? m_state.m_fsrRcas16Program : m_state.m_fsrRcas32Program;
-
-				bgfx::setViewName(view, "fsr rcas");
-				m_state.m_fsrUniforms.submit();
-				bgfx::setTexture(0, m_state.s_fsrInputTexture, fsrEasuTexture);
-				bgfx::setImage(1, m_state.m_fsr16Bit ? m_state.m_fsrRcasTexture16F : m_state.m_fsrRcasTexture32F, 0, bgfx::Access::Write, format);
-				bgfx::dispatch(view, program, dispatchX, dispatchY, 1);
-				++view;
-			}
-
-			return view;
+			destroyFramebuffers();
+			createFramebuffers();
+			m_state.m_fsr.resize(m_state.m_width, m_state.m_height);
 		}
 
 		void createFramebuffers()
@@ -857,36 +739,16 @@ namespace
 			m_state.m_frameBufferTex[FRAMEBUFFER_RT_COLOR] = bgfx::createTexture2D(uint16_t(m_state.m_size[0]), uint16_t(m_state.m_size[1]), false, 1, bgfx::TextureFormat::RGBA16F, colorFlags);
 			m_state.m_frameBufferTex[FRAMEBUFFER_RT_DEPTH] = bgfx::createTexture2D(uint16_t(m_state.m_size[0]), uint16_t(m_state.m_size[1]), false, 1, bgfx::TextureFormat::D24S8, depthFlags);
 			m_state.m_frameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_state.m_frameBufferTex), m_state.m_frameBufferTex, true);
-
-			m_state.m_fsrEasuTexture16F = bgfx::createTexture2D(uint16_t(m_state.m_width), uint16_t(m_state.m_height), false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
-			m_state.m_fsrRcasTexture16F = bgfx::createTexture2D(uint16_t(m_state.m_width), uint16_t(m_state.m_height), false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
-			m_state.m_fsrEasuTexture32F = bgfx::createTexture2D(uint16_t(m_state.m_width), uint16_t(m_state.m_height), false, 1, bgfx::TextureFormat::RGBA32F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
-			m_state.m_fsrRcasTexture32F = bgfx::createTexture2D(uint16_t(m_state.m_width), uint16_t(m_state.m_height), false, 1, bgfx::TextureFormat::RGBA32F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT);
 		}
 
 		// all buffers set to destroy their textures
 		void destroyFramebuffers()
 		{
 			bgfx::destroy(m_state.m_frameBuffer);
-			bgfx::destroy(m_state.m_fsrEasuTexture16F);
-			bgfx::destroy(m_state.m_fsrRcasTexture16F);
-			bgfx::destroy(m_state.m_fsrEasuTexture32F);
-			bgfx::destroy(m_state.m_fsrRcasTexture32F);
 		}
 
 		void updateUniforms()
 		{
-			float const srcWidth = static_cast<float>(m_state.m_width) / m_state.m_superSamplingFactor;
-			float const srcHeight = static_cast<float>(m_state.m_height) / m_state.m_superSamplingFactor;
-
-			m_state.m_fsrUniforms.ViewportSizeRcasAttenuation.x = srcWidth;
-			m_state.m_fsrUniforms.ViewportSizeRcasAttenuation.y = srcHeight;
-			m_state.m_fsrUniforms.ViewportSizeRcasAttenuation.z = m_state.m_rcasAttenuation;
-			m_state.m_fsrUniforms.SrcSize.x = static_cast<float>(m_state.m_width);
-			m_state.m_fsrUniforms.SrcSize.y = static_cast<float>(m_state.m_height);
-			m_state.m_fsrUniforms.DstSize.x = static_cast<float>(m_state.m_width);
-			m_state.m_fsrUniforms.DstSize.y = static_cast<float>(m_state.m_height);
-
 			m_state.m_modelUniforms.m_lightPosition[0] = 0.0f;
 			m_state.m_modelUniforms.m_lightPosition[1] = 6.0f;
 			m_state.m_modelUniforms.m_lightPosition[2] = 10.0f;
