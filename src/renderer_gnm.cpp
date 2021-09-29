@@ -971,7 +971,7 @@ namespace bgfx {
 
 			uint64_t value = reinterpret_cast<int64_t>(g_platformData.nwh);
 			uint32_t mask = 0xf;
-			m_videoOutHandle = ((value)+(mask)) & ((~0) & (~(mask)));
+			m_videoOutHandle = sceVideoOutOpen(SCE_USER_SERVICE_USER_ID_SYSTEM, SCE_VIDEO_OUT_BUS_TYPE_MAIN, 0, nullptr);
 
 			if (m_videoOutHandle < 0)
 			{
@@ -3826,22 +3826,20 @@ case UniformType::_uniform| BGFX_UNIFORM_FRAGMENTBIT: \
 			uint32_t magic;
 			bx::read(&reader, magic);
 
-			switch (magic)
+			bool fragment = isShaderType(magic, 'F');
+
+			uint32_t hashIn{};
+			bx::read(&reader, hashIn);
+
+			uint32_t hashOut{};
+			if (isShaderVerLess(magic, 6))
 			{
-			case BGFX_CHUNK_MAGIC_CSH:
-			case BGFX_CHUNK_MAGIC_FSH:
-			case BGFX_CHUNK_MAGIC_VSH:
-				break;
-
-			default:
-				BGFX_FATAL(false, Fatal::InvalidShader, "Unknown shader format %x.", magic);
-				break;
+				hashOut = hashIn;
 			}
-
-			bool fragment = BGFX_CHUNK_MAGIC_FSH == magic;
-
-			uint32_t iohash;
-			bx::read(&reader, iohash);
+			else
+			{
+				bx::read(&reader, hashOut);
+			}
 
 			uint16_t count;
 			bx::read(&reader, count);
@@ -3850,11 +3848,11 @@ case UniformType::_uniform| BGFX_UNIFORM_FRAGMENTBIT: \
 			m_numUniforms = count;
 
 			BX_TRACE("%s Shader consts %d"
-				, BGFX_CHUNK_MAGIC_FSH == magic ? "Fragment" : BGFX_CHUNK_MAGIC_VSH == magic ? "Vertex" : "Compute"
+				, fragment ? "Fragment" : isShaderType(magic, 'V') ? "Vertex" : "Compute"
 				, count
 			);
 
-			uint8_t fragmentBit = fragment ? BGFX_UNIFORM_FRAGMENTBIT : 0;
+			uint8_t fragmentBit = fragment ? kUniformFragmentBit : 0;
 
 			if (0 < count)
 			{
@@ -3890,7 +3888,7 @@ case UniformType::_uniform| BGFX_UNIFORM_FRAGMENTBIT: \
 						m_predefined[m_numPredefined].m_type = uint8_t(predefined | fragmentBit);
 						m_numPredefined++;
 					}
-					else if (0 == (BGFX_UNIFORM_SAMPLERBIT & type))
+					else if (0 == (kUniformSamplerBit & type))
 					{
 						const UniformRegInfo* info = s_renderGNM->m_uniformReg.find(name);
 						BX_WARN(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
@@ -3912,7 +3910,7 @@ case UniformType::_uniform| BGFX_UNIFORM_FRAGMENTBIT: \
 						kind = "sampler";
 					}
 
-					UniformType::Enum uniformType = UniformType::Enum(type & ~BGFX_UNIFORM_MASK);
+					UniformType::Enum uniformType = UniformType::Enum(type & ~kUniformMask);
 
 					BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
 						, kind
@@ -3974,14 +3972,14 @@ case UniformType::_uniform| BGFX_UNIFORM_FRAGMENTBIT: \
 				}
 			}
 
-			if (BGFX_CHUNK_MAGIC_FSH == magic)
+			if (isShaderType(magic, 'F'))
 			{
 				BX_ASSERT(m_pixelShader == nullptr, "No m_pixelShader set");
 				m_pixelShader = BX_NEW(g_allocator, EmbeddedPixelShaderWithSource);
 				m_pixelShader->m_source = source;
 				m_pixelShader->initialize(s_renderGNM->m_garlicAllocator, s_renderGNM->m_onionAllocator, "ShaderGNM pixel");
 			}
-			else if (BGFX_CHUNK_MAGIC_VSH == magic)
+			else if (isShaderType(magic, 'V'))
 			{
 				BX_ASSERT(m_vertexShader == nullptr, "No m_vertexShader set");
 				m_vertexShader = BX_NEW(g_allocator, EmbeddedVertexShaderWithSource);
@@ -4001,7 +3999,7 @@ case UniformType::_uniform| BGFX_UNIFORM_FRAGMENTBIT: \
 			}
 			else
 			{
-				BGFX_FATAL(BGFX_CHUNK_MAGIC_CSH == magic, bgfx::Fatal::InvalidShader, "Expected shader to be frag,vert, or compute.");
+				BGFX_FATAL(isShaderType(magic, 'C'), bgfx::Fatal::InvalidShader, "Expected shader to be frag,vert, or compute.");
 			}
 
 			uint16_t constantBufferSize = 0;

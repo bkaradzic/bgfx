@@ -16,8 +16,28 @@
 #include <shader/wave_psslc.h>
 
 #include <unordered_set>
+#include <map>
+#include <atomic>
 #endif
 
+
+
+/********************************************************
+*   (c) Mojang. All rights reserved                     *
+*   (c) Microsoft. All rights reserved.                 *
+*********************************************************/
+
+#include "shaderc.h"
+
+#if defined(BGFX_GNM)
+#include <gnm/constants.h>
+#include <gnm/shader.h>
+#include <shader/wave_psslc.h>
+#include <shader/binary.h>
+#include <gnmx/shaderbinary.h>
+#include <gnmx/shader_parser.h>
+#include <shader/pssl_types.h>
+#endif
 
 namespace bgfx {
 	namespace pssl
@@ -130,26 +150,210 @@ namespace bgfx {
 			"#define GetRenderTargetSamplePosition    samplePosition\n"
 			;
 
-		// "??0Program@Binary@Shader@sce@@QEAA@XZ"
-		// "??1Program@Binary@Shader@sce@@QEAA@XZ"
-		// "?calculateSize@Program@Binary@Shader@sce@@QEAAIXZ"
-		// "?calculateSize@Program@Binary@Shader@sce@@QEBAIXZ"
-		// "?getBufferResourceByName@Program@Binary@Shader@sce@@QEBAPEAVBuffer@234@PEBD@Z"
-		// "?getConstantByName@Program@Binary@Shader@sce@@QEBAPEAVConstant@234@PEBD@Z"
-		// "?getInputAttributeById@Program@Binary@Shader@sce@@QEBAPEAVAttribute@234@E@Z"
-		// "?getInputAttributeBySemantic@Program@Binary@Shader@sce@@QEBAPEAVAttribute@234@W4PsslSemantic@234@@Z"
-		// "?getInputAttributeBySemanticNameAndIndex@Program@Binary@Shader@sce@@QEBAPEAVAttribute@234@PEBDE@Z"
-		// "?getOutputAttributeById@Program@Binary@Shader@sce@@QEBAPEAVAttribute@234@E@Z"
-		// "?getOutputAttributeBySemantic@Program@Binary@Shader@sce@@QEBAPEAVAttribute@234@W4PsslSemantic@234@@Z"
-		// "?getOutputAttributeBySemanticNameAndIndex@Program@Binary@Shader@sce@@QEBAPEAVAttribute@234@PEBDE@Z"
-		// "?getSamplerStateByName@Program@Binary@Shader@sce@@QEBAPEAVSamplerState@234@PEBD@Z"
-		// "?loadFromMemory@Program@Binary@Shader@sce@@QEAA?AW4PsslStatus@234@PEBXI@Z"
-		// "?parseGsShader@Binary@Shader@sce@@YAXPEAVShaderInfo@123@0PEBX@Z"
-		// "?parseShader@Binary@Shader@sce@@YAXPEAVShaderInfo@123@PEBXW4ShaderType@Gnmx@3@@Z"
-		// "?saveToMemory@Program@Binary@Shader@sce@@QEAA?AW4PsslStatus@234@PEAXI@Z"
-		// "?saveToMemory@Program@Binary@Shader@sce@@QEBA?AW4PsslStatus@234@PEAXI@Z"
 
-		typedef sce::Shader::Binary::PsslStatus(*LoadFromMemoryFn)(sce::Shader::Binary::Program* _this, const void* shaderBinary, uint32_t shaderBinarySize);
+		// BBI-TODO (dgalloway 3) make this path something reasonable like in the user documents folder and maybe with an override
+		static const std::string sGnmGpuDebuggerPath = "D:\\temp\\GnmGPUDebuggerPath\\";
+
+		static void printShaderDiagnostics(const Options& _options, const sce::Shader::Wave::Psslc::DiagnosticMessage* diags, int diagCount)
+		{
+			const sce::Shader::Wave::Psslc::SourceLocation* srcLoc = nullptr;
+
+			const char* srcFile = "n/a";
+			uint32_t srcLine = 0;
+			uint32_t srcColumn = 0;
+
+			for (int ii = 0; ii < diagCount; ++ii)
+			{
+				srcLoc = diags[ii].location;
+
+				if (srcLoc != nullptr)
+				{
+					srcFile = srcLoc->file->fileName;
+					srcLine = srcLoc->lineNumber;
+					srcColumn = srcLoc->columnNumber;
+				}
+
+				std::string diagnostic =
+					"\n================ [Shader Diagnostic] ================"
+					"\nCode: " + std::to_string(diags[ii].code) +
+					"\nLevel: " + std::to_string(diags[ii].level) +
+					"\nMessage: " + diags[ii].message +
+					"\nLocation: " + srcFile + " @ Ln " + std::to_string(srcLine) + ", Col " + std::to_string(srcColumn);
+
+				fprintf(stderr, diagnostic.c_str());
+			}
+		}
+
+		static bool writeUniforms(const Options& _options, bx::WriterI* _writer, const sce::Shader::Binary::Program& program, uint16_t& constantBufferSize)
+		{
+
+			bool isFragment = (_options.shaderType == 'f');
+			uint32_t fragmentBit = isFragment ? kUniformFragmentBit : 0;
+
+			struct UniformMapping
+			{
+				bgfx::UniformType::Enum mType;
+				uint16_t mSize;
+				uint16_t mRegCount;
+			};
+
+			static const std::map<sce::Shader::Binary::PsslType, UniformMapping> psslUniformToBgfx =
+			{
+				{sce::Shader::Binary::PsslType::kTypeFloat4,   {bgfx::UniformType::Enum::Vec4, sizeof(float) * 4, 1}},
+				{sce::Shader::Binary::PsslType::kTypeFloat3x3, {bgfx::UniformType::Enum::Mat3, sizeof(float) * 4 * 3, 3}},
+				{sce::Shader::Binary::PsslType::kTypeFloat4x4, {bgfx::UniformType::Enum::Mat4, sizeof(float) * 4 * 4, 4}},
+			};
+
+			uint16_t numUniforms = 0;
+			uint32_t globalBufIdx = UINT32_MAX;
+
+			// find the global constant buffer
+			if ((program.m_elements != nullptr) && (program.m_numElements > 0) && program.m_numBuffers > 0)
+			{
+				uint32_t idx;
+
+				for (idx = 0; idx < program.m_numBuffers; ++idx)
+				{
+					const sce::Shader::Binary::Buffer& buffer = program.m_buffers[idx];
+					const char* bufferName = program.m_buffers[idx].getName();
+					if (0 == bx::strCmp("__GLOBAL_CB__", bufferName))
+					{
+						globalBufIdx = idx;
+						break;
+					}
+				}
+			}
+
+			uint32_t startPosition = 0;
+			uint32_t numConstantBufferUniforms = 0;
+			if (globalBufIdx != UINT32_MAX)
+			{
+				startPosition = program.m_buffers[globalBufIdx].m_elementOffset;
+				numConstantBufferUniforms = program.m_buffers[globalBufIdx].m_numElements;
+			}
+
+			numUniforms = numConstantBufferUniforms + program.m_numSamplerStates;
+
+			BX_TRACE("-----------------------------------------------------------------------");
+			BX_TRACE("Writing uniforms");
+
+			bx::write(_writer, numUniforms);
+			BX_TRACE("count: %d", numUniforms);
+
+			if (numUniforms == 0)
+			{
+				return true;
+			}
+
+			// check if we have any constant buffer values to output
+			if (0 < numConstantBufferUniforms)
+			{
+				for (uint32_t ii = startPosition; ii < (startPosition + numConstantBufferUniforms); ++ii)
+				{
+					const sce::Shader::Binary::Element& elem = program.m_elements[ii];
+					if (elem.m_isUsed)
+					{
+						Uniform un = {};
+						un.name.assign(elem.getName());
+						un.regIndex = elem.m_byteOffset;
+
+						uint16_t entrySize = 0;
+						bool valid = false;
+
+						{
+							auto mapping = psslUniformToBgfx.find(static_cast<sce::Shader::Binary::PsslType>(elem.m_type));
+							if (!(mapping == psslUniformToBgfx.end()))
+							{
+								un.type = mapping->second.mType;
+								un.num = elem.m_arraySize > 0 ? elem.m_arraySize : 1;
+								un.regCount = mapping->second.mRegCount * un.num;  // regCount should be multiplied by number - corresponding change in renderer_gnm.cpp
+								entrySize += mapping->second.mSize * un.num;
+								valid = true;
+							}
+							else
+							{
+								// BBI TODO
+								// printError has a side effect of exiting the compilation!!
+								fprintf (stderr, ("Unknown uniform type for " + un.name + ". Type is " + std::to_string(un.type)).c_str());
+							}
+						}
+
+						if (valid)
+						{
+							constantBufferSize = std::max(constantBufferSize, static_cast<uint16_t>(elem.m_byteOffset + entrySize));
+
+							const uint8_t nameSize = static_cast<uint8_t>(un.name.size());
+							bx::write(_writer, nameSize);
+							BX_TRACE("nameSize: %d", nameSize);
+							bx::write(_writer, un.name.c_str(), nameSize);
+							BX_TRACE("name: %s", un.name.c_str());
+							uint8_t type = uint8_t(un.type | kUniformFragmentBit);
+							bx::write(_writer, type);
+							BX_TRACE("type: %d", type);
+							bx::write(_writer, un.num);
+							BX_TRACE("num: %d", un.num);
+							bx::write(_writer, un.regIndex);
+							BX_TRACE("regIndex: %d", un.regIndex);
+							bx::write(_writer, un.regCount);
+							BX_TRACE("regCount: %d", un.regCount);
+						}
+					}
+					else
+					{
+						continue;
+					}
+				}
+			}
+
+
+			// loop over buffers to emit the texture uniforms
+			for (uint32_t idx = 0; idx < program.m_numSamplerStates; ++idx)
+			{
+				const sce::Shader::Binary::SamplerState& samplerState = program.m_samplerStates[idx];
+
+				Uniform un = {};
+				uint16_t entrySize = 0;
+				bool valid = false;
+
+				// Remove 'sampler' suffix to adhere to same convention as DX
+				// Not sure this is truly necessary
+				std::string bufferName(samplerState.getName());
+				std::string s = "Sampler";
+				std::string::size_type i = bufferName.rfind(s);
+				if (i != std::string::npos)
+					bufferName.erase(i, s.length());
+
+				un.name.assign(bufferName);
+				un.regIndex = samplerState.m_resourceIndex;
+				un.type = UniformType::Enum(fragmentBit | kUniformSamplerBit | bgfx::UniformType::Sampler);
+				un.num = 1;
+				un.regCount = 1; // uint16_t(bindDesc.BindCount);
+				entrySize = 16; // still uses full register of 4 floats
+				valid = true;
+
+				if (valid)
+				{
+					constantBufferSize = std::max(constantBufferSize, static_cast<uint16_t>(entrySize));
+					const uint8_t nameSize = static_cast<uint8_t>(un.name.size());
+					bx::write(_writer, nameSize);
+					BX_TRACE("nameSize: %d", nameSize);
+					bx::write(_writer, un.name.c_str(), nameSize);
+					BX_TRACE("name: %s", un.name.c_str());
+					uint8_t type = uint8_t(un.type | fragmentBit);
+					bx::write(_writer, type);
+					BX_TRACE("type: %d", type);
+					bx::write(_writer, un.num);
+					BX_TRACE("num: %d", un.num);
+					bx::write(_writer, un.regIndex);
+					BX_TRACE("regIndex: %d", un.regIndex);
+					bx::write(_writer, un.regCount);
+					BX_TRACE("regCount: %d", un.regCount);
+				}
+
+			}
+
+			return true;
+		}
 
 		struct RemapInputSemantic
 		{
@@ -158,9 +362,9 @@ namespace bgfx {
 			uint8_t m_index;
 		};
 
-		static const RemapInputSemantic s_remapInputSemantic[] =
+		static const RemapInputSemantic s_remapInputSemantic[bgfx::Attrib::Count + 1] =
 		{
-			{ bgfx::Attrib::Position,  "S_POSITION",   0 },
+			{ bgfx::Attrib::Position,  "POSITION",     0 },
 			{ bgfx::Attrib::Normal,    "NORMAL",       0 },
 			{ bgfx::Attrib::Tangent,   "TANGENT",      0 },
 			{ bgfx::Attrib::Bitangent, "BITANGENT",    0 },
@@ -180,9 +384,8 @@ namespace bgfx {
 			{ bgfx::Attrib::TexCoord7, "TEXCOORD",     7 },
 			{ bgfx::Attrib::Count,     "",             0 },
 		};
-		BX_STATIC_ASSERT(BX_COUNTOF(s_remapInputSemantic) == bgfx::Attrib::Count + 1);
 
-		const RemapInputSemantic& findInputSemantic(const char* _name, uint8_t _index)
+		static const RemapInputSemantic& findInputSemantic(const char* _name, uint8_t _index)
 		{
 			for (uint32_t ii = 0; ii < bgfx::Attrib::Count; ++ii)
 			{
@@ -197,749 +400,281 @@ namespace bgfx {
 			return s_remapInputSemantic[bgfx::Attrib::Count];
 		}
 
-		struct UniformRemap
+		static bool writeAttributes(const Options& _options, bx::WriterI* _writer, const sce::Shader::Binary::Program& program)
 		{
-			UniformType::Enum id;
-			sce::Shader::Binary::PsslType type;
-		};
+			const uint32_t numInputAttribs = program.m_numInputAttributes;
+			uint8_t attributesCount = 0;  // This HAS to be uint_8_t since it's being written below in bx::write and the reader expects a 8 bit value
 
-		static const UniformRemap s_uniformRemap[] =
-		{
-			{ UniformType::Sampler, sce::Shader::Binary::PsslType::kTypeInt1     },
-			{ UniformType::Vec4, sce::Shader::Binary::PsslType::kTypeFloat4   },
-			{ UniformType::Mat3, sce::Shader::Binary::PsslType::kTypeFloat3x3 },
-			{ UniformType::Mat4, sce::Shader::Binary::PsslType::kTypeFloat4x4 },
-			{ UniformType::Sampler, sce::Shader::Binary::PsslType::kTypeInt1     },
-			{ UniformType::Sampler, sce::Shader::Binary::PsslType::kTypeInt1     },
-			{ UniformType::Sampler, sce::Shader::Binary::PsslType::kTypeInt1     },
-			{ UniformType::Sampler, sce::Shader::Binary::PsslType::kTypeInt1     },
-		};
-
-		UniformType::Enum findUniformType(sce::Shader::Binary::PsslType _type)
-		{
-			for (uint32_t ii = 0; ii < BX_COUNTOF(s_uniformRemap); ++ii)
+			// Only need to write out attributes for vertex shader
+			if (_options.shaderType == 'v')
 			{
-				const UniformRemap& remap = s_uniformRemap[ii];
-
-				if (remap.type == _type)
+				for (uint32_t ii = 0; ii < numInputAttribs; ++ii)
 				{
-					return remap.id;
+					const sce::Shader::Binary::Attribute* attrib = program.m_inputAttributes + ii;
+					const char* semanticName = attrib->getSemanticName();
+					if ( bx::strFind(semanticName, "S_").getPtr() == semanticName)
+					{
+						continue;
+					}
+					attributesCount++;
 				}
 			}
 
-			return UniformType::Count;
-		}
+			BX_TRACE("-----------------------------------------------------------------------");
+			BX_TRACE("Writing attributes");
 
-		static const char* toString(sce::Shader::Binary::PsslType _psslType)
-		{
-			switch (_psslType)
+			bx::write(_writer, attributesCount);
+			BX_TRACE("numAttrs: %d", attributesCount);
+
+			if (attributesCount > 0)
 			{
-			case sce::Shader::Binary::kTypeInt1:   return "int1";
-			case sce::Shader::Binary::kTypeInt2:   return "int2";
-			case sce::Shader::Binary::kTypeInt3:   return "int3";
-			case sce::Shader::Binary::kTypeInt4:   return "int4";
-			case sce::Shader::Binary::kTypeUint1:  return "uint1";
-			case sce::Shader::Binary::kTypeUint2:  return "uint2";
-			case sce::Shader::Binary::kTypeUint3:  return "uint3";
-			case sce::Shader::Binary::kTypeUint4:  return "uint4";
-			case sce::Shader::Binary::kTypeFloat1: return "float1";
-			case sce::Shader::Binary::kTypeFloat2: return "float2";
-			case sce::Shader::Binary::kTypeFloat3: return "float3";
-			case sce::Shader::Binary::kTypeFloat4:
-			default: break;
-			};
-
-			return "float4";
-		}
-
-		struct Srt
-		{
-			std::string name;
-			uint32_t idx;
-		};
-
-		typedef std::vector<Srt> SrtArray;
-
-		typedef std::vector<bx::StringView> StringViewArray;
-
-		StringViewArray split(const bx::StringView& _str, char _seperator)
-		{
-			StringViewArray result;
-
-			const char* prev = _str.getPtr();
-			bx::StringView curr(_str);
-
-			for (curr = bx::strFind(bx::StringView(curr.getPtr(), _str.getTerm()), _seperator)
-				; !curr.isEmpty()
-				; prev = curr.getPtr() + 1, curr = bx::strFind(bx::StringView(prev, _str.getTerm()), _seperator)
-				)
-			{
-				bx::StringView sv(prev, curr.getPtr());
-				result.push_back(sv);
-			}
-
-			bx::StringView sv(prev, _str.getTerm());
-
-			if (!sv.isEmpty())
-			{
-				result.push_back(sv);
-			}
-
-			return result;
-		}
-
-		bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bool _firstPass, const SrtArray& _srts)
-		{
-			char sceOrbisSdkDir[bx::kMaxFilePath];
-			char tempDir[bx::kMaxFilePath];
-			{
-				uint32_t len = sizeof(sceOrbisSdkDir);
-				if (!bx::getEnv(sceOrbisSdkDir, &len, "SCE_ORBIS_SDK_DIR"))
+				for (uint32_t ii = 0; ii < numInputAttribs; ++ii)
 				{
-					fprintf(stderr, "Error: SCE_ORBIS_SDK_DIR environment variable not set.");
-					return false;
+					const sce::Shader::Binary::Attribute* attrib = program.m_inputAttributes + ii;
+					const char* semanticName = attrib->getSemanticName();
+
+					if (bx::strFind(semanticName, "S_").getPtr() == semanticName)
+					{
+						continue;
+					}
+					const RemapInputSemantic ris = findInputSemantic(attrib->getSemanticName(), attrib->m_semanticIndex);
+
+					uint8_t slotPlusInstanceFlag = attrib->m_resourceIndex;
+					constexpr uint8_t IS_INSTANCE_FLAG = 128;
+					const char* attribName = attrib->getName();
+
+					// if semantic names start with i_ this indicates instancing on PS4
+					if ((attribName[0] == 'i') && (attribName[1] == '_')) {
+						slotPlusInstanceFlag |= IS_INSTANCE_FLAG;
+					}
+
+					bx::write(_writer, slotPlusInstanceFlag);
+
+					if (ris.m_attr != bgfx::Attrib::Count)
+					{
+						const uint16_t attribId = bgfx::attribToId(ris.m_attr);
+						bx::write(_writer, attribId);
+						BX_TRACE("attr: %d : %d : %s", attribId, slotPlusInstanceFlag, attribName);
+					}
+					else
+					{
+						constexpr uint16_t attribId = UINT16_MAX;
+						bx::write(_writer, attribId);
+						BX_TRACE("attr: %d", attribId);
+						fprintf(stderr, "Error: Unknown vertex input attribute.\n");
+						return false;
+					}
+				}
+			}
+
+			BX_TRACE("-----------------------------------------------------------------------");
+
+			return true;
+		}
+
+		sce::Shader::Wave::Psslc::SourceFile* loadShaderSource(const char* fileName, const sce::Shader::Wave::Psslc::SourceLocation* includedFrom, const sce::Shader::Wave::Psslc::OptionsBase* compileOptions, void* userData, const char** errorString)
+		{
+			BX_UNUSED(fileName, includedFrom, compileOptions, errorString);
+			return static_cast<sce::Shader::Wave::Psslc::SourceFile*>(userData);
+		}
+
+		static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
+		{
+			std::string variant = "";
+
+			bool debug = _options.debugInformation;
+
+			if (_options.emitShaderSource)
+			{
+				const char* profile = _options.profile.c_str();
+				std::string file;
+
+				for (auto& item : _options.defines)
+				{
+					std::string temp = item;
+					const std::string flag = "FLAG_";
+					if (temp.rfind("FLAG_", 0) == 0)
+					{
+						temp.erase(0, flag.length());
+						std::string s = "=1";
+						std::string::size_type fl = temp.rfind(s);
+						if (fl != std::string::npos)
+							temp.erase(fl, s.length());
+
+						s = "_";
+						fl = temp.rfind(s);
+						if (fl != std::string::npos)
+							temp.erase(fl, s.length());
+
+						variant += temp + "__";
+					}
 				}
 
-				bx::FilePath temp(bx::Dir::Temp);
-				bx::strCopy(tempDir, BX_COUNTOF(tempDir), temp);
+				variant = _options.inputFilePath + "__" + variant;
+
+				//file = ".\\pssl\\" + file + variant + ".pssl";
+				file = file + variant + ".pssl";
+
+				writeFile(file.c_str(), _code.c_str(), (int32_t)_code.size());
 			}
 
-			std::string dll(sceOrbisSdkDir);
-			dll += "\\host_tools\\bin\\libSceShaderBinary.dll";
-			void* sceShaderBinaryDll = bx::dlopen(dll.c_str());
-			if (NULL == sceShaderBinaryDll)
+			sce::Shader::Wave::Psslc::Options compileOptions;
+			sce::Shader::Wave::Psslc::initializeOptions(&compileOptions, SCE_WAVE_API_VERSION);
+
+			switch (_options.shaderType)
 			{
-				fprintf(stderr, "Error: PSSL compiler is not supported.\n");
+			case 'v': compileOptions.targetProfile = sce::Shader::Wave::Psslc::TargetProfile::kTargetProfileVsVs;
+				break;
+			case 'f': compileOptions.targetProfile = sce::Shader::Wave::Psslc::TargetProfile::kTargetProfilePs;
+				break;
+			case 'c': compileOptions.targetProfile = sce::Shader::Wave::Psslc::TargetProfile::kTargetProfileCs;
+				break;
+			default:
+				fprintf(stderr, "Error: Unsupported shader type.\n");
 				return false;
 			}
 
-			LoadFromMemoryFn loadFromMemory = (LoadFromMemoryFn)bx::dlsym(sceShaderBinaryDll
-				, "?loadFromMemory@Program@Binary@Shader@sce@@QEAA?AW4PsslStatus@234@PEBXI@Z"
-			);
+			BX_TRACE("***********************************************************************");
+			BX_TRACE("Saving shader: %s PSSL", variant.c_str());
 
-			std::string shader;
-			//		shader += s_preamble;
-			shader += _code;
+			// Format shader macros as C-string array
+			std::vector<const char*> macroDefinitions{};
+			macroDefinitions.reserve(_options.defines.size());
 
-			uint32_t hash = bx::hash<bx::HashMurmur2A>(shader.c_str(), uint32_t(shader.length()));
-			char psslFilePath[bx::kMaxFilePath];
-			bx::snprintf(psslFilePath, BX_COUNTOF(psslFilePath), "%s/tmp-%08x.pssl", tempDir, hash);
-
-			char sbFilePath[bx::kMaxFilePath];
-			bx::snprintf(sbFilePath, BX_COUNTOF(sbFilePath), "%s/tmp-%08x.sb", tempDir, hash);
-
-			bx::FileWriter writer;
-			bx::Error err;
-			if (bx::open(&writer, psslFilePath, false, &err))
+			for (const auto& define : _options.defines)
 			{
-				bx::write(&writer, shader.c_str(), uint32_t(shader.length()), &err);
-				bx::close(&writer);
+				macroDefinitions.push_back(define.c_str());
 			}
 
-			if (!err.isOk())
-			{
-				fprintf(stderr, "Error: failed to save temp file.\n");
-				goto error;
+			compileOptions.macroDefinitions = macroDefinitions.data();
+			compileOptions.macroDefinitionCount = static_cast<uint32_t>(macroDefinitions.size());
+
+			compileOptions.mainSourceFile = _options.inputFilePath.c_str();
+			compileOptions.entryFunctionName = "main";
+			if (debug) {
+				compileOptions.sdbCache = 1;
 			}
 
+			static const uint32_t suppressedWarnings[] =
 			{
-				bx::ProcessReader pr;
+				6923,  // implicit type narrowing
+				20087, // unreferenced formal parameter
+				20088  // unreferenced local variable
+			};
 
-				bx::FilePath exec(sceOrbisSdkDir);
-				exec.join("host_tools/bin/orbis-wave-psslc.exe");
+			compileOptions.suppressedWarnings = suppressedWarnings;
+			compileOptions.suppressedWarningsCount = sizeof(suppressedWarnings);
 
-				// warning D20087: unreferenced formal parameter ''
-				// warning D20088: unreferenced local variable ''
-				std::string cmd = "-Wsuppress=20087,20088 ";
+			// Set all callbacks to trivial placeholders, except for CallbackOpenFile
+			sce::Shader::Wave::Psslc::CallbackList callbackList;
+			sce::Shader::Wave::Psslc::initializeCallbackList(&callbackList, sce::Shader::Wave::Psslc::kCallbackDefaultsTrivial);
+			callbackList.openFile = &loadShaderSource;
 
-				{
-					cmd += " -profile sce_";
+			// The above openFile callback will return this dummy file
+			sce::Shader::Wave::Psslc::SourceFile srcFile;
+			srcFile.fileName = _options.inputFilePath.c_str();
+			srcFile.text = _code.data();
+			srcFile.size = static_cast<uint32_t>(_code.size());
 
-					switch (_options.shaderType)
-					{
-					case 'c': cmd += "c";    break;
-					case 'f': cmd += "p";    break;
-					case 'v': cmd += "vs_v"; break;
-					}
-
-					cmd += "s_orbis";
+			if (debug)
+			{
+				compileOptions.optimizeForDebug = 1;
+				compileOptions.optimizationLevel = 0;
+				compileOptions.useFastmath = 0;
+			}
+			else
+			{
+				if (_options.optimize) {
+					compileOptions.optimizationLevel = 4;
 				}
+			}
 
-				cmd += " -o ";
-				cmd += sbFilePath;
-				cmd += " ";
-				cmd += psslFilePath;
+			// Now tell the compiler to load our dummy file when it runs
+			compileOptions.userData = static_cast<void*>(&srcFile);
 
-				if (bx::open(&pr, exec, cmd.c_str(), &err))
+			const sce::Shader::Wave::Psslc::Output* compileOutput = sce::Shader::Wave::Psslc::run(&compileOptions, &callbackList);
+
+			if (compileOutput)
+			{
+				if (compileOutput->programData != nullptr && compileOutput->programSize != 0)
 				{
-					char out[1024];
+					sce::Shader::Binary::Program program = {};
+					sce::Shader::Binary::PsslStatus result = program.loadFromMemory(compileOutput->programData, compileOutput->programSize);
 
-					for (;;)
+					if (result != sce::Shader::Binary::PsslStatus::kStatusOk)
 					{
-						int32_t len = bx::read(&pr, out, sizeof(out) - 1, &err);
-						if (!err.isOk())
-						{
-							break;
-						}
-
-						out[len] = '\0';
-						fputs(out, stderr);
+						fprintf( stderr, "Failed to load shader binary program from source blob!");
+						return false;
 					}
 
-					bx::close(&pr);
-
-					if (!_options.keepIntermediate)
+					uint16_t constantBufferSize = 0;
+					if (!writeUniforms(_options, _writer, program, constantBufferSize))
 					{
-						bx::remove(psslFilePath);
+						fprintf(stderr, "Failed to write uniforms for shader binary program!");
+						return false;
 					}
 
-					if (!err.isOk()
-						&& err != bx::kErrorReaderWriterEof)
+					bx::write(_writer, compileOutput->programSize);
+					BX_TRACE("size: %d", compileOutput->programSize);
+					bx::write(_writer, compileOutput->programData, compileOutput->programSize);
+					BX_TRACE("code:");
+					uint8_t nul = 0;
+					bx::write(_writer, nul);
+					BX_TRACE("nul:");
+
+					if (!writeAttributes(_options, _writer, program))
 					{
-						fprintf(stderr, "Error: PSSL process failed.\n");
-						goto error;
+						fprintf(stderr, "Failed to write attributes for shader binary program!");
+						return false;
 					}
 
-					if (0 != pr.getExitCode())
-					{
-						fprintf(stderr, "Error: PSSL exit 0x%08x.\n", pr.getExitCode());
+					bx::write(_writer, constantBufferSize);
+					BX_TRACE("constant buffer size: %d", constantBufferSize);
+					BX_TRACE("VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
 
-						if (0xc0000005 == uint32_t(pr.getExitCode()))
-						{
-							fprintf(stderr
-								, "\n"
-								"If you're running inside ConEmu/Cmder, disable hooks temporary with:\n"
-								"\n"
-								"    set ConEmuHooks=OFF\n"
-								"\n"
-								"Reference(s):\n"
-								" - https://conemu.github.io/en/ConEmuEnvironment.html#Disabling_hooks_temporarily\n"
-								"\n"
-							);
-						}
 
-						goto error;
-					}
+					// Write SDB files for GPU Debugger (BBI-TODO)
+					//if (compileOutput->sdbDataSize > 0 && debug) {
+
+					//	static std::atomic<int> sFileUniqueCounter = 0;
+
+					//	std::string outputSDBFile = sGnmGpuDebuggerPath + std::string(_options.inputFilePath.c_str()) + std::string("_") + std::to_string(sFileUniqueCounter++) + std::string("_") + _options.shaderType + std::string(compileOutput->sdbExt);
+
+					//	FILE* glslcOutputFileHandle = nullptr;
+
+					//	if (fopen_s(&glslcOutputFileHandle, outputSDBFile.c_str(), "wb") != 0)
+					//	{
+					//		BX_ASSERT(false, "Failed to open file %s", outputSDBFile.c_str());
+					//	}
+					//	if (!glslcOutputFileHandle)
+					//	{
+					//		BX_ASSERT(false, "Can't write file %s", outputSDBFile.c_str());
+					//	}
+
+					//	fwrite(compileOutput->sdbData, compileOutput->sdbDataSize, 1, glslcOutputFileHandle);
+					//	fclose(glslcOutputFileHandle);
+					//}
+
+					sce::Shader::Wave::Psslc::destroyOutput(compileOutput);
 				}
 				else
 				{
-					fprintf(stderr, "Error: PSSL process failed to open.\n");
-					goto error;
-				}
-
-				{
-					bx::FileReader reader;
-					if (bx::open(&reader, sbFilePath))
+					BX_TRACE("Compile failed");
+					if (compileOutput->diagnosticCount > 0)
 					{
-						uint32_t shaderSize = (uint32_t)bx::getSize(&reader);
-						char* shaderData = new char[shaderSize];
-						shaderSize = (uint32_t)bx::read(&reader, shaderData, shaderSize);
-						bx::close(&reader);
-
-						if (!_options.keepIntermediate)
-						{
-							bx::remove(sbFilePath);
-						}
-
-						sce::Shader::Binary::Program* sbp = (sce::Shader::Binary::Program*)alloca(sizeof(sce::Shader::Binary::Program));
-						sce::Shader::Binary::PsslStatus status = loadFromMemory(sbp, shaderData, shaderSize);
-						if (sce::Shader::Binary::PsslStatus::kStatusOk == status)
-						{
-							if (_firstPass)
-							{
-								for (uint32_t ii = 0, num = sbp->m_numElements; ii < num; ++ii)
-								{
-									const sce::Shader::Binary::Element& element = sbp->m_elements[ii];
-									BX_TRACE("element %d: %s", ii, element.getName());
-								}
-
-								std::string samplersInit;
-								std::unordered_set<std::string> samplers;
-
-								// Sort resources by binding index.
-								struct Remap
-								{
-									uint32_t idx;
-									uint32_t resourceIndex;
-								};
-
-								Remap remap[128];
-
-								for (uint32_t ii = 0, num = sbp->m_numSamplerStates; ii < num; ++ii)
-								{
-									const sce::Shader::Binary::SamplerState& ss = sbp->m_samplerStates[ii];
-									remap[ii].idx = ii;
-									remap[ii].resourceIndex = ss.m_resourceIndex;
-								}
-
-								bx::quickSort(remap, sbp->m_numSamplerStates, sizeof(Remap), [](const void* _lhs, const void* _rhs) {
-									const Remap* lhs = (const Remap*)_lhs;
-									const Remap* rhs = (const Remap*)_rhs;
-									return int32_t(lhs->resourceIndex) - int32_t(rhs->resourceIndex);
-								});
-
-								for (uint32_t ii = 0, num = sbp->m_numSamplerStates, resourceIndex = 0; ii < num; ++ii)
-								{
-									const sce::Shader::Binary::SamplerState& ss = sbp->m_samplerStates[remap[ii].idx];
-
-									for (; resourceIndex != ss.m_resourceIndex; ++resourceIndex)
-									{
-										std::string str;
-										bx::stringPrintf(str, "unused%d", resourceIndex);
-
-										samplersInit += "\tSamplerState " + str + ";\n";
-									}
-
-									const char* name = ss.getName();
-									uint32_t len = (uint32_t)bx::strLen(name);
-									if (0 == bx::strCmp(&name[len - 7], "Sampler"))
-									{
-										char str[1024];
-										bx::strCopy(str, sizeof(str), name, len - 7);
-										BX_TRACE("%2d: %s", ii, str);
-
-										samplersInit += "\tSamplerState ";
-										samplersInit += str;
-										samplersInit += ";\n";
-
-										samplers.insert(str);
-									}
-									else if (0 == bx::strCmp(&name[len - 10], "Comparison"))
-									{
-										char str[1024];
-										bx::strCopy(str, sizeof(str), name, len - 17);
-										BX_TRACE("%2d: %s", ii, str);
-
-										samplersInit += "\tSamplerComparisonState ";
-										samplersInit += str;
-										samplersInit += ";\n";
-
-										samplers.insert(str);
-									}
-									else
-									{
-										BX_TRACE("Unknown: %s", name);
-									}
-
-									++resourceIndex;
-								}
-
-								std::string input;
-
-								if ('v' == _options.shaderType) // Only care about input semantic on vertex shaders
-								{
-									// Keep "unused" arguments - let the actual PSSL compiler strip them and the dead code that's
-									// using them, instead of trying to define them as statics or strip dead code ourselves.
-									//    Output main(float4 a_color0 : COLOR0 , float4 a_normal : NORMAL , float3 a_position : POSITION , float2 a_texcoord0 : TEXCOORD0) {
-									// input:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-									const char mainArgsStart[] = "Output main(";
-									size_t pos = _code.find(mainArgsStart) + sizeof(mainArgsStart) - 1;
-									size_t end = _code.find(')', pos);
-									input = _code.substr(pos, end - pos);
-								}
-
-								std::string init;
-								std::string textures;
-
-								// Sort resources by binding index.
-								for (uint32_t ii = 0, num = sbp->m_numBuffers; ii < num; ++ii)
-								{
-									const sce::Shader::Binary::Buffer& sbb = sbp->m_buffers[ii];
-									remap[ii].idx = ii;
-									remap[ii].resourceIndex = sbb.m_resourceIndex;
-								}
-
-								bx::quickSort(remap, sbp->m_numBuffers, sizeof(Remap), [](const void* _lhs, const void* _rhs) {
-									const Remap* lhs = (const Remap*)_lhs;
-									const Remap* rhs = (const Remap*)_rhs;
-									return int32_t(lhs->resourceIndex) - int32_t(rhs->resourceIndex);
-								});
-
-								SrtArray srts;
-								for (uint32_t ii = 0, num = sbp->m_numBuffers, resourceIndex = 0; ii < num; ++ii)
-								{
-									const sce::Shader::Binary::Buffer& sbb = sbp->m_buffers[remap[ii].idx];
-									const char* name = sbb.getName();
-
-									if (sce::Shader::Binary::PsslBufferType::kBufferTypeDataBuffer == sbb.m_langType
-										|| sce::Shader::Binary::PsslBufferType::kBufferTypeRwDataBuffer == sbb.m_langType)
-									{
-										for (; resourceIndex != sbb.m_resourceIndex; ++resourceIndex)
-										{
-											std::string str;
-											bx::stringPrintf(str, "unused%d", resourceIndex);
-
-											textures += "\tTexture2D<float4> " + str + ";\n";
-										}
-
-										textures += "\t";
-
-										sce::Shader::Binary::PsslType psslType = sce::Shader::Binary::PsslType(sbb.m_type);
-										switch (sbb.m_langType)
-										{
-										default:
-										case sce::Shader::Binary::PsslBufferType::kBufferTypeDataBuffer:   textures += "DataBuffer<";   break;
-										case sce::Shader::Binary::PsslBufferType::kBufferTypeRwDataBuffer: textures += "RW_DataBuffer<"; break;
-										}
-
-										textures += toString(psslType);
-										textures += "> ";
-
-										Srt srt;
-										srt.name = name;
-										srt.idx = sbb.m_resourceIndex;
-
-										srts.push_back(srt);
-
-										textures += name;
-										textures += ";\n";
-
-										textures += "\tDataBuffer<float4> ";
-										bx::stringPrintf(textures, "pad%d", resourceIndex);
-										textures += ";\n";
-
-										init += "\t";
-										init += name;
-										init += " = bgfxSrtData.textures->";
-										init += name;
-										init += ";\n";
-
-										++resourceIndex;
-									}
-									else
-									{
-										uint32_t len = (uint32_t)bx::strLen(name);
-										if (0 != bx::strCmp(name, "__GLOBAL_CB__")
-											&& len > 7)
-										{
-											if (0 == bx::strCmp(&name[len - 7], "Texture"))
-											{
-												for (; resourceIndex != sbb.m_resourceIndex; ++resourceIndex)
-												{
-													std::string str;
-													bx::stringPrintf(str, "unused%d", resourceIndex);
-
-													textures += "\tTexture2D<float4> " + str + ";\n";
-												}
-
-												char str[1024];
-												bx::strCopy(str, sizeof(str), name, len - 7);
-												BX_TRACE("%2d: %s", ii, str);
-
-												textures += "\t";
-
-												sce::Shader::Binary::PsslType psslType = sce::Shader::Binary::PsslType(sbb.m_type);
-												switch (sbb.m_langType)
-												{
-												default:
-												case sce::Shader::Binary::PsslBufferType::kBufferTypeTexture2d:          textures += "Texture2D<";             break;
-												case sce::Shader::Binary::PsslBufferType::kBufferTypeTexture2dArray:     textures += "Texture2D_Array<";       break;
-												case sce::Shader::Binary::PsslBufferType::kBufferTypeMsTexture2d:        textures += "MS_Texture2D<";          break;
-												case sce::Shader::Binary::PsslBufferType::kBufferTypeMsTexture2dArray:   textures += "MS_Texture2D_Array<";    break;
-												case sce::Shader::Binary::PsslBufferType::kBufferTypeRwTexture2d:        textures += "RW_Texture2D<";          break;
-												case sce::Shader::Binary::PsslBufferType::kBufferTypeRwTexture2dArray:   textures += "RW_Texture2D_Array<";    break;
-												case sce::Shader::Binary::PsslBufferType::kBufferTypeRwMsTexture2d:      textures += "RW_MS_Texture2D<";       break;
-												case sce::Shader::Binary::PsslBufferType::kBufferTypeRwMsTexture2dArray: textures += "RW_MS_Texture2D_Array<"; break;
-												case sce::Shader::Binary::PsslBufferType::kBufferTypeTexture3d:          textures += "Texture3D<";             break;
-												case sce::Shader::Binary::PsslBufferType::kBufferTypeRwTexture3d:        textures += "RW_Texture3D<";          break;
-												case sce::Shader::Binary::PsslBufferType::kBufferTypeTextureCube:        textures += "TextureCube<";           break;
-												case sce::Shader::Binary::PsslBufferType::kBufferTypeTextureCubeArray:   textures += "TextureCube_Array<";     break;
-												case sce::Shader::Binary::PsslBufferType::kBufferTypeRwTextureCube:      textures += "RW_TextureCube<";        break;
-												case sce::Shader::Binary::PsslBufferType::kBufferTypeRwTextureCubeArray: textures += "RW_TextureCube_Array<";  break;
-												};
-
-												textures += toString(psslType);
-												textures += "> ";
-
-												Srt srt;
-												srt.name = str;
-												srt.idx = sbb.m_resourceIndex;
-
-												srts.push_back(srt);
-
-												textures += str;
-												textures += ";\n";
-
-												if (samplers.end() != samplers.find(str))
-												{
-													init += "\t";
-													init += str;
-													init += ".m_sampler = bgfxSrtData.samplers->";
-													init += str;
-													init += ";\n";
-												}
-
-												init += "\t";
-												init += str;
-												init += ".m_texture = bgfxSrtData.textures->";
-												init += str;
-												init += ";\n";
-
-												++resourceIndex;
-											}
-										}
-									}
-								}
-
-								if (!textures.empty()
-									|| !input.empty())
-								{
-									delete shaderData;
-
-									size_t end = std::string::npos;
-									size_t pos = _code.find("[NUM_THREADS(");
-									if (std::string::npos != pos)
-									{
-										end = _code.find(')', pos);
-										end = _code.find(')', end + 1);
-									}
-									else
-									{
-										pos = std::string::npos == pos ? _code.find("void main(") : pos;
-										pos = std::string::npos == pos ? _code.find("Output main(") : pos;
-										end = _code.find(')', pos);
-									}
-
-									std::string code(_code, 0, pos);
-									code += "\n";
-
-									if (!textures.empty())
-									{
-										code += "struct BgfxSrtTextures\n{\n";
-										code += textures;
-										code += "};\n\n";
-
-										code += "struct BgfxSrtSamplers\n{\n";
-										code += samplersInit;
-										code += "};\n\n";
-
-										code +=
-											"struct BgfxSrt\n"
-											"{\n"
-											"\tBgfxSrtSamplers* samplers;\n"
-											"\tBgfxSrtTextures* textures;\n"
-											"};\n"
-											"\n"
-											;
-
-										size_t func = _code.find("main(", pos) + 5;
-										code += _code.substr(pos, func - pos);
-										std::string args = _code.substr(func, end - func);
-										code += input.empty() ? args : input;
-										code += 1 >= args.size() ? " " : ", ";
-										code += "BgfxSrt bgfxSrtData : S_SRT_DATA)\n{\n";
-										code += init;
-									}
-									else
-									{
-										size_t func = _code.find('(', pos) + 1;
-										code += _code.substr(pos, func - pos);
-										code += input;
-										code += ")\n{\n";
-									}
-
-									end = _code.find('{', end) + 1;
-
-									code += _code.substr(end);
-
-									//								fputs(code.c_str(), stderr);
-
-									return compile(_options, _version, code, _writer, false, srts);
-								}
-							}
-
-							UniformArray uniforms;
-							uint8_t numAttrs = 0;
-							uint16_t attrs[bgfx::Attrib::Count];
-
-							if ('v' == _options.shaderType) // Only care about input semantic on vertex shaders
-							{
-								size_t pos = _code.find("Output main(");
-								size_t end = _code.find(')', pos);
-								size_t func = _code.find("main(", pos) + 5;
-								std::string args = _code.substr(func, end - func);
-								StringViewArray sa = split(args.c_str(), ',');
-
-								bool hasSrt = false;
-
-								if (0 != sa.size())
-								{
-									const bx::StringView srtArg = sa[sa.size() - 1];
-									hasSrt = !bx::strFind(srtArg, "BgfxSrt").isEmpty();
-
-									if (hasSrt)
-									{
-										sa.pop_back();
-									}
-
-									if (sbp->m_numInputAttributes != sa.size())
-									{
-										std::string code(_code, 0, pos);
-										code += "Output main(";
-
-										bool first = true;
-
-										for (uint32_t ii = 0, num = sbp->m_numInputAttributes; ii < num; ++ii)
-										{
-											const sce::Shader::Binary::Attribute& sbs = sbp->m_inputAttributes[ii];
-
-											std::string semantic = sbs.getSemanticName();
-											if (0 == bx::strCmp(sbs.getSemanticName(), "TEXCOORD")
-												|| 0 == bx::strCmp(sbs.getSemanticName(), "COLOR"))
-											{
-												bx::stringPrintf(semantic, "%d", sbs.m_semanticIndex);
-											}
-
-											for (StringViewArray::const_iterator it = sa.begin(), itEnd = sa.end(); it != itEnd; ++it)
-											{
-												if (!bx::strFind(*it, semantic.c_str()).isEmpty())
-												{
-													code += !first ? "," : "";
-													first = false;
-													code.append(it->getPtr(), it->getTerm());
-
-													sa.erase(it);
-													break;
-												}
-											}
-										}
-
-										if (hasSrt)
-										{
-											code += !first ? "," : "";
-											code.append(srtArg.getPtr(), srtArg.getTerm());
-										}
-
-										code += ")\n{\n";
-
-										if (0 != sa.size())
-										{
-											code += "\t// Removed input attributes:\n";
-											for (StringViewArray::const_iterator it = sa.begin(), itEnd = sa.end(); it != itEnd; ++it)
-											{
-												code += "\t";
-												code.append(it->getPtr(), bx::strFind(*it, ':').getPtr());
-												code += ";\n";
-											}
-										}
-
-										end = _code.find('{', end);
-										code += _code.substr(end + 1);
-
-										return compile(_options, _version, code, _writer, false, _srts);
-									}
-								}
-
-								for (uint32_t ii = 0, num = sbp->m_numInputAttributes; ii < num; ++ii)
-								{
-									const sce::Shader::Binary::Attribute& sbs = sbp->m_inputAttributes[ii];
-
-									const RemapInputSemantic& ris = findInputSemantic(
-										sbs.getSemanticName()
-										, sbs.m_semanticIndex
-									);
-									if (ris.m_attr != bgfx::Attrib::Count)
-									{
-										BX_TRACE("Attribute: %s", sbs.getName());
-										attrs[numAttrs] = bgfx::attribToId(ris.m_attr);
-										++numAttrs;
-									}
-								}
-							}
-
-							uint16_t uniformBufferSize = 0;
-							for (uint32_t ii = 0, num = sbp->m_numElements; ii < num; ++ii)
-							{
-								const sce::Shader::Binary::Element& sbs = sbp->m_elements[ii];
-
-								Uniform un;
-								un.name = sbs.getName();
-								un.type = findUniformType(sce::Shader::Binary::PsslType(sbs.m_type));
-								if (bgfx::UniformType::Count == un.type)
-								{
-									continue;
-								}
-
-								un.num = uint8_t(sbs.m_numElements);
-								un.regIndex = uint16_t(sbs.m_byteOffset / 16);
-								un.regCount = uint16_t(sbs.m_size / 16);
-								uniforms.push_back(un);
-
-								uniformBufferSize = bx::max(
-									uniformBufferSize
-									, uint16_t(sbs.m_byteOffset + sbs.m_size)
-								);
-
-								BX_TRACE("%s", sbs.getName());
-							}
-
-							uint8_t numSrtData = 0;
-							for (uint32_t ii = 0, num = uint32_t(_srts.size()); ii < num; ++ii)
-							{
-								Uniform un;
-								un.name = _srts[ii].name.c_str();
-								un.type = UniformType::Enum(bgfx::UniformType::Sampler | kUniformSamplerBit);
-								un.num = 1;
-								un.regIndex = uint16_t(_srts[ii].idx);
-								un.regCount = 0;
-								uniforms.push_back(un);
-
-								numSrtData = bx::max(numSrtData, uint8_t(un.regIndex + 1));
-							}
-
-							uint16_t count = (uint16_t)uniforms.size();
-							bx::write(_writer, count);
-
-							uint32_t fragmentBit = 'f' == _options.shaderType ? kUniformFragmentBit : 0;
-							for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
-							{
-								const Uniform& un = *it;
-								uint8_t nameSize = (uint8_t)un.name.size();
-								bx::write(_writer, nameSize);
-								bx::write(_writer, un.name.c_str(), nameSize);
-								uint8_t type = uint8_t(un.type | fragmentBit);
-								bx::write(_writer, type);
-								bx::write(_writer, un.num);
-								bx::write(_writer, un.regIndex);
-								bx::write(_writer, un.regCount);
-								bx::write(_writer, un.texComponent); // BBI-NOTE: (manderson) additional info added in recent versions.
-								bx::write(_writer, un.texDimension);
-								bx::write(_writer, un.texFormat);
-
-								BX_TRACE("%s, %s, %d, %d, %d"
-									, un.name.c_str()
-									, getUniformTypeName(un.type)
-									, un.num
-									, un.regIndex
-									, un.regCount
-								);
-							}
-
-							//						bx::align(_writer, 4);
-							bx::write(_writer, shaderSize);
-							bx::write(_writer, shaderData, shaderSize);
-							uint8_t nul = 0;
-							bx::write(_writer, nul);
-
-							bx::write(_writer, numAttrs);
-							bx::write(_writer, attrs, numAttrs * sizeof(uint16_t));
-
-							bx::write(_writer, uniformBufferSize);
-							bx::write(_writer, numSrtData);
-						}
-
-						delete shaderData;
+						printShaderDiagnostics(_options, compileOutput->diagnostics, compileOutput->diagnosticCount);
 					}
+					fprintf(stderr, "Error: Failed to compile shader.\n");
+					return false;
 				}
 			}
+			else
+			{
+				fprintf(stderr, "Error: Internal psslc error. Failed to compile shader.\n");
+				return false;
+			}
 
-			bx::dlclose(sceShaderBinaryDll);
 			return true;
-
-		error:
-			bx::dlclose(sceShaderBinaryDll);
-			return false;
 		}
 #endif // BGFX_GNM
 	} // namespace pssl
@@ -947,12 +682,11 @@ namespace bgfx {
 	bool compilePSSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
 	{
 #if defined(BGFX_GNM)
-		pssl::SrtArray srts;
-		return pssl::compile(_options, _version, _code, _writer, true, srts);
+		return pssl::compile(_options, _version, _code, _writer);
 #else
 		BX_UNUSED(_options, _version, _code, _writer);
-		bx::printf("PSSL not supported for this platform");
-		return false;
+		_options.printError("PSSL not supported for this platform");
+		return CompileResult{ false };
 #endif
 	}
 
