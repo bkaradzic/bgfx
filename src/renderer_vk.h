@@ -704,18 +704,20 @@ VK_DESTROY_FUNC(DescriptorSet);
 		TextureFormat::Enum m_colorFormat;
 		TextureFormat::Enum m_depthFormat;
 
+		static constexpr size_t MaxBackBuffers = bx::max(BGFX_CONFIG_MAX_BACK_BUFFERS, 10);
+
 		VkSurfaceKHR   m_surface;
 		VkSwapchainKHR m_swapchain;
 		uint32_t       m_numSwapchainImages;
-		VkImageLayout  m_backBufferColorImageLayout[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		VkImage        m_backBufferColorImage[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		VkImageView    m_backBufferColorImageView[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		VkFramebuffer  m_backBufferFrameBuffer[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		VkFence        m_backBufferFence[BGFX_CONFIG_MAX_BACK_BUFFERS];
+		VkImageLayout  m_backBufferColorImageLayout[MaxBackBuffers];
+		VkImage        m_backBufferColorImage[MaxBackBuffers];
+		VkImageView    m_backBufferColorImageView[MaxBackBuffers];
+		VkFramebuffer  m_backBufferFrameBuffer[MaxBackBuffers];
+		VkFence        m_backBufferFence[MaxBackBuffers];
 		uint32_t       m_backBufferColorIdx;
 
-		VkSemaphore m_presentDoneSemaphore[BGFX_CONFIG_MAX_BACK_BUFFERS];
-		VkSemaphore m_renderDoneSemaphore[BGFX_CONFIG_MAX_BACK_BUFFERS];
+		VkSemaphore m_presentDoneSemaphore[MaxBackBuffers];
+		VkSemaphore m_renderDoneSemaphore[MaxBackBuffers];
 		uint32_t    m_currentSemaphore;
 
 		VkSemaphore m_lastImageRenderedSemaphore;

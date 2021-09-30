@@ -6795,16 +6795,16 @@ VK_DESTROY
 
 		const uint32_t minSwapBufferCount = bx::max<uint32_t>(surfaceCapabilities.minImageCount, 2);
 		const uint32_t maxSwapBufferCount = surfaceCapabilities.maxImageCount == 0
-			? BGFX_CONFIG_MAX_BACK_BUFFERS
-			: bx::min<uint32_t>(surfaceCapabilities.maxImageCount, BGFX_CONFIG_MAX_BACK_BUFFERS)
+			? SwapChainVK::MaxBackBuffers
+			: bx::min<uint32_t>(surfaceCapabilities.maxImageCount, SwapChainVK::MaxBackBuffers)
 			;
 
 		if (minSwapBufferCount > maxSwapBufferCount)
 		{
-			BX_TRACE("Create swapchain error: Incompatible swapchain image count (min: %d, max: %d, BGFX_CONFIG_MAX_BACK_BUFFERS: %d)."
+			BX_TRACE("Create swapchain error: Incompatible swapchain image count (min: %d, max: %d, MaxBackBuffers: %d)."
 				, minSwapBufferCount
 				, maxSwapBufferCount
-				, BGFX_CONFIG_MAX_BACK_BUFFERS
+				, SwapChainVK::MaxBackBuffers
 				);
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
