@@ -4000,6 +4000,18 @@ namespace bgfx { namespace mtl
 									if (desc.texture != NULL)
 									{
 										desc.loadAction = MTLLoadActionLoad;
+
+										if (NULL != m_capture
+										&&  !isValid(fbh)
+										&&  m_hasStoreActionStoreAndMultisampleResolve)
+										{
+											desc.storeAction = desc.texture.sampleCount > 1 ? MTLStoreActionStoreAndMultisampleResolve : MTLStoreActionStore;
+
+										}
+										else
+										{
+											desc.storeAction = desc.texture.sampleCount > 1 ? MTLStoreActionMultisampleResolve : MTLStoreActionStore;
+										}
 									}
 								}
 
