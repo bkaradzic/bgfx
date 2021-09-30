@@ -9,80 +9,10 @@
 #ifndef __FSR_H__
 #define __FSR_H__
 
-#include <common.h>
-#include <bgfx_utils.h>
+#include <bgfx/bgfx.h>
 
 class Fsr
 {
-	struct State
-	{
-		struct Uniforms
-		{
-			struct Vec4
-			{
-				float x;
-				float y;
-				float z;
-				float w;
-			};
-
-			enum
-			{
-				NumVec4 = 3
-			};
-
-			void init()
-			{
-				u_params = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, NumVec4);
-			};
-
-			void submit() const
-			{
-				bgfx::setUniform(u_params, m_params, NumVec4);
-			}
-
-			void destroy()
-			{
-				bgfx::destroy(u_params);
-			}
-
-			union
-			{
-				struct
-				{
-					Vec4 ViewportSizeRcasAttenuation;
-					Vec4 SrcSize;
-					Vec4 DstSize;
-				};
-
-				uint32_t m_params[NumVec4 * 4];
-			};
-
-			bgfx::UniformHandle u_params{ BGFX_INVALID_HANDLE };
-		};
-
-		uint32_t m_width{ 0 };
-		uint32_t m_height{ 0 };
-
-		// Resource handles
-		bgfx::ProgramHandle m_bilinear16Program{ BGFX_INVALID_HANDLE };
-		bgfx::ProgramHandle m_bilinear32Program{ BGFX_INVALID_HANDLE };
-		bgfx::ProgramHandle m_easu16Program{ BGFX_INVALID_HANDLE };
-		bgfx::ProgramHandle m_easu32Program{ BGFX_INVALID_HANDLE };
-		bgfx::ProgramHandle m_rcas16Program{ BGFX_INVALID_HANDLE };
-		bgfx::ProgramHandle m_rcas32Program{ BGFX_INVALID_HANDLE };
-
-		// Shader uniforms
-		Uniforms m_uniforms;
-
-		// Uniforms to indentify texture samplers
-		bgfx::UniformHandle s_inputTexture{ BGFX_INVALID_HANDLE };
-
-		bgfx::TextureHandle m_easuTexture16F{ BGFX_INVALID_HANDLE };
-		bgfx::TextureHandle m_rcasTexture16F{ BGFX_INVALID_HANDLE };
-		bgfx::TextureHandle m_easuTexture32F{ BGFX_INVALID_HANDLE };
-		bgfx::TextureHandle m_rcasTexture32F{ BGFX_INVALID_HANDLE };
-	};
 
 public:
 
@@ -97,7 +27,8 @@ public:
 
 	Config m_config;
 
-	Fsr() {}
+	Fsr();
+	~Fsr();
 
 	void init(uint32_t _width, uint32_t _height);
 	void destroy();
@@ -109,7 +40,7 @@ public:
 private:
 	void updateUniforms();
 
-	State m_state;
+	struct FsrResources *m_resources;
 };
 
 #endif // __FSR_H__
