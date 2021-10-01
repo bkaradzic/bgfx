@@ -2828,7 +2828,7 @@ VK_IMPORT_DEVICE
 				newFrameBuffer.acquire(m_commandBuffer);
 
 				int64_t now = bx::getHPCounter();
-				
+
 				if (NULL != newFrameBuffer.m_nwh)
 				{
 					m_presentElapsed += now - start;
@@ -6795,8 +6795,8 @@ VK_DESTROY
 
 		const uint32_t minSwapBufferCount = bx::max<uint32_t>(surfaceCapabilities.minImageCount, 2);
 		const uint32_t maxSwapBufferCount = surfaceCapabilities.maxImageCount == 0
-			? SwapChainVK::MaxBackBuffers
-			: bx::min<uint32_t>(surfaceCapabilities.maxImageCount, SwapChainVK::MaxBackBuffers)
+			? kMaxBackBuffers
+			: bx::min<uint32_t>(surfaceCapabilities.maxImageCount, kMaxBackBuffers)
 			;
 
 		if (minSwapBufferCount > maxSwapBufferCount)
@@ -6804,7 +6804,7 @@ VK_DESTROY
 			BX_TRACE("Create swapchain error: Incompatible swapchain image count (min: %d, max: %d, MaxBackBuffers: %d)."
 				, minSwapBufferCount
 				, maxSwapBufferCount
-				, SwapChainVK::MaxBackBuffers
+				, kMaxBackBuffers
 				);
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}

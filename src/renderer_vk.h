@@ -660,6 +660,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 		static VkImageAspectFlags getAspectMask(VkFormat _format);
 	};
 
+	constexpr uint32_t kMaxBackBuffers = bx::max(BGFX_CONFIG_MAX_BACK_BUFFERS, 10);
+
 	struct SwapChainVK
 	{
 		SwapChainVK()
@@ -672,7 +674,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		}
 
 		VkResult create(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution, TextureFormat::Enum _depthFormat = TextureFormat::Count);
-		
+
 		void destroy();
 
 		void update(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution);
@@ -704,29 +706,27 @@ VK_DESTROY_FUNC(DescriptorSet);
 		TextureFormat::Enum m_colorFormat;
 		TextureFormat::Enum m_depthFormat;
 
-		static constexpr size_t MaxBackBuffers = bx::max(BGFX_CONFIG_MAX_BACK_BUFFERS, 10);
-
 		VkSurfaceKHR   m_surface;
 		VkSwapchainKHR m_swapchain;
 		uint32_t       m_numSwapchainImages;
-		VkImageLayout  m_backBufferColorImageLayout[MaxBackBuffers];
-		VkImage        m_backBufferColorImage[MaxBackBuffers];
-		VkImageView    m_backBufferColorImageView[MaxBackBuffers];
-		VkFramebuffer  m_backBufferFrameBuffer[MaxBackBuffers];
-		VkFence        m_backBufferFence[MaxBackBuffers];
+		VkImageLayout  m_backBufferColorImageLayout[kMaxBackBuffers];
+		VkImage        m_backBufferColorImage[kMaxBackBuffers];
+		VkImageView    m_backBufferColorImageView[kMaxBackBuffers];
+		VkFramebuffer  m_backBufferFrameBuffer[kMaxBackBuffers];
+		VkFence        m_backBufferFence[kMaxBackBuffers];
 		uint32_t       m_backBufferColorIdx;
 
-		VkSemaphore m_presentDoneSemaphore[MaxBackBuffers];
-		VkSemaphore m_renderDoneSemaphore[MaxBackBuffers];
+		VkSemaphore m_presentDoneSemaphore[kMaxBackBuffers];
+		VkSemaphore m_renderDoneSemaphore[kMaxBackBuffers];
 		uint32_t    m_currentSemaphore;
 
 		VkSemaphore m_lastImageRenderedSemaphore;
 		VkSemaphore m_lastImageAcquiredSemaphore;
-		
+
 		bool m_needPresent;
 		bool m_needToRefreshSwapchain;
 		bool m_needToRecreateSurface;
-		
+
 		TextureVK   m_backBufferDepthStencil;
 		VkImageView m_backBufferDepthStencilImageView;
 
