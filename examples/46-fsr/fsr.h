@@ -13,7 +13,6 @@
 
 class Fsr
 {
-
 public:
 
 	struct Config

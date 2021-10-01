@@ -2239,9 +2239,9 @@
   AH2 AToTwoH2(AH2 c){return sqrt(c);}
   AH3 AToTwoH3(AH3 c){return sqrt(c);}
 //------------------------------------------------------------------------------------------------------------------------------
-  AH1 AToThreeF1(AH1 c){return pow(c,AH1_(1.0/3.0));}
-  AH2 AToThreeF2(AH2 c){return pow(c,AH2_(1.0/3.0));}
-  AH3 AToThreeF3(AH3 c){return pow(c,AH3_(1.0/3.0));}
+  AH1 AToThreeH1(AH1 c){return pow(c,AH1_(1.0/3.0));}
+  AH2 AToThreeH2(AH2 c){return pow(c,AH2_(1.0/3.0));}
+  AH3 AToThreeH3(AH3 c){return pow(c,AH3_(1.0/3.0));}
  #endif
 //==============================================================================================================================
  #ifdef A_HALF
