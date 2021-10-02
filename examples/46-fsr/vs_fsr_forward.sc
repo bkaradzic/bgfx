@@ -1,4 +1,4 @@
-$input a_position, a_normal, a_texcoord0
+$input a_position, a_normal
 $output v_normal, v_texcoord0, v_texcoord1, v_texcoord2
 
 /*
@@ -23,7 +23,7 @@ void main()
 	vec3 wsNormal = mul(u_model[0], vec4(osNormal, 0.0)).xyz;
 
 	v_normal.xyz = normalize(wsNormal);
-	v_texcoord0 = a_texcoord0;
+	v_texcoord0 = a_position.xy * vec2_splat(0.5); // the used mesh does not provide texture coordinates
 
 	// Store world space view vector in extra texCoord attribute
 	vec3 wsCamPos = mul(u_invView, vec4(0.0, 0.0, 0.0, 1.0)).xyz;

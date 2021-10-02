@@ -35,11 +35,13 @@ public:
 
 	bgfx::ViewId computeFsr(bgfx::ViewId _pass, bgfx::TextureHandle _colorTexture);
 	bgfx::TextureHandle getResultTexture() const;
+	bool supports16BitPrecision() const;
 
 private:
 	void updateUniforms();
 
 	struct FsrResources *m_resources;
+	bool m_support16BitPrecision{ false };
 };
 
 #endif // __FSR_H__

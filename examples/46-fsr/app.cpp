@@ -264,7 +264,7 @@ namespace
 
 			bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_ALWAYS | BGFX_STATE_BLEND_ALPHA);
 			bgfx::setTexture(0, state.s_color, m_widgetTexture);
-			screenSpaceTriangle(float(m_widgetWidth), float(m_widgetHeight), state.m_texelHalf, caps->originBottomLeft, scaleX, scaleY, offsetX, offsetY);
+			screenSpaceTriangle(float(m_widgetWidth), float(m_widgetHeight), state.m_texelHalf, false, scaleX, scaleY, offsetX, offsetY);
 			bgfx::submit(view, state.m_copyLinearToGammaProgram);
 		}
 
@@ -279,12 +279,13 @@ namespace
 				bgfx::setTransform(identity);
 			}
 
-			float invMagScaleX = 1.0f / static_cast<float>(m_content.m_width);
-			float invMagScaleY = 1.0f / static_cast<float>(m_content.m_height);
-			float scaleX = state.m_width * invMagScaleX;
-			float scaleY = state.m_height * invMagScaleY;
-			float offsetX = std::min(std::max(m_position.x - m_content.m_width * 0.5f, 0.0f), static_cast<float>(state.m_width - m_content.m_width)) * scaleX / state.m_width;
-			float offsetY = std::min(std::max(m_position.y - m_content.m_height * 0.5f, 0.0f), static_cast<float>(state.m_height - m_content.m_height)) * scaleY / state.m_height;
+			float const verticalPos = caps->originBottomLeft ? state.m_height - m_position.y : m_position.y;
+			float const invMagScaleX = 1.0f / static_cast<float>(m_content.m_width);
+			float const invMagScaleY = 1.0f / static_cast<float>(m_content.m_height);
+			float const scaleX = state.m_width * invMagScaleX;
+			float const scaleY = state.m_height * invMagScaleY;
+			float const offsetX = std::min(std::max(m_position.x - m_content.m_width * 0.5f, 0.0f), static_cast<float>(state.m_width - m_content.m_width)) * scaleX / state.m_width;
+			float const offsetY = std::min(std::max(verticalPos - m_content.m_height * 0.5f, 0.0f), static_cast<float>(state.m_height - m_content.m_height)) * scaleY / state.m_height;
 
 			bgfx::setViewName(view, "magnifier");
 			bgfx::setViewRect(view, 0, 0, uint16_t(m_content.m_width), uint16_t(m_content.m_height));
@@ -292,7 +293,7 @@ namespace
 			bgfx::setViewFrameBuffer(view, m_content.m_buffer);
 			bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
 			bgfx::setTexture(0, state.s_color, srcTexture, BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
-			screenSpaceTriangle(float(state.m_width), float(state.m_height), state.m_texelHalf, caps->originBottomLeft, scaleX, scaleY, offsetX, offsetY);
+			screenSpaceTriangle(float(state.m_width), float(state.m_height), state.m_texelHalf, false, scaleX, scaleY, offsetX, offsetY);
 			bgfx::submit(view, state.m_copyLinearToGammaProgram);
 			++view;
 		}
@@ -512,7 +513,10 @@ namespace
 					bgfx::setViewClear(view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x7fb8ffff, 1.0f, 0);
 
 					float const viewScale = m_state.m_renderNativeResolution ? 1.0f : 1.0f / m_state.m_fsr.m_config.m_superSamplingFactor;
-					bgfx::setViewRect(view, 0, 0, uint16_t(ceilf(m_state.m_size[0] * viewScale)), uint16_t(ceilf(m_state.m_size[1] * viewScale)));
+					uint16_t const viewRectWidth = uint16_t(ceilf(m_state.m_size[0] * viewScale));
+					uint16_t const viewRectHeight = uint16_t(ceilf(m_state.m_size[1] * viewScale));
+					uint16_t const viewRectY = caps->originBottomLeft ? m_state.m_size[1] - viewRectHeight : 0;
+					bgfx::setViewRect(view, 0, viewRectY, viewRectWidth, viewRectHeight);
 					bgfx::setViewTransform(view, m_state.m_view, m_state.m_proj);
 					bgfx::setViewFrameBuffer(view, m_state.m_frameBuffer);
 
@@ -526,8 +530,6 @@ namespace
 				// optionally run FSR
 				if (!m_state.m_renderNativeResolution)
 				{
-					// TODO: Fix OpenGL Support
-					// TODO: Fix Vulkan Support
 					view = m_state.m_fsr.computeFsr(view, m_state.m_frameBufferTex[FRAMEBUFFER_RT_COLOR]);
 				}
 
@@ -608,14 +610,17 @@ namespace
 
 						ImGui::Separator();
 
-						ImGui::Checkbox("Use 16 Bit", &m_state.m_fsr.m_config.m_fsr16Bit);
-						if (ImGui::IsItemHovered())
+						if (m_state.m_fsr.supports16BitPrecision())
 						{
-							ImGui::BeginTooltip();
-							ImGui::Text("For better performance and less memory consumption use 16 Bit precision.");
-							ImGui::Text("If disabled use 32 Bit per channel precision for FSR which works better on older hardware.");
-							ImGui::Text("FSR in 16 Bit precision is also prone to be broken in Direct3D11, Direct3D12 works though.");
-							ImGui::EndTooltip();
+							ImGui::Checkbox("Use 16 Bit", &m_state.m_fsr.m_config.m_fsr16Bit);
+							if (ImGui::IsItemHovered())
+							{
+								ImGui::BeginTooltip();
+								ImGui::Text("For better performance and less memory consumption use 16 Bit precision.");
+								ImGui::Text("If disabled use 32 Bit per channel precision for FSR which works better on older hardware.");
+								ImGui::Text("FSR in 16 Bit precision is also prone to be broken in Direct3D11, Direct3D12 works though.");
+								ImGui::EndTooltip();
+							}
 						}
 
 						ImGui::Checkbox("Apply FSR", &m_state.m_fsr.m_config.m_applyFsr);

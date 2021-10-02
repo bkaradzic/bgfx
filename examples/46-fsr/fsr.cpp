@@ -9,6 +9,7 @@
 #include "fsr.h"
 
 #include <bgfx_utils.h>
+#include <assert.h>
 
 struct FsrResources
 {
@@ -102,29 +103,42 @@ void Fsr::init(uint32_t _width, uint32_t _height)
 	m_resources->s_inputTexture = bgfx::createUniform("InputTexture", bgfx::UniformType::Sampler);
 
 	// Create program from shaders.
-	m_resources->m_bilinear16Program = bgfx::createProgram(loadShader("cs_fsr_bilinear_16"), true);
 	m_resources->m_bilinear32Program = bgfx::createProgram(loadShader("cs_fsr_bilinear_32"), true);
-	m_resources->m_easu16Program = bgfx::createProgram(loadShader("cs_fsr_easu_16"), true);
 	m_resources->m_easu32Program = bgfx::createProgram(loadShader("cs_fsr_easu_32"), true);
-	m_resources->m_rcas16Program = bgfx::createProgram(loadShader("cs_fsr_rcas_16"), true);
 	m_resources->m_rcas32Program = bgfx::createProgram(loadShader("cs_fsr_rcas_32"), true);
+
+	m_support16BitPrecision = (bgfx::getRendererType() != bgfx::RendererType::OpenGL);
+	if (m_support16BitPrecision)
+	{
+		m_resources->m_bilinear16Program = bgfx::createProgram(loadShader("cs_fsr_bilinear_16"), true);
+		m_resources->m_easu16Program = bgfx::createProgram(loadShader("cs_fsr_easu_16"), true);
+		m_resources->m_rcas16Program = bgfx::createProgram(loadShader("cs_fsr_rcas_16"), true);
+	}
 }
 
 void Fsr::destroy()
 {
-	bgfx::destroy(m_resources->m_bilinear16Program);
+	if(m_support16BitPrecision)
+	{
+		bgfx::destroy(m_resources->m_bilinear16Program);
+		bgfx::destroy(m_resources->m_easu16Program);
+		bgfx::destroy(m_resources->m_rcas16Program);
+	}
+
 	bgfx::destroy(m_resources->m_bilinear32Program);
-	bgfx::destroy(m_resources->m_easu16Program);
 	bgfx::destroy(m_resources->m_easu32Program);
-	bgfx::destroy(m_resources->m_rcas16Program);
 	bgfx::destroy(m_resources->m_rcas32Program);
 
 	m_resources->m_uniforms.destroy();
 
 	bgfx::destroy(m_resources->s_inputTexture);
 
-	bgfx::destroy(m_resources->m_easuTexture16F);
-	bgfx::destroy(m_resources->m_rcasTexture16F);
+	if (m_support16BitPrecision)
+	{
+		bgfx::destroy(m_resources->m_easuTexture16F);
+		bgfx::destroy(m_resources->m_rcasTexture16F);
+	}
+
 	bgfx::destroy(m_resources->m_easuTexture32F);
 	bgfx::destroy(m_resources->m_rcasTexture32F);
 }
@@ -136,20 +150,28 @@ void Fsr::resize(uint32_t _width, uint32_t _height)
 
 	if(m_resources->m_easuTexture16F.idx != bgfx::kInvalidHandle)
 	{
-		bgfx::destroy(m_resources->m_easuTexture16F);
-		bgfx::destroy(m_resources->m_rcasTexture16F);
+		if (m_support16BitPrecision)
+		{
+			bgfx::destroy(m_resources->m_easuTexture16F);
+			bgfx::destroy(m_resources->m_rcasTexture16F);
+		}
 		bgfx::destroy(m_resources->m_easuTexture32F);
 		bgfx::destroy(m_resources->m_rcasTexture32F);
 	}
 
-	m_resources->m_easuTexture16F = bgfx::createTexture2D(uint16_t(m_resources->m_width), uint16_t(m_resources->m_height), false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
-	m_resources->m_rcasTexture16F = bgfx::createTexture2D(uint16_t(m_resources->m_width), uint16_t(m_resources->m_height), false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+	if (m_support16BitPrecision)
+	{
+		m_resources->m_easuTexture16F = bgfx::createTexture2D(uint16_t(m_resources->m_width), uint16_t(m_resources->m_height), false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+		m_resources->m_rcasTexture16F = bgfx::createTexture2D(uint16_t(m_resources->m_width), uint16_t(m_resources->m_height), false, 1, bgfx::TextureFormat::RGBA16F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+	}
 	m_resources->m_easuTexture32F = bgfx::createTexture2D(uint16_t(m_resources->m_width), uint16_t(m_resources->m_height), false, 1, bgfx::TextureFormat::RGBA32F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
 	m_resources->m_rcasTexture32F = bgfx::createTexture2D(uint16_t(m_resources->m_width), uint16_t(m_resources->m_height), false, 1, bgfx::TextureFormat::RGBA32F, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
 }
 
 bgfx::ViewId Fsr::computeFsr(bgfx::ViewId _pass, bgfx::TextureHandle _colorTexture)
 {
+	assert(!m_config.m_fsr16Bit || m_support16BitPrecision);
+
 	updateUniforms();
 
 	bgfx::ViewId view = _pass;
@@ -204,6 +226,11 @@ bgfx::TextureHandle Fsr::getResultTexture() const
 	{
 		return m_config.m_fsr16Bit ? m_resources->m_easuTexture16F : m_resources->m_easuTexture32F;
 	}
+}
+
+bool Fsr::supports16BitPrecision() const
+{
+	return m_support16BitPrecision;
 }
 
 void Fsr::updateUniforms()

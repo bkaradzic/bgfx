@@ -60,7 +60,7 @@ uniform vec4 u_params[3];
 
 #include "ffx_fsr1.h"
 
-void CurrFilter(AU2 pos, AU4 Const0, AU4 Const1, AU4 Const2, AU4 Const3, AU4 Const4, AU4 Sample)
+void CurrFilter(AU2 pos, AU4 Const0, AU4 Const1, AU4 Const2, AU4 Const3, AU4 Sample)
 {
 #if SAMPLE_BILINEAR
     AF2 pp = (AF2(pos) * AF2_AU2(Const0.xy) + AF2_AU2(Const0.zw)) * AF2_AU2(Const1.xy) + AF2(0.5, -0.5) * AF2_AU2(Const1.zw);
@@ -101,7 +101,7 @@ void CurrFilter(AU2 pos, AU4 Const0, AU4 Const1, AU4 Const2, AU4 Const3, AU4 Con
 NUM_THREADS(64, 1, 1)
 void main()
 {
-	AU4 Const0, Const1, Const2, Const3, Const4, Sample;
+	AU4 Const0, Const1, Const2, Const3, Sample;
 
 	// We compute these constants on GPU because bgfx does not support uniform type uint.
 #if SAMPLE_EASU || SAMPLE_BILINEAR
@@ -118,12 +118,12 @@ void main()
 
     // Do remapping of local xy in workgroup for a more PS-like swizzle pattern.
     AU2 gxy = ARmp8x8(gl_LocalInvocationID.x) + AU2(gl_WorkGroupID.x << 4u, gl_WorkGroupID.y << 4u);
-    CurrFilter(gxy, Const0, Const1, Const2, Const3, Const4, Sample);
+    CurrFilter(gxy, Const0, Const1, Const2, Const3, Sample);
     gxy.x += 8u;
-    CurrFilter(gxy, Const0, Const1, Const2, Const3, Const4, Sample);
+    CurrFilter(gxy, Const0, Const1, Const2, Const3, Sample);
     gxy.y += 8u;
-    CurrFilter(gxy, Const0, Const1, Const2, Const3, Const4, Sample);
+    CurrFilter(gxy, Const0, Const1, Const2, Const3, Sample);
     gxy.x -= 8u;
-    CurrFilter(gxy, Const0, Const1, Const2, Const3, Const4, Sample);
+    CurrFilter(gxy, Const0, Const1, Const2, Const3, Sample);
 }
 
