@@ -5290,13 +5290,15 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 		break;
 
 	case SPIRType::Int64:
+	{
+		auto tmp = type;
+		tmp.vecsize = 1;
+		tmp.columns = 1;
+		auto int64_type = type_to_glsl(tmp);
+
 		if (splat)
 		{
-			res += convert_to_string(c.scalar_i64(vector, 0));
-			if (backend.long_long_literal_suffix)
-				res += "ll";
-			else
-				res += "l";
+			res += convert_to_string(c.scalar_i64(vector, 0), int64_type, backend.long_long_literal_suffix);
 		}
 		else
 		{
@@ -5305,19 +5307,14 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
 					res += to_name(c.specialization_constant_id(vector, i));
 				else
-				{
-					res += convert_to_string(c.scalar_i64(vector, i));
-					if (backend.long_long_literal_suffix)
-						res += "ll";
-					else
-						res += "l";
-				}
+					res += convert_to_string(c.scalar_i64(vector, i), int64_type, backend.long_long_literal_suffix);
 
 				if (i + 1 < c.vector_size())
 					res += ", ";
 			}
 		}
 		break;
+	}
 
 	case SPIRType::UInt64:
 		if (splat)
