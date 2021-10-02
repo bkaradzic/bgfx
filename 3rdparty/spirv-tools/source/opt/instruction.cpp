@@ -30,6 +30,7 @@ namespace {
 const uint32_t kTypeImageDimIndex = 1;
 const uint32_t kLoadBaseIndex = 0;
 const uint32_t kPointerTypeStorageClassIndex = 0;
+const uint32_t kVariableStorageClassIndex = 0;
 const uint32_t kTypeImageSampledIndex = 5;
 
 // Constants for OpenCL.DebugInfo.100 / NonSemantic.Shader.DebugInfo.100
@@ -400,6 +401,21 @@ bool Instruction::IsVulkanStorageBuffer() const {
         [&is_block](const Instruction&) { is_block = true; });
     return is_block;
   }
+  return false;
+}
+
+bool Instruction::IsVulkanStorageBufferVariable() const {
+  if (opcode() != SpvOpVariable) {
+    return false;
+  }
+
+  uint32_t storage_class = GetSingleWordInOperand(kVariableStorageClassIndex);
+  if (storage_class == SpvStorageClassStorageBuffer ||
+      storage_class == SpvStorageClassUniform) {
+    Instruction* var_type = context()->get_def_use_mgr()->GetDef(type_id());
+    return var_type != nullptr && var_type->IsVulkanStorageBuffer();
+  }
+
   return false;
 }
 
