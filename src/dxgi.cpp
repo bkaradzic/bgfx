@@ -206,7 +206,7 @@ namespace bgfx
 							, desc.SubSysId
 							, desc.Revision
 							);
-						BX_TRACE("\tMemory: %td (video), %td (system), %td (shared)"
+						BX_TRACE("\tMemory: %tu (video), %tu (system), %tu (shared)"
 							, desc.DedicatedVideoMemory
 							, desc.DedicatedSystemMemory
 							, desc.SharedSystemMemory
