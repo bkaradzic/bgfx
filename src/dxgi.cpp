@@ -219,7 +219,7 @@ namespace bgfx
 						BX_TRACE("\tMemory: %s (video), %s (system), %s (shared)"
 							, dedicatedVideo
 							, dedicatedSystem
-							, desc.SharedSystemMemory
+							, sharedSystem
 							);
 
 						_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
