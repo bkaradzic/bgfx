@@ -3427,6 +3427,7 @@ namespace bgfx { namespace mtl
 	void CommandQueueMtl::init(Device _device)
 	{
 		m_commandQueue = _device.newCommandQueue();
+		g_internalData.commandQueue = m_commandQueue.m_obj;
 		m_framesSemaphore.post(BGFX_CONFIG_MAX_FRAME_LATENCY);
 	}
 
