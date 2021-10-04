@@ -71,9 +71,6 @@ enum TOperator {
     EOpFunctionCall,
     EOpFunction,        // For function definition
     EOpParameters,      // an aggregate listing the parameters to a function
-#ifndef GLSLANG_WEB
-    EOpSpirvInst,
-#endif
 
     //
     // Unary operators
@@ -596,7 +593,6 @@ enum TOperator {
     EOpTime,
 
     EOpAtomicAdd,
-    EOpAtomicSubtract,
     EOpAtomicMin,
     EOpAtomicMax,
     EOpAtomicAnd,
@@ -926,7 +922,6 @@ enum TOperator {
     EOpMul32x16,
 
     EOpTraceNV,
-    EOpTraceRayMotionNV,
     EOpTraceKHR,
     EOpReportIntersection,
     EOpIgnoreIntersectionNV,
@@ -1140,8 +1135,6 @@ public:
     virtual TBasicType getBasicType() const { return type.getBasicType(); }
     virtual TQualifier& getQualifier() { return type.getQualifier(); }
     virtual const TQualifier& getQualifier() const { return type.getQualifier(); }
-    virtual TArraySizes* getArraySizes() { return type.getArraySizes(); }
-    virtual const TArraySizes* getArraySizes() const { return type.getArraySizes(); }
     virtual void propagatePrecision(TPrecisionQualifier);
     virtual int getVectorSize() const { return type.getVectorSize(); }
     virtual int getMatrixCols() const { return type.getMatrixCols(); }
@@ -1282,15 +1275,15 @@ public:
     // if symbol is initialized as symbol(sym), the memory comes from the pool allocator of sym. If sym comes from
     // per process threadPoolAllocator, then it causes increased memory usage per compile
     // it is essential to use "symbol = sym" to assign to symbol
-    TIntermSymbol(long long i, const TString& n, const TType& t)
+    TIntermSymbol(int i, const TString& n, const TType& t)
         : TIntermTyped(t), id(i),
 #ifndef GLSLANG_WEB
         flattenSubset(-1),
 #endif
         constSubtree(nullptr)
           { name = n; }
-    virtual long long getId() const { return id; }
-    virtual void changeId(long long i) { id = i; }
+    virtual int getId() const { return id; }
+    virtual void changeId(int i) { id = i; }
     virtual const TString& getName() const { return name; }
     virtual void traverse(TIntermTraverser*);
     virtual       TIntermSymbol* getAsSymbolNode()       { return this; }
@@ -1308,10 +1301,10 @@ public:
 
     // This is meant for cases where a node has already been constructed, and
     // later on, it becomes necessary to switch to a different symbol.
-    virtual void switchId(long long newId) { id = newId; }
+    virtual void switchId(int newId) { id = newId; }
 
 protected:
-    long long id;                // the unique id of the symbol this node represents
+    int id;                      // the unique id of the symbol this node represents
 #ifndef GLSLANG_WEB
     int flattenSubset;           // how deeply the flattened object rooted at id has been dereferenced
 #endif
@@ -1620,15 +1613,8 @@ public:
     virtual       TIntermUnary* getAsUnaryNode()       { return this; }
     virtual const TIntermUnary* getAsUnaryNode() const { return this; }
     virtual void updatePrecision();
-#ifndef GLSLANG_WEB
-    void setSpirvInstruction(const TSpirvInstruction& inst) { spirvInst = inst; }
-    const TSpirvInstruction& getSpirvInstruction() const { return spirvInst; }
-#endif
 protected:
     TIntermTyped* operand;
-#ifndef GLSLANG_WEB
-    TSpirvInstruction spirvInst;
-#endif
 };
 
 typedef TVector<TIntermNode*> TIntermSequence;
@@ -1659,10 +1645,6 @@ public:
     bool getDebug() const { return debug; }
     void setPragmaTable(const TPragmaTable& pTable);
     const TPragmaTable& getPragmaTable() const { return *pragmaTable; }
-#ifndef GLSLANG_WEB
-    void setSpirvInstruction(const TSpirvInstruction& inst) { spirvInst = inst; }
-    const TSpirvInstruction& getSpirvInstruction() const { return spirvInst; }
-#endif
 protected:
     TIntermAggregate(const TIntermAggregate&); // disallow copy constructor
     TIntermAggregate& operator=(const TIntermAggregate&); // disallow assignment operator
@@ -1673,9 +1655,6 @@ protected:
     bool optimize;
     bool debug;
     TPragmaTable* pragmaTable;
-#ifndef GLSLANG_WEB
-    TSpirvInstruction spirvInst;
-#endif
 };
 
 //
@@ -1693,11 +1672,8 @@ public:
         flatten(false), dontFlatten(false) {}
     virtual void traverse(TIntermTraverser*);
     virtual TIntermTyped* getCondition() const { return condition; }
-    virtual void setCondition(TIntermTyped* c) { condition = c; }
     virtual TIntermNode* getTrueBlock() const { return trueBlock; }
-    virtual void setTrueBlock(TIntermTyped* tb) { trueBlock = tb; }
     virtual TIntermNode* getFalseBlock() const { return falseBlock; }
-    virtual void setFalseBlock(TIntermTyped* fb) { falseBlock = fb; }
     virtual       TIntermSelection* getAsSelectionNode()       { return this; }
     virtual const TIntermSelection* getAsSelectionNode() const { return this; }
 

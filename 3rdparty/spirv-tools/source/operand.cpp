@@ -229,9 +229,6 @@ const char* spvOperandTypeStr(spv_operand_type_t type) {
       return "ray query committed intersection type";
     case SPV_OPERAND_TYPE_RAY_QUERY_CANDIDATE_INTERSECTION_TYPE:
       return "ray query candidate intersection type";
-    case SPV_OPERAND_TYPE_PACKED_VECTOR_FORMAT:
-    case SPV_OPERAND_TYPE_OPTIONAL_PACKED_VECTOR_FORMAT:
-      return "packed vector format";
     case SPV_OPERAND_TYPE_IMAGE:
     case SPV_OPERAND_TYPE_OPTIONAL_IMAGE:
       return "image";
@@ -267,15 +264,6 @@ const char* spvOperandTypeStr(spv_operand_type_t type) {
       return "image channel order";
     case SPV_OPERAND_TYPE_IMAGE_CHANNEL_DATA_TYPE:
       return "image channel data type";
-
-    case SPV_OPERAND_TYPE_FPDENORM_MODE:
-      return "FP denorm mode";
-    case SPV_OPERAND_TYPE_FPOPERATION_MODE:
-      return "FP operation mode";
-    case SPV_OPERAND_TYPE_QUANTIZATION_MODES:
-      return "quantization mode";
-    case SPV_OPERAND_TYPE_OVERFLOW_MODES:
-      return "overflow mode";
 
     case SPV_OPERAND_TYPE_NONE:
       return "NONE";
@@ -360,11 +348,6 @@ bool spvOperandIsConcrete(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_TYPE_QUALIFIER:
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_OPERATION:
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY:
-    case SPV_OPERAND_TYPE_FPDENORM_MODE:
-    case SPV_OPERAND_TYPE_FPOPERATION_MODE:
-    case SPV_OPERAND_TYPE_QUANTIZATION_MODES:
-    case SPV_OPERAND_TYPE_OVERFLOW_MODES:
-    case SPV_OPERAND_TYPE_PACKED_VECTOR_FORMAT:
       return true;
     default:
       break;
@@ -400,7 +383,6 @@ bool spvOperandIsOptional(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_OPTIONAL_TYPED_LITERAL_INTEGER:
     case SPV_OPERAND_TYPE_OPTIONAL_LITERAL_STRING:
     case SPV_OPERAND_TYPE_OPTIONAL_ACCESS_QUALIFIER:
-    case SPV_OPERAND_TYPE_OPTIONAL_PACKED_VECTOR_FORMAT:
     case SPV_OPERAND_TYPE_OPTIONAL_CIV:
       return true;
     default:
@@ -578,12 +560,6 @@ std::function<bool(unsigned)> spvOperandCanBeForwardDeclaredFunction(
 
 std::function<bool(unsigned)> spvDbgInfoExtOperandCanBeForwardDeclaredFunction(
     spv_ext_inst_type_t ext_type, uint32_t key) {
-  // The Vulkan debug info extended instruction set is non-semantic so allows no
-  // forward references ever.
-  if (ext_type == SPV_EXT_INST_TYPE_NONSEMANTIC_VULKAN_DEBUGINFO_100) {
-    return [](unsigned) { return false; };
-  }
-
   // TODO(https://gitlab.khronos.org/spirv/SPIR-V/issues/532): Forward
   // references for debug info instructions are still in discussion. We must
   // update the following lines of code when we conclude the spec.

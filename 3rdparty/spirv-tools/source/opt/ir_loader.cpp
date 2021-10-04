@@ -17,7 +17,6 @@
 #include <utility>
 
 #include "DebugInfo.h"
-#include "NonSemanticVulkanDebugInfo100.h"
 #include "OpenCLDebugInfo100.h"
 #include "source/ext_inst.h"
 #include "source/opt/log.h"
@@ -42,7 +41,6 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
   ++inst_index_;
   const auto opcode = static_cast<SpvOp>(inst->opcode);
   if (IsDebugLineInst(opcode)) {
-    module()->SetContainsDebugInfo();
     last_line_inst_.reset();
     dbg_line_info_.push_back(
         Instruction(module()->context(), *inst, last_dbg_scope_));
@@ -54,23 +52,21 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
   // struct DebugScope.
   if (opcode == SpvOpExtInst && spvExtInstIsDebugInfo(inst->ext_inst_type)) {
     const uint32_t ext_inst_index = inst->words[kExtInstSetIndex];
-    if (inst->ext_inst_type == SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100 ||
-        inst->ext_inst_type ==
-            SPV_EXT_INST_TYPE_NONSEMANTIC_VULKAN_DEBUGINFO_100) {
-      const CommonDebugInfoInstructions ext_inst_key =
-          CommonDebugInfoInstructions(ext_inst_index);
-      if (ext_inst_key == CommonDebugInfoDebugScope) {
+    if (inst->ext_inst_type == SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100) {
+      const OpenCLDebugInfo100Instructions ext_inst_key =
+          OpenCLDebugInfo100Instructions(ext_inst_index);
+      if (ext_inst_key == OpenCLDebugInfo100DebugScope) {
         uint32_t inlined_at = 0;
         if (inst->num_words > kInlinedAtIndex)
           inlined_at = inst->words[kInlinedAtIndex];
         last_dbg_scope_ =
             DebugScope(inst->words[kLexicalScopeIndex], inlined_at);
-        module()->SetContainsDebugInfo();
+        module()->SetContainsDebugScope();
         return true;
       }
-      if (ext_inst_key == CommonDebugInfoDebugNoScope) {
+      if (ext_inst_key == OpenCLDebugInfo100DebugNoScope) {
         last_dbg_scope_ = DebugScope(kNoDebugScope, kNoInlinedAt);
-        module()->SetContainsDebugInfo();
+        module()->SetContainsDebugScope();
         return true;
       }
     } else {
@@ -82,12 +78,12 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
           inlined_at = inst->words[kInlinedAtIndex];
         last_dbg_scope_ =
             DebugScope(inst->words[kLexicalScopeIndex], inlined_at);
-        module()->SetContainsDebugInfo();
+        module()->SetContainsDebugScope();
         return true;
       }
       if (ext_inst_key == DebugInfoDebugNoScope) {
         last_dbg_scope_ = DebugScope(kNoDebugScope, kNoInlinedAt);
-        module()->SetContainsDebugInfo();
+        module()->SetContainsDebugScope();
         return true;
       }
     }
@@ -231,35 +227,6 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
                 function_->AddDebugInstructionInHeader(std::move(spv_inst));
               else
                 block_->AddInstruction(std::move(spv_inst));
-              break;
-            }
-            default: {
-              Errorf(consumer_, src, loc,
-                     "Debug info extension instruction other than DebugScope, "
-                     "DebugNoScope, DebugFunctionDefinition, DebugDeclare, and "
-                     "DebugValue found inside function",
-                     opcode);
-              return false;
-            }
-          }
-        } else if (inst->ext_inst_type ==
-                   SPV_EXT_INST_TYPE_NONSEMANTIC_VULKAN_DEBUGINFO_100) {
-          const NonSemanticVulkanDebugInfo100Instructions ext_inst_key =
-              NonSemanticVulkanDebugInfo100Instructions(ext_inst_index);
-          switch (ext_inst_key) {
-            case NonSemanticVulkanDebugInfo100DebugDeclare:
-            case NonSemanticVulkanDebugInfo100DebugValue:
-            case NonSemanticVulkanDebugInfo100DebugScope:
-            case NonSemanticVulkanDebugInfo100DebugNoScope:
-            case NonSemanticVulkanDebugInfo100DebugFunctionDefinition: {
-              if (block_ == nullptr) {  // Inside function but outside blocks
-                Errorf(consumer_, src, loc,
-                       "Debug info extension instruction found inside function "
-                       "but outside block",
-                       opcode);
-              } else {
-                block_->AddInstruction(std::move(spv_inst));
-              }
               break;
             }
             default: {

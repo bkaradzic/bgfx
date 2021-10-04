@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -248,7 +248,7 @@ namespace ps
 				Particle& particle = m_particles[m_num];
 				m_num++;
 
-				bx::Vec3 pos(bx::init::None);
+				bx::Vec3 pos;
 				switch (m_shape)
 				{
 					default:
@@ -281,7 +281,7 @@ namespace ps
 						break;
 				}
 
-				bx::Vec3 dir(bx::init::None);
+				bx::Vec3 dir;
 				switch (m_direction)
 				{
 					default:

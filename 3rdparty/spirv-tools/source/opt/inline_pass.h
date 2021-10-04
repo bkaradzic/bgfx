@@ -37,7 +37,7 @@ class InlinePass : public Pass {
   using cbb_ptr = const BasicBlock*;
 
  public:
-  virtual ~InlinePass() override = default;
+  virtual ~InlinePass() = default;
 
  protected:
   InlinePass();

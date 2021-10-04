@@ -676,15 +676,14 @@ spv_result_t Link(const Context& context, const uint32_t* const* binaries,
     if (schema != 0u) {
       position.index = 4u;
       return DiagnosticStream(position, consumer, "", SPV_ERROR_INVALID_BINARY)
-             << "Schema is non-zero for module " << i + 1 << ".";
+             << "Schema is non-zero for module " << i << ".";
     }
 
     std::unique_ptr<IRContext> ir_context = BuildModule(
         c_context->target_env, consumer, binaries[i], binary_sizes[i]);
     if (ir_context == nullptr)
       return DiagnosticStream(position, consumer, "", SPV_ERROR_INVALID_BINARY)
-             << "Failed to build module " << i + 1 << " out of " << num_binaries
-             << ".";
+             << "Failed to build a module out of " << ir_contexts.size() << ".";
     modules.push_back(ir_context->module());
     ir_contexts.push_back(std::move(ir_context));
   }

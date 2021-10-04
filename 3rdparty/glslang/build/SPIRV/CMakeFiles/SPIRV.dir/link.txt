@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSPIRV.a  CMakeFiles/SPIRV.dir/GlslangToSpv.cpp.o CMakeFiles/SPIRV.dir/InReadableOrder.cpp.o CMakeFiles/SPIRV.dir/Logger.cpp.o CMakeFiles/SPIRV.dir/SpvBuilder.cpp.o CMakeFiles/SPIRV.dir/SpvPostProcess.cpp.o CMakeFiles/SPIRV.dir/doc.cpp.o CMakeFiles/SPIRV.dir/SpvTools.cpp.o CMakeFiles/SPIRV.dir/disassemble.cpp.o CMakeFiles/SPIRV.dir/CInterface/spirv_c_interface.cpp.o
+/usr/bin/ranlib libSPIRV.a

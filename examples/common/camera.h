@@ -43,6 +43,6 @@ bx::Vec3 cameraGetPosition();
 bx::Vec3 cameraGetAt();
 
 ///
-void cameraUpdate(float _deltaTime, const entry::MouseState& _mouseState, bool _reset = false);
+void cameraUpdate(float _deltaTime, const entry::MouseState& _mouseState);
 
 #endif // CAMERA_H_HEADER_GUARD

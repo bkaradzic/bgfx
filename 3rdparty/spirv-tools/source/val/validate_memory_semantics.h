@@ -22,8 +22,7 @@ namespace val {
 
 spv_result_t ValidateMemorySemantics(ValidationState_t& _,
                                      const Instruction* inst,
-                                     uint32_t operand_index,
-                                     uint32_t memory_scope);
+                                     uint32_t operand_index);
 
 }  // namespace val
 }  // namespace spvtools

@@ -1376,7 +1376,7 @@ TIntermTyped* HlslParseContext::flattenAccess(TIntermTyped* base, int member)
 
     return flattened ? flattened : base;
 }
-TIntermTyped* HlslParseContext::flattenAccess(long long uniqueId, int member, TStorageQualifier outerStorage,
+TIntermTyped* HlslParseContext::flattenAccess(int uniqueId, int member, TStorageQualifier outerStorage,
     const TType& dereferencedType, int subset)
 {
     const auto flattenData = flattenMap.find(uniqueId);
@@ -1444,7 +1444,7 @@ int HlslParseContext::findSubtreeOffset(const TType& type, int subset, const TVe
 };
 
 // Find and return the split IO TVariable for id, or nullptr if none.
-TVariable* HlslParseContext::getSplitNonIoVar(long long id) const
+TVariable* HlslParseContext::getSplitNonIoVar(int id) const
 {
     const auto splitNonIoVar = splitNonIoVars.find(id);
     if (splitNonIoVar == splitNonIoVars.end())
@@ -3256,7 +3256,7 @@ TIntermAggregate* HlslParseContext::handleSamplerTextureCombine(const TSourceLoc
         // shadow state.  This depends on downstream optimization to
         // DCE one variant in [shadow, nonshadow] if both are present,
         // or the SPIR-V module would be invalid.
-        long long newId = texSymbol->getId();
+        int newId = texSymbol->getId();
 
         // Check to see if this texture has been given a shadow mode already.
         // If so, look up the one we already have.
@@ -5492,10 +5492,6 @@ TIntermTyped* HlslParseContext::handleFunctionCall(const TSourceLoc& loc, TFunct
 
             op = fnCandidate->getBuiltInOp();
             if (builtIn && op != EOpNull) {
-                // SM 4.0 and above guarantees roundEven semantics for round()
-                if (!hlslDX9Compatible() && op == EOpRound)
-                    op = EOpRoundEven;
-
                 // A function call mapped to a built-in operation.
                 result = intermediate.addBuiltInFunctionCall(loc, op, fnCandidate->getParamCount() == 1, arguments,
                                                              fnCandidate->getType());
@@ -6075,12 +6071,8 @@ void HlslParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fn
     case EOpInterpolateAtCentroid:
     case EOpInterpolateAtSample:
     case EOpInterpolateAtOffset:
-        // TODO(greg-lunarg): Re-enable this check. It currently gives false errors for builtins
-        // defined and passed as members of a struct. In this case the storage class is showing to be
-        // Function. See glslang #2584
-
         // Make sure the first argument is an interpolant, or an array element of an interpolant
-        // if (arg0->getType().getQualifier().storage != EvqVaryingIn) {
+        if (arg0->getType().getQualifier().storage != EvqVaryingIn) {
             // It might still be an array element.
             //
             // We could check more, but the semantics of the first argument are already met; the
@@ -6088,11 +6080,11 @@ void HlslParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fn
             //
             // ES and desktop 4.3 and earlier:  swizzles may not be used
             // desktop 4.4 and later: swizzles may be used
-            // const TIntermTyped* base = TIntermediate::findLValueBase(arg0, true);
-            // if (base == nullptr || base->getType().getQualifier().storage != EvqVaryingIn)
-            //     error(loc, "first argument must be an interpolant, or interpolant-array element",
-            //           fnCandidate.getName().c_str(), "");
-        // }
+            const TIntermTyped* base = TIntermediate::findLValueBase(arg0, true);
+            if (base == nullptr || base->getType().getQualifier().storage != EvqVaryingIn)
+                error(loc, "first argument must be an interpolant, or interpolant-array element",
+                      fnCandidate.getName().c_str(), "");
+        }
         break;
 
     default:
@@ -6689,6 +6681,12 @@ void HlslParseContext::globalQualifierFix(const TSourceLoc&, TQualifier& qualifi
 
 //
 // Merge characteristics of the 'src' qualifier into the 'dst'.
+// If there is duplication, issue error messages, unless 'force'
+// is specified, which means to just override default settings.
+//
+// Also, when force is false, it will be assumed that 'src' follows
+// 'dst', for the purpose of error checking order for versions
+// that require specific orderings of qualifiers.
 //
 void HlslParseContext::mergeQualifiers(TQualifier& dst, const TQualifier& src)
 {
@@ -6706,7 +6704,8 @@ void HlslParseContext::mergeQualifiers(TQualifier& dst, const TQualifier& src)
     mergeObjectLayoutQualifiers(dst, src, false);
 
     // individual qualifiers
-#define MERGE_SINGLETON(field) dst.field |= src.field;
+    bool repeated = false;
+#define MERGE_SINGLETON(field) repeated |= dst.field && src.field; dst.field |= src.field;
     MERGE_SINGLETON(invariant);
     MERGE_SINGLETON(noContraction);
     MERGE_SINGLETON(centroid);
@@ -9866,7 +9865,7 @@ void HlslParseContext::addPatchConstantInvocation()
                 } else {
                     // Use the original declaration type for the linkage
                     paramType->getQualifier().builtIn = biType;
-                    if (biType == EbvTessLevelInner || biType == EbvTessLevelOuter)
+                    if (biType == EbvTessLevelInner || biType == EbvTessLevelInner)
                         paramType->getQualifier().patch = true;
 
                     if (notInEntryPoint.count(tInterstageIoData(biType, storage)) == 1)

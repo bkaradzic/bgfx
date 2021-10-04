@@ -1,6 +1,5 @@
 /*
- * Copyright 2018-2021 Arm Limited
- * SPDX-License-Identifier: Apache-2.0 OR MIT
+ * Copyright 2018-2020 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +18,7 @@
  * At your option, you may choose to accept this material under either:
  *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
  *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
+ * SPDX-License-Identifier: Apache-2.0 OR MIT.
  */
 
 #ifndef SPIRV_CROSS_PARSED_IR_HPP
@@ -221,8 +221,6 @@ public:
 	static void sanitize_underscores(std::string &str);
 	static void sanitize_identifier(std::string &str, bool member, bool allow_reserved_prefixes);
 	static bool is_globally_reserved_identifier(std::string &str, bool allow_reserved_prefixes);
-
-	uint32_t get_spirv_version() const;
 
 private:
 	template <typename T>

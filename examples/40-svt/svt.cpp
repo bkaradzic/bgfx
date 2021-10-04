@@ -261,7 +261,7 @@ public:
 				ImGui::End();
 
 				// Update camera.
-				cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
+				cameraUpdate(deltaTime, m_mouseState);
 
 				float view[16];
 				cameraGetViewMtx(view);

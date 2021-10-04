@@ -1,6 +1,5 @@
 /*
- * Copyright 2018-2021 Arm Limited
- * SPDX-License-Identifier: Apache-2.0 OR MIT
+ * Copyright 2018-2020 Arm Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +18,7 @@
  * At your option, you may choose to accept this material under either:
  *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
  *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
+ * SPDX-License-Identifier: Apache-2.0 OR MIT.
  */
 
 #include "spirv_parser.hpp"
@@ -140,8 +140,6 @@ void Parser::parse()
 		SPIRV_CROSS_THROW("Function was not terminated.");
 	if (current_block)
 		SPIRV_CROSS_THROW("Block was not terminated.");
-	if (ir.default_entry_point == 0)
-		SPIRV_CROSS_THROW("There is no entry point in the SPIR-V module.");
 }
 
 const uint32_t *Parser::stream(const Instruction &instr) const
@@ -729,7 +727,7 @@ void Parser::parse(const Instruction &instruction)
 		break;
 	}
 
-	case OpTypeRayQueryKHR:
+	case OpTypeRayQueryProvisionalKHR:
 	{
 		uint32_t id = ops[0];
 		auto &type = set<SPIRType>(id);
@@ -993,22 +991,6 @@ void Parser::parse(const Instruction &instruction)
 		current_block = nullptr;
 		break;
 	}
-
-	case OpTerminateRayKHR:
-		// NV variant is not a terminator.
-		if (!current_block)
-			SPIRV_CROSS_THROW("Trying to end a non-existing block.");
-		current_block->terminator = SPIRBlock::TerminateRay;
-		current_block = nullptr;
-		break;
-
-	case OpIgnoreIntersectionKHR:
-		// NV variant is not a terminator.
-		if (!current_block)
-			SPIRV_CROSS_THROW("Trying to end a non-existing block.");
-		current_block->terminator = SPIRBlock::IgnoreIntersection;
-		current_block = nullptr;
-		break;
 
 	case OpReturn:
 	{

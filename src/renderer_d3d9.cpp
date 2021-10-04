@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -2466,12 +2466,6 @@ namespace bgfx { namespace d3d9
 					bx::read(&reader, texInfo);
 				}
 
-				if (!isShaderVerLess(magic, 10) )
-				{
-					uint16_t texFormat = 0;
-					bx::read(&reader, texFormat);
-				}
-
 				const char* kind = "invalid";
 
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
@@ -4268,6 +4262,8 @@ namespace bgfx { namespace d3d9
 						DX_CHECK(device->SetStreamSourceFreq(0, freq) );
 						DX_CHECK(device->SetStreamSource(numStreams, vb.m_ptr, 0, stride) );
 					}
+
+					currentState.m_numVertices = numVertices;
 
 					if (0 < numStreams)
 					{

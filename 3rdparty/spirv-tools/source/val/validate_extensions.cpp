@@ -27,7 +27,6 @@
 #include "source/latest_version_glsl_std_450_header.h"
 #include "source/latest_version_opencl_std_header.h"
 #include "source/opcode.h"
-#include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
 #include "source/val/validate.h"
@@ -687,13 +686,14 @@ bool IsDebugVariableWithIntScalarType(ValidationState_t& _,
 }  // anonymous namespace
 
 spv_result_t ValidateExtension(ValidationState_t& _, const Instruction* inst) {
-  if (_.version() < SPV_SPIRV_VERSION_WORD(1, 4)) {
+  if (spvIsWebGPUEnv(_.context()->target_env)) {
     std::string extension = GetExtensionString(&(inst->c_inst()));
-    if (extension ==
-        ExtensionToString(kSPV_KHR_workgroup_memory_explicit_layout)) {
-      return _.diag(SPV_ERROR_WRONG_VERSION, inst)
-             << "SPV_KHR_workgroup_memory_explicit_layout extension "
-                "requires SPIR-V version 1.4 or later.";
+
+    if (extension != ExtensionToString(kSPV_KHR_vulkan_memory_model)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "For WebGPU, the only valid parameter to OpExtension is "
+             << "\"" << ExtensionToString(kSPV_KHR_vulkan_memory_model)
+             << "\".";
     }
   }
 
@@ -703,6 +703,16 @@ spv_result_t ValidateExtension(ValidationState_t& _, const Instruction* inst) {
 spv_result_t ValidateExtInstImport(ValidationState_t& _,
                                    const Instruction* inst) {
   const auto name_id = 1;
+  if (spvIsWebGPUEnv(_.context()->target_env)) {
+    const std::string name(reinterpret_cast<const char*>(
+        inst->words().data() + inst->operands()[name_id].offset));
+    if (name != "GLSL.std.450") {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "For WebGPU, the only valid parameter to OpExtInstImport is "
+                "\"GLSL.std.450\".";
+    }
+  }
+
   if (!_.HasExtension(kSPV_KHR_non_semantic_info)) {
     const std::string name(reinterpret_cast<const char*>(
         inst->words().data() + inst->operands()[name_id].offset));
@@ -812,7 +822,7 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
         for (uint32_t operand_index = 4; operand_index < num_operands;
              ++operand_index) {
           const uint32_t operand_type = _.GetOperandTypeId(inst, operand_index);
-          if (!operand_type || !_.IsIntScalarOrVectorType(operand_type)) {
+          if (!_.IsIntScalarOrVectorType(operand_type)) {
             return _.diag(SPV_ERROR_INVALID_DATA, inst)
                    << ext_inst_name() << ": "
                    << "expected all operands to be int scalars or vectors";
@@ -1372,16 +1382,7 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
                  << "or vector type";
         }
 
-        // If HLSL legalization and first operand is an OpLoad, use load
-        // pointer as the interpolant lvalue. Else use interpolate first
-        // operand.
-        uint32_t interp_id = inst->GetOperandAs<uint32_t>(4);
-        auto* interp_inst = _.FindDef(interp_id);
-        uint32_t interpolant_type = (_.options()->before_hlsl_legalization &&
-                                     interp_inst->opcode() == SpvOpLoad)
-                                        ? _.GetOperandTypeId(interp_inst, 2)
-                                        : _.GetOperandTypeId(inst, 4);
-
+        const uint32_t interpolant_type = _.GetOperandTypeId(inst, 4);
         uint32_t interpolant_storage_class = 0;
         uint32_t interpolant_data_type = 0;
         if (!_.GetPointerTypeInfo(interpolant_type, &interpolant_data_type,
@@ -3112,7 +3113,6 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
       case OpenCLDebugInfo100DebugMacroDef:
       case OpenCLDebugInfo100DebugMacroUndef:
       case OpenCLDebugInfo100DebugImportedEntity:
-      case OpenCLDebugInfo100DebugModuleINTEL:
         break;
       case OpenCLDebugInfo100InstructionsMax:
         assert(0);

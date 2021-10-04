@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -589,7 +589,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 
 				if (0 == bx::strCmp(argv[0], "vn") )
 				{
-					bx::Vec3 normal(bx::init::None);
+					bx::Vec3 normal;
 					bx::fromString(&normal.x, argv[1]);
 					bx::fromString(&normal.y, argv[2]);
 					bx::fromString(&normal.z, argv[3]);
@@ -607,7 +607,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 				}
 				else if (0 == bx::strCmp(argv[0], "vt") )
 				{
-					bx::Vec3 texcoord(bx::init::None);
+					bx::Vec3 texcoord;
 					texcoord.y = 0.0f;
 					texcoord.z = 0.0f;
 
@@ -645,10 +645,15 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 						pw = 1.0f;
 					}
 
-					bx::Vec3 pos(px, py, pz);
+					float invW = 1.0f/pw;
+					px *= invW;
+					py *= invW;
+					pz *= invW;
 
-					const float invW = bx::rcp(pw);
-					pos = bx::mul(pos, invW);
+					bx::Vec3 pos;
+					pos.x = px;
+					pos.y = py;
+					pos.z = pz;
 
 					_mesh->m_positions.push_back(pos);
 				}
@@ -748,9 +753,8 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 				{
 					_mesh->m_positions.reserve(_mesh->m_positions.size() + accessorCount);
 
-					bx::Vec3 pos(bx::init::None);
-
-					for (cgltf_size v = 0; v < accessorCount; ++v)
+					bx::Vec3 pos;
+					for (cgltf_size v=0;v<accessorCount;++v)
 					{
 						gltfReadFloat(accessorData, numComponents, v, &pos.x, 3);
 						pos = mul(pos, nodeToWorld);
@@ -762,9 +766,8 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 					_mesh->m_normals.reserve(_mesh->m_normals.size() + accessorCount);
 
 					hasNormal = true;
-					bx::Vec3 normal(bx::init::None);
-
-					for (cgltf_size v = 0; v < accessorCount; ++v)
+					bx::Vec3 normal;
+					for (cgltf_size v=0;v<accessorCount;++v)
 					{
 						gltfReadFloat(accessorData, numComponents, v, &normal.x, 3);
 						normal = mul(normal, nodeToWorldNormal);
@@ -776,9 +779,8 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 					_mesh->m_texcoords.reserve(_mesh->m_texcoords.size() + accessorCount);
 
 					hasTexcoord = true;
-					bx::Vec3 texcoord(bx::init::None);
-
-					for (cgltf_size v = 0; v < accessorCount; ++v)
+					bx::Vec3 texcoord;
+					for (cgltf_size v=0;v<accessorCount;++v)
 					{
 						gltfReadFloat(accessorData, numComponents, v, &texcoord.x, 3);
 						_mesh->m_texcoords.push_back(texcoord);
@@ -896,7 +898,7 @@ void help(const char* _error = NULL)
 
 	bx::printf(
 		  "geometryc, bgfx geometry compiler tool, version %d.%d.%d.\n"
-		  "Copyright 2011-2021 Branimir Karadzic. All rights reserved.\n"
+		  "Copyright 2011-2020 Branimir Karadzic. All rights reserved.\n"
 		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 		, BGFX_GEOMETRYC_VERSION_MAJOR
 		, BGFX_GEOMETRYC_VERSION_MINOR

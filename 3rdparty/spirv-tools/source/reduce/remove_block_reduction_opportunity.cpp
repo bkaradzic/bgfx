@@ -20,11 +20,12 @@ namespace spvtools {
 namespace reduce {
 
 RemoveBlockReductionOpportunity::RemoveBlockReductionOpportunity(
-    opt::IRContext* context, opt::Function* function, opt::BasicBlock* block)
-    : context_(context), function_(function), block_(block) {
+    opt::Function* function, opt::BasicBlock* block)
+    : function_(function), block_(block) {
   // precondition:
   assert(block_->begin() != block_->end() &&
-         context_->get_def_use_mgr()->NumUsers(block_->id()) == 0 &&
+         block_->begin()->context()->get_def_use_mgr()->NumUsers(
+             block_->id()) == 0 &&
          "RemoveBlockReductionOpportunity block must have 0 references");
 }
 
@@ -37,8 +38,10 @@ void RemoveBlockReductionOpportunity::Apply() {
   // We need an iterator pointing to the block, hence the loop.
   for (auto bi = function_->begin(); bi != function_->end(); ++bi) {
     if (bi->id() == block_->id()) {
+      bi->KillAllInsts(true);
       bi.Erase();
-      context_->InvalidateAnalysesExceptFor(opt::IRContext::kAnalysisNone);
+      // Block removal changes the function, but we don't use analyses, so no
+      // need to invalidate them.
       return;
     }
   }

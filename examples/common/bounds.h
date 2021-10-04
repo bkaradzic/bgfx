@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -11,39 +11,39 @@
 ///
 struct Aabb
 {
-	bx::Vec3 min = bx::init::None;
-	bx::Vec3 max = bx::init::None;
+	bx::Vec3 min;
+	bx::Vec3 max;
 };
 
 ///
 struct Capsule
 {
-	bx::Vec3 pos = bx::init::None;
-	bx::Vec3 end = bx::init::None;
+	bx::Vec3 pos;
+	bx::Vec3 end;
 	float    radius;
 };
 
 ///
 struct Cone
 {
-	bx::Vec3 pos = bx::init::None;
-	bx::Vec3 end = bx::init::None;
+	bx::Vec3 pos;
+	bx::Vec3 end;
 	float    radius;
 };
 
 ///
 struct Cylinder
 {
-	bx::Vec3 pos = bx::init::None;
-	bx::Vec3 end = bx::init::None;
+	bx::Vec3 pos;
+	bx::Vec3 end;
 	float    radius;
 };
 
 ///
 struct Disk
 {
-	bx::Vec3 center = bx::init::None;
-	bx::Vec3 normal = bx::init::None;
+	bx::Vec3 center;
+	bx::Vec3 normal;
 	float    radius;
 };
 
@@ -56,30 +56,30 @@ struct Obb
 ///
 struct Sphere
 {
-	bx::Vec3 center = bx::init::None;
+	bx::Vec3 center;
 	float    radius;
 };
 
 ///
 struct Triangle
 {
-	bx::Vec3 v0 = bx::init::None;
-	bx::Vec3 v1 = bx::init::None;
-	bx::Vec3 v2 = bx::init::None;
+	bx::Vec3 v0;
+	bx::Vec3 v1;
+	bx::Vec3 v2;
 };
 
 ///
 struct Ray
 {
-	bx::Vec3 pos = bx::init::None;
-	bx::Vec3 dir = bx::init::None;
+	bx::Vec3 pos;
+	bx::Vec3 dir;
 };
 
 ///
 struct Hit
 {
-	bx::Vec3  pos   = bx::init::None;
-	bx::Plane plane = bx::init::None;
+	bx::Vec3  pos;
+	bx::Plane plane;
 };
 
 ///
@@ -444,7 +444,5 @@ bool overlap(const Triangle& _triangle, const Disk& _disk);
 
 ///
 bool overlap(const Triangle& _triangle, const Obb& _obb);
-
-#include "bounds.inl"
 
 #endif // BOUNDS_H_HEADER_GUARD

@@ -511,8 +511,11 @@ namespace
 
 				ImGui::End();
 
-				// Update camera.
-				cameraUpdate(deltaTime*0.01f, m_mouseState, ImGui::MouseOverArea() );
+				if (!ImGui::MouseOverArea() )
+				{
+					// Update camera.
+					cameraUpdate(deltaTime*0.01f, m_mouseState);
+				}
 
 				bgfx::touch(0);
 				bgfx::touch(1);
