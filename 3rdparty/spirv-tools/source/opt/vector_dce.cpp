@@ -52,7 +52,7 @@ void VectorDCE::FindLiveComponents(Function* function,
   // components are live because of arbitrary nesting of structs.
   function->ForEachInst(
       [&work_list, this, live_components](Instruction* current_inst) {
-        if (current_inst->IsCommonDebugInstr()) {
+        if (current_inst->IsOpenCL100DebugInstr()) {
           return;
         }
         if (!HasVectorOrScalarResult(current_inst) ||
@@ -394,7 +394,7 @@ void VectorDCE::MarkDebugValueUsesAsDead(
     Instruction* composite, std::vector<Instruction*>* dead_dbg_value) {
   context()->get_def_use_mgr()->ForEachUser(
       composite, [&dead_dbg_value](Instruction* use) {
-        if (use->GetCommonDebugOpcode() == CommonDebugInfoDebugValue)
+        if (use->GetOpenCL100DebugOpcode() == OpenCLDebugInfo100DebugValue)
           dead_dbg_value->push_back(use);
       });
 }

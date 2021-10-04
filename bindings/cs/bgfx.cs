@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -553,7 +553,7 @@ public static partial class bgfx
 		InstanceData           = 0x00000004,
 	
 		/// <summary>
-		/// Discard state and uniform bindings.
+		/// Discard state.
 		/// </summary>
 		State                  = 0x00000008,
 	
@@ -1332,11 +1332,6 @@ public static partial class bgfx
 		Noop,
 	
 		/// <summary>
-		/// AGC
-		/// </summary>
-		Agc,
-	
-		/// <summary>
 		/// Direct3D 9.0
 		/// </summary>
 		Direct3D9,
@@ -1859,7 +1854,7 @@ public static partial class bgfx
 		TriListFlipWinding,
 	
 		/// <summary>
-		/// Flip winding order of triangle strip.
+		/// Flip winding order of trinagle strip.
 		/// </summary>
 		TriStripFlipWinding,
 	
@@ -2035,7 +2030,6 @@ public static partial class bgfx
 		public RendererType type;
 		public ushort vendorId;
 		public ushort deviceId;
-		public ulong capabilities;
 		public byte debug;
 		public byte profile;
 		public PlatformData platformData;
@@ -2266,8 +2260,6 @@ public static partial class bgfx
 	/// Start VertexLayout.
 	/// </summary>
 	///
-	/// <param name="_rendererType">Renderer backend type. See: `bgfx::RendererType`</param>
-	///
 	[DllImport(DllName, EntryPoint="bgfx_vertex_layout_begin", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe VertexLayout* vertex_layout_begin(VertexLayout* _this, RendererType _rendererType);
 	
@@ -2299,7 +2291,7 @@ public static partial class bgfx
 	public static extern unsafe void vertex_layout_decode(VertexLayout* _this, Attrib _attrib, byte * _num, AttribType* _type, bool* _normalized, bool* _asInt);
 	
 	/// <summary>
-	/// Returns `true` if VertexLayout contains attribute.
+	/// Returns true if VertexLayout contains attribute.
 	/// </summary>
 	///
 	/// <param name="_attrib">Attribute semantics. See: `bgfx::Attrib`</param>
@@ -2311,8 +2303,6 @@ public static partial class bgfx
 	/// <summary>
 	/// Skip `_num` bytes in vertex stream.
 	/// </summary>
-	///
-	/// <param name="_num">Number of bytes to skip.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_vertex_layout_skip", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe VertexLayout* vertex_layout_skip(VertexLayout* _this, byte _num);
@@ -2777,10 +2767,9 @@ public static partial class bgfx
 	/// </summary>
 	///
 	/// <param name="_num">Number of required indices.</param>
-	/// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_get_avail_transient_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe uint get_avail_transient_index_buffer(uint _num, bool _index32);
+	public static extern unsafe uint get_avail_transient_index_buffer(uint _num);
 	
 	/// <summary>
 	/// Returns number of requested or maximum available vertices.
@@ -2804,6 +2793,8 @@ public static partial class bgfx
 	
 	/// <summary>
 	/// Allocate transient index buffer.
+	/// @remarks
+	///   Only 16-bit index buffer is supported.
 	/// </summary>
 	///
 	/// <param name="_tib">TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
@@ -2828,6 +2819,8 @@ public static partial class bgfx
 	/// Check for required space and allocate transient vertex and index
 	/// buffers. If both space requirements are satisfied function returns
 	/// true.
+	/// @remarks
+	///   Only 16-bit index buffer is supported.
 	/// </summary>
 	///
 	/// <param name="_tvb">TransientVertexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
@@ -2835,11 +2828,10 @@ public static partial class bgfx
 	/// <param name="_numVertices">Number of vertices to allocate.</param>
 	/// <param name="_tib">TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
 	/// <param name="_numIndices">Number of indices to allocate.</param>
-	/// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_alloc_transient_buffers", CallingConvention = CallingConvention.Cdecl)]
 	[return: MarshalAs(UnmanagedType.I1)]
-	public static extern unsafe bool alloc_transient_buffers(TransientVertexBuffer* _tvb, VertexLayout* _layout, uint _numVertices, TransientIndexBuffer* _tib, uint _numIndices, bool _index32);
+	public static extern unsafe bool alloc_transient_buffers(TransientVertexBuffer* _tvb, VertexLayout* _layout, uint _numVertices, TransientIndexBuffer* _tib, uint _numIndices);
 	
 	/// <summary>
 	/// Allocate instance data buffer.
@@ -2957,17 +2949,6 @@ public static partial class bgfx
 	[DllImport(DllName, EntryPoint="bgfx_is_texture_valid", CallingConvention = CallingConvention.Cdecl)]
 	[return: MarshalAs(UnmanagedType.I1)]
 	public static extern unsafe bool is_texture_valid(ushort _depth, bool _cubeMap, ushort _numLayers, TextureFormat _format, ulong _flags);
-	
-	/// <summary>
-	/// Validate frame buffer parameters.
-	/// </summary>
-	///
-	/// <param name="_num">Number of attachments.</param>
-	/// <param name="_attachment">Attachment texture info. See: `bgfx::Attachment`.</param>
-	///
-	[DllImport(DllName, EntryPoint="bgfx_is_frame_buffer_valid", CallingConvention = CallingConvention.Cdecl)]
-	[return: MarshalAs(UnmanagedType.I1)]
-	public static extern unsafe bool is_frame_buffer_valid(byte _num, Attachment* _attachment);
 	
 	/// <summary>
 	/// Calculate amount of memory required for texture.
@@ -3194,7 +3175,7 @@ public static partial class bgfx
 	/// mip level.
 	/// </summary>
 	///
-	/// <param name="_num">Number of attachments.</param>
+	/// <param name="_num">Number of attachements.</param>
 	/// <param name="_attachment">Attachment texture info. See: `bgfx::Attachment`.</param>
 	/// <param name="_destroyTexture">If true, textures will be destroyed when frame buffer is destroyed.</param>
 	///
@@ -4365,7 +4346,7 @@ public static partial class bgfx
 	/// <param name="_id">View id.</param>
 	/// <param name="_program">Program.</param>
 	/// <param name="_depth">Depth for sorting.</param>
-	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
+	/// <param name="_flags">Which states to discard for next draw. See BGFX_DISCARD_</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_submit", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void submit(ushort _id, ProgramHandle _program, uint _depth, byte _flags);
@@ -4378,7 +4359,7 @@ public static partial class bgfx
 	/// <param name="_program">Program.</param>
 	/// <param name="_occlusionQuery">Occlusion query.</param>
 	/// <param name="_depth">Depth for sorting.</param>
-	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
+	/// <param name="_flags">Which states to discard for next draw. See BGFX_DISCARD_</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_submit_occlusion_query", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void submit_occlusion_query(ushort _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint _depth, byte _flags);
@@ -4394,7 +4375,7 @@ public static partial class bgfx
 	/// <param name="_start">First element in indirect buffer.</param>
 	/// <param name="_num">Number of dispatches.</param>
 	/// <param name="_depth">Depth for sorting.</param>
-	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
+	/// <param name="_flags">Which states to discard for next draw. See BGFX_DISCARD_</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_submit_indirect", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void submit_indirect(ushort _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, ushort _start, ushort _num, uint _depth, byte _flags);

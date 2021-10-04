@@ -129,8 +129,6 @@ void RemoveStructMemberReductionOpportunity::Apply() {
 
   // Remove the member from the struct type.
   struct_type_->RemoveInOperand(member_index_);
-
-  context->InvalidateAnalysesExceptFor(opt::IRContext::kAnalysisNone);
 }
 
 void RemoveStructMemberReductionOpportunity::AdjustAccessedIndices(

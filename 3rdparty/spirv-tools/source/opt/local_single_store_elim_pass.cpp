@@ -123,9 +123,6 @@ void LocalSingleStoreElimPass::InitExtensionAllowList() {
       "SPV_EXT_fragment_invocation_density",
       "SPV_EXT_physical_storage_buffer",
       "SPV_KHR_terminate_invocation",
-      "SPV_KHR_subgroup_uniform_control_flow",
-      "SPV_KHR_integer_dot_product",
-      "SPV_EXT_shader_image_int64",
   });
 }
 bool LocalSingleStoreElimPass::ProcessVariable(Instruction* var_inst) {
@@ -178,7 +175,7 @@ bool LocalSingleStoreElimPass::RewriteDebugDeclares(Instruction* store_inst,
     for (auto* decl : invisible_decls) {
       if (dominator_analysis->Dominates(store_inst, decl)) {
         context()->get_debug_info_mgr()->AddDebugValueForDecl(decl, value_id,
-                                                              decl, store_inst);
+                                                              decl);
         modified = true;
       }
     }
@@ -224,9 +221,9 @@ Instruction* LocalSingleStoreElimPass::FindSingleStoreAndCheckUses(
       case SpvOpCopyObject:
         break;
       case SpvOpExtInst: {
-        auto dbg_op = user->GetCommonDebugOpcode();
-        if (dbg_op == CommonDebugInfoDebugDeclare ||
-            dbg_op == CommonDebugInfoDebugValue) {
+        auto dbg_op = user->GetOpenCL100DebugOpcode();
+        if (dbg_op == OpenCLDebugInfo100DebugDeclare ||
+            dbg_op == OpenCLDebugInfo100DebugValue) {
           break;
         }
         return nullptr;
@@ -293,9 +290,9 @@ bool LocalSingleStoreElimPass::RewriteLoads(
   bool modified = false;
   for (Instruction* use : uses) {
     if (use->opcode() == SpvOpStore) continue;
-    auto dbg_op = use->GetCommonDebugOpcode();
-    if (dbg_op == CommonDebugInfoDebugDeclare ||
-        dbg_op == CommonDebugInfoDebugValue)
+    auto dbg_op = use->GetOpenCL100DebugOpcode();
+    if (dbg_op == OpenCLDebugInfo100DebugDeclare ||
+        dbg_op == OpenCLDebugInfo100DebugValue)
       continue;
     if (use->opcode() == SpvOpLoad &&
         dominator_analysis->Dominates(store_inst, use)) {

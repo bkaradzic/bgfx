@@ -49,7 +49,7 @@ class Module {
   using const_inst_iterator = InstructionList::const_iterator;
 
   // Creates an empty module with zero'd header.
-  Module() : header_({}), contains_debug_info_(false) {}
+  Module() : header_({}), contains_debug_scope_(false) {}
 
   // Sets the header to the given |header|.
   void SetHeader(const ModuleHeader& header) { header_ = header; }
@@ -103,8 +103,8 @@ class Module {
   // This is due to decision by the SPIR Working Group, pending publication.
   inline void AddDebug3Inst(std::unique_ptr<Instruction> d);
 
-  // Appends a debug info extension (OpenCL.DebugInfo.100,
-  // NonSemantic.Vulkan.DebugInfo.100, or DebugInfo) instruction to this module.
+  // Appends a debug info extension (OpenCL.DebugInfo.100 or DebugInfo)
+  // instruction to this module.
   inline void AddExtInstDebugInfo(std::unique_ptr<Instruction> d);
 
   // Appends an annotation instruction to this module.
@@ -119,9 +119,9 @@ class Module {
   // Appends a function to this module.
   inline void AddFunction(std::unique_ptr<Function> f);
 
-  // Sets |contains_debug_info_| as true.
-  inline void SetContainsDebugInfo();
-  inline bool ContainsDebugInfo() { return contains_debug_info_; }
+  // Sets |contains_debug_scope_| as true.
+  inline void SetContainsDebugScope();
+  inline bool ContainsDebugScope() { return contains_debug_scope_; }
 
   // Returns a vector of pointers to type-declaration instructions in this
   // module.
@@ -192,8 +192,8 @@ class Module {
   inline IteratorRange<const_inst_iterator> debugs3() const;
 
   // Iterators for debug info instructions (excluding OpLine & OpNoLine)
-  // contained in this module.  These are OpExtInst for DebugInfo extension
-  // placed between section 9 and 10.
+  // contained in this module.  These are OpExtInst for OpenCL.DebugInfo.100
+  // or DebugInfo extension placed between section 9 and 10.
   inline inst_iterator ext_inst_debuginfo_begin();
   inline inst_iterator ext_inst_debuginfo_end();
   inline IteratorRange<inst_iterator> ext_inst_debuginfo();
@@ -301,8 +301,8 @@ class Module {
   // any instruction.  We record them here, so they will not be lost.
   std::vector<Instruction> trailing_dbg_line_info_;
 
-  // This module contains DebugScope/DebugNoScope or OpLine/OpNoLine.
-  bool contains_debug_info_;
+  // This module contains DebugScope or DebugNoScope.
+  bool contains_debug_scope_;
 };
 
 // Pretty-prints |module| to |str|. Returns |str|.
@@ -364,7 +364,7 @@ inline void Module::AddFunction(std::unique_ptr<Function> f) {
   functions_.emplace_back(std::move(f));
 }
 
-inline void Module::SetContainsDebugInfo() { contains_debug_info_ = true; }
+inline void Module::SetContainsDebugScope() { contains_debug_scope_ = true; }
 
 inline Module::inst_iterator Module::capability_begin() {
   return capabilities_.begin();

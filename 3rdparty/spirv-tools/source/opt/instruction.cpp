@@ -16,7 +16,6 @@
 
 #include <initializer_list>
 
-#include "NonSemanticVulkanDebugInfo100.h"
 #include "OpenCLDebugInfo100.h"
 #include "source/disassemble.h"
 #include "source/opt/fold.h"
@@ -33,8 +32,7 @@ const uint32_t kLoadBaseIndex = 0;
 const uint32_t kPointerTypeStorageClassIndex = 0;
 const uint32_t kTypeImageSampledIndex = 5;
 
-// Constants for OpenCL.DebugInfo.100 / NonSemantic.Vulkan.DebugInfo.100
-// extension instructions.
+// Constants for OpenCL.DebugInfo.100 extension instructions.
 const uint32_t kExtInstSetIdInIdx = 0;
 const uint32_t kExtInstInstructionInIdx = 1;
 const uint32_t kDebugScopeNumWords = 7;
@@ -66,8 +64,7 @@ Instruction::Instruction(IRContext* c, SpvOp op)
 
 Instruction::Instruction(IRContext* c, const spv_parsed_instruction_t& inst,
                          std::vector<Instruction>&& dbg_line)
-    : utils::IntrusiveNodeBase<Instruction>(),
-      context_(c),
+    : context_(c),
       opcode_(static_cast<SpvOp>(inst.opcode)),
       has_type_id_(inst.type_id != 0),
       has_result_id_(inst.result_id != 0),
@@ -87,8 +84,7 @@ Instruction::Instruction(IRContext* c, const spv_parsed_instruction_t& inst,
 
 Instruction::Instruction(IRContext* c, const spv_parsed_instruction_t& inst,
                          const DebugScope& dbg_scope)
-    : utils::IntrusiveNodeBase<Instruction>(),
-      context_(c),
+    : context_(c),
       opcode_(static_cast<SpvOp>(inst.opcode)),
       has_type_id_(inst.type_id != 0),
       has_result_id_(inst.result_id != 0),
@@ -126,7 +122,6 @@ Instruction::Instruction(IRContext* c, SpvOp op, uint32_t ty_id,
 
 Instruction::Instruction(Instruction&& that)
     : utils::IntrusiveNodeBase<Instruction>(),
-      context_(that.context_),
       opcode_(that.opcode_),
       has_type_id_(that.has_type_id_),
       has_result_id_(that.has_result_id_),
@@ -140,7 +135,6 @@ Instruction::Instruction(Instruction&& that)
 }
 
 Instruction& Instruction::operator=(Instruction&& that) {
-  context_ = that.context_;
   opcode_ = that.opcode_;
   has_type_id_ = that.has_type_id_;
   has_result_id_ = that.has_result_id_;
@@ -624,49 +618,6 @@ OpenCLDebugInfo100Instructions Instruction::GetOpenCL100DebugOpcode() const {
       GetSingleWordInOperand(kExtInstInstructionInIdx));
 }
 
-NonSemanticVulkanDebugInfo100Instructions Instruction::GetVulkan100DebugOpcode()
-    const {
-  if (opcode() != SpvOpExtInst) {
-    return NonSemanticVulkanDebugInfo100InstructionsMax;
-  }
-
-  if (!context()->get_feature_mgr()->GetExtInstImportId_Vulkan100DebugInfo()) {
-    return NonSemanticVulkanDebugInfo100InstructionsMax;
-  }
-
-  if (GetSingleWordInOperand(kExtInstSetIdInIdx) !=
-      context()->get_feature_mgr()->GetExtInstImportId_Vulkan100DebugInfo()) {
-    return NonSemanticVulkanDebugInfo100InstructionsMax;
-  }
-
-  return NonSemanticVulkanDebugInfo100Instructions(
-      GetSingleWordInOperand(kExtInstInstructionInIdx));
-}
-
-CommonDebugInfoInstructions Instruction::GetCommonDebugOpcode() const {
-  if (opcode() != SpvOpExtInst) {
-    return CommonDebugInfoInstructionsMax;
-  }
-
-  const uint32_t opencl_set_id =
-      context()->get_feature_mgr()->GetExtInstImportId_OpenCL100DebugInfo();
-  const uint32_t vulkan_set_id =
-      context()->get_feature_mgr()->GetExtInstImportId_Vulkan100DebugInfo();
-
-  if (!opencl_set_id && !vulkan_set_id) {
-    return CommonDebugInfoInstructionsMax;
-  }
-
-  const uint32_t used_set_id = GetSingleWordInOperand(kExtInstSetIdInIdx);
-
-  if (used_set_id != opencl_set_id && used_set_id != vulkan_set_id) {
-    return CommonDebugInfoInstructionsMax;
-  }
-
-  return CommonDebugInfoInstructions(
-      GetSingleWordInOperand(kExtInstInstructionInIdx));
-}
-
 bool Instruction::IsValidBaseImage() const {
   uint32_t tid = type_id();
   if (tid == 0) {
@@ -989,10 +940,10 @@ void DebugScope::ToBinary(uint32_t type_id, uint32_t result_id,
                           uint32_t ext_set,
                           std::vector<uint32_t>* binary) const {
   uint32_t num_words = kDebugScopeNumWords;
-  CommonDebugInfoInstructions dbg_opcode = CommonDebugInfoDebugScope;
+  OpenCLDebugInfo100Instructions dbg_opcode = OpenCLDebugInfo100DebugScope;
   if (GetLexicalScope() == kNoDebugScope) {
     num_words = kDebugNoScopeNumWords;
-    dbg_opcode = CommonDebugInfoDebugNoScope;
+    dbg_opcode = OpenCLDebugInfo100DebugNoScope;
   } else if (GetInlinedAt() == kNoInlinedAt) {
     num_words = kDebugScopeNumWordsWithoutInlinedAt;
   }

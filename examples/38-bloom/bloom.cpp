@@ -411,7 +411,7 @@ public:
 					{
 						bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA32F, tsFlags),
 						bgfx::getTexture(m_texChainFb[0]),
-						bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D32F, tsFlags),
+						bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D24S8, tsFlags),
 					};
 
 					m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(gbufferTex), gbufferTex, true);
@@ -435,7 +435,7 @@ public:
 				ImGui::End();
 
 				// Update camera.
-				cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
+				cameraUpdate(deltaTime, m_mouseState);
 
 				float view[16];
 				cameraGetViewMtx(view);

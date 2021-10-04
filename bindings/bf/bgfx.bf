@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -15,8 +15,6 @@ namespace Bgfx
 {
 public static class bgfx
 {
-	public typealias ViewId = uint16;
-
 	[AllowDuplicates]
 	public enum StateFlags : uint64
 	{
@@ -554,7 +552,7 @@ public static class bgfx
 		InstanceData           = 0x00000004,
 	
 		/// <summary>
-		/// Discard state and uniform bindings.
+		/// Discard state.
 		/// </summary>
 		State                  = 0x00000008,
 	
@@ -1335,11 +1333,6 @@ public static class bgfx
 		Noop,
 	
 		/// <summary>
-		/// AGC
-		/// </summary>
-		Agc,
-	
-		/// <summary>
 		/// Direct3D 9.0
 		/// </summary>
 		Direct3D9,
@@ -1871,7 +1864,7 @@ public static class bgfx
 		TriListFlipWinding,
 	
 		/// <summary>
-		/// Flip winding order of triangle strip.
+		/// Flip winding order of trinagle strip.
 		/// </summary>
 		TriStripFlipWinding,
 	
@@ -2010,7 +2003,7 @@ public static class bgfx
 		public uint8 homogeneousDepth;
 		public uint8 originBottomLeft;
 		public uint8 numGPUs;
-		public GPU[4] gpu;
+		public uint32[4] gpu;
 		public Limits limits;
 		public uint16[85] formats;
 	}
@@ -2058,7 +2051,6 @@ public static class bgfx
 		public RendererType type;
 		public uint16 vendorId;
 		public uint16 deviceId;
-		public uint64 capabilities;
 		public uint8 debug;
 		public uint8 profile;
 		public PlatformData platformData;
@@ -2151,7 +2143,7 @@ public static class bgfx
 	public struct ViewStats
 	{
 		public char8[256] name;
-		public ViewId view;
+		public uint16 view;
 		public int64 cpuTimeBegin;
 		public int64 cpuTimeEnd;
 		public int64 gpuTimeBegin;
@@ -2314,8 +2306,6 @@ public static class bgfx
 	/// Start VertexLayout.
 	/// </summary>
 	///
-	/// <param name="_rendererType">Renderer backend type. See: `bgfx::RendererType`</param>
-	///
 	[LinkName("bgfx_vertex_layout_begin")]
 	public static extern VertexLayout* vertex_layout_begin(VertexLayout* _this, RendererType _rendererType);
 	
@@ -2347,7 +2337,7 @@ public static class bgfx
 	public static extern void vertex_layout_decode(VertexLayout* _this, Attrib _attrib, uint8 * _num, AttribType* _type, bool* _normalized, bool* _asInt);
 	
 	/// <summary>
-	/// Returns `true` if VertexLayout contains attribute.
+	/// Returns true if VertexLayout contains attribute.
 	/// </summary>
 	///
 	/// <param name="_attrib">Attribute semantics. See: `bgfx::Attrib`</param>
@@ -2358,8 +2348,6 @@ public static class bgfx
 	/// <summary>
 	/// Skip `_num` bytes in vertex stream.
 	/// </summary>
-	///
-	/// <param name="_num">Number of bytes to skip.</param>
 	///
 	[LinkName("bgfx_vertex_layout_skip")]
 	public static extern VertexLayout* vertex_layout_skip(VertexLayout* _this, uint8 _num);
@@ -2628,7 +2616,7 @@ public static class bgfx
 	/// <param name="_format">`printf` style format.</param>
 	///
 	[LinkName("bgfx_dbg_text_printf")]
-	public static extern void dbg_text_printf(uint16 _x, uint16 _y, uint8 _attr, char8* _format, ... );
+	public static extern void dbg_text_printf(uint16 _x, uint16 _y, uint8 _attr, char8* _format, params Object[] args );
 	
 	/// <summary>
 	/// Print formatted data from variable argument list to internal debug text character-buffer (VGA-compatible text mode).
@@ -2823,10 +2811,9 @@ public static class bgfx
 	/// </summary>
 	///
 	/// <param name="_num">Number of required indices.</param>
-	/// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
 	///
 	[LinkName("bgfx_get_avail_transient_index_buffer")]
-	public static extern uint32 get_avail_transient_index_buffer(uint32 _num, bool _index32);
+	public static extern uint32 get_avail_transient_index_buffer(uint32 _num);
 	
 	/// <summary>
 	/// Returns number of requested or maximum available vertices.
@@ -2850,6 +2837,8 @@ public static class bgfx
 	
 	/// <summary>
 	/// Allocate transient index buffer.
+	/// @remarks
+	///   Only 16-bit index buffer is supported.
 	/// </summary>
 	///
 	/// <param name="_tib">TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
@@ -2874,6 +2863,8 @@ public static class bgfx
 	/// Check for required space and allocate transient vertex and index
 	/// buffers. If both space requirements are satisfied function returns
 	/// true.
+	/// @remarks
+	///   Only 16-bit index buffer is supported.
 	/// </summary>
 	///
 	/// <param name="_tvb">TransientVertexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
@@ -2881,10 +2872,9 @@ public static class bgfx
 	/// <param name="_numVertices">Number of vertices to allocate.</param>
 	/// <param name="_tib">TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
 	/// <param name="_numIndices">Number of indices to allocate.</param>
-	/// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
 	///
 	[LinkName("bgfx_alloc_transient_buffers")]
-	public static extern bool alloc_transient_buffers(TransientVertexBuffer* _tvb, VertexLayout* _layout, uint32 _numVertices, TransientIndexBuffer* _tib, uint32 _numIndices, bool _index32);
+	public static extern bool alloc_transient_buffers(TransientVertexBuffer* _tvb, VertexLayout* _layout, uint32 _numVertices, TransientIndexBuffer* _tib, uint32 _numIndices);
 	
 	/// <summary>
 	/// Allocate instance data buffer.
@@ -3001,16 +2991,6 @@ public static class bgfx
 	///
 	[LinkName("bgfx_is_texture_valid")]
 	public static extern bool is_texture_valid(uint16 _depth, bool _cubeMap, uint16 _numLayers, TextureFormat _format, uint64 _flags);
-	
-	/// <summary>
-	/// Validate frame buffer parameters.
-	/// </summary>
-	///
-	/// <param name="_num">Number of attachments.</param>
-	/// <param name="_attachment">Attachment texture info. See: `bgfx::Attachment`.</param>
-	///
-	[LinkName("bgfx_is_frame_buffer_valid")]
-	public static extern bool is_frame_buffer_valid(uint8 _num, Attachment* _attachment);
 	
 	/// <summary>
 	/// Calculate amount of memory required for texture.
@@ -3237,7 +3217,7 @@ public static class bgfx
 	/// mip level.
 	/// </summary>
 	///
-	/// <param name="_num">Number of attachments.</param>
+	/// <param name="_num">Number of attachements.</param>
 	/// <param name="_attachment">Attachment texture info. See: `bgfx::Attachment`.</param>
 	/// <param name="_destroyTexture">If true, textures will be destroyed when frame buffer is destroyed.</param>
 	///
@@ -3402,7 +3382,7 @@ public static class bgfx
 	/// <param name="_name">View name.</param>
 	///
 	[LinkName("bgfx_set_view_name")]
-	public static extern void set_view_name(ViewId _id, char8* _name);
+	public static extern void set_view_name(uint16 _id, char8* _name);
 	
 	/// <summary>
 	/// Set view rectangle. Draw primitive outside view will be clipped.
@@ -3415,7 +3395,7 @@ public static class bgfx
 	/// <param name="_height">Height of view port region.</param>
 	///
 	[LinkName("bgfx_set_view_rect")]
-	public static extern void set_view_rect(ViewId _id, uint16 _x, uint16 _y, uint16 _width, uint16 _height);
+	public static extern void set_view_rect(uint16 _id, uint16 _x, uint16 _y, uint16 _width, uint16 _height);
 	
 	/// <summary>
 	/// Set view rectangle. Draw primitive outside view will be clipped.
@@ -3427,7 +3407,7 @@ public static class bgfx
 	/// <param name="_ratio">Width and height will be set in respect to back-buffer size. See: `BackbufferRatio::Enum`.</param>
 	///
 	[LinkName("bgfx_set_view_rect_ratio")]
-	public static extern void set_view_rect_ratio(ViewId _id, uint16 _x, uint16 _y, BackbufferRatio _ratio);
+	public static extern void set_view_rect_ratio(uint16 _id, uint16 _x, uint16 _y, BackbufferRatio _ratio);
 	
 	/// <summary>
 	/// Set view scissor. Draw primitive outside view will be clipped. When
@@ -3441,7 +3421,7 @@ public static class bgfx
 	/// <param name="_height">Height of view scissor region.</param>
 	///
 	[LinkName("bgfx_set_view_scissor")]
-	public static extern void set_view_scissor(ViewId _id, uint16 _x, uint16 _y, uint16 _width, uint16 _height);
+	public static extern void set_view_scissor(uint16 _id, uint16 _x, uint16 _y, uint16 _width, uint16 _height);
 	
 	/// <summary>
 	/// Set view clear flags.
@@ -3454,7 +3434,7 @@ public static class bgfx
 	/// <param name="_stencil">Stencil clear value.</param>
 	///
 	[LinkName("bgfx_set_view_clear")]
-	public static extern void set_view_clear(ViewId _id, uint16 _flags, uint32 _rgba, float _depth, uint8 _stencil);
+	public static extern void set_view_clear(uint16 _id, uint16 _flags, uint32 _rgba, float _depth, uint8 _stencil);
 	
 	/// <summary>
 	/// Set view clear flags with different clear color for each
@@ -3476,7 +3456,7 @@ public static class bgfx
 	/// <param name="_c7">Palette index for frame buffer attachment 7.</param>
 	///
 	[LinkName("bgfx_set_view_clear_mrt")]
-	public static extern void set_view_clear_mrt(ViewId _id, uint16 _flags, float _depth, uint8 _stencil, uint8 _c0, uint8 _c1, uint8 _c2, uint8 _c3, uint8 _c4, uint8 _c5, uint8 _c6, uint8 _c7);
+	public static extern void set_view_clear_mrt(uint16 _id, uint16 _flags, float _depth, uint8 _stencil, uint8 _c0, uint8 _c1, uint8 _c2, uint8 _c3, uint8 _c4, uint8 _c5, uint8 _c6, uint8 _c7);
 	
 	/// <summary>
 	/// Set view sorting mode.
@@ -3488,7 +3468,7 @@ public static class bgfx
 	/// <param name="_mode">View sort mode. See `ViewMode::Enum`.</param>
 	///
 	[LinkName("bgfx_set_view_mode")]
-	public static extern void set_view_mode(ViewId _id, ViewMode _mode);
+	public static extern void set_view_mode(uint16 _id, ViewMode _mode);
 	
 	/// <summary>
 	/// Set view frame buffer.
@@ -3500,7 +3480,7 @@ public static class bgfx
 	/// <param name="_handle">Frame buffer handle. Passing `BGFX_INVALID_HANDLE` as frame buffer handle will draw primitives from this view into default back buffer.</param>
 	///
 	[LinkName("bgfx_set_view_frame_buffer")]
-	public static extern void set_view_frame_buffer(ViewId _id, FrameBufferHandle _handle);
+	public static extern void set_view_frame_buffer(uint16 _id, FrameBufferHandle _handle);
 	
 	/// <summary>
 	/// Set view view and projection matrices, all draw primitives in this
@@ -3512,7 +3492,7 @@ public static class bgfx
 	/// <param name="_proj">Projection matrix.</param>
 	///
 	[LinkName("bgfx_set_view_transform")]
-	public static extern void set_view_transform(ViewId _id, void* _view, void* _proj);
+	public static extern void set_view_transform(uint16 _id, void* _view, void* _proj);
 	
 	/// <summary>
 	/// Post submit view reordering.
@@ -3523,14 +3503,14 @@ public static class bgfx
 	/// <param name="_order">View remap id table. Passing `NULL` will reset view ids to default state.</param>
 	///
 	[LinkName("bgfx_set_view_order")]
-	public static extern void set_view_order(ViewId _id, uint16 _num, ViewId* _order);
+	public static extern void set_view_order(uint16 _id, uint16 _num, uint16* _order);
 	
 	/// <summary>
 	/// Reset all view settings to default.
 	/// </summary>
 	///
 	[LinkName("bgfx_reset_view")]
-	public static extern void reset_view(ViewId _id);
+	public static extern void reset_view(uint16 _id);
 	
 	/// <summary>
 	/// Begin submitting draw calls from thread.
@@ -3843,7 +3823,7 @@ public static class bgfx
 	/// <param name="_id">View id.</param>
 	///
 	[LinkName("bgfx_encoder_touch")]
-	public static extern void encoder_touch(Encoder* _this, ViewId _id);
+	public static extern void encoder_touch(Encoder* _this, uint16 _id);
 	
 	/// <summary>
 	/// Submit primitive for rendering.
@@ -3855,7 +3835,7 @@ public static class bgfx
 	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_encoder_submit")]
-	public static extern void encoder_submit(Encoder* _this, ViewId _id, ProgramHandle _program, uint32 _depth, uint8 _flags);
+	public static extern void encoder_submit(Encoder* _this, uint16 _id, ProgramHandle _program, uint32 _depth, uint8 _flags);
 	
 	/// <summary>
 	/// Submit primitive with occlusion query for rendering.
@@ -3868,7 +3848,7 @@ public static class bgfx
 	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_encoder_submit_occlusion_query")]
-	public static extern void encoder_submit_occlusion_query(Encoder* _this, ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32 _depth, uint8 _flags);
+	public static extern void encoder_submit_occlusion_query(Encoder* _this, uint16 _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32 _depth, uint8 _flags);
 	
 	/// <summary>
 	/// Submit primitive for rendering with index and instance data info from
@@ -3884,7 +3864,7 @@ public static class bgfx
 	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_encoder_submit_indirect")]
-	public static extern void encoder_submit_indirect(Encoder* _this, ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint32 _depth, uint8 _flags);
+	public static extern void encoder_submit_indirect(Encoder* _this, uint16 _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint32 _depth, uint8 _flags);
 	
 	/// <summary>
 	/// Set compute index buffer.
@@ -3966,7 +3946,7 @@ public static class bgfx
 	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_encoder_dispatch")]
-	public static extern void encoder_dispatch(Encoder* _this, ViewId _id, ProgramHandle _program, uint32 _numX, uint32 _numY, uint32 _numZ, uint8 _flags);
+	public static extern void encoder_dispatch(Encoder* _this, uint16 _id, ProgramHandle _program, uint32 _numX, uint32 _numY, uint32 _numZ, uint8 _flags);
 	
 	/// <summary>
 	/// Dispatch compute indirect.
@@ -3980,7 +3960,7 @@ public static class bgfx
 	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_encoder_dispatch_indirect")]
-	public static extern void encoder_dispatch_indirect(Encoder* _this, ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint8 _flags);
+	public static extern void encoder_dispatch_indirect(Encoder* _this, uint16 _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint8 _flags);
 	
 	/// <summary>
 	/// Discard previously set state for draw or compute call.
@@ -4013,7 +3993,7 @@ public static class bgfx
 	/// <param name="_depth">If texture is 3D this argument represents depth of region, otherwise it's unused.</param>
 	///
 	[LinkName("bgfx_encoder_blit")]
-	public static extern void encoder_blit(Encoder* _this, ViewId _id, TextureHandle _dst, uint8 _dstMip, uint16 _dstX, uint16 _dstY, uint16 _dstZ, TextureHandle _src, uint8 _srcMip, uint16 _srcX, uint16 _srcY, uint16 _srcZ, uint16 _width, uint16 _height, uint16 _depth);
+	public static extern void encoder_blit(Encoder* _this, uint16 _id, TextureHandle _dst, uint8 _dstMip, uint16 _dstX, uint16 _dstY, uint16 _dstZ, TextureHandle _src, uint8 _srcMip, uint16 _srcX, uint16 _srcY, uint16 _srcZ, uint16 _width, uint16 _height, uint16 _depth);
 	
 	/// <summary>
 	/// Request screen shot of window back buffer.
@@ -4399,7 +4379,7 @@ public static class bgfx
 	/// <param name="_id">View id.</param>
 	///
 	[LinkName("bgfx_touch")]
-	public static extern void touch(ViewId _id);
+	public static extern void touch(uint16 _id);
 	
 	/// <summary>
 	/// Submit primitive for rendering.
@@ -4408,10 +4388,10 @@ public static class bgfx
 	/// <param name="_id">View id.</param>
 	/// <param name="_program">Program.</param>
 	/// <param name="_depth">Depth for sorting.</param>
-	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
+	/// <param name="_flags">Which states to discard for next draw. See BGFX_DISCARD_</param>
 	///
 	[LinkName("bgfx_submit")]
-	public static extern void submit(ViewId _id, ProgramHandle _program, uint32 _depth, uint8 _flags);
+	public static extern void submit(uint16 _id, ProgramHandle _program, uint32 _depth, uint8 _flags);
 	
 	/// <summary>
 	/// Submit primitive with occlusion query for rendering.
@@ -4421,10 +4401,10 @@ public static class bgfx
 	/// <param name="_program">Program.</param>
 	/// <param name="_occlusionQuery">Occlusion query.</param>
 	/// <param name="_depth">Depth for sorting.</param>
-	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
+	/// <param name="_flags">Which states to discard for next draw. See BGFX_DISCARD_</param>
 	///
 	[LinkName("bgfx_submit_occlusion_query")]
-	public static extern void submit_occlusion_query(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32 _depth, uint8 _flags);
+	public static extern void submit_occlusion_query(uint16 _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32 _depth, uint8 _flags);
 	
 	/// <summary>
 	/// Submit primitive for rendering with index and instance data info from
@@ -4437,10 +4417,10 @@ public static class bgfx
 	/// <param name="_start">First element in indirect buffer.</param>
 	/// <param name="_num">Number of dispatches.</param>
 	/// <param name="_depth">Depth for sorting.</param>
-	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
+	/// <param name="_flags">Which states to discard for next draw. See BGFX_DISCARD_</param>
 	///
 	[LinkName("bgfx_submit_indirect")]
-	public static extern void submit_indirect(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint32 _depth, uint8 _flags);
+	public static extern void submit_indirect(uint16 _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint32 _depth, uint8 _flags);
 	
 	/// <summary>
 	/// Set compute index buffer.
@@ -4522,7 +4502,7 @@ public static class bgfx
 	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_dispatch")]
-	public static extern void dispatch(ViewId _id, ProgramHandle _program, uint32 _numX, uint32 _numY, uint32 _numZ, uint8 _flags);
+	public static extern void dispatch(uint16 _id, ProgramHandle _program, uint32 _numX, uint32 _numY, uint32 _numZ, uint8 _flags);
 	
 	/// <summary>
 	/// Dispatch compute indirect.
@@ -4536,7 +4516,7 @@ public static class bgfx
 	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_dispatch_indirect")]
-	public static extern void dispatch_indirect(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint8 _flags);
+	public static extern void dispatch_indirect(uint16 _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint8 _flags);
 	
 	/// <summary>
 	/// Discard previously set state for draw or compute call.
@@ -4569,7 +4549,7 @@ public static class bgfx
 	/// <param name="_depth">If texture is 3D this argument represents depth of region, otherwise it's unused.</param>
 	///
 	[LinkName("bgfx_blit")]
-	public static extern void blit(ViewId _id, TextureHandle _dst, uint8 _dstMip, uint16 _dstX, uint16 _dstY, uint16 _dstZ, TextureHandle _src, uint8 _srcMip, uint16 _srcX, uint16 _srcY, uint16 _srcZ, uint16 _width, uint16 _height, uint16 _depth);
+	public static extern void blit(uint16 _id, TextureHandle _dst, uint8 _dstMip, uint16 _dstX, uint16 _dstY, uint16 _dstZ, TextureHandle _src, uint8 _srcMip, uint16 _srcX, uint16 _srcY, uint16 _srcZ, uint16 _width, uint16 _height, uint16 _depth);
 	
 
 	public static bgfx.StateFlags blend_function_separate(bgfx.StateFlags _srcRGB, bgfx.StateFlags _dstRGB, bgfx.StateFlags _srcA, bgfx.StateFlags _dstA)

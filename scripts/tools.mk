@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2021 Branimir Karadzic. All rights reserved.
+# Copyright 2011-2020 Branimir Karadzic. All rights reserved.
 # License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 #
 
@@ -8,13 +8,11 @@ SILENT?=@
 THISDIR:=$(dir $(lastword $(MAKEFILE_LIST)))
 
 UNAME:=$(shell uname)
-ifeq ($(UNAME),$(filter Linux Darwin MINGW%,$(UNAME)))
+ifeq ($(UNAME),$(filter $(UNAME),Linux Darwin))
 CMD_MKDIR=mkdir -p "$(1)"
 CMD_RMDIR=rm -r "$(1)"
-ifeq ($(UNAME),$(filter Darwin,$(UNAME)))
+ifeq ($(UNAME),$(filter $(UNAME),Darwin))
 OS=darwin
-else ifeq ($(UNAME),$(filter MINGW%,$(UNAME)))
-OS=windows
 else
 OS=linux
 endif

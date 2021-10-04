@@ -22,9 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include "NonSemanticVulkanDebugInfo100.h"
 #include "OpenCLDebugInfo100.h"
-#include "source/common_debug_info.h"
 #include "source/latest_version_glsl_std_450_header.h"
 #include "source/latest_version_spirv_header.h"
 #include "source/opcode.h"
@@ -99,14 +97,10 @@ struct Operand {
     assert(type == SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER);
     assert(1 <= words.size());
     assert(words.size() <= 2);
-    uint64_t result = 0;
-    if (words.size() > 0) {  // Needed to avoid maybe-uninitialized GCC warning
-      uint32_t low = words[0];
-      result = uint64_t(low);
-    }
+    // Load the low word.
+    uint64_t result = uint64_t(words[0]);
     if (words.size() > 1) {
-      uint32_t high = words[1];
-      result = result | (uint64_t(high) << 32);
+      result = result | (uint64_t(words[1]) << 32);
     }
     return result;
   }
@@ -211,7 +205,7 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   Instruction(Instruction&&);
   Instruction& operator=(Instruction&&);
 
-  ~Instruction() override = default;
+  virtual ~Instruction() = default;
 
   // Returns a newly allocated instruction that has the same operands, result,
   // and type as |this|.  The new instruction is not linked into any list.
@@ -552,27 +546,9 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   // OpenCLDebugInfo100InstructionsMax.
   OpenCLDebugInfo100Instructions GetOpenCL100DebugOpcode() const;
 
-  // Returns debug opcode of a NonSemantic.Vulkan.DebugInfo.100 instruction. If
-  // it is not a NonSemantic.Vulkan.DebugInfo.100 instruction, just returns
-  // NonSemanticVulkanDebugInfo100InstructionsMax.
-  NonSemanticVulkanDebugInfo100Instructions GetVulkan100DebugOpcode() const;
-
-  // Returns debug opcode of an OpenCL.100.DebugInfo or
-  // NonSemantic.Vulkan.DebugInfo.100 instruction. Since these overlap, we
-  // return the OpenCLDebugInfo code
-  CommonDebugInfoInstructions GetCommonDebugOpcode() const;
-
   // Returns true if it is an OpenCL.DebugInfo.100 instruction.
   bool IsOpenCL100DebugInstr() const {
     return GetOpenCL100DebugOpcode() != OpenCLDebugInfo100InstructionsMax;
-  }
-  // Returns true if it is a NonSemantic.Vulkan.DebugInfo.100 instruction.
-  bool IsVulkan100DebugInstr() const {
-    return GetVulkan100DebugOpcode() !=
-           NonSemanticVulkanDebugInfo100InstructionsMax;
-  }
-  bool IsCommonDebugInstr() const {
-    return GetCommonDebugOpcode() != CommonDebugInfoInstructionsMax;
   }
 
   // Returns true if this instructions a non-semantic instruction.

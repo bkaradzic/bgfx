@@ -439,7 +439,7 @@ namespace bgfx { namespace mtl
 			m_textureDescriptor = newTextureDescriptor();
 			m_samplerDescriptor = newSamplerDescriptor();
 
-			for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_LATENCY; ++ii)
+			for (uint8_t ii = 0; ii < MTL_MAX_FRAMES_IN_FLIGHT; ++ii)
 			{
 				m_uniformBuffers[ii] = m_device.newBufferWithLength(UNIFORM_BUFFER_SIZE, 0);
 			}
@@ -729,7 +729,7 @@ namespace bgfx { namespace mtl
 
 			m_mainFrameBuffer.destroy();
 
-			for (uint8_t i=0; i < BGFX_CONFIG_MAX_FRAME_LATENCY; ++i)
+			for (uint8_t i=0; i < MTL_MAX_FRAMES_IN_FLIGHT; ++i)
 			{
 				MTL_RELEASE(m_uniformBuffers[i]);
 			}
@@ -954,7 +954,7 @@ namespace bgfx { namespace mtl
 
 			FrameBufferMtl& fb = m_frameBuffers[_handle.idx];
 			fb.create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
-			fb.m_swapChain->resize(m_frameBuffers[_handle.idx], _width, _height, m_resolution.reset, m_resolution.maxFrameLatency);
+			fb.m_swapChain->resize(m_frameBuffers[_handle.idx], _width, _height, 0);
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
@@ -1280,7 +1280,7 @@ namespace bgfx { namespace mtl
 				}
 				m_resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
 
-				m_mainFrameBuffer.m_swapChain->resize(m_mainFrameBuffer, _resolution.width, _resolution.height, _resolution.reset, m_resolution.maxFrameLatency);
+				m_mainFrameBuffer.m_swapChain->resize(m_mainFrameBuffer, _resolution.width, _resolution.height, _resolution.reset);
 
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
 				{
@@ -1469,6 +1469,14 @@ namespace bgfx { namespace mtl
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
+#define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type) \
+	case UniformType::_uniform:                            \
+	case UniformType::_uniform|kUniformFragmentBit:        \
+	{                                                      \
+		setShaderUniform(uint8_t(type), loc, data, num);   \
+	}                                                      \
+	break;
+
 				switch ( (uint32_t)type)
 				{
 				case UniformType::Mat3:
@@ -1495,16 +1503,9 @@ namespace bgfx { namespace mtl
 					}
 					break;
 
-				case UniformType::Sampler:
-				case UniformType::Sampler | kUniformFragmentBit:
-				case UniformType::Vec4:
-				case UniformType::Vec4 | kUniformFragmentBit:
-				case UniformType::Mat4:
-				case UniformType::Mat4 | kUniformFragmentBit:
-					{
-						setShaderUniform(uint8_t(type), loc, data, num);
-					}
-					break;
+					CASE_IMPLEMENT_UNIFORM(Sampler, I, int);
+					CASE_IMPLEMENT_UNIFORM(Vec4,    F, float);
+					CASE_IMPLEMENT_UNIFORM(Mat4,    F, float);
 
 				case UniformType::End:
 					break;
@@ -1513,6 +1514,9 @@ namespace bgfx { namespace mtl
 					BX_TRACE("%4d: INVALID 0x%08x, t %d, l %d, n %d, c %d", _uniformBuffer.getPos(), opcode, type, loc, num, copy);
 					break;
 				}
+
+#undef CASE_IMPLEMENT_UNIFORM
+
 			}
 		}
 
@@ -2358,7 +2362,7 @@ namespace bgfx { namespace mtl
 		bool m_hasStoreActionStoreAndMultisampleResolve;
 
 		Buffer   m_uniformBuffer;
-		Buffer   m_uniformBuffers[BGFX_CONFIG_MAX_FRAME_LATENCY];
+		Buffer   m_uniformBuffers[MTL_MAX_FRAMES_IN_FLIGHT];
 		uint32_t m_uniformBufferVertexOffset;
 		uint32_t m_uniformBufferFragmentOffset;
 
@@ -2501,12 +2505,6 @@ namespace bgfx { namespace mtl
 			{
 				uint16_t texInfo = 0;
 				bx::read(&reader, texInfo);
-			}
-
-			if (!isShaderVerLess(magic, 10) )
-			{
-				uint16_t texFormat = 0;
-				bx::read(&reader, texFormat);
 			}
 		}
 
@@ -2974,18 +2972,16 @@ namespace bgfx { namespace mtl
 			desc.mipmapLevelCount = 1;
 			desc.sampleCount = 1;
 			desc.arrayLength = 1;
-
 			if (s_renderMtl->m_iOS9Runtime
-			||  s_renderMtl->m_macOS11Runtime)
+				||  s_renderMtl->m_macOS11Runtime)
 			{
 				desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 				desc.storageMode  = BX_ENABLED(BX_PLATFORM_IOS)
-					? (MTLStorageMode)0 // MTLStorageModeShared
-					: (MTLStorageMode)1 // MTLStorageModeManaged
-					;
+				? (MTLStorageMode)0 // MTLStorageModeShared
+				: (MTLStorageMode)1 // MTLStorageModeManaged
+				;
 				desc.usage        = 0;
 			}
-
 			Texture tempTexture = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 			MTLRegion region =
 			{
@@ -3185,7 +3181,7 @@ namespace bgfx { namespace mtl
 		retain(m_metalLayer);
 	}
 
-	void SwapChainMtl::resize(FrameBufferMtl &_frameBuffer, uint32_t _width, uint32_t _height, uint32_t _flags, uint32_t _maximumDrawableCount)
+	void SwapChainMtl::resize(FrameBufferMtl &_frameBuffer, uint32_t _width, uint32_t _height, uint32_t _flags)
 	{
 		const int32_t sampleCount = s_msaa[(_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
@@ -3194,10 +3190,6 @@ namespace bgfx { namespace mtl
 		if (@available(macOS 10.13, *))
 		{
 			m_metalLayer.displaySyncEnabled = 0 != (_flags&BGFX_RESET_VSYNC);
-		}
-		if (@available(macOS 10.13.2, *))
-		{
-			m_metalLayer.maximumDrawableCount = bx::clamp<uint32_t>(_maximumDrawableCount, 2, 3);
 		}
 #endif // __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
 #endif // BX_PLATFORM_OSX
@@ -3304,13 +3296,13 @@ namespace bgfx { namespace mtl
 				desc.arrayLength = 1;
 
 				if (s_renderMtl->m_iOS9Runtime
-				||  s_renderMtl->m_macOS11Runtime)
+					||  s_renderMtl->m_macOS11Runtime)
 				{
 					desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 					desc.storageMode = BX_ENABLED(BX_PLATFORM_IOS)
-						? (MTLStorageMode)0 // MTLStorageModeShared
-						: (MTLStorageMode)1 // MTLStorageModeManaged
-						;
+					? (MTLStorageMode)0 // MTLStorageModeShared
+					: (MTLStorageMode)1 // MTLStorageModeManaged
+					;
 
 					desc.usage = MTLTextureUsageRenderTarget;
 				}
@@ -3427,7 +3419,7 @@ namespace bgfx { namespace mtl
 	void CommandQueueMtl::init(Device _device)
 	{
 		m_commandQueue = _device.newCommandQueue();
-		m_framesSemaphore.post(BGFX_CONFIG_MAX_FRAME_LATENCY);
+		m_framesSemaphore.post(MTL_MAX_FRAMES_IN_FLIGHT);
 	}
 
 	void CommandQueueMtl::shutdown()
@@ -3459,7 +3451,7 @@ namespace bgfx { namespace mtl
 		{
 			if (_endFrame)
 			{
-				m_releaseWriteIndex = (m_releaseWriteIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
+				m_releaseWriteIndex = (m_releaseWriteIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
 				m_activeCommandBuffer.addCompletedHandler(commandBufferFinishedCallback, this);
 			}
 
@@ -3504,7 +3496,7 @@ namespace bgfx { namespace mtl
 	void CommandQueueMtl::consume()
 	{
 		m_framesSemaphore.wait();
-		m_releaseReadIndex = (m_releaseReadIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
+		m_releaseReadIndex = (m_releaseReadIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
 
 		ResourceArray& ra = m_release[m_releaseReadIndex];
 
@@ -3779,7 +3771,7 @@ namespace bgfx { namespace mtl
 		}
 
 		m_uniformBuffer = m_uniformBuffers[m_bufferIndex];
-		m_bufferIndex = (m_bufferIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
+		m_bufferIndex = (m_bufferIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
 		m_uniformBufferVertexOffset = 0;
 		m_uniformBufferFragmentOffset = 0;
 
@@ -4455,6 +4447,8 @@ namespace bgfx { namespace mtl
 
 						rce.setVertexBuffer(vb.m_ptr, offset, idx+1);
 					}
+
+					currentState.m_numVertices = numVertices;
 
 					if (!isValid(currentProgram) )
 					{

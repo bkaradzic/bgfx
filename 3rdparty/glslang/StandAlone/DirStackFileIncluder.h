@@ -40,7 +40,6 @@
 #include <string>
 #include <fstream>
 #include <algorithm>
-#include <set>
 
 #include "./../glslang/Public/ShaderLang.h"
 
@@ -85,18 +84,12 @@ public:
         }
     }
 
-    virtual std::set<std::string> getIncludedFiles()
-    {
-        return includedFiles;
-    }
-
     virtual ~DirStackFileIncluder() override { }
 
 protected:
     typedef char tUserDataElement;
     std::vector<std::string> directoryStack;
     int externalLocalDirectoryCount;
-    std::set<std::string> includedFiles;
 
     // Search for a valid "local" path based on combining the stack of include
     // directories and the nominal name of the header.
@@ -115,7 +108,6 @@ protected:
             std::ifstream file(path, std::ios_base::binary | std::ios_base::ate);
             if (file) {
                 directoryStack.push_back(getDirectory(path));
-                includedFiles.insert(path);
                 return newIncludeResult(path, file, (int)file.tellg());
             }
         }

@@ -2027,7 +2027,7 @@ public:
 			s_uniforms.m_time = time;
 
 			// Update camera.
-			cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
+			cameraUpdate(deltaTime, m_mouseState);
 
 			// Set view and projection matrix for view 0.
 			{

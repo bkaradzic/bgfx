@@ -474,13 +474,14 @@ bool AggressiveDCEPass::AggressiveDCE(Function* func) {
         ProcessLoad(func, varId);
       }
       // If DebugDeclare, process as load of variable
-    } else if (liveInst->GetCommonDebugOpcode() ==
-               CommonDebugInfoDebugDeclare) {
+    } else if (liveInst->GetOpenCL100DebugOpcode() ==
+               OpenCLDebugInfo100DebugDeclare) {
       uint32_t varId =
           liveInst->GetSingleWordOperand(kDebugDeclareOperandVariableIndex);
       ProcessLoad(func, varId);
       // If DebugValue with Deref, process as load of variable
-    } else if (liveInst->GetCommonDebugOpcode() == CommonDebugInfoDebugValue) {
+    } else if (liveInst->GetOpenCL100DebugOpcode() ==
+               OpenCLDebugInfo100DebugValue) {
       uint32_t varId = context()
                            ->get_debug_info_mgr()
                            ->GetVariableIdOfDebugValueUsedForDeclare(liveInst);
@@ -651,7 +652,7 @@ void AggressiveDCEPass::InitializeModuleScopeLiveInstructions() {
   // For each DebugInfo GlobalVariable keep all operands except the Variable.
   // Later, if the variable is dead, we will set the operand to DebugInfoNone.
   for (auto& dbg : get_module()->ext_inst_debuginfo()) {
-    if (dbg.GetCommonDebugOpcode() != CommonDebugInfoDebugGlobalVariable)
+    if (dbg.GetOpenCL100DebugOpcode() != OpenCLDebugInfo100DebugGlobalVariable)
       continue;
     dbg.ForEachInId([this](const uint32_t* iid) {
       Instruction* inInst = get_def_use_mgr()->GetDef(*iid);
@@ -876,7 +877,8 @@ bool AggressiveDCEPass::ProcessGlobalValues() {
     if (!IsDead(&dbg)) continue;
     // Save GlobalVariable if its variable is live, otherwise null out variable
     // index
-    if (dbg.GetCommonDebugOpcode() == CommonDebugInfoDebugGlobalVariable) {
+    if (dbg.GetOpenCL100DebugOpcode() ==
+        OpenCLDebugInfo100DebugGlobalVariable) {
       auto var_id = dbg.GetSingleWordOperand(kGlobalVariableVariableIndex);
       Instruction* var_inst = get_def_use_mgr()->GetDef(var_id);
       if (!IsDead(var_inst)) continue;
@@ -994,10 +996,6 @@ void AggressiveDCEPass::InitExtensions() {
       "SPV_EXT_physical_storage_buffer",
       "SPV_KHR_terminate_invocation",
       "SPV_KHR_shader_clock",
-      "SPV_KHR_vulkan_memory_model",
-      "SPV_KHR_subgroup_uniform_control_flow",
-      "SPV_KHR_integer_dot_product",
-      "SPV_EXT_shader_image_int64",
   });
 }
 

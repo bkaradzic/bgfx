@@ -63,7 +63,16 @@ bool DescriptorScalarReplacement::IsCandidate(Instruction* var) {
 
   // All structures with descriptor assignments must be replaced by variables,
   // one for each of their members - with the exceptions of buffers.
-  if (IsTypeOfStructuredBuffer(var_type_inst)) {
+  // Buffers are represented as structures, but we shouldn't replace a buffer
+  // with its elements. All buffers have offset decorations for members of their
+  // structure types.
+  bool has_offset_decoration = false;
+  context()->get_decoration_mgr()->ForEachDecoration(
+      var_type_inst->result_id(), SpvDecorationOffset,
+      [&has_offset_decoration](const Instruction&) {
+        has_offset_decoration = true;
+      });
+  if (has_offset_decoration) {
     return false;
   }
 
@@ -88,23 +97,6 @@ bool DescriptorScalarReplacement::IsCandidate(Instruction* var) {
   }
 
   return true;
-}
-
-bool DescriptorScalarReplacement::IsTypeOfStructuredBuffer(
-    const Instruction* type) const {
-  if (type->opcode() != SpvOpTypeStruct) {
-    return false;
-  }
-
-  // All buffers have offset decorations for members of their structure types.
-  // This is how we distinguish it from a structure of descriptors.
-  bool has_offset_decoration = false;
-  context()->get_decoration_mgr()->ForEachDecoration(
-      type->result_id(), SpvDecorationOffset,
-      [&has_offset_decoration](const Instruction&) {
-        has_offset_decoration = true;
-      });
-  return has_offset_decoration;
 }
 
 bool DescriptorScalarReplacement::ReplaceCandidate(Instruction* var) {
@@ -376,8 +368,7 @@ uint32_t DescriptorScalarReplacement::GetNumBindingsUsedByType(
 
   // The number of bindings consumed by a structure is the sum of the bindings
   // used by its members.
-  if (type_inst->opcode() == SpvOpTypeStruct &&
-      !IsTypeOfStructuredBuffer(type_inst)) {
+  if (type_inst->opcode() == SpvOpTypeStruct) {
     uint32_t sum = 0;
     for (uint32_t i = 0; i < type_inst->NumInOperands(); i++)
       sum += GetNumBindingsUsedByType(type_inst->GetSingleWordInOperand(i));

@@ -32,6 +32,7 @@
 		BGFX_PROFILER_END();       \
 	BX_MACRO_BLOCK_END
 
+#define WEBGPU_MAX_FRAMES_IN_FLIGHT 3
 #define WEBGPU_NUM_UNIFORM_BUFFERS  8
 
 namespace bgfx { namespace webgpu
@@ -112,12 +113,7 @@ namespace bgfx { namespace webgpu
 		uint8_t*     m_dynamic = NULL;
 	};
 
-	struct IndexBufferWgpu : public BufferWgpu
-	{
-		void create(uint32_t _size, void* _data, uint16_t _flags);
-
-		wgpu::IndexFormat m_format;
-	};
+	typedef BufferWgpu IndexBufferWgpu;
 
 	struct VertexBufferWgpu : public BufferWgpu
 	{
@@ -219,17 +215,17 @@ namespace bgfx { namespace webgpu
 
 		wgpu::RenderPassDescriptor desc;
 
-		wgpu::RenderPassColorAttachment colorAttachments[kMaxColorAttachments];
-		wgpu::RenderPassDepthStencilAttachment depthStencilAttachment;
+		wgpu::RenderPassColorAttachmentDescriptor colorAttachments[kMaxColorAttachments];
+		wgpu::RenderPassDepthStencilAttachmentDescriptor depthStencilAttachment;
 	};
 
 	struct VertexStateDescriptor
 	{
 		VertexStateDescriptor();
 
-		wgpu::VertexState desc;
+		wgpu::VertexStateDescriptor desc;
 
-		wgpu::VertexBufferLayoutDescriptor buffers[kMaxVertexInputs];
+		wgpu::VertexBufferLayoutDescriptor vertexBuffers[kMaxVertexInputs];
 		wgpu::VertexAttributeDescriptor attributes[kMaxVertexAttributes];
 	};
 
@@ -237,13 +233,16 @@ namespace bgfx { namespace webgpu
 	{
 		RenderPipelineDescriptor();
 
-		wgpu::RenderPipelineDescriptor2 desc;
+		wgpu::RenderPipelineDescriptor desc;
 
-		wgpu::FragmentState fragment;
-		wgpu::DepthStencilState depthStencil;
+		//wgpu::ProgrammableStageDescriptor vertexStage;
+		wgpu::ProgrammableStageDescriptor fragmentStage;
 
-		wgpu::ColorTargetState targets[kMaxColorAttachments];
-		wgpu::BlendState blends[kMaxColorAttachments];
+		wgpu::VertexStateDescriptor inputState;
+
+		wgpu::RasterizationStateDescriptor rasterizationState;
+		wgpu::DepthStencilStateDescriptor depthStencilState;
+		wgpu::ColorStateDescriptor colorStates[kMaxColorAttachments];
 	};
 
 	struct BindingsWgpu
@@ -294,7 +293,7 @@ namespace bgfx { namespace webgpu
 		void unmap();
 		void destroy();
 
-		void mapped(void* _data);
+		void mapped(void* _data, uint64_t _size);
 
 		wgpu::Buffer m_buffer;
 		void* m_data = NULL;
@@ -340,9 +339,9 @@ namespace bgfx { namespace webgpu
 			m_buffer.Destroy();
 		}
 
-		void readback(void const* data)
+		void readback(void const* data, uint64_t size)
 		{
-			bx::memCopy(m_data, data, m_size);
+			bx::memCopy(m_data, data, m_size < size ? m_size : size);
 			m_buffer.Unmap();
 			m_mapped = false;
 		}
@@ -497,7 +496,7 @@ namespace bgfx { namespace webgpu
 		int m_releaseReadIndex = 0;
 
 		typedef stl::vector<wgpu::Buffer> ResourceArray;
-		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
+		ResourceArray m_release[WEBGPU_MAX_FRAMES_IN_FLIGHT];
 	};
 
 	struct TimerQueryWgpu

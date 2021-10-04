@@ -157,7 +157,8 @@ uint32_t PrivateToLocalPass::GetNewType(uint32_t old_type_id) {
 bool PrivateToLocalPass::IsValidUse(const Instruction* inst) const {
   // The cases in this switch have to match the cases in |UpdateUse|.
   // If we don't know how to update it, it is not valid.
-  if (inst->GetCommonDebugOpcode() == CommonDebugInfoDebugGlobalVariable) {
+  if (inst->GetOpenCL100DebugOpcode() ==
+      OpenCLDebugInfo100DebugGlobalVariable) {
     return true;
   }
   switch (inst->opcode()) {
@@ -182,7 +183,8 @@ bool PrivateToLocalPass::UpdateUse(Instruction* inst, Instruction* user) {
   // The cases in this switch have to match the cases in |IsValidUse|.  If we
   // don't think it is valid, the optimization will not view the variable as a
   // candidate, and therefore the use will not be updated.
-  if (inst->GetCommonDebugOpcode() == CommonDebugInfoDebugGlobalVariable) {
+  if (inst->GetOpenCL100DebugOpcode() ==
+      OpenCLDebugInfo100DebugGlobalVariable) {
     context()->get_debug_info_mgr()->ConvertDebugGlobalToLocalVariable(inst,
                                                                        user);
     return true;

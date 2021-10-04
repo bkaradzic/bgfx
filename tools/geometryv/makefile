@@ -3,4 +3,4 @@
 # License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 #
 
-include ../../scripts/shader-embeded.mk
+include ../../../bgfx/scripts/shader-embeded.mk

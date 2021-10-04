@@ -30,13 +30,6 @@ project ("texturev")
 		defines { "ENTRY_CONFIG_USE_SDL=1" }
 		links   { "SDL2" }
 
-		configuration { "linux or freebsd" }
-			if _OPTIONS["with-wayland"]  then
-				links {
-					"wayland-egl",
-				}
-			end
-
 		configuration { "x32", "windows" }
 			libdirs { "$(SDL2_DIR)/lib/x86" }
 
@@ -59,7 +52,7 @@ project ("texturev")
 				"Xcursor",
 			}
 
-		configuration { "osx*" }
+		configuration { "osx" }
 			linkoptions {
 				"-framework CoreVideo",
 				"-framework IOKit",
@@ -145,7 +138,7 @@ project ("texturev")
 			"pthread",
 		}
 
-	configuration { "osx*" }
+	configuration { "osx" }
 		linkoptions {
 			"-framework Cocoa",
 			"-framework Metal",

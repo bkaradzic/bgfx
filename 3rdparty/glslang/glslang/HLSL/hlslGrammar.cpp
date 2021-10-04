@@ -161,10 +161,8 @@ bool HlslGrammar::acceptDeclarationList(TIntermNode*& nodeList)
             return true;
 
         // declaration
-        if (! acceptDeclaration(nodeList)) {
-            expected("declaration");
+        if (! acceptDeclaration(nodeList))
             return false;
-        }
     } while (true);
 
     return true;
@@ -3244,7 +3242,7 @@ bool HlslGrammar::acceptConstructor(TIntermTyped*& node)
         }
 
         // hook it up
-        node = parseContext.handleFunctionCall(token.loc, constructorFunction, arguments);
+        node = parseContext.handleFunctionCall(arguments->getLoc(), constructorFunction, arguments);
 
         return node != nullptr;
     }

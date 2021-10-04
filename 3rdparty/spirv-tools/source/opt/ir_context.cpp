@@ -30,8 +30,7 @@ static const int kSpvDecorateBuiltinInIdx = 2;
 static const int kEntryPointInterfaceInIdx = 3;
 static const int kEntryPointFunctionIdInIdx = 1;
 
-// Constants for OpenCL.DebugInfo.100 / NonSemantic.Vulkan.DebugInfo.100
-// extension instructions.
+// Constants for OpenCL.DebugInfo.100 extension instructions.
 static const uint32_t kDebugFunctionOperandFunctionIndex = 13;
 static const uint32_t kDebugGlobalVariableOperandVariableIndex = 11;
 
@@ -215,10 +214,10 @@ Instruction* IRContext::KillInst(Instruction* inst) {
   return next_instruction;
 }
 
-void IRContext::CollectNonSemanticTree(
-    Instruction* inst, std::unordered_set<Instruction*>* to_kill) {
+void IRContext::KillNonSemanticInfo(Instruction* inst) {
   if (!inst->HasResultId()) return;
   std::vector<Instruction*> work_list;
+  std::vector<Instruction*> to_kill;
   std::unordered_set<Instruction*> seen;
   work_list.push_back(inst);
 
@@ -226,12 +225,16 @@ void IRContext::CollectNonSemanticTree(
     auto* i = work_list.back();
     work_list.pop_back();
     get_def_use_mgr()->ForEachUser(
-        i, [&work_list, to_kill, &seen](Instruction* user) {
+        i, [&work_list, &to_kill, &seen](Instruction* user) {
           if (user->IsNonSemanticInstruction() && seen.insert(user).second) {
             work_list.push_back(user);
-            to_kill->insert(user);
+            to_kill.push_back(user);
           }
         });
+  }
+
+  for (auto* dead : to_kill) {
+    KillInst(dead);
   }
 }
 
@@ -438,7 +441,8 @@ void IRContext::KillOperandFromDebugInstructions(Instruction* inst) {
   if (opcode == SpvOpVariable || IsConstantInst(opcode)) {
     for (auto it = module()->ext_inst_debuginfo_begin();
          it != module()->ext_inst_debuginfo_end(); ++it) {
-      if (it->GetCommonDebugOpcode() != CommonDebugInfoDebugGlobalVariable)
+      if (it->GetOpenCL100DebugOpcode() !=
+          OpenCLDebugInfo100DebugGlobalVariable)
         continue;
       auto& operand = it->GetOperand(kDebugGlobalVariableOperandVariableIndex);
       if (operand.words[0] == id) {
@@ -1033,12 +1037,6 @@ bool IRContext::CheckCFG() {
   }
 
   return true;
-}
-
-bool IRContext::IsReachable(const opt::BasicBlock& bb) {
-  auto enclosing_function = bb.GetParent();
-  return GetDominatorAnalysis(enclosing_function)
-      ->Dominates(enclosing_function->entry().get(), &bb);
 }
 }  // namespace opt
 }  // namespace spvtools
