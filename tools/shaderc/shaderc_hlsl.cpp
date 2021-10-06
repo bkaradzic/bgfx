@@ -479,7 +479,7 @@ namespace bgfx { namespace hlsl
 								un.type = uniformType;
 								un.num = uint8_t(constDesc.Elements);
 								un.regIndex = uint16_t(varDesc.StartOffset);
-								un.regCount = bx::alignUp(varDesc.Size, 16) / 16;
+								un.regCount = uint16_t(bx::alignUp(varDesc.Size, 16) / 16);
 								_uniforms.push_back(un);
 
 								BX_TRACE("\t%s, %d, size %d, flags 0x%08x, %d (used)"

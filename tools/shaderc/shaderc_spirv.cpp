@@ -766,7 +766,7 @@ namespace bgfx { namespace spirv
 						un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
 						un.texFormat = uint16_t(s_textureFormats[imageType.format]);
 
-						un.regIndex = binding_index;
+						un.regIndex = uint16_t(binding_index);
 						un.regCount = 0; // unused
 
 						uniforms.push_back(un);
@@ -795,7 +795,7 @@ namespace bgfx { namespace spirv
 						un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
 						un.texFormat = uint16_t(s_textureFormats[imageType.format]);
 
-						un.regIndex = binding_index;
+						un.regIndex = uint16_t(binding_index);
 						un.regCount = descriptorTypeToId(DescriptorType::StorageImage);
 
 						uniforms.push_back(un);
@@ -817,7 +817,7 @@ namespace bgfx { namespace spirv
 						un.name = name;
 						un.type = type;
 						un.num = 0;
-						un.regIndex = binding_index;
+						un.regIndex = uint16_t(binding_index);
 						un.regCount = descriptorTypeToId(DescriptorType::StorageBuffer);
 
 						uniforms.push_back(un);
