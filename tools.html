@@ -3,10 +3,9 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <title>Tools &mdash; bgfx 1.0 documentation</title>
   
@@ -14,15 +13,10 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
 
   
   
-
   
-  
-
   
 
   
@@ -32,10 +26,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -57,7 +51,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> bgfx
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> bgfx
           
 
           
@@ -150,8 +144,6 @@
 
 
 
-
-
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
@@ -163,7 +155,7 @@
     
       <li class="wy-breadcrumbs-aside">
         
-          
+            
         
       </li>
     
@@ -175,9 +167,9 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="tools">
+  <div class="section" id="tools">
 <h1>Tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h1>
-<section id="geometry-compiler-geometryc">
+<div class="section" id="geometry-compiler-geometryc">
 <h2>Geometry Compiler (geometryc)<a class="headerlink" href="#geometry-compiler-geometryc" title="Permalink to this headline">¶</a></h2>
 <p>Converts Wavefront .obj, or glTF 2.0 mesh file to format optimal for using with bgfx.</p>
 <p>Usage:</p>
@@ -260,12 +252,12 @@ More steps slower calculation.</p>
 </dd>
 </dl>
 </div></blockquote>
-</section>
-<section id="geometry-viewer-geometryv">
+</div>
+<div class="section" id="geometry-viewer-geometryv">
 <h2>Geometry Viewer (geometryv)<a class="headerlink" href="#geometry-viewer-geometryv" title="Permalink to this headline">¶</a></h2>
 <p>Geometry viewer.</p>
-</section>
-<section id="shader-compiler-shaderc">
+</div>
+<div class="section" id="shader-compiler-shaderc">
 <h2>Shader Compiler (shaderc)<a class="headerlink" href="#shader-compiler-shaderc" title="Permalink to this headline">¶</a></h2>
 <p>bgfx cross-platform shader language is based on GLSL syntax. It’s uses
 ANSI C preprocessor to transform GLSL like language syntax into HLSL.
@@ -327,7 +319,7 @@ macros</a>.</p>
 <dd><p>Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).</p>
 </dd>
 <dt><kbd><span class="option">--type <var>&lt;type&gt;</var></span></kbd></dt>
-<dd><p>Shader type (vertex, fragment)</p>
+<dd><p>Shader type (vertex, fragment, compute)</p>
 </dd>
 <dt><kbd><span class="option">--varyingdef <var>&lt;file path&gt;</var></span></kbd></dt>
 <dd><p>Path to varying.def.sc file.</p>
@@ -355,13 +347,13 @@ macros</a>.</p>
 </dd>
 </dl>
 </div></blockquote>
-<section id="building-shaders">
+<div class="section" id="building-shaders">
 <h3>Building shaders<a class="headerlink" href="#building-shaders" title="Permalink to this headline">¶</a></h3>
 <p>Shaders must be compiled for all renderers by using <cite>shaderc</cite> tool. Makefile to simplify building
 shaders is provided in examples. D3D shaders can be only compiled on Windows.</p>
-</section>
-</section>
-<section id="texture-compiler-texturec">
+</div>
+</div>
+<div class="section" id="texture-compiler-texturec">
 <h2>Texture Compiler (texturec)<a class="headerlink" href="#texture-compiler-texturec" title="Permalink to this headline">¶</a></h2>
 <p>Convert PNG, TGA, DDS, KTX, PVR texture into bgfx supported texture formats.</p>
 <p>Usage:</p>
@@ -498,33 +490,41 @@ shaders is provided in examples. D3D shaders can be only compiled on Windows.</p
 </dd>
 </dl>
 </div></blockquote>
-</section>
-<section id="texture-viewer-texturev">
+</div>
+<div class="section" id="texture-viewer-texturev">
 <h2>Texture Viewer (texturev)<a class="headerlink" href="#texture-viewer-texturev" title="Permalink to this headline">¶</a></h2>
 <p>Texture viewer.</p>
-</section>
-</section>
+</div>
+</div>
 
 
            </div>
            
           </div>
           <footer>
+  
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="internals.html" class="btn btn-neutral float-right" title="Internals" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-        <a href="bgfx.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+      
+        <a href="internals.html" class="btn btn-neutral float-right" title="Internals" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="bgfx.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
     </div>
+  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        &#169; Copyright 2010-2020, Branimir Karadžić.
+        
+        &copy; Copyright 2010-2020, Branimir Karadžić
 
     </p>
   </div> 
 
 </footer>
+
         </div>
       </div>
 
