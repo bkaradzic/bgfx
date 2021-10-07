@@ -542,7 +542,7 @@ namespace
 						;
 					const uint16_t viewRectWidth  = uint16_t(bx::ceil(m_state.m_size[0] * viewScale) );
 					const uint16_t viewRectHeight = uint16_t(bx::ceil(m_state.m_size[1] * viewScale) );
-					const uint16_t viewRectY      = caps->originBottomLeft ? m_state.m_size[1] - viewRectHeight : 0;
+					const uint16_t viewRectY      = uint16_t(caps->originBottomLeft ? m_state.m_size[1] - viewRectHeight : 0);
 
 					bgfx::setViewRect(view, 0, viewRectY, viewRectWidth, viewRectHeight);
 					bgfx::setViewTransform(view, m_state.m_view, m_state.m_proj);
