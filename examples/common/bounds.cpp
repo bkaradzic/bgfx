@@ -1046,7 +1046,7 @@ Srt toSrt(const void* _mtx)
 
 void mtxFromSrt(float* _outMtx, const Srt& _srt)
 {
-	mtxQuat(_outMtx, _srt.rotation);
+	mtxFromQuaternion(_outMtx, _srt.rotation);
 
 	store<Vec3>(&_outMtx[0], mul(load<Vec3>(&_outMtx[0]), _srt.scale.x) );
 	store<Vec3>(&_outMtx[4], mul(load<Vec3>(&_outMtx[4]), _srt.scale.y) );
