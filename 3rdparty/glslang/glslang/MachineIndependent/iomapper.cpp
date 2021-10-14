@@ -1633,6 +1633,37 @@ bool TGlslIoMapper::doMap(TIoMapResolver* resolver, TInfoSink& infoSink) {
             return TVarEntryInfo::TOrderByPriority()(p1.second, p2.second);
         });
         resolver->endResolve(EShLangCount);
+        if (autoPushConstantBlockName.length()) {
+            bool upgraded = false;
+            for (size_t stage = 0; stage < EShLangCount; stage++) {
+                if (intermediates[stage] != nullptr) {
+                    TVarLiveMap** pUniformVarMap = uniformResolve.uniformVarMap;
+                    auto at = pUniformVarMap[stage]->find(autoPushConstantBlockName);
+                    if (at == pUniformVarMap[stage]->end())
+                        continue;
+                    TQualifier& qualifier = at->second.symbol->getQualifier();
+                    if (!qualifier.isUniform())
+                        continue;
+                    TType& t = at->second.symbol->getWritableType();
+                    int size, stride;
+                    TIntermediate::getBaseAlignment(t, size, stride, autoPushConstantBlockPacking,
+                                                    qualifier.layoutMatrix == ElmRowMajor);
+                    if (size <= int(autoPushConstantMaxSize)) {
+                        qualifier.setBlockStorage(EbsPushConstant);
+                        qualifier.layoutPacking = autoPushConstantBlockPacking;
+                        upgraded = true;
+                    }
+                }
+            }
+            // If it's been upgraded to push_constant, then remove it from the uniformVector
+            // so it doesn't get a set/binding assigned to it.
+            if (upgraded) {
+                auto at = std::find_if(uniformVector.begin(), uniformVector.end(),
+                                       [this](const TVarLivePair& p) { return p.first == autoPushConstantBlockName; });
+                if (at != uniformVector.end())
+                    uniformVector.erase(at);
+            }
+        }
         for (size_t stage = 0; stage < EShLangCount; stage++) {
             if (intermediates[stage] != nullptr) {
                 // traverse each stage, set new location to each input/output and unifom symbol, set new binding to

@@ -6,9 +6,9 @@
 #include "bgfx_p.h"
 
 #if BGFX_CONFIG_RENDERER_VULKAN
+#	include <bx/pixelformat.h>
 #	include "renderer_vk.h"
 #	include "shader_spirv.h"
-#	include <bx/pixelformat.h>
 
 #if BX_PLATFORM_OSX
 #	import <Cocoa/Cocoa.h>
@@ -1477,7 +1477,7 @@ VK_IMPORT_INSTANCE
 					vkGetPhysicalDeviceFeatures(m_physicalDevice, &supportedFeatures);
 				}
 
-				memset(&m_deviceFeatures, 0, sizeof(m_deviceFeatures) );
+				bx::memSet(&m_deviceFeatures, 0, sizeof(m_deviceFeatures) );
 
 				m_deviceFeatures.fullDrawIndexUint32       = supportedFeatures.fullDrawIndexUint32;
 				m_deviceFeatures.imageCubeArray            = supportedFeatures.imageCubeArray            && (_init.capabilities & BGFX_CAPS_TEXTURE_CUBE_ARRAY);
@@ -2828,7 +2828,7 @@ VK_IMPORT_DEVICE
 				newFrameBuffer.acquire(m_commandBuffer);
 
 				int64_t now = bx::getHPCounter();
-				
+
 				if (NULL != newFrameBuffer.m_nwh)
 				{
 					m_presentElapsed += now - start;
@@ -6153,6 +6153,7 @@ VK_DESTROY
 		const bool needResolve = VK_NULL_HANDLE != m_singleMsaaImage;
 
 		const bool needMipGen = true
+			&& !needResolve
 			&& 0 != (m_flags & BGFX_TEXTURE_RT_MASK)
 			&& 0 == (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY)
 			&& (_mip + 1) < m_numMips
@@ -6196,23 +6197,12 @@ VK_DESTROY
 				);
 		}
 
-		if (needResolve && needMipGen)
-		{
-			setMemoryBarrier(
-				  _commandBuffer
-				, VK_PIPELINE_STAGE_TRANSFER_BIT
-				, VK_PIPELINE_STAGE_TRANSFER_BIT
-				);
-		}
-
 		if (needMipGen)
 		{
-			setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, needResolve);
+			setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 			int32_t mipWidth  = bx::max<int32_t>(int32_t(m_width)  >> _mip, 1);
 			int32_t mipHeight = bx::max<int32_t>(int32_t(m_height) >> _mip, 1);
-
-			const VkImage image = needResolve ? m_singleMsaaImage : m_textureImage;
 
 			const VkFilter filter = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
 				? VK_FILTER_NEAREST
@@ -6246,7 +6236,7 @@ VK_DESTROY
 
 				vk::setImageMemoryBarrier(
 					  _commandBuffer
-					, image
+					, m_textureImage
 					, m_aspectMask
 					, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
@@ -6258,9 +6248,9 @@ VK_DESTROY
 
 				vkCmdBlitImage(
 					  _commandBuffer
-					, image
+					, m_textureImage
 					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-					, image
+					, m_textureImage
 					, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 					, 1
 					, &blit
@@ -6270,7 +6260,7 @@ VK_DESTROY
 
 			vk::setImageMemoryBarrier(
 				  _commandBuffer
-				, image
+				, m_textureImage
 				, m_aspectMask
 				, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 				, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
@@ -6805,16 +6795,16 @@ VK_DESTROY
 
 		const uint32_t minSwapBufferCount = bx::max<uint32_t>(surfaceCapabilities.minImageCount, 2);
 		const uint32_t maxSwapBufferCount = surfaceCapabilities.maxImageCount == 0
-			? BGFX_CONFIG_MAX_BACK_BUFFERS
-			: bx::min<uint32_t>(surfaceCapabilities.maxImageCount, BGFX_CONFIG_MAX_BACK_BUFFERS)
+			? kMaxBackBuffers
+			: bx::min<uint32_t>(surfaceCapabilities.maxImageCount, kMaxBackBuffers)
 			;
 
 		if (minSwapBufferCount > maxSwapBufferCount)
 		{
-			BX_TRACE("Create swapchain error: Incompatible swapchain image count (min: %d, max: %d, BGFX_CONFIG_MAX_BACK_BUFFERS: %d)."
+			BX_TRACE("Create swapchain error: Incompatible swapchain image count (min: %d, max: %d, MaxBackBuffers: %d)."
 				, minSwapBufferCount
 				, maxSwapBufferCount
-				, BGFX_CONFIG_MAX_BACK_BUFFERS
+				, kMaxBackBuffers
 				);
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}

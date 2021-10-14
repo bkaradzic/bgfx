@@ -866,6 +866,30 @@ void calcPlane(Plane& _outPlane, const Triangle& _triangle)
 
 struct Interval
 {
+	Interval(float _val)
+		: start(_val)
+		, end(_val)
+	{
+	}
+
+	Interval(float _start, float _end)
+		: start(_start)
+		, end(_end)
+	{
+	}
+
+	void set(float _val)
+	{
+		start = _val;
+		end   = _val;
+	}
+
+	void expand(float _val)
+	{
+		start = min(_val, start);
+		end   = max(_val, end);
+	}
+
 	float start;
 	float end;
 };
@@ -882,10 +906,22 @@ float projectToAxis(const Vec3& _axis, const Vec3& _point)
 	return dot(_axis, _point);
 }
 
+Interval projectToAxis(const Vec3& _axis, const Vec3* _points, uint32_t _num)
+{
+	Interval interval(projectToAxis(_axis, _points[0]) );
+
+	for (uint32_t ii = 1; ii < _num; ++ii)
+	{
+		interval.expand(projectToAxis(_axis, _points[ii]) );
+	}
+
+	return interval;
+}
+
 Interval projectToAxis(const Vec3& _axis, const Aabb& _aabb)
 {
-	const float extent = bx::abs(dot(abs(_axis), getExtents(_aabb) ) );
-	const float center =         dot(    _axis , getCenter (_aabb) );
+	const float extent = bx::abs(projectToAxis(abs(_axis), getExtents(_aabb) ) );
+	const float center =         projectToAxis(    _axis , getCenter (_aabb) );
 	return
 	{
 		center - extent,
@@ -895,9 +931,9 @@ Interval projectToAxis(const Vec3& _axis, const Aabb& _aabb)
 
 Interval projectToAxis(const Vec3& _axis, const Triangle& _triangle)
 {
-	const float a0 = dot(_axis, _triangle.v0);
-	const float a1 = dot(_axis, _triangle.v1);
-	const float a2 = dot(_axis, _triangle.v2);
+	const float a0 = projectToAxis(_axis, _triangle.v0);
+	const float a1 = projectToAxis(_axis, _triangle.v1);
+	const float a2 = projectToAxis(_axis, _triangle.v2);
 	return
 	{
 		min(a0, a1, a2),
@@ -911,6 +947,11 @@ struct Srt
 	Vec3       translation = init::Zero;
 	Vec3       scale       = init::Zero;
 };
+
+Srt toSrt(const Aabb& _aabb)
+{
+	return { init::Identity, getCenter(_aabb), getExtents(_aabb) };
+}
 
 Srt toSrt(const void* _mtx)
 {
@@ -1005,7 +1046,7 @@ Srt toSrt(const void* _mtx)
 
 void mtxFromSrt(float* _outMtx, const Srt& _srt)
 {
-	mtxQuat(_outMtx, _srt.rotation);
+	mtxFromQuaternion(_outMtx, _srt.rotation);
 
 	store<Vec3>(&_outMtx[0], mul(load<Vec3>(&_outMtx[0]), _srt.scale.x) );
 	store<Vec3>(&_outMtx[4], mul(load<Vec3>(&_outMtx[4]), _srt.scale.y) );
@@ -1016,7 +1057,7 @@ void mtxFromSrt(float* _outMtx, const Srt& _srt)
 
 bool isNearZero(float _v)
 {
-	return equal(_v, 0.0f, 0.00001f);
+	return isEqual(_v, 0.0f, 0.00001f);
 }
 
 bool isNearZero(const Vec3& _v)
@@ -1208,7 +1249,7 @@ Vec3 closestPoint(const Aabb& _aabb, const Vec3& _point)
 
 Vec3 closestPoint(const Obb& _obb, const Vec3& _point)
 {
-	Srt srt = toSrt(_obb.mtx);
+	const Srt srt = toSrt(_obb.mtx);
 
 	Aabb aabb;
 	toAabb(aabb, srt.scale);
@@ -1246,12 +1287,9 @@ bool overlap(const Aabb& _aabb, const Vec3& _pos)
 bool overlap(const Aabb& _aabbA, const Aabb& _aabbB)
 {
 	return true
-		&& _aabbA.max.x > _aabbB.min.x
-		&& _aabbB.max.x > _aabbA.min.x
-		&& _aabbA.max.y > _aabbB.min.y
-		&& _aabbB.max.y > _aabbA.min.y
-		&& _aabbA.max.z > _aabbB.min.z
-		&& _aabbB.max.z > _aabbA.min.z
+		&& overlap(Interval{_aabbA.min.x, _aabbA.max.x}, Interval{_aabbB.min.x, _aabbB.max.x})
+		&& overlap(Interval{_aabbA.min.y, _aabbA.max.y}, Interval{_aabbB.min.y, _aabbB.max.y})
+		&& overlap(Interval{_aabbA.min.z, _aabbA.max.z}, Interval{_aabbB.min.z, _aabbB.max.z})
 		;
 }
 
@@ -1349,10 +1387,82 @@ bool overlap(const Aabb& _aabb, const Disk& _disk)
 	return overlap(_aabb, plane);
 }
 
+static void calcObbVertices(
+	  bx::Vec3* _outVertices
+	, const bx::Vec3& _axisX
+	, const bx::Vec3& _axisY
+	, const bx::Vec3& _axisZ
+	, const bx::Vec3& _pos
+	, const bx::Vec3& _scale
+	)
+{
+	const Vec3 ax = mul(_axisX, _scale.x);
+	const Vec3 ay = mul(_axisY, _scale.y);
+	const Vec3 az = mul(_axisZ, _scale.z);
+
+	const Vec3 ppx = add(_pos, ax);
+	const Vec3 pmx = sub(_pos, ax);
+	const Vec3 ypz = add(ay, az);
+	const Vec3 ymz = sub(ay, az);
+
+	_outVertices[0] = sub(pmx, ymz);
+	_outVertices[1] = sub(ppx, ymz);
+	_outVertices[2] = add(ppx, ymz);
+	_outVertices[3] = add(pmx, ymz);
+	_outVertices[4] = sub(pmx, ypz);
+	_outVertices[5] = sub(ppx, ypz);
+	_outVertices[6] = add(ppx, ypz);
+	_outVertices[7] = add(pmx, ypz);
+}
+
+static bool overlaps(const Vec3& _axis, const Vec3* _vertsA, const Vec3* _vertsB)
+{
+	Interval ia = projectToAxis(_axis, _vertsA, 8);
+	Interval ib = projectToAxis(_axis, _vertsB, 8);
+
+	return overlap(ia, ib);
+}
+
+static bool overlap(const Srt& _srtA, const Srt& _srtB)
+{
+	const Vec3 ax = toXAxis(_srtA.rotation);
+	const Vec3 ay = toYAxis(_srtA.rotation);
+	const Vec3 az = toZAxis(_srtA.rotation);
+
+	const Vec3 bx = toXAxis(_srtB.rotation);
+	const Vec3 by = toYAxis(_srtB.rotation);
+	const Vec3 bz = toZAxis(_srtB.rotation);
+
+	Vec3 vertsA[8] = { init::None, init::None, init::None, init::None, init::None, init::None, init::None, init::None };
+	calcObbVertices(vertsA, ax, ay, az, init::Zero, _srtA.scale);
+
+	Vec3 vertsB[8] = { init::None, init::None, init::None, init::None, init::None, init::None, init::None, init::None };
+	calcObbVertices(vertsB, bx, by, bz, sub(_srtB.translation, _srtA.translation), _srtB.scale);
+
+	return overlaps(ax,            vertsA, vertsB)
+		&& overlaps(ay,            vertsA, vertsB)
+		&& overlaps(az,            vertsA, vertsB)
+		&& overlaps(bx,            vertsA, vertsB)
+		&& overlaps(by,            vertsA, vertsB)
+		&& overlaps(bz,            vertsA, vertsB)
+		&& overlaps(cross(ax, bx), vertsA, vertsB)
+		&& overlaps(cross(ax, by), vertsA, vertsB)
+		&& overlaps(cross(ax, bz), vertsA, vertsB)
+		&& overlaps(cross(ay, bx), vertsA, vertsB)
+		&& overlaps(cross(ay, by), vertsA, vertsB)
+		&& overlaps(cross(ay, bz), vertsA, vertsB)
+		&& overlaps(cross(az, bx), vertsA, vertsB)
+		&& overlaps(cross(az, by), vertsA, vertsB)
+		&& overlaps(cross(az, bz), vertsA, vertsB)
+		;
+}
+
 bool overlap(const Aabb& _aabb, const Obb& _obb)
 {
-	BX_UNUSED(_aabb, _obb);
-	return false;
+	const Srt srtA = toSrt(_aabb);
+	const Srt srtB = toSrt(_obb.mtx);
+
+	return overlap(srtA, srtB);
 }
 
 bool overlap(const Capsule& _capsule, const Vec3& _pos)
@@ -1579,7 +1689,7 @@ bool overlap(const Disk& _disk, const Obb& _obb)
 
 bool overlap(const Obb& _obb, const Vec3& _pos)
 {
-	Srt srt = toSrt(_obb.mtx);
+	const Srt srt = toSrt(_obb.mtx);
 
 	Aabb aabb;
 	toAabb(aabb, srt.scale);
@@ -1592,7 +1702,7 @@ bool overlap(const Obb& _obb, const Vec3& _pos)
 
 bool overlap(const Obb& _obb, const Plane& _plane)
 {
-	Srt srt = toSrt(_obb.mtx);
+	const Srt srt = toSrt(_obb.mtx);
 
 	const Quaternion invRotation = invert(srt.rotation);
 	const Vec3 axis =
@@ -1610,7 +1720,7 @@ bool overlap(const Obb& _obb, const Plane& _plane)
 
 bool overlap(const Obb& _obb, const Capsule& _capsule)
 {
-	Srt srt = toSrt(_obb.mtx);
+	const Srt srt = toSrt(_obb.mtx);
 
 	Aabb aabb;
 	toAabb(aabb, srt.scale);
@@ -1629,8 +1739,10 @@ bool overlap(const Obb& _obb, const Capsule& _capsule)
 
 bool overlap(const Obb& _obbA, const Obb& _obbB)
 {
-	BX_UNUSED(_obbA, _obbB);
-	return false;
+	const Srt srtA = toSrt(_obbA.mtx);
+	const Srt srtB = toSrt(_obbB.mtx);
+
+	return overlap(srtA, srtB);
 }
 
 bool overlap(const Plane& _plane, const LineSegment& _line)
@@ -1974,7 +2086,7 @@ bool overlap(const Triangle& _triangle, const Disk& _disk)
 
 bool overlap(const Triangle& _triangle, const Obb& _obb)
 {
-	Srt srt = toSrt(_obb.mtx);
+	const Srt srt = toSrt(_obb.mtx);
 
 	Aabb aabb;
 	toAabb(aabb, srt.scale);

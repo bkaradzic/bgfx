@@ -2304,7 +2304,7 @@ namespace bgfx
 											);
 									}
 
-									if (need130)
+									if (need130 || (glsl_profile >= 130))
 									{
 										bx::stringPrintf(code
 											, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
@@ -2368,6 +2368,13 @@ namespace bgfx
 											, "#extension GL_EXT_shadow_samplers : enable\n"
 											  "#define shadow2D shadow2DEXT\n"
 											  "#define shadow2DProj shadow2DProjEXT\n"
+											);
+									}
+									else
+									{
+										bx::stringPrintf(code
+											, "#define shadow2D(_sampler, _coord) texture(_sampler, _coord)\n"
+											  "#define shadow2DProj(_sampler, _coord) textureProj(_sampler, _coord)\n"
 											);
 									}
 

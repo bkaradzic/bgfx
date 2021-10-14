@@ -1,6 +1,6 @@
 
 
-static const spv_ext_inst_desc_t nonsemantic_vulkan_debuginfo_100_entries[] = {
+static const spv_ext_inst_desc_t nonsemantic_shader_debuginfo_100_entries[] = {
   {"DebugInfoNone", 0, 0, nullptr, {SPV_OPERAND_TYPE_NONE}},
   {"DebugCompilationUnit", 1, 0, nullptr, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_NONE}},
   {"DebugTypeBasic", 2, 0, nullptr, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_NONE}},

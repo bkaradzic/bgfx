@@ -55,8 +55,8 @@ class FeatureManager {
     return extinst_importid_OpenCL100DebugInfo_;
   }
 
-  uint32_t GetExtInstImportId_Vulkan100DebugInfo() const {
-    return extinst_importid_Vulkan100DebugInfo_;
+  uint32_t GetExtInstImportId_Shader100DebugInfo() const {
+    return extinst_importid_Shader100DebugInfo_;
   }
 
   friend bool operator==(const FeatureManager& a, const FeatureManager& b);
@@ -97,9 +97,9 @@ class FeatureManager {
   // for performance.
   uint32_t extinst_importid_OpenCL100DebugInfo_ = 0;
 
-  // Common NonSemanticVulkan100DebugInfo external instruction import ids,
+  // Common NonSemanticShader100DebugInfo external instruction import ids,
   // cached for performance.
-  uint32_t extinst_importid_Vulkan100DebugInfo_ = 0;
+  uint32_t extinst_importid_Shader100DebugInfo_ = 0;
 };
 
 }  // namespace opt

@@ -44,7 +44,9 @@ class AggressiveDCEPass : public MemPass {
   using GetBlocksFunction =
       std::function<std::vector<BasicBlock*>*(const BasicBlock*)>;
 
-  AggressiveDCEPass();
+  AggressiveDCEPass(bool preserve_interface = false)
+      : preserve_interface_(preserve_interface) {}
+
   const char* name() const override { return "eliminate-dead-code-aggressive"; }
   Status Process() override;
 
@@ -55,6 +57,12 @@ class AggressiveDCEPass : public MemPass {
   }
 
  private:
+  // Preserve entry point interface if true. All variables in interface
+  // will be marked live and will not be eliminated. This mode is needed by
+  // GPU-Assisted Validation instrumentation where a change in the interface
+  // is not allowed.
+  bool preserve_interface_;
+
   // Return true if |varId| is a variable of |storageClass|. |varId| must either
   // be 0 or the result of an instruction.
   bool IsVarOfStorage(uint32_t varId, uint32_t storageClass);
@@ -101,18 +109,6 @@ class AggressiveDCEPass : public MemPass {
   // If |varId| is local, mark all stores of varId as live.
   void ProcessLoad(Function* func, uint32_t varId);
 
-  // If |bp| is structured header block, returns true and sets |mergeInst| to
-  // the merge instruction, |branchInst| to the branch and |mergeBlockId| to the
-  // merge block if they are not nullptr.  Any of |mergeInst|, |branchInst| or
-  // |mergeBlockId| may be a null pointer.  Returns false if |bp| is a null
-  // pointer.
-  bool IsStructuredHeader(BasicBlock* bp, Instruction** mergeInst,
-                          Instruction** branchInst, uint32_t* mergeBlockId);
-
-  // Initialize block2headerBranch_,  header2nextHeaderBranch_, and
-  // branch2merge_ using |structuredOrder| to order blocks.
-  void ComputeBlock2HeaderMaps(std::list<BasicBlock*>& structuredOrder);
-
   // Add branch to |labelId| to end of block |bp|.
   void AddBranch(uint32_t labelId, BasicBlock* bp);
 
@@ -140,11 +136,33 @@ class AggressiveDCEPass : public MemPass {
 
   Pass::Status ProcessImpl();
 
-  // True if current function has a call instruction contained in it
-  bool call_in_func_;
+  // Adds instructions which must be kept because of they have side-effects
+  // that ADCE cannot model to the work list.
+  void InitializeWorkList(Function* func,
+                          std::list<BasicBlock*>& structuredOrder);
 
-  // True if current function is an entry point
-  bool func_is_entry_point_;
+  // Marks all of the OpFunctionParameter instructions in |func| as live.
+  void MarkFunctionParameterAsLive(const Function* func);
+
+  // Returns the terminator instruction in the header for the innermost
+  // construct that contains |blk|.  Returns nullptr if no such header exists.
+  Instruction* GetHeaderBranch(BasicBlock* blk);
+
+  // Returns the header for the innermost construct that contains |blk|.  A loop
+  // header will be its own header.  Returns nullptr if no such header exists.
+  BasicBlock* GetHeaderBlock(BasicBlock* blk) const;
+
+  // Returns the same as |GetHeaderBlock| except if |blk| is a loop header it
+  // will return the header of the next enclosing construct.  Returns nullptr if
+  // no such header exists.
+  Instruction* GetBranchForNextHeader(BasicBlock* blk);
+
+  // Returns the merge instruction in the same basic block as |inst|.  Returns
+  // nullptr if one does not exist.
+  Instruction* GetMergeInstruction(Instruction* inst);
+
+  // Returns true if |bb| is in the construct with header |header_block|.
+  bool BlockIsInConstruct(BasicBlock* header_block, BasicBlock* bb);
 
   // True if current function is entry point and has no function calls.
   bool private_like_local_;
@@ -155,27 +173,6 @@ class AggressiveDCEPass : public MemPass {
   // removed from this list as the algorithm traces side effects,
   // building up the live instructions set |live_insts_|.
   std::queue<Instruction*> worklist_;
-
-  // Map from block to the branch instruction in the header of the most
-  // immediate controlling structured if or loop.  A loop header block points
-  // to its own branch instruction.  An if-selection block points to the branch
-  // of an enclosing construct's header, if one exists.
-  std::unordered_map<BasicBlock*, Instruction*> block2headerBranch_;
-
-  // Map from header block to the branch instruction in the header of the
-  // structured construct enclosing it.
-  // The liveness algorithm is designed to iteratively mark as live all
-  // structured constructs enclosing a live instruction.
-  std::unordered_map<BasicBlock*, Instruction*> header2nextHeaderBranch_;
-
-  // Maps basic block to their index in the structured order traversal.
-  std::unordered_map<BasicBlock*, uint32_t> structured_order_index_;
-
-  // Map from branch to its associated merge instruction, if any
-  std::unordered_map<Instruction*, Instruction*> branch2merge_;
-
-  // Store instructions to variables of private storage
-  std::vector<Instruction*> private_stores_;
 
   // Live Instructions
   utils::BitVector live_insts_;

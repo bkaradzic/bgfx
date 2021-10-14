@@ -779,6 +779,7 @@ cgltf_result cgltf_load_buffers(
 
 cgltf_result cgltf_load_buffer_base64(const cgltf_options* options, cgltf_size size, const char* base64, void** out_data);
 
+void cgltf_decode_string(char* string);
 void cgltf_decode_uri(char* uri);
 
 cgltf_result cgltf_validate(cgltf_data* data);
@@ -1263,6 +1264,72 @@ static int cgltf_unhex(char ch)
 		(unsigned)(ch - 'A') < 6 ? (ch - 'A') + 10 :
 		(unsigned)(ch - 'a') < 6 ? (ch - 'a') + 10 :
 		-1;
+}
+
+void cgltf_decode_string(char* string)
+{
+	char* read = strchr(string, '\\');
+	if (read == NULL)
+	{
+		return;
+	}
+	char* write = string;
+	char* last = string;
+
+	while (read)
+	{
+		// Copy characters since last escaped sequence
+		cgltf_size written = read - last;
+		strncpy(write, last, written);
+		write += written;
+
+		// jsmn already checked that all escape sequences are valid
+		++read;
+		switch (*read++)
+		{
+		case '\"': *write++ = '\"'; break;
+		case '/':  *write++ = '/';  break;
+		case '\\': *write++ = '\\'; break;
+		case 'b':  *write++ = '\b'; break;
+		case 'f':  *write++ = '\f'; break;
+		case 'r':  *write++ = '\r'; break;
+		case 'n':  *write++ = '\n'; break;
+		case 't':  *write++ = '\t'; break;
+		case 'u':
+		{
+			// UCS-2 codepoint \uXXXX to UTF-8
+			int character = 0;
+			for (cgltf_size i = 0; i < 4; ++i)
+			{
+				character = (character << 4) + cgltf_unhex(*read++);
+			}
+
+			if (character <= 0x7F)
+			{
+				*write++ = character & 0xFF;
+			}
+			else if (character <= 0x7FF)
+			{
+				*write++ = 0xC0 | ((character >> 6) & 0xFF);
+				*write++ = 0x80 | (character & 0x3F);
+			}
+			else
+			{
+				*write++ = 0xE0 | ((character >> 12) & 0xFF);
+				*write++ = 0x80 | ((character >> 6) & 0x3F);
+				*write++ = 0x80 | (character & 0x3F);
+			}
+			break;
+		}
+		default:
+			break;
+		}
+
+		last = read;
+		read = strchr(read, '\\');
+	}
+
+	strcpy(write, last);
 }
 
 void cgltf_decode_uri(char* uri)

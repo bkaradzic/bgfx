@@ -14,10 +14,16 @@
 
 #if BX_PLATFORM_OSX || BX_PLATFORM_IOS
 #	include <objc/message.h>
+#elif BX_PLATFORM_WINDOWS
+#	ifndef WIN32_LEAN_AND_MEAN
+#		define WIN32_LEAN_AND_MEAN
+#	endif // WIN32_LEAN_AND_MEAN
+#	include <windows.h>
 #endif // BX_PLATFORM_OSX
 
 BX_ERROR_RESULT(BGFX_ERROR_TEXTURE_VALIDATION,      BX_MAKEFOURCC('b', 'g', 0, 1) );
 BX_ERROR_RESULT(BGFX_ERROR_FRAME_BUFFER_VALIDATION, BX_MAKEFOURCC('b', 'g', 0, 2) );
+BX_ERROR_RESULT(BGFX_ERROR_IDENTIFIER_VALIDATION,   BX_MAKEFOURCC('b', 'g', 0, 3) );
 
 namespace bgfx
 {
@@ -973,7 +979,7 @@ namespace bgfx
 		return s_predefinedName[_enum];
 	}
 
-	PredefinedUniform::Enum nameToPredefinedUniformEnum(const char* _name)
+	PredefinedUniform::Enum nameToPredefinedUniformEnum(const bx::StringView& _name)
 	{
 		for (uint32_t ii = 0; ii < PredefinedUniform::Count; ++ii)
 		{
@@ -4642,6 +4648,55 @@ namespace bgfx
 		bx::Error err;
 		isTextureValid(_depth, _cubeMap, _numLayers, _format, _flags, &err);
 		return err.isOk();
+	}
+
+	void isIdentifierValid(const bx::StringView& _name, bx::Error* _err)
+	{
+		BX_ERROR_SCOPE(_err, "Uniform identifier validation");
+
+		BGFX_ERROR_CHECK(false
+			|| !_name.isEmpty()
+			, _err
+			, BGFX_ERROR_IDENTIFIER_VALIDATION
+			, "Identifier can't be empty."
+			, ""
+			);
+
+		BGFX_ERROR_CHECK(false
+			|| PredefinedUniform::Count == nameToPredefinedUniformEnum(_name)
+			, _err
+			, BGFX_ERROR_IDENTIFIER_VALIDATION
+			, "Identifier can't use predefined uniform name."
+			, ""
+			);
+
+		const char ch = *_name.getPtr();
+		BGFX_ERROR_CHECK(false
+			|| bx::isAlpha(ch)
+			|| '_' == ch
+			, _err
+			, BGFX_ERROR_IDENTIFIER_VALIDATION
+			, "The first character of an identifier should be either an alphabet character or an underscore."
+			, ""
+			);
+
+		bool result = true;
+
+		for (const char* ptr = _name.getPtr() + 1, *term = _name.getTerm()
+			; ptr != term && result
+			; ++ptr
+			)
+		{
+			result &= bx::isAlphaNum(*ptr) || '_' == *ptr;
+		}
+
+		BGFX_ERROR_CHECK(false
+			|| result
+			, _err
+			, BGFX_ERROR_IDENTIFIER_VALIDATION
+			, "Identifier contains invalid characters. Identifier must be the alphabet character, number, or underscore."
+			, ""
+			);
 	}
 
 	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format)

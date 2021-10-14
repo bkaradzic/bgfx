@@ -92,7 +92,7 @@ void InlinePass::AddStore(uint32_t ptr_id, uint32_t val_id,
                       {{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {ptr_id}},
                        {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {val_id}}}));
   if (line_inst != nullptr) {
-    newStore->dbg_line_insts().push_back(*line_inst);
+    newStore->AddDebugLine(line_inst);
   }
   newStore->SetDebugScope(dbg_scope);
   (*block_ptr)->AddInstruction(std::move(newStore));
@@ -106,7 +106,7 @@ void InlinePass::AddLoad(uint32_t type_id, uint32_t resultId, uint32_t ptr_id,
       new Instruction(context(), SpvOpLoad, type_id, resultId,
                       {{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {ptr_id}}}));
   if (line_inst != nullptr) {
-    newLoad->dbg_line_insts().push_back(*line_inst);
+    newLoad->AddDebugLine(line_inst);
   }
   newLoad->SetDebugScope(dbg_scope);
   (*block_ptr)->AddInstruction(std::move(newLoad));
@@ -405,8 +405,8 @@ bool InlinePass::InlineEntryBlock(
   while (callee_inst_itr != callee_first_block->end()) {
     // Don't inline function definition links, the calling function is not a
     // definition.
-    if (callee_inst_itr->GetVulkan100DebugOpcode() ==
-        NonSemanticVulkanDebugInfo100DebugFunctionDefinition) {
+    if (callee_inst_itr->GetShader100DebugOpcode() ==
+        NonSemanticShaderDebugInfo100DebugFunctionDefinition) {
       ++callee_inst_itr;
       continue;
     }
@@ -441,6 +441,11 @@ std::unique_ptr<BasicBlock> InlinePass::InlineBasicBlocks(
     auto tail_inst_itr = callee_block_itr->end();
     for (auto inst_itr = callee_block_itr->begin(); inst_itr != tail_inst_itr;
          ++inst_itr) {
+      // Don't inline function definition links, the calling function is not a
+      // definition
+      if (inst_itr->GetShader100DebugOpcode() ==
+          NonSemanticShaderDebugInfo100DebugFunctionDefinition)
+        continue;
       if (!InlineSingleInstruction(
               callee2caller, new_blk_ptr.get(), &*inst_itr,
               context()->get_debug_info_mgr()->BuildDebugInlinedAtChain(

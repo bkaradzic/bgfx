@@ -1,10 +1,10 @@
 /*
-* Copyright 2021 Richard Schubert. All rights reserved.
-* License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
-* 
-* AMD FidelityFX Super Resolution 1.0 (FSR)
-* Based on https://github.com/GPUOpen-Effects/FidelityFX-FSR/blob/master/sample/
-*/
+ * Copyright 2021 Richard Schubert. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ *
+ * AMD FidelityFX Super Resolution 1.0 (FSR)
+ * Based on https://github.com/GPUOpen-Effects/FidelityFX-FSR/blob/master/sample/
+ */
 
 #include <common.h>
 #include <camera.h>
@@ -12,9 +12,6 @@
 #include <imgui/imgui.h>
 #include <bx/rng.h>
 #include <bx/os.h>
-
-#include <cmath>
-#include <algorithm>
 
 #include "fsr.h"
 
@@ -28,18 +25,20 @@ namespace
 	enum Meshes
 	{
 		MeshCube = 0,
-		MeshHollowCube
+		MeshHollowCube,
 	};
 
 	static const char *s_meshPaths[] =
-		{
-			"meshes/cube.bin",
-			"meshes/hollowcube.bin"};
+	{
+		"meshes/cube.bin",
+		"meshes/hollowcube.bin",
+	};
 
 	static const float s_meshScale[] =
-		{
-			0.45f,
-			0.30f};
+	{
+		0.45f,
+		0.30f,
+	};
 
 	// Vertex decl for our screen space quad (used in deferred rendering)
 	struct PosTexCoord0Vertex
@@ -66,7 +65,7 @@ namespace
 
 	void screenSpaceTriangle(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f, float _offsetX = 0.0f, float _offsetY = 0.0f)
 	{
-		if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout))
+		if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout) )
 		{
 			bgfx::TransientVertexBuffer vb;
 			bgfx::allocTransientVertexBuffer(&vb, 3, PosTexCoord0Vertex::ms_layout);
@@ -214,11 +213,10 @@ namespace
 	{
 		void init(uint32_t _width, uint32_t _height, bgfx::TextureFormat::Enum _format, uint64_t _flags)
 		{
-			m_width = _width;
-			m_height = _height;
+			m_width   = _width;
+			m_height  = _height;
 			m_texture = bgfx::createTexture2D(uint16_t(_width), uint16_t(_height), false, 1, _format, _flags);
-			const bool destroyTextures = true;
-			m_buffer = bgfx::createFrameBuffer(1, &m_texture, destroyTextures);
+			m_buffer  = bgfx::createFrameBuffer(1, &m_texture, true);
 		}
 
 		void destroy()
@@ -253,14 +251,14 @@ namespace
 			m_position.y = y;
 		}
 
-		void drawToScreen(bgfx::ViewId &view, AppState const &state, const bgfx::Caps *caps)
+		void drawToScreen(bgfx::ViewId &view, AppState const &state)
 		{
 			float invScreenScaleX = 1.0f / static_cast<float>(state.m_width);
 			float invScreenScaleY = 1.0f / static_cast<float>(state.m_height);
 			float scaleX = m_widgetWidth * invScreenScaleX;
 			float scaleY = m_widgetHeight * invScreenScaleY;
-			float offsetX = -std::min(std::max(m_position.x - m_widgetWidth * 0.5f, -3.0f), static_cast<float>(state.m_width - m_widgetWidth + 3)) * invScreenScaleX;
-			float offsetY = -std::min(std::max(m_position.y - m_widgetHeight * 0.5f, -3.0f), static_cast<float>(state.m_height - m_widgetHeight + 3)) * invScreenScaleY;
+			float offsetX = -bx::min(bx::max(m_position.x - m_widgetWidth * 0.5f, -3.0f), static_cast<float>(state.m_width - m_widgetWidth + 3) ) * invScreenScaleX;
+			float offsetY = -bx::min(bx::max(m_position.y - m_widgetHeight * 0.5f, -3.0f), static_cast<float>(state.m_height - m_widgetHeight + 3) ) * invScreenScaleY;
 
 			bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_ALWAYS | BGFX_STATE_BLEND_ALPHA);
 			bgfx::setTexture(0, state.s_color, m_widgetTexture);
@@ -279,16 +277,16 @@ namespace
 				bgfx::setTransform(identity);
 			}
 
-			float const verticalPos = caps->originBottomLeft ? state.m_height - m_position.y : m_position.y;
-			float const invMagScaleX = 1.0f / static_cast<float>(m_content.m_width);
-			float const invMagScaleY = 1.0f / static_cast<float>(m_content.m_height);
-			float const scaleX = state.m_width * invMagScaleX;
-			float const scaleY = state.m_height * invMagScaleY;
-			float const offsetX = std::min(std::max(m_position.x - m_content.m_width * 0.5f, 0.0f), static_cast<float>(state.m_width - m_content.m_width)) * scaleX / state.m_width;
-			float const offsetY = std::min(std::max(verticalPos - m_content.m_height * 0.5f, 0.0f), static_cast<float>(state.m_height - m_content.m_height)) * scaleY / state.m_height;
+			const float verticalPos = caps->originBottomLeft ? state.m_height - m_position.y : m_position.y;
+			const float invMagScaleX = 1.0f / static_cast<float>(m_content.m_width);
+			const float invMagScaleY = 1.0f / static_cast<float>(m_content.m_height);
+			const float scaleX = state.m_width * invMagScaleX;
+			const float scaleY = state.m_height * invMagScaleY;
+			const float offsetX = bx::min(bx::max(m_position.x - m_content.m_width * 0.5f, 0.0f), static_cast<float>(state.m_width - m_content.m_width) ) * scaleX / state.m_width;
+			const float offsetY = bx::min(bx::max(verticalPos - m_content.m_height * 0.5f, 0.0f), static_cast<float>(state.m_height - m_content.m_height) ) * scaleY / state.m_height;
 
 			bgfx::setViewName(view, "magnifier");
-			bgfx::setViewRect(view, 0, 0, uint16_t(m_content.m_width), uint16_t(m_content.m_height));
+			bgfx::setViewRect(view, 0, 0, uint16_t(m_content.m_width), uint16_t(m_content.m_height) );
 			bgfx::setViewTransform(view, NULL, orthoProj);
 			bgfx::setViewFrameBuffer(view, m_content.m_buffer);
 			bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
@@ -307,16 +305,17 @@ namespace
 	private:
 		void createWidgetTexture(uint32_t _width, uint32_t _height)
 		{
-			const bgfx::Memory *mem = bgfx::alloc(_width * _height * sizeof(uint32_t));
+			const bgfx::Memory *mem = bgfx::alloc(_width * _height * sizeof(uint32_t) );
 
-			uint32_t *pixels = const_cast<uint32_t *>((uint32_t *const)(mem->data));
-			memset(pixels, 0, mem->size);
+			uint32_t *pixels = (uint32_t*)mem->data;
+			bx::memSet(pixels, 0, mem->size);
 
-			uint32_t const white = 0xFFFFFFFF;
-			uint32_t const black = 0xFF000000;
+			const uint32_t white = 0xFFFFFFFF;
+			const uint32_t black = 0xFF000000;
 
-			uint32_t const y0 = 1;
-			uint32_t const y1 = _height - 3;
+			const uint32_t y0 = 1;
+			const uint32_t y1 = _height - 3;
+
 			for (uint32_t x = 0; x < _width - 4; x++)
 			{
 				pixels[(y0 + 0) * _width + x + 1] = white;
@@ -324,8 +323,10 @@ namespace
 				pixels[(y1 + 0) * _width + x + 1] = white;
 				pixels[(y1 + 1) * _width + x + 2] = black;
 			}
-			uint32_t const x0 = 1;
-			uint32_t const x1 = _width - 3;
+
+			const uint32_t x0 = 1;
+			const uint32_t x1 = _width - 3;
+
 			for (uint32_t y = 0; y < _height - 3; y++)
 			{
 				pixels[(y + 1) * _width + x0 + 0] = white;
@@ -333,11 +334,20 @@ namespace
 				pixels[(y + 1) * _width + x1 + 0] = white;
 				pixels[(y + 2) * _width + x1 + 1] = black;
 			}
+
 			pixels[(y1 + 0) * _width + 2] = white;
 
-			m_widgetWidth = _width;
-			m_widgetHeight = _height;
-			m_widgetTexture = bgfx::createTexture2D(uint16_t(_width), uint16_t(_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP, mem);
+			m_widgetWidth   = _width;
+			m_widgetHeight  = _height;
+			m_widgetTexture = bgfx::createTexture2D(
+				  uint16_t(_width)
+				, uint16_t(_height)
+				, false
+				, 1
+				, bgfx::TextureFormat::BGRA8
+				, BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+				, mem
+				);
 		}
 	};
 
@@ -353,18 +363,21 @@ namespace
 		{
 			Args args(_argc, _argv);
 
-			m_state.m_width = _width;
+			m_state.m_width  = _width;
 			m_state.m_height = _height;
-			m_state.m_debug = BGFX_DEBUG_NONE;
-			m_state.m_reset = BGFX_RESET_MAXANISOTROPY;
+			m_state.m_debug  = BGFX_DEBUG_NONE;
+			m_state.m_reset  = 0
+				| BGFX_RESET_VSYNC
+				| BGFX_RESET_MAXANISOTROPY
+				;
 
 			bgfx::Init init;
 			init.type = args.m_type;
 
-			init.vendorId = args.m_pciId;
-			init.resolution.width = m_state.m_width;
+			init.vendorId          = args.m_pciId;
+			init.resolution.width  = m_state.m_width;
 			init.resolution.height = m_state.m_height;
-			init.resolution.reset = m_state.m_reset;
+			init.resolution.reset  = m_state.m_reset;
 			bgfx::init(init);
 
 			// Enable debug text.
@@ -375,12 +388,12 @@ namespace
 
 			// Create texture sampler uniforms (used when we bind textures)
 			m_state.s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler);
-			m_state.s_color = bgfx::createUniform("s_color", bgfx::UniformType::Sampler);
+			m_state.s_color  = bgfx::createUniform("s_color",  bgfx::UniformType::Sampler);
 			m_state.s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Sampler);
 
 			// Create program from shaders.
-			m_state.m_forwardProgram = loadProgram("vs_fsr_forward", "fs_fsr_forward");
-			m_state.m_gridProgram = loadProgram("vs_fsr_forward", "fs_fsr_forward_grid");
+			m_state.m_forwardProgram           = loadProgram("vs_fsr_forward",    "fs_fsr_forward");
+			m_state.m_gridProgram              = loadProgram("vs_fsr_forward",    "fs_fsr_forward_grid");
 			m_state.m_copyLinearToGammaProgram = loadProgram("vs_fsr_screenquad", "fs_fsr_copy_linear_to_gamma");
 
 			// Load some meshes
@@ -457,18 +470,22 @@ namespace
 
 		bool update() override
 		{
-			if (!entry::processEvents(m_state.m_width, m_state.m_height, m_state.m_debug, m_state.m_reset, &m_state.m_mouseState))
+			if (!entry::processEvents(m_state.m_width, m_state.m_height, m_state.m_debug, m_state.m_reset, &m_state.m_mouseState) )
 			{
 				// skip processing when minimized, otherwise crashing
-				if (0 == m_state.m_width || 0 == m_state.m_height)
+				if (0 == m_state.m_width
+				||  0 == m_state.m_height)
 				{
 					return true;
 				}
 
-				if (m_state.m_mouseState.m_buttons[entry::MouseButton::Left] && !ImGui::MouseOverArea())
+				if (m_state.m_mouseState.m_buttons[entry::MouseButton::Left]
+				&&  !ImGui::MouseOverArea() )
 				{
-					m_magnifierWidget.setPosition(static_cast<float>(m_state.m_mouseState.m_mx),
-												  static_cast<float>(m_state.m_mouseState.m_my));
+					m_magnifierWidget.setPosition(
+						  float(m_state.m_mouseState.m_mx)
+						, float(m_state.m_mouseState.m_my)
+						);
 				}
 
 				// Update frame timer
@@ -476,9 +493,9 @@ namespace
 				static int64_t last = now;
 				const int64_t frameTime = now - last;
 				last = now;
-				const double freq = double(bx::getHPFrequency());
+				const double freq = double(bx::getHPFrequency() );
 				const float deltaTime = float(frameTime / freq);
-				const bgfx::Caps *caps = bgfx::getCaps();
+				const bgfx::Caps* caps = bgfx::getCaps();
 
 				if (m_state.m_size[0] != (int32_t)m_state.m_width || m_state.m_size[1] != (int32_t)m_state.m_height)
 				{
@@ -497,43 +514,46 @@ namespace
 				}
 
 				// Update camera
-				cameraUpdate(deltaTime * 0.15f, m_state.m_mouseState, ImGui::MouseOverArea());
+				cameraUpdate(deltaTime * 0.15f, m_state.m_mouseState, ImGui::MouseOverArea() );
 
 				cameraGetViewMtx(m_state.m_view);
 
 				updateUniforms();
 
-				bx::mtxProj(m_state.m_proj, m_state.m_fovY, float(m_state.m_size[0]) / float(m_state.m_size[1]), 0.01f, 100.0f, caps->homogeneousDepth);
+				bx::mtxProj(
+					  m_state.m_proj
+					, m_state.m_fovY
+					, float(m_state.m_size[0]) / float(m_state.m_size[1])
+					, 0.01f
+					, 100.0f
+					, caps->homogeneousDepth
+					);
 
 				bgfx::ViewId view = 0;
-
-				// Clear full frame buffer to avoid sampling into garbage during FSR pass
-				if (!m_state.m_renderNativeResolution)
-				{
-					bgfx::setViewRect(view, 0, 0, m_state.m_width, m_state.m_height);
-					bgfx::setViewClear(view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x00000000, 1.0f, 0);
-					bgfx::setViewFrameBuffer(view, m_state.m_frameBuffer);
-					bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS);
-					bgfx::setTexture(0, m_state.s_color, BGFX_INVALID_HANDLE);
-					bgfx::submit(view, BGFX_INVALID_HANDLE);
-
-					++view;
-				}
 
 				// Draw models into scene
 				{
 					bgfx::setViewName(view, "forward scene");
 					bgfx::setViewClear(view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x7fb8ffff, 1.0f, 0);
 
-					float const viewScale = m_state.m_renderNativeResolution ? 1.0f : 1.0f / m_state.m_fsr.m_config.m_superSamplingFactor;
-					uint16_t const viewRectWidth = uint16_t(ceilf(m_state.m_size[0] * viewScale));
-					uint16_t const viewRectHeight = uint16_t(ceilf(m_state.m_size[1] * viewScale));
-					uint16_t const viewRectY = caps->originBottomLeft ? m_state.m_size[1] - viewRectHeight : 0;
+					const float viewScale = m_state.m_renderNativeResolution
+						? 1.0f
+						: 1.0f / m_state.m_fsr.m_config.m_superSamplingFactor
+						;
+					const uint16_t viewRectWidth  = uint16_t(bx::ceil(m_state.m_size[0] * viewScale) );
+					const uint16_t viewRectHeight = uint16_t(bx::ceil(m_state.m_size[1] * viewScale) );
+					const uint16_t viewRectY      = uint16_t(caps->originBottomLeft ? m_state.m_size[1] - viewRectHeight : 0);
+
 					bgfx::setViewRect(view, 0, viewRectY, viewRectWidth, viewRectHeight);
 					bgfx::setViewTransform(view, m_state.m_view, m_state.m_proj);
 					bgfx::setViewFrameBuffer(view, m_state.m_frameBuffer);
 
-					bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS);
+					bgfx::setState(0
+						| BGFX_STATE_WRITE_RGB
+						| BGFX_STATE_WRITE_A
+						| BGFX_STATE_WRITE_Z
+						| BGFX_STATE_DEPTH_TEST_LESS
+						);
 
 					drawAllModels(view, m_state.m_forwardProgram, m_state.m_modelUniforms);
 
@@ -558,17 +578,11 @@ namespace
 
 					float orthoProj[16];
 					bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, caps->homogeneousDepth);
-					{
-						// clear out transform stack
-						float identity[16];
-						bx::mtxIdentity(identity);
-						bgfx::setTransform(identity);
-					}
 
 					bgfx::setViewName(view, "display");
 					bgfx::setViewClear(view, BGFX_CLEAR_NONE, 0, 1.0f, 0);
 
-					bgfx::setViewRect(view, 0, 0, uint16_t(m_state.m_width), uint16_t(m_state.m_height));
+					bgfx::setViewRect(view, 0, 0, uint16_t(m_state.m_width), uint16_t(m_state.m_height) );
 					bgfx::setViewTransform(view, NULL, orthoProj);
 					bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
 					bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
@@ -577,12 +591,12 @@ namespace
 					bgfx::submit(view, m_state.m_copyLinearToGammaProgram);
 				}
 
-				m_magnifierWidget.drawToScreen(view, m_state, caps);
+				m_magnifierWidget.drawToScreen(view, m_state);
 
 				++view;
 
 				// Draw UI
-				imguiBeginFrame(m_state.m_mouseState.m_mx, m_state.m_mouseState.m_my, (m_state.m_mouseState.m_buttons[entry::MouseButton::Left] ? IMGUI_MBUT_LEFT : 0) | (m_state.m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0) | (m_state.m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0), m_state.m_mouseState.m_mz, uint16_t(m_state.m_width), uint16_t(m_state.m_height));
+				imguiBeginFrame(m_state.m_mouseState.m_mx, m_state.m_mouseState.m_my, (m_state.m_mouseState.m_buttons[entry::MouseButton::Left] ? IMGUI_MBUT_LEFT : 0) | (m_state.m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0) | (m_state.m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0), m_state.m_mouseState.m_mz, uint16_t(m_state.m_width), uint16_t(m_state.m_height) );
 
 				showExampleDialog(this);
 
@@ -591,29 +605,30 @@ namespace
 				ImGui::Begin("Settings", NULL, 0);
 				ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
 
-				ImVec2 const itemSize = ImGui::GetItemRectSize();
+				const ImVec2 itemSize = ImGui::GetItemRectSize();
 
 				{
 					ImGui::Checkbox("Animate scene", &m_state.m_animateScene);
 
-					if (ImGui::Combo("Antialiasing", &m_state.m_antiAliasingSetting, "none\0"
-																					 "4x\0"
-																					 "16x\0"
-																					 "\0"))
+					if (ImGui::Combo("Antialiasing", &m_state.m_antiAliasingSetting, "none\0""4x\0""16x\0""\0") )
 					{
 						resize();
 					}
 
 					ImGui::Checkbox("Render native resolution", &m_state.m_renderNativeResolution);
-					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip("Disable super sampling and FSR.");
 
-					ImGui::Image(m_magnifierWidget.m_content.m_texture, ImVec2(itemSize.x * 0.94f, itemSize.x * 0.94f));
+					if (ImGui::IsItemHovered() )
+					{
+						ImGui::SetTooltip("Disable super sampling and FSR.");
+					}
+
+					ImGui::Image(m_magnifierWidget.m_content.m_texture, ImVec2(itemSize.x * 0.94f, itemSize.x * 0.94f) );
 
 					if (!m_state.m_renderNativeResolution)
 					{
 						ImGui::SliderFloat("Super sampling", &m_state.m_fsr.m_config.m_superSamplingFactor, 1.0f, 2.0f);
-						if (ImGui::IsItemHovered())
+
+						if (ImGui::IsItemHovered() )
 						{
 							ImGui::BeginTooltip();
 							ImGui::Text("2.0 means the scene is rendered at half window resolution.");
@@ -623,10 +638,11 @@ namespace
 
 						ImGui::Separator();
 
-						if (m_state.m_fsr.supports16BitPrecision())
+						if (m_state.m_fsr.supports16BitPrecision() )
 						{
 							ImGui::Checkbox("Use 16 Bit", &m_state.m_fsr.m_config.m_fsr16Bit);
-							if (ImGui::IsItemHovered())
+
+							if (ImGui::IsItemHovered() )
 							{
 								ImGui::BeginTooltip();
 								ImGui::Text("For better performance and less memory consumption use 16 Bit precision.");
@@ -637,20 +653,29 @@ namespace
 						}
 
 						ImGui::Checkbox("Apply FSR", &m_state.m_fsr.m_config.m_applyFsr);
-						if (ImGui::IsItemHovered())
+
+						if (ImGui::IsItemHovered() )
+						{
 							ImGui::SetTooltip("Compare between FSR and bilinear interpolation of source image.");
+						}
 
 						if (m_state.m_fsr.m_config.m_applyFsr)
 						{
 							ImGui::Checkbox("Apply FSR sharpening", &m_state.m_fsr.m_config.m_applyFsrRcas);
-							if (ImGui::IsItemHovered())
+
+							if (ImGui::IsItemHovered() )
+							{
 								ImGui::SetTooltip("Apply the FSR RCAS sharpening pass.");
+							}
 
 							if (m_state.m_fsr.m_config.m_applyFsrRcas)
 							{
 								ImGui::SliderFloat("Sharpening attenuation", &m_state.m_fsr.m_config.m_rcasAttenuation, 0.01f, 2.0f);
-								if (ImGui::IsItemHovered())
+
+								if (ImGui::IsItemHovered() )
+								{
 									ImGui::SetTooltip("Lower value means sharper.");
+								}
 							}
 						}
 					}
@@ -675,9 +700,9 @@ namespace
 			const int32_t width = 6;
 			const int32_t length = 20;
 
-			float c0[] = {235.0f / 255.0f, 126.0f / 255.0f, 30.0f / 255.0f};  // orange
-			float c1[] = {235.0f / 255.0f, 146.0f / 255.0f, 251.0f / 255.0f}; // purple
-			float c2[] = {199.0f / 255.0f, 0.0f / 255.0f, 57.0f / 255.0f};	  // pink
+			float c0[] = { 235.0f / 255.0f, 126.0f / 255.0f,  30.0f / 255.0f}; // orange
+			float c1[] = { 235.0f / 255.0f, 146.0f / 255.0f, 251.0f / 255.0f}; // purple
+			float c2[] = { 199.0f / 255.0f,   0.0f / 255.0f,  57.0f / 255.0f}; // pink
 
 			for (int32_t zz = 0; zz < length; ++zz)
 			{
@@ -748,15 +773,48 @@ namespace
 			m_state.m_size[0] = m_state.m_width;
 			m_state.m_size[1] = m_state.m_height;
 
-			uint64_t constexpr msaaFlags[] = {BGFX_TEXTURE_NONE, BGFX_TEXTURE_RT_MSAA_X4, BGFX_TEXTURE_RT_MSAA_X16};
+			constexpr uint64_t msaaFlags[] =
+			{
+				BGFX_TEXTURE_NONE,
+				BGFX_TEXTURE_RT_MSAA_X4,
+				BGFX_TEXTURE_RT_MSAA_X16,
+			};
 
 			const uint64_t msaa = msaaFlags[m_state.m_antiAliasingSetting];
-			const uint64_t colorFlags = 0 | BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | msaa;
-			const uint64_t depthFlags = 0 | BGFX_TEXTURE_RT_WRITE_ONLY | msaa;
+			const uint64_t colorFlags = 0
+				| BGFX_TEXTURE_RT
+				| BGFX_SAMPLER_U_CLAMP
+				| BGFX_SAMPLER_V_CLAMP
+				| msaa
+				;
+			const uint64_t depthFlags = 0
+				| BGFX_TEXTURE_RT_WRITE_ONLY
+				| msaa
+				;
 
-			m_state.m_frameBufferTex[FRAMEBUFFER_RT_COLOR] = bgfx::createTexture2D(uint16_t(m_state.m_size[0]), uint16_t(m_state.m_size[1]), false, 1, bgfx::TextureFormat::RGBA16F, colorFlags);
-			m_state.m_frameBufferTex[FRAMEBUFFER_RT_DEPTH] = bgfx::createTexture2D(uint16_t(m_state.m_size[0]), uint16_t(m_state.m_size[1]), false, 1, bgfx::TextureFormat::D24S8, depthFlags);
-			m_state.m_frameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_state.m_frameBufferTex), m_state.m_frameBufferTex, true);
+			m_state.m_frameBufferTex[FRAMEBUFFER_RT_COLOR] = bgfx::createTexture2D(
+				  uint16_t(m_state.m_size[0])
+				, uint16_t(m_state.m_size[1])
+				, false
+				, 1
+				, bgfx::TextureFormat::RGBA16F
+				, colorFlags
+				);
+
+			m_state.m_frameBufferTex[FRAMEBUFFER_RT_DEPTH] = bgfx::createTexture2D(
+				  uint16_t(m_state.m_size[0])
+				, uint16_t(m_state.m_size[1])
+				, false
+				, 1
+				, bgfx::TextureFormat::D32F
+				, depthFlags
+				);
+
+			m_state.m_frameBuffer = bgfx::createFrameBuffer(
+				  BX_COUNTOF(m_state.m_frameBufferTex)
+				, m_state.m_frameBufferTex
+				, true
+				);
 		}
 
 		// all buffers set to destroy their textures
@@ -778,4 +836,10 @@ namespace
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleFsr, "46-fsr", "AMD FidelityFX Super Resolution (FSR)\n\nFor an optimal FSR result high quality antialiasing for the low resolution source image and negative texture LOD bias is recommended.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleFsr
+	, "46-fsr"
+	, "AMD FidelityFX Super Resolution (FSR)\n"
+	  "\n"
+	  "For an optimal FSR result high quality antialiasing for the low resolution source image and negative texture LOD bias is recommended."
+	);

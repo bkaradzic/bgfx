@@ -233,11 +233,11 @@ static const spv_operand_desc_t pygen_variable_ImageOperandsEntries[] = {
 
 static const spv_operand_desc_t pygen_variable_FPFastMathModeEntries[] = {
   {"None", 0x0000, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"NotNaN", 0x0001, 1, pygen_variable_caps_Kernel, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"NotInf", 0x0002, 1, pygen_variable_caps_Kernel, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"NSZ", 0x0004, 1, pygen_variable_caps_Kernel, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"AllowRecip", 0x0008, 1, pygen_variable_caps_Kernel, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"Fast", 0x0010, 1, pygen_variable_caps_Kernel, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"NotNaN", 0x0001, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"NotInf", 0x0002, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"NSZ", 0x0004, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"AllowRecip", 0x0008, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Fast", 0x0010, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"AllowContractFastINTEL", 0x10000, 1, pygen_variable_caps_FPFastMathModeINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
   {"AllowReassocINTEL", 0x20000, 1, pygen_variable_caps_FPFastMathModeINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
 };

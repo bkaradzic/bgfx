@@ -636,6 +636,11 @@ namespace bgfx { namespace spirv
 						Uniform un;
 						un.name = program->getUniformName(ii);
 
+						if (bx::hasSuffix(un.name.c_str(), ".@data") )
+						{
+							continue;
+						}
+
 						un.num = 0;
 						const uint32_t offset = program->getUniformBufferOffset(ii);
 						un.regIndex = uint16_t(offset);
@@ -761,7 +766,7 @@ namespace bgfx { namespace spirv
 						un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
 						un.texFormat = uint16_t(s_textureFormats[imageType.format]);
 
-						un.regIndex = binding_index;
+						un.regIndex = uint16_t(binding_index);
 						un.regCount = 0; // unused
 
 						uniforms.push_back(un);
@@ -790,7 +795,7 @@ namespace bgfx { namespace spirv
 						un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
 						un.texFormat = uint16_t(s_textureFormats[imageType.format]);
 
-						un.regIndex = binding_index;
+						un.regIndex = uint16_t(binding_index);
 						un.regCount = descriptorTypeToId(DescriptorType::StorageImage);
 
 						uniforms.push_back(un);
@@ -800,6 +805,7 @@ namespace bgfx { namespace spirv
 					for (auto& resource : resourcesrefl.storage_buffers)
 					{
 						std::string name = refl.get_name(resource.id);
+
 						uint32_t binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
 
 						spirv_cross::Bitset flags = refl.get_buffer_block_flags(resource.id);
@@ -811,7 +817,7 @@ namespace bgfx { namespace spirv
 						un.name = name;
 						un.type = type;
 						un.num = 0;
-						un.regIndex = binding_index;
+						un.regIndex = uint16_t(binding_index);
 						un.regCount = descriptorTypeToId(DescriptorType::StorageBuffer);
 
 						uniforms.push_back(un);

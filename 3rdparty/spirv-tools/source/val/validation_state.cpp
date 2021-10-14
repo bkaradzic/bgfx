@@ -175,6 +175,9 @@ ValidationState_t::ValidationState_t(const spv_const_context ctx,
     }
   }
 
+  // LocalSizeId is always allowed in non-Vulkan environments.
+  features_.env_allow_localsizeid = !spvIsVulkanEnv(env);
+
   // Only attempt to count if we have words, otherwise let the other validation
   // fail and generate an error.
   if (num_words > 0) {
@@ -729,19 +732,19 @@ uint32_t ValidationState_t::GetBitWidth(uint32_t id) const {
 
 bool ValidationState_t::IsVoidType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
-  return inst->opcode() == SpvOpTypeVoid;
+  return inst && inst->opcode() == SpvOpTypeVoid;
 }
 
 bool ValidationState_t::IsFloatScalarType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
-  return inst->opcode() == SpvOpTypeFloat;
+  return inst && inst->opcode() == SpvOpTypeFloat;
 }
 
 bool ValidationState_t::IsFloatVectorType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
+  if (!inst) {
+    return false;
+  }
 
   if (inst->opcode() == SpvOpTypeVector) {
     return IsFloatScalarType(GetComponentType(id));
@@ -752,7 +755,9 @@ bool ValidationState_t::IsFloatVectorType(uint32_t id) const {
 
 bool ValidationState_t::IsFloatScalarOrVectorType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
+  if (!inst) {
+    return false;
+  }
 
   if (inst->opcode() == SpvOpTypeFloat) {
     return true;
@@ -767,13 +772,14 @@ bool ValidationState_t::IsFloatScalarOrVectorType(uint32_t id) const {
 
 bool ValidationState_t::IsIntScalarType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
-  return inst->opcode() == SpvOpTypeInt;
+  return inst && inst->opcode() == SpvOpTypeInt;
 }
 
 bool ValidationState_t::IsIntVectorType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
+  if (!inst) {
+    return false;
+  }
 
   if (inst->opcode() == SpvOpTypeVector) {
     return IsIntScalarType(GetComponentType(id));
@@ -784,7 +790,9 @@ bool ValidationState_t::IsIntVectorType(uint32_t id) const {
 
 bool ValidationState_t::IsIntScalarOrVectorType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
+  if (!inst) {
+    return false;
+  }
 
   if (inst->opcode() == SpvOpTypeInt) {
     return true;
@@ -799,13 +807,14 @@ bool ValidationState_t::IsIntScalarOrVectorType(uint32_t id) const {
 
 bool ValidationState_t::IsUnsignedIntScalarType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
-  return inst->opcode() == SpvOpTypeInt && inst->word(3) == 0;
+  return inst && inst->opcode() == SpvOpTypeInt && inst->word(3) == 0;
 }
 
 bool ValidationState_t::IsUnsignedIntVectorType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
+  if (!inst) {
+    return false;
+  }
 
   if (inst->opcode() == SpvOpTypeVector) {
     return IsUnsignedIntScalarType(GetComponentType(id));
@@ -816,13 +825,14 @@ bool ValidationState_t::IsUnsignedIntVectorType(uint32_t id) const {
 
 bool ValidationState_t::IsSignedIntScalarType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
-  return inst->opcode() == SpvOpTypeInt && inst->word(3) == 1;
+  return inst && inst->opcode() == SpvOpTypeInt && inst->word(3) == 1;
 }
 
 bool ValidationState_t::IsSignedIntVectorType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
+  if (!inst) {
+    return false;
+  }
 
   if (inst->opcode() == SpvOpTypeVector) {
     return IsSignedIntScalarType(GetComponentType(id));
@@ -833,13 +843,14 @@ bool ValidationState_t::IsSignedIntVectorType(uint32_t id) const {
 
 bool ValidationState_t::IsBoolScalarType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
-  return inst->opcode() == SpvOpTypeBool;
+  return inst && inst->opcode() == SpvOpTypeBool;
 }
 
 bool ValidationState_t::IsBoolVectorType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
+  if (!inst) {
+    return false;
+  }
 
   if (inst->opcode() == SpvOpTypeVector) {
     return IsBoolScalarType(GetComponentType(id));
@@ -850,7 +861,9 @@ bool ValidationState_t::IsBoolVectorType(uint32_t id) const {
 
 bool ValidationState_t::IsBoolScalarOrVectorType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
+  if (!inst) {
+    return false;
+  }
 
   if (inst->opcode() == SpvOpTypeBool) {
     return true;
@@ -865,7 +878,9 @@ bool ValidationState_t::IsBoolScalarOrVectorType(uint32_t id) const {
 
 bool ValidationState_t::IsFloatMatrixType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
+  if (!inst) {
+    return false;
+  }
 
   if (inst->opcode() == SpvOpTypeMatrix) {
     return IsFloatScalarType(GetComponentType(id));
@@ -920,8 +935,7 @@ bool ValidationState_t::GetStructMemberTypes(
 
 bool ValidationState_t::IsPointerType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
-  return inst->opcode() == SpvOpTypePointer;
+  return inst && inst->opcode() == SpvOpTypePointer;
 }
 
 bool ValidationState_t::GetPointerTypeInfo(uint32_t id, uint32_t* data_type,
@@ -939,8 +953,7 @@ bool ValidationState_t::GetPointerTypeInfo(uint32_t id, uint32_t* data_type,
 
 bool ValidationState_t::IsCooperativeMatrixType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  assert(inst);
-  return inst->opcode() == SpvOpTypeCooperativeMatrixNV;
+  return inst && inst->opcode() == SpvOpTypeCooperativeMatrixNV;
 }
 
 bool ValidationState_t::IsFloatCooperativeMatrixType(uint32_t id) const {

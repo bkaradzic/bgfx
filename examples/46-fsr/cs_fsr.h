@@ -10,20 +10,18 @@
 
 uniform vec4 u_params[3];
 
-#define ViewportSizeRcasAttenuation			(u_params[0])
-#define SrcSize								(u_params[1])
-#define DstSize								(u_params[2])
+#define ViewportSizeRcasAttenuation u_params[0]
+#define SrcSize                     u_params[1]
+#define DstSize                     u_params[2]
 
 #define A_GPU 1
 
-#if BGFX_SHADER_LANGUAGE_GLSL > 0
+#if BGFX_SHADER_LANGUAGE_GLSL
 #define A_GLSL 1
 #define A_SKIP_EXT 1
-#elif BGFX_SHADER_LANGUAGE_SPIRV > 0
+#else
 #define A_HLSL 1
-#elif BGFX_SHADER_LANGUAGE_HLSL > 0
-#define A_HLSL 1
-#endif
+#endif // BGFX_SHADER_LANGUAGE_GLSL
 
 #if SAMPLE_SLOW_FALLBACK
     #include "ffx_a.h"

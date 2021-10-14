@@ -1,10 +1,10 @@
 /*
-* Copyright 2021 Richard Schubert. All rights reserved.
-* License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
-* 
-* AMD FidelityFX Super Resolution 1.0 (FSR)
-* Based on https://github.com/GPUOpen-Effects/FidelityFX-FSR/blob/master/sample/
-*/
+ * Copyright 2021 Richard Schubert. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ *
+ * AMD FidelityFX Super Resolution 1.0 (FSR)
+ * Based on https://github.com/GPUOpen-Effects/FidelityFX-FSR/blob/master/sample/
+ */
 
 #ifndef __FSR_H__
 #define __FSR_H__
@@ -14,14 +14,13 @@
 class Fsr
 {
 public:
-
 	struct Config
 	{
-		bool m_applyFsr{ true };
-		bool m_applyFsrRcas{ true };
-		float m_superSamplingFactor{ 2.0f };
-		float m_rcasAttenuation{ 0.2f };
-		bool m_fsr16Bit{ false };
+		float m_superSamplingFactor = 2.0f;
+		float m_rcasAttenuation = 0.2f;
+		bool m_applyFsr = true;
+		bool m_applyFsrRcas = true;
+		bool m_fsr16Bit = false;
 	};
 
 	Config m_config;
@@ -41,7 +40,7 @@ private:
 	void updateUniforms();
 
 	struct FsrResources *m_resources;
-	bool m_support16BitPrecision{ false };
+	bool m_support16BitPrecision{false};
 };
 
 #endif // __FSR_H__

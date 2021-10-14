@@ -104,7 +104,7 @@ class Module {
   inline void AddDebug3Inst(std::unique_ptr<Instruction> d);
 
   // Appends a debug info extension (OpenCL.DebugInfo.100,
-  // NonSemantic.Vulkan.DebugInfo.100, or DebugInfo) instruction to this module.
+  // NonSemantic.Shader.DebugInfo.100, or DebugInfo) instruction to this module.
   inline void AddExtInstDebugInfo(std::unique_ptr<Instruction> d);
 
   // Appends an annotation instruction to this module.

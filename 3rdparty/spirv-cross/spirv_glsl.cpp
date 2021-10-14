@@ -4712,6 +4712,14 @@ string CompilerGLSL::constant_op_expression(const SPIRConstantOp &cop)
 		GLSL_BOP(UGreaterThanEqual, ">=");
 		GLSL_BOP(SGreaterThanEqual, ">=");
 
+	case OpSRem:
+	{
+		uint32_t op0 = cop.arguments[0];
+		uint32_t op1 = cop.arguments[1];
+		return join(to_enclosed_expression(op0), " - ", to_enclosed_expression(op1), " * ", "(",
+		                 to_enclosed_expression(op0), " / ", to_enclosed_expression(op1), ")");
+	}
+
 	case OpSelect:
 	{
 		if (cop.arguments.size() < 3)
@@ -5282,13 +5290,15 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 		break;
 
 	case SPIRType::Int64:
+	{
+		auto tmp = type;
+		tmp.vecsize = 1;
+		tmp.columns = 1;
+		auto int64_type = type_to_glsl(tmp);
+
 		if (splat)
 		{
-			res += convert_to_string(c.scalar_i64(vector, 0));
-			if (backend.long_long_literal_suffix)
-				res += "ll";
-			else
-				res += "l";
+			res += convert_to_string(c.scalar_i64(vector, 0), int64_type, backend.long_long_literal_suffix);
 		}
 		else
 		{
@@ -5297,19 +5307,14 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
 					res += to_name(c.specialization_constant_id(vector, i));
 				else
-				{
-					res += convert_to_string(c.scalar_i64(vector, i));
-					if (backend.long_long_literal_suffix)
-						res += "ll";
-					else
-						res += "l";
-				}
+					res += convert_to_string(c.scalar_i64(vector, i), int64_type, backend.long_long_literal_suffix);
 
 				if (i + 1 < c.vector_size())
 					res += ", ";
 			}
 		}
 		break;
+	}
 
 	case SPIRType::UInt64:
 		if (splat)
@@ -8047,7 +8052,11 @@ string CompilerGLSL::bitcast_glsl_op(const SPIRType &out_type, const SPIRType &i
 {
 	// OpBitcast can deal with pointers.
 	if (out_type.pointer || in_type.pointer)
+	{
+		if (out_type.vecsize == 2 || in_type.vecsize == 2)
+			require_extension_internal("GL_EXT_buffer_reference_uvec2");
 		return type_to_glsl(out_type);
+	}
 
 	if (out_type.basetype == in_type.basetype)
 		return "";
@@ -12611,6 +12620,10 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		if (type.storage != StorageClassPhysicalStorageBufferEXT)
 			SPIRV_CROSS_THROW("Only StorageClassPhysicalStorageBufferEXT is supported by OpConvertUToPtr.");
 
+		auto &in_type = expression_type(ops[2]);
+		if (in_type.vecsize == 2)
+			require_extension_internal("GL_EXT_buffer_reference_uvec2");
+
 		auto op = type_to_glsl(type);
 		emit_unary_func_op(ops[0], ops[1], ops[2], op.c_str());
 		break;
@@ -12622,6 +12635,9 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		auto &ptr_type = expression_type(ops[2]);
 		if (ptr_type.storage != StorageClassPhysicalStorageBufferEXT)
 			SPIRV_CROSS_THROW("Only StorageClassPhysicalStorageBufferEXT is supported by OpConvertPtrToU.");
+
+		if (type.vecsize == 2)
+			require_extension_internal("GL_EXT_buffer_reference_uvec2");
 
 		auto op = type_to_glsl(type);
 		emit_unary_func_op(ops[0], ops[1], ops[2], op.c_str());
@@ -14974,26 +14990,30 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 		}
 
 		// Might still have to flush phi variables if we branch from loop header directly to merge target.
-		if (flush_phi_required(block.self, block.next_block))
+		// This is supposed to emit all cases where we branch from header to merge block directly.
+		// There are two main scenarios where cannot rely on default fallthrough.
+		// - There is an explicit default: label already.
+		//   In this case, literals_to_merge need to form their own "default" case, so that we avoid executing that block.
+		// - Header -> Merge requires flushing PHI. In this case, we need to collect all cases and flush PHI there.
+		bool header_merge_requires_phi = flush_phi_required(block.self, block.next_block);
+		bool need_fallthrough_block = block.default_block == block.next_block || !literals_to_merge.empty();
+		if ((header_merge_requires_phi && need_fallthrough_block) || !literals_to_merge.empty())
 		{
-			if (block.default_block == block.next_block || !literals_to_merge.empty())
+			for (auto &case_literal : literals_to_merge)
+				statement("case ", to_case_label(case_literal, unsigned_case), label_suffix, ":");
+
+			if (block.default_block == block.next_block)
 			{
-				for (auto &case_literal : literals_to_merge)
-					statement("case ", to_case_label(case_literal, unsigned_case), label_suffix, ":");
-
-				if (block.default_block == block.next_block)
-				{
-					if (is_legacy_es())
-						statement("else");
-					else
-						statement("default:");
-				}
-
-				begin_scope();
-				flush_phi(block.self, block.next_block);
-				statement("break;");
-				end_scope();
+				if (is_legacy_es())
+					statement("else");
+				else
+					statement("default:");
 			}
+
+			begin_scope();
+			flush_phi(block.self, block.next_block);
+			statement("break;");
+			end_scope();
 		}
 
 		if (degenerate_switch && !is_legacy_es())
@@ -15061,8 +15081,11 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 		break;
 	}
 
+	// If the Kill is terminating a block with a (probably synthetic) return value, emit a return value statement.
 	case SPIRBlock::Kill:
 		statement(backend.discard_literal, ";");
+		if (block.return_value)
+			statement("return ", to_expression(block.return_value), ";");
 		break;
 
 	case SPIRBlock::Unreachable:

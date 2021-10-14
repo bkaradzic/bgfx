@@ -173,7 +173,9 @@ void MergeWithSuccessor(IRContext* context, Function* func,
       auto& vec = terminator->dbg_line_insts();
       auto& new_vec = merge_inst->dbg_line_insts();
       new_vec.insert(new_vec.end(), vec.begin(), vec.end());
-      terminator->clear_dbg_line_insts();
+      terminator->ClearDbgLineInsts();
+      for (auto& l_inst : new_vec)
+        context->get_def_use_mgr()->AnalyzeInstDefUse(&l_inst);
 
       // Move the merge instruction to just before the terminator.
       merge_inst->InsertBefore(terminator);

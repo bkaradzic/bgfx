@@ -35,7 +35,7 @@ class Linter {
   void SetMessageConsumer(MessageConsumer consumer);
 
   // Returns a reference to the registered message consumer.
-  const MessageConsumer& consumer() const;
+  const MessageConsumer& Consumer() const;
 
   bool Run(const uint32_t* binary, size_t binary_size);
 

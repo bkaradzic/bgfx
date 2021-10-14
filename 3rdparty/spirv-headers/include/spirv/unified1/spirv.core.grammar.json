@@ -8488,40 +8488,35 @@
         },
         {
           "enumerant" : "NotNaN",
-          "value" : "0x0001",
-          "capabilities" : [ "Kernel" ]
+          "value" : "0x0001"
         },
         {
           "enumerant" : "NotInf",
-          "value" : "0x0002",
-          "capabilities" : [ "Kernel" ]
+          "value" : "0x0002"
         },
         {
           "enumerant" : "NSZ",
-          "value" : "0x0004",
-          "capabilities" : [ "Kernel" ]
+          "value" : "0x0004"
         },
         {
           "enumerant" : "AllowRecip",
-          "value" : "0x0008",
-          "capabilities" : [ "Kernel" ]
+          "value" : "0x0008"
         },
         {
           "enumerant" : "Fast",
-          "value" : "0x0010",
-          "capabilities" : [ "Kernel" ]
+          "value" : "0x0010"
         },
         {
           "enumerant" : "AllowContractFastINTEL",
           "value" : "0x10000",
           "capabilities" : [ "FPFastMathModeINTEL" ],
-	  "version" : "None"
+          "version" : "None"
         },
         {
           "enumerant" : "AllowReassocINTEL",
           "value" : "0x20000",
           "capabilities" : [ "FPFastMathModeINTEL" ],
-	  "version" : "None"
+          "version" : "None"
         }
       ]
     },
