@@ -7,6 +7,10 @@
 
 #if BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX
 #	if BX_PLATFORM_WINDOWS
+#		ifndef WIN32_LEAN_AND_MEAN
+#			define WIN32_LEAN_AND_MEAN
+#		endif // WIN32_LEAN_AND_MEAN
+#		include <windows.h>
 #		include <psapi.h>
 #	endif // BX_PLATFORM_WINDOWS
 #	include <renderdoc/renderdoc_app.h>

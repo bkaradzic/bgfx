@@ -226,8 +226,6 @@ namespace stl = std;
 
 #if BX_PLATFORM_ANDROID
 #	include <android/native_window.h>
-#elif BX_PLATFORM_WINDOWS
-#	include <windows.h>
 #endif // BX_PLATFORM_*
 
 #define BGFX_MAX_COMPUTE_BINDINGS BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
