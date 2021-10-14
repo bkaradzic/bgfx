@@ -226,16 +226,22 @@ namespace bgfx {
 			Gnm::kDepthCompareAlways,
 		};
 
-		static const Gnm::StencilOp s_stencilOp[] =
+		struct StencilOp
 		{
-			Gnm::kStencilOpZero,
-			Gnm::kStencilOpKeep,
-			Gnm::kStencilOpReplaceOp,
-			Gnm::kStencilOpAddWrap,
-			Gnm::kStencilOpAddClamp,
-			Gnm::kStencilOpSubWrap,
-			Gnm::kStencilOpSubClamp,
-			Gnm::kStencilOpInvert,
+			Gnm::StencilOp op;
+			bool useOne;
+		};
+
+		static const StencilOp s_stencilOp[] =
+		{
+			{ Gnm::kStencilOpZero,      false },
+			{ Gnm::kStencilOpKeep,      false },
+			{ Gnm::kStencilOpReplaceOp, false },
+			{ Gnm::kStencilOpAddWrap,   true  },
+			{ Gnm::kStencilOpAddClamp,  true  },
+			{ Gnm::kStencilOpSubWrap,   true  },
+			{ Gnm::kStencilOpSubClamp,  true  },
+			{ Gnm::kStencilOpInvert,    false },
 		};
 
 		static const Gnm::PrimitiveSetupCullFaceMode s_cullMode[] =
@@ -968,9 +974,6 @@ namespace bgfx {
 			m_numSamples = m_msaaSampleInfo->m_numSampleLookup.at(std::min(static_cast<size_t>((m_resolution.reset & BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT), m_msaaSampleInfo->m_numSampleLookup.size() - 1));
 
 
-
-			uint64_t value = reinterpret_cast<int64_t>(g_platformData.nwh);
-			uint32_t mask = 0xf;
 			m_videoOutHandle = sceVideoOutOpen(SCE_USER_SERVICE_USER_ID_SYSTEM, SCE_VIDEO_OUT_BUS_TYPE_MAIN, 0, nullptr);
 
 			if (m_videoOutHandle < 0)
@@ -3499,95 +3502,99 @@ namespace bgfx {
 
 		void RendererContextGNM::setDepthStencilState(Gnmx::GnmxGfxContext& gfxc, uint64_t _state, uint64_t _stencil)
 		{
-			uint32_t depthTestFunc = (_state & BGFX_STATE_DEPTH_TEST_MASK) >> BGFX_STATE_DEPTH_TEST_SHIFT;
+			Gnm::DepthStencilControl dsc;
+			dsc.init();
 
-			Gnm::DepthStencilControl depthStencil;
-			depthStencil.init();
-			depthStencil.setDepthEnable(depthTestFunc != 0);
-			BX_ASSERT(depthTestFunc < BX_COUNTOF(s_cmpFunc), "Unexpected depth test depthTestFunc value");
-			depthStencil.setDepthControl((BGFX_STATE_WRITE_Z & _state) ? Gnm::kDepthControlZWriteEnable : Gnm::kDepthControlZWriteDisable, s_cmpFunc[depthTestFunc]);
+			const Gnm::DepthControlZWrite zwrite = !!(BGFX_STATE_WRITE_Z & _state)
+				? Gnm::kDepthControlZWriteEnable
+				: Gnm::kDepthControlZWriteDisable
+				;
+			const uint32_t func = (_state & BGFX_STATE_DEPTH_TEST_MASK) >> BGFX_STATE_DEPTH_TEST_SHIFT;
+			dsc.setDepthEnable(0 != func);
+			dsc.setDepthControl(zwrite, s_cmpFunc[func]);
 
-			if (_stencil != 0)
+			if (0 != _stencil)
 			{
-				depthStencil.setStencilEnable(true);
-
-				uint32_t fstencil = unpackStencil(0, _stencil);
+				const uint32_t fstencil = unpackStencil(0, _stencil);
 				uint32_t bstencil = unpackStencil(1, _stencil);
-				uint32_t ref = (fstencil & BGFX_STENCIL_FUNC_REF_MASK) >> BGFX_STENCIL_FUNC_REF_SHIFT;
-				BX_ASSERT(ref <= 0xFF, "stencil ref doesn't fit in one byte!");
-				uint8_t ref8 = static_cast<uint8_t>(ref);
+				const bool frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
+				bstencil = frontAndBack ? bstencil : fstencil;
 
-				bool frontAndBack = bstencil != BGFX_STENCIL_NONE && bstencil != fstencil;
-				depthStencil.setSeparateStencilEnable(frontAndBack);
+				dsc.setStencilEnable(true);
+				dsc.setSeparateStencilEnable(frontAndBack);
 
-				uint32_t stencilFunc = (fstencil & BGFX_STENCIL_TEST_MASK) >> BGFX_STENCIL_TEST_SHIFT;
-				BX_ASSERT(stencilFunc < BX_COUNTOF(s_cmpFunc), "Unexpected stencilFunc value");
-				depthStencil.setStencilFunction(s_cmpFunc[stencilFunc]);
+				const Gnm::CompareFunc frontCmp = s_cmpFunc[(fstencil & BGFX_STENCIL_TEST_MASK) >> BGFX_STENCIL_TEST_SHIFT];
+				dsc.setStencilFunction(frontCmp);
 
-				Gnm::StencilControl frontStencilControl;
-				frontStencilControl.init();
-				frontStencilControl.m_mask = (fstencil & BGFX_STENCIL_FUNC_RMASK_MASK) >> BGFX_STENCIL_FUNC_RMASK_SHIFT;
-				frontStencilControl.m_writeMask = 0xff;
-				frontStencilControl.m_testVal = ref8;
-				frontStencilControl.m_opVal = ref8;
+				const uint32_t frontOpFailS = (fstencil & BGFX_STENCIL_OP_FAIL_S_MASK) >> BGFX_STENCIL_OP_FAIL_S_SHIFT;
+				const uint32_t frontOpPassZ = (fstencil & BGFX_STENCIL_OP_PASS_Z_MASK) >> BGFX_STENCIL_OP_PASS_Z_SHIFT;
+				const uint32_t frontOpFailZ = (fstencil & BGFX_STENCIL_OP_FAIL_Z_MASK) >> BGFX_STENCIL_OP_FAIL_Z_SHIFT;
 
-				uint32_t failStencilIndex = (fstencil & BGFX_STENCIL_OP_FAIL_S_MASK) >> BGFX_STENCIL_OP_FAIL_S_SHIFT;
-				BX_ASSERT(failStencilIndex < BX_COUNTOF(s_stencilOp), "Unexpected failStencilIndex value");
+				const Gnm::StencilOp fstencilFail = s_stencilOp[frontOpFailS].op;
+				const Gnm::StencilOp fstencilZPass = s_stencilOp[frontOpPassZ].op;
+				const Gnm::StencilOp fstencilZFail = s_stencilOp[frontOpFailZ].op;
+				Gnm::StencilOpControl soc;
+				soc.setStencilOps(fstencilFail, fstencilZPass, fstencilZFail);
 
-				uint32_t failStencilDepthIndex = (fstencil & BGFX_STENCIL_OP_FAIL_Z_MASK) >> BGFX_STENCIL_OP_FAIL_Z_SHIFT;
-				BX_ASSERT(failStencilDepthIndex < BX_COUNTOF(s_stencilOp), "Unexpected failStencilDepthIndex value");
+				const uint32_t frontRef = (fstencil & BGFX_STENCIL_FUNC_REF_MASK) >> BGFX_STENCIL_FUNC_REF_SHIFT;
+				const uint32_t frontRmask = (fstencil & BGFX_STENCIL_FUNC_RMASK_MASK) >> BGFX_STENCIL_FUNC_RMASK_SHIFT;
 
-				uint32_t passStencilIndex = (fstencil & BGFX_STENCIL_OP_PASS_Z_MASK) >> BGFX_STENCIL_OP_PASS_Z_SHIFT;
-				BX_ASSERT(passStencilIndex < BX_COUNTOF(s_stencilOp), "Unexpected passStencilIndex value");
+				const bool frontUseOne = false
+					|| s_stencilOp[frontOpFailS].useOne
+					|| s_stencilOp[frontOpPassZ].useOne
+					|| s_stencilOp[frontOpFailZ].useOne
+					;
 
-				Gnm::StencilOpControl opControl;
-				opControl.init();
-				opControl.setStencilOps(s_stencilOp[failStencilIndex], s_stencilOp[passStencilIndex], s_stencilOp[failStencilDepthIndex]);
+				Gnm::StencilControl fsc;
+				fsc.m_testVal = frontRef;
+				fsc.m_mask = frontRmask;
+				fsc.m_writeMask = UINT8_MAX;
+				fsc.m_opVal = frontUseOne ? 1 : frontRef;
 
 				if (!frontAndBack)
 				{
-					gfxc.setStencil(frontStencilControl);
+					gfxc.setStencil(fsc);
 				}
 				else
 				{
-					uint32_t backStencilFunc = (bstencil & BGFX_STENCIL_TEST_MASK) >> BGFX_STENCIL_TEST_SHIFT;
-					BX_ASSERT(backStencilFunc < BX_COUNTOF(s_cmpFunc), "Unexpected backStencilFunc value");
-					depthStencil.setStencilFunctionBack(s_cmpFunc[backStencilFunc]);
+					const Gnm::CompareFunc backCmp = s_cmpFunc[(bstencil & BGFX_STENCIL_TEST_MASK) >> BGFX_STENCIL_TEST_SHIFT];
+					dsc.setStencilFunctionBack(backCmp);
 
-					uint32_t bref = (bstencil & BGFX_STENCIL_FUNC_REF_MASK) >> BGFX_STENCIL_FUNC_REF_SHIFT;
-					BX_ASSERT(bref <= 0xFF, "stencil bref doesn't fit in one byte!");
-					uint8_t bref8 = static_cast<uint8_t>(bref);
+					const uint32_t backOpFailS = (bstencil & BGFX_STENCIL_OP_FAIL_S_MASK) >> BGFX_STENCIL_OP_FAIL_S_SHIFT;
+					const uint32_t backOpPassZ = (bstencil & BGFX_STENCIL_OP_PASS_Z_MASK) >> BGFX_STENCIL_OP_PASS_Z_SHIFT;
+					const uint32_t backOpFailZ = (bstencil & BGFX_STENCIL_OP_FAIL_Z_MASK) >> BGFX_STENCIL_OP_FAIL_Z_SHIFT;
+					const Gnm::StencilOp bstencilFail = s_stencilOp[backOpFailS].op;
+					const Gnm::StencilOp bstencilZPass = s_stencilOp[backOpPassZ].op;
+					const Gnm::StencilOp bstencilZFail = s_stencilOp[backOpFailZ].op;
+					soc.setStencilOpsBack(bstencilFail, bstencilZPass, bstencilZFail);
 
-					Gnm::StencilControl backStencilControl;
-					backStencilControl.init();
-					backStencilControl.m_mask = (bstencil & BGFX_STENCIL_FUNC_RMASK_MASK) >> BGFX_STENCIL_FUNC_RMASK_SHIFT;
-					backStencilControl.m_writeMask = 0xff;
-					backStencilControl.m_testVal = bref8;
-					backStencilControl.m_opVal = bref8;
+					const uint32_t backRef = (bstencil & BGFX_STENCIL_FUNC_REF_MASK) >> BGFX_STENCIL_FUNC_REF_SHIFT;
+					const uint32_t backRmask = (bstencil & BGFX_STENCIL_FUNC_RMASK_MASK) >> BGFX_STENCIL_FUNC_RMASK_SHIFT;
 
-					gfxc.setStencilSeparate(frontStencilControl, backStencilControl);
+					const bool backUseOne = false
+						|| s_stencilOp[backOpFailS].useOne
+						|| s_stencilOp[backOpPassZ].useOne
+						|| s_stencilOp[backOpFailZ].useOne
+						;
 
-					uint32_t backFailStencilIndex = (bstencil & BGFX_STENCIL_OP_FAIL_S_MASK) >> BGFX_STENCIL_OP_FAIL_S_SHIFT;
-					BX_ASSERT(backFailStencilIndex < BX_COUNTOF(s_stencilOp), "Unexpected backFailStencilIndex value");
+					Gnm::StencilControl bsc;
+					bsc.m_testVal = backRef;
+					bsc.m_mask = backRmask;
+					bsc.m_writeMask = UINT8_MAX;
+					bsc.m_opVal = backUseOne ? 1 : backRef;
 
-					uint32_t backFailStencilDepthIndex = (bstencil & BGFX_STENCIL_OP_FAIL_Z_MASK) >> BGFX_STENCIL_OP_FAIL_Z_SHIFT;
-					BX_ASSERT(backFailStencilDepthIndex < BX_COUNTOF(s_stencilOp), "Unexpected backFailStencilDepthIndex value");
-
-					uint32_t backPassStencilIndex = (bstencil & BGFX_STENCIL_OP_PASS_Z_MASK) >> BGFX_STENCIL_OP_PASS_Z_SHIFT;
-					BX_ASSERT(backPassStencilIndex < BX_COUNTOF(s_stencilOp), "Unexpected backPassStencilIndex value");
-
-					opControl.setStencilOpsBack(s_stencilOp[backFailStencilIndex], s_stencilOp[backPassStencilIndex], s_stencilOp[backFailStencilDepthIndex]);
+					gfxc.setStencilSeparate(fsc, bsc);
 				}
 
-				gfxc.setStencilOpControl(opControl);
+				gfxc.setStencilOpControl(soc);
 			}
 
-			gfxc.setDepthStencilControl(depthStencil);
+			gfxc.setDepthStencilControl(dsc);
 
-			// The DB will update HTILE even thought turn off depth operations,
+			// The DB will update HTILE even when we've turned off depth operations,
 			// so unbind depth rendertarget to prevent misread HTILE when depth and stencil are disabled
 			// https://ps4.siedev.net/forums/thread/411260/
-			if (!depthStencil.getDepthEnable() && !depthStencil.getStencilEnable()) {
+			if (!dsc.getDepthEnable() && !dsc.getStencilEnable()) {
 				gfxc.setDepthRenderTarget(nullptr);
 			}
 			else {
@@ -3700,7 +3707,7 @@ namespace bgfx {
 
 #define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type) \
 case UniformType::_uniform: \
-case UniformType::_uniform| BGFX_UNIFORM_FRAGMENTBIT: \
+case UniformType::_uniform| kUniformFragmentBit: \
 		{ \
 			setShaderUniform(uint8_t(type), loc, data, num, _constantBuffers); \
 		} \
@@ -3709,7 +3716,7 @@ case UniformType::_uniform| BGFX_UNIFORM_FRAGMENTBIT: \
 				switch ((uint32_t)type)
 				{
 				case UniformType::Mat3:
-				case UniformType::Mat3 | BGFX_UNIFORM_FRAGMENTBIT: \
+				case UniformType::Mat3 | kUniformFragmentBit: \
 				{
 					float* value = (float*)data;
 					for (uint32_t ii = 0, count = num / 3; ii < count; ++ii, loc += 3 * 16, value += 9)
@@ -3730,11 +3737,11 @@ case UniformType::_uniform| BGFX_UNIFORM_FRAGMENTBIT: \
 						setShaderUniform(uint8_t(type), loc, &mtx.un.val[0], 3, _constantBuffers);
 					}
 				}
-																 break;
+				break;
 
-																 //CASE_IMPLEMENT_UNIFORM(Int1, I, int);
-																 CASE_IMPLEMENT_UNIFORM(Vec4, F, float);
-																 CASE_IMPLEMENT_UNIFORM(Mat4, F, float);
+				CASE_IMPLEMENT_UNIFORM(Sampler, S, int);
+				CASE_IMPLEMENT_UNIFORM(Vec4, F, float);
+				CASE_IMPLEMENT_UNIFORM(Mat4, F, float);
 
 				case UniformType::End:
 					break;
@@ -4488,7 +4495,8 @@ case UniformType::_uniform| BGFX_UNIFORM_FRAGMENTBIT: \
 					}
 				}
 				return TextureFormat::Unknown;
-			}(m_internalTexture.getDataFormat());
+			}
+			(m_internalTexture.getDataFormat());
 			m_width = m_internalTexture.getWidth();
 			m_height = m_internalTexture.getHeight();
 			m_depth = m_internalTexture.getDepth();
@@ -4499,17 +4507,17 @@ case UniformType::_uniform| BGFX_UNIFORM_FRAGMENTBIT: \
 
 			ref.init(
 				BackbufferRatio::Count
-				, 0
-				, 0
-				, 0
+				, m_width
+				, m_height
+				, m_depth
 				, static_cast<TextureFormat::Enum>(m_textureFormat)
 				, 0
 				, m_numMips
 				, m_internalTexture.getLastArraySliceIndex() + 1
 				, true
 				, true
-				, true
-				, 0);
+				, false
+				, m_flags);
 		}
 
 		void GPUmem::_create(uint32_t _size, uint32_t alignment, const sce::Gnm::ResourceType resourceType, const char* name, void* _data, uint16_t _flags)
