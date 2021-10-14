@@ -531,6 +531,19 @@ namespace
 
 				bgfx::ViewId view = 0;
 
+				// Clear full frame buffer to avoid sampling into garbage during FSR pass
+				if (!m_state.m_renderNativeResolution)
+				{
+					bgfx::setViewRect(view, 0, 0, m_state.m_width, m_state.m_height);
+					bgfx::setViewClear(view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x00000000, 1.0f, 0);
+					bgfx::setViewFrameBuffer(view, m_state.m_frameBuffer);
+					bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS);
+					bgfx::setTexture(0, m_state.s_color, BGFX_INVALID_HANDLE);
+					bgfx::submit(view, BGFX_INVALID_HANDLE);
+
+					++view;
+				}
+
 				// Draw models into scene
 				{
 					bgfx::setViewName(view, "forward scene");
