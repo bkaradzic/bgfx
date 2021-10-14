@@ -6,9 +6,9 @@
 #include "bgfx_p.h"
 
 #if BGFX_CONFIG_RENDERER_VULKAN
+#	include <bx/pixelformat.h>
 #	include "renderer_vk.h"
 #	include "shader_spirv.h"
-#	include <bx/pixelformat.h>
 
 #if BX_PLATFORM_OSX
 #	import <Cocoa/Cocoa.h>
@@ -1477,7 +1477,7 @@ VK_IMPORT_INSTANCE
 					vkGetPhysicalDeviceFeatures(m_physicalDevice, &supportedFeatures);
 				}
 
-				memset(&m_deviceFeatures, 0, sizeof(m_deviceFeatures) );
+				bx::memSet(&m_deviceFeatures, 0, sizeof(m_deviceFeatures) );
 
 				m_deviceFeatures.fullDrawIndexUint32       = supportedFeatures.fullDrawIndexUint32;
 				m_deviceFeatures.imageCubeArray            = supportedFeatures.imageCubeArray            && (_init.capabilities & BGFX_CAPS_TEXTURE_CUBE_ARRAY);

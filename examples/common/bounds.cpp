@@ -1057,7 +1057,7 @@ void mtxFromSrt(float* _outMtx, const Srt& _srt)
 
 bool isNearZero(float _v)
 {
-	return equal(_v, 0.0f, 0.00001f);
+	return isEqual(_v, 0.0f, 0.00001f);
 }
 
 bool isNearZero(const Vec3& _v)
