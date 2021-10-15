@@ -7,6 +7,16 @@
 #	error "Must be included from bounds.h!"
 #endif // BOUNDS_H_HEADER_GUARD
 
+inline bx::Vec3 getPointAt(const Ray& _ray, float _t)
+{
+	return bx::mad(_ray.dir, _t, _ray.pos);
+}
+
+inline bool intersect(const Ray& _ray, const bx::Plane& _plane, Hit* _hit)
+{
+	return intersect(_ray, _plane, false, _hit);
+}
+
 inline bool overlap(const Aabb& _aabb, const Sphere& _sphere)
 {
 	return overlap(_sphere, _aabb);

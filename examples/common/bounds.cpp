@@ -423,11 +423,6 @@ Ray makeRay(float _x, float _y, const float* _invVp)
 	return ray;
 }
 
-inline Vec3 getPointAt(const Ray& _ray, float _t)
-{
-	return mad(_ray.dir, _t, _ray.pos);
-}
-
 bool intersect(const Ray& _ray, const Aabb& _aabb, Hit* _hit)
 {
 	const Vec3 invDir = rcp(_ray.dir);
@@ -717,16 +712,13 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 	return true;
 }
 
-bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit)
+bool intersect(const Ray& _ray, const Plane& _plane, bool _doublesided, Hit* _hit)
 {
-	const float dist = distance(_plane, _ray.pos);
-	if (0.0f > dist)
-	{
-		return false;
-	}
-
+	const float dist  = distance(_plane, _ray.pos);
 	const float ndotd = dot(_ray.dir, _plane.normal);
-	if (0.0f < ndotd)
+
+	if (!_doublesided
+	&& (0.0f > dist || 0.0f < ndotd) )
 	{
 		return false;
 	}

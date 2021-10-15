@@ -83,6 +83,9 @@ struct Hit
 };
 
 ///
+bx::Vec3 getPointAt(const Ray& _ray, float _t);
+
+///
 bx::Vec3 getCenter(const Aabb& _aabb);
 
 ///
@@ -168,6 +171,9 @@ bool intersect(const Ray& _ray, const Disk& _disk, Hit* _hit = NULL);
 
 /// Intersect ray / plane.
 bool intersect(const Ray& _ray, const bx::Plane& _plane, Hit* _hit = NULL);
+
+/// Intersect ray / plane.
+bool intersect(const Ray& _ray, const bx::Plane& _plane, bool _doublesided, Hit* _hit = NULL);
 
 /// Intersect ray / sphere.
 bool intersect(const Ray& _ray, const Sphere& _sphere, Hit* _hit = NULL);
