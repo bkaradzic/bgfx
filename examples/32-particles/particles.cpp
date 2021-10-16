@@ -417,7 +417,7 @@ public:
 
 			if (showBounds)
 			{
-				Aabb aabb;
+				bx::Aabb aabb;
 				psGetAabb(m_emitter[currentEmitter].m_handle, aabb);
 				dde.push();
 					dde.setWireframe(true);

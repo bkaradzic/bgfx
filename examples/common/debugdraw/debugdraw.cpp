@@ -1383,7 +1383,7 @@ struct DebugDrawEncoderImpl
 		m_state = State::None;
 	}
 
-	void draw(const Aabb& _aabb)
+	void draw(const bx::Aabb& _aabb)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		if (attrib.m_wireframe)
@@ -1414,23 +1414,23 @@ struct DebugDrawEncoderImpl
 		}
 		else
 		{
-			Obb obb;
+			bx::Obb obb;
 			toObb(obb, _aabb);
 			draw(DebugMesh::Cube, obb.mtx, 1, false);
 		}
 	}
 
-	void draw(const Cylinder& _cylinder, bool _capsule)
+	void draw(const bx::Cylinder& _cylinder, bool _capsule)
 	{
 		drawCylinder(_cylinder.pos, _cylinder.end, _cylinder.radius, _capsule);
 	}
 
-	void draw(const Disk& _disk)
+	void draw(const bx::Disk& _disk)
 	{
 		drawCircle(_disk.normal, _disk.center, _disk.radius, 0.0f);
 	}
 
-	void draw(const Obb& _obb)
+	void draw(const bx::Obb& _obb)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		if (attrib.m_wireframe)
@@ -1469,7 +1469,7 @@ struct DebugDrawEncoderImpl
 		}
 	}
 
-	void draw(const Sphere& _sphere)
+	void draw(const bx::Sphere& _sphere)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		float mtx[16];
@@ -1491,7 +1491,7 @@ struct DebugDrawEncoderImpl
 		draw(DebugMesh::Enum(DebugMesh::Sphere0 + lod), mtx, 1, attrib.m_wireframe);
 	}
 
-	void draw(const Triangle& _triangle)
+	void draw(const bx::Triangle& _triangle)
 	{
 		Attrib& attrib = m_attrib[m_stack];
 		if (attrib.m_wireframe)
@@ -1955,7 +1955,7 @@ struct DebugDrawEncoderImpl
 				;
 			draw(DebugMesh::Enum(DebugMesh::Capsule0 + lod), mtx[0], 2, attrib.m_wireframe);
 
-			Sphere sphere;
+			bx::Sphere sphere;
 			sphere.center = _from;
 			sphere.radius = _radius;
 			draw(sphere);
@@ -2425,42 +2425,42 @@ void DebugDrawEncoder::close()
 	DEBUG_DRAW_ENCODER(close() );
 }
 
-void DebugDrawEncoder::draw(const Aabb& _aabb)
+void DebugDrawEncoder::draw(const bx::Aabb& _aabb)
 {
 	DEBUG_DRAW_ENCODER(draw(_aabb) );
 }
 
-void DebugDrawEncoder::draw(const Cylinder& _cylinder)
+void DebugDrawEncoder::draw(const bx::Cylinder& _cylinder)
 {
 	DEBUG_DRAW_ENCODER(draw(_cylinder, false) );
 }
 
-void DebugDrawEncoder::draw(const Capsule& _capsule)
+void DebugDrawEncoder::draw(const bx::Capsule& _capsule)
 {
-	DEBUG_DRAW_ENCODER(draw(*( (const Cylinder*)&_capsule), true) );
+	DEBUG_DRAW_ENCODER(draw(*( (const bx::Cylinder*)&_capsule), true) );
 }
 
-void DebugDrawEncoder::draw(const Disk& _disk)
+void DebugDrawEncoder::draw(const bx::Disk& _disk)
 {
 	DEBUG_DRAW_ENCODER(draw(_disk) );
 }
 
-void DebugDrawEncoder::draw(const Obb& _obb)
+void DebugDrawEncoder::draw(const bx::Obb& _obb)
 {
 	DEBUG_DRAW_ENCODER(draw(_obb) );
 }
 
-void DebugDrawEncoder::draw(const Sphere& _sphere)
+void DebugDrawEncoder::draw(const bx::Sphere& _sphere)
 {
 	DEBUG_DRAW_ENCODER(draw(_sphere) );
 }
 
-void DebugDrawEncoder::draw(const Triangle& _triangle)
+void DebugDrawEncoder::draw(const bx::Triangle& _triangle)
 {
 	DEBUG_DRAW_ENCODER(draw(_triangle) );
 }
 
-void DebugDrawEncoder::draw(const Cone& _cone)
+void DebugDrawEncoder::draw(const bx::Cone& _cone)
 {
 	DEBUG_DRAW_ENCODER(drawCone(_cone.pos, _cone.end, _cone.radius) );
 }

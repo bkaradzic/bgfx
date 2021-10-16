@@ -307,11 +307,11 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _la
 
 void write(bx::WriterI* _writer, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
 {
-	Sphere maxSphere;
-	calcMaxBoundingSphere(maxSphere, _vertices, _numVertices, _stride);
+	bx::Sphere maxSphere;
+	bx::calcMaxBoundingSphere(maxSphere, _vertices, _numVertices, _stride);
 
-	Sphere minSphere;
-	calcMinBoundingSphere(minSphere, _vertices, _numVertices, _stride);
+	bx::Sphere minSphere;
+	bx::calcMinBoundingSphere(minSphere, _vertices, _numVertices, _stride);
 
 	if (minSphere.radius > maxSphere.radius)
 	{
@@ -322,12 +322,12 @@ void write(bx::WriterI* _writer, const void* _vertices, uint32_t _numVertices, u
 		bx::write(_writer, minSphere);
 	}
 
-	Aabb aabb;
-	toAabb(aabb, _vertices, _numVertices, _stride);
+	bx::Aabb aabb;
+	bx::toAabb(aabb, _vertices, _numVertices, _stride);
 	bx::write(_writer, aabb);
 
-	Obb obb;
-	calcObb(obb, _vertices, _numVertices, _stride, s_obbSteps);
+	bx::Obb obb;
+	bx::calcObb(obb, _vertices, _numVertices, _stride, s_obbSteps);
 	bx::write(_writer, obb);
 }
 

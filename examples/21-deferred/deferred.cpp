@@ -3,11 +3,11 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
+#include <bx/bounds.h>
 #include "common.h"
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
 #include "camera.h"
-#include "bounds.h"
 
 namespace
 {
@@ -679,7 +679,7 @@ public:
 				// Draw lights into light buffer.
 				for (int32_t light = 0; light < m_numLights; ++light)
 				{
-					Sphere lightPosRadius;
+					bx::Sphere lightPosRadius;
 
 					float lightTime = time * m_lightAnimationSpeed * (bx::sin(light/float(m_numLights) * bx::kPiHalf ) * 0.5f + 0.5f);
 					lightPosRadius.center.x = bx::sin( ( (lightTime + light*0.47f) + bx::kPiHalf*1.37f ) )*offset;
@@ -687,7 +687,7 @@ public:
 					lightPosRadius.center.z = bx::sin( ( (lightTime + light*0.37f) + bx::kPiHalf*1.57f ) )*2.0f;
 					lightPosRadius.radius   = 2.0f;
 
-					Aabb aabb;
+					bx::Aabb aabb;
 					toAabb(aabb, lightPosRadius);
 
 					const bx::Vec3 box[8] =

@@ -1002,20 +1002,40 @@ int _main_(int _argc, char** _argv)
 							ImGui::Text("Name: %s %s", view.m_fileList[view.m_fileIndex].c_str(), layout);
 
 							ImGui::Indent();
-							for (GroupArray::const_iterator itGroup = mesh->m_groups.begin(), itGroupEnd = mesh->m_groups.end(); itGroup != itGroupEnd; ++itGroup)
+							for (GroupArray::const_iterator itGroup = mesh->m_groups.begin(), itGroupEnd = mesh->m_groups.end()
+								; itGroup != itGroupEnd
+								; ++itGroup
+								)
 							{
-								ImGui::Text("Group v %d i %d c %.2f %.2f %.2f r %.2f", itGroup->m_numVertices, itGroup->m_numIndices,
-											itGroup->m_sphere.center.x, itGroup->m_sphere.center.y, itGroup->m_sphere.center.z,
-											itGroup->m_sphere.radius);
+								ImGui::Text("Group v %d i %d c %.2f %.2f %.2f r %.2f"
+									, itGroup->m_numVertices
+									, itGroup->m_numIndices
+									, itGroup->m_sphere.center.x
+									, itGroup->m_sphere.center.y
+									, itGroup->m_sphere.center.z
+									, itGroup->m_sphere.radius
+									);
+
 								ImGui::Indent();
-								for (PrimitiveArray::const_iterator itPrim = itGroup->m_prims.begin(), itPrimEnd = itGroup->m_prims.end(); itPrim != itPrimEnd; ++itPrim)
+
+								for (PrimitiveArray::const_iterator itPrim = itGroup->m_prims.begin(), itPrimEnd = itGroup->m_prims.end()
+									; itPrim != itPrimEnd
+									; ++itPrim
+									)
 								{
-									ImGui::Text("Primitive v %d i %d c %.2f %.2f %.2f r %.2f", itPrim->m_numVertices, itPrim->m_numIndices,
-												itPrim->m_sphere.center.x, itPrim->m_sphere.center.y, itPrim->m_sphere.center.z,
-												itPrim->m_sphere.radius);
+									ImGui::Text("Primitive v %d i %d c %.2f %.2f %.2f r %.2f"
+										, itPrim->m_numVertices
+										, itPrim->m_numIndices
+										, itPrim->m_sphere.center.x
+										, itPrim->m_sphere.center.y
+										, itPrim->m_sphere.center.z
+										, itPrim->m_sphere.radius
+										);
 								}
+
 								ImGui::Unindent();
 							}
+
 							ImGui::Unindent();
 
 							ImGui::Separator();
@@ -1189,7 +1209,7 @@ int _main_(int _argc, char** _argv)
 					uint32_t numPrimitives = 0;
 					uint32_t numVertices = 0;
 					uint32_t numIndices = 0;
-					Aabb boundingBox = {};
+					bx::Aabb boundingBox = {};
 
 					for (GroupArray::const_iterator it = mesh->m_groups.begin(), itEnd = mesh->m_groups.end(); it != itEnd; ++it)
 					{
@@ -1218,8 +1238,8 @@ int _main_(int _argc, char** _argv)
 						, numIndices
 						);
 
-					view.m_meshCenter = getCenter(boundingBox);
-					view.m_meshRadius = bx::length(getExtents(boundingBox));
+					view.m_meshCenter = bx::getCenter(boundingBox);
+					view.m_meshRadius = bx::length(bx::getExtents(boundingBox) );
 
 					view.m_camera.init( view.m_meshCenter, view.m_meshRadius * 2.0f, 0.01f, view.m_meshRadius * 10.0f);
 				}

@@ -485,15 +485,15 @@ struct Shape
 	};
 
 	Shape() : type(uint8_t(Type::Count) ) {}
-	Shape(const Aabb     & _a) : type(uint8_t(Type::Aabb    ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
-	Shape(const Capsule  & _a) : type(uint8_t(Type::Capsule ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
-	Shape(const Cone     & _a) : type(uint8_t(Type::Cone    ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
-	Shape(const Cylinder & _a) : type(uint8_t(Type::Cylinder) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
-	Shape(const Disk     & _a) : type(uint8_t(Type::Disk    ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
-	Shape(const Obb      & _a) : type(uint8_t(Type::Obb     ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
-	Shape(const bx::Plane& _a) : type(uint8_t(Type::Plane   ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
-	Shape(const Sphere   & _a) : type(uint8_t(Type::Sphere  ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
-	Shape(const Triangle & _a) : type(uint8_t(Type::Triangle) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const bx::Aabb     & _a) : type(uint8_t(Type::Aabb    ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const bx::Capsule  & _a) : type(uint8_t(Type::Capsule ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const bx::Cone     & _a) : type(uint8_t(Type::Cone    ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const bx::Cylinder & _a) : type(uint8_t(Type::Cylinder) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const bx::Disk     & _a) : type(uint8_t(Type::Disk    ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const bx::Obb      & _a) : type(uint8_t(Type::Obb     ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const bx::Plane    & _a) : type(uint8_t(Type::Plane   ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const bx::Sphere   & _a) : type(uint8_t(Type::Sphere  ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const bx::Triangle & _a) : type(uint8_t(Type::Triangle) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
 
 	uint8_t data[64];
 	uint8_t type;
@@ -504,28 +504,28 @@ struct Shape
 	{                                                                                                            \
 		switch (_shapeB.type)                                                                                    \
 		{                                                                                                        \
-		case Shape::Type::Aabb:     return ::overlap(_shapeA, *reinterpret_cast<const Aabb     *>(_shapeB.data) ); \
-		case Shape::Type::Capsule:  return ::overlap(_shapeA, *reinterpret_cast<const Capsule  *>(_shapeB.data) ); \
-		case Shape::Type::Cone:     return ::overlap(_shapeA, *reinterpret_cast<const Cone     *>(_shapeB.data) ); \
-		case Shape::Type::Cylinder: return ::overlap(_shapeA, *reinterpret_cast<const Cylinder *>(_shapeB.data) ); \
-		case Shape::Type::Disk:     return ::overlap(_shapeA, *reinterpret_cast<const Disk     *>(_shapeB.data) ); \
-		case Shape::Type::Obb:      return ::overlap(_shapeA, *reinterpret_cast<const Obb      *>(_shapeB.data) ); \
-		case Shape::Type::Plane:    return ::overlap(_shapeA, *reinterpret_cast<const bx::Plane*>(_shapeB.data) ); \
-		case Shape::Type::Sphere:   return ::overlap(_shapeA, *reinterpret_cast<const Sphere   *>(_shapeB.data) ); \
-		case Shape::Type::Triangle: return ::overlap(_shapeA, *reinterpret_cast<const Triangle *>(_shapeB.data) ); \
+		case Shape::Type::Aabb:     return bx::overlap(_shapeA, *reinterpret_cast<const bx::Aabb     *>(_shapeB.data) ); \
+		case Shape::Type::Capsule:  return bx::overlap(_shapeA, *reinterpret_cast<const bx::Capsule  *>(_shapeB.data) ); \
+		case Shape::Type::Cone:     return bx::overlap(_shapeA, *reinterpret_cast<const bx::Cone     *>(_shapeB.data) ); \
+		case Shape::Type::Cylinder: return bx::overlap(_shapeA, *reinterpret_cast<const bx::Cylinder *>(_shapeB.data) ); \
+		case Shape::Type::Disk:     return bx::overlap(_shapeA, *reinterpret_cast<const bx::Disk     *>(_shapeB.data) ); \
+		case Shape::Type::Obb:      return bx::overlap(_shapeA, *reinterpret_cast<const bx::Obb      *>(_shapeB.data) ); \
+		case Shape::Type::Plane:    return bx::overlap(_shapeA, *reinterpret_cast<const bx::Plane    *>(_shapeB.data) ); \
+		case Shape::Type::Sphere:   return bx::overlap(_shapeA, *reinterpret_cast<const bx::Sphere   *>(_shapeB.data) ); \
+		case Shape::Type::Triangle: return bx::overlap(_shapeA, *reinterpret_cast<const bx::Triangle *>(_shapeB.data) ); \
 		}                                                                                                        \
 		return false;                                                                                            \
 	}
 
-OVERLAP(Aabb);
-OVERLAP(Capsule);
-OVERLAP(Cone);
-OVERLAP(Cylinder);
-OVERLAP(Disk);
-OVERLAP(Obb);
+OVERLAP(bx::Aabb);
+OVERLAP(bx::Capsule);
+OVERLAP(bx::Cone);
+OVERLAP(bx::Cylinder);
+OVERLAP(bx::Disk);
+OVERLAP(bx::Obb);
 OVERLAP(bx::Plane);
-OVERLAP(Sphere);
-OVERLAP(Triangle);
+OVERLAP(bx::Sphere);
+OVERLAP(bx::Triangle);
 
 #undef OVERLAP
 
@@ -535,14 +535,14 @@ void initA(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 	{
 	case Shape::Type::Aabb:
 		{
-			Aabb aabb;
+			bx::Aabb aabb;
 			toAabb(aabb, _pos, { 0.5f, 0.5f, 0.5f });
 			_outShape = Shape(aabb);
 		}
 		break;
 
 	case Shape::Type::Capsule:
-		_outShape = Shape(Capsule
+		_outShape = Shape(bx::Capsule
 		{
 			{ bx::add(_pos, {0.0f, -1.0f, 0.0f}) },
 			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
@@ -551,7 +551,7 @@ void initA(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 		break;
 
 	case Shape::Type::Cone:
-		_outShape = Shape(Cone
+		_outShape = Shape(bx::Cone
 		{
 			{ bx::add(_pos, {0.0f, -1.0f, 0.0f}) },
 			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
@@ -560,7 +560,7 @@ void initA(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 		break;
 
 	case Shape::Type::Cylinder:
-		_outShape = Shape(Cylinder
+		_outShape = Shape(bx::Cylinder
 		{
 			{ bx::add(_pos, {0.0f, -1.0f, 0.0f}) },
 			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
@@ -569,7 +569,7 @@ void initA(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 		break;
 
 	case Shape::Type::Disk:
-		_outShape = Shape(Disk
+		_outShape = Shape(bx::Disk
 		{
 			_pos,
 			bx::normalize(bx::Vec3{0.0f, 1.0f, 1.0f}),
@@ -579,7 +579,7 @@ void initA(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 
 	case Shape::Type::Obb:
 		{
-			Obb obb;
+			bx::Obb obb;
 			bx::mtxSRT(obb.mtx
 				, 0.25f
 				, 1.0f
@@ -596,7 +596,7 @@ void initA(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 		break;
 
 	case Shape::Type::Sphere:
-		_outShape = Shape(Sphere{_pos, 0.5f});
+		_outShape = Shape(bx::Sphere{_pos, 0.5f});
 		break;
 
 	case Shape::Type::Plane:
@@ -608,7 +608,7 @@ void initA(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 		break;
 
 	case Shape::Type::Triangle:
-		_outShape = Shape(Triangle
+		_outShape = Shape(bx::Triangle
 			{
 				{ bx::add(_pos, {-0.4f,  0.0f, -0.4f}) },
 				{ bx::add(_pos, { 0.0f, -0.3f,  0.5f}) },
@@ -626,14 +626,14 @@ void initB(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 	{
 	case Shape::Type::Aabb:
 		{
-			Aabb aabb;
+			bx::Aabb aabb;
 			toAabb(aabb, _pos, { 0.5f, 0.5f, 0.5f });
 			_outShape = Shape(aabb);
 		}
 		break;
 
 	case Shape::Type::Capsule:
-		_outShape = Shape(Capsule
+		_outShape = Shape(bx::Capsule
 		{
 			{ bx::add(_pos, {0.0f, -1.0f, 0.1f}) },
 			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
@@ -642,7 +642,7 @@ void initB(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 		break;
 
 	case Shape::Type::Cone:
-		_outShape = Shape(Cone
+		_outShape = Shape(bx::Cone
 		{
 			{ bx::add(_pos, {0.0f, -1.0f, 0.1f}) },
 			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
@@ -651,7 +651,7 @@ void initB(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 		break;
 
 	case Shape::Type::Cylinder:
-		_outShape = Shape(Cylinder
+		_outShape = Shape(bx::Cylinder
 		{
 			{ bx::add(_pos, {0.0f, -1.0f, 0.1f}) },
 			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
@@ -660,7 +660,7 @@ void initB(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 		break;
 
 	case Shape::Type::Disk:
-		_outShape = Shape(Disk
+		_outShape = Shape(bx::Disk
 		{
 			_pos,
 			bx::normalize(bx::Vec3{1.0f, 1.0f, 0.0f}),
@@ -670,7 +670,7 @@ void initB(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 
 	case Shape::Type::Obb:
 		{
-			Obb obb;
+			bx::Obb obb;
 			bx::mtxSRT(obb.mtx
 				, 1.0f
 				, 0.25f
@@ -695,11 +695,11 @@ void initB(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 		break;
 
 	case Shape::Type::Sphere:
-		_outShape = Shape(Sphere{_pos, 0.5f});
+		_outShape = Shape(bx::Sphere{_pos, 0.5f});
 		break;
 
 	case Shape::Type::Triangle:
-		_outShape = Shape(Triangle
+		_outShape = Shape(bx::Triangle
 			{
 				{ bx::add(_pos, {-0.4f,  0.0f, -0.4f}) },
 				{ bx::add(_pos, {-0.5f, -0.3f,  0.0f}) },
@@ -715,15 +715,15 @@ int32_t overlap(const Shape& _shapeA, const Shape& _shapeB)
 {
 	switch (_shapeA.type)
 	{
-	case Shape::Type::Aabb:     return overlap(*reinterpret_cast<const Aabb     *>(_shapeA.data), _shapeB);
-	case Shape::Type::Capsule:  return overlap(*reinterpret_cast<const Capsule  *>(_shapeA.data), _shapeB);
-	case Shape::Type::Cone:     return overlap(*reinterpret_cast<const Cone     *>(_shapeA.data), _shapeB);
-	case Shape::Type::Cylinder: return overlap(*reinterpret_cast<const Cylinder *>(_shapeA.data), _shapeB);
-	case Shape::Type::Disk:     return overlap(*reinterpret_cast<const Disk     *>(_shapeA.data), _shapeB);
-	case Shape::Type::Obb:      return overlap(*reinterpret_cast<const Obb      *>(_shapeA.data), _shapeB);
-	case Shape::Type::Plane:    return overlap(*reinterpret_cast<const bx::Plane*>(_shapeA.data), _shapeB);
-	case Shape::Type::Sphere:   return overlap(*reinterpret_cast<const Sphere   *>(_shapeA.data), _shapeB);
-	case Shape::Type::Triangle: return overlap(*reinterpret_cast<const Triangle *>(_shapeA.data), _shapeB);
+	case Shape::Type::Aabb:     return ::overlap(*reinterpret_cast<const bx::Aabb     *>(_shapeA.data), _shapeB);
+	case Shape::Type::Capsule:  return ::overlap(*reinterpret_cast<const bx::Capsule  *>(_shapeA.data), _shapeB);
+	case Shape::Type::Cone:     return ::overlap(*reinterpret_cast<const bx::Cone     *>(_shapeA.data), _shapeB);
+	case Shape::Type::Cylinder: return ::overlap(*reinterpret_cast<const bx::Cylinder *>(_shapeA.data), _shapeB);
+	case Shape::Type::Disk:     return ::overlap(*reinterpret_cast<const bx::Disk     *>(_shapeA.data), _shapeB);
+	case Shape::Type::Obb:      return ::overlap(*reinterpret_cast<const bx::Obb      *>(_shapeA.data), _shapeB);
+	case Shape::Type::Plane:    return ::overlap(*reinterpret_cast<const bx::Plane    *>(_shapeA.data), _shapeB);
+	case Shape::Type::Sphere:   return ::overlap(*reinterpret_cast<const bx::Sphere   *>(_shapeA.data), _shapeB);
+	case Shape::Type::Triangle: return ::overlap(*reinterpret_cast<const bx::Triangle *>(_shapeA.data), _shapeB);
 	}
 
 	return 2;
@@ -733,15 +733,15 @@ void draw(DebugDrawEncoder& _dde, const Shape& _shape, const bx::Vec3 _pos)
 {
 	switch (_shape.type)
 	{
-	case Shape::Type::Aabb:     _dde.draw    (*reinterpret_cast<const Aabb     *>(_shape.data) ); break;
-	case Shape::Type::Capsule:  _dde.draw    (*reinterpret_cast<const Capsule  *>(_shape.data) ); break;
-	case Shape::Type::Cone:     _dde.draw    (*reinterpret_cast<const Cone     *>(_shape.data) ); break;
-	case Shape::Type::Cylinder: _dde.draw    (*reinterpret_cast<const Cylinder *>(_shape.data) ); break;
-	case Shape::Type::Disk:     _dde.draw    (*reinterpret_cast<const Disk     *>(_shape.data) ); break;
-	case Shape::Type::Obb:      _dde.draw    (*reinterpret_cast<const Obb      *>(_shape.data) ); break;
-	case Shape::Type::Plane:  { _dde.drawGrid( reinterpret_cast<const bx::Plane*>(_shape.data)->normal, _pos, 9, 0.3f); } break;
-	case Shape::Type::Sphere:   _dde.draw    (*reinterpret_cast<const Sphere   *>(_shape.data) ); break;
-	case Shape::Type::Triangle: _dde.draw    (*reinterpret_cast<const Triangle *>(_shape.data) ); break;
+	case Shape::Type::Aabb:     _dde.draw    (*reinterpret_cast<const bx::Aabb     *>(_shape.data) ); break;
+	case Shape::Type::Capsule:  _dde.draw    (*reinterpret_cast<const bx::Capsule  *>(_shape.data) ); break;
+	case Shape::Type::Cone:     _dde.draw    (*reinterpret_cast<const bx::Cone     *>(_shape.data) ); break;
+	case Shape::Type::Cylinder: _dde.draw    (*reinterpret_cast<const bx::Cylinder *>(_shape.data) ); break;
+	case Shape::Type::Disk:     _dde.draw    (*reinterpret_cast<const bx::Disk     *>(_shape.data) ); break;
+	case Shape::Type::Obb:      _dde.draw    (*reinterpret_cast<const bx::Obb      *>(_shape.data) ); break;
+	case Shape::Type::Plane:  { _dde.drawGrid( reinterpret_cast<const bx::Plane    *>(_shape.data)->normal, _pos, 9, 0.3f); } break;
+	case Shape::Type::Sphere:   _dde.draw    (*reinterpret_cast<const bx::Sphere   *>(_shape.data) ); break;
+	case Shape::Type::Triangle: _dde.draw    (*reinterpret_cast<const bx::Triangle *>(_shape.data) ); break;
 	}
 }
 
@@ -835,10 +835,10 @@ public:
 	}
 
 	template<typename Ty>
-	bool intersect(DebugDrawEncoder* _dde, const Ray& _ray, const Ty& _shape)
+	bool intersect(DebugDrawEncoder* _dde, const bx::Ray& _ray, const Ty& _shape)
 	{
-		Hit hit;
-		if (::intersect(_ray, _shape, &hit) )
+		bx::Hit hit;
+		if (bx::intersect(_ray, _shape, &hit) )
 		{
 			_dde->push();
 
@@ -931,7 +931,7 @@ public:
 			bx::mtxProj(proj, 45.0f, float(m_width)/float(m_height), 1.0f, 15.0f, bgfx::getCaps()->homogeneousDepth);
 			bx::mtxMul(mtxVp, view, proj);
 
-			Ray ray = makeRay(
+			bx::Ray ray = bx::makeRay(
 				   (float(m_mouseState.m_mx)/float(m_width)  * 2.0f - 1.0f)
 				, -(float(m_mouseState.m_my)/float(m_height) * 2.0f - 1.0f)
 				, mtxInvVp
@@ -947,7 +947,7 @@ public:
 			dde.drawAxis(0.0f, 0.0f, 0.0f);
 
 			dde.push();
-				Aabb aabb =
+				bx::Aabb aabb =
 				{
 					{  5.0f, 1.0f, 1.0f },
 					{ 10.0f, 5.0f, 5.0f },
@@ -960,7 +960,7 @@ public:
 			static float time = 0.0f;
 			time += deltaTime*timeScale;
 
-			Obb obb;
+			bx::Obb obb;
 			bx::mtxRotateX(obb.mtx, time);
 			dde.setWireframe(true);
 			dde.setColor(intersect(&dde, ray, obb) ? kSelected : 0xffffffff);
@@ -969,7 +969,7 @@ public:
 			bx::mtxSRT(obb.mtx, 1.0f, 1.0f, 1.0f, time*0.23f, time, 0.0f, 3.0f, 0.0f, 0.0f);
 
 			dde.push();
-				toAabb(aabb, obb);
+				bx::toAabb(aabb, obb);
 				dde.setWireframe(true);
 				dde.setColor(0xff0000ff);
 				dde.draw(aabb);
@@ -1014,7 +1014,7 @@ public:
 			dde.drawFrustum(mtxVp);
 
 			dde.push();
-				Sphere sphere = { { 0.0f, 5.0f, 0.0f }, 1.0f };
+				bx::Sphere sphere = { { 0.0f, 5.0f, 0.0f }, 1.0f };
 				dde.setColor(intersect(&dde, ray, sphere) ? kSelected : 0xfff0c0ff);
 				dde.setWireframe(true);
 				dde.setLod(3);
@@ -1065,14 +1065,14 @@ public:
 				dde.push();
 					dde.setSpin(time*0.3f);
 					{
-						Cone cone =
+						bx::Cone cone =
 						{
 							{ -11.0f, 4.0f,  0.0f },
 							{ -13.0f, 6.0f,  1.0f },
 							1.0f
 						};
 
-						Cylinder cylinder =
+						bx::Cylinder cylinder =
 						{
 							{  -9.0f, 2.0f, -1.0f },
 							{ -11.0f, 4.0f,  0.0f },
@@ -1093,7 +1093,7 @@ public:
 
 				{
 					dde.setLod(0);
-					Capsule capsule =
+					bx::Capsule capsule =
 					{
 						{  0.0f, 7.0f, 0.0f },
 						{ -6.0f, 7.0f, 0.0f },
@@ -1113,7 +1113,7 @@ public:
 					, -10.0f, 1.0f, 10.0f
 					);
 
-				Cylinder cylinder =
+				bx::Cylinder cylinder =
 				{
 					{ -10.0f, 1.0f, 10.0f },
 					{   0.0f, 0.0f,  0.0f },

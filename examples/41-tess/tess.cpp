@@ -17,7 +17,6 @@
 #include <bx/math.h>
 
 #include "bgfx_utils.h"
-#include "bounds.h"
 #include "camera.h"
 #include "common.h"
 #include "imgui/imgui.h"
