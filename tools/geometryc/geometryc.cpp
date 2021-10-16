@@ -47,15 +47,14 @@ namespace stl = tinystl;
 #endif // 0
 
 #include <bx/bx.h>
-#include <bx/debug.h>
+#include <bx/bounds.h>
 #include <bx/commandline.h>
-#include <bx/timer.h>
-#include <bx/hash.h>
-#include <bx/uint32_t.h>
-#include <bx/math.h>
+#include <bx/debug.h>
 #include <bx/file.h>
-
-#include "bounds.h"
+#include <bx/hash.h>
+#include <bx/math.h>
+#include <bx/timer.h>
+#include <bx/uint32_t.h>
 
 typedef stl::vector<bx::Vec3> Vec3Array;
 
