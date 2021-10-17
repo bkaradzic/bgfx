@@ -54,30 +54,30 @@ struct FsrResources
 			uint32_t m_params[NumVec4 * 4];
 		};
 
-		bgfx::UniformHandle u_params{ BGFX_INVALID_HANDLE };
+		bgfx::UniformHandle u_params = BGFX_INVALID_HANDLE;
 	};
 
 	uint32_t m_width{ 0 };
 	uint32_t m_height{ 0 };
 
 	// Resource handles
-	bgfx::ProgramHandle m_bilinear16Program{ BGFX_INVALID_HANDLE };
-	bgfx::ProgramHandle m_bilinear32Program{ BGFX_INVALID_HANDLE };
-	bgfx::ProgramHandle m_easu16Program{ BGFX_INVALID_HANDLE };
-	bgfx::ProgramHandle m_easu32Program{ BGFX_INVALID_HANDLE };
-	bgfx::ProgramHandle m_rcas16Program{ BGFX_INVALID_HANDLE };
-	bgfx::ProgramHandle m_rcas32Program{ BGFX_INVALID_HANDLE };
+	bgfx::ProgramHandle m_bilinear16Program = BGFX_INVALID_HANDLE;
+	bgfx::ProgramHandle m_bilinear32Program = BGFX_INVALID_HANDLE;
+	bgfx::ProgramHandle m_easu16Program = BGFX_INVALID_HANDLE;
+	bgfx::ProgramHandle m_easu32Program = BGFX_INVALID_HANDLE;
+	bgfx::ProgramHandle m_rcas16Program = BGFX_INVALID_HANDLE;
+	bgfx::ProgramHandle m_rcas32Program = BGFX_INVALID_HANDLE;
 
 	// Shader uniforms
 	Uniforms m_uniforms;
 
 	// Uniforms to indentify texture samplers
-	bgfx::UniformHandle s_inputTexture{ BGFX_INVALID_HANDLE };
+	bgfx::UniformHandle s_inputTexture = BGFX_INVALID_HANDLE;
 
-	bgfx::TextureHandle m_easuTexture16F{ BGFX_INVALID_HANDLE };
-	bgfx::TextureHandle m_rcasTexture16F{ BGFX_INVALID_HANDLE };
-	bgfx::TextureHandle m_easuTexture32F{ BGFX_INVALID_HANDLE };
-	bgfx::TextureHandle m_rcasTexture32F{ BGFX_INVALID_HANDLE };
+	bgfx::TextureHandle m_easuTexture16F = BGFX_INVALID_HANDLE;
+	bgfx::TextureHandle m_rcasTexture16F = BGFX_INVALID_HANDLE;
+	bgfx::TextureHandle m_easuTexture32F = BGFX_INVALID_HANDLE;
+	bgfx::TextureHandle m_rcasTexture32F = BGFX_INVALID_HANDLE;
 };
 
 
