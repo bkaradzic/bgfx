@@ -364,7 +364,7 @@ namespace bgfx {
 
 		static const RemapInputSemantic s_remapInputSemantic[bgfx::Attrib::Count + 1] =
 		{
-			{ bgfx::Attrib::Position,  "POSITION",     0 },
+			{ bgfx::Attrib::Position,  "S_POSITION",   0 },
 			{ bgfx::Attrib::Normal,    "NORMAL",       0 },
 			{ bgfx::Attrib::Tangent,   "TANGENT",      0 },
 			{ bgfx::Attrib::Bitangent, "BITANGENT",    0 },
@@ -412,10 +412,10 @@ namespace bgfx {
 				{
 					const sce::Shader::Binary::Attribute* attrib = program.m_inputAttributes + ii;
 					const char* semanticName = attrib->getSemanticName();
-					if ( bx::strFind(semanticName, "S_").getPtr() == semanticName)
+					/*if ( bx::strFind(semanticName, "S_").getPtr() == semanticName)
 					{
 						continue;
-					}
+					}*/
 					attributesCount++;
 				}
 			}
@@ -433,10 +433,10 @@ namespace bgfx {
 					const sce::Shader::Binary::Attribute* attrib = program.m_inputAttributes + ii;
 					const char* semanticName = attrib->getSemanticName();
 
-					if (bx::strFind(semanticName, "S_").getPtr() == semanticName)
+					/*if (bx::strFind(semanticName, "S_").getPtr() == semanticName)
 					{
 						continue;
-					}
+					}*/
 					const RemapInputSemantic ris = findInputSemantic(attrib->getSemanticName(), attrib->m_semanticIndex);
 
 					uint8_t slotPlusInstanceFlag = attrib->m_resourceIndex;

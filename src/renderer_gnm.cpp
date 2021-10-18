@@ -743,7 +743,7 @@ namespace bgfx {
 			void updateTextureEnd() override;
 			void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override;
 			void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override;
-			void overrideInternal(TextureHandle _handle, uintptr_t _ptr);
+			void overrideInternal(TextureHandle _handle, uintptr_t _ptr) override;
 			uintptr_t getInternal(TextureHandle _handle) override;
 			void destroyTexture(TextureHandle _handle) override;
 			void createShaderBuffer(ShaderBufferHandle _handle, uint32_t _size, uint32_t _stride) override;
