@@ -6266,11 +6266,12 @@ namespace bgfx { namespace gl
 						: 120
 						;
 
-					version = 0 == bx::strCmp(code, "#version 430", 12) ? 430 : version;
+					if (0 != version)
+					{
+						bx::write(&writer, &err, "#version %d\n", version);
+					}
 
-					bx::write(&writer, &err, "#version %d\n", version);
-
-					if (430 > version && usesTextureLod)
+					if (usesTextureLod)
 					{
 						if (m_type == GL_FRAGMENT_SHADER)
 						{
@@ -6344,17 +6345,14 @@ namespace bgfx { namespace gl
 
 					if (130 <= version)
 					{
-						if (430 > version)
+						if (m_type == GL_FRAGMENT_SHADER)
 						{
-							if (m_type == GL_FRAGMENT_SHADER)
-							{
-								bx::write(&writer, "#define varying in\n");
-							}
-							else
-							{
-								bx::write(&writer, "#define attribute in\n");
-								bx::write(&writer, "#define varying out\n");
-							}
+							bx::write(&writer, "#define varying in\n");
+						}
+						else
+						{
+							bx::write(&writer, "#define attribute in\n");
+							bx::write(&writer, "#define varying out\n");
 						}
 
 						uint32_t fragData = 0;
@@ -6413,16 +6411,7 @@ namespace bgfx { namespace gl
 							);
 					}
 
-					if (version == 430)
-					{
-						int32_t verLen = bx::strLen("#version 430\n");
-						bx::write(&writer, code.getPtr()+verLen, code.getLength()-verLen);
-					}
-					else
-					{
-						bx::write(&writer, code);
-					}
-
+					bx::write(&writer, code);
 					bx::write(&writer, '\0');
 				}
 				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL   >= 31)

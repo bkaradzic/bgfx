@@ -13,13 +13,13 @@ extern "C"
 #include <fpp.h>
 } // extern "C"
 
-#define BGFX_SHADER_BIN_VERSION 11
+#define BGFX_SHADER_BIN_VERSION 12
 #define BGFX_CHUNK_MAGIC_CSH BX_MAKEFOURCC('C', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 #define BGFX_CHUNK_MAGIC_FSH BX_MAKEFOURCC('F', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 
 #define BGFX_SHADERC_VERSION_MAJOR 1
-#define BGFX_SHADERC_VERSION_MINOR 18
+#define BGFX_SHADERC_VERSION_MINOR 19
 
 namespace bgfx
 {
@@ -2476,6 +2476,38 @@ namespace bgfx
 									, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
 									  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
 									);
+
+								const bool hasFragColor = !bx::findIdentifierMatch(input, "gl_FragColor").isEmpty();
+								const bool hasFragData = !bx::findIdentifierMatch(input, "gl_FragData").isEmpty();
+
+								const uint32_t maxFragData = 8;
+								uint32_t fragData = 0;
+
+								if (hasFragData)
+								{
+									for (uint32_t ii = 0; ii < maxFragData; ++ii)
+									{
+										char temp[32];
+										bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
+										if (!bx::strFind(input, temp).isEmpty())
+										{
+											fragData = bx::uint32_max(fragData, ii);
+										}
+									}
+
+									BX_ASSERT(0 != fragData, "Unable to find and patch gl_FragData!");
+								}
+
+								if (0 != fragData)
+								{
+									bx::stringPrintf(code, "out vec4 bgfx_FragData[%d];\n", fragData);
+									bx::stringPrintf(code, "#define gl_FragData bgfx_FragData\n");
+								}
+								else if (hasFragColor)
+								{
+									bx::stringPrintf(code, "out vec4 bgfx_FragColor;\n");
+									bx::stringPrintf(code, "#define gl_FragColor bgfx_FragColor\n");
+								}
 							}
 
 							if ( (profile->lang == ShadingLang::GLSL && glsl_profile > 400)
