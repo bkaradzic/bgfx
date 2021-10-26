@@ -326,7 +326,7 @@ namespace bgfx { namespace spirv
 	{
 		uint16_t size = 0;
 
-		bx::Error err;
+		bx::ErrorAssert err;
 
 		uint16_t count = static_cast<uint16_t>(uniforms.size() );
 		bx::write(_writer, count, &err);

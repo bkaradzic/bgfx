@@ -330,7 +330,7 @@ namespace bgfx { namespace glsl
 			}
 		}
 
-		bx::Error err;
+		bx::ErrorAssert err;
 
 		uint16_t count = (uint16_t)uniforms.size();
 		bx::write(_writer, count, &err);

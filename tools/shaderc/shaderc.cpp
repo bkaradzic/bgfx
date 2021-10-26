@@ -309,6 +309,31 @@ namespace bgfx
 		NULL
 	};
 
+	void fatal(const char* _filePath, uint16_t _line, Fatal::Enum _code, const char* _format, ...)
+	{
+		BX_UNUSED(_filePath, _line, _code);
+
+		va_list argList;
+		va_start(argList, _format);
+
+		bx::vprintf(_format, argList);
+
+		va_end(argList);
+
+		abort();
+	}
+
+	void trace(const char* _filePath, uint16_t _line, const char* _format, ...)
+	{
+		BX_UNUSED(_filePath, _line);
+
+		va_list argList;
+		va_start(argList, _format);
+
+		bx::vprintf(_format, argList);
+
+		va_end(argList);
+	}
 	Options::Options()
 		: shaderType(' ')
 		, disasm(false)
