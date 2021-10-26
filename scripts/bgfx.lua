@@ -46,7 +46,6 @@ function bgfxProjectBase(_kind, _defines)
 
 		links {
 			"bimg",
-			"bx",
 		}
 
 		configuration { "vs20* or mingw*" }
@@ -95,26 +94,18 @@ function bgfxProjectBase(_kind, _defines)
 
 	includedirs {
 		path.join(BGFX_DIR, "3rdparty"),
-		path.join(BX_DIR,   "include"),
 		path.join(BIMG_DIR, "include"),
 	}
 
 	defines (_defines)
 
-	links {
-		"bx",
-	}
+	using_bx()
 
 	if _OPTIONS["with-glfw"] then
 		defines {
 			"BGFX_CONFIG_MULTITHREADED=0",
 		}
 	end
-
-	configuration { "Debug" }
-		defines {
-			"BGFX_CONFIG_DEBUG=1",
-		}
 
 	configuration { "vs* or mingw*", "not durango" }
 		includedirs {

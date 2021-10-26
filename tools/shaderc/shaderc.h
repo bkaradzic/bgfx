@@ -11,35 +11,6 @@ namespace bgfx
 	extern bool g_verbose;
 }
 
-#define _BX_TRACE(_format, ...)                                                          \
-				BX_MACRO_BLOCK_BEGIN                                                     \
-					if (bgfx::g_verbose)                                                 \
-					{                                                                    \
-						bx::printf(BX_FILE_LINE_LITERAL "" _format "\n", ##__VA_ARGS__); \
-					}                                                                    \
-				BX_MACRO_BLOCK_END
-
-#define _BX_WARN(_condition, _format, ...)                        \
-				BX_MACRO_BLOCK_BEGIN                              \
-					if (!(_condition) )                           \
-					{                                             \
-						BX_TRACE("WARN " _format, ##__VA_ARGS__); \
-					}                                             \
-				BX_MACRO_BLOCK_END
-
-#define _BX_ASSERT(_condition, _format, ...)                       \
-				BX_MACRO_BLOCK_BEGIN                               \
-					if (!(_condition) )                            \
-					{                                              \
-						BX_TRACE("CHECK " _format, ##__VA_ARGS__); \
-						bx::debugBreak();                          \
-					}                                              \
-				BX_MACRO_BLOCK_END
-
-#define BX_TRACE  _BX_TRACE
-#define BX_WARN   _BX_WARN
-#define BX_ASSERT _BX_ASSERT
-
 #ifndef SHADERC_CONFIG_HLSL
 #	define SHADERC_CONFIG_HLSL BX_PLATFORM_WINDOWS
 #endif // SHADERC_CONFIG_HLSL

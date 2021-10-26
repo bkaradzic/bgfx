@@ -800,7 +800,7 @@ struct View
 		bx::FileReader reader;
 		if (bx::open(&reader, filePath) )
 		{
-			bx::read(&reader, settings);
+			bx::read(&reader, settings, bx::ErrorAssert{});
 			bx::close(&reader);
 
 			if (!bx::fromString(&m_transitionTime, settings.get("view/transition") ) )
@@ -849,7 +849,7 @@ struct View
 			bx::FileWriter writer;
 			if (bx::open(&writer, filePath) )
 			{
-				bx::write(&writer, settings);
+				bx::write(&writer, settings, bx::ErrorAssert{});
 				bx::close(&writer);
 			}
 		}

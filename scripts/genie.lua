@@ -220,7 +220,6 @@ function exampleProjectDefaults()
 	debugdir (path.join(BGFX_DIR, "examples/runtime"))
 
 	includedirs {
-		path.join(BX_DIR,   "include"),
 		path.join(BIMG_DIR, "include"),
 		path.join(BGFX_DIR, "include"),
 		path.join(BGFX_DIR, "3rdparty"),
@@ -237,8 +236,9 @@ function exampleProjectDefaults()
 		"bgfx",
 		"bimg_decode",
 		"bimg",
-		"bx",
 	}
+
+	using_bx()
 
 	if _OPTIONS["with-webgpu"] then
 		usesWebGPU()
@@ -500,6 +500,10 @@ function exampleProject(_combined, ...)
 
 end
 
+dofile(path.join(BX_DIR,   "scripts/bx.lua"))
+dofile(path.join(BIMG_DIR, "scripts/bimg.lua"))
+dofile(path.join(BIMG_DIR, "scripts/bimg_decode.lua"))
+
 dofile "bgfx.lua"
 
 group "libs"
@@ -519,10 +523,6 @@ end
 BGFX_CONFIG = userdefines()
 
 bgfxProject("", "StaticLib", BGFX_CONFIG)
-
-dofile(path.join(BX_DIR,   "scripts/bx.lua"))
-dofile(path.join(BIMG_DIR, "scripts/bimg.lua"))
-dofile(path.join(BIMG_DIR, "scripts/bimg_decode.lua"))
 
 if _OPTIONS["with-tools"] then
 	dofile(path.join(BIMG_DIR, "scripts/bimg_encode.lua"))

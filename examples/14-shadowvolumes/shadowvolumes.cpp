@@ -1067,7 +1067,6 @@ struct Model
 			::setRenderState(_renderState);
 
 			// Submit
-			BX_ASSERT(bgfx::kInvalidHandle != m_program, "Error, program is not set.");
 			::submit(_viewId, m_program);
 		}
 	}

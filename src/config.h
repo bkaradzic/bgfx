@@ -6,7 +6,7 @@
 #ifndef BGFX_CONFIG_H_HEADER_GUARD
 #define BGFX_CONFIG_H_HEADER_GUARD
 
-#include <bx/bx.h>
+#include <bx/bx.h> // bx::isPowerOf2
 
 // # Configuration options for bgfx.
 //
@@ -15,9 +15,9 @@
 //
 // When selecting rendering backends select all backends you want to include in the build.
 
-#ifndef BGFX_CONFIG_DEBUG
-#	define BGFX_CONFIG_DEBUG 0
-#endif // BGFX_CONFIG_DEBUG
+#ifndef BX_CONFIG_DEBUG
+#	error "BX_CONFIG_DEBUG must be defined in build script!"
+#endif // BX_CONFIG_DEBUG
 
 #if !defined(BGFX_CONFIG_RENDERER_AGC)        \
  && !defined(BGFX_CONFIG_RENDERER_DIRECT3D9)  \

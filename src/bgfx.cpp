@@ -74,7 +74,7 @@ namespace bgfx
 
 		virtual void fatal(const char* _filePath, uint16_t _line, Fatal::Enum _code, const char* _str) override
 		{
-			bgfx::trace(_filePath, _line, "BGFX 0x%08x: %s\n", _code, _str);
+			bgfx::trace(_filePath, _line, "BGFX FATAL 0x%08x: %s\n", _code, _str);
 
 			if (Fatal::DebugCheck == _code)
 			{
@@ -393,7 +393,7 @@ namespace bgfx
 
 		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-		bx::write(&writer, magic);
+		bx::write(&writer, magic, bx::ErrorAssert{});
 
 		TextureCreate tc;
 		tc.m_width     = _width;
@@ -404,7 +404,7 @@ namespace bgfx
 		tc.m_format    = _format;
 		tc.m_cubeMap   = false;
 		tc.m_mem       = NULL;
-		bx::write(&writer, tc);
+		bx::write(&writer, tc, bx::ErrorAssert{});
 
 		rci->destroyTexture(_handle);
 		rci->createTexture(_handle, mem, _flags, 0);
@@ -442,7 +442,7 @@ namespace bgfx
 
 		if (BX_UNLIKELY(NULL == g_callback) )
 		{
-			bx::debugPrintf("%s(%d): BGFX 0x%08x: %s", _filePath, _line, _code, out);
+			bx::debugPrintf("%s(%d): BGFX FATAL 0x%08x: %s", _filePath, _line, _code, out);
 			abort();
 		}
 		else
@@ -683,13 +683,13 @@ namespace bgfx
 		charsetFillTexture(vga8x8, rgba, 8, pitch, bpp);
 		charsetFillTexture(vga8x16, &rgba[8*pitch], 16, pitch, bpp);
 		m_texture = createTexture2D(width, height, false, 1, TextureFormat::R8
-						, BGFX_SAMPLER_MIN_POINT
-						| BGFX_SAMPLER_MAG_POINT
-						| BGFX_SAMPLER_MIP_POINT
-						| BGFX_SAMPLER_U_CLAMP
-						| BGFX_SAMPLER_V_CLAMP
-						, mem
-						);
+			, BGFX_SAMPLER_MIN_POINT
+			| BGFX_SAMPLER_MAG_POINT
+			| BGFX_SAMPLER_MIP_POINT
+			| BGFX_SAMPLER_U_CLAMP
+			| BGFX_SAMPLER_V_CLAMP
+			, mem
+			);
 
 		ShaderHandle vsh = createEmbeddedShader(s_embeddedShaders, g_caps.rendererType, "vs_debugfont");
 		ShaderHandle fsh = createEmbeddedShader(s_embeddedShaders, g_caps.rendererType, "fs_debugfont");
@@ -3111,14 +3111,15 @@ namespace bgfx
 					}
 
 					bx::MemoryReader reader(mem->data, mem->size);
+					bx::Error err;
 
 					uint32_t magic;
-					bx::read(&reader, magic);
+					bx::read(&reader, magic, &err);
 
 					if (BGFX_CHUNK_MAGIC_TEX == magic)
 					{
 						TextureCreate tc;
-						bx::read(&reader, tc);
+						bx::read(&reader, tc, &err);
 
 						if (NULL != tc.m_mem)
 						{
@@ -3823,11 +3824,14 @@ namespace bgfx
 		BGFX_CHECK_HANDLE_INVALID_OK("setTexture/TextureHandle", s_ctx->m_textureHandle, _handle);
 		BX_ASSERT(_stage < g_caps.limits.maxTextureSamplers, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxTextureSamplers);
 
-		const TextureRef& ref = s_ctx->m_textureRef[_handle.idx];
-		BX_ASSERT(!ref.isReadBack()
-			, "Can't sample from texture which was created with BGFX_TEXTURE_READ_BACK. This is CPU only texture."
-			);
-		BX_UNUSED(ref);
+		if (isValid(_handle) )
+		{
+			const TextureRef& ref = s_ctx->m_textureRef[_handle.idx];
+			BX_ASSERT(!ref.isReadBack()
+				, "Can't sample from texture which was created with BGFX_TEXTURE_READ_BACK. This is CPU only texture."
+				);
+			BX_UNUSED(ref);
+		}
 
 		BGFX_ENCODER(setTexture(_stage, _sampler, _handle, _flags) );
 	}
@@ -4528,7 +4532,7 @@ namespace bgfx
 		return err.isOk();
 	}
 
-	static void isTextureValid(uint16_t _depth, bool _cubeMap, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags, bx::Error* _err)
+	static void isTextureValid(uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags, bx::Error* _err)
 	{
 		BX_ERROR_SCOPE(_err, "Texture validation");
 
@@ -4554,6 +4558,18 @@ namespace bgfx
 			);
 
 		BGFX_ERROR_CHECK(false
+			|| _width  < g_caps.limits.maxTextureSize
+			|| _height < g_caps.limits.maxTextureSize
+			, _err
+			, BGFX_ERROR_TEXTURE_VALIDATION
+			, "Requested texture width/height is above the `maxTextureSize` limit."
+			, "Texture width x height requested %d x %d (Max: %d)."
+			, _width
+			, _height
+			, g_caps.limits.maxTextureSize
+			);
+
+		BGFX_ERROR_CHECK(false
 			|| 0 == (_flags & BGFX_TEXTURE_RT_MASK)
 			|| 0 == (_flags & BGFX_TEXTURE_READ_BACK)
 			, _err
@@ -4570,6 +4586,16 @@ namespace bgfx
 			, "Texture array is not supported! "
 			  "Use bgfx::getCaps to check `BGFX_CAPS_TEXTURE_2D_ARRAY` backend renderer capabilities."
 			, ""
+			);
+
+		BGFX_ERROR_CHECK(false
+			|| _numLayers < g_caps.limits.maxTextureLayers
+			, _err
+			, BGFX_ERROR_TEXTURE_VALIDATION
+			, "Requested number of texture array layers is above the `maxTextureLayers` limit."
+			, "Number of texture array layers requested %d (Max: %d)."
+			, _numLayers
+			, g_caps.limits.maxTextureLayers
 			);
 
 		bool formatSupported;
@@ -4619,7 +4645,7 @@ namespace bgfx
 			  formatSupported
 			, _err
 			, BGFX_ERROR_TEXTURE_VALIDATION
-			, "Texture format is not supported!"
+			, "Texture format is not supported! "
 			  "Use bgfx::isTextureValid to check support for texture format before creating it."
 			, "Texture format: %s."
 			, getName(_format)
@@ -4653,7 +4679,7 @@ namespace bgfx
 	bool isTextureValid(uint16_t _depth, bool _cubeMap, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags)
 	{
 		bx::Error err;
-		isTextureValid(_depth, _cubeMap, _numLayers, _format, _flags, &err);
+		isTextureValid(0, 0, _depth, _cubeMap, _numLayers, _format, _flags, &err);
 		return err.isOk();
 	}
 
@@ -4737,20 +4763,19 @@ namespace bgfx
 
 	static TextureHandle createTexture2D(BackbufferRatio::Enum _ratio, uint16_t _width, uint16_t _height, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags, const Memory* _mem)
 	{
-		bx::Error err;
-		isTextureValid(0, false, _numLayers, _format, _flags, &err);
-		BGFX_ERROR_ASSERT(&err);
-
-		if (!err.isOk() )
-		{
-			return BGFX_INVALID_HANDLE;
-		}
-
 		if (BackbufferRatio::Count != _ratio)
 		{
 			_width  = uint16_t(s_ctx->m_init.resolution.width);
 			_height = uint16_t(s_ctx->m_init.resolution.height);
 			getTextureSizeFromRatio(_ratio, _width, _height);
+		}
+
+		bx::ErrorAssert err;
+		isTextureValid(_width, _height, 0, false, _numLayers, _format, _flags, &err);
+
+		if (!err.isOk() )
+		{
+			return BGFX_INVALID_HANDLE;
 		}
 
 		const uint8_t numMips = calcNumMips(_hasMips, _width, _height);
@@ -4773,7 +4798,7 @@ namespace bgfx
 
 		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-		bx::write(&writer, magic);
+		bx::write(&writer, magic, bx::ErrorAssert{});
 
 		TextureCreate tc;
 		tc.m_width     = _width;
@@ -4784,7 +4809,7 @@ namespace bgfx
 		tc.m_format    = _format;
 		tc.m_cubeMap   = false;
 		tc.m_mem       = _mem;
-		bx::write(&writer, tc);
+		bx::write(&writer, tc, bx::ErrorAssert{});
 
 		return s_ctx->createTexture(mem, _flags, 0, NULL, _ratio, NULL != _mem);
 	}
@@ -4803,9 +4828,8 @@ namespace bgfx
 
 	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, bool _hasMips, TextureFormat::Enum _format, uint64_t _flags, const Memory* _mem)
 	{
-		bx::Error err;
-		isTextureValid(_depth, false, 1, _format, _flags, &err);
-		BGFX_ERROR_ASSERT(&err);
+		bx::ErrorAssert err;
+		isTextureValid(_width, _height, _depth, false, 1, _format, _flags, &err);
 
 		if (!err.isOk() )
 		{
@@ -4831,7 +4855,7 @@ namespace bgfx
 
 		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-		bx::write(&writer, magic);
+		bx::write(&writer, magic, bx::ErrorAssert{});
 
 		TextureCreate tc;
 		tc.m_width     = _width;
@@ -4842,16 +4866,15 @@ namespace bgfx
 		tc.m_format    = _format;
 		tc.m_cubeMap   = false;
 		tc.m_mem       = _mem;
-		bx::write(&writer, tc);
+		bx::write(&writer, tc, bx::ErrorAssert{});
 
 		return s_ctx->createTexture(mem, _flags, 0, NULL, BackbufferRatio::Count, NULL != _mem);
 	}
 
 	TextureHandle createTextureCube(uint16_t _size, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags, const Memory* _mem)
 	{
-		bx::Error err;
-		isTextureValid(0, true, _numLayers, _format, _flags, &err);
-		BGFX_ERROR_ASSERT(&err);
+		bx::ErrorAssert err;
+		isTextureValid(_size, _size, 0, true, _numLayers, _format, _flags, &err);
 
 		if (!err.isOk() )
 		{
@@ -4878,7 +4901,7 @@ namespace bgfx
 
 		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-		bx::write(&writer, magic);
+		bx::write(&writer, magic, bx::ErrorAssert{});
 
 		TextureCreate tc;
 		tc.m_width     = _size;
@@ -4889,7 +4912,7 @@ namespace bgfx
 		tc.m_format    = _format;
 		tc.m_cubeMap   = true;
 		tc.m_mem       = _mem;
-		bx::write(&writer, tc);
+		bx::write(&writer, tc, bx::ErrorAssert{});
 
 		return s_ctx->createTexture(mem, _flags, 0, NULL, BackbufferRatio::Count, NULL != _mem);
 	}

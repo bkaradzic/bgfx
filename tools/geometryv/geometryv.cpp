@@ -430,7 +430,7 @@ struct View
 		{
 			m_path = _filePath;
 		}
-		else if (bx::open(&dr, _filePath.getPath() ) )
+		else if (bx::open(&dr, _filePath.getPath()) )
 		{
 			m_path = _filePath.getPath();
 		}
@@ -515,7 +515,7 @@ struct View
 		bx::FileReader reader;
 		if (bx::open(&reader, filePath) )
 		{
-			bx::read(&reader, settings);
+			bx::read(&reader, settings, bx::ErrorAssert{});
 			bx::close(&reader);
 
 			if (!bx::fromString(&m_width, settings.get("view/width") ) )
@@ -550,7 +550,7 @@ struct View
 			bx::FileWriter writer;
 			if (bx::open(&writer, filePath) )
 			{
-				bx::write(&writer, settings);
+				bx::write(&writer, settings, bx::ErrorAssert{});
 				bx::close(&writer);
 			}
 		}
