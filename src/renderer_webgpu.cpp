@@ -2471,8 +2471,10 @@ namespace bgfx { namespace webgpu
 
 		bx::MemoryReader reader(_mem->data, _mem->size);
 
+		bx::ErrorAssert err;
+
 		uint32_t magic;
-		bx::read(&reader, magic);
+		bx::read(&reader, magic, &err);
 
 		wgpu::ShaderStage shaderStage;
 
@@ -2496,7 +2498,7 @@ namespace bgfx { namespace webgpu
 		m_stage = shaderStage;
 
 		uint32_t hashIn;
-		bx::read(&reader, hashIn);
+		bx::read(&reader, hashIn, &err);
 
 		uint32_t hashOut;
 
@@ -2506,11 +2508,11 @@ namespace bgfx { namespace webgpu
 		}
 		else
 		{
-			bx::read(&reader, hashOut);
+			bx::read(&reader, hashOut, &err);
 		}
 
 		uint16_t count;
-		bx::read(&reader, count);
+		bx::read(&reader, count, &err);
 
 		m_numPredefined = 0;
 		m_numUniforms = count;
@@ -2530,32 +2532,32 @@ namespace bgfx { namespace webgpu
 			for (uint32_t ii = 0; ii < count; ++ii)
 			{
 				uint8_t nameSize = 0;
-				bx::read(&reader, nameSize);
+				bx::read(&reader, nameSize, &err);
 
 				char name[256];
-				bx::read(&reader, &name, nameSize);
+				bx::read(&reader, &name, nameSize, &err);
 				name[nameSize] = '\0';
 
 				uint8_t type = 0;
-				bx::read(&reader, type);
+				bx::read(&reader, type, &err);
 
 				uint8_t num;
-				bx::read(&reader, num);
+				bx::read(&reader, num, &err);
 
 				uint16_t regIndex;
-				bx::read(&reader, regIndex);
+				bx::read(&reader, regIndex, &err);
 
 				uint16_t regCount;
-				bx::read(&reader, regCount);
+				bx::read(&reader, regCount, &err);
 
 				uint8_t texComponent;
-				bx::read(&reader, texComponent);
+				bx::read(&reader, texComponent, &err);
 
 				uint8_t texDimension;
-				bx::read(&reader, texDimension);
+				bx::read(&reader, texDimension, &err);
 
 				uint16_t texFormat = 0;
-				bx::read(&reader, texFormat);
+				bx::read(&reader, texFormat, &err);
 
 				const char* kind = "invalid";
 
@@ -2654,7 +2656,8 @@ namespace bgfx { namespace webgpu
 					m_samplers[m_numSamplers].visibility = shaderStage;
 					m_samplers[m_numSamplers].sampler.type = comparisonSampler
 						? wgpu::SamplerBindingType::Comparison
-						: wgpu::SamplerBindingType::Filtering;
+						: wgpu::SamplerBindingType::Filtering
+						;
 
 					m_numSamplers++;
 
@@ -2693,7 +2696,7 @@ namespace bgfx { namespace webgpu
 		}
 
 		uint32_t shaderSize;
-		bx::read(&reader, shaderSize);
+		bx::read(&reader, shaderSize, &err);
 
 		BX_TRACE("Shader body is at %lld size %u remaining %lld", reader.getPos(), shaderSize, reader.remaining());
 
@@ -2709,7 +2712,7 @@ namespace bgfx { namespace webgpu
 		BX_TRACE("First word %08" PRIx32, code[0]);
 
 		uint8_t numAttrs = 0;
-		bx::read(&reader, numAttrs);
+		bx::read(&reader, numAttrs, &err);
 
 		m_numAttrs = numAttrs;
 
@@ -2719,7 +2722,7 @@ namespace bgfx { namespace webgpu
 		for(uint8_t ii = 0; ii < numAttrs; ++ii)
 		{
 			uint16_t id;
-			bx::read(&reader, id);
+			bx::read(&reader, id, &err);
 
 			auto toString = [](Attrib::Enum attr)
 			{
@@ -2784,10 +2787,10 @@ namespace bgfx { namespace webgpu
 			return ((value + multiple - 1) / multiple) * multiple;
 		};
 
-		bx::read(&reader, m_size);
+		bx::read(&reader, m_size, &err);
 
 		const uint32_t align = kMinBufferOffsetAlignment;
-		m_gpuSize = (uint16_t) bx::strideAlign(m_size, align);
+		m_gpuSize = uint16_t(bx::strideAlign(m_size, align) );
 
 		BX_TRACE("shader size %d (used=%d) (prev=%d)", (int)m_size, (int)m_gpuSize, (int)bx::strideAlign(roundUp(m_size, 4), align));
 	}

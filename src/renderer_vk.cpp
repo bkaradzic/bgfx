@@ -4688,9 +4688,9 @@ VK_DESTROY
 
 	void ShaderVK::create(const Memory* _mem)
 	{
-		bx::Error err;
-
 		bx::MemoryReader reader(_mem->data, _mem->size);
+
+		bx::ErrorAssert err;
 
 		uint32_t magic;
 		bx::read(&reader, magic, &err);

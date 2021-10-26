@@ -2433,11 +2433,13 @@ namespace bgfx { namespace mtl
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
 
+		bx::ErrorAssert err;
+
 		uint32_t magic;
-		bx::read(&reader, magic);
+		bx::read(&reader, magic, &err);
 
 		uint32_t hashIn;
-		bx::read(&reader, hashIn);
+		bx::read(&reader, hashIn, &err);
 
 		uint32_t hashOut;
 
@@ -2447,7 +2449,7 @@ namespace bgfx { namespace mtl
 		}
 		else
 		{
-			bx::read(&reader, hashOut);
+			bx::read(&reader, hashOut, &err);
 		}
 
 		uint16_t count;
@@ -2461,34 +2463,34 @@ namespace bgfx { namespace mtl
 		for (uint32_t ii = 0; ii < count; ++ii)
 		{
 			uint8_t nameSize;
-			bx::read(&reader, nameSize);
+			bx::read(&reader, nameSize, &err);
 
 			char name[256];
 			bx::read(&reader, &name, nameSize);
 			name[nameSize] = '\0';
 
 			uint8_t type;
-			bx::read(&reader, type);
+			bx::read(&reader, type, &err);
 
 			uint8_t num;
-			bx::read(&reader, num);
+			bx::read(&reader, num, &err);
 
 			uint16_t regIndex;
-			bx::read(&reader, regIndex);
+			bx::read(&reader, regIndex, &err);
 
 			uint16_t regCount;
-			bx::read(&reader, regCount);
+			bx::read(&reader, regCount, &err);
 
 			if (!isShaderVerLess(magic, 8) )
 			{
 				uint16_t texInfo = 0;
-				bx::read(&reader, texInfo);
+				bx::read(&reader, texInfo, &err);
 			}
 
 			if (!isShaderVerLess(magic, 10) )
 			{
 				uint16_t texFormat = 0;
-				bx::read(&reader, texFormat);
+				bx::read(&reader, texFormat, &err);
 			}
 		}
 
@@ -2496,12 +2498,12 @@ namespace bgfx { namespace mtl
 		{
 			for (uint32_t ii = 0; ii < 3; ++ii)
 			{
-				bx::read(&reader, m_numThreads[ii]);
+				bx::read(&reader, m_numThreads[ii], &err);
 			}
 		}
 
 		uint32_t shaderSize;
-		bx::read(&reader, shaderSize);
+		bx::read(&reader, shaderSize, &err);
 
 		const char* code = (const char*)reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);

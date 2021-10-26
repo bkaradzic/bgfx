@@ -5940,10 +5940,10 @@ namespace bgfx { namespace gl
 
 	void ShaderGL::create(const Memory* _mem)
 	{
-		bx::Error err;
-
 		bx::MemoryReader reader(_mem->data, _mem->size);
 		m_hash = bx::hash<bx::HashMurmur2A>(_mem->data, _mem->size);
+
+		bx::ErrorAssert err;
 
 		uint32_t magic;
 		bx::read(&reader, magic, &err);
