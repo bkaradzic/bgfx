@@ -1134,7 +1134,7 @@ namespace bgfx { namespace d3d9
 
 			bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 			uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-			bx::write(&writer, magic);
+			bx::write(&writer, magic, bx::ErrorAssert{});
 
 			TextureCreate tc;
 			tc.m_width     = _width;
@@ -1145,7 +1145,7 @@ namespace bgfx { namespace d3d9
 			tc.m_format    = TextureFormat::Enum(texture.m_requestedFormat);
 			tc.m_cubeMap   = false;
 			tc.m_mem       = NULL;
-			bx::write(&writer, tc);
+			bx::write(&writer, tc, bx::ErrorAssert{});
 
 			texture.destroy(true);
 			texture.create(mem, texture.m_flags, 0);
@@ -2397,13 +2397,15 @@ namespace bgfx { namespace d3d9
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
 
+		bx::ErrorAssert err;
+
 		uint32_t magic;
-		bx::read(&reader, magic);
+		bx::read(&reader, magic, &err);
 
 		const bool fragment = isShaderType(magic, 'F');
 
 		uint32_t hashIn;
-		bx::read(&reader, hashIn);
+		bx::read(&reader, hashIn, &err);
 
 		uint32_t hashOut;
 
@@ -2413,11 +2415,11 @@ namespace bgfx { namespace d3d9
 		}
 		else
 		{
-			bx::read(&reader, hashOut);
+			bx::read(&reader, hashOut, &err);
 		}
 
 		uint16_t count;
-		bx::read(&reader, count);
+		bx::read(&reader, count, &err);
 
 		m_numPredefined = 0;
 
@@ -2430,34 +2432,34 @@ namespace bgfx { namespace d3d9
 			for (uint32_t ii = 0; ii < count; ++ii)
 			{
 				uint8_t nameSize = 0;
-				bx::read(&reader, nameSize);
+				bx::read(&reader, nameSize, &err);
 
 				char name[256] = {};
-				bx::read(&reader, &name, nameSize);
+				bx::read(&reader, &name, nameSize, &err);
 				name[nameSize] = '\0';
 
 				uint8_t type = 0;
-				bx::read(&reader, type);
+				bx::read(&reader, type, &err);
 
 				uint8_t num = 0;
-				bx::read(&reader, num);
+				bx::read(&reader, num, &err);
 
 				uint16_t regIndex = 0;
-				bx::read(&reader, regIndex);
+				bx::read(&reader, regIndex, &err);
 
 				uint16_t regCount = 0;
-				bx::read(&reader, regCount);
+				bx::read(&reader, regCount, &err);
 
 				if (!isShaderVerLess(magic, 8) )
 				{
 					uint16_t texInfo = 0;
-					bx::read(&reader, texInfo);
+					bx::read(&reader, texInfo, &err);
 				}
 
 				if (!isShaderVerLess(magic, 10) )
 				{
 					uint16_t texFormat = 0;
-					bx::read(&reader, texFormat);
+					bx::read(&reader, texFormat, &err);
 				}
 
 				const char* kind = "invalid";
@@ -2510,7 +2512,7 @@ namespace bgfx { namespace d3d9
 		}
 
 		uint32_t shaderSize;
-		bx::read(&reader, shaderSize);
+		bx::read(&reader, shaderSize, &err);
 
 		const DWORD* code = (const DWORD*)reader.getDataPtr();
 
