@@ -848,7 +848,7 @@ void drawBlendish(struct NVGcontext* _vg, float _x, float _y, float _w, float _h
 
 	y += 25.0f;
 	bndLabel(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, -1, "Label:");
-	y += BND_WIDGET_HEIGHT;
+	y += float(BND_WIDGET_HEIGHT);
 	bndChoiceButton(_vg, x, y, 80.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_DEFAULT, -1, "Default");
 	y += 25.0f;
 	bndChoiceButton(_vg, x, y, 80.0f, BND_WIDGET_HEIGHT, BND_CORNER_NONE, BND_HOVER, -1, "Hovered");
@@ -869,9 +869,9 @@ void drawBlendish(struct NVGcontext* _vg, float _x, float _y, float _w, float _h
 
 	y += 40.0f;
 	bndNumberField(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_CORNER_DOWN, BND_DEFAULT, "Top", "100");
-	y += BND_WIDGET_HEIGHT - 2.0f;
+	y += float(BND_WIDGET_HEIGHT) - 2.0f;
 	bndNumberField(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_CORNER_ALL, BND_DEFAULT, "Center", "100");
-	y += BND_WIDGET_HEIGHT - 2.0f;
+	y += float(BND_WIDGET_HEIGHT) - 2.0f;
 	bndNumberField(_vg, x, y, 120.0f, BND_WIDGET_HEIGHT, BND_CORNER_TOP, BND_DEFAULT, "Bottom", "100");
 
 	float mx = x - 30.0f;
@@ -879,11 +879,11 @@ void drawBlendish(struct NVGcontext* _vg, float _x, float _y, float _w, float _h
 	float mw = 120.0f;
 	bndMenuBackground(_vg, mx, my, mw, 120.0f, BND_CORNER_TOP);
 	bndMenuLabel(_vg, mx, my, mw, BND_WIDGET_HEIGHT, -1, "Menu Title");
-	my += BND_WIDGET_HEIGHT - 2.0f;
+	my += float(BND_WIDGET_HEIGHT) - 2.0f;
 	bndMenuItem(_vg, mx, my, mw, BND_WIDGET_HEIGHT, BND_DEFAULT, BND_ICONID(17, 3), "Default");
-	my += BND_WIDGET_HEIGHT - 2.0f;
+	my += float(BND_WIDGET_HEIGHT) - 2.0f;
 	bndMenuItem(_vg, mx, my, mw, BND_WIDGET_HEIGHT, BND_HOVER, BND_ICONID(18, 3), "Hovered");
-	my += BND_WIDGET_HEIGHT - 2.0f;
+	my += float(BND_WIDGET_HEIGHT) - 2.0f;
 	bndMenuItem(_vg, mx, my, mw, BND_WIDGET_HEIGHT, BND_ACTIVE, BND_ICONID(19, 3), "Active");
 
 	y = _y;
