@@ -3917,6 +3917,16 @@ namespace bgfx
 		BX_ASSERT(_format != TextureFormat::BGRA8
 			, "Can't use TextureFormat::BGRA8 with compute, use TextureFormat::RGBA8 instead."
 			);
+
+		if (isValid(_handle) )
+		{
+			const TextureRef& ref = s_ctx->m_textureRef[_handle.idx];
+			BX_ASSERT(!ref.isReadBack()
+				, "Can't texture which was created with BGFX_TEXTURE_READ_BACK with compute. This is CPU only texture."
+				);
+			BX_UNUSED(ref);
+		}
+
 		BGFX_ENCODER(setImage(_stage, _handle, _mip, _access, _format) );
 	}
 
@@ -4575,6 +4585,15 @@ namespace bgfx
 			, _err
 			, BGFX_ERROR_TEXTURE_VALIDATION
 			, "Can't create render target with `BGFX_TEXTURE_READ_BACK` flag."
+			, ""
+			);
+
+		BGFX_ERROR_CHECK(false
+			|| 0 == (_flags & BGFX_TEXTURE_COMPUTE_WRITE)
+			|| 0 == (_flags & BGFX_TEXTURE_READ_BACK)
+			, _err
+			, BGFX_ERROR_TEXTURE_VALIDATION
+			, "Can't create compute texture with `BGFX_TEXTURE_READ_BACK` flag."
 			, ""
 			);
 
