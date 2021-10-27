@@ -12,6 +12,142 @@
 
 struct FsrResources
 {
+	void init(uint32_t _width, uint32_t _height)
+	{
+		resize(_width, _height);
+
+		// Create uniforms for screen passes and models
+		m_uniforms.init();
+
+		// Create texture sampler uniforms (used when we bind textures)
+		s_inputTexture = bgfx::createUniform("InputTexture", bgfx::UniformType::Sampler);
+
+		// Create program from shaders.
+		m_bilinear32Program = bgfx::createProgram(loadShader("cs_fsr_bilinear_32"), true);
+		m_easu32Program     = bgfx::createProgram(loadShader("cs_fsr_easu_32"), true);
+		m_rcas32Program     = bgfx::createProgram(loadShader("cs_fsr_rcas_32"), true);
+
+		m_support16BitPrecision = (bgfx::getRendererType() != bgfx::RendererType::OpenGL);
+
+		if (m_support16BitPrecision)
+		{
+			m_bilinear16Program = bgfx::createProgram(loadShader("cs_fsr_bilinear_16"), true);
+			m_easu16Program     = bgfx::createProgram(loadShader("cs_fsr_easu_16"), true);
+			m_rcas16Program     = bgfx::createProgram(loadShader("cs_fsr_rcas_16"), true);
+		}
+	}
+
+	void destroy()
+	{
+		if (m_support16BitPrecision)
+		{
+			bgfx::destroy(m_bilinear16Program);
+			m_bilinear16Program = BGFX_INVALID_HANDLE;
+
+			bgfx::destroy(m_easu16Program);
+			m_easu16Program = BGFX_INVALID_HANDLE;
+
+			bgfx::destroy(m_rcas16Program);
+			m_rcas16Program = BGFX_INVALID_HANDLE;
+		}
+
+		bgfx::destroy(m_bilinear32Program);
+		m_bilinear32Program = BGFX_INVALID_HANDLE;
+
+		bgfx::destroy(m_easu32Program);
+		m_easu32Program = BGFX_INVALID_HANDLE;
+
+		bgfx::destroy(m_rcas32Program);
+		m_rcas32Program = BGFX_INVALID_HANDLE;
+
+		m_uniforms.destroy();
+
+		bgfx::destroy(s_inputTexture);
+		s_inputTexture = BGFX_INVALID_HANDLE;
+
+		if (bgfx::isValid(m_easuTexture16F) )
+		{
+			bgfx::destroy(m_easuTexture16F);
+			m_easuTexture16F = BGFX_INVALID_HANDLE;
+
+			bgfx::destroy(m_rcasTexture16F);
+			m_rcasTexture16F = BGFX_INVALID_HANDLE;
+		}
+
+		if (bgfx::isValid(m_easuTexture32F) )
+		{
+			bgfx::destroy(m_easuTexture32F);
+			m_easuTexture32F = BGFX_INVALID_HANDLE;
+
+			bgfx::destroy(m_rcasTexture32F);
+			m_rcasTexture32F = BGFX_INVALID_HANDLE;
+		}
+	}
+
+	void resize(uint32_t _width, uint32_t _height)
+	{
+		m_width  = _width;
+		m_height = _height;
+
+		if (bgfx::isValid(m_easuTexture16F) )
+		{
+			bgfx::destroy(m_easuTexture16F);
+			m_easuTexture16F = BGFX_INVALID_HANDLE;
+
+			bgfx::destroy(m_rcasTexture16F);
+			m_rcasTexture16F = BGFX_INVALID_HANDLE;
+		}
+
+		if (bgfx::isValid(m_easuTexture32F) )
+		{
+			bgfx::destroy(m_easuTexture32F);
+			bgfx::destroy(m_rcasTexture32F);
+		}
+
+		if (m_support16BitPrecision)
+		{
+			m_easuTexture16F = bgfx::createTexture2D(
+				  uint16_t(m_width)
+				, uint16_t(m_height)
+				, false
+				, 1
+				, bgfx::TextureFormat::RGBA16F
+				, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+				);
+			bgfx::setName(m_easuTexture16F, "easuTexture16F");
+
+			m_rcasTexture16F = bgfx::createTexture2D(
+				  uint16_t(m_width)
+				, uint16_t(m_height)
+				, false
+				, 1
+				, bgfx::TextureFormat::RGBA16F
+				, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+				);
+			bgfx::setName(m_rcasTexture16F, "rcasTexture16F");
+		}
+
+		m_easuTexture32F = bgfx::createTexture2D(
+			  uint16_t(m_width)
+			, uint16_t(m_height)
+			, false
+			, 1
+			, bgfx::TextureFormat::RGBA32F
+			, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+			);
+		bgfx::setName(m_easuTexture32F, "easuTexture32F");
+
+		m_rcasTexture32F = bgfx::createTexture2D(
+			  uint16_t(m_width)
+			, uint16_t(m_height)
+			, false
+			, 1
+			, bgfx::TextureFormat::RGBA32F
+			, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+			);
+		bgfx::setName(m_rcasTexture32F, "rcasTexture32F");
+	}
+
 	struct Uniforms
 	{
 		struct Vec4
@@ -57,16 +193,22 @@ struct FsrResources
 		bgfx::UniformHandle u_params = BGFX_INVALID_HANDLE;
 	};
 
-	uint32_t m_width{ 0 };
-	uint32_t m_height{ 0 };
+	uint32_t m_width  = 0;
+	uint32_t m_height = 0;
+	bool     m_support16BitPrecision = false;
 
 	// Resource handles
 	bgfx::ProgramHandle m_bilinear16Program = BGFX_INVALID_HANDLE;
+	bgfx::ProgramHandle m_easu16Program     = BGFX_INVALID_HANDLE;
+	bgfx::ProgramHandle m_rcas16Program     = BGFX_INVALID_HANDLE;
+	bgfx::TextureHandle m_easuTexture16F    = BGFX_INVALID_HANDLE;
+	bgfx::TextureHandle m_rcasTexture16F    = BGFX_INVALID_HANDLE;
+
 	bgfx::ProgramHandle m_bilinear32Program = BGFX_INVALID_HANDLE;
-	bgfx::ProgramHandle m_easu16Program = BGFX_INVALID_HANDLE;
-	bgfx::ProgramHandle m_easu32Program = BGFX_INVALID_HANDLE;
-	bgfx::ProgramHandle m_rcas16Program = BGFX_INVALID_HANDLE;
-	bgfx::ProgramHandle m_rcas32Program = BGFX_INVALID_HANDLE;
+	bgfx::ProgramHandle m_easu32Program     = BGFX_INVALID_HANDLE;
+	bgfx::ProgramHandle m_rcas32Program     = BGFX_INVALID_HANDLE;
+	bgfx::TextureHandle m_easuTexture32F    = BGFX_INVALID_HANDLE;
+	bgfx::TextureHandle m_rcasTexture32F    = BGFX_INVALID_HANDLE;
 
 	// Shader uniforms
 	Uniforms m_uniforms;
@@ -74,12 +216,7 @@ struct FsrResources
 	// Uniforms to indentify texture samplers
 	bgfx::UniformHandle s_inputTexture = BGFX_INVALID_HANDLE;
 
-	bgfx::TextureHandle m_easuTexture16F = BGFX_INVALID_HANDLE;
-	bgfx::TextureHandle m_rcasTexture16F = BGFX_INVALID_HANDLE;
-	bgfx::TextureHandle m_easuTexture32F = BGFX_INVALID_HANDLE;
-	bgfx::TextureHandle m_rcasTexture32F = BGFX_INVALID_HANDLE;
 };
-
 
 Fsr::Fsr()
 {
@@ -93,114 +230,17 @@ Fsr::~Fsr()
 
 void Fsr::init(uint32_t _width, uint32_t _height)
 {
-	resize(_width, _height);
-
-	// Create uniforms for screen passes and models
-	m_resources->m_uniforms.init();
-
-	// Create texture sampler uniforms (used when we bind textures)
-	m_resources->s_inputTexture = bgfx::createUniform("InputTexture", bgfx::UniformType::Sampler);
-
-	// Create program from shaders.
-	m_resources->m_bilinear32Program = bgfx::createProgram(loadShader("cs_fsr_bilinear_32"), true);
-	m_resources->m_easu32Program     = bgfx::createProgram(loadShader("cs_fsr_easu_32"), true);
-	m_resources->m_rcas32Program     = bgfx::createProgram(loadShader("cs_fsr_rcas_32"), true);
-
-	m_support16BitPrecision = (bgfx::getRendererType() != bgfx::RendererType::OpenGL);
-
-	if (m_support16BitPrecision)
-	{
-		m_resources->m_bilinear16Program = bgfx::createProgram(loadShader("cs_fsr_bilinear_16"), true);
-		m_resources->m_easu16Program     = bgfx::createProgram(loadShader("cs_fsr_easu_16"), true);
-		m_resources->m_rcas16Program     = bgfx::createProgram(loadShader("cs_fsr_rcas_16"), true);
-	}
+	m_resources->init(_width, _height);
 }
 
 void Fsr::destroy()
 {
-	if (m_support16BitPrecision)
-	{
-		bgfx::destroy(m_resources->m_bilinear16Program);
-		bgfx::destroy(m_resources->m_easu16Program);
-		bgfx::destroy(m_resources->m_rcas16Program);
-	}
-
-	bgfx::destroy(m_resources->m_bilinear32Program);
-	bgfx::destroy(m_resources->m_easu32Program);
-	bgfx::destroy(m_resources->m_rcas32Program);
-
-	m_resources->m_uniforms.destroy();
-
-	bgfx::destroy(m_resources->s_inputTexture);
-
-	if (bgfx::isValid(m_resources->m_easuTexture16F) )
-	{
-		bgfx::destroy(m_resources->m_easuTexture16F);
-		bgfx::destroy(m_resources->m_rcasTexture16F);
-	}
-
-	if (bgfx::isValid(m_resources->m_easuTexture32F) )
-	{
-		bgfx::destroy(m_resources->m_easuTexture32F);
-		bgfx::destroy(m_resources->m_rcasTexture32F);
-	}
+	m_resources->destroy();
 }
 
 void Fsr::resize(uint32_t _width, uint32_t _height)
 {
-	m_resources->m_width  = _width;
-	m_resources->m_height = _height;
-
-	if (bgfx::isValid(m_resources->m_easuTexture16F) )
-	{
-		bgfx::destroy(m_resources->m_easuTexture16F);
-		bgfx::destroy(m_resources->m_rcasTexture16F);
-	}
-
-	if (bgfx::isValid(m_resources->m_easuTexture32F) )
-	{
-		bgfx::destroy(m_resources->m_easuTexture32F);
-		bgfx::destroy(m_resources->m_rcasTexture32F);
-	}
-
-	if (m_support16BitPrecision)
-	{
-		m_resources->m_easuTexture16F = bgfx::createTexture2D(
-			  uint16_t(m_resources->m_width)
-			, uint16_t(m_resources->m_height)
-			, false
-			, 1
-			, bgfx::TextureFormat::RGBA16F
-			, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
-			);
-
-		m_resources->m_rcasTexture16F = bgfx::createTexture2D(
-			  uint16_t(m_resources->m_width)
-			, uint16_t(m_resources->m_height)
-			, false
-			, 1
-			, bgfx::TextureFormat::RGBA16F
-			, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
-			);
-	}
-
-	m_resources->m_easuTexture32F = bgfx::createTexture2D(
-		  uint16_t(m_resources->m_width)
-		, uint16_t(m_resources->m_height)
-		, false
-		, 1
-		, bgfx::TextureFormat::RGBA32F
-		, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
-		);
-
-	m_resources->m_rcasTexture32F = bgfx::createTexture2D(
-		  uint16_t(m_resources->m_width)
-		, uint16_t(m_resources->m_height)
-		, false
-		, 1
-		, bgfx::TextureFormat::RGBA32F
-		, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
-		);
+	m_resources->resize(_width, _height);
 }
 
 bgfx::ViewId Fsr::computeFsr(bgfx::ViewId _pass, bgfx::TextureHandle _colorTexture)
@@ -288,7 +328,7 @@ bgfx::TextureHandle Fsr::getResultTexture() const
 
 bool Fsr::supports16BitPrecision() const
 {
-	return m_support16BitPrecision;
+	return m_resources->m_support16BitPrecision;
 }
 
 void Fsr::updateUniforms()

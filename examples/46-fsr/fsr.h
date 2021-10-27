@@ -41,7 +41,6 @@ private:
 	void updateUniforms();
 
 	struct FsrResources *m_resources;
-	bool m_support16BitPrecision{ false };
 };
 
 #endif // __FSR_H__
