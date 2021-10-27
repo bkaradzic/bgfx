@@ -4608,7 +4608,7 @@ namespace bgfx
 			);
 
 		BGFX_ERROR_CHECK(false
-			|| _numLayers < g_caps.limits.maxTextureLayers
+			|| _numLayers <= g_caps.limits.maxTextureLayers
 			, _err
 			, BGFX_ERROR_TEXTURE_VALIDATION
 			, "Requested number of texture array layers is above the `maxTextureLayers` limit."
