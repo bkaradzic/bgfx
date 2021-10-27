@@ -500,13 +500,11 @@ function exampleProject(_combined, ...)
 
 end
 
+group "libs"
 dofile(path.join(BX_DIR,   "scripts/bx.lua"))
 dofile(path.join(BIMG_DIR, "scripts/bimg.lua"))
 dofile(path.join(BIMG_DIR, "scripts/bimg_decode.lua"))
-
 dofile "bgfx.lua"
-
-group "libs"
 
 local function userdefines()
 	local defines = {}
@@ -524,7 +522,13 @@ BGFX_CONFIG = userdefines()
 
 bgfxProject("", "StaticLib", BGFX_CONFIG)
 
+if _OPTIONS["with-shared-lib"] then
+	group "libs"
+	bgfxProject("-shared-lib", "SharedLib", BGFX_CONFIG)
+end
+
 if _OPTIONS["with-tools"] then
+	group "libs"
 	dofile(path.join(BIMG_DIR, "scripts/bimg_encode.lua"))
 end
 
@@ -596,11 +600,6 @@ or _OPTIONS["with-combined-examples"] then
 	if not premake.vstudio.iswinrt() then
 		exampleProject(false, "25-c99")
 	end
-end
-
-if _OPTIONS["with-shared-lib"] then
-	group "libs"
-	bgfxProject("-shared-lib", "SharedLib", BGFX_CONFIG)
 end
 
 if _OPTIONS["with-tools"] then
