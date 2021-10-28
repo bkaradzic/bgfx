@@ -134,8 +134,8 @@ public:
 		m_useShadowSampler = m_shadowSamplerSupported;
 
 		m_shadowMapFB = BGFX_INVALID_HANDLE;
-		m_progShadow = BGFX_INVALID_HANDLE;
-		m_progMesh = BGFX_INVALID_HANDLE;
+		m_progShadow  = BGFX_INVALID_HANDLE;
+		m_progMesh    = BGFX_INVALID_HANDLE;
 
 		m_state[0] = meshStateCreate();
 		m_state[0]->m_state = 0;

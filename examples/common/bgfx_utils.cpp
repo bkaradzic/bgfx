@@ -596,8 +596,16 @@ void Mesh::submit(bgfx::ViewId _id, bgfx::ProgramHandle _program, const float* _
 
 		bgfx::setIndexBuffer(group.m_ibh);
 		bgfx::setVertexBuffer(0, group.m_vbh);
-		bgfx::submit(_id, _program, 0, (it == itEnd-1) ? (BGFX_DISCARD_INDEX_BUFFER | BGFX_DISCARD_VERTEX_STREAMS | BGFX_DISCARD_STATE) : BGFX_DISCARD_NONE);
+		bgfx::submit(
+			  _id
+			, _program
+			, 0
+			, BGFX_DISCARD_INDEX_BUFFER
+			| BGFX_DISCARD_VERTEX_STREAMS
+			);
 	}
+
+	bgfx::discard();
 }
 
 void Mesh::submit(const MeshState*const* _state, uint8_t _numPasses, const float* _mtx, uint16_t _numMatrices) const
@@ -632,10 +640,19 @@ void Mesh::submit(const MeshState*const* _state, uint8_t _numPasses, const float
 				  state.m_viewId
 				, state.m_program
 				, 0
-				, (it == itEnd - 1) ? (BGFX_DISCARD_INDEX_BUFFER | BGFX_DISCARD_VERTEX_STREAMS | BGFX_DISCARD_STATE) : BGFX_DISCARD_NONE
+				, BGFX_DISCARD_INDEX_BUFFER
+				| BGFX_DISCARD_VERTEX_STREAMS
 				);
 		}
+
+		bgfx::discard(0
+			| BGFX_DISCARD_BINDINGS
+			| BGFX_DISCARD_STATE
+			| BGFX_DISCARD_TRANSFORM
+			);
 	}
+
+	bgfx::discard();
 }
 
 Mesh* meshLoad(bx::ReaderSeekerI* _reader, bool _ramcopy)
