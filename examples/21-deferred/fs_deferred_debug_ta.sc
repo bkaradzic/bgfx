@@ -5,12 +5,13 @@ $input v_texcoord0
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-#include <bgfx_compute.sh>
+#include "../common/common.sh"
 
-IMAGE2D_RW(i_light, rgba8, 2);
+SAMPLER2DARRAY(s_texColor, 0);
+
+uniform vec4 u_layer;
 
 void main()
 {
-    ivec2 coord = ivec2(gl_FragCoord.xy);
-    imageStore(i_light, coord, vec4(0.0, 0.0, 0.0, 0.0) );
+	gl_FragColor = texture2DArray(s_texColor, vec3(v_texcoord0, u_layer.x) );
 }
