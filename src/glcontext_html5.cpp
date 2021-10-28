@@ -71,7 +71,23 @@ namespace bgfx { namespace gl
 
 		const char* canvas = (const char*) g_platformData.nwh;
 
-		m_primary = createSwapChain((void*)canvas);
+		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = (EMSCRIPTEN_WEBGL_CONTEXT_HANDLE) g_platformData.context;
+		if (context > 0)
+		{
+			if (emscripten_webgl_get_context_attributes(context, &s_attrs) >= 0)
+			{
+				import(s_attrs.majorVersion);
+				m_primary = BX_NEW(g_allocator, SwapChainGL)(context, canvas);
+			}
+			else
+			{
+				BX_TRACE("Invalid WebGL context. (Canvas handle: '%s', context handle: %d)", canvas, context);
+			}
+		}
+		else
+		{
+			m_primary = createSwapChain((void*)canvas);
+		}
 
 		if (0 != _width
 		&&  0 != _height)
