@@ -418,6 +418,7 @@ public:
 		bgfx::destroy(s_depth);
 		bgfx::destroy(s_light);
 
+		bgfx::destroy(u_layer);
 		bgfx::destroy(u_lightPosRadius);
 		bgfx::destroy(u_lightRgbInnerR);
 		bgfx::destroy(u_mtx);
