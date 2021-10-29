@@ -329,6 +329,7 @@ namespace bgfx { namespace hlsl
 
 		const uint8_t* headerBytePtr = (const uint8_t*)header;
 		const char* creator = (const char*)(headerBytePtr + header->Creator);
+		BX_UNUSED(creator);
 
 		BX_TRACE("Creator: %s 0x%08x", creator, header->Version);
 		BX_TRACE("Num constants: %d", header->Constants);
