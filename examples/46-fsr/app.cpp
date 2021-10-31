@@ -253,12 +253,12 @@ namespace
 
 		void drawToScreen(bgfx::ViewId &view, AppState const &state)
 		{
-			float invScreenScaleX = 1.0f / static_cast<float>(state.m_width);
-			float invScreenScaleY = 1.0f / static_cast<float>(state.m_height);
+			float invScreenScaleX = 1.0f / float(state.m_width);
+			float invScreenScaleY = 1.0f / float(state.m_height);
 			float scaleX = m_widgetWidth * invScreenScaleX;
 			float scaleY = m_widgetHeight * invScreenScaleY;
-			float offsetX = -bx::min(bx::max(m_position.x - m_widgetWidth * 0.5f, -3.0f), static_cast<float>(state.m_width - m_widgetWidth + 3) ) * invScreenScaleX;
-			float offsetY = -bx::min(bx::max(m_position.y - m_widgetHeight * 0.5f, -3.0f), static_cast<float>(state.m_height - m_widgetHeight + 3) ) * invScreenScaleY;
+			float offsetX = -bx::min(bx::max(m_position.x - m_widgetWidth * 0.5f, -3.0f), float(state.m_width - m_widgetWidth + 3) ) * invScreenScaleX;
+			float offsetY = -bx::min(bx::max(m_position.y - m_widgetHeight * 0.5f, -3.0f), float(state.m_height - m_widgetHeight + 3) ) * invScreenScaleY;
 
 			bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_ALWAYS | BGFX_STATE_BLEND_ALPHA);
 			bgfx::setTexture(0, state.s_color, m_widgetTexture);
@@ -278,12 +278,12 @@ namespace
 			}
 
 			const float verticalPos = caps->originBottomLeft ? state.m_height - m_position.y : m_position.y;
-			const float invMagScaleX = 1.0f / static_cast<float>(m_content.m_width);
-			const float invMagScaleY = 1.0f / static_cast<float>(m_content.m_height);
+			const float invMagScaleX = 1.0f / float(m_content.m_width);
+			const float invMagScaleY = 1.0f / float(m_content.m_height);
 			const float scaleX = state.m_width * invMagScaleX;
 			const float scaleY = state.m_height * invMagScaleY;
-			const float offsetX = bx::min(bx::max(m_position.x - m_content.m_width * 0.5f, 0.0f), static_cast<float>(state.m_width - m_content.m_width) ) * scaleX / state.m_width;
-			const float offsetY = bx::min(bx::max(verticalPos - m_content.m_height * 0.5f, 0.0f), static_cast<float>(state.m_height - m_content.m_height) ) * scaleY / state.m_height;
+			const float offsetX = bx::min(bx::max(m_position.x - m_content.m_width * 0.5f, 0.0f), float(state.m_width - m_content.m_width) ) * scaleX / state.m_width;
+			const float offsetY = bx::min(bx::max(verticalPos - m_content.m_height * 0.5f, 0.0f), float(state.m_height - m_content.m_height) ) * scaleY / state.m_height;
 
 			bgfx::setViewName(view, "magnifier");
 			bgfx::setViewRect(view, 0, 0, uint16_t(m_content.m_width), uint16_t(m_content.m_height) );
