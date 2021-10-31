@@ -333,14 +333,14 @@ bool Fsr::supports16BitPrecision() const
 
 void Fsr::updateUniforms()
 {
-	const float srcWidth = static_cast<float>(m_resources->m_width) / m_config.m_superSamplingFactor;
-	const float srcHeight = static_cast<float>(m_resources->m_height) / m_config.m_superSamplingFactor;
+	const float srcWidth = float(m_resources->m_width) / m_config.m_superSamplingFactor;
+	const float srcHeight = float(m_resources->m_height) / m_config.m_superSamplingFactor;
 
 	m_resources->m_uniforms.ViewportSizeRcasAttenuation.x = srcWidth;
 	m_resources->m_uniforms.ViewportSizeRcasAttenuation.y = srcHeight;
 	m_resources->m_uniforms.ViewportSizeRcasAttenuation.z = m_config.m_rcasAttenuation;
-	m_resources->m_uniforms.SrcSize.x = static_cast<float>(m_resources->m_width);
-	m_resources->m_uniforms.SrcSize.y = static_cast<float>(m_resources->m_height);
-	m_resources->m_uniforms.DstSize.x = static_cast<float>(m_resources->m_width);
-	m_resources->m_uniforms.DstSize.y = static_cast<float>(m_resources->m_height);
+	m_resources->m_uniforms.SrcSize.x = float(m_resources->m_width);
+	m_resources->m_uniforms.SrcSize.y = float(m_resources->m_height);
+	m_resources->m_uniforms.DstSize.x = float(m_resources->m_width);
+	m_resources->m_uniforms.DstSize.y = float(m_resources->m_height);
 }

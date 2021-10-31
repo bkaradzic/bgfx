@@ -328,7 +328,7 @@ namespace bgfx { namespace spirv
 
 		bx::ErrorAssert err;
 
-		uint16_t count = static_cast<uint16_t>(uniforms.size() );
+		uint16_t count = uint16_t(uniforms.size());
 		bx::write(_writer, count, &err);
 
 		uint32_t fragmentBit = isFragmentShader ? kUniformFragmentBit : 0;
