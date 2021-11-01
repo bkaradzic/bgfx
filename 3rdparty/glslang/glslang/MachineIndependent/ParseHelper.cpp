@@ -3029,11 +3029,14 @@ void TParseContext::constantValueCheck(TIntermTyped* node, const char* token)
 
 //
 // Both test, and if necessary spit out an error, to see if the node is really
-// an integer.
+// a 32-bit integer or can implicitly convert to one.
 //
 void TParseContext::integerCheck(const TIntermTyped* node, const char* token)
 {
-    if ((node->getBasicType() == EbtInt || node->getBasicType() == EbtUint) && node->isScalar())
+    auto from_type = node->getBasicType();
+    if ((from_type == EbtInt || from_type == EbtUint ||
+         intermediate.canImplicitlyPromote(from_type, EbtInt, EOpNull) ||
+         intermediate.canImplicitlyPromote(from_type, EbtUint, EOpNull)) && node->isScalar())
         return;
 
     error(node->getLoc(), "scalar integer expression required", token, "");

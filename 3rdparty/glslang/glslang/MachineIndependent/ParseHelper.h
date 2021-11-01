@@ -480,7 +480,6 @@ public:
     TSpirvRequirement* mergeSpirvRequirements(const TSourceLoc& loc, TSpirvRequirement* spirvReq1,
                                                 TSpirvRequirement* spirvReq2);
     TSpirvTypeParameters* makeSpirvTypeParameters(const TSourceLoc& loc, const TIntermConstantUnion* constant);
-    TSpirvTypeParameters* makeSpirvTypeParameters(const TPublicType& type);
     TSpirvTypeParameters* mergeSpirvTypeParameters(TSpirvTypeParameters* spirvTypeParams1,
                                                    TSpirvTypeParameters* spirvTypeParams2);
     TSpirvInstruction* makeSpirvInstruction(const TSourceLoc& loc, const TString& name, const TString& value);

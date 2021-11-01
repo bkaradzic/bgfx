@@ -165,7 +165,7 @@ public:
 protected:
     TDefaultIoResolverBase(TDefaultIoResolverBase&);
     TDefaultIoResolverBase& operator=(TDefaultIoResolverBase&);
-    const TIntermediate& intermediate;
+    const TIntermediate& referenceIntermediate;
     int nextUniformLocation;
     int nextInputLocation;
     int nextOutputLocation;
@@ -322,8 +322,8 @@ public:
                 intermediates[stage] = nullptr;
         }
     }
-	// If set, the uniform block with the given name will be changed to be backed by
-	// push_constant if it's size is <= maxSize
+    // If set, the uniform block with the given name will be changed to be backed by
+    // push_constant if it's size is <= maxSize
     void setAutoPushConstantBlock(const char* name, unsigned int maxSize, TLayoutPacking packing) {
         autoPushConstantBlockName = name;
         autoPushConstantMaxSize = maxSize;
