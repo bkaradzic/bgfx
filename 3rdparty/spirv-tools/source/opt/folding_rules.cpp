@@ -968,25 +968,17 @@ FoldingRule MergeDivMulArithmetic() {
 FoldingRule MergeDivNegateArithmetic() {
   return [](IRContext* context, Instruction* inst,
             const std::vector<const analysis::Constant*>& constants) {
-    assert(inst->opcode() == SpvOpFDiv || inst->opcode() == SpvOpSDiv);
+    assert(inst->opcode() == SpvOpFDiv);
     analysis::ConstantManager* const_mgr = context->get_constant_mgr();
-    const analysis::Type* type =
-        context->get_type_mgr()->GetType(inst->type_id());
-    bool uses_float = HasFloatingPoint(type);
-    if (uses_float && !inst->IsFloatingPointFoldingAllowed()) return false;
-
-    uint32_t width = ElementWidth(type);
-    if (width != 32 && width != 64) return false;
+    if (!inst->IsFloatingPointFoldingAllowed()) return false;
 
     const analysis::Constant* const_input1 = ConstInput(constants);
     if (!const_input1) return false;
     Instruction* other_inst = NonConstInput(context, constants[0], inst);
-    if (uses_float && !other_inst->IsFloatingPointFoldingAllowed())
-      return false;
+    if (!other_inst->IsFloatingPointFoldingAllowed()) return false;
 
     bool first_is_variable = constants[0] == nullptr;
-    if (other_inst->opcode() == SpvOpFNegate ||
-        other_inst->opcode() == SpvOpSNegate) {
+    if (other_inst->opcode() == SpvOpFNegate) {
       uint32_t neg_id = NegateConstant(const_mgr, const_input1);
 
       if (first_is_variable) {
@@ -2588,8 +2580,6 @@ void FoldingRules::AddFoldingRules() {
   rules_[SpvOpISub].push_back(MergeSubSubArithmetic());
 
   rules_[SpvOpPhi].push_back(RedundantPhi());
-
-  rules_[SpvOpSDiv].push_back(MergeDivNegateArithmetic());
 
   rules_[SpvOpSNegate].push_back(MergeNegateArithmetic());
   rules_[SpvOpSNegate].push_back(MergeNegateMulDivArithmetic());

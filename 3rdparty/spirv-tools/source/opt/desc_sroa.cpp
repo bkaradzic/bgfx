@@ -14,6 +14,7 @@
 
 #include "source/opt/desc_sroa.h"
 
+#include "source/opt/desc_sroa_util.h"
 #include "source/util/string_utils.h"
 
 namespace spvtools {
@@ -25,7 +26,7 @@ Pass::Status DescriptorScalarReplacement::Process() {
   std::vector<Instruction*> vars_to_kill;
 
   for (Instruction& var : context()->types_values()) {
-    if (IsCandidate(&var)) {
+    if (descsroautil::IsDescriptorArray(context(), &var)) {
       modified = true;
       if (!ReplaceCandidate(&var)) {
         return Status::Failure;
@@ -39,72 +40,6 @@ Pass::Status DescriptorScalarReplacement::Process() {
   }
 
   return (modified ? Status::SuccessWithChange : Status::SuccessWithoutChange);
-}
-
-bool DescriptorScalarReplacement::IsCandidate(Instruction* var) {
-  if (var->opcode() != SpvOpVariable) {
-    return false;
-  }
-
-  uint32_t ptr_type_id = var->type_id();
-  Instruction* ptr_type_inst =
-      context()->get_def_use_mgr()->GetDef(ptr_type_id);
-  if (ptr_type_inst->opcode() != SpvOpTypePointer) {
-    return false;
-  }
-
-  uint32_t var_type_id = ptr_type_inst->GetSingleWordInOperand(1);
-  Instruction* var_type_inst =
-      context()->get_def_use_mgr()->GetDef(var_type_id);
-  if (var_type_inst->opcode() != SpvOpTypeArray &&
-      var_type_inst->opcode() != SpvOpTypeStruct) {
-    return false;
-  }
-
-  // All structures with descriptor assignments must be replaced by variables,
-  // one for each of their members - with the exceptions of buffers.
-  if (IsTypeOfStructuredBuffer(var_type_inst)) {
-    return false;
-  }
-
-  bool has_desc_set_decoration = false;
-  context()->get_decoration_mgr()->ForEachDecoration(
-      var->result_id(), SpvDecorationDescriptorSet,
-      [&has_desc_set_decoration](const Instruction&) {
-        has_desc_set_decoration = true;
-      });
-  if (!has_desc_set_decoration) {
-    return false;
-  }
-
-  bool has_binding_decoration = false;
-  context()->get_decoration_mgr()->ForEachDecoration(
-      var->result_id(), SpvDecorationBinding,
-      [&has_binding_decoration](const Instruction&) {
-        has_binding_decoration = true;
-      });
-  if (!has_binding_decoration) {
-    return false;
-  }
-
-  return true;
-}
-
-bool DescriptorScalarReplacement::IsTypeOfStructuredBuffer(
-    const Instruction* type) const {
-  if (type->opcode() != SpvOpTypeStruct) {
-    return false;
-  }
-
-  // All buffers have offset decorations for members of their structure types.
-  // This is how we distinguish it from a structure of descriptors.
-  bool has_offset_decoration = false;
-  context()->get_decoration_mgr()->ForEachDecoration(
-      type->result_id(), SpvDecorationOffset,
-      [&has_offset_decoration](const Instruction&) {
-        has_offset_decoration = true;
-      });
-  return has_offset_decoration;
 }
 
 bool DescriptorScalarReplacement::ReplaceCandidate(Instruction* var) {
@@ -162,16 +97,15 @@ bool DescriptorScalarReplacement::ReplaceAccessChain(Instruction* var,
     return false;
   }
 
-  uint32_t idx_id = use->GetSingleWordInOperand(1);
-  const analysis::Constant* idx_const =
-      context()->get_constant_mgr()->FindDeclaredConstant(idx_id);
-  if (idx_const == nullptr) {
+  const analysis::Constant* const_index =
+      descsroautil::GetAccessChainIndexAsConst(context(), use);
+  if (const_index == nullptr) {
     context()->EmitErrorMessage("Variable cannot be replaced: invalid index",
                                 use);
     return false;
   }
 
-  uint32_t idx = idx_const->GetU32();
+  uint32_t idx = const_index->GetU32();
   uint32_t replacement_var = GetReplacementVariable(var, idx);
 
   if (use->NumInOperands() == 2) {
@@ -208,39 +142,12 @@ uint32_t DescriptorScalarReplacement::GetReplacementVariable(Instruction* var,
                                                              uint32_t idx) {
   auto replacement_vars = replacement_variables_.find(var);
   if (replacement_vars == replacement_variables_.end()) {
-    uint32_t ptr_type_id = var->type_id();
-    Instruction* ptr_type_inst = get_def_use_mgr()->GetDef(ptr_type_id);
-    assert(ptr_type_inst->opcode() == SpvOpTypePointer &&
-           "Variable should be a pointer to an array or structure.");
-    uint32_t pointee_type_id = ptr_type_inst->GetSingleWordInOperand(1);
-    Instruction* pointee_type_inst = get_def_use_mgr()->GetDef(pointee_type_id);
-    const bool is_array = pointee_type_inst->opcode() == SpvOpTypeArray;
-    const bool is_struct = pointee_type_inst->opcode() == SpvOpTypeStruct;
-    assert((is_array || is_struct) &&
-           "Variable should be a pointer to an array or structure.");
-
-    // For arrays, each array element should be replaced with a new replacement
-    // variable
-    if (is_array) {
-      uint32_t array_len_id = pointee_type_inst->GetSingleWordInOperand(1);
-      const analysis::Constant* array_len_const =
-          context()->get_constant_mgr()->FindDeclaredConstant(array_len_id);
-      assert(array_len_const != nullptr && "Array length must be a constant.");
-      uint32_t array_len = array_len_const->GetU32();
-
-      replacement_vars = replacement_variables_
-                             .insert({var, std::vector<uint32_t>(array_len, 0)})
-                             .first;
-    }
-    // For structures, each member should be replaced with a new replacement
-    // variable
-    if (is_struct) {
-      const uint32_t num_members = pointee_type_inst->NumInOperands();
-      replacement_vars =
-          replacement_variables_
-              .insert({var, std::vector<uint32_t>(num_members, 0)})
-              .first;
-    }
+    uint32_t number_of_elements =
+        descsroautil::GetNumberOfElementsForArrayOrStruct(context(), var);
+    replacement_vars =
+        replacement_variables_
+            .insert({var, std::vector<uint32_t>(number_of_elements, 0)})
+            .first;
   }
 
   if (replacement_vars->second[idx] == 0) {
@@ -377,7 +284,7 @@ uint32_t DescriptorScalarReplacement::GetNumBindingsUsedByType(
   // The number of bindings consumed by a structure is the sum of the bindings
   // used by its members.
   if (type_inst->opcode() == SpvOpTypeStruct &&
-      !IsTypeOfStructuredBuffer(type_inst)) {
+      !descsroautil::IsTypeOfStructuredBuffer(context(), type_inst)) {
     uint32_t sum = 0;
     for (uint32_t i = 0; i < type_inst->NumInOperands(); i++)
       sum += GetNumBindingsUsedByType(type_inst->GetSingleWordInOperand(i));

@@ -1102,6 +1102,10 @@ void LoopUtils::Finalize() {
 Pass::Status LoopUnroller::Process() {
   bool changed = false;
   for (Function& f : *context()->module()) {
+    if (f.IsDeclaration()) {
+      continue;
+    }
+
     LoopDescriptor* LD = context()->GetLoopDescriptor(&f);
     for (Loop& loop : *LD) {
       LoopUtils loop_utils{context(), &loop};

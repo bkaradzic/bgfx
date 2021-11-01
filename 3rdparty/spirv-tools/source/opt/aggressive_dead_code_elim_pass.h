@@ -67,18 +67,15 @@ class AggressiveDCEPass : public MemPass {
   // be 0 or the result of an instruction.
   bool IsVarOfStorage(uint32_t varId, uint32_t storageClass);
 
-  // Return true if |varId| is variable of function storage class or is
-  // private variable and privates can be optimized like locals (see
-  // privates_like_local_).
-  bool IsLocalVar(uint32_t varId);
+  // Return true if the instance of the variable |varId| can only be access in
+  // |func|.  For example, a function scope variable, or a private variable
+  // where |func| is an entry point with no function calls.
+  bool IsLocalVar(uint32_t varId, Function* func);
 
   // Return true if |inst| is marked live.
   bool IsLive(const Instruction* inst) const {
     return live_insts_.Get(inst->unique_id());
   }
-
-  // Returns true if |inst| is dead.
-  bool IsDead(Instruction* inst);
 
   // Adds entry points, execution modes and workgroup size decorations to the
   // worklist for processing with the first function.
@@ -139,7 +136,50 @@ class AggressiveDCEPass : public MemPass {
   // Adds instructions which must be kept because of they have side-effects
   // that ADCE cannot model to the work list.
   void InitializeWorkList(Function* func,
-                          std::list<BasicBlock*>& structuredOrder);
+                          std::list<BasicBlock*>& structured_order);
+
+  // Process each instruction in the work list by marking any instruction that
+  // that it depends on as live, and adding it to the work list.  The work list
+  // will be empty at the end.
+  void ProcessWorkList(Function* func);
+
+  // Kills any instructions in |func| that have not been marked as live.
+  bool KillDeadInstructions(const Function* func,
+                            std::list<BasicBlock*>& structured_order);
+
+  // Adds the instructions that define the operands of |inst| to the work list.
+  void AddOperandsToWorkList(const Instruction* inst);
+
+  // Marks all of the labels and branch that inst requires as live.
+  void MarkBlockAsLive(Instruction* inst);
+
+  // Marks any variables from which |inst| may require data as live.
+  void MarkLoadedVariablesAsLive(Function* func, Instruction* inst);
+
+  // Returns the id of the variable that |ptr_id| point to.  |ptr_id| must be a
+  // value whose type is a pointer.
+  uint32_t GetVariableId(uint32_t ptr_id);
+
+  // Returns all of the ids for the variables from which |inst| will load data.
+  std::vector<uint32_t> GetLoadedVariables(Instruction* inst);
+
+  // Returns all of the ids for the variables from which |inst| will load data.
+  // The opcode of |inst| must be  OpFunctionCall.
+  std::vector<uint32_t> GetLoadedVariablesFromFunctionCall(
+      const Instruction* inst);
+
+  // Returns the id of the variable from which |inst| will load data. |inst|
+  // must not be an OpFunctionCall.  Returns 0 if no data is read or the
+  // variable cannot be determined.  Note that in logical addressing mode the
+  // latter is not possible for function and private storage class because there
+  // cannot be variable pointers pointing to those storage classes.
+  uint32_t GetLoadedVariableFromNonFunctionCalls(Instruction* inst);
+
+  // Adds all decorations of |inst| to the work list.
+  void AddDecorationsToWorkList(const Instruction* inst);
+
+  // Adds all debug instruction associated with |inst| to the work list.
+  void AddDebugInstructionsToWorkList(const Instruction* inst);
 
   // Marks all of the OpFunctionParameter instructions in |func| as live.
   void MarkFunctionParameterAsLive(const Function* func);
@@ -164,8 +204,29 @@ class AggressiveDCEPass : public MemPass {
   // Returns true if |bb| is in the construct with header |header_block|.
   bool BlockIsInConstruct(BasicBlock* header_block, BasicBlock* bb);
 
-  // True if current function is entry point and has no function calls.
-  bool private_like_local_;
+  // Returns true if |func| is an entry point that does not have any function
+  // calls.
+  bool IsEntryPointWithNoCalls(Function* func);
+
+  // Returns true if |func| is an entry point.
+  bool IsEntryPoint(Function* func);
+
+  // Returns true if |func| contains a function call.
+  bool HasCall(Function* func);
+
+  // Marks the first block, which is the entry block, in |func| as live.
+  void MarkFirstBlockAsLive(Function* func);
+
+  // Adds an OpUnreachable instruction at the end of |block|.
+  void AddUnreachable(BasicBlock*& block);
+
+  // Marks the OpLoopMerge and the terminator in |basic_block| as live if
+  // |basic_block| is a loop header.
+  void MarkLoopConstructAsLiveIfLoopHeader(BasicBlock* basic_block);
+
+  // The cached results for |IsEntryPointWithNoCalls|.  It maps the function's
+  // result id to the return value.
+  std::unordered_map<uint32_t, bool> entry_point_with_no_calls_cache_;
 
   // Live Instruction Worklist.  An instruction is added to this list
   // if it might have a side effect, either directly or indirectly.

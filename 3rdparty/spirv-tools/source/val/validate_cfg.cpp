@@ -659,9 +659,9 @@ spv_result_t ValidateStructuredSelections(
       // Mark the upcoming blocks as seen now, but only error out if this block
       // was missing a merge instruction and both labels hadn't been seen
       // previously.
-      const bool both_unseen =
-          seen.insert(true_label).second && seen.insert(false_label).second;
-      if (!merge && both_unseen) {
+      const bool true_label_unseen = seen.insert(true_label).second;
+      const bool false_label_unseen = seen.insert(false_label).second;
+      if (!merge && true_label_unseen && false_label_unseen) {
         return _.diag(SPV_ERROR_INVALID_CFG, terminator)
                << "Selection must be structured";
       }

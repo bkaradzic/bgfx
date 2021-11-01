@@ -35,6 +35,10 @@ namespace opt {
 Pass::Status ScalarReplacementPass::Process() {
   Status status = Status::SuccessWithoutChange;
   for (auto& f : *get_module()) {
+    if (f.IsDeclaration()) {
+      continue;
+    }
+
     Status functionStatus = ProcessFunction(&f);
     if (functionStatus == Status::Failure)
       return functionStatus;

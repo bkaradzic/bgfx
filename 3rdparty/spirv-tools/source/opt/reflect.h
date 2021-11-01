@@ -51,7 +51,8 @@ inline bool IsTypeInst(SpvOp opcode) {
          opcode == SpvOpTypeCooperativeMatrixNV;
 }
 inline bool IsConstantInst(SpvOp opcode) {
-  return opcode >= SpvOpConstantTrue && opcode <= SpvOpSpecConstantOp;
+  return (opcode >= SpvOpConstantTrue && opcode <= SpvOpSpecConstantOp) ||
+         opcode == SpvOpConstFunctionPointerINTEL;
 }
 inline bool IsCompileTimeConstantInst(SpvOp opcode) {
   return opcode >= SpvOpConstantTrue && opcode <= SpvOpConstantNull;

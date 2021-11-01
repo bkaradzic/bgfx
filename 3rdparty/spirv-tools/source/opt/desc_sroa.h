@@ -46,10 +46,6 @@ class DescriptorScalarReplacement : public Pass {
   }
 
  private:
-  // Returns true if |var| is an OpVariable instruction that represents a
-  // descriptor array.  These are the variables that we want to replace.
-  bool IsCandidate(Instruction* var);
-
   // Replaces all references to |var| by new variables, one for each element of
   // the array |var|.  The binding for the new variables corresponding to
   // element i will be the binding of |var| plus i.  Returns true if successful.
@@ -92,11 +88,6 @@ class DescriptorScalarReplacement : public Pass {
   // 3- The number of bindings consumed by a structure is the sum of the
   // bindings used by its members.
   uint32_t GetNumBindingsUsedByType(uint32_t type_id);
-
-  // Returns true if |type| is a type that could be used for a structured buffer
-  // as opposed to a type that would be used for a structure of resource
-  // descriptors.
-  bool IsTypeOfStructuredBuffer(const Instruction* type) const;
 
   // A map from an OpVariable instruction to the set of variables that will be
   // used to replace it. The entry |replacement_variables_[var][i]| is the id of

@@ -223,7 +223,7 @@ Pass::Status LocalSingleBlockLoadStoreElimPass::ProcessImpl() {
     return LocalSingleBlockLoadStoreElim(fp);
   };
 
-  bool modified = context()->ProcessEntryPointCallTree(pfn);
+  bool modified = context()->ProcessReachableCallTree(pfn);
   return modified ? Status::SuccessWithChange : Status::SuccessWithoutChange;
 }
 
