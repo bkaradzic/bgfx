@@ -7918,10 +7918,10 @@ VK_DESTROY
 			TextureVK& dst = m_textures[blit.m_dst.idx];
 
 			src.setImageMemoryBarrier(
-					  m_commandBuffer
-					, blit.m_src.idx == blit.m_dst.idx ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-					, VK_NULL_HANDLE != src.m_singleMsaaImage
-					);
+				  m_commandBuffer
+				, blit.m_src.idx == blit.m_dst.idx ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+				, VK_NULL_HANDLE != src.m_singleMsaaImage
+				);
 
 			if (blit.m_src.idx != blit.m_dst.idx)
 			{

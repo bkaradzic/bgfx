@@ -5855,11 +5855,13 @@ namespace bgfx { namespace d3d12
 				currentSrc = blit.m_src;
 
 				if (NULL != src.m_singleMsaa)
+				{
 					setResourceBarrier(m_commandList
 						, src.m_singleMsaa
 						, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
 						, D3D12_RESOURCE_STATE_COPY_SOURCE
 					);
+				}
 
 				state = src.setState(m_commandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
 			}
@@ -5867,17 +5869,23 @@ namespace bgfx { namespace d3d12
 			if (TextureD3D12::Texture3D == src.m_type)
 			{
 				D3D12_BOX box;
- 				box.left   = blit.m_srcX;
- 				box.top    = blit.m_srcY;
- 				box.front  = blit.m_srcZ;
- 				box.right  = blit.m_srcX + blit.m_width;
- 				box.bottom = blit.m_srcY + blit.m_height;
- 				box.back   = blit.m_srcZ + bx::uint32_imax(1, blit.m_depth);
+				box.left   = blit.m_srcX;
+				box.top    = blit.m_srcY;
+				box.front  = blit.m_srcZ;
+				box.right  = blit.m_srcX + blit.m_width;
+				box.bottom = blit.m_srcY + blit.m_height;
+				box.back   = blit.m_srcZ + bx::uint32_imax(1, blit.m_depth);
 
-				D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { } };
+				D3D12_TEXTURE_COPY_LOCATION dstLocation;
+				dstLocation.pResource = dst.m_ptr;
+				dstLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 				dstLocation.SubresourceIndex = blit.m_dstMip;
-				D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { } };
+
+				D3D12_TEXTURE_COPY_LOCATION srcLocation;
+				srcLocation.pResource = src.m_ptr;
+				srcLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 				srcLocation.SubresourceIndex = blit.m_srcMip;
+
 				m_commandList->CopyTextureRegion(&dstLocation
 					, blit.m_dstX
 					, blit.m_dstY
@@ -5909,13 +5917,16 @@ namespace bgfx { namespace d3d12
 				dstLocation.pResource = dst.m_ptr;
 				dstLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 				dstLocation.SubresourceIndex = dstZ*dst.m_numMips+blit.m_dstMip;
+
 				D3D12_TEXTURE_COPY_LOCATION srcLocation;
 				srcLocation.pResource = NULL != src.m_singleMsaa ? src.m_singleMsaa : src.m_ptr;
 				srcLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 				srcLocation.SubresourceIndex = srcZ*src.m_numMips+blit.m_srcMip;
 
-				bool depthStencil = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
-				m_commandList->CopyTextureRegion(&dstLocation
+				const bool depthStencil = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
+
+				m_commandList->CopyTextureRegion(
+					  &dstLocation
 					, blit.m_dstX
 					, blit.m_dstY
 					, 0
@@ -5925,11 +5936,14 @@ namespace bgfx { namespace d3d12
 			}
 
 			if (NULL != src.m_singleMsaa)
-				setResourceBarrier(m_commandList
+			{
+				setResourceBarrier(
+					  m_commandList
 					, src.m_singleMsaa
 					, D3D12_RESOURCE_STATE_COPY_SOURCE
 					, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
-				);
+					);
+			}
 		}
 
 		if (isValid(currentSrc)
