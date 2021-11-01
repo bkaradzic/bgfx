@@ -4945,6 +4945,88 @@
       "version" : "None"
     },
     {
+      "opname" : "OpConvertUToImageNV",
+      "class"  : "Reserved",
+      "opcode" : 5391,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Operand'" }
+      ],
+      "capabilities" : [ "BindlessTextureNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConvertUToSamplerNV",
+      "class"  : "Reserved",
+      "opcode" : 5392,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Operand'" }
+      ],
+      "capabilities" : [ "BindlessTextureNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConvertImageToUNV",
+      "class"  : "Reserved",
+      "opcode" : 5393,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Operand'" }
+      ],
+      "capabilities" : [ "BindlessTextureNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConvertSamplerToUNV",
+      "class"  : "Reserved",
+      "opcode" : 5394,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Operand'" }
+      ],
+      "capabilities" : [ "BindlessTextureNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConvertUToSampledImageNV",
+      "class"  : "Reserved",
+      "opcode" : 5395,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Operand'" }
+      ],
+      "capabilities" : [ "BindlessTextureNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConvertSampledImageToUNV",
+      "class"  : "Reserved",
+      "opcode" : 5396,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Operand'" }
+      ],
+      "capabilities" : [ "BindlessTextureNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSamplerImageAddressingModeNV",
+      "class"  : "Reserved",
+      "opcode" : 5397,
+      "operands" : [
+        { "kind" : "LiteralInteger", "name" : "'Bit Width'" }
+      ],
+      "capabilities" : [ "BindlessTextureNV" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpSubgroupShuffleINTEL",
       "class"  : "Group",
       "opcode" : 5571,
@@ -8475,6 +8557,13 @@
           "enumerant" : "ZeroExtend",
           "value" : "0x2000",
           "version" : "1.4"
+        },
+        {
+          "enumerant" : "Offsets",
+          "value" : "0x10000",
+          "parameters" : [
+            { "kind" : "IdRef" }
+          ]
         }
       ]
     },
@@ -11074,6 +11163,30 @@
           "version" : "1.5"
         },
         {
+          "enumerant" : "BindlessSamplerNV",
+          "value" : 5398,
+          "capabilities" : [ "BindlessTextureNV" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BindlessImageNV",
+          "value" : 5399,
+          "capabilities" : [ "BindlessTextureNV" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BoundSamplerNV",
+          "value" : 5400,
+          "capabilities" : [ "BindlessTextureNV" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BoundImageNV",
+          "value" : 5401,
+          "capabilities" : [ "BindlessTextureNV" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "SIMTCallINTEL",
           "value" : 5599,
           "parameters" : [
@@ -13212,6 +13325,12 @@
           "value" : 5379,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_EXT_demote_to_helper_invocation" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BindlessTextureNV",
+          "value" : 5390,
+          "extensions" : [ "SPV_NV_bindless_texture" ],
           "version" : "None"
         },
         {
