@@ -686,15 +686,9 @@ string CompilerGLSL::compile()
 		statement("void main()");
 		begin_scope();
 		statement("// Interlocks were used in a way not compatible with GLSL, this is very slow.");
-		if (options.es)
-			statement("beginInvocationInterlockNV();");
-		else
-			statement("beginInvocationInterlockARB();");
+		statement("SPIRV_Cross_beginInvocationInterlock();");
 		statement("spvMainInterlockedBody();");
-		if (options.es)
-			statement("endInvocationInterlockNV();");
-		else
-			statement("endInvocationInterlockARB();");
+		statement("SPIRV_Cross_endInvocationInterlock();");
 		end_scope();
 	}
 
@@ -784,10 +778,12 @@ void CompilerGLSL::emit_header()
 		require_extension_internal("GL_ARB_post_depth_coverage");
 
 	// Needed for: layout({pixel,sample}_interlock_[un]ordered) in;
-	if (execution.flags.get(ExecutionModePixelInterlockOrderedEXT) ||
-	    execution.flags.get(ExecutionModePixelInterlockUnorderedEXT) ||
-	    execution.flags.get(ExecutionModeSampleInterlockOrderedEXT) ||
-	    execution.flags.get(ExecutionModeSampleInterlockUnorderedEXT))
+	bool interlock_used = execution.flags.get(ExecutionModePixelInterlockOrderedEXT) ||
+	                      execution.flags.get(ExecutionModePixelInterlockUnorderedEXT) ||
+	                      execution.flags.get(ExecutionModeSampleInterlockOrderedEXT) ||
+	                      execution.flags.get(ExecutionModeSampleInterlockUnorderedEXT);
+
+	if (interlock_used)
 	{
 		if (options.es)
 		{
@@ -874,6 +870,24 @@ void CompilerGLSL::emit_header()
 			statement("#define SPIRV_CROSS_BRANCH");
 			statement("#define SPIRV_CROSS_UNROLL");
 			statement("#define SPIRV_CROSS_LOOP");
+			statement("#endif");
+		}
+		else if (ext == "GL_NV_fragment_shader_interlock")
+		{
+			statement("#extension GL_NV_fragment_shader_interlock : require");
+			statement("#define SPIRV_Cross_beginInvocationInterlock() beginInvocationInterlockNV()");
+			statement("#define SPIRV_Cross_endInvocationInterlock() endInvocationInterlockNV()");
+		}
+		else if (ext == "GL_ARB_fragment_shader_interlock")
+		{
+			statement("#ifdef GL_ARB_fragment_shader_interlock");
+			statement("#extension GL_ARB_fragment_shader_interlock : enable");
+			statement("#define SPIRV_Cross_beginInvocationInterlock() beginInvocationInterlockARB()");
+			statement("#define SPIRV_Cross_endInvocationInterlock() endInvocationInterlockARB()");
+			statement("#elif defined(GL_INTEL_fragment_shader_ordering)");
+			statement("#extension GL_INTEL_fragment_shader_ordering : enable");
+			statement("#define SPIRV_Cross_beginInvocationInterlock() beginFragmentShaderOrderingINTEL()");
+			statement("#define SPIRV_Cross_endInvocationInterlock()");
 			statement("#endif");
 		}
 		else
@@ -1056,14 +1070,24 @@ void CompilerGLSL::emit_header()
 		if (execution.flags.get(ExecutionModePostDepthCoverage))
 			inputs.push_back("post_depth_coverage");
 
+		if (interlock_used)
+			statement("#if defined(GL_ARB_fragment_shader_interlock)");
+
 		if (execution.flags.get(ExecutionModePixelInterlockOrderedEXT))
-			inputs.push_back("pixel_interlock_ordered");
+			statement("layout(pixel_interlock_ordered) in;");
 		else if (execution.flags.get(ExecutionModePixelInterlockUnorderedEXT))
-			inputs.push_back("pixel_interlock_unordered");
+			statement("layout(pixel_interlock_unordered) in;");
 		else if (execution.flags.get(ExecutionModeSampleInterlockOrderedEXT))
-			inputs.push_back("sample_interlock_ordered");
+			statement("layout(sample_interlock_ordered) in;");
 		else if (execution.flags.get(ExecutionModeSampleInterlockUnorderedEXT))
-			inputs.push_back("sample_interlock_unordered");
+			statement("layout(sample_interlock_unordered) in;");
+
+		if (interlock_used)
+		{
+			statement("#elif !defined(GL_INTEL_fragment_shader_ordering)");
+			statement("#error Fragment Shader Interlock/Ordering extension missing!");
+			statement("#endif");
+		}
 
 		if (!options.es && execution.flags.get(ExecutionModeDepthGreater))
 			statement("layout(depth_greater) out float gl_FragDepth;");
@@ -4375,19 +4399,7 @@ string CompilerGLSL::to_unpacked_expression(uint32_t id, bool register_expressio
 
 string CompilerGLSL::to_enclosed_unpacked_expression(uint32_t id, bool register_expression_read)
 {
-	// If we need to transpose, it will also take care of unpacking rules.
-	auto *e = maybe_get<SPIRExpression>(id);
-	bool need_transpose = e && e->need_transpose;
-	bool is_remapped = has_extended_decoration(id, SPIRVCrossDecorationPhysicalTypeID);
-	bool is_packed = has_extended_decoration(id, SPIRVCrossDecorationPhysicalTypePacked);
-	if (!need_transpose && (is_remapped || is_packed))
-	{
-		return unpack_expression_type(to_expression(id, register_expression_read), expression_type(id),
-		                              get_extended_decoration(id, SPIRVCrossDecorationPhysicalTypeID),
-		                              has_extended_decoration(id, SPIRVCrossDecorationPhysicalTypePacked), false);
-	}
-	else
-		return to_enclosed_expression(id, register_expression_read);
+	return enclose_expression(to_unpacked_expression(id, register_expression_read));
 }
 
 string CompilerGLSL::to_dereferenced_expression(uint32_t id, bool register_expression_read)
@@ -6263,48 +6275,49 @@ bool CompilerGLSL::to_trivial_mix_op(const SPIRType &type, string &op, uint32_t 
 	if (!backend.use_constructor_splatting && value_type.vecsize != lerptype.vecsize)
 		return false;
 
+	// Only valid way in SPIR-V 1.4 to use matrices in select is a scalar select.
+	// matrix(scalar) constructor fills in diagnonals, so gets messy very quickly.
+	// Just avoid this case.
+	if (value_type.columns > 1)
+		return false;
+
 	// If our bool selects between 0 and 1, we can cast from bool instead, making our trivial constructor.
 	bool ret = true;
-	for (uint32_t col = 0; col < value_type.columns; col++)
+	for (uint32_t row = 0; ret && row < value_type.vecsize; row++)
 	{
-		for (uint32_t row = 0; row < value_type.vecsize; row++)
+		switch (type.basetype)
 		{
-			switch (type.basetype)
-			{
-			case SPIRType::Short:
-			case SPIRType::UShort:
-				ret = cleft->scalar_u16(col, row) == 0 && cright->scalar_u16(col, row) == 1;
-				break;
-
-			case SPIRType::Int:
-			case SPIRType::UInt:
-				ret = cleft->scalar(col, row) == 0 && cright->scalar(col, row) == 1;
-				break;
-
-			case SPIRType::Half:
-				ret = cleft->scalar_f16(col, row) == 0.0f && cright->scalar_f16(col, row) == 1.0f;
-				break;
-
-			case SPIRType::Float:
-				ret = cleft->scalar_f32(col, row) == 0.0f && cright->scalar_f32(col, row) == 1.0f;
-				break;
-
-			case SPIRType::Double:
-				ret = cleft->scalar_f64(col, row) == 0.0 && cright->scalar_f64(col, row) == 1.0;
-				break;
-
-			case SPIRType::Int64:
-			case SPIRType::UInt64:
-				ret = cleft->scalar_u64(col, row) == 0 && cright->scalar_u64(col, row) == 1;
-				break;
-
-			default:
-				return false;
-			}
-		}
-
-		if (!ret)
+		case SPIRType::Short:
+		case SPIRType::UShort:
+			ret = cleft->scalar_u16(0, row) == 0 && cright->scalar_u16(0, row) == 1;
 			break;
+
+		case SPIRType::Int:
+		case SPIRType::UInt:
+			ret = cleft->scalar(0, row) == 0 && cright->scalar(0, row) == 1;
+			break;
+
+		case SPIRType::Half:
+			ret = cleft->scalar_f16(0, row) == 0.0f && cright->scalar_f16(0, row) == 1.0f;
+			break;
+
+		case SPIRType::Float:
+			ret = cleft->scalar_f32(0, row) == 0.0f && cright->scalar_f32(0, row) == 1.0f;
+			break;
+
+		case SPIRType::Double:
+			ret = cleft->scalar_f64(0, row) == 0.0 && cright->scalar_f64(0, row) == 1.0;
+			break;
+
+		case SPIRType::Int64:
+		case SPIRType::UInt64:
+			ret = cleft->scalar_u64(0, row) == 0 && cright->scalar_u64(0, row) == 1;
+			break;
+
+		default:
+			ret = false;
+			break;
+		}
 	}
 
 	if (ret)
@@ -8524,7 +8537,7 @@ const char *CompilerGLSL::index_to_swizzle(uint32_t index)
 	case 3:
 		return "w";
 	default:
-		SPIRV_CROSS_THROW("Swizzle index out of range");
+		return "x";		// Don't crash, but engage the "undefined behavior" described for out-of-bounds logical addressing in spec.
 	}
 }
 
@@ -8540,7 +8553,7 @@ void CompilerGLSL::access_chain_internal_append_index(std::string &expr, uint32_
 	if (index_is_literal)
 		expr += convert_to_string(index);
 	else
-		expr += to_expression(index, register_expression_read);
+		expr += to_unpacked_expression(index, register_expression_read);
 
 	expr += "]";
 }
@@ -8748,12 +8761,15 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 
 			access_chain_is_arrayed = true;
 		}
-		// For structs, the index refers to a constant, which indexes into the members.
+		// For structs, the index refers to a constant, which indexes into the members, possibly through a redirection mapping.
 		// We also check if this member is a builtin, since we then replace the entire expression with the builtin one.
 		else if (type->basetype == SPIRType::Struct)
 		{
 			if (!is_literal)
 				index = evaluate_constant_u32(index);
+
+			if (index < uint32_t(type->member_type_index_redirection.size()))
+				index = type->member_type_index_redirection[index];
 
 			if (index >= type->member_types.size())
 				SPIRV_CROSS_THROW("Member index is out of bounds!");
@@ -8804,7 +8820,7 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 			if (is_literal)
 				expr += convert_to_string(index);
 			else
-				expr += to_expression(index, register_expression_read);
+				expr += to_unpacked_expression(index, register_expression_read);
 			expr += "]";
 
 			type_id = type->parent_type;
@@ -8886,7 +8902,7 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 			else
 			{
 				expr += "[";
-				expr += to_expression(index, register_expression_read);
+				expr += to_unpacked_expression(index, register_expression_read);
 				expr += "]";
 			}
 
@@ -9878,7 +9894,7 @@ void CompilerGLSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_ex
 				convert_non_uniform_expression(lhs, lhs_expression);
 
 			// We might need to cast in order to store to a builtin.
-			cast_to_builtin_store(lhs_expression, rhs, expression_type(rhs_expression));
+			cast_to_variable_store(lhs_expression, rhs, expression_type(rhs_expression));
 
 			// Tries to optimize assignments like "<lhs> = <lhs> op expr".
 			// While this is purely cosmetic, this is important for legacy ESSL where loop
@@ -10043,7 +10059,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 			expr = enclose_expression(expr + vector_swizzle(type.vecsize, 0));
 
 		// We might need to cast in order to load from a builtin.
-		cast_from_builtin_load(ptr, expr, type);
+		cast_from_variable_load(ptr, expr, type);
 
 		// We might be trying to load a gl_Position[N], where we should be
 		// doing float4[](gl_in[i].gl_Position, ...) instead.
@@ -12675,11 +12691,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		// If the interlock is complex, we emit this elsewhere.
 		if (!interlocked_is_complex)
 		{
-			if (options.es)
-				statement("beginInvocationInterlockNV();");
-			else
-				statement("beginInvocationInterlockARB();");
-
+			statement("SPIRV_Cross_beginInvocationInterlock();");
 			flush_all_active_variables();
 			// Make sure forwarding doesn't propagate outside interlock region.
 		}
@@ -12689,11 +12701,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		// If the interlock is complex, we emit this elsewhere.
 		if (!interlocked_is_complex)
 		{
-			if (options.es)
-				statement("endInvocationInterlockNV();");
-			else
-				statement("endInvocationInterlockARB();");
-
+			statement("SPIRV_Cross_endInvocationInterlock();");
 			flush_all_active_variables();
 			// Make sure forwarding doesn't propagate outside interlock region.
 		}
@@ -13097,7 +13105,7 @@ string CompilerGLSL::argument_decl(const SPIRFunction::Parameter &arg)
 
 string CompilerGLSL::to_initializer_expression(const SPIRVariable &var)
 {
-	return to_expression(var.initializer);
+	return to_unpacked_expression(var.initializer);
 }
 
 string CompilerGLSL::to_zero_initialized_expression(uint32_t type_id)
@@ -13145,7 +13153,7 @@ string CompilerGLSL::variable_decl(const SPIRVariable &variable)
 	{
 		uint32_t expr = variable.static_expression;
 		if (ir.ids[expr].get_type() != TypeUndef)
-			res += join(" = ", to_expression(variable.static_expression));
+			res += join(" = ", to_unpacked_expression(variable.static_expression));
 		else if (options.force_zero_initialized_variables && type_can_zero_initialize(type))
 			res += join(" = ", to_zero_initialized_expression(get_variable_data_type_id(variable)));
 	}
@@ -14930,7 +14938,7 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 		else
 		{
 			emit_block_hints(block);
-			statement("switch (", to_expression(block.condition), ")");
+			statement("switch (", to_unpacked_expression(block.condition), ")");
 		}
 		begin_scope();
 
@@ -15066,7 +15074,7 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 			{
 				// OpReturnValue can return Undef, so don't emit anything for this case.
 				if (ir.ids[block.return_value].get_type() != TypeUndef)
-					statement("return ", to_expression(block.return_value), ";");
+					statement("return ", to_unpacked_expression(block.return_value), ";");
 			}
 		}
 		else if (!cfg.node_terminates_control_flow_in_sub_graph(current_function->entry_block, block.self) ||
@@ -15085,7 +15093,7 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 	case SPIRBlock::Kill:
 		statement(backend.discard_literal, ";");
 		if (block.return_value)
-			statement("return ", to_expression(block.return_value), ";");
+			statement("return ", to_unpacked_expression(block.return_value), ";");
 		break;
 
 	case SPIRBlock::Unreachable:
@@ -15380,7 +15388,7 @@ void CompilerGLSL::unroll_array_from_complex_load(uint32_t target_id, uint32_t s
 	}
 }
 
-void CompilerGLSL::cast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type)
+void CompilerGLSL::cast_from_variable_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type)
 {
 	// We will handle array cases elsewhere.
 	if (!expr_type.array.empty())
@@ -15439,7 +15447,7 @@ void CompilerGLSL::cast_from_builtin_load(uint32_t source_id, std::string &expr,
 		expr = bitcast_expression(expr_type, expected_type, expr);
 }
 
-void CompilerGLSL::cast_to_builtin_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type)
+void CompilerGLSL::cast_to_variable_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type)
 {
 	auto *var = maybe_get_backing_variable(target_id);
 	if (var)
