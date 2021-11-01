@@ -59,7 +59,7 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 
 #if defined(__INTELLISENSE__) || defined(__JETBRAINS_IDE__)
 /* This makes MSVC/CLion intellisense work. */
-#define CGLTF_IMPLEMENTATION
+#define CGLTF_WRITE_IMPLEMENTATION
 #endif
 
 #ifdef CGLTF_WRITE_IMPLEMENTATION

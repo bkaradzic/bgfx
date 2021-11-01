@@ -779,8 +779,8 @@ cgltf_result cgltf_load_buffers(
 
 cgltf_result cgltf_load_buffer_base64(const cgltf_options* options, cgltf_size size, const char* base64, void** out_data);
 
-void cgltf_decode_string(char* string);
-void cgltf_decode_uri(char* uri);
+cgltf_size cgltf_decode_string(char* string);
+cgltf_size cgltf_decode_uri(char* uri);
 
 cgltf_result cgltf_validate(cgltf_data* data);
 
@@ -1266,25 +1266,29 @@ static int cgltf_unhex(char ch)
 		-1;
 }
 
-void cgltf_decode_string(char* string)
+cgltf_size cgltf_decode_string(char* string)
 {
-	char* read = strchr(string, '\\');
-	if (read == NULL)
+	char* read = string + strcspn(string, "\\");
+	if (*read == 0)
 	{
-		return;
+		return read - string;
 	}
 	char* write = string;
 	char* last = string;
 
-	while (read)
+	for (;;)
 	{
 		// Copy characters since last escaped sequence
 		cgltf_size written = read - last;
-		strncpy(write, last, written);
+		memmove(write, last, written);
 		write += written;
 
+		if (*read++ == 0)
+		{
+			break;
+		}
+
 		// jsmn already checked that all escape sequences are valid
-		++read;
 		switch (*read++)
 		{
 		case '\"': *write++ = '\"'; break;
@@ -1326,13 +1330,14 @@ void cgltf_decode_string(char* string)
 		}
 
 		last = read;
-		read = strchr(read, '\\');
+		read += strcspn(read, "\\");
 	}
 
-	strcpy(write, last);
+	*write = 0;
+	return write - string;
 }
 
-void cgltf_decode_uri(char* uri)
+cgltf_size cgltf_decode_uri(char* uri)
 {
 	char* write = uri;
 	char* i = uri;
@@ -1360,6 +1365,7 @@ void cgltf_decode_uri(char* uri)
 	}
 
 	*write = 0;
+	return write - uri;
 }
 
 cgltf_result cgltf_load_buffers(const cgltf_options* options, cgltf_data* data, const char* gltf_path)
