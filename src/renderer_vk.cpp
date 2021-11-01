@@ -7890,43 +7890,42 @@ VK_DESTROY
 
 	void RendererContextVK::submitBlit(BlitState& _bs, uint16_t _view)
 	{
-		TextureHandle currentSrc = { kInvalidHandle };
-		TextureHandle currentDst = { kInvalidHandle };
-		VkImageLayout oldSrcLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		VkImageLayout oldDstLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		VkImageLayout srcLayouts[BGFX_CONFIG_MAX_BLIT_ITEMS];
+		VkImageLayout dstLayouts[BGFX_CONFIG_MAX_BLIT_ITEMS];
 
-		while (_bs.hasItem(_view) )
+		BlitState bs0 = _bs;
+
+		while (bs0.hasItem(_view) )
 		{
-			const BlitItem& blit = _bs.advance();
+			uint16_t item = bs0.m_item;
+
+			const BlitItem& blit = bs0.advance();
 
 			TextureVK& src = m_textures[blit.m_src.idx];
 			TextureVK& dst = m_textures[blit.m_dst.idx];
 
-			if (currentSrc.idx != blit.m_src.idx)
-			{
-				if (oldSrcLayout != VK_IMAGE_LAYOUT_UNDEFINED)
-				{
-					TextureVK& texture = m_textures[currentSrc.idx];
-					texture.setImageMemoryBarrier(m_commandBuffer, oldSrcLayout, VK_NULL_HANDLE != texture.m_singleMsaaImage);
-				}
+			srcLayouts[item] = VK_NULL_HANDLE != src.m_singleMsaaImage ? src.m_currentSingleMsaaImageLayout : src.m_currentImageLayout;
+			dstLayouts[item] = dst.m_currentImageLayout;
+		}
 
-				oldSrcLayout = src.setImageMemoryBarrier(
+		bs0 = _bs;
+
+		while (bs0.hasItem(_view) )
+		{
+			const BlitItem& blit = bs0.advance();
+
+			TextureVK& src = m_textures[blit.m_src.idx];
+			TextureVK& dst = m_textures[blit.m_dst.idx];
+
+			src.setImageMemoryBarrier(
 					  m_commandBuffer
-					, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+					, blit.m_src.idx == blit.m_dst.idx ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 					, VK_NULL_HANDLE != src.m_singleMsaaImage
 					);
-				currentSrc = blit.m_src;
-			}
 
-			if (currentDst.idx != blit.m_dst.idx)
+			if (blit.m_src.idx != blit.m_dst.idx)
 			{
-				if (oldDstLayout != VK_IMAGE_LAYOUT_UNDEFINED)
-				{
-					m_textures[currentDst.idx].setImageMemoryBarrier(m_commandBuffer, oldDstLayout);
-				}
-
-				oldDstLayout = dst.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-				currentDst = blit.m_dst;
+				dst.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 			}
 
 			const uint16_t srcSamples = VK_NULL_HANDLE != src.m_singleMsaaImage ? 1 : src.m_sampler.Count;
@@ -7994,15 +7993,17 @@ VK_DESTROY
 				);
 		}
 
-		if (oldSrcLayout != VK_IMAGE_LAYOUT_UNDEFINED)
+		while (_bs.hasItem(_view) )
 		{
-			TextureVK& texture = m_textures[currentSrc.idx];
-			texture.setImageMemoryBarrier(m_commandBuffer, oldSrcLayout, VK_NULL_HANDLE != texture.m_singleMsaaImage);
-		}
+			uint16_t item = _bs.m_item;
 
-		if (oldDstLayout != VK_IMAGE_LAYOUT_UNDEFINED)
-		{
-			m_textures[currentDst.idx].setImageMemoryBarrier(m_commandBuffer, oldDstLayout);
+			const BlitItem& blit = _bs.advance();
+
+			TextureVK& src = m_textures[blit.m_src.idx];
+			TextureVK& dst = m_textures[blit.m_dst.idx];
+
+			src.setImageMemoryBarrier(m_commandBuffer, srcLayouts[item], VK_NULL_HANDLE != src.m_singleMsaaImage);
+			dst.setImageMemoryBarrier(m_commandBuffer, dstLayouts[item]);
 		}
 	}
 
