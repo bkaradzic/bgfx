@@ -424,9 +424,15 @@ public:
 
 		m_texture2dData = (uint8_t*)malloc(kTexture2dSize*kTexture2dSize*4);
 
-		m_blitTestA = bgfx::createTexture2D(16, 16, false, 1, bgfx::TextureFormat::Enum::RGBA8, BGFX_TEXTURE_BLIT_DST);
-		m_blitTestB = bgfx::createTexture2D(16, 16, false, 1, bgfx::TextureFormat::Enum::RGBA8, BGFX_TEXTURE_BLIT_DST);
-		m_blitTestC = bgfx::createTexture2D(16, 16, false, 1, bgfx::TextureFormat::Enum::RGBA8, BGFX_TEXTURE_BLIT_DST);
+		if (m_blitSupported)
+		{
+			m_blitTestA = bgfx::createTexture2D(16, 16, false, 1, bgfx::TextureFormat::Enum::RGBA8, BGFX_TEXTURE_BLIT_DST);
+			m_blitTestB = bgfx::createTexture2D(16, 16, false, 1, bgfx::TextureFormat::Enum::RGBA8, BGFX_TEXTURE_BLIT_DST);
+			m_blitTestC = bgfx::createTexture2D(16, 16, false, 1, bgfx::TextureFormat::Enum::RGBA8, BGFX_TEXTURE_BLIT_DST);
+			bgfx::setName(m_blitTestA, "Blit A");
+			bgfx::setName(m_blitTestB, "Blit B");
+			bgfx::setName(m_blitTestC, "Blit C");
+		}
 
 		m_rr = m_rng.gen()%255;
 		m_gg = m_rng.gen()%255;
@@ -453,9 +459,12 @@ public:
 		// Cleanup.
 		free(m_texture2dData);
 
-		bgfx::destroy(m_blitTestA);
-		bgfx::destroy(m_blitTestB);
-		bgfx::destroy(m_blitTestC);
+		if (m_blitSupported)
+		{
+			bgfx::destroy(m_blitTestA);
+			bgfx::destroy(m_blitTestB);
+			bgfx::destroy(m_blitTestC);
+		}
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
 		{
@@ -921,17 +930,20 @@ public:
 				ImGuiDescription(mtx[12], mtx[13], mtx[14], worldToScreen, descSampler[ii]);
 			}
 
-			bgfx::blit(1, m_blitTestA, 0, 0, m_blitTestB, 0, 0);
-			bgfx::blit(1, m_blitTestC, 0, 0, m_blitTestA, 0, 0);
+			if (m_blitSupported)
+			{
+				bgfx::blit(1, m_blitTestA, 0, 0, m_blitTestB, 0, 0);
+				bgfx::blit(1, m_blitTestC, 0, 0, m_blitTestA, 0, 0);
 
-			bgfx::blit(1, m_blitTestA, 0, 0, m_blitTestB, 0, 0);
-			bgfx::blit(1, m_blitTestB, 0, 0, m_blitTestC, 0, 0);
+				bgfx::blit(1, m_blitTestA, 0, 0, m_blitTestB, 0, 0);
+				bgfx::blit(1, m_blitTestB, 0, 0, m_blitTestC, 0, 0);
 
-			bgfx::blit(1, m_blitTestA, 0, 0, m_blitTestB, 0, 0);
-			bgfx::blit(1, m_blitTestB, 0, 0, m_blitTestA, 0, 0);
+				bgfx::blit(1, m_blitTestA, 0, 0, m_blitTestB, 0, 0);
+				bgfx::blit(1, m_blitTestB, 0, 0, m_blitTestA, 0, 0);
 
-			bgfx::blit(1, m_blitTestB, 0, 0, m_blitTestA, 0, 0);
-			bgfx::blit(1, m_blitTestC, 0, 0, m_blitTestB, 0, 0);
+				bgfx::blit(1, m_blitTestB, 0, 0, m_blitTestA, 0, 0);
+				bgfx::blit(1, m_blitTestC, 0, 0, m_blitTestB, 0, 0);
+			}
 
 			imguiEndFrame();
 
