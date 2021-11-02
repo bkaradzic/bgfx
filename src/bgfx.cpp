@@ -3922,7 +3922,9 @@ namespace bgfx
 		{
 			const TextureRef& ref = s_ctx->m_textureRef[_handle.idx];
 			BX_ASSERT(!ref.isReadBack()
-				, "Can't texture which was created with BGFX_TEXTURE_READ_BACK with compute. This is CPU only texture."
+				, "Can't texture (handle %d, '%S') which was created with BGFX_TEXTURE_READ_BACK with compute. This is CPU only texture."
+				, _handle.idx
+				, &ref.m_name
 				);
 			BX_UNUSED(ref);
 		}
@@ -4394,7 +4396,7 @@ namespace bgfx
 		{
 			const Attachment&   at = _attachment[ii];
 			const TextureHandle texHandle = at.handle;
-			const TextureRef& tr = s_ctx->m_textureRef[texHandle.idx];
+			const TextureRef&   tr = s_ctx->m_textureRef[texHandle.idx];
 
 			BGFX_ERROR_CHECK(true
 				&& isValid(texHandle)
@@ -4407,14 +4409,15 @@ namespace bgfx
 				, texHandle.idx
 				);
 
-			BGFX_ERROR_CHECK(
-				  at.mip < tr.m_numMips
+			BGFX_ERROR_CHECK(true
+				&& at.mip < tr.m_numMips
 				, _err
 				, BGFX_ERROR_FRAME_BUFFER_VALIDATION
 				, "Invalid texture mip level."
-				, "Attachment %d, Mip %d, texture number of mips %d."
+				, "Attachment %d, Mip %d, texture (handle %d) number of mips %d."
 				, ii
 				, at.mip
+				, texHandle.idx
 				, tr.m_numMips
 				);
 
@@ -4424,8 +4427,8 @@ namespace bgfx
 					: tr.m_numLayers * (tr.isCubeMap() ? 6 : 1)
 					;
 
-				BGFX_ERROR_CHECK(
-					(at.layer + at.numLayers) <= numLayers
+				BGFX_ERROR_CHECK(true
+					&& (at.layer + at.numLayers) <= numLayers
 					, _err
 					, BGFX_ERROR_FRAME_BUFFER_VALIDATION
 					, "Invalid texture layer range."
@@ -4437,8 +4440,8 @@ namespace bgfx
 					);
 			}
 
-			BGFX_ERROR_CHECK(
-				  _attachment[0].numLayers == at.numLayers
+			BGFX_ERROR_CHECK(true
+				&& _attachment[0].numLayers == at.numLayers
 				, _err
 				, BGFX_ERROR_FRAME_BUFFER_VALIDATION
 				, "Mismatch in attachment layer count."
@@ -4448,8 +4451,8 @@ namespace bgfx
 				, _attachment[0].numLayers
 				);
 
-			BGFX_ERROR_CHECK(
-				  firstTexture.m_bbRatio == tr.m_bbRatio
+			BGFX_ERROR_CHECK(true
+				&& firstTexture.m_bbRatio == tr.m_bbRatio
 				, _err
 				, BGFX_ERROR_FRAME_BUFFER_VALIDATION
 				, "Mismatch in texture back-buffer ratio."
@@ -4459,8 +4462,8 @@ namespace bgfx
 				, firstTexture.m_bbRatio
 				);
 
-			BGFX_ERROR_CHECK(
-				  firstTexture.m_numSamples == tr.m_numSamples
+			BGFX_ERROR_CHECK(true
+				&& firstTexture.m_numSamples == tr.m_numSamples
 				, _err
 				, BGFX_ERROR_FRAME_BUFFER_VALIDATION
 				, "Mismatch in texture sample count."
@@ -4499,8 +4502,8 @@ namespace bgfx
 				++color;
 			}
 
-			BGFX_ERROR_CHECK(
-				  0 == (tr.m_flags & BGFX_TEXTURE_READ_BACK)
+			BGFX_ERROR_CHECK(true
+				&& 0 == (tr.m_flags & BGFX_TEXTURE_READ_BACK)
 				, _err
 				, BGFX_ERROR_FRAME_BUFFER_VALIDATION
 				, "Frame buffer texture cannot be created with `BGFX_TEXTURE_READ_BACK`."
@@ -4509,8 +4512,8 @@ namespace bgfx
 				, tr.m_flags
 				);
 
-			BGFX_ERROR_CHECK(
-				  0 != (tr.m_flags & BGFX_TEXTURE_RT_MASK)
+			BGFX_ERROR_CHECK(true
+				&& 0 != (tr.m_flags & BGFX_TEXTURE_RT_MASK)
 				, _err
 				, BGFX_ERROR_FRAME_BUFFER_VALIDATION
 				, "Frame buffer texture is not created with one of `BGFX_TEXTURE_RT*` flags."
@@ -4520,8 +4523,8 @@ namespace bgfx
 				);
 		}
 
-		BGFX_ERROR_CHECK(
-			  color <= g_caps.limits.maxFBAttachments
+		BGFX_ERROR_CHECK(true
+			&& color <= g_caps.limits.maxFBAttachments
 			, _err
 			, BGFX_ERROR_FRAME_BUFFER_VALIDATION
 			, "Too many frame buffer color attachments."
@@ -4530,8 +4533,8 @@ namespace bgfx
 			, g_caps.limits.maxFBAttachments
 			);
 
-		BGFX_ERROR_CHECK(
-			  depth <= 1
+		BGFX_ERROR_CHECK(true
+			&& depth <= 1
 			, _err
 			, BGFX_ERROR_FRAME_BUFFER_VALIDATION
 			, "There can be only one depth texture attachment."
