@@ -1886,6 +1886,11 @@ namespace bgfx
 			return 0 != (m_flags & BGFX_TEXTURE_READ_BACK);
 		}
 
+		bool isBlitDst() const
+		{
+			return 0 != (m_flags & BGFX_TEXTURE_BLIT_DST);
+		}
+
 		bool isCubeMap() const
 		{
 			return m_cubeMap;

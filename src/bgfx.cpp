@@ -3965,6 +3965,12 @@ namespace bgfx
 		const TextureRef& src = s_ctx->m_textureRef[_src.idx];
 		const TextureRef& dst = s_ctx->m_textureRef[_dst.idx];
 
+		BX_ASSERT(dst.isBlitDst()
+			, "Blit destination texture (handle %d, '%S') is not created with `BGFX_TEXTURE_BLIT_DST` flag."
+			, _dst.idx
+			, &dst.m_name
+			);
+
 		BX_ASSERT(src.m_format == dst.m_format
 			, "Texture format must match (src %s, dst %s)."
 			, bimg::getName(bimg::TextureFormat::Enum(src.m_format) )
