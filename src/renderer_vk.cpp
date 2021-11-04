@@ -2320,7 +2320,7 @@ VK_IMPORT_DEVICE
 
 			uint16_t denseIdx = m_numWindows++;
 			m_windows[denseIdx] = _handle;
-			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
+			VK_CHECK(m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _format, _depthFormat) );
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
