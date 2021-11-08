@@ -3993,14 +3993,6 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     const Decoration& decoration, const Instruction& inst) {
   const SpvBuiltIn label = SpvBuiltIn(decoration.params()[0]);
 
-  // Builtins can only be applied to variables, structures or constants.
-  auto target_opcode = inst.opcode();
-  if (target_opcode != SpvOpTypeStruct && target_opcode != SpvOpVariable &&
-      !spvOpcodeIsConstant(target_opcode)) {
-    return _.diag(SPV_ERROR_INVALID_DATA, &inst)
-           << "BuiltIns can only target variables, structs or constants";
-  }
-
   if (!spvIsVulkanEnv(_.context()->target_env)) {
     // Early return. All currently implemented rules are based on Vulkan spec.
     //

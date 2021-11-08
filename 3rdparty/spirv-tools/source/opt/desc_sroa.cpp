@@ -19,6 +19,14 @@
 
 namespace spvtools {
 namespace opt {
+namespace {
+
+bool IsDecorationBinding(Instruction* inst) {
+  if (inst->opcode() != SpvOpDecorate) return false;
+  return inst->GetSingleWordInOperand(1u) == SpvDecorationBinding;
+}
+
+}  // namespace
 
 Pass::Status DescriptorScalarReplacement::Process() {
   bool modified = false;
@@ -157,6 +165,74 @@ uint32_t DescriptorScalarReplacement::GetReplacementVariable(Instruction* var,
   return replacement_vars->second[idx];
 }
 
+void DescriptorScalarReplacement::CopyDecorationsForNewVariable(
+    Instruction* old_var, uint32_t index, uint32_t new_var_id,
+    uint32_t new_var_ptr_type_id, const bool is_old_var_array,
+    const bool is_old_var_struct, Instruction* old_var_type) {
+  // Handle OpDecorate instructions.
+  for (auto old_decoration :
+       get_decoration_mgr()->GetDecorationsFor(old_var->result_id(), true)) {
+    uint32_t new_binding = 0;
+    if (IsDecorationBinding(old_decoration)) {
+      new_binding = GetNewBindingForElement(
+          old_decoration->GetSingleWordInOperand(2), index, new_var_ptr_type_id,
+          is_old_var_array, is_old_var_struct, old_var_type);
+    }
+    CreateNewDecorationForNewVariable(old_decoration, new_var_id, new_binding);
+  }
+
+  // Handle OpMemberDecorate instructions.
+  for (auto old_decoration : get_decoration_mgr()->GetDecorationsFor(
+           old_var_type->result_id(), true)) {
+    assert(old_decoration->opcode() == SpvOpMemberDecorate);
+    if (old_decoration->GetSingleWordInOperand(1u) != index) continue;
+    CreateNewDecorationForMemberDecorate(old_decoration, new_var_id);
+  }
+}
+
+uint32_t DescriptorScalarReplacement::GetNewBindingForElement(
+    uint32_t old_binding, uint32_t index, uint32_t new_var_ptr_type_id,
+    const bool is_old_var_array, const bool is_old_var_struct,
+    Instruction* old_var_type) {
+  if (is_old_var_array) {
+    return old_binding + index * GetNumBindingsUsedByType(new_var_ptr_type_id);
+  }
+  if (is_old_var_struct) {
+    // The binding offset that should be added is the sum of binding
+    // numbers used by previous members of the current struct.
+    uint32_t new_binding = old_binding;
+    for (uint32_t i = 0; i < index; ++i) {
+      new_binding +=
+          GetNumBindingsUsedByType(old_var_type->GetSingleWordInOperand(i));
+    }
+    return new_binding;
+  }
+  return old_binding;
+}
+
+void DescriptorScalarReplacement::CreateNewDecorationForNewVariable(
+    Instruction* old_decoration, uint32_t new_var_id, uint32_t new_binding) {
+  assert(old_decoration->opcode() == SpvOpDecorate);
+  std::unique_ptr<Instruction> new_decoration(old_decoration->Clone(context()));
+  new_decoration->SetInOperand(0, {new_var_id});
+
+  if (IsDecorationBinding(new_decoration.get())) {
+    new_decoration->SetInOperand(2, {new_binding});
+  }
+  context()->AddAnnotationInst(std::move(new_decoration));
+}
+
+void DescriptorScalarReplacement::CreateNewDecorationForMemberDecorate(
+    Instruction* old_member_decoration, uint32_t new_var_id) {
+  std::vector<Operand> operands(
+      {{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {new_var_id}}});
+  auto new_decorate_operand_begin = old_member_decoration->begin() + 2u;
+  auto new_decorate_operand_end = old_member_decoration->end();
+  operands.insert(operands.end(), new_decorate_operand_begin,
+                  new_decorate_operand_end);
+  get_decoration_mgr()->AddDecoration(SpvOpDecorate, std::move(operands));
+}
+
 uint32_t DescriptorScalarReplacement::CreateReplacementVariable(
     Instruction* var, uint32_t idx) {
   // The storage class for the new variable is the same as the original.
@@ -192,33 +268,8 @@ uint32_t DescriptorScalarReplacement::CreateReplacementVariable(
                            {static_cast<uint32_t>(storage_class)}}}));
   context()->AddGlobalValue(std::move(variable));
 
-  // Copy all of the decorations to the new variable.  The only difference is
-  // the Binding decoration needs to be adjusted.
-  for (auto old_decoration :
-       get_decoration_mgr()->GetDecorationsFor(var->result_id(), true)) {
-    assert(old_decoration->opcode() == SpvOpDecorate);
-    std::unique_ptr<Instruction> new_decoration(
-        old_decoration->Clone(context()));
-    new_decoration->SetInOperand(0, {id});
-
-    uint32_t decoration = new_decoration->GetSingleWordInOperand(1u);
-    if (decoration == SpvDecorationBinding) {
-      uint32_t new_binding = new_decoration->GetSingleWordInOperand(2);
-      if (is_array) {
-        new_binding += idx * GetNumBindingsUsedByType(ptr_element_type_id);
-      }
-      if (is_struct) {
-        // The binding offset that should be added is the sum of binding numbers
-        // used by previous members of the current struct.
-        for (uint32_t i = 0; i < idx; ++i) {
-          new_binding += GetNumBindingsUsedByType(
-              pointee_type_inst->GetSingleWordInOperand(i));
-        }
-      }
-      new_decoration->SetInOperand(2, {new_binding});
-    }
-    context()->AddAnnotationInst(std::move(new_decoration));
-  }
+  CopyDecorationsForNewVariable(var, idx, id, ptr_element_type_id, is_array,
+                                is_struct, pointee_type_inst);
 
   // Create a new OpName for the replacement variable.
   std::vector<std::unique_ptr<Instruction>> names_to_add;
