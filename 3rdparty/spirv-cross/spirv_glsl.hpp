@@ -592,7 +592,7 @@ protected:
 	void emit_resources();
 	void emit_extension_workarounds(spv::ExecutionModel model);
 	void emit_buffer_block_native(const SPIRVariable &var);
-	void emit_buffer_reference_block(SPIRType &type, bool forward_declaration);
+	void emit_buffer_reference_block(uint32_t type_id, bool forward_declaration);
 	void emit_buffer_block_legacy(const SPIRVariable &var);
 	void emit_buffer_block_flattened(const SPIRVariable &type);
 	void fixup_implicit_builtin_block_names();

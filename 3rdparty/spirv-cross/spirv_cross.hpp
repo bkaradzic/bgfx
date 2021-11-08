@@ -1010,15 +1010,32 @@ protected:
 		uint32_t write_count = 0;
 	};
 
+	struct PhysicalBlockMeta
+	{
+		uint32_t alignment = 0;
+	};
+
 	struct PhysicalStorageBufferPointerHandler : OpcodeHandler
 	{
 		explicit PhysicalStorageBufferPointerHandler(Compiler &compiler_);
 		bool handle(spv::Op op, const uint32_t *args, uint32_t length) override;
 		Compiler &compiler;
-		std::unordered_set<uint32_t> types;
+
+		std::unordered_set<uint32_t> non_block_types;
+		std::unordered_map<uint32_t, PhysicalBlockMeta> physical_block_type_meta;
+		std::unordered_map<uint32_t, PhysicalBlockMeta *> access_chain_to_physical_block;
+
+		void mark_aligned_access(uint32_t id, const uint32_t *args, uint32_t length);
+		PhysicalBlockMeta *find_block_meta(uint32_t id) const;
+		bool type_is_bda_block_entry(uint32_t type_id) const;
+		void setup_meta_chain(uint32_t type_id, uint32_t var_id);
+		uint32_t get_minimum_scalar_alignment(const SPIRType &type) const;
+		void analyze_non_block_types_from_block(const SPIRType &type);
+		uint32_t get_base_non_block_type_id(uint32_t type_id) const;
 	};
 	void analyze_non_block_pointer_types();
 	SmallVector<uint32_t> physical_storage_non_block_pointer_types;
+	std::unordered_map<uint32_t, PhysicalBlockMeta> physical_storage_type_to_alignment;
 
 	void analyze_variable_scope(SPIRFunction &function, AnalyzeVariableScopeAccessHandler &handler);
 	void find_function_local_luts(SPIRFunction &function, const AnalyzeVariableScopeAccessHandler &handler,

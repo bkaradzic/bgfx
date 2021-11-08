@@ -2171,8 +2171,9 @@ void CompilerGLSL::emit_buffer_block_legacy(const SPIRVariable &var)
 	statement("");
 }
 
-void CompilerGLSL::emit_buffer_reference_block(SPIRType &type, bool forward_declaration)
+void CompilerGLSL::emit_buffer_reference_block(uint32_t type_id, bool forward_declaration)
 {
+	auto &type = get<SPIRType>(type_id);
 	string buffer_name;
 
 	if (forward_declaration)
@@ -2215,8 +2216,19 @@ void CompilerGLSL::emit_buffer_reference_block(SPIRType &type, bool forward_decl
 
 	if (!forward_declaration)
 	{
+		auto itr = physical_storage_type_to_alignment.find(type_id);
+		uint32_t alignment = 0;
+		if (itr != physical_storage_type_to_alignment.end())
+			alignment = itr->second.alignment;
+
 		if (type.basetype == SPIRType::Struct)
 		{
+			SmallVector<std::string> attributes;
+			attributes.push_back("buffer_reference");
+			if (alignment)
+				attributes.push_back(join("buffer_reference_align = ", alignment));
+			attributes.push_back(buffer_to_packing_standard(type, true));
+
 			auto flags = ir.get_buffer_block_type_flags(type);
 			string decorations;
 			if (flags.get(DecorationRestrict))
@@ -2227,9 +2239,11 @@ void CompilerGLSL::emit_buffer_reference_block(SPIRType &type, bool forward_decl
 				decorations += " writeonly";
 			if (flags.get(DecorationNonWritable))
 				decorations += " readonly";
-			statement("layout(buffer_reference, ", buffer_to_packing_standard(type, true),
-			          ")", decorations, " buffer ", buffer_name);
+
+			statement("layout(", merge(attributes), ")", decorations, " buffer ", buffer_name);
 		}
+		else if (alignment)
+			statement("layout(buffer_reference, buffer_reference_align = ", alignment, ") buffer ", buffer_name);
 		else
 			statement("layout(buffer_reference) buffer ", buffer_name);
 
@@ -3447,28 +3461,28 @@ void CompilerGLSL::emit_resources()
 	{
 		for (auto type : physical_storage_non_block_pointer_types)
 		{
-			emit_buffer_reference_block(get<SPIRType>(type), false);
+			emit_buffer_reference_block(type, false);
 		}
 
 		// Output buffer reference blocks.
 		// Do this in two stages, one with forward declaration,
 		// and one without. Buffer reference blocks can reference themselves
 		// to support things like linked lists.
-		ir.for_each_typed_id<SPIRType>([&](uint32_t, SPIRType &type) {
-			bool has_block_flags = has_decoration(type.self, DecorationBlock);
-			if (has_block_flags && type.pointer && type.pointer_depth == 1 && !type_is_array_of_pointers(type) &&
+		ir.for_each_typed_id<SPIRType>([&](uint32_t self, SPIRType &type) {
+			if (type.basetype == SPIRType::Struct && type.pointer &&
+			    type.pointer_depth == 1 && !type_is_array_of_pointers(type) &&
 			    type.storage == StorageClassPhysicalStorageBufferEXT)
 			{
-				emit_buffer_reference_block(type, true);
+				emit_buffer_reference_block(self, true);
 			}
 		});
 
-		ir.for_each_typed_id<SPIRType>([&](uint32_t, SPIRType &type) {
-			bool has_block_flags = has_decoration(type.self, DecorationBlock);
-			if (has_block_flags && type.pointer && type.pointer_depth == 1 && !type_is_array_of_pointers(type) &&
+		ir.for_each_typed_id<SPIRType>([&](uint32_t self, SPIRType &type) {
+			if (type.basetype == SPIRType::Struct &&
+			    type.pointer && type.pointer_depth == 1 && !type_is_array_of_pointers(type) &&
 			    type.storage == StorageClassPhysicalStorageBufferEXT)
 			{
-				emit_buffer_reference_block(type, false);
+				emit_buffer_reference_block(self, false);
 			}
 		});
 	}

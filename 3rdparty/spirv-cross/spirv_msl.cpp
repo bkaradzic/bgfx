@@ -1710,6 +1710,16 @@ void CompilerMSL::extract_global_variables_from_function(uint32_t func_id, std::
 						added_arg_ids.insert(stage_in_var_id);
 						break;
 					}
+
+					case GLSLstd450Modf:
+					case GLSLstd450Frexp:
+					{
+						uint32_t base_id = ops[5];
+						if (global_var_ids.find(base_id) != global_var_ids.end())
+							added_arg_ids.insert(base_id);
+						break;
+					}
+
 					default:
 						break;
 					}
@@ -2251,7 +2261,7 @@ void CompilerMSL::add_plain_variable_to_interface_block(StorageClass storage, co
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationComponent, comp);
 		mark_location_as_used_by_shader(locn, get<SPIRType>(type_id), storage);
 	}
-	else if (is_builtin && is_tessellation_shader() && inputs_by_builtin.count(builtin))
+	else if (is_builtin && is_tessellation_shader() && storage == StorageClassInput && inputs_by_builtin.count(builtin))
 	{
 		uint32_t locn = inputs_by_builtin[builtin].location;
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
@@ -2416,7 +2426,7 @@ void CompilerMSL::add_composite_variable_to_interface_block(StorageClass storage
 				set_member_decoration(ib_type.self, ib_mbr_idx, DecorationComponent, comp);
 			mark_location_as_used_by_shader(locn, *usable_type, storage);
 		}
-		else if (is_builtin && is_tessellation_shader() && inputs_by_builtin.count(builtin))
+		else if (is_builtin && is_tessellation_shader() && storage == StorageClassInput && inputs_by_builtin.count(builtin))
 		{
 			uint32_t locn = inputs_by_builtin[builtin].location + i;
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
@@ -2589,7 +2599,7 @@ void CompilerMSL::add_composite_member_variable_to_interface_block(StorageClass 
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 			mark_location_as_used_by_shader(locn, *usable_type, storage);
 		}
-		else if (is_builtin && is_tessellation_shader() && inputs_by_builtin.count(builtin))
+		else if (is_builtin && is_tessellation_shader() && storage == StorageClassInput && inputs_by_builtin.count(builtin))
 		{
 			uint32_t locn = inputs_by_builtin[builtin].location + i;
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
@@ -2780,7 +2790,7 @@ void CompilerMSL::add_plain_member_variable_to_interface_block(StorageClass stor
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 		mark_location_as_used_by_shader(locn, get<SPIRType>(mbr_type_id), storage);
 	}
-	else if (is_builtin && is_tessellation_shader() && inputs_by_builtin.count(builtin))
+	else if (is_builtin && is_tessellation_shader() && storage == StorageClassInput && inputs_by_builtin.count(builtin))
 	{
 		uint32_t locn = 0;
 		auto builtin_itr = inputs_by_builtin.find(builtin);
@@ -4171,11 +4181,7 @@ void CompilerMSL::ensure_member_packing_rules_msl(SPIRType &ib_type, uint32_t in
 		set_decoration(type_id, DecorationArrayStride, array_stride);
 
 		// Remove packed_ for vectors of size 1, 2 and 4.
-		if (has_extended_decoration(ib_type.self, SPIRVCrossDecorationPhysicalTypePacked))
-			SPIRV_CROSS_THROW("Unable to remove packed decoration as entire struct must be fully packed. Do not mix "
-			                  "scalar and std140 layout rules.");
-		else
-			unset_extended_member_decoration(ib_type.self, index, SPIRVCrossDecorationPhysicalTypePacked);
+		unset_extended_member_decoration(ib_type.self, index, SPIRVCrossDecorationPhysicalTypePacked);
 	}
 	else if (is_matrix(mbr_type))
 	{
@@ -4202,11 +4208,7 @@ void CompilerMSL::ensure_member_packing_rules_msl(SPIRType &ib_type, uint32_t in
 		set_extended_member_decoration(ib_type.self, index, SPIRVCrossDecorationPhysicalTypeID, type_id);
 
 		// Remove packed_ for vectors of size 1, 2 and 4.
-		if (has_extended_decoration(ib_type.self, SPIRVCrossDecorationPhysicalTypePacked))
-			SPIRV_CROSS_THROW("Unable to remove packed decoration as entire struct must be fully packed. Do not mix "
-			                  "scalar and std140 layout rules.");
-		else
-			unset_extended_member_decoration(ib_type.self, index, SPIRVCrossDecorationPhysicalTypePacked);
+		unset_extended_member_decoration(ib_type.self, index, SPIRVCrossDecorationPhysicalTypePacked);
 	}
 	else
 		SPIRV_CROSS_THROW("Found a buffer packing case which we cannot represent in MSL.");
@@ -9171,8 +9173,16 @@ void CompilerMSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop, 
 	case GLSLstd450Frexp:
 	{
 		// Special case. If the variable is a scalar access chain, we cannot use it directly. We have to emit a temporary.
+		// Another special case is if the variable is in a storage class which is not thread.
 		auto *ptr = maybe_get<SPIRExpression>(args[1]);
-		if (ptr && ptr->access_chain && is_scalar(expression_type(args[1])))
+		auto &type = expression_type(args[1]);
+
+		bool is_thread_storage = storage_class_array_is_thread(type.storage);
+		if (type.storage == StorageClassOutput && capture_output_to_buffer)
+			is_thread_storage = false;
+
+		if (!is_thread_storage ||
+		    (ptr && ptr->access_chain && is_scalar(expression_type(args[1]))))
 		{
 			register_call_out_argument(args[1]);
 			forced_temporaries.insert(id);
@@ -9183,7 +9193,7 @@ void CompilerMSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop, 
 			if (!tmp_id)
 				tmp_id = ir.increase_bound_by(1);
 
-			uint32_t tmp_type_id = get_pointee_type_id(ptr->expression_type);
+			uint32_t tmp_type_id = get_pointee_type_id(expression_type_id(args[1]));
 			emit_uninitialized_temporary_expression(tmp_type_id, tmp_id);
 			emit_binary_func_op(result_type, id, args[0], tmp_id, eop == GLSLstd450Modf ? "modf" : "frexp");
 			statement(to_expression(args[1]), " = ", to_expression(tmp_id), ";");
