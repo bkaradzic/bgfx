@@ -1075,8 +1075,11 @@ int _main_(int _argc, char** _argv)
 						{
 							const int32_t itemCount = int32_t(view.m_fileList.size() );
 
-							int32_t start, end;
-							ImGui::CalcListClipping(itemCount, itemHeight, &start, &end);
+							ImGuiListClipper clipper;
+							clipper.Begin(itemCount, itemHeight);
+
+							int32_t start = clipper.DisplayStart;
+							int32_t end   = clipper.DisplayEnd;
 
 							const int32_t index = int32_t(view.m_fileIndex);
 							if (index <= start)
@@ -1087,9 +1090,6 @@ int _main_(int _argc, char** _argv)
 							{
 								ImGui::SetScrollY(ImGui::GetScrollY() + (index-end+1)*itemHeight);
 							}
-
-							ImGuiListClipper clipper;
-							clipper.Begin(itemCount, itemHeight);
 
 							while (clipper.Step() )
 							{
