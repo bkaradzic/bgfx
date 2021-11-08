@@ -72,7 +72,7 @@ extern "C" {
 #define VK_API_VERSION_1_0 VK_MAKE_API_VERSION(0, 1, 0, 0)// Patch version should always be set to 0
 
 // Version of this file
-#define VK_HEADER_VERSION 196
+#define VK_HEADER_VERSION 197
 
 // Complete version of this file
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 2, VK_HEADER_VERSION)
@@ -514,6 +514,15 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_DPB_SLOT_INFO_EXT = 1000040007,
 #endif
     VK_STRUCTURE_TYPE_TEXTURE_LOD_GATHER_FORMAT_PROPERTIES_AMD = 1000041000,
+    VK_STRUCTURE_TYPE_RENDERING_INFO_KHR = 1000044000,
+    VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR = 1000044001,
+    VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR = 1000044002,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR = 1000044003,
+    VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDERING_INFO_KHR = 1000044004,
+    VK_STRUCTURE_TYPE_RENDERING_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR = 1000044006,
+    VK_STRUCTURE_TYPE_RENDERING_FRAGMENT_DENSITY_MAP_ATTACHMENT_INFO_EXT = 1000044007,
+    VK_STRUCTURE_TYPE_ATTACHMENT_SAMPLE_COUNT_INFO_AMD = 1000044008,
+    VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_ATTRIBUTES_INFO_NVX = 1000044009,
     VK_STRUCTURE_TYPE_STREAM_DESCRIPTOR_SURFACE_CREATE_INFO_GGP = 1000049000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CORNER_SAMPLED_IMAGE_FEATURES_NV = 1000050000,
     VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO_NV = 1000056000,
@@ -900,6 +909,7 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES,
     VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
+    VK_STRUCTURE_TYPE_ATTACHMENT_SAMPLE_COUNT_INFO_NV = VK_STRUCTURE_TYPE_ATTACHMENT_SAMPLE_COUNT_INFO_AMD,
     VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO_KHR = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES_KHR = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES_KHR = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES,
@@ -1768,8 +1778,9 @@ typedef enum VkAttachmentLoadOp {
 typedef enum VkAttachmentStoreOp {
     VK_ATTACHMENT_STORE_OP_STORE = 0,
     VK_ATTACHMENT_STORE_OP_DONT_CARE = 1,
-    VK_ATTACHMENT_STORE_OP_NONE_EXT = 1000301000,
-    VK_ATTACHMENT_STORE_OP_NONE_QCOM = VK_ATTACHMENT_STORE_OP_NONE_EXT,
+    VK_ATTACHMENT_STORE_OP_NONE_KHR = 1000301000,
+    VK_ATTACHMENT_STORE_OP_NONE_QCOM = VK_ATTACHMENT_STORE_OP_NONE_KHR,
+    VK_ATTACHMENT_STORE_OP_NONE_EXT = VK_ATTACHMENT_STORE_OP_NONE_KHR,
     VK_ATTACHMENT_STORE_OP_MAX_ENUM = 0x7FFFFFFF
 } VkAttachmentStoreOp;
 
@@ -2203,6 +2214,8 @@ typedef enum VkPipelineCreateFlagBits {
     VK_PIPELINE_CREATE_DERIVATIVE_BIT = 0x00000004,
     VK_PIPELINE_CREATE_VIEW_INDEX_FROM_DEVICE_INDEX_BIT = 0x00000008,
     VK_PIPELINE_CREATE_DISPATCH_BASE_BIT = 0x00000010,
+    VK_PIPELINE_RASTERIZATION_STATE_CREATE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR = 0x00200000,
+    VK_PIPELINE_RASTERIZATION_STATE_CREATE_FRAGMENT_DENSITY_MAP_ATTACHMENT_BIT_EXT = 0x00400000,
     VK_PIPELINE_CREATE_RAY_TRACING_NO_NULL_ANY_HIT_SHADERS_BIT_KHR = 0x00004000,
     VK_PIPELINE_CREATE_RAY_TRACING_NO_NULL_CLOSEST_HIT_SHADERS_BIT_KHR = 0x00008000,
     VK_PIPELINE_CREATE_RAY_TRACING_NO_NULL_MISS_SHADERS_BIT_KHR = 0x00010000,
@@ -6484,6 +6497,116 @@ VKAPI_ATTR VkResult VKAPI_CALL vkCreateSharedSwapchainsKHR(
 #define VK_KHR_sampler_mirror_clamp_to_edge 1
 #define VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_SPEC_VERSION 3
 #define VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME "VK_KHR_sampler_mirror_clamp_to_edge"
+
+
+#define VK_KHR_dynamic_rendering 1
+#define VK_KHR_DYNAMIC_RENDERING_SPEC_VERSION 1
+#define VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME "VK_KHR_dynamic_rendering"
+
+typedef enum VkRenderingFlagBitsKHR {
+    VK_RENDERING_CONTENTS_SECONDARY_COMMAND_BUFFERS_BIT_KHR = 0x00000001,
+    VK_RENDERING_SUSPENDING_BIT_KHR = 0x00000002,
+    VK_RENDERING_RESUMING_BIT_KHR = 0x00000004,
+    VK_RENDERING_FLAG_BITS_MAX_ENUM_KHR = 0x7FFFFFFF
+} VkRenderingFlagBitsKHR;
+typedef VkFlags VkRenderingFlagsKHR;
+typedef struct VkRenderingAttachmentInfoKHR {
+    VkStructureType          sType;
+    const void*              pNext;
+    VkImageView              imageView;
+    VkImageLayout            imageLayout;
+    VkResolveModeFlagBits    resolveMode;
+    VkImageView              resolveImageView;
+    VkImageLayout            resolveImageLayout;
+    VkAttachmentLoadOp       loadOp;
+    VkAttachmentStoreOp      storeOp;
+    VkClearValue             clearValue;
+} VkRenderingAttachmentInfoKHR;
+
+typedef struct VkRenderingInfoKHR {
+    VkStructureType                        sType;
+    const void*                            pNext;
+    VkRenderingFlagsKHR                    flags;
+    VkRect2D                               renderArea;
+    uint32_t                               layerCount;
+    uint32_t                               viewMask;
+    uint32_t                               colorAttachmentCount;
+    const VkRenderingAttachmentInfoKHR*    pColorAttachments;
+    const VkRenderingAttachmentInfoKHR*    pDepthAttachment;
+    const VkRenderingAttachmentInfoKHR*    pStencilAttachment;
+} VkRenderingInfoKHR;
+
+typedef struct VkPipelineRenderingCreateInfoKHR {
+    VkStructureType    sType;
+    const void*        pNext;
+    uint32_t           viewMask;
+    uint32_t           colorAttachmentCount;
+    const VkFormat*    pColorAttachmentFormats;
+    VkFormat           depthAttachmentFormat;
+    VkFormat           stencilAttachmentFormat;
+} VkPipelineRenderingCreateInfoKHR;
+
+typedef struct VkPhysicalDeviceDynamicRenderingFeaturesKHR {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           dynamicRendering;
+} VkPhysicalDeviceDynamicRenderingFeaturesKHR;
+
+typedef struct VkCommandBufferInheritanceRenderingInfoKHR {
+    VkStructureType          sType;
+    const void*              pNext;
+    VkRenderingFlagsKHR      flags;
+    uint32_t                 viewMask;
+    uint32_t                 colorAttachmentCount;
+    const VkFormat*          pColorAttachmentFormats;
+    VkFormat                 depthAttachmentFormat;
+    VkFormat                 stencilAttachmentFormat;
+    VkSampleCountFlagBits    rasterizationSamples;
+} VkCommandBufferInheritanceRenderingInfoKHR;
+
+typedef struct VkRenderingFragmentShadingRateAttachmentInfoKHR {
+    VkStructureType    sType;
+    const void*        pNext;
+    VkImageView        imageView;
+    VkImageLayout      imageLayout;
+    VkExtent2D         shadingRateAttachmentTexelSize;
+} VkRenderingFragmentShadingRateAttachmentInfoKHR;
+
+typedef struct VkRenderingFragmentDensityMapAttachmentInfoEXT {
+    VkStructureType    sType;
+    const void*        pNext;
+    VkImageView        imageView;
+    VkImageLayout      imageLayout;
+} VkRenderingFragmentDensityMapAttachmentInfoEXT;
+
+typedef struct VkAttachmentSampleCountInfoAMD {
+    VkStructureType                 sType;
+    const void*                     pNext;
+    uint32_t                        colorAttachmentCount;
+    const VkSampleCountFlagBits*    pColorAttachmentSamples;
+    VkSampleCountFlagBits           depthStencilAttachmentSamples;
+} VkAttachmentSampleCountInfoAMD;
+
+typedef VkAttachmentSampleCountInfoAMD VkAttachmentSampleCountInfoNV;
+
+typedef struct VkMultiviewPerViewAttributesInfoNVX {
+    VkStructureType    sType;
+    const void*        pNext;
+    VkBool32           perViewAttributes;
+    VkBool32           perViewAttributesPositionXOnly;
+} VkMultiviewPerViewAttributesInfoNVX;
+
+typedef void (VKAPI_PTR *PFN_vkCmdBeginRenderingKHR)(VkCommandBuffer                   commandBuffer, const VkRenderingInfoKHR*                           pRenderingInfo);
+typedef void (VKAPI_PTR *PFN_vkCmdEndRenderingKHR)(VkCommandBuffer                   commandBuffer);
+
+#ifndef VK_NO_PROTOTYPES
+VKAPI_ATTR void VKAPI_CALL vkCmdBeginRenderingKHR(
+    VkCommandBuffer                             commandBuffer,
+    const VkRenderingInfoKHR*                   pRenderingInfo);
+
+VKAPI_ATTR void VKAPI_CALL vkCmdEndRenderingKHR(
+    VkCommandBuffer                             commandBuffer);
+#endif
 
 
 #define VK_KHR_multiview 1
