@@ -253,7 +253,7 @@ public:
 			float view[16];
 			bx::mtxLookAt(view, eye, at);
 
-			const float centering = 0.0f;
+			float centering = 0.0f;
 			if (bgfx::getRendererType() == bgfx::RendererType::Direct3D9) {
 				centering = -0.5f;
 			}
