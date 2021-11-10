@@ -306,6 +306,17 @@ namespace bgfx
 		"i_data2",
 		"i_data3",
 		"i_data4",
+		"i_data5",
+		"i_data6",
+		"i_data7",
+		"i_data8",
+		"i_data9",
+		"i_data10",
+		"i_data11",
+		"i_data12",
+		"i_data13",
+		"i_data14",
+		"i_data15",
 		NULL
 	};
 
@@ -1453,7 +1464,8 @@ namespace bgfx
 						  "Valid input attributes:\n"
 						  "  a_position, a_normal, a_tangent, a_bitangent, a_color0, a_color1, a_color2, a_color3, a_indices, a_weight,\n"
 						  "  a_texcoord0, a_texcoord1, a_texcoord2, a_texcoord3, a_texcoord4, a_texcoord5, a_texcoord6, a_texcoord7,\n"
-						  "  i_data0, i_data1, i_data2, i_data3, i_data4.\n"
+						  "  i_data0, i_data1, i_data2, i_data3, i_data4, i_data5, i_data6, i_data7, i_data8, i_data9, i_data10,\n"
+						  "  i_data11, i_data12, i_data13, i_data14, i_data15.\n"
 						  "\n"
 						, it->c_str() );
 					break;
