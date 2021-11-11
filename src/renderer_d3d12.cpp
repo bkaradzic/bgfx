@@ -5105,6 +5105,14 @@ namespace bgfx { namespace d3d12
 
 		const bool convert = m_textureFormat != m_requestedFormat;
 
+		D3D12_BOX box;
+		box.left   = 0;
+		box.top    = 0;
+		box.right  = box.left + _rect.m_width;
+		box.bottom = box.top  + _rect.m_height;
+		box.front  = _z;
+		box.back   = _z + _depth;
+
 		uint8_t* srcData = _mem->data;
 		uint8_t* temp = NULL;
 
@@ -5113,8 +5121,10 @@ namespace bgfx { namespace d3d12
 			temp = (uint8_t*)BX_ALLOC(g_allocator, slicepitch);
 			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat));
 			srcData = temp;
-		}
 
+			box.right = bx::max(1u, m_width >> _mip);
+			box.bottom = bx::max(1u, m_height >> _mip);
+		}
 
 		D3D12_RESOURCE_DESC desc = getResourceDesc(m_ptr);
 
@@ -5154,14 +5164,6 @@ namespace bgfx { namespace d3d12
 
 		D3D12_RANGE writeRange = { 0, numRows*rowPitch };
 		staging->Unmap(0, &writeRange);
-
-		D3D12_BOX box;
-		box.left   = 0;
-		box.top    = 0;
-		box.right  = box.left + _rect.m_width;
-		box.bottom = box.top  + _rect.m_height;
-		box.front  = _z;
-		box.back   = _z+_depth;
 
 		D3D12_TEXTURE_COPY_LOCATION dst = { m_ptr,   D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {        } };
 		dst.SubresourceIndex = subres;
