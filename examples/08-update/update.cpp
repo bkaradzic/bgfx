@@ -173,18 +173,17 @@ bgfx::TextureHandle loadTextureWithUpdate(const char* _filePath, uint64_t _flags
 					, NULL
 					);
 
-				uint32_t width = imageContainer->m_width;
+				const bimg::ImageBlockInfo& blockInfo = getBlockInfo(imageContainer->m_format);
+				const uint32_t blockWidth  = blockInfo.blockWidth;
+				const uint32_t blockHeight = blockInfo.blockHeight;
+
+				uint32_t width  = imageContainer->m_width;
 				uint32_t height = imageContainer->m_height;
 
 				for (uint8_t lod = 0, num = imageContainer->m_numMips; lod < num; ++lod)
 				{
-					if (width < 4 || height < 4)
-					{
-						break;
-					}
-
-					width  = bx::max(1u, width);
-					height = bx::max(1u, height);
+					width  = bx::max(blockWidth,  width);
+					height = bx::max(blockHeight, height);
 
 					bimg::ImageMip mip;
 
