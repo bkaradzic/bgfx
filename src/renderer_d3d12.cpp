@@ -5122,7 +5122,7 @@ namespace bgfx { namespace d3d12
 			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat));
 			srcData = temp;
 
-			box.right = bx::max(1u, m_width >> _mip);
+			box.right  = bx::max(1u, m_width  >> _mip);
 			box.bottom = bx::max(1u, m_height >> _mip);
 		}
 
