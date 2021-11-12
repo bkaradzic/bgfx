@@ -5697,8 +5697,16 @@ namespace bgfx { namespace gl
 			|| swizzle
 			;
 
-		const uint32_t width  = _rect.m_width;
-		const uint32_t height = _rect.m_height;
+		Rect rect;
+		rect.setIntersect(_rect
+			, {
+				0, 0,
+				uint16_t(bx::max(1u, m_width  >> _mip) ),
+				uint16_t(bx::max(1u, m_height >> _mip) ),
+			});
+
+		uint32_t width  = rect.m_width;
+		uint32_t height = rect.m_height;
 
 		uint8_t* temp = NULL;
 		if (convert
@@ -5727,11 +5735,11 @@ namespace bgfx { namespace gl
 				;
 			GL_CHECK(compressedTexSubImage(target+_side
 				, _mip
-				, _rect.m_x
-				, _rect.m_y
+				, rect.m_x
+				, rect.m_y
 				, _z
-				, _rect.m_width
-				, _rect.m_height
+				, rect.m_width
+				, rect.m_height
 				, _depth
 				, internalFmt
 				, _mem->size
@@ -5759,11 +5767,11 @@ namespace bgfx { namespace gl
 
 			GL_CHECK(texSubImage(target+_side
 				, _mip
-				, _rect.m_x
-				, _rect.m_y
+				, rect.m_x
+				, rect.m_y
 				, _z
-				, _rect.m_width
-				, _rect.m_height
+				, rect.m_width
+				, rect.m_height
 				, _depth
 				, m_fmt
 				, m_type
