@@ -27,6 +27,7 @@
 
 static const uint32_t kDebugValueOperandValueIndex = 5;
 static const uint32_t kDebugValueOperandExpressionIndex = 6;
+static const uint32_t kDebugDeclareOperandVariableIndex = 5;
 
 namespace spvtools {
 namespace opt {
@@ -34,6 +35,10 @@ namespace opt {
 Pass::Status ScalarReplacementPass::Process() {
   Status status = Status::SuccessWithoutChange;
   for (auto& f : *get_module()) {
+    if (f.IsDeclaration()) {
+      continue;
+    }
+
     Status functionStatus = ProcessFunction(&f);
     if (functionStatus == Status::Failure)
       return functionStatus;
@@ -83,14 +88,14 @@ Pass::Status ScalarReplacementPass::ReplaceVariable(
   std::vector<Instruction*> dead;
   bool replaced_all_uses = get_def_use_mgr()->WhileEachUser(
       inst, [this, &replacements, &dead](Instruction* user) {
-        if (user->GetOpenCL100DebugOpcode() == OpenCLDebugInfo100DebugDeclare) {
+        if (user->GetCommonDebugOpcode() == CommonDebugInfoDebugDeclare) {
           if (ReplaceWholeDebugDeclare(user, replacements)) {
             dead.push_back(user);
             return true;
           }
           return false;
         }
-        if (user->GetOpenCL100DebugOpcode() == OpenCLDebugInfo100DebugValue) {
+        if (user->GetCommonDebugOpcode() == CommonDebugInfoDebugValue) {
           if (ReplaceWholeDebugValue(user, replacements)) {
             dead.push_back(user);
             return true;
@@ -172,10 +177,15 @@ bool ScalarReplacementPass::ReplaceWholeDebugDeclare(
   // Add DebugValue instruction with Indexes operand and Deref operation.
   int32_t idx = 0;
   for (const auto* var : replacements) {
+    Instruction* insert_before = var->NextNode();
+    while (insert_before->opcode() == SpvOpVariable)
+      insert_before = insert_before->NextNode();
+    assert(insert_before != nullptr && "unexpected end of list");
     Instruction* added_dbg_value =
         context()->get_debug_info_mgr()->AddDebugValueForDecl(
             dbg_decl, /*value_id=*/var->result_id(),
-            /*insert_before=*/var->NextNode());
+            /*insert_before=*/insert_before, /*scope_and_line=*/dbg_decl);
+
     if (added_dbg_value == nullptr) return false;
     added_dbg_value->AddOperand(
         {SPV_OPERAND_TYPE_ID,
@@ -503,7 +513,7 @@ void ScalarReplacementPass::CreateVariable(
     }
   }
 
-  // Update the OpenCL.DebugInfo.100 debug information.
+  // Update the DebugInfo debug information.
   inst->UpdateDebugInfoFrom(varInst);
 
   replacements->push_back(inst);
@@ -790,8 +800,8 @@ bool ScalarReplacementPass::CheckUses(const Instruction* inst,
   get_def_use_mgr()->ForEachUse(inst, [this, max_legal_index, stats, &ok](
                                           const Instruction* user,
                                           uint32_t index) {
-    if (user->GetOpenCL100DebugOpcode() == OpenCLDebugInfo100DebugDeclare ||
-        user->GetOpenCL100DebugOpcode() == OpenCLDebugInfo100DebugValue) {
+    if (user->GetCommonDebugOpcode() == CommonDebugInfoDebugDeclare ||
+        user->GetCommonDebugOpcode() == CommonDebugInfoDebugValue) {
       // TODO: include num_partial_accesses if it uses Fragment operation or
       // DebugValue has Indexes operand.
       stats->num_full_accesses++;
@@ -860,6 +870,14 @@ bool ScalarReplacementPass::CheckUsesRelaxed(const Instruction* inst) const {
           case SpvOpStore:
             if (!CheckStore(user, index)) ok = false;
             break;
+          case SpvOpImageTexelPointer:
+            if (!CheckImageTexelPointer(index)) ok = false;
+            break;
+          case SpvOpExtInst:
+            if (user->GetCommonDebugOpcode() != CommonDebugInfoDebugDeclare ||
+                !CheckDebugDeclare(index))
+              ok = false;
+            break;
           default:
             ok = false;
             break;
@@ -867,6 +885,10 @@ bool ScalarReplacementPass::CheckUsesRelaxed(const Instruction* inst) const {
       });
 
   return ok;
+}
+
+bool ScalarReplacementPass::CheckImageTexelPointer(uint32_t index) const {
+  return index == 2u;
 }
 
 bool ScalarReplacementPass::CheckLoad(const Instruction* inst,
@@ -886,6 +908,12 @@ bool ScalarReplacementPass::CheckStore(const Instruction* inst,
     return false;
   return true;
 }
+
+bool ScalarReplacementPass::CheckDebugDeclare(uint32_t index) const {
+  if (index != kDebugDeclareOperandVariableIndex) return false;
+  return true;
+}
+
 bool ScalarReplacementPass::IsLargerThanSizeLimit(uint64_t length) const {
   if (max_num_elements_ == 0) {
     return false;

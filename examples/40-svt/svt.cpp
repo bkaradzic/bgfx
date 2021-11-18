@@ -17,7 +17,6 @@
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
 #include "camera.h"
-#include "bounds.h"
 #include "vt.h"
 
 namespace
@@ -261,7 +260,7 @@ public:
 				ImGui::End();
 
 				// Update camera.
-				cameraUpdate(deltaTime, m_mouseState);
+				cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 				float view[16];
 				cameraGetViewMtx(view);

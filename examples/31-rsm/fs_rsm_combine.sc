@@ -65,22 +65,6 @@ float PCF(sampler2DShadow _sampler, vec4 _shadowCoord, float _bias, vec2 _texelS
 	return result / 16.0;
 }
 
-
-float toClipSpaceDepth(float _depthTextureZ)
-{
-#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
-	return _depthTextureZ;
-#else
-	return _depthTextureZ * 2.0 - 1.0;
-#endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
-}
-
-vec3 clipToWorld(mat4 _invViewProj, vec3 _clipPos)
-{
-	vec4 wpos = mul(_invViewProj, vec4(_clipPos, 1.0) );
-	return wpos.xyz / wpos.w;
-}
-
 void main()
 {
 	vec3 n  = texture2D(s_normal, v_texcoord0).xyz;
@@ -97,18 +81,18 @@ void main()
 	float deviceDepth = texture2D(s_depth, texCoord).x;
 	float depth       = toClipSpaceDepth(deviceDepth);
 	vec3 clip = vec3(texCoord * 2.0 - 1.0, depth);
-#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
+#if !BGFX_SHADER_LANGUAGE_GLSL
 	clip.y = -clip.y;
-#endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
+#endif // !BGFX_SHADER_LANGUAGE_GLSL
 	vec3 wpos = clipToWorld(u_invMvp, clip);
 
 	const float shadowMapOffset = 0.003;
 	vec3 posOffset = wpos + n.xyz * shadowMapOffset;
 	vec4 shadowCoord = mul(u_lightMtx, vec4(posOffset, 1.0) );
 
-#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_METAL
+#if !BGFX_SHADER_LANGUAGE_GLSL
 	shadowCoord.y *= -1.0;
-#endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_METAL
+#endif // !BGFX_SHADER_LANGUAGE_GLSL
 
 	float shadowMapBias = 0.001;
 	vec2 texelSize = vec2_splat(u_shadowDimsInv.x);

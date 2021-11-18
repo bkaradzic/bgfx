@@ -56,7 +56,7 @@ namespace ImGui
 		PushFont(Font::Mono);
 
 		PushItemWidth(-1);
-		if (ListBoxHeader("##empty", ImVec2(0.0f, 0.0f) ) )
+		if (BeginListBox("##empty", ImVec2(0.0f, 0.0f) ) )
 		{
 			const float lineHeight = GetTextLineHeightWithSpacing();
 
@@ -112,7 +112,7 @@ namespace ImGui
 			}
 			clipper.End();
 
-			ListBoxFooter();
+			EndListBox();
 
 			if (!chdir.IsEmpty() )
 			{

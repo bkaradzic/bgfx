@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -552,11 +552,13 @@ namespace bgfx { namespace d3d11
 		{
 			uint8_t temp[28];
 
+			bx::ErrorAssert err;
+
 			bx::StaticMemoryBlockWriter writer(&temp, sizeof(temp) );
-			bx::write(&writer, "INTCEXTNCAPSFUNC", 16);
-			bx::write(&writer, kIntelExtensionInterfaceVersion);
-			bx::write(&writer, UINT32_C(0) );
-			bx::write(&writer, UINT32_C(0) );
+			bx::write(&writer, "INTCEXTNCAPSFUNC", 16, &err);
+			bx::write(&writer, kIntelExtensionInterfaceVersion, &err);
+			bx::write(&writer, uint32_t(0), &err);
+			bx::write(&writer, uint32_t(0), &err);
 
 			if (SUCCEEDED(setIntelExtension(_device, temp, sizeof(temp) ) ) )
 			{
@@ -564,10 +566,10 @@ namespace bgfx { namespace d3d11
 				bx::skip(&reader, 16);
 
 				uint32_t version;
-				bx::read(&reader, version);
+				bx::read(&reader, version, &err);
 
 				uint32_t driverVersion;
-				bx::read(&reader, driverVersion);
+				bx::read(&reader, driverVersion, &err);
 
 				return version <= driverVersion;
 			}
@@ -677,6 +679,7 @@ namespace bgfx { namespace d3d11
 			, m_ags(NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_swapChain(NULL)
+			, m_msaaRt(NULL)
 			, m_needPresent(false)
 			, m_lost(false)
 			, m_numWindows(0)
@@ -787,7 +790,7 @@ namespace bgfx { namespace d3d11
 
 						for (int32_t ii = 0; ii < numGPUs; ++ii)
 						{
-							long long memSize;
+							int64_t memSize;
 							result = agsGetGPUMemorySize(m_ags, ii, &memSize);
 							if (AGS_SUCCESS == result)
 							{
@@ -1047,7 +1050,7 @@ namespace bgfx { namespace d3d11
 					m_scd.alphaMode  = DXGI_ALPHA_MODE_IGNORE;
 					m_scd.flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-					m_scd.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, 3);
+					m_scd.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, BGFX_CONFIG_MAX_FRAME_LATENCY);
 					m_scd.nwh             = g_platformData.nwh;
 					m_scd.ndt             = g_platformData.ndt;
 					m_scd.windowed        = true;
@@ -1286,11 +1289,6 @@ namespace bgfx { namespace d3d11
 				if (m_featureLevel == D3D_FEATURE_LEVEL_10_0
 				||  m_featureLevel == D3D_FEATURE_LEVEL_10_1)
 				{
-					struct D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS
-					{
-						BOOL ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x;
-					};
-
 					D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS data;
 					HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &data, sizeof(data) );
 					if (SUCCEEDED(hr)
@@ -1311,13 +1309,8 @@ namespace bgfx { namespace d3d11
 				}
 				else
 				{
-					struct D3D11_FEATURE_DATA_D3D9_SIMPLE_INSTANCING_SUPPORT
-					{
-						BOOL SimpleInstancingSupported;
-					};
-
 					D3D11_FEATURE_DATA_D3D9_SIMPLE_INSTANCING_SUPPORT data;
-					HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE(11) /*D3D11_FEATURE_D3D9_SIMPLE_INSTANCING_SUPPORT*/, &data, sizeof(data) );
+					HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D9_SIMPLE_INSTANCING_SUPPORT, &data, sizeof(data) );
 					if (SUCCEEDED(hr)
 					&&  data.SimpleInstancingSupported)
 					{
@@ -1328,17 +1321,23 @@ namespace bgfx { namespace d3d11
 				// shadow compare is optional on 9_1 through 9_3 targets
 				if (m_featureLevel <= D3D_FEATURE_LEVEL_9_3)
 				{
-					struct D3D11_FEATURE_DATA_D3D9_SHADOW_SUPPORT
-					{
-						BOOL SupportsDepthAsTextureWithLessEqualComparisonFilter;
-					};
-
 					D3D11_FEATURE_DATA_D3D9_SHADOW_SUPPORT data;
-					HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE(9) /*D3D11_FEATURE_D3D9_SHADOW_SUPPORT*/, &data, sizeof(data) );
+					HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D9_SHADOW_SUPPORT, &data, sizeof(data) );
 					if (SUCCEEDED(hr)
 					&&  data.SupportsDepthAsTextureWithLessEqualComparisonFilter)
 					{
 						g_caps.supported |= BGFX_CAPS_TEXTURE_COMPARE_LEQUAL;
+					}
+				}
+
+				// support for SV_ViewportArrayIndex and SV_RenderTargetArrayIndex in the vertex shader is optional
+				{
+					D3D11_FEATURE_DATA_D3D11_OPTIONS3 data;
+					HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS3, &data, sizeof(data) );
+					if (SUCCEEDED(hr)
+					&&  data.VPAndRTArrayIndexFromAnyShaderFeedingRasterizer)
+					{
+						g_caps.supported |= BGFX_CAPS_VIEWPORT_LAYER_ARRAY;
 					}
 				}
 
@@ -1356,13 +1355,7 @@ namespace bgfx { namespace d3d11
 					{
 						if (BX_ENABLED(BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
 						{
-							struct D3D11_FEATURE_DATA_FORMAT_SUPPORT
-							{
-								DXGI_FORMAT InFormat;
-								UINT OutFormatSupport;
-							};
-
-							D3D11_FEATURE_DATA_FORMAT_SUPPORT data; // D3D11_FEATURE_DATA_FORMAT_SUPPORT2
+							D3D11_FEATURE_DATA_FORMAT_SUPPORT data;
 							data.InFormat = fmt;
 							HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
 							if (SUCCEEDED(hr) )
@@ -1446,21 +1439,23 @@ namespace bgfx { namespace d3d11
 
 							if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ) )
 							{
+								D3D11_FEATURE_DATA_FORMAT_SUPPORT2 data2;
+
 								// clear image flag for additional testing
 								support &= ~BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ;
 
-								data.InFormat = s_textureFormat[ii].m_fmt;
-								hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &data, sizeof(data) );
+								data2.InFormat = s_textureFormat[ii].m_fmt;
+								hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &data2, sizeof(data2) );
 								if (SUCCEEDED(hr) )
 								{
-									support |= 0 != (data.OutFormatSupport & (0
+									support |= 0 != (data2.OutFormatSupport2 & (0
 											| D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD
 											) )
 											? BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
 											: BGFX_CAPS_FORMAT_TEXTURE_NONE
 											;
 
-									support |= 0 != (data.OutFormatSupport & (0
+									support |= 0 != (data2.OutFormatSupport2 & (0
 											| D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE
 											) )
 											? BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
@@ -1495,7 +1490,7 @@ namespace bgfx { namespace d3d11
 								UINT OutFormatSupport;
 							};
 
-							D3D11_FEATURE_DATA_FORMAT_SUPPORT data; // D3D11_FEATURE_DATA_FORMAT_SUPPORT2
+							D3D11_FEATURE_DATA_FORMAT_SUPPORT data;
 							data.InFormat = fmtSrgb;
 							HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
 							if (SUCCEEDED(hr) )
@@ -1871,7 +1866,7 @@ namespace bgfx { namespace d3d11
 
 			bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 			uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-			bx::write(&writer, magic);
+			bx::write(&writer, magic, bx::ErrorAssert{});
 
 			TextureCreate tc;
 			tc.m_width     = _width;
@@ -1882,7 +1877,7 @@ namespace bgfx { namespace d3d11
 			tc.m_format    = TextureFormat::Enum(texture.m_requestedFormat);
 			tc.m_cubeMap   = false;
 			tc.m_mem       = NULL;
-			bx::write(&writer, tc);
+			bx::write(&writer, tc, bx::ErrorAssert{});
 
 			texture.destroy();
 			texture.create(mem, texture.m_flags, 0);
@@ -2308,7 +2303,15 @@ namespace bgfx { namespace d3d11
 					if (NULL != m_swapChain
 					&&  m_needPresent)
 					{
-						hr = m_swapChain->Present(syncInterval, 0);
+						uint32_t presentFlags = 0;
+
+						if (!syncInterval
+						&&  m_dxgi.tearingSupported() )
+						{
+							presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
+						}
+
+						hr = m_swapChain->Present(syncInterval, presentFlags);
 
 						m_needPresent = false;
 					}
@@ -2989,11 +2992,12 @@ namespace bgfx { namespace d3d11
 			const uint32_t index = (_flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
 			_flags &= BGFX_SAMPLER_BITS_MASK;
 
-			// Force both min+max anisotropic, can't be set individually.
-			_flags |= 0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) )
-					? BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC
-					: 0
-					;
+			// Force min+mag anisotropic (can't be set individually) and remove mip (not supported).
+			if (0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC)))
+			{
+				_flags |= BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC;
+				_flags &= ~BGFX_SAMPLER_MIP_MASK;
+			}
 
 			uint32_t hash;
 			ID3D11SamplerState* sampler;
@@ -3054,7 +3058,7 @@ namespace bgfx { namespace d3d11
 				sd.MinLOD = 0;
 				sd.MaxLOD = D3D11_FLOAT32_MAX;
 
-				m_device->CreateSamplerState(&sd, &sampler);
+				DX_CHECK(m_device->CreateSamplerState(&sd, &sampler));
 				DX_CHECK_REFCOUNT(sampler, 1);
 
 				m_samplerStateCache.add(hash, sampler);
@@ -3073,50 +3077,54 @@ namespace bgfx { namespace d3d11
 		{
 			const uint32_t maxTextureSamplers = g_caps.limits.maxTextureSamplers;
 
+			ID3D11DeviceContext* deviceCtx = m_deviceCtx;
+
 			// vertex texture fetch not supported on 9_1 through 9_3
 			if (m_featureLevel > D3D_FEATURE_LEVEL_9_3)
 			{
-					m_deviceCtx->VSSetShaderResources(0, maxTextureSamplers, s_zero.m_srv);
-					m_deviceCtx->VSSetSamplers(0, maxTextureSamplers, s_zero.m_sampler);
+				deviceCtx->VSSetShaderResources(0, maxTextureSamplers, s_zero.m_srv);
+				deviceCtx->VSSetSamplers(0, maxTextureSamplers, s_zero.m_sampler);
 			}
 
 			if (m_featureLevel > D3D_FEATURE_LEVEL_11_0)
 			{
-					m_deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(
-						D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL
-						, NULL
-						, NULL
-						, 16
-						, maxTextureSamplers
-						, s_zero.m_uav
-						, NULL
+				deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(
+					  D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL
+					, NULL
+					, NULL
+					, 16
+					, maxTextureSamplers
+					, s_zero.m_uav
+					, NULL
 					);
 			}
 
-			m_deviceCtx->PSSetShaderResources(0, maxTextureSamplers, s_zero.m_srv);
-			m_deviceCtx->PSSetSamplers(0, maxTextureSamplers, s_zero.m_sampler);
+			deviceCtx->PSSetShaderResources(0, maxTextureSamplers, s_zero.m_srv);
+			deviceCtx->PSSetSamplers(0, maxTextureSamplers, s_zero.m_sampler);
 		}
 
 		void commitTextureStage()
 		{
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG))
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 			{
 				quietValidation();
 			}
 
 			const uint32_t maxTextureSamplers = g_caps.limits.maxTextureSamplers;
 
+			ID3D11DeviceContext* deviceCtx = m_deviceCtx;
+
 			// vertex texture fetch not supported on 9_1 through 9_3
 			if (m_featureLevel > D3D_FEATURE_LEVEL_9_3)
 			{
-				m_deviceCtx->VSSetShaderResources(0, maxTextureSamplers, m_textureStage.m_srv);
-				m_deviceCtx->VSSetSamplers(0, maxTextureSamplers, m_textureStage.m_sampler);
+				deviceCtx->VSSetShaderResources(0, maxTextureSamplers, m_textureStage.m_srv);
+				deviceCtx->VSSetSamplers(0, maxTextureSamplers, m_textureStage.m_sampler);
 			}
 
 			if (m_featureLevel > D3D_FEATURE_LEVEL_11_0)
 			{
-				m_deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(
-					D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL
+				deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(
+					  D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL
 					, NULL
 					, NULL
 					, 16
@@ -3126,8 +3134,8 @@ namespace bgfx { namespace d3d11
 					);
 			}
 
-			m_deviceCtx->PSSetShaderResources(0, maxTextureSamplers, m_textureStage.m_srv);
-			m_deviceCtx->PSSetSamplers(0, maxTextureSamplers, m_textureStage.m_sampler);
+			deviceCtx->PSSetShaderResources(0, maxTextureSamplers, m_textureStage.m_srv);
+			deviceCtx->PSSetSamplers(0, maxTextureSamplers, m_textureStage.m_sampler);
 		}
 
 		void invalidateTextureStage()
@@ -3384,18 +3392,10 @@ namespace bgfx { namespace d3d11
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
-#define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type) \
-		case UniformType::_uniform: \
-		case UniformType::_uniform|kUniformFragmentBit: \
-				{ \
-					setShaderUniform(uint8_t(type), loc, data, num); \
-				} \
-				break;
-
 				switch ( (uint32_t)type)
 				{
 				case UniformType::Mat3:
-				case UniformType::Mat3|kUniformFragmentBit: \
+				case UniformType::Mat3|kUniformFragmentBit:
 					 {
 						 float* value = (float*)data;
 						 for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3*16, value += 9)
@@ -3418,9 +3418,16 @@ namespace bgfx { namespace d3d11
 					}
 					break;
 
-				CASE_IMPLEMENT_UNIFORM(Sampler, I, int);
-				CASE_IMPLEMENT_UNIFORM(Vec4,    F, float);
-				CASE_IMPLEMENT_UNIFORM(Mat4,    F, float);
+				case UniformType::Sampler:
+				case UniformType::Sampler | kUniformFragmentBit:
+				case UniformType::Vec4:
+				case UniformType::Vec4 | kUniformFragmentBit:
+				case UniformType::Mat4:
+				case UniformType::Mat4 | kUniformFragmentBit:
+					{
+						setShaderUniform(uint8_t(type), loc, data, num);
+					}
+					break;
 
 				case UniformType::End:
 					break;
@@ -3429,7 +3436,6 @@ namespace bgfx { namespace d3d11
 					BX_TRACE("%4d: INVALID 0x%08x, t %d, l %d, n %d, c %d", _uniformBuffer.getPos(), opcode, type, loc, num, copy);
 					break;
 				}
-#undef CASE_IMPLEMENT_UNIFORM
 			}
 		}
 
@@ -4004,7 +4010,7 @@ namespace bgfx { namespace d3d11
 
 	static void patchUAVRegisterByteCode(DxbcInstruction& _instruction, void* _userData)
 	{
-		union { void* ptr; uint32_t offset; } cast = { _userData };
+		BX_UNUSED(_userData);
 
 		switch (_instruction.opcode)
 		{
@@ -4013,37 +4019,37 @@ namespace bgfx { namespace d3d11
 				DxbcOperand& operand = _instruction.operand[0];
 				operand.regIndex[0] += 16;
 
-				BX_ASSERT(operand.regIndex[1] == 0 && operand.regIndex[2] == 0
-					, "Unexpected values");
+				BX_ASSERT(operand.regIndex[1] == 0 && operand.regIndex[2] == 0, "Unexpected values");
 			}
 			break;
+
 		case DxbcOpcode::DCL_UNORDERED_ACCESS_VIEW_RAW:
-			{
-				BX_ASSERT(false, "Unsupported UAV access");
-			}
+			BX_ASSERT(false, "Unsupported UAV access");
 			break;
+
 		case DxbcOpcode::DCL_UNORDERED_ACCESS_VIEW_STRUCTURED:
-			{
-				BX_ASSERT(false, "Unsupported UAV access");
-			}
+			BX_ASSERT(false, "Unsupported UAV access");
 			break;
+
 		case DxbcOpcode::LD_UAV_TYPED:
 			{
 				DxbcOperand& operand = _instruction.operand[2];
 				operand.regIndex[0] += 16;
 
-				BX_ASSERT(operand.regIndex[1] == 0 && operand.regIndex[2] == 0
-					, "Unexpected values");
+				BX_ASSERT(operand.regIndex[1] == 0 && operand.regIndex[2] == 0, "Unexpected values");
 			}
 			break;
+
 		case DxbcOpcode::STORE_UAV_TYPED:
 			{
 				DxbcOperand& operand = _instruction.operand[0];
 				operand.regIndex[0] += 16;
 
-				BX_ASSERT(operand.regIndex[1] == 0 && operand.regIndex[2] == 0
-					, "Unexpected values");
+				BX_ASSERT(operand.regIndex[1] == 0 && operand.regIndex[2] == 0, "Unexpected values");
 			}
+			break;
+
+		default:
 			break;
 		}
 	}
@@ -4088,13 +4094,15 @@ namespace bgfx { namespace d3d11
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
 
+		bx::ErrorAssert err;
+
 		uint32_t magic;
-		bx::read(&reader, magic);
+		bx::read(&reader, magic, &err);
 
 		const bool fragment = isShaderType(magic, 'F');
 
 		uint32_t hashIn;
-		bx::read(&reader, hashIn);
+		bx::read(&reader, hashIn, &err);
 
 		uint32_t hashOut;
 
@@ -4104,11 +4112,11 @@ namespace bgfx { namespace d3d11
 		}
 		else
 		{
-			bx::read(&reader, hashOut);
+			bx::read(&reader, hashOut, &err);
 		}
 
 		uint16_t count;
-		bx::read(&reader, count);
+		bx::read(&reader, count, &err);
 
 		m_numPredefined = 0;
 		m_numUniforms = count;
@@ -4125,28 +4133,34 @@ namespace bgfx { namespace d3d11
 			for (uint32_t ii = 0; ii < count; ++ii)
 			{
 				uint8_t nameSize = 0;
-				bx::read(&reader, nameSize);
+				bx::read(&reader, nameSize, &err);
 
 				char name[256] = { '\0' };
-				bx::read(&reader, &name, nameSize);
+				bx::read(&reader, &name, nameSize, &err);
 				name[nameSize] = '\0';
 
 				uint8_t type = 0;
-				bx::read(&reader, type);
+				bx::read(&reader, type, &err);
 
 				uint8_t num = 0;
-				bx::read(&reader, num);
+				bx::read(&reader, num, &err);
 
 				uint16_t regIndex = 0;
-				bx::read(&reader, regIndex);
+				bx::read(&reader, regIndex, &err);
 
 				uint16_t regCount = 0;
-				bx::read(&reader, regCount);
+				bx::read(&reader, regCount, &err);
 
 				if (!isShaderVerLess(magic, 8) )
 				{
 					uint16_t texInfo = 0;
-					bx::read(&reader, texInfo);
+					bx::read(&reader, texInfo, &err);
+				}
+
+				if (!isShaderVerLess(magic, 10) )
+				{
+					uint16_t texFormat = 0;
+					bx::read(&reader, texFormat, &err);
 				}
 
 				const char* kind = "invalid";
@@ -4199,7 +4213,7 @@ namespace bgfx { namespace d3d11
 		}
 
 		uint32_t shaderSize;
-		bx::read(&reader, shaderSize);
+		bx::read(&reader, shaderSize, &err);
 
 		const void* code = reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
@@ -4211,8 +4225,7 @@ namespace bgfx { namespace d3d11
 			bx::MemoryReader rd(code, shaderSize);
 
 			DxbcContext dxbc;
-			bx::Error err;
-			read(&rd, dxbc, &err);
+			read(&rd, dxbc, bx::ErrorAssert{});
 
 			bool patchShader = !dxbc.shader.aon9;
 			if (patchShader)
@@ -4252,14 +4265,14 @@ namespace bgfx { namespace d3d11
 		}
 
 		uint8_t numAttrs = 0;
-		bx::read(&reader, numAttrs);
+		bx::read(&reader, numAttrs, bx::ErrorAssert{});
 
 		bx::memSet(m_attrMask, 0, sizeof(m_attrMask) );
 
 		for (uint32_t ii = 0; ii < numAttrs; ++ii)
 		{
 			uint16_t id;
-			bx::read(&reader, id);
+			bx::read(&reader, id, bx::ErrorAssert{});
 
 			Attrib::Enum attr = idToAttrib(id);
 
@@ -4270,7 +4283,7 @@ namespace bgfx { namespace d3d11
 		}
 
 		uint16_t size;
-		bx::read(&reader, size);
+		bx::read(&reader, size, bx::ErrorAssert{});
 
 		if (0 < size)
 		{
@@ -4752,9 +4765,10 @@ namespace bgfx { namespace d3d11
 		uint32_t rectpitch  = _rect.m_width*bpp/8;
 		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat)))
 		{
-			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat));
+			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
 			rectpitch = (_rect.m_width / blockInfo.blockWidth)*blockInfo.blockSize;
 		}
+
 		const uint32_t srcpitch   = UINT16_MAX == _pitch ? rectpitch : _pitch;
 		const uint32_t slicepitch = rectpitch*_rect.m_height;
 
@@ -4768,6 +4782,9 @@ namespace bgfx { namespace d3d11
 			temp = (uint8_t*)BX_ALLOC(g_allocator, slicepitch);
 			bimg::imageDecodeToBgra8(g_allocator, temp, data, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			data = temp;
+
+			box.right  = bx::max(1u, m_width  >> _mip);
+			box.bottom = bx::max(1u, m_height >> _mip);
 		}
 
 		deviceCtx->UpdateSubresource(
@@ -4811,14 +4828,18 @@ namespace bgfx { namespace d3d11
 		ts.m_sampler[_stage] = s_renderD3D11->getSamplerState(flags, _palette[index]);
 	}
 
-	void TextureD3D11::resolve(uint8_t _resolve) const
+	void TextureD3D11::resolve(uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip) const
 	{
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 
 		const bool needResolve = NULL != m_rt;
 		if (needResolve)
 		{
-			deviceCtx->ResolveSubresource(m_texture2d, 0, m_rt, 0, s_textureFormat[m_textureFormat].m_fmt);
+			for (uint32_t ii = _layer; ii < _numLayers; ++ii)
+			{
+				const UINT resource = _mip + (ii * m_numMips);
+				deviceCtx->ResolveSubresource(m_texture2d, resource, m_rt, resource, s_textureFormat[m_textureFormat].m_fmt);
+			}
 		}
 
 		const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
@@ -5093,7 +5114,7 @@ namespace bgfx { namespace d3d11
 								{
 									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
 									desc.Texture2DMSArray.FirstArraySlice = at.layer;
-									desc.Texture2DMSArray.ArraySize       = 1;
+									desc.Texture2DMSArray.ArraySize       = at.numLayers;
 								}
 								else
 								{
@@ -5176,7 +5197,7 @@ namespace bgfx { namespace d3d11
 				if (isValid(at.handle) )
 				{
 					const TextureD3D11& texture = s_renderD3D11->m_textures[at.handle.idx];
-					texture.resolve(at.resolve);
+					texture.resolve(at.resolve, at.layer, at.numLayers, at.mip);
 				}
 			}
 		}
@@ -5570,6 +5591,8 @@ namespace bgfx { namespace d3d11
 		currentState.clear();
 		currentState.m_stateFlags = BGFX_STATE_NONE;
 		currentState.m_stencil = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
+
+		uint32_t currentNumVertices = 0;
 
 		RenderBind currentBind;
 		currentBind.clear();
@@ -6201,7 +6224,7 @@ namespace bgfx { namespace d3d11
 						}
 					}
 
-					currentState.m_numVertices = numVertices;
+					currentNumVertices = numVertices;
 
 					if (0 < numStreams)
 					{
@@ -6261,7 +6284,7 @@ namespace bgfx { namespace d3d11
 
 				if (0 != currentState.m_streamMask)
 				{
-					uint32_t numVertices       = currentState.m_numVertices;
+					uint32_t numVertices       = currentNumVertices;
 					uint32_t numIndices        = 0;
 					uint32_t numPrimsSubmitted = 0;
 					uint32_t numInstances      = 0;

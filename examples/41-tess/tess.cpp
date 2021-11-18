@@ -17,7 +17,6 @@
 #include <bx/math.h>
 
 #include "bgfx_utils.h"
-#include "bounds.h"
 #include "camera.h"
 #include "common.h"
 #include "imgui/imgui.h"
@@ -511,11 +510,8 @@ namespace
 
 				ImGui::End();
 
-				if (!ImGui::MouseOverArea() )
-				{
-					// Update camera.
-					cameraUpdate(deltaTime*0.01f, m_mouseState);
-				}
+				// Update camera.
+				cameraUpdate(deltaTime*0.01f, m_mouseState, ImGui::MouseOverArea() );
 
 				bgfx::touch(0);
 				bgfx::touch(1);

@@ -90,19 +90,6 @@ class ValidationState_t {
     // conversion opcodes
     bool use_int8_type = false;
 
-    // Use scalar block layout. See VK_EXT_scalar_block_layout:
-    // Defines scalar alignment:
-    // - scalar alignment equals the scalar size in bytes
-    // - array alignment is same as its element alignment
-    // - array alignment is max alignment of any of its members
-    // - vector alignment is same as component alignment
-    // - matrix alignment is same as component alignment
-    // For struct in Uniform, StorageBuffer, PushConstant:
-    // - Offset of a member is multiple of scalar alignment of that member
-    // - ArrayStride and MatrixStride are multiples of scalar alignment
-    // Members need not be listed in offset order
-    bool scalar_block_layout = false;
-
     // SPIR-V 1.4 allows us to select between any two composite values
     // of the same type.
     bool select_between_composites = false;
@@ -117,6 +104,9 @@ class ValidationState_t {
 
     // SPIR-V 1.4 allows Function and Private variables to be NonWritable
     bool nonwritable_var_in_function_or_private = false;
+
+    // Whether LocalSizeId execution mode is allowed by the environment.
+    bool env_allow_localsizeid = false;
   };
 
   ValidationState_t(const spv_const_context context,
@@ -461,6 +451,10 @@ class ValidationState_t {
   void RegisterSampledImageConsumer(uint32_t sampled_image_id,
                                     Instruction* consumer);
 
+  // Record a function's storage class consumer instruction
+  void RegisterStorageClassConsumer(SpvStorageClass storage_class,
+                                    Instruction* consumer);
+
   /// Returns the set of Global Variables.
   std::unordered_set<uint32_t>& global_vars() { return global_vars_; }
 
@@ -483,6 +477,12 @@ class ValidationState_t {
   // VK_KHR_relaxed_block_layout.
   bool IsRelaxedBlockLayout() const {
     return features_.env_relaxed_block_layout || options()->relax_block_layout;
+  }
+
+  // Returns true if allowing localsizeid, either because the environment always
+  // allows it, or because it is enabled from the command-line.
+  bool IsLocalSizeIdAllowed() const {
+    return features_.env_allow_localsizeid || options()->allow_localsizeid;
   }
 
   /// Sets the struct nesting depth for a given struct ID
@@ -586,6 +586,17 @@ class ValidationState_t {
   // Returns true if |id| is a type id that contains a 8- or 16-bit int or
   // 16-bit float that is not generally enabled for use.
   bool ContainsLimitedUseIntOrFloatType(uint32_t id) const;
+
+  // Returns true if |id| is a type that contains a runtime-sized array.
+  // Does not consider a pointers as contains the array.
+  bool ContainsRuntimeArray(uint32_t id) const;
+
+  // Generic type traversal.
+  // Only traverse pointers and functions if |traverse_all_types| is true.
+  // Recursively tests |f| against the type hierarchy headed by |id|.
+  bool ContainsType(uint32_t id,
+                    const std::function<bool(const Instruction*)>& f,
+                    bool traverse_all_types = true) const;
 
   // Gets value from OpConstant and OpSpecConstant as uint64.
   // Returns false on failure (no instruction, wrong instruction, not int).

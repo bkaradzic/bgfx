@@ -33,7 +33,7 @@
 //   Version 2 - Add Loader/ICD Interface version negotiation
 //               via vk_icdNegotiateLoaderICDInterfaceVersion.
 //   Version 3 - Add ICD creation/destruction of KHR_surface objects.
-//   Version 4 - Add unknown physical device extension qyering via
+//   Version 4 - Add unknown physical device extension querying via
 //               vk_icdGetPhysicalDeviceProcAddr.
 //   Version 5 - Tells ICDs that the loader is now paying attention to the
 //               application version of Vulkan passed into the ApplicationInfo
@@ -122,6 +122,7 @@ typedef enum {
     VK_ICD_WSI_PLATFORM_DIRECTFB,
     VK_ICD_WSI_PLATFORM_VI,
     VK_ICD_WSI_PLATFORM_GGP,
+    VK_ICD_WSI_PLATFORM_SCREEN,
 } VkIcdWsiPlatform;
 
 typedef struct {
@@ -232,5 +233,13 @@ typedef struct {
     void *window;
 } VkIcdSurfaceVi;
 #endif // VK_USE_PLATFORM_VI_NN
+
+#ifdef VK_USE_PLATFORM_SCREEN_QNX
+typedef struct {
+    VkIcdSurfaceBase base;
+    struct _screen_context *context;
+    struct _screen_window *window;
+} VkIcdSurfaceScreen;
+#endif  // VK_USE_PLATFORM_SCREEN_QNX
 
 #endif  // VKICD_H

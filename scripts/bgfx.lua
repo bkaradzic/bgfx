@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2020 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2021 Branimir Karadzic. All rights reserved.
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
@@ -46,7 +46,6 @@ function bgfxProjectBase(_kind, _defines)
 
 		links {
 			"bimg",
-			"bx",
 		}
 
 		configuration { "vs20* or mingw*" }
@@ -95,26 +94,18 @@ function bgfxProjectBase(_kind, _defines)
 
 	includedirs {
 		path.join(BGFX_DIR, "3rdparty"),
-		path.join(BX_DIR,   "include"),
 		path.join(BIMG_DIR, "include"),
 	}
 
 	defines (_defines)
 
-	links {
-		"bx",
-	}
+	using_bx()
 
 	if _OPTIONS["with-glfw"] then
 		defines {
 			"BGFX_CONFIG_MULTITHREADED=0",
 		}
 	end
-
-	configuration { "Debug" }
-		defines {
-			"BGFX_CONFIG_DEBUG=1",
-		}
 
 	configuration { "vs* or mingw*", "not durango" }
 		includedirs {
@@ -138,7 +129,7 @@ function bgfxProjectBase(_kind, _defines)
 			"-Wno-microsoft-const-init", -- default initialization of an object of const type '' without a user-provided default constructor is a Microsoft extension
 		}
 
-	configuration { "osx" }
+	configuration { "osx*" }
 		buildoptions { "-x objective-c++" }  -- additional build option for osx
 		linkoptions {
 			"-framework Cocoa",
@@ -171,6 +162,11 @@ function bgfxProjectBase(_kind, _defines)
 		path.join(BGFX_DIR, "src/**.bin.h"),
 	}
 
+	overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-agc"), {
+		path.join(BGFX_DIR, "src/renderer_agc.cpp"),
+		path.join(BGFX_DIR, "src/renderer_agc.h"),
+	})
+
 	overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-gnm"), {
 		path.join(BGFX_DIR, "src/renderer_gnm.cpp"),
 		path.join(BGFX_DIR, "src/renderer_gnm.h"),
@@ -184,9 +180,10 @@ function bgfxProjectBase(_kind, _defines)
 	if _OPTIONS["with-webgpu"] then
 		defines {
 			"BGFX_CONFIG_RENDERER_WEBGPU=1",
+			"BGFX_CONFIG_DEBUG_ANNOTATION=0", -- does not work
 		}
 
-		local generator = "out/VS2019"
+		local generator = "out/Cmake"
 
 		configuration { "wasm*" }
 			defines {
@@ -196,13 +193,14 @@ function bgfxProjectBase(_kind, _defines)
 
 		configuration { "not wasm*" }
 			includedirs {
-				path.join(DAWN_DIR, "src"),
 				path.join(DAWN_DIR, "src/include"),
-				path.join(DAWN_DIR, "third_party/vulkan-headers/include"),
-				path.join(DAWN_DIR, generator, "gen/src"),
+				path.join(DAWN_DIR, "third_party/vulkan-deps/vulkan-headers/src/include"),
 				path.join(DAWN_DIR, generator, "gen/src/include"),
 			}
 
+			files {
+				path.join(DAWN_DIR, generator, "gen/src/dawn/webgpu_cpp.cpp"),
+			}
 		configuration { "vs*" }
 			defines {
 				"NTDDI_VERSION=NTDDI_WIN10_RS2",
@@ -232,7 +230,7 @@ function bgfxProjectBase(_kind, _defines)
 			path.join(BGFX_DIR, "src/vertexlayout.cpp"),
 		}
 
-		configuration { "xcode* or osx or ios*" }
+		configuration { "xcode* or osx* or ios*" }
 			files {
 				path.join(BGFX_DIR, "src/amalgamated.mm"),
 			}
@@ -243,7 +241,7 @@ function bgfxProjectBase(_kind, _defines)
 				path.join(BGFX_DIR, "src/amalgamated.cpp"),
 			}
 
-		configuration { "not (xcode* or osx or ios*)" }
+		configuration { "not (xcode* or osx* or ios*)" }
 			excludes {
 				path.join(BGFX_DIR, "src/**.mm"),
 			}
@@ -251,7 +249,7 @@ function bgfxProjectBase(_kind, _defines)
 		configuration {}
 
 	else
-		configuration { "xcode* or osx or ios*" }
+		configuration { "xcode* or osx* or ios*" }
 			files {
 				path.join(BGFX_DIR, "src/glcontext_**.mm"),
 				path.join(BGFX_DIR, "src/renderer_**.mm"),
@@ -297,43 +295,43 @@ if _OPTIONS["with-webgpu"] then
 			}
 
 		configuration { "not wasm*" }
-			--local generator = "out/Default"
-			local generator = "out/VS2019"
+			local generator = "out/Cmake"
 
 			includedirs {
-				path.join(DAWN_DIR, "src"),
 				path.join(DAWN_DIR, "src/include"),
-				path.join(DAWN_DIR, generator, "gen/src"),
 				path.join(DAWN_DIR, generator, "gen/src/include"),
 			}
 
 			libdirs {
 				path.join(DAWN_DIR, generator),
-				path.join(DAWN_DIR, generator, "lib/Debug"),
-			}
-
-			files {
-				path.join(DAWN_DIR, generator, "gen/src/dawn/webgpu_cpp.cpp"),
+				path.join(DAWN_DIR, generator, "src/common/Debug"),
+				path.join(DAWN_DIR, generator, "src/dawn/Debug"),
+				path.join(DAWN_DIR, generator, "src/dawn_native/Debug"),
+				path.join(DAWN_DIR, generator, "src/dawn_platform/Debug"),
+				path.join(DAWN_DIR, generator, "third_party/tint/src/Debug"),
+				path.join(DAWN_DIR, generator, "third_party/vulkan-deps/spirv-tools/src/source/Debug"),
+				path.join(DAWN_DIR, generator, "third_party/vulkan-deps/spirv-tools/src/source/opt/Debug"),
+				path.join(DAWN_DIR, generator, "third_party/vulkan-deps/spirv-cross/src/Debug"),
 			}
 
 			links {
 				-- shared
-				"dawn_proc_shared",
-				"dawn_native_shared",
-				"shaderc_spvc_shared",
+				--"dawn_proc_shared",
+				--"dawn_native_shared",
+				--"shaderc_spvc_shared",
 				-- static
-				--"dawn_common",
-				--"dawn_proc",
-				--"dawn_native",
-				--"dawn_platform",
-				------"shaderc",
-				--"shaderc_spvc",
-				--"SPIRV-tools",
-				--"SPIRV-tools-opt",
-				--"spirv-cross-cored",
-				--"spirv-cross-hlsld",
-				--"spirv-cross-glsld",
-				--"spirv-cross-msld",
+				"dawn_common",
+				"dawn_proc",
+				"dawn_native",
+				"dawn_platform",
+				----"shaderc",
+				"tint",
+				"SPIRV-Tools",
+				"SPIRV-Tools-opt",
+				"spirv-cross-cored",
+				"spirv-cross-hlsld",
+				"spirv-cross-glsld",
+				"spirv-cross-msld",
 				--"spirv-cross-reflectd",
 			}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -311,7 +311,7 @@ EGL_IMPORT
 #	endif // BX_PLATFORM_RPI
 				{
 					bx::write(&writer, EGLint(EGL_CONTEXT_CLIENT_VERSION) );
-					bx::write(&writer, 2);
+					bx::write(&writer, EGLint(gles / 10));
 				}
 
 				bx::write(&writer, EGLint(EGL_NONE) );

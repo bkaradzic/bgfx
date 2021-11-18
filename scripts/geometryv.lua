@@ -5,7 +5,6 @@ project ("geometryv")
 	configuration {}
 
 	includedirs {
-		path.join(BX_DIR,   "include"),
 		path.join(BIMG_DIR, "include"),
 		path.join(BGFX_DIR, "include"),
 		path.join(BGFX_DIR, "3rdparty"),
@@ -23,12 +22,20 @@ project ("geometryv")
 		"bimg_decode",
 		"bimg",
 		"bgfx",
-		"bx",
 	}
+
+	using_bx()
 
 	if _OPTIONS["with-sdl"] then
 		defines { "ENTRY_CONFIG_USE_SDL=1" }
 		links   { "SDL2" }
+
+		configuration { "linux or freebsd" }
+			if _OPTIONS["with-wayland"]  then
+				links {
+					"wayland-egl",
+				}
+			end
 
 		configuration { "x32", "windows" }
 			libdirs { "$(SDL2_DIR)/lib/x86" }
@@ -52,7 +59,7 @@ project ("geometryv")
 				"Xcursor",
 			}
 
-		configuration { "osx" }
+		configuration { "osx*" }
 			linkoptions {
 				"-framework CoreVideo",
 				"-framework IOKit",
@@ -138,7 +145,7 @@ project ("geometryv")
 			"pthread",
 		}
 
-	configuration { "osx" }
+	configuration { "osx*" }
 		linkoptions {
 			"-framework Cocoa",
 			"-framework Metal",

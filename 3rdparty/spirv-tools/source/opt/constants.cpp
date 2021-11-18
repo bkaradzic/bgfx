@@ -217,7 +217,8 @@ Instruction* ConstantManager::BuildInstructionAndAddToModule(
   auto* new_inst_ptr = new_inst.get();
   *pos = pos->InsertBefore(std::move(new_inst));
   ++(*pos);
-  context()->get_def_use_mgr()->AnalyzeInstDefUse(new_inst_ptr);
+  if (context()->AreAnalysesValid(IRContext::Analysis::kAnalysisDefUse))
+    context()->get_def_use_mgr()->AnalyzeInstDefUse(new_inst_ptr);
   MapConstantToInst(new_const, new_inst_ptr);
   return new_inst_ptr;
 }
@@ -389,6 +390,36 @@ const Constant* ConstantManager::GetConstant(
   return cst ? RegisterConstant(std::move(cst)) : nullptr;
 }
 
+const Constant* ConstantManager::GetNumericVectorConstantWithWords(
+    const Vector* type, const std::vector<uint32_t>& literal_words) {
+  const auto* element_type = type->element_type();
+  uint32_t words_per_element = 0;
+  if (const auto* float_type = element_type->AsFloat())
+    words_per_element = float_type->width() / 32;
+  else if (const auto* int_type = element_type->AsInteger())
+    words_per_element = int_type->width() / 32;
+
+  if (words_per_element != 1 && words_per_element != 2) return nullptr;
+
+  if (words_per_element * type->element_count() !=
+      static_cast<uint32_t>(literal_words.size())) {
+    return nullptr;
+  }
+
+  std::vector<uint32_t> element_ids;
+  for (uint32_t i = 0; i < type->element_count(); ++i) {
+    auto first_word = literal_words.begin() + (words_per_element * i);
+    std::vector<uint32_t> const_data(first_word,
+                                     first_word + words_per_element);
+    const analysis::Constant* element_constant =
+        GetConstant(element_type, const_data);
+    auto element_id = GetDefiningInstruction(element_constant)->result_id();
+    element_ids.push_back(element_id);
+  }
+
+  return GetConstant(type, element_ids);
+}
+
 uint32_t ConstantManager::GetFloatConst(float val) {
   Type* float_type = context()->get_type_mgr()->GetFloatType();
   utils::FloatProxy<float> v(val);
@@ -399,6 +430,12 @@ uint32_t ConstantManager::GetFloatConst(float val) {
 uint32_t ConstantManager::GetSIntConst(int32_t val) {
   Type* sint_type = context()->get_type_mgr()->GetSIntType();
   const Constant* c = GetConstant(sint_type, {static_cast<uint32_t>(val)});
+  return GetDefiningInstruction(c)->result_id();
+}
+
+uint32_t ConstantManager::GetUIntConst(uint32_t val) {
+  Type* uint_type = context()->get_type_mgr()->GetUIntType();
+  const Constant* c = GetConstant(uint_type, {val});
   return GetDefiningInstruction(c)->result_id();
 }
 

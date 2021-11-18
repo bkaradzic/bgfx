@@ -134,8 +134,8 @@ public:
 		m_useShadowSampler = m_shadowSamplerSupported;
 
 		m_shadowMapFB = BGFX_INVALID_HANDLE;
-		m_progShadow = BGFX_INVALID_HANDLE;
-		m_progMesh = BGFX_INVALID_HANDLE;
+		m_progShadow  = BGFX_INVALID_HANDLE;
+		m_progMesh    = BGFX_INVALID_HANDLE;
 
 		m_state[0] = meshStateCreate();
 		m_state[0]->m_state = 0;
@@ -251,23 +251,31 @@ public:
 			const double freq = double(bx::getHPFrequency() );
 			float time = float( (now-m_timeOffset)/freq);
 
-			if (!bgfx::isValid(m_shadowMapFB) || shadowSamplerModeChanged)
+			if (!bgfx::isValid(m_shadowMapFB)
+			||  shadowSamplerModeChanged)
 			{
-				bgfx::TextureHandle shadowMapTexture;
+				bgfx::TextureHandle shadowMapTexture = BGFX_INVALID_HANDLE;
 
-				if (bgfx::isValid(m_progShadow))
+				if (bgfx::isValid(m_progShadow) )
+				{
 					bgfx::destroy(m_progShadow);
-				if (bgfx::isValid(m_progMesh))
-					bgfx::destroy(m_progMesh);
+				}
 
-				if (bgfx::isValid(m_shadowMapFB))
+				if (bgfx::isValid(m_progMesh) )
+				{
+					bgfx::destroy(m_progMesh);
+				}
+
+				if (bgfx::isValid(m_shadowMapFB) )
+				{
 					bgfx::destroy(m_shadowMapFB);
+				}
 
 				if (m_useShadowSampler)
 				{
 					// Depth textures and shadow samplers are supported.
 					m_progShadow = loadProgram("vs_sms_shadow", "fs_sms_shadow");
-					m_progMesh = loadProgram("vs_sms_mesh", "fs_sms_mesh");
+					m_progMesh   = loadProgram("vs_sms_mesh",   "fs_sms_mesh");
 
 					bgfx::TextureHandle fbtextures[] =
 					{
@@ -280,6 +288,7 @@ public:
 							, BGFX_TEXTURE_RT | BGFX_SAMPLER_COMPARE_LEQUAL
 							),
 					};
+
 					shadowMapTexture = fbtextures[0];
 					m_shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 				}
@@ -288,7 +297,7 @@ public:
 					// Depth textures and shadow samplers are not supported. Use float
 					// depth packing into color buffer instead.
 					m_progShadow = loadProgram("vs_sms_shadow_pd", "fs_sms_shadow_pd");
-					m_progMesh = loadProgram("vs_sms_mesh", "fs_sms_mesh_pd");
+					m_progMesh   = loadProgram("vs_sms_mesh",      "fs_sms_mesh_pd");
 
 					bgfx::TextureHandle fbtextures[] =
 					{
@@ -309,6 +318,7 @@ public:
 							, BGFX_TEXTURE_RT_WRITE_ONLY
 							),
 					};
+
 					shadowMapTexture = fbtextures[0];
 					m_shadowMapFB = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 				}

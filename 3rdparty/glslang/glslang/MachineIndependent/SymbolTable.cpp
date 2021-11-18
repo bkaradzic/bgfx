@@ -77,6 +77,7 @@ void TType::buildMangledName(TString& mangledName) const
     case EbtAtomicUint:         mangledName += "au";     break;
     case EbtAccStruct:          mangledName += "as";     break;
     case EbtRayQuery:           mangledName += "rq";     break;
+    case EbtSpirvType:          mangledName += "spv-t";  break;
 #endif
     case EbtSampler:
         switch (sampler.type) {
@@ -170,7 +171,7 @@ void TType::buildMangledName(TString& mangledName) const
         for (int i = 0; i < arraySizes->getNumDims(); ++i) {
             if (arraySizes->getDimNode(i)) {
                 if (arraySizes->getDimNode(i)->getAsSymbolNode())
-                    snprintf(buf, maxSize, "s%d", arraySizes->getDimNode(i)->getAsSymbolNode()->getId());
+                    snprintf(buf, maxSize, "s%lld", arraySizes->getDimNode(i)->getAsSymbolNode()->getId());
                 else
                     snprintf(buf, maxSize, "s%p", arraySizes->getDimNode(i));
             } else
@@ -278,8 +279,14 @@ TFunction::~TFunction()
 //
 TSymbolTableLevel::~TSymbolTableLevel()
 {
-    for (tLevel::iterator it = level.begin(); it != level.end(); ++it)
-        delete (*it).second;
+    for (tLevel::iterator it = level.begin(); it != level.end(); ++it) {
+        const TString& name = it->first;
+        auto retargetIter = std::find_if(retargetedSymbols.begin(), retargetedSymbols.end(),
+                                      [&name](const std::pair<TString, TString>& i) { return i.first == name; });
+        if (retargetIter == retargetedSymbols.end())
+            delete (*it).second;
+    }
+
 
     delete [] defaultPrecision;
 }
@@ -390,6 +397,9 @@ TFunction::TFunction(const TFunction& copyOf) : TSymbol(copyOf)
     implicitThis = copyOf.implicitThis;
     illegalImplicitThis = copyOf.illegalImplicitThis;
     defaultParamCount = copyOf.defaultParamCount;
+#ifndef GLSLANG_WEB
+    spirvInst = copyOf.spirvInst;
+#endif
 }
 
 TFunction* TFunction::clone() const
@@ -414,6 +424,15 @@ TSymbolTableLevel* TSymbolTableLevel::clone() const
     TSymbolTableLevel *symTableLevel = new TSymbolTableLevel();
     symTableLevel->anonId = anonId;
     symTableLevel->thisLevel = thisLevel;
+    symTableLevel->retargetedSymbols.clear();
+    for (auto &s : retargetedSymbols) {
+        // Extra constructions to make sure they use the correct allocator pool
+        TString newFrom;
+        newFrom = s.first;
+        TString newTo;
+        newTo = s.second;
+        symTableLevel->retargetedSymbols.push_back({std::move(newFrom), std::move(newTo)});
+    }
     std::vector<bool> containerCopied(anonId, false);
     tLevel::const_iterator iter;
     for (iter = level.begin(); iter != level.end(); ++iter) {
@@ -429,8 +448,25 @@ TSymbolTableLevel* TSymbolTableLevel::clone() const
                 symTableLevel->insert(*container, false);
                 containerCopied[anon->getAnonId()] = true;
             }
-        } else
+        } else {
+            const TString& name = iter->first;
+            auto retargetIter = std::find_if(retargetedSymbols.begin(), retargetedSymbols.end(),
+                                          [&name](const std::pair<TString, TString>& i) { return i.first == name; });
+            if (retargetIter != retargetedSymbols.end())
+                continue;
             symTableLevel->insert(*iter->second->clone(), false);
+        }
+    }
+    // Now point retargeted symbols to the newly created versions of them
+    for (auto &s : retargetedSymbols) {
+        TSymbol* sym = symTableLevel->find(s.second);
+        if (!sym)
+            continue;
+
+        // Need to declare and assign so newS is using the correct pool allocator
+        TString newS;
+        newS = s.first;
+        symTableLevel->insert(newS, sym);
     }
 
     return symTableLevel;

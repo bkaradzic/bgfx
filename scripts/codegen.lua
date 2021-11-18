@@ -3,10 +3,11 @@
 
 local codegen = {}
 
-local NAMEALIGN = 20
+local DEFAULT_NAME_ALIGN = 20
+local DEFINE_NAME_ALIGN  = 41
 
 local function namealign(name, align)
-	align = align or NAMEALIGN
+	align = align or DEFAULT_NAME_ALIGN
 	return string.rep(" ", align - #name)
 end
 
@@ -448,7 +449,7 @@ local function codetemp(func)
 
 	if func.class then
 		-- It's a member function
-		cargs[1] = func.this  .. " _this"
+		cargs[1] = func.this .. " _this"
 		conversion[1] = func.this_conversion
 		cppfunc = "This->" .. func.name
 		callargs[1] = "_this"
@@ -784,7 +785,7 @@ function codegen.gen_flag_cdefine(flag)
 			end
 			value = string.format(flag.format, value)
 			local code = string.format("#define %s %sUINT%d_C(0x%s)%s",
-				name, namealign(name, 35), flag.bits, value, comment)
+				name, namealign(name, DEFINE_NAME_ALIGN), flag.bits, value, comment)
 			s[#s+1] = code
 		end
 	end
@@ -804,7 +805,7 @@ function codegen.gen_flag_cdefine(flag)
 		if flag.desc then
 			comment = string.format(" //!< %s bit shift", flag.desc)
 		end
-		local code = string.format("#define %s %s%s%s", name, namealign(name, 35), shift_align, comment)
+		local code = string.format("#define %s %s%s%s", name, namealign(name, DEFINE_NAME_ALIGN), shift_align, comment)
 		s[#s+1] = code
 	end
 	if flag.range then
@@ -813,7 +814,7 @@ function codegen.gen_flag_cdefine(flag)
 		if flag.desc then
 			comment = string.format(" //!< %s bit mask", flag.desc)
 		end
-		local code = string.format("#define %s %s%s%s", name, namealign(name, 35), mask, comment)
+		local code = string.format("#define %s %s%s%s", name, namealign(name, DEFINE_NAME_ALIGN), mask, comment)
 		s[#s+1] = code
 	end
 

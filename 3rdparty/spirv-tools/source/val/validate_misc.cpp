@@ -37,10 +37,6 @@ spv_result_t ValidateUndef(ValidationState_t& _, const Instruction* inst) {
            << "Cannot create undefined values with 8- or 16-bit types";
   }
 
-  if (spvIsWebGPUEnv(_.context()->target_env)) {
-    return _.diag(SPV_ERROR_INVALID_BINARY, inst) << "OpUndef is disallowed";
-  }
-
   return SPV_SUCCESS;
 }
 
@@ -56,7 +52,7 @@ spv_result_t ValidateShaderClock(ValidationState_t& _,
   std::tie(is_int32, is_const_int32, value) = _.EvalInt32IfConst(scope);
   if (is_const_int32 && value != SpvScopeSubgroup && value != SpvScopeDevice) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
-           << "Scope must be Subgroup or Device";
+           << _.VkErrorID(4652) << "Scope must be Subgroup or Device";
   }
 
   // Result Type must be a 64 - bit unsigned integer type or
@@ -73,6 +69,37 @@ spv_result_t ValidateShaderClock(ValidationState_t& _,
                                                    " or 64bit unsigned integer";
   }
 
+  return SPV_SUCCESS;
+}
+
+spv_result_t ValidateAssumeTrue(ValidationState_t& _, const Instruction* inst) {
+  const auto operand_type_id = _.GetOperandTypeId(inst, 0);
+  if (!operand_type_id || !_.IsBoolScalarType(operand_type_id)) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Value operand of OpAssumeTrueKHR must be a boolean scalar";
+  }
+  return SPV_SUCCESS;
+}
+
+spv_result_t ValidateExpect(ValidationState_t& _, const Instruction* inst) {
+  const auto result_type = inst->type_id();
+  if (!_.IsBoolScalarOrVectorType(result_type) &&
+      !_.IsIntScalarOrVectorType(result_type)) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Result of OpExpectKHR must be a scalar or vector of integer "
+              "type or boolean type";
+  }
+
+  if (_.GetOperandTypeId(inst, 2) != result_type) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Type of Value operand of OpExpectKHR does not match the result "
+              "type ";
+  }
+  if (_.GetOperandTypeId(inst, 3) != result_type) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Type of ExpectedValue operand of OpExpectKHR does not match the "
+              "result type ";
+  }
   return SPV_SUCCESS;
 }
 
@@ -153,6 +180,16 @@ spv_result_t MiscPass(ValidationState_t& _, const Instruction* inst) {
     }
     case SpvOpReadClockKHR:
       if (auto error = ValidateShaderClock(_, inst)) {
+        return error;
+      }
+      break;
+    case SpvOpAssumeTrueKHR:
+      if (auto error = ValidateAssumeTrue(_, inst)) {
+        return error;
+      }
+      break;
+    case SpvOpExpectKHR:
+      if (auto error = ValidateExpect(_, inst)) {
         return error;
       }
       break;

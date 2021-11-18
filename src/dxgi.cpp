@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -122,6 +122,7 @@ namespace bgfx
 		, m_factory(NULL)
 		, m_adapter(NULL)
 		, m_output(NULL)
+		, m_tearingSupported(false)
 	{
 	}
 
@@ -205,10 +206,20 @@ namespace bgfx
 							, desc.SubSysId
 							, desc.Revision
 							);
-						BX_TRACE("\tMemory: %" PRIi64 " (video), %" PRIi64 " (system), %" PRIi64 " (shared)"
-							, desc.DedicatedVideoMemory
-							, desc.DedicatedSystemMemory
-							, desc.SharedSystemMemory
+
+						char dedicatedVideo[16];
+						bx::prettify(dedicatedVideo, BX_COUNTOF(dedicatedVideo), desc.DedicatedVideoMemory);
+
+						char dedicatedSystem[16];
+						bx::prettify(dedicatedSystem, BX_COUNTOF(dedicatedSystem), desc.DedicatedSystemMemory);
+
+						char sharedSystem[16];
+						bx::prettify(sharedSystem, BX_COUNTOF(sharedSystem), desc.SharedSystemMemory);
+
+						BX_TRACE("\tMemory: %s (video), %s (system), %s (shared)"
+							, dedicatedVideo
+							, dedicatedSystem
+							, sharedSystem
 							);
 
 						_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
@@ -388,6 +399,8 @@ namespace bgfx
 				? 0 // DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
 				: 0
 				;
+
+			m_tearingSupported = allowTearing;
 
 			DX_RELEASE_I(factory5);
 		}
@@ -783,6 +796,11 @@ namespace bgfx
 			DX_RELEASE(device, 1);
 		}
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+	}
+
+	bool Dxgi::tearingSupported() const
+	{
+		return m_tearingSupported;
 	}
 
 } // namespace bgfx

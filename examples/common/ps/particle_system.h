@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -7,10 +7,9 @@
 #define PARTICLE_SYSTEM_H_HEADER_GUARD
 
 #include <bx/allocator.h>
+#include <bx/bounds.h>
 #include <bx/easing.h>
 #include <bx/rng.h>
-
-#include "../bounds.h"
 
 struct EmitterHandle       { uint16_t idx; };
 struct EmitterSpriteHandle { uint16_t idx; };
@@ -92,7 +91,7 @@ EmitterHandle psCreateEmitter(EmitterShape::Enum _shape, EmitterDirection::Enum 
 void psUpdateEmitter(EmitterHandle _handle, const EmitterUniforms* _uniforms = NULL);
 
 ///
-void psGetAabb(EmitterHandle _handle, Aabb& _outAabb);
+void psGetAabb(EmitterHandle _handle, bx::Aabb& _outAabb);
 
 ///
 void psDestroyEmitter(EmitterHandle _handle);

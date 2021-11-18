@@ -53,6 +53,20 @@ bool LocalSingleStoreElimPass::AllExtensionsSupported() const {
     if (extensions_allowlist_.find(extName) == extensions_allowlist_.end())
       return false;
   }
+  // only allow NonSemantic.Shader.DebugInfo.100, we cannot safely optimise
+  // around unknown extended
+  // instruction sets even if they are non-semantic
+  for (auto& inst : context()->module()->ext_inst_imports()) {
+    assert(inst.opcode() == SpvOpExtInstImport &&
+           "Expecting an import of an extension's instruction set.");
+    const char* extension_name =
+        reinterpret_cast<const char*>(&inst.GetInOperand(0).words[0]);
+    if (0 == std::strncmp(extension_name, "NonSemantic.", 12) &&
+        0 != std::strncmp(extension_name, "NonSemantic.Shader.DebugInfo.100",
+                          32)) {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -67,7 +81,7 @@ Pass::Status LocalSingleStoreElimPass::ProcessImpl() {
   ProcessFunction pfn = [this](Function* fp) {
     return LocalSingleStoreElim(fp);
   };
-  bool modified = context()->ProcessEntryPointCallTree(pfn);
+  bool modified = context()->ProcessReachableCallTree(pfn);
   return modified ? Status::SuccessWithChange : Status::SuccessWithoutChange;
 }
 
@@ -123,6 +137,10 @@ void LocalSingleStoreElimPass::InitExtensionAllowList() {
       "SPV_EXT_fragment_invocation_density",
       "SPV_EXT_physical_storage_buffer",
       "SPV_KHR_terminate_invocation",
+      "SPV_KHR_subgroup_uniform_control_flow",
+      "SPV_KHR_integer_dot_product",
+      "SPV_EXT_shader_image_int64",
+      "SPV_KHR_non_semantic_info",
   });
 }
 bool LocalSingleStoreElimPass::ProcessVariable(Instruction* var_inst) {
@@ -175,7 +193,7 @@ bool LocalSingleStoreElimPass::RewriteDebugDeclares(Instruction* store_inst,
     for (auto* decl : invisible_decls) {
       if (dominator_analysis->Dominates(store_inst, decl)) {
         context()->get_debug_info_mgr()->AddDebugValueForDecl(decl, value_id,
-                                                              decl);
+                                                              decl, store_inst);
         modified = true;
       }
     }
@@ -221,9 +239,9 @@ Instruction* LocalSingleStoreElimPass::FindSingleStoreAndCheckUses(
       case SpvOpCopyObject:
         break;
       case SpvOpExtInst: {
-        auto dbg_op = user->GetOpenCL100DebugOpcode();
-        if (dbg_op == OpenCLDebugInfo100DebugDeclare ||
-            dbg_op == OpenCLDebugInfo100DebugValue) {
+        auto dbg_op = user->GetCommonDebugOpcode();
+        if (dbg_op == CommonDebugInfoDebugDeclare ||
+            dbg_op == CommonDebugInfoDebugValue) {
           break;
         }
         return nullptr;
@@ -290,9 +308,9 @@ bool LocalSingleStoreElimPass::RewriteLoads(
   bool modified = false;
   for (Instruction* use : uses) {
     if (use->opcode() == SpvOpStore) continue;
-    auto dbg_op = use->GetOpenCL100DebugOpcode();
-    if (dbg_op == OpenCLDebugInfo100DebugDeclare ||
-        dbg_op == OpenCLDebugInfo100DebugValue)
+    auto dbg_op = use->GetCommonDebugOpcode();
+    if (dbg_op == CommonDebugInfoDebugDeclare ||
+        dbg_op == CommonDebugInfoDebugValue)
       continue;
     if (use->opcode() == SpvOpLoad &&
         dominator_analysis->Dominates(store_inst, use)) {

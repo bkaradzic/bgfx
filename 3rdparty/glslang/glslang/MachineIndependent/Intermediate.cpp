@@ -65,7 +65,7 @@ namespace glslang {
 // Returns the added node.
 //
 
-TIntermSymbol* TIntermediate::addSymbol(int id, const TString& name, const TType& type, const TConstUnionArray& constArray,
+TIntermSymbol* TIntermediate::addSymbol(long long id, const TString& name, const TType& type, const TConstUnionArray& constArray,
                                         TIntermTyped* constSubtree, const TSourceLoc& loc)
 {
     TIntermSymbol* node = new TIntermSymbol(id, name, type);
@@ -416,20 +416,24 @@ TIntermTyped* TIntermediate::addUnaryMath(TOperator op, TIntermTyped* child,
     // TODO: but, did this bypass constant folding?
     //
     switch (op) {
-    case EOpConstructInt8:
-    case EOpConstructUint8:
-    case EOpConstructInt16:
-    case EOpConstructUint16:
-    case EOpConstructInt:
-    case EOpConstructUint:
-    case EOpConstructInt64:
-    case EOpConstructUint64:
-    case EOpConstructBool:
-    case EOpConstructFloat:
-    case EOpConstructDouble:
-    case EOpConstructFloat16:
-        return child;
-    default: break; // some compilers want this
+        case EOpConstructInt8:
+        case EOpConstructUint8:
+        case EOpConstructInt16:
+        case EOpConstructUint16:
+        case EOpConstructInt:
+        case EOpConstructUint:
+        case EOpConstructInt64:
+        case EOpConstructUint64:
+        case EOpConstructBool:
+        case EOpConstructFloat:
+        case EOpConstructDouble:
+        case EOpConstructFloat16: {
+            TIntermUnary* unary_node = child->getAsUnaryNode();
+            if (unary_node != nullptr)
+                unary_node->updatePrecision();
+            return child;
+        }
+        default: break; // some compilers want this
     }
 
     //
@@ -1739,7 +1743,7 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
         case EbtUint:
             switch (from) {
             case EbtInt:
-                return version >= 400 || getSource() == EShSourceHlsl;
+                return version >= 400 || getSource() == EShSourceHlsl || IsRequestedExtension(E_GL_ARB_gpu_shader5);
             case EbtBool:
                 return getSource() == EShSourceHlsl;
             case EbtInt16:
@@ -2676,7 +2680,11 @@ TIntermTyped* TIntermediate::addSwizzle(TSwizzleSelectors<selectorType>& selecto
 // 'swizzleOkay' says whether or not it is okay to consider a swizzle
 // a valid part of the dereference chain.
 //
-const TIntermTyped* TIntermediate::findLValueBase(const TIntermTyped* node, bool swizzleOkay)
+// 'BufferReferenceOk' says if type is buffer_reference, the routine stop to find the most left node.
+//
+//
+
+const TIntermTyped* TIntermediate::findLValueBase(const TIntermTyped* node, bool swizzleOkay , bool bufferReferenceOk)
 {
     do {
         const TIntermBinary* binary = node->getAsBinaryNode();
@@ -2694,6 +2702,8 @@ const TIntermTyped* TIntermediate::findLValueBase(const TIntermTyped* node, bool
                 return nullptr;
         }
         node = node->getAsBinaryNode()->getLeft();
+        if (bufferReferenceOk && node->isReference())
+            return node;
     } while (true);
 }
 
@@ -2870,7 +2880,7 @@ void TIntermediate::addToCallGraph(TInfoSink& /*infoSink*/, const TString& calle
             return;
     }
 
-    callGraph.push_front(TCall(caller, callee));
+    callGraph.emplace_front(caller, callee);
 }
 
 //
@@ -3772,15 +3782,42 @@ bool TIntermediate::promoteAggregate(TIntermAggregate& node)
 
 // Propagate precision qualifiers *up* from children to parent, and then
 // back *down* again to the children's subtrees.
+void TIntermAggregate::updatePrecision()
+{
+    if (getBasicType() == EbtInt || getBasicType() == EbtUint ||
+        getBasicType() == EbtFloat || getBasicType() == EbtFloat16) {
+        TPrecisionQualifier maxPrecision = EpqNone;
+        TIntermSequence operands = getSequence();
+        for (unsigned int i = 0; i < operands.size(); ++i) {
+            TIntermTyped* typedNode = operands[i]->getAsTyped();
+            assert(typedNode);
+            maxPrecision = std::max(maxPrecision, typedNode->getQualifier().precision);
+        }
+        getQualifier().precision = maxPrecision;
+        for (unsigned int i = 0; i < operands.size(); ++i) {
+          TIntermTyped* typedNode = operands[i]->getAsTyped();
+          assert(typedNode);
+          typedNode->propagatePrecision(maxPrecision);
+        }
+    }
+}
+
+// Propagate precision qualifiers *up* from children to parent, and then
+// back *down* again to the children's subtrees.
 void TIntermBinary::updatePrecision()
 {
      if (getBasicType() == EbtInt || getBasicType() == EbtUint ||
          getBasicType() == EbtFloat || getBasicType() == EbtFloat16) {
-        getQualifier().precision = std::max(right->getQualifier().precision, left->getQualifier().precision);
-        if (getQualifier().precision != EpqNone) {
-            left->propagatePrecision(getQualifier().precision);
-            right->propagatePrecision(getQualifier().precision);
-        }
+       if (op == EOpRightShift || op == EOpLeftShift) {
+         // For shifts get precision from left side only and thus no need to propagate
+         getQualifier().precision = left->getQualifier().precision;
+       } else {
+         getQualifier().precision = std::max(right->getQualifier().precision, left->getQualifier().precision);
+         if (getQualifier().precision != EpqNone) {
+           left->propagatePrecision(getQualifier().precision);
+           right->propagatePrecision(getQualifier().precision);
+         }
+       }
     }
 }
 

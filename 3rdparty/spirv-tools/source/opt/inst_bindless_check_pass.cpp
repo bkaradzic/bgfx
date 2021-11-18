@@ -27,13 +27,16 @@ static const int kSpvCopyObjectOperandIdInIdx = 0;
 static const int kSpvLoadPtrIdInIdx = 0;
 static const int kSpvAccessChainBaseIdInIdx = 0;
 static const int kSpvAccessChainIndex0IdInIdx = 1;
+static const int kSpvTypeArrayTypeIdInIdx = 0;
 static const int kSpvTypeArrayLengthIdInIdx = 1;
 static const int kSpvConstantValueInIdx = 0;
 static const int kSpvVariableStorageClassInIdx = 0;
+static const int kSpvTypePtrTypeIdInIdx = 1;
 static const int kSpvTypeImageDim = 1;
 static const int kSpvTypeImageDepth = 2;
 static const int kSpvTypeImageArrayed = 3;
 static const int kSpvTypeImageMS = 4;
+static const int kSpvTypeImageSampled = 5;
 }  // anonymous namespace
 
 // Avoid unused variable warning/error on Linux
@@ -206,13 +209,40 @@ bool InstBindlessCheckPass::AnalyzeDescriptorReference(Instruction* ref_inst,
         var_inst->GetSingleWordInOperand(kSpvVariableStorageClassInIdx);
     switch (storage_class) {
       case SpvStorageClassUniform:
-      case SpvStorageClassUniformConstant:
       case SpvStorageClassStorageBuffer:
         break;
       default:
         return false;
         break;
     }
+    // Check for deprecated storage block form
+    if (storage_class == SpvStorageClassUniform) {
+      uint32_t var_ty_id = var_inst->type_id();
+      Instruction* var_ty_inst = get_def_use_mgr()->GetDef(var_ty_id);
+      uint32_t ptr_ty_id =
+          var_ty_inst->GetSingleWordInOperand(kSpvTypePtrTypeIdInIdx);
+      Instruction* ptr_ty_inst = get_def_use_mgr()->GetDef(ptr_ty_id);
+      SpvOp ptr_ty_op = ptr_ty_inst->opcode();
+      uint32_t block_ty_id =
+          (ptr_ty_op == SpvOpTypeArray || ptr_ty_op == SpvOpTypeRuntimeArray)
+              ? ptr_ty_inst->GetSingleWordInOperand(kSpvTypeArrayTypeIdInIdx)
+              : ptr_ty_id;
+      assert(get_def_use_mgr()->GetDef(block_ty_id)->opcode() ==
+                 SpvOpTypeStruct &&
+             "unexpected block type");
+      bool block_found = get_decoration_mgr()->FindDecoration(
+          block_ty_id, SpvDecorationBlock,
+          [](const Instruction&) { return true; });
+      if (!block_found) {
+        // If block decoration not found, verify deprecated form of SSBO
+        bool buffer_block_found = get_decoration_mgr()->FindDecoration(
+            block_ty_id, SpvDecorationBufferBlock,
+            [](const Instruction&) { return true; });
+        USE_ASSERT(buffer_block_found && "block decoration not found");
+        storage_class = SpvStorageClassStorageBuffer;
+      }
+    }
+    ref->strg_class = storage_class;
     Instruction* desc_type_inst = GetPointeeTypeInst(var_inst);
     switch (desc_type_inst->opcode()) {
       case SpvOpTypeArray:
@@ -665,8 +695,10 @@ void InstBindlessCheckPass::GenDescInitCheckCode(
   // for the referenced value.
   Instruction* ult_inst =
       builder.AddBinaryOp(GetBoolId(), SpvOpULessThan, ref_id, init_id);
-  uint32_t error =
-      init_check ? kInstErrorBindlessUninit : kInstErrorBindlessBuffOOB;
+  uint32_t error = init_check ? kInstErrorBindlessUninit
+                              : (ref.strg_class == SpvStorageClassUniform
+                                     ? kInstErrorBuffOOBUniform
+                                     : kInstErrorBuffOOBStorage);
   uint32_t error_id = builder.GetUintConstantId(error);
   GenCheckCode(ult_inst->result_id(), error_id, init_check ? 0 : ref_id,
                init_check ? builder.GetUintConstantId(0u) : init_id, stage_idx,
@@ -732,7 +764,11 @@ void InstBindlessCheckPass::GenTexBuffCheckCode(
   // for the referenced value.
   Instruction* ult_inst =
       builder.AddBinaryOp(GetBoolId(), SpvOpULessThan, coord_id, size_id);
-  uint32_t error_id = builder.GetUintConstantId(kInstErrorBindlessBuffOOB);
+  uint32_t error =
+      (image_ty_inst->GetSingleWordInOperand(kSpvTypeImageSampled) == 2)
+          ? kInstErrorBuffOOBStorageTexel
+          : kInstErrorBuffOOBUniformTexel;
+  uint32_t error_id = builder.GetUintConstantId(error);
   GenCheckCode(ult_inst->result_id(), error_id, coord_id, size_id, stage_idx,
                &ref, new_blocks);
   // Move original block's remaining code into remainder/merge block and add

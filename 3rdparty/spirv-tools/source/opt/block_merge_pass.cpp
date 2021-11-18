@@ -28,7 +28,9 @@ namespace opt {
 bool BlockMergePass::MergeBlocks(Function* func) {
   bool modified = false;
   for (auto bi = func->begin(); bi != func->end();) {
-    if (blockmergeutil::CanMergeWithSuccessor(context(), &*bi)) {
+    // Don't bother trying to merge unreachable blocks.
+    if (context()->IsReachable(*bi) &&
+        blockmergeutil::CanMergeWithSuccessor(context(), &*bi)) {
       blockmergeutil::MergeWithSuccessor(context(), func, bi);
       // Reprocess block.
       modified = true;
@@ -42,7 +44,7 @@ bool BlockMergePass::MergeBlocks(Function* func) {
 Pass::Status BlockMergePass::Process() {
   // Process all entry point functions.
   ProcessFunction pfn = [this](Function* fp) { return MergeBlocks(fp); };
-  bool modified = context()->ProcessEntryPointCallTree(pfn);
+  bool modified = context()->ProcessReachableCallTree(pfn);
   return modified ? Status::SuccessWithChange : Status::SuccessWithoutChange;
 }
 

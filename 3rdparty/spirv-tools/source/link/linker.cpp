@@ -34,6 +34,7 @@
 #include "source/opt/pass_manager.h"
 #include "source/opt/remove_duplicates_pass.h"
 #include "source/opt/type_manager.h"
+#include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
 #include "source/util/make_unique.h"
 #include "spirv-tools/libspirv.hpp"
@@ -207,7 +208,7 @@ spv_result_t GenerateHeader(const MessageConsumer& consumer,
 
   header->magic_number = SpvMagicNumber;
   header->version = version;
-  header->generator = 17u;
+  header->generator = SPV_GENERATOR_WORD(SPV_GENERATOR_KHRONOS_LINKER, 0);
   header->bound = max_id_bound;
   header->reserved = 0u;
 
@@ -676,14 +677,15 @@ spv_result_t Link(const Context& context, const uint32_t* const* binaries,
     if (schema != 0u) {
       position.index = 4u;
       return DiagnosticStream(position, consumer, "", SPV_ERROR_INVALID_BINARY)
-             << "Schema is non-zero for module " << i << ".";
+             << "Schema is non-zero for module " << i + 1 << ".";
     }
 
     std::unique_ptr<IRContext> ir_context = BuildModule(
         c_context->target_env, consumer, binaries[i], binary_sizes[i]);
     if (ir_context == nullptr)
       return DiagnosticStream(position, consumer, "", SPV_ERROR_INVALID_BINARY)
-             << "Failed to build a module out of " << ir_contexts.size() << ".";
+             << "Failed to build module " << i + 1 << " out of " << num_binaries
+             << ".";
     modules.push_back(ir_context->module());
     ir_contexts.push_back(std::move(ir_context));
   }

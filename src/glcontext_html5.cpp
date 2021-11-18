@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -71,7 +71,23 @@ namespace bgfx { namespace gl
 
 		const char* canvas = (const char*) g_platformData.nwh;
 
-		m_primary = createSwapChain((void*)canvas);
+		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = (EMSCRIPTEN_WEBGL_CONTEXT_HANDLE) g_platformData.context;
+		if (context > 0)
+		{
+			if (emscripten_webgl_get_context_attributes(context, &s_attrs) >= 0)
+			{
+				import(s_attrs.majorVersion);
+				m_primary = BX_NEW(g_allocator, SwapChainGL)(context, canvas);
+			}
+			else
+			{
+				BX_TRACE("Invalid WebGL context. (Canvas handle: '%s', context handle: %d)", canvas, context);
+			}
+		}
+		else
+		{
+			m_primary = createSwapChain((void*)canvas);
+		}
 
 		if (0 != _width
 		&&  0 != _height)
@@ -112,12 +128,12 @@ namespace bgfx { namespace gl
 
 		// Work around bug https://bugs.chromium.org/p/chromium/issues/detail?id=1045643 in Chrome
 		// by having alpha always enabled.
-		s_attrs.alpha = true;
-		s_attrs.premultipliedAlpha = false;
-		s_attrs.depth = true;
-		s_attrs.stencil = true;
+		s_attrs.alpha                     = true;
+		s_attrs.premultipliedAlpha        = false;
+		s_attrs.depth                     = true;
+		s_attrs.stencil                   = true;
 		s_attrs.enableExtensionsByDefault = true;
-		s_attrs.antialias = false;
+		s_attrs.antialias                 = false;
 
 		s_attrs.minorVersion = 0;
 		const char* canvas = (const char*) _nwh;

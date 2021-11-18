@@ -776,7 +776,7 @@ FeedbackBuffer::FeedbackBuffer(VirtualTextureInfo* _info, int _width, int _heigh
 	bgfx::TextureHandle feedbackFrameBufferTextures[] =
 	{
 		bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
-		bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT),
+		bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D32F,  BGFX_TEXTURE_RT),
 	};
 
 	m_feedbackFrameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(feedbackFrameBufferTextures), feedbackFrameBufferTextures, true);

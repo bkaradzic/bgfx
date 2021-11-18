@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2020 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2021 Branimir Karadzic. All rights reserved.
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
@@ -23,9 +23,7 @@ project "geometryc"
 		path.join(BGFX_DIR, "examples/common/bounds.**"),
 	}
 
-	links {
-		"bx",
-	}
+	using_bx();
 
 	configuration { "mingw-*" }
 		targetextension ".exe"
@@ -33,7 +31,7 @@ project "geometryc"
 			"psapi",
 		}
 
-	configuration { "osx" }
+	configuration { "osx*" }
 		links {
 			"Cocoa.framework",
 		}

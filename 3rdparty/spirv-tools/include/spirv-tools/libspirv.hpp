@@ -104,9 +104,21 @@ class ValidatorOptions {
     spvValidatorOptionsSetScalarBlockLayout(options_, val);
   }
 
+  // Enables scalar layout when validating Workgroup blocks.  See
+  // VK_KHR_workgroup_memory_explicit_layout.
+  void SetWorkgroupScalarBlockLayout(bool val) {
+    spvValidatorOptionsSetWorkgroupScalarBlockLayout(options_, val);
+  }
+
   // Skips validating standard uniform/storage buffer/push-constant layout.
   void SetSkipBlockLayout(bool val) {
     spvValidatorOptionsSetSkipBlockLayout(options_, val);
+  }
+
+  // Enables LocalSizeId decorations where the environment would not otherwise
+  // allow them.
+  void SetAllowLocalSizeId(bool val) {
+    spvValidatorOptionsSetAllowLocalSizeId(options_, val);
   }
 
   // Records whether or not the validator should relax the rules on pointer
@@ -130,6 +142,8 @@ class ValidatorOptions {
   // 3) Pointers that are actaul parameters on function calls do not have to
   //    point to the same type pointed as the formal parameter.  The types just
   //    need to logically match.
+  // 4) GLSLstd450 Interpolate* instructions can have a load of an interpolant
+  //    for a first argument.
   void SetBeforeHlslLegalization(bool val) {
     spvValidatorOptionsSetBeforeHlslLegalization(options_, val);
   }

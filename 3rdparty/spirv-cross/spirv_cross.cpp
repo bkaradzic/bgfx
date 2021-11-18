@@ -1,5 +1,6 @@
 /*
- * Copyright 2015-2020 Arm Limited
+ * Copyright 2015-2021 Arm Limited
+ * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +19,6 @@
  * At your option, you may choose to accept this material under either:
  *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
  *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
- * SPDX-License-Identifier: Apache-2.0 OR MIT.
  */
 
 #include "spirv_cross.hpp"
@@ -96,7 +96,9 @@ bool Compiler::variable_storage_is_aliased(const SPIRVariable &v)
 bool Compiler::block_is_pure(const SPIRBlock &block)
 {
 	// This is a global side effect of the function.
-	if (block.terminator == SPIRBlock::Kill)
+	if (block.terminator == SPIRBlock::Kill ||
+	    block.terminator == SPIRBlock::TerminateRay ||
+	    block.terminator == SPIRBlock::IgnoreIntersection)
 		return false;
 
 	for (auto &i : block.ops)
@@ -158,11 +160,19 @@ bool Compiler::block_is_pure(const SPIRBlock &block)
 			return false;
 
 		// Ray tracing builtins are impure.
-		case OpReportIntersectionNV:
+		case OpReportIntersectionKHR:
 		case OpIgnoreIntersectionNV:
 		case OpTerminateRayNV:
 		case OpTraceNV:
+		case OpTraceRayKHR:
 		case OpExecuteCallableNV:
+		case OpExecuteCallableKHR:
+		case OpRayQueryInitializeKHR:
+		case OpRayQueryTerminateKHR:
+		case OpRayQueryGenerateIntersectionKHR:
+		case OpRayQueryConfirmIntersectionKHR:
+		case OpRayQueryProceedKHR:
+			// There are various getters in ray query, but they are considered pure.
 			return false;
 
 			// OpExtInst is potentially impure depending on extension, but GLSL builtins are at least pure.
@@ -170,6 +180,30 @@ bool Compiler::block_is_pure(const SPIRBlock &block)
 		case OpDemoteToHelperInvocationEXT:
 			// This is a global side effect of the function.
 			return false;
+
+		case OpExtInst:
+		{
+			uint32_t extension_set = ops[2];
+			if (get<SPIRExtension>(extension_set).ext == SPIRExtension::GLSL)
+			{
+				auto op_450 = static_cast<GLSLstd450>(ops[3]);
+				switch (op_450)
+				{
+				case GLSLstd450Modf:
+				case GLSLstd450Frexp:
+				{
+					auto &type = expression_type(ops[5]);
+					if (type.storage != StorageClassFunction)
+						return false;
+					break;
+				}
+
+				default:
+					break;
+				}
+			}
+			break;
+		}
 
 		default:
 			break;
@@ -278,31 +312,6 @@ SPIRVariable *Compiler::maybe_get_backing_variable(uint32_t chain)
 	}
 
 	return var;
-}
-
-StorageClass Compiler::get_expression_effective_storage_class(uint32_t ptr)
-{
-	auto *var = maybe_get_backing_variable(ptr);
-
-	// If the expression has been lowered to a temporary, we need to use the Generic storage class.
-	// We're looking for the effective storage class of a given expression.
-	// An access chain or forwarded OpLoads from such access chains
-	// will generally have the storage class of the underlying variable, but if the load was not forwarded
-	// we have lost any address space qualifiers.
-	bool forced_temporary = ir.ids[ptr].get_type() == TypeExpression && !get<SPIRExpression>(ptr).access_chain &&
-	                        (forced_temporaries.count(ptr) != 0 || forwarded_temporaries.count(ptr) == 0);
-
-	if (var && !forced_temporary)
-	{
-		// Normalize SSBOs to StorageBuffer here.
-		if (var->storage == StorageClassUniform &&
-		    has_decoration(get<SPIRType>(var->basetype).self, DecorationBufferBlock))
-			return StorageClassStorageBuffer;
-		else
-			return var->storage;
-	}
-	else
-		return expression_type(ptr).storage;
 }
 
 void Compiler::register_read(uint32_t expr, uint32_t chain, bool forwarded)
@@ -542,10 +551,16 @@ bool Compiler::is_hidden_variable(const SPIRVariable &var, bool include_builtins
 		return false;
 	}
 
-	bool hidden = false;
-	if (check_active_interface_variables && storage_class_is_interface(var.storage))
-		hidden = active_interface_variables.find(var.self) == end(active_interface_variables);
-	return hidden;
+	// In SPIR-V 1.4 and up we must also use the active variable interface to disable global variables
+	// which are not part of the entry point.
+	if (ir.get_spirv_version() >= 0x10400 && var.storage != spv::StorageClassGeneric &&
+	    var.storage != spv::StorageClassFunction && !interface_variable_exists_in_entry_point(var.self))
+	{
+		return true;
+	}
+
+	return check_active_interface_variables && storage_class_is_interface(var.storage) &&
+	       active_interface_variables.find(var.self) == end(active_interface_variables);
 }
 
 bool Compiler::is_builtin_type(const SPIRType &type) const
@@ -725,6 +740,15 @@ bool Compiler::InterfaceVariableAccessHandler::handle(Op opcode, const uint32_t 
 				break;
 			}
 
+			case GLSLstd450Modf:
+			case GLSLstd450Fract:
+			{
+				auto *var = compiler.maybe_get<SPIRVariable>(args[5]);
+				if (var && storage_class_is_interface(var->storage))
+					variables.insert(args[5]);
+				break;
+			}
+
 			default:
 				break;
 			}
@@ -805,9 +829,17 @@ unordered_set<VariableID> Compiler::get_active_interface_variables() const
 	InterfaceVariableAccessHandler handler(*this, variables);
 	traverse_all_reachable_opcodes(get<SPIRFunction>(ir.default_entry_point), handler);
 
-	// Make sure we preserve output variables which are only initialized, but never accessed by any code.
 	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, const SPIRVariable &var) {
-		if (var.storage == StorageClassOutput && var.initializer != ID(0))
+		if (var.storage != StorageClassOutput)
+			return;
+		if (!interface_variable_exists_in_entry_point(var.self))
+			return;
+
+		// An output variable which is just declared (but uninitialized) might be read by subsequent stages
+		// so we should force-enable these outputs,
+		// since compilation will fail if a subsequent stage attempts to read from the variable in question.
+		// Also, make sure we preserve output variables which are only initialized, but never accessed by any code.
+		if (var.initializer != ID(0) || get_execution_model() != ExecutionModelFragment)
 			variables.insert(var.self);
 	});
 
@@ -835,19 +867,79 @@ ShaderResources Compiler::get_shader_resources(const unordered_set<VariableID> *
 
 		// It is possible for uniform storage classes to be passed as function parameters, so detect
 		// that. To detect function parameters, check of StorageClass of variable is function scope.
-		if (var.storage == StorageClassFunction || !type.pointer || is_builtin_variable(var))
+		if (var.storage == StorageClassFunction || !type.pointer)
 			return;
 
 		if (active_variables && active_variables->find(var.self) == end(*active_variables))
 			return;
 
+		// In SPIR-V 1.4 and up, every global must be present in the entry point interface list,
+		// not just IO variables.
+		bool active_in_entry_point = true;
+		if (ir.get_spirv_version() < 0x10400)
+		{
+			if (var.storage == StorageClassInput || var.storage == StorageClassOutput)
+				active_in_entry_point = interface_variable_exists_in_entry_point(var.self);
+		}
+		else
+			active_in_entry_point = interface_variable_exists_in_entry_point(var.self);
+
+		if (!active_in_entry_point)
+			return;
+
+		bool is_builtin = is_builtin_variable(var);
+
+		if (is_builtin)
+		{
+			if (var.storage != StorageClassInput && var.storage != StorageClassOutput)
+				return;
+
+			auto &list = var.storage == StorageClassInput ? res.builtin_inputs : res.builtin_outputs;
+			BuiltInResource resource;
+
+			if (has_decoration(type.self, DecorationBlock))
+			{
+				resource.resource = { var.self, var.basetype, type.self,
+				                      get_remapped_declared_block_name(var.self, false) };
+
+				for (uint32_t i = 0; i < uint32_t(type.member_types.size()); i++)
+				{
+					resource.value_type_id = type.member_types[i];
+					resource.builtin = BuiltIn(get_member_decoration(type.self, i, DecorationBuiltIn));
+					list.push_back(resource);
+				}
+			}
+			else
+			{
+				bool strip_array =
+						!has_decoration(var.self, DecorationPatch) && (
+								get_execution_model() == ExecutionModelTessellationControl ||
+								(get_execution_model() == ExecutionModelTessellationEvaluation &&
+								 var.storage == StorageClassInput));
+
+				resource.resource = { var.self, var.basetype, type.self, get_name(var.self) };
+
+				if (strip_array && !type.array.empty())
+					resource.value_type_id = get_variable_data_type(var).parent_type;
+				else
+					resource.value_type_id = get_variable_data_type_id(var);
+
+				assert(resource.value_type_id);
+
+				resource.builtin = BuiltIn(get_decoration(var.self, DecorationBuiltIn));
+				list.push_back(std::move(resource));
+			}
+			return;
+		}
+
 		// Input
-		if (var.storage == StorageClassInput && interface_variable_exists_in_entry_point(var.self))
+		if (var.storage == StorageClassInput)
 		{
 			if (has_decoration(type.self, DecorationBlock))
 			{
 				res.stage_inputs.push_back(
-				    { var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self, false) });
+						{ var.self, var.basetype, type.self,
+						  get_remapped_declared_block_name(var.self, false) });
 			}
 			else
 				res.stage_inputs.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
@@ -858,12 +950,12 @@ ShaderResources Compiler::get_shader_resources(const unordered_set<VariableID> *
 			res.subpass_inputs.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
 		}
 		// Outputs
-		else if (var.storage == StorageClassOutput && interface_variable_exists_in_entry_point(var.self))
+		else if (var.storage == StorageClassOutput)
 		{
 			if (has_decoration(type.self, DecorationBlock))
 			{
 				res.stage_outputs.push_back(
-				    { var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self, false) });
+						{ var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self, false) });
 			}
 			else
 				res.stage_outputs.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
@@ -1600,6 +1692,9 @@ bool Compiler::traverse_all_reachable_opcodes(const SPIRBlock &block, OpcodeHand
 		}
 	}
 
+	if (!handler.handle_terminator(block))
+		return false;
+
 	return true;
 }
 
@@ -1667,10 +1762,22 @@ size_t Compiler::get_declared_struct_size(const SPIRType &type) const
 	if (type.member_types.empty())
 		SPIRV_CROSS_THROW("Declared struct in block cannot be empty.");
 
-	uint32_t last = uint32_t(type.member_types.size() - 1);
-	size_t offset = type_struct_member_offset(type, last);
-	size_t size = get_declared_struct_member_size(type, last);
-	return offset + size;
+	// Offsets can be declared out of order, so we need to deduce the actual size
+	// based on last member instead.
+	uint32_t member_index = 0;
+	size_t highest_offset = 0;
+	for (uint32_t i = 0; i < uint32_t(type.member_types.size()); i++)
+	{
+		size_t offset = type_struct_member_offset(type, i);
+		if (offset > highest_offset)
+		{
+			highest_offset = offset;
+			member_index = i;
+		}
+	}
+
+	size_t size = get_declared_struct_member_size(type, member_index);
+	return highest_offset + size;
 }
 
 size_t Compiler::get_declared_struct_size_runtime_array(const SPIRType &type, size_t array_size) const
@@ -2279,16 +2386,22 @@ SPIREntryPoint &Compiler::get_entry_point()
 bool Compiler::interface_variable_exists_in_entry_point(uint32_t id) const
 {
 	auto &var = get<SPIRVariable>(id);
-	if (var.storage != StorageClassInput && var.storage != StorageClassOutput &&
-	    var.storage != StorageClassUniformConstant)
-		SPIRV_CROSS_THROW("Only Input, Output variables and Uniform constants are part of a shader linking interface.");
 
-	// This is to avoid potential problems with very old glslang versions which did
-	// not emit input/output interfaces properly.
-	// We can assume they only had a single entry point, and single entry point
-	// shaders could easily be assumed to use every interface variable anyways.
-	if (ir.entry_points.size() <= 1)
-		return true;
+	if (ir.get_spirv_version() < 0x10400)
+	{
+		if (var.storage != StorageClassInput && var.storage != StorageClassOutput &&
+		    var.storage != StorageClassUniformConstant)
+			SPIRV_CROSS_THROW("Only Input, Output variables and Uniform constants are part of a shader linking interface.");
+
+		// This is to avoid potential problems with very old glslang versions which did
+		// not emit input/output interfaces properly.
+		// We can assume they only had a single entry point, and single entry point
+		// shaders could easily be assumed to use every interface variable anyways.
+		if (ir.entry_points.size() <= 1)
+			return true;
+	}
+
+	// In SPIR-V 1.4 and later, all global resource variables must be present.
 
 	auto &execution = get_entry_point();
 	return find(begin(execution.interface_variables), end(execution.interface_variables), VariableID(id)) !=
@@ -2811,7 +2924,8 @@ const SPIRConstant &Compiler::get_constant(ConstantID id) const
 	return get<SPIRConstant>(id);
 }
 
-static bool exists_unaccessed_path_to_return(const CFG &cfg, uint32_t block, const unordered_set<uint32_t> &blocks)
+static bool exists_unaccessed_path_to_return(const CFG &cfg, uint32_t block, const unordered_set<uint32_t> &blocks,
+                                             unordered_set<uint32_t> &visit_cache)
 {
 	// This block accesses the variable.
 	if (blocks.find(block) != end(blocks))
@@ -2823,8 +2937,14 @@ static bool exists_unaccessed_path_to_return(const CFG &cfg, uint32_t block, con
 
 	// If any of our successors have a path to the end, there exists a path from block.
 	for (auto &succ : cfg.get_succeeding_edges(block))
-		if (exists_unaccessed_path_to_return(cfg, succ, blocks))
-			return true;
+	{
+		if (visit_cache.count(succ) == 0)
+		{
+			if (exists_unaccessed_path_to_return(cfg, succ, blocks, visit_cache))
+				return true;
+			visit_cache.insert(succ);
+		}
+	}
 
 	return false;
 }
@@ -2881,7 +3001,8 @@ void Compiler::analyze_parameter_preservation(
 		// void foo(int &var) { if (cond) var = 10; }
 		// Using read/write counts, we will think it's just an out variable, but it really needs to be inout,
 		// because if we don't write anything whatever we put into the function must return back to the caller.
-		if (exists_unaccessed_path_to_return(cfg, entry.entry_block, itr->second))
+		unordered_set<uint32_t> visit_cache;
+		if (exists_unaccessed_path_to_return(cfg, entry.entry_block, itr->second, visit_cache))
 			arg.read_count++;
 	}
 }
@@ -2980,6 +3101,27 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::id_is_potential_temporary(uint
 
 	// Temporaries are not created before we start emitting code.
 	return compiler.ir.ids[id].empty() || (compiler.ir.ids[id].get_type() == TypeExpression);
+}
+
+bool Compiler::AnalyzeVariableScopeAccessHandler::handle_terminator(const SPIRBlock &block)
+{
+	switch (block.terminator)
+	{
+	case SPIRBlock::Return:
+		if (block.return_value)
+			notify_variable_access(block.return_value, block.self);
+		break;
+
+	case SPIRBlock::Select:
+	case SPIRBlock::MultiSelect:
+		notify_variable_access(block.condition, block.self);
+		break;
+
+	default:
+		break;
+	}
+
+	return true;
 }
 
 bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint32_t *args, uint32_t length)
@@ -3153,15 +3295,69 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 		break;
 	}
 
+	case OpSelect:
+	{
+		// In case of variable pointers, we might access a variable here.
+		// We cannot prove anything about these accesses however.
+		for (uint32_t i = 1; i < length; i++)
+		{
+			if (i >= 3)
+			{
+				auto *var = compiler.maybe_get_backing_variable(args[i]);
+				if (var)
+				{
+					accessed_variables_to_block[var->self].insert(current_block->self);
+					// Assume we can get partial writes to this variable.
+					partial_write_variables_to_block[var->self].insert(current_block->self);
+				}
+			}
+
+			// Might try to copy a Phi variable here.
+			notify_variable_access(args[i], current_block->self);
+		}
+		break;
+	}
+
 	case OpExtInst:
 	{
 		for (uint32_t i = 4; i < length; i++)
 			notify_variable_access(args[i], current_block->self);
 		notify_variable_access(args[1], current_block->self);
+
+		uint32_t extension_set = args[2];
+		if (compiler.get<SPIRExtension>(extension_set).ext == SPIRExtension::GLSL)
+		{
+			auto op_450 = static_cast<GLSLstd450>(args[3]);
+			switch (op_450)
+			{
+			case GLSLstd450Modf:
+			case GLSLstd450Frexp:
+			{
+				uint32_t ptr = args[5];
+				auto *var = compiler.maybe_get_backing_variable(ptr);
+				if (var)
+				{
+					accessed_variables_to_block[var->self].insert(current_block->self);
+					if (var->self == ptr)
+						complete_write_variables_to_block[var->self].insert(current_block->self);
+					else
+						partial_write_variables_to_block[var->self].insert(current_block->self);
+				}
+				break;
+			}
+
+			default:
+				break;
+			}
+		}
 		break;
 	}
 
 	case OpArrayLength:
+		// Only result is a temporary.
+		notify_variable_access(args[1], current_block->self);
+		break;
+
 	case OpLine:
 	case OpNoLine:
 		// Uses literals, but cannot be a phi variable or temporary, so ignore.
@@ -3839,23 +4035,55 @@ void Compiler::ActiveBuiltinHandler::handle_builtin(const SPIRType &type, BuiltI
 	}
 }
 
-bool Compiler::ActiveBuiltinHandler::handle(spv::Op opcode, const uint32_t *args, uint32_t length)
+void Compiler::ActiveBuiltinHandler::add_if_builtin(uint32_t id, bool allow_blocks)
 {
-	const auto add_if_builtin = [&](uint32_t id) {
-		// Only handles variables here.
-		// Builtins which are part of a block are handled in AccessChain.
-		auto *var = compiler.maybe_get<SPIRVariable>(id);
-		auto &decorations = compiler.ir.meta[id].decoration;
-		if (var && decorations.builtin)
+	// Only handle plain variables here.
+	// Builtins which are part of a block are handled in AccessChain.
+	// If allow_blocks is used however, this is to handle initializers of blocks,
+	// which implies that all members are written to.
+
+	auto *var = compiler.maybe_get<SPIRVariable>(id);
+	auto *m = compiler.ir.find_meta(id);
+	if (var && m)
+	{
+		auto &type = compiler.get<SPIRType>(var->basetype);
+		auto &decorations = m->decoration;
+		auto &flags = type.storage == StorageClassInput ?
+		              compiler.active_input_builtins : compiler.active_output_builtins;
+		if (decorations.builtin)
 		{
-			auto &type = compiler.get<SPIRType>(var->basetype);
-			auto &flags =
-			    type.storage == StorageClassInput ? compiler.active_input_builtins : compiler.active_output_builtins;
 			flags.set(decorations.builtin_type);
 			handle_builtin(type, decorations.builtin_type, decorations.decoration_flags);
 		}
-	};
+		else if (allow_blocks && compiler.has_decoration(type.self, DecorationBlock))
+		{
+			uint32_t member_count = uint32_t(type.member_types.size());
+			for (uint32_t i = 0; i < member_count; i++)
+			{
+				if (compiler.has_member_decoration(type.self, i, DecorationBuiltIn))
+				{
+					auto &member_type = compiler.get<SPIRType>(type.member_types[i]);
+					BuiltIn builtin = BuiltIn(compiler.get_member_decoration(type.self, i, DecorationBuiltIn));
+					flags.set(builtin);
+					handle_builtin(member_type, builtin, compiler.get_member_decoration_bitset(type.self, i));
+				}
+			}
+		}
+	}
+}
 
+void Compiler::ActiveBuiltinHandler::add_if_builtin(uint32_t id)
+{
+	add_if_builtin(id, false);
+}
+
+void Compiler::ActiveBuiltinHandler::add_if_builtin_or_block(uint32_t id)
+{
+	add_if_builtin(id, true);
+}
+
+bool Compiler::ActiveBuiltinHandler::handle(spv::Op opcode, const uint32_t *args, uint32_t length)
+{
 	switch (opcode)
 	{
 	case OpStore:
@@ -3993,10 +4221,21 @@ void Compiler::update_active_builtins()
 	clip_distance_count = 0;
 	ActiveBuiltinHandler handler(*this);
 	traverse_all_reachable_opcodes(get<SPIRFunction>(ir.default_entry_point), handler);
+
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, const SPIRVariable &var) {
+		if (var.storage != StorageClassOutput)
+			return;
+		if (!interface_variable_exists_in_entry_point(var.self))
+			return;
+
+		// Also, make sure we preserve output variables which are only initialized, but never accessed by any code.
+		if (var.initializer != ID(0))
+			handler.add_if_builtin_or_block(var.self);
+	});
 }
 
 // Returns whether this shader uses a builtin of the storage class
-bool Compiler::has_active_builtin(BuiltIn builtin, StorageClass storage)
+bool Compiler::has_active_builtin(BuiltIn builtin, StorageClass storage) const
 {
 	const Bitset *flags;
 	switch (storage)
@@ -4510,31 +4749,181 @@ Compiler::PhysicalStorageBufferPointerHandler::PhysicalStorageBufferPointerHandl
 {
 }
 
-bool Compiler::PhysicalStorageBufferPointerHandler::handle(Op op, const uint32_t *args, uint32_t)
+Compiler::PhysicalBlockMeta *Compiler::PhysicalStorageBufferPointerHandler::find_block_meta(uint32_t id) const
 {
-	if (op == OpConvertUToPtr || op == OpBitcast)
+	auto chain_itr = access_chain_to_physical_block.find(id);
+	if (chain_itr != access_chain_to_physical_block.end())
+		return chain_itr->second;
+	else
+		return nullptr;
+}
+
+void Compiler::PhysicalStorageBufferPointerHandler::mark_aligned_access(uint32_t id, const uint32_t *args, uint32_t length)
+{
+	uint32_t mask = *args;
+	args++;
+	length--;
+	if (length && (mask & MemoryAccessVolatileMask) != 0)
 	{
-		auto &type = compiler.get<SPIRType>(args[0]);
-		if (type.storage == StorageClassPhysicalStorageBufferEXT && type.pointer && type.pointer_depth == 1)
+		args++;
+		length--;
+	}
+
+	if (length && (mask & MemoryAccessAlignedMask) != 0)
+	{
+		uint32_t alignment = *args;
+		auto *meta = find_block_meta(id);
+
+		// This makes the assumption that the application does not rely on insane edge cases like:
+		// Bind buffer with ADDR = 8, use block offset of 8 bytes, load/store with 16 byte alignment.
+		// If we emit the buffer with alignment = 16 here, the first element at offset = 0 should
+		// actually have alignment of 8 bytes, but this is too theoretical and awkward to support.
+		// We could potentially keep track of any offset in the access chain, but it's
+		// practically impossible for high level compilers to emit code like that,
+		// so deducing overall alignment requirement based on maximum observed Alignment value is probably fine.
+		if (meta && alignment > meta->alignment)
+			meta->alignment = alignment;
+	}
+}
+
+bool Compiler::PhysicalStorageBufferPointerHandler::type_is_bda_block_entry(uint32_t type_id) const
+{
+	auto &type = compiler.get<SPIRType>(type_id);
+	return type.storage == StorageClassPhysicalStorageBufferEXT && type.pointer &&
+	       type.pointer_depth == 1 && !compiler.type_is_array_of_pointers(type);
+}
+
+uint32_t Compiler::PhysicalStorageBufferPointerHandler::get_minimum_scalar_alignment(const SPIRType &type) const
+{
+	if (type.storage == spv::StorageClassPhysicalStorageBufferEXT)
+		return 8;
+	else if (type.basetype == SPIRType::Struct)
+	{
+		uint32_t alignment = 0;
+		for (auto &member_type : type.member_types)
 		{
-			// If we need to cast to a pointer type which is not a block, we might need to synthesize ourselves
-			// a block type which wraps this POD type.
-			if (type.basetype != SPIRType::Struct)
-				types.insert(args[0]);
+			uint32_t member_align = get_minimum_scalar_alignment(compiler.get<SPIRType>(member_type));
+			if (member_align > alignment)
+				alignment = member_align;
 		}
+		return alignment;
+	}
+	else
+		return type.width / 8;
+}
+
+void Compiler::PhysicalStorageBufferPointerHandler::setup_meta_chain(uint32_t type_id, uint32_t var_id)
+{
+	if (type_is_bda_block_entry(type_id))
+	{
+		auto &meta = physical_block_type_meta[type_id];
+		access_chain_to_physical_block[var_id] = &meta;
+
+		auto &type = compiler.get<SPIRType>(type_id);
+		if (type.basetype != SPIRType::Struct)
+			non_block_types.insert(type_id);
+
+		if (meta.alignment == 0)
+			meta.alignment = get_minimum_scalar_alignment(compiler.get_pointee_type(type));
+	}
+}
+
+bool Compiler::PhysicalStorageBufferPointerHandler::handle(Op op, const uint32_t *args, uint32_t length)
+{
+	// When a BDA pointer comes to life, we need to keep a mapping of SSA ID -> type ID for the pointer type.
+	// For every load and store, we'll need to be able to look up the type ID being accessed and mark any alignment
+	// requirements.
+	switch (op)
+	{
+	case OpConvertUToPtr:
+	case OpBitcast:
+	case OpCompositeExtract:
+		// Extract can begin a new chain if we had a struct or array of pointers as input.
+		// We don't begin chains before we have a pure scalar pointer.
+		setup_meta_chain(args[0], args[1]);
+		break;
+
+	case OpAccessChain:
+	case OpInBoundsAccessChain:
+	case OpPtrAccessChain:
+	case OpCopyObject:
+	{
+		auto itr = access_chain_to_physical_block.find(args[2]);
+		if (itr != access_chain_to_physical_block.end())
+			access_chain_to_physical_block[args[1]] = itr->second;
+		break;
+	}
+
+	case OpLoad:
+	{
+		setup_meta_chain(args[0], args[1]);
+		if (length >= 4)
+			mark_aligned_access(args[2], args + 3, length - 3);
+		break;
+	}
+
+	case OpStore:
+	{
+		if (length >= 3)
+			mark_aligned_access(args[0], args + 2, length - 2);
+		break;
+	}
+
+	default:
+		break;
 	}
 
 	return true;
+}
+
+uint32_t Compiler::PhysicalStorageBufferPointerHandler::get_base_non_block_type_id(uint32_t type_id) const
+{
+	auto *type = &compiler.get<SPIRType>(type_id);
+	while (type->pointer &&
+	       type->storage == StorageClassPhysicalStorageBufferEXT &&
+	       !type_is_bda_block_entry(type_id))
+	{
+		type_id = type->parent_type;
+		type = &compiler.get<SPIRType>(type_id);
+	}
+
+	assert(type_is_bda_block_entry(type_id));
+	return type_id;
+}
+
+void Compiler::PhysicalStorageBufferPointerHandler::analyze_non_block_types_from_block(const SPIRType &type)
+{
+	for (auto &member : type.member_types)
+	{
+		auto &subtype = compiler.get<SPIRType>(member);
+		if (subtype.basetype != SPIRType::Struct && subtype.pointer &&
+		    subtype.storage == spv::StorageClassPhysicalStorageBufferEXT)
+		{
+			non_block_types.insert(get_base_non_block_type_id(member));
+		}
+		else if (subtype.basetype == SPIRType::Struct && !subtype.pointer)
+			analyze_non_block_types_from_block(subtype);
+	}
 }
 
 void Compiler::analyze_non_block_pointer_types()
 {
 	PhysicalStorageBufferPointerHandler handler(*this);
 	traverse_all_reachable_opcodes(get<SPIRFunction>(ir.default_entry_point), handler);
-	physical_storage_non_block_pointer_types.reserve(handler.types.size());
-	for (auto type : handler.types)
+
+	// Analyze any block declaration we have to make. It might contain
+	// physical pointers to POD types which we never used, and thus never added to the list.
+	// We'll need to add those pointer types to the set of types we declare.
+	ir.for_each_typed_id<SPIRType>([&](uint32_t, SPIRType &type) {
+		if (has_decoration(type.self, DecorationBlock) || has_decoration(type.self, DecorationBufferBlock))
+			handler.analyze_non_block_types_from_block(type);
+	});
+
+	physical_storage_non_block_pointer_types.reserve(handler.non_block_types.size());
+	for (auto type : handler.non_block_types)
 		physical_storage_non_block_pointer_types.push_back(type);
 	sort(begin(physical_storage_non_block_pointer_types), end(physical_storage_non_block_pointer_types));
+	physical_storage_type_to_alignment = move(handler.physical_block_type_meta);
 }
 
 bool Compiler::InterlockedResourceAccessPrepassHandler::handle(Op op, const uint32_t *, uint32_t)
