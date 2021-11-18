@@ -66,6 +66,7 @@
 #include "source/opt/relax_float_ops_pass.h"
 #include "source/opt/remove_duplicates_pass.h"
 #include "source/opt/remove_unused_interface_variables_pass.h"
+#include "source/opt/replace_desc_array_access_using_var_index.h"
 #include "source/opt/replace_invalid_opc.h"
 #include "source/opt/scalar_replacement_pass.h"
 #include "source/opt/set_spec_constant_default_value_pass.h"

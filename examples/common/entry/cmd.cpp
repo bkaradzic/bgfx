@@ -29,10 +29,22 @@ struct CmdContext
 
 	void add(const char* _name, ConsoleFn _fn, void* _userData)
 	{
-		uint32_t cmd = bx::hash<bx::HashMurmur2A>(_name, (uint32_t)bx::strLen(_name) );
+		const uint32_t cmd = bx::hash<bx::HashMurmur2A>(_name, (uint32_t)bx::strLen(_name) );
 		BX_ASSERT(m_lookup.end() == m_lookup.find(cmd), "Command \"%s\" already exist.", _name);
+
 		Func fn = { _fn, _userData };
 		m_lookup.insert(stl::make_pair(cmd, fn) );
+	}
+
+	void remove(const char* _name)
+	{
+		const uint32_t cmd = bx::hash<bx::HashMurmur2A>(_name, (uint32_t)bx::strLen(_name) );
+
+		CmdLookup::iterator it = m_lookup.find(cmd);
+		if (it != m_lookup.end() )
+		{
+			m_lookup.erase(it);
+		}
 	}
 
 	void exec(const char* _cmd)
@@ -103,6 +115,11 @@ void cmdShutdown()
 void cmdAdd(const char* _name, ConsoleFn _fn, void* _userData)
 {
 	s_cmdContext->add(_name, _fn, _userData);
+}
+
+void cmdRemove(const char* _name)
+{
+	s_cmdContext->remove(_name);
 }
 
 void cmdExec(const char* _format, ...)

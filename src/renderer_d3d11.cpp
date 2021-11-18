@@ -552,11 +552,13 @@ namespace bgfx { namespace d3d11
 		{
 			uint8_t temp[28];
 
+			bx::ErrorAssert err;
+
 			bx::StaticMemoryBlockWriter writer(&temp, sizeof(temp) );
-			bx::write(&writer, "INTCEXTNCAPSFUNC", 16);
-			bx::write(&writer, kIntelExtensionInterfaceVersion);
-			bx::write(&writer, UINT32_C(0) );
-			bx::write(&writer, UINT32_C(0) );
+			bx::write(&writer, "INTCEXTNCAPSFUNC", 16, &err);
+			bx::write(&writer, kIntelExtensionInterfaceVersion, &err);
+			bx::write(&writer, uint32_t(0), &err);
+			bx::write(&writer, uint32_t(0), &err);
 
 			if (SUCCEEDED(setIntelExtension(_device, temp, sizeof(temp) ) ) )
 			{
@@ -564,10 +566,10 @@ namespace bgfx { namespace d3d11
 				bx::skip(&reader, 16);
 
 				uint32_t version;
-				bx::read(&reader, version);
+				bx::read(&reader, version, &err);
 
 				uint32_t driverVersion;
-				bx::read(&reader, driverVersion);
+				bx::read(&reader, driverVersion, &err);
 
 				return version <= driverVersion;
 			}
@@ -1864,7 +1866,7 @@ namespace bgfx { namespace d3d11
 
 			bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 			uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-			bx::write(&writer, magic);
+			bx::write(&writer, magic, bx::ErrorAssert{});
 
 			TextureCreate tc;
 			tc.m_width     = _width;
@@ -1875,7 +1877,7 @@ namespace bgfx { namespace d3d11
 			tc.m_format    = TextureFormat::Enum(texture.m_requestedFormat);
 			tc.m_cubeMap   = false;
 			tc.m_mem       = NULL;
-			bx::write(&writer, tc);
+			bx::write(&writer, tc, bx::ErrorAssert{});
 
 			texture.destroy();
 			texture.create(mem, texture.m_flags, 0);
@@ -4092,13 +4094,15 @@ namespace bgfx { namespace d3d11
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
 
+		bx::ErrorAssert err;
+
 		uint32_t magic;
-		bx::read(&reader, magic);
+		bx::read(&reader, magic, &err);
 
 		const bool fragment = isShaderType(magic, 'F');
 
 		uint32_t hashIn;
-		bx::read(&reader, hashIn);
+		bx::read(&reader, hashIn, &err);
 
 		uint32_t hashOut;
 
@@ -4108,11 +4112,11 @@ namespace bgfx { namespace d3d11
 		}
 		else
 		{
-			bx::read(&reader, hashOut);
+			bx::read(&reader, hashOut, &err);
 		}
 
 		uint16_t count;
-		bx::read(&reader, count);
+		bx::read(&reader, count, &err);
 
 		m_numPredefined = 0;
 		m_numUniforms = count;
@@ -4129,34 +4133,34 @@ namespace bgfx { namespace d3d11
 			for (uint32_t ii = 0; ii < count; ++ii)
 			{
 				uint8_t nameSize = 0;
-				bx::read(&reader, nameSize);
+				bx::read(&reader, nameSize, &err);
 
 				char name[256] = { '\0' };
-				bx::read(&reader, &name, nameSize);
+				bx::read(&reader, &name, nameSize, &err);
 				name[nameSize] = '\0';
 
 				uint8_t type = 0;
-				bx::read(&reader, type);
+				bx::read(&reader, type, &err);
 
 				uint8_t num = 0;
-				bx::read(&reader, num);
+				bx::read(&reader, num, &err);
 
 				uint16_t regIndex = 0;
-				bx::read(&reader, regIndex);
+				bx::read(&reader, regIndex, &err);
 
 				uint16_t regCount = 0;
-				bx::read(&reader, regCount);
+				bx::read(&reader, regCount, &err);
 
 				if (!isShaderVerLess(magic, 8) )
 				{
 					uint16_t texInfo = 0;
-					bx::read(&reader, texInfo);
+					bx::read(&reader, texInfo, &err);
 				}
 
 				if (!isShaderVerLess(magic, 10) )
 				{
 					uint16_t texFormat = 0;
-					bx::read(&reader, texFormat);
+					bx::read(&reader, texFormat, &err);
 				}
 
 				const char* kind = "invalid";
@@ -4209,7 +4213,7 @@ namespace bgfx { namespace d3d11
 		}
 
 		uint32_t shaderSize;
-		bx::read(&reader, shaderSize);
+		bx::read(&reader, shaderSize, &err);
 
 		const void* code = reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
@@ -4221,8 +4225,7 @@ namespace bgfx { namespace d3d11
 			bx::MemoryReader rd(code, shaderSize);
 
 			DxbcContext dxbc;
-			bx::Error err;
-			read(&rd, dxbc, &err);
+			read(&rd, dxbc, bx::ErrorAssert{});
 
 			bool patchShader = !dxbc.shader.aon9;
 			if (patchShader)
@@ -4262,14 +4265,14 @@ namespace bgfx { namespace d3d11
 		}
 
 		uint8_t numAttrs = 0;
-		bx::read(&reader, numAttrs);
+		bx::read(&reader, numAttrs, bx::ErrorAssert{});
 
 		bx::memSet(m_attrMask, 0, sizeof(m_attrMask) );
 
 		for (uint32_t ii = 0; ii < numAttrs; ++ii)
 		{
 			uint16_t id;
-			bx::read(&reader, id);
+			bx::read(&reader, id, bx::ErrorAssert{});
 
 			Attrib::Enum attr = idToAttrib(id);
 
@@ -4280,7 +4283,7 @@ namespace bgfx { namespace d3d11
 		}
 
 		uint16_t size;
-		bx::read(&reader, size);
+		bx::read(&reader, size, bx::ErrorAssert{});
 
 		if (0 < size)
 		{
@@ -4762,9 +4765,10 @@ namespace bgfx { namespace d3d11
 		uint32_t rectpitch  = _rect.m_width*bpp/8;
 		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat)))
 		{
-			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat));
+			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
 			rectpitch = (_rect.m_width / blockInfo.blockWidth)*blockInfo.blockSize;
 		}
+
 		const uint32_t srcpitch   = UINT16_MAX == _pitch ? rectpitch : _pitch;
 		const uint32_t slicepitch = rectpitch*_rect.m_height;
 
@@ -4778,6 +4782,9 @@ namespace bgfx { namespace d3d11
 			temp = (uint8_t*)BX_ALLOC(g_allocator, slicepitch);
 			bimg::imageDecodeToBgra8(g_allocator, temp, data, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			data = temp;
+
+			box.right  = bx::max(1u, m_width  >> _mip);
+			box.bottom = bx::max(1u, m_height >> _mip);
 		}
 
 		deviceCtx->UpdateSubresource(

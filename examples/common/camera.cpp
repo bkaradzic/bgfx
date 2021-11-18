@@ -94,6 +94,7 @@ struct Camera
 
 	~Camera()
 	{
+		cmdRemove("move");
 		inputRemoveBindings("camBindings");
 	}
 

@@ -1066,7 +1066,7 @@ namespace bgfx
 
 		_instruction.opcode = DxbcOpcode::Enum( (token & UINT32_C(0x000007ff) )      );
 		BX_ASSERT(_instruction.opcode < DxbcOpcode::Enum::Count, "unknown opcode");
-		
+
 		_instruction.length =          uint8_t( (token & UINT32_C(0x7f000000) ) >> 24);
 		bool extended       =              0 != (token & UINT32_C(0x80000000) );
 
@@ -1281,7 +1281,7 @@ namespace bgfx
 					size += read(_reader, tableId, _err);
 
 					uint32_t num;
-					size += read(_reader, num);
+					size += read(_reader, num, _err);
 
 					for (uint32_t ii = 0; ii < num; ++ii)
 					{
@@ -1358,7 +1358,7 @@ namespace bgfx
 					token &= UINT32_C(0x000007ff);
 					token |= _instruction.customDataClass << 11;
 
-					size += bx::write(_writer, token);
+					size += bx::write(_writer, token, _err);
 
 					uint32_t len = uint32_t(_instruction.customData.size()*sizeof(uint32_t) );
 					size += bx::write(_writer, len/4+2, _err);
@@ -1410,7 +1410,7 @@ namespace bgfx
 				break;
 		}
 
-		size += bx::write(_writer, token);
+		size += bx::write(_writer, token, _err);
 
 		for (uint32_t ii = 0; _instruction.extended[ii] != DxbcInstruction::ExtendedType::Count; ++ii)
 		{
@@ -1734,7 +1734,7 @@ namespace bgfx
 			DxbcSignature::Element element;
 
 			uint32_t nameOffset;
-			size += bx::read(_reader, nameOffset);
+			size += bx::read(_reader, nameOffset, _err);
 
 			char name[DXBC_MAX_NAME_STRING];
 			readString(_reader, offset + nameOffset, name, DXBC_MAX_NAME_STRING, _err);
@@ -1784,7 +1784,7 @@ namespace bgfx
 			}
 			else
 			{
-				size += bx::write(_writer, it->second);
+				size += bx::write(_writer, it->second, _err);
 			}
 
 			size += bx::write(_writer, element.semanticIndex, _err);
@@ -1979,7 +1979,7 @@ namespace bgfx
 		}
 
 		int64_t dxbcOffset = bx::seek(_writer);
-		size += bx::write(_writer, DXBC_CHUNK_HEADER);
+		size += bx::write(_writer, DXBC_CHUNK_HEADER, _err);
 
 		size += bx::writeRep(_writer, 0, 16, _err);
 

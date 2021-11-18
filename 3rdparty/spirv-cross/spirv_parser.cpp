@@ -961,6 +961,49 @@ void Parser::parse(const Instruction &instruction)
 		current_block->false_block = ops[2];
 
 		current_block->terminator = SPIRBlock::Select;
+
+		if (current_block->true_block == current_block->false_block)
+		{
+			// Bogus conditional, translate to a direct branch.
+			// Avoids some ugly edge cases later when analyzing CFGs.
+
+			// There are some super jank cases where the merge block is different from the true/false,
+			// and later branches can "break" out of the selection construct this way.
+			// This is complete nonsense, but CTS hits this case.
+			// In this scenario, we should see the selection construct as more of a Switch with one default case.
+			// The problem here is that this breaks any attempt to break out of outer switch statements,
+			// but it's theoretically solvable if this ever comes up using the ladder breaking system ...
+
+			if (current_block->true_block != current_block->next_block &&
+			    current_block->merge == SPIRBlock::MergeSelection)
+			{
+				uint32_t ids = ir.increase_bound_by(2);
+
+				SPIRType type;
+				type.basetype = SPIRType::Int;
+				type.width = 32;
+				set<SPIRType>(ids, type);
+				auto &c = set<SPIRConstant>(ids + 1, ids);
+
+				current_block->condition = c.self;
+				current_block->default_block = current_block->true_block;
+				current_block->terminator = SPIRBlock::MultiSelect;
+				ir.block_meta[current_block->next_block] &= ~ParsedIR::BLOCK_META_SELECTION_MERGE_BIT;
+				ir.block_meta[current_block->next_block] |= ParsedIR::BLOCK_META_MULTISELECT_MERGE_BIT;
+			}
+			else
+			{
+				ir.block_meta[current_block->next_block] &= ~ParsedIR::BLOCK_META_SELECTION_MERGE_BIT;
+				current_block->next_block = current_block->true_block;
+				current_block->condition = 0;
+				current_block->true_block = 0;
+				current_block->false_block = 0;
+				current_block->merge_block = 0;
+				current_block->merge = SPIRBlock::MergeNone;
+				current_block->terminator = SPIRBlock::Direct;
+			}
+		}
+
 		current_block = nullptr;
 		break;
 	}

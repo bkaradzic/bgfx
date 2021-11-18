@@ -87,6 +87,12 @@
 #			undef GL_VERSION_1_4
 #			undef GL_VERSION_1_5
 #			undef GL_VERSION_2_0
+#		elif BX_PLATFORM_WINDOWS
+#			ifndef WIN32_LEAN_AND_MEAN
+#				define WIN32_LEAN_AND_MEAN
+#			endif // WIN32_LEAN_AND_MEAN
+#			include <windows.h>
+#			include <GL/gl.h>
 #		else
 #			include <GL/gl.h>
 #		endif // BX_PLATFORM_
@@ -1084,9 +1090,7 @@ typedef uint64_t GLuint64;
 #	define GL_TEXTURE_LOD_BIAS 0x8501
 #endif // GL_TEXTURE_LOD_BIAS
 
-#if BX_PLATFORM_WINDOWS
-#	include <windows.h>
-#elif BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #	include "glcontext_glx.h"
 #elif BX_PLATFORM_OSX
 #	include "glcontext_nsgl.h"

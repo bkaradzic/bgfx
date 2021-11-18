@@ -8,7 +8,6 @@ project "texturec"
 	kind "ConsoleApp"
 
 	includedirs {
-		path.join(BX_DIR,   "include"),
 		path.join(BIMG_DIR, "include"),
 		path.join(BGFX_DIR, "include"),
 		path.join(BIMG_DIR, "3rdparty/iqa/include"),
@@ -22,8 +21,9 @@ project "texturec"
 		"bimg_decode",
 		"bimg_encode",
 		"bimg",
-		"bx",
 	}
+
+	using_bx()
 
 	configuration { "mingw-*" }
 		targetextension ".exe"

@@ -52,7 +52,6 @@
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
 #include "camera.h"
-#include "bounds.h"
 
 #include <map>
 
@@ -268,7 +267,7 @@ namespace
 	private:
 		void CalculateSunOrbit()
 		{
-			float day = 30.0f * m_month + 15.0f;
+			const float day = 30.0f * float(m_month) + 15.0f;
 			float lambda = 280.46f + 0.9856474f * day;
 			lambda  = bx::toRad(lambda);
 			m_delta = bx::asin(bx::sin(m_eclipticObliquity) * bx::sin(lambda) );
@@ -287,11 +286,11 @@ namespace
 				bx::sin(latitude) * bx::sin(m_delta) + bx::cos(latitude) * bx::cos(m_delta) * bx::cos(hh)
 				);
 
-			const bx::Quaternion rot0 = bx::rotateAxis(m_upDir, -azimuth);
+			const bx::Quaternion rot0 = bx::fromAxisAngle(m_upDir, -azimuth);
 			const bx::Vec3 dir = bx::mul(m_northDir, rot0);
 			const bx::Vec3 uxd = bx::cross(m_upDir, dir);
 
-			const bx::Quaternion rot1 = bx::rotateAxis(uxd, altitude);
+			const bx::Quaternion rot1 = bx::fromAxisAngle(uxd, altitude);
 			m_sunDir = bx::mul(dir, rot1);
 		}
 

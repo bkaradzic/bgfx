@@ -190,7 +190,7 @@ namespace ps
 			m_dt = 0.0f;
 			m_uniforms.reset();
 			m_num = 0;
-			bx::memSet(&m_aabb, 0, sizeof(Aabb) );
+			bx::memSet(&m_aabb, 0, sizeof(bx::Aabb) );
 
 			m_rng.reset();
 		}
@@ -329,7 +329,7 @@ namespace ps
 			bx::EaseFn easeBlend = bx::getEaseFunc(m_uniforms.m_easeBlend);
 			bx::EaseFn easeScale = bx::getEaseFunc(m_uniforms.m_easeScale);
 
-			Aabb aabb =
+			bx::Aabb aabb =
 			{
 				{  bx::kInfinity,  bx::kInfinity,  bx::kInfinity },
 				{ -bx::kInfinity, -bx::kInfinity, -bx::kInfinity },
@@ -425,7 +425,7 @@ namespace ps
 		bx::RngMwc      m_rng;
 		EmitterUniforms m_uniforms;
 
-		Aabb m_aabb;
+		bx::Aabb m_aabb;
 
 		Particle* m_particles;
 		uint32_t m_num;
@@ -626,7 +626,7 @@ namespace ps
 
 		void updateEmitter(EmitterHandle _handle, const EmitterUniforms* _uniforms)
 		{
-			BX_ASSERT(m_emitterAlloc.isValid(_handle.idx)
+			BX_ASSERT(isValid(_handle)
 				, "destroyEmitter handle %d is not valid."
 				, _handle.idx
 				);
@@ -643,9 +643,9 @@ namespace ps
 			}
 		}
 
-		void getAabb(EmitterHandle _handle, Aabb& _outAabb)
+		void getAabb(EmitterHandle _handle, bx::Aabb& _outAabb)
 		{
-			BX_ASSERT(m_emitterAlloc.isValid(_handle.idx)
+			BX_ASSERT(isValid(_handle)
 				, "getAabb handle %d is not valid."
 				, _handle.idx
 				);
@@ -654,7 +654,7 @@ namespace ps
 
 		void destroyEmitter(EmitterHandle _handle)
 		{
-			BX_ASSERT(m_emitterAlloc.isValid(_handle.idx)
+			BX_ASSERT(isValid(_handle)
 				, "destroyEmitter handle %d is not valid."
 				, _handle.idx
 				);
@@ -730,7 +730,7 @@ void psUpdateEmitter(EmitterHandle _handle, const EmitterUniforms* _uniforms)
 	s_ctx.updateEmitter(_handle, _uniforms);
 }
 
-void psGetAabb(EmitterHandle _handle, Aabb& _outAabb)
+void psGetAabb(EmitterHandle _handle, bx::Aabb& _outAabb)
 {
 	s_ctx.getAabb(_handle, _outAabb);
 }

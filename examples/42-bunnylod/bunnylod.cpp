@@ -188,21 +188,25 @@ public:
 		m_cachePermutation = NULL;
 		m_originalVertices = 0;
 
+		bx::Error err;
+
 		bx::FileReader reader;
 
 		if (bx::open(&reader, kCacheFilePath) )
 		{
-			bx::read(&reader, m_originalVertices);
-			bx::read(&reader, m_totalVertices);
+			bx::read(&reader, m_originalVertices, &err);
+			bx::read(&reader, m_totalVertices, &err);
 			m_cacheWeld = (uint32_t*)BX_ALLOC(entry::getAllocator(), m_originalVertices * sizeof(uint32_t) );
 
-			bx::read(&reader, m_cacheWeld, m_originalVertices * sizeof(uint32_t) );
+			bx::read(&reader, m_cacheWeld, m_originalVertices * sizeof(uint32_t), &err);
 			m_cachePermutation = (uint32_t*)BX_ALLOC(entry::getAllocator(), m_totalVertices * sizeof(uint32_t) );
 
-			bx::read(&reader, m_cachePermutation, m_totalVertices * sizeof(uint32_t) );
+			bx::read(&reader, m_cachePermutation, m_totalVertices * sizeof(uint32_t), &err);
 			m_map = (uint32_t*)BX_ALLOC(entry::getAllocator(), m_totalVertices * sizeof(uint32_t) );
 
-			if (bx::read(&reader, m_map, m_totalVertices * sizeof(uint32_t) ) != int32_t(m_totalVertices * sizeof(uint32_t) ) )
+			bx::read(&reader, m_map, m_totalVertices * sizeof(uint32_t), &err);
+
+			if (!err.isOk() )
 			{
 				// read fail
 				BX_FREE(entry::getAllocator(), m_cacheWeld);
@@ -225,11 +229,14 @@ public:
 
 		if (bx::open(&writer, kCacheFilePath) )
 		{
-			bx::write(&writer, m_originalVertices);
-			bx::write(&writer, m_totalVertices);
-			bx::write(&writer, m_cacheWeld, m_originalVertices * sizeof(uint32_t) );
-			bx::write(&writer, m_cachePermutation, m_totalVertices * sizeof(uint32_t) );
-			bx::write(&writer, m_map, m_totalVertices * sizeof(uint32_t) );
+			bx::Error err;
+
+			bx::write(&writer, m_originalVertices, &err);
+			bx::write(&writer, m_totalVertices, &err);
+			bx::write(&writer, m_cacheWeld, m_originalVertices * sizeof(uint32_t), &err);
+			bx::write(&writer, m_cachePermutation, m_totalVertices * sizeof(uint32_t), &err);
+			bx::write(&writer, m_map, m_totalVertices * sizeof(uint32_t), &err);
+
 			bx::close(&writer);
 		}
 	}

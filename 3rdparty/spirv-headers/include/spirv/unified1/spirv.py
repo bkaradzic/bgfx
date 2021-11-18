@@ -332,6 +332,7 @@ spv = {
         'VolatileTexelKHR' : 11,
         'SignExtend' : 12,
         'ZeroExtend' : 13,
+        'Offsets' : 16,
     },
 
     'ImageOperandsMask' : {
@@ -354,6 +355,7 @@ spv = {
         'VolatileTexelKHR' : 0x00000800,
         'SignExtend' : 0x00001000,
         'ZeroExtend' : 0x00002000,
+        'Offsets' : 0x00010000,
     },
 
     'FPFastMathModeShift' : {
@@ -472,6 +474,10 @@ spv = {
         'RestrictPointerEXT' : 5355,
         'AliasedPointer' : 5356,
         'AliasedPointerEXT' : 5356,
+        'BindlessSamplerNV' : 5398,
+        'BindlessImageNV' : 5399,
+        'BoundSamplerNV' : 5400,
+        'BoundImageNV' : 5401,
         'SIMTCallINTEL' : 5599,
         'ReferencedIndirectlyINTEL' : 5602,
         'ClobberINTEL' : 5607,
@@ -969,6 +975,7 @@ spv = {
         'ShaderSMBuiltinsNV' : 5373,
         'FragmentShaderPixelInterlockEXT' : 5378,
         'DemoteToHelperInvocationEXT' : 5379,
+        'BindlessTextureNV' : 5390,
         'SubgroupShuffleINTEL' : 5568,
         'SubgroupBufferBlockIOINTEL' : 5569,
         'SubgroupImageBlockIOINTEL' : 5570,
@@ -1513,6 +1520,13 @@ spv = {
         'OpEndInvocationInterlockEXT' : 5365,
         'OpDemoteToHelperInvocationEXT' : 5380,
         'OpIsHelperInvocationEXT' : 5381,
+        'OpConvertUToImageNV' : 5391,
+        'OpConvertUToSamplerNV' : 5392,
+        'OpConvertImageToUNV' : 5393,
+        'OpConvertSamplerToUNV' : 5394,
+        'OpConvertUToSampledImageNV' : 5395,
+        'OpConvertSampledImageToUNV' : 5396,
+        'OpSamplerImageAddressingModeNV' : 5397,
         'OpSubgroupShuffleINTEL' : 5571,
         'OpSubgroupShuffleDownINTEL' : 5572,
         'OpSubgroupShuffleUpINTEL' : 5573,

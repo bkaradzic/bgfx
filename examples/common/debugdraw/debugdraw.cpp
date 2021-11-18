@@ -9,6 +9,7 @@
 #include "../bgfx_utils.h"
 #include "../packrect.h"
 
+#include <bx/debug.h>
 #include <bx/mutex.h>
 #include <bx/math.h>
 #include <bx/sort.h>
@@ -1026,6 +1027,7 @@ struct DebugDrawEncoderImpl
 	void init(bgfx::Encoder* _encoder)
 	{
 		m_defaultEncoder = _encoder;
+		m_state = State::Count;
 	}
 
 	void shutdown()
@@ -1034,7 +1036,7 @@ struct DebugDrawEncoderImpl
 
 	void begin(bgfx::ViewId _viewId, bool _depthTestLess, bgfx::Encoder* _encoder)
 	{
-		BX_ASSERT(State::Count == m_state);
+		BX_ASSERT(State::Count == m_state, "");
 
 		m_viewId        = _viewId;
 		m_encoder       = _encoder == NULL ? m_defaultEncoder : _encoder;
@@ -1079,14 +1081,14 @@ struct DebugDrawEncoderImpl
 
 	void push()
 	{
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 		++m_stack;
 		m_attrib[m_stack] = m_attrib[m_stack-1];
 	}
 
 	void pop()
 	{
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 		const Attrib& curr = m_attrib[m_stack];
 		const Attrib& prev = m_attrib[m_stack-1];
 		if (curr.m_stipple != prev.m_stipple
@@ -1099,7 +1101,7 @@ struct DebugDrawEncoderImpl
 
 	void setDepthTestLess(bool _depthTestLess)
 	{
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 		if (m_depthTestLess != _depthTestLess)
 		{
 			m_depthTestLess = _depthTestLess;
@@ -1115,7 +1117,7 @@ struct DebugDrawEncoderImpl
 
 	void setTransform(const void* _mtx, uint16_t _num = 1, bool _flush = true)
 	{
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 		if (_flush)
 		{
 			flush();
@@ -1151,7 +1153,7 @@ struct DebugDrawEncoderImpl
 	void pushTransform(const void* _mtx, uint16_t _num, bool _flush = true)
 	{
 		BX_ASSERT(m_mtxStackCurrent < BX_COUNTOF(m_mtxStack), "Out of matrix stack!");
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 		if (_flush)
 		{
 			flush();
@@ -1181,7 +1183,7 @@ struct DebugDrawEncoderImpl
 
 	void popTransform(bool _flush = true)
 	{
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 		if (_flush)
 		{
 			flush();
@@ -1241,25 +1243,25 @@ struct DebugDrawEncoderImpl
 
 	void setColor(uint32_t _abgr)
 	{
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 		m_attrib[m_stack].m_abgr = _abgr;
 	}
 
 	void setLod(uint8_t _lod)
 	{
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 		m_attrib[m_stack].m_lod = _lod;
 	}
 
 	void setWireframe(bool _wireframe)
 	{
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 		m_attrib[m_stack].m_wireframe = _wireframe;
 	}
 
 	void setStipple(bool _stipple, float _scale = 1.0f, float _offset = 0.0f)
 	{
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 
 		Attrib& attrib = m_attrib[m_stack];
 
@@ -1281,7 +1283,7 @@ struct DebugDrawEncoderImpl
 
 	void moveTo(float _x, float _y, float _z = 0.0f)
 	{
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 
 		softFlush();
 
@@ -1301,7 +1303,7 @@ struct DebugDrawEncoderImpl
 
 	void moveTo(const bx::Vec3& _pos)
 	{
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 		moveTo(_pos.x, _pos.y, _pos.z);
 	}
 
@@ -1312,7 +1314,7 @@ struct DebugDrawEncoderImpl
 
 	void lineTo(float _x, float _y, float _z = 0.0f)
 	{
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 		if (State::None == m_state)
 		{
 			moveTo(_x, _y, _z);
@@ -1365,7 +1367,7 @@ struct DebugDrawEncoderImpl
 
 	void lineTo(const bx::Vec3& _pos)
 	{
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 		lineTo(_pos.x, _pos.y, _pos.z);
 	}
 
@@ -1376,14 +1378,14 @@ struct DebugDrawEncoderImpl
 
 	void close()
 	{
-		BX_ASSERT(State::Count != m_state);
+		BX_ASSERT(State::Count != m_state, "");
 		DebugVertex& vertex = m_cache[m_vertexPos];
 		lineTo(vertex.m_x, vertex.m_y, vertex.m_z);
 
 		m_state = State::None;
 	}
 
-	void draw(const Aabb& _aabb)
+	void draw(const bx::Aabb& _aabb)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		if (attrib.m_wireframe)
@@ -1414,23 +1416,23 @@ struct DebugDrawEncoderImpl
 		}
 		else
 		{
-			Obb obb;
+			bx::Obb obb;
 			toObb(obb, _aabb);
 			draw(DebugMesh::Cube, obb.mtx, 1, false);
 		}
 	}
 
-	void draw(const Cylinder& _cylinder, bool _capsule)
+	void draw(const bx::Cylinder& _cylinder, bool _capsule)
 	{
 		drawCylinder(_cylinder.pos, _cylinder.end, _cylinder.radius, _capsule);
 	}
 
-	void draw(const Disk& _disk)
+	void draw(const bx::Disk& _disk)
 	{
 		drawCircle(_disk.normal, _disk.center, _disk.radius, 0.0f);
 	}
 
-	void draw(const Obb& _obb)
+	void draw(const bx::Obb& _obb)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		if (attrib.m_wireframe)
@@ -1469,7 +1471,7 @@ struct DebugDrawEncoderImpl
 		}
 	}
 
-	void draw(const Sphere& _sphere)
+	void draw(const bx::Sphere& _sphere)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		float mtx[16];
@@ -1491,7 +1493,7 @@ struct DebugDrawEncoderImpl
 		draw(DebugMesh::Enum(DebugMesh::Sphere0 + lod), mtx, 1, attrib.m_wireframe);
 	}
 
-	void draw(const Triangle& _triangle)
+	void draw(const bx::Triangle& _triangle)
 	{
 		Attrib& attrib = m_attrib[m_stack];
 		if (attrib.m_wireframe)
@@ -1955,7 +1957,7 @@ struct DebugDrawEncoderImpl
 				;
 			draw(DebugMesh::Enum(DebugMesh::Capsule0 + lod), mtx[0], 2, attrib.m_wireframe);
 
-			Sphere sphere;
+			bx::Sphere sphere;
 			sphere.center = _from;
 			sphere.radius = _radius;
 			draw(sphere);
@@ -2425,42 +2427,42 @@ void DebugDrawEncoder::close()
 	DEBUG_DRAW_ENCODER(close() );
 }
 
-void DebugDrawEncoder::draw(const Aabb& _aabb)
+void DebugDrawEncoder::draw(const bx::Aabb& _aabb)
 {
 	DEBUG_DRAW_ENCODER(draw(_aabb) );
 }
 
-void DebugDrawEncoder::draw(const Cylinder& _cylinder)
+void DebugDrawEncoder::draw(const bx::Cylinder& _cylinder)
 {
 	DEBUG_DRAW_ENCODER(draw(_cylinder, false) );
 }
 
-void DebugDrawEncoder::draw(const Capsule& _capsule)
+void DebugDrawEncoder::draw(const bx::Capsule& _capsule)
 {
-	DEBUG_DRAW_ENCODER(draw(*( (const Cylinder*)&_capsule), true) );
+	DEBUG_DRAW_ENCODER(draw(*( (const bx::Cylinder*)&_capsule), true) );
 }
 
-void DebugDrawEncoder::draw(const Disk& _disk)
+void DebugDrawEncoder::draw(const bx::Disk& _disk)
 {
 	DEBUG_DRAW_ENCODER(draw(_disk) );
 }
 
-void DebugDrawEncoder::draw(const Obb& _obb)
+void DebugDrawEncoder::draw(const bx::Obb& _obb)
 {
 	DEBUG_DRAW_ENCODER(draw(_obb) );
 }
 
-void DebugDrawEncoder::draw(const Sphere& _sphere)
+void DebugDrawEncoder::draw(const bx::Sphere& _sphere)
 {
 	DEBUG_DRAW_ENCODER(draw(_sphere) );
 }
 
-void DebugDrawEncoder::draw(const Triangle& _triangle)
+void DebugDrawEncoder::draw(const bx::Triangle& _triangle)
 {
 	DEBUG_DRAW_ENCODER(draw(_triangle) );
 }
 
-void DebugDrawEncoder::draw(const Cone& _cone)
+void DebugDrawEncoder::draw(const bx::Cone& _cone)
 {
 	DEBUG_DRAW_ENCODER(drawCone(_cone.pos, _cone.end, _cone.radius) );
 }

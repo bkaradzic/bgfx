@@ -86,8 +86,8 @@ bool MemPass::IsPtr(uint32_t ptrId) {
   }
   const SpvOp op = ptrInst->opcode();
   if (op == SpvOpVariable || IsNonPtrAccessChain(op)) return true;
-  if (op != SpvOpFunctionParameter) return false;
   const uint32_t varTypeId = ptrInst->type_id();
+  if (varTypeId == 0) return false;
   const Instruction* varTypeInst = get_def_use_mgr()->GetDef(varTypeId);
   return varTypeInst->opcode() == SpvOpTypePointer;
 }

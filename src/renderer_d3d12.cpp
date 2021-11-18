@@ -1732,7 +1732,7 @@ namespace bgfx { namespace d3d12
 
 			bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 			uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-			bx::write(&writer, magic);
+			bx::write(&writer, magic, bx::ErrorAssert{});
 
 			TextureCreate tc;
 			tc.m_width     = _width;
@@ -1743,7 +1743,7 @@ namespace bgfx { namespace d3d12
 			tc.m_format    = TextureFormat::Enum(texture.m_requestedFormat);
 			tc.m_cubeMap   = false;
 			tc.m_mem       = NULL;
-			bx::write(&writer, tc);
+			bx::write(&writer, tc, bx::ErrorAssert{});
 
 			texture.destroy();
 			texture.create(mem, texture.m_flags, 0);
@@ -4515,13 +4515,15 @@ namespace bgfx { namespace d3d12
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
 
+		bx::ErrorAssert err;
+
 		uint32_t magic;
-		bx::read(&reader, magic);
+		bx::read(&reader, magic, &err);
 
 		const bool fragment = isShaderType(magic, 'F');
 
 		uint32_t hashIn;
-		bx::read(&reader, hashIn);
+		bx::read(&reader, hashIn, &err);
 
 		uint32_t hashOut;
 
@@ -4531,11 +4533,11 @@ namespace bgfx { namespace d3d12
 		}
 		else
 		{
-			bx::read(&reader, hashOut);
+			bx::read(&reader, hashOut, &err);
 		}
 
 		uint16_t count;
-		bx::read(&reader, count);
+		bx::read(&reader, count, &err);
 
 		m_numPredefined = 0;
 		m_numUniforms = count;
@@ -4552,34 +4554,34 @@ namespace bgfx { namespace d3d12
 			for (uint32_t ii = 0; ii < count; ++ii)
 			{
 				uint8_t nameSize = 0;
-				bx::read(&reader, nameSize);
+				bx::read(&reader, nameSize, &err);
 
 				char name[256] = {};
-				bx::read(&reader, &name, nameSize);
+				bx::read(&reader, &name, nameSize, &err);
 				name[nameSize] = '\0';
 
 				uint8_t type = 0;
-				bx::read(&reader, type);
+				bx::read(&reader, type, &err);
 
 				uint8_t num = 0;
-				bx::read(&reader, num);
+				bx::read(&reader, num, &err);
 
 				uint16_t regIndex = 0;
-				bx::read(&reader, regIndex);
+				bx::read(&reader, regIndex, &err);
 
 				uint16_t regCount = 0;
-				bx::read(&reader, regCount);
+				bx::read(&reader, regCount, &err);
 
 				if (!isShaderVerLess(magic, 8) )
 				{
 					uint16_t texInfo = 0;
-					bx::read(&reader, texInfo);
+					bx::read(&reader, texInfo, &err);
 				}
 
 				if (!isShaderVerLess(magic, 10) )
 				{
 					uint16_t texFormat = 0;
-					bx::read(&reader, texFormat);
+					bx::read(&reader, texFormat, &err);
 				}
 
 				const char* kind = "invalid";
@@ -4632,7 +4634,7 @@ namespace bgfx { namespace d3d12
 		}
 
 		uint32_t shaderSize;
-		bx::read(&reader, shaderSize);
+		bx::read(&reader, shaderSize, &err);
 
 		const void* code = reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
@@ -4640,14 +4642,14 @@ namespace bgfx { namespace d3d12
 		m_code = copy(code, shaderSize);
 
 		uint8_t numAttrs = 0;
-		bx::read(&reader, numAttrs);
+		bx::read(&reader, numAttrs, &err);
 
 		bx::memSet(m_attrMask, 0, sizeof(m_attrMask) );
 
 		for (uint32_t ii = 0; ii < numAttrs; ++ii)
 		{
 			uint16_t id;
-			bx::read(&reader, id);
+			bx::read(&reader, id, &err);
 
 			Attrib::Enum attr = idToAttrib(id);
 
@@ -4666,7 +4668,7 @@ namespace bgfx { namespace d3d12
 		murmur.add(m_attrMask, numAttrs);
 		m_hash = murmur.end();
 
-		bx::read(&reader, m_size);
+		bx::read(&reader, m_size, &err);
 	}
 
 	void* TextureD3D12::create(const Memory* _mem, uint64_t _flags, uint8_t _skip)
@@ -5117,6 +5119,14 @@ namespace bgfx { namespace d3d12
 
 		const bool convert = m_textureFormat != m_requestedFormat;
 
+		D3D12_BOX box;
+		box.left   = 0;
+		box.top    = 0;
+		box.right  = box.left + _rect.m_width;
+		box.bottom = box.top  + _rect.m_height;
+		box.front  = _z;
+		box.back   = _z + _depth;
+
 		uint8_t* srcData = _mem->data;
 		uint8_t* temp = NULL;
 
@@ -5125,8 +5135,10 @@ namespace bgfx { namespace d3d12
 			temp = (uint8_t*)BX_ALLOC(g_allocator, slicepitch);
 			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat));
 			srcData = temp;
-		}
 
+			box.right  = bx::max(1u, m_width  >> _mip);
+			box.bottom = bx::max(1u, m_height >> _mip);
+		}
 
 		D3D12_RESOURCE_DESC desc = getResourceDesc(m_ptr);
 
@@ -5166,14 +5178,6 @@ namespace bgfx { namespace d3d12
 
 		D3D12_RANGE writeRange = { 0, numRows*rowPitch };
 		staging->Unmap(0, &writeRange);
-
-		D3D12_BOX box;
-		box.left   = 0;
-		box.top    = 0;
-		box.right  = box.left + _rect.m_width;
-		box.bottom = box.top  + _rect.m_height;
-		box.front  = _z;
-		box.back   = _z+_depth;
 
 		D3D12_TEXTURE_COPY_LOCATION dst = { m_ptr,   D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {        } };
 		dst.SubresourceIndex = subres;
@@ -5867,11 +5871,13 @@ namespace bgfx { namespace d3d12
 				currentSrc = blit.m_src;
 
 				if (NULL != src.m_singleMsaa)
+				{
 					setResourceBarrier(m_commandList
 						, src.m_singleMsaa
 						, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
 						, D3D12_RESOURCE_STATE_COPY_SOURCE
 					);
+				}
 
 				state = src.setState(m_commandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
 			}
@@ -5879,17 +5885,23 @@ namespace bgfx { namespace d3d12
 			if (TextureD3D12::Texture3D == src.m_type)
 			{
 				D3D12_BOX box;
- 				box.left   = blit.m_srcX;
- 				box.top    = blit.m_srcY;
- 				box.front  = blit.m_srcZ;
- 				box.right  = blit.m_srcX + blit.m_width;
- 				box.bottom = blit.m_srcY + blit.m_height;
- 				box.back   = blit.m_srcZ + bx::uint32_imax(1, blit.m_depth);
+				box.left   = blit.m_srcX;
+				box.top    = blit.m_srcY;
+				box.front  = blit.m_srcZ;
+				box.right  = blit.m_srcX + blit.m_width;
+				box.bottom = blit.m_srcY + blit.m_height;
+				box.back   = blit.m_srcZ + bx::uint32_imax(1, blit.m_depth);
 
-				D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { } };
+				D3D12_TEXTURE_COPY_LOCATION dstLocation;
+				dstLocation.pResource = dst.m_ptr;
+				dstLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 				dstLocation.SubresourceIndex = blit.m_dstMip;
-				D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { } };
+
+				D3D12_TEXTURE_COPY_LOCATION srcLocation;
+				srcLocation.pResource = src.m_ptr;
+				srcLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 				srcLocation.SubresourceIndex = blit.m_srcMip;
+
 				m_commandList->CopyTextureRegion(&dstLocation
 					, blit.m_dstX
 					, blit.m_dstY
@@ -5921,13 +5933,16 @@ namespace bgfx { namespace d3d12
 				dstLocation.pResource = dst.m_ptr;
 				dstLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 				dstLocation.SubresourceIndex = dstZ*dst.m_numMips+blit.m_dstMip;
+
 				D3D12_TEXTURE_COPY_LOCATION srcLocation;
 				srcLocation.pResource = NULL != src.m_singleMsaa ? src.m_singleMsaa : src.m_ptr;
 				srcLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 				srcLocation.SubresourceIndex = srcZ*src.m_numMips+blit.m_srcMip;
 
-				bool depthStencil = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
-				m_commandList->CopyTextureRegion(&dstLocation
+				const bool depthStencil = bimg::isDepth(bimg::TextureFormat::Enum(src.m_textureFormat) );
+
+				m_commandList->CopyTextureRegion(
+					  &dstLocation
 					, blit.m_dstX
 					, blit.m_dstY
 					, 0
@@ -5937,11 +5952,14 @@ namespace bgfx { namespace d3d12
 			}
 
 			if (NULL != src.m_singleMsaa)
-				setResourceBarrier(m_commandList
+			{
+				setResourceBarrier(
+					  m_commandList
 					, src.m_singleMsaa
 					, D3D12_RESOURCE_STATE_COPY_SOURCE
 					, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
-				);
+					);
+			}
 		}
 
 		if (isValid(currentSrc)

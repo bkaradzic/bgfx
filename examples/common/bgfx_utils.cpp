@@ -29,7 +29,7 @@ void* load(bx::FileReaderI* _reader, bx::AllocatorI* _allocator, const char* _fi
 	{
 		uint32_t size = (uint32_t)bx::getSize(_reader);
 		void* data = BX_ALLOC(_allocator, size);
-		bx::read(_reader, data, size);
+		bx::read(_reader, data, size, bx::ErrorAssert{});
 		bx::close(_reader);
 		if (NULL != _size)
 		{
@@ -66,7 +66,7 @@ static const bgfx::Memory* loadMem(bx::FileReaderI* _reader, const char* _filePa
 	{
 		uint32_t size = (uint32_t)bx::getSize(_reader);
 		const bgfx::Memory* mem = bgfx::alloc(size+1);
-		bx::read(_reader, mem->data, size);
+		bx::read(_reader, mem->data, size, bx::ErrorAssert{});
 		bx::close(_reader);
 		mem->data[mem->size-1] = '\0';
 		return mem;
@@ -82,7 +82,7 @@ static void* loadMem(bx::FileReaderI* _reader, bx::AllocatorI* _allocator, const
 	{
 		uint32_t size = (uint32_t)bx::getSize(_reader);
 		void* data = BX_ALLOC(_allocator, size);
-		bx::read(_reader, data, size);
+		bx::read(_reader, data, size, bx::ErrorAssert{});
 		bx::close(_reader);
 
 		if (NULL != _size)
@@ -375,7 +375,7 @@ void Group::reset()
 
 namespace bgfx
 {
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexLayout& _layout, bx::Error* _err = NULL);
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexLayout& _layout, bx::Error* _err);
 }
 
 void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
@@ -402,17 +402,17 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 		{
 			case kChunkVertexBuffer:
 			{
-				read(_reader, group.m_sphere);
-				read(_reader, group.m_aabb);
-				read(_reader, group.m_obb);
+				read(_reader, group.m_sphere, &err);
+				read(_reader, group.m_aabb, &err);
+				read(_reader, group.m_obb, &err);
 
-				read(_reader, m_layout);
+				read(_reader, m_layout, &err);
 
 				uint16_t stride = m_layout.getStride();
 
-				read(_reader, group.m_numVertices);
+				read(_reader, group.m_numVertices, &err);
 				const bgfx::Memory* mem = bgfx::alloc(group.m_numVertices*stride);
-				read(_reader, mem->data, mem->size);
+				read(_reader, mem->data, mem->size, &err);
 
 				if (_ramcopy)
 				{
@@ -426,23 +426,23 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 
 			case kChunkVertexBufferCompressed:
 			{
-				read(_reader, group.m_sphere);
-				read(_reader, group.m_aabb);
-				read(_reader, group.m_obb);
+				read(_reader, group.m_sphere, &err);
+				read(_reader, group.m_aabb, &err);
+				read(_reader, group.m_obb, &err);
 
-				read(_reader, m_layout);
+				read(_reader, m_layout, &err);
 
 				uint16_t stride = m_layout.getStride();
 
-				read(_reader, group.m_numVertices);
+				read(_reader, group.m_numVertices, &err);
 
 				const bgfx::Memory* mem = bgfx::alloc(group.m_numVertices*stride);
 
 				uint32_t compressedSize;
-				bx::read(_reader, compressedSize);
+				bx::read(_reader, compressedSize, &err);
 
 				void* compressedVertices = BX_ALLOC(allocator, compressedSize);
-				bx::read(_reader, compressedVertices, compressedSize);
+				bx::read(_reader, compressedVertices, compressedSize, &err);
 
 				meshopt_decodeVertexBuffer(mem->data, group.m_numVertices, stride, (uint8_t*)compressedVertices, compressedSize);
 
@@ -460,9 +460,10 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 
 			case kChunkIndexBuffer:
 			{
-				read(_reader, group.m_numIndices);
+				read(_reader, group.m_numIndices, &err);
+
 				const bgfx::Memory* mem = bgfx::alloc(group.m_numIndices*2);
-				read(_reader, mem->data, mem->size);
+				read(_reader, mem->data, mem->size, &err);
 
 				if (_ramcopy)
 				{
@@ -476,16 +477,16 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 
 			case kChunkIndexBufferCompressed:
 			{
-				bx::read(_reader, group.m_numIndices);
+				bx::read(_reader, group.m_numIndices, &err);
 
 				const bgfx::Memory* mem = bgfx::alloc(group.m_numIndices*2);
 
 				uint32_t compressedSize;
-				bx::read(_reader, compressedSize);
+				bx::read(_reader, compressedSize, &err);
 
 				void* compressedIndices = BX_ALLOC(allocator, compressedSize);
 
-				bx::read(_reader, compressedIndices, compressedSize);
+				bx::read(_reader, compressedIndices, compressedSize, &err);
 
 				meshopt_decodeIndexBuffer(mem->data, group.m_numIndices, 2, (uint8_t*)compressedIndices, compressedSize);
 
@@ -504,31 +505,31 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 			case kChunkPrimitive:
 			{
 				uint16_t len;
-				read(_reader, len);
+				read(_reader, len, &err);
 
 				stl::string material;
 				material.resize(len);
-				read(_reader, const_cast<char*>(material.c_str() ), len);
+				read(_reader, const_cast<char*>(material.c_str() ), len, &err);
 
 				uint16_t num;
-				read(_reader, num);
+				read(_reader, num, &err);
 
 				for (uint32_t ii = 0; ii < num; ++ii)
 				{
-					read(_reader, len);
+					read(_reader, len, &err);
 
 					stl::string name;
 					name.resize(len);
-					read(_reader, const_cast<char*>(name.c_str() ), len);
+					read(_reader, const_cast<char*>(name.c_str() ), len, &err);
 
 					Primitive prim;
-					read(_reader, prim.m_startIndex);
-					read(_reader, prim.m_numIndices);
-					read(_reader, prim.m_startVertex);
-					read(_reader, prim.m_numVertices);
-					read(_reader, prim.m_sphere);
-					read(_reader, prim.m_aabb);
-					read(_reader, prim.m_obb);
+					read(_reader, prim.m_startIndex, &err);
+					read(_reader, prim.m_numIndices, &err);
+					read(_reader, prim.m_startVertex, &err);
+					read(_reader, prim.m_numVertices, &err);
+					read(_reader, prim.m_sphere, &err);
+					read(_reader, prim.m_aabb, &err);
+					read(_reader, prim.m_obb, &err);
 
 					group.m_prims.push_back(prim);
 				}
@@ -595,8 +596,16 @@ void Mesh::submit(bgfx::ViewId _id, bgfx::ProgramHandle _program, const float* _
 
 		bgfx::setIndexBuffer(group.m_ibh);
 		bgfx::setVertexBuffer(0, group.m_vbh);
-		bgfx::submit(_id, _program, 0, (it == itEnd-1) ? (BGFX_DISCARD_INDEX_BUFFER | BGFX_DISCARD_VERTEX_STREAMS | BGFX_DISCARD_STATE) : BGFX_DISCARD_NONE);
+		bgfx::submit(
+			  _id
+			, _program
+			, 0
+			, BGFX_DISCARD_INDEX_BUFFER
+			| BGFX_DISCARD_VERTEX_STREAMS
+			);
 	}
+
+	bgfx::discard();
 }
 
 void Mesh::submit(const MeshState*const* _state, uint8_t _numPasses, const float* _mtx, uint16_t _numMatrices) const
@@ -631,10 +640,19 @@ void Mesh::submit(const MeshState*const* _state, uint8_t _numPasses, const float
 				  state.m_viewId
 				, state.m_program
 				, 0
-				, (it == itEnd - 1) ? (BGFX_DISCARD_INDEX_BUFFER | BGFX_DISCARD_VERTEX_STREAMS | BGFX_DISCARD_STATE) : BGFX_DISCARD_NONE
+				, BGFX_DISCARD_INDEX_BUFFER
+				| BGFX_DISCARD_VERTEX_STREAMS
 				);
 		}
+
+		bgfx::discard(0
+			| BGFX_DISCARD_BINDINGS
+			| BGFX_DISCARD_STATE
+			| BGFX_DISCARD_TRANSFORM
+			);
 	}
+
+	bgfx::discard();
 }
 
 Mesh* meshLoad(bx::ReaderSeekerI* _reader, bool _ramcopy)

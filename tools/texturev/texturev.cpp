@@ -800,7 +800,7 @@ struct View
 		bx::FileReader reader;
 		if (bx::open(&reader, filePath) )
 		{
-			bx::read(&reader, settings);
+			bx::read(&reader, settings, bx::ErrorAssert{});
 			bx::close(&reader);
 
 			if (!bx::fromString(&m_transitionTime, settings.get("view/transition") ) )
@@ -849,7 +849,7 @@ struct View
 			bx::FileWriter writer;
 			if (bx::open(&writer, filePath) )
 			{
-				bx::write(&writer, settings);
+				bx::write(&writer, settings, bx::ErrorAssert{});
 				bx::close(&writer);
 			}
 		}
@@ -1861,8 +1861,11 @@ int _main_(int _argc, char** _argv)
 						{
 							const int32_t itemCount = int32_t(view.m_fileList.size() );
 
-							int32_t start, end;
-							ImGui::CalcListClipping(itemCount, itemHeight, &start, &end);
+							ImGuiListClipper clipper;
+							clipper.Begin(itemCount, itemHeight);
+
+							int32_t start = clipper.DisplayStart;
+							int32_t end   = clipper.DisplayEnd;
 
 							const int32_t index = int32_t(view.m_fileIndex);
 							if (index <= start)
@@ -1873,9 +1876,6 @@ int _main_(int _argc, char** _argv)
 							{
 								ImGui::SetScrollY(ImGui::GetScrollY() + (index-end+1)*itemHeight);
 							}
-
-							ImGuiListClipper clipper;
-							clipper.Begin(itemCount, itemHeight);
 
 							while (clipper.Step() )
 							{

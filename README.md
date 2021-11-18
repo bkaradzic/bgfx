@@ -480,6 +480,14 @@ target="_blank"><img src="http://img.youtube.com/vi/cwDR0Wj3LO4/0.jpg"
 alt="Off The Road Unleashed"
 width="640" height="480" border="0" /></a>
 
+## Guild Wars 2
+
+Guild Wars 2 is an online role-playing game with fast-paced action combat, a rich and detailed universe of stories, awe-inspiring landscapes to explore, two challenging player vs. player modes—and no subscription fees!
+
+https://www.guildwars2.com/
+
+![Guild-Wars-2-wallpaper](https://d3b4yo2b5lbfy.cloudfront.net/wp-content/uploads/wallpapers/GuildWars2-01-800x600.jpg)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 

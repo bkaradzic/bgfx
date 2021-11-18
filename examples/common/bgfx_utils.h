@@ -6,11 +6,11 @@
 #ifndef BGFX_UTILS_H_HEADER_GUARD
 #define BGFX_UTILS_H_HEADER_GUARD
 
+#include <bx/bounds.h>
 #include <bx/pixelformat.h>
 #include <bx/string.h>
 #include <bgfx/bgfx.h>
 #include <bimg/bimg.h>
-#include "bounds.h"
 
 #include <tinystl/allocator.h>
 #include <tinystl/vector.h>
@@ -92,9 +92,9 @@ struct Primitive
 	uint32_t m_startVertex;
 	uint32_t m_numVertices;
 
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
+	bx::Sphere m_sphere;
+	bx::Aabb   m_aabb;
+	bx::Obb    m_obb;
 };
 
 typedef stl::vector<Primitive> PrimitiveArray;
@@ -110,9 +110,9 @@ struct Group
 	uint8_t* m_vertices;
 	uint32_t m_numIndices;
 	uint16_t* m_indices;
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
+	bx::Sphere m_sphere;
+	bx::Aabb   m_aabb;
+	bx::Obb    m_obb;
 	PrimitiveArray m_prims;
 };
 typedef stl::vector<Group> GroupArray;

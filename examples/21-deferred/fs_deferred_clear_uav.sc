@@ -12,5 +12,5 @@ IMAGE2D_RW(i_light, rgba8, 2);
 void main()
 {
     ivec2 coord = ivec2(gl_FragCoord.xy);
-    imageStore(i_light, coord, vec4(0.0, 0.0, 0.0, 0.0));
+    imageStore(i_light, coord, vec4(0.0, 0.0, 0.0, 0.0) );
 }

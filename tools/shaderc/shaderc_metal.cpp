@@ -220,8 +220,10 @@ namespace bgfx { namespace metal
 	{
 		uint16_t size = 0;
 
-		uint16_t count = static_cast<uint16_t>(uniforms.size() );
-		bx::write(_writer, count);
+		bx::ErrorAssert err;
+
+		uint16_t count = uint16_t(uniforms.size());
+		bx::write(_writer, count, &err);
 
 		uint32_t fragmentBit = isFragmentShader ? kUniformFragmentBit : 0;
 		for (uint16_t ii = 0; ii < count; ++ii)
@@ -231,15 +233,15 @@ namespace bgfx { namespace metal
 			size += un.regCount*16;
 
 			uint8_t nameSize = (uint8_t)un.name.size();
-			bx::write(_writer, nameSize);
-			bx::write(_writer, un.name.c_str(), nameSize);
-			bx::write(_writer, uint8_t(un.type | fragmentBit) );
-			bx::write(_writer, un.num);
-			bx::write(_writer, un.regIndex);
-			bx::write(_writer, un.regCount);
-			bx::write(_writer, un.texComponent);
-			bx::write(_writer, un.texDimension);
-			bx::write(_writer, un.texFormat);
+			bx::write(_writer, nameSize, &err);
+			bx::write(_writer, un.name.c_str(), nameSize, &err);
+			bx::write(_writer, uint8_t(un.type | fragmentBit), &err);
+			bx::write(_writer, un.num, &err);
+			bx::write(_writer, un.regIndex, &err);
+			bx::write(_writer, un.regCount, &err);
+			bx::write(_writer, un.texComponent, &err);
+			bx::write(_writer, un.texDimension, &err);
+			bx::write(_writer, un.texFormat, &err);
 
 			BX_TRACE("%s, %s, %d, %d, %d"
 				, un.name.c_str()
@@ -540,6 +542,8 @@ namespace bgfx { namespace metal
 					}
 					uint16_t size = writeUniformArray( _writer, uniforms, _options.shaderType == 'f');
 
+					bx::Error err;
+
 					if (_version == BX_MAKEFOURCC('M', 'T', 'L', 0) )
 					{
 						spirv_cross::CompilerMSL msl(std::move(spirv) );
@@ -624,42 +628,42 @@ namespace bgfx { namespace metal
 							for (int i = 0; i < 3; ++i)
 							{
 								uint16_t dim = (uint16_t)msl.get_execution_mode_argument(spv::ExecutionMode::ExecutionModeLocalSize, i);
-								bx::write(_writer, dim);
+								bx::write(_writer, dim, &err);
 							}
 						}
 
 						uint32_t shaderSize = (uint32_t)source.size();
-						bx::write(_writer, shaderSize);
-						bx::write(_writer, source.c_str(), shaderSize);
+						bx::write(_writer, shaderSize, &err);
+						bx::write(_writer, source.c_str(), shaderSize, &err);
 						uint8_t nul = 0;
-						bx::write(_writer, nul);
+						bx::write(_writer, nul, &err);
 					}
 					else
 					{
 						uint32_t shaderSize = (uint32_t)spirv.size() * sizeof(uint32_t);
-						bx::write(_writer, shaderSize);
-						bx::write(_writer, spirv.data(), shaderSize);
+						bx::write(_writer, shaderSize, &err);
+						bx::write(_writer, spirv.data(), shaderSize, &err);
 						uint8_t nul = 0;
-						bx::write(_writer, nul);
+						bx::write(_writer, nul, &err);
 					}
 					//
 					const uint8_t numAttr = (uint8_t)program->getNumLiveAttributes();
-					bx::write(_writer, numAttr);
+					bx::write(_writer, numAttr, &err);
 
 					for (uint8_t ii = 0; ii < numAttr; ++ii)
 					{
 						bgfx::Attrib::Enum attr = toAttribEnum(program->getAttributeName(ii) );
 						if (bgfx::Attrib::Count != attr)
 						{
-							bx::write(_writer, bgfx::attribToId(attr) );
+							bx::write(_writer, bgfx::attribToId(attr), &err);
 						}
 						else
 						{
-							bx::write(_writer, uint16_t(UINT16_MAX) );
+							bx::write(_writer, uint16_t(UINT16_MAX), &err);
 						}
 					}
 
-					bx::write(_writer, size);
+					bx::write(_writer, size, &err);
 				}
 			}
 		}

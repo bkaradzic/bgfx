@@ -482,6 +482,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_debug_printf 1\n"
             "#define GL_EXT_fragment_shading_rate 1\n"
             "#define GL_EXT_shared_memory_block 1\n"
+            "#define GL_EXT_shader_integer_mix 1\n"
 
             // GL_KHR_shader_subgroup
             "#define GL_KHR_shader_subgroup_basic 1\n"

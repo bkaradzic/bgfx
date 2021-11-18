@@ -4017,11 +4017,11 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             txsample->getSequence().push_back(txcombine);
             txsample->getSequence().push_back(argCoord);
 
-            if (argBias != nullptr)
-                txsample->getSequence().push_back(argBias);
-
             if (argOffset != nullptr)
                 txsample->getSequence().push_back(argOffset);
+
+            if (argBias != nullptr)
+              txsample->getSequence().push_back(argBias);
 
             node = convertReturn(txsample, sampler);
 

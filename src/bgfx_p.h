@@ -8,16 +8,19 @@
 
 #include <bx/platform.h>
 
-#ifndef BGFX_CONFIG_DEBUG
-#	define BGFX_CONFIG_DEBUG 0
+#ifndef BX_CONFIG_DEBUG
+#	error "BX_CONFIG_DEBUG must be defined in build script!"
 #endif // BGFX_CONFIG_DEBUG
 
-#if BGFX_CONFIG_DEBUG || BX_COMPILER_CLANG_ANALYZER
-#	define BX_TRACE _BX_TRACE
-#	define BX_WARN  _BX_WARN
-#	define BX_ASSERT _BX_ASSERT
-#	define BX_CONFIG_ALLOCATOR_DEBUG 1
-#endif // BGFX_CONFIG_DEBUG
+#define BGFX_CONFIG_DEBUG BX_CONFIG_DEBUG
+
+#if BX_CONFIG_DEBUG
+#	define BX_TRACE  _BGFX_TRACE
+#	define BX_WARN   _BGFX_WARN
+#	define BX_ASSERT _BGFX_ASSERT
+#endif // BX_CONFIG_DEBUG
+
+#	define BX_ASSERT2 _BGFX_ASSERT
 
 #include <bgfx/bgfx.h>
 #include "config.h"
@@ -67,7 +70,7 @@
 namespace bgfx
 {
 #if BX_COMPILER_CLANG_ANALYZER
-	void __attribute__( (analyzer_noreturn) ) fatal(Fatal::Enum _code, const char* _format, ...);
+	void __attribute__( (analyzer_noreturn) ) fatal(const char* _filePath, uint16_t _line, Fatal::Enum _code, const char* _format, ...);
 #else
 	void fatal(const char* _filePath, uint16_t _line, Fatal::Enum _code, const char* _format, ...);
 #endif // BX_COMPILER_CLANG_ANALYZER
@@ -78,12 +81,12 @@ namespace bgfx
 	inline bool operator==(const UniformHandle& _lhs,    const UniformHandle&    _rhs) { return _lhs.idx == _rhs.idx; }
 }
 
-#define _BX_TRACE(_format, ...)                                                         \
+#define _BGFX_TRACE(_format, ...)                                                       \
 	BX_MACRO_BLOCK_BEGIN                                                                \
 		bgfx::trace(__FILE__, uint16_t(__LINE__), "BGFX " _format "\n", ##__VA_ARGS__); \
 	BX_MACRO_BLOCK_END
 
-#define _BX_WARN(_condition, _format, ...)            \
+#define _BGFX_WARN(_condition, _format, ...)          \
 	BX_MACRO_BLOCK_BEGIN                              \
 		if (!BX_IGNORE_C4127(_condition) )            \
 		{                                             \
@@ -91,11 +94,11 @@ namespace bgfx
 		}                                             \
 	BX_MACRO_BLOCK_END
 
-#define _BX_ASSERT(_condition, _format, ...)                                                            \
+#define _BGFX_ASSERT(_condition, _format, ...)                                                          \
 	BX_MACRO_BLOCK_BEGIN                                                                                \
 		if (!BX_IGNORE_C4127(_condition) )                                                              \
 		{                                                                                               \
-			BX_TRACE("CHECK " _format, ##__VA_ARGS__);                                                  \
+			BX_TRACE("ASSERT " _format, ##__VA_ARGS__);                                                 \
 			bgfx::fatal(__FILE__, uint16_t(__LINE__), bgfx::Fatal::DebugCheck, _format, ##__VA_ARGS__); \
 		}                                                                                               \
 	BX_MACRO_BLOCK_END
@@ -112,24 +115,14 @@ namespace bgfx
 	if (!BX_IGNORE_C4127(_condition) )                                  \
 	{                                                                   \
 		BX_ERROR_SET(_err, _result, _msg);                              \
-		BX_TRACE("%.*s: 0x%08x '%.*s' - " _format                       \
-			, bxErrorScope.getName().getLength()                        \
-			, bxErrorScope.getName().getPtr()                           \
+		BX_TRACE("%S: 0x%08x '%S' - " _format                           \
+			, &bxErrorScope.getName()                                   \
 			, _err->get().code                                          \
-			, _err->getMessage().getLength()                            \
-			, _err->getMessage().getPtr()                               \
+			, &_err->getMessage()                                       \
 			, ##__VA_ARGS__                                             \
 			);                                                          \
 		return;                                                         \
 	}
-
-#define BGFX_ERROR_ASSERT(_err)            \
-	BX_ASSERT((_err)->isOk()               \
-		, "ERROR: 0x%08x '%.*s'."          \
-		, (_err)->get().code               \
-		, (_err)->getMessage().getLength() \
-		, (_err)->getMessage().getPtr()    \
-		);
 
 #include <bx/allocator.h>
 #include <bx/bx.h>
@@ -226,8 +219,6 @@ namespace stl = std;
 
 #if BX_PLATFORM_ANDROID
 #	include <android/native_window.h>
-#elif BX_PLATFORM_WINDOWS
-#	include <windows.h>
 #endif // BX_PLATFORM_*
 
 #define BGFX_MAX_COMPUTE_BINDINGS BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
@@ -304,6 +295,7 @@ namespace bgfx
 	extern PlatformData g_platformData;
 	extern bool g_platformDataChangedSinceReset;
 	extern void isFrameBufferValid(uint8_t _num, const Attachment* _attachment, bx::Error* _err);
+	extern void isIdentifierValid(const bx::StringView& _name, bx::Error* _err);
 
 #if BGFX_CONFIG_MAX_DRAW_CALLS < (64<<10)
 	typedef uint16_t RenderItemCount;
@@ -792,7 +784,7 @@ namespace bgfx
 	const char* getUniformTypeName(UniformType::Enum _enum);
 	UniformType::Enum nameToUniformTypeEnum(const char* _name);
 	const char* getPredefinedUniformName(PredefinedUniform::Enum _enum);
-	PredefinedUniform::Enum nameToPredefinedUniformEnum(const char* _name);
+	PredefinedUniform::Enum nameToPredefinedUniformEnum(const bx::StringView& _name);
 
 	class CommandBuffer
 	{
@@ -1891,7 +1883,12 @@ namespace bgfx
 
 		bool isReadBack() const
 		{
-			return 0 != (m_flags&BGFX_TEXTURE_READ_BACK);
+			return 0 != (m_flags & BGFX_TEXTURE_READ_BACK);
+		}
+
+		bool isBlitDst() const
+		{
+			return 0 != (m_flags & BGFX_TEXTURE_BLIT_DST);
 		}
 
 		bool isCubeMap() const
@@ -4025,13 +4022,13 @@ namespace bgfx
 				if (!isShaderVerLess(magic, 8) )
 				{
 					uint16_t texInfo;
-					bx::read(&reader, texInfo);
+					bx::read(&reader, texInfo, &err);
 				}
 
 				if (!isShaderVerLess(magic, 10) )
 				{
 					uint16_t texFormat = 0;
-					bx::read(&reader, texFormat);
+					bx::read(&reader, texFormat, &err);
 				}
 
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
@@ -4080,7 +4077,12 @@ namespace bgfx
 		void setName(Handle _handle, const bx::StringView& _name)
 		{
 			char tmp[1024];
-			uint16_t len = 1+(uint16_t)bx::snprintf(tmp, BX_COUNTOF(tmp), "%sH %d: %.*s", getTypeName(_handle), _handle.idx, _name.getLength(), _name.getPtr() );
+			uint16_t len = 1+(uint16_t)bx::snprintf(tmp, BX_COUNTOF(tmp)
+				, "%sH %d: %S"
+				, getTypeName(_handle)
+				, _handle.idx
+				, &_name
+				);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::SetName);
 			cmdbuf.write(_handle);
@@ -4552,9 +4554,8 @@ namespace bgfx
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			bx::Error err;
+			bx::ErrorAssert err;
 			isFrameBufferValid(_num, _attachment, &err);
-			BGFX_ERROR_ASSERT(&err);
 
 			if (!err.isOk() )
 			{
@@ -4692,10 +4693,14 @@ namespace bgfx
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			if (PredefinedUniform::Count != nameToPredefinedUniformEnum(_name) )
 			{
-				BX_TRACE("%s is predefined uniform name.", _name);
-				return BGFX_INVALID_HANDLE;
+				bx::ErrorAssert err;
+				isIdentifierValid(_name, &err);
+
+				if (!err.isOk() )
+				{
+					return BGFX_INVALID_HANDLE;
+				}
 			}
 
 			_num  = bx::max<uint16_t>(1, _num);
@@ -4916,7 +4921,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setViewClear(ViewId _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil) )
 		{
-			BX_ASSERT(bx::equal(_depth, bx::clamp(_depth, 0.0f, 1.0f), 0.0001f)
+			BX_ASSERT(bx::isEqual(_depth, bx::clamp(_depth, 0.0f, 1.0f), 0.0001f)
 				, "Clear depth value must be between 0.0 and 1.0 (_depth %f)."
 				, _depth
 				);
@@ -4926,7 +4931,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setViewClear(ViewId _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7) )
 		{
-			BX_ASSERT(bx::equal(_depth, bx::clamp(_depth, 0.0f, 1.0f), 0.0001f)
+			BX_ASSERT(bx::isEqual(_depth, bx::clamp(_depth, 0.0f, 1.0f), 0.0001f)
 				, "Clear depth value must be between 0.0 and 1.0 (_depth %f)."
 				, _depth
 				);

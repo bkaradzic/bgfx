@@ -327,8 +327,8 @@ public:
 
 	void reserve(size_t count) SPIRV_CROSS_NOEXCEPT
 	{
-		if ((count > std::numeric_limits<size_t>::max() / sizeof(T)) ||
-		    (count > std::numeric_limits<size_t>::max() / 2))
+		if ((count > (std::numeric_limits<size_t>::max)() / sizeof(T)) ||
+		    (count > (std::numeric_limits<size_t>::max)() / 2))
 		{
 			// Only way this should ever happen is with garbage input, terminate.
 			std::terminate();
@@ -546,7 +546,7 @@ class ObjectPoolBase
 {
 public:
 	virtual ~ObjectPoolBase() = default;
-	virtual void free_opaque(void *ptr) = 0;
+	virtual void deallocate_opaque(void *ptr) = 0;
 };
 
 template <typename T>
@@ -580,15 +580,15 @@ public:
 		return ptr;
 	}
 
-	void free(T *ptr)
+	void deallocate(T *ptr)
 	{
 		ptr->~T();
 		vacants.push_back(ptr);
 	}
 
-	void free_opaque(void *ptr) override
+	void deallocate_opaque(void *ptr) override
 	{
-		free(static_cast<T *>(ptr));
+		deallocate(static_cast<T *>(ptr));
 	}
 
 	void clear()

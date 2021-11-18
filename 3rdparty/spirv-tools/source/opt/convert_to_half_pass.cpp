@@ -340,7 +340,7 @@ Pass::Status ConvertToHalfPass::ProcessImpl() {
   Pass::ProcessFunction pfn = [this](Function* fp) {
     return ProcessFunction(fp);
   };
-  bool modified = context()->ProcessEntryPointCallTree(pfn);
+  bool modified = context()->ProcessReachableCallTree(pfn);
   // If modified, make sure module has Float16 capability
   if (modified) context()->AddCapability(SpvCapabilityFloat16);
   // Remove all RelaxedPrecision decorations from instructions and globals

@@ -52,6 +52,7 @@
 #endif
 
 #ifdef SIMD_WASM
+#undef __DEPRECATED
 #include <wasm_simd128.h>
 #endif
 

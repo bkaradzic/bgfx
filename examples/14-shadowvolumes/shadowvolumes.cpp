@@ -919,9 +919,9 @@ struct Group
 	uint8_t* m_vertices;
 	uint32_t m_numIndices;
 	uint16_t* m_indices;
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
+	bx::Sphere m_sphere;
+	bx::Aabb   m_aabb;
+	bx::Obb    m_obb;
 	PrimitiveArray m_prims;
 	uint32_t m_numEdges;
 	Edge* m_edges;
@@ -990,9 +990,9 @@ struct Mesh
 			group.m_ibh = bgfx::createIndexBuffer(mem);
 
 			group.m_sphere = it->m_sphere;
-			group.m_aabb = it->m_aabb;
-			group.m_obb = it->m_obb;
-			group.m_prims = it->m_prims;
+			group.m_aabb   = it->m_aabb;
+			group.m_obb    = it->m_obb;
+			group.m_prims  = it->m_prims;
 
 			m_groups.push_back(group);
 		}
@@ -1067,7 +1067,6 @@ struct Model
 			::setRenderState(_renderState);
 
 			// Submit
-			BX_ASSERT(bgfx::kInvalidHandle != m_program, "Error, program is not set.");
 			::submit(_viewId, m_program);
 		}
 	}
@@ -1686,7 +1685,7 @@ bool clipTest(const float* _planes, uint8_t _planeNum, const Mesh& _mesh, const 
 	{
 		const Group& group = *it;
 
-		Sphere sphere = group.m_sphere;
+		bx::Sphere sphere = group.m_sphere;
 		sphere.center.x = sphere.center.x * scale + _translate[0];
 		sphere.center.y = sphere.center.y * scale + _translate[1];
 		sphere.center.z = sphere.center.z * scale + _translate[2];

@@ -7,6 +7,7 @@ static const SpvCapability pygen_variable_caps_ArbitraryPrecisionFloatingPointIN
 static const SpvCapability pygen_variable_caps_AsmINTEL[] = {SpvCapabilityAsmINTEL};
 static const SpvCapability pygen_variable_caps_AtomicFloat16AddEXTAtomicFloat32AddEXTAtomicFloat64AddEXT[] = {SpvCapabilityAtomicFloat16AddEXT, SpvCapabilityAtomicFloat32AddEXT, SpvCapabilityAtomicFloat64AddEXT};
 static const SpvCapability pygen_variable_caps_AtomicFloat16MinMaxEXTAtomicFloat32MinMaxEXTAtomicFloat64MinMaxEXT[] = {SpvCapabilityAtomicFloat16MinMaxEXT, SpvCapabilityAtomicFloat32MinMaxEXT, SpvCapabilityAtomicFloat64MinMaxEXT};
+static const SpvCapability pygen_variable_caps_BindlessTextureNV[] = {SpvCapabilityBindlessTextureNV};
 static const SpvCapability pygen_variable_caps_BlockingPipesINTEL[] = {SpvCapabilityBlockingPipesINTEL};
 static const SpvCapability pygen_variable_caps_CooperativeMatrixNV[] = {SpvCapabilityCooperativeMatrixNV};
 static const SpvCapability pygen_variable_caps_DemoteToHelperInvocationEXT[] = {SpvCapabilityDemoteToHelperInvocationEXT};
@@ -498,6 +499,13 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"EndInvocationInterlockEXT", SpvOpEndInvocationInterlockEXT, 3, pygen_variable_caps_FragmentShaderSampleInterlockEXTFragmentShaderPixelInterlockEXTFragmentShaderShadingRateInterlockEXT, 0, {}, 0, 0, 1, pygen_variable_exts_SPV_EXT_fragment_shader_interlock, 0xffffffffu, 0xffffffffu},
   {"DemoteToHelperInvocationEXT", SpvOpDemoteToHelperInvocationEXT, 1, pygen_variable_caps_DemoteToHelperInvocationEXT, 0, {}, 0, 0, 1, pygen_variable_exts_SPV_EXT_demote_to_helper_invocation, 0xffffffffu, 0xffffffffu},
   {"IsHelperInvocationEXT", SpvOpIsHelperInvocationEXT, 1, pygen_variable_caps_DemoteToHelperInvocationEXT, 2, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID}, 1, 1, 1, pygen_variable_exts_SPV_EXT_demote_to_helper_invocation, 0xffffffffu, 0xffffffffu},
+  {"ConvertUToImageNV", SpvOpConvertUToImageNV, 1, pygen_variable_caps_BindlessTextureNV, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"ConvertUToSamplerNV", SpvOpConvertUToSamplerNV, 1, pygen_variable_caps_BindlessTextureNV, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"ConvertImageToUNV", SpvOpConvertImageToUNV, 1, pygen_variable_caps_BindlessTextureNV, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"ConvertSamplerToUNV", SpvOpConvertSamplerToUNV, 1, pygen_variable_caps_BindlessTextureNV, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"ConvertUToSampledImageNV", SpvOpConvertUToSampledImageNV, 1, pygen_variable_caps_BindlessTextureNV, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"ConvertSampledImageToUNV", SpvOpConvertSampledImageToUNV, 1, pygen_variable_caps_BindlessTextureNV, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"SamplerImageAddressingModeNV", SpvOpSamplerImageAddressingModeNV, 1, pygen_variable_caps_BindlessTextureNV, 1, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SubgroupShuffleINTEL", SpvOpSubgroupShuffleINTEL, 1, pygen_variable_caps_SubgroupShuffleINTEL, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SubgroupShuffleDownINTEL", SpvOpSubgroupShuffleDownINTEL, 1, pygen_variable_caps_SubgroupShuffleINTEL, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SubgroupShuffleUpINTEL", SpvOpSubgroupShuffleUpINTEL, 1, pygen_variable_caps_SubgroupShuffleINTEL, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},

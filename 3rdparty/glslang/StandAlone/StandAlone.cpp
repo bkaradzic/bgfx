@@ -2,6 +2,7 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2013-2016 LunarG, Inc.
 // Copyright (C) 2016-2020 Google, Inc.
+// Modifications Copyright(C) 2021 Advanced Micro Devices, Inc.All rights reserved.
 //
 // All rights reserved.
 //
@@ -64,6 +65,8 @@
 
 // Build-time generated includes
 #include "glslang/build_info.h"
+
+#include "glslang/glsl_intrinsic_header.h"
 
 extern "C" {
     GLSLANG_EXPORT void ShOutputHtml();
@@ -263,6 +266,7 @@ protected:
 
 // Track the user's #define and #undef from the command line.
 TPreamble UserPreamble;
+std::string PreambleString;
 
 //
 // Create the default name for saving a binary if -o is not provided.
@@ -1204,8 +1208,17 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                        "Use '-e <name>'.\n");
             shader->setSourceEntryPoint(sourceEntryPointName);
         }
+
+        std::string intrinsicString = getIntrinsic(compUnit.text, compUnit.count);
+
+        PreambleString = "";
         if (UserPreamble.isSet())
-            shader->setPreamble(UserPreamble.get());
+            PreambleString.append(UserPreamble.get());
+
+        if (!intrinsicString.empty())
+            PreambleString.append(intrinsicString);
+
+        shader->setPreamble(PreambleString.c_str());
         shader->addProcesses(Processes);
 
 #ifndef GLSLANG_WEB

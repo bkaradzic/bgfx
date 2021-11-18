@@ -40,6 +40,10 @@ bool IsDebugDeclareOrValue(Instruction* di) {
 Pass::Status CopyPropagateArrays::Process() {
   bool modified = false;
   for (Function& function : *get_module()) {
+    if (function.IsDeclaration()) {
+      continue;
+    }
+
     BasicBlock* entry_bb = &*function.begin();
 
     for (auto var_inst = entry_bb->begin(); var_inst->opcode() == SpvOpVariable;

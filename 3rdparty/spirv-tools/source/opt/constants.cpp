@@ -217,7 +217,8 @@ Instruction* ConstantManager::BuildInstructionAndAddToModule(
   auto* new_inst_ptr = new_inst.get();
   *pos = pos->InsertBefore(std::move(new_inst));
   ++(*pos);
-  context()->get_def_use_mgr()->AnalyzeInstDefUse(new_inst_ptr);
+  if (context()->AreAnalysesValid(IRContext::Analysis::kAnalysisDefUse))
+    context()->get_def_use_mgr()->AnalyzeInstDefUse(new_inst_ptr);
   MapConstantToInst(new_const, new_inst_ptr);
   return new_inst_ptr;
 }

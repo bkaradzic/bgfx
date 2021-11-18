@@ -3029,11 +3029,14 @@ void TParseContext::constantValueCheck(TIntermTyped* node, const char* token)
 
 //
 // Both test, and if necessary spit out an error, to see if the node is really
-// an integer.
+// a 32-bit integer or can implicitly convert to one.
 //
 void TParseContext::integerCheck(const TIntermTyped* node, const char* token)
 {
-    if ((node->getBasicType() == EbtInt || node->getBasicType() == EbtUint) && node->isScalar())
+    auto from_type = node->getBasicType();
+    if ((from_type == EbtInt || from_type == EbtUint ||
+         intermediate.canImplicitlyPromote(from_type, EbtInt, EOpNull) ||
+         intermediate.canImplicitlyPromote(from_type, EbtUint, EOpNull)) && node->isScalar())
         return;
 
     error(node->getLoc(), "scalar integer expression required", token, "");
@@ -7691,7 +7694,13 @@ TIntermTyped* TParseContext::addConstructor(const TSourceLoc& loc, TIntermNode* 
             return nullptr;
     }
 
-    return intermediate.setAggregateOperator(aggrNode, op, type, loc);
+    TIntermTyped *ret_node = intermediate.setAggregateOperator(aggrNode, op, type, loc);
+
+    TIntermAggregate *agg_node = ret_node->getAsAggregate();
+    if (agg_node && (agg_node->isVector() || agg_node->isArray() || agg_node->isMatrix()))
+        agg_node->updatePrecision();
+
+    return ret_node;
 }
 
 // Function for constructor implementation. Calls addUnaryMath with appropriate EOp value
@@ -9237,10 +9246,13 @@ TIntermNode* TParseContext::addSwitch(const TSourceLoc& loc, TIntermTyped* expre
         // "it is an error to have no statement between a label and the end of the switch statement."
         // The specifications were updated to remove this (being ill-defined what a "statement" was),
         // so, this became a warning.  However, 3.0 tests still check for the error.
-        if (isEsProfile() && version <= 300 && ! relaxedErrors())
+        if (isEsProfile() && (version <= 300 || version >= 320) && ! relaxedErrors())
+            error(loc, "last case/default label not followed by statements", "switch", "");
+        else if (!isEsProfile() && (version <= 430 || version >= 460))
             error(loc, "last case/default label not followed by statements", "switch", "");
         else
             warn(loc, "last case/default label not followed by statements", "switch", "");
+
 
         // emulate a break for error recovery
         lastStatements = intermediate.makeAggregate(intermediate.addBranch(EOpBreak, loc));

@@ -904,9 +904,9 @@ public:
 		{
 			bgfx::destroy(m_bokehTexture);
 		}
-		BX_ASSERT(0 < _lobeCount);
+		BX_ASSERT(0 < _lobeCount, "");
 
-		const uint32_t bokehSize = 128;
+		const int32_t bokehSize = 128;
 
 		const bgfx::Memory* mem = bgfx::alloc(bokehSize*bokehSize*4);
 		bx::memSet(mem->data, 0x00, bokehSize*bokehSize*4);
@@ -926,8 +926,7 @@ public:
 
 			// apply shape to circular distribution
 			const float shapeScale = bokehShapeFromAngle(_lobeCount, _lobeRadiusMin, radiusDelta2x, _lobeRotation, theta);
-			BX_ASSERT(_lobeRadiusMin <= shapeScale);
-			BX_ASSERT(shapeScale <= _maxRadius);
+			BX_ASSERT(_lobeRadiusMin <= shapeScale, "");
 
 			float spiralCoordX = bx::cos(theta) * (radius * shapeScale);
 			float spiralCoordY = bx::sin(theta) * (radius * shapeScale);
@@ -941,10 +940,10 @@ public:
 			int32_t pixelCoordX = int32_t(bx::floor(spiralCoordX * float(bokehSize-1) + 0.5f));
 			int32_t pixelCoordY = int32_t(bx::floor(spiralCoordY * float(bokehSize-1) + 0.5f));
 
-			BX_ASSERT(0 <= pixelCoordX);
-			BX_ASSERT(0 <= pixelCoordY);
-			BX_ASSERT(pixelCoordX < bokehSize);
-			BX_ASSERT(pixelCoordY < bokehSize);
+			BX_ASSERT(0 <= pixelCoordX, "");
+			BX_ASSERT(0 <= pixelCoordY, "");
+			BX_ASSERT(pixelCoordX < bokehSize, "");
+			BX_ASSERT(pixelCoordY < bokehSize, "");
 
 			// plot sample position, track for total samples
 			uint32_t offset = (pixelCoordY * bokehSize + pixelCoordX) * 4;

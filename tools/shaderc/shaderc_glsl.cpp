@@ -330,23 +330,25 @@ namespace bgfx { namespace glsl
 			}
 		}
 
+		bx::ErrorAssert err;
+
 		uint16_t count = (uint16_t)uniforms.size();
-		bx::write(_writer, count);
+		bx::write(_writer, count, &err);
 
 		for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
 		{
 			const Uniform& un = *it;
 			uint8_t nameSize = (uint8_t)un.name.size();
-			bx::write(_writer, nameSize);
-			bx::write(_writer, un.name.c_str(), nameSize);
+			bx::write(_writer, nameSize, &err);
+			bx::write(_writer, un.name.c_str(), nameSize, &err);
 			uint8_t uniformType = uint8_t(un.type);
-			bx::write(_writer, uniformType);
-			bx::write(_writer, un.num);
-			bx::write(_writer, un.regIndex);
-			bx::write(_writer, un.regCount);
-			bx::write(_writer, un.texComponent);
-			bx::write(_writer, un.texDimension);
-			bx::write(_writer, un.texFormat);
+			bx::write(_writer, uniformType, &err);
+			bx::write(_writer, un.num, &err);
+			bx::write(_writer, un.regIndex, &err);
+			bx::write(_writer, un.regCount, &err);
+			bx::write(_writer, un.texComponent, &err);
+			bx::write(_writer, un.texDimension, &err);
+			bx::write(_writer, un.texFormat, &err);
 
 			BX_TRACE("%s, %s, %d, %d, %d"
 				, un.name.c_str()
@@ -358,10 +360,10 @@ namespace bgfx { namespace glsl
 		}
 
 		uint32_t shaderSize = (uint32_t)bx::strLen(optimizedShader);
-		bx::write(_writer, shaderSize);
-		bx::write(_writer, optimizedShader, shaderSize);
+		bx::write(_writer, shaderSize, &err);
+		bx::write(_writer, optimizedShader, shaderSize, &err);
 		uint8_t nul = 0;
-		bx::write(_writer, nul);
+		bx::write(_writer, nul, &err);
 
 		if (_options.disasm )
 		{

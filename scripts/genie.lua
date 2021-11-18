@@ -220,7 +220,6 @@ function exampleProjectDefaults()
 	debugdir (path.join(BGFX_DIR, "examples/runtime"))
 
 	includedirs {
-		path.join(BX_DIR,   "include"),
 		path.join(BIMG_DIR, "include"),
 		path.join(BGFX_DIR, "include"),
 		path.join(BGFX_DIR, "3rdparty"),
@@ -237,8 +236,9 @@ function exampleProjectDefaults()
 		"bgfx",
 		"bimg_decode",
 		"bimg",
-		"bx",
 	}
+
+	using_bx()
 
 	if _OPTIONS["with-webgpu"] then
 		usesWebGPU()
@@ -500,9 +500,11 @@ function exampleProject(_combined, ...)
 
 end
 
-dofile "bgfx.lua"
-
 group "libs"
+dofile(path.join(BX_DIR,   "scripts/bx.lua"))
+dofile(path.join(BIMG_DIR, "scripts/bimg.lua"))
+dofile(path.join(BIMG_DIR, "scripts/bimg_decode.lua"))
+dofile "bgfx.lua"
 
 local function userdefines()
 	local defines = {}
@@ -520,11 +522,13 @@ BGFX_CONFIG = userdefines()
 
 bgfxProject("", "StaticLib", BGFX_CONFIG)
 
-dofile(path.join(BX_DIR,   "scripts/bx.lua"))
-dofile(path.join(BIMG_DIR, "scripts/bimg.lua"))
-dofile(path.join(BIMG_DIR, "scripts/bimg_decode.lua"))
+if _OPTIONS["with-shared-lib"] then
+	group "libs"
+	bgfxProject("-shared-lib", "SharedLib", BGFX_CONFIG)
+end
 
 if _OPTIONS["with-tools"] then
+	group "libs"
 	dofile(path.join(BIMG_DIR, "scripts/bimg_encode.lua"))
 end
 
@@ -584,6 +588,7 @@ or _OPTIONS["with-combined-examples"] then
 		, "43-denoise"
 		, "44-sss"
 		, "45-bokeh"
+		, "46-fsr"
 		)
 
 	-- 17-drawstress requires multithreading, does not compile for singlethreaded wasm
@@ -595,11 +600,6 @@ or _OPTIONS["with-combined-examples"] then
 	if not premake.vstudio.iswinrt() then
 		exampleProject(false, "25-c99")
 	end
-end
-
-if _OPTIONS["with-shared-lib"] then
-	group "libs"
-	bgfxProject("-shared-lib", "SharedLib", BGFX_CONFIG)
 end
 
 if _OPTIONS["with-tools"] then

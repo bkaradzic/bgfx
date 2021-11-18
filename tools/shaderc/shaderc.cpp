@@ -309,6 +309,31 @@ namespace bgfx
 		NULL
 	};
 
+	void fatal(const char* _filePath, uint16_t _line, Fatal::Enum _code, const char* _format, ...)
+	{
+		BX_UNUSED(_filePath, _line, _code);
+
+		va_list argList;
+		va_start(argList, _format);
+
+		bx::vprintf(_format, argList);
+
+		va_end(argList);
+
+		abort();
+	}
+
+	void trace(const char* _filePath, uint16_t _line, const char* _format, ...)
+	{
+		BX_UNUSED(_filePath, _line);
+
+		va_list argList;
+		va_start(argList, _format);
+
+		bx::vprintf(_format, argList);
+
+		va_end(argList);
+	}
 	Options::Options()
 		: shaderType(' ')
 		, disasm(false)
@@ -443,7 +468,7 @@ namespace bgfx
 			len = bx::vsnprintf(out, len, _format, argList);
 		}
 
-		len = bx::write(_writer, out, len);
+		len = bx::write(_writer, out, len, bx::ErrorAssert{});
 
 		va_end(argList);
 
@@ -538,8 +563,7 @@ namespace bgfx
 				len = bx::vsnprintf(out, len, _format, argList);
 			}
 
-			bx::Error err;
-			int32_t size = bx::FileWriter::write(out, len, &err);
+			int32_t size = bx::FileWriter::write(out, len, bx::ErrorAssert{});
 
 			va_end(argList);
 
@@ -584,7 +608,7 @@ namespace bgfx
 			{
 				m_size = (uint32_t)bx::getSize(&reader);
 				m_data = new char[m_size+1];
-				m_size = (uint32_t)bx::read(&reader, m_data, m_size);
+				m_size = (uint32_t)bx::read(&reader, m_data, m_size, bx::ErrorAssert{});
 				bx::close(&reader);
 
 				if (m_data[0] == '\xef'
@@ -686,7 +710,7 @@ namespace bgfx
 		bx::FileWriter out;
 		if (bx::open(&out, _filePath) )
 		{
-			bx::write(&out, _data, _size);
+			bx::write(&out, _data, _size, bx::ErrorAssert{});
 			bx::close(&out);
 		}
 	}
@@ -1352,6 +1376,7 @@ namespace bgfx
 		InOut shaderOutputs;
 		uint32_t inputHash = 0;
 		uint32_t outputHash = 0;
+		bx::ErrorAssert err;
 
 		char* data;
 		char* input;
@@ -1443,31 +1468,31 @@ namespace bgfx
 		{
 			if ('f' == _options.shaderType)
 			{
-				bx::write(_writer, BGFX_CHUNK_MAGIC_FSH);
+				bx::write(_writer, BGFX_CHUNK_MAGIC_FSH, &err);
 			}
 			else if ('v' == _options.shaderType)
 			{
-				bx::write(_writer, BGFX_CHUNK_MAGIC_VSH);
+				bx::write(_writer, BGFX_CHUNK_MAGIC_VSH, &err);
 			}
 			else
 			{
-				bx::write(_writer, BGFX_CHUNK_MAGIC_CSH);
+				bx::write(_writer, BGFX_CHUNK_MAGIC_CSH, &err);
 			}
 
-			bx::write(_writer, inputHash);
-			bx::write(_writer, outputHash);
+			bx::write(_writer, inputHash, &err);
+			bx::write(_writer, outputHash, &err);
 		}
 
 		if (raw)
 		{
 			if (profile->lang == ShadingLang::GLSL)
 			{
-				bx::write(_writer, uint16_t(0) );
+				bx::write(_writer, uint16_t(0), &err);
 
 				uint32_t shaderSize = (uint32_t)bx::strLen(input);
-				bx::write(_writer, shaderSize);
-				bx::write(_writer, input, shaderSize);
-				bx::write(_writer, uint8_t(0) );
+				bx::write(_writer, shaderSize, &err);
+				bx::write(_writer, input, shaderSize, &err);
+				bx::write(_writer, uint8_t(0), &err);
 
 				compiled = true;
 			}
@@ -1579,7 +1604,12 @@ namespace bgfx
 				{
 					if (_options.preprocessOnly)
 					{
-						bx::write(_writer, preprocessor.m_preprocessed.c_str(), (int32_t)preprocessor.m_preprocessed.size() );
+						bx::write(
+							  _writer
+							, preprocessor.m_preprocessed.c_str()
+							, (int32_t)preprocessor.m_preprocessed.size()
+							, &err
+							);
 
 						return true;
 					}
@@ -1587,9 +1617,9 @@ namespace bgfx
 					{
 						std::string code;
 
-						bx::write(_writer, BGFX_CHUNK_MAGIC_CSH);
-						bx::write(_writer, uint32_t(0) );
-						bx::write(_writer, outputHash);
+						bx::write(_writer, BGFX_CHUNK_MAGIC_CSH, &err);
+						bx::write(_writer, uint32_t(0), &err);
+						bx::write(_writer, outputHash, &err);
 
 						if (profile->lang == ShadingLang::GLSL
 						||  profile->lang == ShadingLang::ESSL)
@@ -1607,23 +1637,16 @@ namespace bgfx
 									);
 							}
 
-#if 1
 							code += preprocessor.m_preprocessed;
 
-							bx::write(_writer, uint16_t(0) );
+							bx::write(_writer, uint16_t(0), &err);
 
 							uint32_t shaderSize = (uint32_t)code.size();
-							bx::write(_writer, shaderSize);
-							bx::write(_writer, code.c_str(), shaderSize);
-							bx::write(_writer, uint8_t(0) );
+							bx::write(_writer, shaderSize, &err);
+							bx::write(_writer, code.c_str(), shaderSize, &err);
+							bx::write(_writer, uint8_t(0), &err);
 
 							compiled = true;
-#else
-							code += _comment;
-							code += preprocessor.m_preprocessed;
-
-							compiled = compileGLSLShader(cmdLine, essl, code, writer);
-#endif // 0
 						}
 						else
 						{
@@ -2108,12 +2131,14 @@ namespace bgfx
 
 				if (preprocessor.run(input) )
 				{
-					//BX_TRACE("Input file: %s", filePath);
-					//BX_TRACE("Output file: %s", outFilePath);
-
 					if (_options.preprocessOnly)
 					{
-						bx::write(_writer, preprocessor.m_preprocessed.c_str(), (int32_t)preprocessor.m_preprocessed.size() );
+						bx::write(
+							  _writer
+							, preprocessor.m_preprocessed.c_str()
+							, (int32_t)preprocessor.m_preprocessed.size()
+							, &err
+							);
 
 						return true;
 					}
@@ -2123,21 +2148,21 @@ namespace bgfx
 
 						if ('f' == _options.shaderType)
 						{
-							bx::write(_writer, BGFX_CHUNK_MAGIC_FSH);
-							bx::write(_writer, inputHash);
-							bx::write(_writer, uint32_t(0) );
+							bx::write(_writer, BGFX_CHUNK_MAGIC_FSH, &err);
+							bx::write(_writer, inputHash, &err);
+							bx::write(_writer, uint32_t(0), &err);
 						}
 						else if ('v' == _options.shaderType)
 						{
-							bx::write(_writer, BGFX_CHUNK_MAGIC_VSH);
-							bx::write(_writer, uint32_t(0) );
-							bx::write(_writer, outputHash);
+							bx::write(_writer, BGFX_CHUNK_MAGIC_VSH, &err);
+							bx::write(_writer, uint32_t(0), &err);
+							bx::write(_writer, outputHash, &err);
 						}
 						else
 						{
-							bx::write(_writer, BGFX_CHUNK_MAGIC_CSH);
-							bx::write(_writer, uint32_t(0) );
-							bx::write(_writer, outputHash);
+							bx::write(_writer, BGFX_CHUNK_MAGIC_CSH, &err);
+							bx::write(_writer, uint32_t(0), &err);
+							bx::write(_writer, outputHash, &err);
 						}
 
 						if (profile->lang == ShadingLang::GLSL
@@ -2304,7 +2329,7 @@ namespace bgfx
 											);
 									}
 
-									if (need130)
+									if (need130 || (glsl_profile >= 130))
 									{
 										bx::stringPrintf(code
 											, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
@@ -2368,6 +2393,13 @@ namespace bgfx
 											, "#extension GL_EXT_shadow_samplers : enable\n"
 											  "#define shadow2D shadow2DEXT\n"
 											  "#define shadow2DProj shadow2DProjEXT\n"
+											);
+									}
+									else
+									{
+										bx::stringPrintf(code
+											, "#define shadow2D(_sampler, _coord) texture(_sampler, _coord)\n"
+											  "#define shadow2DProj(_sampler, _coord) textureProj(_sampler, _coord)\n"
 											);
 									}
 
@@ -2441,7 +2473,7 @@ namespace bgfx
 											"		, vec4(v0.w, v1.w, v2.w, v3.w)\n"
 											"		);\n"
 											"}\n"
-											;											
+											;
 									}
 								}
 							}
@@ -2476,12 +2508,12 @@ namespace bgfx
 							{
 								code += preprocessor.m_preprocessed;
 
-								bx::write(_writer, uint16_t(0) );
+								bx::write(_writer, uint16_t(0), &err);
 
 								uint32_t shaderSize = (uint32_t)code.size();
-								bx::write(_writer, shaderSize);
-								bx::write(_writer, code.c_str(), shaderSize);
-								bx::write(_writer, uint8_t(0) );
+								bx::write(_writer, shaderSize, &err);
+								bx::write(_writer, code.c_str(), shaderSize, &err);
+								bx::write(_writer, uint8_t(0), &err);
 
 								compiled = true;
 							}
@@ -2738,7 +2770,7 @@ namespace bgfx
 			const size_t padding    = 16384;
 			uint32_t size = (uint32_t)bx::getSize(&reader);
 			char* data = new char[size+padding+1];
-			size = (uint32_t)bx::read(&reader, data, size);
+			size = (uint32_t)bx::read(&reader, data, size, bx::ErrorAssert{});
 
 			if (data[0] == '\xef'
 			&&  data[1] == '\xbb'
