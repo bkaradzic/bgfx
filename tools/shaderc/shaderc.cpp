@@ -1728,8 +1728,8 @@ namespace bgfx
 						}
 						if (hasFragColor)
 						{
-							preprocessor.writef("#define gl_FragColor bgfx_FragData0\n");
-							preprocessor.writef("out mediump vec4 bgfx_FragData0;\n");
+							preprocessor.writef("#define gl_FragColor bgfx_FragColor\n");
+							preprocessor.writef("out mediump vec4 bgfx_FragColor;\n");
 						}
 						else if (numFragData)
 						{
