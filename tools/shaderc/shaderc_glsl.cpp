@@ -75,6 +75,9 @@ namespace bgfx { namespace glsl
 			char* code = const_cast<char*>(optimizedShader);
 			strReplace(code, "gl_FragDepthEXT", "gl_FragDepth");
 
+			strReplace(code, "textureLodEXT", "texture2DLod");
+			strReplace(code, "textureGradEXT", "texture2DGrad");
+
 			strReplace(code, "texture2DLodARB", "texture2DLod");
 			strReplace(code, "texture2DLodEXT", "texture2DLod");
 			strReplace(code, "texture2DGradARB", "texture2DGrad");
