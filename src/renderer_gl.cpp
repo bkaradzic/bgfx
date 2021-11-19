@@ -6512,7 +6512,9 @@ namespace bgfx { namespace gl
 
 						uint32_t fragData = 0;
 
-						if (!bx::findIdentifierMatch(code, "gl_FragData").isEmpty() )
+						bool patchedFragData = s_renderGL->m_gles3 && !bx::findIdentifierMatch(code, "bgfx_FragData").isEmpty();
+
+						if (!patchedFragData && !bx::findIdentifierMatch(code, "gl_FragData").isEmpty() )
 						{
 							for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 							{
@@ -6543,16 +6545,22 @@ namespace bgfx { namespace gl
 
 						if (0 != fragData)
 						{
-							bx::write(&writer, &err, "out vec4 bgfx_FragData[%d];\n", fragData);
-							bx::write(&writer, "#define gl_FragData bgfx_FragData\n", &err);
+							if (!patchedFragData)
+							{
+								bx::write(&writer, &err, "out vec4 bgfx_FragData[%d];\n", fragData);
+								bx::write(&writer, "#define gl_FragData bgfx_FragData\n", &err);
+							}
 						}
-						else
+						else if (!patchedFragData)
 						{
-							bx::write(&writer
-								, "out vec4 bgfx_FragColor;\n"
-								  "#define gl_FragColor bgfx_FragColor\n"
-								, &err
-								);
+							if (bx::findIdentifierMatch(code, "bgfx_FragColor").isEmpty() )
+							{
+								bx::write(&writer
+									, "out vec4 bgfx_FragColor;\n"
+									  "#define gl_FragColor bgfx_FragColor\n"
+									, &err
+									);
+							}
 						}
 					}
 					else
