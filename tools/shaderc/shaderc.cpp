@@ -2491,6 +2491,17 @@ namespace bgfx
 							{
 								bx::stringPrintf(code, "#version %d\n", glsl_profile);
 
+								if (120 < glsl_profile)
+								{
+									if (!bx::findIdentifierMatch(input, "gl_FragColor").isEmpty() )
+									{
+										bx::stringPrintf(code
+											, "out vec4 bgfx_FragColor;\n"
+											  "#define gl_FragColor bgfx_FragColor\n"
+											);
+									}
+								}
+
 								bx::stringPrintf(code
 									, "#define texture2DLod       textureLod\n"
 									  "#define texture2DGrad      textureGrad\n"
