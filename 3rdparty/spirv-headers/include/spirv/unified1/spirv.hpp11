@@ -1600,7 +1600,7 @@ enum class Op : unsigned {
     OpUSubSatINTEL = 5596,
     OpIMul32x16INTEL = 5597,
     OpUMul32x16INTEL = 5598,
-    OpConstFunctionPointerINTEL = 5600,
+    OpConstantFunctionPointerINTEL = 5600,
     OpFunctionPointerCallINTEL = 5601,
     OpAsmTargetINTEL = 5609,
     OpAsmINTEL = 5610,
@@ -2253,7 +2253,7 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpUSubSatINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpIMul32x16INTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpUMul32x16INTEL: *hasResult = true; *hasResultType = true; break;
-    case Op::OpConstFunctionPointerINTEL: *hasResult = true; *hasResultType = true; break;
+    case Op::OpConstantFunctionPointerINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpFunctionPointerCallINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpAsmTargetINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpAsmINTEL: *hasResult = true; *hasResultType = true; break;
