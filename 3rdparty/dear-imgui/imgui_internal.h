@@ -253,12 +253,19 @@ namespace ImStb
 #endif
 
 // Debug Tools
-// Use 'Metrics->Tools->Item Picker' to break into the call-stack of a specific item.
+// Use 'Metrics/Debugger->Tools->Item Picker' to break into the call-stack of a specific item.
+// This will call IM_DEBUG_BREAK() which you may redefine yourself. See https://github.com/scottt/debugbreak for more reference.
 #ifndef IM_DEBUG_BREAK
-#if defined(__clang__)
-#define IM_DEBUG_BREAK()    __builtin_debugtrap()
-#elif defined (_MSC_VER)
+#if defined (_MSC_VER)
 #define IM_DEBUG_BREAK()    __debugbreak()
+#elif defined(__clang__)
+#define IM_DEBUG_BREAK()    __builtin_debugtrap()
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#define IM_DEBUG_BREAK()    __asm__ volatile("int $0x03")
+#elif defined(__GNUC__) && defined(__thumb__)
+#define IM_DEBUG_BREAK()    __asm__ volatile(".inst 0xde01")
+#elif defined(__GNUC__) && defined(__arm__) && !defined(__thumb__)
+#define IM_DEBUG_BREAK()    __asm__ volatile(".inst 0xe7f001f0");
 #else
 #define IM_DEBUG_BREAK()    IM_ASSERT(0)    // It is expected that you define IM_DEBUG_BREAK() into something that will break nicely in a debugger!
 #endif
@@ -1020,8 +1027,6 @@ struct IMGUI_API ImGuiInputTextState
     bool                    SelectedAllMouseLock;   // after a double-click to select all, we ignore further mouse drags to update selection
     bool                    Edited;                 // edited this frame
     ImGuiInputTextFlags     Flags;                  // copy of InputText() flags
-    ImGuiInputTextCallback  UserCallback;           // "
-    void*                   UserCallbackData;       // "
 
     ImGuiInputTextState()                   { memset(this, 0, sizeof(*this)); }
     void        ClearText()                 { CurLenW = CurLenA = 0; TextW[0] = 0; TextA[0] = 0; CursorClamp(); }
@@ -1230,9 +1235,10 @@ enum ImGuiNavHighlightFlags_
 enum ImGuiNavDirSourceFlags_
 {
     ImGuiNavDirSourceFlags_None             = 0,
-    ImGuiNavDirSourceFlags_Keyboard         = 1 << 0,
-    ImGuiNavDirSourceFlags_PadDPad          = 1 << 1,
-    ImGuiNavDirSourceFlags_PadLStick        = 1 << 2
+    ImGuiNavDirSourceFlags_RawKeyboard      = 1 << 0,   // Raw keyboard (not pulled from nav), faciliate use of some functions before we can unify nav and keys
+    ImGuiNavDirSourceFlags_Keyboard         = 1 << 1,
+    ImGuiNavDirSourceFlags_PadDPad          = 1 << 2,
+    ImGuiNavDirSourceFlags_PadLStick        = 1 << 3
 };
 
 enum ImGuiNavMoveFlags_
@@ -2526,7 +2532,7 @@ namespace ImGui
     IMGUI_API void          ClosePopupsExceptModals();
     IMGUI_API bool          IsPopupOpen(ImGuiID id, ImGuiPopupFlags popup_flags);
     IMGUI_API bool          BeginPopupEx(ImGuiID id, ImGuiWindowFlags extra_flags);
-    IMGUI_API void          BeginTooltipEx(ImGuiWindowFlags extra_flags, ImGuiTooltipFlags tooltip_flags);
+    IMGUI_API void          BeginTooltipEx(ImGuiTooltipFlags tooltip_flags, ImGuiWindowFlags extra_window_flags);
     IMGUI_API ImRect        GetPopupAllowedExtentRect(ImGuiWindow* window);
     IMGUI_API ImGuiWindow*  GetTopMostPopupModal();
     IMGUI_API ImVec2        FindBestWindowPosForPopup(ImGuiWindow* window);
