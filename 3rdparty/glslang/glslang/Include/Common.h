@@ -40,6 +40,11 @@
 #include <sstream>
 #include <algorithm>
 #include <cassert>
+#ifdef _MSC_VER
+#include <cfloat>
+#else
+#include <cmath>
+#endif
 #include <cstdio>
 #include <cstdlib>
 #include <list>
@@ -301,6 +306,34 @@ template <class T> int IntLog2(T n)
       result++;
     }
     return result;
+}
+
+inline bool IsInfinity(double x) {
+#ifdef _MSC_VER
+    switch (_fpclass(x)) {
+    case _FPCLASS_NINF:
+    case _FPCLASS_PINF:
+        return true;
+    default:
+        return false;
+    }
+#else
+    return std::isinf(x);
+#endif
+}
+
+inline bool IsNan(double x) {
+#ifdef _MSC_VER
+    switch (_fpclass(x)) {
+    case _FPCLASS_SNAN:
+    case _FPCLASS_QNAN:
+        return true;
+    default:
+        return false;
+    }
+#else
+  return std::isnan(x);
+#endif
 }
 
 } // end namespace glslang

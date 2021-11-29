@@ -177,6 +177,7 @@ const char* shaderStageName = nullptr;
 const char* variableName = nullptr;
 bool HlslEnable16BitTypes = false;
 bool HlslDX9compatible = false;
+bool HlslDxPositionW = false;
 bool DumpBuiltinSymbols = false;
 std::vector<std::string> IncludeDirectoryList;
 
@@ -662,6 +663,8 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         HlslEnable16BitTypes = true;
                     } else if (lowerword == "hlsl-dx9-compatible") {
                         HlslDX9compatible = true;
+                    } else if (lowerword == "hlsl-dx-position-w") {
+                        HlslDxPositionW = true;
                     } else if (lowerword == "auto-sampled-textures") { 
                         autoSampledTextures = true;
                     } else if (lowerword == "invert-y" ||  // synonyms
@@ -1284,6 +1287,9 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         if (Options & EOptionInvertY)
             shader->setInvertY(true);
 
+        if (HlslDxPositionW)
+            shader->setDxPositionW(true);
+
         // Set up the environment, some subsettings take precedence over earlier
         // ways of setting things.
         if (Options & EOptionSpv) {
@@ -1847,6 +1853,8 @@ void usage()
            "  --hlsl-dx9-compatible             interprets sampler declarations as a\n"
            "                                    texture/sampler combo like DirectX9 would,\n"
            "                                    and recognizes DirectX9-specific semantics\n"
+           "  --hlsl-dx-position-w              W component of SV_Position in HLSL fragment\n"
+           "                                    shaders compatible with DirectX\n"
            "  --invert-y | --iy                 invert position.Y output in vertex shader\n"
            "  --keep-uncalled | --ku            don't eliminate uncalled functions\n"
            "  --nan-clamp                       favor non-NaN operand in min, max, and clamp\n"

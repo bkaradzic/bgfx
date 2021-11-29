@@ -269,6 +269,8 @@ static glslang::EShTargetClientVersion c_shader_client_version(glslang_target_cl
     switch (client_version) {
     case GLSLANG_TARGET_VULKAN_1_1:
         return glslang::EShTargetVulkan_1_1;
+    case GLSLANG_TARGET_VULKAN_1_2:
+        return glslang::EShTargetVulkan_1_2;
     case GLSLANG_TARGET_OPENGL_450:
         return glslang::EShTargetOpenGL_450;
     default:

@@ -2469,6 +2469,14 @@ public:
                     if (*(*structure)[li].type != *(*right.structure)[ri].type)
                         return false;
                 } else {
+                    // Skip hidden members
+                    if ((*structure)[li].type->hiddenMember()) {
+                        ri--;
+                        continue;
+                    } else if ((*right.structure)[ri].type->hiddenMember()) {
+                        li--;
+                        continue;
+                    }
                     // If one of the members is something that's inconsistently declared, skip over it
                     // for now.
                     if (isGLPerVertex) {
@@ -2485,10 +2493,10 @@ public:
                 }
             // If we get here, then there should only be inconsistently declared members left
             } else if (li < structure->size()) {
-                if (!isInconsistentGLPerVertexMember((*structure)[li].type->getFieldName()))
+                if (!(*structure)[li].type->hiddenMember() && !isInconsistentGLPerVertexMember((*structure)[li].type->getFieldName()))
                     return false;
             } else {
-                if (!isInconsistentGLPerVertexMember((*right.structure)[ri].type->getFieldName()))
+                if (!(*right.structure)[ri].type->hiddenMember() && !isInconsistentGLPerVertexMember((*right.structure)[ri].type->getFieldName()))
                     return false;
             }
         }
