@@ -101,7 +101,7 @@
 
 #define IMAGE2D_WR( _name, _format, _reg)                                                 \
 	WRITEONLY FORMAT(_format) RWTexture2D<COMP_ ## _format> _name : REGISTER(u, _reg);  \
-	
+
 #define UIMAGE2D_WR(_name, _format, _reg) IMAGE2D_WR(_name, _format, _reg)
 
 #define IMAGE2D_RW( _name, _format, _reg)                            \
@@ -139,7 +139,7 @@
 
 #define UIMAGE3D_RW(_name, _format, _reg) IMAGE3D_RW(_name, _format, _reg)
 
-#if BGFX_SHADER_LANGUAGE_METAL || BGFX_SHADER_LANGUAGE_SPIRV
+#if BGFX_SHADER_LANGUAGE_METAL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_HLSL
 #define BUFFER_RO(_name, _struct, _reg) StructuredBuffer<_struct>   _name : REGISTER(t, _reg)
 #define BUFFER_RW(_name, _struct, _reg) RWStructuredBuffer <_struct> _name : REGISTER(u, _reg)
 #define BUFFER_WR(_name, _struct, _reg) BUFFER_RW(_name, _struct, _reg)
