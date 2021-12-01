@@ -427,6 +427,7 @@ flag.PciId { bits = 16 , const }
 	.Amd                 (0x1002) --- AMD adapter.
 	.Intel               (0x8086) --- Intel adapter.
 	.Nvidia              (0x10de) --- nVidia adapter.
+    .Microsoft           (0x1414) --- Microsoft adapter.
 	()
 
 flag.CubeMap { bits = 8, const }
