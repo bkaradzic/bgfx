@@ -1128,7 +1128,6 @@ namespace bgfx
 		preprocessor.setDefaultDefine("BX_PLATFORM_WINDOWS");
 		preprocessor.setDefaultDefine("BX_PLATFORM_XBOXONE");
 
-//		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_ESSL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_GLSL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_HLSL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_METAL");
@@ -1140,10 +1139,14 @@ namespace bgfx
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_VERTEX");
 
 		char glslDefine[128];
-		bx::snprintf(glslDefine, BX_COUNTOF(glslDefine)
-				, "BGFX_SHADER_LANGUAGE_GLSL=%d"
-				, (profile->lang == ShadingLang::ESSL) ? 1 : profile->id
-				);
+		if (profile->lang == ShadingLang::GLSL
+		||  profile->lang == ShadingLang::ESSL)
+		{
+			bx::snprintf(glslDefine, BX_COUNTOF(glslDefine)
+					, "BGFX_SHADER_LANGUAGE_GLSL=%d"
+					, profile->id
+					);
+		}
 
 		char hlslDefine[128];
 		if (profile->lang == ShadingLang::HLSL)
@@ -1158,12 +1161,19 @@ namespace bgfx
 		if (0 == bx::strCmpI(platform, "android") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_ANDROID=1");
-			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
+			if (profile->lang == ShadingLang::SpirV)
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
+			}
+			else
+			{
+				preprocessor.setDefine(glslDefine);
+			}
 		}
 		else if (0 == bx::strCmpI(platform, "asm.js") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_EMSCRIPTEN=1");
-			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
+			preprocessor.setDefine(glslDefine);
 		}
 		else if (0 == bx::strCmpI(platform, "ios") )
 		{
@@ -1174,7 +1184,7 @@ namespace bgfx
 			}
 			else
 			{
-				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
+				preprocessor.setDefine(glslDefine);
 			}
 		}
 		else if (0 == bx::strCmpI(platform, "linux") )
@@ -2480,6 +2490,17 @@ namespace bgfx
 							else
 							{
 								bx::stringPrintf(code, "#version %d\n", glsl_profile);
+
+								if (120 < glsl_profile)
+								{
+									if (!bx::findIdentifierMatch(input, "gl_FragColor").isEmpty() )
+									{
+										bx::stringPrintf(code
+											, "out vec4 bgfx_FragColor;\n"
+											  "#define gl_FragColor bgfx_FragColor\n"
+											);
+									}
+								}
 
 								bx::stringPrintf(code
 									, "#define texture2DLod       textureLod\n"

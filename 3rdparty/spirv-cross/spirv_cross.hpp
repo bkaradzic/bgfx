@@ -1107,7 +1107,7 @@ protected:
 	Bitset combined_decoration_for_member(const SPIRType &type, uint32_t index) const;
 	static bool is_desktop_only_format(spv::ImageFormat format);
 
-	bool image_is_comparison(const SPIRType &type, uint32_t id) const;
+	bool is_depth_image(const SPIRType &type, uint32_t id) const;
 
 	void set_extended_decoration(uint32_t id, ExtendedDecorations decoration, uint32_t value = 0);
 	uint32_t get_extended_decoration(uint32_t id, ExtendedDecorations decoration) const;
@@ -1134,6 +1134,11 @@ protected:
 	uint32_t evaluate_constant_u32(uint32_t id) const;
 
 	bool is_vertex_like_shader() const;
+
+	// Get the correct case list for the OpSwitch, since it can be either a
+	// 32 bit wide condition or a 64 bit, but the type is not embedded in the
+	// instruction itself.
+	const SmallVector<SPIRBlock::Case> &get_case_list(const SPIRBlock &block) const;
 
 private:
 	// Used only to implement the old deprecated get_entry_point() interface.

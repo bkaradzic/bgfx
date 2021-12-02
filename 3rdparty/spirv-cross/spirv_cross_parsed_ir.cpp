@@ -83,6 +83,7 @@ ParsedIR &ParsedIR::operator=(ParsedIR &&other) SPIRV_CROSS_NOEXCEPT
 		loop_iteration_depth_soft = other.loop_iteration_depth_soft;
 
 		meta_needing_name_fixup = std::move(other.meta_needing_name_fixup);
+		load_type_width = std::move(other.load_type_width);
 	}
 	return *this;
 }
@@ -115,7 +116,9 @@ ParsedIR &ParsedIR::operator=(const ParsedIR &other)
 		addressing_model = other.addressing_model;
 		memory_model = other.memory_model;
 
+
 		meta_needing_name_fixup = other.meta_needing_name_fixup;
+		load_type_width = other.load_type_width;
 
 		// Very deliberate copying of IDs. There is no default copy constructor, nor a simple default constructor.
 		// Construct object first so we have the correct allocator set-up, then we can copy object into our new pool group.

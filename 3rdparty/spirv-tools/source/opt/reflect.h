@@ -52,7 +52,7 @@ inline bool IsTypeInst(SpvOp opcode) {
 }
 inline bool IsConstantInst(SpvOp opcode) {
   return (opcode >= SpvOpConstantTrue && opcode <= SpvOpSpecConstantOp) ||
-         opcode == SpvOpConstFunctionPointerINTEL;
+         opcode == SpvOpConstantFunctionPointerINTEL;
 }
 inline bool IsCompileTimeConstantInst(SpvOp opcode) {
   return opcode >= SpvOpConstantTrue && opcode <= SpvOpConstantNull;

@@ -403,6 +403,7 @@ enum ushort BGFX_PCI_ID_SOFTWARE_RASTERIZER = 0x0001; /// Software rasterizer.
 enum ushort BGFX_PCI_ID_AMD = 0x1002; /// AMD adapter.
 enum ushort BGFX_PCI_ID_INTEL = 0x8086; /// Intel adapter.
 enum ushort BGFX_PCI_ID_NVIDIA = 0x10de; /// nVidia adapter.
+enum ushort BGFX_PCI_ID_MICROSOFT = 0x1414; /// Microsoft adapter.
 
 enum ubyte BGFX_CUBE_MAP_POSITIVE_X = 0x00; /// Cubemap +x.
 enum ubyte BGFX_CUBE_MAP_NEGATIVE_X = 0x01; /// Cubemap -x.

@@ -1604,7 +1604,7 @@ typedef enum SpvOp_ {
     SpvOpUSubSatINTEL = 5596,
     SpvOpIMul32x16INTEL = 5597,
     SpvOpUMul32x16INTEL = 5598,
-    SpvOpConstFunctionPointerINTEL = 5600,
+    SpvOpConstantFunctionPointerINTEL = 5600,
     SpvOpFunctionPointerCallINTEL = 5601,
     SpvOpAsmTargetINTEL = 5609,
     SpvOpAsmINTEL = 5610,
@@ -2257,7 +2257,7 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpUSubSatINTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpIMul32x16INTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpUMul32x16INTEL: *hasResult = true; *hasResultType = true; break;
-    case SpvOpConstFunctionPointerINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpConstantFunctionPointerINTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpFunctionPointerCallINTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpAsmTargetINTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpAsmINTEL: *hasResult = true; *hasResultType = true; break;

@@ -2227,8 +2227,6 @@ namespace bgfx { namespace gl
 			m_glslVersion = getGLString(GL_SHADING_LANGUAGE_VERSION);
 
 			{
-				int32_t glVersion = 0;
-
 				if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 				{
 					int32_t majorGlVersion = 0;
@@ -2242,15 +2240,16 @@ namespace bgfx { namespace gl
 
 					bx::fromString(&majorGlVersion, version);
 					bx::fromString(&minorGlVersion, version + 2);
-					glVersion = majorGlVersion*10 + minorGlVersion;
+					int32_t glVersion = majorGlVersion*10 + minorGlVersion;
 
 					BX_TRACE("WebGL context version %d (%d.%d).", glVersion, majorGlVersion, minorGlVersion);
-				}
 
-				m_gles3 = false
-					||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
-					|| (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) && glVersion >= 30)
-					;
+					m_gles3 = glVersion >= 30;
+				}
+				else
+				{
+					m_gles3 = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30);
+				}
 			}
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_vendorIds); ++ii)
@@ -2876,7 +2875,7 @@ namespace bgfx { namespace gl
 						|| s_extension[Extension::ARB_sampler_objects].m_supported
 						);
 
-				m_shadowSamplersSupport = !!(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				m_shadowSamplersSupport = !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
 					|| s_extension[Extension::EXT_shadow_samplers].m_supported
 					;
 
@@ -3353,8 +3352,7 @@ namespace bgfx { namespace gl
 						, at[0].mip
 						) );
 
-					if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
-					&&  !BX_ENABLED(BX_PLATFORM_IOS) )
+					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || m_gles3)
 					{
 						GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0) );
 					}
@@ -3621,7 +3619,7 @@ namespace bgfx { namespace gl
 			if (!BX_ENABLED(BX_PLATFORM_OSX) )
 			{
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-				||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+				||  m_gles3 )
 				{
 					if (m_samplerObjectSupport)
 					{
@@ -3822,7 +3820,7 @@ namespace bgfx { namespace gl
 				GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, _msaa, GL_DEPTH24_STENCIL8, _width, _height) );
 				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_msaaBackBufferRbos[0]) );
 
-				GLenum attachment = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+				GLenum attachment = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || m_gles3
 					? GL_DEPTH_STENCIL_ATTACHMENT
 					: GL_DEPTH_ATTACHMENT
 					;
@@ -3865,7 +3863,7 @@ namespace bgfx { namespace gl
 				GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0) );
 				uint32_t width  = m_resolution.width;
 				uint32_t height = m_resolution.height;
-				GLenum filter = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30)
+				GLenum filter = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || !m_gles3
 					? GL_NEAREST
 					: GL_LINEAR
 					;
@@ -3916,7 +3914,7 @@ namespace bgfx { namespace gl
 
 		void invalidateCache()
 		{
-			if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+			if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || m_gles3)
 			&&  m_samplerObjectSupport)
 			{
 				m_samplerStateCache.invalidate();
@@ -3925,7 +3923,7 @@ namespace bgfx { namespace gl
 
 		void setSamplerState(uint32_t _stage, uint32_t _numMips, uint32_t _flags, const float _rgba[4])
 		{
-			if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+			if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || m_gles3)
 			&&  m_samplerObjectSupport)
 			{
 				if (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags) )
@@ -4007,7 +4005,7 @@ namespace bgfx { namespace gl
 							GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropy) );
 						}
 
-						if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+						if (m_gles3
 						||  m_shadowSamplersSupport)
 						{
 							const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
@@ -5168,7 +5166,7 @@ namespace bgfx { namespace gl
 					GL_CHECK(glVertexAttribDivisor(loc, 0) );
 
 					uint32_t baseVertex = _baseVertex*_layout.m_stride + _layout.m_offset[attr];
-					if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) ||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31) )
+					if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) || s_renderGL->m_gles3)
 					&& (AttribType::Uint8 == type || AttribType::Int16 == type)
 					&&  !normalized)
 					{
@@ -5386,7 +5384,7 @@ namespace bgfx { namespace gl
 						, _height
 						) );
 				}
-				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3)
 				{
 					GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER
 						, msaaQuality
@@ -5796,7 +5794,7 @@ namespace bgfx { namespace gl
 
 	void TextureGL::setSamplerState(uint32_t _flags, const float _rgba[4])
 	{
-		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30)
+		if (!s_renderGL->m_gles3
 		&&  !s_textureFilter[m_textureFormat])
 		{
 			// Force point sampling when texture format doesn't support linear sampling.
@@ -5839,7 +5837,7 @@ namespace bgfx { namespace gl
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_S, s_textureAddress[(flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT]) );
 			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_T, s_textureAddress[(flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT]) );
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3
 			||  s_extension[Extension::APPLE_texture_max_level].m_supported)
 			{
 				GL_CHECK(glTexParameteri(targetMsaa, GL_TEXTURE_MAX_LEVEL, numMips-1) );
@@ -5873,7 +5871,7 @@ namespace bgfx { namespace gl
 				GL_CHECK(glTexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, s_renderGL->m_maxAnisotropy) );
 			}
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+			if (s_renderGL->m_gles3
 			||  s_renderGL->m_shadowSamplersSupport)
 			{
 				const uint32_t cmpFunc = (flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
@@ -5904,7 +5902,7 @@ namespace bgfx { namespace gl
 		GL_CHECK(glBindTexture(m_target, m_id) );
 
 		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
-		&&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
+		&&  !s_renderGL->m_gles3)
 		{
 			// GLES2 doesn't have support for sampler object.
 			setSamplerState(flags, _palette[index]);
@@ -6572,7 +6570,7 @@ namespace bgfx { namespace gl
 							);
 					}
 
-					if (!BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+					if (!s_renderGL->m_gles3)
 					{
 						bx::write(&writer
 							, "#define lowp\n"
@@ -6733,8 +6731,8 @@ namespace bgfx { namespace gl
 
 					if (0 != texture.m_rbo)
 					{
-#if !(BGFX_CONFIG_RENDERER_OPENGL >= 30 || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
-						if (GL_DEPTH_STENCIL_ATTACHMENT == attachment)
+						if (!(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) || s_renderGL->m_gles3)
+							&& GL_DEPTH_STENCIL_ATTACHMENT == attachment)
 						{
 							GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
 								, GL_DEPTH_ATTACHMENT
@@ -6748,7 +6746,6 @@ namespace bgfx { namespace gl
 								) );
 						}
 						else
-#endif
 						{
 							GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
 								, attachment
@@ -6804,7 +6801,7 @@ namespace bgfx { namespace gl
 
 			m_num = uint8_t(colorIdx);
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 31) )
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3 )
 			{
 				if (0 == colorIdx)
 				{
@@ -6984,7 +6981,10 @@ namespace bgfx { namespace gl
 			}
 
 			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
-			GL_CHECK(glReadBuffer(GL_NONE) );
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3)
+			{
+				GL_CHECK(glReadBuffer(GL_NONE) );
+			}
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderGL->m_msaaBackBufferFbo) );
 		}
 

@@ -485,6 +485,7 @@ public:
     GLSLANG_EXPORT void addUniformLocationOverride(const char* name, int loc);
     GLSLANG_EXPORT void setUniformLocationBase(int base);
     GLSLANG_EXPORT void setInvertY(bool invert);
+    GLSLANG_EXPORT void setDxPositionW(bool dxPosW);
 #ifdef ENABLE_HLSL
     GLSLANG_EXPORT void setHlslIoMapping(bool hlslIoMap);
     GLSLANG_EXPORT void setFlattenUniformArrays(bool flatten);

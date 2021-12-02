@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 11.7.0 2021-11-11
+
+### Other changes
+* Add support for targeting Vulkan 1.2 in the C API
+
 ## 11.6.0 2021-08-25
 
 ### Other changes

@@ -637,7 +637,16 @@ class ConstantManager {
   }
 
   // Returns the id of a 32-bit floating point constant with value |val|.
-  uint32_t GetFloatConst(float val);
+  uint32_t GetFloatConstId(float val);
+
+  // Returns a 32-bit float constant with the given value.
+  const Constant* GetFloatConst(float val);
+
+  // Returns the id of a 64-bit floating point constant with value |val|.
+  uint32_t GetDoubleConstId(double val);
+
+  // Returns a 64-bit float constant with the given value.
+  const Constant* GetDoubleConst(double val);
 
   // Returns the id of a 32-bit signed integer constant with value |val|.
   uint32_t GetSIntConst(int32_t val);

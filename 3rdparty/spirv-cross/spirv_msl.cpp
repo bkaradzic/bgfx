@@ -3364,16 +3364,22 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 		// It's not enough to simply avoid marking fragment outputs if the pipeline won't
 		// accept them. We can't put them in the struct at all, or otherwise the compiler
 		// complains that the outputs weren't explicitly marked.
+		// Frag depth and stencil outputs are incompatible with explicit early fragment tests.
+		// In GLSL, depth and stencil outputs are just ignored when explicit early fragment tests are required.
+		// In Metal, it's a compilation error, so we need to exclude them from the output struct.
 		if (get_execution_model() == ExecutionModelFragment && storage == StorageClassOutput && !patch &&
-		    ((is_builtin && ((bi_type == BuiltInFragDepth && !msl_options.enable_frag_depth_builtin) ||
-		                     (bi_type == BuiltInFragStencilRefEXT && !msl_options.enable_frag_stencil_ref_builtin))) ||
+		    ((is_builtin && ((bi_type == BuiltInFragDepth && (!msl_options.enable_frag_depth_builtin || uses_explicit_early_fragment_test())) ||
+		                     (bi_type == BuiltInFragStencilRefEXT && (!msl_options.enable_frag_stencil_ref_builtin || uses_explicit_early_fragment_test())))) ||
 		     (!is_builtin && !(msl_options.enable_frag_output_mask & (1 << location)))))
 		{
 			hidden = true;
 			disabled_frag_outputs.push_back(var_id);
-			// If a builtin, force it to have the proper name.
+			// If a builtin, force it to have the proper name, and mark it as not part of the output struct.
 			if (is_builtin)
+			{
 				set_name(var_id, builtin_to_glsl(bi_type, StorageClassFunction));
+				mask_stage_output_by_builtin(bi_type);
+			}
 		}
 
 		// Barycentric inputs must be emitted in stage-in, because they can have interpolation arguments.
@@ -9393,8 +9399,6 @@ static bool needs_chroma_reconstruction(const MSLConstexprSampler *constexpr_sam
 string CompilerMSL::to_function_name(const TextureFunctionNameArguments &args)
 {
 	VariableID img = args.base.img;
-	auto &imgtype = *args.base.imgtype;
-
 	const MSLConstexprSampler *constexpr_sampler = nullptr;
 	bool is_dynamic_img_sampler = false;
 	if (auto *var = maybe_get_backing_variable(img))
@@ -9408,8 +9412,9 @@ string CompilerMSL::to_function_name(const TextureFunctionNameArguments &args)
 	if (msl_options.swizzle_texture_samples && args.base.is_gather && !is_dynamic_img_sampler &&
 	    (!constexpr_sampler || !constexpr_sampler->ycbcr_conversion_enable))
 	{
-		add_spv_func_and_recompile(imgtype.image.depth ? SPVFuncImplGatherCompareSwizzle : SPVFuncImplGatherSwizzle);
-		return imgtype.image.depth ? "spvGatherCompareSwizzle" : "spvGatherSwizzle";
+		bool is_compare = comparison_ids.count(img);
+		add_spv_func_and_recompile(is_compare ? SPVFuncImplGatherCompareSwizzle : SPVFuncImplGatherSwizzle);
+		return is_compare ? "spvGatherCompareSwizzle" : "spvGatherSwizzle";
 	}
 
 	auto *combined = maybe_get<SPIRCombinedImageSampler>(img);
@@ -10021,7 +10026,7 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 				image_var = var->self;
 			}
 
-			if (image_var == 0 || !image_is_comparison(expression_type(image_var), image_var))
+			if (image_var == 0 || !is_depth_image(expression_type(image_var), image_var))
 				farg_str += ", " + to_component_argument(args.component);
 		}
 	}
@@ -11157,10 +11162,7 @@ string CompilerMSL::func_type_decl(SPIRType &type)
 			                  execution.output_vertices, ") ]] vertex");
 		break;
 	case ExecutionModelFragment:
-		entry_type = execution.flags.get(ExecutionModeEarlyFragmentTests) ||
-		                     execution.flags.get(ExecutionModePostDepthCoverage) ?
-		                 "[[ early_fragment_tests ]] fragment" :
-		                 "fragment";
+		entry_type = uses_explicit_early_fragment_test() ? "[[ early_fragment_tests ]] fragment" : "fragment";
 		break;
 	case ExecutionModelTessellationControl:
 		if (!msl_options.supports_msl_version(1, 2))
@@ -11178,6 +11180,12 @@ string CompilerMSL::func_type_decl(SPIRType &type)
 	}
 
 	return entry_type + " " + return_type;
+}
+
+bool CompilerMSL::uses_explicit_early_fragment_test()
+{
+	auto &ep_flags = get_entry_point().flags;
+	return ep_flags.get(ExecutionModeEarlyFragmentTests) || ep_flags.get(ExecutionModePostDepthCoverage);
 }
 
 // In MSL, address space qualifiers are required for all pointer or reference variables
@@ -13631,7 +13639,7 @@ string CompilerMSL::image_type_glsl(const SPIRType &type, uint32_t id)
 
 	// Bypass pointers because we need the real image struct
 	auto &img_type = get<SPIRType>(type.self).image;
-	if (image_is_comparison(type, id))
+	if (is_depth_image(type, id))
 	{
 		switch (img_type.dim)
 		{

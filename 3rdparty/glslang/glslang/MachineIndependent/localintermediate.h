@@ -290,6 +290,7 @@ public:
         resources(TBuiltInResource{}),
         numEntryPoints(0), numErrors(0), numPushConstants(0), recursive(false),
         invertY(false),
+        dxPositionW(false),
         useStorageBuffer(false),
         invariantAll(false),
         nanMinMaxClamp(false),
@@ -459,6 +460,14 @@ public:
             processes.addProcess("invert-y");
     }
     bool getInvertY() const { return invertY; }
+
+    void setDxPositionW(bool dxPosW)
+    {
+      dxPositionW = dxPosW;
+      if (dxPositionW)
+        processes.addProcess("dx-position-w");
+    }
+    bool getDxPositionW() const { return dxPositionW; }
 
 #ifdef ENABLE_HLSL
     void setSource(EShSource s) { source = s; }
@@ -1070,6 +1079,7 @@ protected:
     int numPushConstants;
     bool recursive;
     bool invertY;
+    bool dxPositionW;
     bool useStorageBuffer;
     bool invariantAll;
     bool nanMinMaxClamp;            // true if desiring min/max/clamp to favor non-NaN over NaN
