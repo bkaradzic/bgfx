@@ -926,7 +926,7 @@ static void             NavEndFrame();
 static bool             NavScoreItem(ImGuiNavItemData* result);
 static void             NavApplyItemToResult(ImGuiNavItemData* result);
 static void             NavProcessItem();
-static void             NavProcessItemForTabbingRequest(ImGuiWindow* window, ImGuiID id);
+static void             NavProcessItemForTabbingRequest(ImGuiID id);
 static ImVec2           NavCalcPreferredRefPos();
 static void             NavSaveLastChildNavWindowIntoParent(ImGuiWindow* nav_window);
 static ImGuiWindow*     NavRestoreLastChildNavWindow(ImGuiWindow* window);
@@ -2413,6 +2413,15 @@ void ImGuiListClipper::End()
     }
 }
 
+void ImGuiListClipper::ForceDisplayRangeByIndices(int item_min, int item_max)
+{
+    ImGuiListClipperData* data = (ImGuiListClipperData*)TempData;
+    IM_ASSERT(DisplayStart < 0); // Only allowed after Begin() and if there has not been a specified range yet.
+    IM_ASSERT(item_min <= item_max);
+    if (item_min < item_max)
+        data->Ranges.push_back(ImGuiListClipperRange::FromIndices(item_min, item_max));
+}
+
 bool ImGuiListClipper::Step()
 {
     ImGuiContext& g = *GImGui;
@@ -3114,7 +3123,7 @@ ImGuiID ImGuiWindow::GetIDNoKeepAlive(int n)
 ImGuiID ImGuiWindow::GetIDFromRectangle(const ImRect& r_abs)
 {
     ImGuiID seed = IDStack.back();
-    const int r_rel[4] = { (int)(r_abs.Min.x - Pos.x), (int)(r_abs.Min.y - Pos.y), (int)(r_abs.Max.x - Pos.x), (int)(r_abs.Max.y - Pos.y) };
+    ImRect r_rel = ImGui::WindowRectAbsToRel(this, r_abs);
     ImGuiID id = ImHashData(&r_rel, sizeof(r_rel), seed);
     ImGui::KeepAliveID(id);
     return id;
@@ -3271,42 +3280,46 @@ bool ImGui::IsItemHovered(ImGuiHoveredFlags flags)
     {
         if ((g.LastItemData.InFlags & ImGuiItemFlags_Disabled) && !(flags & ImGuiHoveredFlags_AllowWhenDisabled))
             return false;
-        return IsItemFocused();
+        if (!IsItemFocused())
+            return false;
+    }
+    else
+    {
+        // Test for bounding box overlap, as updated as ItemAdd()
+        ImGuiItemStatusFlags status_flags = g.LastItemData.StatusFlags;
+        if (!(status_flags & ImGuiItemStatusFlags_HoveredRect))
+            return false;
+        IM_ASSERT((flags & (ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_RootWindow | ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_NoPopupHierarchy)) == 0);   // Flags not supported by this function
+
+        // Test if we are hovering the right window (our window could be behind another window)
+        // [2021/03/02] Reworked / reverted the revert, finally. Note we want e.g. BeginGroup/ItemAdd/EndGroup to work as well. (#3851)
+        // [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to NOT test for RootWindow but this leaves us unable
+        // to use IsItemHovered() after EndChild() itself. Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was
+        // the test that has been running for a long while.
+        if (g.HoveredWindow != window && (status_flags & ImGuiItemStatusFlags_HoveredWindow) == 0)
+            if ((flags & ImGuiHoveredFlags_AllowWhenOverlapped) == 0)
+                return false;
+
+        // Test if another item is active (e.g. being dragged)
+        if ((flags & ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) == 0)
+            if (g.ActiveId != 0 && g.ActiveId != g.LastItemData.ID && !g.ActiveIdAllowOverlap && g.ActiveId != window->MoveId)
+                return false;
+
+        // Test if interactions on this window are blocked by an active popup or modal.
+        // The ImGuiHoveredFlags_AllowWhenBlockedByPopup flag will be tested here.
+        if (!IsWindowContentHoverable(window, flags))
+            return false;
+
+        // Test if the item is disabled
+        if ((g.LastItemData.InFlags & ImGuiItemFlags_Disabled) && !(flags & ImGuiHoveredFlags_AllowWhenDisabled))
+            return false;
+
+        // Special handling for calling after Begin() which represent the title bar or tab.
+        // When the window is collapsed (SkipItems==true) that last item will never be overwritten so we need to detect the case.
+        if (g.LastItemData.ID == window->MoveId && window->WriteAccessed)
+            return false;
     }
 
-    // Test for bounding box overlap, as updated as ItemAdd()
-    ImGuiItemStatusFlags status_flags = g.LastItemData.StatusFlags;
-    if (!(status_flags & ImGuiItemStatusFlags_HoveredRect))
-        return false;
-    IM_ASSERT((flags & (ImGuiHoveredFlags_AnyWindow | ImGuiHoveredFlags_RootWindow | ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_NoPopupHierarchy)) == 0);   // Flags not supported by this function
-
-    // Test if we are hovering the right window (our window could be behind another window)
-    // [2021/03/02] Reworked / reverted the revert, finally. Note we want e.g. BeginGroup/ItemAdd/EndGroup to work as well. (#3851)
-    // [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to NOT test for RootWindow but this leaves us unable
-    // to use IsItemHovered() after EndChild() itself. Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was
-    // the test that has been running for a long while.
-    if (g.HoveredWindow != window && (status_flags & ImGuiItemStatusFlags_HoveredWindow) == 0)
-        if ((flags & ImGuiHoveredFlags_AllowWhenOverlapped) == 0)
-            return false;
-
-    // Test if another item is active (e.g. being dragged)
-    if ((flags & ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) == 0)
-        if (g.ActiveId != 0 && g.ActiveId != g.LastItemData.ID && !g.ActiveIdAllowOverlap && g.ActiveId != window->MoveId)
-            return false;
-
-    // Test if interactions on this window are blocked by an active popup or modal.
-    // The ImGuiHoveredFlags_AllowWhenBlockedByPopup flag will be tested here.
-    if (!IsWindowContentHoverable(window, flags))
-        return false;
-
-    // Test if the item is disabled
-    if ((g.LastItemData.InFlags & ImGuiItemFlags_Disabled) && !(flags & ImGuiHoveredFlags_AllowWhenDisabled))
-        return false;
-
-    // Special handling for calling after Begin() which represent the title bar or tab.
-    // When the window is collapsed (SkipItems==true) that last item will never be overwritten so we need to detect the case.
-    if (g.LastItemData.ID == window->MoveId && window->WriteAccessed)
-        return false;
     return true;
 }
 
@@ -3701,7 +3714,7 @@ void ImGui::UpdateMouseMovingWindowEndFrame()
         // Find the top-most window between HoveredWindow and the top-most Modal Window.
         // This is where we can trim the popup stack.
         ImGuiWindow* modal = GetTopMostPopupModal();
-        bool hovered_window_above_modal = g.HoveredWindow && IsWindowAbove(g.HoveredWindow, modal);
+        bool hovered_window_above_modal = g.HoveredWindow && (modal == NULL || IsWindowAbove(g.HoveredWindow, modal));
         ClosePopupsOverWindow(hovered_window_above_modal ? g.HoveredWindow : modal, true);
     }
 }
@@ -4354,11 +4367,15 @@ static void AddWindowToDrawData(ImGuiWindow* window, int layer)
     }
 }
 
-// Layer is locked for the root window, however child windows may use a different viewport (e.g. extruding menu)
-static void AddRootWindowToDrawData(ImGuiWindow* window)
+static inline int GetWindowDisplayLayer(ImGuiWindow* window)
 {
-    int layer = (window->Flags & ImGuiWindowFlags_Tooltip) ? 1 : 0;
-    AddWindowToDrawData(window, layer);
+    return (window->Flags & ImGuiWindowFlags_Tooltip) ? 1 : 0;
+}
+
+// Layer is locked for the root window, however child windows may use a different viewport (e.g. extruding menu)
+static inline void AddRootWindowToDrawData(ImGuiWindow* window)
+{
+    AddWindowToDrawData(window, GetWindowDisplayLayer(window));
 }
 
 void ImDrawDataBuilder::FlattenIntoSingleLayer()
@@ -5516,7 +5533,7 @@ static bool ImGui::UpdateWindowManualResize(ImGuiWindow* window, const ImVec2& s
     {
         ImVec2 nav_resize_delta;
         if (g.NavInputSource == ImGuiInputSource_Keyboard && g.IO.KeyShift)
-            nav_resize_delta = GetNavInputAmount2d(ImGuiNavDirSourceFlags_Keyboard, ImGuiInputReadMode_Down);
+            nav_resize_delta = GetNavInputAmount2d(ImGuiNavDirSourceFlags_RawKeyboard, ImGuiInputReadMode_Down);
         if (g.NavInputSource == ImGuiInputSource_Gamepad)
             nav_resize_delta = GetNavInputAmount2d(ImGuiNavDirSourceFlags_PadDPad, ImGuiInputReadMode_Down);
         if (nav_resize_delta.x != 0.0f || nav_resize_delta.y != 0.0f)
@@ -6396,9 +6413,12 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
             // Mark them as collapsed so commands are skipped earlier (we can't manually collapse them because they have no title bar).
             IM_ASSERT((flags & ImGuiWindowFlags_NoTitleBar) != 0);
             if (!(flags & ImGuiWindowFlags_AlwaysAutoResize) && window->AutoFitFramesX <= 0 && window->AutoFitFramesY <= 0) // FIXME: Doesn't make sense for ChildWindow??
-                if (!g.LogEnabled)
+            {
+                const bool nav_request = (flags & ImGuiWindowFlags_NavFlattened) && (g.NavAnyRequest && g.NavWindow && g.NavWindow->RootWindowForNav == window->RootWindowForNav);
+                if (!g.LogEnabled && !nav_request)
                     if (window->OuterRectClipped.Min.x >= window->OuterRectClipped.Max.x || window->OuterRectClipped.Min.y >= window->OuterRectClipped.Max.y)
                         window->HiddenFramesCanSkipItems = 1;
+            }
 
             // Hide along with parent or if parent is collapsed
             if (parent_window && (parent_window->Collapsed || parent_window->HiddenFramesCanSkipItems > 0))
@@ -6749,6 +6769,12 @@ bool ImGui::IsWindowChildOf(ImGuiWindow* window, ImGuiWindow* potential_parent, 
 bool ImGui::IsWindowAbove(ImGuiWindow* potential_above, ImGuiWindow* potential_below)
 {
     ImGuiContext& g = *GImGui;
+
+    // It would be saner to ensure that display layer is always reflected in the g.Windows[] order, which would likely requires altering all manipulations of that array
+    const int display_layer_delta = GetWindowDisplayLayer(potential_above) - GetWindowDisplayLayer(potential_below);
+    if (display_layer_delta != 0)
+        return display_layer_delta > 0;
+
     for (int i = g.Windows.Size - 1; i >= 0; i--)
     {
         ImGuiWindow* candidate_window = g.Windows[i];
@@ -8209,10 +8235,10 @@ void ImGui::SetScrollHereY(float center_y_ratio)
 
 void ImGui::BeginTooltip()
 {
-    BeginTooltipEx(ImGuiWindowFlags_None, ImGuiTooltipFlags_None);
+    BeginTooltipEx(ImGuiTooltipFlags_None, ImGuiWindowFlags_None);
 }
 
-void ImGui::BeginTooltipEx(ImGuiWindowFlags extra_flags, ImGuiTooltipFlags tooltip_flags)
+void ImGui::BeginTooltipEx(ImGuiTooltipFlags tooltip_flags, ImGuiWindowFlags extra_window_flags)
 {
     ImGuiContext& g = *GImGui;
 
@@ -8241,7 +8267,7 @@ void ImGui::BeginTooltipEx(ImGuiWindowFlags extra_flags, ImGuiTooltipFlags toolt
                 ImFormatString(window_name, IM_ARRAYSIZE(window_name), "##Tooltip_%02d", ++g.TooltipOverrideCount);
             }
     ImGuiWindowFlags flags = ImGuiWindowFlags_Tooltip | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize;
-    Begin(window_name, NULL, flags | extra_flags);
+    Begin(window_name, NULL, flags | extra_window_flags);
 }
 
 void ImGui::EndTooltip()
@@ -8252,7 +8278,7 @@ void ImGui::EndTooltip()
 
 void ImGui::SetTooltipV(const char* fmt, va_list args)
 {
-    BeginTooltipEx(0, ImGuiTooltipFlags_OverridePreviousTooltip);
+    BeginTooltipEx(ImGuiTooltipFlags_OverridePreviousTooltip, ImGuiWindowFlags_None);
     TextV(fmt, args);
     EndTooltip();
 }
@@ -9046,7 +9072,7 @@ static void ImGui::NavProcessItem()
         if (is_tabbing)
         {
             if (is_tab_stop || (g.NavMoveFlags & ImGuiNavMoveFlags_FocusApi))
-                NavProcessItemForTabbingRequest(window, id);
+                NavProcessItemForTabbingRequest(id);
         }
         else if ((g.NavId != id || (g.NavMoveFlags & ImGuiNavMoveFlags_AllowCurrentNavId)) && !(item_flags & (ImGuiItemFlags_Disabled | ImGuiItemFlags_NoNav)))
         {
@@ -9084,11 +9110,12 @@ static void ImGui::NavProcessItem()
 // - Case 3: tab forward wrap:    set result to first eligible item (preemptively), on ref id set counter, on next frame if counter hasn't elapsed store result. // FIXME-TABBING: Could be done as a next-frame forwarded request
 // - Case 4: tab backward:        store all results, on ref id pick prev, stop storing
 // - Case 5: tab backward wrap:   store all results, on ref id if no result keep storing until last // FIXME-TABBING: Could be done as next-frame forwarded requested
-void ImGui::NavProcessItemForTabbingRequest(ImGuiWindow* window, ImGuiID id)
+void ImGui::NavProcessItemForTabbingRequest(ImGuiID id)
 {
     ImGuiContext& g = *GImGui;
 
-    ImGuiNavItemData* result = (window == g.NavWindow) ? &g.NavMoveResultLocal : &g.NavMoveResultOther;
+    // Always store in NavMoveResultLocal (unlike directional request which uses NavMoveResultOther on sibling/flattened windows)
+    ImGuiNavItemData* result = &g.NavMoveResultLocal;
     if (g.NavTabbingDir == +1)
     {
         // Tab Forward or SetKeyboardFocusHere() with >= 0
@@ -9328,6 +9355,8 @@ float ImGui::GetNavInputAmount(ImGuiNavInput n, ImGuiInputReadMode mode)
 ImVec2 ImGui::GetNavInputAmount2d(ImGuiNavDirSourceFlags dir_sources, ImGuiInputReadMode mode, float slow_factor, float fast_factor)
 {
     ImVec2 delta(0.0f, 0.0f);
+    if (dir_sources & ImGuiNavDirSourceFlags_RawKeyboard)
+        delta += ImVec2((float)IsKeyDown(GetKeyIndex(ImGuiKey_RightArrow)) - (float)IsKeyDown(GetKeyIndex(ImGuiKey_LeftArrow)), (float)IsKeyDown(GetKeyIndex(ImGuiKey_DownArrow)) - (float)IsKeyDown(GetKeyIndex(ImGuiKey_UpArrow)));
     if (dir_sources & ImGuiNavDirSourceFlags_Keyboard)
         delta += ImVec2(GetNavInputAmount(ImGuiNavInput_KeyRight_, mode)   - GetNavInputAmount(ImGuiNavInput_KeyLeft_,   mode), GetNavInputAmount(ImGuiNavInput_KeyDown_,   mode) - GetNavInputAmount(ImGuiNavInput_KeyUp_,   mode));
     if (dir_sources & ImGuiNavDirSourceFlags_PadDPad)
@@ -9676,11 +9705,8 @@ void ImGui::NavMoveRequestApplyResult()
 
     // Tabbing forward wrap
     if (g.NavMoveFlags & ImGuiNavMoveFlags_Tabbing)
-        if (g.NavTabbingCounter == 1 || g.NavTabbingDir == 0)
-        {
-            IM_ASSERT(g.NavTabbingResultFirst.ID != 0);
+        if ((g.NavTabbingCounter == 1 || g.NavTabbingDir == 0) && g.NavTabbingResultFirst.ID)
             result = &g.NavTabbingResultFirst;
-        }
 
     // In a situation when there is no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)
     if (result == NULL)
@@ -10012,10 +10038,9 @@ static void ImGui::NavUpdateWindowing()
             g.NavWindowingTargetAnim = NULL;
     }
 
-    // Start CTRL-TAB or Square+L/R window selection
-    const bool nav_keyboard_active = (io.ConfigFlags & ImGuiConfigFlags_NavEnableKeyboard) != 0;
+    // Start CTRL+Tab or Square+L/R window selection
     const bool start_windowing_with_gamepad = allow_windowing && !g.NavWindowingTarget && IsNavInputTest(ImGuiNavInput_Menu, ImGuiInputReadMode_Pressed);
-    const bool start_windowing_with_keyboard = allow_windowing && !g.NavWindowingTarget && nav_keyboard_active && io.KeyCtrl && IsKeyPressedMap(ImGuiKey_Tab);
+    const bool start_windowing_with_keyboard = allow_windowing && !g.NavWindowingTarget && io.KeyCtrl && IsKeyPressedMap(ImGuiKey_Tab);
     if (start_windowing_with_gamepad || start_windowing_with_keyboard)
         if (ImGuiWindow* window = g.NavWindow ? g.NavWindow : FindWindowNavFocusable(g.WindowsFocusOrder.Size - 1, -INT_MAX, -1))
         {
@@ -10066,6 +10091,7 @@ static void ImGui::NavUpdateWindowing()
     // Keyboard: Press and Release ALT to toggle menu layer
     // - Testing that only Alt is tested prevents Alt+Shift or AltGR from toggling menu layer.
     // - AltGR is normally Alt+Ctrl but we can't reliably detect it (not all backends/systems/layout emit it as Alt+Ctrl). But even on keyboards without AltGR we don't want Alt+Ctrl to open menu anyway.
+	const bool nav_keyboard_active = (io.ConfigFlags & ImGuiConfigFlags_NavEnableKeyboard) != 0;
     if (nav_keyboard_active && io.KeyMods == ImGuiKeyModFlags_Alt && (io.KeyModsPrev & ImGuiKeyModFlags_Alt) == 0)
     {
         g.NavWindowingToggleLayer = true;
@@ -10094,7 +10120,7 @@ static void ImGui::NavUpdateWindowing()
     {
         ImVec2 move_delta;
         if (g.NavInputSource == ImGuiInputSource_Keyboard && !io.KeyShift)
-            move_delta = GetNavInputAmount2d(ImGuiNavDirSourceFlags_Keyboard, ImGuiInputReadMode_Down);
+            move_delta = GetNavInputAmount2d(ImGuiNavDirSourceFlags_RawKeyboard, ImGuiInputReadMode_Down);
         if (g.NavInputSource == ImGuiInputSource_Gamepad)
             move_delta = GetNavInputAmount2d(ImGuiNavDirSourceFlags_PadLStick, ImGuiInputReadMode_Down);
         if (move_delta.x != 0.0f || move_delta.y != 0.0f)
@@ -10266,16 +10292,16 @@ bool ImGui::BeginDragDropSource(ImGuiDragDropFlags flags)
                 return false;
 
             // If you want to use BeginDragDropSource() on an item with no unique identifier for interaction, such as Text() or Image(), you need to:
-            // A) Read the explanation below, B) Use the ImGuiDragDropFlags_SourceAllowNullID flag, C) Swallow your programmer pride.
+            // A) Read the explanation below, B) Use the ImGuiDragDropFlags_SourceAllowNullID flag.
             if (!(flags & ImGuiDragDropFlags_SourceAllowNullID))
             {
                 IM_ASSERT(0);
                 return false;
             }
 
-            // Magic fallback (=somehow reprehensible) to handle items with no assigned ID, e.g. Text(), Image()
+            // Magic fallback to handle items with no assigned ID, e.g. Text(), Image()
             // We build a throwaway ID based on current ID stack + relative AABB of items in window.
-            // THE IDENTIFIER WON'T SURVIVE ANY REPOSITIONING OF THE WIDGET, so if your widget moves your dragging operation will be canceled.
+            // THE IDENTIFIER WON'T SURVIVE ANY REPOSITIONING/RESIZINGG OF THE WIDGET, so if your widget moves your dragging operation will be canceled.
             // We don't need to maintain/call ClearActiveID() as releasing the button will early out this function and trigger !ActiveIdIsAlive.
             // Rely on keeping other window->LastItemXXX fields intact.
             source_id = g.LastItemData.ID = window->GetIDFromRectangle(g.LastItemData.Rect);

@@ -1278,6 +1278,11 @@ public static class bgfx
 		/// nVidia adapter.
 		/// </summary>
 		Nvidia                 = 0x10de,
+	
+		/// <summary>
+		/// Microsoft adapter.
+		/// </summary>
+		Microsoft              = 0x1414,
 	}
 	
 	[AllowDuplicates]

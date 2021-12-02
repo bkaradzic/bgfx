@@ -5338,7 +5338,7 @@
       "version" : "None"
     },
     {
-      "opname" : "OpConstFunctionPointerINTEL",
+      "opname" : "OpConstantFunctionPointerINTEL",
       "class"  : "@exclude",
       "opcode" : 5600,
       "operands" : [

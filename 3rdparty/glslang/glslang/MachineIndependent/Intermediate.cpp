@@ -3902,7 +3902,7 @@ TIntermTyped* TIntermediate::promoteConstantUnion(TBasicType promoteTo, TIntermC
         case EbtFloat16: PROMOTE(setDConst, double, Get); break; \
         case EbtFloat: PROMOTE(setDConst, double, Get); break; \
         case EbtDouble: PROMOTE(setDConst, double, Get); break; \
-        case EbtInt8: PROMOTE(setI8Const, char, Get); break; \
+        case EbtInt8: PROMOTE(setI8Const, signed char, Get); break; \
         case EbtInt16: PROMOTE(setI16Const, short, Get); break; \
         case EbtInt: PROMOTE(setIConst, int, Get); break; \
         case EbtInt64: PROMOTE(setI64Const, long long, Get); break; \

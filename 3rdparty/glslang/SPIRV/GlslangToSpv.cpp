@@ -1256,8 +1256,10 @@ spv::StorageClass TGlslangToSpvTraverser::TranslateStorageClass(const glslang::T
     if (type.getBasicType() == glslang::EbtRayQuery)
         return spv::StorageClassPrivate;
 #ifndef GLSLANG_WEB
-    if (type.getQualifier().isSpirvByReference())
-        return spv::StorageClassFunction;
+    if (type.getQualifier().isSpirvByReference()) {
+        if (type.getQualifier().isParamInput() || type.getQualifier().isParamOutput())
+            return spv::StorageClassFunction;
+    }
 #endif
     if (type.getQualifier().isPipeInput())
         return spv::StorageClassInput;
@@ -4148,23 +4150,23 @@ spv::Id TGlslangToSpvTraverser::convertGlslangToSpvType(const glslang::TType& ty
         const auto& spirvType = type.getSpirvType();
         const auto& spirvInst = spirvType.spirvInst;
 
-        std::vector<spv::Id> operands;
+        std::vector<spv::IdImmediate> operands;
         for (const auto& typeParam : spirvType.typeParams) {
             // Constant expression
             if (typeParam.constant->isLiteral()) {
                 if (typeParam.constant->getBasicType() == glslang::EbtFloat) {
                     float floatValue = static_cast<float>(typeParam.constant->getConstArray()[0].getDConst());
                     unsigned literal = *reinterpret_cast<unsigned*>(&floatValue);
-                    operands.push_back(literal);
+                    operands.push_back({false, literal});
                 } else if (typeParam.constant->getBasicType() == glslang::EbtInt) {
                     unsigned literal = typeParam.constant->getConstArray()[0].getIConst();
-                    operands.push_back(literal);
+                    operands.push_back({false, literal});
                 } else if (typeParam.constant->getBasicType() == glslang::EbtUint) {
                     unsigned literal = typeParam.constant->getConstArray()[0].getUConst();
-                    operands.push_back(literal);
+                    operands.push_back({false, literal});
                 } else if (typeParam.constant->getBasicType() == glslang::EbtBool) {
                     unsigned literal = typeParam.constant->getConstArray()[0].getBConst();
-                    operands.push_back(literal);
+                    operands.push_back({false, literal});
                 } else if (typeParam.constant->getBasicType() == glslang::EbtString) {
                     auto str = typeParam.constant->getConstArray()[0].getSConst()->c_str();
                     unsigned literal = 0;
@@ -4176,7 +4178,7 @@ spv::Id TGlslangToSpvTraverser::convertGlslangToSpvType(const glslang::TType& ty
                         *(literalPtr++) = ch;
                         ++charCount;
                         if (charCount == 4) {
-                            operands.push_back(literal);
+                            operands.push_back({false, literal});
                             literalPtr = reinterpret_cast<char*>(&literal);
                             charCount = 0;
                         }
@@ -4186,20 +4188,17 @@ spv::Id TGlslangToSpvTraverser::convertGlslangToSpvType(const glslang::TType& ty
                     if (charCount > 0) {
                         for (; charCount < 4; ++charCount)
                             *(literalPtr++) = 0;
-                        operands.push_back(literal);
+                        operands.push_back({false, literal});
                     }
                 } else
                     assert(0); // Unexpected type
             } else
-                operands.push_back(createSpvConstant(*typeParam.constant));
+                operands.push_back({true, createSpvConstant(*typeParam.constant)});
         }
 
-        if (spirvInst.set == "")
-            spvType = builder.createOp(static_cast<spv::Op>(spirvInst.id), spv::NoType, operands);
-        else {
-            spvType = builder.createBuiltinCall(
-                spv::NoType, getExtBuiltins(spirvInst.set.c_str()), spirvInst.id, operands);
-        }
+        assert(spirvInst.set == ""); // Currently, couldn't be extended instructions.
+        spvType = builder.makeGenericType(static_cast<spv::Op>(spirvInst.id), operands);
+
         break;
     }
 #endif

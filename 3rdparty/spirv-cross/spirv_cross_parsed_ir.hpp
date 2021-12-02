@@ -78,6 +78,13 @@ public:
 	SmallVector<ID> ids_for_constant_or_type;
 	SmallVector<ID> ids_for_constant_or_variable;
 
+	// We need to keep track of the width the Ops that contains a type for the
+	// OpSwitch instruction, since this one doesn't contains the type in the
+	// instruction itself. And in some case we need to cast the condition to
+	// wider types. We only need the width to do the branch fixup since the
+	// type check itself can be done at runtime
+	std::unordered_map<ID, uint32_t> load_type_width;
+
 	// Declared capabilities and extensions in the SPIR-V module.
 	// Not really used except for reflection at the moment.
 	SmallVector<spv::Capability> declared_capabilities;

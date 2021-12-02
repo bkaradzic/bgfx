@@ -514,6 +514,24 @@ struct TSymbolValidater
                         return;
                     }
                     else {
+                        // Deal with input/output pairs where one is a block member but the other is loose,
+                        // e.g. with ARB_separate_shader_objects
+                        if (type1.getBasicType() == EbtBlock &&
+                            type1.isStruct() && !type2.isStruct()) {
+                            // Iterate through block members tracking layout
+                            glslang::TString name;
+                            type1.getStruct()->begin()->type->appendMangledName(name);
+                            if (name == mangleName2
+                                && type1.getQualifier().layoutLocation == type2.getQualifier().layoutLocation) return;
+                        }
+                        if (type2.getBasicType() == EbtBlock &&
+                            type2.isStruct() && !type1.isStruct()) {
+                            // Iterate through block members tracking layout
+                            glslang::TString name;
+                            type2.getStruct()->begin()->type->appendMangledName(name);
+                            if (name == mangleName1
+                                && type1.getQualifier().layoutLocation == type2.getQualifier().layoutLocation) return;
+                        }
                         TString err = "Invalid In/Out variable type : " + entKey.first;
                         infoSink.info.message(EPrefixInternalError, err.c_str());
                         hadError = true;

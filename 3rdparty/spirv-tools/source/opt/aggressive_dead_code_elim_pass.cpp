@@ -569,12 +569,7 @@ void AggressiveDCEPass::InitializeModuleScopeLiveInstructions() {
   }
   // Keep all entry points.
   for (auto& entry : get_module()->entry_points()) {
-    if (get_module()->version() >= SPV_SPIRV_VERSION_WORD(1, 4) &&
-        !preserve_interface_) {
-      // In SPIR-V 1.4 and later, entry points must list all global variables
-      // used. DCE can still remove non-input/output variables and update the
-      // interface list. Mark the entry point as live and inputs and outputs as
-      // live, but defer decisions all other interfaces.
+    if (!preserve_interface_) {
       live_insts_.Set(entry.unique_id());
       // The actual function is live always.
       AddToWorklist(
@@ -582,8 +577,9 @@ void AggressiveDCEPass::InitializeModuleScopeLiveInstructions() {
       for (uint32_t i = 3; i < entry.NumInOperands(); ++i) {
         auto* var = get_def_use_mgr()->GetDef(entry.GetSingleWordInOperand(i));
         auto storage_class = var->GetSingleWordInOperand(0u);
-        if (storage_class == SpvStorageClassInput ||
-            storage_class == SpvStorageClassOutput) {
+        // Vulkan support outputs without an associated input, but not inputs
+        // without an associated output.
+        if (storage_class == SpvStorageClassOutput) {
           AddToWorklist(var);
         }
       }
@@ -885,8 +881,7 @@ bool AggressiveDCEPass::ProcessGlobalValues() {
     }
   }
 
-  if (get_module()->version() >= SPV_SPIRV_VERSION_WORD(1, 4) &&
-      !preserve_interface_) {
+  if (!preserve_interface_) {
     // Remove the dead interface variables from the entry point interface list.
     for (auto& entry : get_module()->entry_points()) {
       std::vector<Operand> new_operands;
