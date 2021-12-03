@@ -963,7 +963,6 @@ namespace bgfx { namespace d3d12
 
 				m_msaaRt = NULL;
 
-				if (NULL != m_scd.nwh)
 				{
 					hr = m_dxgi.createSwapChain(
 						  getDeviceForSwapChain()
