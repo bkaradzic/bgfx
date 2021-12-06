@@ -792,10 +792,9 @@ namespace bgfx { namespace webgpu
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
+		void createDynamicVertexBuffer(VertexBufferHandle _handle, VertexLayoutHandle _layoutHandle, uint32_t _size, uint16_t _flags) override
 		{
-			VertexLayoutHandle decl = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(_size, NULL, decl, _flags);
+			m_vertexBuffers[_handle.idx].create(_size, NULL, _layoutHandle, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
