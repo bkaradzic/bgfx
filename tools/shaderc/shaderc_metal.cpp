@@ -438,6 +438,11 @@ namespace bgfx { namespace metal
 						Uniform un;
 						un.name = program->getUniformName(ii);
 
+                        if (bx::hasSuffix(un.name.c_str(), ".@data") )
+                        {
+                            continue;
+                        }
+
 						un.num = uint8_t(program->getUniformArraySize(ii) );
 						const uint32_t offset = program->getUniformBufferOffset(ii);
 						un.regIndex = uint16_t(offset);
