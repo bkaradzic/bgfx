@@ -3191,7 +3191,7 @@ namespace bgfx { namespace mtl
 		}
 		if (@available(macOS 10.13.2, *))
 		{
-			m_metalLayer.maximumDrawableCount = bx::clamp<uint32_t>(_maximumDrawableCount, 2, 3);
+            m_metalLayer.maximumDrawableCount = bx::clamp<uint32_t>(_maximumDrawableCount != 0 ? _maximumDrawableCount : BGFX_CONFIG_MAX_FRAME_LATENCY, 2, 3);
 		}
 #endif // __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
 #endif // BX_PLATFORM_OSX
