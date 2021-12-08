@@ -71,8 +71,8 @@ TrueTypeFont::~TrueTypeFont()
 
 bool TrueTypeFont::init(const uint8_t* _buffer, uint32_t _bufferSize, int32_t _fontIndex, uint32_t _pixelHeight, int16_t _widthPadding, int16_t _heightPadding)
 {
-	BX_ASSERT( (_bufferSize > 256 && _bufferSize < 100000000), "TrueType buffer size is suspicious");
-	BX_ASSERT( (_pixelHeight > 4 && _pixelHeight < 128), "TrueType buffer size is suspicious");
+	BX_WARN( (_bufferSize > 256 && _bufferSize < 100000000), "(FontIndex %d) TrueType buffer size is suspicious (%d)", _fontIndex, _bufferSize);
+	BX_WARN( (_pixelHeight > 4 && _pixelHeight < 128), "(FontIndex %d) TrueType pixel height is suspicious (%d)", _fontIndex, _pixelHeight);
 	BX_UNUSED(_bufferSize);
 
 	int offset = stbtt_GetFontOffsetForIndex(_buffer, _fontIndex);
