@@ -604,7 +604,7 @@ public static class bgfx
 		Text                   = 0x00000008,
 	
 		/// <summary>
-		/// Enable profiler.
+		/// Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
 		/// </summary>
 		Profiler               = 0x00000010,
 	}

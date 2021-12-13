@@ -275,7 +275,7 @@
 #define BGFX_DEBUG_IFH                            UINT32_C(0x00000002)
 #define BGFX_DEBUG_STATS                          UINT32_C(0x00000004) //!< Enable statistics display.
 #define BGFX_DEBUG_TEXT                           UINT32_C(0x00000008) //!< Enable debug text display.
-#define BGFX_DEBUG_PROFILER                       UINT32_C(0x00000010) //!< Enable profiler.
+#define BGFX_DEBUG_PROFILER                       UINT32_C(0x00000010) //!< Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
 
 #define BGFX_BUFFER_COMPUTE_FORMAT_8X1            UINT16_C(0x0001) //!< 1 8-bit value
 #define BGFX_BUFFER_COMPUTE_FORMAT_8X2            UINT16_C(0x0002) //!< 2 8-bit values
