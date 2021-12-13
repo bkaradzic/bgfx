@@ -219,7 +219,7 @@ flag.Debug { bits = 32 }
 	           --- It's useful when profiling to quickly assess bottleneck between CPU and GPU.
 	.Stats     --- Enable statistics display.
 	.Text      --- Enable debug text display.
-	.Profiler  --- Enable profiler.
+	.Profiler  --- Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
 	()
 
 flag.BufferComputeFormat { bits = 16, shift = 0, range = 4, base = 1 }

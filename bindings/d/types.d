@@ -211,7 +211,7 @@ enum uint BGFX_DEBUG_WIREFRAME = 0x00000001; /// Enable wireframe for all primit
 enum uint BGFX_DEBUG_IFH = 0x00000002;
 enum uint BGFX_DEBUG_STATS = 0x00000004; /// Enable statistics display.
 enum uint BGFX_DEBUG_TEXT = 0x00000008; /// Enable debug text display.
-enum uint BGFX_DEBUG_PROFILER = 0x00000010; /// Enable profiler.
+enum uint BGFX_DEBUG_PROFILER = 0x00000010; /// Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
 
 enum ushort BGFX_BUFFER_COMPUTE_FORMAT_8X1 = 0x0001; /// 1 8-bit value
 enum ushort BGFX_BUFFER_COMPUTE_FORMAT_8X2 = 0x0002; /// 2 8-bit values
