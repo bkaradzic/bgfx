@@ -1590,6 +1590,9 @@ namespace bgfx
 			BX_TRACE("");
 		}
 
+		BX_TRACE("GPU device, Device ID: %04x, Vendor ID: %04x", g_caps.deviceId, g_caps.vendorId);
+		BX_TRACE("");
+
 		RendererType::Enum renderers[RendererType::Count];
 		uint8_t num = getSupportedRenderers(BX_COUNTOF(renderers), renderers);
 

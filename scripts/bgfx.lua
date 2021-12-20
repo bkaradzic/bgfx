@@ -133,8 +133,9 @@ function bgfxProjectBase(_kind, _defines)
 		buildoptions { "-x objective-c++" }  -- additional build option for osx
 		linkoptions {
 			"-framework Cocoa",
-			"-framework QuartzCore",
+			"-framework IOKit",
 			"-framework OpenGL",
+			"-framework QuartzCore",
 			"-weak_framework Metal",
 			"-weak_framework MetalKit",
 		}

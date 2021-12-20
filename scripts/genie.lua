@@ -283,7 +283,6 @@ function exampleProjectDefaults()
 		configuration { "osx*" }
 			linkoptions {
 				"-framework CoreVideo",
-				"-framework IOKit",
 			}
 
 		configuration {}
@@ -404,8 +403,9 @@ function exampleProjectDefaults()
 	configuration { "osx*" }
 		linkoptions {
 			"-framework Cocoa",
-			"-framework QuartzCore",
+			"-framework IOKit",
 			"-framework OpenGL",
+			"-framework QuartzCore",
 			"-weak_framework Metal",
 		}
 
@@ -414,9 +414,10 @@ function exampleProjectDefaults()
 		linkoptions {
 			"-framework CoreFoundation",
 			"-framework Foundation",
+			"-framework IOKit",
 			"-framework OpenGLES",
-			"-framework UIKit",
 			"-framework QuartzCore",
+			"-framework UIKit",
 			"-weak_framework Metal",
 		}
 

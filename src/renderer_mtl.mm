@@ -349,12 +349,43 @@ namespace bgfx { namespace mtl
 		return UniformType::End;
 	}
 
+	static uint64_t getRegistryId(id<MTLDevice> _device)
+	{
+		return [_device respondsToSelector: @selector(registryID)] ? _device.registryID : 0;
+	}
+
+	static uint32_t getEntryProperty(io_registry_entry_t _entry, CFStringRef _propertyName)
+	{
+		uint32_t result = 0;
+
+		CFTypeRef typeRef = IORegistryEntrySearchCFProperty(
+			  _entry
+			, kIOServicePlane
+			, _propertyName
+			, kCFAllocatorDefault
+			, kIORegistryIterateRecursively |kIORegistryIterateParents
+			);
+
+		if (NULL != typeRef)
+		{
+			const uint32_t* value = (const uint32_t*)(CFDataGetBytePtr( (CFDataRef)typeRef) );
+			if (NULL != value)
+			{
+				result = *value;
+			}
+
+			CFRelease(typeRef);
+		}
+
+		return result;
+	}
+
+
 #define SHADER_FUNCTION_NAME ("xlatMtlMain")
 #define SHADER_UNIFORM_NAME ("_mtl_u")
 
 	struct RendererContextMtl;
 	static RendererContextMtl* s_renderMtl;
-
 
 	struct RendererContextMtl : public RendererContextI
 	{
@@ -473,7 +504,61 @@ namespace bgfx { namespace mtl
 			m_renderPipelineDescriptor.colorAttachments[0].pixelFormat = m_mainFrameBuffer.m_swapChain->m_metalLayer.pixelFormat;
 			m_renderPipelineDescriptor.vertexFunction   = m_screenshotBlitProgram.m_vsh->m_function;
 			m_renderPipelineDescriptor.fragmentFunction = m_screenshotBlitProgram.m_fsh->m_function;
-			m_screenshotBlitRenderPipelineState = m_device.newRenderPipelineStateWithDescriptor(m_renderPipelineDescriptor);
+			m_screenshotBlitRenderPipelineState         = m_device.newRenderPipelineStateWithDescriptor(m_renderPipelineDescriptor);
+
+			{
+				if ([m_device respondsToSelector: @selector(supportsFamily:)])
+				{
+					if ([m_device supportsFamily: MTLGPUFamily(1005) /*MTLGPUFamilyApple5*/])
+					{
+						g_caps.vendorId = BGFX_PCI_ID_APPLE;
+
+						if ([m_device supportsFamily: MTLGPUFamily(1007) /*MTLGPUFamilyApple7*/])
+						{
+							g_caps.deviceId = 1007;
+						}
+						else if ([m_device supportsFamily: MTLGPUFamily(1006) /*MTLGPUFamilyApple6*/])
+						{
+							g_caps.deviceId = 1006;
+						}
+						else
+						{
+							g_caps.deviceId = 1005;
+						}
+					}
+				}
+
+				if (0 == g_caps.vendorId)
+				{
+					io_registry_entry_t entry;
+
+					uint64_t registryId = getRegistryId(m_device);
+
+					if (0 != registryId)
+					{
+						entry = IOServiceGetMatchingService(kIOMainPortDefault, IORegistryEntryIDMatching(registryId) );
+
+						if (0 != entry)
+						{
+							io_registry_entry_t parent;
+
+							if (kIOReturnSuccess == IORegistryEntryGetParentEntry(entry, kIOServicePlane, &parent) )
+							{
+								g_caps.vendorId = getEntryProperty(parent, CFSTR("vendor-id") );
+								g_caps.deviceId = getEntryProperty(parent, CFSTR("device-id") );
+
+								IOObjectRelease(parent);
+							}
+
+							IOObjectRelease(entry);
+						}
+					}
+				}
+			}
+
+			g_caps.numGPUs = 1;
+			g_caps.gpu[0].vendorId = g_caps.vendorId;
+			g_caps.gpu[0].deviceId = g_caps.deviceId;
 
 			g_caps.supported |= (0
 				| BGFX_CAPS_ALPHA_TO_COVERAGE
@@ -906,7 +991,7 @@ namespace bgfx { namespace mtl
 
 		uintptr_t getInternal(TextureHandle _handle) override
 		{
-			return uintptr_t(id<MTLTexture>(m_textures[_handle.idx].m_ptr));
+			return uintptr_t(id<MTLTexture>(m_textures[_handle.idx].m_ptr) );
 		}
 
 		void destroyTexture(TextureHandle _handle) override
@@ -2504,7 +2589,7 @@ namespace bgfx { namespace mtl
 			}
 		}
 
-		if (isShaderType(magic, 'C'))
+		if (isShaderType(magic, 'C') )
 		{
 			for (uint32_t ii = 0; ii < 3; ++ii)
 			{
@@ -2906,7 +2991,7 @@ namespace bgfx { namespace mtl
 	{
 		const uint32_t bpp       = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		uint32_t rectpitch  = _rect.m_width*bpp/8;
-		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat)))
+		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) ) )
 		{
 			if (m_ptr.pixelFormat() >= 160 /*PVRTC_RGB_2BPP*/
 			&&  m_ptr.pixelFormat() <= 167 /*PVRTC_RGBA_4BPP_sRGB*/)
@@ -2915,7 +3000,7 @@ namespace bgfx { namespace mtl
 			}
 			else
 			{
-				const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat));
+				const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
 				rectpitch = (_rect.m_width / blockInfo.blockWidth)*blockInfo.blockSize;
 			}
 		}
@@ -2988,7 +3073,7 @@ namespace bgfx { namespace mtl
 			};
 			tempTexture.replaceRegion(region, 0, 0, data, srcpitch, srcpitch * _rect.m_height);
 			bce.copyFromTexture(tempTexture, 0, 0,  MTLOriginMake(0,0,0), MTLSizeMake(_rect.m_width, _rect.m_height, _depth),
-								m_ptr, slice, _mip, MTLOriginMake(_rect.m_x, _rect.m_y, zz));
+								m_ptr, slice, _mip, MTLOriginMake(_rect.m_x, _rect.m_y, zz) );
 			release(tempTexture);
 		}
 
@@ -3046,7 +3131,7 @@ namespace bgfx { namespace mtl
 						  m_ptr.pixelFormat()
 						, m_ptr.textureType()
 						, NSMakeRange(_mip,1)
-						, NSMakeRange(0,m_ptr.arrayLength())
+						, NSMakeRange(0,m_ptr.arrayLength() )
 						);
 				}
 			}
@@ -3185,11 +3270,11 @@ namespace bgfx { namespace mtl
 
 #if BX_PLATFORM_OSX
 #if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
-		if (@available(macOS 10.13, *))
+		if (@available(macOS 10.13, *) )
 		{
 			m_metalLayer.displaySyncEnabled = 0 != (_flags&BGFX_RESET_VSYNC);
 		}
-		if (@available(macOS 10.13.2, *))
+		if (@available(macOS 10.13.2, *) )
 		{
             m_metalLayer.maximumDrawableCount = bx::clamp<uint32_t>(_maximumDrawableCount != 0 ? _maximumDrawableCount : BGFX_CONFIG_MAX_FRAME_LATENCY, 2, 3);
 		}
@@ -3268,8 +3353,8 @@ namespace bgfx { namespace mtl
 		murmur.begin();
 		murmur.add(1);
 		murmur.add( (uint32_t)m_metalLayer.pixelFormat);
-		murmur.add( (uint32_t)m_backBufferDepth.pixelFormat());
-		murmur.add( (uint32_t)m_backBufferStencil.pixelFormat());
+		murmur.add( (uint32_t)m_backBufferDepth.pixelFormat() );
+		murmur.add( (uint32_t)m_backBufferStencil.pixelFormat() );
 		murmur.add( (uint32_t)sampleCount);
 		_frameBuffer.m_pixelFormatHash = murmur.end();
 	}
@@ -3895,8 +3980,8 @@ namespace bgfx { namespace mtl
 						Rect viewRect = viewState.m_rect;
 						bool clearWithRenderPass = false;
 
-						if ((NULL == m_renderCommandEncoder
-							 ||  fbh.idx != _render->m_view[view].m_fbh.idx))
+						if (NULL == m_renderCommandEncoder
+						||  fbh.idx != _render->m_view[view].m_fbh.idx)
 						{
 							endEncoding();
 
@@ -4363,7 +4448,10 @@ namespace bgfx { namespace mtl
 				{
 					if (BGFX_STATE_FRONT_CCW & changedFlags)
 					{
-						rce.setFrontFacingWinding((newFlags&BGFX_STATE_FRONT_CCW) ? MTLWindingCounterClockwise : MTLWindingClockwise);
+						rce.setFrontFacingWinding( (newFlags&BGFX_STATE_FRONT_CCW)
+							? MTLWindingCounterClockwise
+							: MTLWindingClockwise
+							);
 					}
 
 					if (BGFX_STATE_CULL_MASK & changedFlags)
@@ -4551,39 +4639,45 @@ namespace bgfx { namespace mtl
 						const Binding& bind = renderBind.m_bind[stage];
 						Binding& current = currentBind.m_bind[stage];
 						if (current.m_idx          != bind.m_idx
-							||  current.m_type         != bind.m_type
-							||  current.m_samplerFlags != bind.m_samplerFlags
-							||  programChanged)
+						||  current.m_type         != bind.m_type
+						||  current.m_samplerFlags != bind.m_samplerFlags
+						||  programChanged)
 						{
 							if (kInvalidHandle != bind.m_idx)
 							{
 								switch (bind.m_type)
 								{
-									case Binding::Texture:
+								case Binding::Texture:
 									{
 										TextureMtl& texture = m_textures[bind.m_idx];
-										texture.commit(stage
-													   , 0 != (bindingTypes[stage] & PipelineStateMtl::BindToVertexShader)
-													   , 0 != (bindingTypes[stage] & PipelineStateMtl::BindToFragmentShader)
-													   , bind.m_samplerFlags
-													   );
+										texture.commit(
+											stage
+											, 0 != (bindingTypes[stage] & PipelineStateMtl::BindToVertexShader)
+											, 0 != (bindingTypes[stage] & PipelineStateMtl::BindToFragmentShader)
+											, bind.m_samplerFlags
+											);
 									}
-										break;
+									break;
 
-									case Binding::IndexBuffer:
-									case Binding::VertexBuffer:
+								case Binding::IndexBuffer:
+								case Binding::VertexBuffer:
 									{
 										const BufferMtl& buffer = Binding::IndexBuffer == bind.m_type
-										? m_indexBuffers[bind.m_idx]
-										: m_vertexBuffers[bind.m_idx]
-										;
+											? m_indexBuffers[bind.m_idx]
+											: m_vertexBuffers[bind.m_idx]
+											;
 
-										if (0 != (bindingTypes[stage] & PipelineStateMtl::BindToVertexShader))
+										if (0 != (bindingTypes[stage] & PipelineStateMtl::BindToVertexShader) )
+										{
 											rce.setVertexBuffer(buffer.m_ptr, 0, stage + 1);
-										if (0 != (bindingTypes[stage] & PipelineStateMtl::BindToFragmentShader))
+										}
+
+										if (0 != (bindingTypes[stage] & PipelineStateMtl::BindToFragmentShader) )
+										{
 											rce.setFragmentBuffer(buffer.m_ptr, 0, stage + 1);
+										}
 									}
-										break;
+									break;
 								}
 							}
 						}
