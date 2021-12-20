@@ -520,6 +520,7 @@
 #define BGFX_PCI_ID_NONE                          UINT16_C(0x0000) //!< Autoselect adapter.
 #define BGFX_PCI_ID_SOFTWARE_RASTERIZER           UINT16_C(0x0001) //!< Software rasterizer.
 #define BGFX_PCI_ID_AMD                           UINT16_C(0x1002) //!< AMD adapter.
+#define BGFX_PCI_ID_APPLE                         UINT16_C(0x106b) //!< Apple adapter.
 #define BGFX_PCI_ID_INTEL                         UINT16_C(0x8086) //!< Intel adapter.
 #define BGFX_PCI_ID_NVIDIA                        UINT16_C(0x10de) //!< nVidia adapter.
 #define BGFX_PCI_ID_MICROSOFT                     UINT16_C(0x1414) //!< Microsoft adapter.

@@ -401,6 +401,7 @@ enum ubyte BGFX_RESOLVE_AUTO_GEN_MIPS = 0x01; /// Auto-generate mip maps on reso
 enum ushort BGFX_PCI_ID_NONE = 0x0000; /// Autoselect adapter.
 enum ushort BGFX_PCI_ID_SOFTWARE_RASTERIZER = 0x0001; /// Software rasterizer.
 enum ushort BGFX_PCI_ID_AMD = 0x1002; /// AMD adapter.
+enum ushort BGFX_PCI_ID_APPLE = 0x106b; /// Apple adapter.
 enum ushort BGFX_PCI_ID_INTEL = 0x8086; /// Intel adapter.
 enum ushort BGFX_PCI_ID_NVIDIA = 0x10de; /// nVidia adapter.
 enum ushort BGFX_PCI_ID_MICROSOFT = 0x1414; /// Microsoft adapter.

@@ -1270,6 +1270,11 @@ public static class bgfx
 		Amd                    = 0x1002,
 	
 		/// <summary>
+		/// Apple adapter.
+		/// </summary>
+		Apple                  = 0x106b,
+	
+		/// <summary>
 		/// Intel adapter.
 		/// </summary>
 		Intel                  = 0x8086,
