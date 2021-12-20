@@ -536,7 +536,7 @@ namespace bgfx { namespace mtl
 
 					if (0 != registryId)
 					{
-						entry = IOServiceGetMatchingService(kIOMainPortDefault, IORegistryEntryIDMatching(registryId) );
+						entry = IOServiceGetMatchingService(NULL, IORegistryEntryIDMatching(registryId) );
 
 						if (0 != entry)
 						{
