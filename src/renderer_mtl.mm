@@ -354,6 +354,7 @@ namespace bgfx { namespace mtl
 		return [_device respondsToSelector: @selector(registryID)] ? _device.registryID : 0;
 	}
 
+#if BX_PLATFORM_OSX
 	static uint32_t getEntryProperty(io_registry_entry_t _entry, CFStringRef _propertyName)
 	{
 		uint32_t result = 0;
@@ -363,7 +364,7 @@ namespace bgfx { namespace mtl
 			, kIOServicePlane
 			, _propertyName
 			, kCFAllocatorDefault
-			, kIORegistryIterateRecursively |kIORegistryIterateParents
+			, kIORegistryIterateRecursively | kIORegistryIterateParents
 			);
 
 		if (NULL != typeRef)
@@ -379,10 +380,10 @@ namespace bgfx { namespace mtl
 
 		return result;
 	}
-
+#endif // BX_PLATFORM_OSX
 
 #define SHADER_FUNCTION_NAME ("xlatMtlMain")
-#define SHADER_UNIFORM_NAME ("_mtl_u")
+#define SHADER_UNIFORM_NAME  ("_mtl_u")
 
 	struct RendererContextMtl;
 	static RendererContextMtl* s_renderMtl;
@@ -509,7 +510,7 @@ namespace bgfx { namespace mtl
 			{
 				if ([m_device respondsToSelector: @selector(supportsFamily:)])
 				{
-					if ([m_device supportsFamily: MTLGPUFamily(1005) /*MTLGPUFamilyApple5*/])
+					if ([m_device supportsFamily: MTLGPUFamily(1004) /*MTLGPUFamilyApple4*/])
 					{
 						g_caps.vendorId = BGFX_PCI_ID_APPLE;
 
@@ -521,13 +522,18 @@ namespace bgfx { namespace mtl
 						{
 							g_caps.deviceId = 1006;
 						}
-						else
+						else if ([m_device supportsFamily: MTLGPUFamily(1005) /*MTLGPUFamilyApple5*/])
 						{
 							g_caps.deviceId = 1005;
+						}
+						else
+						{
+							g_caps.deviceId = 1004;
 						}
 					}
 				}
 
+#if BX_PLATFORM_OSX
 				if (0 == g_caps.vendorId)
 				{
 					io_registry_entry_t entry;
@@ -536,7 +542,7 @@ namespace bgfx { namespace mtl
 
 					if (0 != registryId)
 					{
-						entry = IOServiceGetMatchingService(NULL, IORegistryEntryIDMatching(registryId) );
+						entry = IOServiceGetMatchingService(mach_port_t(NULL), IORegistryEntryIDMatching(registryId) );
 
 						if (0 != entry)
 						{
@@ -554,6 +560,7 @@ namespace bgfx { namespace mtl
 						}
 					}
 				}
+#endif // BX_PLATFORM_OSX
 			}
 
 			g_caps.numGPUs = 1;
