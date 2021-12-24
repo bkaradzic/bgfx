@@ -1355,6 +1355,7 @@ string CompilerMSL::compile()
 	backend.nonuniform_qualifier = "";
 	backend.support_small_type_sampling_result = true;
 	backend.supports_empty_struct = true;
+	backend.support_64bit_switch = true;
 
 	// Allow Metal to use the array<T> template unless we force it off.
 	backend.can_return_array = !msl_options.force_native_arrays;

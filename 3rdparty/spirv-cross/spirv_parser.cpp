@@ -1029,7 +1029,7 @@ void Parser::parse(const Instruction &instruction)
 		{
 			for (uint32_t i = 2; i + 3 <= length; i += 3)
 			{
-				uint64_t value = (static_cast<uint64_t>(ops[i]) << 32) | ops[i + 1];
+				uint64_t value = (static_cast<uint64_t>(ops[i + 1]) << 32) | ops[i];
 				current_block->cases_64bit.push_back({ value, ops[i + 2] });
 			}
 		}

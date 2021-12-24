@@ -586,6 +586,7 @@ protected:
 		bool needs_row_major_load_workaround = false;
 		bool support_pointer_to_pointer = false;
 		bool support_precise_qualifier = false;
+		bool support_64bit_switch = false;
 	} backend;
 
 	void emit_struct(SPIRType &type);
