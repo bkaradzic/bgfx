@@ -845,7 +845,7 @@ int TDefaultIoResolverBase::resolveUniformLocation(EShLanguage /*stage*/, TVarEn
     }
     // no locations added if already present, a built-in variable, a block, or an opaque
     if (type.getQualifier().hasLocation() || type.isBuiltIn() || type.getBasicType() == EbtBlock ||
-        type.isAtomic() || (type.containsOpaque() && referenceIntermediate.getSpv().openGl == 0)) {
+        type.isAtomic() || type.isSpirvType() || (type.containsOpaque() && referenceIntermediate.getSpv().openGl == 0)) {
         return ent.newLocation = -1;
     }
     // no locations on blocks of built-in variables
@@ -873,8 +873,8 @@ int TDefaultIoResolverBase::resolveInOutLocation(EShLanguage stage, TVarEntryInf
         return ent.newLocation = -1;
     }
 
-    // no locations added if already present, or a built-in variable
-    if (type.getQualifier().hasLocation() || type.isBuiltIn()) {
+    // no locations added if already present, a built-in variable, or a variable with SPIR-V decorate
+    if (type.getQualifier().hasLocation() || type.isBuiltIn() || type.getQualifier().hasSprivDecorate()) {
         return ent.newLocation = -1;
     }
 
@@ -960,8 +960,8 @@ int TDefaultGlslIoResolver::resolveInOutLocation(EShLanguage stage, TVarEntryInf
     if (type.getQualifier().hasLocation()) {
         return ent.newLocation = type.getQualifier().layoutLocation;
     }
-    // no locations added if already present, or a built-in variable
-    if (type.isBuiltIn()) {
+    // no locations added if already present, a built-in variable, or a variable with SPIR-V decorate
+    if (type.isBuiltIn() || type.getQualifier().hasSprivDecorate()) {
         return ent.newLocation = -1;
     }
     // no locations on blocks of built-in variables
@@ -1042,7 +1042,8 @@ int TDefaultGlslIoResolver::resolveUniformLocation(EShLanguage /*stage*/, TVarEn
     } else {
         // no locations added if already present, a built-in variable, a block, or an opaque
         if (type.getQualifier().hasLocation() || type.isBuiltIn() || type.getBasicType() == EbtBlock ||
-            type.isAtomic() || (type.containsOpaque() && referenceIntermediate.getSpv().openGl == 0)) {
+            type.isAtomic() || type.isSpirvType() ||
+            (type.containsOpaque() && referenceIntermediate.getSpv().openGl == 0)) {
             return ent.newLocation = -1;
         }
         // no locations on blocks of built-in variables

@@ -1003,6 +1003,7 @@ enum Capability {
     CapabilityFragmentShaderShadingRateInterlockEXT = 5372,
     CapabilityShaderSMBuiltinsNV = 5373,
     CapabilityFragmentShaderPixelInterlockEXT = 5378,
+    CapabilityDemoteToHelperInvocation = 5379,
     CapabilityDemoteToHelperInvocationEXT = 5379,
     CapabilitySubgroupShuffleINTEL = 5568,
     CapabilitySubgroupBufferBlockIOINTEL = 5569,
@@ -1543,7 +1544,7 @@ enum Op {
     OpUSubSatINTEL = 5596,
     OpIMul32x16INTEL = 5597,
     OpUMul32x16INTEL = 5598,
-    OpConstantFunctionPointerINTEL = 5600,
+    OpConstFunctionPointerINTEL = 5600,
     OpFunctionPointerCallINTEL = 5601,
     OpAsmTargetINTEL = 5609,
     OpAsmINTEL = 5610,
@@ -2131,7 +2132,7 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case OpUSubSatINTEL: *hasResult = true; *hasResultType = true; break;
     case OpIMul32x16INTEL: *hasResult = true; *hasResultType = true; break;
     case OpUMul32x16INTEL: *hasResult = true; *hasResultType = true; break;
-    case OpConstantFunctionPointerINTEL: *hasResult = true; *hasResultType = true; break;
+    case OpConstFunctionPointerINTEL: *hasResult = true; *hasResultType = true; break;
     case OpFunctionPointerCallINTEL: *hasResult = true; *hasResultType = true; break;
     case OpAsmTargetINTEL: *hasResult = true; *hasResultType = true; break;
     case OpAsmINTEL: *hasResult = true; *hasResultType = true; break;
@@ -2311,4 +2312,3 @@ inline FragmentShadingRateMask operator|(FragmentShadingRateMask a, FragmentShad
 }  // end namespace spv
 
 #endif  // #ifndef spirv_HPP
-

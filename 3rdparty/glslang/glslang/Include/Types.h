@@ -1865,10 +1865,12 @@ public:
     bool isAtomic() const { return false; }
     bool isCoopMat() const { return false; }
     bool isReference() const { return false; }
+    bool isSpirvType() const { return false; }
 #else
     bool isAtomic() const { return basicType == EbtAtomicUint; }
     bool isCoopMat() const { return coopmat; }
     bool isReference() const { return getBasicType() == EbtReference; }
+    bool isSpirvType() const { return getBasicType() == EbtSpirvType; }
 #endif
 
     // return true if this type contains any subtype which satisfies the given predicate.

@@ -1664,9 +1664,22 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(unsigned int spvVersion,
 
     case EShLangCompute:
         builder.addCapability(spv::CapabilityShader);
-        builder.addExecutionMode(shaderEntry, spv::ExecutionModeLocalSize, glslangIntermediate->getLocalSize(0),
-                                                                           glslangIntermediate->getLocalSize(1),
-                                                                           glslangIntermediate->getLocalSize(2));
+        if (glslangIntermediate->getSpv().spv >= glslang::EShTargetSpv_1_6) {
+          std::vector<spv::Id> dimConstId;
+          for (int dim = 0; dim < 3; ++dim) {
+            bool specConst = (glslangIntermediate->getLocalSizeSpecId(dim) != glslang::TQualifier::layoutNotSet);
+            dimConstId.push_back(builder.makeUintConstant(glslangIntermediate->getLocalSize(dim), specConst));
+            if (specConst) {
+                builder.addDecoration(dimConstId.back(), spv::DecorationSpecId,
+                                      glslangIntermediate->getLocalSizeSpecId(dim));
+            }
+          }
+          builder.addExecutionModeId(shaderEntry, spv::ExecutionModeLocalSizeId, dimConstId);
+        } else {
+          builder.addExecutionMode(shaderEntry, spv::ExecutionModeLocalSize, glslangIntermediate->getLocalSize(0),
+                                                                             glslangIntermediate->getLocalSize(1),
+                                                                             glslangIntermediate->getLocalSize(2));
+        }
         if (glslangIntermediate->getLayoutDerivativeModeNone() == glslang::LayoutDerivativeGroupQuads) {
             builder.addCapability(spv::CapabilityComputeDerivativeGroupQuadsNV);
             builder.addExecutionMode(shaderEntry, spv::ExecutionModeDerivativeGroupQuadsNV);
@@ -1770,9 +1783,22 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(unsigned int spvVersion,
     case EShLangMeshNV:
         builder.addCapability(spv::CapabilityMeshShadingNV);
         builder.addExtension(spv::E_SPV_NV_mesh_shader);
-        builder.addExecutionMode(shaderEntry, spv::ExecutionModeLocalSize, glslangIntermediate->getLocalSize(0),
-                                                                           glslangIntermediate->getLocalSize(1),
-                                                                           glslangIntermediate->getLocalSize(2));
+        if (glslangIntermediate->getSpv().spv >= glslang::EShTargetSpv_1_6) {
+            std::vector<spv::Id> dimConstId;
+            for (int dim = 0; dim < 3; ++dim) {
+                bool specConst = (glslangIntermediate->getLocalSizeSpecId(dim) != glslang::TQualifier::layoutNotSet);
+                dimConstId.push_back(builder.makeUintConstant(glslangIntermediate->getLocalSize(dim), specConst));
+                if (specConst) {
+                    builder.addDecoration(dimConstId.back(), spv::DecorationSpecId,
+                                          glslangIntermediate->getLocalSizeSpecId(dim));
+                }
+            }
+            builder.addExecutionModeId(shaderEntry, spv::ExecutionModeLocalSizeId, dimConstId);
+        } else {
+            builder.addExecutionMode(shaderEntry, spv::ExecutionModeLocalSize, glslangIntermediate->getLocalSize(0),
+                                                                               glslangIntermediate->getLocalSize(1),
+                                                                               glslangIntermediate->getLocalSize(2));
+        }
         if (glslangIntermediate->getStage() == EShLangMeshNV) {
             builder.addExecutionMode(shaderEntry, spv::ExecutionModeOutputVertices,
                 glslangIntermediate->getVertices());
@@ -3779,7 +3805,16 @@ bool TGlslangToSpvTraverser::visitBranch(glslang::TVisit /* visit */, glslang::T
 
     switch (node->getFlowOp()) {
     case glslang::EOpKill:
-        builder.makeStatementTerminator(spv::OpKill, "post-discard");
+        if (glslangIntermediate->getSpv().spv >= glslang::EShTargetSpv_1_6) {
+            if (glslangIntermediate->getSource() == glslang::EShSourceHlsl) {
+              builder.addCapability(spv::CapabilityDemoteToHelperInvocation);
+              builder.createNoResultOp(spv::OpDemoteToHelperInvocationEXT);
+            } else {
+                builder.makeStatementTerminator(spv::OpTerminateInvocation, "post-terminate-invocation");
+            }
+        } else {
+            builder.makeStatementTerminator(spv::OpKill, "post-discard");
+        }
         break;
     case glslang::EOpTerminateInvocation:
         builder.addExtension(spv::E_SPV_KHR_terminate_invocation);
@@ -8716,8 +8751,18 @@ spv::Id TGlslangToSpvTraverser::getSymbolId(const glslang::TIntermSymbol* symbol
             builder.addDecoration(id, spv::DecorationOffset, symbol->getQualifier().layoutOffset);
     }
 
-    if (symbol->getQualifier().hasLocation())
-        builder.addDecoration(id, spv::DecorationLocation, symbol->getQualifier().layoutLocation);
+    if (symbol->getQualifier().hasLocation()) {
+        if (!(glslangIntermediate->isRayTracingStage() && glslangIntermediate->IsRequestedExtension(glslang::E_GL_EXT_ray_tracing)
+              && (builder.getStorageClass(id) == spv::StorageClassRayPayloadKHR ||
+                  builder.getStorageClass(id) == spv::StorageClassIncomingRayPayloadKHR ||
+                  builder.getStorageClass(id) == spv::StorageClassCallableDataKHR ||
+                  builder.getStorageClass(id) == spv::StorageClassIncomingCallableDataKHR))) {
+            // Location values are used to link TraceRayKHR and ExecuteCallableKHR to corresponding variables
+            // but are not valid in SPIRV since they are supported only for Input/Output Storage classes.
+            builder.addDecoration(id, spv::DecorationLocation, symbol->getQualifier().layoutLocation);
+        }
+    }
+
     builder.addDecoration(id, TranslateInvariantDecoration(symbol->getType().getQualifier()));
     if (symbol->getQualifier().hasStream() && glslangIntermediate->isMultiStream()) {
         builder.addCapability(spv::CapabilityGeometryStreams);
@@ -8751,7 +8796,16 @@ spv::Id TGlslangToSpvTraverser::getSymbolId(const glslang::TIntermSymbol* symbol
 
     // add built-in variable decoration
     if (builtIn != spv::BuiltInMax) {
-        builder.addDecoration(id, spv::DecorationBuiltIn, (int)builtIn);
+        // WorkgroupSize deprecated in spirv1.6
+        if (glslangIntermediate->getSpv().spv < glslang::EShTargetSpv_1_6 ||
+            builtIn != spv::BuiltInWorkgroupSize)
+            builder.addDecoration(id, spv::DecorationBuiltIn, (int)builtIn);
+    }
+
+    // Add volatile decoration to HelperInvocation for spirv1.6 and beyond
+    if (builtIn == spv::BuiltInHelperInvocation &&
+        glslangIntermediate->getSpv().spv >= glslang::EShTargetSpv_1_6) {
+        builder.addDecoration(id, spv::DecorationVolatile);
     }
 
 #ifndef GLSLANG_WEB

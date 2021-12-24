@@ -788,9 +788,13 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                             } else if (strcmp(argv[1], "spirv1.5") == 0) {
                                 TargetLanguage = glslang::EShTargetSpv;
                                 TargetVersion = glslang::EShTargetSpv_1_5;
+                            } else if (strcmp(argv[1], "spirv1.6") == 0) {
+                                TargetLanguage = glslang::EShTargetSpv;
+                                TargetVersion = glslang::EShTargetSpv_1_6;
                             } else
-                                Error("--target-env expected one of: vulkan1.0, vulkan1.1, vulkan1.2, opengl,\n"
-                                      "spirv1.0, spirv1.1, spirv1.2, spirv1.3, spirv1.4, or spirv1.5");
+                                Error("--target-env expected one of: vulkan1.0, vulkan1.1, vulkan1.2,\n"
+                                      "opengl, spirv1.0, spirv1.1, spirv1.2, spirv1.3,\n"
+                                      "spirv1.4, spirv1.5 or spirv1.6");
                         }
                         bumpArg();
                     } else if (lowerword == "undef-macro" ||
@@ -1930,8 +1934,9 @@ void usage()
            "  --sep                             synonym for --source-entrypoint\n"
            "  --stdin                           read from stdin instead of from a file;\n"
            "                                    requires providing the shader stage using -S\n"
-           "  --target-env {vulkan1.0 | vulkan1.1 | vulkan1.2 | opengl | \n"
-           "                spirv1.0 | spirv1.1 | spirv1.2 | spirv1.3 | spirv1.4 | spirv1.5}\n"
+           "  --target-env {vulkan1.0 | vulkan1.1 | vulkan1.2 | opengl |\n"
+           "                spirv1.0 | spirv1.1 | spirv1.2 | spirv1.3 | spirv1.4 |\n"
+           "                spirv1.5 | spirv1.6}\n"
            "                                    Set the execution environment that the\n"
            "                                    generated code will be executed in.\n"
            "                                    Defaults to:\n"

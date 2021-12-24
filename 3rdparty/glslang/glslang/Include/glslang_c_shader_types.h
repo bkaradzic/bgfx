@@ -113,7 +113,8 @@ typedef enum {
     GLSLANG_TARGET_SPV_1_3 = (1 << 16) | (3 << 8),
     GLSLANG_TARGET_SPV_1_4 = (1 << 16) | (4 << 8),
     GLSLANG_TARGET_SPV_1_5 = (1 << 16) | (5 << 8),
-    LAST_ELEMENT_MARKER(GLSLANG_TARGET_LANGUAGE_VERSION_COUNT = 6),
+    GLSLANG_TARGET_SPV_1_6 = (1 << 16) | (6 << 8),
+    LAST_ELEMENT_MARKER(GLSLANG_TARGET_LANGUAGE_VERSION_COUNT = 7),
 } glslang_target_language_version_t;
 
 /* EShExecutable counterpart */
@@ -180,6 +181,26 @@ typedef enum {
     GLSLANG_ES_PROFILE = (1 << 3),
     LAST_ELEMENT_MARKER(GLSLANG_PROFILE_COUNT),
 } glslang_profile_t;
+
+/* Shader options */
+typedef enum {
+    GLSLANG_SHADER_DEFAULT_BIT = 0,
+    GLSLANG_SHADER_AUTO_MAP_BINDINGS = (1 << 0),
+    GLSLANG_SHADER_AUTO_MAP_LOCATIONS = (1 << 1),
+    GLSLANG_SHADER_VULKAN_RULES_RELAXED = (1 << 2),
+    LAST_ELEMENT_MARKER(GLSLANG_SHADER_COUNT),
+} glslang_shader_options_t;
+
+/* TResourceType counterpart */
+typedef enum {
+    GLSLANG_RESOURCE_TYPE_SAMPLER,
+    GLSLANG_RESOURCE_TYPE_TEXTURE,
+    GLSLANG_RESOURCE_TYPE_IMAGE,
+    GLSLANG_RESOURCE_TYPE_UBO,
+    GLSLANG_RESOURCE_TYPE_SSBO,
+    GLSLANG_RESOURCE_TYPE_UAV,
+    LAST_ELEMENT_MARKER(GLSLANG_RESOURCE_TYPE_COUNT),
+} glslang_resource_type_t;
 
 #undef LAST_ELEMENT_MARKER
 

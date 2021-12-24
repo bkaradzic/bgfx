@@ -398,6 +398,9 @@ public:
         case EShTargetSpv_1_5:
             processes.addProcess("target-env spirv1.5");
             break;
+        case EShTargetSpv_1_6:
+            processes.addProcess("target-env spirv1.6");
+            break;
         default:
             processes.addProcess("target-env spirvUnknown");
             break;
