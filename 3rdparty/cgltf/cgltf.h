@@ -474,6 +474,11 @@ typedef struct cgltf_sheen
 	cgltf_float sheen_roughness_factor;
 } cgltf_sheen;
 
+typedef struct cgltf_emissive_strength
+{
+	cgltf_float emissive_strength;
+} cgltf_emissive_strength;
+
 typedef struct cgltf_material
 {
 	char* name;
@@ -485,6 +490,7 @@ typedef struct cgltf_material
 	cgltf_bool has_ior;
 	cgltf_bool has_specular;
 	cgltf_bool has_sheen;
+	cgltf_bool has_emissive_strength;
 	cgltf_pbr_metallic_roughness pbr_metallic_roughness;
 	cgltf_pbr_specular_glossiness pbr_specular_glossiness;
 	cgltf_clearcoat clearcoat;
@@ -493,6 +499,7 @@ typedef struct cgltf_material
 	cgltf_sheen sheen;
 	cgltf_transmission transmission;
 	cgltf_volume volume;
+	cgltf_emissive_strength emissive_strength;
 	cgltf_texture_view normal_texture;
 	cgltf_texture_view occlusion_texture;
 	cgltf_texture_view emissive_texture;
@@ -3844,6 +3851,39 @@ static int cgltf_parse_json_sheen(cgltf_options* options, jsmntok_t const* token
 	return i;
 }
 
+static int cgltf_parse_json_emissive_strength(jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_emissive_strength* out_emissive_strength)
+{
+	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+	int size = tokens[i].size;
+	++i;
+
+	// Default
+	out_emissive_strength->emissive_strength = 1.f;
+
+	for (int j = 0; j < size; ++j)
+	{
+		CGLTF_CHECK_KEY(tokens[i]);
+
+		if (cgltf_json_strcmp(tokens + i, json_chunk, "emissiveStrength") == 0)
+		{
+			++i;
+			out_emissive_strength->emissive_strength = cgltf_json_to_float(tokens + i, json_chunk);
+			++i;
+		}
+		else
+		{
+			i = cgltf_skip_json(tokens, i + 1);
+		}
+
+		if (i < 0)
+		{
+			return i;
+		}
+	}
+
+	return i;
+}
+
 static int cgltf_parse_json_image(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_image* out_image)
 {
 	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
@@ -4217,6 +4257,11 @@ static int cgltf_parse_json_material(cgltf_options* options, jsmntok_t const* to
 				{
 					out_material->has_sheen = 1;
 					i = cgltf_parse_json_sheen(options, tokens, i + 1, json_chunk, &out_material->sheen);
+				}
+				else if (cgltf_json_strcmp(tokens + i, json_chunk, "KHR_materials_emissive_strength") == 0)
+				{
+					out_material->has_emissive_strength = 1;
+					i = cgltf_parse_json_emissive_strength(tokens, i + 1, json_chunk, &out_material->emissive_strength);
 				}
 				else
 				{
