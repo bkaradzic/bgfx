@@ -27,6 +27,7 @@
 #include "source/opt/iterator.h"
 #include "source/opt/reflect.h"
 #include "source/spirv_constant.h"
+#include "source/util/string_utils.h"
 
 namespace spvtools {
 namespace opt {
@@ -146,8 +147,7 @@ void AggressiveDCEPass::AddStores(Function* func, uint32_t ptrId) {
 bool AggressiveDCEPass::AllExtensionsSupported() const {
   // If any extension not in allowlist, return false
   for (auto& ei : get_module()->extensions()) {
-    const char* extName =
-        reinterpret_cast<const char*>(&ei.GetInOperand(0).words[0]);
+    const std::string extName = ei.GetInOperand(0).AsString();
     if (extensions_allowlist_.find(extName) == extensions_allowlist_.end())
       return false;
   }
@@ -156,11 +156,9 @@ bool AggressiveDCEPass::AllExtensionsSupported() const {
   for (auto& inst : context()->module()->ext_inst_imports()) {
     assert(inst.opcode() == SpvOpExtInstImport &&
            "Expecting an import of an extension's instruction set.");
-    const char* extension_name =
-        reinterpret_cast<const char*>(&inst.GetInOperand(0).words[0]);
-    if (0 == std::strncmp(extension_name, "NonSemantic.", 12) &&
-        0 != std::strncmp(extension_name, "NonSemantic.Shader.DebugInfo.100",
-                          32)) {
+    const std::string extension_name = inst.GetInOperand(0).AsString();
+    if (spvtools::utils::starts_with(extension_name, "NonSemantic.") &&
+        extension_name != "NonSemantic.Shader.DebugInfo.100") {
       return false;
     }
   }

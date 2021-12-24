@@ -115,10 +115,11 @@ class DescriptorScalarReplacement : public Pass {
                                    const bool is_old_var_struct,
                                    Instruction* old_var_type);
 
-  // Create a new OpDecorate instruction by cloning |old_decoration|. The new
-  // OpDecorate instruction will be used for a variable whose id is
-  // |new_var_ptr_type_id|. If |old_decoration| is a decoration for a binding,
-  // the new OpDecorate instruction will have |new_binding| as its binding.
+  // Create a new OpDecorate(String) instruction by cloning |old_decoration|.
+  // The new OpDecorate(String) instruction will be used for a variable whose id
+  // is |new_var_ptr_type_id|. If |old_decoration| is a decoration for a
+  // binding, the new OpDecorate(String) instruction will have |new_binding| as
+  // its binding.
   void CreateNewDecorationForNewVariable(Instruction* old_decoration,
                                          uint32_t new_var_id,
                                          uint32_t new_binding);

@@ -27,6 +27,7 @@
 
 #include "source/cfa.h"
 #include "source/opcode.h"
+#include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
 #include "source/spirv_validator_options.h"
 #include "source/val/basic_block.h"
@@ -189,6 +190,12 @@ spv_result_t ValidateBranchConditional(ValidationState_t& _,
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "The 'False Label' operand for OpBranchConditional must be the "
               "ID of an OpLabel instruction";
+  }
+
+  if (_.version() >= SPV_SPIRV_VERSION_WORD(1, 6) && true_id == false_id) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "In SPIR-V 1.6 or later, True Label and False Label must be "
+              "different labels";
   }
 
   return SPV_SUCCESS;

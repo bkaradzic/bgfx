@@ -169,7 +169,7 @@ void DescriptorScalarReplacement::CopyDecorationsForNewVariable(
     Instruction* old_var, uint32_t index, uint32_t new_var_id,
     uint32_t new_var_ptr_type_id, const bool is_old_var_array,
     const bool is_old_var_struct, Instruction* old_var_type) {
-  // Handle OpDecorate instructions.
+  // Handle OpDecorate and OpDecorateString instructions.
   for (auto old_decoration :
        get_decoration_mgr()->GetDecorationsFor(old_var->result_id(), true)) {
     uint32_t new_binding = 0;
@@ -212,7 +212,8 @@ uint32_t DescriptorScalarReplacement::GetNewBindingForElement(
 
 void DescriptorScalarReplacement::CreateNewDecorationForNewVariable(
     Instruction* old_decoration, uint32_t new_var_id, uint32_t new_binding) {
-  assert(old_decoration->opcode() == SpvOpDecorate);
+  assert(old_decoration->opcode() == SpvOpDecorate ||
+         old_decoration->opcode() == SpvOpDecorateString);
   std::unique_ptr<Instruction> new_decoration(old_decoration->Clone(context()));
   new_decoration->SetInOperand(0, {new_var_id});
 

@@ -559,21 +559,17 @@ uint32_t GraphicsRobustAccessPass::GetGlslInsts() {
   if (module_status_.glsl_insts_id == 0) {
     // This string serves double-duty as raw data for a string and for a vector
     // of 32-bit words
-    const char glsl[] = "GLSL.std.450\0\0\0\0";
-    const size_t glsl_str_byte_len = 16;
+    const char glsl[] = "GLSL.std.450";
     // Use an existing import if we can.
     for (auto& inst : context()->module()->ext_inst_imports()) {
-      const auto& name_words = inst.GetInOperand(0).words;
-      if (0 == std::strncmp(reinterpret_cast<const char*>(name_words.data()),
-                            glsl, glsl_str_byte_len)) {
+      if (inst.GetInOperand(0).AsString() == glsl) {
         module_status_.glsl_insts_id = inst.result_id();
       }
     }
     if (module_status_.glsl_insts_id == 0) {
       // Make a new import instruction.
       module_status_.glsl_insts_id = TakeNextId();
-      std::vector<uint32_t> words(glsl_str_byte_len / sizeof(uint32_t));
-      std::memcpy(words.data(), glsl, glsl_str_byte_len);
+      std::vector<uint32_t> words = spvtools::utils::MakeVector(glsl);
       auto import_inst = MakeUnique<Instruction>(
           context(), SpvOpExtInstImport, 0, module_status_.glsl_insts_id,
           std::initializer_list<Operand>{

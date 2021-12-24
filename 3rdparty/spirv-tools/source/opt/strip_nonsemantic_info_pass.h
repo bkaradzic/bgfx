@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SOURCE_OPT_STRIP_REFLECT_INFO_PASS_H_
-#define SOURCE_OPT_STRIP_REFLECT_INFO_PASS_H_
+#ifndef SOURCE_OPT_STRIP_NONSEMANTIC_INFO_PASS_H_
+#define SOURCE_OPT_STRIP_NONSEMANTIC_INFO_PASS_H_
 
 #include "source/opt/ir_context.h"
 #include "source/opt/module.h"
@@ -23,9 +23,9 @@ namespace spvtools {
 namespace opt {
 
 // See optimizer.hpp for documentation.
-class StripReflectInfoPass : public Pass {
+class StripNonSemanticInfoPass : public Pass {
  public:
-  const char* name() const override { return "strip-reflect"; }
+  const char* name() const override { return "strip-nonsemantic"; }
   Status Process() override;
 
   // Return the mask of preserved Analyses.
@@ -41,4 +41,4 @@ class StripReflectInfoPass : public Pass {
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // SOURCE_OPT_STRIP_REFLECT_INFO_PASS_H_
+#endif  // SOURCE_OPT_STRIP_NONSEMANTIC_INFO_PASS_H_

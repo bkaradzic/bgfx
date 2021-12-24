@@ -219,9 +219,7 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
       if (inst->opcode() == SpvOpEntryPoint) {
         const auto entry_point = inst->GetOperandAs<uint32_t>(1);
         const auto execution_model = inst->GetOperandAs<SpvExecutionModel>(0);
-        const char* str = reinterpret_cast<const char*>(
-            inst->words().data() + inst->operand(2).offset);
-        const std::string desc_name(str);
+        const std::string desc_name = inst->GetOperandAs<std::string>(2);
 
         ValidationState_t::EntryPointDescription desc;
         desc.name = desc_name;
@@ -237,9 +235,8 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
           for (const Instruction* check_inst : visited_entry_points) {
             const auto check_execution_model =
                 check_inst->GetOperandAs<SpvExecutionModel>(0);
-            const char* check_str = reinterpret_cast<const char*>(
-                check_inst->words().data() + inst->operand(2).offset);
-            const std::string check_name(check_str);
+            const std::string check_name =
+                check_inst->GetOperandAs<std::string>(2);
 
             if (desc_name == check_name &&
                 execution_model == check_execution_model) {

@@ -43,6 +43,7 @@
 #include "source/opt/type_manager.h"
 #include "source/opt/value_number_table.h"
 #include "source/util/make_unique.h"
+#include "source/util/string_utils.h"
 
 namespace spvtools {
 namespace opt {
@@ -518,6 +519,18 @@ class IRContext {
         std::string message = "ID overflow. Try running compact-ids.";
         consumer()(SPV_MSG_ERROR, "", {0, 0, 0}, message.c_str());
       }
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+      // If TakeNextId returns 0, it is very likely that execution will
+      // subsequently fail. Such failures are false alarms from a fuzzing point
+      // of view: they are due to the fact that too many ids were used, rather
+      // than being due to an actual bug. Thus, during a fuzzing build, it is
+      // preferable to bail out when ID overflow occurs.
+      //
+      // A zero exit code is returned here because a non-zero code would cause
+      // ClusterFuzz/OSS-Fuzz to regard the termination as a crash, and spurious
+      // crash reports is what this guard aims to avoid.
+      exit(0);
+#endif
     }
     return next_id;
   }
@@ -1020,11 +1033,7 @@ void IRContext::AddCapability(std::unique_ptr<Instruction>&& c) {
 }
 
 void IRContext::AddExtension(const std::string& ext_name) {
-  const auto num_chars = ext_name.size();
-  // Compute num words, accommodate the terminating null character.
-  const auto num_words = (num_chars + 1 + 3) / 4;
-  std::vector<uint32_t> ext_words(num_words, 0u);
-  std::memcpy(ext_words.data(), ext_name.data(), num_chars);
+  std::vector<uint32_t> ext_words = spvtools::utils::MakeVector(ext_name);
   AddExtension(std::unique_ptr<Instruction>(
       new Instruction(this, SpvOpExtension, 0u, 0u,
                       {{SPV_OPERAND_TYPE_LITERAL_STRING, ext_words}})));
@@ -1041,11 +1050,7 @@ void IRContext::AddExtension(std::unique_ptr<Instruction>&& e) {
 }
 
 void IRContext::AddExtInstImport(const std::string& name) {
-  const auto num_chars = name.size();
-  // Compute num words, accommodate the terminating null character.
-  const auto num_words = (num_chars + 1 + 3) / 4;
-  std::vector<uint32_t> ext_words(num_words, 0u);
-  std::memcpy(ext_words.data(), name.data(), num_chars);
+  std::vector<uint32_t> ext_words = spvtools::utils::MakeVector(name);
   AddExtInstImport(std::unique_ptr<Instruction>(
       new Instruction(this, SpvOpExtInstImport, 0u, TakeNextId(),
                       {{SPV_OPERAND_TYPE_LITERAL_STRING, ext_words}})));

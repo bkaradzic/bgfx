@@ -280,8 +280,7 @@ spv_result_t ValidateClspvReflectionKernel(ValidationState_t& _,
     return _.diag(SPV_ERROR_INVALID_ID, inst) << "Name must be an OpString";
   }
 
-  const std::string name_str = reinterpret_cast<const char*>(
-      name->words().data() + name->operands()[1].offset);
+  const std::string name_str = name->GetOperandAs<std::string>(1);
   bool found = false;
   for (auto& desc : _.entry_point_descriptions(kernel_id)) {
     if (name_str == desc.name) {
@@ -740,9 +739,9 @@ spv_result_t ValidateExtension(ValidationState_t& _, const Instruction* inst) {
 spv_result_t ValidateExtInstImport(ValidationState_t& _,
                                    const Instruction* inst) {
   const auto name_id = 1;
-  if (!_.HasExtension(kSPV_KHR_non_semantic_info)) {
-    const std::string name(reinterpret_cast<const char*>(
-        inst->words().data() + inst->operands()[name_id].offset));
+  if (_.version() <= SPV_SPIRV_VERSION_WORD(1, 5) &&
+      !_.HasExtension(kSPV_KHR_non_semantic_info)) {
+    const std::string name = inst->GetOperandAs<std::string>(name_id);
     if (name.find("NonSemantic.") == 0) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "NonSemantic extended instruction sets cannot be declared "
@@ -774,7 +773,7 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
     assert(import_inst);
 
     std::ostringstream ss;
-    ss << reinterpret_cast<const char*>(import_inst->words().data() + 2);
+    ss << import_inst->GetOperandAs<std::string>(1);
     ss << " ";
     ss << desc->name;
 
@@ -3264,8 +3263,7 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
     }
   } else if (ext_inst_type == SPV_EXT_INST_TYPE_NONSEMANTIC_CLSPVREFLECTION) {
     auto import_inst = _.FindDef(inst->GetOperandAs<uint32_t>(2));
-    const std::string name(reinterpret_cast<const char*>(
-        import_inst->words().data() + import_inst->operands()[1].offset));
+    const std::string name = import_inst->GetOperandAs<std::string>(1);
     const std::string reflection = "NonSemantic.ClspvReflection.";
     char* end_ptr;
     auto version_string = name.substr(reflection.size());

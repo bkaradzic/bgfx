@@ -21,11 +21,13 @@
 #include <utility>
 #include <vector>
 
+#include "source/binary.h"
 #include "source/diagnostic.h"
 #include "source/opcode.h"
 #include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
 #include "source/spirv_validator_options.h"
+#include "source/util/string_utils.h"
 #include "source/val/validate_scopes.h"
 #include "source/val/validation_state.h"
 
@@ -94,6 +96,14 @@ bool isBuiltInStruct(uint32_t struct_id, ValidationState_t& vstate) {
         return SpvDecorationBuiltIn == d.dec_type() &&
                Decoration::kInvalidMember != d.struct_member_index();
       });
+}
+
+// Returns true if the given structure type has a Block decoration.
+bool isBlock(uint32_t struct_id, ValidationState_t& vstate) {
+  const auto& decorations = vstate.id_decorations(struct_id);
+  return std::any_of(
+      decorations.begin(), decorations.end(),
+      [](const Decoration& d) { return SpvDecorationBlock == d.dec_type(); });
 }
 
 // Returns true if the given ID has the Import LinkageAttributes decoration.
@@ -702,7 +712,7 @@ spv_result_t CheckBuiltInVariable(uint32_t var_id, ValidationState_t& vstate) {
       if (d.dec_type() == SpvDecorationLocation ||
           d.dec_type() == SpvDecorationComponent) {
         return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(var_id))
-               << "A BuiltIn variable (id " << var_id
+               << vstate.VkErrorID(4915) << "A BuiltIn variable (id " << var_id
                << ") cannot have any Location or Component decorations";
       }
     }
@@ -714,8 +724,8 @@ spv_result_t CheckBuiltInVariable(uint32_t var_id, ValidationState_t& vstate) {
 spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
   for (uint32_t entry_point : vstate.entry_points()) {
     const auto& descs = vstate.entry_point_descriptions(entry_point);
-    int num_builtin_inputs = 0;
-    int num_builtin_outputs = 0;
+    int num_builtin_block_inputs = 0;
+    int num_builtin_block_outputs = 0;
     int num_workgroup_variables = 0;
     int num_workgroup_variables_with_block = 0;
     int num_workgroup_variables_with_aliased = 0;
@@ -766,9 +776,20 @@ spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
         Instruction* type_instr = vstate.FindDef(type_id);
         if (type_instr && SpvOpTypeStruct == type_instr->opcode() &&
             isBuiltInStruct(type_id, vstate)) {
-          if (storage_class == SpvStorageClassInput) ++num_builtin_inputs;
-          if (storage_class == SpvStorageClassOutput) ++num_builtin_outputs;
-          if (num_builtin_inputs > 1 || num_builtin_outputs > 1) break;
+          if (!isBlock(type_id, vstate)) {
+            return vstate.diag(SPV_ERROR_INVALID_DATA, vstate.FindDef(type_id))
+                   << vstate.VkErrorID(4919)
+                   << "Interface struct has no Block decoration but has "
+                      "BuiltIn members. "
+                      "Location decorations must be used on each member of "
+                      "OpVariable with a structure type that is a block not "
+                      "decorated with Location.";
+          }
+          if (storage_class == SpvStorageClassInput) ++num_builtin_block_inputs;
+          if (storage_class == SpvStorageClassOutput)
+            ++num_builtin_block_outputs;
+          if (num_builtin_block_inputs > 1 || num_builtin_block_outputs > 1)
+            break;
           if (auto error = CheckBuiltInVariable(interface, vstate))
             return error;
         } else if (isBuiltInVar(interface, vstate)) {
@@ -786,7 +807,7 @@ spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
           }
         }
       }
-      if (num_builtin_inputs > 1 || num_builtin_outputs > 1) {
+      if (num_builtin_block_inputs > 1 || num_builtin_block_outputs > 1) {
         return vstate.diag(SPV_ERROR_INVALID_BINARY,
                            vstate.FindDef(entry_point))
                << "There must be at most one object per Storage Class that can "
@@ -798,8 +819,8 @@ spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
       // targeted by an OpEntryPoint instruction
       for (auto& decoration : vstate.id_decorations(entry_point)) {
         if (SpvDecorationLinkageAttributes == decoration.dec_type()) {
-          const char* linkage_name =
-              reinterpret_cast<const char*>(&decoration.params()[0]);
+          const std::string linkage_name =
+              spvtools::utils::MakeString(decoration.params());
           return vstate.diag(SPV_ERROR_INVALID_BINARY,
                              vstate.FindDef(entry_point))
                  << "The LinkageAttributes Decoration (Linkage name: "

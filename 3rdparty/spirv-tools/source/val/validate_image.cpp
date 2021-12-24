@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Google Inc.
+﻿// Copyright (c) 2017 Google Inc.
 // Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights
 // reserved.
 //
@@ -20,6 +20,7 @@
 
 #include "source/diagnostic.h"
 #include "source/opcode.h"
+#include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
 #include "source/util/bitutils.h"
 #include "source/val/instruction.h"
@@ -71,6 +72,7 @@ bool CheckAllImageOperandsHandled() {
     //                blocks other PRs.
     // https://github.com/KhronosGroup/SPIRV-Tools/issues/4565
     case SpvImageOperandsOffsetsMask:
+    case SpvImageOperandsNontemporalMask:
       return true;
   }
   return false;
@@ -630,6 +632,10 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
     // TODO: add validation
   }
 
+  if (mask & SpvImageOperandsNontemporalMask) {
+    // Checked elsewhere: SPIR-V 1.6 version or later.
+  }
+
   return SPV_SUCCESS;
 }
 
@@ -913,6 +919,13 @@ spv_result_t ValidateTypeSampledImage(ValidationState_t& _,
            << _.VkErrorID(4657)
            << "Sampled image type requires an image type with \"Sampled\" "
               "operand set to 0 or 1";
+  }
+
+  // This covers both OpTypeSampledImage and OpSampledImage.
+  if (_.version() >= SPV_SPIRV_VERSION_WORD(1, 6) && info.dim == SpvDimBuffer) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "In SPIR-V 1.6 or later, sampled image dimension must not be "
+              "Buffer";
   }
 
   return SPV_SUCCESS;

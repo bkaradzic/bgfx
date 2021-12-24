@@ -37,6 +37,7 @@
 #include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
 #include "source/util/make_unique.h"
+#include "source/util/string_utils.h"
 #include "spirv-tools/libspirv.hpp"
 
 namespace spvtools {
@@ -210,7 +211,7 @@ spv_result_t GenerateHeader(const MessageConsumer& consumer,
   header->version = version;
   header->generator = SPV_GENERATOR_WORD(SPV_GENERATOR_KHRONOS_LINKER, 0);
   header->bound = max_id_bound;
-  header->reserved = 0u;
+  header->schema = 0u;
 
   return SPV_SUCCESS;
 }
@@ -282,16 +283,15 @@ spv_result_t MergeModules(const MessageConsumer& consumer,
           memory_model_inst->Clone(linked_context)));
   } while (false);
 
-  std::vector<std::pair<uint32_t, const char*>> entry_points;
+  std::vector<std::pair<uint32_t, std::string>> entry_points;
   for (const auto& module : input_modules)
     for (const auto& inst : module->entry_points()) {
       const uint32_t model = inst.GetSingleWordInOperand(0);
-      const char* const name =
-          reinterpret_cast<const char*>(inst.GetInOperand(2).words.data());
+      const std::string name = inst.GetInOperand(2).AsString();
       const auto i = std::find_if(
           entry_points.begin(), entry_points.end(),
-          [model, name](const std::pair<uint32_t, const char*>& v) {
-            return v.first == model && strcmp(name, v.second) == 0;
+          [model, name](const std::pair<uint32_t, std::string>& v) {
+            return v.first == model && v.second == name;
           });
       if (i != entry_points.end()) {
         spv_operand_desc desc = nullptr;
@@ -334,11 +334,8 @@ spv_result_t MergeModules(const MessageConsumer& consumer,
   // OpModuleProcessed instruction about the linking step.
   if (linked_module->version() >= 0x10100) {
     const std::string processed_string("Linked by SPIR-V Tools Linker");
-    const auto num_chars = processed_string.size();
-    // Compute num words, accommodate the terminating null character.
-    const auto num_words = (num_chars + 1 + 3) / 4;
-    std::vector<uint32_t> processed_words(num_words, 0u);
-    std::memcpy(processed_words.data(), processed_string.data(), num_chars);
+    std::vector<uint32_t> processed_words =
+        spvtools::utils::MakeVector(processed_string);
     linked_module->AddDebug3Inst(std::unique_ptr<Instruction>(
         new Instruction(linked_context, SpvOpModuleProcessed, 0u, 0u,
                         {{SPV_OPERAND_TYPE_LITERAL_STRING, processed_words}})));
@@ -414,8 +411,7 @@ spv_result_t GetImportExportPairs(const MessageConsumer& consumer,
     const uint32_t type = decoration.GetSingleWordInOperand(3u);
 
     LinkageSymbolInfo symbol_info;
-    symbol_info.name =
-        reinterpret_cast<const char*>(decoration.GetInOperand(2u).words.data());
+    symbol_info.name = decoration.GetInOperand(2u).AsString();
     symbol_info.id = id;
     symbol_info.type_id = 0u;
 
