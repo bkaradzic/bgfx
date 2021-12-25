@@ -938,6 +938,7 @@ namespace entry
 			SelectObject(hdc, brush);
 			FillRect(hdc, &rect, brush);
 			ReleaseDC(_hwnd, hdc);
+			DeleteObject(brush);
 		}
 
 		void adjust(HWND _hwnd, uint32_t _width, uint32_t _height, bool _windowFrame)
