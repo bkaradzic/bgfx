@@ -180,7 +180,7 @@ public:
 			ImGui::PopEnabled();
 
 			ImGui::Text("Grid Side Size:");
-			ImGui::SliderInt("", (int*)&m_sideSize, 1, 512);
+			ImGui::SliderInt("##size", (int*)&m_sideSize, 1, 512);
 
 			if (m_lastFrameMissing > 0)
 			{
