@@ -1,8 +1,0 @@
-vec4 xlat_main() {
-    return vec4(1.0, 1e7, 1e-6, 1.5);
-}
-void main() {
-    vec4 x = xlat_main();
-    gl_FragData[0] = x;
-    gl_FragData[1] = vec4(1.0/0.0, -1.0/0.0, 0.0/0.0, -0.0/0.0);
-}

@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.2.  */
+/* A Bison parser, made by GNU Bison 3.5.1.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -40,11 +41,14 @@
    define necessary library symbols; they are noted "INFRINGES ON
    USER NAME SPACE" below.  */
 
+/* Undocumented macros, especially those whose name start with YY_,
+   are private implementation details.  Do not rely on them.  */
+
 /* Identify Bison output.  */
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "3.0.2"
+#define YYBISON_VERSION "3.5.1"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -66,9 +70,8 @@
 #define yydebug         _mesa_glsl_debug
 #define yynerrs         _mesa_glsl_nerrs
 
-
-/* Copy the first part of user declarations.  */
-#line 1 "src/glsl/glsl_parser.yy" /* yacc.c:339  */
+/* First part of user prologue.  */
+#line 1 "src/glsl/glsl_parser.yy"
 
 /*
  * Copyright © 2008, 2009 Intel Corporation
@@ -149,13 +152,26 @@ static bool match_layout_qualifier(const char *s1, const char *s2,
       return strcasecmp(s1, s2);
 }
 
-#line 153 "src/glsl/glsl_parser.cpp" /* yacc.c:339  */
+#line 156 "src/glsl/glsl_parser.cpp"
 
-# ifndef YY_NULLPTR
-#  if defined __cplusplus && 201103L <= __cplusplus
-#   define YY_NULLPTR nullptr
+# ifndef YY_CAST
+#  ifdef __cplusplus
+#   define YY_CAST(Type, Val) static_cast<Type> (Val)
+#   define YY_REINTERPRET_CAST(Type, Val) reinterpret_cast<Type> (Val)
 #  else
-#   define YY_NULLPTR 0
+#   define YY_CAST(Type, Val) ((Type) (Val))
+#   define YY_REINTERPRET_CAST(Type, Val) ((Type) (Val))
+#  endif
+# endif
+# ifndef YY_NULLPTR
+#  if defined __cplusplus
+#   if 201103L <= __cplusplus
+#    define YY_NULLPTR nullptr
+#   else
+#    define YY_NULLPTR 0
+#   endif
+#  else
+#   define YY_NULLPTR ((void*)0)
 #  endif
 # endif
 
@@ -167,8 +183,8 @@ static bool match_layout_qualifier(const char *s1, const char *s2,
 # define YYERROR_VERBOSE 1
 #endif
 
-/* In a future release of Bison, this section will be replaced
-   by #include "glsl_parser.h".  */
+/* Use api.header.include to #include this header
+   instead of duplicating it here.  */
 #ifndef YY__MESA_GLSL_SRC_GLSL_GLSL_PARSER_H_INCLUDED
 # define YY__MESA_GLSL_SRC_GLSL_GLSL_PARSER_H_INCLUDED
 /* Debug traces.  */
@@ -419,10 +435,9 @@ extern int _mesa_glsl_debug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 99 "src/glsl/glsl_parser.yy" /* yacc.c:355  */
+#line 99 "src/glsl/glsl_parser.yy"
 
    int n;
    float real;
@@ -459,8 +474,10 @@ union YYSTYPE
       ast_node *else_statement;
    } selection_rest_statement;
 
-#line 463 "src/glsl/glsl_parser.cpp" /* yacc.c:355  */
+#line 478 "src/glsl/glsl_parser.cpp"
+
 };
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif
@@ -485,36 +502,81 @@ int _mesa_glsl_parse (struct _mesa_glsl_parse_state *state);
 
 #endif /* !YY__MESA_GLSL_SRC_GLSL_GLSL_PARSER_H_INCLUDED  */
 
-/* Copy the second part of user declarations.  */
 
-#line 491 "src/glsl/glsl_parser.cpp" /* yacc.c:358  */
 
 #ifdef short
 # undef short
 #endif
 
-#ifdef YYTYPE_UINT8
-typedef YYTYPE_UINT8 yytype_uint8;
-#else
-typedef unsigned char yytype_uint8;
+/* On compilers that do not define __PTRDIFF_MAX__ etc., make sure
+   <limits.h> and (if available) <stdint.h> are included
+   so that the code can choose integer types of a good width.  */
+
+#ifndef __PTRDIFF_MAX__
+# include <limits.h> /* INFRINGES ON USER NAME SPACE */
+# if defined __STDC_VERSION__ && 199901 <= __STDC_VERSION__
+#  include <stdint.h> /* INFRINGES ON USER NAME SPACE */
+#  define YY_STDINT_H
+# endif
 #endif
 
-#ifdef YYTYPE_INT8
-typedef YYTYPE_INT8 yytype_int8;
+/* Narrow types that promote to a signed type and that can represent a
+   signed or unsigned integer of at least N bits.  In tables they can
+   save space and decrease cache pressure.  Promoting to a signed type
+   helps avoid bugs in integer arithmetic.  */
+
+#ifdef __INT_LEAST8_MAX__
+typedef __INT_LEAST8_TYPE__ yytype_int8;
+#elif defined YY_STDINT_H
+typedef int_least8_t yytype_int8;
 #else
 typedef signed char yytype_int8;
 #endif
 
-#ifdef YYTYPE_UINT16
-typedef YYTYPE_UINT16 yytype_uint16;
+#ifdef __INT_LEAST16_MAX__
+typedef __INT_LEAST16_TYPE__ yytype_int16;
+#elif defined YY_STDINT_H
+typedef int_least16_t yytype_int16;
 #else
-typedef unsigned short int yytype_uint16;
+typedef short yytype_int16;
 #endif
 
-#ifdef YYTYPE_INT16
-typedef YYTYPE_INT16 yytype_int16;
+#if defined __UINT_LEAST8_MAX__ && __UINT_LEAST8_MAX__ <= __INT_MAX__
+typedef __UINT_LEAST8_TYPE__ yytype_uint8;
+#elif (!defined __UINT_LEAST8_MAX__ && defined YY_STDINT_H \
+       && UINT_LEAST8_MAX <= INT_MAX)
+typedef uint_least8_t yytype_uint8;
+#elif !defined __UINT_LEAST8_MAX__ && UCHAR_MAX <= INT_MAX
+typedef unsigned char yytype_uint8;
 #else
-typedef short int yytype_int16;
+typedef short yytype_uint8;
+#endif
+
+#if defined __UINT_LEAST16_MAX__ && __UINT_LEAST16_MAX__ <= __INT_MAX__
+typedef __UINT_LEAST16_TYPE__ yytype_uint16;
+#elif (!defined __UINT_LEAST16_MAX__ && defined YY_STDINT_H \
+       && UINT_LEAST16_MAX <= INT_MAX)
+typedef uint_least16_t yytype_uint16;
+#elif !defined __UINT_LEAST16_MAX__ && USHRT_MAX <= INT_MAX
+typedef unsigned short yytype_uint16;
+#else
+typedef int yytype_uint16;
+#endif
+
+#ifndef YYPTRDIFF_T
+# if defined __PTRDIFF_TYPE__ && defined __PTRDIFF_MAX__
+#  define YYPTRDIFF_T __PTRDIFF_TYPE__
+#  define YYPTRDIFF_MAXIMUM __PTRDIFF_MAX__
+# elif defined PTRDIFF_MAX
+#  ifndef ptrdiff_t
+#   include <stddef.h> /* INFRINGES ON USER NAME SPACE */
+#  endif
+#  define YYPTRDIFF_T ptrdiff_t
+#  define YYPTRDIFF_MAXIMUM PTRDIFF_MAX
+# else
+#  define YYPTRDIFF_T long
+#  define YYPTRDIFF_MAXIMUM LONG_MAX
+# endif
 #endif
 
 #ifndef YYSIZE_T
@@ -522,15 +584,27 @@ typedef short int yytype_int16;
 #  define YYSIZE_T __SIZE_TYPE__
 # elif defined size_t
 #  define YYSIZE_T size_t
-# elif ! defined YYSIZE_T
+# elif defined __STDC_VERSION__ && 199901 <= __STDC_VERSION__
 #  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
 #  define YYSIZE_T size_t
 # else
-#  define YYSIZE_T unsigned int
+#  define YYSIZE_T unsigned
 # endif
 #endif
 
-#define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
+#define YYSIZE_MAXIMUM                                  \
+  YY_CAST (YYPTRDIFF_T,                                 \
+           (YYPTRDIFF_MAXIMUM < YY_CAST (YYSIZE_T, -1)  \
+            ? YYPTRDIFF_MAXIMUM                         \
+            : YY_CAST (YYSIZE_T, -1)))
+
+#define YYSIZEOF(X) YY_CAST (YYPTRDIFF_T, sizeof (X))
+
+/* Stored state numbers (used for stacks). */
+typedef yytype_int16 yy_state_t;
+
+/* State numbers in computations.  */
+typedef int yy_state_fast_t;
 
 #ifndef YY_
 # if defined YYENABLE_NLS && YYENABLE_NLS
@@ -544,30 +618,19 @@ typedef short int yytype_int16;
 # endif
 #endif
 
-#ifndef YY_ATTRIBUTE
-# if (defined __GNUC__                                               \
-      && (2 < __GNUC__ || (__GNUC__ == 2 && 96 <= __GNUC_MINOR__)))  \
-     || defined __SUNPRO_C && 0x5110 <= __SUNPRO_C
-#  define YY_ATTRIBUTE(Spec) __attribute__(Spec)
+#ifndef YY_ATTRIBUTE_PURE
+# if defined __GNUC__ && 2 < __GNUC__ + (96 <= __GNUC_MINOR__)
+#  define YY_ATTRIBUTE_PURE __attribute__ ((__pure__))
 # else
-#  define YY_ATTRIBUTE(Spec) /* empty */
+#  define YY_ATTRIBUTE_PURE
 # endif
 #endif
 
-#ifndef YY_ATTRIBUTE_PURE
-# define YY_ATTRIBUTE_PURE   YY_ATTRIBUTE ((__pure__))
-#endif
-
 #ifndef YY_ATTRIBUTE_UNUSED
-# define YY_ATTRIBUTE_UNUSED YY_ATTRIBUTE ((__unused__))
-#endif
-
-#if !defined _Noreturn \
-     && (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112)
-# if defined _MSC_VER && 1200 <= _MSC_VER
-#  define _Noreturn __declspec (noreturn)
+# if defined __GNUC__ && 2 < __GNUC__ + (7 <= __GNUC_MINOR__)
+#  define YY_ATTRIBUTE_UNUSED __attribute__ ((__unused__))
 # else
-#  define _Noreturn YY_ATTRIBUTE ((__noreturn__))
+#  define YY_ATTRIBUTE_UNUSED
 # endif
 #endif
 
@@ -578,13 +641,13 @@ typedef short int yytype_int16;
 # define YYUSE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
+#if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
-# define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN \
-    _Pragma ("GCC diagnostic push") \
-    _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")\
+# define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                            \
+    _Pragma ("GCC diagnostic push")                                     \
+    _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")              \
     _Pragma ("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")
-# define YY_IGNORE_MAYBE_UNINITIALIZED_END \
+# define YY_IGNORE_MAYBE_UNINITIALIZED_END      \
     _Pragma ("GCC diagnostic pop")
 #else
 # define YY_INITIAL_VALUE(Value) Value
@@ -597,6 +660,20 @@ typedef short int yytype_int16;
 # define YY_INITIAL_VALUE(Value) /* Nothing. */
 #endif
 
+#if defined __cplusplus && defined __GNUC__ && ! defined __ICC && 6 <= __GNUC__
+# define YY_IGNORE_USELESS_CAST_BEGIN                          \
+    _Pragma ("GCC diagnostic push")                            \
+    _Pragma ("GCC diagnostic ignored \"-Wuseless-cast\"")
+# define YY_IGNORE_USELESS_CAST_END            \
+    _Pragma ("GCC diagnostic pop")
+#endif
+#ifndef YY_IGNORE_USELESS_CAST_BEGIN
+# define YY_IGNORE_USELESS_CAST_BEGIN
+# define YY_IGNORE_USELESS_CAST_END
+#endif
+
+
+#define YY_ASSERT(E) ((void) (0 && (E)))
 
 #if ! defined yyoverflow || YYERROR_VERBOSE
 
@@ -674,18 +751,19 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  yytype_int16 yyss_alloc;
+  yy_state_t yyss_alloc;
   YYSTYPE yyvs_alloc;
   YYLTYPE yyls_alloc;
 };
 
 /* The size of the maximum gap between one aligned stack and the next.  */
-# define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
+# define YYSTACK_GAP_MAXIMUM (YYSIZEOF (union yyalloc) - 1)
 
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
 # define YYSTACK_BYTES(N) \
-     ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE) + sizeof (YYLTYPE)) \
+     ((N) * (YYSIZEOF (yy_state_t) + YYSIZEOF (YYSTYPE) \
+             + YYSIZEOF (YYLTYPE)) \
       + 2 * YYSTACK_GAP_MAXIMUM)
 
 # define YYCOPY_NEEDED 1
@@ -698,11 +776,11 @@ union yyalloc
 # define YYSTACK_RELOCATE(Stack_alloc, Stack)                           \
     do                                                                  \
       {                                                                 \
-        YYSIZE_T yynewbytes;                                            \
+        YYPTRDIFF_T yynewbytes;                                         \
         YYCOPY (&yyptr->Stack_alloc, Stack, yysize);                    \
         Stack = &yyptr->Stack_alloc;                                    \
-        yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
-        yyptr += yynewbytes / sizeof (*yyptr);                          \
+        yynewbytes = yystacksize * YYSIZEOF (*Stack) + YYSTACK_GAP_MAXIMUM; \
+        yyptr += yynewbytes / YYSIZEOF (*yyptr);                        \
       }                                                                 \
     while (0)
 
@@ -714,12 +792,12 @@ union yyalloc
 # ifndef YYCOPY
 #  if defined __GNUC__ && 1 < __GNUC__
 #   define YYCOPY(Dst, Src, Count) \
-      __builtin_memcpy (Dst, Src, (Count) * sizeof (*(Src)))
+      __builtin_memcpy (Dst, Src, YY_CAST (YYSIZE_T, (Count)) * sizeof (*(Src)))
 #  else
 #   define YYCOPY(Dst, Src, Count)              \
       do                                        \
         {                                       \
-          YYSIZE_T yyi;                         \
+          YYPTRDIFF_T yyi;                      \
           for (yyi = 0; yyi < (Count); yyi++)   \
             (Dst)[yyi] = (Src)[yyi];            \
         }                                       \
@@ -742,17 +820,18 @@ union yyalloc
 /* YYNSTATES -- Number of states.  */
 #define YYNSTATES  540
 
-/* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
-   by yylex, with out-of-bounds checking.  */
 #define YYUNDEFTOK  2
 #define YYMAXUTOK   487
 
+
+/* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
+   as returned by yylex, with out-of-bounds checking.  */
 #define YYTRANSLATE(YYX)                                                \
-  ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
+  (0 <= (YYX) && (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
 
 /* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
-   as returned by yylex, without out-of-bounds checking.  */
-static const yytype_uint16 yytranslate[] =
+   as returned by yylex.  */
+static const yytype_int16 yytranslate[] =
 {
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -807,7 +886,7 @@ static const yytype_uint16 yytranslate[] =
 
 #if YYDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_uint16 yyrline[] =
+static const yytype_int16 yyrline[] =
 {
        0,   303,   303,   302,   314,   316,   323,   333,   334,   335,
      336,   337,   350,   352,   356,   357,   358,   362,   371,   379,
@@ -950,7 +1029,7 @@ static const char *const yytname[] =
 # ifdef YYPRINT
 /* YYTOKNUM[NUM] -- (External) token number corresponding to the
    (internal) symbol number NUM (which must be that of a token).  */
-static const yytype_uint16 yytoknum[] =
+static const yytype_int16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
@@ -981,14 +1060,14 @@ static const yytype_uint16 yytoknum[] =
 };
 # endif
 
-#define YYPACT_NINF -414
+#define YYPACT_NINF (-414)
 
-#define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-414)))
+#define yypact_value_is_default(Yyn) \
+  ((Yyn) == YYPACT_NINF)
 
-#define YYTABLE_NINF -378
+#define YYTABLE_NINF (-378)
 
-#define yytable_value_is_error(Yytable_value) \
+#define yytable_value_is_error(Yyn) \
   0
 
   /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
@@ -1054,7 +1133,7 @@ static const yytype_int16 yypact[] =
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
      Performed when YYTABLE does not specify something else to do.  Zero
      means the default is an error.  */
-static const yytype_uint16 yydefact[] =
+static const yytype_int16 yydefact[] =
 {
        4,     0,     0,    12,     0,     1,     2,    14,    15,    16,
        5,     0,     0,     0,    13,     6,     0,   179,   178,   203,
@@ -2247,7 +2326,7 @@ static const yytype_int16 yycheck[] =
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
-static const yytype_uint16 yystos[] =
+static const yytype_int16 yystos[] =
 {
        0,   174,   258,   260,   142,     0,   262,   138,   139,   140,
      178,   263,   175,   259,   264,   178,   263,     3,     4,     5,
@@ -2306,7 +2385,7 @@ static const yytype_uint16 yystos[] =
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
-static const yytype_uint16 yyr1[] =
+static const yytype_int16 yyr1[] =
 {
        0,   257,   259,   258,   260,   260,   260,   261,   261,   261,
      261,   261,   262,   262,   263,   263,   263,   264,   265,   265,
@@ -2350,7 +2429,7 @@ static const yytype_uint16 yyr1[] =
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
-static const yytype_uint8 yyr2[] =
+static const yytype_int8 yyr2[] =
 {
        0,     2,     0,     4,     0,     3,     4,     2,     2,     2,
        2,     2,     0,     2,     1,     1,     1,     5,     1,     2,
@@ -2406,22 +2485,22 @@ static const yytype_uint8 yyr2[] =
 
 #define YYRECOVERING()  (!!yyerrstatus)
 
-#define YYBACKUP(Token, Value)                                  \
-do                                                              \
-  if (yychar == YYEMPTY)                                        \
-    {                                                           \
-      yychar = (Token);                                         \
-      yylval = (Value);                                         \
-      YYPOPSTACK (yylen);                                       \
-      yystate = *yyssp;                                         \
-      goto yybackup;                                            \
-    }                                                           \
-  else                                                          \
-    {                                                           \
-      yyerror (&yylloc, state, YY_("syntax error: cannot back up")); \
-      YYERROR;                                                  \
-    }                                                           \
-while (0)
+#define YYBACKUP(Token, Value)                                    \
+  do                                                              \
+    if (yychar == YYEMPTY)                                        \
+      {                                                           \
+        yychar = (Token);                                         \
+        yylval = (Value);                                         \
+        YYPOPSTACK (yylen);                                       \
+        yystate = *yyssp;                                         \
+        goto yybackup;                                            \
+      }                                                           \
+    else                                                          \
+      {                                                           \
+        yyerror (&yylloc, state, YY_("syntax error: cannot back up")); \
+        YYERROR;                                                  \
+      }                                                           \
+  while (0)
 
 /* Error token number */
 #define YYTERROR        1
@@ -2480,10 +2559,10 @@ do {                                            \
 /* Print *YYLOCP on YYO.  Private, do not rely on its existence. */
 
 YY_ATTRIBUTE_UNUSED
-static unsigned
+static int
 yy_location_print_ (FILE *yyo, YYLTYPE const * const yylocp)
 {
-  unsigned res = 0;
+  int res = 0;
   int end_col = 0 != yylocp->last_column ? yylocp->last_column - 1 : 0;
   if (0 <= yylocp->first_line)
     {
@@ -2526,41 +2605,43 @@ do {                                                                      \
 } while (0)
 
 
-/*----------------------------------------.
-| Print this symbol's value on YYOUTPUT.  |
-`----------------------------------------*/
+/*-----------------------------------.
+| Print this symbol's value on YYO.  |
+`-----------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, struct _mesa_glsl_parse_state *state)
+yy_symbol_value_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, struct _mesa_glsl_parse_state *state)
 {
-  FILE *yyo = yyoutput;
-  YYUSE (yyo);
+  FILE *yyoutput = yyo;
+  YYUSE (yyoutput);
   YYUSE (yylocationp);
   YYUSE (state);
   if (!yyvaluep)
     return;
 # ifdef YYPRINT
   if (yytype < YYNTOKENS)
-    YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
+    YYPRINT (yyo, yytoknum[yytype], *yyvaluep);
 # endif
+  YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
   YYUSE (yytype);
+  YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
 
-/*--------------------------------.
-| Print this symbol on YYOUTPUT.  |
-`--------------------------------*/
+/*---------------------------.
+| Print this symbol on YYO.  |
+`---------------------------*/
 
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, struct _mesa_glsl_parse_state *state)
+yy_symbol_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, struct _mesa_glsl_parse_state *state)
 {
-  YYFPRINTF (yyoutput, "%s %s (",
+  YYFPRINTF (yyo, "%s %s (",
              yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
 
-  YY_LOCATION_PRINT (yyoutput, *yylocationp);
-  YYFPRINTF (yyoutput, ": ");
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, state);
-  YYFPRINTF (yyoutput, ")");
+  YY_LOCATION_PRINT (yyo, *yylocationp);
+  YYFPRINTF (yyo, ": ");
+  yy_symbol_value_print (yyo, yytype, yyvaluep, yylocationp, state);
+  YYFPRINTF (yyo, ")");
 }
 
 /*------------------------------------------------------------------.
@@ -2569,7 +2650,7 @@ yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYL
 `------------------------------------------------------------------*/
 
 static void
-yy_stack_print (yytype_int16 *yybottom, yytype_int16 *yytop)
+yy_stack_print (yy_state_t *yybottom, yy_state_t *yytop)
 {
   YYFPRINTF (stderr, "Stack now");
   for (; yybottom <= yytop; yybottom++)
@@ -2592,20 +2673,20 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, YYLTYPE *yylsp, int yyrule, struct _mesa_glsl_parse_state *state)
+yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp, YYLTYPE *yylsp, int yyrule, struct _mesa_glsl_parse_state *state)
 {
-  unsigned long int yylno = yyrline[yyrule];
+  int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
   int yyi;
-  YYFPRINTF (stderr, "Reducing stack by rule %d (line %lu):\n",
+  YYFPRINTF (stderr, "Reducing stack by rule %d (line %d):\n",
              yyrule - 1, yylno);
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
     {
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr,
-                       yystos[yyssp[yyi + 1 - yynrhs]],
-                       &(yyvsp[(yyi + 1) - (yynrhs)])
+                       yystos[+yyssp[yyi + 1 - yynrhs]],
+                       &yyvsp[(yyi + 1) - (yynrhs)]
                        , &(yylsp[(yyi + 1) - (yynrhs)])                       , state);
       YYFPRINTF (stderr, "\n");
     }
@@ -2649,13 +2730,13 @@ int yydebug;
 
 # ifndef yystrlen
 #  if defined __GLIBC__ && defined _STRING_H
-#   define yystrlen strlen
+#   define yystrlen(S) (YY_CAST (YYPTRDIFF_T, strlen (S)))
 #  else
 /* Return the length of YYSTR.  */
-static YYSIZE_T
+static YYPTRDIFF_T
 yystrlen (const char *yystr)
 {
-  YYSIZE_T yylen;
+  YYPTRDIFF_T yylen;
   for (yylen = 0; yystr[yylen]; yylen++)
     continue;
   return yylen;
@@ -2691,12 +2772,12 @@ yystpcpy (char *yydest, const char *yysrc)
    backslash-backslash).  YYSTR is taken from yytname.  If YYRES is
    null, do not copy; instead, return the length of what the result
    would have been.  */
-static YYSIZE_T
+static YYPTRDIFF_T
 yytnamerr (char *yyres, const char *yystr)
 {
   if (*yystr == '"')
     {
-      YYSIZE_T yyn = 0;
+      YYPTRDIFF_T yyn = 0;
       char const *yyp = yystr;
 
       for (;;)
@@ -2709,7 +2790,10 @@ yytnamerr (char *yyres, const char *yystr)
           case '\\':
             if (*++yyp != '\\')
               goto do_not_strip_quotes;
-            /* Fall through.  */
+            else
+              goto append;
+
+          append:
           default:
             if (yyres)
               yyres[yyn] = *yyp;
@@ -2724,10 +2808,10 @@ yytnamerr (char *yyres, const char *yystr)
     do_not_strip_quotes: ;
     }
 
-  if (! yyres)
+  if (yyres)
+    return yystpcpy (yyres, yystr) - yyres;
+  else
     return yystrlen (yystr);
-
-  return yystpcpy (yyres, yystr) - yyres;
 }
 # endif
 
@@ -2740,19 +2824,19 @@ yytnamerr (char *yyres, const char *yystr)
    *YYMSG_ALLOC to the required number of bytes.  Return 2 if the
    required number of bytes is too large to store.  */
 static int
-yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
-                yytype_int16 *yyssp, int yytoken)
+yysyntax_error (YYPTRDIFF_T *yymsg_alloc, char **yymsg,
+                yy_state_t *yyssp, int yytoken)
 {
-  YYSIZE_T yysize0 = yytnamerr (YY_NULLPTR, yytname[yytoken]);
-  YYSIZE_T yysize = yysize0;
   enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
   /* Internationalized format string. */
   const char *yyformat = YY_NULLPTR;
-  /* Arguments of yyformat. */
+  /* Arguments of yyformat: reported tokens (one for the "unexpected",
+     one per "expected"). */
   char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
-  /* Number of reported tokens (one for the "unexpected", one per
-     "expected"). */
+  /* Actual size of YYARG. */
   int yycount = 0;
+  /* Cumulated lengths of YYARG.  */
+  YYPTRDIFF_T yysize = 0;
 
   /* There are many possibilities here to consider:
      - If this state is a consistent state with a default action, then
@@ -2779,7 +2863,9 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
   */
   if (yytoken != YYEMPTY)
     {
-      int yyn = yypact[*yyssp];
+      int yyn = yypact[+*yyssp];
+      YYPTRDIFF_T yysize0 = yytnamerr (YY_NULLPTR, yytname[yytoken]);
+      yysize = yysize0;
       yyarg[yycount++] = yytname[yytoken];
       if (!yypact_value_is_default (yyn))
         {
@@ -2804,11 +2890,12 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
                   }
                 yyarg[yycount++] = yytname[yyx];
                 {
-                  YYSIZE_T yysize1 = yysize + yytnamerr (YY_NULLPTR, yytname[yyx]);
-                  if (! (yysize <= yysize1
-                         && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
+                  YYPTRDIFF_T yysize1
+                    = yysize + yytnamerr (YY_NULLPTR, yytname[yyx]);
+                  if (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM)
+                    yysize = yysize1;
+                  else
                     return 2;
-                  yysize = yysize1;
                 }
               }
         }
@@ -2820,6 +2907,7 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
       case N:                               \
         yyformat = S;                       \
       break
+    default: /* Avoid compiler warnings. */
       YYCASE_(0, YY_("syntax error"));
       YYCASE_(1, YY_("syntax error, unexpected %s"));
       YYCASE_(2, YY_("syntax error, unexpected %s, expecting %s"));
@@ -2830,10 +2918,13 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
     }
 
   {
-    YYSIZE_T yysize1 = yysize + yystrlen (yyformat);
-    if (! (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
+    /* Don't count the "%s"s in the final size, but reserve room for
+       the terminator.  */
+    YYPTRDIFF_T yysize1 = yysize + (yystrlen (yyformat) - 2 * yycount) + 1;
+    if (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM)
+      yysize = yysize1;
+    else
       return 2;
-    yysize = yysize1;
   }
 
   if (*yymsg_alloc < yysize)
@@ -2859,8 +2950,8 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
         }
       else
         {
-          yyp++;
-          yyformat++;
+          ++yyp;
+          ++yyformat;
         }
   }
   return 0;
@@ -2917,7 +3008,7 @@ YYLTYPE yylloc = yyloc_default;
     /* Number of syntax errors so far.  */
     int yynerrs;
 
-    int yystate;
+    yy_state_fast_t yystate;
     /* Number of tokens to shift before error messages enabled.  */
     int yyerrstatus;
 
@@ -2930,9 +3021,9 @@ YYLTYPE yylloc = yyloc_default;
        to reallocate them elsewhere.  */
 
     /* The state stack.  */
-    yytype_int16 yyssa[YYINITDEPTH];
-    yytype_int16 *yyss;
-    yytype_int16 *yyssp;
+    yy_state_t yyssa[YYINITDEPTH];
+    yy_state_t *yyss;
+    yy_state_t *yyssp;
 
     /* The semantic value stack.  */
     YYSTYPE yyvsa[YYINITDEPTH];
@@ -2947,7 +3038,7 @@ YYLTYPE yylloc = yyloc_default;
     /* The locations where the error started and ended.  */
     YYLTYPE yyerror_range[3];
 
-    YYSIZE_T yystacksize;
+    YYPTRDIFF_T yystacksize;
 
   int yyn;
   int yyresult;
@@ -2962,7 +3053,7 @@ YYLTYPE yylloc = yyloc_default;
   /* Buffer for error messages, and its allocated size.  */
   char yymsgbuf[128];
   char *yymsg = yymsgbuf;
-  YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
+  YYPTRDIFF_T yymsg_alloc = sizeof yymsgbuf;
 #endif
 
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N), yylsp -= (N))
@@ -2984,7 +3075,7 @@ YYLTYPE yylloc = yyloc_default;
   yychar = YYEMPTY; /* Cause a token to be read.  */
 
 /* User initialization code.  */
-#line 88 "src/glsl/glsl_parser.yy" /* yacc.c:1429  */
+#line 88 "src/glsl/glsl_parser.yy"
 {
    yylloc.first_line = 1;
    yylloc.first_column = 1;
@@ -2993,33 +3084,46 @@ YYLTYPE yylloc = yyloc_default;
    yylloc.source = 0;
 }
 
-#line 2997 "src/glsl/glsl_parser.cpp" /* yacc.c:1429  */
+#line 3088 "src/glsl/glsl_parser.cpp"
+
   yylsp[0] = yylloc;
   goto yysetstate;
 
+
 /*------------------------------------------------------------.
-| yynewstate -- Push a new state, which is found in yystate.  |
+| yynewstate -- push a new state, which is found in yystate.  |
 `------------------------------------------------------------*/
- yynewstate:
+yynewstate:
   /* In all cases, when you get here, the value and location stacks
      have just been pushed.  So pushing a state here evens the stacks.  */
   yyssp++;
 
- yysetstate:
-  *yyssp = yystate;
+
+/*--------------------------------------------------------------------.
+| yysetstate -- set current state (the top of the stack) to yystate.  |
+`--------------------------------------------------------------------*/
+yysetstate:
+  YYDPRINTF ((stderr, "Entering state %d\n", yystate));
+  YY_ASSERT (0 <= yystate && yystate < YYNSTATES);
+  YY_IGNORE_USELESS_CAST_BEGIN
+  *yyssp = YY_CAST (yy_state_t, yystate);
+  YY_IGNORE_USELESS_CAST_END
 
   if (yyss + yystacksize - 1 <= yyssp)
+#if !defined yyoverflow && !defined YYSTACK_RELOCATE
+    goto yyexhaustedlab;
+#else
     {
       /* Get the current used size of the three stacks, in elements.  */
-      YYSIZE_T yysize = yyssp - yyss + 1;
+      YYPTRDIFF_T yysize = yyssp - yyss + 1;
 
-#ifdef yyoverflow
+# if defined yyoverflow
       {
         /* Give user a chance to reallocate the stack.  Use copies of
            these so that the &'s don't force the real ones into
            memory.  */
+        yy_state_t *yyss1 = yyss;
         YYSTYPE *yyvs1 = yyvs;
-        yytype_int16 *yyss1 = yyss;
         YYLTYPE *yyls1 = yyls;
 
         /* Each stack pointer address is followed by the size of the
@@ -3027,19 +3131,15 @@ YYLTYPE yylloc = yyloc_default;
            conditional around just the two extra args, but that might
            be undefined if yyoverflow is a macro.  */
         yyoverflow (YY_("memory exhausted"),
-                    &yyss1, yysize * sizeof (*yyssp),
-                    &yyvs1, yysize * sizeof (*yyvsp),
-                    &yyls1, yysize * sizeof (*yylsp),
+                    &yyss1, yysize * YYSIZEOF (*yyssp),
+                    &yyvs1, yysize * YYSIZEOF (*yyvsp),
+                    &yyls1, yysize * YYSIZEOF (*yylsp),
                     &yystacksize);
-
-        yyls = yyls1;
         yyss = yyss1;
         yyvs = yyvs1;
+        yyls = yyls1;
       }
-#else /* no yyoverflow */
-# ifndef YYSTACK_RELOCATE
-      goto yyexhaustedlab;
-# else
+# else /* defined YYSTACK_RELOCATE */
       /* Extend the stack our own way.  */
       if (YYMAXDEPTH <= yystacksize)
         goto yyexhaustedlab;
@@ -3048,44 +3148,45 @@ YYLTYPE yylloc = yyloc_default;
         yystacksize = YYMAXDEPTH;
 
       {
-        yytype_int16 *yyss1 = yyss;
+        yy_state_t *yyss1 = yyss;
         union yyalloc *yyptr =
-          (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
+          YY_CAST (union yyalloc *,
+                   YYSTACK_ALLOC (YY_CAST (YYSIZE_T, YYSTACK_BYTES (yystacksize))));
         if (! yyptr)
           goto yyexhaustedlab;
         YYSTACK_RELOCATE (yyss_alloc, yyss);
         YYSTACK_RELOCATE (yyvs_alloc, yyvs);
         YYSTACK_RELOCATE (yyls_alloc, yyls);
-#  undef YYSTACK_RELOCATE
+# undef YYSTACK_RELOCATE
         if (yyss1 != yyssa)
           YYSTACK_FREE (yyss1);
       }
 # endif
-#endif /* no yyoverflow */
 
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
       yylsp = yyls + yysize - 1;
 
-      YYDPRINTF ((stderr, "Stack size increased to %lu\n",
-                  (unsigned long int) yystacksize));
+      YY_IGNORE_USELESS_CAST_BEGIN
+      YYDPRINTF ((stderr, "Stack size increased to %ld\n",
+                  YY_CAST (long, yystacksize)));
+      YY_IGNORE_USELESS_CAST_END
 
       if (yyss + yystacksize - 1 <= yyssp)
         YYABORT;
     }
-
-  YYDPRINTF ((stderr, "Entering state %d\n", yystate));
+#endif /* !defined yyoverflow && !defined YYSTACK_RELOCATE */
 
   if (yystate == YYFINAL)
     YYACCEPT;
 
   goto yybackup;
 
+
 /*-----------.
 | yybackup.  |
 `-----------*/
 yybackup:
-
   /* Do appropriate processing given the current state.  Read a
      lookahead token if we need one and don't already have one.  */
 
@@ -3135,15 +3236,14 @@ yybackup:
 
   /* Shift the lookahead token.  */
   YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
-
-  /* Discard the shifted token.  */
-  yychar = YYEMPTY;
-
   yystate = yyn;
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
   *++yyvsp = yylval;
   YY_IGNORE_MAYBE_UNINITIALIZED_END
   *++yylsp = yylloc;
+
+  /* Discard the shifted token.  */
+  yychar = YYEMPTY;
   goto yynewstate;
 
 
@@ -3158,7 +3258,7 @@ yydefault:
 
 
 /*-----------------------------.
-| yyreduce -- Do a reduction.  |
+| yyreduce -- do a reduction.  |
 `-----------------------------*/
 yyreduce:
   /* yyn is the number of a rule to reduce with.  */
@@ -3174,54 +3274,55 @@ yyreduce:
      GCC warning that YYVAL may be used uninitialized.  */
   yyval = yyvsp[1-yylen];
 
-  /* Default location.  */
+  /* Default location. */
   YYLLOC_DEFAULT (yyloc, (yylsp - yylen), yylen);
+  yyerror_range[1] = yyloc;
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-        case 2:
-#line 303 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+  case 2:
+#line 303 "src/glsl/glsl_parser.yy"
+   {
       _mesa_glsl_initialize_types(state);
    }
-#line 3188 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3289 "src/glsl/glsl_parser.cpp"
     break;
 
   case 3:
-#line 307 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 307 "src/glsl/glsl_parser.yy"
+   {
       delete state->symbols;
       state->symbols = new(ralloc_parent(state)) glsl_symbol_table;
       _mesa_glsl_initialize_types(state);
    }
-#line 3198 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3299 "src/glsl/glsl_parser.cpp"
     break;
 
   case 5:
-#line 317 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 317 "src/glsl/glsl_parser.yy"
+   {
       state->process_version_directive(&(yylsp[-1]), (yyvsp[-1].n), NULL);
       if (state->error) {
          YYERROR;
       }
    }
-#line 3209 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3310 "src/glsl/glsl_parser.cpp"
     break;
 
   case 6:
-#line 324 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 324 "src/glsl/glsl_parser.yy"
+   {
       state->process_version_directive(&(yylsp[-2]), (yyvsp[-2].n), (yyvsp[-1].identifier));
       if (state->error) {
          YYERROR;
       }
    }
-#line 3220 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3321 "src/glsl/glsl_parser.cpp"
     break;
 
   case 11:
-#line 338 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 338 "src/glsl/glsl_parser.yy"
+   {
       if (!state->is_version(120, 100)) {
          _mesa_glsl_warning(& (yylsp[-1]), state,
                             "pragma `invariant(all)' not supported in %s "
@@ -3231,46 +3332,46 @@ yyreduce:
          state->all_invariant = true;
       }
    }
-#line 3235 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3336 "src/glsl/glsl_parser.cpp"
     break;
 
   case 17:
-#line 363 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 363 "src/glsl/glsl_parser.yy"
+   {
       if (!_mesa_glsl_process_extension((yyvsp[-3].identifier), & (yylsp[-3]), (yyvsp[-1].identifier), & (yylsp[-1]), state)) {
          YYERROR;
       }
    }
-#line 3245 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3346 "src/glsl/glsl_parser.cpp"
     break;
 
   case 18:
-#line 372 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 372 "src/glsl/glsl_parser.yy"
+   {
       /* FINISHME: The NULL test is required because pragmas are set to
        * FINISHME: NULL. (See production rule for external_declaration.)
        */
       if ((yyvsp[0].node) != NULL)
          state->translation_unit.push_tail(& (yyvsp[0].node)->link);
    }
-#line 3257 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3358 "src/glsl/glsl_parser.cpp"
     break;
 
   case 19:
-#line 380 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 380 "src/glsl/glsl_parser.yy"
+   {
       /* FINISHME: The NULL test is required because pragmas are set to
        * FINISHME: NULL. (See production rule for external_declaration.)
        */
       if ((yyvsp[0].node) != NULL)
          state->translation_unit.push_tail(& (yyvsp[0].node)->link);
    }
-#line 3269 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3370 "src/glsl/glsl_parser.cpp"
     break;
 
   case 20:
-#line 387 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 387 "src/glsl/glsl_parser.yy"
+                                                   {
       if (!state->allow_extension_directive_midshader) {
          _mesa_glsl_error(& (yylsp[0]), state,
                           "#extension directive is not allowed "
@@ -3278,558 +3379,558 @@ yyreduce:
          YYERROR;
       }
    }
-#line 3282 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3383 "src/glsl/glsl_parser.cpp"
     break;
 
   case 23:
-#line 404 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 404 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression(ast_identifier, NULL, NULL, NULL);
       (yyval.expression)->set_location((yylsp[0]));
       (yyval.expression)->primary_expression.identifier = (yyvsp[0].identifier);
    }
-#line 3293 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3394 "src/glsl/glsl_parser.cpp"
     break;
 
   case 24:
-#line 411 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 411 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression(ast_int_constant, NULL, NULL, NULL);
       (yyval.expression)->set_location((yylsp[0]));
       (yyval.expression)->primary_expression.int_constant = (yyvsp[0].n);
    }
-#line 3304 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3405 "src/glsl/glsl_parser.cpp"
     break;
 
   case 25:
-#line 418 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 418 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression(ast_uint_constant, NULL, NULL, NULL);
       (yyval.expression)->set_location((yylsp[0]));
       (yyval.expression)->primary_expression.uint_constant = (yyvsp[0].n);
    }
-#line 3315 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3416 "src/glsl/glsl_parser.cpp"
     break;
 
   case 26:
-#line 425 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 425 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression(ast_float_constant, NULL, NULL, NULL);
       (yyval.expression)->set_location((yylsp[0]));
       (yyval.expression)->primary_expression.float_constant = (yyvsp[0].real);
    }
-#line 3326 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3427 "src/glsl/glsl_parser.cpp"
     break;
 
   case 27:
-#line 432 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 432 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression(ast_bool_constant, NULL, NULL, NULL);
       (yyval.expression)->set_location((yylsp[0]));
       (yyval.expression)->primary_expression.bool_constant = (yyvsp[0].n);
    }
-#line 3337 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3438 "src/glsl/glsl_parser.cpp"
     break;
 
   case 28:
-#line 439 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 439 "src/glsl/glsl_parser.yy"
+   {
       (yyval.expression) = (yyvsp[-1].expression);
    }
-#line 3345 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3446 "src/glsl/glsl_parser.cpp"
     break;
 
   case 30:
-#line 447 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 447 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression(ast_array_index, (yyvsp[-3].expression), (yyvsp[-1].expression), NULL);
       (yyval.expression)->set_location_range((yylsp[-3]), (yylsp[0]));
    }
-#line 3355 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3456 "src/glsl/glsl_parser.cpp"
     break;
 
   case 31:
-#line 453 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 453 "src/glsl/glsl_parser.yy"
+   {
       (yyval.expression) = (yyvsp[0].expression);
    }
-#line 3363 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3464 "src/glsl/glsl_parser.cpp"
     break;
 
   case 32:
-#line 457 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 457 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression(ast_field_selection, (yyvsp[-2].expression), NULL, NULL);
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
       (yyval.expression)->primary_expression.identifier = (yyvsp[0].identifier);
    }
-#line 3374 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3475 "src/glsl/glsl_parser.cpp"
     break;
 
   case 33:
-#line 464 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 464 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression(ast_post_inc, (yyvsp[-1].expression), NULL, NULL);
       (yyval.expression)->set_location_range((yylsp[-1]), (yylsp[0]));
    }
-#line 3384 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3485 "src/glsl/glsl_parser.cpp"
     break;
 
   case 34:
-#line 470 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 470 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression(ast_post_dec, (yyvsp[-1].expression), NULL, NULL);
       (yyval.expression)->set_location_range((yylsp[-1]), (yylsp[0]));
    }
-#line 3394 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3495 "src/glsl/glsl_parser.cpp"
     break;
 
   case 38:
-#line 488 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 488 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression(ast_field_selection, (yyvsp[-2].expression), (yyvsp[0].expression), NULL);
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3404 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3505 "src/glsl/glsl_parser.cpp"
     break;
 
   case 43:
-#line 507 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 507 "src/glsl/glsl_parser.yy"
+   {
       (yyval.expression) = (yyvsp[-1].expression);
       (yyval.expression)->set_location((yylsp[-1]));
       (yyval.expression)->expressions.push_tail(& (yyvsp[0].expression)->link);
    }
-#line 3414 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3515 "src/glsl/glsl_parser.cpp"
     break;
 
   case 44:
-#line 513 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 513 "src/glsl/glsl_parser.yy"
+   {
       (yyval.expression) = (yyvsp[-2].expression);
       (yyval.expression)->set_location((yylsp[-2]));
       (yyval.expression)->expressions.push_tail(& (yyvsp[0].expression)->link);
    }
-#line 3424 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3525 "src/glsl/glsl_parser.cpp"
     break;
 
   case 46:
-#line 529 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 529 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_function_expression((yyvsp[0].type_specifier));
       (yyval.expression)->set_location((yylsp[0]));
       }
-#line 3434 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3535 "src/glsl/glsl_parser.cpp"
     break;
 
   case 47:
-#line 535 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 535 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_expression *callee = new(ctx) ast_expression((yyvsp[0].identifier));
       callee->set_location((yylsp[0]));
       (yyval.expression) = new(ctx) ast_function_expression(callee);
       (yyval.expression)->set_location((yylsp[0]));
       }
-#line 3446 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3547 "src/glsl/glsl_parser.cpp"
     break;
 
   case 48:
-#line 543 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 543 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_expression *callee = new(ctx) ast_expression((yyvsp[0].identifier));
       callee->set_location((yylsp[0]));
       (yyval.expression) = new(ctx) ast_function_expression(callee);
       (yyval.expression)->set_location((yylsp[0]));
       }
-#line 3458 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3559 "src/glsl/glsl_parser.cpp"
     break;
 
   case 53:
-#line 564 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 564 "src/glsl/glsl_parser.yy"
+   {
       (yyval.expression) = (yyvsp[-1].expression);
       (yyval.expression)->set_location((yylsp[-1]));
       (yyval.expression)->expressions.push_tail(& (yyvsp[0].expression)->link);
    }
-#line 3468 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3569 "src/glsl/glsl_parser.cpp"
     break;
 
   case 54:
-#line 570 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 570 "src/glsl/glsl_parser.yy"
+   {
       (yyval.expression) = (yyvsp[-2].expression);
       (yyval.expression)->set_location((yylsp[-2]));
       (yyval.expression)->expressions.push_tail(& (yyvsp[0].expression)->link);
    }
-#line 3478 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3579 "src/glsl/glsl_parser.cpp"
     break;
 
   case 55:
-#line 582 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 582 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_expression *callee = new(ctx) ast_expression((yyvsp[-1].identifier));
       callee->set_location((yylsp[-1]));
       (yyval.expression) = new(ctx) ast_function_expression(callee);
       (yyval.expression)->set_location((yylsp[-1]));
    }
-#line 3490 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3591 "src/glsl/glsl_parser.cpp"
     break;
 
   case 57:
-#line 595 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 595 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression(ast_pre_inc, (yyvsp[0].expression), NULL, NULL);
       (yyval.expression)->set_location((yylsp[-1]));
    }
-#line 3500 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3601 "src/glsl/glsl_parser.cpp"
     break;
 
   case 58:
-#line 601 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 601 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression(ast_pre_dec, (yyvsp[0].expression), NULL, NULL);
       (yyval.expression)->set_location((yylsp[-1]));
    }
-#line 3510 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3611 "src/glsl/glsl_parser.cpp"
     break;
 
   case 59:
-#line 607 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 607 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression((yyvsp[-1].n), (yyvsp[0].expression), NULL, NULL);
       (yyval.expression)->set_location_range((yylsp[-1]), (yylsp[0]));
    }
-#line 3520 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3621 "src/glsl/glsl_parser.cpp"
     break;
 
   case 60:
-#line 616 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_plus; }
-#line 3526 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 616 "src/glsl/glsl_parser.yy"
+         { (yyval.n) = ast_plus; }
+#line 3627 "src/glsl/glsl_parser.cpp"
     break;
 
   case 61:
-#line 617 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_neg; }
-#line 3532 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 617 "src/glsl/glsl_parser.yy"
+         { (yyval.n) = ast_neg; }
+#line 3633 "src/glsl/glsl_parser.cpp"
     break;
 
   case 62:
-#line 618 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_logic_not; }
-#line 3538 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 618 "src/glsl/glsl_parser.yy"
+         { (yyval.n) = ast_logic_not; }
+#line 3639 "src/glsl/glsl_parser.cpp"
     break;
 
   case 63:
-#line 619 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_bit_not; }
-#line 3544 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 619 "src/glsl/glsl_parser.yy"
+         { (yyval.n) = ast_bit_not; }
+#line 3645 "src/glsl/glsl_parser.cpp"
     break;
 
   case 65:
-#line 625 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 625 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_mul, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3554 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3655 "src/glsl/glsl_parser.cpp"
     break;
 
   case 66:
-#line 631 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 631 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_div, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3564 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3665 "src/glsl/glsl_parser.cpp"
     break;
 
   case 67:
-#line 637 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 637 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_mod, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3574 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3675 "src/glsl/glsl_parser.cpp"
     break;
 
   case 69:
-#line 647 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 647 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_add, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3584 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3685 "src/glsl/glsl_parser.cpp"
     break;
 
   case 70:
-#line 653 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 653 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_sub, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3594 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3695 "src/glsl/glsl_parser.cpp"
     break;
 
   case 72:
-#line 663 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 663 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_lshift, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3604 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3705 "src/glsl/glsl_parser.cpp"
     break;
 
   case 73:
-#line 669 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 669 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_rshift, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3614 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3715 "src/glsl/glsl_parser.cpp"
     break;
 
   case 75:
-#line 679 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 679 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_less, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3624 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3725 "src/glsl/glsl_parser.cpp"
     break;
 
   case 76:
-#line 685 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 685 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_greater, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3634 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3735 "src/glsl/glsl_parser.cpp"
     break;
 
   case 77:
-#line 691 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 691 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_lequal, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3644 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3745 "src/glsl/glsl_parser.cpp"
     break;
 
   case 78:
-#line 697 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 697 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_gequal, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3654 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3755 "src/glsl/glsl_parser.cpp"
     break;
 
   case 80:
-#line 707 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 707 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_equal, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3664 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3765 "src/glsl/glsl_parser.cpp"
     break;
 
   case 81:
-#line 713 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 713 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_nequal, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3674 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3775 "src/glsl/glsl_parser.cpp"
     break;
 
   case 83:
-#line 723 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 723 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_bit_and, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3684 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3785 "src/glsl/glsl_parser.cpp"
     break;
 
   case 85:
-#line 733 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 733 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_bit_xor, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3694 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3795 "src/glsl/glsl_parser.cpp"
     break;
 
   case 87:
-#line 743 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 743 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_bit_or, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3704 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3805 "src/glsl/glsl_parser.cpp"
     break;
 
   case 89:
-#line 753 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 753 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_logic_and, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3714 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3815 "src/glsl/glsl_parser.cpp"
     break;
 
   case 91:
-#line 763 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 763 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_logic_xor, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3724 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3825 "src/glsl/glsl_parser.cpp"
     break;
 
   case 93:
-#line 773 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 773 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression_bin(ast_logic_or, (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3734 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3835 "src/glsl/glsl_parser.cpp"
     break;
 
   case 95:
-#line 783 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 783 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression(ast_conditional, (yyvsp[-4].expression), (yyvsp[-2].expression), (yyvsp[0].expression));
       (yyval.expression)->set_location_range((yylsp[-4]), (yylsp[0]));
    }
-#line 3744 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3845 "src/glsl/glsl_parser.cpp"
     break;
 
   case 97:
-#line 793 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 793 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_expression((yyvsp[-1].n), (yyvsp[-2].expression), (yyvsp[0].expression), NULL);
       (yyval.expression)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 3754 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3855 "src/glsl/glsl_parser.cpp"
     break;
 
   case 98:
-#line 801 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_assign; }
-#line 3760 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 801 "src/glsl/glsl_parser.yy"
+                      { (yyval.n) = ast_assign; }
+#line 3861 "src/glsl/glsl_parser.cpp"
     break;
 
   case 99:
-#line 802 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_mul_assign; }
-#line 3766 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 802 "src/glsl/glsl_parser.yy"
+                      { (yyval.n) = ast_mul_assign; }
+#line 3867 "src/glsl/glsl_parser.cpp"
     break;
 
   case 100:
-#line 803 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_div_assign; }
-#line 3772 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 803 "src/glsl/glsl_parser.yy"
+                      { (yyval.n) = ast_div_assign; }
+#line 3873 "src/glsl/glsl_parser.cpp"
     break;
 
   case 101:
-#line 804 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_mod_assign; }
-#line 3778 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 804 "src/glsl/glsl_parser.yy"
+                      { (yyval.n) = ast_mod_assign; }
+#line 3879 "src/glsl/glsl_parser.cpp"
     break;
 
   case 102:
-#line 805 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_add_assign; }
-#line 3784 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 805 "src/glsl/glsl_parser.yy"
+                      { (yyval.n) = ast_add_assign; }
+#line 3885 "src/glsl/glsl_parser.cpp"
     break;
 
   case 103:
-#line 806 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_sub_assign; }
-#line 3790 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 806 "src/glsl/glsl_parser.yy"
+                      { (yyval.n) = ast_sub_assign; }
+#line 3891 "src/glsl/glsl_parser.cpp"
     break;
 
   case 104:
-#line 807 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_ls_assign; }
-#line 3796 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 807 "src/glsl/glsl_parser.yy"
+                      { (yyval.n) = ast_ls_assign; }
+#line 3897 "src/glsl/glsl_parser.cpp"
     break;
 
   case 105:
-#line 808 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_rs_assign; }
-#line 3802 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 808 "src/glsl/glsl_parser.yy"
+                      { (yyval.n) = ast_rs_assign; }
+#line 3903 "src/glsl/glsl_parser.cpp"
     break;
 
   case 106:
-#line 809 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_and_assign; }
-#line 3808 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 809 "src/glsl/glsl_parser.yy"
+                      { (yyval.n) = ast_and_assign; }
+#line 3909 "src/glsl/glsl_parser.cpp"
     break;
 
   case 107:
-#line 810 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_xor_assign; }
-#line 3814 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 810 "src/glsl/glsl_parser.yy"
+                      { (yyval.n) = ast_xor_assign; }
+#line 3915 "src/glsl/glsl_parser.cpp"
     break;
 
   case 108:
-#line 811 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = ast_or_assign; }
-#line 3820 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 811 "src/glsl/glsl_parser.yy"
+                      { (yyval.n) = ast_or_assign; }
+#line 3921 "src/glsl/glsl_parser.cpp"
     break;
 
   case 109:
-#line 816 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 816 "src/glsl/glsl_parser.yy"
+   {
       (yyval.expression) = (yyvsp[0].expression);
    }
-#line 3828 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3929 "src/glsl/glsl_parser.cpp"
     break;
 
   case 110:
-#line 820 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 820 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       if ((yyvsp[-2].expression)->oper != ast_sequence) {
          (yyval.expression) = new(ctx) ast_expression(ast_sequence, NULL, NULL, NULL);
@@ -3841,64 +3942,64 @@ yyreduce:
 
       (yyval.expression)->expressions.push_tail(& (yyvsp[0].expression)->link);
    }
-#line 3845 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3946 "src/glsl/glsl_parser.cpp"
     break;
 
   case 112:
-#line 840 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 840 "src/glsl/glsl_parser.yy"
+   {
       state->symbols->pop_scope();
       (yyval.node) = (yyvsp[-1].function);
    }
-#line 3854 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3955 "src/glsl/glsl_parser.cpp"
     break;
 
   case 113:
-#line 845 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 845 "src/glsl/glsl_parser.yy"
+   {
       (yyval.node) = (yyvsp[-1].declarator_list);
    }
-#line 3862 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3963 "src/glsl/glsl_parser.cpp"
     break;
 
   case 114:
-#line 849 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 849 "src/glsl/glsl_parser.yy"
+   {
       (yyvsp[-1].type_specifier)->default_precision = (yyvsp[-2].n);
       (yyval.node) = (yyvsp[-1].type_specifier);
    }
-#line 3871 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3972 "src/glsl/glsl_parser.cpp"
     break;
 
   case 115:
-#line 854 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 854 "src/glsl/glsl_parser.yy"
+   {
       (yyval.node) = (yyvsp[0].node);
    }
-#line 3879 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3980 "src/glsl/glsl_parser.cpp"
     break;
 
   case 119:
-#line 870 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 870 "src/glsl/glsl_parser.yy"
+   {
       (yyval.function) = (yyvsp[-1].function);
       (yyval.function)->parameters.push_tail(& (yyvsp[0].parameter_declarator)->link);
    }
-#line 3888 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3989 "src/glsl/glsl_parser.cpp"
     break;
 
   case 120:
-#line 875 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 875 "src/glsl/glsl_parser.yy"
+   {
       (yyval.function) = (yyvsp[-2].function);
       (yyval.function)->parameters.push_tail(& (yyvsp[0].parameter_declarator)->link);
    }
-#line 3897 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 3998 "src/glsl/glsl_parser.cpp"
     break;
 
   case 121:
-#line 883 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 883 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.function) = new(ctx) ast_function();
       (yyval.function)->set_location((yylsp[-1]));
@@ -3908,12 +4009,12 @@ yyreduce:
       state->symbols->add_function(new(state) ir_function((yyvsp[-1].identifier)));
       state->symbols->push_scope();
    }
-#line 3912 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4013 "src/glsl/glsl_parser.cpp"
     break;
 
   case 122:
-#line 897 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 897 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.parameter_declarator) = new(ctx) ast_parameter_declarator();
       (yyval.parameter_declarator)->set_location_range((yylsp[-1]), (yylsp[0]));
@@ -3922,12 +4023,12 @@ yyreduce:
       (yyval.parameter_declarator)->type->specifier = (yyvsp[-1].type_specifier);
       (yyval.parameter_declarator)->identifier = (yyvsp[0].identifier);
    }
-#line 3926 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4027 "src/glsl/glsl_parser.cpp"
     break;
 
   case 123:
-#line 907 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 907 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.parameter_declarator) = new(ctx) ast_parameter_declarator();
       (yyval.parameter_declarator)->set_location_range((yylsp[-2]), (yylsp[0]));
@@ -3937,21 +4038,21 @@ yyreduce:
       (yyval.parameter_declarator)->identifier = (yyvsp[-1].identifier);
       (yyval.parameter_declarator)->array_specifier = (yyvsp[0].array_specifier);
    }
-#line 3941 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4042 "src/glsl/glsl_parser.cpp"
     break;
 
   case 124:
-#line 921 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 921 "src/glsl/glsl_parser.yy"
+   {
       (yyval.parameter_declarator) = (yyvsp[0].parameter_declarator);
       (yyval.parameter_declarator)->type->qualifier = (yyvsp[-1].type_qualifier);
    }
-#line 3950 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4051 "src/glsl/glsl_parser.cpp"
     break;
 
   case 125:
-#line 926 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 926 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.parameter_declarator) = new(ctx) ast_parameter_declarator();
       (yyval.parameter_declarator)->set_location((yylsp[0]));
@@ -3960,45 +4061,45 @@ yyreduce:
       (yyval.parameter_declarator)->type->qualifier = (yyvsp[-1].type_qualifier);
       (yyval.parameter_declarator)->type->specifier = (yyvsp[0].type_specifier);
    }
-#line 3964 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4065 "src/glsl/glsl_parser.cpp"
     break;
 
   case 126:
-#line 939 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 939 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
    }
-#line 3973 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4074 "src/glsl/glsl_parser.cpp"
     break;
 
   case 127:
-#line 944 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 944 "src/glsl/glsl_parser.yy"
+   {
       if ((yyvsp[0].type_qualifier).flags.q.constant)
          _mesa_glsl_error(&(yylsp[-1]), state, "duplicate const qualifier");
 
       (yyval.type_qualifier) = (yyvsp[0].type_qualifier);
       (yyval.type_qualifier).flags.q.constant = 1;
    }
-#line 3985 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4086 "src/glsl/glsl_parser.cpp"
     break;
 
   case 128:
-#line 952 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 952 "src/glsl/glsl_parser.yy"
+   {
       if ((yyvsp[0].type_qualifier).flags.q.precise)
          _mesa_glsl_error(&(yylsp[-1]), state, "duplicate precise qualifier");
 
       (yyval.type_qualifier) = (yyvsp[0].type_qualifier);
       (yyval.type_qualifier).flags.q.precise = 1;
    }
-#line 3997 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4098 "src/glsl/glsl_parser.cpp"
     break;
 
   case 129:
-#line 960 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 960 "src/glsl/glsl_parser.yy"
+   {
       if (((yyvsp[-1].type_qualifier).flags.q.in || (yyvsp[-1].type_qualifier).flags.q.out) && ((yyvsp[0].type_qualifier).flags.q.in || (yyvsp[0].type_qualifier).flags.q.out))
          _mesa_glsl_error(&(yylsp[-1]), state, "duplicate in/out/inout qualifier");
 
@@ -4009,12 +4110,12 @@ yyreduce:
       (yyval.type_qualifier) = (yyvsp[-1].type_qualifier);
       (yyval.type_qualifier).merge_qualifier(&(yylsp[-1]), state, (yyvsp[0].type_qualifier));
    }
-#line 4013 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4114 "src/glsl/glsl_parser.cpp"
     break;
 
   case 130:
-#line 972 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 972 "src/glsl/glsl_parser.yy"
+   {
       if ((yyvsp[0].type_qualifier).precision != ast_precision_none)
          _mesa_glsl_error(&(yylsp[-1]), state, "duplicate precision qualifier");
 
@@ -4024,43 +4125,43 @@ yyreduce:
       (yyval.type_qualifier) = (yyvsp[0].type_qualifier);
       (yyval.type_qualifier).precision = (yyvsp[-1].n);
    }
-#line 4028 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4129 "src/glsl/glsl_parser.cpp"
     break;
 
   case 131:
-#line 985 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 985 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.in = 1;
    }
-#line 4038 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4139 "src/glsl/glsl_parser.cpp"
     break;
 
   case 132:
-#line 991 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 991 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.out = 1;
    }
-#line 4048 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4149 "src/glsl/glsl_parser.cpp"
     break;
 
   case 133:
-#line 997 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 997 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.in = 1;
       (yyval.type_qualifier).flags.q.out = 1;
    }
-#line 4059 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4160 "src/glsl/glsl_parser.cpp"
     break;
 
   case 136:
-#line 1013 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1013 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_declaration *decl = new(ctx) ast_declaration((yyvsp[0].identifier), NULL, NULL);
       decl->set_location((yylsp[0]));
@@ -4069,12 +4170,12 @@ yyreduce:
       (yyval.declarator_list)->declarations.push_tail(&decl->link);
       state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[0].identifier), ir_var_auto, glsl_precision_undefined));
    }
-#line 4073 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4174 "src/glsl/glsl_parser.cpp"
     break;
 
   case 137:
-#line 1023 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1023 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_declaration *decl = new(ctx) ast_declaration((yyvsp[-1].identifier), (yyvsp[0].array_specifier), NULL);
       decl->set_location_range((yylsp[-1]), (yylsp[0]));
@@ -4083,12 +4184,12 @@ yyreduce:
       (yyval.declarator_list)->declarations.push_tail(&decl->link);
       state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[-1].identifier), ir_var_auto, glsl_precision_undefined));
    }
-#line 4087 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4188 "src/glsl/glsl_parser.cpp"
     break;
 
   case 138:
-#line 1033 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1033 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_declaration *decl = new(ctx) ast_declaration((yyvsp[-3].identifier), (yyvsp[-2].array_specifier), (yyvsp[0].expression));
       decl->set_location_range((yylsp[-3]), (yylsp[-2]));
@@ -4097,12 +4198,12 @@ yyreduce:
       (yyval.declarator_list)->declarations.push_tail(&decl->link);
       state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[-3].identifier), ir_var_auto, glsl_precision_undefined));
    }
-#line 4101 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4202 "src/glsl/glsl_parser.cpp"
     break;
 
   case 139:
-#line 1043 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1043 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_declaration *decl = new(ctx) ast_declaration((yyvsp[-2].identifier), NULL, (yyvsp[0].expression));
       decl->set_location((yylsp[-2]));
@@ -4111,23 +4212,23 @@ yyreduce:
       (yyval.declarator_list)->declarations.push_tail(&decl->link);
       state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[-2].identifier), ir_var_auto, glsl_precision_undefined));
    }
-#line 4115 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4216 "src/glsl/glsl_parser.cpp"
     break;
 
   case 140:
-#line 1057 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1057 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       /* Empty declaration list is valid. */
       (yyval.declarator_list) = new(ctx) ast_declarator_list((yyvsp[0].fully_specified_type));
       (yyval.declarator_list)->set_location((yylsp[0]));
    }
-#line 4126 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4227 "src/glsl/glsl_parser.cpp"
     break;
 
   case 141:
-#line 1064 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1064 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_declaration *decl = new(ctx) ast_declaration((yyvsp[0].identifier), NULL, NULL);
       decl->set_location((yylsp[0]));
@@ -4136,12 +4237,12 @@ yyreduce:
       (yyval.declarator_list)->set_location_range((yylsp[-1]), (yylsp[0]));
       (yyval.declarator_list)->declarations.push_tail(&decl->link);
    }
-#line 4140 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4241 "src/glsl/glsl_parser.cpp"
     break;
 
   case 142:
-#line 1074 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1074 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_declaration *decl = new(ctx) ast_declaration((yyvsp[-1].identifier), (yyvsp[0].array_specifier), NULL);
       decl->set_location_range((yylsp[-1]), (yylsp[0]));
@@ -4150,12 +4251,12 @@ yyreduce:
       (yyval.declarator_list)->set_location_range((yylsp[-2]), (yylsp[0]));
       (yyval.declarator_list)->declarations.push_tail(&decl->link);
    }
-#line 4154 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4255 "src/glsl/glsl_parser.cpp"
     break;
 
   case 143:
-#line 1084 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1084 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_declaration *decl = new(ctx) ast_declaration((yyvsp[-3].identifier), (yyvsp[-2].array_specifier), (yyvsp[0].expression));
       decl->set_location_range((yylsp[-3]), (yylsp[-2]));
@@ -4164,12 +4265,12 @@ yyreduce:
       (yyval.declarator_list)->set_location_range((yylsp[-4]), (yylsp[-2]));
       (yyval.declarator_list)->declarations.push_tail(&decl->link);
    }
-#line 4168 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4269 "src/glsl/glsl_parser.cpp"
     break;
 
   case 144:
-#line 1094 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1094 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_declaration *decl = new(ctx) ast_declaration((yyvsp[-2].identifier), NULL, (yyvsp[0].expression));
       decl->set_location((yylsp[-2]));
@@ -4178,12 +4279,12 @@ yyreduce:
       (yyval.declarator_list)->set_location_range((yylsp[-3]), (yylsp[-2]));
       (yyval.declarator_list)->declarations.push_tail(&decl->link);
    }
-#line 4182 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4283 "src/glsl/glsl_parser.cpp"
     break;
 
   case 145:
-#line 1104 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1104 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_declaration *decl = new(ctx) ast_declaration((yyvsp[0].identifier), NULL, NULL);
       decl->set_location((yylsp[0]));
@@ -4194,12 +4295,12 @@ yyreduce:
 
       (yyval.declarator_list)->declarations.push_tail(&decl->link);
    }
-#line 4198 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4299 "src/glsl/glsl_parser.cpp"
     break;
 
   case 146:
-#line 1116 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1116 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_declaration *decl = new(ctx) ast_declaration((yyvsp[0].identifier), NULL, NULL);
       decl->set_location((yylsp[0]));
@@ -4210,66 +4311,66 @@ yyreduce:
 
       (yyval.declarator_list)->declarations.push_tail(&decl->link);
    }
-#line 4214 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4315 "src/glsl/glsl_parser.cpp"
     break;
 
   case 147:
-#line 1131 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1131 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.fully_specified_type) = new(ctx) ast_fully_specified_type();
       (yyval.fully_specified_type)->set_location((yylsp[0]));
       (yyval.fully_specified_type)->specifier = (yyvsp[0].type_specifier);
    }
-#line 4225 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4326 "src/glsl/glsl_parser.cpp"
     break;
 
   case 148:
-#line 1138 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1138 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.fully_specified_type) = new(ctx) ast_fully_specified_type();
       (yyval.fully_specified_type)->set_location_range((yylsp[-1]), (yylsp[0]));
       (yyval.fully_specified_type)->qualifier = (yyvsp[-1].type_qualifier);
       (yyval.fully_specified_type)->specifier = (yyvsp[0].type_specifier);
    }
-#line 4237 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4338 "src/glsl/glsl_parser.cpp"
     break;
 
   case 149:
-#line 1149 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1149 "src/glsl/glsl_parser.yy"
+   {
       (yyval.type_qualifier) = (yyvsp[-1].type_qualifier);
    }
-#line 4245 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4346 "src/glsl/glsl_parser.cpp"
     break;
 
   case 151:
-#line 1157 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1157 "src/glsl/glsl_parser.yy"
+   {
       (yyval.type_qualifier) = (yyvsp[-2].type_qualifier);
       if (!(yyval.type_qualifier).merge_qualifier(& (yylsp[0]), state, (yyvsp[0].type_qualifier))) {
          YYERROR;
       }
    }
-#line 4256 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4357 "src/glsl/glsl_parser.cpp"
     break;
 
   case 152:
-#line 1166 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = (yyvsp[0].n); }
-#line 4262 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1166 "src/glsl/glsl_parser.yy"
+               { (yyval.n) = (yyvsp[0].n); }
+#line 4363 "src/glsl/glsl_parser.cpp"
     break;
 
   case 153:
-#line 1167 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.n) = (yyvsp[0].n); }
-#line 4268 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1167 "src/glsl/glsl_parser.yy"
+                  { (yyval.n) = (yyvsp[0].n); }
+#line 4369 "src/glsl/glsl_parser.cpp"
     break;
 
   case 154:
-#line 1172 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1172 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
 
@@ -4454,12 +4555,12 @@ yyreduce:
          YYERROR;
       }
    }
-#line 4458 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4559 "src/glsl/glsl_parser.cpp"
     break;
 
   case 155:
-#line 1358 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1358 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
 
@@ -4598,12 +4699,12 @@ yyreduce:
          YYERROR;
       }
    }
-#line 4602 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4703 "src/glsl/glsl_parser.cpp"
     break;
 
   case 156:
-#line 1498 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1498 "src/glsl/glsl_parser.yy"
+   {
       (yyval.type_qualifier) = (yyvsp[0].type_qualifier);
       /* Layout qualifiers for ARB_uniform_buffer_object. */
       if ((yyval.type_qualifier).flags.q.uniform && !state->has_uniform_buffer_objects()) {
@@ -4616,103 +4717,103 @@ yyreduce:
                             "layout qualifier `%s' is used", (yyvsp[0].type_qualifier));
       }
    }
-#line 4620 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4721 "src/glsl/glsl_parser.cpp"
     break;
 
   case 157:
-#line 1524 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1524 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.row_major = 1;
    }
-#line 4630 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4731 "src/glsl/glsl_parser.cpp"
     break;
 
   case 158:
-#line 1530 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1530 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.packed = 1;
    }
-#line 4640 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4741 "src/glsl/glsl_parser.cpp"
     break;
 
   case 159:
-#line 1539 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1539 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.smooth = 1;
    }
-#line 4650 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4751 "src/glsl/glsl_parser.cpp"
     break;
 
   case 160:
-#line 1545 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1545 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.flat = 1;
    }
-#line 4660 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4761 "src/glsl/glsl_parser.cpp"
     break;
 
   case 161:
-#line 1551 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1551 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.noperspective = 1;
    }
-#line 4670 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4771 "src/glsl/glsl_parser.cpp"
     break;
 
   case 162:
-#line 1561 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1561 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.invariant = 1;
    }
-#line 4680 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4781 "src/glsl/glsl_parser.cpp"
     break;
 
   case 163:
-#line 1567 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1567 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
       (yyval.type_qualifier).flags.q.precise = 1;
    }
-#line 4689 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4790 "src/glsl/glsl_parser.cpp"
     break;
 
   case 168:
-#line 1576 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1576 "src/glsl/glsl_parser.yy"
+   {
       memset(&(yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).precision = (yyvsp[0].n);
    }
-#line 4699 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4800 "src/glsl/glsl_parser.cpp"
     break;
 
   case 169:
-#line 1595 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1595 "src/glsl/glsl_parser.yy"
+   {
       if ((yyvsp[0].type_qualifier).flags.q.precise)
          _mesa_glsl_error(&(yylsp[-1]), state, "duplicate \"precise\" qualifier");
 
       (yyval.type_qualifier) = (yyvsp[0].type_qualifier);
       (yyval.type_qualifier).flags.q.precise = 1;
    }
-#line 4711 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4812 "src/glsl/glsl_parser.cpp"
     break;
 
   case 170:
-#line 1603 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1603 "src/glsl/glsl_parser.yy"
+   {
       if ((yyvsp[0].type_qualifier).flags.q.invariant)
          _mesa_glsl_error(&(yylsp[-1]), state, "duplicate \"invariant\" qualifier");
 
@@ -4723,12 +4824,12 @@ yyreduce:
       (yyval.type_qualifier) = (yyvsp[0].type_qualifier);
       (yyval.type_qualifier).flags.q.invariant = 1;
    }
-#line 4727 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4828 "src/glsl/glsl_parser.cpp"
     break;
 
   case 171:
-#line 1615 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1615 "src/glsl/glsl_parser.yy"
+   {
       /* Section 4.3 of the GLSL 1.40 specification states:
        * "...qualified with one of these interpolation qualifiers"
        *
@@ -4751,12 +4852,12 @@ yyreduce:
       (yyval.type_qualifier) = (yyvsp[-1].type_qualifier);
       (yyval.type_qualifier).merge_qualifier(&(yylsp[-1]), state, (yyvsp[0].type_qualifier));
    }
-#line 4755 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4856 "src/glsl/glsl_parser.cpp"
     break;
 
   case 172:
-#line 1639 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1639 "src/glsl/glsl_parser.yy"
+   {
       /* In the absence of ARB_shading_language_420pack, layout qualifiers may
        * appear no later than auxiliary storage qualifiers. There is no
        * particularly clear spec language mandating this, but in all examples
@@ -4772,12 +4873,12 @@ yyreduce:
       (yyval.type_qualifier) = (yyvsp[-1].type_qualifier);
       (yyval.type_qualifier).merge_qualifier(&(yylsp[-1]), state, (yyvsp[0].type_qualifier));
    }
-#line 4776 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4877 "src/glsl/glsl_parser.cpp"
     break;
 
   case 173:
-#line 1656 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1656 "src/glsl/glsl_parser.yy"
+   {
       if ((yyvsp[0].type_qualifier).has_auxiliary_storage()) {
          _mesa_glsl_error(&(yylsp[-1]), state,
                           "duplicate auxiliary storage qualifier (centroid or sample)");
@@ -4792,12 +4893,12 @@ yyreduce:
       (yyval.type_qualifier) = (yyvsp[-1].type_qualifier);
       (yyval.type_qualifier).merge_qualifier(&(yylsp[-1]), state, (yyvsp[0].type_qualifier));
    }
-#line 4796 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4897 "src/glsl/glsl_parser.cpp"
     break;
 
   case 174:
-#line 1672 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1672 "src/glsl/glsl_parser.yy"
+   {
       /* Section 4.3 of the GLSL 1.20 specification states:
        * "Variable declarations may have a storage qualifier specified..."
        *  1.30 clarifies this to "may have one storage qualifier".
@@ -4816,12 +4917,12 @@ yyreduce:
       (yyval.type_qualifier) = (yyvsp[-1].type_qualifier);
       (yyval.type_qualifier).merge_qualifier(&(yylsp[-1]), state, (yyvsp[0].type_qualifier));
    }
-#line 4820 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4921 "src/glsl/glsl_parser.cpp"
     break;
 
   case 175:
-#line 1692 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1692 "src/glsl/glsl_parser.yy"
+   {
       if ((yyvsp[0].type_qualifier).precision != ast_precision_none)
          _mesa_glsl_error(&(yylsp[-1]), state, "duplicate precision qualifier");
 
@@ -4831,81 +4932,81 @@ yyreduce:
       (yyval.type_qualifier) = (yyvsp[0].type_qualifier);
       (yyval.type_qualifier).precision = (yyvsp[-1].n);
    }
-#line 4835 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4936 "src/glsl/glsl_parser.cpp"
     break;
 
   case 176:
-#line 1706 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1706 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.centroid = 1;
    }
-#line 4845 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4946 "src/glsl/glsl_parser.cpp"
     break;
 
   case 177:
-#line 1712 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1712 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
       (yyval.type_qualifier).flags.q.sample = 1;
    }
-#line 4854 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4955 "src/glsl/glsl_parser.cpp"
     break;
 
   case 178:
-#line 1720 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1720 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.constant = 1;
    }
-#line 4864 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4965 "src/glsl/glsl_parser.cpp"
     break;
 
   case 179:
-#line 1726 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1726 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.attribute = 1;
    }
-#line 4874 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4975 "src/glsl/glsl_parser.cpp"
     break;
 
   case 180:
-#line 1732 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1732 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.varying = 1;
    }
-#line 4884 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4985 "src/glsl/glsl_parser.cpp"
     break;
 
   case 181:
-#line 1738 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1738 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.in = 1;
    }
-#line 4894 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 4995 "src/glsl/glsl_parser.cpp"
     break;
 
   case 182:
-#line 1744 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1744 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.out = 1;
    }
-#line 4904 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5005 "src/glsl/glsl_parser.cpp"
     break;
 
   case 183:
-#line 1750 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1750 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
       (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.in = 1;
@@ -4925,88 +5026,88 @@ yyreduce:
           (yyval.type_qualifier).stream = state->out_qualifier->stream;
       }
    }
-#line 4929 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5030 "src/glsl/glsl_parser.cpp"
     break;
 
   case 184:
-#line 1771 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1771 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.uniform = 1;
    }
-#line 4939 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5040 "src/glsl/glsl_parser.cpp"
     break;
 
   case 185:
-#line 1777 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1777 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
       (yyval.type_qualifier).flags.q.coherent = 1;
    }
-#line 4948 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5049 "src/glsl/glsl_parser.cpp"
     break;
 
   case 186:
-#line 1782 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1782 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
       (yyval.type_qualifier).flags.q._volatile = 1;
    }
-#line 4957 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5058 "src/glsl/glsl_parser.cpp"
     break;
 
   case 187:
-#line 1787 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1787 "src/glsl/glsl_parser.yy"
+   {
       STATIC_ASSERT(sizeof((yyval.type_qualifier).flags.q) <= sizeof((yyval.type_qualifier).flags.i));
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
       (yyval.type_qualifier).flags.q.restrict_flag = 1;
    }
-#line 4967 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5068 "src/glsl/glsl_parser.cpp"
     break;
 
   case 188:
-#line 1793 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1793 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
       (yyval.type_qualifier).flags.q.read_only = 1;
    }
-#line 4976 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5077 "src/glsl/glsl_parser.cpp"
     break;
 
   case 189:
-#line 1798 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1798 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
       (yyval.type_qualifier).flags.q.write_only = 1;
    }
-#line 4985 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5086 "src/glsl/glsl_parser.cpp"
     break;
 
   case 190:
-#line 1806 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1806 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.array_specifier) = new(ctx) ast_array_specifier((yylsp[-1]));
       (yyval.array_specifier)->set_location_range((yylsp[-1]), (yylsp[0]));
    }
-#line 4995 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5096 "src/glsl/glsl_parser.cpp"
     break;
 
   case 191:
-#line 1812 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1812 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.array_specifier) = new(ctx) ast_array_specifier((yylsp[-2]), (yyvsp[-1].expression));
       (yyval.array_specifier)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 5005 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5106 "src/glsl/glsl_parser.cpp"
     break;
 
   case 192:
-#line 1818 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1818 "src/glsl/glsl_parser.yy"
+   {
       (yyval.array_specifier) = (yyvsp[-2].array_specifier);
 
       if (!state->ARB_arrays_of_arrays_enable) {
@@ -5019,12 +5120,12 @@ yyreduce:
                           "be unsized");
       }
    }
-#line 5023 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5124 "src/glsl/glsl_parser.cpp"
     break;
 
   case 193:
-#line 1832 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1832 "src/glsl/glsl_parser.yy"
+   {
       (yyval.array_specifier) = (yyvsp[-3].array_specifier);
 
       if (!state->ARB_arrays_of_arrays_enable) {
@@ -5035,723 +5136,723 @@ yyreduce:
 
       (yyval.array_specifier)->add_dimension((yyvsp[-1].expression));
    }
-#line 5039 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5140 "src/glsl/glsl_parser.cpp"
     break;
 
   case 195:
-#line 1848 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1848 "src/glsl/glsl_parser.yy"
+   {
       (yyval.type_specifier) = (yyvsp[-1].type_specifier);
       (yyval.type_specifier)->array_specifier = (yyvsp[0].array_specifier);
    }
-#line 5048 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5149 "src/glsl/glsl_parser.cpp"
     break;
 
   case 196:
-#line 1856 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1856 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.type_specifier) = new(ctx) ast_type_specifier((yyvsp[0].identifier));
       (yyval.type_specifier)->set_location((yylsp[0]));
    }
-#line 5058 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5159 "src/glsl/glsl_parser.cpp"
     break;
 
   case 197:
-#line 1862 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1862 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.type_specifier) = new(ctx) ast_type_specifier((yyvsp[0].struct_specifier));
       (yyval.type_specifier)->set_location((yylsp[0]));
    }
-#line 5068 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5169 "src/glsl/glsl_parser.cpp"
     break;
 
   case 198:
-#line 1868 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1868 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.type_specifier) = new(ctx) ast_type_specifier((yyvsp[0].identifier));
       (yyval.type_specifier)->set_location((yylsp[0]));
    }
-#line 5078 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5179 "src/glsl/glsl_parser.cpp"
     break;
 
   case 199:
-#line 1876 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "void"; }
-#line 5084 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1876 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "void"; }
+#line 5185 "src/glsl/glsl_parser.cpp"
     break;
 
   case 200:
-#line 1877 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "float"; }
-#line 5090 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1877 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "float"; }
+#line 5191 "src/glsl/glsl_parser.cpp"
     break;
 
   case 201:
-#line 1878 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "int"; }
-#line 5096 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1878 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "int"; }
+#line 5197 "src/glsl/glsl_parser.cpp"
     break;
 
   case 202:
-#line 1879 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uint"; }
-#line 5102 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1879 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uint"; }
+#line 5203 "src/glsl/glsl_parser.cpp"
     break;
 
   case 203:
-#line 1880 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "bool"; }
-#line 5108 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1880 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "bool"; }
+#line 5209 "src/glsl/glsl_parser.cpp"
     break;
 
   case 204:
-#line 1881 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "vec2"; }
-#line 5114 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1881 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "vec2"; }
+#line 5215 "src/glsl/glsl_parser.cpp"
     break;
 
   case 205:
-#line 1882 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "vec3"; }
-#line 5120 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1882 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "vec3"; }
+#line 5221 "src/glsl/glsl_parser.cpp"
     break;
 
   case 206:
-#line 1883 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "vec4"; }
-#line 5126 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1883 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "vec4"; }
+#line 5227 "src/glsl/glsl_parser.cpp"
     break;
 
   case 207:
-#line 1884 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "bvec2"; }
-#line 5132 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1884 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "bvec2"; }
+#line 5233 "src/glsl/glsl_parser.cpp"
     break;
 
   case 208:
-#line 1885 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "bvec3"; }
-#line 5138 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1885 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "bvec3"; }
+#line 5239 "src/glsl/glsl_parser.cpp"
     break;
 
   case 209:
-#line 1886 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "bvec4"; }
-#line 5144 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1886 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "bvec4"; }
+#line 5245 "src/glsl/glsl_parser.cpp"
     break;
 
   case 210:
-#line 1887 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "ivec2"; }
-#line 5150 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1887 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "ivec2"; }
+#line 5251 "src/glsl/glsl_parser.cpp"
     break;
 
   case 211:
-#line 1888 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "ivec3"; }
-#line 5156 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1888 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "ivec3"; }
+#line 5257 "src/glsl/glsl_parser.cpp"
     break;
 
   case 212:
-#line 1889 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "ivec4"; }
-#line 5162 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1889 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "ivec4"; }
+#line 5263 "src/glsl/glsl_parser.cpp"
     break;
 
   case 213:
-#line 1890 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uvec2"; }
-#line 5168 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1890 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uvec2"; }
+#line 5269 "src/glsl/glsl_parser.cpp"
     break;
 
   case 214:
-#line 1891 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uvec3"; }
-#line 5174 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1891 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uvec3"; }
+#line 5275 "src/glsl/glsl_parser.cpp"
     break;
 
   case 215:
-#line 1892 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uvec4"; }
-#line 5180 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1892 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uvec4"; }
+#line 5281 "src/glsl/glsl_parser.cpp"
     break;
 
   case 216:
-#line 1893 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "mat2"; }
-#line 5186 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1893 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "mat2"; }
+#line 5287 "src/glsl/glsl_parser.cpp"
     break;
 
   case 217:
-#line 1894 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "mat2x3"; }
-#line 5192 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1894 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "mat2x3"; }
+#line 5293 "src/glsl/glsl_parser.cpp"
     break;
 
   case 218:
-#line 1895 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "mat2x4"; }
-#line 5198 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1895 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "mat2x4"; }
+#line 5299 "src/glsl/glsl_parser.cpp"
     break;
 
   case 219:
-#line 1896 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "mat3x2"; }
-#line 5204 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1896 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "mat3x2"; }
+#line 5305 "src/glsl/glsl_parser.cpp"
     break;
 
   case 220:
-#line 1897 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "mat3"; }
-#line 5210 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1897 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "mat3"; }
+#line 5311 "src/glsl/glsl_parser.cpp"
     break;
 
   case 221:
-#line 1898 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "mat3x4"; }
-#line 5216 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1898 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "mat3x4"; }
+#line 5317 "src/glsl/glsl_parser.cpp"
     break;
 
   case 222:
-#line 1899 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "mat4x2"; }
-#line 5222 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1899 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "mat4x2"; }
+#line 5323 "src/glsl/glsl_parser.cpp"
     break;
 
   case 223:
-#line 1900 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "mat4x3"; }
-#line 5228 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1900 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "mat4x3"; }
+#line 5329 "src/glsl/glsl_parser.cpp"
     break;
 
   case 224:
-#line 1901 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "mat4"; }
-#line 5234 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1901 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "mat4"; }
+#line 5335 "src/glsl/glsl_parser.cpp"
     break;
 
   case 225:
-#line 1902 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "sampler1D"; }
-#line 5240 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1902 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "sampler1D"; }
+#line 5341 "src/glsl/glsl_parser.cpp"
     break;
 
   case 226:
-#line 1903 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "sampler2D"; }
-#line 5246 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1903 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "sampler2D"; }
+#line 5347 "src/glsl/glsl_parser.cpp"
     break;
 
   case 227:
-#line 1904 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "sampler2DRect"; }
-#line 5252 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1904 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "sampler2DRect"; }
+#line 5353 "src/glsl/glsl_parser.cpp"
     break;
 
   case 228:
-#line 1905 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "sampler3D"; }
-#line 5258 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1905 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "sampler3D"; }
+#line 5359 "src/glsl/glsl_parser.cpp"
     break;
 
   case 229:
-#line 1906 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "samplerCube"; }
-#line 5264 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1906 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "samplerCube"; }
+#line 5365 "src/glsl/glsl_parser.cpp"
     break;
 
   case 230:
-#line 1907 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "samplerExternalOES"; }
-#line 5270 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1907 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "samplerExternalOES"; }
+#line 5371 "src/glsl/glsl_parser.cpp"
     break;
 
   case 231:
-#line 1908 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "sampler1DShadow"; }
-#line 5276 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1908 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "sampler1DShadow"; }
+#line 5377 "src/glsl/glsl_parser.cpp"
     break;
 
   case 232:
-#line 1909 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "sampler2DShadow"; }
-#line 5282 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1909 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "sampler2DShadow"; }
+#line 5383 "src/glsl/glsl_parser.cpp"
     break;
 
   case 233:
-#line 1910 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "sampler2DRectShadow"; }
-#line 5288 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1910 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "sampler2DRectShadow"; }
+#line 5389 "src/glsl/glsl_parser.cpp"
     break;
 
   case 234:
-#line 1911 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "samplerCubeShadow"; }
-#line 5294 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1911 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "samplerCubeShadow"; }
+#line 5395 "src/glsl/glsl_parser.cpp"
     break;
 
   case 235:
-#line 1912 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "sampler1DArray"; }
-#line 5300 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1912 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "sampler1DArray"; }
+#line 5401 "src/glsl/glsl_parser.cpp"
     break;
 
   case 236:
-#line 1913 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "sampler2DArray"; }
-#line 5306 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1913 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "sampler2DArray"; }
+#line 5407 "src/glsl/glsl_parser.cpp"
     break;
 
   case 237:
-#line 1914 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "sampler1DArrayShadow"; }
-#line 5312 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1914 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "sampler1DArrayShadow"; }
+#line 5413 "src/glsl/glsl_parser.cpp"
     break;
 
   case 238:
-#line 1915 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "sampler2DArrayShadow"; }
-#line 5318 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1915 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "sampler2DArrayShadow"; }
+#line 5419 "src/glsl/glsl_parser.cpp"
     break;
 
   case 239:
-#line 1916 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "samplerBuffer"; }
-#line 5324 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1916 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "samplerBuffer"; }
+#line 5425 "src/glsl/glsl_parser.cpp"
     break;
 
   case 240:
-#line 1917 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "samplerCubeArray"; }
-#line 5330 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1917 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "samplerCubeArray"; }
+#line 5431 "src/glsl/glsl_parser.cpp"
     break;
 
   case 241:
-#line 1918 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "samplerCubeArrayShadow"; }
-#line 5336 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1918 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "samplerCubeArrayShadow"; }
+#line 5437 "src/glsl/glsl_parser.cpp"
     break;
 
   case 242:
-#line 1919 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "isampler1D"; }
-#line 5342 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1919 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "isampler1D"; }
+#line 5443 "src/glsl/glsl_parser.cpp"
     break;
 
   case 243:
-#line 1920 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "isampler2D"; }
-#line 5348 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1920 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "isampler2D"; }
+#line 5449 "src/glsl/glsl_parser.cpp"
     break;
 
   case 244:
-#line 1921 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "isampler2DRect"; }
-#line 5354 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1921 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "isampler2DRect"; }
+#line 5455 "src/glsl/glsl_parser.cpp"
     break;
 
   case 245:
-#line 1922 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "isampler3D"; }
-#line 5360 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1922 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "isampler3D"; }
+#line 5461 "src/glsl/glsl_parser.cpp"
     break;
 
   case 246:
-#line 1923 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "isamplerCube"; }
-#line 5366 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1923 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "isamplerCube"; }
+#line 5467 "src/glsl/glsl_parser.cpp"
     break;
 
   case 247:
-#line 1924 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "isampler1DArray"; }
-#line 5372 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1924 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "isampler1DArray"; }
+#line 5473 "src/glsl/glsl_parser.cpp"
     break;
 
   case 248:
-#line 1925 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "isampler2DArray"; }
-#line 5378 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1925 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "isampler2DArray"; }
+#line 5479 "src/glsl/glsl_parser.cpp"
     break;
 
   case 249:
-#line 1926 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "isamplerBuffer"; }
-#line 5384 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1926 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "isamplerBuffer"; }
+#line 5485 "src/glsl/glsl_parser.cpp"
     break;
 
   case 250:
-#line 1927 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "isamplerCubeArray"; }
-#line 5390 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1927 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "isamplerCubeArray"; }
+#line 5491 "src/glsl/glsl_parser.cpp"
     break;
 
   case 251:
-#line 1928 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "usampler1D"; }
-#line 5396 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1928 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "usampler1D"; }
+#line 5497 "src/glsl/glsl_parser.cpp"
     break;
 
   case 252:
-#line 1929 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "usampler2D"; }
-#line 5402 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1929 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "usampler2D"; }
+#line 5503 "src/glsl/glsl_parser.cpp"
     break;
 
   case 253:
-#line 1930 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "usampler2DRect"; }
-#line 5408 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1930 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "usampler2DRect"; }
+#line 5509 "src/glsl/glsl_parser.cpp"
     break;
 
   case 254:
-#line 1931 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "usampler3D"; }
-#line 5414 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1931 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "usampler3D"; }
+#line 5515 "src/glsl/glsl_parser.cpp"
     break;
 
   case 255:
-#line 1932 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "usamplerCube"; }
-#line 5420 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1932 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "usamplerCube"; }
+#line 5521 "src/glsl/glsl_parser.cpp"
     break;
 
   case 256:
-#line 1933 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "usampler1DArray"; }
-#line 5426 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1933 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "usampler1DArray"; }
+#line 5527 "src/glsl/glsl_parser.cpp"
     break;
 
   case 257:
-#line 1934 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "usampler2DArray"; }
-#line 5432 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1934 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "usampler2DArray"; }
+#line 5533 "src/glsl/glsl_parser.cpp"
     break;
 
   case 258:
-#line 1935 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "usamplerBuffer"; }
-#line 5438 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1935 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "usamplerBuffer"; }
+#line 5539 "src/glsl/glsl_parser.cpp"
     break;
 
   case 259:
-#line 1936 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "usamplerCubeArray"; }
-#line 5444 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1936 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "usamplerCubeArray"; }
+#line 5545 "src/glsl/glsl_parser.cpp"
     break;
 
   case 260:
-#line 1937 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "sampler2DMS"; }
-#line 5450 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1937 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "sampler2DMS"; }
+#line 5551 "src/glsl/glsl_parser.cpp"
     break;
 
   case 261:
-#line 1938 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "isampler2DMS"; }
-#line 5456 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1938 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "isampler2DMS"; }
+#line 5557 "src/glsl/glsl_parser.cpp"
     break;
 
   case 262:
-#line 1939 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "usampler2DMS"; }
-#line 5462 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1939 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "usampler2DMS"; }
+#line 5563 "src/glsl/glsl_parser.cpp"
     break;
 
   case 263:
-#line 1940 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "sampler2DMSArray"; }
-#line 5468 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1940 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "sampler2DMSArray"; }
+#line 5569 "src/glsl/glsl_parser.cpp"
     break;
 
   case 264:
-#line 1941 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "isampler2DMSArray"; }
-#line 5474 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1941 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "isampler2DMSArray"; }
+#line 5575 "src/glsl/glsl_parser.cpp"
     break;
 
   case 265:
-#line 1942 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "usampler2DMSArray"; }
-#line 5480 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1942 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "usampler2DMSArray"; }
+#line 5581 "src/glsl/glsl_parser.cpp"
     break;
 
   case 266:
-#line 1943 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "image1D"; }
-#line 5486 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1943 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "image1D"; }
+#line 5587 "src/glsl/glsl_parser.cpp"
     break;
 
   case 267:
-#line 1944 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "image2D"; }
-#line 5492 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1944 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "image2D"; }
+#line 5593 "src/glsl/glsl_parser.cpp"
     break;
 
   case 268:
-#line 1945 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "image3D"; }
-#line 5498 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1945 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "image3D"; }
+#line 5599 "src/glsl/glsl_parser.cpp"
     break;
 
   case 269:
-#line 1946 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "image2DRect"; }
-#line 5504 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1946 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "image2DRect"; }
+#line 5605 "src/glsl/glsl_parser.cpp"
     break;
 
   case 270:
-#line 1947 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "imageCube"; }
-#line 5510 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1947 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "imageCube"; }
+#line 5611 "src/glsl/glsl_parser.cpp"
     break;
 
   case 271:
-#line 1948 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "imageBuffer"; }
-#line 5516 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1948 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "imageBuffer"; }
+#line 5617 "src/glsl/glsl_parser.cpp"
     break;
 
   case 272:
-#line 1949 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "image1DArray"; }
-#line 5522 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1949 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "image1DArray"; }
+#line 5623 "src/glsl/glsl_parser.cpp"
     break;
 
   case 273:
-#line 1950 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "image2DArray"; }
-#line 5528 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1950 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "image2DArray"; }
+#line 5629 "src/glsl/glsl_parser.cpp"
     break;
 
   case 274:
-#line 1951 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "imageCubeArray"; }
-#line 5534 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1951 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "imageCubeArray"; }
+#line 5635 "src/glsl/glsl_parser.cpp"
     break;
 
   case 275:
-#line 1952 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "image2DMS"; }
-#line 5540 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1952 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "image2DMS"; }
+#line 5641 "src/glsl/glsl_parser.cpp"
     break;
 
   case 276:
-#line 1953 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "image2DMSArray"; }
-#line 5546 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1953 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "image2DMSArray"; }
+#line 5647 "src/glsl/glsl_parser.cpp"
     break;
 
   case 277:
-#line 1954 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "iimage1D"; }
-#line 5552 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1954 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "iimage1D"; }
+#line 5653 "src/glsl/glsl_parser.cpp"
     break;
 
   case 278:
-#line 1955 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "iimage2D"; }
-#line 5558 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1955 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "iimage2D"; }
+#line 5659 "src/glsl/glsl_parser.cpp"
     break;
 
   case 279:
-#line 1956 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "iimage3D"; }
-#line 5564 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1956 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "iimage3D"; }
+#line 5665 "src/glsl/glsl_parser.cpp"
     break;
 
   case 280:
-#line 1957 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "iimage2DRect"; }
-#line 5570 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1957 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "iimage2DRect"; }
+#line 5671 "src/glsl/glsl_parser.cpp"
     break;
 
   case 281:
-#line 1958 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "iimageCube"; }
-#line 5576 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1958 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "iimageCube"; }
+#line 5677 "src/glsl/glsl_parser.cpp"
     break;
 
   case 282:
-#line 1959 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "iimageBuffer"; }
-#line 5582 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1959 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "iimageBuffer"; }
+#line 5683 "src/glsl/glsl_parser.cpp"
     break;
 
   case 283:
-#line 1960 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "iimage1DArray"; }
-#line 5588 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1960 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "iimage1DArray"; }
+#line 5689 "src/glsl/glsl_parser.cpp"
     break;
 
   case 284:
-#line 1961 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "iimage2DArray"; }
-#line 5594 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1961 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "iimage2DArray"; }
+#line 5695 "src/glsl/glsl_parser.cpp"
     break;
 
   case 285:
-#line 1962 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "iimageCubeArray"; }
-#line 5600 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1962 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "iimageCubeArray"; }
+#line 5701 "src/glsl/glsl_parser.cpp"
     break;
 
   case 286:
-#line 1963 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "iimage2DMS"; }
-#line 5606 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1963 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "iimage2DMS"; }
+#line 5707 "src/glsl/glsl_parser.cpp"
     break;
 
   case 287:
-#line 1964 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "iimage2DMSArray"; }
-#line 5612 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1964 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "iimage2DMSArray"; }
+#line 5713 "src/glsl/glsl_parser.cpp"
     break;
 
   case 288:
-#line 1965 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uimage1D"; }
-#line 5618 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1965 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uimage1D"; }
+#line 5719 "src/glsl/glsl_parser.cpp"
     break;
 
   case 289:
-#line 1966 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uimage2D"; }
-#line 5624 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1966 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uimage2D"; }
+#line 5725 "src/glsl/glsl_parser.cpp"
     break;
 
   case 290:
-#line 1967 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uimage3D"; }
-#line 5630 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1967 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uimage3D"; }
+#line 5731 "src/glsl/glsl_parser.cpp"
     break;
 
   case 291:
-#line 1968 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uimage2DRect"; }
-#line 5636 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1968 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uimage2DRect"; }
+#line 5737 "src/glsl/glsl_parser.cpp"
     break;
 
   case 292:
-#line 1969 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uimageCube"; }
-#line 5642 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1969 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uimageCube"; }
+#line 5743 "src/glsl/glsl_parser.cpp"
     break;
 
   case 293:
-#line 1970 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uimageBuffer"; }
-#line 5648 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1970 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uimageBuffer"; }
+#line 5749 "src/glsl/glsl_parser.cpp"
     break;
 
   case 294:
-#line 1971 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uimage1DArray"; }
-#line 5654 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1971 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uimage1DArray"; }
+#line 5755 "src/glsl/glsl_parser.cpp"
     break;
 
   case 295:
-#line 1972 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uimage2DArray"; }
-#line 5660 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1972 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uimage2DArray"; }
+#line 5761 "src/glsl/glsl_parser.cpp"
     break;
 
   case 296:
-#line 1973 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uimageCubeArray"; }
-#line 5666 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1973 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uimageCubeArray"; }
+#line 5767 "src/glsl/glsl_parser.cpp"
     break;
 
   case 297:
-#line 1974 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uimage2DMS"; }
-#line 5672 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1974 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uimage2DMS"; }
+#line 5773 "src/glsl/glsl_parser.cpp"
     break;
 
   case 298:
-#line 1975 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "uimage2DMSArray"; }
-#line 5678 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1975 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "uimage2DMSArray"; }
+#line 5779 "src/glsl/glsl_parser.cpp"
     break;
 
   case 299:
-#line 1976 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.identifier) = "atomic_uint"; }
-#line 5684 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 1976 "src/glsl/glsl_parser.yy"
+                            { (yyval.identifier) = "atomic_uint"; }
+#line 5785 "src/glsl/glsl_parser.cpp"
     break;
 
   case 300:
-#line 1981 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1981 "src/glsl/glsl_parser.yy"
+   {
       state->check_precision_qualifiers_allowed(&(yylsp[0]));
       (yyval.n) = ast_precision_high;
    }
-#line 5693 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5794 "src/glsl/glsl_parser.cpp"
     break;
 
   case 301:
-#line 1986 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1986 "src/glsl/glsl_parser.yy"
+   {
       state->check_precision_qualifiers_allowed(&(yylsp[0]));
       (yyval.n) = ast_precision_medium;
    }
-#line 5702 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5803 "src/glsl/glsl_parser.cpp"
     break;
 
   case 302:
-#line 1991 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1991 "src/glsl/glsl_parser.yy"
+   {
       state->check_precision_qualifiers_allowed(&(yylsp[0]));
       (yyval.n) = ast_precision_low;
    }
-#line 5711 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5812 "src/glsl/glsl_parser.cpp"
     break;
 
   case 303:
-#line 1999 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 1999 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.struct_specifier) = new(ctx) ast_struct_specifier((yyvsp[-3].identifier), (yyvsp[-1].declarator_list));
       (yyval.struct_specifier)->set_location_range((yylsp[-3]), (yylsp[0]));
       state->symbols->add_type((yyvsp[-3].identifier), glsl_type::void_type);
    }
-#line 5722 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5823 "src/glsl/glsl_parser.cpp"
     break;
 
   case 304:
-#line 2006 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2006 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.struct_specifier) = new(ctx) ast_struct_specifier(NULL, (yyvsp[-1].declarator_list));
       (yyval.struct_specifier)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 5732 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5833 "src/glsl/glsl_parser.cpp"
     break;
 
   case 305:
-#line 2015 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2015 "src/glsl/glsl_parser.yy"
+   {
       (yyval.declarator_list) = (yyvsp[0].declarator_list);
       (yyvsp[0].declarator_list)->link.self_link();
    }
-#line 5741 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5842 "src/glsl/glsl_parser.cpp"
     break;
 
   case 306:
-#line 2020 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2020 "src/glsl/glsl_parser.yy"
+   {
       (yyval.declarator_list) = (yyvsp[-1].declarator_list);
       (yyval.declarator_list)->link.insert_before(& (yyvsp[0].declarator_list)->link);
    }
-#line 5750 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5851 "src/glsl/glsl_parser.cpp"
     break;
 
   case 307:
-#line 2028 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2028 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_fully_specified_type *const type = (yyvsp[-2].fully_specified_type);
       type->set_location((yylsp[-2]));
@@ -5766,146 +5867,146 @@ yyreduce:
 
       (yyval.declarator_list)->declarations.push_degenerate_list_at_head(& (yyvsp[-1].declaration)->link);
    }
-#line 5770 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5871 "src/glsl/glsl_parser.cpp"
     break;
 
   case 308:
-#line 2047 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2047 "src/glsl/glsl_parser.yy"
+   {
       (yyval.declaration) = (yyvsp[0].declaration);
       (yyvsp[0].declaration)->link.self_link();
    }
-#line 5779 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5880 "src/glsl/glsl_parser.cpp"
     break;
 
   case 309:
-#line 2052 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2052 "src/glsl/glsl_parser.yy"
+   {
       (yyval.declaration) = (yyvsp[-2].declaration);
       (yyval.declaration)->link.insert_before(& (yyvsp[0].declaration)->link);
    }
-#line 5788 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5889 "src/glsl/glsl_parser.cpp"
     break;
 
   case 310:
-#line 2060 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2060 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.declaration) = new(ctx) ast_declaration((yyvsp[0].identifier), NULL, NULL);
       (yyval.declaration)->set_location((yylsp[0]));
    }
-#line 5798 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5899 "src/glsl/glsl_parser.cpp"
     break;
 
   case 311:
-#line 2066 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2066 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.declaration) = new(ctx) ast_declaration((yyvsp[-1].identifier), (yyvsp[0].array_specifier), NULL);
       (yyval.declaration)->set_location_range((yylsp[-1]), (yylsp[0]));
    }
-#line 5808 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5909 "src/glsl/glsl_parser.cpp"
     break;
 
   case 313:
-#line 2076 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2076 "src/glsl/glsl_parser.yy"
+   {
       (yyval.expression) = (yyvsp[-1].expression);
    }
-#line 5816 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5917 "src/glsl/glsl_parser.cpp"
     break;
 
   case 314:
-#line 2080 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2080 "src/glsl/glsl_parser.yy"
+   {
       (yyval.expression) = (yyvsp[-2].expression);
    }
-#line 5824 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5925 "src/glsl/glsl_parser.cpp"
     break;
 
   case 315:
-#line 2087 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2087 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.expression) = new(ctx) ast_aggregate_initializer();
       (yyval.expression)->set_location((yylsp[0]));
       (yyval.expression)->expressions.push_tail(& (yyvsp[0].expression)->link);
    }
-#line 5835 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5936 "src/glsl/glsl_parser.cpp"
     break;
 
   case 316:
-#line 2094 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2094 "src/glsl/glsl_parser.yy"
+   {
       (yyvsp[-2].expression)->expressions.push_tail(& (yyvsp[0].expression)->link);
    }
-#line 5843 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5944 "src/glsl/glsl_parser.cpp"
     break;
 
   case 318:
-#line 2106 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.node) = (ast_node *) (yyvsp[0].compound_statement); }
-#line 5849 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 2106 "src/glsl/glsl_parser.yy"
+                             { (yyval.node) = (ast_node *) (yyvsp[0].compound_statement); }
+#line 5950 "src/glsl/glsl_parser.cpp"
     break;
 
   case 326:
-#line 2121 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2121 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.compound_statement) = new(ctx) ast_compound_statement(true, NULL);
       (yyval.compound_statement)->set_location_range((yylsp[-1]), (yylsp[0]));
    }
-#line 5859 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5960 "src/glsl/glsl_parser.cpp"
     break;
 
   case 327:
-#line 2127 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2127 "src/glsl/glsl_parser.yy"
+   {
       state->symbols->push_scope();
    }
-#line 5867 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5968 "src/glsl/glsl_parser.cpp"
     break;
 
   case 328:
-#line 2131 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2131 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.compound_statement) = new(ctx) ast_compound_statement(true, (yyvsp[-1].node));
       (yyval.compound_statement)->set_location_range((yylsp[-3]), (yylsp[0]));
       state->symbols->pop_scope();
    }
-#line 5878 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5979 "src/glsl/glsl_parser.cpp"
     break;
 
   case 329:
-#line 2140 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.node) = (ast_node *) (yyvsp[0].compound_statement); }
-#line 5884 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 2140 "src/glsl/glsl_parser.yy"
+                                   { (yyval.node) = (ast_node *) (yyvsp[0].compound_statement); }
+#line 5985 "src/glsl/glsl_parser.cpp"
     break;
 
   case 331:
-#line 2146 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2146 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.compound_statement) = new(ctx) ast_compound_statement(false, NULL);
       (yyval.compound_statement)->set_location_range((yylsp[-1]), (yylsp[0]));
    }
-#line 5894 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 5995 "src/glsl/glsl_parser.cpp"
     break;
 
   case 332:
-#line 2152 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2152 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.compound_statement) = new(ctx) ast_compound_statement(false, (yyvsp[-1].node));
       (yyval.compound_statement)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 5904 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6005 "src/glsl/glsl_parser.cpp"
     break;
 
   case 333:
-#line 2161 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2161 "src/glsl/glsl_parser.yy"
+   {
       if ((yyvsp[0].node) == NULL) {
          _mesa_glsl_error(& (yylsp[0]), state, "<nil> statement");
          assert((yyvsp[0].node) != NULL);
@@ -5914,12 +6015,12 @@ yyreduce:
       (yyval.node) = (yyvsp[0].node);
       (yyval.node)->link.self_link();
    }
-#line 5918 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6019 "src/glsl/glsl_parser.cpp"
     break;
 
   case 334:
-#line 2171 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2171 "src/glsl/glsl_parser.yy"
+   {
       if ((yyvsp[0].node) == NULL) {
          _mesa_glsl_error(& (yylsp[0]), state, "<nil> statement");
          assert((yyvsp[0].node) != NULL);
@@ -5927,68 +6028,68 @@ yyreduce:
       (yyval.node) = (yyvsp[-1].node);
       (yyval.node)->link.insert_before(& (yyvsp[0].node)->link);
    }
-#line 5931 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6032 "src/glsl/glsl_parser.cpp"
     break;
 
   case 335:
-#line 2183 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2183 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.node) = new(ctx) ast_expression_statement(NULL);
       (yyval.node)->set_location((yylsp[0]));
    }
-#line 5941 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6042 "src/glsl/glsl_parser.cpp"
     break;
 
   case 336:
-#line 2189 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2189 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.node) = new(ctx) ast_expression_statement((yyvsp[-1].expression));
       (yyval.node)->set_location((yylsp[-1]));
    }
-#line 5951 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6052 "src/glsl/glsl_parser.cpp"
     break;
 
   case 337:
-#line 2198 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2198 "src/glsl/glsl_parser.yy"
+   {
       (yyval.node) = new(state) ast_selection_statement((yyvsp[-2].expression), (yyvsp[0].selection_rest_statement).then_statement,
                                               (yyvsp[0].selection_rest_statement).else_statement);
       (yyval.node)->set_location_range((yylsp[-4]), (yylsp[0]));
    }
-#line 5961 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6062 "src/glsl/glsl_parser.cpp"
     break;
 
   case 338:
-#line 2207 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2207 "src/glsl/glsl_parser.yy"
+   {
       (yyval.selection_rest_statement).then_statement = (yyvsp[-2].node);
       (yyval.selection_rest_statement).else_statement = (yyvsp[0].node);
    }
-#line 5970 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6071 "src/glsl/glsl_parser.cpp"
     break;
 
   case 339:
-#line 2212 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2212 "src/glsl/glsl_parser.yy"
+   {
       (yyval.selection_rest_statement).then_statement = (yyvsp[0].node);
       (yyval.selection_rest_statement).else_statement = NULL;
    }
-#line 5979 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6080 "src/glsl/glsl_parser.cpp"
     break;
 
   case 340:
-#line 2220 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2220 "src/glsl/glsl_parser.yy"
+   {
       (yyval.node) = (ast_node *) (yyvsp[0].expression);
    }
-#line 5987 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6088 "src/glsl/glsl_parser.cpp"
     break;
 
   case 341:
-#line 2224 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2224 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_declaration *decl = new(ctx) ast_declaration((yyvsp[-2].identifier), NULL, (yyvsp[0].expression));
       ast_declarator_list *declarator = new(ctx) ast_declarator_list((yyvsp[-3].fully_specified_type));
@@ -5998,253 +6099,253 @@ yyreduce:
       declarator->declarations.push_tail(&decl->link);
       (yyval.node) = declarator;
    }
-#line 6002 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6103 "src/glsl/glsl_parser.cpp"
     break;
 
   case 342:
-#line 2242 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2242 "src/glsl/glsl_parser.yy"
+   {
       (yyval.node) = new(state) ast_switch_statement((yyvsp[-2].expression), (yyvsp[0].switch_body));
       (yyval.node)->set_location_range((yylsp[-4]), (yylsp[0]));
    }
-#line 6011 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6112 "src/glsl/glsl_parser.cpp"
     break;
 
   case 343:
-#line 2250 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2250 "src/glsl/glsl_parser.yy"
+   {
       (yyval.switch_body) = new(state) ast_switch_body(NULL);
       (yyval.switch_body)->set_location_range((yylsp[-1]), (yylsp[0]));
    }
-#line 6020 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6121 "src/glsl/glsl_parser.cpp"
     break;
 
   case 344:
-#line 2255 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2255 "src/glsl/glsl_parser.yy"
+   {
       (yyval.switch_body) = new(state) ast_switch_body((yyvsp[-1].case_statement_list));
       (yyval.switch_body)->set_location_range((yylsp[-2]), (yylsp[0]));
    }
-#line 6029 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6130 "src/glsl/glsl_parser.cpp"
     break;
 
   case 345:
-#line 2263 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2263 "src/glsl/glsl_parser.yy"
+   {
       (yyval.case_label) = new(state) ast_case_label((yyvsp[-1].expression));
       (yyval.case_label)->set_location((yylsp[-1]));
    }
-#line 6038 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6139 "src/glsl/glsl_parser.cpp"
     break;
 
   case 346:
-#line 2268 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2268 "src/glsl/glsl_parser.yy"
+   {
       (yyval.case_label) = new(state) ast_case_label(NULL);
       (yyval.case_label)->set_location((yylsp[0]));
    }
-#line 6047 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6148 "src/glsl/glsl_parser.cpp"
     break;
 
   case 347:
-#line 2276 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2276 "src/glsl/glsl_parser.yy"
+   {
       ast_case_label_list *labels = new(state) ast_case_label_list();
 
       labels->labels.push_tail(& (yyvsp[0].case_label)->link);
       (yyval.case_label_list) = labels;
       (yyval.case_label_list)->set_location((yylsp[0]));
    }
-#line 6059 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6160 "src/glsl/glsl_parser.cpp"
     break;
 
   case 348:
-#line 2284 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2284 "src/glsl/glsl_parser.yy"
+   {
       (yyval.case_label_list) = (yyvsp[-1].case_label_list);
       (yyval.case_label_list)->labels.push_tail(& (yyvsp[0].case_label)->link);
    }
-#line 6068 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6169 "src/glsl/glsl_parser.cpp"
     break;
 
   case 349:
-#line 2292 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2292 "src/glsl/glsl_parser.yy"
+   {
       ast_case_statement *stmts = new(state) ast_case_statement((yyvsp[-1].case_label_list));
       stmts->set_location((yylsp[0]));
 
       stmts->stmts.push_tail(& (yyvsp[0].node)->link);
       (yyval.case_statement) = stmts;
    }
-#line 6080 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6181 "src/glsl/glsl_parser.cpp"
     break;
 
   case 350:
-#line 2300 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2300 "src/glsl/glsl_parser.yy"
+   {
       (yyval.case_statement) = (yyvsp[-1].case_statement);
       (yyval.case_statement)->stmts.push_tail(& (yyvsp[0].node)->link);
    }
-#line 6089 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6190 "src/glsl/glsl_parser.cpp"
     break;
 
   case 351:
-#line 2308 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2308 "src/glsl/glsl_parser.yy"
+   {
       ast_case_statement_list *cases= new(state) ast_case_statement_list();
       cases->set_location((yylsp[0]));
 
       cases->cases.push_tail(& (yyvsp[0].case_statement)->link);
       (yyval.case_statement_list) = cases;
    }
-#line 6101 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6202 "src/glsl/glsl_parser.cpp"
     break;
 
   case 352:
-#line 2316 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2316 "src/glsl/glsl_parser.yy"
+   {
       (yyval.case_statement_list) = (yyvsp[-1].case_statement_list);
       (yyval.case_statement_list)->cases.push_tail(& (yyvsp[0].case_statement)->link);
    }
-#line 6110 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6211 "src/glsl/glsl_parser.cpp"
     break;
 
   case 353:
-#line 2324 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2324 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.node) = new(ctx) ast_iteration_statement(ast_iteration_statement::ast_while,
                                             NULL, (yyvsp[-2].node), NULL, (yyvsp[0].node));
       (yyval.node)->set_location_range((yylsp[-4]), (yylsp[-1]));
    }
-#line 6121 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6222 "src/glsl/glsl_parser.cpp"
     break;
 
   case 354:
-#line 2331 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2331 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.node) = new(ctx) ast_iteration_statement(ast_iteration_statement::ast_do_while,
                                             NULL, (yyvsp[-2].expression), NULL, (yyvsp[-5].node));
       (yyval.node)->set_location_range((yylsp[-6]), (yylsp[-1]));
    }
-#line 6132 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6233 "src/glsl/glsl_parser.cpp"
     break;
 
   case 355:
-#line 2338 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2338 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.node) = new(ctx) ast_iteration_statement(ast_iteration_statement::ast_for,
                                             (yyvsp[-3].node), (yyvsp[-2].for_rest_statement).cond, (yyvsp[-2].for_rest_statement).rest, (yyvsp[0].node));
       (yyval.node)->set_location_range((yylsp[-5]), (yylsp[0]));
    }
-#line 6143 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6244 "src/glsl/glsl_parser.cpp"
     break;
 
   case 359:
-#line 2354 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2354 "src/glsl/glsl_parser.yy"
+   {
       (yyval.node) = NULL;
    }
-#line 6151 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6252 "src/glsl/glsl_parser.cpp"
     break;
 
   case 360:
-#line 2361 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2361 "src/glsl/glsl_parser.yy"
+   {
       (yyval.for_rest_statement).cond = (yyvsp[-1].node);
       (yyval.for_rest_statement).rest = NULL;
    }
-#line 6160 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6261 "src/glsl/glsl_parser.cpp"
     break;
 
   case 361:
-#line 2366 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2366 "src/glsl/glsl_parser.yy"
+   {
       (yyval.for_rest_statement).cond = (yyvsp[-2].node);
       (yyval.for_rest_statement).rest = (yyvsp[0].expression);
    }
-#line 6169 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6270 "src/glsl/glsl_parser.cpp"
     break;
 
   case 362:
-#line 2375 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2375 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.node) = new(ctx) ast_jump_statement(ast_jump_statement::ast_continue, NULL);
       (yyval.node)->set_location((yylsp[-1]));
    }
-#line 6179 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6280 "src/glsl/glsl_parser.cpp"
     break;
 
   case 363:
-#line 2381 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2381 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.node) = new(ctx) ast_jump_statement(ast_jump_statement::ast_break, NULL);
       (yyval.node)->set_location((yylsp[-1]));
    }
-#line 6189 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6290 "src/glsl/glsl_parser.cpp"
     break;
 
   case 364:
-#line 2387 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2387 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.node) = new(ctx) ast_jump_statement(ast_jump_statement::ast_return, NULL);
       (yyval.node)->set_location((yylsp[-1]));
    }
-#line 6199 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6300 "src/glsl/glsl_parser.cpp"
     break;
 
   case 365:
-#line 2393 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2393 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.node) = new(ctx) ast_jump_statement(ast_jump_statement::ast_return, (yyvsp[-1].expression));
       (yyval.node)->set_location_range((yylsp[-2]), (yylsp[-1]));
    }
-#line 6209 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6310 "src/glsl/glsl_parser.cpp"
     break;
 
   case 366:
-#line 2399 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2399 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.node) = new(ctx) ast_jump_statement(ast_jump_statement::ast_discard, NULL);
       (yyval.node)->set_location((yylsp[-1]));
    }
-#line 6219 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6320 "src/glsl/glsl_parser.cpp"
     break;
 
   case 367:
-#line 2407 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.node) = (yyvsp[0].function_definition); }
-#line 6225 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 2407 "src/glsl/glsl_parser.yy"
+                            { (yyval.node) = (yyvsp[0].function_definition); }
+#line 6326 "src/glsl/glsl_parser.cpp"
     break;
 
   case 368:
-#line 2408 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.node) = (yyvsp[0].node); }
-#line 6231 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 2408 "src/glsl/glsl_parser.yy"
+                            { (yyval.node) = (yyvsp[0].node); }
+#line 6332 "src/glsl/glsl_parser.cpp"
     break;
 
   case 369:
-#line 2409 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.node) = NULL; }
-#line 6237 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 2409 "src/glsl/glsl_parser.yy"
+                            { (yyval.node) = NULL; }
+#line 6338 "src/glsl/glsl_parser.cpp"
     break;
 
   case 370:
-#line 2410 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    { (yyval.node) = (yyvsp[0].node); }
-#line 6243 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 2410 "src/glsl/glsl_parser.yy"
+                            { (yyval.node) = (yyvsp[0].node); }
+#line 6344 "src/glsl/glsl_parser.cpp"
     break;
 
   case 371:
-#line 2415 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2415 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       (yyval.function_definition) = new(ctx) ast_function_definition();
       (yyval.function_definition)->set_location_range((yylsp[-1]), (yylsp[0]));
@@ -6253,20 +6354,20 @@ yyreduce:
 
       state->symbols->pop_scope();
    }
-#line 6257 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6358 "src/glsl/glsl_parser.cpp"
     break;
 
   case 372:
-#line 2429 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2429 "src/glsl/glsl_parser.yy"
+   {
       (yyval.node) = (yyvsp[0].interface_block);
    }
-#line 6265 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6366 "src/glsl/glsl_parser.cpp"
     break;
 
   case 373:
-#line 2433 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2433 "src/glsl/glsl_parser.yy"
+   {
       ast_interface_block *block = (yyvsp[0].interface_block);
       if (!block->layout.merge_qualifier(& (yylsp[-1]), state, (yyvsp[-1].type_qualifier))) {
          YYERROR;
@@ -6285,12 +6386,12 @@ yyreduce:
       }
       (yyval.node) = block;
    }
-#line 6289 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6390 "src/glsl/glsl_parser.cpp"
     break;
 
   case 374:
-#line 2456 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2456 "src/glsl/glsl_parser.yy"
+   {
       ast_interface_block *const block = (yyvsp[-1].interface_block);
 
       block->block_name = (yyvsp[-5].identifier);
@@ -6391,89 +6492,89 @@ yyreduce:
 
       (yyval.interface_block) = block;
    }
-#line 6395 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6496 "src/glsl/glsl_parser.cpp"
     break;
 
   case 375:
-#line 2561 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2561 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.in = 1;
    }
-#line 6405 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6506 "src/glsl/glsl_parser.cpp"
     break;
 
   case 376:
-#line 2567 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2567 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.out = 1;
    }
-#line 6415 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6516 "src/glsl/glsl_parser.cpp"
     break;
 
   case 377:
-#line 2573 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2573 "src/glsl/glsl_parser.yy"
+   {
       memset(& (yyval.type_qualifier), 0, sizeof((yyval.type_qualifier)));
 	  (yyval.type_qualifier).precision = ast_precision_none;
       (yyval.type_qualifier).flags.q.uniform = 1;
    }
-#line 6425 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6526 "src/glsl/glsl_parser.cpp"
     break;
 
   case 378:
-#line 2582 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2582 "src/glsl/glsl_parser.yy"
+   {
       (yyval.interface_block) = new(state) ast_interface_block(*state->default_uniform_qualifier,
                                           NULL, NULL);
    }
-#line 6434 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6535 "src/glsl/glsl_parser.cpp"
     break;
 
   case 379:
-#line 2587 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2587 "src/glsl/glsl_parser.yy"
+   {
       (yyval.interface_block) = new(state) ast_interface_block(*state->default_uniform_qualifier,
                                           (yyvsp[0].identifier), NULL);
       (yyval.interface_block)->set_location((yylsp[0]));
    }
-#line 6444 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6545 "src/glsl/glsl_parser.cpp"
     break;
 
   case 380:
-#line 2593 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2593 "src/glsl/glsl_parser.yy"
+   {
       (yyval.interface_block) = new(state) ast_interface_block(*state->default_uniform_qualifier,
                                           (yyvsp[-1].identifier), (yyvsp[0].array_specifier));
       (yyval.interface_block)->set_location_range((yylsp[-1]), (yylsp[0]));
    }
-#line 6454 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6555 "src/glsl/glsl_parser.cpp"
     break;
 
   case 381:
-#line 2602 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2602 "src/glsl/glsl_parser.yy"
+   {
       (yyval.declarator_list) = (yyvsp[0].declarator_list);
       (yyvsp[0].declarator_list)->link.self_link();
    }
-#line 6463 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6564 "src/glsl/glsl_parser.cpp"
     break;
 
   case 382:
-#line 2607 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2607 "src/glsl/glsl_parser.yy"
+   {
       (yyval.declarator_list) = (yyvsp[-1].declarator_list);
       (yyvsp[0].declarator_list)->link.insert_before(& (yyval.declarator_list)->link);
    }
-#line 6472 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6573 "src/glsl/glsl_parser.cpp"
     break;
 
   case 383:
-#line 2615 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2615 "src/glsl/glsl_parser.yy"
+   {
       void *ctx = state;
       ast_fully_specified_type *type = (yyvsp[-2].fully_specified_type);
       type->set_location((yylsp[-2]));
@@ -6493,34 +6594,34 @@ yyreduce:
 
       (yyval.declarator_list)->declarations.push_degenerate_list_at_head(& (yyvsp[-1].declaration)->link);
    }
-#line 6497 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6598 "src/glsl/glsl_parser.cpp"
     break;
 
   case 384:
-#line 2639 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2639 "src/glsl/glsl_parser.yy"
+   {
       if (!state->default_uniform_qualifier->merge_qualifier(& (yylsp[-2]), state, (yyvsp[-2].type_qualifier))) {
          YYERROR;
       }
       (yyval.node) = NULL;
    }
-#line 6508 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6609 "src/glsl/glsl_parser.cpp"
     break;
 
   case 385:
-#line 2647 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2647 "src/glsl/glsl_parser.yy"
+   {
       (yyval.node) = NULL;
       if (!state->in_qualifier->merge_in_qualifier(& (yylsp[-2]), state, (yyvsp[-2].type_qualifier), (yyval.node))) {
          YYERROR;
       }
    }
-#line 6519 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6620 "src/glsl/glsl_parser.cpp"
     break;
 
   case 386:
-#line 2655 "src/glsl/glsl_parser.yy" /* yacc.c:1646  */
-    {
+#line 2655 "src/glsl/glsl_parser.yy"
+   {
       if (state->stage != MESA_SHADER_GEOMETRY) {
          _mesa_glsl_error(& (yylsp[-2]), state,
                           "out layout qualifiers only valid in "
@@ -6547,11 +6648,12 @@ yyreduce:
       }
       (yyval.node) = NULL;
    }
-#line 6551 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6652 "src/glsl/glsl_parser.cpp"
     break;
 
 
-#line 6555 "src/glsl/glsl_parser.cpp" /* yacc.c:1646  */
+#line 6656 "src/glsl/glsl_parser.cpp"
+
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -6577,14 +6679,13 @@ yyreduce:
   /* Now 'shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
      number reduced by.  */
-
-  yyn = yyr1[yyn];
-
-  yystate = yypgoto[yyn - YYNTOKENS] + *yyssp;
-  if (0 <= yystate && yystate <= YYLAST && yycheck[yystate] == *yyssp)
-    yystate = yytable[yystate];
-  else
-    yystate = yydefgoto[yyn - YYNTOKENS];
+  {
+    const int yylhs = yyr1[yyn] - YYNTOKENS;
+    const int yyi = yypgoto[yylhs] + *yyssp;
+    yystate = (0 <= yyi && yyi <= YYLAST && yycheck[yyi] == *yyssp
+               ? yytable[yyi]
+               : yydefgoto[yylhs]);
+  }
 
   goto yynewstate;
 
@@ -6616,7 +6717,7 @@ yyerrlab:
           {
             if (yymsg != yymsgbuf)
               YYSTACK_FREE (yymsg);
-            yymsg = (char *) YYSTACK_ALLOC (yymsg_alloc);
+            yymsg = YY_CAST (char *, YYSTACK_ALLOC (YY_CAST (YYSIZE_T, yymsg_alloc)));
             if (!yymsg)
               {
                 yymsg = yymsgbuf;
@@ -6667,14 +6768,11 @@ yyerrlab:
 | yyerrorlab -- error raised explicitly by YYERROR.  |
 `---------------------------------------------------*/
 yyerrorlab:
+  /* Pacify compilers when the user code never invokes YYERROR and the
+     label yyerrorlab therefore never appears in user code.  */
+  if (0)
+    YYERROR;
 
-  /* Pacify compilers like GCC when the user code never invokes
-     YYERROR and the label yyerrorlab therefore never appears in user
-     code.  */
-  if (/*CONSTCOND*/ 0)
-     goto yyerrorlab;
-
-  yyerror_range[1] = yylsp[1-yylen];
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYERROR.  */
   YYPOPSTACK (yylen);
@@ -6740,12 +6838,14 @@ yyacceptlab:
   yyresult = 0;
   goto yyreturn;
 
+
 /*-----------------------------------.
 | yyabortlab -- YYABORT comes here.  |
 `-----------------------------------*/
 yyabortlab:
   yyresult = 1;
   goto yyreturn;
+
 
 #if !defined yyoverflow || YYERROR_VERBOSE
 /*-------------------------------------------------.
@@ -6757,6 +6857,10 @@ yyexhaustedlab:
   /* Fall through.  */
 #endif
 
+
+/*-----------------------------------------------------.
+| yyreturn -- parsing is finished, return the result.  |
+`-----------------------------------------------------*/
 yyreturn:
   if (yychar != YYEMPTY)
     {
@@ -6773,7 +6877,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  yystos[*yyssp], yyvsp, yylsp, state);
+                  yystos[+*yyssp], yyvsp, yylsp, state);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow

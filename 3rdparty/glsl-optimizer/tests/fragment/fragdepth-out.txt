@@ -1,8 +1,0 @@
-void main ()
-{
-  gl_FragData[0] = vec4(0.5, 0.5, 0.5, 0.5);
-  gl_FragDepth = 0.9;
-}
-
-
-// stats: 2 alu 0 tex 0 flow

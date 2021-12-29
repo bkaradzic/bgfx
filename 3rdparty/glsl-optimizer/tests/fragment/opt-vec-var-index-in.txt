@@ -1,7 +1,0 @@
-void main() {
-	vec2 c = vec2(0.0);
-	for (int j = 0; j < 2; ++j) {
-		c += abs (vec2(vec2(0.0)[j]));
-	}
-	gl_FragColor = vec4(c,0.0,0.0);
-}

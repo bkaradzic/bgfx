@@ -1,6 +1,0 @@
-varying vec3 var_a;
-
-void main() {
-	gl_Position = gl_Vertex * normalize(vec4(1.0,2.0,3.0,4.0));
-	var_a = gl_Vertex.xyz * normalize(vec3(0.0));
-}

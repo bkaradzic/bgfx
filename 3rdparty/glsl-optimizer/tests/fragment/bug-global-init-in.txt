@@ -1,6 +1,0 @@
-uniform float value;
-float otherValue = log(value);
-void main()
-{
-	gl_FragColor = vec4(otherValue);
-}

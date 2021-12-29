@@ -1,9 +1,0 @@
-[General]
-Type = StaticLibrary
-SourceFiles = SourceFiles
-Platform = Tool
-
-[Project]
-IncludePaths=../../../../src/talloc;../../../../include;../../../../src/mesa;../../../../src/mapi;../../../../src/glsl/msvc;../../../../src/glsl
-Defines=snprintf=_snprintf;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE
-DisabledVcWarnings=4291;4996;4800;4099;4244;4018;4245
