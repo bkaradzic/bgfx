@@ -284,7 +284,7 @@ TrueTypeHandle FontManager::createTtf(const uint8_t* _buffer, uint32_t _size)
 void FontManager::destroyTtf(TrueTypeHandle _handle)
 {
 	BX_ASSERT(isValid(_handle), "Invalid handle used");
-	delete m_cachedFiles[_handle.idx].buffer;
+	delete[] m_cachedFiles[_handle.idx].buffer;
 	m_cachedFiles[_handle.idx].bufferSize = 0;
 	m_cachedFiles[_handle.idx].buffer = NULL;
 	m_filesHandles.free(_handle.idx);
