@@ -242,7 +242,18 @@ namespace bgfx { namespace gl
 			// get hooked up properly (especially when there are existing window elements). This ensures
 			// we are valid. Otherwise, you'll probably get a GL_INVALID_FRAMEBUFFER_OPERATION when
 			// trying to glClear() for the first time.
-			[glContext setView:glView];
+			void (^set_view)(void) = ^(void) {
+				[glContext setView:glView];
+			};
+
+			if([NSThread isMainThread])
+			{
+				set_view();
+			}
+			else
+			{
+				dispatch_sync(dispatch_get_main_queue(),set_view);
+			}
 
 			m_view    = glView;
 			m_context = glContext;
@@ -288,7 +299,19 @@ namespace bgfx { namespace gl
 		GLint interval = vsync ? 1 : 0;
 		NSOpenGLContext* glContext = (NSOpenGLContext*)m_context;
 		[glContext setValues:&interval forParameter:NSOpenGLCPSwapInterval];
-		[glContext update];
+		
+		void (^update_view)(void) = ^(void) {
+			[glContext update];
+		};
+
+		if([NSThread isMainThread])
+		{
+			update_view();
+		}
+		else
+		{
+			dispatch_sync(dispatch_get_main_queue(),update_view);
+		}
 	}
 
 	uint64_t GlContext::getCaps() const
