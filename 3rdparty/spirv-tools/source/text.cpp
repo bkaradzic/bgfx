@@ -715,6 +715,12 @@ spv_result_t GetNumericIds(const spvtools::AssemblyGrammar& grammar,
   while (context.hasText()) {
     spv_instruction_t inst;
 
+    // Operand parsing sometimes involves knowing the opcode of the instruction
+    // being parsed. A malformed input might feature such an operand *before*
+    // the opcode is known. To guard against accessing an uninitialized opcode,
+    // the instruction's opcode is initialized to a default value.
+    inst.opcode = SpvOpMax;
+
     if (spvTextEncodeOpcode(grammar, &context, &inst)) {
       return SPV_ERROR_INVALID_TEXT;
     }
