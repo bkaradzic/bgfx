@@ -1215,14 +1215,20 @@ void CompilerHLSL::emit_specialization_constants_and_structs()
 				auto &type = get<SPIRType>(c.constant_type);
 				auto name = to_name(c.self);
 
-				// HLSL does not support specialization constants, so fallback to macros.
-				c.specialization_constant_macro_name =
-				    constant_value_macro_name(get_decoration(c.self, DecorationSpecId));
+				if (has_decoration(c.self, DecorationSpecId))
+				{
+					// HLSL does not support specialization constants, so fallback to macros.
+					c.specialization_constant_macro_name =
+							constant_value_macro_name(get_decoration(c.self, DecorationSpecId));
 
-				statement("#ifndef ", c.specialization_constant_macro_name);
-				statement("#define ", c.specialization_constant_macro_name, " ", constant_expression(c));
-				statement("#endif");
-				statement("static const ", variable_decl(type, name), " = ", c.specialization_constant_macro_name, ";");
+					statement("#ifndef ", c.specialization_constant_macro_name);
+					statement("#define ", c.specialization_constant_macro_name, " ", constant_expression(c));
+					statement("#endif");
+					statement("static const ", variable_decl(type, name), " = ", c.specialization_constant_macro_name, ";");
+				}
+				else
+					statement("static const ", variable_decl(type, name), " = ", constant_expression(c), ";");
+
 				emitted = true;
 			}
 		}
@@ -2430,6 +2436,16 @@ void CompilerHLSL::emit_hlsl_entry_point()
 		uint32_t x = execution.workgroup_size.x;
 		uint32_t y = execution.workgroup_size.y;
 		uint32_t z = execution.workgroup_size.z;
+
+		if (!execution.workgroup_size.constant && execution.flags.get(ExecutionModeLocalSizeId))
+		{
+			if (execution.workgroup_size.id_x)
+				x = get<SPIRConstant>(execution.workgroup_size.id_x).scalar();
+			if (execution.workgroup_size.id_y)
+				y = get<SPIRConstant>(execution.workgroup_size.id_y).scalar();
+			if (execution.workgroup_size.id_z)
+				z = get<SPIRConstant>(execution.workgroup_size.id_z).scalar();
+		}
 
 		auto x_expr = wg_x.id ? get<SPIRConstant>(wg_x.id).specialization_constant_macro_name : to_string(x);
 		auto y_expr = wg_y.id ? get<SPIRConstant>(wg_y.id).specialization_constant_macro_name : to_string(y);

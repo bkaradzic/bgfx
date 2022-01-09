@@ -672,6 +672,7 @@ struct SPIREntryPoint
 	struct WorkgroupSize
 	{
 		uint32_t x = 0, y = 0, z = 0;
+		uint32_t id_x = 0, id_y = 0, id_z = 0;
 		uint32_t constant = 0; // Workgroup size can be expressed as a constant/spec-constant instead.
 	} workgroup_size;
 	uint32_t invocations = 0;

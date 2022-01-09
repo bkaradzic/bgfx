@@ -637,6 +637,7 @@ string CompilerGLSL::compile()
 	backend.force_gl_in_out_block = true;
 	backend.supports_extensions = true;
 	backend.use_array_constructor = true;
+	backend.workgroup_size_is_hidden = true;
 
 	backend.support_precise_qualifier = (!options.es && options.version >= 400) || (options.es && options.version >= 320);
 
@@ -707,6 +708,8 @@ void CompilerGLSL::build_workgroup_size(SmallVector<string> &arguments, const Sp
                                         const SpecializationConstant &wg_y, const SpecializationConstant &wg_z)
 {
 	auto &execution = get_entry_point();
+	bool builtin_workgroup = execution.workgroup_size.constant != 0;
+	bool use_local_size_id = !builtin_workgroup && execution.flags.get(ExecutionModeLocalSizeId);
 
 	if (wg_x.id)
 	{
@@ -715,6 +718,8 @@ void CompilerGLSL::build_workgroup_size(SmallVector<string> &arguments, const Sp
 		else
 			arguments.push_back(join("local_size_x = ", get<SPIRConstant>(wg_x.id).specialization_constant_macro_name));
 	}
+	else if (use_local_size_id && execution.workgroup_size.id_x)
+		arguments.push_back(join("local_size_x = ", get<SPIRConstant>(execution.workgroup_size.id_x).scalar()));
 	else
 		arguments.push_back(join("local_size_x = ", execution.workgroup_size.x));
 
@@ -725,6 +730,8 @@ void CompilerGLSL::build_workgroup_size(SmallVector<string> &arguments, const Sp
 		else
 			arguments.push_back(join("local_size_y = ", get<SPIRConstant>(wg_y.id).specialization_constant_macro_name));
 	}
+	else if (use_local_size_id && execution.workgroup_size.id_y)
+		arguments.push_back(join("local_size_y = ", get<SPIRConstant>(execution.workgroup_size.id_y).scalar()));
 	else
 		arguments.push_back(join("local_size_y = ", execution.workgroup_size.y));
 
@@ -735,6 +742,8 @@ void CompilerGLSL::build_workgroup_size(SmallVector<string> &arguments, const Sp
 		else
 			arguments.push_back(join("local_size_z = ", get<SPIRConstant>(wg_z.id).specialization_constant_macro_name));
 	}
+	else if (use_local_size_id && execution.workgroup_size.id_z)
+		arguments.push_back(join("local_size_z = ", get<SPIRConstant>(execution.workgroup_size.id_z).scalar()));
 	else
 		arguments.push_back(join("local_size_z = ", execution.workgroup_size.z));
 }
@@ -1005,7 +1014,7 @@ void CompilerGLSL::emit_header()
 
 	case ExecutionModelGLCompute:
 	{
-		if (execution.workgroup_size.constant != 0)
+		if (execution.workgroup_size.constant != 0 || execution.flags.get(ExecutionModeLocalSizeId))
 		{
 			SpecializationConstant wg_x, wg_y, wg_z;
 			get_work_group_size_specialization_constants(wg_x, wg_y, wg_z);
@@ -2673,6 +2682,26 @@ void CompilerGLSL::emit_specialization_constant_op(const SPIRConstantOp &constan
 	statement("const ", variable_decl(type, name), " = ", constant_op_expression(constant), ";");
 }
 
+int CompilerGLSL::get_constant_mapping_to_workgroup_component(const SPIRConstant &c) const
+{
+	auto &entry_point = get_entry_point();
+	int index = -1;
+
+	// Need to redirect specialization constants which are used as WorkGroupSize to the builtin,
+	// since the spec constant declarations are never explicitly declared.
+	if (entry_point.workgroup_size.constant == 0 && entry_point.flags.get(ExecutionModeLocalSizeId))
+	{
+		if (c.self == entry_point.workgroup_size.id_x)
+			index = 0;
+		else if (c.self == entry_point.workgroup_size.id_y)
+			index = 1;
+		else if (c.self == entry_point.workgroup_size.id_z)
+			index = 2;
+	}
+
+	return index;
+}
+
 void CompilerGLSL::emit_constant(const SPIRConstant &constant)
 {
 	auto &type = get<SPIRType>(constant.constant_type);
@@ -3441,7 +3470,7 @@ void CompilerGLSL::emit_resources()
 	// If the work group size depends on a specialization constant, we need to declare the layout() block
 	// after constants (and their macros) have been declared.
 	if (execution.model == ExecutionModelGLCompute && !options.vulkan_semantics &&
-	    execution.workgroup_size.constant != 0)
+	    (execution.workgroup_size.constant != 0 || execution.flags.get(ExecutionModeLocalSizeId)))
 	{
 		SpecializationConstant wg_x, wg_y, wg_z;
 		get_work_group_size_specialization_constants(wg_x, wg_y, wg_z);
@@ -4620,11 +4649,24 @@ string CompilerGLSL::to_expression(uint32_t id, bool register_expression_read)
 		auto &type = get<SPIRType>(c.constant_type);
 
 		// WorkGroupSize may be a constant.
-		auto &dec = ir.meta[c.self].decoration;
-		if (dec.builtin)
-			return builtin_to_glsl(dec.builtin_type, StorageClassGeneric);
+		if (has_decoration(c.self, DecorationBuiltIn))
+			return builtin_to_glsl(BuiltIn(get_decoration(c.self, DecorationBuiltIn)), StorageClassGeneric);
 		else if (c.specialization)
+		{
+			if (backend.workgroup_size_is_hidden)
+			{
+				int wg_index = get_constant_mapping_to_workgroup_component(c);
+				if (wg_index >= 0)
+				{
+					auto wg_size = join(builtin_to_glsl(BuiltInWorkgroupSize, StorageClassInput), vector_swizzle(1, wg_index));
+					if (type.basetype != SPIRType::UInt)
+						wg_size = bitcast_expression(type, SPIRType::UInt, wg_size);
+					return wg_size;
+				}
+			}
+
 			return to_name(id);
+		}
 		else if (c.is_used_as_lut)
 			return to_name(id);
 		else if (type.basetype == SPIRType::Struct && !backend.can_declare_struct_inline)
@@ -5266,7 +5308,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 			for (uint32_t i = 0; i < c.vector_size(); i++)
 			{
 				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
-					res += to_name(c.specialization_constant_id(vector, i));
+					res += to_expression(c.specialization_constant_id(vector, i));
 				else
 					res += convert_half_to_string(c, vector, i);
 
@@ -5288,7 +5330,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 			for (uint32_t i = 0; i < c.vector_size(); i++)
 			{
 				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
-					res += to_name(c.specialization_constant_id(vector, i));
+					res += to_expression(c.specialization_constant_id(vector, i));
 				else
 					res += convert_float_to_string(c, vector, i);
 
@@ -5310,7 +5352,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 			for (uint32_t i = 0; i < c.vector_size(); i++)
 			{
 				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
-					res += to_name(c.specialization_constant_id(vector, i));
+					res += to_expression(c.specialization_constant_id(vector, i));
 				else
 					res += convert_double_to_string(c, vector, i);
 
@@ -5336,7 +5378,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 			for (uint32_t i = 0; i < c.vector_size(); i++)
 			{
 				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
-					res += to_name(c.specialization_constant_id(vector, i));
+					res += to_expression(c.specialization_constant_id(vector, i));
 				else
 					res += convert_to_string(c.scalar_i64(vector, i), int64_type, backend.long_long_literal_suffix);
 
@@ -5361,7 +5403,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 			for (uint32_t i = 0; i < c.vector_size(); i++)
 			{
 				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
-					res += to_name(c.specialization_constant_id(vector, i));
+					res += to_expression(c.specialization_constant_id(vector, i));
 				else
 				{
 					res += convert_to_string(c.scalar_u64(vector, i));
@@ -5396,7 +5438,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 			for (uint32_t i = 0; i < c.vector_size(); i++)
 			{
 				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
-					res += to_name(c.specialization_constant_id(vector, i));
+					res += to_expression(c.specialization_constant_id(vector, i));
 				else
 				{
 					res += convert_to_string(c.scalar(vector, i));
@@ -5426,7 +5468,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 			for (uint32_t i = 0; i < c.vector_size(); i++)
 			{
 				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
-					res += to_name(c.specialization_constant_id(vector, i));
+					res += to_expression(c.specialization_constant_id(vector, i));
 				else
 					res += convert_to_string(c.scalar_i32(vector, i));
 				if (i + 1 < c.vector_size())
@@ -5445,7 +5487,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 			for (uint32_t i = 0; i < c.vector_size(); i++)
 			{
 				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
-					res += to_name(c.specialization_constant_id(vector, i));
+					res += to_expression(c.specialization_constant_id(vector, i));
 				else
 				{
 					if (*backend.uint16_t_literal_suffix)
@@ -5479,7 +5521,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 			for (uint32_t i = 0; i < c.vector_size(); i++)
 			{
 				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
-					res += to_name(c.specialization_constant_id(vector, i));
+					res += to_expression(c.specialization_constant_id(vector, i));
 				else
 				{
 					if (*backend.int16_t_literal_suffix)
@@ -5513,7 +5555,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 			for (uint32_t i = 0; i < c.vector_size(); i++)
 			{
 				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
-					res += to_name(c.specialization_constant_id(vector, i));
+					res += to_expression(c.specialization_constant_id(vector, i));
 				else
 				{
 					res += type_to_glsl(scalar_type);
@@ -5538,7 +5580,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 			for (uint32_t i = 0; i < c.vector_size(); i++)
 			{
 				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
-					res += to_name(c.specialization_constant_id(vector, i));
+					res += to_expression(c.specialization_constant_id(vector, i));
 				else
 				{
 					res += type_to_glsl(scalar_type);
@@ -5561,7 +5603,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 			for (uint32_t i = 0; i < c.vector_size(); i++)
 			{
 				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
-					res += to_name(c.specialization_constant_id(vector, i));
+					res += to_expression(c.specialization_constant_id(vector, i));
 				else
 					res += c.scalar(vector, i) ? "true" : "false";
 
@@ -8894,29 +8936,36 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 				                                       is_packed);
 			}
 
-			if (is_literal && !is_packed && !row_major_matrix_needs_conversion)
+			if (is_literal)
 			{
-				expr += ".";
-				expr += index_to_swizzle(index);
+				bool out_of_bounds = (index >= type->vecsize);
+
+				if (!is_packed && !row_major_matrix_needs_conversion)
+				{
+					expr += ".";
+					expr += index_to_swizzle(out_of_bounds ? 0 : index);
+				}
+				else
+				{
+					// For packed vectors, we can only access them as an array, not by swizzle.
+					expr += join("[", out_of_bounds ? 0 : index, "]");
+				}
 			}
 			else if (ir.ids[index].get_type() == TypeConstant && !is_packed && !row_major_matrix_needs_conversion)
 			{
 				auto &c = get<SPIRConstant>(index);
+				bool out_of_bounds = (c.scalar() >= type->vecsize);
+
 				if (c.specialization)
 				{
 					// If the index is a spec constant, we cannot turn extract into a swizzle.
-					expr += join("[", to_expression(index), "]");
+					expr += join("[", out_of_bounds ? "0" : to_expression(index), "]");
 				}
 				else
 				{
 					expr += ".";
-					expr += index_to_swizzle(c.scalar());
+					expr += index_to_swizzle(out_of_bounds ? 0 : c.scalar());
 				}
-			}
-			else if (is_literal)
-			{
-				// For packed vectors, we can only access them as an array, not by swizzle.
-				expr += join("[", index, "]");
 			}
 			else
 			{

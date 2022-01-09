@@ -1050,10 +1050,12 @@ void Compiler::parse_fixup()
 		if (id.get_type() == TypeConstant)
 		{
 			auto &c = id.get<SPIRConstant>();
-			if (ir.meta[c.self].decoration.builtin && ir.meta[c.self].decoration.builtin_type == BuiltInWorkgroupSize)
+			if (has_decoration(c.self, DecorationBuiltIn) &&
+			    BuiltIn(get_decoration(c.self, DecorationBuiltIn)) == BuiltInWorkgroupSize)
 			{
 				// In current SPIR-V, there can be just one constant like this.
 				// All entry points will receive the constant value.
+				// WorkgroupSize take precedence over LocalSizeId.
 				for (auto &entry : ir.entry_points)
 				{
 					entry.second.workgroup_size.constant = c.self;
@@ -2156,6 +2158,12 @@ void Compiler::set_execution_mode(ExecutionMode mode, uint32_t arg0, uint32_t ar
 		execution.workgroup_size.z = arg2;
 		break;
 
+	case ExecutionModeLocalSizeId:
+		execution.workgroup_size.id_x = arg0;
+		execution.workgroup_size.id_y = arg1;
+		execution.workgroup_size.id_z = arg2;
+		break;
+
 	case ExecutionModeInvocations:
 		execution.invocations = arg0;
 		break;
@@ -2183,6 +2191,7 @@ uint32_t Compiler::get_work_group_size_specialization_constants(SpecializationCo
 	y = { 0, 0 };
 	z = { 0, 0 };
 
+	// WorkgroupSize builtin takes precedence over LocalSize / LocalSizeId.
 	if (execution.workgroup_size.constant != 0)
 	{
 		auto &c = get<SPIRConstant>(execution.workgroup_size.constant);
@@ -2205,6 +2214,29 @@ uint32_t Compiler::get_work_group_size_specialization_constants(SpecializationCo
 			z.constant_id = get_decoration(c.m.c[0].id[2], DecorationSpecId);
 		}
 	}
+	else if (execution.flags.get(ExecutionModeLocalSizeId))
+	{
+		auto &cx = get<SPIRConstant>(execution.workgroup_size.id_x);
+		if (cx.specialization)
+		{
+			x.id = execution.workgroup_size.id_x;
+			x.constant_id = get_decoration(execution.workgroup_size.id_x, DecorationSpecId);
+		}
+
+		auto &cy = get<SPIRConstant>(execution.workgroup_size.id_y);
+		if (cy.specialization)
+		{
+			y.id = execution.workgroup_size.id_y;
+			y.constant_id = get_decoration(execution.workgroup_size.id_y, DecorationSpecId);
+		}
+
+		auto &cz = get<SPIRConstant>(execution.workgroup_size.id_z);
+		if (cz.specialization)
+		{
+			z.id = execution.workgroup_size.id_z;
+			z.constant_id = get_decoration(execution.workgroup_size.id_z, DecorationSpecId);
+		}
+	}
 
 	return execution.workgroup_size.constant;
 }
@@ -2214,15 +2246,42 @@ uint32_t Compiler::get_execution_mode_argument(spv::ExecutionMode mode, uint32_t
 	auto &execution = get_entry_point();
 	switch (mode)
 	{
+	case ExecutionModeLocalSizeId:
+		if (execution.flags.get(ExecutionModeLocalSizeId))
+		{
+			switch (index)
+			{
+			case 0:
+				return execution.workgroup_size.id_x;
+			case 1:
+				return execution.workgroup_size.id_y;
+			case 2:
+				return execution.workgroup_size.id_z;
+			default:
+				return 0;
+			}
+		}
+		else
+			return 0;
+
 	case ExecutionModeLocalSize:
 		switch (index)
 		{
 		case 0:
-			return execution.workgroup_size.x;
+			if (execution.flags.get(ExecutionModeLocalSizeId) && execution.workgroup_size.id_x != 0)
+				return get<SPIRConstant>(execution.workgroup_size.id_x).scalar();
+			else
+				return execution.workgroup_size.x;
 		case 1:
-			return execution.workgroup_size.y;
+			if (execution.flags.get(ExecutionModeLocalSizeId) && execution.workgroup_size.id_y != 0)
+				return get<SPIRConstant>(execution.workgroup_size.id_y).scalar();
+			else
+				return execution.workgroup_size.y;
 		case 2:
-			return execution.workgroup_size.z;
+			if (execution.flags.get(ExecutionModeLocalSizeId) && execution.workgroup_size.id_z != 0)
+				return get<SPIRConstant>(execution.workgroup_size.id_z).scalar();
+			else
+				return execution.workgroup_size.z;
 		default:
 			return 0;
 		}

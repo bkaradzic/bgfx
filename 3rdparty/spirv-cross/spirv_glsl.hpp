@@ -587,6 +587,7 @@ protected:
 		bool support_pointer_to_pointer = false;
 		bool support_precise_qualifier = false;
 		bool support_64bit_switch = false;
+		bool workgroup_size_is_hidden = false;
 	} backend;
 
 	void emit_struct(SPIRType &type);
@@ -610,6 +611,7 @@ protected:
 	void emit_block_chain(SPIRBlock &block);
 	void emit_hoisted_temporaries(SmallVector<std::pair<TypeID, ID>> &temporaries);
 	std::string constant_value_macro_name(uint32_t id);
+	int get_constant_mapping_to_workgroup_component(const SPIRConstant &constant) const;
 	void emit_constant(const SPIRConstant &constant);
 	void emit_specialization_constant_op(const SPIRConstantOp &constant);
 	std::string emit_continue_block(uint32_t continue_block, bool follow_true_block, bool follow_false_block);
