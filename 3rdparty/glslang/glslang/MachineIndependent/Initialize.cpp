@@ -8353,10 +8353,11 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         }
 
         if (profile != EEsProfile && version < 330 ) {
-            symbolTable.setFunctionExtensions("floatBitsToInt", 1, &E_GL_ARB_shader_bit_encoding);
-            symbolTable.setFunctionExtensions("floatBitsToUint", 1, &E_GL_ARB_shader_bit_encoding);
-            symbolTable.setFunctionExtensions("intBitsToFloat", 1, &E_GL_ARB_shader_bit_encoding);
-            symbolTable.setFunctionExtensions("uintBitsToFloat", 1, &E_GL_ARB_shader_bit_encoding);
+            const char* bitsConvertExt[2] = {E_GL_ARB_shader_bit_encoding, E_GL_ARB_gpu_shader5};
+            symbolTable.setFunctionExtensions("floatBitsToInt", 2, bitsConvertExt);
+            symbolTable.setFunctionExtensions("floatBitsToUint", 2, bitsConvertExt);
+            symbolTable.setFunctionExtensions("intBitsToFloat", 2, bitsConvertExt);
+            symbolTable.setFunctionExtensions("uintBitsToFloat", 2, bitsConvertExt);
         }
 
         if (profile != EEsProfile && version < 430 ) {

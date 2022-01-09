@@ -2446,10 +2446,14 @@ public:
     //
     bool sameStructType(const TType& right) const
     {
+        // TODO: Why return true when neither types are structures?
         // Most commonly, they are both nullptr, or the same pointer to the same actual structure
         if ((!isStruct() && !right.isStruct()) ||
             (isStruct() && right.isStruct() && structure == right.structure))
             return true;
+
+        if (!isStruct() || !right.isStruct())
+            return false;
 
         // Structure names have to match
         if (*typeName != *right.typeName)
@@ -2460,8 +2464,7 @@ public:
         bool isGLPerVertex = *typeName == "gl_PerVertex";
 
         // Both being nullptr was caught above, now they both have to be structures of the same number of elements
-        if (!isStruct() || !right.isStruct() ||
-            (structure->size() != right.structure->size() && !isGLPerVertex))
+        if (structure->size() != right.structure->size() && !isGLPerVertex)
             return false;
 
         // Compare the names and types of all the members, which have to match

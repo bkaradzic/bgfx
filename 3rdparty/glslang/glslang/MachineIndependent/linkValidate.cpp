@@ -1802,7 +1802,7 @@ unsigned int TIntermediate::computeTypeXfbSize(const TType& type, bool& contains
         return size;
     }
 
-    int numComponents;
+    int numComponents {0};
     if (type.isScalar())
         numComponents = 1;
     else if (type.isVector())
