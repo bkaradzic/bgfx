@@ -83,7 +83,8 @@
         <id value="30"  vendor="SpvGenTwo community" tool="SpvGenTwo SPIR-V IR Tools" comment="https://github.com/rAzoR8/SpvGenTwo"/>
         <id value="31"  vendor="Google" tool="Skia SkSL" comment="Contact Ethan Nicholas, ethannicholas@google.com"/>
         <id value="32"  vendor="TornadoVM" tool="SPIRV Beehive Toolkit" comment="https://github.com/beehive-lab/spirv-beehive-toolkit"/>
-        <unused start="33" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
+        <id value="33"  vendor="DragonJoker" tool="ShaderWriter" comment="Contact Sylvain Doremus, https://github.com/DragonJoker/ShaderWriter"/>
+        <unused start="34" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
     </ids>
 
     <!-- SECTION: SPIR-V Opcodes and Enumerants -->
