@@ -14,11 +14,13 @@ public:
 	TextMetrics(FontManager* _fontManager);
 
 	/// Append an ASCII/utf-8 string to the metrics helper.
-	void appendText(FontHandle _fontHandle, const char* _string);
+	void appendText(FontHandle _fontHandle, const char* _string, const char* _end = NULL);
 
 	/// Append a wide char string to the metrics helper.
 	void appendText(FontHandle _fontHandle, const wchar_t* _string);
 
+    const char* wrapLine(FontHandle _fontHandle, float width, const char* _string, const char* _end);
+    
 	/// Return the width of the measured text.
 	float getWidth() const { return m_width; }
 

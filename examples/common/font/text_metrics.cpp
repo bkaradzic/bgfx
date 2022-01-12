@@ -17,7 +17,7 @@ void TextMetrics::clearText()
 	m_width = m_height = m_x = m_lineHeight = m_lineGap = 0;
 }
 
-void TextMetrics::appendText(FontHandle _fontHandle, const char* _string)
+void TextMetrics::appendText(FontHandle _fontHandle, const char* _string, const char* _end)
 {
 	const FontInfo& font = m_fontManager->getFontInfo(_fontHandle);
 
@@ -36,7 +36,13 @@ void TextMetrics::appendText(FontHandle _fontHandle, const char* _string)
 	CodePoint codepoint = 0;
 	uint32_t state = 0;
 
-	for (; *_string; ++_string)
+    if (_end == NULL)
+    {
+        _end = _string + bx::strLen(_string);
+    }
+    BX_ASSERT(_end >= _string, "");
+    
+	for (; *_string && _string < _end; ++_string)
 	{
 		if (!utf8_decode(&state, (uint32_t*)&codepoint, *_string) )
 		{
@@ -65,6 +71,49 @@ void TextMetrics::appendText(FontHandle _fontHandle, const char* _string)
 	}
 
 	BX_ASSERT(state == UTF8_ACCEPT, "The string is not well-formed");
+}
+
+const char* TextMetrics::wrapLine(FontHandle _fontHandle, float width, const char* _string, const char* _end)
+{
+    CodePoint codepoint = 0;
+    uint32_t state = 0;
+
+    if (_end == NULL)
+    {
+        _end = _string + bx::strLen(_string);
+    }
+    BX_ASSERT(_end >= _string, "");
+
+    const char* ptr = _string;
+    const char* prevSpace = NULL;
+
+    for (; ptr != _end; ++ptr)
+    {
+        if (utf8_decode(&state, (uint32_t*)&codepoint, *ptr) == UTF8_ACCEPT)
+        {
+            clearText();
+            appendText(_fontHandle, _string, ptr);
+            
+            if (getWidth() > width)
+            {
+                if (prevSpace) return prevSpace;
+                clearText();
+                return ptr;
+            }
+            
+            if (codepoint == L'\n')
+            {
+                clearText();
+                return ptr;
+            }
+            else if (codepoint == L' ' && ptr != _string)
+            {
+                clearText();
+                prevSpace = ++ptr;
+            }
+        }
+    }
+    return ptr;
 }
 
 TextLineMetrics::TextLineMetrics(const FontInfo& _fontInfo)

@@ -2810,6 +2810,14 @@ namespace bgfx { namespace mtl
 			desc.mipmapLevelCount = ti.numMips;
 			desc.sampleCount      = 1;
 			desc.arrayLength      = ti.numLayers;
+            
+            // i.e. grayscale image
+//            if (blockInfo.rBits > 0 && blockInfo.gBits == 0 && blockInfo.bBits == 0 && blockInfo.aBits == 0)
+//            {
+//                if (@available(iOS 13.0, *)) {
+//                    desc.swizzle = MTLTextureSwizzleChannelsMake(MTLTextureSwizzleRed, MTLTextureSwizzleRed, MTLTextureSwizzleRed, MTLTextureSwizzleOne);
+//                }
+//            }
 
 			if (s_renderMtl->m_iOS9Runtime
 			||  s_renderMtl->m_macOS11Runtime)

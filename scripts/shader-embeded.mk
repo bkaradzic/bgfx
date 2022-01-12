@@ -20,7 +20,7 @@ CS_BIN = $(addsuffix .bin.h, $(basename $(CS_SOURCES)))
 
 BIN = $(VS_BIN) $(FS_BIN) $(CS_BIN)
 
-SHADER_TMP = $(TEMP)/tmp
+SHADER_TMP = ./tmp
 
 vs_%.bin.h : vs_%.sc
 	@echo [$(<)]
