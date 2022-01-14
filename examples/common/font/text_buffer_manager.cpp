@@ -183,6 +183,15 @@ public:
 	/// Clear the text buffer and reset its state (pen/color)
 	void clearTextBuffer();
 
+    void translateVertices(uint32_t _startIndex, uint32_t _endIndex, float _x, float _y)
+    {
+        for (uint32_t i = _startIndex; i < _endIndex; i++)
+        {
+            m_vertexBuffer[i].x += _x;
+            m_vertexBuffer[i].y += _y;
+        }
+    }
+    
 	/// Get pointer to the vertex buffer to submit it to the graphic card.
 	const uint8_t* getVertexBuffer()
 	{
@@ -1330,3 +1339,18 @@ TextRectangle TextBufferManager::getRectangle(TextBufferHandle _handle) const
 	BufferCache& bc = m_textBuffers[_handle.idx];
 	return bc.textBuffer->getRectangle();
 }
+
+uint32_t TextBufferManager::getVertexCount(TextBufferHandle _handle) const
+{
+    BX_ASSERT(isValid(_handle), "Invalid handle used");
+    BufferCache& bc = m_textBuffers[_handle.idx];
+    return bc.textBuffer->getVertexCount();
+}
+
+void TextBufferManager::translateVertices(TextBufferHandle _handle, uint32_t _startIndex, uint32_t _endIndex, float _x, float _y)
+{
+    BX_ASSERT(isValid(_handle), "Invalid handle used");
+    BufferCache& bc = m_textBuffers[_handle.idx];
+    bc.textBuffer->translateVertices(_startIndex, _endIndex, _x, _y);
+}
+

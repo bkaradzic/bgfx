@@ -110,6 +110,7 @@ const char* TextMetrics::wrapLine(FontHandle _fontHandle, float width, const cha
             {
                 clearText();
                 prevSpace = ++ptr;
+                if (ptr == _end) break;
             }
         }
     }

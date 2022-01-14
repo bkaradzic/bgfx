@@ -95,9 +95,13 @@ public:
 
 	/// Clear the text buffer and reset its state (pen/color).
 	void clearTextBuffer(TextBufferHandle _handle);
-
+    
 	/// Return the rectangular size of the current text buffer (including all its content).
 	TextRectangle getRectangle(TextBufferHandle _handle) const;
+    
+    uint32_t getVertexCount(TextBufferHandle _handle) const;
+    
+    void translateVertices(TextBufferHandle _handle, uint32_t _startIndex, uint32_t _endIndex, float _x, float _y);
 
 private:
 	struct BufferCache
