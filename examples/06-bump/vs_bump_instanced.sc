@@ -2,8 +2,8 @@ $input a_position, a_normal, a_tangent, a_texcoord0, i_data0, i_data1, i_data2, 
 $output v_wpos, v_view, v_normal, v_tangent, v_bitangent, v_texcoord0
 
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "../common/common.sh"

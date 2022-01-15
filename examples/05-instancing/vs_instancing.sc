@@ -2,8 +2,8 @@ $input a_position, a_color0, i_data0, i_data1, i_data2, i_data3, i_data4
 $output v_color0
 
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "../common/common.sh"

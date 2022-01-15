@@ -2,7 +2,7 @@ $input v_lightCenterScale, v_color0
 
 /*
  * Copyright 2016 Joseph Cherlin. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "../common/common.sh"
