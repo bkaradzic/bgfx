@@ -425,7 +425,6 @@ std::string Array::str() const {
 void Array::GetExtraHashWords(std::vector<uint32_t>* words,
                               std::unordered_set<const Type*>* seen) const {
   element_type_->GetHashWords(words, seen);
-  // This should mirror the logic in IsSameImpl
   words->insert(words->end(), length_info_.words.begin(),
                 length_info_.words.end());
 }

@@ -132,7 +132,7 @@ class DescriptorScalarReplacement : public Pass {
 
   // A map from an OpVariable instruction to the set of variables that will be
   // used to replace it. The entry |replacement_variables_[var][i]| is the id of
-  // a variable that will be used in the place of the the ith element of the
+  // a variable that will be used in the place of the ith element of the
   // array |var|. If the entry is |0|, then the variable has not been
   // created yet.
   std::map<Instruction*, std::vector<uint32_t>> replacement_variables_;

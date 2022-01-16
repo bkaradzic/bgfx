@@ -1411,7 +1411,7 @@ spv_result_t ValidateArrayLength(ValidationState_t& state,
            << state.getIdName(inst->id()) << "' must be an OpTypeRuntimeArray.";
   }
 
-  // The array member must the the index of the last element (the run time
+  // The array member must the index of the last element (the run time
   // array).
   if (inst->GetOperandAs<uint32_t>(3) != num_of_members - 1) {
     return state.diag(SPV_ERROR_INVALID_ID, inst)

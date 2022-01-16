@@ -453,7 +453,7 @@ Pass::Status LoopFissionPass::Process() {
   for (Function& f : *context()->module()) {
     // We collect all the inner most loops in the function and run the loop
     // splitting util on each. The reason we do this is to allow us to iterate
-    // over each, as creating new loops will invalidate the the loop iterator.
+    // over each, as creating new loops will invalidate the loop iterator.
     std::vector<Loop*> inner_most_loops{};
     LoopDescriptor& loop_descriptor = *context()->GetLoopDescriptor(&f);
     for (Loop& loop : loop_descriptor) {

@@ -300,7 +300,7 @@ spv_result_t Parser::parseInstruction() {
   const uint32_t first_word = peek();
 
   // If the module's endianness is different from the host native endianness,
-  // then converted_words contains the the endian-translated words in the
+  // then converted_words contains the endian-translated words in the
   // instruction.
   _.endian_converted_words.clear();
   _.endian_converted_words.push_back(first_word);

@@ -134,7 +134,7 @@ class SENodeSimplifyImpl {
   // offset.
   SENode* EliminateZeroCoefficientRecurrents(SENode* node);
 
-  // A reference the the analysis which requested the simplification.
+  // A reference the analysis which requested the simplification.
   ScalarEvolutionAnalysis& analysis_;
 
   // The node being simplified.

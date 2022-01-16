@@ -98,7 +98,7 @@ class DeadBranchElimPass : public MemPass {
   // Fix phis in reachable blocks so that only live (or unremovable) incoming
   // edges are present. If the block now only has a single live incoming edge,
   // remove the phi and replace its uses with its data input. If the single
-  // remaining incoming edge is from the phi itself, the the phi is in an
+  // remaining incoming edge is from the phi itself, the phi is in an
   // unreachable single block loop. Either the block is dead and will be
   // removed, or it's reachable from an unreachable continue target. In the
   // latter case that continue target block will be collapsed into a block that
