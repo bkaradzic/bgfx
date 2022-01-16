@@ -162,8 +162,11 @@ typedef enum {
     LAST_ELEMENT_MARKER(EShTargetCount),
 } EShTargetLanguage;
 
+// TODO(greg-lunarg): Fix non-determinism problem with Universal
+// https://github.com/KhronosGroup/glslang/issues/2858
+
 typedef enum {
-    EShTargetUniversal = 0,                           // Universal
+    EShTargetUniversal = 0,                           // Universal - Do not use, see comment above
     EShTargetVulkan_1_0 = (1 << 22),                  // Vulkan 1.0
     EShTargetVulkan_1_1 = (1 << 22) | (1 << 12),      // Vulkan 1.1
     EShTargetVulkan_1_2 = (1 << 22) | (2 << 12),      // Vulkan 1.2
