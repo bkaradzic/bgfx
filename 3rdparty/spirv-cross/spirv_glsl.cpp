@@ -13422,7 +13422,7 @@ string CompilerGLSL::image_type_glsl(const SPIRType &type, uint32_t id)
 
 	case DimBuffer:
 		if (options.es && options.version < 320)
-			require_extension_internal("GL_OES_texture_buffer");
+			require_extension_internal("GL_EXT_texture_buffer");
 		else if (!options.es && options.version < 300)
 			require_extension_internal("GL_EXT_texture_buffer_object");
 		res += "Buffer";
