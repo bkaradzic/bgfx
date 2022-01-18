@@ -1009,7 +1009,7 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId 
 		return;
 	}
 
-	bgfx::setTexture(0, s_texColor, m_fontManager->getAtlas()->getTextureHandle() );
+	bgfx::setTexture(0, s_texColor, m_fontManager->getAtlas()->getTextureHandle(), BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC );
 
 	bgfx::ProgramHandle program = BGFX_INVALID_HANDLE;
 	switch (bc.fontType)
@@ -1212,6 +1212,13 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId 
 	}
 
 	bgfx::submit(_id, program, _depth);
+}
+
+void TextBufferManager::setFontType(TextBufferHandle _handle, uint32_t _type)
+{
+    BX_ASSERT(isValid(_handle), "Invalid handle used");
+    BufferCache& bc = m_textBuffers[_handle.idx];
+    bc.fontType = _type;
 }
 
 void TextBufferManager::setStyle(TextBufferHandle _handle, uint32_t _flags)

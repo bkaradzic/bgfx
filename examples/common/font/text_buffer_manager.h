@@ -65,6 +65,8 @@ public:
 	void destroyTextBuffer(TextBufferHandle _handle);
 	void submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId _id, int32_t _depth = 0);
 
+    void setFontType(TextBufferHandle _handle, uint32_t _type);
+    
 	void setStyle(TextBufferHandle _handle, uint32_t _flags = STYLE_NORMAL);
 	void setTextColor(TextBufferHandle _handle, uint32_t _rgba = 0x000000FF);
 	void setBackgroundColor(TextBufferHandle _handle, uint32_t _rgba = 0x000000FF);
