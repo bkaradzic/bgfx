@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 11.8.0 2022-01-27
+
+### Other changes
+* Add support for SPIR-V 1.6
+* Add support for Vulkan 1.3
+* Add --hlsl-dx-position-w option
+
 ## 11.7.0 2021-11-11
 
 ### Other changes

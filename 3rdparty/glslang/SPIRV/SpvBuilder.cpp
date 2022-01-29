@@ -437,7 +437,7 @@ Id Builder::makeGenericType(spv::Op opcode, std::vector<spv::IdImmediate>& opera
             continue; // Number mismatch, find next
 
         bool match = true;
-        for (size_t op = 0; match && op < operands.size(); ++op) {
+        for (int op = 0; match && op < (int)operands.size(); ++op) {
             match = (operands[op].isId ? type->getIdOperand(op) : type->getImmediateOperand(op)) == operands[op].word;
         }
         if (match)

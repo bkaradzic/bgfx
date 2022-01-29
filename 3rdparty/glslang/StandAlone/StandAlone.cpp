@@ -767,6 +767,9 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                             } else if (strcmp(argv[1], "vulkan1.2") == 0) {
                                 setVulkanSpv();
                                 ClientVersion = glslang::EShTargetVulkan_1_2;
+                            } else if (strcmp(argv[1], "vulkan1.3") == 0) {
+                                setVulkanSpv();
+                                ClientVersion = glslang::EShTargetVulkan_1_3;
                             } else if (strcmp(argv[1], "opengl") == 0) {
                                 setOpenGlSpv();
                                 ClientVersion = glslang::EShTargetOpenGL_450;
@@ -793,7 +796,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                                 TargetVersion = glslang::EShTargetSpv_1_6;
                             } else
                                 Error("--target-env expected one of: vulkan1.0, vulkan1.1, vulkan1.2,\n"
-                                      "opengl, spirv1.0, spirv1.1, spirv1.2, spirv1.3,\n"
+                                      "vulkan1.3, opengl, spirv1.0, spirv1.1, spirv1.2, spirv1.3,\n"
                                       "spirv1.4, spirv1.5 or spirv1.6");
                         }
                         bumpArg();
@@ -1018,6 +1021,10 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
         case glslang::EShTargetVulkan_1_2:
             TargetLanguage = glslang::EShTargetSpv;
             TargetVersion = glslang::EShTargetSpv_1_5;
+            break;
+        case glslang::EShTargetVulkan_1_3:
+            TargetLanguage = glslang::EShTargetSpv;
+            TargetVersion = glslang::EShTargetSpv_1_6;
             break;
         case glslang::EShTargetOpenGL_450:
             TargetLanguage = glslang::EShTargetSpv;
@@ -1934,7 +1941,7 @@ void usage()
            "  --sep                             synonym for --source-entrypoint\n"
            "  --stdin                           read from stdin instead of from a file;\n"
            "                                    requires providing the shader stage using -S\n"
-           "  --target-env {vulkan1.0 | vulkan1.1 | vulkan1.2 | opengl |\n"
+           "  --target-env {vulkan1.0 | vulkan1.1 | vulkan1.2 | vulkan1.3 | opengl |\n"
            "                spirv1.0 | spirv1.1 | spirv1.2 | spirv1.3 | spirv1.4 |\n"
            "                spirv1.5 | spirv1.6}\n"
            "                                    Set the execution environment that the\n"
@@ -1945,6 +1952,7 @@ void usage()
            "                                     * spirv1.0  under --target-env vulkan1.0\n"
            "                                     * spirv1.3  under --target-env vulkan1.1\n"
            "                                     * spirv1.5  under --target-env vulkan1.2\n"
+           "                                     * spirv1.6  under --target-env vulkan1.3\n"
            "                                    Multiple --target-env can be specified.\n"
            "  --variable-name <name>\n"
            "  --vn <name>                       creates a C header file that contains a\n"

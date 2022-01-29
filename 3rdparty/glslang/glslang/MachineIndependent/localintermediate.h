@@ -419,6 +419,9 @@ public:
         case EShTargetVulkan_1_2:
             processes.addProcess("target-env vulkan1.2");
             break;
+        case EShTargetVulkan_1_3:
+            processes.addProcess("target-env vulkan1.3");
+            break;
         default:
             processes.addProcess("target-env vulkanUnknown");
             break;
