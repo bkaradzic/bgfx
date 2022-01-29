@@ -29,7 +29,7 @@
 // 2 - For each loop in the list, group each instruction into a set of related
 // instructions by traversing each instructions users and operands recursively.
 // We stop if we encounter an instruction we have seen before or an instruction
-// which we don't consider relevent (i.e OpLoopMerge). We then group these
+// which we don't consider relevant (i.e OpLoopMerge). We then group these
 // groups into two different sets, one for the first loop and one for the
 // second.
 //

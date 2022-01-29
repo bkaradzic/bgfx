@@ -158,7 +158,7 @@ class DeadBranchElimPass : public MemPass {
       uint32_t cont_id, uint32_t header_id, uint32_t merge_id,
       std::unordered_set<BasicBlock*>* blocks_with_back_edges);
 
-  // Returns true if there is a brach to the merge node of the selection
+  // Returns true if there is a branch to the merge node of the selection
   // construct |switch_header_id| that is inside a nested selection construct or
   // in the header of the nested selection construct.
   bool SwitchHasNestedBreak(uint32_t switch_header_id);

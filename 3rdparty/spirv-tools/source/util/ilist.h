@@ -59,7 +59,7 @@ class IntrusiveList {
   // Moves the contents of the given list to the list being constructed.
   IntrusiveList(IntrusiveList&&);
 
-  // Destorys the list.  Note that the elements of the list will not be deleted,
+  // Destroys the list.  Note that the elements of the list will not be deleted,
   // but they will be removed from the list.
   virtual ~IntrusiveList();
 

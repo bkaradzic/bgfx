@@ -129,7 +129,7 @@ spv_result_t ValidateUint32ConstantOperandForDebugInfo(
   }
 
 // True if the operand of a debug info instruction |inst| at |word_index|
-// satisifies |expectation| that is given as a function. Otherwise,
+// satisfies |expectation| that is given as a function. Otherwise,
 // returns false.
 bool DoesDebugInfoOperandMatchExpectation(
     const ValidationState_t& _,

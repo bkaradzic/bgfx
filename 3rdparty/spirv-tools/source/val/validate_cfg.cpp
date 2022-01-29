@@ -675,7 +675,7 @@ spv_result_t ValidateStructuredSelections(
     } else if (terminator->opcode() == SpvOpSwitch) {
       if (!merge) {
         return _.diag(SPV_ERROR_INVALID_CFG, terminator)
-               << "OpSwitch must be preceeded by an OpSelectionMerge "
+               << "OpSwitch must be preceded by an OpSelectionMerge "
                   "instruction";
       }
       // Mark the targets as seen.
@@ -917,7 +917,7 @@ spv_result_t PerformCfgChecks(ValidationState_t& _) {
           }
         }
       }
-      // If we have structed control flow, check that no block has a control
+      // If we have structured control flow, check that no block has a control
       // flow nesting depth larger than the limit.
       if (_.HasCapability(SpvCapabilityShader)) {
         const int control_flow_nesting_depth_limit =

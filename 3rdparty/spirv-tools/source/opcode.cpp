@@ -40,12 +40,12 @@ struct OpcodeDescPtrLen {
 static const spv_opcode_table_t kOpcodeTable = {ARRAY_SIZE(kOpcodeTableEntries),
                                                 kOpcodeTableEntries};
 
-// Represents a vendor tool entry in the SPIR-V XML Regsitry.
+// Represents a vendor tool entry in the SPIR-V XML Registry.
 struct VendorTool {
   uint32_t value;
   const char* vendor;
   const char* tool;         // Might be empty string.
-  const char* vendor_tool;  // Combiantion of vendor and tool.
+  const char* vendor_tool;  // Combination of vendor and tool.
 };
 
 const VendorTool vendor_tools[] = {

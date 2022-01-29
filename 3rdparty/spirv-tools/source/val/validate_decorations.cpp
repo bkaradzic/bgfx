@@ -465,7 +465,7 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
         return lhs.offset < rhs.offset;
       });
 
-  // Now scan from lowest offest to highest offset.
+  // Now scan from lowest offset to highest offset.
   uint32_t nextValidOffset = 0;
   for (size_t ordered_member_idx = 0;
        ordered_member_idx < member_offsets.size(); ordered_member_idx++) {
@@ -720,7 +720,7 @@ spv_result_t CheckBuiltInVariable(uint32_t var_id, ValidationState_t& vstate) {
   return SPV_SUCCESS;
 }
 
-// Checks whether proper decorations have been appied to the entry points.
+// Checks whether proper decorations have been applied to the entry points.
 spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
   for (uint32_t entry_point : vstate.entry_points()) {
     const auto& descs = vstate.entry_point_descriptions(entry_point);

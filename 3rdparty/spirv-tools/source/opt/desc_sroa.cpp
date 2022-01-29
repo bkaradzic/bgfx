@@ -118,7 +118,7 @@ bool DescriptorScalarReplacement::ReplaceAccessChain(Instruction* var,
 
   if (use->NumInOperands() == 2) {
     // We are not indexing into the replacement variable.  We can replaces the
-    // access chain with the replacement varibale itself.
+    // access chain with the replacement variable itself.
     context()->ReplaceAllUsesWith(use->result_id(), replacement_var);
     context()->KillInst(use);
     return true;
@@ -135,8 +135,8 @@ bool DescriptorScalarReplacement::ReplaceAccessChain(Instruction* var,
   // Use the replacement variable as the base address.
   new_operands.push_back({SPV_OPERAND_TYPE_ID, {replacement_var}});
 
-  // Drop the first index because it is consumed by the replacment, and copy the
-  // rest.
+  // Drop the first index because it is consumed by the replacement, and copy
+  // the rest.
   for (uint32_t i = 4; i < use->NumOperands(); i++) {
     new_operands.emplace_back(use->GetOperand(i));
   }

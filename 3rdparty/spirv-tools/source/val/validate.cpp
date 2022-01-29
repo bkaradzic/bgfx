@@ -348,7 +348,7 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
   }
 
   // Validate the preconditions involving adjacent instructions. e.g. SpvOpPhi
-  // must only be preceeded by SpvOpLabel, SpvOpPhi, or SpvOpLine.
+  // must only be preceded by SpvOpLabel, SpvOpPhi, or SpvOpLine.
   if (auto error = ValidateAdjacency(*vstate)) return error;
 
   if (auto error = ValidateEntryPoints(*vstate)) return error;

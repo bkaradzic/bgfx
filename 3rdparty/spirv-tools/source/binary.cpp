@@ -215,7 +215,7 @@ class Parser {
     size_t word_index;           // The current position in words.
     size_t instruction_count;    // The count of processed instructions
     spv_endianness_t endian;     // The endianness of the binary.
-    // Is the SPIR-V binary in a different endiannes from the host native
+    // Is the SPIR-V binary in a different endianness from the host native
     // endianness?
     bool requires_endian_conversion;
 

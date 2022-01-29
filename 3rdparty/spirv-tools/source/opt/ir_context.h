@@ -302,7 +302,7 @@ class IRContext {
     }
   }
 
-  // Returns a pointer the decoration manager.  If the decoration manger is
+  // Returns a pointer the decoration manager.  If the decoration manager is
   // invalid, it is rebuilt first.
   analysis::DecorationManager* get_decoration_mgr() {
     if (!AreAnalysesValid(kAnalysisDecorations)) {
@@ -385,7 +385,7 @@ class IRContext {
 
   // Deletes the instruction defining the given |id|. Returns true on
   // success, false if the given |id| is not defined at all. This method also
-  // erases the name, decorations, and defintion of |id|.
+  // erases the name, decorations, and definition of |id|.
   //
   // Pointers and iterators pointing to the deleted instructions become invalid.
   // However other pointers and iterators are still valid.
@@ -802,7 +802,7 @@ class IRContext {
   // iterators to traverse instructions.
   std::unordered_map<uint32_t, Function*> id_to_func_;
 
-  // A bitset indicating which analyes are currently valid.
+  // A bitset indicating which analyzes are currently valid.
   Analysis valid_analyses_;
 
   // Opcodes of shader capability core executable instructions

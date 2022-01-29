@@ -260,7 +260,8 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
         mask & ~uint32_t(SpvImageOperandsNonPrivateTexelKHRMask |
                          SpvImageOperandsVolatileTexelKHRMask |
                          SpvImageOperandsSignExtendMask |
-                         SpvImageOperandsZeroExtendMask);
+                         SpvImageOperandsZeroExtendMask |
+                         SpvImageOperandsNontemporalMask);
     size_t expected_num_image_operand_words =
         spvtools::utils::CountSetBits(mask_bits_having_operands);
     if (mask & SpvImageOperandsGradMask) {
@@ -502,7 +503,7 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
     if (!_.IsIntVectorType(component_type) ||
         _.GetDimension(component_type) != 2) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "Expected Image Operand ConstOffsets array componenets to be "
+             << "Expected Image Operand ConstOffsets array components to be "
                 "int vectors of size 2";
     }
 
@@ -1043,7 +1044,7 @@ spv_result_t ValidateSampledImage(ValidationState_t& _,
                << "Result <id> from OpSampledImage instruction must not appear "
                   "as operand for Op"
                << spvOpcodeString(static_cast<SpvOp>(consumer_opcode))
-               << ", since it is not specificed as taking an "
+               << ", since it is not specified as taking an "
                << "OpTypeSampledImage."
                << " Found result <id> '" << _.getIdName(inst->id())
                << "' as an operand of <id> '"
@@ -1672,7 +1673,7 @@ spv_result_t ValidateImageWrite(ValidationState_t& _, const Instruction* inst) {
            << " components, but given only " << actual_coord_size;
   }
 
-  // TODO(atgoo@github.com) The spec doesn't explicitely say what the type
+  // TODO(atgoo@github.com) The spec doesn't explicitly say what the type
   // of texel should be.
   const uint32_t texel_type = _.GetOperandTypeId(inst, 2);
   if (!_.IsIntScalarOrVectorType(texel_type) &&

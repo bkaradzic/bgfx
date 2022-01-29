@@ -129,7 +129,7 @@ class Pass {
 
   // Processes the given |module|. Returns Status::Failure if errors occur when
   // processing. Returns the corresponding Status::Success if processing is
-  // succesful to indicate whether changes are made to the module.
+  // successful to indicate whether changes are made to the module.
   virtual Status Process() = 0;
 
   // Return the next available SSA id and increment it.

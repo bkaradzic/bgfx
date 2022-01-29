@@ -324,6 +324,8 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
     RegisterPass(CreateLocalAccessChainConvertPass());
   } else if (pass_name == "replace-desc-array-access-using-var-index") {
     RegisterPass(CreateReplaceDescArrayAccessUsingVarIndexPass());
+  } else if (pass_name == "spread-volatile-semantics") {
+    RegisterPass(CreateSpreadVolatileSemanticsPass());
   } else if (pass_name == "descriptor-scalar-replacement") {
     RegisterPass(CreateDescriptorScalarReplacementPass());
   } else if (pass_name == "eliminate-dead-code-aggressive") {
@@ -974,6 +976,11 @@ Optimizer::PassToken CreateGraphicsRobustAccessPass() {
 Optimizer::PassToken CreateReplaceDescArrayAccessUsingVarIndexPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::ReplaceDescArrayAccessUsingVarIndex>());
+}
+
+Optimizer::PassToken CreateSpreadVolatileSemanticsPass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::SpreadVolatileSemantics>());
 }
 
 Optimizer::PassToken CreateDescriptorScalarReplacementPass() {

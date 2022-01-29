@@ -122,7 +122,7 @@ inline bool operator!=(const Operand& o1, const Operand& o2) {
 }
 
 // This structure is used to represent a DebugScope instruction from
-// the OpenCL.100.DebugInfo extened instruction set. Note that we can
+// the OpenCL.100.DebugInfo extended instruction set. Note that we can
 // ignore the result id of DebugScope instruction because it is not
 // used for anything. We do not keep it to reduce the size of
 // structure.

@@ -175,7 +175,7 @@ ValidationState_t::ValidationState_t(const spv_const_context ctx,
     }
   }
 
-  // LocalSizeId is only disallowed without maintainence4.
+  // LocalSizeId is only disallowed prior to Vulkan 1.3 without maintenance4.
   switch (env) {
     case SPV_ENV_VULKAN_1_0:
     case SPV_ENV_VULKAN_1_1:
@@ -498,7 +498,7 @@ spv_result_t ValidationState_t::RegisterFunctionEnd() {
          "inside of another function");
   assert(in_block() == false &&
          "RegisterFunctionParameter can only be called when parsing the binary "
-         "ouside of a block");
+         "outside of a block");
   current_function().RegisterFunctionEnd();
   in_function_ = false;
   return SPV_SUCCESS;
@@ -610,7 +610,7 @@ void ValidationState_t::RegisterStorageClassConsumer(
               if (message) {
                 *message =
                     errorVUID +
-                    "in Vulkan evironment, Output Storage Class must not be "
+                    "in Vulkan environment, Output Storage Class must not be "
                     "used in GLCompute, RayGenerationKHR, IntersectionKHR, "
                     "AnyHitKHR, ClosestHitKHR, MissKHR, or CallableKHR "
                     "execution models";
@@ -632,7 +632,7 @@ void ValidationState_t::RegisterStorageClassConsumer(
               if (message) {
                 *message =
                     errorVUID +
-                    "in Vulkan evironment, Workgroup Storage Class is limited "
+                    "in Vulkan environment, Workgroup Storage Class is limited "
                     "to MeshNV, TaskNV, and GLCompute execution model";
               }
               return false;
@@ -1407,7 +1407,7 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
     return "";
   }
 
-  // This large switch case is only searched when an error has occured.
+  // This large switch case is only searched when an error has occurred.
   // If an id is changed, the old case must be modified or removed. Each string
   // here is interpreted as being "implemented"
 

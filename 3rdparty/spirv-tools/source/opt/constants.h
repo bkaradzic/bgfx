@@ -541,7 +541,7 @@ class ConstantManager {
   // instruction at the end of the current module's types section.
   //
   // |type_id| is an optional argument for disambiguating equivalent types. If
-  // |type_id| is specified, the contant returned will have that type id.
+  // |type_id| is specified, the constant returned will have that type id.
   Instruction* GetDefiningInstruction(const Constant* c, uint32_t type_id = 0,
                                       Module::inst_iterator* pos = nullptr);
 

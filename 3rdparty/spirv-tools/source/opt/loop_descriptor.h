@@ -395,7 +395,7 @@ class Loop {
   // Sets |merge| as the loop merge block. No checks are performed here.
   inline void SetMergeBlockImpl(BasicBlock* merge) { loop_merge_ = merge; }
 
-  // Each differnt loop |condition| affects how we calculate the number of
+  // Each different loop |condition| affects how we calculate the number of
   // iterations using the |condition_value|, |init_value|, and |step_values| of
   // the induction variable. This method will return the number of iterations in
   // a loop with those values for a given |condition|.

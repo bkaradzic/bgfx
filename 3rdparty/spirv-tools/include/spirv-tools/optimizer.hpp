@@ -43,7 +43,7 @@ class Optimizer {
   // consumed by the RegisterPass() method. Tokens are one-time objects that
   // only support move; copying is not allowed.
   struct PassToken {
-    struct Impl;  // Opaque struct for holding inernal data.
+    struct Impl;  // Opaque struct for holding internal data.
 
     PassToken(std::unique_ptr<Impl>);
 
@@ -227,7 +227,7 @@ Optimizer::PassToken CreateNullPass();
 
 // Creates a strip-debug-info pass.
 // A strip-debug-info pass removes all debug instructions (as documented in
-// Section 3.32.2 of the SPIR-V spec) of the SPIR-V module to be optimized.
+// Section 3.42.2 of the SPIR-V spec) of the SPIR-V module to be optimized.
 Optimizer::PassToken CreateStripDebugInfoPass();
 
 // [Deprecated] This will create a strip-nonsemantic-info pass.  See below.
@@ -296,11 +296,11 @@ Optimizer::PassToken CreateFreezeSpecConstantValuePass();
 // and can be changed in future. A spec constant is foldable if all of its
 // value(s) can be determined from the module. E.g., an integer spec constant
 // defined with OpSpecConstantOp instruction can be folded if its value won't
-// change later. This pass will replace the original OpSpecContantOp instruction
-// with an OpConstant instruction. When folding composite spec constants,
-// new instructions may be inserted to define the components of the composite
-// constant first, then the original spec constants will be replaced by
-// OpConstantComposite instructions.
+// change later. This pass will replace the original OpSpecConstantOp
+// instruction with an OpConstant instruction. When folding composite spec
+// constants, new instructions may be inserted to define the components of the
+// composite constant first, then the original spec constants will be replaced
+// by OpConstantComposite instructions.
 //
 // There are some operations not supported yet:
 //   OpSConvert, OpFConvert, OpQuantizeToF16 and
@@ -326,7 +326,7 @@ Optimizer::PassToken CreateUnifyConstantPass();
 
 // Creates a eliminate-dead-constant pass.
 // A eliminate-dead-constant pass removes dead constants, including normal
-// contants defined by OpConstant, OpConstantComposite, OpConstantTrue, or
+// constants defined by OpConstant, OpConstantComposite, OpConstantTrue, or
 // OpConstantFalse and spec constants defined by OpSpecConstant,
 // OpSpecConstantComposite, OpSpecConstantTrue, OpSpecConstantFalse or
 // OpSpecConstantOp.
@@ -390,7 +390,7 @@ Optimizer::PassToken CreateInlineOpaquePass();
 // Only modules with relaxed logical addressing (see opt/instruction.h) are
 // currently processed.
 //
-// This pass is most effective if preceeded by Inlining and
+// This pass is most effective if preceded by Inlining and
 // LocalAccessChainConvert. This pass will reduce the work needed to be done
 // by LocalSingleStoreElim and LocalMultiStoreElim.
 //
@@ -408,7 +408,7 @@ Optimizer::PassToken CreateLocalSingleBlockLoadStoreElimPass();
 // Note that some branches and blocks may be left to avoid creating invalid
 // control flow. Improving this is left to future work.
 //
-// This pass is most effective when preceeded by passes which eliminate
+// This pass is most effective when preceded by passes which eliminate
 // local loads and stores, effectively propagating constant values where
 // possible.
 Optimizer::PassToken CreateDeadBranchElimPass();
@@ -425,7 +425,7 @@ Optimizer::PassToken CreateDeadBranchElimPass();
 // are currently processed. Currently modules with any extensions enabled are
 // not processed. This is left for future work.
 //
-// This pass is most effective if preceeded by Inlining and
+// This pass is most effective if preceded by Inlining and
 // LocalAccessChainConvert. LocalSingleStoreElim and LocalSingleBlockElim
 // will reduce the work that this pass has to do.
 Optimizer::PassToken CreateLocalMultiStoreElimPass();
@@ -630,7 +630,7 @@ Optimizer::PassToken CreateRedundancyEliminationPass();
 Optimizer::PassToken CreateScalarReplacementPass(uint32_t size_limit = 100);
 
 // Create a private to local pass.
-// This pass looks for variables delcared in the private storage class that are
+// This pass looks for variables declared in the private storage class that are
 // used in only one function.  Those variables are moved to the function storage
 // class in the function that they are used.
 Optimizer::PassToken CreatePrivateToLocalPass();
@@ -834,6 +834,19 @@ Optimizer::PassToken CreateFixStorageClassPass();
 //   In this case, the pass will clamp the index between 0 and 2^15-1
 //   inclusive.
 Optimizer::PassToken CreateGraphicsRobustAccessPass();
+
+// Create a pass to spread Volatile semantics to variables with SMIDNV,
+// WarpIDNV, SubgroupSize, SubgroupLocalInvocationId, SubgroupEqMask,
+// SubgroupGeMask, SubgroupGtMask, SubgroupLeMask, or SubgroupLtMask BuiltIn
+// decorations or OpLoad for them when the shader model is the ray generation,
+// closest hit, miss, intersection, or callable. This pass can be used for
+// VUID-StandaloneSpirv-VulkanMemoryModel-04678 and
+// VUID-StandaloneSpirv-VulkanMemoryModel-04679 (See "Standalone SPIR-V
+// Validation" section of Vulkan spec "Appendix A: Vulkan Environment for
+// SPIR-V"). When the SPIR-V version is 1.6 or above, the pass also spreads
+// the Volatile semantics to a variable with HelperInvocation BuiltIn decoration
+// in the fragement shader.
+Optimizer::PassToken CreateSpreadVolatileSemanticsPass();
 
 // Create a pass to replace a descriptor access using variable index.
 // This pass replaces every access using a variable index to array variable
