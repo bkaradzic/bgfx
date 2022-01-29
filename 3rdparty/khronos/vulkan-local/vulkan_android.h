@@ -2,7 +2,7 @@
 #define VULKAN_ANDROID_H_ 1
 
 /*
-** Copyright 2015-2021 The Khronos Group Inc.
+** Copyright 2015-2022 The Khronos Group Inc.
 **
 ** SPDX-License-Identifier: Apache-2.0
 */
@@ -95,7 +95,7 @@ typedef struct VkAndroidHardwareBufferFormatProperties2ANDROID {
     void*                            pNext;
     VkFormat                         format;
     uint64_t                         externalFormat;
-    VkFormatFeatureFlags2KHR         formatFeatures;
+    VkFormatFeatureFlags2            formatFeatures;
     VkComponentMapping               samplerYcbcrConversionComponents;
     VkSamplerYcbcrModelConversion    suggestedYcbcrModel;
     VkSamplerYcbcrRange              suggestedYcbcrRange;
