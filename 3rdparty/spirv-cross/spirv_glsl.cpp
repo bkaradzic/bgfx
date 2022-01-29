@@ -296,8 +296,19 @@ const char *CompilerGLSL::vector_swizzle(int vecsize, int index)
 	return swizzle[vecsize - 1][index];
 }
 
-void CompilerGLSL::reset()
+void CompilerGLSL::reset(uint32_t iteration_count)
 {
+	// Sanity check the iteration count to be robust against a certain class of bugs where
+	// we keep forcing recompilations without making clear forward progress.
+	// In buggy situations we will loop forever, or loop for an unbounded number of iterations.
+	// Certain types of recompilations are considered to make forward progress,
+	// but in almost all situations, we'll never see more than 3 iterations.
+	// It is highly context-sensitive when we need to force recompilation,
+	// and it is not practical with the current architecture
+	// to resolve everything up front.
+	if (iteration_count >= 3 && !is_force_recompile_forward_progress)
+		SPIRV_CROSS_THROW("Over 3 compilation loops detected and no forward progress was made. Must be a bug!");
+
 	// We do some speculative optimizations which should pretty much always work out,
 	// but just in case the SPIR-V is rather weird, recompile until it's happy.
 	// This typically only means one extra pass.
@@ -664,10 +675,7 @@ string CompilerGLSL::compile()
 	uint32_t pass_count = 0;
 	do
 	{
-		if (pass_count >= 3)
-			SPIRV_CROSS_THROW("Over 3 compilation loops detected. Must be a bug!");
-
-		reset();
+		reset(pass_count);
 
 		buffer.reset();
 
@@ -2678,6 +2686,7 @@ string CompilerGLSL::constant_value_macro_name(uint32_t id)
 void CompilerGLSL::emit_specialization_constant_op(const SPIRConstantOp &constant)
 {
 	auto &type = get<SPIRType>(constant.basetype);
+	add_resource_name(constant.self);
 	auto name = to_name(constant.self);
 	statement("const ", variable_decl(type, name), " = ", constant_op_expression(constant), ";");
 }
@@ -2705,7 +2714,6 @@ int CompilerGLSL::get_constant_mapping_to_workgroup_component(const SPIRConstant
 void CompilerGLSL::emit_constant(const SPIRConstant &constant)
 {
 	auto &type = get<SPIRType>(constant.constant_type);
-	auto name = to_name(constant.self);
 
 	SpecializationConstant wg_x, wg_y, wg_z;
 	ID workgroup_size_id = get_work_group_size_specialization_constants(wg_x, wg_y, wg_z);
@@ -2731,6 +2739,9 @@ void CompilerGLSL::emit_constant(const SPIRConstant &constant)
 		// Only bother declaring a workgroup size if it is actually a specialization constant, because we need macros.
 		return;
 	}
+
+	add_resource_name(constant.self);
+	auto name = to_name(constant.self);
 
 	// Only scalars have constant IDs.
 	if (has_decoration(constant.self, DecorationSpecId))
@@ -4291,8 +4302,13 @@ void CompilerGLSL::handle_invalid_expression(uint32_t id)
 {
 	// We tried to read an invalidated expression.
 	// This means we need another pass at compilation, but next time, force temporary variables so that they cannot be invalidated.
-	forced_temporaries.insert(id);
-	force_recompile();
+	auto res = forced_temporaries.insert(id);
+
+	// Forcing new temporaries guarantees forward progress.
+	if (res.second)
+		force_recompile_guarantee_forward_progress();
+	else
+		force_recompile();
 }
 
 // Converts the format of the current expression from packed to unpacked,
@@ -4546,12 +4562,13 @@ string CompilerGLSL::to_rerolled_array_expression(const string &base_expr, const
 	return expr;
 }
 
-string CompilerGLSL::to_composite_constructor_expression(uint32_t id, bool uses_buffer_offset)
+string CompilerGLSL::to_composite_constructor_expression(uint32_t id, bool block_like_type)
 {
 	auto &type = expression_type(id);
 
-	bool reroll_array = !type.array.empty() && (!backend.array_is_value_type ||
-	                                            (uses_buffer_offset && !backend.buffer_offset_array_is_value_type));
+	bool reroll_array = !type.array.empty() &&
+	                    (!backend.array_is_value_type ||
+	                     (block_like_type && !backend.array_is_value_type_in_buffer_blocks));
 
 	if (reroll_array)
 	{
@@ -4953,7 +4970,7 @@ string CompilerGLSL::constant_op_expression(const SPIRConstantOp &cop)
 	}
 }
 
-string CompilerGLSL::constant_expression(const SPIRConstant &c)
+string CompilerGLSL::constant_expression(const SPIRConstant &c, bool inside_block_like_struct_scope)
 {
 	auto &type = get<SPIRType>(c.constant_type);
 
@@ -4966,6 +4983,15 @@ string CompilerGLSL::constant_expression(const SPIRConstant &c)
 		// Handles Arrays and structures.
 		string res;
 
+		// Only consider the decay if we are inside a struct scope.
+		// Outside a struct declaration, we can always bind to a constant array with templated type.
+		bool array_type_decays = inside_block_like_struct_scope &&
+		                         !type.array.empty() && !backend.array_is_value_type_in_buffer_blocks &&
+		                         has_decoration(c.constant_type, DecorationArrayStride);
+
+		if (type.array.empty() && type.basetype == SPIRType::Struct && type_is_block_like(type))
+			inside_block_like_struct_scope = true;
+
 		// Allow Metal to use the array<T> template to make arrays a value type
 		bool needs_trailing_tracket = false;
 		if (backend.use_initializer_list && backend.use_typed_initializer_list && type.basetype == SPIRType::Struct &&
@@ -4974,7 +5000,7 @@ string CompilerGLSL::constant_expression(const SPIRConstant &c)
 			res = type_to_glsl_constructor(type) + "{ ";
 		}
 		else if (backend.use_initializer_list && backend.use_typed_initializer_list && backend.array_is_value_type &&
-		         !type.array.empty())
+		         !type.array.empty() && !array_type_decays)
 		{
 			res = type_to_glsl_constructor(type) + "({ ";
 			needs_trailing_tracket = true;
@@ -4994,7 +5020,7 @@ string CompilerGLSL::constant_expression(const SPIRConstant &c)
 			if (subc.specialization)
 				res += to_name(elem);
 			else
-				res += constant_expression(subc);
+				res += constant_expression(subc, inside_block_like_struct_scope);
 
 			if (&elem != &c.subconstants.back())
 				res += ", ";
@@ -6952,7 +6978,7 @@ bool CompilerGLSL::expression_is_non_value_type_array(uint32_t ptr)
 		return false;
 
 	auto &backed_type = get<SPIRType>(var->basetype);
-	return !backend.buffer_offset_array_is_value_type && backed_type.basetype == SPIRType::Struct &&
+	return !backend.array_is_value_type_in_buffer_blocks && backed_type.basetype == SPIRType::Struct &&
 	       has_member_decoration(backed_type.self, 0, DecorationOffset);
 }
 
@@ -9498,12 +9524,20 @@ bool CompilerGLSL::should_forward(uint32_t id) const
 {
 	// If id is a variable we will try to forward it regardless of force_temporary check below
 	// This is important because otherwise we'll get local sampler copies (highp sampler2D foo = bar) that are invalid in OpenGL GLSL
+
 	auto *var = maybe_get<SPIRVariable>(id);
 	if (var && var->forwardable)
 		return true;
 
 	// For debugging emit temporary variables for all expressions
 	if (options.force_temporary)
+		return false;
+
+	// If an expression carries enough dependencies we need to stop forwarding at some point,
+	// or we explode compilers. There are usually limits to how much we can nest expressions.
+	auto *expr = maybe_get<SPIRExpression>(id);
+	const uint32_t max_expression_dependencies = 64;
+	if (expr && expr->expression_dependencies.size() >= max_expression_dependencies)
 		return false;
 
 	// Immutable expression can always be forwarded.
@@ -14752,7 +14786,7 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 	// as writes to said loop variables might have been masked out, we need a recompile.
 	if (!emitted_loop_header_variables && !block.loop_variables.empty())
 	{
-		force_recompile();
+		force_recompile_guarantee_forward_progress();
 		for (auto var : block.loop_variables)
 			get<SPIRVariable>(var).loop_variable = false;
 		block.loop_variables.clear();

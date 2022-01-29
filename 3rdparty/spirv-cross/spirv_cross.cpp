@@ -4828,6 +4828,12 @@ void Compiler::force_recompile()
 	is_force_recompile = true;
 }
 
+void Compiler::force_recompile_guarantee_forward_progress()
+{
+	force_recompile();
+	is_force_recompile_forward_progress = true;
+}
+
 bool Compiler::is_forcing_recompilation() const
 {
 	return is_force_recompile;
@@ -4836,6 +4842,7 @@ bool Compiler::is_forcing_recompilation() const
 void Compiler::clear_force_recompile()
 {
 	is_force_recompile = false;
+	is_force_recompile_forward_progress = false;
 }
 
 Compiler::PhysicalStorageBufferPointerHandler::PhysicalStorageBufferPointerHandler(Compiler &compiler_)

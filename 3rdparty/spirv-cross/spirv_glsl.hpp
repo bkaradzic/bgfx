@@ -342,7 +342,7 @@ protected:
 	// TODO remove this function when all subgroup ops are supported (or make it always return true)
 	static bool is_supported_subgroup_op_in_opengl(spv::Op op);
 
-	void reset();
+	void reset(uint32_t iteration_count);
 	void emit_function(SPIRFunction &func, const Bitset &return_flags);
 
 	bool has_extension(const std::string &ext) const;
@@ -385,7 +385,7 @@ protected:
 	                                const std::string &qualifier = "", uint32_t base_offset = 0);
 	virtual void emit_struct_padding_target(const SPIRType &type);
 	virtual std::string image_type_glsl(const SPIRType &type, uint32_t id = 0);
-	std::string constant_expression(const SPIRConstant &c);
+	std::string constant_expression(const SPIRConstant &c, bool inside_block_like_struct_scope = false);
 	virtual std::string constant_op_expression(const SPIRConstantOp &cop);
 	virtual std::string constant_expression_vector(const SPIRConstant &c, uint32_t vector);
 	virtual void emit_fixup();
@@ -577,7 +577,7 @@ protected:
 		bool supports_extensions = false;
 		bool supports_empty_struct = false;
 		bool array_is_value_type = true;
-		bool buffer_offset_array_is_value_type = true;
+		bool array_is_value_type_in_buffer_blocks = true;
 		bool comparison_image_samples_scalar = false;
 		bool native_pointers = false;
 		bool support_small_type_sampling_result = false;
@@ -718,7 +718,7 @@ protected:
 	void append_global_func_args(const SPIRFunction &func, uint32_t index, SmallVector<std::string> &arglist);
 	std::string to_non_uniform_aware_expression(uint32_t id);
 	std::string to_expression(uint32_t id, bool register_expression_read = true);
-	std::string to_composite_constructor_expression(uint32_t id, bool uses_buffer_offset);
+	std::string to_composite_constructor_expression(uint32_t id, bool block_like_type);
 	std::string to_rerolled_array_expression(const std::string &expr, const SPIRType &type);
 	std::string to_enclosed_expression(uint32_t id, bool register_expression_read = true);
 	std::string to_unpacked_expression(uint32_t id, bool register_expression_read = true);

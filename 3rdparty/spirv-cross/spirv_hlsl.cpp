@@ -1167,6 +1167,7 @@ void CompilerHLSL::emit_composite_constants()
 
 		if (type.basetype == SPIRType::Struct || !type.array.empty())
 		{
+			add_resource_name(c.self);
 			auto name = to_name(c.self);
 			statement("static const ", variable_decl(type, name), " = ", constant_expression(c), ";");
 			emitted = true;
@@ -1213,6 +1214,7 @@ void CompilerHLSL::emit_specialization_constants_and_structs()
 			else if (c.specialization)
 			{
 				auto &type = get<SPIRType>(c.constant_type);
+				add_resource_name(c.self);
 				auto name = to_name(c.self);
 
 				if (has_decoration(c.self, DecorationSpecId))
@@ -1236,6 +1238,7 @@ void CompilerHLSL::emit_specialization_constants_and_structs()
 		{
 			auto &c = id.get<SPIRConstantOp>();
 			auto &type = get<SPIRType>(c.basetype);
+			add_resource_name(c.self);
 			auto name = to_name(c.self);
 			statement("static const ", variable_decl(type, name), " = ", constant_op_expression(c), ";");
 			emitted = true;
@@ -5801,10 +5804,7 @@ string CompilerHLSL::compile()
 	uint32_t pass_count = 0;
 	do
 	{
-		if (pass_count >= 3)
-			SPIRV_CROSS_THROW("Over 3 compilation loops detected. Must be a bug!");
-
-		reset();
+		reset(pass_count);
 
 		// Move constructor for this type is broken on GCC 4.9 ...
 		buffer.reset();

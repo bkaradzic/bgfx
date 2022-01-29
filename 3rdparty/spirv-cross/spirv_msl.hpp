@@ -872,6 +872,7 @@ protected:
 	std::string member_attribute_qualifier(const SPIRType &type, uint32_t index);
 	std::string member_location_attribute_qualifier(const SPIRType &type, uint32_t index);
 	std::string argument_decl(const SPIRFunction::Parameter &arg);
+	const char *descriptor_address_space(uint32_t id, spv::StorageClass storage, const char *plain_address_space) const;
 	std::string round_fp_tex_coords(std::string tex_coords, bool coord_is_fp);
 	uint32_t get_metal_resource_index(SPIRVariable &var, SPIRType::BaseType basetype, uint32_t plane = 0);
 	uint32_t get_member_location(uint32_t type_id, uint32_t index, uint32_t *comp = nullptr) const;
@@ -920,8 +921,8 @@ protected:
 	std::string get_tess_factor_struct_name();
 	SPIRType &get_uint_type();
 	uint32_t get_uint_type_id();
-	void emit_atomic_func_op(uint32_t result_type, uint32_t result_id, const char *op, uint32_t mem_order_1,
-	                         uint32_t mem_order_2, bool has_mem_order_2, uint32_t op0, uint32_t op1 = 0,
+	void emit_atomic_func_op(uint32_t result_type, uint32_t result_id, const char *op, spv::Op opcode,
+	                         uint32_t mem_order_1, uint32_t mem_order_2, bool has_mem_order_2, uint32_t op0, uint32_t op1 = 0,
 	                         bool op1_is_pointer = false, bool op1_is_literal = false, uint32_t op2 = 0);
 	const char *get_memory_order(uint32_t spv_mem_sem);
 	void add_pragma_line(const std::string &line);

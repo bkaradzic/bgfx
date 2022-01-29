@@ -735,9 +735,11 @@ protected:
 	SPIRBlock::ContinueBlockType continue_block_type(const SPIRBlock &continue_block) const;
 
 	void force_recompile();
+	void force_recompile_guarantee_forward_progress();
 	void clear_force_recompile();
 	bool is_forcing_recompilation() const;
 	bool is_force_recompile = false;
+	bool is_force_recompile_forward_progress = false;
 
 	bool block_is_loop_candidate(const SPIRBlock &block, SPIRBlock::Method method) const;
 

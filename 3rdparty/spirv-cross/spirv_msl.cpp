@@ -1360,8 +1360,8 @@ string CompilerMSL::compile()
 	// Allow Metal to use the array<T> template unless we force it off.
 	backend.can_return_array = !msl_options.force_native_arrays;
 	backend.array_is_value_type = !msl_options.force_native_arrays;
-	// Arrays which are part of buffer objects are never considered to be native arrays.
-	backend.buffer_offset_array_is_value_type = false;
+	// Arrays which are part of buffer objects are never considered to be value types (just plain C-style).
+	backend.array_is_value_type_in_buffer_blocks = false;
 	backend.support_pointer_to_pointer = true;
 
 	capture_output_to_buffer = msl_options.capture_output_to_buffer;
@@ -1446,10 +1446,7 @@ string CompilerMSL::compile()
 	uint32_t pass_count = 0;
 	do
 	{
-		if (pass_count >= 3)
-			SPIRV_CROSS_THROW("Over 3 compilation loops detected. Must be a bug!");
-
-		reset();
+		reset(pass_count);
 
 		// Start bindings at zero.
 		next_metal_resource_index_buffer = 0;
@@ -6568,6 +6565,7 @@ void CompilerMSL::declare_constant_arrays()
 		// link into Metal libraries. This is hacky.
 		if (!type.array.empty() && (!fully_inlined || is_scalar(type) || is_vector(type)))
 		{
+			add_resource_name(c.self);
 			auto name = to_name(c.self);
 			statement(inject_top_level_storage_qualifier(variable_decl(type, name), "constant"),
 			          " = ", constant_expression(c), ";");
@@ -6599,6 +6597,7 @@ void CompilerMSL::declare_complex_constant_arrays()
 		auto &type = this->get<SPIRType>(c.constant_type);
 		if (!type.array.empty() && !(is_scalar(type) || is_vector(type)))
 		{
+			add_resource_name(c.self);
 			auto name = to_name(c.self);
 			statement("", variable_decl(type, name), " = ", constant_expression(c), ";");
 			emitted = true;
@@ -6677,6 +6676,7 @@ void CompilerMSL::emit_specialization_constants_and_structs()
 			{
 				auto &type = get<SPIRType>(c.constant_type);
 				string sc_type_name = type_to_glsl(type);
+				add_resource_name(c.self);
 				string sc_name = to_name(c.self);
 				string sc_tmp_name = sc_name + "_tmp";
 
@@ -6719,6 +6719,7 @@ void CompilerMSL::emit_specialization_constants_and_structs()
 		{
 			auto &c = id.get<SPIRConstantOp>();
 			auto &type = get<SPIRType>(c.basetype);
+			add_resource_name(c.self);
 			auto name = to_name(c.self);
 			statement("constant ", variable_decl(type, name), " = ", constant_op_expression(c), ";");
 			emitted = true;
@@ -7763,7 +7764,7 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		uint32_t ptr = ops[2];
 		uint32_t mem_sem = ops[4];
 		uint32_t val = ops[5];
-		emit_atomic_func_op(result_type, id, "atomic_exchange_explicit", mem_sem, mem_sem, false, ptr, val);
+		emit_atomic_func_op(result_type, id, "atomic_exchange_explicit", opcode, mem_sem, mem_sem, false, ptr, val);
 		break;
 	}
 
@@ -7776,7 +7777,8 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		uint32_t mem_sem_fail = ops[5];
 		uint32_t val = ops[6];
 		uint32_t comp = ops[7];
-		emit_atomic_func_op(result_type, id, "atomic_compare_exchange_weak_explicit", mem_sem_pass, mem_sem_fail, true,
+		emit_atomic_func_op(result_type, id, "atomic_compare_exchange_weak_explicit", opcode,
+		                    mem_sem_pass, mem_sem_fail, true,
 		                    ptr, comp, true, false, val);
 		break;
 	}
@@ -7790,7 +7792,7 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		uint32_t id = ops[1];
 		uint32_t ptr = ops[2];
 		uint32_t mem_sem = ops[4];
-		emit_atomic_func_op(result_type, id, "atomic_load_explicit", mem_sem, mem_sem, false, ptr, 0);
+		emit_atomic_func_op(result_type, id, "atomic_load_explicit", opcode, mem_sem, mem_sem, false, ptr, 0);
 		break;
 	}
 
@@ -7801,7 +7803,7 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		uint32_t ptr = ops[0];
 		uint32_t mem_sem = ops[2];
 		uint32_t val = ops[3];
-		emit_atomic_func_op(result_type, id, "atomic_store_explicit", mem_sem, mem_sem, false, ptr, val);
+		emit_atomic_func_op(result_type, id, "atomic_store_explicit", opcode, mem_sem, mem_sem, false, ptr, val);
 		break;
 	}
 
@@ -7813,7 +7815,8 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		uint32_t ptr = ops[2];                                                                                   \
 		uint32_t mem_sem = ops[4];                                                                               \
 		uint32_t val = valsrc;                                                                                   \
-		emit_atomic_func_op(result_type, id, "atomic_fetch_" #op "_explicit", mem_sem, mem_sem, false, ptr, val, \
+		emit_atomic_func_op(result_type, id, "atomic_fetch_" #op "_explicit", opcode,                            \
+		                    mem_sem, mem_sem, false, ptr, val,                                                   \
 		                    false, valconst);                                                                    \
 	} while (false)
 
@@ -8799,13 +8802,22 @@ bool CompilerMSL::maybe_emit_array_assignment(uint32_t id_lhs, uint32_t id_rhs)
 }
 
 // Emits one of the atomic functions. In MSL, the atomic functions operate on pointers
-void CompilerMSL::emit_atomic_func_op(uint32_t result_type, uint32_t result_id, const char *op, uint32_t mem_order_1,
-                                      uint32_t mem_order_2, bool has_mem_order_2, uint32_t obj, uint32_t op1,
+void CompilerMSL::emit_atomic_func_op(uint32_t result_type, uint32_t result_id, const char *op, Op opcode,
+                                      uint32_t mem_order_1, uint32_t mem_order_2, bool has_mem_order_2, uint32_t obj, uint32_t op1,
                                       bool op1_is_pointer, bool op1_is_literal, uint32_t op2)
 {
 	string exp = string(op) + "(";
 
 	auto &type = get_pointee_type(expression_type(obj));
+	auto expected_type = type.basetype;
+	if (opcode == OpAtomicUMax || opcode == OpAtomicUMin)
+		expected_type = to_unsigned_basetype(type.width);
+	else if (opcode == OpAtomicSMax || opcode == OpAtomicSMin)
+		expected_type = to_signed_basetype(type.width);
+
+	auto remapped_type = type;
+	remapped_type.basetype = expected_type;
+
 	exp += "(";
 	auto *var = maybe_get_backing_variable(obj);
 	if (!var)
@@ -8823,7 +8835,9 @@ void CompilerMSL::emit_atomic_func_op(uint32_t result_type, uint32_t result_id, 
 	}
 
 	exp += " atomic_";
-	exp += type_to_glsl(type);
+	// For signed and unsigned min/max, we can signal this through the pointer type.
+	// There is no other way, since C++ does not have explicit signage for atomics.
+	exp += type_to_glsl(remapped_type);
 	exp += "*)";
 
 	exp += "&";
@@ -8866,7 +8880,7 @@ void CompilerMSL::emit_atomic_func_op(uint32_t result_type, uint32_t result_id, 
 			if (op1_is_literal)
 				exp += join(", ", op1);
 			else
-				exp += ", " + to_expression(op1);
+				exp += ", " + bitcast_expression(expected_type, op1);
 		}
 		if (op2)
 			exp += ", " + to_expression(op2);
@@ -8876,6 +8890,9 @@ void CompilerMSL::emit_atomic_func_op(uint32_t result_type, uint32_t result_id, 
 			exp += string(", ") + get_memory_order(mem_order_2);
 
 		exp += ")";
+
+		if (expected_type != type.basetype)
+			exp = bitcast_expression(type, expected_type, exp);
 
 		if (strcmp(op, "atomic_store_explicit") != 0)
 			emit_op(result_type, result_id, exp, false);
@@ -9364,7 +9381,20 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 
 			// Manufacture automatic sampler arg for SampledImage texture
 			if (arg_type.image.dim != DimBuffer)
-				decl += join(", thread const ", sampler_type(arg_type, arg.id), " ", to_sampler_expression(arg.id));
+			{
+				if (arg_type.array.empty())
+				{
+					decl += join(", ", sampler_type(arg_type, arg.id), " ", to_sampler_expression(arg.id));
+				}
+				else
+				{
+					const char *sampler_address_space =
+							descriptor_address_space(name_id,
+							                         StorageClassUniformConstant,
+							                         "thread const");
+					decl += join(", ", sampler_address_space, " ", sampler_type(arg_type, arg.id), "& ", to_sampler_expression(arg.id));
+				}
+			}
 		}
 
 		// Manufacture automatic swizzle arg.
@@ -12652,6 +12682,39 @@ bool CompilerMSL::type_is_pointer_to_pointer(const SPIRType &type) const
 	return type.pointer_depth > parent_type.pointer_depth && type_is_pointer(parent_type);
 }
 
+const char *CompilerMSL::descriptor_address_space(uint32_t id, StorageClass storage, const char *plain_address_space) const
+{
+	if (msl_options.argument_buffers)
+	{
+		bool storage_class_is_descriptor = storage == StorageClassUniform ||
+		                                   storage == StorageClassStorageBuffer ||
+		                                   storage == StorageClassUniformConstant;
+
+		uint32_t desc_set = get_decoration(id, DecorationDescriptorSet);
+		if (storage_class_is_descriptor && descriptor_set_is_argument_buffer(desc_set))
+		{
+			// An awkward case where we need to emit *more* address space declarations (yay!).
+			// An example is where we pass down an array of buffer pointers to leaf functions.
+			// It's a constant array containing pointers to constants.
+			// The pointer array is always constant however. E.g.
+			// device SSBO * constant (&array)[N].
+			// const device SSBO * constant (&array)[N].
+			// constant SSBO * constant (&array)[N].
+			// However, this only matters for argument buffers, since for MSL 1.0 style codegen,
+			// we emit the buffer array on stack instead, and that seems to work just fine apparently.
+
+			// If the argument was marked as being in device address space, any pointer to member would
+			// be const device, not constant.
+			if (argument_buffer_device_storage_mask & (1u << desc_set))
+				return "const device";
+			else
+				return "constant";
+		}
+	}
+
+	return plain_address_space;
+}
+
 string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 {
 	auto &var = get<SPIRVariable>(arg.id);
@@ -12670,15 +12733,14 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 	// Framebuffer fetch is plain value, const looks out of place, but it is not wrong.
 	if (type_is_msl_framebuffer_fetch(type))
 		constref = false;
+	else if (type_storage == StorageClassUniformConstant)
+		constref = true;
 
 	bool type_is_image = type.basetype == SPIRType::Image || type.basetype == SPIRType::SampledImage ||
 	                     type.basetype == SPIRType::Sampler;
 
-	// Arrays of images/samplers in MSL are always const.
-	if (!type.array.empty() && type_is_image)
-		constref = true;
-
-	const char *cv_qualifier = constref ? "const " : "";
+	// For opaque types we handle const later due to descriptor address spaces.
+	const char *cv_qualifier = (constref && !type_is_image) ? "const " : "";
 	string decl;
 
 	// If this is a combined image-sampler for a 2D image with floating-point type,
@@ -12750,9 +12812,7 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 			decl = join(cv_qualifier, type_to_glsl(type, arg.id));
 	}
 
-	bool opaque_handle = type_storage == StorageClassUniformConstant;
-
-	if (!builtin && !opaque_handle && !is_pointer &&
+	if (!builtin && !is_pointer &&
 	    (type_storage == StorageClassFunction || type_storage == StorageClassGeneric))
 	{
 		// If the argument is a pure value and not an opaque type, we will pass by value.
@@ -12787,33 +12847,15 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 	}
 	else if (is_array(type) && !type_is_image)
 	{
-		// Arrays of images and samplers are special cased.
+		// Arrays of opaque types are special cased.
 		if (!address_space.empty())
 			decl = join(address_space, " ", decl);
 
-		if (msl_options.argument_buffers)
+		const char *argument_buffer_space = descriptor_address_space(name_id, type_storage, nullptr);
+		if (argument_buffer_space)
 		{
-			uint32_t desc_set = get_decoration(name_id, DecorationDescriptorSet);
-			if ((type_storage == StorageClassUniform || type_storage == StorageClassStorageBuffer) &&
-			    descriptor_set_is_argument_buffer(desc_set))
-			{
-				// An awkward case where we need to emit *more* address space declarations (yay!).
-				// An example is where we pass down an array of buffer pointers to leaf functions.
-				// It's a constant array containing pointers to constants.
-				// The pointer array is always constant however. E.g.
-				// device SSBO * constant (&array)[N].
-				// const device SSBO * constant (&array)[N].
-				// constant SSBO * constant (&array)[N].
-				// However, this only matters for argument buffers, since for MSL 1.0 style codegen,
-				// we emit the buffer array on stack instead, and that seems to work just fine apparently.
-
-				// If the argument was marked as being in device address space, any pointer to member would
-				// be const device, not constant.
-				if (argument_buffer_device_storage_mask & (1u << desc_set))
-					decl += " const device";
-				else
-					decl += " constant";
-			}
+			decl += " ";
+			decl += argument_buffer_space;
 		}
 
 		// Special case, need to override the array size here if we're using tess level as an argument.
@@ -12857,7 +12899,7 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 			}
 		}
 	}
-	else if (!opaque_handle && (!pull_model_inputs.count(var.basevariable) || type.basetype == SPIRType::Struct))
+	else if (!type_is_image && (!pull_model_inputs.count(var.basevariable) || type.basetype == SPIRType::Struct))
 	{
 		// If this is going to be a reference to a variable pointer, the address space
 		// for the reference has to go before the '&', but after the '*'.
@@ -12876,6 +12918,27 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 		decl += " ";
 		decl += to_restrict(name_id);
 		decl += to_expression(name_id);
+	}
+	else if (type_is_image)
+	{
+		if (type.array.empty())
+		{
+			// For non-arrayed types we can just pass opaque descriptors by value.
+			// This fixes problems if descriptors are passed by value from argument buffers and plain descriptors
+			// in same shader.
+			// There is no address space we can actually use, but value will work.
+			// This will break if applications attempt to pass down descriptor arrays as arguments, but
+			// fortunately that is extremely unlikely ...
+			decl += " ";
+			decl += to_expression(name_id);
+		}
+		else
+		{
+			const char *img_address_space = descriptor_address_space(name_id, type_storage, "thread const");
+			decl = join(img_address_space, " ", decl);
+			decl += "& ";
+			decl += to_expression(name_id);
+		}
 	}
 	else
 	{
@@ -13565,7 +13628,7 @@ std::string CompilerMSL::variable_decl(const SPIRVariable &variable)
 	if (variable_decl_is_remapped_storage(variable, StorageClassWorkgroup))
 		is_using_builtin_array = true;
 
-	std::string expr = CompilerGLSL::variable_decl(variable);
+	auto expr = CompilerGLSL::variable_decl(variable);
 	is_using_builtin_array = old_is_using_builtin_array;
 	return expr;
 }
