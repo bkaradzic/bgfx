@@ -4580,8 +4580,8 @@ namespace bgfx
 			);
 
 		BGFX_ERROR_CHECK(false
-			|| _width  < g_caps.limits.maxTextureSize
-			|| _height < g_caps.limits.maxTextureSize
+			|| _width  <= g_caps.limits.maxTextureSize
+			|| _height <= g_caps.limits.maxTextureSize
 			, _err
 			, BGFX_ERROR_TEXTURE_VALIDATION
 			, "Requested texture width/height is above the `maxTextureSize` limit."
