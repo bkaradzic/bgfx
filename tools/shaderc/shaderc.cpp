@@ -1956,7 +1956,7 @@ namespace bgfx
 							}
 							else
 							{
-								bx::printf("gl_PrimitiveID builtin is not supported by this D3D9 HLSL.\n");
+								bx::printf("gl_PrimitiveID builtin is not supported by D3D9 HLSL.\n");
 								return false;
 							}
 						}
@@ -2031,7 +2031,7 @@ namespace bgfx
 							}
 							else
 							{
-								bx::printf("gl_ViewportIndex builtin is not supported by this D3D9 HLSL.\n");
+								bx::printf("gl_ViewportIndex builtin is not supported by D3D9 HLSL.\n");
 								return false;
 							}
 						}
@@ -2047,7 +2047,7 @@ namespace bgfx
 							}
 							else
 							{
-								bx::printf("gl_Layer builtin is not supported by this D3D9 HLSL.\n");
+								bx::printf("gl_Layer builtin is not supported by D3D9 HLSL.\n");
 								return false;
 							}
 						}
@@ -2086,7 +2086,7 @@ namespace bgfx
 							}
 							else
 							{
-								bx::printf("gl_VertexID builtin is not supported by this D3D9 HLSL.\n");
+								bx::printf("gl_VertexID builtin is not supported by D3D9 HLSL.\n");
 								return false;
 							}
 						}
@@ -2102,7 +2102,7 @@ namespace bgfx
 							}
 							else
 							{
-								bx::printf("gl_InstanceID builtin is not supported by this D3D9 HLSL.\n");
+								bx::printf("gl_InstanceID builtin is not supported by D3D9 HLSL.\n");
 								return false;
 							}
 						}
