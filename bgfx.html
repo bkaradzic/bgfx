@@ -280,7 +280,7 @@ tutorial.</p>
 <dl class="cpp var">
 <dt id="_CPPv4N4bgfx4Init5debugE">
 <span id="_CPPv3N4bgfx4Init5debugE"></span><span id="_CPPv2N4bgfx4Init5debugE"></span><span id="bgfx::Init::debug__b"></span><span class="target" id="structbgfx_1_1_init_1a3fc874cff90fe5c279356e92a306f022"></span>bool <code class="sig-name descname">debug</code><a class="headerlink" href="#_CPPv4N4bgfx4Init5debugE" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Enable device for debuging. </p>
+<dd><p>Enable device for debugging. </p>
 </dd></dl>
 
 <dl class="cpp var">
@@ -473,7 +473,7 @@ tutorial.</p>
 <dl class="cpp function">
 <dt id="_CPPv4N4bgfx9CallbackI5fatalEPKc8uint16_tN5Fatal4EnumEPKc">
 <span id="_CPPv3N4bgfx9CallbackI5fatalEPKc8uint16_tN5Fatal4EnumEPKc"></span><span id="_CPPv2N4bgfx9CallbackI5fatalEPKc8uint16_tN5Fatal4EnumEPKc"></span><span id="bgfx::CallbackI::fatal__cCP.uint16_t.Fatal::Enum.cCP"></span><span class="target" id="structbgfx_1_1_callback_i_1af6da8564f008e91fddf441175d18850b"></span>void <code class="sig-name descname">fatal</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>_filePath</em>, uint16_t <em>_line</em>, Fatal::Enum <em>_code</em>, <em class="property">const</em> char *<em>_str</em><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv4N4bgfx9CallbackI5fatalEPKc8uint16_tN5Fatal4EnumEPKc" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>This callback is called on unrecoverable errors. It’s not safe to continue (Exluding _code <code class="docutils literal notranslate"><span class="pre">Fatal::DebugCheck</span></code>), inform the user and terminate the application. </p>
+<dd><p>This callback is called on unrecoverable errors. It’s not safe to continue (Excluding _code <code class="docutils literal notranslate"><span class="pre">Fatal::DebugCheck</span></code>), inform the user and terminate the application. </p>
 <p><dl class="simple">
 <dt><strong>Remark</strong></dt><dd><p>Not thread safe and it can be called from any thread.</p>
 </dd>
@@ -907,7 +907,7 @@ tutorial.</p>
 <dl class="cpp macro">
 <dt id="c.BGFX_DEBUG_PROFILER">
 <span class="target" id="defines_8h_1a35d04d76460ad35cf1c9b3926b4267bb"></span><code class="sig-name descname">BGFX_DEBUG_PROFILER</code><a class="headerlink" href="#c.BGFX_DEBUG_PROFILER" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Enable profiler. </p>
+<dd><p>Enable profiler. This causes per-view statistics to be collected, available through <code class="docutils literal notranslate"><span class="pre">bgfx::Stats::ViewStats</span></code>. This is unrelated to the profiler functions in <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_callback_i"><span class="std std-ref"><span class="pre">bgfx::CallbackI</span></span></a></code>. </p>
 </dd></dl>
 
 </div>
@@ -2932,7 +2932,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <p><dl class="simple">
 <dt><strong>Return</strong></dt><dd><p>Index into matrix cache.</p>
 </dd>
-<dt><strong>Attention</strong></dt><dd><p>Pointer returned can be modifed until <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> is called. </p>
+<dt><strong>Attention</strong></dt><dd><p>Pointer returned can be modified until <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> is called. </p>
 </dd>
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_alloc_transform</span></code>. </p>
 </dd>
@@ -3182,7 +3182,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <dl class="cpp function">
 <dt id="_CPPv4N4bgfx7Encoder14setVertexCountE8uint32_t">
 <span id="_CPPv3N4bgfx7Encoder14setVertexCountE8uint32_t"></span><span id="_CPPv2N4bgfx7Encoder14setVertexCountE8uint32_t"></span><span id="bgfx::Encoder::setVertexCount__uint32_t"></span><span class="target" id="structbgfx_1_1_encoder_1a6bec8d7a72516210170abcd6b1fd98aa"></span>void <code class="sig-name descname">setVertexCount</code><span class="sig-paren">(</span>uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder14setVertexCountE8uint32_t" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Set number of vertices for auto generated vertices use in conjuction with gl_VertexID. </p>
+<dd><p>Set number of vertices for auto generated vertices use in conjunction with gl_VertexID. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>Availability depends on: <code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_VERTEX_ID</span></code>. </p>
 </dd>
@@ -3265,7 +3265,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <dl class="cpp function">
 <dt id="_CPPv4N4bgfx7Encoder16setInstanceCountE8uint32_t">
 <span id="_CPPv3N4bgfx7Encoder16setInstanceCountE8uint32_t"></span><span id="_CPPv2N4bgfx7Encoder16setInstanceCountE8uint32_t"></span><span id="bgfx::Encoder::setInstanceCount__uint32_t"></span><span class="target" id="structbgfx_1_1_encoder_1ac8450ebbbf04678db6d2c59ea86178a8"></span>void <code class="sig-name descname">setInstanceCount</code><span class="sig-paren">(</span>uint32_t <em>_numInstances</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder16setInstanceCountE8uint32_t" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Set number of instances for auto generated instances use in conjuction with gl_InstanceID. </p>
+<dd><p>Set number of instances for auto generated instances use in conjunction with gl_InstanceID. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>Availability depends on: <code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_VERTEX_ID</span></code>. </p>
 </dd>
@@ -4030,7 +4030,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <p><dl class="simple">
 <dt><strong>Return</strong></dt><dd><p>index into matrix cache.</p>
 </dd>
-<dt><strong>Attention</strong></dt><dd><p>Pointer returned can be modifed until <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> is called. </p>
+<dt><strong>Attention</strong></dt><dd><p>Pointer returned can be modified until <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> is called. </p>
 </dd>
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_alloc_transform</span></code>. </p>
 </dd>
@@ -4397,7 +4397,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="cpp function">
 <dt id="_CPPv4N4bgfx14setVertexCountE8uint32_t">
 <span id="_CPPv3N4bgfx14setVertexCountE8uint32_t"></span><span id="_CPPv2N4bgfx14setVertexCountE8uint32_t"></span><span id="bgfx::setVertexCount__uint32_t"></span><span class="target" id="namespacebgfx_1ad86de33993e8c57ee016d5af8a2c51bd"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">setVertexCount</code><span class="sig-paren">(</span>uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx14setVertexCountE8uint32_t" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Set number of vertices for auto generated vertices use in conjuction with gl_VertexID. </p>
+<dd><p>Set number of vertices for auto generated vertices use in conjunction with gl_VertexID. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>Availability depends on: <code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_VERTEX_ID</span></code>. </p>
 </dd>
@@ -4530,7 +4530,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="cpp function">
 <dt id="_CPPv4N4bgfx16setInstanceCountE8uint32_t">
 <span id="_CPPv3N4bgfx16setInstanceCountE8uint32_t"></span><span id="_CPPv2N4bgfx16setInstanceCountE8uint32_t"></span><span id="bgfx::setInstanceCount__uint32_t"></span><span class="target" id="namespacebgfx_1aa41e297fd85870c1773f498cb7e51b05"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">setInstanceCount</code><span class="sig-paren">(</span>uint32_t <em>_numInstances</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx16setInstanceCountE8uint32_t" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Set number of instances for auto generated instances use in conjuction with gl_InstanceID. </p>
+<dd><p>Set number of instances for auto generated instances use in conjunction with gl_InstanceID. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>Availability depends on: <code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_VERTEX_ID</span></code>. </p>
 </dd>
