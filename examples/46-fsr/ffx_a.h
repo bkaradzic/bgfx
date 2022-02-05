@@ -50,7 +50,7 @@
 // A_GLSL .... Using GLSL.
 // A_HLSL .... Using HLSL.
 // A_HLSL_6_2  Using HLSL 6.2 with new 'uint16_t' and related types (requires '-enable-16bit-types').
-// A_NO_16_BIT_CAST Don't use instructions that are not availabe in SPIR-V (needed for running A_HLSL_6_2 on Vulkan)
+// A_NO_16_BIT_CAST Don't use instructions that are not available in SPIR-V (needed for running A_HLSL_6_2 on Vulkan)
 // A_GCC ..... Using a GCC compatible compiler (else assume MSVC compatible compiler by default).
 // =======
 // A_BYTE .... Support 8-bit integer.
@@ -2118,7 +2118,7 @@
 //  (b.) For 8-bit  709, steps {0 to 20.7} are in the linear region (8% of the encoding range).
 // Also there is a slight step in the transition regions.
 // Precision of the coefficients in the spec being the likely cause.
-// Main usage case of the sRGB code is to do the linear->sRGB converstion in a compute shader before store.
+// Main usage case of the sRGB code is to do the linear->sRGB conversion in a compute shader before store.
 // This is to work around lack of hardware (typically only ROP does the conversion for free).
 // To "correct" the linear segment, would be to introduce error, because hardware decode of sRGB->linear is fixed (and free).
 // So this header keeps with the spec.

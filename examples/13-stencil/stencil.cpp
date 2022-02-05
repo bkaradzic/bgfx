@@ -777,7 +777,7 @@ struct Mesh
 			// Submit
 			bgfx::submit(_id, _program);
 
-			// Keep track of submited view ids
+			// Keep track of submitted view ids
 			s_viewMask |= 1 << _id;
 		}
 	}

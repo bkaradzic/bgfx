@@ -54,7 +54,7 @@ public:
 			, 0
 			);
 
-		// ID buffer clears to black, which represnts clicking on nothing (background)
+		// ID buffer clears to black, which represents clicking on nothing (background)
 		bgfx::setViewClear(RENDER_PASS_ID
 			, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
 			, 0x000000ff

@@ -3615,7 +3615,7 @@ public static partial class bgfx
 	
 	/// <summary>
 	/// Reserve matrices in internal matrix cache.
-	/// @attention Pointer returned can be modifed until `bgfx::frame` is called.
+	/// @attention Pointer returned can be modified until `bgfx::frame` is called.
 	/// </summary>
 	///
 	/// <param name="_transform">Pointer to `Transform` structure.</param>
@@ -3734,7 +3734,7 @@ public static partial class bgfx
 	public static extern unsafe void encoder_set_transient_vertex_buffer_with_layout(Encoder* _this, byte _stream, TransientVertexBuffer* _tvb, uint _startVertex, uint _numVertices, VertexLayoutHandle _layoutHandle);
 	
 	/// <summary>
-	/// Set number of vertices for auto generated vertices use in conjuction
+	/// Set number of vertices for auto generated vertices use in conjunction
 	/// with gl_VertexID.
 	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	/// </summary>
@@ -3778,7 +3778,7 @@ public static partial class bgfx
 	public static extern unsafe void encoder_set_instance_data_from_dynamic_vertex_buffer(Encoder* _this, DynamicVertexBufferHandle _handle, uint _startVertex, uint _num);
 	
 	/// <summary>
-	/// Set number of instances for auto generated instances use in conjuction
+	/// Set number of instances for auto generated instances use in conjunction
 	/// with gl_InstanceID.
 	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	/// </summary>
@@ -4163,7 +4163,7 @@ public static partial class bgfx
 	
 	/// <summary>
 	/// Reserve matrices in internal matrix cache.
-	/// @attention Pointer returned can be modifed until `bgfx::frame` is called.
+	/// @attention Pointer returned can be modified until `bgfx::frame` is called.
 	/// </summary>
 	///
 	/// <param name="_transform">Pointer to `Transform` structure.</param>
@@ -4292,7 +4292,7 @@ public static partial class bgfx
 	public static extern unsafe void set_transient_vertex_buffer_with_layout(byte _stream, TransientVertexBuffer* _tvb, uint _startVertex, uint _numVertices, VertexLayoutHandle _layoutHandle);
 	
 	/// <summary>
-	/// Set number of vertices for auto generated vertices use in conjuction
+	/// Set number of vertices for auto generated vertices use in conjunction
 	/// with gl_VertexID.
 	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	/// </summary>
@@ -4336,7 +4336,7 @@ public static partial class bgfx
 	public static extern unsafe void set_instance_data_from_dynamic_vertex_buffer(DynamicVertexBufferHandle _handle, uint _startVertex, uint _num);
 	
 	/// <summary>
-	/// Set number of instances for auto generated instances use in conjuction
+	/// Set number of instances for auto generated instances use in conjunction
 	/// with gl_InstanceID.
 	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	/// </summary>

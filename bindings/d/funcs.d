@@ -1329,7 +1329,7 @@ version(BindBgfx_Static)
 	
 	/**
 	 * Reserve matrices in internal matrix cache.
-	 * Attention: Pointer returned can be modifed until `bgfx::frame` is called.
+	 * Attention: Pointer returned can be modified until `bgfx::frame` is called.
 	 * Params:
 	 * _transform = Pointer to `Transform` structure.
 	 * _num = Number of matrices.
@@ -1432,7 +1432,7 @@ version(BindBgfx_Static)
 	void bgfx_encoder_set_transient_vertex_buffer_with_layout(bgfx_encoder_t* _this, byte _stream, const(bgfx_transient_vertex_buffer_t)* _tvb, uint _startVertex, uint _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
 	
 	/**
-	 * Set number of vertices for auto generated vertices use in conjuction
+	 * Set number of vertices for auto generated vertices use in conjunction
 	 * with gl_VertexID.
 	 * Attention: Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	 * Params:
@@ -1469,7 +1469,7 @@ version(BindBgfx_Static)
 	void bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer(bgfx_encoder_t* _this, bgfx_dynamic_vertex_buffer_handle_t _handle, uint _startVertex, uint _num);
 	
 	/**
-	 * Set number of instances for auto generated instances use in conjuction
+	 * Set number of instances for auto generated instances use in conjunction
 	 * with gl_InstanceID.
 	 * Attention: Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	 */
@@ -1820,7 +1820,7 @@ version(BindBgfx_Static)
 	
 	/**
 	 * Reserve matrices in internal matrix cache.
-	 * Attention: Pointer returned can be modifed until `bgfx::frame` is called.
+	 * Attention: Pointer returned can be modified until `bgfx::frame` is called.
 	 * Params:
 	 * _transform = Pointer to `Transform` structure.
 	 * _num = Number of matrices.
@@ -1934,7 +1934,7 @@ version(BindBgfx_Static)
 	void bgfx_set_transient_vertex_buffer_with_layout(byte _stream, const(bgfx_transient_vertex_buffer_t)* _tvb, uint _startVertex, uint _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
 	
 	/**
-	 * Set number of vertices for auto generated vertices use in conjuction
+	 * Set number of vertices for auto generated vertices use in conjunction
 	 * with gl_VertexID.
 	 * Attention: Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	 * Params:
@@ -1971,7 +1971,7 @@ version(BindBgfx_Static)
 	void bgfx_set_instance_data_from_dynamic_vertex_buffer(bgfx_dynamic_vertex_buffer_handle_t _handle, uint _startVertex, uint _num);
 	
 	/**
-	 * Set number of instances for auto generated instances use in conjuction
+	 * Set number of instances for auto generated instances use in conjunction
 	 * with gl_InstanceID.
 	 * Attention: Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	 */
@@ -3589,7 +3589,7 @@ else
 		
 		/**
 		 * Reserve matrices in internal matrix cache.
-		 * Attention: Pointer returned can be modifed until `bgfx::frame` is called.
+		 * Attention: Pointer returned can be modified until `bgfx::frame` is called.
 		 * Params:
 		 * _transform = Pointer to `Transform` structure.
 		 * _num = Number of matrices.
@@ -3703,7 +3703,7 @@ else
 		da_bgfx_encoder_set_transient_vertex_buffer_with_layout bgfx_encoder_set_transient_vertex_buffer_with_layout;
 		
 		/**
-		 * Set number of vertices for auto generated vertices use in conjuction
+		 * Set number of vertices for auto generated vertices use in conjunction
 		 * with gl_VertexID.
 		 * Attention: Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 		 * Params:
@@ -3744,7 +3744,7 @@ else
 		da_bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer;
 		
 		/**
-		 * Set number of instances for auto generated instances use in conjuction
+		 * Set number of instances for auto generated instances use in conjunction
 		 * with gl_InstanceID.
 		 * Attention: Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 		 */
@@ -4125,7 +4125,7 @@ else
 		
 		/**
 		 * Reserve matrices in internal matrix cache.
-		 * Attention: Pointer returned can be modifed until `bgfx::frame` is called.
+		 * Attention: Pointer returned can be modified until `bgfx::frame` is called.
 		 * Params:
 		 * _transform = Pointer to `Transform` structure.
 		 * _num = Number of matrices.
@@ -4250,7 +4250,7 @@ else
 		da_bgfx_set_transient_vertex_buffer_with_layout bgfx_set_transient_vertex_buffer_with_layout;
 		
 		/**
-		 * Set number of vertices for auto generated vertices use in conjuction
+		 * Set number of vertices for auto generated vertices use in conjunction
 		 * with gl_VertexID.
 		 * Attention: Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 		 * Params:
@@ -4291,7 +4291,7 @@ else
 		da_bgfx_set_instance_data_from_dynamic_vertex_buffer bgfx_set_instance_data_from_dynamic_vertex_buffer;
 		
 		/**
-		 * Set number of instances for auto generated instances use in conjuction
+		 * Set number of instances for auto generated instances use in conjunction
 		 * with gl_InstanceID.
 		 * Attention: Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 		 */
