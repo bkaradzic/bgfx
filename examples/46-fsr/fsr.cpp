@@ -213,7 +213,7 @@ struct FsrResources
 	// Shader uniforms
 	Uniforms m_uniforms;
 
-	// Uniforms to indentify texture samplers
+	// Uniforms to identify texture samplers
 	bgfx::UniformHandle s_inputTexture = BGFX_INVALID_HANDLE;
 
 };

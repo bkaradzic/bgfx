@@ -548,7 +548,7 @@ void submit(bgfx::ViewId _id, bgfx::ProgramHandle _handle, int32_t _depth = 0)
 {
 	bgfx::submit(_id, _handle, _depth);
 
-	// Keep track of submited view ids.
+	// Keep track of submitted view ids.
 	s_viewMask |= 1 << _id;
 }
 

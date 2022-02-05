@@ -670,7 +670,7 @@ typedef struct bgfx_init_s
      */
     uint16_t             deviceId;
     uint64_t             capabilities;       /** Capabilities initialization mask (default: UINT64_MAX). */
-    bool                 debug;              /** Enable device for debuging.              */
+    bool                 debug;              /** Enable device for debugging.             */
     bool                 profile;            /** Enable device for profiling.             */
     bgfx_platform_data_t platformData;       /** Platform data.                           */
     bgfx_resolution_t    resolution;         /** Backbuffer resolution and reset parameters. See: `bgfx::Resolution`. */
@@ -2436,7 +2436,7 @@ BGFX_C_API void bgfx_encoder_set_transform_cached(bgfx_encoder_t* _this, uint32_
 
 /**
  * Reserve matrices in internal matrix cache.
- * @attention Pointer returned can be modifed until `bgfx::frame` is called.
+ * @attention Pointer returned can be modified until `bgfx::frame` is called.
  *
  * @param[out] _transform Pointer to `Transform` structure.
  * @param[in] _num Number of matrices.
@@ -2550,7 +2550,7 @@ BGFX_C_API void bgfx_encoder_set_transient_vertex_buffer(bgfx_encoder_t* _this, 
 BGFX_C_API void bgfx_encoder_set_transient_vertex_buffer_with_layout(bgfx_encoder_t* _this, uint8_t _stream, const bgfx_transient_vertex_buffer_t* _tvb, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
 
 /**
- * Set number of vertices for auto generated vertices use in conjuction
+ * Set number of vertices for auto generated vertices use in conjunction
  * with gl_VertexID.
  * @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
  *
@@ -2591,7 +2591,7 @@ BGFX_C_API void bgfx_encoder_set_instance_data_from_vertex_buffer(bgfx_encoder_t
 BGFX_C_API void bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer(bgfx_encoder_t* _this, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);
 
 /**
- * Set number of instances for auto generated instances use in conjuction
+ * Set number of instances for auto generated instances use in conjunction
  * with gl_InstanceID.
  * @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
  *
@@ -2987,7 +2987,7 @@ BGFX_C_API void bgfx_set_transform_cached(uint32_t _cache, uint16_t _num);
 
 /**
  * Reserve matrices in internal matrix cache.
- * @attention Pointer returned can be modifed until `bgfx::frame` is called.
+ * @attention Pointer returned can be modified until `bgfx::frame` is called.
  *
  * @param[out] _transform Pointer to `Transform` structure.
  * @param[in] _num Number of matrices.
@@ -3114,7 +3114,7 @@ BGFX_C_API void bgfx_set_transient_vertex_buffer(uint8_t _stream, const bgfx_tra
 BGFX_C_API void bgfx_set_transient_vertex_buffer_with_layout(uint8_t _stream, const bgfx_transient_vertex_buffer_t* _tvb, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
 
 /**
- * Set number of vertices for auto generated vertices use in conjuction
+ * Set number of vertices for auto generated vertices use in conjunction
  * with gl_VertexID.
  * @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
  *
@@ -3155,7 +3155,7 @@ BGFX_C_API void bgfx_set_instance_data_from_vertex_buffer(bgfx_vertex_buffer_han
 BGFX_C_API void bgfx_set_instance_data_from_dynamic_vertex_buffer(bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);
 
 /**
- * Set number of instances for auto generated instances use in conjuction
+ * Set number of instances for auto generated instances use in conjunction
  * with gl_InstanceID.
  * @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
  *

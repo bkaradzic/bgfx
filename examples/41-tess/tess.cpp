@@ -641,7 +641,7 @@ namespace
 		* Load the Terrain Program
 		*
 		* This program renders an adaptive terrain using the implicit subdivision
-		* technique discribed in GPU Zen 2.
+		* technique described in GPU Zen 2.
 		**/
 		void loadPrograms()
 		{

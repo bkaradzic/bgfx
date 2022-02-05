@@ -179,7 +179,7 @@ namespace
 		// Shader uniforms
 		ModelUniforms m_modelUniforms;
 
-		// Uniforms to indentify texture samplers
+		// Uniforms to identify texture samplers
 		bgfx::UniformHandle s_albedo;
 		bgfx::UniformHandle s_color;
 		bgfx::UniformHandle s_normal;

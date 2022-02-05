@@ -422,7 +422,7 @@ namespace bgfx
 		virtual ~CallbackI() = 0;
 
 		/// This callback is called on unrecoverable errors.
-		/// It's not safe to continue (Exluding _code `Fatal::DebugCheck`),
+		/// It's not safe to continue (Excluding _code `Fatal::DebugCheck`),
 		/// inform the user and terminate the application.
 		///
 		/// @param[in] _filePath File path where fatal message was generated.
@@ -665,7 +665,7 @@ namespace bgfx
 
 		uint64_t capabilities; //!< Capabilities initialization mask (default: UINT64_MAX).
 
-		bool debug;   //!< Enable device for debuging.
+		bool debug;   //!< Enable device for debugging.
 		bool profile; //!< Enable device for profiling.
 
 		/// Platform data.
@@ -1135,7 +1135,7 @@ namespace bgfx
 		/// @param[in] _num Number of matrices.
 		/// @returns Index into matrix cache.
 		///
-		/// @attention Pointer returned can be modifed until `bgfx::frame` is called.
+		/// @attention Pointer returned can be modified until `bgfx::frame` is called.
 		/// @attention C99 equivalent is `bgfx_encoder_alloc_transform`.
 		///
 		uint32_t allocTransform(
@@ -1329,7 +1329,7 @@ namespace bgfx
 			, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE
 			);
 
-		/// Set number of vertices for auto generated vertices use in conjuction
+		/// Set number of vertices for auto generated vertices use in conjunction
 		/// with gl_VertexID.
 		///
 		/// @param[in] _numVertices Number of vertices.
@@ -1389,7 +1389,7 @@ namespace bgfx
 			, uint32_t _num
 			);
 
-		/// Set number of instances for auto generated instances use in conjuction
+		/// Set number of instances for auto generated instances use in conjunction
 		/// with gl_InstanceID.
 		///
 		/// @param[in] _numInstances Number of instances.
@@ -3586,7 +3586,7 @@ namespace bgfx
 	/// @param[in] _num Number of matrices.
 	/// @returns index into matrix cache.
 	///
-	/// @attention Pointer returned can be modifed until `bgfx::frame` is called.
+	/// @attention Pointer returned can be modified until `bgfx::frame` is called.
 	/// @attention C99 equivalent is `bgfx_alloc_transform`.
 	///
 	uint32_t allocTransform(
@@ -3780,7 +3780,7 @@ namespace bgfx
 		, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE
 		);
 
-	/// Set number of vertices for auto generated vertices use in conjuction
+	/// Set number of vertices for auto generated vertices use in conjunction
 	/// with gl_VertexID.
 	///
 	/// @param[in] _numVertices Number of vertices.
@@ -3840,7 +3840,7 @@ namespace bgfx
 		, uint32_t _num
 		);
 
-	/// Set number of instances for auto generated instances use in conjuction
+	/// Set number of instances for auto generated instances use in conjunction
 	/// with gl_InstanceID.
 	///
 	/// @param[in] _numInstances Number of instances.

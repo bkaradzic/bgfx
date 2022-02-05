@@ -800,7 +800,7 @@ struct.Init { ctor }
 	.deviceId       "uint16_t"            --- Device id. If set to 0 it will select first device, or device with
 	                                      --- matching id.
 	.capabilities   "uint64_t"            --- Capabilities initialization mask (default: UINT64_MAX).
-	.debug          "bool"                --- Enable device for debuging.
+	.debug          "bool"                --- Enable device for debugging.
 	.profile        "bool"                --- Enable device for profiling.
 	.platformData   "PlatformData"        --- Platform data.
 	.resolution     "Resolution"          --- Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
@@ -2204,7 +2204,7 @@ func.Encoder.setTransform { cname = "set_transform_cached" }
 
 --- Reserve matrices in internal matrix cache.
 ---
---- @attention Pointer returned can be modifed until `bgfx::frame` is called.
+--- @attention Pointer returned can be modified until `bgfx::frame` is called.
 ---
 func.Encoder.allocTransform
 	"uint32_t"                      --- Index in matrix cache.
@@ -2333,7 +2333,7 @@ func.Encoder.setVertexBuffer { cname = "set_transient_vertex_buffer_with_layout"
 	                                             --- of vertex buffer will be used.
 	 { default = "BGFX_INVALID_HANDLE" }
 
---- Set number of vertices for auto generated vertices use in conjuction
+--- Set number of vertices for auto generated vertices use in conjunction
 --- with gl_VertexID.
 ---
 --- @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
@@ -2378,7 +2378,7 @@ func.Encoder.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_ver
 	.startVertex "uint32_t"                  --- First instance data.
 	.num         "uint32_t"                  --- Number of data instances.
 
---- Set number of instances for auto generated instances use in conjuction
+--- Set number of instances for auto generated instances use in conjunction
 --- with gl_InstanceID.
 ---
 --- @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
@@ -2757,7 +2757,7 @@ func.setTransform { cname = "set_transform_cached" }
 
 --- Reserve matrices in internal matrix cache.
 ---
---- @attention Pointer returned can be modifed until `bgfx::frame` is called.
+--- @attention Pointer returned can be modified until `bgfx::frame` is called.
 ---
 func.allocTransform
 	"uint32_t"                      --- Index in matrix cache.
@@ -2888,7 +2888,7 @@ func.setVertexBuffer { cname = "set_transient_vertex_buffer_with_layout" }
 	                                            --- of vertex buffer will be used.
 	 { default = "BGFX_INVALID_HANDLE" }
 
---- Set number of vertices for auto generated vertices use in conjuction
+--- Set number of vertices for auto generated vertices use in conjunction
 --- with gl_VertexID.
 ---
 --- @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
@@ -2933,7 +2933,7 @@ func.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_vertex_buff
 	.startVertex "uint32_t"                  --- First instance data.
 	.num         "uint32_t"                  --- Number of data instances.
 
---- Set number of instances for auto generated instances use in conjuction
+--- Set number of instances for auto generated instances use in conjunction
 --- with gl_InstanceID.
 ---
 --- @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.

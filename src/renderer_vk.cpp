@@ -4978,7 +4978,7 @@ VK_DESTROY
 
 		bx::read(&reader, m_size, &err);
 
-		// fill binding description with uniform informations
+		// fill binding description with uniform information
 		uint16_t bidx = 0;
 		if (m_size > 0)
 		{

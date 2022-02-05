@@ -823,7 +823,7 @@ public:
 				ImGui::Combo("spatial sample extent", &m_spatialSampleType, "three\0five\0\0");
 				if (ImGui::IsItemHovered() )
 				{
-					ImGui::SetTooltip("select 3x3 or 5x5 filter kernal");
+					ImGui::SetTooltip("select 3x3 or 5x5 filter kernel");
 				}
 
 				ImGui::SliderFloat("sigma z", &m_sigmaDepth, 0.0f, 0.1f, "%.5f");
@@ -1061,7 +1061,7 @@ public:
 	// Shader uniforms
 	Uniforms m_uniforms;
 
-	// Uniforms to indentify texture samplers
+	// Uniforms to identify texture samplers
 	bgfx::UniformHandle s_albedo;
 	bgfx::UniformHandle s_color;
 	bgfx::UniformHandle s_normal;
