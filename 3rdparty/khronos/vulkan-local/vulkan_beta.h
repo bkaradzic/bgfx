@@ -626,13 +626,13 @@ typedef struct VkVideoEncodeH264RateControlLayerInfoEXT {
 #define VK_EXT_video_encode_h265 1
 #include "vk_video/vulkan_video_codec_h265std.h"
 #include "vk_video/vulkan_video_codec_h265std_encode.h"
-#define VK_EXT_VIDEO_ENCODE_H265_SPEC_VERSION 3
+#define VK_EXT_VIDEO_ENCODE_H265_SPEC_VERSION 4
 #define VK_EXT_VIDEO_ENCODE_H265_EXTENSION_NAME "VK_EXT_video_encode_h265"
 typedef VkFlags VkVideoEncodeH265CapabilityFlagsEXT;
 
 typedef enum VkVideoEncodeH265InputModeFlagBitsEXT {
     VK_VIDEO_ENCODE_H265_INPUT_MODE_FRAME_BIT_EXT = 0x00000001,
-    VK_VIDEO_ENCODE_H265_INPUT_MODE_SLICE_BIT_EXT = 0x00000002,
+    VK_VIDEO_ENCODE_H265_INPUT_MODE_SLICE_SEGMENT_BIT_EXT = 0x00000002,
     VK_VIDEO_ENCODE_H265_INPUT_MODE_NON_VCL_BIT_EXT = 0x00000004,
     VK_VIDEO_ENCODE_H265_INPUT_MODE_FLAG_BITS_MAX_ENUM_EXT = 0x7FFFFFFF
 } VkVideoEncodeH265InputModeFlagBitsEXT;
@@ -640,7 +640,7 @@ typedef VkFlags VkVideoEncodeH265InputModeFlagsEXT;
 
 typedef enum VkVideoEncodeH265OutputModeFlagBitsEXT {
     VK_VIDEO_ENCODE_H265_OUTPUT_MODE_FRAME_BIT_EXT = 0x00000001,
-    VK_VIDEO_ENCODE_H265_OUTPUT_MODE_SLICE_BIT_EXT = 0x00000002,
+    VK_VIDEO_ENCODE_H265_OUTPUT_MODE_SLICE_SEGMENT_BIT_EXT = 0x00000002,
     VK_VIDEO_ENCODE_H265_OUTPUT_MODE_NON_VCL_BIT_EXT = 0x00000004,
     VK_VIDEO_ENCODE_H265_OUTPUT_MODE_FLAG_BITS_MAX_ENUM_EXT = 0x7FFFFFFF
 } VkVideoEncodeH265OutputModeFlagBitsEXT;
@@ -723,21 +723,21 @@ typedef struct VkVideoEncodeH265ReferenceListsEXT {
     const StdVideoEncodeH265ReferenceModifications*    pReferenceModifications;
 } VkVideoEncodeH265ReferenceListsEXT;
 
-typedef struct VkVideoEncodeH265NaluSliceEXT {
-    VkStructureType                              sType;
-    const void*                                  pNext;
-    uint32_t                                     ctbCount;
-    const VkVideoEncodeH265ReferenceListsEXT*    pReferenceFinalLists;
-    const StdVideoEncodeH265SliceHeader*         pSliceHeaderStd;
-} VkVideoEncodeH265NaluSliceEXT;
+typedef struct VkVideoEncodeH265NaluSliceSegmentEXT {
+    VkStructureType                                sType;
+    const void*                                    pNext;
+    uint32_t                                       ctbCount;
+    const VkVideoEncodeH265ReferenceListsEXT*      pReferenceFinalLists;
+    const StdVideoEncodeH265SliceSegmentHeader*    pSliceSegmentHeaderStd;
+} VkVideoEncodeH265NaluSliceSegmentEXT;
 
 typedef struct VkVideoEncodeH265VclFrameInfoEXT {
-    VkStructureType                              sType;
-    const void*                                  pNext;
-    const VkVideoEncodeH265ReferenceListsEXT*    pReferenceFinalLists;
-    uint32_t                                     naluSliceEntryCount;
-    const VkVideoEncodeH265NaluSliceEXT*         pNaluSliceEntries;
-    const StdVideoEncodeH265PictureInfo*         pCurrentPictureInfo;
+    VkStructureType                                sType;
+    const void*                                    pNext;
+    const VkVideoEncodeH265ReferenceListsEXT*      pReferenceFinalLists;
+    uint32_t                                       naluSliceSegmentEntryCount;
+    const VkVideoEncodeH265NaluSliceSegmentEXT*    pNaluSliceSegmentEntries;
+    const StdVideoEncodeH265PictureInfo*           pCurrentPictureInfo;
 } VkVideoEncodeH265VclFrameInfoEXT;
 
 typedef struct VkVideoEncodeH265EmitPictureParametersEXT {
