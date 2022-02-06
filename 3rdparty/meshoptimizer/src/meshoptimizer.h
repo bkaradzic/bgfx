@@ -19,6 +19,15 @@
 #define MESHOPTIMIZER_API
 #endif
 
+/* Set the calling-convention for alloc/dealloc function pointers */
+#ifndef MESHOPTIMIZER_ALLOC_CALLCONV
+#ifdef _MSC_VER
+#define MESHOPTIMIZER_ALLOC_CALLCONV __cdecl
+#else
+#define MESHOPTIMIZER_ALLOC_CALLCONV
+#endif
+#endif
+
 /* Experimental APIs have unstable interface and might have implementation that's not fully tested or optimized */
 #define MESHOPTIMIZER_EXPERIMENTAL MESHOPTIMIZER_API
 
@@ -348,7 +357,7 @@ MESHOPTIMIZER_EXPERIMENTAL size_t meshopt_simplifyPoints(unsigned int* destinati
 
 /**
  * Experimental: Returns the error scaling factor used by the simplifier to convert between absolute and relative extents
- * 
+ *
  * Absolute error must be *divided* by the scaling factor before passing it to meshopt_simplify as target_error
  * Relative error returned by meshopt_simplify via result_error must be *multiplied* by the scaling factor to get absolute error.
  */
@@ -514,7 +523,7 @@ MESHOPTIMIZER_EXPERIMENTAL void meshopt_spatialSortTriangles(unsigned int* desti
  * Note that all algorithms only allocate memory for temporary use.
  * allocate/deallocate are always called in a stack-like order - last pointer to be allocated is deallocated first.
  */
-MESHOPTIMIZER_API void meshopt_setAllocator(void* (*allocate)(size_t), void (*deallocate)(void*));
+MESHOPTIMIZER_API void meshopt_setAllocator(void* (MESHOPTIMIZER_ALLOC_CALLCONV *allocate)(size_t), void (MESHOPTIMIZER_ALLOC_CALLCONV *deallocate)(void*));
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -696,8 +705,8 @@ public:
 	template <typename T>
 	struct StorageT
 	{
-		static void* (*allocate)(size_t);
-		static void (*deallocate)(void*);
+		static void* (MESHOPTIMIZER_ALLOC_CALLCONV *allocate)(size_t);
+		static void (MESHOPTIMIZER_ALLOC_CALLCONV *deallocate)(void*);
 	};
 
 	typedef StorageT<void> Storage;
@@ -728,8 +737,8 @@ private:
 };
 
 // This makes sure that allocate/deallocate are lazily generated in translation units that need them and are deduplicated by the linker
-template <typename T> void* (*meshopt_Allocator::StorageT<T>::allocate)(size_t) = operator new;
-template <typename T> void (*meshopt_Allocator::StorageT<T>::deallocate)(void*) = operator delete;
+template <typename T> void* (MESHOPTIMIZER_ALLOC_CALLCONV *meshopt_Allocator::StorageT<T>::allocate)(size_t) = operator new;
+template <typename T> void (MESHOPTIMIZER_ALLOC_CALLCONV *meshopt_Allocator::StorageT<T>::deallocate)(void*) = operator delete;
 #endif
 
 /* Inline implementation for C++ templated wrappers */
