@@ -264,6 +264,7 @@ enum EShMessages : unsigned {
     EShMsgHlslLegalization  = (1 << 12), // enable HLSL Legalization messages
     EShMsgHlslDX9Compatible = (1 << 13), // enable HLSL DX9 compatible mode (for samplers and semantics)
     EShMsgBuiltinSymbolTable = (1 << 14), // print the builtin symbol table
+    EShMsgEnhanced         = (1 << 15), // enhanced message readability
     LAST_ELEMENT_MARKER(EShMsgCount),
 };
 
@@ -488,6 +489,7 @@ public:
     GLSLANG_EXPORT void setUniformLocationBase(int base);
     GLSLANG_EXPORT void setInvertY(bool invert);
     GLSLANG_EXPORT void setDxPositionW(bool dxPosW);
+    GLSLANG_EXPORT void setEnhancedMsgs();
 #ifdef ENABLE_HLSL
     GLSLANG_EXPORT void setHlslIoMapping(bool hlslIoMap);
     GLSLANG_EXPORT void setFlattenUniformArrays(bool flatten);

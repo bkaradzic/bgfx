@@ -1830,6 +1830,7 @@ void  TShader::setUniqueId(unsigned long long id)
 
 void TShader::setInvertY(bool invert)                   { intermediate->setInvertY(invert); }
 void TShader::setDxPositionW(bool invert)               { intermediate->setDxPositionW(invert); }
+void TShader::setEnhancedMsgs()                         { intermediate->setEnhancedMsgs(); }
 void TShader::setNanMinMaxClamp(bool useNonNan)         { intermediate->setNanMinMaxClamp(useNonNan); }
 
 #ifndef GLSLANG_WEB
@@ -2049,6 +2050,8 @@ bool TProgram::linkStage(EShLanguage stage, EShMessages messages)
                                                 firstIntermediate->getVersion(),
                                                 firstIntermediate->getProfile());
         intermediate[stage]->setLimits(firstIntermediate->getLimits());
+        if (firstIntermediate->getEnhancedMsgs())
+            intermediate[stage]->setEnhancedMsgs();
 
         // The new TIntermediate must use the same origin as the original TIntermediates.
         // Otherwise linking will fail due to different coordinate systems.

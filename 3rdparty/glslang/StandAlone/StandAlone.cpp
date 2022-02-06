@@ -178,6 +178,7 @@ const char* variableName = nullptr;
 bool HlslEnable16BitTypes = false;
 bool HlslDX9compatible = false;
 bool HlslDxPositionW = false;
+bool EnhancedMsgs = false;
 bool DumpBuiltinSymbols = false;
 std::vector<std::string> IncludeDirectoryList;
 
@@ -665,6 +666,8 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         HlslDX9compatible = true;
                     } else if (lowerword == "hlsl-dx-position-w") {
                         HlslDxPositionW = true;
+                    } else if (lowerword == "enhanced-msgs") {
+                        EnhancedMsgs = true;
                     } else if (lowerword == "auto-sampled-textures") { 
                         autoSampledTextures = true;
                     } else if (lowerword == "invert-y" ||  // synonyms
@@ -1073,6 +1076,8 @@ void SetMessageOptions(EShMessages& messages)
         messages = (EShMessages)(messages | EShMsgHlslDX9Compatible);
     if (DumpBuiltinSymbols)
         messages = (EShMessages)(messages | EShMsgBuiltinSymbolTable);
+    if (EnhancedMsgs)
+        messages = (EShMessages)(messages | EShMsgEnhanced);
 }
 
 //
@@ -1300,6 +1305,9 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
 
         if (HlslDxPositionW)
             shader->setDxPositionW(true);
+
+        if (EnhancedMsgs)
+            shader->setEnhancedMsgs();
 
         // Set up the environment, some subsettings take precedence over earlier
         // ways of setting things.
@@ -1867,6 +1875,7 @@ void usage()
            "  --hlsl-dx-position-w              W component of SV_Position in HLSL fragment\n"
            "                                    shaders compatible with DirectX\n"
            "  --invert-y | --iy                 invert position.Y output in vertex shader\n"
+           "  --enhanced-msgs                   print more readable error messages (GLSL only)\n"
            "  --keep-uncalled | --ku            don't eliminate uncalled functions\n"
            "  --nan-clamp                       favor non-NaN operand in min, max, and clamp\n"
            "  --no-storage-format | --nsf       use Unknown image format\n"

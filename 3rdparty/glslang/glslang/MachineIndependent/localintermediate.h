@@ -291,6 +291,7 @@ public:
         numEntryPoints(0), numErrors(0), numPushConstants(0), recursive(false),
         invertY(false),
         dxPositionW(false),
+        enhancedMsgs(false),
         useStorageBuffer(false),
         invariantAll(false),
         nanMinMaxClamp(false),
@@ -469,11 +470,17 @@ public:
 
     void setDxPositionW(bool dxPosW)
     {
-      dxPositionW = dxPosW;
-      if (dxPositionW)
-        processes.addProcess("dx-position-w");
+        dxPositionW = dxPosW;
+        if (dxPositionW)
+            processes.addProcess("dx-position-w");
     }
     bool getDxPositionW() const { return dxPositionW; }
+
+    void setEnhancedMsgs()
+    {
+        enhancedMsgs = true;
+    }
+    bool getEnhancedMsgs() const { return enhancedMsgs && source == EShSourceGlsl; }
 
 #ifdef ENABLE_HLSL
     void setSource(EShSource s) { source = s; }
@@ -1031,8 +1038,8 @@ public:
 
 protected:
     TIntermSymbol* addSymbol(long long Id, const TString&, const TType&, const TConstUnionArray&, TIntermTyped* subtree, const TSourceLoc&);
-    void error(TInfoSink& infoSink, const char*);
-    void warn(TInfoSink& infoSink, const char*);
+    void error(TInfoSink& infoSink, const char*, EShLanguage unitStage = EShLangCount);
+    void warn(TInfoSink& infoSink, const char*, EShLanguage unitStage = EShLangCount);
     void mergeCallGraphs(TInfoSink&, TIntermediate&);
     void mergeModes(TInfoSink&, TIntermediate&);
     void mergeTrees(TInfoSink&, TIntermediate&);
@@ -1086,6 +1093,7 @@ protected:
     bool recursive;
     bool invertY;
     bool dxPositionW;
+    bool enhancedMsgs;
     bool useStorageBuffer;
     bool invariantAll;
     bool nanMinMaxClamp;            // true if desiring min/max/clamp to favor non-NaN over NaN
