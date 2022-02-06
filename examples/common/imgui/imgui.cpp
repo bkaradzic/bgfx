@@ -175,7 +175,7 @@ struct OcornutImguiContext
 
 						encoder->setState(state);
 						encoder->setTexture(0, s_tex, th);
-						encoder->setVertexBuffer(0, &tvb, 0, numVertices);
+						encoder->setVertexBuffer(0, &tvb, cmd->VtxOffset, numVertices);
 						encoder->setIndexBuffer(&tib, cmd->IdxOffset, cmd->ElemCount);
 						encoder->submit(m_viewId, program);
 					}
@@ -211,6 +211,8 @@ struct OcornutImguiContext
 		io.IniFilename = NULL;
 
 		setupStyle(true);
+
+		io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
 
 #if USE_ENTRY
 		io.KeyMap[ImGuiKey_Tab]        = (int)entry::Key::Tab;
