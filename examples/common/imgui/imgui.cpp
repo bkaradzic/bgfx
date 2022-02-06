@@ -400,6 +400,7 @@ struct OcornutImguiContext
 		io.KeyShift = 0 != (modifiers & (entry::Modifier::LeftShift | entry::Modifier::RightShift) );
 		io.KeyCtrl  = 0 != (modifiers & (entry::Modifier::LeftCtrl  | entry::Modifier::RightCtrl ) );
 		io.KeyAlt   = 0 != (modifiers & (entry::Modifier::LeftAlt   | entry::Modifier::RightAlt  ) );
+		io.KeySuper = 0 != (modifiers & (entry::Modifier::LeftMeta  | entry::Modifier::RightMeta ) );
 		for (int32_t ii = 0; ii < (int32_t)entry::Key::Count; ++ii)
 		{
 			io.KeysDown[ii] = inputGetKeyState(entry::Key::Enum(ii) );
