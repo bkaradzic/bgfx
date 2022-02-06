@@ -87,6 +87,12 @@ struct Operand {
   spv_operand_type_t type;  // Type of this logical operand.
   OperandData words;        // Binary segments of this logical operand.
 
+  uint32_t AsId() const {
+    assert(spvIsIdType(type));
+    assert(words.size() == 1);
+    return words[0];
+  }
+
   // Returns a string operand as a std::string.
   std::string AsString() const {
     assert(type == SPV_OPERAND_TYPE_LITERAL_STRING);
@@ -95,7 +101,10 @@ struct Operand {
 
   // Returns a literal integer operand as a uint64_t
   uint64_t AsLiteralUint64() const {
-    assert(type == SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER);
+    assert(type == SPV_OPERAND_TYPE_LITERAL_INTEGER ||
+           type == SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER ||
+           type == SPV_OPERAND_TYPE_OPTIONAL_LITERAL_INTEGER ||
+           type == SPV_OPERAND_TYPE_OPTIONAL_TYPED_LITERAL_INTEGER);
     assert(1 <= words.size());
     assert(words.size() <= 2);
     uint64_t result = 0;
@@ -294,6 +303,7 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   inline void SetInOperands(OperandList&& new_operands);
   // Sets the result type id.
   inline void SetResultType(uint32_t ty_id);
+  inline bool HasResultType() const { return has_type_id_; }
   // Sets the result id
   inline void SetResultId(uint32_t res_id);
   inline bool HasResultId() const { return has_result_id_; }

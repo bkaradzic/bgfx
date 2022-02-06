@@ -235,6 +235,7 @@ uint32_t TypeManager::GetTypeInstruction(const Type* type) {
     DefineParameterlessCase(PipeStorage);
     DefineParameterlessCase(NamedBarrier);
     DefineParameterlessCase(AccelerationStructureNV);
+    DefineParameterlessCase(RayQueryKHR);
 #undef DefineParameterlessCase
     case Type::kInteger:
       typeInst = MakeUnique<Instruction>(
@@ -527,6 +528,7 @@ Type* TypeManager::RebuildType(const Type& type) {
     DefineNoSubtypeCase(PipeStorage);
     DefineNoSubtypeCase(NamedBarrier);
     DefineNoSubtypeCase(AccelerationStructureNV);
+    DefineNoSubtypeCase(RayQueryKHR);
 #undef DefineNoSubtypeCase
     case Type::kVector: {
       const Vector* vec_ty = type.AsVector();
