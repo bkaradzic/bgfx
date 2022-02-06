@@ -117,7 +117,6 @@ struct OcornutImguiContext
 
 			bgfx::Encoder* encoder = bgfx::begin();
 
-			uint32_t offset = 0;
 			for (const ImDrawCmd* cmd = drawList->CmdBuffer.begin(), *cmdEnd = drawList->CmdBuffer.end(); cmd != cmdEnd; ++cmd)
 			{
 				if (cmd->UserCallback)
@@ -177,12 +176,10 @@ struct OcornutImguiContext
 						encoder->setState(state);
 						encoder->setTexture(0, s_tex, th);
 						encoder->setVertexBuffer(0, &tvb, 0, numVertices);
-						encoder->setIndexBuffer(&tib, offset, cmd->ElemCount);
+						encoder->setIndexBuffer(&tib, cmd->IdxOffset, cmd->ElemCount);
 						encoder->submit(m_viewId, program);
 					}
 				}
-
-				offset += cmd->ElemCount;
 			}
 
 			bgfx::end(encoder);
