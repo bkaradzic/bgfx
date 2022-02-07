@@ -1283,11 +1283,12 @@ VK_IMPORT
 
 				m_instanceApiVersion = vulkanApiVersionSelector;
 
-				BX_TRACE("Instance API Version Selected: %d.%d.%d"
-					, VK_VERSION_MAJOR(m_instanceApiVersion)
-					, VK_VERSION_MINOR(m_instanceApiVersion)
-					, VK_VERSION_PATCH(m_instanceApiVersion)
+				BX_TRACE("Instance API version: %d.%d.%d"
+					, VK_API_VERSION_MAJOR(m_instanceApiVersion)
+					, VK_API_VERSION_MINOR(m_instanceApiVersion)
+					, VK_API_VERSION_PATCH(m_instanceApiVersion)
 					);
+				BX_TRACE("Instance variant: %d", VK_API_VERSION_VARIANT(m_instanceApiVersion) );
 			}
 
 			errorState = ErrorState::InstanceCreated;
@@ -1368,9 +1369,10 @@ VK_IMPORT_INSTANCE
 					BX_TRACE("Physical device %d:", ii);
 					BX_TRACE("\t          Name: %s", pdp.deviceName);
 					BX_TRACE("\t   API version: %d.%d.%d"
-						, VK_VERSION_MAJOR(pdp.apiVersion)
-						, VK_VERSION_MINOR(pdp.apiVersion)
-						, VK_VERSION_PATCH(pdp.apiVersion) );
+						, VK_API_VERSION_MAJOR(pdp.apiVersion)
+						, VK_API_VERSION_MINOR(pdp.apiVersion)
+						, VK_API_VERSION_PATCH(pdp.apiVersion) );
+					BX_TRACE("\t   API variant: %d", VK_API_VERSION_VARIANT(pdp.apiVersion) );
 					BX_TRACE("\tDriver version: %x", pdp.driverVersion);
 					BX_TRACE("\t      VendorId: %x", pdp.vendorID);
 					BX_TRACE("\t      DeviceId: %x", pdp.deviceID);
