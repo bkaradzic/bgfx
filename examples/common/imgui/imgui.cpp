@@ -117,7 +117,6 @@ struct OcornutImguiContext
 
 			bgfx::Encoder* encoder = bgfx::begin();
 
-			uint32_t offset = 0;
 			for (const ImDrawCmd* cmd = drawList->CmdBuffer.begin(), *cmdEnd = drawList->CmdBuffer.end(); cmd != cmdEnd; ++cmd)
 			{
 				if (cmd->UserCallback)
@@ -176,13 +175,11 @@ struct OcornutImguiContext
 
 						encoder->setState(state);
 						encoder->setTexture(0, s_tex, th);
-						encoder->setVertexBuffer(0, &tvb, 0, numVertices);
-						encoder->setIndexBuffer(&tib, offset, cmd->ElemCount);
+						encoder->setVertexBuffer(0, &tvb, cmd->VtxOffset, numVertices);
+						encoder->setIndexBuffer(&tib, cmd->IdxOffset, cmd->ElemCount);
 						encoder->submit(m_viewId, program);
 					}
 				}
-
-				offset += cmd->ElemCount;
 			}
 
 			bgfx::end(encoder);
@@ -214,6 +211,8 @@ struct OcornutImguiContext
 		io.IniFilename = NULL;
 
 		setupStyle(true);
+
+		io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
 
 #if USE_ENTRY
 		io.KeyMap[ImGuiKey_Tab]        = (int)entry::Key::Tab;
@@ -400,6 +399,7 @@ struct OcornutImguiContext
 		io.KeyShift = 0 != (modifiers & (entry::Modifier::LeftShift | entry::Modifier::RightShift) );
 		io.KeyCtrl  = 0 != (modifiers & (entry::Modifier::LeftCtrl  | entry::Modifier::RightCtrl ) );
 		io.KeyAlt   = 0 != (modifiers & (entry::Modifier::LeftAlt   | entry::Modifier::RightAlt  ) );
+		io.KeySuper = 0 != (modifiers & (entry::Modifier::LeftMeta  | entry::Modifier::RightMeta ) );
 		for (int32_t ii = 0; ii < (int32_t)entry::Key::Count; ++ii)
 		{
 			io.KeysDown[ii] = inputGetKeyState(entry::Key::Enum(ii) );
