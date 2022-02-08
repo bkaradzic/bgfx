@@ -7,6 +7,8 @@
 #pragma once
 
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+#define IMGUI_DISABLE_OBSOLETE_KEYIO
+#define IMGUI_DISABLE_DEFAULT_ALLOCATORS
 
 //---- Define your own ImVector<> type if you don't want to use the provided implementation defined in imgui.h
 //#include <vector>
