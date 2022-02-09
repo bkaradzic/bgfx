@@ -2145,6 +2145,10 @@ namespace bgfx { namespace mtl
 					{
 						const TextureMtl& texture = m_textures[frameBuffer.m_depthHandle.idx];
 						pd.depthAttachmentPixelFormat = texture.m_ptr.m_obj.pixelFormat;
+						pd.sampleCount = NULL != texture.m_ptrMsaa
+							? texture.m_ptrMsaa.sampleCount()
+							: 1
+							;
 						if (NULL != texture.m_ptrStencil)
 						{
 							pd.stencilAttachmentPixelFormat = texture.m_ptrStencil.m_obj.pixelFormat;
