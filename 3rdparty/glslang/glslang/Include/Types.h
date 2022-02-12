@@ -2703,7 +2703,7 @@ public:
             *lpidx = -1;
             *rpidx = -1;
         }
-        return    sampler == right.sampler    &&
+        return ((basicType != EbtSampler && right.basicType != EbtSampler) || sampler == right.sampler) &&
                vectorSize == right.vectorSize &&
                matrixCols == right.matrixCols &&
                matrixRows == right.matrixRows &&
