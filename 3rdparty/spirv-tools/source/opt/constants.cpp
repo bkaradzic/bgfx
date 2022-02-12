@@ -158,6 +158,7 @@ Type* ConstantManager::GetType(const Instruction* inst) const {
 std::vector<const Constant*> ConstantManager::GetOperandConstants(
     const Instruction* inst) const {
   std::vector<const Constant*> constants;
+  constants.reserve(inst->NumInOperands());
   for (uint32_t i = 0; i < inst->NumInOperands(); i++) {
     const Operand* operand = &inst->GetInOperand(i);
     if (operand->type != SPV_OPERAND_TYPE_ID) {

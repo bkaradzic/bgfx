@@ -60,6 +60,7 @@ static const SpvCapability pygen_variable_caps_KernelAttributesINTEL[] = {SpvCap
 static const SpvCapability pygen_variable_caps_Linkage[] = {SpvCapabilityLinkage};
 static const SpvCapability pygen_variable_caps_LoopFuseINTEL[] = {SpvCapabilityLoopFuseINTEL};
 static const SpvCapability pygen_variable_caps_Matrix[] = {SpvCapabilityMatrix};
+static const SpvCapability pygen_variable_caps_MemoryAccessAliasingINTEL[] = {SpvCapabilityMemoryAccessAliasingINTEL};
 static const SpvCapability pygen_variable_caps_MeshShadingNV[] = {SpvCapabilityMeshShadingNV};
 static const SpvCapability pygen_variable_caps_MinLod[] = {SpvCapabilityMinLod};
 static const SpvCapability pygen_variable_caps_MultiView[] = {SpvCapabilityMultiView};
@@ -160,6 +161,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_INTEL_kernel_attributes
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_long_constant_composite[] = {spvtools::Extension::kSPV_INTEL_long_constant_composite};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_loop_fuse[] = {spvtools::Extension::kSPV_INTEL_loop_fuse};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_media_block_io[] = {spvtools::Extension::kSPV_INTEL_media_block_io};
+static const spvtools::Extension pygen_variable_exts_SPV_INTEL_memory_access_aliasing[] = {spvtools::Extension::kSPV_INTEL_memory_access_aliasing};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_optnone[] = {spvtools::Extension::kSPV_INTEL_optnone};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_shader_integer_functions2[] = {spvtools::Extension::kSPV_INTEL_shader_integer_functions2};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_subgroups[] = {spvtools::Extension::kSPV_INTEL_subgroups};
@@ -315,7 +317,9 @@ static const spv_operand_desc_t pygen_variable_MemoryAccessEntries[] = {
   {"MakePointerVisible", 0x0010, 1, pygen_variable_caps_VulkanMemoryModel, 1, pygen_variable_exts_SPV_KHR_vulkan_memory_model, {SPV_OPERAND_TYPE_SCOPE_ID}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
   {"MakePointerVisibleKHR", 0x0010, 1, pygen_variable_caps_VulkanMemoryModel, 1, pygen_variable_exts_SPV_KHR_vulkan_memory_model, {SPV_OPERAND_TYPE_SCOPE_ID}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
   {"NonPrivatePointer", 0x0020, 1, pygen_variable_caps_VulkanMemoryModel, 1, pygen_variable_exts_SPV_KHR_vulkan_memory_model, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
-  {"NonPrivatePointerKHR", 0x0020, 1, pygen_variable_caps_VulkanMemoryModel, 1, pygen_variable_exts_SPV_KHR_vulkan_memory_model, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu}
+  {"NonPrivatePointerKHR", 0x0020, 1, pygen_variable_caps_VulkanMemoryModel, 1, pygen_variable_exts_SPV_KHR_vulkan_memory_model, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
+  {"AliasScopeINTELMask", 0x10000, 1, pygen_variable_caps_MemoryAccessAliasingINTEL, 1, pygen_variable_exts_SPV_INTEL_memory_access_aliasing, {SPV_OPERAND_TYPE_ID}, 0xffffffffu, 0xffffffffu},
+  {"NoAliasINTELMask", 0x20000, 1, pygen_variable_caps_MemoryAccessAliasingINTEL, 1, pygen_variable_exts_SPV_INTEL_memory_access_aliasing, {SPV_OPERAND_TYPE_ID}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_KernelProfilingInfoEntries[] = {
@@ -770,6 +774,8 @@ static const spv_operand_desc_t pygen_variable_DecorationEntries[] = {
   {"PrefetchINTEL", 5902, 1, pygen_variable_caps_FPGAMemoryAccessesINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0xffffffffu, 0xffffffffu},
   {"StallEnableINTEL", 5905, 1, pygen_variable_caps_FPGAClusterAttributesINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
   {"FuseLoopsInFunctionINTEL", 5907, 1, pygen_variable_caps_LoopFuseINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"AliasScopeINTEL", 5914, 1, pygen_variable_caps_MemoryAccessAliasingINTEL, 0, nullptr, {SPV_OPERAND_TYPE_ID}, 0xffffffffu, 0xffffffffu},
+  {"NoAliasINTEL", 5915, 1, pygen_variable_caps_MemoryAccessAliasingINTEL, 0, nullptr, {SPV_OPERAND_TYPE_ID}, 0xffffffffu, 0xffffffffu},
   {"BufferLocationINTEL", 5921, 1, pygen_variable_caps_FPGABufferLocationINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0xffffffffu, 0xffffffffu},
   {"IOPipeStorageINTEL", 5944, 1, pygen_variable_caps_IOPipesINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0xffffffffu, 0xffffffffu},
   {"FunctionFloatingPointModeINTEL", 6080, 1, pygen_variable_caps_FunctionFloatControlINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_FPOPERATION_MODE}, 0xffffffffu, 0xffffffffu},
@@ -1128,6 +1134,7 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"FPGAMemoryAccessesINTEL", 5898, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_fpga_memory_accesses, {}, 0xffffffffu, 0xffffffffu},
   {"FPGAClusterAttributesINTEL", 5904, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_fpga_cluster_attributes, {}, 0xffffffffu, 0xffffffffu},
   {"LoopFuseINTEL", 5906, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_loop_fuse, {}, 0xffffffffu, 0xffffffffu},
+  {"MemoryAccessAliasingINTEL", 5910, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_memory_access_aliasing, {}, 0xffffffffu, 0xffffffffu},
   {"FPGABufferLocationINTEL", 5920, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_fpga_buffer_location, {}, 0xffffffffu, 0xffffffffu},
   {"ArbitraryPrecisionFixedPointINTEL", 5922, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_arbitrary_precision_fixed_point, {}, 0xffffffffu, 0xffffffffu},
   {"USMStorageClassesINTEL", 5935, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_usm_storage_classes, {}, 0xffffffffu, 0xffffffffu},

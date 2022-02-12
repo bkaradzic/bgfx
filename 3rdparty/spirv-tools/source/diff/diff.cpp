@@ -36,7 +36,7 @@ using InstructionToInstructionMap =
 // A flat list of instructions in a function for easier iteration.
 using InstructionList = std::vector<const opt::Instruction*>;
 // A map from a function to its list of instructions.
-using FunctionInstMap = std::unordered_map<uint32_t, InstructionList>;
+using FunctionInstMap = std::map<uint32_t, InstructionList>;
 // A list of ids with some similar property, for example functions with the same
 // name.
 using IdGroup = std::vector<uint32_t>;
@@ -307,6 +307,7 @@ class Differ {
                              const opt::Operand& dst_operand);
   bool DoInstructionsMatchFuzzy(const opt::Instruction* src_inst,
                                 const opt::Instruction* dst_inst);
+  bool AreIdenticalUintConstants(uint32_t src_id, uint32_t dst_id);
   bool DoDebugAndAnnotationInstructionsMatch(const opt::Instruction* src_inst,
                                              const opt::Instruction* dst_inst);
   bool AreVariablesMatchable(uint32_t src_id, uint32_t dst_id,
@@ -840,10 +841,8 @@ bool Differ::DoIdsMatchFuzzy(uint32_t src_id, uint32_t dst_id) {
   }
 
   // Int and Uint constants are interchangeable, match them in that case.
-  if (IsConstantUint(src_id_to_, src_id) &&
-      IsConstantUint(dst_id_to_, dst_id)) {
-    return GetConstantUint(src_id_to_, src_id) ==
-           GetConstantUint(dst_id_to_, dst_id);
+  if (AreIdenticalUintConstants(src_id, dst_id)) {
+    return true;
   }
 
   return false;
@@ -909,6 +908,13 @@ bool Differ::DoInstructionsMatchFuzzy(const opt::Instruction* src_inst,
   }
 
   return match;
+}
+
+bool Differ::AreIdenticalUintConstants(uint32_t src_id, uint32_t dst_id) {
+  return IsConstantUint(src_id_to_, src_id) &&
+         IsConstantUint(dst_id_to_, dst_id) &&
+         GetConstantUint(src_id_to_, src_id) ==
+             GetConstantUint(dst_id_to_, dst_id);
 }
 
 bool Differ::DoDebugAndAnnotationInstructionsMatch(
@@ -1486,7 +1492,7 @@ float Differ::MatchFunctionBodies(const InstructionList& src_body,
   LongestCommonSubsequence<std::vector<const opt::Instruction*>> lcs(src_body,
                                                                      dst_body);
 
-  size_t best_match_length = lcs.Get<const opt::Instruction*>(
+  uint32_t best_match_length = lcs.Get<const opt::Instruction*>(
       [this](const opt::Instruction* src_inst,
              const opt::Instruction* dst_inst) {
         return DoInstructionsMatchFuzzy(src_inst, dst_inst);
@@ -2001,9 +2007,14 @@ void Differ::MatchTypeIds() {
             return false;
           }
 
-          return GetConstantUint(src_id_to_,
-                                 src_inst->GetInOperand(1).AsId()) ==
-                 GetConstantUint(dst_id_to_, dst_inst->GetInOperand(1).AsId());
+          if (AreIdenticalUintConstants(src_inst->GetInOperand(1).AsId(),
+                                        dst_inst->GetInOperand(1).AsId())) {
+            return true;
+          }
+
+          // If size is not OpConstant, expect the ids to match exactly (for
+          // example if a spec contant is used).
+          return DoOperandsMatch(src_inst, dst_inst, 1, 1);
 
         case SpvOpTypeStruct:
           return MatchOpTypeStruct(src_inst, dst_inst, flexibility);
@@ -2053,6 +2064,7 @@ void Differ::MatchConstants() {
         case SpvOpConstant:
           return MatchOpConstant(src_inst, dst_inst, flexibility);
         case SpvOpConstantComposite:
+        case SpvOpSpecConstantComposite:
           // Composite constants must match in type and value.
           //
           // TODO: match OpConstantNull with OpConstantComposite with all zeros
@@ -2081,7 +2093,6 @@ void Differ::MatchConstants() {
         case SpvOpSpecConstantTrue:
         case SpvOpSpecConstantFalse:
         case SpvOpSpecConstant:
-        case SpvOpSpecConstantComposite:
         case SpvOpSpecConstantOp:
           // Match spec constants by name if available, then by the SpecId
           // decoration.

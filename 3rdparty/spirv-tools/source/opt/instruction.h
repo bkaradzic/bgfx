@@ -84,6 +84,11 @@ struct Operand {
 
   Operand(spv_operand_type_t t, const OperandData& w) : type(t), words(w) {}
 
+  template <class InputIt>
+  Operand(spv_operand_type_t t, InputIt firstOperandData,
+          InputIt lastOperandData)
+      : type(t), words(firstOperandData, lastOperandData) {}
+
   spv_operand_type_t type;  // Type of this logical operand.
   OperandData words;        // Binary segments of this logical operand.
 

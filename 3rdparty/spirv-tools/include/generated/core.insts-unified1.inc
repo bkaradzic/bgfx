@@ -40,6 +40,7 @@ static const SpvCapability pygen_variable_caps_KernelImageQuery[] = {SpvCapabili
 static const SpvCapability pygen_variable_caps_LiteralSampler[] = {SpvCapabilityLiteralSampler};
 static const SpvCapability pygen_variable_caps_LongConstantCompositeINTEL[] = {SpvCapabilityLongConstantCompositeINTEL};
 static const SpvCapability pygen_variable_caps_Matrix[] = {SpvCapabilityMatrix};
+static const SpvCapability pygen_variable_caps_MemoryAccessAliasingINTEL[] = {SpvCapabilityMemoryAccessAliasingINTEL};
 static const SpvCapability pygen_variable_caps_MeshShadingNV[] = {SpvCapabilityMeshShadingNV};
 static const SpvCapability pygen_variable_caps_NamedBarrier[] = {SpvCapabilityNamedBarrier};
 static const SpvCapability pygen_variable_caps_PipeStorage[] = {SpvCapabilityPipeStorage};
@@ -80,6 +81,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_hlsl_functionali
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_blocking_pipes[] = {spvtools::Extension::kSPV_INTEL_blocking_pipes};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_fpga_reg[] = {spvtools::Extension::kSPV_INTEL_fpga_reg};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_function_pointers[] = {spvtools::Extension::kSPV_INTEL_function_pointers};
+static const spvtools::Extension pygen_variable_exts_SPV_INTEL_memory_access_aliasing[] = {spvtools::Extension::kSPV_INTEL_memory_access_aliasing};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_unstructured_loop_controls[] = {spvtools::Extension::kSPV_INTEL_unstructured_loop_controls};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_expect_assume[] = {spvtools::Extension::kSPV_KHR_expect_assume};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_integer_dot_product[] = {spvtools::Extension::kSPV_KHR_integer_dot_product};
@@ -716,6 +718,9 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"ArbitraryFloatPowRINTEL", SpvOpArbitraryFloatPowRINTEL, 1, pygen_variable_caps_ArbitraryPrecisionFloatingPointINTEL, 10, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"ArbitraryFloatPowNINTEL", SpvOpArbitraryFloatPowNINTEL, 1, pygen_variable_caps_ArbitraryPrecisionFloatingPointINTEL, 9, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"LoopControlINTEL", SpvOpLoopControlINTEL, 1, pygen_variable_caps_UnstructuredLoopControlsINTEL, 1, {SPV_OPERAND_TYPE_VARIABLE_LITERAL_INTEGER}, 0, 0, 1, pygen_variable_exts_SPV_INTEL_unstructured_loop_controls, 0xffffffffu, 0xffffffffu},
+  {"AliasDomainDeclINTEL", SpvOpAliasDomainDeclINTEL, 1, pygen_variable_caps_MemoryAccessAliasingINTEL, 2, {SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_OPTIONAL_ID}, 1, 0, 1, pygen_variable_exts_SPV_INTEL_memory_access_aliasing, 0xffffffffu, 0xffffffffu},
+  {"AliasScopeDeclINTEL", SpvOpAliasScopeDeclINTEL, 1, pygen_variable_caps_MemoryAccessAliasingINTEL, 3, {SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_OPTIONAL_ID}, 1, 0, 1, pygen_variable_exts_SPV_INTEL_memory_access_aliasing, 0xffffffffu, 0xffffffffu},
+  {"AliasScopeListDeclINTEL", SpvOpAliasScopeListDeclINTEL, 1, pygen_variable_caps_MemoryAccessAliasingINTEL, 2, {SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_VARIABLE_ID}, 1, 0, 1, pygen_variable_exts_SPV_INTEL_memory_access_aliasing, 0xffffffffu, 0xffffffffu},
   {"FixedSqrtINTEL", SpvOpFixedSqrtINTEL, 1, pygen_variable_caps_ArbitraryPrecisionFixedPointINTEL, 9, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"FixedRecipINTEL", SpvOpFixedRecipINTEL, 1, pygen_variable_caps_ArbitraryPrecisionFixedPointINTEL, 9, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"FixedRsqrtINTEL", SpvOpFixedRsqrtINTEL, 1, pygen_variable_caps_ArbitraryPrecisionFixedPointINTEL, 9, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},

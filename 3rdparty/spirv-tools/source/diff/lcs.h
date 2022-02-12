@@ -18,7 +18,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
+#include <stack>
 #include <vector>
 
 namespace spvtools {
@@ -43,44 +45,64 @@ class LongestCommonSubsequence {
   //
   // Returns the length of the longest common subsequence.
   template <typename T>
-  size_t Get(std::function<bool(T src_elem, T dst_elem)> match,
-             DiffMatch* src_match_result, DiffMatch* dst_match_result);
+  uint32_t Get(std::function<bool(T src_elem, T dst_elem)> match,
+               DiffMatch* src_match_result, DiffMatch* dst_match_result);
 
  private:
+  struct DiffMatchIndex {
+    uint32_t src_offset;
+    uint32_t dst_offset;
+  };
+
   template <typename T>
-  size_t CalculateLCS(size_t src_start, size_t dst_start,
-                      std::function<bool(T src_elem, T dst_elem)> match);
+  void CalculateLCS(std::function<bool(T src_elem, T dst_elem)> match);
   void RetrieveMatch(DiffMatch* src_match_result, DiffMatch* dst_match_result);
-  bool IsInBound(size_t src_index, size_t dst_index) {
-    return src_index < src_.size() && dst_index < dst_.size();
+  bool IsInBound(DiffMatchIndex index) {
+    return index.src_offset < src_.size() && index.dst_offset < dst_.size();
   }
-  bool IsCalculated(size_t src_index, size_t dst_index) {
-    assert(IsInBound(src_index, dst_index));
-    return table_[src_index][dst_index].valid;
+  bool IsCalculated(DiffMatchIndex index) {
+    assert(IsInBound(index));
+    return table_[index.src_offset][index.dst_offset].valid;
   }
-  size_t GetMemoizedLength(size_t src_index, size_t dst_index) {
-    if (!IsInBound(src_index, dst_index)) {
+  bool IsCalculatedOrOutOfBound(DiffMatchIndex index) {
+    return !IsInBound(index) || IsCalculated(index);
+  }
+  uint32_t GetMemoizedLength(DiffMatchIndex index) {
+    if (!IsInBound(index)) {
       return 0;
     }
-    assert(IsCalculated(src_index, dst_index));
-    return table_[src_index][dst_index].best_match_length;
+    assert(IsCalculated(index));
+    return table_[index.src_offset][index.dst_offset].best_match_length;
   }
-  bool IsMatched(size_t src_index, size_t dst_index) {
-    assert(IsCalculated(src_index, dst_index));
-    return table_[src_index][dst_index].matched;
+  bool IsMatched(DiffMatchIndex index) {
+    assert(IsCalculated(index));
+    return table_[index.src_offset][index.dst_offset].matched;
+  }
+  void MarkMatched(DiffMatchIndex index, uint32_t best_match_length,
+                   bool matched) {
+    assert(IsInBound(index));
+    DiffMatchEntry& entry = table_[index.src_offset][index.dst_offset];
+    assert(!entry.valid);
+
+    entry.best_match_length = best_match_length & 0x3FFFFFFF;
+    assert(entry.best_match_length == best_match_length);
+    entry.matched = matched;
+    entry.valid = true;
   }
 
   const Sequence& src_;
   const Sequence& dst_;
 
   struct DiffMatchEntry {
-    size_t best_match_length = 0;
+    DiffMatchEntry() : best_match_length(0), matched(false), valid(false) {}
+
+    uint32_t best_match_length : 30;
     // Whether src[i] and dst[j] matched.  This is an optimization to avoid
     // calling the `match` function again when walking the LCS table.
-    bool matched = false;
+    uint32_t matched : 1;
     // Use for the recursive algorithm to know if the contents of this entry are
     // valid.
-    bool valid = false;
+    uint32_t valid : 1;
   };
 
   std::vector<std::vector<DiffMatchEntry>> table_;
@@ -88,18 +110,17 @@ class LongestCommonSubsequence {
 
 template <typename Sequence>
 template <typename T>
-size_t LongestCommonSubsequence<Sequence>::Get(
+uint32_t LongestCommonSubsequence<Sequence>::Get(
     std::function<bool(T src_elem, T dst_elem)> match,
     DiffMatch* src_match_result, DiffMatch* dst_match_result) {
-  size_t best_match_length = CalculateLCS(0, 0, match);
+  CalculateLCS(match);
   RetrieveMatch(src_match_result, dst_match_result);
-  return best_match_length;
+  return GetMemoizedLength({0, 0});
 }
 
 template <typename Sequence>
 template <typename T>
-size_t LongestCommonSubsequence<Sequence>::CalculateLCS(
-    size_t src_start, size_t dst_start,
+void LongestCommonSubsequence<Sequence>::CalculateLCS(
     std::function<bool(T src_elem, T dst_elem)> match) {
   // The LCS algorithm is simple.  Given sequences s and d, with a:b depicting a
   // range in python syntax:
@@ -113,53 +134,62 @@ size_t LongestCommonSubsequence<Sequence>::CalculateLCS(
   //
   // This is a recursive function with memoization, which avoids filling table
   // entries where unnecessary.  This makes the best case O(N) instead of
-  // O(N^2).
+  // O(N^2).  The implemention uses a std::stack to avoid stack overflow on long
+  // sequences.
 
-  // To avoid unnecessary recursion on long sequences, process a whole strip of
-  // matching elements in one go.
-  size_t src_cur = src_start;
-  size_t dst_cur = dst_start;
-  while (IsInBound(src_cur, dst_cur) && !IsCalculated(src_cur, dst_cur) &&
-         match(src_[src_cur], dst_[dst_cur])) {
-    ++src_cur;
-    ++dst_cur;
+  if (src_.empty() || dst_.empty()) {
+    return;
   }
 
-  // We've reached a pair of elements that don't match.  Recursively determine
-  // which one should be left unmatched.
-  size_t best_match_length = 0;
-  if (IsInBound(src_cur, dst_cur)) {
-    if (IsCalculated(src_cur, dst_cur)) {
-      best_match_length = GetMemoizedLength(src_cur, dst_cur);
-    } else {
-      best_match_length = std::max(CalculateLCS(src_cur + 1, dst_cur, match),
-                                   CalculateLCS(src_cur, dst_cur + 1, match));
+  std::stack<DiffMatchIndex> to_calculate;
+  to_calculate.push({0, 0});
 
-      // Fill the table with this information
-      DiffMatchEntry& entry = table_[src_cur][dst_cur];
-      assert(!entry.valid);
-      entry.best_match_length = best_match_length;
-      entry.valid = true;
+  while (!to_calculate.empty()) {
+    DiffMatchIndex current = to_calculate.top();
+    to_calculate.pop();
+    assert(IsInBound(current));
+
+    // If already calculated through another path, ignore it.
+    if (IsCalculated(current)) {
+      continue;
+    }
+
+    if (match(src_[current.src_offset], dst_[current.dst_offset])) {
+      // If the current elements match, advance both indices and calculate the
+      // LCS if not already.  Visit `current` again afterwards, so its
+      // corresponding entry will be updated.
+      DiffMatchIndex next = {current.src_offset + 1, current.dst_offset + 1};
+      if (IsCalculatedOrOutOfBound(next)) {
+        MarkMatched(current, GetMemoizedLength(next) + 1, true);
+      } else {
+        to_calculate.push(current);
+        to_calculate.push(next);
+      }
+      continue;
+    }
+
+    // We've reached a pair of elements that don't match.  Calculate the LCS for
+    // both cases of either being left unmatched and take the max.  Visit
+    // `current` again afterwards, so its corresponding entry will be updated.
+    DiffMatchIndex next_src = {current.src_offset + 1, current.dst_offset};
+    DiffMatchIndex next_dst = {current.src_offset, current.dst_offset + 1};
+
+    if (IsCalculatedOrOutOfBound(next_src) &&
+        IsCalculatedOrOutOfBound(next_dst)) {
+      uint32_t best_match_length =
+          std::max(GetMemoizedLength(next_src), GetMemoizedLength(next_dst));
+      MarkMatched(current, best_match_length, false);
+      continue;
+    }
+
+    to_calculate.push(current);
+    if (!IsCalculatedOrOutOfBound(next_src)) {
+      to_calculate.push(next_src);
+    }
+    if (!IsCalculatedOrOutOfBound(next_dst)) {
+      to_calculate.push(next_dst);
     }
   }
-
-  // Go over the matched strip and update the table as well.
-  assert(src_cur - src_start == dst_cur - dst_start);
-  size_t contiguous_match_len = src_cur - src_start;
-
-  for (size_t i = 0; i < contiguous_match_len; ++i) {
-    --src_cur;
-    --dst_cur;
-    assert(IsInBound(src_cur, dst_cur));
-
-    DiffMatchEntry& entry = table_[src_cur][dst_cur];
-    assert(!entry.valid);
-    entry.best_match_length = ++best_match_length;
-    entry.matched = true;
-    entry.valid = true;
-  }
-
-  return best_match_length;
 }
 
 template <typename Sequence>
@@ -171,20 +201,19 @@ void LongestCommonSubsequence<Sequence>::RetrieveMatch(
   src_match_result->resize(src_.size(), false);
   dst_match_result->resize(dst_.size(), false);
 
-  size_t src_cur = 0;
-  size_t dst_cur = 0;
-  while (IsInBound(src_cur, dst_cur)) {
-    if (IsMatched(src_cur, dst_cur)) {
-      (*src_match_result)[src_cur++] = true;
-      (*dst_match_result)[dst_cur++] = true;
+  DiffMatchIndex current = {0, 0};
+  while (IsInBound(current)) {
+    if (IsMatched(current)) {
+      (*src_match_result)[current.src_offset++] = true;
+      (*dst_match_result)[current.dst_offset++] = true;
       continue;
     }
 
-    if (GetMemoizedLength(src_cur + 1, dst_cur) >=
-        GetMemoizedLength(src_cur, dst_cur + 1)) {
-      ++src_cur;
+    if (GetMemoizedLength({current.src_offset + 1, current.dst_offset}) >=
+        GetMemoizedLength({current.src_offset, current.dst_offset + 1})) {
+      ++current.src_offset;
     } else {
-      ++dst_cur;
+      ++current.dst_offset;
     }
   }
 }

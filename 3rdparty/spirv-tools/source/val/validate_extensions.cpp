@@ -2804,8 +2804,9 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
             bool invalid = false;
             auto* component_count = _.FindDef(inst->word(i));
             if (IsConstIntScalarTypeWith32Or64Bits(_, component_count)) {
-              // TODO: We need a spec discussion for the bindless array.
-              if (!component_count->word(3)) {
+              // TODO: We need a spec discussion for the runtime array for
+              // OpenCL.
+              if (!vulkanDebugInfo && !component_count->word(3)) {
                 invalid = true;
               }
             } else if (component_count->words().size() > 6 &&
