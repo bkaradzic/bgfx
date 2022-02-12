@@ -542,6 +542,8 @@ enum class Decoration : unsigned {
     PrefetchINTEL = 5902,
     StallEnableINTEL = 5905,
     FuseLoopsInFunctionINTEL = 5907,
+    AliasScopeINTEL = 5914,
+    NoAliasINTEL = 5915,
     BufferLocationINTEL = 5921,
     IOPipeStorageINTEL = 5944,
     FunctionFloatingPointModeINTEL = 6080,
@@ -800,6 +802,8 @@ enum class MemoryAccessShift : unsigned {
     MakePointerVisibleKHR = 4,
     NonPrivatePointer = 5,
     NonPrivatePointerKHR = 5,
+    AliasScopeINTELMask = 16,
+    NoAliasINTELMask = 17,
     Max = 0x7fffffff,
 };
 
@@ -814,6 +818,8 @@ enum class MemoryAccessMask : unsigned {
     MakePointerVisibleKHR = 0x00000010,
     NonPrivatePointer = 0x00000020,
     NonPrivatePointerKHR = 0x00000020,
+    AliasScopeINTELMask = 0x00010000,
+    NoAliasINTELMask = 0x00020000,
 };
 
 enum class Scope : unsigned {
@@ -1055,6 +1061,7 @@ enum class Capability : unsigned {
     FPGAMemoryAccessesINTEL = 5898,
     FPGAClusterAttributesINTEL = 5904,
     LoopFuseINTEL = 5906,
+    MemoryAccessAliasingINTEL = 5910,
     FPGABufferLocationINTEL = 5920,
     ArbitraryPrecisionFixedPointINTEL = 5922,
     USMStorageClassesINTEL = 5935,
@@ -1797,6 +1804,9 @@ enum class Op : unsigned {
     OpArbitraryFloatPowRINTEL = 5881,
     OpArbitraryFloatPowNINTEL = 5882,
     OpLoopControlINTEL = 5887,
+    OpAliasDomainDeclINTEL = 5911,
+    OpAliasScopeDeclINTEL = 5912,
+    OpAliasScopeListDeclINTEL = 5913,
     OpFixedSqrtINTEL = 5923,
     OpFixedRecipINTEL = 5924,
     OpFixedRsqrtINTEL = 5925,
@@ -2448,6 +2458,9 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpArbitraryFloatPowRINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpArbitraryFloatPowNINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpLoopControlINTEL: *hasResult = false; *hasResultType = false; break;
+    case Op::OpAliasDomainDeclINTEL: *hasResult = true; *hasResultType = false; break;
+    case Op::OpAliasScopeDeclINTEL: *hasResult = true; *hasResultType = false; break;
+    case Op::OpAliasScopeListDeclINTEL: *hasResult = true; *hasResultType = false; break;
     case Op::OpFixedSqrtINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpFixedRecipINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpFixedRsqrtINTEL: *hasResult = true; *hasResultType = true; break;

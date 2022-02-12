@@ -568,6 +568,8 @@
                     "PrefetchINTEL": 5902,
                     "StallEnableINTEL": 5905,
                     "FuseLoopsInFunctionINTEL": 5907,
+                    "AliasScopeINTEL": 5914,
+                    "NoAliasINTEL": 5915,
                     "BufferLocationINTEL": 5921,
                     "IOPipeStorageINTEL": 5944,
                     "FunctionFloatingPointModeINTEL": 6080,
@@ -786,7 +788,9 @@
                     "MakePointerVisible": 4,
                     "MakePointerVisibleKHR": 4,
                     "NonPrivatePointer": 5,
-                    "NonPrivatePointerKHR": 5
+                    "NonPrivatePointerKHR": 5,
+                    "AliasScopeINTELMask": 16,
+                    "NoAliasINTELMask": 17
                 }
             },
             {
@@ -1039,6 +1043,7 @@
                     "FPGAMemoryAccessesINTEL": 5898,
                     "FPGAClusterAttributesINTEL": 5904,
                     "LoopFuseINTEL": 5906,
+                    "MemoryAccessAliasingINTEL": 5910,
                     "FPGABufferLocationINTEL": 5920,
                     "ArbitraryPrecisionFixedPointINTEL": 5922,
                     "USMStorageClassesINTEL": 5935,
@@ -1792,6 +1797,9 @@
                     "OpArbitraryFloatPowRINTEL": 5881,
                     "OpArbitraryFloatPowNINTEL": 5882,
                     "OpLoopControlINTEL": 5887,
+                    "OpAliasDomainDeclINTEL": 5911,
+                    "OpAliasScopeDeclINTEL": 5912,
+                    "OpAliasScopeListDeclINTEL": 5913,
                     "OpFixedSqrtINTEL": 5923,
                     "OpFixedRecipINTEL": 5924,
                     "OpFixedRsqrtINTEL": 5925,

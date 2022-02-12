@@ -515,6 +515,8 @@ spv = {
         PrefetchINTEL = 5902,
         StallEnableINTEL = 5905,
         FuseLoopsInFunctionINTEL = 5907,
+        AliasScopeINTEL = 5914,
+        NoAliasINTEL = 5915,
         BufferLocationINTEL = 5921,
         IOPipeStorageINTEL = 5944,
         FunctionFloatingPointModeINTEL = 6080,
@@ -767,6 +769,8 @@ spv = {
         MakePointerVisibleKHR = 4,
         NonPrivatePointer = 5,
         NonPrivatePointerKHR = 5,
+        AliasScopeINTELMask = 16,
+        NoAliasINTELMask = 17,
     },
 
     MemoryAccessMask = {
@@ -780,6 +784,8 @@ spv = {
         MakePointerVisibleKHR = 0x00000010,
         NonPrivatePointer = 0x00000020,
         NonPrivatePointerKHR = 0x00000020,
+        AliasScopeINTELMask = 0x00010000,
+        NoAliasINTELMask = 0x00020000,
     },
 
     Scope = {
@@ -1017,6 +1023,7 @@ spv = {
         FPGAMemoryAccessesINTEL = 5898,
         FPGAClusterAttributesINTEL = 5904,
         LoopFuseINTEL = 5906,
+        MemoryAccessAliasingINTEL = 5910,
         FPGABufferLocationINTEL = 5920,
         ArbitraryPrecisionFixedPointINTEL = 5922,
         USMStorageClassesINTEL = 5935,
@@ -1748,6 +1755,9 @@ spv = {
         OpArbitraryFloatPowRINTEL = 5881,
         OpArbitraryFloatPowNINTEL = 5882,
         OpLoopControlINTEL = 5887,
+        OpAliasDomainDeclINTEL = 5911,
+        OpAliasScopeDeclINTEL = 5912,
+        OpAliasScopeListDeclINTEL = 5913,
         OpFixedSqrtINTEL = 5923,
         OpFixedRecipINTEL = 5924,
         OpFixedRsqrtINTEL = 5925,

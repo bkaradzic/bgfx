@@ -7870,6 +7870,43 @@
       "version" : "None"
     },
     {
+      "opname" : "OpAliasDomainDeclINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5911,
+      "operands" : [
+        { "kind" : "IdResult"},
+        { "kind" : "IdRef", "quantifier" : "?", "name" : "'Name'" }
+      ],
+      "capabilities" : [ "MemoryAccessAliasingINTEL" ],
+      "extensions" : [ "SPV_INTEL_memory_access_aliasing" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAliasScopeDeclINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5912,
+      "operands" : [
+        { "kind" : "IdResult"},
+        { "kind" : "IdRef", "name" : "'Alias Domain'"},
+        { "kind" : "IdRef", "quantifier" : "?", "name" : "'Name'" }
+      ],
+      "capabilities" : [ "MemoryAccessAliasingINTEL" ],
+      "extensions" : [ "SPV_INTEL_memory_access_aliasing" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAliasScopeListDeclINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5913,
+      "operands" : [
+        { "kind" : "IdResult"},
+        { "kind" : "IdRef", "quantifier" : "*", "name" : "'AliasScope1, AliasScope2, ...'" }
+      ],
+      "capabilities" : [ "MemoryAccessAliasingINTEL" ],
+      "extensions" : [ "SPV_INTEL_memory_access_aliasing" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpFixedSqrtINTEL",
       "class"  : "@exclude",
       "opcode" : 5923,
@@ -9090,6 +9127,26 @@
           "capabilities" : [ "VulkanMemoryModel" ],
           "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
           "version" : "1.5"
+        },
+        {
+          "enumerant" : "AliasScopeINTELMask",
+          "value" : "0x10000",
+          "parameters" : [
+            { "kind" : "IdRef" }
+          ],
+          "capabilities" : [ "MemoryAccessAliasingINTEL" ],
+          "extensions" : [ "SPV_INTEL_memory_access_aliasing" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "NoAliasINTELMask",
+          "parameters" : [
+            { "kind" : "IdRef" }
+          ],
+          "value" : "0x20000",
+          "capabilities" : [ "MemoryAccessAliasingINTEL" ],
+          "extensions" : [ "SPV_INTEL_memory_access_aliasing" ],
+          "version" : "None"
         }
       ]
     },
@@ -11580,6 +11637,24 @@
           "version" : "None"
         },
         {
+          "enumerant" : "AliasScopeINTEL",
+          "value" : 5914,
+          "parameters" : [
+            { "kind" : "IdRef", "name" : "'Aliasing Scopes List'" }
+          ],
+          "capabilities" : [ "MemoryAccessAliasingINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "NoAliasINTEL",
+          "value" : 5915,
+          "parameters" : [
+            { "kind" : "IdRef", "name" : "'Aliasing Scopes List'" }
+          ],
+          "capabilities" : [ "MemoryAccessAliasingINTEL" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "BufferLocationINTEL",
           "value" : 5921,
           "parameters" : [
@@ -13675,6 +13750,12 @@
           "enumerant" : "LoopFuseINTEL",
           "value" : 5906,
           "extensions" : [ "SPV_INTEL_loop_fuse" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MemoryAccessAliasingINTEL",
+          "value" : 5910,
+          "extensions" : [ "SPV_INTEL_memory_access_aliasing" ],
           "version" : "None"
         },
         {
