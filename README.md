@@ -488,6 +488,17 @@ https://www.guildwars2.com/
 
 ![Guild-Wars-2-wallpaper](https://d3b4yo2b5lbfy.cloudfront.net/wp-content/uploads/wallpapers/GuildWars2-01-800x600.jpg)
 
+## Griftlands
+
+Griftlands is a roguelike deck-building game with role-playing story elements in a science fiction setting, developed and published by Klei Entertainment.
+
+https://klei.com/games/griftlands
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=ufl14_Ne5Lg" 
+target="_blank"><img src="http://img.youtube.com/vi/ufl14_Ne5Lg/0.jpg" 
+alt="Griftlands"
+width="640" height="480" border="0" /></a>
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
