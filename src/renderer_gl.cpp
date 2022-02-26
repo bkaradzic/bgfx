@@ -5164,7 +5164,7 @@ namespace bgfx { namespace gl
 
 					uint32_t baseVertex = _baseVertex*_layout.m_stride + _layout.m_offset[attr];
 					if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) || s_renderGL->m_gles3)
-					&& (AttribType::Uint8 == type || AttribType::Int16 == type)
+					&&  !isFloat(type)
 					&&  !normalized)
 					{
 						GL_CHECK(glVertexAttribIPointer(loc

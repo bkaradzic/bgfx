@@ -122,6 +122,21 @@ namespace bgfx
 		_asInt      = !!(val&(1<<8) );
 	}
 
+	static const bool s_attribTypeIsFloat[] =
+	{
+		false, // Uint8
+		false, // Uint10
+		false, // Int16
+		true,  // Half
+		true,  // Float
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeIsFloat) == AttribType::Count);
+
+	bool isFloat(AttribType::Enum _type)
+	{
+		return s_attribTypeIsFloat[_type];
+	}
+
 	static const char* s_attrName[] =
 	{
 		"P",  "Attrib::Position",
