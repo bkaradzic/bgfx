@@ -6894,7 +6894,7 @@ namespace bgfx { namespace gl
 
 	uint16_t FrameBufferGL::destroy()
 	{
-		if (0 != m_num)
+		if (0 != m_fbo[0])
 		{
 			GL_CHECK(glDeleteFramebuffers(0 == m_fbo[1] ? 1 : 2, m_fbo) );
 			m_num = 0;
