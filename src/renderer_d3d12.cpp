@@ -5110,8 +5110,20 @@ namespace bgfx { namespace d3d12
 		box.top    = 0;
 		box.right  = box.left + _rect.m_width;
 		box.bottom = box.top  + _rect.m_height;
-		box.front  = _z;
-		box.back   = _z + _depth;
+
+		uint32_t layer = 0;
+
+		if (TextureD3D12::Texture3D == m_type)
+		{
+			box.front = _z;
+			box.back  = box.front + _depth;
+		}
+		else
+		{
+			layer = _z * (TextureD3D12::TextureCube == m_type ? 6 : 1);
+			box.front = 0;
+			box.back  = 1;
+		}
 
 		uint8_t* srcData = _mem->data;
 		uint8_t* temp = NULL;
