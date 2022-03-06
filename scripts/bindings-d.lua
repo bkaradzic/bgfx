@@ -90,7 +90,7 @@ local function convert_type(arg)
 	elseif hasPrefix(ctype, "uint16_t") then
 		ctype = ctype:gsub("uint16_t", "ushort")
 	elseif hasPrefix(ctype, "uint8_t") then
-		ctype = ctype:gsub("uint8_t", "byte")
+		ctype = ctype:gsub("uint8_t", "ubyte")
 	elseif hasPrefix(ctype, "uintptr_t") then
 		ctype = ctype:gsub("uintptr_t", "ulong")
 	elseif hasPrefix(ctype, "const ") and hasSuffix(ctype, "*") then
