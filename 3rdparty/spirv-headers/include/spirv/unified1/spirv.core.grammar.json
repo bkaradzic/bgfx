@@ -5029,7 +5029,7 @@
       "opname" : "OpDemoteToHelperInvocationEXT",
       "class"  : "Control-Flow",
       "opcode" : 5380,
-      "capabilities" : [ "DemoteToHelperInvocation" ],
+      "capabilities" : [ "DemoteToHelperInvocationEXT" ],
       "version" : "1.6"
     },
     {
@@ -8548,6 +8548,30 @@
         { "kind" : "IdRef",        "quantifier" : "*", "name" : "'Constituents'" }
       ],
       "capabilities" : [ "LongConstantCompositeINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpControlBarrierArriveINTEL",
+      "class"  : "Barrier",
+      "opcode" : 6142,
+      "operands" : [
+        { "kind" : "IdScope",           "name" : "'Execution'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
+        { "kind" : "IdMemorySemantics", "name" : "'Semantics'" }
+      ],
+      "capabilities" : [ "SplitBarrierINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpControlBarrierWaitINTEL",
+      "class"  : "Barrier",
+      "opcode" : 6143,
+      "operands" : [
+        { "kind" : "IdScope",           "name" : "'Execution'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
+        { "kind" : "IdMemorySemantics", "name" : "'Semantics'" }
+      ],
+      "capabilities" : [ "SplitBarrierINTEL" ],
       "version" : "None"
     }
   ],
@@ -13880,6 +13904,12 @@
           "enumerant" : "DebugInfoModuleINTEL",
           "value" : 6114,
           "extensions" : [ "SPV_INTEL_debug_module" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SplitBarrierINTEL",
+          "value" : 6141,
+          "extensions" : [ "SPV_INTEL_split_barrier" ],
           "version" : "None"
         }
       ]

@@ -1087,6 +1087,7 @@ namespace Spv
             OptNoneINTEL = 6094,
             AtomicFloat16AddEXT = 6095,
             DebugInfoModuleINTEL = 6114,
+            SplitBarrierINTEL = 6141,
         }
 
         public enum RayFlagsShift
@@ -1851,6 +1852,8 @@ namespace Spv
             OpTypeStructContinuedINTEL = 6090,
             OpConstantCompositeContinuedINTEL = 6091,
             OpSpecConstantCompositeContinuedINTEL = 6092,
+            OpControlBarrierArriveINTEL = 6142,
+            OpControlBarrierWaitINTEL = 6143,
         }
     }
 }
