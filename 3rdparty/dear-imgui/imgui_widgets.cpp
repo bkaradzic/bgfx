@@ -3548,6 +3548,9 @@ bool ImGui::InputDouble(const char* label, double* v, double step, double step_f
 // - InputText()
 // - InputTextWithHint()
 // - InputTextMultiline()
+// - InputTextGetCharInfo() [Internal]
+// - InputTextReindexLines() [Internal]
+// - InputTextReindexLinesRange() [Internal]
 // - InputTextEx() [Internal]
 //-------------------------------------------------------------------------
 
@@ -5012,8 +5015,7 @@ bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flag
 
     if (label != label_display_end && !(flags & ImGuiColorEditFlags_NoLabel))
     {
-        const float text_offset_x = (flags & ImGuiColorEditFlags_NoInputs) ? w_button : w_full + style.ItemInnerSpacing.x;
-        window->DC.CursorPos = ImVec2(pos.x + text_offset_x, pos.y + style.FramePadding.y);
+        SameLine(0.0f, style.ItemInnerSpacing.x);
         TextEx(label, label_display_end);
     }
 
@@ -6940,7 +6942,7 @@ bool ImGui::BeginMenuEx(const char* label, const char* icon, bool enabled)
     if (!enabled)
         EndDisabled();
 
-    const bool hovered = (g.HoveredId == id) && enabled;
+    const bool hovered = (g.HoveredId == id) && enabled && !g.NavDisableMouseHover;
     if (menuset_is_open)
         g.NavWindow = backed_nav_window;
 
