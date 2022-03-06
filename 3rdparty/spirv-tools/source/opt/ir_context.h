@@ -867,8 +867,7 @@ inline IRContext::Analysis operator|(IRContext::Analysis lhs,
 
 inline IRContext::Analysis& operator|=(IRContext::Analysis& lhs,
                                        IRContext::Analysis rhs) {
-  lhs = static_cast<IRContext::Analysis>(static_cast<int>(lhs) |
-                                         static_cast<int>(rhs));
+  lhs = lhs | rhs;
   return lhs;
 }
 

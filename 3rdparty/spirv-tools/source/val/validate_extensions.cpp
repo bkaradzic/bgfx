@@ -147,6 +147,24 @@ bool DoesDebugInfoOperandMatchExpectation(
   return true;
 }
 
+// Overload for NonSemanticShaderDebugInfo100Instructions.
+bool DoesDebugInfoOperandMatchExpectation(
+    const ValidationState_t& _,
+    const std::function<bool(NonSemanticShaderDebugInfo100Instructions)>&
+        expectation,
+    const Instruction* inst, uint32_t word_index) {
+  if (inst->words().size() <= word_index) return false;
+  auto* debug_inst = _.FindDef(inst->word(word_index));
+  if (debug_inst->opcode() != SpvOpExtInst ||
+      (debug_inst->ext_inst_type() !=
+       SPV_EXT_INST_TYPE_NONSEMANTIC_SHADER_DEBUGINFO_100) ||
+      !expectation(
+          NonSemanticShaderDebugInfo100Instructions(debug_inst->word(4)))) {
+    return false;
+  }
+  return true;
+}
+
 // Check that the operand of a debug info instruction |inst| at |word_index|
 // is a result id of an debug info instruction whose debug instruction type
 // is |expected_debug_inst|.
@@ -223,6 +241,18 @@ spv_result_t ValidateOperandDebugType(
     const Instruction* inst, uint32_t word_index,
     const std::function<std::string()>& ext_inst_name,
     bool allow_template_param) {
+  // Check for NonSemanticShaderDebugInfo100 specific types.
+  if (inst->ext_inst_type() ==
+      SPV_EXT_INST_TYPE_NONSEMANTIC_SHADER_DEBUGINFO_100) {
+    std::function<bool(NonSemanticShaderDebugInfo100Instructions)> expectation =
+        [](NonSemanticShaderDebugInfo100Instructions dbg_inst) {
+          return dbg_inst == NonSemanticShaderDebugInfo100DebugTypeMatrix;
+        };
+    if (DoesDebugInfoOperandMatchExpectation(_, expectation, inst, word_index))
+      return SPV_SUCCESS;
+  }
+
+  // Check for common types.
   std::function<bool(CommonDebugInfoInstructions)> expectation =
       [&allow_template_param](CommonDebugInfoInstructions dbg_inst) {
         if (allow_template_param &&
@@ -2718,6 +2748,86 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
         ext_inst_type == SPV_EXT_INST_TYPE_NONSEMANTIC_SHADER_DEBUGINFO_100;
 
     auto num_words = inst->words().size();
+
+    // Handle any non-common NonSemanticShaderDebugInfo instructions.
+    if (vulkanDebugInfo) {
+      const NonSemanticShaderDebugInfo100Instructions ext_inst_key =
+          NonSemanticShaderDebugInfo100Instructions(ext_inst_index);
+      switch (ext_inst_key) {
+        // The following block of instructions will be handled by the common
+        // validation.
+        case NonSemanticShaderDebugInfo100DebugInfoNone:
+        case NonSemanticShaderDebugInfo100DebugCompilationUnit:
+        case NonSemanticShaderDebugInfo100DebugTypeBasic:
+        case NonSemanticShaderDebugInfo100DebugTypePointer:
+        case NonSemanticShaderDebugInfo100DebugTypeQualifier:
+        case NonSemanticShaderDebugInfo100DebugTypeArray:
+        case NonSemanticShaderDebugInfo100DebugTypeVector:
+        case NonSemanticShaderDebugInfo100DebugTypedef:
+        case NonSemanticShaderDebugInfo100DebugTypeFunction:
+        case NonSemanticShaderDebugInfo100DebugTypeEnum:
+        case NonSemanticShaderDebugInfo100DebugTypeComposite:
+        case NonSemanticShaderDebugInfo100DebugTypeMember:
+        case NonSemanticShaderDebugInfo100DebugTypeInheritance:
+        case NonSemanticShaderDebugInfo100DebugTypePtrToMember:
+        case NonSemanticShaderDebugInfo100DebugTypeTemplate:
+        case NonSemanticShaderDebugInfo100DebugTypeTemplateParameter:
+        case NonSemanticShaderDebugInfo100DebugTypeTemplateTemplateParameter:
+        case NonSemanticShaderDebugInfo100DebugTypeTemplateParameterPack:
+        case NonSemanticShaderDebugInfo100DebugGlobalVariable:
+        case NonSemanticShaderDebugInfo100DebugFunctionDeclaration:
+        case NonSemanticShaderDebugInfo100DebugFunction:
+        case NonSemanticShaderDebugInfo100DebugLexicalBlock:
+        case NonSemanticShaderDebugInfo100DebugLexicalBlockDiscriminator:
+        case NonSemanticShaderDebugInfo100DebugScope:
+        case NonSemanticShaderDebugInfo100DebugNoScope:
+        case NonSemanticShaderDebugInfo100DebugInlinedAt:
+        case NonSemanticShaderDebugInfo100DebugLocalVariable:
+        case NonSemanticShaderDebugInfo100DebugInlinedVariable:
+        case NonSemanticShaderDebugInfo100DebugDeclare:
+        case NonSemanticShaderDebugInfo100DebugValue:
+        case NonSemanticShaderDebugInfo100DebugOperation:
+        case NonSemanticShaderDebugInfo100DebugExpression:
+        case NonSemanticShaderDebugInfo100DebugMacroDef:
+        case NonSemanticShaderDebugInfo100DebugMacroUndef:
+        case NonSemanticShaderDebugInfo100DebugImportedEntity:
+        case NonSemanticShaderDebugInfo100DebugSource:
+          break;
+        case NonSemanticShaderDebugInfo100DebugTypeMatrix: {
+          CHECK_DEBUG_OPERAND("Vector Type", CommonDebugInfoDebugTypeVector, 5);
+
+          CHECK_CONST_UINT_OPERAND("Vector Count", 6);
+
+          uint32_t vector_count = inst->word(6);
+          uint64_t const_val;
+          if (!_.GetConstantValUint64(vector_count, &const_val)) {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << ext_inst_name()
+                   << ": Vector Count must be 32-bit integer OpConstant";
+          }
+
+          vector_count = const_val & 0xffffffff;
+          if (!vector_count || vector_count > 4) {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << ext_inst_name() << ": Vector Count must be positive "
+                   << "integer less than or equal to 4";
+          }
+          break;
+        }
+        // TODO: Add validation rules for remaining cases as well.
+        case NonSemanticShaderDebugInfo100DebugFunctionDefinition:
+        case NonSemanticShaderDebugInfo100DebugSourceContinued:
+        case NonSemanticShaderDebugInfo100DebugLine:
+        case NonSemanticShaderDebugInfo100DebugNoLine:
+        case NonSemanticShaderDebugInfo100DebugBuildIdentifier:
+        case NonSemanticShaderDebugInfo100DebugStoragePath:
+        case NonSemanticShaderDebugInfo100DebugEntryPoint:
+          break;
+        case NonSemanticShaderDebugInfo100InstructionsMax:
+          assert(0);
+          break;
+      }
+    }
 
     // Handle any non-common OpenCL insts, then common
     if (ext_inst_type != SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100 ||

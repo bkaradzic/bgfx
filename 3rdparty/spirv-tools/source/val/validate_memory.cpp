@@ -596,23 +596,23 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
         }
       }
     }
-  }
 
-  // Vulkan Appendix A: Check that if contains initializer, then
-  // storage class is Output, Private, or Function.
-  if (inst->operands().size() > 3 && storage_class != SpvStorageClassOutput &&
-      storage_class != SpvStorageClassPrivate &&
-      storage_class != SpvStorageClassFunction) {
-    if (spvIsVulkanEnv(_.context()->target_env)) {
+    // Initializers in Vulkan are only allowed in some storage clases
+    if (inst->operands().size() > 3) {
       if (storage_class == SpvStorageClassWorkgroup) {
         auto init_id = inst->GetOperandAs<uint32_t>(3);
         auto init = _.FindDef(init_id);
         if (init->opcode() != SpvOpConstantNull) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << "Variable initializers in Workgroup storage class are "
-                    "limited to OpConstantNull";
+                 << _.VkErrorID(4734) << "OpVariable, <id> '"
+                 << _.getIdName(inst->id())
+                 << "', initializers are limited to OpConstantNull in "
+                    "Workgroup "
+                    "storage class";
         }
-      } else {
+      } else if (storage_class != SpvStorageClassOutput &&
+                 storage_class != SpvStorageClassPrivate &&
+                 storage_class != SpvStorageClassFunction) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << _.VkErrorID(4651) << "OpVariable, <id> '"
                << _.getIdName(inst->id())
