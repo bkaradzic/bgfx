@@ -393,7 +393,7 @@ public:
 		// and will be addressed using the current ViewIndex.
 		bool arrayed_subpass_input = false;
 
-		// Whether to use SIMD-group or quadgroup functions to implement group nnon-uniform
+		// Whether to use SIMD-group or quadgroup functions to implement group non-uniform
 		// operations. Some GPUs on iOS do not support the SIMD-group functions, only the
 		// quadgroup functions.
 		bool ios_use_simdgroup_functions = false;
@@ -443,6 +443,11 @@ public:
 		bool is_macos() const
 		{
 			return platform == macOS;
+		}
+
+		bool use_quadgroup_operation() const
+		{
+			return is_ios() && !ios_use_simdgroup_functions;
 		}
 
 		void set_msl_version(uint32_t major, uint32_t minor = 0, uint32_t patch = 0)
@@ -826,12 +831,20 @@ protected:
 	bool add_component_variable_to_interface_block(spv::StorageClass storage, const std::string &ib_var_ref,
 	                                               SPIRVariable &var, const SPIRType &type,
 	                                               InterfaceBlockMeta &meta);
-	void add_plain_member_variable_to_interface_block(spv::StorageClass storage, const std::string &ib_var_ref,
-	                                                  SPIRType &ib_type, SPIRVariable &var, uint32_t index,
-	                                                  InterfaceBlockMeta &meta);
-	void add_composite_member_variable_to_interface_block(spv::StorageClass storage, const std::string &ib_var_ref,
-	                                                      SPIRType &ib_type, SPIRVariable &var, uint32_t index,
-	                                                      InterfaceBlockMeta &meta);
+	void add_plain_member_variable_to_interface_block(spv::StorageClass storage,
+	                                                  const std::string &ib_var_ref, SPIRType &ib_type,
+	                                                  SPIRVariable &var, SPIRType &var_type,
+	                                                  uint32_t mbr_idx, InterfaceBlockMeta &meta,
+	                                                  const std::string &mbr_name_qual,
+	                                                  const std::string &var_chain_qual,
+	                                                  uint32_t &location, uint32_t &var_mbr_idx);
+	void add_composite_member_variable_to_interface_block(spv::StorageClass storage,
+	                                                      const std::string &ib_var_ref, SPIRType &ib_type,
+	                                                      SPIRVariable &var, SPIRType &var_type,
+	                                                      uint32_t mbr_idx, InterfaceBlockMeta &meta,
+	                                                      const std::string &mbr_name_qual,
+	                                                      const std::string &var_chain_qual,
+	                                                      uint32_t &location, uint32_t &var_mbr_idx);
 	void add_tess_level_input_to_interface_block(const std::string &ib_var_ref, SPIRType &ib_type, SPIRVariable &var);
 
 	void fix_up_interface_member_indices(spv::StorageClass storage, uint32_t ib_type_id);
@@ -858,7 +871,7 @@ protected:
 	std::string entry_point_arg_stage_in();
 	void entry_point_args_builtin(std::string &args);
 	void entry_point_args_discrete_descriptors(std::string &args);
-	std::string to_qualified_member_name(const SPIRType &type, uint32_t index);
+	std::string append_member_name(const std::string &qualifier, const SPIRType &type, uint32_t index);
 	std::string ensure_valid_name(std::string name, std::string pfx);
 	std::string to_sampler_expression(uint32_t id);
 	std::string to_swizzle_expression(uint32_t id);

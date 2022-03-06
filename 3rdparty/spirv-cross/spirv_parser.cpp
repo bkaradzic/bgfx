@@ -31,7 +31,7 @@ namespace SPIRV_CROSS_NAMESPACE
 {
 Parser::Parser(vector<uint32_t> spirv)
 {
-	ir.spirv = move(spirv);
+	ir.spirv = std::move(spirv);
 }
 
 Parser::Parser(const uint32_t *spirv_data, size_t word_count)
@@ -259,7 +259,7 @@ void Parser::parse(const Instruction &instruction)
 	case OpExtension:
 	{
 		auto ext = extract_string(ir.spirv, instruction.offset);
-		ir.declared_extensions.push_back(move(ext));
+		ir.declared_extensions.push_back(std::move(ext));
 		break;
 	}
 
@@ -291,7 +291,15 @@ void Parser::parse(const Instruction &instruction)
 	{
 		// The SPIR-V debug information extended instructions might come at global scope.
 		if (current_block)
+		{
 			current_block->ops.push_back(instruction);
+			if (length >= 2)
+			{
+				const auto *type = maybe_get<SPIRType>(ops[0]);
+				if (type)
+					ir.load_type_width.insert({ ops[1], type->width });
+			}
+		}
 		break;
 	}
 
@@ -1059,6 +1067,7 @@ void Parser::parse(const Instruction &instruction)
 	}
 
 	case OpKill:
+	case OpTerminateInvocation:
 	{
 		if (!current_block)
 			SPIRV_CROSS_THROW("Trying to end a non-existing block.");
@@ -1211,10 +1220,9 @@ void Parser::parse(const Instruction &instruction)
 		{
 			const auto *type = maybe_get<SPIRType>(ops[0]);
 			if (type)
-			{
 				ir.load_type_width.insert({ ops[1], type->width });
-			}
 		}
+
 		if (!current_block)
 			SPIRV_CROSS_THROW("Currently no block to insert opcode.");
 
