@@ -656,6 +656,7 @@ string CompilerGLSL::compile()
 		backend.support_case_fallthrough = false;
 
 	// Scan the SPIR-V to find trivial uses of extensions.
+	fixup_anonymous_struct_names();
 	fixup_type_alias();
 	reorder_type_alias();
 	build_function_control_flow_graphs_and_analyze();
@@ -15789,6 +15790,52 @@ void CompilerGLSL::reset_name_caches()
 	block_ssbo_names.clear();
 	block_names.clear();
 	function_overloads.clear();
+}
+
+void CompilerGLSL::fixup_anonymous_struct_names(std::unordered_set<uint32_t> &visited, const SPIRType &type)
+{
+	if (visited.count(type.self))
+		return;
+	visited.insert(type.self);
+
+	for (uint32_t i = 0; i < uint32_t(type.member_types.size()); i++)
+	{
+		auto &mbr_type = get<SPIRType>(type.member_types[i]);
+
+		if (mbr_type.basetype == SPIRType::Struct)
+		{
+			// If there are multiple aliases, the output might be somewhat unpredictable,
+			// but the only real alternative in that case is to do nothing, which isn't any better.
+			// This check should be fine in practice.
+			if (get_name(mbr_type.self).empty() && !get_member_name(type.self, i).empty())
+			{
+				auto anon_name = join("anon_", get_member_name(type.self, i));
+				ParsedIR::sanitize_underscores(anon_name);
+				set_name(mbr_type.self, anon_name);
+			}
+
+			fixup_anonymous_struct_names(visited, mbr_type);
+		}
+	}
+}
+
+void CompilerGLSL::fixup_anonymous_struct_names()
+{
+	// HLSL codegen can often end up emitting anonymous structs inside blocks, which
+	// breaks GL linking since all names must match ...
+	// Try to emit sensible code, so attempt to find such structs and emit anon_$member.
+
+	// Breaks exponential explosion with weird type trees.
+	std::unordered_set<uint32_t> visited;
+
+	ir.for_each_typed_id<SPIRType>([&](uint32_t, SPIRType &type) {
+		if (type.basetype == SPIRType::Struct &&
+		    (has_decoration(type.self, DecorationBlock) ||
+		     has_decoration(type.self, DecorationBufferBlock)))
+		{
+			fixup_anonymous_struct_names(visited, type);
+		}
+	});
 }
 
 void CompilerGLSL::fixup_type_alias()

@@ -1371,6 +1371,7 @@ string CompilerMSL::compile()
 	for (auto &id : next_metal_resource_ids)
 		id = 0;
 
+	fixup_anonymous_struct_names();
 	fixup_type_alias();
 	replace_illegal_names();
 	sync_entry_point_aliases_and_names();
@@ -3132,6 +3133,14 @@ void CompilerMSL::add_variable_to_interface_block(StorageClass storage, const st
 		return;
 	}
 
+	// If variable names alias, they will end up with wrong names in the interface struct, because
+	// there might be aliases in the member name cache and there would be a mismatch in fixup_in code.
+	// Make sure to register the variables as unique resource names ahead of time.
+	// This would normally conflict with the name cache when emitting local variables,
+	// but this happens in the setup stage, before we hit compilation loops.
+	// The name cache is cleared before we actually emit code, so this is safe.
+	add_resource_name(var.self);
+
 	if (var_type.basetype == SPIRType::Struct)
 	{
 		bool block_requires_flattening = variable_storage_requires_stage_io(storage) || is_block;
@@ -3189,7 +3198,7 @@ void CompilerMSL::add_variable_to_interface_block(StorageClass storage, const st
 
 					if (storage == StorageClassOutput && is_stage_output_block_member_masked(var, mbr_idx, meta.strip_array))
 					{
-						location = UINT32_MAX;		// Skip this member and resolve location again on next var member
+						location = UINT32_MAX; // Skip this member and resolve location again on next var member
 
 						if (is_block)
 							masked_block = true;
@@ -3226,16 +3235,18 @@ void CompilerMSL::add_variable_to_interface_block(StorageClass storage, const st
 					{
 						bool is_composite_type = is_matrix(mbr_type) || is_array(mbr_type) || mbr_type.basetype == SPIRType::Struct;
 						bool attribute_load_store =
-						storage == StorageClassInput && get_execution_model() != ExecutionModelFragment;
+								storage == StorageClassInput && get_execution_model() != ExecutionModelFragment;
 						bool storage_is_stage_io = variable_storage_requires_stage_io(storage);
 
 						// Clip/CullDistance always need to be declared as user attributes.
 						if (builtin == BuiltInClipDistance || builtin == BuiltInCullDistance)
 							is_builtin = false;
 
-						string mbr_name_qual = to_name(var_type.self);
-						string var_chain_qual = to_name(var.self);
-						if (elem_cnt > 1) {
+						const string var_name = to_name(var.self);
+						string mbr_name_qual = var_name;
+						string var_chain_qual = var_name;
+						if (elem_cnt > 1)
+						{
 							mbr_name_qual += join("_", elem_idx);
 							var_chain_qual += join("[", elem_idx, "]");
 						}
