@@ -326,17 +326,20 @@ spv_result_t ValidateDecorationTarget(ValidationState_t& _, SpvDecoration dec,
       case SpvDecorationLocation:
       case SpvDecorationComponent:
         // Location is used for input, output and ray tracing stages.
-        if (sc == SpvStorageClassStorageBuffer ||
-            sc == SpvStorageClassUniform ||
-            sc == SpvStorageClassUniformConstant ||
-            sc == SpvStorageClassWorkgroup || sc == SpvStorageClassPrivate ||
-            sc == SpvStorageClassFunction) {
+        if (sc != SpvStorageClassInput && sc != SpvStorageClassOutput &&
+            sc != SpvStorageClassRayPayloadKHR &&
+            sc != SpvStorageClassIncomingRayPayloadKHR &&
+            sc != SpvStorageClassHitAttributeKHR &&
+            sc != SpvStorageClassCallableDataKHR &&
+            sc != SpvStorageClassIncomingCallableDataKHR &&
+            sc != SpvStorageClassShaderRecordBufferKHR) {
           return _.diag(SPV_ERROR_INVALID_ID, target)
                  << LogStringForDecoration(dec)
                  << " decoration must not be applied to this storage class";
         }
         break;
       case SpvDecorationIndex:
+        // Langauge from SPIR-V definition of Index
         if (sc != SpvStorageClassOutput) {
           return fail(0) << "must be in the Output storage class";
         }
@@ -346,8 +349,8 @@ spv_result_t ValidateDecorationTarget(ValidationState_t& _, SpvDecoration dec,
         if (sc != SpvStorageClassStorageBuffer &&
             sc != SpvStorageClassUniform &&
             sc != SpvStorageClassUniformConstant) {
-          return fail(0) << "must be in the StorageBuffer, Uniform, or "
-                            "UniformConstant storage class";
+          return fail(6491) << "must be in the StorageBuffer, Uniform, or "
+                               "UniformConstant storage class";
         }
         break;
       case SpvDecorationInputAttachmentIndex:

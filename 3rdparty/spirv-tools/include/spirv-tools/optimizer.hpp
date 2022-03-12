@@ -896,6 +896,10 @@ Optimizer::PassToken CreateConvertToSampledImagePass(
     const std::vector<opt::DescriptorSetAndBinding>&
         descriptor_set_binding_pairs);
 
+// Creates a remove-dont-inline pass to remove the |DontInline| function control
+// from every function in the module.  This is useful if you want the inliner to
+// inline these functions some reason.
+Optimizer::PassToken CreateRemoveDontInlinePass();
 }  // namespace spvtools
 
 #endif  // INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_

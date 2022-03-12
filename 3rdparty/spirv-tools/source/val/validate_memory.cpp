@@ -519,20 +519,21 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
     }
   }
 
-  // Vulkan 14.5.1: Check type of PushConstant variables.
-  // Vulkan 14.5.2: Check type of UniformConstant and Uniform variables.
   if (spvIsVulkanEnv(_.context()->target_env)) {
+    // Vulkan Push Constant Interface section: Check type of PushConstant
+    // variables.
     if (storage_class == SpvStorageClassPushConstant) {
-      if (!IsAllowedTypeOrArrayOfSame(_, pointee, {SpvOpTypeStruct})) {
+      if (pointee->opcode() != SpvOpTypeStruct) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << "PushConstant OpVariable <id> '" << _.getIdName(inst->id())
                << "' has illegal type.\n"
-               << "From Vulkan spec, section 14.5.1:\n"
-               << "Such variables must be typed as OpTypeStruct, "
-               << "or an array of this type";
+               << "From Vulkan spec, Push Constant Interface section:\n"
+               << "Such variables must be typed as OpTypeStruct";
       }
     }
 
+    // Vulkan Descriptor Set Interface: Check type of UniformConstant and
+    // Uniform variables.
     if (storage_class == SpvStorageClassUniformConstant) {
       if (!IsAllowedTypeOrArrayOfSame(
               _, pointee,
@@ -667,7 +668,8 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
     if (value_type && value_type->opcode() == SpvOpTypeRuntimeArray) {
       if (!_.HasCapability(SpvCapabilityRuntimeDescriptorArrayEXT)) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
-               << "OpVariable, <id> '" << _.getIdName(inst->id())
+               << _.VkErrorID(4680) << "OpVariable, <id> '"
+               << _.getIdName(inst->id())
                << "', is attempting to create memory for an illegal type, "
                << "OpTypeRuntimeArray.\nFor Vulkan OpTypeRuntimeArray can only "
                << "appear as the final member of an OpTypeStruct, thus cannot "
@@ -679,6 +681,7 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
             storage_class != SpvStorageClassUniform &&
             storage_class != SpvStorageClassUniformConstant) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << _.VkErrorID(4680)
                  << "For Vulkan with RuntimeDescriptorArrayEXT, a variable "
                  << "containing OpTypeRuntimeArray must have storage class of "
                  << "StorageBuffer, Uniform, or UniformConstant.";
@@ -692,25 +695,30 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
     // as BufferBlock.
     if (value_type && value_type->opcode() == SpvOpTypeStruct) {
       if (DoesStructContainRTA(_, value_type)) {
-        if (storage_class == SpvStorageClassStorageBuffer) {
+        if (storage_class == SpvStorageClassStorageBuffer ||
+            storage_class == SpvStorageClassPhysicalStorageBuffer) {
           if (!_.HasDecoration(value_id, SpvDecorationBlock)) {
             return _.diag(SPV_ERROR_INVALID_ID, inst)
+                   << _.VkErrorID(4680)
                    << "For Vulkan, an OpTypeStruct variable containing an "
                    << "OpTypeRuntimeArray must be decorated with Block if it "
-                   << "has storage class StorageBuffer.";
+                   << "has storage class StorageBuffer or "
+                      "PhysicalStorageBuffer.";
           }
         } else if (storage_class == SpvStorageClassUniform) {
           if (!_.HasDecoration(value_id, SpvDecorationBufferBlock)) {
             return _.diag(SPV_ERROR_INVALID_ID, inst)
+                   << _.VkErrorID(4680)
                    << "For Vulkan, an OpTypeStruct variable containing an "
                    << "OpTypeRuntimeArray must be decorated with BufferBlock "
                    << "if it has storage class Uniform.";
           }
         } else {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << _.VkErrorID(4680)
                  << "For Vulkan, OpTypeStruct variables containing "
                  << "OpTypeRuntimeArray must have storage class of "
-                 << "StorageBuffer or Uniform.";
+                 << "StorageBuffer, PhysicalStorageBuffer, or Uniform.";
         }
       }
     }
