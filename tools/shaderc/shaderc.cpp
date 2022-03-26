@@ -2503,14 +2503,15 @@ namespace bgfx
 								}
 
 								bx::stringPrintf(code
-									, "#define texture2DLod       textureLod\n"
+									, "#define texture2D          texture\n"
+									  "#define texture2DLod       textureLod\n"
 									  "#define texture2DGrad      textureGrad\n"
 									  "#define texture2DProjLod   textureProjLod\n"
 									  "#define texture2DProjGrad  textureProjGrad\n"
 									  "#define textureCubeLod     textureLod\n"
 									  "#define textureCubeGrad    textureGrad\n"
 									  "#define texture3D          texture\n"
-									  "#define texture2DLofOffset textureLodOffset\n"
+									  "#define texture2DLodOffset textureLodOffset\n"
 									);
 
 								bx::stringPrintf(code, "#define attribute in\n");
