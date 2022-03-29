@@ -6476,9 +6476,10 @@ namespace bgfx { namespace gl
 					if (m_type == GL_FRAGMENT_SHADER)
 					{
 						bx::write(&writer
-							, "#define varying       in\n"
-							  "#define texture2D     texture\n"
-							  "#define texture2DProj textureProj\n"
+							, "#define varying        in\n"
+							  "#define texture2D      texture\n"
+							  "#define texture2DArray texture\n"
+							  "#define texture2DProj  textureProj\n"
 							, &err
 							);
 
