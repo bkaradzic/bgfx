@@ -2372,6 +2372,11 @@ namespace bgfx
 										bx::stringPrintf(code, "precision highp int;\n");
 									}
 
+									if (glsl_profile >= 300)
+									{
+										bx::stringPrintf(code, "precision highp sampler2DArray;\n");
+									}
+
 									// Pretend that all extensions are available.
 									// This will be stripped later.
 									if (usesTextureLod)
