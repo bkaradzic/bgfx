@@ -919,7 +919,7 @@ namespace bgfx { namespace d3d12
 			}
 
 			DX_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &m_options, sizeof(m_options) ) );
-			BX_TRACE("D3D12 options:")
+			BX_TRACE("D3D12 options:");
 			BX_TRACE("\tTiledResourcesTier %d", m_options.TiledResourcesTier);
 			BX_TRACE("\tResourceBindingTier %d", m_options.ResourceBindingTier);
 			BX_TRACE("\tROVsSupported %d", m_options.ROVsSupported);
