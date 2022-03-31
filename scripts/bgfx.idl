@@ -2035,8 +2035,8 @@ func.setViewClear
 	 { default = 0 }
 
 --- Set view clear flags with different clear color for each
---- frame buffer texture. Must use `bgfx::setPaletteColor` to setup clear color
---- palette.
+--- frame buffer texture. `bgfx::setPaletteColor` must be used to set up a
+--- clear color palette.
 func.setViewClear { cname = "set_view_clear_mrt" }
 	"void"
 	.id      "ViewId"   --- View id.
@@ -2127,7 +2127,7 @@ func.Encoder.setMarker
 --- Set render states for draw primitive.
 ---
 --- @remarks
----   1. To setup more complex states use:
+---   1. To set up more complex states use:
 ---      `BGFX_STATE_ALPHA_REF(_ref)`,
 ---      `BGFX_STATE_POINT_SIZE(_size)`,
 ---      `BGFX_STATE_BLEND_FUNC(_src, _dst)`,
@@ -2680,7 +2680,7 @@ func.setMarker
 --- Set render states for draw primitive.
 ---
 --- @remarks
----   1. To setup more complex states use:
+---   1. To set up more complex states use:
 ---      `BGFX_STATE_ALPHA_REF(_ref)`,
 ---      `BGFX_STATE_POINT_SIZE(_size)`,
 ---      `BGFX_STATE_BLEND_FUNC(_src, _dst)`,
