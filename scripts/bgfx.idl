@@ -759,12 +759,13 @@ struct.InternalData
 --- Platform data.
 struct.PlatformData { ctor }
 	.ndt          "void*" --- Native display type (*nix specific).
-	.nwh          "void*" --- Native window handle. If `NULL` bgfx will create headless
-	                      --- context/device if renderer API supports it.
-	.context      "void*" --- GL context, or D3D device. If `NULL`, bgfx will create context/device.
+	.nwh          "void*" --- Native window handle. If `NULL`, bgfx will create a headless
+	                      --- context/device, provided the rendering API supports it.
+	.context      "void*" --- GL context, D3D device, or Vulkan device. If `NULL`, bgfx
+						  --- will create context/device.
 	.backBuffer   "void*" --- GL back-buffer, or D3D render target view. If `NULL` bgfx will
 	                      --- create back-buffer color surface.
-	.backBufferDS "void*" --- Backbuffer depth/stencil. If `NULL` bgfx will create back-buffer
+	.backBufferDS "void*" --- Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
 	                      --- depth/stencil surface.
 
 --- Backbuffer resolution and reset parameters.
@@ -1137,7 +1138,7 @@ func.initCtor { cfunc }
 	"void"
 	.init "Init*"
 
---- Initialize bgfx library.
+--- Initialize the bgfx library.
 func.init { cfunc }
 	"bool"               --- `true` if initialization was successful.
 	.init "const Init &" --- Initialization parameters. See: `bgfx::Init` for more info.
@@ -1148,8 +1149,8 @@ func.shutdown
 
 --- Reset graphic settings and back-buffer size.
 ---
---- @attention This call doesn't actually change window size, it just
----   resizes back-buffer. Windowing code has to change window size.
+--- @attention This call doesn’t change the window size, it just resizes
+---   the back-buffer. Your windowing code controls the window size.
 ---
 func.reset
 	"void"
@@ -1166,7 +1167,7 @@ func.reset
 	                                 ---   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
 	                                 ---     occurs. Default behaviour is that flip occurs before rendering new
 	                                 ---     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
-	                                 ---   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB backbuffer.
+	                                 ---   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB back-buffer.
 	.format "TextureFormat::Enum"    --- Texture format. See: `TextureFormat::Enum`.
 	 { default = "TextureFormat::Count" }
 
@@ -1382,7 +1383,7 @@ func.createDynamicIndexBuffer
 	                                  ---   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on
 	                                  ---       index buffers.
 
---- Create dynamic index buffer and initialized it.
+--- Create a dynamic index buffer and initialize it.
 func.createDynamicIndexBuffer { cname = "create_dynamic_index_buffer_mem" }
 	"DynamicIndexBufferHandle"        --- Dynamic index buffer handle.
 	.mem   "const Memory*"            --- Index buffer data.
@@ -1593,7 +1594,7 @@ func.destroy { cname = "destroy_program" }
 
 --- Validate texture parameters.
 func.isTextureValid
-	"bool"                           --- True if texture can be successfully created.
+	"bool"                           --- True if a texture with the same parameters can be created.
 	.depth     "uint16_t"            --- Depth dimension of volume texture.
 	.cubeMap   "bool"                --- Indicates that texture contains cubemap.
 	.numLayers "uint16_t"            --- Number of layers in texture array.
@@ -1602,7 +1603,7 @@ func.isTextureValid
 
 --- Validate frame buffer parameters.
 func.isFrameBufferValid
-	"bool"                              --- True if frame buffer can be successfully created.
+	"bool"                              --- True if a frame buffer with the same parameters can be created.
 	.num            "uint8_t"           --- Number of attachments.
 	.attachment     "const Attachment*" --- Attachment texture info. See: `bgfx::Attachment`.
 
@@ -1652,7 +1653,7 @@ func.createTexture2D
 	 { default = NULL }                        --- `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
 	                                           --- 1, expected memory layout is texture and all mips together for each array element.
 
---- Create texture with size based on backbuffer ratio. Texture will maintain ratio
+--- Create texture with size based on back-buffer ratio. Texture will maintain ratio
 --- if back buffer resolution changes.
 func.createTexture2D { cname = "create_texture_2d_scaled" }
 	"TextureHandle"                            --- Texture handle.
@@ -1829,7 +1830,7 @@ func.createFrameBuffer
 	                                    --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 	                                    ---   sampling.
 
---- Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio
+--- Create frame buffer with size based on back-buffer ratio. Frame buffer will maintain ratio
 --- if back buffer resolution changes.
 func.createFrameBuffer { cname = "create_frame_buffer_scaled" }
 	"FrameBufferHandle"                 --- Frame buffer handle.
@@ -2034,8 +2035,8 @@ func.setViewClear
 	 { default = 0 }
 
 --- Set view clear flags with different clear color for each
---- frame buffer texture. Must use `bgfx::setPaletteColor` to setup clear color
---- palette.
+--- frame buffer texture. `bgfx::setPaletteColor` must be used to set up a
+--- clear color palette.
 func.setViewClear { cname = "set_view_clear_mrt" }
 	"void"
 	.id      "ViewId"   --- View id.
@@ -2083,8 +2084,8 @@ func.setViewFrameBuffer
 	                            --- frame buffer handle will draw primitives from this view into
 	                            --- default back buffer.
 
---- Set view view and projection matrices, all draw primitives in this
---- view will use these matrices.
+--- Set view's view matrix and projection matrix,
+--- all draw primitives in this view will use these two matrices.
 func.setViewTransform
 	"void"
 	.id   "ViewId"      --- View id.
@@ -2126,7 +2127,7 @@ func.Encoder.setMarker
 --- Set render states for draw primitive.
 ---
 --- @remarks
----   1. To setup more complex states use:
+---   1. To set up more complex states use:
 ---      `BGFX_STATE_ALPHA_REF(_ref)`,
 ---      `BGFX_STATE_POINT_SIZE(_size)`,
 ---      `BGFX_STATE_BLEND_FUNC(_src, _dst)`,
@@ -2679,7 +2680,7 @@ func.setMarker
 --- Set render states for draw primitive.
 ---
 --- @remarks
----   1. To setup more complex states use:
+---   1. To set up more complex states use:
 ---      `BGFX_STATE_ALPHA_REF(_ref)`,
 ---      `BGFX_STATE_POINT_SIZE(_size)`,
 ---      `BGFX_STATE_BLEND_FUNC(_src, _dst)`,
