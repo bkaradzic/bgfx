@@ -6799,22 +6799,19 @@ namespace bgfx { namespace gl
 
 			m_num = uint8_t(colorIdx);
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3 )
+			if (0 == colorIdx && BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			{
-				if (0 == colorIdx)
-				{
-					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
-					{
-						// When only depth is attached disable draw buffer to avoid
-						// GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER.
-						GL_CHECK(glDrawBuffer(GL_NONE) );
-					}
-				}
-				else
-				{
-					GL_CHECK(glDrawBuffers(colorIdx, buffers) );
-				}
+				// When only depth is attached disable draw buffer to avoid
+				// GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER.
+				GL_CHECK(glDrawBuffer(GL_NONE) );
+			}
+			else if (g_caps.limits.maxFBAttachments > 0)
+			{
+				GL_CHECK(glDrawBuffers(colorIdx, buffers) );
+			}
 
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3)
+			{
 				// Disable read buffer to avoid GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER.
 				GL_CHECK(glReadBuffer(GL_NONE) );
 			}
