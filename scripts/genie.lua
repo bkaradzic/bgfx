@@ -97,6 +97,11 @@ newaction {
 
 		local f = io.popen("git rev-list --count HEAD")
 		local rev = string.match(f:read("*a"), ".*%S")
+
+		local codegen = require "codegen"
+		local idl = codegen.idl "bgfx.idl"
+		print("1." .. idl._version .. "." .. rev)
+
 		f:close()
 		f = io.popen("git log --format=format:%H -1")
 		local sha1 = f:read("*a")

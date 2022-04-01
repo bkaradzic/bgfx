@@ -49,7 +49,6 @@ Supported rendering backends:
 Supported platforms:
 
  * Android (14+, ARM, x86, MIPS)
- * asm.js/Emscripten (1.25.0)
  * FreeBSD
  * iOS (iPhone, iPad, AppleTV)
  * Linux
@@ -57,8 +56,9 @@ Supported platforms:
  * OSX (10.12+)
  * PlayStation 4
  * RaspberryPi
- * Windows (XP, Vista, 7, 8, 10)
  * UWP (Universal Windows, Xbox One)
+ * Wasm/Emscripten
+ * Windows (XP, Vista, 7, 8, 10)
 
 Supported compilers:
 
