@@ -838,11 +838,16 @@ struct bgfx_platform_data_t
 	void* ndt; /// Native display type (*nix specific).
 
 	/**
-	 * Native window handle. If `NULL` bgfx will create headless
-	 * context/device if renderer API supports it.
+	 * Native window handle. If `NULL`, bgfx will create a headless
+	 * context/device, provided the rendering API supports it.
 	 */
 	void* nwh;
-	void* context; /// GL context, or D3D device. If `NULL`, bgfx will create context/device.
+
+	/**
+	 * GL context, D3D device, or Vulkan device. If `NULL`, bgfx
+	 * will create context/device.
+	 */
+	void* context;
 
 	/**
 	 * GL back-buffer, or D3D render target view. If `NULL` bgfx will
@@ -851,7 +856,7 @@ struct bgfx_platform_data_t
 	void* backBuffer;
 
 	/**
-	 * Backbuffer depth/stencil. If `NULL` bgfx will create back-buffer
+	 * Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
 	 * depth/stencil surface.
 	 */
 	void* backBufferDS;

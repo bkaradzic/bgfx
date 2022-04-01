@@ -178,7 +178,7 @@ version(BindBgfx_Static)
 	void bgfx_init_ctor(bgfx_init_t* _init);
 	
 	/**
-	 * Initialize bgfx library.
+	 * Initialize the bgfx library.
 	 * Params:
 	 * _init = Initialization parameters. See: `bgfx::Init` for more info.
 	 */
@@ -191,8 +191,8 @@ version(BindBgfx_Static)
 	
 	/**
 	 * Reset graphic settings and back-buffer size.
-	 * Attention: This call doesn't actually change window size, it just
-	 *   resizes back-buffer. Windowing code has to change window size.
+	 * Attention: This call doesn’t change the window size, it just resizes
+	 *   the back-buffer. Your windowing code controls the window size.
 	 * Params:
 	 * _width = Back-buffer width.
 	 * _height = Back-buffer height.
@@ -207,7 +207,7 @@ version(BindBgfx_Static)
 	 *   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
 	 *     occurs. Default behaviour is that flip occurs before rendering new
 	 *     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
-	 *   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB backbuffer.
+	 *   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB back-buffer.
 	 * _format = Texture format. See: `TextureFormat::Enum`.
 	 */
 	void bgfx_reset(uint _width, uint _height, uint _flags, bgfx_texture_format_t _format);
@@ -449,7 +449,7 @@ version(BindBgfx_Static)
 	bgfx_dynamic_index_buffer_handle_t bgfx_create_dynamic_index_buffer(uint _num, ushort _flags);
 	
 	/**
-	 * Create dynamic index buffer and initialized it.
+	 * Create a dynamic index buffer and initialize it.
 	 * Params:
 	 * _mem = Index buffer data.
 	 * _flags = Buffer creation flags.
@@ -759,7 +759,7 @@ version(BindBgfx_Static)
 	bgfx_texture_handle_t bgfx_create_texture_2d(ushort _width, ushort _height, bool _hasMips, ushort _numLayers, bgfx_texture_format_t _format, ulong _flags, const(bgfx_memory_t)* _mem);
 	
 	/**
-	 * Create texture with size based on backbuffer ratio. Texture will maintain ratio
+	 * Create texture with size based on back-buffer ratio. Texture will maintain ratio
 	 * if back buffer resolution changes.
 	 * Params:
 	 * _ratio = Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.
@@ -937,7 +937,7 @@ version(BindBgfx_Static)
 	bgfx_frame_buffer_handle_t bgfx_create_frame_buffer(ushort _width, ushort _height, bgfx_texture_format_t _format, ulong _textureFlags);
 	
 	/**
-	 * Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio
+	 * Create frame buffer with size based on back-buffer ratio. Frame buffer will maintain ratio
 	 * if back buffer resolution changes.
 	 * Params:
 	 * _ratio = Frame buffer size in respect to back-buffer size. See:
@@ -1157,8 +1157,8 @@ version(BindBgfx_Static)
 	
 	/**
 	 * Set view clear flags with different clear color for each
-	 * frame buffer texture. Must use `bgfx::setPaletteColor` to setup clear color
-	 * palette.
+	 * frame buffer texture. `bgfx::setPaletteColor` must be used to set up a
+	 * clear color palette.
 	 * Params:
 	 * _id = View id.
 	 * _flags = Clear flags. Use `BGFX_CLEAR_NONE` to remove any clear
@@ -1199,8 +1199,8 @@ version(BindBgfx_Static)
 	void bgfx_set_view_frame_buffer(bgfx_view_id_t _id, bgfx_frame_buffer_handle_t _handle);
 	
 	/**
-	 * Set view view and projection matrices, all draw primitives in this
-	 * view will use these matrices.
+	 * Set view's view matrix and projection matrix,
+	 * all draw primitives in this view will use these two matrices.
 	 * Params:
 	 * _id = View id.
 	 * _view = View matrix.
@@ -1248,7 +1248,7 @@ version(BindBgfx_Static)
 	/**
 	 * Set render states for draw primitive.
 	 * Remarks:
-	 *   1. To setup more complex states use:
+	 *   1. To set up more complex states use:
 	 *      `BGFX_STATE_ALPHA_REF(_ref)`,
 	 *      `BGFX_STATE_POINT_SIZE(_size)`,
 	 *      `BGFX_STATE_BLEND_FUNC(_src, _dst)`,
@@ -1739,7 +1739,7 @@ version(BindBgfx_Static)
 	/**
 	 * Set render states for draw primitive.
 	 * Remarks:
-	 *   1. To setup more complex states use:
+	 *   1. To set up more complex states use:
 	 *      `BGFX_STATE_ALPHA_REF(_ref)`,
 	 *      `BGFX_STATE_POINT_SIZE(_size)`,
 	 *      `BGFX_STATE_BLEND_FUNC(_src, _dst)`,
@@ -2338,7 +2338,7 @@ else
 		da_bgfx_init_ctor bgfx_init_ctor;
 		
 		/**
-		 * Initialize bgfx library.
+		 * Initialize the bgfx library.
 		 * Params:
 		 * _init = Initialization parameters. See: `bgfx::Init` for more info.
 		 */
@@ -2353,8 +2353,8 @@ else
 		
 		/**
 		 * Reset graphic settings and back-buffer size.
-		 * Attention: This call doesn't actually change window size, it just
-		 *   resizes back-buffer. Windowing code has to change window size.
+		 * Attention: This call doesn’t change the window size, it just resizes
+		 *   the back-buffer. Your windowing code controls the window size.
 		 * Params:
 		 * _width = Back-buffer width.
 		 * _height = Back-buffer height.
@@ -2369,7 +2369,7 @@ else
 		 *   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
 		 *     occurs. Default behaviour is that flip occurs before rendering new
 		 *     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
-		 *   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB backbuffer.
+		 *   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB back-buffer.
 		 * _format = Texture format. See: `TextureFormat::Enum`.
 		 */
 		alias da_bgfx_reset = void function(uint _width, uint _height, uint _flags, bgfx_texture_format_t _format);
@@ -2634,7 +2634,7 @@ else
 		da_bgfx_create_dynamic_index_buffer bgfx_create_dynamic_index_buffer;
 		
 		/**
-		 * Create dynamic index buffer and initialized it.
+		 * Create a dynamic index buffer and initialize it.
 		 * Params:
 		 * _mem = Index buffer data.
 		 * _flags = Buffer creation flags.
@@ -2972,7 +2972,7 @@ else
 		da_bgfx_create_texture_2d bgfx_create_texture_2d;
 		
 		/**
-		 * Create texture with size based on backbuffer ratio. Texture will maintain ratio
+		 * Create texture with size based on back-buffer ratio. Texture will maintain ratio
 		 * if back buffer resolution changes.
 		 * Params:
 		 * _ratio = Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.
@@ -3161,7 +3161,7 @@ else
 		da_bgfx_create_frame_buffer bgfx_create_frame_buffer;
 		
 		/**
-		 * Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio
+		 * Create frame buffer with size based on back-buffer ratio. Frame buffer will maintain ratio
 		 * if back buffer resolution changes.
 		 * Params:
 		 * _ratio = Frame buffer size in respect to back-buffer size. See:
@@ -3401,8 +3401,8 @@ else
 		
 		/**
 		 * Set view clear flags with different clear color for each
-		 * frame buffer texture. Must use `bgfx::setPaletteColor` to setup clear color
-		 * palette.
+		 * frame buffer texture. `bgfx::setPaletteColor` must be used to set up a
+		 * clear color palette.
 		 * Params:
 		 * _id = View id.
 		 * _flags = Clear flags. Use `BGFX_CLEAR_NONE` to remove any clear
@@ -3446,8 +3446,8 @@ else
 		da_bgfx_set_view_frame_buffer bgfx_set_view_frame_buffer;
 		
 		/**
-		 * Set view view and projection matrices, all draw primitives in this
-		 * view will use these matrices.
+		 * Set view's view matrix and projection matrix,
+		 * all draw primitives in this view will use these two matrices.
 		 * Params:
 		 * _id = View id.
 		 * _view = View matrix.
@@ -3501,7 +3501,7 @@ else
 		/**
 		 * Set render states for draw primitive.
 		 * Remarks:
-		 *   1. To setup more complex states use:
+		 *   1. To set up more complex states use:
 		 *      `BGFX_STATE_ALPHA_REF(_ref)`,
 		 *      `BGFX_STATE_POINT_SIZE(_size)`,
 		 *      `BGFX_STATE_BLEND_FUNC(_src, _dst)`,
@@ -4037,7 +4037,7 @@ else
 		/**
 		 * Set render states for draw primitive.
 		 * Remarks:
-		 *   1. To setup more complex states use:
+		 *   1. To set up more complex states use:
 		 *      `BGFX_STATE_ALPHA_REF(_ref)`,
 		 *      `BGFX_STATE_POINT_SIZE(_size)`,
 		 *      `BGFX_STATE_BLEND_FUNC(_src, _dst)`,
