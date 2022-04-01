@@ -4,7 +4,7 @@ Tools
 Geometry Compiler (geometryc)
 -----------------------------
 
-Converts Wavefront .obj, or glTF 2.0 mesh file to format optimal for using with bgfx.
+Converts Wavefront .obj, or glTF 2.0 mesh files to a format which is optimized for use with bgfx.
 
 Usage::
 
@@ -22,92 +22,105 @@ Supported input file formats:
 
 Options:
 
-  -h, --help               Help.
-  -v, --version            Version information only.
+  -h, --help               Display this help and exit.
+  -v, --version            Output version information and exit.
   -f <file path>           Input file path.
   -o <file path>           Output file path.
   -s, --scale <num>        Scale factor.
   --ccw                    Front face is counter-clockwise winding order.
   --flipv                  Flip texture coordinate V.
   --obb <num>              Number of steps for calculating oriented bounding box.
-       Default value is 17. Less steps less precise OBB is.
-       More steps slower calculation.
-  --packnormal <num>      Normal packing.
-       0 - unpacked 12 bytes (default).
+ 
+		Defaults to 17.
+
+		Less steps = less precise OBB.
+
+		More steps = slower calculation.
+  --packnormal <num>       Normal packing.
+       0 - unpacked 12 bytes. (default)
        1 - packed 4 bytes.
   --packuv <num>           Texture coordinate packing.
-       0 - unpacked 8 bytes (default).
+       0 - unpacked 8 bytes. (default)
        1 - packed 4 bytes.
-  --tangent                Calculate tangent vectors (packing mode is the same as normal).
-  --barycentric            Adds barycentric vertex attribute (packed in bgfx::Attrib::Color1).
+  --tangent                Calculate tangent vectors. (Packing mode is the same as normal)
+  --barycentric            Adds barycentric vertex attribute. (Packed in bgfx::Attrib::Color1)
   -c, --compress           Compress indices.
-      --[l/r]h-up+[y/z]    Coordinate system. Default is '--lh-up+y' Left-Handed +Y is up.
+      --[l/r]h-up+[y/z]    Coordinate system. Default is '--lh-up+y' — Left-Handed +Y is up.
 
 Geometry Viewer (geometryv)
 ---------------------------
 
-Geometry viewer.
+A geometry viewer.
 
 Shader Compiler (shaderc)
 -------------------------
 
-bgfx cross-platform shader language is based on GLSL syntax. It's uses
-ANSI C preprocessor to transform GLSL like language syntax into HLSL.
-This technique has certain drawbacks, but overall it's simple and allows
-quick authoring of cross-platform shaders.
+Shader Compiler is used to compile bgfx's cross-platform shader language, which based on GLSL.
+It uses an ANSI C pre-processor to transform the GLSL-like language into HLSL.
+This method has certain drawbacks,
+but overall it's simple and allows for quick authoring of cross-platform shaders.
 
-Some differences between bgfx's shaderc flavor of GLSL and regular GLSL:
+Some differences between bgfx's shaderc flavor of GLSL and vanilla GLSL:
 
--  No ``bool/int`` uniforms, all uniforms must be ``float``.
--  Attributes and varyings can be accessed only from ``main()``
-   function.
--  Must use ``SAMPLER2D/3D/CUBE/etc.`` macros instead of
-   ``sampler2D/3D/Cube/etc.`` tokens.
--  Must use ``vec2/3/4_splat(<value>)`` instead of
-   ``vec2/3/4(<value>)``.
--  Must use ``mtxFromCols/mtxFromRows`` when constructing matrices in shaders.
--  Must use ``mul(x, y)`` when multiplying vectors and matrices.
--  Must use ``varying.def.sc`` to define input/output semantic and
-   precission instead of using ``attribute/in`` and ``varying/in/out``.
--  ``$input/$output`` tokens must appear at the begining of shader.
+-  ``bool/int`` uniforms are not allowed; all uniforms must be ``float``.
+-  Attributes and varyings can only be accessed from ``main()``.
+-  ``SAMPLER2D/3D/CUBE/etc.`` macros replace the ``sampler2D/3D/Cube/etc.`` tokens.
+-  ``vec2/3/4_splat(<value>)`` replaces the ``vec2/3/4(<value>)`` constructor.
+   ``vec2/3/4`` constructors with multiple values are still valid.
+-  ``mtxFromCols/mtxFromRows`` must be used for constructing matrices.
+- ``mul(x, y)`` must be used when multiplying vectors with matrices.
+-  A ``varying.def.sc`` file must be used to define input/output semantics and types,
+   instead of using ``attribute/in`` and ``varying/in/out``.
+   This file cannot include comments, and typically only one is necessary.
+-  ``$input/$output`` tokens corresponding to inputs and outputs defined in
+   ``varying.def.sc`` must be used at the begining of shader.
 
-For more info see `shader helper
-macros <https://github.com/bkaradzic/bgfx/blob/master/src/bgfx_shader.sh>`__.
+For more info, see the `shader helper macros
+<https://github.com/bkaradzic/bgfx/blob/master/src/bgfx_shader.sh>`__.
 
 Options:
-  -h, --help                    Help.
-  -v, --version                 Version information only.
-  -f <file path>                Input file path.
-  -i <include path>             Include path (for multiple paths use -i multiple times).
-  -o <file path>                Output file path.
-  --bin2c <array name>    Generate C header file. If array name is not specified base file name will be used as name.
-  --depends                 Generate makefile style depends file.
-  --platform <platform>     Target platform.
-  -p, --profile <profile>   Shader model (default GLSL).
-  --preprocess              Preprocess only.
-  --define <defines>        Add defines to preprocessor (semicolon separated).
-  --raw                     Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).
-  --type <type>             Shader type (vertex, fragment, compute)
-  --varyingdef <file path>  Path to varying.def.sc file.
-  --verbose                 Verbose.
 
-Options (DX9 and DX11 only):
+  -h, --help                Display this help and exit.
+  -v, --version             Output version information and exit.
+  -f <file path>            The input's file path.
+  -i <include path>         Include path. (for multiple paths use -i multiple times)
+  -o <file path>            The output's file path.
+  --bin2c <array name>      Generate C header file. If array name is not specified base file name will be used as name.
+  --depends                 Generate makefile style depends file.
+  --platform <platform>     Set target platform.
+  -p, --profile <profile>   Shader model.
+
+  							Defaults to GLSL.
+  --preprocess              Only pre-process.
+  --define <defines>        Add defines to preprocessor. (semicolon separated)
+  --raw                     Do not process shader. No preprocessor, and no glsl-optimizer. (GLSL only)
+  --type <type>             Shader type.
+  
+  							Can be 'vertex', 'fragment, or 'compute'.
+  --varyingdef <file path>  A varying.def.sc's file path.
+  --verbose                 Be verbose.
+
+(DX9 and DX11 only):
 
   --debug                   Debug information.
-  --disasm                  Disassemble compiled shader.
-  -O <level>                    Optimization level (0, 1, 2, 3).
-  --Werror                  Treat warnings as errors.
+  --disasm                  Disassemble a compiled shader.
+  -O <level>                Set optimization level.
+
+							Can be 0–3.
+  --Werror                	Treat warnings as errors.
 
 Building shaders
 ~~~~~~~~~~~~~~~~
 
-Shaders must be compiled for all renderers by using `shaderc` tool. Makefile to simplify building
-shaders is provided in examples. D3D shaders can be only compiled on Windows.
+Shaders can be compiled for all renderers by using the ``shaderc`` tool.
+A Makefile to simplify building shaders is provided in the `bgfx examples
+<https://github.com/bkaradzic/bgfx/tree/master/examples>`__.
+D3D shaders can be only compiled on Windows.
 
 Texture Compiler (texturec)
 ---------------------------
 
-Convert PNG, TGA, DDS, KTX, PVR texture into bgfx supported texture formats.
+Convert PNG, TGA, DDS, KTX, and PVR textures into bgfx-supported texture formats.
 
 Usage::
 
@@ -133,29 +146,33 @@ Supported file formats:
 
 Options:
 
-  -h, --help               Help.
-  -v, --version            Version information only.
-  -f <file path>           Input file path.
-  -o <file path>           Output file path.
-  -t <format>              Output format type (BC1/2/3/4/5, ETC1, PVR14, etc.).
-  -q <quality>             Encoding quality (default, fastest, highest).
-  -m, --mips               Generate mip-maps.
-  --mipskip <N>            Skip <N> number of mips.
-  -n, --normalmap          Input texture is normal map. (Implies --linear)
-  --equirect               Input texture is equirectangular projection of cubemap.
-  --strip                  Input texture is horizontal strip of cubemap.
-  --sdf                    Compute SDF texture.
-  --ref <alpha>            Alpha reference value.
-  --iqa                    Image Quality Assessment
-  --pma                    Premultiply alpha into RGB channel.
-  --linear                 Input and output texture is linear color space (gamma correction won't be applied).
-  --max <max size>         Maximum width/height (image will be scaled down and aspect ratio will be preserved).
-  --radiance <model>       Radiance cubemap filter. (Lighting model: Phong, PhongBrdf, Blinn, BlinnBrdf, GGX)
-  --as <extension>         Save as.
-  --formats                List all supported formats.
-  --validate               **DEBUG** Validate that output image produced matches after loading.
+  -h, --help               	Display this help and exit.
+  -v, --version            	Output version information and exit.
+  -f <file path>           	Input file path.
+  -o <file path>           	Output file path.
+  -t <format>              	Output format type. (BC1/2/3/4/5, ETC1, PVR14, etc.)
+  -q <quality>             	Encoding quality.
+
+						   	Can be 'default', 'fastest', or 'highest'.
+  -m, --mips               	Generate mip-maps.
+  --mipskip <N>            	Skip <N> number of mips.
+  -n, --normalmap          	Input texture is normal map. (Implies --linear)
+  --equirect               	Input texture is equirectangular projection of cubemap.
+  --strip                  	Input texture is horizontal strip of cubemap.
+  --sdf                    	Compute SDF texture.
+  --ref <alpha>           	Alpha reference value.
+  --iqa                    	Image Quality Assessment
+  --pma                    	Premultiply alpha into RGB channel.
+  --linear                 	Input and output texture is linear color space. (Gamma correction won't be applied)
+  --max <max size>         	Maximum width/height. (Image will be scaled down and aspect ratio will be preserved)
+  --radiance <model>       	Radiance cubemap filter.
+
+					       	Model can be 'Phong', 'PhongBrdf', 'Blinn', 'BlinnBrdf', or 'GGX'.
+  --as <extension>         	Save as.
+  --formats                	List all supported formats.
+  --validate               	**DEBUG** Validate that output image produced matches after loading.
 
 Texture Viewer (texturev)
 -------------------------
 
-Texture viewer.
+A texture viewer.
