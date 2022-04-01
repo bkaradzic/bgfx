@@ -210,7 +210,7 @@ https://github.com/floooh/fips#fips
 **Conan** package
 https://github.com/firefalcom/bgfx-conan
 
-Minimal example without bgfx' example harness
+Minimal example without bgfx's example harness
 ---------------------------------------------
 
 This project demonstrates minimal amount of code needed to integrate bgfx with GLFW, but without
