@@ -84,6 +84,9 @@ newaction {
 
 			local csgen = require "bindings-bf"
 			csgen.write(csgen.gen(), "../bindings/bf/bgfx.bf")
+
+			local ziggen = require "bindings-zig"
+			ziggen.write(ziggen.gen(), "../bindings/zig/bgfx.zig")
 		end
 
 		os.exit()
