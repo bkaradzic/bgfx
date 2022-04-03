@@ -1007,7 +1007,7 @@ namespace bgfx
 			  "  -f <file path>                Input file path.\n"
 			  "  -i <include path>             Include path (for multiple paths use -i multiple times).\n"
 			  "  -o <file path>                Output file path.\n"
-              "  -c, --console                 Output to console.\n"
+			  "  -c, --console                 Output to console.\n"
 			  "      --bin2c [array name]      Generate C header file. If array name is not specified base file name will be used as name.\n"
 			  "      --depends                 Generate makefile style depends file.\n"
 			  "      --platform <platform>     Target platform.\n"
@@ -2634,11 +2634,11 @@ namespace bgfx
 			return bx::kExitFailure;
 		}
 
-        bool consoleOut = cmdLine.hasArg('c', "console");
+		bool consoleOut = cmdLine.hasArg('c', "console");
 		const char* outFilePath = cmdLine.findOption('o');
-        if (NULL == outFilePath && !consoleOut)
+		if (NULL == outFilePath && !consoleOut)
 		{
-            help("Output file name must be specified or use \"-c\" or \"--console\" to output to stdout.");
+			help("Output file name must be specified or use \"-c\" or \"--console\" to output to stdout.");
 			return bx::kExitFailure;
 		}
 
@@ -2651,7 +2651,7 @@ namespace bgfx
 
 		Options options;
 		options.inputFilePath = filePath;
-        options.outputFilePath = consoleOut ? "" : outFilePath;
+		options.outputFilePath = consoleOut ? "" : outFilePath;
 		options.shaderType = bx::toLower(type[0]);
 
 		options.disasm = cmdLine.hasArg('\0', "disasm");
