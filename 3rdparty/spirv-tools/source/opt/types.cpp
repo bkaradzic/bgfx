@@ -419,6 +419,12 @@ size_t Array::ComputeExtraStateHash(size_t hash, SeenTypes* seen) const {
 
 void Array::ReplaceElementType(const Type* type) { element_type_ = type; }
 
+Array::LengthInfo Array::GetConstantLengthInfo(uint32_t const_id,
+                                               uint32_t length) const {
+  std::vector<uint32_t> extra_words{LengthInfo::Case::kConstant, length};
+  return {const_id, extra_words};
+}
+
 RuntimeArray::RuntimeArray(const Type* type)
     : Type(kRuntimeArray), element_type_(type) {
   assert(!type->AsVoid());

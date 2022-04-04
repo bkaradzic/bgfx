@@ -70,11 +70,9 @@ class ValidationState_t {
                                          // and its values to be used without
                                          // requiring any capability
 
-    // Allow functionalities enabled by VariablePointers capability.
+    // Allow functionalities enabled by VariablePointers or
+    // VariablePointersStorageBuffer capability.
     bool variable_pointers = false;
-    // Allow functionalities enabled by VariablePointersStorageBuffer
-    // capability.
-    bool variable_pointers_storage_buffer = false;
 
     // Permit group oerations Reduce, InclusiveScan, ExclusiveScan
     bool group_ops_reduce_and_scans = false;

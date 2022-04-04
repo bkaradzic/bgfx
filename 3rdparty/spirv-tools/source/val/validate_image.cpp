@@ -980,8 +980,9 @@ spv_result_t ValidateSampledImage(ValidationState_t& _,
   if (spvIsVulkanEnv(_.context()->target_env)) {
     if (info.sampled != 1) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "Expected Image 'Sampled' parameter to be 1 "
-             << "for Vulkan environment.";
+             << _.VkErrorID(6671)
+             << "Expected Image 'Sampled' parameter to be 1 for Vulkan "
+                "environment.";
     }
   } else {
     if (info.sampled != 0 && info.sampled != 1) {

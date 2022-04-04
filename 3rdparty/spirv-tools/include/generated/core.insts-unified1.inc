@@ -31,6 +31,7 @@ static const SpvCapability pygen_variable_caps_GroupNonUniformQuad[] = {SpvCapab
 static const SpvCapability pygen_variable_caps_GroupNonUniformShuffle[] = {SpvCapabilityGroupNonUniformShuffle};
 static const SpvCapability pygen_variable_caps_GroupNonUniformShuffleRelative[] = {SpvCapabilityGroupNonUniformShuffleRelative};
 static const SpvCapability pygen_variable_caps_GroupNonUniformVote[] = {SpvCapabilityGroupNonUniformVote};
+static const SpvCapability pygen_variable_caps_GroupUniformArithmeticKHR[] = {SpvCapabilityGroupUniformArithmeticKHR};
 static const SpvCapability pygen_variable_caps_Groups[] = {SpvCapabilityGroups};
 static const SpvCapability pygen_variable_caps_ImageFootprintNV[] = {SpvCapabilityImageFootprintNV};
 static const SpvCapability pygen_variable_caps_ImageQuery[] = {SpvCapabilityImageQuery};
@@ -761,5 +762,13 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"ConstantCompositeContinuedINTEL", SpvOpConstantCompositeContinuedINTEL, 1, pygen_variable_caps_LongConstantCompositeINTEL, 1, {SPV_OPERAND_TYPE_VARIABLE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SpecConstantCompositeContinuedINTEL", SpvOpSpecConstantCompositeContinuedINTEL, 1, pygen_variable_caps_LongConstantCompositeINTEL, 1, {SPV_OPERAND_TYPE_VARIABLE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"ControlBarrierArriveINTEL", SpvOpControlBarrierArriveINTEL, 1, pygen_variable_caps_SplitBarrierINTEL, 3, {SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_MEMORY_SEMANTICS_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
-  {"ControlBarrierWaitINTEL", SpvOpControlBarrierWaitINTEL, 1, pygen_variable_caps_SplitBarrierINTEL, 3, {SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_MEMORY_SEMANTICS_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu}
+  {"ControlBarrierWaitINTEL", SpvOpControlBarrierWaitINTEL, 1, pygen_variable_caps_SplitBarrierINTEL, 3, {SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_MEMORY_SEMANTICS_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"GroupIMulKHR", SpvOpGroupIMulKHR, 1, pygen_variable_caps_GroupUniformArithmeticKHR, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"GroupFMulKHR", SpvOpGroupFMulKHR, 1, pygen_variable_caps_GroupUniformArithmeticKHR, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"GroupBitwiseAndKHR", SpvOpGroupBitwiseAndKHR, 1, pygen_variable_caps_GroupUniformArithmeticKHR, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"GroupBitwiseOrKHR", SpvOpGroupBitwiseOrKHR, 1, pygen_variable_caps_GroupUniformArithmeticKHR, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"GroupBitwiseXorKHR", SpvOpGroupBitwiseXorKHR, 1, pygen_variable_caps_GroupUniformArithmeticKHR, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"GroupLogicalAndKHR", SpvOpGroupLogicalAndKHR, 1, pygen_variable_caps_GroupUniformArithmeticKHR, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"GroupLogicalOrKHR", SpvOpGroupLogicalOrKHR, 1, pygen_variable_caps_GroupUniformArithmeticKHR, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"GroupLogicalXorKHR", SpvOpGroupLogicalXorKHR, 1, pygen_variable_caps_GroupUniformArithmeticKHR, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu}
 };

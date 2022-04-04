@@ -523,6 +523,8 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
     RegisterPass(CreateInterpolateFixupPass());
   } else if (pass_name == "remove-dont-inline") {
     RegisterPass(CreateRemoveDontInlinePass());
+  } else if (pass_name == "eliminate-dead-input-components") {
+    RegisterPass(CreateEliminateDeadInputComponentsPass());
   } else if (pass_name == "convert-to-sampled-image") {
     if (pass_args.size() > 0) {
       auto descriptor_set_binding_pairs =
@@ -1002,6 +1004,11 @@ Optimizer::PassToken CreateAmdExtToKhrPass() {
 Optimizer::PassToken CreateInterpolateFixupPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::InterpFixupPass>());
+}
+
+Optimizer::PassToken CreateEliminateDeadInputComponentsPass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::EliminateDeadInputComponentsPass>());
 }
 
 Optimizer::PassToken CreateConvertToSampledImagePass(

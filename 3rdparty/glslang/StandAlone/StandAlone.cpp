@@ -192,6 +192,9 @@ glslang::EShTargetClientVersion ClientVersion;       // not valid until Client i
 glslang::EShTargetLanguage TargetLanguage = glslang::EShTargetNone;
 glslang::EShTargetLanguageVersion TargetVersion;     // not valid until TargetLanguage is set
 
+// GLSL version
+int GlslVersion = 0; // GLSL version specified on CLI, overrides #version in shader source
+
 std::vector<std::string> Processes;                     // what should be recorded by OpModuleProcessed, or equivalent
 
 // Per descriptor-set binding base data
@@ -654,6 +657,48 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                                lowerword == "flatten-uniform-array"  ||
                                lowerword == "fua") {
                         Options |= EOptionFlattenUniformArrays;
+                    } else if (lowerword == "glsl-version") {
+                        if (argc > 1) {
+                            if (strcmp(argv[1], "100") == 0) {
+                                GlslVersion = 100;
+                            } else if (strcmp(argv[1], "110") == 0) {
+                                GlslVersion = 110;
+                            } else if (strcmp(argv[1], "120") == 0) {
+                                GlslVersion = 120;
+                            } else if (strcmp(argv[1], "130") == 0) {
+                                GlslVersion = 130;
+                            } else if (strcmp(argv[1], "140") == 0) {
+                                GlslVersion = 140;
+                            } else if (strcmp(argv[1], "150") == 0) {
+                                GlslVersion = 150;
+                            } else if (strcmp(argv[1], "300es") == 0) {
+                                GlslVersion = 300;
+                            } else if (strcmp(argv[1], "310es") == 0) {
+                                GlslVersion = 310;
+                            } else if (strcmp(argv[1], "320es") == 0) {
+                                GlslVersion = 320;
+                            } else if (strcmp(argv[1], "330") == 0) {
+                                GlslVersion = 330;
+                            } else if (strcmp(argv[1], "400") == 0) {
+                                GlslVersion = 400;
+                            } else if (strcmp(argv[1], "410") == 0) {
+                                GlslVersion = 410;
+                            } else if (strcmp(argv[1], "420") == 0) {
+                                GlslVersion = 420;
+                            } else if (strcmp(argv[1], "430") == 0) {
+                                GlslVersion = 430;
+                            } else if (strcmp(argv[1], "440") == 0) {
+                                GlslVersion = 440;
+                            } else if (strcmp(argv[1], "450") == 0) {
+                                GlslVersion = 450;
+                            } else if (strcmp(argv[1], "460") == 0) {
+                                GlslVersion = 460;
+                            } else
+                                Error("--glsl-version expected one of: 100, 110, 120, 130, 140, 150,\n"
+                                      "300es, 310es, 320es, 330\n"
+                                      "400, 410, 420, 430, 440, 450, 460");
+                        }
+                        bumpArg();
                     } else if (lowerword == "hlsl-offsets") {
                         Options |= EOptionHlslOffsets;
                     } else if (lowerword == "hlsl-iomap" ||
@@ -1168,6 +1213,27 @@ struct ShaderCompUnit {
     }
 };
 
+// Writes a string into a depfile, escaping some special characters following the Makefile rules.
+static void writeEscapedDepString(std::ofstream& file, const std::string& str)
+{
+    for (char c : str) {
+        switch (c) {
+        case ' ':
+        case ':':
+        case '#':
+        case '[':
+        case ']':
+        case '\\':
+            file << '\\';
+            break;
+        case '$':
+            file << '$';
+            break;
+        }
+        file << c;
+    }
+}
+
 // Writes a depfile similar to gcc -MMD foo.c
 bool writeDepFile(std::string depfile, std::vector<std::string>& binaryFiles, const std::vector<std::string>& sources)
 {
@@ -1175,10 +1241,12 @@ bool writeDepFile(std::string depfile, std::vector<std::string>& binaryFiles, co
     if (file.fail())
         return false;
 
-    for (auto it = binaryFiles.begin(); it != binaryFiles.end(); it++) {
-        file << *it << ":";
-        for (auto it = sources.begin(); it != sources.end(); it++) {
-            file << " " << *it;
+    for (auto binaryFile = binaryFiles.begin(); binaryFile != binaryFiles.end(); binaryFile++) {
+        writeEscapedDepString(file, *binaryFile);
+        file << ":";
+        for (auto sourceFile = sources.begin(); sourceFile != sources.end(); sourceFile++) {
+            file << " ";
+            writeEscapedDepString(file, *sourceFile);
         }
         file << std::endl;
     }
@@ -1227,6 +1295,8 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                        "Use '-e <name>'.\n");
             shader->setSourceEntryPoint(sourceEntryPointName);
         }
+
+        shader->setOverrideVersion(GlslVersion);
 
         std::string intrinsicString = getIntrinsic(compUnit.text, compUnit.count);
 
@@ -1865,6 +1935,11 @@ void usage()
            "  -dumpfullversion | -dumpversion   print bare major.minor.patchlevel\n"
            "  --flatten-uniform-arrays | --fua  flatten uniform texture/sampler arrays to\n"
            "                                    scalars\n"
+           "  --glsl-version {100 | 110 | 120 | 130 | 140 | 150 |\n"
+           "                300es | 310es | 320es | 330\n"
+           "                400 | 410 | 420 | 430 | 440 | 450 | 460}\n"
+           "                                    set GLSL version, overrides #version\n"
+           "                                    in shader sourcen\n"
            "  --hlsl-offsets                    allow block offsets to follow HLSL rules\n"
            "                                    works independently of source language\n"
            "  --hlsl-iomap                      perform IO mapping in HLSL register space\n"

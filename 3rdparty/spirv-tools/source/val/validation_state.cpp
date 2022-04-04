@@ -392,11 +392,8 @@ void ValidationState_t::RegisterCapability(SpvCapability cap) {
       features_.free_fp_rounding_mode = true;
       break;
     case SpvCapabilityVariablePointers:
-      features_.variable_pointers = true;
-      features_.variable_pointers_storage_buffer = true;
-      break;
     case SpvCapabilityVariablePointersStorageBuffer:
-      features_.variable_pointers_storage_buffer = true;
+      features_.variable_pointers = true;
       break;
     default:
       // TODO(dneto): For now don't validate SPV_NV_ray_tracing, which uses
@@ -460,7 +457,7 @@ void ValidationState_t::set_addressing_model(SpvAddressingModel am) {
     default:
     // fall through
     case SpvAddressingModelPhysical64:
-    case SpvAddressingModelPhysicalStorageBuffer64EXT:
+    case SpvAddressingModelPhysicalStorageBuffer64:
       pointer_size_and_alignment_ = 8;
       break;
   }
@@ -541,7 +538,7 @@ void ValidationState_t::RegisterInstruction(Instruction* inst) {
   if (inst->id()) all_definitions_.insert(std::make_pair(inst->id(), inst));
 
   // Some validation checks are easier by getting all the consumers
-  for (uint16_t i = 0; i < inst->operands().size(); ++i) {
+  for (size_t i = 0; i < inst->operands().size(); ++i) {
     const spv_parsed_operand_t& operand = inst->operand(i);
     if ((SPV_OPERAND_TYPE_ID == operand.type) ||
         (SPV_OPERAND_TYPE_TYPE_ID == operand.type)) {
@@ -1872,6 +1869,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-OpGroupNonUniformBallotBitCount-04685);
     case 4686:
       return VUID_WRAP(VUID-StandaloneSpirv-None-04686);
+    case 4708:
+      return VUID_WRAP(VUID-StandaloneSpirv-PhysicalStorageBuffer64-04708);
     case 4710:
       return VUID_WRAP(VUID-StandaloneSpirv-PhysicalStorageBuffer64-04710);
     case 4711:
@@ -1890,6 +1889,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-OpImage-04777);
     case 4780:
       return VUID_WRAP(VUID-StandaloneSpirv-Result-04780);
+    case 4781:
+      return VUID_WRAP(VUID-StandaloneSpirv-Base-04781);
     case 4915:
       return VUID_WRAP(VUID-StandaloneSpirv-Location-04915);
     case 4916:
@@ -1904,6 +1905,20 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-OpTypeImage-06214);
     case 6491:
       return VUID_WRAP(VUID-StandaloneSpirv-DescriptorSet-06491);
+    case 6671:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpTypeSampledImage-06671);
+    case 6672:
+      return VUID_WRAP(VUID-StandaloneSpirv-Location-06672);
+    case 6674:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpEntryPoint-06674);
+    case 6675:
+      return VUID_WRAP(VUID-StandaloneSpirv-PushConstant-06675);
+    case 6676:
+      return VUID_WRAP(VUID-StandaloneSpirv-Uniform-06676);
+    case 6677:
+      return VUID_WRAP(VUID-StandaloneSpirv-UniformConstant-06677);
+    case 6678:
+      return VUID_WRAP(VUID-StandaloneSpirv-InputAttachmentIndex-06678);
     default:
       return "";  // unknown id
   }
