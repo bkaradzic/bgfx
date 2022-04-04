@@ -34,6 +34,7 @@
 #include "source/opt/desc_sroa.h"
 #include "source/opt/eliminate_dead_constant_pass.h"
 #include "source/opt/eliminate_dead_functions_pass.h"
+#include "source/opt/eliminate_dead_input_components_pass.h"
 #include "source/opt/eliminate_dead_members_pass.h"
 #include "source/opt/empty_pass.h"
 #include "source/opt/fix_storage_class.h"

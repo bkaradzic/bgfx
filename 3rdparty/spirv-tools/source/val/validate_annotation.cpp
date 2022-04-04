@@ -334,7 +334,7 @@ spv_result_t ValidateDecorationTarget(ValidationState_t& _, SpvDecoration dec,
             sc != SpvStorageClassIncomingCallableDataKHR &&
             sc != SpvStorageClassShaderRecordBufferKHR) {
           return _.diag(SPV_ERROR_INVALID_ID, target)
-                 << LogStringForDecoration(dec)
+                 << _.VkErrorID(6672) << LogStringForDecoration(dec)
                  << " decoration must not be applied to this storage class";
         }
         break;
@@ -355,7 +355,7 @@ spv_result_t ValidateDecorationTarget(ValidationState_t& _, SpvDecoration dec,
         break;
       case SpvDecorationInputAttachmentIndex:
         if (sc != SpvStorageClassUniformConstant) {
-          return fail(0) << "must be in the UniformConstant storage class";
+          return fail(6678) << "must be in the UniformConstant storage class";
         }
         break;
       case SpvDecorationFlat:

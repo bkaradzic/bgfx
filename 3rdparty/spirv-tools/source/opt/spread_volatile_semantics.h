@@ -35,6 +35,13 @@ class SpreadVolatileSemantics : public Pass {
   }
 
  private:
+  // Returns true if it does not have an execution model. Linkage shaders do not
+  // have an execution model.
+  bool HasNoExecutionModel() {
+    return get_module()->entry_points().empty() &&
+           context()->get_feature_mgr()->HasCapability(SpvCapabilityLinkage);
+  }
+
   // Iterates interface variables and spreads the Volatile semantics if it has
   // load instructions for the Volatile semantics.
   Pass::Status SpreadVolatileSemanticsToVariables(

@@ -28,6 +28,13 @@
 #include "spirv-tools/libspirv.hpp"
 #include "types.h"
 
+// Avoid unused variable warning/error on Linux
+#ifndef NDEBUG
+#define USE_ASSERT(x) assert(x)
+#else
+#define USE_ASSERT(x) ((void)(x))
+#endif
+
 namespace spvtools {
 namespace opt {
 
