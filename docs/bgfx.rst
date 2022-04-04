@@ -3,11 +3,12 @@ API Reference
 
 
 .. note::
-
-    TL;DR for simple walkthrough how to use bgfx API, see `Hello, bgfx! <https://dev.to/pperon/hello-bgfx-4dka>`__,
-    `bgfx-minimal-example <https://github.com/jpcy/bgfx-minimal-example#bgfx-minimal-example>`__,
-    or `Using the bgfx library with C++ on Ubuntu <https://www.sandeepnambiar.com/getting-started-with-bgfx/>`__
-    tutorial.
+	
+    If you're just getting started with bgfx, you might get more out of these simple walkthroughs for how to use bgfx's API:
+    
+    - `Hello, bgfx! <https://dev.to/pperon/hello-bgfx-4dka>`_
+    - `bgfx-minimal-example <https://github.com/jpcy/bgfx-minimal-example#bgfx-minimal-example>`_
+    - `Using the bgfx library with C++ on Ubuntu <https://www.sandeepnambiar.com/getting-started-with-bgfx/>`_
 
 General
 -------
@@ -158,8 +159,8 @@ Statistics
 Platform specific
 ~~~~~~~~~~~~~~~~~
 
-These are platform specific APIs. It is only necessary to use these APIs in conjunction with
-creating windows.
+These are platform specific APIs.
+It is only necessary to use these APIs in conjunction with creating windows.
 
 .. doxygenfunction:: bgfx::renderFrame
 
@@ -206,19 +207,21 @@ Miscellaneous
 Views
 -----
 
-View is primary sorting mechanism in bgfx. View represent bucket of draw and compute calls. Compute
-and draw calls inside bucket are sorted in the way that all compute calls are executed before draw
-calls. Compute calls are always in order of submission, while draw calls are sorted by internal
-state if view is not in sequential mode. In the most of cases when z-buffer is used this change in
-order is not noticable to desired output. In cases where order has to be preserved (for example in
-rendering GUIs), view can be set to be in sequential order. Sequential order is less efficient,
-because it doesn't allow state change optimization, and should be avoided when possible.
+Views are the primary sorting mechanism in bgfx.
+They represent buckets of draw and compute calls, or what are often known as 'passes'.
 
-By default views ids are sorted in ascending order. For dynamic renderers where order might not be
-known until the last moment, view ids can be remaped to arbitrary order by calling
-`bgfx::setViewOrder`.
+When compute calls and draw calls occupy the same bucket, the compute calls will be sorted to execute first.
+Compute calls are always executed in order of submission, while draw calls are sorted by internal state if
+the View is not in sequential mode.
+In most cases where the z-buffer is used, this change in order does not affect the desired output.
+When draw call order needs to be preserved (e.g. when rendering GUIs), Views can be set to use sequential mode with `bgfx::setViewMode`.
+Sequential order is less efficient, because it doesn't allow state change optimization, and should be avoided when possible.
 
-View state is preserved between multiple frames.
+By default, Views are sorted by their View ID, in ascending order.
+For dynamic renderers where the right order might not be known until the last moment,
+View IDs can be changed to use arbitrary ordering with `bgfx::setViewOrder`.
+
+A View's state is preserved between frames.
 
 .. doxygenfunction:: bgfx::setViewName
 .. doxygenfunction:: bgfx::setViewRect(ViewId _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
@@ -253,8 +256,8 @@ API for multi-threaded submission.
 Draw
 ~~~~
 
-Draw state is not preserved between two draw calls. All state is cleared after calling
-`bgfx::submit`.
+Draw state is not preserved between two draw calls.
+All state is cleared after calling `bgfx::submit`.
 
 State
 *****
@@ -351,8 +354,9 @@ Stencil Flags
 Scissor
 *******
 
-When scissor rectangle is changing per draw call inside the same view use `bgfx::setScissor`,
-otherwise prefer `bgfx::setViewScissor`.
+If the Scissor rectangle needs to be changed for
+every draw call in a View, use `bgfx::setScissor`.
+Otherwise, use `bgfx::setViewScissor`.
 
 .. doxygenfunction:: bgfx::setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 .. doxygenfunction:: bgfx::setScissor(uint16_t _cache = UINT16_MAX)
@@ -413,7 +417,7 @@ Textures
 Submit
 ******
 
-Within view all draw commands are executed after blit and compute commands.
+In Views, all draw commands are executed **after** blit and compute commands.
 
 .. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
 .. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
@@ -422,8 +426,7 @@ Within view all draw commands are executed after blit and compute commands.
 Compute
 ~~~~~~~
 
-Compute state is not preserved between two compute dispatches. All state is cleared after calling
-`bgfx::dispatch`.
+Compute state is not preserved between compute dispatches; all state is cleared after calling `bgfx::dispatch`.
 
 Buffers
 *******
@@ -445,7 +448,7 @@ Images
 Dispatch
 ********
 
-Within view all compute commands are dispatched after blit commands, and before draw commands.
+In Views, all draw commands are executed **after** blit and compute commands.
 
 .. doxygenfunction:: bgfx::dispatch(ViewId _id, ProgramHandle _handle, uint32_t _numX = 1, uint32_t _numY = 1, uint32_t _numZ = 1, uint8_t _flags = BGFX_DISCARD_ALL)
 .. doxygenfunction:: bgfx::dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start = 0, uint16_t _num = 1, uint8_t _flags = BGFX_DISCARD_ALL)
@@ -453,7 +456,7 @@ Within view all compute commands are dispatched after blit commands, and before 
 Blit
 ~~~~
 
-Within view all blit commands are executed before compute, and draw commands.
+In Views, all draw commands are executed **after** blit and compute commands.
 
 .. doxygenfunction:: bgfx::blit(ViewId _id, TextureHandle _dst, uint16_t _dstX, uint16_t _dstY, TextureHandle _src, uint16_t _srcX = 0, uint16_t _srcY = 0, uint16_t _width = UINT16_MAX, uint16_t _height = UINT16_MAX)
 .. doxygenfunction:: bgfx::blit(ViewId _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip = 0, uint16_t _srcX = 0, uint16_t _srcY = 0, uint16_t _srcZ = 0, uint16_t _width = UINT16_MAX, uint16_t _height = UINT16_MAX, uint16_t _depth = UINT16_MAX)
