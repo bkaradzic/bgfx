@@ -638,7 +638,7 @@ public:
 protected:
 	// An enum of SPIR-V functions that are implemented in additional
 	// source code that is added to the shader if necessary.
-	enum SPVFuncImpl
+	enum SPVFuncImpl : uint8_t
 	{
 		SPVFuncImplNone,
 		SPVFuncImplMod,

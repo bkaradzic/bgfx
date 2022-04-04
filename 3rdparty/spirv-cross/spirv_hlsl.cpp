@@ -462,6 +462,10 @@ string CompilerHLSL::type_to_glsl(const SPIRType &type, uint32_t id)
 			if (hlsl_options.shader_model < 60)
 				SPIRV_CROSS_THROW("64-bit integers only supported in SM 6.0.");
 			return "uint64_t";
+		case SPIRType::AccelerationStructure:
+			return "RaytracingAccelerationStructure";
+		case SPIRType::RayQuery:
+			return "RayQuery<RAY_FLAG_NONE>";
 		default:
 			return "???";
 		}
@@ -2109,6 +2113,13 @@ void CompilerHLSL::emit_struct_member(const SPIRType &type, uint32_t member_type
 	          variable_decl(membertype, to_member_name(type, index)), packing_offset, ";");
 }
 
+void CompilerHLSL::emit_rayquery_function(const char *commited, const char *candidate, const uint32_t *ops)
+{
+	flush_variable_declaration(ops[0]);
+	uint32_t is_commited = evaluate_constant_u32(ops[3]);
+	emit_op(ops[0], ops[1], join(to_expression(ops[2]), is_commited ? commited : candidate), false);
+}
+
 void CompilerHLSL::emit_buffer_block(const SPIRVariable &var)
 {
 	auto &type = get<SPIRType>(var.basetype);
@@ -3287,6 +3298,11 @@ string CompilerHLSL::to_resource_binding(const SPIRVariable &var)
 	case SPIRType::Sampler:
 		space = 's';
 		resource_flags = HLSL_BINDING_AUTO_SAMPLER_BIT;
+		break;
+
+	case SPIRType::AccelerationStructure:
+		space = 't'; // SRV
+		resource_flags = HLSL_BINDING_AUTO_SRV_BIT;
 		break;
 
 	case SPIRType::Struct:
@@ -5616,6 +5632,143 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 			SPIRV_CROSS_THROW("Rasterizer order views require Shader Model 5.1.");
 		break; // Nothing to do in the body
 
+	case OpRayQueryInitializeKHR:
+	{
+		flush_variable_declaration(ops[0]);
+
+		std::string ray_desc_name = get_unique_identifier();
+		statement("RayDesc ", ray_desc_name, " = {", to_expression(ops[4]), ", ", to_expression(ops[5]), ", ",
+			to_expression(ops[6]), ", ", to_expression(ops[7]), "};");
+
+		statement(to_expression(ops[0]), ".TraceRayInline(", 
+			to_expression(ops[1]), ", ", // acc structure
+			to_expression(ops[2]), ", ", // ray flags
+			to_expression(ops[3]), ", ", // mask
+			ray_desc_name, ");"); // ray
+		break;
+	}
+	case OpRayQueryProceedKHR:
+	{
+		flush_variable_declaration(ops[0]);
+		emit_op(ops[0], ops[1], join(to_expression(ops[2]), ".Proceed()"), false);
+		break;
+	}	
+	case OpRayQueryTerminateKHR:
+	{
+		flush_variable_declaration(ops[0]);
+		statement(to_expression(ops[0]), ".Abort();");
+		break;
+	}
+	case OpRayQueryGenerateIntersectionKHR:
+	{
+		flush_variable_declaration(ops[0]);
+		statement(to_expression(ops[0]), ".CommitProceduralPrimitiveHit(", ops[1], ");");
+		break;
+	}
+	case OpRayQueryConfirmIntersectionKHR:
+	{
+		flush_variable_declaration(ops[0]);
+		statement(to_expression(ops[0]), ".CommitNonOpaqueTriangleHit();");
+		break;
+	}
+	case OpRayQueryGetIntersectionTypeKHR:
+	{
+		emit_rayquery_function(".CommittedStatus()", ".CandidateType()", ops);
+		break;
+	}
+	case OpRayQueryGetIntersectionTKHR:
+	{
+		emit_rayquery_function(".CommittedRayT()", ".CandidateTriangleRayT()", ops);
+		break;
+	}
+	case OpRayQueryGetIntersectionInstanceCustomIndexKHR:
+	{
+		emit_rayquery_function(".CommittedInstanceID()", ".CandidateInstanceID()", ops);
+		break;
+	}
+	case OpRayQueryGetIntersectionInstanceIdKHR:
+	{
+		emit_rayquery_function(".CommittedInstanceIndex()", ".CandidateInstanceIndex()", ops);
+		break;
+	}
+	case OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR:
+	{
+		emit_rayquery_function(".CommittedInstanceContributionToHitGroupIndex()", 
+			".CandidateInstanceContributionToHitGroupIndex()", ops);
+		break;
+	}
+	case OpRayQueryGetIntersectionGeometryIndexKHR:
+	{
+		emit_rayquery_function(".CommittedGeometryIndex()",
+				".CandidateGeometryIndex()", ops);
+		break;
+	}
+	case OpRayQueryGetIntersectionPrimitiveIndexKHR:
+	{
+		emit_rayquery_function(".CommittedPrimitiveIndex()", ".CandidatePrimitiveIndex()", ops);
+		break;
+	}
+	case OpRayQueryGetIntersectionBarycentricsKHR:
+	{
+		emit_rayquery_function(".CommittedTriangleBarycentrics()", ".CandidateTriangleBarycentrics()", ops);
+		break;
+	}
+	case OpRayQueryGetIntersectionFrontFaceKHR:
+	{
+		emit_rayquery_function(".CommittedTriangleFrontFace()", ".CandidateTriangleFrontFace()", ops);
+		break;
+	}
+	case OpRayQueryGetIntersectionCandidateAABBOpaqueKHR:
+	{
+		flush_variable_declaration(ops[0]);
+		emit_op(ops[0], ops[1], join(to_expression(ops[2]), ".CandidateProceduralPrimitiveNonOpaque()"), false);
+		break;
+	}
+	case OpRayQueryGetIntersectionObjectRayDirectionKHR:
+	{
+		emit_rayquery_function(".CommittedObjectRayDirection()", ".CandidateObjectRayDirection()", ops);
+		break;
+	}
+	case OpRayQueryGetIntersectionObjectRayOriginKHR:
+	{
+		flush_variable_declaration(ops[0]);
+		emit_rayquery_function(".CommittedObjectRayOrigin()", ".CandidateObjectRayOrigin()", ops);
+		break;
+	}
+	case OpRayQueryGetIntersectionObjectToWorldKHR:
+	{
+		emit_rayquery_function(".CommittedObjectToWorld4x3()", ".CandidateObjectToWorld4x3()", ops);
+		break;
+	}
+	case OpRayQueryGetIntersectionWorldToObjectKHR:
+	{
+		emit_rayquery_function(".CommittedWorldToObject4x3()", ".CandidateWorldToObject4x3()", ops);
+		break;
+	}
+	case OpRayQueryGetRayFlagsKHR:
+	{
+		flush_variable_declaration(ops[0]);
+		emit_op(ops[0], ops[1], join(to_expression(ops[2]), ".RayFlags()"), false);
+		break;
+	}
+	case OpRayQueryGetRayTMinKHR:
+	{
+		flush_variable_declaration(ops[0]);
+		emit_op(ops[0], ops[1], join(to_expression(ops[2]), ".RayTMin()"), false);
+		break;
+	}
+	case OpRayQueryGetWorldRayOriginKHR:
+	{
+		flush_variable_declaration(ops[0]);
+		emit_op(ops[0], ops[1], join(to_expression(ops[2]), ".WorldRayOrigin()"), false);
+		break;
+	}
+	case OpRayQueryGetWorldRayDirectionKHR:
+	{
+		flush_variable_declaration(ops[0]);
+		emit_op(ops[0], ops[1], join(to_expression(ops[2]), ".WorldRayDirection()"), false);
+		break;
+	}
 	default:
 		CompilerGLSL::emit_instruction(instruction);
 		break;
