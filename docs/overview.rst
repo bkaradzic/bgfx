@@ -57,19 +57,21 @@ Supported Languages
 ~~~~~~~~~~~~~~~~~~~
 
 -  `C/C++ API documentation <https://bkaradzic.github.io/bgfx/bgfx.html>`__
+-  `Beef API bindings <https://github.com/bkaradzic/bgfx/tree/master/bindings/bf>`__
 -  `C# language API bindings #1 <https://github.com/bkaradzic/bgfx/tree/master/bindings/cs>`__
--  `C#/VB/F# language API bindings #2 <https://github.com/MikePopoloski/SharpBgfx>`__
 -  `D language API bindings <https://github.com/GoaLitiuM/bindbc-bgfx>`__
 -  `Go language API bindings <https://github.com/james4k/go-bgfx>`__
 -  `Haskell language API bindings <https://github.com/haskell-game/bgfx>`__
 -  `Lightweight Java Game Library 3 bindings <https://github.com/LWJGL/lwjgl3#lwjgl---lightweight-java-game-library-3>`__
 -  `Lua language API bindings <https://github.com/cloudwu/lua-bgfx>`__
 -  `Nim language API bindings <https://github.com/Halsys/nim-bgfx>`__
+-  `Pascal language API bindings <https://github.com/Akira13641/PasBGFX>`__
 -  `Python language API bindings #1 <https://github.com/fbertola/bgfx-python#-----bgfx-python-->`__
 -  `Python language API bindings #2 <https://github.com/jnadro/pybgfx#pybgfx>`__
 -  `Rust language API bindings <https://github.com/rhoot/bgfx-rs#bgfx-rs>`__
 -  `Swift language API bindings <https://github.com/stuartcarnie/SwiftBGFX>`__
--  `Pascal language API bindings <https://github.com/Akira13641/PasBGFX>`__
+-  `Zig language API bindings <https://github.com/bkaradzic/bgfx/tree/master/bindings/zig>`__
+
 
 Project Page
 ~~~~~~~~~~~~
