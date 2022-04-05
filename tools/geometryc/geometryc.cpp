@@ -955,7 +955,7 @@ void help(const char* _error = NULL)
 		  "      --ccw                Front face is counter-clockwise winding order.\n"
 		  "      --flipv              Flip texture coordinate V.\n"
 		  "      --obb <num>          Number of steps for calculating oriented bounding box.\n"
-		  "           Defaults to 17.\n
+		  "           Defaults to 17.\n"
 		  "           Less steps = less precise OBB.\n"
 		  "           More steps = slower calculation.\n"
 		  "      --packnormal <num>   Normal packing.\n"
