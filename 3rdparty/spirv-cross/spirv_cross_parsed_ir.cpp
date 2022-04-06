@@ -349,7 +349,7 @@ void ParsedIR::set_name(ID id, const string &name)
 void ParsedIR::set_member_name(TypeID id, uint32_t index, const string &name)
 {
 	auto &m = meta[id];
-	m.members.resize(max(meta[id].members.size(), size_t(index) + 1));
+	m.members.resize(max(m.members.size(), size_t(index) + 1));
 	m.members[index].alias = name;
 	if (!is_valid_identifier(name) || is_reserved_identifier(name, true, false))
 		meta_needing_name_fixup.insert(id);
@@ -451,8 +451,9 @@ void ParsedIR::set_decoration(ID id, Decoration decoration, uint32_t argument)
 
 void ParsedIR::set_member_decoration(TypeID id, uint32_t index, Decoration decoration, uint32_t argument)
 {
-	meta[id].members.resize(max(meta[id].members.size(), size_t(index) + 1));
-	auto &dec = meta[id].members[index];
+	auto &m = meta[id];
+	m.members.resize(max(m.members.size(), size_t(index) + 1));
+	auto &dec = m.members[index];
 	dec.decoration_flags.set(decoration);
 
 	switch (decoration)
@@ -792,7 +793,8 @@ const Bitset &ParsedIR::get_decoration_bitset(ID id) const
 
 void ParsedIR::set_member_decoration_string(TypeID id, uint32_t index, Decoration decoration, const string &argument)
 {
-	meta[id].members.resize(max(meta[id].members.size(), size_t(index) + 1));
+	auto &m = meta[id];
+	m.members.resize(max(m.members.size(), size_t(index) + 1));
 	auto &dec = meta[id].members[index];
 	dec.decoration_flags.set(decoration);
 

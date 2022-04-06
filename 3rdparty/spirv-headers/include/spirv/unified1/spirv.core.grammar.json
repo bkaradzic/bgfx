@@ -8573,6 +8573,118 @@
       ],
       "capabilities" : [ "SplitBarrierINTEL" ],
       "version" : "None"
+    },
+    {
+      "opname" : "OpGroupIMulKHR",
+      "class"  : "Group",
+      "opcode" : 6401,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupFMulKHR",
+      "class"  : "Group",
+      "opcode" : 6402,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupBitwiseAndKHR",
+      "class"  : "Group",
+      "opcode" : 6403,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupBitwiseOrKHR",
+      "class"  : "Group",
+      "opcode" : 6404,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupBitwiseXorKHR",
+      "class"  : "Group",
+      "opcode" : 6405,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupLogicalAndKHR",
+      "class"  : "Group",
+      "opcode" : 6406,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupLogicalOrKHR",
+      "class"  : "Group",
+      "opcode" : 6407,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupLogicalXorKHR",
+      "class"  : "Group",
+      "opcode" : 6408,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
     }
   ],
   "operand_kinds" : [
@@ -13910,6 +14022,12 @@
           "enumerant" : "SplitBarrierINTEL",
           "value" : 6141,
           "extensions" : [ "SPV_INTEL_split_barrier" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "GroupUniformArithmeticKHR",
+          "value" : 6400,
+          "extensions" : [ "SPV_KHR_uniform_group_instructions"],
           "version" : "None"
         }
       ]

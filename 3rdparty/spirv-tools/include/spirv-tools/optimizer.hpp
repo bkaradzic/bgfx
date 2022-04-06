@@ -886,6 +886,13 @@ Optimizer::PassToken CreateAmdExtToKhrPass();
 // propagated into their final positions.
 Optimizer::PassToken CreateInterpolateFixupPass();
 
+// Removes unused components from composite input variables. Current
+// implementation just removes trailing unused components from input arrays.
+// The pass performs best after maximizing dead code removal. A subsequent dead
+// code elimination pass would be beneficial in removing newly unused component
+// types.
+Optimizer::PassToken CreateEliminateDeadInputComponentsPass();
+
 // Creates a convert-to-sampled-image pass to convert images and/or
 // samplers with given pairs of descriptor set and binding to sampled image.
 // If a pair of an image and a sampler have the same pair of descriptor set and
@@ -896,6 +903,10 @@ Optimizer::PassToken CreateConvertToSampledImagePass(
     const std::vector<opt::DescriptorSetAndBinding>&
         descriptor_set_binding_pairs);
 
+// Creates a remove-dont-inline pass to remove the |DontInline| function control
+// from every function in the module.  This is useful if you want the inliner to
+// inline these functions some reason.
+Optimizer::PassToken CreateRemoveDontInlinePass();
 }  // namespace spvtools
 
 #endif  // INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_

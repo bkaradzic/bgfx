@@ -92,6 +92,10 @@ bool HasOnlyEntryPointsAsFunctions(IRContext* context, Module* module) {
 }  // namespace
 
 Pass::Status SpreadVolatileSemantics::Process() {
+  if (HasNoExecutionModel()) {
+    return Status::SuccessWithoutChange;
+  }
+
   if (!HasOnlyEntryPointsAsFunctions(context(), get_module())) {
     return Status::Failure;
   }

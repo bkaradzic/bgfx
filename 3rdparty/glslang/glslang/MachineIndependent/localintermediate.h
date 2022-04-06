@@ -309,7 +309,7 @@ public:
         useVulkanMemoryModel(false),
         invocations(TQualifier::layoutNotSet), vertices(TQualifier::layoutNotSet),
         inputPrimitive(ElgNone), outputPrimitive(ElgNone),
-        pixelCenterInteger(false), originUpperLeft(false),
+        pixelCenterInteger(false), originUpperLeft(false),texCoordBuiltinRedeclared(false),
         vertexSpacing(EvsNone), vertexOrder(EvoNone), interlockOrdering(EioNone), pointMode(false), earlyFragmentTests(false),
         postDepthCoverage(false), depthLayout(EldNone),
         hlslFunctionality1(false),
@@ -834,6 +834,8 @@ public:
     bool getOriginUpperLeft() const { return originUpperLeft; }
     void setPixelCenterInteger() { pixelCenterInteger = true; }
     bool getPixelCenterInteger() const { return pixelCenterInteger; }
+    void setTexCoordRedeclared() { texCoordBuiltinRedeclared = true; }
+    bool getTexCoordRedeclared() const { return texCoordBuiltinRedeclared; }
     void addBlendEquation(TBlendEquationShift b) { blendEquations |= (1 << b); }
     unsigned int getBlendEquations() const { return blendEquations; }
     bool setXfbBufferStride(int buffer, unsigned stride)
@@ -1122,6 +1124,7 @@ protected:
     TLayoutGeometry outputPrimitive;
     bool pixelCenterInteger;
     bool originUpperLeft;
+    bool texCoordBuiltinRedeclared;
     TVertexSpacing vertexSpacing;
     TVertexOrder vertexOrder;
     TInterlockOrdering interlockOrdering;
@@ -1182,6 +1185,7 @@ protected:
                                             // for callableData/callableDataIn
     // set of names of statically read/written I/O that might need extra checking
     std::set<TString> ioAccessed;
+
     // source code of shader, useful as part of debug information
     std::string sourceFile;
     std::string sourceText;

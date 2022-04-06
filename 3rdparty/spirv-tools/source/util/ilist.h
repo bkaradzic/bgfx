@@ -348,6 +348,7 @@ void IntrusiveList<NodeType>::Check(NodeType* start) {
     p = p->next_node_;
   } while (p != start);
   assert(sentinel_count == 1 && "List should have exactly 1 sentinel node.");
+  (void)sentinel_count;
 
   p = start;
   do {

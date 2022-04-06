@@ -1263,13 +1263,13 @@ namespace bgfx
 
 		m_key.m_view = _id;
 
-		SortKey::Enum type = SortKey::SortProgram;
+		SortKey::Enum type;
 		switch (s_ctx->m_view[_id].m_mode)
 		{
 		case ViewMode::Sequential:      m_key.m_seq   = s_ctx->getSeqIncr(_id); type = SortKey::SortSequence; break;
 		case ViewMode::DepthAscending:  m_key.m_depth =            _depth;      type = SortKey::SortDepth;    break;
 		case ViewMode::DepthDescending: m_key.m_depth = UINT32_MAX-_depth;      type = SortKey::SortDepth;    break;
-		default: break;
+		default:                        m_key.m_depth =            _depth;      type = SortKey::SortProgram;  break;
 		}
 
 		uint64_t key = m_key.encodeDraw(type);

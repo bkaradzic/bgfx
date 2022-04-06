@@ -286,6 +286,7 @@ void LocalSingleBlockLoadStoreElimPass::InitExtensions() {
       "SPV_KHR_integer_dot_product",
       "SPV_EXT_shader_image_int64",
       "SPV_KHR_non_semantic_info",
+      "SPV_KHR_uniform_group_instructions",
   });
 }
 

@@ -946,6 +946,8 @@ protected:
 
 	void fixup_type_alias();
 	void reorder_type_alias();
+	void fixup_anonymous_struct_names();
+	void fixup_anonymous_struct_names(std::unordered_set<uint32_t> &visited, const SPIRType &type);
 
 	static const char *vector_swizzle(int vecsize, int index);
 

@@ -1002,11 +1002,12 @@ namespace bgfx
 
 			  "\n"
 			  "Options:\n"
-			  "  -h, --help                    Help.\n"
-			  "  -v, --version                 Version information only.\n"
-			  "  -f <file path>                Input file path.\n"
-			  "  -i <include path>             Include path (for multiple paths use -i multiple times).\n"
-			  "  -o <file path>                Output file path.\n"
+			  "  -h, --help            	       Display this help and exit.\n"
+			  "  -v, --version                 Output version information and exit.\n"
+			  "  -f <file path>                Input's file path.\n"
+			  "  -i <include path>             Include path. (for multiple paths use -i multiple times)\n"
+			  "  -o <file path>                Output's file path.\n"
+			  "      --stdout                  Output to console.\n"
 			  "      --bin2c [array name]      Generate C header file. If array name is not specified base file name will be used as name.\n"
 			  "      --depends                 Generate makefile style depends file.\n"
 			  "      --platform <platform>     Target platform.\n"
@@ -1017,7 +1018,7 @@ namespace bgfx
 			  "           orbis\n"
 			  "           osx\n"
 			  "           windows\n"
-			  "      -p, --profile <profile>   Shader model (default GLSL).\n"
+			  "      -p, --profile <profile>   Shader model. Defaults to GLSL.\n"
 			);
 
 		{
@@ -1040,20 +1041,20 @@ namespace bgfx
 		}
 
 		bx::printf(
-			  "      --preprocess              Preprocess only.\n"
-			  "      --define <defines>        Add defines to preprocessor (semicolon separated).\n"
-			  "      --raw                     Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).\n"
-			  "      --type <type>             Shader type (vertex, fragment, compute)\n"
-			  "      --varyingdef <file path>  Path to varying.def.sc file.\n"
-			  "      --verbose                 Verbose.\n"
+			  "      --preprocess              Only pre-process.\n"
+			  "      --define <defines>        Add defines to preprocessor. (Semicolon-separated)\n"
+			  "      --raw                     Do not process shader. No preprocessor, and no glsl-optimizer. (GLSL only)\n"
+			  "      --type <type>             Shader type. Can be 'vertex', 'fragment, or 'compute'.\n"
+			  "      --varyingdef <file path>  varying.def.sc's file path.\n"
+			  "      --verbose                 Be verbose.\n"
 
 			  "\n"
-			  "Options (DX9 and DX11 only):\n"
+			  "(DX9 and DX11 only):\n"
 
 			  "\n"
 			  "      --debug                   Debug information.\n"
 			  "      --disasm                  Disassemble compiled shader.\n"
-			  "  -O <level>                    Optimization level (0, 1, 2, 3).\n"
+			  "  -O <level>                    Set optimization level. Can be 0 to 3.\n"
 			  "      --Werror                  Treat warnings as errors.\n"
 
 			  "\n"
@@ -1068,7 +1069,7 @@ namespace bgfx
 		return word;
 	}
 
-	bool compileShader(const char* _varying, const char* _comment, char* _shader, uint32_t _shaderLen, Options& _options, bx::FileWriter* _writer)
+	bool compileShader(const char* _varying, const char* _comment, char* _shader, uint32_t _shaderLen, Options& _options, bx::WriterI* _writer)
 	{
 		uint32_t profile_id = 0;
 
@@ -2372,6 +2373,11 @@ namespace bgfx
 										bx::stringPrintf(code, "precision highp int;\n");
 									}
 
+									if (glsl_profile >= 300)
+									{
+										bx::stringPrintf(code, "precision highp sampler2DArray;\n");
+									}
+
 									// Pretend that all extensions are available.
 									// This will be stripped later.
 									if (usesTextureLod)
@@ -2503,14 +2509,15 @@ namespace bgfx
 								}
 
 								bx::stringPrintf(code
-									, "#define texture2DLod       textureLod\n"
+									, "#define texture2D          texture\n"
+									  "#define texture2DLod       textureLod\n"
 									  "#define texture2DGrad      textureGrad\n"
 									  "#define texture2DProjLod   textureProjLod\n"
 									  "#define texture2DProjGrad  textureProjGrad\n"
 									  "#define textureCubeLod     textureLod\n"
 									  "#define textureCubeGrad    textureGrad\n"
 									  "#define texture3D          texture\n"
-									  "#define texture2DLofOffset textureLodOffset\n"
+									  "#define texture2DLodOffset textureLodOffset\n"
 									);
 
 								bx::stringPrintf(code, "#define attribute in\n");
@@ -2627,10 +2634,11 @@ namespace bgfx
 			return bx::kExitFailure;
 		}
 
+		bool consoleOut = cmdLine.hasArg("stdout");
 		const char* outFilePath = cmdLine.findOption('o');
-		if (NULL == outFilePath)
+		if (NULL == outFilePath && !consoleOut)
 		{
-			help("Output file name must be specified.");
+			help("Output file name must be specified or use \"--stdout\" to output to stdout.");
 			return bx::kExitFailure;
 		}
 
@@ -2643,7 +2651,7 @@ namespace bgfx
 
 		Options options;
 		options.inputFilePath = filePath;
-		options.outputFilePath = outFilePath;
+		options.outputFilePath = consoleOut ? "" : outFilePath;
 		options.shaderType = bx::toLower(type[0]);
 
 		options.disasm = cmdLine.hasArg('\0', "disasm");
@@ -2809,25 +2817,31 @@ namespace bgfx
 
 			bx::FileWriter* writer = NULL;
 
-			if (!bin2c.isEmpty() )
+			if (!consoleOut)
 			{
-				writer = new Bin2cWriter(bin2c);
-			}
-			else
-			{
-				writer = new bx::FileWriter;
+				if (!bin2c.isEmpty())
+				{
+					writer = new Bin2cWriter(bin2c);
+				}
+				else
+				{
+					writer = new bx::FileWriter;
+				}
+
+				if (!bx::open(writer, outFilePath))
+				{
+					bx::printf("Unable to open output file '%s'.\n", outFilePath);
+					return bx::kExitFailure;
+				}
 			}
 
-			if (!bx::open(writer, outFilePath) )
+			compiled = compileShader(varying, commandLineComment.c_str(), data, size, options, consoleOut ? bx::getStdOut() : writer);
+
+			if (!consoleOut)
 			{
-				bx::printf("Unable to open output file '%s'.\n", outFilePath);
-				return bx::kExitFailure;
+				bx::close(writer);
+				delete writer;
 			}
-
-			compiled = compileShader(varying, commandLineComment.c_str(), data, size, options, writer);
-
-			bx::close(writer);
-			delete writer;
 		}
 
 		if (compiled)

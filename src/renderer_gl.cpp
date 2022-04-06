@@ -2829,7 +2829,7 @@ namespace bgfx { namespace gl
 					;
 
 				g_caps.limits.maxTextureSize     = uint16_t(glGet(GL_MAX_TEXTURE_SIZE) );
-				g_caps.limits.maxTextureLayers   = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 31) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31) || s_extension[Extension::EXT_texture_array].m_supported ? uint16_t(bx::max(glGet(GL_MAX_ARRAY_TEXTURE_LAYERS), 1) ) : 1;
+				g_caps.limits.maxTextureLayers   = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) || s_extension[Extension::EXT_texture_array].m_supported ? uint16_t(bx::max(glGet(GL_MAX_ARRAY_TEXTURE_LAYERS), 1) ) : 1;
 				g_caps.limits.maxComputeBindings = computeSupport ? BGFX_MAX_COMPUTE_BINDINGS : 0;
 				g_caps.limits.maxVertexStreams   = BGFX_CONFIG_MAX_VERTEX_STREAMS;
 
@@ -6476,9 +6476,10 @@ namespace bgfx { namespace gl
 					if (m_type == GL_FRAGMENT_SHADER)
 					{
 						bx::write(&writer
-							, "#define varying       in\n"
-							  "#define texture2D     texture\n"
-							  "#define texture2DProj textureProj\n"
+							, "#define varying        in\n"
+							  "#define texture2D      texture\n"
+							  "#define texture2DArray texture\n"
+							  "#define texture2DProj  textureProj\n"
 							, &err
 							);
 
@@ -6798,22 +6799,19 @@ namespace bgfx { namespace gl
 
 			m_num = uint8_t(colorIdx);
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3 )
+			if (0 == colorIdx && BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			{
-				if (0 == colorIdx)
-				{
-					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
-					{
-						// When only depth is attached disable draw buffer to avoid
-						// GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER.
-						GL_CHECK(glDrawBuffer(GL_NONE) );
-					}
-				}
-				else
-				{
-					GL_CHECK(glDrawBuffers(colorIdx, buffers) );
-				}
+				// When only depth is attached disable draw buffer to avoid
+				// GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER.
+				GL_CHECK(glDrawBuffer(GL_NONE) );
+			}
+			else if (g_caps.limits.maxFBAttachments > 0)
+			{
+				GL_CHECK(glDrawBuffers(colorIdx, buffers) );
+			}
 
+			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3)
+			{
 				// Disable read buffer to avoid GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER.
 				GL_CHECK(glReadBuffer(GL_NONE) );
 			}

@@ -375,7 +375,11 @@ GLSLANG_EXPORT void glslang_shader_set_options(glslang_shader_t* shader, int opt
     if (options & GLSLANG_SHADER_VULKAN_RULES_RELAXED) {
         shader->shader->setEnvInputVulkanRulesRelaxed();
     }
+}
 
+GLSLANG_EXPORT void glslang_shader_set_glsl_version(glslang_shader_t* shader, int version)
+{
+    shader->shader->setOverrideVersion(version);
 }
 
 GLSLANG_EXPORT const char* glslang_shader_get_preprocessed_code(glslang_shader_t* shader)
