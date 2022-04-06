@@ -24,8 +24,8 @@ Options:
 
   -h, --help               Display this help and exit.
   -v, --version            Output version information and exit.
-  -f <file path>           Input file path.
-  -o <file path>           Output file path.
+  -f <file path>           Input's file path.
+  -o <file path>           Output's file path.
   -s, --scale <num>        Scale factor.
   --ccw                    Front face is counter-clockwise winding order.
   --flipv                  Flip texture coordinate V.
@@ -37,15 +37,15 @@ Options:
 
 		More steps = slower calculation.
   --packnormal <num>       Normal packing.
-       0 - unpacked 12 bytes. (default)
+       0 - unpacked 12 bytes. (Default)
        1 - packed 4 bytes.
   --packuv <num>           Texture coordinate packing.
-       0 - unpacked 8 bytes. (default)
+       0 - unpacked 8 bytes. (Default)
        1 - packed 4 bytes.
   --tangent                Calculate tangent vectors. (Packing mode is the same as normal)
   --barycentric            Adds barycentric vertex attribute. (Packed in bgfx::Attrib::Color1)
   -c, --compress           Compress indices.
-      --[l/r]h-up+[y/z]    Coordinate system. Default is '--lh-up+y' — Left-Handed +Y is up.
+      --[l/r]h-up+[y/z]    Coordinate system. Defaults to '--lh-up+y' — Left-Handed +Y is up.
 
 Geometry Viewer (geometryv)
 ---------------------------
@@ -82,12 +82,12 @@ Options:
 
   -h, --help                Display this help and exit.
   -v, --version             Output version information and exit.
-  -f <file path>            The input's file path.
+  -f <file path>            Input's file path.
   -i <include path>         Include path. (for multiple paths use -i multiple times)
-  -o <file path>            The output's file path.
+  -o <file path>            Output's file path.
   --bin2c <array name>      Generate C header file. If array name is not specified base file name will be used as name.
   --depends                 Generate makefile style depends file.
-  --platform <platform>     Set target platform.
+  --platform <platform>     Target platform.
   -p, --profile <profile>   Shader model.
 
   							Defaults to GLSL.
@@ -148,8 +148,8 @@ Options:
 
   -h, --help               	Display this help and exit.
   -v, --version            	Output version information and exit.
-  -f <file path>           	Input file path.
-  -o <file path>           	Output file path.
+  -f <file path>           	Input's file path.
+  -o <file path>           	Output's file path.
   -t <format>              	Output format type. (BC1/2/3/4/5, ETC1, PVR14, etc.)
   -q <quality>             	Encoding quality.
 
