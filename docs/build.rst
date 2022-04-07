@@ -211,7 +211,7 @@ https://github.com/floooh/fips#fips
 https://github.com/firefalcom/bgfx-conan
 
 Minimal example without bgfx's example harness
----------------------------------------------
+----------------------------------------------
 
 This project demonstrates minimal amount of code needed to integrate bgfx with GLFW, but without
 any of existing bgfx example harness. It also demonstrates how to build bgfx with alternative build
