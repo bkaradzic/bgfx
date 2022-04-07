@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Tools &mdash; bgfx 1.115.8115 documentation</title>
+  <title>Tools &mdash; bgfx 1.115.8127 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                1.115.8115
+                1.115.8127
               </div>
             
           
@@ -171,7 +171,7 @@
 <h1>Tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="geometry-compiler-geometryc">
 <h2>Geometry Compiler (geometryc)<a class="headerlink" href="#geometry-compiler-geometryc" title="Permalink to this headline">¶</a></h2>
-<p>Converts Wavefront .obj, or glTF 2.0 mesh file to format optimal for using with bgfx.</p>
+<p>Converts Wavefront .obj, or glTF 2.0 mesh files to a format which is optimized for use with bgfx.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">geometryc</span> <span class="o">-</span><span class="n">f</span> <span class="o">&lt;</span><span class="ow">in</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">o</span> <span class="o">&lt;</span><span class="n">out</span><span class="o">&gt;</span>
 </pre></div>
@@ -205,16 +205,16 @@
 <blockquote>
 <div><dl class="option-list">
 <dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Help.</p>
+<dd><p>Display this help and exit.</p>
 </dd>
 <dt><kbd><span class="option">-v</span>, <span class="option">--version</span></kbd></dt>
-<dd><p>Version information only.</p>
+<dd><p>Output version information and exit.</p>
 </dd>
 <dt><kbd><span class="option">-f <var>&lt;file path&gt;</var></span></kbd></dt>
-<dd><p>Input file path.</p>
+<dd><p>Input’s file path.</p>
 </dd>
 <dt><kbd><span class="option">-o <var>&lt;file path&gt;</var></span></kbd></dt>
-<dd><p>Output file path.</p>
+<dd><p>Output’s file path.</p>
 </dd>
 <dt><kbd><span class="option">-s</span>, <span class="option">--scale <var>&lt;num&gt;</var></span></kbd></dt>
 <dd><p>Scale factor.</p>
@@ -226,76 +226,77 @@
 <dd><p>Flip texture coordinate V.</p>
 </dd>
 <dt><kbd><span class="option">--obb <var>&lt;num&gt;</var></span></kbd></dt>
-<dd><p>Number of steps for calculating oriented bounding box.
-Default value is 17. Less steps less precise OBB is.
-More steps slower calculation.</p>
+<dd><p>Number of steps for calculating oriented bounding box.</p>
+<p>Defaults to 17.</p>
+<p>Less steps = less precise OBB.</p>
+<p>More steps = slower calculation.</p>
 </dd>
 <dt><kbd><span class="option">--packnormal <var>&lt;num&gt;</var></span></kbd></dt>
 <dd><p>Normal packing.
-0 - unpacked 12 bytes (default).
+0 - unpacked 12 bytes. (Default)
 1 - packed 4 bytes.</p>
 </dd>
 <dt><kbd><span class="option">--packuv <var>&lt;num&gt;</var></span></kbd></dt>
 <dd><p>Texture coordinate packing.
-0 - unpacked 8 bytes (default).
+0 - unpacked 8 bytes. (Default)
 1 - packed 4 bytes.</p>
 </dd>
 <dt><kbd><span class="option">--tangent</span></kbd></dt>
-<dd><p>Calculate tangent vectors (packing mode is the same as normal).</p>
+<dd><p>Calculate tangent vectors. (Packing mode is the same as normal)</p>
 </dd>
 <dt><kbd><span class="option">--barycentric</span></kbd></dt>
-<dd><p>Adds barycentric vertex attribute (packed in bgfx::Attrib::Color1).</p>
+<dd><p>Adds barycentric vertex attribute. (Packed in bgfx::Attrib::Color1)</p>
 </dd>
 <dt><kbd><span class="option">-c</span>, <span class="option">--compress</span></kbd></dt>
 <dd><p>Compress indices.
-–[l/r]h-up+[y/z]    Coordinate system. Default is ‘–lh-up+y’ Left-Handed +Y is up.</p>
+–[l/r]h-up+[y/z]    Coordinate system. Defaults to ‘–lh-up+y’ — Left-Handed +Y is up.</p>
 </dd>
 </dl>
 </div></blockquote>
 </div>
 <div class="section" id="geometry-viewer-geometryv">
 <h2>Geometry Viewer (geometryv)<a class="headerlink" href="#geometry-viewer-geometryv" title="Permalink to this headline">¶</a></h2>
-<p>Geometry viewer.</p>
+<p>A geometry viewer.</p>
 </div>
 <div class="section" id="shader-compiler-shaderc">
 <h2>Shader Compiler (shaderc)<a class="headerlink" href="#shader-compiler-shaderc" title="Permalink to this headline">¶</a></h2>
-<p>bgfx cross-platform shader language is based on GLSL syntax. It’s uses
-ANSI C preprocessor to transform GLSL like language syntax into HLSL.
-This technique has certain drawbacks, but overall it’s simple and allows
-quick authoring of cross-platform shaders.</p>
-<p>Some differences between bgfx’s shaderc flavor of GLSL and regular GLSL:</p>
+<p>Shader Compiler is used to compile bgfx’s cross-platform shader language, which based on GLSL.
+It uses an ANSI C pre-processor to transform the GLSL-like language into HLSL.
+This method has certain drawbacks,
+but overall it’s simple and allows for quick authoring of cross-platform shaders.</p>
+<p>Some differences between bgfx’s shaderc flavor of GLSL and vanilla GLSL:</p>
 <ul class="simple">
-<li><p>No <code class="docutils literal notranslate"><span class="pre">bool/int</span></code> uniforms, all uniforms must be <code class="docutils literal notranslate"><span class="pre">float</span></code>.</p></li>
-<li><p>Attributes and varyings can be accessed only from <code class="docutils literal notranslate"><span class="pre">main()</span></code>
-function.</p></li>
-<li><p>Must use <code class="docutils literal notranslate"><span class="pre">SAMPLER2D/3D/CUBE/etc.</span></code> macros instead of
-<code class="docutils literal notranslate"><span class="pre">sampler2D/3D/Cube/etc.</span></code> tokens.</p></li>
-<li><p>Must use <code class="docutils literal notranslate"><span class="pre">vec2/3/4_splat(&lt;value&gt;)</span></code> instead of
-<code class="docutils literal notranslate"><span class="pre">vec2/3/4(&lt;value&gt;)</span></code>.</p></li>
-<li><p>Must use <code class="docutils literal notranslate"><span class="pre">mtxFromCols/mtxFromRows</span></code> when constructing matrices in shaders.</p></li>
-<li><p>Must use <code class="docutils literal notranslate"><span class="pre">mul(x,</span> <span class="pre">y)</span></code> when multiplying vectors and matrices.</p></li>
-<li><p>Must use <code class="docutils literal notranslate"><span class="pre">varying.def.sc</span></code> to define input/output semantic and
-precission instead of using <code class="docutils literal notranslate"><span class="pre">attribute/in</span></code> and <code class="docutils literal notranslate"><span class="pre">varying/in/out</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">$input/$output</span></code> tokens must appear at the begining of shader.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bool/int</span></code> uniforms are not allowed; all uniforms must be <code class="docutils literal notranslate"><span class="pre">float</span></code>.</p></li>
+<li><p>Attributes and varyings can only be accessed from <code class="docutils literal notranslate"><span class="pre">main()</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SAMPLER2D/3D/CUBE/etc.</span></code> macros replace the <code class="docutils literal notranslate"><span class="pre">sampler2D/3D/Cube/etc.</span></code> tokens.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">vec2/3/4_splat(&lt;value&gt;)</span></code> replaces the <code class="docutils literal notranslate"><span class="pre">vec2/3/4(&lt;value&gt;)</span></code> constructor.
+<code class="docutils literal notranslate"><span class="pre">vec2/3/4</span></code> constructors with multiple values are still valid.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mtxFromCols/mtxFromRows</span></code> must be used for constructing matrices.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mul(x,</span> <span class="pre">y)</span></code> must be used when multiplying vectors with matrices.</p></li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">varying.def.sc</span></code> file must be used to define input/output semantics and types,
+instead of using <code class="docutils literal notranslate"><span class="pre">attribute/in</span></code> and <code class="docutils literal notranslate"><span class="pre">varying/in/out</span></code>.
+This file cannot include comments, and typically only one is necessary.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">$input/$output</span></code> tokens corresponding to inputs and outputs defined in
+<code class="docutils literal notranslate"><span class="pre">varying.def.sc</span></code> must be used at the begining of shader.</p></li>
 </ul>
-<p>For more info see <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/bgfx_shader.sh">shader helper
-macros</a>.</p>
-<dl>
-<dt>Options:</dt><dd><dl class="option-list">
+<p>For more info, see the <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/bgfx_shader.sh">shader helper macros</a>.</p>
+<p>Options:</p>
+<blockquote>
+<div><dl class="option-list">
 <dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Help.</p>
+<dd><p>Display this help and exit.</p>
 </dd>
 <dt><kbd><span class="option">-v</span>, <span class="option">--version</span></kbd></dt>
-<dd><p>Version information only.</p>
+<dd><p>Output version information and exit.</p>
 </dd>
 <dt><kbd><span class="option">-f <var>&lt;file path&gt;</var></span></kbd></dt>
-<dd><p>Input file path.</p>
+<dd><p>Input’s file path.</p>
 </dd>
 <dt><kbd><span class="option">-i <var>&lt;include path&gt;</var></span></kbd></dt>
-<dd><p>Include path (for multiple paths use -i multiple times).</p>
+<dd><p>Include path. (for multiple paths use -i multiple times)</p>
 </dd>
 <dt><kbd><span class="option">-o <var>&lt;file path&gt;</var></span></kbd></dt>
-<dd><p>Output file path.</p>
+<dd><p>Output’s file path.</p>
 </dd>
 <dt><kbd><span class="option">--bin2c <var>&lt;array name&gt;</var></span></kbd></dt>
 <dd><p>Generate C header file. If array name is not specified base file name will be used as name.</p>
@@ -307,40 +308,42 @@ macros</a>.</p>
 <dd><p>Target platform.</p>
 </dd>
 <dt><kbd><span class="option">-p</span>, <span class="option">--profile <var>&lt;profile&gt;</var></span></kbd></dt>
-<dd><p>Shader model (default GLSL).</p>
+<dd><p>Shader model.</p>
+<p>Defaults to GLSL.</p>
 </dd>
 <dt><kbd><span class="option">--preprocess</span></kbd></dt>
-<dd><p>Preprocess only.</p>
+<dd><p>Only pre-process.</p>
 </dd>
 <dt><kbd><span class="option">--define <var>&lt;defines&gt;</var></span></kbd></dt>
-<dd><p>Add defines to preprocessor (semicolon separated).</p>
+<dd><p>Add defines to preprocessor. (semicolon separated)</p>
 </dd>
 <dt><kbd><span class="option">--raw</span></kbd></dt>
-<dd><p>Do not process shader. No preprocessor, and no glsl-optimizer (GLSL only).</p>
+<dd><p>Do not process shader. No preprocessor, and no glsl-optimizer. (GLSL only)</p>
 </dd>
 <dt><kbd><span class="option">--type <var>&lt;type&gt;</var></span></kbd></dt>
-<dd><p>Shader type (vertex, fragment, compute)</p>
+<dd><p>Shader type.</p>
+<p>Can be ‘vertex’, ‘fragment, or ‘compute’.</p>
 </dd>
 <dt><kbd><span class="option">--varyingdef <var>&lt;file path&gt;</var></span></kbd></dt>
-<dd><p>Path to varying.def.sc file.</p>
+<dd><p>A varying.def.sc’s file path.</p>
 </dd>
 <dt><kbd><span class="option">--verbose</span></kbd></dt>
-<dd><p>Verbose.</p>
+<dd><p>Be verbose.</p>
 </dd>
 </dl>
-</dd>
-</dl>
-<p>Options (DX9 and DX11 only):</p>
+</div></blockquote>
+<p>(DX9 and DX11 only):</p>
 <blockquote>
 <div><dl class="option-list">
 <dt><kbd><span class="option">--debug</span></kbd></dt>
 <dd><p>Debug information.</p>
 </dd>
 <dt><kbd><span class="option">--disasm</span></kbd></dt>
-<dd><p>Disassemble compiled shader.</p>
+<dd><p>Disassemble a compiled shader.</p>
 </dd>
 <dt><kbd><span class="option">-O <var>&lt;level&gt;</var></span></kbd></dt>
-<dd><p>Optimization level (0, 1, 2, 3).</p>
+<dd><p>Set optimization level.</p>
+<p>Can be 0–3.</p>
 </dd>
 <dt><kbd><span class="option">--Werror</span></kbd></dt>
 <dd><p>Treat warnings as errors.</p>
@@ -349,13 +352,14 @@ macros</a>.</p>
 </div></blockquote>
 <div class="section" id="building-shaders">
 <h3>Building shaders<a class="headerlink" href="#building-shaders" title="Permalink to this headline">¶</a></h3>
-<p>Shaders must be compiled for all renderers by using <cite>shaderc</cite> tool. Makefile to simplify building
-shaders is provided in examples. D3D shaders can be only compiled on Windows.</p>
+<p>Shaders can be compiled for all renderers by using the <code class="docutils literal notranslate"><span class="pre">shaderc</span></code> tool.
+A Makefile to simplify building shaders is provided in the <a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples">bgfx examples</a>.
+D3D shaders can be only compiled on Windows.</p>
 </div>
 </div>
 <div class="section" id="texture-compiler-texturec">
 <h2>Texture Compiler (texturec)<a class="headerlink" href="#texture-compiler-texturec" title="Permalink to this headline">¶</a></h2>
-<p>Convert PNG, TGA, DDS, KTX, PVR texture into bgfx supported texture formats.</p>
+<p>Convert PNG, TGA, DDS, KTX, and PVR textures into bgfx-supported texture formats.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">texturec</span> <span class="o">-</span><span class="n">f</span> <span class="o">&lt;</span><span class="ow">in</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">o</span> <span class="o">&lt;</span><span class="n">out</span><span class="o">&gt;</span> <span class="p">[</span><span class="o">-</span><span class="n">t</span> <span class="o">&lt;</span><span class="n">texture</span> <span class="nb">format</span><span class="o">&gt;</span><span class="p">]</span>
 </pre></div>
@@ -426,22 +430,23 @@ shaders is provided in examples. D3D shaders can be only compiled on Windows.</p
 <blockquote>
 <div><dl class="option-list">
 <dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Help.</p>
+<dd><p>Display this help and exit.</p>
 </dd>
 <dt><kbd><span class="option">-v</span>, <span class="option">--version</span></kbd></dt>
-<dd><p>Version information only.</p>
+<dd><p>Output version information and exit.</p>
 </dd>
 <dt><kbd><span class="option">-f <var>&lt;file path&gt;</var></span></kbd></dt>
-<dd><p>Input file path.</p>
+<dd><p>Input’s file path.</p>
 </dd>
 <dt><kbd><span class="option">-o <var>&lt;file path&gt;</var></span></kbd></dt>
-<dd><p>Output file path.</p>
+<dd><p>Output’s file path.</p>
 </dd>
 <dt><kbd><span class="option">-t <var>&lt;format&gt;</var></span></kbd></dt>
-<dd><p>Output format type (BC1/2/3/4/5, ETC1, PVR14, etc.).</p>
+<dd><p>Output format type. (BC1/2/3/4/5, ETC1, PVR14, etc.)</p>
 </dd>
 <dt><kbd><span class="option">-q <var>&lt;quality&gt;</var></span></kbd></dt>
-<dd><p>Encoding quality (default, fastest, highest).</p>
+<dd><p>Encoding quality.</p>
+<p>Can be ‘default’, ‘fastest’, or ‘highest’.</p>
 </dd>
 <dt><kbd><span class="option">-m</span>, <span class="option">--mips</span></kbd></dt>
 <dd><p>Generate mip-maps.</p>
@@ -471,13 +476,14 @@ shaders is provided in examples. D3D shaders can be only compiled on Windows.</p
 <dd><p>Premultiply alpha into RGB channel.</p>
 </dd>
 <dt><kbd><span class="option">--linear</span></kbd></dt>
-<dd><p>Input and output texture is linear color space (gamma correction won’t be applied).</p>
+<dd><p>Input and output texture is linear color space. (Gamma correction won’t be applied)</p>
 </dd>
 <dt><kbd><span class="option">--max <var>&lt;max size&gt;</var></span></kbd></dt>
-<dd><p>Maximum width/height (image will be scaled down and aspect ratio will be preserved).</p>
+<dd><p>Maximum width/height. (Image will be scaled down and aspect ratio will be preserved)</p>
 </dd>
 <dt><kbd><span class="option">--radiance <var>&lt;model&gt;</var></span></kbd></dt>
-<dd><p>Radiance cubemap filter. (Lighting model: Phong, PhongBrdf, Blinn, BlinnBrdf, GGX)</p>
+<dd><p>Radiance cubemap filter.</p>
+<p>Model can be ‘Phong’, ‘PhongBrdf’, ‘Blinn’, ‘BlinnBrdf’, or ‘GGX’.</p>
 </dd>
 <dt><kbd><span class="option">--as <var>&lt;extension&gt;</var></span></kbd></dt>
 <dd><p>Save as.</p>
@@ -493,7 +499,7 @@ shaders is provided in examples. D3D shaders can be only compiled on Windows.</p
 </div>
 <div class="section" id="texture-viewer-texturev">
 <h2>Texture Viewer (texturev)<a class="headerlink" href="#texture-viewer-texturev" title="Permalink to this headline">¶</a></h2>
-<p>Texture viewer.</p>
+<p>A texture viewer.</p>
 </div>
 </div>
 

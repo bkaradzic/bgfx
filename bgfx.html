@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>API Reference &mdash; bgfx 1.115.8115 documentation</title>
+  <title>API Reference &mdash; bgfx 1.115.8127 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                1.115.8115
+                1.115.8127
               </div>
             
           
@@ -225,10 +225,12 @@
 <h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>TL;DR for simple walkthrough how to use bgfx API, see <a class="reference external" href="https://dev.to/pperon/hello-bgfx-4dka">Hello, bgfx!</a>,
-<a class="reference external" href="https://github.com/jpcy/bgfx-minimal-example#bgfx-minimal-example">bgfx-minimal-example</a>,
-or <a class="reference external" href="https://www.sandeepnambiar.com/getting-started-with-bgfx/">Using the bgfx library with C++ on Ubuntu</a>
-tutorial.</p>
+<p>If you’re just getting started with bgfx, you might get more out of these simple walkthroughs for how to use bgfx’s API:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://dev.to/pperon/hello-bgfx-4dka">Hello, bgfx!</a></p></li>
+<li><p><a class="reference external" href="https://github.com/jpcy/bgfx-minimal-example#bgfx-minimal-example">bgfx-minimal-example</a></p></li>
+<li><p><a class="reference external" href="https://www.sandeepnambiar.com/getting-started-with-bgfx/">Using the bgfx library with C++ on Ubuntu</a></p></li>
+</ul>
 </div>
 <div class="section" id="general">
 <h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
@@ -1928,8 +1930,8 @@ tutorial.</p>
 </div>
 <div class="section" id="platform-specific">
 <h3>Platform specific<a class="headerlink" href="#platform-specific" title="Permalink to this headline">¶</a></h3>
-<p>These are platform specific APIs. It is only necessary to use these APIs in conjunction with
-creating windows.</p>
+<p>These are platform specific APIs.
+It is only necessary to use these APIs in conjunction with creating windows.</p>
 <dl class="cpp function">
 <dt id="_CPPv4N4bgfx11renderFrameE7int32_t">
 <span id="_CPPv3N4bgfx11renderFrameE7int32_t"></span><span id="_CPPv2N4bgfx11renderFrameE7int32_t"></span><span id="bgfx::renderFrame__int32_t"></span><span class="target" id="namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"></span><a class="reference internal" href="#_CPPv4N4bgfx11RenderFrameE" title="bgfx::RenderFrame">RenderFrame</a>::Enum <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">renderFrame</code><span class="sig-paren">(</span>int32_t <em>_msecs</em> = -1<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx11renderFrameE7int32_t" title="Permalink to this definition">¶</a><br /></dt>
@@ -2486,17 +2488,18 @@ creating windows.</p>
 </div>
 <div class="section" id="views">
 <h2>Views<a class="headerlink" href="#views" title="Permalink to this headline">¶</a></h2>
-<p>View is primary sorting mechanism in bgfx. View represent bucket of draw and compute calls. Compute
-and draw calls inside bucket are sorted in the way that all compute calls are executed before draw
-calls. Compute calls are always in order of submission, while draw calls are sorted by internal
-state if view is not in sequential mode. In the most of cases when z-buffer is used this change in
-order is not noticable to desired output. In cases where order has to be preserved (for example in
-rendering GUIs), view can be set to be in sequential order. Sequential order is less efficient,
-because it doesn’t allow state change optimization, and should be avoided when possible.</p>
-<p>By default views ids are sorted in ascending order. For dynamic renderers where order might not be
-known until the last moment, view ids can be remaped to arbitrary order by calling
-<cite>bgfx::setViewOrder</cite>.</p>
-<p>View state is preserved between multiple frames.</p>
+<p>Views are the primary sorting mechanism in bgfx.
+They represent buckets of draw and compute calls, or what are often known as ‘passes’.</p>
+<p>When compute calls and draw calls occupy the same bucket, the compute calls will be sorted to execute first.
+Compute calls are always executed in order of submission, while draw calls are sorted by internal state if
+the View is not in sequential mode.
+In most cases where the z-buffer is used, this change in order does not affect the desired output.
+When draw call order needs to be preserved (e.g. when rendering GUIs), Views can be set to use sequential mode with <cite>bgfx::setViewMode</cite>.
+Sequential order is less efficient, because it doesn’t allow state change optimization, and should be avoided when possible.</p>
+<p>By default, Views are sorted by their View ID, in ascending order.
+For dynamic renderers where the right order might not be known until the last moment,
+View IDs can be changed to use arbitrary ordering with <cite>bgfx::setViewOrder</cite>.</p>
+<p>A View’s state is preserved between frames.</p>
 <dl class="cpp function">
 <dt id="_CPPv4N4bgfx11setViewNameE6ViewIdPKc">
 <span id="_CPPv3N4bgfx11setViewNameE6ViewIdPKc"></span><span id="_CPPv2N4bgfx11setViewNameE6ViewIdPKc"></span><span id="bgfx::setViewName__ViewId.cCP"></span><span class="target" id="namespacebgfx_1af08d8fae9b2a2ceff9debcf25c0966fb"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">setViewName</code><span class="sig-paren">(</span>ViewId <em>_id</em>, <em class="property">const</em> char *<em>_name</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx11setViewNameE6ViewIdPKc" title="Permalink to this definition">¶</a><br /></dt>
@@ -3599,8 +3602,8 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 </div>
 <div class="section" id="draw">
 <h3>Draw<a class="headerlink" href="#draw" title="Permalink to this headline">¶</a></h3>
-<p>Draw state is not preserved between two draw calls. All state is cleared after calling
-<cite>bgfx::submit</cite>.</p>
+<p>Draw state is not preserved between two draw calls.
+All state is cleared after calling <cite>bgfx::submit</cite>.</p>
 <div class="section" id="state">
 <h4>State<a class="headerlink" href="#state" title="Permalink to this headline">¶</a></h4>
 </div>
@@ -3983,8 +3986,9 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 </div>
 <div class="section" id="scissor">
 <h4>Scissor<a class="headerlink" href="#scissor" title="Permalink to this headline">¶</a></h4>
-<p>When scissor rectangle is changing per draw call inside the same view use <cite>bgfx::setScissor</cite>,
-otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
+<p>If the Scissor rectangle needs to be changed for
+every draw call in a View, use <cite>bgfx::setScissor</cite>.
+Otherwise, use <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="cpp function">
 <dt id="_CPPv4N4bgfx10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t">
 <span id="_CPPv3N4bgfx10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t"></span><span id="_CPPv2N4bgfx10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t"></span><span id="bgfx::setScissor__uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="namespacebgfx_1a044469089552c76b36ec5e5ac57cf695"></span>uint16_t <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">setScissor</code><span class="sig-paren">(</span>uint16_t <em>_x</em>, uint16_t <em>_y</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a><br /></dt>
@@ -4572,7 +4576,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </div>
 <div class="section" id="submit">
 <h4>Submit<a class="headerlink" href="#submit" title="Permalink to this headline">¶</a></h4>
-<p>Within view all draw commands are executed after blit and compute commands.</p>
+<p>In Views, all draw commands are executed <strong>after</strong> blit and compute commands.</p>
 <dl class="cpp function">
 <dt id="_CPPv4N4bgfx6submitE6ViewId13ProgramHandle8uint32_t7uint8_t">
 <span id="_CPPv3N4bgfx6submitE6ViewId13ProgramHandle8uint32_t7uint8_t"></span><span id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle8uint32_t7uint8_t"></span><span id="bgfx::submit__ViewId.ProgramHandle.uint32_t.uint8_t"></span><span class="target" id="namespacebgfx_1aac8f69b1ff11ad6c8a95db9f9e46d019"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, uint32_t <em>_depth</em> = 0, uint8_t <em>_flags</em> = BGFX_DISCARD_ALL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx6submitE6ViewId13ProgramHandle8uint32_t7uint8_t" title="Permalink to this definition">¶</a><br /></dt>
@@ -4635,8 +4639,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </div>
 <div class="section" id="compute">
 <h3>Compute<a class="headerlink" href="#compute" title="Permalink to this headline">¶</a></h3>
-<p>Compute state is not preserved between two compute dispatches. All state is cleared after calling
-<cite>bgfx::dispatch</cite>.</p>
+<p>Compute state is not preserved between compute dispatches; all state is cleared after calling <cite>bgfx::dispatch</cite>.</p>
 <div class="section" id="id4">
 <h4>Buffers<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
 <dl class="cpp struct">
@@ -4793,7 +4796,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </div>
 <div class="section" id="dispatch">
 <h4>Dispatch<a class="headerlink" href="#dispatch" title="Permalink to this headline">¶</a></h4>
-<p>Within view all compute commands are dispatched after blit commands, and before draw commands.</p>
+<p>In Views, all draw commands are executed <strong>after</strong> blit and compute commands.</p>
 <dl class="cpp function">
 <dt id="_CPPv4N4bgfx8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t">
 <span id="_CPPv3N4bgfx8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t"></span><span id="_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t"></span><span id="bgfx::dispatch__ViewId.ProgramHandle.uint32_t.uint32_t.uint32_t.uint8_t"></span><span class="target" id="namespacebgfx_1a3f99f5af2f277674422b56e60b5d8a91"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1, uint8_t <em>_flags</em> = BGFX_DISCARD_ALL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t" title="Permalink to this definition">¶</a><br /></dt>
@@ -4838,7 +4841,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </div>
 <div class="section" id="blit">
 <h3>Blit<a class="headerlink" href="#blit" title="Permalink to this headline">¶</a></h3>
-<p>Within view all blit commands are executed before compute, and draw commands.</p>
+<p>In Views, all draw commands are executed <strong>after</strong> blit and compute commands.</p>
 <dl class="cpp function">
 <dt id="_CPPv4N4bgfx4blitE6ViewId13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t">
 <span id="_CPPv3N4bgfx4blitE6ViewId13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t"></span><span id="_CPPv2N4bgfx4blitE6ViewId13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t"></span><span id="bgfx::blit__ViewId.TextureHandle.uint16_t.uint16_t.TextureHandle.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="namespacebgfx_1aebd5560001cdeb76b4fa88ac04b660d6"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">blit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, TextureHandle <em>_dst</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, TextureHandle <em>_src</em>, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx4blitE6ViewId13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a><br /></dt>
