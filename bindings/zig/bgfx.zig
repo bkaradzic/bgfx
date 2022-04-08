@@ -9,816 +9,804 @@
 
 const std = @import("std");
 
-pub const StateFlags = enum(c_ulong) {
-    /// Enable R write.
-    WriteR                 = 0x0000000000000001,
+pub const ViewId = u16;
 
-    /// Enable G write.
-    WriteG                 = 0x0000000000000002,
+pub const StateFlags = u64;
+/// Enable R write.
+pub const StateFlags_WriteR: StateFlags                 = 0x0000000000000001;
 
-    /// Enable B write.
-    WriteB                 = 0x0000000000000004,
+/// Enable G write.
+pub const StateFlags_WriteG: StateFlags                 = 0x0000000000000002;
 
-    /// Enable alpha write.
-    WriteA                 = 0x0000000000000008,
+/// Enable B write.
+pub const StateFlags_WriteB: StateFlags                 = 0x0000000000000004;
 
-    /// Enable depth write.
-    WriteZ                 = 0x0000004000000000,
+/// Enable alpha write.
+pub const StateFlags_WriteA: StateFlags                 = 0x0000000000000008;
 
-    /// Enable RGB write.
-    WriteRgb               = 0x0000000000000007,
+/// Enable depth write.
+pub const StateFlags_WriteZ: StateFlags                 = 0x0000004000000000;
 
-    /// Write all channels mask.
-    WriteMask              = 0x000000400000000f,
+/// Enable RGB write.
+pub const StateFlags_WriteRgb: StateFlags               = 0x0000000000000007;
 
-    /// Enable depth test, less.
-    DepthTestLess          = 0x0000000000000010,
+/// Write all channels mask.
+pub const StateFlags_WriteMask: StateFlags              = 0x000000400000000f;
 
-    /// Enable depth test, less or equal.
-    DepthTestLequal        = 0x0000000000000020,
+/// Enable depth test, less.
+pub const StateFlags_DepthTestLess: StateFlags          = 0x0000000000000010;
 
-    /// Enable depth test, equal.
-    DepthTestEqual         = 0x0000000000000030,
+/// Enable depth test, less or equal.
+pub const StateFlags_DepthTestLequal: StateFlags        = 0x0000000000000020;
 
-    /// Enable depth test, greater or equal.
-    DepthTestGequal        = 0x0000000000000040,
+/// Enable depth test, equal.
+pub const StateFlags_DepthTestEqual: StateFlags         = 0x0000000000000030;
 
-    /// Enable depth test, greater.
-    DepthTestGreater       = 0x0000000000000050,
+/// Enable depth test, greater or equal.
+pub const StateFlags_DepthTestGequal: StateFlags        = 0x0000000000000040;
 
-    /// Enable depth test, not equal.
-    DepthTestNotequal      = 0x0000000000000060,
+/// Enable depth test, greater.
+pub const StateFlags_DepthTestGreater: StateFlags       = 0x0000000000000050;
 
-    /// Enable depth test, never.
-    DepthTestNever         = 0x0000000000000070,
+/// Enable depth test, not equal.
+pub const StateFlags_DepthTestNotequal: StateFlags      = 0x0000000000000060;
 
-    /// Enable depth test, always.
-    DepthTestAlways        = 0x0000000000000080,
-    DepthTestShift         = 4,
-    DepthTestMask          = 0x00000000000000f0,
+/// Enable depth test, never.
+pub const StateFlags_DepthTestNever: StateFlags         = 0x0000000000000070;
 
-    /// 0, 0, 0, 0
-    BlendZero              = 0x0000000000001000,
+/// Enable depth test, always.
+pub const StateFlags_DepthTestAlways: StateFlags        = 0x0000000000000080;
+pub const StateFlags_DepthTestShift: StateFlags         = 4;
+pub const StateFlags_DepthTestMask: StateFlags          = 0x00000000000000f0;
 
-    /// 1, 1, 1, 1
-    BlendOne               = 0x0000000000002000,
+/// 0, 0, 0, 0
+pub const StateFlags_BlendZero: StateFlags              = 0x0000000000001000;
 
-    /// Rs, Gs, Bs, As
-    BlendSrcColor          = 0x0000000000003000,
+/// 1, 1, 1, 1
+pub const StateFlags_BlendOne: StateFlags               = 0x0000000000002000;
 
-    /// 1-Rs, 1-Gs, 1-Bs, 1-As
-    BlendInvSrcColor       = 0x0000000000004000,
+/// Rs, Gs, Bs, As
+pub const StateFlags_BlendSrcColor: StateFlags          = 0x0000000000003000;
 
-    /// As, As, As, As
-    BlendSrcAlpha          = 0x0000000000005000,
+/// 1-Rs, 1-Gs, 1-Bs, 1-As
+pub const StateFlags_BlendInvSrcColor: StateFlags       = 0x0000000000004000;
 
-    /// 1-As, 1-As, 1-As, 1-As
-    BlendInvSrcAlpha       = 0x0000000000006000,
+/// As, As, As, As
+pub const StateFlags_BlendSrcAlpha: StateFlags          = 0x0000000000005000;
 
-    /// Ad, Ad, Ad, Ad
-    BlendDstAlpha          = 0x0000000000007000,
+/// 1-As, 1-As, 1-As, 1-As
+pub const StateFlags_BlendInvSrcAlpha: StateFlags       = 0x0000000000006000;
 
-    /// 1-Ad, 1-Ad, 1-Ad ,1-Ad
-    BlendInvDstAlpha       = 0x0000000000008000,
+/// Ad, Ad, Ad, Ad
+pub const StateFlags_BlendDstAlpha: StateFlags          = 0x0000000000007000;
 
-    /// Rd, Gd, Bd, Ad
-    BlendDstColor          = 0x0000000000009000,
+/// 1-Ad, 1-Ad, 1-Ad ,1-Ad
+pub const StateFlags_BlendInvDstAlpha: StateFlags       = 0x0000000000008000;
 
-    /// 1-Rd, 1-Gd, 1-Bd, 1-Ad
-    BlendInvDstColor       = 0x000000000000a000,
+/// Rd, Gd, Bd, Ad
+pub const StateFlags_BlendDstColor: StateFlags          = 0x0000000000009000;
 
-    /// f, f, f, 1; f = min(As, 1-Ad)
-    BlendSrcAlphaSat       = 0x000000000000b000,
+/// 1-Rd, 1-Gd, 1-Bd, 1-Ad
+pub const StateFlags_BlendInvDstColor: StateFlags       = 0x000000000000a000;
 
-    /// Blend factor
-    BlendFactor            = 0x000000000000c000,
+/// f, f, f, 1; f = min(As, 1-Ad)
+pub const StateFlags_BlendSrcAlphaSat: StateFlags       = 0x000000000000b000;
 
-    /// 1-Blend factor
-    BlendInvFactor         = 0x000000000000d000,
-    BlendShift             = 12,
-    BlendMask              = 0x000000000ffff000,
+/// Blend factor
+pub const StateFlags_BlendFactor: StateFlags            = 0x000000000000c000;
 
-    /// Blend add: src + dst.
-    BlendEquationAdd       = 0x0000000000000000,
+/// 1-Blend factor
+pub const StateFlags_BlendInvFactor: StateFlags         = 0x000000000000d000;
+pub const StateFlags_BlendShift: StateFlags             = 12;
+pub const StateFlags_BlendMask: StateFlags              = 0x000000000ffff000;
 
-    /// Blend subtract: src - dst.
-    BlendEquationSub       = 0x0000000010000000,
+/// Blend add: src + dst.
+pub const StateFlags_BlendEquationAdd: StateFlags       = 0x0000000000000000;
 
-    /// Blend reverse subtract: dst - src.
-    BlendEquationRevsub    = 0x0000000020000000,
+/// Blend subtract: src - dst.
+pub const StateFlags_BlendEquationSub: StateFlags       = 0x0000000010000000;
 
-    /// Blend min: min(src, dst).
-    BlendEquationMin       = 0x0000000030000000,
+/// Blend reverse subtract: dst - src.
+pub const StateFlags_BlendEquationRevsub: StateFlags    = 0x0000000020000000;
 
-    /// Blend max: max(src, dst).
-    BlendEquationMax       = 0x0000000040000000,
-    BlendEquationShift     = 28,
-    BlendEquationMask      = 0x00000003f0000000,
+/// Blend min: min(src, dst).
+pub const StateFlags_BlendEquationMin: StateFlags       = 0x0000000030000000;
 
-    /// Cull clockwise triangles.
-    CullCw                 = 0x0000001000000000,
+/// Blend max: max(src, dst).
+pub const StateFlags_BlendEquationMax: StateFlags       = 0x0000000040000000;
+pub const StateFlags_BlendEquationShift: StateFlags     = 28;
+pub const StateFlags_BlendEquationMask: StateFlags      = 0x00000003f0000000;
 
-    /// Cull counter-clockwise triangles.
-    CullCcw                = 0x0000002000000000,
-    CullShift              = 36,
-    CullMask               = 0x0000003000000000,
-    AlphaRefShift          = 40,
-    AlphaRefMask           = 0x0000ff0000000000,
+/// Cull clockwise triangles.
+pub const StateFlags_CullCw: StateFlags                 = 0x0000001000000000;
 
-    /// Tristrip.
-    PtTristrip             = 0x0001000000000000,
+/// Cull counter-clockwise triangles.
+pub const StateFlags_CullCcw: StateFlags                = 0x0000002000000000;
+pub const StateFlags_CullShift: StateFlags              = 36;
+pub const StateFlags_CullMask: StateFlags               = 0x0000003000000000;
+pub const StateFlags_AlphaRefShift: StateFlags          = 40;
+pub const StateFlags_AlphaRefMask: StateFlags           = 0x0000ff0000000000;
 
-    /// Lines.
-    PtLines                = 0x0002000000000000,
+/// Tristrip.
+pub const StateFlags_PtTristrip: StateFlags             = 0x0001000000000000;
 
-    /// Line strip.
-    PtLinestrip            = 0x0003000000000000,
+/// Lines.
+pub const StateFlags_PtLines: StateFlags                = 0x0002000000000000;
 
-    /// Points.
-    PtPoints               = 0x0004000000000000,
-    PtShift                = 48,
-    PtMask                 = 0x0007000000000000,
-    PointSizeShift         = 52,
-    PointSizeMask          = 0x00f0000000000000,
+/// Line strip.
+pub const StateFlags_PtLinestrip: StateFlags            = 0x0003000000000000;
 
-    /// Enable MSAA rasterization.
-    Msaa                   = 0x0100000000000000,
+/// Points.
+pub const StateFlags_PtPoints: StateFlags               = 0x0004000000000000;
+pub const StateFlags_PtShift: StateFlags                = 48;
+pub const StateFlags_PtMask: StateFlags                 = 0x0007000000000000;
+pub const StateFlags_PointSizeShift: StateFlags         = 52;
+pub const StateFlags_PointSizeMask: StateFlags          = 0x00f0000000000000;
 
-    /// Enable line AA rasterization.
-    Lineaa                 = 0x0200000000000000,
+/// Enable MSAA rasterization.
+pub const StateFlags_Msaa: StateFlags                   = 0x0100000000000000;
 
-    /// Enable conservative rasterization.
-    ConservativeRaster     = 0x0400000000000000,
+/// Enable line AA rasterization.
+pub const StateFlags_Lineaa: StateFlags                 = 0x0200000000000000;
 
-    /// No state.
-    None                   = 0x0000000000000000,
+/// Enable conservative rasterization.
+pub const StateFlags_ConservativeRaster: StateFlags     = 0x0400000000000000;
 
-    /// Front counter-clockwise (default is clockwise).
-    FrontCcw               = 0x0000008000000000,
+/// No state.
+pub const StateFlags_None: StateFlags                   = 0x0000000000000000;
 
-    /// Enable blend independent.
-    BlendIndependent       = 0x0000000400000000,
+/// Front counter-clockwise (default is clockwise).
+pub const StateFlags_FrontCcw: StateFlags               = 0x0000008000000000;
 
-    /// Enable alpha to coverage.
-    BlendAlphaToCoverage   = 0x0000000800000000,
+/// Enable blend independent.
+pub const StateFlags_BlendIndependent: StateFlags       = 0x0000000400000000;
 
-    /// Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
-    /// culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored).
-    Default                = 0x010000500000001f,
-    Mask                   = 0xffffffffffffffff,
-    ReservedShift          = 61,
-    ReservedMask           = 0xe000000000000000,
-};
+/// Enable alpha to coverage.
+pub const StateFlags_BlendAlphaToCoverage: StateFlags   = 0x0000000800000000;
 
-pub const StencilFlags = enum(c_uint) {
-    FuncRefShift           = 0,
-    FuncRefMask            = 0x000000ff,
-    FuncRmaskShift         = 8,
-    FuncRmaskMask          = 0x0000ff00,
-    None                   = 0x00000000,
-    Mask                   = 0xffffffff,
-    Default                = 0x00000000,
+/// Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
+/// culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored).
+pub const StateFlags_Default: StateFlags                = 0x010000500000001f;
+pub const StateFlags_Mask: StateFlags                   = 0xffffffffffffffff;
+pub const StateFlags_ReservedShift: StateFlags          = 61;
+pub const StateFlags_ReservedMask: StateFlags           = 0xe000000000000000;
 
-    /// Enable stencil test, less.
-    TestLess               = 0x00010000,
+pub const StencilFlags = u32;
+pub const StencilFlags_FuncRefShift: StencilFlags           = 0;
+pub const StencilFlags_FuncRefMask: StencilFlags            = 0x000000ff;
+pub const StencilFlags_FuncRmaskShift: StencilFlags         = 8;
+pub const StencilFlags_FuncRmaskMask: StencilFlags          = 0x0000ff00;
+pub const StencilFlags_None: StencilFlags                   = 0x00000000;
+pub const StencilFlags_Mask: StencilFlags                   = 0xffffffff;
+pub const StencilFlags_Default: StencilFlags                = 0x00000000;
 
-    /// Enable stencil test, less or equal.
-    TestLequal             = 0x00020000,
+/// Enable stencil test, less.
+pub const StencilFlags_TestLess: StencilFlags               = 0x00010000;
 
-    /// Enable stencil test, equal.
-    TestEqual              = 0x00030000,
+/// Enable stencil test, less or equal.
+pub const StencilFlags_TestLequal: StencilFlags             = 0x00020000;
 
-    /// Enable stencil test, greater or equal.
-    TestGequal             = 0x00040000,
+/// Enable stencil test, equal.
+pub const StencilFlags_TestEqual: StencilFlags              = 0x00030000;
 
-    /// Enable stencil test, greater.
-    TestGreater            = 0x00050000,
+/// Enable stencil test, greater or equal.
+pub const StencilFlags_TestGequal: StencilFlags             = 0x00040000;
 
-    /// Enable stencil test, not equal.
-    TestNotequal           = 0x00060000,
+/// Enable stencil test, greater.
+pub const StencilFlags_TestGreater: StencilFlags            = 0x00050000;
 
-    /// Enable stencil test, never.
-    TestNever              = 0x00070000,
+/// Enable stencil test, not equal.
+pub const StencilFlags_TestNotequal: StencilFlags           = 0x00060000;
 
-    /// Enable stencil test, always.
-    TestAlways             = 0x00080000,
-    TestShift              = 16,
-    TestMask               = 0x000f0000,
+/// Enable stencil test, never.
+pub const StencilFlags_TestNever: StencilFlags              = 0x00070000;
 
-    /// Zero.
-    OpFailSZero            = 0x00000000,
+/// Enable stencil test, always.
+pub const StencilFlags_TestAlways: StencilFlags             = 0x00080000;
+pub const StencilFlags_TestShift: StencilFlags              = 16;
+pub const StencilFlags_TestMask: StencilFlags               = 0x000f0000;
 
-    /// Keep.
-    OpFailSKeep            = 0x00100000,
+/// Zero.
+pub const StencilFlags_OpFailSZero: StencilFlags            = 0x00000000;
 
-    /// Replace.
-    OpFailSReplace         = 0x00200000,
+/// Keep.
+pub const StencilFlags_OpFailSKeep: StencilFlags            = 0x00100000;
 
-    /// Increment and wrap.
-    OpFailSIncr            = 0x00300000,
+/// Replace.
+pub const StencilFlags_OpFailSReplace: StencilFlags         = 0x00200000;
 
-    /// Increment and clamp.
-    OpFailSIncrsat         = 0x00400000,
+/// Increment and wrap.
+pub const StencilFlags_OpFailSIncr: StencilFlags            = 0x00300000;
 
-    /// Decrement and wrap.
-    OpFailSDecr            = 0x00500000,
+/// Increment and clamp.
+pub const StencilFlags_OpFailSIncrsat: StencilFlags         = 0x00400000;
 
-    /// Decrement and clamp.
-    OpFailSDecrsat         = 0x00600000,
+/// Decrement and wrap.
+pub const StencilFlags_OpFailSDecr: StencilFlags            = 0x00500000;
 
-    /// Invert.
-    OpFailSInvert          = 0x00700000,
-    OpFailSShift           = 20,
-    OpFailSMask            = 0x00f00000,
+/// Decrement and clamp.
+pub const StencilFlags_OpFailSDecrsat: StencilFlags         = 0x00600000;
 
-    /// Zero.
-    OpFailZZero            = 0x00000000,
+/// Invert.
+pub const StencilFlags_OpFailSInvert: StencilFlags          = 0x00700000;
+pub const StencilFlags_OpFailSShift: StencilFlags           = 20;
+pub const StencilFlags_OpFailSMask: StencilFlags            = 0x00f00000;
 
-    /// Keep.
-    OpFailZKeep            = 0x01000000,
+/// Zero.
+pub const StencilFlags_OpFailZZero: StencilFlags            = 0x00000000;
 
-    /// Replace.
-    OpFailZReplace         = 0x02000000,
+/// Keep.
+pub const StencilFlags_OpFailZKeep: StencilFlags            = 0x01000000;
 
-    /// Increment and wrap.
-    OpFailZIncr            = 0x03000000,
+/// Replace.
+pub const StencilFlags_OpFailZReplace: StencilFlags         = 0x02000000;
 
-    /// Increment and clamp.
-    OpFailZIncrsat         = 0x04000000,
+/// Increment and wrap.
+pub const StencilFlags_OpFailZIncr: StencilFlags            = 0x03000000;
 
-    /// Decrement and wrap.
-    OpFailZDecr            = 0x05000000,
+/// Increment and clamp.
+pub const StencilFlags_OpFailZIncrsat: StencilFlags         = 0x04000000;
 
-    /// Decrement and clamp.
-    OpFailZDecrsat         = 0x06000000,
+/// Decrement and wrap.
+pub const StencilFlags_OpFailZDecr: StencilFlags            = 0x05000000;
 
-    /// Invert.
-    OpFailZInvert          = 0x07000000,
-    OpFailZShift           = 24,
-    OpFailZMask            = 0x0f000000,
+/// Decrement and clamp.
+pub const StencilFlags_OpFailZDecrsat: StencilFlags         = 0x06000000;
 
-    /// Zero.
-    OpPassZZero            = 0x00000000,
+/// Invert.
+pub const StencilFlags_OpFailZInvert: StencilFlags          = 0x07000000;
+pub const StencilFlags_OpFailZShift: StencilFlags           = 24;
+pub const StencilFlags_OpFailZMask: StencilFlags            = 0x0f000000;
 
-    /// Keep.
-    OpPassZKeep            = 0x10000000,
+/// Zero.
+pub const StencilFlags_OpPassZZero: StencilFlags            = 0x00000000;
 
-    /// Replace.
-    OpPassZReplace         = 0x20000000,
+/// Keep.
+pub const StencilFlags_OpPassZKeep: StencilFlags            = 0x10000000;
 
-    /// Increment and wrap.
-    OpPassZIncr            = 0x30000000,
+/// Replace.
+pub const StencilFlags_OpPassZReplace: StencilFlags         = 0x20000000;
 
-    /// Increment and clamp.
-    OpPassZIncrsat         = 0x40000000,
+/// Increment and wrap.
+pub const StencilFlags_OpPassZIncr: StencilFlags            = 0x30000000;
 
-    /// Decrement and wrap.
-    OpPassZDecr            = 0x50000000,
+/// Increment and clamp.
+pub const StencilFlags_OpPassZIncrsat: StencilFlags         = 0x40000000;
 
-    /// Decrement and clamp.
-    OpPassZDecrsat         = 0x60000000,
+/// Decrement and wrap.
+pub const StencilFlags_OpPassZDecr: StencilFlags            = 0x50000000;
 
-    /// Invert.
-    OpPassZInvert          = 0x70000000,
-    OpPassZShift           = 28,
-    OpPassZMask            = 0xf0000000,
-};
+/// Decrement and clamp.
+pub const StencilFlags_OpPassZDecrsat: StencilFlags         = 0x60000000;
 
-pub const ClearFlags = enum(c_ushort) {
-    /// No clear flags.
-    None                   = 0x0000,
+/// Invert.
+pub const StencilFlags_OpPassZInvert: StencilFlags          = 0x70000000;
+pub const StencilFlags_OpPassZShift: StencilFlags           = 28;
+pub const StencilFlags_OpPassZMask: StencilFlags            = 0xf0000000;
 
-    /// Clear color.
-    Color                  = 0x0001,
+pub const ClearFlags = u16;
+/// No clear flags.
+pub const ClearFlags_None: ClearFlags                   = 0x0000;
 
-    /// Clear depth.
-    Depth                  = 0x0002,
+/// Clear color.
+pub const ClearFlags_Color: ClearFlags                  = 0x0001;
 
-    /// Clear stencil.
-    Stencil                = 0x0004,
+/// Clear depth.
+pub const ClearFlags_Depth: ClearFlags                  = 0x0002;
 
-    /// Discard frame buffer attachment 0.
-    DiscardColor0          = 0x0008,
+/// Clear stencil.
+pub const ClearFlags_Stencil: ClearFlags                = 0x0004;
 
-    /// Discard frame buffer attachment 1.
-    DiscardColor1          = 0x0010,
+/// Discard frame buffer attachment 0.
+pub const ClearFlags_DiscardColor0: ClearFlags          = 0x0008;
 
-    /// Discard frame buffer attachment 2.
-    DiscardColor2          = 0x0020,
+/// Discard frame buffer attachment 1.
+pub const ClearFlags_DiscardColor1: ClearFlags          = 0x0010;
 
-    /// Discard frame buffer attachment 3.
-    DiscardColor3          = 0x0040,
+/// Discard frame buffer attachment 2.
+pub const ClearFlags_DiscardColor2: ClearFlags          = 0x0020;
 
-    /// Discard frame buffer attachment 4.
-    DiscardColor4          = 0x0080,
+/// Discard frame buffer attachment 3.
+pub const ClearFlags_DiscardColor3: ClearFlags          = 0x0040;
 
-    /// Discard frame buffer attachment 5.
-    DiscardColor5          = 0x0100,
+/// Discard frame buffer attachment 4.
+pub const ClearFlags_DiscardColor4: ClearFlags          = 0x0080;
 
-    /// Discard frame buffer attachment 6.
-    DiscardColor6          = 0x0200,
+/// Discard frame buffer attachment 5.
+pub const ClearFlags_DiscardColor5: ClearFlags          = 0x0100;
 
-    /// Discard frame buffer attachment 7.
-    DiscardColor7          = 0x0400,
+/// Discard frame buffer attachment 6.
+pub const ClearFlags_DiscardColor6: ClearFlags          = 0x0200;
 
-    /// Discard frame buffer depth attachment.
-    DiscardDepth           = 0x0800,
+/// Discard frame buffer attachment 7.
+pub const ClearFlags_DiscardColor7: ClearFlags          = 0x0400;
 
-    /// Discard frame buffer stencil attachment.
-    DiscardStencil         = 0x1000,
-    DiscardColorMask       = 0x07f8,
-    DiscardMask            = 0x1ff8,
-};
+/// Discard frame buffer depth attachment.
+pub const ClearFlags_DiscardDepth: ClearFlags           = 0x0800;
 
-pub const DiscardFlags = enum(c_uint) {
-    /// Preserve everything.
-    None                   = 0x00000000,
+/// Discard frame buffer stencil attachment.
+pub const ClearFlags_DiscardStencil: ClearFlags         = 0x1000;
+pub const ClearFlags_DiscardColorMask: ClearFlags       = 0x07f8;
+pub const ClearFlags_DiscardMask: ClearFlags            = 0x1ff8;
 
-    /// Discard texture sampler and buffer bindings.
-    Bindings               = 0x00000001,
+pub const DiscardFlags = u32;
+/// Preserve everything.
+pub const DiscardFlags_None: DiscardFlags                   = 0x00000000;
 
-    /// Discard index buffer.
-    IndexBuffer            = 0x00000002,
+/// Discard texture sampler and buffer bindings.
+pub const DiscardFlags_Bindings: DiscardFlags               = 0x00000001;
 
-    /// Discard instance data.
-    InstanceData           = 0x00000004,
+/// Discard index buffer.
+pub const DiscardFlags_IndexBuffer: DiscardFlags            = 0x00000002;
 
-    /// Discard state and uniform bindings.
-    State                  = 0x00000008,
+/// Discard instance data.
+pub const DiscardFlags_InstanceData: DiscardFlags           = 0x00000004;
 
-    /// Discard transform.
-    Transform              = 0x00000010,
+/// Discard state and uniform bindings.
+pub const DiscardFlags_State: DiscardFlags                  = 0x00000008;
 
-    /// Discard vertex streams.
-    VertexStreams          = 0x00000020,
+/// Discard transform.
+pub const DiscardFlags_Transform: DiscardFlags              = 0x00000010;
 
-    /// Discard all states.
-    All                    = 0x000000ff,
-};
+/// Discard vertex streams.
+pub const DiscardFlags_VertexStreams: DiscardFlags          = 0x00000020;
 
-pub const DebugFlags = enum(c_uint) {
-    /// No debug.
-    None                   = 0x00000000,
+/// Discard all states.
+pub const DiscardFlags_All: DiscardFlags                    = 0x000000ff;
 
-    /// Enable wireframe for all primitives.
-    Wireframe              = 0x00000001,
+pub const DebugFlags = u32;
+/// No debug.
+pub const DebugFlags_None: DebugFlags                   = 0x00000000;
 
-    /// Enable infinitely fast hardware test. No draw calls will be submitted to driver.
-    /// It's useful when profiling to quickly assess bottleneck between CPU and GPU.
-    Ifh                    = 0x00000002,
+/// Enable wireframe for all primitives.
+pub const DebugFlags_Wireframe: DebugFlags              = 0x00000001;
 
-    /// Enable statistics display.
-    Stats                  = 0x00000004,
+/// Enable infinitely fast hardware test. No draw calls will be submitted to driver.
+/// It's useful when profiling to quickly assess bottleneck between CPU and GPU.
+pub const DebugFlags_Ifh: DebugFlags                    = 0x00000002;
 
-    /// Enable debug text display.
-    Text                   = 0x00000008,
+/// Enable statistics display.
+pub const DebugFlags_Stats: DebugFlags                  = 0x00000004;
 
-    /// Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
-    Profiler               = 0x00000010,
-};
+/// Enable debug text display.
+pub const DebugFlags_Text: DebugFlags                   = 0x00000008;
 
-pub const BufferFlags = enum(c_ushort) {
-    /// 1 8-bit value
-    ComputeFormat8x1       = 0x0001,
+/// Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
+pub const DebugFlags_Profiler: DebugFlags               = 0x00000010;
 
-    /// 2 8-bit values
-    ComputeFormat8x2       = 0x0002,
+pub const BufferFlags = u16;
+/// 1 8-bit value
+pub const BufferFlags_ComputeFormat8x1: BufferFlags       = 0x0001;
 
-    /// 4 8-bit values
-    ComputeFormat8x4       = 0x0003,
+/// 2 8-bit values
+pub const BufferFlags_ComputeFormat8x2: BufferFlags       = 0x0002;
 
-    /// 1 16-bit value
-    ComputeFormat16x1      = 0x0004,
+/// 4 8-bit values
+pub const BufferFlags_ComputeFormat8x4: BufferFlags       = 0x0003;
 
-    /// 2 16-bit values
-    ComputeFormat16x2      = 0x0005,
+/// 1 16-bit value
+pub const BufferFlags_ComputeFormat16x1: BufferFlags      = 0x0004;
 
-    /// 4 16-bit values
-    ComputeFormat16x4      = 0x0006,
+/// 2 16-bit values
+pub const BufferFlags_ComputeFormat16x2: BufferFlags      = 0x0005;
 
-    /// 1 32-bit value
-    ComputeFormat32x1      = 0x0007,
+/// 4 16-bit values
+pub const BufferFlags_ComputeFormat16x4: BufferFlags      = 0x0006;
 
-    /// 2 32-bit values
-    ComputeFormat32x2      = 0x0008,
+/// 1 32-bit value
+pub const BufferFlags_ComputeFormat32x1: BufferFlags      = 0x0007;
 
-    /// 4 32-bit values
-    ComputeFormat32x4      = 0x0009,
-    ComputeFormatShift     = 0,
-    ComputeFormatMask      = 0x000f,
+/// 2 32-bit values
+pub const BufferFlags_ComputeFormat32x2: BufferFlags      = 0x0008;
 
-    /// Type `int`.
-    ComputeTypeInt         = 0x0010,
+/// 4 32-bit values
+pub const BufferFlags_ComputeFormat32x4: BufferFlags      = 0x0009;
+pub const BufferFlags_ComputeFormatShift: BufferFlags     = 0;
+pub const BufferFlags_ComputeFormatMask: BufferFlags      = 0x000f;
 
-    /// Type `uint`.
-    ComputeTypeUint        = 0x0020,
+/// Type `int`.
+pub const BufferFlags_ComputeTypeInt: BufferFlags         = 0x0010;
 
-    /// Type `float`.
-    ComputeTypeFloat       = 0x0030,
-    ComputeTypeShift       = 4,
-    ComputeTypeMask        = 0x0030,
-    None                   = 0x0000,
+/// Type `uint`.
+pub const BufferFlags_ComputeTypeUint: BufferFlags        = 0x0020;
 
-    /// Buffer will be read by shader.
-    ComputeRead            = 0x0100,
+/// Type `float`.
+pub const BufferFlags_ComputeTypeFloat: BufferFlags       = 0x0030;
+pub const BufferFlags_ComputeTypeShift: BufferFlags       = 4;
+pub const BufferFlags_ComputeTypeMask: BufferFlags        = 0x0030;
+pub const BufferFlags_None: BufferFlags                   = 0x0000;
 
-    /// Buffer will be used for writing.
-    ComputeWrite           = 0x0200,
+/// Buffer will be read by shader.
+pub const BufferFlags_ComputeRead: BufferFlags            = 0x0100;
 
-    /// Buffer will be used for storing draw indirect commands.
-    DrawIndirect           = 0x0400,
+/// Buffer will be used for writing.
+pub const BufferFlags_ComputeWrite: BufferFlags           = 0x0200;
 
-    /// Allow dynamic index/vertex buffer resize during update.
-    AllowResize            = 0x0800,
+/// Buffer will be used for storing draw indirect commands.
+pub const BufferFlags_DrawIndirect: BufferFlags           = 0x0400;
 
-    /// Index buffer contains 32-bit indices.
-    Index32                = 0x1000,
-    ComputeReadWrite       = 0x0300,
-};
+/// Allow dynamic index/vertex buffer resize during update.
+pub const BufferFlags_AllowResize: BufferFlags            = 0x0800;
 
-pub const TextureFlags = enum(c_ulong) {
-    None                   = 0x0000000000000000,
+/// Index buffer contains 32-bit indices.
+pub const BufferFlags_Index32: BufferFlags                = 0x1000;
+pub const BufferFlags_ComputeReadWrite: BufferFlags       = 0x0300;
 
-    /// Texture will be used for MSAA sampling.
-    MsaaSample             = 0x0000000800000000,
+pub const TextureFlags = u64;
+pub const TextureFlags_None: TextureFlags                   = 0x0000000000000000;
 
-    /// Render target no MSAA.
-    Rt                     = 0x0000001000000000,
+/// Texture will be used for MSAA sampling.
+pub const TextureFlags_MsaaSample: TextureFlags             = 0x0000000800000000;
 
-    /// Texture will be used for compute write.
-    ComputeWrite           = 0x0000100000000000,
+/// Render target no MSAA.
+pub const TextureFlags_Rt: TextureFlags                     = 0x0000001000000000;
 
-    /// Sample texture as sRGB.
-    Srgb                   = 0x0000200000000000,
+/// Texture will be used for compute write.
+pub const TextureFlags_ComputeWrite: TextureFlags           = 0x0000100000000000;
 
-    /// Texture will be used as blit destination.
-    BlitDst                = 0x0000400000000000,
+/// Sample texture as sRGB.
+pub const TextureFlags_Srgb: TextureFlags                   = 0x0000200000000000;
 
-    /// Texture will be used for read back from GPU.
-    ReadBack               = 0x0000800000000000,
+/// Texture will be used as blit destination.
+pub const TextureFlags_BlitDst: TextureFlags                = 0x0000400000000000;
 
-    /// Render target MSAAx2 mode.
-    RtMsaaX2               = 0x0000002000000000,
+/// Texture will be used for read back from GPU.
+pub const TextureFlags_ReadBack: TextureFlags               = 0x0000800000000000;
 
-    /// Render target MSAAx4 mode.
-    RtMsaaX4               = 0x0000003000000000,
+/// Render target MSAAx2 mode.
+pub const TextureFlags_RtMsaaX2: TextureFlags               = 0x0000002000000000;
 
-    /// Render target MSAAx8 mode.
-    RtMsaaX8               = 0x0000004000000000,
+/// Render target MSAAx4 mode.
+pub const TextureFlags_RtMsaaX4: TextureFlags               = 0x0000003000000000;
 
-    /// Render target MSAAx16 mode.
-    RtMsaaX16              = 0x0000005000000000,
-    RtMsaaShift            = 36,
-    RtMsaaMask             = 0x0000007000000000,
+/// Render target MSAAx8 mode.
+pub const TextureFlags_RtMsaaX8: TextureFlags               = 0x0000004000000000;
 
-    /// Render target will be used for writing
-    RtWriteOnly            = 0x0000008000000000,
-    RtShift                = 36,
-    RtMask                 = 0x000000f000000000,
-};
+/// Render target MSAAx16 mode.
+pub const TextureFlags_RtMsaaX16: TextureFlags              = 0x0000005000000000;
+pub const TextureFlags_RtMsaaShift: TextureFlags            = 36;
+pub const TextureFlags_RtMsaaMask: TextureFlags             = 0x0000007000000000;
 
-pub const SamplerFlags = enum(c_uint) {
-    /// Wrap U mode: Mirror
-    UMirror                = 0x00000001,
+/// Render target will be used for writing
+pub const TextureFlags_RtWriteOnly: TextureFlags            = 0x0000008000000000;
+pub const TextureFlags_RtShift: TextureFlags                = 36;
+pub const TextureFlags_RtMask: TextureFlags                 = 0x000000f000000000;
 
-    /// Wrap U mode: Clamp
-    UClamp                 = 0x00000002,
+pub const SamplerFlags = u32;
+/// Wrap U mode: Mirror
+pub const SamplerFlags_UMirror: SamplerFlags                = 0x00000001;
 
-    /// Wrap U mode: Border
-    UBorder                = 0x00000003,
-    UShift                 = 0,
-    UMask                  = 0x00000003,
+/// Wrap U mode: Clamp
+pub const SamplerFlags_UClamp: SamplerFlags                 = 0x00000002;
 
-    /// Wrap V mode: Mirror
-    VMirror                = 0x00000004,
+/// Wrap U mode: Border
+pub const SamplerFlags_UBorder: SamplerFlags                = 0x00000003;
+pub const SamplerFlags_UShift: SamplerFlags                 = 0;
+pub const SamplerFlags_UMask: SamplerFlags                  = 0x00000003;
 
-    /// Wrap V mode: Clamp
-    VClamp                 = 0x00000008,
+/// Wrap V mode: Mirror
+pub const SamplerFlags_VMirror: SamplerFlags                = 0x00000004;
 
-    /// Wrap V mode: Border
-    VBorder                = 0x0000000c,
-    VShift                 = 2,
-    VMask                  = 0x0000000c,
+/// Wrap V mode: Clamp
+pub const SamplerFlags_VClamp: SamplerFlags                 = 0x00000008;
 
-    /// Wrap W mode: Mirror
-    WMirror                = 0x00000010,
+/// Wrap V mode: Border
+pub const SamplerFlags_VBorder: SamplerFlags                = 0x0000000c;
+pub const SamplerFlags_VShift: SamplerFlags                 = 2;
+pub const SamplerFlags_VMask: SamplerFlags                  = 0x0000000c;
 
-    /// Wrap W mode: Clamp
-    WClamp                 = 0x00000020,
+/// Wrap W mode: Mirror
+pub const SamplerFlags_WMirror: SamplerFlags                = 0x00000010;
 
-    /// Wrap W mode: Border
-    WBorder                = 0x00000030,
-    WShift                 = 4,
-    WMask                  = 0x00000030,
+/// Wrap W mode: Clamp
+pub const SamplerFlags_WClamp: SamplerFlags                 = 0x00000020;
 
-    /// Min sampling mode: Point
-    MinPoint               = 0x00000040,
+/// Wrap W mode: Border
+pub const SamplerFlags_WBorder: SamplerFlags                = 0x00000030;
+pub const SamplerFlags_WShift: SamplerFlags                 = 4;
+pub const SamplerFlags_WMask: SamplerFlags                  = 0x00000030;
 
-    /// Min sampling mode: Anisotropic
-    MinAnisotropic         = 0x00000080,
-    MinShift               = 6,
-    MinMask                = 0x000000c0,
+/// Min sampling mode: Point
+pub const SamplerFlags_MinPoint: SamplerFlags               = 0x00000040;
 
-    /// Mag sampling mode: Point
-    MagPoint               = 0x00000100,
+/// Min sampling mode: Anisotropic
+pub const SamplerFlags_MinAnisotropic: SamplerFlags         = 0x00000080;
+pub const SamplerFlags_MinShift: SamplerFlags               = 6;
+pub const SamplerFlags_MinMask: SamplerFlags                = 0x000000c0;
 
-    /// Mag sampling mode: Anisotropic
-    MagAnisotropic         = 0x00000200,
-    MagShift               = 8,
-    MagMask                = 0x00000300,
+/// Mag sampling mode: Point
+pub const SamplerFlags_MagPoint: SamplerFlags               = 0x00000100;
 
-    /// Mip sampling mode: Point
-    MipPoint               = 0x00000400,
-    MipShift               = 10,
-    MipMask                = 0x00000400,
+/// Mag sampling mode: Anisotropic
+pub const SamplerFlags_MagAnisotropic: SamplerFlags         = 0x00000200;
+pub const SamplerFlags_MagShift: SamplerFlags               = 8;
+pub const SamplerFlags_MagMask: SamplerFlags                = 0x00000300;
 
-    /// Compare when sampling depth texture: less.
-    CompareLess            = 0x00010000,
+/// Mip sampling mode: Point
+pub const SamplerFlags_MipPoint: SamplerFlags               = 0x00000400;
+pub const SamplerFlags_MipShift: SamplerFlags               = 10;
+pub const SamplerFlags_MipMask: SamplerFlags                = 0x00000400;
 
-    /// Compare when sampling depth texture: less or equal.
-    CompareLequal          = 0x00020000,
+/// Compare when sampling depth texture: less.
+pub const SamplerFlags_CompareLess: SamplerFlags            = 0x00010000;
 
-    /// Compare when sampling depth texture: equal.
-    CompareEqual           = 0x00030000,
+/// Compare when sampling depth texture: less or equal.
+pub const SamplerFlags_CompareLequal: SamplerFlags          = 0x00020000;
 
-    /// Compare when sampling depth texture: greater or equal.
-    CompareGequal          = 0x00040000,
+/// Compare when sampling depth texture: equal.
+pub const SamplerFlags_CompareEqual: SamplerFlags           = 0x00030000;
 
-    /// Compare when sampling depth texture: greater.
-    CompareGreater         = 0x00050000,
+/// Compare when sampling depth texture: greater or equal.
+pub const SamplerFlags_CompareGequal: SamplerFlags          = 0x00040000;
 
-    /// Compare when sampling depth texture: not equal.
-    CompareNotequal        = 0x00060000,
+/// Compare when sampling depth texture: greater.
+pub const SamplerFlags_CompareGreater: SamplerFlags         = 0x00050000;
 
-    /// Compare when sampling depth texture: never.
-    CompareNever           = 0x00070000,
+/// Compare when sampling depth texture: not equal.
+pub const SamplerFlags_CompareNotequal: SamplerFlags        = 0x00060000;
 
-    /// Compare when sampling depth texture: always.
-    CompareAlways          = 0x00080000,
-    CompareShift           = 16,
-    CompareMask            = 0x000f0000,
-    BorderColorShift       = 24,
-    BorderColorMask        = 0x0f000000,
-    ReservedShift          = 28,
-    ReservedMask           = 0xf0000000,
-    None                   = 0x00000000,
+/// Compare when sampling depth texture: never.
+pub const SamplerFlags_CompareNever: SamplerFlags           = 0x00070000;
 
-    /// Sample stencil instead of depth.
-    SampleStencil          = 0x00100000,
-    Point                  = 0x00000540,
-    UvwMirror              = 0x00000015,
-    UvwClamp               = 0x0000002a,
-    UvwBorder              = 0x0000003f,
-    BitsMask               = 0x000f07ff,
-};
+/// Compare when sampling depth texture: always.
+pub const SamplerFlags_CompareAlways: SamplerFlags          = 0x00080000;
+pub const SamplerFlags_CompareShift: SamplerFlags           = 16;
+pub const SamplerFlags_CompareMask: SamplerFlags            = 0x000f0000;
+pub const SamplerFlags_BorderColorShift: SamplerFlags       = 24;
+pub const SamplerFlags_BorderColorMask: SamplerFlags        = 0x0f000000;
+pub const SamplerFlags_ReservedShift: SamplerFlags          = 28;
+pub const SamplerFlags_ReservedMask: SamplerFlags           = 0xf0000000;
+pub const SamplerFlags_None: SamplerFlags                   = 0x00000000;
 
-pub const ResetFlags = enum(c_uint) {
-    /// Enable 2x MSAA.
-    MsaaX2                 = 0x00000010,
+/// Sample stencil instead of depth.
+pub const SamplerFlags_SampleStencil: SamplerFlags          = 0x00100000;
+pub const SamplerFlags_Point: SamplerFlags                  = 0x00000540;
+pub const SamplerFlags_UvwMirror: SamplerFlags              = 0x00000015;
+pub const SamplerFlags_UvwClamp: SamplerFlags               = 0x0000002a;
+pub const SamplerFlags_UvwBorder: SamplerFlags              = 0x0000003f;
+pub const SamplerFlags_BitsMask: SamplerFlags               = 0x000f07ff;
 
-    /// Enable 4x MSAA.
-    MsaaX4                 = 0x00000020,
+pub const ResetFlags = u32;
+/// Enable 2x MSAA.
+pub const ResetFlags_MsaaX2: ResetFlags                 = 0x00000010;
 
-    /// Enable 8x MSAA.
-    MsaaX8                 = 0x00000030,
+/// Enable 4x MSAA.
+pub const ResetFlags_MsaaX4: ResetFlags                 = 0x00000020;
 
-    /// Enable 16x MSAA.
-    MsaaX16                = 0x00000040,
-    MsaaShift              = 4,
-    MsaaMask               = 0x00000070,
+/// Enable 8x MSAA.
+pub const ResetFlags_MsaaX8: ResetFlags                 = 0x00000030;
 
-    /// No reset flags.
-    None                   = 0x00000000,
+/// Enable 16x MSAA.
+pub const ResetFlags_MsaaX16: ResetFlags                = 0x00000040;
+pub const ResetFlags_MsaaShift: ResetFlags              = 4;
+pub const ResetFlags_MsaaMask: ResetFlags               = 0x00000070;
 
-    /// Not supported yet.
-    Fullscreen             = 0x00000001,
+/// No reset flags.
+pub const ResetFlags_None: ResetFlags                   = 0x00000000;
 
-    /// Enable V-Sync.
-    Vsync                  = 0x00000080,
+/// Not supported yet.
+pub const ResetFlags_Fullscreen: ResetFlags             = 0x00000001;
 
-    /// Turn on/off max anisotropy.
-    Maxanisotropy          = 0x00000100,
+/// Enable V-Sync.
+pub const ResetFlags_Vsync: ResetFlags                  = 0x00000080;
 
-    /// Begin screen capture.
-    Capture                = 0x00000200,
+/// Turn on/off max anisotropy.
+pub const ResetFlags_Maxanisotropy: ResetFlags          = 0x00000100;
 
-    /// Flush rendering after submitting to GPU.
-    FlushAfterRender       = 0x00002000,
+/// Begin screen capture.
+pub const ResetFlags_Capture: ResetFlags                = 0x00000200;
 
-    /// This flag specifies where flip occurs. Default behaviour is that flip occurs
-    /// before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
-    FlipAfterRender        = 0x00004000,
+/// Flush rendering after submitting to GPU.
+pub const ResetFlags_FlushAfterRender: ResetFlags       = 0x00002000;
 
-    /// Enable sRGB backbuffer.
-    SrgbBackbuffer         = 0x00008000,
+/// This flag specifies where flip occurs. Default behaviour is that flip occurs
+/// before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
+pub const ResetFlags_FlipAfterRender: ResetFlags        = 0x00004000;
 
-    /// Enable HDR10 rendering.
-    Hdr10                  = 0x00010000,
+/// Enable sRGB backbuffer.
+pub const ResetFlags_SrgbBackbuffer: ResetFlags         = 0x00008000;
 
-    /// Enable HiDPI rendering.
-    Hidpi                  = 0x00020000,
+/// Enable HDR10 rendering.
+pub const ResetFlags_Hdr10: ResetFlags                  = 0x00010000;
 
-    /// Enable depth clamp.
-    DepthClamp             = 0x00040000,
+/// Enable HiDPI rendering.
+pub const ResetFlags_Hidpi: ResetFlags                  = 0x00020000;
 
-    /// Suspend rendering.
-    Suspend                = 0x00080000,
-    FullscreenShift        = 0,
-    FullscreenMask         = 0x00000001,
-    ReservedShift          = 31,
-    ReservedMask           = 0x80000000,
-};
+/// Enable depth clamp.
+pub const ResetFlags_DepthClamp: ResetFlags             = 0x00040000;
 
-pub const CapsFlags = enum(c_ulong) {
-    /// Alpha to coverage is supported.
-    AlphaToCoverage        = 0x0000000000000001,
+/// Suspend rendering.
+pub const ResetFlags_Suspend: ResetFlags                = 0x00080000;
+pub const ResetFlags_FullscreenShift: ResetFlags        = 0;
+pub const ResetFlags_FullscreenMask: ResetFlags         = 0x00000001;
+pub const ResetFlags_ReservedShift: ResetFlags          = 31;
+pub const ResetFlags_ReservedMask: ResetFlags           = 0x80000000;
 
-    /// Blend independent is supported.
-    BlendIndependent       = 0x0000000000000002,
+pub const CapsFlags = u64;
+/// Alpha to coverage is supported.
+pub const CapsFlags_AlphaToCoverage: CapsFlags        = 0x0000000000000001;
 
-    /// Compute shaders are supported.
-    Compute                = 0x0000000000000004,
+/// Blend independent is supported.
+pub const CapsFlags_BlendIndependent: CapsFlags       = 0x0000000000000002;
 
-    /// Conservative rasterization is supported.
-    ConservativeRaster     = 0x0000000000000008,
+/// Compute shaders are supported.
+pub const CapsFlags_Compute: CapsFlags                = 0x0000000000000004;
 
-    /// Draw indirect is supported.
-    DrawIndirect           = 0x0000000000000010,
+/// Conservative rasterization is supported.
+pub const CapsFlags_ConservativeRaster: CapsFlags     = 0x0000000000000008;
 
-    /// Fragment depth is available in fragment shader.
-    FragmentDepth          = 0x0000000000000020,
+/// Draw indirect is supported.
+pub const CapsFlags_DrawIndirect: CapsFlags           = 0x0000000000000010;
 
-    /// Fragment ordering is available in fragment shader.
-    FragmentOrdering       = 0x0000000000000040,
+/// Fragment depth is available in fragment shader.
+pub const CapsFlags_FragmentDepth: CapsFlags          = 0x0000000000000020;
 
-    /// Graphics debugger is present.
-    GraphicsDebugger       = 0x0000000000000080,
+/// Fragment ordering is available in fragment shader.
+pub const CapsFlags_FragmentOrdering: CapsFlags       = 0x0000000000000040;
 
-    /// HDR10 rendering is supported.
-    Hdr10                  = 0x0000000000000100,
+/// Graphics debugger is present.
+pub const CapsFlags_GraphicsDebugger: CapsFlags       = 0x0000000000000080;
 
-    /// HiDPI rendering is supported.
-    Hidpi                  = 0x0000000000000200,
+/// HDR10 rendering is supported.
+pub const CapsFlags_Hdr10: CapsFlags                  = 0x0000000000000100;
 
-    /// Image Read/Write is supported.
-    ImageRw                = 0x0000000000000400,
+/// HiDPI rendering is supported.
+pub const CapsFlags_Hidpi: CapsFlags                  = 0x0000000000000200;
 
-    /// 32-bit indices are supported.
-    Index32                = 0x0000000000000800,
+/// Image Read/Write is supported.
+pub const CapsFlags_ImageRw: CapsFlags                = 0x0000000000000400;
 
-    /// Instancing is supported.
-    Instancing             = 0x0000000000001000,
+/// 32-bit indices are supported.
+pub const CapsFlags_Index32: CapsFlags                = 0x0000000000000800;
 
-    /// Occlusion query is supported.
-    OcclusionQuery         = 0x0000000000002000,
+/// Instancing is supported.
+pub const CapsFlags_Instancing: CapsFlags             = 0x0000000000001000;
 
-    /// Renderer is on separate thread.
-    RendererMultithreaded  = 0x0000000000004000,
+/// Occlusion query is supported.
+pub const CapsFlags_OcclusionQuery: CapsFlags         = 0x0000000000002000;
 
-    /// Multiple windows are supported.
-    SwapChain              = 0x0000000000008000,
+/// Renderer is on separate thread.
+pub const CapsFlags_RendererMultithreaded: CapsFlags  = 0x0000000000004000;
 
-    /// 2D texture array is supported.
-    Texture2dArray         = 0x0000000000010000,
+/// Multiple windows are supported.
+pub const CapsFlags_SwapChain: CapsFlags              = 0x0000000000008000;
 
-    /// 3D textures are supported.
-    Texture3d              = 0x0000000000020000,
+/// 2D texture array is supported.
+pub const CapsFlags_Texture2dArray: CapsFlags         = 0x0000000000010000;
 
-    /// Texture blit is supported.
-    TextureBlit            = 0x0000000000040000,
-    TextureCompareReserved = 0x0000000000080000,
+/// 3D textures are supported.
+pub const CapsFlags_Texture3d: CapsFlags              = 0x0000000000020000;
 
-    /// Texture compare less equal mode is supported.
-    TextureCompareLequal   = 0x0000000000100000,
+/// Texture blit is supported.
+pub const CapsFlags_TextureBlit: CapsFlags            = 0x0000000000040000;
+pub const CapsFlags_TextureCompareReserved: CapsFlags = 0x0000000000080000;
 
-    /// Cubemap texture array is supported.
-    TextureCubeArray       = 0x0000000000200000,
+/// Texture compare less equal mode is supported.
+pub const CapsFlags_TextureCompareLequal: CapsFlags   = 0x0000000000100000;
 
-    /// CPU direct access to GPU texture memory.
-    TextureDirectAccess    = 0x0000000000400000,
+/// Cubemap texture array is supported.
+pub const CapsFlags_TextureCubeArray: CapsFlags       = 0x0000000000200000;
 
-    /// Read-back texture is supported.
-    TextureReadBack        = 0x0000000000800000,
+/// CPU direct access to GPU texture memory.
+pub const CapsFlags_TextureDirectAccess: CapsFlags    = 0x0000000000400000;
 
-    /// Vertex attribute half-float is supported.
-    VertexAttribHalf       = 0x0000000001000000,
+/// Read-back texture is supported.
+pub const CapsFlags_TextureReadBack: CapsFlags        = 0x0000000000800000;
 
-    /// Vertex attribute 10_10_10_2 is supported.
-    VertexAttribUint10     = 0x0000000002000000,
+/// Vertex attribute half-float is supported.
+pub const CapsFlags_VertexAttribHalf: CapsFlags       = 0x0000000001000000;
 
-    /// Rendering with VertexID only is supported.
-    VertexId               = 0x0000000004000000,
+/// Vertex attribute 10_10_10_2 is supported.
+pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000002000000;
 
-    /// Viewport layer is available in vertex shader.
-    ViewportLayerArray     = 0x0000000008000000,
+/// Rendering with VertexID only is supported.
+pub const CapsFlags_VertexId: CapsFlags               = 0x0000000004000000;
 
-    /// All texture compare modes are supported.
-    TextureCompareAll      = 0x0000000000180000,
-};
+/// Viewport layer is available in vertex shader.
+pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000008000000;
 
-pub const CapsFormatFlags = enum(c_uint) {
-    /// Texture format is not supported.
-    TextureNone            = 0x00000000,
+/// All texture compare modes are supported.
+pub const CapsFlags_TextureCompareAll: CapsFlags      = 0x0000000000180000;
 
-    /// Texture format is supported.
-    Texture2d              = 0x00000001,
+pub const CapsFormatFlags = u32;
+/// Texture format is not supported.
+pub const CapsFormatFlags_TextureNone: CapsFormatFlags            = 0x00000000;
 
-    /// Texture as sRGB format is supported.
-    Texture2dSrgb          = 0x00000002,
+/// Texture format is supported.
+pub const CapsFormatFlags_Texture2d: CapsFormatFlags              = 0x00000001;
 
-    /// Texture format is emulated.
-    Texture2dEmulated      = 0x00000004,
+/// Texture as sRGB format is supported.
+pub const CapsFormatFlags_Texture2dSrgb: CapsFormatFlags          = 0x00000002;
 
-    /// Texture format is supported.
-    Texture3d              = 0x00000008,
+/// Texture format is emulated.
+pub const CapsFormatFlags_Texture2dEmulated: CapsFormatFlags      = 0x00000004;
 
-    /// Texture as sRGB format is supported.
-    Texture3dSrgb          = 0x00000010,
+/// Texture format is supported.
+pub const CapsFormatFlags_Texture3d: CapsFormatFlags              = 0x00000008;
 
-    /// Texture format is emulated.
-    Texture3dEmulated      = 0x00000020,
+/// Texture as sRGB format is supported.
+pub const CapsFormatFlags_Texture3dSrgb: CapsFormatFlags          = 0x00000010;
 
-    /// Texture format is supported.
-    TextureCube            = 0x00000040,
+/// Texture format is emulated.
+pub const CapsFormatFlags_Texture3dEmulated: CapsFormatFlags      = 0x00000020;
 
-    /// Texture as sRGB format is supported.
-    TextureCubeSrgb        = 0x00000080,
+/// Texture format is supported.
+pub const CapsFormatFlags_TextureCube: CapsFormatFlags            = 0x00000040;
 
-    /// Texture format is emulated.
-    TextureCubeEmulated    = 0x00000100,
+/// Texture as sRGB format is supported.
+pub const CapsFormatFlags_TextureCubeSrgb: CapsFormatFlags        = 0x00000080;
 
-    /// Texture format can be used from vertex shader.
-    TextureVertex          = 0x00000200,
+/// Texture format is emulated.
+pub const CapsFormatFlags_TextureCubeEmulated: CapsFormatFlags    = 0x00000100;
 
-    /// Texture format can be used as image and read from.
-    TextureImageRead       = 0x00000400,
+/// Texture format can be used from vertex shader.
+pub const CapsFormatFlags_TextureVertex: CapsFormatFlags          = 0x00000200;
 
-    /// Texture format can be used as image and written to.
-    TextureImageWrite      = 0x00000800,
+/// Texture format can be used as image and read from.
+pub const CapsFormatFlags_TextureImageRead: CapsFormatFlags       = 0x00000400;
 
-    /// Texture format can be used as frame buffer.
-    TextureFramebuffer     = 0x00001000,
+/// Texture format can be used as image and written to.
+pub const CapsFormatFlags_TextureImageWrite: CapsFormatFlags      = 0x00000800;
 
-    /// Texture format can be used as MSAA frame buffer.
-    TextureFramebufferMsaa = 0x00002000,
+/// Texture format can be used as frame buffer.
+pub const CapsFormatFlags_TextureFramebuffer: CapsFormatFlags     = 0x00001000;
 
-    /// Texture can be sampled as MSAA.
-    TextureMsaa            = 0x00004000,
+/// Texture format can be used as MSAA frame buffer.
+pub const CapsFormatFlags_TextureFramebufferMsaa: CapsFormatFlags = 0x00002000;
 
-    /// Texture format supports auto-generated mips.
-    TextureMipAutogen      = 0x00008000,
-};
+/// Texture can be sampled as MSAA.
+pub const CapsFormatFlags_TextureMsaa: CapsFormatFlags            = 0x00004000;
 
-pub const ResolveFlags = enum(c_uint) {
-    /// No resolve flags.
-    None                   = 0x00000000,
+/// Texture format supports auto-generated mips.
+pub const CapsFormatFlags_TextureMipAutogen: CapsFormatFlags      = 0x00008000;
 
-    /// Auto-generate mip maps on resolve.
-    AutoGenMips            = 0x00000001,
-};
+pub const ResolveFlags = u32;
+/// No resolve flags.
+pub const ResolveFlags_None: ResolveFlags                   = 0x00000000;
 
-pub const PciIdFlags = enum(c_ushort) {
-    /// Autoselect adapter.
-    None                   = 0x0000,
+/// Auto-generate mip maps on resolve.
+pub const ResolveFlags_AutoGenMips: ResolveFlags            = 0x00000001;
 
-    /// Software rasterizer.
-    SoftwareRasterizer     = 0x0001,
+pub const PciIdFlags = u16;
+/// Autoselect adapter.
+pub const PciIdFlags_None: PciIdFlags                   = 0x0000;
 
-    /// AMD adapter.
-    Amd                    = 0x1002,
+/// Software rasterizer.
+pub const PciIdFlags_SoftwareRasterizer: PciIdFlags     = 0x0001;
 
-    /// Apple adapter.
-    Apple                  = 0x106b,
+/// AMD adapter.
+pub const PciIdFlags_Amd: PciIdFlags                    = 0x1002;
 
-    /// Intel adapter.
-    Intel                  = 0x8086,
+/// Apple adapter.
+pub const PciIdFlags_Apple: PciIdFlags                  = 0x106b;
 
-    /// nVidia adapter.
-    Nvidia                 = 0x10de,
+/// Intel adapter.
+pub const PciIdFlags_Intel: PciIdFlags                  = 0x8086;
 
-    /// Microsoft adapter.
-    Microsoft              = 0x1414,
-};
+/// nVidia adapter.
+pub const PciIdFlags_Nvidia: PciIdFlags                 = 0x10de;
 
-pub const CubeMapFlags = enum(c_uint) {
-    /// Cubemap +x.
-    PositiveX              = 0x00000000,
+/// Microsoft adapter.
+pub const PciIdFlags_Microsoft: PciIdFlags              = 0x1414;
 
-    /// Cubemap -x.
-    NegativeX              = 0x00000001,
+pub const CubeMapFlags = u32;
+/// Cubemap +x.
+pub const CubeMapFlags_PositiveX: CubeMapFlags              = 0x00000000;
 
-    /// Cubemap +y.
-    PositiveY              = 0x00000002,
+/// Cubemap -x.
+pub const CubeMapFlags_NegativeX: CubeMapFlags              = 0x00000001;
 
-    /// Cubemap -y.
-    NegativeY              = 0x00000003,
+/// Cubemap +y.
+pub const CubeMapFlags_PositiveY: CubeMapFlags              = 0x00000002;
 
-    /// Cubemap +z.
-    PositiveZ              = 0x00000004,
+/// Cubemap -y.
+pub const CubeMapFlags_NegativeY: CubeMapFlags              = 0x00000003;
 
-    /// Cubemap -z.
-    NegativeZ              = 0x00000005,
-};
+/// Cubemap +z.
+pub const CubeMapFlags_PositiveZ: CubeMapFlags              = 0x00000004;
+
+/// Cubemap -z.
+pub const CubeMapFlags_NegativeZ: CubeMapFlags              = 0x00000005;
 
 pub const Fatal = enum(c_int) {
     DebugCheck,
@@ -1292,7 +1280,7 @@ pub const Caps = extern struct {
     };
 
     pub const InternalData = extern struct {
-        caps: [*c]Caps,
+        caps: [*c]const Caps,
         context: ?*anyopaque,
     };
 
@@ -1399,7 +1387,7 @@ pub const Init = extern struct {
 
     pub const ViewStats = extern struct {
         name: [256]u8,
-        view: u16,
+        view: ViewId,
         cpuTimeBegin: i64,
         cpuTimeEnd: i64,
         gpuTimeBegin: i64,
@@ -1460,7 +1448,7 @@ pub const Init = extern struct {
         attributes: [18]u16,
     };
 
-    pub const Encoder = extern struct {
+    pub const Encoder = opaque {
     };
 
 pub const DynamicIndexBufferHandle = extern struct {
@@ -1519,11 +1507,11 @@ pub const VertexLayoutHandle = extern struct {
 /// <param name="_numLayers">Number of texture layer/slice(s) in array to use.</param>
 /// <param name="_mip">Mip level.</param>
 /// <param name="_resolve">Resolve flags. See: `BGFX_RESOLVE_*`</param>
-pub extern fn bgfx_attachment_init(self: [*c]Attachment, handle: TextureHandle, access: Access, layer: u16, numLayers: u16, mip: u16, resolve: u8) callconv(.C) void;
+pub extern fn bgfx_attachment_init(self: [*c]Attachment, handle: TextureHandle, access: Access, layer: u16, numLayers: u16, mip: u16, resolve: u8) void;
 
 /// Start VertexLayout.
 /// <param name="_rendererType">Renderer backend type. See: `bgfx::RendererType`</param>
-pub extern fn bgfx_vertex_layout_begin(self: [*c]VertexLayout, rendererType: RendererType) callconv(.C) [*c]VertexLayout;
+pub extern fn bgfx_vertex_layout_begin(self: [*c]VertexLayout, rendererType: RendererType) [*c]VertexLayout;
 
 /// Add attribute to VertexLayout.
 /// @remarks Must be called between begin/end.
@@ -1532,7 +1520,7 @@ pub extern fn bgfx_vertex_layout_begin(self: [*c]VertexLayout, rendererType: Ren
 /// <param name="_type">Element type.</param>
 /// <param name="_normalized">When using fixed point AttribType (f.e. Uint8) value will be normalized for vertex shader usage. When normalized is set to true, AttribType::Uint8 value in range 0-255 will be in range 0.0-1.0 in vertex shader.</param>
 /// <param name="_asInt">Packaging rule for vertexPack, vertexUnpack, and vertexConvert for AttribType::Uint8 and AttribType::Int16. Unpacking code must be implemented inside vertex shader.</param>
-pub extern fn bgfx_vertex_layout_add(self: [*c]VertexLayout, attrib: Attrib, num: u8, type: AttribType, normalized: bool, asInt: bool) callconv(.C) [*c]VertexLayout;
+pub extern fn bgfx_vertex_layout_add(self: [*c]VertexLayout, attrib: Attrib, num: u8, type: AttribType, normalized: bool, asInt: bool) [*c]VertexLayout;
 
 /// Decode attribute.
 /// <param name="_attrib">Attribute semantics. See: `bgfx::Attrib`</param>
@@ -1540,18 +1528,18 @@ pub extern fn bgfx_vertex_layout_add(self: [*c]VertexLayout, attrib: Attrib, num
 /// <param name="_type">Element type.</param>
 /// <param name="_normalized">Attribute is normalized.</param>
 /// <param name="_asInt">Attribute is packed as int.</param>
-pub extern fn bgfx_vertex_layout_decode(self: [*c]VertexLayout, attrib: Attrib, num: [*c]u8 , type: [*c]AttribType, normalized: [*c]bool, asInt: [*c]bool) callconv(.C) void;
+pub extern fn bgfx_vertex_layout_decode(self: [*c]const VertexLayout, attrib: Attrib, num: [*c]u8 , type: [*c]AttribType, normalized: [*c]bool, asInt: [*c]bool) void;
 
 /// Returns `true` if VertexLayout contains attribute.
 /// <param name="_attrib">Attribute semantics. See: `bgfx::Attrib`</param>
-pub extern fn bgfx_vertex_layout_has(self: [*c]VertexLayout, attrib: Attrib) callconv(.C) bool;
+pub extern fn bgfx_vertex_layout_has(self: [*c]const VertexLayout, attrib: Attrib) bool;
 
 /// Skip `_num` bytes in vertex stream.
 /// <param name="_num">Number of bytes to skip.</param>
-pub extern fn bgfx_vertex_layout_skip(self: [*c]VertexLayout, num: u8) callconv(.C) [*c]VertexLayout;
+pub extern fn bgfx_vertex_layout_skip(self: [*c]VertexLayout, num: u8) [*c]VertexLayout;
 
 /// End VertexLayout.
-pub extern fn bgfx_vertex_layout_end(self: [*c]VertexLayout) callconv(.C) void;
+pub extern fn bgfx_vertex_layout_end(self: [*c]VertexLayout) void;
 
 /// Pack vertex attribute into vertex stream format.
 /// <param name="_input">Value to be packed into vertex stream.</param>
@@ -1560,7 +1548,7 @@ pub extern fn bgfx_vertex_layout_end(self: [*c]VertexLayout) callconv(.C) void;
 /// <param name="_layout">Vertex stream layout.</param>
 /// <param name="_data">Destination vertex stream where data will be packed.</param>
 /// <param name="_index">Vertex index that will be modified.</param>
-pub extern fn bgfx_vertex_pack(input: f32, inputNormalized: bool, attr: Attrib, layout: [*c]VertexLayout, data: ?*anyopaque, index: u32) callconv(.C) void;
+pub extern fn bgfx_vertex_pack(input: [4]f32, inputNormalized: bool, attr: Attrib, layout: [*c]const VertexLayout, data: ?*anyopaque, index: u32) void;
 
 /// Unpack vertex attribute from vertex stream format.
 /// <param name="_output">Result of unpacking.</param>
@@ -1568,7 +1556,7 @@ pub extern fn bgfx_vertex_pack(input: f32, inputNormalized: bool, attr: Attrib, 
 /// <param name="_layout">Vertex stream layout.</param>
 /// <param name="_data">Source vertex stream from where data will be unpacked.</param>
 /// <param name="_index">Vertex index that will be unpacked.</param>
-pub extern fn bgfx_vertex_unpack(output: f32, attr: Attrib, layout: [*c]VertexLayout, data: ?*anyopaque, index: u32) callconv(.C) void;
+pub extern fn bgfx_vertex_unpack(output: [4]f32, attr: Attrib, layout: [*c]const VertexLayout, data: ?*const anyopaque, index: u32) void;
 
 /// Converts vertex stream data from one vertex stream format to another.
 /// <param name="_dstLayout">Destination vertex stream layout.</param>
@@ -1576,7 +1564,7 @@ pub extern fn bgfx_vertex_unpack(output: f32, attr: Attrib, layout: [*c]VertexLa
 /// <param name="_srcLayout">Source vertex stream layout.</param>
 /// <param name="_srcData">Source vertex stream data.</param>
 /// <param name="_num">Number of vertices to convert from source to destination.</param>
-pub extern fn bgfx_vertex_convert(dstLayout: [*c]VertexLayout, dstData: ?*anyopaque, srcLayout: [*c]VertexLayout, srcData: ?*anyopaque, num: u32) callconv(.C) void;
+pub extern fn bgfx_vertex_convert(dstLayout: [*c]const VertexLayout, dstData: ?*anyopaque, srcLayout: [*c]const VertexLayout, srcData: ?*const anyopaque, num: u32) void;
 
 /// Weld vertices.
 /// <param name="_output">Welded vertices remapping table. The size of buffer must be the same as number of vertices.</param>
@@ -1585,7 +1573,7 @@ pub extern fn bgfx_vertex_convert(dstLayout: [*c]VertexLayout, dstData: ?*anyopa
 /// <param name="_num">Number of vertices in vertex stream.</param>
 /// <param name="_index32">Set to `true` if input indices are 32-bit.</param>
 /// <param name="_epsilon">Error tolerance for vertex position comparison.</param>
-pub extern fn bgfx_weld_vertices(output: ?*anyopaque, layout: [*c]VertexLayout, data: ?*anyopaque, num: u32, index32: bool, epsilon: f32) callconv(.C) u32;
+pub extern fn bgfx_weld_vertices(output: ?*anyopaque, layout: [*c]const VertexLayout, data: ?*const anyopaque, num: u32, index32: bool, epsilon: f32) u32;
 
 /// Convert index buffer for use with different primitive topologies.
 /// <param name="_conversion">Conversion type, see `TopologyConvert::Enum`.</param>
@@ -1594,7 +1582,7 @@ pub extern fn bgfx_weld_vertices(output: ?*anyopaque, layout: [*c]VertexLayout, 
 /// <param name="_indices">Source indices.</param>
 /// <param name="_numIndices">Number of input indices.</param>
 /// <param name="_index32">Set to `true` if input indices are 32-bit.</param>
-pub extern fn bgfx_topology_convert(conversion: TopologyConvert, dst: ?*anyopaque, dstSize: u32, indices: ?*anyopaque, numIndices: u32, index32: bool) callconv(.C) u32;
+pub extern fn bgfx_topology_convert(conversion: TopologyConvert, dst: ?*anyopaque, dstSize: u32, indices: ?*const anyopaque, numIndices: u32, index32: bool) u32;
 
 /// Sort indices.
 /// <param name="_sort">Sort order, see `TopologySort::Enum`.</param>
@@ -1607,25 +1595,25 @@ pub extern fn bgfx_topology_convert(conversion: TopologyConvert, dst: ?*anyopaqu
 /// <param name="_indices">Source indices.</param>
 /// <param name="_numIndices">Number of input indices.</param>
 /// <param name="_index32">Set to `true` if input indices are 32-bit.</param>
-pub extern fn bgfx_topology_sort_tri_list(sort: TopologySort, dst: ?*anyopaque, dstSize: u32, dir: f32, pos: f32, vertices: ?*anyopaque, stride: u32, indices: ?*anyopaque, numIndices: u32, index32: bool) callconv(.C) void;
+pub extern fn bgfx_topology_sort_tri_list(sort: TopologySort, dst: ?*anyopaque, dstSize: u32, dir: [3]f32, pos: [3]f32, vertices: ?*const anyopaque, stride: u32, indices: ?*const anyopaque, numIndices: u32, index32: bool) void;
 
 /// Returns supported backend API renderers.
 /// <param name="_max">Maximum number of elements in _enum array.</param>
 /// <param name="_enum">Array where supported renderers will be written.</param>
-pub extern fn bgfx_get_supported_renderers(max: u8, enumeration: [*c]RendererType) callconv(.C) u8;
+pub extern fn bgfx_get_supported_renderers(max: u8, enumeration: [*c]RendererType) u8;
 
 /// Returns name of renderer.
 /// <param name="_type">Renderer backend type. See: `bgfx::RendererType`</param>
-pub extern fn bgfx_get_renderer_name(type: RendererType) callconv(.C) [*c]const u8;
+pub extern fn bgfx_get_renderer_name(type: RendererType) [*c]const u8;
 
-pub extern fn bgfx_init_ctor(init: [*c]Init) callconv(.C) void;
+pub extern fn bgfx_init_ctor(init: [*c]Init) void;
 
 /// Initialize the bgfx library.
 /// <param name="_init">Initialization parameters. See: `bgfx::Init` for more info.</param>
-pub extern fn bgfx_init(init: [*c]Init) callconv(.C) bool;
+pub extern fn bgfx_init(init: [*c]const Init) bool;
 
 /// Shutdown bgfx library.
-pub extern fn bgfx_shutdown() callconv(.C) void;
+pub extern fn bgfx_shutdown() void;
 
 /// Reset graphic settings and back-buffer size.
 /// @attention This call doesn’t change the window size, it just resizes
@@ -1634,36 +1622,36 @@ pub extern fn bgfx_shutdown() callconv(.C) void;
 /// <param name="_height">Back-buffer height.</param>
 /// <param name="_flags">See: `BGFX_RESET_*` for more info.   - `BGFX_RESET_NONE` - No reset flags.   - `BGFX_RESET_FULLSCREEN` - Not supported yet.   - `BGFX_RESET_MSAA_X[2/4/8/16]` - Enable 2, 4, 8 or 16 x MSAA.   - `BGFX_RESET_VSYNC` - Enable V-Sync.   - `BGFX_RESET_MAXANISOTROPY` - Turn on/off max anisotropy.   - `BGFX_RESET_CAPTURE` - Begin screen capture.   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB back-buffer.</param>
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
-pub extern fn bgfx_reset(width: u32, height: u32, flags: u32, format: TextureFormat) callconv(.C) void;
+pub extern fn bgfx_reset(width: u32, height: u32, flags: u32, format: TextureFormat) void;
 
 /// Advance to next frame. When using multithreaded renderer, this call
 /// just swaps internal buffers, kicks render thread, and returns. In
 /// singlethreaded renderer this call does frame rendering.
 /// <param name="_capture">Capture frame with graphics debugger.</param>
-pub extern fn bgfx_frame(capture: bool) callconv(.C) u32;
+pub extern fn bgfx_frame(capture: bool) u32;
 
 /// Returns current renderer backend API type.
 /// @remarks
 ///   Library must be initialized.
-pub extern fn bgfx_get_renderer_type() callconv(.C) RendererType;
+pub extern fn bgfx_get_renderer_type() RendererType;
 
 /// Returns renderer capabilities.
 /// @remarks
 ///   Library must be initialized.
-pub extern fn bgfx_get_caps() callconv(.C) [*c]Caps;
+pub extern fn bgfx_get_caps() [*c]const Caps;
 
 /// Returns performance counters.
 /// @attention Pointer returned is valid until `bgfx::frame` is called.
-pub extern fn bgfx_get_stats() callconv(.C) [*c]Stats;
+pub extern fn bgfx_get_stats() [*c]const Stats;
 
 /// Allocate buffer to pass to bgfx calls. Data will be freed inside bgfx.
 /// <param name="_size">Size to allocate.</param>
-pub extern fn bgfx_alloc(size: u32) callconv(.C) [*c]Memory;
+pub extern fn bgfx_alloc(size: u32) [*c]const Memory;
 
 /// Allocate buffer and copy data into it. Data will be freed inside bgfx.
 /// <param name="_data">Pointer to data to be copied.</param>
 /// <param name="_size">Size of data to be copied.</param>
-pub extern fn bgfx_copy(data: ?*anyopaque, size: u32) callconv(.C) [*c]Memory;
+pub extern fn bgfx_copy(data: ?*const anyopaque, size: u32) [*c]const Memory;
 
 /// Make reference to data to pass to bgfx. Unlike `bgfx::alloc`, this call
 /// doesn't allocate memory for data. It just copies the _data pointer. You
@@ -1674,7 +1662,7 @@ pub extern fn bgfx_copy(data: ?*anyopaque, size: u32) callconv(.C) [*c]Memory;
 /// @attention Data passed must be available for at least 2 `bgfx::frame` calls.
 /// <param name="_data">Pointer to data.</param>
 /// <param name="_size">Size of data.</param>
-pub extern fn bgfx_make_ref(data: ?*anyopaque, size: u32) callconv(.C) [*c]Memory;
+pub extern fn bgfx_make_ref(data: ?*const anyopaque, size: u32) [*c]const Memory;
 
 /// Make reference to data to pass to bgfx. Unlike `bgfx::alloc`, this call
 /// doesn't allocate memory for data. It just copies the _data pointer. You
@@ -1687,23 +1675,23 @@ pub extern fn bgfx_make_ref(data: ?*anyopaque, size: u32) callconv(.C) [*c]Memor
 /// <param name="_size">Size of data.</param>
 /// <param name="_releaseFn">Callback function to release memory after use.</param>
 /// <param name="_userData">User data to be passed to callback function.</param>
-pub extern fn bgfx_make_ref_release(data: ?*anyopaque, size: u32, releaseFn: ?*anyopaque, userData: ?*anyopaque) callconv(.C) [*c]Memory;
+pub extern fn bgfx_make_ref_release(data: ?*const anyopaque, size: u32, releaseFn: ?*anyopaque, userData: ?*anyopaque) [*c]const Memory;
 
 /// Set debug flags.
 /// <param name="_debug">Available flags:   - `BGFX_DEBUG_IFH` - Infinitely fast hardware. When this flag is set     all rendering calls will be skipped. This is useful when profiling     to quickly assess potential bottlenecks between CPU and GPU.   - `BGFX_DEBUG_PROFILER` - Enable profiler.   - `BGFX_DEBUG_STATS` - Display internal statistics.   - `BGFX_DEBUG_TEXT` - Display debug text.   - `BGFX_DEBUG_WIREFRAME` - Wireframe rendering. All rendering     primitives will be rendered as lines.</param>
-pub extern fn bgfx_set_debug(debug: u32) callconv(.C) void;
+pub extern fn bgfx_set_debug(debug: u32) void;
 
 /// Clear internal debug text buffer.
 /// <param name="_attr">Background color.</param>
 /// <param name="_small">Default 8x16 or 8x8 font.</param>
-pub extern fn bgfx_dbg_text_clear(attr: u8, small: bool) callconv(.C) void;
+pub extern fn bgfx_dbg_text_clear(attr: u8, small: bool) void;
 
 /// Print formatted data to internal debug text character-buffer (VGA-compatible text mode).
 /// <param name="_x">Position x from the left corner of the window.</param>
 /// <param name="_y">Position y from the top corner of the window.</param>
 /// <param name="_attr">Color palette. Where top 4-bits represent index of background, and bottom 4-bits represent foreground color from standard VGA text palette (ANSI escape codes).</param>
 /// <param name="_format">`printf` style format.</param>
-pub extern fn bgfx_dbg_text_printf(x: u16, y: u16, attr: u8, format: [*c]const u8, ...) callconv(.C) void;
+pub extern fn bgfx_dbg_text_printf(x: u16, y: u16, attr: u8, format: [*c]const u8, ...) void;
 
 /// Print formatted data from variable argument list to internal debug text character-buffer (VGA-compatible text mode).
 /// <param name="_x">Position x from the left corner of the window.</param>
@@ -1711,7 +1699,7 @@ pub extern fn bgfx_dbg_text_printf(x: u16, y: u16, attr: u8, format: [*c]const u
 /// <param name="_attr">Color palette. Where top 4-bits represent index of background, and bottom 4-bits represent foreground color from standard VGA text palette (ANSI escape codes).</param>
 /// <param name="_format">`printf` style format.</param>
 /// <param name="_argList">Variable arguments list for format string.</param>
-pub extern fn bgfx_dbg_text_vprintf(x: u16, y: u16, attr: u8, format: [*c]const u8, argList: ?*anyopaque) callconv(.C) void;
+pub extern fn bgfx_dbg_text_vprintf(x: u16, y: u16, attr: u8, format: [*c]const u8, argList: ?*anyopaque) void;
 
 /// Draw image into internal debug text buffer.
 /// <param name="_x">Position x from the left corner of the window.</param>
@@ -1720,115 +1708,115 @@ pub extern fn bgfx_dbg_text_vprintf(x: u16, y: u16, attr: u8, format: [*c]const 
 /// <param name="_height">Image height.</param>
 /// <param name="_data">Raw image data (character/attribute raw encoding).</param>
 /// <param name="_pitch">Image pitch in bytes.</param>
-pub extern fn bgfx_dbg_text_image(x: u16, y: u16, width: u16, height: u16, data: ?*anyopaque, pitch: u16) callconv(.C) void;
+pub extern fn bgfx_dbg_text_image(x: u16, y: u16, width: u16, height: u16, data: ?*const anyopaque, pitch: u16) void;
 
 /// Create static index buffer.
 /// <param name="_mem">Index buffer data.</param>
 /// <param name="_flags">Buffer creation flags.   - `BGFX_BUFFER_NONE` - No flags.   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of       data is passed. If this flag is not specified, and more data is passed on update, the buffer       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic       buffers.   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on       index buffers.</param>
-pub extern fn bgfx_create_index_buffer(mem: [*c]Memory, flags: u16) callconv(.C) IndexBufferHandle;
+pub extern fn bgfx_create_index_buffer(mem: [*c]const Memory, flags: u16) IndexBufferHandle;
 
 /// Set static index buffer debug name.
 /// <param name="_handle">Static index buffer handle.</param>
 /// <param name="_name">Static index buffer name.</param>
 /// <param name="_len">Static index buffer name length (if length is INT32_MAX, it's expected that _name is zero terminated string.</param>
-pub extern fn bgfx_set_index_buffer_name(handle: IndexBufferHandle, name: [*c]const u8, len: i32) callconv(.C) void;
+pub extern fn bgfx_set_index_buffer_name(handle: IndexBufferHandle, name: [*c]const u8, len: i32) void;
 
 /// Destroy static index buffer.
 /// <param name="_handle">Static index buffer handle.</param>
-pub extern fn bgfx_destroy_index_buffer(handle: IndexBufferHandle) callconv(.C) void;
+pub extern fn bgfx_destroy_index_buffer(handle: IndexBufferHandle) void;
 
 /// Create vertex layout.
 /// <param name="_layout">Vertex layout.</param>
-pub extern fn bgfx_create_vertex_layout(layout: [*c]VertexLayout) callconv(.C) VertexLayoutHandle;
+pub extern fn bgfx_create_vertex_layout(layout: [*c]const VertexLayout) VertexLayoutHandle;
 
 /// Destroy vertex layout.
 /// <param name="_layoutHandle">Vertex layout handle.</param>
-pub extern fn bgfx_destroy_vertex_layout(layoutHandle: VertexLayoutHandle) callconv(.C) void;
+pub extern fn bgfx_destroy_vertex_layout(layoutHandle: VertexLayoutHandle) void;
 
 /// Create static vertex buffer.
 /// <param name="_mem">Vertex buffer data.</param>
 /// <param name="_layout">Vertex layout.</param>
 /// <param name="_flags">Buffer creation flags.  - `BGFX_BUFFER_NONE` - No flags.  - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.  - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer      is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.  - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.  - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of      data is passed. If this flag is not specified, and more data is passed on update, the buffer      will be trimmed to fit the existing buffer size. This flag has effect only on dynamic buffers.  - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on index buffers.</param>
-pub extern fn bgfx_create_vertex_buffer(mem: [*c]Memory, layout: [*c]VertexLayout, flags: u16) callconv(.C) VertexBufferHandle;
+pub extern fn bgfx_create_vertex_buffer(mem: [*c]const Memory, layout: [*c]const VertexLayout, flags: u16) VertexBufferHandle;
 
 /// Set static vertex buffer debug name.
 /// <param name="_handle">Static vertex buffer handle.</param>
 /// <param name="_name">Static vertex buffer name.</param>
 /// <param name="_len">Static vertex buffer name length (if length is INT32_MAX, it's expected that _name is zero terminated string.</param>
-pub extern fn bgfx_set_vertex_buffer_name(handle: VertexBufferHandle, name: [*c]const u8, len: i32) callconv(.C) void;
+pub extern fn bgfx_set_vertex_buffer_name(handle: VertexBufferHandle, name: [*c]const u8, len: i32) void;
 
 /// Destroy static vertex buffer.
 /// <param name="_handle">Static vertex buffer handle.</param>
-pub extern fn bgfx_destroy_vertex_buffer(handle: VertexBufferHandle) callconv(.C) void;
+pub extern fn bgfx_destroy_vertex_buffer(handle: VertexBufferHandle) void;
 
 /// Create empty dynamic index buffer.
 /// <param name="_num">Number of indices.</param>
 /// <param name="_flags">Buffer creation flags.   - `BGFX_BUFFER_NONE` - No flags.   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of       data is passed. If this flag is not specified, and more data is passed on update, the buffer       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic       buffers.   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on       index buffers.</param>
-pub extern fn bgfx_create_dynamic_index_buffer(num: u32, flags: u16) callconv(.C) DynamicIndexBufferHandle;
+pub extern fn bgfx_create_dynamic_index_buffer(num: u32, flags: u16) DynamicIndexBufferHandle;
 
 /// Create a dynamic index buffer and initialize it.
 /// <param name="_mem">Index buffer data.</param>
 /// <param name="_flags">Buffer creation flags.   - `BGFX_BUFFER_NONE` - No flags.   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of       data is passed. If this flag is not specified, and more data is passed on update, the buffer       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic       buffers.   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on       index buffers.</param>
-pub extern fn bgfx_create_dynamic_index_buffer_mem(mem: [*c]Memory, flags: u16) callconv(.C) DynamicIndexBufferHandle;
+pub extern fn bgfx_create_dynamic_index_buffer_mem(mem: [*c]const Memory, flags: u16) DynamicIndexBufferHandle;
 
 /// Update dynamic index buffer.
 /// <param name="_handle">Dynamic index buffer handle.</param>
 /// <param name="_startIndex">Start index.</param>
 /// <param name="_mem">Index buffer data.</param>
-pub extern fn bgfx_update_dynamic_index_buffer(handle: DynamicIndexBufferHandle, startIndex: u32, mem: [*c]Memory) callconv(.C) void;
+pub extern fn bgfx_update_dynamic_index_buffer(handle: DynamicIndexBufferHandle, startIndex: u32, mem: [*c]const Memory) void;
 
 /// Destroy dynamic index buffer.
 /// <param name="_handle">Dynamic index buffer handle.</param>
-pub extern fn bgfx_destroy_dynamic_index_buffer(handle: DynamicIndexBufferHandle) callconv(.C) void;
+pub extern fn bgfx_destroy_dynamic_index_buffer(handle: DynamicIndexBufferHandle) void;
 
 /// Create empty dynamic vertex buffer.
 /// <param name="_num">Number of vertices.</param>
 /// <param name="_layout">Vertex layout.</param>
 /// <param name="_flags">Buffer creation flags.   - `BGFX_BUFFER_NONE` - No flags.   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of       data is passed. If this flag is not specified, and more data is passed on update, the buffer       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic       buffers.   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on       index buffers.</param>
-pub extern fn bgfx_create_dynamic_vertex_buffer(num: u32, layout: [*c]VertexLayout, flags: u16) callconv(.C) DynamicVertexBufferHandle;
+pub extern fn bgfx_create_dynamic_vertex_buffer(num: u32, layout: [*c]const VertexLayout, flags: u16) DynamicVertexBufferHandle;
 
 /// Create dynamic vertex buffer and initialize it.
 /// <param name="_mem">Vertex buffer data.</param>
 /// <param name="_layout">Vertex layout.</param>
 /// <param name="_flags">Buffer creation flags.   - `BGFX_BUFFER_NONE` - No flags.   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of       data is passed. If this flag is not specified, and more data is passed on update, the buffer       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic       buffers.   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on       index buffers.</param>
-pub extern fn bgfx_create_dynamic_vertex_buffer_mem(mem: [*c]Memory, layout: [*c]VertexLayout, flags: u16) callconv(.C) DynamicVertexBufferHandle;
+pub extern fn bgfx_create_dynamic_vertex_buffer_mem(mem: [*c]const Memory, layout: [*c]const VertexLayout, flags: u16) DynamicVertexBufferHandle;
 
 /// Update dynamic vertex buffer.
 /// <param name="_handle">Dynamic vertex buffer handle.</param>
 /// <param name="_startVertex">Start vertex.</param>
 /// <param name="_mem">Vertex buffer data.</param>
-pub extern fn bgfx_update_dynamic_vertex_buffer(handle: DynamicVertexBufferHandle, startVertex: u32, mem: [*c]Memory) callconv(.C) void;
+pub extern fn bgfx_update_dynamic_vertex_buffer(handle: DynamicVertexBufferHandle, startVertex: u32, mem: [*c]const Memory) void;
 
 /// Destroy dynamic vertex buffer.
 /// <param name="_handle">Dynamic vertex buffer handle.</param>
-pub extern fn bgfx_destroy_dynamic_vertex_buffer(handle: DynamicVertexBufferHandle) callconv(.C) void;
+pub extern fn bgfx_destroy_dynamic_vertex_buffer(handle: DynamicVertexBufferHandle) void;
 
 /// Returns number of requested or maximum available indices.
 /// <param name="_num">Number of required indices.</param>
 /// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
-pub extern fn bgfx_get_avail_transient_index_buffer(num: u32, index32: bool) callconv(.C) u32;
+pub extern fn bgfx_get_avail_transient_index_buffer(num: u32, index32: bool) u32;
 
 /// Returns number of requested or maximum available vertices.
 /// <param name="_num">Number of required vertices.</param>
 /// <param name="_layout">Vertex layout.</param>
-pub extern fn bgfx_get_avail_transient_vertex_buffer(num: u32, layout: [*c]VertexLayout) callconv(.C) u32;
+pub extern fn bgfx_get_avail_transient_vertex_buffer(num: u32, layout: [*c]const VertexLayout) u32;
 
 /// Returns number of requested or maximum available instance buffer slots.
 /// <param name="_num">Number of required instances.</param>
 /// <param name="_stride">Stride per instance.</param>
-pub extern fn bgfx_get_avail_instance_data_buffer(num: u32, stride: u16) callconv(.C) u32;
+pub extern fn bgfx_get_avail_instance_data_buffer(num: u32, stride: u16) u32;
 
 /// Allocate transient index buffer.
 /// <param name="_tib">TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
 /// <param name="_num">Number of indices to allocate.</param>
 /// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
-pub extern fn bgfx_alloc_transient_index_buffer(tib: [*c]TransientIndexBuffer, num: u32, index32: bool) callconv(.C) void;
+pub extern fn bgfx_alloc_transient_index_buffer(tib: [*c]TransientIndexBuffer, num: u32, index32: bool) void;
 
 /// Allocate transient vertex buffer.
 /// <param name="_tvb">TransientVertexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
 /// <param name="_num">Number of vertices to allocate.</param>
 /// <param name="_layout">Vertex layout.</param>
-pub extern fn bgfx_alloc_transient_vertex_buffer(tvb: [*c]TransientVertexBuffer, num: u32, layout: [*c]VertexLayout) callconv(.C) void;
+pub extern fn bgfx_alloc_transient_vertex_buffer(tvb: [*c]TransientVertexBuffer, num: u32, layout: [*c]const VertexLayout) void;
 
 /// Check for required space and allocate transient vertex and index
 /// buffers. If both space requirements are satisfied function returns
@@ -1839,25 +1827,25 @@ pub extern fn bgfx_alloc_transient_vertex_buffer(tvb: [*c]TransientVertexBuffer,
 /// <param name="_tib">TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
 /// <param name="_numIndices">Number of indices to allocate.</param>
 /// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
-pub extern fn bgfx_alloc_transient_buffers(tvb: [*c]TransientVertexBuffer, layout: [*c]VertexLayout, numVertices: u32, tib: [*c]TransientIndexBuffer, numIndices: u32, index32: bool) callconv(.C) bool;
+pub extern fn bgfx_alloc_transient_buffers(tvb: [*c]TransientVertexBuffer, layout: [*c]const VertexLayout, numVertices: u32, tib: [*c]TransientIndexBuffer, numIndices: u32, index32: bool) bool;
 
 /// Allocate instance data buffer.
 /// <param name="_idb">InstanceDataBuffer structure is filled and is valid for duration of frame, and it can be reused for multiple draw calls.</param>
 /// <param name="_num">Number of instances.</param>
 /// <param name="_stride">Instance stride. Must be multiple of 16.</param>
-pub extern fn bgfx_alloc_instance_data_buffer(idb: [*c]InstanceDataBuffer, num: u32, stride: u16) callconv(.C) void;
+pub extern fn bgfx_alloc_instance_data_buffer(idb: [*c]InstanceDataBuffer, num: u32, stride: u16) void;
 
 /// Create draw indirect buffer.
 /// <param name="_num">Number of indirect calls.</param>
-pub extern fn bgfx_create_indirect_buffer(num: u32) callconv(.C) IndirectBufferHandle;
+pub extern fn bgfx_create_indirect_buffer(num: u32) IndirectBufferHandle;
 
 /// Destroy draw indirect buffer.
 /// <param name="_handle">Indirect buffer handle.</param>
-pub extern fn bgfx_destroy_indirect_buffer(handle: IndirectBufferHandle) callconv(.C) void;
+pub extern fn bgfx_destroy_indirect_buffer(handle: IndirectBufferHandle) void;
 
 /// Create shader from memory buffer.
 /// <param name="_mem">Shader binary.</param>
-pub extern fn bgfx_create_shader(mem: [*c]Memory) callconv(.C) ShaderHandle;
+pub extern fn bgfx_create_shader(mem: [*c]const Memory) ShaderHandle;
 
 /// Returns the number of uniforms and uniform handles used inside a shader.
 /// @remarks
@@ -1865,34 +1853,34 @@ pub extern fn bgfx_create_shader(mem: [*c]Memory) callconv(.C) ShaderHandle;
 /// <param name="_handle">Shader handle.</param>
 /// <param name="_uniforms">UniformHandle array where data will be stored.</param>
 /// <param name="_max">Maximum capacity of array.</param>
-pub extern fn bgfx_get_shader_uniforms(handle: ShaderHandle, uniforms: [*c]UniformHandle, max: u16) callconv(.C) u16;
+pub extern fn bgfx_get_shader_uniforms(handle: ShaderHandle, uniforms: [*c]UniformHandle, max: u16) u16;
 
 /// Set shader debug name.
 /// <param name="_handle">Shader handle.</param>
 /// <param name="_name">Shader name.</param>
 /// <param name="_len">Shader name length (if length is INT32_MAX, it's expected that _name is zero terminated string).</param>
-pub extern fn bgfx_set_shader_name(handle: ShaderHandle, name: [*c]const u8, len: i32) callconv(.C) void;
+pub extern fn bgfx_set_shader_name(handle: ShaderHandle, name: [*c]const u8, len: i32) void;
 
 /// Destroy shader.
 /// @remark Once a shader program is created with _handle,
 ///   it is safe to destroy that shader.
 /// <param name="_handle">Shader handle.</param>
-pub extern fn bgfx_destroy_shader(handle: ShaderHandle) callconv(.C) void;
+pub extern fn bgfx_destroy_shader(handle: ShaderHandle) void;
 
 /// Create program with vertex and fragment shaders.
 /// <param name="_vsh">Vertex shader.</param>
 /// <param name="_fsh">Fragment shader.</param>
 /// <param name="_destroyShaders">If true, shaders will be destroyed when program is destroyed.</param>
-pub extern fn bgfx_create_program(vsh: ShaderHandle, fsh: ShaderHandle, destroyShaders: bool) callconv(.C) ProgramHandle;
+pub extern fn bgfx_create_program(vsh: ShaderHandle, fsh: ShaderHandle, destroyShaders: bool) ProgramHandle;
 
 /// Create program with compute shader.
 /// <param name="_csh">Compute shader.</param>
 /// <param name="_destroyShaders">If true, shaders will be destroyed when program is destroyed.</param>
-pub extern fn bgfx_create_compute_program(csh: ShaderHandle, destroyShaders: bool) callconv(.C) ProgramHandle;
+pub extern fn bgfx_create_compute_program(csh: ShaderHandle, destroyShaders: bool) ProgramHandle;
 
 /// Destroy program.
 /// <param name="_handle">Program handle.</param>
-pub extern fn bgfx_destroy_program(handle: ProgramHandle) callconv(.C) void;
+pub extern fn bgfx_destroy_program(handle: ProgramHandle) void;
 
 /// Validate texture parameters.
 /// <param name="_depth">Depth dimension of volume texture.</param>
@@ -1900,12 +1888,12 @@ pub extern fn bgfx_destroy_program(handle: ProgramHandle) callconv(.C) void;
 /// <param name="_numLayers">Number of layers in texture array.</param>
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 /// <param name="_flags">Texture flags. See `BGFX_TEXTURE_*`.</param>
-pub extern fn bgfx_is_texture_valid(depth: u16, cubeMap: bool, numLayers: u16, format: TextureFormat, flags: u64) callconv(.C) bool;
+pub extern fn bgfx_is_texture_valid(depth: u16, cubeMap: bool, numLayers: u16, format: TextureFormat, flags: u64) bool;
 
 /// Validate frame buffer parameters.
 /// <param name="_num">Number of attachments.</param>
 /// <param name="_attachment">Attachment texture info. See: `bgfx::Attachment`.</param>
-pub extern fn bgfx_is_frame_buffer_valid(num: u8, attachment: [*c]Attachment) callconv(.C) bool;
+pub extern fn bgfx_is_frame_buffer_valid(num: u8, attachment: [*c]const Attachment) bool;
 
 /// Calculate amount of memory required for texture.
 /// <param name="_info">Resulting texture info structure. See: `TextureInfo`.</param>
@@ -1916,14 +1904,14 @@ pub extern fn bgfx_is_frame_buffer_valid(num: u8, attachment: [*c]Attachment) ca
 /// <param name="_hasMips">Indicates that texture contains full mip-map chain.</param>
 /// <param name="_numLayers">Number of layers in texture array.</param>
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
-pub extern fn bgfx_calc_texture_size(info: [*c]TextureInfo, width: u16, height: u16, depth: u16, cubeMap: bool, hasMips: bool, numLayers: u16, format: TextureFormat) callconv(.C) void;
+pub extern fn bgfx_calc_texture_size(info: [*c]TextureInfo, width: u16, height: u16, depth: u16, cubeMap: bool, hasMips: bool, numLayers: u16, format: TextureFormat) void;
 
 /// Create texture from memory buffer.
 /// <param name="_mem">DDS, KTX or PVR texture binary data.</param>
 /// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 /// <param name="_skip">Skip top level mips when parsing texture.</param>
 /// <param name="_info">When non-`NULL` is specified it returns parsed texture information.</param>
-pub extern fn bgfx_create_texture(mem: [*c]Memory, flags: u64, skip: u8, info: [*c]TextureInfo) callconv(.C) TextureHandle;
+pub extern fn bgfx_create_texture(mem: [*c]const Memory, flags: u64, skip: u8, info: [*c]TextureInfo) TextureHandle;
 
 /// Create 2D texture.
 /// <param name="_width">Width.</param>
@@ -1933,7 +1921,7 @@ pub extern fn bgfx_create_texture(mem: [*c]Memory, flags: u64, skip: u8, info: [
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 /// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 /// <param name="_mem">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.</param>
-pub extern fn bgfx_create_texture_2d(width: u16, height: u16, hasMips: bool, numLayers: u16, format: TextureFormat, flags: u64, mem: [*c]Memory) callconv(.C) TextureHandle;
+pub extern fn bgfx_create_texture_2d(width: u16, height: u16, hasMips: bool, numLayers: u16, format: TextureFormat, flags: u64, mem: [*c]const Memory) TextureHandle;
 
 /// Create texture with size based on back-buffer ratio. Texture will maintain ratio
 /// if back buffer resolution changes.
@@ -1942,7 +1930,7 @@ pub extern fn bgfx_create_texture_2d(width: u16, height: u16, hasMips: bool, num
 /// <param name="_numLayers">Number of layers in texture array. Must be 1 if caps `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.</param>
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 /// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
-pub extern fn bgfx_create_texture_2d_scaled(ratio: BackbufferRatio, hasMips: bool, numLayers: u16, format: TextureFormat, flags: u64) callconv(.C) TextureHandle;
+pub extern fn bgfx_create_texture_2d_scaled(ratio: BackbufferRatio, hasMips: bool, numLayers: u16, format: TextureFormat, flags: u64) TextureHandle;
 
 /// Create 3D texture.
 /// <param name="_width">Width.</param>
@@ -1952,7 +1940,7 @@ pub extern fn bgfx_create_texture_2d_scaled(ratio: BackbufferRatio, hasMips: boo
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 /// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 /// <param name="_mem">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.</param>
-pub extern fn bgfx_create_texture_3d(width: u16, height: u16, depth: u16, hasMips: bool, format: TextureFormat, flags: u64, mem: [*c]Memory) callconv(.C) TextureHandle;
+pub extern fn bgfx_create_texture_3d(width: u16, height: u16, depth: u16, hasMips: bool, format: TextureFormat, flags: u64, mem: [*c]const Memory) TextureHandle;
 
 /// Create Cube texture.
 /// <param name="_size">Cube side size.</param>
@@ -1961,7 +1949,7 @@ pub extern fn bgfx_create_texture_3d(width: u16, height: u16, depth: u16, hasMip
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 /// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 /// <param name="_mem">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.</param>
-pub extern fn bgfx_create_texture_cube(size: u16, hasMips: bool, numLayers: u16, format: TextureFormat, flags: u64, mem: [*c]Memory) callconv(.C) TextureHandle;
+pub extern fn bgfx_create_texture_cube(size: u16, hasMips: bool, numLayers: u16, format: TextureFormat, flags: u64, mem: [*c]const Memory) TextureHandle;
 
 /// Update 2D texture.
 /// @attention It's valid to update only mutable texture. See `bgfx::createTexture2D` for more info.
@@ -1974,7 +1962,7 @@ pub extern fn bgfx_create_texture_cube(size: u16, hasMips: bool, numLayers: u16,
 /// <param name="_height">Height of texture block.</param>
 /// <param name="_mem">Texture update data.</param>
 /// <param name="_pitch">Pitch of input image (bytes). When _pitch is set to UINT16_MAX, it will be calculated internally based on _width.</param>
-pub extern fn bgfx_update_texture_2d(handle: TextureHandle, layer: u16, mip: u8, x: u16, y: u16, width: u16, height: u16, mem: [*c]Memory, pitch: u16) callconv(.C) void;
+pub extern fn bgfx_update_texture_2d(handle: TextureHandle, layer: u16, mip: u8, x: u16, y: u16, width: u16, height: u16, mem: [*c]const Memory, pitch: u16) void;
 
 /// Update 3D texture.
 /// @attention It's valid to update only mutable texture. See `bgfx::createTexture3D` for more info.
@@ -1987,7 +1975,7 @@ pub extern fn bgfx_update_texture_2d(handle: TextureHandle, layer: u16, mip: u8,
 /// <param name="_height">Height of texture block.</param>
 /// <param name="_depth">Depth of texture block.</param>
 /// <param name="_mem">Texture update data.</param>
-pub extern fn bgfx_update_texture_3d(handle: TextureHandle, mip: u8, x: u16, y: u16, z: u16, width: u16, height: u16, depth: u16, mem: [*c]Memory) callconv(.C) void;
+pub extern fn bgfx_update_texture_3d(handle: TextureHandle, mip: u8, x: u16, y: u16, z: u16, width: u16, height: u16, depth: u16, mem: [*c]const Memory) void;
 
 /// Update Cube texture.
 /// @attention It's valid to update only mutable texture. See `bgfx::createTextureCube` for more info.
@@ -2001,7 +1989,7 @@ pub extern fn bgfx_update_texture_3d(handle: TextureHandle, mip: u8, x: u16, y: 
 /// <param name="_height">Height of texture block.</param>
 /// <param name="_mem">Texture update data.</param>
 /// <param name="_pitch">Pitch of input image (bytes). When _pitch is set to UINT16_MAX, it will be calculated internally based on _width.</param>
-pub extern fn bgfx_update_texture_cube(handle: TextureHandle, layer: u16, side: u8, mip: u8, x: u16, y: u16, width: u16, height: u16, mem: [*c]Memory, pitch: u16) callconv(.C) void;
+pub extern fn bgfx_update_texture_cube(handle: TextureHandle, layer: u16, side: u8, mip: u8, x: u16, y: u16, width: u16, height: u16, mem: [*c]const Memory, pitch: u16) void;
 
 /// Read back texture content.
 /// @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
@@ -2009,50 +1997,50 @@ pub extern fn bgfx_update_texture_cube(handle: TextureHandle, layer: u16, side: 
 /// <param name="_handle">Texture handle.</param>
 /// <param name="_data">Destination buffer.</param>
 /// <param name="_mip">Mip level.</param>
-pub extern fn bgfx_read_texture(handle: TextureHandle, data: ?*anyopaque, mip: u8) callconv(.C) u32;
+pub extern fn bgfx_read_texture(handle: TextureHandle, data: ?*anyopaque, mip: u8) u32;
 
 /// Set texture debug name.
 /// <param name="_handle">Texture handle.</param>
 /// <param name="_name">Texture name.</param>
 /// <param name="_len">Texture name length (if length is INT32_MAX, it's expected that _name is zero terminated string.</param>
-pub extern fn bgfx_set_texture_name(handle: TextureHandle, name: [*c]const u8, len: i32) callconv(.C) void;
+pub extern fn bgfx_set_texture_name(handle: TextureHandle, name: [*c]const u8, len: i32) void;
 
 /// Returns texture direct access pointer.
 /// @attention Availability depends on: `BGFX_CAPS_TEXTURE_DIRECT_ACCESS`. This feature
 ///   is available on GPUs that have unified memory architecture (UMA) support.
 /// <param name="_handle">Texture handle.</param>
-pub extern fn bgfx_get_direct_access_ptr(handle: TextureHandle) callconv(.C) ?*anyopaque;
+pub extern fn bgfx_get_direct_access_ptr(handle: TextureHandle) ?*anyopaque;
 
 /// Destroy texture.
 /// <param name="_handle">Texture handle.</param>
-pub extern fn bgfx_destroy_texture(handle: TextureHandle) callconv(.C) void;
+pub extern fn bgfx_destroy_texture(handle: TextureHandle) void;
 
 /// Create frame buffer (simple).
 /// <param name="_width">Texture width.</param>
 /// <param name="_height">Texture height.</param>
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 /// <param name="_textureFlags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
-pub extern fn bgfx_create_frame_buffer(width: u16, height: u16, format: TextureFormat, textureFlags: u64) callconv(.C) FrameBufferHandle;
+pub extern fn bgfx_create_frame_buffer(width: u16, height: u16, format: TextureFormat, textureFlags: u64) FrameBufferHandle;
 
 /// Create frame buffer with size based on back-buffer ratio. Frame buffer will maintain ratio
 /// if back buffer resolution changes.
 /// <param name="_ratio">Frame buffer size in respect to back-buffer size. See: `BackbufferRatio::Enum`.</param>
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 /// <param name="_textureFlags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
-pub extern fn bgfx_create_frame_buffer_scaled(ratio: BackbufferRatio, format: TextureFormat, textureFlags: u64) callconv(.C) FrameBufferHandle;
+pub extern fn bgfx_create_frame_buffer_scaled(ratio: BackbufferRatio, format: TextureFormat, textureFlags: u64) FrameBufferHandle;
 
 /// Create MRT frame buffer from texture handles (simple).
 /// <param name="_num">Number of texture handles.</param>
 /// <param name="_handles">Texture attachments.</param>
 /// <param name="_destroyTexture">If true, textures will be destroyed when frame buffer is destroyed.</param>
-pub extern fn bgfx_create_frame_buffer_from_handles(num: u8, handles: [*c]TextureHandle, destroyTexture: bool) callconv(.C) FrameBufferHandle;
+pub extern fn bgfx_create_frame_buffer_from_handles(num: u8, handles: [*c]const TextureHandle, destroyTexture: bool) FrameBufferHandle;
 
 /// Create MRT frame buffer from texture handles with specific layer and
 /// mip level.
 /// <param name="_num">Number of attachments.</param>
 /// <param name="_attachment">Attachment texture info. See: `bgfx::Attachment`.</param>
 /// <param name="_destroyTexture">If true, textures will be destroyed when frame buffer is destroyed.</param>
-pub extern fn bgfx_create_frame_buffer_from_attachment(num: u8, attachment: [*c]Attachment, destroyTexture: bool) callconv(.C) FrameBufferHandle;
+pub extern fn bgfx_create_frame_buffer_from_attachment(num: u8, attachment: [*c]const Attachment, destroyTexture: bool) FrameBufferHandle;
 
 /// Create frame buffer for multiple window rendering.
 /// @remarks
@@ -2063,21 +2051,21 @@ pub extern fn bgfx_create_frame_buffer_from_attachment(num: u8, attachment: [*c]
 /// <param name="_height">Window back buffer height.</param>
 /// <param name="_format">Window back buffer color format.</param>
 /// <param name="_depthFormat">Window back buffer depth format.</param>
-pub extern fn bgfx_create_frame_buffer_from_nwh(nwh: ?*anyopaque, width: u16, height: u16, format: TextureFormat, depthFormat: TextureFormat) callconv(.C) FrameBufferHandle;
+pub extern fn bgfx_create_frame_buffer_from_nwh(nwh: ?*anyopaque, width: u16, height: u16, format: TextureFormat, depthFormat: TextureFormat) FrameBufferHandle;
 
 /// Set frame buffer debug name.
 /// <param name="_handle">Frame buffer handle.</param>
 /// <param name="_name">Frame buffer name.</param>
 /// <param name="_len">Frame buffer name length (if length is INT32_MAX, it's expected that _name is zero terminated string.</param>
-pub extern fn bgfx_set_frame_buffer_name(handle: FrameBufferHandle, name: [*c]const u8, len: i32) callconv(.C) void;
+pub extern fn bgfx_set_frame_buffer_name(handle: FrameBufferHandle, name: [*c]const u8, len: i32) void;
 
 /// Obtain texture handle of frame buffer attachment.
 /// <param name="_handle">Frame buffer handle.</param>
-pub extern fn bgfx_get_texture(handle: FrameBufferHandle, attachment: u8) callconv(.C) TextureHandle;
+pub extern fn bgfx_get_texture(handle: FrameBufferHandle, attachment: u8) TextureHandle;
 
 /// Destroy frame buffer.
 /// <param name="_handle">Frame buffer handle.</param>
-pub extern fn bgfx_destroy_frame_buffer(handle: FrameBufferHandle) callconv(.C) void;
+pub extern fn bgfx_destroy_frame_buffer(handle: FrameBufferHandle) void;
 
 /// Create shader uniform parameter.
 /// @remarks
@@ -2105,38 +2093,38 @@ pub extern fn bgfx_destroy_frame_buffer(handle: FrameBufferHandle) callconv(.C) 
 /// <param name="_name">Uniform name in shader.</param>
 /// <param name="_type">Type of uniform (See: `bgfx::UniformType`).</param>
 /// <param name="_num">Number of elements in array.</param>
-pub extern fn bgfx_create_uniform(name: [*c]const u8, type: UniformType, num: u16) callconv(.C) UniformHandle;
+pub extern fn bgfx_create_uniform(name: [*c]const u8, type: UniformType, num: u16) UniformHandle;
 
 /// Retrieve uniform info.
 /// <param name="_handle">Handle to uniform object.</param>
 /// <param name="_info">Uniform info.</param>
-pub extern fn bgfx_get_uniform_info(handle: UniformHandle, info: [*c]UniformInfo) callconv(.C) void;
+pub extern fn bgfx_get_uniform_info(handle: UniformHandle, info: [*c]UniformInfo) void;
 
 /// Destroy shader uniform parameter.
 /// <param name="_handle">Handle to uniform object.</param>
-pub extern fn bgfx_destroy_uniform(handle: UniformHandle) callconv(.C) void;
+pub extern fn bgfx_destroy_uniform(handle: UniformHandle) void;
 
 /// Create occlusion query.
-pub extern fn bgfx_create_occlusion_query() callconv(.C) OcclusionQueryHandle;
+pub extern fn bgfx_create_occlusion_query() OcclusionQueryHandle;
 
 /// Retrieve occlusion query result from previous frame.
 /// <param name="_handle">Handle to occlusion query object.</param>
 /// <param name="_result">Number of pixels that passed test. This argument can be `NULL` if result of occlusion query is not needed.</param>
-pub extern fn bgfx_get_result(handle: OcclusionQueryHandle, result: [*c]i32) callconv(.C) OcclusionQueryResult;
+pub extern fn bgfx_get_result(handle: OcclusionQueryHandle, result: [*c]i32) OcclusionQueryResult;
 
 /// Destroy occlusion query.
 /// <param name="_handle">Handle to occlusion query object.</param>
-pub extern fn bgfx_destroy_occlusion_query(handle: OcclusionQueryHandle) callconv(.C) void;
+pub extern fn bgfx_destroy_occlusion_query(handle: OcclusionQueryHandle) void;
 
 /// Set palette color value.
 /// <param name="_index">Index into palette.</param>
 /// <param name="_rgba">RGBA floating point values.</param>
-pub extern fn bgfx_set_palette_color(index: u8, rgba: f32) callconv(.C) void;
+pub extern fn bgfx_set_palette_color(index: u8, rgba: [4]f32) void;
 
 /// Set palette color value.
 /// <param name="_index">Index into palette.</param>
 /// <param name="_rgba">Packed 32-bit RGBA value.</param>
-pub extern fn bgfx_set_palette_color_rgba8(index: u8, rgba: u32) callconv(.C) void;
+pub extern fn bgfx_set_palette_color_rgba8(index: u8, rgba: u32) void;
 
 /// Set view name.
 /// @remarks
@@ -2148,7 +2136,7 @@ pub extern fn bgfx_set_palette_color_rgba8(index: u8, rgba: u32) callconv(.C) vo
 ///        +------ view id
 /// <param name="_id">View id.</param>
 /// <param name="_name">View name.</param>
-pub extern fn bgfx_set_view_name(id: u16, name: [*c]const u8) callconv(.C) void;
+pub extern fn bgfx_set_view_name(id: ViewId, name: [*c]const u8) void;
 
 /// Set view rectangle. Draw primitive outside view will be clipped.
 /// <param name="_id">View id.</param>
@@ -2156,14 +2144,14 @@ pub extern fn bgfx_set_view_name(id: u16, name: [*c]const u8) callconv(.C) void;
 /// <param name="_y">Position y from the top corner of the window.</param>
 /// <param name="_width">Width of view port region.</param>
 /// <param name="_height">Height of view port region.</param>
-pub extern fn bgfx_set_view_rect(id: u16, x: u16, y: u16, width: u16, height: u16) callconv(.C) void;
+pub extern fn bgfx_set_view_rect(id: ViewId, x: u16, y: u16, width: u16, height: u16) void;
 
 /// Set view rectangle. Draw primitive outside view will be clipped.
 /// <param name="_id">View id.</param>
 /// <param name="_x">Position x from the left corner of the window.</param>
 /// <param name="_y">Position y from the top corner of the window.</param>
 /// <param name="_ratio">Width and height will be set in respect to back-buffer size. See: `BackbufferRatio::Enum`.</param>
-pub extern fn bgfx_set_view_rect_ratio(id: u16, x: u16, y: u16, ratio: BackbufferRatio) callconv(.C) void;
+pub extern fn bgfx_set_view_rect_ratio(id: ViewId, x: u16, y: u16, ratio: BackbufferRatio) void;
 
 /// Set view scissor. Draw primitive outside view will be clipped. When
 /// _x, _y, _width and _height are set to 0, scissor will be disabled.
@@ -2172,7 +2160,7 @@ pub extern fn bgfx_set_view_rect_ratio(id: u16, x: u16, y: u16, ratio: Backbuffe
 /// <param name="_y">Position y from the top corner of the window.</param>
 /// <param name="_width">Width of view scissor region.</param>
 /// <param name="_height">Height of view scissor region.</param>
-pub extern fn bgfx_set_view_scissor(id: u16, x: u16, y: u16, width: u16, height: u16) callconv(.C) void;
+pub extern fn bgfx_set_view_scissor(id: ViewId, x: u16, y: u16, width: u16, height: u16) void;
 
 /// Set view clear flags.
 /// <param name="_id">View id.</param>
@@ -2180,7 +2168,7 @@ pub extern fn bgfx_set_view_scissor(id: u16, x: u16, y: u16, width: u16, height:
 /// <param name="_rgba">Color clear value.</param>
 /// <param name="_depth">Depth clear value.</param>
 /// <param name="_stencil">Stencil clear value.</param>
-pub extern fn bgfx_set_view_clear(id: u16, flags: u16, rgba: u32, depth: f32, stencil: u8) callconv(.C) void;
+pub extern fn bgfx_set_view_clear(id: ViewId, flags: u16, rgba: u32, depth: f32, stencil: u8) void;
 
 /// Set view clear flags with different clear color for each
 /// frame buffer texture. `bgfx::setPaletteColor` must be used to set up a
@@ -2197,50 +2185,50 @@ pub extern fn bgfx_set_view_clear(id: u16, flags: u16, rgba: u32, depth: f32, st
 /// <param name="_c5">Palette index for frame buffer attachment 5.</param>
 /// <param name="_c6">Palette index for frame buffer attachment 6.</param>
 /// <param name="_c7">Palette index for frame buffer attachment 7.</param>
-pub extern fn bgfx_set_view_clear_mrt(id: u16, flags: u16, depth: f32, stencil: u8, c0: u8, c1: u8, c2: u8, c3: u8, c4: u8, c5: u8, c6: u8, c7: u8) callconv(.C) void;
+pub extern fn bgfx_set_view_clear_mrt(id: ViewId, flags: u16, depth: f32, stencil: u8, c0: u8, c1: u8, c2: u8, c3: u8, c4: u8, c5: u8, c6: u8, c7: u8) void;
 
 /// Set view sorting mode.
 /// @remarks
 ///   View mode must be set prior calling `bgfx::submit` for the view.
 /// <param name="_id">View id.</param>
 /// <param name="_mode">View sort mode. See `ViewMode::Enum`.</param>
-pub extern fn bgfx_set_view_mode(id: u16, mode: ViewMode) callconv(.C) void;
+pub extern fn bgfx_set_view_mode(id: ViewId, mode: ViewMode) void;
 
 /// Set view frame buffer.
 /// @remarks
 ///   Not persistent after `bgfx::reset` call.
 /// <param name="_id">View id.</param>
 /// <param name="_handle">Frame buffer handle. Passing `BGFX_INVALID_HANDLE` as frame buffer handle will draw primitives from this view into default back buffer.</param>
-pub extern fn bgfx_set_view_frame_buffer(id: u16, handle: FrameBufferHandle) callconv(.C) void;
+pub extern fn bgfx_set_view_frame_buffer(id: ViewId, handle: FrameBufferHandle) void;
 
 /// Set view's view matrix and projection matrix,
 /// all draw primitives in this view will use these two matrices.
 /// <param name="_id">View id.</param>
 /// <param name="_view">View matrix.</param>
 /// <param name="_proj">Projection matrix.</param>
-pub extern fn bgfx_set_view_transform(id: u16, view: ?*anyopaque, proj: ?*anyopaque) callconv(.C) void;
+pub extern fn bgfx_set_view_transform(id: ViewId, view: ?*const anyopaque, proj: ?*const anyopaque) void;
 
 /// Post submit view reordering.
 /// <param name="_id">First view id.</param>
 /// <param name="_num">Number of views to remap.</param>
 /// <param name="_order">View remap id table. Passing `NULL` will reset view ids to default state.</param>
-pub extern fn bgfx_set_view_order(id: u16, num: u16, order: [*c]c_ushort) callconv(.C) void;
+pub extern fn bgfx_set_view_order(id: ViewId, num: u16, order: [*c]const ViewId) void;
 
 /// Reset all view settings to default.
-pub extern fn bgfx_reset_view(id: u16) callconv(.C) void;
+pub extern fn bgfx_reset_view(id: ViewId) void;
 
 /// Begin submitting draw calls from thread.
 /// <param name="_forThread">Explicitly request an encoder for a worker thread.</param>
-pub extern fn bgfx_encoder_begin(forThread: bool) callconv(.C) [*c]Encoder;
+pub extern fn bgfx_encoder_begin(forThread: bool) ?*Encoder;
 
 /// End submitting draw calls from thread.
 /// <param name="_encoder">Encoder.</param>
-pub extern fn bgfx_encoder_end(encoder: [*c]Encoder) callconv(.C) void;
+pub extern fn bgfx_encoder_end(encoder: ?*Encoder) void;
 
 /// Sets a debug marker. This allows you to group graphics calls together for easy browsing in
 /// graphics debugging tools.
 /// <param name="_marker">Marker string.</param>
-pub extern fn bgfx_encoder_set_marker(self: [*c]Encoder, marker: [*c]const u8) callconv(.C) void;
+pub extern fn bgfx_encoder_set_marker(self: ?*Encoder, marker: [*c]const u8) void;
 
 /// Set render states for draw primitive.
 /// @remarks
@@ -2255,17 +2243,17 @@ pub extern fn bgfx_encoder_set_marker(self: [*c]Encoder, marker: [*c]const u8) c
 ///      equation is specified.
 /// <param name="_state">State flags. Default state for primitive type is   triangles. See: `BGFX_STATE_DEFAULT`.   - `BGFX_STATE_DEPTH_TEST_*` - Depth test function.   - `BGFX_STATE_BLEND_*` - See remark 1 about BGFX_STATE_BLEND_FUNC.   - `BGFX_STATE_BLEND_EQUATION_*` - See remark 2.   - `BGFX_STATE_CULL_*` - Backface culling mode.   - `BGFX_STATE_WRITE_*` - Enable R, G, B, A or Z write.   - `BGFX_STATE_MSAA` - Enable hardware multisample antialiasing.   - `BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]` - Primitive type.</param>
 /// <param name="_rgba">Sets blend factor used by `BGFX_STATE_BLEND_FACTOR` and   `BGFX_STATE_BLEND_INV_FACTOR` blend modes.</param>
-pub extern fn bgfx_encoder_set_state(self: [*c]Encoder, state: u64, rgba: u32) callconv(.C) void;
+pub extern fn bgfx_encoder_set_state(self: ?*Encoder, state: u64, rgba: u32) void;
 
 /// Set condition for rendering.
 /// <param name="_handle">Occlusion query handle.</param>
 /// <param name="_visible">Render if occlusion query is visible.</param>
-pub extern fn bgfx_encoder_set_condition(self: [*c]Encoder, handle: OcclusionQueryHandle, visible: bool) callconv(.C) void;
+pub extern fn bgfx_encoder_set_condition(self: ?*Encoder, handle: OcclusionQueryHandle, visible: bool) void;
 
 /// Set stencil test state.
 /// <param name="_fstencil">Front stencil state.</param>
 /// <param name="_bstencil">Back stencil state. If back is set to `BGFX_STENCIL_NONE` _fstencil is applied to both front and back facing primitives.</param>
-pub extern fn bgfx_encoder_set_stencil(self: [*c]Encoder, fstencil: u32, bstencil: u32) callconv(.C) void;
+pub extern fn bgfx_encoder_set_stencil(self: ?*Encoder, fstencil: u32, bstencil: u32) void;
 
 /// Set scissor for draw primitive.
 /// @remark
@@ -2274,61 +2262,61 @@ pub extern fn bgfx_encoder_set_stencil(self: [*c]Encoder, fstencil: u32, bstenci
 /// <param name="_y">Position y from the top corner of the window.</param>
 /// <param name="_width">Width of view scissor region.</param>
 /// <param name="_height">Height of view scissor region.</param>
-pub extern fn bgfx_encoder_set_scissor(self: [*c]Encoder, x: u16, y: u16, width: u16, height: u16) callconv(.C) u16;
+pub extern fn bgfx_encoder_set_scissor(self: ?*Encoder, x: u16, y: u16, width: u16, height: u16) u16;
 
 /// Set scissor from cache for draw primitive.
 /// @remark
 ///   To scissor for all primitives in view see `bgfx::setViewScissor`.
 /// <param name="_cache">Index in scissor cache.</param>
-pub extern fn bgfx_encoder_set_scissor_cached(self: [*c]Encoder, cache: u16) callconv(.C) void;
+pub extern fn bgfx_encoder_set_scissor_cached(self: ?*Encoder, cache: u16) void;
 
 /// Set model matrix for draw primitive. If it is not called,
 /// the model will be rendered with an identity model matrix.
 /// <param name="_mtx">Pointer to first matrix in array.</param>
 /// <param name="_num">Number of matrices in array.</param>
-pub extern fn bgfx_encoder_set_transform(self: [*c]Encoder, mtx: ?*anyopaque, num: u16) callconv(.C) u32;
+pub extern fn bgfx_encoder_set_transform(self: ?*Encoder, mtx: ?*const anyopaque, num: u16) u32;
 
 ///  Set model matrix from matrix cache for draw primitive.
 /// <param name="_cache">Index in matrix cache.</param>
 /// <param name="_num">Number of matrices from cache.</param>
-pub extern fn bgfx_encoder_set_transform_cached(self: [*c]Encoder, cache: u32, num: u16) callconv(.C) void;
+pub extern fn bgfx_encoder_set_transform_cached(self: ?*Encoder, cache: u32, num: u16) void;
 
 /// Reserve matrices in internal matrix cache.
 /// @attention Pointer returned can be modified until `bgfx::frame` is called.
 /// <param name="_transform">Pointer to `Transform` structure.</param>
 /// <param name="_num">Number of matrices.</param>
-pub extern fn bgfx_encoder_alloc_transform(self: [*c]Encoder, transform: [*c]Transform, num: u16) callconv(.C) u32;
+pub extern fn bgfx_encoder_alloc_transform(self: ?*Encoder, transform: [*c]Transform, num: u16) u32;
 
 /// Set shader uniform parameter for draw primitive.
 /// <param name="_handle">Uniform.</param>
 /// <param name="_value">Pointer to uniform data.</param>
 /// <param name="_num">Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.</param>
-pub extern fn bgfx_encoder_set_uniform(self: [*c]Encoder, handle: UniformHandle, value: ?*anyopaque, num: u16) callconv(.C) void;
+pub extern fn bgfx_encoder_set_uniform(self: ?*Encoder, handle: UniformHandle, value: ?*const anyopaque, num: u16) void;
 
 /// Set index buffer for draw primitive.
 /// <param name="_handle">Index buffer.</param>
 /// <param name="_firstIndex">First index to render.</param>
 /// <param name="_numIndices">Number of indices to render.</param>
-pub extern fn bgfx_encoder_set_index_buffer(self: [*c]Encoder, handle: IndexBufferHandle, firstIndex: u32, numIndices: u32) callconv(.C) void;
+pub extern fn bgfx_encoder_set_index_buffer(self: ?*Encoder, handle: IndexBufferHandle, firstIndex: u32, numIndices: u32) void;
 
 /// Set index buffer for draw primitive.
 /// <param name="_handle">Dynamic index buffer.</param>
 /// <param name="_firstIndex">First index to render.</param>
 /// <param name="_numIndices">Number of indices to render.</param>
-pub extern fn bgfx_encoder_set_dynamic_index_buffer(self: [*c]Encoder, handle: DynamicIndexBufferHandle, firstIndex: u32, numIndices: u32) callconv(.C) void;
+pub extern fn bgfx_encoder_set_dynamic_index_buffer(self: ?*Encoder, handle: DynamicIndexBufferHandle, firstIndex: u32, numIndices: u32) void;
 
 /// Set index buffer for draw primitive.
 /// <param name="_tib">Transient index buffer.</param>
 /// <param name="_firstIndex">First index to render.</param>
 /// <param name="_numIndices">Number of indices to render.</param>
-pub extern fn bgfx_encoder_set_transient_index_buffer(self: [*c]Encoder, tib: [*c]TransientIndexBuffer, firstIndex: u32, numIndices: u32) callconv(.C) void;
+pub extern fn bgfx_encoder_set_transient_index_buffer(self: ?*Encoder, tib: [*c]const TransientIndexBuffer, firstIndex: u32, numIndices: u32) void;
 
 /// Set vertex buffer for draw primitive.
 /// <param name="_stream">Vertex stream.</param>
 /// <param name="_handle">Vertex buffer.</param>
 /// <param name="_startVertex">First vertex to render.</param>
 /// <param name="_numVertices">Number of vertices to render.</param>
-pub extern fn bgfx_encoder_set_vertex_buffer(self: [*c]Encoder, stream: u8, handle: VertexBufferHandle, startVertex: u32, numVertices: u32) callconv(.C) void;
+pub extern fn bgfx_encoder_set_vertex_buffer(self: ?*Encoder, stream: u8, handle: VertexBufferHandle, startVertex: u32, numVertices: u32) void;
 
 /// Set vertex buffer for draw primitive.
 /// <param name="_stream">Vertex stream.</param>
@@ -2336,23 +2324,23 @@ pub extern fn bgfx_encoder_set_vertex_buffer(self: [*c]Encoder, stream: u8, hand
 /// <param name="_startVertex">First vertex to render.</param>
 /// <param name="_numVertices">Number of vertices to render.</param>
 /// <param name="_layoutHandle">Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.</param>
-pub extern fn bgfx_encoder_set_vertex_buffer_with_layout(self: [*c]Encoder, stream: u8, handle: VertexBufferHandle, startVertex: u32, numVertices: u32, layoutHandle: VertexLayoutHandle) callconv(.C) void;
+pub extern fn bgfx_encoder_set_vertex_buffer_with_layout(self: ?*Encoder, stream: u8, handle: VertexBufferHandle, startVertex: u32, numVertices: u32, layoutHandle: VertexLayoutHandle) void;
 
 /// Set vertex buffer for draw primitive.
 /// <param name="_stream">Vertex stream.</param>
 /// <param name="_handle">Dynamic vertex buffer.</param>
 /// <param name="_startVertex">First vertex to render.</param>
 /// <param name="_numVertices">Number of vertices to render.</param>
-pub extern fn bgfx_encoder_set_dynamic_vertex_buffer(self: [*c]Encoder, stream: u8, handle: DynamicVertexBufferHandle, startVertex: u32, numVertices: u32) callconv(.C) void;
+pub extern fn bgfx_encoder_set_dynamic_vertex_buffer(self: ?*Encoder, stream: u8, handle: DynamicVertexBufferHandle, startVertex: u32, numVertices: u32) void;
 
-pub extern fn bgfx_encoder_set_dynamic_vertex_buffer_with_layout(self: [*c]Encoder, stream: u8, handle: DynamicVertexBufferHandle, startVertex: u32, numVertices: u32, layoutHandle: VertexLayoutHandle) callconv(.C) void;
+pub extern fn bgfx_encoder_set_dynamic_vertex_buffer_with_layout(self: ?*Encoder, stream: u8, handle: DynamicVertexBufferHandle, startVertex: u32, numVertices: u32, layoutHandle: VertexLayoutHandle) void;
 
 /// Set vertex buffer for draw primitive.
 /// <param name="_stream">Vertex stream.</param>
 /// <param name="_tvb">Transient vertex buffer.</param>
 /// <param name="_startVertex">First vertex to render.</param>
 /// <param name="_numVertices">Number of vertices to render.</param>
-pub extern fn bgfx_encoder_set_transient_vertex_buffer(self: [*c]Encoder, stream: u8, tvb: [*c]TransientVertexBuffer, startVertex: u32, numVertices: u32) callconv(.C) void;
+pub extern fn bgfx_encoder_set_transient_vertex_buffer(self: ?*Encoder, stream: u8, tvb: [*c]const TransientVertexBuffer, startVertex: u32, numVertices: u32) void;
 
 /// Set vertex buffer for draw primitive.
 /// <param name="_stream">Vertex stream.</param>
@@ -2360,43 +2348,43 @@ pub extern fn bgfx_encoder_set_transient_vertex_buffer(self: [*c]Encoder, stream
 /// <param name="_startVertex">First vertex to render.</param>
 /// <param name="_numVertices">Number of vertices to render.</param>
 /// <param name="_layoutHandle">Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.</param>
-pub extern fn bgfx_encoder_set_transient_vertex_buffer_with_layout(self: [*c]Encoder, stream: u8, tvb: [*c]TransientVertexBuffer, startVertex: u32, numVertices: u32, layoutHandle: VertexLayoutHandle) callconv(.C) void;
+pub extern fn bgfx_encoder_set_transient_vertex_buffer_with_layout(self: ?*Encoder, stream: u8, tvb: [*c]const TransientVertexBuffer, startVertex: u32, numVertices: u32, layoutHandle: VertexLayoutHandle) void;
 
 /// Set number of vertices for auto generated vertices use in conjunction
 /// with gl_VertexID.
 /// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 /// <param name="_numVertices">Number of vertices.</param>
-pub extern fn bgfx_encoder_set_vertex_count(self: [*c]Encoder, numVertices: u32) callconv(.C) void;
+pub extern fn bgfx_encoder_set_vertex_count(self: ?*Encoder, numVertices: u32) void;
 
 /// Set instance data buffer for draw primitive.
 /// <param name="_idb">Transient instance data buffer.</param>
 /// <param name="_start">First instance data.</param>
 /// <param name="_num">Number of data instances.</param>
-pub extern fn bgfx_encoder_set_instance_data_buffer(self: [*c]Encoder, idb: [*c]InstanceDataBuffer, start: u32, num: u32) callconv(.C) void;
+pub extern fn bgfx_encoder_set_instance_data_buffer(self: ?*Encoder, idb: [*c]const InstanceDataBuffer, start: u32, num: u32) void;
 
 /// Set instance data buffer for draw primitive.
 /// <param name="_handle">Vertex buffer.</param>
 /// <param name="_startVertex">First instance data.</param>
 /// <param name="_num">Number of data instances. Set instance data buffer for draw primitive.</param>
-pub extern fn bgfx_encoder_set_instance_data_from_vertex_buffer(self: [*c]Encoder, handle: VertexBufferHandle, startVertex: u32, num: u32) callconv(.C) void;
+pub extern fn bgfx_encoder_set_instance_data_from_vertex_buffer(self: ?*Encoder, handle: VertexBufferHandle, startVertex: u32, num: u32) void;
 
 /// Set instance data buffer for draw primitive.
 /// <param name="_handle">Dynamic vertex buffer.</param>
 /// <param name="_startVertex">First instance data.</param>
 /// <param name="_num">Number of data instances.</param>
-pub extern fn bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer(self: [*c]Encoder, handle: DynamicVertexBufferHandle, startVertex: u32, num: u32) callconv(.C) void;
+pub extern fn bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer(self: ?*Encoder, handle: DynamicVertexBufferHandle, startVertex: u32, num: u32) void;
 
 /// Set number of instances for auto generated instances use in conjunction
 /// with gl_InstanceID.
 /// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
-pub extern fn bgfx_encoder_set_instance_count(self: [*c]Encoder, numInstances: u32) callconv(.C) void;
+pub extern fn bgfx_encoder_set_instance_count(self: ?*Encoder, numInstances: u32) void;
 
 /// Set texture stage for draw primitive.
 /// <param name="_stage">Texture unit.</param>
 /// <param name="_sampler">Program sampler.</param>
 /// <param name="_handle">Texture handle.</param>
 /// <param name="_flags">Texture sampling mode. Default value UINT32_MAX uses   texture sampling settings from the texture.   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap     mode.   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic     sampling.</param>
-pub extern fn bgfx_encoder_set_texture(self: [*c]Encoder, stage: u8, sampler: UniformHandle, handle: TextureHandle, flags: u32) callconv(.C) void;
+pub extern fn bgfx_encoder_set_texture(self: ?*Encoder, stage: u8, sampler: UniformHandle, handle: TextureHandle, flags: u32) void;
 
 /// Submit an empty primitive for rendering. Uniforms and draw state
 /// will be applied but no geometry will be submitted. Useful in cases
@@ -2405,14 +2393,14 @@ pub extern fn bgfx_encoder_set_texture(self: [*c]Encoder, stage: u8, sampler: Un
 /// @remark
 ///   These empty draw calls will sort before ordinary draw calls.
 /// <param name="_id">View id.</param>
-pub extern fn bgfx_encoder_touch(self: [*c]Encoder, id: u16) callconv(.C) void;
+pub extern fn bgfx_encoder_touch(self: ?*Encoder, id: ViewId) void;
 
 /// Submit primitive for rendering.
 /// <param name="_id">View id.</param>
 /// <param name="_program">Program.</param>
 /// <param name="_depth">Depth for sorting.</param>
 /// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
-pub extern fn bgfx_encoder_submit(self: [*c]Encoder, id: u16, program: ProgramHandle, depth: u32, flags: u8) callconv(.C) void;
+pub extern fn bgfx_encoder_submit(self: ?*Encoder, id: ViewId, program: ProgramHandle, depth: u32, flags: u8) void;
 
 /// Submit primitive with occlusion query for rendering.
 /// <param name="_id">View id.</param>
@@ -2420,7 +2408,7 @@ pub extern fn bgfx_encoder_submit(self: [*c]Encoder, id: u16, program: ProgramHa
 /// <param name="_occlusionQuery">Occlusion query.</param>
 /// <param name="_depth">Depth for sorting.</param>
 /// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
-pub extern fn bgfx_encoder_submit_occlusion_query(self: [*c]Encoder, id: u16, program: ProgramHandle, occlusionQuery: OcclusionQueryHandle, depth: u32, flags: u8) callconv(.C) void;
+pub extern fn bgfx_encoder_submit_occlusion_query(self: ?*Encoder, id: ViewId, program: ProgramHandle, occlusionQuery: OcclusionQueryHandle, depth: u32, flags: u8) void;
 
 /// Submit primitive for rendering with index and instance data info from
 /// indirect buffer.
@@ -2431,37 +2419,37 @@ pub extern fn bgfx_encoder_submit_occlusion_query(self: [*c]Encoder, id: u16, pr
 /// <param name="_num">Number of dispatches.</param>
 /// <param name="_depth">Depth for sorting.</param>
 /// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
-pub extern fn bgfx_encoder_submit_indirect(self: [*c]Encoder, id: u16, program: ProgramHandle, indirectHandle: IndirectBufferHandle, start: u16, num: u16, depth: u32, flags: u8) callconv(.C) void;
+pub extern fn bgfx_encoder_submit_indirect(self: ?*Encoder, id: ViewId, program: ProgramHandle, indirectHandle: IndirectBufferHandle, start: u16, num: u16, depth: u32, flags: u8) void;
 
 /// Set compute index buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Index buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-pub extern fn bgfx_encoder_set_compute_index_buffer(self: [*c]Encoder, stage: u8, handle: IndexBufferHandle, access: Access) callconv(.C) void;
+pub extern fn bgfx_encoder_set_compute_index_buffer(self: ?*Encoder, stage: u8, handle: IndexBufferHandle, access: Access) void;
 
 /// Set compute vertex buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Vertex buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-pub extern fn bgfx_encoder_set_compute_vertex_buffer(self: [*c]Encoder, stage: u8, handle: VertexBufferHandle, access: Access) callconv(.C) void;
+pub extern fn bgfx_encoder_set_compute_vertex_buffer(self: ?*Encoder, stage: u8, handle: VertexBufferHandle, access: Access) void;
 
 /// Set compute dynamic index buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Dynamic index buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-pub extern fn bgfx_encoder_set_compute_dynamic_index_buffer(self: [*c]Encoder, stage: u8, handle: DynamicIndexBufferHandle, access: Access) callconv(.C) void;
+pub extern fn bgfx_encoder_set_compute_dynamic_index_buffer(self: ?*Encoder, stage: u8, handle: DynamicIndexBufferHandle, access: Access) void;
 
 /// Set compute dynamic vertex buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Dynamic vertex buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-pub extern fn bgfx_encoder_set_compute_dynamic_vertex_buffer(self: [*c]Encoder, stage: u8, handle: DynamicVertexBufferHandle, access: Access) callconv(.C) void;
+pub extern fn bgfx_encoder_set_compute_dynamic_vertex_buffer(self: ?*Encoder, stage: u8, handle: DynamicVertexBufferHandle, access: Access) void;
 
 /// Set compute indirect buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Indirect buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-pub extern fn bgfx_encoder_set_compute_indirect_buffer(self: [*c]Encoder, stage: u8, handle: IndirectBufferHandle, access: Access) callconv(.C) void;
+pub extern fn bgfx_encoder_set_compute_indirect_buffer(self: ?*Encoder, stage: u8, handle: IndirectBufferHandle, access: Access) void;
 
 /// Set compute image from texture.
 /// <param name="_stage">Compute stage.</param>
@@ -2469,7 +2457,7 @@ pub extern fn bgfx_encoder_set_compute_indirect_buffer(self: [*c]Encoder, stage:
 /// <param name="_mip">Mip level.</param>
 /// <param name="_access">Image access. See `Access::Enum`.</param>
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
-pub extern fn bgfx_encoder_set_image(self: [*c]Encoder, stage: u8, handle: TextureHandle, mip: u8, access: Access, format: TextureFormat) callconv(.C) void;
+pub extern fn bgfx_encoder_set_image(self: ?*Encoder, stage: u8, handle: TextureHandle, mip: u8, access: Access, format: TextureFormat) void;
 
 /// Dispatch compute.
 /// <param name="_id">View id.</param>
@@ -2478,7 +2466,7 @@ pub extern fn bgfx_encoder_set_image(self: [*c]Encoder, stage: u8, handle: Textu
 /// <param name="_numY">Number of groups Y.</param>
 /// <param name="_numZ">Number of groups Z.</param>
 /// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
-pub extern fn bgfx_encoder_dispatch(self: [*c]Encoder, id: u16, program: ProgramHandle, numX: u32, numY: u32, numZ: u32, flags: u8) callconv(.C) void;
+pub extern fn bgfx_encoder_dispatch(self: ?*Encoder, id: ViewId, program: ProgramHandle, numX: u32, numY: u32, numZ: u32, flags: u8) void;
 
 /// Dispatch compute indirect.
 /// <param name="_id">View id.</param>
@@ -2487,11 +2475,11 @@ pub extern fn bgfx_encoder_dispatch(self: [*c]Encoder, id: u16, program: Program
 /// <param name="_start">First element in indirect buffer.</param>
 /// <param name="_num">Number of dispatches.</param>
 /// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
-pub extern fn bgfx_encoder_dispatch_indirect(self: [*c]Encoder, id: u16, program: ProgramHandle, indirectHandle: IndirectBufferHandle, start: u16, num: u16, flags: u8) callconv(.C) void;
+pub extern fn bgfx_encoder_dispatch_indirect(self: ?*Encoder, id: ViewId, program: ProgramHandle, indirectHandle: IndirectBufferHandle, start: u16, num: u16, flags: u8) void;
 
 /// Discard previously set state for draw or compute call.
 /// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
-pub extern fn bgfx_encoder_discard(self: [*c]Encoder, flags: u8) callconv(.C) void;
+pub extern fn bgfx_encoder_discard(self: ?*Encoder, flags: u8) void;
 
 /// Blit 2D texture region between two 2D textures.
 /// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
@@ -2510,7 +2498,7 @@ pub extern fn bgfx_encoder_discard(self: [*c]Encoder, flags: u8) callconv(.C) vo
 /// <param name="_width">Width of region.</param>
 /// <param name="_height">Height of region.</param>
 /// <param name="_depth">If texture is 3D this argument represents depth of region, otherwise it's unused.</param>
-pub extern fn bgfx_encoder_blit(self: [*c]Encoder, id: u16, dst: TextureHandle, dstMip: u8, dstX: u16, dstY: u16, dstZ: u16, src: TextureHandle, srcMip: u8, srcX: u16, srcY: u16, srcZ: u16, width: u16, height: u16, depth: u16) callconv(.C) void;
+pub extern fn bgfx_encoder_blit(self: ?*Encoder, id: ViewId, dst: TextureHandle, dstMip: u8, dstX: u16, dstY: u16, dstZ: u16, src: TextureHandle, srcMip: u8, srcX: u16, srcY: u16, srcZ: u16, width: u16, height: u16, depth: u16) void;
 
 /// Request screen shot of window back buffer.
 /// @remarks
@@ -2518,7 +2506,7 @@ pub extern fn bgfx_encoder_blit(self: [*c]Encoder, id: u16, dst: TextureHandle, 
 /// @attention Frame buffer handle must be created with OS' target native window handle.
 /// <param name="_handle">Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be made for main window back buffer.</param>
 /// <param name="_filePath">Will be passed to `bgfx::CallbackI::screenShot` callback.</param>
-pub extern fn bgfx_request_screen_shot(handle: FrameBufferHandle, filePath: [*c]const u8) callconv(.C) void;
+pub extern fn bgfx_request_screen_shot(handle: FrameBufferHandle, filePath: [*c]const u8) void;
 
 /// Render frame.
 /// @attention `bgfx::renderFrame` is blocking call. It waits for
@@ -2529,18 +2517,18 @@ pub extern fn bgfx_request_screen_shot(handle: FrameBufferHandle, filePath: [*c]
 ///   allow creating separate rendering thread. If it is called before
 ///   to bgfx::init, render thread won't be created by bgfx::init call.
 /// <param name="_msecs">Timeout in milliseconds.</param>
-pub extern fn bgfx_render_frame(msecs: i32) callconv(.C) RenderFrame;
+pub extern fn bgfx_render_frame(msecs: i32) RenderFrame;
 
 /// Set platform data.
 /// @warning Must be called before `bgfx::init`.
 /// <param name="_data">Platform data.</param>
-pub extern fn bgfx_set_platform_data(data: [*c]PlatformData) callconv(.C) void;
+pub extern fn bgfx_set_platform_data(data: [*c]const PlatformData) void;
 
 /// Get internal data for interop.
 /// @attention It's expected you understand some bgfx internals before you
 ///   use this call.
 /// @warning Must be called only on render thread.
-pub extern fn bgfx_get_internal_data() callconv(.C) [*c]InternalData;
+pub extern fn bgfx_get_internal_data() [*c]const InternalData;
 
 /// Override internal texture with externally created texture. Previously
 /// created internal texture will released.
@@ -2549,7 +2537,7 @@ pub extern fn bgfx_get_internal_data() callconv(.C) [*c]InternalData;
 /// @warning Must be called only on render thread.
 /// <param name="_handle">Texture handle.</param>
 /// <param name="_ptr">Native API pointer to texture.</param>
-pub extern fn bgfx_override_internal_texture_ptr(handle: TextureHandle, ptr: usize) callconv(.C) usize;
+pub extern fn bgfx_override_internal_texture_ptr(handle: TextureHandle, ptr: usize) usize;
 
 /// Override internal texture by creating new texture. Previously created
 /// internal texture will released.
@@ -2564,12 +2552,12 @@ pub extern fn bgfx_override_internal_texture_ptr(handle: TextureHandle, ptr: usi
 /// <param name="_numMips">Number of mip-maps.</param>
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 /// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
-pub extern fn bgfx_override_internal_texture(handle: TextureHandle, width: u16, height: u16, numMips: u8, format: TextureFormat, flags: u64) callconv(.C) usize;
+pub extern fn bgfx_override_internal_texture(handle: TextureHandle, width: u16, height: u16, numMips: u8, format: TextureFormat, flags: u64) usize;
 
 /// Sets a debug marker. This allows you to group graphics calls together for easy browsing in
 /// graphics debugging tools.
 /// <param name="_marker">Marker string.</param>
-pub extern fn bgfx_set_marker(marker: [*c]const u8) callconv(.C) void;
+pub extern fn bgfx_set_marker(marker: [*c]const u8) void;
 
 /// Set render states for draw primitive.
 /// @remarks
@@ -2584,17 +2572,17 @@ pub extern fn bgfx_set_marker(marker: [*c]const u8) callconv(.C) void;
 ///      equation is specified.
 /// <param name="_state">State flags. Default state for primitive type is   triangles. See: `BGFX_STATE_DEFAULT`.   - `BGFX_STATE_DEPTH_TEST_*` - Depth test function.   - `BGFX_STATE_BLEND_*` - See remark 1 about BGFX_STATE_BLEND_FUNC.   - `BGFX_STATE_BLEND_EQUATION_*` - See remark 2.   - `BGFX_STATE_CULL_*` - Backface culling mode.   - `BGFX_STATE_WRITE_*` - Enable R, G, B, A or Z write.   - `BGFX_STATE_MSAA` - Enable hardware multisample antialiasing.   - `BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]` - Primitive type.</param>
 /// <param name="_rgba">Sets blend factor used by `BGFX_STATE_BLEND_FACTOR` and   `BGFX_STATE_BLEND_INV_FACTOR` blend modes.</param>
-pub extern fn bgfx_set_state(state: u64, rgba: u32) callconv(.C) void;
+pub extern fn bgfx_set_state(state: u64, rgba: u32) void;
 
 /// Set condition for rendering.
 /// <param name="_handle">Occlusion query handle.</param>
 /// <param name="_visible">Render if occlusion query is visible.</param>
-pub extern fn bgfx_set_condition(handle: OcclusionQueryHandle, visible: bool) callconv(.C) void;
+pub extern fn bgfx_set_condition(handle: OcclusionQueryHandle, visible: bool) void;
 
 /// Set stencil test state.
 /// <param name="_fstencil">Front stencil state.</param>
 /// <param name="_bstencil">Back stencil state. If back is set to `BGFX_STENCIL_NONE` _fstencil is applied to both front and back facing primitives.</param>
-pub extern fn bgfx_set_stencil(fstencil: u32, bstencil: u32) callconv(.C) void;
+pub extern fn bgfx_set_stencil(fstencil: u32, bstencil: u32) void;
 
 /// Set scissor for draw primitive.
 /// @remark
@@ -2603,61 +2591,61 @@ pub extern fn bgfx_set_stencil(fstencil: u32, bstencil: u32) callconv(.C) void;
 /// <param name="_y">Position y from the top corner of the window.</param>
 /// <param name="_width">Width of view scissor region.</param>
 /// <param name="_height">Height of view scissor region.</param>
-pub extern fn bgfx_set_scissor(x: u16, y: u16, width: u16, height: u16) callconv(.C) u16;
+pub extern fn bgfx_set_scissor(x: u16, y: u16, width: u16, height: u16) u16;
 
 /// Set scissor from cache for draw primitive.
 /// @remark
 ///   To scissor for all primitives in view see `bgfx::setViewScissor`.
 /// <param name="_cache">Index in scissor cache.</param>
-pub extern fn bgfx_set_scissor_cached(cache: u16) callconv(.C) void;
+pub extern fn bgfx_set_scissor_cached(cache: u16) void;
 
 /// Set model matrix for draw primitive. If it is not called,
 /// the model will be rendered with an identity model matrix.
 /// <param name="_mtx">Pointer to first matrix in array.</param>
 /// <param name="_num">Number of matrices in array.</param>
-pub extern fn bgfx_set_transform(mtx: ?*anyopaque, num: u16) callconv(.C) u32;
+pub extern fn bgfx_set_transform(mtx: ?*const anyopaque, num: u16) u32;
 
 ///  Set model matrix from matrix cache for draw primitive.
 /// <param name="_cache">Index in matrix cache.</param>
 /// <param name="_num">Number of matrices from cache.</param>
-pub extern fn bgfx_set_transform_cached(cache: u32, num: u16) callconv(.C) void;
+pub extern fn bgfx_set_transform_cached(cache: u32, num: u16) void;
 
 /// Reserve matrices in internal matrix cache.
 /// @attention Pointer returned can be modified until `bgfx::frame` is called.
 /// <param name="_transform">Pointer to `Transform` structure.</param>
 /// <param name="_num">Number of matrices.</param>
-pub extern fn bgfx_alloc_transform(transform: [*c]Transform, num: u16) callconv(.C) u32;
+pub extern fn bgfx_alloc_transform(transform: [*c]Transform, num: u16) u32;
 
 /// Set shader uniform parameter for draw primitive.
 /// <param name="_handle">Uniform.</param>
 /// <param name="_value">Pointer to uniform data.</param>
 /// <param name="_num">Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.</param>
-pub extern fn bgfx_set_uniform(handle: UniformHandle, value: ?*anyopaque, num: u16) callconv(.C) void;
+pub extern fn bgfx_set_uniform(handle: UniformHandle, value: ?*const anyopaque, num: u16) void;
 
 /// Set index buffer for draw primitive.
 /// <param name="_handle">Index buffer.</param>
 /// <param name="_firstIndex">First index to render.</param>
 /// <param name="_numIndices">Number of indices to render.</param>
-pub extern fn bgfx_set_index_buffer(handle: IndexBufferHandle, firstIndex: u32, numIndices: u32) callconv(.C) void;
+pub extern fn bgfx_set_index_buffer(handle: IndexBufferHandle, firstIndex: u32, numIndices: u32) void;
 
 /// Set index buffer for draw primitive.
 /// <param name="_handle">Dynamic index buffer.</param>
 /// <param name="_firstIndex">First index to render.</param>
 /// <param name="_numIndices">Number of indices to render.</param>
-pub extern fn bgfx_set_dynamic_index_buffer(handle: DynamicIndexBufferHandle, firstIndex: u32, numIndices: u32) callconv(.C) void;
+pub extern fn bgfx_set_dynamic_index_buffer(handle: DynamicIndexBufferHandle, firstIndex: u32, numIndices: u32) void;
 
 /// Set index buffer for draw primitive.
 /// <param name="_tib">Transient index buffer.</param>
 /// <param name="_firstIndex">First index to render.</param>
 /// <param name="_numIndices">Number of indices to render.</param>
-pub extern fn bgfx_set_transient_index_buffer(tib: [*c]TransientIndexBuffer, firstIndex: u32, numIndices: u32) callconv(.C) void;
+pub extern fn bgfx_set_transient_index_buffer(tib: [*c]const TransientIndexBuffer, firstIndex: u32, numIndices: u32) void;
 
 /// Set vertex buffer for draw primitive.
 /// <param name="_stream">Vertex stream.</param>
 /// <param name="_handle">Vertex buffer.</param>
 /// <param name="_startVertex">First vertex to render.</param>
 /// <param name="_numVertices">Number of vertices to render.</param>
-pub extern fn bgfx_set_vertex_buffer(stream: u8, handle: VertexBufferHandle, startVertex: u32, numVertices: u32) callconv(.C) void;
+pub extern fn bgfx_set_vertex_buffer(stream: u8, handle: VertexBufferHandle, startVertex: u32, numVertices: u32) void;
 
 /// Set vertex buffer for draw primitive.
 /// <param name="_stream">Vertex stream.</param>
@@ -2665,14 +2653,14 @@ pub extern fn bgfx_set_vertex_buffer(stream: u8, handle: VertexBufferHandle, sta
 /// <param name="_startVertex">First vertex to render.</param>
 /// <param name="_numVertices">Number of vertices to render.</param>
 /// <param name="_layoutHandle">Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.</param>
-pub extern fn bgfx_set_vertex_buffer_with_layout(stream: u8, handle: VertexBufferHandle, startVertex: u32, numVertices: u32, layoutHandle: VertexLayoutHandle) callconv(.C) void;
+pub extern fn bgfx_set_vertex_buffer_with_layout(stream: u8, handle: VertexBufferHandle, startVertex: u32, numVertices: u32, layoutHandle: VertexLayoutHandle) void;
 
 /// Set vertex buffer for draw primitive.
 /// <param name="_stream">Vertex stream.</param>
 /// <param name="_handle">Dynamic vertex buffer.</param>
 /// <param name="_startVertex">First vertex to render.</param>
 /// <param name="_numVertices">Number of vertices to render.</param>
-pub extern fn bgfx_set_dynamic_vertex_buffer(stream: u8, handle: DynamicVertexBufferHandle, startVertex: u32, numVertices: u32) callconv(.C) void;
+pub extern fn bgfx_set_dynamic_vertex_buffer(stream: u8, handle: DynamicVertexBufferHandle, startVertex: u32, numVertices: u32) void;
 
 /// Set vertex buffer for draw primitive.
 /// <param name="_stream">Vertex stream.</param>
@@ -2680,14 +2668,14 @@ pub extern fn bgfx_set_dynamic_vertex_buffer(stream: u8, handle: DynamicVertexBu
 /// <param name="_startVertex">First vertex to render.</param>
 /// <param name="_numVertices">Number of vertices to render.</param>
 /// <param name="_layoutHandle">Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.</param>
-pub extern fn bgfx_set_dynamic_vertex_buffer_with_layout(stream: u8, handle: DynamicVertexBufferHandle, startVertex: u32, numVertices: u32, layoutHandle: VertexLayoutHandle) callconv(.C) void;
+pub extern fn bgfx_set_dynamic_vertex_buffer_with_layout(stream: u8, handle: DynamicVertexBufferHandle, startVertex: u32, numVertices: u32, layoutHandle: VertexLayoutHandle) void;
 
 /// Set vertex buffer for draw primitive.
 /// <param name="_stream">Vertex stream.</param>
 /// <param name="_tvb">Transient vertex buffer.</param>
 /// <param name="_startVertex">First vertex to render.</param>
 /// <param name="_numVertices">Number of vertices to render.</param>
-pub extern fn bgfx_set_transient_vertex_buffer(stream: u8, tvb: [*c]TransientVertexBuffer, startVertex: u32, numVertices: u32) callconv(.C) void;
+pub extern fn bgfx_set_transient_vertex_buffer(stream: u8, tvb: [*c]const TransientVertexBuffer, startVertex: u32, numVertices: u32) void;
 
 /// Set vertex buffer for draw primitive.
 /// <param name="_stream">Vertex stream.</param>
@@ -2695,57 +2683,57 @@ pub extern fn bgfx_set_transient_vertex_buffer(stream: u8, tvb: [*c]TransientVer
 /// <param name="_startVertex">First vertex to render.</param>
 /// <param name="_numVertices">Number of vertices to render.</param>
 /// <param name="_layoutHandle">Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.</param>
-pub extern fn bgfx_set_transient_vertex_buffer_with_layout(stream: u8, tvb: [*c]TransientVertexBuffer, startVertex: u32, numVertices: u32, layoutHandle: VertexLayoutHandle) callconv(.C) void;
+pub extern fn bgfx_set_transient_vertex_buffer_with_layout(stream: u8, tvb: [*c]const TransientVertexBuffer, startVertex: u32, numVertices: u32, layoutHandle: VertexLayoutHandle) void;
 
 /// Set number of vertices for auto generated vertices use in conjunction
 /// with gl_VertexID.
 /// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 /// <param name="_numVertices">Number of vertices.</param>
-pub extern fn bgfx_set_vertex_count(numVertices: u32) callconv(.C) void;
+pub extern fn bgfx_set_vertex_count(numVertices: u32) void;
 
 /// Set instance data buffer for draw primitive.
 /// <param name="_idb">Transient instance data buffer.</param>
 /// <param name="_start">First instance data.</param>
 /// <param name="_num">Number of data instances.</param>
-pub extern fn bgfx_set_instance_data_buffer(idb: [*c]InstanceDataBuffer, start: u32, num: u32) callconv(.C) void;
+pub extern fn bgfx_set_instance_data_buffer(idb: [*c]const InstanceDataBuffer, start: u32, num: u32) void;
 
 /// Set instance data buffer for draw primitive.
 /// <param name="_handle">Vertex buffer.</param>
 /// <param name="_startVertex">First instance data.</param>
 /// <param name="_num">Number of data instances. Set instance data buffer for draw primitive.</param>
-pub extern fn bgfx_set_instance_data_from_vertex_buffer(handle: VertexBufferHandle, startVertex: u32, num: u32) callconv(.C) void;
+pub extern fn bgfx_set_instance_data_from_vertex_buffer(handle: VertexBufferHandle, startVertex: u32, num: u32) void;
 
 /// Set instance data buffer for draw primitive.
 /// <param name="_handle">Dynamic vertex buffer.</param>
 /// <param name="_startVertex">First instance data.</param>
 /// <param name="_num">Number of data instances.</param>
-pub extern fn bgfx_set_instance_data_from_dynamic_vertex_buffer(handle: DynamicVertexBufferHandle, startVertex: u32, num: u32) callconv(.C) void;
+pub extern fn bgfx_set_instance_data_from_dynamic_vertex_buffer(handle: DynamicVertexBufferHandle, startVertex: u32, num: u32) void;
 
 /// Set number of instances for auto generated instances use in conjunction
 /// with gl_InstanceID.
 /// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
-pub extern fn bgfx_set_instance_count(numInstances: u32) callconv(.C) void;
+pub extern fn bgfx_set_instance_count(numInstances: u32) void;
 
 /// Set texture stage for draw primitive.
 /// <param name="_stage">Texture unit.</param>
 /// <param name="_sampler">Program sampler.</param>
 /// <param name="_handle">Texture handle.</param>
 /// <param name="_flags">Texture sampling mode. Default value UINT32_MAX uses   texture sampling settings from the texture.   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap     mode.   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic     sampling.</param>
-pub extern fn bgfx_set_texture(stage: u8, sampler: UniformHandle, handle: TextureHandle, flags: u32) callconv(.C) void;
+pub extern fn bgfx_set_texture(stage: u8, sampler: UniformHandle, handle: TextureHandle, flags: u32) void;
 
 /// Submit an empty primitive for rendering. Uniforms and draw state
 /// will be applied but no geometry will be submitted.
 /// @remark
 ///   These empty draw calls will sort before ordinary draw calls.
 /// <param name="_id">View id.</param>
-pub extern fn bgfx_touch(id: u16) callconv(.C) void;
+pub extern fn bgfx_touch(id: ViewId) void;
 
 /// Submit primitive for rendering.
 /// <param name="_id">View id.</param>
 /// <param name="_program">Program.</param>
 /// <param name="_depth">Depth for sorting.</param>
 /// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
-pub extern fn bgfx_submit(id: u16, program: ProgramHandle, depth: u32, flags: u8) callconv(.C) void;
+pub extern fn bgfx_submit(id: ViewId, program: ProgramHandle, depth: u32, flags: u8) void;
 
 /// Submit primitive with occlusion query for rendering.
 /// <param name="_id">View id.</param>
@@ -2753,7 +2741,7 @@ pub extern fn bgfx_submit(id: u16, program: ProgramHandle, depth: u32, flags: u8
 /// <param name="_occlusionQuery">Occlusion query.</param>
 /// <param name="_depth">Depth for sorting.</param>
 /// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
-pub extern fn bgfx_submit_occlusion_query(id: u16, program: ProgramHandle, occlusionQuery: OcclusionQueryHandle, depth: u32, flags: u8) callconv(.C) void;
+pub extern fn bgfx_submit_occlusion_query(id: ViewId, program: ProgramHandle, occlusionQuery: OcclusionQueryHandle, depth: u32, flags: u8) void;
 
 /// Submit primitive for rendering with index and instance data info from
 /// indirect buffer.
@@ -2764,37 +2752,37 @@ pub extern fn bgfx_submit_occlusion_query(id: u16, program: ProgramHandle, occlu
 /// <param name="_num">Number of dispatches.</param>
 /// <param name="_depth">Depth for sorting.</param>
 /// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
-pub extern fn bgfx_submit_indirect(id: u16, program: ProgramHandle, indirectHandle: IndirectBufferHandle, start: u16, num: u16, depth: u32, flags: u8) callconv(.C) void;
+pub extern fn bgfx_submit_indirect(id: ViewId, program: ProgramHandle, indirectHandle: IndirectBufferHandle, start: u16, num: u16, depth: u32, flags: u8) void;
 
 /// Set compute index buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Index buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-pub extern fn bgfx_set_compute_index_buffer(stage: u8, handle: IndexBufferHandle, access: Access) callconv(.C) void;
+pub extern fn bgfx_set_compute_index_buffer(stage: u8, handle: IndexBufferHandle, access: Access) void;
 
 /// Set compute vertex buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Vertex buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-pub extern fn bgfx_set_compute_vertex_buffer(stage: u8, handle: VertexBufferHandle, access: Access) callconv(.C) void;
+pub extern fn bgfx_set_compute_vertex_buffer(stage: u8, handle: VertexBufferHandle, access: Access) void;
 
 /// Set compute dynamic index buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Dynamic index buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-pub extern fn bgfx_set_compute_dynamic_index_buffer(stage: u8, handle: DynamicIndexBufferHandle, access: Access) callconv(.C) void;
+pub extern fn bgfx_set_compute_dynamic_index_buffer(stage: u8, handle: DynamicIndexBufferHandle, access: Access) void;
 
 /// Set compute dynamic vertex buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Dynamic vertex buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-pub extern fn bgfx_set_compute_dynamic_vertex_buffer(stage: u8, handle: DynamicVertexBufferHandle, access: Access) callconv(.C) void;
+pub extern fn bgfx_set_compute_dynamic_vertex_buffer(stage: u8, handle: DynamicVertexBufferHandle, access: Access) void;
 
 /// Set compute indirect buffer.
 /// <param name="_stage">Compute stage.</param>
 /// <param name="_handle">Indirect buffer handle.</param>
 /// <param name="_access">Buffer access. See `Access::Enum`.</param>
-pub extern fn bgfx_set_compute_indirect_buffer(stage: u8, handle: IndirectBufferHandle, access: Access) callconv(.C) void;
+pub extern fn bgfx_set_compute_indirect_buffer(stage: u8, handle: IndirectBufferHandle, access: Access) void;
 
 /// Set compute image from texture.
 /// <param name="_stage">Compute stage.</param>
@@ -2802,7 +2790,7 @@ pub extern fn bgfx_set_compute_indirect_buffer(stage: u8, handle: IndirectBuffer
 /// <param name="_mip">Mip level.</param>
 /// <param name="_access">Image access. See `Access::Enum`.</param>
 /// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
-pub extern fn bgfx_set_image(stage: u8, handle: TextureHandle, mip: u8, access: Access, format: TextureFormat) callconv(.C) void;
+pub extern fn bgfx_set_image(stage: u8, handle: TextureHandle, mip: u8, access: Access, format: TextureFormat) void;
 
 /// Dispatch compute.
 /// <param name="_id">View id.</param>
@@ -2811,7 +2799,7 @@ pub extern fn bgfx_set_image(stage: u8, handle: TextureHandle, mip: u8, access: 
 /// <param name="_numY">Number of groups Y.</param>
 /// <param name="_numZ">Number of groups Z.</param>
 /// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
-pub extern fn bgfx_dispatch(id: u16, program: ProgramHandle, numX: u32, numY: u32, numZ: u32, flags: u8) callconv(.C) void;
+pub extern fn bgfx_dispatch(id: ViewId, program: ProgramHandle, numX: u32, numY: u32, numZ: u32, flags: u8) void;
 
 /// Dispatch compute indirect.
 /// <param name="_id">View id.</param>
@@ -2820,11 +2808,11 @@ pub extern fn bgfx_dispatch(id: u16, program: ProgramHandle, numX: u32, numY: u3
 /// <param name="_start">First element in indirect buffer.</param>
 /// <param name="_num">Number of dispatches.</param>
 /// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
-pub extern fn bgfx_dispatch_indirect(id: u16, program: ProgramHandle, indirectHandle: IndirectBufferHandle, start: u16, num: u16, flags: u8) callconv(.C) void;
+pub extern fn bgfx_dispatch_indirect(id: ViewId, program: ProgramHandle, indirectHandle: IndirectBufferHandle, start: u16, num: u16, flags: u8) void;
 
 /// Discard previously set state for draw or compute call.
 /// <param name="_flags">Draw/compute states to discard.</param>
-pub extern fn bgfx_discard(flags: u8) callconv(.C) void;
+pub extern fn bgfx_discard(flags: u8) void;
 
 /// Blit 2D texture region between two 2D textures.
 /// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
@@ -2843,6 +2831,6 @@ pub extern fn bgfx_discard(flags: u8) callconv(.C) void;
 /// <param name="_width">Width of region.</param>
 /// <param name="_height">Height of region.</param>
 /// <param name="_depth">If texture is 3D this argument represents depth of region, otherwise it's unused.</param>
-pub extern fn bgfx_blit(id: u16, dst: TextureHandle, dstMip: u8, dstX: u16, dstY: u16, dstZ: u16, src: TextureHandle, srcMip: u8, srcX: u16, srcY: u16, srcZ: u16, width: u16, height: u16, depth: u16) callconv(.C) void;
+pub extern fn bgfx_blit(id: ViewId, dst: TextureHandle, dstMip: u8, dstX: u16, dstY: u16, dstZ: u16, src: TextureHandle, srcMip: u8, srcX: u16, srcY: u16, srcZ: u16, width: u16, height: u16, depth: u16) void;
 
 
