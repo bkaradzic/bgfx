@@ -138,7 +138,8 @@ static void
 array_push(struct array *a, int v) {
 	if (a->n >= a->cap) {
 		int *old = a->buffer;
-		a->buffer = (int *)malloc(a->cap * 2 * sizeof(int));
+		a->cap *= 2;
+		a->buffer = (int *)malloc(a->cap * sizeof(int));
 		int i;
 		for (i=0;i<a->n;i++) {
 			a->buffer[i] = old[i];

@@ -65,19 +65,29 @@ public:
 		}
 	}
 
+	static void mergeIndices(uint32_t* _indices, uint32_t _num)
+	{
+		uint32_t target = 0;
+		for (uint32_t i = 0; i < _num; i++) {
+			uint32_t map = _indices[i];
+			while (_indices[map] != map)
+				map = _indices[map];
+			if (i != map) {
+				_indices[i] = map;
+			} else {
+				_indices[i] = target;
+				++target;
+			}
+		}
+	}
+
 	static const bgfx::Memory* mergeVertices(const uint8_t* _vb, uint16_t _stride, const uint32_t* _indices, uint32_t _num, uint32_t _numMerged)
 	{
 		const bgfx::Memory* mem = bgfx::alloc(_stride * _numMerged);
 
-		uint32_t target = 0;
-
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
-			if (_indices[ii] == target)
-			{
-				bx::memCopy(mem->data + target*_stride, _vb + ii*_stride, _stride);
-				++target;
-			}
+			bx::memCopy(mem->data + _indices[ii]*_stride, _vb + ii*_stride, _stride);
 		}
 
 		return mem;
@@ -143,6 +153,7 @@ public:
 			m_cacheWeld = (uint32_t*)BX_ALLOC(entry::getAllocator(), numVertices * sizeof(uint32_t) );
 
 			m_totalVertices	= bgfx::weldVertices(m_cacheWeld, _mesh->m_layout, vbData, numVertices, true, 0.00001f);
+			mergeIndices(m_cacheWeld, numVertices);
 		}
 
 		const bgfx::Memory* vb = mergeVertices(
