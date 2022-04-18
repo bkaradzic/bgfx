@@ -65,15 +65,13 @@ public:
 		}
 	}
 
-	static void mergeIndices(uint32_t* _indices, uint32_t _num)
+	static void rearrangeIndices(uint32_t* _indices, uint32_t _num)
 	{
 		uint32_t target = 0;
 		for (uint32_t i = 0; i < _num; i++) {
 			uint32_t map = _indices[i];
-			while (_indices[map] != map)
-				map = _indices[map];
 			if (i != map) {
-				_indices[i] = map;
+				_indices[i] = _indices[map];
 			} else {
 				_indices[i] = target;
 				++target;
@@ -153,7 +151,7 @@ public:
 			m_cacheWeld = (uint32_t*)BX_ALLOC(entry::getAllocator(), numVertices * sizeof(uint32_t) );
 
 			m_totalVertices	= bgfx::weldVertices(m_cacheWeld, _mesh->m_layout, vbData, numVertices, true, 0.00001f);
-			mergeIndices(m_cacheWeld, numVertices);
+			rearrangeIndices(m_cacheWeld, numVertices);
 		}
 
 		const bgfx::Memory* vb = mergeVertices(
