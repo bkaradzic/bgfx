@@ -65,7 +65,7 @@ public:
 		}
 	}
 
-	static void rearrangeIndices(uint32_t* _indices, uint32_t _num)
+	static void remapIndices(uint32_t* _indices, uint32_t _num)
 	{
 		uint32_t target = 0;
 		for (uint32_t i = 0; i < _num; i++) {
@@ -151,7 +151,7 @@ public:
 			m_cacheWeld = (uint32_t*)BX_ALLOC(entry::getAllocator(), numVertices * sizeof(uint32_t) );
 
 			m_totalVertices	= bgfx::weldVertices(m_cacheWeld, _mesh->m_layout, vbData, numVertices, true, 0.00001f);
-			rearrangeIndices(m_cacheWeld, numVertices);
+			remapIndices(m_cacheWeld, numVertices);
 		}
 
 		const bgfx::Memory* vb = mergeVertices(
