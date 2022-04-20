@@ -6487,7 +6487,7 @@ namespace bgfx { namespace gl
 						{
 							bx::write(&writer
 								, "#define shadow2D(_sampler, _coord) vec2(textureProj(_sampler, vec4(_coord, 1.0) ) )\n"
-								  "#define shadow2DProj(_sampler, _coord) vec2(textureProj(_sampler, _coord) ) )\n"
+								  "#define shadow2DProj(_sampler, _coord) vec2(textureProj(_sampler, _coord) )\n"
 								, &err
 								);
 						}
@@ -6495,7 +6495,7 @@ namespace bgfx { namespace gl
 						{
 							bx::write(&writer
 								, "#define shadow2D(_sampler, _coord) (textureProj(_sampler, vec4(_coord, 1.0) ) )\n"
-								  "#define shadow2DProj(_sampler, _coord) (textureProj(_sampler, _coord) ) )\n"
+								  "#define shadow2DProj(_sampler, _coord) (textureProj(_sampler, _coord) )\n"
 								, &err
 								);
 						}
