@@ -3094,11 +3094,12 @@ namespace bgfx { namespace mtl
 		}
 	}
 
-	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags)
+	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags, uint8_t _mip)
 	{
 		if (_vertex)
 		{
-			s_renderMtl->m_renderCommandEncoder.setVertexTexture(m_ptr, _stage);
+			Texture p = _mip != UINT8_MAX ? getTextureMipLevel(_mip) : m_ptr;
+			s_renderMtl->m_renderCommandEncoder.setVertexTexture(p, _stage);
 			s_renderMtl->m_renderCommandEncoder.setVertexSamplerState(
 				  0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
 					? s_renderMtl->getSamplerState(_flags)
@@ -3109,7 +3110,8 @@ namespace bgfx { namespace mtl
 
 		if (_fragment)
 		{
-			s_renderMtl->m_renderCommandEncoder.setFragmentTexture(m_ptr, _stage);
+			Texture p = _mip != UINT8_MAX ? getTextureMipLevel(_mip) : m_ptr;
+			s_renderMtl->m_renderCommandEncoder.setFragmentTexture(p, _stage);
 			s_renderMtl->m_renderCommandEncoder.setFragmentSamplerState(
 				  0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
 					? s_renderMtl->getSamplerState(_flags)
@@ -4658,6 +4660,18 @@ namespace bgfx { namespace mtl
 							{
 								switch (bind.m_type)
 								{
+								case Binding::Image:
+								{
+									TextureMtl& texture = m_textures[bind.m_idx];
+									texture.commit(
+										stage
+										, 0 != (bindingTypes[stage] & PipelineStateMtl::BindToVertexShader)
+										, 0 != (bindingTypes[stage] & PipelineStateMtl::BindToFragmentShader)
+										, bind.m_samplerFlags
+										, bind.m_mip
+										);
+								}
+								break;
 								case Binding::Texture:
 									{
 										TextureMtl& texture = m_textures[bind.m_idx];

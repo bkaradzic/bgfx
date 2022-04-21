@@ -999,6 +999,7 @@ namespace bgfx { namespace mtl
 			, bool _vertex
 			, bool _fragment
 			, uint32_t _flags = BGFX_SAMPLER_INTERNAL_DEFAULT
+			, uint8_t _mip = UINT8_MAX
 			);
 
 		Texture getTextureMipLevel(int _mip);
