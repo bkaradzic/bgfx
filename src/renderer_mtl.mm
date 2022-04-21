@@ -2016,19 +2016,21 @@ namespace bgfx { namespace mtl
 						else if (arg.type == MTLArgumentTypeTexture)
 						{
 							const char* name = utf8String(arg.name);
-							const UniformRegInfo* info = s_renderMtl->m_uniformReg.find(name);
-							BX_WARN(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
-
-							if (NULL != info)
+							if (arg.index >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
 							{
-								if (arg.index >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
+								BX_WARN(false, "Binding index is too large %d max is %d. User defined uniform '%s' won't be set.", int(arg.index), BGFX_CONFIG_MAX_TEXTURE_SAMPLERS - 1, name);
+							}
+							else
+							{
+								ps->m_bindingTypes[arg.index] = fragmentBit ? PipelineStateMtl::BindToFragmentShader : PipelineStateMtl::BindToVertexShader;
+								const UniformRegInfo* info = s_renderMtl->m_uniformReg.find(name);
+								if (info)
 								{
-									BX_WARN(false, "Binding index is too large %d max is %d. User defined uniform '%s' won't be set.", int(arg.index), BGFX_CONFIG_MAX_TEXTURE_SAMPLERS - 1, name);
+									BX_TRACE("texture %s %d index:%d", name, info->m_handle, uint32_t(arg.index) );
 								}
 								else
 								{
-									ps->m_bindingTypes[arg.index] = fragmentBit ? PipelineStateMtl::BindToFragmentShader : PipelineStateMtl::BindToVertexShader;
-									BX_TRACE("texture %s %d index:%d", name, info->m_handle, uint32_t(arg.index) );
+									BX_TRACE("image %s index:%d", name, info->m_handle, uint32_t(arg.index) );
 								}
 							}
 						}
