@@ -36,7 +36,7 @@ class Context {
  public:
   // Constructs a context targeting the given environment |env|.
   //
-  // See specific API calls for how the target environment is interpeted
+  // See specific API calls for how the target environment is interpreted
   // (particularly assembly and validation).
   //
   // The constructed instance will have an empty message consumer, which just
@@ -104,9 +104,21 @@ class ValidatorOptions {
     spvValidatorOptionsSetScalarBlockLayout(options_, val);
   }
 
+  // Enables scalar layout when validating Workgroup blocks.  See
+  // VK_KHR_workgroup_memory_explicit_layout.
+  void SetWorkgroupScalarBlockLayout(bool val) {
+    spvValidatorOptionsSetWorkgroupScalarBlockLayout(options_, val);
+  }
+
   // Skips validating standard uniform/storage buffer/push-constant layout.
   void SetSkipBlockLayout(bool val) {
     spvValidatorOptionsSetSkipBlockLayout(options_, val);
+  }
+
+  // Enables LocalSizeId decorations where the environment would not otherwise
+  // allow them.
+  void SetAllowLocalSizeId(bool val) {
+    spvValidatorOptionsSetAllowLocalSizeId(options_, val);
   }
 
   // Records whether or not the validator should relax the rules on pointer
@@ -127,9 +139,11 @@ class ValidatorOptions {
   //    set that option.
   // 2) Pointers that are pass as parameters to function calls do not have to
   //    match the storage class of the formal parameter.
-  // 3) Pointers that are actaul parameters on function calls do not have to
+  // 3) Pointers that are actual parameters on function calls do not have to
   //    point to the same type pointed as the formal parameter.  The types just
   //    need to logically match.
+  // 4) GLSLstd450 Interpolate* instructions can have a load of an interpolant
+  //    for a first argument.
   void SetBeforeHlslLegalization(bool val) {
     spvValidatorOptionsSetBeforeHlslLegalization(options_, val);
   }
@@ -202,6 +216,11 @@ class ReducerOptions {
                                               fail_on_validation_error);
   }
 
+  // See spvReducerOptionsSetTargetFunction.
+  void set_target_function(uint32_t target_function) {
+    spvReducerOptionsSetTargetFunction(options_, target_function);
+  }
+
  private:
   spv_reducer_options options_;
 };
@@ -241,6 +260,9 @@ class FuzzerOptions {
   void enable_fuzzer_pass_validation() {
     spvFuzzerOptionsEnableFuzzerPassValidation(options_);
   }
+
+  // See spvFuzzerOptionsEnableAllPasses.
+  void enable_all_passes() { spvFuzzerOptionsEnableAllPasses(options_); }
 
  private:
   spv_fuzzer_options options_;

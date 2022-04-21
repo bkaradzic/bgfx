@@ -1,2 +1,0 @@
-/usr/bin/ar qc libOSDependent.a  CMakeFiles/OSDependent.dir/ossource.cpp.o
-/usr/bin/ranlib libOSDependent.a

@@ -1,21 +1,27 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "bgfx_p.h"
 
 #if BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX
 #	if BX_PLATFORM_WINDOWS
+#		ifndef WIN32_LEAN_AND_MEAN
+#			define WIN32_LEAN_AND_MEAN
+#		endif // WIN32_LEAN_AND_MEAN
+#		include <windows.h>
 #		include <psapi.h>
 #	endif // BX_PLATFORM_WINDOWS
 #	include <renderdoc/renderdoc_app.h>
 
 namespace bgfx
 {
-	bool findModule(const char* _name)
+	void* findModule(const char* _name)
 	{
 #if BX_PLATFORM_WINDOWS
+		// NOTE: there was some reason to do it this way instead of simply calling GetModuleHandleA,
+		// but not sure what it was.
 		HANDLE process = GetCurrentProcess();
 		DWORD size;
 		BOOL result = EnumProcessModules(process
@@ -45,14 +51,16 @@ namespace bgfx
 					if (0 != result
 					&&  0 == bx::strCmpI(_name, moduleName) )
 					{
-						return true;
+						return (void*)modules[ii];
 					}
 				}
 			}
 		}
-#endif // BX_PLATFORM_WINDOWS
+#else
 		BX_UNUSED(_name);
-		return false;
+#endif // BX_PLATFORM_WINDOWS
+
+		return NULL;
 	}
 
 	pRENDERDOC_GetAPI RENDERDOC_GetAPI;
@@ -72,13 +80,19 @@ namespace bgfx
 			return NULL;
 		}
 
-		void* renderDocDll = bx::dlopen(
+		// If RenderDoc is already injected in the process then use the already present DLL
+		void* renderDocDll = findModule("renderdoc.dll");
+		if (NULL == renderDocDll)
+		{
+			// TODO: try common installation paths before looking in current directory
+			renderDocDll = bx::dlopen(
 #if BX_PLATFORM_WINDOWS
-				"renderdoc.dll"
+					"renderdoc.dll"
 #else
-				"./librenderdoc.so"
+					"./librenderdoc.so"
 #endif // BX_PLATFORM_WINDOWS
-				);
+					);
+		}
 
 		if (NULL != renderDocDll)
 		{
@@ -89,7 +103,7 @@ namespace bgfx
 			{
 				s_renderDoc->SetCaptureFilePathTemplate(BGFX_CONFIG_RENDERDOC_LOG_FILEPATH);
 
- 				s_renderDoc->SetFocusToggleKeys(NULL, 0);
+				s_renderDoc->SetFocusToggleKeys(NULL, 0);
 
 				RENDERDOC_InputButton captureKeys[] = BGFX_CONFIG_RENDERDOC_CAPTURE_KEYS;
 				s_renderDoc->SetCaptureKeys(captureKeys, BX_COUNTOF(captureKeys) );

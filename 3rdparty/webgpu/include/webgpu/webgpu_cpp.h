@@ -1,13 +1,15 @@
-
 #ifndef WEBGPU_CPP_H_
 #define WEBGPU_CPP_H_
 
-#include "webgpu/webgpu.h"
-#include "webgpu/EnumClassBitmasks.h"
+#include "webgpu.h"
+#include "EnumClassBitmasks.h"
 
 namespace wgpu {
 
     static constexpr uint64_t kWholeSize = WGPU_WHOLE_SIZE;
+    // TODO(crbug.com/520): Remove kStrideUndefined in favor of kCopyStrideUndefined.
+    static constexpr uint32_t kStrideUndefined = WGPU_STRIDE_UNDEFINED;
+    static constexpr uint32_t kCopyStrideUndefined = WGPU_COPY_STRIDE_UNDEFINED;
 
     enum class AdapterType : uint32_t {
         DiscreteGPU = 0x00000000,
@@ -33,15 +35,16 @@ namespace wgpu {
     };
 
     enum class BindingType : uint32_t {
-        UniformBuffer = 0x00000000,
-        StorageBuffer = 0x00000001,
-        ReadonlyStorageBuffer = 0x00000002,
-        Sampler = 0x00000003,
-        ComparisonSampler = 0x00000004,
-        SampledTexture = 0x00000005,
-        StorageTexture = 0x00000006,
-        ReadonlyStorageTexture = 0x00000007,
-        WriteonlyStorageTexture = 0x00000008,
+        Undefined = 0x00000000,
+        UniformBuffer = 0x00000001,
+        StorageBuffer = 0x00000002,
+        ReadonlyStorageBuffer = 0x00000003,
+        Sampler = 0x00000004,
+        ComparisonSampler = 0x00000005,
+        SampledTexture = 0x00000006,
+        MultisampledTexture = 0x00000007,
+        ReadonlyStorageTexture = 0x00000008,
+        WriteonlyStorageTexture = 0x00000009,
     };
 
     enum class BlendFactor : uint32_t {
@@ -68,11 +71,20 @@ namespace wgpu {
         Max = 0x00000004,
     };
 
+    enum class BufferBindingType : uint32_t {
+        Undefined = 0x00000000,
+        Uniform = 0x00000001,
+        Storage = 0x00000002,
+        ReadOnlyStorage = 0x00000003,
+    };
+
     enum class BufferMapAsyncStatus : uint32_t {
         Success = 0x00000000,
         Error = 0x00000001,
         Unknown = 0x00000002,
         DeviceLost = 0x00000003,
+        DestroyedBeforeCallback = 0x00000004,
+        UnmappedBeforeCallback = 0x00000005,
     };
 
     enum class CompareFunction : uint32_t {
@@ -85,6 +97,14 @@ namespace wgpu {
         Equal = 0x00000006,
         NotEqual = 0x00000007,
         Always = 0x00000008,
+    };
+
+    enum class CreateReadyPipelineStatus : uint32_t {
+        Success = 0x00000000,
+        Error = 0x00000001,
+        DeviceLost = 0x00000002,
+        DeviceDestroyed = 0x00000003,
+        Unknown = 0x00000004,
     };
 
     enum class CullMode : uint32_t {
@@ -125,8 +145,9 @@ namespace wgpu {
     };
 
     enum class IndexFormat : uint32_t {
-        Uint16 = 0x00000000,
-        Uint32 = 0x00000001,
+        Undefined = 0x00000000,
+        Uint16 = 0x00000001,
+        Uint32 = 0x00000002,
     };
 
     enum class InputStepMode : uint32_t {
@@ -137,6 +158,14 @@ namespace wgpu {
     enum class LoadOp : uint32_t {
         Clear = 0x00000000,
         Load = 0x00000001,
+    };
+
+    enum class PipelineStatisticName : uint32_t {
+        VertexShaderInvocations = 0x00000000,
+        ClipperInvocations = 0x00000001,
+        ClipperPrimitivesOut = 0x00000002,
+        FragmentShaderInvocations = 0x00000003,
+        ComputeShaderInvocations = 0x00000004,
     };
 
     enum class PresentMode : uint32_t {
@@ -153,16 +182,29 @@ namespace wgpu {
         TriangleStrip = 0x00000004,
     };
 
+    enum class QueryType : uint32_t {
+        Occlusion = 0x00000000,
+        PipelineStatistics = 0x00000001,
+        Timestamp = 0x00000002,
+    };
+
     enum class SType : uint32_t {
         Invalid = 0x00000000,
         SurfaceDescriptorFromMetalLayer = 0x00000001,
         SurfaceDescriptorFromWindowsHWND = 0x00000002,
         SurfaceDescriptorFromXlib = 0x00000003,
-        SurfaceDescriptorFromHTMLCanvasId = 0x00000004,
+        SurfaceDescriptorFromCanvasHTMLSelector = 0x00000004,
         ShaderModuleSPIRVDescriptor = 0x00000005,
         ShaderModuleWGSLDescriptor = 0x00000006,
         SamplerDescriptorDummyAnisotropicFiltering = 0x00000007,
         RenderPipelineDescriptorDummyExtension = 0x00000008,
+    };
+
+    enum class SamplerBindingType : uint32_t {
+        Undefined = 0x00000000,
+        Filtering = 0x00000001,
+        NonFiltering = 0x00000002,
+        Comparison = 0x00000003,
     };
 
     enum class StencilOperation : uint32_t {
@@ -174,6 +216,12 @@ namespace wgpu {
         DecrementClamp = 0x00000005,
         IncrementWrap = 0x00000006,
         DecrementWrap = 0x00000007,
+    };
+
+    enum class StorageTextureAccess : uint32_t {
+        Undefined = 0x00000000,
+        ReadOnly = 0x00000001,
+        WriteOnly = 0x00000002,
     };
 
     enum class StoreOp : uint32_t {
@@ -191,6 +239,7 @@ namespace wgpu {
         Float = 0x00000000,
         Sint = 0x00000001,
         Uint = 0x00000002,
+        DepthComparison = 0x00000003,
     };
 
     enum class TextureDimension : uint32_t {
@@ -226,33 +275,43 @@ namespace wgpu {
         BGRA8Unorm = 0x00000017,
         BGRA8UnormSrgb = 0x00000018,
         RGB10A2Unorm = 0x00000019,
-        RG11B10Float = 0x0000001A,
-        RG32Float = 0x0000001B,
-        RG32Uint = 0x0000001C,
-        RG32Sint = 0x0000001D,
-        RGBA16Uint = 0x0000001E,
-        RGBA16Sint = 0x0000001F,
-        RGBA16Float = 0x00000020,
-        RGBA32Float = 0x00000021,
-        RGBA32Uint = 0x00000022,
-        RGBA32Sint = 0x00000023,
-        Depth32Float = 0x00000024,
-        Depth24Plus = 0x00000025,
-        Depth24PlusStencil8 = 0x00000026,
-        BC1RGBAUnorm = 0x00000027,
-        BC1RGBAUnormSrgb = 0x00000028,
-        BC2RGBAUnorm = 0x00000029,
-        BC2RGBAUnormSrgb = 0x0000002A,
-        BC3RGBAUnorm = 0x0000002B,
-        BC3RGBAUnormSrgb = 0x0000002C,
-        BC4RUnorm = 0x0000002D,
-        BC4RSnorm = 0x0000002E,
-        BC5RGUnorm = 0x0000002F,
-        BC5RGSnorm = 0x00000030,
-        BC6HRGBUfloat = 0x00000031,
-        BC6HRGBSfloat = 0x00000032,
-        BC7RGBAUnorm = 0x00000033,
-        BC7RGBAUnormSrgb = 0x00000034,
+        RG11B10Ufloat = 0x0000001A,
+        RGB9E5Ufloat = 0x0000001B,
+        RG32Float = 0x0000001C,
+        RG32Uint = 0x0000001D,
+        RG32Sint = 0x0000001E,
+        RGBA16Uint = 0x0000001F,
+        RGBA16Sint = 0x00000020,
+        RGBA16Float = 0x00000021,
+        RGBA32Float = 0x00000022,
+        RGBA32Uint = 0x00000023,
+        RGBA32Sint = 0x00000024,
+        Depth32Float = 0x00000025,
+        Depth24Plus = 0x00000026,
+        Depth24PlusStencil8 = 0x00000027,
+        BC1RGBAUnorm = 0x00000028,
+        BC1RGBAUnormSrgb = 0x00000029,
+        BC2RGBAUnorm = 0x0000002A,
+        BC2RGBAUnormSrgb = 0x0000002B,
+        BC3RGBAUnorm = 0x0000002C,
+        BC3RGBAUnormSrgb = 0x0000002D,
+        BC4RUnorm = 0x0000002E,
+        BC4RSnorm = 0x0000002F,
+        BC5RGUnorm = 0x00000030,
+        BC5RGSnorm = 0x00000031,
+        BC6HRGBUfloat = 0x00000032,
+        BC6HRGBFloat = 0x00000033,
+        BC7RGBAUnorm = 0x00000034,
+        BC7RGBAUnormSrgb = 0x00000035,
+    };
+
+    enum class TextureSampleType : uint32_t {
+        Undefined = 0x00000000,
+        Float = 0x00000001,
+        UnfilterableFloat = 0x00000002,
+        Depth = 0x00000003,
+        Sint = 0x00000004,
+        Uint = 0x00000005,
     };
 
     enum class TextureViewDimension : uint32_t {
@@ -310,6 +369,7 @@ namespace wgpu {
         Uniform = 0x00000040,
         Storage = 0x00000080,
         Indirect = 0x00000100,
+        QueryResolve = 0x00000200,
     };
 
     enum class ColorWriteMask : uint32_t {
@@ -319,6 +379,12 @@ namespace wgpu {
         Blue = 0x00000004,
         Alpha = 0x00000008,
         All = 0x0000000F,
+    };
+
+    enum class MapMode : uint32_t {
+        None = 0x00000000,
+        Read = 0x00000001,
+        Write = 0x00000002,
     };
 
     enum class ShaderStage : uint32_t {
@@ -335,6 +401,7 @@ namespace wgpu {
         Sampled = 0x00000004,
         Storage = 0x00000008,
         OutputAttachment = 0x00000010,
+        RenderAttachment = 0x00000010,
         Present = 0x00000020,
     };
 
@@ -350,6 +417,11 @@ namespace wgpu {
     };
 
     template<>
+    struct IsDawnBitmask<MapMode> {
+        static constexpr bool enable = true;
+    };
+
+    template<>
     struct IsDawnBitmask<ShaderStage> {
         static constexpr bool enable = true;
     };
@@ -361,8 +433,9 @@ namespace wgpu {
 
 
     using Proc = WGPUProc;
-    using BufferMapReadCallback = WGPUBufferMapReadCallback;
-    using BufferMapWriteCallback = WGPUBufferMapWriteCallback;
+    using BufferMapCallback = WGPUBufferMapCallback;
+    using CreateReadyComputePipelineCallback = WGPUCreateReadyComputePipelineCallback;
+    using CreateReadyRenderPipelineCallback = WGPUCreateReadyRenderPipelineCallback;
     using DeviceLostCallback = WGPUDeviceLostCallback;
     using ErrorCallback = WGPUErrorCallback;
     using FenceOnCompletionCallback = WGPUFenceOnCompletionCallback;
@@ -378,6 +451,7 @@ namespace wgpu {
     class Fence;
     class Instance;
     class PipelineLayout;
+    class QuerySet;
     class Queue;
     class RenderBundle;
     class RenderBundleEncoder;
@@ -392,15 +466,14 @@ namespace wgpu {
 
     struct AdapterProperties;
     struct BindGroupEntry;
-    struct BindGroupLayoutEntry;
     struct BlendDescriptor;
-    struct BufferCopyView;
+    struct BufferBindingLayout;
     struct BufferDescriptor;
     struct Color;
     struct CommandBufferDescriptor;
     struct CommandEncoderDescriptor;
     struct ComputePassDescriptor;
-    struct CreateBufferMappedResult;
+    struct CopyTextureForBrowserOptions;
     struct DeviceProperties;
     struct Extent3D;
     struct FenceDescriptor;
@@ -408,26 +481,32 @@ namespace wgpu {
     struct Origin3D;
     struct PipelineLayoutDescriptor;
     struct ProgrammableStageDescriptor;
+    struct QuerySetDescriptor;
     struct RasterizationStateDescriptor;
     struct RenderBundleDescriptor;
     struct RenderBundleEncoderDescriptor;
     struct RenderPassDepthStencilAttachmentDescriptor;
+    struct SamplerBindingLayout;
     struct SamplerDescriptor;
     struct SamplerDescriptorDummyAnisotropicFiltering;
     struct ShaderModuleDescriptor;
     struct ShaderModuleSPIRVDescriptor;
     struct ShaderModuleWGSLDescriptor;
     struct StencilStateFaceDescriptor;
+    struct StorageTextureBindingLayout;
     struct SurfaceDescriptor;
-    struct SurfaceDescriptorFromHTMLCanvasId;
+    struct SurfaceDescriptorFromCanvasHTMLSelector;
     struct SurfaceDescriptorFromMetalLayer;
     struct SurfaceDescriptorFromWindowsHWND;
     struct SurfaceDescriptorFromXlib;
     struct SwapChainDescriptor;
+    struct TextureBindingLayout;
+    struct TextureDataLayout;
     struct TextureViewDescriptor;
     struct VertexAttributeDescriptor;
     struct BindGroupDescriptor;
-    struct BindGroupLayoutDescriptor;
+    struct BindGroupLayoutEntry;
+    struct BufferCopyView;
     struct ColorStateDescriptor;
     struct ComputePipelineDescriptor;
     struct DepthStencilStateDescriptor;
@@ -436,6 +515,7 @@ namespace wgpu {
     struct TextureCopyView;
     struct TextureDescriptor;
     struct VertexBufferLayoutDescriptor;
+    struct BindGroupLayoutDescriptor;
     struct RenderPassDescriptor;
     struct VertexStateDescriptor;
     struct RenderPipelineDescriptor;
@@ -547,9 +627,9 @@ namespace wgpu {
         using ObjectBase::operator=;
 
         void Destroy() const;
-        void MapReadAsync(BufferMapReadCallback callback, void * userdata) const;
-        void MapWriteAsync(BufferMapWriteCallback callback, void * userdata) const;
-        void SetSubData(uint64_t start, uint64_t count, void const * data) const;
+        void const * GetConstMappedRange(size_t offset = 0, size_t size = 0) const;
+        void * GetMappedRange(size_t offset = 0, size_t size = 0) const;
+        void MapAsync(MapMode mode, size_t offset, size_t size, BufferMapCallback callback, void * userdata) const;
         void Unmap() const;
 
       private:
@@ -582,9 +662,12 @@ namespace wgpu {
         void CopyTextureToBuffer(TextureCopyView const * source, BufferCopyView const * destination, Extent3D const * copySize) const;
         void CopyTextureToTexture(TextureCopyView const * source, TextureCopyView const * destination, Extent3D const * copySize) const;
         CommandBuffer Finish(CommandBufferDescriptor const * descriptor = nullptr) const;
-        void InsertDebugMarker(char const * groupLabel) const;
+        void InjectValidationError(char const * message) const;
+        void InsertDebugMarker(char const * markerLabel) const;
         void PopDebugGroup() const;
         void PushDebugGroup(char const * groupLabel) const;
+        void ResolveQuerySet(QuerySet const& querySet, uint32_t firstQuery, uint32_t queryCount, Buffer const& destination, uint64_t destinationOffset) const;
+        void WriteTimestamp(QuerySet const& querySet, uint32_t queryIndex) const;
 
       private:
         friend ObjectBase<CommandEncoder, WGPUCommandEncoder>;
@@ -600,11 +683,12 @@ namespace wgpu {
         void Dispatch(uint32_t x, uint32_t y = 1, uint32_t z = 1) const;
         void DispatchIndirect(Buffer const& indirectBuffer, uint64_t indirectOffset) const;
         void EndPass() const;
-        void InsertDebugMarker(char const * groupLabel) const;
+        void InsertDebugMarker(char const * markerLabel) const;
         void PopDebugGroup() const;
         void PushDebugGroup(char const * groupLabel) const;
         void SetBindGroup(uint32_t groupIndex, BindGroup const& group, uint32_t dynamicOffsetCount = 0, uint32_t const * dynamicOffsets = nullptr) const;
         void SetPipeline(ComputePipeline const& pipeline) const;
+        void WriteTimestamp(QuerySet const& querySet, uint32_t queryIndex) const;
 
       private:
         friend ObjectBase<ComputePassEncoder, WGPUComputePassEncoder>;
@@ -633,11 +717,13 @@ namespace wgpu {
         BindGroup CreateBindGroup(BindGroupDescriptor const * descriptor) const;
         BindGroupLayout CreateBindGroupLayout(BindGroupLayoutDescriptor const * descriptor) const;
         Buffer CreateBuffer(BufferDescriptor const * descriptor) const;
-        CreateBufferMappedResult CreateBufferMapped(BufferDescriptor const * descriptor) const;
         CommandEncoder CreateCommandEncoder(CommandEncoderDescriptor const * descriptor = nullptr) const;
         ComputePipeline CreateComputePipeline(ComputePipelineDescriptor const * descriptor) const;
+        Buffer CreateErrorBuffer() const;
         PipelineLayout CreatePipelineLayout(PipelineLayoutDescriptor const * descriptor) const;
-        Queue CreateQueue() const;
+        QuerySet CreateQuerySet(QuerySetDescriptor const * descriptor) const;
+        void CreateReadyComputePipeline(ComputePipelineDescriptor const * descriptor, CreateReadyComputePipelineCallback callback, void * userdata) const;
+        void CreateReadyRenderPipeline(RenderPipelineDescriptor const * descriptor, CreateReadyRenderPipelineCallback callback, void * userdata) const;
         RenderBundleEncoder CreateRenderBundleEncoder(RenderBundleEncoderDescriptor const * descriptor) const;
         RenderPipeline CreateRenderPipeline(RenderPipelineDescriptor const * descriptor) const;
         Sampler CreateSampler(SamplerDescriptor const * descriptor) const;
@@ -698,14 +784,30 @@ namespace wgpu {
         static void WGPURelease(WGPUPipelineLayout handle);
     };
 
+    class QuerySet : public ObjectBase<QuerySet, WGPUQuerySet> {
+      public:
+        using ObjectBase::ObjectBase;
+        using ObjectBase::operator=;
+
+        void Destroy() const;
+
+      private:
+        friend ObjectBase<QuerySet, WGPUQuerySet>;
+        static void WGPUReference(WGPUQuerySet handle);
+        static void WGPURelease(WGPUQuerySet handle);
+    };
+
     class Queue : public ObjectBase<Queue, WGPUQueue> {
       public:
         using ObjectBase::ObjectBase;
         using ObjectBase::operator=;
 
-        Fence CreateFence(FenceDescriptor const * descriptor) const;
+        void CopyTextureForBrowser(TextureCopyView const * source, TextureCopyView const * destination, Extent3D const * copySize, CopyTextureForBrowserOptions const * options) const;
+        Fence CreateFence(FenceDescriptor const * descriptor = nullptr) const;
         void Signal(Fence const& fence, uint64_t signalValue) const;
         void Submit(uint32_t commandCount, CommandBuffer const * commands) const;
+        void WriteBuffer(Buffer const& buffer, uint64_t bufferOffset, void const * data, size_t size) const;
+        void WriteTexture(TextureCopyView const * destination, void const * data, size_t dataSize, TextureDataLayout const * dataLayout, Extent3D const * writeSize) const;
 
       private:
         friend ObjectBase<Queue, WGPUQueue>;
@@ -735,11 +837,12 @@ namespace wgpu {
         void DrawIndexedIndirect(Buffer const& indirectBuffer, uint64_t indirectOffset) const;
         void DrawIndirect(Buffer const& indirectBuffer, uint64_t indirectOffset) const;
         RenderBundle Finish(RenderBundleDescriptor const * descriptor = nullptr) const;
-        void InsertDebugMarker(char const * groupLabel) const;
+        void InsertDebugMarker(char const * markerLabel) const;
         void PopDebugGroup() const;
         void PushDebugGroup(char const * groupLabel) const;
         void SetBindGroup(uint32_t groupIndex, BindGroup const& group, uint32_t dynamicOffsetCount = 0, uint32_t const * dynamicOffsets = nullptr) const;
-        void SetIndexBuffer(Buffer const& buffer, uint64_t offset = 0, uint64_t size = 0) const;
+        void SetIndexBuffer(Buffer const& buffer, IndexFormat format, uint64_t offset = 0, uint64_t size = 0) const;
+        void SetIndexBufferWithFormat(Buffer const& buffer, IndexFormat format, uint64_t offset = 0, uint64_t size = 0) const;
         void SetPipeline(RenderPipeline const& pipeline) const;
         void SetVertexBuffer(uint32_t slot, Buffer const& buffer, uint64_t offset = 0, uint64_t size = 0) const;
 
@@ -754,23 +857,27 @@ namespace wgpu {
         using ObjectBase::ObjectBase;
         using ObjectBase::operator=;
 
+        void BeginOcclusionQuery(uint32_t queryIndex) const;
         void Draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0, uint32_t firstInstance = 0) const;
         void DrawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0, int32_t baseVertex = 0, uint32_t firstInstance = 0) const;
         void DrawIndexedIndirect(Buffer const& indirectBuffer, uint64_t indirectOffset) const;
         void DrawIndirect(Buffer const& indirectBuffer, uint64_t indirectOffset) const;
+        void EndOcclusionQuery() const;
         void EndPass() const;
         void ExecuteBundles(uint32_t bundlesCount, RenderBundle const * bundles) const;
-        void InsertDebugMarker(char const * groupLabel) const;
+        void InsertDebugMarker(char const * markerLabel) const;
         void PopDebugGroup() const;
         void PushDebugGroup(char const * groupLabel) const;
         void SetBindGroup(uint32_t groupIndex, BindGroup const& group, uint32_t dynamicOffsetCount = 0, uint32_t const * dynamicOffsets = nullptr) const;
         void SetBlendColor(Color const * color) const;
-        void SetIndexBuffer(Buffer const& buffer, uint64_t offset = 0, uint64_t size = 0) const;
+        void SetIndexBuffer(Buffer const& buffer, IndexFormat format, uint64_t offset = 0, uint64_t size = 0) const;
+        void SetIndexBufferWithFormat(Buffer const& buffer, IndexFormat format, uint64_t offset = 0, uint64_t size = 0) const;
         void SetPipeline(RenderPipeline const& pipeline) const;
         void SetScissorRect(uint32_t x, uint32_t y, uint32_t width, uint32_t height) const;
         void SetStencilReference(uint32_t reference) const;
         void SetVertexBuffer(uint32_t slot, Buffer const& buffer, uint64_t offset = 0, uint64_t size = 0) const;
         void SetViewport(float x, float y, float width, float height, float minDepth, float maxDepth) const;
+        void WriteTimestamp(QuerySet const& querySet, uint32_t queryIndex) const;
 
       private:
         friend ObjectBase<RenderPassEncoder, WGPURenderPassEncoder>;
@@ -882,29 +989,18 @@ namespace wgpu {
         uint32_t deviceID;
         uint32_t vendorID;
         char const * name;
+        char const * driverDescription;
         AdapterType adapterType;
         BackendType backendType;
     };
 
     struct BindGroupEntry {
         uint32_t binding;
-        Buffer buffer;
+        Buffer buffer = nullptr;
         uint64_t offset = 0;
         uint64_t size;
-        Sampler sampler;
-        TextureView textureView;
-    };
-
-    struct BindGroupLayoutEntry {
-        uint32_t binding;
-        ShaderStage visibility;
-        BindingType type;
-        bool hasDynamicOffset = false;
-        bool multisampled = false;
-        TextureViewDimension textureDimension = TextureViewDimension::Undefined;
-        TextureViewDimension viewDimension = TextureViewDimension::Undefined;
-        TextureComponentType textureComponentType = TextureComponentType::Float;
-        TextureFormat storageTextureFormat = TextureFormat::Undefined;
+        Sampler sampler = nullptr;
+        TextureView textureView = nullptr;
     };
 
     struct BlendDescriptor {
@@ -913,14 +1009,11 @@ namespace wgpu {
         BlendFactor dstFactor = BlendFactor::Zero;
     };
 
-    struct BufferCopyView {
+    struct BufferBindingLayout {
         ChainedStruct const * nextInChain = nullptr;
-        Buffer buffer;
-        uint64_t offset = 0;
-        uint32_t rowPitch = 0;
-        uint32_t imageHeight = 0;
-        uint32_t bytesPerRow = 0;
-        uint32_t rowsPerImage = 0;
+        BufferBindingType type = BufferBindingType::Undefined;
+        bool hasDynamicOffset = false;
+        uint64_t minBindingSize = 0;
     };
 
     struct BufferDescriptor {
@@ -928,13 +1021,14 @@ namespace wgpu {
         char const * label = nullptr;
         BufferUsage usage;
         uint64_t size;
+        bool mappedAtCreation = false;
     };
 
     struct Color {
-        float r;
-        float g;
-        float b;
-        float a;
+        double r;
+        double g;
+        double b;
+        double a;
     };
 
     struct CommandBufferDescriptor {
@@ -952,20 +1046,22 @@ namespace wgpu {
         char const * label = nullptr;
     };
 
-    struct CreateBufferMappedResult {
-        Buffer buffer;
-        uint64_t dataLength;
-        void * data;
+    struct CopyTextureForBrowserOptions {
+        ChainedStruct const * nextInChain = nullptr;
+        bool flipY = false;
     };
 
     struct DeviceProperties {
         bool textureCompressionBC = false;
+        bool shaderFloat16 = false;
+        bool pipelineStatisticsQuery = false;
+        bool timestampQuery = false;
     };
 
     struct Extent3D {
-        uint32_t width;
-        uint32_t height;
-        uint32_t depth;
+        uint32_t width = 1;
+        uint32_t height = 1;
+        uint32_t depth = 1;
     };
 
     struct FenceDescriptor {
@@ -997,6 +1093,15 @@ namespace wgpu {
         char const * entryPoint;
     };
 
+    struct QuerySetDescriptor {
+        ChainedStruct const * nextInChain = nullptr;
+        char const * label = nullptr;
+        QueryType type;
+        uint32_t count;
+        PipelineStatisticName const * pipelineStatistics;
+        uint32_t pipelineStatisticsCount = 0;
+    };
+
     struct RasterizationStateDescriptor {
         ChainedStruct const * nextInChain = nullptr;
         FrontFace frontFace = FrontFace::CCW;
@@ -1025,9 +1130,16 @@ namespace wgpu {
         LoadOp depthLoadOp;
         StoreOp depthStoreOp;
         float clearDepth;
+        bool depthReadOnly = false;
         LoadOp stencilLoadOp;
         StoreOp stencilStoreOp;
         uint32_t clearStencil = 0;
+        bool stencilReadOnly = false;
+    };
+
+    struct SamplerBindingLayout {
+        ChainedStruct const * nextInChain = nullptr;
+        SamplerBindingType type = SamplerBindingType::Undefined;
     };
 
     struct SamplerDescriptor {
@@ -1042,6 +1154,7 @@ namespace wgpu {
         float lodMinClamp = 0.0f;
         float lodMaxClamp = 1000.0f;
         CompareFunction compare = CompareFunction::Undefined;
+        uint16_t maxAnisotropy = 1;
     };
 
     struct SamplerDescriptorDummyAnisotropicFiltering : ChainedStruct {
@@ -1054,8 +1167,6 @@ namespace wgpu {
     struct ShaderModuleDescriptor {
         ChainedStruct const * nextInChain = nullptr;
         char const * label = nullptr;
-        uint32_t codeSize = 0;
-        uint32_t const * code = nullptr;
     };
 
     struct ShaderModuleSPIRVDescriptor : ChainedStruct {
@@ -1080,16 +1191,23 @@ namespace wgpu {
         StencilOperation passOp = StencilOperation::Keep;
     };
 
+    struct StorageTextureBindingLayout {
+        ChainedStruct const * nextInChain = nullptr;
+        StorageTextureAccess access = StorageTextureAccess::Undefined;
+        TextureFormat format = TextureFormat::Undefined;
+        TextureViewDimension viewDimension = TextureViewDimension::Undefined;
+    };
+
     struct SurfaceDescriptor {
         ChainedStruct const * nextInChain = nullptr;
         char const * label = nullptr;
     };
 
-    struct SurfaceDescriptorFromHTMLCanvasId : ChainedStruct {
-        SurfaceDescriptorFromHTMLCanvasId() {
-            sType = SType::SurfaceDescriptorFromHTMLCanvasId;
+    struct SurfaceDescriptorFromCanvasHTMLSelector : ChainedStruct {
+        SurfaceDescriptorFromCanvasHTMLSelector() {
+            sType = SType::SurfaceDescriptorFromCanvasHTMLSelector;
         }
-        alignas(ChainedStruct) char const * id;
+        alignas(ChainedStruct) char const * selector;
     };
 
     struct SurfaceDescriptorFromMetalLayer : ChainedStruct {
@@ -1126,6 +1244,20 @@ namespace wgpu {
         uint64_t implementation = 0;
     };
 
+    struct TextureBindingLayout {
+        ChainedStruct const * nextInChain = nullptr;
+        TextureSampleType sampleType = TextureSampleType::Undefined;
+        TextureViewDimension viewDimension = TextureViewDimension::Undefined;
+        bool multisampled = false;
+    };
+
+    struct TextureDataLayout {
+        ChainedStruct const * nextInChain = nullptr;
+        uint64_t offset = 0;
+        uint32_t bytesPerRow = WGPU_COPY_STRIDE_UNDEFINED;
+        uint32_t rowsPerImage = WGPU_COPY_STRIDE_UNDEFINED;
+    };
+
     struct TextureViewDescriptor {
         ChainedStruct const * nextInChain = nullptr;
         char const * label = nullptr;
@@ -1148,19 +1280,29 @@ namespace wgpu {
         ChainedStruct const * nextInChain = nullptr;
         char const * label = nullptr;
         BindGroupLayout layout;
-        uint32_t bindingCount = 0;
-        BindGroupEntry const * bindings;
-        uint32_t entryCount = 0;
+        uint32_t entryCount;
         BindGroupEntry const * entries;
     };
 
-    struct BindGroupLayoutDescriptor {
+    struct BindGroupLayoutEntry {
+        uint32_t binding;
+        ShaderStage visibility;
+        BindingType type = BindingType::Undefined;
+        bool hasDynamicOffset = false;
+        uint64_t minBufferBindingSize = 0;
+        TextureViewDimension viewDimension = TextureViewDimension::Undefined;
+        TextureComponentType textureComponentType = TextureComponentType::Float;
+        TextureFormat storageTextureFormat = TextureFormat::Undefined;
+        BufferBindingLayout buffer;
+        SamplerBindingLayout sampler;
+        TextureBindingLayout texture;
+        StorageTextureBindingLayout storageTexture;
+    };
+
+    struct BufferCopyView {
         ChainedStruct const * nextInChain = nullptr;
-        char const * label = nullptr;
-        uint32_t bindingCount = 0;
-        BindGroupLayoutEntry const * bindings;
-        uint32_t entryCount = 0;
-        BindGroupLayoutEntry const * entries;
+        TextureDataLayout layout;
+        Buffer buffer;
     };
 
     struct ColorStateDescriptor {
@@ -1174,7 +1316,7 @@ namespace wgpu {
     struct ComputePipelineDescriptor {
         ChainedStruct const * nextInChain = nullptr;
         char const * label = nullptr;
-        PipelineLayout layout;
+        PipelineLayout layout = nullptr;
         ProgrammableStageDescriptor computeStage;
     };
 
@@ -1191,7 +1333,7 @@ namespace wgpu {
 
     struct RenderPassColorAttachmentDescriptor {
         TextureView attachment;
-        TextureView resolveTarget;
+        TextureView resolveTarget = nullptr;
         LoadOp loadOp;
         StoreOp storeOp;
         Color clearColor;
@@ -1208,8 +1350,8 @@ namespace wgpu {
         ChainedStruct const * nextInChain = nullptr;
         Texture texture;
         uint32_t mipLevel = 0;
-        uint32_t arrayLayer = 0;
         Origin3D origin;
+        TextureAspect aspect = TextureAspect::All;
     };
 
     struct TextureDescriptor {
@@ -1218,7 +1360,6 @@ namespace wgpu {
         TextureUsage usage;
         TextureDimension dimension = TextureDimension::e2D;
         Extent3D size;
-        uint32_t arrayLayerCount = 1;
         TextureFormat format;
         uint32_t mipLevelCount = 1;
         uint32_t sampleCount = 1;
@@ -1231,17 +1372,25 @@ namespace wgpu {
         VertexAttributeDescriptor const * attributes;
     };
 
+    struct BindGroupLayoutDescriptor {
+        ChainedStruct const * nextInChain = nullptr;
+        char const * label = nullptr;
+        uint32_t entryCount;
+        BindGroupLayoutEntry const * entries;
+    };
+
     struct RenderPassDescriptor {
         ChainedStruct const * nextInChain = nullptr;
         char const * label = nullptr;
         uint32_t colorAttachmentCount;
         RenderPassColorAttachmentDescriptor const * colorAttachments;
         RenderPassDepthStencilAttachmentDescriptor const * depthStencilAttachment = nullptr;
+        QuerySet occlusionQuerySet = nullptr;
     };
 
     struct VertexStateDescriptor {
         ChainedStruct const * nextInChain = nullptr;
-        IndexFormat indexFormat = IndexFormat::Uint32;
+        IndexFormat indexFormat = IndexFormat::Undefined;
         uint32_t vertexBufferCount = 0;
         VertexBufferLayoutDescriptor const * vertexBuffers;
     };
@@ -1249,7 +1398,7 @@ namespace wgpu {
     struct RenderPipelineDescriptor {
         ChainedStruct const * nextInChain = nullptr;
         char const * label = nullptr;
-        PipelineLayout layout;
+        PipelineLayout layout = nullptr;
         ProgrammableStageDescriptor vertexStage;
         ProgrammableStageDescriptor const * fragmentStage = nullptr;
         VertexStateDescriptor const * vertexState = nullptr;
@@ -1263,10 +1412,6 @@ namespace wgpu {
         bool alphaToCoverageEnabled = false;
     };
 
-
-    // TODO(dawn:22): Remove this once users use the "Entry" version.
-    using BindGroupBinding = BindGroupEntry;
-    using BindGroupLayoutBinding = BindGroupLayoutEntry;
 
 }  // namespace wgpu
 

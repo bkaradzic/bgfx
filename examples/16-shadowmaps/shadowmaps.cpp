@@ -1,6 +1,6 @@
 /*
  * Copyright 2013-2014 Dario Manesku. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include <string>
@@ -1747,7 +1747,7 @@ public:
 			bgfx::TextureHandle fbtextures[] =
 			{
 				bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
-				bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT),
+				bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::D32F,  BGFX_TEXTURE_RT),
 			};
 			s_rtShadowMap[ii] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 		}
@@ -2047,7 +2047,7 @@ public:
 			const float deltaTime = float(frameTime/freq);
 
 			// Update camera.
-			cameraUpdate(deltaTime, m_mouseState);
+			cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 			// Update view mtx.
 			cameraGetViewMtx(m_viewState.m_view);
@@ -2326,7 +2326,7 @@ public:
 
 				// Compute split distances.
 				const uint8_t maxNumSplits = 4;
-				BX_ASSERT(maxNumSplits >= settings.m_numSplits, "Error! Max num splits.");
+				BX_ASSERT(maxNumSplits >= m_settings.m_numSplits, "Error! Max num splits.");
 
 				float splitSlices[maxNumSplits*2];
 				splitFrustum(splitSlices

@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Stanlo Slasinski. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 uniform vec4 u_params[3];

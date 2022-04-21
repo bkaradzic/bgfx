@@ -1,5 +1,6 @@
 /*
- * Copyright 2019-2020 Hans-Kristian Arntzen
+ * Copyright 2019-2021 Hans-Kristian Arntzen
+ * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +13,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ * At your option, you may choose to accept this material under either:
+ *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
+ *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
  */
 
 #include "spirv_cross_c.h"
@@ -190,8 +197,11 @@ struct spvc_resources_s : ScratchMemoryAllocation
 	SmallVector<spvc_reflected_resource> separate_images;
 	SmallVector<spvc_reflected_resource> separate_samplers;
 	SmallVector<spvc_reflected_resource> acceleration_structures;
+	SmallVector<spvc_reflected_builtin_resource> builtin_inputs;
+	SmallVector<spvc_reflected_builtin_resource> builtin_outputs;
 
 	bool copy_resources(SmallVector<spvc_reflected_resource> &outputs, const SmallVector<Resource> &inputs);
+	bool copy_resources(SmallVector<spvc_reflected_builtin_resource> &outputs, const SmallVector<BuiltInResource> &inputs);
 	bool copy_resources(const ShaderResources &resources);
 };
 
@@ -241,7 +251,7 @@ spvc_result spvc_context_parse_spirv(spvc_context context, const SpvId *spirv, s
 		pir->context = context;
 		Parser parser(spirv, word_count);
 		parser.parse();
-		pir->parsed = move(parser.get_parsed_ir());
+		pir->parsed = std::move(parser.get_parsed_ir());
 		*parsed_ir = pir.get();
 		context->allocations.push_back(std::move(pir));
 	}
@@ -273,7 +283,7 @@ spvc_result spvc_context_create_compiler(spvc_context context, spvc_backend back
 		{
 		case SPVC_BACKEND_NONE:
 			if (mode == SPVC_CAPTURE_MODE_TAKE_OWNERSHIP)
-				comp->compiler.reset(new Compiler(move(parsed_ir->parsed)));
+				comp->compiler.reset(new Compiler(std::move(parsed_ir->parsed)));
 			else if (mode == SPVC_CAPTURE_MODE_COPY)
 				comp->compiler.reset(new Compiler(parsed_ir->parsed));
 			break;
@@ -281,7 +291,7 @@ spvc_result spvc_context_create_compiler(spvc_context context, spvc_backend back
 #if SPIRV_CROSS_C_API_GLSL
 		case SPVC_BACKEND_GLSL:
 			if (mode == SPVC_CAPTURE_MODE_TAKE_OWNERSHIP)
-				comp->compiler.reset(new CompilerGLSL(move(parsed_ir->parsed)));
+				comp->compiler.reset(new CompilerGLSL(std::move(parsed_ir->parsed)));
 			else if (mode == SPVC_CAPTURE_MODE_COPY)
 				comp->compiler.reset(new CompilerGLSL(parsed_ir->parsed));
 			break;
@@ -290,7 +300,7 @@ spvc_result spvc_context_create_compiler(spvc_context context, spvc_backend back
 #if SPIRV_CROSS_C_API_HLSL
 		case SPVC_BACKEND_HLSL:
 			if (mode == SPVC_CAPTURE_MODE_TAKE_OWNERSHIP)
-				comp->compiler.reset(new CompilerHLSL(move(parsed_ir->parsed)));
+				comp->compiler.reset(new CompilerHLSL(std::move(parsed_ir->parsed)));
 			else if (mode == SPVC_CAPTURE_MODE_COPY)
 				comp->compiler.reset(new CompilerHLSL(parsed_ir->parsed));
 			break;
@@ -299,7 +309,7 @@ spvc_result spvc_context_create_compiler(spvc_context context, spvc_backend back
 #if SPIRV_CROSS_C_API_MSL
 		case SPVC_BACKEND_MSL:
 			if (mode == SPVC_CAPTURE_MODE_TAKE_OWNERSHIP)
-				comp->compiler.reset(new CompilerMSL(move(parsed_ir->parsed)));
+				comp->compiler.reset(new CompilerMSL(std::move(parsed_ir->parsed)));
 			else if (mode == SPVC_CAPTURE_MODE_COPY)
 				comp->compiler.reset(new CompilerMSL(parsed_ir->parsed));
 			break;
@@ -308,7 +318,7 @@ spvc_result spvc_context_create_compiler(spvc_context context, spvc_backend back
 #if SPIRV_CROSS_C_API_CPP
 		case SPVC_BACKEND_CPP:
 			if (mode == SPVC_CAPTURE_MODE_TAKE_OWNERSHIP)
-				comp->compiler.reset(new CompilerCPP(move(parsed_ir->parsed)));
+				comp->compiler.reset(new CompilerCPP(std::move(parsed_ir->parsed)));
 			else if (mode == SPVC_CAPTURE_MODE_COPY)
 				comp->compiler.reset(new CompilerCPP(parsed_ir->parsed));
 			break;
@@ -317,7 +327,7 @@ spvc_result spvc_context_create_compiler(spvc_context context, spvc_backend back
 #if SPIRV_CROSS_C_API_REFLECT
 		case SPVC_BACKEND_JSON:
 			if (mode == SPVC_CAPTURE_MODE_TAKE_OWNERSHIP)
-				comp->compiler.reset(new CompilerReflection(move(parsed_ir->parsed)));
+				comp->compiler.reset(new CompilerReflection(std::move(parsed_ir->parsed)));
 			else if (mode == SPVC_CAPTURE_MODE_COPY)
 				comp->compiler.reset(new CompilerReflection(parsed_ir->parsed));
 			break;
@@ -462,6 +472,12 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_GLSL_FORCE_FLATTENED_IO_BLOCKS:
 		options->glsl.force_flattened_io_blocks = value != 0;
 		break;
+	case SPVC_COMPILER_OPTION_GLSL_OVR_MULTIVIEW_VIEW_COUNT:
+		options->glsl.ovr_multiview_view_count = value;
+		break;
+	case SPVC_COMPILER_OPTION_RELAX_NAN_CHECKS:
+		options->glsl.relax_nan_checks = value != 0;
+		break;
 #endif
 
 #if SPIRV_CROSS_C_API_HLSL
@@ -491,6 +507,10 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 
 	case SPVC_COMPILER_OPTION_HLSL_ENABLE_16BIT_TYPES:
 		options->hlsl.enable_16bit_types = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_HLSL_FLATTEN_MATRIX_VERTEX_INPUT_SEMANTICS:
+		options->hlsl.flatten_matrix_vertex_input_semantics = value != 0;
 		break;
 #endif
 
@@ -599,8 +619,8 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 		options->msl.enable_base_index_zero = value != 0;
 		break;
 
-	case SPVC_COMPILER_OPTION_MSL_IOS_FRAMEBUFFER_FETCH_SUBPASS:
-		options->msl.ios_use_framebuffer_fetch_subpasses = value != 0;
+	case SPVC_COMPILER_OPTION_MSL_FRAMEBUFFER_FETCH_SUBPASS:
+		options->msl.use_framebuffer_fetch_subpasses = value != 0;
 		break;
 
 	case SPVC_COMPILER_OPTION_MSL_INVARIANT_FP_MATH:
@@ -665,6 +685,34 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 
 	case SPVC_COMPILER_OPTION_MSL_ARRAYED_SUBPASS_INPUT:
 		options->msl.arrayed_subpass_input = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_R32UI_LINEAR_TEXTURE_ALIGNMENT:
+		options->msl.r32ui_linear_texture_alignment = value;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_R32UI_ALIGNMENT_CONSTANT_ID:
+		options->msl.r32ui_alignment_constant_id = value;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_IOS_USE_SIMDGROUP_FUNCTIONS:
+		options->msl.ios_use_simdgroup_functions = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_EMULATE_SUBGROUPS:
+		options->msl.emulate_subgroups = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_FIXED_SUBGROUP_SIZE:
+		options->msl.fixed_subgroup_size = value;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_FORCE_SAMPLE_RATE_SHADING:
+		options->msl.force_sample_rate_shading = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_IOS_SUPPORT_BASE_VERTEX_INSTANCE:
+		options->msl.ios_support_base_vertex_instance = value != 0;
 		break;
 #endif
 
@@ -776,6 +824,44 @@ spvc_bool spvc_compiler_variable_is_depth_or_compare(spvc_compiler compiler, spv
 	(void)id;
 	compiler->context->report_error("Cross-compilation related option used on NONE backend which only supports reflection.");
 	return SPVC_FALSE;
+#endif
+}
+
+spvc_result spvc_compiler_mask_stage_output_by_location(spvc_compiler compiler,
+                                                        unsigned location, unsigned component)
+{
+#if SPIRV_CROSS_C_API_GLSL
+	if (compiler->backend == SPVC_BACKEND_NONE)
+	{
+		compiler->context->report_error("Cross-compilation related option used on NONE backend which only supports reflection.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	static_cast<CompilerGLSL *>(compiler->compiler.get())->mask_stage_output_by_location(location, component);
+	return SPVC_SUCCESS;
+#else
+	(void)location;
+	(void)component;
+	compiler->context->report_error("Cross-compilation related option used on NONE backend which only supports reflection.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
+}
+
+spvc_result spvc_compiler_mask_stage_output_by_builtin(spvc_compiler compiler, SpvBuiltIn builtin)
+{
+#if SPIRV_CROSS_C_API_GLSL
+	if (compiler->backend == SPVC_BACKEND_NONE)
+	{
+		compiler->context->report_error("Cross-compilation related option used on NONE backend which only supports reflection.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	static_cast<CompilerGLSL *>(compiler->compiler.get())->mask_stage_output_by_builtin(spv::BuiltIn(builtin));
+	return SPVC_SUCCESS;
+#else
+	(void)builtin;
+	compiler->context->report_error("Cross-compilation related option used on NONE backend which only supports reflection.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
 #endif
 }
 
@@ -1239,6 +1325,42 @@ spvc_bool spvc_compiler_msl_is_resource_used(spvc_compiler compiler, SpvExecutio
 #endif
 }
 
+spvc_result spvc_compiler_msl_set_combined_sampler_suffix(spvc_compiler compiler, const char *suffix)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	msl.set_combined_sampler_suffix(suffix);
+	return SPVC_SUCCESS;
+#else
+	(void)suffix;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
+}
+
+const char *spvc_compiler_msl_get_combined_sampler_suffix(spvc_compiler compiler)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return "";
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	return msl.get_combined_sampler_suffix();
+#else
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return "";
+#endif
+}
+
 #if SPIRV_CROSS_C_API_MSL
 static void spvc_convert_msl_sampler(MSLConstexprSampler &samp, const spvc_msl_constexpr_sampler *sampler)
 {
@@ -1476,6 +1598,30 @@ bool spvc_resources_s::copy_resources(SmallVector<spvc_reflected_resource> &outp
 	return true;
 }
 
+bool spvc_resources_s::copy_resources(SmallVector<spvc_reflected_builtin_resource> &outputs,
+                                      const SmallVector<BuiltInResource> &inputs)
+{
+	for (auto &i : inputs)
+	{
+		spvc_reflected_builtin_resource br;
+
+		br.value_type_id = i.value_type_id;
+		br.builtin = SpvBuiltIn(i.builtin);
+
+		auto &r = br.resource;
+		r.base_type_id = i.resource.base_type_id;
+		r.type_id = i.resource.type_id;
+		r.id = i.resource.id;
+		r.name = context->allocate_name(i.resource.name);
+		if (!r.name)
+			return false;
+
+		outputs.push_back(br);
+	}
+
+	return true;
+}
+
 bool spvc_resources_s::copy_resources(const ShaderResources &resources)
 {
 	if (!copy_resources(uniform_buffers, resources.uniform_buffers))
@@ -1501,6 +1647,10 @@ bool spvc_resources_s::copy_resources(const ShaderResources &resources)
 	if (!copy_resources(separate_samplers, resources.separate_samplers))
 		return false;
 	if (!copy_resources(acceleration_structures, resources.acceleration_structures))
+		return false;
+	if (!copy_resources(builtin_inputs, resources.builtin_inputs))
+		return false;
+	if (!copy_resources(builtin_outputs, resources.builtin_outputs))
 		return false;
 
 	return true;
@@ -1643,6 +1793,37 @@ spvc_result spvc_resources_get_resource_list_for_type(spvc_resources resources, 
 
 	case SPVC_RESOURCE_TYPE_ACCELERATION_STRUCTURE:
 		list = &resources->acceleration_structures;
+		break;
+
+	default:
+		break;
+	}
+
+	if (!list)
+	{
+		resources->context->report_error("Invalid argument.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	*resource_size = list->size();
+	*resource_list = list->data();
+	return SPVC_SUCCESS;
+}
+
+spvc_result spvc_resources_get_builtin_resource_list_for_type(
+		spvc_resources resources, spvc_builtin_resource_type type,
+		const spvc_reflected_builtin_resource **resource_list,
+		size_t *resource_size)
+{
+	const SmallVector<spvc_reflected_builtin_resource> *list = nullptr;
+	switch (type)
+	{
+	case SPVC_BUILTIN_RESOURCE_TYPE_STAGE_INPUT:
+		list = &resources->builtin_inputs;
+		break;
+
+	case SPVC_BUILTIN_RESOURCE_TYPE_STAGE_OUTPUT:
+		list = &resources->builtin_outputs;
 		break;
 
 	default:
@@ -1860,6 +2041,18 @@ unsigned spvc_compiler_get_execution_mode_argument_by_index(spvc_compiler compil
 SpvExecutionModel spvc_compiler_get_execution_model(spvc_compiler compiler)
 {
 	return static_cast<SpvExecutionModel>(compiler->compiler->get_execution_model());
+}
+
+void spvc_compiler_update_active_builtins(spvc_compiler compiler)
+{
+       compiler->compiler->update_active_builtins();
+}
+
+spvc_bool spvc_compiler_has_active_builtin(spvc_compiler compiler, SpvBuiltIn builtin, SpvStorageClass storage)
+{
+	return compiler->compiler->has_active_builtin(static_cast<spv::BuiltIn>(builtin), static_cast<spv::StorageClass>(storage)) ?
+		SPVC_TRUE :
+		SPVC_FALSE;
 }
 
 spvc_type spvc_compiler_get_type_handle(spvc_compiler compiler, spvc_type_id id)

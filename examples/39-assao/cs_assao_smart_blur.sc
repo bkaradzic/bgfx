@@ -1,6 +1,6 @@
 /*
  * Copyright 2018 Attila Kocsis. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "bgfx_compute.sh" 
@@ -39,11 +39,11 @@ vec2 SampleBlurred( ivec2 inPos, vec2 coord )
     vec4 edgesLRTB    = UnpackEdges( packedEdges );
 
 #if BGFX_SHADER_LANGUAGE_GLSL
-    vec4 valuesUL     = textureGather(s_blurInput, vec3(coord - u_halfViewportPixelSize * 0.5 + vec2(0.0,u_halfViewportPixelSize.y), 0.0)).wzyx;
-    vec4 valuesBR     = textureGather(s_blurInput, vec3(coord + u_halfViewportPixelSize * 0.5 + vec2(0.0,-u_halfViewportPixelSize.y), 0.0)).wzyx;
+    vec4 valuesUL     = textureGather(s_blurInput, vec3(coord - u_halfViewportPixelSize * 0.5 + vec2(0.0,u_halfViewportPixelSize.y), 0.0), 0).wzyx;
+    vec4 valuesBR     = textureGather(s_blurInput, vec3(coord + u_halfViewportPixelSize * 0.5 + vec2(0.0,-u_halfViewportPixelSize.y), 0.0), 0).wzyx;
 #else
-    vec4 valuesUL     = textureGather(s_blurInput, vec3(coord - u_halfViewportPixelSize * 0.5, 0.0));
-    vec4 valuesBR     = textureGather(s_blurInput, vec3(coord + u_halfViewportPixelSize * 0.5, 0.0));
+    vec4 valuesUL     = textureGather(s_blurInput, vec3(coord - u_halfViewportPixelSize * 0.5, 0.0), 0);
+    vec4 valuesBR     = textureGather(s_blurInput, vec3(coord + u_halfViewportPixelSize * 0.5, 0.0), 0);
 #endif
 
     float ssaoValue     = valuesUL.y;

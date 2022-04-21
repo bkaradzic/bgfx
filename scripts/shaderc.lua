@@ -1,6 +1,6 @@
 --
--- Copyright 2010-2020 Branimir Karadzic. All rights reserved.
--- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+-- Copyright 2010-2022 Branimir Karadzic. All rights reserved.
+-- License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 --
 
 group "tools/shaderc"
@@ -141,7 +141,7 @@ project "spirv-opt"
 			"/wd4706", -- warning C4706: assignment within conditional expression
 		}
 
-	configuration { "mingw* or linux or osx" }
+	configuration { "mingw* or linux* or osx*" }
 		buildoptions {
 			"-Wno-switch",
 		}
@@ -197,7 +197,7 @@ project "spirv-cross"
 			"/wd4715", -- warning C4715: '': not all control paths return a value
 		}
 
-	configuration { "mingw* or linux or osx" }
+	configuration { "mingw* or linux* or osx*" }
 		buildoptions {
 			"-Wno-type-limits",
 		}
@@ -268,12 +268,17 @@ project "glslang"
 			"/wd4838", -- warning C4838: conversion from 'spv::GroupOperation' to 'unsigned int' requires a narrowing conversion
 		}
 
-	configuration { "mingw* or linux or osx" }
+	configuration { "mingw* or linux*" }
 		buildoptions {
-			"-Wno-ignored-qualifiers",
-			"-Wno-implicit-fallthrough",
 			"-Wno-logical-op",
 			"-Wno-maybe-uninitialized",
+		}
+
+	configuration { "mingw* or linux* or osx*" }
+		buildoptions {
+			"-fno-strict-aliasing", -- glslang has bugs if strict aliasing is used.
+			"-Wno-ignored-qualifiers",
+			"-Wno-implicit-fallthrough",
 			"-Wno-missing-field-initializers",
 			"-Wno-reorder",
 			"-Wno-return-type",
@@ -287,7 +292,7 @@ project "glslang"
 			"-Wno-unused-variable",
 		}
 
-	configuration { "osx" }
+	configuration { "osx*" }
 		buildoptions {
 			"-Wno-c++11-extensions",
 			"-Wno-unused-const-variable",
@@ -297,11 +302,6 @@ project "glslang"
 	configuration { "linux-gcc-*" }
 		buildoptions {
 			"-Wno-unused-but-set-variable",
-		}
-
-	configuration { "mingw* or linux or osx" }
-		buildoptions {
-			"-fno-strict-aliasing", -- glslang has bugs if strict aliasing is used.
 		}
 
 	configuration {}
@@ -530,7 +530,7 @@ project "glsl-optimizer"
 			"/wd4996", -- warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name: _strdup.
 		}
 
-	configuration { "mingw* or linux or osx" }
+	configuration { "mingw* or linux* or osx*" }
 		buildoptions {
 			"-fno-strict-aliasing", -- glsl-optimizer has bugs if strict aliasing is used.
 
@@ -545,7 +545,7 @@ project "glsl-optimizer"
 			"-Wshadow", -- glsl-optimizer is full of -Wshadow warnings ignore it.
 		}
 
-	configuration { "osx" }
+	configuration { "osx*" }
 		buildoptions {
 			"-Wno-deprecated-register",
 		}
@@ -601,7 +601,6 @@ project "shaderc"
 	kind "ConsoleApp"
 
 	includedirs {
-		path.join(BX_DIR,   "include"),
 		path.join(BIMG_DIR, "include"),
 		path.join(BGFX_DIR, "include"),
 
@@ -623,7 +622,6 @@ project "shaderc"
 	}
 
 	links {
-		"bx",
 		"fcpp",
 		"glslang",
 		"glsl-optimizer",
@@ -631,17 +629,19 @@ project "shaderc"
 		"spirv-cross",
 	}
 
+	using_bx()
+
 	files {
 		path.join(BGFX_DIR, "tools/shaderc/**.cpp"),
 		path.join(BGFX_DIR, "tools/shaderc/**.h"),
 		path.join(BGFX_DIR, "src/vertexlayout.**"),
-		path.join(BGFX_DIR, "src/shader_spirv.**"),
+		path.join(BGFX_DIR, "src/shader**"),
 	}
 
 	configuration { "mingw-*" }
 		targetextension ".exe"
 
-	configuration { "osx" }
+	configuration { "osx*" }
 		links {
 			"Cocoa.framework",
 		}
@@ -656,7 +656,7 @@ project "shaderc"
 			"psapi",
 		}
 
-	configuration { "osx or linux*" }
+	configuration { "osx* or linux*" }
 		links {
 			"pthread",
 		}

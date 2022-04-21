@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -17,7 +17,7 @@ namespace bgfx
 {
 	/// Render frame enum.
 	///
-	/// @attention C99 equivalent is `bgfx_render_frame_t`.
+	/// @attention C99's equivalent binding is `bgfx_render_frame_t`.
 	///
 	struct RenderFrame
 	{
@@ -47,7 +47,7 @@ namespace bgfx
 	///   allow creating separate rendering thread. If it is called before
 	///   to bgfx::init, render thread won't be created by bgfx::init call.
 	///
-	/// @attention C99 equivalent is `bgfx_render_frame`.
+	/// @attention C99's equivalent binding is `bgfx_render_frame`.
 	///
 	RenderFrame::Enum renderFrame(int32_t _msecs = -1);
 
@@ -55,13 +55,13 @@ namespace bgfx
 	///
 	/// @warning Must be called before `bgfx::init`.
 	///
-	/// @attention C99 equivalent is `bgfx_set_platform_data`.
+	/// @attention C99's equivalent binding is `bgfx_set_platform_data`.
 	///
 	void setPlatformData(const PlatformData& _data);
 
 	/// Internal data.
 	///
-	/// @attention C99 equivalent is `bgfx_internal_data_t`.
+	/// @attention C99's equivalent binding is `bgfx_internal_data_t`.
 	///
 	struct InternalData
 	{
@@ -76,7 +76,7 @@ namespace bgfx
 	///
 	/// @warning Must be called only on render thread.
 	///
-	/// @attention C99 equivalent is `bgfx_get_internal_data`.
+	/// @attention C99's equivalent binding is `bgfx_get_internal_data`.
 	///
 	const InternalData* getInternalData();
 
@@ -94,7 +94,7 @@ namespace bgfx
 	///
 	/// @warning Must be called only on render thread.
 	///
-	/// @attention C99 equivalent is `bgfx_override_internal_texture_ptr`.
+	/// @attention C99's equivalent binding is `bgfx_override_internal_texture_ptr`.
 	///
 	uintptr_t overrideInternal(TextureHandle _handle, uintptr_t _ptr);
 
@@ -111,9 +111,9 @@ namespace bgfx
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
 	///   is repeat.
-	///   - `BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	///   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
 	///     mode.
-	///   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	///   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 	///     sampling.
 	///
 	/// @returns Native API pointer to texture. If result is 0, texture is not created yet from the
@@ -121,7 +121,7 @@ namespace bgfx
 	///
 	/// @warning Must be called only on render thread.
 	///
-	/// @attention C99 equivalent is `bgfx_override_internal_texture`.
+	/// @attention C99's equivalent binding is `bgfx_override_internal_texture`.
 	///
 	uintptr_t overrideInternal(
 		  TextureHandle _handle

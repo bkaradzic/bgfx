@@ -1,6 +1,6 @@
 --
--- Copyright 2010-2020 Branimir Karadzic. All rights reserved.
--- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+-- Copyright 2010-2022 Branimir Karadzic. All rights reserved.
+-- License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 --
 
 MODULE_DIR = path.getabsolute("../")
@@ -81,6 +81,12 @@ newaction {
 			local dgen = require "bindings-d"
 			dgen.write(dgen.gen_types(), "../bindings/d/types.d")
 			dgen.write(dgen.gen_funcs(), "../bindings/d/funcs.d")
+
+			local csgen = require "bindings-bf"
+			csgen.write(csgen.gen(), "../bindings/bf/bgfx.bf")
+
+			local ziggen = require "bindings-zig"
+			ziggen.write(ziggen.gen(), "../bindings/zig/bgfx.zig")
 		end
 
 		os.exit()
@@ -94,14 +100,19 @@ newaction {
 
 		local f = io.popen("git rev-list --count HEAD")
 		local rev = string.match(f:read("*a"), ".*%S")
+
+		local codegen = require "codegen"
+		local idl = codegen.idl "bgfx.idl"
+		print("1." .. idl._version .. "." .. rev)
+
 		f:close()
 		f = io.popen("git log --format=format:%H -1")
 		local sha1 = f:read("*a")
 		f:close()
 		io.output(path.join(MODULE_DIR, "src/version.h"))
 		io.write("/*\n")
-		io.write(" * Copyright 2011-2020 Branimir Karadzic. All rights reserved.\n")
-		io.write(" * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n")
+		io.write(" * Copyright 2011-2022 Branimir Karadzic. All rights reserved.\n")
+		io.write(" * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE\n")
 		io.write(" */\n")
 		io.write("\n")
 		io.write("/*\n")
@@ -175,7 +186,7 @@ if _OPTIONS["with-webgpu"] then
 		DAWN_DIR = path.getabsolute(path.join(BGFX_DIR, "../dawn"))
 	end
 
-	if not os.isdir(DAWN_DIR) then
+	if not os.isdir(DAWN_DIR) and "wasm*" ~= _OPTIONS["gcc"] then
 		print("Dawn not found at \"" .. DAWN_DIR .. "\". git clone https://dawn.googlesource.com/dawn?")
 
 		print("For more info see: https://bkaradzic.github.io/bgfx/build.html")
@@ -200,7 +211,7 @@ end
 if _OPTIONS["with-sdl"] then
 	if os.is("windows") then
 		if not os.getenv("SDL2_DIR") then
-			print("Set SDL2_DIR enviroment variable.")
+			print("Set SDL2_DIR environment variable.")
 		end
 	end
 end
@@ -217,7 +228,6 @@ function exampleProjectDefaults()
 	debugdir (path.join(BGFX_DIR, "examples/runtime"))
 
 	includedirs {
-		path.join(BX_DIR,   "include"),
 		path.join(BIMG_DIR, "include"),
 		path.join(BGFX_DIR, "include"),
 		path.join(BGFX_DIR, "3rdparty"),
@@ -234,8 +244,9 @@ function exampleProjectDefaults()
 		"bgfx",
 		"bimg_decode",
 		"bimg",
-		"bx",
 	}
+
+	using_bx()
 
 	if _OPTIONS["with-webgpu"] then
 		usesWebGPU()
@@ -252,7 +263,7 @@ function exampleProjectDefaults()
 				}
 			end
 
-		configuration { "osx" }
+		configuration { "osx*" }
 			libdirs { "$(SDL2_DIR)/lib" }
 
 		configuration {}
@@ -277,10 +288,9 @@ function exampleProjectDefaults()
 				}
 			end
 
-		configuration { "osx" }
+		configuration { "osx*" }
 			linkoptions {
 				"-framework CoreVideo",
-				"-framework IOKit",
 			}
 
 		configuration {}
@@ -398,11 +408,12 @@ function exampleProjectDefaults()
 			"pthread",
 		}
 
-	configuration { "osx" }
+	configuration { "osx*" }
 		linkoptions {
 			"-framework Cocoa",
-			"-framework QuartzCore",
+			"-framework IOKit",
 			"-framework OpenGL",
+			"-framework QuartzCore",
 			"-weak_framework Metal",
 		}
 
@@ -411,9 +422,10 @@ function exampleProjectDefaults()
 		linkoptions {
 			"-framework CoreFoundation",
 			"-framework Foundation",
+			"-framework IOKit",
 			"-framework OpenGLES",
-			"-framework UIKit",
 			"-framework QuartzCore",
+			"-framework UIKit",
 			"-weak_framework Metal",
 		}
 
@@ -497,9 +509,11 @@ function exampleProject(_combined, ...)
 
 end
 
-dofile "bgfx.lua"
-
 group "libs"
+dofile(path.join(BX_DIR,   "scripts/bx.lua"))
+dofile(path.join(BIMG_DIR, "scripts/bimg.lua"))
+dofile(path.join(BIMG_DIR, "scripts/bimg_decode.lua"))
+dofile "bgfx.lua"
 
 local function userdefines()
 	local defines = {}
@@ -517,11 +531,13 @@ BGFX_CONFIG = userdefines()
 
 bgfxProject("", "StaticLib", BGFX_CONFIG)
 
-dofile(path.join(BX_DIR,   "scripts/bx.lua"))
-dofile(path.join(BIMG_DIR, "scripts/bimg.lua"))
-dofile(path.join(BIMG_DIR, "scripts/bimg_decode.lua"))
+if _OPTIONS["with-shared-lib"] then
+	group "libs"
+	bgfxProject("-shared-lib", "SharedLib", BGFX_CONFIG)
+end
 
 if _OPTIONS["with-tools"] then
+	group "libs"
 	dofile(path.join(BIMG_DIR, "scripts/bimg_encode.lua"))
 end
 
@@ -578,6 +594,10 @@ or _OPTIONS["with-combined-examples"] then
 		, "40-svt"
 		, "41-tess"
 		, "42-bunnylod"
+		, "43-denoise"
+		, "44-sss"
+		, "45-bokeh"
+		, "46-fsr"
 		)
 
 	-- 17-drawstress requires multithreading, does not compile for singlethreaded wasm
@@ -589,11 +609,6 @@ or _OPTIONS["with-combined-examples"] then
 	if not premake.vstudio.iswinrt() then
 		exampleProject(false, "25-c99")
 	end
-end
-
-if _OPTIONS["with-shared-lib"] then
-	group "libs"
-	bgfxProject("-shared-lib", "SharedLib", BGFX_CONFIG)
 end
 
 if _OPTIONS["with-tools"] then

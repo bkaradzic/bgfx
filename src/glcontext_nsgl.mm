@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "bgfx_p.h"
@@ -21,22 +21,119 @@ namespace bgfx { namespace gl
 
 	struct SwapChainGL
 	{
-		SwapChainGL(void* _nwh)
+		SwapChainGL(void* _nwh,NSOpenGLContext *_context)
 		{
-			BX_UNUSED(_nwh);
+			NSObject* nwh=(NSObject*)_nwh;
+
+			NSWindow* nsWindow = nil;
+			NSView* contentView = nil;
+			if ([nwh isKindOfClass:[NSView class]])
+			{
+				contentView = (NSView*)nwh;
+			}
+			else if ([nwh isKindOfClass:[NSWindow class]])
+			{
+				nsWindow = (NSWindow*)nwh;
+				contentView = [nsWindow contentView];
+			}
+
+#if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
+			NSOpenGLPixelFormatAttribute profile =
+#if BGFX_CONFIG_RENDERER_OPENGL >= 31
+				NSOpenGLProfileVersion3_2Core
+#else
+				NSOpenGLProfileVersionLegacy
+#endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
+				;
+#endif // defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
+
+			NSOpenGLPixelFormatAttribute pixelFormatAttributes[] = {
+#if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
+				NSOpenGLPFAOpenGLProfile, profile,
+#endif // defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
+				NSOpenGLPFAColorSize,     24,
+				NSOpenGLPFAAlphaSize,     8,
+				NSOpenGLPFADepthSize,     24,
+				NSOpenGLPFAStencilSize,   8,
+				NSOpenGLPFADoubleBuffer,  true,
+				NSOpenGLPFAAccelerated,   true,
+				NSOpenGLPFANoRecovery,    true,
+				0,                        0,
+			};
+
+			NSOpenGLPixelFormat* pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:pixelFormatAttributes];
+			BGFX_FATAL(NULL != pixelFormat, Fatal::UnableToInitialize, "Failed to initialize pixel format.");
+
+			NSRect glViewRect = [contentView bounds];
+			NSOpenGLView* glView = [[NSOpenGLView alloc] initWithFrame:glViewRect pixelFormat:pixelFormat];
+
+
+			// GLFW creates a helper contentView that handles things like keyboard and drag and
+			// drop events. We don't want to clobber that view if it exists. Instead we just
+			// add ourselves as a subview and make the view resize automatically.
+			if (nil != contentView)
+			{
+				[glView setAutoresizingMask:( NSViewHeightSizable |
+						NSViewWidthSizable |
+						NSViewMinXMargin |
+						NSViewMaxXMargin |
+						NSViewMinYMargin |
+						NSViewMaxYMargin )];
+				[contentView addSubview:glView];
+			}
+			else
+			{
+				if (nil != nsWindow)
+					[nsWindow setContentView:glView];
+			}
+
+			NSOpenGLContext* glContext = [[NSOpenGLContext alloc] initWithFormat:pixelFormat shareContext:_context];
+			BGFX_FATAL(NULL != glContext, Fatal::UnableToInitialize, "Failed to initialize GL context.");
+
+			void (^attachBlock)(void) = ^(void) {
+				[glView setOpenGLContext: glContext];
+				[glContext setView:glView];
+			};
+
+			if([NSThread isMainThread])
+			{
+				attachBlock();
+			}
+			else
+			{
+				dispatch_sync(dispatch_get_main_queue(),attachBlock);
+			}
+
+			[pixelFormat release];
+
+			[glContext makeCurrentContext];
+			GLint interval = 0;
+			[glContext setValues:&interval forParameter:NSOpenGLCPSwapInterval];
+
+
+			m_view    = glView;
+			m_context = glContext;
 		}
 
 		~SwapChainGL()
 		{
+			if(m_context!=nil) [m_context release];
+			if(m_view!=nil) [m_view release];
 		}
 
 		void makeCurrent()
 		{
+			[m_context makeCurrentContext];
 		}
 
 		void swapBuffers()
 		{
+			[m_context makeCurrentContext];
+			[m_context flushBuffer];
 		}
+
+		NSOpenGLView *m_view;
+		NSOpenGLContext *m_context;
 	};
 
 	class AutoreleasePoolHolder
@@ -141,19 +238,30 @@ namespace bgfx { namespace gl
 			GLint interval = 0;
 			[glContext setValues:&interval forParameter:NSOpenGLCPSwapInterval];
 
-			// When initializing NSOpenGLView programatically (as we are), this sometimes doesn't
+			// When initializing NSOpenGLView programmatically (as we are), this sometimes doesn't
 			// get hooked up properly (especially when there are existing window elements). This ensures
 			// we are valid. Otherwise, you'll probably get a GL_INVALID_FRAMEBUFFER_OPERATION when
 			// trying to glClear() for the first time.
-			[glContext setView:glView];
+			void (^set_view)(void) = ^(void) {
+				[glContext setView:glView];
+			};
+
+			if([NSThread isMainThread])
+			{
+				set_view();
+			}
+			else
+			{
+				dispatch_sync(dispatch_get_main_queue(),set_view);
+			}
 
 			m_view    = glView;
 			m_context = glContext;
 		}
-        else
-        {
-            [g_platformData.context makeCurrentContext];
-        }
+		else
+		{
+			[(NSOpenGLContext*)g_platformData.context makeCurrentContext];
+		}
 
 		import();
 
@@ -191,7 +299,19 @@ namespace bgfx { namespace gl
 		GLint interval = vsync ? 1 : 0;
 		NSOpenGLContext* glContext = (NSOpenGLContext*)m_context;
 		[glContext setValues:&interval forParameter:NSOpenGLCPSwapInterval];
-		[glContext update];
+		
+		void (^update_view)(void) = ^(void) {
+			[glContext update];
+		};
+
+		if([NSThread isMainThread])
+		{
+			update_view();
+		}
+		else
+		{
+			dispatch_sync(dispatch_get_main_queue(),update_view);
+		}
 	}
 
 	uint64_t GlContext::getCaps() const
@@ -202,12 +322,13 @@ namespace bgfx { namespace gl
 		if ([nwh respondsToSelector:@selector(backingScaleFactor)] && (1.0f < [(id)nwh backingScaleFactor]))
 			caps |= BGFX_CAPS_HIDPI;
 #endif // defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
+		caps |= BGFX_CAPS_SWAP_CHAIN;
 		return caps;
 	}
 
 	SwapChainGL* GlContext::createSwapChain(void* _nwh)
 	{
-		return BX_NEW(g_allocator, SwapChainGL)(_nwh);
+		return BX_NEW(g_allocator, SwapChainGL)(_nwh,(NSOpenGLContext*)m_context);
 	}
 
 	void GlContext::destroySwapChain(SwapChainGL* _swapChain)

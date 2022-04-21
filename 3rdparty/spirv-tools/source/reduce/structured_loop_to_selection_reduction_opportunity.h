@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SOURCE_REDUCE_CUT_LOOP_REDUCTION_OPPORTUNITY_H_
-#define SOURCE_REDUCE_CUT_LOOP_REDUCTION_OPPORTUNITY_H_
+#ifndef SOURCE_REDUCE_STRUCTURED_LOOP_TO_SELECTION_REDUCTION_OPPORTUNITY_H_
+#define SOURCE_REDUCE_STRUCTURED_LOOP_TO_SELECTION_REDUCTION_OPPORTUNITY_H_
 
 #include "source/opt/def_use_manager.h"
 #include "source/opt/dominator_analysis.h"
@@ -30,11 +30,8 @@ class StructuredLoopToSelectionReductionOpportunity
   // Constructs an opportunity from a loop header block and the function that
   // encloses it.
   explicit StructuredLoopToSelectionReductionOpportunity(
-      opt::IRContext* context, opt::BasicBlock* loop_construct_header,
-      opt::Function* enclosing_function)
-      : context_(context),
-        loop_construct_header_(loop_construct_header),
-        enclosing_function_(enclosing_function) {}
+      opt::IRContext* context, opt::BasicBlock* loop_construct_header)
+      : context_(context), loop_construct_header_(loop_construct_header) {}
 
   // Returns true if the loop header is reachable.  A structured loop might
   // become unreachable as a result of turning another structured loop into
@@ -86,26 +83,11 @@ class StructuredLoopToSelectionReductionOpportunity
                                           uint32_t use_index,
                                           opt::BasicBlock& def_block);
 
-  // Checks whether the global value list has an OpVariable of the given pointer
-  // type, adding one if not, and returns the id of such an OpVariable.
-  //
-  // TODO(2184): This will likely be used by other reduction passes, so should
-  // be factored out in due course.
-  uint32_t FindOrCreateGlobalVariable(uint32_t pointer_type_id);
-
-  // Checks whether the enclosing function has an OpVariable of the given
-  // pointer type, adding one if not, and returns the id of such an OpVariable.
-  //
-  // TODO(2184): This will likely be used by other reduction passes, so should
-  // be factored out in due course.
-  uint32_t FindOrCreateFunctionVariable(uint32_t pointer_type_id);
-
   opt::IRContext* context_;
   opt::BasicBlock* loop_construct_header_;
-  opt::Function* enclosing_function_;
 };
 
 }  // namespace reduce
 }  // namespace spvtools
 
-#endif  // SOURCE_REDUCE_CUT_LOOP_REDUCTION_OPPORTUNITY_H_
+#endif  // SOURCE_REDUCE_STRUCTURED_LOOP_TO_SELECTION_REDUCTION_OPPORTUNITY_H_

@@ -19,6 +19,7 @@
 #include <ostream>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "libspirv.hpp"
@@ -27,7 +28,8 @@ namespace spvtools {
 
 namespace opt {
 class Pass;
-}
+struct DescriptorSetAndBinding;
+}  // namespace opt
 
 // C++ interface for SPIR-V optimization functionalities. It wraps the context
 // (including target environment and the corresponding SPIR-V grammar) and
@@ -41,7 +43,7 @@ class Optimizer {
   // consumed by the RegisterPass() method. Tokens are one-time objects that
   // only support move; copying is not allowed.
   struct PassToken {
-    struct Impl;  // Opaque struct for holding inernal data.
+    struct Impl;  // Opaque struct for holding internal data.
 
     PassToken(std::unique_ptr<Impl>);
 
@@ -68,11 +70,6 @@ class Optimizer {
   // The instance will have an empty message consumer, which ignores all
   // messages from the library. Use SetMessageConsumer() to supply a consumer
   // if messages are of concern.
-  //
-  // For collections of passes that are meant to transform the input into
-  // another execution environment, then the source environment should be
-  // supplied. e.g. for VulkanToWebGPUPasses the environment should be
-  // SPV_ENV_VULKAN_1_1 not SPV_ENV_WEBGPU_0.
   explicit Optimizer(spv_target_env env);
 
   // Disables copy/move constructor/assignment operations.
@@ -105,16 +102,6 @@ class Optimizer {
   // This sequence of passes is subject to constant review and will change
   // from time to time.
   Optimizer& RegisterSizePasses();
-
-  // Registers passes that have been prescribed for converting from Vulkan to
-  // WebGPU. This sequence of passes is subject to constant review and will
-  // change from time to time.
-  Optimizer& RegisterVulkanToWebGPUPasses();
-
-  // Registers passes that have been prescribed for converting from WebGPU to
-  // Vulkan. This sequence of passes is subject to constant review and will
-  // change from time to time.
-  Optimizer& RegisterWebGPUToVulkanPasses();
 
   // Registers passes that attempt to legalize the generated code.
   //
@@ -238,24 +225,18 @@ class Optimizer {
 // A null pass does nothing to the SPIR-V module to be optimized.
 Optimizer::PassToken CreateNullPass();
 
-// Creates a strip-atomic-counter-memory pass.
-// A strip-atomic-counter-memory pass removes all usages of the
-// AtomicCounterMemory bit in Memory Semantics bitmasks. This bit is a no-op in
-// Vulkan, so isn't needed in that env. And the related capability is not
-// allowed in WebGPU, so it is not allowed in that env.
-Optimizer::PassToken CreateStripAtomicCounterMemoryPass();
-
 // Creates a strip-debug-info pass.
 // A strip-debug-info pass removes all debug instructions (as documented in
-// Section 3.32.2 of the SPIR-V spec) of the SPIR-V module to be optimized.
+// Section 3.42.2 of the SPIR-V spec) of the SPIR-V module to be optimized.
 Optimizer::PassToken CreateStripDebugInfoPass();
 
-// Creates a strip-reflect-info pass.
-// A strip-reflect-info pass removes all reflections instructions.
-// For now, this is limited to removing decorations defined in
-// SPV_GOOGLE_hlsl_functionality1.  The coverage may expand in
-// the future.
+// [Deprecated] This will create a strip-nonsemantic-info pass.  See below.
 Optimizer::PassToken CreateStripReflectInfoPass();
+
+// Creates a strip-nonsemantic-info pass.
+// A strip-nonsemantic-info pass removes all reflections and explicitly
+// non-semantic instructions.
+Optimizer::PassToken CreateStripNonSemanticInfoPass();
 
 // Creates an eliminate-dead-functions pass.
 // An eliminate-dead-functions pass will remove all functions that are not in
@@ -315,11 +296,11 @@ Optimizer::PassToken CreateFreezeSpecConstantValuePass();
 // and can be changed in future. A spec constant is foldable if all of its
 // value(s) can be determined from the module. E.g., an integer spec constant
 // defined with OpSpecConstantOp instruction can be folded if its value won't
-// change later. This pass will replace the original OpSpecContantOp instruction
-// with an OpConstant instruction. When folding composite spec constants,
-// new instructions may be inserted to define the components of the composite
-// constant first, then the original spec constants will be replaced by
-// OpConstantComposite instructions.
+// change later. This pass will replace the original OpSpecConstantOp
+// instruction with an OpConstant instruction. When folding composite spec
+// constants, new instructions may be inserted to define the components of the
+// composite constant first, then the original spec constants will be replaced
+// by OpConstantComposite instructions.
 //
 // There are some operations not supported yet:
 //   OpSConvert, OpFConvert, OpQuantizeToF16 and
@@ -345,7 +326,7 @@ Optimizer::PassToken CreateUnifyConstantPass();
 
 // Creates a eliminate-dead-constant pass.
 // A eliminate-dead-constant pass removes dead constants, including normal
-// contants defined by OpConstant, OpConstantComposite, OpConstantTrue, or
+// constants defined by OpConstant, OpConstantComposite, OpConstantTrue, or
 // OpConstantFalse and spec constants defined by OpSpecConstant,
 // OpSpecConstantComposite, OpSpecConstantTrue, OpSpecConstantFalse or
 // OpSpecConstantOp.
@@ -409,7 +390,7 @@ Optimizer::PassToken CreateInlineOpaquePass();
 // Only modules with relaxed logical addressing (see opt/instruction.h) are
 // currently processed.
 //
-// This pass is most effective if preceeded by Inlining and
+// This pass is most effective if preceded by Inlining and
 // LocalAccessChainConvert. This pass will reduce the work needed to be done
 // by LocalSingleStoreElim and LocalMultiStoreElim.
 //
@@ -427,7 +408,7 @@ Optimizer::PassToken CreateLocalSingleBlockLoadStoreElimPass();
 // Note that some branches and blocks may be left to avoid creating invalid
 // control flow. Improving this is left to future work.
 //
-// This pass is most effective when preceeded by passes which eliminate
+// This pass is most effective when preceded by passes which eliminate
 // local loads and stores, effectively propagating constant values where
 // possible.
 Optimizer::PassToken CreateDeadBranchElimPass();
@@ -444,7 +425,7 @@ Optimizer::PassToken CreateDeadBranchElimPass();
 // are currently processed. Currently modules with any extensions enabled are
 // not processed. This is left for future work.
 //
-// This pass is most effective if preceeded by Inlining and
+// This pass is most effective if preceded by Inlining and
 // LocalAccessChainConvert. LocalSingleStoreElim and LocalSingleBlockElim
 // will reduce the work that this pass has to do.
 Optimizer::PassToken CreateLocalMultiStoreElimPass();
@@ -534,30 +515,31 @@ Optimizer::PassToken CreateDeadInsertElimPass();
 // Conversion, which tends to cause cycles of dead code to be left after
 // Store/Load elimination passes are completed. These cycles cannot be
 // eliminated with standard dead code elimination.
-Optimizer::PassToken CreateAggressiveDCEPass();
-
-// Create line propagation pass
-// This pass propagates line information based on the rules for OpLine and
-// OpNoline and clones an appropriate line instruction into every instruction
-// which does not already have debug line instructions.
 //
-// This pass is intended to maximize preservation of source line information
-// through passes which delete, move and clone instructions. Ideally it should
-// be run before any such pass. It is a bookend pass with EliminateDeadLines
-// which can be used to remove redundant line instructions at the end of a
-// run of such passes and reduce final output file size.
+// If |preserve_interface| is true, all non-io variables in the entry point
+// interface are considered live and are not eliminated. This mode is needed
+// by GPU-Assisted validation instrumentation, where a change in the interface
+// is not allowed.
+Optimizer::PassToken CreateAggressiveDCEPass();
+Optimizer::PassToken CreateAggressiveDCEPass(bool preserve_interface);
+
+// Creates a remove-unused-interface-variables pass.
+// Removes variables referenced on the |OpEntryPoint| instruction that are not
+// referenced in the entry point function or any function in its call tree. Note
+// that this could cause the shader interface to no longer match other shader
+// stages.
+Optimizer::PassToken CreateRemoveUnusedInterfaceVariablesPass();
+
+// Creates an empty pass.
+// This is deprecated and will be removed.
+// TODO(jaebaek): remove this pass after handling glslang's broken unit tests.
+//                https://github.com/KhronosGroup/glslang/pull/2440
 Optimizer::PassToken CreatePropagateLineInfoPass();
 
-// Create dead line elimination pass
-// This pass eliminates redundant line instructions based on the rules for
-// OpLine and OpNoline. Its main purpose is to reduce the size of the file
-// need to store the SPIR-V without losing line information.
-//
-// This is a bookend pass with PropagateLines which attaches line instructions
-// to every instruction to preserve line information during passes which
-// delete, move and clone instructions. DeadLineElim should be run after
-// PropagateLines and all such subsequent passes. Normally it would be one
-// of the last passes to be run.
+// Creates an empty pass.
+// This is deprecated and will be removed.
+// TODO(jaebaek): remove this pass after handling glslang's broken unit tests.
+//                https://github.com/KhronosGroup/glslang/pull/2440
 Optimizer::PassToken CreateRedundantLineInfoElimPass();
 
 // Creates a compact ids pass.
@@ -648,7 +630,7 @@ Optimizer::PassToken CreateRedundancyEliminationPass();
 Optimizer::PassToken CreateScalarReplacementPass(uint32_t size_limit = 100);
 
 // Create a private to local pass.
-// This pass looks for variables delcared in the private storage class that are
+// This pass looks for variables declared in the private storage class that are
 // used in only one function.  Those variables are moved to the function storage
 // class in the function that they are used.
 Optimizer::PassToken CreatePrivateToLocalPass();
@@ -726,8 +708,11 @@ Optimizer::PassToken CreateVectorDCEPass();
 // Create a pass to reduce the size of loads.
 // This pass looks for loads of structures where only a few of its members are
 // used.  It replaces the loads feeding an OpExtract with an OpAccessChain and
-// a load of the specific elements.
-Optimizer::PassToken CreateReduceLoadSizePass();
+// a load of the specific elements.  The parameter is a threshold to determine
+// whether we have to replace the load or not.  If the ratio of the used
+// components of the load is less than the threshold, we replace the load.
+Optimizer::PassToken CreateReduceLoadSizePass(
+    double load_replacement_threshold = 0.9);
 
 // Create a pass to combine chained access chains.
 // This pass looks for access chains fed by other access chains and combines
@@ -759,12 +744,16 @@ Optimizer::PassToken CreateCombineAccessChainsPass();
 // The instrumentation will read and write buffers in debug
 // descriptor set |desc_set|. It will write |shader_id| in each output record
 // to identify the shader module which generated the record.
-// |input_length_enable| controls instrumentation of runtime descriptor array
-// references, and |input_init_enable| controls instrumentation of descriptor
-// initialization checking, both of which require input buffer support.
+// |desc_length_enable| controls instrumentation of runtime descriptor array
+// references, |desc_init_enable| controls instrumentation of descriptor
+// initialization checking, and |buff_oob_enable| controls instrumentation
+// of storage and uniform buffer bounds checking, all of which require input
+// buffer support. |texbuff_oob_enable| controls instrumentation of texel
+// buffers, which does not require input buffer support.
 Optimizer::PassToken CreateInstBindlessCheckPass(
-    uint32_t desc_set, uint32_t shader_id, bool input_length_enable = false,
-    bool input_init_enable = false);
+    uint32_t desc_set, uint32_t shader_id, bool desc_length_enable = false,
+    bool desc_init_enable = false, bool buff_oob_enable = false,
+    bool texbuff_oob_enable = false);
 
 // Create a pass to instrument physical buffer address checking
 // This pass instruments all physical buffer address references to check that
@@ -810,29 +799,10 @@ Optimizer::PassToken CreateUpgradeMemoryModelPass();
 // where an instruction is moved into a more deeply nested construct.
 Optimizer::PassToken CreateCodeSinkingPass();
 
-// Create a pass to adds initializers for OpVariable calls that require them
-// in WebGPU. Currently this pass naively initializes variables that are
-// missing an initializer with a null value. In the future it may initialize
-// variables to the first value stored in them, if that is a constant.
-Optimizer::PassToken CreateGenerateWebGPUInitializersPass();
-
 // Create a pass to fix incorrect storage classes.  In order to make code
 // generation simpler, DXC may generate code where the storage classes do not
 // match up correctly.  This pass will fix the errors that it can.
 Optimizer::PassToken CreateFixStorageClassPass();
-
-// Create a pass to legalize OpVectorShuffle operands going into WebGPU. WebGPU
-// forbids using 0xFFFFFFFF, which indicates an undefined result, so this pass
-// converts those literals to 0.
-Optimizer::PassToken CreateLegalizeVectorShufflePass();
-
-// Create a pass to decompose initialized variables into a seperate variable
-// declaration and an initial store.
-Optimizer::PassToken CreateDecomposeInitializedVariablesPass();
-
-// Create a pass to attempt to split up invalid unreachable merge-blocks and
-// continue-targets to legalize for WebGPU.
-Optimizer::PassToken CreateSplitInvalidUnreachablePass();
 
 // Creates a graphics robust access pass.
 //
@@ -865,6 +835,26 @@ Optimizer::PassToken CreateSplitInvalidUnreachablePass();
 //   inclusive.
 Optimizer::PassToken CreateGraphicsRobustAccessPass();
 
+// Create a pass to spread Volatile semantics to variables with SMIDNV,
+// WarpIDNV, SubgroupSize, SubgroupLocalInvocationId, SubgroupEqMask,
+// SubgroupGeMask, SubgroupGtMask, SubgroupLeMask, or SubgroupLtMask BuiltIn
+// decorations or OpLoad for them when the shader model is the ray generation,
+// closest hit, miss, intersection, or callable. This pass can be used for
+// VUID-StandaloneSpirv-VulkanMemoryModel-04678 and
+// VUID-StandaloneSpirv-VulkanMemoryModel-04679 (See "Standalone SPIR-V
+// Validation" section of Vulkan spec "Appendix A: Vulkan Environment for
+// SPIR-V"). When the SPIR-V version is 1.6 or above, the pass also spreads
+// the Volatile semantics to a variable with HelperInvocation BuiltIn decoration
+// in the fragement shader.
+Optimizer::PassToken CreateSpreadVolatileSemanticsPass();
+
+// Create a pass to replace a descriptor access using variable index.
+// This pass replaces every access using a variable index to array variable
+// |desc| that has a DescriptorSet and Binding decorations with a constant
+// element of the array. In order to replace the access using a variable index
+// with the constant element, it uses a switch statement.
+Optimizer::PassToken CreateReplaceDescArrayAccessUsingVarIndexPass();
+
 // Create descriptor scalar replacement pass.
 // This pass replaces every array variable |desc| that has a DescriptorSet and
 // Binding decorations with a new variable for each element of the array.
@@ -887,6 +877,36 @@ Optimizer::PassToken CreateWrapOpKillPass();
 // capabilities.
 Optimizer::PassToken CreateAmdExtToKhrPass();
 
+// Replaces the internal version of GLSLstd450 InterpolateAt* extended
+// instructions with the externally valid version. The internal version allows
+// an OpLoad of the interpolant for the first argument. This pass removes the
+// OpLoad and replaces it with its pointer. glslang and possibly other
+// frontends will create the internal version for HLSL. This pass will be part
+// of HLSL legalization and should be called after interpolants have been
+// propagated into their final positions.
+Optimizer::PassToken CreateInterpolateFixupPass();
+
+// Removes unused components from composite input variables. Current
+// implementation just removes trailing unused components from input arrays.
+// The pass performs best after maximizing dead code removal. A subsequent dead
+// code elimination pass would be beneficial in removing newly unused component
+// types.
+Optimizer::PassToken CreateEliminateDeadInputComponentsPass();
+
+// Creates a convert-to-sampled-image pass to convert images and/or
+// samplers with given pairs of descriptor set and binding to sampled image.
+// If a pair of an image and a sampler have the same pair of descriptor set and
+// binding that is one of the given pairs, they will be converted to a sampled
+// image. In addition, if only an image has the descriptor set and binding that
+// is one of the given pairs, it will be converted to a sampled image as well.
+Optimizer::PassToken CreateConvertToSampledImagePass(
+    const std::vector<opt::DescriptorSetAndBinding>&
+        descriptor_set_binding_pairs);
+
+// Creates a remove-dont-inline pass to remove the |DontInline| function control
+// from every function in the module.  This is useful if you want the inliner to
+// inline these functions some reason.
+Optimizer::PassToken CreateRemoveDontInlinePass();
 }  // namespace spvtools
 
 #endif  // INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_

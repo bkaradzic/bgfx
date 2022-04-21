@@ -1,14 +1,14 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef DEBUGDRAW_H_HEADER_GUARD
 #define DEBUGDRAW_H_HEADER_GUARD
 
 #include <bx/allocator.h>
+#include <bx/bounds.h>
 #include <bgfx/bgfx.h>
-#include "../bounds.h"
 
 struct Axis
 {
@@ -121,28 +121,28 @@ struct DebugDrawEncoder
 	void close();
 
 	///
-	void draw(const Aabb& _aabb);
+	void draw(const bx::Aabb& _aabb);
 
 	///
-	void draw(const Cylinder& _cylinder);
+	void draw(const bx::Cylinder& _cylinder);
 
 	///
-	void draw(const Capsule& _capsule);
+	void draw(const bx::Capsule& _capsule);
 
 	///
-	void draw(const Disk& _disk);
+	void draw(const bx::Disk& _disk);
 
 	///
-	void draw(const Obb& _obb);
+	void draw(const bx::Obb& _obb);
 
 	///
-	void draw(const Sphere& _sphere);
+	void draw(const bx::Sphere& _sphere);
 
 	///
-	void draw(const Triangle& _triangle);
+	void draw(const bx::Triangle& _triangle);
 
 	///
-	void draw(const Cone& _cone);
+	void draw(const bx::Cone& _cone);
 
 	///
 	void draw(GeometryHandle _handle);

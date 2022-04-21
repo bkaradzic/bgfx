@@ -1,40 +1,51 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef BGFX_RENDERER_GL_H_HEADER_GUARD
 #define BGFX_RENDERER_GL_H_HEADER_GUARD
 
 #define BGFX_USE_EGL (BGFX_CONFIG_RENDERER_OPENGLES && (0 \
-			|| BX_PLATFORM_ANDROID                        \
-			|| BX_PLATFORM_BSD                            \
-			|| BX_PLATFORM_LINUX                          \
-			|| BX_PLATFORM_NX                             \
-			|| BX_PLATFORM_RPI                            \
-			|| BX_PLATFORM_WINDOWS                        \
-			) )
+	|| BX_PLATFORM_ANDROID                                \
+	|| BX_PLATFORM_BSD                                    \
+	|| BX_PLATFORM_LINUX                                  \
+	|| BX_PLATFORM_NX                                     \
+	|| BX_PLATFORM_RPI                                    \
+	|| BX_PLATFORM_WINDOWS                                \
+	) )
 
 #define BGFX_USE_HTML5 (BGFX_CONFIG_RENDERER_OPENGLES && (0 \
-			|| BX_PLATFORM_EMSCRIPTEN                     \
-			) )
+	|| BX_PLATFORM_EMSCRIPTEN                               \
+	) )
 
-#define BGFX_USE_WGL (BGFX_CONFIG_RENDERER_OPENGL && BX_PLATFORM_WINDOWS)
+#define BGFX_USE_WGL (BGFX_CONFIG_RENDERER_OPENGL && (0 \
+	|| BX_PLATFORM_WINDOWS                              \
+	) )
+
 #define BGFX_USE_GLX (BGFX_CONFIG_RENDERER_OPENGL && (0 \
-			|| BX_PLATFORM_BSD                          \
-			|| BX_PLATFORM_LINUX                        \
-			) )
+	|| BX_PLATFORM_BSD                                  \
+	|| BX_PLATFORM_LINUX                                \
+	) )
 
 #define BGFX_USE_GL_DYNAMIC_LIB (0 \
-			|| BX_PLATFORM_BSD     \
-			|| BX_PLATFORM_LINUX   \
-			|| BX_PLATFORM_OSX     \
-			|| BX_PLATFORM_WINDOWS \
-			)
+	|| BX_PLATFORM_BSD             \
+	|| BX_PLATFORM_LINUX           \
+	|| BX_PLATFORM_OSX             \
+	|| BX_PLATFORM_WINDOWS         \
+	)
 
 // Keep a state cache of GL uniform values to avoid redundant uploads
 // on the following platforms.
 #define BGFX_GL_CONFIG_UNIFORM_CACHE BX_PLATFORM_EMSCRIPTEN
+
+#ifndef BGFX_GL_CONFIG_BLIT_EMULATION
+#	define BGFX_GL_CONFIG_BLIT_EMULATION 0
+#endif // BGFX_GL_CONFIG_BLIT_EMULATION
+
+#ifndef BGFX_GL_CONFIG_TEXTURE_READ_BACK_EMULATION
+#	define BGFX_GL_CONFIG_TEXTURE_READ_BACK_EMULATION 0
+#endif // BGFX_GL_CONFIG_TEXTURE_READ_BACK_EMULATION
 
 #define BGFX_GL_PROFILER_BEGIN(_view, _abgr)                                               \
 	BX_MACRO_BLOCK_BEGIN                                                                   \
@@ -76,6 +87,12 @@
 #			undef GL_VERSION_1_4
 #			undef GL_VERSION_1_5
 #			undef GL_VERSION_2_0
+#		elif BX_PLATFORM_WINDOWS
+#			ifndef WIN32_LEAN_AND_MEAN
+#				define WIN32_LEAN_AND_MEAN
+#			endif // WIN32_LEAN_AND_MEAN
+#			include <windows.h>
+#			include <GL/gl.h>
 #		else
 #			include <GL/gl.h>
 #		endif // BX_PLATFORM_
@@ -613,6 +630,10 @@ typedef uint64_t GLuint64;
 #	define GL_MAX_SAMPLES 0x8D57
 #endif // GL_MAX_SAMPLES
 
+#ifndef GL_MAX_SAMPLES_IMG
+#   define GL_MAX_SAMPLES_IMG 0x9135
+#endif // GL_MAX_SAMPLES_IMG
+
 #ifndef GL_MAX_COLOR_ATTACHMENTS
 #	define GL_MAX_COLOR_ATTACHMENTS 0x8CDF
 #endif // GL_MAX_COLOR_ATTACHMENTS
@@ -966,6 +987,10 @@ typedef uint64_t GLuint64;
 #	define GL_COMMAND_BARRIER_BIT 0x00000040
 #endif // GL_COMMAND_BARRIER_BIT
 
+#ifndef GL_FIRST_VERTEX_CONVENTION
+#	define GL_FIRST_VERTEX_CONVENTION 0x8E4D
+#endif // GL_FIRST_VERTEX_CONVENTION
+
 // _KHR or _ARB...
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS         0x8242
 #define GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH 0x8243
@@ -1065,9 +1090,7 @@ typedef uint64_t GLuint64;
 #	define GL_TEXTURE_LOD_BIAS 0x8501
 #endif // GL_TEXTURE_LOD_BIAS
 
-#if BX_PLATFORM_WINDOWS
-#	include <windows.h>
-#elif BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #	include "glcontext_glx.h"
 #elif BX_PLATFORM_OSX
 #	include "glcontext_nsgl.h"
@@ -1440,7 +1463,6 @@ namespace bgfx { namespace gl
 		uint16_t destroy();
 		void resolve();
 		void discard(uint16_t _flags);
-		void set();
 
 		SwapChainGL* m_swapChain;
 		GLuint m_fbo[2];
@@ -1460,34 +1482,18 @@ namespace bgfx { namespace gl
 			, m_constantBuffer(NULL)
 			, m_numPredefined(0)
 		{
+			m_instanceData[0] = -1;
 		}
 
 		void create(const ShaderGL& _vsh, const ShaderGL& _fsh);
 		void destroy();
 		void init();
-		void bindInstanceData(uint32_t _stride, uint32_t _baseVertex = 0) const;
-		void unbindInstanceData() const;
 
-		void bindAttributesBegin()
-		{
-			bx::memCopy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib) );
-		}
-
+		void bindAttributesBegin();
 		void bindAttributes(const VertexLayout& _layout, uint32_t _baseVertex = 0);
-
-		void bindAttributesEnd()
-		{
-			for (uint32_t ii = 0, iiEnd = m_usedCount; ii < iiEnd; ++ii)
-			{
-				if (Attrib::Count != m_unboundUsedAttrib[ii])
-				{
-					Attrib::Enum attr = Attrib::Enum(m_unboundUsedAttrib[ii]);
-					GLint loc = m_attributes[attr];
-					GL_CHECK(lazyDisableVertexAttribArray(loc) );
-				}
-			}
-		}
-
+		void bindInstanceData(uint32_t _stride, uint32_t _baseVertex = 0) const;
+		void bindAttributesEnd();
+		void unbindInstanceData() const;
 		void unbindAttributes();
 
 		GLuint m_id;

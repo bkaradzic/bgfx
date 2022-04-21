@@ -130,13 +130,48 @@ void InstBuffAddrCheckPass::GenCheckCode(
   context()->KillInst(ref_inst);
 }
 
+uint32_t InstBuffAddrCheckPass::GetTypeAlignment(uint32_t type_id) {
+  Instruction* type_inst = get_def_use_mgr()->GetDef(type_id);
+  switch (type_inst->opcode()) {
+    case SpvOpTypeFloat:
+    case SpvOpTypeInt:
+    case SpvOpTypeVector:
+      return GetTypeLength(type_id);
+    case SpvOpTypeMatrix:
+      return GetTypeAlignment(type_inst->GetSingleWordInOperand(0));
+    case SpvOpTypeArray:
+    case SpvOpTypeRuntimeArray:
+      return GetTypeAlignment(type_inst->GetSingleWordInOperand(0));
+    case SpvOpTypeStruct: {
+      uint32_t max = 0;
+      type_inst->ForEachInId([&max, this](const uint32_t* iid) {
+        uint32_t alignment = GetTypeAlignment(*iid);
+        max = (alignment > max) ? alignment : max;
+      });
+      return max;
+    }
+    case SpvOpTypePointer:
+      assert(type_inst->GetSingleWordInOperand(0) ==
+                 SpvStorageClassPhysicalStorageBufferEXT &&
+             "unexpected pointer type");
+      return 8u;
+    default:
+      assert(false && "unexpected type");
+      return 0;
+  }
+}
+
 uint32_t InstBuffAddrCheckPass::GetTypeLength(uint32_t type_id) {
   Instruction* type_inst = get_def_use_mgr()->GetDef(type_id);
   switch (type_inst->opcode()) {
     case SpvOpTypeFloat:
     case SpvOpTypeInt:
       return type_inst->GetSingleWordInOperand(0) / 8u;
-    case SpvOpTypeVector:
+    case SpvOpTypeVector: {
+      uint32_t raw_cnt = type_inst->GetSingleWordInOperand(1);
+      uint32_t adj_cnt = (raw_cnt == 3u) ? 4u : raw_cnt;
+      return adj_cnt * GetTypeLength(type_inst->GetSingleWordInOperand(0));
+    }
     case SpvOpTypeMatrix:
       return type_inst->GetSingleWordInOperand(1) *
              GetTypeLength(type_inst->GetSingleWordInOperand(0));
@@ -145,8 +180,29 @@ uint32_t InstBuffAddrCheckPass::GetTypeLength(uint32_t type_id) {
                  SpvStorageClassPhysicalStorageBufferEXT &&
              "unexpected pointer type");
       return 8u;
+    case SpvOpTypeArray: {
+      uint32_t const_id = type_inst->GetSingleWordInOperand(1);
+      Instruction* const_inst = get_def_use_mgr()->GetDef(const_id);
+      uint32_t cnt = const_inst->GetSingleWordInOperand(0);
+      return cnt * GetTypeLength(type_inst->GetSingleWordInOperand(0));
+    }
+    case SpvOpTypeStruct: {
+      uint32_t len = 0;
+      type_inst->ForEachInId([&len, this](const uint32_t* iid) {
+        // Align struct length
+        uint32_t alignment = GetTypeAlignment(*iid);
+        uint32_t mod = len % alignment;
+        uint32_t diff = (mod != 0) ? alignment - mod : 0;
+        len += diff;
+        // Increment struct length by component length
+        uint32_t comp_len = GetTypeLength(*iid);
+        len += comp_len;
+      });
+      return len;
+    }
+    case SpvOpTypeRuntimeArray:
     default:
-      assert(false && "unexpected buffer reference type");
+      assert(false && "unexpected type");
       return 0;
   }
 }
@@ -202,7 +258,6 @@ uint32_t InstBuffAddrCheckPass::GetSearchAndTestFuncId() {
     (void)builder.AddInstruction(MakeUnique<Instruction>(
         context(), SpvOpBranch, 0, 0,
         std::initializer_list<Operand>{{SPV_OPERAND_TYPE_ID, {hdr_blk_id}}}));
-    first_blk_ptr->SetParent(&*input_func);
     input_func->AddBasicBlock(std::move(first_blk_ptr));
     // Linear search loop header block
     // TODO(greg-lunarg): Implement binary search
@@ -246,7 +301,6 @@ uint32_t InstBuffAddrCheckPass::GetSearchAndTestFuncId() {
     (void)builder.AddInstruction(MakeUnique<Instruction>(
         context(), SpvOpBranch, 0, 0,
         std::initializer_list<Operand>{{SPV_OPERAND_TYPE_ID, {cont_blk_id}}}));
-    hdr_blk_ptr->SetParent(&*input_func);
     input_func->AddBasicBlock(std::move(hdr_blk_ptr));
     // Continue/Work Block. Read next buffer pointer and break if greater
     // than ref_ptr arg.
@@ -272,7 +326,6 @@ uint32_t InstBuffAddrCheckPass::GetSearchAndTestFuncId() {
     (void)builder.AddConditionalBranch(uptr_test_inst->result_id(),
                                        bound_test_blk_id, hdr_blk_id,
                                        kInvalidId, SpvSelectionControlMaskNone);
-    cont_blk_ptr->SetParent(&*input_func);
     input_func->AddBasicBlock(std::move(cont_blk_ptr));
     // Bounds test block. Read length of selected buffer and test that
     // all len arg bytes are in buffer.
@@ -333,7 +386,6 @@ uint32_t InstBuffAddrCheckPass::GetSearchAndTestFuncId() {
         std::initializer_list<Operand>{
             {SPV_OPERAND_TYPE_ID, {len_test_inst->result_id()}}}));
     // Close block
-    bound_test_blk_ptr->SetParent(&*input_func);
     input_func->AddBasicBlock(std::move(bound_test_blk_ptr));
     // Close function and add function to module
     std::unique_ptr<Instruction> func_end_inst(

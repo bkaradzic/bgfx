@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include <bx/debug.h>
@@ -44,6 +44,7 @@ namespace bgfx
 	static const uint8_t (*s_attribTypeSize[])[AttribType::Count][4] =
 	{
 		&s_attribTypeSizeD3D9,  // Noop
+		&s_attribTypeSizeD3D1x, // Agc
 		&s_attribTypeSizeD3D9,  // Direct3D9
 		&s_attribTypeSizeD3D1x, // Direct3D11
 		&s_attribTypeSizeD3D1x, // Direct3D12
@@ -119,6 +120,21 @@ namespace bgfx
 		_type       = AttribType::Enum( (val>>3)&7);
 		_normalized = !!(val&(1<<7) );
 		_asInt      = !!(val&(1<<8) );
+	}
+
+	static const bool s_attribTypeIsFloat[] =
+	{
+		false, // Uint8
+		false, // Uint10
+		false, // Int16
+		true,  // Half
+		true,  // Float
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeIsFloat) == AttribType::Count);
+
+	bool isFloat(AttribType::Enum _type)
+	{
+		return s_attribTypeIsFloat[_type];
 	}
 
 	static const char* s_attrName[] =
@@ -630,15 +646,7 @@ namespace bgfx
 
 		struct ConvertOp
 		{
-			enum Enum
-			{
-				Set,
-				Copy,
-				Convert,
-			};
-
 			Attrib::Enum attr;
-			Enum op;
 			uint32_t src;
 			uint32_t dest;
 			uint32_t size;
@@ -646,6 +654,12 @@ namespace bgfx
 
 		ConvertOp convertOp[Attrib::Count];
 		uint32_t numOps = 0;
+
+		const uint8_t* src = (const uint8_t*)_srcData;
+		uint32_t srcStride = _srcLayout.getStride();
+
+		uint8_t* dest       = (uint8_t*)_destData;
+		uint32_t destStride = _destLayout.getStride();
 
 		for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
 		{
@@ -667,25 +681,25 @@ namespace bgfx
 				if (_srcLayout.has(attr) )
 				{
 					cop.src = _srcLayout.getOffset(attr);
-					cop.op = _destLayout.m_attributes[attr] == _srcLayout.m_attributes[attr] ? ConvertOp::Copy : ConvertOp::Convert;
+
+					if (_destLayout.m_attributes[attr] == _srcLayout.m_attributes[attr])
+					{
+						bx::memCopy(dest + cop.dest, destStride, src + cop.src, srcStride, cop.size, _num);
+					}
+					else
+					{
+						++numOps;
+					}
 				}
 				else
 				{
-					cop.op = ConvertOp::Set;
+					bx::memSet(dest + cop.dest, destStride, 0, cop.size, _num);
 				}
-
-				++numOps;
 			}
 		}
 
 		if (0 < numOps)
 		{
-			const uint8_t* src = (const uint8_t*)_srcData;
-			uint32_t srcStride = _srcLayout.getStride();
-
-			uint8_t* dest = (uint8_t*)_destData;
-			uint32_t destStride = _destLayout.getStride();
-
 			float unpacked[4];
 
 			for (uint32_t ii = 0; ii < _num; ++ii)
@@ -693,25 +707,11 @@ namespace bgfx
 				for (uint32_t jj = 0; jj < numOps; ++jj)
 				{
 					const ConvertOp& cop = convertOp[jj];
-
-					switch (cop.op)
-					{
-					case ConvertOp::Set:
-						bx::memSet(dest + cop.dest, 0, cop.size);
-						break;
-
-					case ConvertOp::Copy:
-						bx::memCopy(dest + cop.dest, src + cop.src, cop.size);
-						break;
-
-					case ConvertOp::Convert:
-						vertexUnpack(unpacked, cop.attr, _srcLayout, src);
-						vertexPack(unpacked, true, cop.attr, _destLayout, dest);
-						break;
-					}
+					vertexUnpack(unpacked, cop.attr, _srcLayout, src);
+					vertexPack(unpacked, true, cop.attr, _destLayout, dest);
 				}
 
-				src += srcStride;
+				src  += srcStride;
 				dest += destStride;
 			}
 		}

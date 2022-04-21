@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef BGFX_RENDERER_D3D12_H_HEADER_GUARD
@@ -20,8 +20,14 @@
 
 #if defined(__MINGW32__) // BK - temp workaround for MinGW until I nuke d3dx12 usage.
 extern "C++" {
+#	if defined(__cpp_constexpr)        && __cpp_constexpr        >= 200704L \
+	&& defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
+	__extension__ template<typename Ty>
+	constexpr const GUID& __mingw_uuidof();
+#	else
 	__extension__ template<typename Ty>
 	const GUID& __mingw_uuidof();
+#	endif // __cpp_*
 
 	template<>
 	const GUID& __mingw_uuidof<ID3D12Device>()
@@ -321,6 +327,7 @@ namespace bgfx { namespace d3d12
 
 		TextureD3D12()
 			: m_ptr(NULL)
+			, m_singleMsaa(NULL)
 			, m_directAccessPtr(NULL)
 			, m_state(D3D12_RESOURCE_STATE_COMMON)
 			, m_numMips(0)
@@ -333,12 +340,13 @@ namespace bgfx { namespace d3d12
 		void destroy();
 		void overrideInternal(uintptr_t _ptr);
 		void update(ID3D12GraphicsCommandList* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
-		void resolve(uint8_t _resolve) const;
+		void resolve(ID3D12GraphicsCommandList* _commandList, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip);
 		D3D12_RESOURCE_STATES setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state);
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC  m_srvd;
 		D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd;
 		ID3D12Resource* m_ptr;
+		ID3D12Resource* m_singleMsaa;
 		void* m_directAccessPtr;
 		D3D12_RESOURCE_STATES m_state;
 		uint64_t m_flags;

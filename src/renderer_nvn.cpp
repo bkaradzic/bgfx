@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "bgfx_p.h"
@@ -8,10 +8,10 @@
 namespace bgfx
 {
 
-#define BGFX_DECLARE_EMBEDDED_SHADER(_name)                                             \
-	extern const uint8_t* BX_CONCATENATE(_name, _nvn);                                 \
-	extern const uint32_t BX_CONCATENATE(_name, _nvn_size);                            \
-	static const uint8_t  BX_CONCATENATE(_name, _int_nvn)[] = { 0 };                   \
+#define BGFX_DECLARE_EMBEDDED_SHADER(_name)                                           \
+	extern const uint8_t* BX_CONCATENATE(_name, _nvn);                                \
+	extern const uint32_t BX_CONCATENATE(_name, _nvn_size);                           \
+	static const uint8_t  BX_CONCATENATE(_name, _int_nvn)[] = { 0 };                  \
 	const uint8_t* BX_CONCATENATE(_name, _nvn) = &BX_CONCATENATE(_name, _int_nvn)[0]; \
 	const uint32_t BX_CONCATENATE(_name, _nvn_size) = 1
 
@@ -42,4 +42,5 @@ namespace bgfx { namespace nvn
 	void rendererDestroy()
 	{
 	}
+
 } /* namespace nvn */ } // namespace bgfx

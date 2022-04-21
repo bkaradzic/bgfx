@@ -1,6 +1,6 @@
 /*
 * Copyright 2014 Stanlo Slasinski. All rights reserved.
-* License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+* License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 */
 
 #include "common.h"
@@ -368,7 +368,7 @@ public:
 				bx::swap(m_prevPositionBuffer0, m_prevPositionBuffer1);
 
 				// Update camera.
-				cameraUpdate(deltaTime, m_mouseState);
+				cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 				float view[16];
 				cameraGetViewMtx(view);

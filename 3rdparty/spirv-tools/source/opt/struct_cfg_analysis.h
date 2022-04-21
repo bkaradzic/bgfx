@@ -53,6 +53,11 @@ class StructuredCFGAnalysis {
   // merge construct.
   uint32_t MergeBlock(uint32_t bb_id);
 
+  // Returns the nesting depth of the given block, i.e. the number of merge
+  // constructs containing it. Headers and merge blocks are not considered part
+  // of the corresponding merge constructs.
+  uint32_t NestingDepth(uint32_t block_id);
+
   // Returns the id of the header of the innermost loop construct
   // that contains |bb_id|.  Return |0| if |bb_id| is not contained in any loop
   // construct.

@@ -1,5 +1,6 @@
 /*
- * Copyright 2016-2020 Arm Limited
+ * Copyright 2016-2021 Arm Limited
+ * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +13,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ * At your option, you may choose to accept this material under either:
+ *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
+ *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
  */
 
 #include "spirv_cfg.hpp"
@@ -128,7 +135,9 @@ bool CFG::post_order_visit(uint32_t block_id)
 		break;
 
 	case SPIRBlock::MultiSelect:
-		for (auto &target : block.cases)
+	{
+		const auto &cases = compiler.get_case_list(block);
+		for (const auto &target : cases)
 		{
 			if (post_order_visit(target.block))
 				add_branch(block_id, target.block);
@@ -136,7 +145,7 @@ bool CFG::post_order_visit(uint32_t block_id)
 		if (block.default_block && post_order_visit(block.default_block))
 			add_branch(block_id, block.default_block);
 		break;
-
+	}
 	default:
 		break;
 	}
@@ -378,7 +387,9 @@ void DominatorBuilder::lift_continue_block_dominator()
 		break;
 
 	case SPIRBlock::MultiSelect:
-		for (auto &target : block.cases)
+	{
+		auto &cases = cfg.get_compiler().get_case_list(block);
+		for (auto &target : cases)
 		{
 			if (cfg.get_visit_order(target.block) > post_order)
 				back_edge_dominator = true;
@@ -386,6 +397,7 @@ void DominatorBuilder::lift_continue_block_dominator()
 		if (block.default_block && cfg.get_visit_order(block.default_block) > post_order)
 			back_edge_dominator = true;
 		break;
+	}
 
 	default:
 		break;

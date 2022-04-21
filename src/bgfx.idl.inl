@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 /*
@@ -50,11 +50,11 @@ BGFX_C99_STRUCT_SIZE_CHECK(bgfx::InternalData,          bgfx_internal_data_t);
 
 #undef BGFX_C99_STRUCT_SIZE_CHECK
 
-BGFX_C_API void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, uint16_t _layer, uint16_t _mip, uint8_t _resolve)
+BGFX_C_API void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint8_t _resolve)
 {
 	bgfx::Attachment* This = (bgfx::Attachment*)_this;
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
-	This->init(handle.cpp, (bgfx::Access::Enum)_access, _layer, _mip, _resolve);
+	This->init(handle.cpp, (bgfx::Access::Enum)_access, _layer, _numLayers, _mip, _resolve);
 }
 
 BGFX_C_API bgfx_vertex_layout_t* bgfx_vertex_layout_begin(bgfx_vertex_layout_t* _this, bgfx_renderer_type_t _rendererType)
@@ -329,9 +329,9 @@ BGFX_C_API void bgfx_destroy_dynamic_vertex_buffer(bgfx_dynamic_vertex_buffer_ha
 	bgfx::destroy(handle.cpp);
 }
 
-BGFX_C_API uint32_t bgfx_get_avail_transient_index_buffer(uint32_t _num)
+BGFX_C_API uint32_t bgfx_get_avail_transient_index_buffer(uint32_t _num, bool _index32)
 {
-	return bgfx::getAvailTransientIndexBuffer(_num);
+	return bgfx::getAvailTransientIndexBuffer(_num, _index32);
 }
 
 BGFX_C_API uint32_t bgfx_get_avail_transient_vertex_buffer(uint32_t _num, const bgfx_vertex_layout_t * _layout)
@@ -345,9 +345,9 @@ BGFX_C_API uint32_t bgfx_get_avail_instance_data_buffer(uint32_t _num, uint16_t 
 	return bgfx::getAvailInstanceDataBuffer(_num, _stride);
 }
 
-BGFX_C_API void bgfx_alloc_transient_index_buffer(bgfx_transient_index_buffer_t* _tib, uint32_t _num)
+BGFX_C_API void bgfx_alloc_transient_index_buffer(bgfx_transient_index_buffer_t* _tib, uint32_t _num, bool _index32)
 {
-	bgfx::allocTransientIndexBuffer((bgfx::TransientIndexBuffer*)_tib, _num);
+	bgfx::allocTransientIndexBuffer((bgfx::TransientIndexBuffer*)_tib, _num, _index32);
 }
 
 BGFX_C_API void bgfx_alloc_transient_vertex_buffer(bgfx_transient_vertex_buffer_t* _tvb, uint32_t _num, const bgfx_vertex_layout_t * _layout)
@@ -356,10 +356,10 @@ BGFX_C_API void bgfx_alloc_transient_vertex_buffer(bgfx_transient_vertex_buffer_
 	bgfx::allocTransientVertexBuffer((bgfx::TransientVertexBuffer*)_tvb, _num, layout);
 }
 
-BGFX_C_API bool bgfx_alloc_transient_buffers(bgfx_transient_vertex_buffer_t* _tvb, const bgfx_vertex_layout_t * _layout, uint32_t _numVertices, bgfx_transient_index_buffer_t* _tib, uint32_t _numIndices)
+BGFX_C_API bool bgfx_alloc_transient_buffers(bgfx_transient_vertex_buffer_t* _tvb, const bgfx_vertex_layout_t * _layout, uint32_t _numVertices, bgfx_transient_index_buffer_t* _tib, uint32_t _numIndices, bool _index32)
 {
 	const bgfx::VertexLayout & layout = *(const bgfx::VertexLayout *)_layout;
-	return bgfx::allocTransientBuffers((bgfx::TransientVertexBuffer*)_tvb, layout, _numVertices, (bgfx::TransientIndexBuffer*)_tib, _numIndices);
+	return bgfx::allocTransientBuffers((bgfx::TransientVertexBuffer*)_tvb, layout, _numVertices, (bgfx::TransientIndexBuffer*)_tib, _numIndices, _index32);
 }
 
 BGFX_C_API void bgfx_alloc_instance_data_buffer(bgfx_instance_data_buffer_t* _idb, uint32_t _num, uint16_t _stride)
@@ -431,6 +431,11 @@ BGFX_C_API void bgfx_destroy_program(bgfx_program_handle_t _handle)
 BGFX_C_API bool bgfx_is_texture_valid(uint16_t _depth, bool _cubeMap, uint16_t _numLayers, bgfx_texture_format_t _format, uint64_t _flags)
 {
 	return bgfx::isTextureValid(_depth, _cubeMap, _numLayers, (bgfx::TextureFormat::Enum)_format, _flags);
+}
+
+BGFX_C_API bool bgfx_is_frame_buffer_valid(uint8_t _num, const bgfx_attachment_t* _attachment)
+{
+	return bgfx::isFrameBufferValid(_num, (const bgfx::Attachment*)_attachment);
 }
 
 BGFX_C_API void bgfx_calc_texture_size(bgfx_texture_info_t * _info, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, bool _hasMips, uint16_t _numLayers, bgfx_texture_format_t _format)
@@ -1316,6 +1321,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_create_compute_program,
 			bgfx_destroy_program,
 			bgfx_is_texture_valid,
+			bgfx_is_frame_buffer_valid,
 			bgfx_calc_texture_size,
 			bgfx_create_texture,
 			bgfx_create_texture_2d,

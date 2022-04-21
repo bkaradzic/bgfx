@@ -77,15 +77,9 @@
 #endif
 
 #ifdef SIMD_WASM
+#undef __DEPRECATED
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <wasm_simd128.h>
-#endif
-
-#ifndef TRACE
-#define TRACE 0
-#endif
-
-#if TRACE
-#include <stdio.h>
 #endif
 
 #ifdef SIMD_WASM
@@ -132,19 +126,6 @@ inline unsigned char unzigzag8(unsigned char v)
 {
 	return -(v & 1) ^ (v >> 1);
 }
-
-#if TRACE
-struct Stats
-{
-	size_t size;
-	size_t header;
-	size_t bitg[4];
-	size_t bitb[4];
-};
-
-Stats* bytestats;
-Stats vertexstats[256];
-#endif
 
 static bool encodeBytesGroupZero(const unsigned char* buffer)
 {
@@ -267,16 +248,7 @@ static unsigned char* encodeBytes(unsigned char* data, unsigned char* data_end, 
 
 		assert(data + best_size == next);
 		data = next;
-
-#if TRACE > 1
-		bytestats->bitg[bitslog2]++;
-		bytestats->bitb[bitslog2] += best_size;
-#endif
 	}
-
-#if TRACE > 1
-	bytestats->header += header_size;
-#endif
 
 	return data;
 }
@@ -306,19 +278,9 @@ static unsigned char* encodeVertexBlock(unsigned char* data, unsigned char* data
 			vertex_offset += vertex_size;
 		}
 
-#if TRACE
-		const unsigned char* olddata = data;
-		bytestats = &vertexstats[k];
-#endif
-
 		data = encodeBytes(data, data_end, buffer, (vertex_count + kByteGroupSize - 1) & ~(kByteGroupSize - 1));
 		if (!data)
 			return 0;
-
-#if TRACE
-		bytestats = 0;
-		vertexstats[k].size += data - olddata;
-#endif
 	}
 
 	memcpy(last_vertex, &vertex_data[vertex_size * (vertex_count - 1)], vertex_size);
@@ -447,7 +409,7 @@ static const unsigned char* decodeVertexBlock(const unsigned char* data, const u
 static unsigned char kDecodeBytesGroupShuffle[256][8];
 static unsigned char kDecodeBytesGroupCount[256];
 
-#ifdef EMSCRIPTEN
+#ifdef __wasm__
 __attribute__((cold)) // this saves 500 bytes in the output binary - we don't need to vectorize this loop!
 #endif
 static bool
@@ -736,11 +698,9 @@ static const unsigned char* decodeBytesGroupSimd(const unsigned char* data, unsi
 SIMD_TARGET
 static v128_t decodeShuffleMask(unsigned char mask0, unsigned char mask1)
 {
-	// TODO: 8b buffer overrun - should we use splat or extend buffers?
 	v128_t sm0 = wasm_v128_load(&kDecodeBytesGroupShuffle[mask0]);
 	v128_t sm1 = wasm_v128_load(&kDecodeBytesGroupShuffle[mask1]);
 
-	// TODO: we should use v8x16_load_splat
 	v128_t sm1off = wasm_v128_load(&kDecodeBytesGroupCount[mask0]);
 	sm1off = wasm_v8x16_shuffle(sm1off, sm1off, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
@@ -752,19 +712,12 @@ static v128_t decodeShuffleMask(unsigned char mask0, unsigned char mask1)
 SIMD_TARGET
 static void wasmMoveMask(v128_t mask, unsigned char& mask0, unsigned char& mask1)
 {
-	v128_t mask_0 = wasm_v32x4_shuffle(mask, mask, 0, 2, 1, 3);
-
-	// TODO: when Chrome supports v128.const we can try doing vectorized and?
-	uint64_t mask_1a = wasm_i64x2_extract_lane(mask_0, 0) & 0x0804020108040201ull;
-	uint64_t mask_1b = wasm_i64x2_extract_lane(mask_0, 1) & 0x8040201080402010ull;
+	// magic constant found using z3 SMT assuming mask has 8 groups of 0xff or 0x00
+	const uint64_t magic = 0x000103070f1f3f80ull;
 
 	// TODO: This can use v8x16_bitmask in the future
-	uint64_t mask_2 = mask_1a | mask_1b;
-	uint64_t mask_4 = mask_2 | (mask_2 >> 16);
-	uint64_t mask_8 = mask_4 | (mask_4 >> 8);
-
-	mask0 = uint8_t(mask_8);
-	mask1 = uint8_t(mask_8 >> 32);
+	mask0 = uint8_t((wasm_i64x2_extract_lane(mask, 0) * magic) >> 56);
+	mask1 = uint8_t((wasm_i64x2_extract_lane(mask, 1) * magic) >> 56);
 }
 
 SIMD_TARGET
@@ -786,7 +739,6 @@ static const unsigned char* decodeBytesGroupSimd(const unsigned char* data, unsi
 
 	case 1:
 	{
-		// TODO: test 4b load splat
 		v128_t sel2 = wasm_v128_load(data);
 		v128_t rest = wasm_v128_load(data + 4);
 
@@ -801,7 +753,6 @@ static const unsigned char* decodeBytesGroupSimd(const unsigned char* data, unsi
 
 		v128_t shuf = decodeShuffleMask(mask0, mask1);
 
-		// TODO: test or/andnot
 		v128_t result = wasm_v128_bitselect(wasm_v8x16_swizzle(rest, shuf), sel, mask);
 
 		wasm_v128_store(buffer, result);
@@ -811,7 +762,6 @@ static const unsigned char* decodeBytesGroupSimd(const unsigned char* data, unsi
 
 	case 2:
 	{
-		// TODO: test 8b load splat
 		v128_t sel4 = wasm_v128_load(data);
 		v128_t rest = wasm_v128_load(data + 8);
 
@@ -825,7 +775,6 @@ static const unsigned char* decodeBytesGroupSimd(const unsigned char* data, unsi
 
 		v128_t shuf = decodeShuffleMask(mask0, mask1);
 
-		// TODO: test or/andnot
 		v128_t result = wasm_v128_bitselect(wasm_v8x16_swizzle(rest, shuf), sel, mask);
 
 		wasm_v128_store(buffer, result);
@@ -917,8 +866,7 @@ SIMD_TARGET
 static v128_t unzigzag8(v128_t v)
 {
 	v128_t xl = wasm_i8x16_neg(wasm_v128_and(v, wasm_i8x16_splat(1)));
-	// TODO: use wasm_u8x16_shr when v8 fixes codegen for constant shifts
-	v128_t xr = wasm_v128_and(wasm_u16x8_shr(v, 1), wasm_i8x16_splat(127));
+	v128_t xr = wasm_u8x16_shr(v, 1);
 
 	return wasm_v128_xor(xl, xr);
 }
@@ -1010,7 +958,7 @@ static const unsigned char* decodeVertexBlockSimd(const unsigned char* data, con
 
 #ifdef SIMD_WASM
 #define TEMP v128_t
-#define PREP() v128_t pi = wasm_v128_load(last_vertex + k) // TODO: use wasm_v32x4_load_splat to avoid buffer overrun
+#define PREP() v128_t pi = wasm_v128_load(last_vertex + k)
 #define LOAD(i) v128_t r##i = wasm_v128_load(buffer + j + i * vertex_count_aligned)
 #define GRP4(i) t0 = wasmx_splat_v32x4(r##i, 0), t1 = wasmx_splat_v32x4(r##i, 1), t2 = wasmx_splat_v32x4(r##i, 2), t3 = wasmx_splat_v32x4(r##i, 3)
 #define FIXD(i) t##i = pi = wasm_i8x16_add(pi, t##i)
@@ -1082,7 +1030,7 @@ static unsigned int getCpuFeatures()
 	return cpuinfo[2];
 }
 
-unsigned int cpuid = getCpuFeatures();
+static unsigned int cpuid = getCpuFeatures();
 #endif
 
 } // namespace meshopt
@@ -1093,10 +1041,6 @@ size_t meshopt_encodeVertexBuffer(unsigned char* buffer, size_t buffer_size, con
 
 	assert(vertex_size > 0 && vertex_size <= 256);
 	assert(vertex_size % 4 == 0);
-
-#if TRACE
-	memset(vertexstats, 0, sizeof(vertexstats));
-#endif
 
 	const unsigned char* vertex_data = static_cast<const unsigned char*>(vertices);
 
@@ -1149,28 +1093,6 @@ size_t meshopt_encodeVertexBuffer(unsigned char* buffer, size_t buffer_size, con
 
 	assert(data >= buffer + tail_size);
 	assert(data <= buffer + buffer_size);
-
-#if TRACE
-	size_t total_size = data - buffer;
-
-	for (size_t k = 0; k < vertex_size; ++k)
-	{
-		const Stats& vsk = vertexstats[k];
-
-		printf("%2d: %d bytes\t%.1f%%\t%.1f bpv", int(k), int(vsk.size), double(vsk.size) / double(total_size) * 100, double(vsk.size) / double(vertex_count) * 8);
-
-#if TRACE > 1
-		printf("\t\thdr %d bytes\tbit0 %d (%d bytes)\tbit1 %d (%d bytes)\tbit2 %d (%d bytes)\tbit3 %d (%d bytes)",
-		       int(vsk.header),
-		       int(vsk.bitg[0]), int(vsk.bitb[0]),
-		       int(vsk.bitg[1]), int(vsk.bitb[1]),
-		       int(vsk.bitg[2]), int(vsk.bitb[2]),
-		       int(vsk.bitg[3]), int(vsk.bitb[3]));
-#endif
-
-		printf("\n");
-	}
-#endif
 
 	return data - buffer;
 }

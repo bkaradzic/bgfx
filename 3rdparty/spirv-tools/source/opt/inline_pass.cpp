@@ -92,7 +92,7 @@ void InlinePass::AddStore(uint32_t ptr_id, uint32_t val_id,
                       {{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {ptr_id}},
                        {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {val_id}}}));
   if (line_inst != nullptr) {
-    newStore->dbg_line_insts().push_back(*line_inst);
+    newStore->AddDebugLine(line_inst);
   }
   newStore->SetDebugScope(dbg_scope);
   (*block_ptr)->AddInstruction(std::move(newStore));
@@ -106,7 +106,7 @@ void InlinePass::AddLoad(uint32_t type_id, uint32_t resultId, uint32_t ptr_id,
       new Instruction(context(), SpvOpLoad, type_id, resultId,
                       {{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {ptr_id}}}));
   if (line_inst != nullptr) {
-    newLoad->dbg_line_insts().push_back(*line_inst);
+    newLoad->AddDebugLine(line_inst);
   }
   newLoad->SetDebugScope(dbg_scope);
   (*block_ptr)->AddInstruction(std::move(newLoad));
@@ -158,8 +158,8 @@ bool InlinePass::CloneAndMapLocals(
   auto callee_block_itr = calleeFn->begin();
   auto callee_var_itr = callee_block_itr->begin();
   while (callee_var_itr->opcode() == SpvOp::SpvOpVariable ||
-         callee_var_itr->GetOpenCL100DebugOpcode() ==
-             OpenCLDebugInfo100DebugDeclare) {
+         callee_var_itr->GetCommonDebugOpcode() ==
+             CommonDebugInfoDebugDeclare) {
     if (callee_var_itr->opcode() != SpvOp::SpvOpVariable) {
       ++callee_var_itr;
       continue;
@@ -300,8 +300,7 @@ InstructionList::iterator InlinePass::AddStoresForVariableInitializers(
     UptrVectorIterator<BasicBlock> callee_first_block_itr) {
   auto callee_itr = callee_first_block_itr->begin();
   while (callee_itr->opcode() == SpvOp::SpvOpVariable ||
-         callee_itr->GetOpenCL100DebugOpcode() ==
-             OpenCLDebugInfo100DebugDeclare) {
+         callee_itr->GetCommonDebugOpcode() == CommonDebugInfoDebugDeclare) {
     if (callee_itr->opcode() == SpvOp::SpvOpVariable &&
         callee_itr->NumInOperands() == 2) {
       assert(callee2caller.count(callee_itr->result_id()) &&
@@ -315,8 +314,7 @@ InstructionList::iterator InlinePass::AddStoresForVariableInitializers(
                context()->get_debug_info_mgr()->BuildDebugScope(
                    callee_itr->GetDebugScope(), inlined_at_ctx));
     }
-    if (callee_itr->GetOpenCL100DebugOpcode() ==
-        OpenCLDebugInfo100DebugDeclare) {
+    if (callee_itr->GetCommonDebugOpcode() == CommonDebugInfoDebugDeclare) {
       InlineSingleInstruction(
           callee2caller, new_blk_ptr->get(), &*callee_itr,
           context()->get_debug_info_mgr()->BuildDebugInlinedAtChain(
@@ -383,9 +381,7 @@ std::unique_ptr<BasicBlock> InlinePass::InlineReturn(
   uint32_t returnLabelId = 0;
   for (auto callee_block_itr = calleeFn->begin();
        callee_block_itr != calleeFn->end(); ++callee_block_itr) {
-    if (callee_block_itr->tail()->opcode() == SpvOpUnreachable ||
-        callee_block_itr->tail()->opcode() == SpvOpKill ||
-        callee_block_itr->tail()->opcode() == SpvOpTerminateInvocation) {
+    if (spvOpcodeIsAbort(callee_block_itr->tail()->opcode())) {
       returnLabelId = context()->TakeNextId();
       break;
     }
@@ -407,6 +403,14 @@ bool InlinePass::InlineEntryBlock(
       callee2caller, inlined_at_ctx, new_blk_ptr, callee_first_block);
 
   while (callee_inst_itr != callee_first_block->end()) {
+    // Don't inline function definition links, the calling function is not a
+    // definition.
+    if (callee_inst_itr->GetShader100DebugOpcode() ==
+        NonSemanticShaderDebugInfo100DebugFunctionDefinition) {
+      ++callee_inst_itr;
+      continue;
+    }
+
     if (!InlineSingleInstruction(
             callee2caller, new_blk_ptr->get(), &*callee_inst_itr,
             context()->get_debug_info_mgr()->BuildDebugInlinedAtChain(
@@ -437,6 +441,11 @@ std::unique_ptr<BasicBlock> InlinePass::InlineBasicBlocks(
     auto tail_inst_itr = callee_block_itr->end();
     for (auto inst_itr = callee_block_itr->begin(); inst_itr != tail_inst_itr;
          ++inst_itr) {
+      // Don't inline function definition links, the calling function is not a
+      // definition
+      if (inst_itr->GetShader100DebugOpcode() ==
+          NonSemanticShaderDebugInfo100DebugFunctionDefinition)
+        continue;
       if (!InlineSingleInstruction(
               callee2caller, new_blk_ptr.get(), &*inst_itr,
               context()->get_debug_info_mgr()->BuildDebugInlinedAtChain(
@@ -619,14 +628,6 @@ bool InlinePass::GenInlineCode(
     assert(resId != 0);
     AddLoad(calleeTypeId, resId, returnVarId, &new_blk_ptr,
             call_inst_itr->dbg_line_inst(), call_inst_itr->GetDebugScope());
-  } else {
-    // Even though it is very unlikely, it is possible that the result id of
-    // the void-function call is used, so we need to generate an instruction
-    // with that result id.
-    std::unique_ptr<Instruction> undef_inst(
-        new Instruction(context(), SpvOpUndef, call_inst_itr->type_id(),
-                        call_inst_itr->result_id(), {}));
-    context()->AddGlobalValue(std::move(undef_inst));
   }
 
   // Move instructions of original caller block after call instruction.
@@ -645,6 +646,11 @@ bool InlinePass::GenInlineCode(
   for (auto& blk : *new_blocks) {
     id2block_[blk->id()] = &*blk;
   }
+
+  // We need to kill the name and decorations for the call, which will be
+  // deleted.
+  context()->KillNamesAndDecorates(&*call_inst_itr);
+
   return true;
 }
 
@@ -727,6 +733,12 @@ void InlinePass::AnalyzeReturns(Function* func) {
 bool InlinePass::IsInlinableFunction(Function* func) {
   // We can only inline a function if it has blocks.
   if (func->cbegin() == func->cend()) return false;
+
+  // Do not inline functions with DontInline flag.
+  if (func->control_mask() & SpvFunctionControlDontInlineMask) {
+    return false;
+  }
+
   // Do not inline functions with returns in loops. Currently early return
   // functions are inlined by wrapping them in a one trip loop and implementing
   // the returns as a branch to the loop's merge block. However, this can only
@@ -756,8 +768,7 @@ bool InlinePass::IsInlinableFunction(Function* func) {
 
 bool InlinePass::ContainsKillOrTerminateInvocation(Function* func) const {
   return !func->WhileEachInst([](Instruction* inst) {
-    const auto opcode = inst->opcode();
-    return (opcode != SpvOpKill) && (opcode != SpvOpTerminateInvocation);
+    return !spvOpcodeTerminatesExecution(inst->opcode());
   });
 }
 

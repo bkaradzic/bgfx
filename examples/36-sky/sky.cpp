@@ -1,6 +1,6 @@
 /*
  * Copyright 2017 Stanislav Pidhorskyi. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 /*
@@ -37,11 +37,11 @@
  * ==========
  *
  * [1] R. Perez, R. Seals, and J. Michalsky."An All-Weather Model for Sky Luminance Distribution".
- *     Solar Energy, Volume 50, Number 3 (March 1993), pp. 235–245.
+ *     Solar Energy, Volume 50, Number 3 (March 1993), pp. 235-245.
  *
  * [2] A. J. Preetham, Peter Shirley, and Brian Smits. "A Practical Analytic Model for Daylight",
  *     Proceedings of the 26th Annual Conference on Computer Graphics and Interactive Techniques,
- *     1999, pp. 91–100.
+ *     1999, pp. 91-100.
  *     https://www.cs.utah.edu/~shirley/papers/sunsky/sunsky.pdf
  *
  * [3] E. Lengyel, Game Engine Gems, Volume One. Jones & Bartlett Learning, 2010. pp. 219 - 234
@@ -52,7 +52,6 @@
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
 #include "camera.h"
-#include "bounds.h"
 
 #include <map>
 
@@ -63,28 +62,28 @@ namespace
 	typedef bx::Vec3 Color;
 
 	// HDTV rec. 709 matrix.
-	static float M_XYZ2RGB[] =
+	static constexpr float M_XYZ2RGB[] =
 	{
 		 3.240479f, -0.969256f,  0.055648f,
 		-1.53715f,   1.875991f, -0.204043f,
 		-0.49853f,   0.041556f,  1.057311f,
 	};
 
-	// Converts color repesentation from CIE XYZ to RGB color-space.
+	// Converts color representation from CIE XYZ to RGB color-space.
 	Color xyzToRgb(const Color& xyz)
 	{
-		Color rgb;
+		Color rgb(bx::init::None);
 		rgb.x = M_XYZ2RGB[0] * xyz.x + M_XYZ2RGB[3] * xyz.y + M_XYZ2RGB[6] * xyz.z;
 		rgb.y = M_XYZ2RGB[1] * xyz.x + M_XYZ2RGB[4] * xyz.y + M_XYZ2RGB[7] * xyz.z;
 		rgb.z = M_XYZ2RGB[2] * xyz.x + M_XYZ2RGB[5] * xyz.y + M_XYZ2RGB[8] * xyz.z;
 		return rgb;
 	};
 
-
 	// Precomputed luminance of sunlight in XYZ colorspace.
 	// Computed using code from Game Engine Gems, Volume One, chapter 15. Implementation based on Dr. Richard Bird model.
 	// This table is used for piecewise linear interpolation. Transitions from and to 0.0 at sunset and sunrise are highly inaccurate
-	static std::map<float, Color> sunLuminanceXYZTable = {
+	static std::map<float, Color> sunLuminanceXYZTable =
+	{
 		{  5.0f, {  0.000000f,  0.000000f,  0.000000f } },
 		{  7.0f, { 12.703322f, 12.989393f,  9.100411f } },
 		{  8.0f, { 13.202644f, 13.597814f, 11.524929f } },
@@ -107,7 +106,8 @@ namespace
 	// This table is used for piecewise linear interpolation. Day/night transitions are highly inaccurate.
 	// The scale of luminance change in Day/night transitions is not preserved.
 	// Luminance at night was increased to eliminate need the of HDR render.
-	static std::map<float, Color> skyLuminanceXYZTable = {
+	static std::map<float, Color> skyLuminanceXYZTable =
+	{
 		{  0.0f, { 0.308f,    0.308f,    0.411f    } },
 		{  1.0f, { 0.308f,    0.308f,    0.410f    } },
 		{  2.0f, { 0.301f,    0.301f,    0.402f    } },
@@ -134,9 +134,9 @@ namespace
 
 
 	// Turbidity tables. Taken from:
-	// A. J. Preetham, P. Shirley, and B. Smits. A Practical Analytic Model for Daylight. SIGGRAPH ’99
+	// A. J. Preetham, P. Shirley, and B. Smits. A Practical Analytic Model for Daylight. SIGGRAPH '99
 	// Coefficients correspond to xyY colorspace.
-	static Color ABCDE[] =
+	static constexpr Color ABCDE[] =
 	{
 		{ -0.2592f, -0.2608f, -1.4630f },
 		{  0.0008f,  0.0092f,  0.4275f },
@@ -144,7 +144,8 @@ namespace
 		{ -0.8989f, -1.6537f, -2.5771f },
 		{  0.0452f,  0.0529f,  0.3703f },
 	};
-	static Color ABCDE_t[] =
+
+	static constexpr Color ABCDE_t[] =
 	{
 		{ -0.0193f, -0.0167f,  0.1787f },
 		{ -0.0665f, -0.0950f, -0.3554f },
@@ -241,14 +242,14 @@ namespace
 		};
 
 		SunController()
-			: m_latitude(50.0f)
+			: m_northDir(1.0f,  0.0f, 0.0f)
+			, m_sunDir(0.0f, -1.0f, 0.0f)
+			, m_upDir(0.0f,  1.0f, 0.0f)
+			, m_latitude(50.0f)
 			, m_month(June)
 			, m_eclipticObliquity(bx::toRad(23.4f) )
 			, m_delta(0.0f)
 		{
-			m_northDir = { 1.0f,  0.0f, 0.0f };
-			m_sunDir   = { 0.0f, -1.0f, 0.0f };
-			m_upDir    = { 0.0f,  1.0f, 0.0f };
 		}
 
 		void Update(float _time)
@@ -266,7 +267,7 @@ namespace
 	private:
 		void CalculateSunOrbit()
 		{
-			float day = 30.0f * m_month + 15.0f;
+			const float day = 30.0f * float(m_month) + 15.0f;
 			float lambda = 280.46f + 0.9856474f * day;
 			lambda  = bx::toRad(lambda);
 			m_delta = bx::asin(bx::sin(m_eclipticObliquity) * bx::sin(lambda) );
@@ -285,11 +286,11 @@ namespace
 				bx::sin(latitude) * bx::sin(m_delta) + bx::cos(latitude) * bx::cos(m_delta) * bx::cos(hh)
 				);
 
-			const bx::Quaternion rot0 = bx::rotateAxis(m_upDir, -azimuth);
+			const bx::Quaternion rot0 = bx::fromAxisAngle(m_upDir, -azimuth);
 			const bx::Vec3 dir = bx::mul(m_northDir, rot0);
 			const bx::Vec3 uxd = bx::cross(m_upDir, dir);
 
-			const bx::Quaternion rot1 = bx::rotateAxis(uxd, altitude);
+			const bx::Quaternion rot1 = bx::fromAxisAngle(uxd, altitude);
 			m_sunDir = bx::mul(dir, rot1);
 		}
 
@@ -565,11 +566,8 @@ namespace
 
 				imguiEndFrame();
 
-				if (!ImGui::MouseOverArea())
-				{
-					// Update camera.
-					cameraUpdate(deltaTime, m_mouseState);
-				}
+				// Update camera.
+				cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
 				// Set view 0 default viewport.
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height));

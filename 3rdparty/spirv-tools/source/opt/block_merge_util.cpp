@@ -103,11 +103,6 @@ bool CanMergeWithSuccessor(IRContext* context, BasicBlock* block) {
     return false;
   }
 
-  // Don't bother trying to merge unreachable blocks.
-  if (auto dominators = context->GetDominatorAnalysis(block->GetParent())) {
-    if (!dominators->IsReachable(block)) return false;
-  }
-
   Instruction* merge_inst = block->GetMergeInst();
   const bool pred_is_header = IsHeader(block);
   if (pred_is_header && lab_id != merge_inst->GetSingleWordInOperand(0u)) {
@@ -176,10 +171,17 @@ void MergeWithSuccessor(IRContext* context, Function* func,
       // and OpBranchConditional.
       auto terminator = bi->terminator();
       auto& vec = terminator->dbg_line_insts();
-      auto& new_vec = merge_inst->dbg_line_insts();
-      new_vec.insert(new_vec.end(), vec.begin(), vec.end());
-      terminator->clear_dbg_line_insts();
-
+      if (vec.size() > 0) {
+        merge_inst->ClearDbgLineInsts();
+        auto& new_vec = merge_inst->dbg_line_insts();
+        new_vec.insert(new_vec.end(), vec.begin(), vec.end());
+        terminator->ClearDbgLineInsts();
+        for (auto& l_inst : new_vec)
+          context->get_def_use_mgr()->AnalyzeInstDefUse(&l_inst);
+      }
+      // Clear debug scope of terminator to avoid DebugScope
+      // emitted between terminator and merge.
+      terminator->SetDebugScope(DebugScope(kNoDebugScope, kNoInlinedAt));
       // Move the merge instruction to just before the terminator.
       merge_inst->InsertBefore(terminator);
     }

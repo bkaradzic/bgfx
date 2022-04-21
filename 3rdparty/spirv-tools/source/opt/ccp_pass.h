@@ -92,6 +92,22 @@ class CCPPass : public MemPass {
   // generated during propagation.
   analysis::ConstantManager* const_mgr_;
 
+  // Returns a new value for |instr| by computing the meet operation between
+  // its existing value and |val2|.
+  //
+  // Given two values val1 and val2, the meet operation in the constant
+  // lattice uses the following rules:
+  //
+  // meet(val1, UNDEFINED) = val1
+  // meet(val1, VARYING)   = VARYING
+  // meet(val1, val2)      = val1     if val1 == val2
+  // meet(val1, val2)      = VARYING  if val1 != val2
+  //
+  // When two different values meet, the result is always varying because CCP
+  // does not allow lateral transitions in the lattice.  This prevents
+  // infinite cycles during propagation.
+  uint32_t ComputeLatticeMeet(Instruction* instr, uint32_t val2);
+
   // Constant value table.  Each entry <id, const_decl_id> in this map
   // represents the compile-time constant value for |id| as declared by
   // |const_decl_id|. Each |const_decl_id| in this table is an OpConstant
@@ -106,8 +122,9 @@ class CCPPass : public MemPass {
   // Propagator engine used.
   std::unique_ptr<SSAPropagator> propagator_;
 
-  // True if the pass created new constant instructions during propagation.
-  bool created_new_constant_;
+  // Value for the module's ID bound before running CCP. Used to detect whether
+  // propagation created new instructions.
+  uint32_t original_id_bound_;
 };
 
 }  // namespace opt

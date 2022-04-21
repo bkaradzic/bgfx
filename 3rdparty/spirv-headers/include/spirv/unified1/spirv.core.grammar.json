@@ -26,8 +26,8 @@
   ],
   "magic_number" : "0x07230203",
   "major_version" : 1,
-  "minor_version" : 5,
-  "revision" : 3,
+  "minor_version" : 6,
+  "revision" : 1,
   "instruction_printing_class" : [
     {
       "tag"     : "@exclude"
@@ -1735,7 +1735,8 @@
         { "kind" : "IdRef",        "name" : "'x'" },
         { "kind" : "IdRef",        "name" : "'y'" }
       ],
-      "capabilities" : [ "Kernel" ]
+      "capabilities" : [ "Kernel" ],
+      "lastVersion" : "1.5"
     },
     {
       "opname" : "OpOrdered",
@@ -2157,7 +2158,7 @@
         { "kind" : "IdRef",        "name" : "'Offset'" },
         { "kind" : "IdRef",        "name" : "'Count'" }
       ],
-      "capabilities" : [ "Shader" ]
+      "capabilities" : [ "Shader", "BitInstructions" ]
     },
     {
       "opname" : "OpBitFieldSExtract",
@@ -2170,7 +2171,7 @@
         { "kind" : "IdRef",        "name" : "'Offset'" },
         { "kind" : "IdRef",        "name" : "'Count'" }
       ],
-      "capabilities" : [ "Shader" ]
+      "capabilities" : [ "Shader", "BitInstructions" ]
     },
     {
       "opname" : "OpBitFieldUExtract",
@@ -2183,7 +2184,7 @@
         { "kind" : "IdRef",        "name" : "'Offset'" },
         { "kind" : "IdRef",        "name" : "'Count'" }
       ],
-      "capabilities" : [ "Shader" ]
+      "capabilities" : [ "Shader", "BitInstructions" ]
     },
     {
       "opname" : "OpBitReverse",
@@ -2194,7 +2195,7 @@
         { "kind" : "IdResult" },
         { "kind" : "IdRef",        "name" : "'Base'" }
       ],
-      "capabilities" : [ "Shader" ]
+      "capabilities" : [ "Shader", "BitInstructions" ]
     },
     {
       "opname" : "OpBitCount",
@@ -4109,7 +4110,7 @@
         "SPV_KHR_terminate_invocation"
       ],
       "capabilities" : [ "Shader" ],
-      "version" : "None"
+      "version" : "1.6"
     },
     {
       "opname" : "OpSubgroupBallotKHR",
@@ -4197,13 +4198,257 @@
       "version" : "None"
     },
     {
-        "opname" : "OpTypeRayQueryProvisionalKHR",
+      "opname" : "OpTraceRayKHR",
+      "class"  : "Reserved",
+      "opcode" : 4445,
+      "operands" : [
+
+        { "kind" : "IdRef", "name" : "'Accel'" },
+        { "kind" : "IdRef", "name" : "'Ray Flags'" },
+        { "kind" : "IdRef", "name" : "'Cull Mask'" },
+        { "kind" : "IdRef", "name" : "'SBT Offset'" },
+        { "kind" : "IdRef", "name" : "'SBT Stride'" },
+        { "kind" : "IdRef", "name" : "'Miss Index'" },
+        { "kind" : "IdRef", "name" : "'Ray Origin'" },
+        { "kind" : "IdRef", "name" : "'Ray Tmin'" },
+        { "kind" : "IdRef", "name" : "'Ray Direction'" },
+        { "kind" : "IdRef", "name" : "'Ray Tmax'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "RayTracingKHR" ],
+      "extensions" : [ "SPV_KHR_ray_tracing" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpExecuteCallableKHR",
+      "class"  : "Reserved",
+      "opcode" : 4446,
+      "operands" : [
+
+        { "kind" : "IdRef", "name" : "'SBT Index'" },
+        { "kind" : "IdRef", "name" : "'Callable Data'" }
+      ],
+      "capabilities" : [ "RayTracingKHR" ],
+      "extensions" : [ "SPV_KHR_ray_tracing" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConvertUToAccelerationStructureKHR",
+      "class"  : "Reserved",
+      "opcode" : 4447,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",        "name" : "'Accel'" }
+      ],
+      "capabilities" : [ "RayTracingKHR", "RayQueryKHR" ],
+      "extensions" : [ "SPV_KHR_ray_tracing", "SPV_KHR_ray_query" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpIgnoreIntersectionKHR",
+      "class"  : "Reserved",
+      "opcode" : 4448,
+      "capabilities" : [ "RayTracingKHR" ],
+      "extensions" : [ "SPV_KHR_ray_tracing" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTerminateRayKHR",
+      "class"  : "Reserved",
+      "opcode" : 4449,
+      "capabilities" : [ "RayTracingKHR" ],
+      "extensions" : [ "SPV_KHR_ray_tracing" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSDot",
+      "class"  : "Arithmetic",
+      "opcode" : 4450,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Vector 1'" },
+        { "kind" : "IdRef", "name" : "'Vector 2'" },
+        { "kind" : "PackedVectorFormat", "name" : "'Packed Vector Format'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "DotProduct" ],
+      "version" : "1.6"
+    },
+    {
+      "opname" : "OpSDotKHR",
+      "class"  : "Arithmetic",
+      "opcode" : 4450,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Vector 1'" },
+        { "kind" : "IdRef", "name" : "'Vector 2'" },
+        { "kind" : "PackedVectorFormat", "name" : "'Packed Vector Format'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "DotProductKHR" ],
+      "extensions" : [ "SPV_KHR_integer_dot_product" ],
+      "version" : "1.6"
+    },
+    {
+      "opname" : "OpUDot",
+      "class"  : "Arithmetic",
+      "opcode" : 4451,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Vector 1'" },
+        { "kind" : "IdRef", "name" : "'Vector 2'" },
+        { "kind" : "PackedVectorFormat", "name" : "'Packed Vector Format'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "DotProduct" ],
+      "version" : "1.6"
+    },
+    {
+      "opname" : "OpUDotKHR",
+      "class"  : "Arithmetic",
+      "opcode" : 4451,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Vector 1'" },
+        { "kind" : "IdRef", "name" : "'Vector 2'" },
+        { "kind" : "PackedVectorFormat", "name" : "'Packed Vector Format'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "DotProductKHR" ],
+      "extensions" : [ "SPV_KHR_integer_dot_product" ],
+      "version" : "1.6"
+    },
+    {
+      "opname" : "OpSUDot",
+      "class"  : "Arithmetic",
+      "opcode" : 4452,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Vector 1'" },
+        { "kind" : "IdRef", "name" : "'Vector 2'" },
+        { "kind" : "PackedVectorFormat", "name" : "'Packed Vector Format'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "DotProduct" ],
+      "version" : "1.6"
+    },
+    {
+      "opname" : "OpSUDotKHR",
+      "class"  : "Arithmetic",
+      "opcode" : 4452,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Vector 1'" },
+        { "kind" : "IdRef", "name" : "'Vector 2'" },
+        { "kind" : "PackedVectorFormat", "name" : "'Packed Vector Format'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "DotProductKHR" ],
+      "extensions" : [ "SPV_KHR_integer_dot_product" ],
+      "version" : "1.6"
+    },
+    {
+      "opname" : "OpSDotAccSat",
+      "class"  : "Arithmetic",
+      "opcode" : 4453,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Vector 1'" },
+        { "kind" : "IdRef", "name" : "'Vector 2'" },
+        { "kind" : "IdRef", "name" : "'Accumulator'" },
+        { "kind" : "PackedVectorFormat", "name" : "'Packed Vector Format'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "DotProduct" ],
+      "version" : "1.6"
+    },
+    {
+      "opname" : "OpSDotAccSatKHR",
+      "class"  : "Arithmetic",
+      "opcode" : 4453,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Vector 1'" },
+        { "kind" : "IdRef", "name" : "'Vector 2'" },
+        { "kind" : "IdRef", "name" : "'Accumulator'" },
+        { "kind" : "PackedVectorFormat", "name" : "'Packed Vector Format'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "DotProductKHR" ],
+      "extensions" : [ "SPV_KHR_integer_dot_product" ],
+      "version" : "1.6"
+    },
+    {
+      "opname" : "OpUDotAccSat",
+      "class"  : "Arithmetic",
+      "opcode" : 4454,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Vector 1'" },
+        { "kind" : "IdRef", "name" : "'Vector 2'" },
+        { "kind" : "IdRef", "name" : "'Accumulator'" },
+        { "kind" : "PackedVectorFormat", "name" : "'Packed Vector Format'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "DotProduct" ],
+      "version" : "1.6"
+    },
+    {
+      "opname" : "OpUDotAccSatKHR",
+      "class"  : "Arithmetic",
+      "opcode" : 4454,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Vector 1'" },
+        { "kind" : "IdRef", "name" : "'Vector 2'" },
+        { "kind" : "IdRef", "name" : "'Accumulator'" },
+        { "kind" : "PackedVectorFormat", "name" : "'Packed Vector Format'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "DotProductKHR" ],
+      "extensions" : [ "SPV_KHR_integer_dot_product" ],
+      "version" : "1.6"
+    },
+    {
+      "opname" : "OpSUDotAccSat",
+      "class"  : "Arithmetic",
+      "opcode" : 4455,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Vector 1'" },
+        { "kind" : "IdRef", "name" : "'Vector 2'" },
+        { "kind" : "IdRef", "name" : "'Accumulator'" },
+        { "kind" : "PackedVectorFormat", "name" : "'Packed Vector Format'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "DotProduct" ],
+      "version" : "1.6"
+    },
+    {
+      "opname" : "OpSUDotAccSatKHR",
+      "class"  : "Arithmetic",
+      "opcode" : 4455,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Vector 1'" },
+        { "kind" : "IdRef", "name" : "'Vector 2'" },
+        { "kind" : "IdRef", "name" : "'Accumulator'" },
+        { "kind" : "PackedVectorFormat", "name" : "'Packed Vector Format'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "DotProductKHR" ],
+      "extensions" : [ "SPV_KHR_integer_dot_product" ],
+      "version" : "1.6"
+    },
+    {
+        "opname" : "OpTypeRayQueryKHR",
         "class" : "Reserved",
         "opcode" : 4472,
         "operands" : [
             { "kind" : "IdResult" }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -4246,7 +4491,7 @@
             }
 
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -4260,7 +4505,7 @@
                 "name" : "'RayQuery'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -4278,7 +4523,7 @@
                 "name" : "'HitT'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -4292,7 +4537,7 @@
                 "name" : "'RayQuery'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -4308,7 +4553,7 @@
                 "name" : "'RayQuery'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -4328,7 +4573,7 @@
                 "name" : "'Intersection'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -4488,7 +4733,7 @@
       "operands" : [
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
-        { "kind" : "IdScope", "name" : "'Execution'" }
+        { "kind" : "IdScope", "name" : "'Scope'" }
       ],
       "capabilities" : [ "ShaderClockKHR" ],
       "extensions" : [ "SPV_KHR_shader_clock" ],
@@ -4546,7 +4791,7 @@
         { "kind" : "IdRef", "name" : "'Hit'" },
         { "kind" : "IdRef", "name" : "'HitKind'" }
       ],
-      "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+      "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
       "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
       "version" : "None"
     },
@@ -4560,7 +4805,7 @@
         { "kind" : "IdRef", "name" : "'Hit'" },
         { "kind" : "IdRef", "name" : "'HitKind'" }
       ],
-      "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+      "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
       "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
       "version" : "None"
     },
@@ -4568,32 +4813,16 @@
       "opname" : "OpIgnoreIntersectionNV",
       "class"  : "Reserved",
       "opcode" : 5335,
-      "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
-      "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-      "version" : "None"
-    },
-    {
-      "opname" : "OpIgnoreIntersectionKHR",
-      "class"  : "Reserved",
-      "opcode" : 5335,
-      "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
-      "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
+      "capabilities" : [ "RayTracingNV" ],
+      "extensions" : [ "SPV_NV_ray_tracing" ],
       "version" : "None"
     },
     {
       "opname" : "OpTerminateRayNV",
       "class"  : "Reserved",
       "opcode" : 5336,
-      "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
-      "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-      "version" : "None"
-    },
-    {
-      "opname" : "OpTerminateRayKHR",
-      "class"  : "Reserved",
-      "opcode" : 5336,
-      "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
-      "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
+      "capabilities" : [ "RayTracingNV" ],
+      "extensions" : [ "SPV_NV_ray_tracing" ],
       "version" : "None"
     },
     {
@@ -4614,14 +4843,14 @@
         { "kind" : "IdRef", "name" : "'Ray Tmax'" },
         { "kind" : "IdRef", "name" : "'PayloadId'" }
       ],
-      "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
-      "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
+      "capabilities" : [ "RayTracingNV" ],
+      "extensions" : [ "SPV_NV_ray_tracing" ],
       "version" : "None"
     },
     {
-      "opname" : "OpTraceRayKHR",
+      "opname" : "OpTraceMotionNV",
       "class"  : "Reserved",
-      "opcode" : 5337,
+      "opcode" : 5338,
       "operands" : [
 
         { "kind" : "IdRef", "name" : "'Accel'" },
@@ -4634,10 +4863,34 @@
         { "kind" : "IdRef", "name" : "'Ray Tmin'" },
         { "kind" : "IdRef", "name" : "'Ray Direction'" },
         { "kind" : "IdRef", "name" : "'Ray Tmax'" },
+        { "kind" : "IdRef", "name" : "'Time'" },
         { "kind" : "IdRef", "name" : "'PayloadId'" }
       ],
-      "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
-      "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
+      "capabilities" : [ "RayTracingMotionBlurNV" ],
+      "extensions" : [ "SPV_NV_ray_tracing_motion_blur" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTraceRayMotionNV",
+      "class"  : "Reserved",
+      "opcode" : 5339,
+      "operands" : [
+
+        { "kind" : "IdRef", "name" : "'Accel'" },
+        { "kind" : "IdRef", "name" : "'Ray Flags'" },
+        { "kind" : "IdRef", "name" : "'Cull Mask'" },
+        { "kind" : "IdRef", "name" : "'SBT Offset'" },
+        { "kind" : "IdRef", "name" : "'SBT Stride'" },
+        { "kind" : "IdRef", "name" : "'Miss Index'" },
+        { "kind" : "IdRef", "name" : "'Ray Origin'" },
+        { "kind" : "IdRef", "name" : "'Ray Tmin'" },
+        { "kind" : "IdRef", "name" : "'Ray Direction'" },
+        { "kind" : "IdRef", "name" : "'Ray Tmax'" },
+        { "kind" : "IdRef", "name" : "'Time'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "RayTracingMotionBlurNV" ],
+      "extensions" : [ "SPV_NV_ray_tracing_motion_blur" ],
       "version" : "None"
     },
     {
@@ -4647,7 +4900,7 @@
       "operands" : [
         { "kind" : "IdResult" }
       ],
-      "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR", "RayQueryProvisionalKHR" ],
+      "capabilities" : [ "RayTracingNV" , "RayTracingKHR", "RayQueryKHR" ],
       "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing", "SPV_KHR_ray_query" ],
       "version" : "None"
     },
@@ -4658,7 +4911,7 @@
       "operands" : [
         { "kind" : "IdResult" }
       ],
-      "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR", "RayQueryProvisionalKHR" ],
+      "capabilities" : [ "RayTracingNV" , "RayTracingKHR", "RayQueryKHR" ],
       "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing", "SPV_KHR_ray_query" ],
       "version" : "None"
     },
@@ -4671,21 +4924,8 @@
         { "kind" : "IdRef", "name" : "'SBT Index'" },
         { "kind" : "IdRef", "name" : "'Callable DataId'" }
       ],
-      "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
-      "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-      "version" : "None"
-    },
-    {
-      "opname" : "OpExecuteCallableKHR",
-      "class"  : "Reserved",
-      "opcode" : 5344,
-      "operands" : [
-
-        { "kind" : "IdRef", "name" : "'SBT Index'" },
-        { "kind" : "IdRef", "name" : "'Callable DataId'" }
-      ],
-      "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
-      "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
+      "capabilities" : [ "RayTracingNV" ],
+      "extensions" : [ "SPV_NV_ray_tracing" ],
       "version" : "None"
     },
     {
@@ -4779,12 +5019,18 @@
       "version" : "None"
     },
     {
+      "opname" : "OpDemoteToHelperInvocation",
+      "class"  : "Control-Flow",
+      "opcode" : 5380,
+      "capabilities" : [ "DemoteToHelperInvocation" ],
+      "version" : "1.6"
+    },
+    {
       "opname" : "OpDemoteToHelperInvocationEXT",
-      "class"  : "Reserved",
+      "class"  : "Control-Flow",
       "opcode" : 5380,
       "capabilities" : [ "DemoteToHelperInvocationEXT" ],
-      "extensions" : [ "SPV_EXT_demote_to_helper_invocation" ],
-      "version" : "None"
+      "version" : "1.6"
     },
     {
       "opname" : "OpIsHelperInvocationEXT",
@@ -4796,6 +5042,88 @@
       ],
       "capabilities" : [ "DemoteToHelperInvocationEXT" ],
       "extensions" : [ "SPV_EXT_demote_to_helper_invocation" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConvertUToImageNV",
+      "class"  : "Reserved",
+      "opcode" : 5391,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Operand'" }
+      ],
+      "capabilities" : [ "BindlessTextureNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConvertUToSamplerNV",
+      "class"  : "Reserved",
+      "opcode" : 5392,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Operand'" }
+      ],
+      "capabilities" : [ "BindlessTextureNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConvertImageToUNV",
+      "class"  : "Reserved",
+      "opcode" : 5393,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Operand'" }
+      ],
+      "capabilities" : [ "BindlessTextureNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConvertSamplerToUNV",
+      "class"  : "Reserved",
+      "opcode" : 5394,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Operand'" }
+      ],
+      "capabilities" : [ "BindlessTextureNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConvertUToSampledImageNV",
+      "class"  : "Reserved",
+      "opcode" : 5395,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Operand'" }
+      ],
+      "capabilities" : [ "BindlessTextureNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConvertSampledImageToUNV",
+      "class"  : "Reserved",
+      "opcode" : 5396,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Operand'" }
+      ],
+      "capabilities" : [ "BindlessTextureNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSamplerImageAddressingModeNV",
+      "class"  : "Reserved",
+      "opcode" : 5397,
+      "operands" : [
+        { "kind" : "LiteralInteger", "name" : "'Bit Width'" }
+      ],
+      "capabilities" : [ "BindlessTextureNV" ],
       "version" : "None"
     },
     {
@@ -5110,7 +5438,7 @@
       "version" : "None"
     },
     {
-      "opname" : "OpFunctionPointerINTEL",
+      "opname" : "OpConstantFunctionPointerINTEL",
       "class"  : "@exclude",
       "opcode" : 5600,
       "operands" : [
@@ -5133,6 +5461,101 @@
       ],
       "capabilities" : [ "FunctionPointersINTEL" ],
       "extensions" : [ "SPV_INTEL_function_pointers" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAsmTargetINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5609,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "LiteralString", "name" : "'Asm target'" }
+      ],
+      "capabilities" : [ "AsmINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAsmINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5610,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Asm type'" },
+        { "kind" : "IdRef", "name" : "'Target'" },
+        { "kind" : "LiteralString", "name" : "'Asm instructions'" },
+        { "kind" : "LiteralString", "name" : "'Constraints'" }
+      ],
+      "capabilities" : [ "AsmINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAsmCallINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5611,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Asm'" },
+        { "kind" : "IdRef", "quantifier" : "*", "name" : "'Argument 0'" }
+      ],
+      "capabilities" : [ "AsmINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAtomicFMinEXT",
+      "class"  : "Atomic",
+      "opcode" : 5614,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",             "name" : "'Pointer'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
+        { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
+        { "kind" : "IdRef",             "name" : "'Value'" }
+      ],
+      "capabilities" : [ "AtomicFloat16MinMaxEXT", "AtomicFloat32MinMaxEXT", "AtomicFloat64MinMaxEXT" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAtomicFMaxEXT",
+      "class"  : "Atomic",
+      "opcode" : 5615,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",             "name" : "'Pointer'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
+        { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
+        { "kind" : "IdRef",             "name" : "'Value'" }
+      ],
+      "capabilities" : [ "AtomicFloat16MinMaxEXT", "AtomicFloat32MinMaxEXT", "AtomicFloat64MinMaxEXT" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAssumeTrueKHR",
+      "class"  : "Miscellaneous",
+      "opcode" : 5630,
+      "operands" : [
+        { "kind" : "IdRef", "name" : "'Condition'" }
+      ],
+      "capabilities" : [ "ExpectAssumeKHR" ],
+      "extensions" : [ "SPV_KHR_expect_assume" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpExpectKHR",
+      "class"  : "Miscellaneous",
+      "opcode" : 5631,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Value'" },
+        { "kind" : "IdRef", "name" : "'ExpectedValue'" }
+      ],
+      "capabilities" : [ "ExpectAssumeKHR" ],
+      "extensions" : [ "SPV_KHR_expect_assume" ],
       "version" : "None"
     },
     {
@@ -6699,6 +7122,743 @@
       "version" : "None"
     },
     {
+      "opname" : "OpVariableLengthArrayINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5818,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Lenght'" }
+      ],
+      "capabilities" : [ "VariableLengthArrayINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSaveMemoryINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5819,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "VariableLengthArrayINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpRestoreMemoryINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5820,
+      "operands" : [
+        { "kind" : "IdRef", "name" : "'Ptr'" }
+      ],
+      "capabilities" : [ "VariableLengthArrayINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatSinCosPiINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5840,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'FromSign'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatCastINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5841,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatCastFromIntINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5842,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'FromSign'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatCastToIntINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5843,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatAddINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5846,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "IdRef", "name" : "'B'" },
+        { "kind" : "LiteralInteger", "name" : "'M2'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatSubINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5847,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "IdRef", "name" : "'B'" },
+        { "kind" : "LiteralInteger", "name" : "'M2'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatMulINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5848,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "IdRef", "name" : "'B'" },
+        { "kind" : "LiteralInteger", "name" : "'M2'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatDivINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5849,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "IdRef", "name" : "'B'" },
+        { "kind" : "LiteralInteger", "name" : "'M2'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatGTINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5850,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "IdRef", "name" : "'B'" },
+        { "kind" : "LiteralInteger", "name" : "'M2'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatGEINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5851,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "IdRef", "name" : "'B'" },
+        { "kind" : "LiteralInteger", "name" : "'M2'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatLTINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5852,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "IdRef", "name" : "'B'" },
+        { "kind" : "LiteralInteger", "name" : "'M2'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatLEINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5853,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "IdRef", "name" : "'B'" },
+        { "kind" : "LiteralInteger", "name" : "'M2'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatEQINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5854,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "IdRef", "name" : "'B'" },
+        { "kind" : "LiteralInteger", "name" : "'M2'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatRecipINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5855,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatRSqrtINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5856,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatCbrtINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5857,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatHypotINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5858,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "IdRef", "name" : "'B'" },
+        { "kind" : "LiteralInteger", "name" : "'M2'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatSqrtINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5859,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatLogINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5860,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatLog2INTEL",
+      "class"  : "@exclude",
+      "opcode" : 5861,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatLog10INTEL",
+      "class"  : "@exclude",
+      "opcode" : 5862,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatLog1pINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5863,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatExpINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5864,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatExp2INTEL",
+      "class"  : "@exclude",
+      "opcode" : 5865,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatExp10INTEL",
+      "class"  : "@exclude",
+      "opcode" : 5866,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatExpm1INTEL",
+      "class"  : "@exclude",
+      "opcode" : 5867,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatSinINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5868,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatCosINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5869,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatSinCosINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5870,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatSinPiINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5871,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatCosPiINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5872,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatASinINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5873,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatASinPiINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5874,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatACosINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5875,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatACosPiINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5876,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatATanINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5877,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatATanPiINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5878,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatATan2INTEL",
+      "class"  : "@exclude",
+      "opcode" : 5879,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "IdRef", "name" : "'B'" },
+        { "kind" : "LiteralInteger", "name" : "'M2'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatPowINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5880,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "IdRef", "name" : "'B'" },
+        { "kind" : "LiteralInteger", "name" : "'M2'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatPowRINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5881,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "IdRef", "name" : "'B'" },
+        { "kind" : "LiteralInteger", "name" : "'M2'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpArbitraryFloatPowNINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5882,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'A'" },
+        { "kind" : "LiteralInteger", "name" : "'M1'" },
+        { "kind" : "IdRef", "name" : "'B'" },
+        { "kind" : "LiteralInteger", "name" : "'Mout'" },
+        { "kind" : "LiteralInteger", "name" : "'EnableSubnormals'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingMode'" },
+        { "kind" : "LiteralInteger", "name" : "'RoundingAccuracy'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFloatingPointINTEL" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpLoopControlINTEL",
       "class"  : "Reserved",
       "opcode" : 5887,
@@ -6707,6 +7867,265 @@
       ],
       "capabilities" : [ "UnstructuredLoopControlsINTEL" ],
       "extensions" : [ "SPV_INTEL_unstructured_loop_controls" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAliasDomainDeclINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5911,
+      "operands" : [
+        { "kind" : "IdResult"},
+        { "kind" : "IdRef", "quantifier" : "?", "name" : "'Name'" }
+      ],
+      "capabilities" : [ "MemoryAccessAliasingINTEL" ],
+      "extensions" : [ "SPV_INTEL_memory_access_aliasing" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAliasScopeDeclINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5912,
+      "operands" : [
+        { "kind" : "IdResult"},
+        { "kind" : "IdRef", "name" : "'Alias Domain'"},
+        { "kind" : "IdRef", "quantifier" : "?", "name" : "'Name'" }
+      ],
+      "capabilities" : [ "MemoryAccessAliasingINTEL" ],
+      "extensions" : [ "SPV_INTEL_memory_access_aliasing" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpAliasScopeListDeclINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5913,
+      "operands" : [
+        { "kind" : "IdResult"},
+        { "kind" : "IdRef", "quantifier" : "*", "name" : "'AliasScope1, AliasScope2, ...'" }
+      ],
+      "capabilities" : [ "MemoryAccessAliasingINTEL" ],
+      "extensions" : [ "SPV_INTEL_memory_access_aliasing" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpFixedSqrtINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5923,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Input Type'" },
+        { "kind" : "IdRef", "name" : "'Input'" },
+        { "kind" : "LiteralInteger", "name" : "'S'" },
+        { "kind" : "LiteralInteger", "name" : "'I'" },
+        { "kind" : "LiteralInteger", "name" : "'rI'" },
+        { "kind" : "LiteralInteger", "name" : "'Q'" },
+        { "kind" : "LiteralInteger", "name" : "'O'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpFixedRecipINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5924,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Input Type'" },
+        { "kind" : "IdRef", "name" : "'Input'" },
+        { "kind" : "LiteralInteger", "name" : "'S'" },
+        { "kind" : "LiteralInteger", "name" : "'I'" },
+        { "kind" : "LiteralInteger", "name" : "'rI'" },
+        { "kind" : "LiteralInteger", "name" : "'Q'" },
+        { "kind" : "LiteralInteger", "name" : "'O'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpFixedRsqrtINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5925,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Input Type'" },
+        { "kind" : "IdRef", "name" : "'Input'" },
+        { "kind" : "LiteralInteger", "name" : "'S'" },
+        { "kind" : "LiteralInteger", "name" : "'I'" },
+        { "kind" : "LiteralInteger", "name" : "'rI'" },
+        { "kind" : "LiteralInteger", "name" : "'Q'" },
+        { "kind" : "LiteralInteger", "name" : "'O'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpFixedSinINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5926,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Input Type'" },
+        { "kind" : "IdRef", "name" : "'Input'" },
+        { "kind" : "LiteralInteger", "name" : "'S'" },
+        { "kind" : "LiteralInteger", "name" : "'I'" },
+        { "kind" : "LiteralInteger", "name" : "'rI'" },
+        { "kind" : "LiteralInteger", "name" : "'Q'" },
+        { "kind" : "LiteralInteger", "name" : "'O'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpFixedCosINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5927,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Input Type'" },
+        { "kind" : "IdRef", "name" : "'Input'" },
+        { "kind" : "LiteralInteger", "name" : "'S'" },
+        { "kind" : "LiteralInteger", "name" : "'I'" },
+        { "kind" : "LiteralInteger", "name" : "'rI'" },
+        { "kind" : "LiteralInteger", "name" : "'Q'" },
+        { "kind" : "LiteralInteger", "name" : "'O'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpFixedSinCosINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5928,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Input Type'" },
+        { "kind" : "IdRef", "name" : "'Input'" },
+        { "kind" : "LiteralInteger", "name" : "'S'" },
+        { "kind" : "LiteralInteger", "name" : "'I'" },
+        { "kind" : "LiteralInteger", "name" : "'rI'" },
+        { "kind" : "LiteralInteger", "name" : "'Q'" },
+        { "kind" : "LiteralInteger", "name" : "'O'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpFixedSinPiINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5929,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Input Type'" },
+        { "kind" : "IdRef", "name" : "'Input'" },
+        { "kind" : "LiteralInteger", "name" : "'S'" },
+        { "kind" : "LiteralInteger", "name" : "'I'" },
+        { "kind" : "LiteralInteger", "name" : "'rI'" },
+        { "kind" : "LiteralInteger", "name" : "'Q'" },
+        { "kind" : "LiteralInteger", "name" : "'O'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpFixedCosPiINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5930,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Input Type'" },
+        { "kind" : "IdRef", "name" : "'Input'" },
+        { "kind" : "LiteralInteger", "name" : "'S'" },
+        { "kind" : "LiteralInteger", "name" : "'I'" },
+        { "kind" : "LiteralInteger", "name" : "'rI'" },
+        { "kind" : "LiteralInteger", "name" : "'Q'" },
+        { "kind" : "LiteralInteger", "name" : "'O'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpFixedSinCosPiINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5931,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Input Type'" },
+        { "kind" : "IdRef", "name" : "'Input'" },
+        { "kind" : "LiteralInteger", "name" : "'S'" },
+        { "kind" : "LiteralInteger", "name" : "'I'" },
+        { "kind" : "LiteralInteger", "name" : "'rI'" },
+        { "kind" : "LiteralInteger", "name" : "'Q'" },
+        { "kind" : "LiteralInteger", "name" : "'O'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpFixedLogINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5932,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Input Type'" },
+        { "kind" : "IdRef", "name" : "'Input'" },
+        { "kind" : "LiteralInteger", "name" : "'S'" },
+        { "kind" : "LiteralInteger", "name" : "'I'" },
+        { "kind" : "LiteralInteger", "name" : "'rI'" },
+        { "kind" : "LiteralInteger", "name" : "'Q'" },
+        { "kind" : "LiteralInteger", "name" : "'O'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpFixedExpINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5933,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Input Type'" },
+        { "kind" : "IdRef", "name" : "'Input'" },
+        { "kind" : "LiteralInteger", "name" : "'S'" },
+        { "kind" : "LiteralInteger", "name" : "'I'" },
+        { "kind" : "LiteralInteger", "name" : "'rI'" },
+        { "kind" : "LiteralInteger", "name" : "'Q'" },
+        { "kind" : "LiteralInteger", "name" : "'O'" }
+      ],
+      "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpPtrCastToCrossWorkgroupINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5934,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Pointer'" }
+      ],
+      "capabilities" : [ "USMStorageClassesINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpCrossWorkgroupCastToPtrINTEL",
+      "class"  : "@exclude",
+      "opcode" : 5938,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Pointer'" }
+      ],
+      "capabilities" : [ "USMStorageClassesINTEL" ],
       "version" : "None"
     },
     {
@@ -6763,7 +8182,7 @@
                 "name" : "'RayQuery'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -6779,7 +8198,7 @@
                 "name" : "'RayQuery'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -6799,7 +8218,7 @@
                 "name" : "'Intersection'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -6819,7 +8238,7 @@
                 "name" : "'Intersection'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -6839,7 +8258,7 @@
                 "name" : "'Intersection'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -6859,7 +8278,7 @@
                 "name" : "'Intersection'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -6879,7 +8298,7 @@
                 "name" : "'Intersection'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -6899,7 +8318,7 @@
                 "name" : "'Intersection'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -6919,7 +8338,7 @@
                 "name" : "'Intersection'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -6939,7 +8358,7 @@
                 "name" : "'Intersection'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -6955,7 +8374,7 @@
                 "name" : "'RayQuery'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -6975,7 +8394,7 @@
                 "name" : "'Intersection'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -6995,7 +8414,7 @@
                 "name" : "'Intersection'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -7011,7 +8430,7 @@
                 "name" : "'RayQuery'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -7027,7 +8446,7 @@
                 "name" : "'RayQuery'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -7047,7 +8466,7 @@
                 "name" : "'Intersection'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -7067,7 +8486,7 @@
                 "name" : "'Intersection'"
             }
         ],
-        "capabilities" : [ "RayQueryProvisionalKHR" ],
+        "capabilities" : [ "RayQueryKHR" ],
         "extensions" : [ "SPV_KHR_ray_query" ],
         "version" : "None"
     },
@@ -7083,8 +8502,188 @@
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
         { "kind" : "IdRef",             "name" : "'Value'" }
       ],
-      "capabilities" : [ "AtomicFloat32AddEXT", "AtomicFloat64AddEXT" ],
+      "capabilities" : [ "AtomicFloat16AddEXT", "AtomicFloat32AddEXT", "AtomicFloat64AddEXT" ],
       "extensions" : [ "SPV_EXT_shader_atomic_float_add" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeBufferSurfaceINTEL",
+      "class"  : "Type-Declaration",
+      "opcode" : 6086,
+      "operands" : [
+        { "kind" : "IdResult" },
+        {
+          "kind" : "AccessQualifier",
+          "name" : "'AccessQualifier'"
+        }
+      ],
+      "capabilities" : [ "VectorComputeINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeStructContinuedINTEL",
+      "class"  : "Type-Declaration",
+      "opcode" : 6090,
+      "operands" : [
+        { "kind" : "IdRef",    "quantifier" : "*", "name" : "'Member 0 type', +\n'member 1 type', +\n..." }
+      ],
+      "capabilities" : [ "LongConstantCompositeINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConstantCompositeContinuedINTEL",
+      "class"  : "Constant-Creation",
+      "opcode" : 6091,
+      "operands" : [
+        { "kind" : "IdRef",        "quantifier" : "*", "name" : "'Constituents'" }
+      ],
+      "capabilities" : [ "LongConstantCompositeINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSpecConstantCompositeContinuedINTEL",
+      "class"  : "Constant-Creation",
+      "opcode" : 6092,
+      "operands" : [
+        { "kind" : "IdRef",        "quantifier" : "*", "name" : "'Constituents'" }
+      ],
+      "capabilities" : [ "LongConstantCompositeINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpControlBarrierArriveINTEL",
+      "class"  : "Barrier",
+      "opcode" : 6142,
+      "operands" : [
+        { "kind" : "IdScope",           "name" : "'Execution'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
+        { "kind" : "IdMemorySemantics", "name" : "'Semantics'" }
+      ],
+      "capabilities" : [ "SplitBarrierINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpControlBarrierWaitINTEL",
+      "class"  : "Barrier",
+      "opcode" : 6143,
+      "operands" : [
+        { "kind" : "IdScope",           "name" : "'Execution'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
+        { "kind" : "IdMemorySemantics", "name" : "'Semantics'" }
+      ],
+      "capabilities" : [ "SplitBarrierINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupIMulKHR",
+      "class"  : "Group",
+      "opcode" : 6401,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupFMulKHR",
+      "class"  : "Group",
+      "opcode" : 6402,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupBitwiseAndKHR",
+      "class"  : "Group",
+      "opcode" : 6403,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupBitwiseOrKHR",
+      "class"  : "Group",
+      "opcode" : 6404,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupBitwiseXorKHR",
+      "class"  : "Group",
+      "opcode" : 6405,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupLogicalAndKHR",
+      "class"  : "Group",
+      "opcode" : 6406,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupLogicalOrKHR",
+      "class"  : "Group",
+      "opcode" : 6407,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupLogicalXorKHR",
+      "class"  : "Group",
+      "opcode" : 6408,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope",        "name" : "'Execution'" },
+        { "kind" : "GroupOperation", "name" : "'Operation'" },
+        { "kind" : "IdRef",          "name" : "'X'" }
+      ],
+      "capabilities" : [ "GroupUniformArithmeticKHR" ],
       "version" : "None"
     }
   ],
@@ -7231,6 +8830,18 @@
           "enumerant" : "ZeroExtend",
           "value" : "0x2000",
           "version" : "1.4"
+        },
+        {
+          "enumerant" : "Nontemporal",
+          "value" : "0x4000",
+          "version" : "1.6"
+        },
+        {
+          "enumerant" : "Offsets",
+          "value" : "0x10000",
+          "parameters" : [
+            { "kind" : "IdRef" }
+          ]
         }
       ]
     },
@@ -7244,28 +8855,35 @@
         },
         {
           "enumerant" : "NotNaN",
-          "value" : "0x0001",
-          "capabilities" : [ "Kernel" ]
+          "value" : "0x0001"
         },
         {
           "enumerant" : "NotInf",
-          "value" : "0x0002",
-          "capabilities" : [ "Kernel" ]
+          "value" : "0x0002"
         },
         {
           "enumerant" : "NSZ",
-          "value" : "0x0004",
-          "capabilities" : [ "Kernel" ]
+          "value" : "0x0004"
         },
         {
           "enumerant" : "AllowRecip",
-          "value" : "0x0008",
-          "capabilities" : [ "Kernel" ]
+          "value" : "0x0008"
         },
         {
           "enumerant" : "Fast",
-          "value" : "0x0010",
-          "capabilities" : [ "Kernel" ]
+          "value" : "0x0010"
+        },
+        {
+          "enumerant" : "AllowContractFastINTEL",
+          "value" : "0x10000",
+          "capabilities" : [ "FPFastMathModeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AllowReassocINTEL",
+          "value" : "0x20000",
+          "capabilities" : [ "FPFastMathModeINTEL" ],
+          "version" : "None"
         }
       ]
     },
@@ -7425,6 +9043,16 @@
           "capabilities" : [ "FPGALoopControlsINTEL" ],
           "extensions" : [ "SPV_INTEL_fpga_loop_controls" ],
           "version" : "None"
+        },
+        {
+          "enumerant" : "NoFusionINTEL",
+          "value" : "0x800000",
+          "parameters" : [
+            { "kind" : "LiteralInteger" }
+          ],
+          "capabilities" : [ "FPGALoopControlsINTEL" ],
+          "extensions" : [ "SPV_INTEL_fpga_loop_controls" ],
+          "version" : "None"
         }
       ]
     },
@@ -7451,6 +9079,12 @@
         {
           "enumerant" : "Const",
           "value" : "0x0008"
+        },
+        {
+          "enumerant" : "OptNoneINTEL",
+          "value" : "0x10000",
+          "capabilities" : [  "OptNoneINTEL" ],
+          "version" : "None"
         }
       ]
     },
@@ -7629,6 +9263,26 @@
           "capabilities" : [ "VulkanMemoryModel" ],
           "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
           "version" : "1.5"
+        },
+        {
+          "enumerant" : "AliasScopeINTELMask",
+          "value" : "0x10000",
+          "parameters" : [
+            { "kind" : "IdRef" }
+          ],
+          "capabilities" : [ "MemoryAccessAliasingINTEL" ],
+          "extensions" : [ "SPV_INTEL_memory_access_aliasing" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "NoAliasINTELMask",
+          "parameters" : [
+            { "kind" : "IdRef" }
+          ],
+          "value" : "0x20000",
+          "capabilities" : [ "MemoryAccessAliasingINTEL" ],
+          "extensions" : [ "SPV_INTEL_memory_access_aliasing" ],
+          "version" : "None"
         }
       ]
     },
@@ -7654,67 +9308,97 @@
         {
           "enumerant" : "NoneKHR",
           "value" : "0x0000",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR","RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "OpaqueKHR",
           "value" : "0x0001",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR","RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "NoOpaqueKHR",
           "value" : "0x0002",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR","RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "TerminateOnFirstHitKHR",
           "value" : "0x0004",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR","RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "SkipClosestHitShaderKHR",
           "value" : "0x0008",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR","RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "CullBackFacingTrianglesKHR",
           "value" : "0x0010",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR","RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "CullFrontFacingTrianglesKHR",
           "value" : "0x0020",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR","RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "CullOpaqueKHR",
           "value" : "0x0040",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR","RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "CullNoOpaqueKHR",
           "value" : "0x0080",
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR","RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "SkipTrianglesKHR",
           "value" : "0x0100",
-          "capabilities" : [ "RayTraversalPrimitiveCullingProvisionalKHR" ],
+          "capabilities" : [ "RayTraversalPrimitiveCullingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "SkipAABBsKHR",
           "value" : "0x0200",
-          "capabilities" : [ "RayTraversalPrimitiveCullingProvisionalKHR" ],
+          "capabilities" : [ "RayTraversalPrimitiveCullingKHR" ],
+          "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "BitEnum",
+      "kind" : "FragmentShadingRate",
+      "enumerants" : [
+        {
+          "enumerant" : "Vertical2Pixels",
+          "value" : "0x0001",
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Vertical4Pixels",
+          "value" : "0x0002",
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Horizontal2Pixels",
+          "value" : "0x0004",
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Horizontal4Pixels",
+          "value" : "0x0008",
+          "capabilities" : [ "FragmentShadingRateKHR" ],
           "version" : "None"
         }
       ]
@@ -7746,6 +9430,10 @@
         {
           "enumerant" : "HLSL",
           "value" : 5
+        },
+        {
+          "enumerant" : "CPP_for_OpenCL",
+          "value" : 6
         }
       ]
     },
@@ -7803,73 +9491,73 @@
         {
           "enumerant" : "RayGenerationNV",
           "value" : 5313,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "RayGenerationKHR",
           "value" : 5313,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "IntersectionNV",
           "value" : 5314,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "IntersectionKHR",
           "value" : 5314,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "AnyHitNV",
           "value" : 5315,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "AnyHitKHR",
           "value" : 5315,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "ClosestHitNV",
           "value" : 5316,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "ClosestHitKHR",
           "value" : 5316,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "MissNV",
           "value" : 5317,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "MissKHR",
           "value" : 5317,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "CallableNV",
           "value" : 5318,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "CallableKHR",
           "value" : 5318,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         }
       ]
@@ -8173,9 +9861,18 @@
           "value" : 39,
           "capabilities" : [ "Kernel" ],
           "parameters" : [
-            { "kind" : "IdRef", "name" : "'Local Size Hint'" }
+            { "kind" : "IdRef", "name" : "'x size hint'" },
+            { "kind" : "IdRef", "name" : "'y size hint'" },
+            { "kind" : "IdRef", "name" : "'z size hint'" }
           ],
           "version" : "1.2"
+        },
+        {
+          "enumerant" : "SubgroupUniformControlFlowKHR",
+          "value" : 4421,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_subgroup_uniform_control_flow" ],
+          "version" : "None"
         },
         {
           "enumerant" : "PostDepthCoverage",
@@ -8322,6 +10019,51 @@
           "version" : "None"
         },
         {
+          "enumerant" : "SharedLocalMemorySizeINTEL",
+          "value" : 5618,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Size'" }
+          ],
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RoundingModeRTPINTEL",
+          "value" : 5620,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" }
+          ],
+          "capabilities" : [ "RoundToInfinityINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RoundingModeRTNINTEL",
+          "value" : 5621,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" }
+          ],
+          "capabilities" : [ "RoundToInfinityINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FloatingPointModeALTINTEL",
+          "value" : 5622,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" }
+          ],
+          "capabilities" : [ "RoundToInfinityINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FloatingPointModeIEEEINTEL",
+          "value" : 5623,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" }
+          ],
+          "capabilities" : [ "RoundToInfinityINTEL" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "MaxWorkgroupSizeINTEL",
           "value" : 5893,
           "parameters" : [
@@ -8359,6 +10101,15 @@
           "capabilities" : [ "FPGAKernelAttributesINTEL" ],
           "extensions" : [ "SPV_INTEL_kernel_attributes" ],
           "version" : "None"
+        },
+        {
+          "enumerant" : "SchedulerTargetFmaxMhzINTEL",
+          "value" : 5903,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'target_fmax'" }
+          ],
+          "capabilities" : [ "FPGAKernelAttributesINTEL" ],
+          "version" : "None"
         }
       ]
     },
@@ -8395,7 +10146,7 @@
         {
           "enumerant" : "Private",
           "value" : 6,
-          "capabilities" : [ "Shader" ]
+          "capabilities" : [ "Shader", "VectorComputeINTEL" ]
         },
         {
           "enumerant" : "Function",
@@ -8434,84 +10185,84 @@
           "enumerant" : "CallableDataNV",
           "value" : 5328,
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "CallableDataKHR",
           "value" : 5328,
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "IncomingCallableDataNV",
           "value" : 5329,
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "IncomingCallableDataKHR",
           "value" : 5329,
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "RayPayloadNV",
           "value" : 5338,
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "RayPayloadKHR",
           "value" : 5338,
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "HitAttributeNV",
           "value" : 5339,
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "HitAttributeKHR",
           "value" : 5339,
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "IncomingRayPayloadNV",
           "value" : 5342,
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "IncomingRayPayloadKHR",
           "value" : 5342,
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "ShaderRecordBufferNV",
           "value" : 5343,
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "ShaderRecordBufferKHR",
           "value" : 5343,
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "version" : "None"
         },
         {
@@ -8533,6 +10284,24 @@
           "value" : 5605,
           "extensions" : [ "SPV_INTEL_function_pointers" ],
           "capabilities" : [ "FunctionPointersINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DeviceOnlyINTEL",
+          "value" : 5936,
+          "extensions" : [
+            "SPV_INTEL_usm_storage_classes"
+          ],
+          "capabilities" : [ "USMStorageClassesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "HostOnlyINTEL",
+          "value" : 5937,
+          "extensions" : [
+            "SPV_INTEL_usm_storage_classes"
+          ],
+          "capabilities" : [ "USMStorageClassesINTEL" ],
           "version" : "None"
         }
       ]
@@ -8826,6 +10595,16 @@
           "enumerant" : "R8ui",
           "value" : 39,
           "capabilities" : [ "StorageImageExtendedFormats" ]
+        },
+	{
+          "enumerant" : "R64ui",
+          "value" : 40,
+          "capabilities" : [ "Int64ImageEXT" ]
+        },
+        {
+          "enumerant" : "R64i",
+          "value" : 41,
+          "capabilities" : [ "Int64ImageEXT" ]
         }
       ]
     },
@@ -9050,6 +10829,126 @@
     },
     {
       "category" : "ValueEnum",
+      "kind" : "FPDenormMode",
+      "enumerants" : [
+        {
+          "enumerant" : "Preserve",
+          "value" : 0,
+          "capabilities" : [ "FunctionFloatControlINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FlushToZero",
+          "value" : 1,
+          "capabilities" : [ "FunctionFloatControlINTEL" ],
+          "version" : "None"
+	}
+      ]
+    },
+    {
+      "category" : "ValueEnum",
+      "kind" : "QuantizationModes",
+      "enumerants" : [
+        {
+          "enumerant" : "TRN",
+          "value" : 0,
+          "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "TRN_ZERO",
+          "value" : 1,
+          "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RND",
+          "value" : 2,
+          "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RND_ZERO",
+          "value" : 3,
+          "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RND_INF",
+          "value" : 4,
+          "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RND_MIN_INF",
+          "value" : 5,
+          "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RND_CONV",
+          "value" : 6,
+          "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RND_CONV_ODD",
+          "value" : 7,
+          "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL"],
+          "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "ValueEnum",
+      "kind" : "FPOperationMode",
+      "enumerants" : [
+        {
+          "enumerant" : "IEEE",
+          "value" : 0,
+          "capabilities" : [ "FunctionFloatControlINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ALT",
+          "value" : 1,
+          "capabilities" : [ "FunctionFloatControlINTEL" ],
+          "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "ValueEnum",
+      "kind" : "OverflowModes",
+      "enumerants" : [
+        {
+          "enumerant" : "WRAP",
+          "value" : 0,
+          "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SAT",
+          "value" : 1,
+          "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SAT_ZERO",
+          "value" : 2,
+          "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SAT_SYM",
+          "value" : 3,
+          "capabilities" : [ "ArbitraryPrecisionFixedPointINTEL"],
+          "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "ValueEnum",
       "kind" : "LinkageType",
       "enumerants" : [
         {
@@ -9061,6 +10960,13 @@
           "enumerant" : "Import",
           "value" : 1,
           "capabilities" : [ "Linkage" ]
+        },
+        {
+          "enumerant" : "LinkOnceODR",
+          "value" : 2,
+          "capabilities" : [ "Linkage" ],
+          "extensions" : [ "SPV_KHR_linkonce_odr" ],
+          "version" : "None"
         }
       ]
     },
@@ -9269,12 +11175,12 @@
         {
           "enumerant" : "Uniform",
           "value" : 26,
-          "capabilities" : [ "Shader" ]
+          "capabilities" : [ "Shader", "UniformDecoration" ]
         },
         {
           "enumerant" : "UniformId",
           "value" : 27,
-          "capabilities" : [ "Shader" ],
+          "capabilities" : [ "Shader", "UniformDecoration" ],
           "parameters" : [
             { "kind" : "IdScope",           "name" : "'Execution'" }
           ],
@@ -9507,10 +11413,17 @@
           "version" : "None"
         },
         {
+          "enumerant" : "PerVertexKHR",
+          "value" : 5285,
+          "capabilities" : [ "FragmentBarycentricNV", "FragmentBarycentricKHR" ],
+          "extensions" : [ "SPV_NV_fragment_shader_barycentric", "SPV_KHR_fragment_shader_barycentric" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "PerVertexNV",
           "value" : 5285,
-          "capabilities" : [ "FragmentBarycentricNV" ],
-          "extensions" : [ "SPV_NV_fragment_shader_barycentric" ],
+          "capabilities" : [ "FragmentBarycentricNV", "FragmentBarycentricKHR" ],
+          "extensions" : [ "SPV_NV_fragment_shader_barycentric", "SPV_KHR_fragment_shader_barycentric" ],
           "version" : "None"
         },
         {
@@ -9555,10 +11468,94 @@
           "version" : "1.5"
         },
         {
+          "enumerant" : "BindlessSamplerNV",
+          "value" : 5398,
+          "capabilities" : [ "BindlessTextureNV" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BindlessImageNV",
+          "value" : 5399,
+          "capabilities" : [ "BindlessTextureNV" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BoundSamplerNV",
+          "value" : 5400,
+          "capabilities" : [ "BindlessTextureNV" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BoundImageNV",
+          "value" : 5401,
+          "capabilities" : [ "BindlessTextureNV" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SIMTCallINTEL",
+          "value" : 5599,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'N'" }
+          ],
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "ReferencedIndirectlyINTEL",
           "value" : 5602,
           "capabilities" : [ "IndirectReferencesINTEL" ],
           "extensions" : [ "SPV_INTEL_function_pointers" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ClobberINTEL",
+          "value" : 5607,
+          "parameters" : [
+            { "kind" : "LiteralString", "name" : "'Register'" }
+          ],
+          "capabilities" : [ "AsmINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SideEffectsINTEL",
+          "value" : 5608,
+          "capabilities" : [ "AsmINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "VectorComputeVariableINTEL",
+          "value" : 5624,
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FuncParamIOKindINTEL",
+          "value" : 5625,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Kind'" }
+          ],
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "VectorComputeFunctionINTEL",
+          "value" : 5626,
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "StackCallINTEL",
+          "value" : 5627,
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "GlobalVariableOffsetINTEL",
+          "value" : 5628,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Offset'" }
+          ],
+          "capabilities" : [ "VectorComputeINTEL" ],
           "version" : "None"
         },
         {
@@ -9602,6 +11599,26 @@
             { "kind" : "LiteralString", "name" : "'User Type'" }
           ],
           "extensions" : [ "SPV_GOOGLE_user_type" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FunctionRoundingModeINTEL",
+          "value" : 5822,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" },
+            { "kind" : "FPRoundingMode", "name" : "'FP Rounding Mode'" }
+          ],
+          "capabilities" : [ "FunctionFloatControlINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FunctionDenormModeINTEL",
+          "value" : 5823,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" },
+            { "kind" : "FPDenormMode", "name" : "'FP Denorm Mode'" }
+          ],
+          "capabilities" : [ "FunctionFloatControlINTEL" ],
           "version" : "None"
         },
         {
@@ -9712,6 +11729,112 @@
           "capabilities" : [ "FPGAMemoryAttributesINTEL" ],
           "extensions" : [ "SPV_INTEL_fpga_memory_attributes" ],
           "version" : "None"
+        },
+        {
+          "enumerant" : "BurstCoalesceINTEL",
+          "value" : 5899,
+          "capabilities" : [ "FPGAMemoryAccessesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CacheSizeINTEL",
+          "value" : 5900,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Cache Size in bytes'" }
+          ],
+          "capabilities" : [ "FPGAMemoryAccessesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DontStaticallyCoalesceINTEL",
+          "value" : 5901,
+          "capabilities" : [ "FPGAMemoryAccessesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "PrefetchINTEL",
+          "value" : 5902,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Prefetcher Size in bytes'" }
+          ],
+          "capabilities" : [ "FPGAMemoryAccessesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "StallEnableINTEL",
+          "value" : 5905,
+          "capabilities" : [ "FPGAClusterAttributesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FuseLoopsInFunctionINTEL",
+          "value" : 5907,
+          "capabilities" : [ "LoopFuseINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AliasScopeINTEL",
+          "value" : 5914,
+          "parameters" : [
+            { "kind" : "IdRef", "name" : "'Aliasing Scopes List'" }
+          ],
+          "capabilities" : [ "MemoryAccessAliasingINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "NoAliasINTEL",
+          "value" : 5915,
+          "parameters" : [
+            { "kind" : "IdRef", "name" : "'Aliasing Scopes List'" }
+          ],
+          "capabilities" : [ "MemoryAccessAliasingINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BufferLocationINTEL",
+          "value" : 5921,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Buffer Location ID'" }
+          ],
+          "capabilities" : [ "FPGABufferLocationINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "IOPipeStorageINTEL",
+          "value" : 5944,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'IO Pipe ID'" }
+          ],
+          "capabilities" : [ "IOPipesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FunctionFloatingPointModeINTEL",
+          "value" : 6080,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" },
+            { "kind" : "FPOperationMode", "name" : "'FP Operation Mode'" }
+          ],
+          "capabilities" : [ "FunctionFloatControlINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SingleElementVectorINTEL",
+          "value" : 6085,
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "VectorComputeCallableFunctionINTEL",
+          "value" : 6087,
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MediaBlockIOINTEL",
+          "value" : 6140,
+          "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
         }
       ]
     },
@@ -9752,7 +11875,7 @@
         {
           "enumerant" : "PrimitiveId",
           "value" : 7,
-          "capabilities" : [ "Geometry", "Tessellation", "RayTracingNV", "RayTracingProvisionalKHR" ]
+          "capabilities" : [ "Geometry", "Tessellation", "RayTracingNV", "RayTracingKHR", "MeshShadingNV" ]
         },
         {
           "enumerant" : "InvocationId",
@@ -9762,12 +11885,12 @@
         {
           "enumerant" : "Layer",
           "value" : 9,
-          "capabilities" : [ "Geometry", "ShaderLayer", "ShaderViewportIndexLayerEXT" ]
+          "capabilities" : [ "Geometry", "ShaderLayer", "ShaderViewportIndexLayerEXT", "MeshShadingNV" ]
         },
         {
           "enumerant" : "ViewportIndex",
           "value" : 10,
-          "capabilities" : [ "MultiViewport", "ShaderViewportIndex", "ShaderViewportIndexLayerEXT" ]
+          "capabilities" : [ "MultiViewport", "ShaderViewportIndex", "ShaderViewportIndexLayerEXT", "MeshShadingNV" ]
         },
         {
           "enumerant" : "TessLevelOuter",
@@ -9925,34 +12048,16 @@
           "version" : "1.3"
         },
         {
-          "enumerant" : "SubgroupGeMask",
-          "value" : 4417,
-          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
-          "version" : "1.3"
-        },
-        {
-          "enumerant" : "SubgroupGtMask",
-          "value" : 4418,
-          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
-          "version" : "1.3"
-        },
-        {
-          "enumerant" : "SubgroupLeMask",
-          "value" : 4419,
-          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
-          "version" : "1.3"
-        },
-        {
-          "enumerant" : "SubgroupLtMask",
-          "value" : 4420,
-          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
-          "version" : "1.3"
-        },
-        {
           "enumerant" : "SubgroupEqMaskKHR",
           "value" : 4416,
           "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
           "extensions" : [ "SPV_KHR_shader_ballot" ],
+          "version" : "1.3"
+        },
+        {
+          "enumerant" : "SubgroupGeMask",
+          "value" : 4417,
+          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
           "version" : "1.3"
         },
         {
@@ -9963,6 +12068,12 @@
           "version" : "1.3"
         },
         {
+          "enumerant" : "SubgroupGtMask",
+          "value" : 4418,
+          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
+          "version" : "1.3"
+        },
+        {
           "enumerant" : "SubgroupGtMaskKHR",
           "value" : 4418,
           "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
@@ -9970,10 +12081,22 @@
           "version" : "1.3"
         },
         {
+          "enumerant" : "SubgroupLeMask",
+          "value" : 4419,
+          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
+          "version" : "1.3"
+        },
+        {
           "enumerant" : "SubgroupLeMaskKHR",
           "value" : 4419,
           "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
           "extensions" : [ "SPV_KHR_shader_ballot" ],
+          "version" : "1.3"
+        },
+        {
+          "enumerant" : "SubgroupLtMask",
+          "value" : 4420,
+          "capabilities" : [ "SubgroupBallotKHR", "GroupNonUniformBallot" ],
           "version" : "1.3"
         },
         {
@@ -10005,6 +12128,13 @@
           "version" : "1.3"
         },
         {
+          "enumerant" : "PrimitiveShadingRateKHR",
+          "value" : 4432,
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "extensions" : [ "SPV_KHR_fragment_shading_rate" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "DeviceIndex",
           "value" : 4438,
           "capabilities" : [ "DeviceGroup" ],
@@ -10017,6 +12147,13 @@
           "capabilities" : [ "MultiView" ],
           "extensions" : [ "SPV_KHR_multiview" ],
           "version" : "1.3"
+        },
+        {
+          "enumerant" : "ShadingRateKHR",
+          "value" : 4444,
+          "capabilities" : [ "FragmentShadingRateKHR" ],
+          "extensions" : [ "SPV_KHR_fragment_shading_rate" ],
+          "version" : "None"
         },
         {
           "enumerant" : "BaryCoordNoPerspAMD",
@@ -10166,17 +12303,31 @@
           "version" : "None"
         },
         {
+          "enumerant" : "BaryCoordKHR",
+          "value" : 5286,
+          "capabilities" : [ "FragmentBarycentricNV", "FragmentBarycentricKHR" ],
+          "extensions" : [ "SPV_NV_fragment_shader_barycentric", "SPV_KHR_fragment_shader_barycentric" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "BaryCoordNV",
           "value" : 5286,
-          "capabilities" : [ "FragmentBarycentricNV" ],
-          "extensions" : [ "SPV_NV_fragment_shader_barycentric" ],
+          "capabilities" : [ "FragmentBarycentricNV", "FragmentBarycentricKHR" ],
+          "extensions" : [ "SPV_NV_fragment_shader_barycentric", "SPV_KHR_fragment_shader_barycentric" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BaryCoordNoPerspKHR",
+          "value" : 5287,
+          "capabilities" : [ "FragmentBarycentricNV", "FragmentBarycentricKHR" ],
+          "extensions" : [ "SPV_NV_fragment_shader_barycentric", "SPV_KHR_fragment_shader_barycentric" ],
           "version" : "None"
         },
         {
           "enumerant" : "BaryCoordNoPerspNV",
           "value" : 5287,
-          "capabilities" : [ "FragmentBarycentricNV" ],
-          "extensions" : [ "SPV_NV_fragment_shader_barycentric" ],
+          "capabilities" : [ "FragmentBarycentricNV", "FragmentBarycentricKHR" ],
+          "extensions" : [ "SPV_NV_fragment_shader_barycentric", "SPV_KHR_fragment_shader_barycentric" ],
           "version" : "None"
         },
         {
@@ -10210,203 +12361,203 @@
         {
           "enumerant" : "LaunchIdNV",
           "value" : 5319,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "LaunchIdKHR",
           "value" : 5319,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "LaunchSizeNV",
           "value" : 5320,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "LaunchSizeKHR",
           "value" : 5320,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "WorldRayOriginNV",
           "value" : 5321,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "WorldRayOriginKHR",
           "value" : 5321,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "WorldRayDirectionNV",
           "value" : 5322,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "WorldRayDirectionKHR",
           "value" : 5322,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "ObjectRayOriginNV",
           "value" : 5323,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "ObjectRayOriginKHR",
           "value" : 5323,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "ObjectRayDirectionNV",
           "value" : 5324,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "ObjectRayDirectionKHR",
           "value" : 5324,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "RayTminNV",
           "value" : 5325,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "RayTminKHR",
           "value" : 5325,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "RayTmaxNV",
           "value" : 5326,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "RayTmaxKHR",
           "value" : 5326,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "InstanceCustomIndexNV",
           "value" : 5327,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "InstanceCustomIndexKHR",
           "value" : 5327,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "ObjectToWorldNV",
           "value" : 5330,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "ObjectToWorldKHR",
           "value" : 5330,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "WorldToObjectNV",
           "value" : 5331,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "WorldToObjectKHR",
           "value" : 5331,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "HitTNV",
           "value" : 5332,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
-          "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "HitTKHR",
-          "value" : 5332,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
-          "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "HitKindNV",
           "value" : 5333,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "HitKindKHR",
           "value" : 5333,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CurrentRayTimeNV",
+          "value" : 5334,
+          "capabilities" : [ "RayTracingMotionBlurNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing_motion_blur" ],
           "version" : "None"
         },
         {
           "enumerant" : "IncomingRayFlagsNV",
           "value" : 5351,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "IncomingRayFlagsKHR",
           "value" : 5351,
-          "capabilities" : [ "RayTracingNV" , "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
           "enumerant" : "RayGeometryIndexKHR",
           "value" : 5352,
-          "capabilities" : [ "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingKHR" ],
           "extensions" : [ "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
@@ -10479,7 +12630,7 @@
         {
           "enumerant" : "ShaderCallKHR",
           "value" : 6,
-          "capabilities" : [ "RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayTracingKHR" ],
           "version" : "None"
         }
       ]
@@ -10902,6 +13053,18 @@
           "version" : "1.5"
         },
         {
+          "enumerant" : "UniformDecoration",
+          "value" : 71,
+          "version" : "1.6"
+        },
+        {
+          "enumerant" : "FragmentShadingRateKHR",
+          "value" : 4422,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_fragment_shading_rate" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "SubgroupBallotKHR",
           "value" : 4423,
           "extensions" : [ "SPV_KHR_shader_ballot" ],
@@ -10913,6 +13076,27 @@
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_KHR_shader_draw_parameters" ],
           "version" : "1.3"
+        },
+        {
+          "enumerant" : "WorkgroupMemoryExplicitLayoutKHR",
+          "value" : 4428,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_workgroup_memory_explicit_layout" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "WorkgroupMemoryExplicitLayout8BitAccessKHR",
+          "value" : 4429,
+          "capabilities" : [ "WorkgroupMemoryExplicitLayoutKHR" ],
+          "extensions" : [ "SPV_KHR_workgroup_memory_explicit_layout" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "WorkgroupMemoryExplicitLayout16BitAccessKHR",
+          "value" : 4430,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_workgroup_memory_explicit_layout" ],
+          "version" : "None"
         },
         {
           "enumerant" : "SubgroupVoteKHR",
@@ -11060,10 +13244,24 @@
           "version" : "None"
         },
         {
-          "enumerant" : "RayTraversalPrimitiveCullingProvisionalKHR",
+          "enumerant" : "RayQueryKHR",
+          "value" : 4472,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_ray_query" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RayTraversalPrimitiveCullingKHR",
           "value" : 4478,
-          "capabilities" : [ "RayQueryProvisionalKHR","RayTracingProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR","RayTracingKHR" ],
           "extensions" : [ "SPV_KHR_ray_query","SPV_KHR_ray_tracing" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RayTracingKHR",
+          "value" : 4479,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_ray_tracing" ],
           "version" : "None"
         },
         {
@@ -11099,6 +13297,13 @@
           "value" : 5015,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_AMD_shader_image_load_store_lod" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Int64ImageEXT",
+          "value" : 5016,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_shader_image_int64" ],
           "version" : "None"
         },
         {
@@ -11178,9 +13383,15 @@
           "version" : "None"
         },
         {
+          "enumerant" : "FragmentBarycentricKHR",
+          "value" : 5284,
+          "extensions" : [ "SPV_NV_fragment_shader_barycentric", "SPV_KHR_fragment_shader_barycentric" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "FragmentBarycentricNV",
           "value" : 5284,
-          "extensions" : [ "SPV_NV_fragment_shader_barycentric" ],
+          "extensions" : [ "SPV_NV_fragment_shader_barycentric", "SPV_KHR_fragment_shader_barycentric" ],
           "version" : "None"
         },
         {
@@ -11373,6 +13584,13 @@
           "version" : "None"
         },
         {
+          "enumerant" : "RayTracingMotionBlurNV",
+          "value" : 5341,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_NV_ray_tracing_motion_blur" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "VulkanMemoryModel",
           "value" : 5345,
           "version" : "1.5"
@@ -11457,10 +13675,22 @@
           "version" : "None"
         },
         {
+          "enumerant" : "DemoteToHelperInvocation",
+          "value" : 5379,
+          "capabilities" : [ "Shader" ],
+          "version" : "1.6"
+        },
+        {
           "enumerant" : "DemoteToHelperInvocationEXT",
           "value" : 5379,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_EXT_demote_to_helper_invocation" ],
+          "version" : "1.6"
+        },
+        {
+          "enumerant" : "BindlessTextureNV",
+          "value" : 5390,
+          "extensions" : [ "SPV_NV_bindless_texture" ],
           "version" : "None"
         },
         {
@@ -11488,6 +13718,18 @@
           "version" : "None"
         },
         {
+          "enumerant" : "RoundToInfinityINTEL",
+          "value" : 5582,
+          "extensions" : [ "SPV_INTEL_float_controls2" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FloatingPointModeINTEL",
+          "value" : 5583,
+          "extensions" : [ "SPV_INTEL_float_controls2" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "IntegerFunctions2INTEL",
           "value" : 5584,
           "capabilities" : [ "Shader" ],
@@ -11504,6 +13746,49 @@
           "enumerant" : "IndirectReferencesINTEL",
           "value" : 5604,
           "extensions" : [ "SPV_INTEL_function_pointers" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AsmINTEL",
+          "value" : 5606,
+          "extensions" : [ "SPV_INTEL_inline_assembly" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AtomicFloat32MinMaxEXT",
+          "value" : 5612,
+          "extensions" : [ "SPV_EXT_shader_atomic_float_min_max" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AtomicFloat64MinMaxEXT",
+          "value" : 5613,
+          "extensions" : [ "SPV_EXT_shader_atomic_float_min_max" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AtomicFloat16MinMaxEXT",
+          "value" : 5616,
+          "extensions" : [ "SPV_EXT_shader_atomic_float_min_max" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "VectorComputeINTEL",
+          "value" : 5617,
+          "capabilities" : [ "VectorAnyINTEL" ],
+          "extensions" : [ "SPV_INTEL_vector_compute" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "VectorAnyINTEL",
+          "value" : 5619,
+          "extensions" : [ "SPV_INTEL_vector_compute" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ExpectAssumeKHR",
+          "value" : 5629,
+          "extensions" : [ "SPV_KHR_expect_assume" ],
           "version" : "None"
         },
         {
@@ -11525,9 +13810,40 @@
           "version" : "None"
         },
         {
+          "enumerant" : "VariableLengthArrayINTEL",
+          "value" : 5817,
+          "extensions" : [ "SPV_INTEL_variable_length_array" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FunctionFloatControlINTEL",
+          "value" : 5821,
+          "extensions" : [ "SPV_INTEL_float_controls2" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "FPGAMemoryAttributesINTEL",
           "value" : 5824,
           "extensions" : [ "SPV_INTEL_fpga_memory_attributes" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FPFastMathModeINTEL",
+          "value" : 5837,
+          "capabilities" : [ "Kernel" ],
+          "extensions" : [ "SPV_INTEL_fp_fast_math_mode" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ArbitraryPrecisionIntegersINTEL",
+          "value" : 5844,
+          "extensions" : [ "SPV_INTEL_arbitrary_precision_integers" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ArbitraryPrecisionFloatingPointINTEL",
+          "value" : 5845,
+          "extensions" : [ "SPV_INTEL_arbitrary_precision_floating_point" ],
           "version" : "None"
         },
         {
@@ -11555,6 +13871,54 @@
           "version" : "None"
         },
         {
+          "enumerant" : "FPGAMemoryAccessesINTEL",
+          "value" : 5898,
+          "extensions" : [ "SPV_INTEL_fpga_memory_accesses" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FPGAClusterAttributesINTEL",
+          "value" : 5904,
+          "extensions" : [ "SPV_INTEL_fpga_cluster_attributes" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "LoopFuseINTEL",
+          "value" : 5906,
+          "extensions" : [ "SPV_INTEL_loop_fuse" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MemoryAccessAliasingINTEL",
+          "value" : 5910,
+          "extensions" : [ "SPV_INTEL_memory_access_aliasing" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FPGABufferLocationINTEL",
+          "value" : 5920,
+          "extensions" : [ "SPV_INTEL_fpga_buffer_location" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ArbitraryPrecisionFixedPointINTEL",
+          "value" : 5922,
+          "extensions" : [ "SPV_INTEL_arbitrary_precision_fixed_point" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "USMStorageClassesINTEL",
+          "value" : 5935,
+          "extensions" : [ "SPV_INTEL_usm_storage_classes" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "IOPipesINTEL",
+          "value" : 5943,
+          "extensions" : [ "SPV_INTEL_io_pipes" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "BlockingPipesINTEL",
           "value" : 5945,
           "extensions" : [ "SPV_INTEL_blocking_pipes" ],
@@ -11567,17 +13931,103 @@
           "version" : "None"
         },
         {
+          "enumerant" : "DotProductInputAll",
+          "value" : 6016,
+          "version" : "1.6"
+        },
+        {
+          "enumerant" : "DotProductInputAllKHR",
+          "value" : 6016,
+          "extensions" : [ "SPV_KHR_integer_dot_product" ],
+          "version" : "1.6"
+        },
+        {
+          "enumerant" : "DotProductInput4x8Bit",
+          "value" : 6017,
+          "capabilities" : [ "Int8" ],
+          "version" : "1.6"
+        },
+        {
+          "enumerant" : "DotProductInput4x8BitKHR",
+          "value" : 6017,
+          "capabilities" : [ "Int8" ],
+          "extensions" : [ "SPV_KHR_integer_dot_product" ],
+          "version" : "1.6"
+        },
+        {
+          "enumerant" : "DotProductInput4x8BitPacked",
+          "value" : 6018,
+          "version" : "1.6"
+        },
+        {
+          "enumerant" : "DotProductInput4x8BitPackedKHR",
+          "value" : 6018,
+          "extensions" : [ "SPV_KHR_integer_dot_product" ],
+          "version" : "1.6"
+        },
+        {
+          "enumerant" : "DotProduct",
+          "value" : 6019,
+          "version" : "1.6"
+        },
+        {
+          "enumerant" : "DotProductKHR",
+          "value" : 6019,
+          "extensions" : [ "SPV_KHR_integer_dot_product" ],
+          "version" : "1.6"
+        },
+        {
+          "enumerant" : "BitInstructions",
+          "value" : 6025,
+          "extensions" : [ "SPV_KHR_bit_instructions" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "AtomicFloat32AddEXT",
           "value" : 6033,
-          "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_EXT_shader_atomic_float_add" ],
           "version" : "None"
         },
         {
           "enumerant" : "AtomicFloat64AddEXT",
           "value" : 6034,
-          "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_EXT_shader_atomic_float_add" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "LongConstantCompositeINTEL",
+          "value" : 6089,
+          "extensions" : [ "SPV_INTEL_long_constant_composite" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "OptNoneINTEL",
+          "value" : 6094,
+          "extensions" : [ "SPV_INTEL_optnone" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AtomicFloat16AddEXT",
+          "value" : 6095,
+          "extensions" : [ "SPV_EXT_shader_atomic_float16_add" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DebugInfoModuleINTEL",
+          "value" : 6114,
+          "extensions" : [ "SPV_INTEL_debug_module" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SplitBarrierINTEL",
+          "value" : 6141,
+          "extensions" : [ "SPV_INTEL_split_barrier" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "GroupUniformArithmeticKHR",
+          "value" : 6400,
+          "extensions" : [ "SPV_KHR_uniform_group_instructions"],
           "version" : "None"
         }
       ]
@@ -11589,13 +14039,13 @@
         {
           "enumerant" : "RayQueryCandidateIntersectionKHR",
           "value" : 0,
-          "capabilities" : [ "RayQueryProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "RayQueryCommittedIntersectionKHR",
           "value" : 1,
-          "capabilities" : [ "RayQueryProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR" ],
           "version" : "None"
         }
       ]
@@ -11607,19 +14057,19 @@
         {
           "enumerant" : "RayQueryCommittedIntersectionNoneKHR",
           "value" : 0,
-          "capabilities" : [ "RayQueryProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "RayQueryCommittedIntersectionTriangleKHR",
           "value" : 1,
-          "capabilities" : [ "RayQueryProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "RayQueryCommittedIntersectionGeneratedKHR",
           "value" : 2,
-          "capabilities" : [ "RayQueryProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR" ],
           "version" : "None"
         }
       ]
@@ -11631,14 +14081,31 @@
         {
           "enumerant" : "RayQueryCandidateIntersectionTriangleKHR",
           "value" : 0,
-          "capabilities" : [ "RayQueryProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR" ],
           "version" : "None"
         },
         {
           "enumerant" : "RayQueryCandidateIntersectionAABBKHR",
           "value" : 1,
-          "capabilities" : [ "RayQueryProvisionalKHR" ],
+          "capabilities" : [ "RayQueryKHR" ],
           "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "ValueEnum",
+      "kind" : "PackedVectorFormat",
+      "enumerants" : [
+        {
+          "enumerant" : "PackedVectorFormat4x8Bit",
+          "value" : 0,
+          "version" : "1.6"
+        },
+        {
+          "enumerant" : "PackedVectorFormat4x8BitKHR",
+          "value" : 0,
+          "extensions" : [ "SPV_KHR_integer_dot_product" ],
+          "version" : "1.6"
         }
       ]
     },

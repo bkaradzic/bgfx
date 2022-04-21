@@ -113,6 +113,9 @@ typedef enum spv_endianness_t {
 // Sometimes we also need to be able to express the fact that an operand
 // is a member of an optional tuple of values.  In that case the first member
 // would be optional, and the subsequent members would be required.
+//
+// NOTE: Although we don't promise binary compatibility, as a courtesy, please
+// add new enum values at the end.
 typedef enum spv_operand_type_t {
   // A sentinel value.
   SPV_OPERAND_TYPE_NONE = 0,
@@ -167,23 +170,23 @@ typedef enum spv_operand_type_t {
   SPV_OPERAND_TYPE_KERNEL_ENQ_FLAGS,              // SPIR-V Sec 3.29
   SPV_OPERAND_TYPE_KERNEL_PROFILING_INFO,         // SPIR-V Sec 3.30
   SPV_OPERAND_TYPE_CAPABILITY,                    // SPIR-V Sec 3.31
-  SPV_OPERAND_TYPE_RAY_FLAGS,                     // SPIR-V Sec 3.RF
-  SPV_OPERAND_TYPE_RAY_QUERY_INTERSECTION,        // SPIR-V Sec 3.RQIntersection
-  SPV_OPERAND_TYPE_RAY_QUERY_COMMITTED_INTERSECTION_TYPE,  // SPIR-V Sec
-                                                           // 3.RQCommitted
-  SPV_OPERAND_TYPE_RAY_QUERY_CANDIDATE_INTERSECTION_TYPE,  // SPIR-V Sec
-                                                           // 3.RQCandidate
+
+  // NOTE: New concrete enum values should be added at the end.
 
   // Set 5:  Operands that are a single word bitmask.
   // Sometimes a set bit indicates the instruction requires still more operands.
-  SPV_OPERAND_TYPE_IMAGE,              // SPIR-V Sec 3.14
-  SPV_OPERAND_TYPE_FP_FAST_MATH_MODE,  // SPIR-V Sec 3.15
-  SPV_OPERAND_TYPE_SELECTION_CONTROL,  // SPIR-V Sec 3.22
-  SPV_OPERAND_TYPE_LOOP_CONTROL,       // SPIR-V Sec 3.23
-  SPV_OPERAND_TYPE_FUNCTION_CONTROL,   // SPIR-V Sec 3.24
-  SPV_OPERAND_TYPE_MEMORY_ACCESS,      // SPIR-V Sec 3.26
+  SPV_OPERAND_TYPE_IMAGE,                  // SPIR-V Sec 3.14
+  SPV_OPERAND_TYPE_FP_FAST_MATH_MODE,      // SPIR-V Sec 3.15
+  SPV_OPERAND_TYPE_SELECTION_CONTROL,      // SPIR-V Sec 3.22
+  SPV_OPERAND_TYPE_LOOP_CONTROL,           // SPIR-V Sec 3.23
+  SPV_OPERAND_TYPE_FUNCTION_CONTROL,       // SPIR-V Sec 3.24
+  SPV_OPERAND_TYPE_MEMORY_ACCESS,          // SPIR-V Sec 3.26
+  SPV_OPERAND_TYPE_FRAGMENT_SHADING_RATE,  // SPIR-V Sec 3.FSR
 
-// The remaining operand types are only used internally by the assembler.
+// NOTE: New concrete enum values should be added at the end.
+
+// The "optional" and "variable"  operand types are only used internally by
+// the assembler and the binary parser.
 // There are two categories:
 //    Optional : expands to 0 or 1 operand, like ? in regular expressions.
 //    Variable : expands to 0, 1 or many operands or pairs of operands.
@@ -260,6 +263,29 @@ typedef enum spv_operand_type_t {
   SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_OPERATION,                     // Sec 3.6
   SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY,               // Sec 3.7
 
+  // The following are concrete enum types from SPV_INTEL_float_controls2
+  // https://github.com/intel/llvm/blob/39fa9b0cbfbae88327118990a05c5b387b56d2ef/sycl/doc/extensions/SPIRV/SPV_INTEL_float_controls2.asciidoc
+  SPV_OPERAND_TYPE_FPDENORM_MODE,     // Sec 3.17 FP Denorm Mode
+  SPV_OPERAND_TYPE_FPOPERATION_MODE,  // Sec 3.18 FP Operation Mode
+  // A value enum from https://github.com/KhronosGroup/SPIRV-Headers/pull/177
+  SPV_OPERAND_TYPE_QUANTIZATION_MODES,
+  // A value enum from https://github.com/KhronosGroup/SPIRV-Headers/pull/177
+  SPV_OPERAND_TYPE_OVERFLOW_MODES,
+
+  // Concrete operand types for the provisional Vulkan ray tracing feature.
+  SPV_OPERAND_TYPE_RAY_FLAGS,               // SPIR-V Sec 3.RF
+  SPV_OPERAND_TYPE_RAY_QUERY_INTERSECTION,  // SPIR-V Sec 3.RQIntersection
+  SPV_OPERAND_TYPE_RAY_QUERY_COMMITTED_INTERSECTION_TYPE,  // SPIR-V Sec
+                                                           // 3.RQCommitted
+  SPV_OPERAND_TYPE_RAY_QUERY_CANDIDATE_INTERSECTION_TYPE,  // SPIR-V Sec
+                                                           // 3.RQCandidate
+
+  // Concrete operand types for integer dot product.
+  // Packed vector format
+  SPV_OPERAND_TYPE_PACKED_VECTOR_FORMAT,  // SPIR-V Sec 3.x
+  // An optional packed vector format
+  SPV_OPERAND_TYPE_OPTIONAL_PACKED_VECTOR_FORMAT,
+
   // This is a sentinel value, and does not represent an operand type.
   // It should come last.
   SPV_OPERAND_TYPE_NUM_OPERAND_TYPES,
@@ -284,6 +310,7 @@ typedef enum spv_ext_inst_type_t {
   SPV_EXT_INST_TYPE_DEBUGINFO,
   SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100,
   SPV_EXT_INST_TYPE_NONSEMANTIC_CLSPVREFLECTION,
+  SPV_EXT_INST_TYPE_NONSEMANTIC_SHADER_DEBUGINFO_100,
 
   // Multiple distinct extended instruction set types could return this
   // value, if they are prefixed with NonSemantic. and are otherwise
@@ -326,6 +353,8 @@ typedef enum spv_binary_to_text_options_t {
   // time, but will use common names for scalar types, and debug names from
   // OpName instructions.
   SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES = SPV_BIT(6),
+  // Add some comments to the generated assembly
+  SPV_BINARY_TO_TEXT_OPTION_COMMENT = SPV_BIT(7),
   SPV_FORCE_32_BIT_ENUM(spv_binary_to_text_options_t)
 } spv_binary_to_text_options_t;
 
@@ -454,6 +483,7 @@ SPIRV_TOOLS_EXPORT const char* spvSoftwareVersionDetailsString(void);
 //    SPV_ENV_VULKAN_1_1           ->  SPIR-V 1.3
 //    SPV_ENV_VULKAN_1_1_SPIRV_1_4 ->  SPIR-V 1.4
 //    SPV_ENV_VULKAN_1_2           ->  SPIR-V 1.5
+//    SPV_ENV_VULKAN_1_3           ->  SPIR-V 1.6
 // Consult the description of API entry points for specific rules.
 typedef enum {
   SPV_ENV_UNIVERSAL_1_0,  // SPIR-V 1.0 latest revision, no other restrictions.
@@ -480,7 +510,7 @@ typedef enum {
   SPV_ENV_OPENCL_EMBEDDED_2_2,  // OpenCL Embedded Profile 2.2 latest revision.
   SPV_ENV_UNIVERSAL_1_3,  // SPIR-V 1.3 latest revision, no other restrictions.
   SPV_ENV_VULKAN_1_1,     // Vulkan 1.1 latest revision.
-  SPV_ENV_WEBGPU_0,       // Work in progress WebGPU 1.0.
+  SPV_ENV_WEBGPU_0,       // DEPRECATED, may be removed in the future.
   SPV_ENV_UNIVERSAL_1_4,  // SPIR-V 1.4 latest revision, no other restrictions.
 
   // Vulkan 1.1 with VK_KHR_spirv_1_4, i.e. SPIR-V 1.4 binary.
@@ -488,6 +518,11 @@ typedef enum {
 
   SPV_ENV_UNIVERSAL_1_5,  // SPIR-V 1.5 latest revision, no other restrictions.
   SPV_ENV_VULKAN_1_2,     // Vulkan 1.2 latest revision.
+
+  SPV_ENV_UNIVERSAL_1_6,  // SPIR-V 1.6 latest revision, no other restrictions.
+  SPV_ENV_VULKAN_1_3,     // Vulkan 1.3 latest revision.
+
+  SPV_ENV_MAX  // Keep this as the last enum value.
 } spv_target_env;
 
 // SPIR-V Validator can be parameterized with the following Universal Limits.
@@ -526,7 +561,7 @@ SPIRV_TOOLS_EXPORT bool spvParseVulkanEnv(uint32_t vulkan_ver,
 // Creates a context object for most of the SPIRV-Tools API.
 // Returns null if env is invalid.
 //
-// See specific API calls for how the target environment is interpeted
+// See specific API calls for how the target environment is interpreted
 // (particularly assembly and validation).
 SPIRV_TOOLS_EXPORT spv_context spvContextCreate(spv_target_env env);
 
@@ -578,9 +613,11 @@ SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetRelaxLogicalPointer(
 //    set that option.
 // 2) Pointers that are pass as parameters to function calls do not have to
 //    match the storage class of the formal parameter.
-// 3) Pointers that are actaul parameters on function calls do not have to point
+// 3) Pointers that are actual parameters on function calls do not have to point
 //    to the same type pointed as the formal parameter.  The types just need to
 //    logically match.
+// 4) GLSLstd450 Interpolate* instructions can have a load of an interpolant
+//    for a first argument.
 SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetBeforeHlslLegalization(
     spv_validator_options options, bool val);
 
@@ -602,7 +639,7 @@ SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetUniformBufferStandardLayout(
 // Records whether the validator should use "scalar" block layout rules.
 // Scalar layout rules are more permissive than relaxed block layout.
 //
-// See Vulkan extnesion VK_EXT_scalar_block_layout.  The scalar alignment is
+// See Vulkan extension VK_EXT_scalar_block_layout.  The scalar alignment is
 // defined as follows:
 // - scalar alignment of a scalar is the scalar size
 // - scalar alignment of a vector is the scalar alignment of its component
@@ -618,9 +655,20 @@ SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetUniformBufferStandardLayout(
 SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetScalarBlockLayout(
     spv_validator_options options, bool val);
 
+// Records whether the validator should use "scalar" block layout
+// rules (as defined above) for Workgroup blocks.  See Vulkan
+// extension VK_KHR_workgroup_memory_explicit_layout.
+SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetWorkgroupScalarBlockLayout(
+    spv_validator_options options, bool val);
+
 // Records whether or not the validator should skip validating standard
 // uniform/storage block layout.
 SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetSkipBlockLayout(
+    spv_validator_options options, bool val);
+
+// Records whether or not the validator should allow the LocalSizeId
+// decoration where the environment otherwise would not allow it.
+SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetAllowLocalSizeId(
     spv_validator_options options, bool val);
 
 // Creates an optimizer options object with default options. Returns a valid
@@ -658,7 +706,7 @@ SPIRV_TOOLS_EXPORT void spvOptimizerOptionsSetPreserveSpecConstants(
 // Creates a reducer options object with default options. Returns a valid
 // options object. The object remains valid until it is passed into
 // |spvReducerOptionsDestroy|.
-SPIRV_TOOLS_EXPORT spv_reducer_options spvReducerOptionsCreate();
+SPIRV_TOOLS_EXPORT spv_reducer_options spvReducerOptionsCreate(void);
 
 // Destroys the given reducer options object.
 SPIRV_TOOLS_EXPORT void spvReducerOptionsDestroy(spv_reducer_options options);
@@ -675,10 +723,17 @@ SPIRV_TOOLS_EXPORT void spvReducerOptionsSetStepLimit(
 SPIRV_TOOLS_EXPORT void spvReducerOptionsSetFailOnValidationError(
     spv_reducer_options options, bool fail_on_validation_error);
 
+// Sets the function that the reducer should target.  If set to zero the reducer
+// will target all functions as well as parts of the module that lie outside
+// functions.  Otherwise the reducer will restrict reduction to the function
+// with result id |target_function|, which is required to exist.
+SPIRV_TOOLS_EXPORT void spvReducerOptionsSetTargetFunction(
+    spv_reducer_options options, uint32_t target_function);
+
 // Creates a fuzzer options object with default options. Returns a valid
 // options object. The object remains valid until it is passed into
 // |spvFuzzerOptionsDestroy|.
-SPIRV_TOOLS_EXPORT spv_fuzzer_options spvFuzzerOptionsCreate();
+SPIRV_TOOLS_EXPORT spv_fuzzer_options spvFuzzerOptionsCreate(void);
 
 // Destroys the given fuzzer options object.
 SPIRV_TOOLS_EXPORT void spvFuzzerOptionsDestroy(spv_fuzzer_options options);
@@ -707,6 +762,11 @@ SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetShrinkerStepLimit(
 // Enables running the validator after every pass is applied during a fuzzing
 // run.
 SPIRV_TOOLS_EXPORT void spvFuzzerOptionsEnableFuzzerPassValidation(
+    spv_fuzzer_options options);
+
+// Enables all fuzzer passes during a fuzzing run (instead of a random subset
+// of passes).
+SPIRV_TOOLS_EXPORT void spvFuzzerOptionsEnableAllPasses(
     spv_fuzzer_options options);
 
 // Encodes the given SPIR-V assembly text to its binary representation. The

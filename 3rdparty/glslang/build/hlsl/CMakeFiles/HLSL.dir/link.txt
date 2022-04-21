@@ -1,2 +1,0 @@
-/usr/bin/ar qc libHLSL.a  CMakeFiles/HLSL.dir/stub.cpp.o
-/usr/bin/ranlib libHLSL.a

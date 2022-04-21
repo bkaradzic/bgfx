@@ -605,7 +605,7 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
         { "noise",                            "S",     "F",       "V",              "F",             EShLangPS,     false },
         { "normalize",                        nullptr, nullptr,   "V",              "F",             EShLangAll,    false },
         { "pow",                              nullptr, nullptr,   "SVM,",           "F,",            EShLangAll,    false },
-        // { "printf",                           "-",     "-",       "",            "",              EShLangAll,    false }, TODO: varargs
+        { "printf",                           nullptr, nullptr,   "-",              "-",             EShLangAll,    false },
         { "Process2DQuadTessFactorsAvg",      "-",     "-",       "V4,V2,>V4,>V2,", "F,,,,",         EShLangHS,     false },
         { "Process2DQuadTessFactorsMax",      "-",     "-",       "V4,V2,>V4,>V2,", "F,,,,",         EShLangHS,     false },
         { "Process2DQuadTessFactorsMin",      "-",     "-",       "V4,V2,>V4,>V2,", "F,,,,",         EShLangHS,     false },
@@ -665,8 +665,8 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
         { "Sample",             /*!O*/        "V4",    nullptr,   "%@,S,V",         "FIU,S,F",        EShLangPS,    true },
         { "Sample",             /* O*/        "V4",    nullptr,   "%@,S,V,",        "FIU,S,F,I",      EShLangPS,    true },
 
-        { "SampleBias",         /*!O*/        "V4",    nullptr,   "%@,S,V,S",       "FIU,S,F,",       EShLangPS,    true },
-        { "SampleBias",         /* O*/        "V4",    nullptr,   "%@,S,V,S,V",     "FIU,S,F,,I",     EShLangPS,    true },
+        { "SampleBias",         /*!O*/        "V4",    nullptr,   "%@,S,V,S",       "FIU,S,F,F",      EShLangPS,    true },
+        { "SampleBias",         /* O*/        "V4",    nullptr,   "%@,S,V,S,V",     "FIU,S,F,F,I",    EShLangPS,    true },
 
         // TODO: FXC accepts int/uint samplers here.  unclear what that means.
         { "SampleCmp",          /*!O*/        "S",     "F",       "%@,S,V,S",       "FIU,s,F,",       EShLangPS,    true },
@@ -1107,7 +1107,7 @@ void TBuiltInParseablesHlsl::identifyBuiltIns(int /*version*/, EProfile /*profil
     // symbolTable.relateToOperator("noise",                    EOpNoise); // TODO: check return type
     symbolTable.relateToOperator("normalize",                   EOpNormalize);
     symbolTable.relateToOperator("pow",                         EOpPow);
-    // symbolTable.relateToOperator("printf",                     EOpPrintf);
+    symbolTable.relateToOperator("printf",                      EOpDebugPrintf);
     // symbolTable.relateToOperator("Process2DQuadTessFactorsAvg");
     // symbolTable.relateToOperator("Process2DQuadTessFactorsMax");
     // symbolTable.relateToOperator("Process2DQuadTessFactorsMin");
@@ -1123,7 +1123,7 @@ void TBuiltInParseablesHlsl::identifyBuiltIns(int /*version*/, EProfile /*profil
     symbolTable.relateToOperator("reflect",                     EOpReflect);
     symbolTable.relateToOperator("refract",                     EOpRefract);
     symbolTable.relateToOperator("reversebits",                 EOpBitFieldReverse);
-    symbolTable.relateToOperator("round",                       EOpRoundEven);
+    symbolTable.relateToOperator("round",                       EOpRound);
     symbolTable.relateToOperator("rsqrt",                       EOpInverseSqrt);
     symbolTable.relateToOperator("saturate",                    EOpSaturate);
     symbolTable.relateToOperator("sign",                        EOpSign);

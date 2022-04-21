@@ -1,6 +1,6 @@
 /*
  * Copyright 2013 Jeremie Roy. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include <bx/bx.h>
@@ -34,7 +34,7 @@ public:
 	/// Initialize from  an external buffer
 	/// @remark The ownership of the buffer is external, and you must ensure it stays valid up to this object lifetime
 	/// @return true if the initialization succeed
-	bool init(const uint8_t* _buffer, uint32_t _bufferSize, int32_t _fontIndex, uint32_t _pixelHeight);
+	bool init(const uint8_t* _buffer, uint32_t _bufferSize, int32_t _fontIndex, uint32_t _pixelHeight, int16_t _widthPadding, int16_t _heightPadding);
 
 	/// return the font descriptor of the current font
 	FontInfo getFontInfo();
@@ -50,11 +50,18 @@ public:
 	bool bakeGlyphDistance(CodePoint _codePoint, GlyphInfo& _outGlyphInfo, uint8_t* _outBuffer);
 
 private:
+	friend class FontManager;
+
 	stbtt_fontinfo m_font;
 	float m_scale;
+
+	int16_t m_widthPadding;
+	int16_t m_heightPadding;
 };
 
 TrueTypeFont::TrueTypeFont() : m_font()
+	, m_widthPadding(6)
+	, m_heightPadding(6)
 {
 }
 
@@ -62,11 +69,10 @@ TrueTypeFont::~TrueTypeFont()
 {
 }
 
-bool TrueTypeFont::init(const uint8_t* _buffer, uint32_t _bufferSize, int32_t _fontIndex, uint32_t _pixelHeight)
+bool TrueTypeFont::init(const uint8_t* _buffer, uint32_t _bufferSize, int32_t _fontIndex, uint32_t _pixelHeight, int16_t _widthPadding, int16_t _heightPadding)
 {
-	BX_ASSERT(m_font == NULL, "TrueTypeFont already initialized");
-	BX_ASSERT( (_bufferSize > 256 && _bufferSize < 100000000), "TrueType buffer size is suspicious");
-	BX_ASSERT( (_pixelHeight > 4 && _pixelHeight < 128), "TrueType buffer size is suspicious");
+	BX_WARN( (_bufferSize > 256 && _bufferSize < 100000000), "(FontIndex %d) TrueType buffer size is suspicious (%d)", _fontIndex, _bufferSize);
+	BX_WARN( (_pixelHeight > 4 && _pixelHeight < 128), "(FontIndex %d) TrueType pixel height is suspicious (%d)", _fontIndex, _pixelHeight);
 	BX_UNUSED(_bufferSize);
 
 	int offset = stbtt_GetFontOffsetForIndex(_buffer, _fontIndex);
@@ -75,13 +81,13 @@ bool TrueTypeFont::init(const uint8_t* _buffer, uint32_t _bufferSize, int32_t _f
 
 	m_scale = stbtt_ScaleForMappingEmToPixels(&m_font, (float)_pixelHeight);
 
+	m_widthPadding = _widthPadding;
+	m_heightPadding = _heightPadding;
 	return true;
 }
 
 FontInfo TrueTypeFont::getFontInfo()
 {
-	BX_ASSERT(m_font != NULL, "TrueTypeFont not initialized");
-
 	int ascent;
 	int descent;
 	int lineGap;
@@ -106,8 +112,6 @@ FontInfo TrueTypeFont::getFontInfo()
 
 bool TrueTypeFont::bakeGlyphAlpha(CodePoint _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
 {
-	BX_ASSERT(m_font != NULL, "TrueTypeFont not initialized");
-
 	int32_t ascent, descent, lineGap;
 	stbtt_GetFontVMetrics(&m_font, &ascent, &descent, &lineGap);
 
@@ -138,8 +142,6 @@ bool TrueTypeFont::bakeGlyphAlpha(CodePoint _codePoint, GlyphInfo& _glyphInfo, u
 
 bool TrueTypeFont::bakeGlyphDistance(CodePoint _codePoint, GlyphInfo& _glyphInfo, uint8_t* _outBuffer)
 {
-	BX_ASSERT(m_font != NULL, "TrueTypeFont not initialized");
-
 	int32_t ascent, descent, lineGap;
 	stbtt_GetFontVMetrics(&m_font, &ascent, &descent, &lineGap);
 
@@ -167,8 +169,8 @@ bool TrueTypeFont::bakeGlyphDistance(CodePoint _codePoint, GlyphInfo& _glyphInfo
 
 	if (ww * hh > 0)
 	{
-		uint32_t dw = 6;
-		uint32_t dh = 6;
+		uint32_t dw = m_widthPadding;
+		uint32_t dh = m_heightPadding;
 
 		uint32_t nw = ww + dw * 2;
 		uint32_t nh = hh + dh * 2;
@@ -281,19 +283,20 @@ TrueTypeHandle FontManager::createTtf(const uint8_t* _buffer, uint32_t _size)
 
 void FontManager::destroyTtf(TrueTypeHandle _handle)
 {
-	BX_ASSERT(bgfx::isValid(_handle), "Invalid handle used");
-	delete m_cachedFiles[_handle.idx].buffer;
+	BX_ASSERT(isValid(_handle), "Invalid handle used");
+	delete[] m_cachedFiles[_handle.idx].buffer;
 	m_cachedFiles[_handle.idx].bufferSize = 0;
 	m_cachedFiles[_handle.idx].buffer = NULL;
 	m_filesHandles.free(_handle.idx);
 }
 
-FontHandle FontManager::createFontByPixelSize(TrueTypeHandle _ttfHandle, uint32_t _typefaceIndex, uint32_t _pixelSize, uint32_t _fontType)
+FontHandle FontManager::createFontByPixelSize(TrueTypeHandle _ttfHandle, uint32_t _typefaceIndex, uint32_t _pixelSize, uint32_t _fontType,
+		uint16_t _glyphWidthPadding, uint16_t _glyphHeightPadding)
 {
-	BX_ASSERT(bgfx::isValid(_ttfHandle), "Invalid handle used");
+	BX_ASSERT(isValid(_ttfHandle), "Invalid handle used");
 
 	TrueTypeFont* ttf = new TrueTypeFont();
-	if (!ttf->init(m_cachedFiles[_ttfHandle.idx].buffer, m_cachedFiles[_ttfHandle.idx].bufferSize, _typefaceIndex, _pixelSize) )
+	if (!ttf->init(m_cachedFiles[_ttfHandle.idx].buffer, m_cachedFiles[_ttfHandle.idx].bufferSize, _typefaceIndex, _pixelSize, _glyphWidthPadding, _glyphHeightPadding) )
 	{
 		delete ttf;
 		FontHandle invalid = { bx::kInvalidHandle };
@@ -317,7 +320,7 @@ FontHandle FontManager::createFontByPixelSize(TrueTypeHandle _ttfHandle, uint32_
 
 FontHandle FontManager::createScaledFontToPixelSize(FontHandle _baseFontHandle, uint32_t _pixelSize)
 {
-	BX_ASSERT(bgfx::isValid(_baseFontHandle), "Invalid handle used");
+	BX_ASSERT(isValid(_baseFontHandle), "Invalid handle used");
 	CachedFont& baseFont = m_cachedFonts[_baseFontHandle.idx];
 	FontInfo& fontInfo = baseFont.fontInfo;
 
@@ -346,7 +349,7 @@ FontHandle FontManager::createScaledFontToPixelSize(FontHandle _baseFontHandle, 
 
 void FontManager::destroyFont(FontHandle _handle)
 {
-	BX_ASSERT(bgfx::isValid(_handle), "Invalid handle used");
+	BX_ASSERT(isValid(_handle), "Invalid handle used");
 
 	CachedFont& font = m_cachedFonts[_handle.idx];
 
@@ -362,7 +365,7 @@ void FontManager::destroyFont(FontHandle _handle)
 
 bool FontManager::preloadGlyph(FontHandle _handle, const wchar_t* _string)
 {
-	BX_ASSERT(bgfx::isValid(_handle), "Invalid handle used");
+	BX_ASSERT(isValid(_handle), "Invalid handle used");
 	CachedFont& font = m_cachedFonts[_handle.idx];
 
 	if (NULL == font.trueTypeFont)
@@ -384,7 +387,7 @@ bool FontManager::preloadGlyph(FontHandle _handle, const wchar_t* _string)
 
 bool FontManager::preloadGlyph(FontHandle _handle, CodePoint _codePoint)
 {
-	BX_ASSERT(bgfx::isValid(_handle), "Invalid handle used");
+	BX_ASSERT(isValid(_handle), "Invalid handle used");
 	CachedFont& font = m_cachedFonts[_handle.idx];
 	FontInfo& fontInfo = font.fontInfo;
 
@@ -409,6 +412,14 @@ bool FontManager::preloadGlyph(FontHandle _handle, CodePoint _codePoint)
 			break;
 
 		case FONT_TYPE_DISTANCE_SUBPIXEL:
+			font.trueTypeFont->bakeGlyphDistance(_codePoint, glyphInfo, m_buffer);
+			break;
+
+		case FONT_TYPE_DISTANCE_OUTLINE:
+		case FONT_TYPE_DISTANCE_OUTLINE_IMAGE:
+		case FONT_TYPE_DISTANCE_DROP_SHADOW:
+		case FONT_TYPE_DISTANCE_DROP_SHADOW_IMAGE:
+		case FONT_TYPE_DISTANCE_OUTLINE_DROP_SHADOW_IMAGE:
 			font.trueTypeFont->bakeGlyphDistance(_codePoint, glyphInfo, m_buffer);
 			break;
 
@@ -452,10 +463,71 @@ bool FontManager::preloadGlyph(FontHandle _handle, CodePoint _codePoint)
 	return false;
 }
 
+bool FontManager::addGlyphBitmap(FontHandle _handle, CodePoint _codePoint, uint16_t _width, uint16_t _height, uint16_t _pitch, float extraScale, const uint8_t* _bitmapBuffer, float glyphOffsetX, float glyphOffsetY)
+{
+	BX_ASSERT(isValid(_handle), "Invalid handle used");
+	CachedFont& font = m_cachedFonts[_handle.idx];
+
+	GlyphHashMap::iterator iter = font.cachedGlyphs.find(_codePoint);
+	if (iter != font.cachedGlyphs.end() )
+	{
+		return true;
+	}
+
+	GlyphInfo glyphInfo;
+
+	float glyphScale = extraScale;
+	glyphInfo.offset_x = glyphOffsetX * glyphScale;
+	glyphInfo.offset_y = glyphOffsetY * glyphScale;
+	glyphInfo.width = (float)_width;
+	glyphInfo.height = (float)_height;
+	glyphInfo.advance_x = (float)_width * glyphScale;
+	glyphInfo.advance_y = (float)_height * glyphScale;
+	glyphInfo.bitmapScale = glyphScale;
+
+	uint32_t dstPitch = _width * 4;
+
+	uint8_t* dst = m_buffer;
+	const uint8_t* src = _bitmapBuffer;
+	uint32_t srcPitch = _pitch;
+
+	for (int32_t ii = 0; ii < _height; ++ii)
+	{
+		bx::memCopy(dst, src, dstPitch);
+
+		dst += dstPitch;
+		src += srcPitch;
+	}
+
+	glyphInfo.regionIndex = m_atlas->addRegion(
+		  (uint16_t)bx::ceil(glyphInfo.width)
+		, (uint16_t)bx::ceil(glyphInfo.height)
+		, m_buffer
+		, AtlasRegion::TYPE_BGRA8
+		);
+
+	font.cachedGlyphs[_codePoint] = glyphInfo;
+	return true;
+}
+
 const FontInfo& FontManager::getFontInfo(FontHandle _handle) const
 {
-	BX_ASSERT(bgfx::isValid(_handle), "Invalid handle used");
+	BX_ASSERT(isValid(_handle), "Invalid handle used");
 	return m_cachedFonts[_handle.idx].fontInfo;
+}
+
+float FontManager::getKerning(FontHandle _handle, CodePoint _prevCodePoint, CodePoint _codePoint)
+{
+	const CachedFont& cachedFont = m_cachedFonts[_handle.idx];
+	if (isValid(cachedFont.masterFontHandle))
+	{
+		CachedFont& baseFont = m_cachedFonts[cachedFont.masterFontHandle.idx];
+		return baseFont.trueTypeFont->m_scale * stbtt_GetCodepointKernAdvance(&baseFont.trueTypeFont->m_font, _prevCodePoint, _codePoint);
+	}
+	else
+	{
+		return cachedFont.trueTypeFont->m_scale * stbtt_GetCodepointKernAdvance(&cachedFont.trueTypeFont->m_font, _prevCodePoint, _codePoint);
+	}
 }
 
 const GlyphInfo* FontManager::getGlyphInfo(FontHandle _handle, CodePoint _codePoint)

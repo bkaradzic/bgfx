@@ -58,7 +58,7 @@ class ConstantManager;
 class Constant {
  public:
   Constant() = delete;
-  virtual ~Constant() {}
+  virtual ~Constant() = default;
 
   // Make a deep copy of this constant.
   virtual std::unique_ptr<Constant> Copy() const = 0;
@@ -506,10 +506,11 @@ class ConstantManager {
   IRContext* context() const { return ctx_; }
 
   // Gets or creates a unique Constant instance of type |type| and a vector of
-  // constant defining words |words|. If a Constant instance existed already in
-  // the constant pool, it returns a pointer to it.  Otherwise, it creates one
-  // using CreateConstant. If a new Constant instance cannot be created, it
-  // returns nullptr.
+  // constant defining words or ids for elements of Vector type
+  // |literal_words_or_ids|. If a Constant instance existed already in the
+  // constant pool, it returns a pointer to it. Otherwise, it creates one using
+  // CreateConstant. If a new Constant instance cannot be created, it returns
+  // nullptr.
   const Constant* GetConstant(
       const Type* type, const std::vector<uint32_t>& literal_words_or_ids);
 
@@ -518,6 +519,14 @@ class ConstantManager {
     return GetConstant(type, std::vector<uint32_t>(literal_words_or_ids.begin(),
                                                    literal_words_or_ids.end()));
   }
+
+  // Gets or creates a unique Constant instance of Vector type |type| with
+  // numeric elements and a vector of constant defining words |literal_words|.
+  // If a Constant instance existed already in the constant pool, it returns a
+  // pointer to it. Otherwise, it creates one using CreateConstant. If a new
+  // Constant instance cannot be created, it returns nullptr.
+  const Constant* GetNumericVectorConstantWithWords(
+      const Vector* type, const std::vector<uint32_t>& literal_words);
 
   // Gets or creates a Constant instance to hold the constant value of the given
   // instruction. It returns a pointer to a Constant instance or nullptr if it
@@ -532,7 +541,7 @@ class ConstantManager {
   // instruction at the end of the current module's types section.
   //
   // |type_id| is an optional argument for disambiguating equivalent types. If
-  // |type_id| is specified, the contant returned will have that type id.
+  // |type_id| is specified, the constant returned will have that type id.
   Instruction* GetDefiningInstruction(const Constant* c, uint32_t type_id = 0,
                                       Module::inst_iterator* pos = nullptr);
 
@@ -628,10 +637,22 @@ class ConstantManager {
   }
 
   // Returns the id of a 32-bit floating point constant with value |val|.
-  uint32_t GetFloatConst(float val);
+  uint32_t GetFloatConstId(float val);
+
+  // Returns a 32-bit float constant with the given value.
+  const Constant* GetFloatConst(float val);
+
+  // Returns the id of a 64-bit floating point constant with value |val|.
+  uint32_t GetDoubleConstId(double val);
+
+  // Returns a 64-bit float constant with the given value.
+  const Constant* GetDoubleConst(double val);
 
   // Returns the id of a 32-bit signed integer constant with value |val|.
   uint32_t GetSIntConst(int32_t val);
+
+  // Returns the id of a 32-bit unsigned integer constant with value |val|.
+  uint32_t GetUIntConst(uint32_t val);
 
  private:
   // Creates a Constant instance with the given type and a vector of constant

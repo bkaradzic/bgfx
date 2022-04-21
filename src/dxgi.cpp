@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "bgfx_p.h"
@@ -122,6 +122,7 @@ namespace bgfx
 		, m_factory(NULL)
 		, m_adapter(NULL)
 		, m_output(NULL)
+		, m_tearingSupported(false)
 	{
 	}
 
@@ -205,10 +206,20 @@ namespace bgfx
 							, desc.SubSysId
 							, desc.Revision
 							);
-						BX_TRACE("\tMemory: %" PRIi64 " (video), %" PRIi64 " (system), %" PRIi64 " (shared)"
-							, desc.DedicatedVideoMemory
-							, desc.DedicatedSystemMemory
-							, desc.SharedSystemMemory
+
+						char dedicatedVideo[16];
+						bx::prettify(dedicatedVideo, BX_COUNTOF(dedicatedVideo), desc.DedicatedVideoMemory);
+
+						char dedicatedSystem[16];
+						bx::prettify(dedicatedSystem, BX_COUNTOF(dedicatedSystem), desc.DedicatedSystemMemory);
+
+						char sharedSystem[16];
+						bx::prettify(sharedSystem, BX_COUNTOF(sharedSystem), desc.SharedSystemMemory);
+
+						BX_TRACE("\tMemory: %s (video), %s (system), %s (shared)"
+							, dedicatedVideo
+							, dedicatedSystem
+							, sharedSystem
 							);
 
 						_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
@@ -382,12 +393,14 @@ namespace bgfx
 			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
 
 			scdFlags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-			scdFlags |=
-				(_scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
-					|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_DISCARD)
-				? DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
-				: 0;
+			scdFlags |= false
+				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
+				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_DISCARD
+				? 0 // DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
+				: 0
+				;
 
+			m_tearingSupported = allowTearing;
 
 			DX_RELEASE_I(factory5);
 		}
@@ -572,6 +585,68 @@ namespace bgfx
 		return S_OK;
 	}
 
+#if BX_PLATFORM_WINRT
+	HRESULT Dxgi::removeSwapChain(const SwapChainDesc& _scd, SwapChainI** _swapChain)
+	{
+		IInspectable *nativeWindow = reinterpret_cast<IInspectable*>(_scd.nwh);
+		ISwapChainPanelNative* swapChainPanelNative;
+
+		HRESULT hr = nativeWindow->QueryInterface(
+			  __uuidof(ISwapChainPanelNative)
+			, (void**)&swapChainPanelNative
+			);
+
+		if (SUCCEEDED(hr))
+		{
+			// Swap Chain Panel
+			if (NULL != swapChainPanelNative)
+			{
+				// Remove swap chain
+				hr = swapChainPanelNative->SetSwapChain(NULL);
+
+				if (FAILED(hr))
+				{
+					DX_RELEASE(swapChainPanelNative, 0);
+					BX_TRACE("Failed to SetSwapChain, hr %x.");
+					return hr;
+				}
+
+				DX_RELEASE_I(swapChainPanelNative);
+			}
+		}
+		else
+		{
+			// Swap Chain Background Panel
+			ISwapChainBackgroundPanelNative* swapChainBackgroundPanelNative = NULL;
+
+			hr = nativeWindow->QueryInterface(
+				__uuidof(ISwapChainBackgroundPanelNative)
+				, (void**)&swapChainBackgroundPanelNative
+			);
+
+			if (FAILED(hr))
+			{
+				return hr;
+			}
+
+			if (NULL != swapChainBackgroundPanelNative)
+			{
+				// Remove swap chain
+				hr = swapChainBackgroundPanelNative->SetSwapChain(NULL);
+
+				if (FAILED(hr))
+				{
+					DX_RELEASE(swapChainBackgroundPanelNative, 0);
+					BX_TRACE("Failed to SetSwapChain, hr %x.");
+					return hr;
+				}
+
+				DX_RELEASE_I(swapChainBackgroundPanelNative);
+			}
+		}
+	}
+#endif
+
 	void Dxgi::updateHdr10(SwapChainI* _swapChain, const SwapChainDesc& _scd)
 	{
 #if BX_PLATFORM_WINDOWS
@@ -665,10 +740,12 @@ namespace bgfx
 			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
 
 			scdFlags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-			scdFlags |= (_scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
-				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_DISCARD)
-				? DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
-				: 0;
+			scdFlags |= false
+				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
+				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_DISCARD
+				? 0 // DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
+				: 0
+				;
 
 			DX_RELEASE_I(factory5);
 		}
@@ -719,6 +796,11 @@ namespace bgfx
 			DX_RELEASE(device, 1);
 		}
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+	}
+
+	bool Dxgi::tearingSupported() const
+	{
+		return m_tearingSupported;
 	}
 
 } // namespace bgfx

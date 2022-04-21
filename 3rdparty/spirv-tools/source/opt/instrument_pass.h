@@ -50,7 +50,7 @@
 // A validation pass may read or write multiple buffers. All such buffers
 // are located in a single debug descriptor set whose index is passed at the
 // creation of the instrumentation pass. The bindings of the buffers used by
-// a validation pass are permanantly assigned and fixed and documented by
+// a validation pass are permanently assigned and fixed and documented by
 // the kDebugOutput* static consts.
 
 namespace spvtools {
@@ -82,12 +82,15 @@ class InstrumentPass : public Pass {
  protected:
   // Create instrumentation pass for |validation_id| which utilizes descriptor
   // set |desc_set| for debug input and output buffers and writes |shader_id|
-  // into debug output records.
-  InstrumentPass(uint32_t desc_set, uint32_t shader_id, uint32_t validation_id)
+  // into debug output records. |opt_direct_reads| indicates that the pass
+  // will see direct input buffer reads and should prepare to optimize them.
+  InstrumentPass(uint32_t desc_set, uint32_t shader_id, uint32_t validation_id,
+                 bool opt_direct_reads = false)
       : Pass(),
         desc_set_(desc_set),
         shader_id_(shader_id),
-        validation_id_(validation_id) {}
+        validation_id_(validation_id),
+        opt_direct_reads_(opt_direct_reads) {}
 
   // Initialize state for instrumentation of module.
   void InitializeInstrument();
@@ -176,8 +179,8 @@ class InstrumentPass : public Pass {
   // the error. Every stage will write a fixed number of words. Vertex shaders
   // will write the Vertex and Instance ID. Fragment shaders will write
   // FragCoord.xy. Compute shaders will write the GlobalInvocation ID.
-  // The tesselation eval shader will write the Primitive ID and TessCoords.uv.
-  // The tesselation control shader and geometry shader will write the
+  // The tessellation eval shader will write the Primitive ID and TessCoords.uv.
+  // The tessellation control shader and geometry shader will write the
   // Primitive ID and Invocation ID.
   //
   // The Validation Error Code specifies the exact error which has occurred.
@@ -196,6 +199,9 @@ class InstrumentPass : public Pass {
                            const std::vector<uint32_t>& validation_ids,
                            InstructionBuilder* builder);
 
+  // Return true if all instructions in |ids| are constants or spec constants.
+  bool AllConstant(const std::vector<uint32_t>& ids);
+
   // Generate in |builder| instructions to read the unsigned integer from the
   // input buffer specified by the offsets in |offset_ids|. Given offsets
   // o0, o1, ... oN, and input buffer ibuf, return the id for the value:
@@ -207,8 +213,12 @@ class InstrumentPass : public Pass {
   uint32_t GenDebugDirectRead(const std::vector<uint32_t>& offset_ids,
                               InstructionBuilder* builder);
 
-  // Generate code to cast |value_id| to unsigned, if needed. Return
-  // an id to the unsigned equivalent.
+  // Generate code to convert integer |value_id| to 32bit, if needed. Return
+  // an id to the 32bit equivalent.
+  uint32_t Gen32BitCvtCode(uint32_t value_id, InstructionBuilder* builder);
+
+  // Generate code to cast integer |value_id| to 32bit unsigned, if needed.
+  // Return an id to the Uint equivalent.
   uint32_t GenUintCastCode(uint32_t value_id, InstructionBuilder* builder);
 
   // Return new label.
@@ -283,6 +293,12 @@ class InstrumentPass : public Pass {
   // Return id for input function taking |param_cnt| uint32 parameters. Define
   // if it doesn't exist.
   uint32_t GetDirectReadFunctionId(uint32_t param_cnt);
+
+  // Split block |block_itr| into two new blocks where the second block
+  // contains |inst_itr| and place in |new_blocks|.
+  void SplitBlock(BasicBlock::iterator inst_itr,
+                  UptrVectorIterator<BasicBlock> block_itr,
+                  std::vector<std::unique_ptr<BasicBlock>>* new_blocks);
 
   // Apply instrumentation function |pfn| to every instruction in |func|.
   // If code is generated for an instruction, replace the instruction's
@@ -428,6 +444,29 @@ class InstrumentPass : public Pass {
 
   // Post-instrumentation same-block op ids
   std::unordered_map<uint32_t, uint32_t> same_block_post_;
+
+  // Map function calls to result id. Clear for every function.
+  // This is for debug input reads with constant arguments that
+  // have been generated into the first block of the function.
+  // This mechanism is used to avoid multiple identical debug
+  // input buffer reads.
+  struct vector_hash_ {
+    std::size_t operator()(const std::vector<uint32_t>& v) const {
+      std::size_t hash = v.size();
+      for (auto& u : v) {
+        hash ^= u + 0x9e3779b9 + (hash << 11) + (hash >> 21);
+      }
+      return hash;
+    }
+  };
+  std::unordered_map<std::vector<uint32_t>, uint32_t, vector_hash_> call2id_;
+
+  // Function currently being instrumented
+  Function* curr_func_;
+
+  // Optimize direct debug input buffer reads. Specifically, move all such
+  // reads with constant args to first block and reuse them.
+  bool opt_direct_reads_;
 };
 
 }  // namespace opt

@@ -1,6 +1,6 @@
 /*
  * Copyright 2016 Dario Manesku. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "common.h"
@@ -29,8 +29,8 @@ struct Camera
 
 	void reset()
 	{
-		m_target.curr = { 0.0f, 0.0f, 0.0f };
-		m_target.dest = { 0.0f, 0.0f, 0.0f };
+		m_target.curr = bx::init::Zero;
+		m_target.dest = bx::init::Zero;
 
 		m_pos.curr = { 0.0f, 0.0f, -2.0f };
 		m_pos.dest = { 0.0f, 0.0f, -2.0f };
@@ -135,8 +135,8 @@ struct Camera
 
 	struct Interp3f
 	{
-		bx::Vec3 curr;
-		bx::Vec3 dest;
+		bx::Vec3 curr = bx::init::None;
+		bx::Vec3 dest = bx::init::None;
 	};
 
 	Interp3f m_target;

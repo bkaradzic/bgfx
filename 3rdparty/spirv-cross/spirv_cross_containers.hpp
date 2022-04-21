@@ -1,5 +1,6 @@
 /*
- * Copyright 2019-2020 Hans-Kristian Arntzen
+ * Copyright 2019-2021 Hans-Kristian Arntzen
+ * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +13,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ * At your option, you may choose to accept this material under either:
+ *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
+ *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
  */
 
 #ifndef SPIRV_CROSS_CONTAINERS_HPP
@@ -212,6 +219,10 @@ public:
 		this->buffer_size = count;
 	}
 
+	SmallVector(std::initializer_list<T> init) SPIRV_CROSS_NOEXCEPT : SmallVector(init.begin(), init.end())
+	{
+	}
+
 	SmallVector(SmallVector &&other) SPIRV_CROSS_NOEXCEPT : SmallVector()
 	{
 		*this = std::move(other);
@@ -316,8 +327,8 @@ public:
 
 	void reserve(size_t count) SPIRV_CROSS_NOEXCEPT
 	{
-		if ((count > std::numeric_limits<size_t>::max() / sizeof(T)) ||
-		    (count > std::numeric_limits<size_t>::max() / 2))
+		if ((count > (std::numeric_limits<size_t>::max)() / sizeof(T)) ||
+		    (count > (std::numeric_limits<size_t>::max)() / 2))
 		{
 			// Only way this should ever happen is with garbage input, terminate.
 			std::terminate();
@@ -535,7 +546,7 @@ class ObjectPoolBase
 {
 public:
 	virtual ~ObjectPoolBase() = default;
-	virtual void free_opaque(void *ptr) = 0;
+	virtual void deallocate_opaque(void *ptr) = 0;
 };
 
 template <typename T>
@@ -569,15 +580,15 @@ public:
 		return ptr;
 	}
 
-	void free(T *ptr)
+	void deallocate(T *ptr)
 	{
 		ptr->~T();
 		vacants.push_back(ptr);
 	}
 
-	void free_opaque(void *ptr) override
+	void deallocate_opaque(void *ptr) override
 	{
-		free(static_cast<T *>(ptr));
+		deallocate(static_cast<T *>(ptr));
 	}
 
 	void clear()

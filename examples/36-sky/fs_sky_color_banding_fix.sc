@@ -2,7 +2,7 @@ $input v_skyColor, v_screenPos, v_viewDir
 
 /*
 * Copyright 2017 Stanislav Pidhorskyi. All rights reserved.
-* License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+* License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 */
 
 

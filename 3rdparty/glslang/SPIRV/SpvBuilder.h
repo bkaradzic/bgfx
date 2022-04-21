@@ -181,6 +181,7 @@ public:
     Id makeSamplerType();
     Id makeSampledImageType(Id imageType);
     Id makeCooperativeMatrixType(Id component, Id scope, Id rows, Id cols);
+    Id makeGenericType(spv::Op opcode, std::vector<spv::IdImmediate>& operands);
 
     // accelerationStructureNV type
     Id makeAccelerationStructureType();
@@ -202,6 +203,7 @@ public:
     StorageClass getTypeStorageClass(Id typeId) const { return module.getStorageClass(typeId); }
     ImageFormat getImageTypeFormat(Id typeId) const
         { return (ImageFormat)module.getInstruction(typeId)->getImmediateOperand(6); }
+    Id getResultingAccessChainType() const;
 
     bool isPointer(Id resultId)      const { return isPointerType(getTypeId(resultId)); }
     bool isScalar(Id resultId)       const { return isScalarType(getTypeId(resultId)); }
@@ -293,6 +295,7 @@ public:
     }
 
     // For making new constants (will return old constant if the requested one was already made).
+    Id makeNullConstant(Id typeId);
     Id makeBoolConstant(bool b, bool specConstant = false);
     Id makeInt8Constant(int i, bool specConstant = false)
         { return makeIntConstant(makeIntType(8),  (unsigned)i, specConstant); }
@@ -321,13 +324,20 @@ public:
     // Methods for adding information outside the CFG.
     Instruction* addEntryPoint(ExecutionModel, Function*, const char* name);
     void addExecutionMode(Function*, ExecutionMode mode, int value1 = -1, int value2 = -1, int value3 = -1);
+    void addExecutionMode(Function*, ExecutionMode mode, const std::vector<unsigned>& literals);
+    void addExecutionModeId(Function*, ExecutionMode mode, const std::vector<Id>& operandIds);
     void addName(Id, const char* name);
     void addMemberName(Id, int member, const char* name);
     void addDecoration(Id, Decoration, int num = -1);
     void addDecoration(Id, Decoration, const char*);
+    void addDecoration(Id, Decoration, const std::vector<unsigned>& literals);
+    void addDecoration(Id, Decoration, const std::vector<const char*>& strings);
     void addDecorationId(Id id, Decoration, Id idDecoration);
+    void addDecorationId(Id id, Decoration, const std::vector<Id>& operandIds);
     void addMemberDecoration(Id, unsigned int member, Decoration, int num = -1);
     void addMemberDecoration(Id, unsigned int member, Decoration, const char*);
+    void addMemberDecoration(Id, unsigned int member, Decoration, const std::vector<unsigned>& literals);
+    void addMemberDecoration(Id, unsigned int member, Decoration, const std::vector<const char*>& strings);
 
     // At the end of what block do the next create*() instructions go?
     void setBuildPoint(Block* bp) { buildPoint = bp; }
@@ -350,8 +360,9 @@ public:
     // Generate all the code needed to finish up a function.
     void leaveFunction();
 
-    // Create a discard.
-    void makeDiscard();
+    // Create block terminator instruction for certain statements like
+    // discard, terminate-invocation, terminateRayEXT, or ignoreIntersectionEXT
+    void makeStatementTerminator(spv::Op opcode, const char *name);
 
     // Create a global or function local or IO variable.
     Id createVariable(Decoration precision, StorageClass, Id type, const char* name = nullptr,
@@ -617,6 +628,7 @@ public:
             CoherentFlags operator |=(const CoherentFlags &other) { return *this; }
 #else
             bool isVolatile() const { return volatil; }
+            bool isNonUniform() const { return nonUniform; }
             bool anyCoherent() const {
                 return coherent || devicecoherent || queuefamilycoherent || workgroupcoherent ||
                     subgroupcoherent || shadercallcoherent;
@@ -631,6 +643,7 @@ public:
             unsigned nonprivate : 1;
             unsigned volatil : 1;
             unsigned isImage : 1;
+            unsigned nonUniform : 1;
 
             void clear() {
                 coherent = 0;
@@ -642,6 +655,7 @@ public:
                 nonprivate = 0;
                 volatil = 0;
                 isImage = 0;
+                nonUniform = 0;
             }
 
             CoherentFlags operator |=(const CoherentFlags &other) {
@@ -654,6 +668,7 @@ public:
                 nonprivate |= other.nonprivate;
                 volatil |= other.volatil;
                 isImage |= other.isImage;
+                nonUniform |= other.nonUniform;
                 return *this;
             }
 #endif
@@ -714,11 +729,12 @@ public:
     }
 
     // use accessChain and swizzle to store value
-    void accessChainStore(Id rvalue, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone,
+    void accessChainStore(Id rvalue, Decoration nonUniform,
+        spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone,
         spv::Scope scope = spv::ScopeMax, unsigned int alignment = 0);
 
     // use accessChain and swizzle to load an r-value
-    Id accessChainLoad(Decoration precision, Decoration nonUniform, Id ResultType,
+    Id accessChainLoad(Decoration precision, Decoration l_nonUniform, Decoration r_nonUniform, Id ResultType,
         spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone, spv::Scope scope = spv::ScopeMax,
             unsigned int alignment = 0);
 
@@ -825,6 +841,8 @@ public:
     std::unordered_map<unsigned int, std::vector<Instruction*>> groupedStructConstants;
     // map type opcodes to type instructions
     std::unordered_map<unsigned int, std::vector<Instruction*>> groupedTypes;
+    // list of OpConstantNull instructions
+    std::vector<Instruction*> nullConstants;
 
     // stack of switches
     std::stack<Block*> switchMerges;

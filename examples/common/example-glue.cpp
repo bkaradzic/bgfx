@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "imgui/imgui.h"
@@ -391,9 +391,10 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 						const double toGpuMs = 1000.0/double(stats->gpuTimerFreq);
 						const float  scale   = 3.0f;
 
-						if (ImGui::ListBoxHeader("Encoders", ImVec2(ImGui::GetWindowWidth(), stats->numEncoders*itemHeightWithSpacing) ) )
+						if (ImGui::BeginListBox("Encoders", ImVec2(ImGui::GetWindowWidth(), stats->numEncoders*itemHeightWithSpacing) ) )
 						{
-							ImGuiListClipper clipper(stats->numEncoders, itemHeight);
+							ImGuiListClipper clipper;
+							clipper.Begin(stats->numEncoders, itemHeight);
 
 							while (clipper.Step() )
 							{
@@ -418,14 +419,15 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 								}
 							}
 
-							ImGui::ListBoxFooter();
+							ImGui::EndListBox();
 						}
 
 						ImGui::Separator();
 
-						if (ImGui::ListBoxHeader("Views", ImVec2(ImGui::GetWindowWidth(), stats->numViews*itemHeightWithSpacing) ) )
+						if (ImGui::BeginListBox("Views", ImVec2(ImGui::GetWindowWidth(), stats->numViews*itemHeightWithSpacing) ) )
 						{
-							ImGuiListClipper clipper(stats->numViews, itemHeight);
+							ImGuiListClipper clipper;
+							clipper.Begin(stats->numViews, itemHeight);
 
 							while (clipper.Step() )
 							{
@@ -464,7 +466,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 								}
 							}
 
-							ImGui::ListBoxFooter();
+							ImGui::EndListBox();
 						}
 
 						ImGui::PopFont();

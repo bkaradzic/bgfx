@@ -44,10 +44,13 @@
 #include "../Include/BaseTypes.h"
 #include "../Public/ShaderLang.h"
 #include "arrays.h"
+#include "SpirvIntrinsics.h"
 
 #include <algorithm>
 
 namespace glslang {
+
+class TIntermAggregate;
 
 const int GlslangMaxTypeLength = 200;  // TODO: need to print block/struct one member per line, so this can stay bounded
 
@@ -115,6 +118,7 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
 #endif
 
     bool is1D()          const { return dim == Esd1D; }
+    bool is2D()          const { return dim == Esd2D; }
     bool isBuffer()      const { return dim == EsdBuffer; }
     bool isRect()        const { return dim == EsdRect; }
     bool isSubpass()     const { return dim == EsdSubpass; }
@@ -406,6 +410,7 @@ enum TLayoutFormat {
     ElfRg8i,
     ElfR16i,
     ElfR8i,
+    ElfR64i,
 
     ElfIntGuard,       // to help with comparisons
 
@@ -423,6 +428,7 @@ enum TLayoutFormat {
     ElfRg8ui,
     ElfR16ui,
     ElfR8ui,
+    ElfR64ui,
 
     ElfCount
 };
@@ -484,7 +490,6 @@ enum TShaderInterface
     EsiCount
 };
 
-
 class TQualifier {
 public:
     static const int layoutNotSet = -1;
@@ -497,7 +502,11 @@ public:
         declaredBuiltIn = EbvNone;
 #ifndef GLSLANG_WEB
         noContraction = false;
+        nullInit = false;
+        spirvByReference = false;
+        spirvLiteral = false;
 #endif
+        defaultBlock = false;
     }
 
     // drop qualifiers that don't belong in a temporary variable
@@ -510,7 +519,15 @@ public:
         clearMemory();
         specConstant = false;
         nonUniform = false;
+        nullInit = false;
+        defaultBlock = false;
         clearLayout();
+#ifndef GLSLANG_WEB
+        spirvStorageClass = -1;
+        spirvDecorate = nullptr;
+        spirvByReference = false;
+        spirvLiteral = false;
+#endif
     }
 
     void clearInterstage()
@@ -568,6 +585,7 @@ public:
     bool specConstant : 1;
     bool nonUniform   : 1;
     bool explicitOffset   : 1;
+    bool defaultBlock : 1; // default blocks with matching names have structures merged when linking
 
 #ifdef GLSLANG_WEB
     bool isWriteOnly() const { return false; }
@@ -586,6 +604,12 @@ public:
     bool isNoContraction() const { return false; }
     void setNoContraction() { }
     bool isPervertexNV() const { return false; }
+    void setNullInit() { }
+    bool isNullInit() const { return false; }
+    void setSpirvByReference() { }
+    bool isSpirvByReference() { return false; }
+    void setSpirvLiteral() { }
+    bool isSpirvLiteral() { return false; }
 #else
     bool noContraction: 1; // prevent contraction and reassociation, e.g., for 'precise' keyword, and expressions it affects
     bool nopersp      : 1;
@@ -607,6 +631,9 @@ public:
     bool subgroupcoherent  : 1;
     bool shadercallcoherent : 1;
     bool nonprivate   : 1;
+    bool nullInit : 1;
+    bool spirvByReference : 1;
+    bool spirvLiteral : 1;
     bool isWriteOnly() const { return writeonly; }
     bool isReadOnly() const { return readonly; }
     bool isRestrict() const { return restrict; }
@@ -642,6 +669,12 @@ public:
     bool isNoContraction() const { return noContraction; }
     void setNoContraction() { noContraction = true; }
     bool isPervertexNV() const { return pervertexNV; }
+    void setNullInit() { nullInit = true; }
+    bool isNullInit() const { return nullInit; }
+    void setSpirvByReference() { spirvByReference = true; }
+    bool isSpirvByReference() const { return spirvByReference; }
+    void setSpirvLiteral() { spirvLiteral = true; }
+    bool isSpirvLiteral() const { return spirvLiteral; }
 #endif
 
     bool isPipeInput() const
@@ -708,6 +741,16 @@ public:
         }
     }
 
+    bool isUniform() const
+    {
+        switch (storage) {
+        case EvqUniform:
+            return true;
+        default:
+            return false;
+        }
+    }
+
     bool isIo() const
     {
         switch (storage) {
@@ -747,6 +790,46 @@ public:
         }
     }
 
+    TBlockStorageClass getBlockStorage() const {
+        if (storage == EvqUniform && !isPushConstant()) {
+            return EbsUniform;
+        }
+        else if (storage == EvqUniform) {
+            return EbsPushConstant;
+        }
+        else if (storage == EvqBuffer) {
+            return EbsStorageBuffer;
+        }
+        return EbsNone;
+    }
+
+    void setBlockStorage(TBlockStorageClass newBacking) {
+#ifndef GLSLANG_WEB
+        layoutPushConstant = (newBacking == EbsPushConstant);
+#endif
+        switch (newBacking) {
+        case EbsUniform :
+            if (layoutPacking == ElpStd430) {
+                // std430 would not be valid
+                layoutPacking = ElpStd140;
+            }
+            storage = EvqUniform;
+            break;
+        case EbsStorageBuffer : 
+            storage = EvqBuffer;
+            break;
+#ifndef GLSLANG_WEB
+        case EbsPushConstant :
+            storage = EvqUniform;
+            layoutSet = TQualifier::layoutSetEnd;
+            layoutBinding = TQualifier::layoutBindingEnd;
+            break;
+#endif
+        default:
+            break;
+        }
+    }
+
 #ifdef GLSLANG_WEB
     bool isPerView() const { return false; }
     bool isTaskMemory() const { return false; }
@@ -755,6 +838,12 @@ public:
     bool isPerPrimitive() const { return perPrimitiveNV; }
     bool isPerView() const { return perViewNV; }
     bool isTaskMemory() const { return perTaskNV; }
+    bool isAnyPayload() const {
+        return storage == EvqPayload || storage == EvqPayloadIn;
+    }
+    bool isAnyCallable() const {
+        return storage == EvqCallableData || storage == EvqCallableDataIn;
+    }
 
     // True if this type of IO is supposed to be arrayed with extra level for per-vertex data
     bool isArrayedIo(EShLanguage language) const
@@ -837,6 +926,7 @@ public:
         return hasNonXfbLayout() ||
                hasXfb();
     }
+
     TLayoutMatrix  layoutMatrix  : 3;
     TLayoutPacking layoutPacking : 4;
     int layoutOffset;
@@ -888,6 +978,10 @@ public:
     bool layoutViewportRelative;
     int layoutSecondaryViewportRelativeOffset;
     bool layoutShaderRecord;
+
+    // GL_EXT_spirv_intrinsics
+    int spirvStorageClass;
+    TSpirvDecorate* spirvDecorate;
 #endif
 
     bool hasUniformLayout() const
@@ -1019,6 +1113,15 @@ public:
     {
         return nonUniform;
     }
+
+    // GL_EXT_spirv_intrinsics
+    bool hasSprivDecorate() const { return spirvDecorate != nullptr; }
+    void setSpirvDecorate(int decoration, const TIntermAggregate* args = nullptr);
+    void setSpirvDecorateId(int decoration, const TIntermAggregate* args);
+    void setSpirvDecorateString(int decoration, const TIntermAggregate* args);
+    const TSpirvDecorate& getSpirvDecorate() const { assert(spirvDecorate); return *spirvDecorate; }
+    TSpirvDecorate& getSpirvDecorate() { assert(spirvDecorate); return *spirvDecorate; }
+    TString getSpirvDecorateQualifierString() const;
 #endif
     bool hasSpecConstantId() const
     {
@@ -1117,6 +1220,8 @@ public:
         case ElfR32ui:        return "r32ui";
         case ElfR16ui:        return "r16ui";
         case ElfR8ui:         return "r8ui";
+        case ElfR64ui:        return "r64ui";
+        case ElfR64i:         return "r64i";
         default:              return "none";
         }
     }
@@ -1361,6 +1466,10 @@ public:
     const TType* userDef;
     TSourceLoc loc;
     TArraySizes* typeParameters;
+#ifndef GLSLANG_WEB
+    // SPIR-V type defined by spirv_type directive
+    TSpirvType* spirvType;
+#endif
 
 #ifdef GLSLANG_WEB
     bool isCoopmat() const { return false; }
@@ -1379,6 +1488,9 @@ public:
         loc = l;
         typeParameters = nullptr;
         coopmat = false;
+#ifndef GLSLANG_WEB
+        spirvType = nullptr;
+#endif
     }
 
     void initQualifiers(bool global = false)
@@ -1415,6 +1527,11 @@ public:
         return matrixCols == 0 && vectorSize == 1 && arraySizes == nullptr && userDef == nullptr;
     }
 
+#ifndef GLSLANG_WEB
+    // GL_EXT_spirv_intrinsics
+    void setSpirvType(const TSpirvInstruction& spirvInst, const TSpirvTypeParameters* typeParams = nullptr);
+#endif
+
     // "Image" is a superset of "Subpass"
     bool isImage()   const { return basicType == EbtSampler && sampler.isImage(); }
     bool isSubpass() const { return basicType == EbtSampler && sampler.isSubpass(); }
@@ -1432,6 +1549,9 @@ public:
                    bool isVector = false) :
                             basicType(t), vectorSize(vs), matrixCols(mc), matrixRows(mr), vector1(isVector && vs == 1), coopmat(false),
                             arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr), typeParameters(nullptr)
+#ifndef GLSLANG_WEB
+                            , spirvType(nullptr)
+#endif
                             {
                                 sampler.clear();
                                 qualifier.clear();
@@ -1443,6 +1563,9 @@ public:
           bool isVector = false) :
                             basicType(t), vectorSize(vs), matrixCols(mc), matrixRows(mr), vector1(isVector && vs == 1), coopmat(false),
                             arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr), typeParameters(nullptr)
+#ifndef GLSLANG_WEB
+                            , spirvType(nullptr)
+#endif
                             {
                                 sampler.clear();
                                 qualifier.clear();
@@ -1456,6 +1579,9 @@ public:
                             basicType(p.basicType),
                             vectorSize(p.vectorSize), matrixCols(p.matrixCols), matrixRows(p.matrixRows), vector1(false), coopmat(p.coopmat),
                             arraySizes(p.arraySizes), structure(nullptr), fieldName(nullptr), typeName(nullptr), typeParameters(p.typeParameters)
+#ifndef GLSLANG_WEB
+                            , spirvType(p.spirvType)
+#endif
                             {
                                 if (basicType == EbtSampler)
                                     sampler = p.sampler;
@@ -1490,6 +1616,9 @@ public:
         basicType(EbtSampler), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false), coopmat(false),
         arraySizes(as), structure(nullptr), fieldName(nullptr), typeName(nullptr),
         sampler(sampler), typeParameters(nullptr)
+#ifndef GLSLANG_WEB
+        , spirvType(nullptr)
+#endif
     {
         qualifier.clear();
         qualifier.storage = q;
@@ -1540,6 +1669,9 @@ public:
     TType(TTypeList* userDef, const TString& n) :
                             basicType(EbtStruct), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false), coopmat(false),
                             arraySizes(nullptr), structure(userDef), fieldName(nullptr), typeParameters(nullptr)
+#ifndef GLSLANG_WEB
+                            , spirvType(nullptr)
+#endif
                             {
                                 sampler.clear();
                                 qualifier.clear();
@@ -1549,6 +1681,9 @@ public:
     TType(TTypeList* userDef, const TString& n, const TQualifier& q) :
                             basicType(EbtBlock), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false), coopmat(false),
                             qualifier(q), arraySizes(nullptr), structure(userDef), fieldName(nullptr), typeParameters(nullptr)
+#ifndef GLSLANG_WEB
+                            , spirvType(nullptr)
+#endif
                             {
                                 sampler.clear();
                                 typeName = NewPoolTString(n.c_str());
@@ -1557,6 +1692,9 @@ public:
     explicit TType(TBasicType t, const TType &p, const TString& n) :
                             basicType(t), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false),
                             arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr)
+#ifndef GLSLANG_WEB
+                            , spirvType(nullptr)
+#endif
                             {
                                 assert(t == EbtReference);
                                 typeName = NewPoolTString(n.c_str());
@@ -1587,6 +1725,9 @@ public:
             referentType = copyOf.referentType;
         }
         typeParameters = copyOf.typeParameters;
+#ifndef GLSLANG_WEB
+        spirvType = copyOf.spirvType;
+#endif
         coopmat = copyOf.isCoopMat();
     }
 
@@ -1677,6 +1818,7 @@ public:
 
     virtual bool isScalar() const { return ! isVector() && ! isMatrix() && ! isStruct() && ! isArray(); }
     virtual bool isScalarOrVec1() const { return isScalar() || vector1; }
+    virtual bool isScalarOrVector() const { return !isMatrix() && !isStruct() && !isArray(); }
     virtual bool isVector() const { return vectorSize > 1 || vector1; }
     virtual bool isMatrix() const { return matrixCols ? true : false; }
     virtual bool isArray()  const { return arraySizes != nullptr; }
@@ -1707,7 +1849,7 @@ public:
     }
     virtual bool isOpaque() const { return basicType == EbtSampler
 #ifndef GLSLANG_WEB
-         || basicType == EbtAtomicUint || basicType == EbtAccStruct || basicType == EbtRayQuery
+            || basicType == EbtAtomicUint || basicType == EbtAccStruct || basicType == EbtRayQuery
 #endif
         ; }
     virtual bool isBuiltIn() const { return getQualifier().builtIn != EbvNone; }
@@ -1723,10 +1865,12 @@ public:
     bool isAtomic() const { return false; }
     bool isCoopMat() const { return false; }
     bool isReference() const { return false; }
+    bool isSpirvType() const { return false; }
 #else
     bool isAtomic() const { return basicType == EbtAtomicUint; }
     bool isCoopMat() const { return coopmat; }
     bool isReference() const { return getBasicType() == EbtReference; }
+    bool isSpirvType() const { return getBasicType() == EbtSpirvType; }
 #endif
 
     // return true if this type contains any subtype which satisfies the given predicate.
@@ -1955,8 +2099,6 @@ public:
         }
     }
 
-
-
     const char* getBasicString() const
     {
         return TType::getBasicString(basicType);
@@ -1986,6 +2128,8 @@ public:
         case EbtAccStruct:         return "accelerationStructureNV";
         case EbtRayQuery:          return "rayQueryEXT";
         case EbtReference:         return "reference";
+        case EbtString:            return "string";
+        case EbtSpirvType:         return "spirv_type";
 #endif
         default:                   return "unknown type";
         }
@@ -1998,7 +2142,8 @@ public:
     const char* getPrecisionQualifierString() const { return ""; }
     TString getBasicTypeString() const { return ""; }
 #else
-    TString getCompleteString() const
+    TString getCompleteString(bool syntactic = false, bool getQualifiers = true, bool getPrecision = true,
+                              bool getType = true, TString name = "", TString structName = "") const
     {
         TString typeString;
 
@@ -2006,223 +2151,335 @@ public:
         const auto appendUint = [&](unsigned int u) { typeString.append(std::to_string(u).c_str()); };
         const auto appendInt  = [&](int i)          { typeString.append(std::to_string(i).c_str()); };
 
-        if (qualifier.hasLayout()) {
+        if (getQualifiers) {
+          if (qualifier.hasSprivDecorate())
+            appendStr(qualifier.getSpirvDecorateQualifierString().c_str());
+
+          if (qualifier.hasLayout()) {
             // To reduce noise, skip this if the only layout is an xfb_buffer
             // with no triggering xfb_offset.
             TQualifier noXfbBuffer = qualifier;
             noXfbBuffer.layoutXfbBuffer = TQualifier::layoutXfbBufferEnd;
             if (noXfbBuffer.hasLayout()) {
-                appendStr("layout(");
-                if (qualifier.hasAnyLocation()) {
-                    appendStr(" location=");
-                    appendUint(qualifier.layoutLocation);
-                    if (qualifier.hasComponent()) {
-                        appendStr(" component=");
-                        appendUint(qualifier.layoutComponent);
-                    }
-                    if (qualifier.hasIndex()) {
-                        appendStr(" index=");
-                        appendUint(qualifier.layoutIndex);
-                    }
+              appendStr("layout(");
+              if (qualifier.hasAnyLocation()) {
+                appendStr(" location=");
+                appendUint(qualifier.layoutLocation);
+                if (qualifier.hasComponent()) {
+                  appendStr(" component=");
+                  appendUint(qualifier.layoutComponent);
                 }
-                if (qualifier.hasSet()) {
-                    appendStr(" set=");
-                    appendUint(qualifier.layoutSet);
+                if (qualifier.hasIndex()) {
+                  appendStr(" index=");
+                  appendUint(qualifier.layoutIndex);
                 }
-                if (qualifier.hasBinding()) {
-                    appendStr(" binding=");
-                    appendUint(qualifier.layoutBinding);
-                }
-                if (qualifier.hasStream()) {
-                    appendStr(" stream=");
-                    appendUint(qualifier.layoutStream);
-                }
-                if (qualifier.hasMatrix()) {
-                    appendStr(" ");
-                    appendStr(TQualifier::getLayoutMatrixString(qualifier.layoutMatrix));
-                }
-                if (qualifier.hasPacking()) {
-                    appendStr(" ");
-                    appendStr(TQualifier::getLayoutPackingString(qualifier.layoutPacking));
-                }
-                if (qualifier.hasOffset()) {
-                    appendStr(" offset=");
-                    appendInt(qualifier.layoutOffset);
-                }
-                if (qualifier.hasAlign()) {
-                    appendStr(" align=");
-                    appendInt(qualifier.layoutAlign);
-                }
-                if (qualifier.hasFormat()) {
-                    appendStr(" ");
-                    appendStr(TQualifier::getLayoutFormatString(qualifier.layoutFormat));
-                }
-                if (qualifier.hasXfbBuffer() && qualifier.hasXfbOffset()) {
-                    appendStr(" xfb_buffer=");
-                    appendUint(qualifier.layoutXfbBuffer);
-                }
-                if (qualifier.hasXfbOffset()) {
-                    appendStr(" xfb_offset=");
-                    appendUint(qualifier.layoutXfbOffset);
-                }
-                if (qualifier.hasXfbStride()) {
-                    appendStr(" xfb_stride=");
-                    appendUint(qualifier.layoutXfbStride);
-                }
-                if (qualifier.hasAttachment()) {
-                    appendStr(" input_attachment_index=");
-                    appendUint(qualifier.layoutAttachment);
-                }
-                if (qualifier.hasSpecConstantId()) {
-                    appendStr(" constant_id=");
-                    appendUint(qualifier.layoutSpecConstantId);
-                }
-                if (qualifier.layoutPushConstant)
-                    appendStr(" push_constant");
-                if (qualifier.layoutBufferReference)
-                    appendStr(" buffer_reference");
-                if (qualifier.hasBufferReferenceAlign()) {
-                    appendStr(" buffer_reference_align=");
-                    appendUint(1u << qualifier.layoutBufferReferenceAlign);
-                }
+              }
+              if (qualifier.hasSet()) {
+                appendStr(" set=");
+                appendUint(qualifier.layoutSet);
+              }
+              if (qualifier.hasBinding()) {
+                appendStr(" binding=");
+                appendUint(qualifier.layoutBinding);
+              }
+              if (qualifier.hasStream()) {
+                appendStr(" stream=");
+                appendUint(qualifier.layoutStream);
+              }
+              if (qualifier.hasMatrix()) {
+                appendStr(" ");
+                appendStr(TQualifier::getLayoutMatrixString(qualifier.layoutMatrix));
+              }
+              if (qualifier.hasPacking()) {
+                appendStr(" ");
+                appendStr(TQualifier::getLayoutPackingString(qualifier.layoutPacking));
+              }
+              if (qualifier.hasOffset()) {
+                appendStr(" offset=");
+                appendInt(qualifier.layoutOffset);
+              }
+              if (qualifier.hasAlign()) {
+                appendStr(" align=");
+                appendInt(qualifier.layoutAlign);
+              }
+              if (qualifier.hasFormat()) {
+                appendStr(" ");
+                appendStr(TQualifier::getLayoutFormatString(qualifier.layoutFormat));
+              }
+              if (qualifier.hasXfbBuffer() && qualifier.hasXfbOffset()) {
+                appendStr(" xfb_buffer=");
+                appendUint(qualifier.layoutXfbBuffer);
+              }
+              if (qualifier.hasXfbOffset()) {
+                appendStr(" xfb_offset=");
+                appendUint(qualifier.layoutXfbOffset);
+              }
+              if (qualifier.hasXfbStride()) {
+                appendStr(" xfb_stride=");
+                appendUint(qualifier.layoutXfbStride);
+              }
+              if (qualifier.hasAttachment()) {
+                appendStr(" input_attachment_index=");
+                appendUint(qualifier.layoutAttachment);
+              }
+              if (qualifier.hasSpecConstantId()) {
+                appendStr(" constant_id=");
+                appendUint(qualifier.layoutSpecConstantId);
+              }
+              if (qualifier.layoutPushConstant)
+                appendStr(" push_constant");
+              if (qualifier.layoutBufferReference)
+                appendStr(" buffer_reference");
+              if (qualifier.hasBufferReferenceAlign()) {
+                appendStr(" buffer_reference_align=");
+                appendUint(1u << qualifier.layoutBufferReferenceAlign);
+              }
 
-                if (qualifier.layoutPassthrough)
-                    appendStr(" passthrough");
-                if (qualifier.layoutViewportRelative)
-                    appendStr(" layoutViewportRelative");
-                if (qualifier.layoutSecondaryViewportRelativeOffset != -2048) {
-                    appendStr(" layoutSecondaryViewportRelativeOffset=");
-                    appendInt(qualifier.layoutSecondaryViewportRelativeOffset);
-                }
-                if (qualifier.layoutShaderRecord)
-                    appendStr(" shaderRecordNV");
+              if (qualifier.layoutPassthrough)
+                appendStr(" passthrough");
+              if (qualifier.layoutViewportRelative)
+                appendStr(" layoutViewportRelative");
+              if (qualifier.layoutSecondaryViewportRelativeOffset != -2048) {
+                appendStr(" layoutSecondaryViewportRelativeOffset=");
+                appendInt(qualifier.layoutSecondaryViewportRelativeOffset);
+              }
+              if (qualifier.layoutShaderRecord)
+                appendStr(" shaderRecordNV");
 
-                appendStr(")");
+              appendStr(")");
             }
-        }
+          }
 
-        if (qualifier.invariant)
+          if (qualifier.invariant)
             appendStr(" invariant");
-        if (qualifier.noContraction)
+          if (qualifier.noContraction)
             appendStr(" noContraction");
-        if (qualifier.centroid)
+          if (qualifier.centroid)
             appendStr(" centroid");
-        if (qualifier.smooth)
+          if (qualifier.smooth)
             appendStr(" smooth");
-        if (qualifier.flat)
+          if (qualifier.flat)
             appendStr(" flat");
-        if (qualifier.nopersp)
+          if (qualifier.nopersp)
             appendStr(" noperspective");
-        if (qualifier.explicitInterp)
+          if (qualifier.explicitInterp)
             appendStr(" __explicitInterpAMD");
-        if (qualifier.pervertexNV)
+          if (qualifier.pervertexNV)
             appendStr(" pervertexNV");
-        if (qualifier.perPrimitiveNV)
+          if (qualifier.perPrimitiveNV)
             appendStr(" perprimitiveNV");
-        if (qualifier.perViewNV)
+          if (qualifier.perViewNV)
             appendStr(" perviewNV");
-        if (qualifier.perTaskNV)
+          if (qualifier.perTaskNV)
             appendStr(" taskNV");
-        if (qualifier.patch)
+          if (qualifier.patch)
             appendStr(" patch");
-        if (qualifier.sample)
+          if (qualifier.sample)
             appendStr(" sample");
-        if (qualifier.coherent)
+          if (qualifier.coherent)
             appendStr(" coherent");
-        if (qualifier.devicecoherent)
+          if (qualifier.devicecoherent)
             appendStr(" devicecoherent");
-        if (qualifier.queuefamilycoherent)
+          if (qualifier.queuefamilycoherent)
             appendStr(" queuefamilycoherent");
-        if (qualifier.workgroupcoherent)
+          if (qualifier.workgroupcoherent)
             appendStr(" workgroupcoherent");
-        if (qualifier.subgroupcoherent)
+          if (qualifier.subgroupcoherent)
             appendStr(" subgroupcoherent");
-        if (qualifier.shadercallcoherent)
+          if (qualifier.shadercallcoherent)
             appendStr(" shadercallcoherent");
-        if (qualifier.nonprivate)
+          if (qualifier.nonprivate)
             appendStr(" nonprivate");
-        if (qualifier.volatil)
+          if (qualifier.volatil)
             appendStr(" volatile");
-        if (qualifier.restrict)
+          if (qualifier.restrict)
             appendStr(" restrict");
-        if (qualifier.readonly)
+          if (qualifier.readonly)
             appendStr(" readonly");
-        if (qualifier.writeonly)
+          if (qualifier.writeonly)
             appendStr(" writeonly");
-        if (qualifier.specConstant)
+          if (qualifier.specConstant)
             appendStr(" specialization-constant");
-        if (qualifier.nonUniform)
+          if (qualifier.nonUniform)
             appendStr(" nonuniform");
-        appendStr(" ");
-        appendStr(getStorageQualifierString());
-        if (isArray()) {
-            for(int i = 0; i < (int)arraySizes->getNumDims(); ++i) {
+          if (qualifier.isNullInit())
+            appendStr(" null-init");
+          if (qualifier.isSpirvByReference())
+            appendStr(" spirv_by_reference");
+          if (qualifier.isSpirvLiteral())
+            appendStr(" spirv_literal");
+          appendStr(" ");
+          appendStr(getStorageQualifierString());
+        }
+        if (getType) {
+          if (syntactic) {
+            if (getPrecision && qualifier.precision != EpqNone) {
+              appendStr(" ");
+              appendStr(getPrecisionQualifierString());
+            }
+            if (isVector() || isMatrix()) {
+              appendStr(" ");
+              switch (basicType) {
+              case EbtDouble:
+                appendStr("d");
+                break;
+              case EbtInt:
+                appendStr("i");
+                break;
+              case EbtUint:
+                appendStr("u");
+                break;
+              case EbtBool:
+                appendStr("b");
+                break;
+              case EbtFloat:
+              default:
+                break;
+              }
+              if (isVector()) {
+                appendStr("vec");
+                appendInt(vectorSize);
+              } else {
+                appendStr("mat");
+                appendInt(matrixCols);
+                appendStr("x");
+                appendInt(matrixRows);
+              }
+            } else if (isStruct() && structure) {
+                appendStr(" ");
+                appendStr(structName.c_str());
+                appendStr("{");
+                bool hasHiddenMember = true;
+                for (size_t i = 0; i < structure->size(); ++i) {
+                  if (!(*structure)[i].type->hiddenMember()) {
+                    if (!hasHiddenMember)
+                      appendStr(", ");
+                    typeString.append((*structure)[i].type->getCompleteString(syntactic, getQualifiers, getPrecision, getType, (*structure)[i].type->getFieldName()));
+                    hasHiddenMember = false;
+                  }
+                }
+                appendStr("}");
+            } else {
+                appendStr(" ");
+                switch (basicType) {
+                case EbtDouble:
+                  appendStr("double");
+                  break;
+                case EbtInt:
+                  appendStr("int");
+                  break;
+                case EbtUint:
+                  appendStr("uint");
+                  break;
+                case EbtBool:
+                  appendStr("bool");
+                  break;
+                case EbtFloat:
+                  appendStr("float");
+                  break;
+                default:
+                  appendStr("unexpected");
+                  break;
+                }
+            }
+            if (name.length() > 0) {
+              appendStr(" ");
+              appendStr(name.c_str());
+            }
+            if (isArray()) {
+              for (int i = 0; i < (int)arraySizes->getNumDims(); ++i) {
                 int size = arraySizes->getDimSize(i);
                 if (size == UnsizedArraySize && i == 0 && arraySizes->isVariablyIndexed())
-                    appendStr(" runtime-sized array of");
+                  appendStr("[]");
                 else {
-                    if (size == UnsizedArraySize) {
-                        appendStr(" unsized");
-                        if (i == 0) {
-                            appendStr(" ");
-                            appendInt(arraySizes->getImplicitSize());
-                        }
-                    } else {
-                        appendStr(" ");
-                        appendInt(arraySizes->getDimSize(i));
-                    }
-                    appendStr("-element array of");
+                  if (size == UnsizedArraySize) {
+                    appendStr("[");
+                    if (i == 0)
+                      appendInt(arraySizes->getImplicitSize());
+                    appendStr("]");
+                  }
+                  else {
+                    appendStr("[");
+                    appendInt(arraySizes->getDimSize(i));
+                    appendStr("]");
+                  }
                 }
+              }
             }
-        }
-        if (isParameterized()) {
-            appendStr("<");
-            for(int i = 0; i < (int)typeParameters->getNumDims(); ++i) {
+          }
+          else {
+            if (isArray()) {
+              for (int i = 0; i < (int)arraySizes->getNumDims(); ++i) {
+                int size = arraySizes->getDimSize(i);
+                if (size == UnsizedArraySize && i == 0 && arraySizes->isVariablyIndexed())
+                  appendStr(" runtime-sized array of");
+                else {
+                  if (size == UnsizedArraySize) {
+                    appendStr(" unsized");
+                    if (i == 0) {
+                      appendStr(" ");
+                      appendInt(arraySizes->getImplicitSize());
+                    }
+                  }
+                  else {
+                    appendStr(" ");
+                    appendInt(arraySizes->getDimSize(i));
+                  }
+                  appendStr("-element array of");
+                }
+              }
+            }
+            if (isParameterized()) {
+              appendStr("<");
+              for (int i = 0; i < (int)typeParameters->getNumDims(); ++i) {
                 appendInt(typeParameters->getDimSize(i));
                 if (i != (int)typeParameters->getNumDims() - 1)
+                  appendStr(", ");
+              }
+              appendStr(">");
+            }
+            if (getPrecision && qualifier.precision != EpqNone) {
+              appendStr(" ");
+              appendStr(getPrecisionQualifierString());
+            }
+            if (isMatrix()) {
+              appendStr(" ");
+              appendInt(matrixCols);
+              appendStr("X");
+              appendInt(matrixRows);
+              appendStr(" matrix of");
+            }
+            else if (isVector()) {
+              appendStr(" ");
+              appendInt(vectorSize);
+              appendStr("-component vector of");
+            }
+
+            appendStr(" ");
+            typeString.append(getBasicTypeString());
+
+            if (qualifier.builtIn != EbvNone) {
+              appendStr(" ");
+              appendStr(getBuiltInVariableString());
+            }
+
+            // Add struct/block members
+            if (isStruct() && structure) {
+              appendStr("{");
+              bool hasHiddenMember = true;
+              for (size_t i = 0; i < structure->size(); ++i) {
+                if (!(*structure)[i].type->hiddenMember()) {
+                  if (!hasHiddenMember)
                     appendStr(", ");
-            }
-            appendStr(">");
-        }
-        if (qualifier.precision != EpqNone) {
-            appendStr(" ");
-            appendStr(getPrecisionQualifierString());
-        }
-        if (isMatrix()) {
-            appendStr(" ");
-            appendInt(matrixCols);
-            appendStr("X");
-            appendInt(matrixRows);
-            appendStr(" matrix of");
-        } else if (isVector()) {
-            appendStr(" ");
-            appendInt(vectorSize);
-            appendStr("-component vector of");
-        }
-
-        appendStr(" ");
-        typeString.append(getBasicTypeString());
-
-        if (qualifier.builtIn != EbvNone) {
-            appendStr(" ");
-            appendStr(getBuiltInVariableString());
-        }
-
-        // Add struct/block members
-        if (isStruct() && structure) {
-            appendStr("{");
-            bool hasHiddenMember = true;
-            for (size_t i = 0; i < structure->size(); ++i) {
-                if (! (*structure)[i].type->hiddenMember()) {
-                    if (!hasHiddenMember) 
-                        appendStr(", ");
-                    typeString.append((*structure)[i].type->getCompleteString());
-                    typeString.append(" ");
-                    typeString.append((*structure)[i].type->getFieldName());
-                    hasHiddenMember = false;
+                  typeString.append((*structure)[i].type->getCompleteString());
+                  typeString.append(" ");
+                  typeString.append((*structure)[i].type->getFieldName());
+                  hasHiddenMember = false;
                 }
+              }
+              appendStr("}");
             }
-            appendStr("}");
+          }
         }
 
         return typeString;
@@ -2272,6 +2529,17 @@ public:
         name += ';' ;
     }
 
+    // These variables are inconsistently declared inside and outside of gl_PerVertex in glslang right now.
+    // They are declared inside of 'in gl_PerVertex', but sitting as standalone when they are 'out'puts.
+    bool isInconsistentGLPerVertexMember(const TString& name) const
+    {
+        if (name == "gl_SecondaryPositionNV" ||
+            name == "gl_PositionPerViewNV")
+            return true;
+        return false;
+    }
+
+
     // Do two structure types match?  They could be declared independently,
     // in different places, but still might satisfy the definition of matching.
     // From the spec:
@@ -2280,29 +2548,90 @@ public:
     //  type definitions, and member names to be considered the same type.
     //  This rule applies recursively for nested or embedded types."
     //
-    bool sameStructType(const TType& right) const
+    // If type mismatch in structure, return member indices through lpidx and rpidx.
+    // If matching members for either block are exhausted, return -1 for exhausted
+    // block and the index of the unmatched member. Otherwise return {-1,-1}.
+    //
+    bool sameStructType(const TType& right, int* lpidx = nullptr, int* rpidx = nullptr) const
     {
+        // Initialize error to general type mismatch.
+        if (lpidx != nullptr) {
+            *lpidx = -1;
+            *rpidx = -1;
+        }
+
         // Most commonly, they are both nullptr, or the same pointer to the same actual structure
+        // TODO: Why return true when neither types are structures?
         if ((!isStruct() && !right.isStruct()) ||
             (isStruct() && right.isStruct() && structure == right.structure))
             return true;
 
-        // Both being nullptr was caught above, now they both have to be structures of the same number of elements
-        if (!isStruct() || !right.isStruct() ||
-            structure->size() != right.structure->size())
+        if (!isStruct() || !right.isStruct())
             return false;
 
         // Structure names have to match
         if (*typeName != *right.typeName)
             return false;
 
-        // Compare the names and types of all the members, which have to match
-        for (unsigned int i = 0; i < structure->size(); ++i) {
-            if ((*structure)[i].type->getFieldName() != (*right.structure)[i].type->getFieldName())
-                return false;
+        // There are inconsistencies with how gl_PerVertex is setup. For now ignore those as errors if they
+        // are known inconsistencies.
+        bool isGLPerVertex = *typeName == "gl_PerVertex";
 
-            if (*(*structure)[i].type != *(*right.structure)[i].type)
-                return false;
+        // Both being nullptr was caught above, now they both have to be structures of the same number of elements
+        if (lpidx == nullptr &&
+            (structure->size() != right.structure->size() && !isGLPerVertex)) {
+            return false;
+        }
+
+        // Compare the names and types of all the members, which have to match
+        for (size_t li = 0, ri = 0; li < structure->size() || ri < right.structure->size(); ++li, ++ri) {
+            if (lpidx != nullptr) {
+                *lpidx = static_cast<int>(li);
+                *rpidx = static_cast<int>(ri);
+            }
+            if (li < structure->size() && ri < right.structure->size()) {
+                if ((*structure)[li].type->getFieldName() == (*right.structure)[ri].type->getFieldName()) {
+                    if (*(*structure)[li].type != *(*right.structure)[ri].type)
+                        return false;
+                } else {
+                    // Skip hidden members
+                    if ((*structure)[li].type->hiddenMember()) {
+                        ri--;
+                        continue;
+                    } else if ((*right.structure)[ri].type->hiddenMember()) {
+                        li--;
+                        continue;
+                    }
+                    // If one of the members is something that's inconsistently declared, skip over it
+                    // for now.
+                    if (isGLPerVertex) {
+                        if (isInconsistentGLPerVertexMember((*structure)[li].type->getFieldName())) {
+                            ri--;
+                            continue;
+                        } else if (isInconsistentGLPerVertexMember((*right.structure)[ri].type->getFieldName())) {
+                            li--;
+                            continue;
+                        }
+                    } else {
+                        return false;
+                    }
+                }
+            // If we get here, then there should only be inconsistently declared members left
+            } else if (li < structure->size()) {
+                if (!(*structure)[li].type->hiddenMember() && !isInconsistentGLPerVertexMember((*structure)[li].type->getFieldName())) {
+                    if (lpidx != nullptr) {
+                        *rpidx = -1;
+                    }
+                    return false;
+                }
+            } else {
+                if (!(*right.structure)[ri].type->hiddenMember() && !isInconsistentGLPerVertexMember((*right.structure)[ri].type->getFieldName())) {
+                    if (lpidx != nullptr) {
+                        *lpidx = -1;
+                    }
+                    return false;
+                }
+            }
         }
 
         return true;
@@ -2325,10 +2654,15 @@ public:
         return *referentType == *right.referentType;
     }
 
-   // See if two types match, in all aspects except arrayness
-    bool sameElementType(const TType& right) const
+    // See if two types match, in all aspects except arrayness
+    // If mismatch in structure members, return member indices in lpidx and rpidx.
+    bool sameElementType(const TType& right, int* lpidx = nullptr, int* rpidx = nullptr) const
     {
-        return basicType == right.basicType && sameElementShape(right);
+        if (lpidx != nullptr) {
+            *lpidx = -1;
+            *rpidx = -1;
+        }
+        return basicType == right.basicType && sameElementShape(right, lpidx, rpidx);
     }
 
     // See if two type's arrayness match
@@ -2352,16 +2686,30 @@ public:
                 (typeParameters != nullptr && right.typeParameters != nullptr && *typeParameters == *right.typeParameters));
     }
 
-    // See if two type's elements match in all ways except basic type
-    bool sameElementShape(const TType& right) const
+#ifndef GLSLANG_WEB
+    // See if two type's SPIR-V type contents match
+    bool sameSpirvType(const TType& right) const
     {
-        return    sampler == right.sampler    &&
+        return ((spirvType == nullptr && right.spirvType == nullptr) ||
+                (spirvType != nullptr && right.spirvType != nullptr && *spirvType == *right.spirvType));
+    }
+#endif
+
+    // See if two type's elements match in all ways except basic type
+    // If mismatch in structure members, return member indices in lpidx and rpidx.
+    bool sameElementShape(const TType& right, int* lpidx = nullptr, int* rpidx = nullptr) const
+    {
+        if (lpidx != nullptr) {
+            *lpidx = -1;
+            *rpidx = -1;
+        }
+        return ((basicType != EbtSampler && right.basicType != EbtSampler) || sampler == right.sampler) &&
                vectorSize == right.vectorSize &&
                matrixCols == right.matrixCols &&
                matrixRows == right.matrixRows &&
                   vector1 == right.vector1    &&
               isCoopMat() == right.isCoopMat() &&
-               sameStructType(right)          &&
+               sameStructType(right, lpidx, rpidx) &&
                sameReferenceType(right);
     }
 
@@ -2390,7 +2738,11 @@ public:
     // See if two types match in all ways (just the actual type, not qualification)
     bool operator==(const TType& right) const
     {
+#ifndef GLSLANG_WEB
+        return sameElementType(right) && sameArrayness(right) && sameTypeParameters(right) && sameSpirvType(right);
+#else
         return sameElementType(right) && sameArrayness(right) && sameTypeParameters(right);
+#endif
     }
 
     bool operator!=(const TType& right) const
@@ -2409,6 +2761,10 @@ public:
         return 0;
     }
 
+#ifndef GLSLANG_WEB
+    const TSpirvType& getSpirvType() const { assert(spirvType); return *spirvType; }
+#endif
+
 protected:
     // Require consumer to pick between deep copy and shallow copy.
     TType(const TType& type);
@@ -2420,6 +2776,19 @@ protected:
     void deepCopy(const TType& copyOf, TMap<TTypeList*,TTypeList*>& copiedMap)
     {
         shallowCopy(copyOf);
+
+#ifndef GLSLANG_WEB
+        // GL_EXT_spirv_intrinsics
+        if (copyOf.qualifier.spirvDecorate) {
+            qualifier.spirvDecorate = new TSpirvDecorate;
+            *qualifier.spirvDecorate = *copyOf.qualifier.spirvDecorate;
+        }
+
+        if (copyOf.spirvType) {
+            spirvType = new TSpirvType;
+            *spirvType = *copyOf.spirvType;
+        }
+#endif
 
         if (copyOf.arraySizes) {
             arraySizes = new TArraySizes;
@@ -2480,6 +2849,9 @@ protected:
     TString *typeName;          // for structure type name
     TSampler sampler;
     TArraySizes* typeParameters;// nullptr unless a parameterized type; can be shared across types
+#ifndef GLSLANG_WEB
+    TSpirvType* spirvType;  // SPIR-V type defined by spirv_type directive
+#endif
 };
 
 } // end namespace glslang

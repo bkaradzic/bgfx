@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "entry_p.h"
@@ -573,6 +573,8 @@ namespace entry
 							, (HINSTANCE)GetModuleHandle(NULL)
 							, 0
 							);
+
+						adjust(hwnd, msg->m_width, msg->m_height, true);
 						clear(hwnd);
 
 						m_hwnd[_wparam]  = hwnd;
@@ -936,6 +938,7 @@ namespace entry
 			SelectObject(hdc, brush);
 			FillRect(hdc, &rect, brush);
 			ReleaseDC(_hwnd, hdc);
+			DeleteObject(brush);
 		}
 
 		void adjust(HWND _hwnd, uint32_t _width, uint32_t _height, bool _windowFrame)

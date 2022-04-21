@@ -1,7 +1,0 @@
-#version 300 es
-uniform highp sampler2D map;
-layout ( location = 0 ) out mediump vec4 out_color;
-void main () {
- vec2 map_size = vec2(textureSize(map, 0));
- out_color = vec4(map_size.x, map_size.y, 0.0, 0.0);
-}

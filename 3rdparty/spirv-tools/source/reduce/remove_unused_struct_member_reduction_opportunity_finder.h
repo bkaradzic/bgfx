@@ -32,7 +32,7 @@ class RemoveUnusedStructMemberReductionOpportunityFinder
   std::string GetName() const final;
 
   std::vector<std::unique_ptr<ReductionOpportunity>> GetAvailableOpportunities(
-      opt::IRContext* context) const final;
+      opt::IRContext* context, uint32_t target_function) const final;
 
  private:
   // A helper method to update |unused_members_to_structs| by removing from it

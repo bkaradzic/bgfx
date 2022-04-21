@@ -116,6 +116,9 @@ using namespace glslang;
             glslang::TIntermNodePair nodePair;
             glslang::TIntermTyped* intermTypedNode;
             glslang::TAttributes* attributes;
+            glslang::TSpirvRequirement* spirvReq;
+            glslang::TSpirvInstruction* spirvInst;
+            glslang::TSpirvTypeParameters* spirvTypeParams;
         };
         union {
             glslang::TPublicType type;
@@ -242,6 +245,18 @@ GLSLANG_WEB_EXCLUDE_ON
 %token <lex> F16IMAGECUBE F16IMAGE1DARRAY F16IMAGE2DARRAY F16IMAGECUBEARRAY
 %token <lex> F16IMAGEBUFFER F16IMAGE2DMS F16IMAGE2DMSARRAY
 
+%token <lex> I64IMAGE1D U64IMAGE1D
+%token <lex> I64IMAGE2D U64IMAGE2D
+%token <lex> I64IMAGE3D U64IMAGE3D
+%token <lex> I64IMAGE2DRECT U64IMAGE2DRECT
+%token <lex> I64IMAGECUBE U64IMAGECUBE
+%token <lex> I64IMAGEBUFFER U64IMAGEBUFFER
+%token <lex> I64IMAGE1DARRAY U64IMAGE1DARRAY
+%token <lex> I64IMAGE2DARRAY U64IMAGE2DARRAY
+%token <lex> I64IMAGECUBEARRAY U64IMAGECUBEARRAY
+%token <lex> I64IMAGE2DMS U64IMAGE2DMS
+%token <lex> I64IMAGE2DMSARRAY U64IMAGE2DMSARRAY
+
 // texture without sampler
 %token <lex> TEXTURECUBEARRAY ITEXTURECUBEARRAY UTEXTURECUBEARRAY
 %token <lex> TEXTURE1D ITEXTURE1D UTEXTURE1D
@@ -258,6 +273,11 @@ GLSLANG_WEB_EXCLUDE_ON
 // input attachments
 %token <lex> SUBPASSINPUT SUBPASSINPUTMS ISUBPASSINPUT ISUBPASSINPUTMS USUBPASSINPUT USUBPASSINPUTMS
 %token <lex> F16SUBPASSINPUT F16SUBPASSINPUTMS
+
+// spirv intrinsics
+%token <lex> SPIRV_INSTRUCTION SPIRV_EXECUTION_MODE SPIRV_EXECUTION_MODE_ID
+%token <lex> SPIRV_DECORATE SPIRV_DECORATE_ID SPIRV_DECORATE_STRING
+%token <lex> SPIRV_TYPE SPIRV_STORAGE_CLASS SPIRV_BY_REFERENCE SPIRV_LITERAL
 
 GLSLANG_WEB_EXCLUDE_OFF
 
@@ -281,6 +301,8 @@ GLSLANG_WEB_EXCLUDE_OFF
 %token <lex> CENTROID IN OUT INOUT
 %token <lex> STRUCT VOID WHILE
 %token <lex> BREAK CONTINUE DO ELSE FOR IF DISCARD RETURN SWITCH CASE DEFAULT
+%token <lex> TERMINATE_INVOCATION
+%token <lex> TERMINATE_RAY IGNORE_INTERSECTION
 %token <lex> UNIFORM SHARED BUFFER
 %token <lex> FLAT SMOOTH LAYOUT
 
@@ -348,6 +370,19 @@ GLSLANG_WEB_EXCLUDE_ON
 %type <interm.attributes> attribute attribute_list single_attribute
 %type <interm.intermNode> demote_statement
 %type <interm.intermTypedNode> initializer_list
+%type <interm.spirvReq> spirv_requirements_list spirv_requirements_parameter
+%type <interm.intermNode> spirv_extension_list spirv_capability_list
+%type <interm.intermNode> spirv_execution_mode_qualifier
+%type <interm.intermNode> spirv_execution_mode_parameter_list spirv_execution_mode_parameter spirv_execution_mode_id_parameter_list
+%type <interm.type> spirv_storage_class_qualifier
+%type <interm.type> spirv_decorate_qualifier
+%type <interm.intermNode> spirv_decorate_parameter_list spirv_decorate_parameter
+%type <interm.intermNode> spirv_decorate_id_parameter_list
+%type <interm.intermNode> spirv_decorate_string_parameter_list
+%type <interm.type> spirv_type_specifier
+%type <interm.spirvTypeParams> spirv_type_parameter_list spirv_type_parameter
+%type <interm.spirvInst> spirv_instruction_qualifier
+%type <interm.spirvInst> spirv_instruction_qualifier_list spirv_instruction_qualifier_id
 GLSLANG_WEB_EXCLUDE_OFF
 
 %start translation_unit
@@ -763,7 +798,7 @@ conditional_expression
         parseContext.rValueErrorCheck($5.loc, ":", $6);
         $$ = parseContext.intermediate.addSelection($1, $4, $6, $2.loc);
         if ($$ == 0) {
-            parseContext.binaryOpError($2.loc, ":", $4->getCompleteString(), $6->getCompleteString());
+            parseContext.binaryOpError($2.loc, ":", $4->getCompleteString(parseContext.intermediate.getEnhancedMsgs()), $6->getCompleteString(parseContext.intermediate.getEnhancedMsgs()));
             $$ = $6;
         }
     }
@@ -780,7 +815,7 @@ assignment_expression
         parseContext.rValueErrorCheck($2.loc, "assign", $3);
         $$ = parseContext.addAssign($2.loc, $2.op, $1, $3);
         if ($$ == 0) {
-            parseContext.assignError($2.loc, "assign", $1->getCompleteString(), $3->getCompleteString());
+            parseContext.assignError($2.loc, "assign", $1->getCompleteString(parseContext.intermediate.getEnhancedMsgs()), $3->getCompleteString(parseContext.intermediate.getEnhancedMsgs()));
             $$ = $1;
         }
     }
@@ -842,7 +877,7 @@ expression
         parseContext.samplerConstructorLocationCheck($2.loc, ",", $3);
         $$ = parseContext.intermediate.addComma($1, $3, $2.loc);
         if ($$ == 0) {
-            parseContext.binaryOpError($2.loc, ",", $1->getCompleteString(), $3->getCompleteString());
+            parseContext.binaryOpError($2.loc, ",", $1->getCompleteString(parseContext.intermediate.getEnhancedMsgs()), $3->getCompleteString(parseContext.intermediate.getEnhancedMsgs()));
             $$ = $3;
         }
     }
@@ -861,6 +896,20 @@ declaration
         $$ = 0;
         // TODO: 4.0 functionality: subroutines: make the identifier a user type for this signature
     }
+GLSLANG_WEB_EXCLUDE_ON
+    | spirv_instruction_qualifier function_prototype SEMICOLON {
+        parseContext.requireExtensions($2.loc, 1, &E_GL_EXT_spirv_intrinsics, "SPIR-V instruction qualifier");
+        $2.function->setSpirvInstruction(*$1); // Attach SPIR-V intruction qualifier
+        parseContext.handleFunctionDeclarator($2.loc, *$2.function, true /* prototype */);
+        $$ = 0;
+        // TODO: 4.0 functionality: subroutines: make the identifier a user type for this signature
+    }
+    | spirv_execution_mode_qualifier SEMICOLON {
+        parseContext.globalCheck($2.loc, "SPIR-V execution mode qualifier");
+        parseContext.requireExtensions($2.loc, 1, &E_GL_EXT_spirv_intrinsics, "SPIR-V execution mode qualifier");
+        $$ = 0;
+    }
+GLSLANG_WEB_EXCLUDE_OFF
     | init_declarator_list SEMICOLON {
         if ($1.intermNode && $1.intermNode->getAsAggregate())
             $1.intermNode->getAsAggregate()->setOperator(EOpSequence);
@@ -905,7 +954,7 @@ declaration
 
 block_structure
     : type_qualifier IDENTIFIER LEFT_BRACE { parseContext.nestedBlockCheck($1.loc); } struct_declaration_list RIGHT_BRACE {
-        --parseContext.structNestingLevel;
+        --parseContext.blockNestingLevel;
         parseContext.blockName = $2.string;
         parseContext.globalQualifierFixCheck($1.loc, $1.qualifier);
         parseContext.checkNoShaderLayouts($1.loc, $1.shaderQualifiers);
@@ -929,6 +978,25 @@ function_prototype
     : function_declarator RIGHT_PAREN  {
         $$.function = $1;
         $$.loc = $2.loc;
+    }
+    | function_declarator RIGHT_PAREN attribute {
+        $$.function = $1;
+        $$.loc = $2.loc;
+        parseContext.requireExtensions($2.loc, 1, &E_GL_EXT_subgroup_uniform_control_flow, "attribute");
+        parseContext.handleFunctionAttributes($2.loc, *$3);
+    }
+    | attribute function_declarator RIGHT_PAREN {
+        $$.function = $2;
+        $$.loc = $3.loc;
+        parseContext.requireExtensions($3.loc, 1, &E_GL_EXT_subgroup_uniform_control_flow, "attribute");
+        parseContext.handleFunctionAttributes($3.loc, *$1);
+    }
+    | attribute function_declarator RIGHT_PAREN attribute {
+        $$.function = $2;
+        $$.loc = $3.loc;
+        parseContext.requireExtensions($3.loc, 1, &E_GL_EXT_subgroup_uniform_control_flow, "attribute");
+        parseContext.handleFunctionAttributes($3.loc, *$1);
+        parseContext.handleFunctionAttributes($3.loc, *$4);
     }
     ;
 
@@ -1332,6 +1400,25 @@ GLSLANG_WEB_EXCLUDE_ON
     }
     | non_uniform_qualifier {
         $$ = $1;
+    }
+    | spirv_storage_class_qualifier {
+        parseContext.globalCheck($1.loc, "spirv_storage_class");
+        parseContext.requireExtensions($1.loc, 1, &E_GL_EXT_spirv_intrinsics, "SPIR-V storage class qualifier");
+        $$ = $1;
+    }
+    | spirv_decorate_qualifier {
+        parseContext.requireExtensions($1.loc, 1, &E_GL_EXT_spirv_intrinsics, "SPIR-V decorate qualifier");
+        $$ = $1;
+    }
+    | SPIRV_BY_REFERENCE {
+        parseContext.requireExtensions($1.loc, 1, &E_GL_EXT_spirv_intrinsics, "spirv_by_reference");
+        $$.init($1.loc);
+        $$.qualifier.setSpirvByReference();
+    }
+    | SPIRV_LITERAL {
+        parseContext.requireExtensions($1.loc, 1, &E_GL_EXT_spirv_intrinsics, "spirv_by_literal");
+        $$.init($1.loc);
+        $$.qualifier.setSpirvLiteral();
     }
 GLSLANG_WEB_EXCLUDE_OFF
     ;
@@ -3203,6 +3290,116 @@ GLSLANG_WEB_EXCLUDE_ON
         $$.basicType = EbtSampler;
         $$.sampler.setImage(EbtUint, Esd2D, true, false, true);
     }
+    | I64IMAGE1D {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtInt64, Esd1D);
+    }
+    | U64IMAGE1D {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtUint64, Esd1D);
+    }
+    | I64IMAGE2D {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtInt64, Esd2D);
+    }
+    | U64IMAGE2D {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtUint64, Esd2D);
+    }
+    | I64IMAGE3D {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtInt64, Esd3D);
+    }
+    | U64IMAGE3D {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtUint64, Esd3D);
+    }
+    | I64IMAGE2DRECT {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtInt64, EsdRect);
+    }
+    | U64IMAGE2DRECT {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtUint64, EsdRect);
+    }
+    | I64IMAGECUBE {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtInt64, EsdCube);
+    }
+    | U64IMAGECUBE {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtUint64, EsdCube);
+    }
+    | I64IMAGEBUFFER {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtInt64, EsdBuffer);
+    }
+    | U64IMAGEBUFFER {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtUint64, EsdBuffer);
+    }
+    | I64IMAGE1DARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtInt64, Esd1D, true);
+    }
+    | U64IMAGE1DARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtUint64, Esd1D, true);
+    }
+    | I64IMAGE2DARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtInt64, Esd2D, true);
+    }
+    | U64IMAGE2DARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtUint64, Esd2D, true);
+    }
+    | I64IMAGECUBEARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtInt64, EsdCube, true);
+    }
+    | U64IMAGECUBEARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtUint64, EsdCube, true);
+    }
+    | I64IMAGE2DMS {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtInt64, Esd2D, false, false, true);
+    }
+    | U64IMAGE2DMS {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtUint64, Esd2D, false, false, true);
+    }
+    | I64IMAGE2DMSARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtInt64, Esd2D, true, false, true);
+    }
+    | U64IMAGE2DMSARRAY {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setImage(EbtUint64, Esd2D, true, false, true);
+    }
     | SAMPLEREXTERNALOES {  // GL_OES_EGL_image_external
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtSampler;
@@ -3282,6 +3479,10 @@ GLSLANG_WEB_EXCLUDE_ON
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtUint;
         $$.coopmat = true;
+    }
+    | spirv_type_specifier {
+        parseContext.requireExtensions($1.loc, 1, &E_GL_EXT_spirv_intrinsics, "SPIR-V type specifier");
+        $$ = $1;
     }
 GLSLANG_WEB_EXCLUDE_OFF
     | struct_specifier {
@@ -3451,6 +3652,12 @@ GLSLANG_WEB_EXCLUDE_ON
         parseContext.profileRequires($1.loc, ~EEsProfile, 420, E_GL_ARB_shading_language_420pack, initFeature);
         $$ = $2;
     }
+    | LEFT_BRACE RIGHT_BRACE {
+        const char* initFeature = "empty { } initializer";
+        parseContext.profileRequires($1.loc, EEsProfile, 0, E_GL_EXT_null_initializer, initFeature);
+        parseContext.profileRequires($1.loc, ~EEsProfile, 0, E_GL_EXT_null_initializer, initFeature);
+        $$ = parseContext.intermediate.makeAggregate($1.loc);
+    }
 GLSLANG_WEB_EXCLUDE_OFF
     ;
 
@@ -3583,6 +3790,7 @@ selection_statement
     }
 GLSLANG_WEB_EXCLUDE_ON
     | attribute selection_statement_nonattributed {
+        parseContext.requireExtensions($2->getLoc(), 1, &E_GL_EXT_control_flow_attributes, "attribute");
         parseContext.handleSelectionAttributes(*$1, $2);
         $$ = $2;
     }
@@ -3630,6 +3838,7 @@ switch_statement
     }
 GLSLANG_WEB_EXCLUDE_ON
     | attribute switch_statement_nonattributed {
+        parseContext.requireExtensions($2->getLoc(), 1, &E_GL_EXT_control_flow_attributes, "attribute");
         parseContext.handleSwitchAttributes(*$1, $2);
         $$ = $2;
     }
@@ -3694,6 +3903,7 @@ iteration_statement
     }
 GLSLANG_WEB_EXCLUDE_ON
     | attribute iteration_statement_nonattributed {
+        parseContext.requireExtensions($2->getLoc(), 1, &E_GL_EXT_control_flow_attributes, "attribute");
         parseContext.handleLoopAttributes(*$1, $2);
         $$ = $2;
     }
@@ -3716,6 +3926,7 @@ iteration_statement_nonattributed
         --parseContext.controlFlowNestingLevel;
     }
     | DO {
+        parseContext.symbolTable.push();
         ++parseContext.loopNestingLevel;
         ++parseContext.statementNestingLevel;
         ++parseContext.controlFlowNestingLevel;
@@ -3727,6 +3938,7 @@ iteration_statement_nonattributed
         parseContext.boolCheck($8.loc, $6);
 
         $$ = parseContext.intermediate.addLoop($3, $6, 0, false, $4.loc);
+        parseContext.symbolTable.pop(&parseContext.defaultPrecision[0]);
         --parseContext.loopNestingLevel;
         --parseContext.statementNestingLevel;
         --parseContext.controlFlowNestingLevel;
@@ -3805,6 +4017,20 @@ jump_statement
         parseContext.requireStage($1.loc, EShLangFragment, "discard");
         $$ = parseContext.intermediate.addBranch(EOpKill, $1.loc);
     }
+    | TERMINATE_INVOCATION SEMICOLON {
+        parseContext.requireStage($1.loc, EShLangFragment, "terminateInvocation");
+        $$ = parseContext.intermediate.addBranch(EOpTerminateInvocation, $1.loc);
+    }
+GLSLANG_WEB_EXCLUDE_ON
+    | TERMINATE_RAY SEMICOLON {
+        parseContext.requireStage($1.loc, EShLangAnyHit, "terminateRayEXT");
+        $$ = parseContext.intermediate.addBranch(EOpTerminateRayKHR, $1.loc);
+    }
+    | IGNORE_INTERSECTION SEMICOLON {
+        parseContext.requireStage($1.loc, EShLangAnyHit, "ignoreIntersectionEXT");
+        $$ = parseContext.intermediate.addBranch(EOpIgnoreIntersectionKHR, $1.loc);
+    }
+GLSLANG_WEB_EXCLUDE_OFF
     ;
 
 // Grammar Note:  No 'goto'.  Gotos are not supported.
@@ -3842,6 +4068,14 @@ function_definition
     : function_prototype {
         $1.function = parseContext.handleFunctionDeclarator($1.loc, *$1.function, false /* not prototype */);
         $1.intermNode = parseContext.handleFunctionDefinition($1.loc, *$1.function);
+
+        // For ES 100 only, according to ES shading language 100 spec: A function
+        // body has a scope nested inside the function's definition.
+        if (parseContext.profile == EEsProfile && parseContext.version == 100)
+        {
+            parseContext.symbolTable.push();
+            ++parseContext.statementNestingLevel;
+        }
     }
     compound_statement_no_new_scope {
         //   May be best done as post process phase on intermediate code
@@ -3857,6 +4091,17 @@ function_definition
         $$->getAsAggregate()->setOptimize(parseContext.contextPragma.optimize);
         $$->getAsAggregate()->setDebug(parseContext.contextPragma.debug);
         $$->getAsAggregate()->setPragmaTable(parseContext.contextPragma.pragmaTable);
+
+        // Set currentFunctionType to empty pointer when goes outside of the function
+        parseContext.currentFunctionType = nullptr;
+
+        // For ES 100 only, according to ES shading language 100 spec: A function
+        // body has a scope nested inside the function's definition.
+        if (parseContext.profile == EEsProfile && parseContext.version == 100)
+        {
+            parseContext.symbolTable.pop(&parseContext.defaultPrecision[0]);
+            --parseContext.statementNestingLevel;
+        }
     }
     ;
 
@@ -3864,7 +4109,6 @@ GLSLANG_WEB_EXCLUDE_ON
 attribute
     : LEFT_BRACKET LEFT_BRACKET attribute_list RIGHT_BRACKET RIGHT_BRACKET {
         $$ = $3;
-        parseContext.requireExtensions($1.loc, 1, &E_GL_EXT_control_flow_attributes, "attribute");
     }
 
 attribute_list
@@ -3881,6 +4125,272 @@ single_attribute
     }
     | IDENTIFIER LEFT_PAREN constant_expression RIGHT_PAREN {
         $$ = parseContext.makeAttributes(*$1.string, $3);
+    }
+GLSLANG_WEB_EXCLUDE_OFF
+
+GLSLANG_WEB_EXCLUDE_ON
+spirv_requirements_list
+    : spirv_requirements_parameter {
+        $$ = $1;
+    }
+    | spirv_requirements_list COMMA spirv_requirements_parameter {
+        $$ = parseContext.mergeSpirvRequirements($2.loc, $1, $3);
+    }
+
+spirv_requirements_parameter
+    : IDENTIFIER EQUAL LEFT_BRACKET spirv_extension_list RIGHT_BRACKET {
+        $$ = parseContext.makeSpirvRequirement($2.loc, *$1.string, $4->getAsAggregate(), nullptr);
+    }
+    | IDENTIFIER EQUAL LEFT_BRACKET spirv_capability_list RIGHT_BRACKET {
+        $$ = parseContext.makeSpirvRequirement($2.loc, *$1.string, nullptr, $4->getAsAggregate());
+    }
+
+spirv_extension_list
+    : STRING_LITERAL {
+        $$ = parseContext.intermediate.makeAggregate(parseContext.intermediate.addConstantUnion($1.string, $1.loc, true));
+    }
+    | spirv_extension_list COMMA STRING_LITERAL {
+        $$ = parseContext.intermediate.growAggregate($1, parseContext.intermediate.addConstantUnion($3.string, $3.loc, true));
+    }
+
+spirv_capability_list
+    : INTCONSTANT {
+        $$ = parseContext.intermediate.makeAggregate(parseContext.intermediate.addConstantUnion($1.i, $1.loc, true));
+    }
+    | spirv_capability_list COMMA INTCONSTANT {
+        $$ = parseContext.intermediate.growAggregate($1, parseContext.intermediate.addConstantUnion($3.i, $3.loc, true));
+    }
+
+spirv_execution_mode_qualifier
+    : SPIRV_EXECUTION_MODE LEFT_PAREN INTCONSTANT RIGHT_PAREN {
+        parseContext.intermediate.insertSpirvExecutionMode($3.i);
+        $$ = 0;
+    }
+    | SPIRV_EXECUTION_MODE LEFT_PAREN spirv_requirements_list COMMA INTCONSTANT RIGHT_PAREN {
+        parseContext.intermediate.insertSpirvRequirement($3);
+        parseContext.intermediate.insertSpirvExecutionMode($5.i);
+        $$ = 0;
+    }
+    | SPIRV_EXECUTION_MODE LEFT_PAREN INTCONSTANT COMMA spirv_execution_mode_parameter_list RIGHT_PAREN {
+        parseContext.intermediate.insertSpirvExecutionMode($3.i, $5->getAsAggregate());
+        $$ = 0;
+    }
+    | SPIRV_EXECUTION_MODE LEFT_PAREN spirv_requirements_list COMMA INTCONSTANT COMMA spirv_execution_mode_parameter_list RIGHT_PAREN {
+        parseContext.intermediate.insertSpirvRequirement($3);
+        parseContext.intermediate.insertSpirvExecutionMode($5.i, $7->getAsAggregate());
+        $$ = 0;
+    }
+    | SPIRV_EXECUTION_MODE_ID LEFT_PAREN INTCONSTANT COMMA spirv_execution_mode_id_parameter_list RIGHT_PAREN {
+        parseContext.intermediate.insertSpirvExecutionModeId($3.i, $5->getAsAggregate());
+        $$ = 0;
+    }
+    | SPIRV_EXECUTION_MODE_ID LEFT_PAREN spirv_requirements_list COMMA INTCONSTANT COMMA spirv_execution_mode_id_parameter_list RIGHT_PAREN {
+        parseContext.intermediate.insertSpirvRequirement($3);
+        parseContext.intermediate.insertSpirvExecutionModeId($5.i, $7->getAsAggregate());
+        $$ = 0;
+    }
+
+spirv_execution_mode_parameter_list
+    : spirv_execution_mode_parameter {
+        $$ = parseContext.intermediate.makeAggregate($1);
+    }
+    | spirv_execution_mode_parameter_list COMMA spirv_execution_mode_parameter {
+        $$ = parseContext.intermediate.growAggregate($1, $3);
+    }
+
+spirv_execution_mode_parameter
+    : FLOATCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.d, EbtFloat, $1.loc, true);
+    }
+    | INTCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.i, $1.loc, true);
+    }
+    | UINTCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.u, $1.loc, true);
+    }
+    | BOOLCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.b, $1.loc, true);
+    }
+    | STRING_LITERAL {
+        $$ = parseContext.intermediate.addConstantUnion($1.string, $1.loc, true);
+    }
+
+spirv_execution_mode_id_parameter_list
+    : constant_expression {
+        if ($1->getBasicType() != EbtFloat &&
+            $1->getBasicType() != EbtInt &&
+            $1->getBasicType() != EbtUint &&
+            $1->getBasicType() != EbtBool &&
+            $1->getBasicType() != EbtString)
+            parseContext.error($1->getLoc(), "this type not allowed", $1->getType().getBasicString(), "");
+        $$ = parseContext.intermediate.makeAggregate($1);
+    }
+    | spirv_execution_mode_id_parameter_list COMMA constant_expression {
+        if ($3->getBasicType() != EbtFloat &&
+            $3->getBasicType() != EbtInt &&
+            $3->getBasicType() != EbtUint &&
+            $3->getBasicType() != EbtBool &&
+            $3->getBasicType() != EbtString)
+            parseContext.error($3->getLoc(), "this type not allowed", $3->getType().getBasicString(), "");
+        $$ = parseContext.intermediate.growAggregate($1, $3);
+    }
+
+spirv_storage_class_qualifier
+    : SPIRV_STORAGE_CLASS LEFT_PAREN INTCONSTANT RIGHT_PAREN {
+        $$.init($1.loc);
+        $$.qualifier.storage = EvqSpirvStorageClass;
+        $$.qualifier.spirvStorageClass = $3.i;
+    }
+    | SPIRV_STORAGE_CLASS LEFT_PAREN spirv_requirements_list COMMA INTCONSTANT RIGHT_PAREN {
+        $$.init($1.loc);
+        parseContext.intermediate.insertSpirvRequirement($3);
+        $$.qualifier.storage = EvqSpirvStorageClass;
+        $$.qualifier.spirvStorageClass = $5.i;
+    }
+
+spirv_decorate_qualifier
+    : SPIRV_DECORATE LEFT_PAREN INTCONSTANT RIGHT_PAREN{
+        $$.init($1.loc);
+        $$.qualifier.setSpirvDecorate($3.i);
+    }
+    | SPIRV_DECORATE LEFT_PAREN spirv_requirements_list COMMA INTCONSTANT RIGHT_PAREN{
+        $$.init($1.loc);
+        parseContext.intermediate.insertSpirvRequirement($3);
+        $$.qualifier.setSpirvDecorate($5.i);
+    }
+    | SPIRV_DECORATE LEFT_PAREN INTCONSTANT COMMA spirv_decorate_parameter_list RIGHT_PAREN {
+        $$.init($1.loc);
+        $$.qualifier.setSpirvDecorate($3.i, $5->getAsAggregate());
+    }
+    | SPIRV_DECORATE LEFT_PAREN spirv_requirements_list COMMA INTCONSTANT COMMA spirv_decorate_parameter_list RIGHT_PAREN {
+        $$.init($1.loc);
+        parseContext.intermediate.insertSpirvRequirement($3);
+        $$.qualifier.setSpirvDecorate($5.i, $7->getAsAggregate());
+    }
+    | SPIRV_DECORATE_ID LEFT_PAREN INTCONSTANT COMMA spirv_decorate_id_parameter_list RIGHT_PAREN {
+        $$.init($1.loc);
+        $$.qualifier.setSpirvDecorateId($3.i, $5->getAsAggregate());
+    }
+    | SPIRV_DECORATE_ID LEFT_PAREN spirv_requirements_list COMMA INTCONSTANT COMMA spirv_decorate_id_parameter_list RIGHT_PAREN {
+        $$.init($1.loc);
+        parseContext.intermediate.insertSpirvRequirement($3);
+        $$.qualifier.setSpirvDecorateId($5.i, $7->getAsAggregate());
+    }
+    | SPIRV_DECORATE_STRING LEFT_PAREN INTCONSTANT COMMA spirv_decorate_string_parameter_list RIGHT_PAREN {
+        $$.init($1.loc);
+        $$.qualifier.setSpirvDecorateString($3.i, $5->getAsAggregate());
+    }
+    | SPIRV_DECORATE_STRING LEFT_PAREN spirv_requirements_list COMMA INTCONSTANT COMMA spirv_decorate_string_parameter_list RIGHT_PAREN {
+        $$.init($1.loc);
+        parseContext.intermediate.insertSpirvRequirement($3);
+        $$.qualifier.setSpirvDecorateString($5.i, $7->getAsAggregate());
+    }
+
+spirv_decorate_parameter_list
+    : spirv_decorate_parameter {
+        $$ = parseContext.intermediate.makeAggregate($1);
+    }
+    | spirv_decorate_parameter_list COMMA spirv_decorate_parameter {
+        $$ = parseContext.intermediate.growAggregate($1, $3);
+    }
+
+spirv_decorate_parameter
+    : FLOATCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.d, EbtFloat, $1.loc, true);
+    }
+    | INTCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.i, $1.loc, true);
+    }
+    | UINTCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.u, $1.loc, true);
+    }
+    | BOOLCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.b, $1.loc, true);
+    }
+
+spirv_decorate_id_parameter_list
+    : constant_expression {
+        if ($1->getBasicType() != EbtFloat &&
+            $1->getBasicType() != EbtInt &&
+            $1->getBasicType() != EbtUint &&
+            $1->getBasicType() != EbtBool)
+            parseContext.error($1->getLoc(), "this type not allowed", $1->getType().getBasicString(), "");
+        $$ = parseContext.intermediate.makeAggregate($1);
+    }
+    | spirv_decorate_id_parameter_list COMMA constant_expression {
+        if ($3->getBasicType() != EbtFloat &&
+            $3->getBasicType() != EbtInt &&
+            $3->getBasicType() != EbtUint &&
+            $3->getBasicType() != EbtBool)
+            parseContext.error($3->getLoc(), "this type not allowed", $3->getType().getBasicString(), "");
+        $$ = parseContext.intermediate.growAggregate($1, $3);
+    }
+
+spirv_decorate_string_parameter_list
+    : STRING_LITERAL {
+        $$ = parseContext.intermediate.makeAggregate(
+            parseContext.intermediate.addConstantUnion($1.string, $1.loc, true));
+    }
+    | spirv_decorate_string_parameter_list COMMA STRING_LITERAL {
+        $$ = parseContext.intermediate.growAggregate($1, parseContext.intermediate.addConstantUnion($3.string, $3.loc, true));
+    }
+
+spirv_type_specifier
+    : SPIRV_TYPE LEFT_PAREN spirv_instruction_qualifier_list COMMA spirv_type_parameter_list RIGHT_PAREN {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.setSpirvType(*$3, $5);
+    }
+    | SPIRV_TYPE LEFT_PAREN spirv_requirements_list COMMA spirv_instruction_qualifier_list COMMA spirv_type_parameter_list RIGHT_PAREN {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        parseContext.intermediate.insertSpirvRequirement($3);
+        $$.setSpirvType(*$5, $7);
+    }
+    | SPIRV_TYPE LEFT_PAREN spirv_instruction_qualifier_list RIGHT_PAREN {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.setSpirvType(*$3);
+    }
+    | SPIRV_TYPE LEFT_PAREN spirv_requirements_list COMMA spirv_instruction_qualifier_list RIGHT_PAREN {
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        parseContext.intermediate.insertSpirvRequirement($3);
+        $$.setSpirvType(*$5);
+    }
+
+spirv_type_parameter_list
+    : spirv_type_parameter {
+        $$ = $1;
+    }
+    | spirv_type_parameter_list COMMA spirv_type_parameter {
+        $$ = parseContext.mergeSpirvTypeParameters($1, $3);
+    }
+
+spirv_type_parameter
+    : constant_expression {
+        $$ = parseContext.makeSpirvTypeParameters($1->getLoc(), $1->getAsConstantUnion());
+    }
+
+spirv_instruction_qualifier
+    : SPIRV_INSTRUCTION LEFT_PAREN spirv_instruction_qualifier_list RIGHT_PAREN {
+        $$ = $3;
+    }
+    | SPIRV_INSTRUCTION LEFT_PAREN spirv_requirements_list COMMA spirv_instruction_qualifier_list RIGHT_PAREN {
+        parseContext.intermediate.insertSpirvRequirement($3);
+        $$ = $5;
+    }
+
+spirv_instruction_qualifier_list
+    : spirv_instruction_qualifier_id {
+        $$ = $1;
+    }
+    | spirv_instruction_qualifier_list COMMA spirv_instruction_qualifier_id {
+        $$ = parseContext.mergeSpirvInstruction($2.loc, $1, $3);
+    }
+
+spirv_instruction_qualifier_id
+    : IDENTIFIER EQUAL STRING_LITERAL {
+        $$ = parseContext.makeSpirvInstruction($2.loc, *$1.string, *$3.string);
+    }
+    | IDENTIFIER EQUAL INTCONSTANT {
+        $$ = parseContext.makeSpirvInstruction($2.loc, *$1.string, $3.i);
     }
 GLSLANG_WEB_EXCLUDE_OFF
 

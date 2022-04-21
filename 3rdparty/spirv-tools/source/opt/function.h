@@ -94,6 +94,9 @@ class Function {
   // Returns function's return type id
   inline uint32_t type_id() const { return def_inst_->type_id(); }
 
+  // Returns the function's control mask
+  inline uint32_t control_mask() const { return def_inst_->GetSingleWordInOperand(0); }
+
   // Returns the entry basic block for this function.
   const std::unique_ptr<BasicBlock>& entry() const { return blocks_.front(); }
 
@@ -174,6 +177,9 @@ class Function {
   // debuggers.
   void Dump() const;
 
+  // Returns true is a function declaration and not a function definition.
+  bool IsDeclaration() { return begin() == end(); }
+
  private:
   // The OpFunction instruction that begins the definition of this function.
   std::unique_ptr<Instruction> def_inst_;
@@ -210,6 +216,7 @@ inline void Function::AddBasicBlock(std::unique_ptr<BasicBlock> b) {
 
 inline void Function::AddBasicBlock(std::unique_ptr<BasicBlock> b,
                                     iterator ip) {
+  b->SetParent(this);
   ip.InsertBefore(std::move(b));
 }
 

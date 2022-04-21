@@ -1,6 +1,6 @@
 /*
  * Copyright 2013 Dario Manesku. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef CAMERA_H_HEADER_GUARD
@@ -43,6 +43,6 @@ bx::Vec3 cameraGetPosition();
 bx::Vec3 cameraGetAt();
 
 ///
-void cameraUpdate(float _deltaTime, const entry::MouseState& _mouseState);
+void cameraUpdate(float _deltaTime, const entry::MouseState& _mouseState, bool _reset = false);
 
 #endif // CAMERA_H_HEADER_GUARD

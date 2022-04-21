@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2020 The Khronos Group Inc.
+// Copyright (c) 2015-2022 The Khronos Group Inc.
 // Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights
 // reserved.
 //
@@ -40,12 +40,12 @@ struct OpcodeDescPtrLen {
 static const spv_opcode_table_t kOpcodeTable = {ARRAY_SIZE(kOpcodeTableEntries),
                                                 kOpcodeTableEntries};
 
-// Represents a vendor tool entry in the SPIR-V XML Regsitry.
+// Represents a vendor tool entry in the SPIR-V XML Registry.
 struct VendorTool {
   uint32_t value;
   const char* vendor;
   const char* tool;         // Might be empty string.
-  const char* vendor_tool;  // Combiantion of vendor and tool.
+  const char* vendor_tool;  // Combination of vendor and tool.
 };
 
 const VendorTool vendor_tools[] = {
@@ -337,7 +337,7 @@ int32_t spvOpcodeGeneratesType(SpvOp op) {
     case SpvOpTypeCooperativeMatrixNV:
     // case SpvOpTypeAccelerationStructureKHR: covered by
     // SpvOpTypeAccelerationStructureNV
-    case SpvOpTypeRayQueryProvisionalKHR:
+    case SpvOpTypeRayQueryKHR:
       return true;
     default:
       // In particular, OpTypeForwardPointer does not generate a type,
@@ -417,8 +417,10 @@ bool spvOpcodeIsAtomicWithLoad(const SpvOp opcode) {
     case SpvOpAtomicISub:
     case SpvOpAtomicSMin:
     case SpvOpAtomicUMin:
+    case SpvOpAtomicFMinEXT:
     case SpvOpAtomicSMax:
     case SpvOpAtomicUMax:
+    case SpvOpAtomicFMaxEXT:
     case SpvOpAtomicAnd:
     case SpvOpAtomicOr:
     case SpvOpAtomicXor:
@@ -444,13 +446,30 @@ bool spvOpcodeIsReturn(SpvOp opcode) {
   }
 }
 
+bool spvOpcodeIsAbort(SpvOp opcode) {
+  switch (opcode) {
+    case SpvOpKill:
+    case SpvOpUnreachable:
+    case SpvOpTerminateInvocation:
+    case SpvOpTerminateRayKHR:
+    case SpvOpIgnoreIntersectionKHR:
+      return true;
+    default:
+      return false;
+  }
+}
+
 bool spvOpcodeIsReturnOrAbort(SpvOp opcode) {
-  return spvOpcodeIsReturn(opcode) || opcode == SpvOpKill ||
-         opcode == SpvOpUnreachable || opcode == SpvOpTerminateInvocation;
+  return spvOpcodeIsReturn(opcode) || spvOpcodeIsAbort(opcode);
 }
 
 bool spvOpcodeIsBlockTerminator(SpvOp opcode) {
   return spvOpcodeIsBranch(opcode) || spvOpcodeIsReturnOrAbort(opcode);
+}
+
+bool spvOpcodeTerminatesExecution(SpvOp opcode) {
+  return opcode == SpvOpKill || opcode == SpvOpTerminateInvocation ||
+         opcode == SpvOpTerminateRayKHR || opcode == SpvOpIgnoreIntersectionKHR;
 }
 
 bool spvOpcodeIsBaseOpaqueType(SpvOp opcode) {
@@ -612,6 +631,7 @@ bool spvOpcodeIsDebug(SpvOp opcode) {
     case SpvOpString:
     case SpvOpLine:
     case SpvOpNoLine:
+    case SpvOpModuleProcessed:
       return true;
     default:
       return false;
@@ -726,6 +746,23 @@ bool spvOpcodeIsAccessChain(SpvOp opcode) {
     case SpvOpInBoundsAccessChain:
     case SpvOpPtrAccessChain:
     case SpvOpInBoundsPtrAccessChain:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool spvOpcodeIsBit(SpvOp opcode) {
+  switch (opcode) {
+    case SpvOpShiftRightLogical:
+    case SpvOpShiftRightArithmetic:
+    case SpvOpShiftLeftLogical:
+    case SpvOpBitwiseOr:
+    case SpvOpBitwiseXor:
+    case SpvOpBitwiseAnd:
+    case SpvOpNot:
+    case SpvOpBitReverse:
+    case SpvOpBitCount:
       return true;
     default:
       return false;

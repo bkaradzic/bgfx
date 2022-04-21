@@ -3,7 +3,7 @@ $output v_position, v_texcoord0
 
 #include "../common.sh"
 
-#define NEED_HALF_TEXEL (BGFX_SHADER_LANGUAGE_HLSL < 4)
+#define NEED_HALF_TEXEL (BGFX_SHADER_LANGUAGE_HLSL < 400)
 
 uniform vec4 u_viewSize;
 

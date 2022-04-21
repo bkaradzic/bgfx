@@ -24,7 +24,14 @@ namespace reduce {
 
 std::vector<std::unique_ptr<ReductionOpportunity>>
 RemoveUnusedStructMemberReductionOpportunityFinder::GetAvailableOpportunities(
-    opt::IRContext* context) const {
+    opt::IRContext* context, uint32_t target_function) const {
+  if (target_function) {
+    // Removing an unused struct member is a global change, as struct types are
+    // global.  We thus do not consider such opportunities if we are targeting
+    // a specific function.
+    return {};
+  }
+
   std::vector<std::unique_ptr<ReductionOpportunity>> result;
 
   // We track those struct members that are never accessed.  We do this by
@@ -129,9 +136,9 @@ RemoveUnusedStructMemberReductionOpportunityFinder::GetAvailableOpportunities(
     }
   }
 
-  // We now know those struct indices that are unsed, and we make a reduction
+  // We now know those struct indices that are unused, and we make a reduction
   // opportunity for each of them. By mapping each relevant member index to the
-  // structs in which it is unsed, we will group all opportunities to remove
+  // structs in which it is unused, we will group all opportunities to remove
   // member k of a struct (for some k) together.  This reduces the likelihood
   // that opportunities to remove members from the same struct will be adjacent,
   // which is good because such opportunities mutually disable one another.

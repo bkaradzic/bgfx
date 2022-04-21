@@ -1,6 +1,6 @@
 /*
 * Copyright 2013 Jeremie Roy. All rights reserved.
-* License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+* License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 */
 
 #include "common.h"
@@ -259,10 +259,10 @@ Atlas::Atlas(uint16_t _textureSize, uint16_t _maxRegionsCount)
 	BX_ASSERT(_textureSize >= 64 && _textureSize <= 4096, "Invalid _textureSize %d.", _textureSize);
 	BX_ASSERT(_maxRegionsCount >= 64 && _maxRegionsCount <= 32000, "Invalid _maxRegionsCount %d.", _maxRegionsCount);
 
-	init();
+	m_texelSize = float(UINT16_MAX) / float(m_textureSize);
 
-	m_layers = new PackedLayer[24];
-	for (int ii = 0; ii < 24; ++ii)
+	m_layers = new PackedLayer[6];
+	for (int ii = 0; ii < 6; ++ii)
 	{
 		m_layers[ii].packer.init(_textureSize, _textureSize);
 	}
@@ -279,7 +279,7 @@ Atlas::Atlas(uint16_t _textureSize, uint16_t _maxRegionsCount)
 }
 
 Atlas::Atlas(uint16_t _textureSize, const uint8_t* _textureBuffer, uint16_t _regionCount, const uint8_t* _regionBuffer, uint16_t _maxRegionsCount)
-	: m_usedLayers(24)
+	: m_usedLayers(6)
 	, m_usedFaces(6)
 	, m_textureSize(_textureSize)
 	, m_regionCount(_regionCount)
@@ -287,7 +287,7 @@ Atlas::Atlas(uint16_t _textureSize, const uint8_t* _textureBuffer, uint16_t _reg
 {
 	BX_ASSERT(_regionCount <= 64 && _maxRegionsCount <= 4096, "_regionCount %d, _maxRegionsCount %d", _regionCount, _maxRegionsCount);
 
-	init();
+	m_texelSize = float(UINT16_MAX) / float(m_textureSize);
 
 	m_regions = new AtlasRegion[_regionCount];
 	m_textureBuffer = new uint8_t[getTextureBufferSize()];
@@ -311,30 +311,6 @@ Atlas::~Atlas()
 	delete [] m_layers;
 	delete [] m_regions;
 	delete [] m_textureBuffer;
-}
-
-void Atlas::init()
-{
-	m_texelSize = float(UINT16_MAX) / float(m_textureSize);
-	float texelHalf = m_texelSize/2.0f;
-	switch (bgfx::getRendererType() )
-	{
-	case bgfx::RendererType::Direct3D9:
-		m_texelOffset[0] = 0.0f;
-		m_texelOffset[1] = 0.0f;
-		break;
-
-	case bgfx::RendererType::Direct3D11:
-	case bgfx::RendererType::Direct3D12:
-		m_texelOffset[0] = texelHalf;
-		m_texelOffset[1] = texelHalf;
-		break;
-
-	default:
-		m_texelOffset[0] = texelHalf;
-		m_texelOffset[1] = -texelHalf;
-		break;
-	}
 }
 
 uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bitmapBuffer, AtlasRegion::Type _type, uint16_t outline)
@@ -366,8 +342,9 @@ uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bit
 			return UINT16_MAX;
 		}
 
-		for (int ii = 0; ii < _type; ++ii)
+		//for (int ii = 0; ii < _type; ++ii)
 		{
+			int ii = 0;
 			AtlasRegion& region = m_layers[idx + ii].faceRegion;
 			region.x = 0;
 			region.y = 0;
@@ -376,7 +353,7 @@ uint16_t Atlas::addRegion(uint16_t _width, uint16_t _height, const uint8_t* _bit
 			region.setMask(_type, m_usedFaces, ii);
 		}
 
-		m_usedLayers += _type;
+		m_usedLayers++;
 		m_usedFaces++;
 
 		if (!m_layers[idx].packer.addRectangle(_width + 1, _height + 1, xx, yy) )
@@ -468,10 +445,10 @@ static void writeUV(uint8_t* _vertexBuffer, int16_t _x, int16_t _y, int16_t _z, 
 
 void Atlas::packUV(const AtlasRegion& _region, uint8_t* _vertexBuffer, uint32_t _offset, uint32_t _stride) const
 {
-	int16_t x0 = (int16_t)( ( (float)_region.x * m_texelSize + m_texelOffset[0]) - float(INT16_MAX) );
-	int16_t y0 = (int16_t)( ( (float)_region.y * m_texelSize + m_texelOffset[1]) - float(INT16_MAX) );
-	int16_t x1 = (int16_t)( ( ( (float)_region.x + _region.width) * m_texelSize + m_texelOffset[0]) - float(INT16_MAX) );
-	int16_t y1 = (int16_t)( ( ( (float)_region.y + _region.height) * m_texelSize + m_texelOffset[1]) - float(INT16_MAX) );
+	int16_t x0 = (int16_t)( ( (float)_region.x * m_texelSize) - float(INT16_MAX) );
+	int16_t y0 = (int16_t)( ( (float)_region.y * m_texelSize) - float(INT16_MAX) );
+	int16_t x1 = (int16_t)( ( ( (float)_region.x + _region.width) * m_texelSize) - float(INT16_MAX) );
+	int16_t y1 = (int16_t)( ( ( (float)_region.y + _region.height) * m_texelSize) - float(INT16_MAX) );
 	int16_t ww = (int16_t)( (float(INT16_MAX) / 4.0f) * (float)_region.getComponentIndex() );
 
 	_vertexBuffer += _offset;

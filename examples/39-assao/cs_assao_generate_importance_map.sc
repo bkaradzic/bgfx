@@ -1,6 +1,6 @@
 /*
  * Copyright 2018 Attila Kocsis. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "bgfx_compute.sh" 
@@ -28,7 +28,7 @@ void main()
 		UNROLL
 		for( int i = 0; i < 4; i++ )
 		{
-			vec4 vals = textureGather(s_finalSSAO, vec3( gatherUV, i ) );
+			vec4 vals = textureGather(s_finalSSAO, vec3( gatherUV, i ), 0);
 
 			// apply the same modifications that would have been applied in the main shader
 			vals = u_effectShadowStrength * vals;

@@ -1,5 +1,6 @@
 /*
- * Copyright 2018-2020 Arm Limited
+ * Copyright 2018-2021 Arm Limited
+ * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +13,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ * At your option, you may choose to accept this material under either:
+ *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
+ *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
  */
 
 #ifndef SPIRV_CROSS_PARSED_IR_HPP
@@ -70,6 +77,13 @@ public:
 	// Constants can be of struct type, and struct array sizes can use specialization constants.
 	SmallVector<ID> ids_for_constant_or_type;
 	SmallVector<ID> ids_for_constant_or_variable;
+
+	// We need to keep track of the width the Ops that contains a type for the
+	// OpSwitch instruction, since this one doesn't contains the type in the
+	// instruction itself. And in some case we need to cast the condition to
+	// wider types. We only need the width to do the branch fixup since the
+	// type check itself can be done at runtime
+	std::unordered_map<ID, uint32_t> load_type_width;
 
 	// Declared capabilities and extensions in the SPIR-V module.
 	// Not really used except for reflection at the moment.
@@ -139,6 +153,7 @@ public:
 	void mark_used_as_array_length(ID id);
 	uint32_t increase_bound_by(uint32_t count);
 	Bitset get_buffer_block_flags(const SPIRVariable &var) const;
+	Bitset get_buffer_block_type_flags(const SPIRType &type) const;
 
 	void add_typed_id(Types type, ID id);
 	void remove_typed_id(Types type, ID id);
@@ -213,6 +228,8 @@ public:
 	static void sanitize_underscores(std::string &str);
 	static void sanitize_identifier(std::string &str, bool member, bool allow_reserved_prefixes);
 	static bool is_globally_reserved_identifier(std::string &str, bool allow_reserved_prefixes);
+
+	uint32_t get_spirv_version() const;
 
 private:
 	template <typename T>

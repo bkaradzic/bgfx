@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "bgfx_p.h"
@@ -205,9 +205,16 @@ EGL_IMPORT
 			// https://www.khronos.org/registry/EGL/extensions/ANDROID/EGL_ANDROID_recordable.txt
 			const bool hasEglAndroidRecordable = !bx::findIdentifierMatch(extensions, "EGL_ANDROID_recordable").isEmpty();
 
+			const uint32_t gles = BGFX_CONFIG_RENDERER_OPENGLES;
+
 			EGLint attrs[] =
 			{
-				EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+				EGL_RENDERABLE_TYPE, (gles >= 30) ? EGL_OPENGL_ES3_BIT_KHR : EGL_OPENGL_ES2_BIT,
+
+				EGL_BLUE_SIZE, 8,
+				EGL_GREEN_SIZE, 8,
+				EGL_RED_SIZE, 8,
+				EGL_ALPHA_SIZE, 8,
 
 #	if BX_PLATFORM_ANDROID
 				EGL_DEPTH_SIZE, 16,
@@ -266,8 +273,6 @@ EGL_IMPORT
 			const bool hasEglKhrCreateContext = !bx::findIdentifierMatch(extensions, "EGL_KHR_create_context").isEmpty();
 			const bool hasEglKhrNoError       = !bx::findIdentifierMatch(extensions, "EGL_KHR_create_context_no_error").isEmpty();
 
-			const uint32_t gles = BGFX_CONFIG_RENDERER_OPENGLES;
-
 			for (uint32_t ii = 0; ii < 2; ++ii)
 			{
 				bx::StaticMemoryBlockWriter writer(s_contextAttrs, sizeof(s_contextAttrs) );
@@ -279,11 +284,11 @@ EGL_IMPORT
 #	else
 				if (hasEglKhrCreateContext)
 				{
-					bx::write(&writer, EGLint(EGL_CONTEXT_MAJOR_VERSION_KHR) );
-					bx::write(&writer, EGLint(gles / 10) );
+					bx::write(&writer, EGLint(EGL_CONTEXT_MAJOR_VERSION_KHR), bx::ErrorAssert{} );
+					bx::write(&writer, EGLint(gles / 10), bx::ErrorAssert{} );
 
-					bx::write(&writer, EGLint(EGL_CONTEXT_MINOR_VERSION_KHR) );
-					bx::write(&writer, EGLint(gles % 10) );
+					bx::write(&writer, EGLint(EGL_CONTEXT_MINOR_VERSION_KHR), bx::ErrorAssert{} );
+					bx::write(&writer, EGLint(gles % 10), bx::ErrorAssert{} );
 
 					flags |= BGFX_CONFIG_DEBUG && hasEglKhrNoError ? 0
 						| EGL_CONTEXT_FLAG_NO_ERROR_BIT_KHR
@@ -298,18 +303,18 @@ EGL_IMPORT
 							: 0
 							;
 
-						bx::write(&writer, EGLint(EGL_CONTEXT_FLAGS_KHR) );
-						bx::write(&writer, flags);
+						bx::write(&writer, EGLint(EGL_CONTEXT_FLAGS_KHR), bx::ErrorAssert{} );
+						bx::write(&writer, flags, bx::ErrorAssert{});
 					}
 				}
 				else
 #	endif // BX_PLATFORM_RPI
 				{
-					bx::write(&writer, EGLint(EGL_CONTEXT_CLIENT_VERSION) );
-					bx::write(&writer, 2);
+					bx::write(&writer, EGLint(EGL_CONTEXT_CLIENT_VERSION), bx::ErrorAssert{} );
+					bx::write(&writer, EGLint(gles / 10), bx::ErrorAssert{} );
 				}
 
-				bx::write(&writer, EGLint(EGL_NONE) );
+				bx::write(&writer, EGLint(EGL_NONE), bx::ErrorAssert{} );
 
 				m_context = eglCreateContext(m_display, m_config, EGL_NO_CONTEXT, s_contextAttrs);
 				if (NULL != m_context)
@@ -465,7 +470,7 @@ EGL_IMPORT
 			{                                                                            \
 				if (NULL == _func)                                                       \
 				{                                                                        \
-					_func = bx::dlsym<_proto>(eglGetProcAddress(#_import) );             \
+					_func = reinterpret_cast<_proto>(eglGetProcAddress(#_import) );      \
 					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                   \
 					BGFX_FATAL(_optional || NULL != _func                                \
 						, Fatal::UnableToInitialize                                      \

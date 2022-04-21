@@ -67,8 +67,8 @@ class DebugInlinedAtContext {
   std::unordered_map<uint32_t, uint32_t> callee_inlined_at2chain_;
 };
 
-// A class for analyzing, managing, and creating OpenCL.DebugInfo.100 extension
-// instructions.
+// A class for analyzing, managing, and creating OpenCL.DebugInfo.100 and
+// NonSemantic.Shader.DebugInfo.100 extension instructions.
 class DebugInfoManager {
  public:
   // Constructs a debug information manager from the given |context|.
@@ -85,7 +85,7 @@ class DebugInfoManager {
     return !(lhs == rhs);
   }
 
-  // Analyzes OpenCL.DebugInfo.100 instruction |dbg_inst|.
+  // Analyzes DebugInfo instruction |dbg_inst|.
   void AnalyzeDebugInst(Instruction* dbg_inst);
 
   // Creates new DebugInlinedAt and returns its id. Its line operand is the
@@ -138,25 +138,34 @@ class DebugInfoManager {
   bool IsVariableDebugDeclared(uint32_t variable_id);
 
   // Kills all debug declaration instructions with Deref whose 'Local Variable'
-  // operand is |variable_id|.
-  void KillDebugDeclares(uint32_t variable_id);
+  // operand is |variable_id|. Returns whether it kills an instruction or not.
+  bool KillDebugDeclares(uint32_t variable_id);
 
   // Generates a DebugValue instruction with value |value_id| for every local
   // variable that is in the scope of |scope_and_line| and whose memory is
   // |variable_id| and inserts it after the instruction |insert_pos|.
-  void AddDebugValueIfVarDeclIsVisible(Instruction* scope_and_line,
-                                       uint32_t variable_id, uint32_t value_id,
-                                       Instruction* insert_pos);
+  // Returns whether a DebugValue is added or not. |invisible_decls| returns
+  // DebugDeclares invisible to |scope_and_line|.
+  bool AddDebugValueIfVarDeclIsVisible(
+      Instruction* scope_and_line, uint32_t variable_id, uint32_t value_id,
+      Instruction* insert_pos,
+      std::unordered_set<Instruction*>* invisible_decls);
 
-  // Generates a DebugValue instruction with |dbg_local_var_id|, |value_id|,
-  // |expr_id|, |index_id| operands and inserts it before |insert_before|.
-  Instruction* AddDebugValueWithIndex(uint32_t dbg_local_var_id,
-                                      uint32_t value_id, uint32_t expr_id,
-                                      uint32_t index_id,
-                                      Instruction* insert_before);
+  // Creates a DebugValue for DebugDeclare |dbg_decl| and inserts it before
+  // |insert_before|. The new DebugValue has the same line and scope as
+  // |scope_and_line|, or no scope and line information if |scope_and_line|
+  // is nullptr. The new DebugValue has the same operands as DebugDeclare
+  // but it uses |value_id| for the value. Returns the created DebugValue,
+  // or nullptr if fails to create one.
+  Instruction* AddDebugValueForDecl(Instruction* dbg_decl, uint32_t value_id,
+                                    Instruction* insert_before,
+                                    Instruction* scope_and_line);
 
   // Erases |instr| from data structures of this class.
   void ClearDebugInfo(Instruction* instr);
+
+  // Return the opcode for the Vulkan DebugOperation inst
+  uint32_t GetVulkanDebugOperation(Instruction* inst);
 
   // Returns the id of Value operand if |inst| is DebugValue who has Deref
   // operation and its Value operand is a result id of OpVariable with
@@ -184,9 +193,12 @@ class DebugInfoManager {
  private:
   IRContext* context() { return context_; }
 
-  // Analyzes OpenCL.DebugInfo.100 instructions in the given |module| and
+  // Analyzes DebugInfo instructions in the given |module| and
   // populates data structures in this class.
   void AnalyzeDebugInsts(Module& module);
+
+  // Get the DebugInfo ExtInstImport Id, or 0 if no DebugInfo is available.
+  uint32_t GetDbgSetImportId();
 
   // Returns the debug instruction whose id is |id|. Returns |nullptr| if one
   // does not exists.
@@ -217,15 +229,14 @@ class DebugInfoManager {
 
   // Returns true if the declaration of a local variable |dbg_declare|
   // is visible in the scope of an instruction |instr_scope_id|.
-  bool IsDeclareVisibleToInstr(Instruction* dbg_declare,
-                               uint32_t instr_scope_id);
+  bool IsDeclareVisibleToInstr(Instruction* dbg_declare, Instruction* scope);
 
   // Returns the parent scope of the scope |child_scope|.
   uint32_t GetParentScope(uint32_t child_scope);
 
   IRContext* context_;
 
-  // Mapping from ids of OpenCL.DebugInfo.100 extension instructions
+  // Mapping from ids of DebugInfo extension instructions.
   // to their Instruction instances.
   std::unordered_map<uint32_t, Instruction*> id_to_dbg_inst_;
 

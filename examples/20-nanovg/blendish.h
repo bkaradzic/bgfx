@@ -1739,13 +1739,13 @@ void bndNodeBackground(NVGcontext *ctx, float x, float y, float w, float h,
         BND_NODE_RADIUS,BND_NODE_RADIUS,0,0,
         bndTransparent(bndOffsetColor(titleColor, BND_BEVEL_SHADE)), 
         bndTransparent(titleColor));
-    bndInnerBox(ctx,x,y+BND_NODE_TITLE_HEIGHT-1,w,h+2-BND_NODE_TITLE_HEIGHT,
+    bndInnerBox(ctx,x,y+float(BND_NODE_TITLE_HEIGHT-1),w,h+2-float(BND_NODE_TITLE_HEIGHT),
         0,0,BND_NODE_RADIUS,BND_NODE_RADIUS,
         bndTransparent(bnd_theme.nodeTheme.nodeBackdropColor), 
         bndTransparent(bnd_theme.nodeTheme.nodeBackdropColor));
     bndNodeIconLabel(ctx,
-        x+BND_NODE_ARROW_AREA_WIDTH,y,
-        w-BND_NODE_ARROW_AREA_WIDTH-BND_NODE_MARGIN_SIDE,BND_NODE_TITLE_HEIGHT,
+        x+float(BND_NODE_ARROW_AREA_WIDTH),y,
+        w-float(BND_NODE_ARROW_AREA_WIDTH)-float(BND_NODE_MARGIN_SIDE),BND_NODE_TITLE_HEIGHT,
         iconid, bnd_theme.regularTheme.textColor, 
         bndOffsetColor(titleColor, BND_BEVEL_SHADE), 
         BND_LEFT, BND_LABEL_FONT_SIZE, label);
@@ -2164,7 +2164,7 @@ void bndIconLabelValue(NVGcontext *ctx, float x, float y, float w, float h,
             nvgTextAlign(ctx, 
                 (align==BND_LEFT)?(NVG_ALIGN_LEFT|NVG_ALIGN_BASELINE):
                 (NVG_ALIGN_CENTER|NVG_ALIGN_BASELINE));
-            nvgTextBox(ctx,x+pleft,y+BND_WIDGET_HEIGHT-BND_TEXT_PAD_DOWN,
+            nvgTextBox(ctx,x+pleft,y+float(BND_WIDGET_HEIGHT)-BND_TEXT_PAD_DOWN,
                 w-BND_PAD_RIGHT-pleft,label, NULL);
         }
     } else if (iconid >= 0) {

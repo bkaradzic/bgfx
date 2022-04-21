@@ -161,8 +161,10 @@ bool HlslGrammar::acceptDeclarationList(TIntermNode*& nodeList)
             return true;
 
         // declaration
-        if (! acceptDeclaration(nodeList))
+        if (! acceptDeclaration(nodeList)) {
+            expected("declaration");
             return false;
+        }
     } while (true);
 
     return true;
@@ -480,8 +482,9 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& nodeList)
             }
 
             // TODO: things scoped within an annotation need their own name space;
-            // TODO: strings are not yet handled.
-            if (variableType.getBasicType() != EbtString && parseContext.getAnnotationNestingLevel() == 0) {
+            // TODO: non-constant strings are not yet handled.
+            if (!(variableType.getBasicType() == EbtString && !variableType.getQualifier().isConstant()) &&
+                parseContext.getAnnotationNestingLevel() == 0) {
                 if (typedefDecl)
                     parseContext.declareTypedef(idToken.loc, *fullName, variableType);
                 else if (variableType.getBasicType() == EbtBlock) {
@@ -3241,7 +3244,7 @@ bool HlslGrammar::acceptConstructor(TIntermTyped*& node)
         }
 
         // hook it up
-        node = parseContext.handleFunctionCall(arguments->getLoc(), constructorFunction, arguments);
+        node = parseContext.handleFunctionCall(token.loc, constructorFunction, arguments);
 
         return node != nullptr;
     }

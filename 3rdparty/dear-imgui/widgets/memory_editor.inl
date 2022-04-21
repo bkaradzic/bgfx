@@ -38,7 +38,8 @@ namespace ImGui
 
         float line_height = GetTextLineHeight();
         int line_total_count = (int)((mem_size + Rows-1) / Rows);
-        ImGuiListClipper clipper(line_total_count, line_height);
+        ImGuiListClipper clipper;
+        clipper.Begin(line_total_count, line_height);
         int visible_start_addr = clipper.DisplayStart * Rows;
         int visible_end_addr = clipper.DisplayEnd * Rows;
 
@@ -109,7 +110,7 @@ namespace ImGui
                     }
 
                     PushItemWidth(CalcTextSize("FF").x);
-                    ImGuiInputTextFlags flags = ImGuiInputTextFlags_CharsHexadecimal|ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_AutoSelectAll|ImGuiInputTextFlags_NoHorizontalScroll|ImGuiInputTextFlags_AlwaysInsertMode|ImGuiInputTextFlags_CallbackAlways;
+                    ImGuiInputTextFlags flags = ImGuiInputTextFlags_CharsHexadecimal|ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_AutoSelectAll|ImGuiInputTextFlags_NoHorizontalScroll|ImGuiInputTextFlags_AlwaysOverwrite|ImGuiInputTextFlags_CallbackAlways;
                     if (InputText("##data", DataInput, 32, flags, FuncHolder::Callback, &cursor_pos))
                     {
                         data_write = data_next = true;

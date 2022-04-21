@@ -12,11 +12,44 @@ module bindbc.bgfx.types;
 
 public import core.stdc.stdarg : va_list;
 
+enum expandEnum(EnumType, string fqnEnumType = EnumType.stringof) = (){
+	string expandEnum;
+	foreach(m; __traits(allMembers, EnumType)){
+		expandEnum ~= "alias " ~ m ~ " = " ~ fqnEnumType ~ "." ~ m ~ ";";
+	}
+	return expandEnum;
+}();
+
 extern(C) @nogc nothrow:
 
 $version
 
 alias bgfx_view_id_t = ushort;
+
+//NOTE: TEMPORARY fix to some missing preprocessor function-macros...
+static BGFX_STATE_BLEND_FUNC_SEPARATE(ulong _srcRGB, ulong _dstRGB, ulong _srcA, ulong _dstA){
+	return (0UL
+			| ( ( cast(ulong)_srcRGB | ( cast(ulong)_dstRGB<<4) )   )
+			| ( ( cast(ulong)_srcA   | ( cast(ulong)_dstA  <<4) )<<8)
+		);
+}
+
+/// Blend equation separate.
+static BGFX_STATE_BLEND_EQUATION_SEPARATE(ulong _equationRGB, ulong _equationA){ return ( cast(ulong)_equationRGB | (cast(ulong)_equationA<<3) ); }
+
+/// Blend function.
+static BGFX_STATE_BLEND_FUNC(ulong _src, ulong _dst){ return BGFX_STATE_BLEND_FUNC_SEPARATE(_src, _dst, _src, _dst); }
+
+/// Blend equation.
+static BGFX_STATE_BLEND_EQUATION(ulong _equation){ return BGFX_STATE_BLEND_EQUATION_SEPARATE(_equation, _equation); }
+
+/// Utility predefined blend modes.
+
+/// Additive blending.
+static BGFX_STATE_BLEND_ADD(){ return (0 | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)); }
+
+/// Alpha blend.
+static BGFX_STATE_BLEND_ALPHA(){ return (0 | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)); }
 
 $types
 ]]
@@ -90,7 +123,7 @@ local function convert_type(arg)
 	elseif hasPrefix(ctype, "uint16_t") then
 		ctype = ctype:gsub("uint16_t", "ushort")
 	elseif hasPrefix(ctype, "uint8_t") then
-		ctype = ctype:gsub("uint8_t", "byte")
+		ctype = ctype:gsub("uint8_t", "ubyte")
 	elseif hasPrefix(ctype, "uintptr_t") then
 		ctype = ctype:gsub("uintptr_t", "ulong")
 	elseif hasPrefix(ctype, "const ") and hasSuffix(ctype, "*") then
@@ -231,6 +264,7 @@ function converter.types(typ)
 		--yield("\t" .. prefix .. "_COUNT = " .. #typ.enum)
 		yield("\t" .. prefix .. "_COUNT")
 		yield("}")
+		yield("mixin(expandEnum!" .. typ.cname .. ");")
 
 	elseif typ.bits ~= nil then
 		local prefix = "BGFX_" .. to_underscorecase(typ.name):upper()

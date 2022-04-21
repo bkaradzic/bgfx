@@ -1,15 +1,16 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef BGFX_UTILS_H_HEADER_GUARD
 #define BGFX_UTILS_H_HEADER_GUARD
 
+#include <bx/bounds.h>
 #include <bx/pixelformat.h>
+#include <bx/string.h>
 #include <bgfx/bgfx.h>
 #include <bimg/bimg.h>
-#include "bounds.h"
 
 #include <tinystl/allocator.h>
 #include <tinystl/vector.h>
@@ -90,10 +91,10 @@ struct Primitive
 	uint32_t m_numIndices;
 	uint32_t m_startVertex;
 	uint32_t m_numVertices;
-	
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
+
+	bx::Sphere m_sphere;
+	bx::Aabb   m_aabb;
+	bx::Obb    m_obb;
 };
 
 typedef stl::vector<Primitive> PrimitiveArray;
@@ -102,16 +103,16 @@ struct Group
 {
 	Group();
 	void reset();
-	
+
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle m_ibh;
 	uint16_t m_numVertices;
 	uint8_t* m_vertices;
 	uint32_t m_numIndices;
 	uint16_t* m_indices;
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
+	bx::Sphere m_sphere;
+	bx::Aabb   m_aabb;
+	bx::Obb    m_obb;
 	PrimitiveArray m_prims;
 };
 typedef stl::vector<Group> GroupArray;
@@ -144,6 +145,12 @@ void meshSubmit(const Mesh* _mesh, bgfx::ViewId _id, bgfx::ProgramHandle _progra
 
 ///
 void meshSubmit(const Mesh* _mesh, const MeshState*const* _state, uint8_t _numPasses, const float* _mtx, uint16_t _numMatrices = 1);
+
+/// bgfx::RendererType::Enum to name.
+bx::StringView getName(bgfx::RendererType::Enum _type);
+
+/// Name to bgfx::RendererType::Enum.
+bgfx::RendererType::Enum getType(const bx::StringView& _name);
 
 ///
 struct Args

@@ -77,6 +77,7 @@ void TType::buildMangledName(TString& mangledName) const
     case EbtAtomicUint:         mangledName += "au";     break;
     case EbtAccStruct:          mangledName += "as";     break;
     case EbtRayQuery:           mangledName += "rq";     break;
+    case EbtSpirvType:          mangledName += "spv-t";  break;
 #endif
     case EbtSampler:
         switch (sampler.type) {
@@ -85,6 +86,8 @@ void TType::buildMangledName(TString& mangledName) const
 #endif
         case EbtInt:   mangledName += "i"; break;
         case EbtUint:  mangledName += "u"; break;
+        case EbtInt64:   mangledName += "i64"; break;
+        case EbtUint64:  mangledName += "u64"; break;
         default: break; // some compilers want this
         }
         if (sampler.isImageClass())
@@ -146,6 +149,8 @@ void TType::buildMangledName(TString& mangledName) const
         if (typeName)
             mangledName += *typeName;
         for (unsigned int i = 0; i < structure->size(); ++i) {
+            if ((*structure)[i].type->getBasicType() == EbtVoid)
+                continue;
             mangledName += '-';
             (*structure)[i].type->buildMangledName(mangledName);
         }
@@ -166,7 +171,7 @@ void TType::buildMangledName(TString& mangledName) const
         for (int i = 0; i < arraySizes->getNumDims(); ++i) {
             if (arraySizes->getDimNode(i)) {
                 if (arraySizes->getDimNode(i)->getAsSymbolNode())
-                    snprintf(buf, maxSize, "s%d", arraySizes->getDimNode(i)->getAsSymbolNode()->getId());
+                    snprintf(buf, maxSize, "s%lld", arraySizes->getDimNode(i)->getAsSymbolNode()->getId());
                 else
                     snprintf(buf, maxSize, "s%p", arraySizes->getDimNode(i));
             } else
@@ -274,8 +279,14 @@ TFunction::~TFunction()
 //
 TSymbolTableLevel::~TSymbolTableLevel()
 {
-    for (tLevel::iterator it = level.begin(); it != level.end(); ++it)
-        delete (*it).second;
+    for (tLevel::iterator it = level.begin(); it != level.end(); ++it) {
+        const TString& name = it->first;
+        auto retargetIter = std::find_if(retargetedSymbols.begin(), retargetedSymbols.end(),
+                                      [&name](const std::pair<TString, TString>& i) { return i.first == name; });
+        if (retargetIter == retargetedSymbols.end())
+            delete (*it).second;
+    }
+
 
     delete [] defaultPrecision;
 }
@@ -386,6 +397,9 @@ TFunction::TFunction(const TFunction& copyOf) : TSymbol(copyOf)
     implicitThis = copyOf.implicitThis;
     illegalImplicitThis = copyOf.illegalImplicitThis;
     defaultParamCount = copyOf.defaultParamCount;
+#ifndef GLSLANG_WEB
+    spirvInst = copyOf.spirvInst;
+#endif
 }
 
 TFunction* TFunction::clone() const
@@ -410,6 +424,10 @@ TSymbolTableLevel* TSymbolTableLevel::clone() const
     TSymbolTableLevel *symTableLevel = new TSymbolTableLevel();
     symTableLevel->anonId = anonId;
     symTableLevel->thisLevel = thisLevel;
+    symTableLevel->retargetedSymbols.clear();
+    for (auto &s : retargetedSymbols) {
+        symTableLevel->retargetedSymbols.push_back({s.first, s.second});
+    }
     std::vector<bool> containerCopied(anonId, false);
     tLevel::const_iterator iter;
     for (iter = level.begin(); iter != level.end(); ++iter) {
@@ -425,8 +443,21 @@ TSymbolTableLevel* TSymbolTableLevel::clone() const
                 symTableLevel->insert(*container, false);
                 containerCopied[anon->getAnonId()] = true;
             }
-        } else
+        } else {
+            const TString& name = iter->first;
+            auto retargetIter = std::find_if(retargetedSymbols.begin(), retargetedSymbols.end(),
+                                          [&name](const std::pair<TString, TString>& i) { return i.first == name; });
+            if (retargetIter != retargetedSymbols.end())
+                continue;
             symTableLevel->insert(*iter->second->clone(), false);
+        }
+    }
+    // Now point retargeted symbols to the newly created versions of them
+    for (auto &s : retargetedSymbols) {
+        TSymbol* sym = symTableLevel->find(s.second);
+        if (!sym)
+            continue;
+        symTableLevel->insert(s.first, sym);
     }
 
     return symTableLevel;

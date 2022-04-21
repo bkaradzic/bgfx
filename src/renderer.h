@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef BGFX_RENDERER_H_HEADER_GUARD
@@ -312,7 +312,7 @@ namespace bgfx
 			data.m_parent = _parent;
 			m_hashMap.insert(stl::make_pair(_key, handle) );
 
-			return &m_data[handle].m_value;
+			return bx::addressOf(m_data[handle].m_value);
 		}
 
 		Ty* find(uint64_t _key)
@@ -322,7 +322,7 @@ namespace bgfx
 			{
 				uint16_t handle = it->second;
 				m_alloc.touch(handle);
-				return &m_data[handle].m_value;
+				return bx::addressOf(m_data[handle].m_value);
 			}
 
 			return NULL;

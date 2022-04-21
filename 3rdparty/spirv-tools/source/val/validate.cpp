@@ -111,57 +111,6 @@ spv_result_t ValidateForwardDecls(ValidationState_t& _) {
          << id_str.substr(0, id_str.size() - 1);
 }
 
-std::vector<std::string> CalculateNamesForEntryPoint(ValidationState_t& _,
-                                                     const uint32_t id) {
-  auto id_descriptions = _.entry_point_descriptions(id);
-  auto id_names = std::vector<std::string>();
-  id_names.reserve((id_descriptions.size()));
-
-  for (auto description : id_descriptions) id_names.push_back(description.name);
-
-  return id_names;
-}
-
-spv_result_t ValidateEntryPointNameUnique(ValidationState_t& _,
-                                          const uint32_t id) {
-  auto id_names = CalculateNamesForEntryPoint(_, id);
-  const auto names =
-      std::unordered_set<std::string>(id_names.begin(), id_names.end());
-
-  if (id_names.size() != names.size()) {
-    std::sort(id_names.begin(), id_names.end());
-    for (size_t i = 0; i < id_names.size() - 1; i++) {
-      if (id_names[i] == id_names[i + 1]) {
-        return _.diag(SPV_ERROR_INVALID_BINARY, _.FindDef(id))
-               << "Entry point name \"" << id_names[i]
-               << "\" is not unique, which is not allow in WebGPU env.";
-      }
-    }
-  }
-
-  for (const auto other_id : _.entry_points()) {
-    if (other_id == id) continue;
-    const auto other_id_names = CalculateNamesForEntryPoint(_, other_id);
-    for (const auto& other_id_name : other_id_names) {
-      if (names.find(other_id_name) != names.end()) {
-        return _.diag(SPV_ERROR_INVALID_BINARY, _.FindDef(id))
-               << "Entry point name \"" << other_id_name
-               << "\" is not unique, which is not allow in WebGPU env.";
-      }
-    }
-  }
-
-  return SPV_SUCCESS;
-}
-
-spv_result_t ValidateEntryPointNamesUnique(ValidationState_t& _) {
-  for (const auto id : _.entry_points()) {
-    auto result = ValidateEntryPointNameUnique(_, id);
-    if (result != SPV_SUCCESS) return result;
-  }
-  return SPV_SUCCESS;
-}
-
 // Entry point validation. Based on 2.16.1 (Universal Validation Rules) of the
 // SPIRV spec:
 // * There is at least one OpEntryPoint instruction, unless the Linkage
@@ -169,8 +118,7 @@ spv_result_t ValidateEntryPointNamesUnique(ValidationState_t& _) {
 // * No function can be targeted by both an OpEntryPoint instruction and an
 //   OpFunctionCall instruction.
 //
-// Additionally enforces that entry points for Vulkan and WebGPU should not have
-// recursion. And that entry names should be unique for WebGPU.
+// Additionally enforces that entry points for Vulkan should not have recursion.
 spv_result_t ValidateEntryPoints(ValidationState_t& _) {
   _.ComputeFunctionToEntryPointMapping();
   _.ComputeRecursiveEntryPoints();
@@ -189,20 +137,15 @@ spv_result_t ValidateEntryPoints(ValidationState_t& _) {
                 "an OpFunctionCall instruction.";
     }
 
-    // For Vulkan and WebGPU, the static function-call graph for an entry point
+    // For Vulkan, the static function-call graph for an entry point
     // must not contain cycles.
-    if (spvIsVulkanOrWebGPUEnv(_.context()->target_env)) {
+    if (spvIsVulkanEnv(_.context()->target_env)) {
       if (_.recursive_entry_points().find(entry_point) !=
           _.recursive_entry_points().end()) {
         return _.diag(SPV_ERROR_INVALID_BINARY, _.FindDef(entry_point))
+               << _.VkErrorID(4634)
                << "Entry points may not have a call graph with cycles.";
       }
-    }
-
-    // For WebGPU all entry point names must be unique.
-    if (spvIsWebGPUEnv(_.context()->target_env)) {
-      const auto result = ValidateEntryPointNamesUnique(_);
-      if (result != SPV_SUCCESS) return result;
     }
   }
 
@@ -221,12 +164,6 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
     return DiagnosticStream(position, context.consumer, "",
                             SPV_ERROR_INVALID_BINARY)
            << "Invalid SPIR-V magic number.";
-  }
-
-  if (spvIsWebGPUEnv(context.target_env) && endian != SPV_ENDIANNESS_LITTLE) {
-    return DiagnosticStream(position, context.consumer, "",
-                            SPV_ERROR_INVALID_BINARY)
-           << "WebGPU requires SPIR-V to be little endian.";
   }
 
   spv_header_t header;
@@ -265,7 +202,7 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
                  /* diagnostic = */ nullptr);
 
   // Parse the module and perform inline validation checks. These checks do
-  // not require the the knowledge of the whole module.
+  // not require the knowledge of the whole module.
   if (auto error = spvBinaryParse(&context, vstate, words, num_words,
                                   /*parsed_header =*/nullptr,
                                   ProcessInstruction, pDiagnostic)) {
@@ -282,11 +219,10 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
       if (inst->opcode() == SpvOpEntryPoint) {
         const auto entry_point = inst->GetOperandAs<uint32_t>(1);
         const auto execution_model = inst->GetOperandAs<SpvExecutionModel>(0);
-        const char* str = reinterpret_cast<const char*>(
-            inst->words().data() + inst->operand(2).offset);
+        const std::string desc_name = inst->GetOperandAs<std::string>(2);
 
         ValidationState_t::EntryPointDescription desc;
-        desc.name = str;
+        desc.name = desc_name;
 
         std::vector<uint32_t> interfaces;
         for (size_t j = 3; j < inst->operands().size(); ++j)
@@ -299,11 +235,10 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
           for (const Instruction* check_inst : visited_entry_points) {
             const auto check_execution_model =
                 check_inst->GetOperandAs<SpvExecutionModel>(0);
-            const char* check_str = reinterpret_cast<const char*>(
-                check_inst->words().data() + inst->operand(2).offset);
-            const std::string check_name(check_str);
+            const std::string check_name =
+                check_inst->GetOperandAs<std::string>(2);
 
-            if (desc.name == check_name &&
+            if (desc_name == check_name &&
                 execution_model == check_execution_model) {
               return vstate->diag(SPV_ERROR_INVALID_DATA, inst)
                      << "2 Entry points cannot share the same name and "
@@ -320,13 +255,6 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
         }
 
         const auto called_id = inst->GetOperandAs<uint32_t>(2);
-        if (spvIsWebGPUEnv(context.target_env) &&
-            !vstate->IsFunctionCallDefined(called_id)) {
-          return vstate->diag(SPV_ERROR_INVALID_LAYOUT, &instruction)
-                 << "For WebGPU, functions need to be defined before being "
-                    "called.";
-        }
-
         vstate->AddFunctionCallTarget(called_id);
       }
 
@@ -420,7 +348,7 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
   }
 
   // Validate the preconditions involving adjacent instructions. e.g. SpvOpPhi
-  // must only be preceeded by SpvOpLabel, SpvOpPhi, or SpvOpLine.
+  // must only be preceded by SpvOpLabel, SpvOpPhi, or SpvOpLine.
   if (auto error = ValidateAdjacency(*vstate)) return error;
 
   if (auto error = ValidateEntryPoints(*vstate)) return error;

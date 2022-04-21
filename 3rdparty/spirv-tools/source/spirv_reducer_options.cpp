@@ -23,7 +23,9 @@ const uint32_t kDefaultStepLimit = 2500;
 }  // namespace
 
 spv_reducer_options_t::spv_reducer_options_t()
-    : step_limit(kDefaultStepLimit), fail_on_validation_error(false) {}
+    : step_limit(kDefaultStepLimit),
+      fail_on_validation_error(false),
+      target_function(0) {}
 
 SPIRV_TOOLS_EXPORT spv_reducer_options spvReducerOptionsCreate() {
   return new spv_reducer_options_t();
@@ -41,4 +43,9 @@ SPIRV_TOOLS_EXPORT void spvReducerOptionsSetStepLimit(
 SPIRV_TOOLS_EXPORT void spvReducerOptionsSetFailOnValidationError(
     spv_reducer_options options, bool fail_on_validation_error) {
   options->fail_on_validation_error = fail_on_validation_error;
+}
+
+SPIRV_TOOLS_EXPORT void spvReducerOptionsSetTargetFunction(
+    spv_reducer_options options, uint32_t target_function) {
+  options->target_function = target_function;
 }

@@ -1,5 +1,0 @@
-uniform sampler3D tex;
-varying vec3 uv;
-void main() {
-	gl_FragColor = texture3D(tex, uv);
-}

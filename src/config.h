@@ -1,12 +1,12 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef BGFX_CONFIG_H_HEADER_GUARD
 #define BGFX_CONFIG_H_HEADER_GUARD
 
-#include <bx/bx.h>
+#include <bx/bx.h> // bx::isPowerOf2
 
 // # Configuration options for bgfx.
 //
@@ -15,11 +15,12 @@
 //
 // When selecting rendering backends select all backends you want to include in the build.
 
-#ifndef BGFX_CONFIG_DEBUG
-#	define BGFX_CONFIG_DEBUG 0
-#endif // BGFX_CONFIG_DEBUG
+#ifndef BX_CONFIG_DEBUG
+#	error "BX_CONFIG_DEBUG must be defined in build script!"
+#endif // BX_CONFIG_DEBUG
 
-#if !defined(BGFX_CONFIG_RENDERER_DIRECT3D9)  \
+#if !defined(BGFX_CONFIG_RENDERER_AGC)        \
+ && !defined(BGFX_CONFIG_RENDERER_DIRECT3D9)  \
  && !defined(BGFX_CONFIG_RENDERER_DIRECT3D11) \
  && !defined(BGFX_CONFIG_RENDERER_DIRECT3D12) \
  && !defined(BGFX_CONFIG_RENDERER_GNM)        \
@@ -29,6 +30,12 @@
  && !defined(BGFX_CONFIG_RENDERER_OPENGLES)   \
  && !defined(BGFX_CONFIG_RENDERER_VULKAN)     \
  && !defined(BGFX_CONFIG_RENDERER_WEBGPU)
+
+#	ifndef BGFX_CONFIG_RENDERER_AGC
+#		define BGFX_CONFIG_RENDERER_AGC (0 \
+					|| BX_PLATFORM_PS5     \
+					? 1 : 0)
+#	endif // BGFX_CONFIG_RENDERER_AGC
 
 #	ifndef BGFX_CONFIG_RENDERER_DIRECT3D9
 #		define BGFX_CONFIG_RENDERER_DIRECT3D9 (0 \
@@ -86,7 +93,9 @@
 #	endif // BGFX_CONFIG_RENDERER_OPENGL
 
 #	ifndef BGFX_CONFIG_RENDERER_OPENGLES_MIN_VERSION
-#		define BGFX_CONFIG_RENDERER_OPENGLES_MIN_VERSION 1
+#		define BGFX_CONFIG_RENDERER_OPENGLES_MIN_VERSION (0 \
+					|| BX_PLATFORM_ANDROID                  \
+					? 30 : 1)
 #	endif // BGFX_CONFIG_RENDERER_OPENGLES_MIN_VERSION
 
 #	ifndef BGFX_CONFIG_RENDERER_OPENGLES
@@ -114,6 +123,10 @@
 #	endif // BGFX_CONFIG_RENDERER_WEBGPU
 
 #else
+#	ifndef BGFX_CONFIG_RENDERER_AGC
+#		define BGFX_CONFIG_RENDERER_AGC 0
+#	endif // BGFX_CONFIG_RENDERER_AGC
+
 #	ifndef BGFX_CONFIG_RENDERER_DIRECT3D9
 #		define BGFX_CONFIG_RENDERER_DIRECT3D9 0
 #	endif // BGFX_CONFIG_RENDERER_DIRECT3D9
@@ -361,10 +374,22 @@ BX_STATIC_ASSERT(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS m
 #	define BGFX_CONFIG_MAX_BACK_BUFFERS 4
 #endif // BGFX_CONFIG_MAX_BACK_BUFFERS
 
+#ifndef BGFX_CONFIG_MAX_FRAME_LATENCY
+#	define BGFX_CONFIG_MAX_FRAME_LATENCY 3
+#endif // BGFX_CONFIG_MAX_FRAME_LATENCY
+
 #ifndef BGFX_CONFIG_PREFER_DISCRETE_GPU
 // On laptops with integrated and discrete GPU, prefer selection of discrete GPU.
 // nVidia and AMD, on Windows only.
 #	define BGFX_CONFIG_PREFER_DISCRETE_GPU BX_PLATFORM_WINDOWS
 #endif // BGFX_CONFIG_PREFER_DISCRETE_GPU
+
+#ifndef BGFX_CONFIG_MAX_SCREENSHOTS
+#	define BGFX_CONFIG_MAX_SCREENSHOTS 4
+#endif // BGFX_CONFIG_MAX_SCREENSHOTS
+
+#ifndef BGFX_CONFIG_ENCODER_API_ONLY
+#	define BGFX_CONFIG_ENCODER_API_ONLY 0
+#endif // BGFX_CONFIG_ENCODER_API_ONLY
 
 #endif // BGFX_CONFIG_H_HEADER_GUARD

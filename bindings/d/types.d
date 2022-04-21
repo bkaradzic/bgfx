@@ -8,11 +8,44 @@ module bindbc.bgfx.types;
 
 public import core.stdc.stdarg : va_list;
 
+enum expandEnum(EnumType, string fqnEnumType = EnumType.stringof) = (){
+	string expandEnum;
+	foreach(m; __traits(allMembers, EnumType)){
+		expandEnum ~= "alias " ~ m ~ " = " ~ fqnEnumType ~ "." ~ m ~ ";";
+	}
+	return expandEnum;
+}();
+
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 109;
+enum uint BGFX_API_VERSION = 115;
 
 alias bgfx_view_id_t = ushort;
+
+//NOTE: TEMPORARY fix to some missing preprocessor function-macros...
+static BGFX_STATE_BLEND_FUNC_SEPARATE(ulong _srcRGB, ulong _dstRGB, ulong _srcA, ulong _dstA){
+	return (0UL
+			| ( ( cast(ulong)_srcRGB | ( cast(ulong)_dstRGB<<4) )   )
+			| ( ( cast(ulong)_srcA   | ( cast(ulong)_dstA  <<4) )<<8)
+		);
+}
+
+/// Blend equation separate.
+static BGFX_STATE_BLEND_EQUATION_SEPARATE(ulong _equationRGB, ulong _equationA){ return ( cast(ulong)_equationRGB | (cast(ulong)_equationA<<3) ); }
+
+/// Blend function.
+static BGFX_STATE_BLEND_FUNC(ulong _src, ulong _dst){ return BGFX_STATE_BLEND_FUNC_SEPARATE(_src, _dst, _src, _dst); }
+
+/// Blend equation.
+static BGFX_STATE_BLEND_EQUATION(ulong _equation){ return BGFX_STATE_BLEND_EQUATION_SEPARATE(_equation, _equation); }
+
+/// Utility predefined blend modes.
+
+/// Additive blending.
+static BGFX_STATE_BLEND_ADD(){ return (0 | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)); }
+
+/// Alpha blend.
+static BGFX_STATE_BLEND_ALPHA(){ return (0 | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)); }
 
 /// Memory release callback.
 
@@ -197,7 +230,7 @@ enum ubyte BGFX_DISCARD_NONE = 0x00; /// Preserve everything.
 enum ubyte BGFX_DISCARD_BINDINGS = 0x01; /// Discard texture sampler and buffer bindings.
 enum ubyte BGFX_DISCARD_INDEX_BUFFER = 0x02; /// Discard index buffer.
 enum ubyte BGFX_DISCARD_INSTANCE_DATA = 0x04; /// Discard instance data.
-enum ubyte BGFX_DISCARD_STATE = 0x08; /// Discard state.
+enum ubyte BGFX_DISCARD_STATE = 0x08; /// Discard state and uniform bindings.
 enum ubyte BGFX_DISCARD_TRANSFORM = 0x10; /// Discard transform.
 enum ubyte BGFX_DISCARD_VERTEX_STREAMS = 0x20; /// Discard vertex streams.
 enum ubyte BGFX_DISCARD_ALL = 0xff; /// Discard all states.
@@ -211,7 +244,7 @@ enum uint BGFX_DEBUG_WIREFRAME = 0x00000001; /// Enable wireframe for all primit
 enum uint BGFX_DEBUG_IFH = 0x00000002;
 enum uint BGFX_DEBUG_STATS = 0x00000004; /// Enable statistics display.
 enum uint BGFX_DEBUG_TEXT = 0x00000008; /// Enable debug text display.
-enum uint BGFX_DEBUG_PROFILER = 0x00000010; /// Enable profiler.
+enum uint BGFX_DEBUG_PROFILER = 0x00000010; /// Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
 
 enum ushort BGFX_BUFFER_COMPUTE_FORMAT_8X1 = 0x0001; /// 1 8-bit value
 enum ushort BGFX_BUFFER_COMPUTE_FORMAT_8X2 = 0x0002; /// 2 8-bit values
@@ -352,47 +385,48 @@ enum ulong BGFX_CAPS_BLEND_INDEPENDENT = 0x0000000000000002; /// Blend independe
 enum ulong BGFX_CAPS_COMPUTE = 0x0000000000000004; /// Compute shaders are supported.
 enum ulong BGFX_CAPS_CONSERVATIVE_RASTER = 0x0000000000000008; /// Conservative rasterization is supported.
 enum ulong BGFX_CAPS_DRAW_INDIRECT = 0x0000000000000010; /// Draw indirect is supported.
-enum ulong BGFX_CAPS_FRAGMENT_DEPTH = 0x0000000000000020; /// Fragment depth is accessible in fragment shader.
+enum ulong BGFX_CAPS_FRAGMENT_DEPTH = 0x0000000000000020; /// Fragment depth is available in fragment shader.
 enum ulong BGFX_CAPS_FRAGMENT_ORDERING = 0x0000000000000040; /// Fragment ordering is available in fragment shader.
-enum ulong BGFX_CAPS_FRAMEBUFFER_RW = 0x0000000000000080; /// Read/Write frame buffer attachments are supported.
-enum ulong BGFX_CAPS_GRAPHICS_DEBUGGER = 0x0000000000000100; /// Graphics debugger is present.
-enum ulong BGFX_CAPS_RESERVED = 0x0000000000000200;
-enum ulong BGFX_CAPS_HDR10 = 0x0000000000000400; /// HDR10 rendering is supported.
-enum ulong BGFX_CAPS_HIDPI = 0x0000000000000800; /// HiDPI rendering is supported.
-enum ulong BGFX_CAPS_INDEX32 = 0x0000000000001000; /// 32-bit indices are supported.
-enum ulong BGFX_CAPS_INSTANCING = 0x0000000000002000; /// Instancing is supported.
-enum ulong BGFX_CAPS_OCCLUSION_QUERY = 0x0000000000004000; /// Occlusion query is supported.
-enum ulong BGFX_CAPS_RENDERER_MULTITHREADED = 0x0000000000008000; /// Renderer is on separate thread.
-enum ulong BGFX_CAPS_SWAP_CHAIN = 0x0000000000010000; /// Multiple windows are supported.
-enum ulong BGFX_CAPS_TEXTURE_2D_ARRAY = 0x0000000000020000; /// 2D texture array is supported.
-enum ulong BGFX_CAPS_TEXTURE_3D = 0x0000000000040000; /// 3D textures are supported.
-enum ulong BGFX_CAPS_TEXTURE_BLIT = 0x0000000000080000; /// Texture blit is supported.
-enum ulong BGFX_CAPS_TEXTURE_COMPARE_RESERVED = 0x0000000000100000; /// All texture compare modes are supported.
-enum ulong BGFX_CAPS_TEXTURE_COMPARE_LEQUAL = 0x0000000000200000; /// Texture compare less equal mode is supported.
-enum ulong BGFX_CAPS_TEXTURE_CUBE_ARRAY = 0x0000000000400000; /// Cubemap texture array is supported.
-enum ulong BGFX_CAPS_TEXTURE_DIRECT_ACCESS = 0x0000000000800000; /// CPU direct access to GPU texture memory.
-enum ulong BGFX_CAPS_TEXTURE_READ_BACK = 0x0000000001000000; /// Read-back texture is supported.
-enum ulong BGFX_CAPS_VERTEX_ATTRIB_HALF = 0x0000000002000000; /// Vertex attribute half-float is supported.
-enum ulong BGFX_CAPS_VERTEX_ATTRIB_UINT10 = 0x0000000004000000; /// Vertex attribute 10_10_10_2 is supported.
-enum ulong BGFX_CAPS_VERTEX_ID = 0x0000000008000000; /// Rendering with VertexID only is supported.
-enum ulong BGFX_CAPS_TEXTURE_COMPARE_ALL = 0x0000000000300000; /// All texture compare modes are supported.
+enum ulong BGFX_CAPS_GRAPHICS_DEBUGGER = 0x0000000000000080; /// Graphics debugger is present.
+enum ulong BGFX_CAPS_HDR10 = 0x0000000000000100; /// HDR10 rendering is supported.
+enum ulong BGFX_CAPS_HIDPI = 0x0000000000000200; /// HiDPI rendering is supported.
+enum ulong BGFX_CAPS_IMAGE_RW = 0x0000000000000400; /// Image Read/Write is supported.
+enum ulong BGFX_CAPS_INDEX32 = 0x0000000000000800; /// 32-bit indices are supported.
+enum ulong BGFX_CAPS_INSTANCING = 0x0000000000001000; /// Instancing is supported.
+enum ulong BGFX_CAPS_OCCLUSION_QUERY = 0x0000000000002000; /// Occlusion query is supported.
+enum ulong BGFX_CAPS_RENDERER_MULTITHREADED = 0x0000000000004000; /// Renderer is on separate thread.
+enum ulong BGFX_CAPS_SWAP_CHAIN = 0x0000000000008000; /// Multiple windows are supported.
+enum ulong BGFX_CAPS_TEXTURE_2D_ARRAY = 0x0000000000010000; /// 2D texture array is supported.
+enum ulong BGFX_CAPS_TEXTURE_3D = 0x0000000000020000; /// 3D textures are supported.
+enum ulong BGFX_CAPS_TEXTURE_BLIT = 0x0000000000040000; /// Texture blit is supported.
+enum ulong BGFX_CAPS_TEXTURE_COMPARE_RESERVED = 0x0000000000080000;
+enum ulong BGFX_CAPS_TEXTURE_COMPARE_LEQUAL = 0x0000000000100000; /// Texture compare less equal mode is supported.
+enum ulong BGFX_CAPS_TEXTURE_CUBE_ARRAY = 0x0000000000200000; /// Cubemap texture array is supported.
+enum ulong BGFX_CAPS_TEXTURE_DIRECT_ACCESS = 0x0000000000400000; /// CPU direct access to GPU texture memory.
+enum ulong BGFX_CAPS_TEXTURE_READ_BACK = 0x0000000000800000; /// Read-back texture is supported.
+enum ulong BGFX_CAPS_VERTEX_ATTRIB_HALF = 0x0000000001000000; /// Vertex attribute half-float is supported.
+enum ulong BGFX_CAPS_VERTEX_ATTRIB_UINT10 = 0x0000000002000000; /// Vertex attribute 10_10_10_2 is supported.
+enum ulong BGFX_CAPS_VERTEX_ID = 0x0000000004000000; /// Rendering with VertexID only is supported.
+enum ulong BGFX_CAPS_VIEWPORT_LAYER_ARRAY = 0x0000000008000000; /// Viewport layer is available in vertex shader.
+enum ulong BGFX_CAPS_TEXTURE_COMPARE_ALL = 0x0000000000180000; /// All texture compare modes are supported.
 
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_NONE = 0x0000; /// Texture format is not supported.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_2D = 0x0001; /// Texture format is supported.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB = 0x0002; /// Texture as sRGB format is supported.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED = 0x0004; /// Texture format is emulated.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_3D = 0x0008; /// Texture format is supported.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB = 0x0010; /// Texture as sRGB format is supported.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED = 0x0020; /// Texture format is emulated.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_CUBE = 0x0040; /// Texture format is supported.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB = 0x0080; /// Texture as sRGB format is supported.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED = 0x0100; /// Texture format is emulated.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_VERTEX = 0x0200; /// Texture format can be used from vertex shader.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_IMAGE = 0x0400; /// Texture format can be used as image from compute shader.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER = 0x0800; /// Texture format can be used as frame buffer.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA = 0x1000; /// Texture format can be used as MSAA frame buffer.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_MSAA = 0x2000; /// Texture can be sampled as MSAA.
-enum ushort BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN = 0x4000; /// Texture format supports auto-generated mips.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_NONE = 0x00000000; /// Texture format is not supported.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_2D = 0x00000001; /// Texture format is supported.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB = 0x00000002; /// Texture as sRGB format is supported.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED = 0x00000004; /// Texture format is emulated.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_3D = 0x00000008; /// Texture format is supported.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB = 0x00000010; /// Texture as sRGB format is supported.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED = 0x00000020; /// Texture format is emulated.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_CUBE = 0x00000040; /// Texture format is supported.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB = 0x00000080; /// Texture as sRGB format is supported.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED = 0x00000100; /// Texture format is emulated.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_VERTEX = 0x00000200; /// Texture format can be used from vertex shader.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ = 0x00000400; /// Texture format can be used as image and read from.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE = 0x00000800; /// Texture format can be used as image and written to.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER = 0x00001000; /// Texture format can be used as frame buffer.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA = 0x00002000; /// Texture format can be used as MSAA frame buffer.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_MSAA = 0x00004000; /// Texture can be sampled as MSAA.
+enum uint BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN = 0x00008000; /// Texture format supports auto-generated mips.
 
 enum ubyte BGFX_RESOLVE_NONE = 0x00; /// No resolve flags.
 enum ubyte BGFX_RESOLVE_AUTO_GEN_MIPS = 0x01; /// Auto-generate mip maps on resolve.
@@ -400,8 +434,10 @@ enum ubyte BGFX_RESOLVE_AUTO_GEN_MIPS = 0x01; /// Auto-generate mip maps on reso
 enum ushort BGFX_PCI_ID_NONE = 0x0000; /// Autoselect adapter.
 enum ushort BGFX_PCI_ID_SOFTWARE_RASTERIZER = 0x0001; /// Software rasterizer.
 enum ushort BGFX_PCI_ID_AMD = 0x1002; /// AMD adapter.
+enum ushort BGFX_PCI_ID_APPLE = 0x106b; /// Apple adapter.
 enum ushort BGFX_PCI_ID_INTEL = 0x8086; /// Intel adapter.
 enum ushort BGFX_PCI_ID_NVIDIA = 0x10de; /// nVidia adapter.
+enum ushort BGFX_PCI_ID_MICROSOFT = 0x1414; /// Microsoft adapter.
 
 enum ubyte BGFX_CUBE_MAP_POSITIVE_X = 0x00; /// Cubemap +x.
 enum ubyte BGFX_CUBE_MAP_NEGATIVE_X = 0x01; /// Cubemap -x.
@@ -421,11 +457,13 @@ enum bgfx_fatal_t
 
 	BGFX_FATAL_COUNT
 }
+mixin(expandEnum!bgfx_fatal_t);
 
 /// Renderer backend type enum.
 enum bgfx_renderer_type_t
 {
 	BGFX_RENDERER_TYPE_NOOP, /// No rendering.
+	BGFX_RENDERER_TYPE_AGC, /// AGC
 	BGFX_RENDERER_TYPE_DIRECT3D9, /// Direct3D 9.0
 	BGFX_RENDERER_TYPE_DIRECT3D11, /// Direct3D 11.0
 	BGFX_RENDERER_TYPE_DIRECT3D12, /// Direct3D 12.0
@@ -439,6 +477,7 @@ enum bgfx_renderer_type_t
 
 	BGFX_RENDERER_TYPE_COUNT
 }
+mixin(expandEnum!bgfx_renderer_type_t);
 
 /// Access mode enum.
 enum bgfx_access_t
@@ -449,6 +488,7 @@ enum bgfx_access_t
 
 	BGFX_ACCESS_COUNT
 }
+mixin(expandEnum!bgfx_access_t);
 
 /// Vertex attribute enum.
 enum bgfx_attrib_t
@@ -474,6 +514,7 @@ enum bgfx_attrib_t
 
 	BGFX_ATTRIB_COUNT
 }
+mixin(expandEnum!bgfx_attrib_t);
 
 /// Vertex attribute type enum.
 enum bgfx_attrib_type_t
@@ -486,6 +527,7 @@ enum bgfx_attrib_type_t
 
 	BGFX_ATTRIB_TYPE_COUNT
 }
+mixin(expandEnum!bgfx_attrib_type_t);
 
 /**
  * Texture format enum.
@@ -591,6 +633,7 @@ enum bgfx_texture_format_t
 
 	BGFX_TEXTURE_FORMAT_COUNT
 }
+mixin(expandEnum!bgfx_texture_format_t);
 
 /// Uniform type enum.
 enum bgfx_uniform_type_t
@@ -603,6 +646,7 @@ enum bgfx_uniform_type_t
 
 	BGFX_UNIFORM_TYPE_COUNT
 }
+mixin(expandEnum!bgfx_uniform_type_t);
 
 /// Backbuffer ratio enum.
 enum bgfx_backbuffer_ratio_t
@@ -616,6 +660,7 @@ enum bgfx_backbuffer_ratio_t
 
 	BGFX_BACKBUFFER_RATIO_COUNT
 }
+mixin(expandEnum!bgfx_backbuffer_ratio_t);
 
 /// Occlusion query result.
 enum bgfx_occlusion_query_result_t
@@ -626,6 +671,7 @@ enum bgfx_occlusion_query_result_t
 
 	BGFX_OCCLUSION_QUERY_RESULT_COUNT
 }
+mixin(expandEnum!bgfx_occlusion_query_result_t);
 
 /// Primitive topology.
 enum bgfx_topology_t
@@ -638,18 +684,20 @@ enum bgfx_topology_t
 
 	BGFX_TOPOLOGY_COUNT
 }
+mixin(expandEnum!bgfx_topology_t);
 
 /// Topology conversion function.
 enum bgfx_topology_convert_t
 {
 	BGFX_TOPOLOGY_CONVERT_TRILISTFLIPWINDING, /// Flip winding order of triangle list.
-	BGFX_TOPOLOGY_CONVERT_TRISTRIPFLIPWINDING, /// Flip winding order of trinagle strip.
+	BGFX_TOPOLOGY_CONVERT_TRISTRIPFLIPWINDING, /// Flip winding order of triangle strip.
 	BGFX_TOPOLOGY_CONVERT_TRILISTTOLINELIST, /// Convert triangle list to line list.
 	BGFX_TOPOLOGY_CONVERT_TRISTRIPTOTRILIST, /// Convert triangle strip to triangle list.
 	BGFX_TOPOLOGY_CONVERT_LINESTRIPTOLINELIST, /// Convert line strip to line list.
 
 	BGFX_TOPOLOGY_CONVERT_COUNT
 }
+mixin(expandEnum!bgfx_topology_convert_t);
 
 /// Topology sort order.
 enum bgfx_topology_sort_t
@@ -669,6 +717,7 @@ enum bgfx_topology_sort_t
 
 	BGFX_TOPOLOGY_SORT_COUNT
 }
+mixin(expandEnum!bgfx_topology_sort_t);
 
 /// View mode sets draw call sort order.
 enum bgfx_view_mode_t
@@ -680,6 +729,7 @@ enum bgfx_view_mode_t
 
 	BGFX_VIEW_MODE_COUNT
 }
+mixin(expandEnum!bgfx_view_mode_t);
 
 /// Render frame enum.
 enum bgfx_render_frame_t
@@ -691,6 +741,7 @@ enum bgfx_render_frame_t
 
 	BGFX_RENDER_FRAME_COUNT
 }
+mixin(expandEnum!bgfx_render_frame_t);
 
 /// GPU info.
 struct bgfx_caps_gpu_t
@@ -735,14 +786,14 @@ struct bgfx_caps_t
 
 	/**
 	 * Supported functionality.
-	 *   @attention See BGFX_CAPS_* flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
+	 *   @attention See `BGFX_CAPS_*` flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
 	 */
 	ulong supported;
 	ushort vendorId; /// Selected GPU vendor PCI id.
 	ushort deviceId; /// Selected GPU device id.
 	bool homogeneousDepth; /// True when NDC depth is in [-1, 1] range, otherwise its [0, 1].
 	bool originBottomLeft; /// True when NDC origin is at bottom left.
-	byte numGPUs; /// Number of enumerated GPUs.
+	ubyte numGPUs; /// Number of enumerated GPUs.
 	bgfx_caps_gpu_t[4] gpu; /// Enumerated GPUs.
 	bgfx_caps_limits_t limits; /// Renderer runtime limits.
 
@@ -759,8 +810,10 @@ struct bgfx_caps_t
 	 *   - `BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB` - Texture as sRGB format is supported.
 	 *   - `BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED` - Texture format is emulated.
 	 *   - `BGFX_CAPS_FORMAT_TEXTURE_VERTEX` - Texture format can be used from vertex shader.
-	 *   - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE` - Texture format can be used as image from compute
-	 *     shader.
+	 *   - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ` - Texture format can be used as image
+	 *     and read from.
+	 *   - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE` - Texture format can be used as image
+	 *     and written to.
 	 *   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER` - Texture format can be used as frame
 	 *     buffer.
 	 *   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` - Texture format can be used as MSAA
@@ -785,11 +838,16 @@ struct bgfx_platform_data_t
 	void* ndt; /// Native display type (*nix specific).
 
 	/**
-	 * Native window handle. If `NULL` bgfx will create headless
-	 * context/device if renderer API supports it.
+	 * Native window handle. If `NULL`, bgfx will create a headless
+	 * context/device, provided the rendering API supports it.
 	 */
 	void* nwh;
-	void* context; /// GL context, or D3D device. If `NULL`, bgfx will create context/device.
+
+	/**
+	 * GL context, D3D device, or Vulkan device. If `NULL`, bgfx
+	 * will create context/device.
+	 */
+	void* context;
 
 	/**
 	 * GL back-buffer, or D3D render target view. If `NULL` bgfx will
@@ -798,7 +856,7 @@ struct bgfx_platform_data_t
 	void* backBuffer;
 
 	/**
-	 * Backbuffer depth/stencil. If `NULL` bgfx will create back-buffer
+	 * Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
 	 * depth/stencil surface.
 	 */
 	void* backBufferDS;
@@ -811,8 +869,8 @@ struct bgfx_resolution_t
 	uint width; /// Backbuffer width.
 	uint height; /// Backbuffer height.
 	uint reset; /// Reset parameters.
-	byte numBackBuffers; /// Number of back buffers.
-	byte maxFrameLatency; /// Maximum frame latency.
+	ubyte numBackBuffers; /// Number of back buffers.
+	ubyte maxFrameLatency; /// Maximum frame latency.
 }
 
 /// Configurable runtime limits parameters.
@@ -851,7 +909,8 @@ struct bgfx_init_t
 	 * matching id.
 	 */
 	ushort deviceId;
-	bool debug_; /// Enable device for debuging.
+	ulong capabilities; /// Capabilities initialization mask (default: UINT64_MAX).
+	bool debug_; /// Enable device for debugging.
 	bool profile; /// Enable device for profiling.
 	bgfx_platform_data_t platformData; /// Platform data.
 	bgfx_resolution_t resolution; /// Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
@@ -877,23 +936,24 @@ struct bgfx_init_t
  */
 struct bgfx_memory_t
 {
-	byte* data; /// Pointer to data.
+	ubyte* data; /// Pointer to data.
 	uint size; /// Data size.
 }
 
 /// Transient index buffer.
 struct bgfx_transient_index_buffer_t
 {
-	byte* data; /// Pointer to data.
+	ubyte* data; /// Pointer to data.
 	uint size; /// Data size.
 	uint startIndex; /// First index.
 	bgfx_index_buffer_handle_t handle; /// Index buffer handle.
+	bool isIndex16; /// Index buffer format is 16-bits if true, otherwise it is 32-bit.
 }
 
 /// Transient vertex buffer.
 struct bgfx_transient_vertex_buffer_t
 {
-	byte* data; /// Pointer to data.
+	ubyte* data; /// Pointer to data.
 	uint size; /// Data size.
 	uint startVertex; /// First vertex.
 	ushort stride; /// Vertex stride.
@@ -904,7 +964,7 @@ struct bgfx_transient_vertex_buffer_t
 /// Instance data buffer info.
 struct bgfx_instance_data_buffer_t
 {
-	byte* data; /// Pointer to data.
+	ubyte* data; /// Pointer to data.
 	uint size; /// Data size.
 	uint offset; /// Offset in vertex buffer.
 	uint num; /// Number of instances.
@@ -921,8 +981,8 @@ struct bgfx_texture_info_t
 	ushort height; /// Texture height.
 	ushort depth; /// Texture depth.
 	ushort numLayers; /// Number of layers in texture array.
-	byte numMips; /// Number of MIP maps.
-	byte bitsPerPixel; /// Format bits per pixel.
+	ubyte numMips; /// Number of MIP maps.
+	ubyte bitsPerPixel; /// Format bits per pixel.
 	bool cubeMap; /// Texture is cubemap.
 }
 
@@ -937,11 +997,12 @@ struct bgfx_uniform_info_t
 /// Frame buffer texture attachment info.
 struct bgfx_attachment_t
 {
-	bgfx_access_t access; /// Attachement access. See `Access::Enum`.
+	bgfx_access_t access; /// Attachment access. See `Access::Enum`.
 	bgfx_texture_handle_t handle; /// Render target texture handle.
 	ushort mip; /// Mip level.
-	ushort layer; /// Cubemap side or depth layer/slice.
-	byte resolve; /// Resolve flags. See: `BGFX_RESOLVE_*`
+	ushort layer; /// Cubemap side or depth layer/slice to use.
+	ushort numLayers; /// Number of texture layer/slice(s) in array to use.
+	ubyte resolve; /// Resolve flags. See: `BGFX_RESOLVE_*`
 }
 
 /// Transform data.
@@ -1013,7 +1074,7 @@ struct bgfx_stats_t
 	ushort textHeight; /// Debug text height in characters.
 	ushort numViews; /// Number of view stats.
 	bgfx_view_stats_t* viewStats; /// Array of View stats.
-	byte numEncoders; /// Number of encoders used during frame.
+	ubyte numEncoders; /// Number of encoders used during frame.
 	bgfx_encoder_stats_t* encoderStats; /// Array of encoder stats.
 }
 

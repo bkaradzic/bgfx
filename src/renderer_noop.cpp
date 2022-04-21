@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "bgfx_p.h"
@@ -53,7 +53,8 @@ namespace bgfx { namespace noop
 					| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
 					| BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED
 					| BGFX_CAPS_FORMAT_TEXTURE_VERTEX
-					| BGFX_CAPS_FORMAT_TEXTURE_IMAGE
+					| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
+					| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
 					| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 					| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
 					| BGFX_CAPS_FORMAT_TEXTURE_MSAA

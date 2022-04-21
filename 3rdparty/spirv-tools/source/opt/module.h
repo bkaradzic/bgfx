@@ -36,7 +36,7 @@ struct ModuleHeader {
   uint32_t version;
   uint32_t generator;
   uint32_t bound;
-  uint32_t reserved;
+  uint32_t schema;
 };
 
 // A SPIR-V module. It contains all the information for a SPIR-V module and
@@ -49,7 +49,7 @@ class Module {
   using const_inst_iterator = InstructionList::const_iterator;
 
   // Creates an empty module with zero'd header.
-  Module() : header_({}), contains_debug_scope_(false) {}
+  Module() : header_({}), contains_debug_info_(false) {}
 
   // Sets the header to the given |header|.
   void SetHeader(const ModuleHeader& header) { header_ = header; }
@@ -61,7 +61,7 @@ class Module {
   }
 
   // Returns the Id bound.
-  uint32_t IdBound() { return header_.bound; }
+  uint32_t IdBound() const { return header_.bound; }
 
   // Returns the current Id bound and increases it to the next available value.
   // If the id bound has already reached its maximum value, then 0 is returned.
@@ -103,8 +103,8 @@ class Module {
   // This is due to decision by the SPIR Working Group, pending publication.
   inline void AddDebug3Inst(std::unique_ptr<Instruction> d);
 
-  // Appends a debug info extension (OpenCL.DebugInfo.100 or DebugInfo)
-  // instruction to this module.
+  // Appends a debug info extension (OpenCL.DebugInfo.100,
+  // NonSemantic.Shader.DebugInfo.100, or DebugInfo) instruction to this module.
   inline void AddExtInstDebugInfo(std::unique_ptr<Instruction> d);
 
   // Appends an annotation instruction to this module.
@@ -119,9 +119,9 @@ class Module {
   // Appends a function to this module.
   inline void AddFunction(std::unique_ptr<Function> f);
 
-  // Sets |contains_debug_scope_| as true.
-  inline void SetContainsDebugScope();
-  inline bool ContainsDebugScope() { return contains_debug_scope_; }
+  // Sets |contains_debug_info_| as true.
+  inline void SetContainsDebugInfo();
+  inline bool ContainsDebugInfo() { return contains_debug_info_; }
 
   // Returns a vector of pointers to type-declaration instructions in this
   // module.
@@ -141,6 +141,8 @@ class Module {
   inline uint32_t id_bound() const { return header_.bound; }
 
   inline uint32_t version() const { return header_.version; }
+  inline uint32_t generator() const { return header_.generator; }
+  inline uint32_t schema() const { return header_.schema; }
 
   inline void set_version(uint32_t v) { header_.version = v; }
 
@@ -192,8 +194,8 @@ class Module {
   inline IteratorRange<const_inst_iterator> debugs3() const;
 
   // Iterators for debug info instructions (excluding OpLine & OpNoLine)
-  // contained in this module.  These are OpExtInst for OpenCL.DebugInfo.100
-  // or DebugInfo extension placed between section 9 and 10.
+  // contained in this module.  These are OpExtInst for DebugInfo extension
+  // placed between section 9 and 10.
   inline inst_iterator ext_inst_debuginfo_begin();
   inline inst_iterator ext_inst_debuginfo_end();
   inline IteratorRange<inst_iterator> ext_inst_debuginfo();
@@ -301,8 +303,8 @@ class Module {
   // any instruction.  We record them here, so they will not be lost.
   std::vector<Instruction> trailing_dbg_line_info_;
 
-  // This module contains DebugScope or DebugNoScope.
-  bool contains_debug_scope_;
+  // This module contains DebugScope/DebugNoScope or OpLine/OpNoLine.
+  bool contains_debug_info_;
 };
 
 // Pretty-prints |module| to |str|. Returns |str|.
@@ -364,7 +366,7 @@ inline void Module::AddFunction(std::unique_ptr<Function> f) {
   functions_.emplace_back(std::move(f));
 }
 
-inline void Module::SetContainsDebugScope() { contains_debug_scope_ = true; }
+inline void Module::SetContainsDebugInfo() { contains_debug_info_ = true; }
 
 inline Module::inst_iterator Module::capability_begin() {
   return capabilities_.begin();

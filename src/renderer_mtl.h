@@ -1,6 +1,6 @@
 /*
  * Copyright 2011-2015 Attila Kocsis, Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef BGFX_RENDERER_METAL_H_HEADER_GUARD
@@ -66,8 +66,6 @@ namespace bgfx { namespace mtl
 	// c++ wrapper
 	// objects with creation functions starting with 'new' has a refcount 1 after creation, object must be destroyed with release.
 	// commandBuffer, commandEncoders are autoreleased objects. Needs AutoreleasePool!
-
-#define MTL_MAX_FRAMES_IN_FLIGHT (3)
 
 #define MTL_CLASS(name)                                   \
 	class name                                            \
@@ -1038,7 +1036,7 @@ namespace bgfx { namespace mtl
 		~SwapChainMtl();
 
 		void init(void* _nwh);
-		void resize(FrameBufferMtl &_frameBuffer, uint32_t _width, uint32_t _height, uint32_t _flags);
+		void resize(FrameBufferMtl &_frameBuffer, uint32_t _width, uint32_t _height, uint32_t _flags, uint32_t _maximumDrawableCount);
 
 		id <MTLTexture> 	currentDrawableTexture();
 
@@ -1115,7 +1113,7 @@ namespace bgfx { namespace mtl
 		int m_releaseWriteIndex;
 		int m_releaseReadIndex;
 		typedef stl::vector<NSObject*> ResourceArray;
-		ResourceArray m_release[MTL_MAX_FRAMES_IN_FLIGHT];
+		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
 	};
 
 	struct TimerQueryMtl

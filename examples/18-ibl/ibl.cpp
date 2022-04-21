@@ -1,6 +1,6 @@
 /*
  * Copyright 2014-2016 Dario Manesku. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include <vector>
@@ -291,8 +291,8 @@ struct Camera
 
 	struct Interp3f
 	{
-		bx::Vec3 curr;
-		bx::Vec3 dest;
+		bx::Vec3 curr = bx::init::None;
+		bx::Vec3 dest = bx::init::None;
 	};
 
 	Interp3f m_target;

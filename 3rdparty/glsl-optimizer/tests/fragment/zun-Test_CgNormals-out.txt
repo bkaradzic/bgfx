@@ -1,9 +1,0 @@
-void main ()
-{
-  gl_FragData[0] = gl_Color;
-}
-
-
-// stats: 0 alu 0 tex 0 flow
-// inputs: 1
-//  #0: gl_Color (high float) 4x1 [-1] loc 1

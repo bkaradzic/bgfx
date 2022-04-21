@@ -67,14 +67,12 @@ class ValidationState_t {
     bool declare_int16_type = false;     // Allow OpTypeInt with 16 bit width?
     bool declare_float16_type = false;   // Allow OpTypeFloat with 16 bit width?
     bool free_fp_rounding_mode = false;  // Allow the FPRoundingMode decoration
-                                         // and its vaules to be used without
+                                         // and its values to be used without
                                          // requiring any capability
 
-    // Allow functionalities enabled by VariablePointers capability.
+    // Allow functionalities enabled by VariablePointers or
+    // VariablePointersStorageBuffer capability.
     bool variable_pointers = false;
-    // Allow functionalities enabled by VariablePointersStorageBuffer
-    // capability.
-    bool variable_pointers_storage_buffer = false;
 
     // Permit group oerations Reduce, InclusiveScan, ExclusiveScan
     bool group_ops_reduce_and_scans = false;
@@ -90,19 +88,6 @@ class ValidationState_t {
     // conversion opcodes
     bool use_int8_type = false;
 
-    // Use scalar block layout. See VK_EXT_scalar_block_layout:
-    // Defines scalar alignment:
-    // - scalar alignment equals the scalar size in bytes
-    // - array alignment is same as its element alignment
-    // - array alignment is max alignment of any of its members
-    // - vector alignment is same as component alignment
-    // - matrix alignment is same as component alignment
-    // For struct in Uniform, StorageBuffer, PushConstant:
-    // - Offset of a member is multiple of scalar alignment of that member
-    // - ArrayStride and MatrixStride are multiples of scalar alignment
-    // Members need not be listed in offset order
-    bool scalar_block_layout = false;
-
     // SPIR-V 1.4 allows us to select between any two composite values
     // of the same type.
     bool select_between_composites = false;
@@ -117,6 +102,9 @@ class ValidationState_t {
 
     // SPIR-V 1.4 allows Function and Private variables to be NonWritable
     bool nonwritable_var_in_function_or_private = false;
+
+    // Whether LocalSizeId execution mode is allowed by the environment.
+    bool env_allow_localsizeid = false;
   };
 
   ValidationState_t(const spv_const_context context,
@@ -194,6 +182,9 @@ class ValidationState_t {
 
   /// Increments the module_layout_order_section_
   void ProgressToNextLayoutSectionOrder();
+
+  /// Determines if the op instruction is in a previous layout section
+  bool IsOpcodeInPreviousLayoutSection(SpvOp op);
 
   /// Determines if the op instruction is part of the current section
   bool IsOpcodeInCurrentLayoutSection(SpvOp op);
@@ -458,6 +449,10 @@ class ValidationState_t {
   void RegisterSampledImageConsumer(uint32_t sampled_image_id,
                                     Instruction* consumer);
 
+  // Record a function's storage class consumer instruction
+  void RegisterStorageClassConsumer(SpvStorageClass storage_class,
+                                    Instruction* consumer);
+
   /// Returns the set of Global Variables.
   std::unordered_set<uint32_t>& global_vars() { return global_vars_; }
 
@@ -480,6 +475,12 @@ class ValidationState_t {
   // VK_KHR_relaxed_block_layout.
   bool IsRelaxedBlockLayout() const {
     return features_.env_relaxed_block_layout || options()->relax_block_layout;
+  }
+
+  // Returns true if allowing localsizeid, either because the environment always
+  // allows it, or because it is enabled from the command-line.
+  bool IsLocalSizeIdAllowed() const {
+    return features_.env_allow_localsizeid || options()->allow_localsizeid;
   }
 
   /// Sets the struct nesting depth for a given struct ID
@@ -583,6 +584,17 @@ class ValidationState_t {
   // Returns true if |id| is a type id that contains a 8- or 16-bit int or
   // 16-bit float that is not generally enabled for use.
   bool ContainsLimitedUseIntOrFloatType(uint32_t id) const;
+
+  // Returns true if |id| is a type that contains a runtime-sized array.
+  // Does not consider a pointers as contains the array.
+  bool ContainsRuntimeArray(uint32_t id) const;
+
+  // Generic type traversal.
+  // Only traverse pointers and functions if |traverse_all_types| is true.
+  // Recursively tests |f| against the type hierarchy headed by |id|.
+  bool ContainsType(uint32_t id,
+                    const std::function<bool(const Instruction*)>& f,
+                    bool traverse_all_types = true) const;
 
   // Gets value from OpConstant and OpSpecConstant as uint64.
   // Returns false on failure (no instruction, wrong instruction, not int).
@@ -718,6 +730,11 @@ class ValidationState_t {
   // https://github.com/KhronosGroup/Vulkan-Guide/blob/master/chapters/validation_overview.md
   std::string VkErrorID(uint32_t id, const char* reference = nullptr) const;
 
+  // Testing method to allow setting the current layout section.
+  void SetCurrentLayoutSectionForTesting(ModuleLayoutSection section) {
+    current_layout_section_ = section;
+  }
+
  private:
   ValidationState_t(const ValidationState_t&);
 
@@ -778,7 +795,7 @@ class ValidationState_t {
   /// IDs that are entry points, ie, arguments to OpEntryPoint.
   std::vector<uint32_t> entry_points_;
 
-  /// Maps an entry point id to its desciptions.
+  /// Maps an entry point id to its descriptions.
   std::unordered_map<uint32_t, std::vector<EntryPointDescription>>
       entry_point_descriptions_;
 
@@ -825,7 +842,7 @@ class ValidationState_t {
   // have the same pointer size (for physical pointer types).
   uint32_t pointer_size_and_alignment_;
 
-  /// NOTE: See correspoding getter functions
+  /// NOTE: See corresponding getter functions
   bool in_function_;
 
   /// The state of optional features.  These are determined by capabilities

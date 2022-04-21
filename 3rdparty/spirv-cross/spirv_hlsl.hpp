@@ -1,5 +1,6 @@
 /*
- * Copyright 2016-2020 Robert Konrad
+ * Copyright 2016-2021 Robert Konrad
+ * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +13,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ * At your option, you may choose to accept this material under either:
+ *  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
+ *  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
  */
 
 #ifndef SPIRV_HLSL_HPP
@@ -124,6 +131,12 @@ public:
 		// Uses half/int16_t/uint16_t instead of min16* types.
 		// Also adds support for 16-bit load-store from (RW)ByteAddressBuffer.
 		bool enable_16bit_types = false;
+
+		// If matrices are used as IO variables, flatten the attribute declaration to use
+		// TEXCOORD{N,N+1,N+2,...} rather than TEXCOORDN_{0,1,2,3}.
+		// If add_vertex_attribute_remap is used and this feature is used,
+		// the semantic name will be queried once per active location.
+		bool flatten_matrix_vertex_input_semantics = false;
 	};
 
 	explicit CompilerHLSL(std::vector<uint32_t> spirv_)
@@ -206,7 +219,10 @@ private:
 	void emit_resources();
 	void declare_undefined_values() override;
 	void emit_interface_block_globally(const SPIRVariable &type);
-	void emit_interface_block_in_struct(const SPIRVariable &type, std::unordered_set<uint32_t> &active_locations);
+	void emit_interface_block_in_struct(const SPIRVariable &var, std::unordered_set<uint32_t> &active_locations);
+	void emit_interface_block_member_in_struct(const SPIRVariable &var, uint32_t member_index,
+	                                           uint32_t location,
+	                                           std::unordered_set<uint32_t> &active_locations);
 	void emit_builtin_inputs_in_struct();
 	void emit_builtin_outputs_in_struct();
 	void emit_texture_op(const Instruction &i, bool sparse) override;
@@ -231,6 +247,7 @@ private:
 	std::string to_resource_binding(const SPIRVariable &var);
 	std::string to_resource_binding_sampler(const SPIRVariable &var);
 	std::string to_resource_register(HLSLBindingFlagBits flag, char space, uint32_t binding, uint32_t set);
+	std::string to_initializer_expression(const SPIRVariable &var) override;
 	void emit_sampled_image_op(uint32_t result_type, uint32_t result_id, uint32_t image_id, uint32_t samp_id) override;
 	void emit_access_chain(const Instruction &instruction);
 	void emit_load(const Instruction &instruction);
@@ -250,6 +267,7 @@ private:
 
 	void emit_struct_member(const SPIRType &type, uint32_t member_type_id, uint32_t index, const std::string &qualifier,
 	                        uint32_t base_offset = 0) override;
+	void emit_rayquery_function(const char *commited, const char *candidate, const uint32_t *ops);
 
 	const char *to_storage_qualifiers_glsl(const SPIRVariable &var) override;
 	void replace_illegal_names() override;
@@ -333,7 +351,6 @@ private:
 
 	uint32_t type_to_consumed_locations(const SPIRType &type) const;
 
-	void emit_io_block(const SPIRVariable &var);
 	std::string to_semantic(uint32_t location, spv::ExecutionModel em, spv::StorageClass sc);
 
 	uint32_t num_workgroups_builtin = 0;
@@ -355,6 +372,8 @@ private:
 
 	// Returns true for BuiltInSampleMask because gl_SampleMask[] is an array in SPIR-V, but SV_Coverage is a scalar in HLSL.
 	bool builtin_translates_to_nonarray(spv::BuiltIn builtin) const override;
+
+	std::vector<TypeID> composite_selection_workaround_types;
 };
 } // namespace SPIRV_CROSS_NAMESPACE
 

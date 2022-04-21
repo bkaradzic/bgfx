@@ -17,6 +17,7 @@
 #include <cassert>
 
 #include "DebugInfo.h"
+#include "NonSemanticShaderDebugInfo100.h"
 #include "OpenCLDebugInfo100.h"
 #include "source/diagnostic.h"
 #include "source/opcode.h"
@@ -37,17 +38,7 @@ spv_result_t ModuleScopedInstructions(ValidationState_t& _,
                                       const Instruction* inst, SpvOp opcode) {
   switch (opcode) {
     case SpvOpExtInst:
-      if (spvExtInstIsNonSemantic(inst->ext_inst_type())) {
-        // non-semantic extinst opcodes are allowed beginning in the types
-        // section, but since they must name a return type they cannot be the
-        // first instruction in the types section. Therefore check that we are
-        // already in it.
-        if (_.current_layout_section() < kLayoutTypes) {
-          return _.diag(SPV_ERROR_INVALID_LAYOUT, inst)
-                 << "Non-semantic OpExtInst must not appear before types "
-                 << "section";
-        }
-      } else if (spvExtInstIsDebugInfo(inst->ext_inst_type())) {
+      if (spvExtInstIsDebugInfo(inst->ext_inst_type())) {
         const uint32_t ext_inst_index = inst->word(4);
         bool local_debug_info = false;
         if (inst->ext_inst_type() == SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100) {
@@ -57,6 +48,20 @@ spv_result_t ModuleScopedInstructions(ValidationState_t& _,
               ext_inst_key == OpenCLDebugInfo100DebugNoScope ||
               ext_inst_key == OpenCLDebugInfo100DebugDeclare ||
               ext_inst_key == OpenCLDebugInfo100DebugValue) {
+            local_debug_info = true;
+          }
+        } else if (inst->ext_inst_type() ==
+                   SPV_EXT_INST_TYPE_NONSEMANTIC_SHADER_DEBUGINFO_100) {
+          const NonSemanticShaderDebugInfo100Instructions ext_inst_key =
+              NonSemanticShaderDebugInfo100Instructions(ext_inst_index);
+          if (ext_inst_key == NonSemanticShaderDebugInfo100DebugScope ||
+              ext_inst_key == NonSemanticShaderDebugInfo100DebugNoScope ||
+              ext_inst_key == NonSemanticShaderDebugInfo100DebugDeclare ||
+              ext_inst_key == NonSemanticShaderDebugInfo100DebugValue ||
+              ext_inst_key == NonSemanticShaderDebugInfo100DebugLine ||
+              ext_inst_key == NonSemanticShaderDebugInfo100DebugNoLine ||
+              ext_inst_key ==
+                  NonSemanticShaderDebugInfo100DebugFunctionDefinition) {
             local_debug_info = true;
           }
         } else {
@@ -94,6 +99,16 @@ spv_result_t ModuleScopedInstructions(ValidationState_t& _,
                    << "declarations)";
           }
         }
+      } else if (spvExtInstIsNonSemantic(inst->ext_inst_type())) {
+        // non-semantic extinst opcodes are allowed beginning in the types
+        // section, but since they must name a return type they cannot be the
+        // first instruction in the types section. Therefore check that we are
+        // already in it.
+        if (_.current_layout_section() < kLayoutTypes) {
+          return _.diag(SPV_ERROR_INVALID_LAYOUT, inst)
+                 << "Non-semantic OpExtInst must not appear before types "
+                 << "section";
+        }
       } else {
         // otherwise they must be used in a block
         if (_.current_layout_section() < kLayoutFunctionDefinitions) {
@@ -107,6 +122,11 @@ spv_result_t ModuleScopedInstructions(ValidationState_t& _,
   }
 
   while (_.IsOpcodeInCurrentLayoutSection(opcode) == false) {
+    if (_.IsOpcodeInPreviousLayoutSection(opcode)) {
+      return _.diag(SPV_ERROR_INVALID_LAYOUT, inst)
+             << spvOpcodeString(opcode) << " is in an invalid layout section";
+    }
+
     _.ProgressToNextLayoutSectionOrder();
 
     switch (_.current_layout_section()) {
@@ -135,6 +155,20 @@ spv_result_t ModuleScopedInstructions(ValidationState_t& _,
 // encountered inside of a function.
 spv_result_t FunctionScopedInstructions(ValidationState_t& _,
                                         const Instruction* inst, SpvOp opcode) {
+  // Make sure we advance into the function definitions when we hit
+  // non-function declaration instructions.
+  if (_.current_layout_section() == kLayoutFunctionDeclarations &&
+      !_.IsOpcodeInCurrentLayoutSection(opcode)) {
+    _.ProgressToNextLayoutSectionOrder();
+
+    if (_.in_function_body()) {
+      if (auto error = _.current_function().RegisterSetFunctionDeclType(
+              FunctionDecl::kFunctionDeclDefinition)) {
+        return error;
+      }
+    }
+  }
+
   if (_.IsOpcodeInCurrentLayoutSection(opcode)) {
     switch (opcode) {
       case SpvOpFunction: {
@@ -208,29 +242,10 @@ spv_result_t FunctionScopedInstructions(ValidationState_t& _,
           return _.diag(SPV_ERROR_INVALID_LAYOUT, inst)
                  << "A block must end with a branch instruction.";
         }
-        if (_.current_layout_section() == kLayoutFunctionDeclarations) {
-          _.ProgressToNextLayoutSectionOrder();
-          if (auto error = _.current_function().RegisterSetFunctionDeclType(
-                  FunctionDecl::kFunctionDeclDefinition))
-            return error;
-        }
         break;
 
       case SpvOpExtInst:
-        if (spvExtInstIsNonSemantic(inst->ext_inst_type())) {
-          // non-semantic extinst opcodes are allowed beginning in the types
-          // section, but must either be placed outside a function declaration,
-          // or inside a block.
-          if (_.current_layout_section() < kLayoutTypes) {
-            return _.diag(SPV_ERROR_INVALID_LAYOUT, inst)
-                   << "Non-semantic OpExtInst must not appear before types "
-                   << "section";
-          } else if (_.in_function_body() && _.in_block() == false) {
-            return _.diag(SPV_ERROR_INVALID_LAYOUT, inst)
-                   << "Non-semantic OpExtInst within function definition must "
-                      "appear in a block";
-          }
-        } else if (spvExtInstIsDebugInfo(inst->ext_inst_type())) {
+        if (spvExtInstIsDebugInfo(inst->ext_inst_type())) {
           const uint32_t ext_inst_index = inst->word(4);
           bool local_debug_info = false;
           if (inst->ext_inst_type() == SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100) {
@@ -240,6 +255,20 @@ spv_result_t FunctionScopedInstructions(ValidationState_t& _,
                 ext_inst_key == OpenCLDebugInfo100DebugNoScope ||
                 ext_inst_key == OpenCLDebugInfo100DebugDeclare ||
                 ext_inst_key == OpenCLDebugInfo100DebugValue) {
+              local_debug_info = true;
+            }
+          } else if (inst->ext_inst_type() ==
+                     SPV_EXT_INST_TYPE_NONSEMANTIC_SHADER_DEBUGINFO_100) {
+            const NonSemanticShaderDebugInfo100Instructions ext_inst_key =
+                NonSemanticShaderDebugInfo100Instructions(ext_inst_index);
+            if (ext_inst_key == NonSemanticShaderDebugInfo100DebugScope ||
+                ext_inst_key == NonSemanticShaderDebugInfo100DebugNoScope ||
+                ext_inst_key == NonSemanticShaderDebugInfo100DebugDeclare ||
+                ext_inst_key == NonSemanticShaderDebugInfo100DebugValue ||
+                ext_inst_key == NonSemanticShaderDebugInfo100DebugLine ||
+                ext_inst_key == NonSemanticShaderDebugInfo100DebugNoLine ||
+                ext_inst_key ==
+                    NonSemanticShaderDebugInfo100DebugFunctionDefinition) {
               local_debug_info = true;
             }
           } else {
@@ -276,6 +305,19 @@ spv_result_t FunctionScopedInstructions(ValidationState_t& _,
                      << "global variables) and section 10 (function "
                      << "declarations)";
             }
+          }
+        } else if (spvExtInstIsNonSemantic(inst->ext_inst_type())) {
+          // non-semantic extinst opcodes are allowed beginning in the types
+          // section, but must either be placed outside a function declaration,
+          // or inside a block.
+          if (_.current_layout_section() < kLayoutTypes) {
+            return _.diag(SPV_ERROR_INVALID_LAYOUT, inst)
+                   << "Non-semantic OpExtInst must not appear before types "
+                   << "section";
+          } else if (_.in_function_body() && _.in_block() == false) {
+            return _.diag(SPV_ERROR_INVALID_LAYOUT, inst)
+                   << "Non-semantic OpExtInst within function definition must "
+                      "appear in a block";
           }
         } else {
           // otherwise they must be used in a block

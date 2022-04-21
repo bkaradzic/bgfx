@@ -28,61 +28,72 @@ RemoveUnusedInstructionReductionOpportunityFinder::
 
 std::vector<std::unique_ptr<ReductionOpportunity>>
 RemoveUnusedInstructionReductionOpportunityFinder::GetAvailableOpportunities(
-    opt::IRContext* context) const {
+    opt::IRContext* context, uint32_t target_function) const {
   std::vector<std::unique_ptr<ReductionOpportunity>> result;
 
-  for (auto& inst : context->module()->debugs1()) {
-    if (context->get_def_use_mgr()->NumUses(&inst) > 0) {
-      continue;
+  if (!target_function) {
+    // We are not restricting reduction to a specific function, so we consider
+    // unused instructions defined outside functions.
+
+    for (auto& inst : context->module()->debugs1()) {
+      if (context->get_def_use_mgr()->NumUses(&inst) > 0) {
+        continue;
+      }
+      result.push_back(
+          MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
     }
-    result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
+
+    for (auto& inst : context->module()->debugs2()) {
+      if (context->get_def_use_mgr()->NumUses(&inst) > 0) {
+        continue;
+      }
+      result.push_back(
+          MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
+    }
+
+    for (auto& inst : context->module()->debugs3()) {
+      if (context->get_def_use_mgr()->NumUses(&inst) > 0) {
+        continue;
+      }
+      result.push_back(
+          MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
+    }
+
+    for (auto& inst : context->module()->ext_inst_debuginfo()) {
+      if (context->get_def_use_mgr()->NumUses(&inst) > 0) {
+        continue;
+      }
+      result.push_back(
+          MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
+    }
+
+    for (auto& inst : context->module()->types_values()) {
+      if (!remove_constants_and_undefs_ &&
+          spvOpcodeIsConstantOrUndef(inst.opcode())) {
+        continue;
+      }
+      if (!OnlyReferencedByIntimateDecorationOrEntryPointInterface(context,
+                                                                   inst)) {
+        continue;
+      }
+      result.push_back(
+          MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
+    }
+
+    for (auto& inst : context->module()->annotations()) {
+      if (context->get_def_use_mgr()->NumUsers(&inst) > 0) {
+        continue;
+      }
+      if (!IsIndependentlyRemovableDecoration(inst)) {
+        continue;
+      }
+      result.push_back(
+          MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
+    }
   }
 
-  for (auto& inst : context->module()->debugs2()) {
-    if (context->get_def_use_mgr()->NumUses(&inst) > 0) {
-      continue;
-    }
-    result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
-  }
-
-  for (auto& inst : context->module()->debugs3()) {
-    if (context->get_def_use_mgr()->NumUses(&inst) > 0) {
-      continue;
-    }
-    result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
-  }
-
-  for (auto& inst : context->module()->ext_inst_debuginfo()) {
-    if (context->get_def_use_mgr()->NumUses(&inst) > 0) {
-      continue;
-    }
-    result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
-  }
-
-  for (auto& inst : context->module()->types_values()) {
-    if (!remove_constants_and_undefs_ &&
-        spvOpcodeIsConstantOrUndef(inst.opcode())) {
-      continue;
-    }
-    if (!OnlyReferencedByIntimateDecorationOrEntryPointInterface(context,
-                                                                 inst)) {
-      continue;
-    }
-    result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
-  }
-
-  for (auto& inst : context->module()->annotations()) {
-    if (context->get_def_use_mgr()->NumUsers(&inst) > 0) {
-      continue;
-    }
-    if (!IsIndependentlyRemovableDecoration(inst)) {
-      continue;
-    }
-    result.push_back(MakeUnique<RemoveInstructionReductionOpportunity>(&inst));
-  }
-
-  for (auto& function : *context->module()) {
-    for (auto& block : function) {
+  for (auto* function : GetTargetFunctions(context, target_function)) {
+    for (auto& block : *function) {
       for (auto& inst : block) {
         if (context->get_def_use_mgr()->NumUses(&inst) > 0) {
           continue;

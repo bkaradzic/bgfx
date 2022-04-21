@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2020 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "shaderc.h"
@@ -329,6 +329,7 @@ namespace bgfx { namespace hlsl
 
 		const uint8_t* headerBytePtr = (const uint8_t*)header;
 		const char* creator = (const char*)(headerBytePtr + header->Creator);
+		BX_UNUSED(creator);
 
 		BX_TRACE("Creator: %s 0x%08x", creator, header->Version);
 		BX_TRACE("Num constants: %d", header->Constants);
@@ -479,7 +480,7 @@ namespace bgfx { namespace hlsl
 								un.type = uniformType;
 								un.num = uint8_t(constDesc.Elements);
 								un.regIndex = uint16_t(varDesc.StartOffset);
-								un.regCount = bx::alignUp(varDesc.Size, 16) / 16;
+								un.regCount = uint16_t(bx::alignUp(varDesc.Size, 16) / 16);
 								_uniforms.push_back(un);
 
 								BX_TRACE("\t%s, %d, size %d, flags 0x%08x, %d (used)"
@@ -513,7 +514,7 @@ namespace bgfx { namespace hlsl
 			hr = reflect->GetResourceBindingDesc(ii, &bindDesc);
 			if (SUCCEEDED(hr) )
 			{
-				if (D3D_SIT_SAMPLER == bindDesc.Type)
+				if (D3D_SIT_SAMPLER == bindDesc.Type || D3D_SIT_TEXTURE == bindDesc.Type)
 				{
 					BX_TRACE("\t%s, %d, %d, %d"
 						, bindDesc.Name
@@ -523,7 +524,10 @@ namespace bgfx { namespace hlsl
 						);
 
 					bx::StringView end = bx::strFind(bindDesc.Name, "Sampler");
-					if (!end.isEmpty() )
+					if (end.isEmpty())
+						end = bx::strFind(bindDesc.Name, "Texture");
+
+					if (!end.isEmpty())
 					{
 						Uniform un;
 						un.name.assign(bindDesc.Name, (end.getPtr() - bindDesc.Name) );
@@ -533,6 +537,10 @@ namespace bgfx { namespace hlsl
 						un.regCount = uint16_t(bindDesc.BindCount);
 						_uniforms.push_back(un);
 					}
+				}
+				else
+				{
+					BX_TRACE("\t%s, unknown bind data", bindDesc.Name);
 				}
 			}
 		}
@@ -602,6 +610,8 @@ namespace bgfx { namespace hlsl
 			writeFile(hlslfp.c_str(), _code.c_str(), (int32_t)_code.size() );
 		}
 
+		bx::ErrorAssert err;
+
 		HRESULT hr = D3DCompile(_code.c_str()
 			, _code.size()
 			, hlslfp.c_str()
@@ -656,7 +666,7 @@ namespace bgfx { namespace hlsl
 		uint16_t attrs[bgfx::Attrib::Count];
 		uint16_t size = 0;
 
-		if (_version == 9)
+		if (_version < 400)
 		{
 			if (!getReflectionDataD3D9(code, uniforms) )
 			{
@@ -724,26 +734,27 @@ namespace bgfx { namespace hlsl
 
 		{
 			uint16_t count = (uint16_t)uniforms.size();
-			bx::write(_writer, count);
+			bx::write(_writer, count, &err);
 
 			uint32_t fragmentBit = profile[0] == 'p' ? kUniformFragmentBit : 0;
 			for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
 			{
 				const Uniform& un = *it;
 				uint8_t nameSize = (uint8_t)un.name.size();
-				bx::write(_writer, nameSize);
-				bx::write(_writer, un.name.c_str(), nameSize);
+				bx::write(_writer, nameSize, &err);
+				bx::write(_writer, un.name.c_str(), nameSize, &err);
 				uint8_t type = uint8_t(un.type | fragmentBit);
-				bx::write(_writer, type);
-				bx::write(_writer, un.num);
-				bx::write(_writer, un.regIndex);
-				bx::write(_writer, un.regCount);
-				bx::write(_writer, un.texComponent);
-				bx::write(_writer, un.texDimension);
+				bx::write(_writer, type, &err);
+				bx::write(_writer, un.num, &err);
+				bx::write(_writer, un.regIndex, &err);
+				bx::write(_writer, un.regCount, &err);
+				bx::write(_writer, un.texComponent, &err);
+				bx::write(_writer, un.texDimension, &err);
+				bx::write(_writer, un.texFormat, &err);
 
 				BX_TRACE("%s, %s, %d, %d, %d"
 					, un.name.c_str()
-					, getUniformTypeName(un.type)
+					, getUniformTypeName(UniformType::Enum(un.type & ~kUniformMask))
 					, un.num
 					, un.regIndex
 					, un.regCount
@@ -769,18 +780,18 @@ namespace bgfx { namespace hlsl
 
 		{
 			uint32_t shaderSize = uint32_t(code->GetBufferSize() );
-			bx::write(_writer, shaderSize);
-			bx::write(_writer, code->GetBufferPointer(), shaderSize);
+			bx::write(_writer, shaderSize, &err);
+			bx::write(_writer, code->GetBufferPointer(), shaderSize, &err);
 			uint8_t nul = 0;
-			bx::write(_writer, nul);
+			bx::write(_writer, nul, &err);
 		}
 
-		if (_version > 9)
+		if (_version >= 400)
 		{
-			bx::write(_writer, numAttrs);
-			bx::write(_writer, attrs, numAttrs*sizeof(uint16_t) );
+			bx::write(_writer, numAttrs, &err);
+			bx::write(_writer, attrs, numAttrs*sizeof(uint16_t), &err);
 
-			bx::write(_writer, size);
+			bx::write(_writer, size, &err);
 		}
 
 		if (_options.disasm )
