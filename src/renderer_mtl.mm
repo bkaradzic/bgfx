@@ -382,6 +382,14 @@ namespace bgfx { namespace mtl
 	}
 #endif // BX_PLATFORM_OSX
 
+static const char* s_accessNames[] = {
+	"Access::Read",
+	"Access::Write",
+	"Access::ReadWrite",
+};
+
+BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames count");
+
 #define SHADER_FUNCTION_NAME ("xlatMtlMain")
 #define SHADER_UNIFORM_NAME  ("_mtl_u")
 
@@ -4674,14 +4682,8 @@ namespace bgfx { namespace mtl
                                         || (bind.m_access == Access::ReadWrite && (0 == (g_caps.formats[bind.m_format] & (BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ|BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE))))
                                         )
 									{
-										const char* accessNames[] = {
-											"Access::Read",
-											"Access::Write",
-											"Access::ReadWrite",
-										};
-										BX_STATIC_ASSERT(sizeof(accessNames)/sizeof(accessNames[0]) == Access::Count, "Invalid accessNames");
 										BGFX_FATAL(false, Fatal::DebugCheck,
-										"Failed to set image with access: %s, format:%s is not supoort", accessNames[bind.m_access], bimg::getName(bimg::TextureFormat::Enum(bind.m_format)));
+										"Failed to set image with access: %s, format:%s is not supoort", s_accessNames[bind.m_access], bimg::getName(bimg::TextureFormat::Enum(bind.m_format)));
 									}
 									TextureMtl& texture = m_textures[bind.m_idx];
 									texture.commit(
