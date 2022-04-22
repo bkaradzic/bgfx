@@ -2030,7 +2030,7 @@ namespace bgfx { namespace mtl
 								}
 								else
 								{
-									BX_TRACE("image %s index:%d", name, info->m_handle, uint32_t(arg.index) );
+									BX_TRACE("image %s index:%d", name, uint32_t(arg.index) );
 								}
 							}
 						}
