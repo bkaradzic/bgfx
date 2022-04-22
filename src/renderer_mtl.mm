@@ -4662,6 +4662,27 @@ namespace bgfx { namespace mtl
 								{
 								case Binding::Image:
 								{
+									if (bind.m_access == Access::ReadWrite && 0 == (g_caps.supported & BGFX_CAPS_IMAGE_RW))
+									{
+										BGFX_FATAL(false, Fatal::DebugCheck,
+										"Failed to set image with access: Access::ReadWrite, device is not support image read&write");
+									}
+
+									if (
+                                        (bind.m_access == Access::Read && (0 == (g_caps.formats[bind.m_format] & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ)))
+										|| (bind.m_access == Access::Write && (0 == (g_caps.formats[bind.m_format] & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE)))
+                                        || (bind.m_access == Access::ReadWrite && (0 == (g_caps.formats[bind.m_format] & (BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ|BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE))))
+                                        )
+									{
+										const char* accessNames[] = {
+											"Access::Read",
+											"Access::Write",
+											"Access::ReadWrite",
+										};
+										BX_STATIC_ASSERT(sizeof(accessNames)/sizeof(accessNames[0]) == Access::Count, "Invalid accessNames");
+										BGFX_FATAL(false, Fatal::DebugCheck,
+										"Failed to set image with access: %s, format:%s is not supoort", accessNames[bind.m_access], bimg::getName(bimg::TextureFormat::Enum(bind.m_format)));
+									}
 									TextureMtl& texture = m_textures[bind.m_idx];
 									texture.commit(
 										stage
