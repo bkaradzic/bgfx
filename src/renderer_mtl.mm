@@ -382,6 +382,14 @@ namespace bgfx { namespace mtl
 	}
 #endif // BX_PLATFORM_OSX
 
+static const char* s_accessNames[] = {
+	"Access::Read",
+	"Access::Write",
+	"Access::ReadWrite",
+};
+
+BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames count");
+
 #define SHADER_FUNCTION_NAME ("xlatMtlMain")
 #define SHADER_UNIFORM_NAME  ("_mtl_u")
 
@@ -3096,11 +3104,12 @@ namespace bgfx { namespace mtl
 		}
 	}
 
-	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags)
+	void TextureMtl::commit(uint8_t _stage, bool _vertex, bool _fragment, uint32_t _flags, uint8_t _mip)
 	{
 		if (_vertex)
 		{
-			s_renderMtl->m_renderCommandEncoder.setVertexTexture(m_ptr, _stage);
+			Texture p = _mip != UINT8_MAX ? getTextureMipLevel(_mip) : m_ptr;
+			s_renderMtl->m_renderCommandEncoder.setVertexTexture(p, _stage);
 			s_renderMtl->m_renderCommandEncoder.setVertexSamplerState(
 				  0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
 					? s_renderMtl->getSamplerState(_flags)
@@ -3111,7 +3120,8 @@ namespace bgfx { namespace mtl
 
 		if (_fragment)
 		{
-			s_renderMtl->m_renderCommandEncoder.setFragmentTexture(m_ptr, _stage);
+			Texture p = _mip != UINT8_MAX ? getTextureMipLevel(_mip) : m_ptr;
+			s_renderMtl->m_renderCommandEncoder.setFragmentTexture(p, _stage);
 			s_renderMtl->m_renderCommandEncoder.setFragmentSamplerState(
 				  0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
 					? s_renderMtl->getSamplerState(_flags)
@@ -4660,6 +4670,33 @@ namespace bgfx { namespace mtl
 							{
 								switch (bind.m_type)
 								{
+								case Binding::Image:
+								{
+									if (bind.m_access == Access::ReadWrite && 0 == (g_caps.supported & BGFX_CAPS_IMAGE_RW))
+									{
+										BGFX_FATAL(false, Fatal::DebugCheck,
+										"Failed to set image with access: Access::ReadWrite, device is not support image read&write");
+									}
+
+									if (
+                                        (bind.m_access == Access::Read && (0 == (g_caps.formats[bind.m_format] & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ)))
+										|| (bind.m_access == Access::Write && (0 == (g_caps.formats[bind.m_format] & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE)))
+                                        || (bind.m_access == Access::ReadWrite && (0 == (g_caps.formats[bind.m_format] & (BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ|BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE))))
+                                        )
+									{
+										BGFX_FATAL(false, Fatal::DebugCheck,
+										"Failed to set image with access: %s, format:%s is not supoort", s_accessNames[bind.m_access], bimg::getName(bimg::TextureFormat::Enum(bind.m_format)));
+									}
+									TextureMtl& texture = m_textures[bind.m_idx];
+									texture.commit(
+										stage
+										, 0 != (bindingTypes[stage] & PipelineStateMtl::BindToVertexShader)
+										, 0 != (bindingTypes[stage] & PipelineStateMtl::BindToFragmentShader)
+										, bind.m_samplerFlags
+										, bind.m_mip
+										);
+								}
+								break;
 								case Binding::Texture:
 									{
 										TextureMtl& texture = m_textures[bind.m_idx];
