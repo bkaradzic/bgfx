@@ -7182,7 +7182,7 @@ namespace bgfx { namespace gl
 					) );
 
 				GL_CHECK(glDeleteFramebuffers(1, &fbo) );
-				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
 			}
 		}
 	}
