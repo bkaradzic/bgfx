@@ -390,6 +390,44 @@ static const char* s_accessNames[] = {
 
 BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames count");
 
+// https://developer.apple.com/documentation/metal/mtlblitcommandencoder/1400748-generatemipmapsfortexture
+// the metal api needed the texture format: 
+// 	Mipmap generation works only for textures with color-renderable and color-filterable pixel formats.
+// follow: https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf, start from page 6
+static bool isTextureFormatCanAutoGenMipmap(TextureFormat::Enum fmt)
+{
+	switch (fmt)
+	{
+		case TextureFormat::R8:
+		case TextureFormat::R8S:
+		case TextureFormat::R16:
+		case TextureFormat::R16S:
+		case TextureFormat::R16F:
+		case TextureFormat::RG8:
+		case TextureFormat::RG8S:
+		case TextureFormat::R5G6B5:
+		case TextureFormat::RGBA4:
+		case TextureFormat::RGB5A1:
+		case TextureFormat::RG16:
+		case TextureFormat::RG16S:
+		case TextureFormat::RG16F:
+		case TextureFormat::RGBA8:
+		case TextureFormat::RGBA8S:
+		case TextureFormat::BGRA8:
+		case TextureFormat::RGB10A2:
+		case TextureFormat::RG11B10F:
+		case TextureFormat::RGBA16:
+		case TextureFormat::RGBA16S:
+		case TextureFormat::RGBA16F:
+		case TextureFormat::RGBA32F:
+		case TextureFormat::RGBA32U:
+		case TextureFormat::RGBA32I:
+			return true;
+		default:
+			return false;
+	}
+}
+
 #define SHADER_FUNCTION_NAME ("xlatMtlMain")
 #define SHADER_UNIFORM_NAME  ("_mtl_u")
 
@@ -687,6 +725,13 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					support |= 0
 						| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 						| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
+						;
+				}
+
+				if (isTextureFormatCanAutoGenMipmap(TextureFormat::Enum(ii)))
+				{
+					support |= 0
+						| BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
 						;
 				}
 
@@ -1753,6 +1798,12 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 		void setFrameBuffer(RenderPassDescriptor _renderPassDescriptor, FrameBufferHandle _fbh, bool _msaa = true)
 		{
+			// reslove framebuffer
+			if (isValid(m_fbh) && m_fbh.idx != _fbh.idx)
+			{
+				FrameBufferMtl& frameBuffer = m_frameBuffers[m_fbh.idx];
+				frameBuffer.resolve();
+			}
 			if (!isValid(_fbh)
 			||  m_frameBuffers[_fbh.idx].m_swapChain)
 			{
@@ -3524,6 +3575,28 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		m_denseIdx = UINT16_MAX;
 
 		return denseIdx;
+	}
+
+	void FrameBufferMtl::resolve()
+	{
+		BlitCommandEncoder bce = s_renderMtl->getBlitCommandEncoder();
+		for (uint32_t ii = 0; ii < m_num; ++ii)
+		{
+			if (0 != (m_colorAttachment[ii].resolve & BGFX_RESOLVE_AUTO_GEN_MIPS))
+			{
+				const TextureMtl& texture = s_renderMtl->m_textures[m_colorHandle[ii].idx];
+				const bool isRenderTarget = (texture.m_flags & BGFX_TEXTURE_RT_MASK);
+				const bool fmtSupport = 0 != (g_caps.formats[texture.m_textureFormat] & BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN);
+				if (isRenderTarget
+					&& fmtSupport
+					&& texture.m_numMips > 1)
+				{
+					bce.generateMipmapsForTexture(texture.m_ptr);
+				}
+			}
+		}
+
+        s_renderMtl->endEncoding();
 	}
 
 	void CommandQueueMtl::init(Device _device)
