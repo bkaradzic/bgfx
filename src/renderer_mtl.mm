@@ -382,6 +382,50 @@ namespace bgfx { namespace mtl
 	}
 #endif // BX_PLATFORM_OSX
 
+// see: https://developer.apple.com/documentation/metal/mtlreadwritetexturetier?language=objc
+static bool isTextureFormatSupportReadWrite(TextureFormat::Enum fmt,  MTLReadWriteTextureTier rwTier)
+{
+	switch(rwTier)
+	{
+	case MTLReadWriteTextureTier2:
+		switch(fmt)
+		{
+			case TextureFormat::RGBA32F:
+			case TextureFormat::RGBA32U:
+			case TextureFormat::RGBA32I:
+			case TextureFormat::RGBA16F:
+			case TextureFormat::RGBA16U:
+			case TextureFormat::RGBA16I:
+			case TextureFormat::RGBA8:
+			case TextureFormat::RGBA8U:
+			case TextureFormat::RGBA8I:
+			case TextureFormat::R16F:
+			case TextureFormat::R16U:
+			case TextureFormat::R16I:
+			case TextureFormat::R8:
+			case TextureFormat::R8U:
+			case TextureFormat::R8I:
+				return true;
+			default:
+				return false;
+		}
+	case MTLReadWriteTextureTier1:
+		switch(fmt)
+		{
+			case TextureFormat::R32F:
+			case TextureFormat::R32U:
+			case TextureFormat::R32I:
+				return true;
+			default:
+				return false;
+		}
+		break;
+	default:
+	case MTLReadWriteTextureTierNone:
+		return false;
+	}
+}
+
 static const char* s_accessNames[] = {
 	"Access::Read",
 	"Access::Write",
@@ -662,6 +706,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				s_textureFormat[TextureFormat::RG8].m_fmtSrgb = MTLPixelFormatInvalid;
 			}
 
+			const MTLReadWriteTextureTier rwTier = [m_device readWriteTextureSupport];
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 			{
 				uint16_t support = 0;
@@ -687,6 +732,14 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					support |= 0
 						| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 						| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
+						;
+				}
+
+				if (isTextureFormatSupportReadWrite(TextureFormat::Enum(ii), rwTier))
+				{
+					support |= 0
+						| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
+						| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
 						;
 				}
 
