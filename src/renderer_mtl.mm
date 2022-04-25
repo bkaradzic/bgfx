@@ -211,104 +211,109 @@ namespace bgfx { namespace mtl
 	{
 		MTLPixelFormat m_fmt;
 		MTLPixelFormat m_fmtSrgb;
+		// https://developer.apple.com/documentation/metal/mtlblitcommandencoder/1400748-generatemipmapsfortexture
+		// the metal api needed the texture format: 
+		// 	Mipmap generation works only for textures with color-renderable and color-filterable pixel formats.
+		// follow: https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf, start from page 6
+		bool autoGenMipamp;
 	};
 
 	static TextureFormatInfo s_textureFormat[] =
 	{
-		{ MTLPixelFormat(130/*BC1_RGBA*/),              MTLPixelFormat(131/*BC1_RGBA_sRGB*/)        }, // BC1
-		{ MTLPixelFormat(132/*BC2_RGBA*/),              MTLPixelFormat(133/*BC2_RGBA_sRGB*/)        }, // BC2
-		{ MTLPixelFormat(134/*BC3_RGBA*/),              MTLPixelFormat(135/*BC3_RGBA_sRGB*/)        }, // BC3
-		{ MTLPixelFormat(140/*BC4_RUnorm*/),            MTLPixelFormatInvalid                       }, // BC4
-		{ MTLPixelFormat(142/*BC5_RGUnorm*/),           MTLPixelFormatInvalid                       }, // BC5
-		{ MTLPixelFormat(150/*BC6H_RGBFloat*/),         MTLPixelFormatInvalid                       }, // BC6H
-		{ MTLPixelFormat(152/*BC7_RGBAUnorm*/),         MTLPixelFormat(153/*BC7_RGBAUnorm_sRGB*/)   }, // BC7
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ETC1
-		{ MTLPixelFormat(180/*ETC2_RGB8*/),             MTLPixelFormat(181/*ETC2_RGB8_sRGB*/)       }, // ETC2
-		{ MTLPixelFormat(178/*EAC_RGBA8*/),             MTLPixelFormat(179/*EAC_RGBA8_sRGB*/)       }, // ETC2A
-		{ MTLPixelFormat(182/*ETC2_RGB8A1*/),           MTLPixelFormat(183/*ETC2_RGB8A1_sRGB*/)     }, // ETC2A1
-		{ MTLPixelFormat(160/*PVRTC_RGB_2BPP*/),        MTLPixelFormat(161/*PVRTC_RGB_2BPP_sRGB*/)  }, // PTC12
-		{ MTLPixelFormat(162/*PVRTC_RGB_4BPP*/),        MTLPixelFormat(163/*PVRTC_RGB_4BPP_sRGB*/)  }, // PTC14
-		{ MTLPixelFormat(164/*PVRTC_RGBA_2BPP*/),       MTLPixelFormat(165/*PVRTC_RGBA_2BPP_sRGB*/) }, // PTC12A
-		{ MTLPixelFormat(166/*PVRTC_RGBA_4BPP*/),       MTLPixelFormat(167/*PVRTC_RGBA_4BPP_sRGB*/) }, // PTC14A
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // PTC22
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // PTC24
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ATC
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ATCE
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ATCI
+		{ MTLPixelFormat(130/*BC1_RGBA*/),              MTLPixelFormat(131/*BC1_RGBA_sRGB*/), 		false}, // BC1
+		{ MTLPixelFormat(132/*BC2_RGBA*/),              MTLPixelFormat(133/*BC2_RGBA_sRGB*/), 		false}, // BC2
+		{ MTLPixelFormat(134/*BC3_RGBA*/),              MTLPixelFormat(135/*BC3_RGBA_sRGB*/), 		false}, // BC3
+		{ MTLPixelFormat(140/*BC4_RUnorm*/),            MTLPixelFormatInvalid, 						false}, // BC4
+		{ MTLPixelFormat(142/*BC5_RGUnorm*/),           MTLPixelFormatInvalid, 						false}, // BC5
+		{ MTLPixelFormat(150/*BC6H_RGBFloat*/),         MTLPixelFormatInvalid, 						false}, // BC6H
+		{ MTLPixelFormat(152/*BC7_RGBAUnorm*/),         MTLPixelFormat(153/*BC7_RGBAUnorm_sRGB*/),	false}, // BC7
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // ETC1
+		{ MTLPixelFormat(180/*ETC2_RGB8*/),             MTLPixelFormat(181/*ETC2_RGB8_sRGB*/), 		false}, // ETC2
+		{ MTLPixelFormat(178/*EAC_RGBA8*/),             MTLPixelFormat(179/*EAC_RGBA8_sRGB*/), 		false}, // ETC2A
+		{ MTLPixelFormat(182/*ETC2_RGB8A1*/),           MTLPixelFormat(183/*ETC2_RGB8A1_sRGB*/), 	false}, // ETC2A1
+		{ MTLPixelFormat(160/*PVRTC_RGB_2BPP*/),        MTLPixelFormat(161/*PVRTC_RGB_2BPP_sRGB*/), false}, // PTC12
+		{ MTLPixelFormat(162/*PVRTC_RGB_4BPP*/),        MTLPixelFormat(163/*PVRTC_RGB_4BPP_sRGB*/), false}, // PTC14
+		{ MTLPixelFormat(164/*PVRTC_RGBA_2BPP*/),       MTLPixelFormat(165/*PVRTC_RGBA_2BPP_sRGB*/),false}, // PTC12A
+		{ MTLPixelFormat(166/*PVRTC_RGBA_4BPP*/),       MTLPixelFormat(167/*PVRTC_RGBA_4BPP_sRGB*/),false}, // PTC14A
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // PTC22
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // PTC24
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // ATC
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // ATCE
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // ATCI
 #if BX_PLATFORM_IOS && !TARGET_OS_MACCATALYST
-		{ MTLPixelFormatASTC_4x4_LDR,                   MTLPixelFormatASTC_4x4_sRGB                 }, // ASTC4x4
-		{ MTLPixelFormatASTC_5x5_LDR,                   MTLPixelFormatASTC_5x5_sRGB                 }, // ASTC5x5
-		{ MTLPixelFormatASTC_6x6_LDR,                   MTLPixelFormatASTC_6x6_sRGB                 }, // ASTC6x6
-		{ MTLPixelFormatASTC_8x5_LDR,                   MTLPixelFormatASTC_8x5_sRGB                 }, // ASTC8x5
-		{ MTLPixelFormatASTC_8x6_LDR,                   MTLPixelFormatASTC_8x6_sRGB                 }, // ASTC8x6
-		{ MTLPixelFormatASTC_10x5_LDR,                  MTLPixelFormatASTC_10x5_sRGB                }, // ASTC10x5
+		{ MTLPixelFormatASTC_4x4_LDR,                   MTLPixelFormatASTC_4x4_sRGB, 				false}, // ASTC4x4
+		{ MTLPixelFormatASTC_5x5_LDR,                   MTLPixelFormatASTC_5x5_sRGB, 				false}, // ASTC5x5
+		{ MTLPixelFormatASTC_6x6_LDR,                   MTLPixelFormatASTC_6x6_sRGB, 				false}, // ASTC6x6
+		{ MTLPixelFormatASTC_8x5_LDR,                   MTLPixelFormatASTC_8x5_sRGB, 				false}, // ASTC8x5
+		{ MTLPixelFormatASTC_8x6_LDR,                   MTLPixelFormatASTC_8x6_sRGB, 				false}, // ASTC8x6
+		{ MTLPixelFormatASTC_10x5_LDR,                  MTLPixelFormatASTC_10x5_sRGB, 				false}, // ASTC10x5
 #else
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ASTC4x4
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ASTC5x5
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ASTC6x6
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ASTC8x5
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ASTC8x6
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // ASTC10x5
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // ASTC4x4
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // ASTC5x5
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // ASTC6x6
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // ASTC8x5
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // ASTC8x6
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // ASTC10x5
 #endif // BX_PLATFORM_IOS && !TARGET_OS_MACCATALYST
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // Unknown
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // R1
-		{ MTLPixelFormatA8Unorm,                        MTLPixelFormatInvalid                       }, // A8
-		{ MTLPixelFormatR8Unorm,                        MTLPixelFormat(11/*R8Unorm_sRGB*/)          }, // R8
-		{ MTLPixelFormatR8Sint,                         MTLPixelFormatInvalid                       }, // R8I
-		{ MTLPixelFormatR8Uint,                         MTLPixelFormatInvalid                       }, // R8U
-		{ MTLPixelFormatR8Snorm,                        MTLPixelFormatInvalid                       }, // R8S
-		{ MTLPixelFormatR16Unorm,                       MTLPixelFormatInvalid                       }, // R16
-		{ MTLPixelFormatR16Sint,                        MTLPixelFormatInvalid                       }, // R16I
-		{ MTLPixelFormatR16Uint,                        MTLPixelFormatInvalid                       }, // R16U
-		{ MTLPixelFormatR16Float,                       MTLPixelFormatInvalid                       }, // R16F
-		{ MTLPixelFormatR16Snorm,                       MTLPixelFormatInvalid                       }, // R16S
-		{ MTLPixelFormatR32Sint,                        MTLPixelFormatInvalid                       }, // R32I
-		{ MTLPixelFormatR32Uint,                        MTLPixelFormatInvalid                       }, // R32U
-		{ MTLPixelFormatR32Float,                       MTLPixelFormatInvalid                       }, // R32F
-		{ MTLPixelFormatRG8Unorm,                       MTLPixelFormat(31/*RG8Unorm_sRGB*/)         }, // RG8
-		{ MTLPixelFormatRG8Sint,                        MTLPixelFormatInvalid                       }, // RG8I
-		{ MTLPixelFormatRG8Uint,                        MTLPixelFormatInvalid                       }, // RG8U
-		{ MTLPixelFormatRG8Snorm,                       MTLPixelFormatInvalid                       }, // RG8S
-		{ MTLPixelFormatRG16Unorm,                      MTLPixelFormatInvalid                       }, // RG16
-		{ MTLPixelFormatRG16Sint,                       MTLPixelFormatInvalid                       }, // RG16I
-		{ MTLPixelFormatRG16Uint,                       MTLPixelFormatInvalid                       }, // RG16U
-		{ MTLPixelFormatRG16Float,                      MTLPixelFormatInvalid                       }, // RG16F
-		{ MTLPixelFormatRG16Snorm,                      MTLPixelFormatInvalid                       }, // RG16S
-		{ MTLPixelFormatRG32Sint,                       MTLPixelFormatInvalid                       }, // RG32I
-		{ MTLPixelFormatRG32Uint,                       MTLPixelFormatInvalid                       }, // RG32U
-		{ MTLPixelFormatRG32Float,                      MTLPixelFormatInvalid                       }, // RG32F
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // RGB8
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // RGB8I
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // RGB8U
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // RGB8S
-		{ MTLPixelFormatRGB9E5Float,                    MTLPixelFormatInvalid                       }, // RGB9E5F
-		{ MTLPixelFormatBGRA8Unorm,                     MTLPixelFormatBGRA8Unorm_sRGB               }, // BGRA8
-		{ MTLPixelFormatRGBA8Unorm,                     MTLPixelFormatRGBA8Unorm_sRGB               }, // RGBA8
-		{ MTLPixelFormatRGBA8Sint,                      MTLPixelFormatInvalid                       }, // RGBA8I
-		{ MTLPixelFormatRGBA8Uint,                      MTLPixelFormatInvalid                       }, // RGBA8U
-		{ MTLPixelFormatRGBA8Snorm,                     MTLPixelFormatInvalid                       }, // RGBA8S
-		{ MTLPixelFormatRGBA16Unorm,                    MTLPixelFormatInvalid                       }, // RGBA16
-		{ MTLPixelFormatRGBA16Sint,                     MTLPixelFormatInvalid                       }, // RGBA16I
-		{ MTLPixelFormatRGBA16Uint,                     MTLPixelFormatInvalid                       }, // RGBA16U
-		{ MTLPixelFormatRGBA16Float,                    MTLPixelFormatInvalid                       }, // RGBA16F
-		{ MTLPixelFormatRGBA16Snorm,                    MTLPixelFormatInvalid                       }, // RGBA16S
-		{ MTLPixelFormatRGBA32Sint,                     MTLPixelFormatInvalid                       }, // RGBA32I
-		{ MTLPixelFormatRGBA32Uint,                     MTLPixelFormatInvalid                       }, // RGBA32U
-		{ MTLPixelFormatRGBA32Float,                    MTLPixelFormatInvalid                       }, // RGBA32F
-		{ MTLPixelFormat(40/*B5G6R5Unorm*/),            MTLPixelFormatInvalid                       }, // R5G6B5
-		{ MTLPixelFormat(42/*ABGR4Unorm*/),             MTLPixelFormatInvalid                       }, // RGBA4
-		{ MTLPixelFormat(41/*A1BGR5Unorm*/),            MTLPixelFormatInvalid                       }, // RGB5A1
-		{ MTLPixelFormatRGB10A2Unorm,                   MTLPixelFormatInvalid                       }, // RGB10A2
-		{ MTLPixelFormatRG11B10Float,                   MTLPixelFormatInvalid                       }, // RG11B10F
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid                       }, // UnknownDepth
-		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid                       }, // D16
-		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid                       }, // D24
-		{ MTLPixelFormat(255/*Depth24Unorm_Stencil8*/), MTLPixelFormatInvalid                       }, // D24S8
-		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid                       }, // D32
-		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid                       }, // D16F
-		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid                       }, // D24F
-		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid                       }, // D32F
-		{ MTLPixelFormatStencil8,                       MTLPixelFormatInvalid                       }, // D0S8
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // Unknown
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // R1
+		{ MTLPixelFormatA8Unorm,                        MTLPixelFormatInvalid, 						false}, // A8
+		{ MTLPixelFormatR8Unorm,                        MTLPixelFormat(11/*R8Unorm_sRGB*/), 		true},  // R8
+		{ MTLPixelFormatR8Sint,                         MTLPixelFormatInvalid, 						false}, // R8I
+		{ MTLPixelFormatR8Uint,                         MTLPixelFormatInvalid, 						false}, // R8U
+		{ MTLPixelFormatR8Snorm,                        MTLPixelFormatInvalid, 						true},  // R8S
+		{ MTLPixelFormatR16Unorm,                       MTLPixelFormatInvalid, 						true},  // R16
+		{ MTLPixelFormatR16Sint,                        MTLPixelFormatInvalid, 						false}, // R16I
+		{ MTLPixelFormatR16Uint,                        MTLPixelFormatInvalid, 						false}, // R16U
+		{ MTLPixelFormatR16Float,                       MTLPixelFormatInvalid, 						true},  // R16F
+		{ MTLPixelFormatR16Snorm,                       MTLPixelFormatInvalid, 						true},  // R16S
+		{ MTLPixelFormatR32Sint,                        MTLPixelFormatInvalid, 						false}, // R32I
+		{ MTLPixelFormatR32Uint,                        MTLPixelFormatInvalid, 						false}, // R32U
+		{ MTLPixelFormatR32Float,                       MTLPixelFormatInvalid, 						false}, // R32F
+		{ MTLPixelFormatRG8Unorm,                       MTLPixelFormat(31/*RG8Unorm_sRGB*/), 		true},  // RG8
+		{ MTLPixelFormatRG8Sint,                        MTLPixelFormatInvalid, 						false}, // RG8I
+		{ MTLPixelFormatRG8Uint,                        MTLPixelFormatInvalid, 						false}, // RG8U
+		{ MTLPixelFormatRG8Snorm,                       MTLPixelFormatInvalid, 						true},  // RG8S
+		{ MTLPixelFormatRG16Unorm,                      MTLPixelFormatInvalid, 						true},  // RG16
+		{ MTLPixelFormatRG16Sint,                       MTLPixelFormatInvalid, 						false}, // RG16I
+		{ MTLPixelFormatRG16Uint,                       MTLPixelFormatInvalid, 						false}, // RG16U
+		{ MTLPixelFormatRG16Float,                      MTLPixelFormatInvalid, 						true},  // RG16F
+		{ MTLPixelFormatRG16Snorm,                      MTLPixelFormatInvalid, 						true},  // RG16S
+		{ MTLPixelFormatRG32Sint,                       MTLPixelFormatInvalid, 						false}, // RG32I
+		{ MTLPixelFormatRG32Uint,                       MTLPixelFormatInvalid, 						false}, // RG32U
+		{ MTLPixelFormatRG32Float,                      MTLPixelFormatInvalid, 						false}, // RG32F
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // RGB8
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // RGB8I
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // RGB8U
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // RGB8S
+		{ MTLPixelFormatRGB9E5Float,                    MTLPixelFormatInvalid, 						false}, // RGB9E5F
+		{ MTLPixelFormatBGRA8Unorm,                     MTLPixelFormatBGRA8Unorm_sRGB, 				false}, // BGRA8
+		{ MTLPixelFormatRGBA8Unorm,                     MTLPixelFormatRGBA8Unorm_sRGB, 				true},  // RGBA8
+		{ MTLPixelFormatRGBA8Sint,                      MTLPixelFormatInvalid, 						false}, // RGBA8I
+		{ MTLPixelFormatRGBA8Uint,                      MTLPixelFormatInvalid, 						false}, // RGBA8U
+		{ MTLPixelFormatRGBA8Snorm,                     MTLPixelFormatInvalid, 						true},  // RGBA8S
+		{ MTLPixelFormatRGBA16Unorm,                    MTLPixelFormatInvalid, 						true},  // RGBA16
+		{ MTLPixelFormatRGBA16Sint,                     MTLPixelFormatInvalid, 						false}, // RGBA16I
+		{ MTLPixelFormatRGBA16Uint,                     MTLPixelFormatInvalid, 						false}, // RGBA16U
+		{ MTLPixelFormatRGBA16Float,                    MTLPixelFormatInvalid, 						true},  // RGBA16F
+		{ MTLPixelFormatRGBA16Snorm,                    MTLPixelFormatInvalid, 						true},  // RGBA16S
+		{ MTLPixelFormatRGBA32Sint,                     MTLPixelFormatInvalid, 						true},  // RGBA32I
+		{ MTLPixelFormatRGBA32Uint,                     MTLPixelFormatInvalid, 						true},  // RGBA32U
+		{ MTLPixelFormatRGBA32Float,                    MTLPixelFormatInvalid, 						true},  // RGBA32F
+		{ MTLPixelFormat(40/*B5G6R5Unorm*/),            MTLPixelFormatInvalid, 						true},  // R5G6B5
+		{ MTLPixelFormat(42/*ABGR4Unorm*/),             MTLPixelFormatInvalid, 						true},  // RGBA4
+		{ MTLPixelFormat(41/*A1BGR5Unorm*/),            MTLPixelFormatInvalid, 						true},  // RGB5A1
+		{ MTLPixelFormatRGB10A2Unorm,                   MTLPixelFormatInvalid, 						true},  // RGB10A2
+		{ MTLPixelFormatRG11B10Float,                   MTLPixelFormatInvalid, 						true},  // RG11B10F
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						false}, // UnknownDepth
+		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid, 						false}, // D16
+		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid, 						false}, // D24
+		{ MTLPixelFormat(255/*Depth24Unorm_Stencil8*/), MTLPixelFormatInvalid, 						false}, // D24S8
+		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid, 						false}, // D32
+		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid, 						false}, // D16F
+		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid, 						false}, // D24F
+		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid, 						false}, // D32F
+		{ MTLPixelFormatStencil8,                       MTLPixelFormatInvalid, 						false}, // D0S8
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
@@ -389,44 +394,6 @@ static const char* s_accessNames[] = {
 };
 
 BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames count");
-
-// https://developer.apple.com/documentation/metal/mtlblitcommandencoder/1400748-generatemipmapsfortexture
-// the metal api needed the texture format: 
-// 	Mipmap generation works only for textures with color-renderable and color-filterable pixel formats.
-// follow: https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf, start from page 6
-static bool isTextureFormatCanAutoGenMipmap(TextureFormat::Enum fmt)
-{
-	switch (fmt)
-	{
-		case TextureFormat::R8:
-		case TextureFormat::R8S:
-		case TextureFormat::R16:
-		case TextureFormat::R16S:
-		case TextureFormat::R16F:
-		case TextureFormat::RG8:
-		case TextureFormat::RG8S:
-		case TextureFormat::R5G6B5:
-		case TextureFormat::RGBA4:
-		case TextureFormat::RGB5A1:
-		case TextureFormat::RG16:
-		case TextureFormat::RG16S:
-		case TextureFormat::RG16F:
-		case TextureFormat::RGBA8:
-		case TextureFormat::RGBA8S:
-		case TextureFormat::BGRA8:
-		case TextureFormat::RGB10A2:
-		case TextureFormat::RG11B10F:
-		case TextureFormat::RGBA16:
-		case TextureFormat::RGBA16S:
-		case TextureFormat::RGBA16F:
-		case TextureFormat::RGBA32F:
-		case TextureFormat::RGBA32U:
-		case TextureFormat::RGBA32I:
-			return true;
-		default:
-			return false;
-	}
-}
 
 #define SHADER_FUNCTION_NAME ("xlatMtlMain")
 #define SHADER_UNIFORM_NAME  ("_mtl_u")
@@ -728,12 +695,10 @@ static bool isTextureFormatCanAutoGenMipmap(TextureFormat::Enum fmt)
 						;
 				}
 
-				if (isTextureFormatCanAutoGenMipmap(TextureFormat::Enum(ii)))
-				{
-					support |= 0
-						| BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
+				support |= s_textureFormat[ii].autoGenMipamp
+						? BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
+						: 0
 						;
-				}
 
 				g_caps.formats[ii] = support;
 			}
