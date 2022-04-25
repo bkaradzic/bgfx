@@ -683,6 +683,9 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			}
 
 			const MTLReadWriteTextureTier rwTier = [m_device readWriteTextureSupport];
+            g_caps.supported |= rwTier != MTLReadWriteTextureTierNone
+            ? BGFX_CAPS_IMAGE_RW
+            : 0;
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 			{
 				uint16_t support = 0;
