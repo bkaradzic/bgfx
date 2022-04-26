@@ -218,116 +218,109 @@ namespace bgfx { namespace mtl
 	};
 
 // see: https://developer.apple.com/documentation/metal/mtlreadwritetexturetier?language=objc
-
-	static const ReadWriteTierMask::Enum s_readWriteTierMasks[] = {
-		ReadWriteTierMask::None,
-		ReadWriteTierMask::Tier1,
-		ReadWriteTierMask::Tier2,
-	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_readWriteTierMasks) == ReadWriteTierMask::Count, "Invalid ReadWriteTierMask::Count");
 	struct TextureFormatInfo
 	{
 		MTLPixelFormat  m_fmt;
 		MTLPixelFormat  m_fmtSrgb;
-		uint8_t         m_rwTierMask; //ReadWriteTierMask::Enum
+		MTLReadWriteTextureTier m_rwTier;
 	};
 
 	static TextureFormatInfo s_textureFormat[] =
 	{
-		{ MTLPixelFormat(130/*BC1_RGBA*/),              MTLPixelFormat(131/*BC1_RGBA_sRGB*/), 		ReadWriteTierMask::None}, // BC1
-		{ MTLPixelFormat(132/*BC2_RGBA*/),              MTLPixelFormat(133/*BC2_RGBA_sRGB*/), 		ReadWriteTierMask::None}, // BC2
-		{ MTLPixelFormat(134/*BC3_RGBA*/),              MTLPixelFormat(135/*BC3_RGBA_sRGB*/), 		ReadWriteTierMask::None}, // BC3
-		{ MTLPixelFormat(140/*BC4_RUnorm*/),            MTLPixelFormatInvalid, 						ReadWriteTierMask::None}, // BC4
-		{ MTLPixelFormat(142/*BC5_RGUnorm*/),           MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // BC5
-		{ MTLPixelFormat(150/*BC6H_RGBFloat*/),         MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // BC6H
-		{ MTLPixelFormat(152/*BC7_RGBAUnorm*/),         MTLPixelFormat(153/*BC7_RGBAUnorm_sRGB*/),	ReadWriteTierMask::None}, // BC7
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // ETC1
-		{ MTLPixelFormat(180/*ETC2_RGB8*/),             MTLPixelFormat(181/*ETC2_RGB8_sRGB*/),		ReadWriteTierMask::None}, // ETC2
-		{ MTLPixelFormat(178/*EAC_RGBA8*/),             MTLPixelFormat(179/*EAC_RGBA8_sRGB*/),		ReadWriteTierMask::None}, // ETC2A
-		{ MTLPixelFormat(182/*ETC2_RGB8A1*/),           MTLPixelFormat(183/*ETC2_RGB8A1_sRGB*/),	ReadWriteTierMask::None}, // ETC2A1
-		{ MTLPixelFormat(160/*PVRTC_RGB_2BPP*/),        MTLPixelFormat(161/*PVRTC_RGB_2BPP_sRGB*/), ReadWriteTierMask::None}, // PTC12
-		{ MTLPixelFormat(162/*PVRTC_RGB_4BPP*/),        MTLPixelFormat(163/*PVRTC_RGB_4BPP_sRGB*/), ReadWriteTierMask::None}, // PTC14
-		{ MTLPixelFormat(164/*PVRTC_RGBA_2BPP*/),       MTLPixelFormat(165/*PVRTC_RGBA_2BPP_sRGB*/),ReadWriteTierMask::None}, // PTC12A
-		{ MTLPixelFormat(166/*PVRTC_RGBA_4BPP*/),       MTLPixelFormat(167/*PVRTC_RGBA_4BPP_sRGB*/),ReadWriteTierMask::None}, // PTC14A
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // PTC22
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // PTC24
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // ATC
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // ATCE
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						ReadWriteTierMask::None}, // ATCI
+		{ MTLPixelFormat(130/*BC1_RGBA*/),              MTLPixelFormat(131/*BC1_RGBA_sRGB*/), 		MTLReadWriteTextureTierNone}, // BC1
+		{ MTLPixelFormat(132/*BC2_RGBA*/),              MTLPixelFormat(133/*BC2_RGBA_sRGB*/), 		MTLReadWriteTextureTierNone}, // BC2
+		{ MTLPixelFormat(134/*BC3_RGBA*/),              MTLPixelFormat(135/*BC3_RGBA_sRGB*/), 		MTLReadWriteTextureTierNone}, // BC3
+		{ MTLPixelFormat(140/*BC4_RUnorm*/),            MTLPixelFormatInvalid, 						MTLReadWriteTextureTierNone}, // BC4
+		{ MTLPixelFormat(142/*BC5_RGUnorm*/),           MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // BC5
+		{ MTLPixelFormat(150/*BC6H_RGBFloat*/),         MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // BC6H
+		{ MTLPixelFormat(152/*BC7_RGBAUnorm*/),         MTLPixelFormat(153/*BC7_RGBAUnorm_sRGB*/),	MTLReadWriteTextureTierNone}, // BC7
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // ETC1
+		{ MTLPixelFormat(180/*ETC2_RGB8*/),             MTLPixelFormat(181/*ETC2_RGB8_sRGB*/),		MTLReadWriteTextureTierNone}, // ETC2
+		{ MTLPixelFormat(178/*EAC_RGBA8*/),             MTLPixelFormat(179/*EAC_RGBA8_sRGB*/),		MTLReadWriteTextureTierNone}, // ETC2A
+		{ MTLPixelFormat(182/*ETC2_RGB8A1*/),           MTLPixelFormat(183/*ETC2_RGB8A1_sRGB*/),	MTLReadWriteTextureTierNone}, // ETC2A1
+		{ MTLPixelFormat(160/*PVRTC_RGB_2BPP*/),        MTLPixelFormat(161/*PVRTC_RGB_2BPP_sRGB*/), MTLReadWriteTextureTierNone}, // PTC12
+		{ MTLPixelFormat(162/*PVRTC_RGB_4BPP*/),        MTLPixelFormat(163/*PVRTC_RGB_4BPP_sRGB*/), MTLReadWriteTextureTierNone}, // PTC14
+		{ MTLPixelFormat(164/*PVRTC_RGBA_2BPP*/),       MTLPixelFormat(165/*PVRTC_RGBA_2BPP_sRGB*/),MTLReadWriteTextureTierNone}, // PTC12A
+		{ MTLPixelFormat(166/*PVRTC_RGBA_4BPP*/),       MTLPixelFormat(167/*PVRTC_RGBA_4BPP_sRGB*/),MTLReadWriteTextureTierNone}, // PTC14A
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // PTC22
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // PTC24
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // ATC
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // ATCE
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid, 						MTLReadWriteTextureTierNone}, // ATCI
 #if BX_PLATFORM_IOS && !TARGET_OS_MACCATALYST
-		{ MTLPixelFormatASTC_4x4_LDR,                   MTLPixelFormatASTC_4x4_sRGB,				ReadWriteTierMask::None}, // ASTC4x4
-		{ MTLPixelFormatASTC_5x5_LDR,                   MTLPixelFormatASTC_5x5_sRGB,				ReadWriteTierMask::None}, // ASTC5x5
-		{ MTLPixelFormatASTC_6x6_LDR,                   MTLPixelFormatASTC_6x6_sRGB,				ReadWriteTierMask::None}, // ASTC6x6
-		{ MTLPixelFormatASTC_8x5_LDR,                   MTLPixelFormatASTC_8x5_sRGB,				ReadWriteTierMask::None}, // ASTC8x5
-		{ MTLPixelFormatASTC_8x6_LDR,                   MTLPixelFormatASTC_8x6_sRGB,				ReadWriteTierMask::None}, // ASTC8x6
-		{ MTLPixelFormatASTC_10x5_LDR,                  MTLPixelFormatASTC_10x5_sRGB,				ReadWriteTierMask::None}, // ASTC10x5
+		{ MTLPixelFormatASTC_4x4_LDR,                   MTLPixelFormatASTC_4x4_sRGB,				MTLReadWriteTextureTierNone}, // ASTC4x4
+		{ MTLPixelFormatASTC_5x5_LDR,                   MTLPixelFormatASTC_5x5_sRGB,				MTLReadWriteTextureTierNone}, // ASTC5x5
+		{ MTLPixelFormatASTC_6x6_LDR,                   MTLPixelFormatASTC_6x6_sRGB,				MTLReadWriteTextureTierNone}, // ASTC6x6
+		{ MTLPixelFormatASTC_8x5_LDR,                   MTLPixelFormatASTC_8x5_sRGB,				MTLReadWriteTextureTierNone}, // ASTC8x5
+		{ MTLPixelFormatASTC_8x6_LDR,                   MTLPixelFormatASTC_8x6_sRGB,				MTLReadWriteTextureTierNone}, // ASTC8x6
+		{ MTLPixelFormatASTC_10x5_LDR,                  MTLPixelFormatASTC_10x5_sRGB,				MTLReadWriteTextureTierNone}, // ASTC10x5
 #else
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // ASTC4x4
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // ASTC5x5
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // ASTC6x6
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // ASTC8x5
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // ASTC8x6
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // ASTC10x5
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // ASTC4x4
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // ASTC5x5
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // ASTC6x6
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // ASTC8x5
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // ASTC8x6
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // ASTC10x5
 #endif // BX_PLATFORM_IOS && !TARGET_OS_MACCATALYST
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // Unknown
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // R1
-		{ MTLPixelFormatA8Unorm,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // A8
-		{ MTLPixelFormatR8Unorm,                        MTLPixelFormat(11/*R8Unorm_sRGB*/),			ReadWriteTierMask::Tier2}, // R8
-		{ MTLPixelFormatR8Sint,                         MTLPixelFormatInvalid,						ReadWriteTierMask::Tier2}, // R8I
-		{ MTLPixelFormatR8Uint,                         MTLPixelFormatInvalid,						ReadWriteTierMask::Tier2}, // R8U
-		{ MTLPixelFormatR8Snorm,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // R8S
-		{ MTLPixelFormatR16Unorm,                       MTLPixelFormatInvalid,						ReadWriteTierMask::Tier2}, // R16
-		{ MTLPixelFormatR16Sint,                        MTLPixelFormatInvalid,						ReadWriteTierMask::Tier2}, // R16I
-		{ MTLPixelFormatR16Uint,                        MTLPixelFormatInvalid,						ReadWriteTierMask::Tier2}, // R16U
-		{ MTLPixelFormatR16Float,                       MTLPixelFormatInvalid,						ReadWriteTierMask::Tier2}, // R16F
-		{ MTLPixelFormatR16Snorm,                       MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // R16S
-		{ MTLPixelFormatR32Sint,                        MTLPixelFormatInvalid,						ReadWriteTierMask::Tier1|ReadWriteTierMask::Tier2}, // R32I
-		{ MTLPixelFormatR32Uint,                        MTLPixelFormatInvalid,						ReadWriteTierMask::Tier1|ReadWriteTierMask::Tier2}, // R32U
-		{ MTLPixelFormatR32Float,                       MTLPixelFormatInvalid,						ReadWriteTierMask::Tier1|ReadWriteTierMask::Tier2}, // R32F
-		{ MTLPixelFormatRG8Unorm,                       MTLPixelFormat(31/*RG8Unorm_sRGB*/),		ReadWriteTierMask::None}, // RG8
-		{ MTLPixelFormatRG8Sint,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RG8I
-		{ MTLPixelFormatRG8Uint,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RG8U
-		{ MTLPixelFormatRG8Snorm,                       MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RG8S
-		{ MTLPixelFormatRG16Unorm,                      MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RG16
-		{ MTLPixelFormatRG16Sint,                       MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RG16I
-		{ MTLPixelFormatRG16Uint,                       MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RG16U
-		{ MTLPixelFormatRG16Float,                      MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RG16F
-		{ MTLPixelFormatRG16Snorm,                      MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RG16S
-		{ MTLPixelFormatRG32Sint,                       MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RG32I
-		{ MTLPixelFormatRG32Uint,                       MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RG32U
-		{ MTLPixelFormatRG32Float,                      MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RG32F
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RGB8
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RGB8I
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RGB8U
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RGB8S
-		{ MTLPixelFormatRGB9E5Float,                    MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RGB9E5F
-		{ MTLPixelFormatBGRA8Unorm,                     MTLPixelFormatBGRA8Unorm_sRGB,				ReadWriteTierMask::None}, // BGRA8
-		{ MTLPixelFormatRGBA8Unorm,                     MTLPixelFormatRGBA8Unorm_sRGB,				ReadWriteTierMask::Tier2}, // RGBA8
-		{ MTLPixelFormatRGBA8Sint,                      MTLPixelFormatInvalid,						ReadWriteTierMask::Tier2}, // RGBA8I
-		{ MTLPixelFormatRGBA8Uint,                      MTLPixelFormatInvalid,						ReadWriteTierMask::Tier2}, // RGBA8U
-		{ MTLPixelFormatRGBA8Snorm,                     MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RGBA8S
-		{ MTLPixelFormatRGBA16Unorm,                    MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RGBA16
-		{ MTLPixelFormatRGBA16Sint,                     MTLPixelFormatInvalid,						ReadWriteTierMask::Tier2}, // RGBA16I
-		{ MTLPixelFormatRGBA16Uint,                     MTLPixelFormatInvalid,						ReadWriteTierMask::Tier2}, // RGBA16U
-		{ MTLPixelFormatRGBA16Float,                    MTLPixelFormatInvalid,						ReadWriteTierMask::Tier2}, // RGBA16F
-		{ MTLPixelFormatRGBA16Snorm,                    MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RGBA16S
-		{ MTLPixelFormatRGBA32Sint,                     MTLPixelFormatInvalid,						ReadWriteTierMask::Tier2}, // RGBA32I
-		{ MTLPixelFormatRGBA32Uint,                     MTLPixelFormatInvalid,						ReadWriteTierMask::Tier2}, // RGBA32U
-		{ MTLPixelFormatRGBA32Float,                    MTLPixelFormatInvalid,						ReadWriteTierMask::Tier2}, // RGBA32F
-		{ MTLPixelFormat(40/*B5G6R5Unorm*/),            MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // R5G6B5
-		{ MTLPixelFormat(42/*ABGR4Unorm*/),             MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RGBA4
-		{ MTLPixelFormat(41/*A1BGR5Unorm*/),            MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RGB5A1
-		{ MTLPixelFormatRGB10A2Unorm,                   MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RGB10A2
-		{ MTLPixelFormatRG11B10Float,                   MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // RG11B10F
-		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // UnknownDepth
-		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // D16
-		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // D24
-		{ MTLPixelFormat(255/*Depth24Unorm_Stencil8*/), MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // D24S8
-		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // D32
-		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // D16F
-		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // D24F
-		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // D32F
-		{ MTLPixelFormatStencil8,                       MTLPixelFormatInvalid,						ReadWriteTierMask::None}, // D0S8
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // Unknown
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // R1
+		{ MTLPixelFormatA8Unorm,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // A8
+		{ MTLPixelFormatR8Unorm,                        MTLPixelFormat(11/*R8Unorm_sRGB*/),			MTLReadWriteTextureTier2}, // R8
+		{ MTLPixelFormatR8Sint,                         MTLPixelFormatInvalid,						MTLReadWriteTextureTier2}, // R8I
+		{ MTLPixelFormatR8Uint,                         MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // R8U
+		{ MTLPixelFormatR8Snorm,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTier2}, // R8S
+		{ MTLPixelFormatR16Unorm,                       MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // R16
+		{ MTLPixelFormatR16Sint,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTier2}, // R16I
+		{ MTLPixelFormatR16Uint,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTier2}, // R16U
+		{ MTLPixelFormatR16Float,                       MTLPixelFormatInvalid,						MTLReadWriteTextureTier2}, // R16F
+		{ MTLPixelFormatR16Snorm,                       MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // R16S
+		{ MTLPixelFormatR32Sint,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTier1}, // R32I
+		{ MTLPixelFormatR32Uint,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTier1}, // R32U
+		{ MTLPixelFormatR32Float,                       MTLPixelFormatInvalid,						MTLReadWriteTextureTier1}, // R32F
+		{ MTLPixelFormatRG8Unorm,                       MTLPixelFormat(31/*RG8Unorm_sRGB*/),		MTLReadWriteTextureTierNone}, // RG8
+		{ MTLPixelFormatRG8Sint,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RG8I
+		{ MTLPixelFormatRG8Uint,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RG8U
+		{ MTLPixelFormatRG8Snorm,                       MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RG8S
+		{ MTLPixelFormatRG16Unorm,                      MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RG16
+		{ MTLPixelFormatRG16Sint,                       MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RG16I
+		{ MTLPixelFormatRG16Uint,                       MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RG16U
+		{ MTLPixelFormatRG16Float,                      MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RG16F
+		{ MTLPixelFormatRG16Snorm,                      MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RG16S
+		{ MTLPixelFormatRG32Sint,                       MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RG32I
+		{ MTLPixelFormatRG32Uint,                       MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RG32U
+		{ MTLPixelFormatRG32Float,                      MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RG32F
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RGB8
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RGB8I
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RGB8U
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RGB8S
+		{ MTLPixelFormatRGB9E5Float,                    MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RGB9E5F
+		{ MTLPixelFormatBGRA8Unorm,                     MTLPixelFormatBGRA8Unorm_sRGB,				MTLReadWriteTextureTierNone}, // BGRA8
+		{ MTLPixelFormatRGBA8Unorm,                     MTLPixelFormatRGBA8Unorm_sRGB,				MTLReadWriteTextureTier2}, // RGBA8
+		{ MTLPixelFormatRGBA8Sint,                      MTLPixelFormatInvalid,						MTLReadWriteTextureTier2}, // RGBA8I
+		{ MTLPixelFormatRGBA8Uint,                      MTLPixelFormatInvalid,						MTLReadWriteTextureTier2}, // RGBA8U
+		{ MTLPixelFormatRGBA8Snorm,                     MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RGBA8S
+		{ MTLPixelFormatRGBA16Unorm,                    MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RGBA16
+		{ MTLPixelFormatRGBA16Sint,                     MTLPixelFormatInvalid,						MTLReadWriteTextureTier2}, // RGBA16I
+		{ MTLPixelFormatRGBA16Uint,                     MTLPixelFormatInvalid,						MTLReadWriteTextureTier2}, // RGBA16U
+		{ MTLPixelFormatRGBA16Float,                    MTLPixelFormatInvalid,						MTLReadWriteTextureTier2}, // RGBA16F
+		{ MTLPixelFormatRGBA16Snorm,                    MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RGBA16S
+		{ MTLPixelFormatRGBA32Sint,                     MTLPixelFormatInvalid,						MTLReadWriteTextureTier2}, // RGBA32I
+		{ MTLPixelFormatRGBA32Uint,                     MTLPixelFormatInvalid,						MTLReadWriteTextureTier2}, // RGBA32U
+		{ MTLPixelFormatRGBA32Float,                    MTLPixelFormatInvalid,						MTLReadWriteTextureTier2}, // RGBA32F
+		{ MTLPixelFormat(40/*B5G6R5Unorm*/),            MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // R5G6B5
+		{ MTLPixelFormat(42/*ABGR4Unorm*/),             MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RGBA4
+		{ MTLPixelFormat(41/*A1BGR5Unorm*/),            MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RGB5A1
+		{ MTLPixelFormatRGB10A2Unorm,                   MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RGB10A2
+		{ MTLPixelFormatRG11B10Float,                   MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // RG11B10F
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // UnknownDepth
+		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // D16
+		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // D24
+		{ MTLPixelFormat(255/*Depth24Unorm_Stencil8*/), MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // D24S8
+		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // D32
+		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // D16F
+		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // D24F
+		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // D32F
+		{ MTLPixelFormatStencil8,                       MTLPixelFormatInvalid,						MTLReadWriteTextureTierNone}, // D0S8
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
@@ -715,10 +708,11 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				}
 
 				
-				support |= (0 != (s_textureFormat[ii].m_rwTierMask & s_readWriteTierMasks[rwTier]))
-					? BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
-					| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
-					: BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				support |= (s_textureFormat[ii].m_rwTier != MTLReadWriteTextureTierNone
+							&& rwTier >= s_textureFormat[ii].m_rwTier)
+						? BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
+						| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
+						: BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
 				g_caps.formats[ii] = support;
 			}
