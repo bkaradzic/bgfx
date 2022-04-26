@@ -207,17 +207,6 @@ namespace bgfx { namespace mtl
 		MTLSamplerMipFilterNearest,
 	};
 
-	struct ReadWriteTierMask {
-		enum Enum {
-			None = 0,       //MTLReadWriteTextureNone
-			Tier1 = 0x01,   //MTLReadWriteTextureTier1
-			Tier2 = 0x02,   //MTLReadWriteTextureTier2
-
-			Count = 3,
-		};
-	};
-
-
 	struct TextureFormatInfo
 	{
 		MTLPixelFormat m_fmt;
