@@ -1,6 +1,6 @@
 /*
  * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
+ * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #include "bgfx_p.h"
@@ -108,17 +108,17 @@ namespace bgfx
 		{ 1, 0 }, // DCL_CONSTANT_BUFFER
 		{ 1, 0 }, // DCL_SAMPLER
 		{ 1, 1 }, // DCL_INDEX_RANGE
-		{ 1, 0 }, // DCL_GS_OUTPUT_PRIMITIVE_TOPOLOGY
-		{ 1, 0 }, // DCL_GS_INPUT_PRIMITIVE
+		{ 0, 0 }, // DCL_GS_OUTPUT_PRIMITIVE_TOPOLOGY
+		{ 0, 0 }, // DCL_GS_INPUT_PRIMITIVE
 		{ 0, 1 }, // DCL_MAX_OUTPUT_VERTEX_COUNT
 		{ 1, 0 }, // DCL_INPUT
 		{ 1, 1 }, // DCL_INPUT_SGV
-		{ 1, 0 }, // DCL_INPUT_SIV
+		{ 1, 1 }, // DCL_INPUT_SIV
 		{ 1, 0 }, // DCL_INPUT_PS
 		{ 1, 1 }, // DCL_INPUT_PS_SGV
 		{ 1, 1 }, // DCL_INPUT_PS_SIV
 		{ 1, 0 }, // DCL_OUTPUT
-		{ 1, 0 }, // DCL_OUTPUT_SGV
+		{ 1, 1 }, // DCL_OUTPUT_SGV
 		{ 1, 1 }, // DCL_OUTPUT_SIV
 		{ 0, 1 }, // DCL_TEMPS
 		{ 0, 3 }, // DCL_INDEXABLE_TEMP
@@ -135,8 +135,8 @@ namespace bgfx
 		{ 0, 0 }, // HS_CONTROL_POINT_PHASE
 		{ 0, 0 }, // HS_FORK_PHASE
 		{ 0, 0 }, // HS_JOIN_PHASE
-		{ 0, 0 }, // EMIT_STREAM
-		{ 0, 0 }, // CUT_STREAM
+		{ 1, 0 }, // EMIT_STREAM
+		{ 1, 0 }, // CUT_STREAM
 		{ 1, 0 }, // EMITTHENCUT_STREAM
 		{ 1, 0 }, // INTERFACE_CALL
 		{ 0, 0 }, // BUFINFO
@@ -161,7 +161,7 @@ namespace bgfx
 		{ 5, 0 }, // BFI
 		{ 0, 0 }, // BFREV
 		{ 5, 0 }, // SWAPC
-		{ 0, 0 }, // DCL_STREAM
+		{ 1, 0 }, // DCL_STREAM
 		{ 1, 0 }, // DCL_FUNCTION_BODY
 		{ 0, 0 }, // DCL_FUNCTION_TABLE
 		{ 0, 0 }, // DCL_INTERFACE
@@ -502,6 +502,69 @@ namespace bgfx
 		"linear noperspective sample",
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcInterpolationName) == DxbcInterpolation::Count);
+
+	const char *s_dxbcPrimitiveTopologyName[] =
+	{
+		"",
+		"PointList",
+		"LineList",
+		"LineStrip",
+		"TriangleList",
+		"TriangleStrip",
+		"",
+		"",
+		"",
+		"",
+		"LineListAdj",
+		"LineStripAdj",
+		"TriangleListAdj",
+		"TriangleStripAdj",
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcPrimitiveTopologyName) == DxbcPrimitiveTopology::Count);
+
+	const char *s_dxbcPrimitiveName[] = {
+		"",
+		"Point",
+		"Line",
+		"Triangle",
+		"",
+		"",
+		"LineAdj",
+		"TriangleAdj",
+		"_1ControlPointPatch",
+		"_2ControlPointPatch",
+		"_3ControlPointPatch",
+		"_4ControlPointPatch",
+		"_5ControlPointPatch",
+		"_6ControlPointPatch",
+		"_7ControlPointPatch",
+		"_8ControlPointPatch",
+		"_9ControlPointPatch",
+		"_10ControlPointPatch",
+		"_11ControlPointPatch",
+		"_12ControlPointPatch",
+		"_13ControlPointPatch",
+		"_14ControlPointPatch",
+		"_15ControlPointPatch",
+		"_16ControlPointPatch",
+		"_17ControlPointPatch",
+		"_18ControlPointPatch",
+		"_19ControlPointPatch",
+		"_20ControlPointPatch",
+		"_21ControlPointPatch",
+		"_22ControlPointPatch",
+		"_23ControlPointPatch",
+		"_24ControlPointPatch",
+		"_25ControlPointPatch",
+		"_26ControlPointPatch",
+		"_27ControlPointPatch",
+		"_28ControlPointPatch",
+		"_29ControlPointPatch",
+		"_30ControlPointPatch",
+		"_31ControlPointPatch",
+		"_32ControlPointPatch",
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcPrimitiveName) == DxbcPrimitive::Count);
 
 	// mesa/src/gallium/state_trackers/d3d1x/d3d1xshader/defs/shortfiles.txt
 	static const char* s_dxbcOperandType[] =
@@ -1149,11 +1212,30 @@ namespace bgfx
 				_instruction.enableShaderExtensions = 0 != (token & UINT32_C(0x00040000) );
 				break;
 
-			case DxbcOpcode::DCL_INPUT_PS:
+			case DxbcOpcode::DCL_GS_INPUT_PRIMITIVE:
+				// 0       1       2       3
+				// 76543210765432107654321076543210
+				// ........       pppppp...........
+				//                ^----------------- Primitive
+
+				_instruction.primitive = DxbcPrimitive::Enum( (token & UINT32_C(0x0001f800) ) >> 11);
+				break;
+
+			case DxbcOpcode::DCL_GS_OUTPUT_PRIMITIVE_TOPOLOGY:
+				// 0       1       2       3
+				// 76543210765432107654321076543210
+				// ........       pppppp...........
+				//                ^----------------- Primitive Topology
+
+				_instruction.primitiveTopology = DxbcPrimitiveTopology::Enum( (token & UINT32_C(0x0001f800) ) >> 11);
+				break;
+
+			case DxbcOpcode::DCL_INPUT_PS: BX_FALLTHROUGH;
+			case DxbcOpcode::DCL_INPUT_PS_SIV:
 				// 0       1       2       3
 				// 76543210765432107654321076543210
 				// ........        iiiii...........
-				//                 ^---------------- Interpolation
+				//                 ^---------------- Interploation
 
 				_instruction.interpolation = DxbcInterpolation::Enum( (token & UINT32_C(0x0000f800) ) >> 11);
 				break;
@@ -1381,7 +1463,16 @@ namespace bgfx
 				token |= _instruction.enableShaderExtensions ? UINT32_C(0x00040000) : 0;
 				break;
 
-			case DxbcOpcode::DCL_INPUT_PS:
+			case DxbcOpcode::DCL_GS_INPUT_PRIMITIVE:
+				token |= (_instruction.primitive << 11) & UINT32_C(0x0001f800);
+				break;
+
+			case DxbcOpcode::DCL_GS_OUTPUT_PRIMITIVE_TOPOLOGY:
+				token |= (_instruction.primitiveTopology << 11) & UINT32_C(0x0001f800);
+				break;
+
+			case DxbcOpcode::DCL_INPUT_PS: BX_FALLTHROUGH;
+			case DxbcOpcode::DCL_INPUT_PS_SIV:
 				token |= (_instruction.interpolation << 11) & UINT32_C(0x0000f800);
 				break;
 
@@ -1546,6 +1637,22 @@ namespace bgfx
 			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
 						, "%s"
 						, s_dxbcCustomDataClass[_instruction.customDataClass]
+						);
+			break;
+
+		case DxbcOpcode::DCL_GS_OUTPUT_PRIMITIVE_TOPOLOGY:
+			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
+						, "%s %s"
+						, getName(_instruction.opcode)
+						, s_dxbcPrimitiveTopologyName[_instruction.primitiveTopology]
+						);
+			break;
+
+		case DxbcOpcode::DCL_GS_INPUT_PRIMITIVE:
+			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
+						, "%s %s"
+						, getName(_instruction.opcode)
+						, s_dxbcPrimitiveName[_instruction.primitive]
 						);
 			break;
 
