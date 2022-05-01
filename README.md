@@ -84,8 +84,8 @@ Languages:
  * [Swift language API bindings](https://github.com/stuartcarnie/SwiftBGFX)
  * [Zig language API bindings](https://github.com/bkaradzic/bgfx/tree/master/bindings/zig)
 
-Who is using it? [#madewithbgfx](https://twitter.com/search?q=%23madewithbgfx&f=live)
--------------------------------------------------------------------------------------
+Who is using it? [#madewithbgfx](https://twitter.com/search?q=%23madewithbgfx&src=typed_query&f=live)
+-----------------------------------------------------------------------------------------------------
 
 ## Airmech
 
