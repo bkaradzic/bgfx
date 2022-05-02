@@ -190,7 +190,7 @@ osx-arm64-debug: .build/projects/gmake-osx-arm64 ## Build - macOS ARM Debug
 	$(MAKE) -C .build/projects/gmake-osx-arm64 config=debug
 osx-arm64-release: .build/projects/gmake-osx-arm64 ## Build - macOS ARM Release
 	$(MAKE) -C .build/projects/gmake-osx-arm64 config=release
-osx-arm: osx-arm64-debug osx-arm64-release ## Build - macOS ARM Debug and Release
+osx-arm64: osx-arm64-debug osx-arm64-release ## Build - macOS ARM Debug and Release
 
 .build/projects/gmake-ios-arm:
 	$(GENIE) --gcc=ios-arm gmake
