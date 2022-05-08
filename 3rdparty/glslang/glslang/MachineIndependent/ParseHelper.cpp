@@ -2327,7 +2327,7 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
             error(loc, "argument must be compile-time constant", "payload number", "a");
         else {
             unsigned int location = (*argp)[10]->getAsConstantUnion()->getAsConstantUnion()->getConstArray()[0].getUConst();
-            if (intermediate.checkLocationRT(0, location) < 0)
+            if (!extensionTurnedOn(E_GL_EXT_spirv_intrinsics) && intermediate.checkLocationRT(0, location) < 0)
                 error(loc, "with layout(location =", "no rayPayloadEXT/rayPayloadInEXT declared", "%d)", location);
         }
         break;
@@ -2340,7 +2340,7 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
             error(loc, "argument must be compile-time constant", "callable data number", "");
         else {
             unsigned int location = (*argp)[1]->getAsConstantUnion()->getAsConstantUnion()->getConstArray()[0].getUConst();
-            if (intermediate.checkLocationRT(1, location) < 0)
+            if (!extensionTurnedOn(E_GL_EXT_spirv_intrinsics) && intermediate.checkLocationRT(1, location) < 0)
                 error(loc, "with layout(location =", "no callableDataEXT/callableDataInEXT declared", "%d)", location);
         }
         break;

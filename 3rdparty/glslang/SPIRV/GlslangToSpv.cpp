@@ -1007,6 +1007,8 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
         return spv::BuiltInRayTminKHR;
     case glslang::EbvRayTmax:
         return spv::BuiltInRayTmaxKHR;
+    case glslang::EbvCullMask:
+        return spv::BuiltInCullMaskKHR;
     case glslang::EbvInstanceCustomIndex:
         return spv::BuiltInInstanceCustomIndexKHR;
     case glslang::EbvHitT:
@@ -1777,6 +1779,13 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(unsigned int spvVersion,
             builder.addCapability(spv::CapabilityRayTracingNV);
             builder.addExtension("SPV_NV_ray_tracing");
         }
+	if (glslangIntermediate->getStage() != EShLangRayGen && glslangIntermediate->getStage() != EShLangCallable)
+	{
+		if (extensions.find("GL_EXT_ray_cull_mask") != extensions.end()) {
+			builder.addCapability(spv::CapabilityRayCullMaskKHR);
+			builder.addExtension("SPV_KHR_ray_cull_mask");
+		}
+	}
         break;
     }
     case EShLangTaskNV:

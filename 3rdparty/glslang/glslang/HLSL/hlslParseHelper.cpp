@@ -5430,7 +5430,7 @@ void HlslParseContext::decomposeIntrinsic(const TSourceLoc& loc, TIntermTyped*& 
         }
     case EOpWavePrefixCountBits:
         {
-            // Mapped to subgroupBallotInclusiveBitCount(subgroupBallot())
+            // Mapped to subgroupBallotExclusiveBitCount(subgroupBallot())
             // builtin
 
             // uvec4 type.
@@ -5444,7 +5444,7 @@ void HlslParseContext::decomposeIntrinsic(const TSourceLoc& loc, TIntermTyped*& 
             TType uintType(EbtUint, EvqTemporary);
 
             node = intermediate.addBuiltInFunctionCall(loc,
-                EOpSubgroupBallotInclusiveBitCount, true, res, uintType);
+                EOpSubgroupBallotExclusiveBitCount, true, res, uintType);
 
             break;
         }

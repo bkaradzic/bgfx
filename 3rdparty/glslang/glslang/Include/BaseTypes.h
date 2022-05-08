@@ -263,6 +263,7 @@ enum TBuiltInVariable {
     EbvObjectRayDirection,
     EbvRayTmin,
     EbvRayTmax,
+    EbvCullMask,
     EbvHitT,
     EbvHitKind,
     EbvObjectToWorld,
