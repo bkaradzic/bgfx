@@ -24,6 +24,9 @@
 #ifndef SPIRV_CROSS_HPP
 #define SPIRV_CROSS_HPP
 
+#ifndef SPV_ENABLE_UTILITY_CODE
+#define SPV_ENABLE_UTILITY_CODE
+#endif
 #include "spirv.hpp"
 #include "spirv_cfg.hpp"
 #include "spirv_cross_parsed_ir.hpp"
@@ -554,6 +557,11 @@ protected:
 				SPIRV_CROSS_THROW("Compiler::stream() out of range.");
 			return &ir.spirv[instr.offset];
 		}
+	}
+
+	uint32_t *stream_mutable(const Instruction &instr) const
+	{
+		return const_cast<uint32_t *>(stream(instr));
 	}
 
 	ParsedIR ir;

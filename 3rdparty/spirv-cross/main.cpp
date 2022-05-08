@@ -400,6 +400,12 @@ static void print_resources(const Compiler &compiler, const char *tag, const Sma
 			fprintf(stderr, " writeonly");
 		if (mask.get(DecorationNonWritable))
 			fprintf(stderr, " readonly");
+		if (mask.get(DecorationRestrict))
+			fprintf(stderr, " restrict");
+		if (mask.get(DecorationCoherent))
+			fprintf(stderr, " coherent");
+		if (mask.get(DecorationVolatile))
+			fprintf(stderr, " volatile");
 		if (is_sized_block)
 		{
 			fprintf(stderr, " (BlockSize : %u bytes)", block_size);

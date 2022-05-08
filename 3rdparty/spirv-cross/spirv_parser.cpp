@@ -279,6 +279,8 @@ void Parser::parse(const Instruction &instruction)
 			set<SPIRExtension>(id, SPIRExtension::SPV_AMD_shader_trinary_minmax);
 		else if (ext == "SPV_AMD_gcn_shader")
 			set<SPIRExtension>(id, SPIRExtension::SPV_AMD_gcn_shader);
+		else if (ext == "NonSemantic.DebugPrintf")
+			set<SPIRExtension>(id, SPIRExtension::NonSemanticDebugPrintf);
 		else
 			set<SPIRExtension>(id, SPIRExtension::Unsupported);
 

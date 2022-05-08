@@ -643,6 +643,13 @@ void CompilerHLSL::emit_builtin_outputs_in_struct()
 			else
 				SPIRV_CROSS_THROW("Unsupported builtin in HLSL.");
 
+		case BuiltInLayer:
+			if (hlsl_options.shader_model < 50 || get_entry_point().model != ExecutionModelGeometry)
+				SPIRV_CROSS_THROW("Render target index output is only supported in GS 5.0 or higher.");
+			type = "uint";
+			semantic = "SV_RenderTargetIndex";
+			break;
+
 		default:
 			SPIRV_CROSS_THROW("Unsupported builtin in HLSL.");
 		}
@@ -672,6 +679,11 @@ void CompilerHLSL::emit_builtin_inputs_in_struct()
 				SPIRV_CROSS_THROW("Vertex index not supported in SM 3.0 or lower.");
 			type = "uint";
 			semantic = "SV_VertexID";
+			break;
+
+		case BuiltInPrimitiveId:
+			type = "uint";
+			semantic = "SV_PrimitiveID";
 			break;
 
 		case BuiltInInstanceId:
@@ -719,6 +731,13 @@ void CompilerHLSL::emit_builtin_inputs_in_struct()
 		case BuiltInFrontFacing:
 			type = "bool";
 			semantic = "SV_IsFrontFace";
+			break;
+
+		case BuiltInViewIndex:
+			if (hlsl_options.shader_model < 61 || (get_entry_point().model != ExecutionModelVertex && get_entry_point().model != ExecutionModelFragment))
+				SPIRV_CROSS_THROW("View Index input is only supported in VS and PS 6.1 or higher.");
+			type = "uint";
+			semantic = "SV_ViewID";
 			break;
 
 		case BuiltInNumWorkgroups:
@@ -775,6 +794,13 @@ void CompilerHLSL::emit_builtin_inputs_in_struct()
 				break;
 			else
 				SPIRV_CROSS_THROW("Unsupported builtin in HLSL.");
+
+		case BuiltInLayer:
+			if (hlsl_options.shader_model < 50 || get_entry_point().model != ExecutionModelFragment)
+				SPIRV_CROSS_THROW("Render target index input is only supported in PS 5.0 or higher.");
+			type = "uint";
+			semantic = "SV_RenderTargetIndex";
+			break;
 
 		default:
 			SPIRV_CROSS_THROW("Unsupported builtin in HLSL.");
@@ -1133,6 +1159,12 @@ void CompilerHLSL::emit_builtin_variables()
 			type = "int";
 			break;
 
+		case BuiltInPrimitiveId:
+		case BuiltInViewIndex:
+		case BuiltInLayer:
+			type = "uint";
+			break;
+
 		default:
 			SPIRV_CROSS_THROW(join("Unsupported builtin in HLSL: ", unsigned(builtin)));
 		}
@@ -1285,7 +1317,33 @@ void CompilerHLSL::replace_illegal_names()
 {
 	static const unordered_set<string> keywords = {
 		// Additional HLSL specific keywords.
-		"line", "linear", "matrix", "point", "row_major", "sampler", "vector"
+		// From https://docs.microsoft.com/en-US/windows/win32/direct3dhlsl/dx-graphics-hlsl-appendix-keywords
+		"AppendStructuredBuffer", "asm", "asm_fragment",
+		"BlendState", "bool", "break", "Buffer", "ByteAddressBuffer",
+		"case", "cbuffer", "centroid", "class", "column_major", "compile",
+		"compile_fragment", "CompileShader", "const", "continue", "ComputeShader",
+		"ConsumeStructuredBuffer",
+		"default", "DepthStencilState", "DepthStencilView", "discard", "do",
+		"double", "DomainShader", "dword",
+		"else", "export", "false", "float", "for", "fxgroup",
+		"GeometryShader", "groupshared", "half", "HullShader",
+		"if", "in", "inline", "inout", "InputPatch", "int", "interface",
+		"line", "lineadj", "linear", "LineStream",
+		"matrix", "min16float", "min10float", "min16int", "min16uint",
+		"namespace", "nointerpolation", "noperspective", "NULL",
+		"out", "OutputPatch",
+		"packoffset", "pass", "pixelfragment", "PixelShader", "point",
+		"PointStream", "precise", "RasterizerState", "RenderTargetView",
+		"return", "register", "row_major", "RWBuffer", "RWByteAddressBuffer",
+		"RWStructuredBuffer", "RWTexture1D", "RWTexture1DArray", "RWTexture2D",
+		"RWTexture2DArray", "RWTexture3D", "sample", "sampler", "SamplerState",
+		"SamplerComparisonState", "shared", "snorm", "stateblock", "stateblock_state",
+		"static", "string", "struct", "switch", "StructuredBuffer", "tbuffer",
+		"technique", "technique10", "technique11", "texture", "Texture1D",
+		"Texture1DArray", "Texture2D", "Texture2DArray", "Texture2DMS", "Texture2DMSArray",
+		"Texture3D", "TextureCube", "TextureCubeArray", "true", "typedef", "triangle",
+		"triangleadj", "TriangleStream", "uint", "uniform", "unorm", "unsigned",
+		"vector", "vertexfragment", "VertexShader", "void", "volatile", "while",
 	};
 
 	CompilerGLSL::replace_illegal_names(keywords);

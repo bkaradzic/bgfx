@@ -1765,6 +1765,45 @@ void CompilerMSL::extract_global_variables_from_function(uint32_t func_id, std::
 				break;
 			}
 
+			case OpRayQueryInitializeKHR:
+			case OpRayQueryProceedKHR:
+			case OpRayQueryTerminateKHR:
+			case OpRayQueryGenerateIntersectionKHR:
+			case OpRayQueryConfirmIntersectionKHR:
+			{
+				// Ray query accesses memory directly, need check pass down object if using Private storage class.
+				uint32_t base_id = ops[0];
+				if (global_var_ids.find(base_id) != global_var_ids.end())
+					added_arg_ids.insert(base_id);
+				break;
+			}
+
+			case OpRayQueryGetRayTMinKHR:
+			case OpRayQueryGetRayFlagsKHR:
+			case OpRayQueryGetWorldRayOriginKHR:
+			case OpRayQueryGetWorldRayDirectionKHR:
+			case OpRayQueryGetIntersectionCandidateAABBOpaqueKHR:
+			case OpRayQueryGetIntersectionTypeKHR:
+			case OpRayQueryGetIntersectionTKHR:
+			case OpRayQueryGetIntersectionInstanceCustomIndexKHR:
+			case OpRayQueryGetIntersectionInstanceIdKHR:
+			case OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR:
+			case OpRayQueryGetIntersectionGeometryIndexKHR:
+			case OpRayQueryGetIntersectionPrimitiveIndexKHR:
+			case OpRayQueryGetIntersectionBarycentricsKHR:
+			case OpRayQueryGetIntersectionFrontFaceKHR:
+			case OpRayQueryGetIntersectionObjectRayDirectionKHR:
+			case OpRayQueryGetIntersectionObjectRayOriginKHR:
+			case OpRayQueryGetIntersectionObjectToWorldKHR:
+			case OpRayQueryGetIntersectionWorldToObjectKHR:
+			{
+				// Ray query accesses memory directly, need check pass down object if using Private storage class.
+				uint32_t base_id = ops[2];
+				if (global_var_ids.find(base_id) != global_var_ids.end())
+					added_arg_ids.insert(base_id);
+				break;
+			}
+
 			default:
 				break;
 			}
@@ -2541,12 +2580,14 @@ void CompilerMSL::add_composite_member_variable_to_interface_block(StorageClass 
 	uint32_t mbr_type_id = var_type.member_types[mbr_idx];
 	auto &mbr_type = get<SPIRType>(mbr_type_id);
 
+	bool mbr_is_indexable = false;
 	uint32_t elem_cnt = 1;
 	if (is_matrix(mbr_type))
 	{
 		if (is_array(mbr_type))
 			SPIRV_CROSS_THROW("MSL cannot emit arrays-of-matrices in input and output variables.");
 
+		mbr_is_indexable = true;
 		elem_cnt = mbr_type.columns;
 	}
 	else if (is_array(mbr_type))
@@ -2554,6 +2595,7 @@ void CompilerMSL::add_composite_member_variable_to_interface_block(StorageClass 
 		if (mbr_type.array.size() != 1)
 			SPIRV_CROSS_THROW("MSL cannot emit arrays-of-arrays in input and output variables.");
 
+		mbr_is_indexable = true;
 		elem_cnt = to_array_size_literal(mbr_type);
 	}
 
@@ -2589,8 +2631,8 @@ void CompilerMSL::add_composite_member_variable_to_interface_block(StorageClass 
 	{
 		for (uint32_t i = 0; i < elem_cnt; i++)
 		{
-			string mbr_name = append_member_name(mbr_name_qual, var_type, mbr_idx) + (elem_cnt == 1 ? "" : join("_", i));
-			string var_chain = join(var_chain_qual, ".", to_member_name(var_type, mbr_idx), (elem_cnt == 1 ? "" : join("[", i, "]")));
+			string mbr_name = append_member_name(mbr_name_qual, var_type, mbr_idx) + (mbr_is_indexable ? join("_", i) : "");
+			string var_chain = join(var_chain_qual, ".", to_member_name(var_type, mbr_idx), (mbr_is_indexable ? join("[", i, "]") : ""));
 			uint32_t sub_mbr_cnt = uint32_t(mbr_type.member_types.size());
 			for (uint32_t sub_mbr_idx = 0; sub_mbr_idx < sub_mbr_cnt; sub_mbr_idx++)
 			{
@@ -2615,7 +2657,7 @@ void CompilerMSL::add_composite_member_variable_to_interface_block(StorageClass 
 			ib_type.member_types.push_back(usable_type->self);
 
 		// Give the member a name
-		string mbr_name = ensure_valid_name(append_member_name(mbr_name_qual, var_type, mbr_idx) + (elem_cnt == 1 ? "" : join("_", i)), "m");
+		string mbr_name = ensure_valid_name(append_member_name(mbr_name_qual, var_type, mbr_idx) + (mbr_is_indexable ? join("_", i) : ""), "m");
 		set_member_name(ib_type.self, ib_mbr_idx, mbr_name);
 
 		// Once we determine the location of the first member within nested structures,
@@ -2679,7 +2721,7 @@ void CompilerMSL::add_composite_member_variable_to_interface_block(StorageClass 
 		// Unflatten or flatten from [[stage_in]] or [[stage_out]] as appropriate.
 		if (!meta.strip_array && meta.allow_local_declaration)
 		{
-			string var_chain = join(var_chain_qual, ".", to_member_name(var_type, mbr_idx), (elem_cnt == 1 ? "" : join("[", i, "]")));
+			string var_chain = join(var_chain_qual, ".", to_member_name(var_type, mbr_idx), (mbr_is_indexable ? join("[", i, "]") : ""));
 			switch (storage)
 			{
 			case StorageClassInput:

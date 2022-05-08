@@ -649,8 +649,9 @@ string CompilerGLSL::compile()
 	backend.supports_extensions = true;
 	backend.use_array_constructor = true;
 	backend.workgroup_size_is_hidden = true;
-
-	backend.support_precise_qualifier = (!options.es && options.version >= 400) || (options.es && options.version >= 320);
+	backend.requires_relaxed_precision_analysis = options.es || options.vulkan_semantics;
+	backend.support_precise_qualifier =
+			(!options.es && options.version >= 400) || (options.es && options.version >= 320);
 
 	if (is_legacy_es())
 		backend.support_case_fallthrough = false;
@@ -2130,9 +2131,8 @@ void CompilerGLSL::emit_push_constant_block_glsl(const SPIRVariable &var)
 	// OpenGL has no concept of push constant blocks, implement it as a uniform struct.
 	auto &type = get<SPIRType>(var.basetype);
 
-	auto &flags = ir.meta[var.self].decoration.decoration_flags;
-	flags.clear(DecorationBinding);
-	flags.clear(DecorationDescriptorSet);
+	unset_decoration(var.self, DecorationBinding);
+	unset_decoration(var.self, DecorationDescriptorSet);
 
 #if 0
     if (flags & ((1ull << DecorationBinding) | (1ull << DecorationDescriptorSet)))
@@ -2142,14 +2142,13 @@ void CompilerGLSL::emit_push_constant_block_glsl(const SPIRVariable &var)
 
 	// We're emitting the push constant block as a regular struct, so disable the block qualifier temporarily.
 	// Otherwise, we will end up emitting layout() qualifiers on naked structs which is not allowed.
-	auto &block_flags = ir.meta[type.self].decoration.decoration_flags;
-	bool block_flag = block_flags.get(DecorationBlock);
-	block_flags.clear(DecorationBlock);
+	bool block_flag = has_decoration(type.self, DecorationBlock);
+	unset_decoration(type.self, DecorationBlock);
 
 	emit_struct(type);
 
 	if (block_flag)
-		block_flags.set(DecorationBlock);
+		set_decoration(type.self, DecorationBlock);
 
 	emit_uniform(var);
 	statement("");
@@ -2986,11 +2985,10 @@ void CompilerGLSL::fixup_image_load_store_access()
 			// Solve this by making the image access as restricted as possible and loosen up if we need to.
 			// If any no-read/no-write flags are actually set, assume that the compiler knows what it's doing.
 
-			auto &flags = ir.meta[var].decoration.decoration_flags;
-			if (!flags.get(DecorationNonWritable) && !flags.get(DecorationNonReadable))
+			if (!has_decoration(var, DecorationNonWritable) && !has_decoration(var, DecorationNonReadable))
 			{
-				flags.set(DecorationNonWritable);
-				flags.set(DecorationNonReadable);
+				set_decoration(var, DecorationNonWritable);
+				set_decoration(var, DecorationNonReadable);
 			}
 		}
 	});
@@ -4310,6 +4308,73 @@ void CompilerGLSL::force_temporary_and_recompile(uint32_t id)
 		force_recompile();
 }
 
+uint32_t CompilerGLSL::consume_temporary_in_precision_context(uint32_t type_id, uint32_t id, Options::Precision precision)
+{
+	// Constants do not have innate precision.
+	if (ir.ids[id].get_type() == TypeConstant || ir.ids[id].get_type() == TypeConstantOp)
+		return id;
+
+	// Ignore anything that isn't 32-bit values.
+	auto &type = get<SPIRType>(type_id);
+	if (type.pointer)
+		return id;
+	if (type.basetype != SPIRType::Float && type.basetype != SPIRType::UInt && type.basetype != SPIRType::Int)
+		return id;
+
+	if (precision == Options::DontCare)
+	{
+		// If precision is consumed as don't care (operations only consisting of constants),
+		// we need to bind the expression to a temporary,
+		// otherwise we have no way of controlling the precision later.
+		auto itr = forced_temporaries.insert(id);
+		if (itr.second)
+			force_recompile_guarantee_forward_progress();
+		return id;
+	}
+
+	auto current_precision = has_decoration(id, DecorationRelaxedPrecision) ? Options::Mediump : Options::Highp;
+	if (current_precision == precision)
+		return id;
+
+	auto itr = temporary_to_mirror_precision_alias.find(id);
+	if (itr == temporary_to_mirror_precision_alias.end())
+	{
+		uint32_t alias_id = ir.increase_bound_by(1);
+		auto &m = ir.meta[alias_id];
+		if (auto *input_m = ir.find_meta(id))
+			m = *input_m;
+
+		const char *prefix;
+		if (precision == Options::Mediump)
+		{
+			set_decoration(alias_id, DecorationRelaxedPrecision);
+			prefix = "mp_copy_";
+		}
+		else
+		{
+			unset_decoration(alias_id, DecorationRelaxedPrecision);
+			prefix = "hp_copy_";
+		}
+
+		auto alias_name = join(prefix, to_name(id));
+		ParsedIR::sanitize_underscores(alias_name);
+		set_name(alias_id, alias_name);
+
+		emit_op(type_id, alias_id, to_expression(id), true);
+		temporary_to_mirror_precision_alias[id] = alias_id;
+		forced_temporaries.insert(id);
+		forced_temporaries.insert(alias_id);
+		force_recompile_guarantee_forward_progress();
+		id = alias_id;
+	}
+	else
+	{
+		id = itr->second;
+	}
+
+	return id;
+}
+
 void CompilerGLSL::handle_invalid_expression(uint32_t id)
 {
 	// We tried to read an invalidated expression.
@@ -4710,7 +4775,20 @@ string CompilerGLSL::to_expression(uint32_t id, bool register_expression_read)
 		// If we try to use a loop variable before the loop header, we have to redirect it to the static expression,
 		// the variable has not been declared yet.
 		if (var.statically_assigned || (var.loop_variable && !var.loop_variable_enable))
-			return to_expression(var.static_expression);
+		{
+			// We might try to load from a loop variable before it has been initialized.
+			// Prefer static expression and fallback to initializer.
+			if (var.static_expression)
+				return to_expression(var.static_expression);
+			else if (var.initializer)
+				return to_expression(var.initializer);
+			else
+			{
+				// We cannot declare the variable yet, so have to fake it.
+				uint32_t undef_id = ir.increase_bound_by(1);
+				return emit_uninitialized_temporary_expression(get_variable_data_type_id(var), undef_id).expression;
+			}
+		}
 		else if (var.deferred_declaration)
 		{
 			var.deferred_declaration = false;
@@ -5679,7 +5757,7 @@ void CompilerGLSL::emit_uninitialized_temporary(uint32_t result_type, uint32_t r
 {
 	// If we're declaring temporaries inside continue blocks,
 	// we must declare the temporary in the loop header so that the continue block can avoid declaring new variables.
-	if (current_continue_block && !hoisted_temporaries.count(result_id))
+	if (!block_temporary_hoisting && current_continue_block && !hoisted_temporaries.count(result_id))
 	{
 		auto &header = get<SPIRBlock>(current_continue_block->loop_dominator);
 		if (find_if(begin(header.declare_temporary), end(header.declare_temporary),
@@ -5695,7 +5773,7 @@ void CompilerGLSL::emit_uninitialized_temporary(uint32_t result_type, uint32_t r
 	else if (hoisted_temporaries.count(result_id) == 0)
 	{
 		auto &type = get<SPIRType>(result_type);
-		auto &flags = ir.meta[result_id].decoration.decoration_flags;
+		auto &flags = get_decoration_bitset(result_id);
 
 		// The result_id has not been made into an expression yet, so use flags interface.
 		add_local_variable_name(result_id);
@@ -5711,11 +5789,10 @@ void CompilerGLSL::emit_uninitialized_temporary(uint32_t result_type, uint32_t r
 string CompilerGLSL::declare_temporary(uint32_t result_type, uint32_t result_id)
 {
 	auto &type = get<SPIRType>(result_type);
-	auto &flags = ir.meta[result_id].decoration.decoration_flags;
 
 	// If we're declaring temporaries inside continue blocks,
 	// we must declare the temporary in the loop header so that the continue block can avoid declaring new variables.
-	if (current_continue_block && !hoisted_temporaries.count(result_id))
+	if (!block_temporary_hoisting && current_continue_block && !hoisted_temporaries.count(result_id))
 	{
 		auto &header = get<SPIRBlock>(current_continue_block->loop_dominator);
 		if (find_if(begin(header.declare_temporary), end(header.declare_temporary),
@@ -5725,7 +5802,7 @@ string CompilerGLSL::declare_temporary(uint32_t result_type, uint32_t result_id)
 		{
 			header.declare_temporary.emplace_back(result_type, result_id);
 			hoisted_temporaries.insert(result_id);
-			force_recompile();
+			force_recompile_guarantee_forward_progress();
 		}
 
 		return join(to_name(result_id), " = ");
@@ -5739,6 +5816,7 @@ string CompilerGLSL::declare_temporary(uint32_t result_type, uint32_t result_id)
 	{
 		// The result_id has not been made into an expression yet, so use flags interface.
 		add_local_variable_name(result_id);
+		auto &flags = get_decoration_bitset(result_id);
 		return join(flags_to_qualifiers_glsl(type, flags), variable_decl(type, to_name(result_id)), " = ");
 	}
 }
@@ -8766,6 +8844,7 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 	bool is_packed = has_extended_decoration(base, SPIRVCrossDecorationPhysicalTypePacked);
 	uint32_t physical_type = get_extended_decoration(base, SPIRVCrossDecorationPhysicalTypeID);
 	bool is_invariant = has_decoration(base, DecorationInvariant);
+	bool relaxed_precision = has_decoration(base, DecorationRelaxedPrecision);
 	bool pending_array_enclose = false;
 	bool dimension_flatten = false;
 
@@ -8953,6 +9032,8 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 
 			if (has_member_decoration(type->self, index, DecorationInvariant))
 				is_invariant = true;
+			if (has_member_decoration(type->self, index, DecorationRelaxedPrecision))
+				relaxed_precision = true;
 
 			is_packed = member_is_packed_physical_type(*type, index);
 			if (member_is_remapped_physical_type(*type, index))
@@ -9098,6 +9179,7 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 		meta->storage_is_packed = is_packed;
 		meta->storage_is_invariant = is_invariant;
 		meta->storage_physical_type = physical_type;
+		meta->relaxed_precision = relaxed_precision;
 	}
 
 	return expr;
@@ -10021,8 +10103,51 @@ void CompilerGLSL::register_control_dependent_expression(uint32_t expr)
 void CompilerGLSL::emit_block_instructions(SPIRBlock &block)
 {
 	current_emitting_block = &block;
+
+	if (backend.requires_relaxed_precision_analysis)
+	{
+		// If PHI variables are consumed in unexpected precision contexts, copy them here.
+		for (auto &phi : block.phi_variables)
+		{
+			auto itr = temporary_to_mirror_precision_alias.find(phi.function_variable);
+			if (itr != temporary_to_mirror_precision_alias.end())
+			{
+				// Explicitly, we don't want to inherit RelaxedPrecision state in this CopyObject,
+				// so it helps to have handle_instruction_precision() on the outside of emit_instruction().
+				EmbeddedInstruction inst;
+				inst.op = OpCopyObject;
+				inst.length = 3;
+				inst.ops.push_back(expression_type_id(itr->first));
+				inst.ops.push_back(itr->second);
+				inst.ops.push_back(itr->first);
+				emit_instruction(inst);
+			}
+		}
+	}
+
 	for (auto &op : block.ops)
+	{
+		auto temporary_copy = handle_instruction_precision(op);
 		emit_instruction(op);
+		if (temporary_copy.dst_id)
+		{
+			// Explicitly, we don't want to inherit RelaxedPrecision state in this CopyObject,
+			// so it helps to have handle_instruction_precision() on the outside of emit_instruction().
+			EmbeddedInstruction inst;
+			inst.op = OpCopyObject;
+			inst.length = 3;
+			inst.ops.push_back(expression_type_id(temporary_copy.src_id));
+			inst.ops.push_back(temporary_copy.dst_id);
+			inst.ops.push_back(temporary_copy.src_id);
+
+			// Never attempt to hoist mirrored temporaries.
+			// They are hoisted in lock-step with their parents.
+			block_temporary_hoisting = true;
+			emit_instruction(inst);
+			block_temporary_hoisting = false;
+		}
+	}
+
 	current_emitting_block = nullptr;
 }
 
@@ -10152,6 +10277,233 @@ uint32_t CompilerGLSL::get_integer_width_for_glsl_instruction(GLSLstd450 op, con
 		return 32;
 	}
 	}
+}
+
+void CompilerGLSL::forward_relaxed_precision(uint32_t dst_id, const uint32_t *args, uint32_t length)
+{
+	// Only GLSL supports RelaxedPrecision directly.
+	// We cannot implement this in HLSL or MSL because it is tied to the type system.
+	// In SPIR-V, everything must masquerade as 32-bit.
+	if (!backend.requires_relaxed_precision_analysis)
+		return;
+
+	auto input_precision = analyze_expression_precision(args, length);
+
+	// For expressions which are loaded or directly forwarded, we inherit mediump implicitly.
+	// For dst_id to be analyzed properly, it must inherit any relaxed precision decoration from src_id.
+	if (input_precision == Options::Mediump)
+		set_decoration(dst_id, DecorationRelaxedPrecision);
+}
+
+CompilerGLSL::Options::Precision CompilerGLSL::analyze_expression_precision(const uint32_t *args, uint32_t length) const
+{
+	// Now, analyze the precision at which the arguments would run.
+	// GLSL rules are such that the precision used to evaluate an expression is equal to the highest precision
+	// for the inputs. Constants do not have inherent precision and do not contribute to this decision.
+	// If all inputs are constants, they inherit precision from outer expressions, including an l-value.
+	// In this case, we'll have to force a temporary for dst_id so that we can bind the constant expression with
+	// correct precision.
+	bool expression_has_highp = false;
+	bool expression_has_mediump = false;
+
+	for (uint32_t i = 0; i < length; i++)
+	{
+		uint32_t arg = args[i];
+		if (ir.ids[arg].get_type() == TypeConstant)
+			continue;
+
+		if (has_decoration(arg, DecorationRelaxedPrecision))
+			expression_has_mediump = true;
+		else
+			expression_has_highp = true;
+	}
+
+	if (expression_has_highp)
+		return Options::Highp;
+	else if (expression_has_mediump)
+		return Options::Mediump;
+	else
+		return Options::DontCare;
+}
+
+void CompilerGLSL::analyze_precision_requirements(uint32_t type_id, uint32_t dst_id, uint32_t *args, uint32_t length)
+{
+	if (!backend.requires_relaxed_precision_analysis)
+		return;
+
+	auto &type = get<SPIRType>(type_id);
+
+	// RelaxedPrecision only applies to 32-bit values.
+	if (type.basetype != SPIRType::Float && type.basetype != SPIRType::Int && type.basetype != SPIRType::UInt)
+		return;
+
+	bool operation_is_highp = !has_decoration(dst_id, DecorationRelaxedPrecision);
+
+	auto input_precision = analyze_expression_precision(args, length);
+	if (input_precision == Options::DontCare)
+	{
+		consume_temporary_in_precision_context(type_id, dst_id, input_precision);
+		return;
+	}
+
+	// In SPIR-V and GLSL, the semantics are flipped for how relaxed precision is determined.
+	// In SPIR-V, the operation itself marks RelaxedPrecision, meaning that inputs can be truncated to 16-bit.
+	// However, if the expression is not, inputs must be expanded to 32-bit first,
+	// since the operation must run at high precision.
+	// This is the awkward part, because if we have mediump inputs, or expressions which derived from mediump,
+	// we might have to forcefully bind the source IDs to highp temporaries. This is done by clearing decorations
+	// and forcing temporaries. Similarly for mediump operations. We bind highp expressions to mediump variables.
+	if ((operation_is_highp && input_precision == Options::Mediump) ||
+	    (!operation_is_highp && input_precision == Options::Highp))
+	{
+		auto precision = operation_is_highp ? Options::Highp : Options::Mediump;
+		for (uint32_t i = 0; i < length; i++)
+		{
+			// Rewrites the opcode so that we consume an ID in correct precision context.
+			// This is pretty hacky, but it's the most straight forward way of implementing this without adding
+			// lots of extra passes to rewrite all code blocks.
+			args[i] = consume_temporary_in_precision_context(expression_type_id(args[i]), args[i], precision);
+		}
+	}
+}
+
+// This is probably not exhaustive ...
+static bool opcode_is_precision_sensitive_operation(Op op)
+{
+	switch (op)
+	{
+	case OpFAdd:
+	case OpFSub:
+	case OpFMul:
+	case OpFNegate:
+	case OpIAdd:
+	case OpISub:
+	case OpIMul:
+	case OpSNegate:
+	case OpFMod:
+	case OpFDiv:
+	case OpFRem:
+	case OpSMod:
+	case OpSDiv:
+	case OpSRem:
+	case OpUMod:
+	case OpUDiv:
+	case OpVectorTimesMatrix:
+	case OpMatrixTimesVector:
+	case OpMatrixTimesMatrix:
+	case OpDPdx:
+	case OpDPdy:
+	case OpDPdxCoarse:
+	case OpDPdyCoarse:
+	case OpDPdxFine:
+	case OpDPdyFine:
+	case OpFwidth:
+	case OpFwidthCoarse:
+	case OpFwidthFine:
+	case OpVectorTimesScalar:
+	case OpMatrixTimesScalar:
+	case OpOuterProduct:
+	case OpFConvert:
+	case OpSConvert:
+	case OpUConvert:
+	case OpConvertSToF:
+	case OpConvertUToF:
+	case OpConvertFToU:
+	case OpConvertFToS:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
+// Instructions which just load data but don't do any arithmetic operation should just inherit the decoration.
+// SPIR-V doesn't require this, but it's somewhat implied it has to work this way, relaxed precision is only
+// relevant when operating on the IDs, not when shuffling things around.
+static bool opcode_is_precision_forwarding_instruction(Op op, uint32_t &arg_count)
+{
+	switch (op)
+	{
+	case OpLoad:
+	case OpAccessChain:
+	case OpInBoundsAccessChain:
+	case OpCompositeExtract:
+	case OpVectorExtractDynamic:
+	case OpSampledImage:
+	case OpImage:
+	case OpCopyObject:
+
+	case OpImageRead:
+	case OpImageFetch:
+	case OpImageSampleImplicitLod:
+	case OpImageSampleProjImplicitLod:
+	case OpImageSampleDrefImplicitLod:
+	case OpImageSampleProjDrefImplicitLod:
+	case OpImageSampleExplicitLod:
+	case OpImageSampleProjExplicitLod:
+	case OpImageSampleDrefExplicitLod:
+	case OpImageSampleProjDrefExplicitLod:
+	case OpImageGather:
+	case OpImageDrefGather:
+	case OpImageSparseRead:
+	case OpImageSparseFetch:
+	case OpImageSparseSampleImplicitLod:
+	case OpImageSparseSampleProjImplicitLod:
+	case OpImageSparseSampleDrefImplicitLod:
+	case OpImageSparseSampleProjDrefImplicitLod:
+	case OpImageSparseSampleExplicitLod:
+	case OpImageSparseSampleProjExplicitLod:
+	case OpImageSparseSampleDrefExplicitLod:
+	case OpImageSparseSampleProjDrefExplicitLod:
+	case OpImageSparseGather:
+	case OpImageSparseDrefGather:
+		arg_count = 1;
+		return true;
+
+	case OpVectorShuffle:
+		arg_count = 2;
+		return true;
+
+	case OpCompositeConstruct:
+		return true;
+
+	default:
+		break;
+	}
+
+	return false;
+}
+
+CompilerGLSL::TemporaryCopy CompilerGLSL::handle_instruction_precision(const Instruction &instruction)
+{
+	auto ops = stream_mutable(instruction);
+	auto opcode = static_cast<Op>(instruction.op);
+	uint32_t length = instruction.length;
+
+	if (backend.requires_relaxed_precision_analysis)
+	{
+		if (length > 2)
+		{
+			uint32_t forwarding_length = length - 2;
+
+			if (opcode_is_precision_sensitive_operation(opcode))
+				analyze_precision_requirements(ops[0], ops[1], &ops[2], forwarding_length);
+			else if (opcode == OpExtInst && length >= 5 && get<SPIRExtension>(ops[2]).ext == SPIRExtension::GLSL)
+				analyze_precision_requirements(ops[0], ops[1], &ops[4], forwarding_length - 2);
+			else if (opcode_is_precision_forwarding_instruction(opcode, forwarding_length))
+				forward_relaxed_precision(ops[1], &ops[2], forwarding_length);
+		}
+
+		uint32_t result_type = 0, result_id = 0;
+		if (instruction_to_result_type(result_type, result_id, opcode, ops, length))
+		{
+			auto itr = temporary_to_mirror_precision_alias.find(ops[1]);
+			if (itr != temporary_to_mirror_precision_alias.end())
+				return { itr->second, itr->first };
+		}
+	}
+
+	return {};
 }
 
 void CompilerGLSL::emit_instruction(const Instruction &instruction)
@@ -10350,6 +10702,8 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 			set_decoration(ops[1], DecorationInvariant);
 		if (meta.flattened_struct)
 			flattened_structs[ops[1]] = true;
+		if (meta.relaxed_precision && backend.requires_relaxed_precision_analysis)
+			set_decoration(ops[1], DecorationRelaxedPrecision);
 
 		// If we have some expression dependencies in our access chain, this access chain is technically a forwarded
 		// temporary which could be subject to invalidation.
@@ -10714,6 +11068,9 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 			e = &emit_op(result_type, id, expr, true, should_suppress_usage_tracking(ops[2]));
 			inherit_expression_dependencies(id, ops[2]);
 			e->base_expression = ops[2];
+
+			if (meta.relaxed_precision && backend.requires_relaxed_precision_analysis)
+				set_decoration(ops[1], DecorationRelaxedPrecision);
 		}
 		else
 		{
@@ -10829,8 +11186,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		{
 			// Need a copy.
 			// For pointer types, we copy the pointer itself.
-			statement(declare_temporary(result_type, id), to_unpacked_expression(rhs), ";");
-			set<SPIRExpression>(id, to_name(id), result_type, true);
+			emit_op(result_type, id, to_unpacked_expression(rhs), false);
 		}
 		else
 		{
@@ -11971,10 +12327,10 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		auto *var = maybe_get_backing_variable(ops[2]);
 		if (var)
 		{
-			auto &flags = ir.meta[var->self].decoration.decoration_flags;
+			auto &flags = get_decoration_bitset(var->self);
 			if (flags.get(DecorationNonReadable))
 			{
-				flags.clear(DecorationNonReadable);
+				unset_decoration(var->self, DecorationNonReadable);
 				force_recompile();
 			}
 		}
@@ -12163,10 +12519,9 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		auto *var = maybe_get_backing_variable(ops[0]);
 		if (var)
 		{
-			auto &flags = ir.meta[var->self].decoration.decoration_flags;
-			if (flags.get(DecorationNonWritable))
+			if (has_decoration(var->self, DecorationNonWritable))
 			{
-				flags.clear(DecorationNonWritable);
+				unset_decoration(var->self, DecorationNonWritable);
 				force_recompile();
 			}
 		}
@@ -12410,30 +12765,49 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 	case OpExtInst:
 	{
 		uint32_t extension_set = ops[2];
+		auto ext = get<SPIRExtension>(extension_set).ext;
 
-		if (get<SPIRExtension>(extension_set).ext == SPIRExtension::GLSL)
+		if (ext == SPIRExtension::GLSL)
 		{
 			emit_glsl_op(ops[0], ops[1], ops[3], &ops[4], length - 4);
 		}
-		else if (get<SPIRExtension>(extension_set).ext == SPIRExtension::SPV_AMD_shader_ballot)
+		else if (ext == SPIRExtension::SPV_AMD_shader_ballot)
 		{
 			emit_spv_amd_shader_ballot_op(ops[0], ops[1], ops[3], &ops[4], length - 4);
 		}
-		else if (get<SPIRExtension>(extension_set).ext == SPIRExtension::SPV_AMD_shader_explicit_vertex_parameter)
+		else if (ext == SPIRExtension::SPV_AMD_shader_explicit_vertex_parameter)
 		{
 			emit_spv_amd_shader_explicit_vertex_parameter_op(ops[0], ops[1], ops[3], &ops[4], length - 4);
 		}
-		else if (get<SPIRExtension>(extension_set).ext == SPIRExtension::SPV_AMD_shader_trinary_minmax)
+		else if (ext == SPIRExtension::SPV_AMD_shader_trinary_minmax)
 		{
 			emit_spv_amd_shader_trinary_minmax_op(ops[0], ops[1], ops[3], &ops[4], length - 4);
 		}
-		else if (get<SPIRExtension>(extension_set).ext == SPIRExtension::SPV_AMD_gcn_shader)
+		else if (ext == SPIRExtension::SPV_AMD_gcn_shader)
 		{
 			emit_spv_amd_gcn_shader_op(ops[0], ops[1], ops[3], &ops[4], length - 4);
 		}
-		else if (get<SPIRExtension>(extension_set).ext == SPIRExtension::SPV_debug_info)
+		else if (ext == SPIRExtension::SPV_debug_info)
 		{
 			break; // Ignore SPIR-V debug information extended instructions.
+		}
+		else if (ext == SPIRExtension::NonSemanticDebugPrintf)
+		{
+			// Operation 1 is printf.
+			if (ops[3] == 1)
+			{
+				if (!options.vulkan_semantics)
+					SPIRV_CROSS_THROW("Debug printf is only supported in Vulkan GLSL.\n");
+				require_extension_internal("GL_EXT_debug_printf");
+				auto &format_string = get<SPIRString>(ops[4]).str;
+				string expr = join("debugPrintfEXT(\"", format_string, "\"");
+				for (uint32_t i = 5; i < length; i++)
+				{
+					expr += ", ";
+					expr += to_expression(ops[i]);
+				}
+				statement(expr, ");");
+			}
 		}
 		else
 		{
@@ -13234,7 +13608,7 @@ void CompilerGLSL::fixup_io_block_patch_qualifiers(const SPIRVariable &var)
 
 string CompilerGLSL::to_qualifiers_glsl(uint32_t id)
 {
-	auto &flags = ir.meta[id].decoration.decoration_flags;
+	auto &flags = get_decoration_bitset(id);
 	string res;
 
 	auto *var = maybe_get<SPIRVariable>(id);
@@ -13363,7 +13737,7 @@ string CompilerGLSL::variable_decl(const SPIRVariable &variable)
 
 const char *CompilerGLSL::to_pls_qualifiers_glsl(const SPIRVariable &variable)
 {
-	auto &flags = ir.meta[variable.self].decoration.decoration_flags;
+	auto &flags = get_decoration_bitset(variable.self);
 	if (flags.get(DecorationRelaxedPrecision))
 		return "mediump ";
 	else
@@ -13821,7 +14195,7 @@ void CompilerGLSL::flatten_buffer_block(VariableID id)
 	auto &var = get<SPIRVariable>(id);
 	auto &type = get<SPIRType>(var.basetype);
 	auto name = to_name(type.self, false);
-	auto &flags = ir.meta[type.self].decoration.decoration_flags;
+	auto &flags = get_decoration_bitset(type.self);
 
 	if (!type.array.empty())
 		SPIRV_CROSS_THROW(name + " is an array of UBOs.");
@@ -13851,11 +14225,10 @@ bool CompilerGLSL::check_atomic_image(uint32_t id)
 		auto *var = maybe_get_backing_variable(id);
 		if (var)
 		{
-			auto &flags = ir.meta[var->self].decoration.decoration_flags;
-			if (flags.get(DecorationNonWritable) || flags.get(DecorationNonReadable))
+			if (has_decoration(var->self, DecorationNonWritable) || has_decoration(var->self, DecorationNonReadable))
 			{
-				flags.clear(DecorationNonWritable);
-				flags.clear(DecorationNonReadable);
+				unset_decoration(var->self, DecorationNonWritable);
+				unset_decoration(var->self, DecorationNonReadable);
 				force_recompile();
 			}
 		}
@@ -14108,7 +14481,11 @@ void CompilerGLSL::emit_function(SPIRFunction &func, const Bitset &return_flags)
 
 		// Loop variables are never declared outside their for-loop, so block any implicit declaration.
 		if (var.loop_variable)
+		{
 			var.deferred_declaration = false;
+			// Need to reset the static expression so we can fallback to initializer if need be.
+			var.static_expression = 0;
+		}
 	}
 
 	// Enforce declaration order for regression testing purposes.
@@ -14736,7 +15113,7 @@ void CompilerGLSL::emit_hoisted_temporaries(SmallVector<pair<TypeID, ID>> &tempo
 			continue;
 
 		add_local_variable_name(tmp.second);
-		auto &flags = ir.meta[tmp.second].decoration.decoration_flags;
+		auto &flags = get_decoration_bitset(tmp.second);
 
 		// Not all targets support pointer literals, so don't bother with that case.
 		string initializer;
@@ -14750,6 +15127,21 @@ void CompilerGLSL::emit_hoisted_temporaries(SmallVector<pair<TypeID, ID>> &tempo
 
 		// The temporary might be read from before it's assigned, set up the expression now.
 		set<SPIRExpression>(tmp.second, to_name(tmp.second), tmp.first, true);
+
+		// If we have hoisted temporaries in multi-precision contexts, emit that here too ...
+		// We will not be able to analyze hoisted-ness for dependent temporaries that we hallucinate here.
+		auto mirrored_precision_itr = temporary_to_mirror_precision_alias.find(tmp.second);
+		if (mirrored_precision_itr != temporary_to_mirror_precision_alias.end())
+		{
+			uint32_t mirror_id = mirrored_precision_itr->second;
+			auto &mirror_flags = get_decoration_bitset(mirror_id);
+			statement(flags_to_qualifiers_glsl(type, mirror_flags),
+			          variable_decl(type, to_name(mirror_id)),
+			          initializer, ";");
+			// The temporary might be read from before it's assigned, set up the expression now.
+			set<SPIRExpression>(mirror_id, to_name(mirror_id), tmp.first, true);
+			hoisted_temporaries.insert(mirror_id);
+		}
 	}
 }
 

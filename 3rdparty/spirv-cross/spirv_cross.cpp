@@ -4710,46 +4710,22 @@ bool Compiler::reflection_ssbo_instance_name_is_significant() const
 	return aliased_ssbo_types;
 }
 
-bool Compiler::instruction_to_result_type(uint32_t &result_type, uint32_t &result_id, spv::Op op, const uint32_t *args,
-                                          uint32_t length)
+bool Compiler::instruction_to_result_type(uint32_t &result_type, uint32_t &result_id, spv::Op op,
+                                          const uint32_t *args, uint32_t length)
 {
-	// Most instructions follow the pattern of <result-type> <result-id> <arguments>.
-	// There are some exceptions.
-	switch (op)
-	{
-	case OpStore:
-	case OpCopyMemory:
-	case OpCopyMemorySized:
-	case OpImageWrite:
-	case OpAtomicStore:
-	case OpAtomicFlagClear:
-	case OpEmitStreamVertex:
-	case OpEndStreamPrimitive:
-	case OpControlBarrier:
-	case OpMemoryBarrier:
-	case OpGroupWaitEvents:
-	case OpRetainEvent:
-	case OpReleaseEvent:
-	case OpSetUserEventStatus:
-	case OpCaptureEventProfilingInfo:
-	case OpCommitReadPipe:
-	case OpCommitWritePipe:
-	case OpGroupCommitReadPipe:
-	case OpGroupCommitWritePipe:
-	case OpLine:
-	case OpNoLine:
+	if (length < 2)
 		return false;
 
-	default:
-		if (length > 1 && maybe_get<SPIRType>(args[0]) != nullptr)
-		{
-			result_type = args[0];
-			result_id = args[1];
-			return true;
-		}
-		else
-			return false;
+	bool has_result_id = false, has_result_type = false;
+	HasResultAndType(op, &has_result_id, &has_result_type);
+	if (has_result_id && has_result_type)
+	{
+		result_type = args[0];
+		result_id = args[1];
+		return true;
 	}
+	else
+		return false;
 }
 
 Bitset Compiler::combined_decoration_for_member(const SPIRType &type, uint32_t index) const
