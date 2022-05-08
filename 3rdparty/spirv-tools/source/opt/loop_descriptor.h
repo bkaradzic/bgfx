@@ -398,7 +398,8 @@ class Loop {
   // Each different loop |condition| affects how we calculate the number of
   // iterations using the |condition_value|, |init_value|, and |step_values| of
   // the induction variable. This method will return the number of iterations in
-  // a loop with those values for a given |condition|.
+  // a loop with those values for a given |condition|.  Returns 0 if the number
+  // of iterations could not be computed.
   int64_t GetIterations(SpvOp condition, int64_t condition_value,
                         int64_t init_value, int64_t step_value) const;
 

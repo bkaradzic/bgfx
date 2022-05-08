@@ -68,38 +68,12 @@ bool HasVolatileDecoration(analysis::DecorationManager* decoration_manager,
   return decoration_manager->HasDecoration(var_id, SpvDecorationVolatile);
 }
 
-bool HasOnlyEntryPointsAsFunctions(IRContext* context, Module* module) {
-  std::unordered_set<uint32_t> entry_function_ids;
-  for (Instruction& entry_point : module->entry_points()) {
-    entry_function_ids.insert(
-        entry_point.GetSingleWordInOperand(kOpEntryPointInOperandEntryPoint));
-  }
-  for (auto& function : *module) {
-    if (entry_function_ids.find(function.result_id()) ==
-        entry_function_ids.end()) {
-      std::string message(
-          "Functions of SPIR-V for spread-volatile-semantics pass input must "
-          "be inlined except entry points");
-      message += "\n  " + function.DefInst().PrettyPrint(
-                              SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES);
-      context->consumer()(SPV_MSG_ERROR, "", {0, 0, 0}, message.c_str());
-      return false;
-    }
-  }
-  return true;
-}
-
 }  // namespace
 
 Pass::Status SpreadVolatileSemantics::Process() {
   if (HasNoExecutionModel()) {
     return Status::SuccessWithoutChange;
   }
-
-  if (!HasOnlyEntryPointsAsFunctions(context(), get_module())) {
-    return Status::Failure;
-  }
-
   const bool is_vk_memory_model_enabled =
       context()->get_feature_mgr()->HasCapability(
           SpvCapabilityVulkanMemoryModel);
@@ -142,6 +116,8 @@ bool SpreadVolatileSemantics::IsTargetUsedByNonVolatileLoadInEntryPoint(
     uint32_t var_id, Instruction* entry_point) {
   uint32_t entry_function_id =
       entry_point->GetSingleWordInOperand(kOpEntryPointInOperandEntryPoint);
+  std::unordered_set<uint32_t> funcs;
+  context()->CollectCallTreeFromRoots(entry_function_id, &funcs);
   return !VisitLoadsOfPointersToVariableInEntries(
       var_id,
       [](Instruction* load) {
@@ -154,7 +130,7 @@ bool SpreadVolatileSemantics::IsTargetUsedByNonVolatileLoadInEntryPoint(
             load->GetSingleWordInOperand(kOpLoadInOperandMemoryOperands);
         return (memory_operands & SpvMemoryAccessVolatileMask) != 0;
       },
-      {entry_function_id});
+      funcs);
 }
 
 bool SpreadVolatileSemantics::HasInterfaceInConflictOfVolatileSemantics() {
@@ -225,7 +201,7 @@ void SpreadVolatileSemantics::DecorateVarWithVolatile(Instruction* var) {
 
 bool SpreadVolatileSemantics::VisitLoadsOfPointersToVariableInEntries(
     uint32_t var_id, const std::function<bool(Instruction*)>& handle_load,
-    const std::unordered_set<uint32_t>& entry_function_ids) {
+    const std::unordered_set<uint32_t>& function_ids) {
   std::vector<uint32_t> worklist({var_id});
   auto* def_use_mgr = context()->get_def_use_mgr();
   while (!worklist.empty()) {
@@ -233,11 +209,11 @@ bool SpreadVolatileSemantics::VisitLoadsOfPointersToVariableInEntries(
     worklist.pop_back();
     bool finish_traversal = !def_use_mgr->WhileEachUser(
         ptr_id, [this, &worklist, &ptr_id, handle_load,
-                 &entry_function_ids](Instruction* user) {
+                 &function_ids](Instruction* user) {
           BasicBlock* block = context()->get_instr_block(user);
           if (block == nullptr ||
-              entry_function_ids.find(block->GetParent()->result_id()) ==
-                  entry_function_ids.end()) {
+              function_ids.find(block->GetParent()->result_id()) ==
+                  function_ids.end()) {
             return true;
           }
 
@@ -266,21 +242,25 @@ void SpreadVolatileSemantics::SetVolatileForLoadsInEntries(
     Instruction* var, const std::unordered_set<uint32_t>& entry_function_ids) {
   // Set Volatile memory operand for all load instructions if they do not have
   // it.
-  VisitLoadsOfPointersToVariableInEntries(
-      var->result_id(),
-      [](Instruction* load) {
-        if (load->NumInOperands() <= kOpLoadInOperandMemoryOperands) {
-          load->AddOperand(
-              {SPV_OPERAND_TYPE_MEMORY_ACCESS, {SpvMemoryAccessVolatileMask}});
+  for (auto entry_id : entry_function_ids) {
+    std::unordered_set<uint32_t> funcs;
+    context()->CollectCallTreeFromRoots(entry_id, &funcs);
+    VisitLoadsOfPointersToVariableInEntries(
+        var->result_id(),
+        [](Instruction* load) {
+          if (load->NumInOperands() <= kOpLoadInOperandMemoryOperands) {
+            load->AddOperand({SPV_OPERAND_TYPE_MEMORY_ACCESS,
+                              {SpvMemoryAccessVolatileMask}});
+            return true;
+          }
+          uint32_t memory_operands =
+              load->GetSingleWordInOperand(kOpLoadInOperandMemoryOperands);
+          memory_operands |= SpvMemoryAccessVolatileMask;
+          load->SetInOperand(kOpLoadInOperandMemoryOperands, {memory_operands});
           return true;
-        }
-        uint32_t memory_operands =
-            load->GetSingleWordInOperand(kOpLoadInOperandMemoryOperands);
-        memory_operands |= SpvMemoryAccessVolatileMask;
-        load->SetInOperand(kOpLoadInOperandMemoryOperands, {memory_operands});
-        return true;
-      },
-      entry_function_ids);
+        },
+        funcs);
+  }
 }
 
 bool SpreadVolatileSemantics::IsTargetForVolatileSemantics(

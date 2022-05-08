@@ -411,6 +411,10 @@ class IRContext {
   void CollectNonSemanticTree(Instruction* inst,
                               std::unordered_set<Instruction*>* to_kill);
 
+  // Collect function reachable from |entryId|, returns |funcs|
+  void CollectCallTreeFromRoots(unsigned entryId,
+                                std::unordered_set<uint32_t>* funcs);
+
   // Returns true if all of the given analyses are valid.
   bool AreAnalysesValid(Analysis set) { return (set & valid_analyses_) == set; }
 

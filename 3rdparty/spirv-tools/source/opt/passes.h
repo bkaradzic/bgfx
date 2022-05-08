@@ -37,6 +37,7 @@
 #include "source/opt/eliminate_dead_input_components_pass.h"
 #include "source/opt/eliminate_dead_members_pass.h"
 #include "source/opt/empty_pass.h"
+#include "source/opt/fix_func_call_arguments.h"
 #include "source/opt/fix_storage_class.h"
 #include "source/opt/flatten_decoration_pass.h"
 #include "source/opt/fold_spec_constant_op_and_composite_pass.h"

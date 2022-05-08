@@ -1443,6 +1443,12 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-CullDistance-CullDistance-04199);
     case 4200:
       return VUID_WRAP(VUID-CullDistance-CullDistance-04200);
+    case 6735:
+      return VUID_WRAP(VUID-CullMaskKHR-CullMaskKHR-06735); // Execution Model
+    case 6736:
+      return VUID_WRAP(VUID-CullMaskKHR-CullMaskKHR-06736); // input storage
+    case 6737:
+      return VUID_WRAP(VUID-CullMaskKHR-CullMaskKHR-06737); // 32 int scalar
     case 4205:
       return VUID_WRAP(VUID-DeviceIndex-DeviceIndex-04205);
     case 4206:

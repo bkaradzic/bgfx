@@ -72,15 +72,14 @@ class SpreadVolatileSemantics : public Pass {
                                                  Instruction* entry_point);
 
   // Visits load instructions of pointers to variable whose result id is
-  // |var_id| if the load instructions are in entry points whose
-  // function id is one of |entry_function_ids|. |handle_load| is a function to
-  // do some actions for the load instructions. Finishes the traversal and
-  // returns false if |handle_load| returns false for a load instruction.
-  // Otherwise, returns true after running |handle_load| for all the load
-  // instructions.
+  // |var_id| if the load instructions are in reachable functions from entry
+  // points. |handle_load| is a function to do some actions for the load
+  // instructions. Finishes the traversal and returns false if |handle_load|
+  // returns false for a load instruction. Otherwise, returns true after running
+  // |handle_load| for all the load instructions.
   bool VisitLoadsOfPointersToVariableInEntries(
       uint32_t var_id, const std::function<bool(Instruction*)>& handle_load,
-      const std::unordered_set<uint32_t>& entry_function_ids);
+      const std::unordered_set<uint32_t>& function_ids);
 
   // Sets Memory Operands of OpLoad instructions that load |var| or pointers
   // of |var| as Volatile if the function id of the OpLoad instruction is

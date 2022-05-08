@@ -28,6 +28,7 @@ static const SpvCapability pygen_variable_caps_GroupNonUniformArithmeticGroupNon
 static const SpvCapability pygen_variable_caps_GroupNonUniformBallot[] = {SpvCapabilityGroupNonUniformBallot};
 static const SpvCapability pygen_variable_caps_GroupNonUniformPartitionedNV[] = {SpvCapabilityGroupNonUniformPartitionedNV};
 static const SpvCapability pygen_variable_caps_GroupNonUniformQuad[] = {SpvCapabilityGroupNonUniformQuad};
+static const SpvCapability pygen_variable_caps_GroupNonUniformRotateKHR[] = {SpvCapabilityGroupNonUniformRotateKHR};
 static const SpvCapability pygen_variable_caps_GroupNonUniformShuffle[] = {SpvCapabilityGroupNonUniformShuffle};
 static const SpvCapability pygen_variable_caps_GroupNonUniformShuffleRelative[] = {SpvCapabilityGroupNonUniformShuffleRelative};
 static const SpvCapability pygen_variable_caps_GroupNonUniformVote[] = {SpvCapabilityGroupNonUniformVote};
@@ -454,6 +455,7 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"SubgroupAllKHR", SpvOpSubgroupAllKHR, 1, pygen_variable_caps_SubgroupVoteKHR, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_subgroup_vote, 0xffffffffu, 0xffffffffu},
   {"SubgroupAnyKHR", SpvOpSubgroupAnyKHR, 1, pygen_variable_caps_SubgroupVoteKHR, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_subgroup_vote, 0xffffffffu, 0xffffffffu},
   {"SubgroupAllEqualKHR", SpvOpSubgroupAllEqualKHR, 1, pygen_variable_caps_SubgroupVoteKHR, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_subgroup_vote, 0xffffffffu, 0xffffffffu},
+  {"GroupNonUniformRotateKHR", SpvOpGroupNonUniformRotateKHR, 1, pygen_variable_caps_GroupNonUniformRotateKHR, 6, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_OPTIONAL_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SubgroupReadInvocationKHR", SpvOpSubgroupReadInvocationKHR, 1, pygen_variable_caps_SubgroupBallotKHR, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_shader_ballot, 0xffffffffu, 0xffffffffu},
   {"TraceRayKHR", SpvOpTraceRayKHR, 1, pygen_variable_caps_RayTracingKHR, 11, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 1, pygen_variable_exts_SPV_KHR_ray_tracing, 0xffffffffu, 0xffffffffu},
   {"ExecuteCallableKHR", SpvOpExecuteCallableKHR, 1, pygen_variable_caps_RayTracingKHR, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 1, pygen_variable_exts_SPV_KHR_ray_tracing, 0xffffffffu, 0xffffffffu},

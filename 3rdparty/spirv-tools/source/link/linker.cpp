@@ -34,6 +34,7 @@
 #include "source/opt/ir_loader.h"
 #include "source/opt/pass_manager.h"
 #include "source/opt/remove_duplicates_pass.h"
+#include "source/opt/remove_unused_interface_variables_pass.h"
 #include "source/opt/type_manager.h"
 #include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
@@ -807,11 +808,16 @@ spv_result_t Link(const Context& context, const uint32_t* const* binaries,
   pass_res = manager.Run(&linked_context);
   if (pass_res == opt::Pass::Status::Failure) return SPV_ERROR_INVALID_DATA;
 
-  // Phase 11: Warn if SPIR-V limits were exceeded
+  // Phase 11: Recompute EntryPoint variables
+  manager.AddPass<opt::RemoveUnusedInterfaceVariablesPass>();
+  pass_res = manager.Run(&linked_context);
+  if (pass_res == opt::Pass::Status::Failure) return SPV_ERROR_INVALID_DATA;
+
+  // Phase 12: Warn if SPIR-V limits were exceeded
   res = VerifyLimits(consumer, linked_context);
   if (res != SPV_SUCCESS) return res;
 
-  // Phase 12: Output the module
+  // Phase 13: Output the module
   linked_context.module()->ToBinary(linked_binary, true);
 
   return SPV_SUCCESS;

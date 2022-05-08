@@ -528,6 +528,7 @@ bool spvOpcodeIsNonUniformGroupOperation(SpvOp opcode) {
     case SpvOpGroupNonUniformLogicalXor:
     case SpvOpGroupNonUniformQuadBroadcast:
     case SpvOpGroupNonUniformQuadSwap:
+    case SpvOpGroupNonUniformRotateKHR:
       return true;
     default:
       return false;
