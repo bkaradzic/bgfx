@@ -2166,7 +2166,6 @@ namespace bgfx { namespace gl
 			, m_maxAnisotropy(0.0f)
 			, m_maxAnisotropyDefault(0.0f)
 			, m_maxMsaa(0)
-			, m_vao(0)
 			, m_blitSupported(false)
 			, m_readBackSupported(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			, m_vaoSupport(false)
@@ -2861,12 +2860,6 @@ namespace bgfx { namespace gl
 						|| s_extension[Extension::ARB_vertex_array_object].m_supported
 						|| s_extension[Extension::OES_vertex_array_object].m_supported
 						);
-
-				if (m_vaoSupport)
-				{
-					GL_CHECK(glGenVertexArrays(1, &m_vao) );
-				}
-
 				m_samplerObjectSupport = !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
 					&& (m_gles3
 						|| s_extension[Extension::ARB_sampler_objects].m_supported
@@ -3124,13 +3117,6 @@ namespace bgfx { namespace gl
 
 		void shutdown()
 		{
-			if (m_vaoSupport)
-			{
-				GL_CHECK(glBindVertexArray(0) );
-				GL_CHECK(glDeleteVertexArrays(1, &m_vao) );
-				m_vao = 0;
-			}
-
 			captureFinish();
 
 			invalidateCache();
@@ -3578,11 +3564,6 @@ namespace bgfx { namespace gl
 
 		void blitSetup(TextVideoMemBlitter& _blitter) override
 		{
-			if (0 != m_vao)
-			{
-				GL_CHECK(glBindVertexArray(m_vao) );
-			}
-
 			uint32_t width  = m_resolution.width;
 			uint32_t height = m_resolution.height;
 
@@ -4295,12 +4276,6 @@ namespace bgfx { namespace gl
 			}
 			else
 			{
-				const GLuint defaultVao = m_vao;
-				if (0 != defaultVao)
-				{
-					GL_CHECK(glBindVertexArray(defaultVao) );
-				}
-
 				GL_CHECK(glDisable(GL_SCISSOR_TEST) );
 				GL_CHECK(glDisable(GL_CULL_FACE) );
 				GL_CHECK(glDisable(GL_BLEND) );
@@ -4517,7 +4492,6 @@ namespace bgfx { namespace gl
 		float m_maxAnisotropy;
 		float m_maxAnisotropyDefault;
 		int32_t m_maxMsaa;
-		GLuint m_vao;
 		uint16_t m_maxLabelLen;
 		bool m_blitSupported;
 		bool m_readBackSupported;
@@ -7198,21 +7172,6 @@ namespace bgfx { namespace gl
 
 		BGFX_GL_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
 
-		if (1 < m_numWindows
-		&&  m_vaoSupport)
-		{
-			m_vaoSupport = false;
-			GL_CHECK(glBindVertexArray(0) );
-			GL_CHECK(glDeleteVertexArrays(1, &m_vao) );
-			m_vao = 0;
-		}
-
-		const GLuint defaultVao = m_vao;
-		if (0 != defaultVao)
-		{
-			GL_CHECK(glBindVertexArray(defaultVao) );
-		}
-
 		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
 		GL_CHECK(glFrontFace(GL_CW) );
 
@@ -7910,15 +7869,13 @@ namespace bgfx { namespace gl
 
 				if (isValid(currentProgram) )
 				{
-					ProgramGL& program = m_program[currentProgram.idx];
-
 					if (constantsChanged
-					&&  NULL != program.m_constantBuffer)
+					&&  NULL != m_program[currentProgram.idx].m_constantBuffer)
 					{
-						commit(*program.m_constantBuffer);
+						commit(*m_program[currentProgram.idx].m_constantBuffer);
 					}
 
-					viewState.setPredefined<1>(this, view, program, _render, draw);
+					viewState.setPredefined<1>(this, view, m_program[currentProgram.idx], _render, draw);
 
 					{
 						GLbitfield barrier = 0;
@@ -8052,7 +8009,7 @@ namespace bgfx { namespace gl
 
 								boundProgram = currentProgram;
 
-								program.bindAttributesBegin();
+								m_program[currentProgram.idx].bindAttributesBegin();
 
 								if (UINT8_MAX != draw.m_streamMask)
 								{
@@ -8070,17 +8027,17 @@ namespace bgfx { namespace gl
 											? draw.m_stream[idx].m_layoutHandle.idx
 											: vb.m_layoutHandle.idx;
 										GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
-										program.bindAttributes(m_vertexLayouts[decl], draw.m_stream[idx].m_startVertex);
+										m_program[currentProgram.idx].bindAttributes(m_vertexLayouts[decl], draw.m_stream[idx].m_startVertex);
 									}
 								}
 
 								if (isValid(draw.m_instanceDataBuffer) )
 								{
 									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffers[draw.m_instanceDataBuffer.idx].m_id) );
-									program.bindInstanceData(draw.m_instanceDataStride, draw.m_instanceDataOffset);
+									m_program[currentProgram.idx].bindInstanceData(draw.m_instanceDataStride, draw.m_instanceDataOffset);
 								}
 
-								program.bindAttributesEnd();
+								m_program[currentProgram.idx].bindAttributesEnd();
 							}
 						}
 					}
@@ -8253,11 +8210,6 @@ namespace bgfx { namespace gl
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
 			blitMsaaFbo();
-
-			if (m_vaoSupport)
-			{
-				GL_CHECK(glBindVertexArray(m_vao) );
-			}
 
 			if (0 < _render->m_numRenderItems)
 			{
