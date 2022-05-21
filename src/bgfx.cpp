@@ -3841,8 +3841,8 @@ namespace bgfx
 
 	void Encoder::touch(ViewId _id)
 	{
-		ProgramHandle handle = BGFX_INVALID_HANDLE;
-		submit(_id, handle);
+		discard();
+		submit(_id, BGFX_INVALID_HANDLE);
 	}
 
 	void Encoder::submit(ViewId _id, ProgramHandle _program, uint32_t _depth, uint8_t _flags)
@@ -5426,8 +5426,8 @@ namespace bgfx
 
 	void touch(ViewId _id)
 	{
-		ProgramHandle handle = BGFX_INVALID_HANDLE;
-		submit(_id, handle);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->touch(_id);
 	}
 
 	void submit(ViewId _id, ProgramHandle _program, uint32_t _depth, uint8_t _flags)
