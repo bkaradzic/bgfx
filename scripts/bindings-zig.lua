@@ -33,13 +33,24 @@ local function hasSuffix(str, suffix)
 	return suffix == "" or str:sub(- #suffix) == suffix
 end
 
-local enum = { }
+local enum = {}
 
 local function convert_array(member)
 	if string.find(member.array, "::") then
 		return string.format("[%s]", enum[member.array])
 	else
 		return member.array
+	end
+end
+
+local function gisub(s, pat, repl, n)
+	pat = string.gsub(pat, '(%a)', function(v)
+		return '[' .. string.upper(v) .. string.lower(v) .. ']'
+	end)
+	if n then
+		return string.gsub(s, pat, repl, n)
+	else
+		return string.gsub(s, pat, repl)
 	end
 end
 
@@ -68,10 +79,8 @@ local function convert_type_0(arg)
 		return arg.fulltype
 	elseif arg.ctype == "..." then
 		return "..."
-	elseif arg.ctype == "va_list"
-		or arg.fulltype == "bx::AllocatorI*"
-		or arg.fulltype == "CallbackI*"
-		or arg.fulltype == "ReleaseFn" then
+	elseif arg.ctype == "va_list" or arg.fulltype == "bx::AllocatorI*" or arg.fulltype == "CallbackI*" or arg.fulltype ==
+		"ReleaseFn" then
 		return "?*anyopaque"
 	end
 
@@ -110,6 +119,46 @@ local function convert_ret_type(arg)
 	return convert_type(arg)
 end
 
+local function wrap_simple_func(func, args, argNames)
+	local zigFunc = {}
+	local zigFuncTemplate = [[pub inline fn $func($params) $ret {
+  return $cfunc($args);
+}]]
+
+	-- transform name to camelCase from snake_case
+	zigFunc.func = func.cname:gsub("_(.)", func.cname.upper)
+	zigFunc.params = table.concat(args, ", ")
+	zigFunc.ret = convert_ret_type(func.ret)
+	zigFunc.cfunc = "bgfx_" .. func.cname
+	zigFunc.args = table.concat(argNames, ", ")
+	return zigFuncTemplate:gsub("$(%l+)", zigFunc)
+end
+
+local function wrap_method(func, type, args, argNames, indent)
+	local zigFunc = {}
+	local zigFuncTemplate = [[%spub inline fn $func($params) $ret {
+  %sreturn $cfunc($args);
+%s}]]
+
+	zigFuncTemplate = string.format(zigFuncTemplate, indent, indent, indent);
+
+	-- transform name to camelCase from snake_case
+	zigFunc.func = func.cname:gsub("_(.)", func.cname.upper)
+	-- remove type from name
+	zigFunc.func = gisub(zigFunc.func, type, "");
+	-- make first letter lowercase
+	zigFunc.func = zigFunc.func:gsub("^%L", string.lower)
+	zigFunc.params = table.concat(args, ", ")
+	zigFunc.ret = convert_ret_type(func.ret)
+	-- remove C API pointer [*c] for fluent interfaces
+	if zigFunc.ret == ("[*c]" .. type) then
+		zigFunc.ret = zigFunc.ret:gsub("%[%*c%]", "*")
+	end
+	zigFunc.cfunc = "bgfx_" .. func.cname
+	zigFunc.args = table.concat(argNames, ", ")
+	return zigFuncTemplate:gsub("$(%l+)", zigFunc)
+end
+
 local converter = {}
 local yield = coroutine.yield
 local gen = {}
@@ -117,13 +166,30 @@ local gen = {}
 local indent = ""
 
 function gen.gen()
+	-- find the functions that have `this` first argument
+	-- these belong to a type (struct) and we need to add them when converting structures
+	local methods = {}
+	for _, func in ipairs(idl["funcs"]) do
+		if func.this ~= nil then
+			if methods[func.this_type.type] == nil then
+				methods[func.this_type.type] = {}
+			end
+			table.insert(methods[func.this_type.type], func)
+		end
+	end
+
 	local r = zig_template:gsub("$(%l+)", function(what)
 		local tmp = {}
 		for _, object in ipairs(idl[what]) do
 			local co = coroutine.create(converter[what])
 			local any
+			-- we're pretty confident there are no types that have the same name with a func
+			local funcs = methods[object.name]
 			while true do
-				local ok, v = coroutine.resume(co, object)
+				local ok, v = coroutine.resume(co, {
+					obj = object,
+					funcs = funcs
+				})
 				assert(ok, debug.traceback(co, v))
 				if not v then
 					break
@@ -173,34 +239,17 @@ local function FlagBlock(typ)
 		end
 
 		local flagName = flag.name:gsub("_", "")
-		yield("pub const " .. name .. "_"
-			.. flagName
-			.. ": "
-			.. name
-			.. string.rep(" ", 22 - #(flagName))
-			.. " = "
-			.. string.format(flag.format or format, flag.value)
-			.. ";"
-		)
+		yield("pub const " .. name .. "_" .. flagName .. ": " .. name .. string.rep(" ", 22 - #(flagName)) .. " = " ..
+			string.format(flag.format or format, flag.value) .. ";")
 	end
 
 	if typ.shift then
-		yield("    "
-			.. "Shift"
-			.. string.rep(" ", 22 - #("Shift"))
-			.. " = "
-			.. flag.shift
-		)
+		yield("    " .. "Shift" .. string.rep(" ", 22 - #("Shift")) .. " = " .. flag.shift)
 	end
 
 	-- generate Mask
 	if typ.mask then
-		yield("    "
-			.. "Mask"
-			.. string.rep(" ", 22 - #("Mask"))
-			.. " = "
-			.. string.format(format, flag.mask)
-		)
+		yield("    " .. "Mask" .. string.rep(" ", 22 - #("Mask")) .. " = " .. string.format(format, flag.mask))
 	end
 end
 
@@ -221,7 +270,9 @@ end
 
 local namespace = ""
 
-function converter.types(typ)
+function converter.types(params)
+	local typ = params.obj
+	local funcs = params.funcs
 	if typ.handle then
 		lastCombinedFlagBlock()
 
@@ -280,7 +331,7 @@ function converter.types(typ)
 				table.insert(flags, {
 					name = flagName,
 					value = value,
-					comment = flag.comment,
+					comment = flag.comment
 				})
 			end
 
@@ -289,7 +340,7 @@ function converter.types(typ)
 					name = name .. "Shift",
 					value = typ.shift,
 					format = "%d",
-					comment = typ.comment,
+					comment = typ.comment
 				})
 			end
 
@@ -298,7 +349,7 @@ function converter.types(typ)
 				table.insert(flags, {
 					name = name .. "Mask",
 					value = typ.mask,
-					comment = typ.comment,
+					comment = typ.comment
 				})
 				lookup[name .. "Mask"] = typ.mask
 			end
@@ -331,20 +382,35 @@ function converter.types(typ)
 		for _, member in ipairs(typ.struct) do
 			yield(indent .. indent .. convert_struct_member(member) .. ",")
 		end
+		if funcs ~= nil then
+			for _, func in ipairs(funcs) do
+				converter.funcs({
+					obj = func,
+					asMethod = true
+				})
+			end
+		end
 
 		yield(indent .. "};")
 	end
 end
 
-function converter.funcs(func)
-
+function converter.funcs(params)
+	local func = params.obj
 	if func.cpponly then
 		return
 	end
 
+	-- skipp for now, don't know how to handle variadic functions
+	if func.cname == "dbg_text_printf" or func.cname == "dbg_text_vprintf" then
+		return
+	end
+
+	local func_indent = (params.asMethod == true and indent .. indent or "")
+
 	if func.comments ~= nil then
 		for _, line in ipairs(func.comments) do
-			yield("/// " .. line)
+			yield(func_indent .. "/// " .. line)
 		end
 
 		local hasParams = false
@@ -353,12 +419,7 @@ function converter.funcs(func)
 			if arg.comment ~= nil then
 				local comment = table.concat(arg.comment, " ")
 
-				yield("/// <param name=\""
-					.. arg.name
-					.. "\">"
-					.. comment
-					.. "</param>"
-				)
+				yield(func_indent .. "/// <param name=\"" .. arg.name .. "\">" .. comment .. "</param>")
 
 				hasParams = true
 			end
@@ -366,8 +427,14 @@ function converter.funcs(func)
 	end
 
 	local args = {}
+	local argNames = {}
+
 	if func.this ~= nil then
 		local ptr = "[*c]"
+		if params.asMethod == true then
+			ptr = "*"
+		end
+		-- print("Function " .. func.name .. " has this: " .. func.this_type.type)
 		if func.const ~= nil then
 			ptr = ptr .. "const "
 		end
@@ -376,17 +443,31 @@ function converter.funcs(func)
 			ptr = "?*"
 		end
 		args[1] = "self: " .. ptr .. func.this_type.type
+		argNames[1] = "self"
 	end
 	for _, arg in ipairs(func.args) do
-		local argName = arg.name:gsub("_", "")
-		argName = argName:gsub("enum", "enumeration")
+		local argName = arg.name
+		-- local argName = arg.name:gsub("_", "")
+		-- argName = argName:gsub("enum", "enumeration")
+		-- argName = argName:gsub("type_", '@"type"')
 		if not isempty(argName) then
+			table.insert(argNames, argName)
 			table.insert(args, argName .. ": " .. convert_type(arg))
 		else
 			table.insert(args, convert_type(arg))
 		end
 	end
-	yield("pub extern fn bgfx_" .. func.cname .. "(" .. table.concat(args, ", ") .. ") " .. convert_ret_type(func.ret) .. ";")
+
+	if (params.asMethod == true) then
+		yield(wrap_method(func, func.this_type.type, args, argNames, func_indent))
+	else
+		if func.this == nil then
+			yield(wrap_simple_func(func, args, argNames))
+		end
+		yield(
+			"extern fn bgfx_" .. func.cname .. "(" .. table.concat(args, ", ") .. ") " .. convert_ret_type(func.ret) ..
+			";")
+	end
 end
 
 function gen.write(codes, outputfile)
