@@ -1070,6 +1070,18 @@ static ExecutionModel stage_to_execution_model(const std::string &stage)
 		return ExecutionModelTessellationEvaluation;
 	else if (stage == "geom")
 		return ExecutionModelGeometry;
+	else if (stage == "rgen")
+		return ExecutionModelRayGenerationKHR;
+	else if (stage == "rint")
+		return ExecutionModelIntersectionKHR;
+	else if (stage == "rahit")
+		return ExecutionModelAnyHitKHR;
+	else if (stage == "rchit")
+		return ExecutionModelClosestHitKHR;
+	else if (stage == "rmiss")
+		return ExecutionModelMissKHR;
+	else if (stage == "rcall")
+		return ExecutionModelCallableKHR;
 	else
 		SPIRV_CROSS_THROW("Invalid stage.");
 }

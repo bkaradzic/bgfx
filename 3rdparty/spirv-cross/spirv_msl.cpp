@@ -15685,9 +15685,19 @@ void CompilerMSL::cast_from_variable_load(uint32_t source_id, std::string &expr,
 	if (var && var->storage == StorageClassWorkgroup && expr_type.basetype == SPIRType::Boolean)
 		expr = join(type_to_glsl(expr_type), "(", expr, ")");
 
-	// Only interested in standalone builtin variables.
+	// Only interested in standalone builtin variables in the switch below.
 	if (!has_decoration(source_id, DecorationBuiltIn))
+	{
+		// If the backing variable does not match our expected sign, we can fix it up here.
+		// See ensure_correct_input_type().
+		if (var && var->storage == StorageClassInput)
+		{
+			auto &base_type = get<SPIRType>(var->basetype);
+			if (base_type.basetype != SPIRType::Struct && expr_type.basetype != base_type.basetype)
+				expr = join(type_to_glsl(expr_type), "(", expr, ")");
+		}
 		return;
+	}
 
 	auto builtin = static_cast<BuiltIn>(get_decoration(source_id, DecorationBuiltIn));
 	auto expected_type = expr_type.basetype;

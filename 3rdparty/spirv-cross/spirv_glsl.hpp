@@ -915,6 +915,8 @@ protected:
 
 	uint32_t consume_temporary_in_precision_context(uint32_t type_id, uint32_t id, Options::Precision precision);
 	std::unordered_map<uint32_t, uint32_t> temporary_to_mirror_precision_alias;
+	std::unordered_set<uint32_t> composite_insert_overwritten;
+	std::unordered_set<uint32_t> block_composite_insert_overwrite;
 
 	std::string emit_for_loop_initializers(const SPIRBlock &block);
 	void emit_while_loop_initializers(const SPIRBlock &block);

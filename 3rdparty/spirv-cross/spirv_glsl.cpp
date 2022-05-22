@@ -316,6 +316,7 @@ void CompilerGLSL::reset(uint32_t iteration_count)
 
 	// Clear invalid expression tracking.
 	invalid_expressions.clear();
+	composite_insert_overwritten.clear();
 	current_function = nullptr;
 
 	// Clear temporary usage tracking.
@@ -4311,7 +4312,8 @@ void CompilerGLSL::force_temporary_and_recompile(uint32_t id)
 uint32_t CompilerGLSL::consume_temporary_in_precision_context(uint32_t type_id, uint32_t id, Options::Precision precision)
 {
 	// Constants do not have innate precision.
-	if (ir.ids[id].get_type() == TypeConstant || ir.ids[id].get_type() == TypeConstantOp)
+	auto handle_type = ir.ids[id].get_type();
+	if (handle_type == TypeConstant || handle_type == TypeConstantOp || handle_type == TypeUndef)
 		return id;
 
 	// Ignore anything that isn't 32-bit values.
@@ -4381,6 +4383,11 @@ void CompilerGLSL::handle_invalid_expression(uint32_t id)
 	// This means we need another pass at compilation, but next time,
 	// force temporary variables so that they cannot be invalidated.
 	force_temporary_and_recompile(id);
+
+	// If the invalid expression happened as a result of a CompositeInsert
+	// overwrite, we must block this from happening next iteration.
+	if (composite_insert_overwritten.count(id))
+		block_composite_insert_overwrite.insert(id);
 }
 
 // Converts the format of the current expression from packed to unpacked,
@@ -7100,7 +7107,7 @@ string CompilerGLSL::to_function_name(const TextureFunctionNameArguments &args)
 	// This happens for HLSL SampleCmpLevelZero on Texture2DArray and TextureCube.
 	bool workaround_lod_array_shadow_as_grad = false;
 	if (((imgtype.image.arrayed && imgtype.image.dim == Dim2D) || imgtype.image.dim == DimCube) &&
-	    is_depth_image(imgtype, tex) && args.lod)
+	    is_depth_image(imgtype, tex) && args.lod && !args.base.is_fetch)
 	{
 		if (!expression_is_constant_null(args.lod))
 		{
@@ -7244,7 +7251,7 @@ string CompilerGLSL::to_function_args(const TextureFunctionArguments &args, bool
 	// This happens for HLSL SampleCmpLevelZero on Texture2DArray and TextureCube.
 	bool workaround_lod_array_shadow_as_grad =
 	    ((imgtype.image.arrayed && imgtype.image.dim == Dim2D) || imgtype.image.dim == DimCube) &&
-	    is_depth_image(imgtype, img) && args.lod != 0;
+	    is_depth_image(imgtype, img) && args.lod != 0 && !args.base.is_fetch;
 
 	if (args.dref)
 	{
@@ -10309,7 +10316,9 @@ CompilerGLSL::Options::Precision CompilerGLSL::analyze_expression_precision(cons
 	for (uint32_t i = 0; i < length; i++)
 	{
 		uint32_t arg = args[i];
-		if (ir.ids[arg].get_type() == TypeConstant)
+
+		auto handle_type = ir.ids[arg].get_type();
+		if (handle_type == TypeConstant || handle_type == TypeConstantOp || handle_type == TypeUndef)
 			continue;
 
 		if (has_decoration(arg, DecorationRelaxedPrecision))
@@ -11105,11 +11114,61 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 
 		flush_variable_declaration(composite);
 
-		// Make a copy, then use access chain to store the variable.
-		statement(declare_temporary(result_type, id), to_expression(composite), ";");
-		set<SPIRExpression>(id, to_name(id), result_type, true);
-		auto chain = access_chain_internal(id, elems, length, ACCESS_CHAIN_INDEX_IS_LITERAL_BIT, nullptr);
-		statement(chain, " = ", to_unpacked_expression(obj), ";");
+		// CompositeInsert requires a copy + modification, but this is very awkward code in HLL.
+		// Speculate that the input composite is no longer used, and we can modify it in-place.
+		// There are various scenarios where this is not possible to satisfy.
+		bool can_modify_in_place = true;
+		forced_temporaries.insert(id);
+
+		// Cannot safely RMW PHI variables since they have no way to be invalidated,
+		// forcing temporaries is not going to help.
+		// This is similar for Constant and Undef inputs.
+		// The only safe thing to RMW is SPIRExpression.
+		if (invalid_expressions.count(composite) ||
+		    block_composite_insert_overwrite.count(composite) ||
+		    maybe_get<SPIRExpression>(composite) == nullptr)
+		{
+			can_modify_in_place = false;
+		}
+		else if (backend.requires_relaxed_precision_analysis &&
+		         has_decoration(composite, DecorationRelaxedPrecision) !=
+		         has_decoration(id, DecorationRelaxedPrecision) &&
+		         get<SPIRType>(result_type).basetype != SPIRType::Struct)
+		{
+			// Similarly, if precision does not match for input and output,
+			// we cannot alias them. If we write a composite into a relaxed precision
+			// ID, we might get a false truncation.
+			can_modify_in_place = false;
+		}
+
+		if (can_modify_in_place)
+		{
+			// Have to make sure the modified SSA value is bound to a temporary so we can modify it in-place.
+			if (!forced_temporaries.count(composite))
+				force_temporary_and_recompile(composite);
+
+			auto chain = access_chain_internal(composite, elems, length, ACCESS_CHAIN_INDEX_IS_LITERAL_BIT, nullptr);
+			statement(chain, " = ", to_unpacked_expression(obj), ";");
+			set<SPIRExpression>(id, to_expression(composite), result_type, true);
+			invalid_expressions.insert(composite);
+			composite_insert_overwritten.insert(composite);
+		}
+		else
+		{
+			if (maybe_get<SPIRUndef>(composite) != nullptr)
+			{
+				emit_uninitialized_temporary_expression(result_type, id);
+			}
+			else
+			{
+				// Make a copy, then use access chain to store the variable.
+				statement(declare_temporary(result_type, id), to_expression(composite), ";");
+				set<SPIRExpression>(id, to_name(id), result_type, true);
+			}
+
+			auto chain = access_chain_internal(id, elems, length, ACCESS_CHAIN_INDEX_IS_LITERAL_BIT, nullptr);
+			statement(chain, " = ", to_unpacked_expression(obj), ";");
+		}
 
 		break;
 	}
@@ -15704,8 +15763,43 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 		break;
 
 	case SPIRBlock::Unreachable:
+	{
+		// Avoid emitting false fallthrough, which can happen for
+		// if (cond) break; else discard; inside a case label.
+		// Discard is not always implementable as a terminator.
+
+		auto &cfg = get_cfg_for_current_function();
+		bool inner_dominator_is_switch = false;
+		ID id = block.self;
+
+		while (id)
+		{
+			auto &iter_block = get<SPIRBlock>(id);
+			if (iter_block.terminator == SPIRBlock::MultiSelect ||
+			    iter_block.merge == SPIRBlock::MergeLoop)
+			{
+				ID next_block = iter_block.merge == SPIRBlock::MergeLoop ?
+				                iter_block.merge_block : iter_block.next_block;
+				bool outside_construct = next_block && cfg.find_common_dominator(next_block, block.self) == next_block;
+				if (!outside_construct)
+				{
+					inner_dominator_is_switch = iter_block.terminator == SPIRBlock::MultiSelect;
+					break;
+				}
+			}
+
+			if (cfg.get_preceding_edges(id).empty())
+				break;
+
+			id = cfg.get_immediate_dominator(id);
+		}
+
+		if (inner_dominator_is_switch)
+			statement("break; // unreachable workaround");
+
 		emit_next_block = false;
 		break;
+	}
 
 	case SPIRBlock::IgnoreIntersection:
 		statement("ignoreIntersectionEXT;");
