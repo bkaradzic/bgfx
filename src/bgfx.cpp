@@ -5300,7 +5300,8 @@ namespace bgfx
 
 	void setIndexBuffer(IndexBufferHandle _handle)
 	{
-		setIndexBuffer(_handle, 0, UINT32_MAX);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setIndexBuffer(_handle);
 	}
 
 	void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
@@ -5311,7 +5312,8 @@ namespace bgfx
 
 	void setIndexBuffer(DynamicIndexBufferHandle _handle)
 	{
-		setIndexBuffer(_handle, 0, UINT32_MAX);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setIndexBuffer(_handle);
 	}
 
 	void setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
@@ -5322,7 +5324,8 @@ namespace bgfx
 
 	void setIndexBuffer(const TransientIndexBuffer* _tib)
 	{
-		setIndexBuffer(_tib, 0, UINT32_MAX);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setIndexBuffer(_tib);
 	}
 
 	void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices)
@@ -5345,7 +5348,8 @@ namespace bgfx
 
 	void setVertexBuffer(uint8_t _stream, VertexBufferHandle _handle)
 	{
-		setVertexBuffer(_stream, _handle, 0, UINT32_MAX);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setVertexBuffer(_stream, _handle);
 	}
 
 	void setVertexBuffer(
@@ -5362,7 +5366,8 @@ namespace bgfx
 
 	void setVertexBuffer(uint8_t _stream, DynamicVertexBufferHandle _handle)
 	{
-		setVertexBuffer(_stream, _handle, 0, UINT32_MAX);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setVertexBuffer(_stream, _handle);
 	}
 
 	void setVertexBuffer(
@@ -5379,7 +5384,8 @@ namespace bgfx
 
 	void setVertexBuffer(uint8_t _stream, const TransientVertexBuffer* _tvb)
 	{
-		setVertexBuffer(_stream, _tvb, 0, UINT32_MAX);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setVertexBuffer(_stream, _tvb);
 	}
 
 	void setVertexCount(uint32_t _numVertices)
@@ -5432,8 +5438,8 @@ namespace bgfx
 
 	void submit(ViewId _id, ProgramHandle _program, uint32_t _depth, uint8_t _flags)
 	{
-		OcclusionQueryHandle handle = BGFX_INVALID_HANDLE;
-		submit(_id, _program, handle, _depth, _flags);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->submit(_id, _program, _depth, _flags);
 	}
 
 	void submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth, uint8_t _flags)
@@ -5504,7 +5510,8 @@ namespace bgfx
 
 	void blit(ViewId _id, TextureHandle _dst, uint16_t _dstX, uint16_t _dstY, TextureHandle _src, uint16_t _srcX, uint16_t _srcY, uint16_t _width, uint16_t _height)
 	{
-		blit(_id, _dst, 0, _dstX, _dstY, 0, _src, 0, _srcX, _srcY, 0, _width, _height, 0);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->blit(_id, _dst, _dstX, _dstY, _src, _srcX, _srcY, _width, _height);
 	}
 
 	void blit(ViewId _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
