@@ -1020,6 +1020,11 @@ Optimizer::PassToken CreateConvertToSampledImagePass(
       MakeUnique<opt::ConvertToSampledImagePass>(descriptor_set_binding_pairs));
 }
 
+Optimizer::PassToken CreateInterfaceVariableScalarReplacementPass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::InterfaceVariableScalarReplacement>());
+}
+
 Optimizer::PassToken CreateRemoveDontInlinePass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::RemoveDontInline>());

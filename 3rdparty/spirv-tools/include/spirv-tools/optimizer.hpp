@@ -903,6 +903,11 @@ Optimizer::PassToken CreateConvertToSampledImagePass(
     const std::vector<opt::DescriptorSetAndBinding>&
         descriptor_set_binding_pairs);
 
+// Create an interface-variable-scalar-replacement pass that replaces array or
+// matrix interface variables with a series of scalar or vector interface
+// variables. For example, it replaces `float3 foo[2]` with `float3 foo0, foo1`.
+Optimizer::PassToken CreateInterfaceVariableScalarReplacementPass();
+
 // Creates a remove-dont-inline pass to remove the |DontInline| function control
 // from every function in the module.  This is useful if you want the inliner to
 // inline these functions some reason.

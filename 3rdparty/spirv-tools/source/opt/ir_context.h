@@ -1094,6 +1094,9 @@ void IRContext::AddDebug2Inst(std::unique_ptr<Instruction>&& d) {
       id_to_name_->insert({d->GetSingleWordInOperand(0), d.get()});
     }
   }
+  if (AreAnalysesValid(kAnalysisDefUse)) {
+    get_def_use_mgr()->AnalyzeInstDefUse(d.get());
+  }
   module()->AddDebug2Inst(std::move(d));
 }
 

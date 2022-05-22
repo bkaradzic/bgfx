@@ -76,11 +76,12 @@ class ReplaceDescArrayAccessUsingVarIndex : public Pass {
   void CollectRecursiveUsersWithConcreteType(
       Instruction* access_chain, std::vector<Instruction*>* final_users) const;
 
-  // Recursively collects the operands of |user_of_image_insts| (and operands
-  // of the operands) whose result types are images/samplers or pointers/array/
-  // struct of them and returns them.
-  std::deque<Instruction*> CollectRequiredImageInsts(
-      Instruction* user_of_image_insts) const;
+  // Recursively collects the operands of |user| (and operands of the operands)
+  // whose result types are images/samplers (or pointers/arrays/ structs of
+  // them) and access chains instructions and returns them. The returned
+  // collection includes |user|.
+  std::deque<Instruction*> CollectRequiredImageAndAccessInsts(
+      Instruction* user) const;
 
   // Returns whether result type of |inst| is an image/sampler/pointer of image
   // or sampler or not.

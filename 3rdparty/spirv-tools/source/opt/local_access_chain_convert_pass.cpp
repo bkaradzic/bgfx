@@ -28,8 +28,6 @@ namespace {
 
 const uint32_t kStoreValIdInIdx = 1;
 const uint32_t kAccessChainPtrIdInIdx = 0;
-const uint32_t kConstantValueInIdx = 0;
-const uint32_t kTypeIntWidthInIdx = 0;
 
 }  // anonymous namespace
 
@@ -67,7 +65,19 @@ void LocalAccessChainConvertPass::AppendConstantOperands(
   ptrInst->ForEachInId([&iidIdx, &in_opnds, this](const uint32_t* iid) {
     if (iidIdx > 0) {
       const Instruction* cInst = get_def_use_mgr()->GetDef(*iid);
-      uint32_t val = cInst->GetSingleWordInOperand(kConstantValueInIdx);
+      const auto* constant_value =
+          context()->get_constant_mgr()->GetConstantFromInst(cInst);
+      assert(constant_value != nullptr &&
+             "Expecting the index to be a constant.");
+
+      // We take the sign extended value because OpAccessChain interprets the
+      // index as signed.
+      int64_t long_value = constant_value->GetSignExtendedValue();
+      assert(long_value <= UINT32_MAX && long_value >= 0 &&
+             "The index value is too large for a composite insert or extract "
+             "instruction.");
+
+      uint32_t val = static_cast<uint32_t>(long_value);
       in_opnds->push_back(
           {spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER, {val}});
     }
@@ -169,13 +179,16 @@ bool LocalAccessChainConvertPass::GenAccessChainStoreReplacement(
   return true;
 }
 
-bool LocalAccessChainConvertPass::IsConstantIndexAccessChain(
+bool LocalAccessChainConvertPass::Is32BitConstantIndexAccessChain(
     const Instruction* acp) const {
   uint32_t inIdx = 0;
   return acp->WhileEachInId([&inIdx, this](const uint32_t* tid) {
     if (inIdx > 0) {
       Instruction* opInst = get_def_use_mgr()->GetDef(*tid);
       if (opInst->opcode() != SpvOpConstant) return false;
+      const auto* index =
+          context()->get_constant_mgr()->GetConstantFromInst(opInst);
+      if (index->GetSignExtendedValue() > UINT32_MAX) return false;
     }
     ++inIdx;
     return true;
@@ -231,7 +244,7 @@ void LocalAccessChainConvertPass::FindTargetVars(Function* func) {
             break;
           }
           // Rule out variables accessed with non-constant indices
-          if (!IsConstantIndexAccessChain(ptrInst)) {
+          if (!Is32BitConstantIndexAccessChain(ptrInst)) {
             seen_non_target_vars_.insert(varId);
             seen_target_vars_.erase(varId);
             break;
@@ -349,12 +362,6 @@ bool LocalAccessChainConvertPass::AllExtensionsSupported() const {
 }
 
 Pass::Status LocalAccessChainConvertPass::ProcessImpl() {
-  // If non-32-bit integer type in module, terminate processing
-  // TODO(): Handle non-32-bit integer constants in access chains
-  for (const Instruction& inst : get_module()->types_values())
-    if (inst.opcode() == SpvOpTypeInt &&
-        inst.GetSingleWordInOperand(kTypeIntWidthInIdx) != 32)
-      return Status::SuccessWithoutChange;
   // Do not process if module contains OpGroupDecorate. Additional
   // support required in KillNamesAndDecorates().
   // TODO(greg-lunarg): Add support for OpGroupDecorate
