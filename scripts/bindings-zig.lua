@@ -122,11 +122,13 @@ end
 local function wrap_simple_func(func, args, argNames)
 	local zigFunc = {}
 	local zigFuncTemplate = [[pub inline fn $func($params) $ret {
-  return $cfunc($args);
+    return $cfunc($args);
 }]]
 
 	-- transform name to camelCase from snake_case
 	zigFunc.func = func.cname:gsub("_(.)", func.cname.upper)
+	-- make 2d/3d upper case 2D/3D
+	zigFunc.func = zigFunc.func:gsub("%dd", zigFunc.func.upper);
 	zigFunc.params = table.concat(args, ", ")
 	zigFunc.ret = convert_ret_type(func.ret)
 	zigFunc.cfunc = "bgfx_" .. func.cname
@@ -137,7 +139,7 @@ end
 local function wrap_method(func, type, args, argNames, indent)
 	local zigFunc = {}
 	local zigFuncTemplate = [[%spub inline fn $func($params) $ret {
-  %sreturn $cfunc($args);
+    %sreturn $cfunc($args);
 %s}]]
 
 	zigFuncTemplate = string.format(zigFuncTemplate, indent, indent, indent);
@@ -148,6 +150,8 @@ local function wrap_method(func, type, args, argNames, indent)
 	zigFunc.func = gisub(zigFunc.func, type, "");
 	-- make first letter lowercase
 	zigFunc.func = zigFunc.func:gsub("^%L", string.lower)
+	-- make 2d/3d upper case 2D/3D
+	zigFunc.func = zigFunc.func:gsub("%dd", zigFunc.func.upper);
 	zigFunc.params = table.concat(args, ", ")
 	zigFunc.ret = convert_ret_type(func.ret)
 	-- remove C API pointer [*c] for fluent interfaces
@@ -239,6 +243,8 @@ local function FlagBlock(typ)
 		end
 
 		local flagName = flag.name:gsub("_", "")
+		-- make 2d/3d upper case 2D/3D
+		flagName = flagName:gsub("%dd", flagName.upper);
 		yield("pub const " .. name .. "_" .. flagName .. ": " .. name .. string.rep(" ", 22 - #(flagName)) .. " = " ..
 			string.format(flag.format or format, flag.value) .. ";")
 	end
