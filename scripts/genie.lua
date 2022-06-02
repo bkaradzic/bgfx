@@ -601,9 +601,9 @@ or _OPTIONS["with-combined-examples"] then
 		)
 
 	-- 17-drawstress requires multithreading, does not compile for singlethreaded wasm
---	if platform is not single-threaded then
+	if premake.gcc.namestyle == nil or not premake.gcc.namestyle == "Emscripten" then
 		exampleProject(false, "17-drawstress")
---	end
+	end
 
 	-- C99 source doesn't compile under WinRT settings
 	if not premake.vstudio.iswinrt() then
