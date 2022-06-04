@@ -441,14 +441,6 @@ function exampleProjectDefaults()
 			path.join(BGFX_DIR, "examples/runtime/tvOS-Info.plist"),
 		}
 
-
-	configuration { "qnx*" }
-		targetextension ""
-		links {
-			"EGL",
-			"GLESv2",
-		}
-
 	configuration {}
 
 	strip()
