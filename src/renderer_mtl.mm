@@ -2113,15 +2113,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			murmur.add(independentBlendEnable ? _rgba : 0);
 			murmur.add(_numInstanceData);
 
-			if (!isValid(_fbh) )
-			{
-				murmur.add(m_mainFrameBuffer.m_pixelFormatHash);
-			}
-			else
-			{
-				FrameBufferMtl& frameBuffer = m_frameBuffers[_fbh.idx];
-				murmur.add(frameBuffer.m_pixelFormatHash);
-			}
+			murmur.add(_fbh.idx);
 
 			murmur.add(program.m_vsh->m_hash);
 			if (NULL != program.m_fsh)
@@ -3399,15 +3391,6 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			desc.pixelFormat = m_metalLayer.pixelFormat;
 			m_backBufferColorMsaa = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 		}
-
-		bx::HashMurmur2A murmur;
-		murmur.begin();
-		murmur.add(1);
-		murmur.add( (uint32_t)m_metalLayer.pixelFormat);
-		murmur.add( (uint32_t)m_backBufferDepth.pixelFormat() );
-		murmur.add( (uint32_t)m_backBufferStencil.pixelFormat() );
-		murmur.add( (uint32_t)sampleCount);
-		_frameBuffer.m_pixelFormatHash = murmur.end();
 	}
 
 	id <MTLTexture> SwapChainMtl::currentDrawableTexture()
@@ -3488,35 +3471,6 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				}
 			}
 		}
-
-		bx::HashMurmur2A murmur;
-		murmur.begin();
-		murmur.add(m_num);
-
-		for (uint32_t ii = 0; ii < m_num; ++ii)
-		{
-			const TextureMtl& texture = s_renderMtl->m_textures[m_colorHandle[ii].idx];
-			murmur.add(uint32_t(texture.m_ptr.pixelFormat() ) );
-		}
-
-		if (!isValid(m_depthHandle) )
-		{
-			murmur.add(uint32_t(MTLPixelFormatInvalid) );
-			murmur.add(uint32_t(MTLPixelFormatInvalid) );
-		}
-		else
-		{
-			const TextureMtl& depthTexture = s_renderMtl->m_textures[m_depthHandle.idx];
-			murmur.add(uint32_t(depthTexture.m_ptr.pixelFormat() ) );
-			murmur.add(NULL != depthTexture.m_ptrStencil
-				? uint32_t(depthTexture.m_ptrStencil.pixelFormat() )
-				: uint32_t(MTLPixelFormatInvalid)
-				);
-		}
-
-		murmur.add(1); // SampleCount
-
-		m_pixelFormatHash = murmur.end();
 	}
 
 	void FrameBufferMtl::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)

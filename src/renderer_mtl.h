@@ -1062,7 +1062,6 @@ namespace bgfx { namespace mtl
 			: m_swapChain(NULL)
 			, m_nwh(NULL)
 			, m_denseIdx(UINT16_MAX)
-			, m_pixelFormatHash(0)
 			, m_num(0)
 		{
 			m_depthHandle.idx = kInvalidHandle;
@@ -1087,8 +1086,6 @@ namespace bgfx { namespace mtl
 		uint32_t m_width;
 		uint32_t m_height;
 		uint16_t m_denseIdx;
-
-		uint32_t m_pixelFormatHash;
 
 		TextureHandle m_colorHandle[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		TextureHandle m_depthHandle;
