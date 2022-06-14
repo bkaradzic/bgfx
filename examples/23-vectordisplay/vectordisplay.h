@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Kai Jourdan. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef __VECTORDISPLAY_H__
@@ -64,10 +64,10 @@ public:
 	// Set the number of frames of decay/fade to apply to the scene.
 	bool setDecaySteps(int _steps);
 
-	// Set the brightness multipler applied on each decay frame after the first.
+	// Set the brightness multiplier applied on each decay frame after the first.
 	bool setDecay(float _decay);
 
-	// Set the brightness multipler applied on the first decay frame.
+	// Set the brightness multiplier applied on the first decay frame.
 	bool setInitialDecay(float _initialDecay);
 
 	// Set a 2d transformation for the display.

@@ -267,6 +267,7 @@ private:
 
 	void emit_struct_member(const SPIRType &type, uint32_t member_type_id, uint32_t index, const std::string &qualifier,
 	                        uint32_t base_offset = 0) override;
+	void emit_rayquery_function(const char *commited, const char *candidate, const uint32_t *ops);
 
 	const char *to_storage_qualifiers_glsl(const SPIRVariable &var) override;
 	void replace_illegal_names() override;

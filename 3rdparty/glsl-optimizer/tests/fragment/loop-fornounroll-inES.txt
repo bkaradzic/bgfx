@@ -1,7 +1,0 @@
-void main() {
-    int i = 0;
-    float f = 0.0;
-    for (; i < 32; (++i))
-        f += gl_FragCoord.x * float(i);
-    gl_FragColor = vec4(f);
-}

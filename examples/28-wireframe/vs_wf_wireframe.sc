@@ -3,7 +3,7 @@ $output v_view, v_bc
 
 /*
  * Copyright 2016 Dario Manesku. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "../common/common.sh"

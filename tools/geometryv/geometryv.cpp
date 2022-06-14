@@ -1,6 +1,6 @@
 /*
  * Copyright 2019-2019 Attila Kocsis. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "common.h"
@@ -659,7 +659,7 @@ void help(const char* _error = NULL)
 	bx::printf(
 		  "geometryv, bgfx geometry viewer tool, version %d.%d.%d.\n"
 		  "Copyright 2019-2019 Attila Kocsis. All rights reserved.\n"
-		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
+		  "License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE\n\n"
 		, BGFX_GEOMETRYV_VERSION_MAJOR
 		, BGFX_GEOMETRYV_VERSION_MINOR
 		, BGFX_API_VERSION
@@ -1127,7 +1127,7 @@ int _main_(int _argc, char** _argv)
 				ImGui::Text(
 					"geometryv, bgfx geometry viewer tool " ICON_KI_WRENCH ", version %d.%d.%d.\n"
 					"Copyright 2019-2019 Attila Kocsis. All rights reserved.\n"
-					"License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n"
+					"License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE\n"
 					, BGFX_GEOMETRYV_VERSION_MAJOR
 					, BGFX_GEOMETRYV_VERSION_MINOR
 					, BGFX_API_VERSION

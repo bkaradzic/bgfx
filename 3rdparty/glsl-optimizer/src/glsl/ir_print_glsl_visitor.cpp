@@ -756,6 +756,16 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 			buffer.asprintf_append (")");
 		}
 	}
+	else if (ir->operation == ir_triop_csel)
+	{
+		buffer.asprintf_append ("mix(");
+		ir->operands[2]->accept(this);
+		buffer.asprintf_append (", ");
+		ir->operands[1]->accept(this);
+		buffer.asprintf_append (", bvec%d(", ir->operands[1]->type->vector_elements);
+		ir->operands[0]->accept(this);
+		buffer.asprintf_append ("))");
+	}
 	else if (ir->operation == ir_binop_vector_extract)
 	{
 		// a[b]

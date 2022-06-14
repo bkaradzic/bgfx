@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef BGFX_VERTEXDECL_H_HEADER_GUARD
@@ -13,6 +13,9 @@ namespace bgfx
 {
 	///
 	void initAttribTypeSizeTable(RendererType::Enum _type);
+
+	///
+	bool isFloat(AttribType::Enum _type);
 
 	/// Returns attribute name.
 	const char* getAttribName(Attrib::Enum _attr);

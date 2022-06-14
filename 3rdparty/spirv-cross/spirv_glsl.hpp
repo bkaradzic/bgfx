@@ -83,6 +83,11 @@ public:
 
 		// Debug option to always emit temporary variables for all expressions.
 		bool force_temporary = false;
+		// Debug option, can be increased in an attempt to workaround SPIRV-Cross bugs temporarily.
+		// If this limit has to be increased, it points to an implementation bug.
+		// In certain scenarios, the maximum number of debug iterations may increase beyond this limit
+		// as long as we can prove we're making certain kinds of forward progress.
+		uint32_t force_recompile_max_debug_iterations = 3;
 
 		// If true, Vulkan GLSL features are used instead of GL-compatible features.
 		// Mostly useful for debugging SPIR-V files.
@@ -132,6 +137,13 @@ public:
 		// In GLSL, force use of I/O block flattening, similar to
 		// what happens on legacy GLSL targets for blocks and structs.
 		bool force_flattened_io_blocks = false;
+
+		// For opcodes where we have to perform explicit additional nan checks, very ugly code is generated.
+		// If we opt-in, ignore these requirements.
+		// In opcodes like NClamp/NMin/NMax and FP compare, ignore NaN behavior.
+		// Use FClamp/FMin/FMax semantics for clamps and lets implementation choose ordered or unordered
+		// compares.
+		bool relax_nan_checks = false;
 
 		// If non-zero, controls layout(num_views = N) in; in GL_OVR_multiview2.
 		uint32_t ovr_multiview_view_count = 0;
@@ -342,7 +354,7 @@ protected:
 	// TODO remove this function when all subgroup ops are supported (or make it always return true)
 	static bool is_supported_subgroup_op_in_opengl(spv::Op op);
 
-	void reset();
+	void reset(uint32_t iteration_count);
 	void emit_function(SPIRFunction &func, const Bitset &return_flags);
 
 	bool has_extension(const std::string &ext) const;
@@ -356,7 +368,18 @@ protected:
 	bool current_emitting_switch_fallthrough = false;
 
 	virtual void emit_instruction(const Instruction &instr);
+	struct TemporaryCopy
+	{
+		uint32_t dst_id;
+		uint32_t src_id;
+	};
+	TemporaryCopy handle_instruction_precision(const Instruction &instr);
 	void emit_block_instructions(SPIRBlock &block);
+
+	// For relax_nan_checks.
+	GLSLstd450 get_remapped_glsl_op(GLSLstd450 std450_op) const;
+	spv::Op get_remapped_spirv_op(spv::Op op) const;
+
 	virtual void emit_glsl_op(uint32_t result_type, uint32_t result_id, uint32_t op, const uint32_t *args,
 	                          uint32_t count);
 	virtual void emit_spv_amd_shader_ballot_op(uint32_t result_type, uint32_t result_id, uint32_t op,
@@ -385,7 +408,7 @@ protected:
 	                                const std::string &qualifier = "", uint32_t base_offset = 0);
 	virtual void emit_struct_padding_target(const SPIRType &type);
 	virtual std::string image_type_glsl(const SPIRType &type, uint32_t id = 0);
-	std::string constant_expression(const SPIRConstant &c);
+	std::string constant_expression(const SPIRConstant &c, bool inside_block_like_struct_scope = false);
 	virtual std::string constant_op_expression(const SPIRConstantOp &cop);
 	virtual std::string constant_expression_vector(const SPIRConstant &c, uint32_t vector);
 	virtual void emit_fixup();
@@ -495,6 +518,7 @@ protected:
 	// on a single line separated by comma.
 	SmallVector<std::string> *redirect_statement = nullptr;
 	const SPIRBlock *current_continue_block = nullptr;
+	bool block_temporary_hoisting = false;
 
 	void begin_scope();
 	void end_scope();
@@ -577,7 +601,7 @@ protected:
 		bool supports_extensions = false;
 		bool supports_empty_struct = false;
 		bool array_is_value_type = true;
-		bool buffer_offset_array_is_value_type = true;
+		bool array_is_value_type_in_buffer_blocks = true;
 		bool comparison_image_samples_scalar = false;
 		bool native_pointers = false;
 		bool support_small_type_sampling_result = false;
@@ -586,6 +610,9 @@ protected:
 		bool needs_row_major_load_workaround = false;
 		bool support_pointer_to_pointer = false;
 		bool support_precise_qualifier = false;
+		bool support_64bit_switch = false;
+		bool workgroup_size_is_hidden = false;
+		bool requires_relaxed_precision_analysis = false;
 	} backend;
 
 	void emit_struct(SPIRType &type);
@@ -609,6 +636,7 @@ protected:
 	void emit_block_chain(SPIRBlock &block);
 	void emit_hoisted_temporaries(SmallVector<std::pair<TypeID, ID>> &temporaries);
 	std::string constant_value_macro_name(uint32_t id);
+	int get_constant_mapping_to_workgroup_component(const SPIRConstant &constant) const;
 	void emit_constant(const SPIRConstant &constant);
 	void emit_specialization_constant_op(const SPIRConstantOp &constant);
 	std::string emit_continue_block(uint32_t continue_block, bool follow_true_block, bool follow_false_block);
@@ -715,7 +743,7 @@ protected:
 	void append_global_func_args(const SPIRFunction &func, uint32_t index, SmallVector<std::string> &arglist);
 	std::string to_non_uniform_aware_expression(uint32_t id);
 	std::string to_expression(uint32_t id, bool register_expression_read = true);
-	std::string to_composite_constructor_expression(uint32_t id, bool uses_buffer_offset);
+	std::string to_composite_constructor_expression(uint32_t id, bool block_like_type);
 	std::string to_rerolled_array_expression(const std::string &expr, const SPIRType &type);
 	std::string to_enclosed_expression(uint32_t id, bool register_expression_read = true);
 	std::string to_unpacked_expression(uint32_t id, bool register_expression_read = true);
@@ -787,6 +815,10 @@ protected:
 	void replace_fragment_output(SPIRVariable &var);
 	void replace_fragment_outputs();
 	std::string legacy_tex_op(const std::string &op, const SPIRType &imgtype, uint32_t id);
+
+	void forward_relaxed_precision(uint32_t dst_id, const uint32_t *args, uint32_t length);
+	void analyze_precision_requirements(uint32_t type_id, uint32_t dst_id, uint32_t *args, uint32_t length);
+	Options::Precision analyze_expression_precision(const uint32_t *args, uint32_t length) const;
 
 	uint32_t indent = 0;
 
@@ -878,7 +910,13 @@ protected:
 
 	void check_function_call_constraints(const uint32_t *args, uint32_t length);
 	void handle_invalid_expression(uint32_t id);
+	void force_temporary_and_recompile(uint32_t id);
 	void find_static_extensions();
+
+	uint32_t consume_temporary_in_precision_context(uint32_t type_id, uint32_t id, Options::Precision precision);
+	std::unordered_map<uint32_t, uint32_t> temporary_to_mirror_precision_alias;
+	std::unordered_set<uint32_t> composite_insert_overwritten;
+	std::unordered_set<uint32_t> block_composite_insert_overwrite;
 
 	std::string emit_for_loop_initializers(const SPIRBlock &block);
 	void emit_while_loop_initializers(const SPIRBlock &block);
@@ -925,6 +963,8 @@ protected:
 
 	void fixup_type_alias();
 	void reorder_type_alias();
+	void fixup_anonymous_struct_names();
+	void fixup_anonymous_struct_names(std::unordered_set<uint32_t> &visited, const SPIRType &type);
 
 	static const char *vector_swizzle(int vecsize, int index);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -326,6 +326,72 @@ namespace bgfx
 		};
 	};
 
+	struct DxbcPrimitiveTopology
+	{
+		enum Enum
+		{
+			Unknown,
+			PointList,
+			LineList,
+			LineStrip,
+			TriangleList,
+			TriangleStrip,
+			LineListAdj = 10,
+			LineStripAdj,
+			TriangleListAdj,
+			TriangleStripAdj,
+
+			Count
+		};
+	};
+
+	struct DxbcPrimitive
+	{
+		enum Enum
+		{
+			Unknown,
+			Point,
+			Line,
+			Triangle,
+			LineAdj = 6,
+			TriangleAdj,
+			_1ControlPointPatch,
+			_2ControlPointPatch,
+			_3ControlPointPatch,
+			_4ControlPointPatch,
+			_5ControlPointPatch,
+			_6ControlPointPatch,
+			_7ControlPointPatch,
+			_8ControlPointPatch,
+			_9ControlPointPatch,
+			_10ControlPointPatch,
+			_11ControlPointPatch,
+			_12ControlPointPatch,
+			_13ControlPointPatch,
+			_14ControlPointPatch,
+			_15ControlPointPatch,
+			_16ControlPointPatch,
+			_17ControlPointPatch,
+			_18ControlPointPatch,
+			_19ControlPointPatch,
+			_20ControlPointPatch,
+			_21ControlPointPatch,
+			_22ControlPointPatch,
+			_23ControlPointPatch,
+			_24ControlPointPatch,
+			_25ControlPointPatch,
+			_26ControlPointPatch,
+			_27ControlPointPatch,
+			_28ControlPointPatch,
+			_29ControlPointPatch,
+			_30ControlPointPatch,
+			_31ControlPointPatch,
+			_32ControlPointPatch,
+
+			Count
+		};
+	};
+
 	struct DxbcResourceReturnType
 	{
 		enum Enum
@@ -560,6 +626,12 @@ namespace bgfx
 
 		//
 		DxbcInterpolation::Enum interpolation;
+
+		//
+		DxbcPrimitiveTopology::Enum primitiveTopology;
+
+		//
+		DxbcPrimitive::Enum primitive;
 
 		//
 		bool shadow;

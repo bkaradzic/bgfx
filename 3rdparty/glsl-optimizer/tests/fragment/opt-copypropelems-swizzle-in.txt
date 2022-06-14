@@ -1,8 +1,0 @@
-varying vec2 uv;
-uniform sampler2D tex;
-void main() {
-	vec4 v = texture2D (tex, uv);
-	v.xy = v.yx;
-	v.x = -v.x;
-	gl_FragColor = v;
-}

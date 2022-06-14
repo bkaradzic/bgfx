@@ -49,7 +49,6 @@ Supported rendering backends:
 Supported platforms:
 
  * Android (14+, ARM, x86, MIPS)
- * asm.js/Emscripten (1.25.0)
  * FreeBSD
  * iOS (iPhone, iPad, AppleTV)
  * Linux
@@ -57,8 +56,9 @@ Supported platforms:
  * OSX (10.12+)
  * PlayStation 4
  * RaspberryPi
- * Windows (XP, Vista, 7, 8, 10)
  * UWP (Universal Windows, Xbox One)
+ * Wasm/Emscripten
+ * Windows (XP, Vista, 7, 8, 10)
 
 Supported compilers:
 
@@ -71,7 +71,6 @@ Languages:
  * [C/C++ API documentation](https://bkaradzic.github.io/bgfx/bgfx.html)
  * [Beef API bindings](https://github.com/bkaradzic/bgfx/tree/master/bindings/bf)
  * [C# language API bindings #1](https://github.com/bkaradzic/bgfx/tree/master/bindings/cs)
- * [C#/VB/F# language API bindings #2](https://github.com/MikePopoloski/SharpBgfx)
  * [D language API bindings](https://github.com/GoaLitiuM/bindbc-bgfx)
  * [Go language API bindings](https://github.com/james4k/go-bgfx)
  * [Haskell language API bindings](https://github.com/haskell-game/bgfx)
@@ -81,12 +80,12 @@ Languages:
  * [Pascal language API bindings](https://github.com/Akira13641/PasBGFX)
  * [Python language API bindings #1](https://github.com/fbertola/bgfx-python#-----bgfx-python--)
  * [Python language API bindings #2](https://github.com/jnadro/pybgfx#pybgfx)
- * [Rust language API bindings (obsolete)](https://github.com/rhoot/bgfx-rs)
  * [Rust language API bindings (new)](https://github.com/emoon/bgfx-rs)
  * [Swift language API bindings](https://github.com/stuartcarnie/SwiftBGFX)
+ * [Zig language API bindings](https://github.com/bkaradzic/bgfx/tree/master/bindings/zig)
 
-Who is using it? [#madewithbgfx](https://twitter.com/search?q=%23madewithbgfx&f=live)
--------------------------------------------------------------------------------------
+Who is using it? [#madewithbgfx](https://twitter.com/search?q=%23madewithbgfx&src=typed_query&f=live)
+-----------------------------------------------------------------------------------------------------
 
 ## Airmech
 
@@ -488,6 +487,17 @@ https://www.guildwars2.com/
 
 ![Guild-Wars-2-wallpaper](https://d3b4yo2b5lbfy.cloudfront.net/wp-content/uploads/wallpapers/GuildWars2-01-800x600.jpg)
 
+## Griftlands
+
+Griftlands is a roguelike deck-building game with role-playing story elements in a science fiction setting, developed and published by Klei Entertainment.
+
+https://klei.com/games/griftlands
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=ufl14_Ne5Lg" 
+target="_blank"><img src="http://img.youtube.com/vi/ufl14_Ne5Lg/0.jpg" 
+alt="Griftlands"
+width="640" height="480" border="0" /></a>
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
@@ -495,7 +505,7 @@ https://www.guildwars2.com/
 <img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
 </a>
 
-	Copyright 2010-2021 Branimir Karadzic
+	Copyright 2010-2022 Branimir Karadzic
 	
 	Redistribution and use in source and binary forms, with or without modification,
 	are permitted provided that the following conditions are met:

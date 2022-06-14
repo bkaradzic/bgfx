@@ -62,7 +62,6 @@ project ("texturev")
 		configuration { "osx*" }
 			linkoptions {
 				"-framework CoreVideo",
-				"-framework IOKit",
 			}
 
 		configuration {}
@@ -148,9 +147,10 @@ project ("texturev")
 	configuration { "osx*" }
 		linkoptions {
 			"-framework Cocoa",
+			"-framework IOKit",
 			"-framework Metal",
-			"-framework QuartzCore",
 			"-framework OpenGL",
+			"-framework QuartzCore",
 		}
 
 	configuration { "ios*" }
@@ -158,9 +158,10 @@ project ("texturev")
 		linkoptions {
 			"-framework CoreFoundation",
 			"-framework Foundation",
+			"-framework IOKit",
 			"-framework OpenGLES",
-			"-framework UIKit",
 			"-framework QuartzCore",
+			"-framework UIKit",
 		}
 
 	configuration { "xcode*", "ios" }

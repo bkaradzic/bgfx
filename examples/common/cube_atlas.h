@@ -1,6 +1,6 @@
 ﻿/*
  * Copyright 2013 Jeremie Roy. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef CUBE_ATLAS_H_HEADER_GUARD

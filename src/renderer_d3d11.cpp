@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "bgfx_p.h"
@@ -4721,8 +4721,10 @@ namespace bgfx { namespace d3d11
 	void TextureD3D11::overrideInternal(uintptr_t _ptr)
 	{
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+
 		const bool readable = (m_srv != NULL);
-		if (readable) {
+		if (readable)
+		{
 			m_srv->GetDesc(&srvDesc);
 		}
 
@@ -4730,7 +4732,8 @@ namespace bgfx { namespace d3d11
 		m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
 		m_ptr = (ID3D11Resource*)_ptr;
 
-		if (readable) {
+		if (readable)
+		{
 			s_renderD3D11->m_device->CreateShaderResourceView(m_ptr, &srvDesc, &m_srv);
 		}
 	}

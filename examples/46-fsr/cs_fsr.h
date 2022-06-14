@@ -1,6 +1,6 @@
 /*
 * Copyright 2021 Richard Schubert. All rights reserved.
-* License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+* License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 *
 * AMD FidelityFX Super Resolution 1.0 (FSR)
 * Port from https://github.com/GPUOpen-Effects/FidelityFX-FSR/blob/master/sample/src/VK/FSR_Pass.glsl

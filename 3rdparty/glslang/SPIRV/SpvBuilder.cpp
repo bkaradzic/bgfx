@@ -433,11 +433,11 @@ Id Builder::makeGenericType(spv::Op opcode, std::vector<spv::IdImmediate>& opera
     Instruction* type;
     for (int t = 0; t < (int)groupedTypes[opcode].size(); ++t) {
         type = groupedTypes[opcode][t];
-        if (type->getNumOperands() != operands.size())
+        if (static_cast<size_t>(type->getNumOperands()) != operands.size())
             continue; // Number mismatch, find next
 
         bool match = true;
-        for (int op = 0; match && op < operands.size(); ++op) {
+        for (int op = 0; match && op < (int)operands.size(); ++op) {
             match = (operands[op].isId ? type->getIdOperand(op) : type->getImmediateOperand(op)) == operands[op].word;
         }
         if (match)
@@ -446,7 +446,7 @@ Id Builder::makeGenericType(spv::Op opcode, std::vector<spv::IdImmediate>& opera
 
     // not found, make it
     type = new Instruction(getUniqueId(), NoType, opcode);
-    for (int op = 0; op < operands.size(); ++op) {
+    for (size_t op = 0; op < operands.size(); ++op) {
         if (operands[op].isId)
             type->addIdOperand(operands[op].word);
         else

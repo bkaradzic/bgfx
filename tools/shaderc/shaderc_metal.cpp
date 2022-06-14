@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "shaderc.h"
@@ -437,6 +437,11 @@ namespace bgfx { namespace metal
 					{
 						Uniform un;
 						un.name = program->getUniformName(ii);
+
+						if (bx::hasSuffix(un.name.c_str(), ".@data") )
+						{
+							continue;
+						}
 
 						un.num = uint8_t(program->getUniformArraySize(ii) );
 						const uint32_t offset = program->getUniformBufferOffset(ii);

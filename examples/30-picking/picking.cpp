@@ -1,6 +1,6 @@
 /*
  * Copyright 2016 Joseph Cherlin. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "common.h"
@@ -54,7 +54,7 @@ public:
 			, 0
 			);
 
-		// ID buffer clears to black, which represnts clicking on nothing (background)
+		// ID buffer clears to black, which represents clicking on nothing (background)
 		bgfx::setViewClear(RENDER_PASS_ID
 			, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
 			, 0x000000ff

@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef BGFX_SHADER_H_HEADER_GUARD
@@ -22,7 +22,7 @@
 #	define UNROLL
 #endif // BGFX_SHADER_LANGUAGE_HLSL > 300
 
-#if BGFX_SHADER_LANGUAGE_HLSL > 300 && BGFX_SHADER_TYPE_FRAGMENT
+#if (BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_METAL || BGFX_SHADER_LANGUAGE_SPIRV) && BGFX_SHADER_TYPE_FRAGMENT
 #	define EARLY_DEPTH_STENCIL [earlydepthstencil]
 #else
 #	define EARLY_DEPTH_STENCIL
@@ -52,7 +52,7 @@
 
 // To be able to patch the uav registers on the DXBC SPDB Chunk (D3D11 renderer) the whitespaces around
 // '_type[_reg]' are necessary. This only affects shaders with debug info (i.e., those that have the SPDB Chunk).
-#	if BGFX_SHADER_LANGUAGE_HLSL > 400
+#	if BGFX_SHADER_LANGUAGE_HLSL > 400 || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
 #		define REGISTER(_type, _reg) register( _type[_reg] )
 #	else
 #		define REGISTER(_type, _reg) register(_type ## _reg)
@@ -608,6 +608,7 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #		define texture2D(_sampler, _coord)      texture(_sampler, _coord)
 #		define texture2DArray(_sampler, _coord) texture(_sampler, _coord)
 #		define texture3D(_sampler, _coord)      texture(_sampler, _coord)
+#		define textureCube(_sampler, _coord)    texture(_sampler, _coord)
 #		define texture2DLod(_sampler, _coord, _lod)                textureLod(_sampler, _coord, _lod)
 #		define texture2DLodOffset(_sampler, _coord, _lod, _offset) textureLodOffset(_sampler, _coord, _lod, _offset)
 #	endif // BGFX_SHADER_LANGUAGE_GLSL >= 130

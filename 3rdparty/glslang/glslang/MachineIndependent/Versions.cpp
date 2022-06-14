@@ -334,6 +334,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_ray_tracing]                 = EBhDisable;
     extensionBehavior[E_GL_EXT_ray_query]                   = EBhDisable;
     extensionBehavior[E_GL_EXT_ray_flags_primitive_culling] = EBhDisable;
+    extensionBehavior[E_GL_EXT_ray_cull_mask]               = EBhDisable;
     extensionBehavior[E_GL_EXT_blend_func_extended]         = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_implicit_conversions] = EBhDisable;
     extensionBehavior[E_GL_EXT_fragment_shading_rate]       = EBhDisable;
@@ -505,6 +506,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_ray_tracing 1\n"
             "#define GL_EXT_ray_query 1\n"
             "#define GL_EXT_ray_flags_primitive_culling 1\n"
+            "#define GL_EXT_ray_cull_mask 1\n"
             "#define GL_EXT_spirv_intrinsics 1\n"
 
             "#define GL_AMD_shader_ballot 1\n"

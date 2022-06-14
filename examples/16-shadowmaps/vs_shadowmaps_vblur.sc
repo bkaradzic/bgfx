@@ -3,7 +3,7 @@ $output v_texcoord0, v_texcoord1, v_texcoord2, v_texcoord3, v_texcoord4
 
 /*
  * Copyright 2013-2014 Dario Manesku. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "../common/common.sh"

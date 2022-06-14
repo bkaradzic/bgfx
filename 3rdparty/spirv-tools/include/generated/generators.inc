@@ -30,3 +30,6 @@
 {29, "Mikkosoft Productions", "MSP Shader Compiler", "Mikkosoft Productions MSP Shader Compiler"},
 {30, "SpvGenTwo community", "SpvGenTwo SPIR-V IR Tools", "SpvGenTwo community SpvGenTwo SPIR-V IR Tools"},
 {31, "Google", "Skia SkSL", "Google Skia SkSL"},
+{32, "TornadoVM", "SPIRV Beehive Toolkit", "TornadoVM SPIRV Beehive Toolkit"},
+{33, "DragonJoker", "ShaderWriter", "DragonJoker ShaderWriter"},
+{34, "Rayan Hatout", "SPIRVSmith", "Rayan Hatout SPIRVSmith"},

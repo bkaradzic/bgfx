@@ -3,7 +3,7 @@ $output v_normal
 
 /*
  * Copyright 2019-2019 Attila Kocsis. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include <bgfx_shader.sh>

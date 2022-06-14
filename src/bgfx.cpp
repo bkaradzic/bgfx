@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include <bx/platform.h>
@@ -716,7 +716,7 @@ namespace bgfx
 		s_ctx->destroyTransientIndexBuffer(m_ib);
 	}
 
-	static const uint32_t paletteSrgb[] =
+	static const uint32_t s_paletteSrgb[] =
 	{
 		0x0,        // Black
 		0xffa46534, // Blue
@@ -735,9 +735,9 @@ namespace bgfx
 		0xff4fe9fc, // Yellow
 		0xffeceeee, // White
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(paletteSrgb) == 16);
+	BX_STATIC_ASSERT(BX_COUNTOF(s_paletteSrgb) == 16);
 
-	static const uint32_t paletteLinear[] =
+	static const uint32_t s_paletteLinear[] =
 	{
 		0x0,        // Black
 		0xff5e2108, // Blue
@@ -756,7 +756,7 @@ namespace bgfx
 		0xff13cff8, // Yellow
 		0xffd5dada  // White
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(paletteLinear) == 16);
+	BX_STATIC_ASSERT(BX_COUNTOF(s_paletteLinear) == 16);
 
 	void blit(RendererContextI* _renderCtx, TextVideoMemBlitter& _blitter, const TextVideoMem& _mem)
 	{
@@ -785,8 +785,8 @@ namespace bgfx
 		_renderCtx->blitSetup(_blitter);
 
 		const uint32_t* palette = 0 != (s_ctx->m_init.resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
-			? paletteLinear
-			: paletteSrgb
+			? s_paletteLinear
+			: s_paletteSrgb
 			;
 
 		for (;yy < _mem.m_height;)
@@ -1263,13 +1263,13 @@ namespace bgfx
 
 		m_key.m_view = _id;
 
-		SortKey::Enum type = SortKey::SortProgram;
+		SortKey::Enum type;
 		switch (s_ctx->m_view[_id].m_mode)
 		{
 		case ViewMode::Sequential:      m_key.m_seq   = s_ctx->getSeqIncr(_id); type = SortKey::SortSequence; break;
 		case ViewMode::DepthAscending:  m_key.m_depth =            _depth;      type = SortKey::SortDepth;    break;
 		case ViewMode::DepthDescending: m_key.m_depth = UINT32_MAX-_depth;      type = SortKey::SortDepth;    break;
-		default: break;
+		default:                        m_key.m_depth =            _depth;      type = SortKey::SortProgram;  break;
 		}
 
 		uint64_t key = m_key.encodeDraw(type);
@@ -1591,6 +1591,9 @@ namespace bgfx
 
 			BX_TRACE("");
 		}
+
+		BX_TRACE("GPU device, Device ID: %04x, Vendor ID: %04x", g_caps.deviceId, g_caps.vendorId);
+		BX_TRACE("");
 
 		RendererType::Enum renderers[RendererType::Count];
 		uint8_t num = getSupportedRenderers(BX_COUNTOF(renderers), renderers);
@@ -3842,8 +3845,8 @@ namespace bgfx
 
 	void Encoder::touch(ViewId _id)
 	{
-		ProgramHandle handle = BGFX_INVALID_HANDLE;
-		submit(_id, handle);
+		discard();
+		submit(_id, BGFX_INVALID_HANDLE);
 	}
 
 	void Encoder::submit(ViewId _id, ProgramHandle _program, uint32_t _depth, uint8_t _flags)
@@ -4581,8 +4584,8 @@ namespace bgfx
 			);
 
 		BGFX_ERROR_CHECK(false
-			|| _width  < g_caps.limits.maxTextureSize
-			|| _height < g_caps.limits.maxTextureSize
+			|| _width  <= g_caps.limits.maxTextureSize
+			|| _height <= g_caps.limits.maxTextureSize
 			, _err
 			, BGFX_ERROR_TEXTURE_VALIDATION
 			, "Requested texture width/height is above the `maxTextureSize` limit."
@@ -5301,7 +5304,8 @@ namespace bgfx
 
 	void setIndexBuffer(IndexBufferHandle _handle)
 	{
-		setIndexBuffer(_handle, 0, UINT32_MAX);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setIndexBuffer(_handle);
 	}
 
 	void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
@@ -5312,7 +5316,8 @@ namespace bgfx
 
 	void setIndexBuffer(DynamicIndexBufferHandle _handle)
 	{
-		setIndexBuffer(_handle, 0, UINT32_MAX);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setIndexBuffer(_handle);
 	}
 
 	void setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
@@ -5323,7 +5328,8 @@ namespace bgfx
 
 	void setIndexBuffer(const TransientIndexBuffer* _tib)
 	{
-		setIndexBuffer(_tib, 0, UINT32_MAX);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setIndexBuffer(_tib);
 	}
 
 	void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices)
@@ -5346,7 +5352,8 @@ namespace bgfx
 
 	void setVertexBuffer(uint8_t _stream, VertexBufferHandle _handle)
 	{
-		setVertexBuffer(_stream, _handle, 0, UINT32_MAX);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setVertexBuffer(_stream, _handle);
 	}
 
 	void setVertexBuffer(
@@ -5363,7 +5370,8 @@ namespace bgfx
 
 	void setVertexBuffer(uint8_t _stream, DynamicVertexBufferHandle _handle)
 	{
-		setVertexBuffer(_stream, _handle, 0, UINT32_MAX);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setVertexBuffer(_stream, _handle);
 	}
 
 	void setVertexBuffer(
@@ -5380,7 +5388,8 @@ namespace bgfx
 
 	void setVertexBuffer(uint8_t _stream, const TransientVertexBuffer* _tvb)
 	{
-		setVertexBuffer(_stream, _tvb, 0, UINT32_MAX);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->setVertexBuffer(_stream, _tvb);
 	}
 
 	void setVertexCount(uint32_t _numVertices)
@@ -5427,14 +5436,14 @@ namespace bgfx
 
 	void touch(ViewId _id)
 	{
-		ProgramHandle handle = BGFX_INVALID_HANDLE;
-		submit(_id, handle);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->touch(_id);
 	}
 
 	void submit(ViewId _id, ProgramHandle _program, uint32_t _depth, uint8_t _flags)
 	{
-		OcclusionQueryHandle handle = BGFX_INVALID_HANDLE;
-		submit(_id, _program, handle, _depth, _flags);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->submit(_id, _program, _depth, _flags);
 	}
 
 	void submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth, uint8_t _flags)
@@ -5505,7 +5514,8 @@ namespace bgfx
 
 	void blit(ViewId _id, TextureHandle _dst, uint16_t _dstX, uint16_t _dstY, TextureHandle _src, uint16_t _srcX, uint16_t _srcY, uint16_t _width, uint16_t _height)
 	{
-		blit(_id, _dst, 0, _dstX, _dstY, 0, _src, 0, _srcX, _srcY, 0, _width, _height, 0);
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->blit(_id, _dst, _dstX, _dstY, _src, _srcX, _srcY, _width, _height);
 	}
 
 	void blit(ViewId _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)

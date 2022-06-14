@@ -1,7 +1,0 @@
-struct SurfaceOutput {
-	vec4 color;
-};
-void main() {
-    SurfaceOutput o;
-	gl_FragColor = vec4(0.0);
-}

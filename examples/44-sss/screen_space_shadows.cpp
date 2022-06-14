@@ -1,6 +1,6 @@
 /*
 * Copyright 2021 elven cache. All rights reserved.
-* License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+* License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 */
 
 /*
@@ -787,7 +787,7 @@ public:
 	// Shader uniforms
 	Uniforms m_uniforms;
 
-	// Uniforms to indentify texture samplers
+	// Uniforms to identify texture samplers
 	bgfx::UniformHandle s_albedo;
 	bgfx::UniformHandle s_color;
 	bgfx::UniformHandle s_normal;

@@ -1,8 +1,0 @@
-uniform float value;
-uniform float otherValue;
-void main()
-{
-	float invValue = 1.0 / value;
-	float result = otherValue / invValue;
-	gl_FragColor = vec4(result);
-}

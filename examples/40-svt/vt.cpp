@@ -1,6 +1,6 @@
 /*
  * Copyright 2018 Ales Mlakar. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
  /*
@@ -440,7 +440,7 @@ PageTable::PageTable(PageCache* _cache, VirtualTextureInfo* _info, PageIndexer* 
 {
 	auto size = m_info->GetPageTableSize();
 	m_quadtree = BX_NEW(VirtualTexture::getAllocator(), Quadtree)({ 0, 0, size, size }, (int)bx::log2((float)size));
-	m_texture = bgfx::createTexture2D((uint16_t)size, (uint16_t)size, true, 1, bgfx::TextureFormat::BGRA8, BGFX_SAMPLER_UVW_CLAMP | BGFX_SAMPLER_POINT);
+	m_texture = bgfx::createTexture2D((uint16_t)size, (uint16_t)size, true, 1, bgfx::TextureFormat::BGRA8, BGFX_SAMPLER_UVW_CLAMP | BGFX_SAMPLER_POINT | BGFX_TEXTURE_BLIT_DST);
 
 	_cache->added = [=](Page page, Point pt) { m_quadtreeDirty = true; m_quadtree->add(page, pt); };
 	_cache->removed = [=](Page page, Point pt) { m_quadtreeDirty = true; m_quadtree->remove(page); BX_UNUSED(pt); };
@@ -712,7 +712,7 @@ TextureAtlas::TextureAtlas(VirtualTextureInfo* _info, int _count, int _uploadspe
 		, false
 		, 1
 		, bgfx::TextureFormat::BGRA8
-		, BGFX_SAMPLER_UVW_CLAMP
+		, BGFX_SAMPLER_UVW_CLAMP | BGFX_TEXTURE_BLIT_DST
 		);
 }
 

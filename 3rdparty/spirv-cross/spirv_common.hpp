@@ -24,7 +24,11 @@
 #ifndef SPIRV_CROSS_COMMON_HPP
 #define SPIRV_CROSS_COMMON_HPP
 
+#ifndef SPV_ENABLE_UTILITY_CODE
+#define SPV_ENABLE_UTILITY_CODE
+#endif
 #include "spirv.hpp"
+
 #include "spirv_cross_containers.hpp"
 #include "spirv_cross_error_handling.hpp"
 #include <functional>
@@ -638,7 +642,8 @@ struct SPIRExtension : IVariant
 		SPV_AMD_shader_ballot,
 		SPV_AMD_shader_explicit_vertex_parameter,
 		SPV_AMD_shader_trinary_minmax,
-		SPV_AMD_gcn_shader
+		SPV_AMD_gcn_shader,
+		NonSemanticDebugPrintf
 	};
 
 	explicit SPIRExtension(Extension ext_)
@@ -672,6 +677,7 @@ struct SPIREntryPoint
 	struct WorkgroupSize
 	{
 		uint32_t x = 0, y = 0, z = 0;
+		uint32_t id_x = 0, id_y = 0, id_z = 0;
 		uint32_t constant = 0; // Workgroup size can be expressed as a constant/spec-constant instead.
 	} workgroup_size;
 	uint32_t invocations = 0;
@@ -689,7 +695,7 @@ struct SPIRExpression : IVariant
 
 	// Only created by the backend target to avoid creating tons of temporaries.
 	SPIRExpression(std::string expr, TypeID expression_type_, bool immutable_)
-	    : expression(move(expr))
+	    : expression(std::move(expr))
 	    , expression_type(expression_type_)
 	    , immutable(immutable_)
 	{
@@ -1071,7 +1077,6 @@ struct SPIRVariable : IVariant
 
 	// Temporaries which can remain forwarded as long as this variable is not modified.
 	SmallVector<ID> dependees;
-	bool forwardable = true;
 
 	bool deferred_declaration = false;
 	bool phi_variable = false;
@@ -1563,6 +1568,7 @@ struct AccessChainMeta
 	bool storage_is_packed = false;
 	bool storage_is_invariant = false;
 	bool flattened_struct = false;
+	bool relaxed_precision = false;
 };
 
 enum ExtendedDecorations
