@@ -130,9 +130,11 @@ namespace bgfx
 
 	static const bool s_attribTypeIsFloat[] =
 	{
+	    false, // Int8
 		false, // Uint8
 		false, // Uint10
 		false, // Int16
+		false, // Uint16
 		true,  // Half
 		true,  // Float
 	};
