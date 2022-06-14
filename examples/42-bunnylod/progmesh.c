@@ -138,7 +138,8 @@ static void
 array_push(struct array *a, int v) {
 	if (a->n >= a->cap) {
 		int *old = a->buffer;
-		a->buffer = (int *)malloc(a->cap * 2 * sizeof(int));
+		a->cap *= 2;
+		a->buffer = (int *)malloc(a->cap * sizeof(int));
 		int i;
 		for (i=0;i<a->n;i++) {
 			a->buffer[i] = old[i];
@@ -495,7 +496,7 @@ Collapse(struct mesh *M, int uid, int vid) {
 static struct vertex *
 MinimumCostEdge(struct mesh *M) {
 	// Find the edge that when collapsed will affect model the least.
-	// This funtion actually returns a Vertex, the second vertex
+	// This function actually returns a Vertex, the second vertex
 	// of the edge (collapse candidate) is stored in the vertex data.
 	// Serious optimization opportunity here: this function currently
 	// does a sequential search through an unsorted Array :-(

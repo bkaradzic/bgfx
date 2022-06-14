@@ -1430,6 +1430,64 @@ FoldingRule FactorAddMuls() {
   };
 }
 
+// Replaces |inst| inplace with an FMA instruction |(x*y)+a|.
+void ReplaceWithFma(Instruction* inst, uint32_t x, uint32_t y, uint32_t a) {
+  uint32_t ext =
+      inst->context()->get_feature_mgr()->GetExtInstImportId_GLSLstd450();
+
+  if (ext == 0) {
+    inst->context()->AddExtInstImport("GLSL.std.450");
+    ext = inst->context()->get_feature_mgr()->GetExtInstImportId_GLSLstd450();
+    assert(ext != 0 &&
+           "Could not add the GLSL.std.450 extended instruction set");
+  }
+
+  std::vector<Operand> operands;
+  operands.push_back({SPV_OPERAND_TYPE_ID, {ext}});
+  operands.push_back({SPV_OPERAND_TYPE_LITERAL_INTEGER, {GLSLstd450Fma}});
+  operands.push_back({SPV_OPERAND_TYPE_ID, {x}});
+  operands.push_back({SPV_OPERAND_TYPE_ID, {y}});
+  operands.push_back({SPV_OPERAND_TYPE_ID, {a}});
+
+  inst->SetOpcode(SpvOpExtInst);
+  inst->SetInOperands(std::move(operands));
+}
+
+// Folds a multiple and add into an Fma.
+//
+// Cases:
+// (x * y) + a = Fma x y a
+// a + (x * y) = Fma x y a
+bool MergeMulAddArithmetic(IRContext* context, Instruction* inst,
+                           const std::vector<const analysis::Constant*>&) {
+  assert(inst->opcode() == SpvOpFAdd);
+
+  if (!inst->IsFloatingPointFoldingAllowed()) {
+    return false;
+  }
+
+  analysis::DefUseManager* def_use_mgr = context->get_def_use_mgr();
+  for (int i = 0; i < 2; i++) {
+    uint32_t op_id = inst->GetSingleWordInOperand(i);
+    Instruction* op_inst = def_use_mgr->GetDef(op_id);
+
+    if (op_inst->opcode() != SpvOpFMul) {
+      continue;
+    }
+
+    if (!op_inst->IsFloatingPointFoldingAllowed()) {
+      continue;
+    }
+
+    uint32_t x = op_inst->GetSingleWordInOperand(0);
+    uint32_t y = op_inst->GetSingleWordInOperand(1);
+    uint32_t a = inst->GetSingleWordInOperand((i + 1) % 2);
+    ReplaceWithFma(inst, x, y, a);
+    return true;
+  }
+  return false;
+}
+
 FoldingRule IntMultipleBy1() {
   return [](IRContext*, Instruction* inst,
             const std::vector<const analysis::Constant*>& constants) {
@@ -2368,7 +2426,7 @@ FoldingRule VectorShuffleFeedingShuffle() {
             // fold.
             return false;
           }
-        } else {
+        } else if (component_index != undef_literal) {
           if (new_feeder_id == 0) {
             // First time through, save the id of the operand the element comes
             // from.
@@ -2382,7 +2440,7 @@ FoldingRule VectorShuffleFeedingShuffle() {
           component_index -= feeder_op0_length;
         }
 
-        if (!feeder_is_op0) {
+        if (!feeder_is_op0 && component_index != undef_literal) {
           component_index += op0_length;
         }
       }
@@ -2543,6 +2601,7 @@ void FoldingRules::AddFoldingRules() {
   rules_[SpvOpFAdd].push_back(MergeAddSubArithmetic());
   rules_[SpvOpFAdd].push_back(MergeGenericAddSubArithmetic());
   rules_[SpvOpFAdd].push_back(FactorAddMuls());
+  rules_[SpvOpFAdd].push_back(MergeMulAddArithmetic);
 
   rules_[SpvOpFDiv].push_back(RedundantFDiv());
   rules_[SpvOpFDiv].push_back(ReciprocalFDiv());

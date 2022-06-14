@@ -1,6 +1,6 @@
 /*
  * Copyright 2013 Jeremie Roy. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef FONT_MANAGER_H_HEADER_GUARD
@@ -181,7 +181,7 @@ public:
 	/// @remark the handle is required to be valid
 	const FontInfo& getFontInfo(FontHandle _handle) const;
 
-	/// Return the rendering informations about the glyph region. Load the
+	/// Return the rendering information about the glyph region. Load the
 	/// glyph from a TrueType font if possible
 	///
 	const GlyphInfo* getGlyphInfo(FontHandle _handle, CodePoint _codePoint);

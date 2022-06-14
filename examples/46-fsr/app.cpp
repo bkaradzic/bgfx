@@ -1,6 +1,6 @@
 /*
  * Copyright 2021 Richard Schubert. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  *
  * AMD FidelityFX Super Resolution 1.0 (FSR)
  * Based on https://github.com/GPUOpen-Effects/FidelityFX-FSR/blob/master/sample/
@@ -179,7 +179,7 @@ namespace
 		// Shader uniforms
 		ModelUniforms m_modelUniforms;
 
-		// Uniforms to indentify texture samplers
+		// Uniforms to identify texture samplers
 		bgfx::UniformHandle s_albedo;
 		bgfx::UniformHandle s_color;
 		bgfx::UniformHandle s_normal;

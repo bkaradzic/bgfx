@@ -1,9 +1,0 @@
-uniform vec4 uniColors[4];
-varying vec4 varColor;
-void main() {
-	gl_Position = gl_Vertex;
-	vec4 col = vec4(0.0);
-	for (int i = 0; i < 4; ++i)
-		col += max (vec4(0.0), uniColors[i]);
-	varColor = col;
-}

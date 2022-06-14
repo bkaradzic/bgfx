@@ -1,9 +1,0 @@
-#version 300 es
-out lowp vec4 _fragData[4];
-void main()
-{
-	_fragData[0] = vec4(0.0);
-	_fragData[1] = vec4(0.1);
-	_fragData[2] = vec4(0.2);
-	_fragData[3] = vec4(0.3);
-}

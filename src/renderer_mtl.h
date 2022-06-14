@@ -1,6 +1,6 @@
 /*
  * Copyright 2011-2015 Attila Kocsis, Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef BGFX_RENDERER_METAL_H_HEADER_GUARD
@@ -123,6 +123,11 @@ namespace bgfx { namespace mtl
 			[m_obj copyFromBuffer:_sourceBuffer sourceOffset:_sourceOffset sourceBytesPerRow:_sourceBytesPerRow
 			  sourceBytesPerImage:_sourceBytesPerImage sourceSize:_sourceSize toTexture:_destinationTexture
 				 destinationSlice:_destinationSlice destinationLevel:_destinationLevel destinationOrigin:_destinationOrigin];
+		}
+
+		void generateMipmapsForTexture(id<MTLTexture> _texture)
+		{
+			[m_obj generateMipmapsForTexture:_texture];
 		}
 
 #if BX_PLATFORM_OSX
@@ -999,6 +1004,7 @@ namespace bgfx { namespace mtl
 			, bool _vertex
 			, bool _fragment
 			, uint32_t _flags = BGFX_SAMPLER_INTERNAL_DEFAULT
+			, uint8_t _mip = UINT8_MAX
 			);
 
 		Texture getTextureMipLevel(int _mip);
@@ -1073,6 +1079,8 @@ namespace bgfx { namespace mtl
 			);
 		void postReset();
 		uint16_t destroy();
+
+		void resolve();
 
 		SwapChainMtl* m_swapChain;
 		void* m_nwh;

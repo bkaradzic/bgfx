@@ -1,6 +1,6 @@
 /*
  * Copyright 2017 Stanislav Pidhorskyi. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 /*
@@ -69,7 +69,7 @@ namespace
 		-0.49853f,   0.041556f,  1.057311f,
 	};
 
-	// Converts color repesentation from CIE XYZ to RGB color-space.
+	// Converts color representation from CIE XYZ to RGB color-space.
 	Color xyzToRgb(const Color& xyz)
 	{
 		Color rgb(bx::init::None);

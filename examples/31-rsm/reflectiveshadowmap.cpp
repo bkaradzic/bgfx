@@ -1,6 +1,6 @@
 /*
  * Copyright 2016 Joseph Cherlin. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include <common.h>
@@ -353,8 +353,8 @@ public:
 				, BGFX_TEXTURE_RT /* | BGFX_SAMPLER_COMPARE_LEQUAL*/
 				);  // Note I'm not setting BGFX_SAMPLER_COMPARE_LEQUAL.  Why?
 					// Normally a PCF shadow map such as this requires a compare.  However, this sample also
-					// reads from this texture in the lighting pass, and only uses the PCF capabilites in the
-					// combine pass, so the flag is disabled by default.
+					// reads from this texture in the lighting pass, and only uses the PCF capabilities in
+					// the combine pass, so the flag is disabled by default.
 
 		m_shadowBuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_shadowBufferTex), m_shadowBufferTex, true);
 

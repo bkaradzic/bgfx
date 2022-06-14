@@ -2,7 +2,7 @@ $input v_texcoord0
 
 /*
 * Copyright 2021 elven cache. All rights reserved.
-* License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+* License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 */
 
 // don't use 5x5 sample pattern for spatial denoise, use 3x3 instead

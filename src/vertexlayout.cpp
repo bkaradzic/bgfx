@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include <bx/debug.h>
@@ -126,6 +126,21 @@ namespace bgfx
 		_type       = AttribType::Enum( (val>>3)&7);
 		_normalized = !!(val&(1<<7) );
 		_asInt      = !!(val&(1<<8) );
+	}
+
+	static const bool s_attribTypeIsFloat[] =
+	{
+		false, // Uint8
+		false, // Uint10
+		false, // Int16
+		true,  // Half
+		true,  // Float
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeIsFloat) == AttribType::Count);
+
+	bool isFloat(AttribType::Enum _type)
+	{
+		return s_attribTypeIsFloat[_type];
 	}
 
 	static const char* s_attrName[] =

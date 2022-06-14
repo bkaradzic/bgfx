@@ -550,7 +550,7 @@ ConstantFoldingRule FoldFAdd() { return FoldFPBinaryOp(FOLD_FPARITH_OP(+)); }
 ConstantFoldingRule FoldFMul() { return FoldFPBinaryOp(FOLD_FPARITH_OP(*)); }
 
 // Returns the constant that results from evaluating |numerator| / 0.0.  Returns
-// |nullptr| if the result could not be evalutated.
+// |nullptr| if the result could not be evaluated.
 const analysis::Constant* FoldFPScalarDivideByZero(
     const analysis::Type* result_type, const analysis::Constant* numerator,
     analysis::ConstantManager* const_mgr) {
@@ -1346,7 +1346,7 @@ void ConstantFoldingRules::AddFoldingRules() {
         FoldFPUnaryOp(FoldFTranscendentalUnary(std::log)));
 
 #ifdef __ANDROID__
-    // Android NDK r15c tageting ABI 15 doesn't have full support for C++11
+    // Android NDK r15c targeting ABI 15 doesn't have full support for C++11
     // (no std::exp2/log2). ::exp2 is available from C99 but ::log2 isn't
     // available up until ABI 18 so we use a shim
     auto log2_shim = [](double v) -> double { return log(v) / log(2.0); };

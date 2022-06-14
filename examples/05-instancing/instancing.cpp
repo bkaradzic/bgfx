@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "common.h"
@@ -180,7 +180,7 @@ public:
 			ImGui::PopEnabled();
 
 			ImGui::Text("Grid Side Size:");
-			ImGui::SliderInt("", (int*)&m_sideSize, 1, 512);
+			ImGui::SliderInt("##size", (int*)&m_sideSize, 1, 512);
 
 			if (m_lastFrameMissing > 0)
 			{

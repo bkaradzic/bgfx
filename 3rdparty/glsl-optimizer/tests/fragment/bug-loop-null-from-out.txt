@@ -1,7 +1,0 @@
-void main ()
-{
-  gl_FragColor = vec4(12.0, 12.0, 12.0, 12.0);
-}
-
-
-// stats: 1 alu 0 tex 0 flow

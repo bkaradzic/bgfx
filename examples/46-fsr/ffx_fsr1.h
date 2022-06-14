@@ -68,7 +68,7 @@
 //
 //------------------------------------------------------------------------------------------------------------------------------
 // EASU provides a high quality spatial-only scaling at relatively low cost.
-// Meaning EASU is appropiate for laptops and other low-end GPUs.
+// Meaning EASU is appropriate for laptops and other low-end GPUs.
 // Quality from 1x to 4x area scaling is good.
 //------------------------------------------------------------------------------------------------------------------------------
 // The scalar uses a modified fast approximation to the standard lanczos(size=2) kernel.
