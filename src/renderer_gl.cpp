@@ -3815,7 +3815,8 @@ namespace bgfx { namespace gl
 
 				GL_CHECK(glGenFramebuffers(1, &m_msaaBackBufferFbo) );
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
-				if (g_caps.vendorId == BGFX_PCI_ID_ARM && m_gles3) {
+				if (m_gles3)
+				{
 					GL_CHECK(glGenTextures(BX_COUNTOF(m_msaaBackBufferTextures), m_msaaBackBufferTextures));
 					GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_msaaBackBufferTextures[0]));
 					GL_CHECK(glTexStorage2D(GL_TEXTURE_2D, 1, storageFormat, _width, _height));
@@ -3930,7 +3931,7 @@ namespace bgfx { namespace gl
 				GL_CHECK(glDeleteFramebuffers(1, &m_msaaBackBufferFbo) );
 				m_msaaBackBufferFbo = 0;
 
-				if (g_caps.vendorId == BGFX_PCI_ID_ARM && m_gles3)
+				if (m_gles3)
 				{
 					if (0 != m_msaaBackBufferTextures[0])
 					{
@@ -3971,7 +3972,7 @@ namespace bgfx { namespace gl
 								? GL_NEAREST
 								: GL_LINEAR
 				;
-				if (g_caps.vendorId == BGFX_PCI_ID_ARM && m_gles3)
+				if (m_gles3)
 				{
 					GL_CHECK(glUseProgram(m_msaaBlitProgram));
 					GL_CHECK(glActiveTexture(GL_TEXTURE0));
