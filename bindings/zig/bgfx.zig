@@ -789,6 +789,9 @@ pub const PciIdFlags_Nvidia: PciIdFlags                 = 0x10de;
 /// Microsoft adapter.
 pub const PciIdFlags_Microsoft: PciIdFlags              = 0x1414;
 
+/// ARM adapter.
+pub const PciIdFlags_Arm: PciIdFlags                    = 0x13b5;
+
 pub const CubeMapFlags = u32;
 /// Cubemap +x.
 pub const CubeMapFlags_PositiveX: CubeMapFlags              = 0x00000000;

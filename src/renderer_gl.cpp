@@ -2143,6 +2143,7 @@ namespace bgfx { namespace gl
 		{ "Advanced Micro Devices, Inc.", BGFX_PCI_ID_AMD    },
 		{ "Intel",                        BGFX_PCI_ID_INTEL  },
 		{ "ATI Technologies Inc.",        BGFX_PCI_ID_AMD    },
+		{ "ARM",                          BGFX_PCI_ID_ARM    },
 	};
 
 	struct Workaround
@@ -2185,6 +2186,7 @@ namespace bgfx { namespace gl
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
 			, m_backBufferFbo(0)
 			, m_msaaBackBufferFbo(0)
+			, m_msaaBlitProgram(0)
 			, m_clearQuadColor(BGFX_INVALID_HANDLE)
 			, m_clearQuadDepth(BGFX_INVALID_HANDLE)
 		{
@@ -3801,34 +3803,122 @@ namespace bgfx { namespace gl
 		void createMsaaFbo(uint32_t _width, uint32_t _height, uint32_t _msaa)
 		{
 			if (0 == m_msaaBackBufferFbo // iOS
-			&&  1 < _msaa)
+				&&  1 < _msaa)
 			{
 				GLenum storageFormat = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
-					? GL_SRGB8_ALPHA8
-					: GL_RGBA8
-					;
+									   ? GL_SRGB8_ALPHA8
+									   : GL_RGBA8
+				;
+				GLenum attachment = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || m_gles3
+					? GL_DEPTH_STENCIL_ATTACHMENT
+					: GL_DEPTH_ATTACHMENT;
 
 				GL_CHECK(glGenFramebuffers(1, &m_msaaBackBufferFbo) );
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
-				GL_CHECK(glGenRenderbuffers(BX_COUNTOF(m_msaaBackBufferRbos), m_msaaBackBufferRbos) );
-				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_msaaBackBufferRbos[0]) );
-				GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, _msaa, storageFormat, _width, _height) );
-				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
-				GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, _msaa, GL_DEPTH24_STENCIL8, _width, _height) );
-				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_msaaBackBufferRbos[0]) );
+				if (g_caps.vendorId == BGFX_PCI_ID_ARM && m_gles3) {
+					GL_CHECK(glGenTextures(BX_COUNTOF(m_msaaBackBufferTextures), m_msaaBackBufferTextures));
+					GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_msaaBackBufferTextures[0]));
+					GL_CHECK(glTexStorage2D(GL_TEXTURE_2D, 1, storageFormat, _width, _height));
+					GL_CHECK(glFramebufferTexture2DMultisampleEXT(GL_FRAMEBUFFER,
+																  GL_COLOR_ATTACHMENT0,
+																  GL_TEXTURE_2D,
+																  m_msaaBackBufferTextures[0], 0,
+																  _msaa));
+					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo));
 
-				GLenum attachment = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || m_gles3
-					? GL_DEPTH_STENCIL_ATTACHMENT
-					: GL_DEPTH_ATTACHMENT
-					;
-				GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
+					GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_msaaBackBufferTextures[1]));
+					GL_CHECK(glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, _width, _height));
+					GL_CHECK(glFramebufferTexture2DMultisampleEXT(GL_FRAMEBUFFER,
+																  attachment,
+																  GL_TEXTURE_2D,
+																  m_msaaBackBufferTextures[1], 0,
+																  _msaa));
+					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 
-				BX_ASSERT(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
+					BX_ASSERT(GL_FRAMEBUFFER_COMPLETE == glCheckFramebufferStatus(GL_FRAMEBUFFER),
+							  "glCheckFramebufferStatus failed 0x%08x",
+							  glCheckFramebufferStatus(GL_FRAMEBUFFER)
+					);
+
+					if (0 == m_msaaBlitProgram) {
+						static const char msaa_blit_vs[]{R"(#version 300 es
+							precision highp float;
+							out vec2 UV;
+							void main() {
+								float x = -1.0 + float((gl_VertexID & 1) << 2);
+								float y = -1.0 + float((gl_VertexID & 2) << 1);
+								gl_Position = vec4(x, y, 0, 1);
+								UV = vec2(gl_Position.x + 1.0, gl_Position.y + 1.0) * 0.5;
+							}
+						)"};
+
+						static const char msaa_blit_fs[]{R"(#version 300 es
+							precision mediump float;
+							in vec2 UV;
+							uniform sampler2D msaaTexture;
+							out vec4 oFragColor;
+							void main() {
+								oFragColor = texture(msaaTexture, UV);
+							}
+						)"};
+
+						const GLchar *const vs = msaa_blit_vs;
+						const GLchar *const fs = msaa_blit_fs;
+						GLuint shader_vs = glCreateShader(GL_VERTEX_SHADER);
+						BX_WARN(0 != shader_vs, "Failed to create msaa Blit Vertex shader.");
+						GL_CHECK(glShaderSource(shader_vs, 1, &vs, nullptr));
+						GL_CHECK(glCompileShader(shader_vs));
+						GLint compiled = 0;
+						GL_CHECK(glGetShaderiv(shader_vs, GL_COMPILE_STATUS, &compiled));
+						BX_WARN(0 == shader_vs, "Unable to compile msaa Blit Vertex shader.");
+						
+						GLuint shader_fs = glCreateShader(GL_FRAGMENT_SHADER);
+						BX_WARN(0 != shader_fs, "Failed to create msaa Blit Fragment shader.");
+						GL_CHECK(glShaderSource(shader_fs, 1, &fs, nullptr));
+						GL_CHECK(glCompileShader(shader_fs));
+						compiled = 0;
+						GL_CHECK(glGetShaderiv(shader_fs, GL_COMPILE_STATUS, &compiled));
+						BX_WARN(0 == shader_vs, "Unable to compile msaa Blit Fragment shader.");
+						
+						m_msaaBlitProgram = glCreateProgram();
+						if (m_msaaBlitProgram)
+						{
+							GL_CHECK(glAttachShader(m_msaaBlitProgram, shader_vs));
+							GL_CHECK(glAttachShader(m_msaaBlitProgram, shader_fs));
+							
+							GL_CHECK(glLinkProgram(m_msaaBlitProgram));
+							GLint linked = 0;
+							glGetProgramiv(m_msaaBlitProgram, GL_LINK_STATUS, &linked);
+							if (0 == linked) {
+								char log[1024];
+								GL_CHECK(glGetProgramInfoLog(m_msaaBlitProgram, sizeof(log), NULL,
+															 log));
+								BX_TRACE("%d: %s", linked, log);
+							}
+							
+							GL_CHECK(glDetachShader(m_msaaBlitProgram, shader_vs));
+							GL_CHECK(glDeleteShader(shader_vs));
+							GL_CHECK(glDetachShader(m_msaaBlitProgram, shader_fs));
+							GL_CHECK(glDeleteShader(shader_fs));
+						}
+					}
+				}
+				else
+				{
+					GL_CHECK(glGenRenderbuffers(BX_COUNTOF(m_msaaBackBufferRbos), m_msaaBackBufferRbos));
+					GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_msaaBackBufferRbos[0]) );
+					GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, _msaa, storageFormat, _width, _height) );
+					GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
+					GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, _msaa, GL_DEPTH24_STENCIL8, _width, _height) );
+					GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_msaaBackBufferRbos[0]) );
+					
+					GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
+					
+					BX_ASSERT(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
 					, "glCheckFramebufferStatus failed 0x%08x"
 					, glCheckFramebufferStatus(GL_FRAMEBUFFER)
 					);
-
-				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
+				}
 			}
 		}
 
@@ -3840,11 +3930,28 @@ namespace bgfx { namespace gl
 				GL_CHECK(glDeleteFramebuffers(1, &m_msaaBackBufferFbo) );
 				m_msaaBackBufferFbo = 0;
 
-				if (0 != m_msaaBackBufferRbos[0])
+				if (g_caps.vendorId == BGFX_PCI_ID_ARM && m_gles3)
 				{
-					GL_CHECK(glDeleteRenderbuffers(BX_COUNTOF(m_msaaBackBufferRbos), m_msaaBackBufferRbos) );
-					m_msaaBackBufferRbos[0] = 0;
-					m_msaaBackBufferRbos[1] = 0;
+					if (0 != m_msaaBackBufferTextures[0])
+					{
+						GL_CHECK(glDeleteTextures(BX_COUNTOF(m_msaaBackBufferTextures), m_msaaBackBufferTextures));
+						m_msaaBackBufferTextures[0] = 0;
+						m_msaaBackBufferTextures[1] = 0;
+					}
+					if (0 != m_msaaBlitProgram)
+					{
+						GL_CHECK(glDeleteProgram(m_msaaBlitProgram) );
+						m_msaaBlitProgram = 0;
+					}
+				}
+				else
+				{
+					if (0 != m_msaaBackBufferRbos[0])
+					{
+						GL_CHECK(glDeleteRenderbuffers(BX_COUNTOF(m_msaaBackBufferRbos), m_msaaBackBufferRbos));
+						m_msaaBackBufferRbos[0] = 0;
+						m_msaaBackBufferRbos[1] = 0;
+					}
 				}
 			}
 		}
@@ -3861,20 +3968,31 @@ namespace bgfx { namespace gl
 				uint32_t width  = m_resolution.width;
 				uint32_t height = m_resolution.height;
 				GLenum filter = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || !m_gles3
-					? GL_NEAREST
-					: GL_LINEAR
-					;
-				GL_CHECK(glBlitFramebuffer(0
-					, 0
-					, width
-					, height
-					, 0
-					, 0
-					, width
-					, height
-					, GL_COLOR_BUFFER_BIT
-					, filter
-					) );
+								? GL_NEAREST
+								: GL_LINEAR
+				;
+				if (g_caps.vendorId == BGFX_PCI_ID_ARM && m_gles3)
+				{
+					GL_CHECK(glUseProgram(m_msaaBlitProgram));
+					GL_CHECK(glActiveTexture(GL_TEXTURE0));
+					GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_msaaBackBufferTextures[0]));
+					GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
+				}
+				else
+				{
+					GL_CHECK(glBlitFramebuffer(0
+							 , 0
+							 , width
+							 , height
+							 , 0
+							 , 0
+							 , width
+							 , height
+							 , GL_COLOR_BUFFER_BIT
+							 , filter
+					));
+				}
+
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
 			}
 		}
@@ -4541,7 +4659,11 @@ namespace bgfx { namespace gl
 		GLenum m_readPixelsFmt;
 		GLuint m_backBufferFbo;
 		GLuint m_msaaBackBufferFbo;
-		GLuint m_msaaBackBufferRbos[2];
+		union {
+			GLuint m_msaaBackBufferRbos[2];
+			GLuint m_msaaBackBufferTextures[2];
+		};
+		GLuint m_msaaBlitProgram;
 		GlContext m_glctx;
 		bool m_needPresent;
 
