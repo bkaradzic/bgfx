@@ -3925,11 +3925,11 @@ namespace bgfx { namespace gl
 		void destroyMsaaFbo()
 		{
 			if (m_backBufferFbo != m_msaaBackBufferFbo // iOS
-				&&  0 != m_msaaBackBufferFbo)
+			&&  0 != m_msaaBackBufferFbo)
 			{
 				GL_CHECK(glDeleteFramebuffers(1, &m_msaaBackBufferFbo) );
 				m_msaaBackBufferFbo = 0;
-				
+
 				if (g_caps.vendorId == BGFX_PCI_ID_ARM && m_gles3)
 				{
 					if (0 != m_msaaBackBufferTextures[0])
@@ -3959,7 +3959,7 @@ namespace bgfx { namespace gl
 		void blitMsaaFbo()
 		{
 			if (m_backBufferFbo != m_msaaBackBufferFbo // iOS
-				&&  0 != m_msaaBackBufferFbo)
+			&&  0 != m_msaaBackBufferFbo)
 			{
 				GL_CHECK(glDisable(GL_SCISSOR_TEST) );
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
