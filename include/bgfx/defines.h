@@ -524,6 +524,7 @@
 #define BGFX_PCI_ID_INTEL                         UINT16_C(0x8086) //!< Intel adapter.
 #define BGFX_PCI_ID_NVIDIA                        UINT16_C(0x10de) //!< nVidia adapter.
 #define BGFX_PCI_ID_MICROSOFT                     UINT16_C(0x1414) //!< Microsoft adapter.
+#define BGFX_PCI_ID_ARM                           UINT16_C(0x13b5) //!< ARM adapter.
 
 #define BGFX_CUBE_MAP_POSITIVE_X                  UINT8_C(0x00) //!< Cubemap +x.
 #define BGFX_CUBE_MAP_NEGATIVE_X                  UINT8_C(0x01) //!< Cubemap -x.
