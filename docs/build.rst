@@ -110,8 +110,7 @@ Configuration is ``<platform>-<debug/release>[32/64]``. For example:
 
 ::
 
-    linux-release32, nacl-debug64, nacl-arm-debug, pnacl-release,
-    android-release, etc.
+    linux-release64, wasm-debug, wasm-release, osx-debug, osx-release, android-arm64-release, etc.
 
 Windows
 ~~~~~~~
