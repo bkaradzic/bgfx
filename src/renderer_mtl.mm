@@ -1622,21 +1622,6 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 		void clearQuad(ClearQuad& _clearQuad, const Rect& /*_rect*/, const Clear& _clear, const float _palette[][4])
 		{
-			uint32_t width;
-			uint32_t height;
-
-			if (isValid(m_fbh) )
-			{
-				const FrameBufferMtl& fb = m_frameBuffers[m_fbh.idx];
-				width  = fb.m_width;
-				height = fb.m_height;
-			}
-			else
-			{
-				width  = m_resolution.width;
-				height = m_resolution.height;
-			}
-
 			uint64_t state = 0;
 			state |= _clear.m_flags & BGFX_CLEAR_COLOR ? BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A         : 0;
 			state |= _clear.m_flags & BGFX_CLEAR_DEPTH ? BGFX_STATE_DEPTH_TEST_ALWAYS|BGFX_STATE_WRITE_Z : 0;
@@ -2392,7 +2377,6 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 			return program.m_computePS;
 		}
-
 
 		SamplerState getSamplerState(uint32_t _flags)
 		{
@@ -5083,7 +5067,15 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 			rce.setRenderPipelineState(m_screenshotBlitRenderPipelineState);
 
-			rce.setFragmentSamplerState(getSamplerState(BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP|BGFX_SAMPLER_MIN_POINT|BGFX_SAMPLER_MAG_POINT|BGFX_SAMPLER_MIP_POINT), 0);
+			const SamplerState samplerState = getSamplerState(0
+				| BGFX_SAMPLER_U_CLAMP
+				| BGFX_SAMPLER_V_CLAMP
+				| BGFX_SAMPLER_MIN_POINT
+				| BGFX_SAMPLER_MAG_POINT
+				| BGFX_SAMPLER_MIP_POINT
+				);
+
+			rce.setFragmentSamplerState(samplerState, 0);
 			rce.setFragmentTexture(m_screenshotTarget, 0);
 
 			rce.drawPrimitives(MTLPrimitiveTypeTriangle, 0, 3, 1);
