@@ -764,6 +764,10 @@ struct Group
 		m_numEdges = 0;
 		m_edges = NULL;
 		m_edgePlanesUnalignedPtr = NULL;
+		m_edgePlanes = NULL;
+		m_aabb={};
+		m_sphere={};
+		m_obb={};
 		m_prims.clear();
 	}
 
