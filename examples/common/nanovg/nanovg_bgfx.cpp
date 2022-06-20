@@ -764,12 +764,15 @@ namespace
 		{
 			int avail = bgfx::getAvailTransientVertexBuffer(gl->nverts, s_nvgLayout);
 			if (avail < gl->nverts)
-				{
+			{
 				gl->nverts = avail;
 				BX_WARN(true, "Vertex number truncated due to transient vertex buffer overflow");
 				if (gl->nverts < 2)
+				{
 					goto _cleanup;
 				}
+			}
+
 			bgfx::allocTransientVertexBuffer(&gl->tvb, gl->nverts, s_nvgLayout);
 
 			int allocated = gl->tvb.size/gl->tvb.stride;
@@ -814,8 +817,8 @@ namespace
 			}
 		}
 
+_cleanup:
 		// Reset calls
-		_cleanup:
 		gl->nverts    = 0;
 		gl->npaths    = 0;
 		gl->ncalls    = 0;
