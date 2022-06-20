@@ -609,6 +609,9 @@ struct Group
 	{
 		m_vbh.idx = bgfx::kInvalidHandle;
 		m_ibh.idx = bgfx::kInvalidHandle;
+		m_sphere={};
+		m_aabb={};
+		m_obb={};
 		m_prims.clear();
 	}
 
