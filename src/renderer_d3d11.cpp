@@ -2441,7 +2441,7 @@ namespace bgfx { namespace d3d11
 				uint32_t flags = _resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
 
 				bool resize = true
-					&& !BX_ENABLED(BX_PLATFORM_XBOXONE || BX_PLATFORM_WINRT) // can't use ResizeBuffers on Windows Phone
+					&& !BX_ENABLED(BX_PLATFORM_XBOXONE)
 					&& (m_resolution.reset&BGFX_RESET_MSAA_MASK) == (flags&BGFX_RESET_MSAA_MASK)
 					;
 
