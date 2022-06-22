@@ -782,7 +782,7 @@ namespace bgfx
 				);
 		}
 
- 		if (SUCCEEDED(hr) )
+		if (SUCCEEDED(hr) )
 		{
 			updateHdr10(_swapChain, _scd);
 		}
