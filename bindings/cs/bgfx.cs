@@ -1287,6 +1287,11 @@ public static partial class bgfx
 		/// Microsoft adapter.
 		/// </summary>
 		Microsoft              = 0x1414,
+	
+		/// <summary>
+		/// ARM adapter.
+		/// </summary>
+		Arm                    = 0x13b5,
 	}
 	
 	[Flags]
