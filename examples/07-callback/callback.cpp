@@ -279,8 +279,9 @@ public:
 
 		if (kNaturalAlignment >= _align)
 		{
+			intptr_t _ptrOld = intptr_t(_ptr);
 			void* ptr = ::realloc(_ptr, _size);
-			bx::debugPrintf("%s(%d): REALLOC %p (old %p) of %d byte(s)\n", _file, _line, ptr, _ptr, _size);
+			bx::debugPrintf("%s(%d): REALLOC %p (old %p) of %d byte(s)\n", _file, _line, ptr, _ptrOld, _size);
 
 			if (NULL == _ptr)
 			{
