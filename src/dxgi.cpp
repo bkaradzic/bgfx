@@ -427,17 +427,6 @@ namespace bgfx
 			, &scd
 			, reinterpret_cast<IDXGISwapChain**>(_swapChain)
 			);
-
-		if (SUCCEEDED(hr) )
-		{
-			IDXGIDevice1* dxgiDevice1;
-			_device->QueryInterface(IID_IDXGIDevice1, (void**)&dxgiDevice1);
-			if (NULL != dxgiDevice1)
-			{
-				dxgiDevice1->SetMaximumFrameLatency(_scd.maxFrameLatency);
-				DX_RELEASE_I(dxgiDevice1);
-			}
-		}
 #else
 		DXGI_SWAP_CHAIN_DESC1 scd;
 		scd.Width  = _scd.width;
@@ -538,6 +527,22 @@ namespace bgfx
 #	endif // BX_PLATFORM_WINRT
 		}
 #endif // BX_PLATFORM_WINDOWS
+
+		if (SUCCEEDED(hr) )
+		{
+			IDXGIDevice1* dxgiDevice1;
+			_device->QueryInterface(IID_IDXGIDevice1, (void**)&dxgiDevice1);
+			if (NULL != dxgiDevice1)
+			{
+				hr = dxgiDevice1->SetMaximumFrameLatency(_scd.maxFrameLatency);
+				if (FAILED(hr) )
+				{
+					BX_TRACE("Failed to set maximum frame latency, hr 0x%08x", hr);
+					hr = S_OK;
+				}
+				DX_RELEASE_I(dxgiDevice1);
+			}
+		}
 
 		if (FAILED(hr) )
 		{
