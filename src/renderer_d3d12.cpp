@@ -5928,7 +5928,7 @@ namespace bgfx { namespace d3d12
 					;
 
 				D3D12_TEXTURE_COPY_LOCATION dstLocation;
-				dstLocation.pResource = dst.m_ptr;
+				dstLocation.pResource = NULL != dst.m_singleMsaa ? dst.m_singleMsaa : dst.m_ptr;;
 				dstLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 				dstLocation.SubresourceIndex = dstZ*dst.m_numMips+blit.m_dstMip;
 
