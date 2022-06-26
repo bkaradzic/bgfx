@@ -498,6 +498,19 @@ target="_blank"><img src="http://img.youtube.com/vi/ufl14_Ne5Lg/0.jpg"
 alt="Griftlands"
 width="640" height="480" border="0" /></a>
 
+## HARFANG 3D
+
+[HARFANG® 3D](https://www.harfang3d.com) is a **BGFX-powered** 3D visualization framework written in C++ and accessible in [Python](https://pypi.org/project/harfang/), [Go](https://pkg.go.dev/github.com/harfang3d/harfang-go/v3), and [Lua](https://dev.harfang3d.com/releases).
+As a companion to the framework comes [HARFANG Studio](https://www.harfang3d.com/en_US/studio), a **3D editor** for creating real-time scenes & animations that can be used in C++, Python, Go and Lua projects.<br>
+HARFANG is mainly focused on **industrial use-cases**, it supports VR via [OpenVR](https://github.com/ValveSoftware/openvr), physics via [Bullet Physics](https://github.com/bulletphysics/bullet3) and a minimal audio layer via [OpenAL](https://github.com/kcat/openal-soft). It builds on Win32 and Win64 Intel, Linux 64 Intel and Aarch 64 ARM.
+
+![HARFANG-STUDIO](https://raw.githubusercontent.com/harfang3d/image-storage/main/portfolio/3.2.2/harfang-studio-cyber-city.png)
+
+* HARFANG 3D [Lighting demoreel](https://www.youtube.com/watch?v=dOekEPljR7k)
+* Source code of the [HARFANG framework on Github](https://github.com/harfang3d/harfang3d)
+* Python [Dogfight Sandbox](https://github.com/harfang3d/dogfight-sandbox-hg2)
+* Gallery: [ORCA's Bistro Exterior](https://github.com/harfang3d/image-storage/raw/main/portfolio/3.2.2/orca-bistro.png) / [More](https://github.com/harfang3d/image-storage/raw/main/portfolio/3.2.2/harfang-studio-tutorial-0.png) [HARFANG Studio](https://github.com/harfang3d/image-storage/raw/main/portfolio/3.2.2/harfang-studio-tutorial-1.png) / [Pollen Robotics' Reachy digital twin](https://github.com/harfang3d/image-storage/raw/main/portfolio/3.2.2/pollen-robotics-reachy.png) / [Python generated landscape](https://github.com/harfang3d/image-storage/raw/main/portfolio/3.2.2/harfang-generated-landscape.png)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
