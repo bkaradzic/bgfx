@@ -453,6 +453,7 @@
 #define BGFX_RESET_HIDPI                          UINT32_C(0x00020000) //!< Enable HiDPI rendering.
 #define BGFX_RESET_DEPTH_CLAMP                    UINT32_C(0x00040000) //!< Enable depth clamp.
 #define BGFX_RESET_SUSPEND                        UINT32_C(0x00080000) //!< Suspend rendering.
+#define BGFX_RESET_PREMULTIPLIED_BACKBUFFER       UINT32_C(0x00100000) //!< Alpha premultiplied ready backbuffer.
 
 #define BGFX_RESET_FULLSCREEN_SHIFT               0
 

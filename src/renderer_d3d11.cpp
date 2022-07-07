@@ -3425,6 +3425,52 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
+#if BX_PLATFORM_WINRT
+		void premultiplyBackBuffer(const ClearQuad& _clearQuad)
+		{
+			ID3D11DeviceContext* deviceCtx = m_deviceCtx;
+
+			uint64_t state = 0;
+			state |= BGFX_STATE_WRITE_RGB;
+			state |= BGFX_STATE_DEPTH_TEST_ALWAYS;
+			state |= BGFX_STATE_BLEND_FUNC_SEPARATE(BGFX_STATE_BLEND_DST_COLOR, BGFX_STATE_BLEND_DST_ALPHA, BGFX_STATE_BLEND_DST_ALPHA, BGFX_STATE_BLEND_ZERO);
+
+			uint64_t stencil = 0;
+
+			setBlendState(state);
+			setDepthStencilState(state, stencil);
+			setRasterizerState(state);
+
+			uint32_t numMrt = 1;
+			if (isValid(_clearQuad.m_program[numMrt-1]))
+			{
+				ProgramD3D11& program = m_program[_clearQuad.m_program[numMrt-1].idx];
+				m_currentProgram = &program;
+
+				const ShaderD3D11* vsh = program.m_vsh;
+				deviceCtx->VSSetShader(vsh->m_vertexShader, NULL, 0);
+				deviceCtx->VSSetConstantBuffers(0, 1, &vsh->m_buffer);
+
+				const ShaderD3D11* fsh = program.m_fsh;
+				deviceCtx->PSSetShader(fsh->m_pixelShader, NULL, 0);
+
+				VertexBufferD3D11& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
+				const VertexLayout& layout = _clearQuad.m_layout;
+
+				const uint32_t stride = layout.m_stride;
+				const uint32_t offset = 0;
+
+				deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
+				setInputLayout(layout, program, 0);
+
+				m_deviceCtx->OMSetRenderTargets(1, &m_backBufferColor, m_backBufferDepthStencil);
+
+				deviceCtx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+				deviceCtx->Draw(4, 0);
+			}
+		}
+#endif
+
 		void clearQuad(ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
 			uint32_t width;
@@ -6625,6 +6671,13 @@ namespace bgfx { namespace d3d11
 
 			BGFX_D3D11_PROFILER_END();
 		}
+
+#if BX_PLATFORM_WINRT
+		if (m_resolution.reset & BGFX_RESET_PREMULTIPLIED_BACKBUFFER)
+		{
+			premultiplyBackBuffer(_clearQuad);
+		}
+#endif
 
 		m_deviceCtx->OMSetRenderTargets(1, s_zero.m_rtv, NULL);
 

@@ -997,6 +997,11 @@ public static class bgfx
 		/// Suspend rendering.
 		/// </summary>
 		Suspend                = 0x00080000,
+	
+		/// <summary>
+		/// Alpha premultiplied ready backbuffer.
+		/// </summary>
+		PremultipliedBackbuffer = 0x00100000,
 		FullscreenShift        = 0,
 		FullscreenMask         = 0x00000001,
 		ReservedShift          = 31,

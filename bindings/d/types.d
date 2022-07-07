@@ -373,6 +373,7 @@ enum uint BGFX_RESET_HDR10 = 0x00010000; /// Enable HDR10 rendering.
 enum uint BGFX_RESET_HIDPI = 0x00020000; /// Enable HiDPI rendering.
 enum uint BGFX_RESET_DEPTH_CLAMP = 0x00040000; /// Enable depth clamp.
 enum uint BGFX_RESET_SUSPEND = 0x00080000; /// Suspend rendering.
+enum uint BGFX_RESET_PREMULTIPLIED_BACKBUFFER = 0x00100000; /// Alpha premultiplied ready backbuffer.
 
 enum uint BGFX_RESET_FULLSCREEN_SHIFT = 0;
 enum uint BGFX_RESET_FULLSCREEN_MASK = 0x00000001;

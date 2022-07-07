@@ -617,6 +617,9 @@ pub const ResetFlags_DepthClamp: ResetFlags             = 0x00040000;
 
 /// Suspend rendering.
 pub const ResetFlags_Suspend: ResetFlags                = 0x00080000;
+
+/// Alpha premultiplied ready backbuffer.
+pub const ResetFlags_PremultipliedBackbuffer: ResetFlags = 0x00100000;
 pub const ResetFlags_FullscreenShift: ResetFlags        = 0;
 pub const ResetFlags_FullscreenMask: ResetFlags         = 0x00000001;
 pub const ResetFlags_ReservedShift: ResetFlags          = 31;
