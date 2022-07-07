@@ -1035,7 +1035,11 @@ namespace bgfx { namespace d3d11
 						: DXGI_SCALING_STRETCH
 						;
 					m_scd.swapEffect = m_swapEffect;
+#if BX_PLATFORM_WINRT
+					m_scd.alphaMode  = (_init.resolution.reset&BGFX_RESET_PREMULTIPLIED_BACKBUFFER) ? DXGI_ALPHA_MODE_PREMULTIPLIED : DXGI_ALPHA_MODE_IGNORE;
+#else
 					m_scd.alphaMode  = DXGI_ALPHA_MODE_IGNORE;
+#endif
 					m_scd.flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 					m_scd.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, BGFX_CONFIG_MAX_FRAME_LATENCY);
