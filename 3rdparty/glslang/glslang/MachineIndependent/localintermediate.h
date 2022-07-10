@@ -480,7 +480,7 @@ public:
     {
         enhancedMsgs = true;
     }
-    bool getEnhancedMsgs() const { return enhancedMsgs && source == EShSourceGlsl; }
+    bool getEnhancedMsgs() const { return enhancedMsgs && getSource() == EShSourceGlsl; }
 
 #ifdef ENABLE_HLSL
     void setSource(EShSource s) { source = s; }

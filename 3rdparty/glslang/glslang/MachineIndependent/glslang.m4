@@ -315,7 +315,7 @@ GLSLANG_WEB_EXCLUDE_ON
 %token <lex> PATCH SAMPLE NONUNIFORM
 %token <lex> COHERENT VOLATILE RESTRICT READONLY WRITEONLY DEVICECOHERENT QUEUEFAMILYCOHERENT WORKGROUPCOHERENT
 %token <lex> SUBGROUPCOHERENT NONPRIVATE SHADERCALLCOHERENT
-%token <lex> NOPERSPECTIVE EXPLICITINTERPAMD PERVERTEXNV PERPRIMITIVENV PERVIEWNV PERTASKNV
+%token <lex> NOPERSPECTIVE EXPLICITINTERPAMD PERVERTEXEXT PERVERTEXNV PERPRIMITIVENV PERVIEWNV PERTASKNV
 %token <lex> PRECISE
 GLSLANG_WEB_EXCLUDE_OFF
 
@@ -1289,6 +1289,14 @@ GLSLANG_WEB_EXCLUDE_ON
         parseContext.profileRequires($1.loc, EEsProfile, 0, E_GL_NV_fragment_shader_barycentric, "fragment shader barycentric");
         $$.init($1.loc);
         $$.qualifier.pervertexNV = true;
+    }
+    | PERVERTEXEXT {
+        parseContext.globalCheck($1.loc, "pervertexEXT");
+        parseContext.profileRequires($1.loc, ECoreProfile, 0, E_GL_EXT_fragment_shader_barycentric, "fragment shader barycentric");
+        parseContext.profileRequires($1.loc, ECompatibilityProfile, 0, E_GL_EXT_fragment_shader_barycentric, "fragment shader barycentric");
+        parseContext.profileRequires($1.loc, EEsProfile, 0, E_GL_EXT_fragment_shader_barycentric, "fragment shader barycentric");
+        $$.init($1.loc);
+        $$.qualifier.pervertexEXT = true;
     }
     | PERPRIMITIVENV {
         // No need for profile version or extension check. Shader stage already checks both.

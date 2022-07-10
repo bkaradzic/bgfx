@@ -1754,6 +1754,18 @@ void HlslParseContext::handleEntryPointAttributes(const TSourceLoc& loc, const T
                 intermediate.setLocalSize(lid, sequence[lid]->getAsConstantUnion()->getConstArray()[0].getIConst());
             break;
         }
+        case EatInstance: 
+        {
+            int invocations;
+
+            if (!it->getInt(invocations)) {
+                error(loc, "invalid instance", "", "");
+            } else {
+                if (!intermediate.setInvocations(invocations))
+                    error(loc, "cannot change previously set instance attribute", "", "");
+            }
+            break;
+        }
         case EatMaxVertexCount:
         {
             int maxVertexCount;

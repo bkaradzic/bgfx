@@ -1517,6 +1517,15 @@ namespace spv {
         spv.swap(in_spv);
     }
 
+    // remap from a memory image - legacy interface without white list
+    void spirvbin_t::remap(std::vector<std::uint32_t>& in_spv, std::uint32_t opts)
+    {
+      stripWhiteList.clear();
+      spv.swap(in_spv);
+      remap(opts);
+      spv.swap(in_spv);
+    }
+
 } // namespace SPV
 
 #endif // defined (use_cpp11)
