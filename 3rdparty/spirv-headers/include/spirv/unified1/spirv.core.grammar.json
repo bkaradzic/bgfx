@@ -9951,11 +9951,60 @@
           "version" : "1.4"
         },
         {
+          "enumerant": "EarlyAndLateFragmentTestsAMD",
+          "value": 5017,
+          "capabilities": [ "Shader" ],
+          "extensions": [ "SPV_AMD_shader_early_and_late_fragment_tests" ],
+          "version": "None"
+        },
+        {
           "enumerant" : "StencilRefReplacingEXT",
           "value" : 5027,
           "capabilities" : [ "StencilExportEXT" ],
           "extensions" : [ "SPV_EXT_shader_stencil_export" ],
           "version" : "None"
+        },
+        {
+          "enumerant": "StencilRefUnchangedFrontAMD",
+          "value": 5079,
+          "capabilities": [ "StencilExportEXT" ],
+          "extensions": [ "SPV_AMD_shader_early_and_late_fragment_tests", "SPV_EXT_shader_stencil_export" ],
+          "version": "None"
+        },
+        {
+          "enumerant": "StencilRefGreaterFrontAMD",
+          "value": 5080,
+          "capabilities": [ "StencilExportEXT" ],
+          "extensions": [ "SPV_AMD_shader_early_and_late_fragment_tests", "SPV_EXT_shader_stencil_export" ],
+          "version": "None"
+        },
+        {
+          "enumerant": "StencilRefLessFrontAMD",
+          "value": 5081,
+          "capabilities": [ "StencilExportEXT" ],
+          "extensions": [ "SPV_AMD_shader_early_and_late_fragment_tests", "SPV_EXT_shader_stencil_export" ],
+          "version": "None"
+        },
+        {
+          "enumerant": "StencilRefUnchangedBackAMD",
+          "value": 5082,
+          "capabilities": [ "StencilExportEXT" ],
+          "extensions": [ "SPV_AMD_shader_early_and_late_fragment_tests", "SPV_EXT_shader_stencil_export" ],
+          "version": "None"
+        },
+        {
+          "enumerant": "StencilRefGreaterBackAMD",
+          "value": 5083,
+          "capabilities": [ "StencilExportEXT" ],
+          "extensions": [ "SPV_AMD_shader_early_and_late_fragment_tests", "SPV_EXT_shader_stencil_export" ],
+          "version": "None"
+        },
+        {
+          "enumerant": "StencilRefLessBackAMD",
+          "value": 5084,
+          "capabilities": [ "StencilExportEXT" ],
+          "extensions": [ "SPV_AMD_shader_early_and_late_fragment_tests", "SPV_EXT_shader_stencil_export" ],
+          "version": "None"
         },
         {
           "enumerant" : "OutputLinesNV",
