@@ -711,6 +711,7 @@ protected:
 	spv::StorageClass get_expression_effective_storage_class(uint32_t ptr);
 	virtual bool access_chain_needs_stage_io_builtin_translation(uint32_t base);
 
+	virtual void check_physical_type_cast(std::string &expr, const SPIRType *type, uint32_t physical_type);
 	virtual void prepare_access_chain_for_scalar_access(std::string &expr, const SPIRType &type,
 	                                                    spv::StorageClass storage, bool &is_packed);
 
@@ -877,6 +878,7 @@ protected:
 	bool requires_transpose_3x3 = false;
 	bool requires_transpose_4x4 = false;
 	bool ray_tracing_is_khr = false;
+	bool barycentric_is_nv = false;
 	void ray_tracing_khr_fixup_locations();
 
 	bool args_will_forward(uint32_t id, const uint32_t *args, uint32_t num_args, bool pure);
