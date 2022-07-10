@@ -799,7 +799,7 @@ static const char* cgltf_write_str_path_type(cgltf_animation_path_type path_type
 		return "scale";
 	case cgltf_animation_path_type_weights:
 		return "weights";
-	case cgltf_animation_path_type_invalid:
+	default:
 		break;
 	}
 	return "invalid";
@@ -815,6 +815,8 @@ static const char* cgltf_write_str_interpolation_type(cgltf_interpolation_type i
 		return "STEP";
 	case cgltf_interpolation_type_cubic_spline:
 		return "CUBICSPLINE";
+	default:
+		break;
 	}
 	return "invalid";
 }
