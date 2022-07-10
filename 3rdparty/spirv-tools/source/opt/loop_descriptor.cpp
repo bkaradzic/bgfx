@@ -497,7 +497,8 @@ void Loop::ComputeLoopStructuredOrder(
     // continue blocks that must be copied to retain the structured order.
     // The structured order will include these.
     std::list<BasicBlock*> order;
-    cfg.ComputeStructuredOrder(loop_header_->GetParent(), loop_header_, &order);
+    cfg.ComputeStructuredOrder(loop_header_->GetParent(), loop_header_,
+                               loop_merge_, &order);
     for (BasicBlock* bb : order) {
       if (bb == GetMergeBlock()) {
         break;

@@ -384,6 +384,7 @@ void LoopUnrollerUtilsImpl::PartiallyUnrollResidualFactor(Loop* loop,
   std::unique_ptr<Instruction> new_label{new Instruction(
       context_, SpvOp::SpvOpLabel, 0, context_->TakeNextId(), {})};
   std::unique_ptr<BasicBlock> new_exit_bb{new BasicBlock(std::move(new_label))};
+  new_exit_bb->SetParent(&function_);
 
   // Save the id of the block before we move it.
   uint32_t new_merge_id = new_exit_bb->id();
@@ -995,6 +996,20 @@ bool LoopUtils::CanPerformUnroll() {
   // Check that we can find the number of loop iterations.
   if (!loop_->FindNumberOfIterations(induction, &*condition->ctail(), nullptr))
     return false;
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+  // ClusterFuzz/OSS-Fuzz is likely to yield examples with very high loop
+  // iteration counts. This can cause timeouts and memouts during fuzzing that
+  // are not classed as bugs. To avoid this noise, loop unrolling is not applied
+  // to loops with large iteration counts when fuzzing.
+  const size_t kFuzzerIterationLimit = 100;
+  size_t num_iterations;
+  loop_->FindNumberOfIterations(induction, &*condition->ctail(),
+                                &num_iterations);
+  if (num_iterations > kFuzzerIterationLimit) {
+    return false;
+  }
+#endif
 
   // Make sure the latch block is a unconditional branch to the header
   // block.

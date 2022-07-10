@@ -69,6 +69,15 @@ class Decoration {
   std::vector<uint32_t>& params() { return params_; }
   const std::vector<uint32_t>& params() const { return params_; }
 
+  inline bool operator<(const Decoration& rhs) const {
+    // Note: Sort by struct_member_index_ first, then type, so look up can be
+    // efficient using lower_bound() and upper_bound().
+    if (struct_member_index_ < rhs.struct_member_index_) return true;
+    if (rhs.struct_member_index_ < struct_member_index_) return false;
+    if (dec_type_ < rhs.dec_type_) return true;
+    if (rhs.dec_type_ < dec_type_) return false;
+    return params_ < rhs.params_;
+  }
   inline bool operator==(const Decoration& rhs) const {
     return (dec_type_ == rhs.dec_type_ && params_ == rhs.params_ &&
             struct_member_index_ == rhs.struct_member_index_);
