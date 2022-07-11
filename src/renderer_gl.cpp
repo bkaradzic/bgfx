@@ -4019,12 +4019,14 @@ namespace bgfx { namespace gl
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
 				GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_msaaBackBufferFbo) );
 				GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0) );
-				uint32_t width  = m_resolution.width;
-				uint32_t height = m_resolution.height;
-				GLenum filter = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || !m_gles3
-								? GL_NEAREST
-								: GL_LINEAR
-				;
+
+				const uint32_t width  = m_resolution.width;
+				const uint32_t height = m_resolution.height;
+				const GLenum filter = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || !m_gles3
+					? GL_NEAREST
+					: GL_LINEAR
+					;
+
 				if (m_gles3)
 				{
 					GL_CHECK(glUseProgram(m_msaaBlitProgram) );
@@ -4034,17 +4036,18 @@ namespace bgfx { namespace gl
 				}
 				else
 				{
-					GL_CHECK(glBlitFramebuffer(0
-							 , 0
-							 , width
-							 , height
-							 , 0
-							 , 0
-							 , width
-							 , height
-							 , GL_COLOR_BUFFER_BIT
-							 , filter
-					) );
+					GL_CHECK(glBlitFramebuffer(
+						  0
+						, 0
+						, width
+						, height
+						, 0
+						, 0
+						, width
+						, height
+						, GL_COLOR_BUFFER_BIT
+						, filter
+						) );
 				}
 
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
@@ -4368,6 +4371,7 @@ namespace bgfx { namespace gl
 						setUniform1i(loc, *(int32_t*)data);
 					}
 					break;
+
 				case UniformType::Vec4:
 					if (num > 1)
 					{
@@ -4387,7 +4391,8 @@ namespace bgfx { namespace gl
 				case UniformType::Vec4:
 					setUniform4fv(loc, num, (float*)data);
 					break;
-#endif
+#endif // BX_PLATFORM_EMSCRIPTEN
+
 				case UniformType::Mat3:
 					setUniformMatrix3fv(loc, num, GL_FALSE, (float*)data);
 					break;
@@ -4517,14 +4522,18 @@ namespace bgfx { namespace gl
 				{
 					const UniformRegInfo* infoClearColor = m_uniformReg.find("bgfx_clear_color");
 					if (NULL != infoClearColor)
+					{
 						m_clearQuadColor = infoClearColor->m_handle;
+					}
 				}
 
 				if (m_clearQuadDepth.idx == kInvalidHandle)
 				{
 					const UniformRegInfo* infoClearDepth = m_uniformReg.find("bgfx_clear_depth");
 					if (NULL != infoClearDepth)
+					{
 						m_clearQuadDepth = infoClearDepth->m_handle;
+					}
 				}
 
 				float mrtClearDepth[4] = { g_caps.homogeneousDepth ? (_clear.m_depth * 2.0f - 1.0f) : _clear.m_depth };
