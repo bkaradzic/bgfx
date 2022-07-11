@@ -3872,7 +3872,7 @@ namespace bgfx { namespace gl
 						GLint compiled = 0;
 						GL_CHECK(glGetShaderiv(shader_vs, GL_COMPILE_STATUS, &compiled));
 						BX_WARN(0 == shader_vs, "Unable to compile msaa Blit Vertex shader.");
-						
+
 						GLuint shader_fs = glCreateShader(GL_FRAGMENT_SHADER);
 						BX_WARN(0 != shader_fs, "Failed to create msaa Blit Fragment shader.");
 						GL_CHECK(glShaderSource(shader_fs, 1, &fs, nullptr));
@@ -3880,13 +3880,13 @@ namespace bgfx { namespace gl
 						compiled = 0;
 						GL_CHECK(glGetShaderiv(shader_fs, GL_COMPILE_STATUS, &compiled));
 						BX_WARN(0 == shader_vs, "Unable to compile msaa Blit Fragment shader.");
-						
+
 						m_msaaBlitProgram = glCreateProgram();
 						if (m_msaaBlitProgram)
 						{
 							GL_CHECK(glAttachShader(m_msaaBlitProgram, shader_vs));
 							GL_CHECK(glAttachShader(m_msaaBlitProgram, shader_fs));
-							
+
 							GL_CHECK(glLinkProgram(m_msaaBlitProgram));
 							GLint linked = 0;
 							glGetProgramiv(m_msaaBlitProgram, GL_LINK_STATUS, &linked);
@@ -3896,7 +3896,7 @@ namespace bgfx { namespace gl
 															 log));
 								BX_TRACE("%d: %s", linked, log);
 							}
-							
+
 							GL_CHECK(glDetachShader(m_msaaBlitProgram, shader_vs));
 							GL_CHECK(glDeleteShader(shader_vs));
 							GL_CHECK(glDetachShader(m_msaaBlitProgram, shader_fs));
@@ -3912,9 +3912,9 @@ namespace bgfx { namespace gl
 					GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
 					GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, _msaa, GL_DEPTH24_STENCIL8, _width, _height) );
 					GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_msaaBackBufferRbos[0]) );
-					
+
 					GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
-					
+
 					BX_ASSERT(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
 					, "glCheckFramebufferStatus failed 0x%08x"
 					, glCheckFramebufferStatus(GL_FRAMEBUFFER)
@@ -7055,11 +7055,15 @@ namespace bgfx { namespace gl
 					if (!bimg::isDepth(format) )
 					{
 						GL_CHECK(glDisable(GL_SCISSOR_TEST));
+
 						GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
 						GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[1]) );
+
 						GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0 + colorIdx) );
 						GL_CHECK(glDrawBuffer(GL_COLOR_ATTACHMENT0 + colorIdx) );
+
 						colorIdx++;
+
 						GL_CHECK(glBlitFramebuffer(0
 							, 0
 							, m_width
@@ -7071,18 +7075,14 @@ namespace bgfx { namespace gl
 							, GL_COLOR_BUFFER_BIT
 							, GL_LINEAR
 							) );
-
-					} else if (!writeOnly) {
+					}
+					else if (!writeOnly)
+					{
 						GL_CHECK(glDisable(GL_SCISSOR_TEST));
-						// blit depth attachment as well if it doesn't have
-						// BGFX_TEXTURE_RT_WRITE_ONLY render target flag. In most cases it's
-						// not necessary to blit the depth buffer.
+
 						GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
 						GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[1]) );
-						// OpenGL complains about missing buffer if set
-						// attachment. not sure what I'm missing...
-						// GL_CHECK(glReadBuffer(GL_DEPTH_ATTACHMENT) );
-						// GL_CHECK(glDrawBuffer(GL_DEPTH_ATTACHMENT) );
+
 						GL_CHECK(glBlitFramebuffer(0
 							, 0
 							, m_width
@@ -7099,10 +7099,12 @@ namespace bgfx { namespace gl
 			}
 
 			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
+
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3)
 			{
 				GL_CHECK(glReadBuffer(GL_NONE) );
 			}
+
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderGL->m_msaaBackBufferFbo) );
 		}
 
