@@ -1557,8 +1557,8 @@ BGFX_C_API uint32_t bgfx_get_avail_instance_data_buffer(uint32_t _num, uint16_t 
 /**
  * Allocate transient index buffer.
  *
- * @param[out] _tib TransientIndexBuffer structure is filled and is valid
- *  for the duration of frame, and it can be reused for multiple draw
+ * @param[out] _tib TransientIndexBuffer structure will be filled, and will be valid
+ *  for the duration of frame, and can be reused for multiple draw
  *  calls.
  * @param[in] _num Number of indices to allocate.
  * @param[in] _index32 Set to `true` if input indices will be 32-bit.
@@ -1569,8 +1569,8 @@ BGFX_C_API void bgfx_alloc_transient_index_buffer(bgfx_transient_index_buffer_t*
 /**
  * Allocate transient vertex buffer.
  *
- * @param[out] _tvb TransientVertexBuffer structure is filled and is valid
- *  for the duration of frame, and it can be reused for multiple draw
+ * @param[out] _tvb TransientVertexBuffer structure will be filled, and will be valid
+ *  for the duration of frame, and can be reused for multiple draw
  *  calls.
  * @param[in] _num Number of vertices to allocate.
  * @param[in] _layout Vertex layout.
@@ -1583,13 +1583,13 @@ BGFX_C_API void bgfx_alloc_transient_vertex_buffer(bgfx_transient_vertex_buffer_
  * buffers. If both space requirements are satisfied function returns
  * true.
  *
- * @param[out] _tvb TransientVertexBuffer structure is filled and is valid
- *  for the duration of frame, and it can be reused for multiple draw
+ * @param[out] _tvb TransientVertexBuffer structure will be filled, and will be valid
+ *  for the duration of frame, and can be reused for multiple draw
  *  calls.
  * @param[in] _layout Vertex layout.
  * @param[in] _numVertices Number of vertices to allocate.
- * @param[out] _tib TransientIndexBuffer structure is filled and is valid
- *  for the duration of frame, and it can be reused for multiple draw
+ * @param[out] _tib TransientIndexBuffer structure will be filled, and will be valid
+ *  for the duration of frame, and can be reused for multiple draw
  *  calls.
  * @param[in] _numIndices Number of indices to allocate.
  * @param[in] _index32 Set to `true` if input indices will be 32-bit.
@@ -1600,8 +1600,8 @@ BGFX_C_API bool bgfx_alloc_transient_buffers(bgfx_transient_vertex_buffer_t* _tv
 /**
  * Allocate instance data buffer.
  *
- * @param[out] _idb InstanceDataBuffer structure is filled and is valid
- *  for duration of frame, and it can be reused for multiple draw
+ * @param[out] _idb InstanceDataBuffer structure will be filled, and will be valid
+ *  for duration of frame, and can be reused for multiple draw
  *  calls.
  * @param[in] _num Number of instances.
  * @param[in] _stride Instance stride. Must be multiple of 16.
