@@ -2803,7 +2803,7 @@ namespace bgfx { namespace gl
 					: 0
 					;
 
-				g_caps.supported |= (m_readBackSupported || BX_ENABLED(BGFX_GL_CONFIG_TEXTURE_READ_BACK_EMULATION))
+				g_caps.supported |= (m_readBackSupported || BX_ENABLED(BGFX_GL_CONFIG_TEXTURE_READ_BACK_EMULATION) )
 					? BGFX_CAPS_TEXTURE_READ_BACK
 					: 0
 					;
@@ -3330,7 +3330,7 @@ namespace bgfx { namespace gl
 
 				GL_CHECK(glBindTexture(texture.m_target, 0) );
 			}
-			else if (BX_ENABLED(BGFX_GL_CONFIG_TEXTURE_READ_BACK_EMULATION))
+			else if (BX_ENABLED(BGFX_GL_CONFIG_TEXTURE_READ_BACK_EMULATION) )
 			{
 				const TextureGL& texture = m_textures[_handle.idx];
 				const bool compressed    = bimg::isCompressed(bimg::TextureFormat::Enum(texture.m_textureFormat) );
@@ -3803,122 +3803,175 @@ namespace bgfx { namespace gl
 		void createMsaaFbo(uint32_t _width, uint32_t _height, uint32_t _msaa)
 		{
 			if (0 == m_msaaBackBufferFbo // iOS
-				&&  1 < _msaa)
+			&&  1 < _msaa)
 			{
-				GLenum storageFormat = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
-									   ? GL_SRGB8_ALPHA8
-									   : GL_RGBA8
-				;
+				GLenum storageFormat = m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER
+					? GL_SRGB8_ALPHA8
+					: GL_RGBA8
+					;
+
 				GLenum attachment = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || m_gles3
 					? GL_DEPTH_STENCIL_ATTACHMENT
-					: GL_DEPTH_ATTACHMENT;
+					: GL_DEPTH_ATTACHMENT
+					;
 
 				GL_CHECK(glGenFramebuffers(1, &m_msaaBackBufferFbo) );
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
+
 				if (m_gles3)
 				{
-					GL_CHECK(glGenTextures(BX_COUNTOF(m_msaaBackBufferTextures), m_msaaBackBufferTextures));
-					GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_msaaBackBufferTextures[0]));
-					GL_CHECK(glTexStorage2D(GL_TEXTURE_2D, 1, storageFormat, _width, _height));
-					GL_CHECK(glFramebufferTexture2DMultisampleEXT(GL_FRAMEBUFFER,
-																  GL_COLOR_ATTACHMENT0,
-																  GL_TEXTURE_2D,
-																  m_msaaBackBufferTextures[0], 0,
-																  _msaa));
-					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo));
+					GL_CHECK(glGenTextures(BX_COUNTOF(m_msaaBackBufferTextures), m_msaaBackBufferTextures) );
+					GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_msaaBackBufferTextures[0]) );
+					GL_CHECK(glTexStorage2D(GL_TEXTURE_2D, 1, storageFormat, _width, _height) );
+					GL_CHECK(glFramebufferTexture2DMultisampleEXT(
+						  GL_FRAMEBUFFER
+						, GL_COLOR_ATTACHMENT0
+						, GL_TEXTURE_2D
+						, m_msaaBackBufferTextures[0]
+						, 0
+						, _msaa
+						) );
+					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
 
-					GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_msaaBackBufferTextures[1]));
-					GL_CHECK(glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, _width, _height));
-					GL_CHECK(glFramebufferTexture2DMultisampleEXT(GL_FRAMEBUFFER,
-																  attachment,
-																  GL_TEXTURE_2D,
-																  m_msaaBackBufferTextures[1], 0,
-																  _msaa));
-					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+					GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_msaaBackBufferTextures[1]) );
+					GL_CHECK(glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, _width, _height) );
+					GL_CHECK(glFramebufferTexture2DMultisampleEXT(
+						  GL_FRAMEBUFFER
+						, attachment
+						, GL_TEXTURE_2D
+						, m_msaaBackBufferTextures[1]
+						, 0
+						, _msaa
+						) );
+					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0) );
 
-					BX_ASSERT(GL_FRAMEBUFFER_COMPLETE == glCheckFramebufferStatus(GL_FRAMEBUFFER),
-							  "glCheckFramebufferStatus failed 0x%08x",
-							  glCheckFramebufferStatus(GL_FRAMEBUFFER)
-					);
+					BX_ASSERT(GL_FRAMEBUFFER_COMPLETE == glCheckFramebufferStatus(GL_FRAMEBUFFER)
+						, "glCheckFramebufferStatus failed 0x%08x"
+						, glCheckFramebufferStatus(GL_FRAMEBUFFER)
+						);
 
-					if (0 == m_msaaBlitProgram) {
-						static const char msaa_blit_vs[]{R"(#version 300 es
+					if (0 == m_msaaBlitProgram)
+					{
+						static const char* msaa_blit_vs =
+							R"(#version 300 es
 							precision highp float;
 							out vec2 UV;
-							void main() {
-								float x = -1.0 + float((gl_VertexID & 1) << 2);
-								float y = -1.0 + float((gl_VertexID & 2) << 1);
+							void main()
+							{
+								float x = -1.0 + float( (gl_VertexID & 1) << 2);
+								float y = -1.0 + float( (gl_VertexID & 2) << 1);
 								gl_Position = vec4(x, y, 0, 1);
 								UV = vec2(gl_Position.x + 1.0, gl_Position.y + 1.0) * 0.5;
 							}
-						)"};
+						)";
 
-						static const char msaa_blit_fs[]{R"(#version 300 es
+						static const char* msaa_blit_fs =
+							R"(#version 300 es
 							precision mediump float;
 							in vec2 UV;
 							uniform sampler2D msaaTexture;
 							out vec4 oFragColor;
-							void main() {
+							void main()
+							{
 								oFragColor = texture(msaaTexture, UV);
 							}
-						)"};
+						)";
 
 						const GLchar *const vs = msaa_blit_vs;
 						const GLchar *const fs = msaa_blit_fs;
+
 						GLuint shader_vs = glCreateShader(GL_VERTEX_SHADER);
-						BX_WARN(0 != shader_vs, "Failed to create msaa Blit Vertex shader.");
-						GL_CHECK(glShaderSource(shader_vs, 1, &vs, nullptr));
-						GL_CHECK(glCompileShader(shader_vs));
-						GLint compiled = 0;
-						GL_CHECK(glGetShaderiv(shader_vs, GL_COMPILE_STATUS, &compiled));
-						BX_WARN(0 == shader_vs, "Unable to compile msaa Blit Vertex shader.");
+						{
+							BX_WARN(0 != shader_vs, "Failed to create msaa Blit Vertex shader.");
+							GL_CHECK(glShaderSource(shader_vs, 1, &vs, NULL) );
+							GL_CHECK(glCompileShader(shader_vs) );
+
+							GLint compiled = 0;
+							GL_CHECK(glGetShaderiv(shader_vs, GL_COMPILE_STATUS, &compiled) );
+							BX_WARN(0 == shader_vs, "Unable to compile msaa Blit Vertex shader.");
+						}
 
 						GLuint shader_fs = glCreateShader(GL_FRAGMENT_SHADER);
-						BX_WARN(0 != shader_fs, "Failed to create msaa Blit Fragment shader.");
-						GL_CHECK(glShaderSource(shader_fs, 1, &fs, nullptr));
-						GL_CHECK(glCompileShader(shader_fs));
-						compiled = 0;
-						GL_CHECK(glGetShaderiv(shader_fs, GL_COMPILE_STATUS, &compiled));
-						BX_WARN(0 == shader_vs, "Unable to compile msaa Blit Fragment shader.");
+						{
+							BX_WARN(0 != shader_fs, "Failed to create msaa Blit Fragment shader.");
+							GL_CHECK(glShaderSource(shader_fs, 1, &fs, NULL) );
+							GL_CHECK(glCompileShader(shader_fs) );
+
+							GLint compiled = 0;
+							GL_CHECK(glGetShaderiv(shader_fs, GL_COMPILE_STATUS, &compiled) );
+							BX_WARN(0 == shader_vs, "Unable to compile msaa Blit Fragment shader.");
+						}
 
 						m_msaaBlitProgram = glCreateProgram();
+
 						if (m_msaaBlitProgram)
 						{
-							GL_CHECK(glAttachShader(m_msaaBlitProgram, shader_vs));
-							GL_CHECK(glAttachShader(m_msaaBlitProgram, shader_fs));
+							GL_CHECK(glAttachShader(m_msaaBlitProgram, shader_vs) );
+							GL_CHECK(glAttachShader(m_msaaBlitProgram, shader_fs) );
+							GL_CHECK(glLinkProgram(m_msaaBlitProgram) );
 
-							GL_CHECK(glLinkProgram(m_msaaBlitProgram));
 							GLint linked = 0;
-							glGetProgramiv(m_msaaBlitProgram, GL_LINK_STATUS, &linked);
-							if (0 == linked) {
+							GL_CHECK(glGetProgramiv(m_msaaBlitProgram, GL_LINK_STATUS, &linked) );
+
+							if (0 == linked)
+							{
 								char log[1024];
-								GL_CHECK(glGetProgramInfoLog(m_msaaBlitProgram, sizeof(log), NULL,
-															 log));
+								GL_CHECK(glGetProgramInfoLog(
+									  m_msaaBlitProgram
+									, sizeof(log)
+									, NULL
+									, log
+									) );
 								BX_TRACE("%d: %s", linked, log);
 							}
 
-							GL_CHECK(glDetachShader(m_msaaBlitProgram, shader_vs));
-							GL_CHECK(glDeleteShader(shader_vs));
-							GL_CHECK(glDetachShader(m_msaaBlitProgram, shader_fs));
-							GL_CHECK(glDeleteShader(shader_fs));
+							GL_CHECK(glDetachShader(m_msaaBlitProgram, shader_vs) );
+							GL_CHECK(glDeleteShader(shader_vs) );
+
+							GL_CHECK(glDetachShader(m_msaaBlitProgram, shader_fs) );
+							GL_CHECK(glDeleteShader(shader_fs) );
 						}
 					}
 				}
 				else
 				{
-					GL_CHECK(glGenRenderbuffers(BX_COUNTOF(m_msaaBackBufferRbos), m_msaaBackBufferRbos));
-					GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_msaaBackBufferRbos[0]) );
-					GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, _msaa, storageFormat, _width, _height) );
-					GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
-					GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, _msaa, GL_DEPTH24_STENCIL8, _width, _height) );
-					GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_msaaBackBufferRbos[0]) );
+					GL_CHECK(glGenRenderbuffers(BX_COUNTOF(m_msaaBackBufferRbos), m_msaaBackBufferRbos) );
 
-					GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
+					GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_msaaBackBufferRbos[0]) );
+					GL_CHECK(glRenderbufferStorageMultisample(
+						  GL_RENDERBUFFER
+						, _msaa
+						, storageFormat
+						, _width
+						, _height
+						) );
+
+					GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_msaaBackBufferRbos[1]) );
+					GL_CHECK(glRenderbufferStorageMultisample(
+						  GL_RENDERBUFFER
+						, _msaa
+						, GL_DEPTH24_STENCIL8
+						, _width
+						, _height
+						) );
+
+					GL_CHECK(glFramebufferRenderbuffer(
+						  GL_FRAMEBUFFER
+						, GL_COLOR_ATTACHMENT0
+						, GL_RENDERBUFFER
+						, m_msaaBackBufferRbos[0]
+						) );
+					GL_CHECK(glFramebufferRenderbuffer(
+						  GL_FRAMEBUFFER
+						, attachment
+						, GL_RENDERBUFFER
+						, m_msaaBackBufferRbos[1]
+						) );
 
 					BX_ASSERT(GL_FRAMEBUFFER_COMPLETE ==  glCheckFramebufferStatus(GL_FRAMEBUFFER)
-					, "glCheckFramebufferStatus failed 0x%08x"
-					, glCheckFramebufferStatus(GL_FRAMEBUFFER)
-					);
+						, "glCheckFramebufferStatus failed 0x%08x"
+						, glCheckFramebufferStatus(GL_FRAMEBUFFER)
+						);
 				}
 			}
 		}
@@ -3935,7 +3988,7 @@ namespace bgfx { namespace gl
 				{
 					if (0 != m_msaaBackBufferTextures[0])
 					{
-						GL_CHECK(glDeleteTextures(BX_COUNTOF(m_msaaBackBufferTextures), m_msaaBackBufferTextures));
+						GL_CHECK(glDeleteTextures(BX_COUNTOF(m_msaaBackBufferTextures), m_msaaBackBufferTextures) );
 						m_msaaBackBufferTextures[0] = 0;
 						m_msaaBackBufferTextures[1] = 0;
 					}
@@ -3949,7 +4002,7 @@ namespace bgfx { namespace gl
 				{
 					if (0 != m_msaaBackBufferRbos[0])
 					{
-						GL_CHECK(glDeleteRenderbuffers(BX_COUNTOF(m_msaaBackBufferRbos), m_msaaBackBufferRbos));
+						GL_CHECK(glDeleteRenderbuffers(BX_COUNTOF(m_msaaBackBufferRbos), m_msaaBackBufferRbos) );
 						m_msaaBackBufferRbos[0] = 0;
 						m_msaaBackBufferRbos[1] = 0;
 					}
@@ -3974,10 +4027,10 @@ namespace bgfx { namespace gl
 				;
 				if (m_gles3)
 				{
-					GL_CHECK(glUseProgram(m_msaaBlitProgram));
-					GL_CHECK(glActiveTexture(GL_TEXTURE0));
-					GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_msaaBackBufferTextures[0]));
-					GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
+					GL_CHECK(glUseProgram(m_msaaBlitProgram) );
+					GL_CHECK(glActiveTexture(GL_TEXTURE0) );
+					GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_msaaBackBufferTextures[0]) );
+					GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3) );
 				}
 				else
 				{
@@ -3991,7 +4044,7 @@ namespace bgfx { namespace gl
 							 , height
 							 , GL_COLOR_BUFFER_BIT
 							 , filter
-					));
+					) );
 				}
 
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
@@ -5262,7 +5315,7 @@ namespace bgfx { namespace gl
 
 	void ProgramGL::bindAttributesBegin()
 	{
-		bx::memCopy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib));
+		bx::memCopy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib) );
 	}
 
 	void ProgramGL::bindAttributes(const VertexLayout& _layout, uint32_t _baseVertex)
@@ -5321,8 +5374,8 @@ namespace bgfx { namespace gl
 		{
 			GLint loc = m_instanceData[ii];
 			lazyEnableVertexAttribArray(loc);
-			GL_CHECK(glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, _stride, (void*)(uintptr_t)baseVertex));
-			GL_CHECK(glVertexAttribDivisor(loc, 1));
+			GL_CHECK(glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, _stride, (void*)(uintptr_t)baseVertex) );
+			GL_CHECK(glVertexAttribDivisor(loc, 1) );
 			baseVertex += 16;
 		}
 	}
@@ -5850,7 +5903,7 @@ namespace bgfx { namespace gl
 				bimg::imageCopy(temp, width, height, 1, bpp, srcpitch, data);
 				data = temp;
 			}
-			const GLenum internalFmt = (0 != (m_flags & BGFX_TEXTURE_SRGB))
+			const GLenum internalFmt = (0 != (m_flags & BGFX_TEXTURE_SRGB) )
 				? s_textureFormat[m_textureFormat].m_internalFmtSrgb
 				: s_textureFormat[m_textureFormat].m_internalFmt
 				;
@@ -7054,7 +7107,7 @@ namespace bgfx { namespace gl
 
 					if (!bimg::isDepth(format) )
 					{
-						GL_CHECK(glDisable(GL_SCISSOR_TEST));
+						GL_CHECK(glDisable(GL_SCISSOR_TEST) );
 
 						GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
 						GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[1]) );
@@ -7078,7 +7131,7 @@ namespace bgfx { namespace gl
 					}
 					else if (!writeOnly)
 					{
-						GL_CHECK(glDisable(GL_SCISSOR_TEST));
+						GL_CHECK(glDisable(GL_SCISSOR_TEST) );
 
 						GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
 						GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[1]) );
