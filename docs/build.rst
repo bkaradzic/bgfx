@@ -52,7 +52,7 @@ Download AndroidNDK:
 
  - https://developer.android.com/tools/sdk/ndk/index.html
 
-Set following enironment variables:
+Set following environment variables:
 
 ::
 

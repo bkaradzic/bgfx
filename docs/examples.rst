@@ -231,7 +231,7 @@ Shadow volumes.
 60Hz
 ^^^^
 
-Draw stress is CPU stress test to show what is the maximimum number of
+Draw stress is CPU stress test to show what is the maximum number of
 draw calls while maintaining 60Hz frame rate. bgfx currently has default
 limit of 64K draw calls per frame. You can increase this limit by
 changing ``BGFX_CONFIG_MAX_DRAW_CALLS``.
@@ -374,7 +374,7 @@ To test browsers in 60Hz mode following changes were made:
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 By default browsers are using vsync, and don't have option to turn it
-off programatically.
+off programmatically.
 
 +----------------+------------+------------+--------------------------+-------+----------+
 | CPU            | Renderer   | GPU        | Arch/Compiler/OS         | Dim   | Calls    |
