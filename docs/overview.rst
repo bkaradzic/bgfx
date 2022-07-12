@@ -169,7 +169,7 @@ device or OpenGL context.
 
 For more info see: :doc:`bgfx`.
 
-.. note:: You can use ``--with-sdl`` when runnning GENie to enable SDL2 integration with examples:
+.. note:: You can use ``--with-sdl`` when running GENie to enable SDL2 integration with examples:
           ``genie --with-sdl vs2012``
 
 .. note:: ``--with-glfw`` is also available, but it's just simple stub to be used to test GLFW
