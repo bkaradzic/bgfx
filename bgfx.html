@@ -5806,7 +5806,7 @@ Otherwise, use <cite>bgfx::setViewScissor</cite>.</p>
 <dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_alloc_transient_vertex_buffer</span></code>. </p>
 </dd>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">[out]</span> <span class="pre">_tvb</span></code>: <a class="reference internal" href="#structbgfx_1_1_transient_vertex_buffer"><span class="std std-ref">TransientVertexBuffer</span></a> structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[out]</span> <span class="pre">_tvb</span></code>: <a class="reference internal" href="#structbgfx_1_1_transient_vertex_buffer"><span class="std std-ref">TransientVertexBuffer</span></a> structure will be filled, and will be valid for the duration of frame, and can be reused for multiple draw calls. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of vertices to allocate. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layout</span></code>: Vertex layout.</p></li>
 </ul>
@@ -5982,7 +5982,7 @@ Otherwise, use <cite>bgfx::setViewScissor</cite>.</p>
 <dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_alloc_transient_index_buffer</span></code>. </p>
 </dd>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">[out]</span> <span class="pre">_tib</span></code>: <a class="reference internal" href="#structbgfx_1_1_transient_index_buffer"><span class="std std-ref">TransientIndexBuffer</span></a> structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[out]</span> <span class="pre">_tib</span></code>: <a class="reference internal" href="#structbgfx_1_1_transient_index_buffer"><span class="std std-ref">TransientIndexBuffer</span></a> structure will be filled, and will be valid for the duration of frame, and can be reused for multiple draw calls. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of indices to allocate. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_index32</span></code>: Set to <code class="docutils literal notranslate"><span class="pre">true</span></code> if input indices will be 32-bit.</p></li>
 </ul>
@@ -7127,7 +7127,7 @@ Otherwise, use <cite>bgfx::setViewScissor</cite>.</p>
 <dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_alloc_instance_data_buffer</span></code>. </p>
 </dd>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">[out]</span> <span class="pre">_idb</span></code>: <a class="reference internal" href="#structbgfx_1_1_instance_data_buffer"><span class="std std-ref">InstanceDataBuffer</span></a> structure is filled and is valid for duration of frame, and it can be reused for multiple draw calls. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[out]</span> <span class="pre">_idb</span></code>: <a class="reference internal" href="#structbgfx_1_1_instance_data_buffer"><span class="std std-ref">InstanceDataBuffer</span></a> structure will be filled, and will be valid for the duration of frame, and can be reused for multiple draw calls. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of instances. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_stride</span></code>: Instance stride. Must be multiple of 16.</p></li>
 </ul>
