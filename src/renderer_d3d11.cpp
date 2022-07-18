@@ -1036,7 +1036,7 @@ namespace bgfx { namespace d3d11
 						;
 					m_scd.swapEffect = m_swapEffect;
 #if BX_PLATFORM_WINRT
-					m_scd.alphaMode  = (_init.resolution.reset&BGFX_RESET_PREMULTIPLIED_BACKBUFFER) ? DXGI_ALPHA_MODE_PREMULTIPLIED : DXGI_ALPHA_MODE_IGNORE;
+					m_scd.alphaMode  = (_init.resolution.reset & BGFX_RESET_TRANSPARENT_BACKBUFFER) ? DXGI_ALPHA_MODE_PREMULTIPLIED : DXGI_ALPHA_MODE_IGNORE;
 #else
 					m_scd.alphaMode  = DXGI_ALPHA_MODE_IGNORE;
 #endif
@@ -6677,7 +6677,7 @@ namespace bgfx { namespace d3d11
 		}
 
 #if BX_PLATFORM_WINRT
-		if (m_resolution.reset & BGFX_RESET_PREMULTIPLIED_BACKBUFFER)
+		if (m_resolution.reset & BGFX_RESET_TRANSPARENT_BACKBUFFER)
 		{
 			premultiplyBackBuffer(_clearQuad);
 		}

@@ -356,7 +356,7 @@ flag.Reset { bits = 32 }
 	.Hidpi                    (18) --- Enable HiDPI rendering.
 	.DepthClamp               (19) --- Enable depth clamp.
 	.Suspend                  (20) --- Suspend rendering.
-	.PremultipliedBackbuffer  (21) --- Alpha premultiplied ready backbuffer.
+	.TransparentBackbuffer    (21) --- Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
 	()
 
 flag.ResetFullscreen { bits = 32, shift = 0, range = 1, base = 1 }
@@ -384,6 +384,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.Texture_2dArray        --- 2D texture array is supported.
 	.Texture_3d             --- 3D textures are supported.
 	.TextureBlit            --- Texture blit is supported.
+	.TransparentBackbuffer  --- Transparent back buffer supported.
 	.TextureCompareReserved
 	.TextureCompareLequal   --- Texture compare less equal mode is supported.
 	.TextureCubeArray       --- Cubemap texture array is supported.

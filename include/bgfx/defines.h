@@ -453,7 +453,7 @@
 #define BGFX_RESET_HIDPI                          UINT32_C(0x00020000) //!< Enable HiDPI rendering.
 #define BGFX_RESET_DEPTH_CLAMP                    UINT32_C(0x00040000) //!< Enable depth clamp.
 #define BGFX_RESET_SUSPEND                        UINT32_C(0x00080000) //!< Suspend rendering.
-#define BGFX_RESET_PREMULTIPLIED_BACKBUFFER       UINT32_C(0x00100000) //!< Alpha premultiplied ready backbuffer.
+#define BGFX_RESET_TRANSPARENT_BACKBUFFER         UINT32_C(0x00100000) //!< Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
 
 #define BGFX_RESET_FULLSCREEN_SHIFT               0
 
@@ -481,15 +481,16 @@
 #define BGFX_CAPS_TEXTURE_2D_ARRAY                UINT64_C(0x0000000000010000) //!< 2D texture array is supported.
 #define BGFX_CAPS_TEXTURE_3D                      UINT64_C(0x0000000000020000) //!< 3D textures are supported.
 #define BGFX_CAPS_TEXTURE_BLIT                    UINT64_C(0x0000000000040000) //!< Texture blit is supported.
-#define BGFX_CAPS_TEXTURE_COMPARE_RESERVED        UINT64_C(0x0000000000080000)
-#define BGFX_CAPS_TEXTURE_COMPARE_LEQUAL          UINT64_C(0x0000000000100000) //!< Texture compare less equal mode is supported.
-#define BGFX_CAPS_TEXTURE_CUBE_ARRAY              UINT64_C(0x0000000000200000) //!< Cubemap texture array is supported.
-#define BGFX_CAPS_TEXTURE_DIRECT_ACCESS           UINT64_C(0x0000000000400000) //!< CPU direct access to GPU texture memory.
-#define BGFX_CAPS_TEXTURE_READ_BACK               UINT64_C(0x0000000000800000) //!< Read-back texture is supported.
-#define BGFX_CAPS_VERTEX_ATTRIB_HALF              UINT64_C(0x0000000001000000) //!< Vertex attribute half-float is supported.
-#define BGFX_CAPS_VERTEX_ATTRIB_UINT10            UINT64_C(0x0000000002000000) //!< Vertex attribute 10_10_10_2 is supported.
-#define BGFX_CAPS_VERTEX_ID                       UINT64_C(0x0000000004000000) //!< Rendering with VertexID only is supported.
-#define BGFX_CAPS_VIEWPORT_LAYER_ARRAY            UINT64_C(0x0000000008000000) //!< Viewport layer is available in vertex shader.
+#define BGFX_CAPS_TRANSPARENT_BACKBUFFER          UINT64_C(0x0000000000080000) //!< Transparent back buffer supported.
+#define BGFX_CAPS_TEXTURE_COMPARE_RESERVED        UINT64_C(0x0000000000100000)
+#define BGFX_CAPS_TEXTURE_COMPARE_LEQUAL          UINT64_C(0x0000000000200000) //!< Texture compare less equal mode is supported.
+#define BGFX_CAPS_TEXTURE_CUBE_ARRAY              UINT64_C(0x0000000000400000) //!< Cubemap texture array is supported.
+#define BGFX_CAPS_TEXTURE_DIRECT_ACCESS           UINT64_C(0x0000000000800000) //!< CPU direct access to GPU texture memory.
+#define BGFX_CAPS_TEXTURE_READ_BACK               UINT64_C(0x0000000001000000) //!< Read-back texture is supported.
+#define BGFX_CAPS_VERTEX_ATTRIB_HALF              UINT64_C(0x0000000002000000) //!< Vertex attribute half-float is supported.
+#define BGFX_CAPS_VERTEX_ATTRIB_UINT10            UINT64_C(0x0000000004000000) //!< Vertex attribute 10_10_10_2 is supported.
+#define BGFX_CAPS_VERTEX_ID                       UINT64_C(0x0000000008000000) //!< Rendering with VertexID only is supported.
+#define BGFX_CAPS_VIEWPORT_LAYER_ARRAY            UINT64_C(0x0000000010000000) //!< Viewport layer is available in vertex shader.
 /// All texture compare modes are supported.
 #define BGFX_CAPS_TEXTURE_COMPARE_ALL (0 \
 	| BGFX_CAPS_TEXTURE_COMPARE_RESERVED \
