@@ -161,8 +161,15 @@ bool ReduceLoadSize::ShouldReplaceExtract(Instruction* inst) {
       case analysis::Type::kArray: {
         const analysis::Constant* size_const =
             const_mgr->FindDeclaredConstant(load_type->AsArray()->LengthId());
-        assert(size_const->AsIntConstant());
-        total_size = size_const->GetU32();
+
+        if (size_const) {
+          assert(size_const->AsIntConstant());
+          total_size = size_const->GetU32();
+        } else {
+          // The size is spec constant, so it is unknown at this time.  Assume
+          // it is very large.
+          total_size = UINT32_MAX;
+        }
       } break;
       case analysis::Type::kStruct:
         total_size = static_cast<uint32_t>(

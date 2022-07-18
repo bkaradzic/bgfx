@@ -16,6 +16,7 @@ namespace stl = tinystl;
 
 #include <meshoptimizer/src/meshoptimizer.h>
 
+#define CGLTF_VALIDATE_ENABLE_ASSERTS BX_CONFIG_DEBUG
 #define CGLTF_IMPLEMENTATION
 #include <cgltf/cgltf.h>
 

@@ -15,6 +15,7 @@
 #ifndef SOURCE_OPT_SCALAR_REPLACEMENT_PASS_H_
 #define SOURCE_OPT_SCALAR_REPLACEMENT_PASS_H_
 
+#include <cassert>
 #include <cstdio>
 #include <memory>
 #include <queue>
@@ -37,9 +38,20 @@ class ScalarReplacementPass : public MemPass {
  public:
   ScalarReplacementPass(uint32_t limit = kDefaultLimit)
       : max_num_elements_(limit) {
-    name_[0] = '\0';
-    strcat(name_, "scalar-replacement=");
-    sprintf(&name_[strlen(name_)], "%d", max_num_elements_);
+    const auto num_to_write = snprintf(
+        name_, sizeof(name_), "scalar-replacement=%u", max_num_elements_);
+    assert(size_t(num_to_write) < sizeof(name_));
+    (void)num_to_write;  // Mark as unused
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    // ClusterFuzz/OSS-Fuzz is likely to yield examples with very large arrays.
+    // This can cause timeouts and memouts during fuzzing that
+    // are not classed as bugs. To avoid this noise, we set the
+    // max_num_elements_ to a smaller value for fuzzing.
+    max_num_elements_ =
+        (max_num_elements_ > 0 && max_num_elements_ < 100 ? max_num_elements_
+                                                          : 100);
+#endif
   }
 
   const char* name() const override { return name_; }
@@ -253,7 +265,10 @@ class ScalarReplacementPass : public MemPass {
   // Limit on the number of members in an object that will be replaced.
   // 0 means there is no limit.
   uint32_t max_num_elements_;
-  char name_[55];
+  // This has to be big enough to fit "scalar-replacement=" followed by a
+  // uint32_t number written in decimal (so 10 digits), and then a
+  // terminating nul.
+  char name_[30];
 };
 
 }  // namespace opt

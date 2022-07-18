@@ -1760,7 +1760,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 		void setFrameBuffer(RenderPassDescriptor _renderPassDescriptor, FrameBufferHandle _fbh, bool _msaa = true)
 		{
-			// reslove framebuffer
+			// resolve framebuffer
 			if (isValid(m_fbh) && m_fbh.idx != _fbh.idx)
 			{
 				FrameBufferMtl& frameBuffer = m_frameBuffers[m_fbh.idx];

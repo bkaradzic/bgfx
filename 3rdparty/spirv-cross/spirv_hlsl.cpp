@@ -645,9 +645,9 @@ void CompilerHLSL::emit_builtin_outputs_in_struct()
 
 		case BuiltInLayer:
 			if (hlsl_options.shader_model < 50 || get_entry_point().model != ExecutionModelGeometry)
-				SPIRV_CROSS_THROW("Render target index output is only supported in GS 5.0 or higher.");
+				SPIRV_CROSS_THROW("Render target array index output is only supported in GS 5.0 or higher.");
 			type = "uint";
-			semantic = "SV_RenderTargetIndex";
+			semantic = "SV_RenderTargetArrayIndex";
 			break;
 
 		default:
@@ -797,9 +797,9 @@ void CompilerHLSL::emit_builtin_inputs_in_struct()
 
 		case BuiltInLayer:
 			if (hlsl_options.shader_model < 50 || get_entry_point().model != ExecutionModelFragment)
-				SPIRV_CROSS_THROW("Render target index input is only supported in PS 5.0 or higher.");
+				SPIRV_CROSS_THROW("Render target array index input is only supported in PS 5.0 or higher.");
 			type = "uint";
-			semantic = "SV_RenderTargetIndex";
+			semantic = "SV_RenderTargetArrayIndex";
 			break;
 
 		default:
@@ -3597,6 +3597,18 @@ string CompilerHLSL::bitcast_glsl_op(const SPIRType &out_type, const SPIRType &i
 			force_recompile();
 		}
 		return "spvPackFloat2x16";
+	}
+	else if (out_type.basetype == SPIRType::UShort && in_type.basetype == SPIRType::Half)
+	{
+		if (hlsl_options.shader_model < 40)
+			SPIRV_CROSS_THROW("Half to UShort requires Shader Model 4.");
+		return "(" + type_to_glsl(out_type) + ")f32tof16";
+	}
+	else if (out_type.basetype == SPIRType::Half && in_type.basetype == SPIRType::UShort)
+	{
+		if (hlsl_options.shader_model < 40)
+			SPIRV_CROSS_THROW("UShort to Half requires Shader Model 4.");
+		return "(" + type_to_glsl(out_type) + ")f16tof32";
 	}
 	else
 		return "";

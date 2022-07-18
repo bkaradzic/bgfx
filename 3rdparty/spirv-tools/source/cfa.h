@@ -68,6 +68,8 @@ class CFA {
   ///                       CFG following postorder traversal semantics
   /// @param[in] backedge   A function that will be called when a backedge is
   ///                       encountered during a traversal
+  /// @param[in] terminal   A function that will be called to determine if the
+  ///                       search should stop at the given node.
   /// NOTE: The @p successor_func and predecessor_func each return a pointer to
   /// a
   /// collection such that iterators to that collection remain valid for the
@@ -76,7 +78,8 @@ class CFA {
       const BB* entry, get_blocks_func successor_func,
       std::function<void(cbb_ptr)> preorder,
       std::function<void(cbb_ptr)> postorder,
-      std::function<void(cbb_ptr, cbb_ptr)> backedge);
+      std::function<void(cbb_ptr, cbb_ptr)> backedge,
+      std::function<bool(cbb_ptr)> terminal);
 
   /// @brief Calculates dominator edges for a set of blocks
   ///
@@ -138,7 +141,8 @@ void CFA<BB>::DepthFirstTraversal(
     const BB* entry, get_blocks_func successor_func,
     std::function<void(cbb_ptr)> preorder,
     std::function<void(cbb_ptr)> postorder,
-    std::function<void(cbb_ptr, cbb_ptr)> backedge) {
+    std::function<void(cbb_ptr, cbb_ptr)> backedge,
+    std::function<bool(cbb_ptr)> terminal) {
   std::unordered_set<uint32_t> processed;
 
   /// NOTE: work_list is the sequence of nodes from the root node to the node
@@ -152,7 +156,7 @@ void CFA<BB>::DepthFirstTraversal(
 
   while (!work_list.empty()) {
     block_info& top = work_list.back();
-    if (top.iter == end(*successor_func(top.block))) {
+    if (terminal(top.block) || top.iter == end(*successor_func(top.block))) {
       postorder(top.block);
       work_list.pop_back();
     } else {
@@ -266,11 +270,13 @@ std::vector<BB*> CFA<BB>::TraversalRoots(const std::vector<BB*>& blocks,
   auto mark_visited = [&visited](const BB* b) { visited.insert(b); };
   auto ignore_block = [](const BB*) {};
   auto ignore_blocks = [](const BB*, const BB*) {};
+  auto no_terminal_blocks = [](const BB*) { return false; };
 
   auto traverse_from_root = [&mark_visited, &succ_func, &ignore_block,
-                             &ignore_blocks](const BB* entry) {
+                             &ignore_blocks,
+                             &no_terminal_blocks](const BB* entry) {
     DepthFirstTraversal(entry, succ_func, mark_visited, ignore_block,
-                        ignore_blocks);
+                        ignore_blocks, no_terminal_blocks);
   };
 
   std::vector<BB*> result;

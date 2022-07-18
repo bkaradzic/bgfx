@@ -306,15 +306,36 @@ bool CFG::node_terminates_control_flow_in_sub_graph(BlockID from, BlockID to) co
 
 		bool true_path_ignore = false;
 		bool false_path_ignore = false;
-		if (ignore_block_id && dom.terminator == SPIRBlock::Select)
+
+		bool merges_to_nothing = dom.merge == SPIRBlock::MergeNone ||
+		                         (dom.merge == SPIRBlock::MergeSelection && dom.next_block &&
+		                          compiler.get<SPIRBlock>(dom.next_block).terminator == SPIRBlock::Unreachable) ||
+		                         (dom.merge == SPIRBlock::MergeLoop && dom.merge_block &&
+		                          compiler.get<SPIRBlock>(dom.merge_block).terminator == SPIRBlock::Unreachable);
+
+		if (dom.self == from || merges_to_nothing)
 		{
-			auto &true_block = compiler.get<SPIRBlock>(dom.true_block);
-			auto &false_block = compiler.get<SPIRBlock>(dom.false_block);
-			auto &ignore_block = compiler.get<SPIRBlock>(ignore_block_id);
-			true_path_ignore = compiler.execution_is_branchless(true_block, ignore_block);
-			false_path_ignore = compiler.execution_is_branchless(false_block, ignore_block);
+			// We can only ignore inner branchy paths if there is no merge,
+			// i.e. no code is generated afterwards. E.g. this allows us to elide continue:
+			// for (;;) { if (cond) { continue; } else { break; } }.
+			// Codegen here in SPIR-V will be something like either no merge if one path directly breaks, or
+			// we merge to Unreachable.
+			if (ignore_block_id && dom.terminator == SPIRBlock::Select)
+			{
+				auto &true_block = compiler.get<SPIRBlock>(dom.true_block);
+				auto &false_block = compiler.get<SPIRBlock>(dom.false_block);
+				auto &ignore_block = compiler.get<SPIRBlock>(ignore_block_id);
+				true_path_ignore = compiler.execution_is_branchless(true_block, ignore_block);
+				false_path_ignore = compiler.execution_is_branchless(false_block, ignore_block);
+			}
 		}
 
+		// Cases where we allow traversal. This serves as a proxy for post-dominance in a loop body.
+		// TODO: Might want to do full post-dominance analysis, but it's a lot of churn for something like this ...
+		// - We're the merge block of a selection construct. Jump to header.
+		// - We're the merge block of a loop. Jump to header.
+		// - Direct branch. Trivial.
+		// - Allow cases inside a branch if the header cannot merge execution before loop exit.
 		if ((dom.merge == SPIRBlock::MergeSelection && dom.next_block == to) ||
 		    (dom.merge == SPIRBlock::MergeLoop && dom.merge_block == to) ||
 		    (dom.terminator == SPIRBlock::Direct && dom.next_block == to) ||

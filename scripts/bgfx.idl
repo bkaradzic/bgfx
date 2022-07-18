@@ -1485,8 +1485,8 @@ func.getAvailInstanceDataBuffer
 ---
 func.allocTransientIndexBuffer
 	"void"
-	.tib     "TransientIndexBuffer*" { out } --- TransientIndexBuffer structure is filled and is valid
-	                                         --- for the duration of frame, and it can be reused for multiple draw
+	.tib     "TransientIndexBuffer*" { out } --- TransientIndexBuffer structure will be filled, and will be valid
+	                                         --- for the duration of frame, and can be reused for multiple draw
 	                                         --- calls.
 	.num     "uint32_t"                      --- Number of indices to allocate.
 	.index32 "bool"                          --- Set to `true` if input indices will be 32-bit.
@@ -1495,8 +1495,8 @@ func.allocTransientIndexBuffer
 --- Allocate transient vertex buffer.
 func.allocTransientVertexBuffer
 	"void"
-	.tvb    "TransientVertexBuffer*" { out } --- TransientVertexBuffer structure is filled and is valid
-	                                         --- for the duration of frame, and it can be reused for multiple draw
+	.tvb    "TransientVertexBuffer*" { out } --- TransientVertexBuffer structure will be filled, and will be valid
+	                                         --- for the duration of frame, and can be reused for multiple draw
 	                                         --- calls.
 	.num    "uint32_t"                       --- Number of vertices to allocate.
 	.layout "const VertexLayout &"           --- Vertex layout.
@@ -1507,13 +1507,13 @@ func.allocTransientVertexBuffer
 ---
 func.allocTransientBuffers
 	"bool"
-	.tvb         "TransientVertexBuffer*" { out } --- TransientVertexBuffer structure is filled and is valid
-	                                              --- for the duration of frame, and it can be reused for multiple draw
+	.tvb         "TransientVertexBuffer*" { out } --- TransientVertexBuffer structure will be filled, and will be valid
+	                                              --- for the duration of frame, and can be reused for multiple draw
 	                                              --- calls.
 	.layout      "const VertexLayout &"           --- Vertex layout.
 	.numVertices "uint32_t"                       --- Number of vertices to allocate.
-	.tib         "TransientIndexBuffer*" { out }  --- TransientIndexBuffer structure is filled and is valid
-	                                              --- for the duration of frame, and it can be reused for multiple draw
+	.tib         "TransientIndexBuffer*" { out }  --- TransientIndexBuffer structure will be filled, and will be valid
+	                                              --- for the duration of frame, and can be reused for multiple draw
 	                                              --- calls.
 	.numIndices  "uint32_t"                       --- Number of indices to allocate.
 	.index32 "bool"                               --- Set to `true` if input indices will be 32-bit.
@@ -1522,8 +1522,8 @@ func.allocTransientBuffers
 --- Allocate instance data buffer.
 func.allocInstanceDataBuffer
 	"void"
-	.idb    "InstanceDataBuffer*" { out } --- InstanceDataBuffer structure is filled and is valid
-	                                      --- for duration of frame, and it can be reused for multiple draw
+	.idb    "InstanceDataBuffer*" { out } --- InstanceDataBuffer structure will be filled, and will be valid
+	                                      --- for duration of frame, and can be reused for multiple draw
 	                                      --- calls.
 	.num    "uint32_t"                    --- Number of instances.
 	.stride "uint16_t"                    --- Instance stride. Must be multiple of 16.

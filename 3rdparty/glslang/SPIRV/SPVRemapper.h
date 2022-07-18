@@ -121,6 +121,9 @@ public:
    void remap(std::vector<std::uint32_t>& spv, const std::vector<std::string>& whiteListStrings,
               std::uint32_t opts = DO_EVERYTHING);
 
+   // remap on an existing binary in memory - legacy interface without white list
+   void remap(std::vector<std::uint32_t>& spv, std::uint32_t opts = DO_EVERYTHING);
+
    // Type for error/log handler functions
    typedef std::function<void(const std::string&)> errorfn_t;
    typedef std::function<void(const std::string&)> logfn_t;

@@ -693,8 +693,12 @@ NonSemanticShaderDebugInfo100Instructions Instruction::GetShader100DebugOpcode()
     return NonSemanticShaderDebugInfo100InstructionsMax;
   }
 
-  return NonSemanticShaderDebugInfo100Instructions(
-      GetSingleWordInOperand(kExtInstInstructionInIdx));
+  uint32_t opcode = GetSingleWordInOperand(kExtInstInstructionInIdx);
+  if (opcode >= NonSemanticShaderDebugInfo100InstructionsMax) {
+    return NonSemanticShaderDebugInfo100InstructionsMax;
+  }
+
+  return NonSemanticShaderDebugInfo100Instructions(opcode);
 }
 
 CommonDebugInfoInstructions Instruction::GetCommonDebugOpcode() const {

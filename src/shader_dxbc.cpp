@@ -1235,7 +1235,7 @@ namespace bgfx
 				// 0       1       2       3
 				// 76543210765432107654321076543210
 				// ........        iiiii...........
-				//                 ^---------------- Interploation
+				//                 ^---------------- Interpolation
 
 				_instruction.interpolation = DxbcInterpolation::Enum( (token & UINT32_C(0x0000f800) ) >> 11);
 				break;
