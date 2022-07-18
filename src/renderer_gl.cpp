@@ -3028,9 +3028,7 @@ namespace bgfx { namespace gl
 					: 0
 					;
 
-#if BX_PLATFORM_WINRT
-				g_caps.supported |= BGFX_CAPS_TRANSPARENT_BACKBUFFER;
-#endif
+				g_caps.supported |= BX_ENABLED(BX_PLATFORM_WINRT) ? BGFX_CAPS_TRANSPARENT_BACKBUFFER : 0;
 
 				if (s_extension[Extension::ARB_debug_output].m_supported
 				||  s_extension[Extension::KHR_debug].m_supported)

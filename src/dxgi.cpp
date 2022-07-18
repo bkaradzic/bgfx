@@ -308,10 +308,8 @@ namespace bgfx
 				}
 
 				_caps.supported |= hdr10 ? BGFX_CAPS_HDR10 : 0;
+				_caps.supported |= BX_ENABLED(BX_PLATFORM_WINRT) ? BGFX_CAPS_TRANSPARENT_BACKBUFFER : 0;
 
-#if BX_PLATFORM_WINRT
-				_caps.supported |= BGFX_CAPS_TRANSPARENT_BACKBUFFER;
-#endif
 				DX_RELEASE(adapter, adapter == m_adapter ? 1 : 0);
 			}
 
