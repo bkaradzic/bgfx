@@ -343,19 +343,20 @@ flag.ResetMsaa { bits = 32, shift = 4, range = 3, base = 1 }
 	()
 
 flag.Reset { bits = 32 }
-	.None             ( 0) --- No reset flags.
-	.Fullscreen       ( 1) --- Not supported yet.
-	.Vsync            ( 8) --- Enable V-Sync.
-	.Maxanisotropy    ( 9) --- Turn on/off max anisotropy.
-	.Capture          (10) --- Begin screen capture.
-	.FlushAfterRender (14) --- Flush rendering after submitting to GPU.
-	.FlipAfterRender  (15) --- This flag specifies where flip occurs. Default behaviour is that flip occurs
-	                       --- before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
-	.SrgbBackbuffer   (16) --- Enable sRGB backbuffer.
-	.Hdr10            (17) --- Enable HDR10 rendering.
-	.Hidpi            (18) --- Enable HiDPI rendering.
-	.DepthClamp       (19) --- Enable depth clamp.
-	.Suspend          (20) --- Suspend rendering.
+	.None                     ( 0) --- No reset flags.
+	.Fullscreen               ( 1) --- Not supported yet.
+	.Vsync                    ( 8) --- Enable V-Sync.
+	.Maxanisotropy            ( 9) --- Turn on/off max anisotropy.
+	.Capture                  (10) --- Begin screen capture.
+	.FlushAfterRender         (14) --- Flush rendering after submitting to GPU.
+	.FlipAfterRender          (15) --- This flag specifies where flip occurs. Default behaviour is that flip occurs
+	                               --- before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
+	.SrgbBackbuffer           (16) --- Enable sRGB backbuffer.
+	.Hdr10                    (17) --- Enable HDR10 rendering.
+	.Hidpi                    (18) --- Enable HiDPI rendering.
+	.DepthClamp               (19) --- Enable depth clamp.
+	.Suspend                  (20) --- Suspend rendering.
+	.TransparentBackbuffer    (21) --- Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
 	()
 
 flag.ResetFullscreen { bits = 32, shift = 0, range = 1, base = 1 }
@@ -383,6 +384,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.Texture_2dArray        --- 2D texture array is supported.
 	.Texture_3d             --- 3D textures are supported.
 	.TextureBlit            --- Texture blit is supported.
+	.TransparentBackbuffer  --- Transparent back buffer supported.
 	.TextureCompareReserved
 	.TextureCompareLequal   --- Texture compare less equal mode is supported.
 	.TextureCubeArray       --- Cubemap texture array is supported.

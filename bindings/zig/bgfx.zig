@@ -617,6 +617,9 @@ pub const ResetFlags_DepthClamp: ResetFlags             = 0x00040000;
 
 /// Suspend rendering.
 pub const ResetFlags_Suspend: ResetFlags                = 0x00080000;
+
+/// Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
+pub const ResetFlags_TransparentBackbuffer: ResetFlags  = 0x00100000;
 pub const ResetFlags_FullscreenShift: ResetFlags        = 0;
 pub const ResetFlags_FullscreenMask: ResetFlags         = 0x00000001;
 pub const ResetFlags_ReservedShift: ResetFlags          = 31;
@@ -679,34 +682,37 @@ pub const CapsFlags_Texture3D: CapsFlags              = 0x0000000000020000;
 
 /// Texture blit is supported.
 pub const CapsFlags_TextureBlit: CapsFlags            = 0x0000000000040000;
-pub const CapsFlags_TextureCompareReserved: CapsFlags = 0x0000000000080000;
+
+/// Transparent back buffer supported.
+pub const CapsFlags_TransparentBackbuffer: CapsFlags  = 0x0000000000080000;
+pub const CapsFlags_TextureCompareReserved: CapsFlags = 0x0000000000100000;
 
 /// Texture compare less equal mode is supported.
-pub const CapsFlags_TextureCompareLequal: CapsFlags   = 0x0000000000100000;
+pub const CapsFlags_TextureCompareLequal: CapsFlags   = 0x0000000000200000;
 
 /// Cubemap texture array is supported.
-pub const CapsFlags_TextureCubeArray: CapsFlags       = 0x0000000000200000;
+pub const CapsFlags_TextureCubeArray: CapsFlags       = 0x0000000000400000;
 
 /// CPU direct access to GPU texture memory.
-pub const CapsFlags_TextureDirectAccess: CapsFlags    = 0x0000000000400000;
+pub const CapsFlags_TextureDirectAccess: CapsFlags    = 0x0000000000800000;
 
 /// Read-back texture is supported.
-pub const CapsFlags_TextureReadBack: CapsFlags        = 0x0000000000800000;
+pub const CapsFlags_TextureReadBack: CapsFlags        = 0x0000000001000000;
 
 /// Vertex attribute half-float is supported.
-pub const CapsFlags_VertexAttribHalf: CapsFlags       = 0x0000000001000000;
+pub const CapsFlags_VertexAttribHalf: CapsFlags       = 0x0000000002000000;
 
 /// Vertex attribute 10_10_10_2 is supported.
-pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000002000000;
+pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000004000000;
 
 /// Rendering with VertexID only is supported.
-pub const CapsFlags_VertexId: CapsFlags               = 0x0000000004000000;
+pub const CapsFlags_VertexId: CapsFlags               = 0x0000000008000000;
 
 /// Viewport layer is available in vertex shader.
-pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000008000000;
+pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000010000000;
 
 /// All texture compare modes are supported.
-pub const CapsFlags_TextureCompareAll: CapsFlags      = 0x0000000000180000;
+pub const CapsFlags_TextureCompareAll: CapsFlags      = 0x0000000000300000;
 
 pub const CapsFormatFlags = u32;
 /// Texture format is not supported.
