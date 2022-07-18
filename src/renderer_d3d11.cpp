@@ -1035,11 +1035,9 @@ namespace bgfx { namespace d3d11
 						: DXGI_SCALING_STRETCH
 						;
 					m_scd.swapEffect = m_swapEffect;
-#if BX_PLATFORM_WINRT
-					m_scd.alphaMode  = (_init.resolution.reset & BGFX_RESET_TRANSPARENT_BACKBUFFER) ? DXGI_ALPHA_MODE_PREMULTIPLIED : DXGI_ALPHA_MODE_IGNORE;
-#else
-					m_scd.alphaMode  = DXGI_ALPHA_MODE_IGNORE;
-#endif
+
+					m_scd.alphaMode = (_init.resolution.reset & BGFX_RESET_TRANSPARENT_BACKBUFFER) ? DXGI_ALPHA_MODE_PREMULTIPLIED : DXGI_ALPHA_MODE_IGNORE;
+
 					m_scd.flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 					m_scd.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, BGFX_CONFIG_MAX_FRAME_LATENCY);
@@ -3429,7 +3427,6 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
-#if BX_PLATFORM_WINRT
 		void premultiplyBackBuffer(const ClearQuad& _clearQuad)
 		{
 			ID3D11DeviceContext* deviceCtx = m_deviceCtx;
@@ -3473,7 +3470,6 @@ namespace bgfx { namespace d3d11
 				deviceCtx->Draw(4, 0);
 			}
 		}
-#endif
 
 		void clearQuad(ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
@@ -6676,12 +6672,10 @@ namespace bgfx { namespace d3d11
 			BGFX_D3D11_PROFILER_END();
 		}
 
-#if BX_PLATFORM_WINRT
 		if (m_resolution.reset & BGFX_RESET_TRANSPARENT_BACKBUFFER)
 		{
 			premultiplyBackBuffer(_clearQuad);
 		}
-#endif
 
 		m_deviceCtx->OMSetRenderTargets(1, s_zero.m_rtv, NULL);
 

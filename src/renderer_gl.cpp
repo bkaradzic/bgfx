@@ -7376,7 +7376,6 @@ namespace bgfx { namespace gl
 		}
 	}
 
-#if BX_PLATFORM_WINRT
 	void RendererContextGL::premultiplyBackBuffer(const ClearQuad& _clearQuad)
 	{
 		const uint32_t numMrt = 1;
@@ -7409,7 +7408,6 @@ namespace bgfx { namespace gl
 			));
 		}
 	}
-#endif
 
 	void RendererContextGL::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
@@ -8498,13 +8496,10 @@ namespace bgfx { namespace gl
 			}
 		}
 
-#if BX_PLATFORM_WINRT
 		if (m_resolution.reset & BGFX_RESET_TRANSPARENT_BACKBUFFER)
 		{
 			premultiplyBackBuffer(_clearQuad);
 		}
-#endif
-
 
 		BGFX_GL_PROFILER_END();
 
