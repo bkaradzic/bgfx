@@ -3077,6 +3077,7 @@ namespace bgfx
 			WARN_RESET_CAPS_FLAGS(HIDPI);
 
 #undef WARN_RESET_CAPS_FLAGS
+			BX_UNUSED(oldFlags);
 
 			BX_WARN(g_caps.limits.maxTextureSize >= _width
 				&&  g_caps.limits.maxTextureSize >= _height
