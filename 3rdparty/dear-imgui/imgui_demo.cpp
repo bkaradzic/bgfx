@@ -1,4 +1,4 @@
-// dear imgui, v1.88 WIP
+// dear imgui, v1.89 WIP
 // (demo code)
 
 // Help:
@@ -302,13 +302,19 @@ void ImGui::ShowDemoWindow(bool* p_open)
 
     // Dear ImGui Apps (accessible from the "Tools" menu)
     static bool show_app_metrics = false;
+    static bool show_app_debug_log = false;
     static bool show_app_stack_tool = false;
-    static bool show_app_style_editor = false;
     static bool show_app_about = false;
+    static bool show_app_style_editor = false;
 
-    if (show_app_metrics)       { ImGui::ShowMetricsWindow(&show_app_metrics); }
-    if (show_app_stack_tool)    { ImGui::ShowStackToolWindow(&show_app_stack_tool); }
-    if (show_app_about)         { ImGui::ShowAboutWindow(&show_app_about); }
+    if (show_app_metrics)
+        ImGui::ShowMetricsWindow(&show_app_metrics);
+    if (show_app_debug_log)
+        ImGui::ShowDebugLogWindow(&show_app_debug_log);
+    if (show_app_stack_tool)
+        ImGui::ShowStackToolWindow(&show_app_stack_tool);
+    if (show_app_about)
+        ImGui::ShowAboutWindow(&show_app_about);
     if (show_app_style_editor)
     {
         ImGui::Begin("Dear ImGui Style Editor", &show_app_style_editor);
@@ -395,10 +401,14 @@ void ImGui::ShowDemoWindow(bool* p_open)
         if (ImGui::BeginMenu("Tools"))
         {
             IMGUI_DEMO_MARKER("Menu/Tools");
-#ifndef IMGUI_DISABLE_METRICS_WINDOW
-            ImGui::MenuItem("Metrics/Debugger", NULL, &show_app_metrics);
-            ImGui::MenuItem("Stack Tool", NULL, &show_app_stack_tool);
+#ifndef IMGUI_DISABLE_DEBUG_TOOLS
+            const bool has_debug_tools = true;
+#else
+            const bool has_debug_tools = false;
 #endif
+            ImGui::MenuItem("Metrics/Debugger", NULL, &show_app_metrics, has_debug_tools);
+            ImGui::MenuItem("Debug Log", NULL, &show_app_debug_log, has_debug_tools);
+            ImGui::MenuItem("Stack Tool", NULL, &show_app_stack_tool, has_debug_tools);
             ImGui::MenuItem("Style Editor", NULL, &show_app_style_editor);
             ImGui::MenuItem("About Dear ImGui", NULL, &show_app_about);
             ImGui::EndMenu();
@@ -406,7 +416,7 @@ void ImGui::ShowDemoWindow(bool* p_open)
         ImGui::EndMenuBar();
     }
 
-    ImGui::Text("dear imgui says hello. (%s)", IMGUI_VERSION);
+    ImGui::Text("dear imgui says hello! (%s) (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
     ImGui::Spacing();
 
     IMGUI_DEMO_MARKER("Help");
@@ -463,6 +473,8 @@ void ImGui::ShowDemoWindow(bool* p_open)
             ImGui::SameLine(); HelpMarker("Enable input queue trickling: some types of events submitted during the same frame (e.g. button down + up) will be spread over multiple frames, improving interactions with low framerates.");
             ImGui::Checkbox("io.ConfigInputTextCursorBlink", &io.ConfigInputTextCursorBlink);
             ImGui::SameLine(); HelpMarker("Enable blinking cursor (optional as some users consider it to be distracting).");
+            ImGui::Checkbox("io.ConfigInputTextEnterKeepActive", &io.ConfigInputTextEnterKeepActive);
+            ImGui::SameLine(); HelpMarker("Pressing Enter will keep item active and select contents (single-line only).");
             ImGui::Checkbox("io.ConfigDragClickToInputText", &io.ConfigDragClickToInputText);
             ImGui::SameLine(); HelpMarker("Enable turning DragXXX widgets into text input with a simple mouse click-release (without moving).");
             ImGui::Checkbox("io.ConfigWindowsResizeFromEdges", &io.ConfigWindowsResizeFromEdges);
@@ -3202,59 +3214,58 @@ static void ShowDemoWindowLayout()
         ImGui::DragFloat2("size", (float*)&size, 0.5f, 1.0f, 200.0f, "%.0f");
         ImGui::TextWrapped("(Click and drag to scroll)");
 
+        HelpMarker(
+            "(Left) Using ImGui::PushClipRect():\n"
+            "Will alter ImGui hit-testing logic + ImDrawList rendering.\n"
+            "(use this if you want your clipping rectangle to affect interactions)\n\n"
+            "(Center) Using ImDrawList::PushClipRect():\n"
+            "Will alter ImDrawList rendering only.\n"
+            "(use this as a shortcut if you are only using ImDrawList calls)\n\n"
+            "(Right) Using ImDrawList::AddText() with a fine ClipRect:\n"
+            "Will alter only this specific ImDrawList::AddText() rendering.\n"
+            "This is often used internally to avoid altering the clipping rectangle and minimize draw calls.");
+
         for (int n = 0; n < 3; n++)
         {
             if (n > 0)
                 ImGui::SameLine();
-            ImGui::PushID(n);
-            ImGui::BeginGroup(); // Lock X position
 
-            ImGui::InvisibleButton("##empty", size);
+            ImGui::PushID(n);
+            ImGui::InvisibleButton("##canvas", size);
             if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
             {
                 offset.x += ImGui::GetIO().MouseDelta.x;
                 offset.y += ImGui::GetIO().MouseDelta.y;
             }
+            ImGui::PopID();
+            if (!ImGui::IsItemVisible()) // Skip rendering as ImDrawList elements are not clipped.
+                continue;
+
             const ImVec2 p0 = ImGui::GetItemRectMin();
             const ImVec2 p1 = ImGui::GetItemRectMax();
             const char* text_str = "Line 1 hello\nLine 2 clip me!";
             const ImVec2 text_pos = ImVec2(p0.x + offset.x, p0.y + offset.y);
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
-
             switch (n)
             {
             case 0:
-                HelpMarker(
-                    "Using ImGui::PushClipRect():\n"
-                    "Will alter ImGui hit-testing logic + ImDrawList rendering.\n"
-                    "(use this if you want your clipping rectangle to affect interactions)");
                 ImGui::PushClipRect(p0, p1, true);
                 draw_list->AddRectFilled(p0, p1, IM_COL32(90, 90, 120, 255));
                 draw_list->AddText(text_pos, IM_COL32_WHITE, text_str);
                 ImGui::PopClipRect();
                 break;
             case 1:
-                HelpMarker(
-                    "Using ImDrawList::PushClipRect():\n"
-                    "Will alter ImDrawList rendering only.\n"
-                    "(use this as a shortcut if you are only using ImDrawList calls)");
                 draw_list->PushClipRect(p0, p1, true);
                 draw_list->AddRectFilled(p0, p1, IM_COL32(90, 90, 120, 255));
                 draw_list->AddText(text_pos, IM_COL32_WHITE, text_str);
                 draw_list->PopClipRect();
                 break;
             case 2:
-                HelpMarker(
-                    "Using ImDrawList::AddText() with a fine ClipRect:\n"
-                    "Will alter only this specific ImDrawList::AddText() rendering.\n"
-                    "(this is often used internally to avoid altering the clipping rectangle and minimize draw calls)");
                 ImVec4 clip_rect(p0.x, p0.y, p1.x, p1.y); // AddText() takes a ImVec4* here so let's convert.
                 draw_list->AddRectFilled(p0, p1, IM_COL32(90, 90, 120, 255));
                 draw_list->AddText(ImGui::GetFont(), ImGui::GetFontSize(), text_pos, IM_COL32_WHITE, text_str, NULL, 0.0f, &clip_rect);
                 break;
             }
-            ImGui::EndGroup();
-            ImGui::PopID();
         }
 
         ImGui::TreePop();
@@ -3547,19 +3558,12 @@ static void ShowDemoWindowPopups()
         ImGui::TextWrapped("Below we are testing adding menu items to a regular window. It's rather unusual but should work!");
         ImGui::Separator();
 
-        // Note: As a quirk in this very specific example, we want to differentiate the parent of this menu from the
-        // parent of the various popup menus above. To do so we are encloding the items in a PushID()/PopID() block
-        // to make them two different menusets. If we don't, opening any popup above and hovering our menu here would
-        // open it. This is because once a menu is active, we allow to switch to a sibling menu by just hovering on it,
-        // which is the desired behavior for regular menus.
-        ImGui::PushID("foo");
         ImGui::MenuItem("Menu item", "CTRL+M");
         if (ImGui::BeginMenu("Menu inside a regular window"))
         {
             ShowExampleMenuFile();
             ImGui::EndMenu();
         }
-        ImGui::PopID();
         ImGui::Separator();
         ImGui::TreePop();
     }
@@ -4841,7 +4845,7 @@ static void ShowDemoWindowTables()
                 ImGui::TableSetColumnIndex(1);
                 ImGui::SliderFloat("float1", &dummy_f, 0.0f, 1.0f);
                 ImGui::TableSetColumnIndex(2);
-                ImGui::SliderFloat("float2", &dummy_f, 0.0f, 1.0f);
+                ImGui::SliderFloat("##float2", &dummy_f, 0.0f, 1.0f); // No visible label since right-aligned
                 ImGui::PopID();
             }
             ImGui::EndTable();
@@ -5729,8 +5733,6 @@ static void ShowDemoWindowMisc()
             ImGui::Text("Keys released:");      for (ImGuiKey key = key_first; key < ImGuiKey_COUNT; key++) { if (funcs::IsLegacyNativeDupe(key)) continue; if (ImGui::IsKeyReleased(key)) { ImGui::SameLine(); ImGui::Text("\"%s\" %d", ImGui::GetKeyName(key), key); } }
             ImGui::Text("Keys mods: %s%s%s%s", io.KeyCtrl ? "CTRL " : "", io.KeyShift ? "SHIFT " : "", io.KeyAlt ? "ALT " : "", io.KeySuper ? "SUPER " : "");
             ImGui::Text("Chars queue:");        for (int i = 0; i < io.InputQueueCharacters.Size; i++) { ImWchar c = io.InputQueueCharacters[i]; ImGui::SameLine();  ImGui::Text("\'%c\' (0x%04X)", (c > ' ' && c <= 255) ? (char)c : '?', c); } // FIXME: We should convert 'c' to UTF-8 here but the functions are not public.
-            ImGui::Text("NavInputs down:");     for (int i = 0; i < IM_ARRAYSIZE(io.NavInputs); i++) if (io.NavInputs[i] > 0.0f)              { ImGui::SameLine(); ImGui::Text("[%d] %.2f (%.02f secs)", i, io.NavInputs[i], io.NavInputsDownDuration[i]); }
-            ImGui::Text("NavInputs pressed:");  for (int i = 0; i < IM_ARRAYSIZE(io.NavInputs); i++) if (io.NavInputsDownDuration[i] == 0.0f) { ImGui::SameLine(); ImGui::Text("[%d]", i); }
 
             // Draw an arbitrary US keyboard layout to visualize translated keys
             {
@@ -5755,39 +5757,66 @@ static void ShowDemoWindowMisc()
                     { 2, 0, "", ImGuiKey_LeftShift },{ 2, 1, "Z", ImGuiKey_Z }, { 2, 2, "X", ImGuiKey_X }, { 2, 3, "C", ImGuiKey_C }, { 2, 4, "V", ImGuiKey_V }
                 };
 
-                ImDrawList* draw_list = ImGui::GetWindowDrawList();
-                draw_list->PushClipRect(board_min, board_max, true);
-                for (int n = 0; n < IM_ARRAYSIZE(keys_to_display); n++)
-                {
-                    const KeyLayoutData* key_data = &keys_to_display[n];
-                    ImVec2 key_min = ImVec2(start_pos.x + key_data->Col * key_step.x + key_data->Row * key_row_offset, start_pos.y + key_data->Row * key_step.y);
-                    ImVec2 key_max = ImVec2(key_min.x + key_size.x, key_min.y + key_size.y);
-                    draw_list->AddRectFilled(key_min, key_max, IM_COL32(204, 204, 204, 255), key_rounding);
-                    draw_list->AddRect(key_min, key_max, IM_COL32(24, 24, 24, 255), key_rounding);
-                    ImVec2 face_min = ImVec2(key_min.x + key_face_pos.x, key_min.y + key_face_pos.y);
-                    ImVec2 face_max = ImVec2(face_min.x + key_face_size.x, face_min.y + key_face_size.y);
-                    draw_list->AddRect(face_min, face_max, IM_COL32(193, 193, 193, 255), key_face_rounding, ImDrawFlags_None, 2.0f);
-                    draw_list->AddRectFilled(face_min, face_max, IM_COL32(252, 252, 252, 255), key_face_rounding);
-                    ImVec2 label_min = ImVec2(key_min.x + key_label_pos.x, key_min.y + key_label_pos.y);
-                    draw_list->AddText(label_min, IM_COL32(64, 64, 64, 255), key_data->Label);
-                    if (ImGui::IsKeyDown(key_data->Key))
-                        draw_list->AddRectFilled(key_min, key_max, IM_COL32(255, 0, 0, 128), key_rounding);
-                }
-                draw_list->PopClipRect();
+                // Elements rendered manually via ImDrawList API are not clipped automatically.
+                // While not strictly necessary, here IsItemVisible() is used to avoid rendering these shapes when they are out of view.
                 ImGui::Dummy(ImVec2(board_max.x - board_min.x, board_max.y - board_min.y));
+                if (ImGui::IsItemVisible())
+                {
+                    ImDrawList* draw_list = ImGui::GetWindowDrawList();
+                    draw_list->PushClipRect(board_min, board_max, true);
+                    for (int n = 0; n < IM_ARRAYSIZE(keys_to_display); n++)
+                    {
+                        const KeyLayoutData* key_data = &keys_to_display[n];
+                        ImVec2 key_min = ImVec2(start_pos.x + key_data->Col * key_step.x + key_data->Row * key_row_offset, start_pos.y + key_data->Row * key_step.y);
+                        ImVec2 key_max = ImVec2(key_min.x + key_size.x, key_min.y + key_size.y);
+                        draw_list->AddRectFilled(key_min, key_max, IM_COL32(204, 204, 204, 255), key_rounding);
+                        draw_list->AddRect(key_min, key_max, IM_COL32(24, 24, 24, 255), key_rounding);
+                        ImVec2 face_min = ImVec2(key_min.x + key_face_pos.x, key_min.y + key_face_pos.y);
+                        ImVec2 face_max = ImVec2(face_min.x + key_face_size.x, face_min.y + key_face_size.y);
+                        draw_list->AddRect(face_min, face_max, IM_COL32(193, 193, 193, 255), key_face_rounding, ImDrawFlags_None, 2.0f);
+                        draw_list->AddRectFilled(face_min, face_max, IM_COL32(252, 252, 252, 255), key_face_rounding);
+                        ImVec2 label_min = ImVec2(key_min.x + key_label_pos.x, key_min.y + key_label_pos.y);
+                        draw_list->AddText(label_min, IM_COL32(64, 64, 64, 255), key_data->Label);
+                        if (ImGui::IsKeyDown(key_data->Key))
+                            draw_list->AddRectFilled(key_min, key_max, IM_COL32(255, 0, 0, 128), key_rounding);
+                    }
+                    draw_list->PopClipRect();
+                }
             }
             ImGui::TreePop();
         }
 
         if (ImGui::TreeNode("Capture override"))
         {
-            ImGui::Button("Hovering me sets the\nkeyboard capture flag");
-            if (ImGui::IsItemHovered())
-                ImGui::CaptureKeyboardFromApp(true);
-            ImGui::SameLine();
-            ImGui::Button("Holding me clears the\nthe keyboard capture flag");
-            if (ImGui::IsItemActive())
-                ImGui::CaptureKeyboardFromApp(false);
+            HelpMarker(
+                "The value of io.WantCaptureMouse and io.WantCaptureKeyboard are normally set by Dear ImGui "
+                "to instruct your application of how to route inputs. Typically, when a value is true, it means "
+                "Dear ImGui wants the corresponding inputs and we expect the underlying application to ignore them.\n\n"
+                "The most typical case is: when hovering a window, Dear ImGui set io.WantCaptureMouse to true, "
+                "and underlying application should ignore mouse inputs (in practice there are many and more subtle "
+                "rules leading to how those flags are set).");
+
+            ImGui::Text("io.WantCaptureMouse: %d", io.WantCaptureMouse);
+            ImGui::Text("io.WantCaptureMouseUnlessPopupClose: %d", io.WantCaptureMouseUnlessPopupClose);
+            ImGui::Text("io.WantCaptureKeyboard: %d", io.WantCaptureKeyboard);
+
+            HelpMarker(
+                "Hovering the colored canvas will override io.WantCaptureXXX fields.\n"
+                "Notice how normally (when set to none), the value of io.WantCaptureKeyboard would be false when hovering and true when clicking.");
+            static int capture_override_mouse = -1;
+            static int capture_override_keyboard = -1;
+            const char* capture_override_desc[] = { "None", "Set to false", "Set to true" };
+            ImGui::SetNextItemWidth(ImGui::GetFontSize() * 15);
+            ImGui::SliderInt("SetNextFrameWantCaptureMouse()", &capture_override_mouse, -1, +1, capture_override_desc[capture_override_mouse + 1], ImGuiSliderFlags_AlwaysClamp);
+            ImGui::SetNextItemWidth(ImGui::GetFontSize() * 15);
+            ImGui::SliderInt("SetNextFrameWantCaptureKeyboard()", &capture_override_keyboard, -1, +1, capture_override_desc[capture_override_keyboard + 1], ImGuiSliderFlags_AlwaysClamp);
+
+            ImGui::ColorButton("##panel", ImVec4(0.7f, 0.1f, 0.7f, 1.0f), ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoDragDrop, ImVec2(256.0f, 192.0f)); // Dummy item
+            if (ImGui::IsItemHovered() && capture_override_mouse != -1)
+                ImGui::SetNextFrameWantCaptureMouse(capture_override_mouse == 1);
+            if (ImGui::IsItemHovered() && capture_override_keyboard != -1)
+                ImGui::SetNextFrameWantCaptureKeyboard(capture_override_keyboard == 1);
+
             ImGui::TreePop();
         }
 
@@ -7336,7 +7365,7 @@ static void ShowExampleAppSimpleOverlay(bool* p_open)
 static void ShowExampleAppFullscreen(bool* p_open)
 {
     static bool use_work_area = true;
-    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
+    static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
 
     // We demonstrate using the full viewport area or the work area (without menu-bars, task-bars etc.)
     // Based on your use case you may want one of the other.
@@ -7774,7 +7803,8 @@ void ShowExampleAppDocuments(bool* p_open)
             if (ImGui::MenuItem("Close All Documents", NULL, false, open_count > 0))
                 for (int doc_n = 0; doc_n < app.Documents.Size; doc_n++)
                     app.Documents[doc_n].DoQueueClose();
-            if (ImGui::MenuItem("Exit", "Alt+F4")) {}
+            if (ImGui::MenuItem("Exit", "Ctrl+F4") && p_open)
+                *p_open = false;
             ImGui::EndMenu();
         }
         ImGui::EndMenuBar();

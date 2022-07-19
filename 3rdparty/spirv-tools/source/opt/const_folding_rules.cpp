@@ -251,6 +251,193 @@ ConstantFoldingRule FoldVectorTimesScalar() {
   };
 }
 
+ConstantFoldingRule FoldVectorTimesMatrix() {
+  return [](IRContext* context, Instruction* inst,
+            const std::vector<const analysis::Constant*>& constants)
+             -> const analysis::Constant* {
+    assert(inst->opcode() == SpvOpVectorTimesMatrix);
+    analysis::ConstantManager* const_mgr = context->get_constant_mgr();
+    analysis::TypeManager* type_mgr = context->get_type_mgr();
+
+    if (!inst->IsFloatingPointFoldingAllowed()) {
+      if (HasFloatingPoint(type_mgr->GetType(inst->type_id()))) {
+        return nullptr;
+      }
+    }
+
+    const analysis::Constant* c1 = constants[0];
+    const analysis::Constant* c2 = constants[1];
+
+    if (c1 == nullptr || c2 == nullptr) {
+      return nullptr;
+    }
+
+    // Check result type.
+    const analysis::Type* result_type = type_mgr->GetType(inst->type_id());
+    const analysis::Vector* vector_type = result_type->AsVector();
+    assert(vector_type != nullptr);
+    const analysis::Type* element_type = vector_type->element_type();
+    assert(element_type != nullptr);
+    const analysis::Float* float_type = element_type->AsFloat();
+    assert(float_type != nullptr);
+
+    // Check types of c1 and c2.
+    assert(c1->type()->AsVector() == vector_type);
+    assert(c1->type()->AsVector()->element_type() == element_type &&
+           c2->type()->AsMatrix()->element_type() == vector_type);
+
+    // Get a float vector that is the result of vector-times-matrix.
+    std::vector<const analysis::Constant*> c1_components =
+        c1->GetVectorComponents(const_mgr);
+    std::vector<const analysis::Constant*> c2_components =
+        c2->AsMatrixConstant()->GetComponents();
+    uint32_t resultVectorSize = result_type->AsVector()->element_count();
+
+    std::vector<uint32_t> ids;
+
+    if ((c1 && c1->IsZero()) || (c2 && c2->IsZero())) {
+      std::vector<uint32_t> words(float_type->width() / 32, 0);
+      for (uint32_t i = 0; i < resultVectorSize; ++i) {
+        const analysis::Constant* new_elem =
+            const_mgr->GetConstant(float_type, words);
+        ids.push_back(const_mgr->GetDefiningInstruction(new_elem)->result_id());
+      }
+      return const_mgr->GetConstant(vector_type, ids);
+    }
+
+    if (float_type->width() == 32) {
+      for (uint32_t i = 0; i < resultVectorSize; ++i) {
+        float result_scalar = 0.0f;
+        const analysis::VectorConstant* c2_vec =
+            c2_components[i]->AsVectorConstant();
+        for (uint32_t j = 0; j < c2_vec->GetComponents().size(); ++j) {
+          float c1_scalar = c1_components[j]->GetFloat();
+          float c2_scalar = c2_vec->GetComponents()[j]->GetFloat();
+          result_scalar += c1_scalar * c2_scalar;
+        }
+        utils::FloatProxy<float> result(result_scalar);
+        std::vector<uint32_t> words = result.GetWords();
+        const analysis::Constant* new_elem =
+            const_mgr->GetConstant(float_type, words);
+        ids.push_back(const_mgr->GetDefiningInstruction(new_elem)->result_id());
+      }
+      return const_mgr->GetConstant(vector_type, ids);
+    } else if (float_type->width() == 64) {
+      for (uint32_t i = 0; i < c2_components.size(); ++i) {
+        double result_scalar = 0.0;
+        const analysis::VectorConstant* c2_vec =
+            c2_components[i]->AsVectorConstant();
+        for (uint32_t j = 0; j < c2_vec->GetComponents().size(); ++j) {
+          double c1_scalar = c1_components[j]->GetDouble();
+          double c2_scalar = c2_vec->GetComponents()[j]->GetDouble();
+          result_scalar += c1_scalar * c2_scalar;
+        }
+        utils::FloatProxy<double> result(result_scalar);
+        std::vector<uint32_t> words = result.GetWords();
+        const analysis::Constant* new_elem =
+            const_mgr->GetConstant(float_type, words);
+        ids.push_back(const_mgr->GetDefiningInstruction(new_elem)->result_id());
+      }
+      return const_mgr->GetConstant(vector_type, ids);
+    }
+    return nullptr;
+  };
+}
+
+ConstantFoldingRule FoldMatrixTimesVector() {
+  return [](IRContext* context, Instruction* inst,
+            const std::vector<const analysis::Constant*>& constants)
+             -> const analysis::Constant* {
+    assert(inst->opcode() == SpvOpMatrixTimesVector);
+    analysis::ConstantManager* const_mgr = context->get_constant_mgr();
+    analysis::TypeManager* type_mgr = context->get_type_mgr();
+
+    if (!inst->IsFloatingPointFoldingAllowed()) {
+      if (HasFloatingPoint(type_mgr->GetType(inst->type_id()))) {
+        return nullptr;
+      }
+    }
+
+    const analysis::Constant* c1 = constants[0];
+    const analysis::Constant* c2 = constants[1];
+
+    if (c1 == nullptr || c2 == nullptr) {
+      return nullptr;
+    }
+
+    // Check result type.
+    const analysis::Type* result_type = type_mgr->GetType(inst->type_id());
+    const analysis::Vector* vector_type = result_type->AsVector();
+    assert(vector_type != nullptr);
+    const analysis::Type* element_type = vector_type->element_type();
+    assert(element_type != nullptr);
+    const analysis::Float* float_type = element_type->AsFloat();
+    assert(float_type != nullptr);
+
+    // Check types of c1 and c2.
+    assert(c1->type()->AsMatrix()->element_type() == vector_type);
+    assert(c2->type()->AsVector()->element_type() == element_type);
+
+    // Get a float vector that is the result of matrix-times-vector.
+    std::vector<const analysis::Constant*> c1_components =
+        c1->AsMatrixConstant()->GetComponents();
+    std::vector<const analysis::Constant*> c2_components =
+        c2->GetVectorComponents(const_mgr);
+    uint32_t resultVectorSize = result_type->AsVector()->element_count();
+
+    std::vector<uint32_t> ids;
+
+    if ((c1 && c1->IsZero()) || (c2 && c2->IsZero())) {
+      std::vector<uint32_t> words(float_type->width() / 32, 0);
+      for (uint32_t i = 0; i < resultVectorSize; ++i) {
+        const analysis::Constant* new_elem =
+            const_mgr->GetConstant(float_type, words);
+        ids.push_back(const_mgr->GetDefiningInstruction(new_elem)->result_id());
+      }
+      return const_mgr->GetConstant(vector_type, ids);
+    }
+
+    if (float_type->width() == 32) {
+      for (uint32_t i = 0; i < resultVectorSize; ++i) {
+        float result_scalar = 0.0f;
+        for (uint32_t j = 0; j < c1_components.size(); ++j) {
+          float c1_scalar = c1_components[j]
+                                ->AsVectorConstant()
+                                ->GetComponents()[i]
+                                ->GetFloat();
+          float c2_scalar = c2_components[j]->GetFloat();
+          result_scalar += c1_scalar * c2_scalar;
+        }
+        utils::FloatProxy<float> result(result_scalar);
+        std::vector<uint32_t> words = result.GetWords();
+        const analysis::Constant* new_elem =
+            const_mgr->GetConstant(float_type, words);
+        ids.push_back(const_mgr->GetDefiningInstruction(new_elem)->result_id());
+      }
+      return const_mgr->GetConstant(vector_type, ids);
+    } else if (float_type->width() == 64) {
+      for (uint32_t i = 0; i < resultVectorSize; ++i) {
+        double result_scalar = 0.0;
+        for (uint32_t j = 0; j < c1_components.size(); ++j) {
+          double c1_scalar = c1_components[j]
+                                 ->AsVectorConstant()
+                                 ->GetComponents()[i]
+                                 ->GetDouble();
+          double c2_scalar = c2_components[j]->GetDouble();
+          result_scalar += c1_scalar * c2_scalar;
+        }
+        utils::FloatProxy<double> result(result_scalar);
+        std::vector<uint32_t> words = result.GetWords();
+        const analysis::Constant* new_elem =
+            const_mgr->GetConstant(float_type, words);
+        ids.push_back(const_mgr->GetDefiningInstruction(new_elem)->result_id());
+      }
+      return const_mgr->GetConstant(vector_type, ids);
+    }
+    return nullptr;
+  };
+}
+
 ConstantFoldingRule FoldCompositeWithConstants() {
   // Folds an OpCompositeConstruct where all of the inputs are constants to a
   // constant.  A new constant is created if necessary.
@@ -1288,6 +1475,8 @@ void ConstantFoldingRules::AddFoldingRules() {
 
   rules_[SpvOpVectorShuffle].push_back(FoldVectorShuffleWithConstants());
   rules_[SpvOpVectorTimesScalar].push_back(FoldVectorTimesScalar());
+  rules_[SpvOpVectorTimesMatrix].push_back(FoldVectorTimesMatrix());
+  rules_[SpvOpMatrixTimesVector].push_back(FoldMatrixTimesVector());
 
   rules_[SpvOpFNegate].push_back(FoldFNegate());
   rules_[SpvOpQuantizeToF16].push_back(FoldQuantizeToF16());

@@ -1411,6 +1411,18 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
   // Clang format adds spaces between hyphens
   // clang-format off
   switch (id) {
+    case 4154:
+      return VUID_WRAP(VUID-BaryCoordKHR-BaryCoordKHR-04154);
+    case 4155:
+      return VUID_WRAP(VUID-BaryCoordKHR-BaryCoordKHR-04155);
+    case 4156:
+      return VUID_WRAP(VUID-BaryCoordKHR-BaryCoordKHR-04156);
+    case 4160:
+      return VUID_WRAP(VUID-BaryCoordNoPerspKHR-BaryCoordNoPerspKHR-04160);
+    case 4161:
+      return VUID_WRAP(VUID-BaryCoordNoPerspKHR-BaryCoordNoPerspKHR-04161);
+    case 4162:
+      return VUID_WRAP(VUID-BaryCoordNoPerspKHR-BaryCoordNoPerspKHR-04162);
     case 4181:
       return VUID_WRAP(VUID-BaseInstance-BaseInstance-04181);
     case 4182:
@@ -1866,7 +1878,7 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
     case 4677:
       return VUID_WRAP(VUID-StandaloneSpirv-Invariant-04677);
     case 4680:
-      return VUID_WRAP( VUID-StandaloneSpirv-OpTypeRuntimeArray-04680);
+      return VUID_WRAP(VUID-StandaloneSpirv-OpTypeRuntimeArray-04680);
     case 4682:
       return VUID_WRAP(VUID-StandaloneSpirv-OpControlBarrier-04682);
     case 6426:
@@ -1891,6 +1903,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-OpMemoryBarrier-04733);
     case 4734:
       return VUID_WRAP(VUID-StandaloneSpirv-OpVariable-04734);
+    case 4744:
+      return VUID_WRAP(VUID-StandaloneSpirv-Flat-04744);
     case 4777:
       return VUID_WRAP(VUID-StandaloneSpirv-OpImage-04777);
     case 4780:
@@ -1907,6 +1921,10 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-Location-04918);
     case 4919:
       return VUID_WRAP(VUID-StandaloneSpirv-Location-04919);
+    case 6201:
+      return VUID_WRAP(VUID-StandaloneSpirv-Flat-06201);
+    case 6202:
+      return VUID_WRAP(VUID-StandaloneSpirv-Flat-06202);
     case 6214:
       return VUID_WRAP(VUID-StandaloneSpirv-OpTypeImage-06214);
     case 6491:
@@ -1925,6 +1943,14 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-UniformConstant-06677);
     case 6678:
       return VUID_WRAP(VUID-StandaloneSpirv-InputAttachmentIndex-06678);
+    case 6777:
+      return VUID_WRAP(VUID-StandaloneSpirv-PerVertexKHR-06777);
+    case 6778:
+      return VUID_WRAP(VUID-StandaloneSpirv-Input-06778);
+    case 6807:
+      return VUID_WRAP(VUID-StandaloneSpirv-Uniform-06807);
+    case 6808:
+      return VUID_WRAP(VUID-StandaloneSpirv-PushConstant-06808);
     default:
       return "";  // unknown id
   }

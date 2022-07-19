@@ -2378,6 +2378,7 @@ namespace bgfx
 
 		void setMarker(const char* _name)
 		{
+			UniformBuffer::update(&m_frame->m_uniformBuffer[m_uniformIdx]);
 			UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
 			uniformBuffer->writeMarker(_name);
 		}
@@ -3058,6 +3059,24 @@ namespace bgfx
 				// Nothing changed, ignore request.
 				return;
 			}
+
+			const uint32_t maskFlags = ~(0
+				| (0 != (g_caps.supported & BGFX_CAPS_TRANSPARENT_BACKBUFFER) ? 0 : BGFX_RESET_TRANSPARENT_BACKBUFFER)
+				| (0 != (g_caps.supported & BGFX_CAPS_HDR10)                  ? 0 : BGFX_RESET_HDR10)
+				| (0 != (g_caps.supported & BGFX_CAPS_HIDPI)                  ? 0 : BGFX_RESET_HIDPI)
+				);
+			const uint32_t oldFlags = _flags;
+			_flags &= maskFlags;
+
+#define WARN_RESET_CAPS_FLAGS(_name) \
+	BX_WARN( (oldFlags&(BGFX_RESET_##_name) ) == (_flags&(BGFX_RESET_##_name) ) \
+		, "Reset flag `BGFX_RESET_" #_name "` will be ignored, because `BGFX_CAPS_" #_name "` is not supported." \
+		)
+			WARN_RESET_CAPS_FLAGS(TRANSPARENT_BACKBUFFER);
+			WARN_RESET_CAPS_FLAGS(HDR10);
+			WARN_RESET_CAPS_FLAGS(HIDPI);
+
+#undef WARN_RESET_CAPS_FLAGS
 
 			BX_WARN(g_caps.limits.maxTextureSize >= _width
 				&&  g_caps.limits.maxTextureSize >= _height

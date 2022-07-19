@@ -199,6 +199,16 @@ typedef struct glsl_include_callbacks_s {
     glsl_free_include_result_func free_include_result;
 } glsl_include_callbacks_t;
 
+/* SpvOptions counterpart */
+typedef struct glslang_spv_options_s {
+    bool generate_debug_info;
+    bool strip_debug_info;
+    bool disable_optimizer;
+    bool optimize_size;
+    bool disassemble;
+    bool validate;
+} glslang_spv_options_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -238,8 +248,11 @@ GLSLANG_EXPORT glslang_program_t* glslang_program_create();
 GLSLANG_EXPORT void glslang_program_delete(glslang_program_t* program);
 GLSLANG_EXPORT void glslang_program_add_shader(glslang_program_t* program, glslang_shader_t* shader);
 GLSLANG_EXPORT int glslang_program_link(glslang_program_t* program, int messages); // glslang_messages_t
+GLSLANG_EXPORT void glslang_program_add_source_text(glslang_program_t* program, glslang_stage_t stage, const char* text, size_t len);
+GLSLANG_EXPORT void glslang_program_set_source_file(glslang_program_t* program, glslang_stage_t stage, const char* file);
 GLSLANG_EXPORT int glslang_program_map_io(glslang_program_t* program);
 GLSLANG_EXPORT void glslang_program_SPIRV_generate(glslang_program_t* program, glslang_stage_t stage);
+GLSLANG_EXPORT void glslang_program_SPIRV_generate_with_options(glslang_program_t* program, glslang_stage_t stage, glslang_spv_options_t* spv_options);
 GLSLANG_EXPORT size_t glslang_program_SPIRV_get_size(glslang_program_t* program);
 GLSLANG_EXPORT void glslang_program_SPIRV_get(glslang_program_t* program, unsigned int*);
 GLSLANG_EXPORT unsigned int* glslang_program_SPIRV_get_ptr(glslang_program_t* program);

@@ -313,6 +313,15 @@ MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeFilterQuat(void* destination, size
 MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeFilterExp(void* destination, size_t count, size_t stride, int bits, const float* data);
 
 /**
+ * Simplification options
+ */
+enum
+{
+    /* Do not move vertices that are located on the topological border (vertices on triangle edges that don't have a paired triangle). Useful for simplifying portions of the larger mesh. */
+    meshopt_SimplifyLockBorder = 1 << 0,
+};
+
+/**
  * Experimental: Mesh simplifier
  * Reduces the number of triangles in the mesh, attempting to preserve mesh appearance as much as possible
  * The algorithm tries to preserve mesh topology and can stop short of the target goal based on topology constraints or target error.
@@ -324,9 +333,10 @@ MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeFilterExp(void* destination, size_
  * destination must contain enough space for the target index buffer, worst case is index_count elements (*not* target_index_count)!
  * vertex_positions should have float3 position in the first 12 bytes of each vertex - similar to glVertexPointer
  * target_error represents the error relative to mesh extents that can be tolerated, e.g. 0.01 = 1% deformation
+ * options must be a bitmask composed of meshopt_SimplifyX options; 0 is a safe default
  * result_error can be NULL; when it's not NULL, it will contain the resulting (relative) error after simplification
  */
-MESHOPTIMIZER_EXPERIMENTAL size_t meshopt_simplify(unsigned int* destination, const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, size_t target_index_count, float target_error, float* result_error);
+MESHOPTIMIZER_EXPERIMENTAL size_t meshopt_simplify(unsigned int* destination, const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, size_t target_index_count, float target_error, unsigned int options, float* result_error);
 
 /**
  * Experimental: Mesh simplifier (sloppy)
@@ -605,7 +615,7 @@ inline size_t meshopt_encodeIndexSequence(unsigned char* buffer, size_t buffer_s
 template <typename T>
 inline int meshopt_decodeIndexSequence(T* destination, size_t index_count, const unsigned char* buffer, size_t buffer_size);
 template <typename T>
-inline size_t meshopt_simplify(T* destination, const T* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, size_t target_index_count, float target_error, float* result_error = 0);
+inline size_t meshopt_simplify(T* destination, const T* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, size_t target_index_count, float target_error, unsigned int options = 0, float* result_error = 0);
 template <typename T>
 inline size_t meshopt_simplifySloppy(T* destination, const T* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, size_t target_index_count, float target_error, float* result_error = 0);
 template <typename T>
@@ -940,12 +950,12 @@ inline int meshopt_decodeIndexSequence(T* destination, size_t index_count, const
 }
 
 template <typename T>
-inline size_t meshopt_simplify(T* destination, const T* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, size_t target_index_count, float target_error, float* result_error)
+inline size_t meshopt_simplify(T* destination, const T* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, size_t target_index_count, float target_error, unsigned int options, float* result_error)
 {
 	meshopt_IndexAdapter<T> in(0, indices, index_count);
 	meshopt_IndexAdapter<T> out(destination, 0, index_count);
 
-	return meshopt_simplify(out.data, in.data, index_count, vertex_positions, vertex_count, vertex_positions_stride, target_index_count, target_error, result_error);
+	return meshopt_simplify(out.data, in.data, index_count, vertex_positions, vertex_count, vertex_positions_stride, target_index_count, target_error, options, result_error);
 }
 
 template <typename T>

@@ -408,7 +408,7 @@ NVGpaint nvgBoxGradient(NVGcontext* ctx, float x, float y, float w, float h,
 NVGpaint nvgRadialGradient(NVGcontext* ctx, float cx, float cy, float inr, float outr,
 						   NVGcolor icol, NVGcolor ocol);
 
-// Creates and returns an image patter. Parameters (ox,oy) specify the left-top location of the image pattern,
+// Creates and returns an image pattern. Parameters (ox,oy) specify the left-top location of the image pattern,
 // (ex,ey) the size of one image, angle rotation around the top-left corner, image is handle to the image to render.
 // The gradient is transformed by the current transform when it is passed to nvgFillPaint() or nvgStrokePaint().
 NVGpaint nvgImagePattern(NVGcontext* ctx, float ox, float oy, float ex, float ey,

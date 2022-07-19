@@ -3229,7 +3229,20 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 	// Keep track of the types of temporaries, so we can hoist them out as necessary.
 	uint32_t result_type, result_id;
 	if (compiler.instruction_to_result_type(result_type, result_id, op, args, length))
+	{
+		// For some opcodes, we will need to override the result id.
+		// If we need to hoist the temporary, the temporary type is the input, not the result.
+		// FIXME: This will likely break with OpCopyObject + hoisting, but we'll have to
+		// solve it if we ever get there ...
+		if (op == OpConvertUToAccelerationStructureKHR)
+		{
+			auto itr = result_id_to_type.find(args[2]);
+			if (itr != result_id_to_type.end())
+				result_type = itr->second;
+		}
+
 		result_id_to_type[result_id] = result_type;
+	}
 
 	switch (op)
 	{

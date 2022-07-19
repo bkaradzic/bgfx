@@ -405,10 +405,9 @@ void CompilerGLSL::find_static_extensions()
 		}
 		else if (type.basetype == SPIRType::Int64 || type.basetype == SPIRType::UInt64)
 		{
-			if (options.es)
-				SPIRV_CROSS_THROW("64-bit integers not supported in ES profile.");
-			if (!options.es)
-				require_extension_internal("GL_ARB_gpu_shader_int64");
+			if (options.es && options.version < 310) // GL_NV_gpu_shader5 fallback requires 310.
+				SPIRV_CROSS_THROW("64-bit integers not supported in ES profile before version 310.");
+			require_extension_internal("GL_ARB_gpu_shader_int64");
 		}
 		else if (type.basetype == SPIRType::Half)
 		{
@@ -619,6 +618,11 @@ void CompilerGLSL::find_static_extensions()
 			SPIRV_CROSS_THROW("OVR_multiview2 can only be used with Vertex shaders.");
 		require_extension_internal("GL_OVR_multiview2");
 	}
+
+	// KHR one is likely to get promoted at some point, so if we don't see an explicit SPIR-V extension, assume KHR.
+	for (auto &ext : ir.declared_extensions)
+		if (ext == "SPV_NV_fragment_shader_barycentric")
+			barycentric_is_nv = true;
 }
 
 void CompilerGLSL::ray_tracing_khr_fixup_locations()
@@ -821,7 +825,20 @@ void CompilerGLSL::emit_header()
 
 	for (auto &ext : forced_extensions)
 	{
-		if (ext == "GL_EXT_shader_explicit_arithmetic_types_float16")
+		if (ext == "GL_ARB_gpu_shader_int64")
+		{
+			statement("#if defined(GL_ARB_gpu_shader_int64)");
+			statement("#extension GL_ARB_gpu_shader_int64 : require");
+			if (!options.vulkan_semantics || options.es)
+			{
+				statement("#elif defined(GL_NV_gpu_shader5)");
+				statement("#extension GL_NV_gpu_shader5 : require");
+			}
+			statement("#else");
+			statement("#error No extension available for 64-bit integers.");
+			statement("#endif");
+		}
+		else if (ext == "GL_EXT_shader_explicit_arithmetic_types_float16")
 		{
 			// Special case, this extension has a potential fallback to another vendor extension in normal GLSL.
 			// GL_AMD_gpu_shader_half_float is a superset, so try that first.
@@ -841,13 +858,30 @@ void CompilerGLSL::emit_header()
 			statement("#error No extension available for FP16.");
 			statement("#endif");
 		}
+		else if (ext == "GL_EXT_shader_explicit_arithmetic_types_int8")
+		{
+			if (options.vulkan_semantics)
+				statement("#extension GL_EXT_shader_explicit_arithmetic_types_int8 : require");
+			else
+			{
+				statement("#if defined(GL_EXT_shader_explicit_arithmetic_types_int8)");
+				statement("#extension GL_EXT_shader_explicit_arithmetic_types_int8 : require");
+				statement("#elif defined(GL_NV_gpu_shader5)");
+				statement("#extension GL_NV_gpu_shader5 : require");
+				statement("#else");
+				statement("#error No extension available for Int8.");
+				statement("#endif");
+			}
+		}
 		else if (ext == "GL_EXT_shader_explicit_arithmetic_types_int16")
 		{
 			if (options.vulkan_semantics)
 				statement("#extension GL_EXT_shader_explicit_arithmetic_types_int16 : require");
 			else
 			{
-				statement("#if defined(GL_AMD_gpu_shader_int16)");
+				statement("#if defined(GL_EXT_shader_explicit_arithmetic_types_int16)");
+				statement("#extension GL_EXT_shader_explicit_arithmetic_types_int16 : require");
+				statement("#elif defined(GL_AMD_gpu_shader_int16)");
 				statement("#extension GL_AMD_gpu_shader_int16 : require");
 				statement("#elif defined(GL_NV_gpu_shader5)");
 				statement("#extension GL_NV_gpu_shader5 : require");
@@ -1206,14 +1240,23 @@ string CompilerGLSL::to_interpolation_qualifiers(const Bitset &flags)
 		res += "__explicitInterpAMD ";
 	}
 
-	if (flags.get(DecorationPerVertexNV))
+	if (flags.get(DecorationPerVertexKHR))
 	{
 		if (options.es && options.version < 320)
-			SPIRV_CROSS_THROW("pervertexNV requires ESSL 320.");
+			SPIRV_CROSS_THROW("pervertexEXT requires ESSL 320.");
 		else if (!options.es && options.version < 450)
-			SPIRV_CROSS_THROW("pervertexNV requires GLSL 450.");
-		require_extension_internal("GL_NV_fragment_shader_barycentric");
-		res += "pervertexNV ";
+			SPIRV_CROSS_THROW("pervertexEXT requires GLSL 450.");
+
+		if (barycentric_is_nv)
+		{
+			require_extension_internal("GL_NV_fragment_shader_barycentric");
+			res += "pervertexNV ";
+		}
+		else
+		{
+			require_extension_internal("GL_EXT_fragment_shader_barycentric");
+			res += "pervertexEXT ";
+		}
 	}
 
 	return res;
@@ -5171,8 +5214,8 @@ string CompilerGLSL::constant_expression(const SPIRConstant &c, bool inside_bloc
 }
 
 #ifdef _MSC_VER
-// sprintf warning.
-// We cannot rely on snprintf existing because, ..., MSVC.
+// snprintf does not exist or is buggy on older MSVC versions, some of them
+// being used by MinGW. Use sprintf instead and disable corresponding warning.
 #pragma warning(push)
 #pragma warning(disable : 4996)
 #endif
@@ -5232,7 +5275,11 @@ string CompilerGLSL::convert_float_to_string(const SPIRConstant &c, uint32_t col
 			in_type.width = 32;
 
 			char print_buffer[32];
+#ifdef _WIN32
 			sprintf(print_buffer, "0x%xu", c.scalar(col, row));
+#else
+			snprintf(print_buffer, sizeof(print_buffer), "0x%xu", c.scalar(col, row));
+#endif
 
 			const char *comment = "inf";
 			if (float_value == -numeric_limits<float>::infinity())
@@ -5299,13 +5346,18 @@ std::string CompilerGLSL::convert_double_to_string(const SPIRConstant &c, uint32
 
 			uint64_t u64_value = c.scalar_u64(col, row);
 
-			if (options.es)
-				SPIRV_CROSS_THROW("64-bit integers/float not supported in ES profile.");
+			if (options.es && options.version < 310) // GL_NV_gpu_shader5 fallback requires 310.
+				SPIRV_CROSS_THROW("64-bit integers not supported in ES profile before version 310.");
 			require_extension_internal("GL_ARB_gpu_shader_int64");
 
 			char print_buffer[64];
+#ifdef _WIN32
 			sprintf(print_buffer, "0x%llx%s", static_cast<unsigned long long>(u64_value),
 			        backend.long_long_literal_suffix ? "ull" : "ul");
+#else
+			snprintf(print_buffer, sizeof(print_buffer), "0x%llx%s", static_cast<unsigned long long>(u64_value),
+			         backend.long_long_literal_suffix ? "ull" : "ul");
+#endif
 
 			const char *comment = "inf";
 			if (double_value == -numeric_limits<double>::infinity())
@@ -6066,6 +6118,16 @@ void CompilerGLSL::emit_binary_func_op(uint32_t result_type, uint32_t result_id,
 void CompilerGLSL::emit_atomic_func_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1,
                                        const char *op)
 {
+	auto &type = get<SPIRType>(result_type);
+	if (type_is_floating_point(type))
+	{
+		if (!options.vulkan_semantics)
+			SPIRV_CROSS_THROW("Floating point atomics requires Vulkan semantics.");
+		if (options.es)
+			SPIRV_CROSS_THROW("Floating point atomics requires desktop GLSL.");
+		require_extension_internal("GL_EXT_shader_atomic_float");
+	}
+
 	forced_temporaries.insert(result_id);
 	emit_op(result_type, result_id,
 	        join(op, "(", to_non_uniform_aware_expression(op0), ", ",
@@ -6340,7 +6402,11 @@ string CompilerGLSL::legacy_tex_op(const std::string &op, const SPIRType &imgtyp
 	switch (imgtype.image.dim)
 	{
 	case spv::Dim1D:
-		type = (imgtype.image.arrayed && !options.es) ? "1DArray" : "1D";
+		// Force 2D path for ES.
+		if (options.es)
+			type = (imgtype.image.arrayed && !options.es) ? "2DArray" : "2D";
+		else
+			type = (imgtype.image.arrayed && !options.es) ? "1DArray" : "1D";
 		break;
 	case spv::Dim2D:
 		type = (imgtype.image.arrayed && !options.es) ? "2DArray" : "2D";
@@ -7018,8 +7084,8 @@ std::string CompilerGLSL::to_texture_op(const Instruction &i, bool sparse, bool 
 	expr += to_function_args(args, forward);
 	expr += ")";
 
-	// texture(samplerXShadow) returns float. shadowX() returns vec4. Swizzle here.
-	if (is_legacy() && is_depth_image(imgtype, img))
+	// texture(samplerXShadow) returns float. shadowX() returns vec4, but only in desktop GLSL. Swizzle here.
+	if (is_legacy() && !options.es && is_depth_image(imgtype, img))
 		expr += ".r";
 
 	// Sampling from a texture which was deduced to be a depth image, might actually return 1 component here.
@@ -7300,10 +7366,29 @@ string CompilerGLSL::to_function_args(const TextureFunctionArguments &args, bool
 			// Create a composite which merges coord/dref into a single vector.
 			auto type = expression_type(args.coord);
 			type.vecsize = args.coord_components + 1;
+			if (imgtype.image.dim == Dim1D && options.es)
+				type.vecsize++;
 			farg_str += ", ";
 			farg_str += type_to_glsl_constructor(type);
 			farg_str += "(";
-			farg_str += coord_expr;
+
+			if (imgtype.image.dim == Dim1D && options.es)
+			{
+				if (imgtype.image.arrayed)
+				{
+					farg_str += enclose_expression(coord_expr) + ".x";
+					farg_str += ", 0.0, ";
+					farg_str += enclose_expression(coord_expr) + ".y";
+				}
+				else
+				{
+					farg_str += coord_expr;
+					farg_str += ", 0.0";
+				}
+			}
+			else
+				farg_str += coord_expr;
+
 			farg_str += ", ";
 			farg_str += to_expression(args.dref);
 			farg_str += ")";
@@ -7311,6 +7396,33 @@ string CompilerGLSL::to_function_args(const TextureFunctionArguments &args, bool
 	}
 	else
 	{
+		if (imgtype.image.dim == Dim1D && options.es)
+		{
+			// Have to fake a second coordinate.
+			if (type_is_floating_point(coord_type))
+			{
+				// Cannot mix proj and array.
+				if (imgtype.image.arrayed || args.base.is_proj)
+				{
+					coord_expr = join("vec3(", enclose_expression(coord_expr), ".x, 0.0, ",
+					                  enclose_expression(coord_expr), ".y)");
+				}
+				else
+					coord_expr = join("vec2(", coord_expr, ", 0.0)");
+			}
+			else
+			{
+				if (imgtype.image.arrayed)
+				{
+					coord_expr = join("ivec3(", enclose_expression(coord_expr),
+									  ".x, 0, ",
+									  enclose_expression(coord_expr), ".y)");
+				}
+				else
+					coord_expr = join("ivec2(", coord_expr, ", 0)");
+			}
+		}
+
 		farg_str += ", ";
 		farg_str += coord_expr;
 	}
@@ -8698,24 +8810,42 @@ string CompilerGLSL::builtin_to_glsl(BuiltIn builtin, StorageClass storage)
 	case BuiltInIncomingRayFlagsKHR:
 		return ray_tracing_is_khr ? "gl_IncomingRayFlagsEXT" : "gl_IncomingRayFlagsNV";
 
-	case BuiltInBaryCoordNV:
+	case BuiltInBaryCoordKHR:
 	{
 		if (options.es && options.version < 320)
-			SPIRV_CROSS_THROW("gl_BaryCoordNV requires ESSL 320.");
+			SPIRV_CROSS_THROW("gl_BaryCoordEXT requires ESSL 320.");
 		else if (!options.es && options.version < 450)
-			SPIRV_CROSS_THROW("gl_BaryCoordNV requires GLSL 450.");
-		require_extension_internal("GL_NV_fragment_shader_barycentric");
-		return "gl_BaryCoordNV";
+			SPIRV_CROSS_THROW("gl_BaryCoordEXT requires GLSL 450.");
+
+		if (barycentric_is_nv)
+		{
+			require_extension_internal("GL_NV_fragment_shader_barycentric");
+			return "gl_BaryCoordNV";
+		}
+		else
+		{
+			require_extension_internal("GL_EXT_fragment_shader_barycentric");
+			return "gl_BaryCoordEXT";
+		}
 	}
 
 	case BuiltInBaryCoordNoPerspNV:
 	{
 		if (options.es && options.version < 320)
-			SPIRV_CROSS_THROW("gl_BaryCoordNoPerspNV requires ESSL 320.");
+			SPIRV_CROSS_THROW("gl_BaryCoordNoPerspEXT requires ESSL 320.");
 		else if (!options.es && options.version < 450)
-			SPIRV_CROSS_THROW("gl_BaryCoordNoPerspNV requires GLSL 450.");
-		require_extension_internal("GL_NV_fragment_shader_barycentric");
-		return "gl_BaryCoordNoPerspNV";
+			SPIRV_CROSS_THROW("gl_BaryCoordNoPerspEXT requires GLSL 450.");
+
+		if (barycentric_is_nv)
+		{
+			require_extension_internal("GL_NV_fragment_shader_barycentric");
+			return "gl_BaryCoordNoPerspNV";
+		}
+		else
+		{
+			require_extension_internal("GL_EXT_fragment_shader_barycentric");
+			return "gl_BaryCoordNoPerspEXT";
+		}
 	}
 
 	case BuiltInFragStencilRefEXT:
@@ -8860,6 +8990,7 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 		if (!is_literal)
 			mod_flags &= ~ACCESS_CHAIN_INDEX_IS_LITERAL_BIT;
 		access_chain_internal_append_index(expr, base, type, mod_flags, access_chain_is_arrayed, index);
+		check_physical_type_cast(expr, type, physical_type);
 	};
 
 	for (uint32_t i = 0; i < count; i++)
@@ -9190,6 +9321,10 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 	}
 
 	return expr;
+}
+
+void CompilerGLSL::check_physical_type_cast(std::string &, const SPIRType *, uint32_t)
+{
 }
 
 void CompilerGLSL::prepare_access_chain_for_scalar_access(std::string &, const SPIRType &, spv::StorageClass, bool &)
@@ -12132,6 +12267,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 	}
 
 	case OpAtomicIAdd:
+	case OpAtomicFAddEXT:
 	{
 		const char *op = check_atomic_image(ops[2]) ? "imageAtomicAdd" : "atomicAdd";
 		emit_atomic_func_op(ops[0], ops[1], ops[2], ops[5], op);
@@ -12484,6 +12620,10 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 			target_coord_type.basetype = SPIRType::Int;
 			coord_expr = bitcast_expression(target_coord_type, expression_type(ops[3]).basetype, coord_expr);
 
+			// ES needs to emulate 1D images as 2D.
+			if (type.image.dim == Dim1D && options.es)
+				coord_expr = join("ivec2(", coord_expr, ", 0)");
+
 			// Plain image load/store.
 			if (sparse)
 			{
@@ -12595,6 +12735,10 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		auto target_coord_type = expression_type(ops[1]);
 		target_coord_type.basetype = SPIRType::Int;
 		coord_expr = bitcast_expression(target_coord_type, expression_type(ops[1]).basetype, coord_expr);
+
+		// ES needs to emulate 1D images as 2D.
+		if (type.image.dim == Dim1D && options.es)
+			coord_expr = join("ivec2(", coord_expr, ", 0)");
 
 		if (type.image.ms)
 		{
@@ -13249,9 +13393,30 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 #undef GLSL_RAY_QUERY_GET_OP2
 
 	case OpConvertUToAccelerationStructureKHR:
+	{
 		require_extension_internal("GL_EXT_ray_tracing");
-		GLSL_UFOP(accelerationStructureEXT);
+
+		bool elide_temporary = should_forward(ops[2]) && forced_temporaries.count(ops[1]) == 0 &&
+		                       !hoisted_temporaries.count(ops[1]);
+
+		if (elide_temporary)
+		{
+			GLSL_UFOP(accelerationStructureEXT);
+		}
+		else
+		{
+			// Force this path in subsequent iterations.
+			forced_temporaries.insert(ops[1]);
+
+			// We cannot declare a temporary acceleration structure in GLSL.
+			// If we get to this point, we'll have to emit a temporary uvec2,
+			// and cast to RTAS on demand.
+			statement(declare_temporary(expression_type_id(ops[2]), ops[1]), to_unpacked_expression(ops[2]), ";");
+			// Use raw SPIRExpression interface to block all usage tracking.
+			set<SPIRExpression>(ops[1], join("accelerationStructureEXT(", to_name(ops[1]), ")"), ops[0], true);
+		}
 		break;
+	}
 
 	case OpConvertUToPtr:
 	{
@@ -13956,7 +14121,8 @@ string CompilerGLSL::image_type_glsl(const SPIRType &type, uint32_t id)
 	switch (type.image.dim)
 	{
 	case Dim1D:
-		res += "1D";
+		// ES doesn't support 1D. Fake it with 2D.
+		res += options.es ? "2D" : "1D";
 		break;
 	case Dim2D:
 		res += "2D";
@@ -15587,26 +15753,32 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 		// If there is only one default block, and no cases, this is a case where SPIRV-opt decided to emulate
 		// non-structured exits with the help of a switch block.
 		// This is buggy on FXC, so just emit the logical equivalent of a do { } while(false), which is more idiomatic.
-		bool degenerate_switch = block.default_block != block.merge_block && cases.empty();
+		bool block_like_switch = cases.empty();
 
-		if (degenerate_switch || is_legacy_es())
+		// If this is true, the switch is completely meaningless, and we should just avoid it.
+		bool collapsed_switch = block_like_switch && block.default_block == block.next_block;
+
+		if (!collapsed_switch)
 		{
-			// ESSL 1.0 is not guaranteed to support do/while.
-			if (is_legacy_es())
+			if (block_like_switch || is_legacy_es())
 			{
-				uint32_t counter = statement_count;
-				statement("for (int spvDummy", counter, " = 0; spvDummy", counter,
-				          " < 1; spvDummy", counter, "++)");
+				// ESSL 1.0 is not guaranteed to support do/while.
+				if (is_legacy_es())
+				{
+					uint32_t counter = statement_count;
+					statement("for (int spvDummy", counter, " = 0; spvDummy", counter, " < 1; spvDummy", counter,
+					          "++)");
+				}
+				else
+					statement("do");
 			}
 			else
-				statement("do");
+			{
+				emit_block_hints(block);
+				statement("switch (", to_unpacked_expression(block.condition), ")");
+			}
+			begin_scope();
 		}
-		else
-		{
-			emit_block_hints(block);
-			statement("switch (", to_unpacked_expression(block.condition), ")");
-		}
-		begin_scope();
 
 		for (size_t i = 0; i < num_blocks; i++)
 		{
@@ -15616,7 +15788,7 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 			if (literals.empty())
 			{
 				// Default case.
-				if (!degenerate_switch)
+				if (!block_like_switch)
 				{
 					if (is_legacy_es())
 						statement("else");
@@ -15654,10 +15826,10 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 			else
 				current_emitting_switch_fallthrough = false;
 
-			if (!degenerate_switch)
+			if (!block_like_switch)
 				begin_scope();
 			branch(block.self, target_block);
-			if (!degenerate_switch)
+			if (!block_like_switch)
 				end_scope();
 
 			current_emitting_switch_fallthrough = false;
@@ -15671,7 +15843,7 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 		// - Header -> Merge requires flushing PHI. In this case, we need to collect all cases and flush PHI there.
 		bool header_merge_requires_phi = flush_phi_required(block.self, block.next_block);
 		bool need_fallthrough_block = block.default_block == block.next_block || !literals_to_merge.empty();
-		if ((header_merge_requires_phi && need_fallthrough_block) || !literals_to_merge.empty())
+		if (!collapsed_switch && ((header_merge_requires_phi && need_fallthrough_block) || !literals_to_merge.empty()))
 		{
 			for (auto &case_literal : literals_to_merge)
 				statement("case ", to_case_label(case_literal, type.width, unsigned_case), label_suffix, ":");
@@ -15690,10 +15862,15 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 			end_scope();
 		}
 
-		if (degenerate_switch && !is_legacy_es())
-			end_scope_decl("while(false)");
+		if (!collapsed_switch)
+		{
+			if (block_like_switch && !is_legacy_es())
+				end_scope_decl("while(false)");
+			else
+				end_scope();
+		}
 		else
-			end_scope();
+			flush_phi(block.self, block.next_block);
 
 		if (block.need_ladder_break)
 		{

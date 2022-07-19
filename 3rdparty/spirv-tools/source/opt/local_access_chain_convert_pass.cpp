@@ -237,7 +237,8 @@ void LocalAccessChainConvertPass::FindTargetVars(Function* func) {
           }
           // Rule out variables with nested access chains
           // TODO(): Convert nested access chains
-          if (IsNonPtrAccessChain(op) && ptrInst->GetSingleWordInOperand(
+          bool is_non_ptr_access_chain = IsNonPtrAccessChain(op);
+          if (is_non_ptr_access_chain && ptrInst->GetSingleWordInOperand(
                                              kAccessChainPtrIdInIdx) != varId) {
             seen_non_target_vars_.insert(varId);
             seen_target_vars_.erase(varId);
@@ -245,6 +246,12 @@ void LocalAccessChainConvertPass::FindTargetVars(Function* func) {
           }
           // Rule out variables accessed with non-constant indices
           if (!Is32BitConstantIndexAccessChain(ptrInst)) {
+            seen_non_target_vars_.insert(varId);
+            seen_target_vars_.erase(varId);
+            break;
+          }
+
+          if (is_non_ptr_access_chain && AnyIndexIsOutOfBounds(ptrInst)) {
             seen_non_target_vars_.insert(varId);
             seen_target_vars_.erase(varId);
             break;
@@ -442,7 +449,45 @@ void LocalAccessChainConvertPass::InitExtensions() {
       "SPV_EXT_shader_image_int64",
       "SPV_KHR_non_semantic_info",
       "SPV_KHR_uniform_group_instructions",
+      "SPV_KHR_fragment_shader_barycentric",
   });
+}
+
+bool LocalAccessChainConvertPass::AnyIndexIsOutOfBounds(
+    const Instruction* access_chain_inst) {
+  assert(IsNonPtrAccessChain(access_chain_inst->opcode()));
+
+  analysis::TypeManager* type_mgr = context()->get_type_mgr();
+  analysis::ConstantManager* const_mgr = context()->get_constant_mgr();
+  auto constants = const_mgr->GetOperandConstants(access_chain_inst);
+  uint32_t base_pointer_id = access_chain_inst->GetSingleWordInOperand(0);
+  Instruction* base_pointer = get_def_use_mgr()->GetDef(base_pointer_id);
+  const analysis::Pointer* base_pointer_type =
+      type_mgr->GetType(base_pointer->type_id())->AsPointer();
+  assert(base_pointer_type != nullptr &&
+         "The base of the access chain is not a pointer.");
+  const analysis::Type* current_type = base_pointer_type->pointee_type();
+  for (uint32_t i = 1; i < access_chain_inst->NumInOperands(); ++i) {
+    if (IsIndexOutOfBounds(constants[i], current_type)) {
+      return true;
+    }
+
+    uint32_t index =
+        (constants[i]
+             ? static_cast<uint32_t>(constants[i]->GetZeroExtendedValue())
+             : 0);
+    current_type = type_mgr->GetMemberType(current_type, {index});
+  }
+
+  return false;
+}
+
+bool LocalAccessChainConvertPass::IsIndexOutOfBounds(
+    const analysis::Constant* index, const analysis::Type* type) const {
+  if (index == nullptr) {
+    return false;
+  }
+  return index->GetZeroExtendedValue() >= type->NumberOfComponents();
 }
 
 }  // namespace opt

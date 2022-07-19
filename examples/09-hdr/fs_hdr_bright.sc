@@ -29,10 +29,10 @@ void main()
 
 	float middleGray = u_tonemap.x;
 	float whiteSqr   = u_tonemap.y;
-	float treshold   = u_tonemap.z;
+	float threshold  = u_tonemap.z;
 	float offset     = u_tonemap.w;
 
-	rgb = max(vec3_splat(0.0), rgb - treshold) * middleGray / (lum + 0.0001);
+	rgb = max(vec3_splat(0.0), rgb - threshold) * middleGray / (lum + 0.0001);
 	rgb = reinhard2(rgb, whiteSqr);
 
 	gl_FragColor = toGamma(vec4(rgb, 1.0) );
