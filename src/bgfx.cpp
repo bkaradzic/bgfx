@@ -1553,6 +1553,7 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_2D_ARRAY),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_3D),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_BLIT),
+		CAPS_FLAGS(BGFX_CAPS_TRANSPARENT_BACKBUFFER),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_COMPARE_ALL),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_COMPARE_LEQUAL),
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_CUBE_ARRAY),
@@ -1739,18 +1740,20 @@ namespace bgfx
 			, _resolution.numBackBuffers
 			, _resolution.maxFrameLatency
 			);
-		BX_TRACE("\t[%c] MSAAx%d", 0 != msaa ? 'x' : ' ', 1<<msaa);
-		BX_TRACE("\t[%c] Fullscreen",         0 != (reset & BGFX_RESET_FULLSCREEN)         ? 'x' : ' ');
-		BX_TRACE("\t[%c] V-sync",             0 != (reset & BGFX_RESET_VSYNC)              ? 'x' : ' ');
-		BX_TRACE("\t[%c] Max Anisotropy",     0 != (reset & BGFX_RESET_MAXANISOTROPY)      ? 'x' : ' ');
-		BX_TRACE("\t[%c] Capture",            0 != (reset & BGFX_RESET_CAPTURE)            ? 'x' : ' ');
-		BX_TRACE("\t[%c] Flush After Render", 0 != (reset & BGFX_RESET_FLUSH_AFTER_RENDER) ? 'x' : ' ');
-		BX_TRACE("\t[%c] Flip After Render",  0 != (reset & BGFX_RESET_FLIP_AFTER_RENDER)  ? 'x' : ' ');
-		BX_TRACE("\t[%c] sRGB Back Buffer",   0 != (reset & BGFX_RESET_SRGB_BACKBUFFER)    ? 'x' : ' ');
-		BX_TRACE("\t[%c] HDR10",              0 != (reset & BGFX_RESET_HDR10)              ? 'x' : ' ');
-		BX_TRACE("\t[%c] Hi-DPI",             0 != (reset & BGFX_RESET_HIDPI)              ? 'x' : ' ');
-		BX_TRACE("\t[%c] Depth Clamp",        0 != (reset & BGFX_RESET_DEPTH_CLAMP)        ? 'x' : ' ');
-		BX_TRACE("\t[%c] Suspend",            0 != (reset & BGFX_RESET_SUSPEND)            ? 'x' : ' ');
+
+		BX_TRACE("\t[%c] MSAAx%d",                 0 != msaa                                        ? 'x' : ' ', 1<<msaa);
+		BX_TRACE("\t[%c] Fullscreen",              0 != (reset & BGFX_RESET_FULLSCREEN)             ? 'x' : ' ');
+		BX_TRACE("\t[%c] V-sync",                  0 != (reset & BGFX_RESET_VSYNC)                  ? 'x' : ' ');
+		BX_TRACE("\t[%c] Max Anisotropy",          0 != (reset & BGFX_RESET_MAXANISOTROPY)          ? 'x' : ' ');
+		BX_TRACE("\t[%c] Capture",                 0 != (reset & BGFX_RESET_CAPTURE)                ? 'x' : ' ');
+		BX_TRACE("\t[%c] Flush After Render",      0 != (reset & BGFX_RESET_FLUSH_AFTER_RENDER)     ? 'x' : ' ');
+		BX_TRACE("\t[%c] Flip After Render",       0 != (reset & BGFX_RESET_FLIP_AFTER_RENDER)      ? 'x' : ' ');
+		BX_TRACE("\t[%c] sRGB Back Buffer",        0 != (reset & BGFX_RESET_SRGB_BACKBUFFER)        ? 'x' : ' ');
+		BX_TRACE("\t[%c] Transparent Back Buffer", 0 != (reset & BGFX_RESET_TRANSPARENT_BACKBUFFER) ? 'x' : ' ');
+		BX_TRACE("\t[%c] HDR10",                   0 != (reset & BGFX_RESET_HDR10)                  ? 'x' : ' ');
+		BX_TRACE("\t[%c] Hi-DPI",                  0 != (reset & BGFX_RESET_HIDPI)                  ? 'x' : ' ');
+		BX_TRACE("\t[%c] Depth Clamp",             0 != (reset & BGFX_RESET_DEPTH_CLAMP)            ? 'x' : ' ');
+		BX_TRACE("\t[%c] Suspend",                 0 != (reset & BGFX_RESET_SUSPEND)                ? 'x' : ' ');
 	}
 
 	TextureFormat::Enum getViableTextureFormat(const bimg::ImageContainer& _imageContainer)
