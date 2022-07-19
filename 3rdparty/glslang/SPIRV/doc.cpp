@@ -305,7 +305,8 @@ const char* DecorationString(int decoration)
     case DecorationPerPrimitiveNV:              return "PerPrimitiveNV";
     case DecorationPerViewNV:                   return "PerViewNV";
     case DecorationPerTaskNV:                   return "PerTaskNV";
-    case DecorationPerVertexNV:                 return "PerVertexNV";
+    
+    case DecorationPerVertexKHR:                return "PerVertexKHR";
 
     case DecorationNonUniformEXT:           return "DecorationNonUniformEXT";
     case DecorationHlslCounterBufferGOOGLE: return "DecorationHlslCounterBufferGOOGLE";
@@ -407,8 +408,8 @@ const char* BuiltInString(int builtIn)
     case BuiltInViewportMaskPerViewNV:       return "ViewportMaskPerViewNV";
 //    case BuiltInFragmentSizeNV:             return "FragmentSizeNV";        // superseded by BuiltInFragSizeEXT
 //    case BuiltInInvocationsPerPixelNV:      return "InvocationsPerPixelNV"; // superseded by BuiltInFragInvocationCountEXT
-    case BuiltInBaryCoordNV:                 return "BaryCoordNV";
-    case BuiltInBaryCoordNoPerspNV:          return "BaryCoordNoPerspNV";
+    case BuiltInBaryCoordKHR:                return "BaryCoordKHR";
+    case BuiltInBaryCoordNoPerspKHR:         return "BaryCoordNoPerspKHR";
 
     case BuiltInFragSizeEXT:                 return "FragSizeEXT";
     case BuiltInFragInvocationCountEXT:      return "FragInvocationCountEXT";
@@ -932,7 +933,7 @@ const char* CapabilityString(int info)
     case CapabilityRayTraversalPrimitiveCullingKHR: return "RayTraversalPrimitiveCullingKHR";
     case CapabilityComputeDerivativeGroupQuadsNV:   return "ComputeDerivativeGroupQuadsNV";
     case CapabilityComputeDerivativeGroupLinearNV:  return "ComputeDerivativeGroupLinearNV";
-    case CapabilityFragmentBarycentricNV:           return "FragmentBarycentricNV";
+    case CapabilityFragmentBarycentricKHR:          return "FragmentBarycentricKHR";
     case CapabilityMeshShadingNV:                   return "MeshShadingNV";
     case CapabilityImageFootprintNV:                return "ImageFootprintNV";
 //    case CapabilityShadingRateNV:                   return "ShadingRateNV";  // superseded by FragmentDensityEXT

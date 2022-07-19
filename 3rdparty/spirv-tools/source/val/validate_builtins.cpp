@@ -120,7 +120,7 @@ typedef enum VUIDError_ {
   VUIDErrorMax,
 } VUIDError;
 
-const static uint32_t NumVUIDBuiltins = 34;
+const static uint32_t NumVUIDBuiltins = 36;
 
 typedef struct {
   SpvBuiltIn builtIn;
@@ -163,6 +163,8 @@ std::array<BuiltinVUIDMapping, NumVUIDBuiltins> builtinVUIDInfo = {{
     {SpvBuiltInFragStencilRefEXT,         {4223, 4224, 4225}},
     {SpvBuiltInFullyCoveredEXT,           {4232, 4233, 4234}},
     {SpvBuiltInCullMaskKHR,               {6735, 6736, 6737}},
+    {SpvBuiltInBaryCoordKHR,              {4154, 4155, 4156}},
+    {SpvBuiltInBaryCoordNoPerspKHR,       {4160, 4161, 4162}},
     // clang-format off
 } };
 
@@ -333,7 +335,9 @@ class BuiltInsValidator {
       const Decoration& decoration, const Instruction& inst);
   spv_result_t ValidateSMBuiltinsAtDefinition(const Decoration& decoration,
                                               const Instruction& inst);
-
+  // Used for BaryCoord, BaryCoordNoPersp.
+  spv_result_t ValidateFragmentShaderF32Vec3InputAtDefinition(
+      const Decoration& decoration, const Instruction& inst);
   // Used for SubgroupEqMask, SubgroupGeMask, SubgroupGtMask, SubgroupLtMask,
   // SubgroupLeMask.
   spv_result_t ValidateI32Vec4InputAtDefinition(const Decoration& decoration,
@@ -511,6 +515,13 @@ class BuiltInsValidator {
       const Decoration& decoration, const Instruction& built_in_inst,
       const Instruction& referenced_inst,
       const Instruction& referenced_from_inst);
+
+  // Used for BaryCoord, BaryCoordNoPersp.
+  spv_result_t ValidateFragmentShaderF32Vec3InputAtReference(
+      const Decoration& decoration, const Instruction& built_in_inst,
+      const Instruction& referenced_inst,
+      const Instruction& referenced_from_inst);
+
   // Used for SubgroupId and NumSubgroups.
   spv_result_t ValidateComputeI32InputAtReference(
       const Decoration& decoration, const Instruction& built_in_inst,
@@ -2790,6 +2801,80 @@ spv_result_t BuiltInsValidator::ValidateLayerOrViewportIndexAtReference(
   return SPV_SUCCESS;
 }
 
+spv_result_t BuiltInsValidator::ValidateFragmentShaderF32Vec3InputAtDefinition(
+    const Decoration& decoration, const Instruction& inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    const SpvBuiltIn builtin = SpvBuiltIn(decoration.params()[0]);
+    if (spv_result_t error = ValidateF32Vec(
+            decoration, inst, 3,
+            [this, &inst, builtin](const std::string& message) -> spv_result_t {
+              uint32_t vuid = GetVUIDForBuiltin(builtin, VUIDErrorType);
+              return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                     << _.VkErrorID(vuid) << "According to the "
+                     << spvLogStringForEnv(_.context()->target_env)
+                     << " spec BuiltIn "
+                     << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                                      builtin)
+                     << " variable needs to be a 3-component 32-bit float "
+                        "vector. "
+                     << message;
+            })) {
+      return error;
+    }
+  }
+
+  // Seed at reference checks with this built-in.
+  return ValidateFragmentShaderF32Vec3InputAtReference(decoration, inst, inst,
+                                                      inst);
+}
+
+spv_result_t BuiltInsValidator::ValidateFragmentShaderF32Vec3InputAtReference(
+    const Decoration& decoration, const Instruction& built_in_inst,
+    const Instruction& referenced_inst,
+    const Instruction& referenced_from_inst) {
+
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    const SpvBuiltIn builtin = SpvBuiltIn(decoration.params()[0]);
+    const SpvStorageClass storage_class = GetStorageClass(referenced_from_inst);
+    if (storage_class != SpvStorageClassMax &&
+        storage_class != SpvStorageClassInput) {
+      uint32_t vuid = GetVUIDForBuiltin(builtin, VUIDErrorStorageClass);
+      return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+             << _.VkErrorID(vuid) << spvLogStringForEnv(_.context()->target_env)
+             << " spec allows BuiltIn "
+             << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN, builtin)
+             << " to be only used for variables with Input storage class. "
+             << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                 referenced_from_inst)
+             << " " << GetStorageClassDesc(referenced_from_inst);
+    }
+
+    for (const SpvExecutionModel execution_model : execution_models_) {
+      if (execution_model != SpvExecutionModelFragment) {
+        uint32_t vuid = GetVUIDForBuiltin(builtin, VUIDErrorExecutionModel);
+        return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+               << _.VkErrorID(vuid)
+               << spvLogStringForEnv(_.context()->target_env)
+               << " spec allows BuiltIn "
+               << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN, builtin)
+               << " to be used only with Fragment execution model. "
+               << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                   referenced_from_inst, execution_model);
+      }
+    }
+  }
+
+  if (function_id_ == 0) {
+    // Propagate this rule to all dependant ids in the global scope.
+    id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
+        &BuiltInsValidator::ValidateFragmentShaderF32Vec3InputAtReference, this,
+        decoration, built_in_inst, referenced_from_inst,
+        std::placeholders::_1));
+  }
+
+  return SPV_SUCCESS;
+}
+
 spv_result_t BuiltInsValidator::ValidateComputeShaderI32Vec3InputAtDefinition(
     const Decoration& decoration, const Instruction& inst) {
   if (spvIsVulkanEnv(_.context()->target_env)) {
@@ -4030,6 +4115,10 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     case SpvBuiltInWorkgroupId: {
       return ValidateComputeShaderI32Vec3InputAtDefinition(decoration, inst);
     }
+    case SpvBuiltInBaryCoordKHR:
+    case SpvBuiltInBaryCoordNoPerspKHR: {
+      return ValidateFragmentShaderF32Vec3InputAtDefinition(decoration, inst);
+    }
     case SpvBuiltInHelperInvocation: {
       return ValidateHelperInvocationAtDefinition(decoration, inst);
     }
@@ -4186,8 +4275,6 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     case SpvBuiltInLayerPerViewNV:
     case SpvBuiltInMeshViewCountNV:
     case SpvBuiltInMeshViewIndicesNV:
-    case SpvBuiltInBaryCoordNV:
-    case SpvBuiltInBaryCoordNoPerspNV:
     case SpvBuiltInCurrentRayTimeNV:
       // No validation rules (for the moment).
       break;

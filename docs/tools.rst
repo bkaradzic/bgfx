@@ -73,7 +73,7 @@ Some differences between bgfx's shaderc flavor of GLSL and vanilla GLSL:
    instead of using ``attribute/in`` and ``varying/in/out``.
    This file cannot include comments, and typically only one is necessary.
 -  ``$input/$output`` tokens corresponding to inputs and outputs defined in
-   ``varying.def.sc`` must be used at the begining of shader.
+   ``varying.def.sc`` must be used at the beginning of shader.
 
 For more info, see the `shader helper macros
 <https://github.com/bkaradzic/bgfx/blob/master/src/bgfx_shader.sh>`__.

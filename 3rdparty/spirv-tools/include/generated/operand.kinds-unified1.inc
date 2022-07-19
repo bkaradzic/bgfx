@@ -123,6 +123,8 @@ static const SpvCapability pygen_variable_caps_WorkgroupMemoryExplicitLayoutKHR[
 
 static const spvtools::Extension pygen_variable_exts_SPV_AMD_gpu_shader_half_float_fetch[] = {spvtools::Extension::kSPV_AMD_gpu_shader_half_float_fetch};
 static const spvtools::Extension pygen_variable_exts_SPV_AMD_shader_ballot[] = {spvtools::Extension::kSPV_AMD_shader_ballot};
+static const spvtools::Extension pygen_variable_exts_SPV_AMD_shader_early_and_late_fragment_tests[] = {spvtools::Extension::kSPV_AMD_shader_early_and_late_fragment_tests};
+static const spvtools::Extension pygen_variable_exts_SPV_AMD_shader_early_and_late_fragment_testsSPV_EXT_shader_stencil_export[] = {spvtools::Extension::kSPV_AMD_shader_early_and_late_fragment_tests, spvtools::Extension::kSPV_EXT_shader_stencil_export};
 static const spvtools::Extension pygen_variable_exts_SPV_AMD_shader_explicit_vertex_parameter[] = {spvtools::Extension::kSPV_AMD_shader_explicit_vertex_parameter};
 static const spvtools::Extension pygen_variable_exts_SPV_AMD_shader_fragment_mask[] = {spvtools::Extension::kSPV_AMD_shader_fragment_mask};
 static const spvtools::Extension pygen_variable_exts_SPV_AMD_shader_image_load_store_lod[] = {spvtools::Extension::kSPV_AMD_shader_image_load_store_lod};
@@ -450,7 +452,14 @@ static const spv_operand_desc_t pygen_variable_ExecutionModeEntries[] = {
   {"SignedZeroInfNanPreserve", 4461, 1, pygen_variable_caps_SignedZeroInfNanPreserve, 1, pygen_variable_exts_SPV_KHR_float_controls, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, SPV_SPIRV_VERSION_WORD(1,4), 0xffffffffu},
   {"RoundingModeRTE", 4462, 1, pygen_variable_caps_RoundingModeRTE, 1, pygen_variable_exts_SPV_KHR_float_controls, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, SPV_SPIRV_VERSION_WORD(1,4), 0xffffffffu},
   {"RoundingModeRTZ", 4463, 1, pygen_variable_caps_RoundingModeRTZ, 1, pygen_variable_exts_SPV_KHR_float_controls, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, SPV_SPIRV_VERSION_WORD(1,4), 0xffffffffu},
+  {"EarlyAndLateFragmentTestsAMD", 5017, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_AMD_shader_early_and_late_fragment_tests, {}, 0xffffffffu, 0xffffffffu},
   {"StencilRefReplacingEXT", 5027, 1, pygen_variable_caps_StencilExportEXT, 1, pygen_variable_exts_SPV_EXT_shader_stencil_export, {}, 0xffffffffu, 0xffffffffu},
+  {"StencilRefUnchangedFrontAMD", 5079, 1, pygen_variable_caps_StencilExportEXT, 2, pygen_variable_exts_SPV_AMD_shader_early_and_late_fragment_testsSPV_EXT_shader_stencil_export, {}, 0xffffffffu, 0xffffffffu},
+  {"StencilRefGreaterFrontAMD", 5080, 1, pygen_variable_caps_StencilExportEXT, 2, pygen_variable_exts_SPV_AMD_shader_early_and_late_fragment_testsSPV_EXT_shader_stencil_export, {}, 0xffffffffu, 0xffffffffu},
+  {"StencilRefLessFrontAMD", 5081, 1, pygen_variable_caps_StencilExportEXT, 2, pygen_variable_exts_SPV_AMD_shader_early_and_late_fragment_testsSPV_EXT_shader_stencil_export, {}, 0xffffffffu, 0xffffffffu},
+  {"StencilRefUnchangedBackAMD", 5082, 1, pygen_variable_caps_StencilExportEXT, 2, pygen_variable_exts_SPV_AMD_shader_early_and_late_fragment_testsSPV_EXT_shader_stencil_export, {}, 0xffffffffu, 0xffffffffu},
+  {"StencilRefGreaterBackAMD", 5083, 1, pygen_variable_caps_StencilExportEXT, 2, pygen_variable_exts_SPV_AMD_shader_early_and_late_fragment_testsSPV_EXT_shader_stencil_export, {}, 0xffffffffu, 0xffffffffu},
+  {"StencilRefLessBackAMD", 5084, 1, pygen_variable_caps_StencilExportEXT, 2, pygen_variable_exts_SPV_AMD_shader_early_and_late_fragment_testsSPV_EXT_shader_stencil_export, {}, 0xffffffffu, 0xffffffffu},
   {"OutputLinesNV", 5269, 1, pygen_variable_caps_MeshShadingNV, 1, pygen_variable_exts_SPV_NV_mesh_shader, {}, 0xffffffffu, 0xffffffffu},
   {"OutputPrimitivesNV", 5270, 1, pygen_variable_caps_MeshShadingNV, 1, pygen_variable_exts_SPV_NV_mesh_shader, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0xffffffffu, 0xffffffffu},
   {"DerivativeGroupQuadsNV", 5289, 1, pygen_variable_caps_ComputeDerivativeGroupQuadsNV, 1, pygen_variable_exts_SPV_NV_compute_shader_derivatives, {}, 0xffffffffu, 0xffffffffu},

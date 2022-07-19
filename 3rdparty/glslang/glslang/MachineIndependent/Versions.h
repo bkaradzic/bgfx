@@ -210,6 +210,7 @@ const char* const E_GL_EXT_null_initializer                 = "GL_EXT_null_initi
 const char* const E_GL_EXT_shared_memory_block              = "GL_EXT_shared_memory_block";
 const char* const E_GL_EXT_subgroup_uniform_control_flow    = "GL_EXT_subgroup_uniform_control_flow";
 const char* const E_GL_EXT_spirv_intrinsics                 = "GL_EXT_spirv_intrinsics";
+const char* const E_GL_EXT_fragment_shader_barycentric      = "GL_EXT_fragment_shader_barycentric";
 
 // Arrays of extensions for the above viewportEXTs duplications
 

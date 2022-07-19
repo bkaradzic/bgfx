@@ -212,8 +212,12 @@ void InterfaceVariableScalarReplacement::KillInstructionAndUsers(
     context()->KillInst(inst);
     return;
   }
+  std::vector<Instruction*> users;
   context()->get_def_use_mgr()->ForEachUser(
-      inst, [this](Instruction* user) { KillInstructionAndUsers(user); });
+      inst, [&users](Instruction* user) { users.push_back(user); });
+  for (auto user : users) {
+    context()->KillInst(user);
+  }
   context()->KillInst(inst);
 }
 

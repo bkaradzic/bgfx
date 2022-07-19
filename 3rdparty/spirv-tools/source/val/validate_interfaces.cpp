@@ -238,7 +238,7 @@ spv_result_t GetLocationsForVariable(
   uint32_t index = 0;
   bool has_patch = false;
   bool has_per_task_nv = false;
-  bool has_per_vertex_nv = false;
+  bool has_per_vertex_khr = false;
   for (auto& dec : _.id_decorations(variable->id())) {
     if (dec.dec_type() == SpvDecorationLocation) {
       if (has_location && dec.params()[0] != location) {
@@ -272,8 +272,20 @@ spv_result_t GetLocationsForVariable(
       has_patch = true;
     } else if (dec.dec_type() == SpvDecorationPerTaskNV) {
       has_per_task_nv = true;
-    } else if (dec.dec_type() == SpvDecorationPerVertexNV) {
-      has_per_vertex_nv = true;
+    } else if (dec.dec_type() == SpvDecorationPerVertexKHR) {
+      if (!is_fragment) {
+        return _.diag(SPV_ERROR_INVALID_DATA, variable)
+               << _.VkErrorID(6777)
+               << "PerVertexKHR can only be applied to Fragment Execution "
+                  "Models";
+      }
+      if (type->opcode() != SpvOpTypeArray &&
+          type->opcode() != SpvOpTypeRuntimeArray) {
+        return _.diag(SPV_ERROR_INVALID_DATA, variable)
+               << _.VkErrorID(6778)
+               << "PerVertexKHR must be declared as arrays";
+      }
+      has_per_vertex_khr = true;
     }
   }
 
@@ -298,7 +310,7 @@ spv_result_t GetLocationsForVariable(
       }
       break;
     case SpvExecutionModelFragment:
-      if (!is_output && has_per_vertex_nv) {
+      if (!is_output && has_per_vertex_khr) {
         is_arrayed = true;
       }
       break;

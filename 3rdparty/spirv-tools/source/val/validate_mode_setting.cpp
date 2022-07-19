@@ -112,6 +112,44 @@ spv_result_t ValidateEntryPoint(ValidationState_t& _, const Instruction* inst) {
                  << "Fragment execution model entry points can specify at most "
                     "one fragment shader interlock execution mode.";
         }
+        if (execution_modes &&
+            1 < std::count_if(
+                    execution_modes->begin(), execution_modes->end(),
+                    [](const SpvExecutionMode& mode) {
+                      switch (mode) {
+                        case SpvExecutionModeStencilRefUnchangedFrontAMD:
+                        case SpvExecutionModeStencilRefLessFrontAMD:
+                        case SpvExecutionModeStencilRefGreaterFrontAMD:
+                          return true;
+                        default:
+                          return false;
+                      }
+                    })) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Fragment execution model entry points can specify at most "
+                    "one of StencilRefUnchangedFrontAMD, "
+                    "StencilRefLessFrontAMD or StencilRefGreaterFrontAMD "
+                    "execution modes.";
+        }
+        if (execution_modes &&
+            1 < std::count_if(
+                    execution_modes->begin(), execution_modes->end(),
+                    [](const SpvExecutionMode& mode) {
+                      switch (mode) {
+                        case SpvExecutionModeStencilRefUnchangedBackAMD:
+                        case SpvExecutionModeStencilRefLessBackAMD:
+                        case SpvExecutionModeStencilRefGreaterBackAMD:
+                          return true;
+                        default:
+                          return false;
+                      }
+                    })) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Fragment execution model entry points can specify at most "
+                    "one of StencilRefUnchangedBackAMD, "
+                    "StencilRefLessBackAMD or StencilRefGreaterBackAMD "
+                    "execution modes.";
+        }
         break;
       case SpvExecutionModelTessellationControl:
       case SpvExecutionModelTessellationEvaluation:
@@ -412,6 +450,13 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
     case SpvExecutionModeSampleInterlockUnorderedEXT:
     case SpvExecutionModeShadingRateInterlockOrderedEXT:
     case SpvExecutionModeShadingRateInterlockUnorderedEXT:
+    case SpvExecutionModeEarlyAndLateFragmentTestsAMD:
+    case SpvExecutionModeStencilRefUnchangedFrontAMD:
+    case SpvExecutionModeStencilRefGreaterFrontAMD:
+    case SpvExecutionModeStencilRefLessFrontAMD:
+    case SpvExecutionModeStencilRefUnchangedBackAMD:
+    case SpvExecutionModeStencilRefGreaterBackAMD:
+    case SpvExecutionModeStencilRefLessBackAMD:
       if (!std::all_of(models->begin(), models->end(),
                        [](const SpvExecutionModel& model) {
                          return model == SpvExecutionModelFragment;

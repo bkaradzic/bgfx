@@ -184,12 +184,12 @@ class Function {
       std::function<const std::vector<BasicBlock*>*(const BasicBlock*)>;
   /// Returns the block successors function for the augmented CFG.
   GetBlocksFunction AugmentedCFGSuccessorsFunction() const;
-  /// Like AugmentedCFGSuccessorsFunction, but also includes a forward edge from
-  /// a loop header block to its continue target, if they are different blocks.
-  GetBlocksFunction
-  AugmentedCFGSuccessorsFunctionIncludingHeaderToContinueEdge() const;
   /// Returns the block predecessors function for the augmented CFG.
   GetBlocksFunction AugmentedCFGPredecessorsFunction() const;
+  /// Returns the block structural successors function for the augmented CFG.
+  GetBlocksFunction AugmentedStructuralCFGSuccessorsFunction() const;
+  /// Returns the block structural predecessors function for the augmented CFG.
+  GetBlocksFunction AugmentedStructuralCFGPredecessorsFunction() const;
 
   /// Returns the control flow nesting depth of the given basic block.
   /// This function only works when you have structured control flow.

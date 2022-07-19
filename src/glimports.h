@@ -576,8 +576,8 @@ GL_IMPORT_____x(true,  PFNGLBLENDEQUATIONSEPARATEIPROC,            glBlendEquati
 GL_IMPORT_____x(true,  PFNGLBLENDFUNCIPROC,                        glBlendFunci);
 GL_IMPORT_____x(true,  PFNGLBLENDFUNCSEPARATEIPROC,                glBlendFuncSeparatei);
 
-GL_IMPORT_____x(true,  PFNGLDRAWBUFFERPROC,                        glDrawBuffer);
-GL_IMPORT_____x(true,  PFNGLREADBUFFERPROC,                        glReadBuffer);
+GL_IMPORT______(true,  PFNGLDRAWBUFFERPROC,                        glDrawBuffer);
+GL_IMPORT______(true,  PFNGLREADBUFFERPROC,                        glReadBuffer);
 GL_IMPORT_____x(true,  PFNGLGENSAMPLERSPROC,                       glGenSamplers);
 GL_IMPORT_____x(true,  PFNGLDELETESAMPLERSPROC,                    glDeleteSamplers);
 GL_IMPORT_____x(true,  PFNGLBINDSAMPLERPROC,                       glBindSampler);

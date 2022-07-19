@@ -617,6 +617,9 @@ pub const ResetFlags_DepthClamp: ResetFlags             = 0x00040000;
 
 /// Suspend rendering.
 pub const ResetFlags_Suspend: ResetFlags                = 0x00080000;
+
+/// Transparent backbuffer. Availability depends on: `BGFX_CAPS_TRANSPARENT_BACKBUFFER`.
+pub const ResetFlags_TransparentBackbuffer: ResetFlags  = 0x00100000;
 pub const ResetFlags_FullscreenShift: ResetFlags        = 0;
 pub const ResetFlags_FullscreenMask: ResetFlags         = 0x00000001;
 pub const ResetFlags_ReservedShift: ResetFlags          = 31;
@@ -679,34 +682,37 @@ pub const CapsFlags_Texture3D: CapsFlags              = 0x0000000000020000;
 
 /// Texture blit is supported.
 pub const CapsFlags_TextureBlit: CapsFlags            = 0x0000000000040000;
-pub const CapsFlags_TextureCompareReserved: CapsFlags = 0x0000000000080000;
+
+/// Transparent back buffer supported.
+pub const CapsFlags_TransparentBackbuffer: CapsFlags  = 0x0000000000080000;
+pub const CapsFlags_TextureCompareReserved: CapsFlags = 0x0000000000100000;
 
 /// Texture compare less equal mode is supported.
-pub const CapsFlags_TextureCompareLequal: CapsFlags   = 0x0000000000100000;
+pub const CapsFlags_TextureCompareLequal: CapsFlags   = 0x0000000000200000;
 
 /// Cubemap texture array is supported.
-pub const CapsFlags_TextureCubeArray: CapsFlags       = 0x0000000000200000;
+pub const CapsFlags_TextureCubeArray: CapsFlags       = 0x0000000000400000;
 
 /// CPU direct access to GPU texture memory.
-pub const CapsFlags_TextureDirectAccess: CapsFlags    = 0x0000000000400000;
+pub const CapsFlags_TextureDirectAccess: CapsFlags    = 0x0000000000800000;
 
 /// Read-back texture is supported.
-pub const CapsFlags_TextureReadBack: CapsFlags        = 0x0000000000800000;
+pub const CapsFlags_TextureReadBack: CapsFlags        = 0x0000000001000000;
 
 /// Vertex attribute half-float is supported.
-pub const CapsFlags_VertexAttribHalf: CapsFlags       = 0x0000000001000000;
+pub const CapsFlags_VertexAttribHalf: CapsFlags       = 0x0000000002000000;
 
 /// Vertex attribute 10_10_10_2 is supported.
-pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000002000000;
+pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000004000000;
 
 /// Rendering with VertexID only is supported.
-pub const CapsFlags_VertexId: CapsFlags               = 0x0000000004000000;
+pub const CapsFlags_VertexId: CapsFlags               = 0x0000000008000000;
 
 /// Viewport layer is available in vertex shader.
-pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000008000000;
+pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000010000000;
 
 /// All texture compare modes are supported.
-pub const CapsFlags_TextureCompareAll: CapsFlags      = 0x0000000000180000;
+pub const CapsFlags_TextureCompareAll: CapsFlags      = 0x0000000000300000;
 
 pub const CapsFormatFlags = u32;
 /// Texture format is not supported.
@@ -2283,7 +2289,7 @@ pub inline fn getAvailInstanceDataBuffer(_num: u32, _stride: u16) u32 {
 extern fn bgfx_get_avail_instance_data_buffer(_num: u32, _stride: u16) u32;
 
 /// Allocate transient index buffer.
-/// <param name="_tib">TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
+/// <param name="_tib">TransientIndexBuffer structure will be filled, and will be valid for the duration of frame, and can be reused for multiple draw calls.</param>
 /// <param name="_num">Number of indices to allocate.</param>
 /// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
 pub inline fn allocTransientIndexBuffer(_tib: [*c]TransientIndexBuffer, _num: u32, _index32: bool) void {
@@ -2292,7 +2298,7 @@ pub inline fn allocTransientIndexBuffer(_tib: [*c]TransientIndexBuffer, _num: u3
 extern fn bgfx_alloc_transient_index_buffer(_tib: [*c]TransientIndexBuffer, _num: u32, _index32: bool) void;
 
 /// Allocate transient vertex buffer.
-/// <param name="_tvb">TransientVertexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
+/// <param name="_tvb">TransientVertexBuffer structure will be filled, and will be valid for the duration of frame, and can be reused for multiple draw calls.</param>
 /// <param name="_num">Number of vertices to allocate.</param>
 /// <param name="_layout">Vertex layout.</param>
 pub inline fn allocTransientVertexBuffer(_tvb: [*c]TransientVertexBuffer, _num: u32, _layout: [*c]const VertexLayout) void {
@@ -2303,10 +2309,10 @@ extern fn bgfx_alloc_transient_vertex_buffer(_tvb: [*c]TransientVertexBuffer, _n
 /// Check for required space and allocate transient vertex and index
 /// buffers. If both space requirements are satisfied function returns
 /// true.
-/// <param name="_tvb">TransientVertexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
+/// <param name="_tvb">TransientVertexBuffer structure will be filled, and will be valid for the duration of frame, and can be reused for multiple draw calls.</param>
 /// <param name="_layout">Vertex layout.</param>
 /// <param name="_numVertices">Number of vertices to allocate.</param>
-/// <param name="_tib">TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
+/// <param name="_tib">TransientIndexBuffer structure will be filled, and will be valid for the duration of frame, and can be reused for multiple draw calls.</param>
 /// <param name="_numIndices">Number of indices to allocate.</param>
 /// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
 pub inline fn allocTransientBuffers(_tvb: [*c]TransientVertexBuffer, _layout: [*c]const VertexLayout, _numVertices: u32, _tib: [*c]TransientIndexBuffer, _numIndices: u32, _index32: bool) bool {
@@ -2315,7 +2321,7 @@ pub inline fn allocTransientBuffers(_tvb: [*c]TransientVertexBuffer, _layout: [*
 extern fn bgfx_alloc_transient_buffers(_tvb: [*c]TransientVertexBuffer, _layout: [*c]const VertexLayout, _numVertices: u32, _tib: [*c]TransientIndexBuffer, _numIndices: u32, _index32: bool) bool;
 
 /// Allocate instance data buffer.
-/// <param name="_idb">InstanceDataBuffer structure is filled and is valid for duration of frame, and it can be reused for multiple draw calls.</param>
+/// <param name="_idb">InstanceDataBuffer structure will be filled, and will be valid for duration of frame, and can be reused for multiple draw calls.</param>
 /// <param name="_num">Number of instances.</param>
 /// <param name="_stride">Instance stride. Must be multiple of 16.</param>
 pub inline fn allocInstanceDataBuffer(_idb: [*c]InstanceDataBuffer, _num: u32, _stride: u16) void {

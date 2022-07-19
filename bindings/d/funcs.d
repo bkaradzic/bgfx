@@ -566,8 +566,8 @@ version(BindBgfx_Static)
 	/**
 	 * Allocate transient index buffer.
 	 * Params:
-	 * _tib = TransientIndexBuffer structure is filled and is valid
-	 * for the duration of frame, and it can be reused for multiple draw
+	 * _tib = TransientIndexBuffer structure will be filled, and will be valid
+	 * for the duration of frame, and can be reused for multiple draw
 	 * calls.
 	 * _num = Number of indices to allocate.
 	 * _index32 = Set to `true` if input indices will be 32-bit.
@@ -577,8 +577,8 @@ version(BindBgfx_Static)
 	/**
 	 * Allocate transient vertex buffer.
 	 * Params:
-	 * _tvb = TransientVertexBuffer structure is filled and is valid
-	 * for the duration of frame, and it can be reused for multiple draw
+	 * _tvb = TransientVertexBuffer structure will be filled, and will be valid
+	 * for the duration of frame, and can be reused for multiple draw
 	 * calls.
 	 * _num = Number of vertices to allocate.
 	 * _layout = Vertex layout.
@@ -590,13 +590,13 @@ version(BindBgfx_Static)
 	 * buffers. If both space requirements are satisfied function returns
 	 * true.
 	 * Params:
-	 * _tvb = TransientVertexBuffer structure is filled and is valid
-	 * for the duration of frame, and it can be reused for multiple draw
+	 * _tvb = TransientVertexBuffer structure will be filled, and will be valid
+	 * for the duration of frame, and can be reused for multiple draw
 	 * calls.
 	 * _layout = Vertex layout.
 	 * _numVertices = Number of vertices to allocate.
-	 * _tib = TransientIndexBuffer structure is filled and is valid
-	 * for the duration of frame, and it can be reused for multiple draw
+	 * _tib = TransientIndexBuffer structure will be filled, and will be valid
+	 * for the duration of frame, and can be reused for multiple draw
 	 * calls.
 	 * _numIndices = Number of indices to allocate.
 	 * _index32 = Set to `true` if input indices will be 32-bit.
@@ -606,8 +606,8 @@ version(BindBgfx_Static)
 	/**
 	 * Allocate instance data buffer.
 	 * Params:
-	 * _idb = InstanceDataBuffer structure is filled and is valid
-	 * for duration of frame, and it can be reused for multiple draw
+	 * _idb = InstanceDataBuffer structure will be filled, and will be valid
+	 * for duration of frame, and can be reused for multiple draw
 	 * calls.
 	 * _num = Number of instances.
 	 * _stride = Instance stride. Must be multiple of 16.
@@ -2761,8 +2761,8 @@ else
 		/**
 		 * Allocate transient index buffer.
 		 * Params:
-		 * _tib = TransientIndexBuffer structure is filled and is valid
-		 * for the duration of frame, and it can be reused for multiple draw
+		 * _tib = TransientIndexBuffer structure will be filled, and will be valid
+		 * for the duration of frame, and can be reused for multiple draw
 		 * calls.
 		 * _num = Number of indices to allocate.
 		 * _index32 = Set to `true` if input indices will be 32-bit.
@@ -2773,8 +2773,8 @@ else
 		/**
 		 * Allocate transient vertex buffer.
 		 * Params:
-		 * _tvb = TransientVertexBuffer structure is filled and is valid
-		 * for the duration of frame, and it can be reused for multiple draw
+		 * _tvb = TransientVertexBuffer structure will be filled, and will be valid
+		 * for the duration of frame, and can be reused for multiple draw
 		 * calls.
 		 * _num = Number of vertices to allocate.
 		 * _layout = Vertex layout.
@@ -2787,13 +2787,13 @@ else
 		 * buffers. If both space requirements are satisfied function returns
 		 * true.
 		 * Params:
-		 * _tvb = TransientVertexBuffer structure is filled and is valid
-		 * for the duration of frame, and it can be reused for multiple draw
+		 * _tvb = TransientVertexBuffer structure will be filled, and will be valid
+		 * for the duration of frame, and can be reused for multiple draw
 		 * calls.
 		 * _layout = Vertex layout.
 		 * _numVertices = Number of vertices to allocate.
-		 * _tib = TransientIndexBuffer structure is filled and is valid
-		 * for the duration of frame, and it can be reused for multiple draw
+		 * _tib = TransientIndexBuffer structure will be filled, and will be valid
+		 * for the duration of frame, and can be reused for multiple draw
 		 * calls.
 		 * _numIndices = Number of indices to allocate.
 		 * _index32 = Set to `true` if input indices will be 32-bit.
@@ -2804,8 +2804,8 @@ else
 		/**
 		 * Allocate instance data buffer.
 		 * Params:
-		 * _idb = InstanceDataBuffer structure is filled and is valid
-		 * for duration of frame, and it can be reused for multiple draw
+		 * _idb = InstanceDataBuffer structure will be filled, and will be valid
+		 * for duration of frame, and can be reused for multiple draw
 		 * calls.
 		 * _num = Number of instances.
 		 * _stride = Instance stride. Must be multiple of 16.

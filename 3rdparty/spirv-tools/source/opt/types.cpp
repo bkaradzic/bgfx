@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <climits>
 #include <cstdint>
 #include <sstream>
 #include <string>
@@ -244,6 +245,35 @@ size_t Type::ComputeHashValue(size_t hash, SeenTypes* seen) const {
 size_t Type::HashValue() const {
   SeenTypes seen;
   return ComputeHashValue(0, &seen);
+}
+
+uint64_t Type::NumberOfComponents() const {
+  switch (kind()) {
+    case kVector:
+      return AsVector()->element_count();
+    case kMatrix:
+      return AsMatrix()->element_count();
+    case kArray: {
+      Array::LengthInfo length_info = AsArray()->length_info();
+      if (length_info.words[0] != Array::LengthInfo::kConstant) {
+        return UINT64_MAX;
+      }
+      assert(length_info.words.size() <= 3 &&
+             "The size of the array could not fit size_t.");
+      uint64_t length = 0;
+      length |= length_info.words[1];
+      if (length_info.words.size() > 2) {
+        length |= static_cast<uint64_t>(length_info.words[2]) << 32;
+      }
+      return length;
+    }
+    case kRuntimeArray:
+      return UINT64_MAX;
+    case kStruct:
+      return AsStruct()->element_types().size();
+    default:
+      return 0;
+  }
 }
 
 bool Integer::IsSameImpl(const Type* that, IsSameCache*) const {

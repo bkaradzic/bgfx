@@ -407,7 +407,7 @@ function converter.funcs(params)
 		return
 	end
 
-	-- skipp for now, don't know how to handle variadic functions
+	-- skip for now, don't know how to handle variadic functions
 	if func.cname == "dbg_text_printf" or func.cname == "dbg_text_vprintf" then
 		return
 	end

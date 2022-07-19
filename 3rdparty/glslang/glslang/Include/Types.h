@@ -552,6 +552,7 @@ public:
         perViewNV = false;
         perTaskNV = false;
 #endif
+        pervertexEXT = false;
     }
 
     void clearMemory()
@@ -604,7 +605,8 @@ public:
     bool isNoContraction() const { return false; }
     void setNoContraction() { }
     bool isPervertexNV() const { return false; }
-    void setNullInit() { }
+    bool isPervertexEXT() const { return pervertexEXT; }
+    void setNullInit() {}
     bool isNullInit() const { return false; }
     void setSpirvByReference() { }
     bool isSpirvByReference() { return false; }
@@ -615,6 +617,7 @@ public:
     bool nopersp      : 1;
     bool explicitInterp : 1;
     bool pervertexNV  : 1;
+    bool pervertexEXT : 1;
     bool perPrimitiveNV : 1;
     bool perViewNV : 1;
     bool perTaskNV : 1;
@@ -663,12 +666,13 @@ public:
     }
     bool isAuxiliary() const
     {
-        return centroid || patch || sample || pervertexNV;
+        return centroid || patch || sample || pervertexNV || pervertexEXT;
     }
     bool isPatch() const { return patch; }
     bool isNoContraction() const { return noContraction; }
     void setNoContraction() { noContraction = true; }
     bool isPervertexNV() const { return pervertexNV; }
+    bool isPervertexEXT() const { return pervertexEXT; }
     void setNullInit() { nullInit = true; }
     bool isNullInit() const { return nullInit; }
     void setSpirvByReference() { spirvByReference = true; }
@@ -856,7 +860,7 @@ public:
         case EShLangTessEvaluation:
             return ! patch && isPipeInput();
         case EShLangFragment:
-            return pervertexNV && isPipeInput();
+            return (pervertexNV || pervertexEXT) && isPipeInput();
         case EShLangMeshNV:
             return ! perTaskNV && isPipeOutput();
 
@@ -2266,6 +2270,8 @@ public:
             appendStr(" __explicitInterpAMD");
           if (qualifier.pervertexNV)
             appendStr(" pervertexNV");
+          if (qualifier.pervertexEXT)
+              appendStr(" pervertexEXT");
           if (qualifier.perPrimitiveNV)
             appendStr(" perprimitiveNV");
           if (qualifier.perViewNV)

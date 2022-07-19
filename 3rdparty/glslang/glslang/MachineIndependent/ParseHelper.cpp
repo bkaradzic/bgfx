@@ -716,7 +716,7 @@ bool TParseContext::isIoResizeArray(const TType& type) const
             (language == EShLangTessControl && type.getQualifier().storage == EvqVaryingOut &&
                 ! type.getQualifier().patch) ||
             (language == EShLangFragment && type.getQualifier().storage == EvqVaryingIn &&
-                type.getQualifier().pervertexNV) ||
+                (type.getQualifier().pervertexNV || type.getQualifier().pervertexEXT)) ||
             (language == EShLangMeshNV && type.getQualifier().storage == EvqVaryingOut &&
                 !type.getQualifier().perTaskNV));
 }
@@ -856,7 +856,7 @@ void TParseContext::checkIoArrayConsistency(const TSourceLoc& loc, int requiredS
             error(loc, "inconsistent output number of vertices for array size of", feature, name.c_str());
         else if (language == EShLangFragment) {
             if (type.getOuterArraySize() > requiredSize)
-                error(loc, " cannot be greater than 3 for pervertexNV", feature, name.c_str());
+                error(loc, " cannot be greater than 3 for pervertexEXT", feature, name.c_str());
         }
         else if (language == EShLangMeshNV)
             error(loc, "inconsistent output array size of", feature, name.c_str());
@@ -3806,7 +3806,7 @@ void TParseContext::globalQualifierTypeCheck(const TSourceLoc& loc, const TQuali
     if (isTypeInt(publicType.basicType) || publicType.basicType == EbtDouble)
         profileRequires(loc, EEsProfile, 300, nullptr, "shader input/output");
 
-    if (!qualifier.flat && !qualifier.isExplicitInterpolation() && !qualifier.isPervertexNV()) {
+    if (!qualifier.flat && !qualifier.isExplicitInterpolation() && !qualifier.isPervertexNV() && !qualifier.isPervertexEXT()) {
         if (isTypeInt(publicType.basicType) ||
             publicType.basicType == EbtDouble ||
             (publicType.userDef && (   publicType.userDef->containsBasicType(EbtInt)
@@ -6069,6 +6069,8 @@ void TParseContext::mergeObjectLayoutQualifiers(TQualifier& dst, const TQualifie
             dst.layoutShaderRecord = true;
         if (src.pervertexNV)
             dst.pervertexNV = true;
+        if (src.pervertexEXT)
+            dst.pervertexEXT = true;
 #endif
     }
 }

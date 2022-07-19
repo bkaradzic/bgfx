@@ -623,10 +623,16 @@ bool Optimizer::Run(const uint32_t* original_binary,
     assert(optimized_binary_with_nop.size() == original_binary_size &&
            "Binary size unexpectedly changed despite the optimizer saying "
            "there was no change");
-    assert(memcmp(optimized_binary_with_nop.data(), original_binary,
-                  original_binary_size) == 0 &&
-           "Binary content unexpectedly changed despite the optimizer saying "
-           "there was no change");
+
+    // Compare the magic number to make sure the binaries were encoded in the
+    // endianness.  If not, the contents of the binaries will be different, so
+    // do not check the contents.
+    if (optimized_binary_with_nop[0] == original_binary[0]) {
+      assert(memcmp(optimized_binary_with_nop.data(), original_binary,
+                    original_binary_size) == 0 &&
+             "Binary content unexpectedly changed despite the optimizer saying "
+             "there was no change");
+    }
   }
 #endif  // !NDEBUG
 

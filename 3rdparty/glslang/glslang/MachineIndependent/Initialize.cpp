@@ -5571,6 +5571,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "flat in int   gl_InvocationsPerPixelNV;"
                 "in vec3 gl_BaryCoordNV;"                   // GL_NV_fragment_shader_barycentric
                 "in vec3 gl_BaryCoordNoPerspNV;"
+                "in vec3 gl_BaryCoordEXT;"                  // GL_EXT_fragment_shader_barycentric
+                "in vec3 gl_BaryCoordNoPerspEXT;"
                 );
 
         if (version >= 450)
@@ -5635,7 +5637,9 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             stageBuiltins[EShLangFragment].append(
                 "in vec3 gl_BaryCoordNV;"
                 "in vec3 gl_BaryCoordNoPerspNV;"
-                );
+                "in vec3 gl_BaryCoordEXT;"
+                "in vec3 gl_BaryCoordNoPerspEXT;"
+            );
         if (version >= 310)
             stageBuiltins[EShLangFragment].append(
                 "flat in highp int gl_ShadingRateEXT;" // GL_EXT_fragment_shading_rate
@@ -8321,6 +8325,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setVariableExtensions("gl_BaryCoordNoPerspNV", 1, &E_GL_NV_fragment_shader_barycentric);
             BuiltInVariable("gl_BaryCoordNV",        EbvBaryCoordNV,        symbolTable);
             BuiltInVariable("gl_BaryCoordNoPerspNV", EbvBaryCoordNoPerspNV, symbolTable);
+            symbolTable.setVariableExtensions("gl_BaryCoordEXT",        1, &E_GL_EXT_fragment_shader_barycentric);
+            symbolTable.setVariableExtensions("gl_BaryCoordNoPerspEXT", 1, &E_GL_EXT_fragment_shader_barycentric);
+            BuiltInVariable("gl_BaryCoordEXT",        EbvBaryCoordEXT,        symbolTable);
+            BuiltInVariable("gl_BaryCoordNoPerspEXT", EbvBaryCoordNoPerspEXT, symbolTable);
         }
 
         if ((profile != EEsProfile && version >= 450) ||

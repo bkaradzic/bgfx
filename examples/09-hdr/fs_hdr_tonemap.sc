@@ -20,7 +20,7 @@ void main()
 
 	float middleGray = u_tonemap.x;
 	float whiteSqr   = u_tonemap.y;
-	float treshold   = u_tonemap.z;
+	float threshold  = u_tonemap.z;
 	float offset     = u_tonemap.w;
 
 	float lp = Yxy.x * middleGray / (lum + 0.0001);
