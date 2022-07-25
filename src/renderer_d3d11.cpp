@@ -1763,10 +1763,9 @@ namespace bgfx { namespace d3d11
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
+		void createDynamicVertexBuffer(VertexBufferHandle _handle, VertexLayoutHandle _layoutHandle, uint32_t _size, uint16_t _flags) override
 		{
-			VertexLayoutHandle layoutHandle = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(_size, NULL, layoutHandle, _flags);
+			m_vertexBuffers[_handle.idx].create(_size, NULL, _layoutHandle, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -3803,8 +3802,16 @@ namespace bgfx { namespace d3d11
 			{
 				if (_vertex)
 				{
-					format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-					stride = 16;
+					if (_stride == 0)
+					{
+						format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+						stride = 16;
+					}
+					else
+					{
+						format = DXGI_FORMAT_UNKNOWN;
+						stride = _stride;
+					}
 				}
 				else
 				{
@@ -3834,6 +3841,12 @@ namespace bgfx { namespace d3d11
 		srd.pSysMem = _data;
 		srd.SysMemPitch = 0;
 		srd.SysMemSlicePitch = 0;
+
+		if(format==DXGI_FORMAT_UNKNOWN){
+			desc.StructureByteStride = stride;
+			desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+			desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		}
 
 		if (needUav)
 		{

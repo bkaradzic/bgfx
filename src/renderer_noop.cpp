@@ -129,7 +129,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createDynamicVertexBuffer(VertexBufferHandle /*_handle*/, uint32_t /*_size*/, uint16_t /*_flags*/) override
+		void createDynamicVertexBuffer(VertexBufferHandle /*_handle*/, VertexLayoutHandle /*_layoutHandle*/, uint32_t /*_size*/, uint16_t /*_flags*/) override
 		{
 		}
 

@@ -1590,10 +1590,9 @@ namespace bgfx { namespace d3d12
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
-		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
+		void createDynamicVertexBuffer(VertexBufferHandle _handle, VertexLayoutHandle _layoutHandle, uint32_t _size, uint16_t _flags) override
 		{
-			VertexLayoutHandle layoutHandle = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(_size, NULL, layoutHandle, _flags);
+			m_vertexBuffers[_handle.idx].create(_size, NULL, _layoutHandle, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -4367,6 +4366,7 @@ namespace bgfx { namespace d3d12
 
 		DXGI_FORMAT format;
 		uint32_t    stride;
+		uint32_t    structureByteStride=0;
 
 		uint32_t flags = needUav
 			? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
@@ -4388,8 +4388,17 @@ namespace bgfx { namespace d3d12
 			{
 				if (_vertex)
 				{
-					format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-					stride = 16;
+					if (0 == _stride)
+					{
+						format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+						stride = 16;
+					}
+					else
+					{
+						format = DXGI_FORMAT_UNKNOWN;
+						stride = _stride;
+						structureByteStride=_stride;
+					}
 				}
 				else
 				{
@@ -4420,14 +4429,14 @@ namespace bgfx { namespace d3d12
 		m_srvd.Shader4ComponentMapping     = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		m_srvd.Buffer.FirstElement         = 0;
 		m_srvd.Buffer.NumElements          = m_size / stride;
-		m_srvd.Buffer.StructureByteStride  = 0;
+		m_srvd.Buffer.StructureByteStride  = structureByteStride;
 		m_srvd.Buffer.Flags                = D3D12_BUFFER_SRV_FLAG_NONE;
 
 		m_uavd.Format                      = format;
 		m_uavd.ViewDimension               = D3D12_UAV_DIMENSION_BUFFER;
 		m_uavd.Buffer.FirstElement         = 0;
 		m_uavd.Buffer.NumElements          = m_size / stride;
-		m_uavd.Buffer.StructureByteStride  = 0;
+		m_uavd.Buffer.StructureByteStride  = structureByteStride;
 		m_uavd.Buffer.CounterOffsetInBytes = 0;
 		m_uavd.Buffer.Flags                = D3D12_BUFFER_UAV_FLAG_NONE;
 
@@ -4493,7 +4502,8 @@ namespace bgfx { namespace d3d12
 
 	void VertexBufferD3D12::create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags)
 	{
-		BufferD3D12::create(_size, _data, _flags, true);
+		VertexLayout& layout = s_renderD3D12->m_vertexLayouts[_layoutHandle.idx];
+		BufferD3D12::create(_size, _data, _flags, true, layout.m_stride);
 		m_layoutHandle = _layoutHandle;
 	}
 

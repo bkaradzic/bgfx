@@ -2952,7 +2952,7 @@ namespace bgfx
 		virtual void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint16_t _flags) = 0;
 		virtual void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) = 0;
 		virtual void destroyDynamicIndexBuffer(IndexBufferHandle _handle) = 0;
-		virtual void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) = 0;
+		virtual void createDynamicVertexBuffer(VertexBufferHandle _handle, VertexLayoutHandle _layoutHandle, uint32_t _size, uint16_t _flags) = 0;
 		virtual void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) = 0;
 		virtual void destroyDynamicVertexBuffer(VertexBufferHandle _handle) = 0;
 		virtual void createShader(ShaderHandle _handle, const Memory* _mem) = 0;
@@ -3546,7 +3546,7 @@ namespace bgfx
 			m_dynamicIndexBufferHandle.free(_handle.idx);
 		}
 
-		uint64_t allocDynamicVertexBuffer(uint32_t _size, uint16_t _flags)
+		uint64_t allocDynamicVertexBuffer(uint32_t _size, uint16_t _flags, VertexLayoutHandle layoutHandle)
 		{
 			uint64_t ptr = m_dynVertexBufferAllocator.alloc(_size);
 			if (ptr == NonLocalAllocator::kInvalidBlock)
@@ -3566,6 +3566,7 @@ namespace bgfx
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
 				cmdbuf.write(vertexBufferHandle);
+				cmdbuf.write(layoutHandle);
 				cmdbuf.write(allocSize);
 				cmdbuf.write(_flags);
 
@@ -3576,7 +3577,7 @@ namespace bgfx
 			return ptr;
 		}
 
-		uint64_t allocVertexBuffer(uint32_t _size, uint16_t _flags)
+		uint64_t allocVertexBuffer(uint32_t _size, uint16_t _flags, VertexLayoutHandle layoutHandle)
 		{
 			VertexBufferHandle vertexBufferHandle = { m_vertexBufferHandle.alloc() };
 
@@ -3592,6 +3593,7 @@ namespace bgfx
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
 			cmdbuf.write(vertexBufferHandle);
+			cmdbuf.write(layoutHandle);
 			cmdbuf.write(_size);
 			cmdbuf.write(_flags);
 
@@ -3621,8 +3623,8 @@ namespace bgfx
 			const uint32_t size = bx::strideAlign<16>(_num*_layout.m_stride, _layout.m_stride)+_layout.m_stride;
 
 			const uint64_t ptr = (0 != (_flags & BGFX_BUFFER_COMPUTE_READ_WRITE) )
-				? allocVertexBuffer(size, _flags)
-				: allocDynamicVertexBuffer(size, _flags)
+				? allocVertexBuffer(size, _flags, layoutHandle)
+				: allocDynamicVertexBuffer(size, _flags, layoutHandle)
 				;
 
 			if (ptr == NonLocalAllocator::kInvalidBlock)
@@ -3681,8 +3683,8 @@ namespace bgfx
 				const uint32_t size = bx::strideAlign<16>(_mem->size, dvb.m_stride)+dvb.m_stride;
 
 				const uint64_t ptr = (0 != (dvb.m_flags & BGFX_BUFFER_COMPUTE_READ) )
-					? allocVertexBuffer(size, dvb.m_flags)
-					: allocDynamicVertexBuffer(size, dvb.m_flags)
+					? allocVertexBuffer(size, dvb.m_flags, dvb.m_layoutHandle)
+					: allocDynamicVertexBuffer(size, dvb.m_flags, dvb.m_layoutHandle)
 					;
 
 				dvb.m_handle.idx  = uint16_t(ptr>>32);
@@ -3845,6 +3847,7 @@ namespace bgfx
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
 				cmdbuf.write(handle);
+				cmdbuf.write(layoutHandle);
 				cmdbuf.write(_size);
 				uint16_t flags = BGFX_BUFFER_NONE;
 				cmdbuf.write(flags);
@@ -3917,9 +3920,11 @@ namespace bgfx
 			{
 				uint32_t size  = _num * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 				uint16_t flags = BGFX_BUFFER_DRAW_INDIRECT;
+				VertexLayoutHandle layoutHandle = BGFX_INVALID_HANDLE;
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
 				cmdbuf.write(handle);
+				cmdbuf.write(layoutHandle);
 				cmdbuf.write(size);
 				cmdbuf.write(flags);
 			}
