@@ -384,7 +384,9 @@ namespace bgfx
 
 		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-		bx::write(&writer, magic);
+        
+        bx::Error err;
+		bx::write(&writer, magic, &err);
 
 		TextureCreate tc;
 		tc.m_width     = _width;
@@ -395,7 +397,7 @@ namespace bgfx
 		tc.m_format    = _format;
 		tc.m_cubeMap   = false;
 		tc.m_mem       = NULL;
-		bx::write(&writer, tc);
+		bx::write(&writer, tc, &err);
 
 		rci->destroyTexture(_handle);
 		rci->createTexture(_handle, mem, _flags, 0);
@@ -3016,12 +3018,13 @@ namespace bgfx
 					bx::MemoryReader reader(mem->data, mem->size);
 
 					uint32_t magic;
-					bx::read(&reader, magic);
+                    bx::Error err;
+					bx::read(&reader, magic, &err);
 
 					if (BGFX_CHUNK_MAGIC_TEX == magic)
 					{
 						TextureCreate tc;
-						bx::read(&reader, tc);
+						bx::read(&reader, tc, &err);
 
 						if (NULL != tc.m_mem)
 						{
@@ -4423,7 +4426,7 @@ namespace bgfx
 
 		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-		bx::write(&writer, magic);
+		bx::write(&writer, magic, &err);
 
 		TextureCreate tc;
 		tc.m_width     = _width;
@@ -4434,7 +4437,7 @@ namespace bgfx
 		tc.m_format    = _format;
 		tc.m_cubeMap   = false;
 		tc.m_mem       = _mem;
-		bx::write(&writer, tc);
+		bx::write(&writer, tc, &err);
 
 		return s_ctx->createTexture(mem, _flags, 0, NULL, _ratio, NULL != _mem);
 	}
@@ -4476,7 +4479,7 @@ namespace bgfx
 
 		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-		bx::write(&writer, magic);
+		bx::write(&writer, magic, &err);
 
 		TextureCreate tc;
 		tc.m_width     = _width;
@@ -4487,7 +4490,7 @@ namespace bgfx
 		tc.m_format    = _format;
 		tc.m_cubeMap   = false;
 		tc.m_mem       = _mem;
-		bx::write(&writer, tc);
+		bx::write(&writer, tc, &err);
 
 		return s_ctx->createTexture(mem, _flags, 0, NULL, BackbufferRatio::Count, NULL != _mem);
 	}
@@ -4518,7 +4521,7 @@ namespace bgfx
 
 		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 		uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-		bx::write(&writer, magic);
+		bx::write(&writer, magic, &err);
 
 		TextureCreate tc;
 		tc.m_width     = _size;
@@ -4529,7 +4532,7 @@ namespace bgfx
 		tc.m_format    = _format;
 		tc.m_cubeMap   = true;
 		tc.m_mem       = _mem;
-		bx::write(&writer, tc);
+		bx::write(&writer, tc, &err);
 
 		return s_ctx->createTexture(mem, _flags, 0, NULL, BackbufferRatio::Count, NULL != _mem);
 	}

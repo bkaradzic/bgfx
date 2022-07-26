@@ -16,8 +16,10 @@ namespace bgfx
 		bx::WriterI* writer = reinterpret_cast<bx::WriterI*>(_userData);
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
-		bx::write(writer, temp, (int32_t)bx::strLen(temp) );
-		bx::write(writer, '\n');
+        
+        bx::Error err;
+		bx::write(writer, temp, (int32_t)bx::strLen(temp), &err);
+		bx::write(writer, '\n', &err);
 		return true;
 	}
 
@@ -27,8 +29,10 @@ namespace bgfx
 		bx::WriterI* writer = reinterpret_cast<bx::WriterI*>(_userData);
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
-		bx::write(writer, temp, (int32_t)bx::strLen(temp) );
-		bx::write(writer, '\n');
+        
+        bx::Error err;
+		bx::write(writer, temp, (int32_t)bx::strLen(temp), &err);
+		bx::write(writer, '\n', &err);
 		return true;
 	}
 
@@ -38,15 +42,17 @@ namespace bgfx
 		bx::WriterI* writer = reinterpret_cast<bx::WriterI*>(_userData);
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
-		bx::write(writer, temp, (int32_t)bx::strLen(temp) );
-		bx::write(writer, '\n');
+        
+        bx::Error err;
+		bx::write(writer, temp, (int32_t)bx::strLen(temp), &err);
+		bx::write(writer, '\n', &err);
 		return true;
 	}
 
 	void disassembleByteCode(bx::WriterI* _writer, bx::ReaderSeekerI* _reader, bx::Error* _err)
 	{
 		uint32_t magic;
-		bx::peek(_reader, magic);
+		bx::peek(_reader, magic, _err);
 
 		if (magic == SPV_CHUNK_HEADER)
 		{
@@ -73,14 +79,14 @@ namespace bgfx
 		BX_ERROR_SCOPE(_err);
 
 		uint32_t magic;
-		bx::peek(_reader, magic);
+		bx::peek(_reader, magic, _err);
 
 		if (isShaderBin(magic) )
 		{
-			bx::read(_reader, magic);
+			bx::read(_reader, magic, _err);
 
 			uint32_t hashIn;
-			bx::read(_reader, hashIn);
+			bx::read(_reader, hashIn, _err);
 
 			uint32_t hashOut;
 
@@ -90,7 +96,7 @@ namespace bgfx
 			}
 			else
 			{
-				bx::read(_reader, hashOut);
+				bx::read(_reader, hashOut, _err);
 			}
 
 			uint16_t count;

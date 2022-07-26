@@ -3918,7 +3918,7 @@ namespace bgfx
 				if (!isShaderVerLess(magic, 8))
 				{
 					uint16_t texInfo;
-					bx::read(&reader, texInfo);
+					bx::read(&reader, texInfo, &err);
 				}
 
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);

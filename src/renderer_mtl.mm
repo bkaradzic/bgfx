@@ -916,7 +916,9 @@ namespace bgfx { namespace mtl
 
 			bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 			uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-			bx::write(&writer, magic);
+            
+            bx::Error err;
+			bx::write(&writer, magic, &err);
 
 			TextureCreate tc;
 			tc.m_width     = _width;
@@ -927,7 +929,7 @@ namespace bgfx { namespace mtl
 			tc.m_format    = TextureFormat::Enum(texture.m_requestedFormat);
 			tc.m_cubeMap   = false;
 			tc.m_mem       = NULL;
-			bx::write(&writer, tc);
+			bx::write(&writer, tc, &err);
 
 			texture.destroy();
 			texture.create(mem, texture.m_flags, 0);
@@ -2487,18 +2489,21 @@ namespace bgfx { namespace mtl
 
 	void writeString(bx::WriterI* _writer, const char* _str)
 	{
-		bx::write(_writer, _str, (int32_t)bx::strLen(_str) );
+        bx::Error err;
+		bx::write(_writer, _str, (int32_t)bx::strLen(_str), &err );
 	}
 
 	void ShaderMtl::create(const Memory* _mem)
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
 
+        bx::Error err;
+        
 		uint32_t magic;
-		bx::read(&reader, magic);
+		bx::read(&reader, magic, &err);
 
 		uint32_t hashIn;
-		bx::read(&reader, hashIn);
+		bx::read(&reader, hashIn, &err);
 
 		uint32_t hashOut;
 
@@ -2508,11 +2513,11 @@ namespace bgfx { namespace mtl
 		}
 		else
 		{
-			bx::read(&reader, hashOut);
+			bx::read(&reader, hashOut, &err);
 		}
 
 		uint16_t count;
-		bx::read(&reader, count);
+		bx::read(&reader, count, &err);
 
 		BX_TRACE("%s Shader consts %d"
 			, getShaderTypeName(magic)
@@ -2522,28 +2527,28 @@ namespace bgfx { namespace mtl
 		for (uint32_t ii = 0; ii < count; ++ii)
 		{
 			uint8_t nameSize;
-			bx::read(&reader, nameSize);
+			bx::read(&reader, nameSize, &err);
 
 			char name[256];
-			bx::read(&reader, &name, nameSize);
+			bx::read(&reader, &name, nameSize, &err);
 			name[nameSize] = '\0';
 
 			uint8_t type;
-			bx::read(&reader, type);
+			bx::read(&reader, type, &err);
 
 			uint8_t num;
-			bx::read(&reader, num);
+			bx::read(&reader, num, &err);
 
 			uint16_t regIndex;
-			bx::read(&reader, regIndex);
+			bx::read(&reader, regIndex, &err);
 
 			uint16_t regCount;
-			bx::read(&reader, regCount);
+			bx::read(&reader, regCount, &err);
 			
 			if (!isShaderVerLess(magic, 8) )
 			{
 				uint16_t texInfo = 0;
-				bx::read(&reader, texInfo);
+				bx::read(&reader, texInfo, &err);
 			}
 		}
 
@@ -2551,12 +2556,12 @@ namespace bgfx { namespace mtl
 		{
 			for (uint32_t ii = 0; ii < 3; ++ii)
 			{
-				bx::read(&reader, m_numThreads[ii]);
+				bx::read(&reader, m_numThreads[ii], &err);
 			}
 		}
 
 		uint32_t shaderSize;
-		bx::read(&reader, shaderSize);
+		bx::read(&reader, shaderSize, &err);
 
 		const char* code = (const char*)reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
