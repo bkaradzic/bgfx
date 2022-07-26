@@ -3,6 +3,11 @@
 -- License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 --
 
+premake.xcode.parameters = {
+	'IPHONEOS_DEPLOYMENT_TARGET = 13.6',
+	'ONLY_ACTIVE_ARCH = NO'
+}
+
 newoption {
 	trigger = "with-amalgamated",
 	description = "Enable amalgamated build.",
@@ -414,7 +419,7 @@ function exampleProjectDefaults()
 			"-framework UIKit",
 			"-framework QuartzCore",
 			"-weak_framework Metal",
-		}
+		}		
 
 	configuration { "xcode*", "ios" }
 		kind "WindowedApp"
