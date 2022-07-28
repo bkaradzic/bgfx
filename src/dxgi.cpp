@@ -10,6 +10,62 @@
 #include "dxgi.h"
 #include "renderer_d3d.h"
 
+#if (BX_PLATFORM_XBOXONE)
+/* 
+ * Xbox has no DXGI. This wrapper hides the fact.
+ */
+
+namespace bgfx
+{
+	Dxgi::Dxgi()
+		: m_dxgiDll(NULL)
+		, m_dxgiDebugDll(NULL)
+		, m_driverType(D3D_DRIVER_TYPE_NULL)
+		, m_factory(NULL)
+		, m_adapter(NULL)
+		, m_output(NULL)
+		, m_tearingSupported(false)
+	{
+	}
+	
+	bool Dxgi::init(Caps& _caps)
+	{
+		bx::memSet(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
+		return true;
+	}
+
+	void Dxgi::shutdown() {}
+
+	void Dxgi::update(IUnknown* _device) {}
+
+	HRESULT Dxgi::createSwapChain(IUnknown* _device, const SwapChainDesc& _scd, SwapChainI** _swapChain)
+	{
+		return S_OK;
+	}
+
+	void Dxgi::updateHdr10(SwapChainI* _swapChain, const SwapChainDesc& _scd) {}
+
+	HRESULT Dxgi::resizeBuffers(SwapChainI* _swapChain, const SwapChainDesc& _scd, const uint32_t* _nodeMask, IUnknown* const* _presentQueue)
+	{
+		return S_OK;
+	}
+
+	void Dxgi::trim() {}
+
+	bool Dxgi::Dxgi::tearingSupported() const
+	{
+		return false;
+	}
+
+	uint32_t Dxgi::getTearingFlag()
+	{
+		return 0;
+	}
+	
+}
+
+#else
+
 #if !BX_PLATFORM_WINDOWS && !BX_PLATFORM_LINUX
 #	include <inspectable.h>
 #	if BX_PLATFORM_WINRT
@@ -819,6 +875,13 @@ namespace bgfx
 		return m_tearingSupported;
 	}
 
+	uint32_t Dxgi::getTearingFlag()
+	{
+		return DXGI_PRESENT_ALLOW_TEARING;
+	}
+
+
 } // namespace bgfx
 
+#endif // !BX_PLATFORM_XBOXONE
 #endif // BGFX_CONFIG_RENDERER_DIRECT3D11 || BGFX_CONFIG_RENDERER_DIRECT3D12

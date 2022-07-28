@@ -13,6 +13,25 @@
 
 #if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 #   include <d3d12.h>
+#elif defined(BX_PLATFORM_XBOXONE)
+#   if defined(_GAMING_XBOX_SCARLETT)
+#      include <d3d12_xs.h>
+#   elif defined(_GAMING_XBOX_XBOXONE)
+#      include <d3d12_x.h>
+#   endif
+#   include <algorithm>
+#   include <assert.h>
+#   include <atomic>
+#   include <cmath>
+#   include <cstdint>
+#   include <exception>
+#   include <gxdk.h>
+#   include <memory>
+#   include <stdexcept>
+#   include <stdio.h>
+#   include <wrl/client.h>
+#   include <wrl/event.h>
+    using Microsoft::WRL::ComPtr;
 #else
 #   if !BGFX_CONFIG_DEBUG
 #      define D3DCOMPILE_NO_DEBUG 1
@@ -39,6 +58,23 @@ extern "C++" {
 	}
 }
 #endif // defined(__MINGW32__)
+
+BX_PRAGMA_DIAGNOSTIC_PUSH();
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wmissing-field-initializers");
+#if BX_PLATFORM_XBOXONE
+#	if defined(_GAMING_XBOX_SCARLETT)
+#		include <d3dx12_xs.h>
+#	elif defined(_GAMING_XBOX_XBOXONE)
+#		include <d3dx12_x.h>
+#	endif
+#else
+#	include <d3dx12.h>
+#endif // BX_PLATFORM_XBOXONE
+BX_PRAGMA_DIAGNOSTIC_POP();
+
+#ifndef D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
+#	define D3D12_TEXTURE_DATA_PITCH_ALIGNMENT 1024
+#endif // D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
 
 #include "renderer.h"
 #include "renderer_d3d.h"
@@ -378,7 +414,11 @@ namespace bgfx { namespace d3d12
 
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		TextureHandle m_depth;
+#ifdef _GAMING_XBOX
+		uint32_t m_swapChain;
+#else
 		Dxgi::SwapChainI* m_swapChain;
+#endif
 		void* m_nwh;
 		uint32_t m_width;
 		uint32_t m_height;

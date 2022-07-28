@@ -12,6 +12,12 @@
 #if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 #	include <d3dcommon.h>
 #	include <dxgi1_6.h>
+#elif defined(BX_PLATFORM_XBOXONE)
+#	if defined(_GAMING_XBOX_SCARLETT)
+#		include <d3d12_xs.h>
+#	elif defined(_GAMING_XBOX_XBOXONE)
+#		include <d3d12_x.h>
+#	endif
 #else
 #	include <d3d11_x.h>
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
@@ -104,6 +110,9 @@ namespace bgfx
 
 		///
 		bool tearingSupported() const;
+
+		///
+		uint32_t getTearingFlag();
 
 		///
 		void* m_dxgiDll;
