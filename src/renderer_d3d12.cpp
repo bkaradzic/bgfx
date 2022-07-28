@@ -20,7 +20,9 @@ PFN_PIX_GET_THREAD_INFO      bgfx_PIXGetThreadInfo;
 PFN_PIX_EVENTS_REPLACE_BLOCK bgfx_PIXEventsReplaceBlock;
 #endif // BGFX_CONFIG_DEBUG_ANNOTATION && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
 
-namespace bgfx { namespace d3d12
+namespace bgfx
+{
+namespace d3d12
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
 
@@ -681,6 +683,9 @@ namespace bgfx { namespace d3d12
 			, m_backBufferColorIdx(0)
 			, m_rtMsaa(false)
 			, m_directAccessSupport(false)
+#if BX_PLATFORM_XBOXONE
+			,m_framePipelineToken(D3D12XBOX_FRAME_PIPELINE_TOKEN_NULL)
+#endif
 		{
 		}
 
@@ -891,7 +896,7 @@ namespace bgfx { namespace d3d12
 				params.DisableTessellationShaderAllocations = true;
 
 				hr = D3D12XboxCreateDevice(
-						  m_dxgi.m_adapter
+						m_dxgi.m_adapter
 						, &params
 						, IID_ID3D12Device
 						, (void**)&m_device
@@ -975,7 +980,11 @@ namespace bgfx { namespace d3d12
 			initHeapProperties(m_device);
 
 			m_cmd.init(m_device);
+#ifdef BX_PLATFORM_XBOXONE
+			m_device->SetPrivateDataInterface(IID_ID3D12CommandQueue, reinterpret_cast<const ::IUnknown*>(m_cmd.m_commandQueue));
+#else
 			m_device->SetPrivateDataInterface(IID_ID3D12CommandQueue, m_cmd.m_commandQueue);
+#endif
 			errorState = ErrorState::CreatedCommandQueue;
 
 			if (NULL == g_platformData.backBuffer)
@@ -1012,6 +1021,38 @@ namespace bgfx { namespace d3d12
 				{
 #if BX_PLATFORM_LINUX
 					hr = E_FAIL;
+#elif BX_PLATFORM_XBOXONE
+					// First, retrieve the underlying DXGI device from the D3D device.
+					ComPtr<ID3D12Device> device = m_device;
+					ComPtr<IDXGIDevice1> dxgiDevice;
+
+					DX_CHECK(device.As(&dxgiDevice));
+
+					// Identify the physical adapter (GPU or card) that this device is running on.
+					ComPtr<IDXGIAdapter> dxgiAdapter;
+
+					DX_CHECK(dxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf()));
+
+					// Retrieve the outputs for the adapter.
+					ComPtr<IDXGIOutput> dxgiOutput;
+
+					DX_CHECK(dxgiAdapter->EnumOutputs(0, dxgiOutput.GetAddressOf()));
+
+					// Set the frame interval, and register for frame events.
+					DX_CHECK(device->SetFrameIntervalX(
+						dxgiOutput.Get(),
+						D3D12XBOX_FRAME_INTERVAL_60_HZ,
+						2 /* Allow 2 frames of latency */,
+						D3D12XBOX_FRAME_INTERVAL_FLAG_NONE));
+
+					DX_CHECK(device->ScheduleFrameEventX(
+						D3D12XBOX_FRAME_EVENT_ORIGIN,
+						0U,
+						nullptr,
+						D3D12XBOX_SCHEDULE_FRAME_EVENT_FLAG_NONE));
+
+					m_swapChain = 1;
+
 #else
 					hr = m_dxgi.createSwapChain(
 						  getDeviceForSwapChain()
@@ -1480,6 +1521,7 @@ namespace bgfx { namespace d3d12
 			}
 
 			m_pipelineStateCache.invalidate();
+			m_pipelineStateCacheBasic.invalidate();
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_indexBuffers); ++ii)
 			{
@@ -1515,7 +1557,10 @@ namespace bgfx { namespace d3d12
 
 			DX_RELEASE(m_rootSignature, 0);
 			DX_RELEASE(m_msaaRt, 0);
+#if !BX_PLATFORM_XBOXONE
 			DX_RELEASE(m_swapChain, 0);
+#endif
+			m_swapChain = NULL;
 
 			m_device->SetPrivateDataInterface(IID_ID3D12CommandQueue, NULL);
 			m_cmd.shutdown();
@@ -1553,13 +1598,15 @@ namespace bgfx { namespace d3d12
 			return m_lost;
 		}
 
+		bool prevHackFlip = false;
+		bool prevSuspend = false;
 		void flip() override
 		{
 			if (!m_lost)
 			{
 				int64_t start = bx::getHPCounter();
 
-				m_cmd.finish(m_backBufferColorFence[(m_backBufferColorIdx-1) % m_scd.bufferCount]);
+				m_cmd.finish(m_backBufferColorFence[(m_backBufferColorIdx-1) % m_scd.bufferCount], true);
 
 				HRESULT hr = S_OK;
 				uint32_t syncInterval = !!(m_resolution.reset & BGFX_RESET_VSYNC);
@@ -1571,7 +1618,7 @@ namespace bgfx { namespace d3d12
 #if !BX_PLATFORM_LINUX
 				else if (m_dxgi.tearingSupported() )
 				{
-					presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
+					presentFlags |= m_dxgi.getTearingFlag();
 				}
 #endif // !BX_PLATFORM_LINUX
 
@@ -1581,11 +1628,19 @@ namespace bgfx { namespace d3d12
 					hr = frameBuffer.present(syncInterval, presentFlags);
 				}
 
+#if BX_PLATFORM_XBOXONE
+				D3D12XBOX_PRESENT_PLANE_PARAMETERS planeParameters = {};
+				planeParameters.Token = m_framePipelineToken;
+				planeParameters.ResourceCount = 1;
+				planeParameters.ppResources = &m_backBufferColor[m_backBufferColorIdx];
+				DX_CHECK(m_cmd.m_commandQueue->PresentX(1, &planeParameters, 0));
+#else
 				if (SUCCEEDED(hr)
 				&&  NULL != m_swapChain)
 				{
 					hr = m_swapChain->Present(syncInterval, presentFlags);
 				}
+#endif
 
 				int64_t now = bx::getHPCounter();
 				m_presentElapsed = now - start;
@@ -1841,7 +1896,9 @@ namespace bgfx { namespace d3d12
 		{
 			FrameBufferD3D12& frameBuffer = m_frameBuffers[_handle.idx];
 
+#if !BX_PLATFORM_XBOXONE
 			if (NULL != frameBuffer.m_swapChain)
+#endif
 			{
 				finishAll(true);
 			}
@@ -2145,17 +2202,42 @@ namespace bgfx { namespace d3d12
 			bx::memSet(m_backBufferColorFence, 0, sizeof(m_backBufferColorFence) );
 
 			uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+#if BX_PLATFORM_XBOXONE
+			CD3DX12_HEAP_PROPERTIES swapChainHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 
+			D3D12_RESOURCE_DESC swapChainBufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+				m_scd.format,
+				m_scd.width,
+				m_scd.height,
+				1, // This resource has only one texture.
+				1  // Use a single mipmap level.
+			);
+			swapChainBufferDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+			D3D12_CLEAR_VALUE swapChainOptimizedClearValue = {};
+			swapChainOptimizedClearValue.Format = m_scd.format;
+#endif
 			if (NULL != m_swapChain)
 			{
 				for (uint32_t ii = 0, num = m_scd.bufferCount; ii < num; ++ii)
 				{
 					D3D12_CPU_DESCRIPTOR_HANDLE handle = getCPUHandleHeapStart(m_rtvDescriptorHeap);
 					handle.ptr += ii * rtvDescriptorSize;
+
+#if BX_PLATFORM_XBOXONE
+					DX_CHECK(m_device->CreateCommittedResource(
+						&swapChainHeapProperties,
+						D3D12_HEAP_FLAG_ALLOW_DISPLAY,
+						&swapChainBufferDesc,
+						D3D12_RESOURCE_STATE_PRESENT,
+						&swapChainOptimizedClearValue,
+						IID_GRAPHICS_PPV_ARGS(&m_backBufferColor[ii])));
+#else
 					DX_CHECK(m_swapChain->GetBuffer(ii
 						, IID_ID3D12Resource
 						, (void**)&m_backBufferColor[ii]
 						) );
+#endif
 
 					D3D12_RENDER_TARGET_VIEW_DESC rtvDesc;
 					rtvDesc.Format = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
@@ -2250,7 +2332,7 @@ namespace bgfx { namespace d3d12
 		void invalidateCache()
 		{
 			m_pipelineStateCache.invalidate();
-
+			m_pipelineStateCacheBasic.invalidate();
 			m_samplerStateCache.invalidate();
 			m_samplerAllocator.reset();
 		}
@@ -2308,6 +2390,7 @@ namespace bgfx { namespace d3d12
 			{
 				m_depthClamp = depthClamp;
 				m_pipelineStateCache.invalidate();
+				m_pipelineStateCacheBasic.invalidate();
 			}
 
 			const uint32_t maskFlags = ~(0
@@ -2342,10 +2425,12 @@ namespace bgfx { namespace d3d12
 
 				DX_RELEASE(m_msaaRt, 0);
 
+#if !BX_PLATFORM_XBOXONE
 				if (NULL == m_swapChain)
 				{
 				}
 				else
+#endif
 				{
 					if (resize)
 					{
@@ -2365,8 +2450,41 @@ namespace bgfx { namespace d3d12
 						updateMsaa(m_scd.format);
 						m_scd.sampleDesc = s_msaa[(m_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
-						DX_RELEASE(m_swapChain, 0);
+#if BX_PLATFORM_XBOXONE
+						m_swapChain = NULL;
 
+						// First, retrieve the underlying DXGI device from the D3D device.
+						ComPtr<ID3D12Device> device = m_device;
+						ComPtr<IDXGIDevice1> dxgiDevice;
+
+						DX_CHECK(device.As(&dxgiDevice));
+
+						// Identify the physical adapter (GPU or card) that this device is running on.
+						ComPtr<IDXGIAdapter> dxgiAdapter;
+
+						DX_CHECK(dxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf()));
+
+						// Retrieve the outputs for the adapter.
+						ComPtr<IDXGIOutput> dxgiOutput;
+
+						DX_CHECK(dxgiAdapter->EnumOutputs(0, dxgiOutput.GetAddressOf()));
+
+						// Set the frame interval, and register for frame events.
+						DX_CHECK(device->SetFrameIntervalX(
+							dxgiOutput.Get(),
+							D3D12XBOX_FRAME_INTERVAL_60_HZ,
+							2 /* Allow 2 frames of latency */,
+							D3D12XBOX_FRAME_INTERVAL_FLAG_NONE));
+
+						DX_CHECK(device->ScheduleFrameEventX(
+							D3D12XBOX_FRAME_EVENT_ORIGIN,
+							0U,
+							nullptr,
+							D3D12XBOX_SCHEDULE_FRAME_EVENT_FLAG_NONE));
+
+						m_swapChain = 1;
+#else
+						DX_RELEASE(m_swapChain, 0);
 						HRESULT hr;
 #if BX_PLATFORM_LINUX
 						hr = E_FAIL;
@@ -2378,6 +2496,7 @@ namespace bgfx { namespace d3d12
 							);
 #endif // BX_PLATFORM_LINUX
 						BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
+#endif
 					}
 
 					if (1 < m_scd.sampleDesc.Count)
@@ -3153,13 +3272,72 @@ namespace bgfx { namespace d3d12
 				}
 			}
 
+#if BX_PLATFORM_XBOXONE
+			if (NULL == pso)
+			{
+				bx::HashMurmur2A murmurBasic;
+				murmurBasic.begin();
+				murmurBasic.add(program.m_vsh->m_hash);
+				murmurBasic.add(program.m_vsh->m_attrMask, sizeof(program.m_vsh->m_attrMask));
+
+				if (NULL != program.m_fsh)
+				{
+					murmurBasic.add(program.m_fsh->m_hash);
+				}
+
+				for (uint32_t ii = 0; ii < _numStreams; ++ii)
+				{
+					murmurBasic.add(_layouts[ii]->m_hash);
+				}
+
+				murmurBasic.add(layout.m_attributes, sizeof(layout.m_attributes));
+				murmurBasic.add(desc.RTVFormats[0]);
+				murmurBasic.add(desc.DSVFormat);
+				murmurBasic.add(_numInstanceData);
+				const uint32_t hashBasic = murmurBasic.end();
+
+				ID3D12PipelineState* psoBasic = m_pipelineStateCacheBasic.find(hashBasic);
+
+				if (NULL != psoBasic)
+				{
+					D3D12XBOX_DERIVED_GRAPHICS_STATE_DESC derivedDescs[3] {};
+
+					derivedDescs[0].Type = D3D12XBOX_DERIVED_GRAPHICS_STATE_TYPE_DEPTH_STENCIL;
+					derivedDescs[0].DepthStencilDesc = desc.DepthStencilState;
+
+					derivedDescs[1].Type = D3D12XBOX_DERIVED_GRAPHICS_STATE_TYPE_RASTERIZER;
+					derivedDescs[1].RasterizerDesc = desc.RasterizerState;
+
+					derivedDescs[2].Type = D3D12XBOX_DERIVED_GRAPHICS_STATE_TYPE_BLEND;
+					derivedDescs[2].BlendDesc = desc.BlendState;
+
+					DX_CHECK(m_device->CreateDerivedGraphicsPipelineStateX(psoBasic
+						, 3
+						, derivedDescs
+						, IID_GRAPHICS_PPV_ARGS(&pso)
+					));
+				}
+				else
+				{
+					DX_CHECK(m_device->CreateGraphicsPipelineState(&desc
+						, IID_ID3D12PipelineState
+						, (void**)&pso
+					));
+
+					m_pipelineStateCacheBasic.add(hashBasic, pso);
+				}
+
+			}
+#else
+
 			if (NULL == pso)
 			{
 				DX_CHECK(m_device->CreateGraphicsPipelineState(&desc
 					, IID_ID3D12PipelineState
 					, (void**)&pso
-					) );
+				));
 			}
+#endif
 
 			BGFX_FATAL(NULL != pso, Fatal::InvalidShader, "Failed to create PSO!");
 
@@ -3422,7 +3600,11 @@ namespace bgfx { namespace d3d12
 		D3D12_FEATURE_DATA_ARCHITECTURE m_architecture;
 		D3D12_FEATURE_DATA_D3D12_OPTIONS m_options;
 
+#if BX_PLATFORM_XBOXONE
+		int32_t m_swapChain;
+#else
 		Dxgi::SwapChainI* m_swapChain;
+#endif
 		ID3D12Resource*   m_msaaRt;
 
 #if BX_PLATFORM_WINDOWS
@@ -3433,6 +3615,9 @@ namespace bgfx { namespace d3d12
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
+#if BX_PLATFORM_XBOXONE
+		D3D12XBOX_FRAME_PIPELINE_TOKEN m_framePipelineToken;
+#endif
 		ID3D12Device*       m_device;
 		TimerQueryD3D12     m_gpuTimer;
 		OcclusionQueryD3D12 m_occlusionQuery;
@@ -3479,6 +3664,7 @@ namespace bgfx { namespace d3d12
 		UniformRegistry m_uniformReg;
 
 		StateCacheT<ID3D12PipelineState> m_pipelineStateCache;
+		StateCacheT<ID3D12PipelineState> m_pipelineStateCacheBasic;
 		StateCache m_samplerStateCache;
 
 		TextVideoMem m_textVideoMem;
@@ -5357,6 +5543,7 @@ namespace bgfx { namespace d3d12
 
 		desc.Width  = _rect.m_width;
 		desc.Height = _rect.m_height;
+      desc.MipLevels = desc.MipLevels - _mip;
 
 		uint32_t numRows;
 		uint64_t totalBytes;
@@ -5517,7 +5704,9 @@ namespace bgfx { namespace d3d12
 
 	uint16_t FrameBufferD3D12::destroy()
 	{
+#if !BX_PLATFORM_XBOXONE
 		DX_RELEASE(m_swapChain, 0);
+#endif
 
 		m_nwh   = NULL;
 		m_numTh = 0;
@@ -5535,8 +5724,11 @@ namespace bgfx { namespace d3d12
 	{
 		if (m_needPresent)
 		{
-			HRESULT hr = m_swapChain->Present(_syncInterval, _flags);
+			HRESULT hr = S_OK;
+#if !BX_PLATFORM_XBOXONE
+			hr = m_swapChain->Present(_syncInterval, _flags);
 			hr = !isLost(hr) ? S_OK : hr;
+#endif
 			m_needPresent = false;
 			return hr;
 		}
@@ -5830,6 +6022,7 @@ namespace bgfx { namespace d3d12
 	{
 		if (m_state != _state)
 		{
+#if !BX_PLATFORM_XBOXONE
 			ID3D12Resource* colorBuffer;
 			DX_CHECK(m_swapChain->GetBuffer(_idx
 				, IID_ID3D12Resource
@@ -5843,6 +6036,7 @@ namespace bgfx { namespace d3d12
 				);
 
 			DX_RELEASE(colorBuffer, 0);
+#endif
 
 			bx::swap(m_state, _state);
 		}
@@ -6187,7 +6381,10 @@ namespace bgfx { namespace d3d12
 	void RendererContextD3D12::submit(Frame* _render, ClearQuad& /*_clearQuad*/, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		if (m_lost
-		||  updateResolution(_render->m_resolution) )
+#if !BX_PLATFORM_XBOXONE
+			|| updateResolution(_render->m_resolution)
+#endif
+         )
 		{
 			return;
 		}
@@ -6196,6 +6393,13 @@ namespace bgfx { namespace d3d12
 		{
 			renderDocTriggerCapture();
 		}
+
+#if BX_PLATFORM_XBOXONE
+		m_framePipelineToken = D3D12XBOX_FRAME_PIPELINE_TOKEN_NULL;
+		DX_CHECK(m_device->WaitFrameEventX(D3D12XBOX_FRAME_EVENT_ORIGIN, INFINITE, nullptr,
+			D3D12XBOX_WAIT_FRAME_EVENT_FLAG_NONE, &m_framePipelineToken));
+#endif
+
 
 		BGFX_D3D12_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorFrame);
 
@@ -6704,6 +6908,12 @@ namespace bgfx { namespace d3d12
 				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
 				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
+				// The state reset on D3D12 is skipped because draw.m_streamMask is set to 0 when the current draw.m_scissor is not set ( equal to UINT16_MAX )
+// Because of this we need to reset the internsl state, otherwise the next run will inherit the last set state and because of this may result being not different
+// So the next draw call, at the beginning of the frame will think the scissor has already been set while this is not true.
+// Solution: detect this particular case and manually reset the currentState scissor.
+				//if (draw.m_scissor == UINT16_MAX) currentState.m_scissor = draw.m_scissor;
+
 				if (0 != draw.m_streamMask)
 				{
 					currentState.m_streamMask             = draw.m_streamMask;
@@ -6722,6 +6932,7 @@ namespace bgfx { namespace d3d12
 					const VertexLayout* layouts[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 
 					uint8_t numStreams = 0;
+					bool doTransientBufferFlush = false;
 					if (UINT8_MAX != draw.m_streamMask)
 					{
 						for (uint32_t idx = 0, streamMask = draw.m_streamMask
@@ -6739,6 +6950,10 @@ namespace bgfx { namespace d3d12
 
 							uint16_t handle = draw.m_stream[idx].m_handle.idx;
 							const VertexBufferD3D12& vb = m_vertexBuffers[handle];
+
+							if (vb.m_layoutHandle.idx == kInvalidHandle)
+								doTransientBufferFlush = true;
+
 							const uint16_t layoutIdx = isValid(draw.m_stream[idx].m_layoutHandle)
 								? draw.m_stream[idx].m_layoutHandle.idx
 								: vb.m_layoutHandle.idx;
@@ -6766,7 +6981,8 @@ namespace bgfx { namespace d3d12
 					||  prim.m_topology != s_primInfo[primIndex].m_topology)
 					||  currentState.m_scissor != scissor
 					||  pso != currentPso
-					||  hasOcclusionQuery)
+					||  hasOcclusionQuery
+					||  doTransientBufferFlush)
 					{
 						m_batch.flush(m_commandList);
 					}

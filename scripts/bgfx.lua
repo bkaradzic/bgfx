@@ -114,7 +114,7 @@ function bgfxProjectBase(_kind, _defines)
 			path.join(BGFX_DIR, "3rdparty/directx-headers/include/wsl/stubs"),
 		}
 
-	configuration { "vs* or mingw*", "not durango" }
+	configuration { "vs* or mingw*", "not durango", "not gdk-xboxone", "not gdk-scarlett" }
 		includedirs {
 			path.join(BGFX_DIR, "3rdparty/directx-headers/include/directx"),
 		}
