@@ -94,20 +94,7 @@
 <li class="toctree-l1"><a class="reference internal" href="internals.html">Internals</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">License</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#license-bsd-2-clause">License (BSD 2-clause)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#rd-party-libraries">3rd Party Libraries</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#blendish-mit">Blendish (MIT)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#edtaa3-mit">edtaa3 (MIT)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#fcpp-bsd">fcpp (BSD)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#forsyth-triangle-order-optimizer-public-domain">Forsyth Triangle Order Optimizer (Public Domain)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#freetype">FreeType</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#glsl-optimizer-mit">glsl-optimizer (MIT)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#nanovg-zlib">NanoVG (ZLIB)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#imgui-mit">ImGui (MIT)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#sdf-mit">SDF (MIT)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#stb-public-domain">stb (Public Domain)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#vertex-cache-optimised-index-buffer-compression-bsd">Vertex Cache Optimised Index Buffer Compression (BSD)</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#rd-party-libraries">3rd Party Libraries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#assets">Assets</a></li>
 </ul>
 </li>
@@ -208,104 +195,24 @@
 <p>All required 3rd party libraries are included in bgfx repository in
 <a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/3rdparty">3rdparty/</a>
 directory.</p>
-<div class="section" id="blendish-mit">
-<h3>Blendish (MIT)<a class="headerlink" href="#blendish-mit" title="Permalink to this headline">¶</a></h3>
-<p>Blendish - Blender 2.5 UI based theming functions for NanoVG.</p>
 <blockquote>
 <div><ul class="simple">
-<li><p><a class="reference external" href="https://bitbucket.org/duangle/oui-blendish">https://bitbucket.org/duangle/oui-blendish</a></p></li>
+<li><p>cgltf (<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/3rdparty/cgltf/LICENSE">MIT</a>)</p></li>
+<li><p>Dear ImGui (<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/3rdparty/dear-imgui/LICENSE.txt">MIT</a>)</p></li>
+<li><p>Blendish (<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/67b2f1e2bfcf6015db6d8b5c2d6fcfd5cee7e167/examples/20-nanovg/blendish.h#L2-L22">MIT</a>)</p></li>
+<li><p>fcpp (<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/3rdparty/fcpp/COPYING">BSD</a>)</p></li>
+<li><p>glsl-optimizer (<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/3rdparty/glsl-optimizer/license.txt">MIT</a>)</p></li>
+<li><p>glslang (<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/3rdparty/glslang/LICENSE.txt">Apache 2.0</a>)</p></li>
+<li><p>IconFontCppHeaders (<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/3rdparty/iconfontheaders/LICENSE">MIT</a>)</p></li>
+<li><p>meshoptimizer (<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/3rdparty/meshoptimizer/LICENSE.md">MIT</a>)</p></li>
+<li><p>NanoVG (<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/67b2f1e2bfcf6015db6d8b5c2d6fcfd5cee7e167/examples/common/nanovg/nanovg.cpp#L2-L16">ZLIB</a>)</p></li>
+<li><p>SDF (<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/3rdparty/sdf/LICENSE.txt">MIT</a>)</p></li>
+<li><p>spirv-cross (<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/3rdparty/spirv-cross/LICENSE">Apache 2.0</a>)</p></li>
+<li><p>spirv-headers (<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/3rdparty/spirv-headers/LICENSE">Khronos/MIT</a>)</p></li>
+<li><p>spirv-tools (<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/3rdparty/spirv-tools/LICENSE">Apache 2.0</a>)</p></li>
+<li><p>stb (<a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/3rdparty/stb/LICENSE">Public Domain</a>)</p></li>
 </ul>
 </div></blockquote>
-</div>
-<div class="section" id="edtaa3-mit">
-<h3>edtaa3 (MIT)<a class="headerlink" href="#edtaa3-mit" title="Permalink to this headline">¶</a></h3>
-<p>Contour Rendering by Distance Fields</p>
-<blockquote>
-<div><ul class="simple">
-<li><p><a class="reference external" href="https://github.com/OpenGLInsights/OpenGLInsightsCode/tree/master/Chapter%2012%202D%20Shape%20Rendering%20by%20Distance%20Fields">https://github.com/OpenGLInsights/OpenGLInsightsCode/tree/master/Chapter%2012%202D%20Shape%20Rendering%20by%20Distance%20Fields</a></p></li>
-</ul>
-</div></blockquote>
-</div>
-<div class="section" id="fcpp-bsd">
-<h3>fcpp (BSD)<a class="headerlink" href="#fcpp-bsd" title="Permalink to this headline">¶</a></h3>
-<p>Frexx C preprocessor</p>
-<blockquote>
-<div><ul class="simple">
-<li><p><a class="reference external" href="https://github.com/bagder/fcpp">https://github.com/bagder/fcpp</a></p></li>
-</ul>
-</div></blockquote>
-</div>
-<div class="section" id="forsyth-triangle-order-optimizer-public-domain">
-<h3>Forsyth Triangle Order Optimizer (Public Domain)<a class="headerlink" href="#forsyth-triangle-order-optimizer-public-domain" title="Permalink to this headline">¶</a></h3>
-<blockquote>
-<div><ul class="simple">
-<li><p><a class="reference external" href="http://gameangst.com/?p=9">http://gameangst.com/?p=9</a></p></li>
-</ul>
-</div></blockquote>
-</div>
-<div class="section" id="freetype">
-<h3>FreeType<a class="headerlink" href="#freetype" title="Permalink to this headline">¶</a></h3>
-<blockquote>
-<div><ul class="simple">
-<li><p><a class="reference external" href="http://www.freetype.org/">http://www.freetype.org/</a></p></li>
-</ul>
-</div></blockquote>
-</div>
-<div class="section" id="glsl-optimizer-mit">
-<h3>glsl-optimizer (MIT)<a class="headerlink" href="#glsl-optimizer-mit" title="Permalink to this headline">¶</a></h3>
-<p>GLSL optimizer based on Mesa’s GLSL compiler. Used in Unity for mobile
-shader optimization.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p><a class="reference external" href="https://github.com/aras-p/glsl-optimizer">https://github.com/aras-p/glsl-optimizer</a></p></li>
-</ul>
-</div></blockquote>
-</div>
-<div class="section" id="nanovg-zlib">
-<h3>NanoVG (ZLIB)<a class="headerlink" href="#nanovg-zlib" title="Permalink to this headline">¶</a></h3>
-<p>NanoVG is small antialiased vector graphics rendering library.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p><a class="reference external" href="https://github.com/memononen/nanovg">https://github.com/memononen/nanovg</a></p></li>
-</ul>
-</div></blockquote>
-</div>
-<div class="section" id="imgui-mit">
-<h3>ImGui (MIT)<a class="headerlink" href="#imgui-mit" title="Permalink to this headline">¶</a></h3>
-<p>Bloat-free Immediate Mode Graphical User interface for C++ with minimal
-dependencies.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p><a class="reference external" href="https://github.com/ocornut/imgui">https://github.com/ocornut/imgui</a></p></li>
-</ul>
-</div></blockquote>
-</div>
-<div class="section" id="sdf-mit">
-<h3>SDF (MIT)<a class="headerlink" href="#sdf-mit" title="Permalink to this headline">¶</a></h3>
-<p>Sweep-and-update Euclidean distance transform of an antialised image for
-contour texturing.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p><a class="reference external" href="https://github.com/memononen/SDF">https://github.com/memononen/SDF</a></p></li>
-</ul>
-</div></blockquote>
-</div>
-<div class="section" id="stb-public-domain">
-<h3>stb (Public Domain)<a class="headerlink" href="#stb-public-domain" title="Permalink to this headline">¶</a></h3>
-<blockquote>
-<div><ul class="simple">
-<li><p><a class="reference external" href="http://nothings.org">http://nothings.org</a></p></li>
-</ul>
-</div></blockquote>
-</div>
-<div class="section" id="vertex-cache-optimised-index-buffer-compression-bsd">
-<h3>Vertex Cache Optimised Index Buffer Compression (BSD)<a class="headerlink" href="#vertex-cache-optimised-index-buffer-compression-bsd" title="Permalink to this headline">¶</a></h3>
-<blockquote>
-<div><ul class="simple">
-<li><p><a class="reference external" href="https://github.com/ConorStokes/IndexBufferCompression">https://github.com/ConorStokes/IndexBufferCompression</a></p></li>
-</ul>
-</div></blockquote>
-</div>
 </div>
 <div class="section" id="assets">
 <h2>Assets<a class="headerlink" href="#assets" title="Permalink to this headline">¶</a></h2>
