@@ -364,7 +364,7 @@ protected:
 	virtual void emit_function_prototype(SPIRFunction &func, const Bitset &return_flags);
 
 	SPIRBlock *current_emitting_block = nullptr;
-	SPIRBlock *current_emitting_switch = nullptr;
+	SmallVector<SPIRBlock *> current_emitting_switch_stack;
 	bool current_emitting_switch_fallthrough = false;
 
 	virtual void emit_instruction(const Instruction &instr);
