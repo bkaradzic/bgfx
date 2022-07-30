@@ -483,6 +483,22 @@ spv_result_t InstructionPass(ValidationState_t& _, const Instruction* inst) {
     if (auto error = LimitCheckNumVars(_, inst->id(), storage_class)) {
       return error;
     }
+  } else if (opcode == SpvOpSamplerImageAddressingModeNV) {
+    if (!_.HasCapability(SpvCapabilityBindlessTextureNV)) {
+      return _.diag(SPV_ERROR_MISSING_EXTENSION, inst)
+             << "OpSamplerImageAddressingModeNV supported only with extension "
+                "SPV_NV_bindless_texture";
+    }
+    uint32_t bitwidth = inst->GetOperandAs<uint32_t>(0);
+    if (_.samplerimage_variable_address_mode() != 0) {
+      return _.diag(SPV_ERROR_INVALID_LAYOUT, inst)
+             << "OpSamplerImageAddressingModeNV should only be provided once";
+    }
+    if (bitwidth != 32 && bitwidth != 64) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "OpSamplerImageAddressingModeNV bitwidth should be 64 or 32";
+    }
+    _.set_samplerimage_variable_address_mode(bitwidth);
   }
 
   if (auto error = ReservedCheck(_, inst)) return error;

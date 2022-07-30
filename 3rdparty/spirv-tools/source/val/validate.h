@@ -197,6 +197,9 @@ spv_result_t FunctionPass(ValidationState_t& _, const Instruction* inst);
 /// Validates correctness of miscellaneous instructions.
 spv_result_t MiscPass(ValidationState_t& _, const Instruction* inst);
 
+/// Validates correctness of ray query instructions.
+spv_result_t RayQueryPass(ValidationState_t& _, const Instruction* inst);
+
 /// Calculates the reachability of basic blocks.
 void ReachabilityPass(ValidationState_t& _);
 

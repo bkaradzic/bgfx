@@ -59,10 +59,7 @@ spv_result_t ValidateShaderClock(ValidationState_t& _,
   // a vector of two - components of 32 -
   // bit unsigned integer type
   const uint32_t result_type = inst->type_id();
-  if (!(_.IsUnsignedIntScalarType(result_type) &&
-        _.GetBitWidth(result_type) == 64) &&
-      !(_.IsUnsignedIntVectorType(result_type) &&
-        _.GetDimension(result_type) == 2 && _.GetBitWidth(result_type) == 32)) {
+  if (!_.IsUnsigned64BitHandle(result_type)) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst) << "Expected Value to be a "
                                                    "vector of two components"
                                                    " of unsigned integer"
