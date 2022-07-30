@@ -296,6 +296,7 @@ public:
         invariantAll(false),
         nanMinMaxClamp(false),
         depthReplacing(false),
+        stencilReplacing(false),
         uniqueId(0),
         globalUniformBlockName(""),
         atomicCounterBlockName(""),
@@ -311,7 +312,7 @@ public:
         inputPrimitive(ElgNone), outputPrimitive(ElgNone),
         pixelCenterInteger(false), originUpperLeft(false),texCoordBuiltinRedeclared(false),
         vertexSpacing(EvsNone), vertexOrder(EvoNone), interlockOrdering(EioNone), pointMode(false), earlyFragmentTests(false),
-        postDepthCoverage(false), depthLayout(EldNone),
+        postDepthCoverage(false), earlyAndLateFragmentTestsAMD(false), depthLayout(EldNone), stencilLayout(ElsNone),
         hlslFunctionality1(false),
         blendEquations(0), xfbMode(false), multiStream(false),
         layoutOverrideCoverage(false),
@@ -587,6 +588,8 @@ public:
     bool isInvariantAll() const { return invariantAll; }
     void setDepthReplacing() { depthReplacing = true; }
     bool isDepthReplacing() const { return depthReplacing; }
+    void setStencilReplacing() { stencilReplacing = true; }
+    bool isStencilReplacing() const { return stencilReplacing; }
     bool setLocalSize(int dim, int size)
     {
         if (localSizeNotDefault[dim])
@@ -821,7 +824,9 @@ public:
     void setPostDepthCoverage() { postDepthCoverage = true; }
     bool getPostDepthCoverage() const { return postDepthCoverage; }
     void setEarlyFragmentTests() { earlyFragmentTests = true; }
+    void setEarlyAndLateFragmentTestsAMD() { earlyAndLateFragmentTestsAMD = true; }
     bool getEarlyFragmentTests() const { return earlyFragmentTests; }
+    bool getEarlyAndLateFragmentTestsAMD() const { return earlyAndLateFragmentTestsAMD; }
     bool setDepth(TLayoutDepth d)
     {
         if (depthLayout != EldNone)
@@ -829,7 +834,15 @@ public:
         depthLayout = d;
         return true;
     }
+    bool setStencil(TLayoutStencil s)
+    {
+        if (stencilLayout != ElsNone)
+            return stencilLayout == s;
+        stencilLayout = s;
+        return true;
+    }
     TLayoutDepth getDepth() const { return depthLayout; }
+    TLayoutStencil getStencil() const { return stencilLayout; }
     void setOriginUpperLeft() { originUpperLeft = true; }
     bool getOriginUpperLeft() const { return originUpperLeft; }
     void setPixelCenterInteger() { pixelCenterInteger = true; }
@@ -1100,6 +1113,7 @@ protected:
     bool invariantAll;
     bool nanMinMaxClamp;            // true if desiring min/max/clamp to favor non-NaN over NaN
     bool depthReplacing;
+    bool stencilReplacing;
     int localSize[3];
     bool localSizeNotDefault[3];
     int localSizeSpecId[3];
@@ -1131,7 +1145,9 @@ protected:
     bool pointMode;
     bool earlyFragmentTests;
     bool postDepthCoverage;
+    bool earlyAndLateFragmentTestsAMD;
     TLayoutDepth depthLayout;
+    TLayoutStencil stencilLayout;
     bool hlslFunctionality1;
     int blendEquations;        // an 'or'ing of masks of shifts of TBlendEquationShift
     bool xfbMode;

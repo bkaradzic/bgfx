@@ -275,6 +275,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_AMD_shader_image_load_store_lod]          = EBhDisable;
     extensionBehavior[E_GL_AMD_shader_fragment_mask]                 = EBhDisable;
     extensionBehavior[E_GL_AMD_gpu_shader_half_float_fetch]          = EBhDisable;
+    extensionBehavior[E_GL_AMD_shader_early_and_late_fragment_tests] = EBhDisable;
 
     extensionBehavior[E_GL_INTEL_shader_integer_functions2]          = EBhDisable;
 

@@ -217,6 +217,10 @@ const char* const E_GL_EXT_fragment_shader_barycentric      = "GL_EXT_fragment_s
 const char* const post_depth_coverageEXTs[] = { E_GL_ARB_post_depth_coverage, E_GL_EXT_post_depth_coverage };
 const int Num_post_depth_coverageEXTs = sizeof(post_depth_coverageEXTs) / sizeof(post_depth_coverageEXTs[0]);
 
+// Array of extensions to cover both extensions providing ray tracing capabilities.
+const char* const ray_tracing_EXTs[] = { E_GL_EXT_ray_query, E_GL_EXT_ray_tracing };
+const int Num_ray_tracing_EXTs = sizeof(ray_tracing_EXTs) / sizeof(ray_tracing_EXTs[0]);
+
 // OVR extensions
 const char* const E_GL_OVR_multiview                    = "GL_OVR_multiview";
 const char* const E_GL_OVR_multiview2                   = "GL_OVR_multiview2";
@@ -238,6 +242,7 @@ const char* const E_GL_AMD_gpu_shader_int16                     = "GL_AMD_gpu_sh
 const char* const E_GL_AMD_shader_image_load_store_lod          = "GL_AMD_shader_image_load_store_lod";
 const char* const E_GL_AMD_shader_fragment_mask                 = "GL_AMD_shader_fragment_mask";
 const char* const E_GL_AMD_gpu_shader_half_float_fetch          = "GL_AMD_gpu_shader_half_float_fetch";
+const char* const E_GL_AMD_shader_early_and_late_fragment_tests = "GL_AMD_shader_early_and_late_fragment_tests";
 
 const char* const E_GL_INTEL_shader_integer_functions2          = "GL_INTEL_shader_integer_functions2";
 
