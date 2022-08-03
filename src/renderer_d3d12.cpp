@@ -2716,7 +2716,7 @@ namespace bgfx { namespace d3d12
 				}
 
 				bx::memCopy(curr, &inst, sizeof(D3D12_INPUT_ELEMENT_DESC) );
-				curr->InputSlot = 1;
+				curr->InputSlot = _numStreams;
 				curr->SemanticIndex = index;
 				curr->AlignedByteOffset = ii*16;
 			}
