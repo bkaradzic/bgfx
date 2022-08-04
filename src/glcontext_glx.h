@@ -23,10 +23,11 @@ namespace bgfx { namespace gl
 			, m_context(0)
 			, m_visualInfo(NULL)
 			, m_display(NULL)
+			, m_msaaContext(false)
 		{
 		}
 
-		void create(uint32_t _width, uint32_t _height);
+		void create(uint32_t _width, uint32_t _height, uint32_t _flags);
 		void destroy();
 		void resize(uint32_t _width, uint32_t _height, uint32_t _flags);
 
@@ -47,6 +48,8 @@ namespace bgfx { namespace gl
 		GLXContext m_context;
 		XVisualInfo* m_visualInfo;
 		::Display* m_display;
+		// true when MSAA is handled by the context instead of using MSAA FBO
+		bool m_msaaContext;
 	};
 } /* namespace gl */ } // namespace bgfx
 

@@ -20,10 +20,11 @@ namespace bgfx { namespace gl
 			, m_fbo(0)
 			, m_colorRbo(0)
 			, m_depthStencilRbo(0)
+			, m_msaaContext(false)
 		{
 		}
 
-		void create(uint32_t _width, uint32_t _height);
+		void create(uint32_t _width, uint32_t _height, uint32_t _flags);
 		void destroy();
 		void resize(uint32_t _width, uint32_t _height, uint32_t _flags);
 
@@ -51,6 +52,8 @@ namespace bgfx { namespace gl
 		GLuint m_fbo;
 		GLuint m_colorRbo;
 		GLuint m_depthStencilRbo;
+		// true when MSAA is handled by the context instead of using MSAA FBO
+		bool m_msaaContext;
 	};
 } /* namespace gl */ } // namespace bgfx
 
