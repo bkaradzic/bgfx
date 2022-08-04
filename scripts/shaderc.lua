@@ -127,6 +127,7 @@ project "spirv-opt"
 		path.join(SPIRV_TOOLS, "source/val/validate_mode_setting.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_non_uniform.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_primitives.cpp"),
+		path.join(SPIRV_TOOLS, "source/val/validate_ray_query.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_scopes.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_small_type_uses.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_type.cpp"),

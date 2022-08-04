@@ -173,28 +173,32 @@ const char* ExecutionModeString(int mode)
     case 31: return "ContractionOff";
     case 32: return "Bad";
 
-    case ExecutionModeInitializer:              return "Initializer";
-    case ExecutionModeFinalizer:                return "Finalizer";
-    case ExecutionModeSubgroupSize:             return "SubgroupSize";
-    case ExecutionModeSubgroupsPerWorkgroup:    return "SubgroupsPerWorkgroup";
-    case ExecutionModeSubgroupsPerWorkgroupId:  return "SubgroupsPerWorkgroupId";
-    case ExecutionModeLocalSizeId:              return "LocalSizeId";
-    case ExecutionModeLocalSizeHintId:          return "LocalSizeHintId";
+    case ExecutionModeInitializer:                   return "Initializer";
+    case ExecutionModeFinalizer:                     return "Finalizer";
+    case ExecutionModeSubgroupSize:                  return "SubgroupSize";
+    case ExecutionModeSubgroupsPerWorkgroup:         return "SubgroupsPerWorkgroup";
+    case ExecutionModeSubgroupsPerWorkgroupId:       return "SubgroupsPerWorkgroupId";
+    case ExecutionModeLocalSizeId:                   return "LocalSizeId";
+    case ExecutionModeLocalSizeHintId:               return "LocalSizeHintId";
 
-    case ExecutionModePostDepthCoverage:        return "PostDepthCoverage";
-    case ExecutionModeDenormPreserve:           return "DenormPreserve";
-    case ExecutionModeDenormFlushToZero:        return "DenormFlushToZero";
-    case ExecutionModeSignedZeroInfNanPreserve: return "SignedZeroInfNanPreserve";
-    case ExecutionModeRoundingModeRTE:          return "RoundingModeRTE";
-    case ExecutionModeRoundingModeRTZ:          return "RoundingModeRTZ";
-    case ExecutionModeStencilRefReplacingEXT:   return "StencilRefReplacingEXT";
+    case ExecutionModePostDepthCoverage:             return "PostDepthCoverage";
+    case ExecutionModeDenormPreserve:                return "DenormPreserve";
+    case ExecutionModeDenormFlushToZero:             return "DenormFlushToZero";
+    case ExecutionModeSignedZeroInfNanPreserve:      return "SignedZeroInfNanPreserve";
+    case ExecutionModeRoundingModeRTE:               return "RoundingModeRTE";
+    case ExecutionModeRoundingModeRTZ:               return "RoundingModeRTZ";
+    case ExecutionModeEarlyAndLateFragmentTestsAMD:  return "EarlyAndLateFragmentTestsAMD";
+    case ExecutionModeStencilRefUnchangedFrontAMD:   return "StencilRefUnchangedFrontAMD";
+    case ExecutionModeStencilRefLessFrontAMD:        return "StencilRefLessFrontAMD";
+    case ExecutionModeStencilRefGreaterBackAMD:      return "StencilRefGreaterBackAMD";
+    case ExecutionModeStencilRefReplacingEXT:        return "StencilRefReplacingEXT";
     case ExecutionModeSubgroupUniformControlFlowKHR: return "SubgroupUniformControlFlow";
 
-    case ExecutionModeOutputLinesNV:            return "OutputLinesNV";
-    case ExecutionModeOutputPrimitivesNV:       return "OutputPrimitivesNV";
-    case ExecutionModeOutputTrianglesNV:        return "OutputTrianglesNV";
-    case ExecutionModeDerivativeGroupQuadsNV:   return "DerivativeGroupQuadsNV";
-    case ExecutionModeDerivativeGroupLinearNV:  return "DerivativeGroupLinearNV";
+    case ExecutionModeOutputLinesNV:                 return "OutputLinesNV";
+    case ExecutionModeOutputPrimitivesNV:            return "OutputPrimitivesNV";
+    case ExecutionModeOutputTrianglesNV:             return "OutputTrianglesNV";
+    case ExecutionModeDerivativeGroupQuadsNV:        return "DerivativeGroupQuadsNV";
+    case ExecutionModeDerivativeGroupLinearNV:       return "DerivativeGroupLinearNV";
 
     case ExecutionModePixelInterlockOrderedEXT:         return "PixelInterlockOrderedEXT";
     case ExecutionModePixelInterlockUnorderedEXT:       return "PixelInterlockUnorderedEXT";

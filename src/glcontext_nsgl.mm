@@ -156,7 +156,7 @@ namespace bgfx { namespace gl
 
 	static void* s_opengl = NULL;
 
-	void GlContext::create(uint32_t _width, uint32_t _height)
+	void GlContext::create(uint32_t _width, uint32_t _height, uint32_t /*_flags*/)
 	{
 		BX_UNUSED(_width, _height);
 

@@ -187,6 +187,8 @@ bool IrLoader::AddInstruction(const spv_parsed_instruction_t* inst) {
         module_->AddExtInstImport(std::move(spv_inst));
       } else if (opcode == SpvOpMemoryModel) {
         module_->SetMemoryModel(std::move(spv_inst));
+      } else if (opcode == SpvOpSamplerImageAddressingModeNV) {
+        module_->SetSampledImageAddressMode(std::move(spv_inst));
       } else if (opcode == SpvOpEntryPoint) {
         module_->AddEntryPoint(std::move(spv_inst));
       } else if (opcode == SpvOpExecutionMode ||

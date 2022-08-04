@@ -128,6 +128,7 @@ enum TStorageQualifier {
     // built-ins written by fragment shader
     EvqFragColor,
     EvqFragDepth,
+    EvqFragStencil,
 
     // end of list
     EvqLast
@@ -353,6 +354,7 @@ __inline const char* GetStorageQualifierString(TStorageQualifier q)
     case EvqPointCoord:     return "gl_PointCoord";  break;
     case EvqFragColor:      return "fragColor";      break;
     case EvqFragDepth:      return "gl_FragDepth";   break;
+    case EvqFragStencil:    return "gl_FragStencilRefARB"; break;
     case EvqPayload:        return "rayPayloadNV";     break;
     case EvqPayloadIn:      return "rayPayloadInNV";   break;
     case EvqHitAttr:        return "hitAttributeNV";   break;

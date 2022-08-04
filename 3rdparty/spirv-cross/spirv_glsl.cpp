@@ -327,6 +327,8 @@ void CompilerGLSL::reset(uint32_t iteration_count)
 	// Ensure that we declare phi-variable copies even if the original declaration isn't deferred
 	flushed_phi_variables.clear();
 
+	current_emitting_switch_stack.clear();
+
 	reset_name_caches();
 
 	ir.for_each_typed_id<SPIRFunction>([&](uint32_t, SPIRFunction &func) {
@@ -14895,21 +14897,32 @@ void CompilerGLSL::branch(BlockID from, BlockID to)
 		// - Break merge target all at once ...
 
 		// Very dirty workaround.
-		// Switch constructs are able to break, but they cannot break out of a loop at the same time.
+		// Switch constructs are able to break, but they cannot break out of a loop at the same time,
+		// yet SPIR-V allows it.
 		// Only sensible solution is to make a ladder variable, which we declare at the top of the switch block,
 		// write to the ladder here, and defer the break.
 		// The loop we're breaking out of must dominate the switch block, or there is no ladder breaking case.
-		if (current_emitting_switch && is_loop_break(to) &&
-		    current_emitting_switch->loop_dominator != BlockID(SPIRBlock::NoDominator) &&
-		    get<SPIRBlock>(current_emitting_switch->loop_dominator).merge_block == to)
+		if (is_loop_break(to))
 		{
-			if (!current_emitting_switch->need_ladder_break)
+			for (size_t n = current_emitting_switch_stack.size(); n; n--)
 			{
-				force_recompile();
-				current_emitting_switch->need_ladder_break = true;
-			}
+				auto *current_emitting_switch = current_emitting_switch_stack[n - 1];
 
-			statement("_", current_emitting_switch->self, "_ladder_break = true;");
+				if (current_emitting_switch &&
+				    current_emitting_switch->loop_dominator != BlockID(SPIRBlock::NoDominator) &&
+				    get<SPIRBlock>(current_emitting_switch->loop_dominator).merge_block == to)
+				{
+					if (!current_emitting_switch->need_ladder_break)
+					{
+						force_recompile();
+						current_emitting_switch->need_ladder_break = true;
+					}
+
+					statement("_", current_emitting_switch->self, "_ladder_break = true;");
+				}
+				else
+					break;
+			}
 		}
 		statement("break;");
 	}
@@ -15594,8 +15607,7 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 		else if (type.basetype == SPIRType::Short)
 			label_suffix = backend.int16_t_literal_suffix;
 
-		SPIRBlock *old_emitting_switch = current_emitting_switch;
-		current_emitting_switch = &block;
+		current_emitting_switch_stack.push_back(&block);
 
 		if (block.need_ladder_break)
 			statement("bool _", block.self, "_ladder_break = false;");
@@ -15880,7 +15892,7 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 			end_scope();
 		}
 
-		current_emitting_switch = old_emitting_switch;
+		current_emitting_switch_stack.pop_back();
 		break;
 	}
 

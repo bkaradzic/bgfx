@@ -1,5 +1,5 @@
 ---
-name: Bug report
+name: Bug report (FOR BUGS ONLY! DO NOT SUBMIT QUESTIONS HERE!)
 about: Create a report to help us improve
 title: ''
 labels: ''
@@ -9,6 +9,12 @@ assignees: ''
 
 <!---
 ###########################################################################
+
+**BEWARE!**
+
+If you completely disregard this guidance, and submit random question as issue
+(bug report), the issue will be deleted. If you submit the same issue after
+deletion, you'll be blocked.
 
 **IMPORTANT: READ FIRST!**
 

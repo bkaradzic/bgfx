@@ -155,7 +155,7 @@ EGL_IMPORT
 	static EGL_DISPMANX_WINDOW_T s_dispmanWindow;
 #	endif // BX_PLATFORM_RPI
 
-	void GlContext::create(uint32_t _width, uint32_t _height)
+	void GlContext::create(uint32_t _width, uint32_t _height, uint32_t _flags)
 	{
 #	if BX_PLATFORM_RPI
 		bcm_host_init();
@@ -207,6 +207,12 @@ EGL_IMPORT
 
 			const uint32_t gles = BGFX_CONFIG_RENDERER_OPENGLES;
 
+#if BX_PLATFORM_ANDROID
+			uint32_t msaa = (_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+            uint32_t msaaSamples = msaa == 0 ? 0 : 1<<msaa;
+			m_msaaContext = true;
+#endif // BX_PLATFORM_ANDROID
+
 			EGLint attrs[] =
 			{
 				EGL_RENDERABLE_TYPE, (gles >= 30) ? EGL_OPENGL_ES3_BIT_KHR : EGL_OPENGL_ES2_BIT,
@@ -218,6 +224,7 @@ EGL_IMPORT
 
 #	if BX_PLATFORM_ANDROID
 				EGL_DEPTH_SIZE, 16,
+				EGL_SAMPLES, msaaSamples,
 #	else
 				EGL_DEPTH_SIZE, 24,
 #	endif // BX_PLATFORM_

@@ -190,6 +190,13 @@ uint32_t getBaseAlignment(uint32_t member_id, bool roundUp,
   // Minimal alignment is byte-aligned.
   uint32_t baseAlignment = 1;
   switch (inst->opcode()) {
+    case SpvOpTypeSampledImage:
+    case SpvOpTypeSampler:
+    case SpvOpTypeImage:
+      if (vstate.HasCapability(SpvCapabilityBindlessTextureNV))
+        return baseAlignment = vstate.samplerimage_variable_address_mode() / 8;
+      assert(0);
+      return 0;
     case SpvOpTypeInt:
     case SpvOpTypeFloat:
       baseAlignment = words[2] / 8;
@@ -219,6 +226,7 @@ uint32_t getBaseAlignment(uint32_t member_id, bool roundUp,
         baseAlignment =
             componentAlignment * (num_columns == 3 ? 4 : num_columns);
       }
+      if (roundUp) baseAlignment = align(baseAlignment, 16u);
     } break;
     case SpvOpTypeArray:
     case SpvOpTypeRuntimeArray:
@@ -256,6 +264,13 @@ uint32_t getScalarAlignment(uint32_t type_id, ValidationState_t& vstate) {
   const auto inst = vstate.FindDef(type_id);
   const auto& words = inst->words();
   switch (inst->opcode()) {
+    case SpvOpTypeSampledImage:
+    case SpvOpTypeSampler:
+    case SpvOpTypeImage:
+      if (vstate.HasCapability(SpvCapabilityBindlessTextureNV))
+        return vstate.samplerimage_variable_address_mode() / 8;
+      assert(0);
+      return 0;
     case SpvOpTypeInt:
     case SpvOpTypeFloat:
       return words[2] / 8;
@@ -296,6 +311,13 @@ uint32_t getSize(uint32_t member_id, const LayoutConstraints& inherited,
   const auto inst = vstate.FindDef(member_id);
   const auto& words = inst->words();
   switch (inst->opcode()) {
+    case SpvOpTypeSampledImage:
+    case SpvOpTypeSampler:
+    case SpvOpTypeImage:
+      if (vstate.HasCapability(SpvCapabilityBindlessTextureNV))
+        return vstate.samplerimage_variable_address_mode() / 8;
+      assert(0);
+      return 0;
     case SpvOpTypeInt:
     case SpvOpTypeFloat:
       return words[2] / 8;
@@ -638,7 +660,8 @@ bool hasDecoration(uint32_t id, SpvDecoration decoration,
 }
 
 // Returns true if all ids of given type have a specified decoration.
-bool checkForRequiredDecoration(uint32_t struct_id, SpvDecoration decoration,
+bool checkForRequiredDecoration(uint32_t struct_id,
+                                std::function<bool(SpvDecoration)> checker,
                                 SpvOp type, ValidationState_t& vstate) {
   const auto& members = getStructMembers(struct_id, vstate);
   for (size_t memberIdx = 0; memberIdx < members.size(); memberIdx++) {
@@ -646,10 +669,10 @@ bool checkForRequiredDecoration(uint32_t struct_id, SpvDecoration decoration,
     if (type != vstate.FindDef(id)->opcode()) continue;
     bool found = false;
     for (auto& dec : vstate.id_decorations(id)) {
-      if (decoration == dec.dec_type()) found = true;
+      if (checker(dec.dec_type())) found = true;
     }
     for (auto& dec : vstate.id_decorations(struct_id)) {
-      if (decoration == dec.dec_type() &&
+      if (checker(dec.dec_type()) &&
           (int)memberIdx == dec.struct_member_index()) {
         found = true;
       }
@@ -659,7 +682,7 @@ bool checkForRequiredDecoration(uint32_t struct_id, SpvDecoration decoration,
     }
   }
   for (auto id : getStructMembers(struct_id, SpvOpTypeStruct, vstate)) {
-    if (!checkForRequiredDecoration(id, decoration, type, vstate)) {
+    if (!checkForRequiredDecoration(id, checker, type, vstate)) {
       return false;
     }
   }
@@ -1201,30 +1224,48 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
               return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
                      << "Structure id " << id << " decorated as " << deco_str
                      << " must not use GLSLPacked decoration.";
-            } else if (!checkForRequiredDecoration(id, SpvDecorationArrayStride,
-                                                   SpvOpTypeArray, vstate)) {
+            } else if (!checkForRequiredDecoration(
+                           id,
+                           [](SpvDecoration d) {
+                             return d == SpvDecorationArrayStride;
+                           },
+                           SpvOpTypeArray, vstate)) {
               return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
                      << "Structure id " << id << " decorated as " << deco_str
                      << " must be explicitly laid out with ArrayStride "
                         "decorations.";
-            } else if (!checkForRequiredDecoration(id,
-                                                   SpvDecorationMatrixStride,
-                                                   SpvOpTypeMatrix, vstate)) {
+            } else if (!checkForRequiredDecoration(
+                           id,
+                           [](SpvDecoration d) {
+                             return d == SpvDecorationMatrixStride;
+                           },
+                           SpvOpTypeMatrix, vstate)) {
               return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
                      << "Structure id " << id << " decorated as " << deco_str
                      << " must be explicitly laid out with MatrixStride "
                         "decorations.";
+            } else if (!checkForRequiredDecoration(
+                           id,
+                           [](SpvDecoration d) {
+                             return d == SpvDecorationRowMajor ||
+                                    d == SpvDecorationColMajor;
+                           },
+                           SpvOpTypeMatrix, vstate)) {
+              return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
+                     << "Structure id " << id << " decorated as " << deco_str
+                     << " must be explicitly laid out with RowMajor or "
+                        "ColMajor decorations.";
             } else if (blockRules &&
-                       (SPV_SUCCESS != (recursive_status = checkLayout(
-                                            id, sc_str, deco_str, true,
-                                            scalar_block_layout, 0,
-                                            constraints, vstate)))) {
+                       (SPV_SUCCESS !=
+                        (recursive_status = checkLayout(
+                             id, sc_str, deco_str, true, scalar_block_layout, 0,
+                             constraints, vstate)))) {
               return recursive_status;
             } else if (bufferRules &&
-                       (SPV_SUCCESS != (recursive_status = checkLayout(
-                                            id, sc_str, deco_str, false,
-                                            scalar_block_layout, 0,
-                                            constraints, vstate)))) {
+                       (SPV_SUCCESS !=
+                        (recursive_status = checkLayout(
+                             id, sc_str, deco_str, false, scalar_block_layout,
+                             0, constraints, vstate)))) {
               return recursive_status;
             }
           }

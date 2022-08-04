@@ -137,6 +137,9 @@ public:
 		// If add_vertex_attribute_remap is used and this feature is used,
 		// the semantic name will be queried once per active location.
 		bool flatten_matrix_vertex_input_semantics = false;
+
+		// Rather than emitting main() for the entry point, use the name in SPIR-V.
+		bool use_entry_point_name = false;
 	};
 
 	explicit CompilerHLSL(std::vector<uint32_t> spirv_)
@@ -374,6 +377,8 @@ private:
 	bool builtin_translates_to_nonarray(spv::BuiltIn builtin) const override;
 
 	std::vector<TypeID> composite_selection_workaround_types;
+
+	std::string get_inner_entry_point_name() const;
 };
 } // namespace SPIRV_CROSS_NAMESPACE
 

@@ -108,7 +108,7 @@ namespace bgfx { namespace gl
 		return context;
 	}
 
-	void GlContext::create(uint32_t /*_width*/, uint32_t /*_height*/)
+	void GlContext::create(uint32_t /*_width*/, uint32_t /*_height*/, uint32_t /*_flags*/)
 	{
 		m_opengl32dll = bx::dlopen("opengl32.dll");
 		BGFX_FATAL(NULL != m_opengl32dll, Fatal::UnableToInitialize, "Failed to load opengl32.dll.");
