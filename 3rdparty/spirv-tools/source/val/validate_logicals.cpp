@@ -170,6 +170,16 @@ spv_result_t LogicalsPass(ValidationState_t& _, const Instruction* inst) {
             break;
           }
 
+          case SpvOpTypeSampledImage:
+          case SpvOpTypeImage:
+          case SpvOpTypeSampler: {
+            if (!_.HasCapability(SpvCapabilityBindlessTextureNV))
+              return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                     << "Using image/sampler with OpSelect requires capability "
+                     << "BindlessTextureNV";
+            break;
+          }
+
           case SpvOpTypeVector: {
             dimension = type_inst->word(3);
             break;

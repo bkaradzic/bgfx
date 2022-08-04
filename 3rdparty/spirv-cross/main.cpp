@@ -1348,6 +1348,10 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 			build_dummy_sampler = true;
 		}
 
+		// If we're explicitly renaming, we probably want that name to be output.
+		if (!args.entry_point_rename.empty())
+			hlsl_opts.use_entry_point_name = true;
+
 		hlsl_opts.support_nonzero_base_vertex_base_instance = args.hlsl_support_nonzero_base;
 		hlsl_opts.force_storage_buffer_as_uav = args.hlsl_force_storage_buffer_as_uav;
 		hlsl_opts.nonwritable_uav_texture_as_srv = args.hlsl_nonwritable_uav_texture_as_srv;

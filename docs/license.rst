@@ -6,7 +6,7 @@ License
 
 ::
 
-    Copyright 2010-2020 Branimir Karadzic
+    Copyright 2010-2022 Branimir Karadzic
 
     Redistribution and use in source and binary forms, with or without modification,
     are permitted provided that the following conditions are met:
@@ -36,77 +36,20 @@ All required 3rd party libraries are included in bgfx repository in
 `3rdparty/ <https://github.com/bkaradzic/bgfx/tree/master/3rdparty>`__
 directory.
 
-Blendish (MIT)
-~~~~~~~~~~~~~~
-
-Blendish - Blender 2.5 UI based theming functions for NanoVG.
-
- - https://bitbucket.org/duangle/oui-blendish
-
-edtaa3 (MIT)
-~~~~~~~~~~~~
-
-Contour Rendering by Distance Fields
-
- - https://github.com/OpenGLInsights/OpenGLInsightsCode/tree/master/Chapter%2012%202D%20Shape%20Rendering%20by%20Distance%20Fields
-
-fcpp (BSD)
-~~~~~~~~~~
-
-Frexx C preprocessor
-
- - https://github.com/bagder/fcpp
-
-Forsyth Triangle Order Optimizer (Public Domain)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
- - http://gameangst.com/?p=9
-
-FreeType
-~~~~~~~~
-
- - http://www.freetype.org/
-
-glsl-optimizer (MIT)
-~~~~~~~~~~~~~~~~~~~~
-
-GLSL optimizer based on Mesa's GLSL compiler. Used in Unity for mobile
-shader optimization.
-
- - https://github.com/aras-p/glsl-optimizer
-
-NanoVG (ZLIB)
-~~~~~~~~~~~~~
-
-NanoVG is small antialiased vector graphics rendering library.
-
- - https://github.com/memononen/nanovg
-
-ImGui (MIT)
-~~~~~~~~~~~
-
-Bloat-free Immediate Mode Graphical User interface for C++ with minimal
-dependencies.
-
- - https://github.com/ocornut/imgui
-
-SDF (MIT)
-~~~~~~~~~
-
-Sweep-and-update Euclidean distance transform of an antialised image for
-contour texturing.
-
- - https://github.com/memononen/SDF
-
-stb (Public Domain)
-~~~~~~~~~~~~~~~~~~~
-
- - http://nothings.org
-
-Vertex Cache Optimised Index Buffer Compression (BSD)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
- - https://github.com/ConorStokes/IndexBufferCompression
+ - cgltf (`MIT <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/cgltf/LICENSE>`__)
+ - Dear ImGui (`MIT <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/dear-imgui/LICENSE.txt>`__)
+ - Blendish (`MIT <https://github.com/bkaradzic/bgfx/blob/67b2f1e2bfcf6015db6d8b5c2d6fcfd5cee7e167/examples/20-nanovg/blendish.h#L2-L22>`__)
+ - fcpp (`BSD <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/fcpp/COPYING>`__)
+ - glsl-optimizer (`MIT <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/glsl-optimizer/license.txt>`__)
+ - glslang (`Apache 2.0 <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/glslang/LICENSE.txt>`__)
+ - IconFontCppHeaders (`MIT <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/iconfontheaders/LICENSE>`__)
+ - meshoptimizer (`MIT <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/meshoptimizer/LICENSE.md>`__)
+ - NanoVG (`ZLIB <https://github.com/bkaradzic/bgfx/blob/67b2f1e2bfcf6015db6d8b5c2d6fcfd5cee7e167/examples/common/nanovg/nanovg.cpp#L2-L16>`__)
+ - SDF (`MIT <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/sdf/LICENSE.txt>`__)
+ - spirv-cross (`Apache 2.0 <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/spirv-cross/LICENSE>`__)
+ - spirv-headers (`Khronos/MIT <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/spirv-headers/LICENSE>`__)
+ - spirv-tools (`Apache 2.0 <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/spirv-tools/LICENSE>`__)
+ - stb (`Public Domain <https://github.com/bkaradzic/bgfx/blob/master/3rdparty/stb/LICENSE>`__)
 
 Assets
 ------

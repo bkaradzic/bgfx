@@ -66,7 +66,8 @@ spv_result_t ValidatePhi(ValidationState_t& _, const Instruction* inst) {
   assert(type_inst);
   const SpvOp type_opcode = type_inst->opcode();
 
-  if (!_.options()->before_hlsl_legalization) {
+  if (!_.options()->before_hlsl_legalization &&
+      !_.HasCapability(SpvCapabilityBindlessTextureNV)) {
     if (type_opcode == SpvOpTypeSampledImage ||
         (_.HasCapability(SpvCapabilityShader) &&
          (type_opcode == SpvOpTypeImage || type_opcode == SpvOpTypeSampler))) {

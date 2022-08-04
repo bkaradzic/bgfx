@@ -220,30 +220,23 @@ spv_result_t ValidateMemoryScope(ValidationState_t& _, const Instruction* inst,
 
   // Vulkan Specific rules
   if (spvIsVulkanEnv(_.context()->target_env)) {
-    if (value == SpvScopeCrossDevice) {
-      return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << _.VkErrorID(4638) << spvOpcodeString(opcode)
-             << ": in Vulkan environment, Memory Scope cannot be CrossDevice";
-    }
-    // Vulkan 1.0 specific rules
-    if (_.context()->target_env == SPV_ENV_VULKAN_1_0 &&
-        value != SpvScopeDevice && value != SpvScopeWorkgroup &&
-        value != SpvScopeInvocation) {
-      return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << _.VkErrorID(4638) << spvOpcodeString(opcode)
-             << ": in Vulkan 1.0 environment Memory Scope is limited to "
-             << "Device, Workgroup and Invocation";
-    }
-    // Vulkan 1.1 specific rules
-    if ((_.context()->target_env == SPV_ENV_VULKAN_1_1 ||
-         _.context()->target_env == SPV_ENV_VULKAN_1_2) &&
-        value != SpvScopeDevice && value != SpvScopeWorkgroup &&
+    if (value != SpvScopeDevice && value != SpvScopeWorkgroup &&
         value != SpvScopeSubgroup && value != SpvScopeInvocation &&
-        value != SpvScopeShaderCallKHR) {
+        value != SpvScopeShaderCallKHR && value != SpvScopeQueueFamily) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << _.VkErrorID(4638) << spvOpcodeString(opcode)
-             << ": in Vulkan 1.1 and 1.2 environment Memory Scope is limited "
-             << "to Device, Workgroup, Invocation, and ShaderCall";
+             << ": in Vulkan environment Memory Scope is limited to Device, "
+                "QueueFamily, Workgroup, ShaderCallKHR, Subgroup, or "
+                "Invocation";
+    } else if (_.context()->target_env == SPV_ENV_VULKAN_1_0 &&
+               value == SpvScopeSubgroup &&
+               !_.HasCapability(SpvCapabilitySubgroupBallotKHR) &&
+               !_.HasCapability(SpvCapabilitySubgroupVoteKHR)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << spvOpcodeString(opcode)
+             << ": in Vulkan 1.0 environment Memory Scope is can not be "
+                "Subgroup without SubgroupBallotKHR or SubgroupVoteKHR "
+                "declared";
     }
 
     if (value == SpvScopeShaderCallKHR) {

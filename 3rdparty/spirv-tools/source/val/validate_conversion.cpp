@@ -534,6 +534,24 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
       break;
     }
 
+    case SpvOpConvertUToAccelerationStructureKHR: {
+      if (!_.IsAccelerationStructureType(result_type)) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Expected Result Type to be a Acceleration Structure: "
+               << spvOpcodeString(opcode);
+      }
+
+      const uint32_t input_type = _.GetOperandTypeId(inst, 2);
+      if (!input_type || !_.IsUnsigned64BitHandle(input_type)) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Expected 64-bit uint scalar or 2-component 32-bit uint "
+                  "vector as input: "
+               << spvOpcodeString(opcode);
+      }
+
+      break;
+    }
+
     default:
       break;
   }

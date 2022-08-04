@@ -59,6 +59,11 @@ public:
 			return 0;
 	}
 
+	bool is_reachable(uint32_t block) const
+	{
+		return visit_order.count(block) != 0;
+	}
+
 	uint32_t get_visit_order(uint32_t block) const
 	{
 		auto itr = visit_order.find(block);

@@ -3,9 +3,9 @@ API Reference
 
 
 .. note::
-	
+
     If you're just getting started with bgfx, you might get more out of these simple walkthroughs for how to use bgfx's API:
-    
+
     - `Hello, bgfx! <https://dev.to/pperon/hello-bgfx-4dka>`_
     - `bgfx-minimal-example <https://github.com/jpcy/bgfx-minimal-example#bgfx-minimal-example>`_
     - `Using the bgfx library with C++ on Ubuntu <https://www.sandeepnambiar.com/getting-started-with-bgfx/>`_
@@ -561,13 +561,15 @@ Textures
 Frame Buffers
 ~~~~~~~~~~~~~
 
+.. doxygenstruct:: bgfx::Attachment
+    :members:
+
+.. doxygenfunction:: bgfx::isFrameBufferValid
+
 .. doxygenfunction:: bgfx::createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint64_t _textureFlags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP)
 .. doxygenfunction:: bgfx::createFrameBuffer(BackbufferRatio::Enum _ratio, TextureFormat::Enum _format, uint64_t _textureFlags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP)
 .. doxygenfunction:: bgfx::createFrameBuffer(uint8_t _num, const TextureHandle *_handles, bool _destroyTextures = false)
 .. doxygenfunction:: bgfx::createFrameBuffer(void *_nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _format = TextureFormat::Count, TextureFormat::Enum _depthFormat = TextureFormat::Count)
-
-.. doxygenstruct:: bgfx::Attachment
-    :members:
 
 .. doxygenfunction:: bgfx::createFrameBuffer(uint8_t _num, const Attachment *_attachment, bool _destroyTextures = false)
 .. doxygenfunction:: bgfx::getTexture

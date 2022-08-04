@@ -2221,7 +2221,7 @@ namespace bgfx { namespace gl
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
 			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
-			setRenderContextSize(_init.resolution.width, _init.resolution.height);
+			setRenderContextSize(_init.resolution.width, _init.resolution.height, _init.resolution.reset);
 
 			m_vendor      = getGLString(GL_VENDOR);
 			m_renderer    = getGLString(GL_RENDERER);
@@ -3808,7 +3808,8 @@ namespace bgfx { namespace gl
 		void createMsaaFbo(uint32_t _width, uint32_t _height, uint32_t _msaa)
 		{
 			if (0 == m_msaaBackBufferFbo // iOS
-			&&  1 < _msaa)
+			&&  1 < _msaa
+			&& !m_glctx.m_msaaContext)
 			{
 				GLenum storageFormat = m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER
 					? GL_SRGB8_ALPHA8
@@ -4066,7 +4067,7 @@ namespace bgfx { namespace gl
 			{
 				if (!m_glctx.isValid() )
 				{
-					m_glctx.create(_width, _height);
+					m_glctx.create(_width, _height, _flags);
 
 #if BX_PLATFORM_IOS
 					// iOS: need to figure out how to deal with FBO created by context.

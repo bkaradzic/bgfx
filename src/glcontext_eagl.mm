@@ -159,7 +159,7 @@ namespace bgfx { namespace gl
 		GLint m_height;
 	};
 
-	void GlContext::create(uint32_t _width, uint32_t _height)
+	void GlContext::create(uint32_t _width, uint32_t _height, uint32_t /*_flags*/)
 	{
 		s_opengles = bx::dlopen("/System/Library/Frameworks/OpenGLES.framework/OpenGLES");
 		BX_ASSERT(NULL != s_opengles, "OpenGLES dynamic library is not found!");

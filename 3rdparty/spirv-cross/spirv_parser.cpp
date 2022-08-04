@@ -1020,7 +1020,16 @@ void Parser::parse(const Instruction &instruction)
 			}
 			else
 			{
-				ir.block_meta[current_block->next_block] &= ~ParsedIR::BLOCK_META_SELECTION_MERGE_BIT;
+				// Collapse loops if we have to.
+				bool collapsed_loop = current_block->true_block == current_block->merge_block &&
+				                      current_block->merge == SPIRBlock::MergeLoop;
+
+				if (collapsed_loop)
+				{
+					ir.block_meta[current_block->merge_block] &= ~ParsedIR::BLOCK_META_LOOP_MERGE_BIT;
+					ir.block_meta[current_block->continue_block] &= ~ParsedIR::BLOCK_META_CONTINUE_BIT;
+				}
+
 				current_block->next_block = current_block->true_block;
 				current_block->condition = 0;
 				current_block->true_block = 0;

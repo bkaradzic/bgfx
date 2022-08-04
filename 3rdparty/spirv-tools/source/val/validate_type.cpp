@@ -306,35 +306,6 @@ spv_result_t ValidateTypeRuntimeArray(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
-bool ContainsOpaqueType(ValidationState_t& _, const Instruction* str) {
-  const size_t elem_type_index = 1;
-  uint32_t elem_type_id;
-  Instruction* elem_type;
-
-  if (spvOpcodeIsBaseOpaqueType(str->opcode())) {
-    return true;
-  }
-
-  switch (str->opcode()) {
-    case SpvOpTypeArray:
-    case SpvOpTypeRuntimeArray:
-      elem_type_id = str->GetOperandAs<uint32_t>(elem_type_index);
-      elem_type = _.FindDef(elem_type_id);
-      return ContainsOpaqueType(_, elem_type);
-    case SpvOpTypeStruct:
-      for (size_t member_type_index = 1;
-           member_type_index < str->operands().size(); ++member_type_index) {
-        auto member_type_id = str->GetOperandAs<uint32_t>(member_type_index);
-        auto member_type = _.FindDef(member_type_id);
-        if (ContainsOpaqueType(_, member_type)) return true;
-      }
-      break;
-    default:
-      break;
-  }
-  return false;
-}
-
 spv_result_t ValidateTypeStruct(ValidationState_t& _, const Instruction* inst) {
   const uint32_t struct_id = inst->GetOperandAs<uint32_t>(0);
   for (size_t member_type_index = 1;
@@ -425,8 +396,21 @@ spv_result_t ValidateTypeStruct(ValidationState_t& _, const Instruction* inst) {
     _.RegisterStructTypeWithBuiltInMember(struct_id);
   }
 
+  const auto isOpaqueType = [&_](const Instruction* opaque_inst) {
+    auto opcode = opaque_inst->opcode();
+    if (_.HasCapability(SpvCapabilityBindlessTextureNV) &&
+        (opcode == SpvOpTypeImage || opcode == SpvOpTypeSampler ||
+         opcode == SpvOpTypeSampledImage)) {
+      return false;
+    } else if (spvOpcodeIsBaseOpaqueType(opcode)) {
+      return true;
+    }
+    return false;
+  };
+
   if (spvIsVulkanEnv(_.context()->target_env) &&
-      !_.options()->before_hlsl_legalization && ContainsOpaqueType(_, inst)) {
+      !_.options()->before_hlsl_legalization &&
+      _.ContainsType(inst->id(), isOpaqueType)) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << _.VkErrorID(4667) << "In "
            << spvLogStringForEnv(_.context()->target_env)

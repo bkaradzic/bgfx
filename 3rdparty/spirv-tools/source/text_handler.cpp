@@ -62,28 +62,29 @@ spv_result_t advanceLine(spv_text text, spv_position position) {
 // parameters, its the users responsibility to ensure these are non null.
 spv_result_t advance(spv_text text, spv_position position) {
   // NOTE: Consume white space, otherwise don't advance.
-  if (position->index >= text->length) return SPV_END_OF_STREAM;
-  switch (text->str[position->index]) {
-    case '\0':
-      return SPV_END_OF_STREAM;
-    case ';':
-      if (spv_result_t error = advanceLine(text, position)) return error;
-      return advance(text, position);
-    case ' ':
-    case '\t':
-    case '\r':
-      position->column++;
-      position->index++;
-      return advance(text, position);
-    case '\n':
-      position->column = 0;
-      position->line++;
-      position->index++;
-      return advance(text, position);
-    default:
-      break;
+  while (true) {
+    if (position->index >= text->length) return SPV_END_OF_STREAM;
+    switch (text->str[position->index]) {
+      case '\0':
+        return SPV_END_OF_STREAM;
+      case ';':
+        if (spv_result_t error = advanceLine(text, position)) return error;
+        continue;
+      case ' ':
+      case '\t':
+      case '\r':
+        position->column++;
+        position->index++;
+        continue;
+      case '\n':
+        position->column = 0;
+        position->line++;
+        position->index++;
+        continue;
+      default:
+        return SPV_SUCCESS;
+    }
   }
-  return SPV_SUCCESS;
 }
 
 // Fetches the next word from the given text stream starting from the given

@@ -2404,12 +2404,32 @@ string CompilerHLSL::to_func_call_arg(const SPIRFunction::Parameter &arg, uint32
 	return arg_str;
 }
 
+string CompilerHLSL::get_inner_entry_point_name() const
+{
+	auto &execution = get_entry_point();
+
+	if (hlsl_options.use_entry_point_name)
+	{
+		auto name = join(execution.name, "_inner");
+		ParsedIR::sanitize_underscores(name);
+		return name;
+	}
+
+	if (execution.model == ExecutionModelVertex)
+		return "vert_main";
+	else if (execution.model == ExecutionModelFragment)
+		return "frag_main";
+	else if (execution.model == ExecutionModelGLCompute)
+		return "comp_main";
+	else
+		SPIRV_CROSS_THROW("Unsupported execution model.");
+}
+
 void CompilerHLSL::emit_function_prototype(SPIRFunction &func, const Bitset &return_flags)
 {
 	if (func.self != ir.default_entry_point)
 		add_function_overload(func);
 
-	auto &execution = get_entry_point();
 	// Avoid shadow declarations.
 	local_variable_names = resource_names;
 
@@ -2430,14 +2450,7 @@ void CompilerHLSL::emit_function_prototype(SPIRFunction &func, const Bitset &ret
 
 	if (func.self == ir.default_entry_point)
 	{
-		if (execution.model == ExecutionModelVertex)
-			decl += "vert_main";
-		else if (execution.model == ExecutionModelFragment)
-			decl += "frag_main";
-		else if (execution.model == ExecutionModelGLCompute)
-			decl += "comp_main";
-		else
-			SPIRV_CROSS_THROW("Unsupported execution model.");
+		decl += get_inner_entry_point_name();
 		processing_entry_point = true;
 	}
 	else
@@ -2555,7 +2568,13 @@ void CompilerHLSL::emit_hlsl_entry_point()
 		break;
 	}
 
-	statement(require_output ? "SPIRV_Cross_Output " : "void ", "main(", merge(arguments), ")");
+	const char *entry_point_name;
+	if (hlsl_options.use_entry_point_name)
+		entry_point_name = get_entry_point().name.c_str();
+	else
+		entry_point_name = "main";
+
+	statement(require_output ? "SPIRV_Cross_Output " : "void ", entry_point_name, "(", merge(arguments), ")");
 	begin_scope();
 	bool legacy = hlsl_options.shader_model <= 30;
 
@@ -2728,12 +2747,12 @@ void CompilerHLSL::emit_hlsl_entry_point()
 	});
 
 	// Run the shader.
-	if (execution.model == ExecutionModelVertex)
-		statement("vert_main();");
-	else if (execution.model == ExecutionModelFragment)
-		statement("frag_main();");
-	else if (execution.model == ExecutionModelGLCompute)
-		statement("comp_main();");
+	if (execution.model == ExecutionModelVertex ||
+	    execution.model == ExecutionModelFragment ||
+	    execution.model == ExecutionModelGLCompute)
+	{
+		statement(get_inner_entry_point_name(), "();");
+	}
 	else
 		SPIRV_CROSS_THROW("Unsupported shader stage.");
 
@@ -4728,9 +4747,9 @@ void CompilerHLSL::emit_subgroup_op(const Instruction &i)
 	case OpGroupNonUniformBallotBitCount:
 	{
 		auto operation = static_cast<GroupOperation>(ops[3]);
+		bool forward = should_forward(ops[4]);
 		if (operation == GroupOperationReduce)
 		{
-			bool forward = should_forward(ops[4]);
 			auto left = join("countbits(", to_enclosed_expression(ops[4]), ".x) + countbits(",
 			                 to_enclosed_expression(ops[4]), ".y)");
 			auto right = join("countbits(", to_enclosed_expression(ops[4]), ".z) + countbits(",
@@ -4739,9 +4758,31 @@ void CompilerHLSL::emit_subgroup_op(const Instruction &i)
 			inherit_expression_dependencies(id, ops[4]);
 		}
 		else if (operation == GroupOperationInclusiveScan)
-			SPIRV_CROSS_THROW("Cannot trivially implement BallotBitCount Inclusive Scan in HLSL.");
+		{
+			auto left = join("countbits(", to_enclosed_expression(ops[4]), ".x & gl_SubgroupLeMask.x) + countbits(",
+			                 to_enclosed_expression(ops[4]), ".y & gl_SubgroupLeMask.y)");
+			auto right = join("countbits(", to_enclosed_expression(ops[4]), ".z & gl_SubgroupLeMask.z) + countbits(",
+			                  to_enclosed_expression(ops[4]), ".w & gl_SubgroupLeMask.w)");
+			emit_op(result_type, id, join(left, " + ", right), forward);
+			if (!active_input_builtins.get(BuiltInSubgroupLeMask))
+			{
+				active_input_builtins.set(BuiltInSubgroupLeMask);
+				force_recompile_guarantee_forward_progress();
+			}
+		}
 		else if (operation == GroupOperationExclusiveScan)
-			SPIRV_CROSS_THROW("Cannot trivially implement BallotBitCount Exclusive Scan in HLSL.");
+		{
+			auto left = join("countbits(", to_enclosed_expression(ops[4]), ".x & gl_SubgroupLtMask.x) + countbits(",
+			                 to_enclosed_expression(ops[4]), ".y & gl_SubgroupLtMask.y)");
+			auto right = join("countbits(", to_enclosed_expression(ops[4]), ".z & gl_SubgroupLtMask.z) + countbits(",
+			                  to_enclosed_expression(ops[4]), ".w & gl_SubgroupLtMask.w)");
+			emit_op(result_type, id, join(left, " + ", right), forward);
+			if (!active_input_builtins.get(BuiltInSubgroupLtMask))
+			{
+				active_input_builtins.set(BuiltInSubgroupLtMask);
+				force_recompile_guarantee_forward_progress();
+			}
+		}
 		else
 			SPIRV_CROSS_THROW("Invalid BitCount operation.");
 		break;

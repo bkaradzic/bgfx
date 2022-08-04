@@ -980,6 +980,7 @@ spv_result_t ValidateStore(ValidationState_t& _, const Instruction* inst) {
         }
         if (_.HasDecoration(base_type->id(), SpvDecorationBlock)) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << _.VkErrorID(6925)
                  << "In the Vulkan environment, cannot store to Uniform Blocks";
         }
       }
