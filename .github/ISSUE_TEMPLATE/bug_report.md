@@ -1,5 +1,5 @@
 ---
-name: Bug report / **DO NOT SUBMIT QUESTIONS HERE!**
+name: Bug report (FOR BUGS ONLY! DO NOT SUBMIT QUESTIONS HERE!)
 about: Create a report to help us improve
 title: ''
 labels: ''
