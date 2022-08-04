@@ -65,10 +65,11 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 			, m_opengl32dll(NULL)
 			, m_context(NULL)
 			, m_hdc(NULL)
+			, m_msaaContext(false)
 		{
 		}
 
-		void create(uint32_t _width, uint32_t _height);
+		void create(uint32_t _width, uint32_t _height, uint32_t _flags);
 		void destroy();
 		void resize(uint32_t _width, uint32_t _height, uint32_t _flags);
 
@@ -92,6 +93,8 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 		void* m_opengl32dll;
 		HGLRC m_context;
 		HDC m_hdc;
+		// true when MSAA is handled by the context instead of using MSAA FBO
+		bool m_msaaContext;
 	};
 } /* namespace gl */ } // namespace bgfx
 

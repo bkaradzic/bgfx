@@ -89,7 +89,7 @@ namespace bgfx { namespace gl
 		return reinterpret_cast<ProtoT>( (void*)::glXGetProcAddress( (const GLubyte*)_name) );
 	}
 
-	void GlContext::create(uint32_t _width, uint32_t _height)
+	void GlContext::create(uint32_t _width, uint32_t _height, uint32_t /*_flags*/)
 	{
 		BX_UNUSED(_width, _height);
 
