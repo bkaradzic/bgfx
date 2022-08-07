@@ -505,6 +505,19 @@ It comes with a 3D editor, HARFANG Studio.
 
 ![HARFANG-STUDIO](https://raw.githubusercontent.com/harfang3d/image-storage/main/portfolio/3.2.2/harfang-studio-cyber-city.png)
 
+## Marine Melodies / Resistance
+
+Demoscene musicdisk released at Evoke 2022 demoparty.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=Ma1-UBa3f2E" 
+target="_blank"><img src="http://img.youtube.com/vi/Ma1-UBa3f2E/0.jpg" 
+alt="Marine Melodies"
+width="640" height="480" border="0" /></a>
+
+https://www.pouet.net/prod.php?which=91906
+
+https://github.com/astrofra/demo-marine-melodies
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
