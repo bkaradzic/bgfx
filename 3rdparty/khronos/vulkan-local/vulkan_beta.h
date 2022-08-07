@@ -22,7 +22,7 @@ extern "C" {
 #define VK_KHR_video_queue 1
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkVideoSessionKHR)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkVideoSessionParametersKHR)
-#define VK_KHR_VIDEO_QUEUE_SPEC_VERSION   3
+#define VK_KHR_VIDEO_QUEUE_SPEC_VERSION   4
 #define VK_KHR_VIDEO_QUEUE_EXTENSION_NAME "VK_KHR_video_queue"
 
 typedef enum VkQueryResultStatusKHR {
@@ -102,7 +102,7 @@ typedef VkFlags VkVideoCodingQualityPresetFlagsKHR;
 typedef struct VkQueueFamilyQueryResultStatusProperties2KHR {
     VkStructureType    sType;
     void*              pNext;
-    VkBool32           supported;
+    VkBool32           queryResultStatusSupport;
 } VkQueueFamilyQueryResultStatusProperties2KHR;
 
 typedef struct VkVideoQueueFamilyProperties2KHR {
@@ -113,7 +113,7 @@ typedef struct VkVideoQueueFamilyProperties2KHR {
 
 typedef struct VkVideoProfileKHR {
     VkStructureType                     sType;
-    void*                               pNext;
+    const void*                         pNext;
     VkVideoCodecOperationFlagBitsKHR    videoCodecOperation;
     VkVideoChromaSubsamplingFlagsKHR    chromaSubsampling;
     VkVideoComponentBitDepthFlagsKHR    lumaBitDepth;
@@ -122,7 +122,7 @@ typedef struct VkVideoProfileKHR {
 
 typedef struct VkVideoProfilesKHR {
     VkStructureType             sType;
-    void*                       pNext;
+    const void*                 pNext;
     uint32_t                    profileCount;
     const VkVideoProfileKHR*    pProfiles;
 } VkVideoProfilesKHR;
@@ -142,16 +142,20 @@ typedef struct VkVideoCapabilitiesKHR {
 } VkVideoCapabilitiesKHR;
 
 typedef struct VkPhysicalDeviceVideoFormatInfoKHR {
-    VkStructureType              sType;
-    void*                        pNext;
-    VkImageUsageFlags            imageUsage;
-    const VkVideoProfilesKHR*    pVideoProfiles;
+     VkStructureType     sType;
+    void*                pNext;
+    VkImageUsageFlags    imageUsage;
 } VkPhysicalDeviceVideoFormatInfoKHR;
 
 typedef struct VkVideoFormatPropertiesKHR {
-    VkStructureType    sType;
-    void*              pNext;
-    VkFormat           format;
+    VkStructureType       sType;
+    void*                 pNext;
+    VkFormat              format;
+    VkComponentMapping    componentMapping;
+    VkImageCreateFlags    imageCreateFlags;
+    VkImageType           imageType;
+    VkImageTiling         imageTiling;
+    VkImageUsageFlags     imageUsageFlags;
 } VkVideoFormatPropertiesKHR;
 
 typedef struct VkVideoPictureResourceKHR {

@@ -72,7 +72,7 @@ extern "C" {
 #define VK_API_VERSION_1_0 VK_MAKE_API_VERSION(0, 1, 0, 0)// Patch version should always be set to 0
 
 // Version of this file
-#define VK_HEADER_VERSION 214
+#define VK_HEADER_VERSION 224
 
 // Complete version of this file
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 3, VK_HEADER_VERSION)
@@ -168,6 +168,24 @@ typedef enum VkResult {
     VK_ERROR_INCOMPATIBLE_DISPLAY_KHR = -1000003001,
     VK_ERROR_VALIDATION_FAILED_EXT = -1000011001,
     VK_ERROR_INVALID_SHADER_NV = -1000012000,
+#ifdef VK_ENABLE_BETA_EXTENSIONS
+    VK_ERROR_IMAGE_USAGE_NOT_SUPPORTED_KHR = -1000023000,
+#endif
+#ifdef VK_ENABLE_BETA_EXTENSIONS
+    VK_ERROR_VIDEO_PICTURE_LAYOUT_NOT_SUPPORTED_KHR = -1000023001,
+#endif
+#ifdef VK_ENABLE_BETA_EXTENSIONS
+    VK_ERROR_VIDEO_PROFILE_OPERATION_NOT_SUPPORTED_KHR = -1000023002,
+#endif
+#ifdef VK_ENABLE_BETA_EXTENSIONS
+    VK_ERROR_VIDEO_PROFILE_FORMAT_NOT_SUPPORTED_KHR = -1000023003,
+#endif
+#ifdef VK_ENABLE_BETA_EXTENSIONS
+    VK_ERROR_VIDEO_PROFILE_CODEC_NOT_SUPPORTED_KHR = -1000023004,
+#endif
+#ifdef VK_ENABLE_BETA_EXTENSIONS
+    VK_ERROR_VIDEO_STD_VERSION_NOT_SUPPORTED_KHR = -1000023005,
+#endif
     VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT = -1000158000,
     VK_ERROR_NOT_PERMITTED_KHR = -1000174001,
     VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT = -1000255000,
@@ -596,6 +614,9 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_VI_SURFACE_CREATE_INFO_NN = 1000062000,
     VK_STRUCTURE_TYPE_IMAGE_VIEW_ASTC_DECODE_MODE_EXT = 1000067000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ASTC_DECODE_FEATURES_EXT = 1000067001,
+    VK_STRUCTURE_TYPE_PIPELINE_ROBUSTNESS_CREATE_INFO_EXT = 1000068000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_FEATURES_EXT = 1000068001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_PROPERTIES_EXT = 1000068002,
     VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR = 1000073000,
     VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR = 1000073001,
     VK_STRUCTURE_TYPE_MEMORY_WIN32_HANDLE_PROPERTIES_KHR = 1000073002,
@@ -768,7 +789,6 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_NV = 1000201000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV = 1000202000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV = 1000202001,
-    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_NV = 1000203000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_FOOTPRINT_FEATURES_NV = 1000204000,
     VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_EXCLUSIVE_SCISSOR_STATE_CREATE_INFO_NV = 1000205000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXCLUSIVE_SCISSOR_FEATURES_NV = 1000205002,
@@ -872,12 +892,26 @@ typedef enum VkStructureType {
 #endif
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DIAGNOSTICS_CONFIG_FEATURES_NV = 1000300000,
     VK_STRUCTURE_TYPE_DEVICE_DIAGNOSTICS_CONFIG_CREATE_INFO_NV = 1000300001,
+    VK_STRUCTURE_TYPE_EXPORT_METAL_OBJECT_CREATE_INFO_EXT = 1000311000,
+    VK_STRUCTURE_TYPE_EXPORT_METAL_OBJECTS_INFO_EXT = 1000311001,
+    VK_STRUCTURE_TYPE_EXPORT_METAL_DEVICE_INFO_EXT = 1000311002,
+    VK_STRUCTURE_TYPE_EXPORT_METAL_COMMAND_QUEUE_INFO_EXT = 1000311003,
+    VK_STRUCTURE_TYPE_EXPORT_METAL_BUFFER_INFO_EXT = 1000311004,
+    VK_STRUCTURE_TYPE_IMPORT_METAL_BUFFER_INFO_EXT = 1000311005,
+    VK_STRUCTURE_TYPE_EXPORT_METAL_TEXTURE_INFO_EXT = 1000311006,
+    VK_STRUCTURE_TYPE_IMPORT_METAL_TEXTURE_INFO_EXT = 1000311007,
+    VK_STRUCTURE_TYPE_EXPORT_METAL_IO_SURFACE_INFO_EXT = 1000311008,
+    VK_STRUCTURE_TYPE_IMPORT_METAL_IO_SURFACE_INFO_EXT = 1000311009,
+    VK_STRUCTURE_TYPE_EXPORT_METAL_SHARED_EVENT_INFO_EXT = 1000311010,
+    VK_STRUCTURE_TYPE_IMPORT_METAL_SHARED_EVENT_INFO_EXT = 1000311011,
     VK_STRUCTURE_TYPE_QUEUE_FAMILY_CHECKPOINT_PROPERTIES_2_NV = 1000314008,
     VK_STRUCTURE_TYPE_CHECKPOINT_DATA_2_NV = 1000314009,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT = 1000320000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_PROPERTIES_EXT = 1000320001,
     VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT = 1000320002,
-    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_EXT = 1000321000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_AMD = 1000321000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR = 1000203000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_PROPERTIES_KHR = 1000322000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_UNIFORM_CONTROL_FLOW_FEATURES_KHR = 1000323000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_PROPERTIES_NV = 1000326000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_FEATURES_NV = 1000326001,
@@ -895,6 +929,7 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_SUBRESOURCE_LAYOUT_2_EXT = 1000338002,
     VK_STRUCTURE_TYPE_IMAGE_SUBRESOURCE_2_EXT = 1000338003,
     VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT = 1000338004,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_LAYOUT_FEATURES_EXT = 1000339000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_4444_FORMATS_FEATURES_EXT = 1000340000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_FEATURES_ARM = 1000342000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RGBA10X6_FORMATS_FEATURES_EXT = 1000344000,
@@ -931,6 +966,9 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_RDMA_FEATURES_NV = 1000371001,
     VK_STRUCTURE_TYPE_PIPELINE_PROPERTIES_IDENTIFIER_EXT = 1000372000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROPERTIES_FEATURES_EXT = 1000372001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_FEATURES_EXT = 1000376000,
+    VK_STRUCTURE_TYPE_SUBPASS_RESOLVE_PERFORMANCE_QUERY_EXT = 1000376001,
+    VK_STRUCTURE_TYPE_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_INFO_EXT = 1000376002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT = 1000377000,
     VK_STRUCTURE_TYPE_SCREEN_SURFACE_CREATE_INFO_QNX = 1000378000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT = 1000381000,
@@ -948,15 +986,27 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_SET_HOST_MAPPING_FEATURES_VALVE = 1000420000,
     VK_STRUCTURE_TYPE_DESCRIPTOR_SET_BINDING_REFERENCE_VALVE = 1000420001,
     VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_HOST_MAPPING_INFO_VALVE = 1000420002,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_NON_SEAMLESS_CUBE_MAP_FEATURES_EXT = 1000422000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_FEATURES_QCOM = 1000425000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_PROPERTIES_QCOM = 1000425001,
     VK_STRUCTURE_TYPE_SUBPASS_FRAGMENT_DENSITY_MAP_OFFSET_END_INFO_QCOM = 1000425002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINEAR_COLOR_ATTACHMENT_FEATURES_NV = 1000430000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_FEATURES_EXT = 1000437000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_FEATURES_QCOM = 1000440000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_PROPERTIES_QCOM = 1000440001,
+    VK_STRUCTURE_TYPE_IMAGE_VIEW_SAMPLE_WEIGHT_CREATE_INFO_QCOM = 1000440002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_MERGE_FEEDBACK_FEATURES_EXT = 1000458000,
     VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_CONTROL_EXT = 1000458001,
-    VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_FEEDBACK_INFO_EXT = 1000458002,
-    VK_STRUCTURE_TYPE_RENDER_PASS_SUBPASS_FEEDBACK_INFO_EXT = 1000458003,
+    VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_FEEDBACK_CREATE_INFO_EXT = 1000458002,
+    VK_STRUCTURE_TYPE_RENDER_PASS_SUBPASS_FEEDBACK_CREATE_INFO_EXT = 1000458003,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_FEATURES_EXT = 1000462000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_PROPERTIES_EXT = 1000462001,
+    VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_MODULE_IDENTIFIER_CREATE_INFO_EXT = 1000462002,
+    VK_STRUCTURE_TYPE_SHADER_MODULE_IDENTIFIER_EXT = 1000462003,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_PROPERTIES_FEATURES_QCOM = 1000484000,
+    VK_STRUCTURE_TYPE_TILE_PROPERTIES_QCOM = 1000484001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_AMIGO_PROFILING_FEATURES_SEC = 1000485000,
+    VK_STRUCTURE_TYPE_AMIGO_PROFILING_SUBMIT_INFO_SEC = 1000485001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES,
     VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
@@ -1062,6 +1112,7 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES_KHR = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES_KHR = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES,
     VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE_KHR = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_NV = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES_KHR = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES,
     VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO_KHR = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
@@ -1174,6 +1225,7 @@ typedef enum VkImageLayout {
 #ifdef VK_ENABLE_BETA_EXTENSIONS
     VK_IMAGE_LAYOUT_VIDEO_ENCODE_DPB_KHR = 1000299002,
 #endif
+    VK_IMAGE_LAYOUT_ATTACHMENT_FEEDBACK_LOOP_OPTIMAL_EXT = 1000339000,
     VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL_KHR = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL,
     VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL,
     VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR,
@@ -1873,8 +1925,8 @@ typedef enum VkBorderColor {
 typedef enum VkFilter {
     VK_FILTER_NEAREST = 0,
     VK_FILTER_LINEAR = 1,
-    VK_FILTER_CUBIC_IMG = 1000015000,
-    VK_FILTER_CUBIC_EXT = VK_FILTER_CUBIC_IMG,
+    VK_FILTER_CUBIC_EXT = 1000015000,
+    VK_FILTER_CUBIC_IMG = VK_FILTER_CUBIC_EXT,
     VK_FILTER_MAX_ENUM = 0x7FFFFFFF
 } VkFilter;
 
@@ -1910,6 +1962,8 @@ typedef enum VkDescriptorType {
     VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR = 1000150000,
     VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV = 1000165000,
     VK_DESCRIPTOR_TYPE_MUTABLE_VALVE = 1000351000,
+    VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM = 1000440000,
+    VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM = 1000440001,
     VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT = VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK,
     VK_DESCRIPTOR_TYPE_MAX_ENUM = 0x7FFFFFFF
 } VkDescriptorType;
@@ -2045,7 +2099,6 @@ typedef enum VkFormatFeatureFlagBits {
     VK_FORMAT_FEATURE_DISJOINT_BIT = 0x00400000,
     VK_FORMAT_FEATURE_COSITED_CHROMA_SAMPLES_BIT = 0x00800000,
     VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_MINMAX_BIT = 0x00010000,
-    VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG = 0x00002000,
 #ifdef VK_ENABLE_BETA_EXTENSIONS
     VK_FORMAT_FEATURE_VIDEO_DECODE_OUTPUT_BIT_KHR = 0x02000000,
 #endif
@@ -2053,6 +2106,7 @@ typedef enum VkFormatFeatureFlagBits {
     VK_FORMAT_FEATURE_VIDEO_DECODE_DPB_BIT_KHR = 0x04000000,
 #endif
     VK_FORMAT_FEATURE_ACCELERATION_STRUCTURE_VERTEX_BUFFER_BIT_KHR = 0x20000000,
+    VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_EXT = 0x00002000,
     VK_FORMAT_FEATURE_FRAGMENT_DENSITY_MAP_BIT_EXT = 0x01000000,
     VK_FORMAT_FEATURE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR = 0x40000000,
 #ifdef VK_ENABLE_BETA_EXTENSIONS
@@ -2061,6 +2115,7 @@ typedef enum VkFormatFeatureFlagBits {
 #ifdef VK_ENABLE_BETA_EXTENSIONS
     VK_FORMAT_FEATURE_VIDEO_ENCODE_DPB_BIT_KHR = 0x10000000,
 #endif
+    VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG = VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_EXT,
     VK_FORMAT_FEATURE_TRANSFER_SRC_BIT_KHR = VK_FORMAT_FEATURE_TRANSFER_SRC_BIT,
     VK_FORMAT_FEATURE_TRANSFER_DST_BIT_KHR = VK_FORMAT_FEATURE_TRANSFER_DST_BIT,
     VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_MINMAX_BIT_EXT = VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_MINMAX_BIT,
@@ -2071,7 +2126,6 @@ typedef enum VkFormatFeatureFlagBits {
     VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_FORCEABLE_BIT_KHR = VK_FORMAT_FEATURE_SAMPLED_IMAGE_YCBCR_CONVERSION_CHROMA_RECONSTRUCTION_EXPLICIT_FORCEABLE_BIT,
     VK_FORMAT_FEATURE_DISJOINT_BIT_KHR = VK_FORMAT_FEATURE_DISJOINT_BIT,
     VK_FORMAT_FEATURE_COSITED_CHROMA_SAMPLES_BIT_KHR = VK_FORMAT_FEATURE_COSITED_CHROMA_SAMPLES_BIT,
-    VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_EXT = VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG,
     VK_FORMAT_FEATURE_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF
 } VkFormatFeatureFlagBits;
 typedef VkFlags VkFormatFeatureFlags;
@@ -2092,6 +2146,7 @@ typedef enum VkImageCreateFlagBits {
     VK_IMAGE_CREATE_CORNER_SAMPLED_BIT_NV = 0x00002000,
     VK_IMAGE_CREATE_SAMPLE_LOCATIONS_COMPATIBLE_DEPTH_BIT_EXT = 0x00001000,
     VK_IMAGE_CREATE_SUBSAMPLED_BIT_EXT = 0x00004000,
+    VK_IMAGE_CREATE_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_BIT_EXT = 0x00040000,
     VK_IMAGE_CREATE_2D_VIEW_COMPATIBLE_BIT_EXT = 0x00020000,
     VK_IMAGE_CREATE_FRAGMENT_DENSITY_MAP_OFFSET_BIT_QCOM = 0x00008000,
     VK_IMAGE_CREATE_SPLIT_INSTANCE_BIND_REGIONS_BIT_KHR = VK_IMAGE_CREATE_SPLIT_INSTANCE_BIND_REGIONS_BIT,
@@ -2145,7 +2200,10 @@ typedef enum VkImageUsageFlagBits {
 #ifdef VK_ENABLE_BETA_EXTENSIONS
     VK_IMAGE_USAGE_VIDEO_ENCODE_DPB_BIT_KHR = 0x00008000,
 #endif
+    VK_IMAGE_USAGE_ATTACHMENT_FEEDBACK_LOOP_BIT_EXT = 0x00080000,
     VK_IMAGE_USAGE_INVOCATION_MASK_BIT_HUAWEI = 0x00040000,
+    VK_IMAGE_USAGE_SAMPLE_WEIGHT_BIT_QCOM = 0x00100000,
+    VK_IMAGE_USAGE_SAMPLE_BLOCK_MATCH_BIT_QCOM = 0x00200000,
     VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV = VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR,
     VK_IMAGE_USAGE_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF
 } VkImageUsageFlagBits;
@@ -2394,6 +2452,8 @@ typedef enum VkPipelineCreateFlagBits {
     VK_PIPELINE_CREATE_RETAIN_LINK_TIME_OPTIMIZATION_INFO_BIT_EXT = 0x00800000,
     VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT = 0x00000400,
     VK_PIPELINE_CREATE_RAY_TRACING_ALLOW_MOTION_BIT_NV = 0x00100000,
+    VK_PIPELINE_CREATE_COLOR_ATTACHMENT_FEEDBACK_LOOP_BIT_EXT = 0x02000000,
+    VK_PIPELINE_CREATE_DEPTH_STENCIL_ATTACHMENT_FEEDBACK_LOOP_BIT_EXT = 0x04000000,
     VK_PIPELINE_CREATE_DISPATCH_BASE = VK_PIPELINE_CREATE_DISPATCH_BASE_BIT,
     VK_PIPELINE_RASTERIZATION_STATE_CREATE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR = VK_PIPELINE_CREATE_RENDERING_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR,
     VK_PIPELINE_RASTERIZATION_STATE_CREATE_FRAGMENT_DENSITY_MAP_ATTACHMENT_BIT_EXT = VK_PIPELINE_CREATE_RENDERING_FRAGMENT_DENSITY_MAP_ATTACHMENT_BIT_EXT,
@@ -2480,6 +2540,8 @@ typedef VkFlags VkShaderStageFlags;
 typedef enum VkSamplerCreateFlagBits {
     VK_SAMPLER_CREATE_SUBSAMPLED_BIT_EXT = 0x00000001,
     VK_SAMPLER_CREATE_SUBSAMPLED_COARSE_RECONSTRUCTION_BIT_EXT = 0x00000002,
+    VK_SAMPLER_CREATE_NON_SEAMLESS_CUBE_MAP_BIT_EXT = 0x00000004,
+    VK_SAMPLER_CREATE_IMAGE_PROCESSING_BIT_QCOM = 0x00000010,
     VK_SAMPLER_CREATE_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF
 } VkSamplerCreateFlagBits;
 typedef VkFlags VkSamplerCreateFlags;
@@ -2513,6 +2575,7 @@ typedef enum VkDependencyFlagBits {
     VK_DEPENDENCY_BY_REGION_BIT = 0x00000001,
     VK_DEPENDENCY_DEVICE_GROUP_BIT = 0x00000004,
     VK_DEPENDENCY_VIEW_LOCAL_BIT = 0x00000002,
+    VK_DEPENDENCY_FEEDBACK_LOOP_BIT_EXT = 0x00000008,
     VK_DEPENDENCY_VIEW_LOCAL_BIT_KHR = VK_DEPENDENCY_VIEW_LOCAL_BIT,
     VK_DEPENDENCY_DEVICE_GROUP_BIT_KHR = VK_DEPENDENCY_DEVICE_GROUP_BIT,
     VK_DEPENDENCY_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF
@@ -5542,6 +5605,7 @@ typedef enum VkDriverId {
     VK_DRIVER_ID_MESA_PANVK = 20,
     VK_DRIVER_ID_SAMSUNG_PROPRIETARY = 21,
     VK_DRIVER_ID_MESA_VENUS = 22,
+    VK_DRIVER_ID_MESA_DOZEN = 23,
     VK_DRIVER_ID_AMD_PROPRIETARY_KHR = VK_DRIVER_ID_AMD_PROPRIETARY,
     VK_DRIVER_ID_AMD_OPEN_SOURCE_KHR = VK_DRIVER_ID_AMD_OPEN_SOURCE,
     VK_DRIVER_ID_MESA_RADV_KHR = VK_DRIVER_ID_MESA_RADV,
@@ -6543,6 +6607,10 @@ static const VkFormatFeatureFlagBits2 VK_FORMAT_FEATURE_2_VIDEO_ENCODE_INPUT_BIT
 static const VkFormatFeatureFlagBits2 VK_FORMAT_FEATURE_2_VIDEO_ENCODE_DPB_BIT_KHR = 0x10000000ULL;
 #endif
 static const VkFormatFeatureFlagBits2 VK_FORMAT_FEATURE_2_LINEAR_COLOR_ATTACHMENT_BIT_NV = 0x4000000000ULL;
+static const VkFormatFeatureFlagBits2 VK_FORMAT_FEATURE_2_WEIGHT_IMAGE_BIT_QCOM = 0x400000000ULL;
+static const VkFormatFeatureFlagBits2 VK_FORMAT_FEATURE_2_WEIGHT_SAMPLED_IMAGE_BIT_QCOM = 0x800000000ULL;
+static const VkFormatFeatureFlagBits2 VK_FORMAT_FEATURE_2_BLOCK_MATCHING_BIT_QCOM = 0x1000000000ULL;
+static const VkFormatFeatureFlagBits2 VK_FORMAT_FEATURE_2_BOX_FILTER_SAMPLED_BIT_QCOM = 0x2000000000ULL;
 
 typedef struct VkPhysicalDeviceVulkan13Features {
     VkStructureType    sType;
@@ -9402,6 +9470,23 @@ VKAPI_ATTR void VKAPI_CALL vkGetQueueCheckpointData2NV(
 #endif
 
 
+#define VK_KHR_fragment_shader_barycentric 1
+#define VK_KHR_FRAGMENT_SHADER_BARYCENTRIC_SPEC_VERSION 1
+#define VK_KHR_FRAGMENT_SHADER_BARYCENTRIC_EXTENSION_NAME "VK_KHR_fragment_shader_barycentric"
+typedef struct VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           fragmentShaderBarycentric;
+} VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR;
+
+typedef struct VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           triStripVertexOrderIndependentOfProvokingVertex;
+} VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR;
+
+
+
 #define VK_KHR_shader_subgroup_uniform_control_flow 1
 #define VK_KHR_SHADER_SUBGROUP_UNIFORM_CONTROL_FLOW_SPEC_VERSION 1
 #define VK_KHR_SHADER_SUBGROUP_UNIFORM_CONTROL_FLOW_EXTENSION_NAME "VK_KHR_shader_subgroup_uniform_control_flow"
@@ -10227,6 +10312,51 @@ typedef struct VkPhysicalDeviceASTCDecodeFeaturesEXT {
     void*              pNext;
     VkBool32           decodeModeSharedExponent;
 } VkPhysicalDeviceASTCDecodeFeaturesEXT;
+
+
+
+#define VK_EXT_pipeline_robustness 1
+#define VK_EXT_PIPELINE_ROBUSTNESS_SPEC_VERSION 1
+#define VK_EXT_PIPELINE_ROBUSTNESS_EXTENSION_NAME "VK_EXT_pipeline_robustness"
+
+typedef enum VkPipelineRobustnessBufferBehaviorEXT {
+    VK_PIPELINE_ROBUSTNESS_BUFFER_BEHAVIOR_DEVICE_DEFAULT_EXT = 0,
+    VK_PIPELINE_ROBUSTNESS_BUFFER_BEHAVIOR_DISABLED_EXT = 1,
+    VK_PIPELINE_ROBUSTNESS_BUFFER_BEHAVIOR_ROBUST_BUFFER_ACCESS_EXT = 2,
+    VK_PIPELINE_ROBUSTNESS_BUFFER_BEHAVIOR_ROBUST_BUFFER_ACCESS_2_EXT = 3,
+    VK_PIPELINE_ROBUSTNESS_BUFFER_BEHAVIOR_MAX_ENUM_EXT = 0x7FFFFFFF
+} VkPipelineRobustnessBufferBehaviorEXT;
+
+typedef enum VkPipelineRobustnessImageBehaviorEXT {
+    VK_PIPELINE_ROBUSTNESS_IMAGE_BEHAVIOR_DEVICE_DEFAULT_EXT = 0,
+    VK_PIPELINE_ROBUSTNESS_IMAGE_BEHAVIOR_DISABLED_EXT = 1,
+    VK_PIPELINE_ROBUSTNESS_IMAGE_BEHAVIOR_ROBUST_IMAGE_ACCESS_EXT = 2,
+    VK_PIPELINE_ROBUSTNESS_IMAGE_BEHAVIOR_ROBUST_IMAGE_ACCESS_2_EXT = 3,
+    VK_PIPELINE_ROBUSTNESS_IMAGE_BEHAVIOR_MAX_ENUM_EXT = 0x7FFFFFFF
+} VkPipelineRobustnessImageBehaviorEXT;
+typedef struct VkPhysicalDevicePipelineRobustnessFeaturesEXT {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           pipelineRobustness;
+} VkPhysicalDevicePipelineRobustnessFeaturesEXT;
+
+typedef struct VkPhysicalDevicePipelineRobustnessPropertiesEXT {
+    VkStructureType                          sType;
+    void*                                    pNext;
+    VkPipelineRobustnessBufferBehaviorEXT    defaultRobustnessStorageBuffers;
+    VkPipelineRobustnessBufferBehaviorEXT    defaultRobustnessUniformBuffers;
+    VkPipelineRobustnessBufferBehaviorEXT    defaultRobustnessVertexInputs;
+    VkPipelineRobustnessImageBehaviorEXT     defaultRobustnessImages;
+} VkPhysicalDevicePipelineRobustnessPropertiesEXT;
+
+typedef struct VkPipelineRobustnessCreateInfoEXT {
+    VkStructureType                          sType;
+    const void*                              pNext;
+    VkPipelineRobustnessBufferBehaviorEXT    storageBuffers;
+    VkPipelineRobustnessBufferBehaviorEXT    uniformBuffers;
+    VkPipelineRobustnessBufferBehaviorEXT    vertexInputs;
+    VkPipelineRobustnessImageBehaviorEXT     images;
+} VkPipelineRobustnessCreateInfoEXT;
 
 
 
@@ -11960,11 +12090,7 @@ VKAPI_ATTR void VKAPI_CALL vkCmdDrawMeshTasksIndirectCountNV(
 #define VK_NV_fragment_shader_barycentric 1
 #define VK_NV_FRAGMENT_SHADER_BARYCENTRIC_SPEC_VERSION 1
 #define VK_NV_FRAGMENT_SHADER_BARYCENTRIC_EXTENSION_NAME "VK_NV_fragment_shader_barycentric"
-typedef struct VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV {
-    VkStructureType    sType;
-    void*              pNext;
-    VkBool32           fragmentShaderBarycentric;
-} VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV;
+typedef VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV;
 
 
 
@@ -13065,7 +13191,7 @@ typedef VkPhysicalDeviceTexelBufferAlignmentProperties VkPhysicalDeviceTexelBuff
 
 
 #define VK_QCOM_render_pass_transform 1
-#define VK_QCOM_RENDER_PASS_TRANSFORM_SPEC_VERSION 2
+#define VK_QCOM_RENDER_PASS_TRANSFORM_SPEC_VERSION 3
 #define VK_QCOM_RENDER_PASS_TRANSFORM_EXTENSION_NAME "VK_QCOM_render_pass_transform"
 typedef struct VkRenderPassTransformBeginInfoQCOM {
     VkStructureType                  sType;
@@ -13317,11 +13443,11 @@ typedef struct VkGraphicsPipelineLibraryCreateInfoEXT {
 #define VK_AMD_shader_early_and_late_fragment_tests 1
 #define VK_AMD_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_SPEC_VERSION 1
 #define VK_AMD_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_EXTENSION_NAME "VK_AMD_shader_early_and_late_fragment_tests"
-typedef struct VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT {
+typedef struct VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD {
     VkStructureType    sType;
     void*              pNext;
     VkBool32           shaderEarlyAndLateFragmentTests;
-} VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT;
+} VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD;
 
 
 
@@ -13607,6 +13733,17 @@ VKAPI_ATTR void VKAPI_CALL vkGetImageSubresourceLayout2EXT(
 #endif
 
 
+#define VK_EXT_attachment_feedback_loop_layout 1
+#define VK_EXT_ATTACHMENT_FEEDBACK_LOOP_LAYOUT_SPEC_VERSION 2
+#define VK_EXT_ATTACHMENT_FEEDBACK_LOOP_LAYOUT_EXTENSION_NAME "VK_EXT_attachment_feedback_loop_layout"
+typedef struct VkPhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           attachmentFeedbackLoopLayout;
+} VkPhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT;
+
+
+
 #define VK_EXT_4444_formats 1
 #define VK_EXT_4444_FORMATS_SPEC_VERSION  1
 #define VK_EXT_4444_FORMATS_EXTENSION_NAME "VK_EXT_4444_formats"
@@ -13877,6 +14014,30 @@ VKAPI_ATTR VkResult VKAPI_CALL vkGetPipelinePropertiesEXT(
 #endif
 
 
+#define VK_EXT_multisampled_render_to_single_sampled 1
+#define VK_EXT_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_SPEC_VERSION 1
+#define VK_EXT_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_EXTENSION_NAME "VK_EXT_multisampled_render_to_single_sampled"
+typedef struct VkPhysicalDeviceMultisampledRenderToSingleSampledFeaturesEXT {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           multisampledRenderToSingleSampled;
+} VkPhysicalDeviceMultisampledRenderToSingleSampledFeaturesEXT;
+
+typedef struct VkSubpassResolvePerformanceQueryEXT {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           optimal;
+} VkSubpassResolvePerformanceQueryEXT;
+
+typedef struct VkMultisampledRenderToSingleSampledInfoEXT {
+    VkStructureType          sType;
+    const void*              pNext;
+    VkBool32                 multisampledRenderToSingleSampledEnable;
+    VkSampleCountFlagBits    rasterizationSamples;
+} VkMultisampledRenderToSingleSampledInfoEXT;
+
+
+
 #define VK_EXT_extended_dynamic_state2 1
 #define VK_EXT_EXTENDED_DYNAMIC_STATE_2_SPEC_VERSION 1
 #define VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME "VK_EXT_extended_dynamic_state2"
@@ -14126,6 +14287,17 @@ VKAPI_ATTR void VKAPI_CALL vkGetDescriptorSetHostMappingVALVE(
 #endif
 
 
+#define VK_EXT_non_seamless_cube_map 1
+#define VK_EXT_NON_SEAMLESS_CUBE_MAP_SPEC_VERSION 1
+#define VK_EXT_NON_SEAMLESS_CUBE_MAP_EXTENSION_NAME "VK_EXT_non_seamless_cube_map"
+typedef struct VkPhysicalDeviceNonSeamlessCubeMapFeaturesEXT {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           nonSeamlessCubeMap;
+} VkPhysicalDeviceNonSeamlessCubeMapFeaturesEXT;
+
+
+
 #define VK_QCOM_fragment_density_map_offset 1
 #define VK_QCOM_FRAGMENT_DENSITY_MAP_OFFSET_SPEC_VERSION 1
 #define VK_QCOM_FRAGMENT_DENSITY_MAP_OFFSET_EXTENSION_NAME "VK_QCOM_fragment_density_map_offset"
@@ -14177,8 +14349,38 @@ typedef struct VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT {
 
 
 
+#define VK_QCOM_image_processing 1
+#define VK_QCOM_IMAGE_PROCESSING_SPEC_VERSION 1
+#define VK_QCOM_IMAGE_PROCESSING_EXTENSION_NAME "VK_QCOM_image_processing"
+typedef struct VkImageViewSampleWeightCreateInfoQCOM {
+    VkStructureType    sType;
+    const void*        pNext;
+    VkOffset2D         filterCenter;
+    VkExtent2D         filterSize;
+    uint32_t           numPhases;
+} VkImageViewSampleWeightCreateInfoQCOM;
+
+typedef struct VkPhysicalDeviceImageProcessingFeaturesQCOM {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           textureSampleWeighted;
+    VkBool32           textureBoxFilter;
+    VkBool32           textureBlockMatch;
+} VkPhysicalDeviceImageProcessingFeaturesQCOM;
+
+typedef struct VkPhysicalDeviceImageProcessingPropertiesQCOM {
+    VkStructureType    sType;
+    void*              pNext;
+    uint32_t           maxWeightFilterPhases;
+    VkExtent2D         maxWeightFilterDimension;
+    VkExtent2D         maxBlockMatchRegion;
+    VkExtent2D         maxBoxFilterBlockSize;
+} VkPhysicalDeviceImageProcessingPropertiesQCOM;
+
+
+
 #define VK_EXT_subpass_merge_feedback 1
-#define VK_EXT_SUBPASS_MERGE_FEEDBACK_SPEC_VERSION 1
+#define VK_EXT_SUBPASS_MERGE_FEEDBACK_SPEC_VERSION 2
 #define VK_EXT_SUBPASS_MERGE_FEEDBACK_EXTENSION_NAME "VK_EXT_subpass_merge_feedback"
 
 typedef enum VkSubpassMergeStatusEXT {
@@ -14211,18 +14413,124 @@ typedef struct VkRenderPassCreationControlEXT {
 } VkRenderPassCreationControlEXT;
 
 typedef struct VkRenderPassCreationFeedbackInfoEXT {
-    VkStructureType    sType;
-    const void*        pNext;
-    uint32_t           postMergeSubpassCount;
+    uint32_t    postMergeSubpassCount;
 } VkRenderPassCreationFeedbackInfoEXT;
 
+typedef struct VkRenderPassCreationFeedbackCreateInfoEXT {
+    VkStructureType                         sType;
+    const void*                             pNext;
+    VkRenderPassCreationFeedbackInfoEXT*    pRenderPassFeedback;
+} VkRenderPassCreationFeedbackCreateInfoEXT;
+
 typedef struct VkRenderPassSubpassFeedbackInfoEXT {
-    VkStructureType            sType;
-    const void*                pNext;
     VkSubpassMergeStatusEXT    subpassMergeStatus;
     char                       description[VK_MAX_DESCRIPTION_SIZE];
     uint32_t                   postMergeIndex;
 } VkRenderPassSubpassFeedbackInfoEXT;
+
+typedef struct VkRenderPassSubpassFeedbackCreateInfoEXT {
+    VkStructureType                        sType;
+    const void*                            pNext;
+    VkRenderPassSubpassFeedbackInfoEXT*    pSubpassFeedback;
+} VkRenderPassSubpassFeedbackCreateInfoEXT;
+
+
+
+#define VK_EXT_shader_module_identifier 1
+#define VK_MAX_SHADER_MODULE_IDENTIFIER_SIZE_EXT 32U
+#define VK_EXT_SHADER_MODULE_IDENTIFIER_SPEC_VERSION 1
+#define VK_EXT_SHADER_MODULE_IDENTIFIER_EXTENSION_NAME "VK_EXT_shader_module_identifier"
+typedef struct VkPhysicalDeviceShaderModuleIdentifierFeaturesEXT {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           shaderModuleIdentifier;
+} VkPhysicalDeviceShaderModuleIdentifierFeaturesEXT;
+
+typedef struct VkPhysicalDeviceShaderModuleIdentifierPropertiesEXT {
+    VkStructureType    sType;
+    void*              pNext;
+    uint8_t            shaderModuleIdentifierAlgorithmUUID[VK_UUID_SIZE];
+} VkPhysicalDeviceShaderModuleIdentifierPropertiesEXT;
+
+typedef struct VkPipelineShaderStageModuleIdentifierCreateInfoEXT {
+    VkStructureType    sType;
+    const void*        pNext;
+    uint32_t           identifierSize;
+    const uint8_t*     pIdentifier;
+} VkPipelineShaderStageModuleIdentifierCreateInfoEXT;
+
+typedef struct VkShaderModuleIdentifierEXT {
+    VkStructureType    sType;
+    void*              pNext;
+    uint32_t           identifierSize;
+    uint8_t            identifier[VK_MAX_SHADER_MODULE_IDENTIFIER_SIZE_EXT];
+} VkShaderModuleIdentifierEXT;
+
+typedef void (VKAPI_PTR *PFN_vkGetShaderModuleIdentifierEXT)(VkDevice device, VkShaderModule shaderModule, VkShaderModuleIdentifierEXT* pIdentifier);
+typedef void (VKAPI_PTR *PFN_vkGetShaderModuleCreateInfoIdentifierEXT)(VkDevice device, const VkShaderModuleCreateInfo* pCreateInfo, VkShaderModuleIdentifierEXT* pIdentifier);
+
+#ifndef VK_NO_PROTOTYPES
+VKAPI_ATTR void VKAPI_CALL vkGetShaderModuleIdentifierEXT(
+    VkDevice                                    device,
+    VkShaderModule                              shaderModule,
+    VkShaderModuleIdentifierEXT*                pIdentifier);
+
+VKAPI_ATTR void VKAPI_CALL vkGetShaderModuleCreateInfoIdentifierEXT(
+    VkDevice                                    device,
+    const VkShaderModuleCreateInfo*             pCreateInfo,
+    VkShaderModuleIdentifierEXT*                pIdentifier);
+#endif
+
+
+#define VK_QCOM_tile_properties 1
+#define VK_QCOM_TILE_PROPERTIES_SPEC_VERSION 1
+#define VK_QCOM_TILE_PROPERTIES_EXTENSION_NAME "VK_QCOM_tile_properties"
+typedef struct VkPhysicalDeviceTilePropertiesFeaturesQCOM {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           tileProperties;
+} VkPhysicalDeviceTilePropertiesFeaturesQCOM;
+
+typedef struct VkTilePropertiesQCOM {
+    VkStructureType    sType;
+    void*              pNext;
+    VkExtent3D         tileSize;
+    VkExtent2D         apronSize;
+    VkOffset2D         origin;
+} VkTilePropertiesQCOM;
+
+typedef VkResult (VKAPI_PTR *PFN_vkGetFramebufferTilePropertiesQCOM)(VkDevice device, VkFramebuffer framebuffer, uint32_t* pPropertiesCount, VkTilePropertiesQCOM* pProperties);
+typedef VkResult (VKAPI_PTR *PFN_vkGetDynamicRenderingTilePropertiesQCOM)(VkDevice device, const VkRenderingInfo* pRenderingInfo, VkTilePropertiesQCOM* pProperties);
+
+#ifndef VK_NO_PROTOTYPES
+VKAPI_ATTR VkResult VKAPI_CALL vkGetFramebufferTilePropertiesQCOM(
+    VkDevice                                    device,
+    VkFramebuffer                               framebuffer,
+    uint32_t*                                   pPropertiesCount,
+    VkTilePropertiesQCOM*                       pProperties);
+
+VKAPI_ATTR VkResult VKAPI_CALL vkGetDynamicRenderingTilePropertiesQCOM(
+    VkDevice                                    device,
+    const VkRenderingInfo*                      pRenderingInfo,
+    VkTilePropertiesQCOM*                       pProperties);
+#endif
+
+
+#define VK_SEC_amigo_profiling 1
+#define VK_SEC_AMIGO_PROFILING_SPEC_VERSION 1
+#define VK_SEC_AMIGO_PROFILING_EXTENSION_NAME "VK_SEC_amigo_profiling"
+typedef struct VkPhysicalDeviceAmigoProfilingFeaturesSEC {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           amigoProfiling;
+} VkPhysicalDeviceAmigoProfilingFeaturesSEC;
+
+typedef struct VkAmigoProfilingSubmitInfoSEC {
+    VkStructureType    sType;
+    const void*        pNext;
+    uint64_t           firstDrawTimestamp;
+    uint64_t           swapBufferTimestamp;
+} VkAmigoProfilingSubmitInfoSEC;
 
 
 
