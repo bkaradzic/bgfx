@@ -7035,12 +7035,14 @@ TIntermTyped* TParseContext::vkRelaxedRemapFunctionCall(const TSourceLoc& loc, T
 
         TFunction realFunc(&name, function->getType());
 
+        // Use copyParam to avoid shared ownership of the 'type' field
+        // of the parameter.
         for (int i = 0; i < function->getParamCount(); ++i) {
-            realFunc.addParameter((*function)[i]);
+            realFunc.addParameter(TParameter().copyParam((*function)[i]));
         }
 
         TParameter tmpP = { 0, &uintType };
-        realFunc.addParameter(tmpP);
+        realFunc.addParameter(TParameter().copyParam(tmpP));
         arguments = intermediate.growAggregate(arguments, intermediate.addConstantUnion(1, loc, true));
 
         result = handleFunctionCall(loc, &realFunc, arguments);
@@ -7053,11 +7055,11 @@ TIntermTyped* TParseContext::vkRelaxedRemapFunctionCall(const TSourceLoc& loc, T
         TFunction realFunc(&name, function->getType());
 
         for (int i = 0; i < function->getParamCount(); ++i) {
-            realFunc.addParameter((*function)[i]);
+            realFunc.addParameter(TParameter().copyParam((*function)[i]));
         }
 
         TParameter tmpP = { 0, &uintType };
-        realFunc.addParameter(tmpP);
+        realFunc.addParameter(TParameter().copyParam(tmpP));
         arguments = intermediate.growAggregate(arguments, intermediate.addConstantUnion(-1, loc, true));
 
         result = handleFunctionCall(loc, &realFunc, arguments);
