@@ -758,9 +758,6 @@ int Differ::ComparePreambleInstructions(const opt::Instruction* a,
       return 1;
     }
 
-    assert(a_operand.words.size() == 1);
-    assert(b_operand.words.size() == 1);
-
     switch (a_operand.type) {
       case SPV_OPERAND_TYPE_ID:
         // Don't compare ids, there can't be multiple instances of the
@@ -781,6 +778,9 @@ int Differ::ComparePreambleInstructions(const opt::Instruction* a,
       }
       default:
         // Expect literal values to match.
+        assert(a_operand.words.size() == 1);
+        assert(b_operand.words.size() == 1);
+
         if (a_operand.words[0] < b_operand.words[0]) {
           return -1;
         }

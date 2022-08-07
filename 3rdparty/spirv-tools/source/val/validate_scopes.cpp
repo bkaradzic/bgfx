@@ -233,7 +233,7 @@ spv_result_t ValidateMemoryScope(ValidationState_t& _, const Instruction* inst,
                !_.HasCapability(SpvCapabilitySubgroupBallotKHR) &&
                !_.HasCapability(SpvCapabilitySubgroupVoteKHR)) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << spvOpcodeString(opcode)
+             << _.VkErrorID(6997) << spvOpcodeString(opcode)
              << ": in Vulkan 1.0 environment Memory Scope is can not be "
                 "Subgroup without SubgroupBallotKHR or SubgroupVoteKHR "
                 "declared";
