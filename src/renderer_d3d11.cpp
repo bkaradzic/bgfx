@@ -4873,7 +4873,7 @@ namespace bgfx { namespace d3d11
 			for (uint32_t ii = _layer; ii < _numLayers; ++ii)
 			{
 				const UINT resource = _mip + (ii * m_numMips);
-				deviceCtx->ResolveSubresource(m_texture2d, resource, m_rt, resource, s_textureFormat[m_textureFormat].m_fmtSrv);
+				deviceCtx->ResolveSubresource(m_texture2d, resource, m_rt, resource, s_textureFormat[m_textureFormat].m_fmt);
 			}
 		}
 
