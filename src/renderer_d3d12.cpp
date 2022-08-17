@@ -5210,7 +5210,7 @@ namespace bgfx { namespace d3d12
 					, resource
 					, m_ptr
 					, resource
-					, s_textureFormat[m_textureFormat].m_fmtSrv
+					, s_textureFormat[m_textureFormat].m_fmt
 				);
 			}
 
