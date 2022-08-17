@@ -1987,7 +1987,7 @@ namespace bgfx { namespace mtl
 								}
 								else
 								{
-									ps->m_bindingTypes[arg.index] = fragmentBit ? PipelineStateMtl::BindToFragmentShader : PipelineStateMtl::BindToVertexShader;
+									ps->m_bindingTypes[arg.index] |= fragmentBit ? PipelineStateMtl::BindToFragmentShader : PipelineStateMtl::BindToVertexShader;
 									BX_TRACE("texture %s %d index:%d", name, info->m_handle, uint32_t(arg.index) );
 								}
 							}
