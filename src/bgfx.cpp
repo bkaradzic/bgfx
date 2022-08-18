@@ -4502,6 +4502,17 @@ namespace bgfx
 			if (bimg::isDepth(bimg::TextureFormat::Enum(tr.m_format) ) )
 			{
 				++depth;
+
+				BGFX_ERROR_CHECK(true
+					&& 0 != (tr.m_flags & BGFX_TEXTURE_RT_MSAA_MASK)
+					&& 0 != (tr.m_flags & BGFX_TEXTURE_RT_WRITE_ONLY)
+					, _err
+					, BGFX_ERROR_FRAME_BUFFER_VALIDATION
+					, "Frame buffer depth MSAA texture cannot be resolved. It must be created with `BGFX_TEXTURE_RT_WRITE_ONLY` flag."
+					, "Attachment %d, texture flags 0x%016" PRIx64 "."
+					, ii
+					, tr.m_flags
+					);
 			}
 			else
 			{
