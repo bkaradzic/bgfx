@@ -7,6 +7,7 @@
 
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 #	include "renderer_d3d11.h"
+#	include <bx/pixelformat.h>
 
 namespace bgfx { namespace d3d11
 {
@@ -4468,6 +4469,7 @@ namespace bgfx { namespace d3d11
 				, swizzle ? " (swizzle BGRA8 -> RGBA8)" : ""
 				);
 
+			uint8_t* temp = NULL;
 			for (uint16_t side = 0; side < numSides; ++side)
 			{
 				for (uint8_t lod = 0, num = ti.numMips; lod < num; ++lod)
@@ -4480,7 +4482,7 @@ namespace bgfx { namespace d3d11
 						if (convert)
 						{
 							uint32_t srcpitch = mip.m_width*bpp/8;
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, srcpitch*mip.m_height);
+							temp = (uint8_t*)BX_ALLOC(g_allocator, srcpitch*mip.m_height);
 							bimg::imageDecodeToBgra8(g_allocator, temp, mip.m_data, mip.m_width, mip.m_height, srcpitch, mip.m_format);
 
 							srd[kk].pSysMem = temp;
@@ -4494,6 +4496,15 @@ namespace bgfx { namespace d3d11
 						else
 						{
 							srd[kk].SysMemPitch = mip.m_width*mip.m_bpp/8;
+
+							switch (m_textureFormat)
+							{
+							case TextureFormat::RGB5A1:
+								temp = (uint8_t*)BX_ALLOC(g_allocator, srd[kk].SysMemPitch*mip.m_height);
+								bimg::imageConvert(temp, 16, bx::packBgr5a1, mip.m_data, bx::unpackRgb5a1, srd[kk].SysMemPitch*mip.m_height);
+								srd[kk].pSysMem = temp;
+								break;
+							}
 						}
 
 						srd[kk].SysMemSlicePitch = mip.m_height*srd[kk].SysMemPitch;
@@ -4718,8 +4729,7 @@ namespace bgfx { namespace d3d11
 				DX_CHECK(s_renderD3D11->m_device->CreateUnorderedAccessView(m_ptr, NULL, &m_uav) );
 			}
 
-			if (convert
-			&&  0 != kk)
+			if (temp != NULL)
 			{
 				kk = 0;
 				for (uint16_t side = 0; side < numSides; ++side)
@@ -4794,9 +4804,11 @@ namespace bgfx { namespace d3d11
 			box.back  = 1;
 		}
 
+		const bimg::ImageBlockInfo & blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
+		const uint16_t blockHeight = blockInfo.blockHeight;
+		const uint16_t bpp    = blockInfo.bitsPerPixel;
 		const uint32_t subres = _mip + ( (layer + _side) * m_numMips);
 		const bool     depth  = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) );
-		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		uint32_t rectpitch  = _rect.m_width*bpp/8;
 		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat)))
 		{
@@ -4820,6 +4832,22 @@ namespace bgfx { namespace d3d11
 
 			box.right  = bx::max(1u, m_width  >> _mip);
 			box.bottom = bx::max(1u, m_height >> _mip);
+		}
+
+		{
+			uint8_t* src = data;
+			for (uint32_t yy = 0, height = _rect.m_height; yy < height; yy += blockHeight)
+			{
+				switch (m_textureFormat)
+				{
+				case TextureFormat::RGB5A1:
+					temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch);
+					bimg::imageConvert(temp, 16, bx::packBgr5a1, src, bx::unpackRgb5a1, rectpitch);
+					data = temp;
+					break;
+				}
+				src += srcpitch;
+			}
 		}
 
 		deviceCtx->UpdateSubresource(
