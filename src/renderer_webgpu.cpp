@@ -356,7 +356,7 @@ namespace bgfx { namespace webgpu
 		{ wgpu::TextureFormat::RGBA32Sint,          wgpu::TextureFormat::Undefined        },  // RGBA32I
 		{ wgpu::TextureFormat::RGBA32Uint,          wgpu::TextureFormat::Undefined        },  // RGBA32U
 		{ wgpu::TextureFormat::RGBA32Float,         wgpu::TextureFormat::Undefined        },  // RGBA32F
-		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // R5G6B5
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // B5G6R5
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RGBA4
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RGB5A1
 		{ wgpu::TextureFormat::RGB10A2Unorm,        wgpu::TextureFormat::Undefined        },  // RGB10A2
