@@ -252,7 +252,7 @@ VK_IMPORT_DEVICE
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_R32_SFLOAT,               VK_FORMAT_D32_SFLOAT,          VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // D24F
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_R32_SFLOAT,               VK_FORMAT_D32_SFLOAT,          VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // D32F
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_R8_UINT,                  VK_FORMAT_S8_UINT,             VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // D0S8
-#undef $
+#undef $_
 #undef $0
 #undef $1
 #undef $R
