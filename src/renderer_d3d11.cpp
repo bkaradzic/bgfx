@@ -4504,6 +4504,11 @@ namespace bgfx { namespace d3d11
 								bimg::imageConvert(temp, 16, bx::packBgr5a1, mip.m_data, bx::unpackRgb5a1, srd[kk].SysMemPitch*mip.m_height);
 								srd[kk].pSysMem = temp;
 								break;
+							case TextureFormat::RGBA4:
+								temp = (uint8_t*)BX_ALLOC(g_allocator, srd[kk].SysMemPitch*mip.m_height);
+								bimg::imageConvert(temp, 16, bx::packBgra4, mip.m_data, bx::unpackRgba4, srd[kk].SysMemPitch*mip.m_height);
+								srd[kk].pSysMem = temp;
+								break;
 							}
 						}
 
@@ -4843,6 +4848,11 @@ namespace bgfx { namespace d3d11
 				case TextureFormat::RGB5A1:
 					temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch);
 					bimg::imageConvert(temp, 16, bx::packBgr5a1, src, bx::unpackRgb5a1, rectpitch);
+					data = temp;
+					break;
+				case TextureFormat::RGBA4:
+					temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch);
+					bimg::imageConvert(temp, 16, bx::packBgra4, src, bx::unpackRgba4, rectpitch);
 					data = temp;
 					break;
 				}
