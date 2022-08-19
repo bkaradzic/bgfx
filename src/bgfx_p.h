@@ -1802,6 +1802,15 @@ namespace bgfx
 
 	struct DynamicIndexBuffer
 	{
+		void reset()
+		{
+			m_handle     = BGFX_INVALID_HANDLE;
+			m_offset     = 0;
+			m_size       = 0;
+			m_startIndex = 0;
+			m_flags      = 0;
+		}
+
 		IndexBufferHandle m_handle;
 		uint32_t m_offset;
 		uint32_t m_size;
@@ -1811,6 +1820,18 @@ namespace bgfx
 
 	struct DynamicVertexBuffer
 	{
+		void reset()
+		{
+			m_handle       = BGFX_INVALID_HANDLE;
+			m_offset       = 0;
+			m_size         = 0;
+			m_startVertex  = 0;
+			m_numVertices  = 0;
+			m_stride       = 0;
+			m_layoutHandle = BGFX_INVALID_HANDLE;
+			m_flags        = 0;
+		}
+
 		VertexBufferHandle m_handle;
 		uint32_t m_offset;
 		uint32_t m_size;
@@ -3545,6 +3566,7 @@ namespace bgfx
 		{
 			DynamicIndexBuffer& dib = m_dynamicIndexBuffers[_handle.idx];
 			destroy(dib);
+			dib.reset();
 			m_dynamicIndexBufferHandle.free(_handle.idx);
 		}
 
@@ -3753,6 +3775,7 @@ namespace bgfx
 
 			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
 			destroy(dvb);
+			dvb.reset();
 			m_dynamicVertexBufferHandle.free(_handle.idx);
 		}
 
