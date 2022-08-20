@@ -792,7 +792,6 @@ namespace bgfx { namespace mtl
 	{
 		BufferMtl()
 			: m_flags(BGFX_BUFFER_NONE)
-			, m_dynamic(NULL)
 		{
 		}
 
@@ -802,12 +801,8 @@ namespace bgfx { namespace mtl
 		void destroy()
 		{
 			MTL_RELEASE(m_ptr);
-
-			if (NULL != m_dynamic)
-			{
-				BX_DELETE(g_allocator, m_dynamic);
-				m_dynamic = NULL;
-			}
+            for (int i = 0; i < MTL_MAX_FRAMES_IN_FLIGHT; i++)
+                MTL_RELEASE(m_temp[i]);
 		}
 
 		uint32_t m_size;
@@ -815,7 +810,7 @@ namespace bgfx { namespace mtl
 		bool     m_vertex;
 
 		Buffer   m_ptr;
-		uint8_t* m_dynamic;
+        Buffer   m_temp[MTL_MAX_FRAMES_IN_FLIGHT];
 	};
 
 	typedef BufferMtl IndexBufferMtl;

@@ -2658,10 +2658,14 @@ namespace bgfx { namespace mtl
 		if (NULL == _data)
 		{
 			m_ptr = s_renderMtl->m_device.newBufferWithLength(_size, 0);
+            for (int i = 0; i < MTL_MAX_FRAMES_IN_FLIGHT; i++)
+                m_temp[i] = s_renderMtl->m_device.newBufferWithLength(_size, 0);
 		}
 		else
 		{
 			m_ptr = s_renderMtl->m_device.newBufferWithBytes(_data, _size, 0);
+            for (int i = 0; i < MTL_MAX_FRAMES_IN_FLIGHT; i++)
+                m_temp[i] = s_renderMtl->m_device.newBufferWithBytes(_data, _size, 0);
 		}
 	}
 
@@ -2670,25 +2674,17 @@ namespace bgfx { namespace mtl
 		BlitCommandEncoder bce = s_renderMtl->getBlitCommandEncoder();
 
 		if (!m_vertex && !_discard)
-		{
-			if ( m_dynamic == NULL )
-			{
-				m_dynamic = (uint8_t*)BX_ALLOC(g_allocator, m_size);
-			}
-
-			bx::memCopy(m_dynamic + _offset, _data, _size);
-			uint32_t start = _offset & 4;
-			uint32_t end = bx::strideAlign(_offset + _size, 4);
-
-			Buffer temp = s_renderMtl->m_device.newBufferWithBytes(m_dynamic, end - start, 0);
-			bce.copyFromBuffer(temp, 0, m_ptr, start, end - start);
-			s_renderMtl->m_cmd.release(temp);
+        {            
+            uint32_t start = _offset & 4;
+            uint32_t end = bx::strideAlign(_offset + _size, 4);
+            bx::memCopy((uint8_t*)m_temp[s_renderMtl->m_cmd.m_releaseWriteIndex].contents() + start, _data, end - start);
+            
+			bce.copyFromBuffer(m_temp[s_renderMtl->m_cmd.m_releaseWriteIndex], start, m_ptr, start, end - start);
 		}
 		else
 		{
-			Buffer temp = s_renderMtl->m_device.newBufferWithBytes(_data, _size, 0);
-			bce.copyFromBuffer(temp, 0, m_ptr, _offset, _size);
-			s_renderMtl->m_cmd.release(temp);
+            bx::memCopy((uint8_t*)m_temp[s_renderMtl->m_cmd.m_releaseWriteIndex].contents() + _offset, _data, _size);
+			bce.copyFromBuffer(m_temp[s_renderMtl->m_cmd.m_releaseWriteIndex], _offset, m_ptr, _offset, _size);
 		}
 	}
 
@@ -3498,7 +3494,7 @@ namespace bgfx { namespace mtl
 		{
 			if (_endFrame)
 			{
-				m_releaseWriteIndex = (m_releaseWriteIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
+				m_releaseWriteIndex = (m_releaseWriteIndex + 1) %  MTL_MAX_FRAMES_IN_FLIGHT;
 				m_activeCommandBuffer.addCompletedHandler(commandBufferFinishedCallback, this);
 			}
 
