@@ -2666,11 +2666,6 @@ namespace bgfx
 #endif // BX_PLATFORM_WINDOWS
 	}
 
-	static int32_t compareDescending(const void* _lhs, const void* _rhs)
-	{
-		return *(const int32_t*)_rhs - *(const int32_t*)_lhs;
-	}
-
 	RendererContextI* rendererCreate(const Init& _init)
 	{
 		int32_t scores[RendererType::Count];
@@ -2748,7 +2743,7 @@ namespace bgfx
 			}
 		}
 
-		bx::quickSort(scores, numScores, sizeof(int32_t), compareDescending);
+		bx::quickSort(scores, numScores, bx::compareDescending<int32_t>);
 
 		RendererContextI* renderCtx = NULL;
 		for (uint32_t ii = 0; ii < numScores; ++ii)
