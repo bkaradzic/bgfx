@@ -135,6 +135,10 @@ public:
 			bgfx::setViewName(bgfx::ViewId(i + 1), formatName);
 		}
 
+		const bgfx::Memory* checkerboardImageMemory = bgfx::alloc(TEXTURE_SIZE * TEXTURE_SIZE * 4);
+		bimg::imageCheckerboard(checkerboardImageMemory->data, TEXTURE_SIZE, TEXTURE_SIZE, 16, 0xFF909090, 0xFF707070);
+		m_checkerboard = bgfx::createTexture2D(TEXTURE_SIZE, TEXTURE_SIZE, false, 1, bgfx::TextureFormat::RGBA8, flags, checkerboardImageMemory);
+
 		BX_FREE(entry::getAllocator(), rgbaf32Pixels);
 
 		imguiCreate();
@@ -149,6 +153,9 @@ public:
 			if (bgfx::isValid(texture))
 				bgfx::destroy(texture);
 		}
+
+		if (bgfx::isValid(m_checkerboard))
+			bgfx::destroy(m_checkerboard);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();
@@ -183,6 +190,12 @@ public:
 
 		if (bgfx::isValid(texture))
 		{
+			if (bgfx::isValid(m_checkerboard))
+			{
+				ImGui::SetCursorScreenPos(previewPos);
+				ImGui::Image(m_checkerboard, previewSize);
+			}
+
 			ImGui::SetCursorScreenPos(previewPos);
 			ImGui::Image(texture, previewSize);
 		}
@@ -303,6 +316,7 @@ public:
 	float    m_previewSize = 50.0f;
 	bimg::TextureFormat::Enum m_selectedFormat = bimg::TextureFormat::Unknown;
 
+	bgfx::TextureHandle m_checkerboard = BGFX_INVALID_HANDLE;
 	bgfx::TextureHandle m_textures[NUM_FORMATS];
 };
 
