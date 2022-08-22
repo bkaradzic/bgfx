@@ -16,11 +16,12 @@ namespace
 const int TEXTURE_SIZE = 256;
 const int HALF_TEXTURE_SIZE = TEXTURE_SIZE / 2;
 const int NUM_FORMATS = bgfx::TextureFormat::UnknownDepth - bgfx::TextureFormat::Unknown - 1;
+const int NUM_FORMATS_IN_ROW = (int)bx::ceil(bx::sqrt(NUM_FORMATS));
 
 class ExamplePixelFormats : public entry::AppI
 {
 public:
-		ExamplePixelFormats(const char* _name, const char* _description, const char* _url)
+	ExamplePixelFormats(const char* _name, const char* _description, const char* _url)
 		: entry::AppI(_name, _description, _url)
 	{
 	}
@@ -155,6 +156,53 @@ public:
 		return 0;
 	}
 
+	void imguiTextBoxUnformatted(const ImVec2& size, const char* text) const
+	{
+		ImVec2 textSize = ImGui::CalcTextSize(text);
+		ImVec2 textOffset = ImVec2(
+			size.x >= 0.0f ? bx::max((size.x - textSize.x) / 2, 0.0f) : 0.0f,
+			size.y >= 0.0f ? bx::max((size.y - textSize.y) / 2, 0.0f) : 0.0f
+		);
+		ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + textOffset.x, ImGui::GetCursorPosY() + textOffset.y));
+		ImGui::TextUnformatted(text);
+	};
+
+	void imguiTexturePreview(const ImVec2& size, bgfx::TextureHandle texture, const ImVec2& previewSizeHint = ImVec2(-1.0f, -1.0f)) const
+	{
+		ImVec2 origin = ImGui::GetCursorScreenPos();
+
+		ImVec2 previewSize = ImVec2(
+			previewSizeHint.x >= 0.0f ? previewSizeHint.x : size.x,
+			previewSizeHint.y >= 0.0f ? previewSizeHint.y : size.y
+		);
+
+		ImVec2 previewPos = ImVec2(
+			origin.x + bx::max(0.0f, (size.x - previewSize.x) / 2),
+			origin.y + bx::max(0.0f, (size.y - previewSize.y) / 2)
+		);
+
+		if (bgfx::isValid(texture))
+		{
+			ImGui::SetCursorScreenPos(previewPos);
+			ImGui::Image(texture, previewSize);
+		}
+		else
+		{
+			ImU32 color = ImGui::GetColorU32(ImGuiCol_TextDisabled, 0.25f);
+
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			ImVec2 p0 = previewPos;
+			ImVec2 p1 = ImVec2(p0.x + previewSize.x, p0.y + previewSize.y);
+			drawList->AddRect(p0, p1, color);
+			drawList->AddLine(p0, p1, color);
+
+			imguiTextBoxUnformatted(size, "INVALID");
+		}
+
+		ImGui::SetCursorScreenPos(origin);
+		ImGui::Dummy(size);
+	};
+
 	bool update() override
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
@@ -171,65 +219,64 @@ public:
 
 			showExampleDialog(this);
 
-			float col1Length = ImGui::CalcTextSize("Format").x;
+			ImGui::SetNextWindowPos(ImVec2(360.0f, 40.0f), ImGuiCond_FirstUseEver);
+			ImGui::Begin("Formats", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+			float cellWidth = m_previewSize;
 			for (int i = 0; i < NUM_FORMATS; ++i)
 			{
 				int format = (int)bgfx::TextureFormat::Unknown + 1 + i;
 				ImVec2 textSize = ImGui::CalcTextSize(bimg::getName(bimg::TextureFormat::Enum(format)));
-				col1Length = bx::max(col1Length, textSize.x);
+				cellWidth = bx::max(cellWidth, textSize.x);
 			}
-			col1Length += 25.0f;
 
-			ImGui::Begin("Formats");
-			ImGui::Text("Format");
-			ImGui::SameLine(col1Length);
-			ImGui::Text("Texture");
-			ImGui::Separator();
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+			ImVec2 invalidTextSize = ImGui::CalcTextSize("INVALID");
+			ImVec2 invalidTextOffset = ImVec2(bx::max((cellWidth - invalidTextSize.x) / 2, 0.0f), bx::max((m_previewSize - invalidTextSize.y) / 2, 0.0f));
+
+			ImGui::DragFloat("Preview Size", &m_previewSize, 1.0f, 10.0f, TEXTURE_SIZE);
+			ImGui::BeginTable("Formats", NUM_FORMATS_IN_ROW, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit);
 			for (int i = 0; i < NUM_FORMATS; ++i)
 			{
-				int format = (int)bgfx::TextureFormat::Unknown + 1 + i;
-				ImGui::Text("%s", bimg::getName(bimg::TextureFormat::Enum(format)));
-				ImGui::SameLine(col1Length);
-				if (bgfx::isValid(m_textures[i]))
-				{
-					ImGui::Image(m_textures[i], ImVec2(50.0f, 50.0f));
-					if (ImGui::IsItemHovered())
-					{
-						ImVec2 windowTopLeft = ImGui::GetMousePos();
-						windowTopLeft.x += 10;
-						ImGuiStyle& style = ImGui::GetStyle();
-						float titleBarHeight = ImGui::GetFontSize() + style.FramePadding.y * 2;
-						ImVec2 windowBottomRight = {
-							windowTopLeft.x + TEXTURE_SIZE + 2 * style.WindowPadding.x,
-							windowTopLeft.y + TEXTURE_SIZE + 2 * style.WindowPadding.y + titleBarHeight
-						};
-						if (windowBottomRight.x > m_width)
-						{
-							windowTopLeft.x -= windowBottomRight.x - m_width;
-						}
-						if (windowBottomRight.y > m_height)
-						{
-							windowTopLeft.y -= windowBottomRight.y - m_height;
-						}
-						ImGui::SetNextWindowPos(windowTopLeft);
-						ImGuiWindowFlags flags = 0
-							| ImGuiWindowFlags_NoResize
-							| ImGuiWindowFlags_NoScrollbar
-							| ImGuiWindowFlags_NoCollapse
-							| ImGuiWindowFlags_NoInputs
-							;
+				ImGui::TableNextColumn();
 
-						ImGui::Begin(bimg::getName(bimg::TextureFormat::Enum(format)), NULL, flags);
-						ImGui::Image(m_textures[i], ImVec2(TEXTURE_SIZE, TEXTURE_SIZE));
-						ImGui::End();
-					}
-				}
-				else
-				{
-					ImGui::Text("INVALID");
-				}
-				ImGui::Separator();
+				int format = (int)bgfx::TextureFormat::Unknown + 1 + i;
+
+				bool isSelected = (m_selectedFormat == format);
+
+				ImDrawListSplitter splitter;
+				splitter.Split(drawList, 2);
+				splitter.SetCurrentChannel(drawList, 1);
+
+				ImGui::BeginGroup();
+				ImGuiTextBuffer label;
+				label.append(bimg::getName(bimg::TextureFormat::Enum(format)));
+				imguiTextBoxUnformatted(ImVec2(cellWidth, 0.0f), label.c_str());
+				imguiTexturePreview(ImVec2(cellWidth, m_previewSize), m_textures[i], ImVec2(m_previewSize, m_previewSize));
+				ImGui::EndGroup();
+
+				splitter.SetCurrentChannel(drawList, 0);
+				ImGui::SetCursorScreenPos(ImGui::GetItemRectMin());
+
+				ImGui::PushID(i);
+				if (ImGui::Selectable("##selectable", &isSelected, ImGuiSelectableFlags_AllowItemOverlap, ImGui::GetItemRectSize()))
+					m_selectedFormat = bimg::TextureFormat::Enum(format);
+				ImGui::PopID();
+
+				splitter.Merge(drawList);
 			}
+			ImGui::EndTable();
+			ImGui::End();
+
+			ImGui::SetNextWindowPos(ImVec2(40.0f, 300.0f), ImGuiCond_FirstUseEver);
+			ImGui::Begin("Selected Format", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+			ImGui::Text("Format: %s", bimg::getName(m_selectedFormat));
+			int selectedTextureIndex = m_selectedFormat - 1 - (int)bimg::TextureFormat::Unknown;
+			bgfx::TextureHandle selectedTexture = BGFX_INVALID_HANDLE;
+			if (m_selectedFormat != bimg::TextureFormat::Unknown)
+				selectedTexture = m_textures[selectedTextureIndex];
+			imguiTexturePreview(ImVec2(TEXTURE_SIZE, TEXTURE_SIZE), selectedTexture);
 			ImGui::End();
 
 			imguiEndFrame();
@@ -256,6 +303,8 @@ public:
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
+	float    m_previewSize = 50.0f;
+	bimg::TextureFormat::Enum m_selectedFormat = bimg::TextureFormat::Unknown;
 
 	bgfx::TextureHandle m_textures[NUM_FORMATS];
 };
