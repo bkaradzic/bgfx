@@ -50,6 +50,7 @@ all:
 	@make -s --no-print-directory build -C 44-sss
 	@make -s --no-print-directory build -C 45-bokeh
 	@make -s --no-print-directory build -C 46-fsr
+	@make -s --no-print-directory build -C 47-pixelformats
 
 rebuild:
 	@make -s --no-print-directory rebuild -C 01-cubes
@@ -98,6 +99,7 @@ rebuild:
 	@make -s --no-print-directory rebuild -C 44-sss
 	@make -s --no-print-directory rebuild -C 45-bokeh
 	@make -s --no-print-directory rebuild -C 46-fsr
+	@make -s --no-print-directory rebuild -C 47-pixelformats
 
 rebuild-embedded:
 	@make -s --no-print-directory rebuild -C 02-metaballs
