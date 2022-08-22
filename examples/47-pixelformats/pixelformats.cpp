@@ -232,9 +232,6 @@ public:
 
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-			ImVec2 invalidTextSize = ImGui::CalcTextSize("INVALID");
-			ImVec2 invalidTextOffset = ImVec2(bx::max((cellWidth - invalidTextSize.x) / 2, 0.0f), bx::max((m_previewSize - invalidTextSize.y) / 2, 0.0f));
-
 			ImGui::DragFloat("Preview Size", &m_previewSize, 1.0f, 10.0f, TEXTURE_SIZE);
 			ImGui::BeginTable("Formats", NUM_FORMATS_IN_ROW, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit);
 			for (int i = 0; i < NUM_FORMATS; ++i)
