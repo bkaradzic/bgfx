@@ -197,7 +197,7 @@ public:
 			}
 
 			ImGui::SetCursorScreenPos(previewPos);
-			ImGui::Image(texture, previewSize);
+			ImGui::Image(texture, m_ignoreAlpha ? IMGUI_FLAGS_NONE : IMGUI_FLAGS_ALPHA_BLEND, 0, previewSize);
 		}
 		else
 		{
@@ -246,6 +246,8 @@ public:
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
 
 			ImGui::DragFloat("Preview Size", &m_previewSize, 1.0f, 10.0f, TEXTURE_SIZE);
+			ImGui::SameLine();
+			ImGui::Checkbox("Ignore Alpha", &m_ignoreAlpha);
 			ImGui::BeginTable("Formats", NUM_FORMATS_IN_ROW, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit);
 			for (int i = 0; i < NUM_FORMATS; ++i)
 			{
@@ -314,7 +316,8 @@ public:
 	uint32_t m_debug;
 	uint32_t m_reset;
 	float    m_previewSize = 50.0f;
-	bimg::TextureFormat::Enum m_selectedFormat = bimg::TextureFormat::Unknown;
+	bool     m_ignoreAlpha = false;
+	bimg::TextureFormat::Enum m_selectedFormat = bimg::TextureFormat::RGBA8;
 
 	bgfx::TextureHandle m_checkerboard = BGFX_INVALID_HANDLE;
 	bgfx::TextureHandle m_textures[NUM_FORMATS];
