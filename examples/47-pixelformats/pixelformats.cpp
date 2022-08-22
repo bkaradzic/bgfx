@@ -196,7 +196,7 @@ public:
 			drawList->AddRect(p0, p1, color);
 			drawList->AddLine(p0, p1, color);
 
-			imguiTextBoxUnformatted(size, "INVALID");
+//			imguiTextBoxUnformatted(size, "INVALID");
 		}
 
 		ImGui::SetCursorScreenPos(origin);
