@@ -55,8 +55,6 @@ public:
 			);
 
 		const uint32_t flags = 0
-			| BGFX_SAMPLER_U_CLAMP
-			| BGFX_SAMPLER_V_CLAMP
 			| BGFX_SAMPLER_MIN_POINT
 			| BGFX_SAMPLER_MAG_POINT
 			;
@@ -246,8 +244,13 @@ public:
 		{
 			if (bgfx::isValid(m_checkerboard) )
 			{
+				static int64_t timeOffset = bx::getHPCounter();
+				const float time = float( (bx::getHPCounter()-timeOffset)/double(bx::getHPFrequency() ) );
+				const float xx = bx::sin(time * 0.17f);
+				const float yy = bx::cos(time * 0.13f);
+
 				ImGui::SetCursorScreenPos(previewPos);
-				ImGui::Image(m_checkerboard, previewSize);
+				ImGui::Image(m_checkerboard, previewSize, ImVec2(xx, yy), ImVec2(xx+1.0f, yy+1.0f) );
 			}
 
 			ImGui::SetCursorScreenPos(previewPos);
