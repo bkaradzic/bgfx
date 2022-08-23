@@ -4499,14 +4499,19 @@ namespace bgfx { namespace d3d11
 
 							switch (m_textureFormat)
 							{
-							case TextureFormat::RGB5A1:
+							case TextureFormat::R5G6B5:
 								temp = (uint8_t*)BX_ALLOC(g_allocator, srd[kk].SysMemPitch*mip.m_height);
-								bimg::imageConvert(temp, 16, bx::packBgr5a1, mip.m_data, bx::unpackRgb5a1, srd[kk].SysMemPitch*mip.m_height);
+								bimg::imageConvert(temp, 16, bx::packB5G6R5, mip.m_data, bx::unpackR5G6B5, srd[kk].SysMemPitch*mip.m_height);
 								srd[kk].pSysMem = temp;
 								break;
 							case TextureFormat::RGBA4:
 								temp = (uint8_t*)BX_ALLOC(g_allocator, srd[kk].SysMemPitch*mip.m_height);
 								bimg::imageConvert(temp, 16, bx::packBgra4, mip.m_data, bx::unpackRgba4, srd[kk].SysMemPitch*mip.m_height);
+								srd[kk].pSysMem = temp;
+								break;
+							case TextureFormat::RGB5A1:
+								temp = (uint8_t*)BX_ALLOC(g_allocator, srd[kk].SysMemPitch*mip.m_height);
+								bimg::imageConvert(temp, 16, bx::packBgr5a1, mip.m_data, bx::unpackRgb5a1, srd[kk].SysMemPitch*mip.m_height);
 								srd[kk].pSysMem = temp;
 								break;
 							}
@@ -4844,14 +4849,19 @@ namespace bgfx { namespace d3d11
 			{
 				switch (m_textureFormat)
 				{
-				case TextureFormat::RGB5A1:
+				case TextureFormat::R5G6B5:
 					temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch);
-					bimg::imageConvert(temp, 16, bx::packBgr5a1, src, bx::unpackRgb5a1, rectpitch);
+					bimg::imageConvert(temp, 16, bx::packB5G6R5, src, bx::unpackR5G6B5, rectpitch);
 					data = temp;
 					break;
 				case TextureFormat::RGBA4:
 					temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch);
 					bimg::imageConvert(temp, 16, bx::packBgra4, src, bx::unpackRgba4, rectpitch);
+					data = temp;
+					break;
+				case TextureFormat::RGB5A1:
+					temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch);
+					bimg::imageConvert(temp, 16, bx::packBgr5a1, src, bx::unpackRgb5a1, rectpitch);
 					data = temp;
 					break;
 				}
