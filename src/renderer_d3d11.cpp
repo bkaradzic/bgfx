@@ -4809,15 +4809,14 @@ namespace bgfx { namespace d3d11
 			box.back  = 1;
 		}
 
-		const bimg::ImageBlockInfo & blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
+		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
 		const uint16_t blockHeight = blockInfo.blockHeight;
 		const uint16_t bpp    = blockInfo.bitsPerPixel;
 		const uint32_t subres = _mip + ( (layer + _side) * m_numMips);
 		const bool     depth  = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) );
 		uint32_t rectpitch  = _rect.m_width*bpp/8;
-		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat)))
+		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) ) )
 		{
-			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
 			rectpitch = (_rect.m_width / blockInfo.blockWidth)*blockInfo.blockSize;
 		}
 
