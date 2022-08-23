@@ -4103,7 +4103,7 @@ namespace bgfx
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
 				if (PredefinedUniform::Count == predefined && UniformType::End != UniformType::Enum(type) )
 				{
-					uniforms[sr.m_num] = createUniform(name, UniformType::Enum(type), regCount);
+					uniforms[sr.m_num] = createUniform(name, UniformType::Enum(type), num);
 					sr.m_num++;
 				}
 			}

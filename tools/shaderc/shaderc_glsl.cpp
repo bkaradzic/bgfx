@@ -207,6 +207,18 @@ namespace bgfx { namespace glsl
 						un.num = num;
 						un.regIndex = 0;
 						un.regCount = num;
+						switch (un.type)
+						{
+						case UniformType::Mat3:
+							un.regCount *= 3;
+							break;
+						case UniformType::Mat4:
+							un.regCount *= 4;
+							break;
+						default:
+							break;
+						}
+
 						uniforms.push_back(un);
 					}
 
