@@ -48,11 +48,11 @@ public:
 
 		// Set view 0 clear state.
 		bgfx::setViewClear(0
-				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-				, 0x303030ff
-				, 1.0f
-				, 0
-				);
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 0x303030ff
+			, 1.0f
+			, 0
+			);
 
 		const uint32_t flags = 0
 			| BGFX_SAMPLER_U_CLAMP
@@ -60,11 +60,12 @@ public:
 			| BGFX_SAMPLER_MIN_POINT
 			| BGFX_SAMPLER_MAG_POINT
 			;
+
 		float* rgbaf32Pixels = (float*)BX_ALLOC(entry::getAllocator(), kTextureSize * kTextureSize * 4 * sizeof(float) );
-		int32_t x, y;
-		for (y = 0 ; y < kTextureSize; ++y)
+
+		for (int32_t y = 0 ; y < kTextureSize; ++y)
 		{
-			for (x = 0; x < kTextureSize; ++x)
+			for (int32_t x = 0; x < kTextureSize; ++x)
 			{
 				float relX = (x - kHalfTextureSize) / (float) kHalfTextureSize;
 				float relY = (y - kHalfTextureSize) / (float) kHalfTextureSize;
@@ -77,9 +78,9 @@ public:
 			}
 		}
 
-		for (y = 0; y < 16; ++y)
+		for (int32_t y = 0; y < 16; ++y)
 		{
-			for (x = 0; x < 16; ++x)
+			for (int32_t x = 0; x < 16; ++x)
 			{
 				float* r = &rgbaf32Pixels[(x + (kTextureSize - 36 + y) * kTextureSize) * 4];
 				r[0] = 1.0f;
@@ -101,9 +102,9 @@ public:
 			}
 		}
 
-		for (y = 0; y < 16; ++y)
+		for (int32_t y = 0; y < 16; ++y)
 		{
-			for (x = 0; x < 48; ++x)
+			for (int32_t x = 0; x < 48; ++x)
 			{
 				float* a = &rgbaf32Pixels[(x + (kTextureSize - 20 + y) * kTextureSize) * 4];
 				a[0] = 1.0f;
@@ -113,7 +114,6 @@ public:
 			}
 		}
 
-		bimg::TextureInfo info;
 		for (int32_t i = 0; i < kNumFormats; ++i)
 		{
 			int32_t format = (int32_t)bgfx::TextureFormat::Unknown + 1 + i;
@@ -121,14 +121,15 @@ public:
 			int32_t formatNameLen = bx::strLen(formatName);
 
 			if (!bimg::imageConvert(bimg::TextureFormat::Enum(format), bimg::TextureFormat::RGBA32F)
-			|| formatName[formatNameLen - 1] == 'I'
-			|| formatName[formatNameLen - 1] == 'U'
+			||  formatName[formatNameLen - 1] == 'I'
+			||  formatName[formatNameLen - 1] == 'U'
 				)
 			{
 				m_textures[i] = BGFX_INVALID_HANDLE;
 				continue;
 			}
 
+			bimg::TextureInfo info;
 			bimg::imageGetSize(
 				  &info
 				, kTextureSize
@@ -194,14 +195,18 @@ public:
 	{
 		imguiDestroy();
 
-		for (auto texture: m_textures)
+		for (auto texture : m_textures)
 		{
 			if (bgfx::isValid(texture) )
+			{
 				bgfx::destroy(texture);
+			}
 		}
 
 		if (bgfx::isValid(m_checkerboard) )
+		{
 			bgfx::destroy(m_checkerboard);
+		}
 
 		// Shutdown bgfx.
 		bgfx::shutdown();
