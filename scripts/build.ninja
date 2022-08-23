@@ -48,6 +48,9 @@ rule texturec_height
 rule texturec_equirect
     command = texturec -f $in -o $out --max 512 -t rgba16f --equirect
 
+rule texturec_rgba8
+    command = texturec -f $in -o $out -t rgba8
+
 pwd = ../examples/assets/meshes
 subninja ../examples/assets/meshes/meshes.ninja
 

@@ -12,3 +12,8 @@ build $textures/parallax-n.ktx: texturec_normal   $pwd/parallax-n.png
 build $textures/parallax-h.ktx: texturec_height   $pwd/parallax-h.png
 build $textures/lightmap.ktx:   texturec_height   $pwd/../sky/lightmap.png
 build $textures/uffizi.ktx:     texturec_equirect $pwd/uffizi-large.exr
+
+build $textures/pf_compression_test.dds:  texturec_rgba8 $pwd/texture-compression-test.png
+build $textures/pf_alpha_test.dds:        texturec_rgba8 $pwd/texture-alpha-test.png
+build $textures/pf_uv_filtering_test.dds: texturec_rgba8 $pwd/texture-uv-filtering-test.png
+build $textures/pf_cubemap_test.dds:      texturec_rgba8 $pwd/texture-cubemap-test.png
