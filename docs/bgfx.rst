@@ -27,8 +27,10 @@ Initialization and Shutdown
 .. doxygendefine:: BGFX_PCI_ID_NONE
 .. doxygendefine:: BGFX_PCI_ID_SOFTWARE_RASTERIZER
 .. doxygendefine:: BGFX_PCI_ID_AMD
+.. doxygendefine:: BGFX_PCI_ID_APPLE
 .. doxygendefine:: BGFX_PCI_ID_INTEL
 .. doxygendefine:: BGFX_PCI_ID_NVIDIA
+.. doxygendefine:: BGFX_PCI_ID_MICROSOFT
 
 .. doxygenstruct:: bgfx::CallbackI
     :members:
