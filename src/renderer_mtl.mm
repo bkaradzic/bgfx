@@ -306,7 +306,7 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatRGBA32Float,                    MTLPixelFormatInvalid,                       MTLReadWriteTextureTier2,    { $R, $G, $B, $A }, true  }, // RGBA32F
 		{ MTLPixelFormat(40/*B5G6R5Unorm*/),            MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, true  }, // R5G6B5
 		{ MTLPixelFormatABGR4Unorm,                     MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $A, $B, $G, $R }, true  }, // RGBA4
-		{ MTLPixelFormatBGR5A1Unorm,                    MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $A, $R, $G, $B }, true  }, // RGB5A1
+		{ MTLPixelFormatBGR5A1Unorm,                    MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $B, $G, $R, $A }, true  }, // RGB5A1
 		{ MTLPixelFormatRGB10A2Unorm,                   MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, true  }, // RGB10A2
 		{ MTLPixelFormatRG11B10Float,                   MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, true  }, // RG11B10F
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // UnknownDepth
