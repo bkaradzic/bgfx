@@ -651,13 +651,15 @@ namespace bgfx
 		/// See: `bgfx::RendererType`
 		RendererType::Enum type;
 
-		/// Vendor PCI id. If set to `BGFX_PCI_ID_NONE` it will select the first
-		/// device.
-		///   - `BGFX_PCI_ID_NONE` - Autoselect adapter.
+		/// Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
+		/// GPUs will be prioritised.
+		///   - `BGFX_PCI_ID_NONE` - Auto-select adapter.
 		///   - `BGFX_PCI_ID_SOFTWARE_RASTERIZER` - Software rasterizer.
 		///   - `BGFX_PCI_ID_AMD` - AMD adapter.
+		///   - `BGFX_PCI_ID_APPLE` - Apple adapter.
 		///   - `BGFX_PCI_ID_INTEL` - Intel adapter.
 		///   - `BGFX_PCI_ID_NVIDIA` - nVidia adapter.
+		///   - `BGFX_PCI_ID_MICROSOFT` - Microsoft adapter.
 		uint16_t vendorId;
 
 		/// Device id. If set to 0 it will select first device, or device with
