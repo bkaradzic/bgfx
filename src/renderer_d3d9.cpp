@@ -3037,12 +3037,16 @@ namespace bgfx { namespace d3d9
 							uint32_t size = useMipSize ? mip.m_size : mipSize;
 							switch (m_textureFormat)
 							{
-							case TextureFormat::RGB5A1:
-								bimg::imageConvert(bits, 16, bx::packBgr5a1, mip.m_data, bx::unpackRgb5a1, size);
+							case TextureFormat::R5G6B5:
+								bimg::imageConvert(bits, 16, bx::packB5G6R5, mip.m_data, bx::unpackR5G6B5, size);
 								break;
 
 							case TextureFormat::RGBA4:
 								bimg::imageConvert(bits, 16, bx::packBgra4, mip.m_data, bx::unpackRgba4, size);
+								break;
+
+							case TextureFormat::RGB5A1:
+								bimg::imageConvert(bits, 16, bx::packBgr5a1, mip.m_data, bx::unpackRgb5a1, size);
 								break;
 
 							default:
@@ -3102,12 +3106,16 @@ namespace bgfx { namespace d3d9
 			{
 				switch (m_textureFormat)
 				{
-				case TextureFormat::RGB5A1:
-					bimg::imageConvert(dst, 16, bx::packBgr5a1, src, bx::unpackRgb5a1, rectpitch);
+				case TextureFormat::R5G6B5:
+					bimg::imageConvert(dst, 16, bx::packB5G6R5, src, bx::unpackR5G6B5, rectpitch);
 					break;
 
 				case TextureFormat::RGBA4:
 					bimg::imageConvert(dst, 16, bx::packBgra4, src, bx::unpackRgba4, rectpitch);
+					break;
+
+				case TextureFormat::RGB5A1:
+					bimg::imageConvert(dst, 16, bx::packBgr5a1, src, bx::unpackRgb5a1, rectpitch);
 					break;
 
 				default:
