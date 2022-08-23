@@ -350,22 +350,52 @@ public:
 				ImGui::Begin("Selected Format", NULL, ImGuiWindowFlags_AlwaysAutoResize);
 				ImGui::Text("Format: %s", bimg::getName(m_selectedFormat) );
 
-				ImGui::PushEnabled(false);
-
 				const bgfx::Caps* caps = bgfx::getCaps();
 
-				bool supported = caps->formats[m_selectedFormat] != BGFX_CAPS_FORMAT_TEXTURE_NONE;
-				ImGui::Checkbox("Supported", &supported);
-				ImGui::SameLine();
+				if (caps->formats[m_selectedFormat] == BGFX_CAPS_FORMAT_TEXTURE_NONE)
+				{
+					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 10.0f));
+					ImGui::Text("Not supported!");
+					ImGui::PopStyleVar();
+				}
+				else
+				{
+					const uint32_t formatFlags = caps->formats[m_selectedFormat];
 
-				bool emulated = 0 != (caps->formats[m_selectedFormat] & (0
-					| BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED
-					| BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED
-					| BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED
-					) );
-				ImGui::Checkbox("Emulated", &emulated);
+					bool emulated = 0 != (formatFlags & (0
+						| BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED
+						| BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED
+						| BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED
+						) );
+					ImGui::PushEnabled(false);
+					ImGui::Checkbox("Emu", &emulated);
+					ImGui::PopEnabled();
+					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+					{
+						ImGui::SetTooltip("Texture format is emulated.");
+					}
+					ImGui::SameLine();
 
-				ImGui::PopEnabled();
+					bool framebuffer = 0 != (formatFlags & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER);
+					ImGui::PushEnabled(false);
+					ImGui::Checkbox("FB", &framebuffer);
+					ImGui::PopEnabled();
+					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+					{
+						ImGui::SetTooltip("Texture format can be used as frame buffer.");
+					}
+					ImGui::SameLine();
+
+					bool msaa = 0 != (formatFlags & BGFX_CAPS_FORMAT_TEXTURE_MSAA);
+					ImGui::PushEnabled(false);
+					ImGui::Checkbox("MSAA", &msaa);
+					ImGui::PopEnabled();
+					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+					{
+						ImGui::SetTooltip("Texture can be sampled as MSAA.");
+					}
+
+				}
 
 				int32_t selectedTextureIndex = m_selectedFormat - 1 - (int32_t)bimg::TextureFormat::Unknown;
 
