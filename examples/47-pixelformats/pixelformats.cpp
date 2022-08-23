@@ -319,6 +319,7 @@ public:
 				label.append(bimg::getName(bimg::TextureFormat::Enum(format) ) );
 				imguiTextBoxUnformatted(ImVec2(cellWidth, 0.0f), label.c_str() );
 				imguiTexturePreview(ImVec2(cellWidth, m_previewSize), m_textures[i], ImVec2(m_previewSize, m_previewSize) );
+
 				ImGui::EndGroup();
 
 				splitter.SetCurrentChannel(drawList, 0);
@@ -344,20 +345,40 @@ public:
 			ImGui::EndTable();
 			ImGui::End();
 
-			ImGui::SetNextWindowPos(ImVec2(40.0f, 300.0f), ImGuiCond_FirstUseEver);
-			ImGui::Begin("Selected Format", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-			ImGui::Text("Format: %s", bimg::getName(m_selectedFormat) );
-			int32_t selectedTextureIndex = m_selectedFormat - 1 - (int32_t)bimg::TextureFormat::Unknown;
-
-			bgfx::TextureHandle selectedTexture = BGFX_INVALID_HANDLE;
-
-			if (m_selectedFormat != bimg::TextureFormat::Unknown)
 			{
-				selectedTexture = m_textures[selectedTextureIndex];
-			}
+				ImGui::SetNextWindowPos(ImVec2(40.0f, 300.0f), ImGuiCond_FirstUseEver);
+				ImGui::Begin("Selected Format", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+				ImGui::Text("Format: %s", bimg::getName(m_selectedFormat) );
 
-			imguiTexturePreview(ImVec2(kTextureSize, kTextureSize), selectedTexture);
-			ImGui::End();
+				ImGui::PushEnabled(false);
+
+				const bgfx::Caps* caps = bgfx::getCaps();
+
+				bool supported = caps->formats[m_selectedFormat] != BGFX_CAPS_FORMAT_TEXTURE_NONE;
+				ImGui::Checkbox("Supported", &supported);
+				ImGui::SameLine();
+
+				bool emulated = 0 != (caps->formats[m_selectedFormat] & (0
+					| BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED
+					| BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED
+					| BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED
+					) );
+				ImGui::Checkbox("Emulated", &emulated);
+
+				ImGui::PopEnabled();
+
+				int32_t selectedTextureIndex = m_selectedFormat - 1 - (int32_t)bimg::TextureFormat::Unknown;
+
+				bgfx::TextureHandle selectedTexture = BGFX_INVALID_HANDLE;
+
+				if (m_selectedFormat != bimg::TextureFormat::Unknown)
+				{
+					selectedTexture = m_textures[selectedTextureIndex];
+				}
+
+				imguiTexturePreview(ImVec2(kTextureSize, kTextureSize), selectedTexture);
+				ImGui::End();
+			}
 
 			imguiEndFrame();
 
