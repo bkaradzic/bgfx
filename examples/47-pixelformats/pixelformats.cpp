@@ -375,7 +375,7 @@ public:
 					ImGui::PopEnabled();
 					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
 					{
-						ImGui::SetTooltip("Texture format is emulated.");
+						ImGui::SetTooltip("Texture format is%s emulated.", emulated ? "" : " not");
 					}
 					ImGui::SameLine();
 
@@ -385,7 +385,7 @@ public:
 					ImGui::PopEnabled();
 					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
 					{
-						ImGui::SetTooltip("Texture format can be used as frame buffer.");
+						ImGui::SetTooltip("Texture format can%s be used as frame buffer.", framebuffer ? "" : "not");
 					}
 					ImGui::SameLine();
 
@@ -395,7 +395,7 @@ public:
 					ImGui::PopEnabled();
 					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
 					{
-						ImGui::SetTooltip("Texture can be sampled as MSAA.");
+						ImGui::SetTooltip("Texture can%s be sampled as MSAA.", msaa ? "" : "not");
 					}
 
 				}
