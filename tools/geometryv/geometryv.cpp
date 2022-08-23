@@ -214,7 +214,7 @@ struct Camera
 	{
 		const bx::Vec3 toTarget     = bx::sub(m_target.dest, m_pos.dest);
 		const float toTargetLen     = bx::length(toTarget);
-		const float invToTargetLen  = 1.0f / (toTargetLen + bx::kFloatMin);
+		const float invToTargetLen  = 1.0f / (toTargetLen + bx::kFloatSmallest);
 		const bx::Vec3 toTargetNorm = bx::mul(toTarget, invToTargetLen);
 
 		float delta  = toTargetLen * _dz;
@@ -237,7 +237,7 @@ struct Camera
 
 		const bx::Vec3 toPos     = bx::sub(m_pos.curr, m_target.curr);
 		const float toPosLen     = bx::length(toPos);
-		const float invToPosLen  = 1.0f / (toPosLen + bx::kFloatMin);
+		const float invToPosLen  = 1.0f / (toPosLen + bx::kFloatSmallest);
 		const bx::Vec3 toPosNorm = bx::mul(toPos, invToPosLen);
 
 		float ll[2];
