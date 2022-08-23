@@ -13,10 +13,10 @@
 namespace
 {
 
-const int TEXTURE_SIZE = 256;
-const int HALF_TEXTURE_SIZE = TEXTURE_SIZE / 2;
-const int NUM_FORMATS = bgfx::TextureFormat::UnknownDepth - bgfx::TextureFormat::Unknown - 1;
-const int NUM_FORMATS_IN_ROW = (int)bx::ceil(bx::sqrt(NUM_FORMATS));
+constexpr int32_t kTextureSize = 256;
+constexpr int32_t kHalfTextureSize = kTextureSize / 2;
+constexpr int32_t kNumFormats = bgfx::TextureFormat::UnknownDepth - bgfx::TextureFormat::Unknown - 1;
+const     int32_t kNumFormatsInRow = (int32_t)bx::ceil(bx::sqrt(kNumFormats) );
 
 class ExamplePixelFormats : public entry::AppI
 {
@@ -60,17 +60,17 @@ public:
 			| BGFX_SAMPLER_MIN_POINT
 			| BGFX_SAMPLER_MAG_POINT
 			;
-		float* rgbaf32Pixels = (float*)BX_ALLOC(entry::getAllocator(), TEXTURE_SIZE * TEXTURE_SIZE * 4 * sizeof(float));
-		int x, y;
-		for (y = 0 ; y < TEXTURE_SIZE; ++y)
+		float* rgbaf32Pixels = (float*)BX_ALLOC(entry::getAllocator(), kTextureSize * kTextureSize * 4 * sizeof(float) );
+		int32_t x, y;
+		for (y = 0 ; y < kTextureSize; ++y)
 		{
-			for (x = 0; x < TEXTURE_SIZE; ++x)
+			for (x = 0; x < kTextureSize; ++x)
 			{
-				float relX = (x - HALF_TEXTURE_SIZE) / (float) HALF_TEXTURE_SIZE;
-				float relY = (y - HALF_TEXTURE_SIZE) / (float) HALF_TEXTURE_SIZE;
-				float distance = bx::min(1.0f, bx::sqrt(relX * relX + relY * relY));
+				float relX = (x - kHalfTextureSize) / (float) kHalfTextureSize;
+				float relY = (y - kHalfTextureSize) / (float) kHalfTextureSize;
+				float distance = bx::min(1.0f, bx::sqrt(relX * relX + relY * relY) );
 				float angle = bx::atan2(relY, relX);
-				float* pixel = &rgbaf32Pixels[(x + y * TEXTURE_SIZE) * 4];
+				float* pixel = &rgbaf32Pixels[(x + y * kTextureSize) * 4];
 				float hsv[3] = {angle / (2.0f * bx::kPi), 1.0f, 1.0f - distance};
 				bx::hsvToRgb(pixel, hsv);
 				pixel[3] = 1.0f - distance;
@@ -81,19 +81,19 @@ public:
 		{
 			for (x = 0; x < 16; ++x)
 			{
-				float* r = &rgbaf32Pixels[(x + (TEXTURE_SIZE - 36 + y) * TEXTURE_SIZE) * 4];
+				float* r = &rgbaf32Pixels[(x + (kTextureSize - 36 + y) * kTextureSize) * 4];
 				r[0] = 1.0f;
 				r[1] = 0.0f;
 				r[2] = 0.0f;
 				r[3] = 1.0f;
 
-				float* g = &rgbaf32Pixels[(x + 16 + (TEXTURE_SIZE - 36 + y) * TEXTURE_SIZE) * 4];
+				float* g = &rgbaf32Pixels[(x + 16 + (kTextureSize - 36 + y) * kTextureSize) * 4];
 				g[0] = 0.0f;
 				g[1] = 1.0f;
 				g[2] = 0.0f;
 				g[3] = 1.0f;
 
-				float* b = &rgbaf32Pixels[(x + 32 + (TEXTURE_SIZE - 36 + y) * TEXTURE_SIZE) * 4];
+				float* b = &rgbaf32Pixels[(x + 32 + (kTextureSize - 36 + y) * kTextureSize) * 4];
 				b[0] = 0.0f;
 				b[1] = 0.0f;
 				b[2] = 1.0f;
@@ -105,7 +105,7 @@ public:
 		{
 			for (x = 0; x < 48; ++x)
 			{
-				float* a = &rgbaf32Pixels[(x + (TEXTURE_SIZE - 20 + y) * TEXTURE_SIZE) * 4];
+				float* a = &rgbaf32Pixels[(x + (kTextureSize - 20 + y) * kTextureSize) * 4];
 				a[0] = 1.0f;
 				a[1] = 1.0f;
 				a[2] = 1.0f;
@@ -114,47 +114,93 @@ public:
 		}
 
 		bimg::TextureInfo info;
-		for (int i = 0; i < NUM_FORMATS; ++i)
+		for (int32_t i = 0; i < kNumFormats; ++i)
 		{
-			int format = (int)bgfx::TextureFormat::Unknown + 1 + i;
-			const char* formatName = bimg::getName(bimg::TextureFormat::Enum(format));
+			int32_t format = (int32_t)bgfx::TextureFormat::Unknown + 1 + i;
+			const char* formatName = bimg::getName(bimg::TextureFormat::Enum(format) );
 			int32_t formatNameLen = bx::strLen(formatName);
+
 			if (!bimg::imageConvert(bimg::TextureFormat::Enum(format), bimg::TextureFormat::RGBA32F)
-				|| formatName[formatNameLen - 1] == 'I'
-				|| formatName[formatNameLen - 1] == 'U'
+			|| formatName[formatNameLen - 1] == 'I'
+			|| formatName[formatNameLen - 1] == 'U'
 				)
 			{
 				m_textures[i] = BGFX_INVALID_HANDLE;
 				continue;
 			}
-			bimg::imageGetSize(&info, TEXTURE_SIZE, TEXTURE_SIZE, 1, false, false, 1, bimg::TextureFormat::Enum(format));
+
+			bimg::imageGetSize(
+				  &info
+				, kTextureSize
+				, kTextureSize
+				, 1
+				, false
+				, false
+				, 1
+				, bimg::TextureFormat::Enum(format)
+				);
+
 			const bgfx::Memory* mem = bgfx::alloc(info.storageSize);
-			bimg::imageConvert(entry::getAllocator(), mem->data, info.format, rgbaf32Pixels, bimg::TextureFormat::RGBA32F, TEXTURE_SIZE, TEXTURE_SIZE, 1);
-			m_textures[i] = bgfx::createTexture2D(info.width, info.height, info.numMips > 1, info.numLayers, bgfx::TextureFormat::Enum(info.format), flags, mem);
+			bimg::imageConvert(
+				  entry::getAllocator()
+				, mem->data
+				, info.format
+				, rgbaf32Pixels
+				, bimg::TextureFormat::RGBA32F
+				, kTextureSize
+				, kTextureSize
+				, 1
+				);
+
+			m_textures[i] = bgfx::createTexture2D(
+				  info.width
+				, info.height
+				, info.numMips > 1
+				, info.numLayers
+				, bgfx::TextureFormat::Enum(info.format)
+				, flags
+				, mem
+				);
+
 			bgfx::setName(m_textures[i], formatName);
 			bgfx::setViewName(bgfx::ViewId(i + 1), formatName);
 		}
 
-		const bgfx::Memory* checkerboardImageMemory = bgfx::alloc(TEXTURE_SIZE * TEXTURE_SIZE * 4);
-		bimg::imageCheckerboard(checkerboardImageMemory->data, TEXTURE_SIZE, TEXTURE_SIZE, 16, 0xFF909090, 0xFF707070);
-		m_checkerboard = bgfx::createTexture2D(TEXTURE_SIZE, TEXTURE_SIZE, false, 1, bgfx::TextureFormat::RGBA8, flags, checkerboardImageMemory);
+		const bgfx::Memory* checkerboardImageMemory = bgfx::alloc(kTextureSize * kTextureSize * 4);
+		bimg::imageCheckerboard(
+			  checkerboardImageMemory->data
+			, kTextureSize
+			, kTextureSize
+			, 16
+			, 0xFF909090
+			, 0xFF707070
+			);
+		m_checkerboard = bgfx::createTexture2D(
+			  kTextureSize
+			, kTextureSize
+			, false
+			, 1
+			, bgfx::TextureFormat::RGBA8
+			, flags
+			, checkerboardImageMemory
+			);
 
 		BX_FREE(entry::getAllocator(), rgbaf32Pixels);
 
 		imguiCreate();
 	}
 
-	int shutdown() override
+	int32_t shutdown() override
 	{
 		imguiDestroy();
 
 		for (auto texture: m_textures)
 		{
-			if (bgfx::isValid(texture))
+			if (bgfx::isValid(texture) )
 				bgfx::destroy(texture);
 		}
 
-		if (bgfx::isValid(m_checkerboard))
+		if (bgfx::isValid(m_checkerboard) )
 			bgfx::destroy(m_checkerboard);
 
 		// Shutdown bgfx.
@@ -167,30 +213,33 @@ public:
 	{
 		ImVec2 textSize = ImGui::CalcTextSize(text);
 		ImVec2 textOffset = ImVec2(
-			size.x >= 0.0f ? bx::max((size.x - textSize.x) / 2, 0.0f) : 0.0f,
-			size.y >= 0.0f ? bx::max((size.y - textSize.y) / 2, 0.0f) : 0.0f
-		);
-		ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + textOffset.x, ImGui::GetCursorPosY() + textOffset.y));
+			  size.x >= 0.0f ? bx::max( (size.x - textSize.x) / 2, 0.0f) : 0.0f
+			, size.y >= 0.0f ? bx::max( (size.y - textSize.y) / 2, 0.0f) : 0.0f
+			);
+		ImGui::SetCursorPos(ImVec2(
+			  ImGui::GetCursorPosX() + textOffset.x
+			, ImGui::GetCursorPosY() + textOffset.y
+			) );
 		ImGui::TextUnformatted(text);
 	};
 
-	void imguiTexturePreview(const ImVec2& size, bgfx::TextureHandle texture, const ImVec2& previewSizeHint = ImVec2(-1.0f, -1.0f)) const
+	void imguiTexturePreview(const ImVec2& size, bgfx::TextureHandle texture, const ImVec2& previewSizeHint = ImVec2(-1.0f, -1.0f) ) const
 	{
 		ImVec2 origin = ImGui::GetCursorScreenPos();
 
 		ImVec2 previewSize = ImVec2(
-			previewSizeHint.x >= 0.0f ? previewSizeHint.x : size.x,
-			previewSizeHint.y >= 0.0f ? previewSizeHint.y : size.y
-		);
+			  previewSizeHint.x >= 0.0f ? previewSizeHint.x : size.x
+			, previewSizeHint.y >= 0.0f ? previewSizeHint.y : size.y
+			);
 
 		ImVec2 previewPos = ImVec2(
-			origin.x + bx::max(0.0f, (size.x - previewSize.x) / 2),
-			origin.y + bx::max(0.0f, (size.y - previewSize.y) / 2)
-		);
+			  origin.x + bx::max(0.0f, (size.x - previewSize.x) / 2)
+			, origin.y + bx::max(0.0f, (size.y - previewSize.y) / 2)
+			);
 
-		if (bgfx::isValid(texture))
+		if (bgfx::isValid(texture) )
 		{
-			if (bgfx::isValid(m_checkerboard))
+			if (bgfx::isValid(m_checkerboard) )
 			{
 				ImGui::SetCursorScreenPos(previewPos);
 				ImGui::Image(m_checkerboard, previewSize);
@@ -208,8 +257,6 @@ public:
 			ImVec2 p1 = ImVec2(p0.x + previewSize.x, p0.y + previewSize.y);
 			drawList->AddRect(p0, p1, color);
 			drawList->AddLine(p0, p1, color);
-
-//			imguiTextBoxUnformatted(size, "INVALID");
 		}
 
 		ImGui::SetCursorScreenPos(origin);
@@ -233,27 +280,28 @@ public:
 			showExampleDialog(this);
 
 			ImGui::SetNextWindowPos(ImVec2(360.0f, 40.0f), ImGuiCond_FirstUseEver);
-			ImGui::Begin("Formats", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+			ImGui::Begin("Formats", NULL, ImGuiWindowFlags_AlwaysAutoResize);
 
 			float cellWidth = m_previewSize;
-			for (int i = 0; i < NUM_FORMATS; ++i)
+			for (int32_t i = 0; i < kNumFormats; ++i)
 			{
-				int format = (int)bgfx::TextureFormat::Unknown + 1 + i;
-				ImVec2 textSize = ImGui::CalcTextSize(bimg::getName(bimg::TextureFormat::Enum(format)));
+				int32_t format = (int32_t)bgfx::TextureFormat::Unknown + 1 + i;
+				ImVec2 textSize = ImGui::CalcTextSize(bimg::getName(bimg::TextureFormat::Enum(format) ) );
 				cellWidth = bx::max(cellWidth, textSize.x);
 			}
 
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-			ImGui::DragFloat("Preview Size", &m_previewSize, 1.0f, 10.0f, TEXTURE_SIZE);
+			ImGui::DragFloat("Preview Size", &m_previewSize, 1.0f, 10.0f, kTextureSize);
 			ImGui::SameLine();
 			ImGui::Checkbox("Alpha", &m_useAlpha);
-			ImGui::BeginTable("Formats", NUM_FORMATS_IN_ROW, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit);
-			for (int i = 0; i < NUM_FORMATS; ++i)
+			ImGui::BeginTable("Formats", kNumFormatsInRow, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit);
+
+			for (int32_t i = 0; i < kNumFormats; ++i)
 			{
 				ImGui::TableNextColumn();
 
-				int format = (int)bgfx::TextureFormat::Unknown + 1 + i;
+				int32_t format = (int32_t)bgfx::TextureFormat::Unknown + 1 + i;
 
 				bool isSelected = (m_selectedFormat == format);
 
@@ -263,35 +311,51 @@ public:
 
 				ImGui::BeginGroup();
 				ImGuiTextBuffer label;
-				label.append(bimg::getName(bimg::TextureFormat::Enum(format)));
-				imguiTextBoxUnformatted(ImVec2(cellWidth, 0.0f), label.c_str());
-				imguiTexturePreview(ImVec2(cellWidth, m_previewSize), m_textures[i], ImVec2(m_previewSize, m_previewSize));
+				label.append(bimg::getName(bimg::TextureFormat::Enum(format) ) );
+				imguiTextBoxUnformatted(ImVec2(cellWidth, 0.0f), label.c_str() );
+				imguiTexturePreview(ImVec2(cellWidth, m_previewSize), m_textures[i], ImVec2(m_previewSize, m_previewSize) );
 				ImGui::EndGroup();
 
 				splitter.SetCurrentChannel(drawList, 0);
-				ImGui::SetCursorScreenPos(ImGui::GetItemRectMin());
+				ImGui::SetCursorScreenPos(ImGui::GetItemRectMin() );
 
 				ImGui::PushID(i);
-				if (ImGui::Selectable("##selectable", &isSelected, ImGuiSelectableFlags_AllowItemOverlap, ImGui::GetItemRectSize()))
+
+				if (ImGui::Selectable(
+					  "##selectable"
+					, &isSelected
+					, ImGuiSelectableFlags_AllowItemOverlap
+					, ImGui::GetItemRectSize()
+					) )
+				{
 					m_selectedFormat = bimg::TextureFormat::Enum(format);
+				}
+
 				ImGui::PopID();
 
 				splitter.Merge(drawList);
 			}
+
 			ImGui::EndTable();
 			ImGui::End();
 
 			ImGui::SetNextWindowPos(ImVec2(40.0f, 300.0f), ImGuiCond_FirstUseEver);
-			ImGui::Begin("Selected Format", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-			ImGui::Text("Format: %s", bimg::getName(m_selectedFormat));
-			int selectedTextureIndex = m_selectedFormat - 1 - (int)bimg::TextureFormat::Unknown;
+			ImGui::Begin("Selected Format", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+			ImGui::Text("Format: %s", bimg::getName(m_selectedFormat) );
+			int32_t selectedTextureIndex = m_selectedFormat - 1 - (int32_t)bimg::TextureFormat::Unknown;
+
 			bgfx::TextureHandle selectedTexture = BGFX_INVALID_HANDLE;
+
 			if (m_selectedFormat != bimg::TextureFormat::Unknown)
+			{
 				selectedTexture = m_textures[selectedTextureIndex];
-			imguiTexturePreview(ImVec2(TEXTURE_SIZE, TEXTURE_SIZE), selectedTexture);
+			}
+
+			imguiTexturePreview(ImVec2(kTextureSize, kTextureSize), selectedTexture);
 			ImGui::End();
 
 			imguiEndFrame();
+
 			// Set view 0 default viewport.
 			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
@@ -320,7 +384,7 @@ public:
 	bimg::TextureFormat::Enum m_selectedFormat = bimg::TextureFormat::RGBA8;
 
 	bgfx::TextureHandle m_checkerboard = BGFX_INVALID_HANDLE;
-	bgfx::TextureHandle m_textures[NUM_FORMATS];
+	bgfx::TextureHandle m_textures[kNumFormats];
 };
 
 } // namespace
