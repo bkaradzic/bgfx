@@ -233,6 +233,7 @@ namespace bgfx
 			RGBA32U,
 			RGBA32F,
 			R5G6B5,
+			BGRA4,
 			RGBA4,
 			RGB5A1,
 			RGB10A2,

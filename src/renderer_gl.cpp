@@ -288,6 +288,7 @@ namespace bgfx { namespace gl
 		{ GL_RGBA32UI,                                 GL_ZERO,                                      RGBA_INTEGER,                                GL_RGBA_INTEGER,                             GL_UNSIGNED_INT,                 false, { $_, $_, $_, $_ } }, // RGBA32U
 		{ GL_RGBA32F,                                  GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_FLOAT,                        false, { $_, $_, $_, $_ } }, // RGBA32F
 		{ GL_RGB565,                                   GL_ZERO,                                      GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_SHORT_5_6_5,         false, { $_, $_, $_, $_ } }, // R5G6B5
+		{ GL_RGBA4,                                    GL_ZERO,                                      GL_BGRA,                                     GL_BGRA,                                     GL_UNSIGNED_SHORT_4_4_4_4_REV,   false, { $_, $_, $_, $_ } }, // BGRA4
 		{ GL_RGBA4,                                    GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_SHORT_4_4_4_4_REV,   false, { $_, $_, $_, $_ } }, // RGBA4
 		{ GL_RGB5_A1,                                  GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_SHORT_1_5_5_5_REV,   false, { $_, $_, $_, $_ } }, // RGB5A1
 		{ GL_RGB10_A2,                                 GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_INT_2_10_10_10_REV,  false, { $_, $_, $_, $_ } }, // RGB10A2
@@ -387,6 +388,7 @@ namespace bgfx { namespace gl
 		GL_RGBA32UI,           // RGBA32U
 		GL_RGBA32F,            // RGBA32F
 		GL_RGB565,             // R5G6B5
+		GL_RGBA4,              // BGRA4
 		GL_RGBA4,              // RGBA4
 		GL_RGB5_A1,            // RGB5A1
 		GL_RGB10_A2,           // RGB10A2
@@ -477,6 +479,7 @@ namespace bgfx { namespace gl
 		GL_RGBA32UI,       // RGBA32U
 		GL_RGBA32F,        // RGBA32F
 		GL_RGB565,         // R5G6B5
+		GL_RGBA4,          // BGRA4
 		GL_RGBA4,          // RGBA4
 		GL_RGB5_A1,        // RGB5A1
 		GL_RGB10_A2,       // RGB10A2
@@ -1649,6 +1652,7 @@ namespace bgfx { namespace gl
 			case TextureFormat::A8:
 			case TextureFormat::R8: // Luminance
 			case TextureFormat::R5G6B5:
+			case TextureFormat::BGRA4:
 			case TextureFormat::RGBA4:
 			case TextureFormat::RGB5A1:
 				// GLES2 formats without sRGB.
@@ -1901,6 +1905,7 @@ namespace bgfx { namespace gl
 		{
 			// GLES2 textures
 			case TextureFormat::R5G6B5:
+			case TextureFormat::BGRA4:
 			case TextureFormat::RGBA4:
 			case TextureFormat::RGB5A1:
 			case TextureFormat::D16:
@@ -2515,6 +2520,7 @@ namespace bgfx { namespace gl
 						// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glTexImage2D.xml
 						setTextureFormat(TextureFormat::RGBA8,  GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
 						setTextureFormat(TextureFormat::R5G6B5, GL_RGB,  GL_RGB,  GL_UNSIGNED_SHORT_5_6_5_REV);
+						setTextureFormat(TextureFormat::BGRA4,  GL_BGRA, GL_BGRA, GL_UNSIGNED_SHORT_4_4_4_4_REV);
 						setTextureFormat(TextureFormat::RGBA4,  GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4_REV);
 						setTextureFormat(TextureFormat::RGB5A1, GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV);
 
@@ -2629,6 +2635,7 @@ namespace bgfx { namespace gl
 				if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 				{
 					// OpenGL ES does not have reversed BGRA4 and BGR5A1 support.
+					setTextureFormat(TextureFormat::BGRA4,  GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4);
 					setTextureFormat(TextureFormat::RGBA4,  GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4);
 					setTextureFormat(TextureFormat::RGB5A1, GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1);
 					setTextureFormat(TextureFormat::R5G6B5, GL_RGB,  GL_RGB,  GL_UNSIGNED_SHORT_5_6_5);
