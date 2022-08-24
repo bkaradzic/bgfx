@@ -1739,8 +1739,11 @@ public static partial class bgfx
 		RGBA32I,
 		RGBA32U,
 		RGBA32F,
+		B5G6R5,
 		R5G6B5,
+		BGRA4,
 		RGBA4,
+		BGR5A1,
 		RGB5A1,
 		RGB10A2,
 		RG11B10F,
@@ -2019,7 +2022,7 @@ public static partial class bgfx
 		public byte numGPUs;
 		public fixed uint gpu[4];
 		public Limits limits;
-		public fixed ushort formats[85];
+		public fixed ushort formats[88];
 	}
 	
 	public unsafe struct InternalData
