@@ -237,6 +237,7 @@ namespace bgfx { namespace d3d9
 		{ D3DFMT_R5G6B5        }, // R5G6B5
 		{ D3DFMT_A4R4G4B4      }, // BGRA4
 		{ D3DFMT_A4R4G4B4      }, // RGBA4
+		{ D3DFMT_A1R5G5B5      }, // BGR5A1
 		{ D3DFMT_A1R5G5B5      }, // RGB5A1
 		{ D3DFMT_A2B10G10R10   }, // RGB10A2
 		{ D3DFMT_UNKNOWN       }, // RG11B10F
