@@ -5839,6 +5839,34 @@ namespace bgfx { namespace gl
 				}
 			}
 
+			GLint mapping[4] = {
+				s_textureFormat[m_textureFormat].m_mapping[0],
+				s_textureFormat[m_textureFormat].m_mapping[1],
+				s_textureFormat[m_textureFormat].m_mapping[2],
+				s_textureFormat[m_textureFormat].m_mapping[3],
+			};
+			if (s_renderGL->m_textureSwizzleSupport
+			&& (-1 != mapping[0] || -1 != mapping[1] || -1 != mapping[2] || -1 != mapping[3]) )
+			{
+				if (-1 == mapping[0])
+				{
+					mapping[0] = GL_RED;
+				}
+				if (-1 == mapping[1])
+				{
+					mapping[1] = GL_GREEN;
+				}
+				if (-1 == mapping[2])
+				{
+					mapping[2] = GL_BLUE;
+				}
+				if (-1 == mapping[3])
+				{
+					mapping[3] = GL_ALPHA;
+				}
+				GL_CHECK(glTexParameteriv(m_target, GL_TEXTURE_SWIZZLE_RGBA, mapping));
+			}
+
 			if (NULL != temp)
 			{
 				BX_FREE(g_allocator, temp);
