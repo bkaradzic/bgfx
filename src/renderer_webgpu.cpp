@@ -356,6 +356,7 @@ namespace bgfx { namespace webgpu
 		{ wgpu::TextureFormat::RGBA32Sint,          wgpu::TextureFormat::Undefined        },  // RGBA32I
 		{ wgpu::TextureFormat::RGBA32Uint,          wgpu::TextureFormat::Undefined        },  // RGBA32U
 		{ wgpu::TextureFormat::RGBA32Float,         wgpu::TextureFormat::Undefined        },  // RGBA32F
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // B5G6R5
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // R5G6B5
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // BGRA4
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RGBA4
@@ -660,6 +661,7 @@ namespace bgfx { namespace webgpu
 			g_caps.formats[TextureFormat::PTC14 ] =
 			g_caps.formats[TextureFormat::PTC12A] =
 			g_caps.formats[TextureFormat::PTC14A] =
+			g_caps.formats[TextureFormat::B5G6R5] =
 			g_caps.formats[TextureFormat::R5G6B5] =
 			g_caps.formats[TextureFormat::BGRA4 ] =
 			g_caps.formats[TextureFormat::RGBA4 ] =

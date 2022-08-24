@@ -287,6 +287,7 @@ namespace bgfx { namespace gl
 		{ GL_RGBA32I,                                  GL_ZERO,                                      RGBA_INTEGER,                                GL_RGBA_INTEGER,                             GL_INT,                          false, { $_, $_, $_, $_ } }, // RGBA32I
 		{ GL_RGBA32UI,                                 GL_ZERO,                                      RGBA_INTEGER,                                GL_RGBA_INTEGER,                             GL_UNSIGNED_INT,                 false, { $_, $_, $_, $_ } }, // RGBA32U
 		{ GL_RGBA32F,                                  GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_FLOAT,                        false, { $_, $_, $_, $_ } }, // RGBA32F
+		{ GL_RGB565,                                   GL_ZERO,                                      GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_SHORT_5_6_5,         false, { $_, $_, $_, $_ } }, // B5G6R5
 		{ GL_RGB565,                                   GL_ZERO,                                      GL_RGB,                                      GL_RGB,                                      GL_UNSIGNED_SHORT_5_6_5,         false, { $_, $_, $_, $_ } }, // R5G6B5
 		{ GL_RGBA4,                                    GL_ZERO,                                      GL_BGRA,                                     GL_BGRA,                                     GL_UNSIGNED_SHORT_4_4_4_4_REV,   false, { $_, $_, $_, $_ } }, // BGRA4
 		{ GL_RGBA4,                                    GL_ZERO,                                      GL_RGBA,                                     GL_RGBA,                                     GL_UNSIGNED_SHORT_4_4_4_4_REV,   false, { $_, $_, $_, $_ } }, // RGBA4
@@ -388,6 +389,7 @@ namespace bgfx { namespace gl
 		GL_RGBA32I,            // RGBA32I
 		GL_RGBA32UI,           // RGBA32U
 		GL_RGBA32F,            // RGBA32F
+		GL_RGB565,             // B5G6R5
 		GL_RGB565,             // R5G6B5
 		GL_RGBA4,              // BGRA4
 		GL_RGBA4,              // RGBA4
@@ -480,6 +482,7 @@ namespace bgfx { namespace gl
 		GL_RGBA32I,        // RGBA32I
 		GL_RGBA32UI,       // RGBA32U
 		GL_RGBA32F,        // RGBA32F
+		GL_RGB565,         // B5G6R5
 		GL_RGB565,         // R5G6B5
 		GL_RGBA4,          // BGRA4
 		GL_RGBA4,          // RGBA4
@@ -1654,6 +1657,7 @@ namespace bgfx { namespace gl
 		{
 			case TextureFormat::A8:
 			case TextureFormat::R8: // Luminance
+			case TextureFormat::B5G6R5:
 			case TextureFormat::R5G6B5:
 			case TextureFormat::BGRA4:
 			case TextureFormat::RGBA4:
@@ -1908,6 +1912,7 @@ namespace bgfx { namespace gl
 		switch(_format)
 		{
 			// GLES2 textures
+			case TextureFormat::B5G6R5:
 			case TextureFormat::R5G6B5:
 			case TextureFormat::BGRA4:
 			case TextureFormat::RGBA4:
@@ -2524,6 +2529,7 @@ namespace bgfx { namespace gl
 						// internalFormat and format must match:
 						// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glTexImage2D.xml
 						setTextureFormat(TextureFormat::RGBA8,  GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
+						setTextureFormat(TextureFormat::B5G6R5, GL_RGB,  GL_RGB,  GL_UNSIGNED_SHORT_5_6_5_REV);
 						setTextureFormat(TextureFormat::R5G6B5, GL_RGB,  GL_RGB,  GL_UNSIGNED_SHORT_5_6_5_REV);
 						setTextureFormat(TextureFormat::BGRA4,  GL_BGRA, GL_BGRA, GL_UNSIGNED_SHORT_4_4_4_4_REV);
 						setTextureFormat(TextureFormat::RGBA4,  GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4_REV);
@@ -2645,6 +2651,7 @@ namespace bgfx { namespace gl
 					setTextureFormat(TextureFormat::RGBA4,  GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4);
 					setTextureFormat(TextureFormat::BGR5A1, GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1);
 					setTextureFormat(TextureFormat::RGB5A1, GL_RGBA, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1);
+					setTextureFormat(TextureFormat::B5G6R5, GL_RGB,  GL_RGB,  GL_UNSIGNED_SHORT_5_6_5);
 					setTextureFormat(TextureFormat::R5G6B5, GL_RGB,  GL_RGB,  GL_UNSIGNED_SHORT_5_6_5);
 
 					if (!m_gles3)
