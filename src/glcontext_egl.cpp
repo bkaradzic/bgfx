@@ -224,7 +224,7 @@ EGL_IMPORT
 
 #	if BX_PLATFORM_ANDROID
 				EGL_DEPTH_SIZE, 16,
-				EGL_SAMPLES, msaaSamples,
+				EGL_SAMPLES, (EGLint)msaaSamples,
 #	else
 				EGL_DEPTH_SIZE, 24,
 #	endif // BX_PLATFORM_
