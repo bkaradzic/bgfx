@@ -665,3 +665,27 @@ from lower resolution inputs.
 
 .. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/46-fsr/screenshot.png
    :alt: example-46-fsr
+
+`47-Pixel Formats <https://github.com/bkaradzic/bgfx/tree/master/examples/47-pixelformats>`__
+--------------------------------------------------------------------------
+
+Pixel Formats
+
+View and test texture formats
+
+.. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/47-pixelformats/screenshot.png
+   :alt: example-47-pixelformats
+
+`48-multidrawindirect  <https://github.com/bkaradzic/bgfx/tree/master/examples/48-multidrawindirect>`__
+--------------------------------------------------------------------------
+
+Multidraw Indirect
+
+Simple example of indirect rendering + an implementation of multidraw indirect
+
+Reference(s):
+ - `OpenGL MultiDrawIndirect with per-instance textures <https://web.archive.org/web/20201109155619/https://litasa.github.io/blog/2017/09/04/OpenGL-MultiDrawIndirect-with-Individual-Textures>`__.
+ - `Indirect Rendering - A way to a million draw calls <https://web.archive.org/web/20210926073337/https://cpp-rendering.io/indirect-rendering>`__.
+
+.. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/48-multidrawindirect/screenshot.png
+   :alt: example-48-multidrawindirect
