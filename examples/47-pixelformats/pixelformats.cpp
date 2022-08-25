@@ -24,7 +24,7 @@ constexpr int32_t kFirstUncompressedFormatIndex = bgfx::TextureFormat::Unknown +
 constexpr int32_t kNumCompressedFormats = bgfx::TextureFormat::Unknown;
 constexpr int32_t kNumUncompressedFormats = bgfx::TextureFormat::UnknownDepth - kFirstUncompressedFormatIndex;
 constexpr int32_t kNumFormats = kNumCompressedFormats + kNumUncompressedFormats;
-const     int32_t kNumFormatsInRow = (int32_t)bx::ceil(bx::sqrt(kNumFormats) );
+const     int32_t kNumFormatsInRow = (int32_t)bx::ceil(1.2f * bx::sqrt(kNumFormats) );
 
 inline int32_t formatToIndex(bimg::TextureFormat::Enum format)
 {
@@ -52,10 +52,44 @@ inline bimg::TextureFormat::Enum indexToFormat(int32_t index)
 	}
 }
 
+struct TextureStatus
+{
+	enum Enum
+	{
+		Ok,
+		NotInitialized,
+		FormatNotSupported,
+		ConversionNotSupported,
+		FormatIgnored
+	};
+
+	inline static const char* getDescription(Enum value)
+	{
+		switch (value)
+		{
+			case Ok: return "Ok";
+			case NotInitialized: return "Texture was not initialized";
+			case FormatNotSupported: return "Format not supported by GPU/backend";
+			case ConversionNotSupported: return "Conversion from RGBA8 not supported";
+			case FormatIgnored: return "Format is ignored by this example";
+		}
+
+		return "Unknown";
+	}
+
+	inline static bool isError(Enum value)
+	{
+		return     value == FormatNotSupported
+				|| value == ConversionNotSupported
+				;
+	}
+};
+
 struct Texture
 {
 	uint16_t m_width = 0;
 	uint16_t m_height = 0;
+	TextureStatus::Enum m_status = TextureStatus::NotInitialized;
 	bgfx::TextureHandle m_texture = BGFX_INVALID_HANDLE;
 };
 
@@ -153,7 +187,9 @@ static void textureSetPopulateCompressedFormat(TextureSet& textureSet, bimg::Ima
 	}
 
 	uint32_t textureIndex = indexToFormat(source->m_format);
-	if (bgfx::isValid(textureSet.m_textures[textureIndex].m_texture) )
+	Texture& texture = textureSet.m_textures[textureIndex];
+
+	if (bgfx::isValid(texture.m_texture) || texture.m_status == TextureStatus::FormatNotSupported)
 	{
 		if (freeImage)
 		{
@@ -173,9 +209,9 @@ static void textureSetPopulateCompressedFormat(TextureSet& textureSet, bimg::Ima
 		, mip0
 	);
 
-	Texture& texture = textureSet.m_textures[textureIndex];
 	texture.m_width = uint16_t(mip0.m_width);
 	texture.m_height = uint16_t(mip0.m_height);
+	texture.m_status = TextureStatus::Ok;
 	texture.m_texture = bgfx::createTexture2D(
 		  uint16_t(mip0.m_width)
 		, uint16_t(mip0.m_height)
@@ -211,11 +247,11 @@ static void textureSetPopulateUncompressedFormats(TextureSet& textureSet, bimg::
 
 	for (int32_t i = 0; i < kNumUncompressedFormats; ++i)
 	{
-		int32_t textureIndex = kFirstUncompressedFormatIndex + i;
+		int32_t textureIndex = kNumCompressedFormats + i;
 
 		Texture& texture = textureSet.m_textures[textureIndex];
 
-		if (bgfx::isValid(texture.m_texture) )
+		if (bgfx::isValid(texture.m_texture) || texture.m_status == TextureStatus::FormatNotSupported)
 		{
 			continue;
 		}
@@ -224,12 +260,16 @@ static void textureSetPopulateUncompressedFormats(TextureSet& textureSet, bimg::
 		const char* formatName = bimg::getName(format);
 		int32_t formatNameLen = bx::strLen(formatName);
 
-		if (!bimg::imageConvert(format, source->m_format)
-			||  formatName[formatNameLen - 1] == 'I'
-			||  formatName[formatNameLen - 1] == 'U'
-			)
+		if (!bimg::imageConvert(format, source->m_format) )
 		{
-			textureSet.m_textures[i] = BGFX_INVALID_HANDLE;
+			texture.m_status  = TextureStatus::ConversionNotSupported;
+			continue;
+		}
+
+		if (    formatName[formatNameLen - 1] == 'I'
+			||  formatName[formatNameLen - 1] == 'U')
+		{
+			texture.m_status  = TextureStatus::FormatIgnored;
 			continue;
 		}
 
@@ -259,6 +299,7 @@ static void textureSetPopulateUncompressedFormats(TextureSet& textureSet, bimg::
 
 		texture.m_width = info.width;
 		texture.m_height = info.height;
+		texture.m_status = TextureStatus::Ok;
 		texture.m_texture = bgfx::createTexture2D(
 			  info.width
 			, info.height
@@ -281,10 +322,33 @@ static void textureSetPopulateUncompressedFormats(TextureSet& textureSet, bimg::
 	}
 }
 
-static TextureSet generateTextureSetFromImage(const char* name, bimg::ImageContainer* source, bool freeImage = true)
+static TextureSet makeEmptyTextureSet(const char* name)
 {
 	TextureSet textureSet;
 	textureSet.m_name = name;
+
+	for (int32_t i = 0; i < kNumFormats; ++i)
+	{
+		bimg::TextureFormat::Enum format = indexToFormat(i);
+
+		if (!bgfx::isTextureValid(
+			  1
+			, false
+			, 1
+			, bgfx::TextureFormat::Enum(format)
+			, BGFX_TEXTURE_NONE
+		) )
+		{
+			textureSet.m_textures[i].m_status = TextureStatus::FormatNotSupported;
+		}
+	}
+
+	return textureSet;
+}
+
+static TextureSet generateTextureSetFromImage(const char* name, bimg::ImageContainer* source, bool freeImage = true)
+{
+	TextureSet textureSet = makeEmptyTextureSet(name);
 
 	if (NULL == source)
 	{
@@ -298,8 +362,7 @@ static TextureSet generateTextureSetFromImage(const char* name, bimg::ImageConta
 
 static TextureSet generateTextureSetFromFileSet(const char* name, const char* filePaths[])
 {
-	TextureSet textureSet;
-	textureSet.m_name = name;
+	TextureSet textureSet = makeEmptyTextureSet(name);
 
 	while (NULL != *filePaths)
 	{
@@ -479,6 +542,19 @@ public:
 		ImGui::TextUnformatted(text);
 	};
 
+	void imguiStrikethroughItem()
+	{
+		ImVec2 itemSize = ImGui::GetItemRectSize();
+		if (itemSize.x <= 0.0f || itemSize.y <= 0.0f)
+			return;
+
+		ImVec2 p0 = ImGui::GetItemRectMin();
+		ImVec2 p1 = ImGui::GetItemRectMax();
+		p0.y = p1.y = p0.y + itemSize.y * 0.5f;
+
+		ImGui::GetWindowDrawList()->AddLine(p0, p1, ImGui::GetColorU32(ImGuiCol_Text) );
+	}
+
 	void imguiTexturePreview(const ImVec2& size, bgfx::TextureHandle texture, const ImVec2& previewSizeHint = ImVec2(-1.0f, -1.0f) ) const
 	{
 		ImVec2 origin = ImGui::GetCursorScreenPos();
@@ -498,7 +574,7 @@ public:
 			if (bgfx::isValid(m_checkerboard) )
 			{
 				static int64_t timeOffset = bx::getHPCounter();
-				const float time = float( (bx::getHPCounter()-timeOffset)/double(bx::getHPFrequency() ) );
+				const float time = m_animateCheckerboard ? float( (bx::getHPCounter()-timeOffset)/double(bx::getHPFrequency() ) ) : 0.0f;
 				const float xx = bx::sin(time * 0.17f);
 				const float yy = bx::cos(time * 0.13f);
 				const float uTile = bx::max(1.0f, previewSize.x / kCheckerboardSize);
@@ -513,7 +589,7 @@ public:
 		}
 		else
 		{
-			ImU32 color = ImGui::GetColorU32(ImGuiCol_TextDisabled, 0.25f);
+			ImU32 color = ImGui::GetColorU32(ImGuiCol_Text, 0.25f);
 
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
 			ImVec2 p0 = previewPos;
@@ -569,7 +645,7 @@ public:
 					if (ImGui::Selectable(textureSet.m_name.c_str(), &isSelected))
 					{
 						m_currentTextureSet = &textureSet;
-						if (!m_currentTextureSet->m_hasCompressedTextures && formatToIndex(m_selectedFormat) < kFirstUncompressedFormatIndex)
+						if (!m_currentTextureSet->m_hasCompressedTextures && formatToIndex(m_selectedFormat) < kNumCompressedFormats)
 							m_selectedFormat = bimg::TextureFormat::RGBA8;
 					}
 				}
@@ -578,15 +654,21 @@ public:
 			ImGui::DragFloat("Preview Size", &m_previewSize, 1.0f, 10.0f, m_largestTextureSize, "%.0f px");
 			ImGui::SameLine();
 			ImGui::Checkbox("Alpha", &m_useAlpha);
+			ImGui::SameLine();
+			ImGui::Checkbox("Animate Checkerboard", &m_animateCheckerboard);
 			ImGui::BeginTable("Formats", kNumFormatsInRow, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit);
 
-			for (int32_t i = m_currentTextureSet->m_hasCompressedTextures ? 0 : kFirstUncompressedFormatIndex; i < kNumFormats; ++i)
+			for (int32_t i = m_currentTextureSet->m_hasCompressedTextures ? 0 : kNumCompressedFormats; i < kNumFormats; ++i)
 			{
 				ImGui::TableNextColumn();
 
 				bimg::TextureFormat::Enum format = indexToFormat(i);
+				const Texture& texture = m_currentTextureSet->m_textures[i];
 
 				bool isSelected = (m_selectedFormat == format);
+				bool isFormatSupported = texture.m_status == TextureStatus::Ok;
+				bool isError = TextureStatus::isError(texture.m_status);
+				ImU32 labelColor = isError ? IM_COL32(255, 96, 96, 255) : ImGui::GetColorU32(isFormatSupported ? ImGuiCol_Text : ImGuiCol_TextDisabled);
 
 				ImDrawListSplitter splitter;
 				splitter.Split(drawList, 2);
@@ -595,10 +677,19 @@ public:
 				ImGui::BeginGroup();
 				ImGuiTextBuffer label;
 				label.append(bimg::getName(bimg::TextureFormat::Enum(format) ) );
+				ImGui::PushStyleColor(ImGuiCol_Text, labelColor);
 				imguiTextBoxUnformatted(ImVec2(cellWidth, 0.0f), label.c_str() );
+				if (TextureStatus::isError(texture.m_status) )
+				{
+					imguiStrikethroughItem();
+				}
 				imguiTexturePreview(ImVec2(cellWidth, previewSize.y), m_currentTextureSet->m_textures[i].m_texture, previewSize );
-
+				ImGui::PopStyleColor();
 				ImGui::EndGroup();
+				if (!isFormatSupported && ImGui::IsItemHovered() )
+				{
+					ImGui::SetTooltip("%s", TextureStatus::getDescription(texture.m_status) );
+				}
 
 				splitter.SetCurrentChannel(drawList, 0);
 				ImGui::SetCursorScreenPos(ImGui::GetItemRectMin() );
@@ -624,22 +715,19 @@ public:
 			ImGui::End();
 
 			{
-				ImGui::SetNextWindowPos(ImVec2(40.0f, 300.0f), ImGuiCond_FirstUseEver);
+				int32_t selectedTextureIndex = formatToIndex(m_selectedFormat);
+				const Texture& texture = m_currentTextureSet->m_textures[selectedTextureIndex];
+
+				ImGui::SetNextWindowPos(ImVec2(10.0f, 280.0f), ImGuiCond_FirstUseEver);
 				ImGui::Begin("Selected Format", NULL, ImGuiWindowFlags_AlwaysAutoResize);
 				ImGui::Text("Format: %s", bimg::getName(m_selectedFormat) );
+				ImGui::Text("Status: %s", TextureStatus::getDescription(texture.m_status) );
 
 				const bgfx::Caps* caps = bgfx::getCaps();
 
-				if (caps->formats[m_selectedFormat] == BGFX_CAPS_FORMAT_TEXTURE_NONE)
-				{
-					ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 10.0f));
-					ImGui::Text("Not supported!");
-					ImGui::PopStyleVar();
-				}
-				else
-				{
-					const uint32_t formatFlags = caps->formats[m_selectedFormat];
+				const uint32_t formatFlags = caps->formats[m_selectedFormat];
 
+				{
 					bool emulated = 0 != (formatFlags & (0
 						| BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED
 						| BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED
@@ -672,28 +760,12 @@ public:
 					{
 						ImGui::SetTooltip("Texture can%s be sampled as MSAA.", msaa ? "" : "not");
 					}
-
 				}
-
-				int32_t selectedTextureIndex = formatToIndex(m_selectedFormat);
-
-				bgfx::TextureHandle selectedTexture = BGFX_INVALID_HANDLE;
 
 				ImVec2 size = ImVec2(float(m_currentTextureSet->m_maxWidth), float(m_currentTextureSet->m_maxHeight) );
-				ImVec2 selectedPreviewSize = size;
-				if (m_selectedFormat != bimg::TextureFormat::Unknown)
-				{
-					selectedTexture = m_currentTextureSet->m_textures[selectedTextureIndex].m_texture;
-					if (bgfx::isValid(selectedTexture) )
-					{
-						selectedPreviewSize = ImVec2(
-							  float(m_currentTextureSet->m_textures[selectedTextureIndex].m_width)
-							, float(m_currentTextureSet->m_textures[selectedTextureIndex].m_height)
-							);
-					}
-				}
+				ImVec2 selectedPreviewSize = bgfx::isValid(texture.m_texture) ? ImVec2(float(texture.m_width), float(texture.m_height) ) : size;
 
-				imguiTexturePreview(size, selectedTexture, selectedPreviewSize);
+				imguiTexturePreview(size, texture.m_texture, selectedPreviewSize);
 				ImGui::End();
 			}
 
@@ -725,6 +797,7 @@ public:
 	float    m_largestTextureSize = 256.0f;
 	float    m_previewSize = 50.0f;
 	bool     m_useAlpha = true;
+	bool     m_animateCheckerboard = true;
 	bimg::TextureFormat::Enum m_selectedFormat = bimg::TextureFormat::RGBA8;
 
 	bgfx::TextureHandle m_checkerboard = BGFX_INVALID_HANDLE;
