@@ -365,9 +365,9 @@ width="640" height="480" border="0" /></a>
 
 An open source reimplementation of the game Black & White (2001).
 
-[OpenBlack](https://github.com/openblack/openblack#openblack)
+[openblack](https://github.com/openblack/openblack#openblack)
 
-![openblack](https://user-images.githubusercontent.com/1388267/67631321-93c85380-f88c-11e9-9103-804807844af2.png)
+![openblack](https://user-images.githubusercontent.com/32263167/184559293-56cfc6a7-a7da-4876-8fce-434ba8827eae.png)
 
 ## Cluster
 
