@@ -676,7 +676,7 @@ View and test texture formats
 .. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/47-pixelformats/screenshot.png
    :alt: example-47-pixelformats
 
-`48-multidrawindirect  <https://github.com/bkaradzic/bgfx/tree/master/examples/48-multidrawindirect>`__
+`48-drawindirect  <https://github.com/bkaradzic/bgfx/tree/master/examples/48-drawindirect>`__
 --------------------------------------------------------------------------
 
 Draw Indirect
