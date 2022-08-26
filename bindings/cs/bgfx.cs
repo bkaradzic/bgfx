@@ -2152,6 +2152,7 @@ public static partial class bgfx
 		public long cpuTimeEnd;
 		public long gpuTimeBegin;
 		public long gpuTimeEnd;
+		public uint gpuFrameNum;
 	}
 	
 	public unsafe struct EncoderStats
@@ -2175,6 +2176,7 @@ public static partial class bgfx
 		public uint numCompute;
 		public uint numBlit;
 		public uint maxGpuLatency;
+		public uint gpuFrameNum;
 		public ushort numDynamicIndexBuffers;
 		public ushort numDynamicVertexBuffers;
 		public ushort numFrameBuffers;

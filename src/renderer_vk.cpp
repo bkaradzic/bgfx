@@ -5320,8 +5320,10 @@ VK_DESTROY
 		vkDestroy(m_readbackMemory);
 	}
 
-	uint32_t TimerQueryVK::begin(uint32_t _resultIdx)
+	uint32_t TimerQueryVK::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
+		BX_UNUSED(_frameNum);
+
 		while (0 == m_control.reserve(1) )
 		{
 			m_control.consume(1);
@@ -8067,7 +8069,7 @@ VK_DESTROY
 
 		if (m_timerQuerySupport)
 		{
-			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS);
+			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
 		}
 
 		if (0 < _render->m_iboffset)
@@ -8897,6 +8899,7 @@ VK_DESTROY
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
 		perfStats.maxGpuLatency = maxGpuLatency;
+		perfStats.gpuFrameNum   = result.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
 		perfStats.gpuMemoryMax  = gpuMemoryAvailable;
 		perfStats.gpuMemoryUsed = gpuMemoryUsed;

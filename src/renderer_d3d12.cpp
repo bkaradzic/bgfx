@@ -5692,8 +5692,10 @@ namespace bgfx { namespace d3d12
 		DX_RELEASE(m_readback, 0);
 	}
 
-	uint32_t TimerQueryD3D12::begin(uint32_t _resultIdx)
+	uint32_t TimerQueryD3D12::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
+		BX_UNUSED(_frameNum);
+
 		while (0 == m_control.reserve(1) )
 		{
 			m_control.consume(1);
@@ -6002,7 +6004,7 @@ namespace bgfx { namespace d3d12
 		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
-		uint32_t frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS);
+		uint32_t frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
 
 		if (0 < _render->m_iboffset)
 		{
@@ -6876,6 +6878,7 @@ namespace bgfx { namespace d3d12
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
 		perfStats.maxGpuLatency = maxGpuLatency;
+		perfStats.gpuFrameNum   = result.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
 		perfStats.gpuMemoryMax  = -INT64_MAX;
 		perfStats.gpuMemoryUsed = -INT64_MAX;
