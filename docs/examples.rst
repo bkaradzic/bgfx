@@ -679,7 +679,7 @@ View and test texture formats
 `48-multidrawindirect  <https://github.com/bkaradzic/bgfx/tree/master/examples/48-multidrawindirect>`__
 --------------------------------------------------------------------------
 
-Multidraw Indirect
+Draw Indirect
 
 Simple example of indirect rendering + an implementation of multidraw indirect
 
@@ -687,5 +687,5 @@ Reference(s):
  - `OpenGL MultiDrawIndirect with per-instance textures <https://web.archive.org/web/20201109155619/https://litasa.github.io/blog/2017/09/04/OpenGL-MultiDrawIndirect-with-Individual-Textures>`__.
  - `Indirect Rendering - A way to a million draw calls <https://web.archive.org/web/20210926073337/https://cpp-rendering.io/indirect-rendering>`__.
 
-.. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/48-multidrawindirect/screenshot.png
-   :alt: example-48-multidrawindirect
+.. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/48-drawindirect/screenshot.png
+   :alt: example-48-drawindirect

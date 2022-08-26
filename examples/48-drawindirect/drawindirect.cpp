@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2022-2022 Liam Twigger. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -56,6 +56,27 @@ struct ObjectInstance {
 
 bgfx::VertexLayout ObjectInstance::ms_layout;
 
+struct RenderInstance {
+	float m_mtx[16];
+	float m_color[4];
+	
+	static void init()
+	{
+		ms_layout
+			.begin()
+			.add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::TexCoord1, 4, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::TexCoord2, 4, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::TexCoord3, 4, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Float)
+			.end();
+	};
+	
+	static bgfx::VertexLayout ms_layout;
+	};
+	
+bgfx::VertexLayout RenderInstance::ms_layout;
+
 static PosColorVertex s_multiMeshVertices[12] =
 {
 	// Cube Model
@@ -99,10 +120,10 @@ static const uint16_t s_multiMeshIndices[48] =
 };
 
 
-class MultiDrawIndirect : public entry::AppI
+class DrawIndirect : public entry::AppI
 {
 public:
-	MultiDrawIndirect(const char* _name, const char* _description, const char* _url)
+	DrawIndirect(const char* _name, const char* _description, const char* _url)
 		: entry::AppI(_name, _description, _url)
 	{
 	}
@@ -140,6 +161,7 @@ public:
 		// Create vertex stream declaration.
 		PosColorVertex::init();
 		ObjectInstance::init();
+		RenderInstance::init();
 
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
@@ -167,7 +189,7 @@ public:
 		if (computeSupported && instancingSupported) {
 			// Set up indirect program
 			// This is a barebones program that populates the indirect buffer handle with draw requests
-			m_indirect_program = bgfx::createProgram(loadShader("cs_multidrawindirect"), true);
+			m_indirect_program = bgfx::createProgram(loadShader("cs_drawindirect"), true);
 			m_indirect_buffer_handle = bgfx::createIndirectBuffer(m_nDrawElements);
 			
 			ObjectInstance objs[m_nDrawElements];
@@ -191,6 +213,13 @@ public:
 			
 			// This is a list of objects to be rendered via the indirect program
 			m_object_list_buffer = bgfx::createVertexBuffer(bgfx::copy(objs, sizeof(objs) ), ObjectInstance::ms_layout, BGFX_BUFFER_COMPUTE_READ);
+			
+			// This is the instance buffer used for rendering. 
+			// You could instead use a dynamic instance buffer when rendering (use bgfx::allocInstanceDataBuffer in draw loop)
+			// Fill it with a blank array for now, we will populate it with compute
+			RenderInstance temp[m_nDrawElements];
+			memset(&temp[0], 0, sizeof(temp));
+			m_instance_buffer = bgfx::createVertexBuffer(bgfx::copy(temp, sizeof(temp) ), RenderInstance::ms_layout, BGFX_BUFFER_COMPUTE_WRITE);
 			}
 			
 		m_timeOffset = bx::getHPCounter();
@@ -213,6 +242,8 @@ public:
 			bgfx::destroy(m_indirect_buffer_handle);
 		if (bgfx::isValid(m_object_list_buffer))
 			bgfx::destroy(m_object_list_buffer);
+		if (bgfx::isValid(m_instance_buffer))
+			bgfx::destroy(m_instance_buffer);
 		bgfx::destroy(u_drawParams);
 		
 		// Shutdown bgfx.
@@ -252,17 +283,12 @@ public:
 
 			float time = (float)( (bx::getHPCounter() - m_timeOffset)/double(bx::getHPFrequency() ) );
 
-			if (!computeSupported)
+			if (!(computeSupported && instancingSupported))
 			{
 				// When instancing is not supported by GPU, implement alternative
 				// code path that doesn't use instancing.
 				bool blink = uint32_t(time*3.0f)&1;
-				bgfx::dbgTextPrintf(0, 0, blink ? 0x4f : 0x04, " Compute is not supported by GPU. ");
-			}
-			if (!instancingSupported)
-			{
-				bool blink = uint32_t(time*3.0f)&1;
-				bgfx::dbgTextPrintf(0, 1, blink ? 0x4f : 0x04, " Instancing is not supported by GPU. ");
+				bgfx::dbgTextPrintf(0, 0, blink ? 0x4f : 0x04, " Compute/Instancing is not supported by GPU. ");
 			}
 
 			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
@@ -282,49 +308,27 @@ public:
 			}
 
 			if (computeSupported && instancingSupported) {
-				// Prepare instance buffer
-				const uint16_t instanceStride = 80;
-				bgfx::InstanceDataBuffer idb;
-				bgfx::allocInstanceDataBuffer(&idb, m_nDrawElements, instanceStride);
-
-				uint8_t* data = idb.data;
-
-				for (uint32_t ii = 0; ii < m_nDrawElements; ++ii)
-				{
-					uint32_t yy = ii / m_sideSize;
-					uint32_t xx = ii % m_sideSize;
-
-					float* mtx = (float*)data;
-					bx::mtxRotateXY(mtx, time + xx * 0.21f, time + yy * 0.37f);
-					mtx[12] = -15.0f + float(xx) * 3.0f;
-					mtx[13] = -15.0f + float(yy) * 3.0f;
-					mtx[14] = 0.0f;
-
-					float* color = (float*)&data[64];
-					color[0] = bx::sin(time + float(xx) / 11.0f) * 0.5f + 0.5f;
-					color[1] = bx::cos(time + float(yy) / 11.0f) * 0.5f + 0.5f;
-					color[2] = bx::sin(time * 3.0f) * 0.5f + 0.5f;
-					color[3] = 1.0f;
-
-					data += instanceStride;
-				}
-				
-				// Build indirect buffer
-				// NOTE: This could be done once on startup and results stored
+				// Build indirect buffer & prepare instance buffer
+				// NOTE: IF you are rendering static data then
+				// this could be done once on startup and results stored
 				// This is done here for demonstration purposes
-				// You could modify this to, eg, do frustrum culling on the GPU				
-				bgfx::setBuffer(0, m_indirect_buffer_handle, bgfx::Access::Write);
-				bgfx::setBuffer(1, m_object_list_buffer, bgfx::Access::Read);
 				
-				float ud[4] = { float(m_nDrawElements), 0, 0, 0 };
+				// The model matrix for each instance is also set on compute, you could 
+				// You could modify this to, eg, do frustrum culling on the GPU		
+				float ud[4] = { float(m_nDrawElements), float(m_sideSize), float(time), 0 };
 				bgfx::setUniform(u_drawParams, ud);
-					
+						
+				bgfx::setBuffer(0, m_object_list_buffer, bgfx::Access::Read);
+				bgfx::setBuffer(1, m_indirect_buffer_handle, bgfx::Access::Write);
+				bgfx::setBuffer(2, m_instance_buffer, bgfx::Access::Write);
+				
 				bgfx::dispatch(0, m_indirect_program);
 				
+				// Submit our 1 draw call
 				// Set vertex and index buffer.
 				bgfx::setIndexBuffer(m_ibh);
 				bgfx::setVertexBuffer(0, m_vbh);
-				bgfx::setInstanceDataBuffer(&idb);
+				bgfx::setInstanceDataBuffer(m_instance_buffer, 0, m_nDrawElements);
 				
 				// Set render states.
 				bgfx::setState(BGFX_STATE_DEFAULT);
@@ -359,6 +363,7 @@ public:
 	bgfx::IndirectBufferHandle  m_indirect_buffer_handle;
 	bgfx::ProgramHandle m_indirect_program;
 	bgfx::VertexBufferHandle m_object_list_buffer;
+	bgfx::VertexBufferHandle m_instance_buffer;
 	bgfx::UniformHandle u_drawParams;
 
 	int64_t m_timeOffset;
@@ -367,8 +372,8 @@ public:
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-	  MultiDrawIndirect
-	, "48-multidrawindirect"
+	  DrawIndirect
+	, "48-drawindirect"
 	, "Simple example of indirect rendering to render multiple different meshes with 1 draw call"
 	, "https://bkaradzic.github.io/bgfx/examples.html#multidrawindirect"
 	);

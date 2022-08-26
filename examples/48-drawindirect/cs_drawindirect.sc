@@ -6,19 +6,53 @@
 #include "bgfx_compute.sh"
 
 //instance data for all instances (pre culling)
-BUFFER_RO(instanceDataIn, vec4, 1);
+BUFFER_RO(instanceDataIn, vec4, 0);
 
 // Output
-BUFFER_WR(indirectBuffer, uvec4, 0);
+BUFFER_WR(indirectBuffer, uvec4, 1);
+BUFFER_WR(instanceBufferOut, vec4, 2);
 
 uniform vec4 u_drawParams;
 
 NUM_THREADS(1, 1, 1)
+
 void main()
 {
 	int NoofDrawcalls = int(u_drawParams.x);
+	int m_sideSize = int(u_drawParams.y);
+	float time = u_drawParams.z;
 	
-	// tbd: frustum check draws
+	// Prepare draw mtx
+	for (int k = 0; k < NoofDrawcalls; k++) {
+		int yy = k / m_sideSize;
+		int xx = k % m_sideSize;
+
+		float _ax = time + xx * 0.21f;
+		float _ay = time + yy * 0.37f;
+		float sx = sin(_ax);
+		float cx = cos(_ax);
+		float sy = sin(_ay);
+		float cy = cos(_ay);
+
+		vec4 a = vec4(    cy,  0,     sy, 0);
+		vec4 b = vec4( sx*sy, cx, -sx*cy, 0);
+		vec4 c = vec4(-cx*sy, sx,  cx*cy, 0);
+		vec4 d = vec4(-15.0f + float(xx) * 3.0f, -15.0f + float(yy) * 3.0f, 0.0f, 1.0f);
+		
+		vec4 color;
+		color.x = sin(time + float(xx) / 11.0f) * 0.5f + 0.5f;
+		color.y = cos(time + float(yy) / 11.0f) * 0.5f + 0.5f;
+		color.z = sin(time * 3.0f) * 0.5f + 0.5f;
+		color.w = 1.0f;
+		
+		instanceBufferOut[k*5+0] = a;
+		instanceBufferOut[k*5+1] = b;
+		instanceBufferOut[k*5+2] = c;
+		instanceBufferOut[k*5+3] = d;
+		instanceBufferOut[k*5+4] = color;
+		}
+	
+	// Fill indirect buffer
 	
 	for (int k = 0; k < NoofDrawcalls; k++) {
 		drawIndexedIndirect(
