@@ -12,8 +12,6 @@
 #include <X11/keysymdef.h>
 #include <X11/Xlib.h> // will include X11 which #defines None... Don't mess with order of includes.
 #include <X11/Xutil.h>
-#include <bgfx/platform.h>
-
 #include <unistd.h> // syscall
 
 #undef None
@@ -30,18 +28,6 @@ namespace entry
 {
 	static const char* s_applicationName  = "BGFX";
 	static const char* s_applicationClass = "bgfx";
-
-	///
-	inline void x11SetDisplayWindow(void* _display, uint32_t _window, void* _glx = NULL)
-	{
-		bgfx::PlatformData pd;
-		pd.ndt          = _display;
-		pd.nwh          = (void*)(uintptr_t)_window;
-		pd.context      = _glx;
-		pd.backBuffer   = NULL;
-		pd.backBufferDS = NULL;
-		bgfx::setPlatformData(pd);
-	}
 
 #define JS_EVENT_BUTTON 0x01 /* button pressed/released */
 #define JS_EVENT_AXIS   0x02 /* joystick moved */
@@ -355,29 +341,29 @@ namespace entry
 
 			bx::memSet(&m_windowAttrs, 0, sizeof(m_windowAttrs) );
 			m_windowAttrs.background_pixel = 0;
-			m_windowAttrs.border_pixel = 0;
+			m_windowAttrs.border_pixel     = 0;
 			m_windowAttrs.bit_gravity = StaticGravity;
-			m_windowAttrs.event_mask = 0
-					| ButtonPressMask
-					| ButtonReleaseMask
-					| ExposureMask
-					| KeyPressMask
-					| KeyReleaseMask
-					| PointerMotionMask
-					| StructureNotifyMask
-					;
+			m_windowAttrs.event_mask  = 0
+				| ButtonPressMask
+				| ButtonReleaseMask
+				| ExposureMask
+				| KeyPressMask
+				| KeyReleaseMask
+				| PointerMotionMask
+				| StructureNotifyMask
+				;
 
 			m_windowAlloc.alloc();
-			m_window[0] = XCreateWindow(m_display
-									, m_root
-									, 0, 0
-									, 1, 1, 0
-									, m_depth
-									, InputOutput
-									, m_visual
-									, CWBorderPixel|CWEventMask|CWBackPixel|CWBitGravity
-									, &m_windowAttrs
-									);
+			m_window[0] = XCreateWindow(
+				  m_display
+				, m_root
+				, 0, 0, 1, 1, 0
+				, m_depth
+				, InputOutput
+				, m_visual
+				, CWBorderPixel|CWEventMask|CWBackPixel|CWBitGravity
+				, &m_windowAttrs
+				);
 
 			const char* wmDeleteWindowName = "WM_DELETE_WINDOW";
 			Atom wmDeleteWindow;
@@ -397,18 +383,16 @@ namespace entry
 			im = XOpenIM(m_display, NULL, NULL, NULL);
 
 			XIC ic;
-			ic = XCreateIC(im
-					, XNInputStyle
-					, 0
-					| XIMPreeditNothing
-					| XIMStatusNothing
-					, XNClientWindow
-					, m_window[0]
-					, NULL
-					);
-
-			//
-			x11SetDisplayWindow(m_display, m_window[0]);
+			ic = XCreateIC(
+				  im
+				, XNInputStyle
+				, 0
+				| XIMPreeditNothing
+				| XIMStatusNothing
+				, XNClientWindow
+				, m_window[0]
+				, NULL
+				);
 
 			MainThreadEntry mte;
 			mte.m_argc = _argc;
@@ -585,19 +569,20 @@ namespace entry
 
 		void createWindow(WindowHandle _handle, Msg* msg)
 		{
-			Window window = XCreateWindow(m_display
-									, m_root
-									, msg->m_x
-									, msg->m_y
-									, msg->m_width
-									, msg->m_height
-									, 0
-									, m_depth
-									, InputOutput
-									, m_visual
-									, CWBorderPixel|CWEventMask|CWBackPixel|CWBitGravity
-									, &m_windowAttrs
-									);
+			Window window = XCreateWindow(
+				  m_display
+				, m_root
+				, msg->m_x
+				, msg->m_y
+				, msg->m_width
+				, msg->m_height
+				, 0
+				, m_depth
+				, InputOutput
+				, m_visual
+				, CWBorderPixel|CWEventMask|CWBackPixel|CWBitGravity
+				, &m_windowAttrs
+				);
 			m_window[_handle.idx] = window;
 
 			const char* wmDeleteWindowName = "WM_DELETE_WINDOW";
@@ -765,6 +750,16 @@ namespace entry
 	void setMouseLock(WindowHandle _handle, bool _lock)
 	{
 		BX_UNUSED(_handle, _lock);
+	}
+
+	void* getNativeWindowHandle(WindowHandle _handle)
+	{
+		return (void*)(uintptr_t)s_ctx.m_window[_handle.idx];
+	}
+
+	void* getNativeDisplayHandle()
+	{
+		return s_ctx.m_display;
 	}
 
 } // namespace entry

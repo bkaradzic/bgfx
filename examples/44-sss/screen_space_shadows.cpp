@@ -261,12 +261,13 @@ public:
 		m_reset = BGFX_RESET_VSYNC;
 
 		bgfx::Init init;
-		init.type = args.m_type;
-
+		init.type     = args.m_type;
 		init.vendorId = args.m_pciId;
-		init.resolution.width = m_width;
+		init.platformData.nwh  = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
+		init.platformData.ndt  = entry::getNativeDisplayHandle();
+		init.resolution.width  = m_width;
 		init.resolution.height = m_height;
-		init.resolution.reset = m_reset;
+		init.resolution.reset  = m_reset;
 		bgfx::init(init);
 
 		// Enable debug text.
@@ -276,10 +277,10 @@ public:
 		m_uniforms.init();
 
 		// Create texture sampler uniforms (used when we bind textures)
-		s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler); // Model's source albedo
-		s_color = bgfx::createUniform("s_color", bgfx::UniformType::Sampler); // Color (albedo) gbuffer, default color input
-		s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Sampler); // Normal gbuffer, Model's source normal
-		s_depth = bgfx::createUniform("s_depth", bgfx::UniformType::Sampler); // Depth gbuffer
+		s_albedo  = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler); // Model's source albedo
+		s_color   = bgfx::createUniform("s_color", bgfx::UniformType::Sampler); // Color (albedo) gbuffer, default color input
+		s_normal  = bgfx::createUniform("s_normal", bgfx::UniformType::Sampler); // Normal gbuffer, Model's source normal
+		s_depth   = bgfx::createUniform("s_depth", bgfx::UniformType::Sampler); // Depth gbuffer
 		s_shadows = bgfx::createUniform("s_shadows", bgfx::UniformType::Sampler);
 
 		// Create program from shaders.
@@ -382,7 +383,8 @@ public:
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState))
 		{
 			// skip processing when minimized, otherwise crashing
-			if (0 == m_width || 0 == m_height)
+			if (0 == m_width
+			||  0 == m_height)
 			{
 				return true;
 			}

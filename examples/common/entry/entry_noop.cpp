@@ -67,6 +67,17 @@ namespace entry
 		BX_UNUSED(_handle, _lock);
 	}
 
+	void* getNativeWindowHandle(WindowHandle _handle)
+	{
+		BX_UNUSED(_handle);
+		return NULL;
+	}
+
+	void* getNativeDisplayHandle()
+	{
+		return NULL;
+	}
+
 } // namespace entry
 
 int main(int _argc, const char* const* _argv)

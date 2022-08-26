@@ -19,12 +19,12 @@ namespace stl = tinystl;
 namespace
 {
 
-constexpr int32_t kCheckerboardSize = 128;
+constexpr int32_t kCheckerboardSize             = 128;
 constexpr int32_t kFirstUncompressedFormatIndex = bgfx::TextureFormat::Unknown + 1;
-constexpr int32_t kNumCompressedFormats = bgfx::TextureFormat::Unknown;
-constexpr int32_t kNumUncompressedFormats = bgfx::TextureFormat::UnknownDepth - kFirstUncompressedFormatIndex;
-constexpr int32_t kNumFormats = kNumCompressedFormats + kNumUncompressedFormats;
-const     int32_t kNumFormatsInRow = (int32_t)bx::ceil(1.2f * bx::sqrt(kNumFormats) );
+constexpr int32_t kNumCompressedFormats         = bgfx::TextureFormat::Unknown;
+constexpr int32_t kNumUncompressedFormats       = bgfx::TextureFormat::UnknownDepth - kFirstUncompressedFormatIndex;
+constexpr int32_t kNumFormats                   = kNumCompressedFormats + kNumUncompressedFormats;
+const     int32_t kNumFormatsInRow              = (int32_t)bx::ceil(1.2f * bx::sqrt(kNumFormats) );
 
 inline int32_t formatToIndex(bimg::TextureFormat::Enum format)
 {
@@ -428,6 +428,8 @@ public:
 		bgfx::Init init;
 		init.type     = args.m_type;
 		init.vendorId = args.m_pciId;
+		init.platformData.nwh  = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
+		init.platformData.ndt  = entry::getNativeDisplayHandle();
 		init.resolution.width  = m_width;
 		init.resolution.height = m_height;
 		init.resolution.reset  = m_reset;
@@ -574,7 +576,10 @@ public:
 			if (bgfx::isValid(m_checkerboard) )
 			{
 				static int64_t timeOffset = bx::getHPCounter();
-				const float time = m_animateCheckerboard ? float( (bx::getHPCounter()-timeOffset)/double(bx::getHPFrequency() ) ) : 0.0f;
+				const float time = m_animate
+					? float( (bx::getHPCounter()-timeOffset)/double(bx::getHPFrequency() ) )
+					: 0.0f
+					;
 				const float xx = bx::sin(time * 0.17f);
 				const float yy = bx::cos(time * 0.13f);
 				const float uTile = bx::max(1.0f, previewSize.x / kCheckerboardSize);
@@ -655,7 +660,7 @@ public:
 			ImGui::SameLine();
 			ImGui::Checkbox("Alpha", &m_useAlpha);
 			ImGui::SameLine();
-			ImGui::Checkbox("Animate Checkerboard", &m_animateCheckerboard);
+			ImGui::Checkbox("Animate", &m_animate);
 			ImGui::BeginTable("Formats", kNumFormatsInRow, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit);
 
 			for (int32_t i = m_currentTextureSet->m_hasCompressedTextures ? 0 : kNumCompressedFormats; i < kNumFormats; ++i)
@@ -797,7 +802,7 @@ public:
 	float    m_largestTextureSize = 256.0f;
 	float    m_previewSize = 50.0f;
 	bool     m_useAlpha = true;
-	bool     m_animateCheckerboard = true;
+	bool     m_animate = true;
 	bimg::TextureFormat::Enum m_selectedFormat = bimg::TextureFormat::RGBA8;
 
 	bgfx::TextureHandle m_checkerboard = BGFX_INVALID_HANDLE;

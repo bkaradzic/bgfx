@@ -45,18 +45,6 @@
 
 namespace entry
 {
-	///
-	inline void osxSetNSWindow(void* _window, void* _nsgl = NULL)
-	{
-		bgfx::PlatformData pd;
-		pd.ndt          = NULL;
-		pd.nwh          = _window;
-		pd.context      = _nsgl;
-		pd.backBuffer   = NULL;
-		pd.backBufferDS = NULL;
-		bgfx::setPlatformData(pd);
-	}
-
 	static uint8_t s_translateKey[256];
 
 	struct MainThreadEntry
@@ -507,8 +495,6 @@ namespace entry
 
 			m_windowFrame = [m_window[0] frame];
 
-			osxSetNSWindow(m_window[0]);
-
 			MainThreadEntry mte;
 			mte.m_argc = _argc;
 			mte.m_argv = _argv;
@@ -727,6 +713,16 @@ namespace entry
 				NSWindow* window = s_ctx.m_window[_handle.idx];
 				s_ctx.setMouseLock(window, _lock);
 			});
+	}
+
+	void* getNativeWindowHandle(WindowHandle _handle)
+	{
+		return s_ctx.m_window[_handle.idx];
+	}
+
+	void* getNativeDisplayHandle()
+	{
+		return NULL;
 	}
 
 } // namespace entry

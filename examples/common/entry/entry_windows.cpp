@@ -45,15 +45,6 @@ namespace entry
 		return utf16;
 	}
 
-	///
-	inline void winSetHwnd(::HWND _window)
-	{
-		bgfx::PlatformData pd;
-		bx::memSet(&pd, 0, sizeof(pd) );
-		pd.nwh = _window;
-		bgfx::setPlatformData(pd);
-	}
-
 	typedef DWORD (WINAPI* PFN_XINPUT_GET_STATE)(DWORD dwUserIndex, XINPUT_STATE* pState);
 	typedef void  (WINAPI* PFN_XINPUT_ENABLE)(BOOL enable); // 1.4+
 
@@ -501,8 +492,6 @@ namespace entry
 				| ENTRY_WINDOW_FLAG_ASPECT_RATIO
 				| ENTRY_WINDOW_FLAG_FRAME
 				;
-
-			winSetHwnd(m_hwnd[0]);
 
 			adjust(m_hwnd[0], ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT, true);
 			clear(m_hwnd[0]);
@@ -1168,6 +1157,16 @@ namespace entry
 	void setMouseLock(WindowHandle _handle, bool _lock)
 	{
 		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_MOUSE_LOCK, _handle.idx, _lock);
+	}
+
+	void* getNativeWindowHandle(WindowHandle _handle)
+	{
+		return s_ctx.m_hwnd[_handle.idx];
+	}
+
+	void* getNativeDisplayHandle()
+	{
+		return NULL;
 	}
 
 	int32_t MainThreadEntry::threadFunc(bx::Thread* /*_thread*/, void* _userData)
