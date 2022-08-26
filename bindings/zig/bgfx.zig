@@ -1414,6 +1414,7 @@ pub const Init = extern struct {
         cpuTimeEnd: i64,
         gpuTimeBegin: i64,
         gpuTimeEnd: i64,
+        gpuFrameNum: u32,
     };
 
     pub const EncoderStats = extern struct {
@@ -1435,6 +1436,7 @@ pub const Init = extern struct {
         numCompute: u32,
         numBlit: u32,
         maxGpuLatency: u32,
+        gpuFrameNum: u32,
         numDynamicIndexBuffers: u16,
         numDynamicVertexBuffers: u16,
         numFrameBuffers: u16,

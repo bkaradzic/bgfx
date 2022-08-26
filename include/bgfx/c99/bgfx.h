@@ -825,6 +825,7 @@ typedef struct bgfx_view_stats_s
     int64_t              cpuTimeEnd;         /** CPU (submit) end time.                   */
     int64_t              gpuTimeBegin;       /** GPU begin time.                          */
     int64_t              gpuTimeEnd;         /** GPU end time.                            */
+    uint32_t             gpuFrameNum;        /** Frame which generated gpuTimeBegin, gpuTimeEnd. */
 
 } bgfx_view_stats_t;
 
@@ -860,6 +861,7 @@ typedef struct bgfx_stats_s
     uint32_t             numCompute;         /** Number of compute calls submitted.       */
     uint32_t             numBlit;            /** Number of blit calls submitted.          */
     uint32_t             maxGpuLatency;      /** GPU driver latency.                      */
+    uint32_t             gpuFrameNum;        /** Frame which generated gpuTimeBegin, gpuTimeEnd. */
     uint16_t             numDynamicIndexBuffers; /** Number of used dynamic index buffers.    */
     uint16_t             numDynamicVertexBuffers; /** Number of used dynamic vertex buffers.   */
     uint16_t             numFrameBuffers;    /** Number of used frame buffers.            */

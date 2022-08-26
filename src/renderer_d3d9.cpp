@@ -3537,7 +3537,7 @@ namespace bgfx { namespace d3d9
 		}
 	}
 
-	uint32_t TimerQueryD3D9::begin(uint32_t _resultIdx)
+	uint32_t TimerQueryD3D9::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
 		while (0 == m_control.reserve(1) )
 		{
@@ -3551,6 +3551,7 @@ namespace bgfx { namespace d3d9
 		Query& query = m_query[idx];
 		query.m_resultIdx = _resultIdx;
 		query.m_ready     = false;
+		query.m_frameNum  = _frameNum;
 
 		query.m_disjoint->Issue(D3DISSUE_BEGIN);
 		query.m_begin->Issue(D3DISSUE_END);
@@ -3601,6 +3602,7 @@ namespace bgfx { namespace d3d9
 
 				Result& result = m_result[query.m_resultIdx];
 				--result.m_pending;
+				result.m_frameNum = query.m_frameNum;
 
 				result.m_frequency = freq;
 				result.m_begin     = timeBegin;
@@ -3751,7 +3753,7 @@ namespace bgfx { namespace d3d9
 		device->BeginScene();
 		if (m_timerQuerySupport)
 		{
-			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS);
+			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
 		}
 
 		if (0 < _render->m_iboffset)
@@ -4446,6 +4448,7 @@ namespace bgfx { namespace d3d9
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
 		perfStats.maxGpuLatency = maxGpuLatency;
+		perfStats.gpuFrameNum   = result.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
 		m_nvapi.getMemoryInfo(perfStats.gpuMemoryUsed, perfStats.gpuMemoryMax);
 
