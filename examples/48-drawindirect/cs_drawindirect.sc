@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Stanlo Slasinski. All rights reserved.
+ * Copyright 2022 Liam Twigger. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
