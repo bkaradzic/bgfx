@@ -142,6 +142,8 @@ public:
 		bgfx::Init init;
 		init.type     = args.m_type;
 		init.vendorId = args.m_pciId;
+		init.platformData.nwh  = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
+		init.platformData.ndt  = entry::getNativeDisplayHandle();
 		init.resolution.width  = m_width;
 		init.resolution.height = m_height;
 		init.resolution.reset  = m_reset;
@@ -375,5 +377,5 @@ ENTRY_IMPLEMENT_MAIN(
 	  DrawIndirect
 	, "48-drawindirect"
 	, "Simple example of indirect rendering to render multiple different meshes with 1 draw call"
-	, "https://bkaradzic.github.io/bgfx/examples.html#multidrawindirect"
+	, "https://bkaradzic.github.io/bgfx/examples.html#drawindirect"
 	);
