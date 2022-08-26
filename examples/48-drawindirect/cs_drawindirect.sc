@@ -18,14 +18,15 @@ NUM_THREADS(1, 1, 1)
 
 void main()
 {
-	int NoofDrawcalls = int(u_drawParams.x);
-	int m_sideSize = int(u_drawParams.y);
+	int numDrawItems = int(u_drawParams.x);
+	int sideSize = int(u_drawParams.y);
 	float time = u_drawParams.z;
 	
 	// Prepare draw mtx
-	for (int k = 0; k < NoofDrawcalls; k++) {
-		int yy = k / m_sideSize;
-		int xx = k % m_sideSize;
+	
+	for (int k = 0; k < numDrawItems; k++) {
+		int yy = k / sideSize;
+		int xx = k % sideSize;
 
 		float _ax = time + xx * 0.21f;
 		float _ay = time + yy * 0.37f;
@@ -54,7 +55,7 @@ void main()
 	
 	// Fill indirect buffer
 	
-	for (int k = 0; k < NoofDrawcalls; k++) {
+	for (int k = 0; k < numDrawItems; k++) {
 		drawIndexedIndirect(
 						// Target location params:
 			indirectBuffer,			// target buffer

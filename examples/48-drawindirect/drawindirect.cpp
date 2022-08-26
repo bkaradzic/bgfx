@@ -188,7 +188,8 @@ public:
 		const bool computeSupported = !!(BGFX_CAPS_DRAW_INDIRECT & bgfx::getCaps()->supported);
 		const bool instancingSupported = !!(BGFX_CAPS_INSTANCING & bgfx::getCaps()->supported);
 		
-		if (computeSupported && instancingSupported) {
+		if (computeSupported && instancingSupported)
+		{
 			// Set up indirect program
 			// This is a barebones program that populates the indirect buffer handle with draw requests
 			m_indirect_program = bgfx::createProgram(loadShader("cs_drawindirect"), true);
@@ -196,33 +197,33 @@ public:
 			
 			ObjectInstance objs[m_nDrawElements];
 			
-			for (uint32_t ii = 0; ii < m_nDrawElements; ++ii) {
-				if (ii % 2) {
+			for (uint32_t ii = 0; ii < m_nDrawElements; ++ii)
+			{
+				if (ii % 2)
+				{
 					// Tetrahedron
 					objs[ii].m_vertexOffset = 8;
 					objs[ii].m_vertexCount = 4; // m_vertexCount is unused in compute shader, its only here for completeness
 					objs[ii].m_indexOffset = 36;
 					objs[ii].m_indexCount = 12;
-					}
-				else {
+				}
+				else
+				{
 					// Cube
 					objs[ii].m_vertexOffset = 0;
 					objs[ii].m_vertexCount = 8;
 					objs[ii].m_indexOffset = 0;
 					objs[ii].m_indexCount = 36;
-					}
 				}
+			}
 			
 			// This is a list of objects to be rendered via the indirect program
 			m_object_list_buffer = bgfx::createVertexBuffer(bgfx::copy(objs, sizeof(objs) ), ObjectInstance::ms_layout, BGFX_BUFFER_COMPUTE_READ);
 			
 			// This is the instance buffer used for rendering. 
 			// You could instead use a dynamic instance buffer when rendering (use bgfx::allocInstanceDataBuffer in draw loop)
-			// Fill it with a blank array for now, we will populate it with compute
-			RenderInstance temp[m_nDrawElements];
-			memset(&temp[0], 0, sizeof(temp));
-			m_instance_buffer = bgfx::createVertexBuffer(bgfx::copy(temp, sizeof(temp) ), RenderInstance::ms_layout, BGFX_BUFFER_COMPUTE_WRITE);
-			}
+			m_instance_buffer = bgfx::createDynamicVertexBuffer(m_nDrawElements, RenderInstance::ms_layout, BGFX_BUFFER_COMPUTE_WRITE);
+		}
 			
 		m_timeOffset = bx::getHPCounter();
 
@@ -239,13 +240,21 @@ public:
 		bgfx::destroy(m_program);
 
 		if (bgfx::isValid(m_indirect_program))
+		{
 			bgfx::destroy(m_indirect_program);
+		}
 		if (bgfx::isValid(m_indirect_buffer_handle))
+		{
 			bgfx::destroy(m_indirect_buffer_handle);
+		}
 		if (bgfx::isValid(m_object_list_buffer))
+		{
 			bgfx::destroy(m_object_list_buffer);
+		}
 		if (bgfx::isValid(m_instance_buffer))
+		{
 			bgfx::destroy(m_instance_buffer);
+		}
 		bgfx::destroy(u_drawParams);
 		
 		// Shutdown bgfx.
@@ -272,9 +281,6 @@ public:
 
 			imguiEndFrame();
 			
-			// Get renderer capabilities info.
-			const bool computeSupported = !!(BGFX_CAPS_DRAW_INDIRECT & bgfx::getCaps()->supported);
-			const bool instancingSupported = !!(BGFX_CAPS_INSTANCING & bgfx::getCaps()->supported);
 
 			// Set view 0 default viewport.
 			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
@@ -282,16 +288,6 @@ public:
 			// This dummy draw call is here to make sure that view 0 is cleared
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
-
-			float time = (float)( (bx::getHPCounter() - m_timeOffset)/double(bx::getHPFrequency() ) );
-
-			if (!(computeSupported && instancingSupported))
-			{
-				// When instancing is not supported by GPU, implement alternative
-				// code path that doesn't use instancing.
-				bool blink = uint32_t(time*3.0f)&1;
-				bgfx::dbgTextPrintf(0, 0, blink ? 0x4f : 0x04, " Compute/Instancing is not supported by GPU. ");
-			}
 
 			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
 			const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
@@ -308,8 +304,15 @@ public:
 				// Set view 0 default viewport.
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			}
+			
+			float time = (float)( (bx::getHPCounter() - m_timeOffset)/double(bx::getHPFrequency() ) );
 
-			if (computeSupported && instancingSupported) {
+			// Get renderer capabilities info.
+			const bool computeSupported = !!(BGFX_CAPS_DRAW_INDIRECT & bgfx::getCaps()->supported);
+			const bool instancingSupported = !!(BGFX_CAPS_INSTANCING & bgfx::getCaps()->supported);
+			
+			if (computeSupported && instancingSupported)
+			{
 				// Build indirect buffer & prepare instance buffer
 				// NOTE: IF you are rendering static data then
 				// this could be done once on startup and results stored
@@ -339,6 +342,12 @@ public:
 				// note that this submission requires the draw count
 				bgfx::submit(0, m_program, m_indirect_buffer_handle, 0, m_nDrawElements);
 			}
+			else
+			{
+				// Compute/Instancing is not supported
+				bool blink = uint32_t(time*3.0f)&1;
+				bgfx::dbgTextPrintf(0, 0, blink ? 0x4f : 0x04, " Compute/Instancing is not supported by GPU. ");
+			}
 			
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
@@ -365,7 +374,7 @@ public:
 	bgfx::IndirectBufferHandle  m_indirect_buffer_handle;
 	bgfx::ProgramHandle m_indirect_program;
 	bgfx::VertexBufferHandle m_object_list_buffer;
-	bgfx::VertexBufferHandle m_instance_buffer;
+	bgfx::DynamicVertexBufferHandle m_instance_buffer;
 	bgfx::UniformHandle u_drawParams;
 
 	int64_t m_timeOffset;
