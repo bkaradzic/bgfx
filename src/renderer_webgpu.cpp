@@ -356,8 +356,11 @@ namespace bgfx { namespace webgpu
 		{ wgpu::TextureFormat::RGBA32Sint,          wgpu::TextureFormat::Undefined        },  // RGBA32I
 		{ wgpu::TextureFormat::RGBA32Uint,          wgpu::TextureFormat::Undefined        },  // RGBA32U
 		{ wgpu::TextureFormat::RGBA32Float,         wgpu::TextureFormat::Undefined        },  // RGBA32F
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // B5G6R5
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // R5G6B5
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // BGRA4
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RGBA4
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // BGR5A1
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // RGB5A1
 		{ wgpu::TextureFormat::RGB10A2Unorm,        wgpu::TextureFormat::Undefined        },  // RGB10A2
 		{ wgpu::TextureFormat::RG11B10Ufloat,       wgpu::TextureFormat::Undefined        },  // RG11B10F
@@ -658,8 +661,11 @@ namespace bgfx { namespace webgpu
 			g_caps.formats[TextureFormat::PTC14 ] =
 			g_caps.formats[TextureFormat::PTC12A] =
 			g_caps.formats[TextureFormat::PTC14A] =
+			g_caps.formats[TextureFormat::B5G6R5] =
 			g_caps.formats[TextureFormat::R5G6B5] =
+			g_caps.formats[TextureFormat::BGRA4 ] =
 			g_caps.formats[TextureFormat::RGBA4 ] =
+			g_caps.formats[TextureFormat::BGR5A1] =
 			g_caps.formats[TextureFormat::RGB5A1] = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
 			g_caps.formats[TextureFormat::RGB9E5F] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER | BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);

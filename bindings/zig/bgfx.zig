@@ -1082,8 +1082,11 @@ pub const TextureFormat = enum(c_int) {
     RGBA32I,
     RGBA32U,
     RGBA32F,
+    B5G6R5,
     R5G6B5,
+    BGRA4,
     RGBA4,
+    BGR5A1,
     RGB5A1,
     RGB10A2,
     RG11B10F,
@@ -1285,7 +1288,7 @@ pub const Caps = extern struct {
         numGPUs: u8,
         gpu: [4]GPU,
         limits: Limits,
-        formats: [85]u16,
+        formats: [88]u16,
     };
 
     pub const InternalData = extern struct {

@@ -162,6 +162,10 @@ typedef uint64_t GLuint64;
 #	define GL_LUMINANCE 0x1909
 #endif // GL_LUMINANCE
 
+#ifndef GL_BGR
+#	define GL_BGR 0x80E0
+#endif // GL_BGR
+
 #ifndef GL_BGRA
 #	define GL_BGRA 0x80E1
 #endif // GL_BGRA

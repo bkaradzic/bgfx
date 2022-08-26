@@ -57,6 +57,7 @@ namespace entry
 
 		MainThreadEntry m_mte;
 		bx::Thread m_thread;
+		void* m_window;
 
 		EventQueue m_eventQueue;
 	};
@@ -145,15 +146,24 @@ namespace entry
 		BX_UNUSED(_handle, _lock);
 	}
 
+	void* getNativeWindowHandle(WindowHandle _handle)
+	{
+		if (kDefaultWindowHandle.idx == _handle.idx)
+		{
+			return s_ctx.m_window;
+		}
+
+		return NULL;
+	}
+
+	void* getNativeDisplayHandle()
+	{
+		return NULL;
+	}
+
 } // namespace entry
 
 using namespace entry;
-
-#ifdef HAS_METAL_SDK
-static	id<MTLDevice>  m_device = NULL;
-#else
-static	void* m_device = NULL;
-#endif
 
 @interface ViewController : UIViewController
 @end
@@ -177,13 +187,14 @@ static	void* m_device = NULL;
 + (Class)layerClass
 {
 #ifdef HAS_METAL_SDK
+	static id<MTLDevice> device = NULL;
 	Class metalClass = NSClassFromString(@"CAMetalLayer");    //is metal runtime sdk available
 	if ( metalClass != nil)
 	{
-		m_device = MTLCreateSystemDefaultDevice(); // is metal supported on this device (is there a better way to do this - without creating device ?)
-		if (m_device)
+		device = MTLCreateSystemDefaultDevice(); // is metal supported on this device (is there a better way to do this - without creating device ?)
+		if (NULL != device)
 		{
-			[m_device retain];
+			[device retain];
 			return metalClass;
 		}
 	}
@@ -201,13 +212,7 @@ static	void* m_device = NULL;
 		return nil;
 	}
 
-	bgfx::PlatformData pd;
-	pd.ndt          = NULL;
-	pd.nwh          = self.layer;
-	pd.context      = m_device;
-	pd.backBuffer   = NULL;
-	pd.backBufferDS = NULL;
-	bgfx::setPlatformData(pd);
+	s_ctx->m_window = self.layer;
 
 	return self;
 }
@@ -226,7 +231,7 @@ static	void* m_device = NULL;
 		m_displayLink = [self.window.screen displayLinkWithTarget:self selector:@selector(renderFrame)];
 		//[m_displayLink setFrameInterval:1];
 		//[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-		//		[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop]];
+		//[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop]];
 		[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
 	}
 }

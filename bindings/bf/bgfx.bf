@@ -1746,8 +1746,11 @@ public static class bgfx
 		RGBA32I,
 		RGBA32U,
 		RGBA32F,
+		B5G6R5,
 		R5G6B5,
+		BGRA4,
 		RGBA4,
+		BGR5A1,
 		RGB5A1,
 		RGB10A2,
 		RG11B10F,
@@ -2037,7 +2040,7 @@ public static class bgfx
 		public uint8 numGPUs;
 		public GPU[4] gpu;
 		public Limits limits;
-		public uint16[85] formats;
+		public uint16[88] formats;
 	}
 	
 	[CRepr]
