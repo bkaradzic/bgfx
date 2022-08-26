@@ -3,7 +3,7 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-// Multi Draw Indirect
+// Draw Indirect
 // Render multiple different objects with one draw command. This example shows a minimal implementation of indirect drawing
 // Reading References:
 // https://litasa.github.io/blog/2017/09/04/OpenGL-MultiDrawIndirect-with-Individual-Textures
@@ -313,8 +313,8 @@ public:
 				// this could be done once on startup and results stored
 				// This is done here for demonstration purposes
 				
-				// The model matrix for each instance is also set on compute, you could 
-				// You could modify this to, eg, do frustrum culling on the GPU		
+				// The model matrix for each instance is also set on compute
+				// you could modify this to, eg, do frustrum culling on the GPU		
 				float ud[4] = { float(m_nDrawElements), float(m_sideSize), float(time), 0 };
 				bgfx::setUniform(u_drawParams, ud);
 						
