@@ -576,12 +576,11 @@ public:
 			if (bgfx::isValid(m_checkerboard) )
 			{
 				static int64_t timeOffset = bx::getHPCounter();
-				const float time = m_animate
-					? float( (bx::getHPCounter()-timeOffset)/double(bx::getHPFrequency() ) )
-					: 0.0f
-					;
-				const float xx = bx::sin(time * 0.17f);
-				const float yy = bx::cos(time * 0.13f);
+				const float time = float( (bx::getHPCounter()-timeOffset)/double(bx::getHPFrequency() ) );
+				const float animate = float(m_animate)*0.5f;
+				const float xx = bx::sin(time * 0.37f) * animate;
+				const float yy = bx::cos(time * 0.43f) * animate;
+
 				const float uTile = bx::max(1.0f, previewSize.x / kCheckerboardSize);
 				const float vTile = bx::max(1.0f, previewSize.y / kCheckerboardSize);
 
