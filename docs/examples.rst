@@ -666,8 +666,8 @@ from lower resolution inputs.
 .. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/46-fsr/screenshot.png
    :alt: example-46-fsr
 
-`47-Pixel Formats <https://github.com/bkaradzic/bgfx/tree/master/examples/47-pixelformats>`__
----------------------------------------------------------------------------------------------
+`47-pixelformats <https://github.com/bkaradzic/bgfx/tree/master/examples/47-pixelformats>`__
+--------------------------------------------------------------------------------------------
 
 Pixel Formats
 
