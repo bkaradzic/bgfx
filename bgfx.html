@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>API Reference &mdash; bgfx 1.115.8203 documentation</title>
+  <title>API Reference &mdash; bgfx 1.115.8268 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                1.115.8203
+                1.115.8268
               </div>
             
           
@@ -256,13 +256,15 @@
 <dl class="cpp var">
 <dt id="_CPPv4N4bgfx4Init8vendorIdE">
 <span id="_CPPv3N4bgfx4Init8vendorIdE"></span><span id="_CPPv2N4bgfx4Init8vendorIdE"></span><span id="bgfx::Init::vendorId__uint16_t"></span><span class="target" id="structbgfx_1_1_init_1a95acf1a68426ecd7192d6cdf93e02e83"></span>uint16_t <code class="sig-name descname">vendorId</code><a class="headerlink" href="#_CPPv4N4bgfx4Init8vendorIdE" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Vendor PCI id. If set to <code class="docutils literal notranslate"><span class="pre">BGFX_PCI_ID_NONE</span></code> it will select the first device. </p>
+<dd><p>Vendor PCI ID. If set to <code class="docutils literal notranslate"><span class="pre">BGFX_PCI_ID_NONE</span></code>, discrete and integrated GPUs will be prioritised. </p>
 <p><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_PCI_ID_NONE</span></code> - Autoselect adapter.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_PCI_ID_NONE</span></code> - Auto-select adapter.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_PCI_ID_SOFTWARE_RASTERIZER</span></code> - Software rasterizer.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_PCI_ID_AMD</span></code> - AMD adapter.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_PCI_ID_APPLE</span></code> - Apple adapter.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_PCI_ID_INTEL</span></code> - Intel adapter.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_PCI_ID_NVIDIA</span></code> - nVidia adapter. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_PCI_ID_NVIDIA</span></code> - NVIDIA adapter.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_PCI_ID_MICROSOFT</span></code> - Microsoft adapter. </p></li>
 </ul>
 </p>
 </dd></dl>
@@ -270,7 +272,7 @@
 <dl class="cpp var">
 <dt id="_CPPv4N4bgfx4Init8deviceIdE">
 <span id="_CPPv3N4bgfx4Init8deviceIdE"></span><span id="_CPPv2N4bgfx4Init8deviceIdE"></span><span id="bgfx::Init::deviceId__uint16_t"></span><span class="target" id="structbgfx_1_1_init_1a60ff2d3dd1ccdae79ef96a62eb1bf5e0"></span>uint16_t <code class="sig-name descname">deviceId</code><a class="headerlink" href="#_CPPv4N4bgfx4Init8deviceIdE" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Device id. If set to 0 it will select first device, or device with matching id. </p>
+<dd><p>Device ID. If set to 0 it will select first device, or device with matching ID. </p>
 </dd></dl>
 
 <dl class="cpp var">
@@ -448,6 +450,12 @@
 </dd></dl>
 
 <dl class="cpp macro">
+<dt id="c.BGFX_PCI_ID_APPLE">
+<span class="target" id="defines_8h_1a2478074075bc43cdd19fef17af04a99e"></span><code class="sig-name descname">BGFX_PCI_ID_APPLE</code><a class="headerlink" href="#c.BGFX_PCI_ID_APPLE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Apple adapter. </p>
+</dd></dl>
+
+<dl class="cpp macro">
 <dt id="c.BGFX_PCI_ID_INTEL">
 <span class="target" id="defines_8h_1a2f3ca85ec971d2a6e98f63b60de61755"></span><code class="sig-name descname">BGFX_PCI_ID_INTEL</code><a class="headerlink" href="#c.BGFX_PCI_ID_INTEL" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Intel adapter. </p>
@@ -457,6 +465,12 @@
 <dt id="c.BGFX_PCI_ID_NVIDIA">
 <span class="target" id="defines_8h_1a19a4997d1bcf83055bfd3bf8274b593b"></span><code class="sig-name descname">BGFX_PCI_ID_NVIDIA</code><a class="headerlink" href="#c.BGFX_PCI_ID_NVIDIA" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>nVidia adapter. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt id="c.BGFX_PCI_ID_MICROSOFT">
+<span class="target" id="defines_8h_1a8f1222df21869f3b38de871f2bc5b276"></span><code class="sig-name descname">BGFX_PCI_ID_MICROSOFT</code><a class="headerlink" href="#c.BGFX_PCI_ID_MICROSOFT" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Microsoft adapter. </p>
 </dd></dl>
 
 <dl class="cpp struct">
@@ -6406,13 +6420,28 @@ Otherwise, use <cite>bgfx::setViewScissor</cite>.</p>
 <dd></dd></dl>
 
 <dl class="cpp enumerator">
+<dt id="_CPPv4N4bgfx13TextureFormat4Enum6B5G6R5E">
+<span id="_CPPv3N4bgfx13TextureFormat4Enum6B5G6R5E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6B5G6R5E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a9132b9c53a5e2dafd1a6a6ade302f33b"></span><em class="property">enumerator </em><code class="sig-name descname">B5G6R5</code><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6B5G6R5E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
 <dt id="_CPPv4N4bgfx13TextureFormat4Enum6R5G6B5E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum6R5G6B5E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6R5G6B5E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aec8537567352a4db4088e3e9f1cf978d"></span><em class="property">enumerator </em><code class="sig-name descname">R5G6B5</code><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6R5G6B5E" title="Permalink to this definition">¶</a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp enumerator">
+<dt id="_CPPv4N4bgfx13TextureFormat4Enum5BGRA4E">
+<span id="_CPPv3N4bgfx13TextureFormat4Enum5BGRA4E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5BGRA4E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aa45c193e57e5b9bf0a8693438f1c2256"></span><em class="property">enumerator </em><code class="sig-name descname">BGRA4</code><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5BGRA4E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
 <dt id="_CPPv4N4bgfx13TextureFormat4Enum5RGBA4E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5RGBA4E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5RGBA4E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a4e9ceae8c33292ac988c494f79bccbe3"></span><em class="property">enumerator </em><code class="sig-name descname">RGBA4</code><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5RGBA4E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt id="_CPPv4N4bgfx13TextureFormat4Enum6BGR5A1E">
+<span id="_CPPv3N4bgfx13TextureFormat4Enum6BGR5A1E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6BGR5A1E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a45b848a845dc1081fa04570b1bc7bc2a"></span><em class="property">enumerator </em><code class="sig-name descname">BGR5A1</code><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6BGR5A1E" title="Permalink to this definition">¶</a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp enumerator">
