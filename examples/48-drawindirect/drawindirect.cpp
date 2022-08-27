@@ -119,6 +119,7 @@ static const uint16_t s_multiMeshIndices[48] =
 	1, 3, 0,
 };
 
+static const uint32_t s_maxSideSize = 81;
 
 class DrawIndirect : public entry::AppI
 {
@@ -137,7 +138,7 @@ public:
 		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
 		m_sideSize         = 11;
-		m_nDrawElements = 121;
+		m_nDrawElements = s_maxSideSize*s_maxSideSize;
 
 		bgfx::Init init;
 		init.type     = args.m_type;
@@ -195,7 +196,8 @@ public:
 			m_indirect_program = bgfx::createProgram(loadShader("cs_drawindirect"), true);
 			m_indirect_buffer_handle = bgfx::createIndirectBuffer(m_nDrawElements);
 			
-			ObjectInstance objs[m_nDrawElements];
+			const bgfx::Memory * mem = bgfx::alloc(sizeof(ObjectInstance) * m_nDrawElements);
+			ObjectInstance* objs = (ObjectInstance*) mem->data;
 			
 			for (uint32_t ii = 0; ii < m_nDrawElements; ++ii)
 			{
@@ -218,7 +220,7 @@ public:
 			}
 			
 			// This is a list of objects to be rendered via the indirect program
-			m_object_list_buffer = bgfx::createVertexBuffer(bgfx::copy(objs, sizeof(objs) ), ObjectInstance::ms_layout, BGFX_BUFFER_COMPUTE_READ);
+			m_object_list_buffer = bgfx::createVertexBuffer(mem, ObjectInstance::ms_layout, BGFX_BUFFER_COMPUTE_READ);
 			
 			// This is the instance buffer used for rendering. 
 			// You could instead use a dynamic instance buffer when rendering (use bgfx::allocInstanceDataBuffer in draw loop)
@@ -279,6 +281,27 @@ public:
 
 			showExampleDialog(this);
 
+			ImGui::SetNextWindowPos(
+				ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiCond_FirstUseEver
+			);
+			ImGui::SetNextWindowSize(
+				ImVec2(m_width / 5.0f, m_height / 2.0f)
+				, ImGuiCond_FirstUseEver
+			);
+			ImGui::Begin("Settings"
+				, NULL
+				, 0
+			);
+
+			ImGui::Text("%d draw calls", bgfx::getStats()->numDraw);
+			ImGui::Text("%d objects drawn", m_sideSize*m_sideSize);
+
+			ImGui::Text("Grid Side Size:");
+			ImGui::SliderInt("##size", (int*)&m_sideSize, 1, s_maxSideSize);
+
+			ImGui::End();
+			
 			imguiEndFrame();
 			
 
@@ -298,7 +321,7 @@ public:
 				bx::mtxLookAt(view, eye, at);
 
 				float proj[16];
-				bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
+				bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 500.0f, bgfx::getCaps()->homogeneousDepth);
 				bgfx::setViewTransform(0, view, proj);
 
 				// Set view 0 default viewport.
@@ -333,14 +356,14 @@ public:
 				// Set vertex and index buffer.
 				bgfx::setIndexBuffer(m_ibh);
 				bgfx::setVertexBuffer(0, m_vbh);
-				bgfx::setInstanceDataBuffer(m_instance_buffer, 0, m_nDrawElements);
+				bgfx::setInstanceDataBuffer(m_instance_buffer, 0, m_sideSize*m_sideSize);
 				
 				// Set render states.
 				bgfx::setState(BGFX_STATE_DEFAULT);
 
 				// Submit primitive for rendering to view 0.
 				// note that this submission requires the draw count
-				bgfx::submit(0, m_program, m_indirect_buffer_handle, 0, m_nDrawElements);
+				bgfx::submit(0, m_program, m_indirect_buffer_handle, 0, m_sideSize*m_sideSize);
 			}
 			else
 			{

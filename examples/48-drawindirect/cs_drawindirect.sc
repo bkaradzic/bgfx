@@ -24,7 +24,9 @@ void main()
 	
 	// Prepare draw mtx
 	
-	for (int k = 0; k < numDrawItems; k++) {
+	int maxToDraw = min(sideSize*sideSize, numDrawItems);
+	
+	for (int k = 0; k < maxToDraw; k++) {
 		int yy = k / sideSize;
 		int xx = k % sideSize;
 
@@ -38,7 +40,8 @@ void main()
 		vec4 a = vec4(    cy,  0,     sy, 0);
 		vec4 b = vec4( sx*sy, cx, -sx*cy, 0);
 		vec4 c = vec4(-cx*sy, sx,  cx*cy, 0);
-		vec4 d = vec4(-15.0f + float(xx) * 3.0f, -15.0f + float(yy) * 3.0f, 0.0f, 1.0f);
+		
+		vec4 d = vec4(-15.0f - (sideSize-11)*1.2f + float(xx) * 3.0f, -15.0f - (sideSize-11)*1.4f + float(yy) * 3.0f, max(0.0f, (sideSize-11.0f)*3.0f), 1.0f);
 		
 		vec4 color;
 		color.x = sin(time + float(xx) / 11.0f) * 0.5f + 0.5f;
@@ -55,7 +58,7 @@ void main()
 	
 	// Fill indirect buffer
 	
-	for (int k = 0; k < numDrawItems; k++) {
+	for (int k = 0; k < maxToDraw; k++) {
 		drawIndexedIndirect(
 						// Target location params:
 			indirectBuffer,			// target buffer
