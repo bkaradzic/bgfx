@@ -658,7 +658,7 @@ Reference(s):
    :alt: example-45-bokeh
 
 `46-fsr <https://github.com/bkaradzic/bgfx/tree/master/examples/46-fsr>`__
-------------------------------------------------------------------------------
+--------------------------------------------------------------------------
 
 AMD FidelityFX Super Resolution - high-quality solution for producing high resolution frames
 from lower resolution inputs.
@@ -667,7 +667,7 @@ from lower resolution inputs.
    :alt: example-46-fsr
 
 `47-Pixel Formats <https://github.com/bkaradzic/bgfx/tree/master/examples/47-pixelformats>`__
---------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------
 
 Pixel Formats
 
@@ -677,7 +677,7 @@ View and test texture formats
    :alt: example-47-pixelformats
 
 `48-drawindirect  <https://github.com/bkaradzic/bgfx/tree/master/examples/48-drawindirect>`__
---------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------
 
 Draw Indirect
 
