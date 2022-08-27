@@ -363,7 +363,7 @@ public:
 
 				// Submit primitive for rendering to view 0.
 				// note that this submission requires the draw count
-				bgfx::submit(0, m_program, m_indirect_buffer_handle, 0, m_sideSize*m_sideSize);
+				bgfx::submit(0, m_program, m_indirect_buffer_handle, 0, uint16_t(m_sideSize*m_sideSize));
 			}
 			else
 			{
