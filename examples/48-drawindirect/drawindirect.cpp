@@ -344,7 +344,7 @@ public:
 				// The model matrix for each instance is also set on compute
 				// you could modify this to, eg, do frustrum culling on the GPU		
 				float ud[4] = { float(m_nDrawElements), float(m_sideSize), float(time), 0 };
-				uint16_t numToDraw = (m_sideSize*m_sideSize);
+				uint32_t numToDraw = (m_sideSize*m_sideSize);
 				
 				bgfx::setUniform(u_drawParams, ud);
 						
@@ -367,7 +367,7 @@ public:
 
 				// Submit primitive for rendering to view 0.
 				// note that this submission requires the draw count
-				bgfx::submit(0, m_program, m_indirect_buffer_handle, 0, numToDraw);
+				bgfx::submit(0, m_program, m_indirect_buffer_handle, 0, uint16_t(numToDraw));
 			}
 			else
 			{
