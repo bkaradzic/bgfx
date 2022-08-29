@@ -14,19 +14,26 @@ BUFFER_WR(instanceBufferOut, vec4, 2);
 
 uniform vec4 u_drawParams;
 
-NUM_THREADS(1, 1, 1)
+// Use 64*1*1 local threads
+NUM_THREADS(64, 1, 1)
 
 void main()
 {
+	int tId = int(gl_GlobalInvocationID.x);
 	int numDrawItems = int(u_drawParams.x);
 	int sideSize = int(u_drawParams.y);
 	float time = u_drawParams.z;
 	
-	// Prepare draw mtx
-	
+	// Work out the amount of work we're going to do here
 	int maxToDraw = min(sideSize*sideSize, numDrawItems);
 	
-	for (int k = 0; k < maxToDraw; k++) {
+	int numToDrawPerThread = maxToDraw/64 + 1;
+	
+	int idxStart = tId*numToDrawPerThread;
+	int idxMax = min(maxToDraw, (tId+1)*numToDrawPerThread);
+	
+	// Prepare draw mtx
+	for (int k = idxStart; k < idxMax; k++) {
 		int yy = k / sideSize;
 		int xx = k % sideSize;
 
@@ -58,7 +65,7 @@ void main()
 	
 	// Fill indirect buffer
 	
-	for (int k = 0; k < maxToDraw; k++) {
+	for (int k = idxStart; k < idxMax; k++) {
 		drawIndexedIndirect(
 						// Target location params:
 			indirectBuffer,			// target buffer
