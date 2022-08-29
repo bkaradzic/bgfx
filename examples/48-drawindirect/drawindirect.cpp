@@ -344,26 +344,30 @@ public:
 				// The model matrix for each instance is also set on compute
 				// you could modify this to, eg, do frustrum culling on the GPU		
 				float ud[4] = { float(m_nDrawElements), float(m_sideSize), float(time), 0 };
+				uint16_t numToDraw = (m_sideSize*m_sideSize);
+				
 				bgfx::setUniform(u_drawParams, ud);
 						
 				bgfx::setBuffer(0, m_object_list_buffer, bgfx::Access::Read);
 				bgfx::setBuffer(1, m_indirect_buffer_handle, bgfx::Access::Write);
 				bgfx::setBuffer(2, m_instance_buffer, bgfx::Access::Write);
 				
-				bgfx::dispatch(0, m_indirect_program);
+				// Dispatch the call. We are using 64 local threads on the GPU to process the object list
+				// So lets dispatch ceil(numToDraw/64) workgroups of 64 local threads
+				bgfx::dispatch(0, m_indirect_program, uint32_t(numToDraw/64 + 1), 1, 1);
 				
 				// Submit our 1 draw call
 				// Set vertex and index buffer.
 				bgfx::setIndexBuffer(m_ibh);
 				bgfx::setVertexBuffer(0, m_vbh);
-				bgfx::setInstanceDataBuffer(m_instance_buffer, 0, m_sideSize*m_sideSize);
+				bgfx::setInstanceDataBuffer(m_instance_buffer, 0, numToDraw);
 				
 				// Set render states.
 				bgfx::setState(BGFX_STATE_DEFAULT);
 
 				// Submit primitive for rendering to view 0.
 				// note that this submission requires the draw count
-				bgfx::submit(0, m_program, m_indirect_buffer_handle, 0, uint16_t(m_sideSize*m_sideSize));
+				bgfx::submit(0, m_program, m_indirect_buffer_handle, 0, numToDraw);
 			}
 			else
 			{

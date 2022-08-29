@@ -14,7 +14,8 @@ BUFFER_WR(instanceBufferOut, vec4, 2);
 
 uniform vec4 u_drawParams;
 
-NUM_THREADS(1024, 1, 1)
+// Use 64*1*1 local threads
+NUM_THREADS(64, 1, 1)
 
 void main()
 {
@@ -26,7 +27,7 @@ void main()
 	// Work out the amount of work we're going to do here
 	int maxToDraw = min(sideSize*sideSize, numDrawItems);
 	
-	int numToDrawPerThread = maxToDraw/1024 + 1;
+	int numToDrawPerThread = maxToDraw/64 + 1;
 	
 	int idxStart = tId*numToDrawPerThread;
 	int idxMax = min(maxToDraw, (tId+1)*numToDrawPerThread);
