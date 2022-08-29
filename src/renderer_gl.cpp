@@ -5396,7 +5396,8 @@ namespace bgfx { namespace gl
 					GL_CHECK(glVertexAttribDivisor(loc, 0) );
 
 					uint32_t baseVertex = _baseVertex*_layout.m_stride + _layout.m_offset[attr];
-					if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) || s_renderGL->m_gles3)
+					// Use glVertexAttribIPointer on opengl only. Some Android devices like Samsung S22 do not support this function properly on opengles.
+					if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) && s_renderGL->m_gles3) 
 					&&  !isFloat(type)
 					&&  !normalized)
 					{
