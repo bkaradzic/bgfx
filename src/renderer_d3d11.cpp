@@ -5397,7 +5397,6 @@ namespace bgfx { namespace d3d11
 
 	uint32_t TimerQueryD3D11::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
-		BX_UNUSED(_frameNum);
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 
 		while (0 == m_control.reserve(1) )
@@ -5412,6 +5411,7 @@ namespace bgfx { namespace d3d11
 		Query& query = m_query[idx];
 		query.m_resultIdx = _resultIdx;
 		query.m_ready     = false;
+		query.m_frameNum  = _frameNum;
 
 		deviceCtx->Begin(query.m_disjoint);
 		deviceCtx->End(query.m_begin);
@@ -5468,6 +5468,7 @@ namespace bgfx { namespace d3d11
 
 				Result& result = m_result[query.m_resultIdx];
 				--result.m_pending;
+				result.m_frameNum = query.m_frameNum;
 
 				result.m_frequency = disjoint.Frequency;
 				result.m_begin     = timeBegin;
