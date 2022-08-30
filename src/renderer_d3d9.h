@@ -457,6 +457,7 @@ namespace bgfx { namespace d3d9
 			IDirect3DQuery9* m_end;
 			IDirect3DQuery9* m_freq;
 			uint32_t         m_resultIdx;
+			uint32_t         m_frameNum;
 			bool             m_ready;
 		};
 
@@ -475,7 +476,7 @@ namespace bgfx { namespace d3d9
 			uint64_t m_end;
 			uint64_t m_frequency;
 			uint32_t m_pending;
-			uint32_t m_frameNum; // TODO: implement (currently stays 0)
+			uint32_t m_frameNum;
 		};
 
 		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];

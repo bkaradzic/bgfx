@@ -3539,8 +3539,6 @@ namespace bgfx { namespace d3d9
 
 	uint32_t TimerQueryD3D9::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
-		BX_UNUSED(_frameNum);
-
 		while (0 == m_control.reserve(1) )
 		{
 			update();
@@ -3553,6 +3551,7 @@ namespace bgfx { namespace d3d9
 		Query& query = m_query[idx];
 		query.m_resultIdx = _resultIdx;
 		query.m_ready     = false;
+		query.m_frameNum  = _frameNum;
 
 		query.m_disjoint->Issue(D3DISSUE_BEGIN);
 		query.m_begin->Issue(D3DISSUE_END);
@@ -3603,6 +3602,7 @@ namespace bgfx { namespace d3d9
 
 				Result& result = m_result[query.m_resultIdx];
 				--result.m_pending;
+				result.m_frameNum = query.m_frameNum;
 
 				result.m_frequency = freq;
 				result.m_begin     = timeBegin;
