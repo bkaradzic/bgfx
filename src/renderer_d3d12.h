@@ -535,8 +535,9 @@ namespace bgfx { namespace d3d12
 		struct Query
 		{
 			uint32_t m_resultIdx;
-			bool     m_ready;
+			uint32_t m_frameNum;
 			uint64_t m_fence;
+			bool     m_ready;
 		};
 
 		struct Result
@@ -552,7 +553,7 @@ namespace bgfx { namespace d3d12
 			uint64_t m_begin;
 			uint64_t m_end;
 			uint32_t m_pending;
-			uint32_t m_frameNum; // TODO: implement (currently stays 0)
+			uint32_t m_frameNum;
 		};
 
 		uint64_t m_frequency;
