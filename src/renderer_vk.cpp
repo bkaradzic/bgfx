@@ -5322,8 +5322,6 @@ VK_DESTROY
 
 	uint32_t TimerQueryVK::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
-		BX_UNUSED(_frameNum);
-
 		while (0 == m_control.reserve(1) )
 		{
 			m_control.consume(1);
@@ -5336,6 +5334,7 @@ VK_DESTROY
 		Query& query = m_query[idx];
 		query.m_resultIdx = _resultIdx;
 		query.m_ready     = false;
+		query.m_frameNum  = _frameNum;
 
 		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
 		const uint32_t offset = idx * 2 + 0;
@@ -5398,6 +5397,7 @@ VK_DESTROY
 
 			Result& result = m_result[query.m_resultIdx];
 			--result.m_pending;
+			result.m_frameNum = query.m_frameNum;
 
 			uint32_t offset = idx * 2;
 			result.m_begin  = m_queryResult[offset+0];

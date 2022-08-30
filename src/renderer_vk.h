@@ -538,14 +538,15 @@ VK_DESTROY_FUNC(DescriptorSet);
 			uint64_t m_begin;
 			uint64_t m_end;
 			uint32_t m_pending;
-			uint32_t m_frameNum; // TODO: implement (currently stays 0)
+			uint32_t m_frameNum;
 		};
 
 		struct Query
 		{
-			uint32_t  m_resultIdx;
-			bool      m_ready;
-			uint64_t  m_completed;
+			uint32_t m_resultIdx;
+			uint32_t m_frameNum;
+			uint64_t m_completed;
+			bool     m_ready;
 		};
 
 		uint64_t m_frequency;
