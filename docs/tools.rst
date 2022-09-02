@@ -30,7 +30,6 @@ Options:
   --ccw                    Front face is counter-clockwise winding order.
   --flipv                  Flip texture coordinate V.
   --obb <num>              Number of steps for calculating oriented bounding box.
-
 		Defaults to 17.
 
 		Less steps = less precise OBB.
@@ -177,7 +176,6 @@ Options:
   -o <file path>           	Output's file path.
   -t <format>              	Output format type. (BC1/2/3/4/5, ETC1, PVR14, etc.)
   -q <quality>             	Encoding quality.
-
 						   	Can be 'default', 'fastest', or 'highest'.
   -m, --mips               	Generate mip-maps.
   --mipskip <N>            	Skip <N> number of mips.
@@ -191,7 +189,6 @@ Options:
   --linear                 	Input and output texture is linear color space. (Gamma correction won't be applied)
   --max <max size>         	Maximum width/height. (Image will be scaled down and aspect ratio will be preserved)
   --radiance <model>       	Radiance cubemap filter.
-
 					       	Model can be 'Phong', 'PhongBrdf', 'Blinn', 'BlinnBrdf', or 'GGX'.
   --as <extension>         	Save as.
   --formats                	List all supported formats.
