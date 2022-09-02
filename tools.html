@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Tools &mdash; bgfx 1.115.8268 documentation</title>
+  <title>Tools &mdash; bgfx 1.115.8277 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                1.115.8268
+                1.115.8277
               </div>
             
           
@@ -95,6 +95,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#geometry-compiler-geometryc">Geometry Compiler (geometryc)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#geometry-viewer-geometryv">Geometry Viewer (geometryv)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#shader-compiler-shaderc">Shader Compiler (shaderc)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#defines">Defines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#predefined-uniforms">Predefined Uniforms</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#building-shaders">Building shaders</a></li>
 </ul>
 </li>
@@ -218,7 +220,7 @@
 </dd>
 <dt><kbd><span class="option">-s</span>, <span class="option">--scale <var>&lt;num&gt;</var></span></kbd></dt>
 <dd><p>Scale factor.</p>
-</dd>
+<dl class="option-list">
 <dt><kbd><span class="option">--ccw</span></kbd></dt>
 <dd><p>Front face is counter-clockwise winding order.</p>
 </dd>
@@ -226,30 +228,38 @@
 <dd><p>Flip texture coordinate V.</p>
 </dd>
 <dt><kbd><span class="option">--obb <var>&lt;num&gt;</var></span></kbd></dt>
-<dd><p>Number of steps for calculating oriented bounding box.</p>
-<p>Defaults to 17.</p>
-<p>Less steps = less precise OBB.</p>
-<p>More steps = slower calculation.</p>
+<dd><div class="line-block">
+<div class="line">Number of steps for calculating oriented bounding box.</div>
+<div class="line">Defaults to 17.</div>
+<div class="line">Less steps = less precise OBB.</div>
+<div class="line">More steps = slower calculation.</div>
+</div>
 </dd>
 <dt><kbd><span class="option">--packnormal <var>&lt;num&gt;</var></span></kbd></dt>
-<dd><p>Normal packing.
-0 - unpacked 12 bytes. (Default)
-1 - packed 4 bytes.</p>
+<dd><div class="line-block">
+<div class="line">Normal packing.</div>
+<div class="line">0 - unpacked 12 bytes. (default)</div>
+<div class="line">1 - packed 4 bytes.</div>
+</div>
 </dd>
 <dt><kbd><span class="option">--packuv <var>&lt;num&gt;</var></span></kbd></dt>
-<dd><p>Texture coordinate packing.
-0 - unpacked 8 bytes. (Default)
-1 - packed 4 bytes.</p>
+<dd><div class="line-block">
+<div class="line">Texture coordinate packing.</div>
+<div class="line">0 - unpacked 8 bytes. (default)</div>
+<div class="line">1 - packed 4 bytes.</div>
+</div>
 </dd>
 <dt><kbd><span class="option">--tangent</span></kbd></dt>
-<dd><p>Calculate tangent vectors. (Packing mode is the same as normal)</p>
+<dd><p>Calculate tangent vectors. (packing mode is the same as normal)</p>
 </dd>
 <dt><kbd><span class="option">--barycentric</span></kbd></dt>
 <dd><p>Adds barycentric vertex attribute. (Packed in bgfx::Attrib::Color1)</p>
 </dd>
+</dl>
+</dd>
 <dt><kbd><span class="option">-c</span>, <span class="option">--compress</span></kbd></dt>
-<dd><p>Compress indices.
-–[l/r]h-up+[y/z]    Coordinate system. Defaults to ‘–lh-up+y’ — Left-Handed +Y is up.</p>
+<dd><p>Compress indices.</p>
+<p>–[l/r]h-up+[y/z]    Coordinate system. Defaults to ‘–lh-up+y’ — Left-Handed +Y is up.</p>
 </dd>
 </dl>
 </div></blockquote>
@@ -279,6 +289,171 @@ This file cannot include comments, and typically only one is necessary.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">$input/$output</span></code> tokens corresponding to inputs and outputs defined in
 <code class="docutils literal notranslate"><span class="pre">varying.def.sc</span></code> must be used at the beginning of shader.</p></li>
 </ul>
+<div class="section" id="defines">
+<h3>Defines<a class="headerlink" href="#defines" title="Permalink to this headline">¶</a></h3>
+<p>Shader Compiler also has the following default defines (default value is set to 0):</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 24%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Define symbol</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Option</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BX_PLATFORM_ANDROID</span></code></p></td>
+<td><p>Android platform</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--platform</span> <span class="pre">android</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BX_PLATFORM_EMSCRIPTEN</span></code></p></td>
+<td><p>Emscripten platform</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--platform</span> <span class="pre">asm.js</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BX_PLATFORM_IOS</span></code></p></td>
+<td><p>iOS platform</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--platform</span> <span class="pre">ios</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BX_PLATFORM_LINUX</span></code></p></td>
+<td><p>Linux platform</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--platform</span> <span class="pre">linux</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BX_PLATFORM_OSX</span></code></p></td>
+<td><p>macOS platform</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--platform</span> <span class="pre">osx</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BX_PLATFORM_PS4</span></code></p></td>
+<td><p>PlayStation 4 platform</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--platform</span> <span class="pre">orbis</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BX_PLATFORM_WINDOWS</span></code></p></td>
+<td><p>Windows platform</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--platform</span> <span class="pre">windows</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BX_PLATFORM_XBOXONE</span></code></p></td>
+<td><p><em>Not implemented</em></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BGFX_SHADER_LANGUAGE_GLSL</span></code></p></td>
+<td><p>GLSL profile</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-p</span> <span class="pre">NNN</span></code> and <code class="docutils literal notranslate"><span class="pre">-p</span> <span class="pre">NNN_es</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BGFX_SHADER_LANGUAGE_HLSL</span></code></p></td>
+<td><p>HLSL profile</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-p</span> <span class="pre">s_N_N</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BGFX_SHADER_LANGUAGE_METAL</span></code></p></td>
+<td><p>Metal profile</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-p</span> <span class="pre">metal</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BGFX_SHADER_LANGUAGE_PSSL</span></code></p></td>
+<td><p>PSSL profile</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-p</span> <span class="pre">pssl</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BGFX_SHADER_LANGUAGE_SPIRV</span></code></p></td>
+<td><p>SPIR-V profile</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-p</span> <span class="pre">spirv</span></code> and <code class="docutils literal notranslate"><span class="pre">-p</span> <span class="pre">spirvNN-NN</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BGFX_SHADER_TYPE_COMPUTE</span></code></p></td>
+<td><p>Compute shader</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--type</span> <span class="pre">compute</span></code> or <code class="docutils literal notranslate"><span class="pre">--type</span> <span class="pre">c</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">BGFX_SHADER_TYPE_FRAGMENT</span></code></p></td>
+<td><p>Fragment shader</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--type</span> <span class="pre">fragment</span></code> or <code class="docutils literal notranslate"><span class="pre">--type</span> <span class="pre">f</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">BGFX_SHADER_TYPE_VERTEX</span></code></p></td>
+<td><p>Vertex shader</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--type</span> <span class="pre">vertex</span></code> or <code class="docutils literal notranslate"><span class="pre">--type</span> <span class="pre">v</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</div>
+<div class="section" id="predefined-uniforms">
+<h3>Predefined Uniforms<a class="headerlink" href="#predefined-uniforms" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 7%" />
+<col style="width: 20%" />
+<col style="width: 72%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Type</p></th>
+<th class="head"><p>Name</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>vec4</p></td>
+<td><p>u_viewRect</p></td>
+<td><div class="line-block">
+<div class="line">View rectangle.</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">u_viewRect.xy</span></code> - xy offset in screen space.</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">u_viewRect.zw</span></code> - width/height size in screen space.</div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p>vec4</p></td>
+<td><p>u_viewTexel</p></td>
+<td><div class="line-block">
+<div class="line">Screen-to-texel space conversion.</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">u_viewTexel.xy</span> <span class="pre">=</span> <span class="pre">1.0/u_viewRect.zw;</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p>mat4</p></td>
+<td><p>u_view</p></td>
+<td><p>Transform world-to-view  space.</p></td>
+</tr>
+<tr class="row-odd"><td><p>mat4</p></td>
+<td><p>u_invView</p></td>
+<td><p>Transform view-to-world  space.</p></td>
+</tr>
+<tr class="row-even"><td><p>mat4</p></td>
+<td><p>u_proj</p></td>
+<td><p>Transform view-to-clip   space.</p></td>
+</tr>
+<tr class="row-odd"><td><p>mat4</p></td>
+<td><p>u_invProj</p></td>
+<td><p>Transform clip-to-view   space.</p></td>
+</tr>
+<tr class="row-even"><td><p>mat4</p></td>
+<td><p>u_viewProj</p></td>
+<td><p>Transform world-to-clip  space.</p></td>
+</tr>
+<tr class="row-odd"><td><p>mat4</p></td>
+<td><p>u_invViewProj</p></td>
+<td><p>Transform clip-to-world  space.</p></td>
+</tr>
+<tr class="row-even"><td><p>mat4[N]</p></td>
+<td><p>u_model</p></td>
+<td><p>Transform local-to-world space array.</p></td>
+</tr>
+<tr class="row-odd"><td><p>mat4</p></td>
+<td><p>u_modelView</p></td>
+<td><p>Transform local-to-view  space.</p></td>
+</tr>
+<tr class="row-even"><td><p>mat4</p></td>
+<td><p>u_modelViewProj</p></td>
+<td><p>Transform local-to-clip  space.</p></td>
+</tr>
+<tr class="row-odd"><td><p>float</p></td>
+<td><p>u_alphaRef</p></td>
+<td><div class="line-block">
+<div class="line">The reference value to which incoming alpha</div>
+<div class="line">values are compared.</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
 <p>For more info, see the <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/bgfx_shader.sh">shader helper macros</a>.</p>
 <p>Options:</p>
 <blockquote>
@@ -308,8 +483,8 @@ This file cannot include comments, and typically only one is necessary.</p></li>
 <dd><p>Target platform.</p>
 </dd>
 <dt><kbd><span class="option">-p</span>, <span class="option">--profile <var>&lt;profile&gt;</var></span></kbd></dt>
-<dd><p>Shader model.</p>
-<p>Defaults to GLSL.</p>
+<dd><p>Shader model.
+Defaults to GLSL.</p>
 </dd>
 <dt><kbd><span class="option">--preprocess</span></kbd></dt>
 <dd><p>Only pre-process.</p>
@@ -321,8 +496,8 @@ This file cannot include comments, and typically only one is necessary.</p></li>
 <dd><p>Do not process shader. No preprocessor, and no glsl-optimizer. (GLSL only)</p>
 </dd>
 <dt><kbd><span class="option">--type <var>&lt;type&gt;</var></span></kbd></dt>
-<dd><p>Shader type.</p>
-<p>Can be ‘vertex’, ‘fragment, or ‘compute’.</p>
+<dd><p>Shader type.
+Can be ‘vertex’, ‘fragment, or ‘compute’.</p>
 </dd>
 <dt><kbd><span class="option">--varyingdef <var>&lt;file path&gt;</var></span></kbd></dt>
 <dd><p>A varying.def.sc’s file path.</p>
@@ -342,14 +517,15 @@ This file cannot include comments, and typically only one is necessary.</p></li>
 <dd><p>Disassemble a compiled shader.</p>
 </dd>
 <dt><kbd><span class="option">-O <var>&lt;level&gt;</var></span></kbd></dt>
-<dd><p>Set optimization level.</p>
-<p>Can be 0–3.</p>
+<dd><p>Set optimization level.
+Can be 0–3.</p>
 </dd>
 <dt><kbd><span class="option">--Werror</span></kbd></dt>
 <dd><p>Treat warnings as errors.</p>
 </dd>
 </dl>
 </div></blockquote>
+</div>
 <div class="section" id="building-shaders">
 <h3>Building shaders<a class="headerlink" href="#building-shaders" title="Permalink to this headline">¶</a></h3>
 <p>Shaders can be compiled for all renderers by using the <code class="docutils literal notranslate"><span class="pre">shaderc</span></code> tool.
@@ -427,41 +603,38 @@ D3D shaders can be only compiled on Windows.</p>
 </table>
 </div></blockquote>
 <p>Options:</p>
-<blockquote>
-<div><dl class="option-list">
+<dl>
+<dt>Options:</dt><dd><dl class="option-list">
 <dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
-<dd><p>Display this help and exit.</p>
+<dd><p>Help.</p>
 </dd>
 <dt><kbd><span class="option">-v</span>, <span class="option">--version</span></kbd></dt>
-<dd><p>Output version information and exit.</p>
+<dd><p>Version information only.</p>
 </dd>
 <dt><kbd><span class="option">-f <var>&lt;file path&gt;</var></span></kbd></dt>
-<dd><p>Input’s file path.</p>
+<dd><p>Input file path.</p>
 </dd>
 <dt><kbd><span class="option">-o <var>&lt;file path&gt;</var></span></kbd></dt>
-<dd><p>Output’s file path.</p>
+<dd><p>Output file path.</p>
 </dd>
 <dt><kbd><span class="option">-t <var>&lt;format&gt;</var></span></kbd></dt>
-<dd><p>Output format type. (BC1/2/3/4/5, ETC1, PVR14, etc.)</p>
+<dd><p>Output format type (BC1/2/3/4/5, ETC1, PVR14, etc.).</p>
 </dd>
 <dt><kbd><span class="option">-q <var>&lt;quality&gt;</var></span></kbd></dt>
-<dd><p>Encoding quality.</p>
-<p>Can be ‘default’, ‘fastest’, or ‘highest’.</p>
+<dd><p>Encoding quality (default, fastest, highest).</p>
 </dd>
 <dt><kbd><span class="option">-m</span>, <span class="option">--mips</span></kbd></dt>
-<dd><p>Generate mip-maps.</p>
-</dd>
-<dt><kbd><span class="option">--mipskip <var>&lt;N&gt;</var></span></kbd></dt>
-<dd><p>Skip &lt;N&gt; number of mips.</p>
+<dd><p>Generate mip-maps.
+–mipskip &lt;N&gt;        Skip &lt;N&gt; number of mips.</p>
 </dd>
 <dt><kbd><span class="option">-n</span>, <span class="option">--normalmap</span></kbd></dt>
 <dd><p>Input texture is normal map. (Implies –linear)</p>
-</dd>
+<dl class="option-list">
 <dt><kbd><span class="option">--equirect</span></kbd></dt>
 <dd><p>Input texture is equirectangular projection of cubemap.</p>
 </dd>
 <dt><kbd><span class="option">--strip</span></kbd></dt>
-<dd><p>Input texture is horizontal strip of cubemap.</p>
+<dd><p>Input texture is horizontal or vertical strip of cubemap.</p>
 </dd>
 <dt><kbd><span class="option">--sdf</span></kbd></dt>
 <dd><p>Compute SDF texture.</p>
@@ -476,14 +649,14 @@ D3D shaders can be only compiled on Windows.</p>
 <dd><p>Premultiply alpha into RGB channel.</p>
 </dd>
 <dt><kbd><span class="option">--linear</span></kbd></dt>
-<dd><p>Input and output texture is linear color space. (Gamma correction won’t be applied)</p>
+<dd><p>Input and output texture is linear color space (gamma correction won’t be applied).</p>
 </dd>
 <dt><kbd><span class="option">--max <var>&lt;max size&gt;</var></span></kbd></dt>
-<dd><p>Maximum width/height. (Image will be scaled down and aspect ratio will be preserved)</p>
+<dd><p>Maximum width/height (image will be scaled down and
+aspect ratio will be preserved)</p>
 </dd>
 <dt><kbd><span class="option">--radiance <var>&lt;model&gt;</var></span></kbd></dt>
-<dd><p>Radiance cubemap filter.</p>
-<p>Model can be ‘Phong’, ‘PhongBrdf’, ‘Blinn’, ‘BlinnBrdf’, or ‘GGX’.</p>
+<dd><p>Radiance cubemap filter. (Lighting model: Phong, PhongBrdf, Blinn, BlinnBrdf, GGX)</p>
 </dd>
 <dt><kbd><span class="option">--as <var>&lt;extension&gt;</var></span></kbd></dt>
 <dd><p>Save as.</p>
@@ -495,7 +668,10 @@ D3D shaders can be only compiled on Windows.</p>
 <dd><p><strong>DEBUG</strong> Validate that output image produced matches after loading.</p>
 </dd>
 </dl>
-</div></blockquote>
+</dd>
+</dl>
+</dd>
+</dl>
 </div>
 <div class="section" id="texture-viewer-texturev">
 <h2>Texture Viewer (texturev)<a class="headerlink" href="#texture-viewer-texturev" title="Permalink to this headline">¶</a></h2>
