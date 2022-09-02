@@ -30,7 +30,6 @@ Options:
   --ccw                    Front face is counter-clockwise winding order.
   --flipv                  Flip texture coordinate V.
   --obb <num>              Number of steps for calculating oriented bounding box.
- 
 		Defaults to 17.
 
 		Less steps = less precise OBB.
@@ -75,6 +74,31 @@ Some differences between bgfx's shaderc flavor of GLSL and vanilla GLSL:
 -  ``$input/$output`` tokens corresponding to inputs and outputs defined in
    ``varying.def.sc`` must be used at the beginning of shader.
 
+Shader Compiler also has the following default defines:
+
+  =============================== ======================= =======
+   Define symbol                  Description             Option
+  =============================== ======================= =======
+  ``BX_PLATFORM_ANDROID``         Android platform        ``--platform android``
+  ``BX_PLATFORM_EMSCRIPTEN``      Emscripten platform     ``--platform asm.js``
+  ``BX_PLATFORM_IOS``             iOS platform            ``--platform ios``
+  ``BX_PLATFORM_LINUX``           Linux platform          ``--platform linux``
+  ``BX_PLATFORM_OSX``             macOS platform          ``--platform osx``
+  ``BX_PLATFORM_PS4``             PlayStation 4 platform  ``--platform orbis``
+  ``BX_PLATFORM_WINDOWS``         Windows platform        ``--platform windows``
+  ``BX_PLATFORM_XBOXONE``         *Not implemented*
+  ------------------------------- ----------------------- -------
+  ``BGFX_SHADER_LANGUAGE_GLSL``   GLSL profile            ``-p NNN`` and ``-p NNN_es``
+  ``BGFX_SHADER_LANGUAGE_HLSL``   HLSL profile            ``-p s_N_N``
+  ``BGFX_SHADER_LANGUAGE_METAL``  Metal profile           ``-p metal``
+  ``BGFX_SHADER_LANGUAGE_PSSL``   PSSL profile            ``-p pssl``
+  ``BGFX_SHADER_LANGUAGE_SPIRV``  SPIR-V profile          ``-p spirv`` and ``-p spirvNN-NN``
+  ------------------------------- ----------------------- -------
+  ``BGFX_SHADER_TYPE_COMPUTE``    Compute shader          ``--type compute`` or ``--type c``
+  ``BGFX_SHADER_TYPE_FRAGMENT``   Fragment shader         ``--type fragment`` or ``--type f``
+  ``BGFX_SHADER_TYPE_VERTEX``     Vertex shader           ``--type vertex`` or ``--type v``
+  =============================== ======================= ========
+
 For more info, see the `shader helper macros
 <https://github.com/bkaradzic/bgfx/blob/master/src/bgfx_shader.sh>`__.
 
@@ -89,13 +113,11 @@ Options:
   --depends                 Generate makefile style depends file.
   --platform <platform>     Target platform.
   -p, --profile <profile>   Shader model.
-
   							Defaults to GLSL.
   --preprocess              Only pre-process.
   --define <defines>        Add defines to preprocessor. (semicolon separated)
   --raw                     Do not process shader. No preprocessor, and no glsl-optimizer. (GLSL only)
   --type <type>             Shader type.
-  
   							Can be 'vertex', 'fragment, or 'compute'.
   --varyingdef <file path>  A varying.def.sc's file path.
   --verbose                 Be verbose.
@@ -105,7 +127,6 @@ Options:
   --debug                   Debug information.
   --disasm                  Disassemble a compiled shader.
   -O <level>                Set optimization level.
-
 							Can be 0–3.
   --Werror                	Treat warnings as errors.
 
@@ -152,7 +173,6 @@ Options:
   -o <file path>           	Output's file path.
   -t <format>              	Output format type. (BC1/2/3/4/5, ETC1, PVR14, etc.)
   -q <quality>             	Encoding quality.
-
 						   	Can be 'default', 'fastest', or 'highest'.
   -m, --mips               	Generate mip-maps.
   --mipskip <N>            	Skip <N> number of mips.
@@ -166,7 +186,6 @@ Options:
   --linear                 	Input and output texture is linear color space. (Gamma correction won't be applied)
   --max <max size>         	Maximum width/height. (Image will be scaled down and aspect ratio will be preserved)
   --radiance <model>       	Radiance cubemap filter.
-
 					       	Model can be 'Phong', 'PhongBrdf', 'Blinn', 'BlinnBrdf', or 'GGX'.
   --as <extension>         	Save as.
   --formats                	List all supported formats.
