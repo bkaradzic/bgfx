@@ -113,13 +113,11 @@ Options:
   --depends                 Generate makefile style depends file.
   --platform <platform>     Target platform.
   -p, --profile <profile>   Shader model.
-
   							Defaults to GLSL.
   --preprocess              Only pre-process.
   --define <defines>        Add defines to preprocessor. (semicolon separated)
   --raw                     Do not process shader. No preprocessor, and no glsl-optimizer. (GLSL only)
   --type <type>             Shader type.
-
   							Can be 'vertex', 'fragment, or 'compute'.
   --varyingdef <file path>  A varying.def.sc's file path.
   --verbose                 Be verbose.
@@ -129,7 +127,6 @@ Options:
   --debug                   Debug information.
   --disasm                  Disassemble a compiled shader.
   -O <level>                Set optimization level.
-
 							Can be 0–3.
   --Werror                	Treat warnings as errors.
 
