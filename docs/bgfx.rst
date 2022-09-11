@@ -121,6 +121,7 @@ Available Caps
 .. doxygendefine:: BGFX_CAPS_COMPUTE
 .. doxygendefine:: BGFX_CAPS_CONSERVATIVE_RASTER
 .. doxygendefine:: BGFX_CAPS_DRAW_INDIRECT
+.. doxygendefine:: BGFX_CAPS_DRAW_INDIRECT_COUNT
 .. doxygendefine:: BGFX_CAPS_FRAGMENT_DEPTH
 .. doxygendefine:: BGFX_CAPS_FRAGMENT_ORDERING
 .. doxygendefine:: BGFX_CAPS_GRAPHICS_DEBUGGER

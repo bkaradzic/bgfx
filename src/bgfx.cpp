@@ -3860,6 +3860,16 @@ namespace bgfx
 		BGFX_ENCODER(submit(_id, _program, _indirectHandle, _start, _num, _depth, _flags) );
 	}
 
+	void Encoder::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags)
+	{
+		BGFX_CHECK_HANDLE_INVALID_OK("submit", s_ctx->m_programHandle, _program);
+		BGFX_CHECK_HANDLE("submit", s_ctx->m_vertexBufferHandle, _indirectHandle);
+		BGFX_CHECK_HANDLE("submit", s_ctx->m_indexBufferHandle, _numHandle);
+		BGFX_CHECK_CAPS(BGFX_CAPS_DRAW_INDIRECT, "Draw indirect is not supported!");
+		BGFX_CHECK_CAPS(BGFX_CAPS_DRAW_INDIRECT_COUNT, "Draw indirect count is not supported!");
+		BGFX_ENCODER(submit(_id, _program, _indirectHandle, _start, _numHandle, _numIndex, _numMax, _depth, _flags) );
+	}
+
 	void Encoder::setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
 	{
 		BX_ASSERT(_stage < g_caps.limits.maxComputeBindings, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxComputeBindings);
@@ -5456,6 +5466,12 @@ namespace bgfx
 		s_ctx->m_encoder0->submit(_id, _program, _indirectHandle, _start, _num, _depth, _flags);
 	}
 
+	void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags)
+	{
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->submit(_id, _program, _indirectHandle, _start, _numHandle, _numIndex, _numMax, _depth, _flags);
+	}
+
 	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_ENCODER0();
@@ -5732,6 +5748,8 @@ BX_STATIC_ASSERT( (0
 	| BGFX_CAPS_VERTEX_ATTRIB_HALF
 	| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 	| BGFX_CAPS_VERTEX_ID
+	| BGFX_CAPS_VIEWPORT_LAYER_ARRAY
+	| BGFX_CAPS_DRAW_INDIRECT_COUNT
 	) == (0
 	^ BGFX_CAPS_ALPHA_TO_COVERAGE
 	^ BGFX_CAPS_BLEND_INDEPENDENT
@@ -5757,6 +5775,8 @@ BX_STATIC_ASSERT( (0
 	^ BGFX_CAPS_VERTEX_ATTRIB_HALF
 	^ BGFX_CAPS_VERTEX_ATTRIB_UINT10
 	^ BGFX_CAPS_VERTEX_ID
+	^ BGFX_CAPS_VIEWPORT_LAYER_ARRAY
+	^ BGFX_CAPS_DRAW_INDIRECT_COUNT
 	) );
 
 #undef FLAGS_MASK_TEST
