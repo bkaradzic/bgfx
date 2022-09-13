@@ -1349,13 +1349,13 @@ namespace MinGW_Workaround
 {
 	inline D3D12_RESOURCE_DESC ID3D12ResourceGetDesc(ID3D12Resource* _resource)
 	{
+#if BX_COMPILER_MSVC
+		return _resource->GetDesc();
+#else
 		D3D12_RESOURCE_DESC desc;
-		union {
-			D3D12_RESOURCE_DESC (STDMETHODCALLTYPE ID3D12Resource::*w)();
-			void (STDMETHODCALLTYPE ID3D12Resource::*f)(D3D12_RESOURCE_DESC *);
-		} conversion = { &ID3D12Resource::GetDesc };
-		(_resource->*conversion.f)(&desc);
+		_resource->GetDesc(&desc);
 		return desc;
+#endif // BX_COMPILER_MSVC
 	}
 }
 

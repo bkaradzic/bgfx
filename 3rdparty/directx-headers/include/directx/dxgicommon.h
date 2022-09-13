@@ -1,5 +1,6 @@
 //
-//    Copyright (C) Microsoft.  All rights reserved.
+//    Copyright (C) Microsoft Corporation.
+//    Licensed under the MIT license
 //
 
 #ifndef __dxgicommon_h__

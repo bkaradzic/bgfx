@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
+//  Copyright (c) Microsoft Corporation.
+//  Licensed under the MIT license.
 //
 //  File:       D3D12Shader.h
 //  Content:    D3D12 Shader Types and APIs
@@ -14,16 +15,29 @@
 
 typedef enum D3D12_SHADER_VERSION_TYPE
 {
-    D3D12_SHVER_PIXEL_SHADER    = 0,
-    D3D12_SHVER_VERTEX_SHADER   = 1,
-    D3D12_SHVER_GEOMETRY_SHADER = 2,
+    D3D12_SHVER_PIXEL_SHADER          = 0,
+    D3D12_SHVER_VERTEX_SHADER         = 1,
+    D3D12_SHVER_GEOMETRY_SHADER       = 2,
     
     // D3D11 Shaders
-    D3D12_SHVER_HULL_SHADER     = 3,
-    D3D12_SHVER_DOMAIN_SHADER   = 4,
-    D3D12_SHVER_COMPUTE_SHADER  = 5,
+    D3D12_SHVER_HULL_SHADER           = 3,
+    D3D12_SHVER_DOMAIN_SHADER         = 4,
+    D3D12_SHVER_COMPUTE_SHADER        = 5,
 
-    D3D12_SHVER_RESERVED0       = 0xFFF0,
+    // D3D12 Shaders
+    D3D12_SHVER_LIBRARY               = 6,
+
+    D3D12_SHVER_RAY_GENERATION_SHADER = 7,
+    D3D12_SHVER_INTERSECTION_SHADER   = 8,
+    D3D12_SHVER_ANY_HIT_SHADER        = 9,
+    D3D12_SHVER_CLOSEST_HIT_SHADER    = 10,
+    D3D12_SHVER_MISS_SHADER           = 11,
+    D3D12_SHVER_CALLABLE_SHADER       = 12,
+
+    D3D12_SHVER_MESH_SHADER           = 13,
+    D3D12_SHVER_AMPLIFICATION_SHADER  = 14,
+
+    D3D12_SHVER_RESERVED0             = 0xFFF0,
 } D3D12_SHADER_VERSION_TYPE;
 
 #define D3D12_SHVER_GET_TYPE(_Version) \
@@ -172,6 +186,23 @@ typedef struct _D3D12_SHADER_INPUT_BIND_DESC
 #define D3D_SHADER_REQUIRES_TYPED_UAV_LOAD_ADDITIONAL_FORMATS                               0x00000800
 #define D3D_SHADER_REQUIRES_ROVS                                                            0x00001000
 #define D3D_SHADER_REQUIRES_VIEWPORT_AND_RT_ARRAY_INDEX_FROM_ANY_SHADER_FEEDING_RASTERIZER  0x00002000
+#define D3D_SHADER_REQUIRES_WAVE_OPS                                                        0x00004000
+#define D3D_SHADER_REQUIRES_INT64_OPS                                                       0x00008000
+#define D3D_SHADER_REQUIRES_VIEW_ID                                                         0x00010000
+#define D3D_SHADER_REQUIRES_BARYCENTRICS                                                    0x00020000
+#define D3D_SHADER_REQUIRES_NATIVE_16BIT_OPS                                                0x00040000
+#define D3D_SHADER_REQUIRES_SHADING_RATE                                                    0x00080000
+#define D3D_SHADER_REQUIRES_RAYTRACING_TIER_1_1                                             0x00100000
+#define D3D_SHADER_REQUIRES_SAMPLER_FEEDBACK                                                0x00200000
+#define D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_TYPED_RESOURCE                                  0x00400000
+#define D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_GROUP_SHARED                                    0x00800000
+#define D3D_SHADER_REQUIRES_DERIVATIVES_IN_MESH_AND_AMPLIFICATION_SHADERS                   0x01000000
+#define D3D_SHADER_REQUIRES_RESOURCE_DESCRIPTOR_HEAP_INDEXING                               0x02000000
+#define D3D_SHADER_REQUIRES_SAMPLER_DESCRIPTOR_HEAP_INDEXING                                0x04000000
+#define D3D_SHADER_REQUIRES_WAVE_MMA                                                        0x08000000
+#define D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_DESCRIPTOR_HEAP_RESOURCE                        0x10000000
+#define D3D_SHADER_FEATURE_ADVANCED_TEXTURE_OPS                                             0x20000000
+#define D3D_SHADER_FEATURE_WRITEABLE_MSAA_TEXTURES                                          0x40000000
 
 
 typedef struct _D3D12_LIBRARY_DESC

@@ -460,14 +460,13 @@ namespace bgfx { namespace d3d12
 
 	static inline D3D12_HEAP_PROPERTIES ID3D12DeviceGetCustomHeapProperties(ID3D12Device *device, UINT nodeMask, D3D12_HEAP_TYPE heapType)
 	{
-		// NOTICE: gcc trick for return struct
-		union {
-			D3D12_HEAP_PROPERTIES (STDMETHODCALLTYPE ID3D12Device::*w)(UINT, D3D12_HEAP_TYPE);
-			void (STDMETHODCALLTYPE ID3D12Device::*f)(D3D12_HEAP_PROPERTIES *, UINT, D3D12_HEAP_TYPE);
-		} conversion = { &ID3D12Device::GetCustomHeapProperties };
+#if BX_COMPILER_MSVC
+		return device->GetCustomHeapProperties(nodeMask, heapType);
+#else
 		D3D12_HEAP_PROPERTIES ret;
-		(device->*conversion.f)(&ret, nodeMask, heapType);
+		device->GetCustomHeapProperties(&ret, nodeMask, heapType);
 		return ret;
+#endif // BX_COMPILER_MSVC
 	}
 
 	static void initHeapProperties(ID3D12Device* _device, D3D12_HEAP_PROPERTIES& _properties)
@@ -509,7 +508,12 @@ namespace bgfx { namespace d3d12
 		{
 			void* ptr;
 			DX_CHECK(resource->Map(0, NULL, &ptr) );
-			D3D12_RESOURCE_ALLOCATION_INFO rai = _device->GetResourceAllocationInfo(1, 1, _resourceDesc);
+			D3D12_RESOURCE_ALLOCATION_INFO rai;
+#if BX_COMPILER_MSVC
+			rai = _device->GetResourceAllocationInfo(1, 1, _resourceDesc);
+#else
+			_device->GetResourceAllocationInfo(&rai, 1, 1, _resourceDesc);
+#endif // BX_COMPILER_MSVC
 			bx::memSet(ptr, 0, size_t(rai.SizeInBytes) );
 			resource->Unmap(0, NULL);
 		}
@@ -608,11 +612,7 @@ namespace bgfx { namespace d3d12
 		return _heap->GetCPUDescriptorHandleForHeapStart();
 #else
 		D3D12_CPU_DESCRIPTOR_HANDLE handle;
-		union {
-			D3D12_CPU_DESCRIPTOR_HANDLE (WINAPI ID3D12DescriptorHeap::*w)();
-			void (WINAPI ID3D12DescriptorHeap::*f)(D3D12_CPU_DESCRIPTOR_HANDLE *);
-		} conversion = { &ID3D12DescriptorHeap::GetCPUDescriptorHandleForHeapStart };
-		(_heap->*conversion.f)(&handle);
+		_heap->GetCPUDescriptorHandleForHeapStart(&handle);
 		return handle;
 #endif // BX_COMPILER_MSVC
 	}
@@ -623,11 +623,7 @@ namespace bgfx { namespace d3d12
 		return _heap->GetGPUDescriptorHandleForHeapStart();
 #else
 		D3D12_GPU_DESCRIPTOR_HANDLE handle;
-		union {
-			D3D12_GPU_DESCRIPTOR_HANDLE (WINAPI ID3D12DescriptorHeap::*w)();
-			void (WINAPI ID3D12DescriptorHeap::*f)(D3D12_GPU_DESCRIPTOR_HANDLE *);
-		} conversion = { &ID3D12DescriptorHeap::GetGPUDescriptorHandleForHeapStart };
-		(_heap->*conversion.f)(&handle);
+		_heap->GetGPUDescriptorHandleForHeapStart(&handle);
 		return handle;
 #endif // BX_COMPILER_MSVC
 	}
@@ -638,11 +634,7 @@ namespace bgfx { namespace d3d12
 		return _resource->GetDesc();
 #else
 		D3D12_RESOURCE_DESC desc;
-		union {
-			D3D12_RESOURCE_DESC (STDMETHODCALLTYPE ID3D12Resource::*w)();
-			void (STDMETHODCALLTYPE ID3D12Resource::*f)(D3D12_RESOURCE_DESC *);
-		} conversion = { &ID3D12Resource::GetDesc };
-		(_resource->*conversion.f)(&desc);
+		_resource->GetDesc(&desc);
 		return desc;
 #endif // BX_COMPILER_MSVC
 	}
@@ -5128,8 +5120,6 @@ namespace bgfx { namespace d3d12
 		box.right  = box.left + _rect.m_width;
 		box.bottom = box.top  + _rect.m_height;
 
-		uint32_t layer = 0;
-
 		if (TextureD3D12::Texture3D == m_type)
 		{
 			box.front = _z;
@@ -5137,7 +5127,6 @@ namespace bgfx { namespace d3d12
 		}
 		else
 		{
-			layer = _z * (TextureD3D12::TextureCube == m_type ? 6 : 1);
 			box.front = 0;
 			box.back  = 1;
 		}
