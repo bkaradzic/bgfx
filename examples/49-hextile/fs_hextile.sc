@@ -8,6 +8,13 @@ $input v_position, v_texcoord0
  /*
 
 	Most of the code is inspired/ported from https://github.com/mmikk/hextile-demo/blob/main/hextile-demo/shader_lighting.hlsl
+	
+	The basic idea behind the algorithm is to use tiling & blending schema but instead of regular linear blending, the algorithm uses blending operator that prevents visual artifacts caused by linear blending
+	
+	We partition the uv-space on a triangle grid and compute the local triangle and the barycentric coordinates inside the triangle. We use a hash function to associate a random offset with each vertex of the triangle
+	grid and use this random offset to fetch the example texture.
+	
+	Finally, we blend the result using the barycentric coordinates as blending weights.
  
  */
 
@@ -92,17 +99,18 @@ vec2 hash(vec2 p)
 	return fract(sin(r) * 43758.5453);
 }
 
+// Given a point in UV, compute local triangle barycentric coordinates and vertex IDs
 void TriangleGrid(out float w1, out float w2, out float w3,
 	out vec2 vertex1, out vec2 vertex2, out vec2 vertex3,
-	vec2 st)
+	vec2 uv)
 {
 	// Scaling of the input
-	st *= 2.0 * sqrt(3.0);
+	uv *= 2.0 * sqrt(3.0); // controls the size of the input with respect to the size of the tiles. 
 
 	// Skew input space into simplex triangle grid
 	const mat2 gridToSkewedGrid =
 		mat2(1.0, -0.57735027, 0.0, 1.15470054);
-	vec2 skewedCoord = mul(gridToSkewedGrid, st);
+	vec2 skewedCoord = mul(gridToSkewedGrid, uv);
 
 	vec2 baseId = floor(skewedCoord);
 	vec3 temp = vec3(fract(skewedCoord), 0.0);
@@ -120,15 +128,16 @@ void TriangleGrid(out float w1, out float w2, out float w3,
 	vertex3 = baseId + vec2(1.0 - s, s);
 }
 
-void hex2colTex(out vec4 color, out vec3 weights, vec2 st,
+void hex2colTex(out vec4 color, out vec3 weights, vec2 uv,
 	float rotStrength, float r)
 {
-	vec2 dSTdx = dFdx(st), dSTdy = dFdy(st);
+	// compute uv derivatives
+	vec2 dSTdx = dFdx(uv), dSTdy = dFdy(uv);
 
 	// Get triangle info
 	float w1, w2, w3;
 	vec2 vertex1, vertex2, vertex3;
-	TriangleGrid(w1, w2, w3, vertex1, vertex2, vertex3, st);
+	TriangleGrid(w1, w2, w3, vertex1, vertex2, vertex3, uv);
 
 	mat2 rot1 = LoadRot2x2(vertex1, rotStrength);
 	mat2 rot2 = LoadRot2x2(vertex2, rotStrength);
@@ -138,16 +147,20 @@ void hex2colTex(out vec4 color, out vec3 weights, vec2 st,
 	vec2 cen2 = MakeCenST(vertex2);
 	vec2 cen3 = MakeCenST(vertex3);
 
-	vec2 st1 = mul(st - cen1, rot1) + cen1 + hash(vertex1);
-	vec2 st2 = mul(st - cen2, rot2) + cen2 + hash(vertex2);
-	vec2 st3 = mul(st - cen3, rot3) + cen3 + hash(vertex3);
+	// assign random offset to each triangle vertex
+	// this is used later to fetch from texture
+	vec2 uv1 = mul(uv - cen1, rot1) + cen1 + hash(vertex1);
+	vec2 uv2 = mul(uv - cen2, rot2) + cen2 + hash(vertex2);
+	vec2 uv3 = mul(uv - cen3, rot3) + cen3 + hash(vertex3);
 
 	// Fetch input
-	vec4 c1 = texture2DGrad(s_trx_d, st1,
+	// We could simply use texture2D function, however, the sreen space derivatives could be broken 
+	// since we are using random offsets, we use texture2DGrad to make sure that we pass correct derivatives explicitly.
+	vec4 c1 = texture2DGrad(s_trx_d, uv1,
 		mul(dSTdx, rot1), mul(dSTdy, rot1));
-	vec4 c2 = texture2DGrad(s_trx_d, st2,
+	vec4 c2 = texture2DGrad(s_trx_d, uv2,
 		mul(dSTdx, rot2), mul(dSTdy, rot2));
-	vec4 c3 = texture2DGrad(s_trx_d, st3,
+	vec4 c3 = texture2DGrad(s_trx_d, uv3,
 		mul(dSTdx, rot3), mul(dSTdy, rot3));
 
 	// use luminance as weight
@@ -159,6 +172,8 @@ void hex2colTex(out vec4 color, out vec3 weights, vec2 st,
 	W /= (W.x + W.y + W.z);
 	if (r != 0.5) W = Gain3(W, r);
 
+	// blend weights with color linearly 
+	// histogram preserving blending will be better but requires 
 	color = W.x * c1 + W.y * c2 + W.z * c3;
 	weights = ProduceHexWeights(W.xyz, vertex1, vertex2, vertex3);
 }
@@ -169,10 +184,10 @@ float GetTileRate()
 	return 0.05 * 5.0; // 5.0 is tile rate
 }
 
-void FetchColorAndWeight(out vec3 color, out vec3 weights, vec2 st)
+void FetchColorAndWeight(out vec3 color, out vec3 weights, vec2 uv)
 {
 	vec4 col4;
-	hex2colTex(col4, weights, st, 0.0, 0.7);
+	hex2colTex(col4, weights, uv, 0.0, 0.7);
 	color = col4.xyz;
 }
 
@@ -183,13 +198,10 @@ void main()
 
 	vec3 sp = GetTileRate() * surfPosInWorld;
 
-	vec2 st0 = vec2(sp.x, -sp.z);	// since looking at -Z in a right hand coordinate frame.
-
-	// need to negate .y of derivative due to upper-left corner being the texture origin
-	st0 = vec2(st0.x, 1.0 - st0.y);
+	vec2 uv0 = vec2(sp.x, sp.z);
 
 	vec3 color, weights;
-	FetchColorAndWeight(color, weights, st0);
+	FetchColorAndWeight(color, weights, uv0);
 
 	if (u_showWeights > 0.0)
 	{
