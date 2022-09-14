@@ -38,19 +38,6 @@ extern "C++" {
 }
 #endif // defined(__MINGW32__)
 
-BX_PRAGMA_DIAGNOSTIC_PUSH();
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wmissing-field-initializers");
-#if BX_PLATFORM_XBOXONE
-#	include <d3dx12_x.h>
-#else
-#	include <d3dx12.h>
-#endif // BX_PLATFORM_XBOXONE
-BX_PRAGMA_DIAGNOSTIC_POP();
-
-#ifndef D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
-#	define D3D12_TEXTURE_DATA_PITCH_ALIGNMENT 1024
-#endif // D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
-
 #include "renderer.h"
 #include "renderer_d3d.h"
 #include "shader_dxbc.h"
@@ -418,7 +405,7 @@ namespace bgfx { namespace d3d12
 		void finish(uint64_t _waitFence = UINT64_MAX, bool _finishAll = false);
 		bool tryFinish(uint64_t _waitFence);
 		void release(ID3D12Resource* _ptr);
-		bool consume(uint32_t _ms = INFINITE);
+		bool consume(uint32_t _ms = UINT32_MAX);
 
 		struct CommandList
 		{

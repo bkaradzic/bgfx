@@ -458,7 +458,7 @@ namespace bgfx { namespace d3d12
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_heapProperties) == HeapProperty::Count);
 
-	static inline D3D12_HEAP_PROPERTIES ID3D12DeviceGetCustomHeapProperties(ID3D12Device *device, UINT nodeMask, D3D12_HEAP_TYPE heapType)
+	static inline D3D12_HEAP_PROPERTIES ID3D12DeviceGetCustomHeapProperties(ID3D12Device *device, uint32_t nodeMask, D3D12_HEAP_TYPE heapType)
 	{
 #if BX_COMPILER_MSVC
 		return device->GetCustomHeapProperties(nodeMask, heapType);
@@ -1292,7 +1292,7 @@ namespace bgfx { namespace d3d12
 						struct D3D11_FEATURE_DATA_FORMAT_SUPPORT
 						{
 							DXGI_FORMAT InFormat;
-							UINT OutFormatSupport;
+							uint32_t OutFormatSupport;
 						};
 
 						D3D12_FEATURE_DATA_FORMAT_SUPPORT data;
@@ -4665,6 +4665,144 @@ namespace bgfx { namespace d3d12
 		bx::read(&reader, m_size, &err);
 	}
 
+	static void memcpySubresource(
+		  const D3D12_MEMCPY_DEST* _dst
+		, const D3D12_SUBRESOURCE_DATA* _src
+		, uint64_t _rowSizeInBytes
+		, uint32_t _numRows
+		, uint32_t _numSlices
+		)
+	{
+		for (uint32_t zz = 0; zz < _numSlices; ++zz)
+		{
+			      uint8_t* _dstSlice = (      uint8_t*)(_dst->pData) + _dst->SlicePitch * zz;
+			const uint8_t* _srcSlice = (const uint8_t*)(_src->pData) + _src->SlicePitch * zz;
+			for (uint32_t yy = 0; yy < _numRows; ++yy)
+			{
+				bx::memCopy(
+					  _dstSlice + _dst->RowPitch * yy
+					, _srcSlice + _src->RowPitch * yy
+					, size_t(_rowSizeInBytes)
+					);
+			}
+		}
+	}
+
+	static uint64_t updateSubresources(
+		  ID3D12GraphicsCommandList* _commandList
+		, ID3D12Resource* _dstResource
+		, ID3D12Resource* _intermediate
+		, uint32_t _firstSubresource
+		, uint32_t _numSubresources
+		, uint64_t _requiredSize
+		, const D3D12_PLACED_SUBRESOURCE_FOOTPRINT* _layouts
+		, const uint32_t* _numRows
+		, const uint64_t* _rowSizesInBytes
+		, const D3D12_SUBRESOURCE_DATA* _srcData
+		)
+	{
+		uint8_t* data;
+		DX_CHECK(_intermediate->Map(0, NULL, (void**)&data) );
+
+		for (uint32_t ii = 0; ii < _numSubresources; ++ii)
+		{
+			D3D12_MEMCPY_DEST dstData =
+			{
+				data + _layouts[ii].Offset,
+				_layouts[ii].Footprint.RowPitch,
+				_layouts[ii].Footprint.RowPitch * _numRows[ii],
+			};
+
+			memcpySubresource(
+				  &dstData
+				, &_srcData[ii]
+				, _rowSizesInBytes[ii]
+				, _numRows[ii]
+				, _layouts[ii].Footprint.Depth
+				);
+		}
+
+		_intermediate->Unmap(0, NULL);
+
+		D3D12_RESOURCE_DESC dstDesc = getResourceDesc(_dstResource);
+		if (dstDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+		{
+			_commandList->CopyBufferRegion(
+				  _dstResource
+				, 0
+				, _intermediate
+				, _layouts[0].Offset
+				, _layouts[0].Footprint.Width
+				);
+		}
+		else
+		{
+			for (uint32_t i = 0; i < _numSubresources; ++i)
+			{
+				D3D12_TEXTURE_COPY_LOCATION src;
+				src.pResource        = _intermediate;
+				src.Type             = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+				src.PlacedFootprint  = _layouts[i];
+
+				D3D12_TEXTURE_COPY_LOCATION dst;
+				dst.pResource        = _dstResource;
+				dst.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+				dst.SubresourceIndex = i + _firstSubresource;
+
+				_commandList->CopyTextureRegion(&dst, 0, 0, 0, &src, NULL);
+			}
+		}
+
+		return _requiredSize;
+	}
+
+	static uint64_t updateSubresources(
+		  ID3D12GraphicsCommandList* _commandList
+		, ID3D12Resource* _dstResource
+		, ID3D12Resource* _intermediate
+		, uint64_t _intermediateOffset
+		, uint32_t _firstSubresource
+		, uint32_t _numSubresources
+		, D3D12_SUBRESOURCE_DATA* _srcData
+		)
+	{
+		uint64_t requiredSize = 0;
+
+		const size_t sizeInBytes = size_t(sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(uint32_t) + sizeof(uint64_t) ) * _numSubresources;
+		D3D12_PLACED_SUBRESOURCE_FOOTPRINT* layouts = (D3D12_PLACED_SUBRESOURCE_FOOTPRINT*)BX_ALLOC(g_allocator, sizeInBytes);
+		uint64_t* rowSizesInBytes = (uint64_t*)(layouts + _numSubresources);
+		uint32_t* numRows         = (uint32_t*)(rowSizesInBytes + _numSubresources);
+
+		D3D12_RESOURCE_DESC desc = getResourceDesc(_dstResource);
+		s_renderD3D12->m_device->GetCopyableFootprints(
+			  &desc
+			, _firstSubresource
+			, _numSubresources
+			, _intermediateOffset
+			, layouts
+			, numRows
+			, rowSizesInBytes
+			, &requiredSize
+			);
+
+		const uint64_t result = updateSubresources(
+			  _commandList
+			, _dstResource
+			, _intermediate
+			, _firstSubresource
+			, _numSubresources
+			, requiredSize
+			, layouts
+			, numRows
+			, rowSizesInBytes
+			, _srcData
+			);
+
+		BX_FREE(g_allocator, layouts);
+
+		return result;
+	}
+
 	void* TextureD3D12::create(const Memory* _mem, uint64_t _flags, uint8_t _skip)
 	{
 		bimg::ImageContainer imageContainer;
@@ -5009,7 +5147,7 @@ namespace bgfx { namespace d3d12
 
 				setState(commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 
-				uint64_t result = UpdateSubresources(commandList
+				uint64_t result = updateSubresources(commandList
 					, m_ptr
 					, staging
 					, 0
@@ -5210,7 +5348,7 @@ namespace bgfx { namespace d3d12
 
 			for (uint32_t ii = _layer; ii < _numLayers; ++ii)
 			{
-				const UINT resource = _mip + (ii * m_numMips);
+				const uint32_t resource = _mip + (ii * m_numMips);
 
 				_commandList->ResolveSubresource(m_singleMsaa
 					, resource
