@@ -35,6 +35,7 @@ uniform vec4 u_params;
 #define u_showWeights u_params.x
 #define u_tileRate u_params.y
 #define u_tileRotStrength u_params.z
+#define u_useRegularTiling u_params.w
 
 vec3 Gain3(vec3 x, float r)
 {
@@ -184,6 +185,7 @@ void hex2colTex(out vec4 color, out vec3 weights, vec2 uv,
 float GetTileRate()
 {
 	return 0.05 * u_tileRate;
+}
 
 void FetchColorAndWeight(out vec3 color, out vec3 weights, vec2 uv)
 {
@@ -194,22 +196,31 @@ void FetchColorAndWeight(out vec3 color, out vec3 weights, vec2 uv)
 
 void main()
 {
-	// actual world space position
-	vec3 surfPosInWorld = v_position.xyz;
-
-	vec3 sp = GetTileRate() * surfPosInWorld;
-
-	vec2 uv0 = vec2(sp.x, sp.z);
-
-	vec3 color, weights;
-	FetchColorAndWeight(color, weights, uv0);
-
-	if (u_showWeights > 0.0)
+	if(u_useRegularTiling > 0.0) 
 	{
-		gl_FragColor = vec4(weights, 1.0);
-	}
-	else
+		gl_FragColor = vec4(texture2D(s_trx_d, v_texcoord0.xy));
+	} 
+	else 
 	{
-		gl_FragColor = vec4(color, 1.0);
+		// actual world space position
+		vec3 surfPosInWorld = v_position.xyz;
+
+		vec3 sp = GetTileRate() * surfPosInWorld;
+
+		vec2 uv0 = vec2(sp.x, sp.z);
+
+		vec3 color, weights;
+		FetchColorAndWeight(color, weights, uv0);
+		
+		if (u_showWeights > 0.0)
+		{
+			gl_FragColor = vec4(weights, 1.0);
+		}
+		else
+		{
+			gl_FragColor = vec4(color, 1.0);
+		}
 	}
+
+	
 }

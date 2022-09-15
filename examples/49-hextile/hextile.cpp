@@ -54,9 +54,10 @@ namespace
 
 	struct HextileData
 	{
-		bool    m_showWeights = 0;
+		bool    m_showWeights = false;
 		int		m_tileRate = 5;
 		float	m_tileRotationStrength = 0.0f;
+		bool	m_useRegularTiling = false;
 		bool	m_pauseAnimation;
 	};
 
@@ -125,7 +126,7 @@ namespace
 			m_hextileProgram = loadProgram("vs_hextile", "fs_hextile");
 
 			// load texture to hextile
-			m_tileTexture = loadTexture("textures/nature_pebbles_4k.png");
+			m_tileTexture = loadTexture("textures/aerial_rocks_04_diff_2k.jpg");
 
 			// Imgui.
 			imguiCreate();
@@ -222,6 +223,7 @@ namespace
 
 				ImGui::Separator();
 
+				ImGui::Checkbox("Use Regular Tiling", &m_hexTileData.m_useRegularTiling);
 				ImGui::Checkbox("Show Weights", &m_hexTileData.m_showWeights);
 				ImGui::Checkbox("Pause Animation", &m_hexTileData.m_pauseAnimation);
 
@@ -267,7 +269,8 @@ namespace
 
 				bgfx::setTexture(0, s_tileSampler, m_tileTexture);
 
-				const float data[4] = { float(m_hexTileData.m_showWeights), float(m_hexTileData.m_tileRate), float(m_hexTileData.m_tileRotationStrength), 1.0 };
+				const float data[4] = { float(m_hexTileData.m_showWeights), float(m_hexTileData.m_tileRate),
+										float(m_hexTileData.m_tileRotationStrength), float(m_hexTileData.m_useRegularTiling) };
 				bgfx::setUniform(u_params, data);
 
 				bgfx::submit(0, m_hextileProgram);
