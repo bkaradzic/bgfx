@@ -53,7 +53,7 @@ namespace
 	struct HextileData
 	{
 		bool    m_showWeights = false;
-		int		m_tileRate = 5;
+		int		m_tileRate = 10;
 		float	m_tileRotationStrength = 0.0f;
 		bool	m_useRegularTiling = false;
 		bool	m_pauseAnimation;
