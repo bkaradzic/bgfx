@@ -173,7 +173,7 @@ void hex2colTex(out vec4 color, out vec3 weights, vec2 uv,
 	if (r != 0.5) W = Gain3(W, r);
 
 	// blend weights with color linearly 
-	// histogram preserving blending will be better but requires 
+	// histogram preserving blending will be better but requires precompution step to create histogram texture
 	color = W.x * c1 + W.y * c2 + W.z * c3;
 	weights = ProduceHexWeights(W.xyz, vertex1, vertex2, vertex3);
 }
