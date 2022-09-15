@@ -4447,7 +4447,7 @@ EXTERN_C const IID IID_ID3D12Heap;
     ID3D12Heap : public ID3D12Pageable
     {
     public:
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_HEAP_DESC STDMETHODCALLTYPE GetDesc( void) = 0;
 #else
         virtual D3D12_HEAP_DESC *STDMETHODCALLTYPE GetDesc( 
@@ -4604,7 +4604,7 @@ EXTERN_C const IID IID_ID3D12Resource;
             UINT Subresource,
             _In_opt_  const D3D12_RANGE *pWrittenRange) = 0;
         
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_RESOURCE_DESC STDMETHODCALLTYPE GetDesc( void) = 0;
 #else
         virtual D3D12_RESOURCE_DESC *STDMETHODCALLTYPE GetDesc( 
@@ -5402,21 +5402,21 @@ EXTERN_C const IID IID_ID3D12DescriptorHeap;
     ID3D12DescriptorHeap : public ID3D12Pageable
     {
     public:
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_DESCRIPTOR_HEAP_DESC STDMETHODCALLTYPE GetDesc( void) = 0;
 #else
         virtual D3D12_DESCRIPTOR_HEAP_DESC *STDMETHODCALLTYPE GetDesc( 
             D3D12_DESCRIPTOR_HEAP_DESC * RetVal) = 0;
 #endif
         
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_CPU_DESCRIPTOR_HANDLE STDMETHODCALLTYPE GetCPUDescriptorHandleForHeapStart( void) = 0;
 #else
         virtual D3D12_CPU_DESCRIPTOR_HANDLE *STDMETHODCALLTYPE GetCPUDescriptorHandleForHeapStart( 
             D3D12_CPU_DESCRIPTOR_HANDLE * RetVal) = 0;
 #endif
         
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_GPU_DESCRIPTOR_HANDLE STDMETHODCALLTYPE GetGPUDescriptorHandleForHeapStart( void) = 0;
 #else
         virtual D3D12_GPU_DESCRIPTOR_HANDLE *STDMETHODCALLTYPE GetGPUDescriptorHandleForHeapStart( 
@@ -8390,7 +8390,7 @@ EXTERN_C const IID IID_ID3D12CommandQueue;
             _Out_  UINT64 *pGpuTimestamp,
             _Out_  UINT64 *pCpuTimestamp) = 0;
         
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_COMMAND_QUEUE_DESC STDMETHODCALLTYPE GetDesc( void) = 0;
 #else
         virtual D3D12_COMMAND_QUEUE_DESC *STDMETHODCALLTYPE GetDesc( 
@@ -8754,7 +8754,7 @@ EXTERN_C const IID IID_ID3D12Device;
             _In_  D3D12_CPU_DESCRIPTOR_HANDLE SrcDescriptorRangeStart,
             _In_  D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType) = 0;
         
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_RESOURCE_ALLOCATION_INFO STDMETHODCALLTYPE GetResourceAllocationInfo( 
             _In_  UINT visibleMask,
             _In_  UINT numResourceDescs,
@@ -8767,7 +8767,7 @@ EXTERN_C const IID IID_ID3D12Device;
             _In_reads_(numResourceDescs)  const D3D12_RESOURCE_DESC *pResourceDescs) = 0;
 #endif
         
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_HEAP_PROPERTIES STDMETHODCALLTYPE GetCustomHeapProperties( 
             _In_  UINT nodeMask,
             D3D12_HEAP_TYPE heapType) = 0;
@@ -8875,7 +8875,7 @@ EXTERN_C const IID IID_ID3D12Device;
             _In_  UINT FirstSubresourceTilingToGet,
             _Out_writes_(*pNumSubresourceTilings)  D3D12_SUBRESOURCE_TILING *pSubresourceTilingsForNonPackedMips) = 0;
         
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual LUID STDMETHODCALLTYPE GetAdapterLuid( void) = 0;
 #else
         virtual LUID *STDMETHODCALLTYPE GetAdapterLuid( 
@@ -11873,7 +11873,7 @@ EXTERN_C const IID IID_ID3D12ProtectedResourceSession;
     ID3D12ProtectedResourceSession : public ID3D12ProtectedSession
     {
     public:
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_PROTECTED_RESOURCE_SESSION_DESC STDMETHODCALLTYPE GetDesc( void) = 0;
 #else
         virtual D3D12_PROTECTED_RESOURCE_SESSION_DESC *STDMETHODCALLTYPE GetDesc( 
@@ -12073,7 +12073,7 @@ EXTERN_C const IID IID_ID3D12Device4;
             REFIID riid,
             _COM_Outptr_opt_  void **ppvResource) = 0;
         
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_RESOURCE_ALLOCATION_INFO STDMETHODCALLTYPE GetResourceAllocationInfo1( 
             UINT visibleMask,
             UINT numResourceDescs,
@@ -12896,7 +12896,7 @@ EXTERN_C const IID IID_ID3D12SwapChainAssistant;
     ID3D12SwapChainAssistant : public IUnknown
     {
     public:
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual LUID STDMETHODCALLTYPE GetLUID( void) = 0;
 #else
         virtual LUID *STDMETHODCALLTYPE GetLUID( 
@@ -16507,7 +16507,7 @@ EXTERN_C const IID IID_ID3D12ProtectedResourceSession1;
     ID3D12ProtectedResourceSession1 : public ID3D12ProtectedResourceSession
     {
     public:
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_PROTECTED_RESOURCE_SESSION_DESC1 STDMETHODCALLTYPE GetDesc1( void) = 0;
 #else
         virtual D3D12_PROTECTED_RESOURCE_SESSION_DESC1 *STDMETHODCALLTYPE GetDesc1( 
@@ -17526,7 +17526,7 @@ EXTERN_C const IID IID_ID3D12Device8;
     ID3D12Device8 : public ID3D12Device7
     {
     public:
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_RESOURCE_ALLOCATION_INFO STDMETHODCALLTYPE GetResourceAllocationInfo2( 
             UINT visibleMask,
             UINT numResourceDescs,
@@ -18695,7 +18695,7 @@ EXTERN_C const IID IID_ID3D12Resource2;
     ID3D12Resource2 : public ID3D12Resource1
     {
     public:
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_RESOURCE_DESC1 STDMETHODCALLTYPE GetDesc1( void) = 0;
 #else
         virtual D3D12_RESOURCE_DESC1 *STDMETHODCALLTYPE GetDesc1( 
@@ -21132,7 +21132,7 @@ EXTERN_C const IID IID_ID3D12ShaderCacheSession;
         
         virtual void STDMETHODCALLTYPE SetDeleteOnDestroy( void) = 0;
         
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_SHADER_CACHE_SESSION_DESC STDMETHODCALLTYPE GetDesc( void) = 0;
 #else
         virtual D3D12_SHADER_CACHE_SESSION_DESC *STDMETHODCALLTYPE GetDesc( 
@@ -25044,7 +25044,7 @@ EXTERN_C const IID IID_ID3D12DeviceConfiguration;
     ID3D12DeviceConfiguration : public IUnknown
     {
     public:
-#if defined(_MSC_VER) || !defined(_WIN32)
+#if defined(_MSC_VER)
         virtual D3D12_DEVICE_CONFIGURATION_DESC STDMETHODCALLTYPE GetDesc( void) = 0;
 #else
         virtual D3D12_DEVICE_CONFIGURATION_DESC *STDMETHODCALLTYPE GetDesc( 
