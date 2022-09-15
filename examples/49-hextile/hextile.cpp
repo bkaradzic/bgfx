@@ -124,7 +124,7 @@ namespace
 			m_hextileProgram = loadProgram("vs_hextile", "fs_hextile");
 
 			// load texture to hextile
-			m_tileTexture = loadTexture("textures/aerial_rocks_04_diff_2k.jpg");
+			m_tileTexture = loadTexture("textures/aerial_rocks_04_diff_2k.ktx");
 
 			// Imgui.
 			imguiCreate();
