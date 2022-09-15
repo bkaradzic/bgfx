@@ -63,21 +63,10 @@ namespace
 	public:
 		ExampleHextile(const char* _name, const char* _description, const char* _url)
 			: entry::AppI(_name, _description, _url)
-			, m_debug(BGFX_DEBUG_NONE)
-			, m_height(0)
 			, m_width(0)
-			, m_hexTileData()
-			, m_hextileProgram()
-			, m_ibh()
-			, m_modelTransform()
-			, m_projMtx()
+			, m_height(0)
+			, m_debug(BGFX_DEBUG_NONE)
 			, m_reset()
-			, m_tileTexture()
-			, m_timeOffset()
-			, m_vbh()
-			, m_viewMtx()
-			, s_tileSampler()
-			, u_params()
 		{
 		}
 
