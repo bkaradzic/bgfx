@@ -2692,9 +2692,10 @@ namespace bgfx
 				}
 				else if (BX_ENABLED(BX_PLATFORM_LINUX) )
 				{
-					score += RendererType::Vulkan   == renderer ? 30 : 0;
-					score += RendererType::OpenGL   == renderer ? 20 : 0;
-					score += RendererType::OpenGLES == renderer ? 10 : 0;
+					score += RendererType::Vulkan     == renderer ? 30 : 0;
+					score += RendererType::OpenGL     == renderer ? 20 : 0;
+					score += RendererType::OpenGLES   == renderer ? 10 : 0;
+					score += RendererType::Direct3D12 == renderer ?  5 : 0;
 				}
 				else if (BX_ENABLED(BX_PLATFORM_OSX) )
 				{

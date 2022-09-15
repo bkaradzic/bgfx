@@ -8,8 +8,13 @@
 
 #define USE_D3D12_DYNAMIC_LIB (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
 
-#include <sal.h>
-#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT || BX_PLATFORM_LINUX
+#if BX_PLATFORM_LINUX
+#	include <unknwn.h>
+#else
+#	include <sal.h>
+#endif // BX_PLATFORM_LINUX
+
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 #   include <d3d12.h>
 #else
 #   if !BGFX_CONFIG_DEBUG
@@ -45,7 +50,7 @@ extern "C++" {
 #include "nvapi.h"
 #include "dxgi.h"
 
-#if BGFX_CONFIG_DEBUG_ANNOTATION
+#if BGFX_CONFIG_DEBUG_ANNOTATION && !BX_PLATFORM_LINUX
 #	if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 typedef struct PIXEventsThreadInfo* (WINAPI* PFN_PIX_GET_THREAD_INFO)();
 typedef uint64_t                    (WINAPI* PFN_PIX_EVENTS_REPLACE_BLOCK)(bool _getEarliestTime);
