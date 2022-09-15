@@ -6,8 +6,11 @@
 #ifndef BGFX_DXGI_H_HEADER_GUARD
 #define BGFX_DXGI_H_HEADER_GUARD
 
+#if BX_PLATFORM_LINUX
+#	include <unknwn.h>
 typedef void* HMODULE;
 #define _Out_writes_bytes_to_(s,c)
+#endif // BX_PLATFORM_LINUX
 
 #if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 #	include <d3dcommon.h>
