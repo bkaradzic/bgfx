@@ -12,7 +12,7 @@ void main()
 {
 	vec3 vp = mul(u_model[0], vec4(a_position.xyz, 1.0)).xyz;
 	v_position = vp;
-	v_texcoord0 = a_texcoord0;
+	v_texcoord0 = mul(u_model[0], vec4(a_texcoord0.xy, 1.0, 1.0)).xy;
 
 	gl_Position = mul(u_viewProj, vec4(vp.xyz, 1.0));
 }

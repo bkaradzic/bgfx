@@ -240,7 +240,7 @@ namespace
 				{
 					m_eye.z = bx::abs(m_eye.z) + (deltaTime / 4.0f);
 
-					if (m_eye.z < 4.0f)
+					if (m_eye.z < 10.0f)
 					{
 						m_eye.z *= -1;
 					}
@@ -273,6 +273,14 @@ namespace
 				const float data[4] = { float(m_hexTileData.m_showWeights), float(m_hexTileData.m_tileRate),
 										float(m_hexTileData.m_tileRotationStrength), float(m_hexTileData.m_useRegularTiling) };
 				bgfx::setUniform(u_params, data);
+
+				bgfx::setState(0
+					| BGFX_STATE_WRITE_RGB
+					| BGFX_STATE_WRITE_A
+					| BGFX_STATE_WRITE_Z
+					| BGFX_STATE_DEPTH_TEST_LESS
+					| BGFX_STATE_MSAA
+				);
 
 				bgfx::submit(0, m_hextileProgram);
 
