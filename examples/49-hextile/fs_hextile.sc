@@ -33,6 +33,8 @@ uniform vec4 u_params;
 #define moduleOper(a, b) a - (float(b) * floor(a/float(b)))
 
 #define u_showWeights u_params.x
+#define u_tileRate u_params.y
+#define u_tileRotStrength u_params.z
 
 vec3 Gain3(vec3 x, float r)
 {
@@ -181,13 +183,12 @@ void hex2colTex(out vec4 color, out vec3 weights, vec2 uv,
 
 float GetTileRate()
 {
-	return 0.05 * 5.0; // 5.0 is tile rate
-}
+	return 0.05 * u_tileRate;
 
 void FetchColorAndWeight(out vec3 color, out vec3 weights, vec2 uv)
 {
 	vec4 col4;
-	hex2colTex(col4, weights, uv, 0.0, 0.7);
+	hex2colTex(col4, weights, uv, u_tileRotStrength, 0.7);
 	color = col4.xyz;
 }
 

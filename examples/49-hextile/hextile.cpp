@@ -54,7 +54,9 @@ namespace
 
 	struct HextileData
 	{
-		bool    m_showWeights;
+		bool    m_showWeights = 0;
+		int		m_tileRate = 5;
+		float	m_tileRotationStrength = 0.0f;
 		bool	m_pauseAnimation;
 	};
 
@@ -164,6 +166,11 @@ namespace
 				bgfx::destroy(s_tileSampler);
 			}
 
+			if (bgfx::isValid(u_params))
+			{
+				bgfx::destroy(u_params);
+			}
+
 			bgfx::destroy(m_hextileProgram);
 
 			/// When data is passed to bgfx via makeRef we need to make
@@ -201,11 +208,11 @@ namespace
 				showExampleDialog(this);
 
 				ImGui::SetNextWindowPos(
-					ImVec2(m_width - m_width / 7.0f - 10.0f, 10.0f)
+					ImVec2(m_width - m_width / 4.5f - 5.0f, 10.0f)
 					, ImGuiCond_FirstUseEver
 				);
 				ImGui::SetNextWindowSize(
-					ImVec2(m_width / 7.0f, m_height / 7.0f)
+					ImVec2(m_width / 4.5f, m_height / 4.0f)
 					, ImGuiCond_FirstUseEver
 				);
 				ImGui::Begin("Settings"
@@ -217,6 +224,12 @@ namespace
 
 				ImGui::Checkbox("Show Weights", &m_hexTileData.m_showWeights);
 				ImGui::Checkbox("Pause Animation", &m_hexTileData.m_pauseAnimation);
+
+				ImGui::SliderInt("Tile Rate", &m_hexTileData.m_tileRate, 2, 25);
+
+				ImGui::SliderFloat("Tile Rotation", &m_hexTileData.m_tileRotationStrength, 0.0f, 20.0f);
+
+				ImGui::Separator();
 
 				ImGui::End();
 				imguiEndFrame();
@@ -254,7 +267,7 @@ namespace
 
 				bgfx::setTexture(0, s_tileSampler, m_tileTexture);
 
-				const float data[4] = { float(m_hexTileData.m_showWeights) };
+				const float data[4] = { float(m_hexTileData.m_showWeights), float(m_hexTileData.m_tileRate), float(m_hexTileData.m_tileRotationStrength), 1.0 };
 				bgfx::setUniform(u_params, data);
 
 				bgfx::submit(0, m_hextileProgram);
