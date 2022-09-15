@@ -3,8 +3,6 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include <cstdlib>
-
 #include <bx/allocator.h>
 #include <bx/debug.h>
 #include <bx/math.h>
@@ -40,9 +38,9 @@ namespace
 	static PosTextCoord0Vertex s_screenSpaceQuadVertices[] =
 	{
 		{-1.0f, 0.0f, -1.0f, 0.0, 0.0 },
-		{-1.0f, 0.0f, 1.0f, 0.0, 1.0  },
-		{ 1.0f, 0.0f, -1.0f, 1.0, 0.0  },
-		{ 1.0f, 0.0f, 1.0f, 1.0, 1.0  },
+		{-1.0f, 0.0f,  1.0f, 0.0, 1.0 },
+		{ 1.0f, 0.0f, -1.0f, 1.0, 0.0 },
+		{ 1.0f, 0.0f,  1.0f, 1.0, 1.0 },
 	};
 
 	static const uint16_t s_screenSpaceQuadIndices[] =
@@ -134,10 +132,6 @@ namespace
 			m_timeOffset = bx::getHPCounter();
 
 			s_tileSampler = bgfx::createUniform("s_trx_d", bgfx::UniformType::Sampler);
-
-			bx::mtxSRT(m_modelTransform, 30, 30, 30, 0.0, 0.0, 0.0f, 0.0f, 0.0f, 0.0f);
-
-			bx::mtxProj(m_projMtx, 30.0f, float(m_width) / float(m_height), 0.1f, 1000.0f, bgfx::getCaps()->homogeneousDepth);
 
 			u_params = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, 3);
 		}
@@ -244,7 +238,7 @@ namespace
 
 				if (!m_hexTileData.m_pauseAnimation)
 				{
-					m_eye.z = std::abs(m_eye.z) + (deltaTime / 4.0f);
+					m_eye.z = bx::abs(m_eye.z) + (deltaTime / 4.0f);
 
 					if (m_eye.z < 4.0f)
 					{
@@ -256,13 +250,20 @@ namespace
 					}
 				}
 
-				bx::mtxLookAt(m_viewMtx, m_eye, at);
+				float viewMtx[16];
+				bx::mtxLookAt(viewMtx, m_eye, at);
+
+				float projMtx[16];
+				bx::mtxProj(projMtx, 30.0f, float(m_width) / float(m_height), 0.1f, 1000.0f, bgfx::getCaps()->homogeneousDepth);
+
+				bgfx::setViewTransform(0, viewMtx, projMtx);
 
 				// Set view 0 default viewport.
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height));
 
-				bgfx::setViewTransform(0, m_viewMtx, m_projMtx);
-				bgfx::setTransform(m_modelTransform);
+				float modelTransform[16];
+				bx::mtxSRT(modelTransform, 30.0f, 30.0f, 30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+				bgfx::setTransform(modelTransform);
 
 				bgfx::setVertexBuffer(0, m_vbh);
 				bgfx::setIndexBuffer(m_ibh);
@@ -288,16 +289,9 @@ namespace
 		bgfx::VertexBufferHandle m_vbh;
 		bgfx::IndexBufferHandle m_ibh;
 
-
 		bgfx::ProgramHandle m_hextileProgram;
 		bgfx::UniformHandle s_tileSampler;
 		bgfx::TextureHandle m_tileTexture;
-
-
-		float m_modelTransform[16];
-
-		float m_viewMtx[16];
-		float m_projMtx[16];
 
 		uint32_t m_width;
 		uint32_t m_height;
