@@ -123,7 +123,7 @@ namespace
 			m_hextileProgram = loadProgram("vs_hextile", "fs_hextile");
 
 			// load texture to hextile
-			m_tileTexture = loadTexture("textures/Nature_Pebbles_4K.png");
+			m_tileTexture = loadTexture("textures/nature_pebbles_4k.png");
 
 			// Imgui.
 			imguiCreate();
