@@ -18,7 +18,10 @@ BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunknown-pragmas" );
 BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wpragmas");
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4005) // warning C4005: '' : macro redefinition
+
 #include <sal.h>
+#include <unknwn.h>
+
 #define D3D11_NO_HELPERS
 #if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
 #   include <d3d11_3.h>

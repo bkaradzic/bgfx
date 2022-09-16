@@ -811,11 +811,19 @@ namespace bgfx { namespace d3d11
 			m_nvapi.init();
 
 #if USE_D3D11_DYNAMIC_LIB
-			m_d3d11Dll = bx::dlopen("d3d11.dll");
+			const char* d3d11DllName =
+#if BX_PLATFORM_LINUX
+				"d3d11.so"
+#else
+				"d3d11.dll"
+#endif // BX_PLATFORM_LINUX
+				;
+
+			m_d3d11Dll = bx::dlopen(d3d11DllName);
 
 			if (NULL == m_d3d11Dll)
 			{
-				BX_TRACE("Init error: Failed to load d3d11.dll.");
+				BX_TRACE("Init error: Failed to load %s.", d3d11DllName);
 				goto error;
 			}
 
@@ -1004,11 +1012,11 @@ namespace bgfx { namespace d3d11
 					HRESULT hr = S_OK;
 
 					m_swapEffect =
-#if BX_PLATFORM_WINDOWS
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
 						DXGI_SWAP_EFFECT_FLIP_DISCARD
 #else
 						DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
-#endif // !BX_PLATFORM_WINDOWS
+#endif // BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
 						;
 
 					m_swapBufferCount = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
@@ -1040,7 +1048,10 @@ namespace bgfx { namespace d3d11
 						;
 					m_scd.swapEffect = m_swapEffect;
 
-					m_scd.alphaMode = (_init.resolution.reset & BGFX_RESET_TRANSPARENT_BACKBUFFER) ? DXGI_ALPHA_MODE_PREMULTIPLIED : DXGI_ALPHA_MODE_IGNORE;
+					m_scd.alphaMode = (_init.resolution.reset & BGFX_RESET_TRANSPARENT_BACKBUFFER)
+						? DXGI_ALPHA_MODE_PREMULTIPLIED
+						: DXGI_ALPHA_MODE_IGNORE
+						;
 
 					m_scd.flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
@@ -1345,7 +1356,7 @@ namespace bgfx { namespace d3d11
 
 					if (DXGI_FORMAT_UNKNOWN != fmt)
 					{
-						if (BX_ENABLED(BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
+						if (BX_ENABLED(BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
 						{
 							D3D11_FEATURE_DATA_FORMAT_SUPPORT data;
 							data.InFormat = fmt;
@@ -1474,7 +1485,7 @@ namespace bgfx { namespace d3d11
 
 					if (DXGI_FORMAT_UNKNOWN != fmtSrgb)
 					{
-						if (BX_ENABLED(BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
+						if (BX_ENABLED(BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
 						{
 							struct D3D11_FEATURE_DATA_FORMAT_SUPPORT
 							{
