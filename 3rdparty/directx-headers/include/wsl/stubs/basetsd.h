@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <limits.h>
+#include <sal.h>
 
 // Note: using fixed-width here to match Windows widths
 // Specifically this is different for 'long' vs 'LONG'
@@ -30,7 +31,9 @@ typedef size_t SIZE_T;
 typedef float FLOAT;
 typedef double DOUBLE;
 typedef unsigned char BYTE;
-typedef int HWND;
+typedef HANDLE HWND;
+typedef HANDLE HMODULE;
+typedef size_t SIZE;
 typedef int PALETTEENTRY;
 typedef int HDC;
 typedef uint16_t WORD;
@@ -147,68 +150,6 @@ inline bool operator!=(REFGUID guidOne, REFGUID guidOther)
 #define REFIID const IID *
 #define REFCLSID const IID *
 #endif
-
-// SAL annotations
-#define _In_
-#define _In_z_
-#define _In_opt_
-#define _In_opt_z_
-#define _In_reads_(x)
-#define _In_reads_opt_(x)
-#define _In_reads_bytes_(x)
-#define _In_reads_bytes_opt_(x)
-#define _In_range_(x, y)
-#define _In_bytecount_(x)
-#define _Out_
-#define _Out_opt_
-#define _Outptr_
-#define _Outptr_opt_result_z_
-#define _Outptr_opt_result_bytebuffer_(x)
-#define _COM_Outptr_
-#define _COM_Outptr_result_maybenull_
-#define _COM_Outptr_opt_
-#define _COM_Outptr_opt_result_maybenull_
-#define _Out_writes_(x)
-#define _Out_writes_z_(x)
-#define _Out_writes_opt_(x)
-#define _Out_writes_all_(x)
-#define _Out_writes_all_opt_(x)
-#define _Out_writes_to_opt_(x, y)
-#define _Out_writes_bytes_(x)
-#define _Out_writes_bytes_all_(x)
-#define _Out_writes_bytes_all_opt_(x)
-#define _Out_writes_bytes_opt_(x)
-#define _Inout_
-#define _Inout_opt_
-#define _Inout_updates_(x)
-#define _Inout_updates_bytes_(x)
-#define _Field_size_(x)
-#define _Field_size_opt_(x)
-#define _Field_size_bytes_(x)
-#define _Field_size_full_(x)
-#define _Field_size_full_opt_(x)
-#define _Field_size_bytes_full_(x)
-#define _Field_size_bytes_full_opt_(x)
-#define _Field_size_bytes_part_(x, y)
-#define _Field_range_(x, y)
-#define _Field_z_
-#define _Check_return_
-#define _IRQL_requires_(x)
-#define _IRQL_requires_min_(x)
-#define _IRQL_requires_max_(x)
-#define _At_(x, y)
-#define _Always_(x)
-#define _Return_type_success_(x)
-#define _Translates_Win32_to_HRESULT_(x)
-#define _Maybenull_
-#define _Outptr_result_maybenull_
-#define _Outptr_result_nullonfailure_
-#define _Analysis_assume_(x)
-#define _Success_(x)
-#define _In_count_(x)
-#define _In_opt_count_(x)
-#define _Use_decl_annotations_
-#define _Null_terminated_
 
 // Calling conventions
 #define __cdecl
