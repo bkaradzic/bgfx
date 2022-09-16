@@ -592,6 +592,7 @@ or _OPTIONS["with-combined-examples"] then
 		, "46-fsr"
 		, "47-pixelformats"
 		, "48-drawindirect"
+		, "49-hextile"		
 		)
 
 	-- 17-drawstress requires multithreading, does not compile for singlethreaded wasm

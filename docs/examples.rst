@@ -689,3 +689,18 @@ Reference(s):
 
 .. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/48-drawindirect/screenshot.png
    :alt: example-48-drawindirect
+   
+
+`49-hextile  <https://github.com/bkaradzic/bgfx/tree/master/examples/49-hextile>`__
+---------------------------------------------------------------------------------------------
+
+Realtime Hex-Tiling
+
+Simple example of how to use Hex-tiling in real time, ported from https://github.com/mmikk/hextile-demo
+
+Reference(s):
+ - `Hex-Tiling demo <https://github.com/mmikk/hextile-demo>`__.
+ - `Paper explaining concepts - <https://github.com/mmikk/mmikk.github.io/blob/master/papers3d/mm_hex_compressed.pdf>`__.
+
+.. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/49-hextile/screenshot.png
+   :alt: example-49-hextile
