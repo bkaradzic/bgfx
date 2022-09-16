@@ -284,6 +284,7 @@ Chronological order:
  - Sandy Carter (`@bwrsandman <https://github.com/bwrsandman>`__) - `47-pixelformats
    <examples.html#pixelformats>`__ example, and various fixes and improvements.
  - Liam Twigger (`@SnapperTT <https://github.com/SnapperTT>`__) - `48-drawindirect <examples.html#drawindirect>`__ example.
+ - Preetish Kakkar (`@blackhole <https://github.com/preetishkakkar>`__) - `49-hextile <examples.html#49-hextile>`__ example.
 
 and `others <https://github.com/bkaradzic/bgfx/graphs/contributors>`__...
 
