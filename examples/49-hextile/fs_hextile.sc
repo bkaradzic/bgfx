@@ -196,19 +196,19 @@ void FetchColorAndWeight(out vec3 color, out vec3 weights, vec2 uv)
 
 void main()
 {
+	// actual world space position
+	vec3 surfPosInWorld = v_position.xyz;
+
+	vec3 sp = GetTileRate() * surfPosInWorld;
+
+	vec2 uv0 = vec2(sp.x, sp.z);
+		
 	if(u_useRegularTiling > 0.0) 
 	{
-		gl_FragColor = vec4(texture2D(s_trx_d, v_texcoord0.xy));
+		gl_FragColor = vec4(texture2D(s_trx_d, uv0.xy));
 	} 
 	else 
 	{
-		// actual world space position
-		vec3 surfPosInWorld = v_position.xyz;
-
-		vec3 sp = GetTileRate() * surfPosInWorld;
-
-		vec2 uv0 = vec2(sp.x, sp.z);
-
 		vec3 color, weights;
 		FetchColorAndWeight(color, weights, uv0);
 		
