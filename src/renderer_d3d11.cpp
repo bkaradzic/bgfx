@@ -1356,7 +1356,7 @@ namespace bgfx { namespace d3d11
 
 					if (DXGI_FORMAT_UNKNOWN != fmt)
 					{
-						if (BX_ENABLED(BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
+						if (BX_ENABLED(BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
 						{
 							D3D11_FEATURE_DATA_FORMAT_SUPPORT data;
 							data.InFormat = fmt;
@@ -1485,7 +1485,7 @@ namespace bgfx { namespace d3d11
 
 					if (DXGI_FORMAT_UNKNOWN != fmtSrgb)
 					{
-						if (BX_ENABLED(BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
+						if (BX_ENABLED(BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT) )
 						{
 							struct D3D11_FEATURE_DATA_FORMAT_SUPPORT
 							{
