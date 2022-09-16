@@ -148,7 +148,6 @@ namespace bgfx
 #	if BX_PLATFORM_WINDOWS
 		m_dxgiDebugDll = bx::dlopen("dxgidebug.dll");
 
-
 		if (NULL != m_dxgiDebugDll)
 		{
 			DXGIGetDebugInterface  = (PFN_GET_DEBUG_INTERFACE )bx::dlsym(m_dxgiDebugDll, "DXGIGetDebugInterface");
