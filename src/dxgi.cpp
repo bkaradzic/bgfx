@@ -128,15 +128,27 @@ namespace bgfx
 
 	bool Dxgi::init(Caps& _caps)
 	{
-#if BX_PLATFORM_WINDOWS
-		m_dxgiDll = bx::dlopen("dxgi.dll");
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
+
+		const char* dxgiDllName =
+#if BX_PLATFORM_LINUX
+				"dxgi.so"
+#else
+				"dxgi.dll"
+#endif // BX_PLATFORM_LINUX
+				;
+		m_dxgiDll = bx::dlopen(dxgiDllName);
+
 		if (NULL == m_dxgiDll)
 		{
-			BX_TRACE("Init error: Failed to load dxgi.dll.");
+			BX_TRACE("Init error: Failed to load %s.", dxgiDllName);
 			return false;
 		}
 
+#	if BX_PLATFORM_WINDOWS
 		m_dxgiDebugDll = bx::dlopen("dxgidebug.dll");
+
+
 		if (NULL != m_dxgiDebugDll)
 		{
 			DXGIGetDebugInterface  = (PFN_GET_DEBUG_INTERFACE )bx::dlsym(m_dxgiDebugDll, "DXGIGetDebugInterface");
@@ -161,6 +173,7 @@ namespace bgfx
 			BX_TRACE("Init error: Function CreateDXGIFactory not found.");
 			return false;
 		}
+#	endif // BX_PLATFORM_WINDOWS
 #endif // BX_PLATFORM_WINDOWS
 
 		HRESULT hr = S_OK;
@@ -273,7 +286,7 @@ namespace bgfx
 						BX_TRACE("\t\t    AttachedToDesktop: %d", outputDesc.AttachedToDesktop);
 						BX_TRACE("\t\t             Rotation: %d", outputDesc.Rotation);
 
-#if BX_PLATFORM_WINDOWS
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
 						IDXGIOutput6* output6;
 						hr = output->QueryInterface(IID_IDXGIOutput6, (void**)&output6);
 						if (SUCCEEDED(hr) )
@@ -381,7 +394,7 @@ namespace bgfx
 
 		uint32_t scdFlags = _scd.flags;
 
-#if BX_PLATFORM_WINDOWS
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
 		IDXGIFactory5* factory5;
 		hr = m_factory->QueryInterface(IID_IDXGIFactory5, (void**)&factory5);
 
@@ -733,7 +746,7 @@ namespace bgfx
 
 		uint32_t scdFlags = _scd.flags;
 
-#if BX_PLATFORM_WINDOWS
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
 		IDXGIFactory5* factory5;
 		hr = m_factory->QueryInterface(IID_IDXGIFactory5, (void**)&factory5);
 

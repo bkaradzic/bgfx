@@ -541,10 +541,6 @@ namespace bgfx { namespace d3d12
 		return createCommittedResource(_device, _heapProperty, &resourceDesc, NULL);
 	}
 
-#ifndef DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
-#	define DXGI_ERROR_NOT_CURRENTLY_AVAILABLE HRESULT(0x887A0022)
-#endif // DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
-
 	inline bool isLost(HRESULT _hr)
 	{
 		return false

@@ -8,11 +8,8 @@
 
 #define USE_D3D12_DYNAMIC_LIB (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
 
-#if BX_PLATFORM_LINUX
-#	include <unknwn.h>
-#else
-#	include <sal.h>
-#endif // BX_PLATFORM_LINUX
+#include <sal.h>
+#include <unknwn.h>
 
 #if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 #   include <d3d12.h>
