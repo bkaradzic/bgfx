@@ -1153,6 +1153,11 @@ public static class bgfx
 		ViewportLayerArray     = 0x0000000010000000,
 	
 		/// <summary>
+		/// Draw indirect with indirect count is supported.
+		/// </summary>
+		DrawIndirectCount      = 0x0000000020000000,
+	
+		/// <summary>
 		/// All texture compare modes are supported.
 		/// </summary>
 		TextureCompareAll      = 0x0000000000300000,
@@ -3901,18 +3906,38 @@ public static class bgfx
 	/// <summary>
 	/// Submit primitive for rendering with index and instance data info from
 	/// indirect buffer.
+	/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
 	/// <param name="_program">Program.</param>
 	/// <param name="_indirectHandle">Indirect buffer.</param>
 	/// <param name="_start">First element in indirect buffer.</param>
-	/// <param name="_num">Number of dispatches.</param>
+	/// <param name="_num">Number of draws.</param>
 	/// <param name="_depth">Depth for sorting.</param>
 	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_encoder_submit_indirect")]
 	public static extern void encoder_submit_indirect(Encoder* _this, ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint32 _depth, uint8 _flags);
+	
+	/// <summary>
+	/// Submit primitive for rendering with index and instance data info and
+	/// draw count from indirect buffers.
+	/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+	/// </summary>
+	///
+	/// <param name="_id">View id.</param>
+	/// <param name="_program">Program.</param>
+	/// <param name="_indirectHandle">Indirect buffer.</param>
+	/// <param name="_start">First element in indirect buffer.</param>
+	/// <param name="_numHandle">Buffer for number of draws. Must be   created with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.</param>
+	/// <param name="_numIndex">Element in number buffer.</param>
+	/// <param name="_numMax">Max number of draws.</param>
+	/// <param name="_depth">Depth for sorting.</param>
+	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
+	///
+	[LinkName("bgfx_encoder_submit_indirect_count")]
+	public static extern void encoder_submit_indirect_count(Encoder* _this, ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, IndexBufferHandle _numHandle, uint32 _numIndex, uint16 _numMax, uint32 _depth, uint8 _flags);
 	
 	/// <summary>
 	/// Set compute index buffer.
@@ -4457,18 +4482,38 @@ public static class bgfx
 	/// <summary>
 	/// Submit primitive for rendering with index and instance data info from
 	/// indirect buffer.
+	/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
 	/// <param name="_program">Program.</param>
 	/// <param name="_indirectHandle">Indirect buffer.</param>
 	/// <param name="_start">First element in indirect buffer.</param>
-	/// <param name="_num">Number of dispatches.</param>
+	/// <param name="_num">Number of draws.</param>
 	/// <param name="_depth">Depth for sorting.</param>
 	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_submit_indirect")]
 	public static extern void submit_indirect(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint32 _depth, uint8 _flags);
+	
+	/// <summary>
+	/// Submit primitive for rendering with index and instance data info and
+	/// draw count from indirect buffers.
+	/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+	/// </summary>
+	///
+	/// <param name="_id">View id.</param>
+	/// <param name="_program">Program.</param>
+	/// <param name="_indirectHandle">Indirect buffer.</param>
+	/// <param name="_start">First element in indirect buffer.</param>
+	/// <param name="_numHandle">Buffer for number of draws. Must be   created with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.</param>
+	/// <param name="_numIndex">Element in number buffer.</param>
+	/// <param name="_numMax">Max number of draws.</param>
+	/// <param name="_depth">Depth for sorting.</param>
+	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
+	///
+	[LinkName("bgfx_submit_indirect_count")]
+	public static extern void submit_indirect_count(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, IndexBufferHandle _numHandle, uint32 _numIndex, uint16 _numMax, uint32 _depth, uint8 _flags);
 	
 	/// <summary>
 	/// Set compute index buffer.

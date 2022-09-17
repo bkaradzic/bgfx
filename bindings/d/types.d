@@ -410,6 +410,7 @@ enum ulong BGFX_CAPS_VERTEX_ATTRIB_HALF = 0x0000000002000000; /// Vertex attribu
 enum ulong BGFX_CAPS_VERTEX_ATTRIB_UINT10 = 0x0000000004000000; /// Vertex attribute 10_10_10_2 is supported.
 enum ulong BGFX_CAPS_VERTEX_ID = 0x0000000008000000; /// Rendering with VertexID only is supported.
 enum ulong BGFX_CAPS_VIEWPORT_LAYER_ARRAY = 0x0000000010000000; /// Viewport layer is available in vertex shader.
+enum ulong BGFX_CAPS_DRAW_INDIRECT_COUNT = 0x0000000020000000; /// Draw indirect with indirect count is supported.
 enum ulong BGFX_CAPS_TEXTURE_COMPARE_ALL = 0x0000000000300000; /// All texture compare modes are supported.
 
 enum uint BGFX_CAPS_FORMAT_TEXTURE_NONE = 0x00000000; /// Texture format is not supported.
