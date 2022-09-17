@@ -749,20 +749,22 @@ namespace bgfx { namespace d3d12
 
 			m_nvapi.init();
 
-			const char* d3d12DllName =
-#if BX_PLATFORM_LINUX
-				"libd3d12.so"
-#else
-				"d3d12.dll"
-#endif // BX_PLATFORM_LINUX
-				;
-
-			m_d3d12Dll = bx::dlopen(d3d12DllName);
-
-			if (NULL == m_d3d12Dll)
 			{
-				BX_TRACE("Init error: Failed to load %s.", d3d12DllName);
-				goto error;
+				const char* d3d12DllName =
+#if BX_PLATFORM_LINUX
+					"libd3d12.so"
+#else
+					"d3d12.dll"
+#endif // BX_PLATFORM_LINUX
+					;
+
+				m_d3d12Dll = bx::dlopen(d3d12DllName);
+
+				if (NULL == m_d3d12Dll)
+				{
+					BX_TRACE("Init error: Failed to load %s.", d3d12DllName);
+					goto error;
+				}
 			}
 
 			errorState = ErrorState::LoadedD3D12;

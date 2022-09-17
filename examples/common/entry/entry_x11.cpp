@@ -332,7 +332,13 @@ namespace entry
 		int32_t run(int _argc, const char* const* _argv)
 		{
 			XInitThreads();
+
 			m_display = XOpenDisplay(NULL);
+			if (NULL == m_display)
+			{
+				bx::printf("XOpenDisplay failed: DISPLAY environment variable must be set.\n\n");
+				return bx::kExitFailure;
+			}
 
 			int32_t screen = DefaultScreen(m_display);
 			m_depth  = DefaultDepth(m_display, screen);
@@ -557,6 +563,9 @@ namespace entry
 
 			XUnmapWindow(m_display, m_window[0]);
 			XDestroyWindow(m_display, m_window[0]);
+
+			XCloseDisplay(m_display);
+			m_display = NULL;
 
 			return thread.getExitCode();
 		}
