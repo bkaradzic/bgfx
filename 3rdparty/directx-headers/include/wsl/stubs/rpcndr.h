@@ -14,6 +14,10 @@
 #define CONST_VTBL
 #endif
 
+#ifndef __cpp_inline_variables
+#define __cpp_inline_variables 0
+#endif
+
 /* Macros for __uuidof template-based emulation */
 #if defined(__cplusplus)
 #if __cpp_constexpr >= 200704l && __cpp_inline_variables >= 201606L

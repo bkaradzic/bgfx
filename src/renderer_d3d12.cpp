@@ -3932,7 +3932,9 @@ namespace bgfx { namespace d3d12
 	bool CommandQueueD3D12::consume(uint32_t _ms)
 	{
 		CommandList& commandList = m_commandList[m_control.m_read];
-#if !BX_PLATFORM_LINUX
+#if BX_PLATFORM_LINUX
+		BX_UNUSED(commandList, _ms);
+#else
 		if (WAIT_OBJECT_0 == WaitForSingleObject(commandList.m_event, _ms) )
 		{
 			CloseHandle(commandList.m_event);
@@ -5446,7 +5448,7 @@ namespace bgfx { namespace d3d12
 
 	void FrameBufferD3D12::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)
 	{
-		BX_UNUSED(_nwh, _width, _height, _depthFormat);
+		BX_UNUSED(_nwh, _width, _height, _format, _depthFormat);
 
 #if BX_PLATFORM_WINDOWS
 		SwapChainDesc scd;

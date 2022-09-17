@@ -206,7 +206,7 @@ typedef struct DXGI_ADAPTER_DESC
     LUID AdapterLuid;
     } 	DXGI_ADAPTER_DESC;
 
-#if !defined(HMONITOR_DECLARED) && !defined(HMONITOR) && (WINVER < 0x0500)
+#if !defined(HMONITOR_DECLARED) && !defined(HMONITOR) && (!defined(WINVER) || WINVER < 0x0500)
 #define HMONITOR_DECLARED
 #if 0
 typedef HANDLE HMONITOR;
