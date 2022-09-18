@@ -42,7 +42,7 @@ struct ObjectInstance {
 	float m_vertexCount;
 	float m_indexOffset;
 	float m_indexCount;
-	
+
 	static void init()
 	{
 		ms_layout
@@ -50,7 +50,7 @@ struct ObjectInstance {
 			.add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float)
 			.end();
 	};
-	
+
 	static bgfx::VertexLayout ms_layout;
 	};
 
@@ -59,7 +59,7 @@ bgfx::VertexLayout ObjectInstance::ms_layout;
 struct RenderInstance {
 	float m_mtx[16];
 	float m_color[4];
-	
+
 	static void init()
 	{
 		ms_layout
@@ -71,10 +71,10 @@ struct RenderInstance {
 			.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Float)
 			.end();
 	};
-	
+
 	static bgfx::VertexLayout ms_layout;
 	};
-	
+
 bgfx::VertexLayout RenderInstance::ms_layout;
 
 static PosColorVertex s_multiMeshVertices[12] =
@@ -88,7 +88,7 @@ static PosColorVertex s_multiMeshVertices[12] =
 	{ 1.0f,  1.0f, -1.0f, 0xffff00ff },
 	{-1.0f, -1.0f, -1.0f, 0xffffff00 },
 	{ 1.0f, -1.0f, -1.0f, 0xffffffff },
-	
+
 	// Tetrahedron Model (offset = 8)
 	{ 1.0f,  1.0f,  1.0f, 0xff0000ff },
 	{ 1.0f, -1.0f, -1.0f, 0xff000000 },
@@ -111,7 +111,7 @@ static const uint16_t s_multiMeshIndices[48] =
 	4, 5, 1,
 	2, 3, 6, // 10
 	6, 3, 7,
-	
+
 	// Tetrahedron Indices (offset = 36)
 	0, 2, 1,
 	1, 2, 3,
@@ -137,8 +137,9 @@ public:
 		m_height = _height;
 		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
-		m_sideSize         = 11;
+		m_sideSize = 11;
 		m_nDrawElements = s_maxSideSize*s_maxSideSize;
+		m_useIndirectCount = false;
 
 		bgfx::Init init;
 		init.type     = args.m_type;
@@ -179,26 +180,40 @@ public:
 
 		// Create program from shaders.
 		m_program = loadProgram("vs_instancing", "fs_instancing"); // These are reused from 05-instancing
-		
+
 		m_indirect_program = BGFX_INVALID_HANDLE;
+		m_indirect_count_program = BGFX_INVALID_HANDLE;
 		m_indirect_buffer_handle = BGFX_INVALID_HANDLE;
+		m_indirect_count_buffer_handle = BGFX_INVALID_HANDLE;
 		m_object_list_buffer = BGFX_INVALID_HANDLE;
-		
+
 		u_drawParams = bgfx::createUniform("u_drawParams", bgfx::UniformType::Vec4);
-		
-		const bool computeSupported = !!(BGFX_CAPS_DRAW_INDIRECT & bgfx::getCaps()->supported);
+
+		const bool computeSupported = !!(BGFX_CAPS_COMPUTE & bgfx::getCaps()->supported);
+		const bool indirectSupported = !!(BGFX_CAPS_DRAW_INDIRECT & bgfx::getCaps()->supported);
 		const bool instancingSupported = !!(BGFX_CAPS_INSTANCING & bgfx::getCaps()->supported);
-		
-		if (computeSupported && instancingSupported)
+
+		if (computeSupported && indirectSupported && instancingSupported)
 		{
 			// Set up indirect program
 			// This is a barebones program that populates the indirect buffer handle with draw requests
 			m_indirect_program = bgfx::createProgram(loadShader("cs_drawindirect"), true);
 			m_indirect_buffer_handle = bgfx::createIndirectBuffer(m_nDrawElements);
-			
+
+			const bool indirectCountSupported = !!(BGFX_CAPS_DRAW_INDIRECT_COUNT & bgfx::getCaps()->supported);
+			if (indirectCountSupported)
+			{
+				m_useIndirectCount = true;
+				m_indirect_count_program = bgfx::createProgram(loadShader("cs_drawindirect_count"), true);
+
+				const bgfx::Memory * mem = bgfx::alloc(sizeof(uint32_t));
+				*(uint32_t *)mem->data = 0;
+				m_indirect_count_buffer_handle = bgfx::createIndexBuffer(mem, BGFX_BUFFER_INDEX32 | BGFX_BUFFER_COMPUTE_WRITE | BGFX_BUFFER_DRAW_INDIRECT);
+			}
+
 			const bgfx::Memory * mem = bgfx::alloc(sizeof(ObjectInstance) * m_nDrawElements);
 			ObjectInstance* objs = (ObjectInstance*) mem->data;
-			
+
 			for (uint32_t ii = 0; ii < m_nDrawElements; ++ii)
 			{
 				if (ii % 2)
@@ -218,15 +233,15 @@ public:
 					objs[ii].m_indexCount = 36;
 				}
 			}
-			
+
 			// This is a list of objects to be rendered via the indirect program
 			m_object_list_buffer = bgfx::createVertexBuffer(mem, ObjectInstance::ms_layout, BGFX_BUFFER_COMPUTE_READ);
-			
-			// This is the instance buffer used for rendering. 
+
+			// This is the instance buffer used for rendering.
 			// You could instead use a dynamic instance buffer when rendering (use bgfx::allocInstanceDataBuffer in draw loop)
 			m_instance_buffer = bgfx::createDynamicVertexBuffer(m_nDrawElements, RenderInstance::ms_layout, BGFX_BUFFER_COMPUTE_WRITE);
 		}
-			
+
 		m_timeOffset = bx::getHPCounter();
 
 		imguiCreate();
@@ -245,9 +260,17 @@ public:
 		{
 			bgfx::destroy(m_indirect_program);
 		}
+		if (bgfx::isValid(m_indirect_count_program))
+		{
+			bgfx::destroy(m_indirect_count_program);
+		}
 		if (bgfx::isValid(m_indirect_buffer_handle))
 		{
 			bgfx::destroy(m_indirect_buffer_handle);
+		}
+		if (bgfx::isValid(m_indirect_count_buffer_handle))
+		{
+			bgfx::destroy(m_indirect_count_buffer_handle);
 		}
 		if (bgfx::isValid(m_object_list_buffer))
 		{
@@ -258,7 +281,7 @@ public:
 			bgfx::destroy(m_instance_buffer);
 		}
 		bgfx::destroy(u_drawParams);
-		
+
 		// Shutdown bgfx.
 		bgfx::shutdown();
 
@@ -269,6 +292,12 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			// Get renderer capabilities info.
+			const bool computeSupported = !!(BGFX_CAPS_COMPUTE & bgfx::getCaps()->supported);
+			const bool indirectSupported = !!(BGFX_CAPS_DRAW_INDIRECT & bgfx::getCaps()->supported);
+			const bool indirectCountSupported = !!(BGFX_CAPS_DRAW_INDIRECT_COUNT & bgfx::getCaps()->supported);
+			const bool instancingSupported = !!(BGFX_CAPS_INSTANCING & bgfx::getCaps()->supported);
+
 			imguiBeginFrame(m_mouseState.m_mx
 				,  m_mouseState.m_my
 				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
@@ -300,10 +329,18 @@ public:
 			ImGui::Text("Grid Side Size:");
 			ImGui::SliderInt("##size", (int*)&m_sideSize, 1, s_maxSideSize);
 
+			ImGui::BeginDisabled(!indirectCountSupported);
+			ImGui::Checkbox("Indirect Count", &m_useIndirectCount);
+			ImGui::EndDisabled();
+			if (!indirectCountSupported && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) )
+			{
+				ImGui::SetTooltip("Indirect Count is not supported by GPU.");
+			}
+
 			ImGui::End();
-			
+
 			imguiEndFrame();
-			
+
 
 			// Set view 0 default viewport.
 			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
@@ -327,55 +364,66 @@ public:
 				// Set view 0 default viewport.
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 			}
-			
+
 			float time = (float)( (bx::getHPCounter() - m_timeOffset)/double(bx::getHPFrequency() ) );
 
-			// Get renderer capabilities info.
-			const bool computeSupported = !!(BGFX_CAPS_DRAW_INDIRECT & bgfx::getCaps()->supported);
-			const bool instancingSupported = !!(BGFX_CAPS_INSTANCING & bgfx::getCaps()->supported);
-			
-			if (computeSupported && instancingSupported)
+			if (computeSupported && indirectSupported && instancingSupported)
 			{
 				// Build indirect buffer & prepare instance buffer
 				// NOTE: IF you are rendering static data then
 				// this could be done once on startup and results stored
 				// This is done here for demonstration purposes
-				
+
 				// The model matrix for each instance is also set on compute
-				// you could modify this to, eg, do frustrum culling on the GPU		
+				// you could modify this to, eg, do frustrum culling on the GPU
 				float ud[4] = { float(m_nDrawElements), float(m_sideSize), float(time), 0 };
 				uint32_t numToDraw = (m_sideSize*m_sideSize);
-				
+
 				bgfx::setUniform(u_drawParams, ud);
-						
+
 				bgfx::setBuffer(0, m_object_list_buffer, bgfx::Access::Read);
 				bgfx::setBuffer(1, m_indirect_buffer_handle, bgfx::Access::Write);
 				bgfx::setBuffer(2, m_instance_buffer, bgfx::Access::Write);
-				
+
 				// Dispatch the call. We are using 64 local threads on the GPU to process the object list
 				// So lets dispatch ceil(numToDraw/64) workgroups of 64 local threads
-				bgfx::dispatch(0, m_indirect_program, uint32_t(numToDraw/64 + 1), 1, 1);
-				
+				if (m_useIndirectCount)
+				{
+					bgfx::setBuffer(3, m_indirect_count_buffer_handle, bgfx::Access::Write);
+					bgfx::dispatch(0, m_indirect_count_program, uint32_t(numToDraw/64 + 1), 1, 1);
+				}
+				else
+				{
+					bgfx::dispatch(0, m_indirect_program, uint32_t(numToDraw/64 + 1), 1, 1);
+				}
+
 				// Submit our 1 draw call
 				// Set vertex and index buffer.
 				bgfx::setIndexBuffer(m_ibh);
 				bgfx::setVertexBuffer(0, m_vbh);
 				bgfx::setInstanceDataBuffer(m_instance_buffer, 0, numToDraw);
-				
+
 				// Set render states.
 				bgfx::setState(BGFX_STATE_DEFAULT);
 
 				// Submit primitive for rendering to view 0.
-				// note that this submission requires the draw count
-				bgfx::submit(0, m_program, m_indirect_buffer_handle, 0, uint16_t(numToDraw));
+				if (m_useIndirectCount)
+				{
+					// With indirect count, the number of draws is read from a buffer
+					bgfx::submit(0, m_program, m_indirect_buffer_handle, 0, m_indirect_count_buffer_handle);
+				}
+				else
+				{
+					bgfx::submit(0, m_program, m_indirect_buffer_handle, 0, uint16_t(numToDraw));
+				}
 			}
 			else
 			{
-				// Compute/Instancing is not supported
+				// Compute/Indirect/Instancing is not supported
 				bool blink = uint32_t(time*3.0f)&1;
-				bgfx::dbgTextPrintf(0, 0, blink ? 0x4f : 0x04, " Compute/Instancing is not supported by GPU. ");
+				bgfx::dbgTextPrintf(0, 0, blink ? 0x4f : 0x04, " Compute/Indirect/Instancing is not supported by GPU. ");
 			}
-			
+
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
 			bgfx::frame();
@@ -394,12 +442,15 @@ public:
 	uint32_t m_reset;
 	uint32_t m_sideSize;
 	uint32_t m_nDrawElements;
+	bool m_useIndirectCount;
 
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle  m_ibh;
 	bgfx::ProgramHandle m_program;
-	bgfx::IndirectBufferHandle  m_indirect_buffer_handle;
+	bgfx::IndirectBufferHandle m_indirect_buffer_handle;
+	bgfx::IndexBufferHandle m_indirect_count_buffer_handle;
 	bgfx::ProgramHandle m_indirect_program;
+	bgfx::ProgramHandle m_indirect_count_program;
 	bgfx::VertexBufferHandle m_object_list_buffer;
 	bgfx::DynamicVertexBufferHandle m_instance_buffer;
 	bgfx::UniformHandle u_drawParams;

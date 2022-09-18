@@ -2665,17 +2665,37 @@ BGFX_C_API void bgfx_encoder_submit_occlusion_query(bgfx_encoder_t* _this, bgfx_
 /**
  * Submit primitive for rendering with index and instance data info from
  * indirect buffer.
+ * @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
  *
  * @param[in] _id View id.
  * @param[in] _program Program.
  * @param[in] _indirectHandle Indirect buffer.
  * @param[in] _start First element in indirect buffer.
- * @param[in] _num Number of dispatches.
+ * @param[in] _num Number of draws.
  * @param[in] _depth Depth for sorting.
  * @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
  *
  */
 BGFX_C_API void bgfx_encoder_submit_indirect(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, uint8_t _flags);
+
+/**
+ * Submit primitive for rendering with index and instance data info and
+ * draw count from indirect buffers.
+ * @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+ *
+ * @param[in] _id View id.
+ * @param[in] _program Program.
+ * @param[in] _indirectHandle Indirect buffer.
+ * @param[in] _start First element in indirect buffer.
+ * @param[in] _numHandle Buffer for number of draws. Must be
+ *    created with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.
+ * @param[in] _numIndex Element in number buffer.
+ * @param[in] _numMax Max number of draws.
+ * @param[in] _depth Depth for sorting.
+ * @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
+ *
+ */
+BGFX_C_API void bgfx_encoder_submit_indirect_count(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, bgfx_index_buffer_handle_t _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags);
 
 /**
  * Set compute index buffer.
@@ -3227,17 +3247,37 @@ BGFX_C_API void bgfx_submit_occlusion_query(bgfx_view_id_t _id, bgfx_program_han
 /**
  * Submit primitive for rendering with index and instance data info from
  * indirect buffer.
+ * @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
  *
  * @param[in] _id View id.
  * @param[in] _program Program.
  * @param[in] _indirectHandle Indirect buffer.
  * @param[in] _start First element in indirect buffer.
- * @param[in] _num Number of dispatches.
+ * @param[in] _num Number of draws.
  * @param[in] _depth Depth for sorting.
  * @param[in] _flags Which states to discard for next draw. See `BGFX_DISCARD_*`.
  *
  */
 BGFX_C_API void bgfx_submit_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, uint8_t _flags);
+
+/**
+ * Submit primitive for rendering with index and instance data info and
+ * draw count from indirect buffers.
+ * @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+ *
+ * @param[in] _id View id.
+ * @param[in] _program Program.
+ * @param[in] _indirectHandle Indirect buffer.
+ * @param[in] _start First element in indirect buffer.
+ * @param[in] _numHandle Buffer for number of draws. Must be
+ *    created with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.
+ * @param[in] _numIndex Element in number buffer.
+ * @param[in] _numMax Max number of draws.
+ * @param[in] _depth Depth for sorting.
+ * @param[in] _flags Which states to discard for next draw. See `BGFX_DISCARD_*`.
+ *
+ */
+BGFX_C_API void bgfx_submit_indirect_count(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, bgfx_index_buffer_handle_t _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags);
 
 /**
  * Set compute index buffer.
@@ -3503,6 +3543,7 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_ENCODER_SUBMIT,
     BGFX_FUNCTION_ID_ENCODER_SUBMIT_OCCLUSION_QUERY,
     BGFX_FUNCTION_ID_ENCODER_SUBMIT_INDIRECT,
+    BGFX_FUNCTION_ID_ENCODER_SUBMIT_INDIRECT_COUNT,
     BGFX_FUNCTION_ID_ENCODER_SET_COMPUTE_INDEX_BUFFER,
     BGFX_FUNCTION_ID_ENCODER_SET_COMPUTE_VERTEX_BUFFER,
     BGFX_FUNCTION_ID_ENCODER_SET_COMPUTE_DYNAMIC_INDEX_BUFFER,
@@ -3548,6 +3589,7 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_SUBMIT,
     BGFX_FUNCTION_ID_SUBMIT_OCCLUSION_QUERY,
     BGFX_FUNCTION_ID_SUBMIT_INDIRECT,
+    BGFX_FUNCTION_ID_SUBMIT_INDIRECT_COUNT,
     BGFX_FUNCTION_ID_SET_COMPUTE_INDEX_BUFFER,
     BGFX_FUNCTION_ID_SET_COMPUTE_VERTEX_BUFFER,
     BGFX_FUNCTION_ID_SET_COMPUTE_DYNAMIC_INDEX_BUFFER,
@@ -3703,6 +3745,7 @@ struct bgfx_interface_vtbl
     void (*encoder_submit)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _depth, uint8_t _flags);
     void (*encoder_submit_occlusion_query)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint32_t _depth, uint8_t _flags);
     void (*encoder_submit_indirect)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, uint8_t _flags);
+    void (*encoder_submit_indirect_count)(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, bgfx_index_buffer_handle_t _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags);
     void (*encoder_set_compute_index_buffer)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access);
     void (*encoder_set_compute_vertex_buffer)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access);
     void (*encoder_set_compute_dynamic_index_buffer)(bgfx_encoder_t* _this, uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access);
@@ -3748,6 +3791,7 @@ struct bgfx_interface_vtbl
     void (*submit)(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _depth, uint8_t _flags);
     void (*submit_occlusion_query)(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint32_t _depth, uint8_t _flags);
     void (*submit_indirect)(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, uint8_t _flags);
+    void (*submit_indirect_count)(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, bgfx_index_buffer_handle_t _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags);
     void (*set_compute_index_buffer)(uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access);
     void (*set_compute_vertex_buffer)(uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access);
     void (*set_compute_dynamic_index_buffer)(uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access);

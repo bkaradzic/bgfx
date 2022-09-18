@@ -329,6 +329,7 @@ VK_IMPORT_DEVICE
 			EXT_line_rasterization,
 			EXT_shader_viewport_index_layer,
 			EXT_custom_border_color,
+			KHR_draw_indirect_count,
 
 			Count
 		};
@@ -353,6 +354,7 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_line_rasterization",              1, false, false, true                                                         , Layer::Count },
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                                                         , Layer::Count },
 		{ "VK_EXT_custom_border_color",             1, false, false, true                                                         , Layer::Count },
+		{ "VK_KHR_draw_indirect_count",             1, false, false, true                                                         , Layer::Count },
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
 
@@ -1178,6 +1180,7 @@ VK_IMPORT
 
 				s_extension[Extension::EXT_shader_viewport_index_layer].m_initialize = !!(_init.capabilities & BGFX_CAPS_VIEWPORT_LAYER_ARRAY);
 				s_extension[Extension::EXT_conservative_rasterization ].m_initialize = !!(_init.capabilities & BGFX_CAPS_CONSERVATIVE_RASTER );
+				s_extension[Extension::KHR_draw_indirect_count        ].m_initialize = !!(_init.capabilities & BGFX_CAPS_DRAW_INDIRECT_COUNT );
 
 				dumpExtensions(VK_NULL_HANDLE, s_extension);
 
@@ -1570,6 +1573,7 @@ VK_IMPORT_INSTANCE
 				g_caps.supported |= 0
 					| (s_extension[Extension::EXT_conservative_rasterization ].m_supported ? BGFX_CAPS_CONSERVATIVE_RASTER  : 0)
 					| (s_extension[Extension::EXT_shader_viewport_index_layer].m_supported ? BGFX_CAPS_VIEWPORT_LAYER_ARRAY : 0)
+					| (s_extension[Extension::KHR_draw_indirect_count        ].m_supported && indirectDrawSupport ? BGFX_CAPS_DRAW_INDIRECT_COUNT : 0)
 					;
 
 				const uint32_t maxAttachments = bx::min<uint32_t>(m_deviceProperties.limits.maxFragmentOutputAttachments, m_deviceProperties.limits.maxColorAttachments);
@@ -8683,8 +8687,10 @@ VK_DESTROY
 					}
 
 					VkBuffer bufferIndirect = VK_NULL_HANDLE;
+					VkBuffer bufferNumIndirect = VK_NULL_HANDLE;
 					uint32_t numDrawIndirect = 0;
 					uint32_t bufferOffsetIndirect = 0;
+					uint32_t bufferNumOffsetIndirect = 0;
 					if (isValid(draw.m_indirectBuffer) )
 					{
 						const VertexBufferVK& vb = m_vertexBuffers[draw.m_indirectBuffer.idx];
@@ -8694,6 +8700,12 @@ VK_DESTROY
 							: draw.m_numIndirect
 							;
 						bufferOffsetIndirect = draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
+
+						if (isValid(draw.m_numIndirectBuffer) )
+						{
+							bufferNumIndirect = m_indexBuffers[draw.m_numIndirectBuffer.idx].m_buffer;
+							bufferNumOffsetIndirect = draw.m_numIndirectIndex * sizeof(uint32_t);
+						}
 					}
 
 					if (hasOcclusionQuery)
@@ -8713,13 +8725,28 @@ VK_DESTROY
 
 						if (isValid(draw.m_indirectBuffer) )
 						{
-							vkCmdDrawIndirect(
-								  m_commandBuffer
-								, bufferIndirect
-								, bufferOffsetIndirect
-								, numDrawIndirect
-								, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
-								);
+							if (isValid(draw.m_numIndirectBuffer) )
+							{
+								vkCmdDrawIndirectCountKHR(
+									  m_commandBuffer
+									, bufferIndirect
+									, bufferOffsetIndirect
+									, bufferNumIndirect
+									, bufferNumOffsetIndirect
+									, numDrawIndirect
+									, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+									);
+							}
+							else
+							{
+								vkCmdDrawIndirect(
+									  m_commandBuffer
+									, bufferIndirect
+									, bufferOffsetIndirect
+									, numDrawIndirect
+									, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+									);
+							}
 						}
 						else
 						{
@@ -8762,13 +8789,28 @@ VK_DESTROY
 
 						if (isValid(draw.m_indirectBuffer) )
 						{
-							vkCmdDrawIndexedIndirect(
-								  m_commandBuffer
-								, bufferIndirect
-								, bufferOffsetIndirect
-								, numDrawIndirect
-								, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
-								);
+							if (isValid(draw.m_numIndirectBuffer) )
+							{
+								vkCmdDrawIndexedIndirectCountKHR(
+									  m_commandBuffer
+									, bufferIndirect
+									, bufferOffsetIndirect
+									, bufferNumIndirect
+									, bufferNumOffsetIndirect
+									, numDrawIndirect
+									, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+									);
+							}
+							else
+							{
+								vkCmdDrawIndexedIndirect(
+									  m_commandBuffer
+									, bufferIndirect
+									, bufferOffsetIndirect
+									, numDrawIndirect
+									, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+									);
+							}
 						}
 						else
 						{

@@ -1205,6 +1205,7 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 					| BGFX_CAPS_IMAGE_RW
 					| BGFX_CAPS_VIEWPORT_LAYER_ARRAY
+					| BGFX_CAPS_DRAW_INDIRECT_COUNT
 					);
 				g_caps.limits.maxTextureSize     = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 				g_caps.limits.maxTextureLayers   = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
@@ -4134,6 +4135,13 @@ namespace bgfx { namespace d3d12
 				? indirect.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 				: _draw.m_numIndirect
 				;
+			ID3D12Resource* numIndirect = NULL;
+			uint32_t numOffsetIndirect = 0;
+			if (isValid(_draw.m_numIndirectBuffer) )
+			{
+				numIndirect = s_renderD3D12->m_indexBuffers[_draw.m_numIndirectBuffer.idx].m_ptr;
+				numOffsetIndirect = _draw.m_numIndirectIndex * sizeof(uint32_t);
+			}
 
 			uint32_t numIndices = 0;
 
@@ -4165,8 +4173,8 @@ namespace bgfx { namespace d3d12
 					, numDrawIndirect
 					, indirect.m_ptr
 					, _draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE
-					, NULL
-					, 0
+					, numIndirect
+					, numOffsetIndirect
 					);
 			}
 			else
@@ -4176,8 +4184,8 @@ namespace bgfx { namespace d3d12
 					, numDrawIndirect
 					, indirect.m_ptr
 					, _draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE
-					, NULL
-					, 0
+					, numIndirect
+					, numOffsetIndirect
 					);
 			}
 
@@ -4441,8 +4449,8 @@ namespace bgfx { namespace d3d12
 #if BX_PLATFORM_XBOXONE
 			flags |= D3D12XBOX_RESOURCE_FLAG_ALLOW_INDIRECT_BUFFER;
 #endif // BX_PLATFORM_XBOXONE
-			format = DXGI_FORMAT_R32G32B32A32_UINT;
-			stride = 16;
+			format = _vertex ? DXGI_FORMAT_R32G32B32A32_UINT : DXGI_FORMAT_R32_UINT;
+			stride = _vertex ? 16 : 4;
 		}
 		else
 		{
