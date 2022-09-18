@@ -1,72 +1,38 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>Tools &mdash; bgfx 1.115.8277 documentation</title>
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-
-  
-  
-  
-  
-
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tools &mdash; bgfx 1.116.8293 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Internals" href="internals.html" />
     <link rel="prev" title="API Reference" href="bgfx.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
-            <a href="index.html" class="icon icon-home" alt="Documentation Home"> bgfx
-          
-
-          
+            <a href="index.html" class="icon icon-home"> bgfx
           </a>
-
-          
-            
-            
               <div class="version">
-                1.115.8277
+                1.116.8293
               </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -74,18 +40,7 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="build.html">Building</a></li>
@@ -108,71 +63,33 @@
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">bgfx</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-        
       <li>Tools</li>
-    
-    
       <li class="wy-breadcrumbs-aside">
-        
-            
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
-  <div class="section" id="tools">
-<h1>Tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="geometry-compiler-geometryc">
-<h2>Geometry Compiler (geometryc)<a class="headerlink" href="#geometry-compiler-geometryc" title="Permalink to this headline">¶</a></h2>
+             
+  <section id="tools">
+<h1>Tools<a class="headerlink" href="#tools" title="Permalink to this heading">¶</a></h1>
+<section id="geometry-compiler-geometryc">
+<h2>Geometry Compiler (geometryc)<a class="headerlink" href="#geometry-compiler-geometryc" title="Permalink to this heading">¶</a></h2>
 <p>Converts Wavefront .obj, or glTF 2.0 mesh files to a format which is optimized for use with bgfx.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">geometryc</span> <span class="o">-</span><span class="n">f</span> <span class="o">&lt;</span><span class="ow">in</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">o</span> <span class="o">&lt;</span><span class="n">out</span><span class="o">&gt;</span>
@@ -263,13 +180,13 @@
 </dd>
 </dl>
 </div></blockquote>
-</div>
-<div class="section" id="geometry-viewer-geometryv">
-<h2>Geometry Viewer (geometryv)<a class="headerlink" href="#geometry-viewer-geometryv" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="geometry-viewer-geometryv">
+<h2>Geometry Viewer (geometryv)<a class="headerlink" href="#geometry-viewer-geometryv" title="Permalink to this heading">¶</a></h2>
 <p>A geometry viewer.</p>
-</div>
-<div class="section" id="shader-compiler-shaderc">
-<h2>Shader Compiler (shaderc)<a class="headerlink" href="#shader-compiler-shaderc" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="shader-compiler-shaderc">
+<h2>Shader Compiler (shaderc)<a class="headerlink" href="#shader-compiler-shaderc" title="Permalink to this heading">¶</a></h2>
 <p>Shader Compiler is used to compile bgfx’s cross-platform shader language, which based on GLSL.
 It uses an ANSI C pre-processor to transform the GLSL-like language into HLSL.
 This method has certain drawbacks,
@@ -289,8 +206,8 @@ This file cannot include comments, and typically only one is necessary.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">$input/$output</span></code> tokens corresponding to inputs and outputs defined in
 <code class="docutils literal notranslate"><span class="pre">varying.def.sc</span></code> must be used at the beginning of shader.</p></li>
 </ul>
-<div class="section" id="defines">
-<h3>Defines<a class="headerlink" href="#defines" title="Permalink to this headline">¶</a></h3>
+<section id="defines">
+<h3>Defines<a class="headerlink" href="#defines" title="Permalink to this heading">¶</a></h3>
 <p>Shader Compiler also has the following default defines (default value is set to 0):</p>
 <blockquote>
 <div><table class="docutils align-default">
@@ -373,9 +290,9 @@ This file cannot include comments, and typically only one is necessary.</p></li>
 </tbody>
 </table>
 </div></blockquote>
-</div>
-<div class="section" id="predefined-uniforms">
-<h3>Predefined Uniforms<a class="headerlink" href="#predefined-uniforms" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="predefined-uniforms">
+<h3>Predefined Uniforms<a class="headerlink" href="#predefined-uniforms" title="Permalink to this heading">¶</a></h3>
 <blockquote>
 <div><table class="docutils align-default">
 <colgroup>
@@ -525,16 +442,16 @@ Can be 0–3.</p>
 </dd>
 </dl>
 </div></blockquote>
-</div>
-<div class="section" id="building-shaders">
-<h3>Building shaders<a class="headerlink" href="#building-shaders" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="building-shaders">
+<h3>Building shaders<a class="headerlink" href="#building-shaders" title="Permalink to this heading">¶</a></h3>
 <p>Shaders can be compiled for all renderers by using the <code class="docutils literal notranslate"><span class="pre">shaderc</span></code> tool.
 A Makefile to simplify building shaders is provided in the <a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples">bgfx examples</a>.
 D3D shaders can be only compiled on Windows.</p>
-</div>
-</div>
-<div class="section" id="texture-compiler-texturec">
-<h2>Texture Compiler (texturec)<a class="headerlink" href="#texture-compiler-texturec" title="Permalink to this headline">¶</a></h2>
+</section>
+</section>
+<section id="texture-compiler-texturec">
+<h2>Texture Compiler (texturec)<a class="headerlink" href="#texture-compiler-texturec" title="Permalink to this heading">¶</a></h2>
 <p>Convert PNG, TGA, DDS, KTX, and PVR textures into bgfx-supported texture formats.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">texturec</span> <span class="o">-</span><span class="n">f</span> <span class="o">&lt;</span><span class="ow">in</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">o</span> <span class="o">&lt;</span><span class="n">out</span><span class="o">&gt;</span> <span class="p">[</span><span class="o">-</span><span class="n">t</span> <span class="o">&lt;</span><span class="n">texture</span> <span class="nb">format</span><span class="o">&gt;</span><span class="p">]</span>
@@ -672,59 +589,39 @@ aspect ratio will be preserved)</p>
 </dl>
 </dd>
 </dl>
-</div>
-<div class="section" id="texture-viewer-texturev">
-<h2>Texture Viewer (texturev)<a class="headerlink" href="#texture-viewer-texturev" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="texture-viewer-texturev">
+<h2>Texture Viewer (texturev)<a class="headerlink" href="#texture-viewer-texturev" title="Permalink to this heading">¶</a></h2>
 <p>A texture viewer.</p>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="internals.html" class="btn btn-neutral float-right" title="Internals" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="bgfx.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bgfx.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="internals.html" class="btn btn-neutral float-right" title="Internals" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        
-        &copy; Copyright 2010-2022, Branimir Karadžić
+    <p>&#169; Copyright 2010-2022, Branimir Karadžić.</p>
+  </div>
 
-    </p>
-  </div> 
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

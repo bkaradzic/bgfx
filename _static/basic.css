@@ -4,7 +4,7 @@
  *
  * Sphinx stylesheet -- basic theme.
  *
- * :copyright: Copyright 2007-2020 by the Sphinx team, see AUTHORS.
+ * :copyright: Copyright 2007-2022 by the Sphinx team, see AUTHORS.
  * :license: BSD, see LICENSE for details.
  *
  */
@@ -130,7 +130,7 @@ ul.search li a {
     font-weight: bold;
 }
 
-ul.search li div.context {
+ul.search li p.context {
     color: #888;
     margin: 2px 0 0 30px;
     text-align: left;
@@ -222,7 +222,7 @@ table.modindextable td {
 /* -- general body styles --------------------------------------------------- */
 
 div.body {
-    min-width: 450px;
+    min-width: 360px;
     max-width: 800px;
 }
 
@@ -236,7 +236,6 @@ div.body p, div.body dd, div.body li, div.body blockquote {
 a.headerlink {
     visibility: hidden;
 }
-
 a.brackets:before,
 span.brackets > a:before{
     content: "[";
@@ -246,6 +245,7 @@ a.brackets:after,
 span.brackets > a:after {
     content: "]";
 }
+
 
 h1:hover > a.headerlink,
 h2:hover > a.headerlink,
@@ -277,25 +277,25 @@ p.rubric {
     font-weight: bold;
 }
 
-img.align-left, .figure.align-left, object.align-left {
+img.align-left, figure.align-left, .figure.align-left, object.align-left {
     clear: left;
     float: left;
     margin-right: 1em;
 }
 
-img.align-right, .figure.align-right, object.align-right {
+img.align-right, figure.align-right, .figure.align-right, object.align-right {
     clear: right;
     float: right;
     margin-left: 1em;
 }
 
-img.align-center, .figure.align-center, object.align-center {
+img.align-center, figure.align-center, .figure.align-center, object.align-center {
   display: block;
   margin-left: auto;
   margin-right: auto;
 }
 
-img.align-default, .figure.align-default {
+img.align-default, figure.align-default, .figure.align-default {
   display: block;
   margin-left: auto;
   margin-right: auto;
@@ -319,7 +319,8 @@ img.align-default, .figure.align-default {
 
 /* -- sidebars -------------------------------------------------------------- */
 
-div.sidebar {
+div.sidebar,
+aside.sidebar {
     margin: 0 0 0.5em 1em;
     border: 1px solid #ddb;
     padding: 7px;
@@ -333,13 +334,11 @@ div.sidebar {
 p.sidebar-title {
     font-weight: bold;
 }
-
 div.admonition, div.topic, blockquote {
     clear: left;
 }
 
 /* -- topics ---------------------------------------------------------------- */
-
 div.topic {
     border: 1px solid #ccc;
     padding: 7px;
@@ -377,12 +376,14 @@ div.body p.centered {
 /* -- content of sidebars/topics/admonitions -------------------------------- */
 
 div.sidebar > :last-child,
+aside.sidebar > :last-child,
 div.topic > :last-child,
 div.admonition > :last-child {
     margin-bottom: 0;
 }
 
 div.sidebar::after,
+aside.sidebar::after,
 div.topic::after,
 div.admonition::after,
 blockquote::after {
@@ -425,10 +426,6 @@ table.docutils td, table.docutils th {
     border-bottom: 1px solid #aaa;
 }
 
-table.footnote td, table.footnote th {
-    border: 0 !important;
-}
-
 th {
     text-align: left;
     padding-right: 5px;
@@ -455,20 +452,22 @@ td > :last-child {
 
 /* -- figures --------------------------------------------------------------- */
 
-div.figure {
+div.figure, figure {
     margin: 0.5em;
     padding: 0.5em;
 }
 
-div.figure p.caption {
+div.figure p.caption, figcaption {
     padding: 0.3em;
 }
 
-div.figure p.caption span.caption-number {
+div.figure p.caption span.caption-number,
+figcaption span.caption-number {
     font-style: italic;
 }
 
-div.figure p.caption span.caption-text {
+div.figure p.caption span.caption-text,
+figcaption span.caption-text {
 }
 
 /* -- field list styles ----------------------------------------------------- */
@@ -501,6 +500,63 @@ table.hlist {
 
 table.hlist td {
     vertical-align: top;
+}
+
+/* -- object description styles --------------------------------------------- */
+
+.sig {
+	font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
+}
+
+.sig-name, code.descname {
+    background-color: transparent;
+    font-weight: bold;
+}
+
+.sig-name {
+	font-size: 1.1em;
+}
+
+code.descname {
+    font-size: 1.2em;
+}
+
+.sig-prename, code.descclassname {
+    background-color: transparent;
+}
+
+.optional {
+    font-size: 1.3em;
+}
+
+.sig-paren {
+    font-size: larger;
+}
+
+.sig-param.n {
+	font-style: italic;
+}
+
+/* C++ specific styling */
+
+.sig-inline.c-texpr,
+.sig-inline.cpp-texpr {
+	font-family: unset;
+}
+
+.sig.c   .k, .sig.c   .kt,
+.sig.cpp .k, .sig.cpp .kt {
+	color: #0033B3;
+}
+
+.sig.c   .m,
+.sig.cpp .m {
+	color: #1750EB;
+}
+
+.sig.c   .s, .sig.c   .sc,
+.sig.cpp .s, .sig.cpp .sc {
+	color: #067D17;
 }
 
 
@@ -552,7 +608,6 @@ ol.simple p,
 ul.simple p {
     margin-bottom: 0;
 }
-
 dl.footnote > dt,
 dl.citation > dt {
     float: left;
@@ -581,10 +636,10 @@ dl.field-list > dt {
     padding-left: 0.5em;
     padding-right: 5px;
 }
-
 dl.field-list > dt:after {
     content: ":";
 }
+
 
 dl.field-list > dd {
     padding-left: 0.5em;
@@ -629,14 +684,6 @@ dl.glossary dt {
     font-size: 1.1em;
 }
 
-.optional {
-    font-size: 1.3em;
-}
-
-.sig-paren {
-    font-size: larger;
-}
-
 .versionmodified {
     font-style: italic;
 }
@@ -677,8 +724,9 @@ dl.glossary dt {
 
 .classifier:before {
     font-style: normal;
-    margin: 0.5em;
+    margin: 0 0.5em;
     content: ":";
+    display: inline-block;
 }
 
 abbr, acronym {
@@ -702,6 +750,7 @@ span.pre {
     -ms-hyphens: none;
     -webkit-hyphens: none;
     hyphens: none;
+    white-space: nowrap;
 }
 
 div[class*="highlight-"] {
@@ -765,8 +814,12 @@ div.code-block-caption code {
 
 table.highlighttable td.linenos,
 span.linenos,
-div.doctest > div.highlight span.gp {  /* gp: Generic.Prompt */
-    user-select: none;
+div.highlight span.gp {  /* gp: Generic.Prompt */
+  user-select: none;
+  -webkit-user-select: text; /* Safari fallback only */
+  -webkit-user-select: none; /* Chrome/Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+ */
 }
 
 div.code-block-caption span.caption-number {
@@ -779,16 +832,6 @@ div.code-block-caption span.caption-text {
 
 div.literal-block-wrapper {
     margin: 1em 0;
-}
-
-code.descname {
-    background-color: transparent;
-    font-weight: bold;
-    font-size: 1.2em;
-}
-
-code.descclassname {
-    background-color: transparent;
 }
 
 code.xref, a code {
