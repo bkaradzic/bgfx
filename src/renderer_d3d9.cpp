@@ -455,32 +455,37 @@ namespace bgfx { namespace d3d9
 			// Reference(s):
 			// - https://web.archive.org/web/20190207230309/https://docs.microsoft.com/en-us/windows/desktop/direct3d9/d3dpresent-parameters
 			bx::memSet(&m_params, 0, sizeof(m_params) );
-			m_params.BackBufferWidth  = _init.resolution.width;
-			m_params.BackBufferHeight = _init.resolution.height;
-			m_params.BackBufferFormat = adapterFormat;
-			m_params.BackBufferCount  = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
-			m_params.MultiSampleType  = D3DMULTISAMPLE_NONE;
-			m_params.MultiSampleQuality = 0;
+			m_params.BackBufferWidth        = _init.resolution.width;
+			m_params.BackBufferHeight       = _init.resolution.height;
+			m_params.BackBufferFormat       = adapterFormat;
+			m_params.BackBufferCount        = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
+			m_params.MultiSampleType        = D3DMULTISAMPLE_NONE;
+			m_params.MultiSampleQuality     = 0;
 			m_params.EnableAutoDepthStencil = TRUE;
 			m_params.AutoDepthStencilFormat = D3DFMT_D24S8;
-			m_params.Flags = D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
+			m_params.Flags                  = D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
 
 			m_params.FullScreen_RefreshRateInHz = 0;
-			m_params.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
-			m_params.SwapEffect = D3DSWAPEFFECT_DISCARD;
-			m_params.hDeviceWindow = NULL;
-			m_params.Windowed = true;
+			m_params.PresentationInterval       = D3DPRESENT_INTERVAL_IMMEDIATE;
+			m_params.SwapEffect                 = D3DSWAPEFFECT_DISCARD;
+			m_params.hDeviceWindow              = NULL;
+			m_params.Windowed                   = true;
+			m_params.BackBufferWidth            = _init.resolution.width;
+			m_params.BackBufferHeight           = _init.resolution.height;
 
-			RECT rect;
-			GetWindowRect( (HWND)g_platformData.nwh, &rect);
-			m_params.BackBufferWidth  = rect.right-rect.left;
-			m_params.BackBufferHeight = rect.bottom-rect.top;
+			const char* d3d9DllName =
+#if BX_PLATFORM_LINUX
+				"d3d9.so"
+#else
+				"d3d9.dll"
+#endif // BX_PLATFORM_LINUX
+				;
 
-			m_d3d9Dll = bx::dlopen("d3d9.dll");
+			m_d3d9Dll = bx::dlopen(d3d9DllName);
 
 			if (NULL == m_d3d9Dll)
 			{
-				BX_TRACE("Init error: Failed to load d3d9.dll.");
+				BX_TRACE("Init error: Failed to load %s.", d3d9DllName);
 				goto error;
 			}
 
@@ -1231,6 +1236,7 @@ namespace bgfx { namespace d3d9
 
 		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
 		{
+#if BX_PLATFORM_WINDOWS
 			IDirect3DSwapChain9* swapChain = isValid(_handle)
 				? m_frameBuffers[_handle.idx].m_swapChain
 				: m_swapChain
@@ -1294,6 +1300,10 @@ namespace bgfx { namespace d3d9
 
 			DX_CHECK(surface->UnlockRect() );
 			DX_RELEASE(surface, 0);
+#else
+			BX_TRACE("Screenshot not supported!");
+			BX_UNUSED(_handle, _filePath);
+#endif // BX_PLATFORM_WINDOWS
 		}
 
 		void updateViewName(ViewId _id, const char* _name) override

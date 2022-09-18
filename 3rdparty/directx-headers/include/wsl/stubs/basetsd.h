@@ -40,6 +40,7 @@ typedef uint16_t WORD;
 typedef void* PVOID;
 typedef char BOOLEAN;
 typedef uint64_t ULONGLONG;
+typedef int16_t SHORT, *PSHORT;
 typedef uint16_t USHORT, *PUSHORT;
 typedef int64_t LONGLONG, *PLONGLONG;
 typedef int64_t LONG_PTR, *PLONG_PTR;
