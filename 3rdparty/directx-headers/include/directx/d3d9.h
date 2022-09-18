@@ -42,7 +42,7 @@
 
 #include <windows.h>
 
-#if !defined(HMONITOR_DECLARED) && (WINVER < 0x0500)
+#if !defined(HMONITOR_DECLARED) && (!defined(WINVER) || WINVER < 0x0500)
     #define HMONITOR_DECLARED
     DECLARE_HANDLE(HMONITOR);
 #endif
