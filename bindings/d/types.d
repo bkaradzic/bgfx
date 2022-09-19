@@ -18,7 +18,7 @@ enum expandEnum(EnumType, string fqnEnumType = EnumType.stringof) = (){
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 116;
+enum uint BGFX_API_VERSION = 117;
 
 alias bgfx_view_id_t = ushort;
 
