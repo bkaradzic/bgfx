@@ -1529,6 +1529,7 @@ namespace bgfx { namespace gl
 			{
 				Query& query = m_query[ii];
 				query.m_ready = false;
+				query.m_frameNum = 0;
 				GL_CHECK(glGenQueries(1, &query.m_begin) );
 				GL_CHECK(glGenQueries(1, &query.m_end) );
 			}
@@ -1550,7 +1551,7 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		uint32_t begin(uint32_t _resultIdx)
+		uint32_t begin(uint32_t _resultIdx, uint32_t _frameNum)
 		{
 			while (0 == m_control.reserve(1) )
 			{
@@ -1563,6 +1564,7 @@ namespace bgfx { namespace gl
 			const uint32_t idx = m_control.m_current;
 			Query& query = m_query[idx];
 			query.m_resultIdx = _resultIdx;
+			query.m_frameNum = _frameNum;
 			query.m_ready     = false;
 
 			GL_CHECK(glQueryCounter(query.m_begin
@@ -1611,6 +1613,7 @@ namespace bgfx { namespace gl
 
 					Result& result = m_result[query.m_resultIdx];
 					--result.m_pending;
+					result.m_frameNum = query.m_frameNum;
 
 					GL_CHECK(glGetQueryObjectui64v(query.m_begin
 						, GL_QUERY_RESULT
@@ -1633,14 +1636,16 @@ namespace bgfx { namespace gl
 		{
 			void reset()
 			{
-				m_begin   = 0;
-				m_end     = 0;
-				m_pending = 0;
+				m_begin    = 0;
+				m_end      = 0;
+				m_pending  = 0;
+				m_frameNum = 0;
 			}
 
 			uint64_t m_begin;
 			uint64_t m_end;
 			uint32_t m_pending;
+			uint32_t m_frameNum;
 		};
 
 		struct Query
@@ -1648,6 +1653,7 @@ namespace bgfx { namespace gl
 			GLuint   m_begin;
 			GLuint   m_end;
 			uint32_t m_resultIdx;
+			uint32_t m_frameNum;
 			bool     m_ready;
 		};
 

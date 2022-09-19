@@ -2189,6 +2189,7 @@ public static class bgfx
 		public int64 cpuTimeEnd;
 		public int64 gpuTimeBegin;
 		public int64 gpuTimeEnd;
+		public uint32 gpuFrameNum;
 	}
 	
 	[CRepr]
@@ -2214,6 +2215,7 @@ public static class bgfx
 		public uint32 numCompute;
 		public uint32 numBlit;
 		public uint32 maxGpuLatency;
+		public uint32 gpuFrameNum;
 		public uint16 numDynamicIndexBuffers;
 		public uint16 numDynamicVertexBuffers;
 		public uint16 numFrameBuffers;

@@ -910,6 +910,7 @@ struct.ViewStats
 	.cpuTimeEnd     "int64_t"   --- CPU (submit) end time.
 	.gpuTimeBegin   "int64_t"   --- GPU begin time.
 	.gpuTimeEnd     "int64_t"   --- GPU end time.
+	.gpuFrameNum    "uint32_t"  --- Frame which generated gpuTimeBegin, gpuTimeEnd.
 
 --- Encoder stats.
 struct.EncoderStats
@@ -937,6 +938,7 @@ struct.Stats
 	.numCompute              "uint32_t"      --- Number of compute calls submitted.
 	.numBlit                 "uint32_t"      --- Number of blit calls submitted.
 	.maxGpuLatency           "uint32_t"      --- GPU driver latency.
+	.gpuFrameNum             "uint32_t"      --- Frame which generated gpuTimeBegin, gpuTimeEnd.
 
 	.numDynamicIndexBuffers  "uint16_t"      --- Number of used dynamic index buffers.
 	.numDynamicVertexBuffers "uint16_t"      --- Number of used dynamic vertex buffers.

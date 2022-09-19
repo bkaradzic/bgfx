@@ -252,6 +252,7 @@ namespace bgfx { namespace noop
 			perfStats.gpuTimeBegin  = 0;
 			perfStats.gpuTimeEnd    = 0;
 			perfStats.gpuTimerFreq  = 1000000000;
+			perfStats.gpuFrameNum   = 0;
 
 			bx::memSet(perfStats.numPrims, 0, sizeof(perfStats.numPrims) );
 

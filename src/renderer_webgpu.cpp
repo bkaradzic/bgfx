@@ -3987,9 +3987,10 @@ namespace bgfx { namespace webgpu
 	{
 	}
 
-	uint32_t TimerQueryWgpu::begin(uint32_t _resultIdx)
+	uint32_t TimerQueryWgpu::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
 		BX_UNUSED(_resultIdx);
+		BX_UNUSED(_frameNum);
 		return 0;
 	}
 
@@ -4847,6 +4848,7 @@ namespace bgfx { namespace webgpu
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
 		perfStats.maxGpuLatency = maxGpuLatency;
+		perfStats.gpuFrameNum   = result.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
 		perfStats.gpuMemoryMax  = -INT64_MAX;
 		perfStats.gpuMemoryUsed = -INT64_MAX;
