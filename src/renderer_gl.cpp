@@ -5360,13 +5360,16 @@ namespace bgfx { namespace gl
 		m_usedCount = (uint8_t)used;
 
 		used = 0;
-		for (uint32_t ii = 0; ii < BX_COUNTOF(s_instanceDataName); ++ii)
+		for (uint32_t ii = 0, baseVertex = 0; ii < BX_COUNTOF(s_instanceDataName); ++ii, baseVertex += 16)
 		{
 			GLint loc = glGetAttribLocation(m_id, s_instanceDataName[ii]);
 			if (-1 != loc)
 			{
 				BX_TRACE("instance data %s: %d", s_instanceDataName[ii], loc);
-				m_instanceData[used++] = loc;
+				m_instanceData[used]   = loc;
+				m_instanceOffset[used] = uint16_t(baseVertex);
+
+				used++;
 			}
 		}
 		BX_ASSERT(used < BX_COUNTOF(m_instanceData)
@@ -5433,14 +5436,14 @@ namespace bgfx { namespace gl
 
 	void ProgramGL::bindInstanceData(uint32_t _stride, uint32_t _baseVertex) const
 	{
-		uint32_t baseVertex = _baseVertex;
 		for (uint32_t ii = 0; -1 != m_instanceData[ii]; ++ii)
 		{
 			GLint loc = m_instanceData[ii];
 			lazyEnableVertexAttribArray(loc);
+
+			const uint32_t baseVertex = _baseVertex + m_instanceOffset[ii];
 			GL_CHECK(glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, _stride, (void*)(uintptr_t)baseVertex) );
 			GL_CHECK(glVertexAttribDivisor(loc, 1) );
-			baseVertex += 16;
 		}
 	}
 

@@ -1505,8 +1505,10 @@ namespace bgfx { namespace gl
 		uint8_t m_unboundUsedAttrib[Attrib::Count]; // For tracking unbound used attributes between begin()/end().
 		uint8_t m_usedCount;
 		uint8_t m_used[Attrib::Count]; // Dense.
-		GLint m_attributes[Attrib::Count]; // Sparse.
-		GLint m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT+1];
+		GLint   m_attributes[Attrib::Count]; // Sparse.
+
+		GLint    m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT+1];
+		uint16_t m_instanceOffset[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 
 		GLint m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint8_t m_numSamplers;
