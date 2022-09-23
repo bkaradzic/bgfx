@@ -129,5 +129,4 @@ Normal map texture (GFDL License)
 
 Hextile example-49 texture (CC0 License)
 
- - `Rob Tuytel`__
  - https://polyhaven.com/a/aerial_rocks_04

@@ -425,7 +425,7 @@ In Views, all draw commands are executed **after** blit and compute commands.
 .. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
 .. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
 .. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start = 0, uint16_t _num = 1, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
-.. doxygenfunction:: void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex = 0, uint16_t _numMax = UINT16_MAX, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
+.. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex = 0, uint16_t _numMax = UINT16_MAX, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
 
 
 Compute

@@ -83,6 +83,9 @@ Windows users download GnuWin32 utilities:
  - http://gnuwin32.sourceforge.net/packages/libiconv.htm
  - http://gnuwin32.sourceforge.net/packages/libintl.htm
 
+.. note:: **MSYS**, **Cygwin**, etc. shells are not supported!
+   You must use use **cmd.exe** with provided makefiles.
+
 Build
 -----
 
