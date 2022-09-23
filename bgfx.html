@@ -1909,6 +1909,12 @@
 <dd><p>GPU end time. </p>
 </dd></dl>
 
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx9ViewStats11gpuFrameNumE">
+<span id="_CPPv3N4bgfx9ViewStats11gpuFrameNumE"></span><span id="_CPPv2N4bgfx9ViewStats11gpuFrameNumE"></span><span id="bgfx::ViewStats::gpuFrameNum__uint32_t"></span><span class="target" id="structbgfx_1_1_view_stats_1a61045c977a89c204cb1d45a5a263730a"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">gpuFrameNum</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx9ViewStats11gpuFrameNumE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Frame which generated gpuTimeBegin, gpuTimeEnd. </p>
+</dd></dl>
+
 </div>
 </dd></dl>
 
@@ -4970,10 +4976,34 @@ Otherwise, use <cite>bgfx::setViewScissor</cite>.</p>
 </dl>
 </dd></dl>
 
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>doxygenfunction: Cannot find function “void submit” in doxygen xml output for project “bgfx” from directory: ../../.build/docs/xml</p>
-</div>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t17IndexBufferHandle8uint32_t8uint16_t8uint32_t7uint8_t">
+<span id="_CPPv3N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t17IndexBufferHandle8uint32_t8uint16_t8uint32_t7uint8_t"></span><span id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t17IndexBufferHandle8uint32_t8uint16_t8uint32_t7uint8_t"></span><span id="bgfx::submit__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.IndexBufferHandle.uint32_t.uint16_t.uint32_t.uint8_t"></span><span class="target" id="namespacebgfx_1ab29554c6570160fd0a760e107f49e610"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">submit</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">ViewId</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_id</span></span>, <span class="n"><span class="pre">ProgramHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_program</span></span>, <span class="n"><span class="pre">IndirectBufferHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_indirectHandle</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_start</span></span>, <span class="n"><span class="pre">IndexBufferHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_numHandle</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_numIndex</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_numMax</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">UINT16_MAX</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_depth</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span>, <span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_flags</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">BGFX_DISCARD_ALL</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t17IndexBufferHandle8uint32_t8uint16_t8uint32_t7uint8_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Submit primitive for rendering with index and instance data info and draw count from indirect buffers. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>Availability depends on:<code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_DRAW_INDIRECT_COUNT</span></code>. </p>
+</dd>
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_submit_indirect_count</span></code>. </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_id</strong> – <strong>[in]</strong> View id. </p></li>
+<li><p><strong>_program</strong> – <strong>[in]</strong> Program. </p></li>
+<li><p><strong>_indirectHandle</strong> – <strong>[in]</strong> Indirect buffer. </p></li>
+<li><p><strong>_start</strong> – <strong>[in]</strong> First element in indirect buffer. </p></li>
+<li><p><strong>_numHandle</strong> – <strong>[in]</strong> Buffer for number of draws. Must be created with <code class="docutils literal notranslate"><span class="pre">BGFX_BUFFER_INDEX32</span></code> and <code class="docutils literal notranslate"><span class="pre">BGFX_BUFFER_DRAW_INDIRECT</span></code>. </p></li>
+<li><p><strong>_numIndex</strong> – <strong>[in]</strong> Element in number buffer. </p></li>
+<li><p><strong>_numMax</strong> – <strong>[in]</strong> Max number of draws. </p></li>
+<li><p><strong>_depth</strong> – <strong>[in]</strong> Depth for sorting. </p></li>
+<li><p><strong>_flags</strong> – <strong>[in]</strong> Discard or preserve states. See <code class="docutils literal notranslate"><span class="pre">BGFX_DISCARD_*</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 <section id="compute">
