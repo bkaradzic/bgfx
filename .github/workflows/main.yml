@@ -11,7 +11,7 @@ on:
 jobs:
   msvc:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include: [
           { config: Debug, platform: Win32, bindir: 'win32_vs2019' },
@@ -54,7 +54,7 @@ jobs:
           ".build\${{ matrix.bindir }}\bin\texturec${{ matrix.config }}.exe" --version
   mingw:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include: [
           { msystem: MINGW64, project: 'mingw-gcc', bindir: 'win64_mingw-gcc' },
@@ -99,7 +99,7 @@ jobs:
           ".build\${{ matrix.bindir }}\bin\texturecRelease.exe" --version
   linux:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include: [
           { config: debug, binsuffix: Debug },
