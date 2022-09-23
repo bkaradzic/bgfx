@@ -164,6 +164,8 @@ typedef void           (GL_APIENTRYP PFNGLLINKPROGRAMPROC) (GLuint program);
 typedef void           (GL_APIENTRYP PFNGLMEMORYBARRIERPROC) (GLbitfield barriers);
 typedef void           (GL_APIENTRYP PFNGLMULTIDRAWARRAYSINDIRECTPROC) (GLenum mode, const void *indirect, GLsizei drawcount, GLsizei stride);
 typedef void           (GL_APIENTRYP PFNGLMULTIDRAWELEMENTSINDIRECTPROC) (GLenum mode, GLenum type, const void *indirect, GLsizei drawcount, GLsizei stride);
+typedef void           (GL_APIENTRYP PFNGLMULTIDRAWARRAYSINDIRECTCOUNTPROC) (GLenum mode, const void *indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride);
+typedef void           (GL_APIENTRYP PFNGLMULTIDRAWELEMENTSINDIRECTCOUNTPROC) (GLenum mode, GLenum type, const void *indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride);
 typedef void           (GL_APIENTRYP PFNGLOBJECTLABELPROC) (GLenum identifier, GLuint name, GLsizei length, const GLchar *label);
 typedef void           (GL_APIENTRYP PFNGLOBJECTPTRLABELPROC) (const void *ptr, GLsizei length, const GLchar *label);
 typedef void           (GL_APIENTRYP PFNGLPIXELSTOREIPROC) (GLenum pname, GLint param);
@@ -459,7 +461,6 @@ GL_IMPORT_ARB__(true,  PFNGLINVALIDATEFRAMEBUFFERPROC,             glInvalidateF
 
 GL_IMPORT_ARB__(true,  PFNGLMULTIDRAWARRAYSINDIRECTPROC,           glMultiDrawArraysIndirect);
 GL_IMPORT_ARB__(true,  PFNGLMULTIDRAWELEMENTSINDIRECTPROC,         glMultiDrawElementsIndirect);
-
 GL_IMPORT_ARB__(true,  PFNGLMULTIDRAWARRAYSINDIRECTCOUNTPROC,      glMultiDrawArraysIndirectCount);
 GL_IMPORT_ARB__(true,  PFNGLMULTIDRAWELEMENTSINDIRECTCOUNTPROC,    glMultiDrawElementsIndirectCount);
 
@@ -551,6 +552,8 @@ GL_IMPORT_EXT__(true,  PFNGLDRAWARRAYSINDIRECTPROC,                glDrawArraysI
 GL_IMPORT_EXT__(true,  PFNGLDRAWELEMENTSINDIRECTPROC,              glDrawElementsIndirect);
 GL_IMPORT_EXT__(true,  PFNGLMULTIDRAWARRAYSINDIRECTPROC,           glMultiDrawArraysIndirect);
 GL_IMPORT_EXT__(true,  PFNGLMULTIDRAWELEMENTSINDIRECTPROC,         glMultiDrawElementsIndirect);
+GL_IMPORT_EXT__(true,  PFNGLMULTIDRAWARRAYSINDIRECTCOUNTPROC,      glMultiDrawArraysIndirectCount);
+GL_IMPORT_EXT__(true,  PFNGLMULTIDRAWELEMENTSINDIRECTCOUNTPROC,    glMultiDrawElementsIndirectCount);
 
 GL_IMPORT_OES__(true,  PFNGLGETPROGRAMBINARYPROC,                  glGetProgramBinary);
 GL_IMPORT_OES__(true,  PFNGLPROGRAMBINARYPROC,                     glProgramBinary);
@@ -700,6 +703,8 @@ GL_IMPORT______(true,  PFNGLDRAWARRAYSINDIRECTPROC,                glDrawArraysI
 GL_IMPORT______(true,  PFNGLDRAWELEMENTSINDIRECTPROC,              glDrawElementsIndirect);
 GL_IMPORT______(true,  PFNGLMULTIDRAWARRAYSINDIRECTPROC,           glMultiDrawArraysIndirect);
 GL_IMPORT______(true,  PFNGLMULTIDRAWELEMENTSINDIRECTPROC,         glMultiDrawElementsIndirect);
+GL_IMPORT______(true,  PFNGLMULTIDRAWARRAYSINDIRECTCOUNTPROC,      glMultiDrawArraysIndirectCount);
+GL_IMPORT______(true,  PFNGLMULTIDRAWELEMENTSINDIRECTCOUNTPROC,    glMultiDrawElementsIndirectCount);
 
 GL_IMPORT______(true,  PFNGLINVALIDATEFRAMEBUFFERPROC,             glInvalidateFramebuffer);
 

@@ -1103,20 +1103,20 @@ namespace bgfx { namespace gl
 			) );
 	}
 
-	static void GL_APIENTRY stubMultiDrawArraysIndirect(GLenum _mode, const void* _indirect, GLsizei _drawcount, GLsizei _stride)
+	static void GL_APIENTRY stubMultiDrawArraysIndirect(GLenum _mode, const void* _indirect, GLsizei _drawCount, GLsizei _stride)
 	{
 		const uint8_t* args = (const uint8_t*)_indirect;
-		for (GLsizei ii = 0; ii < _drawcount; ++ii)
+		for (GLsizei ii = 0; ii < _drawCount; ++ii)
 		{
 			GL_CHECK(glDrawArraysIndirect(_mode, (void*)args) );
 			args += _stride;
 		}
 	}
 
-	static void GL_APIENTRY stubMultiDrawElementsIndirect(GLenum _mode, GLenum _type, const void* _indirect, GLsizei _drawcount, GLsizei _stride)
+	static void GL_APIENTRY stubMultiDrawElementsIndirect(GLenum _mode, GLenum _type, const void* _indirect, GLsizei _drawCount, GLsizei _stride)
 	{
 		const uint8_t* args = (const uint8_t*)_indirect;
-		for (GLsizei ii = 0; ii < _drawcount; ++ii)
+		for (GLsizei ii = 0; ii < _drawCount; ++ii)
 		{
 			GL_CHECK(glDrawElementsIndirect(_mode, _type, (void*)args) );
 			args += _stride;
@@ -6890,7 +6890,7 @@ namespace bgfx { namespace gl
 				{
 					bx::StringView str = lineReader.next();
 					BX_TRACE("%3d %.*s", line, str.getLength(), str.getPtr() );
-					BX_UNUSED(str);
+					BX_UNUSED(str, line);
 				}
 
 				GLsizei len;
