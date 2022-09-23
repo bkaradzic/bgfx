@@ -385,8 +385,6 @@ namespace bgfx
 		DX_RELEASE_I(dxgiDevice);
 	}
 
-	static const GUID IID_ID3D12CommandQueue = { 0x0ec870a6, 0x5d7e, 0x4c22, { 0x8c, 0xfc, 0x5b, 0xaa, 0xe0, 0x76, 0x16, 0xed } };
-
 	HRESULT Dxgi::createSwapChain(IUnknown* _device, const SwapChainDesc& _scd, SwapChainI** _swapChain)
 	{
 		HRESULT hr = S_OK;
@@ -563,7 +561,7 @@ namespace bgfx
 			return hr;
 		}
 
-#if BX_PLATFORM_WINDOWS
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
 		if (SUCCEEDED(hr) )
 		{
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_dxgiSwapChainIIDs); ++ii)
@@ -596,7 +594,7 @@ namespace bgfx
 				}
 			}
 		}
-#endif // BX_PLATFORM_WINDOWS
+#endif // BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
 
 		updateHdr10(*_swapChain, _scd);
 
