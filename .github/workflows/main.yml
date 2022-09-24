@@ -134,3 +134,37 @@ jobs:
           ".build/linux64_gcc/bin/geometryc${{ matrix.binsuffix}}" --version
           ".build/linux64_gcc/bin/shaderc${{ matrix.binsuffix}}" --version
           ".build/linux64_gcc/bin/texturec${{ matrix.binsuffix}}" --version
+  wasm:
+    strategy:
+      fail-fast: true
+      matrix:
+        config: [ debug, release]
+    name: wasm-${{ matrix.config }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout bgfx
+        uses: actions/checkout@v3
+        with:
+          path: bgfx
+      - name: Checkout bx
+        uses: actions/checkout@v3
+        with:
+          repository: bkaradzic/bx
+          path: bx
+      - name: Checkout bimg
+        uses: actions/checkout@v3
+        with:
+          repository: bkaradzic/bimg
+          path: bimg
+      - name: Prepare
+        run: |
+          docker pull emscripten/emsdk
+          docker run --rm emscripten/emsdk which emcc em++ emar
+      - name: Build
+        run: >
+          docker run --rm -u $(id -u):$(id -g) -v $(pwd):/bgfx emscripten/emsdk
+          make -C /bgfx/bgfx -j$(nproc) wasm-${{ matrix.config }} EMSCRIPTEN=/emsdk/upstream/emscripten
+      - name: Check
+        run: |
+          cd bgfx
+          ls -lash ".build/wasm/bin"
