@@ -269,7 +269,7 @@ project "glslang"
 			"/wd4838", -- warning C4838: conversion from 'spv::GroupOperation' to 'unsigned int' requires a narrowing conversion
 		}
 
-	configuration { "mingw* or linux*" }
+	configuration { "mingw-gcc or linux-gcc" }
 		buildoptions {
 			"-Wno-logical-op",
 			"-Wno-maybe-uninitialized",
