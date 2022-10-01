@@ -265,7 +265,6 @@ namespace bgfx
 		BX_CLASS(ThreadData
 			, NO_DEFAULT_CTOR
 			, NO_COPY
-			, NO_COPY_ASSIGNMENT
 			);
 
 	public:
