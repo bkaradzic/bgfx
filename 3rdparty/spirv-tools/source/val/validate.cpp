@@ -209,6 +209,8 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
     return error;
   }
 
+  bool has_mask_task_nv = false;
+  bool has_mask_task_ext = false;
   std::vector<Instruction*> visited_entry_points;
   for (auto& instruction : vstate->ordered_instructions()) {
     {
@@ -247,6 +249,11 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
           }
         }
         visited_entry_points.push_back(inst);
+
+        has_mask_task_nv |= (execution_model == SpvExecutionModelTaskNV ||
+                             execution_model == SpvExecutionModelMeshNV);
+        has_mask_task_ext |= (execution_model == SpvExecutionModelTaskEXT ||
+                              execution_model == SpvExecutionModelMeshEXT);
       }
       if (inst->opcode() == SpvOpFunctionCall) {
         if (!vstate->in_function_body()) {
@@ -297,6 +304,12 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
       !vstate->has_samplerimage_variable_address_mode_specified())
     return vstate->diag(SPV_ERROR_INVALID_LAYOUT, nullptr)
            << "Missing required OpSamplerImageAddressingModeNV instruction.";
+
+  if (has_mask_task_ext && has_mask_task_nv)
+    return vstate->diag(SPV_ERROR_INVALID_LAYOUT, nullptr)
+           << vstate->VkErrorID(7102)
+           << "Module can't mix MeshEXT/TaskEXT with MeshNV/TaskNV Execution "
+              "Model.";
 
   // Catch undefined forward references before performing further checks.
   if (auto error = ValidateForwardDecls(*vstate)) return error;
@@ -351,6 +364,8 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
 
     if (auto error = LiteralsPass(*vstate, &instruction)) return error;
     if (auto error = RayQueryPass(*vstate, &instruction)) return error;
+    if (auto error = RayTracingPass(*vstate, &instruction)) return error;
+    if (auto error = MeshShadingPass(*vstate, &instruction)) return error;
   }
 
   // Validate the preconditions involving adjacent instructions. e.g. SpvOpPhi

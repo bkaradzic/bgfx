@@ -505,8 +505,8 @@ spv_result_t ValidateVectorShuffle(ValidationState_t& _,
   if (componentCount != resultVectorDimension) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpVectorShuffle component literals count does not match "
-              "Result Type <id> '"
-           << _.getIdName(resultType->id()) << "'s vector component count.";
+              "Result Type <id> "
+           << _.getIdName(resultType->id()) << "s vector component count.";
   }
 
   // Vector 1 and Vector 2 must both have vector types, with the same Component

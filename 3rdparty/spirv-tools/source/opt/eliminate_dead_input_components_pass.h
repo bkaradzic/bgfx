@@ -30,7 +30,10 @@ class EliminateDeadInputComponentsPass : public Pass {
  public:
   explicit EliminateDeadInputComponentsPass() {}
 
-  const char* name() const override { return "reduce-load-size"; }
+  const char* name() const override {
+    return "eliminate-dead-input-components";
+  }
+
   Status Process() override;
 
   // Return the mask of preserved Analyses.
@@ -51,6 +54,9 @@ class EliminateDeadInputComponentsPass : public Pass {
 
   // Change the length of the array |inst| to |length|
   void ChangeArrayLength(Instruction& inst, unsigned length);
+
+  // Change the length of the struct |struct_var| to |length|
+  void ChangeStructLength(Instruction& struct_var, unsigned length);
 };
 
 }  // namespace opt

@@ -200,6 +200,12 @@ spv_result_t MiscPass(ValidationState_t& _, const Instruction* inst);
 /// Validates correctness of ray query instructions.
 spv_result_t RayQueryPass(ValidationState_t& _, const Instruction* inst);
 
+/// Validates correctness of ray tracing instructions.
+spv_result_t RayTracingPass(ValidationState_t& _, const Instruction* inst);
+
+/// Validates correctness of mesh shading instructions.
+spv_result_t MeshShadingPass(ValidationState_t& _, const Instruction* inst);
+
 /// Calculates the reachability of basic blocks.
 void ReachabilityPass(ValidationState_t& _);
 

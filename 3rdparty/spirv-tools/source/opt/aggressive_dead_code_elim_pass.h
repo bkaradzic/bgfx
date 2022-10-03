@@ -178,6 +178,9 @@ class AggressiveDCEPass : public MemPass {
   // Adds all decorations of |inst| to the work list.
   void AddDecorationsToWorkList(const Instruction* inst);
 
+  // Adds DebugScope instruction associated with |inst| to the work list.
+  void AddDebugScopeToWorkList(const Instruction* inst);
+
   // Adds all debug instruction associated with |inst| to the work list.
   void AddDebugInstructionsToWorkList(const Instruction* inst);
 

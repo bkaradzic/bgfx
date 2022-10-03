@@ -393,6 +393,8 @@ uint32_t InstBuffAddrCheckPass::GetSearchAndTestFuncId() {
     get_def_use_mgr()->AnalyzeInstDefUse(&*func_end_inst);
     input_func->SetFunctionEnd(std::move(func_end_inst));
     context()->AddFunction(std::move(input_func));
+    context()->AddDebug2Inst(
+        NewGlobalName(search_test_func_id_, "search_and_test"));
   }
   return search_test_func_id_;
 }

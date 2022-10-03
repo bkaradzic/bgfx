@@ -28,16 +28,16 @@ spv_result_t ValidateMemberName(ValidationState_t& _, const Instruction* inst) {
   const auto type = _.FindDef(type_id);
   if (!type || SpvOpTypeStruct != type->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpMemberName Type <id> '" << _.getIdName(type_id)
-           << "' is not a struct type.";
+           << "OpMemberName Type <id> " << _.getIdName(type_id)
+           << " is not a struct type.";
   }
   const auto member_id = inst->GetOperandAs<uint32_t>(1);
   const auto member_count = (uint32_t)(type->words().size() - 2);
   if (member_count <= member_id) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpMemberName Member <id> '" << _.getIdName(member_id)
-           << "' index is larger than Type <id> '" << _.getIdName(type->id())
-           << "'s member count.";
+           << "OpMemberName Member <id> " << _.getIdName(member_id)
+           << " index is larger than Type <id> " << _.getIdName(type->id())
+           << "s member count.";
   }
   return SPV_SUCCESS;
 }
@@ -47,8 +47,8 @@ spv_result_t ValidateLine(ValidationState_t& _, const Instruction* inst) {
   const auto file = _.FindDef(file_id);
   if (!file || SpvOpString != file->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpLine Target <id> '" << _.getIdName(file_id)
-           << "' is not an OpString.";
+           << "OpLine Target <id> " << _.getIdName(file_id)
+           << " is not an OpString.";
   }
   return SPV_SUCCESS;
 }

@@ -794,22 +794,25 @@ bool InlinePass::IsInlinableFunction(Function* func) {
     return false;
   }
 
-  // Do not inline functions with an OpKill if they are called from a continue
-  // construct. If it is inlined into a continue construct it will generate
-  // invalid code.
+  // Do not inline functions with an abort instruction if they are called from a
+  // continue construct. If it is inlined into a continue construct the backedge
+  // will no longer post-dominate the continue target, which is invalid.  An
+  // `OpUnreachable` is acceptable because it will not change post-dominance if
+  // it is statically unreachable.
   bool func_is_called_from_continue =
       funcs_called_from_continue_.count(func->result_id()) != 0;
 
-  if (func_is_called_from_continue && ContainsKillOrTerminateInvocation(func)) {
+  if (func_is_called_from_continue && ContainsAbortOtherThanUnreachable(func)) {
     return false;
   }
 
   return true;
 }
 
-bool InlinePass::ContainsKillOrTerminateInvocation(Function* func) const {
+bool InlinePass::ContainsAbortOtherThanUnreachable(Function* func) const {
   return !func->WhileEachInst([](Instruction* inst) {
-    return !spvOpcodeTerminatesExecution(inst->opcode());
+    return inst->opcode() == SpvOpUnreachable ||
+           !spvOpcodeIsAbort(inst->opcode());
   });
 }
 
