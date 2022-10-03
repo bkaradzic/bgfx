@@ -330,6 +330,10 @@ void ParsedIR::fixup_reserved_names()
 {
 	for (uint32_t id : meta_needing_name_fixup)
 	{
+		// Don't rename remapped variables like 'gl_LastFragDepthARM'.
+		if (ids[id].get_type() == TypeVariable && get<SPIRVariable>(id).remapped_variable)
+			continue;
+
 		auto &m = meta[id];
 		sanitize_identifier(m.decoration.alias, false, false);
 		for (auto &memb : m.members)
