@@ -163,7 +163,7 @@ jobs:
       - name: Build
         run: >
           cd bgfx
-          genie --with-examples --gcc=wasm gmake
+          ../bx/tools/bin/linux/genie --with-examples --gcc=wasm gmake
           docker run --rm -u $(id -u):$(id -g) -v $(pwd):/bgfx emscripten/emsdk
           make --no-print-directory -C .build/projects/gmake-wasm config=${{ matrix.config }} -j$(nproc) EMSCRIPTEN=/emsdk/upstream/emscripten
       - name: Check
