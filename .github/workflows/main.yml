@@ -162,8 +162,10 @@ jobs:
           docker run --rm emscripten/emsdk which emcc em++ emar
       - name: Build
         run: >
+          cd bgfx
+          genie --with-examples --gcc=wasm gmake
           docker run --rm -u $(id -u):$(id -g) -v $(pwd):/bgfx emscripten/emsdk
-          make -C /bgfx/bgfx -j$(nproc) wasm-${{ matrix.config }} EMSCRIPTEN=/emsdk/upstream/emscripten
+          make --no-print-directory -C .build/projects/gmake-wasm config=${{ matrix.config }} -j$(nproc) EMSCRIPTEN=/emsdk/upstream/emscripten
       - name: Check
         run: |
           cd bgfx
