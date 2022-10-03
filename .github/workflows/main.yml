@@ -106,7 +106,7 @@ jobs:
           { config: release, binsuffix: Release },
         ]
     name: linux-${{ matrix.config }}64
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout bgfx
         uses: actions/checkout@v3
@@ -140,7 +140,7 @@ jobs:
       matrix:
         config: [ debug, release]
     name: wasm-${{ matrix.config }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout bgfx
         uses: actions/checkout@v3
