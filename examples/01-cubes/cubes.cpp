@@ -43,6 +43,19 @@ static PosColorVertex s_cubeVertices[] =
 	{ 1.0f, -1.0f, -1.0f, 0xffffffff },
 };
 
+static PosColorVertex s_nullCubeVertices[] =
+{
+	{-1.0f,  1.0f,  1.0f, 0x00000000 },
+	{ 1.0f,  1.0f,  1.0f, 0x00000000 },
+	{-1.0f, -1.0f,  1.0f, 0x00000000 },
+	{ 1.0f, -1.0f,  1.0f, 0x00000000 },
+	{-1.0f,  1.0f, -1.0f, 0x00000000 },
+	{ 1.0f,  1.0f, -1.0f, 0x00000000 },
+	{-1.0f, -1.0f, -1.0f, 0x00000000 },
+	{ 1.0f, -1.0f, -1.0f, 0x00000000 },
+};
+
+
 static const uint16_t s_cubeTriList[] =
 {
 	0, 1, 2, // 0
@@ -170,6 +183,12 @@ public:
 
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
+			// Static data can be passed with bgfx::makeRef
+			  bgfx::makeRef(s_nullCubeVertices, sizeof(s_nullCubeVertices) )
+			, PosColorVertex::ms_layout
+			);
+			
+		m_tempVbh = bgfx::createVertexBuffer(
 			// Static data can be passed with bgfx::makeRef
 			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
 			, PosColorVertex::ms_layout
@@ -307,7 +326,16 @@ public:
 				| BGFX_STATE_MSAA
 				| s_ptState[m_pt]
 				;
-
+				
+			
+			
+			// Test copy
+			if (bgfx::getCaps()->supported & BGFX_CAPS_BUFFER_BLIT)
+			{
+				//bgfx::blit(0, m_vbh, m_tempVbh); // copy full buffer
+				bgfx::blit(0, m_vbh, m_tempVbh, 4, 4); // copy half buffer at halfway
+			}
+				
 			// Submit 11x11 cubes.
 			for (uint32_t yy = 0; yy < 11; ++yy)
 			{
@@ -351,6 +379,7 @@ public:
 	uint32_t m_debug;
 	uint32_t m_reset;
 	bgfx::VertexBufferHandle m_vbh;
+	bgfx::VertexBufferHandle m_tempVbh;
 	bgfx::IndexBufferHandle m_ibh[BX_COUNTOF(s_ptState)];
 	bgfx::ProgramHandle m_program;
 	int64_t m_timeOffset;

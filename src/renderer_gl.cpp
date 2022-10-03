@@ -2201,6 +2201,7 @@ namespace bgfx { namespace gl
 			, m_maxMsaa(0)
 			, m_vao(0)
 			, m_blitSupported(false)
+			, m_bufferBlitSupported(false)
 			, m_readBackSupported(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
 			, m_vaoSupport(false)
 			, m_samplerObjectSupport(false)
@@ -2850,6 +2851,10 @@ namespace bgfx { namespace gl
 					m_blitSupported = NULL != glCopyImageSubData;
 				}
 
+				m_bufferBlitSupported = NULL != glCopyBufferSubData;
+
+				g_caps.supported |= m_bufferBlitSupported ? BGFX_CAPS_BUFFER_BLIT : 0;
+				
 				g_caps.supported |= m_blitSupported || BX_ENABLED(BGFX_GL_CONFIG_BLIT_EMULATION)
 					? BGFX_CAPS_TEXTURE_BLIT
 					: 0
@@ -4756,6 +4761,7 @@ namespace bgfx { namespace gl
 		GLuint m_vao;
 		uint16_t m_maxLabelLen;
 		bool m_blitSupported;
+		bool m_bufferBlitSupported;
 		bool m_readBackSupported;
 		bool m_vaoSupport;
 		bool m_samplerObjectSupport;
@@ -7379,6 +7385,41 @@ namespace bgfx { namespace gl
 			while (_bs.hasItem(_view) )
 			{
 				const BlitItem& bi = _bs.advance();
+				
+				const TextureHandle nullHandle = BGFX_INVALID_HANDLE;
+				if (bi.m_src.idx == bi.m_dst.idx &&
+					bi.m_src.idx == nullHandle.idx &&
+					bi.m_depth == BGFX_BUFFER_BLIT_MAGIC)
+				{
+					if (!m_bufferBlitSupported)
+					{
+						continue;
+					}
+					
+					uint32_t readOffset  = (uint32_t(bi.m_dstY) << 16) | bi.m_dstZ;
+					uint32_t writeOffset = (uint32_t(bi.m_srcZ) << 16) | bi.m_dstX;
+					uint32_t count = (uint32_t(bi.m_srcX) << 16) | bi.m_srcY;
+									
+					if (bi.m_dstMip == BGFX_BUFFER_BLIT_VERTEX_BUFFER && bi.m_srcMip == BGFX_BUFFER_BLIT_VERTEX_BUFFER)
+					{
+						VertexBufferGL& srcBuff = m_vertexBuffers[bi.m_height];
+						VertexBufferGL& dstBuff = m_vertexBuffers[bi.m_width];
+						
+						BX_ASSERT ( isValid(srcBuff.m_layoutHandle), "Invalid vertex decl" );
+						BX_ASSERT ( isValid(dstBuff.m_layoutHandle), "Invalid vertex decl" );
+						
+						const VertexLayout& layout1 = m_vertexLayouts[srcBuff.m_layoutHandle.idx];
+						const VertexLayout& layout2 = m_vertexLayouts[srcBuff.m_layoutHandle.idx];
+						const uint64_t stride = layout1.getStride(); // force type promotion
+						
+						BX_ASSERT(stride == layout2.getStride(), "Src and Dst buffers have different strides");
+						
+						GL_CHECK( glBindBuffer(GL_COPY_READ_BUFFER, srcBuff.m_id) );
+						GL_CHECK( glBindBuffer(GL_COPY_WRITE_BUFFER, dstBuff.m_id) );
+						GL_CHECK( glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, readOffset*stride, writeOffset*stride, bx::min(srcBuff.m_size - readOffset*stride, count*stride)) );
+					}
+					continue;
+				}
 
 				const TextureGL& src = m_textures[bi.m_src.idx];
 				const TextureGL& dst = m_textures[bi.m_dst.idx];

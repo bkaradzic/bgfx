@@ -1734,6 +1734,27 @@ namespace bgfx
 			, uint16_t _height = UINT16_MAX
 			, uint16_t _depth = UINT16_MAX
 			);
+			
+		/// Blit between two buffers.
+		///
+		/// @param[in] _id View id.
+		/// @param[in] _dst Destination buffer handle.
+		/// @param[in] _src Destination buffer handle.
+		/// @param[in] _dstIndex Write index in the destination buffer of whatever is being blitted (for Vertex Buffers this is the vertex type, index buffers this is indices, etc)
+		/// @param[in] _srcIndex Read index in the source buffer
+		/// @param[in] _count Num elements to copy. Pass `UINT32_MAX` to copy to the end of the source buffer
+		///
+		/// @attention Availability depends on: `BGFX_CAPS_BUFFER_BLIT`.
+		///
+		void blit(
+			  ViewId _id
+			, VertexBufferHandle _dst
+			, VertexBufferHandle _src
+			, uint32_t _dstIndex
+			, uint32_t _srcIndex
+			, uint32_t _count = UINT32_MAX
+			);
+			
 	};
 
 	/// Vertex layout.
@@ -4209,6 +4230,27 @@ namespace bgfx
 		, uint16_t _depth = UINT16_MAX
 		);
 
+			
+	/// Blit between two buffers.
+	///
+	/// @param[in] _id View id.
+	/// @param[in] _dst Destination buffer handle.
+	/// @param[in] _src Destination buffer handle.
+	/// @param[in] _dstIndex Write index in the destination buffer of whatever is being blitted (for Vertex Buffers this is the vertex type, index buffers this is indices, etc)
+	/// @param[in] _srcIndex Read index in the source buffer
+	/// @param[in] _count Num elements to copy. Pass `UINT32_MAX` to copy to the end of the source buffer
+	///
+	/// @attention Availability depends on: `BGFX_CAPS_BUFFER_BLIT`.
+	///
+	void blit(
+		  ViewId _id
+		, VertexBufferHandle _dst
+		, VertexBufferHandle _src
+		, uint32_t _dstIndex
+		, uint32_t _srcIndex
+		, uint32_t _count = UINT32_MAX
+		);
+			
 	/// Request screen shot of window back buffer.
 	///
 	/// @param[in] _handle Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be

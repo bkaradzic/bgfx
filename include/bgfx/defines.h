@@ -492,6 +492,7 @@
 #define BGFX_CAPS_VERTEX_ID                       UINT64_C(0x0000000008000000) //!< Rendering with VertexID only is supported.
 #define BGFX_CAPS_VIEWPORT_LAYER_ARRAY            UINT64_C(0x0000000010000000) //!< Viewport layer is available in vertex shader.
 #define BGFX_CAPS_DRAW_INDIRECT_COUNT             UINT64_C(0x0000000020000000) //!< Draw indirect with indirect count is supported.
+#define BGFX_CAPS_BUFFER_BLIT                     UINT64_C(0x0000000040000000) //!< Buffer blit is supported.
 /// All texture compare modes are supported.
 #define BGFX_CAPS_TEXTURE_COMPARE_ALL (0 \
 	| BGFX_CAPS_TEXTURE_COMPARE_RESERVED \
@@ -618,4 +619,13 @@
 #define BGFX_STATE_BLEND_FUNC_RT_3E(_src, _dst, _equation) (BGFX_STATE_BLEND_FUNC_RT_xE(_src, _dst, _equation)<<22)
 
 
+/// Used for packing buffer blit instructions into texture blit objects
+#define BGFX_BUFFER_BLIT_VERTEX_BUFFER          UINT8_C(0xFF)
+#define BGFX_BUFFER_BLIT_DYNAMIC_VERTEX_BUFFER  UINT8_C(0xFE)
+#define BGFX_BUFFER_BLIT_INDEX_BUFFER           UINT8_C(0xFD)
+#define BGFX_BUFFER_BLIT_DYNAMIC_INDEX_BUFFER   UINT8_C(0xFC)
+#define BGFX_BUFFER_BLIT_MIN                    UINT8_C(0xFB)
+
+#define BGFX_BUFFER_BLIT_MAGIC                  UINT16_C(0xFFFF)
+	
 #endif // BGFX_DEFINES_H_HEADER_GUARD
