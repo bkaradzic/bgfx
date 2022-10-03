@@ -170,3 +170,39 @@ jobs:
         run: |
           cd bgfx
           ls -lash ".build/wasm/bin"
+  osx:
+    strategy:
+      fail-fast: true
+      matrix:
+        include: [
+          { config: debug, binsuffix: Debug },
+          { config: release, binsuffix: Release },
+        ]
+    name: osx-x64-${{ matrix.config }}
+    runs-on: macos-latest
+    steps:
+      - name: Checkout bgfx
+        uses: actions/checkout@v3
+        with:
+          path: bgfx
+      - name: Checkout bx
+        uses: actions/checkout@v3
+        with:
+          repository: bkaradzic/bx
+          path: bx
+      - name: Checkout bimg
+        uses: actions/checkout@v3
+        with:
+          repository: bkaradzic/bimg
+          path: bimg
+      - name: Build
+        run: |
+          cd bgfx
+          make -j$(sysctl -n hw.physicalcpu) osx-x64-${{ matrix.config }}
+      - name: Check
+        run: |
+          cd bgfx
+          ls -lash ".build/osx-x64/bin"
+          ".build/osx-x64/bin/geometryc${{ matrix.binsuffix}}" --version
+          ".build/osx-x64/bin/shaderc${{ matrix.binsuffix}}" --version
+          ".build/osx-x64/bin/texturec${{ matrix.binsuffix}}" --version
