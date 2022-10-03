@@ -113,6 +113,8 @@ bool SpvToolsDisassembler = false;
 bool SpvToolsValidate = false;
 bool NaNClamp = false;
 bool stripDebugInfo = false;
+bool emitNonSemanticShaderDebugInfo = false;
+bool emitNonSemanticShaderDebugSource = false;
 bool beQuiet = false;
 bool VulkanRulesRelaxed = false;
 bool autoSampledTextures = false;
@@ -293,8 +295,8 @@ const char* GetBinaryName(EShLanguage stage)
         case EShLangClosestHit:      name = "rchit.spv";   break;
         case EShLangMiss:            name = "rmiss.spv";   break;
         case EShLangCallable:        name = "rcall.spv";   break;
-        case EShLangMeshNV:          name = "mesh.spv";    break;
-        case EShLangTaskNV:          name = "task.spv";    break;
+        case EShLangMesh :           name = "mesh.spv";    break;
+        case EShLangTask :           name = "task.spv";    break;
         default:                     name = "unknown";     break;
         }
     } else
@@ -969,11 +971,21 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
             case 'g':
                 // Override previous -g or -g0 argument
                 stripDebugInfo = false;
+                emitNonSemanticShaderDebugInfo = false;
                 Options &= ~EOptionDebug;
                 if (argv[0][2] == '0')
                     stripDebugInfo = true;
-                else
+                else {
                     Options |= EOptionDebug;
+                    if (argv[0][2] == 'V') {
+                        emitNonSemanticShaderDebugInfo = true;
+                        if (argv[0][3] == 'S') {
+                            emitNonSemanticShaderDebugSource = true;
+                        } else {
+                            emitNonSemanticShaderDebugSource = false;
+                        }
+                    }
+                }
                 break;
             case 'h':
                 usage();
@@ -1379,6 +1391,9 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         if (EnhancedMsgs)
             shader->setEnhancedMsgs();
 
+        if (emitNonSemanticShaderDebugInfo)
+            shader->setDebugInfo(true);
+
         // Set up the environment, some subsettings take precedence over earlier
         // ways of setting things.
         if (Options & EOptionSpv) {
@@ -1470,9 +1485,15 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                     std::vector<unsigned int> spirv;
                     spv::SpvBuildLogger logger;
                     glslang::SpvOptions spvOptions;
-                    if (Options & EOptionDebug)
+                    if (Options & EOptionDebug) {
                         spvOptions.generateDebugInfo = true;
-                    else if (stripDebugInfo)
+                        if (emitNonSemanticShaderDebugInfo) {
+                            spvOptions.emitNonSemanticShaderDebugInfo = true;
+                            if (emitNonSemanticShaderDebugSource) {
+                                spvOptions.emitNonSemanticShaderDebugSource = true;
+                            }
+                        }
+                    } else if (stripDebugInfo)
                         spvOptions.stripDebugInfo = true;
                     spvOptions.disableOptimizer = (Options & EOptionOptimizeDisable) != 0;
                     spvOptions.optimizeSize = (Options & EOptionOptimizeSize) != 0;
@@ -1780,9 +1801,9 @@ EShLanguage FindLanguage(const std::string& name, bool parseStageName)
     else if (stageName == "rcall")
         return EShLangCallable;
     else if (stageName == "mesh")
-        return EShLangMeshNV;
+        return EShLangMesh;
     else if (stageName == "task")
-        return EShLangTaskNV;
+        return EShLangTask;
 
     usage();
     return EShLangVertex;
@@ -1906,6 +1927,8 @@ void usage()
            "              SPV_GOOGLE_hlsl_functionality1 extension\n"
            "  -g          generate debug information\n"
            "  -g0         strip debug information\n"
+           "  -gV         generate nonsemantic shader debug information\n"
+           "  -gVS        generate nonsemantic shader debug information with source\n"
            "  -h          print this usage message\n"
            "  -i          intermediate tree (glslang AST) is printed out\n"
            "  -l          link all input files together to form a single module\n"

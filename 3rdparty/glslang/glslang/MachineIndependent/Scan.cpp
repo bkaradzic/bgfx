@@ -758,6 +758,8 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["perprimitiveNV"] =          PERPRIMITIVENV;
     (*KeywordMap)["perviewNV"] =               PERVIEWNV;
     (*KeywordMap)["taskNV"] =                  PERTASKNV;
+    (*KeywordMap)["perprimitiveEXT"] =         PERPRIMITIVEEXT;
+    (*KeywordMap)["taskPayloadSharedEXT"] =    TASKPAYLOADWORKGROUPEXT;
 
     (*KeywordMap)["fcoopmatNV"] =              FCOOPMATNV;
     (*KeywordMap)["icoopmatNV"] =              ICOOPMATNV;
@@ -1740,9 +1742,15 @@ int TScanContext::tokenizeIdentifier()
     case PERPRIMITIVENV:
     case PERVIEWNV:
     case PERTASKNV:
-        if ((!parseContext.isEsProfile() && parseContext.version >= 450) ||
-            (parseContext.isEsProfile() && parseContext.version >= 320) ||
+        if (parseContext.symbolTable.atBuiltInLevel() ||
             parseContext.extensionTurnedOn(E_GL_NV_mesh_shader))
+            return keyword;
+        return identifierOrType();
+
+    case PERPRIMITIVEEXT:
+    case TASKPAYLOADWORKGROUPEXT:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_EXT_mesh_shader))
             return keyword;
         return identifierOrType();
 

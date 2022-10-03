@@ -292,6 +292,7 @@ public:
         invertY(false),
         dxPositionW(false),
         enhancedMsgs(false),
+        debugInfo(false),
         useStorageBuffer(false),
         invariantAll(false),
         nanMinMaxClamp(false),
@@ -322,6 +323,7 @@ public:
         primitives(TQualifier::layoutNotSet),
         numTaskNVBlocks(0),
         layoutPrimitiveCulling(false),
+        numTaskEXTPayloads(0),
         autoMapBindings(false),
         autoMapLocations(false),
         flattenUniformArrays(false),
@@ -460,6 +462,12 @@ public:
     void setEntryPointMangledName(const char* ep) { entryPointMangledName = ep; }
     const std::string& getEntryPointName() const { return entryPointName; }
     const std::string& getEntryPointMangledName() const { return entryPointMangledName; }
+
+    void setDebugInfo(bool debuginfo)
+    {
+        debugInfo = debuginfo;
+    }
+    bool getDebugInfo() const { return debugInfo; }
 
     void setInvertY(bool invert)
     {
@@ -639,6 +647,7 @@ public:
     int getNumPushConstants() const { return 0; }
     void addShaderRecordCount() { }
     void addTaskNVCount() { }
+    void addTaskPayloadEXTCount() { }
     void setUseVulkanMemoryModel() { }
     bool usingVulkanMemoryModel() const { return false; }
     bool usingPhysicalStorageBuffer() const { return false; }
@@ -756,6 +765,7 @@ public:
     int getNumPushConstants() const { return numPushConstants; }
     void addShaderRecordCount() { ++numShaderRecordBlocks; }
     void addTaskNVCount() { ++numTaskNVBlocks; }
+    void addTaskPayloadEXTCount() { ++numTaskEXTPayloads; }
 
     bool setInvocations(int i)
     {
@@ -1109,6 +1119,7 @@ protected:
     bool invertY;
     bool dxPositionW;
     bool enhancedMsgs;
+    bool debugInfo;
     bool useStorageBuffer;
     bool invariantAll;
     bool nanMinMaxClamp;            // true if desiring min/max/clamp to favor non-NaN over NaN
@@ -1160,6 +1171,7 @@ protected:
     int primitives;
     int numTaskNVBlocks;
     bool layoutPrimitiveCulling;
+    int numTaskEXTPayloads;
 
     // Base shift values
     std::array<unsigned int, EResCount> shiftBinding;

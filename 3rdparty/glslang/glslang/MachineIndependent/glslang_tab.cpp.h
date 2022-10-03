@@ -506,7 +506,9 @@ extern int yydebug;
     PERPRIMITIVENV = 707,          /* PERPRIMITIVENV  */
     PERVIEWNV = 708,               /* PERVIEWNV  */
     PERTASKNV = 709,               /* PERTASKNV  */
-    PRECISE = 710                  /* PRECISE  */
+    PERPRIMITIVEEXT = 710,         /* PERPRIMITIVEEXT  */
+    TASKPAYLOADWORKGROUPEXT = 711, /* TASKPAYLOADWORKGROUPEXT  */
+    PRECISE = 712                  /* PRECISE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -554,7 +556,7 @@ union YYSTYPE
         glslang::TArraySizes* typeParameters;
     } interm;
 
-#line 558 "MachineIndependent/glslang_tab.cpp.h"
+#line 560 "MachineIndependent/glslang_tab.cpp.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
