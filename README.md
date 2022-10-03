@@ -518,6 +518,13 @@ https://www.pouet.net/prod.php?which=91906
 
 https://github.com/astrofra/demo-marine-melodies
 
+## Activeworlds
+
+[Activeworlds](https://www.activeworlds.com/) is an online VR platform with rich multimedia and presentation features. Create your own worlds or build in free community worlds, hold your own event / meeting or join inworld events!
+
+![Activeworlds-wallpaper](http://www.activeworlds.com/img/181107-213544_small_enkii.jpg)
+
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
