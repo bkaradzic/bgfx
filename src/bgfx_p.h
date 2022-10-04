@@ -788,7 +788,6 @@ namespace bgfx
 	{
 		BX_CLASS(CommandBuffer
 			, NO_COPY
-			, NO_ASSIGNMENT
 			);
 
 	public:

@@ -391,13 +391,13 @@ bool InitializeSymbolTables(TInfoSink& infoSink, TSymbolTable** commonTable,  TS
     // check for mesh
     if ((profile != EEsProfile && version >= 450) ||
         (profile == EEsProfile && version >= 320))
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangMeshNV, source,
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangMesh, source,
                                    infoSink, commonTable, symbolTables);
 
     // check for task
     if ((profile != EEsProfile && version >= 450) ||
         (profile == EEsProfile && version >= 320))
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangTaskNV, source,
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangTask, source,
                                    infoSink, commonTable, symbolTables);
 #endif // !GLSLANG_ANGLE
 #endif // !GLSLANG_WEB
@@ -650,8 +650,8 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
             version = 460;
         }
         break;
-    case EShLangMeshNV:
-    case EShLangTaskNV:
+    case EShLangMesh:
+    case EShLangTask:
         if ((profile == EEsProfile && version < 320) ||
             (profile != EEsProfile && version < 450)) {
             correct = false;
@@ -1839,6 +1839,7 @@ void TShader::setOverrideVersion(int version)
     overrideVersion = version;
 }
 
+void TShader::setDebugInfo(bool debugInfo)              { intermediate->setDebugInfo(debugInfo); }
 void TShader::setInvertY(bool invert)                   { intermediate->setInvertY(invert); }
 void TShader::setDxPositionW(bool invert)               { intermediate->setDxPositionW(invert); }
 void TShader::setEnhancedMsgs()                         { intermediate->setEnhancedMsgs(); }

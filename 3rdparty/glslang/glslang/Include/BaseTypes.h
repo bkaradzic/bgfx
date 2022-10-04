@@ -105,6 +105,8 @@ enum TStorageQualifier {
     EvqCallableData,
     EvqCallableDataIn,
 
+    EvqtaskPayloadSharedEXT,
+
     // parameters
     EvqIn,            // also, for 'in' in the grammar before we know if it's a pipeline input or an 'in' parameter
     EvqOut,           // also, for 'out' in the grammar before we know if it's a pipeline output or an 'out' parameter
@@ -287,6 +289,11 @@ enum TBuiltInVariable {
     EbvLayerPerViewNV,
     EbvMeshViewCountNV,
     EbvMeshViewIndicesNV,
+    //GL_EXT_mesh_shader
+    EbvPrimitivePointIndicesEXT,
+    EbvPrimitiveLineIndicesEXT,
+    EbvPrimitiveTriangleIndicesEXT,
+    EbvCullPrimitiveEXT,
 
     // sm builtins
     EbvWarpsPerSM,
@@ -360,6 +367,7 @@ __inline const char* GetStorageQualifierString(TStorageQualifier q)
     case EvqHitAttr:        return "hitAttributeNV";   break;
     case EvqCallableData:   return "callableDataNV";   break;
     case EvqCallableDataIn: return "callableDataInNV"; break;
+    case EvqtaskPayloadSharedEXT: return "taskPayloadSharedEXT"; break;
     default:                return "unknown qualifier";
     }
 }
@@ -496,6 +504,11 @@ __inline const char* GetBuiltInVariableString(TBuiltInVariable v)
     case EbvLayerPerViewNV:             return "LayerPerViewNV";
     case EbvMeshViewCountNV:            return "MeshViewCountNV";
     case EbvMeshViewIndicesNV:          return "MeshViewIndicesNV";
+    // GL_EXT_mesh_shader
+    case EbvPrimitivePointIndicesEXT:    return "PrimitivePointIndicesEXT";
+    case EbvPrimitiveLineIndicesEXT:     return "PrimitiveLineIndicesEXT";
+    case EbvPrimitiveTriangleIndicesEXT: return "PrimitiveTriangleIndicesEXT";
+    case EbvCullPrimitiveEXT:            return "CullPrimitiveEXT";
 
     case EbvWarpsPerSM:                 return "WarpsPerSMNV";
     case EbvSMCount:                    return "SMCountNV";

@@ -94,8 +94,8 @@ class LocalAccessChainConvertPass : public MemPass {
   bool ReplaceAccessChainLoad(const Instruction* address_inst,
                               Instruction* original_load);
 
-  // Return true if all indices of access chain |acp| are OpConstant integers
-  // whose values can fit into an unsigned 32-bit value.
+  // Return true if all indices of the access chain |acp| are OpConstant
+  // integers whose signed values can be represented as unsigned 32-bit values.
   bool Is32BitConstantIndexAccessChain(const Instruction* acp) const;
 
   // Identify all function scope variables of target type which are

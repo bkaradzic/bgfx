@@ -97,6 +97,8 @@ const char* ExecutionModelString(int model)
     case 6:  return "Kernel";
     case ExecutionModelTaskNV: return "TaskNV";
     case ExecutionModelMeshNV: return "MeshNV";
+    case ExecutionModelTaskEXT: return "TaskEXT";
+    case ExecutionModelMeshEXT: return "MeshEXT";
 
     default: return "Bad";
 
@@ -242,7 +244,7 @@ const char* StorageClassString(int StorageClass)
     case StorageClassIncomingCallableDataKHR:  return "IncomingCallableDataKHR";
 
     case StorageClassPhysicalStorageBufferEXT: return "PhysicalStorageBufferEXT";
-
+    case StorageClassTaskPayloadWorkgroupEXT:  return "TaskPayloadWorkgroupEXT";
     default: return "Bad";
     }
 }
@@ -433,6 +435,10 @@ const char* BuiltInString(int builtIn)
     case BuiltInWarpIDNV:               return "WarpIDNV";
     case BuiltInSMIDNV:                 return "SMIDNV";
     case BuiltInCurrentRayTimeNV:       return "CurrentRayTimeNV";
+    case BuiltInPrimitivePointIndicesEXT:        return "PrimitivePointIndicesEXT";
+    case BuiltInPrimitiveLineIndicesEXT:         return "PrimitiveLineIndicesEXT";
+    case BuiltInPrimitiveTriangleIndicesEXT:     return "PrimitiveTriangleIndicesEXT";
+    case BuiltInCullPrimitiveEXT:                return "CullPrimitiveEXT";
 
     default: return "Bad";
     }
@@ -940,6 +946,7 @@ const char* CapabilityString(int info)
     case CapabilityFragmentBarycentricKHR:          return "FragmentBarycentricKHR";
     case CapabilityMeshShadingNV:                   return "MeshShadingNV";
     case CapabilityImageFootprintNV:                return "ImageFootprintNV";
+    case CapabilityMeshShadingEXT:                  return "MeshShadingEXT";
 //    case CapabilityShadingRateNV:                   return "ShadingRateNV";  // superseded by FragmentDensityEXT
     case CapabilitySampleMaskOverrideCoverageNV:    return "SampleMaskOverrideCoverageNV";
     case CapabilityFragmentDensityEXT:              return "FragmentDensityEXT";
@@ -1407,6 +1414,8 @@ const char* OpcodeString(int op)
     case OpGroupNonUniformPartitionNV:       return "OpGroupNonUniformPartitionNV";
     case OpImageSampleFootprintNV:           return "OpImageSampleFootprintNV";
     case OpWritePackedPrimitiveIndices4x8NV: return "OpWritePackedPrimitiveIndices4x8NV";
+    case OpEmitMeshTasksEXT:                 return "OpEmitMeshTasksEXT";
+    case OpSetMeshOutputsEXT:                return "OpSetMeshOutputsEXT";
 
     case OpTypeRayQueryKHR:                                                   return "OpTypeRayQueryKHR";
     case OpRayQueryInitializeKHR:                                             return "OpRayQueryInitializeKHR";
@@ -2980,6 +2989,17 @@ void Parameterize()
     
     InstructionDesc[OpWritePackedPrimitiveIndices4x8NV].operands.push(OperandId, "'Index Offset'");
     InstructionDesc[OpWritePackedPrimitiveIndices4x8NV].operands.push(OperandId, "'Packed Indices'");
+
+    InstructionDesc[OpEmitMeshTasksEXT].operands.push(OperandId, "'groupCountX'");
+    InstructionDesc[OpEmitMeshTasksEXT].operands.push(OperandId, "'groupCountY'");
+    InstructionDesc[OpEmitMeshTasksEXT].operands.push(OperandId, "'groupCountZ'");
+    InstructionDesc[OpEmitMeshTasksEXT].operands.push(OperandId, "'Payload'");
+    InstructionDesc[OpEmitMeshTasksEXT].setResultAndType(false, false);
+
+    InstructionDesc[OpSetMeshOutputsEXT].operands.push(OperandId, "'vertexCount'");
+    InstructionDesc[OpSetMeshOutputsEXT].operands.push(OperandId, "'primitiveCount'");
+    InstructionDesc[OpSetMeshOutputsEXT].setResultAndType(false, false);
+
 
     InstructionDesc[OpTypeCooperativeMatrixNV].operands.push(OperandId, "'Component Type'");
     InstructionDesc[OpTypeCooperativeMatrixNV].operands.push(OperandId, "'Scope'");

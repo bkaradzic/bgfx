@@ -106,7 +106,7 @@ jobs:
           { config: release, binsuffix: Release },
         ]
     name: linux-${{ matrix.config }}64
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout bgfx
         uses: actions/checkout@v3
@@ -140,7 +140,7 @@ jobs:
       matrix:
         config: [ debug, release]
     name: wasm-${{ matrix.config }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout bgfx
         uses: actions/checkout@v3
@@ -160,11 +160,49 @@ jobs:
         run: |
           docker pull emscripten/emsdk
           docker run --rm emscripten/emsdk which emcc em++ emar
+          cd bgfx
+          EMSCRIPTEN=/emsdk/upstream/emscripten ../bx/tools/bin/linux/genie --with-examples --gcc=wasm gmake
       - name: Build
         run: >
           docker run --rm -u $(id -u):$(id -g) -v $(pwd):/bgfx emscripten/emsdk
-          make -C /bgfx/bgfx -j$(nproc) wasm-${{ matrix.config }} EMSCRIPTEN=/emsdk/upstream/emscripten
+          make -C /bgfx/bgfx wasm-${{ matrix.config }} -j$(nproc) EMSCRIPTEN=/emsdk/upstream/emscripten
       - name: Check
         run: |
           cd bgfx
           ls -lash ".build/wasm/bin"
+  osx:
+    strategy:
+      fail-fast: true
+      matrix:
+        include: [
+          { config: debug, binsuffix: Debug },
+          { config: release, binsuffix: Release },
+        ]
+    name: osx-x64-${{ matrix.config }}
+    runs-on: macos-latest
+    steps:
+      - name: Checkout bgfx
+        uses: actions/checkout@v3
+        with:
+          path: bgfx
+      - name: Checkout bx
+        uses: actions/checkout@v3
+        with:
+          repository: bkaradzic/bx
+          path: bx
+      - name: Checkout bimg
+        uses: actions/checkout@v3
+        with:
+          repository: bkaradzic/bimg
+          path: bimg
+      - name: Build
+        run: |
+          cd bgfx
+          make -j$(sysctl -n hw.physicalcpu) osx-x64-${{ matrix.config }}
+      - name: Check
+        run: |
+          cd bgfx
+          ls -lash ".build/osx-x64/bin"
+          ".build/osx-x64/bin/geometryc${{ matrix.binsuffix}}" --version
+          ".build/osx-x64/bin/shaderc${{ matrix.binsuffix}}" --version
+          ".build/osx-x64/bin/texturec${{ matrix.binsuffix}}" --version

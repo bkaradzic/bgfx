@@ -338,23 +338,25 @@ void AggressiveDCEPass::ProcessWorkList(Function* func) {
   }
 }
 
+void AggressiveDCEPass::AddDebugScopeToWorkList(const Instruction* inst) {
+  auto scope = inst->GetDebugScope();
+  auto lex_scope_id = scope.GetLexicalScope();
+  if (lex_scope_id != kNoDebugScope)
+    AddToWorklist(get_def_use_mgr()->GetDef(lex_scope_id));
+  auto inlined_at_id = scope.GetInlinedAt();
+  if (inlined_at_id != kNoInlinedAt)
+    AddToWorklist(get_def_use_mgr()->GetDef(inlined_at_id));
+}
+
 void AggressiveDCEPass::AddDebugInstructionsToWorkList(
     const Instruction* inst) {
   for (auto& line_inst : inst->dbg_line_insts()) {
     if (line_inst.IsDebugLineInst()) {
       AddOperandsToWorkList(&line_inst);
     }
+    AddDebugScopeToWorkList(&line_inst);
   }
-
-  if (inst->GetDebugScope().GetLexicalScope() != kNoDebugScope) {
-    auto* scope =
-        get_def_use_mgr()->GetDef(inst->GetDebugScope().GetLexicalScope());
-    AddToWorklist(scope);
-  }
-  if (inst->GetDebugInlinedAt() != kNoInlinedAt) {
-    auto* inlined_at = get_def_use_mgr()->GetDef(inst->GetDebugInlinedAt());
-    AddToWorklist(inlined_at);
-  }
+  AddDebugScopeToWorkList(inst);
 }
 
 void AggressiveDCEPass::AddDecorationsToWorkList(const Instruction* inst) {
@@ -629,6 +631,16 @@ void AggressiveDCEPass::InitializeModuleScopeLiveInstructions() {
   if (debug_global_seen) {
     auto dbg_none = context()->get_debug_info_mgr()->GetDebugInfoNone();
     AddToWorklist(dbg_none);
+  }
+
+  // Add top level DebugInfo to worklist
+  for (auto& dbg : get_module()->ext_inst_debuginfo()) {
+    auto op = dbg.GetShader100DebugOpcode();
+    if (op == NonSemanticShaderDebugInfo100DebugCompilationUnit ||
+        op == NonSemanticShaderDebugInfo100DebugEntryPoint ||
+        op == NonSemanticShaderDebugInfo100DebugSourceContinued) {
+      AddToWorklist(&dbg);
+    }
   }
 }
 

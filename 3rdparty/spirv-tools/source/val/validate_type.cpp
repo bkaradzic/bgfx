@@ -152,8 +152,8 @@ spv_result_t ValidateTypeVector(ValidationState_t& _, const Instruction* inst) {
   const auto component_type = _.FindDef(component_id);
   if (!component_type || !spvOpcodeIsScalarType(component_type->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeVector Component Type <id> '" << _.getIdName(component_id)
-           << "' is not a scalar type.";
+           << "OpTypeVector Component Type <id> " << _.getIdName(component_id)
+           << " is not a scalar type.";
   }
 
   // Validates that the number of components in the vector is valid.
@@ -215,21 +215,21 @@ spv_result_t ValidateTypeArray(ValidationState_t& _, const Instruction* inst) {
   const auto element_type = _.FindDef(element_type_id);
   if (!element_type || !spvOpcodeGeneratesType(element_type->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeArray Element Type <id> '" << _.getIdName(element_type_id)
-           << "' is not a type.";
+           << "OpTypeArray Element Type <id> " << _.getIdName(element_type_id)
+           << " is not a type.";
   }
 
   if (element_type->opcode() == SpvOpTypeVoid) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeArray Element Type <id> '" << _.getIdName(element_type_id)
-           << "' is a void type.";
+           << "OpTypeArray Element Type <id> " << _.getIdName(element_type_id)
+           << " is a void type.";
   }
 
   if (spvIsVulkanEnv(_.context()->target_env) &&
       element_type->opcode() == SpvOpTypeRuntimeArray) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << _.VkErrorID(4680) << "OpTypeArray Element Type <id> '"
-           << _.getIdName(element_type_id) << "' is not valid in "
+           << _.VkErrorID(4680) << "OpTypeArray Element Type <id> "
+           << _.getIdName(element_type_id) << " is not valid in "
            << spvLogStringForEnv(_.context()->target_env) << " environments.";
   }
 
@@ -238,8 +238,8 @@ spv_result_t ValidateTypeArray(ValidationState_t& _, const Instruction* inst) {
   const auto length = _.FindDef(length_id);
   if (!length || !spvOpcodeIsConstant(length->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeArray Length <id> '" << _.getIdName(length_id)
-           << "' is not a scalar constant type.";
+           << "OpTypeArray Length <id> " << _.getIdName(length_id)
+           << " is not a scalar constant type.";
   }
 
   // NOTE: Check the initialiser value of the constant
@@ -248,8 +248,8 @@ spv_result_t ValidateTypeArray(ValidationState_t& _, const Instruction* inst) {
   const auto const_result_type = _.FindDef(const_inst[const_result_type_index]);
   if (!const_result_type || SpvOpTypeInt != const_result_type->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeArray Length <id> '" << _.getIdName(length_id)
-           << "' is not a constant integer type.";
+           << "OpTypeArray Length <id> " << _.getIdName(length_id)
+           << " is not a constant integer type.";
   }
 
   switch (length->opcode()) {
@@ -261,14 +261,14 @@ spv_result_t ValidateTypeArray(ValidationState_t& _, const Instruction* inst) {
       const int64_t ivalue = ConstantLiteralAsInt64(width, length->words());
       if (ivalue == 0 || (ivalue < 0 && is_signed)) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
-               << "OpTypeArray Length <id> '" << _.getIdName(length_id)
-               << "' default value must be at least 1: found " << ivalue;
+               << "OpTypeArray Length <id> " << _.getIdName(length_id)
+               << " default value must be at least 1: found " << ivalue;
       }
     } break;
     case SpvOpConstantNull:
       return _.diag(SPV_ERROR_INVALID_ID, inst)
-             << "OpTypeArray Length <id> '" << _.getIdName(length_id)
-             << "' default value must be at least 1.";
+             << "OpTypeArray Length <id> " << _.getIdName(length_id)
+             << " default value must be at least 1.";
     case SpvOpSpecConstantOp:
       // Assume it's OK, rather than try to evaluate the operation.
       break;
@@ -285,21 +285,21 @@ spv_result_t ValidateTypeRuntimeArray(ValidationState_t& _,
   const auto element_type = _.FindDef(element_id);
   if (!element_type || !spvOpcodeGeneratesType(element_type->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeRuntimeArray Element Type <id> '"
-           << _.getIdName(element_id) << "' is not a type.";
+           << "OpTypeRuntimeArray Element Type <id> " << _.getIdName(element_id)
+           << " is not a type.";
   }
 
   if (element_type->opcode() == SpvOpTypeVoid) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeRuntimeArray Element Type <id> '"
-           << _.getIdName(element_id) << "' is a void type.";
+           << "OpTypeRuntimeArray Element Type <id> " << _.getIdName(element_id)
+           << " is a void type.";
   }
 
   if (spvIsVulkanEnv(_.context()->target_env) &&
       element_type->opcode() == SpvOpTypeRuntimeArray) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << _.VkErrorID(4680) << "OpTypeRuntimeArray Element Type <id> '"
-           << _.getIdName(element_id) << "' is not valid in "
+           << _.VkErrorID(4680) << "OpTypeRuntimeArray Element Type <id> "
+           << _.getIdName(element_id) << " is not valid in "
            << spvLogStringForEnv(_.context()->target_env) << " environments.";
   }
 
@@ -319,8 +319,8 @@ spv_result_t ValidateTypeStruct(ValidationState_t& _, const Instruction* inst) {
     auto member_type = _.FindDef(member_type_id);
     if (!member_type || !spvOpcodeGeneratesType(member_type->opcode())) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
-             << "OpTypeStruct Member Type <id> '" << _.getIdName(member_type_id)
-             << "' is not a type.";
+             << "OpTypeStruct Member Type <id> " << _.getIdName(member_type_id)
+             << " is not a type.";
     }
     if (member_type->opcode() == SpvOpTypeVoid) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
@@ -426,8 +426,8 @@ spv_result_t ValidateTypePointer(ValidationState_t& _,
   auto type = _.FindDef(type_id);
   if (!type || !spvOpcodeGeneratesType(type->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypePointer Type <id> '" << _.getIdName(type_id)
-           << "' is not a type.";
+           << "OpTypePointer Type <id> " << _.getIdName(type_id)
+           << " is not a type.";
   }
   // See if this points to a storage image.
   const auto storage_class = inst->GetOperandAs<SpvStorageClass>(1);
@@ -461,8 +461,8 @@ spv_result_t ValidateTypeFunction(ValidationState_t& _,
   const auto return_type = _.FindDef(return_type_id);
   if (!return_type || !spvOpcodeGeneratesType(return_type->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeFunction Return Type <id> '" << _.getIdName(return_type_id)
-           << "' is not a type.";
+           << "OpTypeFunction Return Type <id> " << _.getIdName(return_type_id)
+           << " is not a type.";
   }
   size_t num_args = 0;
   for (size_t param_type_index = 2; param_type_index < inst->operands().size();
@@ -471,14 +471,14 @@ spv_result_t ValidateTypeFunction(ValidationState_t& _,
     const auto param_type = _.FindDef(param_id);
     if (!param_type || !spvOpcodeGeneratesType(param_type->opcode())) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
-             << "OpTypeFunction Parameter Type <id> '" << _.getIdName(param_id)
-             << "' is not a type.";
+             << "OpTypeFunction Parameter Type <id> " << _.getIdName(param_id)
+             << " is not a type.";
     }
 
     if (param_type->opcode() == SpvOpTypeVoid) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
-             << "OpTypeFunction Parameter Type <id> '" << _.getIdName(param_id)
-             << "' cannot be OpTypeVoid.";
+             << "OpTypeFunction Parameter Type <id> " << _.getIdName(param_id)
+             << " cannot be OpTypeVoid.";
     }
   }
   const uint32_t num_function_args_limit =
@@ -486,8 +486,8 @@ spv_result_t ValidateTypeFunction(ValidationState_t& _,
   if (num_args > num_function_args_limit) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpTypeFunction may not take more than "
-           << num_function_args_limit << " arguments. OpTypeFunction <id> '"
-           << _.getIdName(inst->GetOperandAs<uint32_t>(0)) << "' has "
+           << num_function_args_limit << " arguments. OpTypeFunction <id> "
+           << _.getIdName(inst->GetOperandAs<uint32_t>(0)) << " has "
            << num_args << " arguments.";
   }
 
@@ -550,9 +550,9 @@ spv_result_t ValidateTypeCooperativeMatrixNV(ValidationState_t& _,
   if (!component_type || (SpvOpTypeFloat != component_type->opcode() &&
                           SpvOpTypeInt != component_type->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeCooperativeMatrixNV Component Type <id> '"
+           << "OpTypeCooperativeMatrixNV Component Type <id> "
            << _.getIdName(component_type_id)
-           << "' is not a scalar numerical type.";
+           << " is not a scalar numerical type.";
   }
 
   const auto scope_index = 2;
@@ -561,8 +561,8 @@ spv_result_t ValidateTypeCooperativeMatrixNV(ValidationState_t& _,
   if (!scope || !_.IsIntScalarType(scope->type_id()) ||
       !spvOpcodeIsConstant(scope->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeCooperativeMatrixNV Scope <id> '" << _.getIdName(scope_id)
-           << "' is not a constant instruction with scalar integer type.";
+           << "OpTypeCooperativeMatrixNV Scope <id> " << _.getIdName(scope_id)
+           << " is not a constant instruction with scalar integer type.";
   }
 
   const auto rows_index = 3;
@@ -571,8 +571,8 @@ spv_result_t ValidateTypeCooperativeMatrixNV(ValidationState_t& _,
   if (!rows || !_.IsIntScalarType(rows->type_id()) ||
       !spvOpcodeIsConstant(rows->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeCooperativeMatrixNV Rows <id> '" << _.getIdName(rows_id)
-           << "' is not a constant instruction with scalar integer type.";
+           << "OpTypeCooperativeMatrixNV Rows <id> " << _.getIdName(rows_id)
+           << " is not a constant instruction with scalar integer type.";
   }
 
   const auto cols_index = 4;
@@ -581,8 +581,8 @@ spv_result_t ValidateTypeCooperativeMatrixNV(ValidationState_t& _,
   if (!cols || !_.IsIntScalarType(cols->type_id()) ||
       !spvOpcodeIsConstant(cols->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeCooperativeMatrixNV Cols <id> '" << _.getIdName(cols_id)
-           << "' is not a constant instruction with scalar integer type.";
+           << "OpTypeCooperativeMatrixNV Cols <id> " << _.getIdName(cols_id)
+           << " is not a constant instruction with scalar integer type.";
   }
 
   return SPV_SUCCESS;

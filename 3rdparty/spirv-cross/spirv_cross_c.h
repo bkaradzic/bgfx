@@ -290,23 +290,29 @@ typedef enum spvc_msl_index_type
 } spvc_msl_index_type;
 
 /* Maps to C++ API. */
-typedef enum spvc_msl_shader_input_format
+typedef enum spvc_msl_shader_variable_format
 {
-	SPVC_MSL_SHADER_INPUT_FORMAT_OTHER = 0,
-	SPVC_MSL_SHADER_INPUT_FORMAT_UINT8 = 1,
-	SPVC_MSL_SHADER_INPUT_FORMAT_UINT16 = 2,
-	SPVC_MSL_SHADER_INPUT_FORMAT_ANY16 = 3,
-	SPVC_MSL_SHADER_INPUT_FORMAT_ANY32 = 4,
+	SPVC_MSL_SHADER_VARIABLE_FORMAT_OTHER = 0,
+	SPVC_MSL_SHADER_VARIABLE_FORMAT_UINT8 = 1,
+	SPVC_MSL_SHADER_VARIABLE_FORMAT_UINT16 = 2,
+	SPVC_MSL_SHADER_VARIABLE_FORMAT_ANY16 = 3,
+	SPVC_MSL_SHADER_VARIABLE_FORMAT_ANY32 = 4,
 
 	/* Deprecated names. */
-	SPVC_MSL_VERTEX_FORMAT_OTHER = SPVC_MSL_SHADER_INPUT_FORMAT_OTHER,
-	SPVC_MSL_VERTEX_FORMAT_UINT8 = SPVC_MSL_SHADER_INPUT_FORMAT_UINT8,
-	SPVC_MSL_VERTEX_FORMAT_UINT16 = SPVC_MSL_SHADER_INPUT_FORMAT_UINT16,
+	SPVC_MSL_VERTEX_FORMAT_OTHER = SPVC_MSL_SHADER_VARIABLE_FORMAT_OTHER,
+	SPVC_MSL_VERTEX_FORMAT_UINT8 = SPVC_MSL_SHADER_VARIABLE_FORMAT_UINT8,
+	SPVC_MSL_VERTEX_FORMAT_UINT16 = SPVC_MSL_SHADER_VARIABLE_FORMAT_UINT16,
+	SPVC_MSL_SHADER_INPUT_FORMAT_OTHER = SPVC_MSL_SHADER_VARIABLE_FORMAT_OTHER,
+	SPVC_MSL_SHADER_INPUT_FORMAT_UINT8 = SPVC_MSL_SHADER_VARIABLE_FORMAT_UINT8,
+	SPVC_MSL_SHADER_INPUT_FORMAT_UINT16 = SPVC_MSL_SHADER_VARIABLE_FORMAT_UINT16,
+	SPVC_MSL_SHADER_INPUT_FORMAT_ANY16 = SPVC_MSL_SHADER_VARIABLE_FORMAT_ANY16,
+	SPVC_MSL_SHADER_INPUT_FORMAT_ANY32 = SPVC_MSL_SHADER_VARIABLE_FORMAT_ANY32,
+
 
 	SPVC_MSL_SHADER_INPUT_FORMAT_INT_MAX = 0x7fffffff
-} spvc_msl_shader_input_format, spvc_msl_vertex_format;
+} spvc_msl_shader_variable_format, spvc_msl_shader_input_format, spvc_msl_vertex_format;
 
-/* Maps to C++ API. Deprecated; use spvc_msl_shader_input. */
+/* Maps to C++ API. Deprecated; use spvc_msl_shader_interface_var. */
 typedef struct spvc_msl_vertex_attribute
 {
 	unsigned location;
@@ -330,16 +336,20 @@ typedef struct spvc_msl_vertex_attribute
 SPVC_PUBLIC_API void spvc_msl_vertex_attribute_init(spvc_msl_vertex_attribute *attr);
 
 /* Maps to C++ API. */
-typedef struct spvc_msl_shader_input
+typedef struct spvc_msl_shader_interface_var
 {
 	unsigned location;
 	spvc_msl_vertex_format format;
 	SpvBuiltIn builtin;
 	unsigned vecsize;
-} spvc_msl_shader_input;
+} spvc_msl_shader_interface_var, spvc_msl_shader_input;
 
 /*
  * Initializes the shader input struct.
+ */
+SPVC_PUBLIC_API void spvc_msl_shader_interface_var_init(spvc_msl_shader_interface_var *var);
+/*
+ * Deprecated. Use spvc_msl_shader_interface_var_init().
  */
 SPVC_PUBLIC_API void spvc_msl_shader_input_init(spvc_msl_shader_input *input);
 
@@ -786,13 +796,16 @@ SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_vertex_attribute(spvc_compiler
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_resource_binding(spvc_compiler compiler,
                                                                    const spvc_msl_resource_binding *binding);
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_shader_input(spvc_compiler compiler,
-                                                               const spvc_msl_shader_input *input);
+                                                               const spvc_msl_shader_interface_var *input);
+SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_shader_output(spvc_compiler compiler,
+                                                                const spvc_msl_shader_interface_var *output);
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_discrete_descriptor_set(spvc_compiler compiler, unsigned desc_set);
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_set_argument_buffer_device_address_space(spvc_compiler compiler, unsigned desc_set, spvc_bool device_address);
 
 /* Obsolete, use is_shader_input_used. */
 SPVC_PUBLIC_API spvc_bool spvc_compiler_msl_is_vertex_attribute_used(spvc_compiler compiler, unsigned location);
 SPVC_PUBLIC_API spvc_bool spvc_compiler_msl_is_shader_input_used(spvc_compiler compiler, unsigned location);
+SPVC_PUBLIC_API spvc_bool spvc_compiler_msl_is_shader_output_used(spvc_compiler compiler, unsigned location);
 
 SPVC_PUBLIC_API spvc_bool spvc_compiler_msl_is_resource_used(spvc_compiler compiler,
                                                              SpvExecutionModel model,
