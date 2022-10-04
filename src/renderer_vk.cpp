@@ -7942,10 +7942,16 @@ VK_DESTROY
 		{
 			uint16_t item = bs0.m_item;
 
-			const BlitItem& blit = bs0.advance();
-
-			TextureVK& src = m_textures[blit.m_src.idx];
-			TextureVK& dst = m_textures[blit.m_dst.idx];
+			const BlitItem& blitWrap = bs0.advance();
+			
+			if (blitWrap.isBufferBlit) {
+				BX_WARN(false, "buffer blit not supported!");
+				continue;
+				}
+			const TextureBlitItem& bi = blitWrap.blitData.textureBlitData;
+			
+			TextureVK& src = m_textures[bi.m_src.idx];
+			TextureVK& dst = m_textures[bi.m_dst.idx];
 
 			srcLayouts[item] = VK_NULL_HANDLE != src.m_singleMsaaImage ? src.m_currentSingleMsaaImageLayout : src.m_currentImageLayout;
 			dstLayouts[item] = dst.m_currentImageLayout;
@@ -7955,8 +7961,13 @@ VK_DESTROY
 
 		while (bs0.hasItem(_view) )
 		{
-			const BlitItem& blit = bs0.advance();
-
+			const BlitItem& blitWrap = bs0.advance();
+			if (blitWrap.isBufferBlit) 
+			{
+				continue;
+			}
+			const TextureBlitItem& blit = blitWrap.blitData.textureBlitData;
+				
 			TextureVK& src = m_textures[blit.m_src.idx];
 			TextureVK& dst = m_textures[blit.m_dst.idx];
 
@@ -8040,7 +8051,12 @@ VK_DESTROY
 		{
 			uint16_t item = _bs.m_item;
 
-			const BlitItem& blit = _bs.advance();
+			const BlitItem& blitWrap = bs0.advance();
+			if (blitWrap.isBufferBlit) 
+			{
+				continue;
+			}
+			const TextureBlitItem& blit = blitWrap.blitData.textureBlitData;
 
 			TextureVK& src = m_textures[blit.m_src.idx];
 			TextureVK& dst = m_textures[blit.m_dst.idx];

@@ -333,7 +333,7 @@ public:
 			if (bgfx::getCaps()->supported & BGFX_CAPS_BUFFER_BLIT)
 			{
 				//bgfx::blit(0, m_vbh, m_tempVbh); // copy full buffer
-				bgfx::blit(0, m_vbh, m_tempVbh, 4, 4); // copy half buffer at halfway
+				bgfx::blit(0, m_vbh, m_tempVbh, 4*sizeof(PosColorVertex), 4*sizeof(PosColorVertex)); // copy half buffer at halfway
 			}
 				
 			// Submit 11x11 cubes.

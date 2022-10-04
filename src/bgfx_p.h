@@ -1773,7 +1773,7 @@ namespace bgfx
 		RenderCompute compute;
 	};
 
-	BX_ALIGN_DECL_CACHE_LINE(struct) BlitItem
+	struct TextureBlitItem
 	{
 		uint16_t m_srcX;
 		uint16_t m_srcY;
@@ -1788,6 +1788,29 @@ namespace bgfx
 		uint8_t  m_dstMip;
 		TextureHandle m_src;
 		TextureHandle m_dst;
+	};
+	
+	struct BufferBlitItem
+	{
+		uint32_t m_srcPos;
+		uint32_t m_dstPos;
+		uint32_t m_count;
+		uint8_t m_srcHandleType;
+		uint8_t m_dstHandleType;
+		Handle m_src;
+		Handle m_dst;
+	};
+	
+	union BlitItemData
+	{
+		TextureBlitItem textureBlitData;
+		BufferBlitItem bufferBlitData;
+	};
+	
+	BX_ALIGN_DECL_CACHE_LINE(struct) BlitItem
+	{
+		BlitItemData blitData;
+		bool isBufferBlit;
 	};
 
 	struct IndexBuffer
@@ -2724,6 +2747,7 @@ namespace bgfx
 		}
 
 		void blit(ViewId _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth);
+		void blit(ViewId _id, Handle _dst, uint32_t _dstPos, uint8_t _dstHandleType, Handle _src, uint32_t _srcPos, uint8_t _srcHandleType, uint32_t _count);
 
 		Frame* m_frame;
 

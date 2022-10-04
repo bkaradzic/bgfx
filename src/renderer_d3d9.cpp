@@ -3704,7 +3704,13 @@ namespace bgfx { namespace d3d9
 	{
 		while (_bs.hasItem(_view) )
 		{
-			const BlitItem& blit = _bs.advance();
+			const BlitItem& blitWrap = _bs.advance();
+			if (blitWrap.isBufferBlit)
+			{
+				BX_WARN(false, "Buffer blit not supported by this backend");
+				continue;
+			}
+			const TextureBlitItem & blit = blitWrap.blitData.textureBlitData;
 
 			const TextureD3D9& src = m_textures[blit.m_src.idx];
 			const TextureD3D9& dst = m_textures[blit.m_dst.idx];

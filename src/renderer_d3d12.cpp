@@ -6063,7 +6063,13 @@ namespace bgfx { namespace d3d12
 
 		while (_bs.hasItem(_view) )
 		{
-			const BlitItem& blit = _bs.advance();
+			const BlitItem& blitWrap = _bs.advance();
+			if (blitWrap.isBufferBlit)
+			{
+				BX_WARN(false, "Buffer blit not supported by this backend");
+				continue;
+			}
+			const TextureBlitItem & blit = blitWrap.blitData.textureBlitData;
 
 			TextureD3D12& src = m_textures[blit.m_src.idx];
 			const TextureD3D12& dst = m_textures[blit.m_dst.idx];

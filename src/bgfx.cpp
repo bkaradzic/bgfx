@@ -1371,6 +1371,36 @@ namespace bgfx
 		m_uniformBegin = m_uniformEnd;
 	}
 
+	void EncoderImpl::blit(ViewId _id, Handle _dst, uint32_t _dstPos, uint8_t _dstHandleType, Handle _src, uint32_t _srcPos, uint8_t _srcHandleType, uint32_t _count)
+	{
+		BX_WARN(m_frame->m_numBlitItems < BGFX_CONFIG_MAX_BLIT_ITEMS
+			, "Exceed number of available blit items per frame. BGFX_CONFIG_MAX_BLIT_ITEMS is %d. Skipping blit."
+			, BGFX_CONFIG_MAX_BLIT_ITEMS
+			);
+		if (m_frame->m_numBlitItems < BGFX_CONFIG_MAX_BLIT_ITEMS)
+		{
+			uint16_t item = m_frame->m_numBlitItems++;
+
+			BlitItem& bii = m_frame->m_blitItem[item];
+			BufferBlitItem& bi = bii.blitData.bufferBlitData;
+
+			bi.m_srcPos = _srcPos;
+			bi.m_dstPos = _dstPos;
+			bi.m_count = _count;
+			bi.m_srcHandleType = _srcHandleType;
+			bi.m_dstHandleType = _dstHandleType;
+			bi.m_src = _src;
+			bi.m_dst = _dst;
+		
+			bii.isBufferBlit = true;
+
+			BlitKey key;
+			key.m_view = _id;
+			key.m_item = item;
+			m_frame->m_blitKeys[item] = key.encode();
+		}
+	}
+	
 	void EncoderImpl::blit(ViewId _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
 		BX_WARN(m_frame->m_numBlitItems < BGFX_CONFIG_MAX_BLIT_ITEMS
@@ -1381,7 +1411,8 @@ namespace bgfx
 		{
 			uint16_t item = m_frame->m_numBlitItems++;
 
-			BlitItem& bi = m_frame->m_blitItem[item];
+			BlitItem& bii = m_frame->m_blitItem[item];
+			TextureBlitItem& bi = bii.blitData.textureBlitData;
 			bi.m_srcX    = _srcX;
 			bi.m_srcY    = _srcY;
 			bi.m_srcZ    = _srcZ;
@@ -1395,6 +1426,7 @@ namespace bgfx
 			bi.m_dstMip  = _dstMip;
 			bi.m_src     = _src;
 			bi.m_dst     = _dst;
+			bii.isBufferBlit = false;
 
 			BlitKey key;
 			key.m_view = _id;
@@ -4017,29 +4049,9 @@ namespace bgfx
 		BGFX_ENCODER(blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, width, height, depth) );
 	}
 
-
-	BlitItem buffer_blit_worker(uint16_t _dstIdx, uint16_t _srcIdx, uint8_t srcType, uint8_t dstType, uint32_t _dstIndex, uint32_t _srcIndex, uint32_t _count)
-	{
-		BlitItem bi;
-		bi.m_srcX    = uint16_t(_count >> 16);
-		bi.m_srcY    = uint16_t(_count & uint16_t(-1));
-		bi.m_srcZ    = uint16_t(_dstIndex >> 16);
-		bi.m_dstX    = uint16_t(_dstIndex & uint16_t(-1));
-		bi.m_dstY    = uint16_t(_srcIndex >> 16);
-		bi.m_dstZ    = uint16_t(_srcIndex & uint16_t(-1));
-		bi.m_width   = _dstIdx;
-		bi.m_height  = _srcIdx;
-		bi.m_depth   = BGFX_BUFFER_BLIT_MAGIC;
-		bi.m_srcMip  = srcType;
-		bi.m_dstMip  = dstType;
-		return bi;
-	}
-		
-	
 	void Encoder::blit(ViewId _id, VertexBufferHandle _dst, VertexBufferHandle _src, uint32_t _dstIndex, uint32_t _srcIndex, uint32_t _count)
 	{
-		BlitItem bi = buffer_blit_worker(_dst.idx, _src.idx, BGFX_BUFFER_BLIT_VERTEX_BUFFER, BGFX_BUFFER_BLIT_VERTEX_BUFFER, _dstIndex, _srcIndex, _count);
-		BGFX_ENCODER(blit(_id, BGFX_INVALID_HANDLE, bi.m_dstMip, bi.m_dstX, bi.m_dstY, bi.m_dstZ, BGFX_INVALID_HANDLE, bi.m_srcMip, bi.m_srcX, bi.m_srcY, bi.m_srcZ, bi.m_width, bi.m_height, bi.m_depth) );
+		BGFX_ENCODER( blit(_id, convert(_dst), _dstIndex, BGFX_BUFFER_BLIT_VERTEX_BUFFER, convert(_src), _srcIndex, BGFX_BUFFER_BLIT_VERTEX_BUFFER, _count) );
 	}
 
 #undef BGFX_ENCODER

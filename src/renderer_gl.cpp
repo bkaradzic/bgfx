@@ -7384,43 +7384,59 @@ namespace bgfx { namespace gl
 		{
 			while (_bs.hasItem(_view) )
 			{
-				const BlitItem& bi = _bs.advance();
+				const BlitItem& blitWrap = _bs.advance();
 				
-				const TextureHandle nullHandle = BGFX_INVALID_HANDLE;
-				if (bi.m_src.idx == bi.m_dst.idx &&
-					bi.m_src.idx == nullHandle.idx &&
-					bi.m_depth == BGFX_BUFFER_BLIT_MAGIC)
+				if (blitWrap.isBufferBlit)
 				{
+					const BufferBlitItem& bi = blitWrap.blitData.bufferBlitData;
 					if (!m_bufferBlitSupported)
 					{
+						BX_WARN(false, "buffer blit not supported!");
 						continue;
 					}
 					
-					uint32_t readOffset  = (uint32_t(bi.m_dstY) << 16) | bi.m_dstZ;
-					uint32_t writeOffset = (uint32_t(bi.m_srcZ) << 16) | bi.m_dstX;
-					uint32_t count = (uint32_t(bi.m_srcX) << 16) | bi.m_srcY;
-									
-					if (bi.m_dstMip == BGFX_BUFFER_BLIT_VERTEX_BUFFER && bi.m_srcMip == BGFX_BUFFER_BLIT_VERTEX_BUFFER)
+					GLuint srcBuffGl = 0;
+					GLuint dstBuffGl = 0;
+					uint32_t maxSize = UINT32_MAX;
+		
+					// decode src/dst buffer types
+					if (bi.m_srcHandleType == BGFX_BUFFER_BLIT_VERTEX_BUFFER)
 					{
-						VertexBufferGL& srcBuff = m_vertexBuffers[bi.m_height];
-						VertexBufferGL& dstBuff = m_vertexBuffers[bi.m_width];
+						srcBuffGl = m_vertexBuffers[bi.m_src.idx].m_id;
+						VertexBufferGL& srcBuff = m_vertexBuffers[bi.m_src.idx];
+						maxSize = srcBuff.m_size;
+					}
 						
-						BX_ASSERT ( isValid(srcBuff.m_layoutHandle), "Invalid vertex decl" );
-						BX_ASSERT ( isValid(dstBuff.m_layoutHandle), "Invalid vertex decl" );
+					if (bi.m_dstHandleType == BGFX_BUFFER_BLIT_VERTEX_BUFFER)
+					{
+						dstBuffGl = m_vertexBuffers[bi.m_dst.idx].m_id;
+					}
 						
-						const VertexLayout& layout1 = m_vertexLayouts[srcBuff.m_layoutHandle.idx];
-						const VertexLayout& layout2 = m_vertexLayouts[srcBuff.m_layoutHandle.idx];
-						const uint64_t stride = layout1.getStride(); // force type promotion
+					if (srcBuffGl && dstBuffGl)
+					{
 						
-						BX_ASSERT(stride == layout2.getStride(), "Src and Dst buffers have different strides");
+					//	If we're copying by *bytes* then stride sizes don't matter
+					//
+					//	VertexBufferGL& srcBuff = m_vertexBuffers[bi.m_src.idx];
+					//	VertexBufferGL& dstBuff = m_vertexBuffers[bi.m_dst.idx];
+					//
+					//	BX_ASSERT ( isValid(srcBuff.m_layoutHandle), "Invalid vertex decl" );
+					//	BX_ASSERT ( isValid(dstBuff.m_layoutHandle), "Invalid vertex decl" );
+					//
+					//	const VertexLayout& layout1 = m_vertexLayouts[srcBuff.m_layoutHandle.idx];
+					//	const VertexLayout& layout2 = m_vertexLayouts[dstBuff.m_layoutHandle.idx];
+					//	const uint64_t stride = layout1.getStride(); // force type promotion
+					//	
+					//	BX_ASSERT(stride == layout2.getStride(), "Src and Dst buffers have different strides");
 						
-						GL_CHECK( glBindBuffer(GL_COPY_READ_BUFFER, srcBuff.m_id) );
-						GL_CHECK( glBindBuffer(GL_COPY_WRITE_BUFFER, dstBuff.m_id) );
-						GL_CHECK( glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, readOffset*stride, writeOffset*stride, bx::min(srcBuff.m_size - readOffset*stride, count*stride)) );
+						GL_CHECK( glBindBuffer(GL_COPY_READ_BUFFER, srcBuffGl) );
+						GL_CHECK( glBindBuffer(GL_COPY_WRITE_BUFFER, dstBuffGl) );
+						GL_CHECK( glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, bi.m_srcPos, bi.m_dstPos, bx::min(maxSize - bi.m_srcPos, bi.m_count)) );
 					}
 					continue;
 				}
-
+				const TextureBlitItem& bi = blitWrap.blitData.textureBlitData;
+				
 				const TextureGL& src = m_textures[bi.m_src.idx];
 				const TextureGL& dst = m_textures[bi.m_dst.idx];
 
@@ -7446,7 +7462,15 @@ namespace bgfx { namespace gl
 		{
 			while (_bs.hasItem(_view) )
 			{
-				const BlitItem& bi = _bs.advance();
+				const BlitItem& blitWrap = _bs.advance();
+				
+				if (blitWrap.isBufferBlit)
+				{
+					BX_WARN(false, "buffer blit not supported!");
+					continue;
+				}
+				const TextureBlitItem& bi = blitWrap.blitData.textureBlitData;
+				
 
 				const TextureGL& src = m_textures[bi.m_src.idx];
 				const TextureGL& dst = m_textures[bi.m_dst.idx];
