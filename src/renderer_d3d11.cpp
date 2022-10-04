@@ -2929,10 +2929,10 @@ namespace bgfx { namespace d3d11
 		{
 			_state &= 0
 				| BGFX_STATE_CULL_MASK
+				| BGFX_STATE_FRONT_CCW
 				| BGFX_STATE_MSAA
 				| BGFX_STATE_LINEAA
 				| BGFX_STATE_CONSERVATIVE_RASTER
-				| BGFX_STATE_FRONT_CCW
 				;
 			_state |= _wireframe ? BGFX_STATE_PT_LINES : BGFX_STATE_NONE;
 			_state |= _scissor   ? BGFX_STATE_RESERVED_MASK : 0;
@@ -6090,6 +6090,7 @@ namespace bgfx { namespace d3d11
 
 				if ( (0
 					 | BGFX_STATE_CULL_MASK
+					 | BGFX_STATE_FRONT_CCW
 					 | BGFX_STATE_ALPHA_REF_MASK
 					 | BGFX_STATE_PT_MASK
 					 | BGFX_STATE_POINT_SIZE_MASK
@@ -6100,6 +6101,7 @@ namespace bgfx { namespace d3d11
 				{
 					if ( (0
 						 | BGFX_STATE_CULL_MASK
+						 | BGFX_STATE_FRONT_CCW
 						 | BGFX_STATE_MSAA
 						 | BGFX_STATE_LINEAA
 						 | BGFX_STATE_CONSERVATIVE_RASTER

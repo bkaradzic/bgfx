@@ -4023,6 +4023,7 @@ namespace bgfx { namespace d3d9
 
 				if ( (0
 					 | BGFX_STATE_CULL_MASK
+//					 | BGFX_STATE_FRONT_CCW
 					 | BGFX_STATE_WRITE_Z
 					 | BGFX_STATE_DEPTH_TEST_MASK
 					 | BGFX_STATE_WRITE_RGB
