@@ -4515,9 +4515,9 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 				if ( (0
 					 | BGFX_STATE_CULL_MASK
+					 | BGFX_STATE_FRONT_CCW
 					 | BGFX_STATE_ALPHA_REF_MASK
 					 | BGFX_STATE_PT_MASK
-					 | BGFX_STATE_FRONT_CCW
 					 ) & changedFlags)
 				{
 					if (BGFX_STATE_FRONT_CCW & changedFlags)
