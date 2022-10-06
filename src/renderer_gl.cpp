@@ -3631,7 +3631,6 @@ namespace bgfx { namespace gl
 		void submitBlit(BlitState& _bs, uint16_t _view);
 
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;
-		void premultiplyBackBuffer(const ClearQuad& _clearQuad);
 		void blitSetup(TextVideoMemBlitter& _blitter) override
 		{
 			if (0 != m_vao)
@@ -7449,39 +7448,6 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	void RendererContextGL::premultiplyBackBuffer(const ClearQuad& _clearQuad)
-	{
-		const uint32_t numMrt = 1;
-		if (isValid(_clearQuad.m_program[numMrt - 1]))
-		{
-			GL_CHECK(glDisable(GL_SCISSOR_TEST));
-			GL_CHECK(glDisable(GL_CULL_FACE));
-			GL_CHECK(glEnable(GL_BLEND));
-			GL_CHECK(glEnable(GL_BLEND));
-			GL_CHECK(glBlendFuncSeparate(GL_DST_COLOR, GL_DST_ALPHA, GL_DST_ALPHA, GL_ZERO));
-
-			GL_CHECK(glColorMask(true, true, true, false));
-			GL_CHECK(glDisable(GL_DEPTH_TEST));
-			GL_CHECK(glDisable(GL_STENCIL_TEST));
-
-			const VertexBufferGL& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
-			const VertexLayout& layout = _clearQuad.m_layout;
-
-			GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id));
-
-			ProgramGL& program = m_program[_clearQuad.m_program[numMrt - 1].idx];
-			setProgram(program.m_id);
-			program.bindAttributesBegin();
-			program.bindAttributes(layout, 0);
-			program.bindAttributesEnd();
-
-			GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP
-				, 0
-				, 4
-			));
-		}
-	}
-
 	void RendererContextGL::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		if (_render->m_capture)
@@ -8612,11 +8578,6 @@ namespace bgfx { namespace gl
 
 				profiler.end();
 			}
-		}
-
-		if (m_resolution.reset & BGFX_RESET_TRANSPARENT_BACKBUFFER)
-		{
-			premultiplyBackBuffer(_clearQuad);
 		}
 
 		BGFX_GL_PROFILER_END();
