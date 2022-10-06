@@ -6158,8 +6158,8 @@ namespace bgfx { namespace gl
 		GL_CHECK(glActiveTexture(GL_TEXTURE0+_stage) );
 		GL_CHECK(glBindTexture(m_target, m_id) );
 
-		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
-		&&  !s_renderGL->m_gles3)
+		if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) || 
+		(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES) && !s_renderGL->m_gles3))
 		{
 			// GLES2 doesn't have support for sampler object.
 			setSamplerState(flags, _palette[index]);
