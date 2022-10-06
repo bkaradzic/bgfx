@@ -504,10 +504,6 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   // Returns true if this instruction exits this function or aborts execution.
   bool IsReturnOrAbort() const { return spvOpcodeIsReturnOrAbort(opcode()); }
 
-  // Returns the id for the |element|'th subtype. If the |this| is not a
-  // composite type, this function returns 0.
-  uint32_t GetTypeComponent(uint32_t element) const;
-
   // Returns true if this instruction is a basic block terminator.
   bool IsBlockTerminator() const {
     return spvOpcodeIsBlockTerminator(opcode());

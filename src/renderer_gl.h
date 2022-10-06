@@ -162,6 +162,10 @@ typedef uint64_t GLuint64;
 #	define GL_LUMINANCE 0x1909
 #endif // GL_LUMINANCE
 
+#ifndef GL_BGR
+#	define GL_BGR 0x80E0
+#endif // GL_BGR
+
 #ifndef GL_BGRA
 #	define GL_BGRA 0x80E1
 #endif // GL_BGRA
@@ -991,6 +995,10 @@ typedef uint64_t GLuint64;
 #	define GL_FIRST_VERTEX_CONVENTION 0x8E4D
 #endif // GL_FIRST_VERTEX_CONVENTION
 
+#ifndef GL_PARAMETER_BUFFER_ARB
+#	define GL_PARAMETER_BUFFER_ARB 0x80EE
+#endif // GL_PARAMETER_BUFFER_ARB
+
 // _KHR or _ARB...
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS         0x8242
 #define GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH 0x8243
@@ -1501,8 +1509,10 @@ namespace bgfx { namespace gl
 		uint8_t m_unboundUsedAttrib[Attrib::Count]; // For tracking unbound used attributes between begin()/end().
 		uint8_t m_usedCount;
 		uint8_t m_used[Attrib::Count]; // Dense.
-		GLint m_attributes[Attrib::Count]; // Sparse.
-		GLint m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT+1];
+		GLint   m_attributes[Attrib::Count]; // Sparse.
+
+		GLint    m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT+1];
+		uint16_t m_instanceOffset[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 
 		GLint m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint8_t m_numSamplers;
@@ -1525,6 +1535,7 @@ namespace bgfx { namespace gl
 			{
 				Query& query = m_query[ii];
 				query.m_ready = false;
+				query.m_frameNum = 0;
 				GL_CHECK(glGenQueries(1, &query.m_begin) );
 				GL_CHECK(glGenQueries(1, &query.m_end) );
 			}
@@ -1546,7 +1557,7 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		uint32_t begin(uint32_t _resultIdx)
+		uint32_t begin(uint32_t _resultIdx, uint32_t _frameNum)
 		{
 			while (0 == m_control.reserve(1) )
 			{
@@ -1559,6 +1570,7 @@ namespace bgfx { namespace gl
 			const uint32_t idx = m_control.m_current;
 			Query& query = m_query[idx];
 			query.m_resultIdx = _resultIdx;
+			query.m_frameNum = _frameNum;
 			query.m_ready     = false;
 
 			GL_CHECK(glQueryCounter(query.m_begin
@@ -1607,6 +1619,7 @@ namespace bgfx { namespace gl
 
 					Result& result = m_result[query.m_resultIdx];
 					--result.m_pending;
+					result.m_frameNum = query.m_frameNum;
 
 					GL_CHECK(glGetQueryObjectui64v(query.m_begin
 						, GL_QUERY_RESULT
@@ -1629,14 +1642,16 @@ namespace bgfx { namespace gl
 		{
 			void reset()
 			{
-				m_begin   = 0;
-				m_end     = 0;
-				m_pending = 0;
+				m_begin    = 0;
+				m_end      = 0;
+				m_pending  = 0;
+				m_frameNum = 0;
 			}
 
 			uint64_t m_begin;
 			uint64_t m_end;
 			uint32_t m_pending;
+			uint32_t m_frameNum;
 		};
 
 		struct Query
@@ -1644,6 +1659,7 @@ namespace bgfx { namespace gl
 			GLuint   m_begin;
 			GLuint   m_end;
 			uint32_t m_resultIdx;
+			uint32_t m_frameNum;
 			bool     m_ready;
 		};
 

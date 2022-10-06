@@ -723,6 +723,16 @@ class ValidationState_t {
   // Returns the disassembly string for the given instruction.
   std::string Disassemble(const uint32_t* words, uint16_t num_words) const;
 
+  // Returns the string name for |decoration|.
+  std::string SpvDecorationString(uint32_t decoration) {
+    spv_operand_desc desc = nullptr;
+    if (grammar_.lookupOperand(SPV_OPERAND_TYPE_DECORATION, decoration,
+                               &desc) != SPV_SUCCESS) {
+      return std::string("Unknown");
+    }
+    return std::string(desc->name);
+  }
+
   // Returns whether type m1 and type m2 are cooperative matrices with
   // the same "shape" (matching scope, rows, cols). If any are specialization
   // constants, we assume they can match because we can't prove they don't.

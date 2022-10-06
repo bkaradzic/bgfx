@@ -497,6 +497,15 @@ void CompilerGLSL::find_static_extensions()
 			require_extension_internal("GL_NV_ray_tracing");
 		break;
 
+	case ExecutionModelMeshEXT:
+	case ExecutionModelTaskEXT:
+		if (options.es || options.version < 450)
+			SPIRV_CROSS_THROW("Mesh shaders require GLSL 450 or above.");
+		if (!options.vulkan_semantics)
+			SPIRV_CROSS_THROW("Mesh shaders require Vulkan semantics.");
+		require_extension_internal("GL_EXT_mesh_shader");
+		break;
+
 	default:
 		break;
 	}
@@ -649,7 +658,7 @@ string CompilerGLSL::compile()
 	{
 		// only NV_gpu_shader5 supports divergent indexing on OpenGL, and it does so without extra qualifiers
 		backend.nonuniform_qualifier = "";
-		backend.needs_row_major_load_workaround = true;
+		backend.needs_row_major_load_workaround = options.enable_row_major_load_workaround;
 	}
 	backend.allow_precision_qualifiers = options.vulkan_semantics || options.es;
 	backend.force_gl_in_out_block = true;
@@ -1060,6 +1069,8 @@ void CompilerGLSL::emit_header()
 		break;
 
 	case ExecutionModelGLCompute:
+	case ExecutionModelTaskEXT:
+	case ExecutionModelMeshEXT:
 	{
 		if (execution.workgroup_size.constant != 0 || execution.flags.get(ExecutionModeLocalSizeId))
 		{
@@ -1077,6 +1088,18 @@ void CompilerGLSL::emit_header()
 			inputs.push_back(join("local_size_x = ", execution.workgroup_size.x));
 			inputs.push_back(join("local_size_y = ", execution.workgroup_size.y));
 			inputs.push_back(join("local_size_z = ", execution.workgroup_size.z));
+		}
+
+		if (execution.model == ExecutionModelMeshEXT)
+		{
+			outputs.push_back(join("max_vertices = ", execution.output_vertices));
+			outputs.push_back(join("max_primitives = ", execution.output_primitives));
+			if (execution.flags.get(ExecutionModeOutputTrianglesEXT))
+				outputs.push_back("triangles");
+			else if (execution.flags.get(ExecutionModeOutputLinesEXT))
+				outputs.push_back("lines");
+			else if (execution.flags.get(ExecutionModeOutputPoints))
+				outputs.push_back("points");
 		}
 		break;
 	}
@@ -1235,6 +1258,8 @@ string CompilerGLSL::to_interpolation_qualifiers(const Bitset &flags)
 		res += "sample ";
 	if (flags.get(DecorationInvariant))
 		res += "invariant ";
+	if (flags.get(DecorationPerPrimitiveEXT))
+	    res += "perprimitiveEXT ";
 
 	if (flags.get(DecorationExplicitInterpAMD))
 	{
@@ -2624,7 +2649,7 @@ void CompilerGLSL::emit_interface_block(const SPIRVariable &var)
 			}
 
 			// Workaround to make sure we can emit "patch in/out" correctly.
-			fixup_io_block_patch_qualifiers(var);
+			fixup_io_block_patch_primitive_qualifiers(var);
 
 			// Block names should never alias.
 			auto block_name = to_name(type.self, false);
@@ -2647,8 +2672,15 @@ void CompilerGLSL::emit_interface_block(const SPIRVariable &var)
 			// Instance names cannot alias block names.
 			resource_names.insert(block_name);
 
-			bool is_patch = has_decoration(var.self, DecorationPatch);
-			statement(layout_for_variable(var), (is_patch ? "patch " : ""), qual, block_name);
+			const char *block_qualifier;
+			if (has_decoration(var.self, DecorationPatch))
+				block_qualifier = "patch ";
+			else if (has_decoration(var.self, DecorationPerPrimitiveEXT))
+				block_qualifier = "perprimitiveEXT ";
+			else
+				block_qualifier = "";
+
+			statement(layout_for_variable(var), block_qualifier, qual, block_name);
 			begin_scope();
 
 			type.member_name_cache.clear();
@@ -3084,7 +3116,8 @@ bool CompilerGLSL::should_force_emit_builtin_block(StorageClass storage)
 	});
 
 	// If we're declaring clip/cull planes with control points we need to force block declaration.
-	if (get_execution_model() == ExecutionModelTessellationControl &&
+	if ((get_execution_model() == ExecutionModelTessellationControl ||
+	     get_execution_model() == ExecutionModelMeshEXT) &&
 	    (clip_distance_count || cull_distance_count))
 	{
 		should_force = true;
@@ -3093,7 +3126,7 @@ bool CompilerGLSL::should_force_emit_builtin_block(StorageClass storage)
 	return should_force;
 }
 
-void CompilerGLSL::fixup_implicit_builtin_block_names()
+void CompilerGLSL::fixup_implicit_builtin_block_names(ExecutionModel model)
 {
 	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
 		auto &type = this->get<SPIRType>(var.basetype);
@@ -3101,11 +3134,22 @@ void CompilerGLSL::fixup_implicit_builtin_block_names()
 		if ((var.storage == StorageClassOutput || var.storage == StorageClassInput) && block &&
 		    is_builtin_variable(var))
 		{
-			// Make sure the array has a supported name in the code.
-			if (var.storage == StorageClassOutput)
-				set_name(var.self, "gl_out");
-			else if (var.storage == StorageClassInput)
-				set_name(var.self, "gl_in");
+			if (model != ExecutionModelMeshEXT)
+			{
+				// Make sure the array has a supported name in the code.
+				if (var.storage == StorageClassOutput)
+					set_name(var.self, "gl_out");
+				else if (var.storage == StorageClassInput)
+					set_name(var.self, "gl_in");
+			}
+			else
+			{
+				auto flags = get_buffer_block_flags(var.self);
+				if (flags.get(DecorationPerPrimitiveEXT))
+					set_name(var.self, "gl_MeshPrimitivesEXT");
+				else
+					set_name(var.self, "gl_MeshVerticesEXT");
+			}
 		}
 	});
 }
@@ -3129,6 +3173,11 @@ void CompilerGLSL::emit_declared_builtin_block(StorageClass storage, ExecutionMo
 	uint32_t xfb_stride = 0, xfb_buffer = 0, geom_stream = 0;
 	std::unordered_map<uint32_t, uint32_t> builtin_xfb_offsets;
 
+	const auto builtin_is_per_vertex_set = [](BuiltIn builtin) -> bool {
+		return builtin == BuiltInPosition || builtin == BuiltInPointSize ||
+			builtin == BuiltInClipDistance || builtin == BuiltInCullDistance;
+	};
+
 	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
 		auto &type = this->get<SPIRType>(var.basetype);
 		bool block = has_decoration(type.self, DecorationBlock);
@@ -3139,7 +3188,7 @@ void CompilerGLSL::emit_declared_builtin_block(StorageClass storage, ExecutionMo
 			uint32_t index = 0;
 			for (auto &m : ir.meta[type.self].members)
 			{
-				if (m.builtin)
+				if (m.builtin && builtin_is_per_vertex_set(m.builtin_type))
 				{
 					builtins.set(m.builtin_type);
 					if (m.builtin_type == BuiltInCullDistance)
@@ -3192,7 +3241,7 @@ void CompilerGLSL::emit_declared_builtin_block(StorageClass storage, ExecutionMo
 		{
 			// While we're at it, collect all declared global builtins (HLSL mostly ...).
 			auto &m = ir.meta[var.self].decoration;
-			if (m.builtin)
+			if (m.builtin && builtin_is_per_vertex_set(m.builtin_type))
 			{
 				global_builtins.set(m.builtin_type);
 				if (m.builtin_type == BuiltInCullDistance)
@@ -3281,7 +3330,9 @@ void CompilerGLSL::emit_declared_builtin_block(StorageClass storage, ExecutionMo
 			attr.push_back(join("stream = ", geom_stream));
 		}
 
-		if (!attr.empty())
+		if (model == ExecutionModelMeshEXT)
+			statement("out gl_MeshPerVertexEXT");
+		else if (!attr.empty())
 			statement("layout(", merge(attr), ") out gl_PerVertex");
 		else
 			statement("out gl_PerVertex");
@@ -3399,7 +3450,8 @@ void CompilerGLSL::emit_resources()
 	case ExecutionModelGeometry:
 	case ExecutionModelTessellationControl:
 	case ExecutionModelTessellationEvaluation:
-		fixup_implicit_builtin_block_names();
+	case ExecutionModelMeshEXT:
+		fixup_implicit_builtin_block_names(execution.model);
 		break;
 
 	default:
@@ -3419,6 +3471,7 @@ void CompilerGLSL::emit_resources()
 			break;
 
 		case ExecutionModelVertex:
+		case ExecutionModelMeshEXT:
 			emit_declared_builtin_block(StorageClassOutput, execution.model);
 			break;
 
@@ -8890,6 +8943,15 @@ string CompilerGLSL::builtin_to_glsl(BuiltIn builtin, StorageClass storage)
 			SPIRV_CROSS_THROW("Need desktop GL to use GL_NV_conservative_raster_underestimation.");
 		return "gl_FragFullyCoveredNV";
 
+	case BuiltInPrimitiveTriangleIndicesEXT:
+		return "gl_PrimitiveTriangleIndicesEXT";
+	case BuiltInPrimitiveLineIndicesEXT:
+		return "gl_PrimitiveLineIndicesEXT";
+	case BuiltInPrimitivePointIndicesEXT:
+		return "gl_PrimitivePointIndicesEXT";
+	case BuiltInCullPrimitiveEXT:
+		return "gl_CullPrimitiveEXT";
+
 	default:
 		return join("gl_BuiltIn_", convert_to_string(builtin));
 	}
@@ -8913,20 +8975,31 @@ const char *CompilerGLSL::index_to_swizzle(uint32_t index)
 }
 
 void CompilerGLSL::access_chain_internal_append_index(std::string &expr, uint32_t /*base*/, const SPIRType * /*type*/,
-                                                      AccessChainFlags flags, bool & /*access_chain_is_arrayed*/,
+                                                      AccessChainFlags flags, bool &access_chain_is_arrayed,
                                                       uint32_t index)
 {
 	bool index_is_literal = (flags & ACCESS_CHAIN_INDEX_IS_LITERAL_BIT) != 0;
+	bool ptr_chain = (flags & ACCESS_CHAIN_PTR_CHAIN_BIT) != 0;
 	bool register_expression_read = (flags & ACCESS_CHAIN_SKIP_REGISTER_EXPRESSION_READ_BIT) == 0;
 
-	expr += "[";
+	string idx_expr = index_is_literal ? convert_to_string(index) : to_unpacked_expression(index, register_expression_read);
 
-	if (index_is_literal)
-		expr += convert_to_string(index);
+	// For the case where the base of an OpPtrAccessChain already ends in [n],
+	// we need to use the index as an offset to the existing index, otherwise,
+	// we can just use the index directly.
+	if (ptr_chain && access_chain_is_arrayed)
+	{
+		size_t split_pos = expr.find_last_of(']');
+		string expr_front = expr.substr(0, split_pos);
+		string expr_back = expr.substr(split_pos);
+		expr = expr_front + " + " +  enclose_expression(idx_expr) + expr_back;
+	}
 	else
-		expr += to_unpacked_expression(index, register_expression_read);
-
-	expr += "]";
+	{
+		expr += "[";
+		expr += idx_expr;
+		expr += "]";
+	}
 }
 
 bool CompilerGLSL::access_chain_needs_stage_io_builtin_translation(uint32_t)
@@ -8987,10 +9060,12 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 	bool pending_array_enclose = false;
 	bool dimension_flatten = false;
 
-	const auto append_index = [&](uint32_t index, bool is_literal) {
+	const auto append_index = [&](uint32_t index, bool is_literal, bool is_ptr_chain = false) {
 		AccessChainFlags mod_flags = flags;
 		if (!is_literal)
 			mod_flags &= ~ACCESS_CHAIN_INDEX_IS_LITERAL_BIT;
+		if (!is_ptr_chain)
+			mod_flags &= ~ACCESS_CHAIN_PTR_CHAIN_BIT;
 		access_chain_internal_append_index(expr, base, type, mod_flags, access_chain_is_arrayed, index);
 		check_physical_type_cast(expr, type, physical_type);
 	};
@@ -9043,7 +9118,7 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 			}
 			else
 			{
-				append_index(index, is_literal);
+				append_index(index, is_literal, true);
 			}
 
 			if (type->basetype == SPIRType::ControlPointArray)
@@ -9078,17 +9153,33 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 				// but HLSL seems to just emit straight arrays here.
 				// We must pretend this access goes through gl_in/gl_out arrays
 				// to be able to access certain builtins as arrays.
+				// Similar concerns apply for mesh shaders where we have to redirect to gl_MeshVerticesEXT or MeshPrimitivesEXT.
 				auto builtin = ir.meta[base].decoration.builtin_type;
+				bool mesh_shader = get_execution_model() == ExecutionModelMeshEXT;
+
 				switch (builtin)
 				{
 				// case BuiltInCullDistance: // These are already arrays, need to figure out rules for these in tess/geom.
 				// case BuiltInClipDistance:
 				case BuiltInPosition:
 				case BuiltInPointSize:
-					if (var->storage == StorageClassInput)
+					if (mesh_shader)
+						expr = join("gl_MeshVerticesEXT[", to_expression(index, register_expression_read), "].", expr);
+					else if (var->storage == StorageClassInput)
 						expr = join("gl_in[", to_expression(index, register_expression_read), "].", expr);
 					else if (var->storage == StorageClassOutput)
 						expr = join("gl_out[", to_expression(index, register_expression_read), "].", expr);
+					else
+						append_index(index, is_literal);
+					break;
+
+				case BuiltInPrimitiveId:
+				case BuiltInLayer:
+				case BuiltInViewportIndex:
+				case BuiltInCullPrimitiveEXT:
+				case BuiltInPrimitiveShadingRateKHR:
+					if (mesh_shader)
+						expr = join("gl_MeshPrimitivesEXT[", to_expression(index, register_expression_read), "].", expr);
 					else
 						append_index(index, is_literal);
 					break;
@@ -10741,8 +10832,14 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		if (expr_type.vecsize > type.vecsize)
 			expr = enclose_expression(expr + vector_swizzle(type.vecsize, 0));
 
+		if (forward && ptr_expression)
+			ptr_expression->need_transpose = old_need_transpose;
+
 		// We might need to cast in order to load from a builtin.
 		cast_from_variable_load(ptr, expr, type);
+
+		if (forward && ptr_expression)
+			ptr_expression->need_transpose = false;
 
 		// We might be trying to load a gl_Position[N], where we should be
 		// doing float4[](gl_in[i].gl_Position, ...) instead.
@@ -11261,8 +11358,13 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		// forcing temporaries is not going to help.
 		// This is similar for Constant and Undef inputs.
 		// The only safe thing to RMW is SPIRExpression.
+		// If the expression has already been used (i.e. used in a continue block), we have to keep using
+		// that loop variable, since we won't be able to override the expression after the fact.
+		// If the composite is hoisted, we might never be able to properly invalidate any usage
+		// of that composite in a subsequent loop iteration.
 		if (invalid_expressions.count(composite) ||
 		    block_composite_insert_overwrite.count(composite) ||
+		    hoisted_temporaries.count(id) || hoisted_temporaries.count(composite) ||
 		    maybe_get<SPIRExpression>(composite) == nullptr)
 		{
 			can_modify_in_place = false;
@@ -12495,12 +12597,12 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		uint32_t result_type = ops[0];
 		uint32_t id = ops[1];
 		uint32_t img = ops[2];
+		auto &type = expression_type(img);
+		auto &imgtype = get<SPIRType>(type.self);
 
 		std::string fname = "textureSize";
 		if (is_legacy_desktop())
 		{
-			auto &type = expression_type(img);
-			auto &imgtype = get<SPIRType>(type.self);
 			fname = legacy_tex_op(fname, imgtype, img);
 		}
 		else if (is_legacy_es())
@@ -12508,6 +12610,11 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 
 		auto expr = join(fname, "(", convert_separate_image_to_expression(img), ", ",
 		                 bitcast_expression(SPIRType::Int, ops[3]), ")");
+
+		// ES needs to emulate 1D images as 2D.
+		if (type.image.dim == Dim1D && options.es)
+			expr = join(expr, ".x");
+
 		auto &restype = get<SPIRType>(ops[0]);
 		expr = bitcast_expression(restype, SPIRType::Int, expr);
 		emit_op(result_type, id, expr, true);
@@ -13499,6 +13606,10 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		}
 		break;
 
+	case OpSetMeshOutputsEXT:
+		statement("SetMeshOutputsEXT(", to_unpacked_expression(ops[0]), ", ", to_unpacked_expression(ops[1]), ");");
+		break;
+
 	default:
 		statement("// unimplemented op ", instruction.op);
 		break;
@@ -13807,28 +13918,41 @@ string CompilerGLSL::to_precision_qualifiers_glsl(uint32_t id)
 	return flags_to_qualifiers_glsl(type, ir.meta[id].decoration.decoration_flags);
 }
 
-void CompilerGLSL::fixup_io_block_patch_qualifiers(const SPIRVariable &var)
+void CompilerGLSL::fixup_io_block_patch_primitive_qualifiers(const SPIRVariable &var)
 {
 	// Works around weird behavior in glslangValidator where
 	// a patch out block is translated to just block members getting the decoration.
 	// To make glslang not complain when we compile again, we have to transform this back to a case where
 	// the variable itself has Patch decoration, and not members.
+	// Same for perprimitiveEXT.
 	auto &type = get<SPIRType>(var.basetype);
 	if (has_decoration(type.self, DecorationBlock))
 	{
 		uint32_t member_count = uint32_t(type.member_types.size());
+		Decoration promoted_decoration = {};
+		bool do_promote_decoration = false;
 		for (uint32_t i = 0; i < member_count; i++)
 		{
 			if (has_member_decoration(type.self, i, DecorationPatch))
 			{
-				set_decoration(var.self, DecorationPatch);
+				promoted_decoration = DecorationPatch;
+				do_promote_decoration = true;
+				break;
+			}
+			else if (has_member_decoration(type.self, i, DecorationPerPrimitiveEXT))
+			{
+				promoted_decoration = DecorationPerPrimitiveEXT;
+				do_promote_decoration = true;
 				break;
 			}
 		}
 
-		if (has_decoration(var.self, DecorationPatch))
+		if (do_promote_decoration)
+		{
+			set_decoration(var.self, promoted_decoration);
 			for (uint32_t i = 0; i < member_count; i++)
-				unset_member_decoration(type.self, i, DecorationPatch);
+				unset_member_decoration(type.self, i, promoted_decoration);
+		}
 	}
 }
 
@@ -13841,6 +13965,8 @@ string CompilerGLSL::to_qualifiers_glsl(uint32_t id)
 
 	if (var && var->storage == StorageClassWorkgroup && !backend.shared_is_implied)
 		res += "shared ";
+	else if (var && var->storage == StorageClassTaskPayloadWorkgroupEXT)
+		res += "taskPayloadSharedEXT ";
 
 	res += to_interpolation_qualifiers(flags);
 	if (var)
@@ -15998,6 +16124,13 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 		statement("terminateRayEXT;");
 		break;
 
+	case SPIRBlock::EmitMeshTasks:
+		statement("EmitMeshTasksEXT(",
+		          to_unpacked_expression(block.mesh.groups[0]), ", ",
+		          to_unpacked_expression(block.mesh.groups[1]), ", ",
+		          to_unpacked_expression(block.mesh.groups[2]), ");");
+		break;
+
 	default:
 		SPIRV_CROSS_THROW("Unimplemented block terminator.");
 	}
@@ -16326,6 +16459,9 @@ void CompilerGLSL::cast_from_variable_load(uint32_t source_id, std::string &expr
 	case BuiltInIncomingRayFlagsNV:
 	case BuiltInLaunchIdNV:
 	case BuiltInLaunchSizeNV:
+	case BuiltInPrimitiveTriangleIndicesEXT:
+	case BuiltInPrimitiveLineIndicesEXT:
+	case BuiltInPrimitivePointIndicesEXT:
 		expected_type = SPIRType::UInt;
 		break;
 

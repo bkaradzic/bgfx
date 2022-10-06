@@ -627,8 +627,7 @@ Instruction* InstructionFolder::FoldInstructionToConstant(
     Instruction* inst, std::function<uint32_t(uint32_t)> id_map) const {
   analysis::ConstantManager* const_mgr = context_->get_constant_mgr();
 
-  if (!inst->IsFoldableByFoldScalar() &&
-      !GetConstantFoldingRules().HasFoldingRule(inst)) {
+  if (!inst->IsFoldableByFoldScalar() && !HasConstFoldingRule(inst)) {
     return nullptr;
   }
   // Collect the values of the constant parameters.

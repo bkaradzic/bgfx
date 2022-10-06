@@ -234,8 +234,11 @@ namespace bgfx
 			RGBA32I,
 			RGBA32U,
 			RGBA32F,
+			B5G6R5,
 			R5G6B5,
+			BGRA4,
 			RGBA4,
+			BGR5A1,
 			RGB5A1,
 			RGB10A2,
 			RG11B10F,
@@ -635,7 +638,7 @@ namespace bgfx
 		TextureFormat::Enum format; //!< Backbuffer format.
 		uint32_t width;             //!< Backbuffer width.
 		uint32_t height;            //!< Backbuffer height.
-		uint32_t reset;	            //!< Reset parameters.
+		uint32_t reset;             //!< Reset parameters.
 		uint8_t  numBackBuffers;    //!< Number of back buffers.
 		uint8_t  maxFrameLatency;   //!< Maximum frame latency.
 	};
@@ -653,17 +656,19 @@ namespace bgfx
 		/// See: `bgfx::RendererType`
 		RendererType::Enum type;
 
-		/// Vendor PCI id. If set to `BGFX_PCI_ID_NONE` it will select the first
-		/// device.
-		///   - `BGFX_PCI_ID_NONE` - Autoselect adapter.
+		/// Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
+		/// GPUs will be prioritised.
+		///   - `BGFX_PCI_ID_NONE` - Auto-select adapter.
 		///   - `BGFX_PCI_ID_SOFTWARE_RASTERIZER` - Software rasterizer.
 		///   - `BGFX_PCI_ID_AMD` - AMD adapter.
+		///   - `BGFX_PCI_ID_APPLE` - Apple adapter.
 		///   - `BGFX_PCI_ID_INTEL` - Intel adapter.
-		///   - `BGFX_PCI_ID_NVIDIA` - nVidia adapter.
+		///   - `BGFX_PCI_ID_NVIDIA` - NVIDIA adapter.
+		///   - `BGFX_PCI_ID_MICROSOFT` - Microsoft adapter.
 		uint16_t vendorId;
 
-		/// Device id. If set to 0 it will select first device, or device with
-		/// matching id.
+		/// Device ID. If set to 0 it will select first device, or device with
+		/// matching ID.
 		uint16_t deviceId;
 
 		uint64_t capabilities; //!< Capabilities initialization mask (default: UINT64_MAX).
@@ -939,12 +944,13 @@ namespace bgfx
 	///
 	struct ViewStats
 	{
-		char    name[256];      //!< View name.
-		ViewId  view;           //!< View id.
-		int64_t cpuTimeBegin;   //!< CPU (submit) begin time.
-		int64_t cpuTimeEnd;     //!< CPU (submit) end time.
-		int64_t gpuTimeBegin;   //!< GPU begin time.
-		int64_t gpuTimeEnd;     //!< GPU end time.
+		char     name[256];      //!< View name.
+		ViewId   view;           //!< View id.
+		int64_t  cpuTimeBegin;   //!< CPU (submit) begin time.
+		int64_t  cpuTimeEnd;     //!< CPU (submit) end time.
+		int64_t  gpuTimeBegin;   //!< GPU begin time.
+		int64_t  gpuTimeEnd;     //!< GPU end time.
+		uint32_t gpuFrameNum;    //!< Frame which generated gpuTimeBegin, gpuTimeEnd.
 	};
 
 	/// Encoder stats.
@@ -982,6 +988,7 @@ namespace bgfx
 		uint32_t numCompute;                //!< Number of compute calls submitted.
 		uint32_t numBlit;                   //!< Number of blit calls submitted.
 		uint32_t maxGpuLatency;             //!< GPU driver latency.
+		uint32_t gpuFrameNum;               //<! Frame which generated gpuTimeBegin, gpuTimeEnd.
 
 		uint16_t numDynamicIndexBuffers;    //!< Number of used dynamic index buffers.
 		uint16_t numDynamicVertexBuffers;   //!< Number of used dynamic vertex buffers.
@@ -1477,10 +1484,11 @@ namespace bgfx
 		/// @param[in] _program Program.
 		/// @param[in] _indirectHandle Indirect buffer.
 		/// @param[in] _start First element in indirect buffer.
-		/// @param[in] _num Number of dispatches.
+		/// @param[in] _num Number of draws.
 		/// @param[in] _depth Depth for sorting.
 		/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
 		///
+		/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
 		/// @attention C99's equivalent binding is `bgfx_encoder_submit_indirect`.
 		///
 		void submit(
@@ -1489,6 +1497,35 @@ namespace bgfx
 			, IndirectBufferHandle _indirectHandle
 			, uint16_t _start = 0
 			, uint16_t _num = 1
+			, uint32_t _depth = 0
+			, uint8_t _flags = BGFX_DISCARD_ALL
+			);
+
+		/// Submit primitive for rendering with index and instance data info and
+		/// draw count from indirect buffers.
+		///
+		/// @param[in] _id View id.
+		/// @param[in] _program Program.
+		/// @param[in] _indirectHandle Indirect buffer.
+		/// @param[in] _start First element in indirect buffer.
+		/// @param[in] _numHandle Buffer for number of draws. Must be created
+		///   with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.
+		/// @param[in] _numIndex Element in number buffer.
+		/// @param[in] _numMax Max number of draws.
+		/// @param[in] _depth Depth for sorting.
+		/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
+		///
+		/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+		/// @attention C99's equivalent binding is `bgfx_encoder_submit_indirect_count`.
+		///
+		void submit(
+			  ViewId _id
+			, ProgramHandle _program
+			, IndirectBufferHandle _indirectHandle
+			, uint16_t _start
+			, IndexBufferHandle _numHandle
+			, uint32_t _numIndex = 0
+			, uint16_t _numMax = UINT16_MAX
 			, uint32_t _depth = 0
 			, uint8_t _flags = BGFX_DISCARD_ALL
 			);
@@ -3921,10 +3958,11 @@ namespace bgfx
 	/// @param[in] _program Program.
 	/// @param[in] _indirectHandle Indirect buffer.
 	/// @param[in] _start First element in indirect buffer.
-	/// @param[in] _num Number of dispatches.
+	/// @param[in] _num Number of draws.
 	/// @param[in] _depth Depth for sorting.
 	/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
 	///
+	/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
 	/// @attention C99's equivalent binding is `bgfx_submit_indirect`.
 	///
 	void submit(
@@ -3935,6 +3973,35 @@ namespace bgfx
 		, uint16_t _num   = 1
 		, uint32_t _depth = 0
 		, uint8_t _flags  = BGFX_DISCARD_ALL
+		);
+
+	/// Submit primitive for rendering with index and instance data info and
+	/// draw count from indirect buffers.
+	///
+	/// @param[in] _id View id.
+	/// @param[in] _program Program.
+	/// @param[in] _indirectHandle Indirect buffer.
+	/// @param[in] _start First element in indirect buffer.
+	/// @param[in] _numHandle Buffer for number of draws. Must be created
+	///   with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.
+	/// @param[in] _numIndex Element in number buffer.
+	/// @param[in] _numMax Max number of draws.
+	/// @param[in] _depth Depth for sorting.
+	/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
+	///
+	/// @attention Availability depends on:`BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+	/// @attention C99's equivalent binding is `bgfx_submit_indirect_count`.
+	///
+	void submit(
+		  ViewId _id
+		, ProgramHandle _program
+		, IndirectBufferHandle _indirectHandle
+		, uint16_t _start
+		, IndexBufferHandle _numHandle
+		, uint32_t _numIndex = 0
+		, uint16_t _numMax = UINT16_MAX
+		, uint32_t _depth = 0
+		, uint8_t _flags = BGFX_DISCARD_ALL
 		);
 
 	/// Set compute index buffer.

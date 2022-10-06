@@ -2733,10 +2733,10 @@ TIntermAggregate* TIntermediate::addForLoop(TIntermNode* body, TIntermNode* init
     TIntermAggregate* loopSequence = (initializer == nullptr ||
                                       initializer->getAsAggregate() == nullptr) ? makeAggregate(initializer, loc)
                                                                                 : initializer->getAsAggregate();
-    if (loopSequence != nullptr && loopSequence->getOp() == EOpSequence)
+    if (loopSequence != nullptr && (loopSequence->getOp() == EOpSequence || loopSequence->getOp() == EOpScope))
         loopSequence->setOp(EOpNull);
     loopSequence = growAggregate(loopSequence, node);
-    loopSequence->setOperator(EOpSequence);
+    loopSequence->setOperator(getDebugInfo() ? EOpScope : EOpSequence);
 
     return loopSequence;
 }

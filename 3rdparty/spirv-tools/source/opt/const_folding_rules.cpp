@@ -74,7 +74,7 @@ bool HasFloatingPoint(const analysis::Type* type) {
 
 // Returns a constants with the value |-val| of the given type.  Only works for
 // 32-bit and 64-bit float point types.  Returns |nullptr| if an error occurs.
-const analysis::Constant* negateFPConst(const analysis::Type* result_type,
+const analysis::Constant* NegateFPConst(const analysis::Type* result_type,
                                         const analysis::Constant* val,
                                         analysis::ConstantManager* const_mgr) {
   const analysis::Float* float_type = result_type->AsFloat();
@@ -755,7 +755,7 @@ const analysis::Constant* FoldFPScalarDivideByZero(
   }
 
   if (numerator->AsFloatConstant()->GetValueAsDouble() < 0.0) {
-    result = negateFPConst(result_type, result, const_mgr);
+    result = NegateFPConst(result_type, result, const_mgr);
   }
   return result;
 }
@@ -780,7 +780,7 @@ const analysis::Constant* FoldScalarFPDivide(
     const analysis::Constant* result =
         FoldFPScalarDivideByZero(result_type, numerator, const_mgr);
     if (result != nullptr)
-      result = negateFPConst(result_type, result, const_mgr);
+      result = NegateFPConst(result_type, result, const_mgr);
     return result;
   } else {
     return FOLD_FPARITH_OP(/)(result_type, numerator, denominator, const_mgr);
@@ -951,7 +951,7 @@ UnaryScalarFoldingRule FoldFNegateOp() {
             analysis::ConstantManager* const_mgr) -> const analysis::Constant* {
     assert(result_type != nullptr && a != nullptr);
     assert(result_type == a->type());
-    return negateFPConst(result_type, a, const_mgr);
+    return NegateFPConst(result_type, a, const_mgr);
   };
 }
 
@@ -1181,17 +1181,6 @@ ConstantFoldingRule FoldFMix() {
     return FoldFPBinaryOp(FOLD_FPARITH_OP(+), inst->type_id(), {temp2, temp3},
                           context);
   };
-}
-
-template <class IntType>
-IntType FoldIClamp(IntType x, IntType min_val, IntType max_val) {
-  if (x < min_val) {
-    x = min_val;
-  }
-  if (x > max_val) {
-    x = max_val;
-  }
-  return x;
 }
 
 const analysis::Constant* FoldMin(const analysis::Type* result_type,

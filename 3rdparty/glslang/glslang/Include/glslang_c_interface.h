@@ -148,6 +148,15 @@ typedef struct glslang_resource_s {
     int max_task_work_group_size_y_nv;
     int max_task_work_group_size_z_nv;
     int max_mesh_view_count_nv;
+    int max_mesh_output_vertices_ext;
+    int max_mesh_output_primitives_ext;
+    int max_mesh_work_group_size_x_ext;
+    int max_mesh_work_group_size_y_ext;
+    int max_mesh_work_group_size_z_ext;
+    int max_task_work_group_size_x_ext;
+    int max_task_work_group_size_y_ext;
+    int max_task_work_group_size_z_ext;
+    int max_mesh_view_count_ext;
     int maxDualSourceDrawBuffersEXT;
 
     glslang_limits_t limits;
@@ -207,6 +216,8 @@ typedef struct glslang_spv_options_s {
     bool optimize_size;
     bool disassemble;
     bool validate;
+    bool emit_nonsemantic_shader_debug_info;
+    bool emit_nonsemantic_shader_debug_source;
 } glslang_spv_options_t;
 
 #ifdef __cplusplus

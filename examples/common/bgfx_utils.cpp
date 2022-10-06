@@ -767,20 +767,17 @@ Args::Args(int _argc, const char* const* _argv)
 	{
 		m_type = bgfx::RendererType::Noop;
 	}
-	else if (BX_ENABLED(BX_PLATFORM_WINDOWS|BX_PLATFORM_WINRT|BX_PLATFORM_XBOXONE) )
+	if (cmdLine.hasArg("d3d9") )
 	{
-		if (cmdLine.hasArg("d3d9") )
-		{
-			m_type = bgfx::RendererType::Direct3D9;
-		}
-		else if (cmdLine.hasArg("d3d11") )
-		{
-			m_type = bgfx::RendererType::Direct3D11;
-		}
-		else if (cmdLine.hasArg("d3d12") )
-		{
-			m_type = bgfx::RendererType::Direct3D12;
-		}
+		m_type = bgfx::RendererType::Direct3D9;
+	}
+	else if (cmdLine.hasArg("d3d11") )
+	{
+		m_type = bgfx::RendererType::Direct3D11;
+	}
+	else if (cmdLine.hasArg("d3d12") )
+	{
+		m_type = bgfx::RendererType::Direct3D12;
 	}
 	else if (BX_ENABLED(BX_PLATFORM_OSX) )
 	{

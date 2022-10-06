@@ -28,8 +28,6 @@ extern "C" void entry_emscripten_yield()
 
 namespace entry
 {
-	static WindowHandle s_defaultWindow = { 0 };
-
 	static uint8_t s_translateKey[256];
 
 	struct Context
@@ -126,11 +124,6 @@ namespace entry
 			EMSCRIPTEN_CHECK(emscripten_set_focusin_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb) );
 			EMSCRIPTEN_CHECK(emscripten_set_focusout_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, this, true, focusCb) );
 
-			bgfx::PlatformData pd;
-			bx::memSet(&pd, 0, sizeof(pd) );
-			pd.nwh = (void*)canvas;
-			bgfx::setPlatformData(pd);
-
 			int32_t result = main(_argc, _argv);
 			return result;
 		}
@@ -163,7 +156,7 @@ namespace entry
 				case EMSCRIPTEN_EVENT_MOUSEMOVE:
 					s_ctx.m_mx = _event->targetX;
 					s_ctx.m_my = _event->targetY;
-					s_ctx.m_eventQueue.postMouseEvent(s_defaultWindow, s_ctx.m_mx, s_ctx.m_my, s_ctx.m_scroll);
+					s_ctx.m_eventQueue.postMouseEvent(kDefaultWindowHandle, s_ctx.m_mx, s_ctx.m_my, s_ctx.m_scroll);
 					return true;
 
 				case EMSCRIPTEN_EVENT_MOUSEDOWN:
@@ -176,7 +169,7 @@ namespace entry
 						? MouseButton::Middle : MouseButton::Left)
 						;
 					s_ctx.m_eventQueue.postMouseEvent(
-						  s_defaultWindow
+						  kDefaultWindowHandle
 						, s_ctx.m_mx
 						, s_ctx.m_my
 						, s_ctx.m_scroll
@@ -203,7 +196,7 @@ namespace entry
 					s_ctx.m_scrollf += _event->deltaY;
 
 					s_ctx.m_scroll = (int32_t)s_ctx.m_scrollf;
-					s_ctx.m_eventQueue.postMouseEvent(s_defaultWindow, s_ctx.m_mx, s_ctx.m_my, s_ctx.m_scroll);
+					s_ctx.m_eventQueue.postMouseEvent(kDefaultWindowHandle, s_ctx.m_mx, s_ctx.m_my, s_ctx.m_scroll);
 					return true;
 				}
 			}
@@ -303,14 +296,14 @@ namespace entry
 						else
 						{
 							enum { ShiftMask = Modifier::LeftShift|Modifier::RightShift };
-							s_ctx.m_eventQueue.postCharEvent(s_defaultWindow, 1, pressedChar);
-							s_ctx.m_eventQueue.postKeyEvent(s_defaultWindow, key, modifiers, true);
+							s_ctx.m_eventQueue.postCharEvent(kDefaultWindowHandle, 1, pressedChar);
+							s_ctx.m_eventQueue.postKeyEvent(kDefaultWindowHandle, key, modifiers, true);
 							return true;
 						}
 						break;
 
 					case EMSCRIPTEN_EVENT_KEYUP:
-						s_ctx.m_eventQueue.postKeyEvent(s_defaultWindow, key, modifiers, false);
+						s_ctx.m_eventQueue.postKeyEvent(kDefaultWindowHandle, key, modifiers, false);
 						return true;
 				}
 			}
@@ -340,19 +333,19 @@ namespace entry
 			switch (_eventType)
 			{
 				case EMSCRIPTEN_EVENT_BLUR:
-					s_ctx.m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::DidSuspend);
+					s_ctx.m_eventQueue.postSuspendEvent(kDefaultWindowHandle, Suspend::DidSuspend);
 					return true;
 
 				case EMSCRIPTEN_EVENT_FOCUS:
-					s_ctx.m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::DidResume);
+					s_ctx.m_eventQueue.postSuspendEvent(kDefaultWindowHandle, Suspend::DidResume);
 					return true;
 
 				case EMSCRIPTEN_EVENT_FOCUSIN:
-					s_ctx.m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::WillResume);
+					s_ctx.m_eventQueue.postSuspendEvent(kDefaultWindowHandle, Suspend::WillResume);
 					return true;
 
 				case EMSCRIPTEN_EVENT_FOCUSOUT:
-					s_ctx.m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::WillSuspend);
+					s_ctx.m_eventQueue.postSuspendEvent(kDefaultWindowHandle, Suspend::WillSuspend);
 					return true;
 			}
 		}
@@ -418,6 +411,21 @@ namespace entry
 	void setMouseLock(WindowHandle _handle, bool _lock)
 	{
 		BX_UNUSED(_handle, _lock);
+	}
+
+	void* getNativeWindowHandle(WindowHandle _handle)
+	{
+		if (kDefaultWindowHandle.idx == _handle.idx)
+		{
+			return (void*)"#canvas";
+		}
+
+		return NULL;
+	}
+
+	void* getNativeDisplayHandle()
+	{
+		return NULL;
 	}
 }
 

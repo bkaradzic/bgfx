@@ -6,12 +6,11 @@
 #ifndef BGFX_RENDERER_D3D9_H_HEADER_GUARD
 #define BGFX_RENDERER_D3D9_H_HEADER_GUARD
 
-#define BGFX_CONFIG_RENDERER_DIRECT3D9EX BX_PLATFORM_WINDOWS
+#define BGFX_CONFIG_RENDERER_DIRECT3D9EX (BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS)
 
-#if BX_PLATFORM_WINDOWS
-#	include <sal.h>
-#	include <d3d9.h>
-#endif // BX_PLATFORM_
+#include <sal.h>
+#include <unknwn.h>
+#include <d3d9.h>
 
 #ifndef D3DSTREAMSOURCE_INDEXEDDATA
 #	define D3DSTREAMSOURCE_INDEXEDDATA  (1<<30)
@@ -446,7 +445,7 @@ namespace bgfx { namespace d3d9
 
 		void postReset();
 		void preReset();
-		uint32_t begin(uint32_t _resultIdx);
+		uint32_t begin(uint32_t _resultIdx, uint32_t _frameNum);
 		void end(uint32_t _idx);
 		bool update();
 
@@ -457,6 +456,7 @@ namespace bgfx { namespace d3d9
 			IDirect3DQuery9* m_end;
 			IDirect3DQuery9* m_freq;
 			uint32_t         m_resultIdx;
+			uint32_t         m_frameNum;
 			bool             m_ready;
 		};
 
@@ -468,12 +468,14 @@ namespace bgfx { namespace d3d9
 				m_end       = 0;
 				m_frequency = 1;
 				m_pending   = 0;
+				m_frameNum  = 0;
 			}
 
 			uint64_t m_begin;
 			uint64_t m_end;
 			uint64_t m_frequency;
 			uint32_t m_pending;
+			uint32_t m_frameNum;
 		};
 
 		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];

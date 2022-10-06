@@ -136,7 +136,7 @@ mingw-gcc-release64: .build/projects/gmake-mingw-gcc ## Build - MinGW GCC x64 Re
 mingw-gcc: mingw-gcc-debug32 mingw-gcc-release32 mingw-gcc-debug64 mingw-gcc-release64 ## Build - MinGW GCC x86/x64 Debug and Release
 
 .build/projects/gmake-mingw-clang:
-	$(GENIE) --gcc=mingw-clang gmake
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --os=windows --gcc=mingw-clang gmake
 mingw-clang-debug32: .build/projects/gmake-mingw-clang ## Build - MinGW Clang x86 Debug
 	$(MAKE) -R -C .build/projects/gmake-mingw-clang config=debug32
 mingw-clang-release32: .build/projects/gmake-mingw-clang ## Build - MinGW Clang x86 Release

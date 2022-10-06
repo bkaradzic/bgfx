@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(115)
+version(117)
 
 typedef "bool"
 typedef "char"
@@ -394,6 +394,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.VertexAttribUint10     --- Vertex attribute 10_10_10_2 is supported.
 	.VertexId               --- Rendering with VertexID only is supported.
 	.ViewportLayerArray     --- Viewport layer is available in vertex shader.
+	.DrawIndirectCount      --- Draw indirect with indirect count is supported.
 	.TextureCompareAll      --- All texture compare modes are supported.
 	 { "TextureCompareReserved", "TextureCompareLequal" }
 	()
@@ -593,8 +594,11 @@ enum.TextureFormat { comment = "Texture formats:" }
 	.RGBA32I
 	.RGBA32U
 	.RGBA32F
+	.B5G6R5
 	.R5G6B5
+	.BGRA4
 	.RGBA4
+	.BGR5A1
 	.RGB5A1
 	.RGB10A2
 	.RG11B10F
@@ -793,16 +797,18 @@ struct.Init { ctor }
 	                                      --- a default rendering backend will be selected appropriate to the platform.
 	                                      --- See: `bgfx::RendererType`
 
-	.vendorId       "uint16_t"            --- Vendor PCI id. If set to `BGFX_PCI_ID_NONE` it will select the first
-	                                      --- device.
+	.vendorId       "uint16_t"            --- Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
+	                                      --- GPUs will be prioritised.
 	                                      ---   - `BGFX_PCI_ID_NONE` - Autoselect adapter.
 	                                      ---   - `BGFX_PCI_ID_SOFTWARE_RASTERIZER` - Software rasterizer.
 	                                      ---   - `BGFX_PCI_ID_AMD` - AMD adapter.
+	                                      ---   - `BGFX_PCI_ID_APPLE` - Apple adapter.
 	                                      ---   - `BGFX_PCI_ID_INTEL` - Intel adapter.
-	                                      ---   - `BGFX_PCI_ID_NVIDIA` - nVidia adapter.
+	                                      ---   - `BGFX_PCI_ID_NVIDIA` - NVIDIA adapter.
+	                                      ---   - `BGFX_PCI_ID_MICROSOFT` - Microsoft adapter.
 
-	.deviceId       "uint16_t"            --- Device id. If set to 0 it will select first device, or device with
-	                                      --- matching id.
+	.deviceId       "uint16_t"            --- Device ID. If set to 0 it will select first device, or device with
+	                                      --- matching ID.
 	.capabilities   "uint64_t"            --- Capabilities initialization mask (default: UINT64_MAX).
 	.debug          "bool"                --- Enable device for debugging.
 	.profile        "bool"                --- Enable device for profiling.
@@ -904,6 +910,7 @@ struct.ViewStats
 	.cpuTimeEnd     "int64_t"   --- CPU (submit) end time.
 	.gpuTimeBegin   "int64_t"   --- GPU begin time.
 	.gpuTimeEnd     "int64_t"   --- GPU end time.
+	.gpuFrameNum    "uint32_t"  --- Frame which generated gpuTimeBegin, gpuTimeEnd.
 
 --- Encoder stats.
 struct.EncoderStats
@@ -931,6 +938,7 @@ struct.Stats
 	.numCompute              "uint32_t"      --- Number of compute calls submitted.
 	.numBlit                 "uint32_t"      --- Number of blit calls submitted.
 	.maxGpuLatency           "uint32_t"      --- GPU driver latency.
+	.gpuFrameNum             "uint32_t"      --- Frame which generated gpuTimeBegin, gpuTimeEnd.
 
 	.numDynamicIndexBuffers  "uint16_t"      --- Number of used dynamic index buffers.
 	.numDynamicVertexBuffers "uint16_t"      --- Number of used dynamic vertex buffers.
@@ -2439,6 +2447,9 @@ func.Encoder.submit { cname = "submit_occlusion_query" }
 
 --- Submit primitive for rendering with index and instance data info from
 --- indirect buffer.
+---
+--- @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
+---
 func.Encoder.submit { cname = "submit_indirect" }
 	"void"
 	.id             "ViewId"               --- View id.
@@ -2446,12 +2457,34 @@ func.Encoder.submit { cname = "submit_indirect" }
 	.indirectHandle "IndirectBufferHandle" --- Indirect buffer.
 	.start          "uint16_t"             --- First element in indirect buffer.
 	 { default = 0 }
-	.num            "uint16_t"             --- Number of dispatches.
+	.num            "uint16_t"             --- Number of draws.
 	 { default = 1 }
 	.depth          "uint32_t"             --- Depth for sorting.
 	 { default = 0 }
 	.flags          "uint8_t"              --- Discard or preserve states. See `BGFX_DISCARD_*`.
 	 { default = "BGFX_DISCARD_ALL" }
+
+--- Submit primitive for rendering with index and instance data info and
+--- draw count from indirect buffers.
+---
+--- @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+---
+func.Encoder.submit { cname = "submit_indirect_count" }
+	"void"
+	.id             "ViewId"               --- View id.
+	.program        "ProgramHandle"        --- Program.
+	.indirectHandle "IndirectBufferHandle" --- Indirect buffer.
+	.start          "uint16_t"             --- First element in indirect buffer.
+	.numHandle      "IndexBufferHandle"    --- Buffer for number of draws. Must be
+	                                       ---   created with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.
+	.numIndex       "uint32_t"             --- Element in number buffer.
+	{ default = 0 }
+	.numMax         "uint16_t"             --- Max number of draws.
+	{ default = UINT16_MAX }
+	.depth          "uint32_t"             --- Depth for sorting.
+	{ default = 0 }
+	.flags          "uint8_t"              --- Discard or preserve states. See `BGFX_DISCARD_*`.
+	{ default = "BGFX_DISCARD_ALL" }
 
 --- Set compute index buffer.
 func.Encoder.setBuffer { cname = "set_compute_index_buffer" }
@@ -2992,6 +3025,9 @@ func.submit { cname = "submit_occlusion_query" }
 
 --- Submit primitive for rendering with index and instance data info from
 --- indirect buffer.
+---
+--- @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
+---
 func.submit { cname = "submit_indirect" }
 	"void"
 	.id             "ViewId"               --- View id.
@@ -2999,11 +3035,33 @@ func.submit { cname = "submit_indirect" }
 	.indirectHandle "IndirectBufferHandle" --- Indirect buffer.
 	.start          "uint16_t"             --- First element in indirect buffer.
 	{ default = 0 }
-	.num            "uint16_t"             --- Number of dispatches.
+	.num            "uint16_t"             --- Number of draws.
 	{ default = 1 }
 	.depth          "uint32_t"             --- Depth for sorting.
 	{ default = 0 }
-	.flags "uint8_t"                       --- Which states to discard for next draw. See `BGFX_DISCARD_*`.
+	.flags          "uint8_t"              --- Which states to discard for next draw. See `BGFX_DISCARD_*`.
+	{ default = "BGFX_DISCARD_ALL" }
+
+--- Submit primitive for rendering with index and instance data info and
+--- draw count from indirect buffers.
+---
+--- @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+---
+func.submit { cname = "submit_indirect_count" }
+	"void"
+	.id             "ViewId"               --- View id.
+	.program        "ProgramHandle"        --- Program.
+	.indirectHandle "IndirectBufferHandle" --- Indirect buffer.
+	.start          "uint16_t"             --- First element in indirect buffer.
+	.numHandle      "IndexBufferHandle"    --- Buffer for number of draws. Must be
+	                                       ---   created with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.
+	.numIndex       "uint32_t"             --- Element in number buffer.
+	{ default = 0 }
+	.numMax         "uint16_t"             --- Max number of draws.
+	{ default = UINT16_MAX }
+	.depth          "uint32_t"             --- Depth for sorting.
+	{ default = 0 }
+	.flags          "uint8_t"              --- Which states to discard for next draw. See `BGFX_DISCARD_*`.
 	{ default = "BGFX_DISCARD_ALL" }
 
 --- Set compute index buffer.

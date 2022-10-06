@@ -151,9 +151,17 @@ Instruction* CopyPropagateArrays::BuildNewAccessChain(
     return source->GetVariable();
   }
 
+  source->BuildConstants();
+  std::vector<uint32_t> access_ids(source->AccessChain().size());
+  std::transform(
+      source->AccessChain().cbegin(), source->AccessChain().cend(),
+      access_ids.begin(), [](const AccessChainEntry& entry) {
+        assert(entry.is_result_id && "Constants needs to be built first.");
+        return entry.result_id;
+      });
+
   return builder.AddAccessChain(source->GetPointerTypeId(this),
-                                source->GetVariable()->result_id(),
-                                source->AccessChain());
+                                source->GetVariable()->result_id(), access_ids);
 }
 
 bool CopyPropagateArrays::HasNoStores(Instruction* ptr_inst) {
@@ -167,6 +175,8 @@ bool CopyPropagateArrays::HasNoStores(Instruction* ptr_inst) {
     } else if (use->opcode() == SpvOpStore) {
       return false;
     } else if (use->opcode() == SpvOpImageTexelPointer) {
+      return true;
+    } else if (use->opcode() == SpvOpEntryPoint) {
       return true;
     }
     // Some other instruction.  Be conservative.
@@ -268,30 +278,20 @@ std::unique_ptr<CopyPropagateArrays::MemoryObject>
 CopyPropagateArrays::BuildMemoryObjectFromExtract(Instruction* extract_inst) {
   assert(extract_inst->opcode() == SpvOpCompositeExtract &&
          "Expecting an OpCompositeExtract instruction.");
-  analysis::ConstantManager* const_mgr = context()->get_constant_mgr();
-
   std::unique_ptr<MemoryObject> result = GetSourceObjectIfAny(
       extract_inst->GetSingleWordInOperand(kCompositeExtractObjectInOperand));
 
-  if (result) {
-    analysis::Integer int_type(32, false);
-    const analysis::Type* uint32_type =
-        context()->get_type_mgr()->GetRegisteredType(&int_type);
-
-    std::vector<uint32_t> components;
-    // Convert the indices in the extract instruction to a series of ids that
-    // can be used by the |OpAccessChain| instruction.
-    for (uint32_t i = 1; i < extract_inst->NumInOperands(); ++i) {
-      uint32_t index = extract_inst->GetSingleWordInOperand(i);
-      const analysis::Constant* index_const =
-          const_mgr->GetConstant(uint32_type, {index});
-      components.push_back(
-          const_mgr->GetDefiningInstruction(index_const)->result_id());
-    }
-    result->GetMember(components);
-    return result;
+  if (!result) {
+    return nullptr;
   }
-  return nullptr;
+
+  // Copy the indices of the extract instruction to |OpAccessChain| indices.
+  std::vector<AccessChainEntry> components;
+  for (uint32_t i = 1; i < extract_inst->NumInOperands(); ++i) {
+    components.push_back({false, {extract_inst->GetSingleWordInOperand(i)}});
+  }
+  result->PushIndirection(components);
+  return result;
 }
 
 std::unique_ptr<CopyPropagateArrays::MemoryObject>
@@ -315,19 +315,12 @@ CopyPropagateArrays::BuildMemoryObjectFromCompositeConstruct(
     return nullptr;
   }
 
-  analysis::ConstantManager* const_mgr = context()->get_constant_mgr();
-  const analysis::Constant* last_access =
-      const_mgr->FindDeclaredConstant(memory_object->AccessChain().back());
-  if (!last_access || !last_access->type()->AsInteger()) {
+  AccessChainEntry last_access = memory_object->AccessChain().back();
+  if (!IsAccessChainIndexValidAndEqualTo(last_access, 0)) {
     return nullptr;
   }
 
-  if (last_access->GetU32() != 0) {
-    return nullptr;
-  }
-
-  memory_object->GetParent();
-
+  memory_object->PopIndirection();
   if (memory_object->GetNumberOfMembers() !=
       conststruct_inst->NumInOperands()) {
     return nullptr;
@@ -349,13 +342,8 @@ CopyPropagateArrays::BuildMemoryObjectFromCompositeConstruct(
       return nullptr;
     }
 
-    last_access =
-        const_mgr->FindDeclaredConstant(member_object->AccessChain().back());
-    if (!last_access || !last_access->type()->AsInteger()) {
-      return nullptr;
-    }
-
-    if (last_access->GetU32() != i) {
+    last_access = member_object->AccessChain().back();
+    if (!IsAccessChainIndexValidAndEqualTo(last_access, i)) {
       return nullptr;
     }
   }
@@ -409,17 +397,12 @@ CopyPropagateArrays::BuildMemoryObjectFromInsert(Instruction* insert_inst) {
     return nullptr;
   }
 
-  const analysis::Constant* last_access =
-      const_mgr->FindDeclaredConstant(memory_object->AccessChain().back());
-  if (!last_access || !last_access->type()->AsInteger()) {
+  AccessChainEntry last_access = memory_object->AccessChain().back();
+  if (!IsAccessChainIndexValidAndEqualTo(last_access, number_of_elements - 1)) {
     return nullptr;
   }
 
-  if (last_access->GetU32() != number_of_elements - 1) {
-    return nullptr;
-  }
-
-  memory_object->GetParent();
+  memory_object->PopIndirection();
 
   Instruction* current_insert =
       def_use_mgr->GetDef(insert_inst->GetSingleWordInOperand(1));
@@ -456,14 +439,9 @@ CopyPropagateArrays::BuildMemoryObjectFromInsert(Instruction* insert_inst) {
       return nullptr;
     }
 
-    const analysis::Constant* current_last_access =
-        const_mgr->FindDeclaredConstant(
-            current_memory_object->AccessChain().back());
-    if (!current_last_access || !current_last_access->type()->AsInteger()) {
-      return nullptr;
-    }
-
-    if (current_last_access->GetU32() != i - 1) {
+    AccessChainEntry current_last_access =
+        current_memory_object->AccessChain().back();
+    if (!IsAccessChainIndexValidAndEqualTo(current_last_access, i - 1)) {
       return nullptr;
     }
     current_insert =
@@ -471,6 +449,21 @@ CopyPropagateArrays::BuildMemoryObjectFromInsert(Instruction* insert_inst) {
   }
 
   return memory_object;
+}
+
+bool CopyPropagateArrays::IsAccessChainIndexValidAndEqualTo(
+    const AccessChainEntry& entry, uint32_t value) const {
+  if (!entry.is_result_id) {
+    return entry.immediate == value;
+  }
+
+  analysis::ConstantManager* const_mgr = context()->get_constant_mgr();
+  const analysis::Constant* constant =
+      const_mgr->FindDeclaredConstant(entry.result_id);
+  if (!constant || !constant->type()->AsInteger()) {
+    return false;
+  }
+  return constant->GetU32() == value;
 }
 
 bool CopyPropagateArrays::IsPointerToArrayType(uint32_t type_id) {
@@ -530,6 +523,12 @@ bool CopyPropagateArrays::CanUpdateUses(Instruction* original_ptr_inst,
             // Variable index means the type is a type where every element
             // is the same type.  Use element 0 to get the type.
             access_chain.push_back(0);
+
+            // We are trying to access a struct with variable indices.
+            // This cannot happen.
+            if (pointee_type->kind() == analysis::Type::kStruct) {
+              return false;
+            }
           }
         }
 
@@ -785,8 +784,8 @@ uint32_t CopyPropagateArrays::GetMemberTypeId(
   return id;
 }
 
-void CopyPropagateArrays::MemoryObject::GetMember(
-    const std::vector<uint32_t>& access_chain) {
+void CopyPropagateArrays::MemoryObject::PushIndirection(
+    const std::vector<AccessChainEntry>& access_chain) {
   access_chain_.insert(access_chain_.end(), access_chain.begin(),
                        access_chain.end());
 }
@@ -821,23 +820,29 @@ uint32_t CopyPropagateArrays::MemoryObject::GetNumberOfMembers() {
 template <class iterator>
 CopyPropagateArrays::MemoryObject::MemoryObject(Instruction* var_inst,
                                                 iterator begin, iterator end)
-    : variable_inst_(var_inst), access_chain_(begin, end) {}
+    : variable_inst_(var_inst) {
+  std::transform(begin, end, std::back_inserter(access_chain_),
+                 [](uint32_t id) {
+                   return AccessChainEntry{true, {id}};
+                 });
+}
 
 std::vector<uint32_t> CopyPropagateArrays::MemoryObject::GetAccessIds() const {
   analysis::ConstantManager* const_mgr =
       variable_inst_->context()->get_constant_mgr();
 
-  std::vector<uint32_t> access_indices;
-  for (uint32_t id : AccessChain()) {
-    const analysis::Constant* element_index_const =
-        const_mgr->FindDeclaredConstant(id);
-    if (!element_index_const) {
-      access_indices.push_back(0);
-    } else {
-      access_indices.push_back(element_index_const->GetU32());
-    }
-  }
-  return access_indices;
+  std::vector<uint32_t> indices(AccessChain().size());
+  std::transform(AccessChain().cbegin(), AccessChain().cend(), indices.begin(),
+                 [&const_mgr](const AccessChainEntry& entry) {
+                   if (entry.is_result_id) {
+                     const analysis::Constant* constant =
+                         const_mgr->FindDeclaredConstant(entry.result_id);
+                     return constant == nullptr ? 0 : constant->GetU32();
+                   }
+
+                   return entry.immediate;
+                 });
+  return indices;
 }
 
 bool CopyPropagateArrays::MemoryObject::Contains(
@@ -856,6 +861,25 @@ bool CopyPropagateArrays::MemoryObject::Contains(
     }
   }
   return true;
+}
+
+void CopyPropagateArrays::MemoryObject::BuildConstants() {
+  for (auto& entry : access_chain_) {
+    if (entry.is_result_id) {
+      continue;
+    }
+
+    auto context = variable_inst_->context();
+    analysis::Integer int_type(32, false);
+    const analysis::Type* uint32_type =
+        context->get_type_mgr()->GetRegisteredType(&int_type);
+    analysis::ConstantManager* const_mgr = context->get_constant_mgr();
+    const analysis::Constant* index_const =
+        const_mgr->GetConstant(uint32_type, {entry.immediate});
+    entry.result_id =
+        const_mgr->GetDefiningInstruction(index_const)->result_id();
+    entry.is_result_id = true;
+  }
 }
 
 }  // namespace opt

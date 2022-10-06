@@ -18,7 +18,7 @@ enum expandEnum(EnumType, string fqnEnumType = EnumType.stringof) = (){
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 115;
+enum uint BGFX_API_VERSION = 117;
 
 alias bgfx_view_id_t = ushort;
 
@@ -410,6 +410,7 @@ enum ulong BGFX_CAPS_VERTEX_ATTRIB_HALF = 0x0000000002000000; /// Vertex attribu
 enum ulong BGFX_CAPS_VERTEX_ATTRIB_UINT10 = 0x0000000004000000; /// Vertex attribute 10_10_10_2 is supported.
 enum ulong BGFX_CAPS_VERTEX_ID = 0x0000000008000000; /// Rendering with VertexID only is supported.
 enum ulong BGFX_CAPS_VIEWPORT_LAYER_ARRAY = 0x0000000010000000; /// Viewport layer is available in vertex shader.
+enum ulong BGFX_CAPS_DRAW_INDIRECT_COUNT = 0x0000000020000000; /// Draw indirect with indirect count is supported.
 enum ulong BGFX_CAPS_TEXTURE_COMPARE_ALL = 0x0000000000300000; /// All texture compare modes are supported.
 
 enum uint BGFX_CAPS_FORMAT_TEXTURE_NONE = 0x00000000; /// Texture format is not supported.
@@ -619,8 +620,11 @@ enum bgfx_texture_format_t
 	BGFX_TEXTURE_FORMAT_RGBA32I,
 	BGFX_TEXTURE_FORMAT_RGBA32U,
 	BGFX_TEXTURE_FORMAT_RGBA32F,
+	BGFX_TEXTURE_FORMAT_B5G6R5,
 	BGFX_TEXTURE_FORMAT_R5G6B5,
+	BGFX_TEXTURE_FORMAT_BGRA4,
 	BGFX_TEXTURE_FORMAT_RGBA4,
+	BGFX_TEXTURE_FORMAT_BGR5A1,
 	BGFX_TEXTURE_FORMAT_RGB5A1,
 	BGFX_TEXTURE_FORMAT_RGB10A2,
 	BGFX_TEXTURE_FORMAT_RG11B10F,
@@ -897,19 +901,21 @@ struct bgfx_init_t
 	bgfx_renderer_type_t type;
 
 	/**
-	 * Vendor PCI id. If set to `BGFX_PCI_ID_NONE` it will select the first
-	 * device.
+	 * Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
+	 * GPUs will be prioritised.
 	 *   - `BGFX_PCI_ID_NONE` - Autoselect adapter.
 	 *   - `BGFX_PCI_ID_SOFTWARE_RASTERIZER` - Software rasterizer.
 	 *   - `BGFX_PCI_ID_AMD` - AMD adapter.
+	 *   - `BGFX_PCI_ID_APPLE` - Apple adapter.
 	 *   - `BGFX_PCI_ID_INTEL` - Intel adapter.
-	 *   - `BGFX_PCI_ID_NVIDIA` - nVidia adapter.
+	 *   - `BGFX_PCI_ID_NVIDIA` - NVIDIA adapter.
+	 *   - `BGFX_PCI_ID_MICROSOFT` - Microsoft adapter.
 	 */
 	ushort vendorId;
 
 	/**
-	 * Device id. If set to 0 it will select first device, or device with
-	 * matching id.
+	 * Device ID. If set to 0 it will select first device, or device with
+	 * matching ID.
 	 */
 	ushort deviceId;
 	ulong capabilities; /// Capabilities initialization mask (default: UINT64_MAX).
@@ -1024,6 +1030,7 @@ struct bgfx_view_stats_t
 	long cpuTimeEnd; /// CPU (submit) end time.
 	long gpuTimeBegin; /// GPU begin time.
 	long gpuTimeEnd; /// GPU end time.
+	uint gpuFrameNum; /// Frame which generated gpuTimeBegin, gpuTimeEnd.
 }
 
 /// Encoder stats.
@@ -1053,6 +1060,7 @@ struct bgfx_stats_t
 	uint numCompute; /// Number of compute calls submitted.
 	uint numBlit; /// Number of blit calls submitted.
 	uint maxGpuLatency; /// GPU driver latency.
+	uint gpuFrameNum; /// Frame which generated gpuTimeBegin, gpuTimeEnd.
 	ushort numDynamicIndexBuffers; /// Number of used dynamic index buffers.
 	ushort numDynamicVertexBuffers; /// Number of used dynamic vertex buffers.
 	ushort numFrameBuffers; /// Number of used frame buffers.

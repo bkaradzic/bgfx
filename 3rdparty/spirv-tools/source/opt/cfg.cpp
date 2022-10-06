@@ -87,7 +87,6 @@ void CFG::ComputeStructuredOrder(Function* func, BasicBlock* root,
   // Compute structured successors and do DFS.
   ComputeStructuredSuccessors(func);
   auto ignore_block = [](cbb_ptr) {};
-  auto ignore_edge = [](cbb_ptr, cbb_ptr) {};
   auto terminal = [end](cbb_ptr bb) { return bb == end; };
 
   auto get_structured_successors = [this](const BasicBlock* b) {
@@ -100,8 +99,7 @@ void CFG::ComputeStructuredOrder(Function* func, BasicBlock* root,
     order->push_front(const_cast<BasicBlock*>(b));
   };
   CFA<BasicBlock>::DepthFirstTraversal(root, get_structured_successors,
-                                       ignore_block, post_order, ignore_edge,
-                                       terminal);
+                                       ignore_block, post_order, terminal);
 }
 
 void CFG::ForEachBlockInPostOrder(BasicBlock* bb,

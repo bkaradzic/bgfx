@@ -179,8 +179,9 @@ uint32_t align(uint32_t x, uint32_t alignment) {
 }
 
 // Returns base alignment of struct member. If |roundUp| is true, also
-// ensure that structs and arrays are aligned at least to a multiple of 16
-// bytes.
+// ensure that structs, arrays, and matrices are aligned at least to a
+// multiple of 16 bytes.  (That is, when roundUp is true, this function
+// returns the *extended* alignment as it's called by the Vulkan spec.)
 uint32_t getBaseAlignment(uint32_t member_id, bool roundUp,
                           const LayoutConstraints& inherited,
                           MemberConstraints& constraints,
@@ -1295,32 +1296,6 @@ bool AtMostOncePerMember(SpvDecoration decoration) {
   }
 }
 
-// Returns the string name for |decoration|.
-const char* GetDecorationName(SpvDecoration decoration) {
-  switch (decoration) {
-    case SpvDecorationAliased:
-      return "Aliased";
-    case SpvDecorationRestrict:
-      return "Restrict";
-    case SpvDecorationArrayStride:
-      return "ArrayStride";
-    case SpvDecorationOffset:
-      return "Offset";
-    case SpvDecorationMatrixStride:
-      return "MatrixStride";
-    case SpvDecorationRowMajor:
-      return "RowMajor";
-    case SpvDecorationColMajor:
-      return "ColMajor";
-    case SpvDecorationBlock:
-      return "Block";
-    case SpvDecorationBufferBlock:
-      return "BufferBlock";
-    default:
-      return "";
-  }
-}
-
 spv_result_t CheckDecorationsCompatibility(ValidationState_t& vstate) {
   using PerIDKey = std::tuple<SpvDecoration, uint32_t>;
   using PerMemberKey = std::tuple<SpvDecoration, uint32_t, uint32_t>;
@@ -1353,7 +1328,7 @@ spv_result_t CheckDecorationsCompatibility(ValidationState_t& vstate) {
       if (already_used && AtMostOncePerId(dec_type)) {
         return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
                << "ID '" << id << "' decorated with "
-               << GetDecorationName(dec_type)
+               << vstate.SpvDecorationString(dec_type)
                << " multiple times is not allowed.";
       }
       // Verify certain mutually exclusive decorations are not both applied on
@@ -1373,8 +1348,9 @@ spv_result_t CheckDecorationsCompatibility(ValidationState_t& vstate) {
         if (seen_per_id.find(excl_k) != seen_per_id.end()) {
           return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
                  << "ID '" << id << "' decorated with both "
-                 << GetDecorationName(dec_type) << " and "
-                 << GetDecorationName(excl_dec_type) << " is not allowed.";
+                 << vstate.SpvDecorationString(dec_type) << " and "
+                 << vstate.SpvDecorationString(excl_dec_type)
+                 << " is not allowed.";
         }
       }
     } else if (SpvOpMemberDecorate == inst.opcode()) {
@@ -1386,7 +1362,7 @@ spv_result_t CheckDecorationsCompatibility(ValidationState_t& vstate) {
       if (already_used && AtMostOncePerMember(dec_type)) {
         return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
                << "ID '" << id << "', member '" << member_id
-               << "' decorated with " << GetDecorationName(dec_type)
+               << "' decorated with " << vstate.SpvDecorationString(dec_type)
                << " multiple times is not allowed.";
       }
       // Verify certain mutually exclusive decorations are not both applied on
@@ -1406,8 +1382,9 @@ spv_result_t CheckDecorationsCompatibility(ValidationState_t& vstate) {
         if (seen_per_member.find(excl_k) != seen_per_member.end()) {
           return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
                  << "ID '" << id << "', member '" << member_id
-                 << "' decorated with both " << GetDecorationName(dec_type)
-                 << " and " << GetDecorationName(excl_dec_type)
+                 << "' decorated with both "
+                 << vstate.SpvDecorationString(dec_type) << " and "
+                 << vstate.SpvDecorationString(excl_dec_type)
                  << " is not allowed.";
         }
       }

@@ -35,9 +35,9 @@ struct SampleData
 		m_values[m_offset] = value;
 		m_offset = (m_offset+1) % kNumSamples;
 
-		float min =  bx::kFloatMax;
-		float max = -bx::kFloatMax;
-		float avg =  0.0f;
+		float min = bx::max<float>();
+		float max = bx::min<float>();
+		float avg = 0.0f;
 
 		for (uint32_t ii = 0; ii < kNumSamples; ++ii)
 		{

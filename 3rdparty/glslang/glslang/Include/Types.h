@@ -833,7 +833,7 @@ public:
             }
             storage = EvqUniform;
             break;
-        case EbsStorageBuffer : 
+        case EbsStorageBuffer :
             storage = EvqBuffer;
             break;
 #ifndef GLSLANG_WEB
@@ -856,6 +856,7 @@ public:
     bool isPerPrimitive() const { return perPrimitiveNV; }
     bool isPerView() const { return perViewNV; }
     bool isTaskMemory() const { return perTaskNV; }
+    bool isTaskPayload() const { return storage == EvqtaskPayloadSharedEXT; }
     bool isAnyPayload() const {
         return storage == EvqPayload || storage == EvqPayloadIn;
     }
@@ -875,7 +876,7 @@ public:
             return ! patch && isPipeInput();
         case EShLangFragment:
             return (pervertexNV || pervertexEXT) && isPipeInput();
-        case EShLangMeshNV:
+        case EShLangMesh:
             return ! perTaskNV && isPipeOutput();
 
         default:
@@ -2543,7 +2544,7 @@ public:
     void setStruct(TTypeList* s) { assert(isStruct()); structure = s; }
     TTypeList* getWritableStruct() const { assert(isStruct()); return structure; }  // This should only be used when known to not be sharing with other threads
     void setBasicType(const TBasicType& t) { basicType = t; }
-    
+
     int computeNumComponents() const
     {
         int components = 0;

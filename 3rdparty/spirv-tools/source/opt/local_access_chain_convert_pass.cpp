@@ -188,7 +188,9 @@ bool LocalAccessChainConvertPass::Is32BitConstantIndexAccessChain(
       if (opInst->opcode() != SpvOpConstant) return false;
       const auto* index =
           context()->get_constant_mgr()->GetConstantFromInst(opInst);
-      if (index->GetSignExtendedValue() > UINT32_MAX) return false;
+      int64_t index_value = index->GetSignExtendedValue();
+      if (index_value > UINT32_MAX) return false;
+      if (index_value < 0) return false;
     }
     ++inIdx;
     return true;

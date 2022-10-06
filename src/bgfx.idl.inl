@@ -885,6 +885,15 @@ BGFX_C_API void bgfx_encoder_submit_indirect(bgfx_encoder_t* _this, bgfx_view_id
 	This->submit((bgfx::ViewId)_id, program.cpp, indirectHandle.cpp, _start, _num, _depth, _flags);
 }
 
+BGFX_C_API void bgfx_encoder_submit_indirect_count(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, bgfx_index_buffer_handle_t _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags)
+{
+	bgfx::Encoder* This = (bgfx::Encoder*)_this;
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
+	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
+	union { bgfx_index_buffer_handle_t c; bgfx::IndexBufferHandle cpp; } numHandle = { _numHandle };
+	This->submit((bgfx::ViewId)_id, program.cpp, indirectHandle.cpp, _start, numHandle.cpp, _numIndex, _numMax, _depth, _flags);
+}
+
 BGFX_C_API void bgfx_encoder_set_compute_index_buffer(bgfx_encoder_t* _this, uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
@@ -1155,6 +1164,14 @@ BGFX_C_API void bgfx_submit_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _
 	bgfx::submit((bgfx::ViewId)_id, program.cpp, indirectHandle.cpp, _start, _num, _depth, _flags);
 }
 
+BGFX_C_API void bgfx_submit_indirect_count(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, bgfx_index_buffer_handle_t _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags)
+{
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
+	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
+	union { bgfx_index_buffer_handle_t c; bgfx::IndexBufferHandle cpp; } numHandle = { _numHandle };
+	bgfx::submit((bgfx::ViewId)_id, program.cpp, indirectHandle.cpp, _start, numHandle.cpp, _numIndex, _numMax, _depth, _flags);
+}
+
 BGFX_C_API void bgfx_set_compute_index_buffer(uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access)
 {
 	union { bgfx_index_buffer_handle_t c; bgfx::IndexBufferHandle cpp; } handle = { _handle };
@@ -1393,6 +1410,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_encoder_submit,
 			bgfx_encoder_submit_occlusion_query,
 			bgfx_encoder_submit_indirect,
+			bgfx_encoder_submit_indirect_count,
 			bgfx_encoder_set_compute_index_buffer,
 			bgfx_encoder_set_compute_vertex_buffer,
 			bgfx_encoder_set_compute_dynamic_index_buffer,
@@ -1438,6 +1456,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_submit,
 			bgfx_submit_occlusion_query,
 			bgfx_submit_indirect,
+			bgfx_submit_indirect_count,
 			bgfx_set_compute_index_buffer,
 			bgfx_set_compute_vertex_buffer,
 			bgfx_set_compute_dynamic_index_buffer,

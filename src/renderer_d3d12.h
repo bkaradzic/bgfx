@@ -9,7 +9,9 @@
 #define USE_D3D12_DYNAMIC_LIB (BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX)
 
 #include <sal.h>
-#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT || BX_PLATFORM_LINUX
+#include <unknwn.h>
+
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 #   include <d3d12.h>
 #else
 #   if !BGFX_CONFIG_DEBUG
@@ -38,19 +40,6 @@ extern "C++" {
 }
 #endif // defined(__MINGW32__)
 
-BX_PRAGMA_DIAGNOSTIC_PUSH();
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wmissing-field-initializers");
-#if BX_PLATFORM_XBOXONE
-#	include <d3dx12_x.h>
-#else
-#	include <d3dx12.h>
-#endif // BX_PLATFORM_XBOXONE
-BX_PRAGMA_DIAGNOSTIC_POP();
-
-#ifndef D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
-#	define D3D12_TEXTURE_DATA_PITCH_ALIGNMENT 1024
-#endif // D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
-
 #include "renderer.h"
 #include "renderer_d3d.h"
 #include "shader_dxbc.h"
@@ -58,7 +47,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 #include "nvapi.h"
 #include "dxgi.h"
 
-#if BGFX_CONFIG_DEBUG_ANNOTATION
+#if BGFX_CONFIG_DEBUG_ANNOTATION && !BX_PLATFORM_LINUX
 #	if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 typedef struct PIXEventsThreadInfo* (WINAPI* PFN_PIX_GET_THREAD_INFO)();
 typedef uint64_t                    (WINAPI* PFN_PIX_EVENTS_REPLACE_BLOCK)(bool _getEarliestTime);
@@ -418,7 +407,7 @@ namespace bgfx { namespace d3d12
 		void finish(uint64_t _waitFence = UINT64_MAX, bool _finishAll = false);
 		bool tryFinish(uint64_t _waitFence);
 		void release(ID3D12Resource* _ptr);
-		bool consume(uint32_t _ms = INFINITE);
+		bool consume(uint32_t _ms = UINT32_MAX);
 
 		struct CommandList
 		{
@@ -528,29 +517,32 @@ namespace bgfx { namespace d3d12
 
 		void init();
 		void shutdown();
-		uint32_t begin(uint32_t _resultIdx);
+		uint32_t begin(uint32_t _resultIdx, uint32_t _frameNum);
 		void end(uint32_t _idx);
 		bool update();
 
 		struct Query
 		{
 			uint32_t m_resultIdx;
-			bool     m_ready;
+			uint32_t m_frameNum;
 			uint64_t m_fence;
+			bool     m_ready;
 		};
 
 		struct Result
 		{
 			void reset()
 			{
-				m_begin     = 0;
-				m_end       = 0;
-				m_pending   = 0;
+				m_begin    = 0;
+				m_end      = 0;
+				m_pending  = 0;
+				m_frameNum = 0;
 			}
 
 			uint64_t m_begin;
 			uint64_t m_end;
 			uint32_t m_pending;
+			uint32_t m_frameNum;
 		};
 
 		uint64_t m_frequency;
