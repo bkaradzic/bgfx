@@ -349,6 +349,7 @@ public:
     const std::vector<Block*>& getBlocks() const { return blocks; }
     void addLocalVariable(std::unique_ptr<Instruction> inst);
     Id getReturnType() const { return functionInstruction.getTypeId(); }
+    Id getFuncId() const { return functionInstruction.getResultId(); }
     void setReturnPrecision(Decoration precision)
     {
         if (precision == DecorationRelaxedPrecision)

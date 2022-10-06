@@ -28,8 +28,10 @@ spv_result_t ValidateRayQueryPointer(ValidationState_t& _,
                                      uint32_t ray_query_index) {
   const uint32_t ray_query_id = inst->GetOperandAs<uint32_t>(ray_query_index);
   auto variable = _.FindDef(ray_query_id);
-  if (!variable || (variable->opcode() != SpvOpVariable &&
-                    variable->opcode() != SpvOpFunctionParameter)) {
+  const auto var_opcode = variable->opcode();
+  if (!variable ||
+      (var_opcode != SpvOpVariable && var_opcode != SpvOpFunctionParameter &&
+       var_opcode != SpvOpAccessChain)) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Ray Query must be a memory object declaration";
   }

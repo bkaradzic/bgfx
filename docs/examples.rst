@@ -658,10 +658,49 @@ Reference(s):
    :alt: example-45-bokeh
 
 `46-fsr <https://github.com/bkaradzic/bgfx/tree/master/examples/46-fsr>`__
-------------------------------------------------------------------------------
+--------------------------------------------------------------------------
 
 AMD FidelityFX Super Resolution - high-quality solution for producing high resolution frames
 from lower resolution inputs.
 
 .. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/46-fsr/screenshot.png
    :alt: example-46-fsr
+
+`47-pixelformats <https://github.com/bkaradzic/bgfx/tree/master/examples/47-pixelformats>`__
+--------------------------------------------------------------------------------------------
+
+Pixel Formats
+
+View and test texture formats
+
+.. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/47-pixelformats/screenshot.png
+   :alt: example-47-pixelformats
+
+`48-drawindirect  <https://github.com/bkaradzic/bgfx/tree/master/examples/48-drawindirect>`__
+---------------------------------------------------------------------------------------------
+
+Draw Indirect
+
+Simple example of indirect rendering + an implementation of multidraw indirect
+
+Reference(s):
+ - `OpenGL MultiDrawIndirect with per-instance textures <https://web.archive.org/web/20201109155619/https://litasa.github.io/blog/2017/09/04/OpenGL-MultiDrawIndirect-with-Individual-Textures>`__.
+ - `Indirect Rendering - A way to a million draw calls <https://web.archive.org/web/20210926073337/https://cpp-rendering.io/indirect-rendering>`__.
+
+.. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/48-drawindirect/screenshot.png
+   :alt: example-48-drawindirect
+   
+
+`49-hextile  <https://github.com/bkaradzic/bgfx/tree/master/examples/49-hextile>`__
+---------------------------------------------------------------------------------------------
+
+Realtime Hex-Tiling
+
+Simple example of how to use Hex-tiling in real time, ported from https://github.com/mmikk/hextile-demo
+
+Reference(s):
+ - `Hex-Tiling demo <https://github.com/mmikk/hextile-demo>`__.
+ - `Paper explaining concepts - <https://github.com/mmikk/mmikk.github.io/blob/master/papers3d/mm_hex_compressed.pdf>`__.
+
+.. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/49-hextile/screenshot.png
+   :alt: example-49-hextile

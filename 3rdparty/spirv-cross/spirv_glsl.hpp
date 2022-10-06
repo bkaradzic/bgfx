@@ -145,6 +145,12 @@ public:
 		// compares.
 		bool relax_nan_checks = false;
 
+		// Loading row-major matrices from UBOs on older AMD Windows OpenGL drivers is problematic.
+		// To load these types correctly, we must generate a wrapper. them in a dummy function which only purpose is to
+		// ensure row_major decoration is actually respected.
+		// This workaround may cause significant performance degeneration on some Android devices.
+		bool enable_row_major_load_workaround = true;
+
 		// If non-zero, controls layout(num_views = N) in; in GL_OVR_multiview2.
 		uint32_t ovr_multiview_view_count = 0;
 
@@ -622,7 +628,7 @@ protected:
 	void emit_buffer_reference_block(uint32_t type_id, bool forward_declaration);
 	void emit_buffer_block_legacy(const SPIRVariable &var);
 	void emit_buffer_block_flattened(const SPIRVariable &type);
-	void fixup_implicit_builtin_block_names();
+	void fixup_implicit_builtin_block_names(spv::ExecutionModel model);
 	void emit_declared_builtin_block(spv::StorageClass storage, spv::ExecutionModel model);
 	bool should_force_emit_builtin_block(spv::StorageClass storage);
 	void emit_push_constant_block_vulkan(const SPIRVariable &var);
@@ -766,7 +772,7 @@ protected:
 	std::string type_to_glsl_constructor(const SPIRType &type);
 	std::string argument_decl(const SPIRFunction::Parameter &arg);
 	virtual std::string to_qualifiers_glsl(uint32_t id);
-	void fixup_io_block_patch_qualifiers(const SPIRVariable &var);
+	void fixup_io_block_patch_primitive_qualifiers(const SPIRVariable &var);
 	void emit_output_variable_initializer(const SPIRVariable &var);
 	std::string to_precision_qualifiers_glsl(uint32_t id);
 	virtual const char *to_storage_qualifiers_glsl(const SPIRVariable &var);

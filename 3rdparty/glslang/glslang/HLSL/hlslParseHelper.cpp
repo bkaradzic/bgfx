@@ -2442,6 +2442,11 @@ void HlslParseContext::remapNonEntryPointIO(TFunction& function)
             clearUniformInputOutput(function[i].type->getQualifier());
 }
 
+TIntermNode* HlslParseContext::handleDeclare(const TSourceLoc& loc, TIntermTyped* var)
+{
+    return intermediate.addUnaryNode(EOpDeclare, var, loc, TType(EbtVoid));
+}
+
 // Handle function returns, including type conversions to the function return type
 // if necessary.
 TIntermNode* HlslParseContext::handleReturnValue(const TSourceLoc& loc, TIntermTyped* value)
@@ -8035,11 +8040,16 @@ TIntermNode* HlslParseContext::declareVariable(const TSourceLoc& loc, const TStr
     if (flattenVar)
         flatten(*symbol->getAsVariable(), symbolTable.atGlobalLevel());
 
-    if (initializer == nullptr)
-        return nullptr;
+    TVariable* variable = symbol->getAsVariable();
+
+    if (initializer == nullptr) {
+        if (intermediate.getDebugInfo())
+            return executeDeclaration(loc, variable);
+        else
+            return nullptr;
+    }
 
     // Deal with initializer
-    TVariable* variable = symbol->getAsVariable();
     if (variable == nullptr) {
         error(loc, "initializer requires a variable, not a member", identifier.c_str(), "");
         return nullptr;
@@ -8104,6 +8114,24 @@ TVariable* HlslParseContext::declareNonArray(const TSourceLoc& loc, const TStrin
 
     error(loc, "redefinition", variable->getName().c_str(), "");
     return nullptr;
+}
+
+// Return a declaration of a temporary variable
+//
+// This is used to force a variable to be declared in the correct scope
+// when debug information is being generated.
+
+TIntermNode* HlslParseContext::executeDeclaration(const TSourceLoc& loc, TVariable* variable)
+{
+  //
+  // Identifier must be of type temporary.
+  //
+  TStorageQualifier qualifier = variable->getType().getQualifier().storage;
+  if (qualifier != EvqTemporary)
+      return nullptr;
+
+  TIntermSymbol* intermSymbol = intermediate.addSymbol(*variable, loc);
+  return handleDeclare(loc, intermSymbol);
 }
 
 //

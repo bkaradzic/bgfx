@@ -26,8 +26,8 @@ spv_result_t ValidateConstantBool(ValidationState_t& _,
   auto type = _.FindDef(inst->type_id());
   if (!type || type->opcode() != SpvOpTypeBool) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "Op" << spvOpcodeString(inst->opcode()) << " Result Type <id> '"
-           << _.getIdName(inst->type_id()) << "' is not a boolean type.";
+           << "Op" << spvOpcodeString(inst->opcode()) << " Result Type <id> "
+           << _.getIdName(inst->type_id()) << " is not a boolean type.";
   }
 
   return SPV_SUCCESS;
@@ -40,8 +40,8 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
   const auto result_type = _.FindDef(inst->type_id());
   if (!result_type || !spvOpcodeIsComposite(result_type->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << opcode_name << " Result Type <id> '"
-           << _.getIdName(inst->type_id()) << "' is not a composite type.";
+           << opcode_name << " Result Type <id> "
+           << _.getIdName(inst->type_id()) << " is not a composite type.";
   }
 
   const auto constituent_count = inst->words().size() - 3;
@@ -53,9 +53,8 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << opcode_name
                << " Constituent <id> count does not match "
-                  "Result Type <id> '"
-               << _.getIdName(result_type->id())
-               << "'s vector component count.";
+                  "Result Type <id> "
+               << _.getIdName(result_type->id()) << "s vector component count.";
       }
       const auto component_type =
           _.FindDef(result_type->GetOperandAs<uint32_t>(1));
@@ -71,18 +70,18 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         if (!constituent ||
             !spvOpcodeIsConstantOrUndef(constituent->opcode())) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> '"
+                 << opcode_name << " Constituent <id> "
                  << _.getIdName(constituent_id)
-                 << "' is not a constant or undef.";
+                 << " is not a constant or undef.";
         }
         const auto constituent_result_type = _.FindDef(constituent->type_id());
         if (!constituent_result_type ||
             component_type->opcode() != constituent_result_type->opcode()) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> '"
+                 << opcode_name << " Constituent <id> "
                  << _.getIdName(constituent_id)
-                 << "'s type does not match Result Type <id> '"
-                 << _.getIdName(result_type->id()) << "'s vector element type.";
+                 << "s type does not match Result Type <id> "
+                 << _.getIdName(result_type->id()) << "s vector element type.";
         }
       }
     } break;
@@ -93,8 +92,8 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << opcode_name
                << " Constituent <id> count does not match "
-                  "Result Type <id> '"
-               << _.getIdName(result_type->id()) << "'s matrix column count.";
+                  "Result Type <id> "
+               << _.getIdName(result_type->id()) << "s matrix column count.";
       }
 
       const auto column_type = _.FindDef(result_type->words()[2]);
@@ -120,9 +119,9 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
           // The message says "... or undef" because the spec does not say
           // undef is a constant.
           return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> '"
+                 << opcode_name << " Constituent <id> "
                  << _.getIdName(constituent_id)
-                 << "' is not a constant or undef.";
+                 << " is not a constant or undef.";
         }
         const auto vector = _.FindDef(constituent->type_id());
         if (!vector) {
@@ -131,28 +130,28 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         }
         if (column_type->opcode() != vector->opcode()) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> '"
+                 << opcode_name << " Constituent <id> "
                  << _.getIdName(constituent_id)
-                 << "' type does not match Result Type <id> '"
-                 << _.getIdName(result_type->id()) << "'s matrix column type.";
+                 << " type does not match Result Type <id> "
+                 << _.getIdName(result_type->id()) << "s matrix column type.";
         }
         const auto vector_component_type =
             _.FindDef(vector->GetOperandAs<uint32_t>(1));
         if (component_type->id() != vector_component_type->id()) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> '"
+                 << opcode_name << " Constituent <id> "
                  << _.getIdName(constituent_id)
-                 << "' component type does not match Result Type <id> '"
+                 << " component type does not match Result Type <id> "
                  << _.getIdName(result_type->id())
-                 << "'s matrix column component type.";
+                 << "s matrix column component type.";
         }
         if (component_count != vector->words()[3]) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> '"
+                 << opcode_name << " Constituent <id> "
                  << _.getIdName(constituent_id)
-                 << "' vector component count does not match Result Type <id> '"
+                 << " vector component count does not match Result Type <id> "
                  << _.getIdName(result_type->id())
-                 << "'s vector component count.";
+                 << "s vector component count.";
         }
       }
     } break;
@@ -175,8 +174,8 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << opcode_name
                << " Constituent count does not match "
-                  "Result Type <id> '"
-               << _.getIdName(result_type->id()) << "'s array length.";
+                  "Result Type <id> "
+               << _.getIdName(result_type->id()) << "s array length.";
       }
       for (size_t constituent_index = 2;
            constituent_index < inst->operands().size(); constituent_index++) {
@@ -186,9 +185,9 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         if (!constituent ||
             !spvOpcodeIsConstantOrUndef(constituent->opcode())) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> '"
+                 << opcode_name << " Constituent <id> "
                  << _.getIdName(constituent_id)
-                 << "' is not a constant or undef.";
+                 << " is not a constant or undef.";
         }
         const auto constituent_type = _.FindDef(constituent->type_id());
         if (!constituent_type) {
@@ -197,10 +196,10 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         }
         if (element_type->id() != constituent_type->id()) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> '"
+                 << opcode_name << " Constituent <id> "
                  << _.getIdName(constituent_id)
-                 << "'s type does not match Result Type <id> '"
-                 << _.getIdName(result_type->id()) << "'s array element type.";
+                 << "s type does not match Result Type <id> "
+                 << _.getIdName(result_type->id()) << "s array element type.";
         }
       }
     } break;
@@ -208,10 +207,10 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
       const auto member_count = result_type->words().size() - 2;
       if (member_count != constituent_count) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
-               << opcode_name << " Constituent <id> '"
+               << opcode_name << " Constituent <id> "
                << _.getIdName(inst->type_id())
-               << "' count does not match Result Type <id> '"
-               << _.getIdName(result_type->id()) << "'s struct member count.";
+               << " count does not match Result Type <id> "
+               << _.getIdName(result_type->id()) << "s struct member count.";
       }
       for (uint32_t constituent_index = 2, member_index = 1;
            constituent_index < inst->operands().size();
@@ -222,9 +221,9 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         if (!constituent ||
             !spvOpcodeIsConstantOrUndef(constituent->opcode())) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> '"
+                 << opcode_name << " Constituent <id> "
                  << _.getIdName(constituent_id)
-                 << "' is not a constant or undef.";
+                 << " is not a constant or undef.";
         }
         const auto constituent_type = _.FindDef(constituent->type_id());
         if (!constituent_type) {
@@ -237,26 +236,25 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         const auto member_type = _.FindDef(member_type_id);
         if (!member_type || member_type->id() != constituent_type->id()) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> '"
+                 << opcode_name << " Constituent <id> "
                  << _.getIdName(constituent_id)
-                 << "' type does not match the Result Type <id> '"
-                 << _.getIdName(result_type->id()) << "'s member type.";
+                 << " type does not match the Result Type <id> "
+                 << _.getIdName(result_type->id()) << "s member type.";
         }
       }
     } break;
     case SpvOpTypeCooperativeMatrixNV: {
       if (1 != constituent_count) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
-               << opcode_name << " Constituent <id> '"
-               << _.getIdName(inst->type_id()) << "' count must be one.";
+               << opcode_name << " Constituent <id> "
+               << _.getIdName(inst->type_id()) << " count must be one.";
       }
       const auto constituent_id = inst->GetOperandAs<uint32_t>(2);
       const auto constituent = _.FindDef(constituent_id);
       if (!constituent || !spvOpcodeIsConstantOrUndef(constituent->opcode())) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
-               << opcode_name << " Constituent <id> '"
-               << _.getIdName(constituent_id)
-               << "' is not a constant or undef.";
+               << opcode_name << " Constituent <id> "
+               << _.getIdName(constituent_id) << " is not a constant or undef.";
       }
       const auto constituent_type = _.FindDef(constituent->type_id());
       if (!constituent_type) {
@@ -268,10 +266,10 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
       const auto component_type = _.FindDef(component_type_id);
       if (!component_type || component_type->id() != constituent_type->id()) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
-               << opcode_name << " Constituent <id> '"
+               << opcode_name << " Constituent <id> "
                << _.getIdName(constituent_id)
-               << "' type does not match the Result Type <id> '"
-               << _.getIdName(result_type->id()) << "'s component type.";
+               << " type does not match the Result Type <id> "
+               << _.getIdName(result_type->id()) << "s component type.";
       }
     } break;
     default:
@@ -285,8 +283,8 @@ spv_result_t ValidateConstantSampler(ValidationState_t& _,
   const auto result_type = _.FindDef(inst->type_id());
   if (!result_type || result_type->opcode() != SpvOpTypeSampler) {
     return _.diag(SPV_ERROR_INVALID_ID, result_type)
-           << "OpConstantSampler Result Type <id> '"
-           << _.getIdName(inst->type_id()) << "' is not a sampler type.";
+           << "OpConstantSampler Result Type <id> "
+           << _.getIdName(inst->type_id()) << " is not a sampler type.";
   }
 
   return SPV_SUCCESS;
@@ -339,8 +337,8 @@ spv_result_t ValidateConstantNull(ValidationState_t& _,
   const auto result_type = _.FindDef(inst->type_id());
   if (!result_type || !IsTypeNullable(result_type->words(), _)) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpConstantNull Result Type <id> '"
-           << _.getIdName(inst->type_id()) << "' cannot have a null value.";
+           << "OpConstantNull Result Type <id> " << _.getIdName(inst->type_id())
+           << " cannot have a null value.";
   }
 
   return SPV_SUCCESS;

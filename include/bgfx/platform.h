@@ -10,7 +10,6 @@
 // This header file contains platform specific interfaces. It is only
 // necessary to use this header in conjunction with creating windows.
 
-#include <bx/platform.h>
 #include "bgfx.h"
 
 namespace bgfx

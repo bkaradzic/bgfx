@@ -96,110 +96,113 @@
 			VK_IMPORT_INSTANCE_FUNC(true,  vkDestroyDebugReportCallbackEXT);           \
 			VK_IMPORT_INSTANCE_PLATFORM
 
-#define VK_IMPORT_DEVICE                                                   \
-			VK_IMPORT_DEVICE_FUNC(false, vkGetDeviceQueue);                \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateFence);                   \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroyFence);                  \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateSemaphore);               \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroySemaphore);              \
-			VK_IMPORT_DEVICE_FUNC(false, vkResetFences);                   \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateCommandPool);             \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroyCommandPool);            \
-			VK_IMPORT_DEVICE_FUNC(false, vkResetCommandPool);              \
-			VK_IMPORT_DEVICE_FUNC(false, vkAllocateCommandBuffers);        \
-			VK_IMPORT_DEVICE_FUNC(false, vkFreeCommandBuffers);            \
-			VK_IMPORT_DEVICE_FUNC(false, vkGetBufferMemoryRequirements);   \
-			VK_IMPORT_DEVICE_FUNC(false, vkGetImageMemoryRequirements);    \
-			VK_IMPORT_DEVICE_FUNC(false, vkGetImageSubresourceLayout);     \
-			VK_IMPORT_DEVICE_FUNC(false, vkAllocateMemory);                \
-			VK_IMPORT_DEVICE_FUNC(false, vkFreeMemory);                    \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateImage);                   \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroyImage);                  \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateImageView);               \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroyImageView);              \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateBuffer);                  \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroyBuffer);                 \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateFramebuffer);             \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroyFramebuffer);            \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateRenderPass);              \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroyRenderPass);             \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateShaderModule);            \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroyShaderModule);           \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreatePipelineCache);           \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroyPipelineCache);          \
-			VK_IMPORT_DEVICE_FUNC(false, vkGetPipelineCacheData);          \
-			VK_IMPORT_DEVICE_FUNC(false, vkMergePipelineCaches);           \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateGraphicsPipelines);       \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateComputePipelines);        \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroyPipeline);               \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreatePipelineLayout);          \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroyPipelineLayout);         \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateSampler);                 \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroySampler);                \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateDescriptorSetLayout);     \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroyDescriptorSetLayout);    \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateDescriptorPool);          \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroyDescriptorPool);         \
-			VK_IMPORT_DEVICE_FUNC(false, vkResetDescriptorPool);           \
-			VK_IMPORT_DEVICE_FUNC(false, vkAllocateDescriptorSets);        \
-			VK_IMPORT_DEVICE_FUNC(false, vkFreeDescriptorSets);            \
-			VK_IMPORT_DEVICE_FUNC(false, vkUpdateDescriptorSets);          \
-			VK_IMPORT_DEVICE_FUNC(false, vkCreateQueryPool);               \
-			VK_IMPORT_DEVICE_FUNC(false, vkDestroyQueryPool);              \
-			VK_IMPORT_DEVICE_FUNC(false, vkQueueSubmit);                   \
-			VK_IMPORT_DEVICE_FUNC(false, vkQueueWaitIdle);                 \
-			VK_IMPORT_DEVICE_FUNC(false, vkDeviceWaitIdle);                \
-			VK_IMPORT_DEVICE_FUNC(false, vkWaitForFences);                 \
-			VK_IMPORT_DEVICE_FUNC(false, vkBeginCommandBuffer);            \
-			VK_IMPORT_DEVICE_FUNC(false, vkEndCommandBuffer);              \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdPipelineBarrier);            \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdBeginRenderPass);            \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdEndRenderPass);              \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdSetViewport);                \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdDraw);                       \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdDrawIndexed);                \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdDrawIndirect);               \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdDrawIndexedIndirect);        \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdDispatch);                   \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdDispatchIndirect);           \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindPipeline);               \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdSetStencilReference);        \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdSetBlendConstants);          \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdSetScissor);                 \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindDescriptorSets);         \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindIndexBuffer);            \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindVertexBuffers);          \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdClearColorImage);            \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdClearDepthStencilImage);     \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdClearAttachments);           \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdResolveImage);               \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyBuffer);                 \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyBufferToImage);          \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyImage);                  \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyImageToBuffer);          \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdBlitImage);                  \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdResetQueryPool);             \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdWriteTimestamp);             \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdBeginQuery);                 \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdEndQuery);                   \
-			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyQueryPoolResults);       \
-			VK_IMPORT_DEVICE_FUNC(false, vkMapMemory);                     \
-			VK_IMPORT_DEVICE_FUNC(false, vkUnmapMemory);                   \
-			VK_IMPORT_DEVICE_FUNC(false, vkFlushMappedMemoryRanges);       \
-			VK_IMPORT_DEVICE_FUNC(false, vkInvalidateMappedMemoryRanges);  \
-			VK_IMPORT_DEVICE_FUNC(false, vkBindBufferMemory);              \
-			VK_IMPORT_DEVICE_FUNC(false, vkBindImageMemory);               \
-			/* VK_KHR_swapchain */                                         \
-			VK_IMPORT_DEVICE_FUNC(true,  vkCreateSwapchainKHR);            \
-			VK_IMPORT_DEVICE_FUNC(true,  vkDestroySwapchainKHR);           \
-			VK_IMPORT_DEVICE_FUNC(true,  vkGetSwapchainImagesKHR);         \
-			VK_IMPORT_DEVICE_FUNC(true,  vkAcquireNextImageKHR);           \
-			VK_IMPORT_DEVICE_FUNC(true,  vkQueuePresentKHR);               \
-			/* VK_EXT_debug_utils */                                       \
-			VK_IMPORT_DEVICE_FUNC(true,  vkSetDebugUtilsObjectNameEXT);    \
-			VK_IMPORT_DEVICE_FUNC(true,  vkCmdBeginDebugUtilsLabelEXT);    \
-			VK_IMPORT_DEVICE_FUNC(true,  vkCmdEndDebugUtilsLabelEXT);      \
-			VK_IMPORT_DEVICE_FUNC(true,  vkCmdInsertDebugUtilsLabelEXT);   \
+#define VK_IMPORT_DEVICE                                                    \
+			VK_IMPORT_DEVICE_FUNC(false, vkGetDeviceQueue);                 \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateFence);                    \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyFence);                   \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateSemaphore);                \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroySemaphore);               \
+			VK_IMPORT_DEVICE_FUNC(false, vkResetFences);                    \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateCommandPool);              \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyCommandPool);             \
+			VK_IMPORT_DEVICE_FUNC(false, vkResetCommandPool);               \
+			VK_IMPORT_DEVICE_FUNC(false, vkAllocateCommandBuffers);         \
+			VK_IMPORT_DEVICE_FUNC(false, vkFreeCommandBuffers);             \
+			VK_IMPORT_DEVICE_FUNC(false, vkGetBufferMemoryRequirements);    \
+			VK_IMPORT_DEVICE_FUNC(false, vkGetImageMemoryRequirements);     \
+			VK_IMPORT_DEVICE_FUNC(false, vkGetImageSubresourceLayout);      \
+			VK_IMPORT_DEVICE_FUNC(false, vkAllocateMemory);                 \
+			VK_IMPORT_DEVICE_FUNC(false, vkFreeMemory);                     \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateImage);                    \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyImage);                   \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateImageView);                \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyImageView);               \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateBuffer);                   \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyBuffer);                  \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateFramebuffer);              \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyFramebuffer);             \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateRenderPass);               \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyRenderPass);              \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateShaderModule);             \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyShaderModule);            \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreatePipelineCache);            \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyPipelineCache);           \
+			VK_IMPORT_DEVICE_FUNC(false, vkGetPipelineCacheData);           \
+			VK_IMPORT_DEVICE_FUNC(false, vkMergePipelineCaches);            \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateGraphicsPipelines);        \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateComputePipelines);         \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyPipeline);                \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreatePipelineLayout);           \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyPipelineLayout);          \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateSampler);                  \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroySampler);                 \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateDescriptorSetLayout);      \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyDescriptorSetLayout);     \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateDescriptorPool);           \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyDescriptorPool);          \
+			VK_IMPORT_DEVICE_FUNC(false, vkResetDescriptorPool);            \
+			VK_IMPORT_DEVICE_FUNC(false, vkAllocateDescriptorSets);         \
+			VK_IMPORT_DEVICE_FUNC(false, vkFreeDescriptorSets);             \
+			VK_IMPORT_DEVICE_FUNC(false, vkUpdateDescriptorSets);           \
+			VK_IMPORT_DEVICE_FUNC(false, vkCreateQueryPool);                \
+			VK_IMPORT_DEVICE_FUNC(false, vkDestroyQueryPool);               \
+			VK_IMPORT_DEVICE_FUNC(false, vkQueueSubmit);                    \
+			VK_IMPORT_DEVICE_FUNC(false, vkQueueWaitIdle);                  \
+			VK_IMPORT_DEVICE_FUNC(false, vkDeviceWaitIdle);                 \
+			VK_IMPORT_DEVICE_FUNC(false, vkWaitForFences);                  \
+			VK_IMPORT_DEVICE_FUNC(false, vkBeginCommandBuffer);             \
+			VK_IMPORT_DEVICE_FUNC(false, vkEndCommandBuffer);               \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdPipelineBarrier);             \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdBeginRenderPass);             \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdEndRenderPass);               \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdSetViewport);                 \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdDraw);                        \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdDrawIndexed);                 \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdDrawIndirect);                \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdDrawIndexedIndirect);         \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdDispatch);                    \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdDispatchIndirect);            \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindPipeline);                \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdSetStencilReference);         \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdSetBlendConstants);           \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdSetScissor);                  \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindDescriptorSets);          \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindIndexBuffer);             \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdBindVertexBuffers);           \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdClearColorImage);             \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdClearDepthStencilImage);      \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdClearAttachments);            \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdResolveImage);                \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyBuffer);                  \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyBufferToImage);           \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyImage);                   \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyImageToBuffer);           \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdBlitImage);                   \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdResetQueryPool);              \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdWriteTimestamp);              \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdBeginQuery);                  \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdEndQuery);                    \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyQueryPoolResults);        \
+			VK_IMPORT_DEVICE_FUNC(false, vkMapMemory);                      \
+			VK_IMPORT_DEVICE_FUNC(false, vkUnmapMemory);                    \
+			VK_IMPORT_DEVICE_FUNC(false, vkFlushMappedMemoryRanges);        \
+			VK_IMPORT_DEVICE_FUNC(false, vkInvalidateMappedMemoryRanges);   \
+			VK_IMPORT_DEVICE_FUNC(false, vkBindBufferMemory);               \
+			VK_IMPORT_DEVICE_FUNC(false, vkBindImageMemory);                \
+			/* VK_KHR_swapchain */                                          \
+			VK_IMPORT_DEVICE_FUNC(true,  vkCreateSwapchainKHR);             \
+			VK_IMPORT_DEVICE_FUNC(true,  vkDestroySwapchainKHR);            \
+			VK_IMPORT_DEVICE_FUNC(true,  vkGetSwapchainImagesKHR);          \
+			VK_IMPORT_DEVICE_FUNC(true,  vkAcquireNextImageKHR);            \
+			VK_IMPORT_DEVICE_FUNC(true,  vkQueuePresentKHR);                \
+			/* VK_EXT_debug_utils */                                        \
+			VK_IMPORT_DEVICE_FUNC(true,  vkSetDebugUtilsObjectNameEXT);     \
+			VK_IMPORT_DEVICE_FUNC(true,  vkCmdBeginDebugUtilsLabelEXT);     \
+			VK_IMPORT_DEVICE_FUNC(true,  vkCmdEndDebugUtilsLabelEXT);       \
+			VK_IMPORT_DEVICE_FUNC(true,  vkCmdInsertDebugUtilsLabelEXT);    \
+			/* VK_KHR_draw_indirect_count */                                \
+			VK_IMPORT_DEVICE_FUNC(true,  vkCmdDrawIndirectCountKHR);        \
+			VK_IMPORT_DEVICE_FUNC(true,  vkCmdDrawIndexedIndirectCountKHR); \
 
 #define VK_DESTROY                                \
 			VK_DESTROY_FUNC(Buffer);              \
@@ -521,7 +524,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 
 		VkResult init();
 		void shutdown();
-		uint32_t begin(uint32_t _resultIdx);
+		uint32_t begin(uint32_t _resultIdx, uint32_t _frameNum);
 		void end(uint32_t _idx);
 		bool update();
 
@@ -529,21 +532,24 @@ VK_DESTROY_FUNC(DescriptorSet);
 		{
 			void reset()
 			{
-				m_begin   = 0;
-				m_end     = 0;
-				m_pending = 0;
+				m_begin    = 0;
+				m_end      = 0;
+				m_pending  = 0;
+				m_frameNum = 0;
 			}
 
 			uint64_t m_begin;
 			uint64_t m_end;
 			uint32_t m_pending;
+			uint32_t m_frameNum;
 		};
 
 		struct Query
 		{
-			uint32_t  m_resultIdx;
-			bool      m_ready;
-			uint64_t  m_completed;
+			uint32_t m_resultIdx;
+			uint32_t m_frameNum;
+			uint64_t m_completed;
+			bool     m_ready;
 		};
 
 		uint64_t m_frequency;

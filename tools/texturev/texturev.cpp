@@ -1152,6 +1152,21 @@ void keyBindingHelp(const char* _bindings, const char* _description)
 	ImGui::Text("%s", _description);
 }
 
+inline std::string replaceAll(const char* _str, const char* _from, const char* _to)
+{
+	std::string str = _str;
+	size_t startPos = 0;
+	const size_t fromLen = bx::strLen(_from);
+	const size_t toLen   = bx::strLen(_to);
+	while ( (startPos = str.find(_from, startPos) ) != std::string::npos)
+	{
+		str.replace(startPos, fromLen, _to);
+		startPos += toLen;
+	}
+
+	return str;
+}
+
 void associate()
 {
 #if BX_PLATFORM_WINDOWS
@@ -1160,7 +1175,7 @@ void associate()
 	char exec[bx::kMaxFilePath];
 	GetModuleFileNameA(GetModuleHandleA(NULL), exec, sizeof(exec) );
 
-	std::string strExec = bx::replaceAll<std::string>(exec, "\\", "\\\\");
+	std::string strExec = replaceAll(exec, "\\", "\\\\");
 
 	std::string value;
 	bx::stringPrintf(value, "@=\"\\\"%s\\\" \\\"%%1\\\"\"\r\n\r\n", strExec.c_str() );
@@ -1311,11 +1326,13 @@ int _main_(int _argc, char** _argv)
 	View view;
 	cmdAdd("view", cmdView, &view);
 
-	entry::setWindowFlags(entry::WindowHandle{0}, ENTRY_WINDOW_FLAG_ASPECT_RATIO, false);
-	entry::setWindowSize(entry::WindowHandle{0}, view.m_width, view.m_height);
+	entry::setWindowFlags(entry::kDefaultWindowHandle, ENTRY_WINDOW_FLAG_ASPECT_RATIO, false);
+	entry::setWindowSize(entry::kDefaultWindowHandle, view.m_width, view.m_height);
 
 	bgfx::Init init;
 	init.type = view.m_rendererType;
+	init.platformData.nwh  = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
+	init.platformData.ndt  = entry::getNativeDisplayHandle();
 	init.resolution.width  = view.m_width;
 	init.resolution.height = view.m_height;
 	init.resolution.reset  = BGFX_RESET_VSYNC;
@@ -2064,8 +2081,7 @@ int _main_(int _argc, char** _argv)
 					bx::stringPrintf(title, "Failed to load %s!", filePath);
 				}
 
-				entry::WindowHandle handle = { 0 };
-				entry::setWindowTitle(handle, title.c_str() );
+				entry::setWindowTitle(entry::kDefaultWindowHandle, title.c_str() );
 			}
 
 			int64_t now = bx::getHPCounter();

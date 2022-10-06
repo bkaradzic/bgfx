@@ -270,5 +270,13 @@ std::string Function::PrettyPrint(uint32_t options) const {
   });
   return str.str();
 }
+
+void Function::ReorderBasicBlocksInStructuredOrder() {
+  std::list<BasicBlock*> order;
+  IRContext* context = this->def_inst_->context();
+  context->cfg()->ComputeStructuredOrder(this, blocks_[0].get(), &order);
+  ReorderBasicBlocks(order.begin(), order.end());
+}
+
 }  // namespace opt
 }  // namespace spvtools

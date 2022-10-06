@@ -78,6 +78,8 @@ ExampleTerrain(const char* _name, const char* _description, const char* _url)
 		bgfx::Init init;
 		init.type     = args.m_type;
 		init.vendorId = args.m_pciId;
+		init.platformData.nwh  = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
+		init.platformData.ndt  = entry::getNativeDisplayHandle();
 		init.resolution.width  = m_width;
 		init.resolution.height = m_height;
 		init.resolution.reset  = m_reset;

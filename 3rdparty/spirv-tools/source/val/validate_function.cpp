@@ -58,16 +58,16 @@ spv_result_t ValidateFunction(ValidationState_t& _, const Instruction* inst) {
   const auto function_type = _.FindDef(function_type_id);
   if (!function_type || SpvOpTypeFunction != function_type->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpFunction Function Type <id> '" << _.getIdName(function_type_id)
-           << "' is not a function type.";
+           << "OpFunction Function Type <id> " << _.getIdName(function_type_id)
+           << " is not a function type.";
   }
 
   const auto return_id = function_type->GetOperandAs<uint32_t>(1);
   if (return_id != inst->type_id()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpFunction Result Type <id> '" << _.getIdName(inst->type_id())
-           << "' does not match the Function Type's return type <id> '"
-           << _.getIdName(return_id) << "'.";
+           << "OpFunction Result Type <id> " << _.getIdName(inst->type_id())
+           << " does not match the Function Type's return type <id> "
+           << _.getIdName(return_id) << ".";
   }
 
   const std::vector<SpvOp> acceptable = {
@@ -141,9 +141,9 @@ spv_result_t ValidateFunctionParameter(ValidationState_t& _,
       _.FindDef(function_type->GetOperandAs<uint32_t>(param_index + 2));
   if (!param_type || inst->type_id() != param_type->id()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpFunctionParameter Result Type <id> '"
+           << "OpFunctionParameter Result Type <id> "
            << _.getIdName(inst->type_id())
-           << "' does not match the OpTypeFunction parameter "
+           << " does not match the OpTypeFunction parameter "
               "type of the same index.";
   }
 
@@ -228,17 +228,16 @@ spv_result_t ValidateFunctionCall(ValidationState_t& _,
   const auto function = _.FindDef(function_id);
   if (!function || SpvOpFunction != function->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpFunctionCall Function <id> '" << _.getIdName(function_id)
-           << "' is not a function.";
+           << "OpFunctionCall Function <id> " << _.getIdName(function_id)
+           << " is not a function.";
   }
 
   auto return_type = _.FindDef(function->type_id());
   if (!return_type || return_type->id() != inst->type_id()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpFunctionCall Result Type <id> '"
-           << _.getIdName(inst->type_id())
-           << "'s type does not match Function <id> '"
-           << _.getIdName(return_type->id()) << "'s return type.";
+           << "OpFunctionCall Result Type <id> " << _.getIdName(inst->type_id())
+           << "s type does not match Function <id> "
+           << _.getIdName(return_type->id()) << "s return type.";
   }
 
   const auto function_type_id = function->GetOperandAs<uint32_t>(3);
@@ -280,9 +279,9 @@ spv_result_t ValidateFunctionCall(ValidationState_t& _,
       if (!_.options()->before_hlsl_legalization ||
           !DoPointeesLogicallyMatch(argument_type, parameter_type, _)) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
-               << "OpFunctionCall Argument <id> '" << _.getIdName(argument_id)
-               << "'s type does not match Function <id> '"
-               << _.getIdName(parameter_type_id) << "'s parameter type.";
+               << "OpFunctionCall Argument <id> " << _.getIdName(argument_id)
+               << "s type does not match Function <id> "
+               << _.getIdName(parameter_type_id) << "s parameter type.";
       }
     }
 

@@ -27,8 +27,10 @@ Initialization and Shutdown
 .. doxygendefine:: BGFX_PCI_ID_NONE
 .. doxygendefine:: BGFX_PCI_ID_SOFTWARE_RASTERIZER
 .. doxygendefine:: BGFX_PCI_ID_AMD
+.. doxygendefine:: BGFX_PCI_ID_APPLE
 .. doxygendefine:: BGFX_PCI_ID_INTEL
 .. doxygendefine:: BGFX_PCI_ID_NVIDIA
+.. doxygendefine:: BGFX_PCI_ID_MICROSOFT
 
 .. doxygenstruct:: bgfx::CallbackI
     :members:
@@ -119,6 +121,7 @@ Available Caps
 .. doxygendefine:: BGFX_CAPS_COMPUTE
 .. doxygendefine:: BGFX_CAPS_CONSERVATIVE_RASTER
 .. doxygendefine:: BGFX_CAPS_DRAW_INDIRECT
+.. doxygendefine:: BGFX_CAPS_DRAW_INDIRECT_COUNT
 .. doxygendefine:: BGFX_CAPS_FRAGMENT_DEPTH
 .. doxygendefine:: BGFX_CAPS_FRAGMENT_ORDERING
 .. doxygendefine:: BGFX_CAPS_GRAPHICS_DEBUGGER
@@ -422,6 +425,8 @@ In Views, all draw commands are executed **after** blit and compute commands.
 .. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
 .. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
 .. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start = 0, uint16_t _num = 1, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
+.. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex = 0, uint16_t _numMax = UINT16_MAX, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
+
 
 Compute
 ~~~~~~~

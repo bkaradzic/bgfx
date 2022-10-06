@@ -492,7 +492,7 @@ namespace bgfx
 			break;
 		}
 
-		return 0;
+		return size;
 	}
 
 	int32_t toString(char* _out, int32_t _size, const Dx9bcInstruction& _instruction)

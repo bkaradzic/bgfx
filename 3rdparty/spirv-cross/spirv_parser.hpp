@@ -46,6 +46,8 @@ private:
 	ParsedIR ir;
 	SPIRFunction *current_function = nullptr;
 	SPIRBlock *current_block = nullptr;
+	// For workarounds.
+	bool ignore_trailing_block_opcodes = false;
 
 	void parse(const Instruction &instr);
 	const uint32_t *stream(const Instruction &instr) const;

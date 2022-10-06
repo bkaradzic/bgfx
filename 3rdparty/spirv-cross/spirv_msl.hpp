@@ -34,34 +34,39 @@
 namespace SPIRV_CROSS_NAMESPACE
 {
 
-// Indicates the format of a shader input. Currently limited to specifying
+// Indicates the format of a shader interface variable. Currently limited to specifying
 // if the input is an 8-bit unsigned integer, 16-bit unsigned integer, or
 // some other format.
-enum MSLShaderInputFormat
+enum MSLShaderVariableFormat
 {
-	MSL_SHADER_INPUT_FORMAT_OTHER = 0,
-	MSL_SHADER_INPUT_FORMAT_UINT8 = 1,
-	MSL_SHADER_INPUT_FORMAT_UINT16 = 2,
-	MSL_SHADER_INPUT_FORMAT_ANY16 = 3,
-	MSL_SHADER_INPUT_FORMAT_ANY32 = 4,
+	MSL_SHADER_VARIABLE_FORMAT_OTHER = 0,
+	MSL_SHADER_VARIABLE_FORMAT_UINT8 = 1,
+	MSL_SHADER_VARIABLE_FORMAT_UINT16 = 2,
+	MSL_SHADER_VARIABLE_FORMAT_ANY16 = 3,
+	MSL_SHADER_VARIABLE_FORMAT_ANY32 = 4,
 
 	// Deprecated aliases.
-	MSL_VERTEX_FORMAT_OTHER = MSL_SHADER_INPUT_FORMAT_OTHER,
-	MSL_VERTEX_FORMAT_UINT8 = MSL_SHADER_INPUT_FORMAT_UINT8,
-	MSL_VERTEX_FORMAT_UINT16 = MSL_SHADER_INPUT_FORMAT_UINT16,
+	MSL_VERTEX_FORMAT_OTHER = MSL_SHADER_VARIABLE_FORMAT_OTHER,
+	MSL_VERTEX_FORMAT_UINT8 = MSL_SHADER_VARIABLE_FORMAT_UINT8,
+	MSL_VERTEX_FORMAT_UINT16 = MSL_SHADER_VARIABLE_FORMAT_UINT16,
+	MSL_SHADER_INPUT_FORMAT_OTHER = MSL_SHADER_VARIABLE_FORMAT_OTHER,
+	MSL_SHADER_INPUT_FORMAT_UINT8 = MSL_SHADER_VARIABLE_FORMAT_UINT8,
+	MSL_SHADER_INPUT_FORMAT_UINT16 = MSL_SHADER_VARIABLE_FORMAT_UINT16,
+	MSL_SHADER_INPUT_FORMAT_ANY16 = MSL_SHADER_VARIABLE_FORMAT_ANY16,
+	MSL_SHADER_INPUT_FORMAT_ANY32 = MSL_SHADER_VARIABLE_FORMAT_ANY32,
 
-	MSL_SHADER_INPUT_FORMAT_INT_MAX = 0x7fffffff
+	MSL_SHADER_VARIABLE_FORMAT_INT_MAX = 0x7fffffff
 };
 
-// Defines MSL characteristics of an input variable at a particular location.
+// Defines MSL characteristics of a shader interface variable at a particular location.
 // After compilation, it is possible to query whether or not this location was used.
 // If vecsize is nonzero, it must be greater than or equal to the vecsize declared in the shader,
 // or behavior is undefined.
-struct MSLShaderInput
+struct MSLShaderInterfaceVariable
 {
 	uint32_t location = 0;
 	uint32_t component = 0;
-	MSLShaderInputFormat format = MSL_SHADER_INPUT_FORMAT_OTHER;
+	MSLShaderVariableFormat format = MSL_SHADER_VARIABLE_FORMAT_OTHER;
 	spv::BuiltIn builtin = spv::BuiltInMax;
 	uint32_t vecsize = 0;
 };
@@ -539,10 +544,15 @@ public:
 	explicit CompilerMSL(const ParsedIR &ir);
 	explicit CompilerMSL(ParsedIR &&ir);
 
-	// input is a shader input description used to fix up shader input variables.
+	// input is a shader interface variable description used to fix up shader input variables.
 	// If shader inputs are provided, is_msl_shader_input_used() will return true after
-	// calling ::compile() if the location was used by the MSL code.
-	void add_msl_shader_input(const MSLShaderInput &input);
+	// calling ::compile() if the location were used by the MSL code.
+	void add_msl_shader_input(const MSLShaderInterfaceVariable &input);
+
+	// output is a shader interface variable description used to fix up shader output variables.
+	// If shader outputs are provided, is_msl_shader_output_used() will return true after
+	// calling ::compile() if the location were used by the MSL code.
+	void add_msl_shader_output(const MSLShaderInterfaceVariable &output);
 
 	// resource is a resource binding to indicate the MSL buffer,
 	// texture or sampler index to use for a particular SPIR-V description set
@@ -577,12 +587,22 @@ public:
 	// Query after compilation is done. This allows you to check if an input location was used by the shader.
 	bool is_msl_shader_input_used(uint32_t location);
 
+	// Query after compilation is done. This allows you to check if an output location were used by the shader.
+	bool is_msl_shader_output_used(uint32_t location);
+
 	// If not using add_msl_shader_input, it's possible
 	// that certain builtin attributes need to be automatically assigned locations.
 	// This is typical for tessellation builtin inputs such as tess levels, gl_Position, etc.
 	// This returns k_unknown_location if the location was explicitly assigned with
 	// add_msl_shader_input or the builtin is not used, otherwise returns N in [[attribute(N)]].
 	uint32_t get_automatic_builtin_input_location(spv::BuiltIn builtin) const;
+
+	// If not using add_msl_shader_output, it's possible
+	// that certain builtin attributes need to be automatically assigned locations.
+	// This is typical for tessellation builtin outputs such as tess levels, gl_Position, etc.
+	// This returns k_unknown_location if the location were explicitly assigned with
+	// add_msl_shader_output or the builtin were not used, otherwise returns N in [[attribute(N)]].
+	uint32_t get_automatic_builtin_output_location(spv::BuiltIn builtin) const;
 
 	// NOTE: Only resources which are remapped using add_msl_resource_binding will be reported here.
 	// Constexpr samplers are always assumed to be emitted.
@@ -665,6 +685,7 @@ protected:
 		SPVFuncImplQuantizeToF16,
 		SPVFuncImplCubemapTo2DArrayFace,
 		SPVFuncImplUnsafeArray, // Allow Metal to use the array<T> template to make arrays a value type
+		SPVFuncImplStorageMatrix, // Allow threadgroup construction of matrices
 		SPVFuncImplInverse4x4,
 		SPVFuncImplInverse3x3,
 		SPVFuncImplInverse2x2,
@@ -718,6 +739,8 @@ protected:
 	// If the underlying resource has been used for comparison then duplicate loads of that resource must be too
 	// Use Metal's native frame-buffer fetch API for subpass inputs.
 	void emit_texture_op(const Instruction &i, bool sparse) override;
+	void emit_binary_ptr_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op);
+	std::string to_ptr_expression(uint32_t id, bool register_expression_read = true);
 	void emit_binary_unord_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op);
 	void emit_instruction(const Instruction &instr) override;
 	void emit_glsl_op(uint32_t result_type, uint32_t result_id, uint32_t op, const uint32_t *args,
@@ -736,6 +759,7 @@ protected:
 	void emit_struct_member(const SPIRType &type, uint32_t member_type_id, uint32_t index,
 	                        const std::string &qualifier = "", uint32_t base_offset = 0) override;
 	void emit_struct_padding_target(const SPIRType &type) override;
+	std::string type_to_glsl(const SPIRType &type, uint32_t id, bool member);
 	std::string type_to_glsl(const SPIRType &type, uint32_t id = 0) override;
 	void emit_block_hints(const SPIRBlock &block) override;
 
@@ -796,6 +820,7 @@ protected:
 	void extract_global_variables_from_functions();
 	void mark_packable_structs();
 	void mark_as_packable(SPIRType &type);
+	void mark_as_workgroup_struct(SPIRType &type);
 
 	std::unordered_map<uint32_t, std::set<uint32_t>> function_global_vars;
 	void extract_global_variables_from_function(uint32_t func_id, std::set<uint32_t> &added_arg_ids,
@@ -891,6 +916,8 @@ protected:
 	uint32_t get_member_location(uint32_t type_id, uint32_t index, uint32_t *comp = nullptr) const;
 	uint32_t get_or_allocate_builtin_input_member_location(spv::BuiltIn builtin,
 	                                                       uint32_t type_id, uint32_t index, uint32_t *comp = nullptr);
+	uint32_t get_or_allocate_builtin_output_member_location(spv::BuiltIn builtin,
+	                                                        uint32_t type_id, uint32_t index, uint32_t *comp = nullptr);
 
 	uint32_t get_physical_tess_level_array_size(spv::BuiltIn builtin) const;
 
@@ -1001,12 +1028,17 @@ protected:
 	Options msl_options;
 	std::set<SPVFuncImpl> spv_function_implementations;
 	// Must be ordered to ensure declarations are in a specific order.
-	std::map<LocationComponentPair, MSLShaderInput> inputs_by_location;
-	std::unordered_map<uint32_t, MSLShaderInput> inputs_by_builtin;
+	std::map<LocationComponentPair, MSLShaderInterfaceVariable> inputs_by_location;
+	std::unordered_map<uint32_t, MSLShaderInterfaceVariable> inputs_by_builtin;
+	std::map<LocationComponentPair, MSLShaderInterfaceVariable> outputs_by_location;
+	std::unordered_map<uint32_t, MSLShaderInterfaceVariable> outputs_by_builtin;
 	std::unordered_set<uint32_t> location_inputs_in_use;
 	std::unordered_set<uint32_t> location_inputs_in_use_fallback;
+	std::unordered_set<uint32_t> location_outputs_in_use;
+	std::unordered_set<uint32_t> location_outputs_in_use_fallback;
 	std::unordered_map<uint32_t, uint32_t> fragment_output_components;
 	std::unordered_map<uint32_t, uint32_t> builtin_to_automatic_input_location;
+	std::unordered_map<uint32_t, uint32_t> builtin_to_automatic_output_location;
 	std::set<std::string> pragma_lines;
 	std::set<std::string> typedef_lines;
 	SmallVector<uint32_t> vars_needing_early_declaration;
@@ -1075,7 +1107,9 @@ protected:
 	const MSLConstexprSampler *find_constexpr_sampler(uint32_t id) const;
 
 	std::unordered_set<uint32_t> buffers_requiring_array_length;
-	SmallVector<uint32_t> buffer_arrays;
+	SmallVector<uint32_t> buffer_arrays_discrete;
+	SmallVector<std::pair<uint32_t, uint32_t>> buffer_aliases_argument;
+	SmallVector<uint32_t> buffer_aliases_discrete;
 	std::unordered_set<uint32_t> atomic_image_vars; // Emulate texture2D atomic operations
 	std::unordered_set<uint32_t> pull_model_inputs;
 

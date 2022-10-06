@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(115)
+#define BGFX_API_VERSION UINT32_C(117)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -496,7 +496,7 @@
 #define BGFX_CAPS_VIEWPORT_LAYER_ARRAY            UINT64_C(0x0000000010000000) //!< Viewport layer is available in vertex shader.
 #define BGFX_CAPS_VERTEX_ATTRIB_INT8              UINT64_C(0x0000000020000000) //!< Vertex attribute signed 8-8-8-8 is supported.
 #define BGFX_CAPS_VERTEX_ATTRIB_UINT16            UINT64_C(0x0000000040000000) //!< Vertex attribute unsigned 16-16 is supported.
-
+#define BGFX_CAPS_DRAW_INDIRECT_COUNT             UINT64_C(0x0000000080000000) //!< Draw indirect with indirect count is supported.
 /// All texture compare modes are supported.
 #define BGFX_CAPS_TEXTURE_COMPARE_ALL (0 \
 	| BGFX_CAPS_TEXTURE_COMPARE_RESERVED \

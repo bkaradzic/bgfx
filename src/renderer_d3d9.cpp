@@ -234,8 +234,11 @@ namespace bgfx { namespace d3d9
 		{ D3DFMT_UNKNOWN       }, // RGBA32I
 		{ D3DFMT_UNKNOWN       }, // RGBA32U
 		{ D3DFMT_A32B32G32R32F }, // RGBA32F
+		{ D3DFMT_R5G6B5        }, // B5G6R5
 		{ D3DFMT_R5G6B5        }, // R5G6B5
+		{ D3DFMT_A4R4G4B4      }, // BGRA4
 		{ D3DFMT_A4R4G4B4      }, // RGBA4
+		{ D3DFMT_A1R5G5B5      }, // BGR5A1
 		{ D3DFMT_A1R5G5B5      }, // RGB5A1
 		{ D3DFMT_A2B10G10R10   }, // RGB10A2
 		{ D3DFMT_UNKNOWN       }, // RG11B10F
@@ -464,32 +467,37 @@ namespace bgfx { namespace d3d9
 			// Reference(s):
 			// - https://web.archive.org/web/20190207230309/https://docs.microsoft.com/en-us/windows/desktop/direct3d9/d3dpresent-parameters
 			bx::memSet(&m_params, 0, sizeof(m_params) );
-			m_params.BackBufferWidth  = _init.resolution.width;
-			m_params.BackBufferHeight = _init.resolution.height;
-			m_params.BackBufferFormat = adapterFormat;
-			m_params.BackBufferCount  = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
-			m_params.MultiSampleType  = D3DMULTISAMPLE_NONE;
-			m_params.MultiSampleQuality = 0;
+			m_params.BackBufferWidth        = _init.resolution.width;
+			m_params.BackBufferHeight       = _init.resolution.height;
+			m_params.BackBufferFormat       = adapterFormat;
+			m_params.BackBufferCount        = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
+			m_params.MultiSampleType        = D3DMULTISAMPLE_NONE;
+			m_params.MultiSampleQuality     = 0;
 			m_params.EnableAutoDepthStencil = TRUE;
 			m_params.AutoDepthStencilFormat = D3DFMT_D24S8;
-			m_params.Flags = D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
+			m_params.Flags                  = D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
 
 			m_params.FullScreen_RefreshRateInHz = 0;
-			m_params.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
-			m_params.SwapEffect = D3DSWAPEFFECT_DISCARD;
-			m_params.hDeviceWindow = NULL;
-			m_params.Windowed = true;
+			m_params.PresentationInterval       = D3DPRESENT_INTERVAL_IMMEDIATE;
+			m_params.SwapEffect                 = D3DSWAPEFFECT_DISCARD;
+			m_params.hDeviceWindow              = NULL;
+			m_params.Windowed                   = true;
+			m_params.BackBufferWidth            = _init.resolution.width;
+			m_params.BackBufferHeight           = _init.resolution.height;
 
-			RECT rect;
-			GetWindowRect( (HWND)g_platformData.nwh, &rect);
-			m_params.BackBufferWidth  = rect.right-rect.left;
-			m_params.BackBufferHeight = rect.bottom-rect.top;
+			const char* d3d9DllName =
+#if BX_PLATFORM_LINUX
+				"d3d9.so"
+#else
+				"d3d9.dll"
+#endif // BX_PLATFORM_LINUX
+				;
 
-			m_d3d9Dll = bx::dlopen("d3d9.dll");
+			m_d3d9Dll = bx::dlopen(d3d9DllName);
 
 			if (NULL == m_d3d9Dll)
 			{
-				BX_TRACE("Init error: Failed to load d3d9.dll.");
+				BX_TRACE("Init error: Failed to load %s.", d3d9DllName);
 				goto error;
 			}
 
@@ -1240,6 +1248,7 @@ namespace bgfx { namespace d3d9
 
 		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
 		{
+#if BX_PLATFORM_WINDOWS
 			IDirect3DSwapChain9* swapChain = isValid(_handle)
 				? m_frameBuffers[_handle.idx].m_swapChain
 				: m_swapChain
@@ -1303,6 +1312,10 @@ namespace bgfx { namespace d3d9
 
 			DX_CHECK(surface->UnlockRect() );
 			DX_RELEASE(surface, 0);
+#else
+			BX_TRACE("Screenshot not supported!");
+			BX_UNUSED(_handle, _filePath);
+#endif // BX_PLATFORM_WINDOWS
 		}
 
 		void updateViewName(ViewId _id, const char* _name) override
@@ -3049,8 +3062,16 @@ namespace bgfx { namespace d3d9
 							uint32_t size = useMipSize ? mip.m_size : mipSize;
 							switch (m_textureFormat)
 							{
+							case TextureFormat::R5G6B5:
+								bimg::imageConvert(bits, 16, bx::packB5G6R5, mip.m_data, bx::unpackR5G6B5, size);
+								break;
+
 							case TextureFormat::RGBA4:
 								bimg::imageConvert(bits, 16, bx::packBgra4, mip.m_data, bx::unpackRgba4, size);
+								break;
+
+							case TextureFormat::RGB5A1:
+								bimg::imageConvert(bits, 16, bx::packBgr5a1, mip.m_data, bx::unpackRgb5a1, size);
 								break;
 
 							default:
@@ -3110,8 +3131,16 @@ namespace bgfx { namespace d3d9
 			{
 				switch (m_textureFormat)
 				{
+				case TextureFormat::R5G6B5:
+					bimg::imageConvert(dst, 16, bx::packB5G6R5, src, bx::unpackR5G6B5, rectpitch);
+					break;
+
 				case TextureFormat::RGBA4:
 					bimg::imageConvert(dst, 16, bx::packBgra4, src, bx::unpackRgba4, rectpitch);
+					break;
+
+				case TextureFormat::RGB5A1:
+					bimg::imageConvert(dst, 16, bx::packBgr5a1, src, bx::unpackRgb5a1, rectpitch);
 					break;
 
 				default:
@@ -3530,7 +3559,7 @@ namespace bgfx { namespace d3d9
 		}
 	}
 
-	uint32_t TimerQueryD3D9::begin(uint32_t _resultIdx)
+	uint32_t TimerQueryD3D9::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
 		while (0 == m_control.reserve(1) )
 		{
@@ -3544,6 +3573,7 @@ namespace bgfx { namespace d3d9
 		Query& query = m_query[idx];
 		query.m_resultIdx = _resultIdx;
 		query.m_ready     = false;
+		query.m_frameNum  = _frameNum;
 
 		query.m_disjoint->Issue(D3DISSUE_BEGIN);
 		query.m_begin->Issue(D3DISSUE_END);
@@ -3594,6 +3624,7 @@ namespace bgfx { namespace d3d9
 
 				Result& result = m_result[query.m_resultIdx];
 				--result.m_pending;
+				result.m_frameNum = query.m_frameNum;
 
 				result.m_frequency = freq;
 				result.m_begin     = timeBegin;
@@ -3744,7 +3775,7 @@ namespace bgfx { namespace d3d9
 		device->BeginScene();
 		if (m_timerQuerySupport)
 		{
-			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS);
+			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
 		}
 
 		if (0 < _render->m_iboffset)
@@ -4004,6 +4035,7 @@ namespace bgfx { namespace d3d9
 
 				if ( (0
 					 | BGFX_STATE_CULL_MASK
+//					 | BGFX_STATE_FRONT_CCW
 					 | BGFX_STATE_WRITE_Z
 					 | BGFX_STATE_DEPTH_TEST_MASK
 					 | BGFX_STATE_WRITE_RGB
@@ -4439,6 +4471,7 @@ namespace bgfx { namespace d3d9
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
 		perfStats.maxGpuLatency = maxGpuLatency;
+		perfStats.gpuFrameNum   = result.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
 		m_nvapi.getMemoryInfo(perfStats.gpuMemoryUsed, perfStats.gpuMemoryMax);
 

@@ -1,19 +1,19 @@
 // Copyright (c) 2014-2020 The Khronos Group Inc.
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and/or associated documentation files (the "Materials"),
 // to deal in the Materials without restriction, including without limitation
 // the rights to use, copy, modify, merge, publish, distribute, sublicense,
 // and/or sell copies of the Materials, and to permit persons to whom the
 // Materials are furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Materials.
-// 
+//
 // MODIFICATIONS TO THIS FILE MAY MEAN IT NO LONGER ACCURATELY REFLECTS KHRONOS
 // STANDARDS. THE UNMODIFIED, NORMATIVE VERSIONS OF KHRONOS SPECIFICATIONS AND
-// HEADER INFORMATION ARE LOCATED AT https://www.khronos.org/registry/ 
-// 
+// HEADER INFORMATION ARE LOCATED AT https://www.khronos.org/registry/
+//
 // THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 // OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -27,7 +27,7 @@
 
 // Enumeration tokens for SPIR-V, in various styles:
 //   C, C++, C++11, JSON, Lua, Python, C#, D
-// 
+//
 // - C will have tokens with a "Spv" prefix, e.g.: SpvSourceLanguageGLSL
 // - C++ will have tokens in the "spv" name space, e.g.: spv::SourceLanguageGLSL
 // - C++11 will use enum classes in the spv namespace, e.g.: spv::SourceLanguage::GLSL
@@ -36,7 +36,7 @@
 // - C# will use enum classes in the Specification class located in the "Spv" namespace,
 //     e.g.: Spv.Specification.SourceLanguage.GLSL
 // - D will have tokens under the "spv" module, e.g: spv.SourceLanguage.GLSL
-// 
+//
 // Some tokens act like mask values, which can be OR'd together,
 // while others are mutually exclusive.  The mask-like ones have
 // "Mask" in their name, and a parallel enum that has the shift
@@ -91,6 +91,8 @@ enum ExecutionModel {
     ExecutionModelMissNV = 5317,
     ExecutionModelCallableKHR = 5318,
     ExecutionModelCallableNV = 5318,
+    ExecutionModelTaskEXT = 5364,
+    ExecutionModelMeshEXT = 5365,
     ExecutionModelMax = 0x7fffffff,
 };
 
@@ -166,10 +168,13 @@ enum ExecutionMode {
     ExecutionModeStencilRefUnchangedBackAMD = 5082,
     ExecutionModeStencilRefGreaterBackAMD = 5083,
     ExecutionModeStencilRefLessBackAMD = 5084,
+    ExecutionModeOutputLinesEXT = 5269,
     ExecutionModeOutputLinesNV = 5269,
+    ExecutionModeOutputPrimitivesEXT = 5270,
     ExecutionModeOutputPrimitivesNV = 5270,
     ExecutionModeDerivativeGroupQuadsNV = 5289,
     ExecutionModeDerivativeGroupLinearNV = 5290,
+    ExecutionModeOutputTrianglesEXT = 5298,
     ExecutionModeOutputTrianglesNV = 5298,
     ExecutionModePixelInterlockOrderedEXT = 5366,
     ExecutionModePixelInterlockUnorderedEXT = 5367,
@@ -218,6 +223,7 @@ enum StorageClass {
     StorageClassShaderRecordBufferNV = 5343,
     StorageClassPhysicalStorageBuffer = 5349,
     StorageClassPhysicalStorageBufferEXT = 5349,
+    StorageClassTaskPayloadWorkgroupEXT = 5402,
     StorageClassCodeSectionINTEL = 5605,
     StorageClassDeviceOnlyINTEL = 5936,
     StorageClassHostOnlyINTEL = 5937,
@@ -500,6 +506,7 @@ enum Decoration {
     DecorationPassthroughNV = 5250,
     DecorationViewportRelativeNV = 5252,
     DecorationSecondaryViewportRelativeNV = 5256,
+    DecorationPerPrimitiveEXT = 5271,
     DecorationPerPrimitiveNV = 5271,
     DecorationPerViewNV = 5272,
     DecorationPerTaskNV = 5273,
@@ -647,6 +654,10 @@ enum BuiltIn {
     BuiltInFragmentSizeNV = 5292,
     BuiltInFragInvocationCountEXT = 5293,
     BuiltInInvocationsPerPixelNV = 5293,
+    BuiltInPrimitivePointIndicesEXT = 5294,
+    BuiltInPrimitiveLineIndicesEXT = 5295,
+    BuiltInPrimitiveTriangleIndicesEXT = 5296,
+    BuiltInCullPrimitiveEXT = 5299,
     BuiltInLaunchIdKHR = 5319,
     BuiltInLaunchIdNV = 5319,
     BuiltInLaunchSizeKHR = 5320,
@@ -983,7 +994,8 @@ enum Capability {
     CapabilityFragmentFullyCoveredEXT = 5265,
     CapabilityMeshShadingNV = 5266,
     CapabilityImageFootprintNV = 5282,
-    CapabilityFragmentBarycentricKHR = 5284,
+    CapabilityMeshShadingEXT = 5283,
+	CapabilityFragmentBarycentricKHR = 5284,
     CapabilityFragmentBarycentricNV = 5284,
     CapabilityComputeDerivativeGroupQuadsNV = 5288,
     CapabilityFragmentDensityEXT = 5291,
@@ -1577,6 +1589,8 @@ enum Op {
     OpFragmentFetchAMD = 5012,
     OpReadClockKHR = 5056,
     OpImageSampleFootprintNV = 5283,
+    OpEmitMeshTasksEXT = 5294,
+    OpSetMeshOutputsEXT = 5295,
     OpGroupNonUniformPartitionNV = 5296,
     OpWritePackedPrimitiveIndices4x8NV = 5299,
     OpReportIntersectionKHR = 5334,
@@ -2234,6 +2248,8 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case OpReadClockKHR: *hasResult = true; *hasResultType = true; break;
     case OpImageSampleFootprintNV: *hasResult = true; *hasResultType = true; break;
     case OpGroupNonUniformPartitionNV: *hasResult = true; *hasResultType = true; break;
+    case OpEmitMeshTasksEXT: *hasResult = false; *hasResultType = false; break;
+    case OpSetMeshOutputsEXT: *hasResult = false; *hasResultType = false; break;
     case OpWritePackedPrimitiveIndices4x8NV: *hasResult = false; *hasResultType = false; break;
     case OpReportIntersectionNV: *hasResult = true; *hasResultType = true; break;
     case OpIgnoreIntersectionNV: *hasResult = false; *hasResultType = false; break;
@@ -2515,4 +2531,3 @@ inline FragmentShadingRateMask operator|(FragmentShadingRateMask a, FragmentShad
 }  // end namespace spv
 
 #endif  // #ifndef spirv_HPP
-
