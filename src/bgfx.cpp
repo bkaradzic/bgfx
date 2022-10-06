@@ -311,19 +311,28 @@ namespace bgfx
 	PlatformData g_platformData;
 	bool g_platformDataChangedSinceReset = false;
 
-	const char* getTypeName(Handle _handle)
+	static Handle::TypeName s_typeName[] =
 	{
-		switch (_handle.type)
-		{
-		case Handle::IndexBuffer:  return "IB";
-		case Handle::Shader:       return "S";
-		case Handle::Texture:      return "T";
-		case Handle::VertexBuffer: return "VB";
-		default:                   break;
-		}
+		{ "DIB",  "DynamicIndexBuffer"  },
+		{ "DVB",  "DynamicVertexBuffer" },
+		{ "FB",   "FrameBuffer"         },
+		{ "IB",   "IndexBuffer"         },
+		{ "IndB", "IndirectBuffer"      },
+		{ "OQ",   "OcclusionQuery"      },
+		{ "P",    "Program"             },
+		{ "S",    "Shader"              },
+		{ "T",    "Texture"             },
+		{ "U",    "Uniform"             },
+		{ "VB",   "VertexBuffer"        },
+		{ "VL",   "VertexLayout"        },
+		{ "?",    "?"                   },
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_typeName) == Handle::Count+1, "");
 
-		BX_ASSERT(false, "You should not be here.");
-		return "?";
+	const Handle::TypeName& Handle::getTypeName(Handle::Enum _enum)
+	{
+		BX_ASSERT(_enum < Handle::Count, "Invalid Handle::Enum %d!", _enum);
+		return s_typeName[bx::min(_enum, Handle::Count)];
 	}
 
 	void AllocatorStub::checkLeaks()

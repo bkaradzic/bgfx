@@ -6065,7 +6065,7 @@ namespace bgfx { namespace d3d12
 		{
 			const BlitItem& blit = _bs.advance();
 
-			TextureD3D12& src = m_textures[blit.m_src.idx];
+			      TextureD3D12& src = m_textures[blit.m_src.idx];
 			const TextureD3D12& dst = m_textures[blit.m_dst.idx];
 
 			if (currentSrc.idx != blit.m_src.idx)
@@ -6075,7 +6075,7 @@ namespace bgfx { namespace d3d12
 					m_textures[currentSrc.idx].setState(m_commandList, state);
 				}
 
-				currentSrc = blit.m_src;
+				currentSrc = blit.m_src.to<TextureHandle>();
 
 				if (NULL != src.m_singleMsaa)
 				{
