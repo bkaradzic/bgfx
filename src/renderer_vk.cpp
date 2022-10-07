@@ -2329,6 +2329,19 @@ VK_IMPORT_DEVICE
 			return 0;
 		}
 
+		void* getVkImageLayout(TextureHandle _handle) override
+		{
+			//const TextureVK& texture = m_textures[_handle.idx];
+			m_imageLayout = m_textures[_handle.idx].m_currentImageLayout;
+			return static_cast<void*>(&m_imageLayout);//m_textures[_handle.idx].m_currentImageLayout);
+		}
+		void* getVkImage(TextureHandle _handle) override
+		{
+			//const TextureVK& texture = m_textures[_handle.idx];
+			m_image = m_textures[_handle.idx].m_textureImage;
+			return static_cast<void*>(&m_image);//m_textures[_handle.idx].m_currentImageLayout);
+		}
+
 		void destroyTexture(TextureHandle _handle) override
 		{
 			m_imageViewCache.invalidateWithParent(_handle.idx);
@@ -4412,6 +4425,9 @@ VK_IMPORT_DEVICE
 		VkQueue  m_globalQueue;
 		VkDescriptorPool m_descriptorPool;
 		VkPipelineCache  m_pipelineCache;
+
+		VkImageLayout m_imageLayout;
+		VkImage m_image;
 
 		TimerQueryVK m_gpuTimer;
 		OcclusionQueryVK m_occlusionQuery;

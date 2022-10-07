@@ -414,6 +414,30 @@ namespace bgfx
 		return rci->getInternal(_handle);
 	}
 
+	uintptr_t getInternal(TextureHandle _handle)
+	{
+		BGFX_CHECK_RENDER_THREAD();
+		RendererContextI* rci = s_ctx->m_renderCtx;
+		if (0 == rci->getInternal(_handle))
+		{
+			return 0;
+		}
+		return rci->getInternal(_handle);
+	}
+	void* getVkImageLayout(TextureHandle _handle)
+	{
+		BGFX_CHECK_RENDER_THREAD();
+		RendererContextI* rci = s_ctx->m_renderCtx;
+		return rci->getVkImageLayout(_handle);
+	}
+
+	void* getVkImage(TextureHandle _handle)
+	{
+		BGFX_CHECK_RENDER_THREAD();
+		RendererContextI* rci = s_ctx->m_renderCtx;
+		return rci->getVkImage(_handle);
+	}
+
 	void setGraphicsDebuggerPresent(bool _present)
 	{
 		BX_TRACE("Graphics debugger is %spresent.", _present ? "" : "not ");

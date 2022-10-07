@@ -131,6 +131,15 @@ namespace bgfx
 		, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE
 		);
 
+	// GetInternal exposes the native texture handle
+	// Used in Qt to share texture created by bgfx with Qt during init
+	uintptr_t getInternal(TextureHandle _handle);
+
+	// For Vulkan with Qt, we can not use getInternal as we need a vkImage
+	// This getters are used instead of getInternal for Vulkan only
+	void* getVkImageLayout(TextureHandle _handle);
+	void* getVkImage(TextureHandle _handle);
+
 } // namespace bgfx
 
 #endif // BGFX_PLATFORM_H_HEADER_GUARD
