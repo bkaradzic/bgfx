@@ -6640,8 +6640,10 @@ namespace bgfx { namespace d3d12
 				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
 				currentState.m_stateFlags = newFlags;
 
-				if (0 != (BGFX_STATE_PT_MASK & changedFlags))
-					primIndex = uint8_t((newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
+				if (0 != (BGFX_STATE_PT_MASK & changedFlags) )
+				{
+					primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
+				}
 
 				const uint64_t newStencil = draw.m_stencil;
 				uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
