@@ -3401,7 +3401,7 @@ namespace bgfx { namespace d3d11
 				case UniformType::Mat3|kUniformFragmentBit:
 					 {
 						 float* value = (float*)data;
-						 for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3*16, value += 9)
+						 for (uint32_t ii = 0, count = num; ii < count; ++ii,  loc += 3*16, value += 9)
 						 {
 							 Matrix4 mtx;
 							 mtx.un.val[ 0] = value[0];
@@ -3425,11 +3425,11 @@ namespace bgfx { namespace d3d11
 				case UniformType::Sampler | kUniformFragmentBit:
 				case UniformType::Vec4:
 				case UniformType::Vec4 | kUniformFragmentBit:
+					setShaderUniform(uint8_t(type), loc, data, num);
+					break;
 				case UniformType::Mat4:
 				case UniformType::Mat4 | kUniformFragmentBit:
-					{
-						setShaderUniform(uint8_t(type), loc, data, num);
-					}
+					setShaderUniform(uint8_t(type), loc, data, num * 4);
 					break;
 
 				case UniformType::End:
@@ -4147,6 +4147,7 @@ namespace bgfx { namespace d3d11
 
 				uint8_t num = 0;
 				bx::read(&reader, num, &err);
+				num  = bx::max<uint16_t>(1, num);
 
 				uint16_t regIndex = 0;
 				bx::read(&reader, regIndex, &err);
@@ -4190,7 +4191,7 @@ namespace bgfx { namespace d3d11
 						}
 
 						kind = "user";
-						m_constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), regIndex, info->m_handle, regCount);
+						m_constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), regIndex, info->m_handle, num);
 					}
 				}
 				else

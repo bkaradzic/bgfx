@@ -6262,6 +6262,7 @@ namespace bgfx { namespace gl
 
 			uint8_t num;
 			bx::read(&reader, num, &err);
+			num  = bx::max<uint16_t>(1, num);
 
 			uint16_t regIndex;
 			bx::read(&reader, regIndex, &err);

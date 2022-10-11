@@ -1906,18 +1906,18 @@ namespace bgfx { namespace d3d9
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
-#define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type) \
+#define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type, _count) \
 				case UniformType::_uniform: \
 				{ \
 					_type* value = (_type*)data; \
-					DX_CHECK(device->SetVertexShaderConstant##_dxsuffix(loc, value, num) ); \
+					DX_CHECK(device->SetVertexShaderConstant##_dxsuffix(loc, value, num * _count) ); \
 				} \
 				break; \
 				\
 				case UniformType::_uniform|kUniformFragmentBit: \
 				{ \
 					_type* value = (_type*)data; \
-					DX_CHECK(device->SetPixelShaderConstant##_dxsuffix(loc, value, num) ); \
+					DX_CHECK(device->SetPixelShaderConstant##_dxsuffix(loc, value, num * _count) ); \
 				} \
 				break
 
@@ -1926,7 +1926,7 @@ namespace bgfx { namespace d3d9
 				case UniformType::Mat3:
 					{
 						float* value = (float*)data;
-						for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3, value += 9)
+						for (uint32_t ii = 0, count = num; ii < count; ++ii,  loc += 3, value += 9)
 						{
 							Matrix4 mtx;
 							mtx.un.val[ 0] = value[0];
@@ -1949,7 +1949,7 @@ namespace bgfx { namespace d3d9
 				case UniformType::Mat3|kUniformFragmentBit:
 					{
 						float* value = (float*)data;
-						for (uint32_t ii = 0, count = num/3; ii < count; ++ii, loc += 3, value += 9)
+						for (uint32_t ii = 0, count = num; ii < count; ++ii, loc += 3, value += 9)
 						{
 							Matrix4 mtx;
 							mtx.un.val[ 0] = value[0];
@@ -1969,9 +1969,9 @@ namespace bgfx { namespace d3d9
 					}
 					break;
 
-				CASE_IMPLEMENT_UNIFORM(Sampler, I, int);
-				CASE_IMPLEMENT_UNIFORM(Vec4,    F, float);
-				CASE_IMPLEMENT_UNIFORM(Mat4,    F, float);
+				CASE_IMPLEMENT_UNIFORM(Sampler, I, int, 1);
+				CASE_IMPLEMENT_UNIFORM(Vec4,    F, float, 1);
+				CASE_IMPLEMENT_UNIFORM(Mat4,    F, float, 4);
 
 				case UniformType::End:
 					break;
@@ -2456,6 +2456,7 @@ namespace bgfx { namespace d3d9
 
 				uint8_t num = 0;
 				bx::read(&reader, num, &err);
+				num  = bx::max<uint16_t>(1, num);
 
 				uint16_t regIndex = 0;
 				bx::read(&reader, regIndex, &err);
@@ -2499,7 +2500,7 @@ namespace bgfx { namespace d3d9
 						}
 
 						kind = "user";
-						m_constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), regIndex, info->m_handle, regCount);
+						m_constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), regIndex, info->m_handle, num);
 					}
 				}
 				else
