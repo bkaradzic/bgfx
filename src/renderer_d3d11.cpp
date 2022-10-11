@@ -4785,7 +4785,6 @@ namespace bgfx { namespace d3d11
 		}
 
 		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
-		const uint16_t blockHeight = blockInfo.blockHeight;
 		const uint16_t bpp    = blockInfo.bitsPerPixel;
 		const uint32_t subres = _mip + ( (layer + _side) * m_numMips);
 		const bool     depth  = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) );
@@ -4811,32 +4810,6 @@ namespace bgfx { namespace d3d11
 
 			box.right  = bx::max(1u, m_width  >> _mip);
 			box.bottom = bx::max(1u, m_height >> _mip);
-		}
-
-		{
-			uint8_t* src = data;
-			for (uint32_t yy = 0, height = _rect.m_height; yy < height; yy += blockHeight)
-			{
-				switch (m_textureFormat)
-				{
-				case TextureFormat::R5G6B5:
-					temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch);
-					bimg::imageConvert(temp, 16, bx::packB5G6R5, src, bx::unpackR5G6B5, rectpitch);
-					data = temp;
-					break;
-				case TextureFormat::RGBA4:
-					temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch);
-					bimg::imageConvert(temp, 16, bx::packBgra4, src, bx::unpackRgba4, rectpitch);
-					data = temp;
-					break;
-				case TextureFormat::RGB5A1:
-					temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch);
-					bimg::imageConvert(temp, 16, bx::packBgr5a1, src, bx::unpackRgb5a1, rectpitch);
-					data = temp;
-					break;
-				}
-				src += srcpitch;
-			}
 		}
 
 		deviceCtx->UpdateSubresource(
