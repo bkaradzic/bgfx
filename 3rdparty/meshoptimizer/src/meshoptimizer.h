@@ -37,8 +37,8 @@ extern "C" {
 #endif
 
 /**
- * Vertex attribute stream, similar to glVertexPointer
- * Each element takes size bytes, with stride controlling the spacing between successive elements.
+ * Vertex attribute stream
+ * Each element takes size bytes, beginning at data, with stride controlling the spacing between successive elements (stride >= size).
  */
 struct meshopt_Stream
 {
@@ -115,7 +115,7 @@ MESHOPTIMIZER_API void meshopt_generateShadowIndexBufferMulti(unsigned int* dest
  * This can be used to implement algorithms like silhouette detection/expansion and other forms of GS-driven rendering.
  *
  * destination must contain enough space for the resulting index buffer (index_count*2 elements)
- * vertex_positions should have float3 position in the first 12 bytes of each vertex - similar to glVertexPointer
+ * vertex_positions should have float3 position in the first 12 bytes of each vertex
  */
 MESHOPTIMIZER_API void meshopt_generateAdjacencyIndexBuffer(unsigned int* destination, const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride);
 
@@ -131,7 +131,7 @@ MESHOPTIMIZER_API void meshopt_generateAdjacencyIndexBuffer(unsigned int* destin
  * See "Tessellation on Any Budget" (John McDonald, GDC 2011) for implementation details.
  *
  * destination must contain enough space for the resulting index buffer (index_count*4 elements)
- * vertex_positions should have float3 position in the first 12 bytes of each vertex - similar to glVertexPointer
+ * vertex_positions should have float3 position in the first 12 bytes of each vertex
  */
 MESHOPTIMIZER_API void meshopt_generateTessellationIndexBuffer(unsigned int* destination, const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride);
 
@@ -171,7 +171,7 @@ MESHOPTIMIZER_API void meshopt_optimizeVertexCacheFifo(unsigned int* destination
  *
  * destination must contain enough space for the resulting index buffer (index_count elements)
  * indices must contain index data that is the result of meshopt_optimizeVertexCache (*not* the original mesh indices!)
- * vertex_positions should have float3 position in the first 12 bytes of each vertex - similar to glVertexPointer
+ * vertex_positions should have float3 position in the first 12 bytes of each vertex
  * threshold indicates how much the overdraw optimizer can degrade vertex cache efficiency (1.05 = up to 5%) to reduce overdraw more efficiently
  */
 MESHOPTIMIZER_API void meshopt_optimizeOverdraw(unsigned int* destination, const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, float threshold);
@@ -331,7 +331,7 @@ enum
  * If the original vertex data isn't required, creating a compact vertex buffer using meshopt_optimizeVertexFetch is recommended.
  *
  * destination must contain enough space for the target index buffer, worst case is index_count elements (*not* target_index_count)!
- * vertex_positions should have float3 position in the first 12 bytes of each vertex - similar to glVertexPointer
+ * vertex_positions should have float3 position in the first 12 bytes of each vertex
  * target_error represents the error relative to mesh extents that can be tolerated, e.g. 0.01 = 1% deformation
  * options must be a bitmask composed of meshopt_SimplifyX options; 0 is a safe default
  * result_error can be NULL; when it's not NULL, it will contain the resulting (relative) error after simplification
@@ -347,7 +347,7 @@ MESHOPTIMIZER_API size_t meshopt_simplify(unsigned int* destination, const unsig
  * If the original vertex data isn't required, creating a compact vertex buffer using meshopt_optimizeVertexFetch is recommended.
  *
  * destination must contain enough space for the target index buffer, worst case is index_count elements (*not* target_index_count)!
- * vertex_positions should have float3 position in the first 12 bytes of each vertex - similar to glVertexPointer
+ * vertex_positions should have float3 position in the first 12 bytes of each vertex
  * target_error represents the error relative to mesh extents that can be tolerated, e.g. 0.01 = 1% deformation
  * result_error can be NULL; when it's not NULL, it will contain the resulting (relative) error after simplification
  */
@@ -361,7 +361,7 @@ MESHOPTIMIZER_EXPERIMENTAL size_t meshopt_simplifySloppy(unsigned int* destinati
  * If the original vertex data isn't required, creating a compact vertex buffer using meshopt_optimizeVertexFetch is recommended.
  *
  * destination must contain enough space for the target index buffer (target_vertex_count elements)
- * vertex_positions should have float3 position in the first 12 bytes of each vertex - similar to glVertexPointer
+ * vertex_positions should have float3 position in the first 12 bytes of each vertex
  */
 MESHOPTIMIZER_EXPERIMENTAL size_t meshopt_simplifyPoints(unsigned int* destination, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, size_t target_vertex_count);
 
@@ -423,7 +423,7 @@ struct meshopt_OverdrawStatistics
  * Returns overdraw statistics using a software rasterizer
  * Results may not match actual GPU performance
  *
- * vertex_positions should have float3 position in the first 12 bytes of each vertex - similar to glVertexPointer
+ * vertex_positions should have float3 position in the first 12 bytes of each vertex
  */
 MESHOPTIMIZER_API struct meshopt_OverdrawStatistics meshopt_analyzeOverdraw(const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride);
 
@@ -461,7 +461,7 @@ struct meshopt_Meshlet
  * meshlets must contain enough space for all meshlets, worst case size can be computed with meshopt_buildMeshletsBound
  * meshlet_vertices must contain enough space for all meshlets, worst case size is equal to max_meshlets * max_vertices
  * meshlet_triangles must contain enough space for all meshlets, worst case size is equal to max_meshlets * max_triangles * 3
- * vertex_positions should have float3 position in the first 12 bytes of each vertex - similar to glVertexPointer
+ * vertex_positions should have float3 position in the first 12 bytes of each vertex
  * max_vertices and max_triangles must not exceed implementation limits (max_vertices <= 255 - not 256!, max_triangles <= 512)
  * cone_weight should be set to 0 when cone culling is not used, and a value between 0 and 1 otherwise to balance between cluster size and cone culling efficiency
  */
@@ -503,7 +503,7 @@ struct meshopt_Bounds
  * The formula that uses the apex is slightly more accurate but needs the apex; if you are already using bounding sphere
  * to do frustum/occlusion culling, the formula that doesn't use the apex may be preferable.
  *
- * vertex_positions should have float3 position in the first 12 bytes of each vertex - similar to glVertexPointer
+ * vertex_positions should have float3 position in the first 12 bytes of each vertex
  * index_count/3 should be less than or equal to 512 (the function assumes clusters of limited size)
  */
 MESHOPTIMIZER_API struct meshopt_Bounds meshopt_computeClusterBounds(const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride);
@@ -523,7 +523,7 @@ MESHOPTIMIZER_EXPERIMENTAL void meshopt_spatialSortRemap(unsigned int* destinati
  * Reorders triangles for spatial locality, and generates a new index buffer. The resulting index buffer can be used with other functions like optimizeVertexCache.
  *
  * destination must contain enough space for the resulting index buffer (index_count elements)
- * vertex_positions should have float3 position in the first 12 bytes of each vertex - similar to glVertexPointer
+ * vertex_positions should have float3 position in the first 12 bytes of each vertex
  */
 MESHOPTIMIZER_EXPERIMENTAL void meshopt_spatialSortTriangles(unsigned int* destination, const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride);
 
