@@ -601,9 +601,6 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define ISAMPLER3D(_name, _reg) uniform isampler3D _name
 #	define USAMPLER3D(_name, _reg) uniform usampler3D _name
 
-#	define texture2DBias(_sampler, _coord, _bias)      texture2D(_sampler, _coord, _bias)
-#	define textureCubeBias(_sampler, _coord, _bias)    textureCube(_sampler, _coord, _bias)
-
 #	if BGFX_SHADER_LANGUAGE_GLSL >= 130
 #		define texture2D(_sampler, _coord)      texture(_sampler, _coord)
 #		define texture2DArray(_sampler, _coord) texture(_sampler, _coord)
@@ -611,6 +608,11 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #		define textureCube(_sampler, _coord)    texture(_sampler, _coord)
 #		define texture2DLod(_sampler, _coord, _lod)                textureLod(_sampler, _coord, _lod)
 #		define texture2DLodOffset(_sampler, _coord, _lod, _offset) textureLodOffset(_sampler, _coord, _lod, _offset)
+#		define texture2DBias(_sampler, _coord, _bias)      texture(_sampler, _coord, _bias)
+#		define textureCubeBias(_sampler, _coord, _bias)    texture(_sampler, _coord, _bias)
+#	else
+#		define texture2DBias(_sampler, _coord, _bias)      texture2D(_sampler, _coord, _bias)
+#		define textureCubeBias(_sampler, _coord, _bias)    textureCube(_sampler, _coord, _bias)
 #	endif // BGFX_SHADER_LANGUAGE_GLSL >= 130
 
 vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_vec, _mtx); }
