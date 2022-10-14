@@ -4143,8 +4143,9 @@ namespace bgfx { namespace gl
 		}
 
 		void setSamplerState(uint32_t _stage, uint32_t _numMips, uint32_t _flags, const float _rgba[4])
-	        {
+		{
 			BX_ASSERT(m_samplerObjectSupport, "Cannot use Sampler Objects");
+
 			if (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags) )
 			{
 				const uint32_t index = (_flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
