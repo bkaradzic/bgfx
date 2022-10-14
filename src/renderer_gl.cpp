@@ -2921,10 +2921,10 @@ namespace bgfx { namespace gl
 					GL_CHECK(glGenVertexArrays(1, &m_vao) );
 				}
 
-				m_samplerObjectSupport = !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
-					&& (m_gles3
-						|| s_extension[Extension::ARB_sampler_objects].m_supported
-						);
+				m_samplerObjectSupport = false
+					|| m_gles3
+					|| s_extension[Extension::ARB_sampler_objects].m_supported
+					;
 
 				m_shadowSamplersSupport = !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
 					|| s_extension[Extension::EXT_shadow_samplers].m_supported
