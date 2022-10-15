@@ -1157,21 +1157,21 @@ namespace bgfx
 	// |        +-draw                                                  |
 	// |----------------------------------------------------------------| Draw Key 0 - Sort by program
 	// |        |kkttpppppppppdddddddddddddddddddddddddddddddd          |
-	// |        |   ^        ^                               ^          |
-	// |        |   |        |                               |          |
-	// |        |   +-blend  +-program                 depth-+          |
-	// |        |                                                       |
+	// |        | ^ ^        ^                               ^          |
+	// |        | | |        |                               |          |
+	// |        | | +-blend  +-program                 depth-+          |
+	// |        | +-key type                                            |
 	// |----------------------------------------------------------------| Draw Key 1 - Sort by depth
 	// |        |kkddddddddddddddddddddddddddddddddttppppppppp          |
-	// |        |                                ^^ ^        ^          |
-	// |        |                                || +-trans  |          |
-	// |        |                          depth-+   program-+          |
+	// |        | ^                               ^ ^        ^          |
+	// |        | |                               | +-blend  |          |
+	// |        | +-key type                depth-+  program-+          |
 	// |        |                                                       |
 	// |----------------------------------------------------------------| Draw Key 2 - Sequential
 	// |        |kkssssssssssssssssssssttppppppppp                      |
-	// |        |                     ^ ^        ^                      |
-	// |        |                     | |        |                      |
-	// |        |                 seq-+ +-trans  +-program              |
+	// |        | ^                   ^ ^        ^                      |
+	// |        | |                   | |        |                      |
+	// |        | +-key type      seq-+ +-blend  +-program              |
 	// |        |                                                       |
 	// |----------------------------------------------------------------| Compute Key
 	// |        |ssssssssssssssssssssppppppppp                          |
