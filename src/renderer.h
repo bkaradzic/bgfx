@@ -75,6 +75,7 @@ namespace bgfx
 			m_invViewCached = UINT16_MAX;
 			m_invProjCached = UINT16_MAX;
 			m_invViewProjCached = UINT16_MAX;
+			m_modelInvTransCached = UINT16_MAX;
 
 			m_view = m_viewTmp;
 
@@ -260,6 +261,23 @@ namespace bgfx
 					}
 					break;
 
+				case PredefinedUniform::ModelInvTrans:
+					{
+						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
+						if (_view != m_modelInvTransCached) {
+							m_modelInvTransCached = _view;
+							bx::float4x4_inverse(&m_modelInvTrans.un.f4x4, &model.un.f4x4);
+							bx::float4x4_transpose(&m_modelInvTrans.un.f4x4, &m_modelInvTrans.un.f4x4);
+						}
+
+						_renderer->setShaderUniform4x4f(flags
+							, predefined.m_loc
+							, m_modelInvTrans.un.val
+							, bx::uint32_min(mtxRegs, predefined.m_count)
+						);
+					}
+					break;
+
 				case PredefinedUniform::AlphaRef:
 					{
 						_renderer->setShaderUniform4f(flags
@@ -284,10 +302,12 @@ namespace bgfx
 		Matrix4  m_invView;
 		Matrix4  m_invProj;
 		Matrix4  m_invViewProj;
+		Matrix4  m_modelInvTrans;
 		float    m_alphaRef;
 		uint16_t m_invViewCached;
 		uint16_t m_invProjCached;
 		uint16_t m_invViewProjCached;
+		uint16_t m_modelInvTransCached;
 	};
 
 	template <typename Ty, uint16_t MaxHandleT>

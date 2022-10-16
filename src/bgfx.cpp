@@ -971,6 +971,7 @@ namespace bgfx
 		"u_model",
 		"u_modelView",
 		"u_modelViewProj",
+		"u_modelInvTrans",
 		"u_alphaRef4",
 	};
 
