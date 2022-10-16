@@ -770,6 +770,7 @@ namespace bgfx
 			Model,
 			ModelView,
 			ModelViewProj,
+			ModelInvTrans,
 			AlphaRef,
 			Count
 		};
