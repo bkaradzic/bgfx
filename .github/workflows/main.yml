@@ -231,8 +231,9 @@ jobs:
       - name: Checkout bx
         uses: actions/checkout@v3
         with:
-          repository: bkaradzic/bx
+          repository: thedmd/bx
           path: bx
+          ref: android-ndk-update
       - name: Checkout bimg
         uses: actions/checkout@v3
         with:
