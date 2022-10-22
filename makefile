@@ -52,6 +52,7 @@ projgen: ## Generate project files for all configurations.
 	$(GENIE)              --with-combined-examples                   --gcc=android-arm     gmake
 	$(GENIE)              --with-combined-examples                   --gcc=android-arm64   gmake
 	$(GENIE)              --with-combined-examples                   --gcc=android-x86     gmake
+	$(GENIE)              --with-combined-examples                   --gcc=android-x86_64  gmake
 	$(GENIE)              --with-examples                            --gcc=wasm2js         gmake
 	$(GENIE)              --with-combined-examples                   --gcc=ios-arm         gmake
 	$(GENIE)              --with-combined-examples                   --gcc=ios-arm64       gmake
@@ -86,6 +87,14 @@ android-x86-debug: .build/projects/gmake-android-x86 ## Build - Android x86 Debu
 android-x86-release: .build/projects/gmake-android-x86 ## Build - Android x86 Debug and Release
 	$(MAKE) -R -C .build/projects/gmake-android-x86 config=release
 android-x86: android-x86-debug android-x86-release ## Build - Android x86 Debug and Release
+
+.build/projects/gmake-android-x86_64:
+	$(GENIE) --gcc=android-x86_64 gmake
+android-x86_64-debug: .build/projects/gmake-android-x86_64 ## Build - Android x86_64 Debug and Release
+	$(MAKE) -R -C .build/projects/gmake-android-x86_64 config=debug
+android-x86_64-release: .build/projects/gmake-android-x86_64 ## Build - Android x86_64 Debug and Release
+	$(MAKE) -R -C .build/projects/gmake-android-x86_64 config=release
+android-x86_64: android-x86_64-debug android-x86_64-release ## Build - Android x86_64 Debug and Release
 
 .build/projects/gmake-wasm2js: # Wasm2JS: The JavaScript fallback for web builds when Wasm is not supported by browser
 	$(GENIE) --gcc=wasm2js --with-combined-examples gmake
