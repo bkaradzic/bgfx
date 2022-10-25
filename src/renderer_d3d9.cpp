@@ -183,12 +183,20 @@ namespace bgfx { namespace d3d9
 		{ D3DFMT_UNKNOWN       }, // ATC,
 		{ D3DFMT_UNKNOWN       }, // ATCE,
 		{ D3DFMT_UNKNOWN       }, // ATCI,
-		{ D3DFMT_UNKNOWN       }, // ASTC4x4,
-		{ D3DFMT_UNKNOWN       }, // ASTC5x5,
-		{ D3DFMT_UNKNOWN       }, // ASTC6x6,
-		{ D3DFMT_UNKNOWN       }, // ASTC8x5,
-		{ D3DFMT_UNKNOWN       }, // ASTC8x6,
-		{ D3DFMT_UNKNOWN       }, // ASTC10x5,
+		{ D3DFMT_UNKNOWN       }, // ASTC4x4
+		{ D3DFMT_UNKNOWN       }, // ASTC5x4
+		{ D3DFMT_UNKNOWN       }, // ASTC5x5
+		{ D3DFMT_UNKNOWN       }, // ASTC6x5
+		{ D3DFMT_UNKNOWN       }, // ASTC6x6
+		{ D3DFMT_UNKNOWN       }, // ASTC8x5
+		{ D3DFMT_UNKNOWN       }, // ASTC8x6
+		{ D3DFMT_UNKNOWN       }, // ASTC8x8
+		{ D3DFMT_UNKNOWN       }, // ASTC10x5
+		{ D3DFMT_UNKNOWN       }, // ASTC10x6
+		{ D3DFMT_UNKNOWN       }, // ASTC10x8
+		{ D3DFMT_UNKNOWN       }, // ASTC10x10
+		{ D3DFMT_UNKNOWN       }, // ASTC12x10
+		{ D3DFMT_UNKNOWN       }, // ASTC12x12
 		{ D3DFMT_UNKNOWN       }, // Unknown
 		{ D3DFMT_A1            }, // R1
 		{ D3DFMT_A8            }, // A8

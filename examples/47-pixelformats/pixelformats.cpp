@@ -470,12 +470,20 @@ public:
 		m_textureSets.push_back(generateTextureSetFromFile("textures/pf_uv_filtering_test.dds") );
 		const char* textureCompressionSetFiles[] =
 		{
-			  "textures/texture_compression_astc_10x5.dds"
-			, "textures/texture_compression_astc_4x4.dds"
+			  "textures/texture_compression_astc_4x4.dds"
+			, "textures/texture_compression_astc_5x4.dds"
 			, "textures/texture_compression_astc_5x5.dds"
+			, "textures/texture_compression_astc_6x5.dds"
 			, "textures/texture_compression_astc_6x6.dds"
 			, "textures/texture_compression_astc_8x5.dds"
 			, "textures/texture_compression_astc_8x6.dds"
+			, "textures/texture_compression_astc_8x8.dds"
+			, "textures/texture_compression_astc_10x5.dds"
+			, "textures/texture_compression_astc_10x6.dds"
+			, "textures/texture_compression_astc_10x8.dds"
+			, "textures/texture_compression_astc_10x10.dds"
+			, "textures/texture_compression_astc_12x10.dds"
+			, "textures/texture_compression_astc_12x12.dds"
 			, "textures/texture_compression_atc.dds"
 			, "textures/texture_compression_atce.dds"
 			, "textures/texture_compression_atci.dds"
