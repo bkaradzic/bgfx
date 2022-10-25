@@ -193,20 +193,20 @@ typedef enum bgfx_texture_format
     BGFX_TEXTURE_FORMAT_ATC,                  /** (17) ATC RGB 4BPP                   */
     BGFX_TEXTURE_FORMAT_ATCE,                 /** (18) ATCE RGBA 8 BPP explicit alpha */
     BGFX_TEXTURE_FORMAT_ATCI,                 /** (19) ATCI RGBA 8 BPP interpolated alpha */
-    BGFX_TEXTURE_FORMAT_ASTC4X4,              /** (20) ASTC 4X4 8.0 BPP               */
-    BGFX_TEXTURE_FORMAT_ASTC5X4,	          /** (21) ASTC 5X4 6.40 BPP              */
-    BGFX_TEXTURE_FORMAT_ASTC5X5,              /** (22) ASTC 5X5 5.12 BPP              */
-    BGFX_TEXTURE_FORMAT_ASTC6X5,	          /** (23) ASTC 6X5 4.27 BPP              */
-    BGFX_TEXTURE_FORMAT_ASTC6X6,              /** (24) ASTC 6X6 3.56 BPP              */
-    BGFX_TEXTURE_FORMAT_ASTC8X5,              /** (25) ASTC 8X5 3.20 BPP              */
-    BGFX_TEXTURE_FORMAT_ASTC8X6,              /** (26) ASTC 8X6 2.67 BPP              */
-    BGFX_TEXTURE_FORMAT_ASTC8X8,	          /** (27) ASTC 8X8 2.00 BPP              */
-    BGFX_TEXTURE_FORMAT_ASTC10X5,             /** (28) ASTC 10X5 2.56 BPP             */
-    BGFX_TEXTURE_FORMAT_ASTC10X6,	          /** (29) ASTC 10X6 2.13 BPP             */
-    BGFX_TEXTURE_FORMAT_ASTC10X8,	          /** (30) ASTC 10X8 1.60 BPP             */
-    BGFX_TEXTURE_FORMAT_ASTC10X10,	          /** (31) ASTC 10X10 1.28 BPP            */
-    BGFX_TEXTURE_FORMAT_ASTC12X10,	          /** (32) ASTC 12X10 1.07 BPP            */
-    BGFX_TEXTURE_FORMAT_ASTC12X12,	          /** (33) ASTC 12X12 0.89 BPP            */
+    BGFX_TEXTURE_FORMAT_ASTC4X4,              /** (20) ASTC 4x4 8.0 BPP               */
+    BGFX_TEXTURE_FORMAT_ASTC5X4,              /** (21) ASTC 5x4 6.40 BPP              */
+    BGFX_TEXTURE_FORMAT_ASTC5X5,              /** (22) ASTC 5x5 5.12 BPP              */
+    BGFX_TEXTURE_FORMAT_ASTC6X5,              /** (23) ASTC 6x5 4.27 BPP              */
+    BGFX_TEXTURE_FORMAT_ASTC6X6,              /** (24) ASTC 6x6 3.56 BPP              */
+    BGFX_TEXTURE_FORMAT_ASTC8X5,              /** (25) ASTC 8x5 3.20 BPP              */
+    BGFX_TEXTURE_FORMAT_ASTC8X6,              /** (26) ASTC 8x6 2.67 BPP              */
+    BGFX_TEXTURE_FORMAT_ASTC8X8,              /** (27) ASTC 8x8 2.00 BPP              */
+    BGFX_TEXTURE_FORMAT_ASTC10X5,             /** (28) ASTC 10x5 2.56 BPP             */
+    BGFX_TEXTURE_FORMAT_ASTC10X6,             /** (29) ASTC 10x6 2.13 BPP             */
+    BGFX_TEXTURE_FORMAT_ASTC10X8,             /** (30) ASTC 10x8 1.60 BPP             */
+    BGFX_TEXTURE_FORMAT_ASTC10X10,            /** (31) ASTC 10x10 1.28 BPP            */
+    BGFX_TEXTURE_FORMAT_ASTC12X10,            /** (32) ASTC 12x10 1.07 BPP            */
+    BGFX_TEXTURE_FORMAT_ASTC12X12,            /** (33) ASTC 12x12 0.89 BPP            */
     BGFX_TEXTURE_FORMAT_UNKNOWN,              /** (34) Compressed formats above.      */
     BGFX_TEXTURE_FORMAT_R1,                   /** (35)                                */
     BGFX_TEXTURE_FORMAT_A8,                   /** (36)                                */
