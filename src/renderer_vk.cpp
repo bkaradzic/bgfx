@@ -187,12 +187,20 @@ VK_IMPORT_DEVICE
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ATC
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ATCE
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ATCI
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC4x4
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC5x5
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC6x6
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC8x5
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC8x6
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC10x5
+		{ VK_FORMAT_ASTC_4x4_UNORM_BLOCK,      VK_FORMAT_ASTC_4x4_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_4x4_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC4x4
+		{ VK_FORMAT_ASTC_5x4_UNORM_BLOCK,      VK_FORMAT_ASTC_5x4_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_5x4_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC5x4
+		{ VK_FORMAT_ASTC_5x5_UNORM_BLOCK,      VK_FORMAT_ASTC_5x5_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_5x5_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC5x5
+		{ VK_FORMAT_ASTC_6x5_UNORM_BLOCK,      VK_FORMAT_ASTC_6x5_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_6x5_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC6x5
+		{ VK_FORMAT_ASTC_6x6_UNORM_BLOCK,      VK_FORMAT_ASTC_6x6_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_6x6_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC6x6
+		{ VK_FORMAT_ASTC_8x5_UNORM_BLOCK,      VK_FORMAT_ASTC_8x5_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_8x5_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC8x5
+		{ VK_FORMAT_ASTC_8x6_UNORM_BLOCK,      VK_FORMAT_ASTC_8x6_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_8x6_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC8x6
+		{ VK_FORMAT_ASTC_8x8_UNORM_BLOCK,      VK_FORMAT_ASTC_8x8_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_8x8_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC8x8
+		{ VK_FORMAT_ASTC_10x5_UNORM_BLOCK,     VK_FORMAT_ASTC_10x5_UNORM_BLOCK,    VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_10x5_SRGB_BLOCK,     { $_, $_, $_, $_ } }, // ASTC10x5
+		{ VK_FORMAT_ASTC_10x6_UNORM_BLOCK,     VK_FORMAT_ASTC_10x6_UNORM_BLOCK,    VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_10x6_SRGB_BLOCK,     { $_, $_, $_, $_ } }, // ASTC10x6
+		{ VK_FORMAT_ASTC_10x8_UNORM_BLOCK,     VK_FORMAT_ASTC_10x8_UNORM_BLOCK,    VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_10x8_SRGB_BLOCK,     { $_, $_, $_, $_ } }, // ASTC10x8
+		{ VK_FORMAT_ASTC_10x10_UNORM_BLOCK,    VK_FORMAT_ASTC_10x10_UNORM_BLOCK,   VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_10x10_SRGB_BLOCK,    { $_, $_, $_, $_ } }, // ASTC10x10
+		{ VK_FORMAT_ASTC_12x10_UNORM_BLOCK,    VK_FORMAT_ASTC_12x10_UNORM_BLOCK,   VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_12x10_SRGB_BLOCK,    { $_, $_, $_, $_ } }, // ASTC12x10
+		{ VK_FORMAT_ASTC_12x12_UNORM_BLOCK,    VK_FORMAT_ASTC_12x12_UNORM_BLOCK,   VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_12x12_SRGB_BLOCK,    { $_, $_, $_, $_ } }, // ASTC12x12
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // Unknown
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // R1
 		{ VK_FORMAT_R8_UNORM,                  VK_FORMAT_R8_UNORM,                 VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $0, $0, $0, $R } }, // A8
