@@ -652,10 +652,10 @@ namespace bgfx { namespace spirv
 							continue;
 						}
 
-						un.num = 0;
+						un.num = uint8_t(program->getUniformArraySize(ii) );
 						const uint32_t offset = program->getUniformBufferOffset(ii);
 						un.regIndex = uint16_t(offset);
-						un.regCount = uint16_t(program->getUniformArraySize(ii));
+						un.regCount = un.num;
 
 						switch (program->getUniformType(ii) )
 						{

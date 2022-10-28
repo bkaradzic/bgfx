@@ -4868,7 +4868,7 @@ namespace bgfx
 				}
 			}
 
-			_num  = bx::max<uint16_t>(1, _num);
+			_num = bx::max<uint16_t>(1, _num);
 
 			uint16_t idx = m_uniformHashMap.find(bx::hash<bx::HashMurmur2A>(_name) );
 			if (kInvalidHandle != idx)
@@ -4889,6 +4889,8 @@ namespace bgfx
 				{
 					uniform.m_type = oldsize < newsize ? _type : uniform.m_type;
 					uniform.m_num  = bx::max<uint16_t>(uniform.m_num, _num);
+
+					BX_TRACE("  Resize uniform (handle %3d) `%s`, num %d", handle.idx, _name, _num);
 
 					CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateUniform);
 					cmdbuf.write(handle);
@@ -4911,7 +4913,7 @@ namespace bgfx
 				return BGFX_INVALID_HANDLE;
 			}
 
-			BX_TRACE("Creating uniform (handle %3d) %s", handle.idx, _name);
+			BX_TRACE("Creating uniform (handle %3d) `%s`, num %d", handle.idx, _name, _num);
 
 			UniformRef& uniform = m_uniformRef[handle.idx];
 			uniform.m_name.set(_name);
