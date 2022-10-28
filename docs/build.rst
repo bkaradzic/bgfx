@@ -59,10 +59,6 @@ Set following environment variables:
     setx ANDROID_NDK_ROOT <path to AndroidNDK directory>
 
 
-To deploy on Android you can use bgfx android activity:
-
- - https://github.com/Nodrev/bgfx-android-activity#bgfx-android-activity---android-glue-for-bgfx
-
 Linux
 ~~~~~
 
