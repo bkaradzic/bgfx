@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Building &mdash; bgfx 1.116.8293 documentation</title>
+  <title>Building &mdash; bgfx 1.118.8367 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -31,7 +31,7 @@
             <a href="index.html" class="icon icon-home"> bgfx
           </a>
               <div class="version">
-                1.116.8293
+                1.118.8367
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -136,7 +136,7 @@
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading">¶</a></h2>
 <section id="android">
 <h3>Android<a class="headerlink" href="#android" title="Permalink to this heading">¶</a></h3>
-<p>Download AndroidNDK:</p>
+<p>Download Android NDK (r23 or newer):</p>
 <blockquote>
 <div><ul class="simple">
 <li><p><a class="reference external" href="https://developer.android.com/tools/sdk/ndk/index.html">https://developer.android.com/tools/sdk/ndk/index.html</a></p></li>
@@ -144,17 +144,8 @@
 </div></blockquote>
 <p>Set following environment variables:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">setx</span> <span class="n">ANDROID_NDK_ROOT</span> <span class="o">&lt;</span><span class="n">path</span> <span class="n">to</span> <span class="n">AndroidNDK</span> <span class="n">directory</span><span class="o">&gt;</span>
-<span class="n">setx</span> <span class="n">ANDROID_NDK_ARM</span> <span class="o">&lt;</span><span class="n">path</span> <span class="n">to</span> <span class="n">AndroidNDK</span> <span class="n">directory</span><span class="o">&gt;</span>\<span class="n">toolchains</span>\<span class="n">arm</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">androideabi</span><span class="o">-</span><span class="mf">4.7</span>\<span class="n">prebuilt</span>\<span class="n">windows</span><span class="o">-</span><span class="n">x86_64</span>
-<span class="n">setx</span> <span class="n">ANDROID_NDK_MIPS</span> <span class="o">&lt;</span><span class="n">path</span> <span class="n">to</span> <span class="n">AndroidNDK</span> <span class="n">directory</span><span class="o">&gt;</span>\<span class="n">toolchains</span>\<span class="n">mipsel</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">android</span><span class="o">-</span><span class="mf">4.7</span>\<span class="n">prebuilt</span>\<span class="n">windows</span><span class="o">-</span><span class="n">x86_64</span>
-<span class="n">setx</span> <span class="n">ANDROID_NDK_X86</span> <span class="o">&lt;</span><span class="n">path</span> <span class="n">to</span> <span class="n">AndroidNDK</span> <span class="n">directory</span><span class="o">&gt;</span>\<span class="n">toolchains</span>\<span class="n">x86</span><span class="o">-</span><span class="mf">4.7</span>\<span class="n">prebuilt</span>\<span class="n">windows</span><span class="o">-</span><span class="n">x86_64</span>
 </pre></div>
 </div>
-<p>To deploy on Android you can use bgfx android activity:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p><a class="reference external" href="https://github.com/Nodrev/bgfx-android-activity#bgfx-android-activity---android-glue-for-bgfx">https://github.com/Nodrev/bgfx-android-activity#bgfx-android-activity—android-glue-for-bgfx</a></p></li>
-</ul>
-</div></blockquote>
 </section>
 <section id="linux">
 <h3>Linux<a class="headerlink" href="#linux" title="Permalink to this heading">¶</a></h3>
