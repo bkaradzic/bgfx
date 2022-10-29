@@ -342,11 +342,12 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_blend_func_extended]         = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_implicit_conversions] = EBhDisable;
     extensionBehavior[E_GL_EXT_fragment_shading_rate]       = EBhDisable;
-    extensionBehavior[E_GL_EXT_shader_image_int64]   = EBhDisable;
+    extensionBehavior[E_GL_EXT_shader_image_int64]          = EBhDisable;
     extensionBehavior[E_GL_EXT_terminate_invocation]        = EBhDisable;
     extensionBehavior[E_GL_EXT_shared_memory_block]         = EBhDisable;
     extensionBehavior[E_GL_EXT_spirv_intrinsics]            = EBhDisable;
     extensionBehavior[E_GL_EXT_mesh_shader]                 = EBhDisable;
+    extensionBehavior[E_GL_EXT_opacity_micromap]            = EBhDisable;
 
     // OVR extensions
     extensionBehavior[E_GL_OVR_multiview]                = EBhDisable;
