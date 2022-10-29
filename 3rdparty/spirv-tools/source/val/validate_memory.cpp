@@ -1410,7 +1410,54 @@ spv_result_t ValidatePtrAccessChain(ValidationState_t& _,
              << "VariablePointers or VariablePointersStorageBuffer";
     }
   }
-  return ValidateAccessChain(_, inst);
+
+  // Need to call first, will make sure Base is a valid ID
+  if (auto error = ValidateAccessChain(_, inst)) return error;
+
+  const auto base_id = inst->GetOperandAs<uint32_t>(2);
+  const auto base = _.FindDef(base_id);
+  const auto base_type = _.FindDef(base->type_id());
+  const auto base_type_storage_class = base_type->word(2);
+
+  if (_.HasCapability(SpvCapabilityShader) &&
+      (base_type_storage_class == SpvStorageClassUniform ||
+       base_type_storage_class == SpvStorageClassStorageBuffer ||
+       base_type_storage_class == SpvStorageClassPhysicalStorageBuffer ||
+       base_type_storage_class == SpvStorageClassPushConstant ||
+       (_.HasCapability(SpvCapabilityWorkgroupMemoryExplicitLayoutKHR) &&
+        base_type_storage_class == SpvStorageClassWorkgroup)) &&
+      !_.HasDecoration(base_type->id(), SpvDecorationArrayStride)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "OpPtrAccessChain must have a Base whose type is decorated "
+              "with ArrayStride";
+  }
+
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if (base_type_storage_class == SpvStorageClassWorkgroup) {
+      if (!_.HasCapability(SpvCapabilityVariablePointers)) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << _.VkErrorID(7651)
+               << "OpPtrAccessChain Base operand pointing to Workgroup "
+                  "storage class must use VariablePointers capability";
+      }
+    } else if (base_type_storage_class == SpvStorageClassStorageBuffer) {
+      if (!_.features().variable_pointers) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << _.VkErrorID(7652)
+               << "OpPtrAccessChain Base operand pointing to StorageBuffer "
+                  "storage class must use VariablePointers or "
+                  "VariablePointersStorageBuffer capability";
+      }
+    } else if (base_type_storage_class !=
+               SpvStorageClassPhysicalStorageBuffer) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << _.VkErrorID(7650)
+             << "OpPtrAccessChain Base operand must point to Workgroup, "
+                "StorageBuffer, or PhysicalStorageBuffer storage class";
+    }
+  }
+
+  return SPV_SUCCESS;
 }
 
 spv_result_t ValidateArrayLength(ValidationState_t& state,

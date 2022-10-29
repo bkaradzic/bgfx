@@ -163,6 +163,21 @@ class ScalarConstant : public Constant {
     return is_zero;
   }
 
+  uint32_t GetU32BitValue() const {
+    // Relies on unsigned values smaller than 32-bit being zero extended.  See
+    // section 2.2.1 of the SPIR-V spec.
+    assert(words().size() == 1);
+    return words()[0];
+  }
+
+  uint64_t GetU64BitValue() const {
+    // Relies on unsigned values smaller than 64-bit being zero extended.  See
+    // section 2.2.1 of the SPIR-V spec.
+    assert(words().size() == 2);
+    return static_cast<uint64_t>(words()[1]) << 32 |
+           static_cast<uint64_t>(words()[0]);
+  }
+
  protected:
   ScalarConstant(const Type* ty, const std::vector<uint32_t>& w)
       : Constant(ty), words_(w) {}
@@ -189,23 +204,8 @@ class IntConstant : public ScalarConstant {
     return words()[0];
   }
 
-  uint32_t GetU32BitValue() const {
-    // Relies on unsigned values smaller than 32-bit being zero extended.  See
-    // section 2.2.1 of the SPIR-V spec.
-    assert(words().size() == 1);
-    return words()[0];
-  }
-
   int64_t GetS64BitValue() const {
     // Relies on unsigned values smaller than 64-bit being sign extended.  See
-    // section 2.2.1 of the SPIR-V spec.
-    assert(words().size() == 2);
-    return static_cast<uint64_t>(words()[1]) << 32 |
-           static_cast<uint64_t>(words()[0]);
-  }
-
-  uint64_t GetU64BitValue() const {
-    // Relies on unsigned values smaller than 64-bit being zero extended.  See
     // section 2.2.1 of the SPIR-V spec.
     assert(words().size() == 2);
     return static_cast<uint64_t>(words()[1]) << 32 |

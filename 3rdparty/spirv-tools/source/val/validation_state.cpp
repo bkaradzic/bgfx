@@ -2094,6 +2094,16 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-Location-04918);
     case 4919:
       return VUID_WRAP(VUID-StandaloneSpirv-Location-04919);
+    case 4920:
+      return VUID_WRAP(VUID-StandaloneSpirv-Component-04920);
+    case 4921:
+      return VUID_WRAP(VUID-StandaloneSpirv-Component-04921);
+    case 4922:
+      return VUID_WRAP(VUID-StandaloneSpirv-Component-04922);
+    case 4923:
+      return VUID_WRAP(VUID-StandaloneSpirv-Component-04923);
+    case 4924:
+      return VUID_WRAP(VUID-StandaloneSpirv-Component-04924);
     case 6201:
       return VUID_WRAP(VUID-StandaloneSpirv-Flat-06201);
     case 6202:
@@ -2134,6 +2144,12 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-ExecutionModel-07320);
     case 7290:
       return VUID_WRAP(VUID-StandaloneSpirv-Input-07290);
+    case 7650:
+      return VUID_WRAP(VUID-StandaloneSpirv-Base-07650);
+    case 7651:
+      return VUID_WRAP(VUID-StandaloneSpirv-Base-07651);
+    case 7652:
+      return VUID_WRAP(VUID-StandaloneSpirv-Base-07652);
     default:
       return "";  // unknown id
   }
