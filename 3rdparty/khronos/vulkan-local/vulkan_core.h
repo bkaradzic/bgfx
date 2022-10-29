@@ -72,7 +72,7 @@ extern "C" {
 #define VK_API_VERSION_1_0 VK_MAKE_API_VERSION(0, 1, 0, 0)// Patch version should always be set to 0
 
 // Version of this file
-#define VK_HEADER_VERSION 230
+#define VK_HEADER_VERSION 232
 
 // Complete version of this file
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 3, VK_HEADER_VERSION)
@@ -1042,6 +1042,8 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_AMIGO_PROFILING_SUBMIT_INFO_SEC = 1000485001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT = 1000351000,
     VK_STRUCTURE_TYPE_MUTABLE_DESCRIPTOR_TYPE_CREATE_INFO_EXT = 1000351002,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_FEATURES_ARM = 1000497000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM = 1000497001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES,
     VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
@@ -15496,6 +15498,25 @@ typedef struct VkAmigoProfilingSubmitInfoSEC {
 #define VK_EXT_mutable_descriptor_type 1
 #define VK_EXT_MUTABLE_DESCRIPTOR_TYPE_SPEC_VERSION 1
 #define VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME "VK_EXT_mutable_descriptor_type"
+
+
+#define VK_ARM_shader_core_builtins 1
+#define VK_ARM_SHADER_CORE_BUILTINS_SPEC_VERSION 2
+#define VK_ARM_SHADER_CORE_BUILTINS_EXTENSION_NAME "VK_ARM_shader_core_builtins"
+typedef struct VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           shaderCoreBuiltins;
+} VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM;
+
+typedef struct VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM {
+    VkStructureType    sType;
+    void*              pNext;
+    uint64_t           shaderCoreMask;
+    uint32_t           shaderCoreCount;
+    uint32_t           shaderWarpsPerCore;
+} VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM;
+
 
 
 #define VK_KHR_acceleration_structure 1
