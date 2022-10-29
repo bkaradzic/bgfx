@@ -991,6 +991,10 @@ ShaderResources Compiler::get_shader_resources(const unordered_set<VariableID> *
 			// in the future.
 			res.push_constant_buffers.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
 		}
+		else if (type.storage == StorageClassShaderRecordBufferKHR)
+		{
+			res.shader_record_buffers.push_back({ var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self, ssbo_instance_name) });
+		}
 		// Images
 		else if (type.storage == StorageClassUniformConstant && type.basetype == SPIRType::Image &&
 		         type.image.sampled == 2)
@@ -2339,6 +2343,11 @@ bool Compiler::is_vertex_like_shader() const
 bool Compiler::is_tessellation_shader() const
 {
 	return is_tessellation_shader(get_execution_model());
+}
+
+bool Compiler::is_tessellating_triangles() const
+{
+	return get_execution_mode_bitset().get(ExecutionModeTriangles);
 }
 
 void Compiler::set_remapped_variable_state(VariableID id, bool remap_enable)

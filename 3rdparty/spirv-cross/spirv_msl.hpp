@@ -58,6 +58,17 @@ enum MSLShaderVariableFormat
 	MSL_SHADER_VARIABLE_FORMAT_INT_MAX = 0x7fffffff
 };
 
+// Indicates the rate at which a variable changes value, one of: per-vertex,
+// per-primitive, or per-patch.
+enum MSLShaderVariableRate
+{
+	MSL_SHADER_VARIABLE_RATE_PER_VERTEX = 0,
+	MSL_SHADER_VARIABLE_RATE_PER_PRIMITIVE = 1,
+	MSL_SHADER_VARIABLE_RATE_PER_PATCH = 2,
+
+	MSL_SHADER_VARIABLE_RATE_INT_MAX = 0x7fffffff,
+};
+
 // Defines MSL characteristics of a shader interface variable at a particular location.
 // After compilation, it is possible to query whether or not this location was used.
 // If vecsize is nonzero, it must be greater than or equal to the vecsize declared in the shader,
@@ -69,6 +80,7 @@ struct MSLShaderInterfaceVariable
 	MSLShaderVariableFormat format = MSL_SHADER_VARIABLE_FORMAT_OTHER;
 	spv::BuiltIn builtin = spv::BuiltInMax;
 	uint32_t vecsize = 0;
+	MSLShaderVariableRate rate = MSL_SHADER_VARIABLE_RATE_PER_VERTEX;
 };
 
 // Matches the binding index of a MSL resource for a binding within a descriptor set.
@@ -306,6 +318,7 @@ public:
 		uint32_t dynamic_offsets_buffer_index = 23;
 		uint32_t shader_input_buffer_index = 22;
 		uint32_t shader_index_buffer_index = 21;
+		uint32_t shader_patch_input_buffer_index = 20;
 		uint32_t shader_input_wg_index = 0;
 		uint32_t device_index = 0;
 		uint32_t enable_frag_output_mask = 0xffffffff;
@@ -386,6 +399,11 @@ public:
 		// single workgroup. This requires changes to the way the InvocationId and PrimitiveId
 		// builtins are processed, but should result in more efficient usage of the GPU.
 		bool multi_patch_workgroup = false;
+
+		// Use storage buffers instead of vertex-style attributes for tessellation evaluation
+		// input. This may require conversion of inputs in the generated post-tessellation
+		// vertex shader, but allows the use of nested arrays.
+		bool raw_buffer_tese_input = false;
 
 		// If set, a vertex shader will be compiled as part of a tessellation pipeline.
 		// It will be translated as a compute kernel, so it can use the global invocation ID
@@ -502,6 +520,11 @@ public:
 	bool needs_buffer_size_buffer() const
 	{
 		return !buffers_requiring_array_length.empty();
+	}
+
+	bool buffer_requires_array_length(VariableID id) const
+	{
+		return buffers_requiring_array_length.count(id) != 0;
 	}
 
 	// Provide feedback to calling API to allow it to pass a buffer
@@ -815,6 +838,9 @@ protected:
 	std::string convert_row_major_matrix(std::string exp_str, const SPIRType &exp_type, uint32_t physical_type_id,
 	                                     bool is_packed) override;
 
+	bool is_tesc_shader() const;
+	bool is_tese_shader() const;
+
 	void preprocess_op_codes();
 	void localize_global_variables();
 	void extract_global_variables_from_functions();
@@ -871,6 +897,7 @@ protected:
 	                                                      const std::string &var_chain_qual,
 	                                                      uint32_t &location, uint32_t &var_mbr_idx);
 	void add_tess_level_input_to_interface_block(const std::string &ib_var_ref, SPIRType &ib_type, SPIRVariable &var);
+	void add_tess_level_input(const std::string &base_ref, const std::string &mbr_name, SPIRVariable &var);
 
 	void fix_up_interface_member_indices(spv::StorageClass storage, uint32_t ib_type_id);
 
@@ -953,7 +980,7 @@ protected:
 	bool validate_member_packing_rules_msl(const SPIRType &type, uint32_t index) const;
 	std::string get_argument_address_space(const SPIRVariable &argument);
 	std::string get_type_address_space(const SPIRType &type, uint32_t id, bool argument = false);
-	const char *to_restrict(uint32_t id, bool space = true);
+	const char *to_restrict(uint32_t id, bool space);
 	SPIRType &get_stage_in_struct_type();
 	SPIRType &get_stage_out_struct_type();
 	SPIRType &get_patch_stage_in_struct_type();
@@ -1058,6 +1085,8 @@ protected:
 	VariableID patch_stage_out_var_id = 0;
 	VariableID stage_in_ptr_var_id = 0;
 	VariableID stage_out_ptr_var_id = 0;
+	VariableID tess_level_inner_var_id = 0;
+	VariableID tess_level_outer_var_id = 0;
 	VariableID stage_out_masked_builtin_type_id = 0;
 
 	// Handle HLSL-style 0-based vertex/instance index.
@@ -1096,6 +1125,7 @@ protected:
 	std::string input_wg_var_name = "gl_in";
 	std::string input_buffer_var_name = "spvIn";
 	std::string output_buffer_var_name = "spvOut";
+	std::string patch_input_buffer_var_name = "spvPatchIn";
 	std::string patch_output_buffer_var_name = "spvPatchOut";
 	std::string tess_factor_buffer_var_name = "spvTessLevel";
 	std::string index_buffer_var_name = "spvIndices";

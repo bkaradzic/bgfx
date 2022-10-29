@@ -98,6 +98,11 @@ struct HLSLResourceBinding
 	} cbv, uav, srv, sampler;
 };
 
+enum HLSLAuxBinding
+{
+	HLSL_AUX_BINDING_BASE_VERTEX_INSTANCE = 0
+};
+
 class CompilerHLSL : public CompilerGLSL
 {
 public:
@@ -210,6 +215,11 @@ public:
 
 	// Controls which storage buffer bindings will be forced to be declared as UAVs.
 	void set_hlsl_force_storage_buffer_as_uav(uint32_t desc_set, uint32_t binding);
+
+	// By default, these magic buffers are not assigned a specific binding.
+	void set_hlsl_aux_buffer_binding(HLSLAuxBinding binding, uint32_t register_index, uint32_t register_space);
+	void unset_hlsl_aux_buffer_binding(HLSLAuxBinding binding);
+	bool is_hlsl_aux_buffer_binding_used(HLSLAuxBinding binding) const;
 
 private:
 	std::string type_to_glsl(const SPIRType &type, uint32_t id = 0) override;
@@ -372,6 +382,14 @@ private:
 	void remap_hlsl_resource_binding(HLSLBindingFlagBits type, uint32_t &desc_set, uint32_t &binding);
 
 	std::unordered_set<SetBindingPair, InternalHasher> force_uav_buffer_bindings;
+
+	struct
+	{
+		uint32_t register_index = 0;
+		uint32_t register_space = 0;
+		bool explicit_binding = false;
+		bool used = false;
+	} base_vertex_info;
 
 	// Returns true for BuiltInSampleMask because gl_SampleMask[] is an array in SPIR-V, but SV_Coverage is a scalar in HLSL.
 	bool builtin_translates_to_nonarray(spv::BuiltIn builtin) const override;
