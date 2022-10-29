@@ -9409,6 +9409,12 @@
           "value" : "0x0200",
           "capabilities" : [ "RayTraversalPrimitiveCullingKHR" ],
           "version" : "None"
+        },
+        {
+          "enumerant" : "ForceOpacityMicromap2StateEXT",
+          "value" : "0x0400",
+          "capabilities" : [ "RayTracingOpacityMicromapEXT" ],
+          "version" : "None"
         }
       ]
     },
@@ -13909,6 +13915,13 @@
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_EXT_demote_to_helper_invocation" ],
           "version" : "1.6"
+        },
+        {
+          "enumerant" : "RayTracingOpacityMicromapEXT",
+          "value" : 5381,
+          "capabilities" : [ "RayQueryKHR","RayTracingKHR" ],
+          "extensions" : [ "SPV_EXT_opacity_micromap" ],
+          "version" : "None"
         },
         {
           "enumerant" : "BindlessTextureNV",
