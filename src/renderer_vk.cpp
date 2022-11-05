@@ -295,27 +295,31 @@ VK_IMPORT_DEVICE
 		LayerInfo m_device;
 	};
 
-
 	// Layer registry
 	//
 	static Layer s_layer[] =
 	{
 		{ "VK_LAYER_LUNARG_standard_validation", 1, { false, false }, { false, false } },
 		{ "VK_LAYER_KHRONOS_validation",         1, { false, false }, { false, false } },
+		{ "",                                    0, { false, false }, { false, false } },
 	};
-	BX_STATIC_ASSERT(Layer::Count == BX_COUNTOF(s_layer) );
+	BX_STATIC_ASSERT(Layer::Count == BX_COUNTOF(s_layer)-1);
 
 	void updateLayer(const char* _name, uint32_t _version, bool _instanceLayer)
 	{
-		bx::StringView lyr(_name);
+		bx::StringView layerName(_name);
 
 		for (uint32_t ii = 0; ii < Layer::Count; ++ii)
 		{
 			Layer& layer = s_layer[ii];
-			LayerInfo& layerInfo = _instanceLayer ? layer.m_instance : layer.m_device;
+			LayerInfo& layerInfo = _instanceLayer
+				? layer.m_instance
+				: layer.m_device
+				;
+
 			if (!layerInfo.m_supported && layerInfo.m_initialize)
 			{
-				if (       0 == bx::strCmp(lyr, layer.m_name)
+				if (       0 == bx::strCmp(layerName, layer.m_name)
 				&&  _version >= layer.m_minVersion)
 				{
 					layerInfo.m_supported = true;
@@ -343,10 +347,10 @@ VK_IMPORT_DEVICE
 		};
 
 		const char* m_name;
-		uint32_t m_minVersion;
-		bool m_instanceExt;
-		bool m_supported;
-		bool m_initialize;
+		uint32_t    m_minVersion;
+		bool        m_instanceExt;
+		bool        m_supported;
+		bool        m_initialize;
 		Layer::Enum m_layer;
 	};
 
@@ -375,7 +379,7 @@ VK_IMPORT_DEVICE
 			for (uint32_t ii = 0; ii < Extension::Count; ++ii)
 			{
 				Extension& extension = _extensions[ii];
-				LayerInfo& layerInfo = _instanceExt
+				const LayerInfo& layerInfo = _instanceExt
 					? s_layer[extension.m_layer].m_instance
 					: s_layer[extension.m_layer].m_device
 					;
