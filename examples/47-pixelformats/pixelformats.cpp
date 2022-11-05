@@ -470,27 +470,35 @@ public:
 		m_textureSets.push_back(generateTextureSetFromFile("textures/pf_uv_filtering_test.dds") );
 		const char* textureCompressionSetFiles[] =
 		{
-			  "textures/texture_compression_astc_10x5.dds"
-			, "textures/texture_compression_astc_4x4.dds"
-			, "textures/texture_compression_astc_5x5.dds"
-			, "textures/texture_compression_astc_6x6.dds"
-			, "textures/texture_compression_astc_8x5.dds"
-			, "textures/texture_compression_astc_8x6.dds"
-			, "textures/texture_compression_atc.dds"
-			, "textures/texture_compression_atce.dds"
-			, "textures/texture_compression_atci.dds"
-			, "textures/texture_compression_bc1.ktx"
-			, "textures/texture_compression_bc2.ktx"
-			, "textures/texture_compression_bc3.ktx"
-			, "textures/texture_compression_bc7.ktx"
-			, "textures/texture_compression_etc1.ktx"
-			, "textures/texture_compression_etc2.ktx"
-			, "textures/texture_compression_ptc12.pvr"
-			, "textures/texture_compression_ptc14.pvr"
-			, "textures/texture_compression_ptc22.pvr"
-			, "textures/texture_compression_ptc24.pvr"
-			, "textures/texture_compression_rgba8.dds"
-			, nullptr
+			"textures/texture_compression_astc_4x4.dds",
+			"textures/texture_compression_astc_5x4.dds",
+			"textures/texture_compression_astc_5x5.dds",
+			"textures/texture_compression_astc_6x5.dds",
+			"textures/texture_compression_astc_6x6.dds",
+			"textures/texture_compression_astc_8x5.dds",
+			"textures/texture_compression_astc_8x6.dds",
+			"textures/texture_compression_astc_8x8.dds",
+			"textures/texture_compression_astc_10x5.dds",
+			"textures/texture_compression_astc_10x6.dds",
+			"textures/texture_compression_astc_10x8.dds",
+			"textures/texture_compression_astc_10x10.dds",
+			"textures/texture_compression_astc_12x10.dds",
+			"textures/texture_compression_astc_12x12.dds",
+			"textures/texture_compression_atc.dds",
+			"textures/texture_compression_atce.dds",
+			"textures/texture_compression_atci.dds",
+			"textures/texture_compression_bc1.ktx",
+			"textures/texture_compression_bc2.ktx",
+			"textures/texture_compression_bc3.ktx",
+			"textures/texture_compression_bc7.ktx",
+			"textures/texture_compression_etc1.ktx",
+			"textures/texture_compression_etc2.ktx",
+			"textures/texture_compression_ptc12.pvr",
+			"textures/texture_compression_ptc14.pvr",
+			"textures/texture_compression_ptc22.pvr",
+			"textures/texture_compression_ptc24.pvr",
+			"textures/texture_compression_rgba8.dds",
+			nullptr
 		};
 		m_textureSets.push_back(generateTextureSetFromFileSet("texture_compression_* set", textureCompressionSetFiles));
 

@@ -18,7 +18,7 @@ enum expandEnum(EnumType, string fqnEnumType = EnumType.stringof) = (){
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 115;
+enum uint BGFX_API_VERSION = 118;
 
 alias bgfx_view_id_t = ushort;
 
@@ -410,6 +410,7 @@ enum ulong BGFX_CAPS_VERTEX_ATTRIB_HALF = 0x0000000002000000; /// Vertex attribu
 enum ulong BGFX_CAPS_VERTEX_ATTRIB_UINT10 = 0x0000000004000000; /// Vertex attribute 10_10_10_2 is supported.
 enum ulong BGFX_CAPS_VERTEX_ID = 0x0000000008000000; /// Rendering with VertexID only is supported.
 enum ulong BGFX_CAPS_VIEWPORT_LAYER_ARRAY = 0x0000000010000000; /// Viewport layer is available in vertex shader.
+enum ulong BGFX_CAPS_DRAW_INDIRECT_COUNT = 0x0000000020000000; /// Draw indirect with indirect count is supported.
 enum ulong BGFX_CAPS_TEXTURE_COMPARE_ALL = 0x0000000000300000; /// All texture compare modes are supported.
 
 enum uint BGFX_CAPS_FORMAT_TEXTURE_NONE = 0x00000000; /// Texture format is not supported.
@@ -569,11 +570,19 @@ enum bgfx_texture_format_t
 	BGFX_TEXTURE_FORMAT_ATCE, /// ATCE RGBA 8 BPP explicit alpha
 	BGFX_TEXTURE_FORMAT_ATCI, /// ATCI RGBA 8 BPP interpolated alpha
 	BGFX_TEXTURE_FORMAT_ASTC4X4, /// ASTC 4x4 8.0 BPP
+	BGFX_TEXTURE_FORMAT_ASTC5X4, /// ASTC 5x4 6.40 BPP
 	BGFX_TEXTURE_FORMAT_ASTC5X5, /// ASTC 5x5 5.12 BPP
+	BGFX_TEXTURE_FORMAT_ASTC6X5, /// ASTC 6x5 4.27 BPP
 	BGFX_TEXTURE_FORMAT_ASTC6X6, /// ASTC 6x6 3.56 BPP
 	BGFX_TEXTURE_FORMAT_ASTC8X5, /// ASTC 8x5 3.20 BPP
 	BGFX_TEXTURE_FORMAT_ASTC8X6, /// ASTC 8x6 2.67 BPP
+	BGFX_TEXTURE_FORMAT_ASTC8X8, /// ASTC 8x8 2.00 BPP
 	BGFX_TEXTURE_FORMAT_ASTC10X5, /// ASTC 10x5 2.56 BPP
+	BGFX_TEXTURE_FORMAT_ASTC10X6, /// ASTC 10x6 2.13 BPP
+	BGFX_TEXTURE_FORMAT_ASTC10X8, /// ASTC 10x8 1.60 BPP
+	BGFX_TEXTURE_FORMAT_ASTC10X10, /// ASTC 10x10 1.28 BPP
+	BGFX_TEXTURE_FORMAT_ASTC12X10, /// ASTC 12x10 1.07 BPP
+	BGFX_TEXTURE_FORMAT_ASTC12X12, /// ASTC 12x12 0.89 BPP
 	BGFX_TEXTURE_FORMAT_UNKNOWN, /// Compressed formats above.
 	BGFX_TEXTURE_FORMAT_R1,
 	BGFX_TEXTURE_FORMAT_A8,
@@ -1029,6 +1038,7 @@ struct bgfx_view_stats_t
 	long cpuTimeEnd; /// CPU (submit) end time.
 	long gpuTimeBegin; /// GPU begin time.
 	long gpuTimeEnd; /// GPU end time.
+	uint gpuFrameNum; /// Frame which generated gpuTimeBegin, gpuTimeEnd.
 }
 
 /// Encoder stats.
@@ -1058,6 +1068,7 @@ struct bgfx_stats_t
 	uint numCompute; /// Number of compute calls submitted.
 	uint numBlit; /// Number of blit calls submitted.
 	uint maxGpuLatency; /// GPU driver latency.
+	uint gpuFrameNum; /// Frame which generated gpuTimeBegin, gpuTimeEnd.
 	ushort numDynamicIndexBuffers; /// Number of used dynamic index buffers.
 	ushort numDynamicVertexBuffers; /// Number of used dynamic vertex buffers.
 	ushort numFrameBuffers; /// Number of used frame buffers.

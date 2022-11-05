@@ -12,8 +12,9 @@
 #		define GLX_GLXEXT_PROTOTYPES
 #		include <glx/glxext.h>
 
-// will include X11 which #defines None...
+// glxext will include X11 which #defines None, Status, etc.
 #undef None
+#undef Status
 
 namespace bgfx { namespace gl
 {

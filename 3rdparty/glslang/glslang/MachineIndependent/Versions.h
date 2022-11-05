@@ -211,6 +211,8 @@ const char* const E_GL_EXT_shared_memory_block              = "GL_EXT_shared_mem
 const char* const E_GL_EXT_subgroup_uniform_control_flow    = "GL_EXT_subgroup_uniform_control_flow";
 const char* const E_GL_EXT_spirv_intrinsics                 = "GL_EXT_spirv_intrinsics";
 const char* const E_GL_EXT_fragment_shader_barycentric      = "GL_EXT_fragment_shader_barycentric";
+const char* const E_GL_EXT_mesh_shader                      = "GL_EXT_mesh_shader";
+const char* const E_GL_EXT_opacity_micromap                 = "GL_EXT_opacity_micromap";
 
 // Arrays of extensions for the above viewportEXTs duplications
 
@@ -288,7 +290,7 @@ const char* const E_GL_EXT_tessellation_shader                  = "GL_EXT_tessel
 const char* const E_GL_EXT_tessellation_point_size              = "GL_EXT_tessellation_point_size";
 const char* const E_GL_EXT_texture_buffer                       = "GL_EXT_texture_buffer";
 const char* const E_GL_EXT_texture_cube_map_array               = "GL_EXT_texture_cube_map_array";
-const char* const E_GL_EXT_shader_integer_mix                   = "GL_EXT_shader_integer_mix"; 
+const char* const E_GL_EXT_shader_integer_mix                   = "GL_EXT_shader_integer_mix";
 
 // OES matching AEP
 const char* const E_GL_OES_geometry_shader                      = "GL_OES_geometry_shader";
@@ -348,6 +350,9 @@ const int Num_AEP_texture_buffer = sizeof(AEP_texture_buffer)/sizeof(AEP_texture
 
 const char* const AEP_texture_cube_map_array[] = { E_GL_EXT_texture_cube_map_array, E_GL_OES_texture_cube_map_array };
 const int Num_AEP_texture_cube_map_array = sizeof(AEP_texture_cube_map_array)/sizeof(AEP_texture_cube_map_array[0]);
+
+const char* const AEP_mesh_shader[] = { E_GL_NV_mesh_shader, E_GL_EXT_mesh_shader };
+const int Num_AEP_mesh_shader = sizeof(AEP_mesh_shader)/sizeof(AEP_mesh_shader[0]);
 
 } // end namespace glslang
 

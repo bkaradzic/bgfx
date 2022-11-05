@@ -126,3 +126,7 @@ Normal map texture (GFDL License)
 
  - `Julian Herzog <https://julianherzog.com/>`__
  - https://commons.wikimedia.org/wiki/File:Normal_map_example_with_scene_and_result.png
+
+Hextile example-49 texture (CC0 License)
+
+ - https://polyhaven.com/a/aerial_rocks_04

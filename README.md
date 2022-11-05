@@ -16,13 +16,13 @@
     <a href="#license-bsd-2-clause">License</a>
 </p>
 
-[![Build status](https://ci.appveyor.com/api/projects/status/ipa3ojgeaet1oko5?svg=true)](https://ci.appveyor.com/project/bkaradzic/bgfx)
+[![GitHub Actions](https://github.com/bkaradzic/bgfx/actions/workflows/main.yml/badge.svg)](https://github.com/bkaradzic/bgfx/actions)
 [![License](https://img.shields.io/badge/license-BSD--2%20clause-blue.svg)](https://bkaradzic.github.io/bgfx/license.html)
 [![Join the chat at https://discord.gg/9eMbv7J](https://img.shields.io/discord/712512073522872352?color=%237289DA&label=bgfx&logo=discord&logoColor=white)](https://discord.gg/9eMbv7J)
 
  * [GitHub Discussions](https://github.com/bkaradzic/bgfx/discussions)
  * [Discord Chat](https://discord.gg/9eMbv7J)
- * [AppVeyor CI](https://ci.appveyor.com/project/bkaradzic/bgfx)
+ * [GitHub Actions](https://github.com/bkaradzic/bgfx/actions)
 
 [What is it?](https://bkaradzic.github.io/bgfx/overview.html)
 -------------------------------------------------------------
@@ -517,6 +517,18 @@ width="640" height="480" border="0" /></a>
 https://www.pouet.net/prod.php?which=91906
 
 https://github.com/astrofra/demo-marine-melodies
+
+## Activeworlds
+
+[Activeworlds](https://www.activeworlds.com/) is an online VR platform with rich multimedia and presentation features. Create your own worlds or build in free community worlds, hold your own event / meeting or join inworld events!
+
+![Activeworlds-wallpaper](http://www.activeworlds.com/img/181107-213544_small_enkii.jpg)
+
+## Equilibrium Engine
+
+[Equilibrium Engine](https://github.com/clibequilibrium/EquilibriumEngine) is a Data-oriented and multi-threaded C11 Game Engine with libraries & shaders hot-reloading.
+
+![Equilibrium Engine](https://raw.githubusercontent.com/clibequilibrium/EquilibriumEngine/master/docs/city.png)
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------

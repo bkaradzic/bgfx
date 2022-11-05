@@ -183,12 +183,20 @@ namespace bgfx { namespace d3d9
 		{ D3DFMT_UNKNOWN       }, // ATC,
 		{ D3DFMT_UNKNOWN       }, // ATCE,
 		{ D3DFMT_UNKNOWN       }, // ATCI,
-		{ D3DFMT_UNKNOWN       }, // ASTC4x4,
-		{ D3DFMT_UNKNOWN       }, // ASTC5x5,
-		{ D3DFMT_UNKNOWN       }, // ASTC6x6,
-		{ D3DFMT_UNKNOWN       }, // ASTC8x5,
-		{ D3DFMT_UNKNOWN       }, // ASTC8x6,
-		{ D3DFMT_UNKNOWN       }, // ASTC10x5,
+		{ D3DFMT_UNKNOWN       }, // ASTC4x4
+		{ D3DFMT_UNKNOWN       }, // ASTC5x4
+		{ D3DFMT_UNKNOWN       }, // ASTC5x5
+		{ D3DFMT_UNKNOWN       }, // ASTC6x5
+		{ D3DFMT_UNKNOWN       }, // ASTC6x6
+		{ D3DFMT_UNKNOWN       }, // ASTC8x5
+		{ D3DFMT_UNKNOWN       }, // ASTC8x6
+		{ D3DFMT_UNKNOWN       }, // ASTC8x8
+		{ D3DFMT_UNKNOWN       }, // ASTC10x5
+		{ D3DFMT_UNKNOWN       }, // ASTC10x6
+		{ D3DFMT_UNKNOWN       }, // ASTC10x8
+		{ D3DFMT_UNKNOWN       }, // ASTC10x10
+		{ D3DFMT_UNKNOWN       }, // ASTC12x10
+		{ D3DFMT_UNKNOWN       }, // ASTC12x12
 		{ D3DFMT_UNKNOWN       }, // Unknown
 		{ D3DFMT_A1            }, // R1
 		{ D3DFMT_A8            }, // A8
@@ -455,32 +463,37 @@ namespace bgfx { namespace d3d9
 			// Reference(s):
 			// - https://web.archive.org/web/20190207230309/https://docs.microsoft.com/en-us/windows/desktop/direct3d9/d3dpresent-parameters
 			bx::memSet(&m_params, 0, sizeof(m_params) );
-			m_params.BackBufferWidth  = _init.resolution.width;
-			m_params.BackBufferHeight = _init.resolution.height;
-			m_params.BackBufferFormat = adapterFormat;
-			m_params.BackBufferCount  = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
-			m_params.MultiSampleType  = D3DMULTISAMPLE_NONE;
-			m_params.MultiSampleQuality = 0;
+			m_params.BackBufferWidth        = _init.resolution.width;
+			m_params.BackBufferHeight       = _init.resolution.height;
+			m_params.BackBufferFormat       = adapterFormat;
+			m_params.BackBufferCount        = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
+			m_params.MultiSampleType        = D3DMULTISAMPLE_NONE;
+			m_params.MultiSampleQuality     = 0;
 			m_params.EnableAutoDepthStencil = TRUE;
 			m_params.AutoDepthStencilFormat = D3DFMT_D24S8;
-			m_params.Flags = D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
+			m_params.Flags                  = D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
 
 			m_params.FullScreen_RefreshRateInHz = 0;
-			m_params.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
-			m_params.SwapEffect = D3DSWAPEFFECT_DISCARD;
-			m_params.hDeviceWindow = NULL;
-			m_params.Windowed = true;
+			m_params.PresentationInterval       = D3DPRESENT_INTERVAL_IMMEDIATE;
+			m_params.SwapEffect                 = D3DSWAPEFFECT_DISCARD;
+			m_params.hDeviceWindow              = NULL;
+			m_params.Windowed                   = true;
+			m_params.BackBufferWidth            = _init.resolution.width;
+			m_params.BackBufferHeight           = _init.resolution.height;
 
-			RECT rect;
-			GetWindowRect( (HWND)g_platformData.nwh, &rect);
-			m_params.BackBufferWidth  = rect.right-rect.left;
-			m_params.BackBufferHeight = rect.bottom-rect.top;
+			const char* d3d9DllName =
+#if BX_PLATFORM_LINUX
+				"d3d9.so"
+#else
+				"d3d9.dll"
+#endif // BX_PLATFORM_LINUX
+				;
 
-			m_d3d9Dll = bx::dlopen("d3d9.dll");
+			m_d3d9Dll = bx::dlopen(d3d9DllName);
 
 			if (NULL == m_d3d9Dll)
 			{
-				BX_TRACE("Init error: Failed to load d3d9.dll.");
+				BX_TRACE("Init error: Failed to load %s.", d3d9DllName);
 				goto error;
 			}
 
@@ -1231,6 +1244,7 @@ namespace bgfx { namespace d3d9
 
 		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
 		{
+#if BX_PLATFORM_WINDOWS
 			IDirect3DSwapChain9* swapChain = isValid(_handle)
 				? m_frameBuffers[_handle.idx].m_swapChain
 				: m_swapChain
@@ -1294,6 +1308,10 @@ namespace bgfx { namespace d3d9
 
 			DX_CHECK(surface->UnlockRect() );
 			DX_RELEASE(surface, 0);
+#else
+			BX_TRACE("Screenshot not supported!");
+			BX_UNUSED(_handle, _filePath);
+#endif // BX_PLATFORM_WINDOWS
 		}
 
 		void updateViewName(ViewId _id, const char* _name) override
@@ -3537,7 +3555,7 @@ namespace bgfx { namespace d3d9
 		}
 	}
 
-	uint32_t TimerQueryD3D9::begin(uint32_t _resultIdx)
+	uint32_t TimerQueryD3D9::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
 		while (0 == m_control.reserve(1) )
 		{
@@ -3551,6 +3569,7 @@ namespace bgfx { namespace d3d9
 		Query& query = m_query[idx];
 		query.m_resultIdx = _resultIdx;
 		query.m_ready     = false;
+		query.m_frameNum  = _frameNum;
 
 		query.m_disjoint->Issue(D3DISSUE_BEGIN);
 		query.m_begin->Issue(D3DISSUE_END);
@@ -3601,6 +3620,7 @@ namespace bgfx { namespace d3d9
 
 				Result& result = m_result[query.m_resultIdx];
 				--result.m_pending;
+				result.m_frameNum = query.m_frameNum;
 
 				result.m_frequency = freq;
 				result.m_begin     = timeBegin;
@@ -3751,7 +3771,7 @@ namespace bgfx { namespace d3d9
 		device->BeginScene();
 		if (m_timerQuerySupport)
 		{
-			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS);
+			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
 		}
 
 		if (0 < _render->m_iboffset)
@@ -4011,6 +4031,7 @@ namespace bgfx { namespace d3d9
 
 				if ( (0
 					 | BGFX_STATE_CULL_MASK
+//					 | BGFX_STATE_FRONT_CCW
 					 | BGFX_STATE_WRITE_Z
 					 | BGFX_STATE_DEPTH_TEST_MASK
 					 | BGFX_STATE_WRITE_RGB
@@ -4446,6 +4467,7 @@ namespace bgfx { namespace d3d9
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
 		perfStats.maxGpuLatency = maxGpuLatency;
+		perfStats.gpuFrameNum   = result.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
 		m_nvapi.getMemoryInfo(perfStats.gpuMemoryUsed, perfStats.gpuMemoryMax);
 

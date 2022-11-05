@@ -40,6 +40,7 @@ bool IsStorageClassAllowedByUniversalRules(uint32_t storage_class) {
     case SpvStorageClassImage:
     case SpvStorageClassFunction:
     case SpvStorageClassPhysicalStorageBuffer:
+    case SpvStorageClassTaskPayloadWorkgroupEXT:
       return true;
       break;
     default:
@@ -206,12 +207,13 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst) {
               (storage_class != SpvStorageClassStorageBuffer) &&
               (storage_class != SpvStorageClassWorkgroup) &&
               (storage_class != SpvStorageClassImage) &&
-              (storage_class != SpvStorageClassPhysicalStorageBuffer)) {
+              (storage_class != SpvStorageClassPhysicalStorageBuffer) &&
+              (storage_class != SpvStorageClassTaskPayloadWorkgroupEXT)) {
             return _.diag(SPV_ERROR_INVALID_DATA, inst)
                    << _.VkErrorID(4686) << spvOpcodeString(opcode)
                    << ": Vulkan spec only allows storage classes for atomic to "
-                      "be: Uniform, Workgroup, Image, StorageBuffer, or "
-                      "PhysicalStorageBuffer.";
+                      "be: Uniform, Workgroup, Image, StorageBuffer, "
+                      "PhysicalStorageBuffer or TaskPayloadWorkgroupEXT.";
           }
         } else if (storage_class == SpvStorageClassFunction) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)

@@ -56,21 +56,30 @@ Pass::Status EliminateDeadInputComponentsPass::Process() {
       continue;
     }
     const analysis::Array* arr_type = ptr_type->pointee_type()->AsArray();
-    if (arr_type == nullptr) {
+    if (arr_type != nullptr) {
+      unsigned arr_len_id = arr_type->LengthId();
+      Instruction* arr_len_inst = def_use_mgr->GetDef(arr_len_id);
+      if (arr_len_inst->opcode() != SpvOpConstant) {
+        continue;
+      }
+      // SPIR-V requires array size is >= 1, so this works for signed or
+      // unsigned size
+      unsigned original_max =
+          arr_len_inst->GetSingleWordInOperand(kConstantValueInIdx) - 1;
+      unsigned max_idx = FindMaxIndex(var, original_max);
+      if (max_idx != original_max) {
+        ChangeArrayLength(var, max_idx + 1);
+        modified = true;
+      }
       continue;
     }
-    unsigned arr_len_id = arr_type->LengthId();
-    Instruction* arr_len_inst = def_use_mgr->GetDef(arr_len_id);
-    if (arr_len_inst->opcode() != SpvOpConstant) {
-      continue;
-    }
-    // SPIR-V requires array size is >= 1, so this works for signed or
-    // unsigned size
-    unsigned original_max =
-        arr_len_inst->GetSingleWordInOperand(kConstantValueInIdx) - 1;
+    const analysis::Struct* struct_type = ptr_type->pointee_type()->AsStruct();
+    if (struct_type == nullptr) continue;
+    const auto elt_types = struct_type->element_types();
+    unsigned original_max = static_cast<unsigned>(elt_types.size()) - 1;
     unsigned max_idx = FindMaxIndex(var, original_max);
     if (max_idx != original_max) {
-      ChangeArrayLength(var, max_idx + 1);
+      ChangeStructLength(var, max_idx + 1);
       modified = true;
     }
   }
@@ -116,12 +125,13 @@ unsigned EliminateDeadInputComponentsPass::FindMaxIndex(Instruction& var,
   return seen_non_const_ac ? original_max : max;
 }
 
-void EliminateDeadInputComponentsPass::ChangeArrayLength(Instruction& arr,
+void EliminateDeadInputComponentsPass::ChangeArrayLength(Instruction& arr_var,
                                                          unsigned length) {
   analysis::TypeManager* type_mgr = context()->get_type_mgr();
   analysis::ConstantManager* const_mgr = context()->get_constant_mgr();
   analysis::DefUseManager* def_use_mgr = context()->get_def_use_mgr();
-  analysis::Pointer* ptr_type = type_mgr->GetType(arr.type_id())->AsPointer();
+  analysis::Pointer* ptr_type =
+      type_mgr->GetType(arr_var.type_id())->AsPointer();
   const analysis::Array* arr_ty = ptr_type->pointee_type()->AsArray();
   assert(arr_ty && "expecting array type");
   uint32_t length_id = const_mgr->GetUIntConst(length);
@@ -131,15 +141,48 @@ void EliminateDeadInputComponentsPass::ChangeArrayLength(Instruction& arr,
   analysis::Pointer new_ptr_ty(reg_new_arr_ty, SpvStorageClassInput);
   analysis::Type* reg_new_ptr_ty = type_mgr->GetRegisteredType(&new_ptr_ty);
   uint32_t new_ptr_ty_id = type_mgr->GetTypeInstruction(reg_new_ptr_ty);
-  arr.SetResultType(new_ptr_ty_id);
-  def_use_mgr->AnalyzeInstUse(&arr);
-  // Move array OpVariable instruction after its new type to preserve order
-  USE_ASSERT(arr.GetSingleWordInOperand(kVariableStorageClassInIdx) !=
+  arr_var.SetResultType(new_ptr_ty_id);
+  def_use_mgr->AnalyzeInstUse(&arr_var);
+  // Move arr_var after its new type to preserve order
+  USE_ASSERT(arr_var.GetSingleWordInOperand(kVariableStorageClassInIdx) !=
                  SpvStorageClassFunction &&
              "cannot move Function variable");
   Instruction* new_ptr_ty_inst = def_use_mgr->GetDef(new_ptr_ty_id);
-  arr.RemoveFromList();
-  arr.InsertAfter(new_ptr_ty_inst);
+  arr_var.RemoveFromList();
+  arr_var.InsertAfter(new_ptr_ty_inst);
+}
+
+void EliminateDeadInputComponentsPass::ChangeStructLength(
+    Instruction& struct_var, unsigned length) {
+  analysis::TypeManager* type_mgr = context()->get_type_mgr();
+  analysis::Pointer* ptr_type =
+      type_mgr->GetType(struct_var.type_id())->AsPointer();
+  const analysis::Struct* struct_ty = ptr_type->pointee_type()->AsStruct();
+  assert(struct_ty && "expecting struct type");
+  const auto orig_elt_types = struct_ty->element_types();
+  std::vector<const analysis::Type*> new_elt_types;
+  for (unsigned u = 0; u < length; ++u)
+    new_elt_types.push_back(orig_elt_types[u]);
+  analysis::Struct new_struct_ty(new_elt_types);
+  analysis::Type* reg_new_struct_ty =
+      type_mgr->GetRegisteredType(&new_struct_ty);
+  uint32_t new_struct_ty_id = type_mgr->GetTypeInstruction(reg_new_struct_ty);
+  uint32_t old_struct_ty_id = type_mgr->GetTypeInstruction(struct_ty);
+  analysis::DecorationManager* deco_mgr = context()->get_decoration_mgr();
+  deco_mgr->CloneDecorations(old_struct_ty_id, new_struct_ty_id);
+  analysis::Pointer new_ptr_ty(reg_new_struct_ty, SpvStorageClassInput);
+  analysis::Type* reg_new_ptr_ty = type_mgr->GetRegisteredType(&new_ptr_ty);
+  uint32_t new_ptr_ty_id = type_mgr->GetTypeInstruction(reg_new_ptr_ty);
+  struct_var.SetResultType(new_ptr_ty_id);
+  analysis::DefUseManager* def_use_mgr = context()->get_def_use_mgr();
+  def_use_mgr->AnalyzeInstUse(&struct_var);
+  // Move struct_var after its new type to preserve order
+  USE_ASSERT(struct_var.GetSingleWordInOperand(kVariableStorageClassInIdx) !=
+                 SpvStorageClassFunction &&
+             "cannot move Function variable");
+  Instruction* new_ptr_ty_inst = def_use_mgr->GetDef(new_ptr_ty_id);
+  struct_var.RemoveFromList();
+  struct_var.InsertAfter(new_ptr_ty_inst);
 }
 
 }  // namespace opt

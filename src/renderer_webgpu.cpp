@@ -306,11 +306,19 @@ namespace bgfx { namespace webgpu
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ATCE
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ATCI
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC4x4
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC5x4
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC5x5
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC6x5
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC6x6
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC8x5
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC8x6
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC8x8
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC10x5
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC10x6
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC10x8
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC10x10
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC12x10
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // ASTC12x12
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // Unknown
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // R1
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // A8
@@ -3987,9 +3995,10 @@ namespace bgfx { namespace webgpu
 	{
 	}
 
-	uint32_t TimerQueryWgpu::begin(uint32_t _resultIdx)
+	uint32_t TimerQueryWgpu::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
 		BX_UNUSED(_resultIdx);
+		BX_UNUSED(_frameNum);
 		return 0;
 	}
 
@@ -4847,6 +4856,7 @@ namespace bgfx { namespace webgpu
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
 		perfStats.maxGpuLatency = maxGpuLatency;
+		perfStats.gpuFrameNum   = result.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
 		perfStats.gpuMemoryMax  = -INT64_MAX;
 		perfStats.gpuMemoryUsed = -INT64_MAX;

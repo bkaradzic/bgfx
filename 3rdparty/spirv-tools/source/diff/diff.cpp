@@ -1284,8 +1284,15 @@ bool Differ::MatchOpSpecConstant(const opt::Instruction* src_inst,
     return src_spec_id == dst_spec_id;
   }
 
-  // There is no spec id, this is not valid.
-  assert(false && "Unreachable");
+  // There is no SpecId decoration, while not practical, still valid.
+  // SpecConstantOp don't have SpecId and can be matched by operands
+  if (src_inst->opcode() == SpvOpSpecConstantOp) {
+    if (src_inst->NumInOperandWords() == dst_inst->NumInOperandWords()) {
+      return DoOperandsMatch(src_inst, dst_inst, 0,
+                             src_inst->NumInOperandWords());
+    }
+  }
+
   return false;
 }
 

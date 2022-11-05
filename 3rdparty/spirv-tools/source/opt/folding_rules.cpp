@@ -136,25 +136,28 @@ std::vector<uint32_t> GetWordsFromScalarIntConstant(
     const analysis::IntConstant* c) {
   assert(c != nullptr);
   uint32_t width = c->type()->AsInteger()->width();
-  assert(width == 32 || width == 64);
+  assert(width == 8 || width == 16 || width == 32 || width == 64);
   if (width == 64) {
     uint64_t uval = static_cast<uint64_t>(c->GetU64());
     return ExtractInts(uval);
   }
-  return {c->GetU32()};
+  // Section 2.2.1 of the SPIR-V spec guarantees that all integer types
+  // smaller than 32-bits are automatically zero or sign extended to 32-bits.
+  return {c->GetU32BitValue()};
 }
 
 std::vector<uint32_t> GetWordsFromScalarFloatConstant(
     const analysis::FloatConstant* c) {
   assert(c != nullptr);
   uint32_t width = c->type()->AsFloat()->width();
-  assert(width == 32 || width == 64);
+  assert(width == 16 || width == 32 || width == 64);
   if (width == 64) {
     utils::FloatProxy<double> result(c->GetDouble());
     return result.GetWords();
   }
-  utils::FloatProxy<float> result(c->GetFloat());
-  return result.GetWords();
+  // Section 2.2.1 of the SPIR-V spec guarantees that all floating-point types
+  // smaller than 32-bits are automatically zero extended to 32-bits.
+  return {c->GetU32BitValue()};
 }
 
 std::vector<uint32_t> GetWordsFromNumericScalarOrVectorConstant(
@@ -2748,7 +2751,8 @@ FoldingRule VectorShuffleFeedingShuffle() {
 
       if (adjustment != 0) {
         for (uint32_t i = 2; i < new_operands.size(); i++) {
-          if (inst->GetSingleWordInOperand(i) >= op0_length) {
+          uint32_t operand = inst->GetSingleWordInOperand(i);
+          if (operand >= op0_length && operand != undef_literal) {
             new_operands[i].words[0] -= adjustment;
           }
         }

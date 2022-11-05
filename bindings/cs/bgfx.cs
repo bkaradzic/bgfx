@@ -1152,6 +1152,11 @@ public static partial class bgfx
 		ViewportLayerArray     = 0x0000000010000000,
 	
 		/// <summary>
+		/// Draw indirect with indirect count is supported.
+		/// </summary>
+		DrawIndirectCount      = 0x0000000020000000,
+	
+		/// <summary>
 		/// All texture compare modes are supported.
 		/// </summary>
 		TextureCompareAll      = 0x0000000000300000,
@@ -1667,9 +1672,19 @@ public static partial class bgfx
 		ASTC4x4,
 	
 		/// <summary>
+		/// ASTC 5x4 6.40 BPP
+		/// </summary>
+		ASTC5x4,
+	
+		/// <summary>
 		/// ASTC 5x5 5.12 BPP
 		/// </summary>
 		ASTC5x5,
+	
+		/// <summary>
+		/// ASTC 6x5 4.27 BPP
+		/// </summary>
+		ASTC6x5,
 	
 		/// <summary>
 		/// ASTC 6x6 3.56 BPP
@@ -1687,9 +1702,39 @@ public static partial class bgfx
 		ASTC8x6,
 	
 		/// <summary>
+		/// ASTC 8x8 2.00 BPP
+		/// </summary>
+		ASTC8x8,
+	
+		/// <summary>
 		/// ASTC 10x5 2.56 BPP
 		/// </summary>
 		ASTC10x5,
+	
+		/// <summary>
+		/// ASTC 10x6 2.13 BPP
+		/// </summary>
+		ASTC10x6,
+	
+		/// <summary>
+		/// ASTC 10x8 1.60 BPP
+		/// </summary>
+		ASTC10x8,
+	
+		/// <summary>
+		/// ASTC 10x10 1.28 BPP
+		/// </summary>
+		ASTC10x10,
+	
+		/// <summary>
+		/// ASTC 12x10 1.07 BPP
+		/// </summary>
+		ASTC12x10,
+	
+		/// <summary>
+		/// ASTC 12x12 0.89 BPP
+		/// </summary>
+		ASTC12x12,
 	
 		/// <summary>
 		/// Compressed formats above.
@@ -2022,7 +2067,7 @@ public static partial class bgfx
 		public byte numGPUs;
 		public fixed uint gpu[4];
 		public Limits limits;
-		public fixed ushort formats[88];
+		public fixed ushort formats[96];
 	}
 	
 	public unsafe struct InternalData
@@ -2152,6 +2197,7 @@ public static partial class bgfx
 		public long cpuTimeEnd;
 		public long gpuTimeBegin;
 		public long gpuTimeEnd;
+		public uint gpuFrameNum;
 	}
 	
 	public unsafe struct EncoderStats
@@ -2175,6 +2221,7 @@ public static partial class bgfx
 		public uint numCompute;
 		public uint numBlit;
 		public uint maxGpuLatency;
+		public uint gpuFrameNum;
 		public ushort numDynamicIndexBuffers;
 		public ushort numDynamicVertexBuffers;
 		public ushort numFrameBuffers;
@@ -3858,18 +3905,38 @@ public static partial class bgfx
 	/// <summary>
 	/// Submit primitive for rendering with index and instance data info from
 	/// indirect buffer.
+	/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
 	/// <param name="_program">Program.</param>
 	/// <param name="_indirectHandle">Indirect buffer.</param>
 	/// <param name="_start">First element in indirect buffer.</param>
-	/// <param name="_num">Number of dispatches.</param>
+	/// <param name="_num">Number of draws.</param>
 	/// <param name="_depth">Depth for sorting.</param>
 	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_encoder_submit_indirect", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void encoder_submit_indirect(Encoder* _this, ushort _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, ushort _start, ushort _num, uint _depth, byte _flags);
+	
+	/// <summary>
+	/// Submit primitive for rendering with index and instance data info and
+	/// draw count from indirect buffers.
+	/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+	/// </summary>
+	///
+	/// <param name="_id">View id.</param>
+	/// <param name="_program">Program.</param>
+	/// <param name="_indirectHandle">Indirect buffer.</param>
+	/// <param name="_start">First element in indirect buffer.</param>
+	/// <param name="_numHandle">Buffer for number of draws. Must be   created with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.</param>
+	/// <param name="_numIndex">Element in number buffer.</param>
+	/// <param name="_numMax">Max number of draws.</param>
+	/// <param name="_depth">Depth for sorting.</param>
+	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_encoder_submit_indirect_count", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void encoder_submit_indirect_count(Encoder* _this, ushort _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, ushort _start, IndexBufferHandle _numHandle, uint _numIndex, ushort _numMax, uint _depth, byte _flags);
 	
 	/// <summary>
 	/// Set compute index buffer.
@@ -4414,18 +4481,38 @@ public static partial class bgfx
 	/// <summary>
 	/// Submit primitive for rendering with index and instance data info from
 	/// indirect buffer.
+	/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
 	/// <param name="_program">Program.</param>
 	/// <param name="_indirectHandle">Indirect buffer.</param>
 	/// <param name="_start">First element in indirect buffer.</param>
-	/// <param name="_num">Number of dispatches.</param>
+	/// <param name="_num">Number of draws.</param>
 	/// <param name="_depth">Depth for sorting.</param>
 	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_submit_indirect", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void submit_indirect(ushort _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, ushort _start, ushort _num, uint _depth, byte _flags);
+	
+	/// <summary>
+	/// Submit primitive for rendering with index and instance data info and
+	/// draw count from indirect buffers.
+	/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+	/// </summary>
+	///
+	/// <param name="_id">View id.</param>
+	/// <param name="_program">Program.</param>
+	/// <param name="_indirectHandle">Indirect buffer.</param>
+	/// <param name="_start">First element in indirect buffer.</param>
+	/// <param name="_numHandle">Buffer for number of draws. Must be   created with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.</param>
+	/// <param name="_numIndex">Element in number buffer.</param>
+	/// <param name="_numMax">Max number of draws.</param>
+	/// <param name="_depth">Depth for sorting.</param>
+	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_submit_indirect_count", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void submit_indirect_count(ushort _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, ushort _start, IndexBufferHandle _numHandle, uint _numIndex, ushort _numMax, uint _depth, byte _flags);
 	
 	/// <summary>
 	/// Set compute index buffer.

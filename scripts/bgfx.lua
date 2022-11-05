@@ -107,9 +107,16 @@ function bgfxProjectBase(_kind, _defines)
 		}
 	end
 
+	configuration { "linux-*" }
+		includedirs {
+			path.join(BGFX_DIR, "3rdparty/directx-headers/include/directx"),
+			path.join(BGFX_DIR, "3rdparty/directx-headers/include"),
+			path.join(BGFX_DIR, "3rdparty/directx-headers/include/wsl/stubs"),
+		}
+
 	configuration { "vs* or mingw*", "not durango" }
 		includedirs {
-			path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
+			path.join(BGFX_DIR, "3rdparty/directx-headers/include/directx"),
 		}
 
 	configuration { "android*" }

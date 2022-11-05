@@ -521,7 +521,7 @@ namespace bgfx
 				ViewStats& viewStats = m_frame->m_perfStats.viewStats[m_numViews];
 				viewStats.cpuTimeBegin = bx::getHPCounter();
 
-				m_queryIdx = m_gpuTimer.begin(_view);
+				m_queryIdx = m_gpuTimer.begin(_view, m_frame->m_frameNum);
 
 				viewStats.view = ViewId(_view);
 				bx::strCopy(viewStats.name
@@ -544,6 +544,7 @@ namespace bgfx
 				viewStats.cpuTimeEnd = bx::getHPCounter();
 				viewStats.gpuTimeBegin = result.m_begin;
 				viewStats.gpuTimeEnd = result.m_end;
+				viewStats.gpuFrameNum = result.m_frameNum;
 
 				++m_numViews;
 				m_queryIdx = UINT32_MAX;

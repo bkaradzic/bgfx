@@ -502,6 +502,16 @@ TIntermTyped* TParseContext::handleVariable(const TSourceLoc& loc, TSymbol* symb
                 error(loc, "cannot be used (maybe an instance name is needed)", string->c_str(), "");
                 variable = nullptr;
             }
+
+            if (language == EShLangMesh && variable) {
+                TLayoutGeometry primitiveType = intermediate.getOutputPrimitive();
+                if ((variable->getMangledName() == "gl_PrimitiveTriangleIndicesEXT" && primitiveType != ElgTriangles) ||
+                    (variable->getMangledName() == "gl_PrimitiveLineIndicesEXT" && primitiveType != ElgLines) ||
+                    (variable->getMangledName() == "gl_PrimitivePointIndicesEXT" && primitiveType != ElgPoints)) {
+                    error(loc, "cannot be used (ouput primitive type mismatch)", string->c_str(), "");
+                    variable = nullptr;
+                }
+            }
         } else {
             if (symbol)
                 error(loc, "variable name expected", string->c_str(), "");
@@ -717,7 +727,7 @@ bool TParseContext::isIoResizeArray(const TType& type) const
                 ! type.getQualifier().patch) ||
             (language == EShLangFragment && type.getQualifier().storage == EvqVaryingIn &&
                 (type.getQualifier().pervertexNV || type.getQualifier().pervertexEXT)) ||
-            (language == EShLangMeshNV && type.getQualifier().storage == EvqVaryingOut &&
+            (language == EShLangMesh && type.getQualifier().storage == EvqVaryingOut &&
                 !type.getQualifier().perTaskNV));
 }
 
@@ -794,7 +804,7 @@ void TParseContext::checkIoArraysConsistency(const TSourceLoc &loc, bool tailOnl
 
         // As I/O array sizes don't change, fetch requiredSize only once,
         // except for mesh shaders which could have different I/O array sizes based on type qualifiers.
-        if (firstIteration || (language == EShLangMeshNV)) {
+        if (firstIteration || (language == EShLangMesh)) {
             requiredSize = getIoArrayImplicitSize(type.getQualifier(), &featureString);
             if (requiredSize == 0)
                 break;
@@ -823,10 +833,11 @@ int TParseContext::getIoArrayImplicitSize(const TQualifier &qualifier, TString *
         // Number of vertices for Fragment shader is always three.
         expectedSize = 3;
         str = "vertices";
-    } else if (language == EShLangMeshNV) {
+    } else if (language == EShLangMesh) {
         unsigned int maxPrimitives =
             intermediate.getPrimitives() != TQualifier::layoutNotSet ? intermediate.getPrimitives() : 0;
-        if (qualifier.builtIn == EbvPrimitiveIndicesNV) {
+        if (qualifier.builtIn == EbvPrimitiveIndicesNV || qualifier.builtIn == EbvPrimitiveTriangleIndicesEXT ||
+            qualifier.builtIn == EbvPrimitiveLineIndicesEXT || qualifier.builtIn == EbvPrimitivePointIndicesEXT) {
             expectedSize = maxPrimitives * TQualifier::mapGeometryToSize(intermediate.getOutputPrimitive());
             str = "max_primitives*";
             str += TQualifier::getGeometryString(intermediate.getOutputPrimitive());
@@ -858,7 +869,7 @@ void TParseContext::checkIoArrayConsistency(const TSourceLoc& loc, int requiredS
             if (type.getOuterArraySize() > requiredSize)
                 error(loc, " cannot be greater than 3 for pervertexEXT", feature, name.c_str());
         }
-        else if (language == EShLangMeshNV)
+        else if (language == EShLangMesh)
             error(loc, "inconsistent output array size of", feature, name.c_str());
         else
             assert(0);
@@ -2000,18 +2011,18 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
         break;
     }
 
-    if ((semantics & gl_SemanticsAcquire) && 
+    if ((semantics & gl_SemanticsAcquire) &&
         (callNode.getOp() == EOpAtomicStore || callNode.getOp() == EOpImageAtomicStore)) {
         error(loc, "gl_SemanticsAcquire must not be used with (image) atomic store",
               fnCandidate.getName().c_str(), "");
     }
-    if ((semantics & gl_SemanticsRelease) && 
+    if ((semantics & gl_SemanticsRelease) &&
         (callNode.getOp() == EOpAtomicLoad || callNode.getOp() == EOpImageAtomicLoad)) {
         error(loc, "gl_SemanticsRelease must not be used with (image) atomic load",
               fnCandidate.getName().c_str(), "");
     }
-    if ((semantics & gl_SemanticsAcquireRelease) && 
-        (callNode.getOp() == EOpAtomicStore || callNode.getOp() == EOpImageAtomicStore || 
+    if ((semantics & gl_SemanticsAcquireRelease) &&
+        (callNode.getOp() == EOpAtomicStore || callNode.getOp() == EOpImageAtomicStore ||
          callNode.getOp() == EOpAtomicLoad  || callNode.getOp() == EOpImageAtomicLoad)) {
         error(loc, "gl_SemanticsAcquireRelease must not be used with (image) atomic load/store",
               fnCandidate.getName().c_str(), "");
@@ -2462,7 +2473,7 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         const TIntermTyped* base = TIntermediate::findLValueBase(arg0, true , true);
         const TType* refType = (base->getType().isReference()) ? base->getType().getReferentType() : nullptr;
         const TQualifier& qualifier = (refType != nullptr) ? refType->getQualifier() : base->getType().getQualifier();
-        if (qualifier.storage != EvqShared && qualifier.storage != EvqBuffer)
+        if (qualifier.storage != EvqShared && qualifier.storage != EvqBuffer && qualifier.storage != EvqtaskPayloadSharedEXT)
             error(loc,"Atomic memory function can only be used for shader storage block member or shared variable.",
             fnCandidate.getName().c_str(), "");
 
@@ -2560,7 +2571,7 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         }
 
         if (profile != EEsProfile && version < 450) {
-            if ((*argp)[0]->getAsTyped()->getBasicType() != EbtFloat && 
+            if ((*argp)[0]->getAsTyped()->getBasicType() != EbtFloat &&
                 (*argp)[0]->getAsTyped()->getBasicType() != EbtDouble &&
                 (*argp)[1]->getAsTyped()->getBasicType() != EbtFloat &&
                 (*argp)[1]->getAsTyped()->getBasicType() != EbtDouble &&
@@ -2995,6 +3006,10 @@ bool TParseContext::lValueErrorCheck(const TSourceLoc& loc, const char* op, TInt
             message = "can't modify EvqFragStencil if using early_fragment_tests";
         break;
 
+    case EvqtaskPayloadSharedEXT:
+        if (language == EShLangMesh)
+            message = "can't modify variable with storage qualifier taskPayloadSharedEXT in mesh shaders";
+        break;
     default:
         break;
     }
@@ -3033,7 +3048,7 @@ void TParseContext::rValueErrorCheck(const TSourceLoc& loc, const char* op, TInt
         if (symNode && symNode->getQualifier().isExplicitInterpolation())
             error(loc, "can't read from explicitly-interpolated object: ", op, symNode->getName().c_str());
 
-    // local_size_{xyz} must be assigned or specialized before gl_WorkGroupSize can be assigned. 
+    // local_size_{xyz} must be assigned or specialized before gl_WorkGroupSize can be assigned.
     if(node->getQualifier().builtIn == EbvWorkGroupSize &&
        !(intermediate.isLocalSizeSet() || intermediate.isLocalSizeSpecialized()))
         error(loc, "can't read from gl_WorkGroupSize before a fixed workgroup size has been declared", op, "");
@@ -3831,6 +3846,9 @@ void TParseContext::globalQualifierTypeCheck(const TSourceLoc& loc, const TQuali
     if (qualifier.isPatch() && qualifier.isInterpolation())
         error(loc, "cannot use interpolation qualifiers with patch", "patch", "");
 
+    if (qualifier.isTaskPayload() && publicType.basicType == EbtBlock)
+        error(loc, "taskPayloadSharedEXT variables should not be declared as interface blocks", "taskPayloadSharedEXT", "");
+
     if (qualifier.isTaskMemory() && publicType.basicType != EbtBlock)
         error(loc, "taskNV variables can be declared only as blocks", "taskNV", "");
 
@@ -3988,7 +4006,7 @@ void TParseContext::mergeQualifiers(const TSourceLoc& loc, TQualifier& dst, cons
                    (src.workgroupcoherent && (dst.coherent || dst.devicecoherent || dst.queuefamilycoherent || dst.subgroupcoherent || dst.shadercallcoherent)) ||
                    (src.subgroupcoherent  && (dst.coherent || dst.devicecoherent || dst.queuefamilycoherent || dst.workgroupcoherent || dst.shadercallcoherent)) ||
                    (src.shadercallcoherent && (dst.coherent || dst.devicecoherent || dst.queuefamilycoherent || dst.workgroupcoherent || dst.subgroupcoherent)))) {
-        error(loc, "only one coherent/devicecoherent/queuefamilycoherent/workgroupcoherent/subgroupcoherent/shadercallcoherent qualifier allowed", 
+        error(loc, "only one coherent/devicecoherent/queuefamilycoherent/workgroupcoherent/subgroupcoherent/shadercallcoherent qualifier allowed",
             GetPrecisionQualifierString(src.precision), "");
     }
 #endif
@@ -4346,10 +4364,10 @@ void TParseContext::arraySizesCheck(const TSourceLoc& loc, const TQualifier& qua
                 extensionsTurnedOn(Num_AEP_tessellation_shader, AEP_tessellation_shader))
                 return;
         break;
-    case EShLangMeshNV:
+    case EShLangMesh:
         if (qualifier.storage == EvqVaryingOut)
             if ((isEsProfile() && version >= 320) ||
-                extensionTurnedOn(E_GL_NV_mesh_shader))
+                extensionsTurnedOn(Num_AEP_mesh_shader, AEP_mesh_shader))
                 return;
         break;
     default:
@@ -4633,6 +4651,9 @@ TSymbol* TParseContext::redeclareBuiltinVariable(const TSourceLoc& loc, const TS
          identifier == "gl_SampleMask"                                                              ||
          identifier == "gl_Layer"                                                                   ||
          identifier == "gl_PrimitiveIndicesNV"                                                      ||
+         identifier == "gl_PrimitivePointIndicesEXT"                                                ||
+         identifier == "gl_PrimitiveLineIndicesEXT"                                                 ||
+         identifier == "gl_PrimitiveTriangleIndicesEXT"                                             ||
          identifier == "gl_TexCoord") {
 
         // Find the existing symbol, if any.
@@ -4771,7 +4792,8 @@ void TParseContext::redeclareBuiltinBlock(const TSourceLoc& loc, TTypeList& newT
     profileRequires(loc, ~EEsProfile, 410, E_GL_ARB_separate_shader_objects, feature);
 
     if (blockName != "gl_PerVertex" && blockName != "gl_PerFragment" &&
-        blockName != "gl_MeshPerVertexNV" && blockName != "gl_MeshPerPrimitiveNV") {
+        blockName != "gl_MeshPerVertexNV" && blockName != "gl_MeshPerPrimitiveNV" &&
+        blockName != "gl_MeshPerVertexEXT" && blockName != "gl_MeshPerPrimitiveEXT") {
         error(loc, "cannot redeclare block: ", "block declaration", blockName.c_str());
         return;
     }
@@ -5340,11 +5362,11 @@ void TParseContext::finish()
         if (!isEsProfile() && version < 430)
             requireExtensions(getCurrentLoc(), 1, &E_GL_ARB_compute_shader, "compute shaders");
         break;
-    case EShLangTaskNV:
-        requireExtensions(getCurrentLoc(), 1, &E_GL_NV_mesh_shader, "task shaders");
+    case EShLangTask:
+        requireExtensions(getCurrentLoc(), Num_AEP_mesh_shader, AEP_mesh_shader, "task shaders");
         break;
-    case EShLangMeshNV:
-        requireExtensions(getCurrentLoc(), 1, &E_GL_NV_mesh_shader, "mesh shaders");
+    case EShLangMesh:
+        requireExtensions(getCurrentLoc(), Num_AEP_mesh_shader, AEP_mesh_shader, "mesh shaders");
         break;
     default:
         break;
@@ -5454,12 +5476,12 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
         intermediate.setUsePhysicalStorageBuffer();
         return;
     }
-    if (language == EShLangGeometry || language == EShLangTessEvaluation || language == EShLangMeshNV) {
+    if (language == EShLangGeometry || language == EShLangTessEvaluation || language == EShLangMesh) {
         if (id == TQualifier::getGeometryString(ElgTriangles)) {
             publicType.shaderQualifiers.geometry = ElgTriangles;
             return;
         }
-        if (language == EShLangGeometry || language == EShLangMeshNV) {
+        if (language == EShLangGeometry || language == EShLangMesh) {
             if (id == TQualifier::getGeometryString(ElgPoints)) {
                 publicType.shaderQualifiers.geometry = ElgPoints;
                 return;
@@ -5737,7 +5759,7 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
         return;
     } else if (id == "location") {
         profileRequires(loc, EEsProfile, 300, nullptr, "location");
-        const char* exts[2] = { E_GL_ARB_separate_shader_objects, E_GL_ARB_explicit_attrib_location }; 
+        const char* exts[2] = { E_GL_ARB_separate_shader_objects, E_GL_ARB_explicit_attrib_location };
         // GL_ARB_explicit_uniform_location requires 330 or GL_ARB_explicit_attrib_location we do not need to add it here
         profileRequires(loc, ~EEsProfile, 330, 2, exts, "location");
         if ((unsigned int)value >= TQualifier::layoutLocationEnd)
@@ -5947,35 +5969,47 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
         }
         break;
 
-    case EShLangMeshNV:
+    case EShLangMesh:
         if (id == "max_vertices") {
-            requireExtensions(loc, 1, &E_GL_NV_mesh_shader, "max_vertices");
+            requireExtensions(loc, Num_AEP_mesh_shader, AEP_mesh_shader, "max_vertices");
             publicType.shaderQualifiers.vertices = value;
-            if (value > resources.maxMeshOutputVerticesNV)
-                error(loc, "too large, must be less than gl_MaxMeshOutputVerticesNV", "max_vertices", "");
+            int max = extensionTurnedOn(E_GL_EXT_mesh_shader) ? resources.maxMeshOutputVerticesEXT
+                                                              : resources.maxMeshOutputVerticesNV;
+            if (value > max) {
+                TString maxsErrtring = "too large, must be less than ";
+                maxsErrtring.append(extensionTurnedOn(E_GL_EXT_mesh_shader) ? "gl_MaxMeshOutputVerticesEXT"
+                                                                            : "gl_MaxMeshOutputVerticesNV");
+                error(loc, maxsErrtring.c_str(), "max_vertices", "");
+            }
             if (nonLiteral)
                 error(loc, "needs a literal integer", "max_vertices", "");
             return;
         }
         if (id == "max_primitives") {
-            requireExtensions(loc, 1, &E_GL_NV_mesh_shader, "max_primitives");
+            requireExtensions(loc, Num_AEP_mesh_shader, AEP_mesh_shader, "max_primitives");
             publicType.shaderQualifiers.primitives = value;
-            if (value > resources.maxMeshOutputPrimitivesNV)
-                error(loc, "too large, must be less than gl_MaxMeshOutputPrimitivesNV", "max_primitives", "");
+            int max = extensionTurnedOn(E_GL_EXT_mesh_shader) ? resources.maxMeshOutputPrimitivesEXT
+                                                              : resources.maxMeshOutputPrimitivesNV;
+            if (value > max) {
+                TString maxsErrtring = "too large, must be less than ";
+                maxsErrtring.append(extensionTurnedOn(E_GL_EXT_mesh_shader) ? "gl_MaxMeshOutputPrimitivesEXT"
+                                                                            : "gl_MaxMeshOutputPrimitivesNV");
+                error(loc, maxsErrtring.c_str(), "max_primitives", "");
+            }
             if (nonLiteral)
                 error(loc, "needs a literal integer", "max_primitives", "");
             return;
         }
         // Fall through
 
-    case EShLangTaskNV:
+    case EShLangTask:
         // Fall through
 #endif
     case EShLangCompute:
         if (id.compare(0, 11, "local_size_") == 0) {
 #ifndef GLSLANG_WEB
-            if (language == EShLangMeshNV || language == EShLangTaskNV) {
-                requireExtensions(loc, 1, &E_GL_NV_mesh_shader, "gl_WorkGroupSize");
+            if (language == EShLangMesh || language == EShLangTask) {
+                requireExtensions(loc, Num_AEP_mesh_shader, AEP_mesh_shader, "gl_WorkGroupSize");
             } else {
                 profileRequires(loc, EEsProfile, 310, 0, "gl_WorkGroupSize");
                 profileRequires(loc, ~EEsProfile, 430, E_GL_ARB_compute_shader, "gl_WorkGroupSize");
@@ -6250,6 +6284,9 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
         case EvqBuffer:
             if (type.getBasicType() == EbtBlock)
                 error(loc, "cannot apply to uniform or buffer block", "location", "");
+            break;
+        case EvqtaskPayloadSharedEXT:
+            error(loc, "cannot apply to taskPayloadSharedEXT", "location", "");
             break;
 #ifndef GLSLANG_WEB
         case EvqPayload:
@@ -6612,7 +6649,7 @@ void TParseContext::checkNoShaderLayouts(const TSourceLoc& loc, const TShaderQua
             error(loc, message, "local_size id", "");
     }
     if (shaderQualifiers.vertices != TQualifier::layoutNotSet) {
-        if (language == EShLangGeometry || language == EShLangMeshNV)
+        if (language == EShLangGeometry || language == EShLangMesh)
             error(loc, message, "max_vertices", "");
         else if (language == EShLangTessControl)
             error(loc, message, "vertices", "");
@@ -6624,7 +6661,7 @@ void TParseContext::checkNoShaderLayouts(const TSourceLoc& loc, const TShaderQua
     if (shaderQualifiers.postDepthCoverage)
         error(loc, message, "post_depth_coverage", "");
     if (shaderQualifiers.primitives != TQualifier::layoutNotSet) {
-        if (language == EShLangMeshNV)
+        if (language == EShLangMesh)
             error(loc, message, "max_primitives", "");
         else
             assert(0);
@@ -7270,6 +7307,8 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
             requireInt8Arithmetic(loc, "qualifier", "(u)int8 types can only be in uniform block or buffer storage");
     }
 
+    if (type.getQualifier().storage == EvqtaskPayloadSharedEXT)
+        intermediate.addTaskPayloadEXTCount();
     if (type.getQualifier().storage == EvqShared && type.containsCoopMat())
         error(loc, "qualifier", "Cooperative matrix types must not be used in shared memory", "");
 
@@ -8236,6 +8275,8 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
             memberQualifier.perViewNV = currentBlockQualifier.perViewNV;
         if (currentBlockQualifier.perTaskNV)
             memberQualifier.perTaskNV = currentBlockQualifier.perTaskNV;
+        if (currentBlockQualifier.storage == EvqtaskPayloadSharedEXT)
+            memberQualifier.storage = EvqtaskPayloadSharedEXT;
         if (memberQualifier.storage == EvqSpirvStorageClass)
             error(memberLoc, "member cannot have a spirv_storage_class qualifier", memberType.getFieldName().c_str(), "");
         if (memberQualifier.hasSprivDecorate() && !memberQualifier.getSpirvDecorate().decorateIds.empty())
@@ -8536,23 +8577,23 @@ void TParseContext::blockStageIoCheck(const TSourceLoc& loc, const TQualifier& q
         // It is a compile-time error to have an input block in a vertex shader or an output block in a fragment shader
         // "Compute shaders do not permit user-defined input variables..."
         requireStage(loc, (EShLanguageMask)(EShLangTessControlMask|EShLangTessEvaluationMask|EShLangGeometryMask|
-            EShLangFragmentMask|EShLangMeshNVMask), "input block");
+            EShLangFragmentMask|EShLangMeshMask), "input block");
         if (language == EShLangFragment) {
             profileRequires(loc, EEsProfile, 320, Num_AEP_shader_io_blocks, AEP_shader_io_blocks, "fragment input block");
-        } else if (language == EShLangMeshNV && ! qualifier.isTaskMemory()) {
+        } else if (language == EShLangMesh && ! qualifier.isTaskMemory()) {
             error(loc, "input blocks cannot be used in a mesh shader", "out", "");
         }
         break;
     case EvqVaryingOut:
         profileRequires(loc, ~EEsProfile, 150, E_GL_ARB_separate_shader_objects, "output block");
         requireStage(loc, (EShLanguageMask)(EShLangVertexMask|EShLangTessControlMask|EShLangTessEvaluationMask|
-            EShLangGeometryMask|EShLangMeshNVMask|EShLangTaskNVMask), "output block");
+            EShLangGeometryMask|EShLangMeshMask|EShLangTaskMask), "output block");
         // ES 310 can have a block before shader_io is turned on, so skip this test for built-ins
         if (language == EShLangVertex && ! parsingBuiltins) {
             profileRequires(loc, EEsProfile, 320, Num_AEP_shader_io_blocks, AEP_shader_io_blocks, "vertex output block");
-        } else if (language == EShLangMeshNV && qualifier.isTaskMemory()) {
+        } else if (language == EShLangMesh && qualifier.isTaskMemory()) {
             error(loc, "can only use on input blocks in mesh shader", "taskNV", "");
-        } else if (language == EShLangTaskNV && ! qualifier.isTaskMemory()) {
+        } else if (language == EShLangTask && ! qualifier.isTaskMemory()) {
             error(loc, "output blocks cannot be used in a task shader", "out", "");
         }
         break;
@@ -8966,7 +9007,7 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
 {
 #ifndef GLSLANG_WEB
     if (publicType.shaderQualifiers.vertices != TQualifier::layoutNotSet) {
-        assert(language == EShLangTessControl || language == EShLangGeometry || language == EShLangMeshNV);
+        assert(language == EShLangTessControl || language == EShLangGeometry || language == EShLangMesh);
         const char* id = (language == EShLangTessControl) ? "vertices" : "max_vertices";
 
         if (publicType.qualifier.storage != EvqVaryingOut)
@@ -8978,7 +9019,7 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
             checkIoArraysConsistency(loc);
     }
     if (publicType.shaderQualifiers.primitives != TQualifier::layoutNotSet) {
-        assert(language == EShLangMeshNV);
+        assert(language == EShLangMesh);
         const char* id = "max_primitives";
 
         if (publicType.qualifier.storage != EvqVaryingOut)
@@ -9002,7 +9043,7 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
             case ElgTrianglesAdjacency:
             case ElgQuads:
             case ElgIsolines:
-                if (language == EShLangMeshNV) {
+                if (language == EShLangMesh) {
                     error(loc, "cannot apply to input", TQualifier::getGeometryString(publicType.shaderQualifiers.geometry), "");
                     break;
                 }
@@ -9019,7 +9060,7 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
             switch (publicType.shaderQualifiers.geometry) {
             case ElgLines:
             case ElgTriangles:
-                if (language != EShLangMeshNV) {
+                if (language != EShLangMesh) {
                     error(loc, "cannot apply to 'out'", TQualifier::getGeometryString(publicType.shaderQualifiers.geometry), "");
                     break;
                 }
@@ -9075,24 +9116,56 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
                             error(loc, "too large; see gl_MaxComputeWorkGroupSize", "local_size", "");
                     }
 #ifndef GLSLANG_WEB
-                    else if (language == EShLangMeshNV) {
+                    else if (language == EShLangMesh) {
                         switch (i) {
-                        case 0: max = resources.maxMeshWorkGroupSizeX_NV; break;
-                        case 1: max = resources.maxMeshWorkGroupSizeY_NV; break;
-                        case 2: max = resources.maxMeshWorkGroupSizeZ_NV; break;
+                        case 0:
+                            max = extensionTurnedOn(E_GL_EXT_mesh_shader) ?
+                                    resources.maxMeshWorkGroupSizeX_EXT :
+                                    resources.maxMeshWorkGroupSizeX_NV;
+                            break;
+                        case 1:
+                            max = extensionTurnedOn(E_GL_EXT_mesh_shader) ?
+                                    resources.maxMeshWorkGroupSizeY_EXT :
+                                    resources.maxMeshWorkGroupSizeY_NV ;
+                            break;
+                        case 2:
+                            max = extensionTurnedOn(E_GL_EXT_mesh_shader) ?
+                                    resources.maxMeshWorkGroupSizeZ_EXT :
+                                    resources.maxMeshWorkGroupSizeZ_NV ;
+                            break;
                         default: break;
                         }
-                        if (intermediate.getLocalSize(i) > (unsigned int)max)
-                            error(loc, "too large; see gl_MaxMeshWorkGroupSizeNV", "local_size", "");
-                    } else if (language == EShLangTaskNV) {
+                        if (intermediate.getLocalSize(i) > (unsigned int)max) {
+                            TString maxsErrtring = "too large, see ";
+                            maxsErrtring.append(extensionTurnedOn(E_GL_EXT_mesh_shader) ?
+                                                    "gl_MaxMeshWorkGroupSizeEXT" : "gl_MaxMeshWorkGroupSizeNV");
+                            error(loc, maxsErrtring.c_str(), "local_size", "");
+                        }
+                    } else if (language == EShLangTask) {
                         switch (i) {
-                        case 0: max = resources.maxTaskWorkGroupSizeX_NV; break;
-                        case 1: max = resources.maxTaskWorkGroupSizeY_NV; break;
-                        case 2: max = resources.maxTaskWorkGroupSizeZ_NV; break;
+                        case 0:
+                            max = extensionTurnedOn(E_GL_EXT_mesh_shader) ?
+                                    resources.maxTaskWorkGroupSizeX_EXT :
+                                    resources.maxTaskWorkGroupSizeX_NV;
+                            break;
+                        case 1:
+                            max = extensionTurnedOn(E_GL_EXT_mesh_shader) ?
+                                    resources.maxTaskWorkGroupSizeY_EXT:
+                                    resources.maxTaskWorkGroupSizeY_NV;
+                            break;
+                        case 2:
+                            max = extensionTurnedOn(E_GL_EXT_mesh_shader) ?
+                                    resources.maxTaskWorkGroupSizeZ_EXT:
+                                    resources.maxTaskWorkGroupSizeZ_NV;
+                            break;
                         default: break;
                         }
-                        if (intermediate.getLocalSize(i) > (unsigned int)max)
-                            error(loc, "too large; see gl_MaxTaskWorkGroupSizeNV", "local_size", "");
+                        if (intermediate.getLocalSize(i) > (unsigned int)max) {
+                            TString maxsErrtring = "too large, see ";
+                            maxsErrtring.append(extensionTurnedOn(E_GL_EXT_mesh_shader) ?
+                                                    "gl_MaxTaskWorkGroupSizeEXT" : "gl_MaxTaskWorkGroupSizeNV");
+                            error(loc, maxsErrtring.c_str(), "local_size", "");
+                        }
                     }
 #endif
                     else {
@@ -9181,7 +9254,7 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
             error(loc, "can only apply to 'in'", "derivative_group_linearNV", "");
     }
     // Check mesh out array sizes, once all the necessary out qualifiers are defined.
-    if ((language == EShLangMeshNV) &&
+    if ((language == EShLangMesh) &&
         (intermediate.getVertices() != TQualifier::layoutNotSet) &&
         (intermediate.getPrimitives() != TQualifier::layoutNotSet) &&
         (intermediate.getOutputPrimitive() != ElgNone))
@@ -9198,7 +9271,7 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
         // Exit early as further checks are not valid
         return;
     }
-#endif 
+#endif
     const TQualifier& qualifier = publicType.qualifier;
 
     if (qualifier.isAuxiliary() ||
@@ -9396,4 +9469,3 @@ const TTypeList* TParseContext::recordStructCopy(TStructRecord& record, const TT
 }
 
 } // end namespace glslang
-

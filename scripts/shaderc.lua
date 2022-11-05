@@ -123,11 +123,13 @@ project "spirv-opt"
 		path.join(SPIRV_TOOLS, "source/val/validate_logicals.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_memory.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_memory_semantics.cpp"),
+		path.join(SPIRV_TOOLS, "source/val/validate_mesh_shading.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_misc.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_mode_setting.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_non_uniform.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_primitives.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_ray_query.cpp"),
+		path.join(SPIRV_TOOLS, "source/val/validate_ray_tracing.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_scopes.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_small_type_uses.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_type.cpp"),
@@ -234,11 +236,6 @@ project "glslang"
 		path.join(GLSLANG, "OGLCompilersDLL/**.h"),
 	}
 
-	removefiles {
-		path.join(GLSLANG, "glslang/OSDependent/Unix/main.cpp"),
-		path.join(GLSLANG, "glslang/OSDependent/Windows/main.cpp"),
-	}
-
 	configuration { "windows" }
 		removefiles {
 			path.join(GLSLANG, "glslang/OSDependent/Unix/**.cpp"),
@@ -269,7 +266,7 @@ project "glslang"
 			"/wd4838", -- warning C4838: conversion from 'spv::GroupOperation' to 'unsigned int' requires a narrowing conversion
 		}
 
-	configuration { "mingw* or linux*" }
+	configuration { "mingw-gcc or linux-gcc" }
 		buildoptions {
 			"-Wno-logical-op",
 			"-Wno-maybe-uninitialized",

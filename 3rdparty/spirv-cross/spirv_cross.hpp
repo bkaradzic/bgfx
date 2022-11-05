@@ -99,6 +99,8 @@ struct ShaderResources
 	// but keep the vector in case this restriction is lifted in the future.
 	SmallVector<Resource> push_constant_buffers;
 
+	SmallVector<Resource> shader_record_buffers;
+
 	// For Vulkan GLSL and HLSL source,
 	// these correspond to separate texture2D and samplers respectively.
 	SmallVector<Resource> separate_images;
@@ -369,6 +371,7 @@ public:
 	spv::ExecutionModel get_execution_model() const;
 
 	bool is_tessellation_shader() const;
+	bool is_tessellating_triangles() const;
 
 	// In SPIR-V, the compute work group size can be represented by a constant vector, in which case
 	// the LocalSize execution mode is ignored.
@@ -755,6 +758,7 @@ protected:
 	void inherit_expression_dependencies(uint32_t dst, uint32_t source);
 	void add_implied_read_expression(SPIRExpression &e, uint32_t source);
 	void add_implied_read_expression(SPIRAccessChain &e, uint32_t source);
+	void add_active_interface_variable(uint32_t var_id);
 
 	// For proper multiple entry point support, allow querying if an Input or Output
 	// variable is part of that entry points interface.
@@ -930,6 +934,7 @@ protected:
 	// Similar is implemented for images, as well as if subpass inputs are needed.
 	std::unordered_set<uint32_t> comparison_ids;
 	bool need_subpass_input = false;
+	bool need_subpass_input_ms = false;
 
 	// In certain backends, we will need to use a dummy sampler to be able to emit code.
 	// GLSL does not support texelFetch on texture2D objects, but SPIR-V does,
@@ -969,6 +974,7 @@ protected:
 
 		void add_hierarchy_to_comparison_ids(uint32_t ids);
 		bool need_subpass_input = false;
+		bool need_subpass_input_ms = false;
 		void add_dependency(uint32_t dst, uint32_t src);
 	};
 

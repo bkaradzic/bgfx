@@ -464,7 +464,7 @@ size_t meshopt_buildMeshlets(meshopt_Meshlet* meshlets, unsigned int* meshlet_ve
 	using namespace meshopt;
 
 	assert(index_count % 3 == 0);
-	assert(vertex_positions_stride > 0 && vertex_positions_stride <= 256);
+	assert(vertex_positions_stride >= 12 && vertex_positions_stride <= 256);
 	assert(vertex_positions_stride % sizeof(float) == 0);
 
 	assert(max_vertices >= 3 && max_vertices <= kMeshletMaxVertices);
@@ -687,7 +687,7 @@ meshopt_Bounds meshopt_computeClusterBounds(const unsigned int* indices, size_t 
 
 	assert(index_count % 3 == 0);
 	assert(index_count / 3 <= kMeshletMaxTriangles);
-	assert(vertex_positions_stride > 0 && vertex_positions_stride <= 256);
+	assert(vertex_positions_stride >= 12 && vertex_positions_stride <= 256);
 	assert(vertex_positions_stride % sizeof(float) == 0);
 
 	(void)vertex_count;
@@ -839,7 +839,7 @@ meshopt_Bounds meshopt_computeMeshletBounds(const unsigned int* meshlet_vertices
 	using namespace meshopt;
 
 	assert(triangle_count <= kMeshletMaxTriangles);
-	assert(vertex_positions_stride > 0 && vertex_positions_stride <= 256);
+	assert(vertex_positions_stride >= 12 && vertex_positions_stride <= 256);
 	assert(vertex_positions_stride % sizeof(float) == 0);
 
 	unsigned int indices[kMeshletMaxTriangles * 3];

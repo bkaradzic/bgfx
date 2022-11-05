@@ -508,63 +508,127 @@ typedef uint64_t GLuint64;
 
 #ifndef ATC_RGB_AMD
 	#define GL_ATC_RGB_AMD 0x8C92
-#endif
+#endif // ATC_RGB_AMD
 
 #ifndef GL_ATC_RGBA_EXPLICIT_ALPHA_AMD
 #   define GL_ATC_RGBA_EXPLICIT_ALPHA_AMD 0x8C93
-#endif
+#endif // GL_ATC_RGBA_EXPLICIT_ALPHA_AMD
 
 #ifndef ATC_RGBA_INTERPOLATED_ALPHA_AMD
 #   define GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD 0x87EE
-#endif
+#endif // ATC_RGBA_INTERPOLATED_ALPHA_AMD
 
 #ifndef GL_COMPRESSED_RGBA_ASTC_4x4_KHR
 #   define GL_COMPRESSED_RGBA_ASTC_4x4_KHR 0x93B0
-#endif
+#endif // GL_COMPRESSED_RGBA_ASTC_4x4_KHR
+
+#ifndef GL_COMPRESSED_RGBA_ASTC_5x4_KHR
+#   define GL_COMPRESSED_RGBA_ASTC_5x4_KHR 0x93B1
+#endif // GL_COMPRESSED_RGBA_ASTC_5x4_KHR
 
 #ifndef GL_COMPRESSED_RGBA_ASTC_5x5_KHR
 #   define GL_COMPRESSED_RGBA_ASTC_5x5_KHR 0x93B2
-#endif
+#endif // GL_COMPRESSED_RGBA_ASTC_5x5_KHR
+
+#ifndef GL_COMPRESSED_RGBA_ASTC_6x5_KHR
+#   define GL_COMPRESSED_RGBA_ASTC_6x5_KHR 0x93B3
+#endif // GL_COMPRESSED_RGBA_ASTC_6x5_KHR
 
 #ifndef GL_COMPRESSED_RGBA_ASTC_6x6_KHR
 #   define GL_COMPRESSED_RGBA_ASTC_6x6_KHR 0x93B4
-#endif
+#endif // GL_COMPRESSED_RGBA_ASTC_6x6_KHR
 
 #ifndef GL_COMPRESSED_RGBA_ASTC_8x5_KHR
 #   define GL_COMPRESSED_RGBA_ASTC_8x5_KHR 0x93B5
-#endif
+#endif // GL_COMPRESSED_RGBA_ASTC_8x5_KHR
 
 #ifndef GL_COMPRESSED_RGBA_ASTC_8x6_KHR
 #   define GL_COMPRESSED_RGBA_ASTC_8x6_KHR 0x93B6
-#endif
+#endif // GL_COMPRESSED_RGBA_ASTC_8x6_KHR
+
+#ifndef GL_COMPRESSED_RGBA_ASTC_8x8_KHR
+#   define GL_COMPRESSED_RGBA_ASTC_8x8_KHR 0x93B7
+#endif // GL_COMPRESSED_RGBA_ASTC_8x8_KHR
 
 #ifndef GL_COMPRESSED_RGBA_ASTC_10x5_KHR
 #   define GL_COMPRESSED_RGBA_ASTC_10x5_KHR 0x93B8
-#endif
+#endif // GL_COMPRESSED_RGBA_ASTC_10x5_KHR
+
+#ifndef GL_COMPRESSED_RGBA_ASTC_10x6_KHR
+#   define GL_COMPRESSED_RGBA_ASTC_10x6_KHR 0x93B9
+#endif // GL_COMPRESSED_RGBA_ASTC_10x6_KHR
+
+#ifndef GL_COMPRESSED_RGBA_ASTC_10x8_KHR
+#   define GL_COMPRESSED_RGBA_ASTC_10x8_KHR 0x93BA
+#endif // GL_COMPRESSED_RGBA_ASTC_10x8_KHR
+
+#ifndef GL_COMPRESSED_RGBA_ASTC_10x10_KHR
+#   define GL_COMPRESSED_RGBA_ASTC_10x10_KHR 0x93BB
+#endif // GL_COMPRESSED_RGBA_ASTC_10x10_KHR
+
+#ifndef GL_COMPRESSED_RGBA_ASTC_12x10_KHR
+#   define GL_COMPRESSED_RGBA_ASTC_12x10_KHR 0x93BC
+#endif // GL_COMPRESSED_RGBA_ASTC_12x10_KHR
+
+#ifndef GL_COMPRESSED_RGBA_ASTC_12x12_KHR
+#   define GL_COMPRESSED_RGBA_ASTC_12x12_KHR 0x93BD
+#endif // GL_COMPRESSED_RGBA_ASTC_12x12_KHR
 
 #ifndef GL_COMPRESSED_SRGB8_ASTC_4x4_KHR
 #   define GL_COMPRESSED_SRGB8_ASTC_4x4_KHR 0x93D0
-#endif
+#endif // GL_COMPRESSED_SRGB8_ASTC_4x4_KHR
+
+#ifndef GL_COMPRESSED_SRGB8_ASTC_5x4_KHR
+#   define GL_COMPRESSED_SRGB8_ASTC_5x4_KHR 0x93D1
+#endif // GL_COMPRESSED_SRGB8_ASTC_5x4_KHR
 
 #ifndef GL_COMPRESSED_SRGB8_ASTC_5x5_KHR
 #   define GL_COMPRESSED_SRGB8_ASTC_5x5_KHR 0x93D2
-#endif
+#endif // GL_COMPRESSED_SRGB8_ASTC_5x5_KHR
+
+#ifndef GL_COMPRESSED_SRGB8_ASTC_6x5_KHR
+#   define GL_COMPRESSED_SRGB8_ASTC_6x5_KHR 0x93D3
+#endif // GL_COMPRESSED_SRGB8_ASTC_6x5_KHR
 
 #ifndef GL_COMPRESSED_SRGB8_ASTC_6x6_KHR
 #   define GL_COMPRESSED_SRGB8_ASTC_6x6_KHR 0x93D4
-#endif
+#endif // GL_COMPRESSED_SRGB8_ASTC_6x6_KHR
 
 #ifndef GL_COMPRESSED_SRGB8_ASTC_8x5_KHR
 #   define GL_COMPRESSED_SRGB8_ASTC_8x5_KHR 0x93D5
-#endif
+#endif // GL_COMPRESSED_SRGB8_ASTC_8x5_KHR
 
 #ifndef GL_COMPRESSED_SRGB8_ASTC_8x6_KHR
 #   define GL_COMPRESSED_SRGB8_ASTC_8x6_KHR 0x93D6
-#endif
+#endif // GL_COMPRESSED_SRGB8_ASTC_8x6_KHR
+
+#ifndef GL_COMPRESSED_SRGB8_ASTC_8x8_KHR
+#   define GL_COMPRESSED_SRGB8_ASTC_8x8_KHR 0x93D7
+#endif // GL_COMPRESSED_SRGB8_ASTC_8x8_KHR
 
 #ifndef GL_COMPRESSED_SRGB8_ASTC_10x5_KHR
 #   define GL_COMPRESSED_SRGB8_ASTC_10x5_KHR 0x93D8
-#endif
+#endif // GL_COMPRESSED_SRGB8_ASTC_10x5_KHR
+
+#ifndef GL_COMPRESSED_SRGB8_ASTC_10x6_KHR
+#   define GL_COMPRESSED_SRGB8_ASTC_10x6_KHR 0x93D9
+#endif // GL_COMPRESSED_SRGB8_ASTC_10x6_KHR
+
+#ifndef GL_COMPRESSED_SRGB8_ASTC_10x8_KHR
+#   define GL_COMPRESSED_SRGB8_ASTC_10x8_KHR 0x93DA
+#endif // GL_COMPRESSED_SRGB8_ASTC_10x8_KHR
+
+#ifndef GL_COMPRESSED_SRGB8_ASTC_10x10_KHR
+#   define GL_COMPRESSED_SRGB8_ASTC_10x10_KHR 0x93DB
+#endif // GL_COMPRESSED_SRGB8_ASTC_10x10_KHR
+
+#ifndef GL_COMPRESSED_SRGB8_ASTC_12x10_KHR
+#   define GL_COMPRESSED_SRGB8_ASTC_12x10_KHR 0x93DC
+#endif // GL_COMPRESSED_SRGB8_ASTC_12x10_KHR
+
+#ifndef GL_COMPRESSED_SRGB8_ASTC_12x12_KHR
+#   define GL_COMPRESSED_SRGB8_ASTC_12x12_KHR 0x93DD
+#endif // GL_COMPRESSED_SRGB8_ASTC_12x12_KHR
 
 #ifndef GL_COMPRESSED_RGBA_BPTC_UNORM_ARB
 #	define GL_COMPRESSED_RGBA_BPTC_UNORM_ARB 0x8E8C
@@ -994,6 +1058,10 @@ typedef uint64_t GLuint64;
 #ifndef GL_FIRST_VERTEX_CONVENTION
 #	define GL_FIRST_VERTEX_CONVENTION 0x8E4D
 #endif // GL_FIRST_VERTEX_CONVENTION
+
+#ifndef GL_PARAMETER_BUFFER_ARB
+#	define GL_PARAMETER_BUFFER_ARB 0x80EE
+#endif // GL_PARAMETER_BUFFER_ARB
 
 // _KHR or _ARB...
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS         0x8242
@@ -1505,8 +1573,10 @@ namespace bgfx { namespace gl
 		uint8_t m_unboundUsedAttrib[Attrib::Count]; // For tracking unbound used attributes between begin()/end().
 		uint8_t m_usedCount;
 		uint8_t m_used[Attrib::Count]; // Dense.
-		GLint m_attributes[Attrib::Count]; // Sparse.
-		GLint m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT+1];
+		GLint   m_attributes[Attrib::Count]; // Sparse.
+
+		GLint    m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT+1];
+		uint16_t m_instanceOffset[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 
 		GLint m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint8_t m_numSamplers;
@@ -1529,6 +1599,7 @@ namespace bgfx { namespace gl
 			{
 				Query& query = m_query[ii];
 				query.m_ready = false;
+				query.m_frameNum = 0;
 				GL_CHECK(glGenQueries(1, &query.m_begin) );
 				GL_CHECK(glGenQueries(1, &query.m_end) );
 			}
@@ -1550,7 +1621,7 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		uint32_t begin(uint32_t _resultIdx)
+		uint32_t begin(uint32_t _resultIdx, uint32_t _frameNum)
 		{
 			while (0 == m_control.reserve(1) )
 			{
@@ -1563,6 +1634,7 @@ namespace bgfx { namespace gl
 			const uint32_t idx = m_control.m_current;
 			Query& query = m_query[idx];
 			query.m_resultIdx = _resultIdx;
+			query.m_frameNum = _frameNum;
 			query.m_ready     = false;
 
 			GL_CHECK(glQueryCounter(query.m_begin
@@ -1611,6 +1683,7 @@ namespace bgfx { namespace gl
 
 					Result& result = m_result[query.m_resultIdx];
 					--result.m_pending;
+					result.m_frameNum = query.m_frameNum;
 
 					GL_CHECK(glGetQueryObjectui64v(query.m_begin
 						, GL_QUERY_RESULT
@@ -1633,14 +1706,16 @@ namespace bgfx { namespace gl
 		{
 			void reset()
 			{
-				m_begin   = 0;
-				m_end     = 0;
-				m_pending = 0;
+				m_begin    = 0;
+				m_end      = 0;
+				m_pending  = 0;
+				m_frameNum = 0;
 			}
 
 			uint64_t m_begin;
 			uint64_t m_end;
 			uint32_t m_pending;
+			uint32_t m_frameNum;
 		};
 
 		struct Query
@@ -1648,6 +1723,7 @@ namespace bgfx { namespace gl
 			GLuint   m_begin;
 			GLuint   m_end;
 			uint32_t m_resultIdx;
+			uint32_t m_frameNum;
 			bool     m_ready;
 		};
 

@@ -180,11 +180,19 @@ namespace bgfx
 			ATCE,         //!< ATCE RGBA 8 BPP explicit alpha
 			ATCI,         //!< ATCI RGBA 8 BPP interpolated alpha
 			ASTC4x4,      //!< ASTC 4x4 8.0 BPP
+			ASTC5x4,	  //!< ASTC 5x4 6.40 BPP
 			ASTC5x5,      //!< ASTC 5x5 5.12 BPP
+			ASTC6x5,	  //!< ASTC 6x5 4.27 BPP
 			ASTC6x6,      //!< ASTC 6x6 3.56 BPP
 			ASTC8x5,      //!< ASTC 8x5 3.20 BPP
 			ASTC8x6,      //!< ASTC 8x6 2.67 BPP
+			ASTC8x8,	  //!< ASTC 8x8 2.00 BPP
 			ASTC10x5,     //!< ASTC 10x5 2.56 BPP
+			ASTC10x6,	  //!< ASTC 10x6 2.13 BPP
+			ASTC10x8,	  //!< ASTC 10x8 1.60 BPP
+			ASTC10x10,	  //!< ASTC 10x10 1.28 BPP
+			ASTC12x10,	  //!< ASTC 12x10 1.07 BPP
+			ASTC12x12,	  //!< ASTC 12x12 0.89 BPP
 
 			Unknown,      // Compressed formats above.
 
@@ -942,12 +950,13 @@ namespace bgfx
 	///
 	struct ViewStats
 	{
-		char    name[256];      //!< View name.
-		ViewId  view;           //!< View id.
-		int64_t cpuTimeBegin;   //!< CPU (submit) begin time.
-		int64_t cpuTimeEnd;     //!< CPU (submit) end time.
-		int64_t gpuTimeBegin;   //!< GPU begin time.
-		int64_t gpuTimeEnd;     //!< GPU end time.
+		char     name[256];      //!< View name.
+		ViewId   view;           //!< View id.
+		int64_t  cpuTimeBegin;   //!< CPU (submit) begin time.
+		int64_t  cpuTimeEnd;     //!< CPU (submit) end time.
+		int64_t  gpuTimeBegin;   //!< GPU begin time.
+		int64_t  gpuTimeEnd;     //!< GPU end time.
+		uint32_t gpuFrameNum;    //!< Frame which generated gpuTimeBegin, gpuTimeEnd.
 	};
 
 	/// Encoder stats.
@@ -985,6 +994,7 @@ namespace bgfx
 		uint32_t numCompute;                //!< Number of compute calls submitted.
 		uint32_t numBlit;                   //!< Number of blit calls submitted.
 		uint32_t maxGpuLatency;             //!< GPU driver latency.
+		uint32_t gpuFrameNum;               //<! Frame which generated gpuTimeBegin, gpuTimeEnd.
 
 		uint16_t numDynamicIndexBuffers;    //!< Number of used dynamic index buffers.
 		uint16_t numDynamicVertexBuffers;   //!< Number of used dynamic vertex buffers.
@@ -1480,10 +1490,11 @@ namespace bgfx
 		/// @param[in] _program Program.
 		/// @param[in] _indirectHandle Indirect buffer.
 		/// @param[in] _start First element in indirect buffer.
-		/// @param[in] _num Number of dispatches.
+		/// @param[in] _num Number of draws.
 		/// @param[in] _depth Depth for sorting.
 		/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
 		///
+		/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
 		/// @attention C99's equivalent binding is `bgfx_encoder_submit_indirect`.
 		///
 		void submit(
@@ -1492,6 +1503,35 @@ namespace bgfx
 			, IndirectBufferHandle _indirectHandle
 			, uint16_t _start = 0
 			, uint16_t _num = 1
+			, uint32_t _depth = 0
+			, uint8_t _flags = BGFX_DISCARD_ALL
+			);
+
+		/// Submit primitive for rendering with index and instance data info and
+		/// draw count from indirect buffers.
+		///
+		/// @param[in] _id View id.
+		/// @param[in] _program Program.
+		/// @param[in] _indirectHandle Indirect buffer.
+		/// @param[in] _start First element in indirect buffer.
+		/// @param[in] _numHandle Buffer for number of draws. Must be created
+		///   with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.
+		/// @param[in] _numIndex Element in number buffer.
+		/// @param[in] _numMax Max number of draws.
+		/// @param[in] _depth Depth for sorting.
+		/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
+		///
+		/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+		/// @attention C99's equivalent binding is `bgfx_encoder_submit_indirect_count`.
+		///
+		void submit(
+			  ViewId _id
+			, ProgramHandle _program
+			, IndirectBufferHandle _indirectHandle
+			, uint16_t _start
+			, IndexBufferHandle _numHandle
+			, uint32_t _numIndex = 0
+			, uint16_t _numMax = UINT16_MAX
 			, uint32_t _depth = 0
 			, uint8_t _flags = BGFX_DISCARD_ALL
 			);
@@ -3924,10 +3964,11 @@ namespace bgfx
 	/// @param[in] _program Program.
 	/// @param[in] _indirectHandle Indirect buffer.
 	/// @param[in] _start First element in indirect buffer.
-	/// @param[in] _num Number of dispatches.
+	/// @param[in] _num Number of draws.
 	/// @param[in] _depth Depth for sorting.
 	/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
 	///
+	/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
 	/// @attention C99's equivalent binding is `bgfx_submit_indirect`.
 	///
 	void submit(
@@ -3938,6 +3979,35 @@ namespace bgfx
 		, uint16_t _num   = 1
 		, uint32_t _depth = 0
 		, uint8_t _flags  = BGFX_DISCARD_ALL
+		);
+
+	/// Submit primitive for rendering with index and instance data info and
+	/// draw count from indirect buffers.
+	///
+	/// @param[in] _id View id.
+	/// @param[in] _program Program.
+	/// @param[in] _indirectHandle Indirect buffer.
+	/// @param[in] _start First element in indirect buffer.
+	/// @param[in] _numHandle Buffer for number of draws. Must be created
+	///   with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.
+	/// @param[in] _numIndex Element in number buffer.
+	/// @param[in] _numMax Max number of draws.
+	/// @param[in] _depth Depth for sorting.
+	/// @param[in] _flags Discard or preserve states. See `BGFX_DISCARD_*`.
+	///
+	/// @attention Availability depends on:`BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+	/// @attention C99's equivalent binding is `bgfx_submit_indirect_count`.
+	///
+	void submit(
+		  ViewId _id
+		, ProgramHandle _program
+		, IndirectBufferHandle _indirectHandle
+		, uint16_t _start
+		, IndexBufferHandle _numHandle
+		, uint32_t _numIndex = 0
+		, uint16_t _numMax = UINT16_MAX
+		, uint32_t _depth = 0
+		, uint8_t _flags = BGFX_DISCARD_ALL
 		);
 
 	/// Set compute index buffer.

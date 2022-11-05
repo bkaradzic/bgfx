@@ -239,23 +239,23 @@ spv_result_t ValidateReturnValue(ValidationState_t& _,
   const auto value = _.FindDef(value_id);
   if (!value || !value->type_id()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpReturnValue Value <id> '" << _.getIdName(value_id)
-           << "' does not represent a value.";
+           << "OpReturnValue Value <id> " << _.getIdName(value_id)
+           << " does not represent a value.";
   }
   auto value_type = _.FindDef(value->type_id());
   if (!value_type || SpvOpTypeVoid == value_type->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpReturnValue value's type <id> '"
-           << _.getIdName(value->type_id()) << "' is missing or void.";
+           << "OpReturnValue value's type <id> "
+           << _.getIdName(value->type_id()) << " is missing or void.";
   }
 
   if (_.addressing_model() == SpvAddressingModelLogical &&
       SpvOpTypePointer == value_type->opcode() &&
       !_.features().variable_pointers && !_.options()->relax_logical_pointer) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpReturnValue value's type <id> '"
+           << "OpReturnValue value's type <id> "
            << _.getIdName(value->type_id())
-           << "' is a pointer, which is invalid in the Logical addressing "
+           << " is a pointer, which is invalid in the Logical addressing "
               "model.";
   }
 
@@ -263,8 +263,8 @@ spv_result_t ValidateReturnValue(ValidationState_t& _,
   const auto return_type = _.FindDef(function->GetResultTypeId());
   if (!return_type || return_type->id() != value_type->id()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpReturnValue Value <id> '" << _.getIdName(value_id)
-           << "'s type does not match OpFunction's return type.";
+           << "OpReturnValue Value <id> " << _.getIdName(value_id)
+           << "s type does not match OpFunction's return type.";
   }
 
   return SPV_SUCCESS;
@@ -896,14 +896,13 @@ spv_result_t PerformCfgChecks(ValidationState_t& _) {
     // CFG to ensure we cover all the blocks.
     std::vector<const BasicBlock*> postorder;
     auto ignore_block = [](const BasicBlock*) {};
-    auto ignore_edge = [](const BasicBlock*, const BasicBlock*) {};
     auto no_terminal_blocks = [](const BasicBlock*) { return false; };
     if (!function.ordered_blocks().empty()) {
       /// calculate dominators
       CFA<BasicBlock>::DepthFirstTraversal(
           function.first_block(), function.AugmentedCFGSuccessorsFunction(),
           ignore_block, [&](const BasicBlock* b) { postorder.push_back(b); },
-          ignore_edge, no_terminal_blocks);
+          no_terminal_blocks);
       auto edges = CFA<BasicBlock>::CalculateDominators(
           postorder, function.AugmentedCFGPredecessorsFunction());
       for (auto edge : edges) {
@@ -953,7 +952,7 @@ spv_result_t PerformCfgChecks(ValidationState_t& _) {
         CFA<BasicBlock>::DepthFirstTraversal(
             function.first_block(),
             function.AugmentedStructuralCFGSuccessorsFunction(), ignore_block,
-            [&](const BasicBlock* b) { postorder.push_back(b); }, ignore_edge,
+            [&](const BasicBlock* b) { postorder.push_back(b); },
             no_terminal_blocks);
         auto edges = CFA<BasicBlock>::CalculateDominators(
             postorder, function.AugmentedStructuralCFGPredecessorsFunction());
@@ -967,7 +966,7 @@ spv_result_t PerformCfgChecks(ValidationState_t& _) {
             function.pseudo_exit_block(),
             function.AugmentedStructuralCFGPredecessorsFunction(), ignore_block,
             [&](const BasicBlock* b) { postdom_postorder.push_back(b); },
-            ignore_edge, no_terminal_blocks);
+            no_terminal_blocks);
         auto postdom_edges = CFA<BasicBlock>::CalculateDominators(
             postdom_postorder,
             function.AugmentedStructuralCFGSuccessorsFunction());
@@ -1067,7 +1066,9 @@ spv_result_t CfgPass(ValidationState_t& _, const Instruction* inst) {
     case SpvOpTerminateInvocation:
     case SpvOpIgnoreIntersectionKHR:
     case SpvOpTerminateRayKHR:
+    case SpvOpEmitMeshTasksEXT:
       _.current_function().RegisterBlockEnd(std::vector<uint32_t>());
+      // Ops with dedicated passes check for the Execution Model there
       if (opcode == SpvOpKill) {
         _.current_function().RegisterExecutionModelLimitation(
             SpvExecutionModelFragment,
@@ -1081,12 +1082,12 @@ spv_result_t CfgPass(ValidationState_t& _, const Instruction* inst) {
       if (opcode == SpvOpIgnoreIntersectionKHR) {
         _.current_function().RegisterExecutionModelLimitation(
             SpvExecutionModelAnyHitKHR,
-            "OpIgnoreIntersectionKHR requires AnyHit execution model");
+            "OpIgnoreIntersectionKHR requires AnyHitKHR execution model");
       }
       if (opcode == SpvOpTerminateRayKHR) {
         _.current_function().RegisterExecutionModelLimitation(
             SpvExecutionModelAnyHitKHR,
-            "OpTerminateRayKHR requires AnyHit execution model");
+            "OpTerminateRayKHR requires AnyHitKHR execution model");
       }
 
       break;

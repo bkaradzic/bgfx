@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-#include "source/val/validate.h"
-
 #include <algorithm>
 
 #include "source/opcode.h"
 #include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
+#include "source/val/validate.h"
 #include "source/val/validation_state.h"
 
 namespace spvtools {
@@ -30,8 +29,8 @@ spv_result_t ValidateEntryPoint(ValidationState_t& _, const Instruction* inst) {
   auto entry_point = _.FindDef(entry_point_id);
   if (!entry_point || SpvOpFunction != entry_point->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpEntryPoint Entry Point <id> '" << _.getIdName(entry_point_id)
-           << "' is not a function.";
+           << "OpEntryPoint Entry Point <id> " << _.getIdName(entry_point_id)
+           << " is not a function.";
   }
 
   // Only check the shader execution models
@@ -42,18 +41,18 @@ spv_result_t ValidateEntryPoint(ValidationState_t& _, const Instruction* inst) {
     const auto entry_point_type = _.FindDef(entry_point_type_id);
     if (!entry_point_type || 3 != entry_point_type->words().size()) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
-             << _.VkErrorID(4633) << "OpEntryPoint Entry Point <id> '"
+             << _.VkErrorID(4633) << "OpEntryPoint Entry Point <id> "
              << _.getIdName(entry_point_id)
-             << "'s function parameter count is not zero.";
+             << "s function parameter count is not zero.";
     }
   }
 
   auto return_type = _.FindDef(entry_point->type_id());
   if (!return_type || SpvOpTypeVoid != return_type->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << _.VkErrorID(4633) << "OpEntryPoint Entry Point <id> '"
+           << _.VkErrorID(4633) << "OpEntryPoint Entry Point <id> "
            << _.getIdName(entry_point_id)
-           << "'s function return type is not void.";
+           << "s function return type is not void.";
   }
 
   const auto* execution_modes = _.GetExecutionModes(entry_point_id);
@@ -242,6 +241,39 @@ spv_result_t ValidateEntryPoint(ValidationState_t& _, const Instruction* inst) {
                     "OutputTriangleStrip execution modes.";
         }
         break;
+      case SpvExecutionModelMeshEXT:
+        if (!execution_modes ||
+            1 != std::count_if(execution_modes->begin(), execution_modes->end(),
+                               [](const SpvExecutionMode& mode) {
+                                 switch (mode) {
+                                   case SpvExecutionModeOutputPoints:
+                                   case SpvExecutionModeOutputLinesEXT:
+                                   case SpvExecutionModeOutputTrianglesEXT:
+                                     return true;
+                                   default:
+                                     return false;
+                                 }
+                               })) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "MeshEXT execution model entry points must specify exactly "
+                    "one of OutputPoints, OutputLinesEXT, or "
+                    "OutputTrianglesEXT Execution Modes.";
+        } else if (2 != std::count_if(
+                            execution_modes->begin(), execution_modes->end(),
+                            [](const SpvExecutionMode& mode) {
+                              switch (mode) {
+                                case SpvExecutionModeOutputPrimitivesEXT:
+                                case SpvExecutionModeOutputVertices:
+                                  return true;
+                                default:
+                                  return false;
+                              }
+                            })) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "MeshEXT execution model entry points must specify both "
+                    "OutputPrimitivesEXT and OutputVertices Execution Modes.";
+        }
+        break;
       default:
         break;
     }
@@ -296,9 +328,8 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
                                _.entry_points().cend(), entry_point_id);
   if (found == _.entry_points().cend()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpExecutionMode Entry Point <id> '"
-           << _.getIdName(entry_point_id)
-           << "' is not the Entry Point "
+           << "OpExecutionMode Entry Point <id> " << _.getIdName(entry_point_id)
+           << " is not the Entry Point "
               "operand of an OpEntryPoint.";
   }
 
@@ -359,14 +390,18 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
                              return true;
                            case SpvExecutionModelMeshNV:
                              return _.HasCapability(SpvCapabilityMeshShadingNV);
+                           case SpvExecutionModelMeshEXT:
+                             return _.HasCapability(
+                                 SpvCapabilityMeshShadingEXT);
                            default:
                              return false;
                          }
                        })) {
-        if (_.HasCapability(SpvCapabilityMeshShadingNV)) {
+        if (_.HasCapability(SpvCapabilityMeshShadingNV) ||
+            _.HasCapability(SpvCapabilityMeshShadingEXT)) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                 << "Execution mode can only be used with the Geometry or "
-                    "MeshNV execution model.";
+                 << "Execution mode can only be used with the Geometry "
+                    "MeshNV or MeshEXT execution model.";
         } else {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
                  << "Execution mode can only be used with the Geometry "
@@ -421,19 +456,37 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
                              return true;
                            case SpvExecutionModelMeshNV:
                              return _.HasCapability(SpvCapabilityMeshShadingNV);
+                           case SpvExecutionModelMeshEXT:
+                             return _.HasCapability(
+                                 SpvCapabilityMeshShadingEXT);
                            default:
                              return false;
                          }
                        })) {
-        if (_.HasCapability(SpvCapabilityMeshShadingNV)) {
+        if (_.HasCapability(SpvCapabilityMeshShadingNV) ||
+            _.HasCapability(SpvCapabilityMeshShadingEXT)) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
                  << "Execution mode can only be used with a Geometry, "
-                    "tessellation or MeshNV execution model.";
+                    "tessellation, MeshNV or MeshEXT execution model.";
         } else {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
                  << "Execution mode can only be used with a Geometry or "
                     "tessellation execution model.";
         }
+      }
+      break;
+    case SpvExecutionModeOutputLinesEXT:
+    case SpvExecutionModeOutputTrianglesEXT:
+    case SpvExecutionModeOutputPrimitivesEXT:
+      if (!std::all_of(models->begin(), models->end(),
+                       [](const SpvExecutionModel& model) {
+                         return (model == SpvExecutionModelMeshEXT ||
+                                 model == SpvExecutionModelMeshNV);
+                       })) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Execution mode can only be used with the MeshEXT or MeshNV "
+                  "execution "
+                  "model.";
       }
       break;
     case SpvExecutionModePixelCenterInteger:
@@ -494,14 +547,19 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
                            case SpvExecutionModelTaskNV:
                            case SpvExecutionModelMeshNV:
                              return _.HasCapability(SpvCapabilityMeshShadingNV);
+                           case SpvExecutionModelTaskEXT:
+                           case SpvExecutionModelMeshEXT:
+                             return _.HasCapability(
+                                 SpvCapabilityMeshShadingEXT);
                            default:
                              return false;
                          }
                        })) {
-        if (_.HasCapability(SpvCapabilityMeshShadingNV)) {
+        if (_.HasCapability(SpvCapabilityMeshShadingNV) ||
+            _.HasCapability(SpvCapabilityMeshShadingEXT)) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
                  << "Execution mode can only be used with a Kernel, GLCompute, "
-                    "MeshNV, or TaskNV execution model.";
+                    "MeshNV, MeshEXT, TaskNV or TaskEXT execution model.";
         } else {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
                  << "Execution mode can only be used with a Kernel or "

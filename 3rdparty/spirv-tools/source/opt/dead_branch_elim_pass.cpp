@@ -459,17 +459,8 @@ void DeadBranchElimPass::FixBlockOrder() {
   };
 
   // Reorders blocks according to structured order.
-  ProcessFunction reorder_structured = [this](Function* function) {
-    std::list<BasicBlock*> order;
-    context()->cfg()->ComputeStructuredOrder(function, &*function->begin(),
-                                             &order);
-    std::vector<BasicBlock*> blocks;
-    for (auto block : order) {
-      blocks.push_back(block);
-    }
-    for (uint32_t i = 1; i < blocks.size(); ++i) {
-      function->MoveBasicBlockToAfter(blocks[i]->id(), blocks[i - 1]);
-    }
+  ProcessFunction reorder_structured = [](Function* function) {
+    function->ReorderBasicBlocksInStructuredOrder();
     return true;
   };
 

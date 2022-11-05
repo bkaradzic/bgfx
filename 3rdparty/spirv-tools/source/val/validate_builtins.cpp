@@ -333,7 +333,7 @@ class BuiltInsValidator {
   // Used for GlobalInvocationId, LocalInvocationId, NumWorkgroups, WorkgroupId.
   spv_result_t ValidateComputeShaderI32Vec3InputAtDefinition(
       const Decoration& decoration, const Instruction& inst);
-  spv_result_t ValidateSMBuiltinsAtDefinition(const Decoration& decoration,
+  spv_result_t ValidateNVSMOrARMCoreBuiltinsAtDefinition(const Decoration& decoration,
                                               const Instruction& inst);
   // Used for BaryCoord, BaryCoordNoPersp.
   spv_result_t ValidateFragmentShaderF32Vec3InputAtDefinition(
@@ -528,7 +528,7 @@ class BuiltInsValidator {
       const Instruction& referenced_inst,
       const Instruction& referenced_from_inst);
 
-  spv_result_t ValidateSMBuiltinsAtReference(
+  spv_result_t ValidateNVSMOrARMCoreBuiltinsAtReference(
       const Decoration& decoration, const Instruction& built_in_inst,
       const Instruction& referenced_inst,
       const Instruction& referenced_from_inst);
@@ -1179,8 +1179,15 @@ spv_result_t BuiltInsValidator::ValidateClipOrCullDistanceAtReference(
           &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, vuid,
           "Vulkan spec doesn't allow BuiltIn ClipDistance/CullDistance to be "
           "used for variables with Input storage class if execution model is "
-          "Vertex.",
+          "MeshNV.",
           SpvExecutionModelMeshNV, decoration, built_in_inst,
+          referenced_from_inst, std::placeholders::_1));
+      id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
+          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, vuid,
+          "Vulkan spec doesn't allow BuiltIn ClipDistance/CullDistance to be "
+          "used for variables with Input storage class if execution model is "
+          "MeshEXT.",
+          SpvExecutionModelMeshEXT, decoration, built_in_inst,
           referenced_from_inst, std::placeholders::_1));
     }
 
@@ -1224,7 +1231,8 @@ spv_result_t BuiltInsValidator::ValidateClipOrCullDistanceAtReference(
         case SpvExecutionModelTessellationControl:
         case SpvExecutionModelTessellationEvaluation:
         case SpvExecutionModelGeometry:
-        case SpvExecutionModelMeshNV: {
+        case SpvExecutionModelMeshNV:
+        case SpvExecutionModelMeshEXT: {
           if (decoration.struct_member_index() != Decoration::kInvalidMember) {
             // The outer level of array is applied on the variable.
             if (spv_result_t error = ValidateF32Arr(
@@ -1856,7 +1864,8 @@ spv_result_t BuiltInsValidator::ValidatePointSizeAtReference(
         case SpvExecutionModelTessellationControl:
         case SpvExecutionModelTessellationEvaluation:
         case SpvExecutionModelGeometry:
-        case SpvExecutionModelMeshNV: {
+        case SpvExecutionModelMeshNV:
+        case SpvExecutionModelMeshEXT: {
           // PointSize can be a per-vertex variable for tessellation control,
           // tessellation evaluation and geometry shader stages. In such cases
           // variables will have an array of 32-bit floats.
@@ -1957,6 +1966,13 @@ spv_result_t BuiltInsValidator::ValidatePositionAtReference(
           "with Input storage class if execution model is MeshNV.",
           SpvExecutionModelMeshNV, decoration, built_in_inst,
           referenced_from_inst, std::placeholders::_1));
+      id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
+          &BuiltInsValidator::ValidateNotCalledWithExecutionModel, this, 4319,
+          "Vulkan spec doesn't allow BuiltIn Position to be used "
+          "for variables "
+          "with Input storage class if execution model is MeshEXT.",
+          SpvExecutionModelMeshEXT, decoration, built_in_inst,
+          referenced_from_inst, std::placeholders::_1));
     }
 
     for (const SpvExecutionModel execution_model : execution_models_) {
@@ -1980,7 +1996,8 @@ spv_result_t BuiltInsValidator::ValidatePositionAtReference(
         case SpvExecutionModelGeometry:
         case SpvExecutionModelTessellationControl:
         case SpvExecutionModelTessellationEvaluation:
-        case SpvExecutionModelMeshNV: {
+        case SpvExecutionModelMeshNV:
+        case SpvExecutionModelMeshEXT: {
           // Position can be a per-vertex variable for tessellation control,
           // tessellation evaluation, geometry and mesh shader stages. In such
           // cases variables will have an array of 4-component 32-bit float
@@ -2151,6 +2168,7 @@ spv_result_t BuiltInsValidator::ValidatePrimitiveIdAtReference(
         case SpvExecutionModelTessellationEvaluation:
         case SpvExecutionModelGeometry:
         case SpvExecutionModelMeshNV:
+        case SpvExecutionModelMeshEXT:
         case SpvExecutionModelIntersectionKHR:
         case SpvExecutionModelAnyHitKHR:
         case SpvExecutionModelClosestHitKHR: {
@@ -2163,9 +2181,8 @@ spv_result_t BuiltInsValidator::ValidatePrimitiveIdAtReference(
                  << _.VkErrorID(4330)
                  << "Vulkan spec allows BuiltIn PrimitiveId to be used only "
                     "with Fragment, TessellationControl, "
-                    "TessellationEvaluation, Geometry, MeshNV, "
-                    "IntersectionKHR, "
-                    "AnyHitKHR, and ClosestHitKHR execution models. "
+                    "TessellationEvaluation, Geometry, MeshNV, MeshEXT, "
+                    "IntersectionKHR, AnyHitKHR, and ClosestHitKHR execution models. "
                  << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
                                      referenced_from_inst, execution_model);
         }
@@ -2713,7 +2730,8 @@ spv_result_t BuiltInsValidator::ValidateLayerOrViewportIndexAtReference(
       assert(function_id_ == 0);
       for (const auto em :
            {SpvExecutionModelVertex, SpvExecutionModelTessellationEvaluation,
-            SpvExecutionModelGeometry, SpvExecutionModelMeshNV}) {
+            SpvExecutionModelGeometry, SpvExecutionModelMeshNV,
+            SpvExecutionModelMeshEXT}) {
         id_to_at_reference_checks_[referenced_from_inst.id()].push_back(
             std::bind(&BuiltInsValidator::ValidateNotCalledWithExecutionModel,
                       this, ((operand == SpvBuiltInLayer) ? 4274 : 4406),
@@ -2721,7 +2739,7 @@ spv_result_t BuiltInsValidator::ValidateLayerOrViewportIndexAtReference(
                       "ViewportIndex to be "
                       "used for variables with Input storage class if "
                       "execution model is Vertex, TessellationEvaluation, "
-                      "Geometry, or MeshNV.",
+                      "Geometry, MeshNV or MeshEXT.",
                       em, decoration, built_in_inst, referenced_from_inst,
                       std::placeholders::_1));
       }
@@ -2746,6 +2764,7 @@ spv_result_t BuiltInsValidator::ValidateLayerOrViewportIndexAtReference(
         case SpvExecutionModelGeometry:
         case SpvExecutionModelFragment:
         case SpvExecutionModelMeshNV:
+        case SpvExecutionModelMeshEXT:
           // Ok.
           break;
         case SpvExecutionModelVertex:
@@ -2925,7 +2944,10 @@ spv_result_t BuiltInsValidator::ValidateComputeShaderI32Vec3InputAtReference(
     for (const SpvExecutionModel execution_model : execution_models_) {
       bool has_vulkan_model = execution_model == SpvExecutionModelGLCompute ||
                               execution_model == SpvExecutionModelTaskNV ||
-                              execution_model == SpvExecutionModelMeshNV;
+                              execution_model == SpvExecutionModelMeshNV ||
+                              execution_model == SpvExecutionModelTaskEXT ||
+                              execution_model == SpvExecutionModelMeshEXT;
+
       if (spvIsVulkanEnv(_.context()->target_env) && !has_vulkan_model) {
         uint32_t vuid = GetVUIDForBuiltin(builtin, VUIDErrorExecutionModel);
         return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
@@ -2933,7 +2955,8 @@ spv_result_t BuiltInsValidator::ValidateComputeShaderI32Vec3InputAtReference(
                << spvLogStringForEnv(_.context()->target_env)
                << " spec allows BuiltIn "
                << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN, builtin)
-               << " to be used only with GLCompute, MeshNV, or TaskNV execution model. "
+               << " to be used only with GLCompute, MeshNV, TaskNV, MeshEXT or"
+               << " TaskEXT execution model. "
                << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
                                    referenced_from_inst, execution_model);
       }
@@ -3007,7 +3030,9 @@ spv_result_t BuiltInsValidator::ValidateComputeI32InputAtReference(
     for (const SpvExecutionModel execution_model : execution_models_) {
       bool has_vulkan_model = execution_model == SpvExecutionModelGLCompute ||
                               execution_model == SpvExecutionModelTaskNV ||
-                              execution_model == SpvExecutionModelMeshNV;
+                              execution_model == SpvExecutionModelMeshNV ||
+                              execution_model == SpvExecutionModelTaskEXT ||
+                              execution_model == SpvExecutionModelMeshEXT;
       if (spvIsVulkanEnv(_.context()->target_env) && !has_vulkan_model) {
         uint32_t vuid = GetVUIDForBuiltin(builtin, VUIDErrorExecutionModel);
         return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
@@ -3015,7 +3040,8 @@ spv_result_t BuiltInsValidator::ValidateComputeI32InputAtReference(
                << spvLogStringForEnv(_.context()->target_env)
                << " spec allows BuiltIn "
                << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN, builtin)
-               << " to be used only with GLCompute, MeshNV, or TaskNV execution model. "
+               << " to be used only with GLCompute, MeshNV, TaskNV, MeshEXT or "
+               << "TaskEXT execution model. "
                << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
                                    referenced_from_inst, execution_model);
       }
@@ -3159,14 +3185,17 @@ spv_result_t BuiltInsValidator::ValidateWorkgroupSizeAtReference(
     for (const SpvExecutionModel execution_model : execution_models_) {
       if (execution_model != SpvExecutionModelGLCompute &&
           execution_model != SpvExecutionModelTaskNV &&
-          execution_model != SpvExecutionModelMeshNV) {
+          execution_model != SpvExecutionModelMeshNV &&
+          execution_model != SpvExecutionModelTaskEXT &&
+          execution_model != SpvExecutionModelMeshEXT) {
         return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
                << _.VkErrorID(4425)
                << spvLogStringForEnv(_.context()->target_env)
                << " spec allows BuiltIn "
                << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
                                                 decoration.params()[0])
-               << " to be used only with GLCompute, MeshNV, or TaskNV execution model. "
+               << " to be used only with GLCompute, MeshNV, TaskNV, MeshEXT or "
+               << "TaskEXT execution model. "
                << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
                                    referenced_from_inst, execution_model);
       }
@@ -3297,12 +3326,15 @@ spv_result_t BuiltInsValidator::ValidateDrawIndexAtReference(
     for (const SpvExecutionModel execution_model : execution_models_) {
       if (execution_model != SpvExecutionModelVertex &&
           execution_model != SpvExecutionModelMeshNV &&
-          execution_model != SpvExecutionModelTaskNV) {
+          execution_model != SpvExecutionModelTaskNV &&
+          execution_model != SpvExecutionModelMeshEXT &&
+          execution_model != SpvExecutionModelTaskEXT) {
         return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
                << _.VkErrorID(4207) << "Vulkan spec allows BuiltIn "
                << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
                                                 operand)
-               << " to be used only with Vertex, MeshNV, or TaskNV execution "
+               << " to be used only with Vertex, MeshNV, TaskNV , MeshEXT or"
+               << " TaskEXT execution "
                   "model. "
                << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
                                    referenced_from_inst, execution_model);
@@ -3717,7 +3749,7 @@ spv_result_t BuiltInsValidator::ValidateFullyCoveredAtReference(
   return SPV_SUCCESS;
 }
 
-spv_result_t BuiltInsValidator::ValidateSMBuiltinsAtDefinition(
+spv_result_t BuiltInsValidator::ValidateNVSMOrARMCoreBuiltinsAtDefinition(
     const Decoration& decoration, const Instruction& inst) {
   if (spvIsVulkanEnv(_.context()->target_env)) {
     if (spv_result_t error = ValidateI32(
@@ -3738,10 +3770,10 @@ spv_result_t BuiltInsValidator::ValidateSMBuiltinsAtDefinition(
   }
 
   // Seed at reference checks with this built-in.
-  return ValidateSMBuiltinsAtReference(decoration, inst, inst, inst);
+  return ValidateNVSMOrARMCoreBuiltinsAtReference(decoration, inst, inst, inst);
 }
 
-spv_result_t BuiltInsValidator::ValidateSMBuiltinsAtReference(
+spv_result_t BuiltInsValidator::ValidateNVSMOrARMCoreBuiltinsAtReference(
     const Decoration& decoration, const Instruction& built_in_inst,
     const Instruction& referenced_inst,
     const Instruction& referenced_from_inst) {
@@ -3765,7 +3797,7 @@ spv_result_t BuiltInsValidator::ValidateSMBuiltinsAtReference(
   if (function_id_ == 0) {
     // Propagate this rule to all dependant ids in the global scope.
     id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
-        &BuiltInsValidator::ValidateSMBuiltinsAtReference, this, decoration,
+        &BuiltInsValidator::ValidateNVSMOrARMCoreBuiltinsAtReference, this, decoration,
         built_in_inst, referenced_from_inst, std::placeholders::_1));
   }
 
@@ -3818,6 +3850,7 @@ spv_result_t BuiltInsValidator::ValidatePrimitiveShadingRateAtReference(
         case SpvExecutionModelVertex:
         case SpvExecutionModelGeometry:
         case SpvExecutionModelMeshNV:
+        case SpvExecutionModelMeshEXT:
           break;
         default: {
           return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
@@ -4192,11 +4225,16 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     case SpvBuiltInLocalInvocationIndex: {
       return ValidateLocalInvocationIndexAtDefinition(decoration, inst);
     }
+    case SpvBuiltInCoreIDARM:
+    case SpvBuiltInCoreCountARM:
+    case SpvBuiltInCoreMaxIDARM:
+    case SpvBuiltInWarpIDARM:
+    case SpvBuiltInWarpMaxIDARM:
     case SpvBuiltInWarpsPerSMNV:
     case SpvBuiltInSMCountNV:
     case SpvBuiltInWarpIDNV:
     case SpvBuiltInSMIDNV: {
-      return ValidateSMBuiltinsAtDefinition(decoration, inst);
+      return ValidateNVSMOrARMCoreBuiltinsAtDefinition(decoration, inst);
     }
     case SpvBuiltInBaseInstance:
     case SpvBuiltInBaseVertex: {
@@ -4247,44 +4285,15 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     case SpvBuiltInCullMaskKHR: {
       return ValidateRayTracingBuiltinsAtDefinition(decoration, inst);
     }
-    case SpvBuiltInWorkDim:
-    case SpvBuiltInGlobalSize:
-    case SpvBuiltInEnqueuedWorkgroupSize:
-    case SpvBuiltInGlobalOffset:
-    case SpvBuiltInGlobalLinearId:
-    case SpvBuiltInSubgroupMaxSize:
-    case SpvBuiltInNumEnqueuedSubgroups:
-    case SpvBuiltInBaryCoordNoPerspAMD:
-    case SpvBuiltInBaryCoordNoPerspCentroidAMD:
-    case SpvBuiltInBaryCoordNoPerspSampleAMD:
-    case SpvBuiltInBaryCoordSmoothAMD:
-    case SpvBuiltInBaryCoordSmoothCentroidAMD:
-    case SpvBuiltInBaryCoordSmoothSampleAMD:
-    case SpvBuiltInBaryCoordPullModelAMD:
-    case SpvBuiltInViewportMaskNV:
-    case SpvBuiltInSecondaryPositionNV:
-    case SpvBuiltInSecondaryViewportMaskNV:
-    case SpvBuiltInPositionPerViewNV:
-    case SpvBuiltInViewportMaskPerViewNV:
-    case SpvBuiltInMax:
-    case SpvBuiltInTaskCountNV:
-    case SpvBuiltInPrimitiveCountNV:
-    case SpvBuiltInPrimitiveIndicesNV:
-    case SpvBuiltInClipDistancePerViewNV:
-    case SpvBuiltInCullDistancePerViewNV:
-    case SpvBuiltInLayerPerViewNV:
-    case SpvBuiltInMeshViewCountNV:
-    case SpvBuiltInMeshViewIndicesNV:
-    case SpvBuiltInCurrentRayTimeNV:
-      // No validation rules (for the moment).
-      break;
-
     case SpvBuiltInPrimitiveShadingRateKHR: {
       return ValidatePrimitiveShadingRateAtDefinition(decoration, inst);
     }
     case SpvBuiltInShadingRateKHR: {
       return ValidateShadingRateAtDefinition(decoration, inst);
     }
+    default:
+      // No validation rules (for the moment).
+      break;
   }
   return SPV_SUCCESS;
 }

@@ -1,11 +1,12 @@
+*.bin binary diff=hex
 *.c   eol=lf
 *.cpp eol=lf
 *.h   eol=lf
+*.lua eol=lf
+*.m   eol=lf
+*.md  eol=lf
+*.mk  eol=lf
+*.mm  eol=lf
 *.sc  eol=lf
 *.sh  eol=lf
-*.m   eol=lf
-*.mm  eol=lf
-*.md  eol=lf
-*.lua eol=lf
-*.mk  eol=lf
 makefile eol=lf

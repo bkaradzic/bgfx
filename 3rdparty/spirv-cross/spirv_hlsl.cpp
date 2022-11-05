@@ -748,6 +748,8 @@ void CompilerHLSL::emit_builtin_inputs_in_struct()
 		case BuiltInSubgroupLeMask:
 		case BuiltInSubgroupGtMask:
 		case BuiltInSubgroupGeMask:
+		case BuiltInBaseVertex:
+		case BuiltInBaseInstance:
 			// Handled specially.
 			break;
 
@@ -1032,8 +1034,6 @@ void CompilerHLSL::emit_builtin_variables()
 	Bitset builtins = active_input_builtins;
 	builtins.merge_or(active_output_builtins);
 
-	bool need_base_vertex_info = false;
-
 	std::unordered_map<uint32_t, ID> builtin_to_initializer;
 	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
 		if (!is_builtin_variable(var) || var.storage != StorageClassOutput || !var.initializer)
@@ -1087,7 +1087,13 @@ void CompilerHLSL::emit_builtin_variables()
 		case BuiltInInstanceIndex:
 			type = "int";
 			if (hlsl_options.support_nonzero_base_vertex_base_instance)
-				need_base_vertex_info = true;
+				base_vertex_info.used = true;
+			break;
+
+		case BuiltInBaseVertex:
+		case BuiltInBaseInstance:
+			type = "int";
+			base_vertex_info.used = true;
 			break;
 
 		case BuiltInInstanceId:
@@ -1187,15 +1193,47 @@ void CompilerHLSL::emit_builtin_variables()
 		}
 	});
 
-	if (need_base_vertex_info)
+	if (base_vertex_info.used)
 	{
-		statement("cbuffer SPIRV_Cross_VertexInfo");
+		string binding_info;
+		if (base_vertex_info.explicit_binding)
+		{
+			binding_info = join(" : register(b", base_vertex_info.register_index);
+			if (base_vertex_info.register_space)
+				binding_info += join(", space", base_vertex_info.register_space);
+			binding_info += ")";
+		}
+		statement("cbuffer SPIRV_Cross_VertexInfo", binding_info);
 		begin_scope();
 		statement("int SPIRV_Cross_BaseVertex;");
 		statement("int SPIRV_Cross_BaseInstance;");
 		end_scope_decl();
 		statement("");
 	}
+}
+
+void CompilerHLSL::set_hlsl_aux_buffer_binding(HLSLAuxBinding binding, uint32_t register_index, uint32_t register_space)
+{
+	if (binding == HLSL_AUX_BINDING_BASE_VERTEX_INSTANCE)
+	{
+		base_vertex_info.explicit_binding = true;
+		base_vertex_info.register_space = register_space;
+		base_vertex_info.register_index = register_index;
+	}
+}
+
+void CompilerHLSL::unset_hlsl_aux_buffer_binding(HLSLAuxBinding binding)
+{
+	if (binding == HLSL_AUX_BINDING_BASE_VERTEX_INSTANCE)
+		base_vertex_info.explicit_binding = false;
+}
+
+bool CompilerHLSL::is_hlsl_aux_buffer_binding_used(HLSLAuxBinding binding) const
+{
+	if (binding == HLSL_AUX_BINDING_BASE_VERTEX_INSTANCE)
+		return base_vertex_info.used;
+	else
+		return false;
 }
 
 void CompilerHLSL::emit_composite_constants()
@@ -2610,6 +2648,14 @@ void CompilerHLSL::emit_hlsl_entry_point()
 			}
 			else
 				statement(builtin, " = int(stage_input.", builtin, ");");
+			break;
+
+		case BuiltInBaseVertex:
+			statement(builtin, " = SPIRV_Cross_BaseVertex;");
+			break;
+
+		case BuiltInBaseInstance:
+			statement(builtin, " = SPIRV_Cross_BaseInstance;");
 			break;
 
 		case BuiltInInstanceId:

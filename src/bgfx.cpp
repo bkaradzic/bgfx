@@ -263,8 +263,8 @@ namespace bgfx
 	class ThreadData
 	{
 		BX_CLASS(ThreadData
+			, NO_DEFAULT_CTOR
 			, NO_COPY
-			, NO_ASSIGNMENT
 			);
 
 	public:
@@ -311,19 +311,28 @@ namespace bgfx
 	PlatformData g_platformData;
 	bool g_platformDataChangedSinceReset = false;
 
-	const char* getTypeName(Handle _handle)
+	static Handle::TypeName s_typeName[] =
 	{
-		switch (_handle.type)
-		{
-		case Handle::IndexBuffer:  return "IB";
-		case Handle::Shader:       return "S";
-		case Handle::Texture:      return "T";
-		case Handle::VertexBuffer: return "VB";
-		default:                   break;
-		}
+		{ "DIB",  "DynamicIndexBuffer"  },
+		{ "DVB",  "DynamicVertexBuffer" },
+		{ "FB",   "FrameBuffer"         },
+		{ "IB",   "IndexBuffer"         },
+		{ "IndB", "IndirectBuffer"      },
+		{ "OQ",   "OcclusionQuery"      },
+		{ "P",    "Program"             },
+		{ "S",    "Shader"              },
+		{ "T",    "Texture"             },
+		{ "U",    "Uniform"             },
+		{ "VB",   "VertexBuffer"        },
+		{ "VL",   "VertexLayout"        },
+		{ "?",    "?"                   },
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_typeName) == Handle::Count+1, "");
 
-		BX_ASSERT(false, "You should not be here.");
-		return "?";
+	const Handle::TypeName& Handle::getTypeName(Handle::Enum _enum)
+	{
+		BX_ASSERT(_enum < Handle::Count, "Invalid Handle::Enum %d!", _enum);
+		return s_typeName[bx::min(_enum, Handle::Count)];
 	}
 
 	void AllocatorStub::checkLeaks()
@@ -1860,11 +1869,19 @@ namespace bgfx
 		TextureFormat::ATCE,
 		TextureFormat::ATCI,
 		TextureFormat::ASTC4x4,
+		TextureFormat::ASTC5x4,
 		TextureFormat::ASTC5x5,
+		TextureFormat::ASTC6x5,
 		TextureFormat::ASTC6x6,
 		TextureFormat::ASTC8x5,
 		TextureFormat::ASTC8x6,
+		TextureFormat::ASTC8x8,
 		TextureFormat::ASTC10x5,
+		TextureFormat::ASTC10x6,
+		TextureFormat::ASTC10x8,
+		TextureFormat::ASTC10x10,
+		TextureFormat::ASTC12x10,
+		TextureFormat::ASTC12x12,
 		TextureFormat::BGRA8, // GL doesn't support BGRA8 without extensions.
 		TextureFormat::RGBA8, // D3D9 doesn't support RGBA8
 	};
@@ -1895,7 +1912,6 @@ namespace bgfx
 
 		m_exit    = false;
 		m_flipped = true;
-		m_frames  = 0;
 		m_debug   = BGFX_DEBUG_NONE;
 		m_frameTimeLast = bx::getHPCounter();
 
@@ -2297,6 +2313,8 @@ namespace bgfx
 
 		m_submit->m_capture = _capture;
 
+		uint32_t frameNum = m_submit->m_frameNum;
+
 		BGFX_PROFILER_SCOPE("bgfx/API thread frame", 0xff2040ff);
 		// wait for render thread to finish
 		renderSemWait();
@@ -2304,7 +2322,7 @@ namespace bgfx
 
 		m_encoder[0].begin(m_submit, 0);
 
-		return m_frames;
+		return frameNum;
 	}
 
 	void Context::frameNoRenderWait()
@@ -2347,8 +2365,8 @@ namespace bgfx
 			renderFrame();
 		}
 
-		m_frames++;
-		m_submit->start();
+		uint32_t nextFrameNum = m_render->m_frameNum + 1;
+		m_submit->start(nextFrameNum);
 
 		bx::memSet(m_seq, 0, sizeof(m_seq) );
 
@@ -2693,9 +2711,12 @@ namespace bgfx
 				}
 				else if (BX_ENABLED(BX_PLATFORM_LINUX) )
 				{
-					score += RendererType::Vulkan   == renderer ? 30 : 0;
-					score += RendererType::OpenGL   == renderer ? 20 : 0;
-					score += RendererType::OpenGLES == renderer ? 10 : 0;
+					score += RendererType::Vulkan     == renderer ? 50 : 0;
+					score += RendererType::OpenGL     == renderer ? 40 : 0;
+					score += RendererType::OpenGLES   == renderer ? 30 : 0;
+					score += RendererType::Direct3D12 == renderer ? 20 : 0;
+					score += RendererType::Direct3D11 == renderer ? 10 : 0;
+					score += RendererType::Direct3D9  == renderer ?  5 : 0;
 				}
 				else if (BX_ENABLED(BX_PLATFORM_OSX) )
 				{
@@ -3856,6 +3877,16 @@ namespace bgfx
 		BGFX_CHECK_HANDLE("submit", s_ctx->m_vertexBufferHandle, _indirectHandle);
 		BGFX_CHECK_CAPS(BGFX_CAPS_DRAW_INDIRECT, "Draw indirect is not supported!");
 		BGFX_ENCODER(submit(_id, _program, _indirectHandle, _start, _num, _depth, _flags) );
+	}
+
+	void Encoder::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags)
+	{
+		BGFX_CHECK_HANDLE_INVALID_OK("submit", s_ctx->m_programHandle, _program);
+		BGFX_CHECK_HANDLE("submit", s_ctx->m_vertexBufferHandle, _indirectHandle);
+		BGFX_CHECK_HANDLE("submit", s_ctx->m_indexBufferHandle, _numHandle);
+		BGFX_CHECK_CAPS(BGFX_CAPS_DRAW_INDIRECT, "Draw indirect is not supported!");
+		BGFX_CHECK_CAPS(BGFX_CAPS_DRAW_INDIRECT_COUNT, "Draw indirect count is not supported!");
+		BGFX_ENCODER(submit(_id, _program, _indirectHandle, _start, _numHandle, _numIndex, _numMax, _depth, _flags) );
 	}
 
 	void Encoder::setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
@@ -5454,6 +5485,12 @@ namespace bgfx
 		s_ctx->m_encoder0->submit(_id, _program, _indirectHandle, _start, _num, _depth, _flags);
 	}
 
+	void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags)
+	{
+		BGFX_CHECK_ENCODER0();
+		s_ctx->m_encoder0->submit(_id, _program, _indirectHandle, _start, _numHandle, _numIndex, _numMax, _depth, _flags);
+	}
+
 	void setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
 	{
 		BGFX_CHECK_ENCODER0();
@@ -5572,11 +5609,19 @@ BGFX_TEXTURE_FORMAT_BIMG(ATC);
 BGFX_TEXTURE_FORMAT_BIMG(ATCE);
 BGFX_TEXTURE_FORMAT_BIMG(ATCI);
 BGFX_TEXTURE_FORMAT_BIMG(ASTC4x4);
+BGFX_TEXTURE_FORMAT_BIMG(ASTC5x4);
 BGFX_TEXTURE_FORMAT_BIMG(ASTC5x5);
+BGFX_TEXTURE_FORMAT_BIMG(ASTC6x5);
 BGFX_TEXTURE_FORMAT_BIMG(ASTC6x6);
 BGFX_TEXTURE_FORMAT_BIMG(ASTC8x5);
 BGFX_TEXTURE_FORMAT_BIMG(ASTC8x6);
+BGFX_TEXTURE_FORMAT_BIMG(ASTC8x8);
 BGFX_TEXTURE_FORMAT_BIMG(ASTC10x5);
+BGFX_TEXTURE_FORMAT_BIMG(ASTC10x6);
+BGFX_TEXTURE_FORMAT_BIMG(ASTC10x8);
+BGFX_TEXTURE_FORMAT_BIMG(ASTC10x10);
+BGFX_TEXTURE_FORMAT_BIMG(ASTC12x10);
+BGFX_TEXTURE_FORMAT_BIMG(ASTC12x12);
 BGFX_TEXTURE_FORMAT_BIMG(Unknown);
 BGFX_TEXTURE_FORMAT_BIMG(R1);
 BGFX_TEXTURE_FORMAT_BIMG(A8);
@@ -5730,6 +5775,8 @@ BX_STATIC_ASSERT( (0
 	| BGFX_CAPS_VERTEX_ATTRIB_HALF
 	| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 	| BGFX_CAPS_VERTEX_ID
+	| BGFX_CAPS_VIEWPORT_LAYER_ARRAY
+	| BGFX_CAPS_DRAW_INDIRECT_COUNT
 	) == (0
 	^ BGFX_CAPS_ALPHA_TO_COVERAGE
 	^ BGFX_CAPS_BLEND_INDEPENDENT
@@ -5755,6 +5802,8 @@ BX_STATIC_ASSERT( (0
 	^ BGFX_CAPS_VERTEX_ATTRIB_HALF
 	^ BGFX_CAPS_VERTEX_ATTRIB_UINT10
 	^ BGFX_CAPS_VERTEX_ID
+	^ BGFX_CAPS_VIEWPORT_LAYER_ARRAY
+	^ BGFX_CAPS_DRAW_INDIRECT_COUNT
 	) );
 
 #undef FLAGS_MASK_TEST

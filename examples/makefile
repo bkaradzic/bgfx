@@ -52,6 +52,7 @@ all:
 	@make -s --no-print-directory build -C 46-fsr
 	@make -s --no-print-directory build -C 47-pixelformats
 	@make -s --no-print-directory build -C 48-drawindirect
+	@make -s --no-print-directory build -C 49-hextile
 
 rebuild:
 	@make -s --no-print-directory rebuild -C 01-cubes
@@ -102,6 +103,7 @@ rebuild:
 	@make -s --no-print-directory rebuild -C 46-fsr
 	@make -s --no-print-directory rebuild -C 47-pixelformats
 	@make -s --no-print-directory rebuild -C 48-drawindirect
+	@make -s --no-print-directory rebuild -C 49-hextile
 
 rebuild-embedded:
 	@make -s --no-print-directory rebuild -C 02-metaballs

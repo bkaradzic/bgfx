@@ -67,7 +67,6 @@ namespace opt {
 namespace {
 const uint32_t kStoreValIdInIdx = 1;
 const uint32_t kVariableInitIdInIdx = 1;
-const uint32_t kDebugDeclareOperandVariableIdx = 5;
 }  // namespace
 
 std::string SSARewriter::PhiCandidate::PrettyPrint(const CFG* cfg) const {
@@ -315,8 +314,8 @@ void SSARewriter::ProcessStore(Instruction* inst, BasicBlock* bb) {
   }
   if (pass_->IsTargetVar(var_id)) {
     WriteVariable(var_id, bb, val_id);
-    pass_->context()->get_debug_info_mgr()->AddDebugValueIfVarDeclIsVisible(
-        inst, var_id, val_id, inst, &decls_invisible_to_value_assignment_);
+    pass_->context()->get_debug_info_mgr()->AddDebugValueForVariable(
+        inst, var_id, val_id, inst);
 
 #if SSA_REWRITE_DEBUGGING_LEVEL > 1
     std::cerr << "\tFound store '%" << var_id << " = %" << val_id << "': "
@@ -559,9 +558,9 @@ bool SSARewriter::ApplyReplacements() {
 
     // Add DebugValue for the new OpPhi instruction.
     insert_it->SetDebugScope(local_var->GetDebugScope());
-    pass_->context()->get_debug_info_mgr()->AddDebugValueIfVarDeclIsVisible(
+    pass_->context()->get_debug_info_mgr()->AddDebugValueForVariable(
         &*insert_it, phi_candidate->var_id(), phi_candidate->result_id(),
-        &*insert_it, &decls_invisible_to_value_assignment_);
+        &*insert_it);
 
     modified = true;
   }
@@ -650,62 +649,6 @@ void SSARewriter::FinalizePhiCandidates() {
   }
 }
 
-Pass::Status SSARewriter::AddDebugValuesForInvisibleDebugDecls(Function* fp) {
-  // For the cases the value assignment is invisible to DebugDeclare e.g.,
-  // the argument passing for an inlined function.
-  //
-  // Before inlining foo(int x):
-  //   a = 3;
-  //   foo(3);
-  // After inlining:
-  //   a = 3;
-  //   foo and x disappeared but we want to specify "DebugValue: %x = %int_3".
-  //
-  // We want to specify the value for the variable using |defs_at_block_[bb]|,
-  // where |bb| is the basic block contains the decl.
-  DominatorAnalysis* dom_tree = pass_->context()->GetDominatorAnalysis(fp);
-  Pass::Status status = Pass::Status::SuccessWithoutChange;
-  for (auto* decl : decls_invisible_to_value_assignment_) {
-    uint32_t var_id =
-        decl->GetSingleWordOperand(kDebugDeclareOperandVariableIdx);
-    auto* var = pass_->get_def_use_mgr()->GetDef(var_id);
-    if (var->opcode() == SpvOpFunctionParameter) continue;
-
-    auto* bb = pass_->context()->get_instr_block(decl);
-    uint32_t value_id = GetValueAtBlock(var_id, bb);
-    Instruction* value = nullptr;
-    if (value_id) value = pass_->get_def_use_mgr()->GetDef(value_id);
-
-    // If |value| is defined before the function body, it dominates |decl|.
-    // If |value| dominates |decl|, we can set it as DebugValue.
-    if (value && (pass_->context()->get_instr_block(value) == nullptr ||
-                  dom_tree->Dominates(value, decl))) {
-      if (pass_->context()->get_debug_info_mgr()->AddDebugValueForDecl(
-              decl, value->result_id(), decl, value) == nullptr) {
-        return Pass::Status::Failure;
-      }
-    } else {
-      // If |value| in the same basic block does not dominate |decl|, we can
-      // assign the value in the immediate dominator.
-      value_id = GetValueAtBlock(var_id, dom_tree->ImmediateDominator(bb));
-      if (value_id) value = pass_->get_def_use_mgr()->GetDef(value_id);
-      if (value_id &&
-          pass_->context()->get_debug_info_mgr()->AddDebugValueForDecl(
-              decl, value_id, decl, value) == nullptr) {
-        return Pass::Status::Failure;
-      }
-    }
-
-    // DebugDeclares of target variables will be removed by
-    // SSARewritePass::Process().
-    if (!pass_->IsTargetVar(var_id)) {
-      pass_->context()->get_debug_info_mgr()->KillDebugDeclares(var_id);
-    }
-    status = Pass::Status::SuccessWithChange;
-  }
-  return status;
-}
-
 Pass::Status SSARewriter::RewriteFunctionIntoSSA(Function* fp) {
 #if SSA_REWRITE_DEBUGGING_LEVEL > 0
   std::cerr << "Function before SSA rewrite:\n"
@@ -734,12 +677,6 @@ Pass::Status SSARewriter::RewriteFunctionIntoSSA(Function* fp) {
 
   // Finally, apply all the replacements in the IR.
   bool modified = ApplyReplacements();
-
-  auto status = AddDebugValuesForInvisibleDebugDecls(fp);
-  if (status == Pass::Status::SuccessWithChange ||
-      status == Pass::Status::Failure) {
-    return status;
-  }
 
 #if SSA_REWRITE_DEBUGGING_LEVEL > 0
   std::cerr << "\n\n\nFunction after SSA rewrite:\n"

@@ -137,7 +137,7 @@ namespace bgfx { namespace gl
 
 		s_attrs.minorVersion = 0;
 		const char* canvas = (const char*) _nwh;
-		int error = 0;
+		int32_t error = 0;
 
 		for (int version = 2; version >= 1; --version)
 		{
@@ -154,10 +154,13 @@ namespace bgfx { namespace gl
 
 				return swapChain;
 			}
-			error = (int) context;
+
+			error = (int32_t)context;
 		}
 
 		BX_TRACE("Failed to create WebGL context. (Canvas handle: '%s', last attempt error %d)", canvas, error);
+		BX_UNUSED(error);
+
 		return NULL;
 	}
 

@@ -166,7 +166,8 @@ void TParseVersions::initializeExtensionBehavior()
     } extensionData;
 
     const extensionData exts[] = { {E_GL_EXT_ray_tracing, EShTargetSpv_1_4},
-                                   {E_GL_NV_ray_tracing_motion_blur, EShTargetSpv_1_4}
+                                   {E_GL_NV_ray_tracing_motion_blur, EShTargetSpv_1_4},
+                                   {E_GL_EXT_mesh_shader, EShTargetSpv_1_4}
                                  };
 
     for (size_t ii = 0; ii < sizeof(exts) / sizeof(exts[0]); ii++) {
@@ -341,10 +342,12 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_blend_func_extended]         = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_implicit_conversions] = EBhDisable;
     extensionBehavior[E_GL_EXT_fragment_shading_rate]       = EBhDisable;
-    extensionBehavior[E_GL_EXT_shader_image_int64]   = EBhDisable;
+    extensionBehavior[E_GL_EXT_shader_image_int64]          = EBhDisable;
     extensionBehavior[E_GL_EXT_terminate_invocation]        = EBhDisable;
     extensionBehavior[E_GL_EXT_shared_memory_block]         = EBhDisable;
     extensionBehavior[E_GL_EXT_spirv_intrinsics]            = EBhDisable;
+    extensionBehavior[E_GL_EXT_mesh_shader]                 = EBhDisable;
+    extensionBehavior[E_GL_EXT_opacity_micromap]            = EBhDisable;
 
     // OVR extensions
     extensionBehavior[E_GL_OVR_multiview]                = EBhDisable;
@@ -511,6 +514,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_ray_flags_primitive_culling 1\n"
             "#define GL_EXT_ray_cull_mask 1\n"
             "#define GL_EXT_spirv_intrinsics 1\n"
+            "#define GL_EXT_mesh_shader 1\n"
 
             "#define GL_AMD_shader_ballot 1\n"
             "#define GL_AMD_shader_trinary_minmax 1\n"
@@ -641,8 +645,8 @@ void TParseVersions::getPreamble(std::string& preamble)
         case EShLangClosestHit:     preamble += "#define GL_CLOSEST_HIT_SHADER_EXT 1 \n";           break;
         case EShLangMiss:           preamble += "#define GL_MISS_SHADER_EXT 1 \n";                  break;
         case EShLangCallable:       preamble += "#define GL_CALLABLE_SHADER_EXT 1 \n";              break;
-        case EShLangTaskNV:         preamble += "#define GL_TASK_SHADER_NV 1 \n";                   break;
-        case EShLangMeshNV:         preamble += "#define GL_MESH_SHADER_NV 1 \n";                   break;
+        case EShLangTask:           preamble += "#define GL_TASK_SHADER_NV 1 \n";                   break;
+        case EShLangMesh:           preamble += "#define GL_MESH_SHADER_NV 1 \n";                   break;
         default:                                                                                    break;
         }
     }
@@ -668,8 +672,8 @@ const char* StageName(EShLanguage stage)
     case EShLangClosestHit:     return "closest-hit";
     case EShLangMiss:           return "miss";
     case EShLangCallable:       return "callable";
-    case EShLangMeshNV:         return "mesh";
-    case EShLangTaskNV:         return "task";
+    case EShLangMesh:           return "mesh";
+    case EShLangTask:           return "task";
 #endif
     default:                    return "unknown stage";
     }
@@ -1060,10 +1064,22 @@ void TParseVersions::checkExtensionStage(const TSourceLoc& loc, const char * con
 {
     // GL_NV_mesh_shader extension is only allowed in task/mesh shaders
     if (strcmp(extension, "GL_NV_mesh_shader") == 0) {
-        requireStage(loc, (EShLanguageMask)(EShLangTaskNVMask | EShLangMeshNVMask | EShLangFragmentMask),
+        requireStage(loc, (EShLanguageMask)(EShLangTaskMask | EShLangMeshMask | EShLangFragmentMask),
                      "#extension GL_NV_mesh_shader");
         profileRequires(loc, ECoreProfile, 450, 0, "#extension GL_NV_mesh_shader");
         profileRequires(loc, EEsProfile, 320, 0, "#extension GL_NV_mesh_shader");
+        if (extensionTurnedOn(E_GL_EXT_mesh_shader)) {
+            error(loc, "GL_EXT_mesh_shader is already turned on, and not allowed with", "#extension", extension);
+        }
+    }
+    else if (strcmp(extension, "GL_EXT_mesh_shader") == 0) {
+        requireStage(loc, (EShLanguageMask)(EShLangTaskMask | EShLangMeshMask | EShLangFragmentMask),
+                     "#extension GL_EXT_mesh_shader");
+        profileRequires(loc, ECoreProfile, 450, 0, "#extension GL_EXT_mesh_shader");
+        profileRequires(loc, EEsProfile, 320, 0, "#extension GL_EXT_mesh_shader");
+        if (extensionTurnedOn(E_GL_NV_mesh_shader)) {
+            error(loc, "GL_NV_mesh_shader is already turned on, and not allowed with", "#extension", extension);
+        }
     }
 }
 

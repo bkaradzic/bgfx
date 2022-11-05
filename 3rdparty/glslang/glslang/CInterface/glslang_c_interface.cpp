@@ -192,10 +192,10 @@ static EShLanguage c_shader_stage(glslang_stage_t stage)
         return EShLangMiss;
     case GLSLANG_STAGE_CALLABLE_NV:
         return EShLangCallable;
-    case GLSLANG_STAGE_TASK_NV:
-        return EShLangTaskNV;
-    case GLSLANG_STAGE_MESH_NV:
-        return EShLangMeshNV;
+    case GLSLANG_STAGE_TASK:
+        return EShLangTask;
+    case GLSLANG_STAGE_MESH:
+        return EShLangMesh;
     default:
         break;
     }
@@ -349,6 +349,10 @@ GLSLANG_EXPORT glslang_shader_t* glslang_shader_create(const glslang_input_t* in
                                  c_shader_target_language_version(input->target_language_version));
 
     return shader;
+}
+
+GLSLANG_EXPORT void glslang_shader_set_preamble(glslang_shader_t* shader, const char* s) {
+    shader->shader->setPreamble(s);
 }
 
 GLSLANG_EXPORT void glslang_shader_shift_binding(glslang_shader_t* shader, glslang_resource_type_t res, unsigned int base)

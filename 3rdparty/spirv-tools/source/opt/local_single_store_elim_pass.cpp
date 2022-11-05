@@ -175,29 +175,9 @@ bool LocalSingleStoreElimPass::ProcessVariable(Instruction* var_inst) {
 
 bool LocalSingleStoreElimPass::RewriteDebugDeclares(Instruction* store_inst,
                                                     uint32_t var_id) {
-  std::unordered_set<Instruction*> invisible_decls;
   uint32_t value_id = store_inst->GetSingleWordInOperand(1);
-  bool modified =
-      context()->get_debug_info_mgr()->AddDebugValueIfVarDeclIsVisible(
-          store_inst, var_id, value_id, store_inst, &invisible_decls);
-
-  // For cases like the argument passing for an inlined function, the value
-  // assignment is out of DebugDeclare's scope, but we have to preserve the
-  // value assignment information using DebugValue. Generally, we need
-  // ssa-rewrite analysis to decide a proper value assignment but at this point
-  // we confirm that |var_id| has a single store. We can safely add DebugValue.
-  if (!invisible_decls.empty()) {
-    BasicBlock* store_block = context()->get_instr_block(store_inst);
-    DominatorAnalysis* dominator_analysis =
-        context()->GetDominatorAnalysis(store_block->GetParent());
-    for (auto* decl : invisible_decls) {
-      if (dominator_analysis->Dominates(store_inst, decl)) {
-        context()->get_debug_info_mgr()->AddDebugValueForDecl(decl, value_id,
-                                                              decl, store_inst);
-        modified = true;
-      }
-    }
-  }
+  bool modified = context()->get_debug_info_mgr()->AddDebugValueForVariable(
+      store_inst, var_id, value_id, store_inst);
   modified |= context()->get_debug_info_mgr()->KillDebugDeclares(var_id);
   return modified;
 }

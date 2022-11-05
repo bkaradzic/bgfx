@@ -88,6 +88,51 @@ std::unique_ptr<Instruction> InstrumentPass::NewLabel(uint32_t label_id) {
   return newLabel;
 }
 
+std::unique_ptr<Instruction> InstrumentPass::NewName(
+    uint32_t id, const std::string& name_str) {
+  std::unique_ptr<Instruction> new_name(new Instruction(
+      context(), SpvOpName, 0, 0,
+      std::initializer_list<Operand>{
+          {SPV_OPERAND_TYPE_ID, {id}},
+          {SPV_OPERAND_TYPE_LITERAL_STRING, utils::MakeVector(name_str)}}));
+
+  return new_name;
+}
+
+std::unique_ptr<Instruction> InstrumentPass::NewGlobalName(
+    uint32_t id, const std::string& name_str) {
+  std::string prefixed_name;
+  switch (validation_id_) {
+    case kInstValidationIdBindless:
+      prefixed_name = "inst_bindless_";
+      break;
+    case kInstValidationIdBuffAddr:
+      prefixed_name = "inst_buff_addr_";
+      break;
+    case kInstValidationIdDebugPrintf:
+      prefixed_name = "inst_printf_";
+      break;
+    default:
+      assert(false);  // add new instrumentation pass here
+      prefixed_name = "inst_pass_";
+      break;
+  }
+  prefixed_name += name_str;
+  return NewName(id, prefixed_name);
+}
+
+std::unique_ptr<Instruction> InstrumentPass::NewMemberName(
+    uint32_t id, uint32_t member_index, const std::string& name_str) {
+  std::unique_ptr<Instruction> new_name(new Instruction(
+      context(), SpvOpMemberName, 0, 0,
+      std::initializer_list<Operand>{
+          {SPV_OPERAND_TYPE_ID, {id}},
+          {SPV_OPERAND_TYPE_LITERAL_INTEGER, {member_index}},
+          {SPV_OPERAND_TYPE_LITERAL_STRING, utils::MakeVector(name_str)}}));
+
+  return new_name;
+}
+
 uint32_t InstrumentPass::Gen32BitCvtCode(uint32_t val_id,
                                          InstructionBuilder* builder) {
   // Convert integer value to 32-bit if necessary
@@ -200,7 +245,9 @@ void InstrumentPass::GenStageStreamWriteCode(uint32_t stage_idx,
     } break;
     case SpvExecutionModelGLCompute:
     case SpvExecutionModelTaskNV:
-    case SpvExecutionModelMeshNV: {
+    case SpvExecutionModelMeshNV:
+    case SpvExecutionModelTaskEXT:
+    case SpvExecutionModelMeshEXT: {
       // Load and store GlobalInvocationId.
       uint32_t load_id = GenVarLoad(
           context()->GetBuiltinInputVarId(SpvBuiltInGlobalInvocationId),
@@ -525,6 +572,10 @@ uint32_t InstrumentPass::GetOutputBufferId() {
         {{spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER,
           {SpvStorageClassStorageBuffer}}}));
     context()->AddGlobalValue(std::move(newVarOp));
+    context()->AddDebug2Inst(NewGlobalName(obufTyId, "OutputBuffer"));
+    context()->AddDebug2Inst(NewMemberName(obufTyId, 0, "written_count"));
+    context()->AddDebug2Inst(NewMemberName(obufTyId, 1, "data"));
+    context()->AddDebug2Inst(NewGlobalName(output_buffer_id_, "output_buffer"));
     deco_mgr->AddDecorationVal(output_buffer_id_, SpvDecorationDescriptorSet,
                                desc_set_);
     deco_mgr->AddDecorationVal(output_buffer_id_, SpvDecorationBinding,
@@ -569,6 +620,9 @@ uint32_t InstrumentPass::GetInputBufferId() {
         {{spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER,
           {SpvStorageClassStorageBuffer}}}));
     context()->AddGlobalValue(std::move(newVarOp));
+    context()->AddDebug2Inst(NewGlobalName(ibufTyId, "InputBuffer"));
+    context()->AddDebug2Inst(NewMemberName(ibufTyId, 0, "data"));
+    context()->AddDebug2Inst(NewGlobalName(input_buffer_id_, "input_buffer"));
     deco_mgr->AddDecorationVal(input_buffer_id_, SpvDecorationDescriptorSet,
                                desc_set_);
     deco_mgr->AddDecorationVal(input_buffer_id_, SpvDecorationBinding,
@@ -783,6 +837,12 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
     get_def_use_mgr()->AnalyzeInstDefUse(&*func_end_inst);
     output_func->SetFunctionEnd(std::move(func_end_inst));
     context()->AddFunction(std::move(output_func));
+
+    std::string name("stream_write_");
+    name += std::to_string(param_cnt);
+
+    context()->AddDebug2Inst(
+        NewGlobalName(param2output_func_id_[param_cnt], name));
   }
   return param2output_func_id_[param_cnt];
 }
@@ -863,6 +923,11 @@ uint32_t InstrumentPass::GetDirectReadFunctionId(uint32_t param_cnt) {
   get_def_use_mgr()->AnalyzeInstDefUse(&*func_end_inst);
   input_func->SetFunctionEnd(std::move(func_end_inst));
   context()->AddFunction(std::move(input_func));
+
+  std::string name("direct_read_");
+  name += std::to_string(param_cnt);
+  context()->AddDebug2Inst(NewGlobalName(func_id, name));
+
   param2input_func_id_[param_cnt] = func_id;
   return func_id;
 }
@@ -1001,7 +1066,8 @@ bool InstrumentPass::InstProcessEntryPointCallTree(InstProcessFunction& pfn) {
       stage != SpvExecutionModelAnyHitNV &&
       stage != SpvExecutionModelClosestHitNV &&
       stage != SpvExecutionModelMissNV &&
-      stage != SpvExecutionModelCallableNV) {
+      stage != SpvExecutionModelCallableNV &&
+      stage != SpvExecutionModelTaskEXT && stage != SpvExecutionModelMeshEXT) {
     if (consumer()) {
       std::string message = "Stage not supported by instrumentation";
       consumer()(SPV_MSG_ERROR, 0, {0, 0, 0}, message.c_str());

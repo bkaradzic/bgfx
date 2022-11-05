@@ -936,11 +936,19 @@ void ImGui::TableUpdateLayout(ImGuiTable* table)
             width_remaining_for_stretched_columns -= 1.0f;
         }
 
+    // Determine if table is hovered which will be used to flag columns as hovered.
+    // - In principle we'd like to use the equivalent of IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem),
+    //   but because our item is partially submitted at this point we use ItemHoverable() and a workaround (temporarily
+    //   clear ActiveId, which is equivalent to the change provided by _AllowWhenBLockedByActiveItem).
+    // - This allows columns to be marked as hovered when e.g. clicking a button inside the column, or using drag and drop.
     ImGuiTableInstanceData* table_instance = TableGetInstanceData(table, table->InstanceCurrent);
     table->HoveredColumnBody = -1;
     table->HoveredColumnBorder = -1;
     const ImRect mouse_hit_rect(table->OuterRect.Min.x, table->OuterRect.Min.y, table->OuterRect.Max.x, ImMax(table->OuterRect.Max.y, table->OuterRect.Min.y + table_instance->LastOuterHeight));
+    const ImGuiID backup_active_id = g.ActiveId;
+    g.ActiveId = 0;
     const bool is_hovering_table = ItemHoverable(mouse_hit_rect, 0);
+    g.ActiveId = backup_active_id;
 
     // [Part 6] Setup final position, offset, skip/clip states and clipping rectangles, detect hovered column
     // Process columns in their visible orders as we are comparing the visible order and adjusting host_clip_rect while looping.
@@ -1163,8 +1171,8 @@ void ImGui::TableUpdateBorders(ImGuiTable* table)
 
         ImGuiID column_id = TableGetColumnResizeID(table, column_n, table->InstanceCurrent);
         ImRect hit_rect(column->MaxX - hit_half_width, hit_y1, column->MaxX + hit_half_width, border_y2_hit);
+        ItemAdd(hit_rect, column_id, NULL, ImGuiItemFlags_NoNav);
         //GetForegroundDrawList()->AddRect(hit_rect.Min, hit_rect.Max, IM_COL32(255, 0, 0, 100));
-        KeepAliveID(column_id);
 
         bool hovered = false, held = false;
         bool pressed = ButtonBehavior(hit_rect, column_id, &hovered, &held, ImGuiButtonFlags_FlattenChildren | ImGuiButtonFlags_AllowItemOverlap | ImGuiButtonFlags_PressedOnClick | ImGuiButtonFlags_PressedOnDoubleClick | ImGuiButtonFlags_NoNavFocus);
@@ -1718,7 +1726,7 @@ void ImGui::TableBeginRow(ImGuiTable* table)
     table->RowIndentOffsetX = window->DC.Indent.x - table->HostIndentX; // Lock indent
     window->DC.PrevLineTextBaseOffset = 0.0f;
     window->DC.CurrLineSize = ImVec2(0.0f, 0.0f);
-    window->DC.IsSameLine = false;
+    window->DC.IsSameLine = window->DC.IsSetPos = false;
     window->DC.CursorMaxPos.y = next_y1;
 
     // Making the header BG color non-transparent will allow us to overlay it multiple times when handling smooth dragging.
@@ -1999,6 +2007,9 @@ void ImGui::TableEndCell(ImGuiTable* table)
 {
     ImGuiTableColumn* column = &table->Columns[table->CurrentColumn];
     ImGuiWindow* window = table->InnerWindow;
+
+    if (window->DC.IsSetPos)
+        ErrorCheckUsingSetCursorPosToExtendParentBoundaries();
 
     // Report maximum position so we can infer content size per column.
     float* p_max_pos_x;
@@ -2994,7 +3005,7 @@ void ImGui::TableHeader(const char* label)
     RenderTextEllipsis(window->DrawList, label_pos, ImVec2(ellipsis_max, label_pos.y + label_height + g.Style.FramePadding.y), ellipsis_max, ellipsis_max, label, label_end, &label_size);
 
     const bool text_clipped = label_size.x > (ellipsis_max - label_pos.x);
-    if (text_clipped && hovered && g.HoveredIdNotActiveTimer > g.TooltipSlowDelay)
+    if (text_clipped && hovered && g.ActiveId == 0 && IsItemHovered(ImGuiHoveredFlags_DelayNormal))
         SetTooltip("%.*s", (int)(label_end - label), label);
 
     // We don't use BeginPopupContextItem() because we want the popup to stay up even after the column is hidden
@@ -4011,8 +4022,7 @@ void ImGui::EndColumns()
             const ImGuiID column_id = columns->ID + ImGuiID(n);
             const float column_hit_hw = COLUMNS_HIT_RECT_HALF_WIDTH;
             const ImRect column_hit_rect(ImVec2(x - column_hit_hw, y1), ImVec2(x + column_hit_hw, y2));
-            KeepAliveID(column_id);
-            if (IsClippedEx(column_hit_rect, column_id)) // FIXME: Can be removed or replaced with a lower-level test
+            if (!ItemAdd(column_hit_rect, column_id, NULL, ImGuiItemFlags_NoNav))
                 continue;
 
             bool hovered = false, held = false;

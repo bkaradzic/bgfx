@@ -43,6 +43,7 @@ static const SpvCapability pygen_variable_caps_LiteralSampler[] = {SpvCapability
 static const SpvCapability pygen_variable_caps_LongConstantCompositeINTEL[] = {SpvCapabilityLongConstantCompositeINTEL};
 static const SpvCapability pygen_variable_caps_Matrix[] = {SpvCapabilityMatrix};
 static const SpvCapability pygen_variable_caps_MemoryAccessAliasingINTEL[] = {SpvCapabilityMemoryAccessAliasingINTEL};
+static const SpvCapability pygen_variable_caps_MeshShadingEXT[] = {SpvCapabilityMeshShadingEXT};
 static const SpvCapability pygen_variable_caps_MeshShadingNV[] = {SpvCapabilityMeshShadingNV};
 static const SpvCapability pygen_variable_caps_NamedBarrier[] = {SpvCapabilityNamedBarrier};
 static const SpvCapability pygen_variable_caps_PipeStorage[] = {SpvCapabilityPipeStorage};
@@ -493,6 +494,8 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"FragmentFetchAMD", SpvOpFragmentFetchAMD, 1, pygen_variable_caps_FragmentMaskAMD, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_AMD_shader_fragment_mask, 0xffffffffu, 0xffffffffu},
   {"ReadClockKHR", SpvOpReadClockKHR, 1, pygen_variable_caps_ShaderClockKHR, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_shader_clock, 0xffffffffu, 0xffffffffu},
   {"ImageSampleFootprintNV", SpvOpImageSampleFootprintNV, 1, pygen_variable_caps_ImageFootprintNV, 7, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_OPTIONAL_IMAGE}, 1, 1, 1, pygen_variable_exts_SPV_NV_shader_image_footprint, 0xffffffffu, 0xffffffffu},
+  {"EmitMeshTasksEXT", SpvOpEmitMeshTasksEXT, 1, pygen_variable_caps_MeshShadingEXT, 4, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_OPTIONAL_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"SetMeshOutputsEXT", SpvOpSetMeshOutputsEXT, 1, pygen_variable_caps_MeshShadingEXT, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"GroupNonUniformPartitionNV", SpvOpGroupNonUniformPartitionNV, 1, pygen_variable_caps_GroupNonUniformPartitionedNV, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_NV_shader_subgroup_partitioned, 0xffffffffu, 0xffffffffu},
   {"WritePackedPrimitiveIndices4x8NV", SpvOpWritePackedPrimitiveIndices4x8NV, 1, pygen_variable_caps_MeshShadingNV, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 1, pygen_variable_exts_SPV_NV_mesh_shader, 0xffffffffu, 0xffffffffu},
   {"ReportIntersectionKHR", SpvOpReportIntersectionKHR, 2, pygen_variable_caps_RayTracingNVRayTracingKHR, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 2, pygen_variable_exts_SPV_NV_ray_tracingSPV_KHR_ray_tracing, 0xffffffffu, 0xffffffffu},

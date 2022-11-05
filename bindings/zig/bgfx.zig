@@ -711,6 +711,9 @@ pub const CapsFlags_VertexId: CapsFlags               = 0x0000000008000000;
 /// Viewport layer is available in vertex shader.
 pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000010000000;
 
+/// Draw indirect with indirect count is supported.
+pub const CapsFlags_DrawIndirectCount: CapsFlags      = 0x0000000020000000;
+
 /// All texture compare modes are supported.
 pub const CapsFlags_TextureCompareAll: CapsFlags      = 0x0000000000300000;
 
@@ -1021,8 +1024,14 @@ pub const TextureFormat = enum(c_int) {
     /// ASTC 4x4 8.0 BPP
     ASTC4x4,
 
+    /// ASTC 5x4 6.40 BPP
+    ASTC5x4,
+
     /// ASTC 5x5 5.12 BPP
     ASTC5x5,
+
+    /// ASTC 6x5 4.27 BPP
+    ASTC6x5,
 
     /// ASTC 6x6 3.56 BPP
     ASTC6x6,
@@ -1033,8 +1042,26 @@ pub const TextureFormat = enum(c_int) {
     /// ASTC 8x6 2.67 BPP
     ASTC8x6,
 
+    /// ASTC 8x8 2.00 BPP
+    ASTC8x8,
+
     /// ASTC 10x5 2.56 BPP
     ASTC10x5,
+
+    /// ASTC 10x6 2.13 BPP
+    ASTC10x6,
+
+    /// ASTC 10x8 1.60 BPP
+    ASTC10x8,
+
+    /// ASTC 10x10 1.28 BPP
+    ASTC10x10,
+
+    /// ASTC 12x10 1.07 BPP
+    ASTC12x10,
+
+    /// ASTC 12x12 0.89 BPP
+    ASTC12x12,
 
     /// Compressed formats above.
     Unknown,
@@ -1288,7 +1315,7 @@ pub const Caps = extern struct {
         numGPUs: u8,
         gpu: [4]GPU,
         limits: Limits,
-        formats: [88]u16,
+        formats: [96]u16,
     };
 
     pub const InternalData = extern struct {
@@ -1414,6 +1441,7 @@ pub const Init = extern struct {
         cpuTimeEnd: i64,
         gpuTimeBegin: i64,
         gpuTimeEnd: i64,
+        gpuFrameNum: u32,
     };
 
     pub const EncoderStats = extern struct {
@@ -1435,6 +1463,7 @@ pub const Init = extern struct {
         numCompute: u32,
         numBlit: u32,
         maxGpuLatency: u32,
+        gpuFrameNum: u32,
         numDynamicIndexBuffers: u16,
         numDynamicVertexBuffers: u16,
         numFrameBuffers: u16,
@@ -1724,15 +1753,31 @@ pub const Init = extern struct {
         }
         /// Submit primitive for rendering with index and instance data info from
         /// indirect buffer.
+        /// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
         /// <param name="_id">View id.</param>
         /// <param name="_program">Program.</param>
         /// <param name="_indirectHandle">Indirect buffer.</param>
         /// <param name="_start">First element in indirect buffer.</param>
-        /// <param name="_num">Number of dispatches.</param>
+        /// <param name="_num">Number of draws.</param>
         /// <param name="_depth">Depth for sorting.</param>
         /// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
         pub inline fn submitIndirect(self: ?*Encoder, _id: ViewId, _program: ProgramHandle, _indirectHandle: IndirectBufferHandle, _start: u16, _num: u16, _depth: u32, _flags: u8) void {
             return bgfx_encoder_submit_indirect(self, _id, _program, _indirectHandle, _start, _num, _depth, _flags);
+        }
+        /// Submit primitive for rendering with index and instance data info and
+        /// draw count from indirect buffers.
+        /// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+        /// <param name="_id">View id.</param>
+        /// <param name="_program">Program.</param>
+        /// <param name="_indirectHandle">Indirect buffer.</param>
+        /// <param name="_start">First element in indirect buffer.</param>
+        /// <param name="_numHandle">Buffer for number of draws. Must be   created with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.</param>
+        /// <param name="_numIndex">Element in number buffer.</param>
+        /// <param name="_numMax">Max number of draws.</param>
+        /// <param name="_depth">Depth for sorting.</param>
+        /// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
+        pub inline fn submitIndirectCount(self: ?*Encoder, _id: ViewId, _program: ProgramHandle, _indirectHandle: IndirectBufferHandle, _start: u16, _numHandle: IndexBufferHandle, _numIndex: u32, _numMax: u16, _depth: u32, _flags: u8) void {
+            return bgfx_encoder_submit_indirect_count(self, _id, _program, _indirectHandle, _start, _numHandle, _numIndex, _numMax, _depth, _flags);
         }
         /// Set compute index buffer.
         /// <param name="_stage">Compute stage.</param>
@@ -3068,14 +3113,29 @@ extern fn bgfx_encoder_submit_occlusion_query(self: ?*Encoder, _id: ViewId, _pro
 
 /// Submit primitive for rendering with index and instance data info from
 /// indirect buffer.
+/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
 /// <param name="_id">View id.</param>
 /// <param name="_program">Program.</param>
 /// <param name="_indirectHandle">Indirect buffer.</param>
 /// <param name="_start">First element in indirect buffer.</param>
-/// <param name="_num">Number of dispatches.</param>
+/// <param name="_num">Number of draws.</param>
 /// <param name="_depth">Depth for sorting.</param>
 /// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 extern fn bgfx_encoder_submit_indirect(self: ?*Encoder, _id: ViewId, _program: ProgramHandle, _indirectHandle: IndirectBufferHandle, _start: u16, _num: u16, _depth: u32, _flags: u8) void;
+
+/// Submit primitive for rendering with index and instance data info and
+/// draw count from indirect buffers.
+/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+/// <param name="_id">View id.</param>
+/// <param name="_program">Program.</param>
+/// <param name="_indirectHandle">Indirect buffer.</param>
+/// <param name="_start">First element in indirect buffer.</param>
+/// <param name="_numHandle">Buffer for number of draws. Must be   created with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.</param>
+/// <param name="_numIndex">Element in number buffer.</param>
+/// <param name="_numMax">Max number of draws.</param>
+/// <param name="_depth">Depth for sorting.</param>
+/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
+extern fn bgfx_encoder_submit_indirect_count(self: ?*Encoder, _id: ViewId, _program: ProgramHandle, _indirectHandle: IndirectBufferHandle, _start: u16, _numHandle: IndexBufferHandle, _numIndex: u32, _numMax: u16, _depth: u32, _flags: u8) void;
 
 /// Set compute index buffer.
 /// <param name="_stage">Compute stage.</param>
@@ -3503,17 +3563,35 @@ extern fn bgfx_submit_occlusion_query(_id: ViewId, _program: ProgramHandle, _occ
 
 /// Submit primitive for rendering with index and instance data info from
 /// indirect buffer.
+/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
 /// <param name="_id">View id.</param>
 /// <param name="_program">Program.</param>
 /// <param name="_indirectHandle">Indirect buffer.</param>
 /// <param name="_start">First element in indirect buffer.</param>
-/// <param name="_num">Number of dispatches.</param>
+/// <param name="_num">Number of draws.</param>
 /// <param name="_depth">Depth for sorting.</param>
 /// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
 pub inline fn submitIndirect(_id: ViewId, _program: ProgramHandle, _indirectHandle: IndirectBufferHandle, _start: u16, _num: u16, _depth: u32, _flags: u8) void {
     return bgfx_submit_indirect(_id, _program, _indirectHandle, _start, _num, _depth, _flags);
 }
 extern fn bgfx_submit_indirect(_id: ViewId, _program: ProgramHandle, _indirectHandle: IndirectBufferHandle, _start: u16, _num: u16, _depth: u32, _flags: u8) void;
+
+/// Submit primitive for rendering with index and instance data info and
+/// draw count from indirect buffers.
+/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+/// <param name="_id">View id.</param>
+/// <param name="_program">Program.</param>
+/// <param name="_indirectHandle">Indirect buffer.</param>
+/// <param name="_start">First element in indirect buffer.</param>
+/// <param name="_numHandle">Buffer for number of draws. Must be   created with `BGFX_BUFFER_INDEX32` and `BGFX_BUFFER_DRAW_INDIRECT`.</param>
+/// <param name="_numIndex">Element in number buffer.</param>
+/// <param name="_numMax">Max number of draws.</param>
+/// <param name="_depth">Depth for sorting.</param>
+/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
+pub inline fn submitIndirectCount(_id: ViewId, _program: ProgramHandle, _indirectHandle: IndirectBufferHandle, _start: u16, _numHandle: IndexBufferHandle, _numIndex: u32, _numMax: u16, _depth: u32, _flags: u8) void {
+    return bgfx_submit_indirect_count(_id, _program, _indirectHandle, _start, _numHandle, _numIndex, _numMax, _depth, _flags);
+}
+extern fn bgfx_submit_indirect_count(_id: ViewId, _program: ProgramHandle, _indirectHandle: IndirectBufferHandle, _start: u16, _numHandle: IndexBufferHandle, _numIndex: u32, _numMax: u16, _depth: u32, _flags: u8) void;
 
 /// Set compute index buffer.
 /// <param name="_stage">Compute stage.</param>

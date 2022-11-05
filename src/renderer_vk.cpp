@@ -187,12 +187,20 @@ VK_IMPORT_DEVICE
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ATC
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ATCE
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ATCI
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC4x4
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC5x5
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC6x6
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC8x5
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC8x6
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC10x5
+		{ VK_FORMAT_ASTC_4x4_UNORM_BLOCK,      VK_FORMAT_ASTC_4x4_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_4x4_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC4x4
+		{ VK_FORMAT_ASTC_5x4_UNORM_BLOCK,      VK_FORMAT_ASTC_5x4_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_5x4_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC5x4
+		{ VK_FORMAT_ASTC_5x5_UNORM_BLOCK,      VK_FORMAT_ASTC_5x5_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_5x5_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC5x5
+		{ VK_FORMAT_ASTC_6x5_UNORM_BLOCK,      VK_FORMAT_ASTC_6x5_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_6x5_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC6x5
+		{ VK_FORMAT_ASTC_6x6_UNORM_BLOCK,      VK_FORMAT_ASTC_6x6_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_6x6_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC6x6
+		{ VK_FORMAT_ASTC_8x5_UNORM_BLOCK,      VK_FORMAT_ASTC_8x5_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_8x5_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC8x5
+		{ VK_FORMAT_ASTC_8x6_UNORM_BLOCK,      VK_FORMAT_ASTC_8x6_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_8x6_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC8x6
+		{ VK_FORMAT_ASTC_8x8_UNORM_BLOCK,      VK_FORMAT_ASTC_8x8_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_8x8_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC8x8
+		{ VK_FORMAT_ASTC_10x5_UNORM_BLOCK,     VK_FORMAT_ASTC_10x5_UNORM_BLOCK,    VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_10x5_SRGB_BLOCK,     { $_, $_, $_, $_ } }, // ASTC10x5
+		{ VK_FORMAT_ASTC_10x6_UNORM_BLOCK,     VK_FORMAT_ASTC_10x6_UNORM_BLOCK,    VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_10x6_SRGB_BLOCK,     { $_, $_, $_, $_ } }, // ASTC10x6
+		{ VK_FORMAT_ASTC_10x8_UNORM_BLOCK,     VK_FORMAT_ASTC_10x8_UNORM_BLOCK,    VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_10x8_SRGB_BLOCK,     { $_, $_, $_, $_ } }, // ASTC10x8
+		{ VK_FORMAT_ASTC_10x10_UNORM_BLOCK,    VK_FORMAT_ASTC_10x10_UNORM_BLOCK,   VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_10x10_SRGB_BLOCK,    { $_, $_, $_, $_ } }, // ASTC10x10
+		{ VK_FORMAT_ASTC_12x10_UNORM_BLOCK,    VK_FORMAT_ASTC_12x10_UNORM_BLOCK,   VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_12x10_SRGB_BLOCK,    { $_, $_, $_, $_ } }, // ASTC12x10
+		{ VK_FORMAT_ASTC_12x12_UNORM_BLOCK,    VK_FORMAT_ASTC_12x12_UNORM_BLOCK,   VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_12x12_SRGB_BLOCK,    { $_, $_, $_, $_ } }, // ASTC12x12
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // Unknown
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // R1
 		{ VK_FORMAT_R8_UNORM,                  VK_FORMAT_R8_UNORM,                 VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $0, $0, $0, $R } }, // A8
@@ -329,6 +337,7 @@ VK_IMPORT_DEVICE
 			EXT_line_rasterization,
 			EXT_shader_viewport_index_layer,
 			EXT_custom_border_color,
+			KHR_draw_indirect_count,
 
 			Count
 		};
@@ -353,6 +362,7 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_line_rasterization",              1, false, false, true                                                         , Layer::Count },
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                                                         , Layer::Count },
 		{ "VK_EXT_custom_border_color",             1, false, false, true                                                         , Layer::Count },
+		{ "VK_KHR_draw_indirect_count",             1, false, false, true                                                         , Layer::Count },
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
 
@@ -1178,6 +1188,7 @@ VK_IMPORT
 
 				s_extension[Extension::EXT_shader_viewport_index_layer].m_initialize = !!(_init.capabilities & BGFX_CAPS_VIEWPORT_LAYER_ARRAY);
 				s_extension[Extension::EXT_conservative_rasterization ].m_initialize = !!(_init.capabilities & BGFX_CAPS_CONSERVATIVE_RASTER );
+				s_extension[Extension::KHR_draw_indirect_count        ].m_initialize = !!(_init.capabilities & BGFX_CAPS_DRAW_INDIRECT_COUNT );
 
 				dumpExtensions(VK_NULL_HANDLE, s_extension);
 
@@ -1570,6 +1581,7 @@ VK_IMPORT_INSTANCE
 				g_caps.supported |= 0
 					| (s_extension[Extension::EXT_conservative_rasterization ].m_supported ? BGFX_CAPS_CONSERVATIVE_RASTER  : 0)
 					| (s_extension[Extension::EXT_shader_viewport_index_layer].m_supported ? BGFX_CAPS_VIEWPORT_LAYER_ARRAY : 0)
+					| (s_extension[Extension::KHR_draw_indirect_count        ].m_supported && indirectDrawSupport ? BGFX_CAPS_DRAW_INDIRECT_COUNT : 0)
 					;
 
 				const uint32_t maxAttachments = bx::min<uint32_t>(m_deviceProperties.limits.maxFragmentOutputAttachments, m_deviceProperties.limits.maxColorAttachments);
@@ -5320,7 +5332,7 @@ VK_DESTROY
 		vkDestroy(m_readbackMemory);
 	}
 
-	uint32_t TimerQueryVK::begin(uint32_t _resultIdx)
+	uint32_t TimerQueryVK::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
 		while (0 == m_control.reserve(1) )
 		{
@@ -5334,6 +5346,7 @@ VK_DESTROY
 		Query& query = m_query[idx];
 		query.m_resultIdx = _resultIdx;
 		query.m_ready     = false;
+		query.m_frameNum  = _frameNum;
 
 		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
 		const uint32_t offset = idx * 2 + 0;
@@ -5396,6 +5409,7 @@ VK_DESTROY
 
 			Result& result = m_result[query.m_resultIdx];
 			--result.m_pending;
+			result.m_frameNum = query.m_frameNum;
 
 			uint32_t offset = idx * 2;
 			result.m_begin  = m_queryResult[offset+0];
@@ -8067,7 +8081,7 @@ VK_DESTROY
 
 		if (m_timerQuerySupport)
 		{
-			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS);
+			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
 		}
 
 		if (0 < _render->m_iboffset)
@@ -8683,8 +8697,10 @@ VK_DESTROY
 					}
 
 					VkBuffer bufferIndirect = VK_NULL_HANDLE;
+					VkBuffer bufferNumIndirect = VK_NULL_HANDLE;
 					uint32_t numDrawIndirect = 0;
 					uint32_t bufferOffsetIndirect = 0;
+					uint32_t bufferNumOffsetIndirect = 0;
 					if (isValid(draw.m_indirectBuffer) )
 					{
 						const VertexBufferVK& vb = m_vertexBuffers[draw.m_indirectBuffer.idx];
@@ -8694,6 +8710,12 @@ VK_DESTROY
 							: draw.m_numIndirect
 							;
 						bufferOffsetIndirect = draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
+
+						if (isValid(draw.m_numIndirectBuffer) )
+						{
+							bufferNumIndirect = m_indexBuffers[draw.m_numIndirectBuffer.idx].m_buffer;
+							bufferNumOffsetIndirect = draw.m_numIndirectIndex * sizeof(uint32_t);
+						}
 					}
 
 					if (hasOcclusionQuery)
@@ -8713,13 +8735,28 @@ VK_DESTROY
 
 						if (isValid(draw.m_indirectBuffer) )
 						{
-							vkCmdDrawIndirect(
-								  m_commandBuffer
-								, bufferIndirect
-								, bufferOffsetIndirect
-								, numDrawIndirect
-								, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
-								);
+							if (isValid(draw.m_numIndirectBuffer) )
+							{
+								vkCmdDrawIndirectCountKHR(
+									  m_commandBuffer
+									, bufferIndirect
+									, bufferOffsetIndirect
+									, bufferNumIndirect
+									, bufferNumOffsetIndirect
+									, numDrawIndirect
+									, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+									);
+							}
+							else
+							{
+								vkCmdDrawIndirect(
+									  m_commandBuffer
+									, bufferIndirect
+									, bufferOffsetIndirect
+									, numDrawIndirect
+									, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+									);
+							}
 						}
 						else
 						{
@@ -8762,13 +8799,28 @@ VK_DESTROY
 
 						if (isValid(draw.m_indirectBuffer) )
 						{
-							vkCmdDrawIndexedIndirect(
-								  m_commandBuffer
-								, bufferIndirect
-								, bufferOffsetIndirect
-								, numDrawIndirect
-								, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
-								);
+							if (isValid(draw.m_numIndirectBuffer) )
+							{
+								vkCmdDrawIndexedIndirectCountKHR(
+									  m_commandBuffer
+									, bufferIndirect
+									, bufferOffsetIndirect
+									, bufferNumIndirect
+									, bufferNumOffsetIndirect
+									, numDrawIndirect
+									, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+									);
+							}
+							else
+							{
+								vkCmdDrawIndexedIndirect(
+									  m_commandBuffer
+									, bufferIndirect
+									, bufferOffsetIndirect
+									, numDrawIndirect
+									, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+									);
+							}
 						}
 						else
 						{
@@ -8897,6 +8949,7 @@ VK_DESTROY
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
 		perfStats.maxGpuLatency = maxGpuLatency;
+		perfStats.gpuFrameNum   = result.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
 		perfStats.gpuMemoryMax  = gpuMemoryAvailable;
 		perfStats.gpuMemoryUsed = gpuMemoryUsed;

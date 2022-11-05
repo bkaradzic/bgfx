@@ -756,10 +756,10 @@ spv_result_t ValidateExtension(ValidationState_t& _, const Instruction* inst) {
   if (_.version() < SPV_SPIRV_VERSION_WORD(1, 4)) {
     std::string extension = GetExtensionString(&(inst->c_inst()));
     if (extension ==
-        ExtensionToString(kSPV_KHR_workgroup_memory_explicit_layout)) {
+            ExtensionToString(kSPV_KHR_workgroup_memory_explicit_layout) ||
+        extension == ExtensionToString(kSPV_EXT_mesh_shader)) {
       return _.diag(SPV_ERROR_WRONG_VERSION, inst)
-             << "SPV_KHR_workgroup_memory_explicit_layout extension "
-                "requires SPIR-V version 1.4 or later.";
+             << extension << " extension requires SPIR-V version 1.4 or later.";
     }
   }
 
