@@ -6083,6 +6083,26 @@ namespace bgfx { namespace gl
 				;
 		}
 
+		if (!s_renderGL->m_gles3
+		&& !s_extension[Extension::OES_texture_npot].m_supported
+		&&  (!bx::isPowerOf2(m_width) || !bx::isPowerOf2(m_height)))
+		{
+			// npot textures do not support trilinear filtering and must clamp to edge
+			_flags &= ~(0
+				| BGFX_SAMPLER_MIP_MASK
+				| BGFX_SAMPLER_U_MASK
+				| BGFX_SAMPLER_V_MASK
+				| BGFX_SAMPLER_W_MASK
+				);
+
+			_flags |= 0
+				| BGFX_SAMPLER_MIP_POINT
+				| BGFX_SAMPLER_U_CLAMP
+				| BGFX_SAMPLER_V_CLAMP
+				| BGFX_SAMPLER_W_CLAMP
+				;
+		}
+
 		const uint32_t flags = (0 != (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags) ? m_flags : _flags) & BGFX_SAMPLER_BITS_MASK;
 
 		bool hasBorderColor = false;
