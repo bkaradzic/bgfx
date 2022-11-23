@@ -1598,8 +1598,6 @@ namespace d3d12
 			return m_lost;
 		}
 
-		bool prevHackFlip = false;
-		bool prevSuspend = false;
 		void flip() override
 		{
 			if (!m_lost)
