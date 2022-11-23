@@ -4233,7 +4233,12 @@ namespace bgfx
 		  FrameBufferHandle _handle
 		, const char* _filePath
 		);
-
+#if BX_PLATFORM_XBOXONE
+	void requestSuspend(void);
+	void requestResume(void);
+	bool isSuspended(void);
+#endif // BX_PLATFORM_XBOXONE
+	
 } // namespace bgfx
 
 #endif // BGFX_H_HEADER_GUARD

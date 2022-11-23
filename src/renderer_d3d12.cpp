@@ -980,7 +980,7 @@ namespace d3d12
 			initHeapProperties(m_device);
 
 			m_cmd.init(m_device);
-#ifdef BX_PLATFORM_XBOXONE
+#if BX_PLATFORM_XBOXONE
 			m_device->SetPrivateDataInterface(IID_ID3D12CommandQueue, reinterpret_cast<const ::IUnknown*>(m_cmd.m_commandQueue));
 #else
 			m_device->SetPrivateDataInterface(IID_ID3D12CommandQueue, m_cmd.m_commandQueue);
@@ -2065,6 +2065,11 @@ namespace d3d12
 		void submitBlit(BlitState& _bs, uint16_t _view);
 
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;
+
+#if BX_PLATFORM_XBOXONE
+		void suspend() override;
+		void resume() override;
+#endif // BX_PLATFORM_XBOXONE
 
 		void blitSetup(TextVideoMemBlitter& _blitter) override
 		{
@@ -7537,6 +7542,46 @@ namespace d3d12
 
 		m_backBufferColorFence[m_backBufferColorIdx] = kick();
 	}
+
+#if BX_PLATFORM_XBOXONE
+	void RendererContextD3D12::suspend()
+	{
+		m_cmd.m_commandQueue->SuspendX(0);
+	}
+
+	void RendererContextD3D12::resume() 
+	{
+		m_cmd.m_commandQueue->ResumeX();
+
+		ComPtr<ID3D12Device> device = m_device;
+		ComPtr<IDXGIDevice1> dxgiDevice;
+
+		DX_CHECK(device.As(&dxgiDevice));
+
+		// Identify the physical adapter (GPU or card) that this device is running on.
+		ComPtr<IDXGIAdapter> dxgiAdapter;
+
+		DX_CHECK(dxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf()));
+
+		// Retrieve the outputs for the adapter.
+		ComPtr<IDXGIOutput> dxgiOutput;
+
+		DX_CHECK(dxgiAdapter->EnumOutputs(0, dxgiOutput.GetAddressOf()));
+
+		// Set the frame interval, and register for frame events.
+		DX_CHECK(m_device->SetFrameIntervalX(
+				 dxgiOutput.Get(),
+				 D3D12XBOX_FRAME_INTERVAL_60_HZ,
+				 2 /* Allow 2 frames of latency */,
+				 D3D12XBOX_FRAME_INTERVAL_FLAG_NONE));
+
+		DX_CHECK(m_device->ScheduleFrameEventX(
+				 D3D12XBOX_FRAME_EVENT_ORIGIN,
+				 0U,
+				 nullptr,
+				 D3D12XBOX_SCHEDULE_FRAME_EVENT_FLAG_NONE));
+	}
+#endif // BX_PLATFORM_XBOXONE
 
 } /* namespace d3d12 */ } // namespace bgfx
 

@@ -267,6 +267,10 @@ namespace bgfx { namespace noop
 		void blitRender(TextVideoMemBlitter& /*_blitter*/, uint32_t /*_numIndices*/) override
 		{
 		}
+#ifdef BX_PLATFORM_XBOXONE
+		void suspend() override {}
+		void resume() override {}
+#endif
 	};
 
 	static RendererContextNOOP* s_renderNOOP;
