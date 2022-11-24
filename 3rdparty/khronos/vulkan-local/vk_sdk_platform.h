@@ -23,7 +23,9 @@
 #define VK_SDK_PLATFORM_H
 
 #if defined(_WIN32)
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #ifndef __cplusplus
 #undef inline
 #define inline __inline

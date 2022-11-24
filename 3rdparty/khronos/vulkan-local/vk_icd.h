@@ -123,6 +123,7 @@ typedef enum {
     VK_ICD_WSI_PLATFORM_VI,
     VK_ICD_WSI_PLATFORM_GGP,
     VK_ICD_WSI_PLATFORM_SCREEN,
+    VK_ICD_WSI_PLATFORM_FUCHSIA,
 } VkIcdWsiPlatform;
 
 typedef struct {
@@ -241,5 +242,11 @@ typedef struct {
     struct _screen_window *window;
 } VkIcdSurfaceScreen;
 #endif  // VK_USE_PLATFORM_SCREEN_QNX
+
+#ifdef VK_USE_PLATFORM_FUCHSIA
+typedef struct {
+  VkIcdSurfaceBase base;
+} VkIcdSurfaceImagePipe;
+#endif // VK_USE_PLATFORM_FUCHSIA
 
 #endif  // VKICD_H
