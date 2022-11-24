@@ -836,11 +836,15 @@ int TParseContext::getIoArrayImplicitSize(const TQualifier &qualifier, TString *
     } else if (language == EShLangMesh) {
         unsigned int maxPrimitives =
             intermediate.getPrimitives() != TQualifier::layoutNotSet ? intermediate.getPrimitives() : 0;
-        if (qualifier.builtIn == EbvPrimitiveIndicesNV || qualifier.builtIn == EbvPrimitiveTriangleIndicesEXT ||
-            qualifier.builtIn == EbvPrimitiveLineIndicesEXT || qualifier.builtIn == EbvPrimitivePointIndicesEXT) {
+        if (qualifier.builtIn == EbvPrimitiveIndicesNV) {
             expectedSize = maxPrimitives * TQualifier::mapGeometryToSize(intermediate.getOutputPrimitive());
             str = "max_primitives*";
             str += TQualifier::getGeometryString(intermediate.getOutputPrimitive());
+        }
+        else if (qualifier.builtIn == EbvPrimitiveTriangleIndicesEXT || qualifier.builtIn == EbvPrimitiveLineIndicesEXT ||
+                 qualifier.builtIn == EbvPrimitivePointIndicesEXT) {
+            expectedSize = maxPrimitives;
+            str = "max_primitives";
         }
         else if (qualifier.isPerPrimitive()) {
             expectedSize = maxPrimitives;
