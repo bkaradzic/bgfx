@@ -89,6 +89,7 @@
 #define CGLTF_H_INCLUDED__
 
 #include <stddef.h>
+#include <stdint.h> /* For uint8_t, uint32_t */
 
 #ifdef __cplusplus
 extern "C" {
@@ -829,6 +830,8 @@ void cgltf_free(cgltf_data* data);
 void cgltf_node_transform_local(const cgltf_node* node, cgltf_float* out_matrix);
 void cgltf_node_transform_world(const cgltf_node* node, cgltf_float* out_matrix);
 
+const uint8_t* cgltf_buffer_view_data(const cgltf_buffer_view* view);
+
 cgltf_bool cgltf_accessor_read_float(const cgltf_accessor* accessor, cgltf_size index, cgltf_float* out, cgltf_size element_size);
 cgltf_bool cgltf_accessor_read_uint(const cgltf_accessor* accessor, cgltf_size index, cgltf_uint* out, cgltf_size element_size);
 cgltf_size cgltf_accessor_read_index(const cgltf_accessor* accessor, cgltf_size index);
@@ -860,7 +863,6 @@ cgltf_result cgltf_copy_extras_json(const cgltf_data* data, const cgltf_extras* 
 
 #ifdef CGLTF_IMPLEMENTATION
 
-#include <stdint.h> /* For uint8_t, uint32_t */
 #include <string.h> /* For strncpy */
 #include <stdio.h>  /* For fopen */
 #include <limits.h> /* For UINT_MAX etc */
