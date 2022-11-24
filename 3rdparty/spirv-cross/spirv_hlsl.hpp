@@ -230,14 +230,13 @@ private:
 	void emit_hlsl_entry_point();
 	void emit_header() override;
 	void emit_resources();
-	void declare_undefined_values() override;
 	void emit_interface_block_globally(const SPIRVariable &type);
 	void emit_interface_block_in_struct(const SPIRVariable &var, std::unordered_set<uint32_t> &active_locations);
-	void emit_interface_block_member_in_struct(const SPIRVariable &var, uint32_t member_index,
-	                                           uint32_t location,
+	void emit_interface_block_member_in_struct(const SPIRVariable &var, uint32_t member_index, uint32_t location,
 	                                           std::unordered_set<uint32_t> &active_locations);
 	void emit_builtin_inputs_in_struct();
 	void emit_builtin_outputs_in_struct();
+	void emit_builtin_primitive_outputs_in_struct();
 	void emit_texture_op(const Instruction &i, bool sparse) override;
 	void emit_instruction(const Instruction &instruction) override;
 	void emit_glsl_op(uint32_t result_type, uint32_t result_id, uint32_t op, const uint32_t *args,
@@ -354,6 +353,10 @@ private:
 		TypePackUint2x32,
 		TypeUnpackUint64
 	};
+
+	void analyze_meshlet_writes();
+	void analyze_meshlet_writes(uint32_t func_id, uint32_t id_per_vertex, uint32_t id_per_primitive,
+	                            std::unordered_set<uint32_t> &processed_func_ids);
 
 	BitcastType get_bitcast_type(uint32_t result_type, uint32_t op0);
 

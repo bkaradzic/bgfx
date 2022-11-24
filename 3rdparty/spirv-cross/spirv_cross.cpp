@@ -725,7 +725,7 @@ bool Compiler::InterfaceVariableAccessHandler::handle(Op opcode, const uint32_t 
 
 	case OpExtInst:
 	{
-		if (length < 5)
+		if (length < 3)
 			return false;
 		auto &extension_set = compiler.get<SPIRExtension>(args[2]);
 		switch (extension_set.ext)

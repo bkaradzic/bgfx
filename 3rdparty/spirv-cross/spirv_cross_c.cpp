@@ -723,6 +723,14 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_MSL_SHADER_PATCH_INPUT_BUFFER_INDEX:
 		options->msl.shader_patch_input_buffer_index = value;
 		break;
+
+	case SPVC_COMPILER_OPTION_MSL_MANUAL_HELPER_INVOCATION_UPDATES:
+		options->msl.manual_helper_invocation_updates = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_CHECK_DISCARDED_FRAG_STORES:
+		options->msl.check_discarded_frag_stores = value != 0;
+		break;
 #endif
 
 	default:
