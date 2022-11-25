@@ -323,6 +323,45 @@ namespace entry
 			initTranslateKey('x',             Key::KeyX);
 			initTranslateKey('y',             Key::KeyY);
 			initTranslateKey('z',             Key::KeyZ);
+			// Unlike other APIs, X11 provides no keyboard-independent way of getting
+			// the raw key code before modifiers are applied. So we must add these
+			//  shifted translations too
+			initTranslateKey(')',             Key::Key0);
+			initTranslateKey('!',             Key::Key1);
+			initTranslateKey('@',             Key::Key2);	// really depends on kbd, but what can you do
+			initTranslateKey('#',             Key::Key3);
+			initTranslateKey('$',             Key::Key4);
+			initTranslateKey('%',             Key::Key5);
+			initTranslateKey('^',             Key::Key6);
+			initTranslateKey('&',             Key::Key7);
+			initTranslateKey('*',             Key::Key8);
+			initTranslateKey('(',             Key::Key9);
+			initTranslateKey('A',             Key::KeyA);
+			initTranslateKey('B',             Key::KeyB);
+			initTranslateKey('C',             Key::KeyC);
+			initTranslateKey('D',             Key::KeyD);
+			initTranslateKey('E',             Key::KeyE);
+			initTranslateKey('F',             Key::KeyF);
+			initTranslateKey('G',             Key::KeyG);
+			initTranslateKey('H',             Key::KeyH);
+			initTranslateKey('I',             Key::KeyI);
+			initTranslateKey('J',             Key::KeyJ);
+			initTranslateKey('K',             Key::KeyK);
+			initTranslateKey('L',             Key::KeyL);
+			initTranslateKey('M',             Key::KeyM);
+			initTranslateKey('N',             Key::KeyN);
+			initTranslateKey('O',             Key::KeyO);
+			initTranslateKey('P',             Key::KeyP);
+			initTranslateKey('Q',             Key::KeyQ);
+			initTranslateKey('R',             Key::KeyR);
+			initTranslateKey('S',             Key::KeyS);
+			initTranslateKey('T',             Key::KeyT);
+			initTranslateKey('U',             Key::KeyU);
+			initTranslateKey('V',             Key::KeyV);
+			initTranslateKey('W',             Key::KeyW);
+			initTranslateKey('X',             Key::KeyX);
+			initTranslateKey('Y',             Key::KeyY);
+			initTranslateKey('Z',             Key::KeyZ);
 
 			m_mx = 0;
 			m_my = 0;
@@ -525,11 +564,6 @@ namespace entry
 								}
 
 								WindowHandle handle = findHandle(xkey.window);
-								if (last_modifiers != m_modifiers)
-								{
-									m_eventQueue.postKeyEvent(handle, Key::None, m_modifiers, KeyPress == event.type);
-									break;
-								}
 
 								if (KeyPress == event.type)
 								{
@@ -552,7 +586,7 @@ namespace entry
 								}
 
 								Key::Enum key = fromXk(keysym);
-								if (Key::None != key)
+								if ((last_modifiers != m_modifiers) || (Key::None != key))
 								{
 									m_eventQueue.postKeyEvent(handle, key, m_modifiers, KeyPress == event.type);
 								}
