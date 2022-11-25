@@ -3278,40 +3278,42 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					}
 					else
 					{
-						BX_WARN(0, "Unable to create Metal device. Please set platform data window to an NSWindow, NSView, or CAMetalLayer");
-						return;
+						m_metalLayer = [CAMetalLayer layer];
+						contentView = nullptr;
 					}
 
-					void (^setLayer)(void) = ^{
-						CALayer* layer = contentView.layer;
-						if(NULL != layer && [layer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
+					if (contentView) {
+						void (^setLayer)(void) = ^{
+							CALayer* layer = contentView.layer;
+							if(NULL != layer && [layer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
+							{
+								m_metalLayer = (CAMetalLayer*)layer;
+							}
+							else
+							{
+								[contentView setWantsLayer:YES];
+								m_metalLayer = [CAMetalLayer layer];
+								[contentView setLayer:m_metalLayer];
+							}
+						};
+
+						if ([NSThread isMainThread])
 						{
-							m_metalLayer = (CAMetalLayer*)layer;
+							setLayer();
 						}
 						else
 						{
-							[contentView setWantsLayer:YES];
-							m_metalLayer = [CAMetalLayer layer];
-							[contentView setLayer:m_metalLayer];
+							bx::Semaphore semaphore;
+							bx::Semaphore* psemaphore = &semaphore;
+
+							CFRunLoopPerformBlock([[NSRunLoop mainRunLoop] getCFRunLoop],
+												  kCFRunLoopCommonModes,
+												  ^{
+													  setLayer();
+													  psemaphore->post();
+												  });
+							semaphore.wait();
 						}
-					};
-
-					if ([NSThread isMainThread])
-					{
-						setLayer();
-					}
-					else
-					{
-						bx::Semaphore semaphore;
-						bx::Semaphore* psemaphore = &semaphore;
-
-						CFRunLoopPerformBlock([[NSRunLoop mainRunLoop] getCFRunLoop],
-											  kCFRunLoopCommonModes,
-											  ^{
-												  setLayer();
-												  psemaphore->post();
-											  });
-						semaphore.wait();
 					}
 				}
 			}
