@@ -248,11 +248,28 @@ EGL_IMPORT
 				EGL_STENCIL_SIZE, 8,
 
 				// Android Recordable surface
-				hasEglAndroidRecordable ? 0x3142 : EGL_NONE,
-				hasEglAndroidRecordable ? 1      : EGL_NONE,
+				EGL_NONE, EGL_NONE,		// pbuffer surface
+				EGL_NONE, EGL_NONE,		// Android recordable surface
 
 				EGL_NONE
 			};
+
+			int cursor = 14;
+
+			if (!nwh)
+			{
+				attrs[cursor++] = EGL_SURFACE_TYPE;
+				attrs[cursor++] = EGL_PBUFFER_BIT;
+			}
+
+			// https://www.khronos.org/registry/EGL/extensions/ANDROID/EGL_ANDROID_recordable.txt
+			const bool hasEglAndroidRecordable = !bx::findIdentifierMatch(extensions, "EGL_ANDROID_recordable").isEmpty();
+
+			if (hasEglAndroidRecordable)
+			{
+				attrs[cursor++] = 0x3142;
+				attrs[cursor++] = 1;
+			}
 
 			EGLint numConfig = 0;
 			success = eglChooseConfig(m_display, attrs, &m_config, 1, &numConfig);
@@ -291,7 +308,16 @@ EGL_IMPORT
 			vc_dispmanx_update_submit_sync(dispmanUpdate);
 #	endif // BX_PLATFORM_ANDROID
 
-			m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
+			if (!nwh) {
+				const EGLint pbufferAttribs[] = {
+				  EGL_WIDTH, (EGLint) _width,
+				  EGL_HEIGHT, (EGLint) _height,
+				  EGL_NONE,
+				};
+				m_surface = eglCreatePbufferSurface(m_display, m_config, pbufferAttribs);
+			} else {
+				m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
+			}
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 
 			const bool hasEglKhrCreateContext = !bx::findIdentifierMatch(extensions, "EGL_KHR_create_context").isEmpty();
@@ -369,6 +395,15 @@ EGL_IMPORT
 			m_current = NULL;
 
 			eglSwapInterval(m_display, 0);
+		} else if (g_platformData.backBuffer && g_platformData.ndt) {
+			// adopt these so we can set context on our thread.
+			m_display = (EGLDisplay) g_platformData.ndt;
+			m_context = (EGLContext) g_platformData.context;
+			m_surface = (EGLSurface) g_platformData.backBuffer;
+
+			bool success = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
+			BGFX_FATAL(success, Fatal::UnableToInitialize, "Failed to set context.");
+			m_current = NULL;
 		}
 
 		import();
