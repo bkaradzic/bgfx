@@ -202,9 +202,6 @@ EGL_IMPORT
 			BX_TRACE("Supported EGL extensions:");
 			dumpExtensions(extensions);
 
-			// https://www.khronos.org/registry/EGL/extensions/ANDROID/EGL_ANDROID_recordable.txt
-			const bool hasEglAndroidRecordable = !bx::findIdentifierMatch(extensions, "EGL_ANDROID_recordable").isEmpty();
-
 			const uint32_t gles = BGFX_CONFIG_RENDERER_OPENGLES;
 
 #if BX_PLATFORM_ANDROID
