@@ -495,6 +495,7 @@ namespace entry
 							{
 								XKeyEvent& xkey = event.xkey;
 								KeySym keysym = XLookupKeysym(&xkey, 0);
+								auto last_modifiers = m_modifiers;
 								switch (keysym)
 								{
 								case XK_Meta_L:    setModifier(Modifier::LeftMeta,   KeyPress == event.type); break;
@@ -505,37 +506,39 @@ namespace entry
 								case XK_Shift_R:   setModifier(Modifier::RightShift, KeyPress == event.type); break;
 								case XK_Alt_L:     setModifier(Modifier::LeftAlt,    KeyPress == event.type); break;
 								case XK_Alt_R:     setModifier(Modifier::RightAlt,   KeyPress == event.type); break;
+								}
 
-								default:
-									{
-										WindowHandle handle = findHandle(xkey.window);
-										if (KeyPress == event.type)
-										{
-											Status status = 0;
-											uint8_t utf8[4];
-											int len = Xutf8LookupString(ic, &xkey, (char*)utf8, sizeof(utf8), &keysym, &status);
-											switch (status)
-											{
-											case XLookupChars:
-											case XLookupBoth:
-												if (0 != len)
-												{
-													m_eventQueue.postCharEvent(handle, len, utf8);
-												}
-												break;
-
-											default:
-												break;
-											}
-										}
-
-										Key::Enum key = fromXk(keysym);
-										if (Key::None != key)
-										{
-											m_eventQueue.postKeyEvent(handle, key, m_modifiers, KeyPress == event.type);
-										}
-									}
+								WindowHandle handle = findHandle(xkey.window);
+								if (last_modifiers != m_modifiers)
+								{
+									m_eventQueue.postKeyEvent(handle, Key::None, m_modifiers, KeyPress == event.type);
 									break;
+								}
+
+								if (KeyPress == event.type)
+								{
+									Status status = 0;
+									uint8_t utf8[4];
+									int len = Xutf8LookupString(ic, &xkey, (char*)utf8, sizeof(utf8), &keysym, &status);
+									switch (status)
+									{
+									case XLookupChars:
+									case XLookupBoth:
+										if (0 != len)
+										{
+											m_eventQueue.postCharEvent(handle, len, utf8);
+										}
+										break;
+
+									default:
+										break;
+									}
+								}
+
+								Key::Enum key = fromXk(keysym);
+								if (Key::None != key)
+								{
+									m_eventQueue.postKeyEvent(handle, key, m_modifiers, KeyPress == event.type);
 								}
 							}
 							break;
