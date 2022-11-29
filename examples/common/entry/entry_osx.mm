@@ -220,18 +220,18 @@ namespace entry
 		}
 
 
-		uint8_t translateModifiers(int flags)
+		uint8_t translateModifiers(NSUInteger flags)
 		{
-			return 0
-				| ( (0 != (flags & NX_DEVICELSHIFTKEYMASK) ) ? Modifier::LeftShift  : 0)
-				| ( (0 != (flags & NX_DEVICERSHIFTKEYMASK) ) ? Modifier::RightShift : 0)
-				| ( (0 != (flags & NX_DEVICELALTKEYMASK) )   ? Modifier::LeftAlt    : 0)
-				| ( (0 != (flags & NX_DEVICERALTKEYMASK) )   ? Modifier::RightAlt   : 0)
-				| ( (0 != (flags & NX_DEVICELCTLKEYMASK) )   ? Modifier::LeftCtrl   : 0)
-				| ( (0 != (flags & NX_DEVICERCTLKEYMASK) )   ? Modifier::RightCtrl  : 0)
-				| ( (0 != (flags & NX_DEVICELCMDKEYMASK) )   ? Modifier::LeftMeta   : 0)
-				| ( (0 != (flags & NX_DEVICERCMDKEYMASK) )   ? Modifier::RightMeta  : 0)
-				;
+			uint8_t result = 0;
+			result |= (0 != (flags & NX_DEVICELSHIFTKEYMASK ) ) ? Modifier::LeftShift  : 0;
+			result |= (0 != (flags & NX_DEVICERSHIFTKEYMASK ) ) ? Modifier::RightShift : 0;
+			result |= (0 != (flags & NX_DEVICELALTKEYMASK ) )   ? Modifier::LeftAlt    : 0;
+			result |= (0 != (flags & NX_DEVICERALTKEYMASK ) )   ? Modifier::RightAlt   : 0;
+			result |= (0 != (flags & NX_DEVICELCTLKEYMASK ) )   ? Modifier::LeftCtrl   : 0;
+			result |= (0 != (flags & NX_DEVICERCTLKEYMASK ) )   ? Modifier::RightCtrl  : 0;
+			result |= (0 != (flags & NX_DEVICELCMDKEYMASK) )    ? Modifier::LeftMeta   : 0;
+			result |= (0 != (flags & NX_DEVICERCMDKEYMASK) )    ? Modifier::RightMeta  : 0;
+			return result;
 		}
 
 		Key::Enum handleKeyEvent(NSEvent* event, uint8_t* specialKeys, uint8_t* _pressedChar)
@@ -247,7 +247,7 @@ namespace entry
 			*_pressedChar = (uint8_t)keyChar;
 
 			int keyCode = keyChar;
-			*specialKeys = translateModifiers(int([event modifierFlags]));
+			*specialKeys = translateModifiers([event modifierFlags]);
 
 			// if this is a unhandled key just return None
 			if (keyCode < 256)
@@ -364,6 +364,13 @@ namespace entry
 					m_eventQueue.postMouseEvent(handle, m_mx, m_my, m_scroll);
 					break;
 
+				case NSEventTypeFlagsChanged:
+					{
+						uint8_t modifiers = translateModifiers([event modifierFlags]);
+						m_eventQueue.postKeyEvent(handle, Key::None, modifiers, false);
+					}
+          break;
+
 				case NSEventTypeKeyDown:
 					{
 						uint8_t modifiers = 0;
@@ -379,7 +386,6 @@ namespace entry
 							}
 							else
 							{
-								enum { ShiftMask = Modifier::LeftShift|Modifier::RightShift };
 								m_eventQueue.postCharEvent(handle, 1, pressedChar);
 								m_eventQueue.postKeyEvent(handle, key, modifiers, true);
 								return false;

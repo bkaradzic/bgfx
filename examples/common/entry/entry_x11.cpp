@@ -323,6 +323,45 @@ namespace entry
 			initTranslateKey('x',             Key::KeyX);
 			initTranslateKey('y',             Key::KeyY);
 			initTranslateKey('z',             Key::KeyZ);
+			// Unlike other APIs, X11 provides no keyboard-independent way of getting
+			// the raw key code before modifiers are applied. So we must add these
+			//  shifted translations too
+			initTranslateKey(')',             Key::Key0);
+			initTranslateKey('!',             Key::Key1);
+			initTranslateKey('@',             Key::Key2);	// really depends on kbd, but what can you do
+			initTranslateKey('#',             Key::Key3);
+			initTranslateKey('$',             Key::Key4);
+			initTranslateKey('%',             Key::Key5);
+			initTranslateKey('^',             Key::Key6);
+			initTranslateKey('&',             Key::Key7);
+			initTranslateKey('*',             Key::Key8);
+			initTranslateKey('(',             Key::Key9);
+			initTranslateKey('A',             Key::KeyA);
+			initTranslateKey('B',             Key::KeyB);
+			initTranslateKey('C',             Key::KeyC);
+			initTranslateKey('D',             Key::KeyD);
+			initTranslateKey('E',             Key::KeyE);
+			initTranslateKey('F',             Key::KeyF);
+			initTranslateKey('G',             Key::KeyG);
+			initTranslateKey('H',             Key::KeyH);
+			initTranslateKey('I',             Key::KeyI);
+			initTranslateKey('J',             Key::KeyJ);
+			initTranslateKey('K',             Key::KeyK);
+			initTranslateKey('L',             Key::KeyL);
+			initTranslateKey('M',             Key::KeyM);
+			initTranslateKey('N',             Key::KeyN);
+			initTranslateKey('O',             Key::KeyO);
+			initTranslateKey('P',             Key::KeyP);
+			initTranslateKey('Q',             Key::KeyQ);
+			initTranslateKey('R',             Key::KeyR);
+			initTranslateKey('S',             Key::KeyS);
+			initTranslateKey('T',             Key::KeyT);
+			initTranslateKey('U',             Key::KeyU);
+			initTranslateKey('V',             Key::KeyV);
+			initTranslateKey('W',             Key::KeyW);
+			initTranslateKey('X',             Key::KeyX);
+			initTranslateKey('Y',             Key::KeyY);
+			initTranslateKey('Z',             Key::KeyZ);
 
 			m_mx = 0;
 			m_my = 0;
@@ -357,6 +396,7 @@ namespace entry
 				| KeyReleaseMask
 				| PointerMotionMask
 				| StructureNotifyMask
+				| FocusChangeMask
 				;
 
 			m_windowAlloc.alloc();
@@ -490,11 +530,27 @@ namespace entry
 							}
 							break;
 
+						case FocusIn:
+							{
+								m_modifiers = 0;
+
+								const XFocusChangeEvent& xfocus = event.xfocus;
+								WindowHandle handle = findHandle(xfocus.window);
+								m_eventQueue.postSuspendEvent(handle, Suspend::DidResume);
+							};
+						case FocusOut:
+							{
+								const XFocusChangeEvent& xfocus = event.xfocus;
+								WindowHandle handle = findHandle(xfocus.window);
+								m_eventQueue.postSuspendEvent(handle, Suspend::DidSuspend);
+							};
+
 						case KeyPress:
 						case KeyRelease:
 							{
 								XKeyEvent& xkey = event.xkey;
 								KeySym keysym = XLookupKeysym(&xkey, 0);
+								auto last_modifiers = m_modifiers;
 								switch (keysym)
 								{
 								case XK_Meta_L:    setModifier(Modifier::LeftMeta,   KeyPress == event.type); break;
@@ -505,37 +561,34 @@ namespace entry
 								case XK_Shift_R:   setModifier(Modifier::RightShift, KeyPress == event.type); break;
 								case XK_Alt_L:     setModifier(Modifier::LeftAlt,    KeyPress == event.type); break;
 								case XK_Alt_R:     setModifier(Modifier::RightAlt,   KeyPress == event.type); break;
+								}
 
-								default:
+								WindowHandle handle = findHandle(xkey.window);
+
+								if (KeyPress == event.type)
+								{
+									Status status = 0;
+									uint8_t utf8[4];
+									int len = Xutf8LookupString(ic, &xkey, (char*)utf8, sizeof(utf8), &keysym, &status);
+									switch (status)
 									{
-										WindowHandle handle = findHandle(xkey.window);
-										if (KeyPress == event.type)
+									case XLookupChars:
+									case XLookupBoth:
+										if (0 != len)
 										{
-											Status status = 0;
-											uint8_t utf8[4];
-											int len = Xutf8LookupString(ic, &xkey, (char*)utf8, sizeof(utf8), &keysym, &status);
-											switch (status)
-											{
-											case XLookupChars:
-											case XLookupBoth:
-												if (0 != len)
-												{
-													m_eventQueue.postCharEvent(handle, len, utf8);
-												}
-												break;
-
-											default:
-												break;
-											}
+											m_eventQueue.postCharEvent(handle, len, utf8);
 										}
+										break;
 
-										Key::Enum key = fromXk(keysym);
-										if (Key::None != key)
-										{
-											m_eventQueue.postKeyEvent(handle, key, m_modifiers, KeyPress == event.type);
-										}
+									default:
+										break;
 									}
-									break;
+								}
+
+								Key::Enum key = fromXk(keysym);
+								if ((last_modifiers != m_modifiers) || (Key::None != key))
+								{
+									m_eventQueue.postKeyEvent(handle, key, m_modifiers, KeyPress == event.type);
 								}
 							}
 							break;
