@@ -3254,22 +3254,10 @@ namespace bgfx { namespace d3d11
 					break;
 
 				case TextureD3D11::TextureCube:
-					if (_compute)
-					{
-						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
-						desc.Texture2DArray.MostDetailedMip = _mip;
-						desc.Texture2DArray.MipLevels       = 1;
-						desc.Texture2DArray.FirstArraySlice = 0;
-						desc.Texture2DArray.ArraySize       = 6;
-					}
-					else
-					{
-						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
-						desc.TextureCube.MostDetailedMip = _mip;
-						desc.TextureCube.MipLevels       = 1;
-					}
+					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+					desc.TextureCube.MostDetailedMip = _mip;
+					desc.TextureCube.MipLevels       = 1;
 					break;
-
 				case TextureD3D11::Texture3D:
 					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
 					desc.Texture3D.MostDetailedMip = _mip;
