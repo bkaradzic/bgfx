@@ -1627,11 +1627,14 @@ namespace d3d12
 				}
 
 #if BX_PLATFORM_XBOXONE
-				D3D12XBOX_PRESENT_PLANE_PARAMETERS planeParameters = {};
-				planeParameters.Token = m_framePipelineToken;
-				planeParameters.ResourceCount = 1;
-				planeParameters.ppResources = &m_backBufferColor[m_backBufferColorIdx];
-				DX_CHECK(m_cmd.m_commandQueue->PresentX(1, &planeParameters, 0));
+                                if (m_framePipelineToken != D3D12XBOX_FRAME_PIPELINE_TOKEN_NULL) {
+					// Skip calling if the token is invalid (eg. after ResumeX was called)
+					D3D12XBOX_PRESENT_PLANE_PARAMETERS planeParameters = {};
+					planeParameters.Token = m_framePipelineToken;
+					planeParameters.ResourceCount = 1;
+					planeParameters.ppResources = &m_backBufferColor[m_backBufferColorIdx];
+					DX_CHECK(m_cmd.m_commandQueue->PresentX(1, &planeParameters, 0));
+				}
 #else
 				if (SUCCEEDED(hr)
 				&&  NULL != m_swapChain)
@@ -7551,6 +7554,9 @@ namespace d3d12
 
 	void RendererContextD3D12::resume() 
 	{
+		// the token is invalidated when SuspendX is called, so clean it up.
+		m_framePipelineToken = D3D12XBOX_FRAME_PIPELINE_TOKEN_NULL;
+
 		m_cmd.m_commandQueue->ResumeX();
 
 		ComPtr<ID3D12Device> device = m_device;
