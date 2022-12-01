@@ -21,8 +21,6 @@ namespace bgfx { namespace gl
 #	define EGL_CONTEXT_FLAG_NO_ERROR_BIT_KHR 0x00000008
 #endif // EGL_CONTEXT_FLAG_NO_ERROR_BIT_KHR
 
-#define BGFX_MAX_EGL_DEVICES 20
-
 #if BGFX_USE_GL_DYNAMIC_LIB
 
 	typedef void (*EGLPROC)(void);
@@ -182,23 +180,7 @@ EGL_IMPORT
 			}
 #	endif // BX_PLATFORM_WINDOWS
 
-# if BX_PLATFORM_LINUX
-			BX_UNUSED(ndt)
-			PFNEGLQUERYDEVICESEXTPROC       eglQueryDevices       = (PFNEGLQUERYDEVICESEXTPROC      ) eglGetProcAddress("eglQueryDevicesEXT");
-			PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplay = (PFNEGLGETPLATFORMDISPLAYEXTPROC) eglGetProcAddress("eglGetPlatformDisplayEXT");
-
-			EGLDeviceEXT eglDevices[BGFX_MAX_EGL_DEVICES];
-			EGLint numDevices = 0;
-			if (!eglQueryDevices(sizeof(eglDevices) / sizeof(eglDevices[0]), eglDevices, &numDevices)) {
-				BGFX_FATAL(false, Fatal::UnableToInitialize, "No valid EGL devices found!");
-			}
-			BGFX_FATAL(g_caps.deviceId >=0 && g_caps.deviceId < numDevices, Fatal::UnableToInitialize, "Requested EGL device ID %d is not available", g_caps.deviceId);
-			m_display = eglGetPlatformDisplay(EGL_PLATFORM_DEVICE_EXT, eglDevices[g_caps.deviceId], 0);
-			g_platformData.ndt = &m_display;
-# else
 			m_display = eglGetDisplay(ndt);
-# endif // BX_PLATFORM_LINUX
-
 			BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display %p", m_display);
 
 			EGLint major = 0;
@@ -400,6 +382,16 @@ EGL_IMPORT
 			m_display = (EGLDisplay) g_platformData.ndt;
 			m_context = (EGLContext) g_platformData.context;
 			m_surface = (EGLSurface) g_platformData.backBuffer;
+
+			// need to re-bind the correct API in the current thread before eglMakeCurrent()
+#	if BGFX_CONFIG_RENDERER_OPENGLES
+			eglBindAPI(EGL_OPENGL_ES_API);
+#	elif BGFX_CONFIG_RENDERER_OPENGL
+			eglBindAPI(EGL_OPENGL_API);
+#	endif
+
+			EGLint err = eglGetError();
+			BGFX_FATAL(err == EGL_SUCCESS, Fatal::UnableToInitialize, "Failed to bind API.");
 
 			bool success = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
 			BGFX_FATAL(success, Fatal::UnableToInitialize, "Failed to set context.");
