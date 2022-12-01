@@ -317,6 +317,7 @@ namespace bgfx
 	std::atomic<bool> g_suspendRequested = false;
 	std::atomic<bool> g_suspendComplete = false;
 	std::atomic<bool> g_resumeRequested = false;
+	std::atomic<bool> g_resumeComplete = true;
 #endif // BX_PLATFORM_XBOXONE
 
 	static Handle::TypeName s_typeName[] =
@@ -2308,18 +2309,8 @@ namespace bgfx
 	uint32_t Context::frame(bool _capture)
 	{
 #if BX_PLATFORM_XBOXONE
-		if (s_ctx->m_singleThreaded) {
-			if (bgfx::g_resumeRequested) {
-				s_ctx->m_renderCtx->resume();
-				bgfx::g_suspendRequested = false;
-				bgfx::g_suspendComplete = false;
-				bgfx::g_resumeRequested = false;
-			} else if (bgfx::g_suspendComplete || bgfx::g_suspendRequested) {
-				return 0;
-			}
-		} else {
-			if (bgfx::g_suspendComplete || bgfx::g_suspendRequested)
-				return 0;
+		if (bgfx::g_suspendComplete || bgfx::g_suspendRequested) {
+			return 0;
 		}
 #endif // BX_PLATFORM_XBOXONE
 		m_encoder[0].end(true);
@@ -2472,6 +2463,8 @@ namespace bgfx
 				{
 					m_renderCtx->suspend();
 					bgfx::g_suspendComplete = true;
+					bgfx::g_resumeRequested = false;
+					bgfx::g_resumeComplete = false;
 					// WARNING: calling thread will be
 					// blocked until resume is requested
 					// from other thread
@@ -2482,8 +2475,10 @@ namespace bgfx
 			}
 			if (bgfx::g_resumeRequested)
 			{
-				bgfx::g_resumeRequested = false;
+				bgfx::g_suspendRequested = false;
 				bgfx::g_suspendComplete = false;
+				bgfx::g_resumeRequested = false;
+				bgfx::g_resumeComplete = true;
 			}
 		}
 #endif // BX_PLATFORM_XBOXONE
@@ -5615,20 +5610,38 @@ namespace bgfx
 		if (s_ctx->m_singleThreaded) {
 			// IMPORTANT: must be called from the same thread bgfx::init was called
 			s_ctx->m_renderCtx->suspend();
-			bgfx::g_suspendComplete = true;
+			g_suspendRequested = false;
+			g_suspendComplete = true;
 		} else {
 			g_suspendRequested = true;
+			g_suspendComplete = false;
 		}
+		g_resumeRequested = false;
+		g_resumeComplete = false;
 	}
 
 	void requestResume()
 	{
-		g_resumeRequested = true;
+		if (s_ctx->m_singleThreaded) {
+			// IMPORTANT: must be called from the same thread bgfx::init was called
+			s_ctx->m_renderCtx->resume();
+			g_resumeRequested = false;
+			g_resumeComplete = true;
+			g_suspendRequested = false;
+			g_suspendComplete = false;
+		} else {
+			g_resumeRequested = true;
+			g_resumeComplete = false;
+		}
 	}
 
 	bool isSuspended()
 	{
 		return g_suspendComplete;
+	}
+	bool isResumed()
+	{
+		return g_resumeComplete;
 	}
 #endif // BX_PLATFORM_XBOXONE
 

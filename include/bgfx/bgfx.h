@@ -4237,6 +4237,7 @@ namespace bgfx
 	void requestSuspend(void);
 	void requestResume(void);
 	bool isSuspended(void);
+	bool isResumed(void);
 #endif // BX_PLATFORM_XBOXONE
 	
 } // namespace bgfx
