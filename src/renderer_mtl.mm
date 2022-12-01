@@ -16,7 +16,7 @@
 
 #import <Foundation/Foundation.h>
 
-#define UNIFORM_BUFFER_SIZE (8*1024*1024)
+#define UNIFORM_BUFFER_SIZE (24*1024*1024)
 
 namespace bgfx { namespace mtl
 {
