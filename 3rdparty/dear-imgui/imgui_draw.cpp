@@ -1,4 +1,4 @@
-// dear imgui, v1.89 WIP
+// dear imgui, v1.89.1 WIP
 // (drawing and font code)
 
 /*
@@ -1312,6 +1312,7 @@ IM_STATIC_ASSERT(ImDrawFlags_RoundCornersTopLeft == (1 << 4));
 static inline ImDrawFlags FixRectCornerFlags(ImDrawFlags flags)
 {
 #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+    // Obsoleted in 1.82 (from February 2021)
     // Legacy Support for hard coded ~0 (used to be a suggested equivalent to ImDrawCornerFlags_All)
     //   ~0   --> ImDrawFlags_RoundCornersAll or 0
     if (flags == ~0)

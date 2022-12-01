@@ -74,8 +74,8 @@ public:
 	// Special purpose lists which contain a union of types.
 	// This is needed so we can declare specialization constants and structs in an interleaved fashion,
 	// among other things.
-	// Constants can be of struct type, and struct array sizes can use specialization constants.
-	SmallVector<ID> ids_for_constant_or_type;
+	// Constants can be undef or of struct type, and struct array sizes can use specialization constants.
+	SmallVector<ID> ids_for_constant_undef_or_type;
 	SmallVector<ID> ids_for_constant_or_variable;
 
 	// We need to keep track of the width the Ops that contains a type for the

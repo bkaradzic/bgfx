@@ -1,5 +1,5 @@
 {
-  "revision" : 3,
+  "revision" : 4,
   "instructions" : [
     {
       "opname" : "Kernel",
@@ -324,6 +324,28 @@
         { "kind" : "IdRef", "name" : "Binding" },
         { "kind" : "IdRef", "name" : "Offset" },
         { "kind" : "IdRef", "name" : "Size" }
+      ]
+    },
+    {
+      "opname" : "ArgumentStorageTexelBuffer",
+      "opcode" : 34,
+      "operands" : [
+        { "kind" : "IdRef", "name" : "Decl" },
+        { "kind" : "IdRef", "name" : "Ordinal" },
+        { "kind" : "IdRef", "name" : "DescriptorSet" },
+        { "kind" : "IdRef", "name" : "Binding" },
+        { "kind" : "IdRef", "name" : "ArgInfo", "quantifier" : "?" }
+      ]
+    },
+    {
+      "opname" : "ArgumentUniformTexelBuffer",
+      "opcode" : 35,
+      "operands" : [
+        { "kind" : "IdRef", "name" : "Decl" },
+        { "kind" : "IdRef", "name" : "Ordinal" },
+        { "kind" : "IdRef", "name" : "DescriptorSet" },
+        { "kind" : "IdRef", "name" : "Binding" },
+        { "kind" : "IdRef", "name" : "ArgInfo", "quantifier" : "?" }
       ]
     }
   ]

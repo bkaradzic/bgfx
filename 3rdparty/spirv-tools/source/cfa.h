@@ -275,10 +275,16 @@ std::vector<std::pair<BB*, BB*>> CFA<BB>::CalculateDominators(
 
   std::vector<std::pair<bb_ptr, bb_ptr>> out;
   for (auto idom : idoms) {
+    // At this point if there is no dominator for the node, just make it
+    // reflexive.
+    auto dominator = std::get<1>(idom).dominator;
+    if (dominator == undefined_dom) {
+      dominator = std::get<1>(idom).postorder_index;
+    }
     // NOTE: performing a const cast for convenient usage with
     // UpdateImmediateDominators
     out.push_back({const_cast<BB*>(std::get<0>(idom)),
-                   const_cast<BB*>(postorder[std::get<1>(idom).dominator])});
+                   const_cast<BB*>(postorder[dominator])});
   }
 
   // Sort by postorder index to generate a deterministic ordering of edges.

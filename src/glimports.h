@@ -586,12 +586,12 @@ GL_IMPORT_____x(true,  PFNGLBLENDFUNCSEPARATEIPROC,                glBlendFuncSe
 
 GL_IMPORT______(true,  PFNGLDRAWBUFFERPROC,                        glDrawBuffer);
 GL_IMPORT______(true,  PFNGLREADBUFFERPROC,                        glReadBuffer);
-GL_IMPORT_____x(true,  PFNGLGENSAMPLERSPROC,                       glGenSamplers);
-GL_IMPORT_____x(true,  PFNGLDELETESAMPLERSPROC,                    glDeleteSamplers);
-GL_IMPORT_____x(true,  PFNGLBINDSAMPLERPROC,                       glBindSampler);
-GL_IMPORT_____x(true,  PFNGLSAMPLERPARAMETERFPROC,                 glSamplerParameterf);
-GL_IMPORT_____x(true,  PFNGLSAMPLERPARAMETERIPROC,                 glSamplerParameteri);
-GL_IMPORT_____x(true,  PFNGLSAMPLERPARAMETERFVPROC,                glSamplerParameterfv);
+GL_IMPORT______(true,  PFNGLGENSAMPLERSPROC,                       glGenSamplers);
+GL_IMPORT______(true,  PFNGLDELETESAMPLERSPROC,                    glDeleteSamplers);
+GL_IMPORT______(true,  PFNGLBINDSAMPLERPROC,                       glBindSampler);
+GL_IMPORT______(true,  PFNGLSAMPLERPARAMETERFPROC,                 glSamplerParameterf);
+GL_IMPORT______(true,  PFNGLSAMPLERPARAMETERIPROC,                 glSamplerParameteri);
+GL_IMPORT______(true,  PFNGLSAMPLERPARAMETERFVPROC,                glSamplerParameterfv);
 
 GL_IMPORT_____x(true,  PFNGLBINDBUFFERBASEPROC,                    glBindBufferBase);
 GL_IMPORT_____x(true,  PFNGLBINDBUFFERRANGEPROC,                   glBindBufferRange);

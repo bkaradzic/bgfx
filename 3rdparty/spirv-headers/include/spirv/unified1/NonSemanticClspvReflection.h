@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 enum {
-    NonSemanticClspvReflectionRevision = 3,
+    NonSemanticClspvReflectionRevision = 4,
     NonSemanticClspvReflectionRevision_BitWidthPadding = 0x7fffffff
 };
 
@@ -71,6 +71,8 @@ enum NonSemanticClspvReflectionInstructions {
     NonSemanticClspvReflectionImageArgumentInfoChannelDataTypePushConstant = 31,
     NonSemanticClspvReflectionImageArgumentInfoChannelOrderUniform = 32,
     NonSemanticClspvReflectionImageArgumentInfoChannelDataTypeUniform = 33,
+    NonSemanticClspvReflectionArgumentStorageTexelBuffer = 34,
+    NonSemanticClspvReflectionArgumentUniformTexelBuffer = 35,
     NonSemanticClspvReflectionInstructionsMax = 0x7fffffff
 };
 

@@ -37,9 +37,9 @@
 #include <sstream>
 #include <cctype>
 
-#include "ResourceLimits.h"
+#include "glslang/Public/ResourceLimits.h"
 
-namespace glslang {
+TBuiltInResource Resources;
 
 const TBuiltInResource DefaultTBuiltInResource = {
     /* .MaxLights = */ 32,
@@ -529,4 +529,12 @@ void DecodeResourceLimits(TBuiltInResource* resources, char* config)
     }
 }
 
-}  // end namespace glslang
+TBuiltInResource* GetResources()
+{
+   return &Resources;
+}
+
+const TBuiltInResource* GetDefaultResources()
+{
+    return &DefaultTBuiltInResource;
+}

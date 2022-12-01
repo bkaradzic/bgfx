@@ -48,7 +48,7 @@ Prerequisites
 Android
 ~~~~~~~
 
-Download AndroidNDK:
+Download Android NDK (r23 or newer):
 
  - https://developer.android.com/tools/sdk/ndk/index.html
 
@@ -57,14 +57,7 @@ Set following environment variables:
 ::
 
     setx ANDROID_NDK_ROOT <path to AndroidNDK directory>
-    setx ANDROID_NDK_ARM <path to AndroidNDK directory>\toolchains\arm-linux-androideabi-4.7\prebuilt\windows-x86_64
-    setx ANDROID_NDK_MIPS <path to AndroidNDK directory>\toolchains\mipsel-linux-android-4.7\prebuilt\windows-x86_64
-    setx ANDROID_NDK_X86 <path to AndroidNDK directory>\toolchains\x86-4.7\prebuilt\windows-x86_64
 
-
-To deploy on Android you can use bgfx android activity:
-
- - https://github.com/Nodrev/bgfx-android-activity#bgfx-android-activity---android-glue-for-bgfx
 
 Linux
 ~~~~~

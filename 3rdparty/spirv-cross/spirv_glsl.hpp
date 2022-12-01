@@ -602,6 +602,7 @@ protected:
 		bool allow_precision_qualifiers = false;
 		bool can_swizzle_scalar = false;
 		bool force_gl_in_out_block = false;
+		bool force_merged_mesh_block = false;
 		bool can_return_array = true;
 		bool allow_truncated_access_chain = false;
 		bool supports_extensions = false;
@@ -619,6 +620,7 @@ protected:
 		bool support_64bit_switch = false;
 		bool workgroup_size_is_hidden = false;
 		bool requires_relaxed_precision_analysis = false;
+		bool implicit_c_integer_promotion_rules = false;
 	} backend;
 
 	void emit_struct(SPIRType &type);
@@ -691,7 +693,7 @@ protected:
 	void emit_unrolled_binary_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op,
 	                             bool negate, SPIRType::BaseType expected_type);
 	void emit_binary_op_cast(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op,
-	                         SPIRType::BaseType input_type, bool skip_cast_if_equal_type);
+	                         SPIRType::BaseType input_type, bool skip_cast_if_equal_type, bool implicit_integer_promotion);
 
 	SPIRType binary_op_bitcast_helper(std::string &cast_op0, std::string &cast_op1, SPIRType::BaseType &input_type,
 	                                  uint32_t op0, uint32_t op1, bool skip_cast_if_equal_type);
@@ -702,6 +704,7 @@ protected:
 	                                  uint32_t false_value);
 
 	void emit_unary_op(uint32_t result_type, uint32_t result_id, uint32_t op0, const char *op);
+	void emit_unary_op_cast(uint32_t result_type, uint32_t result_id, uint32_t op0, const char *op);
 	bool expression_is_forwarded(uint32_t id) const;
 	bool expression_suppresses_usage_tracking(uint32_t id) const;
 	bool expression_read_implies_multiple_reads(uint32_t id) const;
@@ -767,7 +770,7 @@ protected:
 	std::string address_of_expression(const std::string &expr);
 	void strip_enclosed_expression(std::string &expr);
 	std::string to_member_name(const SPIRType &type, uint32_t index);
-	virtual std::string to_member_reference(uint32_t base, const SPIRType &type, uint32_t index, bool ptr_chain);
+	virtual std::string to_member_reference(uint32_t base, const SPIRType &type, uint32_t index, bool ptr_chain_is_resolved);
 	std::string to_multi_member_reference(const SPIRType &type, const SmallVector<uint32_t> &indices);
 	std::string type_to_glsl_constructor(const SPIRType &type);
 	std::string argument_decl(const SPIRFunction::Parameter &arg);
@@ -934,8 +937,6 @@ protected:
 
 	bool type_is_empty(const SPIRType &type);
 
-	virtual void declare_undefined_values();
-
 	bool can_use_io_location(spv::StorageClass storage, bool block);
 	const Instruction *get_next_instruction_in_block(const Instruction &instr);
 	static uint32_t mask_relevant_memory_semantics(uint32_t semantics);
@@ -980,6 +981,7 @@ protected:
 	bool is_stage_output_builtin_masked(spv::BuiltIn builtin) const;
 	bool is_stage_output_variable_masked(const SPIRVariable &var) const;
 	bool is_stage_output_block_member_masked(const SPIRVariable &var, uint32_t index, bool strip_array) const;
+	bool is_per_primitive_variable(const SPIRVariable &var) const;
 	uint32_t get_accumulated_member_location(const SPIRVariable &var, uint32_t mbr_idx, bool strip_array) const;
 	uint32_t get_declared_member_location(const SPIRVariable &var, uint32_t mbr_idx, bool strip_array) const;
 	std::unordered_set<LocationComponentPair, InternalHasher> masked_output_locations;
@@ -987,6 +989,12 @@ protected:
 
 private:
 	void init();
+
+	SmallVector<ConstantID> get_composite_constant_ids(ConstantID const_id);
+	void fill_composite_constant(SPIRConstant &constant, TypeID type_id, const SmallVector<ConstantID> &initializers);
+	void set_composite_constant(ConstantID const_id, TypeID type_id, const SmallVector<ConstantID> &initializers);
+	TypeID get_composite_member_type(TypeID type_id, uint32_t member_idx);
+	std::unordered_map<uint32_t, SmallVector<ConstantID>> const_composite_insert_ids;
 };
 } // namespace SPIRV_CROSS_NAMESPACE
 
