@@ -58,6 +58,17 @@ enum MSLShaderVariableFormat
 	MSL_SHADER_VARIABLE_FORMAT_INT_MAX = 0x7fffffff
 };
 
+// Indicates the rate at which a variable changes value, one of: per-vertex,
+// per-primitive, or per-patch.
+enum MSLShaderVariableRate
+{
+	MSL_SHADER_VARIABLE_RATE_PER_VERTEX = 0,
+	MSL_SHADER_VARIABLE_RATE_PER_PRIMITIVE = 1,
+	MSL_SHADER_VARIABLE_RATE_PER_PATCH = 2,
+
+	MSL_SHADER_VARIABLE_RATE_INT_MAX = 0x7fffffff,
+};
+
 // Defines MSL characteristics of a shader interface variable at a particular location.
 // After compilation, it is possible to query whether or not this location was used.
 // If vecsize is nonzero, it must be greater than or equal to the vecsize declared in the shader,
@@ -69,6 +80,7 @@ struct MSLShaderInterfaceVariable
 	MSLShaderVariableFormat format = MSL_SHADER_VARIABLE_FORMAT_OTHER;
 	spv::BuiltIn builtin = spv::BuiltInMax;
 	uint32_t vecsize = 0;
+	MSLShaderVariableRate rate = MSL_SHADER_VARIABLE_RATE_PER_VERTEX;
 };
 
 // Matches the binding index of a MSL resource for a binding within a descriptor set.
@@ -306,6 +318,7 @@ public:
 		uint32_t dynamic_offsets_buffer_index = 23;
 		uint32_t shader_input_buffer_index = 22;
 		uint32_t shader_index_buffer_index = 21;
+		uint32_t shader_patch_input_buffer_index = 20;
 		uint32_t shader_input_wg_index = 0;
 		uint32_t device_index = 0;
 		uint32_t enable_frag_output_mask = 0xffffffff;
@@ -387,6 +400,11 @@ public:
 		// builtins are processed, but should result in more efficient usage of the GPU.
 		bool multi_patch_workgroup = false;
 
+		// Use storage buffers instead of vertex-style attributes for tessellation evaluation
+		// input. This may require conversion of inputs in the generated post-tessellation
+		// vertex shader, but allows the use of nested arrays.
+		bool raw_buffer_tese_input = false;
+
 		// If set, a vertex shader will be compiled as part of a tessellation pipeline.
 		// It will be translated as a compute kernel, so it can use the global invocation ID
 		// to index the output buffer.
@@ -439,6 +457,20 @@ public:
 		// This will force the shader to run at sample rate, assuming Metal does not optimize
 		// the extra threads away.
 		bool force_sample_rate_shading = false;
+
+		// If set, gl_HelperInvocation will be set manually whenever a fragment is discarded.
+		// Some Metal devices have a bug where simd_is_helper_thread() does not return true
+		// after a fragment has been discarded. This is a workaround that is only expected to be needed
+		// until the bug is fixed in Metal; it is provided as an option to allow disabling it when that occurs.
+		bool manual_helper_invocation_updates = true;
+
+		// If set, extra checks will be emitted in fragment shaders to prevent writes
+		// from discarded fragments. Some Metal devices have a bug where writes to storage resources
+		// from discarded fragment threads continue to occur, despite the fragment being
+		// discarded. This is a workaround that is only expected to be needed until the
+		// bug is fixed in Metal; it is provided as an option so it can be enabled
+		// only when the bug is present.
+		bool check_discarded_frag_stores = false;
 
 		bool is_ios() const
 		{
@@ -502,6 +534,11 @@ public:
 	bool needs_buffer_size_buffer() const
 	{
 		return !buffers_requiring_array_length.empty();
+	}
+
+	bool buffer_requires_array_length(VariableID id) const
+	{
+		return buffers_requiring_array_length.count(id) != 0;
 	}
 
 	// Provide feedback to calling API to allow it to pass a buffer
@@ -794,10 +831,9 @@ protected:
 	std::string bitcast_glsl_op(const SPIRType &result_type, const SPIRType &argument_type) override;
 	bool emit_complex_bitcast(uint32_t result_id, uint32_t id, uint32_t op0) override;
 	bool skip_argument(uint32_t id) const override;
-	std::string to_member_reference(uint32_t base, const SPIRType &type, uint32_t index, bool ptr_chain) override;
+	std::string to_member_reference(uint32_t base, const SPIRType &type, uint32_t index, bool ptr_chain_is_resolved) override;
 	std::string to_qualifiers_glsl(uint32_t id) override;
 	void replace_illegal_names() override;
-	void declare_undefined_values() override;
 	void declare_constant_arrays();
 
 	void replace_illegal_entry_point_names();
@@ -814,6 +850,9 @@ protected:
 	bool member_is_non_native_row_major_matrix(const SPIRType &type, uint32_t index) override;
 	std::string convert_row_major_matrix(std::string exp_str, const SPIRType &exp_type, uint32_t physical_type_id,
 	                                     bool is_packed) override;
+
+	bool is_tesc_shader() const;
+	bool is_tese_shader() const;
 
 	void preprocess_op_codes();
 	void localize_global_variables();
@@ -871,6 +910,7 @@ protected:
 	                                                      const std::string &var_chain_qual,
 	                                                      uint32_t &location, uint32_t &var_mbr_idx);
 	void add_tess_level_input_to_interface_block(const std::string &ib_var_ref, SPIRType &ib_type, SPIRVariable &var);
+	void add_tess_level_input(const std::string &base_ref, const std::string &mbr_name, SPIRVariable &var);
 
 	void fix_up_interface_member_indices(spv::StorageClass storage, uint32_t ib_type_id);
 
@@ -953,7 +993,7 @@ protected:
 	bool validate_member_packing_rules_msl(const SPIRType &type, uint32_t index) const;
 	std::string get_argument_address_space(const SPIRVariable &argument);
 	std::string get_type_address_space(const SPIRType &type, uint32_t id, bool argument = false);
-	const char *to_restrict(uint32_t id, bool space = true);
+	const char *to_restrict(uint32_t id, bool space);
 	SPIRType &get_stage_in_struct_type();
 	SPIRType &get_stage_out_struct_type();
 	SPIRType &get_patch_stage_in_struct_type();
@@ -978,6 +1018,7 @@ protected:
 	uint32_t builtin_frag_coord_id = 0;
 	uint32_t builtin_sample_id_id = 0;
 	uint32_t builtin_sample_mask_id = 0;
+	uint32_t builtin_helper_invocation_id = 0;
 	uint32_t builtin_vertex_idx_id = 0;
 	uint32_t builtin_base_vertex_id = 0;
 	uint32_t builtin_instance_idx_id = 0;
@@ -1002,6 +1043,7 @@ protected:
 	uint32_t argument_buffer_padding_sampler_type_id = 0;
 
 	bool does_shader_write_sample_mask = false;
+	bool frag_shader_needs_discard_checks = false;
 
 	void cast_to_variable_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type) override;
 	void cast_from_variable_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type) override;
@@ -1058,6 +1100,8 @@ protected:
 	VariableID patch_stage_out_var_id = 0;
 	VariableID stage_in_ptr_var_id = 0;
 	VariableID stage_out_ptr_var_id = 0;
+	VariableID tess_level_inner_var_id = 0;
+	VariableID tess_level_outer_var_id = 0;
 	VariableID stage_out_masked_builtin_type_id = 0;
 
 	// Handle HLSL-style 0-based vertex/instance index.
@@ -1084,6 +1128,7 @@ protected:
 	bool needs_subgroup_invocation_id = false;
 	bool needs_subgroup_size = false;
 	bool needs_sample_id = false;
+	bool needs_helper_invocation = false;
 	std::string qual_pos_var_name;
 	std::string stage_in_var_name = "in";
 	std::string stage_out_var_name = "out";
@@ -1096,6 +1141,7 @@ protected:
 	std::string input_wg_var_name = "gl_in";
 	std::string input_buffer_var_name = "spvIn";
 	std::string output_buffer_var_name = "spvOut";
+	std::string patch_input_buffer_var_name = "spvPatchIn";
 	std::string patch_output_buffer_var_name = "spvPatchOut";
 	std::string tess_factor_buffer_var_name = "spvTessLevel";
 	std::string index_buffer_var_name = "spvIndices";
@@ -1150,6 +1196,16 @@ protected:
 
 	bool variable_storage_requires_stage_io(spv::StorageClass storage) const;
 
+	bool needs_manual_helper_invocation_updates() const
+	{
+		return msl_options.manual_helper_invocation_updates && msl_options.supports_msl_version(2, 3);
+	}
+	bool needs_frag_discard_checks() const
+	{
+		return get_execution_model() == spv::ExecutionModelFragment && msl_options.supports_msl_version(2, 3) &&
+		       msl_options.check_discarded_frag_stores && frag_shader_needs_discard_checks;
+	}
+
 	bool has_additional_fixed_sample_mask() const { return msl_options.additional_fixed_sample_mask != 0xffffffff; }
 	std::string additional_fixed_sample_mask_str() const;
 
@@ -1170,10 +1226,13 @@ protected:
 		std::unordered_map<uint32_t, uint32_t> image_pointers; // Emulate texture2D atomic operations
 		bool suppress_missing_prototypes = false;
 		bool uses_atomics = false;
-		bool uses_resource_write = false;
+		bool uses_image_write = false;
+		bool uses_buffer_write = false;
+		bool uses_discard = false;
 		bool needs_subgroup_invocation_id = false;
 		bool needs_subgroup_size = false;
 		bool needs_sample_id = false;
+		bool needs_helper_invocation = false;
 	};
 
 	// OpcodeHandler that scans for uses of sampled images

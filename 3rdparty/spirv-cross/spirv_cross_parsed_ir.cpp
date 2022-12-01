@@ -66,7 +66,7 @@ ParsedIR &ParsedIR::operator=(ParsedIR &&other) SPIRV_CROSS_NOEXCEPT
 		meta = std::move(other.meta);
 		for (int i = 0; i < TypeCount; i++)
 			ids_for_type[i] = std::move(other.ids_for_type[i]);
-		ids_for_constant_or_type = std::move(other.ids_for_constant_or_type);
+		ids_for_constant_undef_or_type = std::move(other.ids_for_constant_undef_or_type);
 		ids_for_constant_or_variable = std::move(other.ids_for_constant_or_variable);
 		declared_capabilities = std::move(other.declared_capabilities);
 		declared_extensions = std::move(other.declared_extensions);
@@ -102,7 +102,7 @@ ParsedIR &ParsedIR::operator=(const ParsedIR &other)
 		meta = other.meta;
 		for (int i = 0; i < TypeCount; i++)
 			ids_for_type[i] = other.ids_for_type[i];
-		ids_for_constant_or_type = other.ids_for_constant_or_type;
+		ids_for_constant_undef_or_type = other.ids_for_constant_undef_or_type;
 		ids_for_constant_or_variable = other.ids_for_constant_or_variable;
 		declared_capabilities = other.declared_capabilities;
 		declared_extensions = other.declared_extensions;
@@ -934,7 +934,7 @@ void ParsedIR::add_typed_id(Types type, ID id)
 		{
 		case TypeConstant:
 			ids_for_constant_or_variable.push_back(id);
-			ids_for_constant_or_type.push_back(id);
+			ids_for_constant_undef_or_type.push_back(id);
 			break;
 
 		case TypeVariable:
@@ -943,7 +943,8 @@ void ParsedIR::add_typed_id(Types type, ID id)
 
 		case TypeType:
 		case TypeConstantOp:
-			ids_for_constant_or_type.push_back(id);
+		case TypeUndef:
+			ids_for_constant_undef_or_type.push_back(id);
 			break;
 
 		default:

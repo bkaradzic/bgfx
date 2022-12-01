@@ -99,6 +99,8 @@ struct ShaderResources
 	// but keep the vector in case this restriction is lifted in the future.
 	SmallVector<Resource> push_constant_buffers;
 
+	SmallVector<Resource> shader_record_buffers;
+
 	// For Vulkan GLSL and HLSL source,
 	// these correspond to separate texture2D and samplers respectively.
 	SmallVector<Resource> separate_images;
@@ -369,6 +371,7 @@ public:
 	spv::ExecutionModel get_execution_model() const;
 
 	bool is_tessellation_shader() const;
+	bool is_tessellating_triangles() const;
 
 	// In SPIR-V, the compute work group size can be represented by a constant vector, in which case
 	// the LocalSize execution mode is ignored.

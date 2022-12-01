@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(117)
+version(118)
 
 typedef "bool"
 typedef "char"
@@ -523,33 +523,41 @@ enum.AttribType { comment = "Attribute types:" }
 ---
 --- @attention Availability depends on Caps (see: formats).
 enum.TextureFormat { comment = "Texture formats:" }
-	.BC1      --- DXT1 R5G6B5A1
-	.BC2      --- DXT3 R5G6B5A4
-	.BC3      --- DXT5 R5G6B5A8
-	.BC4      --- LATC1/ATI1 R8
-	.BC5      --- LATC2/ATI2 RG8
-	.BC6H     --- BC6H RGB16F
-	.BC7      --- BC7 RGB 4-7 bits per color channel, 0-8 bits alpha
-	.ETC1     --- ETC1 RGB8
-	.ETC2     --- ETC2 RGB8
-	.ETC2A    --- ETC2 RGBA8
-	.ETC2A1   --- ETC2 RGB8A1
-	.PTC12    --- PVRTC1 RGB 2BPP
-	.PTC14    --- PVRTC1 RGB 4BPP
-	.PTC12A   --- PVRTC1 RGBA 2BPP
-	.PTC14A   --- PVRTC1 RGBA 4BPP
-	.PTC22    --- PVRTC2 RGBA 2BPP
-	.PTC24    --- PVRTC2 RGBA 4BPP
-	.ATC      --- ATC RGB 4BPP
-	.ATCE     --- ATCE RGBA 8 BPP explicit alpha
-	.ATCI     --- ATCI RGBA 8 BPP interpolated alpha
-	.ASTC4x4  --- ASTC 4x4 8.0 BPP
-	.ASTC5x5  --- ASTC 5x5 5.12 BPP
-	.ASTC6x6  --- ASTC 6x6 3.56 BPP
-	.ASTC8x5  --- ASTC 8x5 3.20 BPP
-	.ASTC8x6  --- ASTC 8x6 2.67 BPP
-	.ASTC10x5 --- ASTC 10x5 2.56 BPP
-	.Unknown  --- Compressed formats above.
+	.BC1       --- DXT1 R5G6B5A1
+	.BC2       --- DXT3 R5G6B5A4
+	.BC3       --- DXT5 R5G6B5A8
+	.BC4       --- LATC1/ATI1 R8
+	.BC5       --- LATC2/ATI2 RG8
+	.BC6H      --- BC6H RGB16F
+	.BC7       --- BC7 RGB 4-7 bits per color channel, 0-8 bits alpha
+	.ETC1      --- ETC1 RGB8
+	.ETC2      --- ETC2 RGB8
+	.ETC2A     --- ETC2 RGBA8
+	.ETC2A1    --- ETC2 RGB8A1
+	.PTC12     --- PVRTC1 RGB 2BPP
+	.PTC14     --- PVRTC1 RGB 4BPP
+	.PTC12A    --- PVRTC1 RGBA 2BPP
+	.PTC14A    --- PVRTC1 RGBA 4BPP
+	.PTC22     --- PVRTC2 RGBA 2BPP
+	.PTC24     --- PVRTC2 RGBA 4BPP
+	.ATC       --- ATC RGB 4BPP
+	.ATCE      --- ATCE RGBA 8 BPP explicit alpha
+	.ATCI      --- ATCI RGBA 8 BPP interpolated alpha
+	.ASTC4x4   --- ASTC 4x4 8.0 BPP
+	.ASTC5x4   --- ASTC 5x4 6.40 BPP
+	.ASTC5x5   --- ASTC 5x5 5.12 BPP
+	.ASTC6x5   --- ASTC 6x5 4.27 BPP
+	.ASTC6x6   --- ASTC 6x6 3.56 BPP
+	.ASTC8x5   --- ASTC 8x5 3.20 BPP
+	.ASTC8x6   --- ASTC 8x6 2.67 BPP
+	.ASTC8x8   --- ASTC 8x8 2.00 BPP
+	.ASTC10x5  --- ASTC 10x5 2.56 BPP
+	.ASTC10x6  --- ASTC 10x6 2.13 BPP
+	.ASTC10x8  --- ASTC 10x8 1.60 BPP
+	.ASTC10x10 --- ASTC 10x10 1.28 BPP
+	.ASTC12x10 --- ASTC 12x10 1.07 BPP
+	.ASTC12x12 --- ASTC 12x12 0.89 BPP
+	.Unknown   --- Compressed formats above.
 	.R1
 	.A8
 	.R8

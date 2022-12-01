@@ -80,6 +80,7 @@ static const SpvCapability pygen_variable_caps_RayTracingKHR[] = {SpvCapabilityR
 static const SpvCapability pygen_variable_caps_RayTracingMotionBlurNV[] = {SpvCapabilityRayTracingMotionBlurNV};
 static const SpvCapability pygen_variable_caps_RayTracingNV[] = {SpvCapabilityRayTracingNV};
 static const SpvCapability pygen_variable_caps_RayTracingNVRayTracingKHR[] = {SpvCapabilityRayTracingNV, SpvCapabilityRayTracingKHR};
+static const SpvCapability pygen_variable_caps_RayTracingOpacityMicromapEXT[] = {SpvCapabilityRayTracingOpacityMicromapEXT};
 static const SpvCapability pygen_variable_caps_RayTraversalPrimitiveCullingKHR[] = {SpvCapabilityRayTraversalPrimitiveCullingKHR};
 static const SpvCapability pygen_variable_caps_RoundToInfinityINTEL[] = {SpvCapabilityRoundToInfinityINTEL};
 static const SpvCapability pygen_variable_caps_RoundingModeRTE[] = {SpvCapabilityRoundingModeRTE};
@@ -141,6 +142,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_EXT_fragment_shader_int
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_mesh_shader[] = {spvtools::Extension::kSPV_EXT_mesh_shader};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_mesh_shaderSPV_KHR_shader_draw_parametersSPV_NV_mesh_shader[] = {spvtools::Extension::kSPV_EXT_mesh_shader, spvtools::Extension::kSPV_KHR_shader_draw_parameters, spvtools::Extension::kSPV_NV_mesh_shader};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_mesh_shaderSPV_NV_mesh_shader[] = {spvtools::Extension::kSPV_EXT_mesh_shader, spvtools::Extension::kSPV_NV_mesh_shader};
+static const spvtools::Extension pygen_variable_exts_SPV_EXT_opacity_micromap[] = {spvtools::Extension::kSPV_EXT_opacity_micromap};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_physical_storage_bufferSPV_KHR_physical_storage_buffer[] = {spvtools::Extension::kSPV_EXT_physical_storage_buffer, spvtools::Extension::kSPV_KHR_physical_storage_buffer};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_atomic_float16_add[] = {spvtools::Extension::kSPV_EXT_shader_atomic_float16_add};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_atomic_float_add[] = {spvtools::Extension::kSPV_EXT_shader_atomic_float_add};
@@ -351,7 +353,8 @@ static const spv_operand_desc_t pygen_variable_RayFlagsEntries[] = {
   {"CullOpaqueKHR", 0x0040, 2, pygen_variable_caps_RayQueryKHRRayTracingKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
   {"CullNoOpaqueKHR", 0x0080, 2, pygen_variable_caps_RayQueryKHRRayTracingKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
   {"SkipTrianglesKHR", 0x0100, 1, pygen_variable_caps_RayTraversalPrimitiveCullingKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
-  {"SkipAABBsKHR", 0x0200, 1, pygen_variable_caps_RayTraversalPrimitiveCullingKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
+  {"SkipAABBsKHR", 0x0200, 1, pygen_variable_caps_RayTraversalPrimitiveCullingKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"ForceOpacityMicromap2StateEXT", 0x0400, 1, pygen_variable_caps_RayTracingOpacityMicromapEXT, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_FragmentShadingRateEntries[] = {
@@ -1142,6 +1145,7 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"FragmentShaderPixelInterlockEXT", 5378, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_EXT_fragment_shader_interlock, {}, 0xffffffffu, 0xffffffffu},
   {"DemoteToHelperInvocation", 5379, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_EXT_demote_to_helper_invocation, {}, SPV_SPIRV_VERSION_WORD(1,6), 0xffffffffu},
   {"DemoteToHelperInvocationEXT", 5379, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_EXT_demote_to_helper_invocation, {}, SPV_SPIRV_VERSION_WORD(1,6), 0xffffffffu},
+  {"RayTracingOpacityMicromapEXT", 5381, 2, pygen_variable_caps_RayQueryKHRRayTracingKHR, 1, pygen_variable_exts_SPV_EXT_opacity_micromap, {}, 0xffffffffu, 0xffffffffu},
   {"BindlessTextureNV", 5390, 0, nullptr, 1, pygen_variable_exts_SPV_NV_bindless_texture, {}, 0xffffffffu, 0xffffffffu},
   {"SubgroupShuffleINTEL", 5568, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_subgroups, {}, 0xffffffffu, 0xffffffffu},
   {"SubgroupBufferBlockIOINTEL", 5569, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_subgroups, {}, 0xffffffffu, 0xffffffffu},

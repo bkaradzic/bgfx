@@ -1,9 +1,11 @@
+*.TMP
+*.dxvk-cache
+*.log
+.DS_Store
 .build
 .debug
-.DS_Store
+.gdb_history
 .git
 .svn
-tags
-.gdb_history
 .vscode
-*.TMP
+tags

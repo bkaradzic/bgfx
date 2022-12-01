@@ -836,11 +836,15 @@ int TParseContext::getIoArrayImplicitSize(const TQualifier &qualifier, TString *
     } else if (language == EShLangMesh) {
         unsigned int maxPrimitives =
             intermediate.getPrimitives() != TQualifier::layoutNotSet ? intermediate.getPrimitives() : 0;
-        if (qualifier.builtIn == EbvPrimitiveIndicesNV || qualifier.builtIn == EbvPrimitiveTriangleIndicesEXT ||
-            qualifier.builtIn == EbvPrimitiveLineIndicesEXT || qualifier.builtIn == EbvPrimitivePointIndicesEXT) {
+        if (qualifier.builtIn == EbvPrimitiveIndicesNV) {
             expectedSize = maxPrimitives * TQualifier::mapGeometryToSize(intermediate.getOutputPrimitive());
             str = "max_primitives*";
             str += TQualifier::getGeometryString(intermediate.getOutputPrimitive());
+        }
+        else if (qualifier.builtIn == EbvPrimitiveTriangleIndicesEXT || qualifier.builtIn == EbvPrimitiveLineIndicesEXT ||
+                 qualifier.builtIn == EbvPrimitivePointIndicesEXT) {
+            expectedSize = maxPrimitives;
+            str = "max_primitives";
         }
         else if (qualifier.isPerPrimitive()) {
             expectedSize = maxPrimitives;
@@ -5973,8 +5977,14 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
         if (id == "max_vertices") {
             requireExtensions(loc, Num_AEP_mesh_shader, AEP_mesh_shader, "max_vertices");
             publicType.shaderQualifiers.vertices = value;
-            if (value > resources.maxMeshOutputVerticesNV)
-                error(loc, "too large, must be less than gl_MaxMeshOutputVerticesNV", "max_vertices", "");
+            int max = extensionTurnedOn(E_GL_EXT_mesh_shader) ? resources.maxMeshOutputVerticesEXT
+                                                              : resources.maxMeshOutputVerticesNV;
+            if (value > max) {
+                TString maxsErrtring = "too large, must be less than ";
+                maxsErrtring.append(extensionTurnedOn(E_GL_EXT_mesh_shader) ? "gl_MaxMeshOutputVerticesEXT"
+                                                                            : "gl_MaxMeshOutputVerticesNV");
+                error(loc, maxsErrtring.c_str(), "max_vertices", "");
+            }
             if (nonLiteral)
                 error(loc, "needs a literal integer", "max_vertices", "");
             return;
@@ -5982,8 +5992,14 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
         if (id == "max_primitives") {
             requireExtensions(loc, Num_AEP_mesh_shader, AEP_mesh_shader, "max_primitives");
             publicType.shaderQualifiers.primitives = value;
-            if (value > resources.maxMeshOutputPrimitivesNV)
-                error(loc, "too large, must be less than gl_MaxMeshOutputPrimitivesNV", "max_primitives", "");
+            int max = extensionTurnedOn(E_GL_EXT_mesh_shader) ? resources.maxMeshOutputPrimitivesEXT
+                                                              : resources.maxMeshOutputPrimitivesNV;
+            if (value > max) {
+                TString maxsErrtring = "too large, must be less than ";
+                maxsErrtring.append(extensionTurnedOn(E_GL_EXT_mesh_shader) ? "gl_MaxMeshOutputPrimitivesEXT"
+                                                                            : "gl_MaxMeshOutputPrimitivesNV");
+                error(loc, maxsErrtring.c_str(), "max_primitives", "");
+            }
             if (nonLiteral)
                 error(loc, "needs a literal integer", "max_primitives", "");
             return;

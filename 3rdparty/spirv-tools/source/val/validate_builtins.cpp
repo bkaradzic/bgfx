@@ -333,7 +333,7 @@ class BuiltInsValidator {
   // Used for GlobalInvocationId, LocalInvocationId, NumWorkgroups, WorkgroupId.
   spv_result_t ValidateComputeShaderI32Vec3InputAtDefinition(
       const Decoration& decoration, const Instruction& inst);
-  spv_result_t ValidateSMBuiltinsAtDefinition(const Decoration& decoration,
+  spv_result_t ValidateNVSMOrARMCoreBuiltinsAtDefinition(const Decoration& decoration,
                                               const Instruction& inst);
   // Used for BaryCoord, BaryCoordNoPersp.
   spv_result_t ValidateFragmentShaderF32Vec3InputAtDefinition(
@@ -528,7 +528,7 @@ class BuiltInsValidator {
       const Instruction& referenced_inst,
       const Instruction& referenced_from_inst);
 
-  spv_result_t ValidateSMBuiltinsAtReference(
+  spv_result_t ValidateNVSMOrARMCoreBuiltinsAtReference(
       const Decoration& decoration, const Instruction& built_in_inst,
       const Instruction& referenced_inst,
       const Instruction& referenced_from_inst);
@@ -3749,7 +3749,7 @@ spv_result_t BuiltInsValidator::ValidateFullyCoveredAtReference(
   return SPV_SUCCESS;
 }
 
-spv_result_t BuiltInsValidator::ValidateSMBuiltinsAtDefinition(
+spv_result_t BuiltInsValidator::ValidateNVSMOrARMCoreBuiltinsAtDefinition(
     const Decoration& decoration, const Instruction& inst) {
   if (spvIsVulkanEnv(_.context()->target_env)) {
     if (spv_result_t error = ValidateI32(
@@ -3770,10 +3770,10 @@ spv_result_t BuiltInsValidator::ValidateSMBuiltinsAtDefinition(
   }
 
   // Seed at reference checks with this built-in.
-  return ValidateSMBuiltinsAtReference(decoration, inst, inst, inst);
+  return ValidateNVSMOrARMCoreBuiltinsAtReference(decoration, inst, inst, inst);
 }
 
-spv_result_t BuiltInsValidator::ValidateSMBuiltinsAtReference(
+spv_result_t BuiltInsValidator::ValidateNVSMOrARMCoreBuiltinsAtReference(
     const Decoration& decoration, const Instruction& built_in_inst,
     const Instruction& referenced_inst,
     const Instruction& referenced_from_inst) {
@@ -3797,7 +3797,7 @@ spv_result_t BuiltInsValidator::ValidateSMBuiltinsAtReference(
   if (function_id_ == 0) {
     // Propagate this rule to all dependant ids in the global scope.
     id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
-        &BuiltInsValidator::ValidateSMBuiltinsAtReference, this, decoration,
+        &BuiltInsValidator::ValidateNVSMOrARMCoreBuiltinsAtReference, this, decoration,
         built_in_inst, referenced_from_inst, std::placeholders::_1));
   }
 
@@ -4225,11 +4225,16 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     case SpvBuiltInLocalInvocationIndex: {
       return ValidateLocalInvocationIndexAtDefinition(decoration, inst);
     }
+    case SpvBuiltInCoreIDARM:
+    case SpvBuiltInCoreCountARM:
+    case SpvBuiltInCoreMaxIDARM:
+    case SpvBuiltInWarpIDARM:
+    case SpvBuiltInWarpMaxIDARM:
     case SpvBuiltInWarpsPerSMNV:
     case SpvBuiltInSMCountNV:
     case SpvBuiltInWarpIDNV:
     case SpvBuiltInSMIDNV: {
-      return ValidateSMBuiltinsAtDefinition(decoration, inst);
+      return ValidateNVSMOrARMCoreBuiltinsAtDefinition(decoration, inst);
     }
     case SpvBuiltInBaseInstance:
     case SpvBuiltInBaseVertex: {

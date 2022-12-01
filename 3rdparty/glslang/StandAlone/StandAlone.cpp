@@ -41,7 +41,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "ResourceLimits.h"
+#include "glslang/Public/ResourceLimits.h"
 #include "Worklist.h"
 #include "DirStackFileIncluder.h"
 #include "./../glslang/Include/ShHandle.h"
@@ -149,7 +149,6 @@ bool LinkFailed = false;
 // array of unique places to leave the shader names and infologs for the asynchronous compiles
 std::vector<std::unique_ptr<glslang::TWorkItem>> WorkItems;
 
-TBuiltInResource Resources;
 std::string ConfigFile;
 
 //
@@ -158,11 +157,11 @@ std::string ConfigFile;
 void ProcessConfigFile()
 {
     if (ConfigFile.size() == 0)
-        Resources = glslang::DefaultTBuiltInResource;
+        *GetResources() = *GetDefaultResources();
 #ifndef GLSLANG_WEB
     else {
         char* configString = ReadFileData(ConfigFile.c_str());
-        glslang::DecodeResourceLimits(&Resources,  configString);
+        DecodeResourceLimits(GetResources(),  configString);
         FreeFileData(configString);
     }
 #endif
@@ -1417,7 +1416,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
 #ifndef GLSLANG_WEB
         if (Options & EOptionOutputPreprocessed) {
             std::string str;
-            if (shader->preprocess(&Resources, defaultVersion, ENoProfile, false, false, messages, &str, includer)) {
+            if (shader->preprocess(GetResources(), defaultVersion, ENoProfile, false, false, messages, &str, includer)) {
                 PutsIfNonEmpty(str.c_str());
             } else {
                 CompileFailed = true;
@@ -1428,7 +1427,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         }
 #endif
 
-        if (! shader->parse(&Resources, defaultVersion, false, messages, includer))
+        if (! shader->parse(GetResources(), defaultVersion, false, messages, includer))
             CompileFailed = true;
 
         program.addShader(shader);
@@ -1612,7 +1611,7 @@ int singleMain()
 
 #ifndef GLSLANG_WEB
     if (Options & EOptionDumpConfig) {
-        printf("%s", glslang::GetDefaultTBuiltInResourceString().c_str());
+        printf("%s", GetDefaultTBuiltInResourceString().c_str());
         if (workList.empty())
             return ESuccess;
     }
@@ -1838,7 +1837,7 @@ void CompileFile(const char* fileName, ShHandle compiler)
     for (int i = 0; i < ((Options & EOptionMemoryLeakMode) ? 100 : 1); ++i) {
         for (int j = 0; j < ((Options & EOptionMemoryLeakMode) ? 100 : 1); ++j) {
             // ret = ShCompile(compiler, shaderStrings, NumShaderStrings, lengths, EShOptNone, &Resources, Options, (Options & EOptionDefaultDesktop) ? 110 : 100, false, messages);
-            ret = ShCompile(compiler, &shaderString, 1, nullptr, EShOptNone, &Resources, Options, (Options & EOptionDefaultDesktop) ? 110 : 100, false, messages);
+            ret = ShCompile(compiler, &shaderString, 1, nullptr, EShOptNone, GetResources(), Options, (Options & EOptionDefaultDesktop) ? 110 : 100, false, messages);
             // const char* multi[12] = { "# ve", "rsion", " 300 e", "s", "\n#err",
             //                         "or should be l", "ine 1", "string 5\n", "float glo", "bal",
             //                         ";\n#error should be line 2\n void main() {", "global = 2.3;}" };

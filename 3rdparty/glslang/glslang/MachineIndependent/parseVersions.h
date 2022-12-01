@@ -58,7 +58,7 @@ public:
                    const SpvVersion& spvVersion, EShLanguage language, TInfoSink& infoSink,
                    bool forwardCompatible, EShMessages messages)
         :
-#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+#if !defined(GLSLANG_WEB)
         forwardCompatible(forwardCompatible),
         profile(profile),
 #endif
@@ -117,13 +117,8 @@ public:
     bool suppressWarnings() const { return true; }
     bool isForwardCompatible() const { return false; }
 #else
-#ifdef GLSLANG_ANGLE
-    const bool forwardCompatible = true;
-    const EProfile profile = ECoreProfile;
-#else
     bool forwardCompatible;      // true if errors are to be given for use of deprecated features
     EProfile profile;            // the declared profile in the shader (core by default)
-#endif
     bool isEsProfile() const { return profile == EEsProfile; }
     void requireProfile(const TSourceLoc& loc, int profileMask, const char* featureDesc);
     void profileRequires(const TSourceLoc& loc, int profileMask, int minVersion, int numExtensions,

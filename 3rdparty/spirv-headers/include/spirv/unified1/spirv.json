@@ -1040,6 +1040,7 @@
                     "FragmentShaderPixelInterlockEXT": 5378,
                     "DemoteToHelperInvocation": 5379,
                     "DemoteToHelperInvocationEXT": 5379,
+                    "RayTracingOpacityMicromapEXT": 5381,
                     "BindlessTextureNV": 5390,
                     "SubgroupShuffleINTEL": 5568,
                     "SubgroupBufferBlockIOINTEL": 5569,
@@ -1115,7 +1116,8 @@
                     "CullOpaqueKHR": 6,
                     "CullNoOpaqueKHR": 7,
                     "SkipTrianglesKHR": 8,
-                    "SkipAABBsKHR": 9
+                    "SkipAABBsKHR": 9,
+                    "ForceOpacityMicromap2StateEXT": 10
                 }
             },
             {

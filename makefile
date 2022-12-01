@@ -49,9 +49,10 @@ projgen: ## Generate project files for all configurations.
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=osx           xcode9
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=ios           xcode9
 	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=freebsd         gmake
-	$(GENIE)              --with-combined-examples                   --gcc=android-arm     gmake
-	$(GENIE)              --with-combined-examples                   --gcc=android-arm64   gmake
-	$(GENIE)              --with-combined-examples                   --gcc=android-x86     gmake
+	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=android-arm     gmake
+	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=android-arm64   gmake
+	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=android-x86     gmake
+	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=android-x86_64  gmake
 	$(GENIE)              --with-examples                            --gcc=wasm2js         gmake
 	$(GENIE)              --with-combined-examples                   --gcc=ios-arm         gmake
 	$(GENIE)              --with-combined-examples                   --gcc=ios-arm64       gmake
@@ -64,7 +65,7 @@ idl: ## Generate code from IDL.
 	cd scripts && ../$(GENIE) idl
 
 .build/projects/gmake-android-arm:
-	$(GENIE) --gcc=android-arm gmake
+	$(GENIE) --gcc=android-arm --with-combined-examples --with-shared-lib gmake
 android-arm-debug: .build/projects/gmake-android-arm ## Build - Android ARM Debug
 	$(MAKE) -R -C .build/projects/gmake-android-arm config=debug
 android-arm-release: .build/projects/gmake-android-arm ## Build - Android ARM Release
@@ -72,7 +73,7 @@ android-arm-release: .build/projects/gmake-android-arm ## Build - Android ARM Re
 android-arm: android-arm-debug android-arm-release ## Build - Android ARM Debug and Release
 
 .build/projects/gmake-android-arm64:
-	$(GENIE) --gcc=android-arm64 gmake
+	$(GENIE) --gcc=android-arm64 --with-combined-examples --with-shared-lib gmake
 android-arm64-debug: .build/projects/gmake-android-arm64 ## Build - Android ARM64 Debug
 	$(MAKE) -R -C .build/projects/gmake-android-arm64 config=debug
 android-arm64-release: .build/projects/gmake-android-arm64 ## Build - Android ARM64 Release
@@ -80,12 +81,20 @@ android-arm64-release: .build/projects/gmake-android-arm64 ## Build - Android AR
 android-arm64: android-arm64-debug android-arm64-release ## Build - Android ARM64 Debug and Release
 
 .build/projects/gmake-android-x86:
-	$(GENIE) --gcc=android-x86 gmake
+	$(GENIE) --gcc=android-x86 --with-combined-examples --with-shared-lib gmake
 android-x86-debug: .build/projects/gmake-android-x86 ## Build - Android x86 Debug and Release
 	$(MAKE) -R -C .build/projects/gmake-android-x86 config=debug
 android-x86-release: .build/projects/gmake-android-x86 ## Build - Android x86 Debug and Release
 	$(MAKE) -R -C .build/projects/gmake-android-x86 config=release
 android-x86: android-x86-debug android-x86-release ## Build - Android x86 Debug and Release
+
+.build/projects/gmake-android-x86_64:
+	$(GENIE) --gcc=android-x86_64 --with-combined-examples --with-shared-lib gmake
+android-x86_64-debug: .build/projects/gmake-android-x86_64 ## Build - Android x86_64 Debug and Release
+	$(MAKE) -R -C .build/projects/gmake-android-x86_64 config=debug
+android-x86_64-release: .build/projects/gmake-android-x86_64 ## Build - Android x86_64 Debug and Release
+	$(MAKE) -R -C .build/projects/gmake-android-x86_64 config=release
+android-x86_64: android-x86_64-debug android-x86_64-release ## Build - Android x86_64 Debug and Release
 
 .build/projects/gmake-wasm2js: # Wasm2JS: The JavaScript fallback for web builds when Wasm is not supported by browser
 	$(GENIE) --gcc=wasm2js --with-combined-examples gmake

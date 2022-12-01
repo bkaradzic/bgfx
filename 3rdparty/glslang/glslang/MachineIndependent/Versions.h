@@ -212,6 +212,7 @@ const char* const E_GL_EXT_subgroup_uniform_control_flow    = "GL_EXT_subgroup_u
 const char* const E_GL_EXT_spirv_intrinsics                 = "GL_EXT_spirv_intrinsics";
 const char* const E_GL_EXT_fragment_shader_barycentric      = "GL_EXT_fragment_shader_barycentric";
 const char* const E_GL_EXT_mesh_shader                      = "GL_EXT_mesh_shader";
+const char* const E_GL_EXT_opacity_micromap                 = "GL_EXT_opacity_micromap";
 
 // Arrays of extensions for the above viewportEXTs duplications
 

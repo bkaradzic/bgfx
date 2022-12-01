@@ -449,7 +449,9 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	
 	const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
 	
-	if (this->state->language_version >= 300 && ir->data.explicit_location)
+	bool built_in = (strstr(ir->name, "gl_") == ir->name);
+
+	if (this->state->language_version >= 300 && ir->data.explicit_location && !built_in)
 	{
 		const int binding_base = (this->state->stage == MESA_SHADER_VERTEX ? (int)VERT_ATTRIB_GENERIC0 : (int)FRAG_RESULT_DATA0);
 		const int location = ir->data.location - binding_base;
@@ -488,7 +490,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	}
 	
 	// keep invariant declaration for builtin variables
-	if (strstr(ir->name, "gl_") == ir->name) {
+	if (built_in) {
 		buffer.asprintf_append ("%s", inv);
 		print_var_name (ir);
 		return;
