@@ -342,7 +342,7 @@ namespace bgfx
 		template<typename Ty>
 		constexpr Handle(Ty _handle)
 			: idx(_handle.idx)
-			, type(toEnum<Ty>() )
+			, type(uint16_t(toEnum<Ty>() ) )
 		{
 		}
 
