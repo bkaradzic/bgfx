@@ -331,6 +331,20 @@
 #define BGFX_TEXTURE_RT_MASK                      UINT64_C(0x000000f000000000)
 
 /**
+ * VGA Color Presets.
+ *
+ */
+#define BGFX_COLOR_BLUE							  UINT8_C(1)
+#define BGFX_COLOR_RED							  UINT8_C(4)
+#define BGFX_COLOR_ORANGE						  UINT8_C(6)
+#define BGFX_COLOR_GREY  						  UINT8_C(8)
+#define BGFX_COLOR_GREEN						  UINT8_C(10)
+#define BGFX_COLOR_CYAN							  UINT8_C(11)
+#define BGFX_COLOR_MAGENTA						  UINT8_C(13)
+#define BGFX_COLOR_YELLOW  						  UINT8_C(14)
+#define BGFX_COLOR_WHITE						  UINT8_C(15)
+
+/**
  * Sampler flags.
  *
  */
