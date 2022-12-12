@@ -1080,11 +1080,7 @@ VK_IMPORT_DEVICE
 			);
 	}
 
-#ifndef VK_MAX_DESCRIPTOR_SETS
 #define MAX_DESCRIPTOR_SETS (1024 * BGFX_CONFIG_MAX_FRAME_LATENCY)
-#else
-#define MAX_DESCRIPTOR_SETS VK_MAX_DESCRIPTOR_SETS
-#endif
 
 	struct RendererContextVK : public RendererContextI
 	{
