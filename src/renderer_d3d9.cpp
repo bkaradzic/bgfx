@@ -1587,11 +1587,6 @@ namespace bgfx { namespace d3d9
 		{
 			if (NULL != m_swapChain)
 			{
-				if (NULL != m_deviceEx)
-				{
-					DX_CHECK(m_deviceEx->WaitForVBlank(0) );
-				}
-
 				for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 				{
 					HRESULT hr = S_OK;
