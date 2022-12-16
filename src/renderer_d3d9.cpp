@@ -729,7 +729,7 @@ namespace bgfx { namespace d3d9
 				| ( (m_caps.DevCaps2 & D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES) ? BGFX_CAPS_TEXTURE_BLIT : 0)
 				| BGFX_CAPS_TEXTURE_READ_BACK
 				| (m_occlusionQuerySupport ? BGFX_CAPS_OCCLUSION_QUERY : 0)
-				| ((m_caps.MaxVertexIndex >= (1<<16)) ? BGFX_CAPS_INDEX32 : 0)
+				| ((m_caps.MaxVertexIndex > UINT16_MAX) ? BGFX_CAPS_INDEX32 : 0)
 				);
 
 			m_caps.NumSimultaneousRTs = bx::uint32_min(m_caps.NumSimultaneousRTs, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
