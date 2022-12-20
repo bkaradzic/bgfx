@@ -3845,10 +3845,16 @@ VK_IMPORT_DEVICE
 								type = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 							}
 
+							/*
+							* Note: in some of our dev tools we display all the framebuffer attachments,
+							* and it can happen that some attachments (e.g. depth) are write-only and
+							* are never transitioned to a sampling layout.
+							*
 							BX_ASSERT(
 								  texture.m_currentImageLayout == texture.m_sampledLayout
 								, "Mismatching image layout. Texture currently used as a framebuffer attachment?"
 								);
+							*/
 
 							imageInfo[imageCount].imageLayout = texture.m_sampledLayout;
 							imageInfo[imageCount].sampler     = VK_NULL_HANDLE;
@@ -3909,10 +3915,16 @@ VK_IMPORT_DEVICE
 								: program.m_textures[bindInfo.index].type
 								;
 
+							/*
+							* Note: in some of our dev tools we display all the framebuffer attachments,
+							* and it can happen that some attachments (e.g. depth) are write-only and
+							* are never transitioned to a sampling layout.
+							*
 							BX_ASSERT(
 								  texture.m_currentImageLayout == texture.m_sampledLayout
 								, "Mismatching image layout. Texture currently used as a framebuffer attachment?"
 								);
+							*/
 
 							imageInfo[imageCount].imageLayout = texture.m_sampledLayout;
 							imageInfo[imageCount].sampler     = sampler;
