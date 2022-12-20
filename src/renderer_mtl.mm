@@ -16,7 +16,12 @@
 
 #import <Foundation/Foundation.h>
 
-#define UNIFORM_BUFFER_SIZE (24*1024*1024)
+#ifndef BGFX_MTL_UNIFORM_BUFFER_SIZE
+  #define BGFX_MTL_UNIFORM_BUFFER_SIZE (8*1024*1024)
+#endif
+
+#define MTL_SWIZZLE (BX_PLATFORM_OSX >= 101500 || BX_PLATFORM_IOS >= 150000)
+#define MTL_GPU_FAMILY (BX_PLATFORM_OSX >= 101500 || BX_PLATFORM_IOS >= 150000)
 
 namespace bgfx { namespace mtl
 {
@@ -212,18 +217,31 @@ namespace bgfx { namespace mtl
 		MTLPixelFormat            m_fmt;
 		MTLPixelFormat            m_fmtSrgb;
 		MTLReadWriteTextureTier   m_rwTier;
+#  if MTL_SWIZZLE
 		MTLTextureSwizzleChannels m_mapping;
+#  else
+    uint8_t 								  m_dummy[4];
+#  endif
 		bool                      m_autoGetMipmap;
 	};
 
 	static TextureFormatInfo s_textureFormat[] =
 	{
-#define $0 MTLTextureSwizzleZero
-#define $1 MTLTextureSwizzleOne
-#define $R MTLTextureSwizzleRed
-#define $G MTLTextureSwizzleGreen
-#define $B MTLTextureSwizzleBlue
-#define $A MTLTextureSwizzleAlpha
+#if MTL_SWIZZLE
+#  define $0 MTLTextureSwizzleZero
+#  define $1 MTLTextureSwizzleOne
+#  define $R MTLTextureSwizzleRed
+#  define $G MTLTextureSwizzleGreen
+#  define $B MTLTextureSwizzleBlue
+#  define $A MTLTextureSwizzleAlpha
+#else
+#  define $0 0
+#  define $1 1
+#  define $R 0
+#  define $G 1
+#  define $B 2
+#  define $A 3
+#endif
 		{ MTLPixelFormat(130/*BC1_RGBA*/),              MTLPixelFormat(131/*BC1_RGBA_sRGB*/),        MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // BC1
 		{ MTLPixelFormat(132/*BC2_RGBA*/),              MTLPixelFormat(133/*BC2_RGBA_sRGB*/),        MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // BC2
 		{ MTLPixelFormat(134/*BC3_RGBA*/),              MTLPixelFormat(135/*BC3_RGBA_sRGB*/),        MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // BC3
@@ -320,12 +338,21 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatRGBA32Sint,                     MTLPixelFormatInvalid,                       MTLReadWriteTextureTier2,    { $R, $G, $B, $A }, true  }, // RGBA32I
 		{ MTLPixelFormatRGBA32Uint,                     MTLPixelFormatInvalid,                       MTLReadWriteTextureTier2,    { $R, $G, $B, $A }, true  }, // RGBA32U
 		{ MTLPixelFormatRGBA32Float,                    MTLPixelFormatInvalid,                       MTLReadWriteTextureTier2,    { $R, $G, $B, $A }, true  }, // RGBA32F
+#if MTL_SWIZZLE
 		{ MTLPixelFormatB5G6R5Unorm,                    MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, true  }, // B5G6R5
 		{ MTLPixelFormatB5G6R5Unorm,                    MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $B, $G, $R, $A }, true  }, // R5G6B5
 		{ MTLPixelFormatABGR4Unorm,                     MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $G, $B, $A, $R }, true  }, // BGRA4
 		{ MTLPixelFormatABGR4Unorm,                     MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $A, $B, $G, $R }, true  }, // RGBA4
 		{ MTLPixelFormatBGR5A1Unorm,                    MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, true  }, // BGR5A1
 		{ MTLPixelFormatBGR5A1Unorm,                    MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $B, $G, $R, $A }, true  }, // RGB5A1
+#else
+    { MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // RGB8
+    { MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // RGB8
+    { MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // RGB8
+    { MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // RGB8
+    { MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // RGB8
+    { MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // RGB8
+#endif
 		{ MTLPixelFormatRGB10A2Unorm,                   MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, true  }, // RGB10A2
 		{ MTLPixelFormatRG11B10Float,                   MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, true  }, // RG11B10F
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // UnknownDepth
@@ -500,7 +527,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 			for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_LATENCY; ++ii)
 			{
-				m_uniformBuffers[ii] = m_device.newBufferWithLength(UNIFORM_BUFFER_SIZE, 0);
+				m_uniformBuffers[ii] = m_device.newBufferWithLength(BGFX_MTL_UNIFORM_BUFFER_SIZE, 0);
 			}
 
 			m_uniformBufferVertexOffset   = 0;
@@ -551,6 +578,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			m_screenshotBlitRenderPipelineState         = m_device.newRenderPipelineStateWithDescriptor(m_renderPipelineDescriptor);
 
 			{
+#if MTL_GPU_FAMILY
 				if ([m_device respondsToSelector: @selector(supportsFamily:)])
 				{
 					if ([m_device supportsFamily: MTLGPUFamily(1004) /*MTLGPUFamilyApple4*/])
@@ -575,6 +603,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 						}
 					}
 				}
+#endif
 
 #if BX_PLATFORM_OSX
 				if (0 == g_caps.vendorId)
@@ -2917,7 +2946,9 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			desc.mipmapLevelCount = ti.numMips;
 			desc.sampleCount      = 1;
 			desc.arrayLength      = ti.numLayers;
+#if MTL_SWIZZLE
 			desc.swizzle          = tfi.m_mapping;
+#endif
 
 			if (s_renderMtl->m_iOS9Runtime
 			||  s_renderMtl->m_macOS11Runtime)
