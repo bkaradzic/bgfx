@@ -1979,7 +1979,7 @@ VK_IMPORT_DEVICE
 			}
 
 			{
-				const uint32_t size = 256;
+				const uint32_t size = 256; // WAYVE: Increasing size, our vertex/frag constant buffers are larger than an average of 128 (by a fair amount..)
 				const uint32_t count = BGFX_CONFIG_MAX_DRAW_CALLS;
 				for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 				{
