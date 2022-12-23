@@ -76,6 +76,7 @@ namespace bgfx
 	// 4.2    420               11.0     vhdgf+c  5.0
 	// 4.3    430      vhdgf+c
 	// 4.4    440
+	// 4.6    460
 	//
 	// SPIR-V profile naming convention:
 	//  spirv<SPIR-V version>-<Vulkan version>
@@ -119,6 +120,7 @@ namespace bgfx
 		{  ShadingLang::GLSL,  420,    "420"        },
 		{  ShadingLang::GLSL,  430,    "430"        },
 		{  ShadingLang::GLSL,  440,    "440"        },
+		{  ShadingLang::GLSL,  460,    "460"        },
 	};
 
 	static const char* s_ARB_shader_texture_lod[] =
@@ -1704,7 +1706,9 @@ namespace bgfx
 		{
 			bx::StringView shader(input);
 			bx::StringView entry = bx::strFind(shader, "void main()");
-			if (entry.isEmpty() )
+			bx::StringView entryCustom = bx::strFind(shader, "void main(");
+			const bool useCustomMain = entry.isEmpty() && !entryCustom.isEmpty();
+			if (entry.isEmpty() && !useCustomMain)
 			{
 				bx::printf("Shader entry point 'void main()' is not found.\n");
 			}
@@ -1833,7 +1837,7 @@ namespace bgfx
 
 					*const_cast<char*>(entry.getPtr() + 4) = '_';
 
-					if ('f' == _options.shaderType)
+					if ('f' == _options.shaderType && !useCustomMain)
 					{
 						bx::StringView insert = bx::strFind(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
 						if (!insert.isEmpty() )
