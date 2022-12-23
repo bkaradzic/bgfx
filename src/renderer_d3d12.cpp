@@ -6787,68 +6787,54 @@ namespace bgfx { namespace d3d12
 					}
 				}
 
-				const uint64_t newFlags = draw.m_stateFlags;
-				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
-				currentState.m_stateFlags = newFlags;
-
-				if (0 != (BGFX_STATE_PT_MASK & changedFlags) )
-				{
-					primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
-				}
-
-				const uint64_t newStencil = draw.m_stencil;
-				uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
-				currentState.m_stencil = newStencil;
-
-				if (resetState)
-				{
-					wasCompute = false;
-
-					currentState.clear();
-					currentState.m_scissor = !draw.m_scissor;
-					changedFlags = BGFX_STATE_MASK;
-					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
-					currentState.m_stateFlags = newFlags;
-					currentState.m_stencil    = newStencil;
-
-					currentBind.clear();
-
-					commandListChanged = true;
-				}
-
-				if (commandListChanged)
-				{
-					commandListChanged = false;
-
-					m_commandList->SetGraphicsRootSignature(m_rootSignature);
-					ID3D12DescriptorHeap* heaps[] = {
-						m_samplerAllocator.getHeap(),
-						scratchBuffer.getHeap(),
-					};
-					m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
-
-					currentPso             = NULL;
-					currentBindHash        = 0;
-					currentSamplerStateIdx = kInvalidHandle;
-					currentProgram         = BGFX_INVALID_HANDLE;
-					currentState.clear();
-					currentState.m_scissor = !draw.m_scissor;
-					changedFlags = BGFX_STATE_MASK;
-					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
-					currentState.m_stateFlags = newFlags;
-					currentState.m_stencil    = newStencil;
-
-					currentBind.clear();
-
-					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
-					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
-				}
-
-				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
-				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
-
 				if (0 != draw.m_streamMask)
 				{
+					const uint64_t newFlags = draw.m_stateFlags;
+					uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
+					currentState.m_stateFlags = newFlags;
+
+					if (0 != (BGFX_STATE_PT_MASK & changedFlags) )
+					{
+						primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
+					}
+
+					const uint64_t newStencil = draw.m_stencil;
+					uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
+					currentState.m_stencil = newStencil;
+
+					if (resetState
+					||  commandListChanged)
+					{
+						wasCompute = false;
+						commandListChanged = false;
+
+						m_commandList->SetGraphicsRootSignature(m_rootSignature);
+						ID3D12DescriptorHeap* heaps[] = {
+							m_samplerAllocator.getHeap(),
+							scratchBuffer.getHeap(),
+						};
+						m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
+
+						currentPso             = NULL;
+						currentBindHash        = 0;
+						currentSamplerStateIdx = kInvalidHandle;
+						currentProgram         = BGFX_INVALID_HANDLE;
+						currentState.clear();
+						currentState.m_scissor = !draw.m_scissor;
+						changedFlags = BGFX_STATE_MASK;
+						changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
+						currentState.m_stateFlags = newFlags;
+						currentState.m_stencil    = newStencil;
+
+						currentBind.clear();
+
+						const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
+						primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
+					}
+
+					bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
+					rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
+
 					currentState.m_streamMask             = draw.m_streamMask;
 					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
 					currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
@@ -6891,23 +6877,23 @@ namespace bgfx { namespace d3d12
 						}
 					}
 
-					ID3D12PipelineState* pso =
-						getPipelineState(state
-							, draw.m_stencil
-							, numStreams
-							, layouts
-							, key.m_program
-							, uint8_t(draw.m_instanceDataStride/16)
-							);
+					ID3D12PipelineState* pso = getPipelineState(
+						  state
+						, draw.m_stencil
+						, numStreams
+						, layouts
+						, key.m_program
+						, uint8_t(draw.m_instanceDataStride/16)
+						);
 
-					uint16_t scissor = draw.m_scissor;
-					uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
+					const uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
+
 					if (currentBindHash != bindHash
 					||  0 != changedStencil
 					|| (hasFactor && blendFactor != draw.m_rgba)
 					|| (0 != (BGFX_STATE_PT_MASK & changedFlags)
 					||  prim.m_topology != s_primInfo[primIndex].m_topology)
-					||  currentState.m_scissor != scissor
+					||  currentState.m_scissor != draw.m_scissor
 					||  pso != currentPso
 					||  hasOcclusionQuery)
 					{
@@ -7053,6 +7039,7 @@ namespace bgfx { namespace d3d12
 						m_commandList->IASetPrimitiveTopology(prim.m_topology);
 					}
 
+					const uint16_t scissor = draw.m_scissor;
 					if (currentState.m_scissor != scissor)
 					{
 						currentState.m_scissor = scissor;
