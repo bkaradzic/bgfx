@@ -52,6 +52,11 @@ jobs:
           ".build\${{ matrix.bindir }}\bin\geometryc${{ matrix.config }}.exe" --version
           ".build\${{ matrix.bindir }}\bin\shaderc${{ matrix.config }}.exe" --version
           ".build\${{ matrix.bindir }}\bin\texturec${{ matrix.config }}.exe" --version
+      - name: Archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: msvc-${{ matrix.config }}-${{ matrix.platform }}
+          path: bgfx/.build
   mingw:
     strategy:
       fail-fast: true
@@ -97,6 +102,11 @@ jobs:
           ".build\${{ matrix.bindir }}\bin\geometrycRelease.exe" --version
           ".build\${{ matrix.bindir }}\bin\shadercRelease.exe" --version
           ".build\${{ matrix.bindir }}\bin\texturecRelease.exe" --version
+      - name: Archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: mingw-${{ matrix.msystem }}
+          path: bgfx/.build
   linux:
     strategy:
       fail-fast: true
@@ -134,6 +144,11 @@ jobs:
           ".build/linux64_gcc/bin/geometryc${{ matrix.binsuffix}}" --version
           ".build/linux64_gcc/bin/shaderc${{ matrix.binsuffix}}" --version
           ".build/linux64_gcc/bin/texturec${{ matrix.binsuffix}}" --version
+      - name: Archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-${{ matrix.config }}64
+          path: bgfx/.build
   wasm:
     strategy:
       fail-fast: true
@@ -170,6 +185,11 @@ jobs:
         run: |
           cd bgfx
           ls -lash ".build/wasm/bin"
+      - name: Archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: wasm-${{ matrix.config }}
+          path: bgfx/.build
   osx:
     strategy:
       fail-fast: true
@@ -206,6 +226,11 @@ jobs:
           ".build/osx-x64/bin/geometryc${{ matrix.binsuffix}}" --version
           ".build/osx-x64/bin/shaderc${{ matrix.binsuffix}}" --version
           ".build/osx-x64/bin/texturec${{ matrix.binsuffix}}" --version
+      - name: Archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: osx-x64-${{ matrix.config }}
+          path: bgfx/.build
   android:
     strategy:
       fail-fast: true
@@ -248,3 +273,8 @@ jobs:
         run: |
           cd bgfx
           ls -lash ".build/android-${{ matrix.platform }}/bin"
+      - name: Archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-${{ matrix.platform }}
+          path: bgfx/.build
