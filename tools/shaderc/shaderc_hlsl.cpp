@@ -563,15 +563,9 @@ namespace bgfx { namespace hlsl
 			return false;
 		}
 
-		char profileAndType[100];
-		memset(profileAndType, 0, 100);
-		if (_options.shaderType == 'f') {
-			profileAndType[0] = 'p';
-		}
-		else {
-			profileAndType[0] = _options.shaderType;
-		}
-		strcat(profileAndType, profile);
+		char profileAndType[100] = {0};
+		profileAndType[0] = (_options.shaderType == 'f') ? 'p' : _options.shaderType;
+		bx::strCat(profileAndType, 100, profile);
 
 		s_compiler = load();
 
