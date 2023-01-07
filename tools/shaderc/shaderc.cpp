@@ -85,6 +85,7 @@ namespace bgfx
 	//       1.3      |       1.1      |      1311
 	//       1.4      |       1.1      |      1411
 	//       1.5      |       1.2      |      1512
+	//       1.6      |       1.3      |      1613
 
 	struct Profile
 	{
@@ -104,11 +105,12 @@ namespace bgfx
 		{  ShadingLang::HLSL,  500,    "s_5_0"      },
 		{  ShadingLang::Metal, 1000,   "metal"      },
 		{  ShadingLang::PSSL,  1000,   "pssl"       },
+		{  ShadingLang::SpirV, 1010,   "spirv"      },
+		{  ShadingLang::SpirV, 1010,   "spirv10-10" },
 		{  ShadingLang::SpirV, 1311,   "spirv13-11" },
 		{  ShadingLang::SpirV, 1411,   "spirv14-11" },
 		{  ShadingLang::SpirV, 1512,   "spirv15-12" },
-		{  ShadingLang::SpirV, 1010,   "spirv10-10" },
-		{  ShadingLang::SpirV, 1010,   "spirv"      },
+		{  ShadingLang::SpirV, 1613,   "spirv16-13" },
 		{  ShadingLang::GLSL,  120,    "120"        },
 		{  ShadingLang::GLSL,  130,    "130"        },
 		{  ShadingLang::GLSL,  140,    "140"        },
