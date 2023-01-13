@@ -211,10 +211,7 @@ jobs:
       fail-fast: true
       matrix:
         include: [
-          { platform: arm    },
           { platform: arm64  },
-          { platform: x86    },
-          { platform: x86_64 },
         ]
     name: android-${{ matrix.platform }}
     runs-on: ubuntu-22.04
