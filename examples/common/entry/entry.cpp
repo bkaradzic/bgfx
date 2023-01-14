@@ -530,10 +530,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	int runApp(AppI* _app, int _argc, const char* const* _argv)
 	{
+		setWindowSize(kDefaultWindowHandle, s_width, s_height);
+
 		_app->init(_argc, _argv, s_width, s_height);
 		bgfx::frame();
-
-		setWindowSize(kDefaultWindowHandle, s_width, s_height);
 
 #if BX_PLATFORM_EMSCRIPTEN
 		s_app = _app;
