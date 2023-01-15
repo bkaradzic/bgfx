@@ -29,16 +29,16 @@ namespace {
 using cbb_ptr = const opt::BasicBlock*;
 
 // Universal Limit of ResultID + 1
-const int kMaxResultId = 0x400000;
+constexpr int kMaxResultId = 0x400000;
 
 }  // namespace
 
 CFG::CFG(Module* module)
     : module_(module),
       pseudo_entry_block_(std::unique_ptr<Instruction>(
-          new Instruction(module->context(), SpvOpLabel, 0, 0, {}))),
+          new Instruction(module->context(), spv::Op::OpLabel, 0, 0, {}))),
       pseudo_exit_block_(std::unique_ptr<Instruction>(new Instruction(
-          module->context(), SpvOpLabel, 0, kMaxResultId, {}))) {
+          module->context(), spv::Op::OpLabel, 0, kMaxResultId, {}))) {
   for (auto& fn : *module) {
     for (auto& blk : fn) {
       RegisterBlock(&blk);
@@ -81,7 +81,7 @@ void CFG::ComputeStructuredOrder(Function* func, BasicBlock* root,
                                  BasicBlock* end,
                                  std::list<BasicBlock*>* order) {
   assert(module_->context()->get_feature_mgr()->HasCapability(
-             SpvCapabilityShader) &&
+             spv::Capability::Shader) &&
          "This only works on structured control flow");
 
   // Compute structured successors and do DFS.
@@ -228,7 +228,7 @@ BasicBlock* CFG::SplitLoopHeader(BasicBlock* bb) {
   // Create the new header bb basic bb.
   // Leave the phi instructions behind.
   auto iter = bb->begin();
-  while (iter->opcode() == SpvOpPhi) {
+  while (iter->opcode() == spv::Op::OpPhi) {
     ++iter;
   }
 
@@ -304,7 +304,7 @@ BasicBlock* CFG::SplitLoopHeader(BasicBlock* bb) {
       context, bb,
       IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
   bb->AddInstruction(
-      MakeUnique<Instruction>(context, SpvOpBranch, 0, 0,
+      MakeUnique<Instruction>(context, spv::Op::OpBranch, 0, 0,
                               std::initializer_list<Operand>{
                                   {SPV_OPERAND_TYPE_ID, {new_header->id()}}}));
   context->AnalyzeUses(bb->terminator());

@@ -253,7 +253,7 @@ inline void Function::RemoveEmptyBlocks() {
   auto first_empty =
       std::remove_if(std::begin(blocks_), std::end(blocks_),
                      [](const std::unique_ptr<BasicBlock>& bb) -> bool {
-                       return bb->GetLabelInst()->opcode() == SpvOpNop;
+                       return bb->GetLabelInst()->opcode() == spv::Op::OpNop;
                      });
   blocks_.erase(first_empty, std::end(blocks_));
 }

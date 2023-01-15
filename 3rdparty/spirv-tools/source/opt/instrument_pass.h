@@ -55,13 +55,14 @@
 
 namespace spvtools {
 namespace opt {
-
+namespace {
 // Validation Ids
 // These are used to identify the general validation being done and map to
 // its output buffers.
-static const uint32_t kInstValidationIdBindless = 0;
-static const uint32_t kInstValidationIdBuffAddr = 1;
-static const uint32_t kInstValidationIdDebugPrintf = 2;
+constexpr uint32_t kInstValidationIdBindless = 0;
+constexpr uint32_t kInstValidationIdBuffAddr = 1;
+constexpr uint32_t kInstValidationIdDebugPrintf = 2;
+}  // namespace
 
 class InstrumentPass : public Pass {
   using cbb_ptr = const BasicBlock*;

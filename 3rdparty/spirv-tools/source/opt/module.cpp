@@ -69,14 +69,14 @@ std::vector<const Instruction*> Module::GetConstants() const {
   return const_insts;
 }
 
-uint32_t Module::GetGlobalValue(SpvOp opcode) const {
+uint32_t Module::GetGlobalValue(spv::Op opcode) const {
   for (auto& inst : types_values_) {
     if (inst.opcode() == opcode) return inst.result_id();
   }
   return 0;
 }
 
-void Module::AddGlobalValue(SpvOp opcode, uint32_t result_id,
+void Module::AddGlobalValue(spv::Op opcode, uint32_t result_id,
                             uint32_t type_id) {
   std::unique_ptr<Instruction> newGlobal(
       new Instruction(context(), opcode, type_id, result_id, {}));
@@ -159,7 +159,6 @@ void Module::ToBinary(std::vector<uint32_t>* binary, bool skip_nop) const {
     if (between_merge_and_branch && i->IsLineInst()) {
       return;
     }
-    between_merge_and_branch = false;
     if (last_line_inst != nullptr) {
       // If the current instruction is OpLine or DebugLine and it is the same
       // as the last line instruction that is still effective (can be applied
@@ -181,28 +180,30 @@ void Module::ToBinary(std::vector<uint32_t>* binary, bool skip_nop) const {
                                      ->get_feature_mgr()
                                      ->GetExtInstImportId_Shader100DebugInfo();
         if (shader_set_id != 0) {
-          binary->push_back((5 << 16) | static_cast<uint16_t>(SpvOpExtInst));
+          binary->push_back((5 << 16) |
+                            static_cast<uint16_t>(spv::Op::OpExtInst));
           binary->push_back(context()->get_type_mgr()->GetVoidTypeId());
           binary->push_back(context()->TakeNextId());
           binary->push_back(shader_set_id);
           binary->push_back(NonSemanticShaderDebugInfo100DebugNoLine);
         } else {
-          binary->push_back((1 << 16) | static_cast<uint16_t>(SpvOpNoLine));
+          binary->push_back((1 << 16) |
+                            static_cast<uint16_t>(spv::Op::OpNoLine));
         }
         last_line_inst = nullptr;
       }
     }
 
-    if (opcode == SpvOpLabel) {
+    if (opcode == spv::Op::OpLabel) {
       between_label_and_phi_var = true;
-    } else if (opcode != SpvOpVariable && opcode != SpvOpPhi &&
+    } else if (opcode != spv::Op::OpVariable && opcode != spv::Op::OpPhi &&
                !spvtools::opt::IsOpLineInst(opcode)) {
       between_label_and_phi_var = false;
     }
 
     if (!(skip_nop && i->IsNop())) {
       const auto& scope = i->GetDebugScope();
-      if (scope != last_scope) {
+      if (scope != last_scope && !between_merge_and_branch) {
         // Can only emit nonsemantic instructions after all phi instructions
         // in a block so don't emit scope instructions before phi instructions
         // for NonSemantic.Shader.DebugInfo.100.
@@ -221,9 +222,11 @@ void Module::ToBinary(std::vector<uint32_t>* binary, bool skip_nop) const {
       i->ToBinaryWithoutAttachedDebugInsts(binary);
     }
     // Update the last line instruction.
+    between_merge_and_branch = false;
     if (spvOpcodeIsBlockTerminator(opcode) || i->IsNoLine()) {
       last_line_inst = nullptr;
-    } else if (opcode == SpvOpLoopMerge || opcode == SpvOpSelectionMerge) {
+    } else if (opcode == spv::Op::OpLoopMerge ||
+               opcode == spv::Op::OpSelectionMerge) {
       between_merge_and_branch = true;
       last_line_inst = nullptr;
     } else if (i->IsLine()) {
@@ -272,7 +275,7 @@ uint32_t Module::GetExtInstImportId(const char* extstr) {
 std::ostream& operator<<(std::ostream& str, const Module& module) {
   module.ForEachInst([&str](const Instruction* inst) {
     str << *inst;
-    if (inst->opcode() != SpvOpFunctionEnd) {
+    if (inst->opcode() != spv::Op::OpFunctionEnd) {
       str << std::endl;
     }
   });

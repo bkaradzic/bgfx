@@ -55,8 +55,8 @@ namespace {
 // called on each node traversed BEFORE their children.
 template <typename BBType, typename SuccessorLambda, typename PreLambda,
           typename PostLambda>
-static void DepthFirstSearch(const BBType* bb, SuccessorLambda successors,
-                             PreLambda pre, PostLambda post) {
+void DepthFirstSearch(const BBType* bb, SuccessorLambda successors,
+                      PreLambda pre, PostLambda post) {
   auto no_terminal_blocks = [](const BBType*) { return false; };
   CFA<BBType>::DepthFirstTraversal(bb, successors, pre, post,
                                    no_terminal_blocks);
@@ -73,9 +73,8 @@ static void DepthFirstSearch(const BBType* bb, SuccessorLambda successors,
 // PostLambda - Lamdba matching the signature of 'void (const BBType*)' will be
 // called on each node traversed after their children.
 template <typename BBType, typename SuccessorLambda, typename PostLambda>
-static void DepthFirstSearchPostOrder(const BBType* bb,
-                                      SuccessorLambda successors,
-                                      PostLambda post) {
+void DepthFirstSearchPostOrder(const BBType* bb, SuccessorLambda successors,
+                               PostLambda post) {
   // Ignore preorder operation.
   auto nop_preorder = [](const BBType*) {};
   DepthFirstSearch(bb, successors, nop_preorder, post);

@@ -1,5 +1,5 @@
-static const SpvCapability pygen_variable_caps_Float64[] = {SpvCapabilityFloat64};
-static const SpvCapability pygen_variable_caps_InterpolationFunction[] = {SpvCapabilityInterpolationFunction};
+static const spv::Capability pygen_variable_caps_Float64[] = {spv::Capability::Float64};
+static const spv::Capability pygen_variable_caps_InterpolationFunction[] = {spv::Capability::InterpolationFunction};
 
 static const spv_ext_inst_desc_t glsl_entries[] = {
   {"Round", 1, 0, nullptr, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_NONE}},

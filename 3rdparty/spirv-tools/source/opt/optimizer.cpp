@@ -60,6 +60,7 @@ struct Optimizer::Impl {
 
   spv_target_env target_env;      // Target environment.
   opt::PassManager pass_manager;  // Internal implementation pass manager.
+  std::unordered_set<uint32_t> live_locs;  // Arg to debug dead output passes
 };
 
 Optimizer::Optimizer(spv_target_env env) : impl_(new Impl(env)) {
@@ -524,7 +525,7 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
   } else if (pass_name == "remove-dont-inline") {
     RegisterPass(CreateRemoveDontInlinePass());
   } else if (pass_name == "eliminate-dead-input-components") {
-    RegisterPass(CreateEliminateDeadInputComponentsPass());
+    RegisterPass(CreateEliminateDeadInputComponentsSafePass());
   } else if (pass_name == "fix-func-call-param") {
     RegisterPass(CreateFixFuncCallArgumentsPass());
   } else if (pass_name == "convert-to-sampled-image") {
@@ -784,14 +785,10 @@ Optimizer::PassToken CreateLocalMultiStoreElimPass() {
       MakeUnique<opt::SSARewritePass>());
 }
 
-Optimizer::PassToken CreateAggressiveDCEPass() {
+Optimizer::PassToken CreateAggressiveDCEPass(bool preserve_interface,
+                                             bool remove_outputs) {
   return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::AggressiveDCEPass>(false));
-}
-
-Optimizer::PassToken CreateAggressiveDCEPass(bool preserve_interface) {
-  return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::AggressiveDCEPass>(preserve_interface));
+      MakeUnique<opt::AggressiveDCEPass>(preserve_interface, remove_outputs));
 }
 
 Optimizer::PassToken CreateRemoveUnusedInterfaceVariablesPass() {
@@ -1016,7 +1013,34 @@ Optimizer::PassToken CreateInterpolateFixupPass() {
 
 Optimizer::PassToken CreateEliminateDeadInputComponentsPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::EliminateDeadInputComponentsPass>());
+      MakeUnique<opt::EliminateDeadIOComponentsPass>(spv::StorageClass::Input,
+                                                     /* safe_mode */ false));
+}
+
+Optimizer::PassToken CreateEliminateDeadOutputComponentsPass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::EliminateDeadIOComponentsPass>(spv::StorageClass::Output,
+                                                     /* safe_mode */ false));
+}
+
+Optimizer::PassToken CreateEliminateDeadInputComponentsSafePass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::EliminateDeadIOComponentsPass>(spv::StorageClass::Input,
+                                                     /* safe_mode */ true));
+}
+
+Optimizer::PassToken CreateAnalyzeLiveInputPass(
+    std::unordered_set<uint32_t>* live_locs,
+    std::unordered_set<uint32_t>* live_builtins) {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::AnalyzeLiveInputPass>(live_locs, live_builtins));
+}
+
+Optimizer::PassToken CreateEliminateDeadOutputStoresPass(
+    std::unordered_set<uint32_t>* live_locs,
+    std::unordered_set<uint32_t>* live_builtins) {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::EliminateDeadOutputStoresPass>(live_locs, live_builtins));
 }
 
 Optimizer::PassToken CreateConvertToSampledImagePass(

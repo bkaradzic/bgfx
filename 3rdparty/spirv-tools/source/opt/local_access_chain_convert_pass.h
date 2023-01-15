@@ -64,7 +64,7 @@ class LocalAccessChainConvertPass : public MemPass {
 
   // Build instruction from |opcode|, |typeId|, |resultId|, and |in_opnds|.
   // Append to |newInsts|.
-  void BuildAndAppendInst(SpvOp opcode, uint32_t typeId, uint32_t resultId,
+  void BuildAndAppendInst(spv::Op opcode, uint32_t typeId, uint32_t resultId,
                           const std::vector<Operand>& in_opnds,
                           std::vector<std::unique_ptr<Instruction>>* newInsts);
 
