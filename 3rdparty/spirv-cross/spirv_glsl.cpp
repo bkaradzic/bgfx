@@ -3181,7 +3181,6 @@ void CompilerGLSL::emit_declared_builtin_block(StorageClass storage, ExecutionMo
 	Bitset global_builtins;
 	const SPIRVariable *block_var = nullptr;
 	bool emitted_block = false;
-	bool builtin_array = false;
 
 	// Need to use declared size in the type.
 	// These variables might have been declared, but not statically used, so we haven't deduced their size yet.
@@ -3305,7 +3304,6 @@ void CompilerGLSL::emit_declared_builtin_block(StorageClass storage, ExecutionMo
 
 		emitted_builtins = builtins;
 		emitted_block = true;
-		builtin_array = !type.array.empty();
 		block_var = &var;
 	});
 
@@ -3404,12 +3402,23 @@ void CompilerGLSL::emit_declared_builtin_block(StorageClass storage, ExecutionMo
 			statement("float gl_CullDistance[", cull_distance_size, "];");
 	}
 
+	bool builtin_array = model == ExecutionModelTessellationControl ||
+	                     (model == ExecutionModelMeshEXT && storage == StorageClassOutput) ||
+	                     (model == ExecutionModelGeometry && storage == StorageClassInput) ||
+	                     (model == ExecutionModelTessellationEvaluation && storage == StorageClassInput);
+
 	if (builtin_array)
 	{
-		if (model == ExecutionModelTessellationControl && storage == StorageClassOutput)
-			end_scope_decl(join(to_name(block_var->self), "[", get_entry_point().output_vertices, "]"));
+		const char *instance_name;
+		if (model == ExecutionModelMeshEXT)
+			instance_name = "gl_MeshVerticesEXT"; // Per primitive is never synthesized.
 		else
-			end_scope_decl(join(to_name(block_var->self), "[]"));
+			instance_name = storage == StorageClassInput ? "gl_in" : "gl_out";
+
+		if (model == ExecutionModelTessellationControl && storage == StorageClassOutput)
+			end_scope_decl(join(instance_name, "[", get_entry_point().output_vertices, "]"));
+		else
+			end_scope_decl(join(instance_name, "[]"));
 	}
 	else
 		end_scope_decl();
@@ -4362,8 +4371,18 @@ void CompilerGLSL::emit_extension_workarounds(spv::ExecutionModel model)
 		for (auto &type_id : workaround_ubo_load_overload_types)
 		{
 			auto &type = get<SPIRType>(type_id);
-			statement(type_to_glsl(type), " spvWorkaroundRowMajor(", type_to_glsl(type),
-			          " wrap) { return wrap; }");
+
+			if (options.es && is_matrix(type))
+			{
+				// Need both variants.
+				// GLSL cannot overload on precision, so need to dispatch appropriately.
+				statement("highp ", type_to_glsl(type), " spvWorkaroundRowMajor(highp ", type_to_glsl(type), " wrap) { return wrap; }");
+				statement("mediump ", type_to_glsl(type), " spvWorkaroundRowMajorMP(mediump ", type_to_glsl(type), " wrap) { return wrap; }");
+			}
+			else
+			{
+				statement(type_to_glsl(type), " spvWorkaroundRowMajor(", type_to_glsl(type), " wrap) { return wrap; }");
+			}
 		}
 		statement("");
 	}
@@ -4955,9 +4974,9 @@ SmallVector<ConstantID> CompilerGLSL::get_composite_constant_ids(ConstantID cons
 		if (is_array(type) || type.basetype == SPIRType::Struct)
 			return constant->subconstants;
 		if (is_matrix(type))
-			return constant->m.id;
+			return SmallVector<ConstantID>(constant->m.id);
 		if (is_vector(type))
-			return constant->m.c[0].id;
+			return SmallVector<ConstantID>(constant->m.c[0].id);
 		SPIRV_CROSS_THROW("Unexpected scalar constant!");
 	}
 	if (!const_composite_insert_ids.count(const_id))
@@ -7280,8 +7299,14 @@ std::string CompilerGLSL::to_texture_op(const Instruction &i, bool sparse, bool 
 	args.grad_x = grad_x;
 	args.grad_y = grad_y;
 	args.lod = lod;
-	args.coffset = coffset;
-	args.offset = offset;
+
+	if (coffsets)
+		args.offset = coffsets;
+	else if (coffset)
+		args.offset = coffset;
+	else
+		args.offset = offset;
+
 	args.bias = bias;
 	args.component = comp;
 	args.sample = sample;
@@ -7673,13 +7698,7 @@ string CompilerGLSL::to_function_args(const TextureFunctionArguments &args, bool
 		farg_str += ", 0";
 	}
 
-	if (args.coffset)
-	{
-		forward = forward && should_forward(args.coffset);
-		farg_str += ", ";
-		farg_str += bitcast_expression(SPIRType::Int, args.coffset);
-	}
-	else if (args.offset)
+	if (args.offset)
 	{
 		forward = forward && should_forward(args.offset);
 		farg_str += ", ";
@@ -10082,7 +10101,7 @@ bool CompilerGLSL::should_dereference(uint32_t id)
 			// same type. Can't check type.self, because for some reason that's
 			// usually the base type with pointers stripped off. This check is
 			// complex enough that I've hoisted it out of the while condition.
-			if (src_type.pointer != type.pointer || src_type.pointer_depth != type.pointer ||
+			if (src_type.pointer != type.pointer || src_type.pointer_depth != type.pointer_depth ||
 			    src_type.parent_type != type.parent_type)
 				break;
 			if ((var = maybe_get<SPIRVariable>(expr->loaded_from)))
@@ -13310,7 +13329,8 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 			emit_spv_amd_gcn_shader_op(ops[0], ops[1], ops[3], &ops[4], length - 4);
 		}
 		else if (ext == SPIRExtension::SPV_debug_info ||
-		         ext == SPIRExtension::NonSemanticShaderDebugInfo)
+		         ext == SPIRExtension::NonSemanticShaderDebugInfo ||
+		         ext == SPIRExtension::NonSemanticGeneric)
 		{
 			break; // Ignore SPIR-V debug information extended instructions.
 		}
@@ -17335,6 +17355,7 @@ void CompilerGLSL::rewrite_load_for_wrapped_row_major(std::string &expr, TypeID 
 
 	auto *type = &get<SPIRType>(loaded_type);
 	bool rewrite = false;
+	bool relaxed = options.es;
 
 	if (is_matrix(*type))
 	{
@@ -17345,24 +17366,31 @@ void CompilerGLSL::rewrite_load_for_wrapped_row_major(std::string &expr, TypeID 
 		// If an access chain occurred, the workaround is not required, so loading vectors or scalars don't need workaround.
 		type = &backing_type;
 	}
+	else
+	{
+		// If we're loading a composite, we don't have overloads like these.
+		relaxed = false;
+	}
 
 	if (type->basetype == SPIRType::Struct)
 	{
 		// If we're loading a struct where any member is a row-major matrix, apply the workaround.
 		for (uint32_t i = 0; i < uint32_t(type->member_types.size()); i++)
 		{
-			if (combined_decoration_for_member(*type, i).get(DecorationRowMajor))
-			{
+			auto decorations = combined_decoration_for_member(*type, i);
+			if (decorations.get(DecorationRowMajor))
 				rewrite = true;
-				break;
-			}
+
+			// Since we decide on a per-struct basis, only use mediump wrapper if all candidates are mediump.
+			if (!decorations.get(DecorationRelaxedPrecision))
+				relaxed = false;
 		}
 	}
 
 	if (rewrite)
 	{
 		request_workaround_wrapper_overload(loaded_type);
-		expr = join("spvWorkaroundRowMajor(", expr, ")");
+		expr = join("spvWorkaroundRowMajor", (relaxed ? "MP" : ""), "(", expr, ")");
 	}
 }
 

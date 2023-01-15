@@ -295,6 +295,8 @@ void Parser::parse(const Instruction &instruction)
 			spirv_ext = SPIRExtension::NonSemanticDebugPrintf;
 		else if (ext == "NonSemantic.Shader.DebugInfo.100")
 			spirv_ext = SPIRExtension::NonSemanticShaderDebugInfo;
+		else if (ext.find("NonSemantic.") == 0)
+			spirv_ext = SPIRExtension::NonSemanticGeneric;
 
 		set<SPIRExtension>(id, spirv_ext);
 		// Other SPIR-V extensions which have ExtInstrs are currently not supported.

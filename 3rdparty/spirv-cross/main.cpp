@@ -645,6 +645,7 @@ struct CLIArguments
 	bool msl_pad_fragment_output = false;
 	bool msl_domain_lower_left = false;
 	bool msl_argument_buffers = false;
+	uint32_t msl_argument_buffers_tier = 0;		// Tier 1
 	bool msl_texture_buffer_native = false;
 	bool msl_framebuffer_fetch = false;
 	bool msl_invariant_float_math = false;
@@ -856,8 +857,11 @@ static void print_help_msl()
 	                "\t[--msl-pad-fragment-output]:\n\t\tAlways emit color outputs as 4-component variables.\n"
 	                "\t\tIn Metal, the fragment shader must emit at least as many components as the render target format.\n"
 	                "\t[--msl-domain-lower-left]:\n\t\tUse a lower-left tessellation domain.\n"
-	                "\t[--msl-argument-buffers]:\n\t\tEmit Indirect Argument buffers instead of plain bindings.\n"
+	                "\t[--msl-argument-buffers]:\n\t\tEmit Metal argument buffers instead of discrete resource bindings.\n"
 	                "\t\tRequires MSL 2.0 to be enabled.\n"
+	                "\t[--msl-argument-buffers-tier]:\n\t\tWhen using Metal argument buffers, indicate the Metal argument buffer tier level supported by the Metal platform.\n"
+	                "\t\tUses same values as Metal MTLArgumentBuffersTier enumeration (0 = Tier1, 1 = Tier2).\n"
+	                "\t\tSetting this value also enables msl-argument-buffers.\n"
 	                "\t[--msl-texture-buffer-native]:\n\t\tEnable native support for texel buffers. Otherwise, it is emulated as a normal texture.\n"
 	                "\t[--msl-framebuffer-fetch]:\n\t\tImplement subpass inputs with frame buffer fetch.\n"
 	                "\t\tEmits [[color(N)]] inputs in fragment stage.\n"
@@ -1190,6 +1194,7 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		msl_opts.pad_fragment_output_components = args.msl_pad_fragment_output;
 		msl_opts.tess_domain_origin_lower_left = args.msl_domain_lower_left;
 		msl_opts.argument_buffers = args.msl_argument_buffers;
+		msl_opts.argument_buffers_tier = static_cast<CompilerMSL::Options::ArgumentBuffersTier>(args.msl_argument_buffers_tier);
 		msl_opts.texture_buffer_native = args.msl_texture_buffer_native;
 		msl_opts.multiview = args.msl_multiview;
 		msl_opts.multiview_layered_rendering = args.msl_multiview_layered_rendering;
@@ -1621,6 +1626,10 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--msl-pad-fragment-output", [&args](CLIParser &) { args.msl_pad_fragment_output = true; });
 	cbs.add("--msl-domain-lower-left", [&args](CLIParser &) { args.msl_domain_lower_left = true; });
 	cbs.add("--msl-argument-buffers", [&args](CLIParser &) { args.msl_argument_buffers = true; });
+	cbs.add("--msl-argument-buffer-tier", [&args](CLIParser &parser) {
+		args.msl_argument_buffers_tier = parser.next_uint();
+		args.msl_argument_buffers = true;
+	});
 	cbs.add("--msl-discrete-descriptor-set",
 	        [&args](CLIParser &parser) { args.msl_discrete_descriptor_sets.push_back(parser.next_uint()); });
 	cbs.add("--msl-device-argument-buffer",

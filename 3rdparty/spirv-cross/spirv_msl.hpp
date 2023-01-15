@@ -339,9 +339,24 @@ public:
 		bool dispatch_base = false;
 		bool texture_1D_as_2D = false;
 
-		// Enable use of MSL 2.0 indirect argument buffers.
+		// Enable use of Metal argument buffers.
 		// MSL 2.0 must also be enabled.
 		bool argument_buffers = false;
+
+		// Defines Metal argument buffer tier levels.
+		// Uses same values as Metal MTLArgumentBuffersTier enumeration.
+		enum class ArgumentBuffersTier
+		{
+			Tier1 = 0,
+			Tier2 = 1,
+		};
+
+		// When using Metal argument buffers, indicates the Metal argument buffer tier level supported by the Metal platform.
+		// Ignored when Options::argument_buffers is disabled.
+		// - Tier1 supports writable images on macOS, but not on iOS.
+		// - Tier2 supports writable images on macOS and iOS, and higher resource count limits.
+		// Tier capabilities based on recommendations from Apple engineering.
+		ArgumentBuffersTier argument_buffers_tier = ArgumentBuffersTier::Tier1;
 
 		// Ensures vertex and instance indices start at zero. This reflects the behavior of HLSL with SV_VertexID and SV_InstanceID.
 		bool enable_base_index_zero = false;
