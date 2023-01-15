@@ -1,4 +1,4 @@
-// dear imgui, v1.89.1 WIP
+// dear imgui, v1.89.3 WIP
 // (tables and columns code)
 
 /*
@@ -395,6 +395,14 @@ bool    ImGui::BeginTableEx(const char* name, ImGuiID id, int columns_count, ImG
         table->OuterRect = table->InnerWindow->Rect();
         table->InnerRect = table->InnerWindow->InnerRect;
         IM_ASSERT(table->InnerWindow->WindowPadding.x == 0.0f && table->InnerWindow->WindowPadding.y == 0.0f && table->InnerWindow->WindowBorderSize == 0.0f);
+
+        // When using multiple instances, ensure they have the same amount of horizontal decorations (aka vertical scrollbar) so stretched columns can be aligned)
+        if (instance_no == 0)
+        {
+            table->HasScrollbarYPrev = table->HasScrollbarYCurr;
+            table->HasScrollbarYCurr = false;
+        }
+        table->HasScrollbarYCurr |= (table->InnerWindow->ScrollMax.y > 0.0f);
     }
     else
     {
@@ -893,7 +901,8 @@ void ImGui::TableUpdateLayout(ImGuiTable* table)
     // [Part 4] Apply final widths based on requested widths
     const ImRect work_rect = table->WorkRect;
     const float width_spacings = (table->OuterPaddingX * 2.0f) + (table->CellSpacingX1 + table->CellSpacingX2) * (table->ColumnsEnabledCount - 1);
-    const float width_avail = ((table->Flags & ImGuiTableFlags_ScrollX) && table->InnerWidth == 0.0f) ? table->InnerClipRect.GetWidth() : work_rect.GetWidth();
+    const float width_removed = (table->HasScrollbarYPrev && !table->InnerWindow->ScrollbarY) ? g.Style.ScrollbarSize : 0.0f; // To synchronize decoration width of synched tables with mismatching scrollbar state (#5920)
+    const float width_avail = ImMax(1.0f, (((table->Flags & ImGuiTableFlags_ScrollX) && table->InnerWidth == 0.0f) ? table->InnerClipRect.GetWidth() : work_rect.GetWidth()) - width_removed);
     const float width_avail_for_stretched_columns = width_avail - width_spacings - sum_width_requests;
     float width_remaining_for_stretched_columns = width_avail_for_stretched_columns;
     table->ColumnsGivenWidth = width_spacings + (table->CellPaddingX * 2.0f) * table->ColumnsEnabledCount;
@@ -964,7 +973,7 @@ void ImGui::TableUpdateLayout(ImGuiTable* table)
         const int column_n = table->DisplayOrderToIndex[order_n];
         ImGuiTableColumn* column = &table->Columns[column_n];
 
-        column->NavLayerCurrent = (ImS8)((table->FreezeRowsCount > 0 || column_n < table->FreezeColumnsCount) ? ImGuiNavLayer_Menu : ImGuiNavLayer_Main);
+        column->NavLayerCurrent = (ImS8)(table->FreezeRowsCount > 0 ? ImGuiNavLayer_Menu : ImGuiNavLayer_Main); // Use Count NOT request so Header line changes layer when frozen
 
         if (offset_x_frozen && table->FreezeColumnsCount == visible_n)
         {
@@ -1123,6 +1132,13 @@ void ImGui::TableUpdateLayout(ImGuiTable* table)
     // This path will only be exercised when sort specs are modified before header rows (e.g. init or visibility change)
     if (table->IsSortSpecsDirty && (table->Flags & ImGuiTableFlags_Sortable))
         TableSortSpecsBuild(table);
+
+    // [Part 14] Setup inner window decoration size (for scrolling / nav tracking to properly take account of frozen rows/columns)
+    if (table->FreezeColumnsRequest > 0)
+        table->InnerWindow->DecoInnerSizeX1 = table->Columns[table->DisplayOrderToIndex[table->FreezeColumnsRequest - 1]].MaxX - table->OuterRect.Min.x;
+    if (table->FreezeRowsRequest > 0)
+        table->InnerWindow->DecoInnerSizeY1 = table_instance->LastFrozenHeight;
+    table_instance->LastFrozenHeight = 0.0f;
 
     // Initial state
     ImGuiWindow* inner_window = table->InnerWindow;
@@ -1839,17 +1855,15 @@ void ImGui::TableEndRow(ImGuiTable* table)
     // get the new cursor position.
     if (unfreeze_rows_request)
         for (int column_n = 0; column_n < table->ColumnsCount; column_n++)
-        {
-            ImGuiTableColumn* column = &table->Columns[column_n];
-            column->NavLayerCurrent = (ImS8)((column_n < table->FreezeColumnsCount) ? ImGuiNavLayer_Menu : ImGuiNavLayer_Main);
-        }
+            table->Columns[column_n].NavLayerCurrent = ImGuiNavLayer_Main;
     if (unfreeze_rows_actual)
     {
         IM_ASSERT(table->IsUnfrozenRows == false);
+        const float y0 = ImMax(table->RowPosY2 + 1, window->InnerClipRect.Min.y);
         table->IsUnfrozenRows = true;
+        TableGetInstanceData(table, table->InstanceCurrent)->LastFrozenHeight = y0 - table->OuterRect.Min.y;
 
         // BgClipRect starts as table->InnerClipRect, reduce it now and make BgClipRectForDrawCmd == BgClipRect
-        float y0 = ImMax(table->RowPosY2 + 1, window->InnerClipRect.Min.y);
         table->BgClipRect.Min.y = table->Bg2ClipRectForDrawCmd.Min.y = ImMin(y0, window->InnerClipRect.Max.y);
         table->BgClipRect.Max.y = table->Bg2ClipRectForDrawCmd.Max.y = window->InnerClipRect.Max.y;
         table->Bg2DrawChannelCurrent = table->Bg2DrawChannelUnfrozen;

@@ -1,4 +1,4 @@
-// dear imgui, v1.89.1 WIP
+// dear imgui, v1.89.3 WIP
 // (drawing and font code)
 
 /*
@@ -447,11 +447,13 @@ void ImDrawList::AddDrawCmd()
 // Note that this leaves the ImDrawList in a state unfit for further commands, as most code assume that CmdBuffer.Size > 0 && CmdBuffer.back().UserCallback == NULL
 void ImDrawList::_PopUnusedDrawCmd()
 {
-    if (CmdBuffer.Size == 0)
-        return;
-    ImDrawCmd* curr_cmd = &CmdBuffer.Data[CmdBuffer.Size - 1];
-    if (curr_cmd->ElemCount == 0 && curr_cmd->UserCallback == NULL)
+    while (CmdBuffer.Size > 0)
+    {
+        ImDrawCmd* curr_cmd = &CmdBuffer.Data[CmdBuffer.Size - 1];
+        if (curr_cmd->ElemCount != 0 || curr_cmd->UserCallback != NULL)
+            return;// break;
         CmdBuffer.pop_back();
+    }
 }
 
 void ImDrawList::AddCallback(ImDrawCallback callback, void* callback_data)
@@ -2935,19 +2937,19 @@ const ImWchar*  ImFontAtlas::GetGlyphRangesJapanese()
     // 2999 ideograms code points for Japanese
     // - 2136 Joyo (meaning "for regular use" or "for common use") Kanji code points
     // - 863 Jinmeiyo (meaning "for personal name") Kanji code points
-    // - Sourced from the character information database of the Information-technology Promotion Agency, Japan
-    //   - https://mojikiban.ipa.go.jp/mji/
-    //   - Available under the terms of the Creative Commons Attribution-ShareAlike 2.1 Japan (CC BY-SA 2.1 JP).
-    //     - https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en
-    //     - https://creativecommons.org/licenses/by-sa/2.1/jp/legalcode
-    //   - You can generate this code by the script at:
-    //     - https://github.com/vaiorabbit/everyday_use_kanji
+    // - Sourced from official information provided by the government agencies of Japan:
+    //   - List of Joyo Kanji by the Agency for Cultural Affairs
+    //     - https://www.bunka.go.jp/kokugo_nihongo/sisaku/joho/joho/kijun/naikaku/kanji/
+    //   - List of Jinmeiyo Kanji by the Ministry of Justice
+    //     - http://www.moj.go.jp/MINJI/minji86.html
+    //   - Available under the terms of the Creative Commons Attribution 4.0 International (CC BY 4.0).
+    //     - https://creativecommons.org/licenses/by/4.0/legalcode
+    // - You can generate this code by the script at:
+    //   - https://github.com/vaiorabbit/everyday_use_kanji
     // - References:
     //   - List of Joyo Kanji
-    //     - (Official list by the Agency for Cultural Affairs) https://www.bunka.go.jp/kokugo_nihongo/sisaku/joho/joho/kakuki/14/tosin02/index.html
     //     - (Wikipedia) https://en.wikipedia.org/wiki/List_of_j%C5%8Dy%C5%8D_kanji
     //   - List of Jinmeiyo Kanji
-    //     - (Official list by the Ministry of Justice) http://www.moj.go.jp/MINJI/minji86.html
     //     - (Wikipedia) https://en.wikipedia.org/wiki/Jinmeiy%C5%8D_kanji
     // - Missing 1 Joyo Kanji: U+20B9F (Kun'yomi: Shikaru, On'yomi: Shitsu,shichi), see https://github.com/ocornut/imgui/pull/3627 for details.
     // You can use ImFontGlyphRangesBuilder to create your own ranges derived from this, by merging existing ranges or adding new characters.
@@ -3110,7 +3112,8 @@ ImFont::ImFont()
     FallbackAdvanceX = 0.0f;
     FallbackChar = (ImWchar)-1;
     EllipsisChar = (ImWchar)-1;
-    DotChar = (ImWchar)-1;
+    EllipsisWidth = EllipsisCharStep = 0.0f;
+    EllipsisCharCount = 0;
     FallbackGlyph = NULL;
     ContainerAtlas = NULL;
     ConfigData = NULL;
@@ -3198,8 +3201,20 @@ void ImFont::BuildLookupTable()
     const ImWchar dots_chars[] = { (ImWchar)'.', (ImWchar)0xFF0E };
     if (EllipsisChar == (ImWchar)-1)
         EllipsisChar = FindFirstExistingGlyph(this, ellipsis_chars, IM_ARRAYSIZE(ellipsis_chars));
-    if (DotChar == (ImWchar)-1)
-        DotChar = FindFirstExistingGlyph(this, dots_chars, IM_ARRAYSIZE(dots_chars));
+    const ImWchar dot_char = FindFirstExistingGlyph(this, dots_chars, IM_ARRAYSIZE(dots_chars));
+    if (EllipsisChar != (ImWchar)-1)
+    {
+        EllipsisCharCount = 1;
+        EllipsisWidth = EllipsisCharStep = FindGlyph(EllipsisChar)->X1;
+    }
+    else if (dot_char != (ImWchar)-1)
+    {
+        const ImFontGlyph* glyph = FindGlyph(dot_char);
+        EllipsisChar = dot_char;
+        EllipsisCharCount = 3;
+        EllipsisCharStep = (glyph->X1 - glyph->X0) + 1.0f;
+        EllipsisWidth = EllipsisCharStep * 3.0f - 1.0f;
+    }
 
     // Setup fallback character
     const ImWchar fallback_chars[] = { (ImWchar)IM_UNICODE_CODEPOINT_INVALID, (ImWchar)'?', (ImWchar)' ' };
@@ -3367,6 +3382,7 @@ const char* ImFont::CalcWordWrapPositionA(float scale, const char* text, const c
     bool inside_word = true;
 
     const char* s = text;
+    IM_ASSERT(text_end != NULL);
     while (s < text_end)
     {
         unsigned int c = (unsigned int)*s;
@@ -3375,8 +3391,6 @@ const char* ImFont::CalcWordWrapPositionA(float scale, const char* text, const c
             next_s = s + 1;
         else
             next_s = s + ImTextCharFromUtf8(&c, s, text_end);
-        if (c == 0)
-            break;
 
         if (c < 32)
         {
@@ -3482,15 +3496,9 @@ ImVec2 ImFont::CalcTextSizeA(float size, float max_width, float wrap_width, cons
         const char* prev_s = s;
         unsigned int c = (unsigned int)*s;
         if (c < 0x80)
-        {
             s += 1;
-        }
         else
-        {
             s += ImTextCharFromUtf8(&c, s, text_end);
-            if (c == 0) // Malformed UTF-8?
-                break;
-        }
 
         if (c < 32)
         {
@@ -3565,17 +3573,18 @@ void ImFont::RenderText(ImDrawList* draw_list, float size, const ImVec2& pos, Im
         while (y + line_height < clip_rect.y && s < text_end)
         {
             const char* line_end = (const char*)memchr(s, '\n', text_end - s);
+            const char* line_next = line_end ? line_end + 1 : text_end;
             if (word_wrap_enabled)
             {
                 // FIXME-OPT: This is not optimal as do first do a search for \n before calling CalcWordWrapPositionA().
                 // If the specs for CalcWordWrapPositionA() were reworked to optionally return on \n we could combine both.
                 // However it is still better than nothing performing the fast-forward!
-                s = CalcWordWrapPositionA(scale, s, line_end, wrap_width);
+                s = CalcWordWrapPositionA(scale, s, line_next, wrap_width);
                 s = CalcWordWrapNextLineStartA(s, text_end);
             }
             else
             {
-                s = line_end ? line_end + 1 : text_end;
+                s = line_next;
             }
             y += line_height;
         }
@@ -3631,15 +3640,9 @@ void ImFont::RenderText(ImDrawList* draw_list, float size, const ImVec2& pos, Im
         // Decode and advance source
         unsigned int c = (unsigned int)*s;
         if (c < 0x80)
-        {
             s += 1;
-        }
         else
-        {
             s += ImTextCharFromUtf8(&c, s, text_end);
-            if (c == 0) // Malformed UTF-8?
-                break;
-        }
 
         if (c < 32)
         {
