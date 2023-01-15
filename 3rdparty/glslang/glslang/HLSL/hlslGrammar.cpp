@@ -3794,7 +3794,7 @@ bool HlslGrammar::acceptIterationStatement(TIntermNode*& statement, const TAttri
         parseContext.unnestLooping();
         --parseContext.controlFlowNestingLevel;
 
-        loopNode = intermediate.addLoop(statement, condition, 0, false, loc);
+        loopNode = intermediate.addLoop(statement, condition, nullptr, false, loc);
         statement = loopNode;
         break;
 

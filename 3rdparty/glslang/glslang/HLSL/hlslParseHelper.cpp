@@ -1596,7 +1596,7 @@ void HlslParseContext::handleFunctionDeclarator(const TSourceLoc& loc, TFunction
     //
     bool builtIn;
     TSymbol* symbol = symbolTable.find(function.getMangledName(), &builtIn);
-    const TFunction* prevDec = symbol ? symbol->getAsFunction() : 0;
+    const TFunction* prevDec = symbol ? symbol->getAsFunction() : nullptr;
 
     if (prototype) {
         // All built-in functions are defined, even though they don't have a body.
@@ -2472,7 +2472,7 @@ TIntermNode* HlslParseContext::handleReturnValue(const TSourceLoc& loc, TIntermT
 void HlslParseContext::handleFunctionArgument(TFunction* function,
                                               TIntermTyped*& arguments, TIntermTyped* newArg)
 {
-    TParameter param = { 0, new TType, nullptr };
+    TParameter param = { nullptr, new TType, nullptr };
     param.type->shallowCopy(newArg->getType());
 
     function->addParameter(param);
@@ -7790,18 +7790,18 @@ const TFunction* HlslParseContext::findFunction(const TSourceLoc& loc, TFunction
             // Handle aggregates: put all args into the new function call
             for (int arg = 0; arg < int(args->getAsAggregate()->getSequence().size()); ++arg) {
                 // TODO: But for constness, we could avoid the new & shallowCopy, and use the pointer directly.
-                TParameter param = { 0, new TType, nullptr };
+                TParameter param = { nullptr, new TType, nullptr };
                 param.type->shallowCopy(args->getAsAggregate()->getSequence()[arg]->getAsTyped()->getType());
                 convertedCall.addParameter(param);
             }
         } else if (args->getAsUnaryNode()) {
             // Handle unaries: put all args into the new function call
-            TParameter param = { 0, new TType, nullptr };
+            TParameter param = { nullptr, new TType, nullptr };
             param.type->shallowCopy(args->getAsUnaryNode()->getOperand()->getAsTyped()->getType());
             convertedCall.addParameter(param);
         } else if (args->getAsTyped()) {
             // Handle bare e.g, floats, not in an aggregate.
-            TParameter param = { 0, new TType, nullptr };
+            TParameter param = { nullptr, new TType, nullptr };
             param.type->shallowCopy(args->getAsTyped()->getType());
             convertedCall.addParameter(param);
         } else {

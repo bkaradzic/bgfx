@@ -504,7 +504,7 @@ void ProcessGlobalBlockSettings(int& argc, char**& argv, std::string* name, unsi
 
     if (set) {
         errno = 0;
-        int setVal = ::strtol(argv[curArg], NULL, 10);
+        int setVal = ::strtol(argv[curArg], nullptr, 10);
         if (errno || setVal < 0) {
             printf("%s: invalid set\n", argv[curArg]);
             usage();
@@ -516,7 +516,7 @@ void ProcessGlobalBlockSettings(int& argc, char**& argv, std::string* name, unsi
 
     if (binding) {
         errno = 0;
-        int bindingVal = ::strtol(argv[curArg], NULL, 10);
+        int bindingVal = ::strtol(argv[curArg], nullptr, 10);
         if (errno || bindingVal < 0) {
             printf("%s: invalid binding\n", argv[curArg]);
             usage();
@@ -594,12 +594,12 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
     const auto getUniformOverride = [getStringOperand]() {
         const char *arg = getStringOperand("-u<name>:<location>");
         const char *split = strchr(arg, ':');
-        if (split == NULL) {
+        if (split == nullptr) {
             printf("%s: missing location\n", arg);
             exit(EFailUsage);
         }
         errno = 0;
-        int location = ::strtol(split + 1, NULL, 10);
+        int location = ::strtol(split + 1, nullptr, 10);
         if (errno) {
             printf("%s: invalid location\n", arg);
             exit(EFailUsage);
@@ -626,7 +626,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                     } else if (lowerword == "uniform-base") {
                         if (argc <= 1)
                             Error("no <base> provided", lowerword.c_str());
-                        uniformBase = ::strtol(argv[1], NULL, 10);
+                        uniformBase = ::strtol(argv[1], nullptr, 10);
                         bumpArg();
                         break;
                     } else if (lowerword == "client") {
@@ -1161,7 +1161,7 @@ void CompileShaders(glslang::TWorklist& worklist)
     } else {
         while (worklist.remove(workItem)) {
             ShHandle compiler = ShConstructCompiler(FindLanguage(workItem->name), Options);
-            if (compiler == 0)
+            if (compiler == nullptr)
                 return;
 
             CompileFile(workItem->name.c_str(), compiler);
@@ -1297,7 +1297,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
             sources.push_back(compUnit.fileNameList[i]);
         }
         glslang::TShader* shader = new glslang::TShader(compUnit.stage);
-        shader->setStringsWithLengthsAndNames(compUnit.text, NULL, compUnit.fileNameList, compUnit.count);
+        shader->setStringsWithLengthsAndNames(compUnit.text, nullptr, compUnit.fileNameList, compUnit.count);
         if (entryPointName)
             shader->setEntryPoint(entryPointName);
         if (sourceEntryPointName) {
