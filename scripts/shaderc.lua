@@ -130,6 +130,7 @@ project "spirv-opt"
 		path.join(SPIRV_TOOLS, "source/val/validate_primitives.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_ray_query.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_ray_tracing.cpp"),
+		path.join(SPIRV_TOOLS, "source/val/validate_ray_tracing_reorder.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_scopes.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_small_type_uses.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_type.cpp"),
