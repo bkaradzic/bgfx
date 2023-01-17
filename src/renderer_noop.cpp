@@ -207,6 +207,11 @@ namespace bgfx { namespace noop
 		{
 		}
 
+		// creates a backbuffer in headless mode.
+		void createBackBuffer(uint8_t /*_num*/, const Attachment* /*_attachment*/) override
+		{
+		}
+
 		void createUniform(UniformHandle /*_handle*/, UniformType::Enum /*_type*/, uint16_t /*_num*/, const char* /*_name*/) override
 		{
 		}

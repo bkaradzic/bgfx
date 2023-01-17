@@ -3088,6 +3088,7 @@ namespace bgfx
 		virtual void createFrameBuffer(FrameBufferHandle _handle, uint8_t _num, const Attachment* _attachment) = 0;
 		virtual void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat) = 0;
 		virtual void destroyFrameBuffer(FrameBufferHandle _handle) = 0;
+		virtual void createBackBuffer(uint8_t _num, const Attachment* _attachment) = 0;  // creates a backbuffer in headless mode
 		virtual void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) = 0;
 		virtual void destroyUniform(UniformHandle _handle) = 0;
 		virtual void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) = 0;
@@ -4797,6 +4798,34 @@ namespace bgfx
 			}
 
 			return handle;
+		}
+
+		void createBackBuffer(const Resolution& _resolution) {
+			const uint32_t msaa = (_resolution.reset & BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT;
+			const uint64_t textureFlags = (uint64_t(msaa + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_TEXTURE_RT;
+			const TextureFormat::Enum depthFormat = TextureFormat::D24S8;
+
+			TextureHandle colour = createTexture2D(_resolution.width, _resolution.height, false, 1, _resolution.format, textureFlags);
+			TextureHandle depth = createTexture2D(_resolution.width, _resolution.height, false, 1, depthFormat, textureFlags | BGFX_TEXTURE_RT_WRITE_ONLY);
+
+			Attachment attachment[2];
+			attachment[0].init(colour, Access::ReadWrite, 0, 1, 0, BGFX_RESOLVE_AUTO_GEN_MIPS);
+			attachment[1].init(depth, Access::Write, 0, 1, 0, BGFX_RESOLVE_AUTO_GEN_MIPS);
+
+			const FrameBufferHandle handle = { kInvalidHandle };
+
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateFrameBuffer);
+			cmdbuf.write(handle);
+			cmdbuf.write(false);
+			cmdbuf.write(uint8_t(2));
+
+			for (uint32_t ii = 0; ii < 2; ++ii)
+			{
+				TextureHandle texHandle = attachment[ii].handle;
+				textureIncRef(texHandle);
+			}
+
+			cmdbuf.write(attachment, sizeof(Attachment) * 2);
 		}
 
 		BGFX_API_FUNC(void setName(FrameBufferHandle _handle, const bx::StringView& _name) )
