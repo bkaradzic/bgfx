@@ -1930,9 +1930,9 @@ VK_IMPORT_DEVICE
 
 					m_windows[0] = BGFX_INVALID_HANDLE;
 					m_numWindows++;
-
-					postReset();
 				}
+
+				postReset();
 			}
 
 			errorState = ErrorState::SwapChainCreated;
@@ -2419,6 +2419,12 @@ VK_IMPORT_DEVICE
 			}
 		}
 
+		// creates a backbuffer in headless mode.
+		void createBackBuffer(uint8_t _num, const Attachment* _attachment) override
+		{
+			m_backBuffer.create(_num, _attachment);
+		}
+
 		void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) override
 		{
 			if (NULL != m_uniforms[_handle.idx])
@@ -2446,8 +2452,10 @@ VK_IMPORT_DEVICE
 				: m_backBuffer
 				;
 			const SwapChainVK& swapChain = frameBuffer.m_swapChain;
+			const bool readFromSwapChain = isSwapChainReadable(swapChain);
+			const bool framebufferReadable = frameBuffer.isRenderable() && isValid(frameBuffer.m_texture[0]);
 
-			if (!isSwapChainReadable(swapChain) )
+			if (!readFromSwapChain && !framebufferReadable)
 			{
 				BX_TRACE("Unable to capture screenshot %s.", _filePath);
 				return;
@@ -2467,14 +2475,25 @@ VK_IMPORT_DEVICE
 					);
 			};
 
-			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(swapChain.m_colorFormat) );
+			bimg::TextureFormat::Enum colourFormat;
+			if (readFromSwapChain)
+			{
+				colourFormat = bimg::TextureFormat::Enum(swapChain.m_colorFormat);
+			}
+			else
+			{
+				const TextureVK& colour_att = m_textures[frameBuffer.m_texture[0].idx];
+				colourFormat = bimg::TextureFormat::Enum(colour_att.m_textureFormat);
+			}
+
+			const uint8_t bpp = bimg::getBitsPerPixel(colourFormat);
 			const uint32_t size = frameBuffer.m_width * frameBuffer.m_height * bpp / 8;
 
 			VkDeviceMemory stagingMemory;
 			VkBuffer stagingBuffer;
 			VK_CHECK(createReadbackBuffer(size, &stagingBuffer, &stagingMemory) );
 
-			readSwapChain(swapChain, stagingBuffer, stagingMemory, callback, _filePath);
+			readBackBuffer(frameBuffer, stagingBuffer, stagingMemory, callback, _filePath);
 
 			vkDestroy(stagingBuffer);
 			vkDestroy(stagingMemory);
@@ -2709,7 +2728,22 @@ VK_IMPORT_DEVICE
 
 			if (m_resolution.reset & BGFX_RESET_CAPTURE)
 			{
-				const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_backBuffer.m_swapChain.m_colorFormat) );
+				bimg::TextureFormat::Enum colourFormat;
+				if (isSwapChainReadable(m_backBuffer.m_swapChain))
+				{
+					colourFormat = bimg::TextureFormat::Enum(m_backBuffer.m_swapChain.m_colorFormat);
+				}
+				else if (isValid(m_backBuffer.m_texture[0]))
+				{
+					const TextureVK& colour_att = m_textures[m_backBuffer.m_texture[0].idx];
+					colourFormat = bimg::TextureFormat::Enum(colour_att.m_textureFormat);
+				}
+				else
+				{
+					return;
+				}
+
+				const uint8_t bpp = bimg::getBitsPerPixel(colourFormat);
 				const uint32_t captureSize = m_backBuffer.m_width * m_backBuffer.m_height * bpp / 8;
 
 				const uint8_t dstBpp = bimg::getBitsPerPixel(bimg::TextureFormat::BGRA8);
@@ -2751,11 +2785,6 @@ VK_IMPORT_DEVICE
 			{
 				m_depthClamp = depthClamp;
 				m_pipelineStateCache.invalidate();
-			}
-
-			if (NULL == m_backBuffer.m_nwh)
-			{
-				return suspended;
 			}
 
 			uint32_t flags = _resolution.reset & ~(0
@@ -2827,8 +2856,8 @@ VK_IMPORT_DEVICE
 		{
 			BX_ASSERT(false
 				  ||  isValid(_fbh)
-				  ||  NULL != m_backBuffer.m_nwh
-				, "Rendering to backbuffer in headless mode."
+				  ||  m_backBuffer.isRenderable()
+				, "Trying to bind an invalid framebuffer."
 				);
 
 			FrameBufferVK& newFrameBuffer = isValid(_fbh)
@@ -4028,21 +4057,23 @@ VK_IMPORT_DEVICE
 				;
 		}
 
-		typedef void (*SwapChainReadFunc)(void* /*src*/, uint32_t /*width*/, uint32_t /*height*/, uint32_t /*pitch*/, const void* /*userData*/);
+		typedef void (*BackBufferReadFunc)(void* /*src*/, uint32_t /*width*/, uint32_t /*height*/, uint32_t /*pitch*/, const void* /*userData*/);
 
-		bool readSwapChain(const SwapChainVK& _swapChain, VkBuffer _buffer, VkDeviceMemory _memory, SwapChainReadFunc _func, const void* _userData = NULL)
+		bool readBackBuffer(const FrameBufferVK& _frameBuffer, VkBuffer _buffer, VkDeviceMemory _memory, BackBufferReadFunc _func, const void* _userData = NULL)
 		{
-			if (isSwapChainReadable(_swapChain) )
+			const SwapChainVK& swapChain = _frameBuffer.m_swapChain;
+
+			if (isSwapChainReadable(swapChain) )
 			{
 				// source for the copy is the last rendered swapchain image
-				const VkImage image = _swapChain.m_backBufferColorImage[_swapChain.m_backBufferColorIdx];
-				const VkImageLayout layout = _swapChain.m_backBufferColorImageLayout[_swapChain.m_backBufferColorIdx];
+				const VkImage image = swapChain.m_backBufferColorImage[swapChain.m_backBufferColorIdx];
+				const VkImageLayout layout = swapChain.m_backBufferColorImageLayout[swapChain.m_backBufferColorIdx];
 
-				const uint32_t width  = _swapChain.m_sci.imageExtent.width;
-				const uint32_t height = _swapChain.m_sci.imageExtent.height;
+				const uint32_t width  = swapChain.m_sci.imageExtent.width;
+				const uint32_t height = swapChain.m_sci.imageExtent.height;
 
 				ReadbackVK readback;
-				readback.create(image, width, height, _swapChain.m_colorFormat);
+				readback.create(image, width, height, swapChain.m_colorFormat);
 				const uint32_t pitch = readback.pitch();
 
 				readback.copyImageToBuffer(m_commandBuffer, _buffer, layout, VK_IMAGE_ASPECT_COLOR_BIT);
@@ -4053,12 +4084,12 @@ VK_IMPORT_DEVICE
 				uint8_t* src;
 				VK_CHECK(vkMapMemory(m_device, _memory, 0, VK_WHOLE_SIZE, 0, (void**)&src) );
 
-				if (_swapChain.m_colorFormat == TextureFormat::RGBA8)
+				if (swapChain.m_colorFormat == TextureFormat::RGBA8)
 				{
 					bimg::imageSwizzleBgra8(src, pitch, width, height, src, pitch);
 					_func(src, width, height, pitch, _userData);
 				}
-				else if (_swapChain.m_colorFormat == TextureFormat::BGRA8)
+				else if (swapChain.m_colorFormat == TextureFormat::BGRA8)
 				{
 					_func(src, width, height, pitch, _userData);
 				}
@@ -4070,7 +4101,61 @@ VK_IMPORT_DEVICE
 
 					void* dst = BX_ALLOC(g_allocator, dstSize);
 
-					bimg::imageConvert(g_allocator, dst, bimg::TextureFormat::BGRA8, src, bimg::TextureFormat::Enum(_swapChain.m_colorFormat), width, height, 1);
+					bimg::imageConvert(g_allocator, dst, bimg::TextureFormat::BGRA8, src, bimg::TextureFormat::Enum(swapChain.m_colorFormat), width, height, 1);
+
+					_func(dst, width, height, dstPitch, _userData);
+
+					BX_FREE(g_allocator, dst);
+				}
+
+				vkUnmapMemory(m_device, _memory);
+
+				readback.destroy();
+
+				return true;
+			}
+			else
+			{
+				// source for the copy is the first framebuffer attachment (if in  headless mode)
+				const TextureVK& colour_att = m_textures[_frameBuffer.m_texture[0].idx];
+				const TextureFormat::Enum colourFormat = TextureFormat::Enum(colour_att.m_textureFormat);
+
+				const VkImage image = colour_att.m_textureImage;
+				const VkImageLayout layout = colour_att.m_currentImageLayout;
+
+				const uint32_t width  = _frameBuffer.m_width;
+				const uint32_t height = _frameBuffer.m_height;
+
+				ReadbackVK readback;
+				readback.create(image, width, height, colourFormat);
+				const uint32_t pitch = readback.pitch();
+
+				readback.copyImageToBuffer(m_commandBuffer, _buffer, layout, VK_IMAGE_ASPECT_COLOR_BIT);
+
+				// stall for commandbuffer to finish
+				kick(true);
+
+				uint8_t* src;
+				VK_CHECK(vkMapMemory(m_device, _memory, 0, VK_WHOLE_SIZE, 0, (void**)&src) );
+
+				if (colourFormat == TextureFormat::RGBA8)
+				{
+					bimg::imageSwizzleBgra8(src, pitch, width, height, src, pitch);
+					_func(src, width, height, pitch, _userData);
+				}
+				else if (colourFormat == TextureFormat::BGRA8)
+				{
+					_func(src, width, height, pitch, _userData);
+				}
+				else
+				{
+					const uint8_t dstBpp = bimg::getBitsPerPixel(bimg::TextureFormat::BGRA8);
+					const uint32_t dstPitch = width * dstBpp / 8;
+					const uint32_t dstSize = height * dstPitch;
+
+					void* dst = BX_ALLOC(g_allocator, dstSize);
+
+					bimg::imageConvert(g_allocator, dst, bimg::TextureFormat::BGRA8, src, bimg::TextureFormat::Enum(colourFormat), width, height, 1);
 
 					_func(dst, width, height, dstPitch, _userData);
 
@@ -4099,7 +4184,7 @@ VK_IMPORT_DEVICE
 					g_callback->captureFrame(_src, size);
 				};
 
-				readSwapChain(m_backBuffer.m_swapChain, m_captureBuffer, m_captureMemory, callback);
+				readBackBuffer(m_backBuffer, m_captureBuffer, m_captureMemory, callback);
 			}
 		}
 
@@ -7609,11 +7694,13 @@ VK_DESTROY
 
 	void FrameBufferVK::update(VkCommandBuffer _commandBuffer, const Resolution& _resolution)
 	{
-		m_swapChain.update(_commandBuffer, m_nwh, _resolution);
-		VK_CHECK(s_renderVK->getRenderPass(m_swapChain, &m_renderPass) );
-		m_width   = _resolution.width;
-		m_height  = _resolution.height;
-		m_sampler = m_swapChain.m_sampler;
+		if (m_nwh) {
+			m_swapChain.update(_commandBuffer, m_nwh, _resolution);
+			VK_CHECK(s_renderVK->getRenderPass(m_swapChain, &m_renderPass) );
+			m_width   = _resolution.width;
+			m_height  = _resolution.height;
+			m_sampler = m_swapChain.m_sampler;
+		}
 	}
 
 	void FrameBufferVK::resolve()

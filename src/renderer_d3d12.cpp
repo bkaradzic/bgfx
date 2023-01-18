@@ -1863,6 +1863,14 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
+		// creates a backbuffer in headless mode.
+		void createBackBuffer(uint8_t _num, const Attachment* _attachment) override
+		{
+			BX_UNUSED(_num);
+			BX_UNUSED(_attachment);
+			BX_WARN(true, "createBackBuffer is not supported in DX12");
+		}
+
 		void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) override
 		{
 			if (NULL != m_uniforms[_handle.idx])

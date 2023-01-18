@@ -2001,6 +2001,12 @@ namespace bgfx
 			return false;
 		}
 
+		if (m_renderCtx->getRendererType() == RendererType::Vulkan && _init.platformData.nwh == nullptr) {
+			// create a default backbuffer if in Vulkan headless mode
+			createBackBuffer(_init.resolution);
+			frame();
+		}
+
 		for (uint32_t ii = 0; ii < BX_COUNTOF(s_emulatedFormats); ++ii)
 		{
 			const uint32_t fmt = s_emulatedFormats[ii];
@@ -3264,7 +3270,10 @@ namespace bgfx
 						Attachment attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 						_cmdbuf.read(attachment, sizeof(Attachment) * num);
 
-						m_renderCtx->createFrameBuffer(handle, num, attachment);
+						if (isValid(handle))
+							m_renderCtx->createFrameBuffer(handle, num, attachment);
+						else
+							m_renderCtx->createBackBuffer(num, attachment);
 					}
 				}
 				break;
