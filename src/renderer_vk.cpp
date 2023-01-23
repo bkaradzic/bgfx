@@ -2856,7 +2856,8 @@ VK_IMPORT_DEVICE
 		{
 			BX_ASSERT(false
 				  ||  isValid(_fbh)
-				  ||  m_backBuffer.isRenderable()
+				  ||  NULL != m_backBuffer.m_nwh
+					||  VK_NULL_HANDLE != m_backBuffer.m_framebuffer   // this is the headless backbuffer
 				, "Trying to bind an invalid framebuffer."
 				);
 
