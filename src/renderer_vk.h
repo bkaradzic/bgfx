@@ -378,6 +378,12 @@ VK_DESTROY_FUNC(DescriptorSet);
 		uint8_t* m_data;
 		uint32_t m_size;
 		uint32_t m_pos;
+
+	private:
+		uint32_t m_entrySize;
+		uint32_t m_entriesCount;
+
+		void grow();
 	};
 
 	struct BufferVK
