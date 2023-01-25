@@ -4711,6 +4711,8 @@ VK_DESTROY
 		}
 
 		m_size = (uint32_t)mr.size;
+		m_entrySize = entrySize;
+		m_entriesCount = _count;
 		m_pos  = 0;
 
 		VK_CHECK(vkBindBufferMemory(device, m_buffer, m_deviceMem, 0) );
@@ -4735,17 +4737,22 @@ VK_DESTROY
 
 	uint32_t ScratchBufferVK::write(const void* _data, uint32_t _size)
 	{
-		BX_ASSERT(m_pos < m_size, "Out of scratch buffer memory");
-
 		const uint32_t offset = m_pos;
 
 		if (_size > 0)
 		{
-			bx::memCopy(&m_data[m_pos], _data, _size);
-
 			const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.limits;
 			const uint32_t align = uint32_t(deviceLimits.minUniformBufferOffsetAlignment);
 			const uint32_t alignedSize = bx::strideAlign(_size, align);
+
+#ifdef VK_DYNAMIC_SCRATCH_BUFFER
+			if (m_pos + alignedSize >= m_size)
+				grow();
+#else
+			BX_ASSERT(m_pos + alignedSize < m_size, "Out of scratch buffer memory");
+#endif
+
+			bx::memCopy(&m_data[m_pos], _data, _size);
 
 			m_pos += alignedSize;
 		}
@@ -4769,6 +4776,30 @@ VK_DESTROY
 		range.size   = size;
 		VK_CHECK(vkFlushMappedMemoryRanges(device, 1, &range) );
 	}
+
+#ifdef VK_DYNAMIC_SCRATCH_BUFFER
+	void ScratchBufferVK::grow()
+	{
+		const uint32_t oldSize = m_size;
+		uint8_t* data = new uint8_t[oldSize];
+		bx::memCopy(data, m_data, oldSize);
+
+		const uint32_t newEntrySize = m_entrySize * 2;
+
+		destroy();
+		create(newEntrySize, m_entriesCount);
+		write(data, oldSize);
+
+		BX_TRACE("Grown scratch buffer from %d to %d MB", oldSize / 1024 / 1024, m_size / 1024 / 1024);
+
+		delete[] data;
+	}
+#else
+	void ScratchBufferVK::grow()
+	{
+
+	}
+#endif
 
 	void BufferVK::create(VkCommandBuffer _commandBuffer, uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride)
 	{
