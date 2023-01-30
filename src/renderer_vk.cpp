@@ -2729,7 +2729,7 @@ VK_IMPORT_DEVICE
 			if (m_resolution.reset & BGFX_RESET_CAPTURE)
 			{
 				bimg::TextureFormat::Enum colourFormat;
-				if (isSwapChainReadable(m_backBuffer.m_swapChain))
+				if (NULL != m_backBuffer.m_nwh)
 				{
 					colourFormat = bimg::TextureFormat::Enum(m_backBuffer.m_swapChain.m_colorFormat);
 				}
@@ -4070,8 +4070,8 @@ VK_IMPORT_DEVICE
 				const VkImage image = swapChain.m_backBufferColorImage[swapChain.m_backBufferColorIdx];
 				const VkImageLayout layout = swapChain.m_backBufferColorImageLayout[swapChain.m_backBufferColorIdx];
 
-				const uint32_t width  = swapChain.m_sci.imageExtent.width;
-				const uint32_t height = swapChain.m_sci.imageExtent.height;
+				const uint32_t width  = m_backBuffer.m_width;
+				const uint32_t height = m_backBuffer.m_height;
 
 				ReadbackVK readback;
 				readback.create(image, width, height, swapChain.m_colorFormat);
