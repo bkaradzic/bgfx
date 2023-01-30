@@ -763,6 +763,9 @@ VK_DESTROY_FUNC(DescriptorSet);
 			, m_needPresent(false)
 			, m_framebuffer(VK_NULL_HANDLE)
 		{
+			for (int i = 0; i < BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS; ++i) {
+				m_texture[i] = { kInvalidHandle };
+			}
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);
