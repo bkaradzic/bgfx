@@ -1858,6 +1858,21 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 				_renderPassDescriptor.depthAttachment.texture   = swapChain->m_backBufferDepth;
 				_renderPassDescriptor.stencilAttachment.texture = swapChain->m_backBufferStencil;
+
+				if (swapChain->m_backBufferDepth)
+				{
+					_renderPassDescriptor.depthAttachment.storeAction = NULL != m_mainFrameBuffer.m_swapChain->m_backBufferColorMsaa
+					? MTLStoreActionDontCare
+					: MTLStoreActionStore
+					;
+				}
+				if (swapChain->m_backBufferStencil)
+				{
+					_renderPassDescriptor.stencilAttachment.storeAction = NULL != m_mainFrameBuffer.m_swapChain->m_backBufferColorMsaa
+					? MTLStoreActionDontCare
+					: MTLStoreActionStore
+				    ;
+				}
 			}
 			else
 			{
@@ -1889,6 +1904,17 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 					setAttachment(_renderPassDescriptor.depthAttachment, frameBuffer.m_depthAttachment, texture.m_type, NULL != texture.m_ptrMsaa);
 					setAttachment(_renderPassDescriptor.stencilAttachment, frameBuffer.m_depthAttachment, texture.m_type, NULL != texture.m_ptrMsaa);
+
+					if (_renderPassDescriptor.depthAttachment)
+					{
+						MTLStoreAction storeAction = (NULL != texture.m_ptrMsaa && (texture.m_flags & BGFX_SAMPLER_COMPARE_MASK) == 0)
+							? MTLStoreActionDontCare
+							: MTLStoreActionStore
+						;
+
+						_renderPassDescriptor.depthAttachment  .storeAction = storeAction;
+						_renderPassDescriptor.stencilAttachment.storeAction = storeAction;
+					}
 
 					if (texture.m_textureFormat == TextureFormat::D24S8)
 					{
@@ -4199,10 +4225,6 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 										? MTLLoadActionClear
 										: MTLLoadActionLoad
 										;
-										depthAttachment.storeAction = NULL != m_mainFrameBuffer.m_swapChain->m_backBufferColorMsaa
-										? MTLStoreActionDontCare
-										: MTLStoreActionStore
-										;
 								}
 
 								RenderPassStencilAttachmentDescriptor stencilAttachment = renderPassDescriptor.stencilAttachment;
@@ -4213,10 +4235,6 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 									stencilAttachment.loadAction   = 0 != (BGFX_CLEAR_STENCIL & clr.m_flags)
 										? MTLLoadActionClear
 										: MTLLoadActionLoad
-										;
-									stencilAttachment.storeAction = NULL != m_mainFrameBuffer.m_swapChain->m_backBufferColorMsaa
-										? MTLStoreActionDontCare
-										: MTLStoreActionStore
 										;
 								}
 							}
