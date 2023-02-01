@@ -1105,7 +1105,7 @@ namespace bgfx
 
 		const Profile *profile = &s_profiles[profile_id];
 
-		Preprocessor preprocessor(_options.inputFilePath.c_str(), profile->lang != ShadingLang::ESSL);
+		Preprocessor preprocessor(_options.inputFilePath.c_str(), profile->lang == ShadingLang::ESSL);
 
 		for (size_t ii = 0; ii < _options.includeDirs.size(); ++ii)
 		{
