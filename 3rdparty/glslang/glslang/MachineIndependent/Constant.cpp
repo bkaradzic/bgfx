@@ -212,9 +212,9 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TIntermTyped* right
 
             case EbtInt64:
                 if (rightUnionArray[i] == 0ll)
-                    newConstArray[i].setI64Const(0x7FFFFFFFFFFFFFFFll);
-                else if (rightUnionArray[i].getI64Const() == -1 && leftUnionArray[i].getI64Const() == (long long)-0x8000000000000000ll)
-                    newConstArray[i].setI64Const((long long)-0x8000000000000000ll);
+                    newConstArray[i].setI64Const(LLONG_MAX);
+                else if (rightUnionArray[i].getI64Const() == -1 && leftUnionArray[i].getI64Const() == LLONG_MIN)
+                    newConstArray[i].setI64Const(LLONG_MIN);
                 else
                     newConstArray[i].setI64Const(leftUnionArray[i].getI64Const() / rightUnionArray[i].getI64Const());
                 break;

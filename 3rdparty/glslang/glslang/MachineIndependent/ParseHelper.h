@@ -95,6 +95,10 @@ public:
             globalUniformSet(TQualifier::layoutSetEnd),
             atomicCounterBlockSet(TQualifier::layoutSetEnd)
     {
+        // use storage buffer on SPIR-V 1.3 and up
+        if (spvVersion.spv >= EShTargetSpv_1_3)
+            intermediate.setUseStorageBuffer();
+
         if (entryPoint != nullptr)
             sourceEntryPointName = *entryPoint;
     }

@@ -175,7 +175,7 @@ protected:
     spv::Id convertGlslangStructToSpvType(const glslang::TType&, const glslang::TTypeList* glslangStruct,
                                           glslang::TLayoutPacking, const glslang::TQualifier&);
     void decorateStructType(const glslang::TType&, const glslang::TTypeList* glslangStruct, glslang::TLayoutPacking,
-                            const glslang::TQualifier&, spv::Id);
+                            const glslang::TQualifier&, spv::Id, const std::vector<spv::Id>& spvMembers);
     spv::Id makeArraySizeId(const glslang::TArraySizes&, int dim);
     spv::Id accessChainLoad(const glslang::TType& type);
     void    accessChainStore(const glslang::TType& type, spv::Id rvalue);
@@ -375,27 +375,25 @@ spv::Decoration TranslatePrecisionDecoration(const glslang::TType& type)
 }
 
 // Translate glslang type to SPIR-V block decorations.
-spv::Decoration TranslateBlockDecoration(const glslang::TType& type, bool useStorageBuffer)
+spv::Decoration TranslateBlockDecoration(const glslang::TStorageQualifier storage, bool useStorageBuffer)
 {
-    if (type.getBasicType() == glslang::EbtBlock) {
-        switch (type.getQualifier().storage) {
-        case glslang::EvqUniform:      return spv::DecorationBlock;
-        case glslang::EvqBuffer:       return useStorageBuffer ? spv::DecorationBlock : spv::DecorationBufferBlock;
-        case glslang::EvqVaryingIn:    return spv::DecorationBlock;
-        case glslang::EvqVaryingOut:   return spv::DecorationBlock;
-        case glslang::EvqShared:       return spv::DecorationBlock;
+    switch (storage) {
+    case glslang::EvqUniform:      return spv::DecorationBlock;
+    case glslang::EvqBuffer:       return useStorageBuffer ? spv::DecorationBlock : spv::DecorationBufferBlock;
+    case glslang::EvqVaryingIn:    return spv::DecorationBlock;
+    case glslang::EvqVaryingOut:   return spv::DecorationBlock;
+    case glslang::EvqShared:       return spv::DecorationBlock;
 #ifndef GLSLANG_WEB
-        case glslang::EvqPayload:      return spv::DecorationBlock;
-        case glslang::EvqPayloadIn:    return spv::DecorationBlock;
-        case glslang::EvqHitAttr:      return spv::DecorationBlock;
-        case glslang::EvqCallableData:   return spv::DecorationBlock;
-        case glslang::EvqCallableDataIn: return spv::DecorationBlock;
-        case glslang::EvqHitObjectAttrNV: return spv::DecorationBlock;
+    case glslang::EvqPayload:      return spv::DecorationBlock;
+    case glslang::EvqPayloadIn:    return spv::DecorationBlock;
+    case glslang::EvqHitAttr:      return spv::DecorationBlock;
+    case glslang::EvqCallableData:   return spv::DecorationBlock;
+    case glslang::EvqCallableDataIn: return spv::DecorationBlock;
+    case glslang::EvqHitObjectAttrNV: return spv::DecorationBlock;
 #endif
-        default:
-            assert(0);
-            break;
-        }
+    default:
+        assert(0);
+        break;
     }
 
     return spv::DecorationMax;
@@ -4672,7 +4670,7 @@ spv::Id TGlslangToSpvTraverser::convertGlslangStructToSpvType(const glslang::TTy
         structMap[explicitLayout][qualifier.layoutMatrix][glslangMembers] = spvType;
 
     // Decorate it
-    decorateStructType(type, glslangMembers, explicitLayout, qualifier, spvType);
+    decorateStructType(type, glslangMembers, explicitLayout, qualifier, spvType, spvMembers);
 
     for (int i = 0; i < (int)deferredForwardPointers.size(); ++i) {
         auto it = deferredForwardPointers[i];
@@ -4686,7 +4684,8 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
                                                 const glslang::TTypeList* glslangMembers,
                                                 glslang::TLayoutPacking explicitLayout,
                                                 const glslang::TQualifier& qualifier,
-                                                spv::Id spvType)
+                                                spv::Id spvType,
+                                                const std::vector<spv::Id>& spvMembers)
 {
     // Name and decorate the non-hidden members
     int offset = -1;
@@ -4839,7 +4838,16 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
 
     // Decorate the structure
     builder.addDecoration(spvType, TranslateLayoutDecoration(type, qualifier.layoutMatrix));
-    builder.addDecoration(spvType, TranslateBlockDecoration(type, glslangIntermediate->usingStorageBuffer()));
+    const auto basicType = type.getBasicType();
+    const auto typeStorageQualifier = type.getQualifier().storage;
+    if (basicType == glslang::EbtBlock) {
+        builder.addDecoration(spvType, TranslateBlockDecoration(typeStorageQualifier, glslangIntermediate->usingStorageBuffer()));
+    } else if (basicType == glslang::EbtStruct && glslangIntermediate->getSpv().vulkan > 0) {
+        const auto hasRuntimeArray = !spvMembers.empty() && builder.getOpCode(spvMembers.back()) == spv::OpTypeRuntimeArray;
+        if (hasRuntimeArray) {
+            builder.addDecoration(spvType, TranslateBlockDecoration(typeStorageQualifier, glslangIntermediate->usingStorageBuffer()));
+        }
+    }
 
     if (qualifier.hasHitObjectShaderRecordNV())
         builder.addDecoration(spvType, spv::DecorationHitObjectShaderRecordBufferNV);
