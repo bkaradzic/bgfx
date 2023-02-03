@@ -15,6 +15,7 @@ static const spv::Capability pygen_variable_caps_DeviceGroup[] = {spv::Capabilit
 static const spv::Capability pygen_variable_caps_DrawParameters[] = {spv::Capability::DrawParameters};
 static const spv::Capability pygen_variable_caps_DrawParametersMeshShadingNVMeshShadingEXT[] = {spv::Capability::DrawParameters, spv::Capability::MeshShadingNV, spv::Capability::MeshShadingEXT};
 static const spv::Capability pygen_variable_caps_FPFastMathModeINTEL[] = {spv::Capability::FPFastMathModeINTEL};
+static const spv::Capability pygen_variable_caps_FPGAArgumentInterfacesINTEL[] = {spv::Capability::FPGAArgumentInterfacesINTEL};
 static const spv::Capability pygen_variable_caps_FPGABufferLocationINTEL[] = {spv::Capability::FPGABufferLocationINTEL};
 static const spv::Capability pygen_variable_caps_FPGAClusterAttributesINTEL[] = {spv::Capability::FPGAClusterAttributesINTEL};
 static const spv::Capability pygen_variable_caps_FPGADSPControlINTEL[] = {spv::Capability::FPGADSPControlINTEL};
@@ -164,6 +165,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_INTEL_debug_module[] = 
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_device_side_avc_motion_estimation[] = {spvtools::Extension::kSPV_INTEL_device_side_avc_motion_estimation};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_float_controls2[] = {spvtools::Extension::kSPV_INTEL_float_controls2};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_fp_fast_math_mode[] = {spvtools::Extension::kSPV_INTEL_fp_fast_math_mode};
+static const spvtools::Extension pygen_variable_exts_SPV_INTEL_fpga_argument_interfaces[] = {spvtools::Extension::kSPV_INTEL_fpga_argument_interfaces};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_fpga_buffer_location[] = {spvtools::Extension::kSPV_INTEL_fpga_buffer_location};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_fpga_cluster_attributes[] = {spvtools::Extension::kSPV_INTEL_fpga_cluster_attributes};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_fpga_dsp_control[] = {spvtools::Extension::kSPV_INTEL_fpga_dsp_control};
@@ -831,7 +833,16 @@ static const spv_operand_desc_t pygen_variable_DecorationEntries[] = {
   {"FunctionFloatingPointModeINTEL", 6080, 1, pygen_variable_caps_FunctionFloatControlINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_FPOPERATION_MODE}, 0xffffffffu, 0xffffffffu},
   {"SingleElementVectorINTEL", 6085, 1, pygen_variable_caps_VectorComputeINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
   {"VectorComputeCallableFunctionINTEL", 6087, 1, pygen_variable_caps_VectorComputeINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
-  {"MediaBlockIOINTEL", 6140, 1, pygen_variable_caps_VectorComputeINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
+  {"MediaBlockIOINTEL", 6140, 1, pygen_variable_caps_VectorComputeINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"ConduitKernelArgumentINTEL", 6175, 1, pygen_variable_caps_FPGAArgumentInterfacesINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"RegisterMapKernelArgumentINTEL", 6176, 1, pygen_variable_caps_FPGAArgumentInterfacesINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"MMHostInterfaceAddressWidthINTEL", 6177, 1, pygen_variable_caps_FPGAArgumentInterfacesINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0xffffffffu, 0xffffffffu},
+  {"MMHostInterfaceDataWidthINTEL", 6178, 1, pygen_variable_caps_FPGAArgumentInterfacesINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0xffffffffu, 0xffffffffu},
+  {"MMHostInterfaceLatencyINTEL", 6179, 1, pygen_variable_caps_FPGAArgumentInterfacesINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0xffffffffu, 0xffffffffu},
+  {"MMHostInterfaceReadWriteModeINTEL", 6180, 1, pygen_variable_caps_FPGAArgumentInterfacesINTEL, 0, nullptr, {SPV_OPERAND_TYPE_ACCESS_QUALIFIER}, 0xffffffffu, 0xffffffffu},
+  {"MMHostInterfaceMaxBurstINTEL", 6181, 1, pygen_variable_caps_FPGAArgumentInterfacesINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0xffffffffu, 0xffffffffu},
+  {"MMHostInterfaceWaitRequestINTEL", 6182, 1, pygen_variable_caps_FPGAArgumentInterfacesINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0xffffffffu, 0xffffffffu},
+  {"StableKernelArgumentINTEL", 6183, 1, pygen_variable_caps_FPGAArgumentInterfacesINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_BuiltInEntries[] = {
@@ -1104,7 +1115,7 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"StencilExportEXT", 5013, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_EXT_shader_stencil_export, {}, 0xffffffffu, 0xffffffffu},
   {"ImageReadWriteLodAMD", 5015, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_AMD_shader_image_load_store_lod, {}, 0xffffffffu, 0xffffffffu},
   {"Int64ImageEXT", 5016, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_EXT_shader_image_int64, {}, 0xffffffffu, 0xffffffffu},
-  {"ShaderClockKHR", 5055, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_KHR_shader_clock, {}, 0xffffffffu, 0xffffffffu},
+  {"ShaderClockKHR", 5055, 0, nullptr, 1, pygen_variable_exts_SPV_KHR_shader_clock, {}, 0xffffffffu, 0xffffffffu},
   {"SampleMaskOverrideCoverageNV", 5249, 1, pygen_variable_caps_SampleRateShading, 1, pygen_variable_exts_SPV_NV_sample_mask_override_coverage, {}, 0xffffffffu, 0xffffffffu},
   {"GeometryShaderPassthroughNV", 5251, 1, pygen_variable_caps_Geometry, 1, pygen_variable_exts_SPV_NV_geometry_shader_passthrough, {}, 0xffffffffu, 0xffffffffu},
   {"ShaderViewportIndexLayerEXT", 5254, 1, pygen_variable_caps_MultiViewport, 2, pygen_variable_exts_SPV_EXT_shader_viewport_index_layerSPV_NV_viewport_array2, {}, 0xffffffffu, 0xffffffffu},
@@ -1226,6 +1237,7 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"AtomicFloat16AddEXT", 6095, 0, nullptr, 1, pygen_variable_exts_SPV_EXT_shader_atomic_float16_add, {}, 0xffffffffu, 0xffffffffu},
   {"DebugInfoModuleINTEL", 6114, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_debug_module, {}, 0xffffffffu, 0xffffffffu},
   {"SplitBarrierINTEL", 6141, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_split_barrier, {}, 0xffffffffu, 0xffffffffu},
+  {"FPGAArgumentInterfacesINTEL", 6174, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_fpga_argument_interfaces, {}, 0xffffffffu, 0xffffffffu},
   {"GroupUniformArithmeticKHR", 6400, 0, nullptr, 1, pygen_variable_exts_SPV_KHR_uniform_group_instructions, {}, 0xffffffffu, 0xffffffffu}
 };
 

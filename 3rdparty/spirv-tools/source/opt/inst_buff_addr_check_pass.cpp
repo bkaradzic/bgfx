@@ -257,9 +257,7 @@ uint32_t InstBuffAddrCheckPass::GetSearchAndTestFuncId() {
     uint32_t hdr_blk_id = TakeNextId();
     // Branch to search loop header
     std::unique_ptr<Instruction> hdr_blk_label(NewLabel(hdr_blk_id));
-    (void)builder.AddInstruction(MakeUnique<Instruction>(
-        context(), spv::Op::OpBranch, 0, 0,
-        std::initializer_list<Operand>{{SPV_OPERAND_TYPE_ID, {hdr_blk_id}}}));
+    (void)builder.AddBranch(hdr_blk_id);
     input_func->AddBasicBlock(std::move(first_blk_ptr));
     // Linear search loop header block
     // TODO(greg-lunarg): Implement binary search
@@ -293,17 +291,10 @@ uint32_t InstBuffAddrCheckPass::GetSearchAndTestFuncId() {
     uint32_t bound_test_blk_id = TakeNextId();
     std::unique_ptr<Instruction> bound_test_blk_label(
         NewLabel(bound_test_blk_id));
-    (void)builder.AddInstruction(MakeUnique<Instruction>(
-        context(), spv::Op::OpLoopMerge, 0, 0,
-        std::initializer_list<Operand>{
-            {SPV_OPERAND_TYPE_ID, {bound_test_blk_id}},
-            {SPV_OPERAND_TYPE_ID, {cont_blk_id}},
-            {SPV_OPERAND_TYPE_LITERAL_INTEGER,
-             {uint32_t(spv::LoopControlMask::MaskNone)}}}));
+    (void)builder.AddLoopMerge(bound_test_blk_id, cont_blk_id,
+                               uint32_t(spv::LoopControlMask::MaskNone));
     // Branch to continue/work block
-    (void)builder.AddInstruction(MakeUnique<Instruction>(
-        context(), spv::Op::OpBranch, 0, 0,
-        std::initializer_list<Operand>{{SPV_OPERAND_TYPE_ID, {cont_blk_id}}}));
+    (void)builder.AddBranch(cont_blk_id);
     input_func->AddBasicBlock(std::move(hdr_blk_ptr));
     // Continue/Work Block. Read next buffer pointer and break if greater
     // than ref_ptr arg.
@@ -386,10 +377,8 @@ uint32_t InstBuffAddrCheckPass::GetSearchAndTestFuncId() {
         GetBoolId(), spv::Op::OpULessThanEqual, ref_end_inst->result_id(),
         len_load_inst->result_id());
     // Return test result
-    (void)builder.AddInstruction(MakeUnique<Instruction>(
-        context(), spv::Op::OpReturnValue, 0, 0,
-        std::initializer_list<Operand>{
-            {SPV_OPERAND_TYPE_ID, {len_test_inst->result_id()}}}));
+    (void)builder.AddUnaryOp(0, spv::Op::OpReturnValue,
+                             len_test_inst->result_id());
     // Close block
     input_func->AddBasicBlock(std::move(bound_test_blk_ptr));
     // Close function and add function to module
@@ -408,14 +397,7 @@ uint32_t InstBuffAddrCheckPass::GenSearchAndTest(Instruction* ref_inst,
                                                  InstructionBuilder* builder,
                                                  uint32_t* ref_uptr_id) {
   // Enable Int64 if necessary
-  if (!get_feature_mgr()->HasCapability(spv::Capability::Int64)) {
-    std::unique_ptr<Instruction> cap_int64_inst(new Instruction(
-        context(), spv::Op::OpCapability, 0, 0,
-        std::initializer_list<Operand>{{SPV_OPERAND_TYPE_CAPABILITY,
-                                        {uint32_t(spv::Capability::Int64)}}}));
-    get_def_use_mgr()->AnalyzeInstDefUse(&*cap_int64_inst);
-    context()->AddCapability(std::move(cap_int64_inst));
-  }
+  context()->AddCapability(spv::Capability::Int64);
   // Convert reference pointer to uint64
   uint32_t ref_ptr_id = ref_inst->GetSingleWordInOperand(0);
   Instruction* ref_uptr_inst =
@@ -429,10 +411,8 @@ uint32_t InstBuffAddrCheckPass::GenSearchAndTest(Instruction* ref_inst,
   uint32_t ref_len = GetTypeLength(ref_ptr_ty_inst->GetSingleWordInOperand(1));
   uint32_t ref_len_id = builder->GetUintConstantId(ref_len);
   // Gen call to search and test function
-  const std::vector<uint32_t> args = {GetSearchAndTestFuncId(), *ref_uptr_id,
-                                      ref_len_id};
-  Instruction* call_inst =
-      builder->AddNaryOp(GetBoolId(), spv::Op::OpFunctionCall, args);
+  Instruction* call_inst = builder->AddFunctionCall(
+      GetBoolId(), GetSearchAndTestFuncId(), {*ref_uptr_id, ref_len_id});
   uint32_t retval = call_inst->result_id();
   return retval;
 }

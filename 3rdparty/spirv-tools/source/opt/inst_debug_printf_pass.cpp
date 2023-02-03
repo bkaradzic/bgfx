@@ -34,8 +34,8 @@ void InstDebugPrintfPass::GenOutputValues(Instruction* val_inst,
       const analysis::Type* c_ty = v_ty->element_type();
       uint32_t c_ty_id = type_mgr->GetId(c_ty);
       for (uint32_t c = 0; c < v_ty->element_count(); ++c) {
-        Instruction* c_inst = builder->AddIdLiteralOp(
-            c_ty_id, spv::Op::OpCompositeExtract, val_inst->result_id(), c);
+        Instruction* c_inst =
+            builder->AddCompositeExtract(c_ty_id, val_inst->result_id(), {c});
         GenOutputValues(c_inst, val_ids, builder);
       }
       return;
@@ -44,9 +44,8 @@ void InstDebugPrintfPass::GenOutputValues(Instruction* val_inst,
       // Select between uint32 zero or one
       uint32_t zero_id = builder->GetUintConstantId(0);
       uint32_t one_id = builder->GetUintConstantId(1);
-      Instruction* sel_inst =
-          builder->AddTernaryOp(GetUintId(), spv::Op::OpSelect,
-                                val_inst->result_id(), one_id, zero_id);
+      Instruction* sel_inst = builder->AddSelect(
+          GetUintId(), val_inst->result_id(), one_id, zero_id);
       val_ids->push_back(sel_inst->result_id());
       return;
     }

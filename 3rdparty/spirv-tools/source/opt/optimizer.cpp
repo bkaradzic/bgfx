@@ -1065,3 +1065,95 @@ Optimizer::PassToken CreateFixFuncCallArgumentsPass() {
       MakeUnique<opt::FixFuncCallArgumentsPass>());
 }
 }  // namespace spvtools
+
+extern "C" {
+
+SPIRV_TOOLS_EXPORT spv_optimizer_t* spvOptimizerCreate(spv_target_env env) {
+  return reinterpret_cast<spv_optimizer_t*>(new spvtools::Optimizer(env));
+}
+
+SPIRV_TOOLS_EXPORT void spvOptimizerDestroy(spv_optimizer_t* optimizer) {
+  delete reinterpret_cast<spvtools::Optimizer*>(optimizer);
+}
+
+SPIRV_TOOLS_EXPORT void spvOptimizerSetMessageConsumer(
+    spv_optimizer_t* optimizer, spv_message_consumer consumer) {
+  reinterpret_cast<spvtools::Optimizer*>(optimizer)->
+      SetMessageConsumer(
+          [consumer](spv_message_level_t level, const char* source,
+                     const spv_position_t& position, const char* message) {
+            return consumer(level, source, &position, message);
+          });
+}
+
+SPIRV_TOOLS_EXPORT void spvOptimizerRegisterLegalizationPasses(
+    spv_optimizer_t* optimizer) {
+  reinterpret_cast<spvtools::Optimizer*>(optimizer)->
+      RegisterLegalizationPasses();
+}
+
+SPIRV_TOOLS_EXPORT void spvOptimizerRegisterPerformancePasses(
+    spv_optimizer_t* optimizer) {
+  reinterpret_cast<spvtools::Optimizer*>(optimizer)->
+      RegisterPerformancePasses();
+}
+
+SPIRV_TOOLS_EXPORT void spvOptimizerRegisterSizePasses(
+    spv_optimizer_t* optimizer) {
+  reinterpret_cast<spvtools::Optimizer*>(optimizer)->RegisterSizePasses();
+}
+
+SPIRV_TOOLS_EXPORT bool spvOptimizerRegisterPassFromFlag(
+    spv_optimizer_t* optimizer, const char* flag)
+{
+  return reinterpret_cast<spvtools::Optimizer*>(optimizer)->
+      RegisterPassFromFlag(flag);
+}
+
+SPIRV_TOOLS_EXPORT bool spvOptimizerRegisterPassesFromFlags(
+    spv_optimizer_t* optimizer, const char** flags, const size_t flag_count) {
+  std::vector<std::string> opt_flags;
+  for (uint32_t i = 0; i < flag_count; i++) {
+    opt_flags.emplace_back(flags[i]);
+  }
+
+  return reinterpret_cast<spvtools::Optimizer*>(optimizer)->
+      RegisterPassesFromFlags(opt_flags);
+}
+
+SPIRV_TOOLS_EXPORT
+spv_result_t spvOptimizerRun(spv_optimizer_t* optimizer,
+                             const uint32_t* binary,
+                             const size_t word_count,
+                             spv_binary* optimized_binary,
+                             const spv_optimizer_options options) {
+  std::vector<uint32_t> optimized;
+
+  if (!reinterpret_cast<spvtools::Optimizer*>(optimizer)->
+      Run(binary, word_count, &optimized, options)) {
+    return SPV_ERROR_INTERNAL;
+  }
+
+  auto result_binary = new spv_binary_t();
+  if (!result_binary) {
+      *optimized_binary = nullptr;
+      return SPV_ERROR_OUT_OF_MEMORY;
+  }
+
+  result_binary->code = new uint32_t[optimized.size()];
+  if (!result_binary->code) {
+      delete result_binary;
+      *optimized_binary = nullptr;
+      return SPV_ERROR_OUT_OF_MEMORY;
+  }
+  result_binary->wordCount = optimized.size();
+
+  memcpy(result_binary->code, optimized.data(),
+         optimized.size() * sizeof(uint32_t));
+
+  *optimized_binary = result_binary;
+
+  return SPV_SUCCESS;
+}
+
+}  // extern "C"
