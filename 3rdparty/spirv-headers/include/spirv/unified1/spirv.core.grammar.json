@@ -4751,7 +4751,6 @@
         { "kind" : "IdScope", "name" : "'Scope'" }
       ],
       "capabilities" : [ "ShaderClockKHR" ],
-      "extensions" : [ "SPV_KHR_shader_clock" ],
       "version" : "None"
     },
     {
@@ -12517,6 +12516,78 @@
           "value" : 6140,
           "capabilities" : [ "VectorComputeINTEL" ],
           "version" : "None"
+        },
+        {
+          "enumerant" : "ConduitKernelArgumentINTEL",
+          "value" : 6175,
+          "capabilities" : [ "FPGAArgumentInterfacesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RegisterMapKernelArgumentINTEL",
+          "value" : 6176,
+          "capabilities" : [ "FPGAArgumentInterfacesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MMHostInterfaceAddressWidthINTEL",
+          "value" : 6177,
+          "capabilities" : [ "FPGAArgumentInterfacesINTEL" ],
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'AddressWidth'" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MMHostInterfaceDataWidthINTEL",
+          "value" : 6178,
+          "capabilities" : [ "FPGAArgumentInterfacesINTEL" ],
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'DataWidth'" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MMHostInterfaceLatencyINTEL",
+          "value" : 6179,
+          "capabilities" : [ "FPGAArgumentInterfacesINTEL" ],
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Latency'" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MMHostInterfaceReadWriteModeINTEL",
+          "value" : 6180,
+          "capabilities" : [ "FPGAArgumentInterfacesINTEL" ],
+          "parameters" : [
+            { "kind" : "AccessQualifier", "name" : "'ReadWriteMode'" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MMHostInterfaceMaxBurstINTEL",
+          "value" : 6181,
+          "capabilities" : [ "FPGAArgumentInterfacesINTEL" ],
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'MaxBurstCount'" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MMHostInterfaceWaitRequestINTEL",
+          "value" : 6182,
+          "capabilities" : [ "FPGAArgumentInterfacesINTEL" ],
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Waitrequest'" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "StableKernelArgumentINTEL",
+          "value" : 6183,
+          "capabilities" : [ "FPGAArgumentInterfacesINTEL" ],
+          "version" : "None"
         }
       ]
     },
@@ -14056,7 +14127,6 @@
         {
           "enumerant" : "ShaderClockKHR",
           "value" : 5055,
-          "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_KHR_shader_clock" ],
           "version" : "None"
         },
@@ -14821,6 +14891,12 @@
           "enumerant" : "SplitBarrierINTEL",
           "value" : 6141,
           "extensions" : [ "SPV_INTEL_split_barrier" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FPGAArgumentInterfacesINTEL",
+          "value" : 6174,
+          "extensions" : [ "SPV_INTEL_fpga_argument_interfaces" ],
           "version" : "None"
         },
         {
