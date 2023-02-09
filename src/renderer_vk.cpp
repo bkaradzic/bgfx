@@ -7729,8 +7729,8 @@ VK_DESTROY
 		if (m_nwh) {
 			m_swapChain.update(_commandBuffer, m_nwh, _resolution);
 			VK_CHECK(s_renderVK->getRenderPass(m_swapChain, &m_renderPass) );
-			m_width   = _resolution.width;
-			m_height  = _resolution.height;
+			m_width   = m_swapChain.m_sci.imageExtent.width;
+			m_height  = m_swapChain.m_sci.imageExtent.height;
 			m_sampler = m_swapChain.m_sampler;
 		}
 	}
@@ -8385,12 +8385,24 @@ VK_DESTROY
 						: m_backBuffer
 						;
 
-					isFrameBufferValid = fb.isRenderable();
+					const Rect& rect = _render->m_view[view].m_rect;
+
+					if (rect.m_x + rect.m_width > fb.m_width || rect.m_y + rect.m_height > fb.m_height)
+					{
+						// The Vulkan spec states:
+						// "renderArea.offset.x + renderArea.extent.width must be less than or equal to VkFramebufferCreateInfo::width the framebuffer was created with"
+						// so this view is invalid and must be dropped or it will cause a VK_DEVICE_LOST when the next render pass is triggered.
+						// This can happen mainly when resizing windows, and in particular when resizing to a smaller size.
+						isFrameBufferValid = false;
+					}
+					else
+					{
+						isFrameBufferValid = fb.isRenderable();
+					}
 
 					if (isFrameBufferValid)
 					{
 						viewState.m_rect = _render->m_view[view].m_rect;
-						const Rect& rect        = _render->m_view[view].m_rect;
 						const Rect& scissorRect = _render->m_view[view].m_scissor;
 						viewHasScissor  = !scissorRect.isZero();
 						viewScissorRect = viewHasScissor ? scissorRect : rect;
