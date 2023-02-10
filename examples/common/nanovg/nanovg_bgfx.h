@@ -76,4 +76,7 @@ void nvgluDeleteFramebuffer(NVGLUframebuffer* _framebuffer);
 ///
 void nvgluSetViewFramebuffer(bgfx::ViewId _viewId, NVGLUframebuffer* _framebuffer);
 
+///
+int nvgCreateBgfxTexture(struct NVGcontext *_ctx, bgfx::TextureHandle _id, int _width, int _height, int _flags);
+
 #endif // NANOVG_BGFX_H_HEADER_GUARD
