@@ -79,4 +79,7 @@ void nvgluSetViewFramebuffer(bgfx::ViewId _viewId, NVGLUframebuffer* _framebuffe
 ///
 int nvgCreateBgfxTexture(struct NVGcontext *_ctx, bgfx::TextureHandle _id, int _width, int _height, int _flags);
 
+///
+int nvgImportBgfxTexture(struct NVGcontext *_ctx, bgfx::TextureHandle _id, int _width, int _height, int _flags);
+
 #endif // NANOVG_BGFX_H_HEADER_GUARD
