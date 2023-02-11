@@ -2185,6 +2185,7 @@ namespace bgfx { namespace d3d12
 
 			const VertexLayout* layouts[1] = { &m_vertexLayouts[_blitter.m_vb->layoutHandle.idx] };
 			ID3D12PipelineState* pso = getPipelineState(state
+				, 0
 				, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT)
 				, 1
 				, layouts
@@ -3047,6 +3048,7 @@ namespace bgfx { namespace d3d12
 
 		ID3D12PipelineState* getPipelineState(
 			  uint64_t _state
+			, uint64_t _rgba
 			, uint64_t _stencil
 			, uint8_t _numStreams
 			, const VertexLayout** _layouts
@@ -3216,7 +3218,7 @@ namespace bgfx { namespace d3d12
 			desc.StreamOutput.NumStrides       = 0;
 			desc.StreamOutput.RasterizedStream = 0;
 
-			setBlendState(desc.BlendState, _state);
+			setBlendState(desc.BlendState, _state, _rgba);
 			desc.SampleMask = UINT32_MAX;
 			setRasterizerState(desc.RasterizerState, _state);
 			setDepthStencilState(desc.DepthStencilState, _state, _stencil);
@@ -6879,6 +6881,7 @@ namespace bgfx { namespace d3d12
 
 					ID3D12PipelineState* pso = getPipelineState(
 						  state
+						, draw.m_rgba
 						, draw.m_stencil
 						, numStreams
 						, layouts
