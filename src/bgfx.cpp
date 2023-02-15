@@ -4178,10 +4178,22 @@ namespace bgfx
 		s_ctx->destroyVertexLayout(_handle);
 	}
 
+	void encodeBufferFlags(const VertexLayout& _layout, uint16_t& _flags)
+	{
+		if (_flags & BGFX_BUFFER_COMPUTE_FORMAT_USER)
+		{
+			BX_ASSERT((_flags & BGFX_BUFFER_COMPUTE_READ_WRITE), "Set BGFX_BUFFER_COMPUTE_FORMAT_USER with compute buffers");
+			int stride = _layout.m_stride - 1;
+			BX_ASSERT(stride >=0 && stride <= 0xff, "Invalid layout stride (%d), cannot be encoded into flags.", _layout.m_stride);
+			_flags |= stride;
+		}
+	}
+
 	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexLayout& _layout, uint16_t _flags)
 	{
 		BX_ASSERT(NULL != _mem, "_mem can't be NULL");
 		BX_ASSERT(isValid(_layout), "Invalid VertexLayout.");
+		encodeBufferFlags(_layout, _flags);
 		return s_ctx->createVertexBuffer(_mem, _layout, _flags);
 	}
 
@@ -4224,6 +4236,7 @@ namespace bgfx
 	DynamicVertexBufferHandle createDynamicVertexBuffer(uint32_t _num, const VertexLayout& _layout, uint16_t _flags)
 	{
 		BX_ASSERT(isValid(_layout), "Invalid VertexLayout.");
+		encodeBufferFlags(_layout, _flags);
 		return s_ctx->createDynamicVertexBuffer(_num, _layout, _flags);
 	}
 
@@ -4231,6 +4244,7 @@ namespace bgfx
 	{
 		BX_ASSERT(NULL != _mem, "_mem can't be NULL");
 		BX_ASSERT(isValid(_layout), "Invalid VertexLayout.");
+		encodeBufferFlags(_layout, _flags);
 		return s_ctx->createDynamicVertexBuffer(_mem, _layout, _flags);
 	}
 

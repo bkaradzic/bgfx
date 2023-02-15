@@ -3735,6 +3735,7 @@ namespace bgfx { namespace d3d11
 
 	void BufferD3D11::create(uint32_t _size, void* _data, uint16_t _flags, uint16_t _stride, bool _vertex)
 	{
+		BX_UNUSED(_stride);
 		m_uav   = NULL;
 		m_size  = _size;
 		m_flags = _flags;
@@ -3742,12 +3743,12 @@ namespace bgfx { namespace d3d11
 		const bool needUav = 0 != (_flags & (BGFX_BUFFER_COMPUTE_WRITE|BGFX_BUFFER_DRAW_INDIRECT) );
 		const bool needSrv = 0 != (_flags & BGFX_BUFFER_COMPUTE_READ);
 		const bool drawIndirect = 0 != (_flags & BGFX_BUFFER_DRAW_INDIRECT);
+		const bool userStride = 0 != (_flags & BGFX_BUFFER_COMPUTE_FORMAT_USER);
 		m_dynamic = NULL == _data && !needUav;
 
 		D3D11_BUFFER_DESC desc;
 		desc.ByteWidth = _size;
 		desc.BindFlags = 0
-			| (_vertex ? D3D11_BIND_VERTEX_BUFFER    : D3D11_BIND_INDEX_BUFFER)
 			| (needUav ? D3D11_BIND_UNORDERED_ACCESS : 0)
 			| (needSrv ? D3D11_BIND_SHADER_RESOURCE  : 0)
 			;
@@ -3763,6 +3764,11 @@ namespace bgfx { namespace d3d11
 		{
 			format = DXGI_FORMAT_R32G32B32A32_UINT;
 			stride = 16;
+		}
+		else if (userStride)
+		{
+			format = DXGI_FORMAT_UNKNOWN;
+			stride = (_flags & 0xff) + 1;
 		}
 		else
 		{
@@ -3796,6 +3802,16 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
+		if (userStride)
+		{
+			desc.StructureByteStride = stride;
+			desc.MiscFlags |= D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+		}
+		else
+		{
+			desc.BindFlags |= (_vertex ? D3D11_BIND_VERTEX_BUFFER : D3D11_BIND_INDEX_BUFFER);
+		}
+
 		ID3D11Device* device = s_renderD3D11->m_device;
 
 		D3D11_SUBRESOURCE_DATA srd;
@@ -3807,7 +3823,6 @@ namespace bgfx { namespace d3d11
 		{
 			desc.Usage = D3D11_USAGE_DEFAULT;
 			desc.CPUAccessFlags = 0;
-			desc.StructureByteStride = _stride;
 
 			DX_CHECK(device->CreateBuffer(&desc
 				, NULL == _data ? NULL : &srd
@@ -3963,12 +3978,8 @@ namespace bgfx { namespace d3d11
 	void VertexBufferD3D11::create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags)
 	{
 		m_layoutHandle = _layoutHandle;
-		uint16_t stride = isValid(_layoutHandle)
-			? s_renderD3D11->m_vertexLayouts[_layoutHandle.idx].m_stride
-			: 0
-			;
 
-		BufferD3D11::create(_size, _data, _flags, stride, true);
+		BufferD3D11::create(_size, _data, _flags, 0, true);
 	}
 
 	static bool hasDepthOp(const void* _code, uint32_t _size)

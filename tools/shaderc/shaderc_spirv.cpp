@@ -653,7 +653,7 @@ namespace bgfx { namespace spirv
 						Uniform un;
 						un.name = program->getUniformName(ii);
 
-						if (bx::hasSuffix(un.name.c_str(), ".@data") )
+						if (un.name.find(".@data") != std::string::npos)
 						{
 							continue;
 						}

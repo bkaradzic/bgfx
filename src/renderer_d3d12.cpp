@@ -4585,10 +4585,12 @@ namespace bgfx { namespace d3d12
 
 		const bool needUav = 0 != (_flags & (BGFX_BUFFER_COMPUTE_WRITE|BGFX_BUFFER_DRAW_INDIRECT) );
 		const bool drawIndirect = 0 != (_flags & BGFX_BUFFER_DRAW_INDIRECT);
+		const bool userStride = 0 != (_flags & BGFX_BUFFER_COMPUTE_FORMAT_USER);
 		m_dynamic = NULL == _data || needUav;
 
 		DXGI_FORMAT format;
 		uint32_t    stride;
+		uint32_t    StructureByteStride = 0;
 
 		uint32_t flags = needUav
 			? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
@@ -4602,6 +4604,11 @@ namespace bgfx { namespace d3d12
 #endif // BX_PLATFORM_XBOXONE
 			format = _vertex ? DXGI_FORMAT_R32G32B32A32_UINT : DXGI_FORMAT_R32_UINT;
 			stride = _vertex ? 16 : 4;
+		}
+		else if (userStride)
+		{
+			format = DXGI_FORMAT_UNKNOWN;
+			stride = StructureByteStride = (_flags & 0xff) + 1;
 		}
 		else
 		{
@@ -4642,14 +4649,14 @@ namespace bgfx { namespace d3d12
 		m_srvd.Shader4ComponentMapping     = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		m_srvd.Buffer.FirstElement         = 0;
 		m_srvd.Buffer.NumElements          = m_size / stride;
-		m_srvd.Buffer.StructureByteStride  = 0;
+		m_srvd.Buffer.StructureByteStride  = StructureByteStride;
 		m_srvd.Buffer.Flags                = D3D12_BUFFER_SRV_FLAG_NONE;
 
 		m_uavd.Format                      = format;
 		m_uavd.ViewDimension               = D3D12_UAV_DIMENSION_BUFFER;
 		m_uavd.Buffer.FirstElement         = 0;
 		m_uavd.Buffer.NumElements          = m_size / stride;
-		m_uavd.Buffer.StructureByteStride  = 0;
+		m_uavd.Buffer.StructureByteStride  = StructureByteStride;
 		m_uavd.Buffer.CounterOffsetInBytes = 0;
 		m_uavd.Buffer.Flags                = D3D12_BUFFER_UAV_FLAG_NONE;
 
