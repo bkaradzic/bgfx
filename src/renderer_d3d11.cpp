@@ -1617,7 +1617,7 @@ namespace bgfx { namespace d3d11
 				DX_RELEASE(m_msaaRt, 0);
 #if BX_PLATFORM_WINRT
 				// Remove swap chain from SwapChainPanel (nwh) if applicable
-				m_dxgi.removeSwapChain(m_scd, &m_swapChain);
+				m_dxgi.removeSwapChain(m_scd);
 #endif
 				DX_RELEASE(m_swapChain, 0);
 				DX_RELEASE(m_deviceCtx, 0);
@@ -1708,7 +1708,7 @@ namespace bgfx { namespace d3d11
 			DX_RELEASE(m_msaaRt, 0);
 #if BX_PLATFORM_WINRT
 			// Remove swap chain from SwapChainPanel (nwh) if applicable
-			m_dxgi.removeSwapChain(m_scd, &m_swapChain);
+			m_dxgi.removeSwapChain(m_scd);
 #endif
 			DX_RELEASE(m_swapChain, 0);
 			DX_RELEASE(m_deviceCtx, 0);
@@ -2396,7 +2396,7 @@ namespace bgfx { namespace d3d11
 				&& (m_scd.nwh != g_platformData.nwh || m_scd.ndt != g_platformData.ndt))
 			{
 				// Remove swap chain from SwapChainPanel (nwh) if applicable
-				m_dxgi.removeSwapChain(m_scd, &m_swapChain);
+				m_dxgi.removeSwapChain(m_scd);
 				// Update nwh after removing swap chain
 				m_scd.nwh = g_platformData.nwh;
 				m_scd.ndt = g_platformData.ndt;
@@ -2511,7 +2511,7 @@ namespace bgfx { namespace d3d11
 
 #if BX_PLATFORM_WINRT
 						// Remove swap chain from SwapChainPanel (nwh) if applicable
-						m_dxgi.removeSwapChain(m_scd, &m_swapChain);
+						m_dxgi.removeSwapChain(m_scd);
 #endif
 						DX_RELEASE(m_swapChain, 0);
 						HRESULT hr = m_dxgi.createSwapChain(m_device
