@@ -20,7 +20,7 @@
 #if BX_PLATFORM_WINRT
 // Copied from <microsoft.ui.xaml.media.dxinterop.h> from Windows App SDK
 // Put in a namespace to avoid conflict with <windows.ui.xaml.media.dxinterop.h>
-namespace WinUI
+namespace WinUI3
 {
 	// https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/win32/microsoft.ui.xaml.media.dxinterop/nn-microsoft-ui-xaml-media-dxinterop-iswapchainpanelnative
 	MIDL_INTERFACE("63aad0b8-7c24-40ff-85a8-640d944cc325")
@@ -169,8 +169,8 @@ namespace bgfx
 
 		if (trySetSwapChain<ISwapChainPanelNative>(nativeWindow, swapChain, &hr)
 		||  trySetSwapChain<ISwapChainBackgroundPanelNative>(nativeWindow, swapChain, &hr)
-		||  trySetSwapChain<WinUI::ISwapChainPanelNative>(nativeWindow, swapChain, &hr)
-		||  trySetSwapChain<WinUI::ISwapChainBackgroundPanelNative>(nativeWindow, swapChain, &hr))
+		||  trySetSwapChain<WinUI3::ISwapChainPanelNative>(nativeWindow, swapChain, &hr)
+		||  trySetSwapChain<WinUI3::ISwapChainBackgroundPanelNative>(nativeWindow, swapChain, &hr))
 		{
 			if (FAILED(hr))
 			{
