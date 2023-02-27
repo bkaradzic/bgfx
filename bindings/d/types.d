@@ -270,7 +270,6 @@ enum ushort BGFX_BUFFER_COMPUTE_WRITE = 0x0200; /// Buffer will be used for writ
 enum ushort BGFX_BUFFER_DRAW_INDIRECT = 0x0400; /// Buffer will be used for storing draw indirect commands.
 enum ushort BGFX_BUFFER_ALLOW_RESIZE = 0x0800; /// Allow dynamic index/vertex buffer resize during update.
 enum ushort BGFX_BUFFER_INDEX32 = 0x1000; /// Index buffer contains 32-bit indices.
-enum ushort BGFX_BUFFER_COMPUTE_FORMAT_USER = 0x2000; /// User defined stride.
 enum ushort BGFX_BUFFER_COMPUTE_READ_WRITE = 0x0300;
 
 enum ulong BGFX_TEXTURE_NONE = 0x0000000000000000;

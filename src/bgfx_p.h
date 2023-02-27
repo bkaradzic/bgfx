@@ -158,6 +158,8 @@ namespace bgfx
 			| BGFX_CLEAR_COLOR_USE_PALETTE \
 			)
 
+#define BGFX_BUFFER_COMPUTE_FORMAT_USER UINT16_C(0x2000)
+
 #if BGFX_CONFIG_USE_TINYSTL
 namespace bgfx
 {
@@ -3403,9 +3405,26 @@ namespace bgfx
 			}
 		}
 
+		void encodeBufferFlags(const VertexLayout& _layout, uint16_t& _flags)
+		{
+			if (_flags & BGFX_BUFFER_COMPUTE_READ_WRITE)
+			{
+				uint32_t uavFormat = (_flags & BGFX_BUFFER_COMPUTE_FORMAT_MASK) >> BGFX_BUFFER_COMPUTE_FORMAT_SHIFT;
+				if (uavFormat == 0)
+				{
+					_flags |= BGFX_BUFFER_COMPUTE_FORMAT_USER;
+					int stride = _layout.m_stride - 1;
+					BX_ASSERT(stride >=0 && stride <= 0xff, "Invalid layout stride (%d), cannot be encoded into flags.", _layout.m_stride);
+					_flags |= stride;
+				}
+			}
+		}
+
 		BGFX_API_FUNC(VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexLayout& _layout, uint16_t _flags) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+
+			encodeBufferFlags(_layout, _flags);
 
 			VertexBufferHandle handle = { m_vertexBufferHandle.alloc() };
 
@@ -3723,6 +3742,8 @@ namespace bgfx
 		BGFX_API_FUNC(DynamicVertexBufferHandle createDynamicVertexBuffer(uint32_t _num, const VertexLayout& _layout, uint16_t _flags) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+
+			encodeBufferFlags(_layout, _flags);
 
 			VertexLayoutHandle layoutHandle = findOrCreateVertexLayout(_layout);
 			if (!isValid(layoutHandle) )

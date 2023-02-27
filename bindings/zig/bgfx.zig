@@ -430,9 +430,6 @@ pub const BufferFlags_AllowResize: BufferFlags            = 0x0800;
 
 /// Index buffer contains 32-bit indices.
 pub const BufferFlags_Index32: BufferFlags                = 0x1000;
-
-/// User defined stride.
-pub const BufferFlags_ComputeFormatUser: BufferFlags      = 0x2000;
 pub const BufferFlags_ComputeReadWrite: BufferFlags       = 0x0300;
 
 pub const TextureFlags = u64;

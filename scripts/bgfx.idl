@@ -247,7 +247,6 @@ flag.Buffer { bits = 16, base = 8 }
 	.DrawIndirect --- Buffer will be used for storing draw indirect commands.
 	.AllowResize  --- Allow dynamic index/vertex buffer resize during update.
 	.Index32      --- Index buffer contains 32-bit indices.
-	.ComputeFormatUser --- User defined stride.
 	.ComputeReadWrite { "ComputeRead" , "ComputeWrite" }
 	()
 

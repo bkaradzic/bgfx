@@ -701,11 +701,6 @@ public static class bgfx
 		/// Index buffer contains 32-bit indices.
 		/// </summary>
 		Index32                = 0x1000,
-	
-		/// <summary>
-		/// User defined stride.
-		/// </summary>
-		ComputeFormatUser      = 0x2000,
 		ComputeReadWrite       = 0x0300,
 	}
 	
