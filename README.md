@@ -132,8 +132,6 @@ alt="Torque 6 Material Editor" width="640" height="480" border="0" /></a>
 https://github.com/podgorskiy/KeplerOrbits - KeplerOrbits - Tool that calculates
 positions of celestial bodies using their orbital elements.
 
-Web Demo: http://podgorskiy.com/KeplerOrbits/KeplerOrbits.html
-
 ## CETech
 
 https://github.com/cyberegoorg/cetech - CETech is a data-driven game engine and
@@ -164,8 +162,6 @@ http://dls.makingartstudios.com/sandbox/ - DLS: The Sandbox.
 ## MAME
 
 https://github.com/mamedev/mame - MAME - Multiple Arcade Machine Emulator.
-
-Web Demo: http://fos.textfiles.com/dfjustin/pacman/pacman/
 
 ![MAME screenshot](https://raw.githubusercontent.com/mamedev/www.mamedev.org/d8d716dbb63919a11964b5d47b9b7f6cfa006b56/bgfx/Raiden.png)
 
@@ -206,8 +202,6 @@ width="640" height="480" border="0" /></a>
 
 https://github.com/degenerated1123/REGoth - REGoth is an open-source
 reimplementation of the zEngine, used by the game "Gothic" and "Gothic II".
-
-Web Demo: http://gothic-dx11.de/gothic-js/REGoth.html
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=8bLAGttYYpY
 " target="_blank"><img src="http://img.youtube.com/vi/8bLAGttYYpY/0.jpg" 
