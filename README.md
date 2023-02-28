@@ -97,7 +97,7 @@ Carbon Games.
 
 ## cmftStudio
 
-[cmftStudio](https://github.com/dariomanesku/cmftStudio) - cubemap filtering
+[cmftStudio](https://github.com/dariomanesku/cmftStudio) - Cubemap filtering
 tool.
 
 ![cmftStudio screenshot](https://github.com/dariomanesku/cmftStudio/raw/master/screenshots/cmftStudio_small.jpg)
