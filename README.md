@@ -89,7 +89,7 @@ Who is using it? [#madewithbgfx](https://twitter.com/search?q=%23madewithbgfx&sr
 
 ## AirMech
 
-[AirMech](https://www.carbongames.com/airmech-strike) is a free-to-play
+https://www.carbongames.com/airmech-strike - AirMech is a free-to-play
 futuristic action real-time strategy video game developed and published by
 Carbon Games.
 
@@ -97,14 +97,14 @@ Carbon Games.
 
 ## cmftStudio
 
-[cmftStudio](https://github.com/dariomanesku/cmftStudio) - Cubemap filtering
+https://github.com/dariomanesku/cmftStudio - cmftStudio - Cubemap filtering
 tool.
 
 ![cmftStudio screenshot](https://github.com/dariomanesku/cmftStudio/raw/master/screenshots/cmftStudio_small.jpg)
 
 ## Crown
 
-[Crown](https://github.com/dbartolini/crown) is a general purpose data-driven
+https://github.com/dbartolini/crown - Crown is a general purpose data-driven
 game engine, written from scratch with a minimalistic and data-oriented design
 philosophy in mind.
 
@@ -112,14 +112,14 @@ philosophy in mind.
 
 ## Offroad Legends 2
 
-[Dogbyte Games](http://www.dogbytegames.com/) is an indie mobile developer
-studio focusing on racing games.
+http://www.dogbytegames.com/ - Dogbyte Games is an indie mobile developer studio
+focusing on racing games.
 
 ![Offroad Legends 2](http://www.dogbytegames.com/bgfx/offroadlegends2_bgfx_ipad2.jpg)
 
 ## Torque6
 
-[Torque 6](https://github.com/andr3wmac/Torque6) is an MIT licensed 3D engine
+https://github.com/andr3wmac/Torque6 - Torque 6 is an MIT licensed 3D engine
 loosely based on Torque2D. Being neither Torque2D or Torque3D it is the 6th
 derivative of the original Torque Engine.
 
@@ -129,51 +129,51 @@ alt="Torque 6 Material Editor" width="640" height="480" border="0" /></a>
 
 ## Kepler Orbits
 
-[KeplerOrbits](https://github.com/podgorskiy/KeplerOrbits) - Tool that
-calculates positions of celestial bodies using their orbital elements.
+https://github.com/podgorskiy/KeplerOrbits - KeplerOrbits - Tool that calculates
+positions of celestial bodies using their orbital elements.
 
-[Web Demo](http://podgorskiy.com/KeplerOrbits/KeplerOrbits.html)
+Web Demo: http://podgorskiy.com/KeplerOrbits/KeplerOrbits.html
 
 ## CETech
 
-[CETech](https://github.com/cyberegoorg/cetech) is Data-Driven game engine and
+https://github.com/cyberegoorg/cetech - CETech is a data-driven game engine and
 toolbox inspired by Bitsquid/Stingray engine.
 
 ![CETech screenshot](https://github.com/cyberegoorg/cetech/raw/master/docs/img/prototyp.png)
 
 ## ioquake3
 
-[A renderer for ioquake3](https://github.com/jpcy/ioq3-renderer-bgfx) written in
+https://github.com/jpcy/ioq3-renderer-bgfx - A renderer for ioquake3 written in
 C++ and using bgfx to support multiple rendering APIs.
 
 ![ioq3-renderer-bgfx screenshot](https://camo.githubusercontent.com/052aa40c05120e56306294d3a1bb5f99f97de8c8/687474703a2f2f692e696d6775722e636f6d2f64364f6856594b2e6a7067)
 
 ## DLS
 
-[DLS](http://makingartstudios.itch.io/dls) - the digital logic simulator game.
+http://makingartstudios.itch.io/dls - DLS, the digital logic simulator game.
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=6o1-sQRNqcA
 " target="_blank"><img src="http://img.youtube.com/vi/6o1-sQRNqcA/0.jpg" 
 alt="DLS - Creating a 4-bit Register "
 width="640" height="480" border="0" /></a>
 
-[DLS: The Sandbox](http://dls.makingartstudios.com/sandbox/)
+http://dls.makingartstudios.com/sandbox/ - DLS: The Sandbox.
 
 ![DLS: The Sandbox screenshot](https://pbs.twimg.com/media/DBaFwOKWAAEq0mp.jpg:large)
 
 ## MAME
 
-[MAME](https://github.com/mamedev/mame) - Multiple Arcade Machine Emulator.
+https://github.com/mamedev/mame - MAME - Multiple Arcade Machine Emulator.
 
-[Try MAME in Browser!](http://fos.textfiles.com/dfjustin/pacman/pacman/)
+Web Demo: http://fos.textfiles.com/dfjustin/pacman/pacman/
 
 ![MAME screenshot](https://raw.githubusercontent.com/mamedev/www.mamedev.org/d8d716dbb63919a11964b5d47b9b7f6cfa006b56/bgfx/Raiden.png)
 
 ## Blackshift
 
-[Blackshift](https://blackshift.itch.io/blackshift) is a grid-based,
-space-themed action puzzle game which isn't afraid of complexity - think Chip's
-Challenge on crack.
+https://blackshift.itch.io/blackshift - Blackshift is a grid-based, space-themed
+action puzzle game which isn't afraid of complexity - think Chip's Challenge on
+crack.
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=PUl8612Y-ds" 
 target="_blank"><img src="http://img.youtube.com/vi/PUl8612Y-ds/0.jpg" 
@@ -182,8 +182,9 @@ width="640" height="480" border="0" /></a>
 
 ## Real-Time Polygonal-Light Shading with Linearly Transformed Cosines
 
-[Real-Time Polygonal-Light Shading with Linearly Transformed Cosines](https://eheitzresearch.wordpress.com/415-2/),
-Eric Heitz, Jonathan Dupuy, Stephen Hill and David Neubelt, ACM SIGGRAPH 2016.
+https://eheitzresearch.wordpress.com/415-2/ - Real-Time Polygonal-Light Shading
+with Linearly Transformed Cosines, Eric Heitz, Jonathan Dupuy, Stephen Hill and
+David Neubelt, ACM SIGGRAPH 2016.
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=ZLRgEN7AQgM" 
 target="_blank"><img src="http://img.youtube.com/vi/ZLRgEN7AQgM/0.jpg" 
@@ -192,7 +193,7 @@ width="640" height="480" border="0" /></a>
 
 ## Dead Venture
 
-[Dead Venture](http://www.dogbytegames.com/dead_venture.html) is a new Drive 'N
+http://www.dogbytegames.com/dead_venture.html - Dead Venture is a new Drive 'N
 Gun game where you help a handful of survivals reach the safe haven: a military
 base on a far island.
 
@@ -203,10 +204,10 @@ width="640" height="480" border="0" /></a>
 
 ## REGoth
 
-[REGoth](https://github.com/degenerated1123/REGoth) is an open-source
+https://github.com/degenerated1123/REGoth - REGoth is an open-source
 reimplementation of the zEngine, used by the game "Gothic" and "Gothic II".
 
-[Browser Demo](http://gothic-dx11.de/gothic-js/REGoth.html)
+Web Demo: http://gothic-dx11.de/gothic-js/REGoth.html
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=8bLAGttYYpY
 " target="_blank"><img src="http://img.youtube.com/vi/8bLAGttYYpY/0.jpg" 
@@ -215,14 +216,14 @@ width="640" height="480" border="0" /></a>
 
 ## Ethereal Engine
 
-[EtherealEngine](https://github.com/volcoma/EtherealEngine) is a C++ Game Engine
-and WYSIWYG Editor.
+https://github.com/volcoma/EtherealEngine - EtherealEngine is a C++ game engine
+and WYSIWYG dditor.
 
 ![EtherealEngine screenshot](https://user-images.githubusercontent.com/1499411/29488403-ff3c3df6-8512-11e7-869f-32a783530cc3.png)
 
 ## Go Rally
 
-[Go Rally](http://gorallygame.com/) is top-down rally game with a career mode,
+http://gorallygame.com/ - Go Rally is top-down rally game with a career mode,
 multiplayer time challenges, and a track creator.
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=ckbkQsB6RVY" 
@@ -232,7 +233,7 @@ width="640" height="480" border="0" /></a>
 
 ## vg-renderer
 
-[vg-renderer](https://github.com/jdryg/vg-renderer#vg-renderer) is a vector
+https://github.com/jdryg/vg-renderer#vg-renderer - vg-renderer is a vector
 graphics renderer for bgfx, based on ideas from both NanoVG and ImDrawList (Dear
 ImGUI).
 
@@ -240,10 +241,10 @@ ImGUI).
 
 ## Zombie Safari
 
-[Zombie Safari](http://www.dogbytegames.com/zombie_safari.html) - Do what you
-please in this Open-World Offroad Driving game: explore massive landscapes,
-complete challenges, smash zombies, find secret locations, unlock and upgrade
-cars and weapons, it's up to you!
+http://www.dogbytegames.com/zombie_safari.html - Do what you please in this
+open-world offroad driving game: explore massive landscapes, complete
+challenges, smash zombies, find secret locations, unlock and upgrade cars and
+weapons, it's up to you!
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=LSiH0lRkw8g" 
 target="_blank"><img src="http://img.youtube.com/vi/LSiH0lRkw8g/0.jpg" 
@@ -252,10 +253,10 @@ width="640" height="480" border="0" /></a>
 
 ## Smith and Winston
 
-[Smith and Winston](http://www.smithandwinston.com/) is an exploration twin
-stick shooter for PC, PS4 & XBoxOne arriving in late 2018. Smith and Winston
-features a massively destructable voxel world, rapid twin stick combat, physics
-puzzles and Metroid-style discovery.
+http://www.smithandwinston.com/ - Smith and Winston is an exploration twin stick
+shooter for PC, PS4 & XBoxOne arriving in late 2018. Smith and Winston features
+a massively destructable voxel world, rapid twin stick combat, physics puzzles
+and Metroid-style discovery.
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=Mr_L7KuiByU" 
 target="_blank"><img src="http://img.youtube.com/vi/Mr_L7KuiByU/0.jpg" 
@@ -264,7 +265,7 @@ width="640" height="480" border="0" /></a>
 
 ## Football Manager 2018
 
-[Football Manager 2018](http://www.footballmanager.com/) is a 2017 football
+http://www.footballmanager.com/ - Football Manager 2018 is a 2017 football
 management simulation video game developed by Sports Interactive and published
 by Sega.
 
@@ -275,7 +276,7 @@ width="640" height="480" border="0" /></a>
 
 ## WonderWorlds
 
-[WonderWorlds](http://wonderworlds.me/) is a place to play thousands of
+http://wonderworlds.me/ - WonderWorlds is a place to play thousands of
 user-created levels and stories, make your own using the extensive in-game tools
 and share them with whomever you want.
 
@@ -286,15 +287,15 @@ width="640" height="480" border="0" /></a>
 
 ## two-io / mud
 
-[two-io](https://hugoam.github.io/two-io/) is an all-purpose c++ app prototyping
-library, focused towards live graphical apps and games.
+https://hugoam.github.io/two-io/ - An all-purpose c++ app prototyping library,
+focused towards live graphical apps and games.
 
 ![two-io / mud screenshot](https://raw.githubusercontent.com/hugoam/mud-io/master/media/14_live_gfx.png)
 
 ## Talking Tom Pool
 
-[Talking Tom Pool](https://outfit7.com/apps/talking-tom-pool/) is a "sling and
-match" puzzle game for mobile devices.
+https://outfit7.com/apps/talking-tom-pool/ - A "sling and match" puzzle game for
+mobile devices.
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=eNSI45zDEo0" 
 target="_blank"><img src="http://img.youtube.com/vi/eNSI45zDEo0/0.jpg" 
@@ -303,7 +304,7 @@ width="640" height="480" border="0" /></a>
 
 ## GPlayEngine
 
-[GPlayEngine](https://github.com/fredakilla/GPlayEngine#gplayengine) is a C++
+https://github.com/fredakilla/GPlayEngine#gplayengine - GPlayEngine is a C++
 cross-platform game engine for creating 2D/3D games based on the GamePlay 3D
 engine v3.0.
 
@@ -311,8 +312,8 @@ engine v3.0.
 
 ## Off The Road
 
-[Off The Road](http://www.dogbytegames.com/off_the_road.html) is a sandbox
-off-road driving simulator.
+http://www.dogbytegames.com/off_the_road.html - A sandbox off-road driving
+simulator.
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=IUmxqAWdXvk" 
 target="_blank"><img src="http://img.youtube.com/vi/IUmxqAWdXvk/0.jpg" 
@@ -321,14 +322,13 @@ width="640" height="480" border="0" /></a>
 
 ## Coal Burnout
 
-[Coal Burnout](https://beardsvibe.com/) is a multiplayer PVP rhythm game.
+https://beardsvibe.com/ - A multiplayer PVP rhythm game.
 
 ![Coal Burnout screenshot](https://beardsvibe.com/scr/0l.png)
 
 ## My Talking Tom 2
 
-[My Talking Tom 2](https://outfit7.com/apps/my-talking-tom-2/) - Many mini games
-for mobile devices.
+https://outfit7.com/apps/my-talking-tom-2/ - Many mini games for mobile devices.
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=I0U7EQKKDjw" 
 target="_blank"><img src="http://img.youtube.com/vi/I0U7EQKKDjw/0.jpg" 
@@ -337,24 +337,23 @@ width="640" height="480" border="0" /></a>
 
 ## NeoAxis Engine
 
-[NeoAxis Engine](https://www.neoaxis.com/) - Versatile 3D project development
-environment.
+https://www.neoaxis.com/ - Versatile 3D project development environment.
 
 ![NeoAxis Engine screenshot](https://www.neoaxis.com/files/NeoAxisEngine04.jpg)
 
 ## xatlas
 
-[xatlas](https://github.com/jpcy/xatlas#xatlas) - Mesh parameterization library.
+https://github.com/jpcy/xatlas#xatlas - Mesh parameterization library.
 
 ![xatlas screenshot](https://user-images.githubusercontent.com/3744372/43034066-53a62dee-8d18-11e8-9767-0b38ed3fa2d3.png)
 
 ## Heroes of Hammerwatch
 
-[Heroes of Hammerwatch](https://store.steampowered.com/app/677120/Heroes_of_Hammerwatch/)
-is a rogue-lite action-adventure game set in the same universe as Hammerwatch.
-Encounter endless hordes of enemies, traps, puzzles, secrets and lots of loot,
-as you battle your way through procedurally generated levels to reach the top of
-the Forsaken Spire.
+https://store.steampowered.com/app/677120/Heroes_of_Hammerwatch/ - Heroes of
+Hammerwatch is a rogue-lite action-adventure game set in the same universe as
+Hammerwatch. Encounter endless hordes of enemies, traps, puzzles, secrets and
+lots of loot, as you battle your way through procedurally generated levels to
+reach the top of the Forsaken Spire.
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=uTIVDKdNvms" 
 target="_blank"><img src="http://img.youtube.com/vi/uTIVDKdNvms/0.jpg" 
@@ -363,16 +362,17 @@ width="640" height="480" border="0" /></a>
 
 ## Babylon Native
 
-[Babylon Native](https://github.com/BabylonJS/BabylonNative#babylon-native) -
-Build cross-platform native applications with the power of the Babylon.js
-JavaScript framework.
+https://github.com/BabylonJS/BabylonNative#babylon-native - Build cross-platform
+native applications with the power of the Babylon.js JavaScript framework.
 
 ## Nira
 
-[Nira](https://nira.app/) - Instantly load and view assets on any device. All
-you need is a web browser.
+https://nira.app/ - Instantly load and view assets on any device. All you need
+is a web browser.
 
-[SIGGRAPH 2019: Project Nira: Instant Interactive Real-Time Access to Multi-Gigabyte Sized 3D Assets on Any Device](https://s2019.siggraph.org/presentation/?sess=sess104&id=real_130#038;id=real_130)
+SIGGRAPH 2019: Project Nira: Instant Interactive Real-Time Access to
+Multi-Gigabyte Sized 3D Assets on Any Device:
+https://s2019.siggraph.org/presentation/?sess=sess104&id=real_130#038;id=real_130
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=Gz9weuemhDA&t=3350" 
 target="_blank"><img src="http://img.youtube.com/vi/Gz9weuemhDA/0.jpg" 
@@ -381,22 +381,21 @@ width="640" height="480" border="0" /></a>
 
 ## openblack
 
-[openblack](https://github.com/openblack/openblack#openblack) - An open source
+https://github.com/openblack/openblack#openblack - An open-source
 reimplementation of the game Black & White (2001).
 
 ![openblack screenshot](https://user-images.githubusercontent.com/32263167/184559293-56cfc6a7-a7da-4876-8fce-434ba8827eae.png)
 
 ## Cluster
 
-[Cluster](https://github.com/pezcode/Cluster#cluster) - Implementation of
-Clustered Shading and Physically Based Rendering with the bgfx rendering
-library.
+https://github.com/pezcode/Cluster#cluster - Implementation of Clustered Shading
+and Physically Based Rendering with the bgfx rendering library.
 
 ![Cluster screenshot](https://raw.githubusercontent.com/pezcode/Cluster/master/images/sponza.jpg)
 
 ## NIMBY Rails
 
-[NIMBY Rails](https://store.steampowered.com/app/1134710/NIMBY_Rails/) is a
+https://store.steampowered.com/app/1134710/NIMBY_Rails/ - NIMBY Rails is a
 management and design sandbox game for railways you build in the real world.
 
 ![NIMBY Rails screenshot](https://user-images.githubusercontent.com/28320/78472283-03d5e200-7727-11ea-8bd4-db8754f52dc3.jpg)
@@ -410,23 +409,22 @@ https://www.minecraft.net/zh-hant/attribution/
 
 ## FFNx
 
-[FFNx](https://github.com/julianxhokaxhiu/FFNx#ffnx) - Next generation driver
-for Final Fantasy VII and Final Fantasy VIII (with native Steam 2013 release
-support!)
+https://github.com/julianxhokaxhiu/FFNx#ffnx - Next generation driver for Final
+Fantasy VII and Final Fantasy VIII (with native Steam 2013 release support!)
 
 ![FFVIII screenshot](https://raw.githubusercontent.com/julianxhokaxhiu/FFNx/master/.screens/ff8.png)
 
 
 ## Shadow Gangs
 
-[Shadow Gangs](https://www.microsoft.com/en-gb/p/shadow-gangs/9n6hkcr65qdq) is
-an arcade style ninja action game.
+https://www.microsoft.com/en-gb/p/shadow-gangs/9n6hkcr65qdq - Shadow Gangs is an
+arcade style ninja action game.
 
 ![Shadow Gangs screenshot](https://user-images.githubusercontent.com/814772/94508248-64ba1080-01c6-11eb-800f-47dc374ef054.jpeg)
 
 ## Growtopia
 
-[Growtopia](https://growtopiagame.com/) is a free-to-play sandbox MMO game with
+https://growtopiagame.com/ - Growtopia is a free-to-play sandbox MMO game with
 almost endless possibilities for world creation, customization and having fun
 with your friends. Enjoy thousands of items, challenges and events.
 
@@ -434,32 +432,31 @@ with your friends. Enjoy thousands of items, challenges and events.
 
 ## Galaxy Trucker
 
-[Galaxy Truck](https://galaxytrucker.com/) - Digital implementation of tabletop
-spaceship building in real-time or turn-based mode, then surviving space
-adventures, with AI opponents, multiplayer, achievements and solo campaign.
+https://galaxytrucker.com/ - Digital implementation of tabletop spaceship
+building in real-time or turn-based mode, then surviving space adventures, with
+AI opponents, multiplayer, achievements and solo campaign.
 
 ![Galaxy Trucker screenshot](https://press.galaxytrucker.com/images/GTAT_junk.png)
 
 ## Through the Ages
 
-[Through the Ages](https://throughtheages.com/) - The card tabletop deep
-strategy game in your devices. Lead your civilization from pyramids to space
-flights. Challenges, achievements, skilled AIs and online multiplayer.
+https://throughtheages.com/ - The card tabletop deep strategy game in your
+devices. Lead your civilization from pyramids to space flights. Challenges,
+achievements, skilled AIs and online multiplayer.
 
 ![Through the Ages screenshot](https://press.throughtheages.com/images/tta01.png)
 
 ## Codenames
 
-[Codenames](https://codenamesgame.com/) - One of the best party games. Two rival
-spymasters know the secret identities of 25 agents. Their teammates know the
-agents only by their codenames. Simple to explain, easy to understand,
-challenging gameplay.
+https://codenamesgame.com/ - One of the best party games. Two rival spymasters
+know the secret identities of 25 agents. Their teammates know the agents only by
+their codenames. Simple to explain, easy to understand, challenging gameplay.
 
 ![Codenames screenshot](https://codenamesgame.com/img/game-features-img-1.jpg)
 
 ## PeakFinder
 
-[PeakFinder](https://www.peakfinder.org/) shows the names of all mountains and
+https://www.peakfinder.org/ - PeakFinder shows the names of all mountains and
 peaks with a 360° panorama display. More than 850'000 peaks - from Mount Everest
 to the little hill around the corner.
 
@@ -467,17 +464,18 @@ to the little hill around the corner.
 
 ## Ember Sword
 
-[Ember Sword](https://embersword.com) is a free to play MMORPG running directly
+https://embersword.com - Ember Sword is a free to play MMORPG running directly
 in your browser and is being developed and published by Bright Star Studios.
 
 ![Ember Sword screenshot](https://user-images.githubusercontent.com/814772/120714133-a860ca80-c477-11eb-8680-f5a948dfd050.png)
 
 ## Off The Road Unleashed
 
-[Off The Road Unleashed](https://www.nintendo.com/games/detail/off-the-road-unleashed-switch/)
-is a sandbox driving game for the Nintendo Switch. If you see a vehicle you bet
-you can hop into it! Pilot big rigs, helicopters, boats, airplanes or even
-trains. Sand dunes, frozen plains, mountains to climb and conquer.
+https://www.nintendo.com/games/detail/off-the-road-unleashed-switch/ - Off The
+Road Unleashed is a sandbox driving game for the Nintendo Switch. If you see a
+vehicle you bet you can hop into it! Pilot big rigs, helicopters, boats,
+airplanes or even trains. Sand dunes, frozen plains, mountains to climb and
+conquer.
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=cwDR0Wj3LO4" 
 target="_blank"><img src="http://img.youtube.com/vi/cwDR0Wj3LO4/0.jpg" 
@@ -486,7 +484,7 @@ width="640" height="480" border="0" /></a>
 
 ## Guild Wars 2
 
-[Guild Wars 2](https://www.guildwars2.com/) is an online role-playing game with
+https://www.guildwars2.com/ - Guild Wars 2 is an online role-playing game with
 fast-paced action combat, a rich and detailed universe of stories, awe-inspiring
 landscapes to explore, two challenging player vs. player modes—and no
 subscription fees!
@@ -495,9 +493,9 @@ subscription fees!
 
 ## Griftlands
 
-[Griftlands](https://klei.com/games/griftlands) is a roguelike deck-building
-game with role-playing story elements in a science fiction setting, developed
-and published by Klei Entertainment.
+https://klei.com/games/griftlands - Griftlands is a roguelike deck-building game
+with role-playing story elements in a science fiction setting, developed and
+published by Klei Entertainment.
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=ufl14_Ne5Lg" 
 target="_blank"><img src="http://img.youtube.com/vi/ufl14_Ne5Lg/0.jpg" 
@@ -506,7 +504,7 @@ width="640" height="480" border="0" /></a>
 
 ## HARFANG 3D
 
-[HARFANG® 3D](https://www.harfang3d.com) is a **BGFX-powered** 3D visualization
+https://www.harfang3d.com - HARFANG® 3D is a **BGFX-powered** 3D visualization
 framework for C++, Python, Go, and Lua. It comes with a 3D editor, HARFANG
 Studio.
 
@@ -514,10 +512,10 @@ Studio.
 
 ## Marine Melodies / Resistance
 
-[Marine Melodies / Resistance](https://www.pouet.net/prod.php?which=91906) -
-Demoscene musicdisk released at Evoke 2022 demoparty.
+https://www.pouet.net/prod.php?which=91906 - Demoscene musicdisk released at
+Evoke 2022 demoparty.
 
-[GitHub](https://github.com/astrofra/demo-marine-melodies)
+https://github.com/astrofra/demo-marine-melodies
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=Ma1-UBa3f2E" 
 target="_blank"><img src="http://img.youtube.com/vi/Ma1-UBa3f2E/0.jpg" 
@@ -526,7 +524,7 @@ width="640" height="480" border="0" /></a>
 
 ## Activeworlds
 
-[Activeworlds](https://www.activeworlds.com/) is an online VR platform with rich
+https://www.activeworlds.com/ - Activeworlds is an online VR platform with rich
 multimedia and presentation features. Create your own worlds or build in free
 community worlds, hold your own event / meeting or join inworld events!
 
@@ -534,7 +532,7 @@ community worlds, hold your own event / meeting or join inworld events!
 
 ## Equilibrium Engine
 
-[Equilibrium Engine](https://github.com/clibequilibrium/EquilibriumEngine) is a
+https://github.com/clibequilibrium/EquilibriumEngine - Equilibrium Engine is a
 data-oriented and multi-threaded C11 Game Engine with libraries & shaders
 hot-reloading.
 
