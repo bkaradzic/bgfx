@@ -463,7 +463,7 @@ challenging gameplay.
 peaks with a 360° panorama display. More than 850'000 peaks - from Mount Everest
 to the little hill around the corner.
 
-![PeakFinder screenshot](https://pfweb-c125.kxcdn.com/images/mobile/cards//en/cameramode.jpg)
+![PeakFinder screenshot](https://pfweb-c125.kxcdn.com/videos/mobile/manual/v4/light/en/peakfinder-trecime.jpg)
 
 ## Ember Sword
 
@@ -491,7 +491,7 @@ fast-paced action combat, a rich and detailed universe of stories, awe-inspiring
 landscapes to explore, two challenging player vs. player modes—and no
 subscription fees!
 
-![Guild Wars 2 screenshot](https://d3b4yo2b5lbfy.cloudfront.net/wp-content/uploads/wallpapers/GuildWars2-01-800x600.jpg)
+![Guild Wars 2 screenshot](https://d3b4yo2b5lbfy.cloudfront.net/wp-content/uploads/2017/07/1a684WvW_ArmorT3.jpg)
 
 ## Griftlands
 
