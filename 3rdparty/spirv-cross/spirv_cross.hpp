@@ -99,6 +99,8 @@ struct ShaderResources
 	// but keep the vector in case this restriction is lifted in the future.
 	SmallVector<Resource> push_constant_buffers;
 
+	SmallVector<Resource> shader_record_buffers;
+
 	// For Vulkan GLSL and HLSL source,
 	// these correspond to separate texture2D and samplers respectively.
 	SmallVector<Resource> separate_images;
@@ -369,6 +371,7 @@ public:
 	spv::ExecutionModel get_execution_model() const;
 
 	bool is_tessellation_shader() const;
+	bool is_tessellating_triangles() const;
 
 	// In SPIR-V, the compute work group size can be represented by a constant vector, in which case
 	// the LocalSize execution mode is ignored.
@@ -749,6 +752,7 @@ protected:
 	bool is_force_recompile = false;
 	bool is_force_recompile_forward_progress = false;
 
+	bool block_is_noop(const SPIRBlock &block) const;
 	bool block_is_loop_candidate(const SPIRBlock &block, SPIRBlock::Method method) const;
 
 	bool types_are_logically_equivalent(const SPIRType &a, const SPIRType &b) const;
@@ -1012,7 +1016,8 @@ protected:
 		std::unordered_map<uint32_t, std::unordered_set<uint32_t>> partial_write_variables_to_block;
 		std::unordered_set<uint32_t> access_chain_expressions;
 		// Access chains used in multiple blocks mean hoisting all the variables used to construct the access chain as not all backends can use pointers.
-		std::unordered_map<uint32_t, std::unordered_set<uint32_t>> access_chain_children;
+		// This is also relevant when forwarding opaque objects since we cannot lower these to temporaries.
+		std::unordered_map<uint32_t, std::unordered_set<uint32_t>> rvalue_forward_children;
 		const SPIRBlock *current_block = nullptr;
 	};
 

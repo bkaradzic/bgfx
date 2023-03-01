@@ -30,6 +30,48 @@ rule texturec_bc5
 rule texturec_bc7
     command = texturec -f $in -o $out -t bc7 -m
 
+rule texturec_astc4x4
+    command = texturec -f $in -o $out -t astc4x4 -m
+
+rule texturec_astc5x4
+    command = texturec -f $in -o $out -t astc5x4 -m
+
+rule texturec_astc5x5
+    command = texturec -f $in -o $out -t astc5x5 -m
+
+rule texturec_astc6x5
+    command = texturec -f $in -o $out -t astc6x5 -m
+
+rule texturec_astc6x6
+    command = texturec -f $in -o $out -t astc6x6 -m
+
+rule texturec_astc8x5
+    command = texturec -f $in -o $out -t astc8x5 -m
+
+rule texturec_astc8x6
+    command = texturec -f $in -o $out -t astc8x6 -m
+
+rule texturec_astc10x5
+    command = texturec -f $in -o $out -t astc10x5 -m
+
+rule texturec_astc10x6
+    command = texturec -f $in -o $out -t astc10x6 -m
+
+rule texturec_astc8x8
+    command = texturec -f $in -o $out -t astc8x8 -m
+
+rule texturec_astc10x8
+    command = texturec -f $in -o $out -t astc10x8 -m
+
+rule texturec_astc10x10
+    command = texturec -f $in -o $out -t astc10x10 -m
+
+rule texturec_astc12x10
+    command = texturec -f $in -o $out -t astc12x10 -m
+
+rule texturec_astc12x12
+    command = texturec -f $in -o $out -t astc12x12 -m
+
 rule texturec_etc1
     command = texturec -f $in -o $out -t etc1 -m
 

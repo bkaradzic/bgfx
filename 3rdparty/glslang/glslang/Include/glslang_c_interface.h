@@ -157,7 +157,13 @@ typedef struct glslang_resource_s {
     int max_task_work_group_size_y_ext;
     int max_task_work_group_size_z_ext;
     int max_mesh_view_count_ext;
-    int maxDualSourceDrawBuffersEXT;
+    union
+    {
+        int max_dual_source_draw_buffers_ext;
+
+        /* Incorrectly capitalized name retained for backward compatibility */
+        int maxDualSourceDrawBuffersEXT;
+    };
 
     glslang_limits_t limits;
 } glslang_resource_t;
@@ -245,6 +251,7 @@ GLSLANG_EXPORT void glslang_finalize_process();
 
 GLSLANG_EXPORT glslang_shader_t* glslang_shader_create(const glslang_input_t* input);
 GLSLANG_EXPORT void glslang_shader_delete(glslang_shader_t* shader);
+GLSLANG_EXPORT void glslang_shader_set_preamble(glslang_shader_t* shader, const char* s);
 GLSLANG_EXPORT void glslang_shader_shift_binding(glslang_shader_t* shader, glslang_resource_type_t res, unsigned int base);
 GLSLANG_EXPORT void glslang_shader_shift_binding_for_set(glslang_shader_t* shader, glslang_resource_type_t res, unsigned int base, unsigned int set);
 GLSLANG_EXPORT void glslang_shader_set_options(glslang_shader_t* shader, int options); // glslang_shader_options_t

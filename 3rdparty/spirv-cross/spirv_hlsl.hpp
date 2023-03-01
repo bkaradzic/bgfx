@@ -98,6 +98,11 @@ struct HLSLResourceBinding
 	} cbv, uav, srv, sampler;
 };
 
+enum HLSLAuxBinding
+{
+	HLSL_AUX_BINDING_BASE_VERTEX_INSTANCE = 0
+};
+
 class CompilerHLSL : public CompilerGLSL
 {
 public:
@@ -105,7 +110,7 @@ public:
 	{
 		uint32_t shader_model = 30; // TODO: map ps_4_0_level_9_0,... somehow
 
-		// Allows the PointSize builtin, and ignores it, as PointSize is not supported in HLSL.
+		// Allows the PointSize builtin in SM 4.0+, and ignores it, as PointSize is not supported in SM 4+.
 		bool point_size_compat = false;
 
 		// Allows the PointCoord builtin, returns float2(0.5, 0.5), as PointCoord is not supported in HLSL.
@@ -211,6 +216,11 @@ public:
 	// Controls which storage buffer bindings will be forced to be declared as UAVs.
 	void set_hlsl_force_storage_buffer_as_uav(uint32_t desc_set, uint32_t binding);
 
+	// By default, these magic buffers are not assigned a specific binding.
+	void set_hlsl_aux_buffer_binding(HLSLAuxBinding binding, uint32_t register_index, uint32_t register_space);
+	void unset_hlsl_aux_buffer_binding(HLSLAuxBinding binding);
+	bool is_hlsl_aux_buffer_binding_used(HLSLAuxBinding binding) const;
+
 private:
 	std::string type_to_glsl(const SPIRType &type, uint32_t id = 0) override;
 	std::string image_type_hlsl(const SPIRType &type, uint32_t id);
@@ -220,14 +230,13 @@ private:
 	void emit_hlsl_entry_point();
 	void emit_header() override;
 	void emit_resources();
-	void declare_undefined_values() override;
 	void emit_interface_block_globally(const SPIRVariable &type);
 	void emit_interface_block_in_struct(const SPIRVariable &var, std::unordered_set<uint32_t> &active_locations);
-	void emit_interface_block_member_in_struct(const SPIRVariable &var, uint32_t member_index,
-	                                           uint32_t location,
+	void emit_interface_block_member_in_struct(const SPIRVariable &var, uint32_t member_index, uint32_t location,
 	                                           std::unordered_set<uint32_t> &active_locations);
 	void emit_builtin_inputs_in_struct();
 	void emit_builtin_outputs_in_struct();
+	void emit_builtin_primitive_outputs_in_struct();
 	void emit_texture_op(const Instruction &i, bool sparse) override;
 	void emit_instruction(const Instruction &instruction) override;
 	void emit_glsl_op(uint32_t result_type, uint32_t result_id, uint32_t op, const uint32_t *args,
@@ -345,6 +354,10 @@ private:
 		TypeUnpackUint64
 	};
 
+	void analyze_meshlet_writes();
+	void analyze_meshlet_writes(uint32_t func_id, uint32_t id_per_vertex, uint32_t id_per_primitive,
+	                            std::unordered_set<uint32_t> &processed_func_ids);
+
 	BitcastType get_bitcast_type(uint32_t result_type, uint32_t op0);
 
 	void emit_builtin_variables();
@@ -372,6 +385,14 @@ private:
 	void remap_hlsl_resource_binding(HLSLBindingFlagBits type, uint32_t &desc_set, uint32_t &binding);
 
 	std::unordered_set<SetBindingPair, InternalHasher> force_uav_buffer_bindings;
+
+	struct
+	{
+		uint32_t register_index = 0;
+		uint32_t register_space = 0;
+		bool explicit_binding = false;
+		bool used = false;
+	} base_vertex_info;
 
 	// Returns true for BuiltInSampleMask because gl_SampleMask[] is an array in SPIR-V, but SV_Coverage is a scalar in HLSL.
 	bool builtin_translates_to_nonarray(spv::BuiltIn builtin) const override;

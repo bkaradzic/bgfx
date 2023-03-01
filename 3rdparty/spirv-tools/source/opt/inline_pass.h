@@ -44,7 +44,7 @@ class InlinePass : public Pass {
 
   // Add pointer to type to module and return resultId.  Returns 0 if the type
   // could not be created.
-  uint32_t AddPointerToType(uint32_t type_id, SpvStorageClass storage_class);
+  uint32_t AddPointerToType(uint32_t type_id, spv::StorageClass storage_class);
 
   // Add unconditional branch to labelId to end of block block_ptr.
   void AddBranch(uint32_t labelId, std::unique_ptr<BasicBlock>* block_ptr);

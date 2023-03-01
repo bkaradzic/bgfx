@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -85,6 +85,7 @@ namespace bgfx
 	//       1.3      |       1.1      |      1311
 	//       1.4      |       1.1      |      1411
 	//       1.5      |       1.2      |      1512
+	//       1.6      |       1.3      |      1613
 
 	struct Profile
 	{
@@ -104,11 +105,12 @@ namespace bgfx
 		{  ShadingLang::HLSL,  500,    "s_5_0"      },
 		{  ShadingLang::Metal, 1000,   "metal"      },
 		{  ShadingLang::PSSL,  1000,   "pssl"       },
+		{  ShadingLang::SpirV, 1010,   "spirv"      },
+		{  ShadingLang::SpirV, 1010,   "spirv10-10" },
 		{  ShadingLang::SpirV, 1311,   "spirv13-11" },
 		{  ShadingLang::SpirV, 1411,   "spirv14-11" },
 		{  ShadingLang::SpirV, 1512,   "spirv15-12" },
-		{  ShadingLang::SpirV, 1010,   "spirv10-10" },
-		{  ShadingLang::SpirV, 1010,   "spirv"      },
+		{  ShadingLang::SpirV, 1613,   "spirv16-13" },
 		{  ShadingLang::GLSL,  120,    "120"        },
 		{  ShadingLang::GLSL,  130,    "130"        },
 		{  ShadingLang::GLSL,  140,    "140"        },
@@ -990,7 +992,7 @@ namespace bgfx
 
 		bx::printf(
 			  "shaderc, bgfx shader compiler tool, version %d.%d.%d.\n"
-			  "Copyright 2011-2022 Branimir Karadzic. All rights reserved.\n"
+			  "Copyright 2011-2023 Branimir Karadzic. All rights reserved.\n"
 			  "License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE\n\n"
 			, BGFX_SHADERC_VERSION_MAJOR
 			, BGFX_SHADERC_VERSION_MINOR
@@ -1103,7 +1105,7 @@ namespace bgfx
 
 		const Profile *profile = &s_profiles[profile_id];
 
-		Preprocessor preprocessor(_options.inputFilePath.c_str(), profile->lang != ShadingLang::ESSL);
+		Preprocessor preprocessor(_options.inputFilePath.c_str(), profile->lang == ShadingLang::ESSL);
 
 		for (size_t ii = 0; ii < _options.includeDirs.size(); ++ii)
 		{
@@ -2373,7 +2375,7 @@ namespace bgfx
 										bx::stringPrintf(code, "precision highp int;\n");
 									}
 
-									if (glsl_profile >= 300)
+									if (glsl_profile >= 300 && usesTextureArray)
 									{
 										bx::stringPrintf(code, "precision highp sampler2DArray;\n");
 									}

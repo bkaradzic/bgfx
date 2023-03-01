@@ -412,7 +412,7 @@ void meshopt_generateAdjacencyIndexBuffer(unsigned int* destination, const unsig
 	using namespace meshopt;
 
 	assert(index_count % 3 == 0);
-	assert(vertex_positions_stride > 0 && vertex_positions_stride <= 256);
+	assert(vertex_positions_stride >= 12 && vertex_positions_stride <= 256);
 	assert(vertex_positions_stride % sizeof(float) == 0);
 
 	meshopt_Allocator allocator;
@@ -483,7 +483,7 @@ void meshopt_generateTessellationIndexBuffer(unsigned int* destination, const un
 	using namespace meshopt;
 
 	assert(index_count % 3 == 0);
-	assert(vertex_positions_stride > 0 && vertex_positions_stride <= 256);
+	assert(vertex_positions_stride >= 12 && vertex_positions_stride <= 256);
 	assert(vertex_positions_stride % sizeof(float) == 0);
 
 	meshopt_Allocator allocator;

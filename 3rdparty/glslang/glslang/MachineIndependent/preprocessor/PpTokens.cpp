@@ -121,7 +121,7 @@ int TPpContext::TokenStream::getToken(TParseContextBase& parseContext, TPpToken 
     if (atom == '#') {
         if (peekToken('#')) {
             parseContext.requireProfile(ppToken->loc, ~EEsProfile, "token pasting (##)");
-            parseContext.profileRequires(ppToken->loc, ~EEsProfile, 130, 0, "token pasting (##)");
+            parseContext.profileRequires(ppToken->loc, ~EEsProfile, 130, nullptr, "token pasting (##)");
             currentPos++;
             atom = PpAtomPaste;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -183,12 +183,20 @@ namespace bgfx { namespace d3d9
 		{ D3DFMT_UNKNOWN       }, // ATC,
 		{ D3DFMT_UNKNOWN       }, // ATCE,
 		{ D3DFMT_UNKNOWN       }, // ATCI,
-		{ D3DFMT_UNKNOWN       }, // ASTC4x4,
-		{ D3DFMT_UNKNOWN       }, // ASTC5x5,
-		{ D3DFMT_UNKNOWN       }, // ASTC6x6,
-		{ D3DFMT_UNKNOWN       }, // ASTC8x5,
-		{ D3DFMT_UNKNOWN       }, // ASTC8x6,
-		{ D3DFMT_UNKNOWN       }, // ASTC10x5,
+		{ D3DFMT_UNKNOWN       }, // ASTC4x4
+		{ D3DFMT_UNKNOWN       }, // ASTC5x4
+		{ D3DFMT_UNKNOWN       }, // ASTC5x5
+		{ D3DFMT_UNKNOWN       }, // ASTC6x5
+		{ D3DFMT_UNKNOWN       }, // ASTC6x6
+		{ D3DFMT_UNKNOWN       }, // ASTC8x5
+		{ D3DFMT_UNKNOWN       }, // ASTC8x6
+		{ D3DFMT_UNKNOWN       }, // ASTC8x8
+		{ D3DFMT_UNKNOWN       }, // ASTC10x5
+		{ D3DFMT_UNKNOWN       }, // ASTC10x6
+		{ D3DFMT_UNKNOWN       }, // ASTC10x8
+		{ D3DFMT_UNKNOWN       }, // ASTC10x10
+		{ D3DFMT_UNKNOWN       }, // ASTC12x10
+		{ D3DFMT_UNKNOWN       }, // ASTC12x12
 		{ D3DFMT_UNKNOWN       }, // Unknown
 		{ D3DFMT_A1            }, // R1
 		{ D3DFMT_A8            }, // A8
@@ -721,6 +729,7 @@ namespace bgfx { namespace d3d9
 				| ( (m_caps.DevCaps2 & D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES) ? BGFX_CAPS_TEXTURE_BLIT : 0)
 				| BGFX_CAPS_TEXTURE_READ_BACK
 				| (m_occlusionQuerySupport ? BGFX_CAPS_OCCLUSION_QUERY : 0)
+				| ((m_caps.MaxVertexIndex > UINT16_MAX) ? BGFX_CAPS_INDEX32 : 0)
 				);
 
 			m_caps.NumSimultaneousRTs = bx::uint32_min(m_caps.NumSimultaneousRTs, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
@@ -1578,11 +1587,6 @@ namespace bgfx { namespace d3d9
 		{
 			if (NULL != m_swapChain)
 			{
-				if (NULL != m_deviceEx)
-				{
-					DX_CHECK(m_deviceEx->WaitForVBlank(0) );
-				}
-
 				for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 				{
 					HRESULT hr = S_OK;

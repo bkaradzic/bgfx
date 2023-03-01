@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -237,11 +237,19 @@ namespace bgfx { namespace gl
 		{ GL_ATC_RGBA_EXPLICIT_ALPHA_AMD,              GL_ZERO,                                      GL_ATC_RGBA_EXPLICIT_ALPHA_AMD,              GL_ATC_RGBA_EXPLICIT_ALPHA_AMD,              GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ATCE
 		{ GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD,          GL_ZERO,                                      GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD,          GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD,          GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ATCI
 		{ GL_COMPRESSED_RGBA_ASTC_4x4_KHR,             GL_COMPRESSED_SRGB8_ASTC_4x4_KHR,             GL_COMPRESSED_RGBA_ASTC_4x4_KHR,             GL_COMPRESSED_RGBA_ASTC_4x4_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC4x4
+		{ GL_COMPRESSED_RGBA_ASTC_5x4_KHR,             GL_COMPRESSED_SRGB8_ASTC_5x4_KHR,             GL_COMPRESSED_RGBA_ASTC_5x4_KHR,             GL_COMPRESSED_RGBA_ASTC_5x4_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC5x4
 		{ GL_COMPRESSED_RGBA_ASTC_5x5_KHR,             GL_COMPRESSED_SRGB8_ASTC_5x5_KHR,             GL_COMPRESSED_RGBA_ASTC_5x5_KHR,             GL_COMPRESSED_RGBA_ASTC_5x5_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC5x5
+		{ GL_COMPRESSED_RGBA_ASTC_6x5_KHR,             GL_COMPRESSED_SRGB8_ASTC_6x5_KHR,             GL_COMPRESSED_RGBA_ASTC_6x5_KHR,             GL_COMPRESSED_RGBA_ASTC_6x5_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC6x5
 		{ GL_COMPRESSED_RGBA_ASTC_6x6_KHR,             GL_COMPRESSED_SRGB8_ASTC_6x6_KHR,             GL_COMPRESSED_RGBA_ASTC_6x6_KHR,             GL_COMPRESSED_RGBA_ASTC_6x6_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC6x6
 		{ GL_COMPRESSED_RGBA_ASTC_8x5_KHR,             GL_COMPRESSED_SRGB8_ASTC_8x5_KHR,             GL_COMPRESSED_RGBA_ASTC_8x5_KHR,             GL_COMPRESSED_RGBA_ASTC_8x5_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC8x5
 		{ GL_COMPRESSED_RGBA_ASTC_8x6_KHR,             GL_COMPRESSED_SRGB8_ASTC_8x6_KHR,             GL_COMPRESSED_RGBA_ASTC_8x6_KHR,             GL_COMPRESSED_RGBA_ASTC_8x6_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC8x6
+		{ GL_COMPRESSED_RGBA_ASTC_8x8_KHR,             GL_COMPRESSED_SRGB8_ASTC_8x8_KHR,             GL_COMPRESSED_RGBA_ASTC_8x8_KHR,             GL_COMPRESSED_RGBA_ASTC_8x8_KHR,             GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC8x8
 		{ GL_COMPRESSED_RGBA_ASTC_10x5_KHR,            GL_COMPRESSED_SRGB8_ASTC_10x5_KHR,            GL_COMPRESSED_RGBA_ASTC_10x5_KHR,            GL_COMPRESSED_RGBA_ASTC_10x5_KHR,            GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC10x5
+		{ GL_COMPRESSED_RGBA_ASTC_10x6_KHR,            GL_COMPRESSED_SRGB8_ASTC_10x6_KHR,            GL_COMPRESSED_RGBA_ASTC_10x6_KHR,            GL_COMPRESSED_RGBA_ASTC_10x6_KHR,            GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC10x6
+		{ GL_COMPRESSED_RGBA_ASTC_10x8_KHR,            GL_COMPRESSED_SRGB8_ASTC_10x8_KHR,            GL_COMPRESSED_RGBA_ASTC_10x8_KHR,            GL_COMPRESSED_RGBA_ASTC_10x8_KHR,            GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC10x8
+		{ GL_COMPRESSED_RGBA_ASTC_10x10_KHR,           GL_COMPRESSED_SRGB8_ASTC_10x10_KHR,           GL_COMPRESSED_RGBA_ASTC_10x10_KHR,           GL_COMPRESSED_RGBA_ASTC_10x10_KHR,           GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC10x10
+		{ GL_COMPRESSED_RGBA_ASTC_12x10_KHR,           GL_COMPRESSED_SRGB8_ASTC_12x10_KHR,           GL_COMPRESSED_RGBA_ASTC_12x10_KHR,           GL_COMPRESSED_RGBA_ASTC_12x10_KHR,           GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC12x10
+		{ GL_COMPRESSED_RGBA_ASTC_12x12_KHR,           GL_COMPRESSED_SRGB8_ASTC_12x12_KHR,           GL_COMPRESSED_RGBA_ASTC_12x12_KHR,           GL_COMPRESSED_RGBA_ASTC_12x12_KHR,           GL_ZERO,                         false, { $_, $_, $_, $_ } }, // ASTC12x12
 		{ GL_ZERO,                                     GL_ZERO,                                      GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                         false, { $_, $_, $_, $_ } }, // Unknown
 		{ GL_ZERO,                                     GL_ZERO,                                      GL_ZERO,                                     GL_ZERO,                                     GL_ZERO,                         false, { $_, $_, $_, $_ } }, // R1
 		{ GL_ALPHA,                                    GL_ZERO,                                      GL_ALPHA,                                    GL_ALPHA,                                    GL_UNSIGNED_BYTE,                false, { $_, $_, $_, $_ } }, // A8
@@ -339,11 +347,19 @@ namespace bgfx { namespace gl
 		GL_ZERO,               // ATCE
 		GL_ZERO,               // ATCI
 		GL_ZERO,               // ASTC4x4
+		GL_ZERO,               // ASTC5x4
 		GL_ZERO,               // ASTC5x5
+		GL_ZERO,               // ASTC6x5
 		GL_ZERO,               // ASTC6x6
 		GL_ZERO,               // ASTC8x5
 		GL_ZERO,               // ASTC8x6
+		GL_ZERO,               // ASTC8x8
 		GL_ZERO,               // ASTC10x5
+		GL_ZERO,               // ASTC10x6
+		GL_ZERO,               // ASTC10x8
+		GL_ZERO,               // ASTC10x10
+		GL_ZERO,               // ASTC12x10
+		GL_ZERO,               // ASTC12x12
 		GL_ZERO,               // Unknown
 		GL_ZERO,               // R1
 		GL_ALPHA,              // A8
@@ -432,11 +448,19 @@ namespace bgfx { namespace gl
 		GL_ZERO,           // ATCE
 		GL_ZERO,           // ATCI
 		GL_ZERO,           // ASTC4x4
+		GL_ZERO,           // ASTC5x4
 		GL_ZERO,           // ASTC5x5
+		GL_ZERO,           // ASTC6x5
 		GL_ZERO,           // ASTC6x6
 		GL_ZERO,           // ASTC8x5
 		GL_ZERO,           // ASTC8x6
+		GL_ZERO,           // ASTC8x8
 		GL_ZERO,           // ASTC10x5
+		GL_ZERO,           // ASTC10x6
+		GL_ZERO,           // ASTC10x8
+		GL_ZERO,           // ASTC10x10
+		GL_ZERO,           // ASTC12x10
+		GL_ZERO,           // ASTC12x12
 		GL_ZERO,           // Unknown
 		GL_ZERO,           // R1
 		GL_ALPHA,          // A8
@@ -2921,10 +2945,10 @@ namespace bgfx { namespace gl
 					GL_CHECK(glGenVertexArrays(1, &m_vao) );
 				}
 
-				m_samplerObjectSupport = !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
-					&& (m_gles3
-						|| s_extension[Extension::ARB_sampler_objects].m_supported
-						);
+				m_samplerObjectSupport = false
+					|| m_gles3
+					|| s_extension[Extension::ARB_sampler_objects].m_supported
+					;
 
 				m_shadowSamplersSupport = !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
 					|| s_extension[Extension::EXT_shadow_samplers].m_supported
@@ -3631,7 +3655,6 @@ namespace bgfx { namespace gl
 		void submitBlit(BlitState& _bs, uint16_t _view);
 
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;
-		void premultiplyBackBuffer(const ClearQuad& _clearQuad);
 		void blitSetup(TextVideoMemBlitter& _blitter) override
 		{
 			if (0 != m_vao)
@@ -3671,13 +3694,9 @@ namespace bgfx { namespace gl
 
 			if (!BX_ENABLED(BX_PLATFORM_OSX) )
 			{
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-				||  m_gles3 )
+				if (m_samplerObjectSupport)
 				{
-					if (m_samplerObjectSupport)
-					{
-						GL_CHECK(glBindSampler(0, 0) );
-					}
+					GL_CHECK(glBindSampler(0, 0) );
 				}
 			}
 		}
@@ -3802,18 +3821,6 @@ namespace bgfx { namespace gl
 				m_needPresent |= true;
 
 				m_currentFbo = m_msaaBackBufferFbo;
-
-				if (m_srgbWriteControlSupport)
-				{
-					if (0 != (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER) )
-					{
-						GL_CHECK(glEnable(GL_FRAMEBUFFER_SRGB) );
-					}
-					else
-					{
-						GL_CHECK(glDisable(GL_FRAMEBUFFER_SRGB) );
-					}
-				}
 			}
 			else
 			{
@@ -3831,6 +3838,26 @@ namespace bgfx { namespace gl
 				{
 					m_glctx.makeCurrent(NULL);
 					m_currentFbo = frameBuffer.m_fbo[0];
+				}
+			}
+
+			if (m_srgbWriteControlSupport)
+			{
+				if (0 == m_currentFbo)
+				{
+					if (0 != (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER) )
+					{
+						GL_CHECK(glEnable(GL_FRAMEBUFFER_SRGB) );
+					}
+					else
+					{
+						GL_CHECK(glDisable(GL_FRAMEBUFFER_SRGB) );
+					}
+				}
+				else
+				{
+					// actual sRGB write/blending determined by FBO's color attachments format
+					GL_CHECK(glEnable(GL_FRAMEBUFFER_SRGB) );
 				}
 			}
 
@@ -4141,8 +4168,7 @@ namespace bgfx { namespace gl
 
 		void invalidateCache()
 		{
-			if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || m_gles3)
-			&&  m_samplerObjectSupport)
+			if (m_samplerObjectSupport)
 			{
 				m_samplerStateCache.invalidate();
 			}
@@ -4150,110 +4176,108 @@ namespace bgfx { namespace gl
 
 		void setSamplerState(uint32_t _stage, uint32_t _numMips, uint32_t _flags, const float _rgba[4])
 		{
-			if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || m_gles3)
-			&&  m_samplerObjectSupport)
+			BX_ASSERT(m_samplerObjectSupport, "Cannot use Sampler Objects");
+
+			if (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags) )
 			{
-				if (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags) )
+				const uint32_t index = (_flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
+
+				_flags &= ~BGFX_SAMPLER_RESERVED_MASK;
+				_flags &= BGFX_SAMPLER_BITS_MASK;
+				_flags |= _numMips<<BGFX_SAMPLER_RESERVED_SHIFT;
+
+				GLuint sampler;
+
+				bool hasBorderColor = false;
+				bx::HashMurmur2A murmur;
+				uint32_t hash;
+
+				murmur.begin();
+				murmur.add(_flags);
+				if (!needBorderColor(_flags) )
 				{
-					const uint32_t index = (_flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
+					murmur.add(-1);
+					hash = murmur.end();
 
-					_flags &= ~BGFX_SAMPLER_RESERVED_MASK;
-					_flags &= BGFX_SAMPLER_BITS_MASK;
-					_flags |= _numMips<<BGFX_SAMPLER_RESERVED_SHIFT;
-
-					GLuint sampler;
-
-					bool hasBorderColor = false;
-					bx::HashMurmur2A murmur;
-					uint32_t hash;
-
-					murmur.begin();
-					murmur.add(_flags);
-					if (!needBorderColor(_flags) )
-					{
-						murmur.add(-1);
-						hash = murmur.end();
-
-						sampler = m_samplerStateCache.find(hash);
-					}
-					else
-					{
-						murmur.add(index);
-						hash = murmur.end();
-
-						if (NULL != _rgba)
-						{
-							hasBorderColor = true;
-							sampler = UINT32_MAX;
-						}
-						else
-						{
-							sampler = m_samplerStateCache.find(hash);
-						}
-					}
-
-					if (UINT32_MAX == sampler)
-					{
-						sampler = m_samplerStateCache.add(hash);
-
-						GL_CHECK(glSamplerParameteri(sampler
-							, GL_TEXTURE_WRAP_S
-							, s_textureAddress[(_flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT]
-							) );
-						GL_CHECK(glSamplerParameteri(sampler
-							, GL_TEXTURE_WRAP_T
-							, s_textureAddress[(_flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT]
-							) );
-						GL_CHECK(glSamplerParameteri(sampler
-							, GL_TEXTURE_WRAP_R
-							, s_textureAddress[(_flags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT]
-							) );
-
-						GLenum minFilter;
-						GLenum magFilter;
-						getFilters(_flags, 1 < _numMips, magFilter, minFilter);
-						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, magFilter) );
-						GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter) );
-
-						if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
-						{
-							GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_LOD_BIAS, float(BGFX_CONFIG_MIP_LOD_BIAS) ) );
-						}
-
-						if (m_borderColorSupport
-						&&  hasBorderColor)
-						{
-							GL_CHECK(glSamplerParameterfv(sampler, GL_TEXTURE_BORDER_COLOR, _rgba) );
-						}
-
-						if (0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) )
-						&&  0.0f < m_maxAnisotropy)
-						{
-							GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropy) );
-						}
-
-						if (m_gles3
-						||  m_shadowSamplersSupport)
-						{
-							const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
-							if (0 == cmpFunc)
-							{
-								GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, GL_NONE) );
-							}
-							else
-							{
-								GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE) );
-								GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]) );
-							}
-						}
-					}
-
-					GL_CHECK(glBindSampler(_stage, sampler) );
+					sampler = m_samplerStateCache.find(hash);
 				}
 				else
 				{
-					GL_CHECK(glBindSampler(_stage, 0) );
+					murmur.add(index);
+					hash = murmur.end();
+
+					if (NULL != _rgba)
+					{
+						hasBorderColor = true;
+						sampler = UINT32_MAX;
+					}
+					else
+					{
+						sampler = m_samplerStateCache.find(hash);
+					}
 				}
+
+				if (UINT32_MAX == sampler)
+				{
+					sampler = m_samplerStateCache.add(hash);
+
+					GL_CHECK(glSamplerParameteri(sampler
+						, GL_TEXTURE_WRAP_S
+						, s_textureAddress[(_flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT]
+						) );
+					GL_CHECK(glSamplerParameteri(sampler
+						, GL_TEXTURE_WRAP_T
+						, s_textureAddress[(_flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT]
+						) );
+					GL_CHECK(glSamplerParameteri(sampler
+						, GL_TEXTURE_WRAP_R
+						, s_textureAddress[(_flags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT]
+						) );
+
+					GLenum minFilter;
+					GLenum magFilter;
+					getFilters(_flags, 1 < _numMips, magFilter, minFilter);
+					GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, magFilter) );
+					GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter) );
+
+					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
+					{
+						GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_LOD_BIAS, float(BGFX_CONFIG_MIP_LOD_BIAS) ) );
+					}
+
+					if (m_borderColorSupport
+					&&  hasBorderColor)
+					{
+						GL_CHECK(glSamplerParameterfv(sampler, GL_TEXTURE_BORDER_COLOR, _rgba) );
+					}
+
+					if (0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) )
+					&&  0.0f < m_maxAnisotropy)
+					{
+						GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropy) );
+					}
+
+					if (m_gles3
+					||  m_shadowSamplersSupport)
+					{
+						const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
+						if (0 == cmpFunc)
+						{
+							GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, GL_NONE) );
+						}
+						else
+						{
+							GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE) );
+							GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]) );
+						}
+					}
+				}
+
+				GL_CHECK(glBindSampler(_stage, sampler) );
+			}
+			else
+			{
+				GL_CHECK(glBindSampler(_stage, 0) );
 			}
 		}
 
@@ -6158,29 +6182,13 @@ namespace bgfx { namespace gl
 		GL_CHECK(glActiveTexture(GL_TEXTURE0+_stage) );
 		GL_CHECK(glBindTexture(m_target, m_id) );
 
-		if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
-		&&  !s_renderGL->m_gles3)
+		if (s_renderGL->m_samplerObjectSupport)
 		{
-			// GLES2 doesn't have support for sampler object.
-			setSamplerState(flags, _palette[index]);
-		}
-		else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-			 &&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL < 31) )
-		{
-			// In case that GL 2.1 sampler object is supported via extension.
-			if (s_renderGL->m_samplerObjectSupport)
-			{
-				s_renderGL->setSamplerState(_stage, m_numMips, flags, _palette[index]);
-			}
-			else
-			{
-				setSamplerState(flags, _palette[index]);
-			}
+			s_renderGL->setSamplerState(_stage, m_numMips, flags, _palette[index]);
 		}
 		else
 		{
-			// Everything else has sampler object.
-			s_renderGL->setSamplerState(_stage, m_numMips, flags, _palette[index]);
+			setSamplerState(flags, _palette[index]);
 		}
 	}
 
@@ -7449,39 +7457,6 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	void RendererContextGL::premultiplyBackBuffer(const ClearQuad& _clearQuad)
-	{
-		const uint32_t numMrt = 1;
-		if (isValid(_clearQuad.m_program[numMrt - 1]))
-		{
-			GL_CHECK(glDisable(GL_SCISSOR_TEST));
-			GL_CHECK(glDisable(GL_CULL_FACE));
-			GL_CHECK(glEnable(GL_BLEND));
-			GL_CHECK(glEnable(GL_BLEND));
-			GL_CHECK(glBlendFuncSeparate(GL_DST_COLOR, GL_DST_ALPHA, GL_DST_ALPHA, GL_ZERO));
-
-			GL_CHECK(glColorMask(true, true, true, false));
-			GL_CHECK(glDisable(GL_DEPTH_TEST));
-			GL_CHECK(glDisable(GL_STENCIL_TEST));
-
-			const VertexBufferGL& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
-			const VertexLayout& layout = _clearQuad.m_layout;
-
-			GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id));
-
-			ProgramGL& program = m_program[_clearQuad.m_program[numMrt - 1].idx];
-			setProgram(program.m_id);
-			program.bindAttributesBegin();
-			program.bindAttributes(layout, 0);
-			program.bindAttributesEnd();
-
-			GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP
-				, 0
-				, 4
-			));
-		}
-	}
-
 	void RendererContextGL::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		if (_render->m_capture)
@@ -8612,11 +8587,12 @@ namespace bgfx { namespace gl
 
 				profiler.end();
 			}
-		}
 
-		if (m_resolution.reset & BGFX_RESET_TRANSPARENT_BACKBUFFER)
-		{
-			premultiplyBackBuffer(_clearQuad);
+			if (m_srgbWriteControlSupport)
+			{
+				// switch state back to default for cases when the on-screen draw is done externally
+				GL_CHECK(glDisable(GL_FRAMEBUFFER_SRGB) );
+			}
 		}
 
 		BGFX_GL_PROFILER_END();

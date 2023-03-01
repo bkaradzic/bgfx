@@ -76,7 +76,7 @@ namespace glslang {
         bool acceptLayoutQualifierList(TQualifier&);
         bool acceptType(TType&);
         bool acceptType(TType&, TIntermNode*& nodeList);
-        bool acceptTemplateVecMatBasicType(TBasicType&);
+        bool acceptTemplateVecMatBasicType(TBasicType&, TPrecisionQualifier&);
         bool acceptVectorTemplateType(TType&);
         bool acceptMatrixTemplateType(TType&);
         bool acceptTessellationDeclType(TBuiltInVariable&);

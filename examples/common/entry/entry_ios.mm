@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -212,8 +212,6 @@ using namespace entry;
 		return nil;
 	}
 
-	s_ctx->m_window = self.layer;
-
 	return self;
 }
 
@@ -335,6 +333,7 @@ using namespace entry;
 	[m_view setContentScaleFactor: scaleFactor ];
 
 	s_ctx = new Context((uint32_t)(scaleFactor*rect.size.width), (uint32_t)(scaleFactor*rect.size.height));
+	s_ctx->m_window = m_view.layer;
 	return YES;
 }
 

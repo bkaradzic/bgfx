@@ -55,13 +55,14 @@
 
 namespace spvtools {
 namespace opt {
-
+namespace {
 // Validation Ids
 // These are used to identify the general validation being done and map to
 // its output buffers.
-static const uint32_t kInstValidationIdBindless = 0;
-static const uint32_t kInstValidationIdBuffAddr = 1;
-static const uint32_t kInstValidationIdDebugPrintf = 2;
+constexpr uint32_t kInstValidationIdBindless = 0;
+constexpr uint32_t kInstValidationIdBuffAddr = 1;
+constexpr uint32_t kInstValidationIdDebugPrintf = 2;
+}  // namespace
 
 class InstrumentPass : public Pass {
   using cbb_ptr = const BasicBlock*;
@@ -213,6 +214,10 @@ class InstrumentPass : public Pass {
   uint32_t GenDebugDirectRead(const std::vector<uint32_t>& offset_ids,
                               InstructionBuilder* builder);
 
+  uint32_t GenReadFunctionCall(uint32_t func_id,
+                               const std::vector<uint32_t>& args,
+                               InstructionBuilder* builder);
+
   // Generate code to convert integer |value_id| to 32bit, if needed. Return
   // an id to the 32bit equivalent.
   uint32_t Gen32BitCvtCode(uint32_t value_id, InstructionBuilder* builder);
@@ -220,6 +225,15 @@ class InstrumentPass : public Pass {
   // Generate code to cast integer |value_id| to 32bit unsigned, if needed.
   // Return an id to the Uint equivalent.
   uint32_t GenUintCastCode(uint32_t value_id, InstructionBuilder* builder);
+
+  std::unique_ptr<Function> StartFunction(
+      uint32_t func_id, const analysis::Type* return_type,
+      const std::vector<const analysis::Type*>& param_types);
+
+  std::vector<uint32_t> AddParameters(
+      Function& func, const std::vector<const analysis::Type*>& param_types);
+
+  std::unique_ptr<Instruction> EndFunction();
 
   // Return new label.
   std::unique_ptr<Instruction> NewLabel(uint32_t label_id);
@@ -252,12 +266,20 @@ class InstrumentPass : public Pass {
   // Return id for void type
   uint32_t GetVoidId();
 
-  // Return pointer to type for runtime array of uint
-  analysis::Type* GetUintXRuntimeArrayType(uint32_t width,
-                                           analysis::Type** rarr_ty);
+  // Get registered type structures
+  analysis::Integer* GetInteger(uint32_t width, bool is_signed);
+  analysis::Struct* GetStruct(const std::vector<const analysis::Type*>& fields);
+  analysis::RuntimeArray* GetRuntimeArray(const analysis::Type* element);
+  analysis::Function* GetFunction(
+      const analysis::Type* return_val,
+      const std::vector<const analysis::Type*>& args);
 
   // Return pointer to type for runtime array of uint
-  analysis::Type* GetUintRuntimeArrayType(uint32_t width);
+  analysis::RuntimeArray* GetUintXRuntimeArrayType(
+      uint32_t width, analysis::RuntimeArray** rarr_ty);
+
+  // Return pointer to type for runtime array of uint
+  analysis::RuntimeArray* GetUintRuntimeArrayType(uint32_t width);
 
   // Return id for buffer uint type
   uint32_t GetOutputBufferPtrId();
@@ -447,10 +469,10 @@ class InstrumentPass : public Pass {
   bool storage_buffer_ext_defined_;
 
   // runtime array of uint type
-  analysis::Type* uint64_rarr_ty_;
+  analysis::RuntimeArray* uint64_rarr_ty_;
 
   // runtime array of uint type
-  analysis::Type* uint32_rarr_ty_;
+  analysis::RuntimeArray* uint32_rarr_ty_;
 
   // Pre-instrumentation same-block insts
   std::unordered_map<uint32_t, Instruction*> same_block_pre_;

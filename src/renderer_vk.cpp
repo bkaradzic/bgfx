@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -187,12 +187,20 @@ VK_IMPORT_DEVICE
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ATC
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ATCE
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ATCI
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC4x4
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC5x5
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC6x6
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC8x5
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC8x6
-		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // ASTC10x5
+		{ VK_FORMAT_ASTC_4x4_UNORM_BLOCK,      VK_FORMAT_ASTC_4x4_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_4x4_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC4x4
+		{ VK_FORMAT_ASTC_5x4_UNORM_BLOCK,      VK_FORMAT_ASTC_5x4_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_5x4_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC5x4
+		{ VK_FORMAT_ASTC_5x5_UNORM_BLOCK,      VK_FORMAT_ASTC_5x5_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_5x5_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC5x5
+		{ VK_FORMAT_ASTC_6x5_UNORM_BLOCK,      VK_FORMAT_ASTC_6x5_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_6x5_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC6x5
+		{ VK_FORMAT_ASTC_6x6_UNORM_BLOCK,      VK_FORMAT_ASTC_6x6_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_6x6_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC6x6
+		{ VK_FORMAT_ASTC_8x5_UNORM_BLOCK,      VK_FORMAT_ASTC_8x5_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_8x5_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC8x5
+		{ VK_FORMAT_ASTC_8x6_UNORM_BLOCK,      VK_FORMAT_ASTC_8x6_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_8x6_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC8x6
+		{ VK_FORMAT_ASTC_8x8_UNORM_BLOCK,      VK_FORMAT_ASTC_8x8_UNORM_BLOCK,     VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_8x8_SRGB_BLOCK,      { $_, $_, $_, $_ } }, // ASTC8x8
+		{ VK_FORMAT_ASTC_10x5_UNORM_BLOCK,     VK_FORMAT_ASTC_10x5_UNORM_BLOCK,    VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_10x5_SRGB_BLOCK,     { $_, $_, $_, $_ } }, // ASTC10x5
+		{ VK_FORMAT_ASTC_10x6_UNORM_BLOCK,     VK_FORMAT_ASTC_10x6_UNORM_BLOCK,    VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_10x6_SRGB_BLOCK,     { $_, $_, $_, $_ } }, // ASTC10x6
+		{ VK_FORMAT_ASTC_10x8_UNORM_BLOCK,     VK_FORMAT_ASTC_10x8_UNORM_BLOCK,    VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_10x8_SRGB_BLOCK,     { $_, $_, $_, $_ } }, // ASTC10x8
+		{ VK_FORMAT_ASTC_10x10_UNORM_BLOCK,    VK_FORMAT_ASTC_10x10_UNORM_BLOCK,   VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_10x10_SRGB_BLOCK,    { $_, $_, $_, $_ } }, // ASTC10x10
+		{ VK_FORMAT_ASTC_12x10_UNORM_BLOCK,    VK_FORMAT_ASTC_12x10_UNORM_BLOCK,   VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_12x10_SRGB_BLOCK,    { $_, $_, $_, $_ } }, // ASTC12x10
+		{ VK_FORMAT_ASTC_12x12_UNORM_BLOCK,    VK_FORMAT_ASTC_12x12_UNORM_BLOCK,   VK_FORMAT_UNDEFINED,           VK_FORMAT_ASTC_12x12_SRGB_BLOCK,    { $_, $_, $_, $_ } }, // ASTC12x12
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // Unknown
 		{ VK_FORMAT_UNDEFINED,                 VK_FORMAT_UNDEFINED,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // R1
 		{ VK_FORMAT_R8_UNORM,                  VK_FORMAT_R8_UNORM,                 VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $0, $0, $0, $R } }, // A8
@@ -202,7 +210,7 @@ VK_IMPORT_DEVICE
 		{ VK_FORMAT_R8_SNORM,                  VK_FORMAT_R8_SNORM,                 VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // R8S
 		{ VK_FORMAT_R16_UNORM,                 VK_FORMAT_R16_UNORM,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // R16
 		{ VK_FORMAT_R16_SINT,                  VK_FORMAT_R16_SINT,                 VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // R16I
-		{ VK_FORMAT_R16_UNORM,                 VK_FORMAT_R16_UNORM,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // R16U
+		{ VK_FORMAT_R16_UINT,                  VK_FORMAT_R16_UINT,                 VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // R16U
 		{ VK_FORMAT_R16_SFLOAT,                VK_FORMAT_R16_SFLOAT,               VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // R16F
 		{ VK_FORMAT_R16_SNORM,                 VK_FORMAT_R16_SNORM,                VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // R16S
 		{ VK_FORMAT_R32_SINT,                  VK_FORMAT_R32_SINT,                 VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // R32I
@@ -287,27 +295,31 @@ VK_IMPORT_DEVICE
 		LayerInfo m_device;
 	};
 
-
 	// Layer registry
 	//
 	static Layer s_layer[] =
 	{
 		{ "VK_LAYER_LUNARG_standard_validation", 1, { false, false }, { false, false } },
 		{ "VK_LAYER_KHRONOS_validation",         1, { false, false }, { false, false } },
+		{ "",                                    0, { false, false }, { false, false } },
 	};
-	BX_STATIC_ASSERT(Layer::Count == BX_COUNTOF(s_layer) );
+	BX_STATIC_ASSERT(Layer::Count == BX_COUNTOF(s_layer)-1);
 
 	void updateLayer(const char* _name, uint32_t _version, bool _instanceLayer)
 	{
-		bx::StringView lyr(_name);
+		bx::StringView layerName(_name);
 
 		for (uint32_t ii = 0; ii < Layer::Count; ++ii)
 		{
 			Layer& layer = s_layer[ii];
-			LayerInfo& layerInfo = _instanceLayer ? layer.m_instance : layer.m_device;
+			LayerInfo& layerInfo = _instanceLayer
+				? layer.m_instance
+				: layer.m_device
+				;
+
 			if (!layerInfo.m_supported && layerInfo.m_initialize)
 			{
-				if (       0 == bx::strCmp(lyr, layer.m_name)
+				if (       0 == bx::strCmp(layerName, layer.m_name)
 				&&  _version >= layer.m_minVersion)
 				{
 					layerInfo.m_supported = true;
@@ -335,10 +347,10 @@ VK_IMPORT_DEVICE
 		};
 
 		const char* m_name;
-		uint32_t m_minVersion;
-		bool m_instanceExt;
-		bool m_supported;
-		bool m_initialize;
+		uint32_t    m_minVersion;
+		bool        m_instanceExt;
+		bool        m_supported;
+		bool        m_initialize;
 		Layer::Enum m_layer;
 	};
 
@@ -367,7 +379,7 @@ VK_IMPORT_DEVICE
 			for (uint32_t ii = 0; ii < Extension::Count; ++ii)
 			{
 				Extension& extension = _extensions[ii];
-				LayerInfo& layerInfo = _instanceExt
+				const LayerInfo& layerInfo = _instanceExt
 					? s_layer[extension.m_layer].m_instance
 					: s_layer[extension.m_layer].m_device
 					;
@@ -1208,13 +1220,21 @@ VK_IMPORT
 						BX_TRACE("\t%s", layer.m_name);
 					}
 				}
+#if BX_PLATFORM_OSX
+				uint32_t numEnabledExtensions = headless ? 0 : 3;
 
+				const char* enabledExtension[Extension::Count + 3] =
+#else
 				uint32_t numEnabledExtensions = headless ? 0 : 2;
 
 				const char* enabledExtension[Extension::Count + 2] =
+#endif
 				{
 					VK_KHR_SURFACE_EXTENSION_NAME,
 					KHR_SURFACE_EXTENSION_NAME,
+#if BX_PLATFORM_OSX
+					VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
+#endif
 				};
 
 				for (uint32_t ii = 0; ii < Extension::Count; ++ii)
@@ -1276,7 +1296,11 @@ VK_IMPORT
 				VkInstanceCreateInfo ici;
 				ici.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 				ici.pNext = NULL;
+#if BX_PLATFORM_OSX
+				ici.flags = 0 | VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#else
 				ici.flags = 0;
+#endif
 				ici.pApplicationInfo        = &appInfo;
 				ici.enabledLayerCount       = numEnabledLayers;
 				ici.ppEnabledLayerNames     = enabledLayer;
@@ -1755,13 +1779,21 @@ VK_IMPORT_INSTANCE
 						BX_TRACE("\t%s", layer.m_name);
 					}
 				}
+#if BX_PLATFORM_OSX
+				uint32_t numEnabledExtensions = headless ? 1 : 3;
 
+				const char* enabledExtension[Extension::Count + 3] =
+#else
 				uint32_t numEnabledExtensions = headless ? 1 : 2;
 
 				const char* enabledExtension[Extension::Count + 2] =
+#endif
 				{
 					VK_KHR_MAINTENANCE1_EXTENSION_NAME,
-					VK_KHR_SWAPCHAIN_EXTENSION_NAME
+					VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+#if BX_PLATFORM_OSX
+					"VK_KHR_portability_subset",
+#endif
 				};
 
 				for (uint32_t ii = 0; ii < Extension::Count; ++ii)
@@ -5952,7 +5984,7 @@ VK_DESTROY
 			bx::memSet(imageInfos, 0, sizeof(ImageInfo) * numSrd);
 			uint32_t alignment = 1; // tightly aligned buffer
 
-			for (uint8_t side = 0; side < numSides; ++side)
+			for (uint16_t side = 0; side < numSides; ++side)
 			{
 				for (uint8_t lod = 0; lod < ti.numMips; ++lod)
 				{

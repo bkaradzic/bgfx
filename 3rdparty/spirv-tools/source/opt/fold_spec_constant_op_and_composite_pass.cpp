@@ -66,14 +66,14 @@ Pass::Status FoldSpecConstantOpAndCompositePass::Process() {
     if (const_mgr->GetType(inst) &&
         !const_mgr->GetType(inst)->decoration_empty())
       continue;
-    switch (SpvOp opcode = inst->opcode()) {
+    switch (spv::Op opcode = inst->opcode()) {
       // Records the values of Normal Constants.
-      case SpvOp::SpvOpConstantTrue:
-      case SpvOp::SpvOpConstantFalse:
-      case SpvOp::SpvOpConstant:
-      case SpvOp::SpvOpConstantNull:
-      case SpvOp::SpvOpConstantComposite:
-      case SpvOp::SpvOpSpecConstantComposite: {
+      case spv::Op::OpConstantTrue:
+      case spv::Op::OpConstantFalse:
+      case spv::Op::OpConstant:
+      case spv::Op::OpConstantNull:
+      case spv::Op::OpConstantComposite:
+      case spv::Op::OpSpecConstantComposite: {
         // A Constant instance will be created if the given instruction is a
         // Normal Constant whose value(s) are fixed. Note that for a composite
         // Spec Constant defined with OpSpecConstantComposite instruction, if
@@ -84,8 +84,8 @@ Pass::Status FoldSpecConstantOpAndCompositePass::Process() {
         if (auto const_value = const_mgr->GetConstantFromInst(inst)) {
           // Need to replace the OpSpecConstantComposite instruction with a
           // corresponding OpConstantComposite instruction.
-          if (opcode == SpvOp::SpvOpSpecConstantComposite) {
-            inst->SetOpcode(SpvOp::SpvOpConstantComposite);
+          if (opcode == spv::Op::OpSpecConstantComposite) {
+            inst->SetOpcode(spv::Op::OpConstantComposite);
             modified = true;
           }
           const_mgr->MapConstantToInst(const_value, inst);
@@ -99,7 +99,7 @@ Pass::Status FoldSpecConstantOpAndCompositePass::Process() {
       // Constants will be added to id_to_const_val_ and const_val_to_id_ so
       // that we can use the new Normal Constants when folding following Spec
       // Constants.
-      case SpvOp::SpvOpSpecConstantOp:
+      case spv::Op::OpSpecConstantOp:
         modified |= ProcessOpSpecConstantOp(&inst_iter);
         break;
       default:
@@ -118,11 +118,11 @@ bool FoldSpecConstantOpAndCompositePass::ProcessOpSpecConstantOp(
          "The first in-operand of OpSpecConstantOp instruction must be of "
          "SPV_OPERAND_TYPE_SPEC_CONSTANT_OP_NUMBER type");
 
-  switch (static_cast<SpvOp>(inst->GetSingleWordInOperand(0))) {
-    case SpvOp::SpvOpCompositeExtract:
-    case SpvOp::SpvOpVectorShuffle:
-    case SpvOp::SpvOpCompositeInsert:
-    case SpvOp::SpvOpQuantizeToF16:
+  switch (static_cast<spv::Op>(inst->GetSingleWordInOperand(0))) {
+    case spv::Op::OpCompositeExtract:
+    case spv::Op::OpVectorShuffle:
+    case spv::Op::OpCompositeInsert:
+    case spv::Op::OpQuantizeToF16:
       folded_inst = FoldWithInstructionFolder(pos);
       break;
     default:
@@ -165,7 +165,7 @@ Instruction* FoldSpecConstantOpAndCompositePass::FoldWithInstructionFolder(
   // instruction and pass it to the instruction folder.
   std::unique_ptr<Instruction> inst((*inst_iter_ptr)->Clone(context()));
   inst->SetOpcode(
-      static_cast<SpvOp>((*inst_iter_ptr)->GetSingleWordInOperand(0)));
+      static_cast<spv::Op>((*inst_iter_ptr)->GetSingleWordInOperand(0)));
   inst->RemoveOperand(2);
 
   // We want the current instruction to be replaced by an |OpConstant*|
@@ -289,7 +289,7 @@ Instruction* FoldSpecConstantOpAndCompositePass::DoComponentWiseOperation(
   const Instruction* inst = &**pos;
   analysis::ConstantManager* const_mgr = context()->get_constant_mgr();
   const analysis::Type* result_type = const_mgr->GetType(inst);
-  SpvOp spec_opcode = static_cast<SpvOp>(inst->GetSingleWordInOperand(0));
+  spv::Op spec_opcode = static_cast<spv::Op>(inst->GetSingleWordInOperand(0));
   // Check and collect operands.
   std::vector<const analysis::Constant*> operands;
 

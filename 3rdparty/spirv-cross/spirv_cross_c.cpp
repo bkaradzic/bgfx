@@ -194,6 +194,7 @@ struct spvc_resources_s : ScratchMemoryAllocation
 	SmallVector<spvc_reflected_resource> sampled_images;
 	SmallVector<spvc_reflected_resource> atomic_counters;
 	SmallVector<spvc_reflected_resource> push_constant_buffers;
+	SmallVector<spvc_reflected_resource> shader_record_buffers;
 	SmallVector<spvc_reflected_resource> separate_images;
 	SmallVector<spvc_reflected_resource> separate_samplers;
 	SmallVector<spvc_reflected_resource> acceleration_structures;
@@ -478,6 +479,9 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_RELAX_NAN_CHECKS:
 		options->glsl.relax_nan_checks = value != 0;
 		break;
+	case SPVC_COMPILER_OPTION_GLSL_ENABLE_ROW_MAJOR_LOAD_WORKAROUND:
+		options->glsl.enable_row_major_load_workaround = value != 0;
+		break;
 #endif
 
 #if SPIRV_CROSS_C_API_HLSL
@@ -713,6 +717,26 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 
 	case SPVC_COMPILER_OPTION_MSL_IOS_SUPPORT_BASE_VERTEX_INSTANCE:
 		options->msl.ios_support_base_vertex_instance = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_RAW_BUFFER_TESE_INPUT:
+		options->msl.raw_buffer_tese_input = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_SHADER_PATCH_INPUT_BUFFER_INDEX:
+		options->msl.shader_patch_input_buffer_index = value;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_MANUAL_HELPER_INVOCATION_UPDATES:
+		options->msl.manual_helper_invocation_updates = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_CHECK_DISCARDED_FRAG_STORES:
+		options->msl.check_discarded_frag_stores = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_ARGUMENT_BUFFERS_TIER:
+		options->msl.argument_buffers_tier = static_cast<CompilerMSL::Options::ArgumentBuffersTier>(value);
 		break;
 #endif
 
@@ -1173,6 +1197,31 @@ spvc_result spvc_compiler_msl_add_shader_input(spvc_compiler compiler, const spv
 #endif
 }
 
+spvc_result spvc_compiler_msl_add_shader_input_2(spvc_compiler compiler, const spvc_msl_shader_interface_var_2 *si)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	MSLShaderInterfaceVariable input;
+	input.location = si->location;
+	input.format = static_cast<MSLShaderVariableFormat>(si->format);
+	input.builtin = static_cast<spv::BuiltIn>(si->builtin);
+	input.vecsize = si->vecsize;
+	input.rate = static_cast<MSLShaderVariableRate>(si->rate);
+	msl.add_msl_shader_input(input);
+	return SPVC_SUCCESS;
+#else
+	(void)si;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
+}
+
 spvc_result spvc_compiler_msl_add_shader_output(spvc_compiler compiler, const spvc_msl_shader_interface_var *so)
 {
 #if SPIRV_CROSS_C_API_MSL
@@ -1188,6 +1237,31 @@ spvc_result spvc_compiler_msl_add_shader_output(spvc_compiler compiler, const sp
 	output.format = static_cast<MSLShaderVariableFormat>(so->format);
 	output.builtin = static_cast<spv::BuiltIn>(so->builtin);
 	output.vecsize = so->vecsize;
+	msl.add_msl_shader_output(output);
+	return SPVC_SUCCESS;
+#else
+	(void)so;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
+}
+
+spvc_result spvc_compiler_msl_add_shader_output_2(spvc_compiler compiler, const spvc_msl_shader_interface_var_2 *so)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	MSLShaderInterfaceVariable output;
+	output.location = so->location;
+	output.format = static_cast<MSLShaderVariableFormat>(so->format);
+	output.builtin = static_cast<spv::BuiltIn>(so->builtin);
+	output.vecsize = so->vecsize;
+	output.rate = static_cast<MSLShaderVariableRate>(so->rate);
 	msl.add_msl_shader_output(output);
 	return SPVC_SUCCESS;
 #else
@@ -1684,6 +1758,8 @@ bool spvc_resources_s::copy_resources(const ShaderResources &resources)
 		return false;
 	if (!copy_resources(push_constant_buffers, resources.push_constant_buffers))
 		return false;
+	if (!copy_resources(shader_record_buffers, resources.shader_record_buffers))
+		return false;
 	if (!copy_resources(separate_images, resources.separate_images))
 		return false;
 	if (!copy_resources(separate_samplers, resources.separate_samplers))
@@ -1835,6 +1911,10 @@ spvc_result spvc_resources_get_resource_list_for_type(spvc_resources resources, 
 
 	case SPVC_RESOURCE_TYPE_ACCELERATION_STRUCTURE:
 		list = &resources->acceleration_structures;
+		break;
+
+	case SPVC_RESOURCE_TYPE_SHADER_RECORD_BUFFER:
+		list = &resources->shader_record_buffers;
 		break;
 
 	default:
@@ -2578,6 +2658,20 @@ void spvc_msl_shader_interface_var_init(spvc_msl_shader_interface_var *var)
 void spvc_msl_shader_input_init(spvc_msl_shader_input *input)
 {
 	spvc_msl_shader_interface_var_init(input);
+}
+
+void spvc_msl_shader_interface_var_init_2(spvc_msl_shader_interface_var_2 *var)
+{
+#if SPIRV_CROSS_C_API_MSL
+	MSLShaderInterfaceVariable var_default;
+	var->location = var_default.location;
+	var->format = static_cast<spvc_msl_shader_variable_format>(var_default.format);
+	var->builtin = static_cast<SpvBuiltIn>(var_default.builtin);
+	var->vecsize = var_default.vecsize;
+	var->rate = static_cast<spvc_msl_shader_variable_rate>(var_default.rate);
+#else
+	memset(var, 0, sizeof(*var));
+#endif
 }
 
 void spvc_msl_resource_binding_init(spvc_msl_resource_binding *binding)

@@ -308,6 +308,24 @@ VKAPI_ATTR VkResult VKAPI_CALL vkGetDeviceGroupSurfacePresentModes2EXT(
     VkDeviceGroupPresentModeFlagsKHR*           pModes);
 #endif
 
+
+#define VK_NV_acquire_winrt_display 1
+#define VK_NV_ACQUIRE_WINRT_DISPLAY_SPEC_VERSION 1
+#define VK_NV_ACQUIRE_WINRT_DISPLAY_EXTENSION_NAME "VK_NV_acquire_winrt_display"
+typedef VkResult (VKAPI_PTR *PFN_vkAcquireWinrtDisplayNV)(VkPhysicalDevice physicalDevice, VkDisplayKHR display);
+typedef VkResult (VKAPI_PTR *PFN_vkGetWinrtDisplayNV)(VkPhysicalDevice physicalDevice, uint32_t deviceRelativeId, VkDisplayKHR* pDisplay);
+
+#ifndef VK_NO_PROTOTYPES
+VKAPI_ATTR VkResult VKAPI_CALL vkAcquireWinrtDisplayNV(
+    VkPhysicalDevice                            physicalDevice,
+    VkDisplayKHR                                display);
+
+VKAPI_ATTR VkResult VKAPI_CALL vkGetWinrtDisplayNV(
+    VkPhysicalDevice                            physicalDevice,
+    uint32_t                                    deviceRelativeId,
+    VkDisplayKHR*                               pDisplay);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

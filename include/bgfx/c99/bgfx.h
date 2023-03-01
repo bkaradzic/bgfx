@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -194,73 +194,81 @@ typedef enum bgfx_texture_format
     BGFX_TEXTURE_FORMAT_ATCE,                 /** (18) ATCE RGBA 8 BPP explicit alpha */
     BGFX_TEXTURE_FORMAT_ATCI,                 /** (19) ATCI RGBA 8 BPP interpolated alpha */
     BGFX_TEXTURE_FORMAT_ASTC4X4,              /** (20) ASTC 4x4 8.0 BPP               */
-    BGFX_TEXTURE_FORMAT_ASTC5X5,              /** (21) ASTC 5x5 5.12 BPP              */
-    BGFX_TEXTURE_FORMAT_ASTC6X6,              /** (22) ASTC 6x6 3.56 BPP              */
-    BGFX_TEXTURE_FORMAT_ASTC8X5,              /** (23) ASTC 8x5 3.20 BPP              */
-    BGFX_TEXTURE_FORMAT_ASTC8X6,              /** (24) ASTC 8x6 2.67 BPP              */
-    BGFX_TEXTURE_FORMAT_ASTC10X5,             /** (25) ASTC 10x5 2.56 BPP             */
-    BGFX_TEXTURE_FORMAT_UNKNOWN,              /** (26) Compressed formats above.      */
-    BGFX_TEXTURE_FORMAT_R1,                   /** (27)                                */
-    BGFX_TEXTURE_FORMAT_A8,                   /** (28)                                */
-    BGFX_TEXTURE_FORMAT_R8,                   /** (29)                                */
-    BGFX_TEXTURE_FORMAT_R8I,                  /** (30)                                */
-    BGFX_TEXTURE_FORMAT_R8U,                  /** (31)                                */
-    BGFX_TEXTURE_FORMAT_R8S,                  /** (32)                                */
-    BGFX_TEXTURE_FORMAT_R16,                  /** (33)                                */
-    BGFX_TEXTURE_FORMAT_R16I,                 /** (34)                                */
-    BGFX_TEXTURE_FORMAT_R16U,                 /** (35)                                */
-    BGFX_TEXTURE_FORMAT_R16F,                 /** (36)                                */
-    BGFX_TEXTURE_FORMAT_R16S,                 /** (37)                                */
-    BGFX_TEXTURE_FORMAT_R32I,                 /** (38)                                */
-    BGFX_TEXTURE_FORMAT_R32U,                 /** (39)                                */
-    BGFX_TEXTURE_FORMAT_R32F,                 /** (40)                                */
-    BGFX_TEXTURE_FORMAT_RG8,                  /** (41)                                */
-    BGFX_TEXTURE_FORMAT_RG8I,                 /** (42)                                */
-    BGFX_TEXTURE_FORMAT_RG8U,                 /** (43)                                */
-    BGFX_TEXTURE_FORMAT_RG8S,                 /** (44)                                */
-    BGFX_TEXTURE_FORMAT_RG16,                 /** (45)                                */
-    BGFX_TEXTURE_FORMAT_RG16I,                /** (46)                                */
-    BGFX_TEXTURE_FORMAT_RG16U,                /** (47)                                */
-    BGFX_TEXTURE_FORMAT_RG16F,                /** (48)                                */
-    BGFX_TEXTURE_FORMAT_RG16S,                /** (49)                                */
-    BGFX_TEXTURE_FORMAT_RG32I,                /** (50)                                */
-    BGFX_TEXTURE_FORMAT_RG32U,                /** (51)                                */
-    BGFX_TEXTURE_FORMAT_RG32F,                /** (52)                                */
-    BGFX_TEXTURE_FORMAT_RGB8,                 /** (53)                                */
-    BGFX_TEXTURE_FORMAT_RGB8I,                /** (54)                                */
-    BGFX_TEXTURE_FORMAT_RGB8U,                /** (55)                                */
-    BGFX_TEXTURE_FORMAT_RGB8S,                /** (56)                                */
-    BGFX_TEXTURE_FORMAT_RGB9E5F,              /** (57)                                */
-    BGFX_TEXTURE_FORMAT_BGRA8,                /** (58)                                */
-    BGFX_TEXTURE_FORMAT_RGBA8,                /** (59)                                */
-    BGFX_TEXTURE_FORMAT_RGBA8I,               /** (60)                                */
-    BGFX_TEXTURE_FORMAT_RGBA8U,               /** (61)                                */
-    BGFX_TEXTURE_FORMAT_RGBA8S,               /** (62)                                */
-    BGFX_TEXTURE_FORMAT_RGBA16,               /** (63)                                */
-    BGFX_TEXTURE_FORMAT_RGBA16I,              /** (64)                                */
-    BGFX_TEXTURE_FORMAT_RGBA16U,              /** (65)                                */
-    BGFX_TEXTURE_FORMAT_RGBA16F,              /** (66)                                */
-    BGFX_TEXTURE_FORMAT_RGBA16S,              /** (67)                                */
-    BGFX_TEXTURE_FORMAT_RGBA32I,              /** (68)                                */
-    BGFX_TEXTURE_FORMAT_RGBA32U,              /** (69)                                */
-    BGFX_TEXTURE_FORMAT_RGBA32F,              /** (70)                                */
-    BGFX_TEXTURE_FORMAT_B5G6R5,               /** (71)                                */
-    BGFX_TEXTURE_FORMAT_R5G6B5,               /** (72)                                */
-    BGFX_TEXTURE_FORMAT_BGRA4,                /** (73)                                */
-    BGFX_TEXTURE_FORMAT_RGBA4,                /** (74)                                */
-    BGFX_TEXTURE_FORMAT_BGR5A1,               /** (75)                                */
-    BGFX_TEXTURE_FORMAT_RGB5A1,               /** (76)                                */
-    BGFX_TEXTURE_FORMAT_RGB10A2,              /** (77)                                */
-    BGFX_TEXTURE_FORMAT_RG11B10F,             /** (78)                                */
-    BGFX_TEXTURE_FORMAT_UNKNOWNDEPTH,         /** (79) Depth formats below.           */
-    BGFX_TEXTURE_FORMAT_D16,                  /** (80)                                */
-    BGFX_TEXTURE_FORMAT_D24,                  /** (81)                                */
-    BGFX_TEXTURE_FORMAT_D24S8,                /** (82)                                */
-    BGFX_TEXTURE_FORMAT_D32,                  /** (83)                                */
-    BGFX_TEXTURE_FORMAT_D16F,                 /** (84)                                */
-    BGFX_TEXTURE_FORMAT_D24F,                 /** (85)                                */
-    BGFX_TEXTURE_FORMAT_D32F,                 /** (86)                                */
-    BGFX_TEXTURE_FORMAT_D0S8,                 /** (87)                                */
+    BGFX_TEXTURE_FORMAT_ASTC5X4,              /** (21) ASTC 5x4 6.40 BPP              */
+    BGFX_TEXTURE_FORMAT_ASTC5X5,              /** (22) ASTC 5x5 5.12 BPP              */
+    BGFX_TEXTURE_FORMAT_ASTC6X5,              /** (23) ASTC 6x5 4.27 BPP              */
+    BGFX_TEXTURE_FORMAT_ASTC6X6,              /** (24) ASTC 6x6 3.56 BPP              */
+    BGFX_TEXTURE_FORMAT_ASTC8X5,              /** (25) ASTC 8x5 3.20 BPP              */
+    BGFX_TEXTURE_FORMAT_ASTC8X6,              /** (26) ASTC 8x6 2.67 BPP              */
+    BGFX_TEXTURE_FORMAT_ASTC8X8,              /** (27) ASTC 8x8 2.00 BPP              */
+    BGFX_TEXTURE_FORMAT_ASTC10X5,             /** (28) ASTC 10x5 2.56 BPP             */
+    BGFX_TEXTURE_FORMAT_ASTC10X6,             /** (29) ASTC 10x6 2.13 BPP             */
+    BGFX_TEXTURE_FORMAT_ASTC10X8,             /** (30) ASTC 10x8 1.60 BPP             */
+    BGFX_TEXTURE_FORMAT_ASTC10X10,            /** (31) ASTC 10x10 1.28 BPP            */
+    BGFX_TEXTURE_FORMAT_ASTC12X10,            /** (32) ASTC 12x10 1.07 BPP            */
+    BGFX_TEXTURE_FORMAT_ASTC12X12,            /** (33) ASTC 12x12 0.89 BPP            */
+    BGFX_TEXTURE_FORMAT_UNKNOWN,              /** (34) Compressed formats above.      */
+    BGFX_TEXTURE_FORMAT_R1,                   /** (35)                                */
+    BGFX_TEXTURE_FORMAT_A8,                   /** (36)                                */
+    BGFX_TEXTURE_FORMAT_R8,                   /** (37)                                */
+    BGFX_TEXTURE_FORMAT_R8I,                  /** (38)                                */
+    BGFX_TEXTURE_FORMAT_R8U,                  /** (39)                                */
+    BGFX_TEXTURE_FORMAT_R8S,                  /** (40)                                */
+    BGFX_TEXTURE_FORMAT_R16,                  /** (41)                                */
+    BGFX_TEXTURE_FORMAT_R16I,                 /** (42)                                */
+    BGFX_TEXTURE_FORMAT_R16U,                 /** (43)                                */
+    BGFX_TEXTURE_FORMAT_R16F,                 /** (44)                                */
+    BGFX_TEXTURE_FORMAT_R16S,                 /** (45)                                */
+    BGFX_TEXTURE_FORMAT_R32I,                 /** (46)                                */
+    BGFX_TEXTURE_FORMAT_R32U,                 /** (47)                                */
+    BGFX_TEXTURE_FORMAT_R32F,                 /** (48)                                */
+    BGFX_TEXTURE_FORMAT_RG8,                  /** (49)                                */
+    BGFX_TEXTURE_FORMAT_RG8I,                 /** (50)                                */
+    BGFX_TEXTURE_FORMAT_RG8U,                 /** (51)                                */
+    BGFX_TEXTURE_FORMAT_RG8S,                 /** (52)                                */
+    BGFX_TEXTURE_FORMAT_RG16,                 /** (53)                                */
+    BGFX_TEXTURE_FORMAT_RG16I,                /** (54)                                */
+    BGFX_TEXTURE_FORMAT_RG16U,                /** (55)                                */
+    BGFX_TEXTURE_FORMAT_RG16F,                /** (56)                                */
+    BGFX_TEXTURE_FORMAT_RG16S,                /** (57)                                */
+    BGFX_TEXTURE_FORMAT_RG32I,                /** (58)                                */
+    BGFX_TEXTURE_FORMAT_RG32U,                /** (59)                                */
+    BGFX_TEXTURE_FORMAT_RG32F,                /** (60)                                */
+    BGFX_TEXTURE_FORMAT_RGB8,                 /** (61)                                */
+    BGFX_TEXTURE_FORMAT_RGB8I,                /** (62)                                */
+    BGFX_TEXTURE_FORMAT_RGB8U,                /** (63)                                */
+    BGFX_TEXTURE_FORMAT_RGB8S,                /** (64)                                */
+    BGFX_TEXTURE_FORMAT_RGB9E5F,              /** (65)                                */
+    BGFX_TEXTURE_FORMAT_BGRA8,                /** (66)                                */
+    BGFX_TEXTURE_FORMAT_RGBA8,                /** (67)                                */
+    BGFX_TEXTURE_FORMAT_RGBA8I,               /** (68)                                */
+    BGFX_TEXTURE_FORMAT_RGBA8U,               /** (69)                                */
+    BGFX_TEXTURE_FORMAT_RGBA8S,               /** (70)                                */
+    BGFX_TEXTURE_FORMAT_RGBA16,               /** (71)                                */
+    BGFX_TEXTURE_FORMAT_RGBA16I,              /** (72)                                */
+    BGFX_TEXTURE_FORMAT_RGBA16U,              /** (73)                                */
+    BGFX_TEXTURE_FORMAT_RGBA16F,              /** (74)                                */
+    BGFX_TEXTURE_FORMAT_RGBA16S,              /** (75)                                */
+    BGFX_TEXTURE_FORMAT_RGBA32I,              /** (76)                                */
+    BGFX_TEXTURE_FORMAT_RGBA32U,              /** (77)                                */
+    BGFX_TEXTURE_FORMAT_RGBA32F,              /** (78)                                */
+    BGFX_TEXTURE_FORMAT_B5G6R5,               /** (79)                                */
+    BGFX_TEXTURE_FORMAT_R5G6B5,               /** (80)                                */
+    BGFX_TEXTURE_FORMAT_BGRA4,                /** (81)                                */
+    BGFX_TEXTURE_FORMAT_RGBA4,                /** (82)                                */
+    BGFX_TEXTURE_FORMAT_BGR5A1,               /** (83)                                */
+    BGFX_TEXTURE_FORMAT_RGB5A1,               /** (84)                                */
+    BGFX_TEXTURE_FORMAT_RGB10A2,              /** (85)                                */
+    BGFX_TEXTURE_FORMAT_RG11B10F,             /** (86)                                */
+    BGFX_TEXTURE_FORMAT_UNKNOWNDEPTH,         /** (87) Depth formats below.           */
+    BGFX_TEXTURE_FORMAT_D16,                  /** (88)                                */
+    BGFX_TEXTURE_FORMAT_D24,                  /** (89)                                */
+    BGFX_TEXTURE_FORMAT_D24S8,                /** (90)                                */
+    BGFX_TEXTURE_FORMAT_D32,                  /** (91)                                */
+    BGFX_TEXTURE_FORMAT_D16F,                 /** (92)                                */
+    BGFX_TEXTURE_FORMAT_D24F,                 /** (93)                                */
+    BGFX_TEXTURE_FORMAT_D32F,                 /** (94)                                */
+    BGFX_TEXTURE_FORMAT_D0S8,                 /** (95)                                */
 
     BGFX_TEXTURE_FORMAT_COUNT
 

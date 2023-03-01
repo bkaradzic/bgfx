@@ -54,7 +54,7 @@ spv_result_t ValidatePhi(ValidationState_t& _, const Instruction* inst) {
            << "OpPhi must not have void result type";
   }
   if (_.IsPointerType(inst->type_id()) &&
-      _.addressing_model() == SpvAddressingModelLogical) {
+      _.addressing_model() == spv::AddressingModel::Logical) {
     if (!_.features().variable_pointers) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Using pointers with OpPhi requires capability "
@@ -64,13 +64,14 @@ spv_result_t ValidatePhi(ValidationState_t& _, const Instruction* inst) {
 
   const Instruction* type_inst = _.FindDef(inst->type_id());
   assert(type_inst);
-  const SpvOp type_opcode = type_inst->opcode();
+  const spv::Op type_opcode = type_inst->opcode();
 
   if (!_.options()->before_hlsl_legalization &&
-      !_.HasCapability(SpvCapabilityBindlessTextureNV)) {
-    if (type_opcode == SpvOpTypeSampledImage ||
-        (_.HasCapability(SpvCapabilityShader) &&
-         (type_opcode == SpvOpTypeImage || type_opcode == SpvOpTypeSampler))) {
+      !_.HasCapability(spv::Capability::BindlessTextureNV)) {
+    if (type_opcode == spv::Op::OpTypeSampledImage ||
+        (_.HasCapability(spv::Capability::Shader) &&
+         (type_opcode == spv::Op::OpTypeImage ||
+          type_opcode == spv::Op::OpTypeSampler))) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "Result type cannot be Op" << spvOpcodeString(type_opcode);
     }
@@ -108,7 +109,7 @@ spv_result_t ValidatePhi(ValidationState_t& _, const Instruction* inst) {
                << " type <id> " << _.getIdName(inc_type_id) << ".";
       }
     } else {
-      if (_.GetIdOpcode(inc_id) != SpvOpLabel) {
+      if (_.GetIdOpcode(inc_id) != spv::Op::OpLabel) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << "OpPhi's incoming basic block <id> " << _.getIdName(inc_id)
                << " is not an OpLabel.";
@@ -143,7 +144,7 @@ spv_result_t ValidateBranch(ValidationState_t& _, const Instruction* inst) {
   // target operands must be OpLabel
   const auto id = inst->GetOperandAs<uint32_t>(0);
   const auto target = _.FindDef(id);
-  if (!target || SpvOpLabel != target->opcode()) {
+  if (!target || spv::Op::OpLabel != target->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "'Target Label' operands for OpBranch must be the ID "
               "of an OpLabel instruction";
@@ -178,7 +179,7 @@ spv_result_t ValidateBranchConditional(ValidationState_t& _,
   // PerformCfgChecks already checks for that
   const auto true_id = inst->GetOperandAs<uint32_t>(1);
   const auto true_target = _.FindDef(true_id);
-  if (!true_target || SpvOpLabel != true_target->opcode()) {
+  if (!true_target || spv::Op::OpLabel != true_target->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "The 'True Label' operand for OpBranchConditional must be the "
               "ID of an OpLabel instruction";
@@ -186,7 +187,7 @@ spv_result_t ValidateBranchConditional(ValidationState_t& _,
 
   const auto false_id = inst->GetOperandAs<uint32_t>(2);
   const auto false_target = _.FindDef(false_id);
-  if (!false_target || SpvOpLabel != false_target->opcode()) {
+  if (!false_target || spv::Op::OpLabel != false_target->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "The 'False Label' operand for OpBranchConditional must be the "
               "ID of an OpLabel instruction";
@@ -213,7 +214,7 @@ spv_result_t ValidateSwitch(ValidationState_t& _, const Instruction* inst) {
   }
 
   const auto default_label = _.FindDef(inst->GetOperandAs<uint32_t>(1));
-  if (default_label->opcode() != SpvOpLabel) {
+  if (default_label->opcode() != spv::Op::OpLabel) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "Default must be an OpLabel instruction";
   }
@@ -223,7 +224,7 @@ spv_result_t ValidateSwitch(ValidationState_t& _, const Instruction* inst) {
     // literal, id
     const auto id = inst->GetOperandAs<uint32_t>(i + 1);
     const auto target = _.FindDef(id);
-    if (!target || SpvOpLabel != target->opcode()) {
+    if (!target || spv::Op::OpLabel != target->opcode()) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "'Target Label' operands for OpSwitch must be IDs of an "
                 "OpLabel instruction";
@@ -243,14 +244,14 @@ spv_result_t ValidateReturnValue(ValidationState_t& _,
            << " does not represent a value.";
   }
   auto value_type = _.FindDef(value->type_id());
-  if (!value_type || SpvOpTypeVoid == value_type->opcode()) {
+  if (!value_type || spv::Op::OpTypeVoid == value_type->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpReturnValue value's type <id> "
            << _.getIdName(value->type_id()) << " is missing or void.";
   }
 
-  if (_.addressing_model() == SpvAddressingModelLogical &&
-      SpvOpTypePointer == value_type->opcode() &&
+  if (_.addressing_model() == spv::AddressingModel::Logical &&
+      spv::Op::OpTypePointer == value_type->opcode() &&
       !_.features().variable_pointers && !_.options()->relax_logical_pointer) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpReturnValue value's type <id> "
@@ -270,10 +271,15 @@ spv_result_t ValidateReturnValue(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+uint32_t operator>>(const spv::LoopControlShift& lhs,
+                    const spv::LoopControlShift& rhs) {
+  return uint32_t(lhs) >> uint32_t(rhs);
+}
+
 spv_result_t ValidateLoopMerge(ValidationState_t& _, const Instruction* inst) {
   const auto merge_id = inst->GetOperandAs<uint32_t>(0);
   const auto merge = _.FindDef(merge_id);
-  if (!merge || merge->opcode() != SpvOpLabel) {
+  if (!merge || merge->opcode() != spv::Op::OpLabel) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "Merge Block " << _.getIdName(merge_id) << " must be an OpLabel";
   }
@@ -284,7 +290,7 @@ spv_result_t ValidateLoopMerge(ValidationState_t& _, const Instruction* inst) {
 
   const auto continue_id = inst->GetOperandAs<uint32_t>(1);
   const auto continue_target = _.FindDef(continue_id);
-  if (!continue_target || continue_target->opcode() != SpvOpLabel) {
+  if (!continue_target || continue_target->opcode() != spv::Op::OpLabel) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "Continue Target " << _.getIdName(continue_id)
            << " must be an OpLabel";
@@ -295,36 +301,36 @@ spv_result_t ValidateLoopMerge(ValidationState_t& _, const Instruction* inst) {
            << "Merge Block and Continue Target must be different ids";
   }
 
-  const auto loop_control = inst->GetOperandAs<uint32_t>(2);
-  if ((loop_control >> SpvLoopControlUnrollShift) & 0x1 &&
-      (loop_control >> SpvLoopControlDontUnrollShift) & 0x1) {
+  const auto loop_control = inst->GetOperandAs<spv::LoopControlShift>(2);
+  if ((loop_control >> spv::LoopControlShift::Unroll) & 0x1 &&
+      (loop_control >> spv::LoopControlShift::DontUnroll) & 0x1) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Unroll and DontUnroll loop controls must not both be specified";
   }
-  if ((loop_control >> SpvLoopControlDontUnrollShift) & 0x1 &&
-      (loop_control >> SpvLoopControlPeelCountShift) & 0x1) {
+  if ((loop_control >> spv::LoopControlShift::DontUnroll) & 0x1 &&
+      (loop_control >> spv::LoopControlShift::PeelCount) & 0x1) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst) << "PeelCount and DontUnroll "
                                                    "loop controls must not "
                                                    "both be specified";
   }
-  if ((loop_control >> SpvLoopControlDontUnrollShift) & 0x1 &&
-      (loop_control >> SpvLoopControlPartialCountShift) & 0x1) {
+  if ((loop_control >> spv::LoopControlShift::DontUnroll) & 0x1 &&
+      (loop_control >> spv::LoopControlShift::PartialCount) & 0x1) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst) << "PartialCount and "
                                                    "DontUnroll loop controls "
                                                    "must not both be specified";
   }
 
   uint32_t operand = 3;
-  if ((loop_control >> SpvLoopControlDependencyLengthShift) & 0x1) {
+  if ((loop_control >> spv::LoopControlShift::DependencyLength) & 0x1) {
     ++operand;
   }
-  if ((loop_control >> SpvLoopControlMinIterationsShift) & 0x1) {
+  if ((loop_control >> spv::LoopControlShift::MinIterations) & 0x1) {
     ++operand;
   }
-  if ((loop_control >> SpvLoopControlMaxIterationsShift) & 0x1) {
+  if ((loop_control >> spv::LoopControlShift::MaxIterations) & 0x1) {
     ++operand;
   }
-  if ((loop_control >> SpvLoopControlIterationMultipleShift) & 0x1) {
+  if ((loop_control >> spv::LoopControlShift::IterationMultiple) & 0x1) {
     if (inst->operands().size() < operand ||
         inst->GetOperandAs<uint32_t>(operand) == 0) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst) << "IterationMultiple loop "
@@ -333,10 +339,10 @@ spv_result_t ValidateLoopMerge(ValidationState_t& _, const Instruction* inst) {
     }
     ++operand;
   }
-  if ((loop_control >> SpvLoopControlPeelCountShift) & 0x1) {
+  if ((loop_control >> spv::LoopControlShift::PeelCount) & 0x1) {
     ++operand;
   }
-  if ((loop_control >> SpvLoopControlPartialCountShift) & 0x1) {
+  if ((loop_control >> spv::LoopControlShift::PartialCount) & 0x1) {
     ++operand;
   }
 
@@ -554,7 +560,7 @@ spv_result_t StructuredSwitchChecks(ValidationState_t& _, Function* function,
           target_block->structurally_reachable() &&
           !header->structurally_dominates(*target_block)) {
         return _.diag(SPV_ERROR_INVALID_CFG, header->label())
-               << "Selection header " << _.getIdName(header->id())
+               << "Switch header " << _.getIdName(header->id())
                << " does not structurally dominate its case construct "
                << _.getIdName(target);
       }
@@ -644,9 +650,9 @@ spv_result_t ValidateStructuredSelections(
     const auto index = terminator - &_.ordered_instructions()[0];
     auto* merge = &_.ordered_instructions()[index - 1];
     // Marks merges and continues as seen.
-    if (merge->opcode() == SpvOpSelectionMerge) {
+    if (merge->opcode() == spv::Op::OpSelectionMerge) {
       seen.insert(merge->GetOperandAs<uint32_t>(0));
-    } else if (merge->opcode() == SpvOpLoopMerge) {
+    } else if (merge->opcode() == spv::Op::OpLoopMerge) {
       seen.insert(merge->GetOperandAs<uint32_t>(0));
       seen.insert(merge->GetOperandAs<uint32_t>(1));
     } else {
@@ -657,7 +663,7 @@ spv_result_t ValidateStructuredSelections(
     // Skip unreachable blocks.
     if (!block->structurally_reachable()) continue;
 
-    if (terminator->opcode() == SpvOpBranchConditional) {
+    if (terminator->opcode() == spv::Op::OpBranchConditional) {
       const auto true_label = terminator->GetOperandAs<uint32_t>(1);
       const auto false_label = terminator->GetOperandAs<uint32_t>(2);
       // Mark the upcoming blocks as seen now, but only error out if this block
@@ -669,7 +675,7 @@ spv_result_t ValidateStructuredSelections(
         return _.diag(SPV_ERROR_INVALID_CFG, terminator)
                << "Selection must be structured";
       }
-    } else if (terminator->opcode() == SpvOpSwitch) {
+    } else if (terminator->opcode() == spv::Op::OpSwitch) {
       if (!merge) {
         return _.diag(SPV_ERROR_INVALID_CFG, terminator)
                << "OpSwitch must be preceded by an OpSelectionMerge "
@@ -746,6 +752,7 @@ spv_result_t StructuredControlFlowChecks(
                                      _.getIdName(merge->id()),
                                      "does not structurally dominate");
     }
+
     // If it's really a merge block for a selection or loop, then it must be
     // *strictly* structrually dominated by the header.
     if (construct.ExitBlockIsMergeBlock() && (header == merge)) {
@@ -798,8 +805,8 @@ spv_result_t StructuredControlFlowChecks(
           block->is_type(BlockType::kBlockTypeLoop)) {
         size_t index = (block->terminator() - &_.ordered_instructions()[0]) - 1;
         const auto& merge_inst = _.ordered_instructions()[index];
-        if (merge_inst.opcode() == SpvOpSelectionMerge ||
-            merge_inst.opcode() == SpvOpLoopMerge) {
+        if (merge_inst.opcode() == spv::Op::OpSelectionMerge ||
+            merge_inst.opcode() == spv::Op::OpLoopMerge) {
           uint32_t merge_id = merge_inst.GetOperandAs<uint32_t>(0);
           auto merge_block = function->GetBlock(merge_id).first;
           if (merge_block->structurally_reachable() &&
@@ -854,7 +861,7 @@ spv_result_t StructuredControlFlowChecks(
 
     // Checks rules for case constructs.
     if (construct.type() == ConstructType::kSelection &&
-        header->terminator()->opcode() == SpvOpSwitch) {
+        header->terminator()->opcode() == spv::Op::OpSwitch) {
       const auto terminator = header->terminator();
       if (auto error =
               StructuredSwitchChecks(_, function, terminator, header, merge)) {
@@ -928,7 +935,7 @@ spv_result_t PerformCfgChecks(ValidationState_t& _) {
       }
       // If we have structured control flow, check that no block has a control
       // flow nesting depth larger than the limit.
-      if (_.HasCapability(SpvCapabilityShader)) {
+      if (_.HasCapability(spv::Capability::Shader)) {
         const int control_flow_nesting_depth_limit =
             _.options()->universal_limits_.max_control_flow_nesting_depth;
         for (auto block = begin(blocks); block != end(blocks); ++block) {
@@ -942,7 +949,7 @@ spv_result_t PerformCfgChecks(ValidationState_t& _) {
     }
 
     /// Structured control flow checks are only required for shader capabilities
-    if (_.HasCapability(SpvCapabilityShader)) {
+    if (_.HasCapability(spv::Capability::Shader)) {
       // Calculate structural dominance.
       postorder.clear();
       std::vector<const BasicBlock*> postdom_postorder;
@@ -998,9 +1005,9 @@ spv_result_t PerformCfgChecks(ValidationState_t& _) {
 }
 
 spv_result_t CfgPass(ValidationState_t& _, const Instruction* inst) {
-  SpvOp opcode = inst->opcode();
+  spv::Op opcode = inst->opcode();
   switch (opcode) {
-    case SpvOpLabel:
+    case spv::Op::OpLabel:
       if (auto error = _.current_function().RegisterBlock(inst->id()))
         return error;
 
@@ -1009,7 +1016,7 @@ spv_result_t CfgPass(ValidationState_t& _, const Instruction* inst) {
       // passes the OpLabel ends up not being part of the basic block it starts.
       _.current_function().current_block()->set_label(inst);
       break;
-    case SpvOpLoopMerge: {
+    case spv::Op::OpLoopMerge: {
       uint32_t merge_block = inst->GetOperandAs<uint32_t>(0);
       uint32_t continue_block = inst->GetOperandAs<uint32_t>(1);
       CFG_ASSERT(MergeBlockAssert, merge_block);
@@ -1018,20 +1025,20 @@ spv_result_t CfgPass(ValidationState_t& _, const Instruction* inst) {
                                                               continue_block))
         return error;
     } break;
-    case SpvOpSelectionMerge: {
+    case spv::Op::OpSelectionMerge: {
       uint32_t merge_block = inst->GetOperandAs<uint32_t>(0);
       CFG_ASSERT(MergeBlockAssert, merge_block);
 
       if (auto error = _.current_function().RegisterSelectionMerge(merge_block))
         return error;
     } break;
-    case SpvOpBranch: {
+    case spv::Op::OpBranch: {
       uint32_t target = inst->GetOperandAs<uint32_t>(0);
       CFG_ASSERT(FirstBlockAssert, target);
 
       _.current_function().RegisterBlockEnd({target});
     } break;
-    case SpvOpBranchConditional: {
+    case spv::Op::OpBranchConditional: {
       uint32_t tlabel = inst->GetOperandAs<uint32_t>(1);
       uint32_t flabel = inst->GetOperandAs<uint32_t>(2);
       CFG_ASSERT(FirstBlockAssert, tlabel);
@@ -1040,7 +1047,7 @@ spv_result_t CfgPass(ValidationState_t& _, const Instruction* inst) {
       _.current_function().RegisterBlockEnd({tlabel, flabel});
     } break;
 
-    case SpvOpSwitch: {
+    case spv::Op::OpSwitch: {
       std::vector<uint32_t> cases;
       for (size_t i = 1; i < inst->operands().size(); i += 2) {
         uint32_t target = inst->GetOperandAs<uint32_t>(i);
@@ -1049,44 +1056,44 @@ spv_result_t CfgPass(ValidationState_t& _, const Instruction* inst) {
       }
       _.current_function().RegisterBlockEnd({cases});
     } break;
-    case SpvOpReturn: {
+    case spv::Op::OpReturn: {
       const uint32_t return_type = _.current_function().GetResultTypeId();
       const Instruction* return_type_inst = _.FindDef(return_type);
       assert(return_type_inst);
-      if (return_type_inst->opcode() != SpvOpTypeVoid)
+      if (return_type_inst->opcode() != spv::Op::OpTypeVoid)
         return _.diag(SPV_ERROR_INVALID_CFG, inst)
                << "OpReturn can only be called from a function with void "
                << "return type.";
       _.current_function().RegisterBlockEnd(std::vector<uint32_t>());
       break;
     }
-    case SpvOpKill:
-    case SpvOpReturnValue:
-    case SpvOpUnreachable:
-    case SpvOpTerminateInvocation:
-    case SpvOpIgnoreIntersectionKHR:
-    case SpvOpTerminateRayKHR:
-    case SpvOpEmitMeshTasksEXT:
+    case spv::Op::OpKill:
+    case spv::Op::OpReturnValue:
+    case spv::Op::OpUnreachable:
+    case spv::Op::OpTerminateInvocation:
+    case spv::Op::OpIgnoreIntersectionKHR:
+    case spv::Op::OpTerminateRayKHR:
+    case spv::Op::OpEmitMeshTasksEXT:
       _.current_function().RegisterBlockEnd(std::vector<uint32_t>());
       // Ops with dedicated passes check for the Execution Model there
-      if (opcode == SpvOpKill) {
+      if (opcode == spv::Op::OpKill) {
         _.current_function().RegisterExecutionModelLimitation(
-            SpvExecutionModelFragment,
+            spv::ExecutionModel::Fragment,
             "OpKill requires Fragment execution model");
       }
-      if (opcode == SpvOpTerminateInvocation) {
+      if (opcode == spv::Op::OpTerminateInvocation) {
         _.current_function().RegisterExecutionModelLimitation(
-            SpvExecutionModelFragment,
+            spv::ExecutionModel::Fragment,
             "OpTerminateInvocation requires Fragment execution model");
       }
-      if (opcode == SpvOpIgnoreIntersectionKHR) {
+      if (opcode == spv::Op::OpIgnoreIntersectionKHR) {
         _.current_function().RegisterExecutionModelLimitation(
-            SpvExecutionModelAnyHitKHR,
+            spv::ExecutionModel::AnyHitKHR,
             "OpIgnoreIntersectionKHR requires AnyHitKHR execution model");
       }
-      if (opcode == SpvOpTerminateRayKHR) {
+      if (opcode == spv::Op::OpTerminateRayKHR) {
         _.current_function().RegisterExecutionModelLimitation(
-            SpvExecutionModelAnyHitKHR,
+            spv::ExecutionModel::AnyHitKHR,
             "OpTerminateRayKHR requires AnyHitKHR execution model");
       }
 
@@ -1140,22 +1147,22 @@ void ReachabilityPass(ValidationState_t& _) {
 
 spv_result_t ControlFlowPass(ValidationState_t& _, const Instruction* inst) {
   switch (inst->opcode()) {
-    case SpvOpPhi:
+    case spv::Op::OpPhi:
       if (auto error = ValidatePhi(_, inst)) return error;
       break;
-    case SpvOpBranch:
+    case spv::Op::OpBranch:
       if (auto error = ValidateBranch(_, inst)) return error;
       break;
-    case SpvOpBranchConditional:
+    case spv::Op::OpBranchConditional:
       if (auto error = ValidateBranchConditional(_, inst)) return error;
       break;
-    case SpvOpReturnValue:
+    case spv::Op::OpReturnValue:
       if (auto error = ValidateReturnValue(_, inst)) return error;
       break;
-    case SpvOpSwitch:
+    case spv::Op::OpSwitch:
       if (auto error = ValidateSwitch(_, inst)) return error;
       break;
-    case SpvOpLoopMerge:
+    case spv::Op::OpLoopMerge:
       if (auto error = ValidateLoopMerge(_, inst)) return error;
       break;
     default:

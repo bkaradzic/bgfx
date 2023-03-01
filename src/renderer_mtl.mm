@@ -246,18 +246,34 @@ namespace bgfx { namespace mtl
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ATCI
 #if BX_PLATFORM_IOS && !TARGET_OS_MACCATALYST
 		{ MTLPixelFormatASTC_4x4_LDR,                   MTLPixelFormatASTC_4x4_sRGB,                 MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC4x4
+		{ MTLPixelFormatASTC_5x4_LDR,                   MTLPixelFormatASTC_5x4_sRGB,                 MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC5x4
 		{ MTLPixelFormatASTC_5x5_LDR,                   MTLPixelFormatASTC_5x5_sRGB,                 MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC5x5
+		{ MTLPixelFormatASTC_6x5_LDR,                   MTLPixelFormatASTC_6x5_sRGB,                 MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC6x5
 		{ MTLPixelFormatASTC_6x6_LDR,                   MTLPixelFormatASTC_6x6_sRGB,                 MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC6x6
 		{ MTLPixelFormatASTC_8x5_LDR,                   MTLPixelFormatASTC_8x5_sRGB,                 MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC8x5
 		{ MTLPixelFormatASTC_8x6_LDR,                   MTLPixelFormatASTC_8x6_sRGB,                 MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC8x6
+		{ MTLPixelFormatASTC_8x8_LDR,                   MTLPixelFormatASTC_8x8_sRGB,                 MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC8x8
 		{ MTLPixelFormatASTC_10x5_LDR,                  MTLPixelFormatASTC_10x5_sRGB,                MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC10x5
+		{ MTLPixelFormatASTC_10x6_LDR,                  MTLPixelFormatASTC_10x6_sRGB,                MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC10x6
+		{ MTLPixelFormatASTC_10x8_LDR,                  MTLPixelFormatASTC_10x8_sRGB,                MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC10x8
+		{ MTLPixelFormatASTC_10x10_LDR,                 MTLPixelFormatASTC_10x10_sRGB,               MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC10x10
+		{ MTLPixelFormatASTC_12x10_LDR,                 MTLPixelFormatASTC_12x10_sRGB,               MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC12x10
+		{ MTLPixelFormatASTC_12x12_LDR,                 MTLPixelFormatASTC_12x12_sRGB,               MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC12x12
 #else
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC4x4
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC5x4
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC5x5
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC6x5
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC6x6
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC8x5
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC8x6
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC8x8
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC10x5
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC10x6
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC10x8
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC10x10
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC12x10
+		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // ASTC12x12
 #endif // BX_PLATFORM_IOS && !TARGET_OS_MACCATALYST
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // Unknown
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // R1
@@ -1257,38 +1273,40 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 				renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionLoad;
 				renderPassDescriptor.colorAttachments[0].storeAction =
-				NULL != renderPassDescriptor.colorAttachments[0].resolveTexture
-				? MTLStoreActionMultisampleResolve
-				: MTLStoreActionStore
-				;
+					NULL != renderPassDescriptor.colorAttachments[0].resolveTexture
+					? MTLStoreActionMultisampleResolve
+					: MTLStoreActionStore
+					;
 
 				RenderCommandEncoder rce = m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);
 				m_renderCommandEncoder = rce;
 				m_renderCommandEncoderFrameBufferHandle = fbh;
 				MTL_RELEASE(renderPassDescriptor);
 
-				MTLViewport viewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f};
+				MTLViewport viewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f };
 				rce.setViewport(viewport);
-				MTLScissorRect rc = { 0,0,width,height };
+
+				MTLScissorRect rc = { 0, 0, width, height };
 				rce.setScissorRect(rc);
+
 				rce.setCullMode(MTLCullModeNone);
 
 				uint64_t state = 0
-				| BGFX_STATE_WRITE_RGB
-				| BGFX_STATE_WRITE_A
-				| BGFX_STATE_DEPTH_TEST_ALWAYS
-				;
+					| BGFX_STATE_WRITE_RGB
+					| BGFX_STATE_WRITE_A
+					| BGFX_STATE_DEPTH_TEST_ALWAYS
+					;
 
 				setDepthStencilState(state);
 
 				PipelineStateMtl* pso = getPipelineState(
-														 state
-														 , 0
-														 , fbh
-														 , _blitter.m_vb->layoutHandle
-														 , _blitter.m_program
-														 , 0
-														 );
+					  state
+					, 0
+					, fbh
+					, _blitter.m_vb->layoutHandle
+					, _blitter.m_program
+					, 0
+					);
 				rce.setRenderPipelineState(pso->m_rps);
 
 				const uint32_t vertexUniformBufferSize   = pso->m_vshConstantBufferSize;
@@ -1875,6 +1893,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			uint32_t hash = murmur.end();
 
 			DepthStencilState dss = m_depthStencilStateCache.find(hash);
+
 			if (NULL == dss)
 			{
 				DepthStencilDescriptor desc = m_depthStencilDescriptor;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -385,6 +385,8 @@ namespace bgfx { namespace spirv
 				return SPV_ENV_VULKAN_1_1_SPIRV_1_4;
 			case 1512:
 				return SPV_ENV_VULKAN_1_2;
+			case 1613:
+				return SPV_ENV_VULKAN_1_3;
 			default:
 				BX_ASSERT(0, "Unknown SPIR-V version requested. Returning SPV_ENV_VULKAN_1_0 as default.");
 				return SPV_ENV_VULKAN_1_0;
@@ -402,6 +404,8 @@ namespace bgfx { namespace spirv
 				return glslang::EShTargetVulkan_1_1;
 			case 1512:
 				return glslang::EShTargetVulkan_1_2;
+			case 1613:
+				return glslang::EShTargetVulkan_1_3;
 			default:
 				BX_ASSERT(0, "Unknown SPIR-V version requested. Returning EShTargetVulkan_1_0 as default.");
 				return glslang::EShTargetVulkan_1_0;
@@ -420,6 +424,8 @@ namespace bgfx { namespace spirv
 				return glslang::EShTargetSpv_1_4;
 			case 1512:
 				return glslang::EShTargetSpv_1_5;
+			case 1613:
+				return glslang::EShTargetSpv_1_6;
 			default:
 				BX_ASSERT(0, "Unknown SPIR-V version requested. Returning EShTargetSpv_1_0 as default.");
 				return glslang::EShTargetSpv_1_0;
@@ -652,10 +658,10 @@ namespace bgfx { namespace spirv
 							continue;
 						}
 
-						un.num = 0;
+						un.num = uint8_t(program->getUniformArraySize(ii) );
 						const uint32_t offset = program->getUniformBufferOffset(ii);
 						un.regIndex = uint16_t(offset);
-						un.regCount = uint16_t(program->getUniformArraySize(ii));
+						un.regCount = un.num;
 
 						switch (program->getUniformType(ii) )
 						{

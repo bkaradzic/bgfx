@@ -442,6 +442,8 @@ typedef struct spv_reducer_options_t spv_reducer_options_t;
 
 typedef struct spv_fuzzer_options_t spv_fuzzer_options_t;
 
+typedef struct spv_optimizer_t spv_optimizer_t;
+
 // Type Definitions
 
 typedef spv_const_binary_t* spv_const_binary;
@@ -900,6 +902,63 @@ SPIRV_TOOLS_EXPORT spv_result_t spvBinaryParse(
     const spv_const_context context, void* user_data, const uint32_t* words,
     const size_t num_words, spv_parsed_header_fn_t parse_header,
     spv_parsed_instruction_fn_t parse_instruction, spv_diagnostic* diagnostic);
+
+// The optimizer interface.
+
+// A pointer to a function that accepts a log message from an optimizer.
+typedef void (*spv_message_consumer)(
+    spv_message_level_t, const char*, const spv_position_t*, const char*);
+
+// Creates and returns an optimizer object.  This object must be passed to
+// optimizer APIs below and is valid until passed to spvOptimizerDestroy.
+SPIRV_TOOLS_EXPORT spv_optimizer_t* spvOptimizerCreate(spv_target_env env);
+
+// Destroys the given optimizer object.
+SPIRV_TOOLS_EXPORT void spvOptimizerDestroy(spv_optimizer_t* optimizer);
+
+// Sets an spv_message_consumer on an optimizer object.
+SPIRV_TOOLS_EXPORT void spvOptimizerSetMessageConsumer(
+    spv_optimizer_t* optimizer, spv_message_consumer consumer);
+
+// Registers passes that attempt to legalize the generated code.
+SPIRV_TOOLS_EXPORT void spvOptimizerRegisterLegalizationPasses(
+    spv_optimizer_t* optimizer);
+
+// Registers passes that attempt to improve performance of generated code.
+SPIRV_TOOLS_EXPORT void spvOptimizerRegisterPerformancePasses(
+    spv_optimizer_t* optimizer);
+
+// Registers passes that attempt to improve the size of generated code.
+SPIRV_TOOLS_EXPORT void spvOptimizerRegisterSizePasses(
+    spv_optimizer_t* optimizer);
+
+// Registers a pass specified by a flag in an optimizer object.
+SPIRV_TOOLS_EXPORT bool spvOptimizerRegisterPassFromFlag(
+    spv_optimizer_t* optimizer, const char* flag);
+
+// Registers passes specified by length number of flags in an optimizer object.
+SPIRV_TOOLS_EXPORT bool spvOptimizerRegisterPassesFromFlags(
+    spv_optimizer_t* optimizer, const char** flags, const size_t flag_count);
+
+// Optimizes the SPIR-V code of size |word_count| pointed to by |binary| and
+// returns an optimized spv_binary in |optimized_binary|.
+//
+// Returns SPV_SUCCESS on successful optimization, whether or not the module is
+// modified.  Returns an SPV_ERROR_* if the module fails to validate or if
+// errors occur when processing using any of the registered passes.  In that
+// case, no further passes are executed and the |optimized_binary| contents may
+// be invalid.
+//
+// By default, the binary is validated before any transforms are performed,
+// and optionally after each transform.  Validation uses SPIR-V spec rules
+// for the SPIR-V version named in the binary's header (at word offset 1).
+// Additionally, if the target environment is a client API (such as
+// Vulkan 1.1), then validate for that client API version, to the extent
+// that it is verifiable from data in the binary itself, or from the
+// validator options set on the optimizer options.
+SPIRV_TOOLS_EXPORT spv_result_t spvOptimizerRun(
+    spv_optimizer_t* optimizer, const uint32_t* binary, const size_t word_count,
+    spv_binary* optimized_binary, const spv_optimizer_options options);
 
 #ifdef __cplusplus
 }

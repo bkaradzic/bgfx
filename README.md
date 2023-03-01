@@ -524,6 +524,11 @@ https://github.com/astrofra/demo-marine-melodies
 
 ![Activeworlds-wallpaper](http://www.activeworlds.com/img/181107-213544_small_enkii.jpg)
 
+## Equilibrium Engine
+
+[Equilibrium Engine](https://github.com/clibequilibrium/EquilibriumEngine) is a Data-oriented and multi-threaded C11 Game Engine with libraries & shaders hot-reloading.
+
+![Equilibrium Engine](https://raw.githubusercontent.com/clibequilibrium/EquilibriumEngine/master/docs/city.png)
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
@@ -532,7 +537,7 @@ https://github.com/astrofra/demo-marine-melodies
 <img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
 </a>
 
-	Copyright 2010-2022 Branimir Karadzic
+	Copyright 2010-2023 Branimir Karadzic
 	
 	Redistribution and use in source and binary forms, with or without modification,
 	are permitted provided that the following conditions are met:

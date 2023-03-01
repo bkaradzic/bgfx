@@ -36,6 +36,8 @@ const char* ExtensionToString(Extension extension) {
       return "SPV_EXT_fragment_shader_interlock";
     case Extension::kSPV_EXT_mesh_shader:
       return "SPV_EXT_mesh_shader";
+    case Extension::kSPV_EXT_opacity_micromap:
+      return "SPV_EXT_opacity_micromap";
     case Extension::kSPV_EXT_physical_storage_buffer:
       return "SPV_EXT_physical_storage_buffer";
     case Extension::kSPV_EXT_shader_atomic_float16_add:
@@ -72,10 +74,16 @@ const char* ExtensionToString(Extension extension) {
       return "SPV_INTEL_float_controls2";
     case Extension::kSPV_INTEL_fp_fast_math_mode:
       return "SPV_INTEL_fp_fast_math_mode";
+    case Extension::kSPV_INTEL_fpga_argument_interfaces:
+      return "SPV_INTEL_fpga_argument_interfaces";
     case Extension::kSPV_INTEL_fpga_buffer_location:
       return "SPV_INTEL_fpga_buffer_location";
     case Extension::kSPV_INTEL_fpga_cluster_attributes:
       return "SPV_INTEL_fpga_cluster_attributes";
+    case Extension::kSPV_INTEL_fpga_dsp_control:
+      return "SPV_INTEL_fpga_dsp_control";
+    case Extension::kSPV_INTEL_fpga_invocation_pipelining_attributes:
+      return "SPV_INTEL_fpga_invocation_pipelining_attributes";
     case Extension::kSPV_INTEL_fpga_loop_controls:
       return "SPV_INTEL_fpga_loop_controls";
     case Extension::kSPV_INTEL_fpga_memory_accesses:
@@ -102,6 +110,8 @@ const char* ExtensionToString(Extension extension) {
       return "SPV_INTEL_memory_access_aliasing";
     case Extension::kSPV_INTEL_optnone:
       return "SPV_INTEL_optnone";
+    case Extension::kSPV_INTEL_runtime_aligned:
+      return "SPV_INTEL_runtime_aligned";
     case Extension::kSPV_INTEL_shader_integer_functions2:
       return "SPV_INTEL_shader_integer_functions2";
     case Extension::kSPV_INTEL_split_barrier:
@@ -200,6 +210,8 @@ const char* ExtensionToString(Extension extension) {
       return "SPV_NV_sample_mask_override_coverage";
     case Extension::kSPV_NV_shader_image_footprint:
       return "SPV_NV_shader_image_footprint";
+    case Extension::kSPV_NV_shader_invocation_reorder:
+      return "SPV_NV_shader_invocation_reorder";
     case Extension::kSPV_NV_shader_sm_builtins:
       return "SPV_NV_shader_sm_builtins";
     case Extension::kSPV_NV_shader_subgroup_partitioned:
@@ -219,8 +231,8 @@ const char* ExtensionToString(Extension extension) {
 
 
     bool GetExtensionFromString(const char* str, Extension* extension) {
-        static const char* known_ext_strs[] = { "SPV_AMD_gcn_shader", "SPV_AMD_gpu_shader_half_float", "SPV_AMD_gpu_shader_half_float_fetch", "SPV_AMD_gpu_shader_int16", "SPV_AMD_shader_ballot", "SPV_AMD_shader_early_and_late_fragment_tests", "SPV_AMD_shader_explicit_vertex_parameter", "SPV_AMD_shader_fragment_mask", "SPV_AMD_shader_image_load_store_lod", "SPV_AMD_shader_trinary_minmax", "SPV_AMD_texture_gather_bias_lod", "SPV_ARM_core_builtins", "SPV_EXT_demote_to_helper_invocation", "SPV_EXT_descriptor_indexing", "SPV_EXT_fragment_fully_covered", "SPV_EXT_fragment_invocation_density", "SPV_EXT_fragment_shader_interlock", "SPV_EXT_mesh_shader", "SPV_EXT_physical_storage_buffer", "SPV_EXT_shader_atomic_float16_add", "SPV_EXT_shader_atomic_float_add", "SPV_EXT_shader_atomic_float_min_max", "SPV_EXT_shader_image_int64", "SPV_EXT_shader_stencil_export", "SPV_EXT_shader_viewport_index_layer", "SPV_GOOGLE_decorate_string", "SPV_GOOGLE_hlsl_functionality1", "SPV_GOOGLE_user_type", "SPV_INTEL_arbitrary_precision_fixed_point", "SPV_INTEL_arbitrary_precision_floating_point", "SPV_INTEL_arbitrary_precision_integers", "SPV_INTEL_blocking_pipes", "SPV_INTEL_debug_module", "SPV_INTEL_device_side_avc_motion_estimation", "SPV_INTEL_float_controls2", "SPV_INTEL_fp_fast_math_mode", "SPV_INTEL_fpga_buffer_location", "SPV_INTEL_fpga_cluster_attributes", "SPV_INTEL_fpga_loop_controls", "SPV_INTEL_fpga_memory_accesses", "SPV_INTEL_fpga_memory_attributes", "SPV_INTEL_fpga_reg", "SPV_INTEL_function_pointers", "SPV_INTEL_inline_assembly", "SPV_INTEL_io_pipes", "SPV_INTEL_kernel_attributes", "SPV_INTEL_long_constant_composite", "SPV_INTEL_loop_fuse", "SPV_INTEL_media_block_io", "SPV_INTEL_memory_access_aliasing", "SPV_INTEL_optnone", "SPV_INTEL_shader_integer_functions2", "SPV_INTEL_split_barrier", "SPV_INTEL_subgroups", "SPV_INTEL_unstructured_loop_controls", "SPV_INTEL_usm_storage_classes", "SPV_INTEL_variable_length_array", "SPV_INTEL_vector_compute", "SPV_KHR_16bit_storage", "SPV_KHR_8bit_storage", "SPV_KHR_bit_instructions", "SPV_KHR_device_group", "SPV_KHR_expect_assume", "SPV_KHR_float_controls", "SPV_KHR_fragment_shader_barycentric", "SPV_KHR_fragment_shading_rate", "SPV_KHR_integer_dot_product", "SPV_KHR_linkonce_odr", "SPV_KHR_multiview", "SPV_KHR_no_integer_wrap_decoration", "SPV_KHR_non_semantic_info", "SPV_KHR_physical_storage_buffer", "SPV_KHR_post_depth_coverage", "SPV_KHR_ray_cull_mask", "SPV_KHR_ray_query", "SPV_KHR_ray_tracing", "SPV_KHR_shader_atomic_counter_ops", "SPV_KHR_shader_ballot", "SPV_KHR_shader_clock", "SPV_KHR_shader_draw_parameters", "SPV_KHR_storage_buffer_storage_class", "SPV_KHR_subgroup_rotate", "SPV_KHR_subgroup_uniform_control_flow", "SPV_KHR_subgroup_vote", "SPV_KHR_terminate_invocation", "SPV_KHR_uniform_group_instructions", "SPV_KHR_variable_pointers", "SPV_KHR_vulkan_memory_model", "SPV_KHR_workgroup_memory_explicit_layout", "SPV_NVX_multiview_per_view_attributes", "SPV_NV_bindless_texture", "SPV_NV_compute_shader_derivatives", "SPV_NV_cooperative_matrix", "SPV_NV_fragment_shader_barycentric", "SPV_NV_geometry_shader_passthrough", "SPV_NV_mesh_shader", "SPV_NV_ray_tracing", "SPV_NV_ray_tracing_motion_blur", "SPV_NV_sample_mask_override_coverage", "SPV_NV_shader_image_footprint", "SPV_NV_shader_sm_builtins", "SPV_NV_shader_subgroup_partitioned", "SPV_NV_shading_rate", "SPV_NV_stereo_view_rendering", "SPV_NV_viewport_array2", "SPV_VALIDATOR_ignore_type_decl_unique" };
-        static const Extension known_ext_ids[] = { Extension::kSPV_AMD_gcn_shader, Extension::kSPV_AMD_gpu_shader_half_float, Extension::kSPV_AMD_gpu_shader_half_float_fetch, Extension::kSPV_AMD_gpu_shader_int16, Extension::kSPV_AMD_shader_ballot, Extension::kSPV_AMD_shader_early_and_late_fragment_tests, Extension::kSPV_AMD_shader_explicit_vertex_parameter, Extension::kSPV_AMD_shader_fragment_mask, Extension::kSPV_AMD_shader_image_load_store_lod, Extension::kSPV_AMD_shader_trinary_minmax, Extension::kSPV_AMD_texture_gather_bias_lod, Extension::kSPV_ARM_core_builtins, Extension::kSPV_EXT_demote_to_helper_invocation, Extension::kSPV_EXT_descriptor_indexing, Extension::kSPV_EXT_fragment_fully_covered, Extension::kSPV_EXT_fragment_invocation_density, Extension::kSPV_EXT_fragment_shader_interlock, Extension::kSPV_EXT_mesh_shader, Extension::kSPV_EXT_physical_storage_buffer, Extension::kSPV_EXT_shader_atomic_float16_add, Extension::kSPV_EXT_shader_atomic_float_add, Extension::kSPV_EXT_shader_atomic_float_min_max, Extension::kSPV_EXT_shader_image_int64, Extension::kSPV_EXT_shader_stencil_export, Extension::kSPV_EXT_shader_viewport_index_layer, Extension::kSPV_GOOGLE_decorate_string, Extension::kSPV_GOOGLE_hlsl_functionality1, Extension::kSPV_GOOGLE_user_type, Extension::kSPV_INTEL_arbitrary_precision_fixed_point, Extension::kSPV_INTEL_arbitrary_precision_floating_point, Extension::kSPV_INTEL_arbitrary_precision_integers, Extension::kSPV_INTEL_blocking_pipes, Extension::kSPV_INTEL_debug_module, Extension::kSPV_INTEL_device_side_avc_motion_estimation, Extension::kSPV_INTEL_float_controls2, Extension::kSPV_INTEL_fp_fast_math_mode, Extension::kSPV_INTEL_fpga_buffer_location, Extension::kSPV_INTEL_fpga_cluster_attributes, Extension::kSPV_INTEL_fpga_loop_controls, Extension::kSPV_INTEL_fpga_memory_accesses, Extension::kSPV_INTEL_fpga_memory_attributes, Extension::kSPV_INTEL_fpga_reg, Extension::kSPV_INTEL_function_pointers, Extension::kSPV_INTEL_inline_assembly, Extension::kSPV_INTEL_io_pipes, Extension::kSPV_INTEL_kernel_attributes, Extension::kSPV_INTEL_long_constant_composite, Extension::kSPV_INTEL_loop_fuse, Extension::kSPV_INTEL_media_block_io, Extension::kSPV_INTEL_memory_access_aliasing, Extension::kSPV_INTEL_optnone, Extension::kSPV_INTEL_shader_integer_functions2, Extension::kSPV_INTEL_split_barrier, Extension::kSPV_INTEL_subgroups, Extension::kSPV_INTEL_unstructured_loop_controls, Extension::kSPV_INTEL_usm_storage_classes, Extension::kSPV_INTEL_variable_length_array, Extension::kSPV_INTEL_vector_compute, Extension::kSPV_KHR_16bit_storage, Extension::kSPV_KHR_8bit_storage, Extension::kSPV_KHR_bit_instructions, Extension::kSPV_KHR_device_group, Extension::kSPV_KHR_expect_assume, Extension::kSPV_KHR_float_controls, Extension::kSPV_KHR_fragment_shader_barycentric, Extension::kSPV_KHR_fragment_shading_rate, Extension::kSPV_KHR_integer_dot_product, Extension::kSPV_KHR_linkonce_odr, Extension::kSPV_KHR_multiview, Extension::kSPV_KHR_no_integer_wrap_decoration, Extension::kSPV_KHR_non_semantic_info, Extension::kSPV_KHR_physical_storage_buffer, Extension::kSPV_KHR_post_depth_coverage, Extension::kSPV_KHR_ray_cull_mask, Extension::kSPV_KHR_ray_query, Extension::kSPV_KHR_ray_tracing, Extension::kSPV_KHR_shader_atomic_counter_ops, Extension::kSPV_KHR_shader_ballot, Extension::kSPV_KHR_shader_clock, Extension::kSPV_KHR_shader_draw_parameters, Extension::kSPV_KHR_storage_buffer_storage_class, Extension::kSPV_KHR_subgroup_rotate, Extension::kSPV_KHR_subgroup_uniform_control_flow, Extension::kSPV_KHR_subgroup_vote, Extension::kSPV_KHR_terminate_invocation, Extension::kSPV_KHR_uniform_group_instructions, Extension::kSPV_KHR_variable_pointers, Extension::kSPV_KHR_vulkan_memory_model, Extension::kSPV_KHR_workgroup_memory_explicit_layout, Extension::kSPV_NVX_multiview_per_view_attributes, Extension::kSPV_NV_bindless_texture, Extension::kSPV_NV_compute_shader_derivatives, Extension::kSPV_NV_cooperative_matrix, Extension::kSPV_NV_fragment_shader_barycentric, Extension::kSPV_NV_geometry_shader_passthrough, Extension::kSPV_NV_mesh_shader, Extension::kSPV_NV_ray_tracing, Extension::kSPV_NV_ray_tracing_motion_blur, Extension::kSPV_NV_sample_mask_override_coverage, Extension::kSPV_NV_shader_image_footprint, Extension::kSPV_NV_shader_sm_builtins, Extension::kSPV_NV_shader_subgroup_partitioned, Extension::kSPV_NV_shading_rate, Extension::kSPV_NV_stereo_view_rendering, Extension::kSPV_NV_viewport_array2, Extension::kSPV_VALIDATOR_ignore_type_decl_unique };
+        static const char* known_ext_strs[] = { "SPV_AMD_gcn_shader", "SPV_AMD_gpu_shader_half_float", "SPV_AMD_gpu_shader_half_float_fetch", "SPV_AMD_gpu_shader_int16", "SPV_AMD_shader_ballot", "SPV_AMD_shader_early_and_late_fragment_tests", "SPV_AMD_shader_explicit_vertex_parameter", "SPV_AMD_shader_fragment_mask", "SPV_AMD_shader_image_load_store_lod", "SPV_AMD_shader_trinary_minmax", "SPV_AMD_texture_gather_bias_lod", "SPV_ARM_core_builtins", "SPV_EXT_demote_to_helper_invocation", "SPV_EXT_descriptor_indexing", "SPV_EXT_fragment_fully_covered", "SPV_EXT_fragment_invocation_density", "SPV_EXT_fragment_shader_interlock", "SPV_EXT_mesh_shader", "SPV_EXT_opacity_micromap", "SPV_EXT_physical_storage_buffer", "SPV_EXT_shader_atomic_float16_add", "SPV_EXT_shader_atomic_float_add", "SPV_EXT_shader_atomic_float_min_max", "SPV_EXT_shader_image_int64", "SPV_EXT_shader_stencil_export", "SPV_EXT_shader_viewport_index_layer", "SPV_GOOGLE_decorate_string", "SPV_GOOGLE_hlsl_functionality1", "SPV_GOOGLE_user_type", "SPV_INTEL_arbitrary_precision_fixed_point", "SPV_INTEL_arbitrary_precision_floating_point", "SPV_INTEL_arbitrary_precision_integers", "SPV_INTEL_blocking_pipes", "SPV_INTEL_debug_module", "SPV_INTEL_device_side_avc_motion_estimation", "SPV_INTEL_float_controls2", "SPV_INTEL_fp_fast_math_mode", "SPV_INTEL_fpga_argument_interfaces", "SPV_INTEL_fpga_buffer_location", "SPV_INTEL_fpga_cluster_attributes", "SPV_INTEL_fpga_dsp_control", "SPV_INTEL_fpga_invocation_pipelining_attributes", "SPV_INTEL_fpga_loop_controls", "SPV_INTEL_fpga_memory_accesses", "SPV_INTEL_fpga_memory_attributes", "SPV_INTEL_fpga_reg", "SPV_INTEL_function_pointers", "SPV_INTEL_inline_assembly", "SPV_INTEL_io_pipes", "SPV_INTEL_kernel_attributes", "SPV_INTEL_long_constant_composite", "SPV_INTEL_loop_fuse", "SPV_INTEL_media_block_io", "SPV_INTEL_memory_access_aliasing", "SPV_INTEL_optnone", "SPV_INTEL_runtime_aligned", "SPV_INTEL_shader_integer_functions2", "SPV_INTEL_split_barrier", "SPV_INTEL_subgroups", "SPV_INTEL_unstructured_loop_controls", "SPV_INTEL_usm_storage_classes", "SPV_INTEL_variable_length_array", "SPV_INTEL_vector_compute", "SPV_KHR_16bit_storage", "SPV_KHR_8bit_storage", "SPV_KHR_bit_instructions", "SPV_KHR_device_group", "SPV_KHR_expect_assume", "SPV_KHR_float_controls", "SPV_KHR_fragment_shader_barycentric", "SPV_KHR_fragment_shading_rate", "SPV_KHR_integer_dot_product", "SPV_KHR_linkonce_odr", "SPV_KHR_multiview", "SPV_KHR_no_integer_wrap_decoration", "SPV_KHR_non_semantic_info", "SPV_KHR_physical_storage_buffer", "SPV_KHR_post_depth_coverage", "SPV_KHR_ray_cull_mask", "SPV_KHR_ray_query", "SPV_KHR_ray_tracing", "SPV_KHR_shader_atomic_counter_ops", "SPV_KHR_shader_ballot", "SPV_KHR_shader_clock", "SPV_KHR_shader_draw_parameters", "SPV_KHR_storage_buffer_storage_class", "SPV_KHR_subgroup_rotate", "SPV_KHR_subgroup_uniform_control_flow", "SPV_KHR_subgroup_vote", "SPV_KHR_terminate_invocation", "SPV_KHR_uniform_group_instructions", "SPV_KHR_variable_pointers", "SPV_KHR_vulkan_memory_model", "SPV_KHR_workgroup_memory_explicit_layout", "SPV_NVX_multiview_per_view_attributes", "SPV_NV_bindless_texture", "SPV_NV_compute_shader_derivatives", "SPV_NV_cooperative_matrix", "SPV_NV_fragment_shader_barycentric", "SPV_NV_geometry_shader_passthrough", "SPV_NV_mesh_shader", "SPV_NV_ray_tracing", "SPV_NV_ray_tracing_motion_blur", "SPV_NV_sample_mask_override_coverage", "SPV_NV_shader_image_footprint", "SPV_NV_shader_invocation_reorder", "SPV_NV_shader_sm_builtins", "SPV_NV_shader_subgroup_partitioned", "SPV_NV_shading_rate", "SPV_NV_stereo_view_rendering", "SPV_NV_viewport_array2", "SPV_VALIDATOR_ignore_type_decl_unique" };
+        static const Extension known_ext_ids[] = { Extension::kSPV_AMD_gcn_shader, Extension::kSPV_AMD_gpu_shader_half_float, Extension::kSPV_AMD_gpu_shader_half_float_fetch, Extension::kSPV_AMD_gpu_shader_int16, Extension::kSPV_AMD_shader_ballot, Extension::kSPV_AMD_shader_early_and_late_fragment_tests, Extension::kSPV_AMD_shader_explicit_vertex_parameter, Extension::kSPV_AMD_shader_fragment_mask, Extension::kSPV_AMD_shader_image_load_store_lod, Extension::kSPV_AMD_shader_trinary_minmax, Extension::kSPV_AMD_texture_gather_bias_lod, Extension::kSPV_ARM_core_builtins, Extension::kSPV_EXT_demote_to_helper_invocation, Extension::kSPV_EXT_descriptor_indexing, Extension::kSPV_EXT_fragment_fully_covered, Extension::kSPV_EXT_fragment_invocation_density, Extension::kSPV_EXT_fragment_shader_interlock, Extension::kSPV_EXT_mesh_shader, Extension::kSPV_EXT_opacity_micromap, Extension::kSPV_EXT_physical_storage_buffer, Extension::kSPV_EXT_shader_atomic_float16_add, Extension::kSPV_EXT_shader_atomic_float_add, Extension::kSPV_EXT_shader_atomic_float_min_max, Extension::kSPV_EXT_shader_image_int64, Extension::kSPV_EXT_shader_stencil_export, Extension::kSPV_EXT_shader_viewport_index_layer, Extension::kSPV_GOOGLE_decorate_string, Extension::kSPV_GOOGLE_hlsl_functionality1, Extension::kSPV_GOOGLE_user_type, Extension::kSPV_INTEL_arbitrary_precision_fixed_point, Extension::kSPV_INTEL_arbitrary_precision_floating_point, Extension::kSPV_INTEL_arbitrary_precision_integers, Extension::kSPV_INTEL_blocking_pipes, Extension::kSPV_INTEL_debug_module, Extension::kSPV_INTEL_device_side_avc_motion_estimation, Extension::kSPV_INTEL_float_controls2, Extension::kSPV_INTEL_fp_fast_math_mode, Extension::kSPV_INTEL_fpga_argument_interfaces, Extension::kSPV_INTEL_fpga_buffer_location, Extension::kSPV_INTEL_fpga_cluster_attributes, Extension::kSPV_INTEL_fpga_dsp_control, Extension::kSPV_INTEL_fpga_invocation_pipelining_attributes, Extension::kSPV_INTEL_fpga_loop_controls, Extension::kSPV_INTEL_fpga_memory_accesses, Extension::kSPV_INTEL_fpga_memory_attributes, Extension::kSPV_INTEL_fpga_reg, Extension::kSPV_INTEL_function_pointers, Extension::kSPV_INTEL_inline_assembly, Extension::kSPV_INTEL_io_pipes, Extension::kSPV_INTEL_kernel_attributes, Extension::kSPV_INTEL_long_constant_composite, Extension::kSPV_INTEL_loop_fuse, Extension::kSPV_INTEL_media_block_io, Extension::kSPV_INTEL_memory_access_aliasing, Extension::kSPV_INTEL_optnone, Extension::kSPV_INTEL_runtime_aligned, Extension::kSPV_INTEL_shader_integer_functions2, Extension::kSPV_INTEL_split_barrier, Extension::kSPV_INTEL_subgroups, Extension::kSPV_INTEL_unstructured_loop_controls, Extension::kSPV_INTEL_usm_storage_classes, Extension::kSPV_INTEL_variable_length_array, Extension::kSPV_INTEL_vector_compute, Extension::kSPV_KHR_16bit_storage, Extension::kSPV_KHR_8bit_storage, Extension::kSPV_KHR_bit_instructions, Extension::kSPV_KHR_device_group, Extension::kSPV_KHR_expect_assume, Extension::kSPV_KHR_float_controls, Extension::kSPV_KHR_fragment_shader_barycentric, Extension::kSPV_KHR_fragment_shading_rate, Extension::kSPV_KHR_integer_dot_product, Extension::kSPV_KHR_linkonce_odr, Extension::kSPV_KHR_multiview, Extension::kSPV_KHR_no_integer_wrap_decoration, Extension::kSPV_KHR_non_semantic_info, Extension::kSPV_KHR_physical_storage_buffer, Extension::kSPV_KHR_post_depth_coverage, Extension::kSPV_KHR_ray_cull_mask, Extension::kSPV_KHR_ray_query, Extension::kSPV_KHR_ray_tracing, Extension::kSPV_KHR_shader_atomic_counter_ops, Extension::kSPV_KHR_shader_ballot, Extension::kSPV_KHR_shader_clock, Extension::kSPV_KHR_shader_draw_parameters, Extension::kSPV_KHR_storage_buffer_storage_class, Extension::kSPV_KHR_subgroup_rotate, Extension::kSPV_KHR_subgroup_uniform_control_flow, Extension::kSPV_KHR_subgroup_vote, Extension::kSPV_KHR_terminate_invocation, Extension::kSPV_KHR_uniform_group_instructions, Extension::kSPV_KHR_variable_pointers, Extension::kSPV_KHR_vulkan_memory_model, Extension::kSPV_KHR_workgroup_memory_explicit_layout, Extension::kSPV_NVX_multiview_per_view_attributes, Extension::kSPV_NV_bindless_texture, Extension::kSPV_NV_compute_shader_derivatives, Extension::kSPV_NV_cooperative_matrix, Extension::kSPV_NV_fragment_shader_barycentric, Extension::kSPV_NV_geometry_shader_passthrough, Extension::kSPV_NV_mesh_shader, Extension::kSPV_NV_ray_tracing, Extension::kSPV_NV_ray_tracing_motion_blur, Extension::kSPV_NV_sample_mask_override_coverage, Extension::kSPV_NV_shader_image_footprint, Extension::kSPV_NV_shader_invocation_reorder, Extension::kSPV_NV_shader_sm_builtins, Extension::kSPV_NV_shader_subgroup_partitioned, Extension::kSPV_NV_shading_rate, Extension::kSPV_NV_stereo_view_rendering, Extension::kSPV_NV_viewport_array2, Extension::kSPV_VALIDATOR_ignore_type_decl_unique };
         const auto b = std::begin(known_ext_strs);
         const auto e = std::end(known_ext_strs);
         const auto found = std::equal_range(
@@ -234,412 +246,424 @@ const char* ExtensionToString(Extension extension) {
     }
     
 
-const char* CapabilityToString(SpvCapability capability) {
+const char* CapabilityToString(spv::Capability capability) {
   switch (capability) {
-    case SpvCapabilityMatrix:
+    case spv::Capability::Matrix:
       return "Matrix";
-    case SpvCapabilityShader:
+    case spv::Capability::Shader:
       return "Shader";
-    case SpvCapabilityGeometry:
+    case spv::Capability::Geometry:
       return "Geometry";
-    case SpvCapabilityTessellation:
+    case spv::Capability::Tessellation:
       return "Tessellation";
-    case SpvCapabilityAddresses:
+    case spv::Capability::Addresses:
       return "Addresses";
-    case SpvCapabilityLinkage:
+    case spv::Capability::Linkage:
       return "Linkage";
-    case SpvCapabilityKernel:
+    case spv::Capability::Kernel:
       return "Kernel";
-    case SpvCapabilityVector16:
+    case spv::Capability::Vector16:
       return "Vector16";
-    case SpvCapabilityFloat16Buffer:
+    case spv::Capability::Float16Buffer:
       return "Float16Buffer";
-    case SpvCapabilityFloat16:
+    case spv::Capability::Float16:
       return "Float16";
-    case SpvCapabilityFloat64:
+    case spv::Capability::Float64:
       return "Float64";
-    case SpvCapabilityInt64:
+    case spv::Capability::Int64:
       return "Int64";
-    case SpvCapabilityInt64Atomics:
+    case spv::Capability::Int64Atomics:
       return "Int64Atomics";
-    case SpvCapabilityImageBasic:
+    case spv::Capability::ImageBasic:
       return "ImageBasic";
-    case SpvCapabilityImageReadWrite:
+    case spv::Capability::ImageReadWrite:
       return "ImageReadWrite";
-    case SpvCapabilityImageMipmap:
+    case spv::Capability::ImageMipmap:
       return "ImageMipmap";
-    case SpvCapabilityPipes:
+    case spv::Capability::Pipes:
       return "Pipes";
-    case SpvCapabilityGroups:
+    case spv::Capability::Groups:
       return "Groups";
-    case SpvCapabilityDeviceEnqueue:
+    case spv::Capability::DeviceEnqueue:
       return "DeviceEnqueue";
-    case SpvCapabilityLiteralSampler:
+    case spv::Capability::LiteralSampler:
       return "LiteralSampler";
-    case SpvCapabilityAtomicStorage:
+    case spv::Capability::AtomicStorage:
       return "AtomicStorage";
-    case SpvCapabilityInt16:
+    case spv::Capability::Int16:
       return "Int16";
-    case SpvCapabilityTessellationPointSize:
+    case spv::Capability::TessellationPointSize:
       return "TessellationPointSize";
-    case SpvCapabilityGeometryPointSize:
+    case spv::Capability::GeometryPointSize:
       return "GeometryPointSize";
-    case SpvCapabilityImageGatherExtended:
+    case spv::Capability::ImageGatherExtended:
       return "ImageGatherExtended";
-    case SpvCapabilityStorageImageMultisample:
+    case spv::Capability::StorageImageMultisample:
       return "StorageImageMultisample";
-    case SpvCapabilityUniformBufferArrayDynamicIndexing:
+    case spv::Capability::UniformBufferArrayDynamicIndexing:
       return "UniformBufferArrayDynamicIndexing";
-    case SpvCapabilitySampledImageArrayDynamicIndexing:
+    case spv::Capability::SampledImageArrayDynamicIndexing:
       return "SampledImageArrayDynamicIndexing";
-    case SpvCapabilityStorageBufferArrayDynamicIndexing:
+    case spv::Capability::StorageBufferArrayDynamicIndexing:
       return "StorageBufferArrayDynamicIndexing";
-    case SpvCapabilityStorageImageArrayDynamicIndexing:
+    case spv::Capability::StorageImageArrayDynamicIndexing:
       return "StorageImageArrayDynamicIndexing";
-    case SpvCapabilityClipDistance:
+    case spv::Capability::ClipDistance:
       return "ClipDistance";
-    case SpvCapabilityCullDistance:
+    case spv::Capability::CullDistance:
       return "CullDistance";
-    case SpvCapabilityImageCubeArray:
+    case spv::Capability::ImageCubeArray:
       return "ImageCubeArray";
-    case SpvCapabilitySampleRateShading:
+    case spv::Capability::SampleRateShading:
       return "SampleRateShading";
-    case SpvCapabilityImageRect:
+    case spv::Capability::ImageRect:
       return "ImageRect";
-    case SpvCapabilitySampledRect:
+    case spv::Capability::SampledRect:
       return "SampledRect";
-    case SpvCapabilityGenericPointer:
+    case spv::Capability::GenericPointer:
       return "GenericPointer";
-    case SpvCapabilityInt8:
+    case spv::Capability::Int8:
       return "Int8";
-    case SpvCapabilityInputAttachment:
+    case spv::Capability::InputAttachment:
       return "InputAttachment";
-    case SpvCapabilitySparseResidency:
+    case spv::Capability::SparseResidency:
       return "SparseResidency";
-    case SpvCapabilityMinLod:
+    case spv::Capability::MinLod:
       return "MinLod";
-    case SpvCapabilitySampled1D:
+    case spv::Capability::Sampled1D:
       return "Sampled1D";
-    case SpvCapabilityImage1D:
+    case spv::Capability::Image1D:
       return "Image1D";
-    case SpvCapabilitySampledCubeArray:
+    case spv::Capability::SampledCubeArray:
       return "SampledCubeArray";
-    case SpvCapabilitySampledBuffer:
+    case spv::Capability::SampledBuffer:
       return "SampledBuffer";
-    case SpvCapabilityImageBuffer:
+    case spv::Capability::ImageBuffer:
       return "ImageBuffer";
-    case SpvCapabilityImageMSArray:
+    case spv::Capability::ImageMSArray:
       return "ImageMSArray";
-    case SpvCapabilityStorageImageExtendedFormats:
+    case spv::Capability::StorageImageExtendedFormats:
       return "StorageImageExtendedFormats";
-    case SpvCapabilityImageQuery:
+    case spv::Capability::ImageQuery:
       return "ImageQuery";
-    case SpvCapabilityDerivativeControl:
+    case spv::Capability::DerivativeControl:
       return "DerivativeControl";
-    case SpvCapabilityInterpolationFunction:
+    case spv::Capability::InterpolationFunction:
       return "InterpolationFunction";
-    case SpvCapabilityTransformFeedback:
+    case spv::Capability::TransformFeedback:
       return "TransformFeedback";
-    case SpvCapabilityGeometryStreams:
+    case spv::Capability::GeometryStreams:
       return "GeometryStreams";
-    case SpvCapabilityStorageImageReadWithoutFormat:
+    case spv::Capability::StorageImageReadWithoutFormat:
       return "StorageImageReadWithoutFormat";
-    case SpvCapabilityStorageImageWriteWithoutFormat:
+    case spv::Capability::StorageImageWriteWithoutFormat:
       return "StorageImageWriteWithoutFormat";
-    case SpvCapabilityMultiViewport:
+    case spv::Capability::MultiViewport:
       return "MultiViewport";
-    case SpvCapabilitySubgroupDispatch:
+    case spv::Capability::SubgroupDispatch:
       return "SubgroupDispatch";
-    case SpvCapabilityNamedBarrier:
+    case spv::Capability::NamedBarrier:
       return "NamedBarrier";
-    case SpvCapabilityPipeStorage:
+    case spv::Capability::PipeStorage:
       return "PipeStorage";
-    case SpvCapabilityGroupNonUniform:
+    case spv::Capability::GroupNonUniform:
       return "GroupNonUniform";
-    case SpvCapabilityGroupNonUniformVote:
+    case spv::Capability::GroupNonUniformVote:
       return "GroupNonUniformVote";
-    case SpvCapabilityGroupNonUniformArithmetic:
+    case spv::Capability::GroupNonUniformArithmetic:
       return "GroupNonUniformArithmetic";
-    case SpvCapabilityGroupNonUniformBallot:
+    case spv::Capability::GroupNonUniformBallot:
       return "GroupNonUniformBallot";
-    case SpvCapabilityGroupNonUniformShuffle:
+    case spv::Capability::GroupNonUniformShuffle:
       return "GroupNonUniformShuffle";
-    case SpvCapabilityGroupNonUniformShuffleRelative:
+    case spv::Capability::GroupNonUniformShuffleRelative:
       return "GroupNonUniformShuffleRelative";
-    case SpvCapabilityGroupNonUniformClustered:
+    case spv::Capability::GroupNonUniformClustered:
       return "GroupNonUniformClustered";
-    case SpvCapabilityGroupNonUniformQuad:
+    case spv::Capability::GroupNonUniformQuad:
       return "GroupNonUniformQuad";
-    case SpvCapabilityShaderLayer:
+    case spv::Capability::ShaderLayer:
       return "ShaderLayer";
-    case SpvCapabilityShaderViewportIndex:
+    case spv::Capability::ShaderViewportIndex:
       return "ShaderViewportIndex";
-    case SpvCapabilityUniformDecoration:
+    case spv::Capability::UniformDecoration:
       return "UniformDecoration";
-    case SpvCapabilityCoreBuiltinsARM:
+    case spv::Capability::CoreBuiltinsARM:
       return "CoreBuiltinsARM";
-    case SpvCapabilityFragmentShadingRateKHR:
+    case spv::Capability::FragmentShadingRateKHR:
       return "FragmentShadingRateKHR";
-    case SpvCapabilitySubgroupBallotKHR:
+    case spv::Capability::SubgroupBallotKHR:
       return "SubgroupBallotKHR";
-    case SpvCapabilityDrawParameters:
+    case spv::Capability::DrawParameters:
       return "DrawParameters";
-    case SpvCapabilityWorkgroupMemoryExplicitLayoutKHR:
+    case spv::Capability::WorkgroupMemoryExplicitLayoutKHR:
       return "WorkgroupMemoryExplicitLayoutKHR";
-    case SpvCapabilityWorkgroupMemoryExplicitLayout8BitAccessKHR:
+    case spv::Capability::WorkgroupMemoryExplicitLayout8BitAccessKHR:
       return "WorkgroupMemoryExplicitLayout8BitAccessKHR";
-    case SpvCapabilityWorkgroupMemoryExplicitLayout16BitAccessKHR:
+    case spv::Capability::WorkgroupMemoryExplicitLayout16BitAccessKHR:
       return "WorkgroupMemoryExplicitLayout16BitAccessKHR";
-    case SpvCapabilitySubgroupVoteKHR:
+    case spv::Capability::SubgroupVoteKHR:
       return "SubgroupVoteKHR";
-    case SpvCapabilityStorageBuffer16BitAccess:
+    case spv::Capability::StorageBuffer16BitAccess:
       return "StorageBuffer16BitAccess";
-    case SpvCapabilityUniformAndStorageBuffer16BitAccess:
+    case spv::Capability::UniformAndStorageBuffer16BitAccess:
       return "UniformAndStorageBuffer16BitAccess";
-    case SpvCapabilityStoragePushConstant16:
+    case spv::Capability::StoragePushConstant16:
       return "StoragePushConstant16";
-    case SpvCapabilityStorageInputOutput16:
+    case spv::Capability::StorageInputOutput16:
       return "StorageInputOutput16";
-    case SpvCapabilityDeviceGroup:
+    case spv::Capability::DeviceGroup:
       return "DeviceGroup";
-    case SpvCapabilityMultiView:
+    case spv::Capability::MultiView:
       return "MultiView";
-    case SpvCapabilityVariablePointersStorageBuffer:
+    case spv::Capability::VariablePointersStorageBuffer:
       return "VariablePointersStorageBuffer";
-    case SpvCapabilityVariablePointers:
+    case spv::Capability::VariablePointers:
       return "VariablePointers";
-    case SpvCapabilityAtomicStorageOps:
+    case spv::Capability::AtomicStorageOps:
       return "AtomicStorageOps";
-    case SpvCapabilitySampleMaskPostDepthCoverage:
+    case spv::Capability::SampleMaskPostDepthCoverage:
       return "SampleMaskPostDepthCoverage";
-    case SpvCapabilityStorageBuffer8BitAccess:
+    case spv::Capability::StorageBuffer8BitAccess:
       return "StorageBuffer8BitAccess";
-    case SpvCapabilityUniformAndStorageBuffer8BitAccess:
+    case spv::Capability::UniformAndStorageBuffer8BitAccess:
       return "UniformAndStorageBuffer8BitAccess";
-    case SpvCapabilityStoragePushConstant8:
+    case spv::Capability::StoragePushConstant8:
       return "StoragePushConstant8";
-    case SpvCapabilityDenormPreserve:
+    case spv::Capability::DenormPreserve:
       return "DenormPreserve";
-    case SpvCapabilityDenormFlushToZero:
+    case spv::Capability::DenormFlushToZero:
       return "DenormFlushToZero";
-    case SpvCapabilitySignedZeroInfNanPreserve:
+    case spv::Capability::SignedZeroInfNanPreserve:
       return "SignedZeroInfNanPreserve";
-    case SpvCapabilityRoundingModeRTE:
+    case spv::Capability::RoundingModeRTE:
       return "RoundingModeRTE";
-    case SpvCapabilityRoundingModeRTZ:
+    case spv::Capability::RoundingModeRTZ:
       return "RoundingModeRTZ";
-    case SpvCapabilityRayQueryProvisionalKHR:
+    case spv::Capability::RayQueryProvisionalKHR:
       return "RayQueryProvisionalKHR";
-    case SpvCapabilityRayQueryKHR:
+    case spv::Capability::RayQueryKHR:
       return "RayQueryKHR";
-    case SpvCapabilityRayTraversalPrimitiveCullingKHR:
+    case spv::Capability::RayTraversalPrimitiveCullingKHR:
       return "RayTraversalPrimitiveCullingKHR";
-    case SpvCapabilityRayTracingKHR:
+    case spv::Capability::RayTracingKHR:
       return "RayTracingKHR";
-    case SpvCapabilityFloat16ImageAMD:
+    case spv::Capability::Float16ImageAMD:
       return "Float16ImageAMD";
-    case SpvCapabilityImageGatherBiasLodAMD:
+    case spv::Capability::ImageGatherBiasLodAMD:
       return "ImageGatherBiasLodAMD";
-    case SpvCapabilityFragmentMaskAMD:
+    case spv::Capability::FragmentMaskAMD:
       return "FragmentMaskAMD";
-    case SpvCapabilityStencilExportEXT:
+    case spv::Capability::StencilExportEXT:
       return "StencilExportEXT";
-    case SpvCapabilityImageReadWriteLodAMD:
+    case spv::Capability::ImageReadWriteLodAMD:
       return "ImageReadWriteLodAMD";
-    case SpvCapabilityInt64ImageEXT:
+    case spv::Capability::Int64ImageEXT:
       return "Int64ImageEXT";
-    case SpvCapabilityShaderClockKHR:
+    case spv::Capability::ShaderClockKHR:
       return "ShaderClockKHR";
-    case SpvCapabilitySampleMaskOverrideCoverageNV:
+    case spv::Capability::SampleMaskOverrideCoverageNV:
       return "SampleMaskOverrideCoverageNV";
-    case SpvCapabilityGeometryShaderPassthroughNV:
+    case spv::Capability::GeometryShaderPassthroughNV:
       return "GeometryShaderPassthroughNV";
-    case SpvCapabilityShaderViewportIndexLayerEXT:
+    case spv::Capability::ShaderViewportIndexLayerEXT:
       return "ShaderViewportIndexLayerEXT";
-    case SpvCapabilityShaderViewportMaskNV:
+    case spv::Capability::ShaderViewportMaskNV:
       return "ShaderViewportMaskNV";
-    case SpvCapabilityShaderStereoViewNV:
+    case spv::Capability::ShaderStereoViewNV:
       return "ShaderStereoViewNV";
-    case SpvCapabilityPerViewAttributesNV:
+    case spv::Capability::PerViewAttributesNV:
       return "PerViewAttributesNV";
-    case SpvCapabilityFragmentFullyCoveredEXT:
+    case spv::Capability::FragmentFullyCoveredEXT:
       return "FragmentFullyCoveredEXT";
-    case SpvCapabilityMeshShadingNV:
+    case spv::Capability::MeshShadingNV:
       return "MeshShadingNV";
-    case SpvCapabilityImageFootprintNV:
+    case spv::Capability::ImageFootprintNV:
       return "ImageFootprintNV";
-    case SpvCapabilityMeshShadingEXT:
+    case spv::Capability::MeshShadingEXT:
       return "MeshShadingEXT";
-    case SpvCapabilityFragmentBarycentricKHR:
+    case spv::Capability::FragmentBarycentricKHR:
       return "FragmentBarycentricKHR";
-    case SpvCapabilityComputeDerivativeGroupQuadsNV:
+    case spv::Capability::ComputeDerivativeGroupQuadsNV:
       return "ComputeDerivativeGroupQuadsNV";
-    case SpvCapabilityFragmentDensityEXT:
+    case spv::Capability::FragmentDensityEXT:
       return "FragmentDensityEXT";
-    case SpvCapabilityGroupNonUniformPartitionedNV:
+    case spv::Capability::GroupNonUniformPartitionedNV:
       return "GroupNonUniformPartitionedNV";
-    case SpvCapabilityShaderNonUniform:
+    case spv::Capability::ShaderNonUniform:
       return "ShaderNonUniform";
-    case SpvCapabilityRuntimeDescriptorArray:
+    case spv::Capability::RuntimeDescriptorArray:
       return "RuntimeDescriptorArray";
-    case SpvCapabilityInputAttachmentArrayDynamicIndexing:
+    case spv::Capability::InputAttachmentArrayDynamicIndexing:
       return "InputAttachmentArrayDynamicIndexing";
-    case SpvCapabilityUniformTexelBufferArrayDynamicIndexing:
+    case spv::Capability::UniformTexelBufferArrayDynamicIndexing:
       return "UniformTexelBufferArrayDynamicIndexing";
-    case SpvCapabilityStorageTexelBufferArrayDynamicIndexing:
+    case spv::Capability::StorageTexelBufferArrayDynamicIndexing:
       return "StorageTexelBufferArrayDynamicIndexing";
-    case SpvCapabilityUniformBufferArrayNonUniformIndexing:
+    case spv::Capability::UniformBufferArrayNonUniformIndexing:
       return "UniformBufferArrayNonUniformIndexing";
-    case SpvCapabilitySampledImageArrayNonUniformIndexing:
+    case spv::Capability::SampledImageArrayNonUniformIndexing:
       return "SampledImageArrayNonUniformIndexing";
-    case SpvCapabilityStorageBufferArrayNonUniformIndexing:
+    case spv::Capability::StorageBufferArrayNonUniformIndexing:
       return "StorageBufferArrayNonUniformIndexing";
-    case SpvCapabilityStorageImageArrayNonUniformIndexing:
+    case spv::Capability::StorageImageArrayNonUniformIndexing:
       return "StorageImageArrayNonUniformIndexing";
-    case SpvCapabilityInputAttachmentArrayNonUniformIndexing:
+    case spv::Capability::InputAttachmentArrayNonUniformIndexing:
       return "InputAttachmentArrayNonUniformIndexing";
-    case SpvCapabilityUniformTexelBufferArrayNonUniformIndexing:
+    case spv::Capability::UniformTexelBufferArrayNonUniformIndexing:
       return "UniformTexelBufferArrayNonUniformIndexing";
-    case SpvCapabilityStorageTexelBufferArrayNonUniformIndexing:
+    case spv::Capability::StorageTexelBufferArrayNonUniformIndexing:
       return "StorageTexelBufferArrayNonUniformIndexing";
-    case SpvCapabilityRayTracingNV:
+    case spv::Capability::RayTracingNV:
       return "RayTracingNV";
-    case SpvCapabilityRayTracingMotionBlurNV:
+    case spv::Capability::RayTracingMotionBlurNV:
       return "RayTracingMotionBlurNV";
-    case SpvCapabilityVulkanMemoryModel:
+    case spv::Capability::VulkanMemoryModel:
       return "VulkanMemoryModel";
-    case SpvCapabilityVulkanMemoryModelDeviceScope:
+    case spv::Capability::VulkanMemoryModelDeviceScope:
       return "VulkanMemoryModelDeviceScope";
-    case SpvCapabilityPhysicalStorageBufferAddresses:
+    case spv::Capability::PhysicalStorageBufferAddresses:
       return "PhysicalStorageBufferAddresses";
-    case SpvCapabilityComputeDerivativeGroupLinearNV:
+    case spv::Capability::ComputeDerivativeGroupLinearNV:
       return "ComputeDerivativeGroupLinearNV";
-    case SpvCapabilityRayTracingProvisionalKHR:
+    case spv::Capability::RayTracingProvisionalKHR:
       return "RayTracingProvisionalKHR";
-    case SpvCapabilityCooperativeMatrixNV:
+    case spv::Capability::CooperativeMatrixNV:
       return "CooperativeMatrixNV";
-    case SpvCapabilityFragmentShaderSampleInterlockEXT:
+    case spv::Capability::FragmentShaderSampleInterlockEXT:
       return "FragmentShaderSampleInterlockEXT";
-    case SpvCapabilityFragmentShaderShadingRateInterlockEXT:
+    case spv::Capability::FragmentShaderShadingRateInterlockEXT:
       return "FragmentShaderShadingRateInterlockEXT";
-    case SpvCapabilityShaderSMBuiltinsNV:
+    case spv::Capability::ShaderSMBuiltinsNV:
       return "ShaderSMBuiltinsNV";
-    case SpvCapabilityFragmentShaderPixelInterlockEXT:
+    case spv::Capability::FragmentShaderPixelInterlockEXT:
       return "FragmentShaderPixelInterlockEXT";
-    case SpvCapabilityDemoteToHelperInvocation:
+    case spv::Capability::DemoteToHelperInvocation:
       return "DemoteToHelperInvocation";
-    case SpvCapabilityBindlessTextureNV:
+    case spv::Capability::RayTracingOpacityMicromapEXT:
+      return "RayTracingOpacityMicromapEXT";
+    case spv::Capability::ShaderInvocationReorderNV:
+      return "ShaderInvocationReorderNV";
+    case spv::Capability::BindlessTextureNV:
       return "BindlessTextureNV";
-    case SpvCapabilitySubgroupShuffleINTEL:
+    case spv::Capability::SubgroupShuffleINTEL:
       return "SubgroupShuffleINTEL";
-    case SpvCapabilitySubgroupBufferBlockIOINTEL:
+    case spv::Capability::SubgroupBufferBlockIOINTEL:
       return "SubgroupBufferBlockIOINTEL";
-    case SpvCapabilitySubgroupImageBlockIOINTEL:
+    case spv::Capability::SubgroupImageBlockIOINTEL:
       return "SubgroupImageBlockIOINTEL";
-    case SpvCapabilitySubgroupImageMediaBlockIOINTEL:
+    case spv::Capability::SubgroupImageMediaBlockIOINTEL:
       return "SubgroupImageMediaBlockIOINTEL";
-    case SpvCapabilityRoundToInfinityINTEL:
+    case spv::Capability::RoundToInfinityINTEL:
       return "RoundToInfinityINTEL";
-    case SpvCapabilityFloatingPointModeINTEL:
+    case spv::Capability::FloatingPointModeINTEL:
       return "FloatingPointModeINTEL";
-    case SpvCapabilityIntegerFunctions2INTEL:
+    case spv::Capability::IntegerFunctions2INTEL:
       return "IntegerFunctions2INTEL";
-    case SpvCapabilityFunctionPointersINTEL:
+    case spv::Capability::FunctionPointersINTEL:
       return "FunctionPointersINTEL";
-    case SpvCapabilityIndirectReferencesINTEL:
+    case spv::Capability::IndirectReferencesINTEL:
       return "IndirectReferencesINTEL";
-    case SpvCapabilityAsmINTEL:
+    case spv::Capability::AsmINTEL:
       return "AsmINTEL";
-    case SpvCapabilityAtomicFloat32MinMaxEXT:
+    case spv::Capability::AtomicFloat32MinMaxEXT:
       return "AtomicFloat32MinMaxEXT";
-    case SpvCapabilityAtomicFloat64MinMaxEXT:
+    case spv::Capability::AtomicFloat64MinMaxEXT:
       return "AtomicFloat64MinMaxEXT";
-    case SpvCapabilityAtomicFloat16MinMaxEXT:
+    case spv::Capability::AtomicFloat16MinMaxEXT:
       return "AtomicFloat16MinMaxEXT";
-    case SpvCapabilityVectorComputeINTEL:
+    case spv::Capability::VectorComputeINTEL:
       return "VectorComputeINTEL";
-    case SpvCapabilityVectorAnyINTEL:
+    case spv::Capability::VectorAnyINTEL:
       return "VectorAnyINTEL";
-    case SpvCapabilityExpectAssumeKHR:
+    case spv::Capability::ExpectAssumeKHR:
       return "ExpectAssumeKHR";
-    case SpvCapabilitySubgroupAvcMotionEstimationINTEL:
+    case spv::Capability::SubgroupAvcMotionEstimationINTEL:
       return "SubgroupAvcMotionEstimationINTEL";
-    case SpvCapabilitySubgroupAvcMotionEstimationIntraINTEL:
+    case spv::Capability::SubgroupAvcMotionEstimationIntraINTEL:
       return "SubgroupAvcMotionEstimationIntraINTEL";
-    case SpvCapabilitySubgroupAvcMotionEstimationChromaINTEL:
+    case spv::Capability::SubgroupAvcMotionEstimationChromaINTEL:
       return "SubgroupAvcMotionEstimationChromaINTEL";
-    case SpvCapabilityVariableLengthArrayINTEL:
+    case spv::Capability::VariableLengthArrayINTEL:
       return "VariableLengthArrayINTEL";
-    case SpvCapabilityFunctionFloatControlINTEL:
+    case spv::Capability::FunctionFloatControlINTEL:
       return "FunctionFloatControlINTEL";
-    case SpvCapabilityFPGAMemoryAttributesINTEL:
+    case spv::Capability::FPGAMemoryAttributesINTEL:
       return "FPGAMemoryAttributesINTEL";
-    case SpvCapabilityFPFastMathModeINTEL:
+    case spv::Capability::FPFastMathModeINTEL:
       return "FPFastMathModeINTEL";
-    case SpvCapabilityArbitraryPrecisionIntegersINTEL:
+    case spv::Capability::ArbitraryPrecisionIntegersINTEL:
       return "ArbitraryPrecisionIntegersINTEL";
-    case SpvCapabilityArbitraryPrecisionFloatingPointINTEL:
+    case spv::Capability::ArbitraryPrecisionFloatingPointINTEL:
       return "ArbitraryPrecisionFloatingPointINTEL";
-    case SpvCapabilityUnstructuredLoopControlsINTEL:
+    case spv::Capability::UnstructuredLoopControlsINTEL:
       return "UnstructuredLoopControlsINTEL";
-    case SpvCapabilityFPGALoopControlsINTEL:
+    case spv::Capability::FPGALoopControlsINTEL:
       return "FPGALoopControlsINTEL";
-    case SpvCapabilityKernelAttributesINTEL:
+    case spv::Capability::KernelAttributesINTEL:
       return "KernelAttributesINTEL";
-    case SpvCapabilityFPGAKernelAttributesINTEL:
+    case spv::Capability::FPGAKernelAttributesINTEL:
       return "FPGAKernelAttributesINTEL";
-    case SpvCapabilityFPGAMemoryAccessesINTEL:
+    case spv::Capability::FPGAMemoryAccessesINTEL:
       return "FPGAMemoryAccessesINTEL";
-    case SpvCapabilityFPGAClusterAttributesINTEL:
+    case spv::Capability::FPGAClusterAttributesINTEL:
       return "FPGAClusterAttributesINTEL";
-    case SpvCapabilityLoopFuseINTEL:
+    case spv::Capability::LoopFuseINTEL:
       return "LoopFuseINTEL";
-    case SpvCapabilityMemoryAccessAliasingINTEL:
+    case spv::Capability::FPGADSPControlINTEL:
+      return "FPGADSPControlINTEL";
+    case spv::Capability::MemoryAccessAliasingINTEL:
       return "MemoryAccessAliasingINTEL";
-    case SpvCapabilityFPGABufferLocationINTEL:
+    case spv::Capability::FPGAInvocationPipeliningAttributesINTEL:
+      return "FPGAInvocationPipeliningAttributesINTEL";
+    case spv::Capability::FPGABufferLocationINTEL:
       return "FPGABufferLocationINTEL";
-    case SpvCapabilityArbitraryPrecisionFixedPointINTEL:
+    case spv::Capability::ArbitraryPrecisionFixedPointINTEL:
       return "ArbitraryPrecisionFixedPointINTEL";
-    case SpvCapabilityUSMStorageClassesINTEL:
+    case spv::Capability::USMStorageClassesINTEL:
       return "USMStorageClassesINTEL";
-    case SpvCapabilityIOPipesINTEL:
+    case spv::Capability::RuntimeAlignedAttributeINTEL:
+      return "RuntimeAlignedAttributeINTEL";
+    case spv::Capability::IOPipesINTEL:
       return "IOPipesINTEL";
-    case SpvCapabilityBlockingPipesINTEL:
+    case spv::Capability::BlockingPipesINTEL:
       return "BlockingPipesINTEL";
-    case SpvCapabilityFPGARegINTEL:
+    case spv::Capability::FPGARegINTEL:
       return "FPGARegINTEL";
-    case SpvCapabilityDotProductInputAll:
+    case spv::Capability::DotProductInputAll:
       return "DotProductInputAll";
-    case SpvCapabilityDotProductInput4x8Bit:
+    case spv::Capability::DotProductInput4x8Bit:
       return "DotProductInput4x8Bit";
-    case SpvCapabilityDotProductInput4x8BitPacked:
+    case spv::Capability::DotProductInput4x8BitPacked:
       return "DotProductInput4x8BitPacked";
-    case SpvCapabilityDotProduct:
+    case spv::Capability::DotProduct:
       return "DotProduct";
-    case SpvCapabilityRayCullMaskKHR:
+    case spv::Capability::RayCullMaskKHR:
       return "RayCullMaskKHR";
-    case SpvCapabilityBitInstructions:
+    case spv::Capability::BitInstructions:
       return "BitInstructions";
-    case SpvCapabilityGroupNonUniformRotateKHR:
+    case spv::Capability::GroupNonUniformRotateKHR:
       return "GroupNonUniformRotateKHR";
-    case SpvCapabilityAtomicFloat32AddEXT:
+    case spv::Capability::AtomicFloat32AddEXT:
       return "AtomicFloat32AddEXT";
-    case SpvCapabilityAtomicFloat64AddEXT:
+    case spv::Capability::AtomicFloat64AddEXT:
       return "AtomicFloat64AddEXT";
-    case SpvCapabilityLongConstantCompositeINTEL:
+    case spv::Capability::LongConstantCompositeINTEL:
       return "LongConstantCompositeINTEL";
-    case SpvCapabilityOptNoneINTEL:
+    case spv::Capability::OptNoneINTEL:
       return "OptNoneINTEL";
-    case SpvCapabilityAtomicFloat16AddEXT:
+    case spv::Capability::AtomicFloat16AddEXT:
       return "AtomicFloat16AddEXT";
-    case SpvCapabilityDebugInfoModuleINTEL:
+    case spv::Capability::DebugInfoModuleINTEL:
       return "DebugInfoModuleINTEL";
-    case SpvCapabilitySplitBarrierINTEL:
+    case spv::Capability::SplitBarrierINTEL:
       return "SplitBarrierINTEL";
-    case SpvCapabilityGroupUniformArithmeticKHR:
+    case spv::Capability::FPGAArgumentInterfacesINTEL:
+      return "FPGAArgumentInterfacesINTEL";
+    case spv::Capability::GroupUniformArithmeticKHR:
       return "GroupUniformArithmeticKHR";
-    case SpvCapabilityMax:
-      assert(0 && "Attempting to convert SpvCapabilityMax to string");
+    case spv::Capability::Max:
+      assert(0 && "Attempting to convert spv::Capability::Max to string");
       return "";
   }
 

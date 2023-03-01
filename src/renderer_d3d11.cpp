@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -224,11 +224,19 @@ namespace bgfx { namespace d3d11
 		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN              }, // ATCE
 		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN              }, // ATCI
 		{ DXGI_FORMAT_ASTC_4X4_UNORM,     DXGI_FORMAT_ASTC_4X4_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_ASTC_4X4_UNORM_SRGB  }, // ASTC4x4
+		{ DXGI_FORMAT_ASTC_5X4_UNORM,     DXGI_FORMAT_ASTC_5X4_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_ASTC_5X4_UNORM_SRGB  }, // ASTC5x4
 		{ DXGI_FORMAT_ASTC_5X5_UNORM,     DXGI_FORMAT_ASTC_5X5_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_ASTC_5X5_UNORM_SRGB  }, // ASTC5x5
+		{ DXGI_FORMAT_ASTC_6X5_UNORM,     DXGI_FORMAT_ASTC_6X5_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_ASTC_6X5_UNORM_SRGB  }, // ASTC6x5
 		{ DXGI_FORMAT_ASTC_6X6_UNORM,     DXGI_FORMAT_ASTC_6X6_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_ASTC_6X6_UNORM_SRGB  }, // ASTC6x6
 		{ DXGI_FORMAT_ASTC_8X5_UNORM,     DXGI_FORMAT_ASTC_8X5_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_ASTC_8X5_UNORM_SRGB  }, // ASTC8x5
 		{ DXGI_FORMAT_ASTC_8X6_UNORM,     DXGI_FORMAT_ASTC_8X6_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_ASTC_8X6_UNORM_SRGB  }, // ASTC8x6
+		{ DXGI_FORMAT_ASTC_8X8_UNORM,     DXGI_FORMAT_ASTC_8X8_UNORM,        DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_ASTC_8X8_UNORM_SRGB  }, // ASTC8x8
 		{ DXGI_FORMAT_ASTC_10X5_UNORM,    DXGI_FORMAT_ASTC_10X5_UNORM,       DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_ASTC_10X5_UNORM_SRGB }, // ASTC10x5
+		{ DXGI_FORMAT_ASTC_10X6_UNORM,    DXGI_FORMAT_ASTC_10X6_UNORM,       DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_ASTC_10X6_UNORM_SRGB }, // ASTC10x6
+		{ DXGI_FORMAT_ASTC_10X8_UNORM,    DXGI_FORMAT_ASTC_10X8_UNORM,       DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_ASTC_10X8_UNORM_SRGB }, // ASTC10x8
+		{ DXGI_FORMAT_ASTC_10X10_UNORM,   DXGI_FORMAT_ASTC_10X10_UNORM,      DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_ASTC_10X10_UNORM_SRGB}, // ASTC10x10
+		{ DXGI_FORMAT_ASTC_12X10_UNORM,   DXGI_FORMAT_ASTC_12X10_UNORM,      DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_ASTC_12X10_UNORM_SRGB}, // ASTC12x10
+		{ DXGI_FORMAT_ASTC_12X12_UNORM,   DXGI_FORMAT_ASTC_12X12_UNORM,      DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_ASTC_12X12_UNORM_SRGB}, // ASTC12x12
 		{ DXGI_FORMAT_UNKNOWN,            DXGI_FORMAT_UNKNOWN,               DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN              }, // Unknown
 		{ DXGI_FORMAT_R1_UNORM,           DXGI_FORMAT_R1_UNORM,              DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN              }, // R1
 		{ DXGI_FORMAT_A8_UNORM,           DXGI_FORMAT_A8_UNORM,              DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN              }, // A8
@@ -875,7 +883,20 @@ namespace bgfx { namespace d3d11
 
 			errorState = ErrorState::LoadedDXGI;
 
-			if (NULL == m_device)
+			if (NULL != m_device)
+			{
+				m_device->AddRef();
+				m_device->GetImmediateContext(&m_deviceCtx);
+
+				if (NULL == m_deviceCtx)
+				{
+					BX_TRACE("Init error: Unable to retrieve Direct3D11 ImmediateContext.");
+					goto error;
+				}
+
+				m_featureLevel = m_device->GetFeatureLevel();
+			}
+			else
 			{
 				if (NULL != m_renderDocDll)
 				{
@@ -955,18 +976,6 @@ namespace bgfx { namespace d3d11
 					BX_TRACE("Init error: Unable to create Direct3D11 device.");
 					goto error;
 				}
-			}
-			else
-			{
-				m_device->GetImmediateContext(&m_deviceCtx);
-
-				if (NULL == m_deviceCtx)
-				{
-					BX_TRACE("Init error: Unable to retrieve Direct3D11 ImmediateContext.");
-					goto error;
-				}
-
-				m_featureLevel = m_device->GetFeatureLevel();
 			}
 
 			m_dxgi.update(m_device);
@@ -3246,22 +3255,10 @@ namespace bgfx { namespace d3d11
 					break;
 
 				case TextureD3D11::TextureCube:
-					if (_compute)
-					{
-						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
-						desc.Texture2DArray.MostDetailedMip = _mip;
-						desc.Texture2DArray.MipLevels       = 1;
-						desc.Texture2DArray.FirstArraySlice = 0;
-						desc.Texture2DArray.ArraySize       = 6;
-					}
-					else
-					{
-						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
-						desc.TextureCube.MostDetailedMip = _mip;
-						desc.TextureCube.MipLevels       = 1;
-					}
+					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+					desc.TextureCube.MostDetailedMip = _mip;
+					desc.TextureCube.MipLevels       = 1;
 					break;
-
 				case TextureD3D11::Texture3D:
 					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
 					desc.Texture3D.MostDetailedMip = _mip;
@@ -3439,50 +3436,6 @@ namespace bgfx { namespace d3d11
 					BX_TRACE("%4d: INVALID 0x%08x, t %d, l %d, n %d, c %d", _uniformBuffer.getPos(), opcode, type, loc, num, copy);
 					break;
 				}
-			}
-		}
-
-		void premultiplyBackBuffer(const ClearQuad& _clearQuad)
-		{
-			ID3D11DeviceContext* deviceCtx = m_deviceCtx;
-
-			uint64_t state = 0;
-			state |= BGFX_STATE_WRITE_RGB;
-			state |= BGFX_STATE_DEPTH_TEST_ALWAYS;
-			state |= BGFX_STATE_BLEND_FUNC_SEPARATE(BGFX_STATE_BLEND_DST_COLOR, BGFX_STATE_BLEND_DST_ALPHA, BGFX_STATE_BLEND_DST_ALPHA, BGFX_STATE_BLEND_ZERO);
-
-			uint64_t stencil = 0;
-
-			setBlendState(state);
-			setDepthStencilState(state, stencil);
-			setRasterizerState(state);
-
-			uint32_t numMrt = 1;
-			if (isValid(_clearQuad.m_program[numMrt-1]))
-			{
-				ProgramD3D11& program = m_program[_clearQuad.m_program[numMrt-1].idx];
-				m_currentProgram = &program;
-
-				const ShaderD3D11* vsh = program.m_vsh;
-				deviceCtx->VSSetShader(vsh->m_vertexShader, NULL, 0);
-				deviceCtx->VSSetConstantBuffers(0, 1, &vsh->m_buffer);
-
-				const ShaderD3D11* fsh = program.m_fsh;
-				deviceCtx->PSSetShader(fsh->m_pixelShader, NULL, 0);
-
-				VertexBufferD3D11& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
-				const VertexLayout& layout = _clearQuad.m_layout;
-
-				const uint32_t stride = layout.m_stride;
-				const uint32_t offset = 0;
-
-				deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
-				setInputLayout(layout, program, 0);
-
-				m_deviceCtx->OMSetRenderTargets(1, &m_backBufferColor, m_backBufferDepthStencil);
-
-				deviceCtx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-				deviceCtx->Draw(4, 0);
 			}
 		}
 
@@ -4829,7 +4782,6 @@ namespace bgfx { namespace d3d11
 		}
 
 		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
-		const uint16_t blockHeight = blockInfo.blockHeight;
 		const uint16_t bpp    = blockInfo.bitsPerPixel;
 		const uint32_t subres = _mip + ( (layer + _side) * m_numMips);
 		const bool     depth  = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) );
@@ -4855,32 +4807,6 @@ namespace bgfx { namespace d3d11
 
 			box.right  = bx::max(1u, m_width  >> _mip);
 			box.bottom = bx::max(1u, m_height >> _mip);
-		}
-
-		{
-			uint8_t* src = data;
-			for (uint32_t yy = 0, height = _rect.m_height; yy < height; yy += blockHeight)
-			{
-				switch (m_textureFormat)
-				{
-				case TextureFormat::R5G6B5:
-					temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch);
-					bimg::imageConvert(temp, 16, bx::packB5G6R5, src, bx::unpackR5G6B5, rectpitch);
-					data = temp;
-					break;
-				case TextureFormat::RGBA4:
-					temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch);
-					bimg::imageConvert(temp, 16, bx::packBgra4, src, bx::unpackRgba4, rectpitch);
-					data = temp;
-					break;
-				case TextureFormat::RGB5A1:
-					temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch);
-					bimg::imageConvert(temp, 16, bx::packBgr5a1, src, bx::unpackRgb5a1, rectpitch);
-					data = temp;
-					break;
-				}
-				src += srcpitch;
-			}
 		}
 
 		deviceCtx->UpdateSubresource(
@@ -6736,11 +6662,6 @@ namespace bgfx { namespace d3d11
 			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 
 			BGFX_D3D11_PROFILER_END();
-		}
-
-		if (m_resolution.reset & BGFX_RESET_TRANSPARENT_BACKBUFFER)
-		{
-			premultiplyBackBuffer(_clearQuad);
 		}
 
 		m_deviceCtx->OMSetRenderTargets(1, s_zero.m_rtv, NULL);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -180,11 +180,19 @@ namespace bgfx
 			ATCE,         //!< ATCE RGBA 8 BPP explicit alpha
 			ATCI,         //!< ATCI RGBA 8 BPP interpolated alpha
 			ASTC4x4,      //!< ASTC 4x4 8.0 BPP
+			ASTC5x4,	  //!< ASTC 5x4 6.40 BPP
 			ASTC5x5,      //!< ASTC 5x5 5.12 BPP
+			ASTC6x5,	  //!< ASTC 6x5 4.27 BPP
 			ASTC6x6,      //!< ASTC 6x6 3.56 BPP
 			ASTC8x5,      //!< ASTC 8x5 3.20 BPP
 			ASTC8x6,      //!< ASTC 8x6 2.67 BPP
+			ASTC8x8,	  //!< ASTC 8x8 2.00 BPP
 			ASTC10x5,     //!< ASTC 10x5 2.56 BPP
+			ASTC10x6,	  //!< ASTC 10x6 2.13 BPP
+			ASTC10x8,	  //!< ASTC 10x8 1.60 BPP
+			ASTC10x10,	  //!< ASTC 10x10 1.28 BPP
+			ASTC12x10,	  //!< ASTC 12x10 1.07 BPP
+			ASTC12x12,	  //!< ASTC 12x12 0.89 BPP
 
 			Unknown,      // Compressed formats above.
 

@@ -275,24 +275,30 @@ void Parser::parse(const Instruction &instruction)
 	case OpExtInstImport:
 	{
 		uint32_t id = ops[0];
+
+		SPIRExtension::Extension spirv_ext = SPIRExtension::Unsupported;
+
 		auto ext = extract_string(ir.spirv, instruction.offset + 1);
 		if (ext == "GLSL.std.450")
-			set<SPIRExtension>(id, SPIRExtension::GLSL);
+			spirv_ext = SPIRExtension::GLSL;
 		else if (ext == "DebugInfo")
-			set<SPIRExtension>(id, SPIRExtension::SPV_debug_info);
+			spirv_ext = SPIRExtension::SPV_debug_info;
 		else if (ext == "SPV_AMD_shader_ballot")
-			set<SPIRExtension>(id, SPIRExtension::SPV_AMD_shader_ballot);
+			spirv_ext = SPIRExtension::SPV_AMD_shader_ballot;
 		else if (ext == "SPV_AMD_shader_explicit_vertex_parameter")
-			set<SPIRExtension>(id, SPIRExtension::SPV_AMD_shader_explicit_vertex_parameter);
+			spirv_ext = SPIRExtension::SPV_AMD_shader_explicit_vertex_parameter;
 		else if (ext == "SPV_AMD_shader_trinary_minmax")
-			set<SPIRExtension>(id, SPIRExtension::SPV_AMD_shader_trinary_minmax);
+			spirv_ext = SPIRExtension::SPV_AMD_shader_trinary_minmax;
 		else if (ext == "SPV_AMD_gcn_shader")
-			set<SPIRExtension>(id, SPIRExtension::SPV_AMD_gcn_shader);
+			spirv_ext = SPIRExtension::SPV_AMD_gcn_shader;
 		else if (ext == "NonSemantic.DebugPrintf")
-			set<SPIRExtension>(id, SPIRExtension::NonSemanticDebugPrintf);
-		else
-			set<SPIRExtension>(id, SPIRExtension::Unsupported);
+			spirv_ext = SPIRExtension::NonSemanticDebugPrintf;
+		else if (ext == "NonSemantic.Shader.DebugInfo.100")
+			spirv_ext = SPIRExtension::NonSemanticShaderDebugInfo;
+		else if (ext.find("NonSemantic.") == 0)
+			spirv_ext = SPIRExtension::NonSemanticGeneric;
 
+		set<SPIRExtension>(id, spirv_ext);
 		// Other SPIR-V extensions which have ExtInstrs are currently not supported.
 
 		break;

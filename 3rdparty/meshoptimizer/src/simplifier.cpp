@@ -1282,7 +1282,7 @@ size_t meshopt_simplify(unsigned int* destination, const unsigned int* indices, 
 	using namespace meshopt;
 
 	assert(index_count % 3 == 0);
-	assert(vertex_positions_stride > 0 && vertex_positions_stride <= 256);
+	assert(vertex_positions_stride >= 12 && vertex_positions_stride <= 256);
 	assert(vertex_positions_stride % sizeof(float) == 0);
 	assert(target_index_count <= index_count);
 	assert((options & ~(meshopt_SimplifyLockBorder)) == 0);
@@ -1425,7 +1425,7 @@ size_t meshopt_simplifySloppy(unsigned int* destination, const unsigned int* ind
 	using namespace meshopt;
 
 	assert(index_count % 3 == 0);
-	assert(vertex_positions_stride > 0 && vertex_positions_stride <= 256);
+	assert(vertex_positions_stride >= 12 && vertex_positions_stride <= 256);
 	assert(vertex_positions_stride % sizeof(float) == 0);
 	assert(target_index_count <= index_count);
 
@@ -1556,7 +1556,7 @@ size_t meshopt_simplifyPoints(unsigned int* destination, const float* vertex_pos
 {
 	using namespace meshopt;
 
-	assert(vertex_positions_stride > 0 && vertex_positions_stride <= 256);
+	assert(vertex_positions_stride >= 12 && vertex_positions_stride <= 256);
 	assert(vertex_positions_stride % sizeof(float) == 0);
 	assert(target_vertex_count <= vertex_count);
 
@@ -1668,7 +1668,7 @@ float meshopt_simplifyScale(const float* vertex_positions, size_t vertex_count, 
 {
 	using namespace meshopt;
 
-	assert(vertex_positions_stride > 0 && vertex_positions_stride <= 256);
+	assert(vertex_positions_stride >= 12 && vertex_positions_stride <= 256);
 	assert(vertex_positions_stride % sizeof(float) == 0);
 
 	float extent = rescalePositions(NULL, vertex_positions, vertex_count, vertex_positions_stride);

@@ -33,7 +33,7 @@ namespace opt {
 // Documented in optimizer.hpp
 class ScalarReplacementPass : public MemPass {
  private:
-  static const uint32_t kDefaultLimit = 100;
+  static constexpr uint32_t kDefaultLimit = 100;
 
  public:
   ScalarReplacementPass(uint32_t limit = kDefaultLimit)
@@ -104,10 +104,10 @@ class ScalarReplacementPass : public MemPass {
   // Returns true if the uses of |inst| are acceptable for scalarization.
   //
   // Recursively checks all the uses of |inst|. For |inst| specifically, only
-  // allows SpvOpAccessChain, SpvOpInBoundsAccessChain, SpvOpLoad and
-  // SpvOpStore. Access chains must have the first index be a compile-time
-  // constant. Subsequent uses of access chains (including other access chains)
-  // are checked in a more relaxed manner.
+  // allows spv::Op::OpAccessChain, spv::Op::OpInBoundsAccessChain,
+  // spv::Op::OpLoad and spv::Op::OpStore. Access chains must have the first
+  // index be a compile-time constant. Subsequent uses of access chains
+  // (including other access chains) are checked in a more relaxed manner.
   bool CheckUses(const Instruction* inst) const;
 
   // Helper function for the above |CheckUses|.

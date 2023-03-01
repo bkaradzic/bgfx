@@ -40,7 +40,7 @@ extern "C" {
 /* Bumped if ABI or API breaks backwards compatibility. */
 #define SPVC_C_API_VERSION_MAJOR 0
 /* Bumped if APIs or enumerations are added in a backwards compatible way. */
-#define SPVC_C_API_VERSION_MINOR 49
+#define SPVC_C_API_VERSION_MINOR 54
 /* Bumped if internal implementation details change. */
 #define SPVC_C_API_VERSION_PATCH 0
 
@@ -225,6 +225,7 @@ typedef enum spvc_resource_type
 	SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS = 11,
 	SPVC_RESOURCE_TYPE_ACCELERATION_STRUCTURE = 12,
 	SPVC_RESOURCE_TYPE_RAY_QUERY = 13,
+	SPVC_RESOURCE_TYPE_SHADER_RECORD_BUFFER = 14,
 	SPVC_RESOURCE_TYPE_INT_MAX = 0x7fffffff
 } spvc_resource_type;
 
@@ -335,7 +336,7 @@ typedef struct spvc_msl_vertex_attribute
  */
 SPVC_PUBLIC_API void spvc_msl_vertex_attribute_init(spvc_msl_vertex_attribute *attr);
 
-/* Maps to C++ API. */
+/* Maps to C++ API. Deprecated; use spvc_msl_shader_interface_var_2. */
 typedef struct spvc_msl_shader_interface_var
 {
 	unsigned location;
@@ -346,12 +347,38 @@ typedef struct spvc_msl_shader_interface_var
 
 /*
  * Initializes the shader input struct.
+ * Deprecated. Use spvc_msl_shader_interface_var_init_2().
  */
 SPVC_PUBLIC_API void spvc_msl_shader_interface_var_init(spvc_msl_shader_interface_var *var);
 /*
- * Deprecated. Use spvc_msl_shader_interface_var_init().
+ * Deprecated. Use spvc_msl_shader_interface_var_init_2().
  */
 SPVC_PUBLIC_API void spvc_msl_shader_input_init(spvc_msl_shader_input *input);
+
+/* Maps to C++ API. */
+typedef enum spvc_msl_shader_variable_rate
+{
+	SPVC_MSL_SHADER_VARIABLE_RATE_PER_VERTEX = 0,
+	SPVC_MSL_SHADER_VARIABLE_RATE_PER_PRIMITIVE = 1,
+	SPVC_MSL_SHADER_VARIABLE_RATE_PER_PATCH = 2,
+
+	SPVC_MSL_SHADER_VARIABLE_RATE_INT_MAX = 0x7fffffff,
+} spvc_msl_shader_variable_rate;
+
+/* Maps to C++ API. */
+typedef struct spvc_msl_shader_interface_var_2
+{
+	unsigned location;
+	spvc_msl_shader_variable_format format;
+	SpvBuiltIn builtin;
+	unsigned vecsize;
+	spvc_msl_shader_variable_rate rate;
+} spvc_msl_shader_interface_var_2;
+
+/*
+ * Initializes the shader interface variable struct.
+ */
+SPVC_PUBLIC_API void spvc_msl_shader_interface_var_init_2(spvc_msl_shader_interface_var_2 *var);
 
 /* Maps to C++ API. */
 typedef struct spvc_msl_resource_binding
@@ -689,6 +716,15 @@ typedef enum spvc_compiler_option
 
 	SPVC_COMPILER_OPTION_RELAX_NAN_CHECKS = 78 | SPVC_COMPILER_OPTION_COMMON_BIT,
 
+	SPVC_COMPILER_OPTION_MSL_RAW_BUFFER_TESE_INPUT = 79 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_SHADER_PATCH_INPUT_BUFFER_INDEX = 80 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_MANUAL_HELPER_INVOCATION_UPDATES = 81 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_CHECK_DISCARDED_FRAG_STORES = 82 | SPVC_COMPILER_OPTION_MSL_BIT,
+
+	SPVC_COMPILER_OPTION_GLSL_ENABLE_ROW_MAJOR_LOAD_WORKAROUND = 83 | SPVC_COMPILER_OPTION_GLSL_BIT,
+
+	SPVC_COMPILER_OPTION_MSL_ARGUMENT_BUFFERS_TIER = 84 | SPVC_COMPILER_OPTION_MSL_BIT,
+
 	SPVC_COMPILER_OPTION_INT_MAX = 0x7fffffff
 } spvc_compiler_option;
 
@@ -795,10 +831,16 @@ SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_vertex_attribute(spvc_compiler
                                                                    const spvc_msl_vertex_attribute *attrs);
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_resource_binding(spvc_compiler compiler,
                                                                    const spvc_msl_resource_binding *binding);
+/* Deprecated; use spvc_compiler_msl_add_shader_input_2(). */
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_shader_input(spvc_compiler compiler,
                                                                const spvc_msl_shader_interface_var *input);
+SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_shader_input_2(spvc_compiler compiler,
+                                                                 const spvc_msl_shader_interface_var_2 *input);
+/* Deprecated; use spvc_compiler_msl_add_shader_output_2(). */
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_shader_output(spvc_compiler compiler,
                                                                 const spvc_msl_shader_interface_var *output);
+SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_shader_output_2(spvc_compiler compiler,
+                                                                  const spvc_msl_shader_interface_var_2 *output);
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_add_discrete_descriptor_set(spvc_compiler compiler, unsigned desc_set);
 SPVC_PUBLIC_API spvc_result spvc_compiler_msl_set_argument_buffer_device_address_space(spvc_compiler compiler, unsigned desc_set, spvc_bool device_address);
 

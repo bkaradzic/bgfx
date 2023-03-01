@@ -206,3 +206,42 @@ jobs:
           ".build/osx-x64/bin/geometryc${{ matrix.binsuffix}}" --version
           ".build/osx-x64/bin/shaderc${{ matrix.binsuffix}}" --version
           ".build/osx-x64/bin/texturec${{ matrix.binsuffix}}" --version
+  android:
+    strategy:
+      fail-fast: true
+      matrix:
+        include: [
+          { platform: arm64  },
+        ]
+    name: android-${{ matrix.platform }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r25b
+          add-to-path: false
+      - name: Checkout bgfx
+        uses: actions/checkout@v3
+        with:
+          path: bgfx
+      - name: Checkout bx
+        uses: actions/checkout@v3
+        with:
+          repository: bkaradzic/bx
+          path: bx
+      - name: Checkout bimg
+        uses: actions/checkout@v3
+        with:
+          repository: bkaradzic/bimg
+          path: bimg
+      - name: Build
+        run: |
+          cd bgfx
+          make -j$(sysctl -n hw.physicalcpu) android-${{ matrix.platform }}
+        env:
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+      - name: Check
+        run: |
+          cd bgfx
+          ls -lash ".build/android-${{ matrix.platform }}/bin"
