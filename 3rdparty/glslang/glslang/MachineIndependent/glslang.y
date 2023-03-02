@@ -151,7 +151,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 
 %parse-param {glslang::TParseContext* pParseContext}
 %lex-param {parseContext}
-%define api.pure  // enable thread safety
+%pure-parser  // enable thread safety
 %expect 1     // One shift reduce conflict because of if | else
 
 %token <lex> CONST BOOL INT UINT FLOAT
@@ -211,6 +211,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> ACCSTRUCTEXT
 %token <lex> RAYQUERYEXT
 %token <lex> FCOOPMATNV ICOOPMATNV UCOOPMATNV
+%token <lex> HITOBJECTNV HITOBJECTATTRNV
 
 // combined image/sampler
 %token <lex> SAMPLERCUBEARRAY SAMPLERCUBEARRAYSHADOW
@@ -310,7 +311,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> DOUBLECONSTANT INT16CONSTANT UINT16CONSTANT FLOAT16CONSTANT INT32CONSTANT UINT32CONSTANT
 %token <lex> INT64CONSTANT UINT64CONSTANT
 %token <lex> SUBROUTINE DEMOTE
-%token <lex> PAYLOADNV PAYLOADINNV HITATTRNV CALLDATANV CALLDATAINNV
+%token <lex> PAYLOADNV PAYLOADINNV HITATTRNV CALLDATANV CALLDATAINNV 
 %token <lex> PAYLOADEXT PAYLOADINEXT HITATTREXT CALLDATAEXT CALLDATAINEXT
 %token <lex> PATCH SAMPLE NONUNIFORM
 %token <lex> COHERENT VOLATILE RESTRICT READONLY WRITEONLY DEVICECOHERENT QUEUEFAMILYCOHERENT WORKGROUPCOHERENT
@@ -1218,7 +1219,7 @@ fully_specified_type
         parseContext.precisionQualifierCheck($$.loc, $$.basicType, $$.qualifier);
     }
     | type_qualifier type_specifier  {
-        parseContext.globalQualifierFixCheck($1.loc, $1.qualifier);
+        parseContext.globalQualifierFixCheck($1.loc, $1.qualifier, false, &$2);
         parseContext.globalQualifierTypeCheck($1.loc, $1.qualifier, $2);
 
         if ($2.arraySizes) {
@@ -1534,6 +1535,14 @@ storage_qualifier
         $$.init($1.loc);
         $$.qualifier.storage = EvqHitAttr;
     }
+	| HITOBJECTATTRNV {
+        parseContext.globalCheck($1.loc, "hitAttributeNV");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangRayGenMask | EShLangClosestHitMask
+            | EShLangMissMask), "hitObjectAttributeNV");
+        parseContext.profileRequires($1.loc, ECoreProfile, 460, E_GL_NV_shader_invocation_reorder, "hitObjectAttributeNV");
+        $$.init($1.loc);
+        $$.qualifier.storage = EvqHitObjectAttrNV;
+	}
     | HITATTREXT {
         parseContext.globalCheck($1.loc, "hitAttributeEXT");
         parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangIntersectMask | EShLangClosestHitMask
@@ -3509,6 +3518,10 @@ type_specifier_nonarray
         parseContext.requireExtensions($1.loc, 1, &E_GL_EXT_spirv_intrinsics, "SPIR-V type specifier");
         $$ = $1;
     }
+	| HITOBJECTNV {
+       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+       $$.basicType = EbtHitObjectNV;
+	}
 
     | struct_specifier {
         $$ = $1;

@@ -2364,7 +2364,7 @@ bool CompilerMSL::add_component_variable_to_interface_block(spv::StorageClass st
 		if (pad_fragment_output)
 		{
 			uint32_t locn = get_decoration(var.self, DecorationLocation);
-			num_components = std::max(num_components, get_target_components_for_fragment_location(locn));
+			num_components = max<uint32_t>(num_components, get_target_components_for_fragment_location(locn));
 		}
 
 		// We have already declared an IO block member as m_location_N.
@@ -3846,7 +3846,7 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 						for (uint32_t location_offset = 0; location_offset < array_size; location_offset++)
 						{
 							auto &location_meta = meta.location_meta[location + location_offset];
-							location_meta.num_components = std::max(location_meta.num_components, component + type.vecsize);
+							location_meta.num_components = max<uint32_t>(location_meta.num_components, component + type.vecsize);
 
 							// For variables sharing location, decorations and base type must match.
 							location_meta.base_type_id = type.self;
@@ -4515,7 +4515,7 @@ void CompilerMSL::mark_scalar_layout_structs(const SPIRType &type)
 				for (uint32_t dim = 0; dim < dimensions; dim++)
 				{
 					uint32_t array_size = to_array_size_literal(mbr_type, dim);
-					array_stride /= max(array_size, 1u);
+					array_stride /= max<uint32_t>(array_size, 1u);
 				}
 
 				// Set expected struct size based on ArrayStride.
@@ -4722,7 +4722,7 @@ void CompilerMSL::ensure_member_packing_rules_msl(SPIRType &ib_type, uint32_t in
 		// Hack off array-of-arrays until we find the array stride per element we must have to make it work.
 		uint32_t dimensions = uint32_t(mbr_type.array.size() - 1);
 		for (uint32_t dim = 0; dim < dimensions; dim++)
-			array_stride /= max(to_array_size_literal(mbr_type, dim), 1u);
+			array_stride /= max<uint32_t>(to_array_size_literal(mbr_type, dim), 1u);
 
 		// Pointers are 8 bytes
 		uint32_t mbr_width_in_bytes = is_buff_ptr ? 8 : (mbr_type.width / 8);
@@ -7206,7 +7206,7 @@ static string inject_top_level_storage_qualifier(const string &expr, const strin
 	else if (last_pointer == string::npos)
 		last_significant = last_reference;
 	else
-		last_significant = std::max(last_reference, last_pointer);
+		last_significant = max<size_t>(last_reference, last_pointer);
 
 	if (last_significant == string::npos)
 		return join(qualifier, " ", expr);
@@ -10701,25 +10701,24 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 		break;
 	}
 
-	if (args.base.is_fetch && (args.offset || args.coffset))
+	if (args.base.is_fetch && args.offset)
 	{
-		uint32_t offset_expr = args.offset ? args.offset : args.coffset;
 		// Fetch offsets must be applied directly to the coordinate.
-		forward = forward && should_forward(offset_expr);
-		auto &type = expression_type(offset_expr);
+		forward = forward && should_forward(args.offset);
+		auto &type = expression_type(args.offset);
 		if (imgtype.image.dim == Dim1D && msl_options.texture_1D_as_2D)
 		{
 			if (type.basetype != SPIRType::UInt)
-				tex_coords += join(" + uint2(", bitcast_expression(SPIRType::UInt, offset_expr), ", 0)");
+				tex_coords += join(" + uint2(", bitcast_expression(SPIRType::UInt, args.offset), ", 0)");
 			else
-				tex_coords += join(" + uint2(", to_enclosed_expression(offset_expr), ", 0)");
+				tex_coords += join(" + uint2(", to_enclosed_expression(args.offset), ", 0)");
 		}
 		else
 		{
 			if (type.basetype != SPIRType::UInt)
-				tex_coords += " + " + bitcast_expression(SPIRType::UInt, offset_expr);
+				tex_coords += " + " + bitcast_expression(SPIRType::UInt, args.offset);
 			else
-				tex_coords += " + " + to_enclosed_expression(offset_expr);
+				tex_coords += " + " + to_enclosed_expression(args.offset);
 		}
 	}
 
@@ -10923,13 +10922,7 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 	// Add offsets
 	string offset_expr;
 	const SPIRType *offset_type = nullptr;
-	if (args.coffset && !args.base.is_fetch)
-	{
-		forward = forward && should_forward(args.coffset);
-		offset_expr = to_expression(args.coffset);
-		offset_type = &expression_type(args.coffset);
-	}
-	else if (args.offset && !args.base.is_fetch)
+	if (args.offset && !args.base.is_fetch)
 	{
 		forward = forward && should_forward(args.offset);
 		offset_expr = to_expression(args.offset);
@@ -11494,11 +11487,11 @@ bool CompilerMSL::member_is_non_native_row_major_matrix(const SPIRType &type, ui
 }
 
 string CompilerMSL::convert_row_major_matrix(string exp_str, const SPIRType &exp_type, uint32_t physical_type_id,
-                                             bool is_packed)
+                                             bool is_packed, bool relaxed)
 {
 	if (!is_matrix(exp_type))
 	{
-		return CompilerGLSL::convert_row_major_matrix(std::move(exp_str), exp_type, physical_type_id, is_packed);
+		return CompilerGLSL::convert_row_major_matrix(std::move(exp_str), exp_type, physical_type_id, is_packed, relaxed);
 	}
 	else
 	{
@@ -11608,11 +11601,14 @@ string CompilerMSL::to_struct_member(const SPIRType &type, uint32_t member_type_
 		}
 	}
 
-	// Very specifically, image load-store in argument buffers are disallowed on MSL on iOS.
-	if (msl_options.is_ios() && physical_type.basetype == SPIRType::Image && physical_type.image.sampled == 2)
+	// iOS Tier 1 argument buffers do not support writable images.
+	if (physical_type.basetype == SPIRType::Image &&
+		physical_type.image.sampled == 2 &&
+		msl_options.is_ios() &&
+		msl_options.argument_buffers_tier <= Options::ArgumentBuffersTier::Tier1 &&
+		!has_decoration(orig_id, DecorationNonWritable))
 	{
-		if (!has_decoration(orig_id, DecorationNonWritable))
-			SPIRV_CROSS_THROW("Writable images are not allowed in argument buffers on iOS.");
+		SPIRV_CROSS_THROW("Writable images are not allowed on Tier1 argument buffers on iOS.");
 	}
 
 	// Array information is baked into these types.
@@ -15924,7 +15920,7 @@ uint32_t CompilerMSL::get_declared_type_array_stride_msl(const SPIRType &type, b
 	for (uint32_t dim = 0; dim < dimensions; dim++)
 	{
 		uint32_t array_size = to_array_size_literal(type, dim);
-		value_size *= max(array_size, 1u);
+		value_size *= max<uint32_t>(array_size, 1u);
 	}
 
 	return value_size;
@@ -16035,7 +16031,7 @@ uint32_t CompilerMSL::get_declared_type_size_msl(const SPIRType &type, bool is_p
 		if (!type.array.empty())
 		{
 			uint32_t array_size = to_array_size_literal(type);
-			return get_declared_type_array_stride_msl(type, is_packed, row_major) * max(array_size, 1u);
+			return get_declared_type_array_stride_msl(type, is_packed, row_major) * max<uint32_t>(array_size, 1u);
 		}
 
 		if (type.basetype == SPIRType::Struct)
@@ -16709,7 +16705,7 @@ void CompilerMSL::cast_from_variable_load(uint32_t source_id, std::string &expr,
 	bool is_packed = has_extended_decoration(source_id, SPIRVCrossDecorationPhysicalTypePacked);
 	auto *source_expr = maybe_get<SPIRExpression>(source_id);
 	auto *var = maybe_get_backing_variable(source_id);
-	const SPIRType *var_type, *phys_type;
+	const SPIRType *var_type = nullptr, *phys_type = nullptr;
 	if (uint32_t phys_id = get_extended_decoration(source_id, SPIRVCrossDecorationPhysicalTypeID))
 		phys_type = &get<SPIRType>(phys_id);
 	else
@@ -16835,7 +16831,7 @@ void CompilerMSL::cast_to_variable_store(uint32_t target_id, std::string &expr, 
 	bool is_packed = has_extended_decoration(target_id, SPIRVCrossDecorationPhysicalTypePacked);
 	auto *target_expr = maybe_get<SPIRExpression>(target_id);
 	auto *var = maybe_get_backing_variable(target_id);
-	const SPIRType *var_type, *phys_type;
+	const SPIRType *var_type = nullptr, *phys_type = nullptr;
 	if (uint32_t phys_id = get_extended_decoration(target_id, SPIRVCrossDecorationPhysicalTypeID))
 		phys_type = &get<SPIRType>(phys_id);
 	else
@@ -16953,13 +16949,14 @@ bool CompilerMSL::descriptor_set_is_argument_buffer(uint32_t desc_set) const
 
 bool CompilerMSL::is_supported_argument_buffer_type(const SPIRType &type) const
 {
-	// Very specifically, image load-store in argument buffers are disallowed on MSL on iOS.
-	// But we won't know when the argument buffer is encoded whether this image will have
-	// a NonWritable decoration. So just use discrete arguments for all storage images
-	// on iOS.
-	bool is_storage_image = type.basetype == SPIRType::Image && type.image.sampled == 2;
-	bool is_supported_type = !msl_options.is_ios() || !is_storage_image;
-	return !type_is_msl_framebuffer_fetch(type) && is_supported_type;
+	// iOS Tier 1 argument buffers do not support writable images.
+	// When the argument buffer is encoded, we don't know whether this image will have a
+	// NonWritable decoration, so just use discrete arguments for all storage images on iOS.
+	bool is_supported_type = !(type.basetype == SPIRType::Image &&
+							   type.image.sampled == 2 &&
+							   msl_options.is_ios() &&
+							   msl_options.argument_buffers_tier <= Options::ArgumentBuffersTier::Tier1);
+	return is_supported_type && !type_is_msl_framebuffer_fetch(type);
 }
 
 void CompilerMSL::analyze_argument_buffers()

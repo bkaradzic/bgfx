@@ -110,7 +110,7 @@ public:
 	{
 		uint32_t shader_model = 30; // TODO: map ps_4_0_level_9_0,... somehow
 
-		// Allows the PointSize builtin, and ignores it, as PointSize is not supported in HLSL.
+		// Allows the PointSize builtin in SM 4.0+, and ignores it, as PointSize is not supported in SM 4+.
 		bool point_size_compat = false;
 
 		// Allows the PointCoord builtin, returns float2(0.5, 0.5), as PointCoord is not supported in HLSL.

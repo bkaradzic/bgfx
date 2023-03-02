@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -563,6 +563,10 @@ namespace bgfx { namespace hlsl
 			return false;
 		}
 
+		char profileAndType[8] = {};
+		profileAndType[0] = (_options.shaderType == 'f') ? 'p' : _options.shaderType;
+		bx::strCat(profileAndType, BX_COUNTOF(profileAndType), profile);
+
 		s_compiler = load();
 
 		bool result = false;
@@ -618,7 +622,7 @@ namespace bgfx { namespace hlsl
 			, NULL
 			, NULL
 			, "main"
-			, profile
+			, profileAndType
 			, flags
 			, 0
 			, &code
@@ -677,7 +681,7 @@ namespace bgfx { namespace hlsl
 		else
 		{
 			UniformNameList unusedUniforms;
-			if (!getReflectionDataD3D11(code, profile[0] == 'v', uniforms, numAttrs, attrs, size, unusedUniforms) )
+			if (!getReflectionDataD3D11(code, profileAndType[0] == 'v', uniforms, numAttrs, attrs, size, unusedUniforms) )
 			{
 				bx::printf("Error: Unable to get D3D11 reflection data.\n");
 				goto error;
@@ -736,7 +740,7 @@ namespace bgfx { namespace hlsl
 			uint16_t count = (uint16_t)uniforms.size();
 			bx::write(_writer, count, &err);
 
-			uint32_t fragmentBit = profile[0] == 'p' ? kUniformFragmentBit : 0;
+			uint32_t fragmentBit = profileAndType[0] == 'p' ? kUniformFragmentBit : 0;
 			for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
 			{
 				const Uniform& un = *it;

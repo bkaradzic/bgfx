@@ -33,7 +33,7 @@ namespace val {
 static const uint32_t kInvalidId = 0x400000;
 
 Function::Function(uint32_t function_id, uint32_t result_type_id,
-                   SpvFunctionControlMask function_control,
+                   spv::FunctionControlMask function_control,
                    uint32_t function_type_id)
     : id_(function_id),
       function_type_id_(function_type_id),
@@ -371,10 +371,10 @@ int Function::GetBlockDepth(BasicBlock* bb) {
   return block_depth_[bb];
 }
 
-void Function::RegisterExecutionModelLimitation(SpvExecutionModel model,
+void Function::RegisterExecutionModelLimitation(spv::ExecutionModel model,
                                                 const std::string& message) {
   execution_model_limitations_.push_back(
-      [model, message](SpvExecutionModel in_model, std::string* out_message) {
+      [model, message](spv::ExecutionModel in_model, std::string* out_message) {
         if (model != in_model) {
           if (out_message) {
             *out_message = message;
@@ -385,7 +385,7 @@ void Function::RegisterExecutionModelLimitation(SpvExecutionModel model,
       });
 }
 
-bool Function::IsCompatibleWithExecutionModel(SpvExecutionModel model,
+bool Function::IsCompatibleWithExecutionModel(spv::ExecutionModel model,
                                               std::string* reason) const {
   bool return_value = true;
   std::stringstream ss_reason;

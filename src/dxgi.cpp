@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -16,6 +16,33 @@
 #		include <windows.ui.xaml.media.dxinterop.h>
 #	endif // BX_PLATFORM_WINRT
 #endif // !BX_PLATFORM_WINDOWS
+
+#if BX_PLATFORM_WINRT
+// Copied from <microsoft.ui.xaml.media.dxinterop.h> from Windows App SDK
+// Put in a namespace to avoid conflict with <windows.ui.xaml.media.dxinterop.h>
+namespace WinUI3
+{
+	// https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/win32/microsoft.ui.xaml.media.dxinterop/nn-microsoft-ui-xaml-media-dxinterop-iswapchainpanelnative
+	MIDL_INTERFACE("63aad0b8-7c24-40ff-85a8-640d944cc325")
+	ISwapChainPanelNative : public IUnknown
+	{
+	public:
+		virtual HRESULT STDMETHODCALLTYPE SetSwapChain( 
+			/* [annotation][in] */ 
+			_In_  IDXGISwapChain *swapChain) = 0;
+	};
+
+	// https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/win32/microsoft.ui.xaml.media.dxinterop/nn-microsoft-ui-xaml-media-dxinterop-iswapchainbackgroundpanelnative
+	MIDL_INTERFACE("24d43d84-4246-4aa7-9774-8604cb73d90d")
+	ISwapChainBackgroundPanelNative : public IUnknown
+	{
+	public:
+		virtual HRESULT STDMETHODCALLTYPE SetSwapChain( 
+			/* [annotation][in] */ 
+			_In_  IDXGISwapChain *swapChain) = 0;
+	};
+}
+#endif // BX_PLATFORM_WINRT
 
 namespace bgfx
 {
@@ -111,6 +138,54 @@ namespace bgfx
 		IID_IDXGISwapChain3,
 	};
 
+#if BX_PLATFORM_WINRT
+	template<typename T>
+	static bool trySetSwapChain(IInspectable* nativeWindow, Dxgi::SwapChainI* swapChain, HRESULT* hr)
+	{
+		ISwapChainPanelNative* swapChainPanelNative;
+
+		if (FAILED(nativeWindow->QueryInterface(__uuidof(T), (void**)&swapChainPanelNative))
+		||  NULL == swapChainPanelNative)
+		{
+			return false;
+		}
+
+		*hr = swapChainPanelNative->SetSwapChain(swapChain);
+		if (SUCCEEDED(*hr))
+		{
+			DX_RELEASE_I(swapChainPanelNative);
+		}
+		else
+		{
+			DX_RELEASE(swapChainPanelNative, 0);
+		}
+
+		return true;
+	}
+
+	static HRESULT setSwapChain(IInspectable* nativeWindow, Dxgi::SwapChainI* swapChain)
+	{
+		HRESULT hr = S_OK;
+
+		if (trySetSwapChain<ISwapChainPanelNative>(nativeWindow, swapChain, &hr)
+		||  trySetSwapChain<ISwapChainBackgroundPanelNative>(nativeWindow, swapChain, &hr)
+		||  trySetSwapChain<WinUI3::ISwapChainPanelNative>(nativeWindow, swapChain, &hr)
+		||  trySetSwapChain<WinUI3::ISwapChainBackgroundPanelNative>(nativeWindow, swapChain, &hr))
+		{
+			if (FAILED(hr))
+			{
+				BX_TRACE("Failed to SetSwapChain, hr %x.");
+			}
+		}
+		else
+		{
+			BX_TRACE("No available interface on native window to SetSwapChain.");
+		}
+
+		return hr;
+	}
+#endif // BX_PLATFORM_WINRT
+
 	DxgiSwapChain::DxgiSwapChain()
 	{
 	}
@@ -183,7 +258,7 @@ namespace bgfx
 		hr = CreateDXGIFactory(IID_IDXGIFactory, (void**)&m_factory);
 #endif // BX_PLATFORM_*
 
-		if (FAILED(hr) )
+		if (FAILED(hr))
 		{
 			BX_TRACE("Init error: Unable to create DXGI factory.");
 			return false;
@@ -475,65 +550,17 @@ namespace bgfx
 				, NULL
 				, reinterpret_cast<IDXGISwapChain1**>(_swapChain)
 				);
-			if (FAILED(hr) )
+			if (FAILED(hr))
 			{
 				return hr;
 			}
 
 #	if BX_PLATFORM_WINRT
-			IInspectable *nativeWindow = reinterpret_cast<IInspectable*>(_scd.nwh);
-			ISwapChainPanelNative* swapChainPanelNative;
-
-			hr = nativeWindow->QueryInterface(
-				  __uuidof(ISwapChainPanelNative)
-				, (void**)&swapChainPanelNative
-				);
-
-			if (!FAILED(hr) )
+			IInspectable* nativeWindow = reinterpret_cast<IInspectable*>(_scd.nwh);
+			hr = setSwapChain(nativeWindow, *_swapChain);
+			if (FAILED(hr))
 			{
-				// Swap Chain Panel
-				if (NULL != swapChainPanelNative)
-				{
-					hr = swapChainPanelNative->SetSwapChain(*_swapChain);
-
-					if (FAILED(hr) )
-					{
-						DX_RELEASE(swapChainPanelNative, 0);
-						BX_TRACE("Failed to SetSwapChain, hr %x.");
-						return hr;
-					}
-
-					DX_RELEASE_I(swapChainPanelNative);
-				}
-			}
-			else
-			{
-				// Swap Chain Background Panel
-				ISwapChainBackgroundPanelNative* swapChainBackgroundPanelNative = NULL;
-
-				hr = nativeWindow->QueryInterface(
-					  __uuidof(ISwapChainBackgroundPanelNative)
-					, (void**)&swapChainBackgroundPanelNative
-					);
-
-				if (FAILED(hr) )
-				{
-					return hr;
-				}
-
-				if (NULL != swapChainBackgroundPanelNative)
-				{
-					hr = swapChainBackgroundPanelNative->SetSwapChain(*_swapChain);
-
-					if (FAILED(hr) )
-					{
-						DX_RELEASE(swapChainBackgroundPanelNative, 0);
-						BX_TRACE("Failed to SetSwapChain, hr %x.");
-						return hr;
-					}
-
-					DX_RELEASE_I(swapChainBackgroundPanelNative);
-				}
+				return hr;
 			}
 #	endif // BX_PLATFORM_WINRT
 		}
@@ -546,7 +573,7 @@ namespace bgfx
 			if (NULL != dxgiDevice1)
 			{
 				hr = dxgiDevice1->SetMaximumFrameLatency(_scd.maxFrameLatency);
-				if (FAILED(hr) )
+				if (FAILED(hr))
 				{
 					BX_TRACE("Failed to set maximum frame latency, hr 0x%08x", hr);
 					hr = S_OK;
@@ -555,7 +582,7 @@ namespace bgfx
 			}
 		}
 
-		if (FAILED(hr) )
+		if (FAILED(hr))
 		{
 			BX_TRACE("Failed to create swap chain.");
 			return hr;
@@ -602,64 +629,10 @@ namespace bgfx
 	}
 
 #if BX_PLATFORM_WINRT
-	HRESULT Dxgi::removeSwapChain(const SwapChainDesc& _scd, SwapChainI** _swapChain)
+	HRESULT Dxgi::removeSwapChain(const SwapChainDesc& _scd)
 	{
-		IInspectable *nativeWindow = reinterpret_cast<IInspectable*>(_scd.nwh);
-		ISwapChainPanelNative* swapChainPanelNative;
-
-		HRESULT hr = nativeWindow->QueryInterface(
-			  __uuidof(ISwapChainPanelNative)
-			, (void**)&swapChainPanelNative
-			);
-
-		if (SUCCEEDED(hr))
-		{
-			// Swap Chain Panel
-			if (NULL != swapChainPanelNative)
-			{
-				// Remove swap chain
-				hr = swapChainPanelNative->SetSwapChain(NULL);
-
-				if (FAILED(hr))
-				{
-					DX_RELEASE(swapChainPanelNative, 0);
-					BX_TRACE("Failed to SetSwapChain, hr %x.");
-					return hr;
-				}
-
-				DX_RELEASE_I(swapChainPanelNative);
-			}
-		}
-		else
-		{
-			// Swap Chain Background Panel
-			ISwapChainBackgroundPanelNative* swapChainBackgroundPanelNative = NULL;
-
-			hr = nativeWindow->QueryInterface(
-				__uuidof(ISwapChainBackgroundPanelNative)
-				, (void**)&swapChainBackgroundPanelNative
-			);
-
-			if (FAILED(hr))
-			{
-				return hr;
-			}
-
-			if (NULL != swapChainBackgroundPanelNative)
-			{
-				// Remove swap chain
-				hr = swapChainBackgroundPanelNative->SetSwapChain(NULL);
-
-				if (FAILED(hr))
-				{
-					DX_RELEASE(swapChainBackgroundPanelNative, 0);
-					BX_TRACE("Failed to SetSwapChain, hr %x.");
-					return hr;
-				}
-
-				DX_RELEASE_I(swapChainBackgroundPanelNative);
-			}
-		}
+		IInspectable* nativeWindow = reinterpret_cast<IInspectable*>(_scd.nwh);
+		return setSwapChain(nativeWindow, NULL);
 	}
 #endif
 

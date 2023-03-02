@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -90,7 +90,7 @@ namespace bgfx
 
 #if BX_PLATFORM_WINRT
 		///
-		HRESULT removeSwapChain(const SwapChainDesc& _scd, SwapChainI** _swapChain);
+		HRESULT removeSwapChain(const SwapChainDesc& _scd);
 #endif
 
 		///

@@ -1,7 +1,7 @@
 /**
  * meshoptimizer - version 0.18
  *
- * Copyright (C) 2016-2022, by Arseny Kapoulkine (arseny.kapoulkine@gmail.com)
+ * Copyright (C) 2016-2023, by Arseny Kapoulkine (arseny.kapoulkine@gmail.com)
  * Report bugs and download new versions at https://github.com/zeux/meshoptimizer
  *
  * This library is distributed under the MIT License. See notice at the end of this file.
@@ -501,7 +501,8 @@ struct meshopt_Bounds
  *   dot(center - camera_position, cone_axis) >= cone_cutoff * length(center - camera_position) + radius
  *
  * The formula that uses the apex is slightly more accurate but needs the apex; if you are already using bounding sphere
- * to do frustum/occlusion culling, the formula that doesn't use the apex may be preferable.
+ * to do frustum/occlusion culling, the formula that doesn't use the apex may be preferable (for derivation see
+ * Real-Time Rendering 4th Edition, section 19.3).
  *
  * vertex_positions should have float3 position in the first 12 bytes of each vertex
  * index_count/3 should be less than or equal to 512 (the function assumes clusters of limited size)
@@ -1044,7 +1045,7 @@ inline void meshopt_spatialSortTriangles(T* destination, const T* indices, size_
 #endif
 
 /**
- * Copyright (c) 2016-2022 Arseny Kapoulkine
+ * Copyright (c) 2016-2023 Arseny Kapoulkine
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation

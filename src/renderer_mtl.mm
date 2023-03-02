@@ -1291,38 +1291,40 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 				renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionLoad;
 				renderPassDescriptor.colorAttachments[0].storeAction =
-				NULL != renderPassDescriptor.colorAttachments[0].resolveTexture
-				? MTLStoreActionMultisampleResolve
-				: MTLStoreActionStore
-				;
+					NULL != renderPassDescriptor.colorAttachments[0].resolveTexture
+					? MTLStoreActionMultisampleResolve
+					: MTLStoreActionStore
+					;
 
 				RenderCommandEncoder rce = m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);
 				m_renderCommandEncoder = rce;
 				m_renderCommandEncoderFrameBufferHandle = fbh;
 				MTL_RELEASE(renderPassDescriptor);
 
-				MTLViewport viewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f};
+				MTLViewport viewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f };
 				rce.setViewport(viewport);
-				MTLScissorRect rc = { 0,0,width,height };
+
+				MTLScissorRect rc = { 0, 0, width, height };
 				rce.setScissorRect(rc);
+
 				rce.setCullMode(MTLCullModeNone);
 
 				uint64_t state = 0
-				| BGFX_STATE_WRITE_RGB
-				| BGFX_STATE_WRITE_A
-				| BGFX_STATE_DEPTH_TEST_ALWAYS
-				;
+					| BGFX_STATE_WRITE_RGB
+					| BGFX_STATE_WRITE_A
+					| BGFX_STATE_DEPTH_TEST_ALWAYS
+					;
 
 				setDepthStencilState(state);
 
 				PipelineStateMtl* pso = getPipelineState(
-														 state
-														 , 0
-														 , fbh
-														 , _blitter.m_vb->layoutHandle
-														 , _blitter.m_program
-														 , 0
-														 );
+					  state
+					, 0
+					, fbh
+					, _blitter.m_vb->layoutHandle
+					, _blitter.m_program
+					, 0
+					);
 				rce.setRenderPipelineState(pso->m_rps);
 
 				const uint32_t vertexUniformBufferSize   = pso->m_vshConstantBufferSize;
@@ -1909,6 +1911,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			uint32_t hash = murmur.end();
 
 			DepthStencilState dss = m_depthStencilStateCache.find(hash);
+
 			if (NULL == dss)
 			{
 				DepthStencilDescriptor desc = m_depthStencilDescriptor;

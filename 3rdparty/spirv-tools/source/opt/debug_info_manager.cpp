@@ -22,32 +22,31 @@
 // Constants for OpenCL.DebugInfo.100 & NonSemantic.Shader.DebugInfo.100
 // extension instructions.
 
-static const uint32_t kOpLineOperandLineIndex = 1;
-static const uint32_t kLineOperandIndexDebugFunction = 7;
-static const uint32_t kLineOperandIndexDebugLexicalBlock = 5;
-static const uint32_t kLineOperandIndexDebugLine = 5;
-static const uint32_t kDebugFunctionOperandFunctionIndex = 13;
-static const uint32_t kDebugFunctionDefinitionOperandDebugFunctionIndex = 4;
-static const uint32_t kDebugFunctionDefinitionOperandOpFunctionIndex = 5;
-static const uint32_t kDebugFunctionOperandParentIndex = 9;
-static const uint32_t kDebugTypeCompositeOperandParentIndex = 9;
-static const uint32_t kDebugLexicalBlockOperandParentIndex = 7;
-static const uint32_t kDebugInlinedAtOperandInlinedIndex = 6;
-static const uint32_t kDebugExpressOperandOperationIndex = 4;
-static const uint32_t kDebugDeclareOperandLocalVariableIndex = 4;
-static const uint32_t kDebugDeclareOperandVariableIndex = 5;
-static const uint32_t kDebugValueOperandExpressionIndex = 6;
-static const uint32_t kDebugOperationOperandOperationIndex = 4;
-static const uint32_t kOpVariableOperandStorageClassIndex = 2;
-static const uint32_t kDebugLocalVariableOperandParentIndex = 9;
-static const uint32_t kExtInstInstructionInIdx = 1;
-static const uint32_t kDebugGlobalVariableOperandFlagsIndex = 12;
-static const uint32_t kDebugLocalVariableOperandFlagsIndex = 10;
-
 namespace spvtools {
 namespace opt {
 namespace analysis {
 namespace {
+constexpr uint32_t kOpLineOperandLineIndex = 1;
+constexpr uint32_t kLineOperandIndexDebugFunction = 7;
+constexpr uint32_t kLineOperandIndexDebugLexicalBlock = 5;
+constexpr uint32_t kLineOperandIndexDebugLine = 5;
+constexpr uint32_t kDebugFunctionOperandFunctionIndex = 13;
+constexpr uint32_t kDebugFunctionDefinitionOperandDebugFunctionIndex = 4;
+constexpr uint32_t kDebugFunctionDefinitionOperandOpFunctionIndex = 5;
+constexpr uint32_t kDebugFunctionOperandParentIndex = 9;
+constexpr uint32_t kDebugTypeCompositeOperandParentIndex = 9;
+constexpr uint32_t kDebugLexicalBlockOperandParentIndex = 7;
+constexpr uint32_t kDebugInlinedAtOperandInlinedIndex = 6;
+constexpr uint32_t kDebugExpressOperandOperationIndex = 4;
+constexpr uint32_t kDebugDeclareOperandLocalVariableIndex = 4;
+constexpr uint32_t kDebugDeclareOperandVariableIndex = 5;
+constexpr uint32_t kDebugValueOperandExpressionIndex = 6;
+constexpr uint32_t kDebugOperationOperandOperationIndex = 4;
+constexpr uint32_t kOpVariableOperandStorageClassIndex = 2;
+constexpr uint32_t kDebugLocalVariableOperandParentIndex = 9;
+constexpr uint32_t kExtInstInstructionInIdx = 1;
+constexpr uint32_t kDebugGlobalVariableOperandFlagsIndex = 12;
+constexpr uint32_t kDebugLocalVariableOperandFlagsIndex = 10;
 
 void SetInlinedOperand(Instruction* dbg_inlined_at, uint32_t inlined_operand) {
   assert(dbg_inlined_at);
@@ -156,7 +155,8 @@ void DebugInfoManager::RegisterDbgDeclare(uint32_t var_id,
 uint32_t AddNewConstInGlobals(IRContext* context, uint32_t const_value) {
   uint32_t id = context->TakeNextId();
   std::unique_ptr<Instruction> new_const(new Instruction(
-      context, SpvOpConstant, context->get_type_mgr()->GetUIntTypeId(), id,
+      context, spv::Op::OpConstant, context->get_type_mgr()->GetUIntTypeId(),
+      id,
       {
           {spv_operand_type_t::SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER,
            {const_value}},
@@ -212,7 +212,7 @@ uint32_t DebugInfoManager::CreateDebugInlinedAt(const Instruction* line,
         break;
     }
   } else {
-    if (line->opcode() == SpvOpLine) {
+    if (line->opcode() == spv::Op::OpLine) {
       line_number = line->GetSingleWordOperand(kOpLineOperandLineIndex);
     } else if (line->GetShader100DebugOpcode() ==
                NonSemanticShaderDebugInfo100DebugLine) {
@@ -230,18 +230,19 @@ uint32_t DebugInfoManager::CreateDebugInlinedAt(const Instruction* line,
     // constants that may be generated here is likely not significant
     // and will likely be cleaned up in later passes.
     if (line_number_type == spv_operand_type_t::SPV_OPERAND_TYPE_ID &&
-        line->opcode() == SpvOpLine) {
+        line->opcode() == spv::Op::OpLine) {
       if (!context()->AreAnalysesValid(IRContext::Analysis::kAnalysisDefUse) ||
           !context()->AreAnalysesValid(IRContext::Analysis::kAnalysisConstants))
         line_number = AddNewConstInGlobals(context(), line_number);
       else
-        line_number = context()->get_constant_mgr()->GetUIntConst(line_number);
+        line_number =
+            context()->get_constant_mgr()->GetUIntConstId(line_number);
     }
   }
 
   uint32_t result_id = context()->TakeNextId();
   std::unique_ptr<Instruction> inlined_at(new Instruction(
-      context(), SpvOpExtInst, context()->get_type_mgr()->GetVoidTypeId(),
+      context(), spv::Op::OpExtInst, context()->get_type_mgr()->GetVoidTypeId(),
       result_id,
       {
           {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {setId}},
@@ -334,8 +335,8 @@ Instruction* DebugInfoManager::GetDebugOperationWithDeref() {
 
   if (context()->get_feature_mgr()->GetExtInstImportId_OpenCL100DebugInfo()) {
     deref_operation = std::unique_ptr<Instruction>(new Instruction(
-        context(), SpvOpExtInst, context()->get_type_mgr()->GetVoidTypeId(),
-        result_id,
+        context(), spv::Op::OpExtInst,
+        context()->get_type_mgr()->GetVoidTypeId(), result_id,
         {
             {SPV_OPERAND_TYPE_ID, {GetDbgSetImportId()}},
             {SPV_OPERAND_TYPE_EXTENSION_INSTRUCTION_NUMBER,
@@ -344,11 +345,11 @@ Instruction* DebugInfoManager::GetDebugOperationWithDeref() {
              {static_cast<uint32_t>(OpenCLDebugInfo100Deref)}},
         }));
   } else {
-    uint32_t deref_id = context()->get_constant_mgr()->GetUIntConst(
+    uint32_t deref_id = context()->get_constant_mgr()->GetUIntConstId(
         NonSemanticShaderDebugInfo100Deref);
 
     deref_operation = std::unique_ptr<Instruction>(
-        new Instruction(context(), SpvOpExtInst,
+        new Instruction(context(), spv::Op::OpExtInst,
                         context()->get_type_mgr()->GetVoidTypeId(), result_id,
                         {
                             {SPV_OPERAND_TYPE_ID, {GetDbgSetImportId()}},
@@ -390,7 +391,7 @@ Instruction* DebugInfoManager::GetDebugInfoNone() {
 
   uint32_t result_id = context()->TakeNextId();
   std::unique_ptr<Instruction> dbg_info_none_inst(new Instruction(
-      context(), SpvOpExtInst, context()->get_type_mgr()->GetVoidTypeId(),
+      context(), spv::Op::OpExtInst, context()->get_type_mgr()->GetVoidTypeId(),
       result_id,
       {
           {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {GetDbgSetImportId()}},
@@ -414,7 +415,7 @@ Instruction* DebugInfoManager::GetEmptyDebugExpression() {
 
   uint32_t result_id = context()->TakeNextId();
   std::unique_ptr<Instruction> empty_debug_expr(new Instruction(
-      context(), SpvOpExtInst, context()->get_type_mgr()->GetVoidTypeId(),
+      context(), spv::Op::OpExtInst, context()->get_type_mgr()->GetVoidTypeId(),
       result_id,
       {
           {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {GetDbgSetImportId()}},
@@ -527,7 +528,7 @@ bool DebugInfoManager::IsDeclareVisibleToInstr(Instruction* dbg_declare,
   assert(scope != nullptr);
 
   std::vector<uint32_t> scope_ids;
-  if (scope->opcode() == SpvOpPhi) {
+  if (scope->opcode() == spv::Op::OpPhi) {
     scope_ids.push_back(scope->GetDebugScope().GetLexicalScope());
     for (uint32_t i = 0; i < scope->NumInOperands(); i += 2) {
       auto* value = context()->get_def_use_mgr()->GetDef(
@@ -571,8 +572,8 @@ bool DebugInfoManager::AddDebugValueForVariable(Instruction* scope_and_line,
     // Avoid inserting the new DebugValue between OpPhi or OpVariable
     // instructions.
     Instruction* insert_before = insert_pos->NextNode();
-    while (insert_before->opcode() == SpvOpPhi ||
-           insert_before->opcode() == SpvOpVariable) {
+    while (insert_before->opcode() == spv::Op::OpPhi ||
+           insert_before->opcode() == spv::Op::OpVariable) {
       insert_before = insert_before->NextNode();
     }
     modified |= AddDebugValueForDecl(dbg_decl_or_val, value_id, insert_before,
@@ -653,9 +654,10 @@ uint32_t DebugInfoManager::GetVariableIdOfDebugValueUsedForDeclare(
   }
 
   auto* var = context()->get_def_use_mgr()->GetDef(var_id);
-  if (var->opcode() == SpvOpVariable &&
-      SpvStorageClass(var->GetSingleWordOperand(
-          kOpVariableOperandStorageClassIndex)) == SpvStorageClassFunction) {
+  if (var->opcode() == spv::Op::OpVariable &&
+      spv::StorageClass(
+          var->GetSingleWordOperand(kOpVariableOperandStorageClassIndex)) ==
+          spv::StorageClass::Function) {
     return var_id;
   }
   return 0;
@@ -762,8 +764,8 @@ void DebugInfoManager::ConvertDebugGlobalToLocalVariable(
       CommonDebugInfoDebugGlobalVariable) {
     return;
   }
-  assert(local_var->opcode() == SpvOpVariable ||
-         local_var->opcode() == SpvOpFunctionParameter);
+  assert(local_var->opcode() == spv::Op::OpVariable ||
+         local_var->opcode() == spv::Op::OpFunctionParameter);
 
   // Convert |dbg_global_var| to DebugLocalVariable
   dbg_global_var->SetInOperand(kExtInstInstructionInIdx,
@@ -780,7 +782,7 @@ void DebugInfoManager::ConvertDebugGlobalToLocalVariable(
 
   // Create a DebugDeclare
   std::unique_ptr<Instruction> new_dbg_decl(new Instruction(
-      context(), SpvOpExtInst, context()->get_type_mgr()->GetVoidTypeId(),
+      context(), spv::Op::OpExtInst, context()->get_type_mgr()->GetVoidTypeId(),
       context()->TakeNextId(),
       {
           {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {GetDbgSetImportId()}},
@@ -794,7 +796,7 @@ void DebugInfoManager::ConvertDebugGlobalToLocalVariable(
       }));
   // Must insert after all OpVariables in block
   Instruction* insert_before = local_var;
-  while (insert_before->opcode() == SpvOpVariable)
+  while (insert_before->opcode() == spv::Op::OpVariable)
     insert_before = insert_before->NextNode();
   auto* added_dbg_decl = insert_before->InsertBefore(std::move(new_dbg_decl));
   if (context()->AreAnalysesValid(IRContext::Analysis::kAnalysisDefUse))

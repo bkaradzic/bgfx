@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -42,6 +42,7 @@ struct OPENFILENAMEA
 };
 
 extern "C" bool     __stdcall GetOpenFileNameA(OPENFILENAMEA* _ofn);
+extern "C" bool     __stdcall GetSaveFileNameA(OPENFILENAMEA * _ofn);
 extern "C" void*    __stdcall GetModuleHandleA(const char* _moduleName);
 extern "C" uint32_t __stdcall GetModuleFileNameA(void* _module, char* _outFilePath, uint32_t _size);
 extern "C" void*    __stdcall ShellExecuteA(void* _hwnd, void* _operation, void* _file, void* _parameters, void* _directory, int32_t _showCmd);
@@ -104,6 +105,17 @@ private:
 	char m_ch;
 };
 
+#if BX_PLATFORM_WINDOWS
+extern "C" typedef bool(__stdcall* OPENFILENAMEFUNCTION)(OPENFILENAMEA* _ofn);
+static const struct { OPENFILENAMEFUNCTION m_function; uint32_t m_flags; }
+s_getFileNameA[] =
+{
+	{ GetOpenFileNameA, /* OFN_EXPLORER */ 0x00080000 | /* OFN_DONTADDTORECENT */ 0x02000000 | /* OFN_FILEMUSTEXIST */ 0x00001000 },
+	{ GetSaveFileNameA, /* OFN_EXPLORER */ 0x00080000 | /* OFN_DONTADDTORECENT */ 0x02000000                                      },
+};
+BX_STATIC_ASSERT(BX_COUNTOF(s_getFileNameA) == FileSelectionDialogType::Count);
+#endif
+
 #if !BX_PLATFORM_OSX
 bool openFileSelectionDialog(
 	  bx::FilePath& _inOutFilePath
@@ -156,7 +168,8 @@ bool openFileSelectionDialog(
 		}
 	}
 #elif BX_PLATFORM_WINDOWS
-	BX_UNUSED(_type);
+	if (_type < 0 || _type >= BX_COUNTOF(s_getFileNameA))
+		return false;
 
 	char out[bx::kMaxFilePath] = { '\0' };
 
@@ -166,11 +179,7 @@ bool openFileSelectionDialog(
 	ofn.initialDir = _inOutFilePath.getCPtr();
 	ofn.file       = out;
 	ofn.maxFile    = sizeof(out);
-	ofn.flags      = 0
-		| /* OFN_EXPLORER        */ 0x00080000
-		| /* OFN_FILEMUSTEXIST   */ 0x00001000
-		| /* OFN_DONTADDTORECENT */ 0x02000000
-		;
+	ofn.flags      = s_getFileNameA[_type].m_flags;
 
 	char tmp[4096];
 	bx::StaticMemoryBlockWriter writer(tmp, sizeof(tmp) );
@@ -220,7 +229,7 @@ bool openFileSelectionDialog(
 	bx::write(&writer, '\0', &err);
 
 	if (err.isOk()
-	&&  GetOpenFileNameA(&ofn) )
+	&& s_getFileNameA[_type].m_function(&ofn))
 	{
 		_inOutFilePath.set(ofn.file);
 		return true;

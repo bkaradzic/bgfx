@@ -1123,6 +1123,7 @@ static void cgltf_write_light(cgltf_write_context* context, const cgltf_light* l
 		cgltf_write_floatprop(context, "outerConeAngle", light->spot_outer_cone_angle, 3.14159265358979323846f/4.0f);
 		cgltf_write_line(context, "}");
 	}
+	cgltf_write_extras( context, &light->extras );
 	cgltf_write_line(context, "}");
 }
 

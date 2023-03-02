@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -1631,7 +1631,7 @@ namespace bgfx { namespace d3d11
 				DX_RELEASE(m_msaaRt, 0);
 #if BX_PLATFORM_WINRT
 				// Remove swap chain from SwapChainPanel (nwh) if applicable
-				m_dxgi.removeSwapChain(m_scd, &m_swapChain);
+				m_dxgi.removeSwapChain(m_scd);
 #endif
 				DX_RELEASE(m_swapChain, 0);
 				DX_RELEASE(m_deviceCtx, 0);
@@ -1722,7 +1722,7 @@ namespace bgfx { namespace d3d11
 			DX_RELEASE(m_msaaRt, 0);
 #if BX_PLATFORM_WINRT
 			// Remove swap chain from SwapChainPanel (nwh) if applicable
-			m_dxgi.removeSwapChain(m_scd, &m_swapChain);
+			m_dxgi.removeSwapChain(m_scd);
 #endif
 			DX_RELEASE(m_swapChain, 0);
 			DX_RELEASE(m_deviceCtx, 0);
@@ -2410,7 +2410,7 @@ namespace bgfx { namespace d3d11
 				&& (m_scd.nwh != g_platformData.nwh || m_scd.ndt != g_platformData.ndt))
 			{
 				// Remove swap chain from SwapChainPanel (nwh) if applicable
-				m_dxgi.removeSwapChain(m_scd, &m_swapChain);
+				m_dxgi.removeSwapChain(m_scd);
 				// Update nwh after removing swap chain
 				m_scd.nwh = g_platformData.nwh;
 				m_scd.ndt = g_platformData.ndt;
@@ -2525,7 +2525,7 @@ namespace bgfx { namespace d3d11
 
 #if BX_PLATFORM_WINRT
 						// Remove swap chain from SwapChainPanel (nwh) if applicable
-						m_dxgi.removeSwapChain(m_scd, &m_swapChain);
+						m_dxgi.removeSwapChain(m_scd);
 #endif
 						DX_RELEASE(m_swapChain, 0);
 						HRESULT hr = m_dxgi.createSwapChain(m_device
@@ -3269,22 +3269,10 @@ namespace bgfx { namespace d3d11
 					break;
 
 				case TextureD3D11::TextureCube:
-					if (_compute)
-					{
-						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
-						desc.Texture2DArray.MostDetailedMip = _mip;
-						desc.Texture2DArray.MipLevels       = 1;
-						desc.Texture2DArray.FirstArraySlice = 0;
-						desc.Texture2DArray.ArraySize       = 6;
-					}
-					else
-					{
-						desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
-						desc.TextureCube.MostDetailedMip = _mip;
-						desc.TextureCube.MipLevels       = 1;
-					}
+					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+					desc.TextureCube.MostDetailedMip = _mip;
+					desc.TextureCube.MipLevels       = 1;
 					break;
-
 				case TextureD3D11::Texture3D:
 					desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
 					desc.Texture3D.MostDetailedMip = _mip;

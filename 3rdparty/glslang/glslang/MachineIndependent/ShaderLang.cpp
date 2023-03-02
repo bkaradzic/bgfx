@@ -1357,7 +1357,7 @@ int ShInitialize()
 ShHandle ShConstructCompiler(const EShLanguage language, int debugOptions)
 {
     if (!InitThread())
-        return 0;
+        return nullptr;
 
     TShHandleBase* base = static_cast<TShHandleBase*>(ConstructCompiler(language, debugOptions));
 
@@ -1367,7 +1367,7 @@ ShHandle ShConstructCompiler(const EShLanguage language, int debugOptions)
 ShHandle ShConstructLinker(const EShExecutable executable, int debugOptions)
 {
     if (!InitThread())
-        return 0;
+        return nullptr;
 
     TShHandleBase* base = static_cast<TShHandleBase*>(ConstructLinker(executable, debugOptions));
 
@@ -1377,7 +1377,7 @@ ShHandle ShConstructLinker(const EShExecutable executable, int debugOptions)
 ShHandle ShConstructUniformMap()
 {
     if (!InitThread())
-        return 0;
+        return nullptr;
 
     TShHandleBase* base = static_cast<TShHandleBase*>(ConstructUniformMap());
 
@@ -1386,7 +1386,7 @@ ShHandle ShConstructUniformMap()
 
 void ShDestruct(ShHandle handle)
 {
-    if (handle == 0)
+    if (handle == nullptr)
         return;
 
     TShHandleBase* base = static_cast<TShHandleBase*>(handle);
@@ -1419,7 +1419,7 @@ int ShFinalize()
                 for (int source = 0; source < SourceCount; ++source) {
                     for (int stage = 0; stage < EShLangCount; ++stage) {
                         delete SharedSymbolTables[version][spvVersion][p][source][stage];
-                        SharedSymbolTables[version][spvVersion][p][source][stage] = 0;
+                        SharedSymbolTables[version][spvVersion][p][source][stage] = nullptr;
                     }
                 }
             }
@@ -1432,7 +1432,7 @@ int ShFinalize()
                 for (int source = 0; source < SourceCount; ++source) {
                     for (int pc = 0; pc < EPcCount; ++pc) {
                         delete CommonSymbolTable[version][spvVersion][p][source][pc];
-                        CommonSymbolTable[version][spvVersion][p][source][pc] = 0;
+                        CommonSymbolTable[version][spvVersion][p][source][pc] = nullptr;
                     }
                 }
             }
@@ -1475,12 +1475,12 @@ int ShCompile(
     )
 {
     // Map the generic handle to the C++ object
-    if (handle == 0)
+    if (handle == nullptr)
         return 0;
 
     TShHandleBase* base = reinterpret_cast<TShHandleBase*>(handle);
     TCompiler* compiler = base->getAsCompiler();
-    if (compiler == 0)
+    if (compiler == nullptr)
         return 0;
 
     SetThreadPoolAllocator(compiler->getPool());
@@ -1520,13 +1520,13 @@ int ShLinkExt(
     const ShHandle compHandles[],
     const int numHandles)
 {
-    if (linkHandle == 0 || numHandles == 0)
+    if (linkHandle == nullptr || numHandles == 0)
         return 0;
 
     THandleList cObjects;
 
     for (int i = 0; i < numHandles; ++i) {
-        if (compHandles[i] == 0)
+        if (compHandles[i] == nullptr)
             return 0;
         TShHandleBase* base = reinterpret_cast<TShHandleBase*>(compHandles[i]);
         if (base->getAsLinker()) {
@@ -1535,7 +1535,7 @@ int ShLinkExt(
         if (base->getAsCompiler())
             cObjects.push_back(base->getAsCompiler());
 
-        if (cObjects[i] == 0)
+        if (cObjects[i] == nullptr)
             return 0;
     }
 
@@ -1544,7 +1544,7 @@ int ShLinkExt(
 
     SetThreadPoolAllocator(linker->getPool());
 
-    if (linker == 0)
+    if (linker == nullptr)
         return 0;
 
     linker->infoSink.info.erase();
@@ -1569,7 +1569,7 @@ int ShLinkExt(
 //
 void ShSetEncryptionMethod(ShHandle handle)
 {
-    if (handle == 0)
+    if (handle == nullptr)
         return;
 }
 
@@ -1578,8 +1578,8 @@ void ShSetEncryptionMethod(ShHandle handle)
 //
 const char* ShGetInfoLog(const ShHandle handle)
 {
-    if (handle == 0)
-        return 0;
+    if (handle == nullptr)
+        return nullptr;
 
     TShHandleBase* base = static_cast<TShHandleBase*>(handle);
     TInfoSink* infoSink;
@@ -1589,7 +1589,7 @@ const char* ShGetInfoLog(const ShHandle handle)
     else if (base->getAsLinker())
         infoSink = &(base->getAsLinker()->getInfoSink());
     else
-        return 0;
+        return nullptr;
 
     infoSink->info << infoSink->debug.c_str();
     return infoSink->info.c_str();
@@ -1601,14 +1601,14 @@ const char* ShGetInfoLog(const ShHandle handle)
 //
 const void* ShGetExecutable(const ShHandle handle)
 {
-    if (handle == 0)
-        return 0;
+    if (handle == nullptr)
+        return nullptr;
 
     TShHandleBase* base = reinterpret_cast<TShHandleBase*>(handle);
 
     TLinker* linker = static_cast<TLinker*>(base->getAsLinker());
-    if (linker == 0)
-        return 0;
+    if (linker == nullptr)
+        return nullptr;
 
     return linker->getObjectCode();
 }
@@ -1623,13 +1623,13 @@ const void* ShGetExecutable(const ShHandle handle)
 //
 int ShSetVirtualAttributeBindings(const ShHandle handle, const ShBindingTable* table)
 {
-    if (handle == 0)
+    if (handle == nullptr)
         return 0;
 
     TShHandleBase* base = reinterpret_cast<TShHandleBase*>(handle);
     TLinker* linker = static_cast<TLinker*>(base->getAsLinker());
 
-    if (linker == 0)
+    if (linker == nullptr)
         return 0;
 
     linker->setAppAttributeBindings(table);
@@ -1642,13 +1642,13 @@ int ShSetVirtualAttributeBindings(const ShHandle handle, const ShBindingTable* t
 //
 int ShSetFixedAttributeBindings(const ShHandle handle, const ShBindingTable* table)
 {
-    if (handle == 0)
+    if (handle == nullptr)
         return 0;
 
     TShHandleBase* base = reinterpret_cast<TShHandleBase*>(handle);
     TLinker* linker = static_cast<TLinker*>(base->getAsLinker());
 
-    if (linker == 0)
+    if (linker == nullptr)
         return 0;
 
     linker->setFixedAttributeBindings(table);
@@ -1660,12 +1660,12 @@ int ShSetFixedAttributeBindings(const ShHandle handle, const ShBindingTable* tab
 //
 int ShExcludeAttributes(const ShHandle handle, int *attributes, int count)
 {
-    if (handle == 0)
+    if (handle == nullptr)
         return 0;
 
     TShHandleBase* base = reinterpret_cast<TShHandleBase*>(handle);
     TLinker* linker = static_cast<TLinker*>(base->getAsLinker());
-    if (linker == 0)
+    if (linker == nullptr)
         return 0;
 
     linker->setExcludedAttributes(attributes, count);
@@ -1681,12 +1681,12 @@ int ShExcludeAttributes(const ShHandle handle, int *attributes, int count)
 //
 int ShGetUniformLocation(const ShHandle handle, const char* name)
 {
-    if (handle == 0)
+    if (handle == nullptr)
         return -1;
 
     TShHandleBase* base = reinterpret_cast<TShHandleBase*>(handle);
     TUniformMap* uniformMap= base->getAsUniformMap();
-    if (uniformMap == 0)
+    if (uniformMap == nullptr)
         return -1;
 
     return uniformMap->getLocation(name);
@@ -1954,14 +1954,14 @@ const char* TShader::getInfoDebugLog()
 
 TProgram::TProgram() :
 #if !defined(GLSLANG_WEB)
-    reflection(0),
+    reflection(nullptr),
 #endif
     linked(false)
 {
     pool = new TPoolAllocator;
     infoSink = new TInfoSink;
     for (int s = 0; s < EShLangCount; ++s) {
-        intermediate[s] = 0;
+        intermediate[s] = nullptr;
         newedIntermediate[s] = false;
     }
 }

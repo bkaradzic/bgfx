@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2022 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2023 Branimir Karadzic. All rights reserved.
 -- License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 --
 
@@ -29,6 +29,8 @@ project "spirv-opt"
 		path.join(SPIRV_TOOLS, "source/opt/**.h"),
 		path.join(SPIRV_TOOLS, "source/reduce/**.cpp"),
 		path.join(SPIRV_TOOLS, "source/reduce/**.h"),
+		path.join(SPIRV_TOOLS, "source/val/**.cpp"),
+		path.join(SPIRV_TOOLS, "source/val/**.h"),
 
 		-- libspirv
 		path.join(SPIRV_TOOLS, "source/assembly_grammar.cpp"),
@@ -89,51 +91,6 @@ project "spirv-opt"
 		path.join(SPIRV_TOOLS, "source/util/string_utils.cpp"),
 		path.join(SPIRV_TOOLS, "source/util/string_utils.h"),
 		path.join(SPIRV_TOOLS, "source/util/timer.h"),
-		path.join(SPIRV_TOOLS, "source/val/basic_block.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/construct.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/decoration.h"),
-		path.join(SPIRV_TOOLS, "source/val/function.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/instruction.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate.h"),
-		path.join(SPIRV_TOOLS, "source/val/validate_adjacency.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_annotation.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_arithmetics.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_atomics.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_barriers.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_bitwise.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_builtins.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_capability.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_cfg.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_composites.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_constants.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_conversion.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_debug.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_decorations.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_derivatives.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_execution_limitations.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_extensions.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_function.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_id.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_image.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_instruction.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_interfaces.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_layout.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_literals.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_logicals.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_memory.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_memory_semantics.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_mesh_shading.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_misc.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_mode_setting.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_non_uniform.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_primitives.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_ray_query.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_ray_tracing.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_scopes.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_small_type_uses.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_type.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validation_state.cpp"),
 	}
 
 	configuration { "vs*" }

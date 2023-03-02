@@ -323,12 +323,12 @@ spv_result_t AssemblyContext::recordTypeDefinition(
                         << " has already been used to generate a type";
   }
 
-  if (pInst->opcode == SpvOpTypeInt) {
+  if (pInst->opcode == spv::Op::OpTypeInt) {
     if (pInst->words.size() != 4)
       return diagnostic() << "Invalid OpTypeInt instruction";
     types_[value] = {pInst->words[2], pInst->words[3] != 0,
                      IdTypeClass::kScalarIntegerType};
-  } else if (pInst->opcode == SpvOpTypeFloat) {
+  } else if (pInst->opcode == spv::Op::OpTypeFloat) {
     if (pInst->words.size() != 3)
       return diagnostic() << "Invalid OpTypeFloat instruction";
     types_[value] = {pInst->words[2], false, IdTypeClass::kScalarFloatType};

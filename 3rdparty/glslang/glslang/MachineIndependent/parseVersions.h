@@ -65,7 +65,7 @@ public:
         infoSink(infoSink), version(version), 
         language(language),
         spvVersion(spvVersion), 
-        intermediate(interm), messages(messages), numErrors(0), currentScanner(0) { }
+        intermediate(interm), messages(messages), numErrors(0), currentScanner(nullptr) { }
     virtual ~TParseVersions() { }
     void requireStage(const TSourceLoc&, EShLanguageMask, const char* featureDesc);
     void requireStage(const TSourceLoc&, EShLanguage, const char* featureDesc);
@@ -226,6 +226,7 @@ public:
 protected:
     TMap<TString, TExtensionBehavior> extensionBehavior;    // for each extension string, what its current behavior is
     TMap<TString, unsigned int> extensionMinSpv;            // for each extension string, store minimum spirv required
+    TVector<TString> spvUnsupportedExt;                     // for extensions reserved for spv usage.
     EShMessages messages;        // errors/warnings/rule-sets
     int numErrors;               // number of compile-time errors encountered
     TInputScanner* currentScanner;

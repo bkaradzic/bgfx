@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -3824,18 +3824,6 @@ namespace bgfx { namespace gl
 				m_needPresent |= true;
 
 				m_currentFbo = m_msaaBackBufferFbo;
-
-				if (m_srgbWriteControlSupport)
-				{
-					if (0 != (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER) )
-					{
-						GL_CHECK(glEnable(GL_FRAMEBUFFER_SRGB) );
-					}
-					else
-					{
-						GL_CHECK(glDisable(GL_FRAMEBUFFER_SRGB) );
-					}
-				}
 			}
 			else
 			{
@@ -3853,6 +3841,26 @@ namespace bgfx { namespace gl
 				{
 					m_glctx.makeCurrent(NULL);
 					m_currentFbo = frameBuffer.m_fbo[0];
+				}
+			}
+
+			if (m_srgbWriteControlSupport)
+			{
+				if (0 == m_currentFbo)
+				{
+					if (0 != (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER) )
+					{
+						GL_CHECK(glEnable(GL_FRAMEBUFFER_SRGB) );
+					}
+					else
+					{
+						GL_CHECK(glDisable(GL_FRAMEBUFFER_SRGB) );
+					}
+				}
+				else
+				{
+					// actual sRGB write/blending determined by FBO's color attachments format
+					GL_CHECK(glEnable(GL_FRAMEBUFFER_SRGB) );
 				}
 			}
 
@@ -8581,6 +8589,12 @@ namespace bgfx { namespace gl
 				captureElapsed += bx::getHPCounter();
 
 				profiler.end();
+			}
+
+			if (m_srgbWriteControlSupport)
+			{
+				// switch state back to default for cases when the on-screen draw is done externally
+				GL_CHECK(glDisable(GL_FRAMEBUFFER_SRGB) );
 			}
 		}
 

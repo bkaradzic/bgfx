@@ -60,6 +60,7 @@ struct Optimizer::Impl {
 
   spv_target_env target_env;      // Target environment.
   opt::PassManager pass_manager;  // Internal implementation pass manager.
+  std::unordered_set<uint32_t> live_locs;  // Arg to debug dead output passes
 };
 
 Optimizer::Optimizer(spv_target_env env) : impl_(new Impl(env)) {
@@ -524,7 +525,7 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
   } else if (pass_name == "remove-dont-inline") {
     RegisterPass(CreateRemoveDontInlinePass());
   } else if (pass_name == "eliminate-dead-input-components") {
-    RegisterPass(CreateEliminateDeadInputComponentsPass());
+    RegisterPass(CreateEliminateDeadInputComponentsSafePass());
   } else if (pass_name == "fix-func-call-param") {
     RegisterPass(CreateFixFuncCallArgumentsPass());
   } else if (pass_name == "convert-to-sampled-image") {
@@ -784,14 +785,10 @@ Optimizer::PassToken CreateLocalMultiStoreElimPass() {
       MakeUnique<opt::SSARewritePass>());
 }
 
-Optimizer::PassToken CreateAggressiveDCEPass() {
+Optimizer::PassToken CreateAggressiveDCEPass(bool preserve_interface,
+                                             bool remove_outputs) {
   return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::AggressiveDCEPass>(false));
-}
-
-Optimizer::PassToken CreateAggressiveDCEPass(bool preserve_interface) {
-  return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::AggressiveDCEPass>(preserve_interface));
+      MakeUnique<opt::AggressiveDCEPass>(preserve_interface, remove_outputs));
 }
 
 Optimizer::PassToken CreateRemoveUnusedInterfaceVariablesPass() {
@@ -1016,7 +1013,34 @@ Optimizer::PassToken CreateInterpolateFixupPass() {
 
 Optimizer::PassToken CreateEliminateDeadInputComponentsPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::EliminateDeadInputComponentsPass>());
+      MakeUnique<opt::EliminateDeadIOComponentsPass>(spv::StorageClass::Input,
+                                                     /* safe_mode */ false));
+}
+
+Optimizer::PassToken CreateEliminateDeadOutputComponentsPass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::EliminateDeadIOComponentsPass>(spv::StorageClass::Output,
+                                                     /* safe_mode */ false));
+}
+
+Optimizer::PassToken CreateEliminateDeadInputComponentsSafePass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::EliminateDeadIOComponentsPass>(spv::StorageClass::Input,
+                                                     /* safe_mode */ true));
+}
+
+Optimizer::PassToken CreateAnalyzeLiveInputPass(
+    std::unordered_set<uint32_t>* live_locs,
+    std::unordered_set<uint32_t>* live_builtins) {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::AnalyzeLiveInputPass>(live_locs, live_builtins));
+}
+
+Optimizer::PassToken CreateEliminateDeadOutputStoresPass(
+    std::unordered_set<uint32_t>* live_locs,
+    std::unordered_set<uint32_t>* live_builtins) {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::EliminateDeadOutputStoresPass>(live_locs, live_builtins));
 }
 
 Optimizer::PassToken CreateConvertToSampledImagePass(
@@ -1041,3 +1065,95 @@ Optimizer::PassToken CreateFixFuncCallArgumentsPass() {
       MakeUnique<opt::FixFuncCallArgumentsPass>());
 }
 }  // namespace spvtools
+
+extern "C" {
+
+SPIRV_TOOLS_EXPORT spv_optimizer_t* spvOptimizerCreate(spv_target_env env) {
+  return reinterpret_cast<spv_optimizer_t*>(new spvtools::Optimizer(env));
+}
+
+SPIRV_TOOLS_EXPORT void spvOptimizerDestroy(spv_optimizer_t* optimizer) {
+  delete reinterpret_cast<spvtools::Optimizer*>(optimizer);
+}
+
+SPIRV_TOOLS_EXPORT void spvOptimizerSetMessageConsumer(
+    spv_optimizer_t* optimizer, spv_message_consumer consumer) {
+  reinterpret_cast<spvtools::Optimizer*>(optimizer)->
+      SetMessageConsumer(
+          [consumer](spv_message_level_t level, const char* source,
+                     const spv_position_t& position, const char* message) {
+            return consumer(level, source, &position, message);
+          });
+}
+
+SPIRV_TOOLS_EXPORT void spvOptimizerRegisterLegalizationPasses(
+    spv_optimizer_t* optimizer) {
+  reinterpret_cast<spvtools::Optimizer*>(optimizer)->
+      RegisterLegalizationPasses();
+}
+
+SPIRV_TOOLS_EXPORT void spvOptimizerRegisterPerformancePasses(
+    spv_optimizer_t* optimizer) {
+  reinterpret_cast<spvtools::Optimizer*>(optimizer)->
+      RegisterPerformancePasses();
+}
+
+SPIRV_TOOLS_EXPORT void spvOptimizerRegisterSizePasses(
+    spv_optimizer_t* optimizer) {
+  reinterpret_cast<spvtools::Optimizer*>(optimizer)->RegisterSizePasses();
+}
+
+SPIRV_TOOLS_EXPORT bool spvOptimizerRegisterPassFromFlag(
+    spv_optimizer_t* optimizer, const char* flag)
+{
+  return reinterpret_cast<spvtools::Optimizer*>(optimizer)->
+      RegisterPassFromFlag(flag);
+}
+
+SPIRV_TOOLS_EXPORT bool spvOptimizerRegisterPassesFromFlags(
+    spv_optimizer_t* optimizer, const char** flags, const size_t flag_count) {
+  std::vector<std::string> opt_flags;
+  for (uint32_t i = 0; i < flag_count; i++) {
+    opt_flags.emplace_back(flags[i]);
+  }
+
+  return reinterpret_cast<spvtools::Optimizer*>(optimizer)->
+      RegisterPassesFromFlags(opt_flags);
+}
+
+SPIRV_TOOLS_EXPORT
+spv_result_t spvOptimizerRun(spv_optimizer_t* optimizer,
+                             const uint32_t* binary,
+                             const size_t word_count,
+                             spv_binary* optimized_binary,
+                             const spv_optimizer_options options) {
+  std::vector<uint32_t> optimized;
+
+  if (!reinterpret_cast<spvtools::Optimizer*>(optimizer)->
+      Run(binary, word_count, &optimized, options)) {
+    return SPV_ERROR_INTERNAL;
+  }
+
+  auto result_binary = new spv_binary_t();
+  if (!result_binary) {
+      *optimized_binary = nullptr;
+      return SPV_ERROR_OUT_OF_MEMORY;
+  }
+
+  result_binary->code = new uint32_t[optimized.size()];
+  if (!result_binary->code) {
+      delete result_binary;
+      *optimized_binary = nullptr;
+      return SPV_ERROR_OUT_OF_MEMORY;
+  }
+  result_binary->wordCount = optimized.size();
+
+  memcpy(result_binary->code, optimized.data(),
+         optimized.size() * sizeof(uint32_t));
+
+  *optimized_binary = result_binary;
+
+  return SPV_SUCCESS;
+}
+
+}  // extern "C"

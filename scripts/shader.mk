@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+# Copyright 2011-2023 Branimir Karadzic. All rights reserved.
 # License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 #
 
@@ -53,14 +53,14 @@ else
 ADDITIONAL_INCLUDES?=
 
 ifeq ($(TARGET), 0)
-VS_FLAGS=--platform windows -p vs_3_0 -O 3
-FS_FLAGS=--platform windows -p ps_3_0 -O 3
+VS_FLAGS=--platform windows -p s_3_0 -O 3
+FS_FLAGS=--platform windows -p s_3_0 -O 3
 SHADER_PATH=shaders/dx9
 else
 ifeq ($(TARGET), 1)
-VS_FLAGS=--platform windows -p vs_5_0 -O 3
-FS_FLAGS=--platform windows -p ps_5_0 -O 3
-CS_FLAGS=--platform windows -p cs_5_0 -O 1
+VS_FLAGS=--platform windows -p s_5_0 -O 3
+FS_FLAGS=--platform windows -p s_5_0 -O 3
+CS_FLAGS=--platform windows -p s_5_0 -O 1
 SHADER_PATH=shaders/dx11
 else
 ifeq ($(TARGET), 2)
