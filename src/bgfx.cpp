@@ -21,6 +21,8 @@
 #	include <windows.h>
 #endif // BX_PLATFORM_OSX
 
+# include "cuda_interop.h"
+
 BX_ERROR_RESULT(BGFX_ERROR_TEXTURE_VALIDATION,      BX_MAKEFOURCC('b', 'g', 0, 1) );
 BX_ERROR_RESULT(BGFX_ERROR_FRAME_BUFFER_VALIDATION, BX_MAKEFOURCC('b', 'g', 0, 2) );
 BX_ERROR_RESULT(BGFX_ERROR_IDENTIFIER_VALIDATION,   BX_MAKEFOURCC('b', 'g', 0, 3) );
@@ -2827,6 +2829,12 @@ namespace bgfx
 							);
 						return;
 					}
+
+					if (0 != (BGFX_CAPS_CUDA_INTEROP & bgfx::getCaps()->supported) )
+					{
+						cudaInit(g_caps.deviceUUID);
+					}
+
 				}
 				break;
 			}
@@ -3233,6 +3241,23 @@ namespace bgfx
 				}
 				break;
 
+			case CommandBuffer::ExportTexture:
+				{
+					BGFX_PROFILER_SCOPE("ExportTexture", 0xff2040ff);
+
+					TextureHandle handle;
+					_cmdbuf.read(handle);
+
+					bool makeCopy;
+					_cmdbuf.read(makeCopy);
+
+					CudaImage* cudaImage;
+					_cmdbuf.read(cudaImage);
+
+					m_renderCtx->exportTextureToCuda(handle, makeCopy, cudaImage);
+				}
+				break;
+
 			case CommandBuffer::CreateFrameBuffer:
 				{
 					BGFX_PROFILER_SCOPE("CreateFrameBuffer", 0xff2040ff);
@@ -3365,6 +3390,18 @@ namespace bgfx
 				}
 				break;
 
+			case CommandBuffer::WaitExternalSemaphore:
+				{
+					m_renderCtx->setWaitExternal();
+				}
+				break;
+
+			case CommandBuffer::SignalExternalSemaphore:
+				{
+					m_renderCtx->setSignalExternal();
+				}
+				break;
+
 			default:
 				BX_ASSERT(false, "Invalid command: %d", command);
 				break;
@@ -3449,6 +3486,11 @@ namespace bgfx
 		, minResourceCbSize(BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE)
 		, transientVbSize(BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE)
 		, transientIbSize(BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE)
+	{
+	}
+
+	Init::Interop::Interop()
+		: enableCuda(false)
 	{
 	}
 
@@ -3639,6 +3681,18 @@ namespace bgfx
 		BGFX_CHECK_API_THREAD();
 		BX_ASSERT(0 == (_flags&BGFX_RESET_RESERVED_MASK), "Do not set reset reserved flags!");
 		s_ctx->reset(_width, _height, _flags, _format);
+	}
+
+	bool CudaImage::isValid() const
+	{
+		return NULL != mipmappedArray &&
+					 NULL != array;
+	}
+
+	bool CudaSemaphore::isValid() const
+	{
+		return NULL != waitSemaphore &&
+		       NULL != signalSemaphore;
 	}
 
 	Encoder* begin(bool _forThread)
@@ -5053,6 +5107,32 @@ namespace bgfx
 		BX_ASSERT(NULL != _data, "_data can't be NULL");
 		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_READ_BACK, "Texture read-back is not supported!");
 		return s_ctx->readTexture(_handle, _data, _mip);
+	}
+
+	uint32_t exportTexture(TextureHandle _handle, bool _makeCopy, CudaImage* _cudaImage)
+	{
+		BX_ASSERT(NULL != _cudaImage, "_cudaImage can't be NULL");
+		BGFX_CHECK_CAPS(BGFX_CAPS_CUDA_INTEROP, "CUDA Interop is not supported!");
+		return s_ctx->exportTexture(_handle, _makeCopy, _cudaImage);
+	}
+
+	void getExternalSemaphore(CudaSemaphore* _cudaSemaphore)
+	{
+		BX_ASSERT(NULL != _cudaSemaphore, "_cudaSemaphore can't be NULL");
+		BGFX_CHECK_CAPS(BGFX_CAPS_CUDA_INTEROP, "CUDA Interop is not supported!");
+		s_ctx->m_renderCtx->getExternalSemaphore(_cudaSemaphore);
+	}
+
+	void setWaitExternal()
+	{
+		BGFX_CHECK_CAPS(BGFX_CAPS_CUDA_INTEROP, "CUDA Interop is not supported!");
+		s_ctx->setWaitExternal();
+	}
+
+	void setSignalExternal()
+	{
+		BGFX_CHECK_CAPS(BGFX_CAPS_CUDA_INTEROP, "CUDA Interop is not supported!");
+		s_ctx->setSignalExternal();
 	}
 
 	FrameBufferHandle createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint64_t _textureFlags)

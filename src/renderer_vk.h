@@ -75,6 +75,7 @@
 			VK_IMPORT_INSTANCE_FUNC(false, vkEnumerateDeviceExtensionProperties);      \
 			VK_IMPORT_INSTANCE_FUNC(false, vkEnumerateDeviceLayerProperties);          \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceProperties);             \
+			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceProperties2);            \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceFormatProperties);       \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceFeatures);               \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceImageFormatProperties);  \
@@ -203,6 +204,9 @@
 			/* VK_KHR_draw_indirect_count */                                \
 			VK_IMPORT_DEVICE_FUNC(true,  vkCmdDrawIndirectCountKHR);        \
 			VK_IMPORT_DEVICE_FUNC(true,  vkCmdDrawIndexedIndirectCountKHR); \
+			/* VK_KHR_external_memory, VK_KHR_external_semaphore*/          \
+			VK_IMPORT_DEVICE_FUNC(true,  vkGetMemoryFdKHR); 	      				\
+			VK_IMPORT_DEVICE_FUNC(true,  vkGetSemaphoreFdKHR);  					  \
 
 #define VK_DESTROY                                \
 			VK_DESTROY_FUNC(Buffer);              \
@@ -637,6 +641,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 
 		VkResult createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, VkImageAspectFlags _aspectMask, bool _renderTarget, ::VkImageView* _view) const;
 
+		int exportMemoryHandle();
+
 		void*    m_directAccessPtr;
 		uint64_t m_flags;
 		uint32_t m_width;
@@ -666,6 +672,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 		VkImageLayout m_sampledLayout;
 
 		ReadbackVK m_readback;
+
+		CudaImage  m_cudaImage;
 
 	private:
 		VkResult createImages(VkCommandBuffer _commandBuffer);

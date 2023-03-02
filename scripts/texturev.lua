@@ -67,6 +67,20 @@ project ("texturev")
 		configuration {}
 	end
 
+	if _OPTIONS["with-cuda"] then
+		configuration { "linux-*" }
+			libdirs {
+				"/usr/local/cuda/lib64",
+			}
+			links {
+				"cudart",
+				"cuda",
+			}
+			linkoptions {
+				"-fopenmp",
+			}
+	end
+
 	configuration { "vs*" }
 		linkoptions {
 			"/ignore:4199", -- LNK4199: /DELAYLOAD:*.dll ignored; no imports found from *.dll

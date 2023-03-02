@@ -55,6 +55,11 @@ newoption {
 	description = "Enable webgpu experimental renderer.",
 }
 
+newoption {
+	trigger = "with-cuda",
+	description = "Enable CUDA interop.",
+}
+
 newaction {
 	trigger = "idl",
 	description = "Generate bgfx interface source code",
@@ -223,6 +228,16 @@ if _OPTIONS["with-profiler"] then
 	}
 end
 
+if _OPTIONS["with-cuda"] then
+	defines {
+		"BGFX_CONFIG_CUDA_INTEROP=1",
+	}
+else
+	defines {
+		"BGFX_CONFIG_CUDA_INTEROP=0",
+	}
+end
+
 function exampleProjectDefaults()
 
 	debugdir (path.join(BGFX_DIR, "examples/runtime"))
@@ -294,6 +309,23 @@ function exampleProjectDefaults()
 			}
 
 		configuration {}
+	end
+
+	if _OPTIONS["with-cuda"] then
+		configuration { "linux-*" }
+			libdirs {
+				"/usr/local/cuda/lib64",
+			}
+			links {
+				"cudart",
+				"cuda",
+			}
+			linkoptions {
+				"-fopenmp",
+			}
+			includedirs {
+				"/usr/local/cuda/include",
+			}
 	end
 
 	configuration { "vs*", "x32 or x64" }
@@ -594,6 +626,7 @@ or _OPTIONS["with-combined-examples"] then
 		, "47-pixelformats"
 		, "48-drawindirect"
 		, "49-hextile"
+		, "50-cuda-interop"
 		)
 
 	-- 17-drawstress requires multithreading, does not compile for singlethreaded wasm

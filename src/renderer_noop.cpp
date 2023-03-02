@@ -182,6 +182,22 @@ namespace bgfx { namespace noop
 		{
 		}
 
+		void exportTextureToCuda(TextureHandle /*_handle*/, bool /*_makeCopy*/, CudaImage* /*_cudaImage*/) override
+		{
+		}
+
+		void getExternalSemaphore(CudaSemaphore* /*_cudaSemaphore*/) override
+		{
+		}
+
+		void setWaitExternal() override
+		{
+		}
+
+		void setSignalExternal() override
+		{
+		}
+
 		void overrideInternal(TextureHandle /*_handle*/, uintptr_t /*_ptr*/) override
 		{
 		}

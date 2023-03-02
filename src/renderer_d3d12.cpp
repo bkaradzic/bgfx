@@ -1794,6 +1794,26 @@ namespace bgfx { namespace d3d12
 			release(mem);
 		}
 
+		void exportTextureToCuda(TextureHandle /*_handle*/, bool /*_makeCopy*/, CudaImage* /*_cudaImage*/) override
+		{
+			BX_TRACE("CUDA Interop is not supported in DX12.");
+		}
+
+		void getExternalSemaphore(CudaSemaphore* /*_cudaSemaphore*/) override
+		{
+			BX_TRACE("CUDA Interop is not supported in DX12.");
+		}
+
+		void setWaitExternal() override
+		{
+			BX_TRACE("CUDA Interop is not supported in DX12.");
+		}
+
+		void setSignalExternal() override
+		{
+			BX_TRACE("CUDA Interop is not supported in DX12.");
+		}
+
 		void overrideInternal(TextureHandle _handle, uintptr_t _ptr) override
 		{
 			// Resource ref. counts might be messed up outside of bgfx.

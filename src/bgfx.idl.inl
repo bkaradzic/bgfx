@@ -47,8 +47,22 @@ BGFX_C99_STRUCT_SIZE_CHECK(bgfx::Caps::Limits,          bgfx_caps_limits_t);
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::Caps,                  bgfx_caps_t);
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::PlatformData,          bgfx_platform_data_t);
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::InternalData,          bgfx_internal_data_t);
+BGFX_C99_STRUCT_SIZE_CHECK(bgfx::CudaImage,         	 	bgfx_cuda_image_t);
+BGFX_C99_STRUCT_SIZE_CHECK(bgfx::CudaSemaphore,      	 	bgfx_cuda_semaphore_t);
 
 #undef BGFX_C99_STRUCT_SIZE_CHECK
+
+BGFX_C_API bool bgfx_cuda_image_is_valid(bgfx_cuda_image_t* _this)
+{
+	bgfx::CudaImage* This = (bgfx::CudaImage*)_this;
+	return This->isValid();
+}
+
+BGFX_C_API bool bgfx_cuda_semaphore_is_valid(bgfx_cuda_semaphore_t* _this)
+{
+	bgfx::CudaSemaphore* This = (bgfx::CudaSemaphore*)_this;
+	return This->isValid();
+}
 
 BGFX_C_API void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, uint16_t _layer, uint16_t _numLayers, uint16_t _mip, uint8_t _resolve)
 {
@@ -503,6 +517,13 @@ BGFX_C_API uint32_t bgfx_read_texture(bgfx_texture_handle_t _handle, void* _data
 	return bgfx::readTexture(handle.cpp, _data, _mip);
 }
 
+BGFX_C_API uint32_t bgfx_export_texture(bgfx_texture_handle_t _handle, bool _makeCopy, bgfx_cuda_image_t* _cudaImage)
+{
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
+	bgfx::CudaImage* cudaImageCpp = (bgfx::CudaImage*)_cudaImage;
+	return bgfx::exportTexture(handle.cpp, _makeCopy, cudaImageCpp);
+}
+
 BGFX_C_API void bgfx_set_texture_name(bgfx_texture_handle_t _handle, const char* _name, int32_t _len)
 {
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
@@ -519,6 +540,22 @@ BGFX_C_API void bgfx_destroy_texture(bgfx_texture_handle_t _handle)
 {
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
 	bgfx::destroy(handle.cpp);
+}
+
+BGFX_C_API void bgfx_get_external_semaphore(bgfx_cuda_semaphore_t* _cudaSemaphore)
+{
+	bgfx::CudaSemaphore* cudaSemaphoreCpp = (bgfx::CudaSemaphore*)_cudaSemaphore;
+	bgfx::getExternalSemaphore(cudaSemaphoreCpp);
+}
+
+BGFX_C_API void bgfx_set_wait_external()
+{
+	bgfx::setWaitExternal();
+}
+
+BGFX_C_API void bgfx_set_signal_external()
+{
+	bgfx::setSignalExternal();
 }
 
 BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer(uint16_t _width, uint16_t _height, bgfx_texture_format_t _format, uint64_t _textureFlags)

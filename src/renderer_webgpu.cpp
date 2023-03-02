@@ -956,6 +956,26 @@ namespace bgfx { namespace webgpu
 			release(mem);
 		}
 
+		void exportTextureToCuda(TextureHandle /*_handle*/, bool /*_makeCopy*/, CudaImage* /*_cudaImage*/) override
+		{
+			BX_TRACE("CUDA Interop is not supported in WebGPU.");
+		}
+
+		void getExternalSemaphore(CudaSemaphore* /*_cudaSemaphore*/) override
+		{
+			BX_TRACE("CUDA Interop is not supported in WebGPU.");
+		}
+
+		void setWaitExternal() override
+		{
+			BX_TRACE("CUDA Interop is not supported in WebGPU.");
+		}
+
+		void setSignalExternal() override
+		{
+			BX_TRACE("CUDA Interop is not supported in WebGPU.");
+		}
+
 		void overrideInternal(TextureHandle _handle, uintptr_t _ptr) override
 		{
 			BX_UNUSED(_handle, _ptr);

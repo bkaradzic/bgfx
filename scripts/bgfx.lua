@@ -107,6 +107,13 @@ function bgfxProjectBase(_kind, _defines)
 		}
 	end
 
+	if _OPTIONS["with-cuda"] then
+		configuration { "linux-*" }
+			includedirs {
+				"/usr/local/cuda/include",
+			}
+	end
+
 	configuration { "linux-*" }
 		includedirs {
 			path.join(BGFX_DIR, "3rdparty/directx-headers/include/directx"),

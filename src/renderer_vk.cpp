@@ -9,6 +9,7 @@
 #	include <bx/pixelformat.h>
 #	include "renderer_vk.h"
 #	include "shader_spirv.h"
+# include "cuda_interop.h"
 
 #if BX_PLATFORM_OSX
 #	import <Cocoa/Cocoa.h>
@@ -342,6 +343,12 @@ VK_IMPORT_DEVICE
 			EXT_shader_viewport_index_layer,
 			EXT_custom_border_color,
 			KHR_draw_indirect_count,
+#if BGFX_CONFIG_CUDA_INTEROP
+			KHR_external_memory,
+			KHR_external_semaphore,
+			KHR_external_memory_fd,
+			KHR_external_semaphore_fd,
+#endif  // BGFX_CONFIG_CUDA_INTEROP
 
 			Count
 		};
@@ -367,6 +374,12 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                                                         , Layer::Count },
 		{ "VK_EXT_custom_border_color",             1, false, false, true                                                         , Layer::Count },
 		{ "VK_KHR_draw_indirect_count",             1, false, false, true                                                         , Layer::Count },
+#if BGFX_CONFIG_CUDA_INTEROP
+		{ "VK_KHR_external_memory",    							1, false, false, true                                                         , Layer::Count },
+		{ "VK_KHR_external_semaphore", 							1, false, false, true                                                         , Layer::Count },
+		{ "VK_KHR_external_memory_fd", 							1, false, false, true                                                         , Layer::Count },
+		{ "VK_KHR_external_semaphore_fd", 					1, false, false, true                                                         , Layer::Count },
+#endif  // BGFX_CONFIG_CUDA_INTEROP
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
 
@@ -1080,6 +1093,21 @@ VK_IMPORT_DEVICE
 			);
 	}
 
+	int getExternalSemaphoreHandle(VkDevice _device, VkSemaphore _semaphore)
+	{
+		int fd = -1;
+
+		VkSemaphoreGetFdInfoKHR info = {};
+		info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_GET_FD_INFO_KHR;
+		info.pNext = NULL;
+		info.semaphore = _semaphore;
+		info.handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+
+		vkGetSemaphoreFdKHR(_device, &info, &fd);
+
+		return fd;
+	}
+
 #ifndef VK_MAX_DESCRIPTOR_SETS
 #define MAX_DESCRIPTOR_SETS (1024 * BGFX_CONFIG_MAX_FRAME_LATENCY)
 #else
@@ -1197,6 +1225,13 @@ VK_IMPORT
 				s_extension[Extension::EXT_shader_viewport_index_layer].m_initialize = !!(_init.capabilities & BGFX_CAPS_VIEWPORT_LAYER_ARRAY);
 				s_extension[Extension::EXT_conservative_rasterization ].m_initialize = !!(_init.capabilities & BGFX_CAPS_CONSERVATIVE_RASTER );
 				s_extension[Extension::KHR_draw_indirect_count        ].m_initialize = !!(_init.capabilities & BGFX_CAPS_DRAW_INDIRECT_COUNT );
+
+#if BGFX_CONFIG_CUDA_INTEROP
+				s_extension[Extension::KHR_external_memory            ].m_initialize = !!(_init.capabilities & BGFX_CAPS_CUDA_INTEROP ) && _init.interop.enableCuda;
+				s_extension[Extension::KHR_external_semaphore         ].m_initialize = !!(_init.capabilities & BGFX_CAPS_CUDA_INTEROP ) && _init.interop.enableCuda;
+				s_extension[Extension::KHR_external_memory_fd         ].m_initialize = !!(_init.capabilities & BGFX_CAPS_CUDA_INTEROP ) && _init.interop.enableCuda;
+				s_extension[Extension::KHR_external_semaphore_fd      ].m_initialize = !!(_init.capabilities & BGFX_CAPS_CUDA_INTEROP ) && _init.interop.enableCuda;
+#endif  // BGFX_CONFIG_CUDA_INTEROP
 
 				dumpExtensions(VK_NULL_HANDLE, s_extension);
 
@@ -1496,9 +1531,21 @@ VK_IMPORT_INSTANCE
 
 				bx::memCopy(&s_extension[0], &physicalDeviceExtensions[physicalDeviceIdx][0], sizeof(s_extension) );
 
-				vkGetPhysicalDeviceProperties(m_physicalDevice, &m_deviceProperties);
+				VkPhysicalDeviceIDProperties deviceIdProperties = {};
+				deviceIdProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+				deviceIdProperties.pNext = NULL;
+
+				VkPhysicalDeviceProperties2 deviceProperties2 = {};
+				deviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+				deviceProperties2.pNext = &deviceIdProperties;
+
+				vkGetPhysicalDeviceProperties2(m_physicalDevice, &deviceProperties2);
+
+				m_deviceProperties = deviceProperties2.properties;
+
 				g_caps.vendorId = uint16_t(m_deviceProperties.vendorID);
 				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
+				memcpy(g_caps.deviceUUID, deviceIdProperties.deviceUUID, sizeof(g_caps.deviceUUID));
 
 				BX_TRACE("Using physical device %d: %s", physicalDeviceIdx, m_deviceProperties.deviceName);
 
@@ -1576,6 +1623,17 @@ VK_IMPORT_INSTANCE
 					&& m_deviceFeatures.drawIndirectFirstInstance
 					;
 
+#if BGFX_CONFIG_CUDA_INTEROP
+				const bool externalMemory = _init.interop.enableCuda
+					&& s_extension[Extension::KHR_external_memory].m_supported
+					&& s_extension[Extension::KHR_external_semaphore].m_supported
+					&& s_extension[Extension::KHR_external_memory_fd].m_supported
+					&& s_extension[Extension::KHR_external_semaphore_fd].m_supported
+					;
+#else
+				const bool externalMemory = false;
+#endif  // BGFX_CONFIG_CUDA_INTEROP
+
 				g_caps.supported |= ( 0
 					| BGFX_CAPS_ALPHA_TO_COVERAGE
 					| (m_deviceFeatures.independentBlend ? BGFX_CAPS_BLEND_INDEPENDENT : 0)
@@ -1596,6 +1654,7 @@ VK_IMPORT_INSTANCE
 					| BGFX_CAPS_VERTEX_ATTRIB_HALF
 					| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 					| BGFX_CAPS_VERTEX_ID
+					| (externalMemory ? BGFX_CAPS_CUDA_INTEROP : 0)
 					);
 
 				g_caps.supported |= 0
@@ -2034,6 +2093,11 @@ VK_IMPORT_DEVICE
 				goto error;
 			}
 
+			if (0 != (g_caps.supported & BGFX_CAPS_CUDA_INTEROP))
+			{
+				m_externalSync.init();
+			}
+
 			g_internalData.context = m_device;
 			return true;
 
@@ -2142,6 +2206,8 @@ VK_IMPORT_DEVICE
 			}
 
 			m_backBuffer.destroy();
+
+			m_externalSync.destroy();
 
 			m_cmd.shutdown();
 
@@ -2354,6 +2420,50 @@ VK_IMPORT_DEVICE
 			createTexture(_handle, mem, flags, 0);
 
 			bgfx::release(mem);
+		}
+
+		void exportTextureToCuda(TextureHandle _handle, bool _makeCopy, CudaImage* _cudaImage) override
+		{
+			if (!isValid(_handle))
+				return;
+
+			TextureVK& texture = m_textures[_handle.idx];
+
+			if (!texture.m_cudaImage.isValid())
+				return;
+
+			if (_makeCopy)
+			{
+				kick(true);
+				cudaCopyImage(&texture.m_cudaImage, _cudaImage);
+			}
+			else
+			{
+				_cudaImage->width = texture.m_cudaImage.width;
+				_cudaImage->height = texture.m_cudaImage.height;
+				_cudaImage->channels = texture.m_cudaImage.channels;
+				_cudaImage->mips = texture.m_cudaImage.mips;
+				_cudaImage->format = texture.m_cudaImage.format;
+				_cudaImage->externalMemory = texture.m_cudaImage.externalMemory;
+				_cudaImage->mipmappedArray = texture.m_cudaImage.mipmappedArray;
+				_cudaImage->array = texture.m_cudaImage.array;
+			}
+		}
+
+		void getExternalSemaphore(CudaSemaphore* _cudaSemaphore) override
+		{
+			_cudaSemaphore->waitSemaphore = m_externalSync.cudaSemaphore.waitSemaphore;
+			_cudaSemaphore->signalSemaphore = m_externalSync.cudaSemaphore.signalSemaphore;
+		}
+
+		void setWaitExternal() override
+		{
+			m_externalSync.shouldWait = true;
+		}
+
+		void setSignalExternal() override
+		{
+			m_externalSync.shouldSignal = true;
 		}
 
 		void overrideInternal(TextureHandle /*_handle*/, uintptr_t /*_ptr*/) override
@@ -4407,12 +4517,21 @@ VK_IMPORT_DEVICE
 			return -1;
 		}
 
-		VkResult allocateMemory(const VkMemoryRequirements* requirements, VkMemoryPropertyFlags propertyFlags, ::VkDeviceMemory* memory) const
+		VkResult allocateMemory(const VkMemoryRequirements* requirements, VkMemoryPropertyFlags propertyFlags, ::VkDeviceMemory* memory, bool exportable = false) const
 		{
 			VkMemoryAllocateInfo ma;
 			ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 			ma.pNext = NULL;
 			ma.allocationSize = requirements->size;
+
+			VkExportMemoryAllocateInfoKHR ema = {};
+			if (exportable) {
+				ema.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
+				ema.pNext = NULL;
+				ema.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+
+				ma.pNext = &ema;
+			}
 
 			VkResult result = VK_ERROR_UNKNOWN;
 			int32_t searchIndex = -1;
@@ -4587,6 +4706,19 @@ VK_IMPORT_DEVICE
 		uint8_t m_vsScratch[64<<10];
 
 		FrameBufferHandle m_fbh;
+
+		struct ExternalSynchronisation
+		{
+			VkSemaphore vkSignalSemaphore = VK_NULL_HANDLE;
+			VkSemaphore vkWaitSemaphore = VK_NULL_HANDLE;
+			CudaSemaphore cudaSemaphore = {};
+
+			bool shouldWait = false;
+			bool shouldSignal = false;
+
+			void init();
+			void destroy();
+		} m_externalSync;
 	};
 
 	static RendererContextVK* s_renderVK;
@@ -5914,6 +6046,25 @@ VK_DESTROY
 			;
 		ici.tiling        = VK_IMAGE_TILING_OPTIMAL;
 
+		const bool needResolve = true
+			&& 1 < m_sampler.Count
+			&& 0 != (ici.usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+			&& 0 == (m_flags & BGFX_TEXTURE_MSAA_SAMPLE)
+			&& 0 == (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY)
+			;
+
+		const bool enableExport = 0 != (m_flags & BGFX_TEXTURE_EXTERNAL);
+		VkExternalMemoryImageCreateInfo emici = {};
+		if (enableExport) {
+			emici.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
+			emici.pNext = NULL;
+			emici.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+		}
+
+		if (!needResolve && enableExport) {
+			ici.pNext = &emici;
+		}
+
 		result = vkCreateImage(device, &ici, allocatorCb, &m_textureImage);
 		if (VK_SUCCESS != result)
 		{
@@ -5924,7 +6075,7 @@ VK_DESTROY
 		VkMemoryRequirements imageMemReq;
 		vkGetImageMemoryRequirements(device, m_textureImage, &imageMemReq);
 
-		result = s_renderVK->allocateMemory(&imageMemReq, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_textureDeviceMem);
+		result = s_renderVK->allocateMemory(&imageMemReq, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_textureDeviceMem, (!needResolve && enableExport));
 		if (VK_SUCCESS != result)
 		{
 			BX_TRACE("Create texture image error: allocateMemory failed %d: %s.", result, getName(result) );
@@ -5943,12 +6094,7 @@ VK_DESTROY
 			: VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 			;
 
-		const bool needResolve = true
-			&& 1 < m_sampler.Count
-			&& 0 != (ici.usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-			&& 0 == (m_flags & BGFX_TEXTURE_MSAA_SAMPLE)
-			&& 0 == (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY)
-			;
+		VkMemoryRequirements imageMemReq_resolve;
 
 		if (needResolve)
 		{
@@ -5957,6 +6103,10 @@ VK_DESTROY
 			ici_resolve.usage &= ~VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 			ici_resolve.flags &= ~VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
+			if (enableExport) {
+				ici_resolve.pNext = &emici;
+			}
+
 			result = vkCreateImage(device, &ici_resolve, allocatorCb, &m_singleMsaaImage);
 			if (VK_SUCCESS != result)
 			{
@@ -5964,10 +6114,9 @@ VK_DESTROY
 				return result;
 			}
 
-			VkMemoryRequirements imageMemReq_resolve;
 			vkGetImageMemoryRequirements(device, m_singleMsaaImage, &imageMemReq_resolve);
 
-			result = s_renderVK->allocateMemory(&imageMemReq_resolve, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_singleMsaaDeviceMem);
+			result = s_renderVK->allocateMemory(&imageMemReq_resolve, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_singleMsaaDeviceMem, enableExport);
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Create texture image error: allocateMemory failed %d: %s.", result, getName(result) );
@@ -5982,6 +6131,18 @@ VK_DESTROY
 			}
 
 			setImageMemoryBarrier(_commandBuffer, m_sampledLayout, true);
+		}
+
+		if (enableExport) {
+			cudaImportImage(
+				m_width,
+				m_height,
+				m_numLayers,
+				(TextureFormat::Enum)m_textureFormat,
+				exportMemoryHandle(),
+				(VK_NULL_HANDLE != m_singleMsaaImage) ? imageMemReq_resolve.size : imageMemReq.size,
+				&m_cudaImage
+			);
 		}
 
 		return result;
@@ -6267,6 +6428,10 @@ VK_DESTROY
 	void TextureVK::destroy()
 	{
 		m_readback.destroy();
+
+		if (m_cudaImage.isValid()) {
+			cudaDestroyImage(&m_cudaImage);
+		}
 
 		if (VK_NULL_HANDLE != m_textureImage)
 		{
@@ -6607,6 +6772,28 @@ VK_DESTROY
 		*_view = view;
 
 		return result;
+	}
+
+	int TextureVK::exportMemoryHandle() {
+		int fd = -1;
+
+		VkMemoryGetFdInfoKHR fdi = {};
+		fdi.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
+		fdi.pNext = NULL;
+		fdi.memory = (VK_NULL_HANDLE != m_singleMsaaDeviceMem) ? m_singleMsaaDeviceMem : m_textureDeviceMem;
+		fdi.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+
+		VkResult result = vkGetMemoryFdKHR(
+			s_renderVK->m_device,
+			&fdi,
+			&fd
+		);
+
+		if (VK_SUCCESS != result) {
+			BX_TRACE("Export texture memory error: vkGetMemoryFdKHR failed %d: %s.", result, getName(result) );
+		}
+
+		return fd;
 	}
 
 	VkImageAspectFlags TextureVK::getAspectMask(VkFormat _format)
@@ -8001,6 +8188,22 @@ VK_DESTROY
 		{
 			const VkDevice device = s_renderVK->m_device;
 
+			if (0 != (g_caps.supported & BGFX_CAPS_CUDA_INTEROP) )
+			{
+				RendererContextVK::ExternalSynchronisation& externalSync = s_renderVK->m_externalSync;
+
+				if (externalSync.shouldWait)
+				{
+					addWaitSemaphore(externalSync.vkWaitSemaphore);
+					externalSync.shouldWait = false;
+				}
+				if (externalSync.shouldSignal)
+				{
+					addSignalSemaphore(externalSync.vkSignalSemaphore);
+					externalSync.shouldSignal = false;
+				}
+			}
+
 			setMemoryBarrier(
 				  m_activeCommandBuffer
 				, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
@@ -8096,6 +8299,55 @@ VK_DESTROY
 		}
 
 		m_release[m_consumeIndex].clear();
+	}
+
+	void RendererContextVK::ExternalSynchronisation::init()
+	{
+		VkExportSemaphoreCreateInfo esci = {};
+		esci.sType = VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO;
+		esci.pNext = NULL;
+		esci.handleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT;
+
+		VkSemaphoreCreateInfo si = {};
+		si.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		si.pNext = &esci;
+
+		VkResult result = vkCreateSemaphore(s_renderVK->m_device, &si, NULL, &vkSignalSemaphore);
+		if (VK_SUCCESS != result)
+		{
+			BX_WARN(true, "Failed to create external semaphore.");
+		}
+
+		result = vkCreateSemaphore(s_renderVK->m_device, &si, NULL, &vkWaitSemaphore);
+		if (VK_SUCCESS != result)
+		{
+			BX_WARN(true, "Failed to create external semaphore.");
+		}
+
+		cudaImportSemaphores(
+			getExternalSemaphoreHandle(s_renderVK->m_device, vkSignalSemaphore),
+			getExternalSemaphoreHandle(s_renderVK->m_device, vkWaitSemaphore),
+			&cudaSemaphore
+		);
+	}
+
+	void RendererContextVK::ExternalSynchronisation::destroy()
+	{
+		if (VK_NULL_HANDLE != vkWaitSemaphore)
+		{
+			vkDestroySemaphore(s_renderVK->m_device, vkWaitSemaphore, NULL);
+			vkWaitSemaphore = VK_NULL_HANDLE;
+		}
+		if (VK_NULL_HANDLE != vkSignalSemaphore)
+		{
+			vkDestroySemaphore(s_renderVK->m_device, vkSignalSemaphore, NULL);
+			vkSignalSemaphore = VK_NULL_HANDLE;
+		}
+
+		cudaDestroySemaphores(&cudaSemaphore);
+
+		shouldWait = false;
+		shouldSignal = false;
 	}
 
 	void RendererContextVK::submitBlit(BlitState& _bs, uint16_t _view)

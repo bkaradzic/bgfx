@@ -3480,6 +3480,26 @@ namespace bgfx { namespace gl
 			release(mem);
 		}
 
+		void exportTextureToCuda(TextureHandle /*_handle*/, bool /*_makeCopy*/, CudaImage* /*_cudaImage*/) override
+		{
+			BX_TRACE("CUDA Interop is not supported in OpenGL.");
+		}
+
+		void getExternalSemaphore(CudaSemaphore* /*_cudaSemaphore*/) override
+		{
+			BX_TRACE("CUDA Interop is not supported in OpenGL.");
+		}
+
+		void setWaitExternal() override
+		{
+			BX_TRACE("CUDA Interop is not supported in OpenGL.");
+		}
+
+		void setSignalExternal() override
+		{
+			BX_TRACE("CUDA Interop is not supported in OpenGL.");
+		}
+
 		void overrideInternal(TextureHandle _handle, uintptr_t _ptr) override
 		{
 			m_textures[_handle.idx].overrideInternal(_ptr);

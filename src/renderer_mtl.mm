@@ -1079,6 +1079,26 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			release(mem);
 		}
 
+		void exportTextureToCuda(TextureHandle /*_handle*/, bool /*_makeCopy*/, CudaImage* /*_cudaImage*/) override
+		{
+			BX_TRACE("CUDA Interop is not supported in Metal.");
+		}
+
+		void getExternalSemaphore(CudaSemaphore* /*_cudaSemaphore*/) override
+		{
+			BX_TRACE("CUDA Interop is not supported in Metal.");
+		}
+
+		void setWaitExternal() override
+		{
+			BX_TRACE("CUDA Interop is not supported in Metal.");
+		}
+
+		void setSignalExternal() override
+		{
+			BX_TRACE("CUDA Interop is not supported in Metal.");
+		}
+
 		void overrideInternal(TextureHandle _handle, uintptr_t _ptr) override
 		{
 			m_textures[_handle.idx].overrideInternal(_ptr);

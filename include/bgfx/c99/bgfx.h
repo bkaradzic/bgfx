@@ -539,20 +539,21 @@ typedef struct bgfx_caps_limits_s
 typedef struct bgfx_caps_s
 {
     bgfx_renderer_type_t rendererType;       /** Renderer backend type. See: `bgfx::RendererType` */
-    
+
     /**
      * Supported functionality.
      *   @attention See `BGFX_CAPS_*` flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
      */
     uint64_t             supported;
     uint16_t             vendorId;           /** Selected GPU vendor PCI id.              */
-    uint16_t             deviceId;           /** Selected GPU device id.                  */
+    uint16_t             deviceId;           /** Selected GPU device PCI id.              */
+    uint8_t              deviceUUID[16];     /** Selected GPU device 16-bit long UUID     */
     bool                 homogeneousDepth;   /** True when NDC depth is in [-1, 1] range, otherwise its [0, 1]. */
     bool                 originBottomLeft;   /** True when NDC origin is at bottom left.  */
     uint8_t              numGPUs;            /** Number of enumerated GPUs.               */
     bgfx_caps_gpu_t      gpu[4];             /** Enumerated GPUs.                         */
     bgfx_caps_limits_t   limits;             /** Renderer runtime limits.                 */
-    
+
     /**
      * Supported texture format capabilities flags:
      *   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - Texture format is not supported.
@@ -600,25 +601,25 @@ typedef struct bgfx_internal_data_s
 typedef struct bgfx_platform_data_s
 {
     void*                ndt;                /** Native display type (*nix specific).     */
-    
+
     /**
      * Native window handle. If `NULL`, bgfx will create a headless
      * context/device, provided the rendering API supports it.
      */
     void*                nwh;
-    
+
     /**
      * GL context, D3D device, or Vulkan device. If `NULL`, bgfx
      * will create context/device.
      */
     void*                context;
-    
+
     /**
      * GL back-buffer, or D3D render target view. If `NULL` bgfx will
      * create back-buffer color surface.
      */
     void*                backBuffer;
-    
+
     /**
      * Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
      * depth/stencil surface.
@@ -656,19 +657,28 @@ typedef struct bgfx_init_limits_s
 } bgfx_init_limits_t;
 
 /**
+ * Enable interop with external APIs (e.g. CUDA)
+ *
+*/
+typedef struct bgfx_init_interop_s
+{
+    bool enableCuda;   /** Inits CUDA if compiled with BGFX_CONFIG_CUDA_INTEROP=1. Ignored otherwise */
+} bgfx_init_interop_t;
+
+/**
  * Initialization parameters used by `bgfx::init`.
  *
  */
 typedef struct bgfx_init_s
 {
-    
+
     /**
      * Select rendering backend. When set to RendererType::Count
      * a default rendering backend will be selected appropriate to the platform.
      * See: `bgfx::RendererType`
      */
     bgfx_renderer_type_t type;
-    
+
     /**
      * Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
      * GPUs will be prioritised.
@@ -681,7 +691,7 @@ typedef struct bgfx_init_s
      *   - `BGFX_PCI_ID_MICROSOFT` - Microsoft adapter.
      */
     uint16_t             vendorId;
-    
+
     /**
      * Device ID. If set to 0 it will select first device, or device with
      * matching ID.
@@ -693,13 +703,14 @@ typedef struct bgfx_init_s
     bgfx_platform_data_t platformData;       /** Platform data.                           */
     bgfx_resolution_t    resolution;         /** Backbuffer resolution and reset parameters. See: `bgfx::Resolution`. */
     bgfx_init_limits_t   limits;             /** Configurable runtime limits parameters.  */
-    
+    bgfx_init_interop_t  interop;            /** Configurable interface with external APIs */
+
     /**
      * Provide application specific callback interface.
      * See: `bgfx::CallbackI`
      */
     bgfx_callback_interface_t* callback;
-    
+
     /**
      * Custom allocator. When a custom allocator is not
      * specified, bgfx uses the CRT allocator. Bgfx assumes
@@ -898,6 +909,53 @@ typedef struct bgfx_stats_s
     bgfx_encoder_stats_t* encoderStats;      /** Array of encoder stats.                  */
 
 } bgfx_stats_t;
+
+/**
+ * Opaque handles to a CUDA image resource
+ *
+ * Used to export a Texture to a buffer shared with CUDA
+ *
+ * @remarks only used if BGFX_CONFIG_CUDA_INTEROP=1 and the device supports CUDA
+*/
+typedef struct bgfx_cuda_image_s
+{
+    void* externalMemory;             /** cudaExternalMemory_t. can be NULL for copies that exist in CUDA only. */
+    void* mipmappedArray;             /** cudaMipmappedArray_t                                                  */
+    void* array;	    			  /** cudaArray_t, typically the 0-th mipmap                                */
+
+    int width;					      /** image width                                                           */
+    int height;				          /** image height                                                          */
+    int channels;	       			  /** number of channels                                                    */
+    int mips;                         /** mipmap levels                                                         */
+    bgfx_texture_format_t format;     /** texture format                                                        */
+} bgfx_cuda_image_t;
+
+/**
+ * Checks if a CUDA image has been initialised
+ *
+ * @param[in] _this Pointer to a bgfx_cuda_image_t
+ * @returns true if memory pointers are non-NULL
+*/
+BGFX_C_API bool bgfx_cuda_image_is_valid(bgfx_cuda_image_t* _this);
+
+/**
+ * Opaque handles to a pair of semaphores for synchronisation between graphics and CUDA
+ *
+ * @remarks only used if BGFX_CONFIG_CUDA_INTEROP=1 and the device supports CUDA
+*/
+typedef struct bgfx_cuda_sempahore_s
+{
+    void* waitSempahore;
+    void* signalSemaphore;
+} bgfx_cuda_semaphore_t;
+
+/**
+ * Checks if a CUDA semaphore has been initialised
+ *
+ * @param[in] _this Pointer to a bgfx_cuda_semaphore_t
+ * @returns true if both semaphore pointers are non-NULL
+*/
+BGFX_C_API bool bgfx_cuda_semaphore_is_valid(bgfx_cuda_semaphore_t* _this);
 
 /**
  * Vertex layout.
@@ -1954,6 +2012,21 @@ BGFX_C_API void bgfx_update_texture_cube(bgfx_texture_handle_t _handle, uint16_t
 BGFX_C_API uint32_t bgfx_read_texture(bgfx_texture_handle_t _handle, void* _data, uint8_t _mip);
 
 /**
+ * Export given texture as a CUDA image resource.
+ *
+ * @param[in] _handle Texture handle.
+ * @param[in] _makeCopy if true, clones the texture into a seprate buffer and exports that.
+ * @param[out] _cudaImage Cuda resources associated with the texture.
+ *
+ * @returns Frame number when the result will be available. See: `bgfx::frame`.
+ *
+ * @remarks Availability depnds on `BGFX_CAPS_CUDA_INTEROP`
+ * @remarks If _makeCopy is true, ownership is transferred to CUDA and lifetime management is a responsibility of the caller.
+ *			Otherwise, lifetime is managed internally
+*/
+BGFX_C_API uint32_t bgfx_export_texture(bgfx_texture_handle_t _handle, bool _makeCopy, bgfx_cuda_image_t* _cudaImage);
+
+/**
  * Set texture debug name.
  *
  * @param[in] _handle Texture handle.
@@ -1986,6 +2059,34 @@ BGFX_C_API void* bgfx_get_direct_access_ptr(bgfx_texture_handle_t _handle);
  *
  */
 BGFX_C_API void bgfx_destroy_texture(bgfx_texture_handle_t _handle);
+
+/**
+ * Returns shared semaphore handles for synchronisation between graphics and CUDA workloads
+ *
+ * @param[out] _cudaSemaphore CUDA semaphore handles.
+ *
+*/
+BGFX_C_API void bgfx_get_external_semaphore(bgfx_cuda_semaphore_t* _cudaSemaphore);
+
+/**
+ * Makes the renderer wait for the external sempahore to be signalled before submitting the graphcis workload
+ * Call before every call to `bgfx::frame`
+ *
+ * @remarks Once called, the external semaphore must be signalled during the same frame update
+ * @remarks Availability depnds on `BGFX_CAPS_CUDA_INTEROP`
+ *
+*/
+BGFX_C_API void bgfx_set_wait_external();
+
+/**
+ * The renderer will signal the end of the graphcis workload to the external semaphore
+ * Call before every call to `bgfx::frame`
+ *
+ * @remarks Once called, the external semaphore must be waited on during the same frame update
+ * @remarks Availability depnds on `BGFX_CAPS_CUDA_INTEROP`
+ *
+*/
+BGFX_C_API void bgfx_set_signal_external();
 
 /**
  * Create frame buffer (simple).

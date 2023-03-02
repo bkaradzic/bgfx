@@ -704,6 +704,19 @@ namespace bgfx
 
 		Limits limits; //!< Configurable runtime limits.
 
+		/// Configurable interface with external APIs (e.g. CUDA)
+		///
+		/// @attention C99's equivalent binding is `bgfx_init_interop_t`
+		///
+		struct Interop
+		{
+			Interop();
+
+			bool enableCuda;     //!< Inits CUDA if compiled with BGFX_CONFIG_CUDA_INTEROP=1. Ignored otherwise
+		};
+
+		Interop interop;
+
 		/// Provide application specific callback interface.
 		/// See: `bgfx::CallbackI`
 		CallbackI* callback;
@@ -753,7 +766,8 @@ namespace bgfx
 		uint64_t supported;
 
 		uint16_t vendorId;         //!< Selected GPU vendor PCI id.
-		uint16_t deviceId;         //!< Selected GPU device id.
+		uint16_t deviceId;         //!< Selected GPU device PCI id.
+		uint8_t  deviceUUID[16];   //!< Selected GPU device 16-bit long UUID
 		bool     homogeneousDepth; //!< True when NDC depth is in [-1, 1] range, otherwise its [0, 1].
 		bool     originBottomLeft; //!< True when NDC origin is at bottom left.
 		uint8_t  numGPUs;          //!< Number of enumerated GPUs.
@@ -1028,6 +1042,41 @@ namespace bgfx
 
 		uint8_t       numEncoders;          //!< Number of encoders used during frame.
 		EncoderStats* encoderStats;         //!< Array of encoder stats.
+	};
+
+	/// Opaque handles to a CUDA image resource
+	///
+	/// Used to export a Texture to a buffer shared with CUDA
+	///
+	/// @attention only used if BGFX_CONFIG_CUDA_INTEROP=1 and the device supports CUDA
+	/// @attention C99's equivalent binding is `bgfx_cuda_image_t`.
+	///
+	struct CudaImage
+	{
+		void* externalMemory = NULL;      //!< cudaExternalMemory_t. can be NULL for copies that exist in CUDA only.
+		void* mipmappedArray = NULL;      //!< cudaMipmappedArray_t
+		void* array = NULL;								//!< cudaArray_t, typically the 0-th mipmap
+
+		int width = -1;										//!< image width
+		int height = -1;									//!< image height
+		int channels = -1;								//!< number of channels
+		int mips = -1;                    //!< mipmap levels
+		TextureFormat::Enum format;       //!< texture format
+
+		bool isValid() const;							//!< returns whether or not CudaImage was initialised
+	};
+
+	/// Opaque handles to a pair of semaphores for synchronisation between graphics and CUDA
+	///
+	/// @attention only used if BGFX_CONFIG_CUDA_INTEROP=1 and the device supports CUDA
+	/// @attention C99's equivalent binding is `bgfx_cuda_semaphore_t`.
+	///
+	struct CudaSemaphore
+	{
+		void* waitSemaphore = NULL;      //!< cudaExternalSemaphore_t. semaphore used to wait for graphics work to be finished
+		void* signalSemaphore = NULL;    //!< cudaExternalSemaphore_t. semaphore used to signal when CUDA work has finished
+
+		bool isValid() const;            //!< returns whether or not CudaSemaphore has been initialised
 	};
 
 	/// Encoders are used for submitting draw calls from multiple threads. Only one encoder
@@ -3004,6 +3053,22 @@ namespace bgfx
 		, uint8_t _mip = 0
 		);
 
+	/// Export given texture as a CUDA image resource.
+	///
+	/// @param[in] _handle Texture handle.
+	/// @param[in] _makeCopy if true, clones the texture into a seprate buffer and exports that.
+	/// @param[out] _cudaImage Cuda resources associated with the texture.
+	///
+	/// @param[out] _cudaImage Cuda resources associated with the texture.
+	/// @returns Frame number when the result will be available. See: `bgfx::frame`.
+	///
+	/// @attention Availability depnds on `BGFX_CAPS_CUDA_INTEROP`
+	/// @attention If _makeCopy is true, ownership is transferred to CUDA and lifetime management is a responsibility of the caller.
+	///						 Otherwise, lifetime is managed internally
+	/// @attention C99's equivalent binding is `bgfx_export_texture`.
+	///
+	uint32_t exportTexture(TextureHandle _handle, bool _makeCopy, CudaImage* _cudaImage);
+
 	/// Set texture debug name.
 	///
 	/// @param[in] _handle Texture handle.
@@ -3042,6 +3107,33 @@ namespace bgfx
 	/// @attention C99's equivalent binding is `bgfx_destroy_texture`.
 	///
 	void destroy(TextureHandle _handle);
+
+	/// Returns shared semaphore handles for synchronisation between graphics and CUDA workloads
+	///
+	/// @param[out] _cudaSemaphore CUDA semaphore handles.
+	///
+	/// @attention Availability depnds on `BGFX_CAPS_CUDA_INTEROP`
+	/// @attention C99's equivalent binding is `bgfx_get_external_semaphore`.
+	///
+	void getExternalSemaphore(CudaSemaphore* _cudaSemaphore);
+
+	/// Makes the renderer wait for the external sempahore to be signalled before submitting the graphcis workload
+	/// Call before every call to `bgfx::frame`
+	///
+	/// @attention Once called, the external semaphore must be signalled during the same frame update
+	/// @attention Availability depnds on `BGFX_CAPS_CUDA_INTEROP`
+	/// @attention C99's equivalent binding is `bgfx_set_wait_external`.
+	///
+	void setWaitExternal();
+
+	/// The renderer will signal the end of the graphcis workload to the external semaphore
+	/// Call before every call to `bgfx::frame`
+	///
+	/// @attention Once called, the external semaphore must be waited on during the same frame update
+	/// @attention Availability depnds on `BGFX_CAPS_CUDA_INTEROP`
+	/// @attention C99's equivalent binding is `bgfx_set_signal_external`.
+	///
+	void setSignalExternal();
 
 	/// Create frame buffer (simple).
 	///
