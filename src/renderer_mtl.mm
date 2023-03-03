@@ -732,17 +732,17 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				}
 
 				support |= true
-						&& s_textureFormat[ii].m_rwTier != MTLReadWriteTextureTierNone
-						&& s_textureFormat[ii].m_rwTier <= rwTier
-						? BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
-						| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
-						: BGFX_CAPS_FORMAT_TEXTURE_NONE
-						;
+					&& s_textureFormat[ii].m_rwTier != MTLReadWriteTextureTierNone
+					&& s_textureFormat[ii].m_rwTier <= rwTier
+					? BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
+					| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
+					: BGFX_CAPS_FORMAT_TEXTURE_NONE
+					;
 
 				support |= s_textureFormat[ii].m_autoGetMipmap
-						? BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
-						: 0
-						;
+					? BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
+					: 0
+					;
 
 				g_caps.formats[ii] = support;
 			}
@@ -1143,10 +1143,10 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			}
 
 #if BX_PLATFORM_OSX
-            m_blitCommandEncoder = getBlitCommandEncoder();
-            m_blitCommandEncoder.synchronizeResource(m_screenshotTarget);
-            m_blitCommandEncoder.endEncoding();
-            m_blitCommandEncoder = 0;
+			m_blitCommandEncoder = getBlitCommandEncoder();
+			m_blitCommandEncoder.synchronizeResource(m_screenshotTarget);
+			m_blitCommandEncoder.endEncoding();
+			m_blitCommandEncoder = NULL;
 #endif  // BX_PLATFORM_OSX
 
 			m_cmd.kick(false, true);
@@ -1507,7 +1507,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					if (NULL != desc.texture)
 					{
 						desc.loadAction  = MTLLoadActionLoad;
-						desc.storeAction = desc.resolveTexture == nil
+						desc.storeAction = desc.resolveTexture == NULL
 							? MTLStoreActionStore
 							: MTLStoreActionMultisampleResolve
 							;
@@ -1519,7 +1519,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				if (NULL != depthAttachment.texture)
 				{
 					depthAttachment.loadAction  = MTLLoadActionLoad;
-					depthAttachment.storeAction = depthAttachment.resolveTexture == nil
+					depthAttachment.storeAction = depthAttachment.resolveTexture == NULL
 						? MTLStoreActionStore
 						: MTLStoreActionMultisampleResolve
 						;
@@ -1530,7 +1530,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				if (NULL != stencilAttachment.texture)
 				{
 					stencilAttachment.loadAction  = MTLLoadActionLoad;
-					stencilAttachment.storeAction = stencilAttachment.resolveTexture == nil
+					stencilAttachment.storeAction = stencilAttachment.resolveTexture == NULL
 						? MTLStoreActionStore
 						: MTLStoreActionMultisampleResolve
 						;
@@ -3339,16 +3339,21 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		const int32_t sampleCount = s_msaa[(_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
 #if BX_PLATFORM_OSX
-#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
+#	if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
 		if (@available(macOS 10.13, *) )
 		{
 			m_metalLayer.displaySyncEnabled = 0 != (_flags&BGFX_RESET_VSYNC);
 		}
+
 		if (@available(macOS 10.13.2, *) )
 		{
-            m_metalLayer.maximumDrawableCount = bx::clamp<uint32_t>(_maximumDrawableCount != 0 ? _maximumDrawableCount : BGFX_CONFIG_MAX_FRAME_LATENCY, 2, 3);
+			m_metalLayer.maximumDrawableCount = bx::clamp<uint32_t>(
+				  _maximumDrawableCount != 0 ? _maximumDrawableCount : BGFX_CONFIG_MAX_FRAME_LATENCY
+				, 2
+				, 3
+				);
 		}
-#endif // __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
+#	endif // __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
 #endif // BX_PLATFORM_OSX
 
 		m_metalLayer.drawableSize = CGSizeMake(_width, _height);
@@ -3575,24 +3580,26 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 	void FrameBufferMtl::resolve()
 	{
-		BlitCommandEncoder bce = s_renderMtl->getBlitCommandEncoder();
 		for (uint32_t ii = 0; ii < m_num; ++ii)
 		{
 			if (0 != (m_colorAttachment[ii].resolve & BGFX_RESOLVE_AUTO_GEN_MIPS))
 			{
 				const TextureMtl& texture = s_renderMtl->m_textures[m_colorHandle[ii].idx];
-				const bool isRenderTarget = (texture.m_flags & BGFX_TEXTURE_RT_MASK);
-				const bool fmtSupport = 0 != (g_caps.formats[texture.m_textureFormat] & BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN);
+				const bool isRenderTarget = !!(texture.m_flags & BGFX_TEXTURE_RT_MASK);
+				const bool hasMips        = 1 < texture.m_numMips;
+				const bool fmtSupport     = 0 != (g_caps.formats[texture.m_textureFormat] & BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN);
+
 				if (isRenderTarget
-					&& fmtSupport
-					&& texture.m_numMips > 1)
+				&&  fmtSupport
+				&&  hasMips)
 				{
+					BlitCommandEncoder bce = s_renderMtl->getBlitCommandEncoder();
 					bce.generateMipmapsForTexture(texture.m_ptr);
 				}
 			}
 		}
 
-        s_renderMtl->endEncoding();
+		s_renderMtl->endEncoding();
 	}
 
 	void CommandQueueMtl::init(Device _device)
@@ -4744,22 +4751,30 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 								{
 									if (bind.m_access == Access::ReadWrite && 0 == (g_caps.supported & BGFX_CAPS_IMAGE_RW))
 									{
-										BGFX_FATAL(false, Fatal::DebugCheck,
-										"Failed to set image with access: Access::ReadWrite, device is not support image read&write");
+										BGFX_FATAL(
+											  false
+											, Fatal::DebugCheck
+											, "Failed to set image with access: Access::ReadWrite, device is not support image read&write"
+											);
 									}
 
-									if (
-                                        (bind.m_access == Access::Read && (0 == (g_caps.formats[bind.m_format] & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ)))
-										|| (bind.m_access == Access::Write && (0 == (g_caps.formats[bind.m_format] & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE)))
-                                        || (bind.m_access == Access::ReadWrite && (0 == (g_caps.formats[bind.m_format] & (BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ|BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE))))
-                                        )
+									if ( (bind.m_access == Access::Read      && (0 == (g_caps.formats[bind.m_format] &  BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ) ) )
+									||   (bind.m_access == Access::Write     && (0 == (g_caps.formats[bind.m_format] &  BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE) ) )
+									||   (bind.m_access == Access::ReadWrite && (0 == (g_caps.formats[bind.m_format] & (BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ|BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE) ) ) )
+									   )
 									{
-										BGFX_FATAL(false, Fatal::DebugCheck,
-										"Failed to set image with access: %s, format:%s is not supoort", s_accessNames[bind.m_access], bimg::getName(bimg::TextureFormat::Enum(bind.m_format)));
+										BGFX_FATAL(
+											  false
+											, Fatal::DebugCheck
+											, "Failed to set image with access: %s, format:%s is not supoort"
+											, s_accessNames[bind.m_access]
+											, bimg::getName(bimg::TextureFormat::Enum(bind.m_format) )
+											);
 									}
+
 									TextureMtl& texture = m_textures[bind.m_idx];
 									texture.commit(
-										stage
+										  stage
 										, 0 != (bindingTypes[stage] & PipelineStateMtl::BindToVertexShader)
 										, 0 != (bindingTypes[stage] & PipelineStateMtl::BindToFragmentShader)
 										, bind.m_samplerFlags
