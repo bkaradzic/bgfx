@@ -62,7 +62,6 @@ namespace bgfx { namespace mtl
 #endif
 	}
 
-
 	// c++ wrapper
 	// objects with creation functions starting with 'new' has a refcount 1 after creation, object must be destroyed with release.
 	// commandBuffer, commandEncoders are autoreleased objects. Needs AutoreleasePool!
@@ -251,8 +250,11 @@ namespace bgfx { namespace mtl
 			[m_obj dispatchThreadgroups:_threadgroupsPerGrid threadsPerThreadgroup:_threadsPerThreadgroup];
 		}
 
-		void dispatchThreadgroupsWithIndirectBuffer(id <MTLBuffer> _indirectBuffer,
-												NSUInteger _indirectBufferOffset, MTLSize _threadsPerThreadgroup)
+		void dispatchThreadgroupsWithIndirectBuffer(
+			  id <MTLBuffer> _indirectBuffer
+			, NSUInteger _indirectBufferOffset
+			, MTLSize _threadsPerThreadgroup
+			)
 		{
 			[m_obj dispatchThreadgroupsWithIndirectBuffer:_indirectBuffer indirectBufferOffset:_indirectBufferOffset threadsPerThreadgroup:_threadsPerThreadgroup];
 		}
@@ -274,9 +276,9 @@ namespace bgfx { namespace mtl
 	MTL_CLASS_END
 
 	MTL_CLASS(Device)
-		bool supportsFeatureSet(MTLFeatureSet _featureSet)
+		bool supportsFamily(MTLGPUFamily _featureSet)
 		{
-			return [m_obj supportsFeatureSet:_featureSet];
+			return [m_obj supportsFamily:_featureSet];
 		}
 
 		id<MTLLibrary> newLibraryWithData(const void* _data)
@@ -727,11 +729,11 @@ namespace bgfx { namespace mtl
 		return [_str UTF8String];
 	}
 
-#define MTL_RELEASE(_obj)        \
-			BX_MACRO_BLOCK_BEGIN \
-				[_obj release];  \
-				_obj = nil;      \
-			BX_MACRO_BLOCK_END
+#define MTL_RELEASE(_obj) \
+	BX_MACRO_BLOCK_BEGIN  \
+		[_obj release];   \
+		_obj = NULL;      \
+	BX_MACRO_BLOCK_END
 
 	// end of c++ wrapper
 

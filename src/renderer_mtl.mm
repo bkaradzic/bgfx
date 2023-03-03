@@ -634,21 +634,21 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			{
 				if (iOSVersionEqualOrGreater("9.0.0") )
 				{
-					g_caps.limits.maxTextureSize = m_device.supportsFeatureSet( (MTLFeatureSet)4 /* iOS_GPUFamily3_v1 */) ? 16384 : 8192;
+					g_caps.limits.maxTextureSize = m_device.supportsFamily( (MTLGPUFamily)4 /* iOS_GPUFamily3_v1 */) ? 16384 : 8192;
 				}
 				else
 				{
 					g_caps.limits.maxTextureSize = 4096;
 				}
 
-				g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(m_device.supportsFeatureSet( (MTLFeatureSet)1 /* MTLFeatureSet_iOS_GPUFamily2_v1 */) ? 8 : 4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
+				g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(m_device.supportsFamily( (MTLGPUFamily)1 /* MTLGPUFamily_iOS_GPUFamily2_v1 */) ? 8 : 4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
 
-				g_caps.supported |= m_device.supportsFeatureSet( (MTLFeatureSet)4 /* MTLFeatureSet_iOS_GPUFamily3_v1 */)
+				g_caps.supported |= m_device.supportsFamily( (MTLGPUFamily)4 /* MTLGPUFamily_iOS_GPUFamily3_v1 */)
 					? BGFX_CAPS_DRAW_INDIRECT
 					: 0
 					;
 
-				g_caps.supported |= m_device.supportsFeatureSet( (MTLFeatureSet)11 /* MTLFeatureSet_iOS_GPUFamily4_v1 */)
+				g_caps.supported |= m_device.supportsFamily( (MTLGPUFamily)11 /* MTLGPUFamily_iOS_GPUFamily4_v1 */)
 					? BGFX_CAPS_TEXTURE_CUBE_ARRAY
 					: 0
 					;
@@ -659,7 +659,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				g_caps.limits.maxFBAttachments = 8;
 				g_caps.supported |= BGFX_CAPS_TEXTURE_CUBE_ARRAY;
 
-				g_caps.supported |= m_device.supportsFeatureSet( (MTLFeatureSet)10001 /* MTLFeatureSet_macOS_GPUFamily1_v2 */)
+				g_caps.supported |= m_device.supportsFamily( (MTLGPUFamily)10001 /* MTLGPUFamily_macOS_GPUFamily1_v2 */)
 					? BGFX_CAPS_DRAW_INDIRECT
 					: 0
 					;
@@ -1155,7 +1155,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			uint32_t width  = m_screenshotTarget.width();
 			uint32_t height = m_screenshotTarget.height();
 			uint32_t length = width*height*4;
-			uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
+			uint8_t* data   = (uint8_t*)BX_ALLOC(g_allocator, length);
 
 			MTLRegion region = { { 0, 0, 0 }, { width, height, 1 } };
 
@@ -1947,8 +1947,8 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 		void processArguments(
 			  PipelineStateMtl* ps
-			, NSArray <MTLArgument *>* _vertexArgs
-			, NSArray <MTLArgument *>* _fragmentArgs
+			, NSArray<MTLArgument*>* _vertexArgs
+			, NSArray<MTLArgument*>* _fragmentArgs
 			)
 		{
 			ps->m_numPredefined = 0;
@@ -2069,6 +2069,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 						else if (arg.type == MTLArgumentTypeTexture)
 						{
 							const char* name = utf8String(arg.name);
+
 							if (arg.index >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
 							{
 								BX_WARN(false, "Binding index is too large %d max is %d. User defined uniform '%s' won't be set.", int(arg.index), BGFX_CONFIG_MAX_TEXTURE_SAMPLERS - 1, name);
@@ -2173,7 +2174,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 						? s_renderMtl->m_mainFrameBuffer.m_swapChain
 						: s_renderMtl->m_frameBuffers[_fbh.idx].m_swapChain
 						;
-					pd.sampleCount = NULL != swapChain->m_backBufferColorMsaa
+					pd.rasterSampleCount = NULL != swapChain->m_backBufferColorMsaa
 						? swapChain->m_backBufferColorMsaa.sampleCount()
 						: 1
 						;
@@ -2189,7 +2190,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
 					{
 						const TextureMtl& texture = m_textures[frameBuffer.m_colorHandle[ii].idx];
-						pd.sampleCount = NULL != texture.m_ptrMsaa
+						pd.rasterSampleCount = NULL != texture.m_ptrMsaa
 							? texture.m_ptrMsaa.sampleCount()
 							: 1
 							;
@@ -2200,7 +2201,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					{
 						const TextureMtl& texture = m_textures[frameBuffer.m_depthHandle.idx];
 						pd.depthAttachmentPixelFormat = texture.m_ptr.m_obj.pixelFormat;
-						pd.sampleCount = NULL != texture.m_ptrMsaa
+						pd.rasterSampleCount = NULL != texture.m_ptrMsaa
 							? texture.m_ptrMsaa.sampleCount()
 							: 1
 							;
@@ -2315,6 +2316,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 							streamUsed = true;
 						}
 					}
+
 					if (streamUsed) {
 						vertexDesc.layouts[stream+1].stride       = layout.getStride();
 						vertexDesc.layouts[stream+1].stepFunction = MTLVertexStepFunctionPerVertex;
@@ -2356,7 +2358,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 					if (NULL != reflection)
 					{
-						processArguments(pso, reflection.vertexArguments, reflection.fragmentArguments);
+						processArguments(pso, reflection.vertexBindings, reflection.fragmentBindings);
 					}
 				}
 
@@ -2398,8 +2400,12 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				program.m_computePS = pso;
 
 				ComputePipelineReflection reflection = NULL;
-				pso->m_cps = m_device.newComputePipelineStateWithFunction(program.m_vsh->m_function, MTLPipelineOptionBufferTypeInfo, &reflection);
-				processArguments(pso, reflection.arguments, NULL);
+				pso->m_cps = m_device.newComputePipelineStateWithFunction(
+					  program.m_vsh->m_function
+					, MTLPipelineOptionBufferTypeInfo
+					, &reflection
+					);
+				processArguments(pso, reflection.bindings, NULL);
 
 				for (uint32_t ii = 0; ii < 3; ++ii)
 				{
@@ -2429,7 +2435,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				m_samplerDescriptor.maxAnisotropy =  (0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) ) ) ? m_mainFrameBuffer.m_swapChain->m_maxAnisotropy : 1;
 
 				if (m_macOS11Runtime
-				|| [m_device supportsFeatureSet:(MTLFeatureSet)4 /*MTLFeatureSet_iOS_GPUFamily3_v1*/])
+				|| [m_device supportsFamily:(MTLGPUFamily)4 /*MTLGPUFamily_iOS_GPUFamily3_v1*/])
 				{
 					const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
 					m_samplerDescriptor.compareFunction = 0 == cmpFunc
