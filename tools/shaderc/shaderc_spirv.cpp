@@ -438,16 +438,18 @@ namespace bgfx { namespace spirv
 	/// The value is 100.
 	constexpr int s_GLSL_VULKAN_CLIENT_VERSION = 100;
 
-	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
+	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages, bool _firstPass)
 	{
 		BX_UNUSED(_version);
+
+		bx::Error messageErr;
 
 		glslang::InitializeProcess();
 
 		EShLanguage stage = getLang(_options.shaderType);
 		if (EShLangCount == stage)
 		{
-			bx::printf("Error: Unknown shader type '%c'.\n", _options.shaderType);
+			bx::write(_messages, &messageErr, "Error: Unknown shader type '%c'.\n", _options.shaderType);
 			return false;
 		}
 
@@ -519,7 +521,7 @@ namespace bgfx { namespace spirv
 
 				printCode(_code.c_str(), line, start, end, column);
 
-				bx::printf("%s\n", log);
+				bx::write(_messages, &messageErr, "%s\n", log);
 			}
 		}
 		else
@@ -535,7 +537,7 @@ namespace bgfx { namespace spirv
 				const char* log = program->getInfoLog();
 				if (NULL != log)
 				{
-					bx::printf("%s\n", log);
+					bx::write(_messages, &messageErr, "%s\n", log);
 				}
 			}
 			else
@@ -640,7 +642,7 @@ namespace bgfx { namespace spirv
 					// recompile with the unused uniforms converted to statics
 					delete program;
 					delete shader;
-					return compile(_options, _version, output.c_str(), _writer, false);
+					return compile(_options, _version, output.c_str(), _writer, _messages, false);
 				}
 
 				UniformArray uniforms;
@@ -708,14 +710,14 @@ namespace bgfx { namespace spirv
 
 				spvtools::Optimizer opt(getSpirvTargetVersion(_version));
 
-				auto print_msg_to_stderr = [](
+				auto print_msg_to_stderr = [_messages, &messageErr](
 					  spv_message_level_t
 					, const char*
 					, const spv_position_t&
 					, const char* m
 					)
 				{
-					bx::printf("Error: %s\n", m);
+					bx::write(_messages, &messageErr, "Error: %s\n", m);
 				};
 
 				opt.SetMessageConsumer(print_msg_to_stderr);
@@ -881,9 +883,9 @@ namespace bgfx { namespace spirv
 
 } // namespace spirv
 
-	bool compileSPIRVShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
+	bool compileSPIRVShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages)
 	{
-		return spirv::compile(_options, _version, _code, _writer, true);
+		return spirv::compile(_options, _version, _code, _writer, _messages, true);
 	}
 
 } // namespace bgfx

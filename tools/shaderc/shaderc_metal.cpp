@@ -263,16 +263,18 @@ namespace bgfx { namespace metal
 		return size;
 	}
 
-	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
+	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages, bool _firstPass)
 	{
 		BX_UNUSED(_version);
+
+		bx::Error messageErr;
 
 		glslang::InitializeProcess();
 
 		EShLanguage stage = getLang(_options.shaderType);
 		if (EShLangCount == stage)
 		{
-			bx::printf("Error: Unknown shader type '%c'.\n", _options.shaderType);
+			bx::write(_messages, &messageErr, "Error: Unknown shader type '%c'.\n", _options.shaderType);
 			return false;
 		}
 
@@ -338,7 +340,7 @@ namespace bgfx { namespace metal
 
 				printCode(_code.c_str(), line, start, end, column);
 
-				bx::printf("%s\n", log);
+				bx::write(_messages, &messageErr, "%s\n", log);
 			}
 		}
 		else
@@ -354,7 +356,7 @@ namespace bgfx { namespace metal
 				const char* log = program->getInfoLog();
 				if (NULL != log)
 				{
-					bx::printf("%s\n", log);
+					bx::write(_messages, &messageErr, "%s\n", log);
 				}
 			}
 			else
@@ -434,7 +436,7 @@ namespace bgfx { namespace metal
 					// recompile with the unused uniforms converted to statics
 					delete program;
 					delete shader;
-					return compile(_options, _version, output.c_str(), _writer, false);
+					return compile(_options, _version, output.c_str(), _writer, _messages, false);
 				}
 
 				UniformArray uniforms;
@@ -498,14 +500,14 @@ namespace bgfx { namespace metal
 
 				spvtools::Optimizer opt(SPV_ENV_VULKAN_1_0);
 
-				auto print_msg_to_stderr = [](
+				auto print_msg_to_stderr = [_messages, &messageErr](
 					  spv_message_level_t
 					, const char*
 					, const spv_position_t&
 					, const char* m
 					)
 				{
-					bx::printf("Error: %s\n", m);
+					bx::write(_messages, &messageErr, "Error: %s\n", m);
 				};
 
 				opt.SetMessageConsumer(print_msg_to_stderr);
@@ -692,9 +694,9 @@ namespace bgfx { namespace metal
 
 } // namespace metal
 
-	bool compileMetalShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
+	bool compileMetalShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages)
 	{
-		return metal::compile(_options, _version, _code, _writer, true);
+		return metal::compile(_options, _version, _code, _writer, _messages, true);
 	}
 
 } // namespace bgfx

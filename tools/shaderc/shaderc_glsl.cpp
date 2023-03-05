@@ -8,8 +8,10 @@
 
 namespace bgfx { namespace glsl
 {
-	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
+	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages)
 	{
+		bx::Error messageErr;
+
 		char ch = _options.shaderType;
 		const glslopt_shader_type type = ch == 'f'
 			? kGlslOptShaderFragment
@@ -53,7 +55,7 @@ namespace bgfx { namespace glsl
 			}
 
 			printCode(_code.c_str(), line, start, end, column);
-			bx::printf("Error: %s\n", log);
+			bx::write(_messages, &messageErr, "Error: %s\n", log);
 			glslopt_shader_delete(shader);
 			glslopt_cleanup(ctx);
 			return false;
@@ -394,9 +396,9 @@ namespace bgfx { namespace glsl
 
 } // namespace glsl
 
-	bool compileGLSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
+	bool compileGLSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages)
 	{
-		return glsl::compile(_options, _version, _code, _writer);
+		return glsl::compile(_options, _version, _code, _writer, _messages);
 	}
 
 } // namespace bgfx
