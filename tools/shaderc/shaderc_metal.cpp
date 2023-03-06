@@ -225,14 +225,14 @@ namespace bgfx { namespace metal
 		"BgfxSampler2DMS",
 	};
 
-	static uint16_t writeUniformArray(bx::WriterI* _writer, const UniformArray& uniforms, bool isFragmentShader)
+	static uint16_t writeUniformArray(bx::WriterI* _shaderWriter, const UniformArray& uniforms, bool isFragmentShader)
 	{
 		uint16_t size = 0;
 
 		bx::ErrorAssert err;
 
 		uint16_t count = uint16_t(uniforms.size());
-		bx::write(_writer, count, &err);
+		bx::write(_shaderWriter, count, &err);
 
 		uint32_t fragmentBit = isFragmentShader ? kUniformFragmentBit : 0;
 		for (uint16_t ii = 0; ii < count; ++ii)
@@ -242,15 +242,15 @@ namespace bgfx { namespace metal
 			size += un.regCount*16;
 
 			uint8_t nameSize = (uint8_t)un.name.size();
-			bx::write(_writer, nameSize, &err);
-			bx::write(_writer, un.name.c_str(), nameSize, &err);
-			bx::write(_writer, uint8_t(un.type | fragmentBit), &err);
-			bx::write(_writer, un.num, &err);
-			bx::write(_writer, un.regIndex, &err);
-			bx::write(_writer, un.regCount, &err);
-			bx::write(_writer, un.texComponent, &err);
-			bx::write(_writer, un.texDimension, &err);
-			bx::write(_writer, un.texFormat, &err);
+			bx::write(_shaderWriter, nameSize, &err);
+			bx::write(_shaderWriter, un.name.c_str(), nameSize, &err);
+			bx::write(_shaderWriter, uint8_t(un.type | fragmentBit), &err);
+			bx::write(_shaderWriter, un.num, &err);
+			bx::write(_shaderWriter, un.regIndex, &err);
+			bx::write(_shaderWriter, un.regCount, &err);
+			bx::write(_shaderWriter, un.texComponent, &err);
+			bx::write(_shaderWriter, un.texDimension, &err);
+			bx::write(_shaderWriter, un.texFormat, &err);
 
 			BX_TRACE("%s, %s, %d, %d, %d"
 				, un.name.c_str()
@@ -263,18 +263,18 @@ namespace bgfx { namespace metal
 		return size;
 	}
 
-	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages, bool _firstPass)
+	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter, bool _firstPass)
 	{
 		BX_UNUSED(_version);
 
-		bx::Error messageErr;
+		bx::ErrorAssert messageErr;
 
 		glslang::InitializeProcess();
 
 		EShLanguage stage = getLang(_options.shaderType);
 		if (EShLangCount == stage)
 		{
-			bx::write(_messages, &messageErr, "Error: Unknown shader type '%c'.\n", _options.shaderType);
+			bx::write(_messageWriter, &messageErr, "Error: Unknown shader type '%c'.\n", _options.shaderType);
 			return false;
 		}
 
@@ -340,7 +340,7 @@ namespace bgfx { namespace metal
 
 				printCode(_code.c_str(), line, start, end, column);
 
-				bx::write(_messages, &messageErr, "%s\n", log);
+				bx::write(_messageWriter, &messageErr, "%s\n", log);
 			}
 		}
 		else
@@ -356,7 +356,7 @@ namespace bgfx { namespace metal
 				const char* log = program->getInfoLog();
 				if (NULL != log)
 				{
-					bx::write(_messages, &messageErr, "%s\n", log);
+					bx::write(_messageWriter, &messageErr, "%s\n", log);
 				}
 			}
 			else
@@ -436,7 +436,7 @@ namespace bgfx { namespace metal
 					// recompile with the unused uniforms converted to statics
 					delete program;
 					delete shader;
-					return compile(_options, _version, output.c_str(), _writer, _messages, false);
+					return compile(_options, _version, output.c_str(), _shaderWriter, _messageWriter, false);
 				}
 
 				UniformArray uniforms;
@@ -500,14 +500,14 @@ namespace bgfx { namespace metal
 
 				spvtools::Optimizer opt(SPV_ENV_VULKAN_1_0);
 
-				auto print_msg_to_stderr = [_messages, &messageErr](
+				auto print_msg_to_stderr = [_messageWriter, &messageErr](
 					  spv_message_level_t
 					, const char*
 					, const spv_position_t&
 					, const char* m
 					)
 				{
-					bx::write(_messages, &messageErr, "Error: %s\n", m);
+					bx::write(_messageWriter, &messageErr, "Error: %s\n", m);
 				};
 
 				opt.SetMessageConsumer(print_msg_to_stderr);
@@ -556,7 +556,7 @@ namespace bgfx { namespace metal
 
 						uniforms.push_back(un);
 					}
-					uint16_t size = writeUniformArray( _writer, uniforms, _options.shaderType == 'f');
+					uint16_t size = writeUniformArray(_shaderWriter, uniforms, _options.shaderType == 'f');
 
 					bx::Error err;
 
@@ -644,42 +644,42 @@ namespace bgfx { namespace metal
 							for (int i = 0; i < 3; ++i)
 							{
 								uint16_t dim = (uint16_t)msl.get_execution_mode_argument(spv::ExecutionMode::ExecutionModeLocalSize, i);
-								bx::write(_writer, dim, &err);
+								bx::write(_shaderWriter, dim, &err);
 							}
 						}
 
 						uint32_t shaderSize = (uint32_t)source.size();
-						bx::write(_writer, shaderSize, &err);
-						bx::write(_writer, source.c_str(), shaderSize, &err);
+						bx::write(_shaderWriter, shaderSize, &err);
+						bx::write(_shaderWriter, source.c_str(), shaderSize, &err);
 						uint8_t nul = 0;
-						bx::write(_writer, nul, &err);
+						bx::write(_shaderWriter, nul, &err);
 					}
 					else
 					{
 						uint32_t shaderSize = (uint32_t)spirv.size() * sizeof(uint32_t);
-						bx::write(_writer, shaderSize, &err);
-						bx::write(_writer, spirv.data(), shaderSize, &err);
+						bx::write(_shaderWriter, shaderSize, &err);
+						bx::write(_shaderWriter, spirv.data(), shaderSize, &err);
 						uint8_t nul = 0;
-						bx::write(_writer, nul, &err);
+						bx::write(_shaderWriter, nul, &err);
 					}
 					//
 					const uint8_t numAttr = (uint8_t)program->getNumLiveAttributes();
-					bx::write(_writer, numAttr, &err);
+					bx::write(_shaderWriter, numAttr, &err);
 
 					for (uint8_t ii = 0; ii < numAttr; ++ii)
 					{
 						bgfx::Attrib::Enum attr = toAttribEnum(program->getAttributeName(ii) );
 						if (bgfx::Attrib::Count != attr)
 						{
-							bx::write(_writer, bgfx::attribToId(attr), &err);
+							bx::write(_shaderWriter, bgfx::attribToId(attr), &err);
 						}
 						else
 						{
-							bx::write(_writer, uint16_t(UINT16_MAX), &err);
+							bx::write(_shaderWriter, uint16_t(UINT16_MAX), &err);
 						}
 					}
 
-					bx::write(_writer, size, &err);
+					bx::write(_shaderWriter, size, &err);
 				}
 			}
 		}
@@ -694,9 +694,9 @@ namespace bgfx { namespace metal
 
 } // namespace metal
 
-	bool compileMetalShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages)
+	bool compileMetalShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
 	{
-		return metal::compile(_options, _version, _code, _writer, _messages, true);
+		return metal::compile(_options, _version, _code, _shaderWriter, _messageWriter, true);
 	}
 
 } // namespace bgfx
