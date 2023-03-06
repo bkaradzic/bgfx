@@ -719,10 +719,11 @@ namespace bgfx
 
 	struct Preprocessor
 	{
-		Preprocessor(const char* _filePath, bool _essl)
+		Preprocessor(const char* _filePath, bool _essl, bx::WriterI* _messageWriter)
 			: m_tagptr(m_tags)
 			, m_scratchPos(0)
 			, m_fgetsPos(0)
+			, m_messageWriter(_messageWriter)
 		{
 			m_tagptr->tag = FPPTAG_USERDATA;
 			m_tagptr->data = this;
@@ -883,9 +884,11 @@ namespace bgfx
 			thisClass->m_preprocessed += char(_ch);
 		}
 
-		static void fppError(void* /*_userData*/, char* _format, va_list _vargs)
+		static void fppError(void* _userData, char* _format, va_list _vargs)
 		{
-			bx::vprintf(_format, _vargs);
+			bx::ErrorAssert err;
+			Preprocessor* thisClass = (Preprocessor*)_userData;
+			bx::write(thisClass->m_messageWriter, _format, _vargs, &err);
 		}
 
 		char* scratch(const char* _str)
@@ -907,6 +910,7 @@ namespace bgfx
 		char m_scratch[16<<10];
 		uint32_t m_scratchPos;
 		uint32_t m_fgetsPos;
+		bx::WriterI* m_messageWriter;
 	};
 
 	typedef std::vector<std::string> InOut;
@@ -1107,7 +1111,7 @@ namespace bgfx
 
 		const Profile *profile = &s_profiles[profile_id];
 
-		Preprocessor preprocessor(_options.inputFilePath.c_str(), profile->lang == ShadingLang::ESSL);
+		Preprocessor preprocessor(_options.inputFilePath.c_str(), profile->lang == ShadingLang::ESSL, _messageWriter);
 
 		for (size_t ii = 0; ii < _options.includeDirs.size(); ++ii)
 		{
