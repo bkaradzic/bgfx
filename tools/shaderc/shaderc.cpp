@@ -454,7 +454,7 @@ namespace bgfx
 		return UniformType::Count;
 	}
 
-	int32_t writef(bx::WriterI* _shaderWriter, const char* _format, ...)
+	int32_t writef(bx::WriterI* _writer, const char* _format, ...)
 	{
 		va_list argList;
 		va_start(argList, _format);
@@ -470,7 +470,7 @@ namespace bgfx
 			len = bx::vsnprintf(out, len, _format, argList);
 		}
 
-		len = bx::write(_shaderWriter, out, len, bx::ErrorAssert{});
+		len = bx::write(_writer, out, len, bx::ErrorAssert{});
 
 		va_end(argList);
 
