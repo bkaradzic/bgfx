@@ -7,10 +7,11 @@
 
 namespace bgfx
 {
-	bool compilePSSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
+	bool compilePSSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
 	{
-		BX_UNUSED(_options, _version, _code, _writer);
-		bx::printf("PSSL compiler is not supported.\n");
+		BX_UNUSED(_options, _version, _code, _shaderWriter);
+		bx::ErrorAssert messageErr;
+		bx::write(_messageWriter, &messageErr, "PSSL compiler is not supported.\n");
 		return false;
 	}
 
