@@ -39,7 +39,7 @@ Supported Platforms
 -  iOS (iPhone, iPad, AppleTV)
 -  Linux
 -  MIPS Creator CI20
--  OSX (10.12+)
+-  OSX (11+)
 -  PlayStation 4
 -  RaspberryPi
 -  UWP (Universal Windows, Xbox One)
@@ -49,9 +49,10 @@ Supported Platforms
 Supported Compilers
 ~~~~~~~~~~~~~~~~~~~
 
--  Clang 3.3 and above
--  GCC 5 and above
--  vs2017 and above
+-  Clang 11 and above
+-  GCC 8 and above
+-  VS2019 and above
+-  Apple clang 12 and above
 
 Supported Languages
 ~~~~~~~~~~~~~~~~~~~
