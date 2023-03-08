@@ -60,6 +60,15 @@ namespace
 
 				break;
 
+			case bgfx::TextureFormat::RGBA16:
+				formatDesc.x = 16;
+				formatDesc.y = 16;
+				formatDesc.z = 16;
+				formatDesc.w = 16;
+				formatDesc.f = cudaChannelFormatKindUnsigned;
+
+				break;
+
 			default:
 				BX_TRACE("makeCudaFormat: texture format %d is not supported.", (int)_format);
 				return formatDesc;

@@ -6053,7 +6053,11 @@ VK_DESTROY
 			&& 0 == (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY)
 			;
 
-		const bool enableExport = 0 != (m_flags & BGFX_TEXTURE_EXTERNAL);
+		const bool enableExport = true
+			&& 0 != (m_flags & BGFX_TEXTURE_EXTERNAL)
+			&& 0 != (g_caps.supported & BGFX_CAPS_CUDA_INTEROP)
+			;
+
 		VkExternalMemoryImageCreateInfo emici = {};
 		if (enableExport) {
 			emici.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
