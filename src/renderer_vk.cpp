@@ -1427,8 +1427,7 @@ VK_IMPORT_INSTANCE
 					goto error;
 				}
 
-				VkPhysicalDevice physicalDevices[4];
-				numPhysicalDevices = bx::min<uint32_t>(numPhysicalDevices, BX_COUNTOF(physicalDevices) );
+				VkPhysicalDevice physicalDevices[numPhysicalDevices];
 				result = vkEnumeratePhysicalDevices(m_instance
 					, &numPhysicalDevices
 					, physicalDevices
