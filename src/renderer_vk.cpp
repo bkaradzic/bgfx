@@ -1427,7 +1427,13 @@ VK_IMPORT_INSTANCE
 					goto error;
 				}
 
-				VkPhysicalDevice physicalDevices[numPhysicalDevices];
+				if (numPhysicalDevices > 16)
+				{
+					BX_TRACE("Init error: numPhysicalDevices exceeds the max supported number of devices (16)");
+					goto error;
+				}
+
+				VkPhysicalDevice physicalDevices[16];
 				result = vkEnumeratePhysicalDevices(m_instance
 					, &numPhysicalDevices
 					, physicalDevices
