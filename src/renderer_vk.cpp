@@ -18,6 +18,8 @@
 #	import <Metal/Metal.h>
 #endif // BX_PLATFORM_OSX
 
+#define VK_MAX_PHYSICAL_DEVICES 16
+
 namespace bgfx { namespace vk
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -1427,13 +1429,13 @@ VK_IMPORT_INSTANCE
 					goto error;
 				}
 
-				if (numPhysicalDevices > 16)
+				if (numPhysicalDevices > VK_MAX_PHYSICAL_DEVICES)
 				{
 					BX_TRACE("Init error: numPhysicalDevices exceeds the max supported number of devices (16)");
 					goto error;
 				}
 
-				VkPhysicalDevice physicalDevices[16];
+				VkPhysicalDevice physicalDevices[VK_MAX_PHYSICAL_DEVICES];
 				result = vkEnumeratePhysicalDevices(m_instance
 					, &numPhysicalDevices
 					, physicalDevices
@@ -1445,7 +1447,7 @@ VK_IMPORT_INSTANCE
 					goto error;
 				}
 
-				Extension physicalDeviceExtensions[4][Extension::Count];
+				Extension physicalDeviceExtensions[VK_MAX_PHYSICAL_DEVICES][Extension::Count];
 
 				uint32_t physicalDeviceIdx         = UINT32_MAX;
 				uint32_t fallbackPhysicalDeviceIdx = UINT32_MAX;
