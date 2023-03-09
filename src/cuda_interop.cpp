@@ -166,7 +166,7 @@ namespace bgfx
 		}
 	}
 
-	void cudaCopyImage(const CudaImage* _srcImage, CudaImage* _dstImage)
+	void cudaCopyImage(const CudaImage* _srcImage, CudaImage* _dstImage, bool _asArray)
 	{
 		_dstImage->width = _srcImage->width;
 		_dstImage->height = _srcImage->height;
@@ -174,30 +174,48 @@ namespace bgfx
 		_dstImage->mips = _srcImage->mips;
 		_dstImage->format = _srcImage->format;
 
-		const cudaMipmappedArray_t srcMipmappedArray = reinterpret_cast<cudaMipmappedArray_t>(_srcImage->mipmappedArray);
-		cudaMipmappedArray_t* dstMipmappedArray = reinterpret_cast<cudaMipmappedArray_t*>(&_dstImage->mipmappedArray);
+		if (_asArray) {
+			// export as image mipmapped array, with all mip levels
+			const cudaMipmappedArray_t srcMipmappedArray = reinterpret_cast<cudaMipmappedArray_t>(_srcImage->mipmappedArray);
+			cudaMipmappedArray_t* dstMipmappedArray = reinterpret_cast<cudaMipmappedArray_t*>(&_dstImage->mipmappedArray);
 
-		cudaExtent extent = make_cudaExtent(_dstImage->width, _dstImage->height, 0);
-		cudaChannelFormatDesc formatDesc = makeCudaFormat(_dstImage->format );
+			cudaExtent extent = make_cudaExtent(_dstImage->width, _dstImage->height, 0);
+			cudaChannelFormatDesc formatDesc = makeCudaFormat(_dstImage->format );
 
-		checkCudaErrors(cudaMallocMipmappedArray(dstMipmappedArray, &formatDesc, extent, _dstImage->mips));
+			checkCudaErrors(cudaMallocMipmappedArray(dstMipmappedArray, &formatDesc, extent, _dstImage->mips));
 
-		for (int mipLevel = 0; mipLevel < _dstImage->mips; ++mipLevel) {
-			cudaArray_t srcArray, dstArray;
+			for (int mipLevel = 0; mipLevel < _dstImage->mips; ++mipLevel) {
+				cudaArray_t srcArray, dstArray;
 
-			checkCudaErrors(cudaGetMipmappedArrayLevel(&srcArray, srcMipmappedArray, mipLevel));
-      checkCudaErrors(cudaGetMipmappedArrayLevel(&dstArray, *dstMipmappedArray, mipLevel));
+				checkCudaErrors(cudaGetMipmappedArrayLevel(&srcArray, srcMipmappedArray, mipLevel));
+				checkCudaErrors(cudaGetMipmappedArrayLevel(&dstArray, *dstMipmappedArray, mipLevel));
 
-			uint32_t levelWidth = (_dstImage->width >> mipLevel) ? (_dstImage->width >> mipLevel) : 1;
-      uint32_t levelHeight = (_dstImage->height >> mipLevel) ? (_dstImage->height >> mipLevel) : 1;
+				uint32_t levelWidth = (_dstImage->width >> mipLevel) ? (_dstImage->width >> mipLevel) : 1;
+				uint32_t levelHeight = (_dstImage->height >> mipLevel) ? (_dstImage->height >> mipLevel) : 1;
+				const uint8_t channels = bimg::getBitsPerPixel((bimg::TextureFormat::Enum)_dstImage->format ) / 8;
+
+				checkCudaErrors(cudaMemcpy2DArrayToArray(dstArray, 0, 0, srcArray, 0, 0, levelWidth * channels, levelHeight, cudaMemcpyDeviceToDevice));
+			}
+
+			// utility: get the base layer as it's the one most likely to be used, but the callers can manage image.mipmappedArray on their own
+			cudaArray_t* dstImageLayer = reinterpret_cast<cudaArray_t*>(&_dstImage->array);
+			checkCudaErrors(cudaGetMipmappedArrayLevel(dstImageLayer, *dstMipmappedArray, 0));
+		} else {
+			// export as raw device memory, only base mip
+			cudaArray_t srcArray = reinterpret_cast<cudaArray_t>(_srcImage->array);
 			const uint8_t channels = bimg::getBitsPerPixel((bimg::TextureFormat::Enum)_dstImage->format ) / 8;
 
-			checkCudaErrors(cudaMemcpy2DArrayToArray(dstArray, 0, 0, srcArray, 0, 0, levelWidth * channels, levelHeight, cudaMemcpyDeviceToDevice));
+			int pitch = _dstImage->width * channels;
+			int imageSize = pitch * _dstImage->height;
+
+			checkCudaErrors(cudaMalloc(&_dstImage->array, imageSize));
+
+			checkCudaErrors(cudaMemcpy2DFromArray(_dstImage->array, pitch, srcArray, 0, 0, pitch, _dstImage->height, cudaMemcpyDeviceToDevice));
+
+			_dstImage->mipmappedArray = NULL;
 		}
 
-		// utility: get the base layer as it's the one most likely to be used, but the callers can manage image.mipmappedArray on their own
-		cudaArray_t* dstImageLayer = reinterpret_cast<cudaArray_t*>(&_dstImage->array);
-		checkCudaErrors(cudaGetMipmappedArrayLevel(dstImageLayer, *dstMipmappedArray, 0));
+		_dstImage->externalMemory = NULL;
 	}
 
 	void cudaImportSemaphores(int _waitHandle, int _signalHandle, CudaSemaphore* _cudaSemaphore)
@@ -250,7 +268,7 @@ namespace bgfx {
 	{
 	}
 
-	void cudaCopyImage(const CudaImage* /*srcImage*/, CudaImage* /*dstImage*/)
+	void cudaCopyImage(const CudaImage* /*srcImage*/, CudaImage* /*dstImage*/, bool /*_asArray*/)
 	{
 	}
 

@@ -2421,7 +2421,7 @@ VK_IMPORT_DEVICE
 			bgfx::release(mem);
 		}
 
-		void exportTextureToCuda(TextureHandle _handle, bool _makeCopy, CudaImage* _cudaImage) override
+		void exportTextureToCuda(TextureHandle _handle, bool _makeCopy, bool _asArray, CudaImage* _cudaImage) override
 		{
 			if (!isValid(_handle))
 				return;
@@ -2434,7 +2434,7 @@ VK_IMPORT_DEVICE
 			if (_makeCopy)
 			{
 				kick(true);
-				cudaCopyImage(&texture.m_cudaImage, _cudaImage);
+				cudaCopyImage(&texture.m_cudaImage, _cudaImage, _asArray);
 			}
 			else
 			{

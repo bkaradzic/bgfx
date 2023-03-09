@@ -228,14 +228,23 @@ void destroyCudaImage(bgfx::CudaImage* _cudaImage)
 		return;
 	}
 
-	cudaMipmappedArray_t mipmappedArray = reinterpret_cast<cudaMipmappedArray_t>(_cudaImage->mipmappedArray);
-	cudaArray_t imageLayer = reinterpret_cast<cudaArray_t>(_cudaImage->array);
+	if (NULL != _cudaImage->mipmappedArray)
+	{
+		cudaMipmappedArray_t mipmappedArray = reinterpret_cast<cudaMipmappedArray_t>(_cudaImage->mipmappedArray);
+		cudaArray_t imageLayer = reinterpret_cast<cudaArray_t>(_cudaImage->array);
 
-	cudaError_t error = cudaFreeArray(imageLayer);
-	BX_UNUSED(error); // !!
-	BX_ASSERT(cudaSuccess == error, "Failed to destroy CUDA image! Reason: %s", cudaGetErrorName(error));
-	error = cudaFreeMipmappedArray(mipmappedArray);
-	BX_ASSERT(cudaSuccess == error, "Failed to destroy CUDA image! Reason: %s", cudaGetErrorName(error));
+		cudaError_t error = cudaFreeArray(imageLayer);
+		BX_UNUSED(error); // !!
+		BX_ASSERT(cudaSuccess == error, "Failed to destroy CUDA image! Reason: %s", cudaGetErrorName(error));
+		error = cudaFreeMipmappedArray(mipmappedArray);
+		BX_ASSERT(cudaSuccess == error, "Failed to destroy CUDA image! Reason: %s", cudaGetErrorName(error));
+	}
+	else
+	{
+		cudaError_t error = cudaFree(_cudaImage->array);
+		BX_UNUSED(error); // !!
+		BX_ASSERT(cudaSuccess == error, "Failed to destroy CUDA image! Reason: %s", cudaGetErrorName(error));
+	}
 
 	*_cudaImage = bgfx::CudaImage{};
 }
@@ -244,16 +253,27 @@ void saveCudaImage(bgfx::CudaImage* _cudaImage)
 {
 	BX_ASSERT(NULL != _cudaImage->array, "");
 
-	cudaArray_t imageArray = reinterpret_cast<cudaArray_t>(_cudaImage->array);
-
 	int pitch = _cudaImage->width * _cudaImage->channels;
 	int imageSize = pitch * _cudaImage->height;
 	std::vector<uint8_t> bytes(imageSize, 0);
 
-	cudaError_t error = cudaMemcpy2DFromArray(bytes.data(), pitch, imageArray, 0, 0, pitch, _cudaImage->height, cudaMemcpyDeviceToHost);
+	if (NULL != _cudaImage->mipmappedArray)
+	{
+		// as image array
+		cudaArray_t imageArray = reinterpret_cast<cudaArray_t>(_cudaImage->array);
+		cudaError_t error = cudaMemcpy2DFromArray(bytes.data(), pitch, imageArray, 0, 0, pitch, _cudaImage->height, cudaMemcpyDeviceToHost);
 
-	BX_UNUSED(error); // !!
-	BX_ASSERT(cudaSuccess == error, "CUDA image transfer failed! Reason: %s", cudaGetErrorName(error));
+		BX_UNUSED(error); // !!
+		BX_ASSERT(cudaSuccess == error, "CUDA image transfer failed! Reason: %s", cudaGetErrorName(error));
+	}
+	else
+	{
+		// as raw device memory
+		cudaError_t error = cudaMemcpy(bytes.data(), _cudaImage->array, imageSize, cudaMemcpyDeviceToHost);
+
+		BX_UNUSED(error); // !!
+		BX_ASSERT(cudaSuccess == error, "CUDA image transfer failed! Reason: %s", cudaGetErrorName(error));
+	}
 
 	bx::FileWriter writer;
 	bx::Error err;
@@ -564,7 +584,7 @@ public:
 				ImGui::InputInt("Seed", &m_seed);
 				ImGui::Checkbox("Show Noise Texture.", &m_showNoiseTexture);
 
-				if (ImGui::Button("Save Shared Albedo"))
+				if (ImGui::Button("Save Shared Albedo (As Array)"))
 				{
 					if (isValid(m_gbufferTex[0]))
 					{
@@ -573,7 +593,20 @@ public:
 							destroyCudaImage(&m_cudaImageOut);
 						}
 
-						m_cudaSaveFrame = bgfx::exportTexture(m_gbufferTex[0], true, &m_cudaImageOut);
+						m_cudaSaveFrame = bgfx::exportTexture(m_gbufferTex[0], true /*makeCopy*/, true /*asArray*/, &m_cudaImageOut);
+					}
+				}
+
+				if (ImGui::Button("Save Shared Albedo (As Memory)"))
+				{
+					if (isValid(m_gbufferTex[0]))
+					{
+						if (m_cudaImageOut.isValid())
+						{
+							destroyCudaImage(&m_cudaImageOut);
+						}
+
+						m_cudaSaveFrame = bgfx::exportTexture(m_gbufferTex[0], true /*makeCopy*/, false /*asArray*/, &m_cudaImageOut);
 					}
 				}
 
@@ -646,7 +679,7 @@ public:
 
 				m_textureNoise = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_EXTERNAL | BGFX_TEXTURE_COMPUTE_WRITE | tsFlags, mem);
 
-				m_cudaReadyFrame = bgfx::exportTexture(m_textureNoise, false, &m_cudaTextureNoise);
+				m_cudaReadyFrame = bgfx::exportTexture(m_textureNoise, false /*makeCopy*/, false /*asArray*/, &m_cudaTextureNoise);
 			}
 
 			if (m_currentFrame == m_cudaSaveFrame)

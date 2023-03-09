@@ -517,11 +517,11 @@ BGFX_C_API uint32_t bgfx_read_texture(bgfx_texture_handle_t _handle, void* _data
 	return bgfx::readTexture(handle.cpp, _data, _mip);
 }
 
-BGFX_C_API uint32_t bgfx_export_texture(bgfx_texture_handle_t _handle, bool _makeCopy, bgfx_cuda_image_t* _cudaImage)
+BGFX_C_API uint32_t bgfx_export_texture(bgfx_texture_handle_t _handle, bool _makeCopy, bool _asArray, bgfx_cuda_image_t* _cudaImage)
 {
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
 	bgfx::CudaImage* cudaImageCpp = (bgfx::CudaImage*)_cudaImage;
-	return bgfx::exportTexture(handle.cpp, _makeCopy, cudaImageCpp);
+	return bgfx::exportTexture(handle.cpp, _makeCopy, _asArray, cudaImageCpp);
 }
 
 BGFX_C_API void bgfx_set_texture_name(bgfx_texture_handle_t _handle, const char* _name, int32_t _len)

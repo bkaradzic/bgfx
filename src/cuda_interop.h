@@ -23,7 +23,7 @@ namespace bgfx
 	);
 
 	void cudaDestroyImage(CudaImage* _cudaImage);
-	void cudaCopyImage(const CudaImage* _srcImage, CudaImage* _dstImage);
+	void cudaCopyImage(const CudaImage* _srcImage, CudaImage* _dstImage, bool _asArray);
 
 	void cudaImportSemaphores(int _waitHandle, int _signalHandle, CudaSemaphore* _cudaSemaphore);
 	void cudaDestroySemaphores(CudaSemaphore* _cudaSemaphore);

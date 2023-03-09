@@ -3105,7 +3105,7 @@ namespace bgfx
 		virtual void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) = 0;
 
 		// CUDA Interop
-		virtual void exportTextureToCuda(TextureHandle _handle, bool _makeCopy, CudaImage* _cudaImage) = 0;
+		virtual void exportTextureToCuda(TextureHandle _handle, bool _makeCopy, bool _asArray, CudaImage* _cudaImage) = 0;
 		virtual void getExternalSemaphore(CudaSemaphore* _cudaSemaphore) = 0;
 		virtual void setWaitExternal() = 0;
 		virtual void setSignalExternal() = 0;
@@ -4725,13 +4725,14 @@ namespace bgfx
 			cmdbuf.write(_mem);
 		}
 
-		BGFX_API_FUNC(uint32_t exportTexture(TextureHandle _handle, bool _makeCopy, CudaImage* _cudaImage) )
+		BGFX_API_FUNC(uint32_t exportTexture(TextureHandle _handle, bool _makeCopy, bool _asArray, CudaImage* _cudaImage) )
 		{
 			BGFX_CHECK_HANDLE("exportTexture", m_textureHandle, _handle);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::ExportTexture);
 			cmdbuf.write(_handle);
 			cmdbuf.write(_makeCopy);
+			cmdbuf.write(_asArray);
 			cmdbuf.write(_cudaImage);
 
 			return m_submit->m_frameNum + 2;

@@ -3251,10 +3251,13 @@ namespace bgfx
 					bool makeCopy;
 					_cmdbuf.read(makeCopy);
 
+					bool asArray;
+					_cmdbuf.read(asArray);
+
 					CudaImage* cudaImage;
 					_cmdbuf.read(cudaImage);
 
-					m_renderCtx->exportTextureToCuda(handle, makeCopy, cudaImage);
+					m_renderCtx->exportTextureToCuda(handle, makeCopy, asArray, cudaImage);
 				}
 				break;
 
@@ -5109,11 +5112,11 @@ namespace bgfx
 		return s_ctx->readTexture(_handle, _data, _mip);
 	}
 
-	uint32_t exportTexture(TextureHandle _handle, bool _makeCopy, CudaImage* _cudaImage)
+	uint32_t exportTexture(TextureHandle _handle, bool _makeCopy, bool _asArray, CudaImage* _cudaImage)
 	{
 		BX_ASSERT(NULL != _cudaImage, "_cudaImage can't be NULL");
 		BGFX_CHECK_CAPS(BGFX_CAPS_CUDA_INTEROP, "CUDA Interop is not supported!");
-		return s_ctx->exportTexture(_handle, _makeCopy, _cudaImage);
+		return s_ctx->exportTexture(_handle, _makeCopy, _asArray, _cudaImage);
 	}
 
 	void getExternalSemaphore(CudaSemaphore* _cudaSemaphore)

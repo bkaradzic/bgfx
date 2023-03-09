@@ -1794,7 +1794,7 @@ namespace bgfx { namespace d3d12
 			release(mem);
 		}
 
-		void exportTextureToCuda(TextureHandle /*_handle*/, bool /*_makeCopy*/, CudaImage* /*_cudaImage*/) override
+		void exportTextureToCuda(TextureHandle /*_handle*/, bool /*_makeCopy*/, bool /*_asArray*/, CudaImage* /*_cudaImage*/) override
 		{
 			BX_TRACE("CUDA Interop is not supported in DX12.");
 		}

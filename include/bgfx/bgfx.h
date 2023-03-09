@@ -1054,8 +1054,8 @@ namespace bgfx
 	struct CudaImage
 	{
 		void* externalMemory = NULL;      //!< cudaExternalMemory_t. can be NULL for copies that exist in CUDA only.
-		void* mipmappedArray = NULL;      //!< cudaMipmappedArray_t
-		void* array = NULL;								//!< cudaArray_t, typically the 0-th mipmap
+		void* mipmappedArray = NULL;      //!< cudaMipmappedArray_t. can be NULL if exported with _asArray = false.
+		void* array = NULL;								//!< cudaArray_t, if exported with _asArray = true, otherwise raw device memory. typically the 0-th mipmap in mipmapped images
 
 		int width = -1;										//!< image width
 		int height = -1;									//!< image height
@@ -3057,6 +3057,7 @@ namespace bgfx
 	///
 	/// @param[in] _handle Texture handle.
 	/// @param[in] _makeCopy if true, clones the texture into a seprate buffer and exports that.
+	/// @param[in] _asArray  if true, exports the texture as a cudaArray_t (i.e. image), otherwise as raw device memory. Ignored if _makeCopy = false
 	/// @param[out] _cudaImage Cuda resources associated with the texture.
 	///
 	/// @param[out] _cudaImage Cuda resources associated with the texture.
@@ -3067,7 +3068,7 @@ namespace bgfx
 	///						 Otherwise, lifetime is managed internally
 	/// @attention C99's equivalent binding is `bgfx_export_texture`.
 	///
-	uint32_t exportTexture(TextureHandle _handle, bool _makeCopy, CudaImage* _cudaImage);
+	uint32_t exportTexture(TextureHandle _handle, bool _makeCopy, bool _asArray, CudaImage* _cudaImage);
 
 	/// Set texture debug name.
 	///

@@ -2016,6 +2016,7 @@ BGFX_C_API uint32_t bgfx_read_texture(bgfx_texture_handle_t _handle, void* _data
  *
  * @param[in] _handle Texture handle.
  * @param[in] _makeCopy if true, clones the texture into a seprate buffer and exports that.
+ * @param[in] _asArray if true, exports the texture as a cudaArray_t (i.e. image), otherwise as raw device memory. Ignored if _makeCopy = false
  * @param[out] _cudaImage Cuda resources associated with the texture.
  *
  * @returns Frame number when the result will be available. See: `bgfx::frame`.
@@ -2024,7 +2025,7 @@ BGFX_C_API uint32_t bgfx_read_texture(bgfx_texture_handle_t _handle, void* _data
  * @remarks If _makeCopy is true, ownership is transferred to CUDA and lifetime management is a responsibility of the caller.
  *			Otherwise, lifetime is managed internally
 */
-BGFX_C_API uint32_t bgfx_export_texture(bgfx_texture_handle_t _handle, bool _makeCopy, bgfx_cuda_image_t* _cudaImage);
+BGFX_C_API uint32_t bgfx_export_texture(bgfx_texture_handle_t _handle, bool _makeCopy, bool _asArray, bgfx_cuda_image_t* _cudaImage);
 
 /**
  * Set texture debug name.
