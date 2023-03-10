@@ -186,6 +186,10 @@ namespace bgfx { namespace noop
 		{
 		}
 
+		void createExternalSyncObjects() override
+		{
+		}
+
 		void getExternalSemaphore(CudaSemaphore* /*_cudaSemaphore*/) override
 		{
 		}

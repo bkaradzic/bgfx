@@ -1901,6 +1901,11 @@ namespace bgfx { namespace d3d11
 			BX_TRACE("CUDA Interop is not supported in DX11.");
 		}
 
+		void createExternalSyncObjects() override
+		{
+			BX_TRACE("CUDA Interop is not supported in DX11.");
+		}
+
 		void getExternalSemaphore(CudaSemaphore* /*_cudaSemaphore*/) override
 		{
 			BX_TRACE("CUDA Interop is not supported in DX11.");

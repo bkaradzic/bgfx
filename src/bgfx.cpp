@@ -2833,6 +2833,7 @@ namespace bgfx
 					if (0 != (BGFX_CAPS_CUDA_INTEROP & bgfx::getCaps()->supported) )
 					{
 						cudaInit(g_caps.deviceUUID);
+						m_renderCtx->createExternalSyncObjects();
 					}
 
 				}

@@ -3106,6 +3106,7 @@ namespace bgfx
 
 		// CUDA Interop
 		virtual void exportTextureToCuda(TextureHandle _handle, bool _makeCopy, bool _asArray, CudaImage* _cudaImage) = 0;
+		virtual void createExternalSyncObjects() = 0;
 		virtual void getExternalSemaphore(CudaSemaphore* _cudaSemaphore) = 0;
 		virtual void setWaitExternal() = 0;
 		virtual void setSignalExternal() = 0;

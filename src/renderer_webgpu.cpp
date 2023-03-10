@@ -961,6 +961,11 @@ namespace bgfx { namespace webgpu
 			BX_TRACE("CUDA Interop is not supported in WebGPU.");
 		}
 
+		void createExternalSyncObjects() override
+		{
+			BX_TRACE("CUDA Interop is not supported in WebGPU.");
+		}
+
 		void getExternalSemaphore(CudaSemaphore* /*_cudaSemaphore*/) override
 		{
 			BX_TRACE("CUDA Interop is not supported in WebGPU.");

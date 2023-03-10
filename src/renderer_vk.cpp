@@ -2100,11 +2100,6 @@ VK_IMPORT_DEVICE
 				goto error;
 			}
 
-			if (0 != (g_caps.supported & BGFX_CAPS_CUDA_INTEROP))
-			{
-				m_externalSync.init();
-			}
-
 			g_internalData.context = m_device;
 			return true;
 
@@ -2454,6 +2449,15 @@ VK_IMPORT_DEVICE
 				_cudaImage->externalMemory = texture.m_cudaImage.externalMemory;
 				_cudaImage->mipmappedArray = texture.m_cudaImage.mipmappedArray;
 				_cudaImage->array = texture.m_cudaImage.array;
+			}
+		}
+
+		void createExternalSyncObjects() override
+		{
+			// must be called after cudaInit() so that the objects are created on the right device
+			if (0 != (g_caps.supported & BGFX_CAPS_CUDA_INTEROP))
+			{
+				m_externalSync.init();
 			}
 		}
 
