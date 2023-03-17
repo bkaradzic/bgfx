@@ -349,6 +349,15 @@ spv_result_t ValidateTypeStruct(ValidationState_t& _, const Instruction* inst) {
                << ", OpTypeRuntimeArray must only be used for the last member "
                   "of an OpTypeStruct";
       }
+
+      if (!_.HasDecoration(inst->id(), spv::Decoration::Block) &&
+          !_.HasDecoration(inst->id(), spv::Decoration::BufferBlock)) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << _.VkErrorID(4680)
+               << spvLogStringForEnv(_.context()->target_env)
+               << ", OpTypeStruct containing an OpTypeRuntimeArray "
+               << "must be decorated with Block or BufferBlock.";
+      }
     }
   }
 

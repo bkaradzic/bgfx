@@ -906,7 +906,7 @@ bool Instruction::IsAtomicWithLoad() const {
 bool Instruction::IsAtomicOp() const { return spvOpcodeIsAtomicOp(opcode()); }
 
 bool Instruction::IsConstant() const {
-  return IsCompileTimeConstantInst(opcode());
+  return IsConstantInst(opcode()) && !IsSpecConstantInst(opcode());
 }
 }  // namespace opt
 }  // namespace spvtools

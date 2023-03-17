@@ -145,12 +145,17 @@ ConstantFoldingRule FoldInsertWithConstants() {
       if (composite->AsNullConstant()) {
         // Make new composite so it can be inserted in the index with the
         // non-null value
-        const auto new_composite = const_mgr->GetNullCompositeConstant(type);
-        // Keep track of any indexes along the way to last index
-        if (i != final_index) {
-          chain.push_back(new_composite);
+        if (const auto new_composite =
+                const_mgr->GetNullCompositeConstant(type)) {
+          // Keep track of any indexes along the way to last index
+          if (i != final_index) {
+            chain.push_back(new_composite);
+          }
+          components = new_composite->AsCompositeConstant()->GetComponents();
+        } else {
+          // Unsupported input type (such as structs)
+          return nullptr;
         }
-        components = new_composite->AsCompositeConstant()->GetComponents();
       } else {
         // Keep track of any indexes along the way to last index
         if (i != final_index) {

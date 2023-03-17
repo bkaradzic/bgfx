@@ -403,6 +403,19 @@ typedef struct spv_parsed_instruction_t {
   uint16_t num_operands;
 } spv_parsed_instruction_t;
 
+typedef struct spv_parsed_header_t {
+  // The magic number of the SPIR-V module.
+  uint32_t magic;
+  // Version number.
+  uint32_t version;
+  // Generator's magic number.
+  uint32_t generator;
+  // IDs bound for this module (0 < id < bound).
+  uint32_t bound;
+  // reserved.
+  uint32_t reserved;
+} spv_parsed_header_t;
+
 typedef struct spv_const_binary_t {
   const uint32_t* code;
   const size_t wordCount;

@@ -240,6 +240,7 @@ int32_t spvOpcodeIsConstant(const spv::Op opcode) {
     case spv::Op::OpConstantComposite:
     case spv::Op::OpConstantSampler:
     case spv::Op::OpConstantNull:
+    case spv::Op::OpConstantFunctionPointerINTEL:
     case spv::Op::OpSpecConstantTrue:
     case spv::Op::OpSpecConstantFalse:
     case spv::Op::OpSpecConstant:

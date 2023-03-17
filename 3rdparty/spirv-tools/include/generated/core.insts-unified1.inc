@@ -7,6 +7,7 @@ static const spv::Capability pygen_variable_caps_ArbitraryPrecisionFloatingPoint
 static const spv::Capability pygen_variable_caps_AsmINTEL[] = {spv::Capability::AsmINTEL};
 static const spv::Capability pygen_variable_caps_AtomicFloat16AddEXTAtomicFloat32AddEXTAtomicFloat64AddEXT[] = {spv::Capability::AtomicFloat16AddEXT, spv::Capability::AtomicFloat32AddEXT, spv::Capability::AtomicFloat64AddEXT};
 static const spv::Capability pygen_variable_caps_AtomicFloat16MinMaxEXTAtomicFloat32MinMaxEXTAtomicFloat64MinMaxEXT[] = {spv::Capability::AtomicFloat16MinMaxEXT, spv::Capability::AtomicFloat32MinMaxEXT, spv::Capability::AtomicFloat64MinMaxEXT};
+static const spv::Capability pygen_variable_caps_BFloat16ConversionINTEL[] = {spv::Capability::BFloat16ConversionINTEL};
 static const spv::Capability pygen_variable_caps_BindlessTextureNV[] = {spv::Capability::BindlessTextureNV};
 static const spv::Capability pygen_variable_caps_BlockingPipesINTEL[] = {spv::Capability::BlockingPipesINTEL};
 static const spv::Capability pygen_variable_caps_CooperativeMatrixNV[] = {spv::Capability::CooperativeMatrixNV};
@@ -72,6 +73,9 @@ static const spv::Capability pygen_variable_caps_SubgroupImageBlockIOINTEL[] = {
 static const spv::Capability pygen_variable_caps_SubgroupImageMediaBlockIOINTEL[] = {spv::Capability::SubgroupImageMediaBlockIOINTEL};
 static const spv::Capability pygen_variable_caps_SubgroupShuffleINTEL[] = {spv::Capability::SubgroupShuffleINTEL};
 static const spv::Capability pygen_variable_caps_SubgroupVoteKHR[] = {spv::Capability::SubgroupVoteKHR};
+static const spv::Capability pygen_variable_caps_TextureBlockMatchQCOM[] = {spv::Capability::TextureBlockMatchQCOM};
+static const spv::Capability pygen_variable_caps_TextureBoxFilterQCOM[] = {spv::Capability::TextureBoxFilterQCOM};
+static const spv::Capability pygen_variable_caps_TextureSampleWeightedQCOM[] = {spv::Capability::TextureSampleWeightedQCOM};
 static const spv::Capability pygen_variable_caps_USMStorageClassesINTEL[] = {spv::Capability::USMStorageClassesINTEL};
 static const spv::Capability pygen_variable_caps_UnstructuredLoopControlsINTEL[] = {spv::Capability::UnstructuredLoopControlsINTEL};
 static const spv::Capability pygen_variable_caps_VariableLengthArrayINTEL[] = {spv::Capability::VariableLengthArrayINTEL};
@@ -483,6 +487,10 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"RayQueryConfirmIntersectionKHR", spv::Op::OpRayQueryConfirmIntersectionKHR, 1, pygen_variable_caps_RayQueryKHR, 1, {SPV_OPERAND_TYPE_ID}, 0, 0, 1, pygen_variable_exts_SPV_KHR_ray_query, 0xffffffffu, 0xffffffffu},
   {"RayQueryProceedKHR", spv::Op::OpRayQueryProceedKHR, 1, pygen_variable_caps_RayQueryKHR, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_ray_query, 0xffffffffu, 0xffffffffu},
   {"RayQueryGetIntersectionTypeKHR", spv::Op::OpRayQueryGetIntersectionTypeKHR, 1, pygen_variable_caps_RayQueryKHR, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_ray_query, 0xffffffffu, 0xffffffffu},
+  {"ImageSampleWeightedQCOM", spv::Op::OpImageSampleWeightedQCOM, 1, pygen_variable_caps_TextureSampleWeightedQCOM, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"ImageBoxFilterQCOM", spv::Op::OpImageBoxFilterQCOM, 1, pygen_variable_caps_TextureBoxFilterQCOM, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"ImageBlockMatchSSDQCOM", spv::Op::OpImageBlockMatchSSDQCOM, 1, pygen_variable_caps_TextureBlockMatchQCOM, 7, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"ImageBlockMatchSADQCOM", spv::Op::OpImageBlockMatchSADQCOM, 1, pygen_variable_caps_TextureBlockMatchQCOM, 7, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"GroupIAddNonUniformAMD", spv::Op::OpGroupIAddNonUniformAMD, 1, pygen_variable_caps_Groups, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_AMD_shader_ballot, 0xffffffffu, 0xffffffffu},
   {"GroupFAddNonUniformAMD", spv::Op::OpGroupFAddNonUniformAMD, 1, pygen_variable_caps_Groups, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_AMD_shader_ballot, 0xffffffffu, 0xffffffffu},
   {"GroupFMinNonUniformAMD", spv::Op::OpGroupFMinNonUniformAMD, 1, pygen_variable_caps_Groups, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_AMD_shader_ballot, 0xffffffffu, 0xffffffffu},
@@ -800,6 +808,8 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"TypeStructContinuedINTEL", spv::Op::OpTypeStructContinuedINTEL, 1, pygen_variable_caps_LongConstantCompositeINTEL, 1, {SPV_OPERAND_TYPE_VARIABLE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"ConstantCompositeContinuedINTEL", spv::Op::OpConstantCompositeContinuedINTEL, 1, pygen_variable_caps_LongConstantCompositeINTEL, 1, {SPV_OPERAND_TYPE_VARIABLE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SpecConstantCompositeContinuedINTEL", spv::Op::OpSpecConstantCompositeContinuedINTEL, 1, pygen_variable_caps_LongConstantCompositeINTEL, 1, {SPV_OPERAND_TYPE_VARIABLE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"ConvertFToBF16INTEL", spv::Op::OpConvertFToBF16INTEL, 1, pygen_variable_caps_BFloat16ConversionINTEL, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"ConvertBF16ToFINTEL", spv::Op::OpConvertBF16ToFINTEL, 1, pygen_variable_caps_BFloat16ConversionINTEL, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"ControlBarrierArriveINTEL", spv::Op::OpControlBarrierArriveINTEL, 1, pygen_variable_caps_SplitBarrierINTEL, 3, {SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_MEMORY_SEMANTICS_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"ControlBarrierWaitINTEL", spv::Op::OpControlBarrierWaitINTEL, 1, pygen_variable_caps_SplitBarrierINTEL, 3, {SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_MEMORY_SEMANTICS_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"GroupIMulKHR", spv::Op::OpGroupIMulKHR, 1, pygen_variable_caps_GroupUniformArithmeticKHR, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
