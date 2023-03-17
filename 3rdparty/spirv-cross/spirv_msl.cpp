@@ -1856,6 +1856,7 @@ void CompilerMSL::extract_global_variables_from_function(uint32_t func_id, std::
 			case OpAtomicIIncrement:
 			case OpAtomicIDecrement:
 			case OpAtomicIAdd:
+			case OpAtomicFAddEXT:
 			case OpAtomicISub:
 			case OpAtomicSMin:
 			case OpAtomicUMin:
@@ -7344,6 +7345,15 @@ void CompilerMSL::emit_specialization_constants_and_structs()
 	emitted = false;
 	declared_structs.clear();
 
+	// It is possible to have multiple spec constants that use the same spec constant ID.
+	// The most common cause of this is defining spec constants in GLSL while also declaring
+	// the workgroup size to use those spec constants. But, Metal forbids declaring more than
+	// one variable with the same function constant ID.
+	// In this case, we must only declare one variable with the [[function_constant(id)]]
+	// attribute, and use its initializer to initialize all the spec constants with
+	// that ID.
+	std::unordered_map<uint32_t, ConstantID> unique_func_constants;
+
 	for (auto &id_ : ir.ids_for_constant_undef_or_type)
 	{
 		auto &id = ir.ids[id_];
@@ -7367,7 +7377,11 @@ void CompilerMSL::emit_specialization_constants_and_structs()
 				string sc_type_name = type_to_glsl(type);
 				add_resource_name(c.self);
 				string sc_name = to_name(c.self);
-				string sc_tmp_name = sc_name + "_tmp";
+				uint32_t constant_id = get_decoration(c.self, DecorationSpecId);
+				if (!unique_func_constants.count(constant_id))
+					unique_func_constants.insert(make_pair(constant_id, c.self));
+				SPIRType::BaseType sc_tmp_type = expression_type(unique_func_constants[constant_id]).basetype;
+				string sc_tmp_name = to_name(unique_func_constants[constant_id]) + "_tmp";
 
 				// Function constants are only supported in MSL 1.2 and later.
 				// If we don't support it just declare the "default" directly.
@@ -7377,12 +7391,13 @@ void CompilerMSL::emit_specialization_constants_and_structs()
 				if (msl_options.supports_msl_version(1, 2) && has_decoration(c.self, DecorationSpecId) &&
 				    !c.is_used_as_array_length)
 				{
-					uint32_t constant_id = get_decoration(c.self, DecorationSpecId);
 					// Only scalar, non-composite values can be function constants.
-					statement("constant ", sc_type_name, " ", sc_tmp_name, " [[function_constant(", constant_id,
-					          ")]];");
+					if (unique_func_constants[constant_id] == c.self)
+						statement("constant ", sc_type_name, " ", sc_tmp_name, " [[function_constant(", constant_id,
+						          ")]];");
 					statement("constant ", sc_type_name, " ", sc_name, " = is_function_constant_defined(", sc_tmp_name,
-					          ") ? ", sc_tmp_name, " : ", constant_expression(c), ";");
+					          ") ? ", bitcast_expression(type, sc_tmp_type, sc_tmp_name), " : ", constant_expression(c),
+					          ";");
 				}
 				else if (has_decoration(c.self, DecorationSpecId))
 				{
@@ -8593,6 +8608,7 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		break;
 
 	case OpAtomicIAdd:
+	case OpAtomicFAddEXT:
 		MSL_AFMO(add);
 		break;
 
@@ -10823,7 +10839,8 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 			// We will detect a compile-time constant 0 value for gradient and promote that to level(0) on MSL.
 			bool constant_zero_x = !grad_x || expression_is_constant_null(grad_x);
 			bool constant_zero_y = !grad_y || expression_is_constant_null(grad_y);
-			if (constant_zero_x && constant_zero_y)
+			if (constant_zero_x && constant_zero_y &&
+			    (!imgtype.image.arrayed || !msl_options.sample_dref_lod_array_as_grad))
 			{
 				lod = 0;
 				grad_x = 0;
@@ -10868,6 +10885,52 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 		if (args.base.is_fetch)
 		{
 			farg_str += ", " + to_expression(lod);
+		}
+		else if (msl_options.sample_dref_lod_array_as_grad && args.dref && imgtype.image.arrayed)
+		{
+			if (msl_options.is_macos() && !msl_options.supports_msl_version(2, 3))
+				SPIRV_CROSS_THROW("Using non-constant 0.0 gradient() qualifier for sample_compare. This is not "
+				                  "supported on macOS prior to MSL 2.3.");
+			// Some Metal devices have a bug where the LoD is erroneously biased upward
+			// when using a level() argument. Since this doesn't happen as much with gradient2d(),
+			// if we perform the LoD calculation in reverse, we can pass a gradient
+			// instead.
+			// lod = log2(rhoMax/eta) -> exp2(lod) = rhoMax/eta
+			// If we make all of the scale factors the same, eta will be 1 and
+			// exp2(lod) = rho.
+			// rhoX = dP/dx * extent; rhoY = dP/dy * extent
+			// Therefore, dP/dx = dP/dy = exp2(lod)/extent.
+			// (Subtracting 0.5 before exponentiation gives better results.)
+			string grad_opt, extent;
+			switch (imgtype.image.dim)
+			{
+			case Dim1D:
+				grad_opt = "2d";
+				extent = join("float2(", to_expression(img), ".get_width(), 1.0)");
+				break;
+			case Dim2D:
+				grad_opt = "2d";
+				extent = join("float2(", to_expression(img), ".get_width(), ", to_expression(img), ".get_height())");
+				break;
+			case DimCube:
+				if (imgtype.image.arrayed && msl_options.emulate_cube_array)
+				{
+					grad_opt = "2d";
+					extent = join("float2(", to_expression(img), ".get_width())");
+				}
+				else
+				{
+					grad_opt = "cube";
+					extent = join("float3(", to_expression(img), ".get_width())");
+				}
+				break;
+			default:
+				grad_opt = "unsupported_gradient_dimension";
+				extent = "float3(1.0)";
+				break;
+			}
+			farg_str += join(", gradient", grad_opt, "(exp2(", to_expression(lod), " - 0.5) / ", extent, ", exp2(",
+			                 to_expression(lod), " - 0.5) / ", extent, ")");
 		}
 		else
 		{
@@ -11002,7 +11065,7 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 // If the texture coordinates are floating point, invokes MSL round() function to round them.
 string CompilerMSL::round_fp_tex_coords(string tex_coords, bool coord_is_fp)
 {
-	return coord_is_fp ? ("round(" + tex_coords + ")") : tex_coords;
+	return coord_is_fp ? ("rint(" + tex_coords + ")") : tex_coords;
 }
 
 // Returns a string to use in an image sampling function argument.
@@ -16253,6 +16316,7 @@ bool CompilerMSL::OpCodePreprocessor::handle(Op opcode, const uint32_t *args, ui
 	case OpAtomicIIncrement:
 	case OpAtomicIDecrement:
 	case OpAtomicIAdd:
+	case OpAtomicFAddEXT:
 	case OpAtomicISub:
 	case OpAtomicSMin:
 	case OpAtomicUMin:
@@ -16458,6 +16522,7 @@ CompilerMSL::SPVFuncImpl CompilerMSL::OpCodePreprocessor::get_spv_func_impl(Op o
 	case OpAtomicIIncrement:
 	case OpAtomicIDecrement:
 	case OpAtomicIAdd:
+	case OpAtomicFAddEXT:
 	case OpAtomicISub:
 	case OpAtomicSMin:
 	case OpAtomicUMin:

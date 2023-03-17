@@ -6467,7 +6467,10 @@ void CompilerGLSL::emit_unary_func_op(uint32_t result_type, uint32_t result_id, 
 void CompilerGLSL::emit_binary_func_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1,
                                        const char *op)
 {
-	bool forward = should_forward(op0) && should_forward(op1);
+	// Opaque types (e.g. OpTypeSampledImage) must always be forwarded in GLSL
+	const auto &type = get_type(result_type);
+	bool must_forward = type_is_opaque_value(type);
+	bool forward = must_forward || (should_forward(op0) && should_forward(op1));
 	emit_op(result_type, result_id, join(op, "(", to_unpacked_expression(op0), ", ", to_unpacked_expression(op1), ")"),
 	        forward);
 	inherit_expression_dependencies(result_id, op0);
