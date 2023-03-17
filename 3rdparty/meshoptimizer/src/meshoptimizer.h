@@ -304,13 +304,22 @@ MESHOPTIMIZER_EXPERIMENTAL void meshopt_decodeFilterExp(void* buffer, size_t cou
  * Input data must contain 4 floats for every quaternion (count*4 total).
  *
  * meshopt_encodeFilterExp encodes arbitrary (finite) floating-point data with 8-bit exponent and K-bit integer mantissa (1 <= K <= 24).
- * Mantissa is shared between all components of a given vector as defined by stride; stride must be divisible by 4.
+ * Exponent can be shared between all components of a given vector as defined by stride or all values of a given component; stride must be divisible by 4.
  * Input data must contain stride/4 floats for every vector (count*stride/4 total).
- * When individual (scalar) encoding is desired, simply pass stride=4 and adjust count accordingly.
  */
+enum meshopt_EncodeExpMode
+{
+    /* When encoding exponents, use separate values for each component (maximum quality) */
+    meshopt_EncodeExpSeparate,
+    /* When encoding exponents, use shared value for all components of each vector (better compression) */
+    meshopt_EncodeExpSharedVector,
+    /* When encoding exponents, use shared value for each component of all vectors (best compression) */
+    meshopt_EncodeExpSharedComponent,
+};
+
 MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeFilterOct(void* destination, size_t count, size_t stride, int bits, const float* data);
 MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeFilterQuat(void* destination, size_t count, size_t stride, int bits, const float* data);
-MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeFilterExp(void* destination, size_t count, size_t stride, int bits, const float* data);
+MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeFilterExp(void* destination, size_t count, size_t stride, int bits, const float* data, enum meshopt_EncodeExpMode mode);
 
 /**
  * Simplification options
