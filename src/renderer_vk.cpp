@@ -3847,7 +3847,19 @@ VK_IMPORT_DEVICE
 								);
 
 							imageInfo[imageCount].imageLayout = texture.m_sampledLayout;
-							imageInfo[imageCount].sampler     = VK_NULL_HANDLE;
+							if (isImageDescriptor)
+							{
+								imageInfo[imageCount].sampler     = VK_NULL_HANDLE;
+							}
+							else
+							{
+								const uint32_t samplerFlags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
+									? bind.m_samplerFlags
+									: (uint32_t)texture.m_flags
+									;
+								imageInfo[imageCount].sampler = getSampler(samplerFlags, texture.m_format, _palette);
+							}
+							
 							imageInfo[imageCount].imageView   = getCachedImageView(
 								  { bind.m_idx }
 								, bind.m_mip
@@ -3855,9 +3867,24 @@ VK_IMPORT_DEVICE
 								, type
 								);
 							wds[wdsCount].pImageInfo = &imageInfo[imageCount];
-							++imageCount;
-
 							++wdsCount;
+
+							if (!isImageDescriptor)
+							{
+								wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+								wds[wdsCount].pNext            = NULL;
+								wds[wdsCount].dstSet           = descriptorSet;
+								wds[wdsCount].dstBinding       = bindInfo.samplerBinding;
+								wds[wdsCount].dstArrayElement  = 0;
+								wds[wdsCount].descriptorCount  = 1;
+								wds[wdsCount].descriptorType   = VK_DESCRIPTOR_TYPE_SAMPLER;
+								wds[wdsCount].pImageInfo       = &imageInfo[imageCount];
+								wds[wdsCount].pBufferInfo      = NULL;
+								wds[wdsCount].pTexelBufferView = NULL;
+								++wdsCount;
+							}
+
+							++imageCount;
 						}
 						break;
 
