@@ -4593,6 +4593,66 @@
         "version" : "None"
     },
     {
+      "opname" : "OpImageSampleWeightedQCOM",
+      "class"  : "Image",
+      "opcode" : 4480,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Texture'" },
+        { "kind" : "IdRef", "name" : "'Coordinates'" },
+        { "kind" : "IdRef", "name" : "'Weights'" }
+      ],
+      "capabilities" : [ "TextureSampleWeightedQCOM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpImageBoxFilterQCOM",
+      "class"  : "Image",
+      "opcode" : 4481,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Texture'" },
+        { "kind" : "IdRef", "name" : "'Coordinates'" },
+        { "kind" : "IdRef", "name" : "'Box Size'" }
+      ],
+      "capabilities" : [ "TextureBoxFilterQCOM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpImageBlockMatchSSDQCOM",
+      "class"  : "Image",
+      "opcode" : 4482,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Target'" },
+        { "kind" : "IdRef", "name" : "'Target Coordinates'" },
+        { "kind" : "IdRef", "name" : "'Reference'" },
+        { "kind" : "IdRef", "name" : "'Reference Coordinates'" },
+        { "kind" : "IdRef", "name" : "'Block Size'" }
+      ],
+      "capabilities" : [ "TextureBlockMatchQCOM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpImageBlockMatchSADQCOM",
+      "class"  : "Image",
+      "opcode" : 4483,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Target'" },
+        { "kind" : "IdRef", "name" : "'Target Coordinates'" },
+        { "kind" : "IdRef", "name" : "'Reference'" },
+        { "kind" : "IdRef", "name" : "'Reference Coordinates'" },
+        { "kind" : "IdRef", "name" : "'Block Size'" }
+      ],
+      "capabilities" : [ "TextureBlockMatchQCOM" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpGroupIAddNonUniformAMD",
       "class"  : "Group",
       "opcode" : 5000,
@@ -9044,6 +9104,30 @@
       "version" : "None"
     },
     {
+      "opname" : "OpConvertFToBF16INTEL",
+      "class"  : "Conversion",
+      "opcode" : 6116,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",        "name" : "'Float Value'" }
+      ],
+      "capabilities" : [ "BFloat16ConversionINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConvertBF16ToFINTEL",
+      "class"  : "Conversion",
+      "opcode" : 6117,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",        "name" : "'BFloat16 Value'" }
+      ],
+      "capabilities" : [ "BFloat16ConversionINTEL" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpControlBarrierArriveINTEL",
       "class"  : "Barrier",
       "opcode" : 6142,
@@ -10716,6 +10800,15 @@
           "version" : "None"
         },
         {
+          "enumerant" : "RegisterMapInterfaceINTEL",
+          "value" : 6160,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'WaitForDoneWrite'" }
+          ],
+          "capabilities" : [ "FPGAKernelAttributesv2INTEL" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "NamedBarrierCountINTEL",
           "value" : 6417,
           "parameters" : [
@@ -11987,6 +12080,18 @@
           "version" : "1.4"
         },
         {
+          "enumerant" : "WeightTextureQCOM",
+          "value" : 4487,
+          "extensions" : [ "SPV_QCOM_image_processing" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BlockMatchTextureQCOM",
+          "value" : 4488,
+          "extensions" : [ "SPV_QCOM_image_processing" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "ExplicitInterpAMD",
           "value" : 4999,
           "extensions" : [ "SPV_AMD_shader_explicit_vertex_parameter" ],
@@ -12515,6 +12620,26 @@
           "enumerant" : "MediaBlockIOINTEL",
           "value" : 6140,
           "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "LatencyControlLabelINTEL",
+          "value" : 6172,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Latency Label'" }
+          ],
+          "capabilities" : [ "FPGALatencyControlINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "LatencyControlConstraintINTEL",
+          "value" : 6173,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Relative To'" },
+            { "kind" : "LiteralInteger", "name" : "'Control Type'" },
+            { "kind" : "LiteralInteger", "name" : "'Relative Cycle'" }
+          ],
+          "capabilities" : [ "FPGALatencyControlINTEL" ],
           "version" : "None"
         },
         {
@@ -14083,6 +14208,24 @@
           "version" : "None"
         },
         {
+          "enumerant" : "TextureSampleWeightedQCOM",
+          "value" : 4484,
+          "extensions" : [ "SPV_QCOM_image_processing" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "TextureBoxFilterQCOM",
+          "value" : 4485,
+          "extensions" : [ "SPV_QCOM_image_processing" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "TextureBlockMatchQCOM",
+          "value" : 4486,
+          "extensions" : [ "SPV_QCOM_image_processing" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "Float16ImageAMD",
           "value" : 5008,
           "capabilities" : [ "Shader" ],
@@ -14888,9 +15031,28 @@
           "version" : "None"
         },
         {
+          "enumerant" : "BFloat16ConversionINTEL",
+          "value" : 6115,
+          "extensions" : [ "SPV_INTEL_bfloat16_conversion" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "SplitBarrierINTEL",
           "value" : 6141,
           "extensions" : [ "SPV_INTEL_split_barrier" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FPGAKernelAttributesv2INTEL",
+          "value" : 6161,
+          "capabilities" : [ "FPGAKernelAttributesINTEL" ],
+          "extensions" : [ "SPV_INTEL_kernel_attributes" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FPGALatencyControlINTEL",
+          "value" : 6171,
+          "extensions" : [ "SPV_INTEL_fpga_latency_control" ],
           "version" : "None"
         },
         {

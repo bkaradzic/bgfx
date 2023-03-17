@@ -196,6 +196,7 @@ enum class ExecutionMode : unsigned {
     NumSIMDWorkitemsINTEL = 5896,
     SchedulerTargetFmaxMhzINTEL = 5903,
     StreamingInterfaceINTEL = 6154,
+    RegisterMapInterfaceINTEL = 6160,
     NamedBarrierCountINTEL = 6417,
     Max = 0x7fffffff,
 };
@@ -508,6 +509,8 @@ enum class Decoration : unsigned {
     MaxByteOffsetId = 47,
     NoSignedWrap = 4469,
     NoUnsignedWrap = 4470,
+    WeightTextureQCOM = 4487,
+    BlockMatchTextureQCOM = 4488,
     ExplicitInterpAMD = 4999,
     OverrideCoverageNV = 5248,
     PassthroughNV = 5250,
@@ -576,6 +579,8 @@ enum class Decoration : unsigned {
     SingleElementVectorINTEL = 6085,
     VectorComputeCallableFunctionINTEL = 6087,
     MediaBlockIOINTEL = 6140,
+    LatencyControlLabelINTEL = 6172,
+    LatencyControlConstraintINTEL = 6173,
     ConduitKernelArgumentINTEL = 6175,
     RegisterMapKernelArgumentINTEL = 6176,
     MMHostInterfaceAddressWidthINTEL = 6177,
@@ -1014,6 +1019,9 @@ enum class Capability : unsigned {
     RayQueryKHR = 4472,
     RayTraversalPrimitiveCullingKHR = 4478,
     RayTracingKHR = 4479,
+    TextureSampleWeightedQCOM = 4484,
+    TextureBoxFilterQCOM = 4485,
+    TextureBlockMatchQCOM = 4486,
     Float16ImageAMD = 5008,
     ImageGatherBiasLodAMD = 5009,
     FragmentMaskAMD = 5010,
@@ -1141,7 +1149,10 @@ enum class Capability : unsigned {
     OptNoneINTEL = 6094,
     AtomicFloat16AddEXT = 6095,
     DebugInfoModuleINTEL = 6114,
+    BFloat16ConversionINTEL = 6115,
     SplitBarrierINTEL = 6141,
+    FPGAKernelAttributesv2INTEL = 6161,
+    FPGALatencyControlINTEL = 6171,
     FPGAArgumentInterfacesINTEL = 6174,
     GroupUniformArithmeticKHR = 6400,
     Max = 0x7fffffff,
@@ -1627,6 +1638,10 @@ enum class Op : unsigned {
     OpRayQueryConfirmIntersectionKHR = 4476,
     OpRayQueryProceedKHR = 4477,
     OpRayQueryGetIntersectionTypeKHR = 4479,
+    OpImageSampleWeightedQCOM = 4480,
+    OpImageBoxFilterQCOM = 4481,
+    OpImageBlockMatchSSDQCOM = 4482,
+    OpImageBlockMatchSADQCOM = 4483,
     OpGroupIAddNonUniformAMD = 5000,
     OpGroupFAddNonUniformAMD = 5001,
     OpGroupFMinNonUniformAMD = 5002,
@@ -1944,6 +1959,8 @@ enum class Op : unsigned {
     OpTypeStructContinuedINTEL = 6090,
     OpConstantCompositeContinuedINTEL = 6091,
     OpSpecConstantCompositeContinuedINTEL = 6092,
+    OpConvertFToBF16INTEL = 6116,
+    OpConvertBF16ToFINTEL = 6117,
     OpControlBarrierArriveINTEL = 6142,
     OpControlBarrierWaitINTEL = 6143,
     OpGroupIMulKHR = 6401,
@@ -2335,6 +2352,10 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpRayQueryConfirmIntersectionKHR: *hasResult = false; *hasResultType = false; break;
     case Op::OpRayQueryProceedKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpRayQueryGetIntersectionTypeKHR: *hasResult = true; *hasResultType = true; break;
+    case Op::OpImageSampleWeightedQCOM: *hasResult = true; *hasResultType = true; break;
+    case Op::OpImageBoxFilterQCOM: *hasResult = true; *hasResultType = true; break;
+    case Op::OpImageBlockMatchSSDQCOM: *hasResult = true; *hasResultType = true; break;
+    case Op::OpImageBlockMatchSADQCOM: *hasResult = true; *hasResultType = true; break;
     case Op::OpGroupIAddNonUniformAMD: *hasResult = true; *hasResultType = true; break;
     case Op::OpGroupFAddNonUniformAMD: *hasResult = true; *hasResultType = true; break;
     case Op::OpGroupFMinNonUniformAMD: *hasResult = true; *hasResultType = true; break;
@@ -2647,6 +2668,8 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpTypeStructContinuedINTEL: *hasResult = false; *hasResultType = false; break;
     case Op::OpConstantCompositeContinuedINTEL: *hasResult = false; *hasResultType = false; break;
     case Op::OpSpecConstantCompositeContinuedINTEL: *hasResult = false; *hasResultType = false; break;
+    case Op::OpConvertFToBF16INTEL: *hasResult = true; *hasResultType = true; break;
+    case Op::OpConvertBF16ToFINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpControlBarrierArriveINTEL: *hasResult = false; *hasResultType = false; break;
     case Op::OpControlBarrierWaitINTEL: *hasResult = false; *hasResultType = false; break;
     case Op::OpGroupIMulKHR: *hasResult = true; *hasResultType = true; break;
