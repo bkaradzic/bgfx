@@ -704,52 +704,39 @@ namespace bgfx { namespace hlsl
 				while (!reader.isDone() )
 				{
 					bx::StringView strLine = reader.next();
-					std::string replaceOutput;
-					bx::StringView str = strFind(strLine, "uniform ");
-					if (!str.isEmpty())
+					bool found = false;
+
+					for (UniformNameList::iterator it = unusedUniforms.begin(), itEnd = unusedUniforms.end(); it != itEnd; ++it)
 					{
-						std::string lineToReplace(strLine.getPtr(), 0, strLine.getLength());
-						for (UniformNameList::iterator it = unusedUniforms.begin(); it != unusedUniforms.end();)
+						bx::StringView str = strFind(strLine, "uniform ");
+						if (str.isEmpty() )
 						{
-							// matching lines like:  uniform u_name;
-							// we want to replace "uniform" with "static" so that it's no longer
-							// included in the uniform blob that the application must upload
-							// we can't just remove them, because unused functions might still reference
-							// them and cause a compile error when they're gone
-							auto identifier = bx::findIdentifierMatch(strLine, it->c_str());
-							if (!identifier.isEmpty())
-							{
-								bx::StringView definePrefix = bx::StringView(strLine.getPtr(), identifier.getPtr());
-								bx::StringView semicolon = strRFind(definePrefix, ';');
-								if (!semicolon.isEmpty())
-								{
-									bx::StringView uniformDefine = bx::StringView(semicolon.getPtr(), strLine.getTerm());
-									str = strFind(uniformDefine, "uniform ");
-								}
-								replaceOutput.clear();
-								replaceOutput.append(strLine.getPtr(), str.getPtr());
-								replaceOutput += "static ";
-								replaceOutput.append(str.getTerm(), strLine.getTerm());
-								lineToReplace = replaceOutput;
-								strLine = bx::StringView(lineToReplace.c_str());
-								it = unusedUniforms.erase(it);
-							}
-							else
-							{
-								++it;
-							}
+							continue;
+						}
+
+						// matching lines like:  uniform u_name;
+						// we want to replace "uniform" with "static" so that it's no longer
+						// included in the uniform blob that the application must upload
+						// we can't just remove them, because unused functions might still reference
+						// them and cause a compile error when they're gone
+						if (!bx::findIdentifierMatch(strLine, it->c_str() ).isEmpty() )
+						{
+							output.append(strLine.getPtr(), str.getPtr() );
+							output += "static ";
+							output.append(str.getTerm(), strLine.getTerm() );
+							output += "\n";
+							found = true;
+
+							unusedUniforms.erase(it);
+							break;
 						}
 					}
 
-					if (!replaceOutput.empty())
-					{
-						output.append(replaceOutput);
-					}
-					else
+					if (!found)
 					{
 						output.append(strLine.getPtr(), strLine.getTerm() );
+						output += "\n";
 					}
-					output += "\n";
 				}
 
 				// recompile with the unused uniforms converted to statics
