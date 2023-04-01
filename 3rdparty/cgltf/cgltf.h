@@ -2218,7 +2218,7 @@ static cgltf_size cgltf_component_read_index(const void* in, cgltf_component_typ
 		case cgltf_component_type_r_32u:
 			return *((const uint32_t*) in);
 		case cgltf_component_type_r_32f:
-			return (cgltf_size)*((const float*) in);
+			return (cgltf_size)((cgltf_ssize)*((const float*) in));
 		case cgltf_component_type_r_8u:
 			return *((const uint8_t*) in);
 		default:
