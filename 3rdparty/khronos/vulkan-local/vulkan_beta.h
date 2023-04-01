@@ -485,6 +485,51 @@ typedef struct VkVideoEncodeH265RateControlLayerInfoEXT {
 } VkVideoEncodeH265RateControlLayerInfoEXT;
 
 
+
+#define VK_NV_displacement_micromap 1
+#define VK_NV_DISPLACEMENT_MICROMAP_SPEC_VERSION 1
+#define VK_NV_DISPLACEMENT_MICROMAP_EXTENSION_NAME "VK_NV_displacement_micromap"
+
+typedef enum VkDisplacementMicromapFormatNV {
+    VK_DISPLACEMENT_MICROMAP_FORMAT_64_TRIANGLES_64_BYTES_NV = 1,
+    VK_DISPLACEMENT_MICROMAP_FORMAT_256_TRIANGLES_128_BYTES_NV = 2,
+    VK_DISPLACEMENT_MICROMAP_FORMAT_1024_TRIANGLES_128_BYTES_NV = 3,
+    VK_DISPLACEMENT_MICROMAP_FORMAT_MAX_ENUM_NV = 0x7FFFFFFF
+} VkDisplacementMicromapFormatNV;
+typedef struct VkPhysicalDeviceDisplacementMicromapFeaturesNV {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           displacementMicromap;
+} VkPhysicalDeviceDisplacementMicromapFeaturesNV;
+
+typedef struct VkPhysicalDeviceDisplacementMicromapPropertiesNV {
+    VkStructureType    sType;
+    void*              pNext;
+    uint32_t           maxDisplacementMicromapSubdivisionLevel;
+} VkPhysicalDeviceDisplacementMicromapPropertiesNV;
+
+typedef struct VkAccelerationStructureTrianglesDisplacementMicromapNV {
+    VkStructureType                     sType;
+    void*                               pNext;
+    VkFormat                            displacementBiasAndScaleFormat;
+    VkFormat                            displacementVectorFormat;
+    VkDeviceOrHostAddressConstKHR       displacementBiasAndScaleBuffer;
+    VkDeviceSize                        displacementBiasAndScaleStride;
+    VkDeviceOrHostAddressConstKHR       displacementVectorBuffer;
+    VkDeviceSize                        displacementVectorStride;
+    VkDeviceOrHostAddressConstKHR       displacedMicromapPrimitiveFlags;
+    VkDeviceSize                        displacedMicromapPrimitiveFlagsStride;
+    VkIndexType                         indexType;
+    VkDeviceOrHostAddressConstKHR       indexBuffer;
+    VkDeviceSize                        indexStride;
+    uint32_t                            baseTriangle;
+    uint32_t                            usageCountsCount;
+    const VkMicromapUsageEXT*           pUsageCounts;
+    const VkMicromapUsageEXT* const*    ppUsageCounts;
+    VkMicromapEXT                       micromap;
+} VkAccelerationStructureTrianglesDisplacementMicromapNV;
+
+
 #ifdef __cplusplus
 }
 #endif
