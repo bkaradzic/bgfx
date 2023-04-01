@@ -17280,41 +17280,44 @@ void CompilerMSL::analyze_argument_buffers()
 			// member_index and next_arg_buff_index are incremented when padding members are added.
 			if (msl_options.pad_argument_buffer_resources)
 			{
-				while (resource.index > next_arg_buff_index)
+				if (!resource.descriptor_alias)
 				{
-					auto &rez_bind = get_argument_buffer_resource(desc_set, next_arg_buff_index);
-					switch (rez_bind.basetype)
+					while (resource.index > next_arg_buff_index)
 					{
-					case SPIRType::Void:
-					case SPIRType::Boolean:
-					case SPIRType::SByte:
-					case SPIRType::UByte:
-					case SPIRType::Short:
-					case SPIRType::UShort:
-					case SPIRType::Int:
-					case SPIRType::UInt:
-					case SPIRType::Int64:
-					case SPIRType::UInt64:
-					case SPIRType::AtomicCounter:
-					case SPIRType::Half:
-					case SPIRType::Float:
-					case SPIRType::Double:
-						add_argument_buffer_padding_buffer_type(buffer_type, member_index, next_arg_buff_index, rez_bind);
-						break;
-					case SPIRType::Image:
-						add_argument_buffer_padding_image_type(buffer_type, member_index, next_arg_buff_index, rez_bind);
-						break;
-					case SPIRType::Sampler:
-						add_argument_buffer_padding_sampler_type(buffer_type, member_index, next_arg_buff_index, rez_bind);
-						break;
-					case SPIRType::SampledImage:
-						if (next_arg_buff_index == rez_bind.msl_sampler)
-							add_argument_buffer_padding_sampler_type(buffer_type, member_index, next_arg_buff_index, rez_bind);
-						else
+						auto &rez_bind = get_argument_buffer_resource(desc_set, next_arg_buff_index);
+						switch (rez_bind.basetype)
+						{
+						case SPIRType::Void:
+						case SPIRType::Boolean:
+						case SPIRType::SByte:
+						case SPIRType::UByte:
+						case SPIRType::Short:
+						case SPIRType::UShort:
+						case SPIRType::Int:
+						case SPIRType::UInt:
+						case SPIRType::Int64:
+						case SPIRType::UInt64:
+						case SPIRType::AtomicCounter:
+						case SPIRType::Half:
+						case SPIRType::Float:
+						case SPIRType::Double:
+							add_argument_buffer_padding_buffer_type(buffer_type, member_index, next_arg_buff_index, rez_bind);
+							break;
+						case SPIRType::Image:
 							add_argument_buffer_padding_image_type(buffer_type, member_index, next_arg_buff_index, rez_bind);
-						break;
-					default:
-						break;
+							break;
+						case SPIRType::Sampler:
+							add_argument_buffer_padding_sampler_type(buffer_type, member_index, next_arg_buff_index, rez_bind);
+							break;
+						case SPIRType::SampledImage:
+							if (next_arg_buff_index == rez_bind.msl_sampler)
+								add_argument_buffer_padding_sampler_type(buffer_type, member_index, next_arg_buff_index, rez_bind);
+							else
+								add_argument_buffer_padding_image_type(buffer_type, member_index, next_arg_buff_index, rez_bind);
+							break;
+						default:
+							break;
+						}
 					}
 				}
 
@@ -17595,7 +17598,7 @@ string CompilerMSL::additional_fixed_sample_mask_str() const
 #pragma warning(push)
 #pragma warning(disable : 4996)
 #endif
-#if _WIN32
+#if defined(_WIN32)
 	sprintf(print_buffer, "0x%x", msl_options.additional_fixed_sample_mask);
 #else
 	snprintf(print_buffer, sizeof(print_buffer), "0x%x", msl_options.additional_fixed_sample_mask);

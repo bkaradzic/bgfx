@@ -26,6 +26,7 @@
 
 #include "spirv_cross_error_handling.hpp"
 #include <algorithm>
+#include <exception>
 #include <functional>
 #include <iterator>
 #include <limits>

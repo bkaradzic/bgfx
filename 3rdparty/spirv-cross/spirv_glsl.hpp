@@ -708,6 +708,7 @@ protected:
 
 	void emit_unary_op(uint32_t result_type, uint32_t result_id, uint32_t op0, const char *op);
 	void emit_unary_op_cast(uint32_t result_type, uint32_t result_id, uint32_t op0, const char *op);
+	virtual void emit_mesh_tasks(SPIRBlock &block);
 	bool expression_is_forwarded(uint32_t id) const;
 	bool expression_suppresses_usage_tracking(uint32_t id) const;
 	bool expression_read_implies_multiple_reads(uint32_t id) const;
@@ -768,6 +769,7 @@ protected:
 	std::string to_extract_component_expression(uint32_t id, uint32_t index);
 	std::string to_extract_constant_composite_expression(uint32_t result_type, const SPIRConstant &c,
 	                                                     const uint32_t *chain, uint32_t length);
+	static bool needs_enclose_expression(const std::string &expr);
 	std::string enclose_expression(const std::string &expr);
 	std::string dereference_expression(const SPIRType &expression_type, const std::string &expr);
 	std::string address_of_expression(const std::string &expr);
