@@ -15,7 +15,6 @@
 #include "source/opt/licm_pass.h"
 
 #include <queue>
-#include <utility>
 
 #include "source/opt/module.h"
 #include "source/opt/pass.h"

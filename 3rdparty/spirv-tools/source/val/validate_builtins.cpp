@@ -24,10 +24,8 @@
 #include <sstream>
 #include <stack>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
-#include "source/diagnostic.h"
 #include "source/opcode.h"
 #include "source/spirv_target_env.h"
 #include "source/util/bitutils.h"

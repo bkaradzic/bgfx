@@ -12,11 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
 #include <cassert>
 #include <functional>
 #include <iostream>
-#include <iterator>
 #include <map>
 #include <string>
 #include <tuple>
@@ -28,7 +26,6 @@
 #include "source/cfa.h"
 #include "source/opcode.h"
 #include "source/spirv_constant.h"
-#include "source/spirv_target_env.h"
 #include "source/spirv_validator_options.h"
 #include "source/val/basic_block.h"
 #include "source/val/construct.h"

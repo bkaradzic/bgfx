@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 
-#include "source/binary.h"
 #include "source/diagnostic.h"
 #include "source/opcode.h"
 #include "source/spirv_constant.h"
@@ -45,13 +44,6 @@ struct PairHash {
     const uint32_t b = pair.second;
     const uint32_t rotated_b = (b >> 2) | ((b & 3) << 30);
     return a ^ rotated_b;
-  }
-};
-
-// A functor for hashing decoration types.
-struct SpvDecorationHash {
-  std::size_t operator()(spv::Decoration dec) const {
-    return static_cast<std::size_t>(dec);
   }
 };
 

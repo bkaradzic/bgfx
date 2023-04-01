@@ -14,12 +14,10 @@
 
 // Validates correctness of composite SPIR-V instructions.
 
-#include "source/val/validate.h"
-
-#include "source/diagnostic.h"
 #include "source/opcode.h"
 #include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
+#include "source/val/validate.h"
 #include "source/val/validation_state.h"
 
 namespace spvtools {

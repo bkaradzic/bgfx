@@ -14,8 +14,6 @@
 
 #include "source/opt/feature_manager.h"
 
-#include <queue>
-#include <stack>
 #include <string>
 
 #include "source/enum_string_mapping.h"

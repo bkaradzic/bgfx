@@ -21,7 +21,6 @@
 #include "source/opt/const_folding_rules.h"
 #include "source/opt/def_use_manager.h"
 #include "source/opt/folding_rules.h"
-#include "source/opt/ir_builder.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {

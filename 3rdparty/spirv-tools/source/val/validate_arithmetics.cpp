@@ -14,13 +14,11 @@
 
 // Performs validation of arithmetic instructions.
 
-#include "source/val/validate.h"
-
 #include <vector>
 
-#include "source/diagnostic.h"
 #include "source/opcode.h"
 #include "source/val/instruction.h"
+#include "source/val/validate.h"
 #include "source/val/validation_state.h"
 
 namespace spvtools {

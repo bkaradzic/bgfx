@@ -15,12 +15,9 @@
 #include "source/opt/fold_spec_constant_op_and_composite_pass.h"
 
 #include <algorithm>
-#include <initializer_list>
 #include <tuple>
 
 #include "source/opt/constants.h"
-#include "source/opt/fold.h"
-#include "source/opt/ir_context.h"
 #include "source/util/make_unique.h"
 
 namespace spvtools {

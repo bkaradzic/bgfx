@@ -14,7 +14,6 @@
 
 // Validates correctness of bitwise instructions.
 
-#include "source/diagnostic.h"
 #include "source/opcode.h"
 #include "source/spirv_target_env.h"
 #include "source/val/instruction.h"

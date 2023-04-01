@@ -31,11 +31,6 @@ class ValidationState_t;
 class BasicBlock;
 class Instruction;
 
-/// A function that returns a vector of BasicBlocks given a BasicBlock. Used to
-/// get the successor and predecessor nodes of a CFG block
-using get_blocks_func =
-    std::function<const std::vector<BasicBlock*>*(const BasicBlock*)>;
-
 /// @brief Performs the Control Flow Graph checks
 ///
 /// @param[in] _ the validation state of the module

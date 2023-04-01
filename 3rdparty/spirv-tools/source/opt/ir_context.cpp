@@ -19,7 +19,6 @@
 #include "OpenCLDebugInfo100.h"
 #include "source/latest_version_glsl_std_450_header.h"
 #include "source/opt/log.h"
-#include "source/opt/mem_pass.h"
 #include "source/opt/reflect.h"
 
 namespace spvtools {

@@ -12,25 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/val/validate.h"
-
-#include <cassert>
-
-#include <algorithm>
-#include <iostream>
-#include <iterator>
-#include <stack>
-#include <string>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
-#include "source/diagnostic.h"
 #include "source/instruction.h"
 #include "source/opcode.h"
 #include "source/operand.h"
-#include "source/spirv_validator_options.h"
 #include "source/val/function.h"
+#include "source/val/validate.h"
 #include "source/val/validation_state.h"
 #include "spirv-tools/libspirv.h"
 

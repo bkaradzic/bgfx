@@ -15,17 +15,14 @@
 #include "source/opt/loop_descriptor.h"
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
 #include <stack>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
 #include "source/opt/cfg.h"
 #include "source/opt/constants.h"
 #include "source/opt/dominator_tree.h"
-#include "source/opt/ir_builder.h"
 #include "source/opt/ir_context.h"
 #include "source/opt/iterator.h"
 #include "source/opt/tree_iterator.h"

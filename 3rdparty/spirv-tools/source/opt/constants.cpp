@@ -14,7 +14,6 @@
 
 #include "source/opt/constants.h"
 
-#include <unordered_map>
 #include <vector>
 
 #include "source/opt/ir_context.h"

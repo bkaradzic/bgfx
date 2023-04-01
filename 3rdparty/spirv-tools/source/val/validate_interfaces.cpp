@@ -15,7 +15,6 @@
 #include <algorithm>
 #include <vector>
 
-#include "source/diagnostic.h"
 #include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
 #include "source/val/function.h"

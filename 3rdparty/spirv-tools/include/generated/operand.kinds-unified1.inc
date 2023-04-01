@@ -95,17 +95,12 @@ static const spv::Capability pygen_variable_caps_SampleMaskOverrideCoverageNV[] 
 static const spv::Capability pygen_variable_caps_SampleMaskPostDepthCoverage[] = {spv::Capability::SampleMaskPostDepthCoverage};
 static const spv::Capability pygen_variable_caps_SampleRateShading[] = {spv::Capability::SampleRateShading};
 static const spv::Capability pygen_variable_caps_Sampled1D[] = {spv::Capability::Sampled1D};
-static const spv::Capability pygen_variable_caps_Sampled1DImage1D[] = {spv::Capability::Sampled1D, spv::Capability::Image1D};
 static const spv::Capability pygen_variable_caps_SampledBuffer[] = {spv::Capability::SampledBuffer};
-static const spv::Capability pygen_variable_caps_SampledBufferImageBuffer[] = {spv::Capability::SampledBuffer, spv::Capability::ImageBuffer};
 static const spv::Capability pygen_variable_caps_SampledBufferShaderNonUniform[] = {spv::Capability::SampledBuffer, spv::Capability::ShaderNonUniform};
 static const spv::Capability pygen_variable_caps_SampledCubeArray[] = {spv::Capability::SampledCubeArray};
 static const spv::Capability pygen_variable_caps_SampledRect[] = {spv::Capability::SampledRect};
-static const spv::Capability pygen_variable_caps_SampledRectImageRect[] = {spv::Capability::SampledRect, spv::Capability::ImageRect};
 static const spv::Capability pygen_variable_caps_Shader[] = {spv::Capability::Shader};
-static const spv::Capability pygen_variable_caps_ShaderImageCubeArray[] = {spv::Capability::Shader, spv::Capability::ImageCubeArray};
 static const spv::Capability pygen_variable_caps_ShaderKernel[] = {spv::Capability::Shader, spv::Capability::Kernel};
-static const spv::Capability pygen_variable_caps_ShaderKernelImageMSArray[] = {spv::Capability::Shader, spv::Capability::Kernel, spv::Capability::ImageMSArray};
 static const spv::Capability pygen_variable_caps_ShaderUniformDecoration[] = {spv::Capability::Shader, spv::Capability::UniformDecoration};
 static const spv::Capability pygen_variable_caps_ShaderVectorComputeINTEL[] = {spv::Capability::Shader, spv::Capability::VectorComputeINTEL};
 static const spv::Capability pygen_variable_caps_ShaderInvocationReorderNV[] = {spv::Capability::ShaderInvocationReorderNV};
@@ -553,12 +548,12 @@ static const spv_operand_desc_t pygen_variable_StorageClassEntries[] = {
 };
 
 static const spv_operand_desc_t pygen_variable_DimEntries[] = {
-  {"1D", 0, 2, pygen_variable_caps_Sampled1DImage1D, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"2D", 1, 3, pygen_variable_caps_ShaderKernelImageMSArray, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"1D", 0, 1, pygen_variable_caps_Sampled1D, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"2D", 1, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"3D", 2, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"Cube", 3, 2, pygen_variable_caps_ShaderImageCubeArray, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"Rect", 4, 2, pygen_variable_caps_SampledRectImageRect, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"Buffer", 5, 2, pygen_variable_caps_SampledBufferImageBuffer, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Cube", 3, 1, pygen_variable_caps_Shader, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Rect", 4, 1, pygen_variable_caps_SampledRect, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"Buffer", 5, 1, pygen_variable_caps_SampledBuffer, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"SubpassData", 6, 1, pygen_variable_caps_InputAttachment, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
 };
 

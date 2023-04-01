@@ -14,26 +14,20 @@
 
 // Performs validation on instructions that appear inside of a SPIR-V block.
 
-#include <algorithm>
 #include <cassert>
-#include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include "source/binary.h"
-#include "source/diagnostic.h"
 #include "source/enum_set.h"
 #include "source/enum_string_mapping.h"
 #include "source/extensions.h"
 #include "source/opcode.h"
 #include "source/operand.h"
 #include "source/spirv_constant.h"
-#include "source/spirv_definition.h"
 #include "source/spirv_target_env.h"
 #include "source/spirv_validator_options.h"
 #include "source/util/string_utils.h"
-#include "source/val/function.h"
 #include "source/val/validate.h"
 #include "source/val/validation_state.h"
 

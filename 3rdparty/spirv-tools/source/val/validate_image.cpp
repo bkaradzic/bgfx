@@ -18,7 +18,6 @@
 
 #include <string>
 
-#include "source/diagnostic.h"
 #include "source/opcode.h"
 #include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
@@ -1996,11 +1995,11 @@ spv_result_t ValidateImageQueryLod(ValidationState_t& _,
            << " components, but given only " << actual_coord_size;
   }
 
-  // The operad is a sampled image.
+  // The operand is a sampled image.
   // The sampled image type is already checked to be parameterized by an image
   // type with Sampled=0 or Sampled=1.  Vulkan bans Sampled=0, and so we have
   // Sampled=1.  So the validator already enforces Vulkan VUID 4659:
-  //   OpImageQuerySizeLod must only consume an “Image” operand whose type has
+  //   OpImageQuerySizeLod must only consume an "Image" operand whose type has
   //   its "Sampled" operand set to 1
   return SPV_SUCCESS;
 }

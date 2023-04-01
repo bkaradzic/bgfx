@@ -19,12 +19,10 @@
 #include <tuple>
 #include <utility>
 
-#include "source/enum_string_mapping.h"
 #include "source/extensions.h"
 #include "source/opt/reflect.h"
 #include "source/opt/types.h"
 #include "source/util/make_unique.h"
-#include "types.h"
 
 namespace spvtools {
 namespace opt {
