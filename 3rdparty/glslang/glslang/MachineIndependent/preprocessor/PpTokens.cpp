@@ -195,9 +195,9 @@ bool TPpContext::TokenStream::peekUntokenizedPasting()
     return pasting;
 }
 
-void TPpContext::pushTokenStreamInput(TokenStream& ts, bool prepasting)
+void TPpContext::pushTokenStreamInput(TokenStream& ts, bool prepasting, bool expanded)
 {
-    pushInput(new tTokenInput(this, &ts, prepasting));
+    pushInput(new tTokenInput(this, &ts, prepasting, expanded));
     ts.reset();
 }
 
