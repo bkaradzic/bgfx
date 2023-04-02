@@ -553,19 +553,23 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			{
 				if ([m_device respondsToSelector: @selector(supportsFamily:)])
 				{
-					if ([m_device supportsFamily: MTLGPUFamily(1004) /*MTLGPUFamilyApple4*/])
+					if ([m_device supportsFamily: MTLGPUFamilyApple4])
 					{
 						g_caps.vendorId = BGFX_PCI_ID_APPLE;
 
-						if ([m_device supportsFamily: MTLGPUFamily(1007) /*MTLGPUFamilyApple7*/])
+						if ([m_device supportsFamily: MTLGPUFamilyApple8])
+						{
+							g_caps.deviceId = 1008;
+						}
+						else if ([m_device supportsFamily: MTLGPUFamilyApple7])
 						{
 							g_caps.deviceId = 1007;
 						}
-						else if ([m_device supportsFamily: MTLGPUFamily(1006) /*MTLGPUFamilyApple6*/])
+						else if ([m_device supportsFamily: MTLGPUFamilyApple6])
 						{
 							g_caps.deviceId = 1006;
 						}
-						else if ([m_device supportsFamily: MTLGPUFamily(1005) /*MTLGPUFamilyApple5*/])
+						else if ([m_device supportsFamily: MTLGPUFamilyApple5])
 						{
 							g_caps.deviceId = 1005;
 						}
@@ -622,48 +626,23 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				| BGFX_CAPS_TEXTURE_2D_ARRAY
 				| BGFX_CAPS_TEXTURE_3D
 				| BGFX_CAPS_TEXTURE_BLIT
-				| BGFX_CAPS_TEXTURE_COMPARE_ALL
-				| BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 				| BGFX_CAPS_TEXTURE_READ_BACK
 				| BGFX_CAPS_VERTEX_ATTRIB_HALF
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 				| BGFX_CAPS_VERTEX_ID
 				);
 
-			if (BX_ENABLED(BX_PLATFORM_IOS) )
-			{
-				if (iOSVersionEqualOrGreater("9.0.0") )
-				{
-					g_caps.limits.maxTextureSize = m_device.supportsFamily( (MTLGPUFamily)4 /* iOS_GPUFamily3_v1 */) ? 16384 : 8192;
-				}
-				else
-				{
-					g_caps.limits.maxTextureSize = 4096;
-				}
-
-				g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(m_device.supportsFamily( (MTLGPUFamily)1 /* MTLGPUFamily_iOS_GPUFamily2_v1 */) ? 8 : 4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
-
-				g_caps.supported |= m_device.supportsFamily( (MTLGPUFamily)4 /* MTLGPUFamily_iOS_GPUFamily3_v1 */)
-					? BGFX_CAPS_DRAW_INDIRECT
-					: 0
-					;
-
-				g_caps.supported |= m_device.supportsFamily( (MTLGPUFamily)11 /* MTLGPUFamily_iOS_GPUFamily4_v1 */)
-					? BGFX_CAPS_TEXTURE_CUBE_ARRAY
-					: 0
-					;
-			}
-			else if (BX_ENABLED(BX_PLATFORM_OSX) )
-			{
-				g_caps.limits.maxTextureSize   = 16384;
-				g_caps.limits.maxFBAttachments = 8;
-				g_caps.supported |= BGFX_CAPS_TEXTURE_CUBE_ARRAY;
-
-				g_caps.supported |= m_device.supportsFamily( (MTLGPUFamily)10001 /* MTLGPUFamily_macOS_GPUFamily1_v2 */)
-					? BGFX_CAPS_DRAW_INDIRECT
-					: 0
-					;
-			}
+			// Reference(s):
+			// - Metal feature set tables
+			//   https://web.archive.org/web/20230330111145/https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf
+			g_caps.limits.maxTextureSize = m_device.supportsFamily(MTLGPUFamilyApple3) ? 16384 : 8192;
+			g_caps.limits.maxFBAttachments = 8;
+			g_caps.supported |= m_device.supportsFamily(MTLGPUFamilyCommon2)
+				? BGFX_CAPS_DRAW_INDIRECT
+				| BGFX_CAPS_TEXTURE_CUBE_ARRAY
+				| BGFX_CAPS_TEXTURE_COMPARE_ALL
+				: 0
+				;
 
 			g_caps.limits.maxTextureLayers = 2048;
 			g_caps.limits.maxVertexStreams = BGFX_CONFIG_MAX_VERTEX_STREAMS;
@@ -2432,10 +2411,12 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				m_samplerDescriptor.lodMinClamp  = 0;
 				m_samplerDescriptor.lodMaxClamp  = FLT_MAX;
 				m_samplerDescriptor.normalizedCoordinates = TRUE;
-				m_samplerDescriptor.maxAnisotropy =  (0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) ) ) ? m_mainFrameBuffer.m_swapChain->m_maxAnisotropy : 1;
+				m_samplerDescriptor.maxAnisotropy =  (0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) ) )
+					? m_mainFrameBuffer.m_swapChain->m_maxAnisotropy
+					: 1
+					;
 
-				if (m_macOS11Runtime
-				|| [m_device supportsFamily:(MTLGPUFamily)4 /*MTLGPUFamily_iOS_GPUFamily3_v1*/])
+				if (0 != (g_caps.supported & BGFX_CAPS_TEXTURE_COMPARE_ALL) )
 				{
 					const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
 					m_samplerDescriptor.compareFunction = 0 == cmpFunc
