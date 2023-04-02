@@ -50,10 +50,10 @@ Supported platforms:
 
  * Android (14+, ARM, x86, MIPS)
  * FreeBSD
- * iOS (iPhone, iPad, AppleTV)
+ * iOS/iPadOS/tvOS (iPhone, iPad, AppleTV)
  * Linux
  * MIPS Creator CI20
- * OSX (11+)
+ * macOS (11+)
  * PlayStation 4
  * RaspberryPi
  * UWP (Universal Windows, Xbox One)
