@@ -7,8 +7,8 @@
 #include "../00-helloworld/logo.h"
 
 extern bool entry_process_events(uint32_t* _width, uint32_t* _height, uint32_t* _debug, uint32_t* _reset);
-extern void* entry_get_default_native_window_handle();
-extern void* entry_get_native_display_handle();
+extern void* entry_get_default_native_window_handle(void);
+extern void* entry_get_native_display_handle(void);
 
 uint16_t uint16_max(uint16_t _a, uint16_t _b)
 {
