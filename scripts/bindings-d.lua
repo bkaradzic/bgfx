@@ -1,84 +1,45 @@
 local codegen = require "codegen"
 local idl = codegen.idl "bgfx.idl"
 
-local d_types_template = [[
-/*
- *
- * AUTO GENERATED! DO NOT EDIT!
- *
- */
+local template = [[
+/+
++ ┌──────────────────────────────┐
++ │ AUTO GENERATED! DO NOT EDIT! │
++ └──────────────────────────────┘
++/
+module bgfx;
 
-module bindbc.bgfx.types;
+import bindbc.bgfx.config;
 
-public import core.stdc.stdarg : va_list;
-
-enum expandEnum(EnumType, string fqnEnumType = EnumType.stringof) = (){
-	string expandEnum;
-	foreach(m; __traits(allMembers, EnumType)){
-		expandEnum ~= "alias " ~ m ~ " = " ~ fqnEnumType ~ "." ~ m ~ ";";
-	}
-	return expandEnum;
-}();
-
-extern(C) @nogc nothrow:
+import bindbc.common.types: va_list;
 
 $version
 
-alias bgfx_view_id_t = ushort;
-
-//NOTE: TEMPORARY fix to some missing preprocessor function-macros...
-static BGFX_STATE_BLEND_FUNC_SEPARATE(ulong _srcRGB, ulong _dstRGB, ulong _srcA, ulong _dstA){
-	return (0UL
-			| ( ( cast(ulong)_srcRGB | ( cast(ulong)_dstRGB<<4) )   )
-			| ( ( cast(ulong)_srcA   | ( cast(ulong)_dstA  <<4) )<<8)
-		);
-}
-
-/// Blend equation separate.
-static BGFX_STATE_BLEND_EQUATION_SEPARATE(ulong _equationRGB, ulong _equationA){ return ( cast(ulong)_equationRGB | (cast(ulong)_equationA<<3) ); }
-
-/// Blend function.
-static BGFX_STATE_BLEND_FUNC(ulong _src, ulong _dst){ return BGFX_STATE_BLEND_FUNC_SEPARATE(_src, _dst, _src, _dst); }
-
-/// Blend equation.
-static BGFX_STATE_BLEND_EQUATION(ulong _equation){ return BGFX_STATE_BLEND_EQUATION_SEPARATE(_equation, _equation); }
-
-/// Utility predefined blend modes.
-
-/// Additive blending.
-static BGFX_STATE_BLEND_ADD(){ return (0 | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)); }
-
-/// Alpha blend.
-static BGFX_STATE_BLEND_ALPHA(){ return (0 | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)); }
-
 $types
+mixin(joinFnBinds((){
+	string[][] ret;
+	ret ~= makeFnBinds([
+		$funcs
+	]);
+	return ret;
+}()));
+
+static if(!staticBinding):
+import bindbc.loader;
+
+mixin(makeDynloadFns("Bgfx", makeLibPaths(["bgfx", "bgfxRelease", "bgfxDebug"]), [__MODULE__]));
 ]]
 
-local d_funcs_template = [[
-/*
- *
- * AUTO GENERATED! DO NOT EDIT!
- *
- */
+local dKeywords = {"abstract", "alias", "align", "asm", "assert", "auto", "bool", "break", "byte", "case", "cast", "catch", "char", "class", "const", "continue", "dchar", "debug", "default", "delegate", "deprecated", "do", "double", "else", "enum", "export", "extern", "false", "final", "finally", "float", "for", "foreach", "foreach_reverse", "function", "goto", "if", "immutable", "import", "in", "inout", "int", "interface", "invariant", "is", "lazy", "long", "macro", "mixin", "module", "new", "nothrow", "null", "out", "override", "package", "pragma", "private", "protected", "public", "pure", "real", "ref", "return", "scope", "shared", "short", "static", "struct", "super", "switch", "synchronized", "template", "this", "throw", "true", "try", "typeid", "typeof", "ubyte", "uint", "ulong", "union", "unittest", "ushort", "version", "void", "wchar", "while", "with"}
 
-module bindbc.bgfx.funcs;
-
-private import bindbc.bgfx.types;
-
-extern(C) @nogc nothrow:
-
-version(BindBgfx_Static)
-{
-	$funcs_static
-}
-else
-{
-	__gshared
-	{
-		$funcs_dynamic
-	}
-}
-]]
+local function contains(table, val)
+	for i=1,#table do
+		if table[i] == val then 
+			return true
+		end
+	end
+	return false
+end
 
 local function hasPrefix(str, prefix)
 	return prefix == "" or str:sub(1, #prefix) == prefix
@@ -88,29 +49,58 @@ local function hasSuffix(str, suffix)
 	return suffix == "" or str:sub(-#suffix) == suffix
 end
 
-local function to_underscorecase(name)
-	local tmp = {}
-	for v in name:gmatch "[_%u][%l%d]*" do
-		if v:byte() == 95 then	-- '_'
-			v = v:sub(2)	-- remove _
+local function toCamelCase(name)
+	return (name:gsub("^([^%l]*)(%l?)", function(s0, s1)
+		if s1 ~= nil then
+			return s0:lower() .. s1
 		end
-		tmp[#tmp+1] = v
-	end
-	return table.concat(tmp, "_")
+		return s0:lower()
+	end))
 end
 
-local function convert_array(member)
+-- local function toPascalCase(name)
+-- 	return (name:gsub("^%l", string.upper))
+-- end
+
+local usEnSubs = {["Color"] = "Colour", ["Rasterize"] = "Rasterise", ["Initialize"] = "Initialise"}
+local function toIntlEn(name)
+	local change = false
+	for us, intl in pairs(usEnSubs) do
+		if name:find(us) then
+			name = (name:gsub(us, intl))
+			change = true
+		end
+	end
+	if change then
+		return name
+	else
+		return nil
+	end
+end
+
+local function hexStr(val, bits)
+	local digits = bits / 4
+	local str = string.format(string.format("%%0%iX", digits), val)
+	local i = 4
+	while i < str:len() do
+		str = str:sub(0, i) .. "_" .. str:sub(i+1)
+		i = i + 5
+	end
+	
+	return "0x" .. str
+end
+
+local function convArray(member)
 	if string.find(member.array, "::") then
-		local name = "bgfx_" .. to_underscorecase(string.gsub(member.array, "::.*", "")):lower() .. "_t"
-		return "[" .. name .. ".BGFX_" .. to_underscorecase(member.array):upper() .. "]"
+		return string.gsub(member.array, "::.*", ".") .. toCamelCase(string.gsub(member.array, ".-::", ""))
 	else
 		return member.array
 	end
 end
 
-local function convert_type(arg)
+local function convType(arg)
 	local ctype = arg.ctype:gsub("%s%*", "*")
-	if arg.fulltype == "bx::AllocatorI*" or arg.fulltype == "CallbackI*" or arg.fulltype == "ReleaseFn" then
+	if arg.fulltype == "bx::AllocatorI*" or arg.fulltype == "CallbackI*" then
 		ctype = "void*"
 	elseif hasPrefix(ctype, "uint64_t") then
 		ctype = ctype:gsub("uint64_t", "ulong")
@@ -124,52 +114,50 @@ local function convert_type(arg)
 		ctype = ctype:gsub("uint16_t", "ushort")
 	elseif hasPrefix(ctype, "uint8_t") then
 		ctype = ctype:gsub("uint8_t", "ubyte")
+	elseif hasPrefix(ctype, "int8_t") then
+		ctype = ctype:gsub("int8_t", "byte")
 	elseif hasPrefix(ctype, "uintptr_t") then
-		ctype = ctype:gsub("uintptr_t", "ulong")
+		ctype = ctype:gsub("uintptr_t", "size_t")
 	elseif hasPrefix(ctype, "const ") and hasSuffix(ctype, "*") then
 		ctype = "const(" .. string.sub(ctype:gsub("const ", "", 1), 1, -2) .. ")*"
 	end
-
+	
 	if arg.array ~= nil then
-		ctype = ctype .. convert_array(arg)
+		ctype = ctype .. convArray(arg)
 	end
-
+	
 	return ctype
 end
 
-local function convert_struct_type(arg)
-	return convert_type(arg)
+local function convStructType(arg)
+	return convType(arg)
 end
 
-local function convert_ret_type(arg)
-	return convert_type(arg)
-end
-
-local function convert_name(arg)
-	if arg == "debug" then
+local function convName(arg)
+	if contains(dKeywords, arg) then
 		return arg .. "_"
 	end
 	return arg
 end
 
-local function convert_struct_member(member)
-	return convert_struct_type(member) .. " " .. convert_name(member.name)
+local function convStructMember(member)
+	return convStructType(member) .. " " .. convName(member.name)
 end
 
-local function gen_version()
-	return "enum uint BGFX_API_VERSION = " .. (idl._version or 0) .. ";"
+local function genVersion()
+	return "enum uint apiVersion = " .. (idl._version or 0) .. ";"
 end
 
 local converter = {}
 local yield = coroutine.yield
 local gen = {}
 
-function gen.gen(template)
+function gen.gen()
 	local indent = ""
 	local idx = 1;
 	local r = template:gsub("$([a-zA-Z_]+)", function(what)
 		local tmp = {}
-
+		
 		local ind_end = template:find("$"..what, idx, true)
 		local ind_start = ind_end
 		for j = 1, ind_end-1 do
@@ -180,15 +168,15 @@ function gen.gen(template)
 				break
 			end
 		end
-
+		
 		indent = string.sub(template, ind_start+1, ind_end-1)
-
+		
 		local what_idl = what:gsub("funcs_dynamic", "funcs"):gsub("funcs_static", "funcs")
-
-		if (what == "version") then
-			return gen_version()
+		
+		if what == "version" then
+			return genVersion()
 		end
-
+		
 		for _, object in ipairs(idl[what_idl]) do
 			local co = coroutine.create(converter[what])
 			local any
@@ -210,183 +198,193 @@ function gen.gen(template)
 	return r
 end
 
-function gen.gen_types()
-	return gen.gen(d_types_template)
-end
-
-function gen.gen_funcs()
-	return gen.gen(d_funcs_template)
-end
-
 function converter.types(typ)
 	if typ.comments ~= nil then
 		if #typ.comments == 1 then
-			yield("/// " .. typ.comments[1])
+			yield("///" .. typ.comments[1])
 		else
 			yield("/**")
 			for _, comment in ipairs(typ.comments) do
-				yield(" * " .. comment)
+				yield("* " .. comment)
 			end
-			yield(" */")
+			yield("*/")
 		end
 	end
-
-	if typ.handle then
-		yield("struct " .. typ.cname .. " { ushort idx; }")
+	
+	if typ.handle then ---hnadle
+		yield("struct " .. typ.name .. "{")
+		yield("\tushort idx;")
+		yield("}")
+	
 	elseif typ.enum then
-		local prefix = "BGFX_" .. to_underscorecase(string.gsub(typ.name, "::Enum", "")):upper()
-		yield("enum " .. typ.cname)
-		yield("{")
+		local typeName = typ.name:gsub("::Enum", "")
+		yield("enum " .. typeName .. "{")
 		for idx, enum in ipairs(typ.enum) do
 			local comments = ""
 			if enum.comment ~= nil then
 				if #enum.comment == 1 then
-					comments = " /// " .. enum.comment[1];
+					comments = " ///" .. enum.comment[1];
 				else
 					yield("\t/**")
 					for _, comment in ipairs(enum.comment) do
-						yield("\t * " .. comment)
+						yield("\t* " .. comment)
 					end
-					yield("\t */")
+					yield("\t*/")
 				end
 			end
-
-			local enumname
-			if enum.underscore then
-				enumname = to_underscorecase(enum.name):upper()
-			else
-				enumname = enum.name:upper()
+			local name = convName(toCamelCase(enum.name))
+			yield("\t" .. name .. "," .. comments)
+			
+			local intlName = toIntlEn(enum.name)
+			if intlName ~= nil then
+				yield("\t" .. convName(toCamelCase(intlName)) .. " = " .. name .. ",")
 			end
-
-			yield("\t" .. prefix .. "_" .. enumname .. "," .. comments)
 		end
-		yield("");
-		--yield("\t" .. prefix .. "_COUNT = " .. #typ.enum)
-		yield("\t" .. prefix .. "_COUNT")
+		yield("\t");
+		yield("\t" .. "count,")
 		yield("}")
-		yield("mixin(expandEnum!" .. typ.cname .. ");")
-
+	
 	elseif typ.bits ~= nil then
-		local prefix = "BGFX_" .. to_underscorecase(typ.name):upper()
+		local typeName = convName(typ.name)
 		local enumType = "uint"
-		format = "%u"
 		if typ.bits == 64 then
-			format = "0x%016x"
 			enumType = "ulong"
 		elseif typ.bits == 32 then
-			format = "0x%08x"
 			enumType = "uint"
 		elseif typ.bits == 16 then
-			format = "0x%04x"
 			enumType = "ushort"
 		elseif typ.bits == 8 then
-			format = "0x%02x"
 			enumType = "ubyte"
 		end
-
+		
+		local maxLen = 0
+		if typ.shift then
+			maxLen = string.len("shift")
+		elseif typ.range then
+			maxLen = string.len("mask")
+		end
+		for _, flag in ipairs(typ.flag) do
+			maxLen = math.max(maxLen, flag.name:len())
+		end
+		
+		yield("alias " .. typeName .. "_ = " .. enumType .. ";")
+		yield("enum " .. typeName .. ": " .. typeName .. "_{")
 		for idx, flag in ipairs(typ.flag) do
 			local value = flag.value
 			if value ~= nil then
-				value = string.format(flag.format or format, value)
+				value = hexStr(value, typ.bits)
 			else
 				for _, name in ipairs(flag) do
-					local fixedname = prefix .. "_" .. to_underscorecase(name):upper()
+					local fixedName = convName(toCamelCase(name))
 					if value ~= nil then
-						value = value .. " | " .. fixedname
+						value = value .. " | " .. fixedName
 					else
-						value = fixedname
+						value = fixedName
 					end
 				end
 			end
+			
 			local comments = ""
 			if flag.comment ~= nil then
 				if #flag.comment == 1 then
-					comments = " /// " .. flag.comment[1]
+					comments = " ///" .. flag.comment[1]
 				else
 					yield("/**")
 					for _, comment in ipairs(flag.comment) do
-						yield(" * " .. comment)
+						yield("* " .. comment)
 					end
-					yield(" */")
+					yield("*/")
 				end
 			end
-			yield("enum " .. enumType .. " " .. prefix .. "_" .. to_underscorecase(flag.name):upper() .. " = " .. value .. ";" .. comments)
+			
+			local name = convName(toCamelCase(flag.name))
+			yield("\t" .. name .. string.rep(" ", maxLen+2 - name:len()) .. "= " .. value .. "," .. comments)
+			
+			local intlName = toIntlEn(flag.name)
+			if intlName ~= nil then
+				intlName = convName(toCamelCase(intlName))
+				yield("\t" .. intlName .. string.rep(" ", maxLen+2 - intlName:len()) .. "= " .. name .. ",")
+			end
 		end
-
+		
 		if typ.shift then
-			local name = prefix .. "_SHIFT"
+			local name = convName("shift")
 			local value = typ.shift
 			local comments = ""
 			if typ.desc then
-				comments = string.format(" /// %s bit shift", typ.desc)
+				comments = string.format(" ///%s bit shift", typ.desc)
 			end
-			yield("enum " .. enumType .. " " .. name .. " = " .. value .. ";" .. comments)
+			yield("\t" .. name .. string.rep(" ", maxLen+2 - name:len()) .. "= " .. value .. "," .. comments)
 		end
 		if typ.range then
-			local name = prefix .. "_MASK"
-			local value = string.format(format, typ.mask)
+			local name = convName("mask")
+			local value = hexStr(typ.mask, typ.bits)
 			local comments = ""
 			if typ.desc then
-				comments = string.format(" /// %s bit mask", typ.desc)
+				comments = string.format(" ///%s bit mask", typ.desc)
 			end
-			yield("enum " .. enumType .. " " .. name .. " = " .. value .. ";" .. comments)
+			yield("\t" .. name .. string.rep(" ", maxLen+2 - name:len()) .. "= " .. value .. "," .. comments)
 		end
-
+		yield("}")
+		
+		local intlName = toIntlEn(typeName)
+		if intlName ~= nil then
+			yield("alias " .. intlName .. " = " .. typeName .. ";")
+		end
+		
 		if typ.helper then
 			yield(string.format(
-				"%s %s (%s v) { return (v << %s) & %s; }",
+				"%s_ to%s(%s v){ return (v << %s) & %s; }",
+				typeName,
+				typeName,
 				enumType,
-				prefix,
-				enumType,
-				(prefix .. "_SHIFT"),
-				(prefix .. "_MASK")))
+				("shift"),
+				("mask")))
+			if intlName ~= nil then
+				yield("alias to" .. intlName .. " = to" .. typeName .. ";")
+			end
 		end
 	elseif typ.struct ~= nil then
-		yield("struct " .. typ.cname)
-		yield("{")
-
+		yield("struct " .. typ.name .. "{")
+		
 		for _, member in ipairs(typ.struct) do
 			local comments = ""
 			if member.comment ~= nil then
 				if #member.comment == 1 then
-					comments = " /// " .. member.comment[1]
+					comments = " ///" .. member.comment[1]
 				else
 					yield("\n\t/**")
 					for _, comment in ipairs(member.comment) do
-						yield("\t * " .. comment)
+						yield("\t* " .. comment)
 					end
-					yield("\t */")
+					yield("\t*/")
 				end
 			end
-			yield("\t" .. convert_struct_member(member) .. ";" .. comments)
+			yield("\t" .. convStructMember(member) .. ";" .. comments)
 		end
-
+		
 		yield("}")
 	end
 end
 
 function converter.funcs_static(func)
-	return converter.funcs(func, true)
+	return converter.funcs(func)
 end
 
 function converter.funcs_dynamic(func)
-	return converter.funcs(func, false)
+	return converter.funcs(func)
 end
 
-function converter.funcs(func, static)
-	if func.cpponly then
-		return
-	end
-
+function converter.funcs(func)
 	if func.comments ~= nil then
 		yield("/**")
 		for _, line in ipairs(func.comments) do
 			local line = line:gsub("@remarks", "Remarks:")
 			line = line:gsub("@remark", "Remarks:")
-			line = line:gsub("@(%l)(%l+)", function(a, b) return a:upper()..b..":" end)
-			yield(" * " .. line)
+			line = line:gsub("@(%l)(%l+)", function(a, b) return a:upper() .. b .. ":" end)
+			yield("* " .. line)
 		end
-
+		
 		local hasParamsComments = false
 		for _, arg in ipairs(func.args) do
 			if arg.comment ~= nil then
@@ -394,39 +392,34 @@ function converter.funcs(func, static)
 				break
 			end
 		end
-
+		
 		if hasParamsComments then
-			yield(" * Params:")
+			yield("* Params:")
 		end
-
+		
 		for _, arg in ipairs(func.args) do
 			if arg.comment ~= nil then
-				yield(" * " .. convert_name(arg.name) .. " = " .. arg.comment[1])
+				yield("* " .. convName(arg.name) .. " = " .. arg.comment[1])
 				for i, comment in ipairs(arg.comment) do
-					if (i > 1) then
-						yield(" * " .. comment)
+					if i > 1 then
+						yield("* " .. comment)
 					end
 				end
 			end
 		end
-
-		yield(" */")
+		
+		yield("*/")
 	end
-
+	
 	local args = {}
-	if func.this ~= nil then
-		args[1] = convert_type(func.this_type) .. " _this"
-	end
+	-- if func.this ~= nil then
+		-- args[1] = convType(func.this_type) .. " _this"
+	-- end
 	for _, arg in ipairs(func.args) do
-		table.insert(args, convert_type(arg) .. " " .. convert_name(arg.name))
+		table.insert(args, convType(arg) .. " " .. convName(arg.name))
 	end
-
-	if static then
-		yield(convert_ret_type(func.ret) .. " bgfx_" .. func.cname .. "(" .. table.concat(args, ", ") .. ");")
-	else
-		yield("alias da_bgfx_" .. func.cname .. " = " .. convert_ret_type(func.ret) .. " function(" .. table.concat(args, ", ") .. ");")
-		yield("da_bgfx_" .. func.cname .. " bgfx_" .. func.cname .. ";")
-	end
+	
+	yield(string.format("[q{%s}, q{%s}, q{%s}, `%s`],", convType(func.ret), func.name, table.concat(args, ", "), "C++"))
 end
 
 -- printtable("idl types", idl.types)
@@ -441,8 +434,7 @@ end
 
 if (...) == nil then
 	-- run `lua bindings-d.lua` in command line
-	print(gen.gen_types())
-	print(gen.gen_funcs())
+	print(gen.gen(dTemplate))
 end
 
 return gen
