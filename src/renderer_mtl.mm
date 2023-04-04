@@ -681,6 +681,11 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					? BGFX_CAPS_TEXTURE_CUBE_ARRAY
 					: 0
 					;
+
+				g_caps.supported |= iOSVersionEqualOrGreater("10.0.0")
+					? BGFX_CAPS_HDR10
+					: 0
+					;
 			}
 			else if (BX_ENABLED(BX_PLATFORM_OSX) )
 			{
@@ -690,6 +695,11 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 				g_caps.supported |= m_device.supportsFeatureSet( (MTLFeatureSet)10001 /* MTLFeatureSet_macOS_GPUFamily1_v2 */)
 					? BGFX_CAPS_DRAW_INDIRECT
+					: 0
+					;
+
+				g_caps.supported |= macOSVersionEqualOrGreater(10, 12, 0)
+					? BGFX_CAPS_HDR10
 					: 0
 					;
 			}
@@ -3435,16 +3445,38 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		}
 		if (@available(macOS 10.13.2, *) )
 		{
-            m_metalLayer.maximumDrawableCount = bx::clamp<uint32_t>(_maximumDrawableCount != 0 ? _maximumDrawableCount : BGFX_CONFIG_MAX_FRAME_LATENCY, 2, 3);
+			m_metalLayer.maximumDrawableCount = bx::clamp<uint32_t>(_maximumDrawableCount != 0 ? _maximumDrawableCount : BGFX_CONFIG_MAX_FRAME_LATENCY, 2, 3);
 		}
 #endif // __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
 #endif // BX_PLATFORM_OSX
 
 		m_metalLayer.drawableSize = CGSizeMake(_width, _height);
-		m_metalLayer.pixelFormat = (_flags & BGFX_RESET_SRGB_BACKBUFFER)
-			? MTLPixelFormatBGRA8Unorm_sRGB
-			: MTLPixelFormatBGRA8Unorm
-			;
+
+		if (_flags & BGFX_RESET_HDR10)
+		{
+			m_metalLayer.wantsExtendedDynamicRangeContent = YES;
+
+			// Strictly speaking for Windows compatibility...
+			// m_metalLayer.pixelFormat = MTLPixelFormatRGB10A2Unorm;
+			// const CFStringRef name = kCGColorSpaceITUR_2020_PQ;
+			// However both Windows and MacOS compose in 16F, which is a lot more convenient albeit double-rate.
+			m_metalLayer.pixelFormat = MTLPixelFormatRGBA16Float;
+			const CFStringRef name = kCGColorSpaceExtendedSRGB;  // or maybe BBC's HLG?
+
+			CGColorSpaceRef colorspace = CGColorSpaceCreateWithName(name);
+			m_metalLayer.colorspace = colorspace;
+			CGColorSpaceRelease(colorspace);
+		}
+		else
+		{
+			m_metalLayer.pixelFormat = (_flags & BGFX_RESET_SRGB_BACKBUFFER)
+				? MTLPixelFormatBGRA8Unorm_sRGB
+				: MTLPixelFormatBGRA8Unorm
+				;
+
+			m_metalLayer.wantsExtendedDynamicRangeContent = NO;
+			m_metalLayer.colorspace = nil;
+		}
 
 		TextureDescriptor desc = s_renderMtl->m_textureDescriptor;
 
