@@ -16,6 +16,7 @@ import bindbc.common.types: va_list;
 $version
 
 $types
+$structs
 mixin(joinFnBinds((){
 	string[][] ret;
 	ret ~= makeFnBinds([
@@ -50,6 +51,11 @@ local function hasSuffix(str, suffix)
 end
 
 local function toCamelCase(name)
+	if name:find("%u%u+%l") then
+		return name:gsub("(%u-)(%u%l)", function(s0, s1)
+			return s0:lower() .. s1
+		end)
+	end
 	return (name:gsub("^([^%l]*)(%l?)", function(s0, s1)
 		if s1 ~= nil then
 			return s0:lower() .. s1
@@ -90,62 +96,158 @@ local function hexStr(val, bits)
 	return "0x" .. str
 end
 
-local function convArray(member)
-	if string.find(member.array, "::") then
-		return string.gsub(member.array, "::.*", ".") .. toCamelCase(string.gsub(member.array, ".-::", ""))
+local function convArray(array)
+	if string.find(array, "::") then
+		return string.gsub(array, "::.*", ".") .. toCamelCase(string.gsub(array, ".-::", ""))
 	else
-		return member.array
+		return array
 	end
 end
 
-local function convType(arg)
-	local ctype = arg.ctype:gsub("%s%*", "*")
-	if arg.fulltype == "bx::AllocatorI*" or arg.fulltype == "CallbackI*" then
-		ctype = "void*"
-	elseif hasPrefix(ctype, "uint64_t") then
-		ctype = ctype:gsub("uint64_t", "ulong")
-	elseif hasPrefix(ctype, "int64_t") then
-		ctype = ctype:gsub("int64_t", "long")
-	elseif hasPrefix(ctype, "uint32_t") then
-		ctype = ctype:gsub("uint32_t", "uint")
-	elseif hasPrefix(ctype, "int32_t") then
-		ctype = ctype:gsub("int32_t", "int")
-	elseif hasPrefix(ctype, "uint16_t") then
-		ctype = ctype:gsub("uint16_t", "ushort")
-	elseif hasPrefix(ctype, "uint8_t") then
-		ctype = ctype:gsub("uint8_t", "ubyte")
-	elseif hasPrefix(ctype, "int8_t") then
-		ctype = ctype:gsub("int8_t", "byte")
-	elseif hasPrefix(ctype, "uintptr_t") then
-		ctype = ctype:gsub("uintptr_t", "size_t")
-	elseif hasPrefix(ctype, "const ") and hasSuffix(ctype, "*") then
-		ctype = "const(" .. string.sub(ctype:gsub("const ", "", 1), 1, -2) .. ")*"
+local typeSubs = {
+	uint32_t  = "uint",   int32_t = "int",
+	uint16_t  = "ushort", int16_t = "short",
+	uint64_t  = "ulong",  int64_t = "long",
+	uint8_t   = "ubyte",  int8_t  = "byte",
+	uintptr_t = "size_t"
+}
+local function convSomeType(arg, isFnArg)
+	local type = arg.fulltype
+	if type == "bx::AllocatorI*" or type == "CallbackI*" then
+		type = "void*"
+	else
+		for from, to in pairs(typeSubs) do
+			if type:find(from) then
+				type = type:gsub(from, to)
+				break
+			end
+		end
+		type = type:gsub("::Enum", "") --fix enums
+		type = type:gsub("%s+%*", "*") --remove spacing before `*`
+		type = type:gsub("([^&]-)%s?&", "ref %1") --change `&` suffix to `ref` prefix
+		--if isFnArg then --(not needed at this point)
+		--	type = type:gsub("%[[^%]]+%]", "*") --change `[n]` to `*`
+		--end
+		type = type:gsub("const%s+([A-Za-z_][A-Za-z0-9_]*)%*", "const(%1)*") --change `const x*` to `const(x)*`
 	end
 	
 	if arg.array ~= nil then
-		ctype = ctype .. convArray(arg)
+		type = type .. convArray(arg.array)
 	end
 	
-	return ctype
+	return type
+end
+
+local function convType(arg)
+	return convSomeType(arg, false)
+end
+
+local function convFnArgType(arg)
+	return convSomeType(arg, true)
+end
+
+local valSubs = {
+	NULL = "null",
+	UINT16_MAX = "ushort.max",
+	UINT32_MAX = "uint.max",
+	
+	BGFX_INVALID_HANDLE = "invalidHandle",
+	
+	BGFX_DISCARD_ALL = "Discard.all",
+	BGFX_BUFFER_NONE = "Buffer.none",
+	BGFX_STENCIL_NONE = "Stencil.none",
+	BGFX_TEXTURE_NONE = "Texture.none",
+	BGFX_SAMPLER_NONE = "Sampler.none",
+	BGFX_SAMPLER_U_CLAMP = "Sampler.uClamp",
+	BGFX_SAMPLER_V_CLAMP = "Sampler.vClamp",
+	BGFX_RESOLVE_AUTO_GEN_MIPS = "Resolve.autoGenMips",
+}
+local function convVal(arg)
+	local val = string.format("%s", arg)
+	
+	for from, to in pairs(valSubs) do
+		if val:find(from) then
+			val = val:gsub(from, to)
+		end
+	end
+	val = convArray(val)
+	
+	return val
 end
 
 local function convStructType(arg)
 	return convType(arg)
 end
 
-local function convName(arg)
-	if contains(dKeywords, arg) then
-		return arg .. "_"
+local function convName(name)
+	if contains(dKeywords, name) then
+		return name .. "_"
 	end
-	return arg
+	return name
 end
 
 local function convStructMember(member)
 	return convStructType(member) .. " " .. convName(member.name)
 end
 
+local allStructs = {}
+
 local function genVersion()
 	return "enum uint apiVersion = " .. (idl._version or 0) .. ";"
+end
+
+local function genStructMemberFn(func) --NOTE: this does not work on nested structs
+	if func.class ~= nil then
+		local st = allStructs[func.class]
+		if func.comments ~= nil then
+			if #st.fns > 0 then
+				table.insert(st.fns, "")
+			end
+			table.insert(st.fns, "/**")
+			for _, line in ipairs(func.comments) do
+				local line = line:gsub("@remarks", "Remarks:")
+				line = line:gsub("@remark", "Remarks:")
+				line = line:gsub("@(%l)(%l+)", function(a, b) return a:upper() .. b .. ":" end)
+				table.insert(st.fns, line)
+			end
+			
+			local hasParamsComments = false
+			for _, arg in ipairs(func.args) do
+				if arg.comment ~= nil then
+					hasParamsComments = true
+					break
+				end
+			end
+			
+			if hasParamsComments then
+				table.insert(st.fns, "Params:")
+			end
+			
+			for _, arg in ipairs(func.args) do
+				if arg.comment ~= nil then
+					table.insert(st.fns, "\t" .. convName(arg.name:sub(2)) .. " = " .. arg.comment[1])
+					for i, comment in ipairs(arg.comment) do
+						if i > 1 then
+							table.insert(st.fns, comment)
+						end
+					end
+				end
+			end
+			
+			table.insert(st.fns, "*/")
+		end
+		
+		local args = {}
+		for _, arg in ipairs(func.args) do
+			local def = ""
+			if arg.default ~= nil then
+				def = string.format("=%s", convVal(arg.default))
+			end
+			table.insert(args, convFnArgType(arg) .. " " .. convName(arg.name:sub(2)) .. def)
+		end
+		
+		table.insert(st.fns, string.format("[q{%s}, q{%s}, q{%s}, `%s`],", convType(func.ret), func.name, table.concat(args, ", "), "C++"))
+	end
 end
 
 local converter = {}
@@ -171,26 +273,44 @@ function gen.gen()
 		
 		indent = string.sub(template, ind_start+1, ind_end-1)
 		
-		local what_idl = what:gsub("funcs_dynamic", "funcs"):gsub("funcs_static", "funcs")
-		
 		if what == "version" then
 			return genVersion()
-		end
-		
-		for _, object in ipairs(idl[what_idl]) do
-			local co = coroutine.create(converter[what])
-			local any
-			while true do
-				local ok, v = coroutine.resume(co, object)
-				assert(ok, debug.traceback(co, v))
-				if not v then
-					break
-				end
-				table.insert(tmp, v)
-				any = true
+		elseif what == "structs" then
+			for _, fn in ipairs(idl.funcs) do
+				genStructMemberFn(fn)
 			end
-			if any and tmp[#tmp] ~= "" then
-				table.insert(tmp, "")
+			for name, object in pairs(allStructs) do
+				local co = coroutine.create(converter[what])
+				local any
+				while true do
+					local ok, v = coroutine.resume(co, object, name, indent:len())
+					assert(ok, debug.traceback(co, v))
+					if not v then
+						break
+					end
+					table.insert(tmp, v)
+					any = true
+				end
+				if any and tmp[#tmp] ~= "" then
+					table.insert(tmp, "")
+				end
+			end
+		else
+			for _, object in ipairs(idl[what]) do
+				local co = coroutine.create(converter[what])
+				local any
+				while true do
+					local ok, v = coroutine.resume(co, object)
+					assert(ok, debug.traceback(co, v))
+					if not v then
+						break
+					end
+					table.insert(tmp, v)
+					any = true
+				end
+				if any and tmp[#tmp] ~= "" then
+					table.insert(tmp, "")
+				end
 			end
 		end
 		return table.concat(tmp, "\n" .. indent)
@@ -198,8 +318,51 @@ function gen.gen()
 	return r
 end
 
+function converter.structs(st, name)
+	for _, line in ipairs(st.comments) do
+		yield(line)
+	end
+	
+	yield("struct " .. name .. "{")
+	
+	local subN = 0
+	for subName, subStruct in pairs(st.subs) do
+		subN = subN + 1
+		local co = coroutine.create(converter.structs)
+		while true do
+			local ok, v = coroutine.resume(co, subStruct, subName)
+			assert(ok, debug.traceback(co, v))
+			if not v then
+				break
+			end
+			yield("\t" .. v)
+		end
+	end
+	if subN > 0 then
+		yield("\t")
+	end
+	
+	for _, line in ipairs(st.fields) do
+		yield(line)
+	end
+	
+	if #st.fns > 0 then
+		yield("\tmixin(joinFnBinds((){")
+		yield("\t\tstring[][] ret;")
+		yield("\t\tret ~= makeFnBinds([")
+		for _, line in ipairs(st.fns) do
+			yield("\t\t\t" .. line)
+		end
+		yield("\t\t]);")
+		yield("\t\treturn ret;")
+		yield("\t}())););")
+	end
+	
+	yield("}")
+end
+
 function converter.types(typ)
-	if typ.comments ~= nil then
+	if typ.comments ~= nil and not typ.struct then
 		if #typ.comments == 1 then
 			yield("///" .. typ.comments[1])
 		else
@@ -215,6 +378,7 @@ function converter.types(typ)
 		yield("struct " .. typ.name .. "{")
 		yield("\tushort idx;")
 		yield("}")
+		yield(typ.name .. " invalidHandle(){ return " .. typ.name .. "(ushort.max); }")
 	
 	elseif typ.enum then
 		local typeName = typ.name:gsub("::Enum", "")
@@ -227,7 +391,7 @@ function converter.types(typ)
 				else
 					yield("\t/**")
 					for _, comment in ipairs(enum.comment) do
-						yield("\t* " .. comment)
+						yield("\t" .. comment)
 					end
 					yield("\t*/")
 				end
@@ -291,7 +455,7 @@ function converter.types(typ)
 				else
 					yield("/**")
 					for _, comment in ipairs(flag.comment) do
-						yield("* " .. comment)
+						yield(comment)
 					end
 					yield("*/")
 				end
@@ -345,7 +509,19 @@ function converter.types(typ)
 			end
 		end
 	elseif typ.struct ~= nil then
-		yield("struct " .. typ.name .. "{")
+		local st = {comments = {}, fields = {}, fns = {}, subs = {}}
+		
+		if typ.comments ~= nil then
+			if #typ.comments == 1 then
+				table.insert(st.comments, "///" .. typ.comments[1])
+			else
+				table.insert(st.comments, "/**")
+				for _, comment in ipairs(typ.comments) do
+					table.insert(st.comments, comment)
+				end
+				table.insert(st.comments, "*/")
+			end
+		end
 		
 		for _, member in ipairs(typ.struct) do
 			local comments = ""
@@ -353,73 +529,82 @@ function converter.types(typ)
 				if #member.comment == 1 then
 					comments = " ///" .. member.comment[1]
 				else
-					yield("\n\t/**")
-					for _, comment in ipairs(member.comment) do
-						yield("\t* " .. comment)
+					if #st.fields > 0 then
+						table.insert(st.fields, "\t")
 					end
-					yield("\t*/")
+					table.insert(st.fields, "\t/**")
+					for _, comment in ipairs(member.comment) do
+						table.insert(st.fields, "\t" .. comment)
+					end
+					table.insert(st.fields, "\t*/")
 				end
 			end
-			yield("\t" .. convStructMember(member) .. ";" .. comments)
+			table.insert(st.fields, "\t" .. convStructMember(member) .. ";" .. comments)
 		end
 		
-		yield("}")
+		if typ.namespace ~= nil then
+			if allStructs[typ.namespace] ~= nil then
+				allStructs[typ.namespace].subs[typ.name] = st
+			else
+				allStructs[typ.namespace] = {subs = {[typ.name] = st}}
+			end
+		else
+			if allStructs[typ.name] ~= nil then
+				st.subs = allStructs[typ.name].subs
+			end
+			allStructs[typ.name] = st
+		end
 	end
-end
-
-function converter.funcs_static(func)
-	return converter.funcs(func)
-end
-
-function converter.funcs_dynamic(func)
-	return converter.funcs(func)
 end
 
 function converter.funcs(func)
-	if func.comments ~= nil then
-		yield("/**")
-		for _, line in ipairs(func.comments) do
-			local line = line:gsub("@remarks", "Remarks:")
-			line = line:gsub("@remark", "Remarks:")
-			line = line:gsub("@(%l)(%l+)", function(a, b) return a:upper() .. b .. ":" end)
-			yield("* " .. line)
-		end
-		
-		local hasParamsComments = false
-		for _, arg in ipairs(func.args) do
-			if arg.comment ~= nil then
-				hasParamsComments = true
-				break
+	if func.class == nil then
+		if func.comments ~= nil then
+			yield("/**")
+			for _, line in ipairs(func.comments) do
+				local line = line:gsub("@remarks", "Remarks:")
+				line = line:gsub("@remark", "Remarks:")
+				line = line:gsub("@(%l)(%l+)", function(a, b) return a:upper() .. b .. ":" end)
+				yield("* " .. line)
 			end
-		end
-		
-		if hasParamsComments then
-			yield("* Params:")
-		end
-		
-		for _, arg in ipairs(func.args) do
-			if arg.comment ~= nil then
-				yield("* " .. convName(arg.name) .. " = " .. arg.comment[1])
-				for i, comment in ipairs(arg.comment) do
-					if i > 1 then
-						yield("* " .. comment)
+			
+			local hasParamsComments = false
+			for _, arg in ipairs(func.args) do
+				if arg.comment ~= nil then
+					hasParamsComments = true
+					break
+				end
+			end
+			
+			if hasParamsComments then
+				yield("Params:")
+			end
+			
+			for _, arg in ipairs(func.args) do
+				if arg.comment ~= nil then
+					yield("\t" .. convName(arg.name:sub(2)) .. " = " .. arg.comment[1])
+					for i, comment in ipairs(arg.comment) do
+						if i > 1 then
+							yield(comment)
+						end
 					end
 				end
 			end
+			
+			yield("*/")
 		end
 		
-		yield("*/")
+		local args = {}
+		for _, arg in ipairs(func.args) do
+			local def = ""
+			if arg.default ~= nil then
+				def = string.format("=%s", convVal(arg.default))
+			end
+			table.insert(args, convFnArgType(arg) .. " " .. convName(arg.name:sub(2)) .. def)
+		end
+		
+		yield(string.format("[q{%s}, q{%s}, q{%s}, `%s`],", convType(func.ret), func.name, table.concat(args, ", "), "C++"))
 	end
-	
-	local args = {}
-	-- if func.this ~= nil then
-		-- args[1] = convType(func.this_type) .. " _this"
-	-- end
-	for _, arg in ipairs(func.args) do
-		table.insert(args, convType(arg) .. " " .. convName(arg.name))
-	end
-	
-	yield(string.format("[q{%s}, q{%s}, q{%s}, `%s`],", convType(func.ret), func.name, table.concat(args, ", "), "C++"))
 end
 
 -- printtable("idl types", idl.types)
