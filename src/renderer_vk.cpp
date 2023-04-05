@@ -1553,6 +1553,7 @@ VK_IMPORT_INSTANCE
 
 				g_caps.vendorId = uint16_t(m_deviceProperties.vendorID);
 				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
+				g_caps.deviceIndex = physicalDeviceIdx;
 				memcpy(g_caps.deviceUUID, deviceIdProperties.deviceUUID, sizeof(g_caps.deviceUUID));
 
 				BX_TRACE("Using physical device %d: %s", physicalDeviceIdx, m_deviceProperties.deviceName);
