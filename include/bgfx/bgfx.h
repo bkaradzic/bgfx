@@ -677,6 +677,10 @@ namespace bgfx
 		/// matching ID.
 		uint16_t deviceId;
 
+		/// 0-based device index, points to a device in list returned by the API.
+		/// Default 255, equivalent to deviceId = 0
+		uint8_t deviceIndex;
+
 		uint64_t capabilities; //!< Capabilities initialization mask (default: UINT64_MAX).
 
 		bool debug;   //!< Enable device for debugging.
@@ -767,6 +771,7 @@ namespace bgfx
 
 		uint16_t vendorId;         //!< Selected GPU vendor PCI id.
 		uint16_t deviceId;         //!< Selected GPU device PCI id.
+		uint8_t  deviceIndex;      //!< Selected GPU index into the list of available GPUs
 		uint8_t  deviceUUID[16];   //!< Selected GPU device 16-bit long UUID
 		bool     homogeneousDepth; //!< True when NDC depth is in [-1, 1] range, otherwise its [0, 1].
 		bool     originBottomLeft; //!< True when NDC origin is at bottom left.
@@ -782,7 +787,7 @@ namespace bgfx
 			uint16_t deviceId; //!< Device id.
 		};
 
-		GPU gpu[4]; //!< Enumerated GPUs.
+		GPU gpu[16]; //!< Enumerated GPUs.
 
 		/// Renderer runtime limits.
 		///
