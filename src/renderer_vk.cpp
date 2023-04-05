@@ -1492,7 +1492,8 @@ VK_IMPORT_INSTANCE
 						{
 							fallbackPhysicalDeviceIdx = ii;
 						}
-						else if (pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+						else if ( (pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+						&&				(UINT32_MAX == physicalDeviceIdx) )
 						{
 							physicalDeviceIdx = ii;
 						}
