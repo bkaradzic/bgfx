@@ -1473,9 +1473,10 @@ VK_IMPORT_INSTANCE
 					g_caps.gpu[ii].deviceId = uint16_t(pdp.deviceID);
 					++g_caps.numGPUs;
 
-					if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||            0 != g_caps.deviceId)
+					if ( (BGFX_PCI_ID_NONE != g_caps.vendorId || 0 != g_caps.deviceId || 255 != g_caps.deviceIndex)
 					&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || pdp.vendorID == g_caps.vendorId)
-					&&   (0 == g_caps.deviceId                || pdp.deviceID == g_caps.deviceId) )
+					&&   (0 == g_caps.deviceId                || pdp.deviceID == g_caps.deviceId)
+					&&   (255 == g_caps.deviceIndex           || ii == g_caps.deviceIndex       ) )
 					{
 						if (pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
 						||  pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)

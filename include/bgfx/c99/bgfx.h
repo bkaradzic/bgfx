@@ -547,11 +547,12 @@ typedef struct bgfx_caps_s
     uint64_t             supported;
     uint16_t             vendorId;           /** Selected GPU vendor PCI id.              */
     uint16_t             deviceId;           /** Selected GPU device PCI id.              */
+    uint8_t              deviceIndex;        /** Selected GPU index into the list of available GPUs */
     uint8_t              deviceUUID[16];     /** Selected GPU device 16-bit long UUID     */
     bool                 homogeneousDepth;   /** True when NDC depth is in [-1, 1] range, otherwise its [0, 1]. */
     bool                 originBottomLeft;   /** True when NDC origin is at bottom left.  */
     uint8_t              numGPUs;            /** Number of enumerated GPUs.               */
-    bgfx_caps_gpu_t      gpu[4];             /** Enumerated GPUs.                         */
+    bgfx_caps_gpu_t      gpu[16];            /** Enumerated GPUs.                         */
     bgfx_caps_limits_t   limits;             /** Renderer runtime limits.                 */
 
     /**
@@ -697,6 +698,10 @@ typedef struct bgfx_init_s
      * matching ID.
      */
     uint16_t             deviceId;
+    /** 0-based device index, points to a device in list returned by the API.
+     * Default 255, equivalent to deviceId = 0
+     */
+    uint8_t              deviceIndex;
     uint64_t             capabilities;       /** Capabilities initialization mask (default: UINT64_MAX). */
     bool                 debug;              /** Enable device for debugging.             */
     bool                 profile;            /** Enable device for profiling.             */

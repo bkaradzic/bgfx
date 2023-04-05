@@ -3502,6 +3502,7 @@ namespace bgfx
 		: type(RendererType::Count)
 		, vendorId(BGFX_PCI_ID_NONE)
 		, deviceId(0)
+		, deviceIndex(UINT8_MAX)
 		, capabilities(UINT64_MAX)
 		, debug(BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		, profile(BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
@@ -3593,6 +3594,7 @@ namespace bgfx
 
 		g_caps.vendorId = init.vendorId;
 		g_caps.deviceId = init.deviceId;
+		g_caps.deviceIndex = init.deviceIndex;
 
 		BX_TRACE("Init...");
 
