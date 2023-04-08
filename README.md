@@ -30,6 +30,8 @@
 Cross-platform, graphics API agnostic, "Bring Your Own Engine/Framework" style
 rendering library.
 
+### Notice: bgfx will most likely not be in the carbon lang package manager. However, one user (me who is writing this) will attempt to add it to the package manager and will maintain it.
+
 Supported rendering backends:
 
  * Direct3D 9
