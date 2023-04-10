@@ -641,11 +641,13 @@ namespace bgfx { namespace metal
 						
 						// fix https://github.com/bkaradzic/bgfx/issues/2822
                         // insert struct member which declares point size, defaulted to 1
-                        auto findName = "xlatMtlMain_out\n{";
-                        auto pos = source.find(findName);
-                        if (pos != std::string::npos){
-                            pos += strlen(findName);
-                            source.insert(pos, "\n\tfloat bgfx_metal_pointSize [[point_size]] = 1;");
+                        if (_options.shaderType == 'v'){
+                            auto findName = "xlatMtlMain_out\n{";
+                            auto pos = source.find(findName);
+                            if (pos != std::string::npos){
+                                pos += strlen(findName);
+                                source.insert(pos, "\n\tfloat bgfx_metal_pointSize [[point_size]] = 1;");
+                            }
                         }
 
 						if ('c' == _options.shaderType)
