@@ -538,7 +538,7 @@ namespace bgfx { namespace metal
 					spirv_cross::ShaderResources resourcesrefl = refl.get_shader_resources();
 
 					// Loop through the separate_images, and extract the uniform names:
-					for (auto &resource : resourcesrefl.separate_images)
+					for (auto& resource : resourcesrefl.separate_images)
 					{
 						std::string name = refl.get_name(resource.id);
 						if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture"))
@@ -556,6 +556,7 @@ namespace bgfx { namespace metal
 
 						uniforms.push_back(un);
 					}
+
 					uint16_t size = writeUniformArray(_shaderWriter, uniforms, _options.shaderType == 'f');
 
 					bx::Error err;
@@ -572,42 +573,48 @@ namespace bgfx { namespace metal
 
 						spirv_cross::SmallVector<spirv_cross::EntryPoint> entryPoints = msl.get_entry_points_and_stages();
 						if (!entryPoints.empty() )
-							msl.rename_entry_point(entryPoints[0].name, "xlatMtlMain", entryPoints[0].execution_model);
-
-						for (auto &resource : resources.uniform_buffers)
 						{
-							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
-							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );
-							newBinding.desc_set = set;
-							newBinding.binding = binding;
+							msl.rename_entry_point(
+								  entryPoints[0].name
+								, "xlatMtlMain"
+								, entryPoints[0].execution_model
+								);
+						}
+
+						for (auto& resource : resources.uniform_buffers)
+						{
+							unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+							unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
+							newBinding.desc_set   = set;
+							newBinding.binding    = binding;
 							newBinding.msl_buffer = 0;
-							msl.add_msl_resource_binding( newBinding );
+							msl.add_msl_resource_binding(newBinding);
 
 							msl.set_name(resource.id, "_mtl_u");
 						}
 
-						for (auto &resource : resources.storage_buffers)
+						for (auto& resource : resources.storage_buffers)
 						{
-							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
-							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );
-							newBinding.desc_set = set;
-							newBinding.binding = binding;
+							unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+							unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
+							newBinding.desc_set   = set;
+							newBinding.binding    = binding;
 							newBinding.msl_buffer = binding + 1;
-							msl.add_msl_resource_binding( newBinding );
+							msl.add_msl_resource_binding(newBinding);
 						}
 
-						for (auto &resource : resources.separate_samplers)
+						for (auto& resource : resources.separate_samplers)
 						{
-							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
-							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );
-							newBinding.desc_set = set;
-							newBinding.binding = binding;
+							unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+							unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
+							newBinding.desc_set    = set;
+							newBinding.binding     = binding;
 							newBinding.msl_texture = binding - textureBindingOffset;
 							newBinding.msl_sampler = binding - textureBindingOffset;
-							msl.add_msl_resource_binding( newBinding );
+							msl.add_msl_resource_binding(newBinding);
 						}
 
-						for (auto &resource : resources.separate_images)
+						for (auto& resource : resources.separate_images)
 						{
 							std::string name = msl.get_name(resource.id);
 							if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
@@ -615,46 +622,52 @@ namespace bgfx { namespace metal
 								msl.set_name(resource.id, name.substr(0, name.length() - 7) );
 							}
 
-							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
-							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );
-							newBinding.desc_set = set;
-							newBinding.binding = binding;
+							unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+							unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
+							newBinding.desc_set    = set;
+							newBinding.binding     = binding;
 							newBinding.msl_texture = binding - textureBindingOffset;
 							newBinding.msl_sampler = binding - textureBindingOffset;
-							msl.add_msl_resource_binding( newBinding );
+							msl.add_msl_resource_binding(newBinding);
 						}
 
-						for (auto &resource : resources.storage_images)
+						for (auto& resource : resources.storage_images)
 						{
 							std::string name = msl.get_name(resource.id);
 
-							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
-							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );
-							newBinding.desc_set = set;
-							newBinding.binding = binding;
+							unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+							unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
+							newBinding.desc_set    = set;
+							newBinding.binding     = binding;
 							newBinding.msl_texture = binding - textureBindingOffset;
 							newBinding.msl_sampler = binding - textureBindingOffset;
-							msl.add_msl_resource_binding( newBinding );
+							msl.add_msl_resource_binding(newBinding);
 						}
 
 						std::string source = msl.compile();
-						
+
 						// fix https://github.com/bkaradzic/bgfx/issues/2822
-                        // insert struct member which declares point size, defaulted to 1
-                        if (_options.shaderType == 'v'){
-                            auto findName = "xlatMtlMain_out\n{";
-                            auto pos = source.find(findName);
-                            if (pos != std::string::npos){
-                                pos += strlen(findName);
-                                source.insert(pos, "\n\tfloat bgfx_metal_pointSize [[point_size]] = 1;");
-                            }
-                        }
+						// insert struct member which declares point size, defaulted to 1
+						if ('v' == _options.shaderType)
+						{
+							const bx::StringView xlatMtlMainOut("xlatMtlMain_out\n{");
+							size_t pos = source.find(xlatMtlMainOut.getPtr() );
+
+							if (pos != std::string::npos)
+							{
+								pos += xlatMtlMainOut.getLength();
+								source.insert(pos, "\n\tfloat bgfx_metal_pointSize [[point_size]] = 1;");
+							}
+						}
 
 						if ('c' == _options.shaderType)
 						{
 							for (int i = 0; i < 3; ++i)
 							{
-								uint16_t dim = (uint16_t)msl.get_execution_mode_argument(spv::ExecutionMode::ExecutionModeLocalSize, i);
+								uint16_t dim = (uint16_t)msl.get_execution_mode_argument(
+									  spv::ExecutionMode::ExecutionModeLocalSize
+									, i
+									);
 								bx::write(_shaderWriter, dim, &err);
 							}
 						}
