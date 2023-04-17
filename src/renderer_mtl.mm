@@ -4344,6 +4344,16 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 								{
 									TextureMtl& texture = m_textures[bind.m_idx];
 									m_computeCommandEncoder.setTexture(texture.getTextureMipLevel(bind.m_mip), stage);
+									if (Access::Read == bind.m_access)
+									{
+										uint32_t flags = bind.m_samplerFlags;
+										m_computeCommandEncoder.setSamplerState(
+											0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & flags)
+											? getSamplerState(flags)
+											: texture.m_sampler
+											, stage
+											);
+									}
 								}
 								break;
 

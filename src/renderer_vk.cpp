@@ -3812,22 +3812,6 @@ VK_IMPORT_DEVICE
 					{
 					case Binding::Image:
 						{
-							const bool isImageDescriptor = BindType::Image == bindInfo.type;
-
-							wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-							wds[wdsCount].pNext            = NULL;
-							wds[wdsCount].dstSet           = descriptorSet;
-							wds[wdsCount].dstBinding       = bindInfo.binding;
-							wds[wdsCount].dstArrayElement  = 0;
-							wds[wdsCount].descriptorCount  = 1;
-							wds[wdsCount].descriptorType   = isImageDescriptor
-								? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
-								: VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
-								;
-							wds[wdsCount].pImageInfo       = NULL;
-							wds[wdsCount].pBufferInfo      = NULL;
-							wds[wdsCount].pTexelBufferView = NULL;
-
 							const TextureVK& texture = m_textures[bind.m_idx];
 
 							VkImageViewType type = texture.m_type;
@@ -3854,10 +3838,46 @@ VK_IMPORT_DEVICE
 								, 1
 								, type
 								);
-							wds[wdsCount].pImageInfo = &imageInfo[imageCount];
-							++imageCount;
 
+							const bool isImageDescriptor = BindType::Image == bindInfo.type;
+
+							wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+							wds[wdsCount].pNext            = NULL;
+							wds[wdsCount].dstSet           = descriptorSet;
+							wds[wdsCount].dstBinding       = bindInfo.binding;
+							wds[wdsCount].dstArrayElement  = 0;
+							wds[wdsCount].descriptorCount  = 1;
+							wds[wdsCount].descriptorType   = isImageDescriptor
+								? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
+								: VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
+								;
+							wds[wdsCount].pImageInfo       = &imageInfo[imageCount];
+							wds[wdsCount].pBufferInfo      = NULL;
+							wds[wdsCount].pTexelBufferView = NULL;
 							++wdsCount;
+
+							if (Access::Read  == bind.m_access)
+							{
+								const uint32_t samplerFlags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
+															? bind.m_samplerFlags
+															: (uint32_t)texture.m_flags
+															;
+								imageInfo[imageCount].sampler  = getSampler(samplerFlags, texture.m_format, _palette);
+
+								wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+								wds[wdsCount].pNext            = NULL;
+								wds[wdsCount].dstSet           = descriptorSet;
+								wds[wdsCount].dstBinding       = bindInfo.samplerBinding;
+								wds[wdsCount].dstArrayElement  = 0;
+								wds[wdsCount].descriptorCount  = 1;
+								wds[wdsCount].descriptorType   = VK_DESCRIPTOR_TYPE_SAMPLER;
+								wds[wdsCount].pImageInfo       = &imageInfo[imageCount];
+								wds[wdsCount].pBufferInfo      = NULL;
+								wds[wdsCount].pTexelBufferView = NULL;
+								++wdsCount;
+							}
+
+							++imageCount;
 						}
 						break;
 
