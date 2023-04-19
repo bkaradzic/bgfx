@@ -8498,7 +8498,14 @@ VK_DESTROY
 
 		if (_render->m_capture)
 		{
-			renderDocTriggerCapture();
+			if (NULL == m_backBuffer.m_nwh)  // headless
+			{
+				renderDocStartFrameCapture();
+			}
+			else
+			{
+				renderDocTriggerCapture();
+			}
 		}
 
 		BGFX_VK_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
@@ -9566,6 +9573,12 @@ VK_DESTROY
 		}
 
 		kick();
+
+		if (_render->m_capture && NULL == m_backBuffer.m_nwh)
+		{
+			// headless, for windowed apps capture ends automatically on present
+			renderDocEndFrameCapture();
+		}
 	}
 
 } /* namespace vk */ } // namespace bgfx

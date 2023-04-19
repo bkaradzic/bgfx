@@ -138,11 +138,29 @@ namespace bgfx
 		}
 	}
 
+	// for windowed apps
 	void renderDocTriggerCapture()
 	{
 		if (NULL != s_renderDoc)
 		{
 			s_renderDoc->TriggerCapture();
+		}
+	}
+
+	// for headless apps
+	void renderDocStartFrameCapture()
+	{
+		if (NULL != s_renderDoc)
+		{
+			s_renderDoc->StartFrameCapture(NULL, NULL);
+		}
+	}
+
+	void renderDocEndFrameCapture()
+	{
+		if (NULL != s_renderDoc)
+		{
+			s_renderDoc->EndFrameCapture(NULL, NULL);
 		}
 	}
 
@@ -163,6 +181,14 @@ namespace bgfx
 	}
 
 	void renderDocTriggerCapture()
+	{
+	}
+
+	void renderDocStartFrameCapture()
+	{
+	}
+
+	void renderDocEndFrameCapture()
 	{
 	}
 

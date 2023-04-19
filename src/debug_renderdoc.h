@@ -11,7 +11,8 @@ namespace bgfx
 	void* loadRenderDoc();
 	void unloadRenderDoc(void*);
 	void renderDocTriggerCapture();
-
+	void renderDocStartFrameCapture();
+	void renderDocEndFrameCapture();
 } // namespace bgfx
 
 #endif // BGFX_RENDERDOC_H_HEADER_GUARD
