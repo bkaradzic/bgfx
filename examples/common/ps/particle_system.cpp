@@ -331,8 +331,8 @@ namespace ps
 
 			bx::Aabb aabb =
 			{
-				{  bx::kInfinity,  bx::kInfinity,  bx::kInfinity },
-				{ -bx::kInfinity, -bx::kInfinity, -bx::kInfinity },
+				{  bx::kFloatInfinity,  bx::kFloatInfinity,  bx::kFloatInfinity },
+				{ -bx::kFloatInfinity, -bx::kFloatInfinity, -bx::kFloatInfinity },
 			};
 
 			for (uint32_t jj = 0, num = m_num, current = _first
