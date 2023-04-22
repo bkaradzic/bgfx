@@ -134,13 +134,13 @@ class CopyPropagateArrays : public MemPass {
           var_pointer_inst->GetSingleWordInOperand(1), GetAccessIds());
 
       uint32_t member_pointer_type_id = type_mgr->FindPointerToType(
-          member_type_id, static_cast<SpvStorageClass>(
+          member_type_id, static_cast<spv::StorageClass>(
                               var_pointer_inst->GetSingleWordInOperand(0)));
       return member_pointer_type_id;
     }
 
     // Returns the storage class of the memory object.
-    SpvStorageClass GetStorageClass() const {
+    spv::StorageClass GetStorageClass() const {
       analysis::TypeManager* type_mgr =
           GetVariable()->context()->get_type_mgr();
       const analysis::Pointer* pointer_type =

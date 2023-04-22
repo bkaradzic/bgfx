@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -236,7 +236,7 @@ namespace bgfx { namespace d3d12
 		{ DXGI_FORMAT_R8_SNORM,           DXGI_FORMAT_R8_SNORM,              DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // R8S
 		{ DXGI_FORMAT_R16_UNORM,          DXGI_FORMAT_R16_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // R16
 		{ DXGI_FORMAT_R16_SINT,           DXGI_FORMAT_R16_SINT,              DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // R16I
-		{ DXGI_FORMAT_R16_UNORM,          DXGI_FORMAT_R16_UNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // R16U
+		{ DXGI_FORMAT_R16_UINT,           DXGI_FORMAT_R16_UINT,              DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // R16U
 		{ DXGI_FORMAT_R16_FLOAT,          DXGI_FORMAT_R16_FLOAT,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // R16F
 		{ DXGI_FORMAT_R16_SNORM,          DXGI_FORMAT_R16_SNORM,             DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // R16S
 		{ DXGI_FORMAT_R32_SINT,           DXGI_FORMAT_R32_SINT,              DXGI_FORMAT_UNKNOWN,           DXGI_FORMAT_UNKNOWN,              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING                }, // R32I
@@ -418,11 +418,14 @@ namespace bgfx { namespace d3d12
 	static const GUID IID_ID3D12Device3              = { 0x81dadc15, 0x2bad, 0x4392, { 0x93, 0xc5, 0x10, 0x13, 0x45, 0xc4, 0xaa, 0x98 } };
 	static const GUID IID_ID3D12Device4              = { 0xe865df17, 0xa9ee, 0x46f9, { 0xa4, 0x63, 0x30, 0x98, 0x31, 0x5a, 0xa2, 0xe5 } };
 	static const GUID IID_ID3D12Device5              = { 0x8b4f173b, 0x2fea, 0x4b80, { 0x8f, 0x58, 0x43, 0x07, 0x19, 0x1a, 0xb9, 0x5d } };
+	static const GUID IID_ID3D12Device6              = { 0xc70b221b, 0x40e4, 0x4a17, { 0x89, 0xaf, 0x02, 0x5a, 0x07, 0x27, 0xa6, 0xdc } };
+	static const GUID IID_ID3D12Device7              = { 0x5c014b53, 0x68a1, 0x4b9b, { 0x8b, 0xd1, 0xdd, 0x60, 0x46, 0xb9, 0x35, 0x8b } };
+	static const GUID IID_ID3D12Device8              = { 0x9218e6bb, 0xf944, 0x4f7e, { 0xa7, 0x5c, 0xb1, 0xb2, 0xc7, 0xb7, 0x01, 0xf3 } };
 	static const GUID IID_ID3D12Fence                = { 0x0a753dcf, 0xc4d8, 0x4b91, { 0xad, 0xf6, 0xbe, 0x5a, 0x60, 0xd9, 0x5a, 0x76 } };
 	static const GUID IID_ID3D12GraphicsCommandList  = { 0x5b160d0f, 0xac1b, 0x4185, { 0x8b, 0xa8, 0xb3, 0xae, 0x42, 0xa5, 0xa4, 0x55 } };
 	static const GUID IID_ID3D12GraphicsCommandList1 = { 0x553103fb, 0x1fe7, 0x4557, { 0xbb, 0x38, 0x94, 0x6d, 0x7d, 0x0e, 0x7c, 0xa7 } };
-	static const GUID IID_ID3D12GraphicsCommandList2 = { 0x38C3E585, 0xFF17, 0x412C, { 0x91, 0x50, 0x4F, 0xC6, 0xF9, 0xD7, 0x2A, 0x28 } };
-	static const GUID IID_ID3D12GraphicsCommandList3 = { 0x6FDA83A7, 0xB84C, 0x4E38, { 0x9A, 0xC8, 0xC7, 0xBD, 0x22, 0x01, 0x6B, 0x3D } };
+	static const GUID IID_ID3D12GraphicsCommandList2 = { 0x38c3e585, 0xff17, 0x412c, { 0x91, 0x50, 0x4f, 0xc6, 0xf9, 0xd7, 0x2a, 0x28 } };
+	static const GUID IID_ID3D12GraphicsCommandList3 = { 0x6fda83a7, 0xb84c, 0x4e38, { 0x9a, 0xc8, 0xc7, 0xbd, 0x22, 0x01, 0x6b, 0x3d } };
 	static const GUID IID_ID3D12GraphicsCommandList4 = { 0x8754318e, 0xd3a9, 0x4541, { 0x98, 0xcf, 0x64, 0x5b, 0x50, 0xdc, 0x48, 0x74 } };
 	static const GUID IID_ID3D12InfoQueue            = { 0x0742a90b, 0xc387, 0x483f, { 0xb9, 0x46, 0x30, 0xa7, 0xe4, 0xe6, 0x14, 0x58 } };
 	static const GUID IID_ID3D12PipelineState        = { 0x765a30f3, 0xf624, 0x4c6f, { 0xa8, 0x28, 0xac, 0xe9, 0x48, 0x62, 0x24, 0x45 } };
@@ -434,6 +437,9 @@ namespace bgfx { namespace d3d12
 
 	static const GUID s_d3dDeviceIIDs[] =
 	{
+		IID_ID3D12Device8,
+		IID_ID3D12Device7,
+		IID_ID3D12Device6,
 		IID_ID3D12Device5,
 		IID_ID3D12Device4,
 		IID_ID3D12Device3,
@@ -850,6 +856,7 @@ namespace bgfx { namespace d3d12
 
 				D3D_FEATURE_LEVEL featureLevel[] =
 				{
+					D3D_FEATURE_LEVEL_12_2,
 					D3D_FEATURE_LEVEL_12_1,
 					D3D_FEATURE_LEVEL_12_0,
 					D3D_FEATURE_LEVEL_11_1,
@@ -909,10 +916,6 @@ namespace bgfx { namespace d3d12
 			if (FAILED(hr) )
 			{
 				BX_TRACE("Init error: Unable to create Direct3D12 device.");
-				if (BX_ENABLED(BX_PLATFORM_WINRT) )
-				{
-					BX_TRACE("Hint: Change UWP app to game?");
-				}
 				goto error;
 			}
 
@@ -971,6 +974,146 @@ namespace bgfx { namespace d3d12
 			BX_TRACE("\tConservativeRasterizationTier %d", m_options.ConservativeRasterizationTier);
 			BX_TRACE("\tCrossNodeSharingTier %d", m_options.CrossNodeSharingTier);
 			BX_TRACE("\tResourceHeapTier %d", m_options.ResourceHeapTier);
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS1 options1; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS1, &options1, sizeof(options1)));)
+			{
+				BX_TRACE("D3D12 options 1:");
+				BX_TRACE("\tWaveOps %d", options1.WaveOps);
+				BX_TRACE("\tWaveLaneCountMin %d", options1.WaveLaneCountMin);
+				BX_TRACE("\tWaveLaneCountMax %d", options1.WaveLaneCountMax);
+				BX_TRACE("\tTotalLaneCount %d", options1.TotalLaneCount);
+				BX_TRACE("\tExpandedComputeResourceStates %d", options1.ExpandedComputeResourceStates);
+				BX_TRACE("\tInt64ShaderOps %d", options1.Int64ShaderOps);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS2 options2; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS2, &options2, sizeof(options2)));)
+			{
+				BX_TRACE("D3D12 options 2:");
+				BX_TRACE("\tCopyQueueTimestampQueriesSupported %d", options2.DepthBoundsTestSupported);
+				BX_TRACE("\tCastingFullyTypedFormatSupported %d", options2.ProgrammableSamplePositionsTier);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &options3, sizeof(options3)));)
+			{
+				BX_TRACE("D3D12 options 3:");
+				BX_TRACE("\tCopyQueueTimestampQueriesSupported %d", options3.CopyQueueTimestampQueriesSupported);
+				BX_TRACE("\tCastingFullyTypedFormatSupported %d", options3.CastingFullyTypedFormatSupported);
+				BX_TRACE("\tWriteBufferImmediateSupportFlags %d", options3.WriteBufferImmediateSupportFlags);
+				BX_TRACE("\tViewInstancingTier %d", options3.ViewInstancingTier);
+				BX_TRACE("\tBarycentricsSupported %d", options3.BarycentricsSupported);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS4 options4; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS4, &options4, sizeof(options4)));)
+			{
+				BX_TRACE("D3D12 options 4:");
+				BX_TRACE("\tMSAA64KBAlignedTextureSupported %d", options4.MSAA64KBAlignedTextureSupported);
+				BX_TRACE("\tSharedResourceCompatibilityTier %d", options4.SharedResourceCompatibilityTier);
+				BX_TRACE("\tNative16BitShaderOpsSupported %d", options4.Native16BitShaderOpsSupported);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options5, sizeof(options5) ) );)
+			{
+				BX_TRACE("D3D12 options 5:");
+				BX_TRACE("\tSRVOnlyTiledResourceTier3 %d", options5.SRVOnlyTiledResourceTier3);
+				BX_TRACE("\tRenderPassesTier %d", options5.RenderPassesTier);
+				BX_TRACE("\tRaytracingTier %d", options5.RaytracingTier);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS6 options6; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &options6, sizeof(options6)));)
+			{
+				BX_TRACE("D3D12 options 6:");
+				BX_TRACE("\tAdditionalShadingRatesSupported %d", options6.AdditionalShadingRatesSupported);
+				BX_TRACE("\tPerPrimitiveShadingRateSupportedWithViewportIndexing %d", options6.PerPrimitiveShadingRateSupportedWithViewportIndexing);
+				BX_TRACE("\tVariableShadingRateTier %d", options6.VariableShadingRateTier);
+				BX_TRACE("\tShadingRateImageTileSize %d", options6.ShadingRateImageTileSize);
+				BX_TRACE("\tBackgroundProcessingSupported %d", options6.BackgroundProcessingSupported);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS7 options7; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &options7, sizeof(options7)));)
+			{
+				BX_TRACE("D3D12 options 7:");
+				BX_TRACE("\tMeshShaderTier %d", options7.MeshShaderTier);
+				BX_TRACE("\tSamplerFeedbackTier %d", options7.SamplerFeedbackTier);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS8 options8; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS8, &options8, sizeof(options8)));)
+			{
+				BX_TRACE("D3D12 options 8:");
+				BX_TRACE("\tUnalignedBlockTexturesSupported %d", options8.UnalignedBlockTexturesSupported);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS9 options9; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS9, &options9, sizeof(options9)));)
+			{
+				BX_TRACE("D3D12 options 9:");
+				BX_TRACE("\tMeshShaderPipelineStatsSupported %d", options9.MeshShaderPipelineStatsSupported);
+				BX_TRACE("\tMeshShaderSupportsFullRangeRenderTargetArrayIndex %d", options9.MeshShaderSupportsFullRangeRenderTargetArrayIndex);
+				BX_TRACE("\tAtomicInt64OnTypedResourceSupported %d", options9.AtomicInt64OnTypedResourceSupported);
+				BX_TRACE("\tAtomicInt64OnGroupSharedSupported %d", options9.AtomicInt64OnGroupSharedSupported);
+				BX_TRACE("\tDerivativesInMeshAndAmplificationShadersSupported %d", options9.DerivativesInMeshAndAmplificationShadersSupported);
+				BX_TRACE("\tWaveMMATier %d", options9.WaveMMATier);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS10 options10; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS10, &options10, sizeof(options10)));)
+			{
+				BX_TRACE("D3D12 options 10:");
+				BX_TRACE("\tVariableRateShadingSumCombinerSupported %d", options10.VariableRateShadingSumCombinerSupported);
+				BX_TRACE("\tMeshShaderPerPrimitiveShadingRateSupported %d", options10.MeshShaderPerPrimitiveShadingRateSupported);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS11 options11; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS11, &options11, sizeof(options11)));)
+			{
+				BX_TRACE("D3D12 options 11:");
+				BX_TRACE("\tAtomicInt64OnDescriptorHeapResourceSupported %d", options11.AtomicInt64OnDescriptorHeapResourceSupported);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS12 options12; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &options12, sizeof(options12)));)
+			{
+				BX_TRACE("D3D12 options 12:");
+				BX_TRACE("\tMSPrimitivesPipelineStatisticIncludesCulledPrimitives %d", options12.MSPrimitivesPipelineStatisticIncludesCulledPrimitives);
+				BX_TRACE("\tEnhancedBarriersSupported %d", options12.EnhancedBarriersSupported);
+				BX_TRACE("\tRelaxedFormatCastingSupported %d", options12.RelaxedFormatCastingSupported);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS13 options13; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &options13, sizeof(options13)));)
+			{
+				BX_TRACE("D3D12 options 13:");
+				BX_TRACE("\tUnrestrictedBufferTextureCopyPitchSupported %d", options13.UnrestrictedBufferTextureCopyPitchSupported);
+				BX_TRACE("\tUnrestrictedVertexElementAlignmentSupported %d", options13.UnrestrictedVertexElementAlignmentSupported);
+				BX_TRACE("\tInvertedViewportHeightFlipsYSupported %d", options13.InvertedViewportHeightFlipsYSupported);
+				BX_TRACE("\tInvertedViewportDepthFlipsZSupported %d", options13.InvertedViewportDepthFlipsZSupported);
+				BX_TRACE("\tTextureCopyBetweenDimensionsSupported %d", options13.TextureCopyBetweenDimensionsSupported);
+				BX_TRACE("\tAlphaBlendFactorSupported %d", options13.AlphaBlendFactorSupported);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS14 options14; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &options14, sizeof(options14)));)
+			{
+				BX_TRACE("D3D12 options 14:");
+				BX_TRACE("\tAdvancedTextureOpsSupported %d", options14.AdvancedTextureOpsSupported);
+				BX_TRACE("\tWriteableMSAATexturesSupported %d", options14.WriteableMSAATexturesSupported);
+				BX_TRACE("\tIndependentFrontAndBackStencilRefMaskSupported %d", options14.IndependentFrontAndBackStencilRefMaskSupported);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS15 options15; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &options15, sizeof(options15)));)
+			{
+				BX_TRACE("D3D12 options 15:");
+				BX_TRACE("\tTriangleFanSupported %d", options15.TriangleFanSupported);
+				BX_TRACE("\tDynamicIndexBufferStripCutSupported %d", options15.DynamicIndexBufferStripCutSupported);
+				break;
+			}
 
 			initHeapProperties(m_device);
 
@@ -4956,7 +5099,7 @@ namespace bgfx { namespace d3d12
 				, swizzle ? " (swizzle BGRA8 -> RGBA8)" : ""
 				);
 
-			for (uint8_t side = 0; side < numSides; ++side)
+			for (uint16_t side = 0; side < numSides; ++side)
 			{
 				for (uint8_t lod = 0; lod < ti.numMips; ++lod)
 				{
@@ -6644,68 +6787,54 @@ namespace bgfx { namespace d3d12
 					}
 				}
 
-				const uint64_t newFlags = draw.m_stateFlags;
-				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
-				currentState.m_stateFlags = newFlags;
-
-				if (0 != (BGFX_STATE_PT_MASK & changedFlags) )
-				{
-					primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
-				}
-
-				const uint64_t newStencil = draw.m_stencil;
-				uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
-				currentState.m_stencil = newStencil;
-
-				if (resetState)
-				{
-					wasCompute = false;
-
-					currentState.clear();
-					currentState.m_scissor = !draw.m_scissor;
-					changedFlags = BGFX_STATE_MASK;
-					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
-					currentState.m_stateFlags = newFlags;
-					currentState.m_stencil    = newStencil;
-
-					currentBind.clear();
-
-					commandListChanged = true;
-				}
-
-				if (commandListChanged)
-				{
-					commandListChanged = false;
-
-					m_commandList->SetGraphicsRootSignature(m_rootSignature);
-					ID3D12DescriptorHeap* heaps[] = {
-						m_samplerAllocator.getHeap(),
-						scratchBuffer.getHeap(),
-					};
-					m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
-
-					currentPso             = NULL;
-					currentBindHash        = 0;
-					currentSamplerStateIdx = kInvalidHandle;
-					currentProgram         = BGFX_INVALID_HANDLE;
-					currentState.clear();
-					currentState.m_scissor = !draw.m_scissor;
-					changedFlags = BGFX_STATE_MASK;
-					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
-					currentState.m_stateFlags = newFlags;
-					currentState.m_stencil    = newStencil;
-
-					currentBind.clear();
-
-					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
-					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
-				}
-
-				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
-				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
-
 				if (0 != draw.m_streamMask)
 				{
+					const uint64_t newFlags = draw.m_stateFlags;
+					uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
+					currentState.m_stateFlags = newFlags;
+
+					if (0 != (BGFX_STATE_PT_MASK & changedFlags) )
+					{
+						primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
+					}
+
+					const uint64_t newStencil = draw.m_stencil;
+					uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
+					currentState.m_stencil = newStencil;
+
+					if (resetState
+					||  commandListChanged)
+					{
+						wasCompute = false;
+						commandListChanged = false;
+
+						m_commandList->SetGraphicsRootSignature(m_rootSignature);
+						ID3D12DescriptorHeap* heaps[] = {
+							m_samplerAllocator.getHeap(),
+							scratchBuffer.getHeap(),
+						};
+						m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
+
+						currentPso             = NULL;
+						currentBindHash        = 0;
+						currentSamplerStateIdx = kInvalidHandle;
+						currentProgram         = BGFX_INVALID_HANDLE;
+						currentState.clear();
+						currentState.m_scissor = !draw.m_scissor;
+						changedFlags = BGFX_STATE_MASK;
+						changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
+						currentState.m_stateFlags = newFlags;
+						currentState.m_stencil    = newStencil;
+
+						currentBind.clear();
+
+						const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
+						primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
+					}
+
+					bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
+					rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
+
 					currentState.m_streamMask             = draw.m_streamMask;
 					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
 					currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
@@ -6748,23 +6877,23 @@ namespace bgfx { namespace d3d12
 						}
 					}
 
-					ID3D12PipelineState* pso =
-						getPipelineState(state
-							, draw.m_stencil
-							, numStreams
-							, layouts
-							, key.m_program
-							, uint8_t(draw.m_instanceDataStride/16)
-							);
+					ID3D12PipelineState* pso = getPipelineState(
+						  state
+						, draw.m_stencil
+						, numStreams
+						, layouts
+						, key.m_program
+						, uint8_t(draw.m_instanceDataStride/16)
+						);
 
-					uint16_t scissor = draw.m_scissor;
-					uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
+					const uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
+
 					if (currentBindHash != bindHash
 					||  0 != changedStencil
 					|| (hasFactor && blendFactor != draw.m_rgba)
 					|| (0 != (BGFX_STATE_PT_MASK & changedFlags)
 					||  prim.m_topology != s_primInfo[primIndex].m_topology)
-					||  currentState.m_scissor != scissor
+					||  currentState.m_scissor != draw.m_scissor
 					||  pso != currentPso
 					||  hasOcclusionQuery)
 					{
@@ -6910,6 +7039,7 @@ namespace bgfx { namespace d3d12
 						m_commandList->IASetPrimitiveTopology(prim.m_topology);
 					}
 
+					const uint16_t scissor = draw.m_scissor;
 					if (currentState.m_scissor != scissor)
 					{
 						currentState.m_scissor = scissor;

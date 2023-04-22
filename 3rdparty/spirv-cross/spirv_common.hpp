@@ -643,7 +643,9 @@ struct SPIRExtension : IVariant
 		SPV_AMD_shader_explicit_vertex_parameter,
 		SPV_AMD_shader_trinary_minmax,
 		SPV_AMD_gcn_shader,
-		NonSemanticDebugPrintf
+		NonSemanticDebugPrintf,
+		NonSemanticShaderDebugInfo,
+		NonSemanticGeneric
 	};
 
 	explicit SPIRExtension(Extension ext_)
@@ -1789,6 +1791,33 @@ static inline bool opcode_is_sign_invariant(spv::Op opcode)
 	case spv::OpBitwiseOr:
 	case spv::OpBitwiseXor:
 	case spv::OpBitwiseAnd:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
+static inline bool opcode_can_promote_integer_implicitly(spv::Op opcode)
+{
+	switch (opcode)
+	{
+	case spv::OpSNegate:
+	case spv::OpNot:
+	case spv::OpBitwiseAnd:
+	case spv::OpBitwiseOr:
+	case spv::OpBitwiseXor:
+	case spv::OpShiftLeftLogical:
+	case spv::OpShiftRightLogical:
+	case spv::OpShiftRightArithmetic:
+	case spv::OpIAdd:
+	case spv::OpISub:
+	case spv::OpIMul:
+	case spv::OpSDiv:
+	case spv::OpUDiv:
+	case spv::OpSRem:
+	case spv::OpUMod:
+	case spv::OpSMod:
 		return true;
 
 	default:

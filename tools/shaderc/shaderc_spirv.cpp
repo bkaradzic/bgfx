@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -331,14 +331,14 @@ namespace bgfx { namespace spirv
 		"BgfxSampler2DMS",
 	};
 
-	static uint16_t writeUniformArray(bx::WriterI* _writer, const UniformArray& uniforms, bool isFragmentShader)
+	static uint16_t writeUniformArray(bx::WriterI* _shaderWriter, const UniformArray& uniforms, bool isFragmentShader)
 	{
 		uint16_t size = 0;
 
 		bx::ErrorAssert err;
 
 		uint16_t count = uint16_t(uniforms.size());
-		bx::write(_writer, count, &err);
+		bx::write(_shaderWriter, count, &err);
 
 		uint32_t fragmentBit = isFragmentShader ? kUniformFragmentBit : 0;
 
@@ -352,15 +352,15 @@ namespace bgfx { namespace spirv
 			}
 
 			uint8_t nameSize = (uint8_t)un.name.size();
-			bx::write(_writer, nameSize, &err);
-			bx::write(_writer, un.name.c_str(), nameSize, &err);
-			bx::write(_writer, uint8_t(un.type | fragmentBit), &err);
-			bx::write(_writer, un.num, &err);
-			bx::write(_writer, un.regIndex, &err);
-			bx::write(_writer, un.regCount, &err);
-			bx::write(_writer, un.texComponent, &err);
-			bx::write(_writer, un.texDimension, &err);
-			bx::write(_writer, un.texFormat, &err);
+			bx::write(_shaderWriter, nameSize, &err);
+			bx::write(_shaderWriter, un.name.c_str(), nameSize, &err);
+			bx::write(_shaderWriter, uint8_t(un.type | fragmentBit), &err);
+			bx::write(_shaderWriter, un.num, &err);
+			bx::write(_shaderWriter, un.regIndex, &err);
+			bx::write(_shaderWriter, un.regCount, &err);
+			bx::write(_shaderWriter, un.texComponent, &err);
+			bx::write(_shaderWriter, un.texDimension, &err);
+			bx::write(_shaderWriter, un.texFormat, &err);
 
 			BX_TRACE("%s, %s, %d, %d, %d"
 				, un.name.c_str()
@@ -385,6 +385,8 @@ namespace bgfx { namespace spirv
 				return SPV_ENV_VULKAN_1_1_SPIRV_1_4;
 			case 1512:
 				return SPV_ENV_VULKAN_1_2;
+			case 1613:
+				return SPV_ENV_VULKAN_1_3;
 			default:
 				BX_ASSERT(0, "Unknown SPIR-V version requested. Returning SPV_ENV_VULKAN_1_0 as default.");
 				return SPV_ENV_VULKAN_1_0;
@@ -402,6 +404,8 @@ namespace bgfx { namespace spirv
 				return glslang::EShTargetVulkan_1_1;
 			case 1512:
 				return glslang::EShTargetVulkan_1_2;
+			case 1613:
+				return glslang::EShTargetVulkan_1_3;
 			default:
 				BX_ASSERT(0, "Unknown SPIR-V version requested. Returning EShTargetVulkan_1_0 as default.");
 				return glslang::EShTargetVulkan_1_0;
@@ -420,6 +424,8 @@ namespace bgfx { namespace spirv
 				return glslang::EShTargetSpv_1_4;
 			case 1512:
 				return glslang::EShTargetSpv_1_5;
+			case 1613:
+				return glslang::EShTargetSpv_1_6;
 			default:
 				BX_ASSERT(0, "Unknown SPIR-V version requested. Returning EShTargetSpv_1_0 as default.");
 				return glslang::EShTargetSpv_1_0;
@@ -432,16 +438,18 @@ namespace bgfx { namespace spirv
 	/// The value is 100.
 	constexpr int s_GLSL_VULKAN_CLIENT_VERSION = 100;
 
-	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
+	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter, bool _firstPass)
 	{
 		BX_UNUSED(_version);
+
+		bx::ErrorAssert messageErr;
 
 		glslang::InitializeProcess();
 
 		EShLanguage stage = getLang(_options.shaderType);
 		if (EShLangCount == stage)
 		{
-			bx::printf("Error: Unknown shader type '%c'.\n", _options.shaderType);
+			bx::write(_messageWriter, &messageErr, "Error: Unknown shader type '%c'.\n", _options.shaderType);
 			return false;
 		}
 
@@ -513,7 +521,7 @@ namespace bgfx { namespace spirv
 
 				printCode(_code.c_str(), line, start, end, column);
 
-				bx::printf("%s\n", log);
+				bx::write(_messageWriter, &messageErr, "%s\n", log);
 			}
 		}
 		else
@@ -529,7 +537,7 @@ namespace bgfx { namespace spirv
 				const char* log = program->getInfoLog();
 				if (NULL != log)
 				{
-					bx::printf("%s\n", log);
+					bx::write(_messageWriter, &messageErr, "%s\n", log);
 				}
 			}
 			else
@@ -634,7 +642,7 @@ namespace bgfx { namespace spirv
 					// recompile with the unused uniforms converted to statics
 					delete program;
 					delete shader;
-					return compile(_options, _version, output.c_str(), _writer, false);
+					return compile(_options, _version, output.c_str(), _shaderWriter, _messageWriter, false);
 				}
 
 				UniformArray uniforms;
@@ -702,14 +710,14 @@ namespace bgfx { namespace spirv
 
 				spvtools::Optimizer opt(getSpirvTargetVersion(_version));
 
-				auto print_msg_to_stderr = [](
+				auto print_msg_to_stderr = [_messageWriter, &messageErr](
 					  spv_message_level_t
 					, const char*
 					, const spv_position_t&
 					, const char* m
 					)
 				{
-					bx::printf("Error: %s\n", m);
+					bx::write(_messageWriter, &messageErr, "Error: %s\n", m);
 				};
 
 				opt.SetMessageConsumer(print_msg_to_stderr);
@@ -836,31 +844,31 @@ namespace bgfx { namespace spirv
 						uniforms.push_back(un);
 					}
 
-					uint16_t size = writeUniformArray( _writer, uniforms, _options.shaderType == 'f');
+					uint16_t size = writeUniformArray(_shaderWriter, uniforms, _options.shaderType == 'f');
 
 					uint32_t shaderSize = (uint32_t)spirv.size() * sizeof(uint32_t);
-					bx::write(_writer, shaderSize, &err);
-					bx::write(_writer, spirv.data(), shaderSize, &err);
+					bx::write(_shaderWriter, shaderSize, &err);
+					bx::write(_shaderWriter, spirv.data(), shaderSize, &err);
 					uint8_t nul = 0;
-					bx::write(_writer, nul, &err);
+					bx::write(_shaderWriter, nul, &err);
 
 					const uint8_t numAttr = (uint8_t)program->getNumLiveAttributes();
-					bx::write(_writer, numAttr, &err);
+					bx::write(_shaderWriter, numAttr, &err);
 
 					for (uint8_t ii = 0; ii < numAttr; ++ii)
 					{
 						bgfx::Attrib::Enum attr = toAttribEnum(program->getAttributeName(ii) );
 						if (bgfx::Attrib::Count != attr)
 						{
-							bx::write(_writer, bgfx::attribToId(attr), &err);
+							bx::write(_shaderWriter, bgfx::attribToId(attr), &err);
 						}
 						else
 						{
-							bx::write(_writer, uint16_t(UINT16_MAX), &err);
+							bx::write(_shaderWriter, uint16_t(UINT16_MAX), &err);
 						}
 					}
 
-					bx::write(_writer, size, &err);
+					bx::write(_shaderWriter, size, &err);
 				}
 			}
 		}
@@ -875,9 +883,9 @@ namespace bgfx { namespace spirv
 
 } // namespace spirv
 
-	bool compileSPIRVShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
+	bool compileSPIRVShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
 	{
-		return spirv::compile(_options, _version, _code, _writer, true);
+		return spirv::compile(_options, _version, _code, _shaderWriter, _messageWriter, true);
 	}
 
 } // namespace bgfx

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -56,11 +56,6 @@ namespace
 		NSVG_SHADER_FILLIMG,
 		NSVG_SHADER_SIMPLE,
 		NSVG_SHADER_IMG
-	};
-
-	// These are additional flags on top of NVGimageFlags.
-	enum NVGimageFlagsGL {
-		NVG_IMAGE_NODELETE = 1<<16, // Do not delete GL texture handle.
 	};
 
 	struct GLNVGtexture
@@ -325,9 +320,12 @@ namespace
 			mem = bgfx::copy(_rgba, tex->height * pitch);
 		}
 
+		BX_ASSERT(tex->width >= 0 && tex->width <= bx::max<uint16_t>(), "Invalid tex width %d (max: %u)",  tex->width, bx::max<uint16_t>());
+		BX_ASSERT(tex->height >= 0 && tex->height <= bx::max<uint16_t>(), "Invalid tex height %d (max: %u)",  tex->height, bx::max<uint16_t>());
+
 		tex->id = bgfx::createTexture2D(
-						  tex->width
-						, tex->height
+						  uint16_t(tex->width)
+						, uint16_t(tex->height)
 						, false
 						, 1
 						, NVG_TEXTURE_RGBA == _type ? bgfx::TextureFormat::RGBA8 : bgfx::TextureFormat::R8
@@ -342,8 +340,8 @@ namespace
 				, 0
 				, 0
 				, 0
-				, tex->width
-				, tex->height
+				, uint16_t(tex->width)
+				, uint16_t(tex->height)
 				, mem
 				);
 		}
@@ -376,14 +374,19 @@ namespace
 		           w * bytesPerPixel,                    // stride
 		           h);                                   // num
 
+		BX_ASSERT(x >= 0 && x <= bx::max<uint16_t>(), "Invalid tex x pos %d (max: %u)", x, bx::max<uint16_t>());
+		BX_ASSERT(y >= 0 && y <= bx::max<uint16_t>(), "Invalid tex y pos %d (max: %u)", y, bx::max<uint16_t>());
+		BX_ASSERT(w >= 0 && w <= bx::max<uint16_t>(), "Invalid tex width %d (max: %u)", w, bx::max<uint16_t>());
+		BX_ASSERT(h >= 0 && h <= bx::max<uint16_t>(), "Invalid tex width %d (max: %u)", h, bx::max<uint16_t>());
+
 		bgfx::updateTexture2D(
 			  tex->id
 			, 0
 			, 0
-			, x
-			, y
-			, w
-			, h
+			, uint16_t(x)
+			, uint16_t(y)
+			, uint16_t(w)
+			, uint16_t(h)
 			, mem
 			, UINT16_MAX
 			);
@@ -574,9 +577,9 @@ namespace
 		uint16_t* data = (uint16_t*)tib.data;
 		for (uint32_t ii = 0; ii < numTris; ++ii)
 		{
-			data[ii*3+0] = _start;
-			data[ii*3+1] = _start + ii + 1;
-			data[ii*3+2] = _start + ii + 2;
+			data[ii*3+0] = uint16_t(_start);
+			data[ii*3+1] = uint16_t(_start + ii + 1);
+			data[ii*3+2] = uint16_t(_start + ii + 2);
 		}
 
 		bgfx::setIndexBuffer(&tib);
@@ -1202,10 +1205,14 @@ NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int32_t width, int32_t
 NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* _ctx, int32_t _width, int32_t _height, int32_t _imageFlags)
 {
 	BX_UNUSED(_imageFlags);
+	BX_ASSERT(_width >= 0 && _width <= bx::max<uint16_t>(), "Invalid tex width %d (max: %u)", _width, bx::max<uint16_t>());
+	BX_ASSERT(_height >= 0 && _height <= bx::max<uint16_t>(), "Invalid tex height %d (max: %u)", _height, bx::max<uint16_t>());
+	const uint16_t w = uint16_t(_width);
+	const uint16_t h = uint16_t(_height);
 	bgfx::TextureHandle textures[] =
 	{
-		bgfx::createTexture2D(_width, _height, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_RT),
-		bgfx::createTexture2D(_width, _height, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY)
+		bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_RT),
+		bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY)
 	};
 	bgfx::FrameBufferHandle fbh = bgfx::createFrameBuffer(
 		  BX_COUNTOF(textures)

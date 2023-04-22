@@ -274,8 +274,6 @@ void CompilerCPP::emit_resources()
 	if (emitted)
 		statement("");
 
-	declare_undefined_values();
-
 	statement("inline void init(spirv_cross_shader& s)");
 	begin_scope();
 	statement(resource_type, "::init(s);");

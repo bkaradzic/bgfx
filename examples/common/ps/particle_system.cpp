@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -331,8 +331,8 @@ namespace ps
 
 			bx::Aabb aabb =
 			{
-				{  bx::kInfinity,  bx::kInfinity,  bx::kInfinity },
-				{ -bx::kInfinity, -bx::kInfinity, -bx::kInfinity },
+				{  bx::kFloatInfinity,  bx::kFloatInfinity,  bx::kFloatInfinity },
+				{ -bx::kFloatInfinity, -bx::kFloatInfinity, -bx::kFloatInfinity },
 			};
 
 			for (uint32_t jj = 0, num = m_num, current = _first

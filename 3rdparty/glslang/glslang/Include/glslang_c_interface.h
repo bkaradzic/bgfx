@@ -157,7 +157,13 @@ typedef struct glslang_resource_s {
     int max_task_work_group_size_y_ext;
     int max_task_work_group_size_z_ext;
     int max_mesh_view_count_ext;
-    int maxDualSourceDrawBuffersEXT;
+    union
+    {
+        int max_dual_source_draw_buffers_ext;
+
+        /* Incorrectly capitalized name retained for backward compatibility */
+        int maxDualSourceDrawBuffersEXT;
+    };
 
     glslang_limits_t limits;
 } glslang_resource_t;

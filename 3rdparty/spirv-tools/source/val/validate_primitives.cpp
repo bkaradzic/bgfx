@@ -14,13 +14,11 @@
 
 // Validates correctness of primitive SPIR-V instructions.
 
-#include "source/val/validate.h"
-
 #include <string>
 
-#include "source/diagnostic.h"
 #include "source/opcode.h"
 #include "source/val/instruction.h"
+#include "source/val/validate.h"
 #include "source/val/validation_state.h"
 
 namespace spvtools {
@@ -28,16 +26,16 @@ namespace val {
 
 // Validates correctness of primitive instructions.
 spv_result_t PrimitivesPass(ValidationState_t& _, const Instruction* inst) {
-  const SpvOp opcode = inst->opcode();
+  const spv::Op opcode = inst->opcode();
 
   switch (opcode) {
-    case SpvOpEmitVertex:
-    case SpvOpEndPrimitive:
-    case SpvOpEmitStreamVertex:
-    case SpvOpEndStreamPrimitive:
+    case spv::Op::OpEmitVertex:
+    case spv::Op::OpEndPrimitive:
+    case spv::Op::OpEmitStreamVertex:
+    case spv::Op::OpEndStreamPrimitive:
       _.function(inst->function()->id())
           ->RegisterExecutionModelLimitation(
-              SpvExecutionModelGeometry,
+              spv::ExecutionModel::Geometry,
               std::string(spvOpcodeString(opcode)) +
                   " instructions require Geometry execution model");
       break;
@@ -46,8 +44,8 @@ spv_result_t PrimitivesPass(ValidationState_t& _, const Instruction* inst) {
   }
 
   switch (opcode) {
-    case SpvOpEmitStreamVertex:
-    case SpvOpEndStreamPrimitive: {
+    case spv::Op::OpEmitStreamVertex:
+    case spv::Op::OpEndStreamPrimitive: {
       const uint32_t stream_id = inst->word(1);
       const uint32_t stream_type = _.GetTypeId(stream_id);
       if (!_.IsIntScalarType(stream_type)) {
@@ -56,7 +54,7 @@ spv_result_t PrimitivesPass(ValidationState_t& _, const Instruction* inst) {
                << ": expected Stream to be int scalar";
       }
 
-      const SpvOp stream_opcode = _.GetIdOpcode(stream_id);
+      const spv::Op stream_opcode = _.GetIdOpcode(stream_id);
       if (!spvOpcodeIsConstant(stream_opcode)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << spvOpcodeString(opcode)

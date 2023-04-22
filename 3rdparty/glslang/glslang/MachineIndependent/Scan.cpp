@@ -765,6 +765,9 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["icoopmatNV"] =              ICOOPMATNV;
     (*KeywordMap)["ucoopmatNV"] =              UCOOPMATNV;
 
+    (*KeywordMap)["hitObjectNV"] =             HITOBJECTNV;
+    (*KeywordMap)["hitObjectAttributeNV"] =    HITOBJECTATTRNV;
+
     ReservedSet = new std::unordered_set<const char*, str_hash, str_eq>;
 
     ReservedSet->insert("common");
@@ -1787,6 +1790,20 @@ int TScanContext::tokenizeIdentifier()
     case SPIRV_LITERAL:
         if (parseContext.symbolTable.atBuiltInLevel() ||
             parseContext.extensionTurnedOn(E_GL_EXT_spirv_intrinsics))
+            return keyword;
+        return identifierOrType();
+
+    case HITOBJECTNV:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            (!parseContext.isEsProfile() && parseContext.version >= 460
+                 && parseContext.extensionTurnedOn(E_GL_NV_shader_invocation_reorder)))
+            return keyword;
+        return identifierOrType();
+
+    case HITOBJECTATTRNV:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            (!parseContext.isEsProfile() && parseContext.version >= 460
+                 && parseContext.extensionTurnedOn(E_GL_NV_shader_invocation_reorder)))
             return keyword;
         return identifierOrType();
 #endif

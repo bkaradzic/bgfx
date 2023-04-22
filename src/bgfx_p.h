@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -342,7 +342,7 @@ namespace bgfx
 		template<typename Ty>
 		constexpr Handle(Ty _handle)
 			: idx(_handle.idx)
-			, type(toEnum<Ty>() )
+			, type(uint16_t(toEnum<Ty>() ) )
 		{
 		}
 

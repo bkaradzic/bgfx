@@ -339,9 +339,24 @@ public:
 		bool dispatch_base = false;
 		bool texture_1D_as_2D = false;
 
-		// Enable use of MSL 2.0 indirect argument buffers.
+		// Enable use of Metal argument buffers.
 		// MSL 2.0 must also be enabled.
 		bool argument_buffers = false;
+
+		// Defines Metal argument buffer tier levels.
+		// Uses same values as Metal MTLArgumentBuffersTier enumeration.
+		enum class ArgumentBuffersTier
+		{
+			Tier1 = 0,
+			Tier2 = 1,
+		};
+
+		// When using Metal argument buffers, indicates the Metal argument buffer tier level supported by the Metal platform.
+		// Ignored when Options::argument_buffers is disabled.
+		// - Tier1 supports writable images on macOS, but not on iOS.
+		// - Tier2 supports writable images on macOS and iOS, and higher resource count limits.
+		// Tier capabilities based on recommendations from Apple engineering.
+		ArgumentBuffersTier argument_buffers_tier = ArgumentBuffersTier::Tier1;
 
 		// Ensures vertex and instance indices start at zero. This reflects the behavior of HLSL with SV_VertexID and SV_InstanceID.
 		bool enable_base_index_zero = false;
@@ -457,6 +472,29 @@ public:
 		// This will force the shader to run at sample rate, assuming Metal does not optimize
 		// the extra threads away.
 		bool force_sample_rate_shading = false;
+
+		// If set, gl_HelperInvocation will be set manually whenever a fragment is discarded.
+		// Some Metal devices have a bug where simd_is_helper_thread() does not return true
+		// after a fragment has been discarded. This is a workaround that is only expected to be needed
+		// until the bug is fixed in Metal; it is provided as an option to allow disabling it when that occurs.
+		bool manual_helper_invocation_updates = true;
+
+		// If set, extra checks will be emitted in fragment shaders to prevent writes
+		// from discarded fragments. Some Metal devices have a bug where writes to storage resources
+		// from discarded fragment threads continue to occur, despite the fragment being
+		// discarded. This is a workaround that is only expected to be needed until the
+		// bug is fixed in Metal; it is provided as an option so it can be enabled
+		// only when the bug is present.
+		bool check_discarded_frag_stores = false;
+
+		// If set, Lod operands to OpImageSample*DrefExplicitLod for 1D and 2D array images
+		// will be implemented using a gradient instead of passing the level operand directly.
+		// Some Metal devices have a bug where the level() argument to depth2d_array<T>::sample_compare()
+		// in a fragment shader is biased by some unknown amount, possibly dependent on the
+		// partial derivatives of the texture coordinates. This is a workaround that is only
+		// expected to be needed until the bug is fixed in Metal; it is provided as an option
+		// so it can be enabled only when the bug is present.
+		bool sample_dref_lod_array_as_grad = false;
 
 		bool is_ios() const
 		{
@@ -817,10 +855,9 @@ protected:
 	std::string bitcast_glsl_op(const SPIRType &result_type, const SPIRType &argument_type) override;
 	bool emit_complex_bitcast(uint32_t result_id, uint32_t id, uint32_t op0) override;
 	bool skip_argument(uint32_t id) const override;
-	std::string to_member_reference(uint32_t base, const SPIRType &type, uint32_t index, bool ptr_chain) override;
+	std::string to_member_reference(uint32_t base, const SPIRType &type, uint32_t index, bool ptr_chain_is_resolved) override;
 	std::string to_qualifiers_glsl(uint32_t id) override;
 	void replace_illegal_names() override;
-	void declare_undefined_values() override;
 	void declare_constant_arrays();
 
 	void replace_illegal_entry_point_names();
@@ -836,7 +873,7 @@ protected:
 	bool is_non_native_row_major_matrix(uint32_t id) override;
 	bool member_is_non_native_row_major_matrix(const SPIRType &type, uint32_t index) override;
 	std::string convert_row_major_matrix(std::string exp_str, const SPIRType &exp_type, uint32_t physical_type_id,
-	                                     bool is_packed) override;
+	                                     bool is_packed, bool relaxed) override;
 
 	bool is_tesc_shader() const;
 	bool is_tese_shader() const;
@@ -1005,6 +1042,7 @@ protected:
 	uint32_t builtin_frag_coord_id = 0;
 	uint32_t builtin_sample_id_id = 0;
 	uint32_t builtin_sample_mask_id = 0;
+	uint32_t builtin_helper_invocation_id = 0;
 	uint32_t builtin_vertex_idx_id = 0;
 	uint32_t builtin_base_vertex_id = 0;
 	uint32_t builtin_instance_idx_id = 0;
@@ -1029,6 +1067,7 @@ protected:
 	uint32_t argument_buffer_padding_sampler_type_id = 0;
 
 	bool does_shader_write_sample_mask = false;
+	bool frag_shader_needs_discard_checks = false;
 
 	void cast_to_variable_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type) override;
 	void cast_from_variable_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type) override;
@@ -1113,6 +1152,7 @@ protected:
 	bool needs_subgroup_invocation_id = false;
 	bool needs_subgroup_size = false;
 	bool needs_sample_id = false;
+	bool needs_helper_invocation = false;
 	std::string qual_pos_var_name;
 	std::string stage_in_var_name = "in";
 	std::string stage_out_var_name = "out";
@@ -1180,6 +1220,16 @@ protected:
 
 	bool variable_storage_requires_stage_io(spv::StorageClass storage) const;
 
+	bool needs_manual_helper_invocation_updates() const
+	{
+		return msl_options.manual_helper_invocation_updates && msl_options.supports_msl_version(2, 3);
+	}
+	bool needs_frag_discard_checks() const
+	{
+		return get_execution_model() == spv::ExecutionModelFragment && msl_options.supports_msl_version(2, 3) &&
+		       msl_options.check_discarded_frag_stores && frag_shader_needs_discard_checks;
+	}
+
 	bool has_additional_fixed_sample_mask() const { return msl_options.additional_fixed_sample_mask != 0xffffffff; }
 	std::string additional_fixed_sample_mask_str() const;
 
@@ -1200,10 +1250,13 @@ protected:
 		std::unordered_map<uint32_t, uint32_t> image_pointers; // Emulate texture2D atomic operations
 		bool suppress_missing_prototypes = false;
 		bool uses_atomics = false;
-		bool uses_resource_write = false;
+		bool uses_image_write = false;
+		bool uses_buffer_write = false;
+		bool uses_discard = false;
 		bool needs_subgroup_invocation_id = false;
 		bool needs_subgroup_size = false;
 		bool needs_sample_id = false;
+		bool needs_helper_invocation = false;
 	};
 
 	// OpcodeHandler that scans for uses of sampled images

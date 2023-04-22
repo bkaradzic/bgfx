@@ -40,7 +40,7 @@ extern "C" {
 /* Bumped if ABI or API breaks backwards compatibility. */
 #define SPVC_C_API_VERSION_MAJOR 0
 /* Bumped if APIs or enumerations are added in a backwards compatible way. */
-#define SPVC_C_API_VERSION_MINOR 51
+#define SPVC_C_API_VERSION_MINOR 56
 /* Bumped if internal implementation details change. */
 #define SPVC_C_API_VERSION_PATCH 0
 
@@ -718,6 +718,13 @@ typedef enum spvc_compiler_option
 
 	SPVC_COMPILER_OPTION_MSL_RAW_BUFFER_TESE_INPUT = 79 | SPVC_COMPILER_OPTION_MSL_BIT,
 	SPVC_COMPILER_OPTION_MSL_SHADER_PATCH_INPUT_BUFFER_INDEX = 80 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_MANUAL_HELPER_INVOCATION_UPDATES = 81 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_CHECK_DISCARDED_FRAG_STORES = 82 | SPVC_COMPILER_OPTION_MSL_BIT,
+
+	SPVC_COMPILER_OPTION_GLSL_ENABLE_ROW_MAJOR_LOAD_WORKAROUND = 83 | SPVC_COMPILER_OPTION_GLSL_BIT,
+
+	SPVC_COMPILER_OPTION_MSL_ARGUMENT_BUFFERS_TIER = 84 | SPVC_COMPILER_OPTION_MSL_BIT,
+	SPVC_COMPILER_OPTION_MSL_SAMPLE_DREF_LOD_ARRAY_AS_GRAD = 85 | SPVC_COMPILER_OPTION_MSL_BIT,
 
 	SPVC_COMPILER_OPTION_INT_MAX = 0x7fffffff
 } spvc_compiler_option;
@@ -1041,6 +1048,19 @@ SPVC_PUBLIC_API unsigned spvc_constant_get_scalar_u8(spvc_constant constant, uns
 SPVC_PUBLIC_API int spvc_constant_get_scalar_i8(spvc_constant constant, unsigned column, unsigned row);
 SPVC_PUBLIC_API void spvc_constant_get_subconstants(spvc_constant constant, const spvc_constant_id **constituents, size_t *count);
 SPVC_PUBLIC_API spvc_type_id spvc_constant_get_type(spvc_constant constant);
+
+/*
+ * C implementation of the C++ api.
+ */
+SPVC_PUBLIC_API void spvc_constant_set_scalar_fp16(spvc_constant constant, unsigned column, unsigned row, unsigned short value);
+SPVC_PUBLIC_API void spvc_constant_set_scalar_fp32(spvc_constant constant, unsigned column, unsigned row, float value);
+SPVC_PUBLIC_API void spvc_constant_set_scalar_fp64(spvc_constant constant, unsigned column, unsigned row, double value);
+SPVC_PUBLIC_API void spvc_constant_set_scalar_u32(spvc_constant constant, unsigned column, unsigned row, unsigned value);
+SPVC_PUBLIC_API void spvc_constant_set_scalar_i32(spvc_constant constant, unsigned column, unsigned row, int value);
+SPVC_PUBLIC_API void spvc_constant_set_scalar_u16(spvc_constant constant, unsigned column, unsigned row, unsigned short value);
+SPVC_PUBLIC_API void spvc_constant_set_scalar_i16(spvc_constant constant, unsigned column, unsigned row, signed short value);
+SPVC_PUBLIC_API void spvc_constant_set_scalar_u8(spvc_constant constant, unsigned column, unsigned row, unsigned char value);
+SPVC_PUBLIC_API void spvc_constant_set_scalar_i8(spvc_constant constant, unsigned column, unsigned row, signed char value);
 
 /*
  * Misc reflection
