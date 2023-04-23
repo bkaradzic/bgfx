@@ -1650,7 +1650,7 @@ struct DebugDrawEncoderImpl
 
 	void drawFrustum(const float* _viewProj)
 	{
-		bx::Plane planes[6] = { bx::init::None, bx::init::None, bx::init::None, bx::init::None, bx::init::None, bx::init::None };
+		bx::Plane planes[6] = { bx::InitNone, bx::InitNone, bx::InitNone, bx::InitNone, bx::InitNone, bx::InitNone };
 		buildFrustumPlanes(planes, _viewProj);
 
 		const bx::Vec3 points[8] =
@@ -1747,8 +1747,8 @@ struct DebugDrawEncoderImpl
 		const float step = bx::kPi * 2.0f / num;
 		_weight = bx::clamp(_weight, 0.0f, 2.0f);
 
-		bx::Vec3 udir(bx::init::None);
-		bx::Vec3 vdir(bx::init::None);
+		bx::Vec3 udir(bx::InitNone);
+		bx::Vec3 vdir(bx::InitNone);
 		bx::calcTangentFrame(udir, vdir, _normal, attrib.m_spin);
 
 		float xy0[2];
@@ -1819,8 +1819,8 @@ struct DebugDrawEncoderImpl
 		const Attrib& attrib = m_attrib[m_stack];
 		if (attrib.m_wireframe)
 		{
-			bx::Vec3 udir(bx::init::None);
-			bx::Vec3 vdir(bx::init::None);
+			bx::Vec3 udir(bx::InitNone);
+			bx::Vec3 vdir(bx::InitNone);
 			bx::calcTangentFrame(udir, vdir, _normal, attrib.m_spin);
 
 			const float halfExtent = _size*0.5f;
@@ -1861,8 +1861,8 @@ struct DebugDrawEncoderImpl
 
 		const Attrib& attrib = m_attrib[m_stack];
 
-		bx::Vec3 udir(bx::init::None);
-		bx::Vec3 vdir(bx::init::None);
+		bx::Vec3 udir(bx::InitNone);
+		bx::Vec3 vdir(bx::InitNone);
 		bx::calcTangentFrame(udir, vdir, _normal, attrib.m_spin);
 
 		const Pack2D& pack = s_dds.m_sprite.get(_handle);
@@ -1982,8 +1982,8 @@ struct DebugDrawEncoderImpl
 		if (_thickness > 0.0f)
 		{
 			const bx::Vec3 from = { _x, _y, _z };
-			bx::Vec3 mid(bx::init::None);
-			bx::Vec3 to(bx::init::None);
+			bx::Vec3 mid(bx::InitNone);
+			bx::Vec3 to(bx::InitNone);
 
 			setColor(Axis::X == _highlight ? 0xff00ffff : 0xff0000ff);
 			mid = { _x + _len - _thickness, _y, _z };
@@ -2025,8 +2025,8 @@ struct DebugDrawEncoderImpl
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 
-		bx::Vec3 udir(bx::init::None);
-		bx::Vec3 vdir(bx::init::None);
+		bx::Vec3 udir(bx::InitNone);
+		bx::Vec3 vdir(bx::InitNone);
 		bx::calcTangentFrame(udir, vdir, _normal, attrib.m_spin);
 
 		udir = bx::mul(udir, _step);

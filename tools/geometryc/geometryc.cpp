@@ -624,7 +624,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 
 				if (0 == bx::strCmp(argv[0], "vn") )
 				{
-					bx::Vec3 normal(bx::init::None);
+					bx::Vec3 normal(bx::InitNone);
 					bx::fromString(&normal.x, argv[1]);
 					bx::fromString(&normal.y, argv[2]);
 					bx::fromString(&normal.z, argv[3]);
@@ -642,7 +642,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 				}
 				else if (0 == bx::strCmp(argv[0], "vt") )
 				{
-					bx::Vec3 texcoord(bx::init::None);
+					bx::Vec3 texcoord(bx::InitNone);
 					texcoord.y = 0.0f;
 					texcoord.z = 0.0f;
 
@@ -783,7 +783,7 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 				{
 					_mesh->m_positions.reserve(_mesh->m_positions.size() + accessorCount);
 
-					bx::Vec3 pos(bx::init::None);
+					bx::Vec3 pos(bx::InitNone);
 
 					for (cgltf_size v = 0; v < accessorCount; ++v)
 					{
@@ -797,7 +797,7 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 					_mesh->m_normals.reserve(_mesh->m_normals.size() + accessorCount);
 
 					hasNormal = true;
-					bx::Vec3 normal(bx::init::None);
+					bx::Vec3 normal(bx::InitNone);
 
 					for (cgltf_size v = 0; v < accessorCount; ++v)
 					{
@@ -811,7 +811,7 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 					_mesh->m_texcoords.reserve(_mesh->m_texcoords.size() + accessorCount);
 
 					hasTexcoord = true;
-					bx::Vec3 texcoord(bx::init::None);
+					bx::Vec3 texcoord(bx::InitNone);
 
 					for (cgltf_size v = 0; v < accessorCount; ++v)
 					{

@@ -29,8 +29,8 @@ struct Camera
 
 	void reset()
 	{
-		m_target.curr = bx::init::Zero;
-		m_target.dest = bx::init::Zero;
+		m_target.curr = bx::InitZero;
+		m_target.dest = bx::InitZero;
 
 		m_pos.curr = { 0.0f, 0.0f, -2.0f };
 		m_pos.dest = { 0.0f, 0.0f, -2.0f };
@@ -135,8 +135,8 @@ struct Camera
 
 	struct Interp3f
 	{
-		bx::Vec3 curr = bx::init::None;
-		bx::Vec3 dest = bx::init::None;
+		bx::Vec3 curr = bx::InitNone;
+		bx::Vec3 dest = bx::InitNone;
 	};
 
 	Interp3f m_target;

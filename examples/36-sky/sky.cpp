@@ -72,7 +72,7 @@ static constexpr float M_XYZ2RGB[] =
 // Converts color representation from CIE XYZ to RGB color-space.
 Color xyzToRgb(const Color& xyz)
 {
-	Color rgb(bx::init::None);
+	Color rgb(bx::InitNone);
 	rgb.x = M_XYZ2RGB[0] * xyz.x + M_XYZ2RGB[3] * xyz.y + M_XYZ2RGB[6] * xyz.z;
 	rgb.y = M_XYZ2RGB[1] * xyz.x + M_XYZ2RGB[4] * xyz.y + M_XYZ2RGB[7] * xyz.z;
 	rgb.z = M_XYZ2RGB[2] * xyz.x + M_XYZ2RGB[5] * xyz.y + M_XYZ2RGB[8] * xyz.z;

@@ -248,7 +248,7 @@ namespace ps
 				Particle& particle = m_particles[m_num];
 				m_num++;
 
-				bx::Vec3 pos(bx::init::None);
+				bx::Vec3 pos(bx::InitNone);
 				switch (m_shape)
 				{
 					default:
@@ -281,7 +281,7 @@ namespace ps
 						break;
 				}
 
-				bx::Vec3 dir(bx::init::None);
+				bx::Vec3 dir(bx::InitNone);
 				switch (m_direction)
 				{
 					default:
