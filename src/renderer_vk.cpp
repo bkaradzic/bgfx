@@ -5960,8 +5960,8 @@ VK_DESTROY
 				uint32_t pitch;
 				uint32_t slice;
 				uint32_t size;
-				uint8_t  mipLevel;
-				uint8_t  layer;
+				uint32_t mipLevel;
+				uint32_t layer;
 			};
 
 			ImageInfo* imageInfos = (ImageInfo*)BX_ALLOC(g_allocator, sizeof(ImageInfo) * numSrd);
