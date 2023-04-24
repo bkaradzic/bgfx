@@ -31,8 +31,8 @@ public:
 
 		if (m_cachePermutation == NULL)
 		{
-			m_cachePermutation = (uint32_t*)BX_ALLOC(entry::getAllocator(), numVertices * sizeof(uint32_t) );
-			m_map = (uint32_t*)BX_ALLOC(entry::getAllocator(), numVertices * sizeof(uint32_t) );
+			m_cachePermutation = (uint32_t*)bx::alloc(entry::getAllocator(), numVertices * sizeof(uint32_t) );
+			m_map = (uint32_t*)bx::alloc(entry::getAllocator(), numVertices * sizeof(uint32_t) );
 
 			// It will takes long time if there are too many vertices.
 			ProgressiveMesh(
@@ -47,7 +47,7 @@ public:
 		}
 
 		// rearrange the vertex Array
-		char* temp = (char*)BX_ALLOC(entry::getAllocator(), numVertices * stride);
+		char* temp = (char*)bx::alloc(entry::getAllocator(), numVertices * stride);
 		bx::memCopy(temp, _vb->data, _vb->size);
 
 		for (uint32_t ii = 0; ii < numVertices; ++ii)
@@ -55,7 +55,7 @@ public:
 			bx::memCopy(_vb->data + m_cachePermutation[ii] * stride , temp + ii * stride, stride);
 		}
 
-		BX_FREE(entry::getAllocator(), temp);
+		bx::free(entry::getAllocator(), temp);
 
 		// update the changes in the entries in the triangle Array
 		for (uint32_t ii = 0, num = numTriangles*3; ii < num; ++ii)
@@ -107,7 +107,7 @@ public:
 		}
 
 		const bgfx::Memory* ib = bgfx::alloc(numIndices * sizeof(uint32_t) );
-		uint8_t* vbData = (uint8_t*)BX_ALLOC(entry::getAllocator(), _mesh->m_layout.getSize(numVertices) );
+		uint8_t* vbData = (uint8_t*)bx::alloc(entry::getAllocator(), _mesh->m_layout.getSize(numVertices) );
 
 		{
 			uint32_t voffset = 0;
@@ -144,11 +144,11 @@ public:
 			cacheInvalid       = true;
 			m_originalVertices = numVertices;
 
-			BX_FREE(entry::getAllocator(), m_cachePermutation);
+			bx::free(entry::getAllocator(), m_cachePermutation);
 			m_cachePermutation = NULL;
 
-			BX_FREE(entry::getAllocator(), m_cacheWeld);
-			m_cacheWeld = (uint32_t*)BX_ALLOC(entry::getAllocator(), numVertices * sizeof(uint32_t) );
+			bx::free(entry::getAllocator(), m_cacheWeld);
+			m_cacheWeld = (uint32_t*)bx::alloc(entry::getAllocator(), numVertices * sizeof(uint32_t) );
 
 			m_totalVertices	= bgfx::weldVertices(m_cacheWeld, _mesh->m_layout, vbData, numVertices, true, 0.00001f);
 			remapIndices(m_cacheWeld, numVertices);
@@ -161,7 +161,7 @@ public:
 			, numVertices
 			, m_totalVertices
 			);
-		BX_FREE(entry::getAllocator(), vbData);
+		bx::free(entry::getAllocator(), vbData);
 
 		{
 			uint32_t* ibData = (uint32_t*)ib->data;
@@ -178,7 +178,7 @@ public:
 			saveCache();
 		}
 
-		m_triangle = (uint32_t*)BX_ALLOC(entry::getAllocator(), ib->size);
+		m_triangle = (uint32_t*)bx::alloc(entry::getAllocator(), ib->size);
 		bx::memCopy(m_triangle, ib->data, ib->size);
 
 		m_vb = bgfx::createVertexBuffer(vb, _mesh->m_layout);
@@ -205,26 +205,26 @@ public:
 		{
 			bx::read(&reader, m_originalVertices, &err);
 			bx::read(&reader, m_totalVertices, &err);
-			m_cacheWeld = (uint32_t*)BX_ALLOC(entry::getAllocator(), m_originalVertices * sizeof(uint32_t) );
+			m_cacheWeld = (uint32_t*)bx::alloc(entry::getAllocator(), m_originalVertices * sizeof(uint32_t) );
 
 			bx::read(&reader, m_cacheWeld, m_originalVertices * sizeof(uint32_t), &err);
-			m_cachePermutation = (uint32_t*)BX_ALLOC(entry::getAllocator(), m_totalVertices * sizeof(uint32_t) );
+			m_cachePermutation = (uint32_t*)bx::alloc(entry::getAllocator(), m_totalVertices * sizeof(uint32_t) );
 
 			bx::read(&reader, m_cachePermutation, m_totalVertices * sizeof(uint32_t), &err);
-			m_map = (uint32_t*)BX_ALLOC(entry::getAllocator(), m_totalVertices * sizeof(uint32_t) );
+			m_map = (uint32_t*)bx::alloc(entry::getAllocator(), m_totalVertices * sizeof(uint32_t) );
 
 			bx::read(&reader, m_map, m_totalVertices * sizeof(uint32_t), &err);
 
 			if (!err.isOk() )
 			{
 				// read fail
-				BX_FREE(entry::getAllocator(), m_cacheWeld);
+				bx::free(entry::getAllocator(), m_cacheWeld);
 				m_cacheWeld = NULL;
 
-				BX_FREE(entry::getAllocator(), m_cachePermutation);
+				bx::free(entry::getAllocator(), m_cachePermutation);
 				m_cachePermutation = NULL;
 
-				BX_FREE(entry::getAllocator(), m_map);
+				bx::free(entry::getAllocator(), m_map);
 				m_map = NULL;
 			}
 
@@ -306,10 +306,10 @@ public:
 		bgfx::destroy(m_ib);
 		bgfx::destroy(u_tint);
 
-		BX_FREE(entry::getAllocator(), m_map);
-		BX_FREE(entry::getAllocator(), m_triangle);
-		BX_FREE(entry::getAllocator(), m_cacheWeld);
-		BX_FREE(entry::getAllocator(), m_cachePermutation);
+		bx::free(entry::getAllocator(), m_map);
+		bx::free(entry::getAllocator(), m_triangle);
+		bx::free(entry::getAllocator(), m_cacheWeld);
+		bx::free(entry::getAllocator(), m_cachePermutation);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();

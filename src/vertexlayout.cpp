@@ -777,7 +777,7 @@ namespace bgfx
 		uint32_t numVertices = 0;
 
 		const uint32_t size = sizeof(IndexT)*(hashSize + _num);
-		IndexT* hashTable = (IndexT*)BX_ALLOC(_allocator, size);
+		IndexT* hashTable = (IndexT*)bx::alloc(_allocator, size);
 		bx::memSet(hashTable, 0xff, size);
 
 		IndexT* next = hashTable + hashSize;
@@ -810,7 +810,7 @@ namespace bgfx
 			}
 		}
 
-		BX_FREE(_allocator, hashTable);
+		bx::free(_allocator, hashTable);
 
 		return IndexT(numVertices);
 	}

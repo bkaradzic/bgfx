@@ -192,7 +192,7 @@ namespace
 			{
 				int old = gl->ctextures;
 				gl->ctextures = (gl->ctextures == 0) ? 2 : gl->ctextures*2;
-				gl->textures = (struct GLNVGtexture*)BX_REALLOC(gl->allocator, gl->textures, sizeof(struct GLNVGtexture)*gl->ctextures);
+				gl->textures = (struct GLNVGtexture*)bx::realloc(gl->allocator, gl->textures, sizeof(struct GLNVGtexture)*gl->ctextures);
 				bx::memSet(&gl->textures[old], 0xff, (gl->ctextures-old)*sizeof(struct GLNVGtexture) );
 
 				if (gl->textures == NULL)
@@ -847,7 +847,7 @@ _cleanup:
 		if (gl->ncalls+1 > gl->ccalls)
 		{
 			gl->ccalls = gl->ccalls == 0 ? 32 : gl->ccalls * 2;
-			gl->calls = (struct GLNVGcall*)BX_REALLOC(gl->allocator, gl->calls, sizeof(struct GLNVGcall) * gl->ccalls);
+			gl->calls = (struct GLNVGcall*)bx::realloc(gl->allocator, gl->calls, sizeof(struct GLNVGcall) * gl->ccalls);
 		}
 		ret = &gl->calls[gl->ncalls++];
 		bx::memSet(ret, 0, sizeof(struct GLNVGcall) );
@@ -860,7 +860,7 @@ _cleanup:
 		if (gl->npaths + n > gl->cpaths) {
 			GLNVGpath* paths;
 			int cpaths = glnvg__maxi(gl->npaths + n, 128) + gl->cpaths / 2; // 1.5x Overallocate
-			paths = (GLNVGpath*)BX_REALLOC(gl->allocator, gl->paths, sizeof(GLNVGpath) * cpaths);
+			paths = (GLNVGpath*)bx::realloc(gl->allocator, gl->paths, sizeof(GLNVGpath) * cpaths);
 			if (paths == NULL) return -1;
 			gl->paths = paths;
 			gl->cpaths = cpaths;
@@ -877,7 +877,7 @@ _cleanup:
 		{
 			NVGvertex* verts;
 			int cverts = glnvg__maxi(gl->nverts + n, 4096) + gl->cverts/2; // 1.5x Overallocate
-			verts = (NVGvertex*)BX_REALLOC(gl->allocator, gl->verts, sizeof(NVGvertex) * cverts);
+			verts = (NVGvertex*)bx::realloc(gl->allocator, gl->verts, sizeof(NVGvertex) * cverts);
 			if (verts == NULL) return -1;
 			gl->verts = verts;
 			gl->cverts = cverts;
@@ -893,7 +893,7 @@ _cleanup:
 		if (gl->nuniforms+n > gl->cuniforms)
 		{
 			gl->cuniforms = gl->cuniforms == 0 ? glnvg__maxi(n, 32) : gl->cuniforms * 2;
-			gl->uniforms = (unsigned char*)BX_REALLOC(gl->allocator, gl->uniforms, gl->cuniforms * structSize);
+			gl->uniforms = (unsigned char*)bx::realloc(gl->allocator, gl->uniforms, gl->cuniforms * structSize);
 		}
 		ret = gl->nuniforms * structSize;
 		gl->nuniforms += n;
@@ -1098,12 +1098,12 @@ _cleanup:
 			}
 		}
 
-		BX_FREE(gl->allocator, gl->uniforms);
-		BX_FREE(gl->allocator, gl->verts);
-		BX_FREE(gl->allocator, gl->paths);
-		BX_FREE(gl->allocator, gl->calls);
-		BX_FREE(gl->allocator, gl->textures);
-		BX_FREE(gl->allocator, gl);
+		bx::free(gl->allocator, gl->uniforms);
+		bx::free(gl->allocator, gl->verts);
+		bx::free(gl->allocator, gl->paths);
+		bx::free(gl->allocator, gl->calls);
+		bx::free(gl->allocator, gl->textures);
+		bx::free(gl->allocator, gl);
 	}
 
 } // namespace
@@ -1118,7 +1118,7 @@ NVGcontext* nvgCreate(int32_t _edgeaa, bgfx::ViewId _viewId, bx::AllocatorI* _al
 
 	struct NVGparams params;
 	struct NVGcontext* ctx = NULL;
-	struct GLNVGcontext* gl = (struct GLNVGcontext*)BX_ALLOC(_allocator, sizeof(struct GLNVGcontext) );
+	struct GLNVGcontext* gl = (struct GLNVGcontext*)bx::alloc(_allocator, sizeof(struct GLNVGcontext) );
 	if (gl == NULL)
 	{
 		goto error;
@@ -1335,7 +1335,7 @@ void nvgluDeleteFramebuffer(NVGLUframebuffer* _framebuffer)
 	struct NVGparams* params = nvgInternalParams(_framebuffer->ctx);
 	struct GLNVGcontext* gl = (struct GLNVGcontext*)params->userPtr;
 	glnvg__deleteTexture(gl, _framebuffer->image);
-	BX_DELETE(gl->allocator, _framebuffer);
+	bx::deleteObject(gl->allocator, _framebuffer);
 }
 
 void nvgluSetViewFramebuffer(bgfx::ViewId _viewId, NVGLUframebuffer* _framebuffer)

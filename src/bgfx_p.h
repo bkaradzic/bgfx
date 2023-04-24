@@ -666,7 +666,7 @@ namespace bgfx
 
 		~TextVideoMem()
 		{
-			BX_FREE(g_allocator, m_mem);
+			bx::free(g_allocator, m_mem);
 		}
 
 		void resize(bool _small, uint32_t _width, uint32_t _height)
@@ -686,7 +686,7 @@ namespace bgfx
 				uint32_t size = m_size;
 				m_size = m_width * m_height;
 
-				m_mem = (MemSlot*)BX_REALLOC(g_allocator, m_mem, m_size * sizeof(MemSlot) );
+				m_mem = (MemSlot*)bx::realloc(g_allocator, m_mem, m_size * sizeof(MemSlot) );
 
 				if (size < m_size)
 				{
@@ -885,7 +885,7 @@ namespace bgfx
 
 		~CommandBuffer()
 		{
-			BX_FREE(g_allocator, m_buffer);
+			bx::free(g_allocator, m_buffer);
 		}
 
 		void init(uint32_t _minCapacity)
@@ -933,7 +933,7 @@ namespace bgfx
 		void resize(uint32_t _capacity = 0)
 		{
 			m_capacity = bx::alignUp(bx::max(_capacity, m_minCapacity), 1024);
-			m_buffer = (uint8_t*)BX_REALLOC(g_allocator, m_buffer, m_capacity);
+			m_buffer = (uint8_t*)bx::realloc(g_allocator, m_buffer, m_capacity);
 		}
 
 		void write(const void* _data, uint32_t _size)
@@ -1483,14 +1483,14 @@ namespace bgfx
 			const uint32_t structSize = sizeof(UniformBuffer)-sizeof(UniformBuffer::m_buffer);
 
 			uint32_t size = bx::alignUp(_size, 16);
-			void*    data = BX_ALLOC(g_allocator, size+structSize);
+			void*    data = bx::alloc(g_allocator, size+structSize);
 			return BX_PLACEMENT_NEW(data, UniformBuffer)(size);
 		}
 
 		static void destroy(UniformBuffer* _uniformBuffer)
 		{
 			_uniformBuffer->~UniformBuffer();
-			BX_FREE(g_allocator, _uniformBuffer);
+			bx::free(g_allocator, _uniformBuffer);
 		}
 
 		static void update(UniformBuffer** _uniformBuffer, uint32_t _threshold = 64<<10, uint32_t _grow = 1<<20)
@@ -1500,7 +1500,7 @@ namespace bgfx
 			{
 				const uint32_t structSize = sizeof(UniformBuffer)-sizeof(UniformBuffer::m_buffer);
 				uint32_t size = bx::alignUp(uniformBuffer->m_size + _grow, 16);
-				void*    data = BX_REALLOC(g_allocator, uniformBuffer, size+structSize);
+				void*    data = bx::realloc(g_allocator, uniformBuffer, size+structSize);
 				uniformBuffer = reinterpret_cast<UniformBuffer*>(data);
 				uniformBuffer->m_size = size;
 
@@ -2182,7 +2182,7 @@ namespace bgfx
 			{
 				const uint32_t num = g_caps.limits.maxEncoders;
 
-				m_uniformBuffer = (UniformBuffer**)BX_ALLOC(g_allocator, sizeof(UniformBuffer*)*num);
+				m_uniformBuffer = (UniformBuffer**)bx::alloc(g_allocator, sizeof(UniformBuffer*)*num);
 
 				for (uint32_t ii = 0; ii < num; ++ii)
 				{
@@ -2202,8 +2202,8 @@ namespace bgfx
 				UniformBuffer::destroy(m_uniformBuffer[ii]);
 			}
 
-			BX_FREE(g_allocator, m_uniformBuffer);
-			BX_DELETE(g_allocator, m_textVideoMem);
+			bx::free(g_allocator, m_uniformBuffer);
+			bx::deleteObject(g_allocator, m_textVideoMem);
 		}
 
 		void reset()
@@ -3909,7 +3909,7 @@ namespace bgfx
 					+ bx::alignUp<uint32_t>(sizeof(TransientIndexBuffer), 16)
 					+ bx::alignUp(_size, 16)
 					;
-				tib = (TransientIndexBuffer*)BX_ALIGNED_ALLOC(g_allocator, size, 16);
+				tib = (TransientIndexBuffer*)bx::alignedAlloc(g_allocator, size, 16);
 				tib->data   = (uint8_t *)tib + bx::alignUp(sizeof(TransientIndexBuffer), 16);
 				tib->size   = _size;
 				tib->handle = handle;
@@ -3926,7 +3926,7 @@ namespace bgfx
 			cmdbuf.write(_tib->handle);
 
 			m_submit->free(_tib->handle);
-			BX_ALIGNED_FREE(g_allocator, _tib, 16);
+			bx::alignedFree(g_allocator, _tib, 16);
 		}
 
 		BGFX_API_FUNC(void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num, bool _index32) )
@@ -3976,7 +3976,7 @@ namespace bgfx
 					+ bx::alignUp<uint32_t>(sizeof(TransientVertexBuffer), 16)
 					+ bx::alignUp(_size, 16)
 					;
-				tvb = (TransientVertexBuffer*)BX_ALIGNED_ALLOC(g_allocator, size, 16);
+				tvb = (TransientVertexBuffer*)bx::alignedAlloc(g_allocator, size, 16);
 				tvb->data = (uint8_t *)tvb + bx::alignUp(sizeof(TransientVertexBuffer), 16);
 				tvb->size = _size;
 				tvb->startVertex = 0;
@@ -3996,7 +3996,7 @@ namespace bgfx
 			cmdbuf.write(_tvb->handle);
 
 			m_submit->free(_tvb->handle);
-			BX_ALIGNED_FREE(g_allocator, _tvb, 16);
+			bx::alignedFree(g_allocator, _tvb, 16);
 		}
 
 		BGFX_API_FUNC(void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, VertexLayoutHandle _layoutHandle, uint16_t _stride) )
@@ -4207,7 +4207,7 @@ namespace bgfx
 			if (0 != sr.m_num)
 			{
 				uint32_t size = sr.m_num*sizeof(UniformHandle);
-				sr.m_uniforms = (UniformHandle*)BX_ALLOC(g_allocator, size);
+				sr.m_uniforms = (UniformHandle*)bx::alloc(g_allocator, size);
 				bx::memCopy(sr.m_uniforms, uniforms, size);
 			}
 
@@ -4320,7 +4320,7 @@ namespace bgfx
 						destroyUniform(sr.m_uniforms[ii]);
 					}
 
-					BX_FREE(g_allocator, sr.m_uniforms);
+					bx::free(g_allocator, sr.m_uniforms);
 					sr.m_uniforms = NULL;
 					sr.m_num = 0;
 				}

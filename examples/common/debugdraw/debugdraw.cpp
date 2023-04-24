@@ -640,11 +640,11 @@ struct DebugDrawShared
 			const uint32_t numVertices = genSphere(tess);
 			const uint32_t numIndices  = numVertices;
 
-			vertices[id] = BX_ALLOC(m_allocator, numVertices*stride);
+			vertices[id] = bx::alloc(m_allocator, numVertices*stride);
 			bx::memSet(vertices[id], 0, numVertices*stride);
 			genSphere(tess, vertices[id], stride);
 
-			uint16_t* trilist = (uint16_t*)BX_ALLOC(m_allocator, numIndices*sizeof(uint16_t) );
+			uint16_t* trilist = (uint16_t*)bx::alloc(m_allocator, numIndices*sizeof(uint16_t) );
 			for (uint32_t ii = 0; ii < numIndices; ++ii)
 			{
 				trilist[ii] = uint16_t(ii);
@@ -658,7 +658,7 @@ struct DebugDrawShared
 				, numIndices
 				, false
 				);
-			indices[id] = (uint16_t*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
+			indices[id] = (uint16_t*)bx::alloc(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
 			uint16_t* indicesOut = indices[id];
 			bx::memCopy(indicesOut, trilist, numIndices*sizeof(uint16_t) );
 
@@ -681,7 +681,7 @@ struct DebugDrawShared
 			startVertex += numVertices;
 			startIndex  += numIndices + numLineListIndices;
 
-			BX_FREE(m_allocator, trilist);
+			bx::free(m_allocator, trilist);
 		}
 
 		for (uint32_t mesh = 0; mesh < 4; ++mesh)
@@ -695,8 +695,8 @@ struct DebugDrawShared
 			const uint32_t numIndices  = num*6;
 			const uint32_t numLineListIndices = num*4;
 
-			vertices[id] = BX_ALLOC(m_allocator, numVertices*stride);
-			indices[id]  = (uint16_t*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
+			vertices[id] = bx::alloc(m_allocator, numVertices*stride);
+			indices[id]  = (uint16_t*)bx::alloc(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
 			bx::memSet(indices[id], 0, (numIndices + numLineListIndices)*sizeof(uint16_t) );
 
 			DebugShapeVertex* vertex = (DebugShapeVertex*)vertices[id];
@@ -756,8 +756,8 @@ struct DebugDrawShared
 			const uint32_t numIndices  = num*12;
 			const uint32_t numLineListIndices = num*6;
 
-			vertices[id] = BX_ALLOC(m_allocator, numVertices*stride);
-			indices[id]  = (uint16_t*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
+			vertices[id] = bx::alloc(m_allocator, numVertices*stride);
+			indices[id]  = (uint16_t*)bx::alloc(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
 			bx::memSet(indices[id], 0, (numIndices + numLineListIndices)*sizeof(uint16_t) );
 
 			DebugShapeVertex* vertex = (DebugShapeVertex*)vertices[id];
@@ -826,8 +826,8 @@ struct DebugDrawShared
 			const uint32_t numIndices  = num*6;
 			const uint32_t numLineListIndices = num*6;
 
-			vertices[id] = BX_ALLOC(m_allocator, numVertices*stride);
-			indices[id]  = (uint16_t*)BX_ALLOC(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
+			vertices[id] = bx::alloc(m_allocator, numVertices*stride);
+			indices[id]  = (uint16_t*)bx::alloc(m_allocator, (numIndices + numLineListIndices)*sizeof(uint16_t) );
 			bx::memSet(indices[id], 0, (numIndices + numLineListIndices)*sizeof(uint16_t) );
 
 			DebugShapeVertex* vertex = (DebugShapeVertex*)vertices[id];
@@ -919,8 +919,8 @@ struct DebugDrawShared
 				 , (m_mesh[id].m_numIndices[0]+m_mesh[id].m_numIndices[1])*sizeof(uint16_t)
 				 );
 
-			BX_FREE(m_allocator, vertices[id]);
-			BX_FREE(m_allocator, indices[id]);
+			bx::free(m_allocator, vertices[id]);
+			bx::free(m_allocator, indices[id]);
 		}
 
 		bx::memCopy(&vb->data[m_mesh[DebugMesh::Quad].m_startVertex * stride]

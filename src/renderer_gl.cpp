@@ -3530,11 +3530,11 @@ namespace bgfx { namespace gl
 		{
 			if (NULL != m_uniforms[_handle.idx])
 			{
-				BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+				bx::free(g_allocator, m_uniforms[_handle.idx]);
 			}
 
 			uint32_t size = g_uniformTypeSize[_type]*_num;
-			void* data = BX_ALLOC(g_allocator, size);
+			void* data = bx::alloc(g_allocator, size);
 			bx::memSet(data, 0, size);
 			m_uniforms[_handle.idx] = data;
 			m_uniformReg.add(_handle, _name);
@@ -3542,7 +3542,7 @@ namespace bgfx { namespace gl
 
 		void destroyUniform(UniformHandle _handle) override
 		{
-			BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+			bx::free(g_allocator, m_uniforms[_handle.idx]);
 			m_uniforms[_handle.idx] = NULL;
 			m_uniformReg.remove(_handle);
 		}
@@ -3564,7 +3564,7 @@ namespace bgfx { namespace gl
 			m_glctx.makeCurrent(swapChain);
 
 			uint32_t length = width*height*4;
-			uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
+			uint8_t* data = (uint8_t*)bx::alloc(g_allocator, length);
 
 			GL_CHECK(glReadPixels(0
 				, 0
@@ -3588,7 +3588,7 @@ namespace bgfx { namespace gl
 				, length
 				, true
 				);
-			BX_FREE(g_allocator, data);
+			bx::free(g_allocator, data);
 		}
 
 		void updateViewName(ViewId _id, const char* _name) override
@@ -4292,7 +4292,7 @@ namespace bgfx { namespace gl
 			if (m_resolution.reset&BGFX_RESET_CAPTURE)
 			{
 				m_captureSize = m_resolution.width*m_resolution.height*4;
-				m_capture = BX_REALLOC(g_allocator, m_capture, m_captureSize);
+				m_capture = bx::realloc(g_allocator, m_capture, m_captureSize);
 				g_callback->captureBegin(m_resolution.width, m_resolution.height, m_resolution.width*4, TextureFormat::BGRA8, true);
 			}
 			else
@@ -4335,7 +4335,7 @@ namespace bgfx { namespace gl
 			if (NULL != m_capture)
 			{
 				g_callback->captureEnd();
-				BX_FREE(g_allocator, m_capture);
+				bx::free(g_allocator, m_capture);
 				m_capture = NULL;
 				m_captureSize = 0;
 			}
@@ -4354,7 +4354,7 @@ namespace bgfx { namespace gl
 
 				if (cached)
 				{
-					void* data = BX_ALLOC(g_allocator, length);
+					void* data = bx::alloc(g_allocator, length);
 					if (g_callback->cacheRead(_id, data, length) )
 					{
 						bx::Error err;
@@ -4366,7 +4366,7 @@ namespace bgfx { namespace gl
 						GL_CHECK(glProgramBinary(programId, format, reader.getDataPtr(), (GLsizei)reader.remaining() ) );
 					}
 
-					BX_FREE(g_allocator, data);
+					bx::free(g_allocator, data);
 				}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
@@ -4390,13 +4390,13 @@ namespace bgfx { namespace gl
 				if (0 < programLength)
 				{
 					uint32_t length = programLength + 4;
-					uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
+					uint8_t* data = (uint8_t*)bx::alloc(g_allocator, length);
 					GL_CHECK(glGetProgramBinary(programId, programLength, NULL, &format, &data[4]) );
 					*(uint32_t*)data = format;
 
 					g_callback->cacheWrite(_id, data, length);
 
-					BX_FREE(g_allocator, data);
+					bx::free(g_allocator, data);
 				}
 			}
 		}
@@ -4830,7 +4830,7 @@ namespace bgfx { namespace gl
 		s_renderGL = BX_NEW(g_allocator, RendererContextGL);
 		if (!s_renderGL->init(_init) )
 		{
-			BX_DELETE(g_allocator, s_renderGL);
+			bx::deleteObject(g_allocator, s_renderGL);
 			s_renderGL = NULL;
 		}
 		return s_renderGL;
@@ -4839,7 +4839,7 @@ namespace bgfx { namespace gl
 	void rendererDestroy()
 	{
 		s_renderGL->shutdown();
-		BX_DELETE(g_allocator, s_renderGL);
+		bx::deleteObject(g_allocator, s_renderGL);
 		s_renderGL = NULL;
 	}
 
@@ -5786,7 +5786,7 @@ namespace bgfx { namespace gl
 			uint8_t* temp = NULL;
 			if (convert)
 			{
-				temp = (uint8_t*)BX_ALLOC(g_allocator, ti.width*ti.height*4);
+				temp = (uint8_t*)bx::alloc(g_allocator, ti.width*ti.height*4);
 			}
 
 			const uint16_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
@@ -5922,7 +5922,7 @@ namespace bgfx { namespace gl
 
 			if (NULL != temp)
 			{
-				BX_FREE(g_allocator, temp);
+				bx::free(g_allocator, temp);
 			}
 		}
 
@@ -5994,7 +5994,7 @@ namespace bgfx { namespace gl
 		if (convert
 		||  !unpackRowLength)
 		{
-			temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*height);
+			temp = (uint8_t*)bx::alloc(g_allocator, rectpitch*height);
 		}
 		else if (unpackRowLength)
 		{
@@ -6069,7 +6069,7 @@ namespace bgfx { namespace gl
 
 		if (NULL != temp)
 		{
-			BX_FREE(g_allocator, temp);
+			bx::free(g_allocator, temp);
 		}
 	}
 

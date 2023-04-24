@@ -288,7 +288,7 @@ void cameraCreate()
 
 void cameraDestroy()
 {
-	BX_DELETE(entry::getAllocator(), s_camera);
+	bx::deleteObject(entry::getAllocator(), s_camera);
 	s_camera = NULL;
 }
 
