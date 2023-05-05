@@ -724,10 +724,8 @@ void CompilerHLSL::emit_builtin_primitive_outputs_in_struct()
 		{
 		case BuiltInLayer:
 		{
-			const ExecutionModel model = get_entry_point().model;
-			if (hlsl_options.shader_model < 50 ||
-			    (model != ExecutionModelGeometry && model != ExecutionModelMeshEXT))
-				SPIRV_CROSS_THROW("Render target array index output is only supported in GS/MS 5.0 or higher.");
+			if (hlsl_options.shader_model < 50)
+				SPIRV_CROSS_THROW("Render target array index output is only supported in SM 5.0 or higher.");
 			type = "uint";
 			semantic = "SV_RenderTargetArrayIndex";
 			break;
@@ -3526,7 +3524,7 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 			{
 				if (gather)
 				{
-					SPIRV_CROSS_THROW("GatherCmp does not exist in HLSL.");
+					texop += ".GatherCmp";
 				}
 				else if (lod || grad_x || grad_y)
 				{

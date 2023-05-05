@@ -2142,8 +2142,7 @@ void CompilerMSL::extract_global_variables_from_function(uint32_t func_id, std::
 				func.add_parameter(type_id, next_id, true);
 				set<SPIRVariable>(next_id, type_id, StorageClassFunction, 0, arg_id);
 
-				// Ensure the existing variable has a valid name and the new variable has all the same meta info
-				set_name(arg_id, ensure_valid_name(to_name(arg_id), "v"));
+				// Ensure the new variable has all the same meta info
 				ir.meta[next_id] = ir.meta[arg_id];
 			}
 		}
@@ -10332,7 +10331,7 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 			{
 				if (arg_type.array.empty())
 				{
-					decl += join(", ", sampler_type(arg_type, arg.id), " ", to_sampler_expression(arg.id));
+					decl += join(", ", sampler_type(arg_type, arg.id), " ", to_sampler_expression(name_id));
 				}
 				else
 				{
@@ -10340,7 +10339,8 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 							descriptor_address_space(name_id,
 							                         StorageClassUniformConstant,
 							                         "thread const");
-					decl += join(", ", sampler_address_space, " ", sampler_type(arg_type, arg.id), "& ", to_sampler_expression(arg.id));
+					decl += join(", ", sampler_address_space, " ", sampler_type(arg_type, name_id), "& ",
+					             to_sampler_expression(name_id));
 				}
 			}
 		}
@@ -10350,7 +10350,7 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 		    !is_dynamic_img_sampler)
 		{
 			bool arg_is_array = !arg_type.array.empty();
-			decl += join(", constant uint", arg_is_array ? "* " : "& ", to_swizzle_expression(arg.id));
+			decl += join(", constant uint", arg_is_array ? "* " : "& ", to_swizzle_expression(name_id));
 		}
 
 		if (buffer_requires_array_length(name_id))

@@ -1786,16 +1786,17 @@ bool CompilerGLSL::buffer_is_packing_standard(const SPIRType &type, BufferPackin
 			packed_size = type_to_packed_size(memb_type, member_flags, packing);
 
 		// We only need to care about this if we have non-array types which can straddle the vec4 boundary.
+		uint32_t actual_offset = type_struct_member_offset(type, i);
+
 		if (packing_is_hlsl(packing))
 		{
 			// If a member straddles across a vec4 boundary, alignment is actually vec4.
-			uint32_t begin_word = offset / 16;
-			uint32_t end_word = (offset + packed_size - 1) / 16;
+			uint32_t begin_word = actual_offset / 16;
+			uint32_t end_word = (actual_offset + packed_size - 1) / 16;
 			if (begin_word != end_word)
 				packed_alignment = max<uint32_t>(packed_alignment, 16u);
 		}
 
-		uint32_t actual_offset = type_struct_member_offset(type, i);
 		// Field is not in the specified range anymore and we can ignore any further fields.
 		if (actual_offset >= end_offset)
 			break;
