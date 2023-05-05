@@ -378,7 +378,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %type <interm.type> spirv_storage_class_qualifier
 %type <interm.type> spirv_decorate_qualifier
 %type <interm.intermNode> spirv_decorate_parameter_list spirv_decorate_parameter
-%type <interm.intermNode> spirv_decorate_id_parameter_list
+%type <interm.intermNode> spirv_decorate_id_parameter_list spirv_decorate_id_parameter
 %type <interm.intermNode> spirv_decorate_string_parameter_list
 %type <interm.type> spirv_type_specifier
 %type <interm.spirvTypeParams> spirv_type_parameter_list spirv_type_parameter
@@ -4347,21 +4347,31 @@ spirv_decorate_parameter
     }
 
 spirv_decorate_id_parameter_list
-    : constant_expression {
-        if ($1->getBasicType() != EbtFloat &&
-            $1->getBasicType() != EbtInt &&
-            $1->getBasicType() != EbtUint &&
-            $1->getBasicType() != EbtBool)
-            parseContext.error($1->getLoc(), "this type not allowed", $1->getType().getBasicString(), "");
+    : spirv_decorate_id_parameter {
         $$ = parseContext.intermediate.makeAggregate($1);
     }
-    | spirv_decorate_id_parameter_list COMMA constant_expression {
-        if ($3->getBasicType() != EbtFloat &&
-            $3->getBasicType() != EbtInt &&
-            $3->getBasicType() != EbtUint &&
-            $3->getBasicType() != EbtBool)
-            parseContext.error($3->getLoc(), "this type not allowed", $3->getType().getBasicString(), "");
+    | spirv_decorate_id_parameter_list COMMA spirv_decorate_id_parameter {
         $$ = parseContext.intermediate.growAggregate($1, $3);
+    }
+
+spirv_decorate_id_parameter
+    : variable_identifier {
+        if ($1->getAsConstantUnion() || $1->getAsSymbolNode())
+            $$ = $1;
+        else
+            parseContext.error($1->getLoc(), "only allow constants or variables which are not elements of a composite", "", "");
+    }
+    | FLOATCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.d, EbtFloat, $1.loc, true);
+    }
+    | INTCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.i, $1.loc, true);
+    }
+    | UINTCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.u, $1.loc, true);
+    }
+    | BOOLCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.b, $1.loc, true);
     }
 
 spirv_decorate_string_parameter_list

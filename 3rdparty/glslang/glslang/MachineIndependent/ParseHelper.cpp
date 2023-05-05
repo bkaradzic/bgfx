@@ -4013,7 +4013,7 @@ void TParseContext::globalQualifierTypeCheck(const TSourceLoc& loc, const TQuali
         switch (language) {
         case EShLangVertex:
             if (publicType.basicType == EbtStruct) {
-                error(loc, "cannot be a structure or array", GetStorageQualifierString(qualifier.storage), "");
+                error(loc, "cannot be a structure", GetStorageQualifierString(qualifier.storage), "");
                 return;
             }
             if (publicType.arraySizes) {
@@ -4228,7 +4228,7 @@ void TParseContext::mergeQualifiers(const TSourceLoc& loc, TQualifier& dst, cons
                 if (dstSpirvDecorate.decorates.find(decorateString.first) != dstSpirvDecorate.decorates.end())
                     error(loc, "too many SPIR-V decorate qualifiers", "spirv_decorate_string", "(decoration=%u)", decorateString.first);
                 else
-                    dstSpirvDecorate.decorates.insert(decorateString);
+                    dstSpirvDecorate.decorateStrings.insert(decorateString);
             }
         } else {
             dst.spirvDecorate = src.spirvDecorate;
@@ -9029,7 +9029,8 @@ void TParseContext::fixBlockUniformOffsets(TQualifier& qualifier, TTypeList& typ
             // "The specified offset must be a multiple
             // of the base alignment of the type of the block member it qualifies, or a compile-time error results."
             if (! IsMultipleOfPow2(memberQualifier.layoutOffset, memberAlignment))
-                error(memberLoc, "must be a multiple of the member's alignment", "offset", "");
+                error(memberLoc, "must be a multiple of the member's alignment", "offset",
+                    "(layout offset = %d | member alignment = %d)", memberQualifier.layoutOffset, memberAlignment);
 
             // GLSL: "It is a compile-time error to specify an offset that is smaller than the offset of the previous
             // member in the block or that lies within the previous member of the block"
