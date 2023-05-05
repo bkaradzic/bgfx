@@ -564,6 +564,19 @@ analysis::RuntimeArray* InstrumentPass::GetRuntimeArray(
   return type->AsRuntimeArray();
 }
 
+analysis::Array* InstrumentPass::GetArray(const analysis::Type* element,
+                                          uint32_t length) {
+  uint32_t length_id = context()->get_constant_mgr()->GetUIntConstId(length);
+  analysis::Array::LengthInfo length_info{
+      length_id, {analysis::Array::LengthInfo::Case::kConstant, length}};
+
+  analysis::Array r(element, length_info);
+
+  analysis::Type* type = context()->get_type_mgr()->GetRegisteredType(&r);
+  assert(type && type->AsArray());
+  return type->AsArray();
+}
+
 analysis::Function* InstrumentPass::GetFunction(
     const analysis::Type* return_val,
     const std::vector<const analysis::Type*>& args) {

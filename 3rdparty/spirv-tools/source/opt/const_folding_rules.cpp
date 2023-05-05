@@ -398,12 +398,14 @@ ConstantFoldingRule FoldVectorTimesMatrix() {
     if (float_type->width() == 32) {
       for (uint32_t i = 0; i < resultVectorSize; ++i) {
         float result_scalar = 0.0f;
-        const analysis::VectorConstant* c2_vec =
-            c2_components[i]->AsVectorConstant();
-        for (uint32_t j = 0; j < c2_vec->GetComponents().size(); ++j) {
-          float c1_scalar = c1_components[j]->GetFloat();
-          float c2_scalar = c2_vec->GetComponents()[j]->GetFloat();
-          result_scalar += c1_scalar * c2_scalar;
+        if (!c2_components[i]->AsNullConstant()) {
+          const analysis::VectorConstant* c2_vec =
+              c2_components[i]->AsVectorConstant();
+          for (uint32_t j = 0; j < c2_vec->GetComponents().size(); ++j) {
+            float c1_scalar = c1_components[j]->GetFloat();
+            float c2_scalar = c2_vec->GetComponents()[j]->GetFloat();
+            result_scalar += c1_scalar * c2_scalar;
+          }
         }
         utils::FloatProxy<float> result(result_scalar);
         std::vector<uint32_t> words = result.GetWords();
@@ -415,12 +417,14 @@ ConstantFoldingRule FoldVectorTimesMatrix() {
     } else if (float_type->width() == 64) {
       for (uint32_t i = 0; i < c2_components.size(); ++i) {
         double result_scalar = 0.0;
-        const analysis::VectorConstant* c2_vec =
-            c2_components[i]->AsVectorConstant();
-        for (uint32_t j = 0; j < c2_vec->GetComponents().size(); ++j) {
-          double c1_scalar = c1_components[j]->GetDouble();
-          double c2_scalar = c2_vec->GetComponents()[j]->GetDouble();
-          result_scalar += c1_scalar * c2_scalar;
+        if (!c2_components[i]->AsNullConstant()) {
+          const analysis::VectorConstant* c2_vec =
+              c2_components[i]->AsVectorConstant();
+          for (uint32_t j = 0; j < c2_vec->GetComponents().size(); ++j) {
+            double c1_scalar = c1_components[j]->GetDouble();
+            double c2_scalar = c2_vec->GetComponents()[j]->GetDouble();
+            result_scalar += c1_scalar * c2_scalar;
+          }
         }
         utils::FloatProxy<double> result(result_scalar);
         std::vector<uint32_t> words = result.GetWords();
@@ -491,12 +495,14 @@ ConstantFoldingRule FoldMatrixTimesVector() {
       for (uint32_t i = 0; i < resultVectorSize; ++i) {
         float result_scalar = 0.0f;
         for (uint32_t j = 0; j < c1_components.size(); ++j) {
-          float c1_scalar = c1_components[j]
-                                ->AsVectorConstant()
-                                ->GetComponents()[i]
-                                ->GetFloat();
-          float c2_scalar = c2_components[j]->GetFloat();
-          result_scalar += c1_scalar * c2_scalar;
+          if (!c1_components[j]->AsNullConstant()) {
+            float c1_scalar = c1_components[j]
+                                  ->AsVectorConstant()
+                                  ->GetComponents()[i]
+                                  ->GetFloat();
+            float c2_scalar = c2_components[j]->GetFloat();
+            result_scalar += c1_scalar * c2_scalar;
+          }
         }
         utils::FloatProxy<float> result(result_scalar);
         std::vector<uint32_t> words = result.GetWords();
@@ -509,12 +515,14 @@ ConstantFoldingRule FoldMatrixTimesVector() {
       for (uint32_t i = 0; i < resultVectorSize; ++i) {
         double result_scalar = 0.0;
         for (uint32_t j = 0; j < c1_components.size(); ++j) {
-          double c1_scalar = c1_components[j]
-                                 ->AsVectorConstant()
-                                 ->GetComponents()[i]
-                                 ->GetDouble();
-          double c2_scalar = c2_components[j]->GetDouble();
-          result_scalar += c1_scalar * c2_scalar;
+          if (!c1_components[j]->AsNullConstant()) {
+            double c1_scalar = c1_components[j]
+                                   ->AsVectorConstant()
+                                   ->GetComponents()[i]
+                                   ->GetDouble();
+            double c2_scalar = c2_components[j]->GetDouble();
+            result_scalar += c1_scalar * c2_scalar;
+          }
         }
         utils::FloatProxy<double> result(result_scalar);
         std::vector<uint32_t> words = result.GetWords();

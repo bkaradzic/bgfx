@@ -76,7 +76,7 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         }
         const auto constituent_result_type = _.FindDef(constituent->type_id());
         if (!constituent_result_type ||
-            component_type->opcode() != constituent_result_type->opcode()) {
+            component_type->id() != constituent_result_type->id()) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
                  << opcode_name << " Constituent <id> "
                  << _.getIdName(constituent_id)

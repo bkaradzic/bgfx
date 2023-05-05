@@ -270,6 +270,7 @@ class InstrumentPass : public Pass {
   analysis::Integer* GetInteger(uint32_t width, bool is_signed);
   analysis::Struct* GetStruct(const std::vector<const analysis::Type*>& fields);
   analysis::RuntimeArray* GetRuntimeArray(const analysis::Type* element);
+  analysis::Array* GetArray(const analysis::Type* element, uint32_t size);
   analysis::Function* GetFunction(
       const analysis::Type* return_val,
       const std::vector<const analysis::Type*>& args);
@@ -339,8 +340,8 @@ class InstrumentPass : public Pass {
   // If code is generated for an instruction, replace the instruction's
   // block with the new blocks that are generated. Continue processing at the
   // top of the last new block.
-  bool InstrumentFunction(Function* func, uint32_t stage_idx,
-                          InstProcessFunction& pfn);
+  virtual bool InstrumentFunction(Function* func, uint32_t stage_idx,
+                                  InstProcessFunction& pfn);
 
   // Call |pfn| on all functions in the call tree of the function
   // ids in |roots|.

@@ -19,6 +19,24 @@
 namespace spvtools {
 namespace opt {
 
+bool InstBuffAddrCheckPass::InstrumentFunction(Function* func,
+                                               uint32_t stage_idx,
+                                               InstProcessFunction& pfn) {
+  // The bindless instrumentation pass adds functions that use
+  // BufferDeviceAddress They should not be instrumented by this pass.
+  Instruction* func_name_inst =
+      context()->GetNames(func->DefInst().result_id()).begin()->second;
+  if (func_name_inst) {
+    static const std::string kPrefix{"inst_bindless_"};
+    std::string func_name = func_name_inst->GetOperand(1).AsString();
+    if (func_name.size() >= kPrefix.size() &&
+        func_name.compare(0, kPrefix.size(), kPrefix) == 0) {
+      return false;
+    }
+  }
+  return InstrumentPass::InstrumentFunction(func, stage_idx, pfn);
+}
+
 uint32_t InstBuffAddrCheckPass::CloneOriginalReference(
     Instruction* ref_inst, InstructionBuilder* builder) {
   // Clone original ref with new result id (if load)

@@ -1572,6 +1572,7 @@ bool ValidationState_t::IsValidStorageClass(
       case spv::StorageClass::ShaderRecordBufferKHR:
       case spv::StorageClass::TaskPayloadWorkgroupEXT:
       case spv::StorageClass::HitObjectAttributeNV:
+      case spv::StorageClass::TileImageEXT:
         return true;
       default:
         return false;

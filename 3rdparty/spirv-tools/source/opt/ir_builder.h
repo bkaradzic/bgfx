@@ -480,9 +480,16 @@ class InstructionBuilder {
     return AddInstruction(std::move(new_inst));
   }
 
-  Instruction* AddLoad(uint32_t type_id, uint32_t base_ptr_id) {
+  Instruction* AddLoad(uint32_t type_id, uint32_t base_ptr_id,
+                       uint32_t alignment = 0) {
     std::vector<Operand> operands;
     operands.push_back({SPV_OPERAND_TYPE_ID, {base_ptr_id}});
+    if (alignment != 0) {
+      operands.push_back(
+          {SPV_OPERAND_TYPE_MEMORY_ACCESS,
+           {static_cast<uint32_t>(spv::MemoryAccessMask::Aligned)}});
+      operands.push_back({SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER, {alignment}});
+    }
 
     // TODO(1841): Handle id overflow.
     std::unique_ptr<Instruction> new_inst(
