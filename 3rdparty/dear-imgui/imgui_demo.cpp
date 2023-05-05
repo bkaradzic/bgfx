@@ -1,8 +1,8 @@
-// dear imgui, v1.89.5 WIP
+// dear imgui, v1.89.6 WIP
 // (demo code)
 
 // Help:
-// - Read FAQ at http://dearimgui.org/faq
+// - Read FAQ at http://dearimgui.com/faq
 // - Newcomers, read 'Programmer guide' in imgui.cpp for notes on how to setup Dear ImGui in your codebase.
 // - Call and read ImGui::ShowDemoWindow() in imgui_demo.cpp. All applications in examples/ are doing that.
 // Read imgui.cpp for more details, documentation and comments.
@@ -409,7 +409,7 @@ void ImGui::ShowDemoWindow(bool* p_open)
         ImGui::BulletText("See the ShowDemoWindow() code in imgui_demo.cpp. <- you are here!");
         ImGui::BulletText("See comments in imgui.cpp.");
         ImGui::BulletText("See example applications in the examples/ folder.");
-        ImGui::BulletText("Read the FAQ at http://www.dearimgui.org/faq/");
+        ImGui::BulletText("Read the FAQ at http://www.dearimgui.com/faq/");
         ImGui::BulletText("Set 'io.ConfigFlags |= NavEnableKeyboard' for keyboard controls.");
         ImGui::BulletText("Set 'io.ConfigFlags |= NavEnableGamepad' for gamepad controls.");
         ImGui::Separator();
@@ -483,13 +483,13 @@ void ImGui::ShowDemoWindow(bool* p_open)
                 "Those flags are set by the backends (imgui_impl_xxx files) to specify their capabilities.\n"
                 "Here we expose them as read-only fields to avoid breaking interactions with your backend.");
 
-            // Make a local copy to avoid modifying actual backend flags.
-            // FIXME: We don't use BeginDisabled() to keep label bright, maybe we need a BeginReadonly() equivalent..
-            ImGuiBackendFlags backend_flags = io.BackendFlags;
-            ImGui::CheckboxFlags("io.BackendFlags: HasGamepad",           &backend_flags, ImGuiBackendFlags_HasGamepad);
-            ImGui::CheckboxFlags("io.BackendFlags: HasMouseCursors",      &backend_flags, ImGuiBackendFlags_HasMouseCursors);
-            ImGui::CheckboxFlags("io.BackendFlags: HasSetMousePos",       &backend_flags, ImGuiBackendFlags_HasSetMousePos);
-            ImGui::CheckboxFlags("io.BackendFlags: RendererHasVtxOffset", &backend_flags, ImGuiBackendFlags_RendererHasVtxOffset);
+            // FIXME: Maybe we need a BeginReadonly() equivalent to keep label bright?
+            ImGui::BeginDisabled();
+            ImGui::CheckboxFlags("io.BackendFlags: HasGamepad",           &io.BackendFlags, ImGuiBackendFlags_HasGamepad);
+            ImGui::CheckboxFlags("io.BackendFlags: HasMouseCursors",      &io.BackendFlags, ImGuiBackendFlags_HasMouseCursors);
+            ImGui::CheckboxFlags("io.BackendFlags: HasSetMousePos",       &io.BackendFlags, ImGuiBackendFlags_HasSetMousePos);
+            ImGui::CheckboxFlags("io.BackendFlags: RendererHasVtxOffset", &io.BackendFlags, ImGuiBackendFlags_RendererHasVtxOffset);
+            ImGui::EndDisabled();
             ImGui::TreePop();
             ImGui::Spacing();
         }

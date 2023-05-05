@@ -1,4 +1,4 @@
-// dear imgui, v1.89.5 WIP
+// dear imgui, v1.89.6 WIP
 // (tables and columns code)
 
 /*
@@ -483,6 +483,7 @@ bool    ImGui::BeginTableEx(const char* name, ImGuiID id, int columns_count, ImG
 
     // Make table current
     g.CurrentTable = table;
+    outer_window->DC.NavIsScrollPushableX = false; // Shortcut for NavUpdateCurrentWindowIsScrollPushableX();
     outer_window->DC.CurrentTableIdx = table_idx;
     if (inner_window != outer_window) // So EndChild() within the inner window can restore the table properly.
         inner_window->DC.CurrentTableIdx = table_idx;
@@ -1436,6 +1437,7 @@ void    ImGui::EndTable()
         g.CurrentTable->DrawSplitter = &temp_data->DrawSplitter;
     }
     outer_window->DC.CurrentTableIdx = g.CurrentTable ? g.Tables.GetIndex(g.CurrentTable) : -1;
+    NavUpdateCurrentWindowIsScrollPushableX();
 }
 
 // See "COLUMN SIZING POLICIES" comments at the top of this file
@@ -2381,11 +2383,11 @@ void ImGui::TableMergeDrawChannels(ImGuiTable* table)
     struct MergeGroup
     {
         ImRect          ClipRect;
-        int             ChannelsCount;
-        ImBitArrayPtr   ChannelsMask;
+        int             ChannelsCount = 0;
+        ImBitArrayPtr   ChannelsMask = NULL;
     };
     int merge_group_mask = 0x00;
-    MergeGroup merge_groups[4] = {};
+    MergeGroup merge_groups[4];
 
     // Use a reusable temp buffer for the merge masks as they are dynamically sized.
     const int max_draw_channels = (4 + table->ColumnsCount * 2);
@@ -3007,7 +3009,7 @@ void ImGui::TableHeader(const char* label)
     }
 
     // Sort order arrow
-    const float ellipsis_max = cell_r.Max.x - w_arrow - w_sort_text;
+    const float ellipsis_max = ImMax(cell_r.Max.x - w_arrow - w_sort_text, label_pos.x);
     if ((table->Flags & ImGuiTableFlags_Sortable) && !(column->Flags & ImGuiTableColumnFlags_NoSort))
     {
         if (column->SortOrder != -1)
@@ -3902,6 +3904,7 @@ void ImGui::BeginColumns(const char* str_id, int columns_count, ImGuiOldColumnFl
     columns->Count = columns_count;
     columns->Flags = flags;
     window->DC.CurrentColumns = columns;
+    window->DC.NavIsScrollPushableX = false; // Shortcut for NavUpdateCurrentWindowIsScrollPushableX();
 
     columns->HostCursorPosY = window->DC.CursorPos.y;
     columns->HostCursorMaxPosX = window->DC.CursorMaxPos.x;
@@ -4092,6 +4095,7 @@ void ImGui::EndColumns()
     window->DC.CurrentColumns = NULL;
     window->DC.ColumnsOffset.x = 0.0f;
     window->DC.CursorPos.x = IM_FLOOR(window->Pos.x + window->DC.Indent.x + window->DC.ColumnsOffset.x);
+    NavUpdateCurrentWindowIsScrollPushableX();
 }
 
 void ImGui::Columns(int columns_count, const char* id, bool border)
