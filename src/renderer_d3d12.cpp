@@ -1282,7 +1282,7 @@ namespace bgfx { namespace d3d12
 						);
 				}
 				m_samplerAllocator.create(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
-					, 1024
+					, 2048
 					, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
 					);
 
@@ -3840,7 +3840,7 @@ namespace bgfx { namespace d3d12
 
 	void DescriptorAllocatorD3D12::create(D3D12_DESCRIPTOR_HEAP_TYPE _type, uint16_t _maxDescriptors, uint16_t _numDescriptorsPerBlock)
 	{
-		m_handleAlloc = bx::createHandleAlloc(g_allocator, _maxDescriptors);
+		m_handleAlloc = bx::createHandleAlloc(g_allocator, _maxDescriptors/_numDescriptorsPerBlock);
 		m_numDescriptorsPerBlock = _numDescriptorsPerBlock;
 
 		ID3D12Device* device = s_renderD3D12->m_device;
@@ -3871,6 +3871,7 @@ namespace bgfx { namespace d3d12
 	uint16_t DescriptorAllocatorD3D12::alloc(ID3D12Resource* _ptr, const D3D12_SHADER_RESOURCE_VIEW_DESC* _desc)
 	{
 		uint16_t idx = m_handleAlloc->alloc();
+		BX_ASSERT(bx::kInvalidHandle != idx, "DescriptorAllocatorD3D12 is out of memory.");
 
 		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = { m_cpuHandle.ptr + idx * m_incrementSize };
 
@@ -3886,6 +3887,7 @@ namespace bgfx { namespace d3d12
 	uint16_t DescriptorAllocatorD3D12::alloc(const uint32_t* _flags, uint32_t _num, const float _palette[][4])
 	{
 		uint16_t idx = m_handleAlloc->alloc();
+		BX_ASSERT(bx::kInvalidHandle != idx, "DescriptorAllocatorD3D12 is out of memory.");
 
 		ID3D12Device* device   = s_renderD3D12->m_device;
 		uint32_t maxAnisotropy = s_renderD3D12->m_maxAnisotropy;
