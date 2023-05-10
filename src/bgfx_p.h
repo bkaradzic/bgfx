@@ -1977,7 +1977,7 @@ namespace bgfx
 			m_height      = _height;
 			m_depth       = _depth;
 			m_format      = uint8_t(_format);
-			m_numSamples  = 1 << bx::uint32_satsub((_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
+			m_numSamples  = 1 << bx::uint32_satsub( (_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 			m_numMips     = _numMips;
 			m_numLayers   = _numLayers;
 			m_owned       = false;
@@ -3572,7 +3572,8 @@ namespace bgfx
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			BX_ASSERT(0 == (_flags &  BGFX_BUFFER_COMPUTE_READ_WRITE), "Cannot initialize compute buffer from CPU.");
+			BX_ASSERT(0 == (_flags & BGFX_BUFFER_COMPUTE_WRITE), "Can't initialize compute write buffer from CPU.");
+
 			const uint32_t indexSize = 0 == (_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 			DynamicIndexBufferHandle handle = createDynamicIndexBuffer(_mem->size/indexSize, _flags);
 
@@ -3594,7 +3595,7 @@ namespace bgfx
 			BGFX_CHECK_HANDLE("updateDynamicIndexBuffer", m_dynamicIndexBufferHandle, _handle);
 
 			DynamicIndexBuffer& dib = m_dynamicIndexBuffers[_handle.idx];
-			BX_ASSERT(0 == (dib.m_flags &  BGFX_BUFFER_COMPUTE_WRITE), "Can't update GPU buffer from CPU.");
+			BX_ASSERT(0 == (dib.m_flags & BGFX_BUFFER_COMPUTE_WRITE), "Can't update GPU write buffer from CPU.");
 			const uint32_t indexSize = 0 == (dib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 
 			if (dib.m_size < _mem->size
@@ -3640,16 +3641,16 @@ namespace bgfx
 
 		void destroy(const DynamicIndexBuffer& _dib)
 		{
-			if (0 != (_dib.m_flags & BGFX_BUFFER_COMPUTE_READ_WRITE))
+			if (0 != (_dib.m_flags & BGFX_BUFFER_COMPUTE_READ_WRITE) )
 			{
 				destroyIndexBuffer(_dib.m_handle);
 			}
 			else
 			{
 				m_dynIndexBufferAllocator.free(uint64_t(_dib.m_handle.idx) << 32 | _dib.m_offset);
-				if (m_dynIndexBufferAllocator.compact())
+				if (m_dynIndexBufferAllocator.compact() )
 				{
-					for (uint64_t ptr = m_dynIndexBufferAllocator.remove(); 0 != ptr; ptr = m_dynIndexBufferAllocator.remove())
+					for (uint64_t ptr = m_dynIndexBufferAllocator.remove(); 0 != ptr; ptr = m_dynIndexBufferAllocator.remove() )
 					{
 						IndexBufferHandle handle = { uint16_t(ptr >> 32) };
 						destroyIndexBuffer(handle);
@@ -3769,6 +3770,8 @@ namespace bgfx
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
+			BX_ASSERT(0 == (_flags & BGFX_BUFFER_COMPUTE_WRITE), "Can't initialize compute write buffer from CPU.");
+
 			uint32_t numVertices = _mem->size/_layout.m_stride;
 			DynamicVertexBufferHandle handle = createDynamicVertexBuffer(numVertices, _layout, _flags);
 
@@ -3790,7 +3793,7 @@ namespace bgfx
 			BGFX_CHECK_HANDLE("updateDynamicVertexBuffer", m_dynamicVertexBufferHandle, _handle);
 
 			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[_handle.idx];
-			BX_ASSERT(0 == (dvb.m_flags &  BGFX_BUFFER_COMPUTE_WRITE), "Can't update GPU write buffer from CPU.");
+			BX_ASSERT(0 == (dvb.m_flags & BGFX_BUFFER_COMPUTE_WRITE), "Can't update GPU write buffer from CPU.");
 
 			if (dvb.m_size < _mem->size
 			&&  0 != (dvb.m_flags & BGFX_BUFFER_ALLOW_RESIZE) )
@@ -3839,16 +3842,16 @@ namespace bgfx
 
 		void destroy(const DynamicVertexBuffer& _dvb)
 		{
-			if (0 != (_dvb.m_flags & BGFX_BUFFER_COMPUTE_READ_WRITE))
+			if (0 != (_dvb.m_flags & BGFX_BUFFER_COMPUTE_READ_WRITE) )
 			{
 				destroyVertexBuffer(_dvb.m_handle);
 			}
 			else
 			{
 				m_dynVertexBufferAllocator.free(uint64_t(_dvb.m_handle.idx) << 32 | _dvb.m_offset);
-				if (m_dynVertexBufferAllocator.compact())
+				if (m_dynVertexBufferAllocator.compact() )
 				{
-					for (uint64_t ptr = m_dynVertexBufferAllocator.remove(); 0 != ptr; ptr = m_dynVertexBufferAllocator.remove())
+					for (uint64_t ptr = m_dynVertexBufferAllocator.remove(); 0 != ptr; ptr = m_dynVertexBufferAllocator.remove() )
 					{
 						VertexBufferHandle handle = { uint16_t(ptr >> 32) };
 						destroyVertexBuffer(handle);
