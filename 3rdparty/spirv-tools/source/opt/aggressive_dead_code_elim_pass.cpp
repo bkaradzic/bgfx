@@ -156,7 +156,8 @@ bool AggressiveDCEPass::AllExtensionsSupported() const {
            "Expecting an import of an extension's instruction set.");
     const std::string extension_name = inst.GetInOperand(0).AsString();
     if (spvtools::utils::starts_with(extension_name, "NonSemantic.") &&
-        extension_name != "NonSemantic.Shader.DebugInfo.100") {
+        (extension_name != "NonSemantic.Shader.DebugInfo.100") &&
+        (extension_name != "NonSemantic.DebugPrintf")) {
       return false;
     }
   }

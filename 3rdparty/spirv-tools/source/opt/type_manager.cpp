@@ -178,7 +178,7 @@ void TypeManager::RemoveId(uint32_t id) {
   if (iter == id_to_type_.end()) return;
 
   auto& type = iter->second;
-  if (!type->IsUniqueType(true)) {
+  if (!type->IsUniqueType()) {
     auto tIter = type_to_id_.find(type);
     if (tIter != type_to_id_.end() && tIter->second == id) {
       // |type| currently maps to |id|.
@@ -437,7 +437,7 @@ uint32_t TypeManager::FindPointerToType(uint32_t type_id,
                                         spv::StorageClass storage_class) {
   Type* pointeeTy = GetType(type_id);
   Pointer pointerTy(pointeeTy, storage_class);
-  if (pointeeTy->IsUniqueType(true)) {
+  if (pointeeTy->IsUniqueType()) {
     // Non-ambiguous type. Get the pointer type through the type manager.
     return GetTypeInstruction(&pointerTy);
   }

@@ -148,12 +148,16 @@ class Type {
   // Returns a clone of |this| minus any decorations.
   std::unique_ptr<Type> RemoveDecorations() const;
 
-  // Returns true if this type must be unique.
+  // Returns true if this cannot hash to the same value as another type in the
+  // module. For example, structs are not unique types because the module could
+  // have two types
   //
-  // If variable pointers are allowed, then pointers are not required to be
-  // unique.
-  // TODO(alanbaker): Update this if variable pointers become a core feature.
-  bool IsUniqueType(bool allowVariablePointers = false) const;
+  //  %1 = OpTypeStruct %int
+  //  %2 = OpTypeStruct %int
+  //
+  // The only way to distinguish these types is the result id. The type manager
+  // will hash them to the same value.
+  bool IsUniqueType() const;
 
   bool operator==(const Type& other) const;
 
