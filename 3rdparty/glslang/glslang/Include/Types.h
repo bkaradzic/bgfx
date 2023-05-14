@@ -72,6 +72,7 @@ enum TSamplerDim {
     EsdRect,
     EsdBuffer,
     EsdSubpass,  // goes only with non-sampled image (image is true)
+    EsdAttachmentEXT,
     EsdNumDims
 };
 
@@ -90,6 +91,7 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
     bool isBuffer()      const { return false; }
     bool isRect()        const { return false; }
     bool isSubpass()     const { return false; }
+    bool isAttachmentEXT()  const { return false; }
     bool isCombined()    const { return true; }
     bool isImage()       const { return false; }
     bool isImageClass()  const { return false; }
@@ -122,8 +124,9 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
     bool isBuffer()      const { return dim == EsdBuffer; }
     bool isRect()        const { return dim == EsdRect; }
     bool isSubpass()     const { return dim == EsdSubpass; }
+    bool isAttachmentEXT()  const { return dim == EsdAttachmentEXT; }
     bool isCombined()    const { return combined; }
-    bool isImage()       const { return image && !isSubpass(); }
+    bool isImage()       const { return image && !isSubpass() && !isAttachmentEXT();}
     bool isImageClass()  const { return image; }
     bool isMultiSample() const { return ms; }
     bool isExternal()    const { return external; }
@@ -214,6 +217,15 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
         dim = EsdSubpass;
         ms = m;
     }
+
+    // make an AttachmentEXT
+    void setAttachmentEXT(TBasicType t)
+    {
+        clear();
+        type = t;
+        image = true;
+        dim = EsdAttachmentEXT;
+    }
 #endif
 
     bool operator==(const TSampler& right) const
@@ -264,7 +276,9 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
         default:  break;
         }
         if (isImageClass()) {
-            if (isSubpass())
+            if (isAttachmentEXT())
+                s.append("attachmentEXT");
+            else if (isSubpass())
                 s.append("subpass");
             else
                 s.append("image");
@@ -285,10 +299,11 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
         case Esd3D:      s.append("3D");      break;
         case EsdCube:    s.append("Cube");    break;
 #ifndef GLSLANG_WEB
-        case Esd1D:      s.append("1D");      break;
-        case EsdRect:    s.append("2DRect");  break;
-        case EsdBuffer:  s.append("Buffer");  break;
-        case EsdSubpass: s.append("Input"); break;
+        case Esd1D:         s.append("1D");      break;
+        case EsdRect:       s.append("2DRect");  break;
+        case EsdBuffer:     s.append("Buffer");  break;
+        case EsdSubpass:    s.append("Input"); break;
+        case EsdAttachmentEXT: s.append(""); break;
 #endif
         default:  break;  // some compilers want this
         }
@@ -1394,6 +1409,9 @@ struct TShaderQualifiers {
     bool earlyFragmentTests;  // fragment input
     bool postDepthCoverage;   // fragment input
     bool earlyAndLateFragmentTestsAMD; //fragment input
+    bool nonCoherentColorAttachmentReadEXT;    // fragment input
+    bool nonCoherentDepthAttachmentReadEXT;    // fragment input
+    bool nonCoherentStencilAttachmentReadEXT;  // fragment input
     TLayoutDepth layoutDepth;
     TLayoutStencil layoutStencil;
     bool blendEquation;       // true if any blend equation was specified
@@ -1433,6 +1451,9 @@ struct TShaderQualifiers {
         earlyFragmentTests = false;
         earlyAndLateFragmentTestsAMD = false;
         postDepthCoverage = false;
+        nonCoherentColorAttachmentReadEXT = false;
+        nonCoherentDepthAttachmentReadEXT = false;
+        nonCoherentStencilAttachmentReadEXT = false;
         layoutDepth = EldNone;
         layoutStencil = ElsNone;
         blendEquation = false;
@@ -1490,6 +1511,12 @@ struct TShaderQualifiers {
             earlyAndLateFragmentTestsAMD = true;
         if (src.postDepthCoverage)
             postDepthCoverage = true;
+        if (src.nonCoherentColorAttachmentReadEXT)
+            nonCoherentColorAttachmentReadEXT = true;
+        if (src.nonCoherentDepthAttachmentReadEXT)
+            nonCoherentDepthAttachmentReadEXT = true;
+        if (src.nonCoherentStencilAttachmentReadEXT)
+            nonCoherentStencilAttachmentReadEXT = true;
         if (src.layoutDepth)
             layoutDepth = src.layoutDepth;
         if (src.layoutStencil)
@@ -1603,8 +1630,9 @@ public:
 #endif
 
     // "Image" is a superset of "Subpass"
-    bool isImage()   const { return basicType == EbtSampler && sampler.isImage(); }
-    bool isSubpass() const { return basicType == EbtSampler && sampler.isSubpass(); }
+    bool isImage()      const { return basicType == EbtSampler && sampler.isImage(); }
+    bool isSubpass()    const { return basicType == EbtSampler && sampler.isSubpass(); }
+    bool isAttachmentEXT() const { return basicType == EbtSampler && sampler.isAttachmentEXT(); }
 };
 
 //
@@ -1927,8 +1955,8 @@ public:
         ; }
     virtual bool isBuiltIn() const { return getQualifier().builtIn != EbvNone; }
 
-    // "Image" is a superset of "Subpass"
-    virtual bool isImage()   const { return basicType == EbtSampler && getSampler().isImage(); }
+    virtual bool isAttachmentEXT() const { return basicType == EbtSampler && getSampler().isAttachmentEXT(); }
+    virtual bool isImage() const { return basicType == EbtSampler && getSampler().isImage(); }
     virtual bool isSubpass() const { return basicType == EbtSampler && getSampler().isSubpass(); }
     virtual bool isTexture() const { return basicType == EbtSampler && getSampler().isTexture(); }
     virtual bool isBindlessImage() const { return isImage() && qualifier.layoutBindlessImage; }

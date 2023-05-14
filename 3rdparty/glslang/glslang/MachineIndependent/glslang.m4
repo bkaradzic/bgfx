@@ -279,6 +279,7 @@ GLSLANG_WEB_EXCLUDE_ON
 %token <lex> SPIRV_INSTRUCTION SPIRV_EXECUTION_MODE SPIRV_EXECUTION_MODE_ID
 %token <lex> SPIRV_DECORATE SPIRV_DECORATE_ID SPIRV_DECORATE_STRING
 %token <lex> SPIRV_TYPE SPIRV_STORAGE_CLASS SPIRV_BY_REFERENCE SPIRV_LITERAL
+%token <lex> ATTACHMENTEXT IATTACHMENTEXT UATTACHMENTEXT
 
 GLSLANG_WEB_EXCLUDE_OFF
 
@@ -304,7 +305,7 @@ GLSLANG_WEB_EXCLUDE_OFF
 %token <lex> BREAK CONTINUE DO ELSE FOR IF DISCARD RETURN SWITCH CASE DEFAULT
 %token <lex> TERMINATE_INVOCATION
 %token <lex> TERMINATE_RAY IGNORE_INTERSECTION
-%token <lex> UNIFORM SHARED BUFFER
+%token <lex> UNIFORM SHARED BUFFER TILEIMAGEEXT
 %token <lex> FLAT SMOOTH LAYOUT
 
 GLSLANG_WEB_EXCLUDE_ON
@@ -1475,6 +1476,11 @@ storage_qualifier
         parseContext.globalCheck($1.loc, "uniform");
         $$.init($1.loc);
         $$.qualifier.storage = EvqUniform;
+    }
+    | TILEIMAGEEXT {
+        parseContext.globalCheck($1.loc, "tileImageEXT");
+        $$.init($1.loc);
+        $$.qualifier.storage = EvqTileImageEXT;
     }
     | SHARED {
         parseContext.globalCheck($1.loc, "shared");
@@ -3445,6 +3451,24 @@ GLSLANG_WEB_EXCLUDE_ON
         $$.basicType = EbtSampler;
         $$.sampler.set(EbtFloat, Esd2D);
         $$.sampler.yuv = true;
+    }
+    | ATTACHMENTEXT {
+        parseContext.requireStage($1.loc, EShLangFragment, "attachmentEXT input");
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setAttachmentEXT(EbtFloat);
+    }
+    | IATTACHMENTEXT {
+        parseContext.requireStage($1.loc, EShLangFragment, "attachmentEXT input");
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setAttachmentEXT(EbtInt);
+    }
+    | UATTACHMENTEXT {
+        parseContext.requireStage($1.loc, EShLangFragment, "attachmentEXT input");
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setAttachmentEXT(EbtUint);
     }
     | SUBPASSINPUT {
         parseContext.requireStage($1.loc, EShLangFragment, "subpass input");

@@ -352,13 +352,11 @@ int main(int argc, char** argv)
     int                      opts;
     int                      verbosity;
 
-#ifdef use_cpp11
     // handle errors by exiting
     spv::spirvbin_t::registerErrorHandler(errHandler);
 
     // Log messages to std::cout
     spv::spirvbin_t::registerLogHandler(logHandler);
-#endif
 
     if (argc < 2)
         usage(argv[0]);

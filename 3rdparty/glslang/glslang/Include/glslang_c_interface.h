@@ -168,23 +168,6 @@ typedef struct glslang_resource_s {
     glslang_limits_t limits;
 } glslang_resource_t;
 
-typedef struct glslang_input_s {
-    glslang_source_t language;
-    glslang_stage_t stage;
-    glslang_client_t client;
-    glslang_target_client_version_t client_version;
-    glslang_target_language_t target_language;
-    glslang_target_language_version_t target_language_version;
-    /** Shader source code */
-    const char* code;
-    int default_version;
-    glslang_profile_t default_profile;
-    int force_default_version_and_profile;
-    int forward_compatible;
-    glslang_messages_t messages;
-    const glslang_resource_t* resource;
-} glslang_input_t;
-
 /* Inclusion result structure allocated by C include_local/include_system callbacks */
 typedef struct glsl_include_result_s {
     /* Header file name or NULL if inclusion failed */
@@ -213,6 +196,25 @@ typedef struct glsl_include_callbacks_s {
     glsl_include_local_func include_local;
     glsl_free_include_result_func free_include_result;
 } glsl_include_callbacks_t;
+
+typedef struct glslang_input_s {
+    glslang_source_t language;
+    glslang_stage_t stage;
+    glslang_client_t client;
+    glslang_target_client_version_t client_version;
+    glslang_target_language_t target_language;
+    glslang_target_language_version_t target_language_version;
+    /** Shader source code */
+    const char* code;
+    int default_version;
+    glslang_profile_t default_profile;
+    int force_default_version_and_profile;
+    int forward_compatible;
+    glslang_messages_t messages;
+    const glslang_resource_t* resource;
+    glsl_include_callbacks_t callbacks;
+    void* callbacks_ctx;
+} glslang_input_t;
 
 /* SpvOptions counterpart */
 typedef struct glslang_spv_options_s {

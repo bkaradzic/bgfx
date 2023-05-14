@@ -265,6 +265,7 @@ const char* const E_GL_NV_fragment_shader_barycentric           = "GL_NV_fragmen
 const char* const E_GL_NV_compute_shader_derivatives            = "GL_NV_compute_shader_derivatives";
 const char* const E_GL_NV_shader_texture_footprint              = "GL_NV_shader_texture_footprint";
 const char* const E_GL_NV_mesh_shader                           = "GL_NV_mesh_shader";
+const char* const E_GL_EXT_ray_tracing_position_fetch           = "GL_EXT_ray_tracing_position_fetch";
 
 // ARM
 const char* const E_GL_ARM_shader_core_builtins                 = "GL_ARM_shader_core_builtins";
@@ -326,6 +327,8 @@ const char* const E_GL_EXT_terminate_invocation = "GL_EXT_terminate_invocation";
 
 const char* const E_GL_EXT_shader_atomic_float = "GL_EXT_shader_atomic_float";
 const char* const E_GL_EXT_shader_atomic_float2 = "GL_EXT_shader_atomic_float2";
+
+const char* const E_GL_EXT_shader_tile_image = "GL_EXT_shader_tile_image";
 
 // Arrays of extensions for the above AEP duplications
 
