@@ -1,42 +1,21 @@
-#ifndef __glxext_h_
-#define __glxext_h_ 1
+#ifndef __glx_glxext_h_
+#define __glx_glxext_h_ 1
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*
-** Copyright (c) 2013 The Khronos Group Inc.
+** Copyright 2013-2020 The Khronos Group Inc.
+** SPDX-License-Identifier: MIT
 **
-** Permission is hereby granted, free of charge, to any person obtaining a
-** copy of this software and/or associated documentation files (the
-** "Materials"), to deal in the Materials without restriction, including
-** without limitation the rights to use, copy, modify, merge, publish,
-** distribute, sublicense, and/or sell copies of the Materials, and to
-** permit persons to whom the Materials are furnished to do so, subject to
-** the following conditions:
-**
-** The above copyright notice and this permission notice shall be included
-** in all copies or substantial portions of the Materials.
-**
-** THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-** IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-** CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
-*/
-/*
 ** This header is generated from the Khronos OpenGL / OpenGL ES XML
 ** API Registry. The current version of the Registry, generator scripts
 ** used to make the header, and the header can be found at
-**   http://www.opengl.org/registry/
-**
-** Khronos $Revision: 23730 $ on $Date: 2013-10-28 15:16:34 -0700 (Mon, 28 Oct 2013) $
+**   https://github.com/KhronosGroup/OpenGL-Registry
 */
 
-#define GLX_GLXEXT_VERSION 20131028
+#define GLX_GLXEXT_VERSION 20220530
 
 /* Generated C header for:
  * API: glx
@@ -49,6 +28,7 @@ extern "C" {
 
 #ifndef GLX_VERSION_1_3
 #define GLX_VERSION_1_3 1
+typedef XID GLXContextID;
 typedef struct __GLXFBConfigRec *GLXFBConfig;
 typedef XID GLXWindow;
 typedef XID GLXPbuffer;
@@ -157,6 +137,13 @@ __GLXextFuncPtr glXGetProcAddress (const GLubyte *procName);
 #endif
 #endif /* GLX_VERSION_1_4 */
 
+#ifndef GLX_ARB_context_flush_control
+#define GLX_ARB_context_flush_control 1
+#define GLX_CONTEXT_RELEASE_BEHAVIOR_ARB  0x2097
+#define GLX_CONTEXT_RELEASE_BEHAVIOR_NONE_ARB 0
+#define GLX_CONTEXT_RELEASE_BEHAVIOR_FLUSH_ARB 0x2098
+#endif /* GLX_ARB_context_flush_control */
+
 #ifndef GLX_ARB_create_context
 #define GLX_ARB_create_context 1
 #define GLX_CONTEXT_DEBUG_BIT_ARB         0x00000001
@@ -169,6 +156,11 @@ typedef GLXContext ( *PFNGLXCREATECONTEXTATTRIBSARBPROC) (Display *dpy, GLXFBCon
 GLXContext glXCreateContextAttribsARB (Display *dpy, GLXFBConfig config, GLXContext share_context, Bool direct, const int *attrib_list);
 #endif
 #endif /* GLX_ARB_create_context */
+
+#ifndef GLX_ARB_create_context_no_error
+#define GLX_ARB_create_context_no_error 1
+#define GLX_CONTEXT_OPENGL_NO_ERROR_ARB   0x31B3
+#endif /* GLX_ARB_create_context_no_error */
 
 #ifndef GLX_ARB_create_context_profile
 #define GLX_ARB_create_context_profile 1
@@ -242,12 +234,40 @@ __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *procName);
 #define GLX_GPU_NUM_SIMD_AMD              0x21A6
 #define GLX_GPU_NUM_RB_AMD                0x21A7
 #define GLX_GPU_NUM_SPI_AMD               0x21A8
+typedef unsigned int ( *PFNGLXGETGPUIDSAMDPROC) (unsigned int maxCount, unsigned int *ids);
+typedef int ( *PFNGLXGETGPUINFOAMDPROC) (unsigned int id, int property, GLenum dataType, unsigned int size, void *data);
+typedef unsigned int ( *PFNGLXGETCONTEXTGPUIDAMDPROC) (GLXContext ctx);
+typedef GLXContext ( *PFNGLXCREATEASSOCIATEDCONTEXTAMDPROC) (unsigned int id, GLXContext share_list);
+typedef GLXContext ( *PFNGLXCREATEASSOCIATEDCONTEXTATTRIBSAMDPROC) (unsigned int id, GLXContext share_context, const int *attribList);
+typedef Bool ( *PFNGLXDELETEASSOCIATEDCONTEXTAMDPROC) (GLXContext ctx);
+typedef Bool ( *PFNGLXMAKEASSOCIATEDCONTEXTCURRENTAMDPROC) (GLXContext ctx);
+typedef GLXContext ( *PFNGLXGETCURRENTASSOCIATEDCONTEXTAMDPROC) (void);
+typedef void ( *PFNGLXBLITCONTEXTFRAMEBUFFERAMDPROC) (GLXContext dstCtx, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+#ifdef GLX_GLXEXT_PROTOTYPES
+unsigned int glXGetGPUIDsAMD (unsigned int maxCount, unsigned int *ids);
+int glXGetGPUInfoAMD (unsigned int id, int property, GLenum dataType, unsigned int size, void *data);
+unsigned int glXGetContextGPUIDAMD (GLXContext ctx);
+GLXContext glXCreateAssociatedContextAMD (unsigned int id, GLXContext share_list);
+GLXContext glXCreateAssociatedContextAttribsAMD (unsigned int id, GLXContext share_context, const int *attribList);
+Bool glXDeleteAssociatedContextAMD (GLXContext ctx);
+Bool glXMakeAssociatedContextCurrentAMD (GLXContext ctx);
+GLXContext glXGetCurrentAssociatedContextAMD (void);
+void glXBlitContextFramebufferAMD (GLXContext dstCtx, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+#endif
 #endif /* GLX_AMD_gpu_association */
 
 #ifndef GLX_EXT_buffer_age
 #define GLX_EXT_buffer_age 1
 #define GLX_BACK_BUFFER_AGE_EXT           0x20F4
 #endif /* GLX_EXT_buffer_age */
+
+#ifndef GLX_EXT_context_priority
+#define GLX_EXT_context_priority 1
+#define GLX_CONTEXT_PRIORITY_LEVEL_EXT    0x3100
+#define GLX_CONTEXT_PRIORITY_HIGH_EXT     0x3101
+#define GLX_CONTEXT_PRIORITY_MEDIUM_EXT   0x3102
+#define GLX_CONTEXT_PRIORITY_LOW_EXT      0x3103
+#endif /* GLX_EXT_context_priority */
 
 #ifndef GLX_EXT_create_context_es2_profile
 #define GLX_EXT_create_context_es2_profile 1
@@ -270,9 +290,12 @@ __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *procName);
 #define GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT  0x20B2
 #endif /* GLX_EXT_framebuffer_sRGB */
 
+#ifndef GLX_EXT_get_drawable_type
+#define GLX_EXT_get_drawable_type 1
+#endif /* GLX_EXT_get_drawable_type */
+
 #ifndef GLX_EXT_import_context
 #define GLX_EXT_import_context 1
-typedef XID GLXContextID;
 #define GLX_SHARE_CONTEXT_EXT             0x800A
 #define GLX_VISUAL_ID_EXT                 0x800B
 #define GLX_SCREEN_EXT                    0x800C
@@ -289,6 +312,32 @@ GLXContext glXImportContextEXT (Display *dpy, GLXContextID contextID);
 void glXFreeContextEXT (Display *dpy, GLXContext context);
 #endif
 #endif /* GLX_EXT_import_context */
+
+#ifndef GLX_EXT_libglvnd
+#define GLX_EXT_libglvnd 1
+#define GLX_VENDOR_NAMES_EXT              0x20F6
+#endif /* GLX_EXT_libglvnd */
+
+#ifndef GLX_EXT_no_config_context
+#define GLX_EXT_no_config_context 1
+#endif /* GLX_EXT_no_config_context */
+
+#ifndef GLX_EXT_stereo_tree
+#define GLX_EXT_stereo_tree 1
+typedef struct {
+    int type;
+    unsigned long serial;
+    Bool send_event;
+    Display *display;
+    int extension;
+    int evtype;
+    GLXDrawable window;
+    Bool stereo_tree;
+} GLXStereoNotifyEventEXT;
+#define GLX_STEREO_TREE_EXT               0x20F5
+#define GLX_STEREO_NOTIFY_MASK_EXT        0x00000001
+#define GLX_STEREO_NOTIFY_EXT             0x00000000
+#endif /* GLX_EXT_stereo_tree */
 
 #ifndef GLX_EXT_swap_control
 #define GLX_EXT_swap_control 1
@@ -407,6 +456,31 @@ GLXPixmap glXCreateGLXPixmapMESA (Display *dpy, XVisualInfo *visual, Pixmap pixm
 #endif
 #endif /* GLX_MESA_pixmap_colormap */
 
+#ifndef GLX_MESA_query_renderer
+#define GLX_MESA_query_renderer 1
+#define GLX_RENDERER_VENDOR_ID_MESA       0x8183
+#define GLX_RENDERER_DEVICE_ID_MESA       0x8184
+#define GLX_RENDERER_VERSION_MESA         0x8185
+#define GLX_RENDERER_ACCELERATED_MESA     0x8186
+#define GLX_RENDERER_VIDEO_MEMORY_MESA    0x8187
+#define GLX_RENDERER_UNIFIED_MEMORY_ARCHITECTURE_MESA 0x8188
+#define GLX_RENDERER_PREFERRED_PROFILE_MESA 0x8189
+#define GLX_RENDERER_OPENGL_CORE_PROFILE_VERSION_MESA 0x818A
+#define GLX_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION_MESA 0x818B
+#define GLX_RENDERER_OPENGL_ES_PROFILE_VERSION_MESA 0x818C
+#define GLX_RENDERER_OPENGL_ES2_PROFILE_VERSION_MESA 0x818D
+typedef Bool ( *PFNGLXQUERYCURRENTRENDERERINTEGERMESAPROC) (int attribute, unsigned int *value);
+typedef const char *( *PFNGLXQUERYCURRENTRENDERERSTRINGMESAPROC) (int attribute);
+typedef Bool ( *PFNGLXQUERYRENDERERINTEGERMESAPROC) (Display *dpy, int screen, int renderer, int attribute, unsigned int *value);
+typedef const char *( *PFNGLXQUERYRENDERERSTRINGMESAPROC) (Display *dpy, int screen, int renderer, int attribute);
+#ifdef GLX_GLXEXT_PROTOTYPES
+Bool glXQueryCurrentRendererIntegerMESA (int attribute, unsigned int *value);
+const char *glXQueryCurrentRendererStringMESA (int attribute);
+Bool glXQueryRendererIntegerMESA (Display *dpy, int screen, int renderer, int attribute, unsigned int *value);
+const char *glXQueryRendererStringMESA (Display *dpy, int screen, int renderer, int attribute);
+#endif
+#endif /* GLX_MESA_query_renderer */
+
 #ifndef GLX_MESA_release_buffers
 #define GLX_MESA_release_buffers 1
 typedef Bool ( *PFNGLXRELEASEBUFFERSMESAPROC) (Display *dpy, GLXDrawable drawable);
@@ -419,11 +493,31 @@ Bool glXReleaseBuffersMESA (Display *dpy, GLXDrawable drawable);
 #define GLX_MESA_set_3dfx_mode 1
 #define GLX_3DFX_WINDOW_MODE_MESA         0x1
 #define GLX_3DFX_FULLSCREEN_MODE_MESA     0x2
-typedef Bool ( *PFNGLXSET3DFXMODEMESAPROC) (int mode);
+typedef GLboolean ( *PFNGLXSET3DFXMODEMESAPROC) (GLint mode);
 #ifdef GLX_GLXEXT_PROTOTYPES
-Bool glXSet3DfxModeMESA (int mode);
+GLboolean glXSet3DfxModeMESA (GLint mode);
 #endif
 #endif /* GLX_MESA_set_3dfx_mode */
+
+#ifndef GLX_MESA_swap_control
+#define GLX_MESA_swap_control 1
+typedef int ( *PFNGLXGETSWAPINTERVALMESAPROC) (void);
+typedef int ( *PFNGLXSWAPINTERVALMESAPROC) (unsigned int interval);
+#ifdef GLX_GLXEXT_PROTOTYPES
+int glXGetSwapIntervalMESA (void);
+int glXSwapIntervalMESA (unsigned int interval);
+#endif
+#endif /* GLX_MESA_swap_control */
+
+#ifndef GLX_NV_copy_buffer
+#define GLX_NV_copy_buffer 1
+typedef void ( *PFNGLXCOPYBUFFERSUBDATANVPROC) (Display *dpy, GLXContext readCtx, GLXContext writeCtx, GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
+typedef void ( *PFNGLXNAMEDCOPYBUFFERSUBDATANVPROC) (Display *dpy, GLXContext readCtx, GLXContext writeCtx, GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
+#ifdef GLX_GLXEXT_PROTOTYPES
+void glXCopyBufferSubDataNV (Display *dpy, GLXContext readCtx, GLXContext writeCtx, GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
+void glXNamedCopyBufferSubDataNV (Display *dpy, GLXContext readCtx, GLXContext writeCtx, GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
+#endif
+#endif /* GLX_NV_copy_buffer */
 
 #ifndef GLX_NV_copy_image
 #define GLX_NV_copy_image 1
@@ -433,10 +527,27 @@ void glXCopyImageSubDataNV (Display *dpy, GLXContext srcCtx, GLuint srcName, GLe
 #endif
 #endif /* GLX_NV_copy_image */
 
+#ifndef GLX_NV_delay_before_swap
+#define GLX_NV_delay_before_swap 1
+typedef Bool ( *PFNGLXDELAYBEFORESWAPNVPROC) (Display *dpy, GLXDrawable drawable, GLfloat seconds);
+#ifdef GLX_GLXEXT_PROTOTYPES
+Bool glXDelayBeforeSwapNV (Display *dpy, GLXDrawable drawable, GLfloat seconds);
+#endif
+#endif /* GLX_NV_delay_before_swap */
+
 #ifndef GLX_NV_float_buffer
 #define GLX_NV_float_buffer 1
 #define GLX_FLOAT_COMPONENTS_NV           0x20B0
 #endif /* GLX_NV_float_buffer */
+
+#ifndef GLX_NV_multigpu_context
+#define GLX_NV_multigpu_context 1
+#define GLX_CONTEXT_MULTIGPU_ATTRIB_NV    0x20AA
+#define GLX_CONTEXT_MULTIGPU_ATTRIB_SINGLE_NV 0x20AB
+#define GLX_CONTEXT_MULTIGPU_ATTRIB_AFR_NV 0x20AC
+#define GLX_CONTEXT_MULTIGPU_ATTRIB_MULTICAST_NV 0x20AD
+#define GLX_CONTEXT_MULTIGPU_ATTRIB_MULTI_DISPLAY_MULTICAST_NV 0x20AE
+#endif /* GLX_NV_multigpu_context */
 
 #ifndef GLX_NV_multisample_coverage
 #define GLX_NV_multisample_coverage 1
@@ -454,6 +565,11 @@ unsigned int *glXEnumerateVideoDevicesNV (Display *dpy, int screen, int *nelemen
 int glXBindVideoDeviceNV (Display *dpy, unsigned int video_slot, unsigned int video_device, const int *attrib_list);
 #endif
 #endif /* GLX_NV_present_video */
+
+#ifndef GLX_NV_robustness_video_memory_purge
+#define GLX_NV_robustness_video_memory_purge 1
+#define GLX_GENERATE_RESET_ON_VIDEO_MEMORY_PURGE_NV 0x20F7
+#endif /* GLX_NV_robustness_video_memory_purge */
 
 #ifndef GLX_NV_swap_group
 #define GLX_NV_swap_group 1
@@ -493,8 +609,8 @@ void glXReleaseVideoCaptureDeviceNV (Display *dpy, GLXVideoCaptureDeviceNV devic
 #endif
 #endif /* GLX_NV_video_capture */
 
-#ifndef GLX_NV_video_output
-#define GLX_NV_video_output 1
+#ifndef GLX_NV_video_out
+#define GLX_NV_video_out 1
 typedef unsigned int GLXVideoDeviceNV;
 #define GLX_VIDEO_OUT_COLOR_NV            0x20C3
 #define GLX_VIDEO_OUT_ALPHA_NV            0x20C4
@@ -520,7 +636,7 @@ int glXReleaseVideoImageNV (Display *dpy, GLXPbuffer pbuf);
 int glXSendPbufferToVideoNV (Display *dpy, GLXPbuffer pbuf, int iBufferType, unsigned long *pulCounterPbuffer, GLboolean bBlock);
 int glXGetVideoInfoNV (Display *dpy, int screen, GLXVideoDeviceNV VideoDevice, unsigned long *pulCounterOutputPbuffer, unsigned long *pulCounterOutputVideo);
 #endif
-#endif /* GLX_NV_video_output */
+#endif /* GLX_NV_video_out */
 
 #ifndef GLX_OML_swap_method
 #define GLX_OML_swap_method 1
@@ -721,13 +837,13 @@ int glXQueryHyperpipeAttribSGIX (Display *dpy, int timeSlice, int attrib, int si
 #define GLX_PBUFFER_SGIX                  0x8023
 typedef GLXPbufferSGIX ( *PFNGLXCREATEGLXPBUFFERSGIXPROC) (Display *dpy, GLXFBConfigSGIX config, unsigned int width, unsigned int height, int *attrib_list);
 typedef void ( *PFNGLXDESTROYGLXPBUFFERSGIXPROC) (Display *dpy, GLXPbufferSGIX pbuf);
-typedef int ( *PFNGLXQUERYGLXPBUFFERSGIXPROC) (Display *dpy, GLXPbufferSGIX pbuf, int attribute, unsigned int *value);
+typedef void ( *PFNGLXQUERYGLXPBUFFERSGIXPROC) (Display *dpy, GLXPbufferSGIX pbuf, int attribute, unsigned int *value);
 typedef void ( *PFNGLXSELECTEVENTSGIXPROC) (Display *dpy, GLXDrawable drawable, unsigned long mask);
 typedef void ( *PFNGLXGETSELECTEDEVENTSGIXPROC) (Display *dpy, GLXDrawable drawable, unsigned long *mask);
 #ifdef GLX_GLXEXT_PROTOTYPES
 GLXPbufferSGIX glXCreateGLXPbufferSGIX (Display *dpy, GLXFBConfigSGIX config, unsigned int width, unsigned int height, int *attrib_list);
 void glXDestroyGLXPbufferSGIX (Display *dpy, GLXPbufferSGIX pbuf);
-int glXQueryGLXPbufferSGIX (Display *dpy, GLXPbufferSGIX pbuf, int attribute, unsigned int *value);
+void glXQueryGLXPbufferSGIX (Display *dpy, GLXPbufferSGIX pbuf, int attribute, unsigned int *value);
 void glXSelectEventSGIX (Display *dpy, GLXDrawable drawable, unsigned long mask);
 void glXGetSelectedEventSGIX (Display *dpy, GLXDrawable drawable, unsigned long *mask);
 #endif
@@ -825,9 +941,9 @@ int glXWaitVideoSyncSGI (int divisor, int remainder, unsigned int *count);
 
 #ifndef GLX_SUN_get_transparent_index
 #define GLX_SUN_get_transparent_index 1
-typedef Status ( *PFNGLXGETTRANSPARENTINDEXSUNPROC) (Display *dpy, Window overlay, Window underlay, long *pTransparentIndex);
+typedef Status ( *PFNGLXGETTRANSPARENTINDEXSUNPROC) (Display *dpy, Window overlay, Window underlay, unsigned long *pTransparentIndex);
 #ifdef GLX_GLXEXT_PROTOTYPES
-Status glXGetTransparentIndexSUN (Display *dpy, Window overlay, Window underlay, long *pTransparentIndex);
+Status glXGetTransparentIndexSUN (Display *dpy, Window overlay, Window underlay, unsigned long *pTransparentIndex);
 #endif
 #endif /* GLX_SUN_get_transparent_index */
 

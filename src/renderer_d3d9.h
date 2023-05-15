@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -166,7 +166,7 @@ namespace bgfx { namespace d3d9
 
 				if (NULL != m_dynamic)
 				{
-					BX_FREE(g_allocator, m_dynamic);
+					bx::free(g_allocator, m_dynamic);
 					m_dynamic = NULL;
 				}
 			}
@@ -219,7 +219,7 @@ namespace bgfx { namespace d3d9
 
 				if (NULL != m_dynamic)
 				{
-					BX_FREE(g_allocator, m_dynamic);
+					bx::free(g_allocator, m_dynamic);
 					m_dynamic = NULL;
 				}
 			}

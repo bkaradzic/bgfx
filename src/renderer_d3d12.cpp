@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -1282,7 +1282,7 @@ namespace bgfx { namespace d3d12
 						);
 				}
 				m_samplerAllocator.create(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
-					, 1024
+					, 2048
 					, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
 					);
 
@@ -2010,11 +2010,11 @@ namespace bgfx { namespace d3d12
 		{
 			if (NULL != m_uniforms[_handle.idx])
 			{
-				BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+				bx::free(g_allocator, m_uniforms[_handle.idx]);
 			}
 
 			const uint32_t size = bx::alignUp(g_uniformTypeSize[_type] * _num, 16);
-			void* data = BX_ALLOC(g_allocator, size);
+			void* data = bx::alloc(g_allocator, size);
 			bx::memSet(data, 0, size);
 			m_uniforms[_handle.idx] = data;
 			m_uniformReg.add(_handle, _name);
@@ -2022,7 +2022,7 @@ namespace bgfx { namespace d3d12
 
 		void destroyUniform(UniformHandle _handle) override
 		{
-			BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+			bx::free(g_allocator, m_uniforms[_handle.idx]);
 			m_uniforms[_handle.idx] = NULL;
 			m_uniformReg.remove(_handle);
 		}
@@ -2994,7 +2994,7 @@ namespace bgfx { namespace d3d12
 
 			if (cached)
 			{
-				cachedData = BX_ALLOC(g_allocator, length);
+				cachedData = bx::alloc(g_allocator, length);
 				if (g_callback->cacheRead(hash, cachedData, length) )
 				{
 					BX_TRACE("Loading cached compute PSO (size %d).", length);
@@ -3039,7 +3039,7 @@ namespace bgfx { namespace d3d12
 
 			if (NULL != cachedData)
 			{
-				BX_FREE(g_allocator, cachedData);
+				bx::free(g_allocator, cachedData);
 			}
 
 			return pso;
@@ -3275,7 +3275,7 @@ namespace bgfx { namespace d3d12
 
 			if (cached)
 			{
-				cachedData = BX_ALLOC(g_allocator, length);
+				cachedData = bx::alloc(g_allocator, length);
 				if (g_callback->cacheRead(hash, cachedData, length) )
 				{
 					BX_TRACE("Loading cached graphics PSO (size %d).", length);
@@ -3327,7 +3327,7 @@ namespace bgfx { namespace d3d12
 
 			if (NULL != cachedData)
 			{
-				BX_FREE(g_allocator, cachedData);
+				bx::free(g_allocator, cachedData);
 			}
 
 			return pso;
@@ -3642,7 +3642,7 @@ namespace bgfx { namespace d3d12
 		s_renderD3D12 = BX_NEW(g_allocator, RendererContextD3D12);
 		if (!s_renderD3D12->init(_init) )
 		{
-			BX_DELETE(g_allocator, s_renderD3D12);
+			bx::deleteObject(g_allocator, s_renderD3D12);
 			s_renderD3D12 = NULL;
 		}
 		return s_renderD3D12;
@@ -3651,7 +3651,7 @@ namespace bgfx { namespace d3d12
 	void rendererDestroy()
 	{
 		s_renderD3D12->shutdown();
-		BX_DELETE(g_allocator, s_renderD3D12);
+		bx::deleteObject(g_allocator, s_renderD3D12);
 		s_renderD3D12 = NULL;
 	}
 
@@ -3840,7 +3840,7 @@ namespace bgfx { namespace d3d12
 
 	void DescriptorAllocatorD3D12::create(D3D12_DESCRIPTOR_HEAP_TYPE _type, uint16_t _maxDescriptors, uint16_t _numDescriptorsPerBlock)
 	{
-		m_handleAlloc = bx::createHandleAlloc(g_allocator, _maxDescriptors);
+		m_handleAlloc = bx::createHandleAlloc(g_allocator, _maxDescriptors/_numDescriptorsPerBlock);
 		m_numDescriptorsPerBlock = _numDescriptorsPerBlock;
 
 		ID3D12Device* device = s_renderD3D12->m_device;
@@ -3871,6 +3871,7 @@ namespace bgfx { namespace d3d12
 	uint16_t DescriptorAllocatorD3D12::alloc(ID3D12Resource* _ptr, const D3D12_SHADER_RESOURCE_VIEW_DESC* _desc)
 	{
 		uint16_t idx = m_handleAlloc->alloc();
+		BX_ASSERT(bx::kInvalidHandle != idx, "DescriptorAllocatorD3D12 is out of memory.");
 
 		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = { m_cpuHandle.ptr + idx * m_incrementSize };
 
@@ -3886,6 +3887,7 @@ namespace bgfx { namespace d3d12
 	uint16_t DescriptorAllocatorD3D12::alloc(const uint32_t* _flags, uint32_t _num, const float _palette[][4])
 	{
 		uint16_t idx = m_handleAlloc->alloc();
+		BX_ASSERT(bx::kInvalidHandle != idx, "DescriptorAllocatorD3D12 is out of memory.");
 
 		ID3D12Device* device   = s_renderD3D12->m_device;
 		uint32_t maxAnisotropy = s_renderD3D12->m_maxAnisotropy;
@@ -4174,8 +4176,8 @@ namespace bgfx { namespace d3d12
 			, (void**)&m_commandSignature[DrawIndexed]
 			) );
 
-		m_cmds[Draw       ] = BX_ALLOC(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndirectCommand) );
-		m_cmds[DrawIndexed] = BX_ALLOC(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndexedIndirectCommand) );
+		m_cmds[Draw       ] = bx::alloc(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndirectCommand) );
+		m_cmds[DrawIndexed] = bx::alloc(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndexedIndirectCommand) );
 
 		uint32_t cmdSize = bx::max<uint32_t>(sizeof(DrawIndirectCommand), sizeof(DrawIndexedIndirectCommand) );
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_indirect); ++ii)
@@ -4191,8 +4193,8 @@ namespace bgfx { namespace d3d12
 
 	void BatchD3D12::destroy()
 	{
-		BX_FREE(g_allocator, m_cmds[0]);
-		BX_FREE(g_allocator, m_cmds[1]);
+		bx::free(g_allocator, m_cmds[0]);
+		bx::free(g_allocator, m_cmds[1]);
 
 		DX_RELEASE(m_commandSignature[0], 0);
 		DX_RELEASE(m_commandSignature[1], 0);
@@ -4983,7 +4985,7 @@ namespace bgfx { namespace d3d12
 		uint64_t requiredSize = 0;
 
 		const size_t sizeInBytes = size_t(sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(uint32_t) + sizeof(uint64_t) ) * _numSubresources;
-		D3D12_PLACED_SUBRESOURCE_FOOTPRINT* layouts = (D3D12_PLACED_SUBRESOURCE_FOOTPRINT*)BX_ALLOC(g_allocator, sizeInBytes);
+		D3D12_PLACED_SUBRESOURCE_FOOTPRINT* layouts = (D3D12_PLACED_SUBRESOURCE_FOOTPRINT*)bx::alloc(g_allocator, sizeInBytes);
 		uint64_t* rowSizesInBytes = (uint64_t*)(layouts + _numSubresources);
 		uint32_t* numRows         = (uint32_t*)(rowSizesInBytes + _numSubresources);
 
@@ -5012,7 +5014,7 @@ namespace bgfx { namespace d3d12
 			, _srcData
 			);
 
-		BX_FREE(g_allocator, layouts);
+		bx::free(g_allocator, layouts);
 
 		return result;
 	}
@@ -5099,7 +5101,7 @@ namespace bgfx { namespace d3d12
 				, swizzle ? " (swizzle BGRA8 -> RGBA8)" : ""
 				);
 
-			for (uint8_t side = 0; side < numSides; ++side)
+			for (uint16_t side = 0; side < numSides; ++side)
 			{
 				for (uint8_t lod = 0; lod < ti.numMips; ++lod)
 				{
@@ -5112,7 +5114,7 @@ namespace bgfx { namespace d3d12
 							const uint32_t slice = bx::strideAlign(bx::max<uint32_t>(mip.m_height, 4)*pitch, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 							const uint32_t size  = slice*mip.m_depth;
 
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, size);
+							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, size);
 							bimg::imageDecodeToBgra8(
 								  g_allocator
 								, temp
@@ -5133,7 +5135,7 @@ namespace bgfx { namespace d3d12
 							const uint32_t slice = bx::strideAlign( (mip.m_height/blockInfo.blockHeight)*pitch,           D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 							const uint32_t size  = slice*mip.m_depth;
 
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, size);
+							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, size);
 							bimg::imageCopy(temp
 									,  mip.m_height/blockInfo.blockHeight
 									, (mip.m_width /blockInfo.blockWidth )*mip.m_blockSize
@@ -5151,7 +5153,7 @@ namespace bgfx { namespace d3d12
 							const uint32_t pitch = bx::strideAlign(mip.m_width*mip.m_bpp / 8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 							const uint32_t slice = bx::strideAlign(mip.m_height*pitch,        D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, slice*mip.m_depth);
+							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, slice*mip.m_depth);
 							bimg::imageCopy(temp
 									, mip.m_height
 									, mip.m_width*mip.m_bpp/8
@@ -5388,7 +5390,7 @@ namespace bgfx { namespace d3d12
 				{
 					for (uint32_t lod = 0, num = ti.numMips; lod < num; ++lod)
 					{
-						BX_FREE(g_allocator, const_cast<void*>(srd[kk].pData) );
+						bx::free(g_allocator, const_cast<void*>(srd[kk].pData) );
 						++kk;
 					}
 				}
@@ -5488,7 +5490,7 @@ namespace bgfx { namespace d3d12
 
 		if (convert)
 		{
-			temp = (uint8_t*)BX_ALLOC(g_allocator, slicepitch);
+			temp = (uint8_t*)bx::alloc(g_allocator, slicepitch);
 			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat));
 			srcData = temp;
 
@@ -5529,7 +5531,7 @@ namespace bgfx { namespace d3d12
 
 		if (NULL != temp)
 		{
-			BX_FREE(g_allocator, temp);
+			bx::free(g_allocator, temp);
 		}
 
 		D3D12_RANGE writeRange = { 0, numRows*rowPitch };
@@ -6787,68 +6789,54 @@ namespace bgfx { namespace d3d12
 					}
 				}
 
-				const uint64_t newFlags = draw.m_stateFlags;
-				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
-				currentState.m_stateFlags = newFlags;
-
-				if (0 != (BGFX_STATE_PT_MASK & changedFlags) )
-				{
-					primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
-				}
-
-				const uint64_t newStencil = draw.m_stencil;
-				uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
-				currentState.m_stencil = newStencil;
-
-				if (resetState)
-				{
-					wasCompute = false;
-
-					currentState.clear();
-					currentState.m_scissor = !draw.m_scissor;
-					changedFlags = BGFX_STATE_MASK;
-					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
-					currentState.m_stateFlags = newFlags;
-					currentState.m_stencil    = newStencil;
-
-					currentBind.clear();
-
-					commandListChanged = true;
-				}
-
-				if (commandListChanged)
-				{
-					commandListChanged = false;
-
-					m_commandList->SetGraphicsRootSignature(m_rootSignature);
-					ID3D12DescriptorHeap* heaps[] = {
-						m_samplerAllocator.getHeap(),
-						scratchBuffer.getHeap(),
-					};
-					m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
-
-					currentPso             = NULL;
-					currentBindHash        = 0;
-					currentSamplerStateIdx = kInvalidHandle;
-					currentProgram         = BGFX_INVALID_HANDLE;
-					currentState.clear();
-					currentState.m_scissor = !draw.m_scissor;
-					changedFlags = BGFX_STATE_MASK;
-					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
-					currentState.m_stateFlags = newFlags;
-					currentState.m_stencil    = newStencil;
-
-					currentBind.clear();
-
-					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
-					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
-				}
-
-				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
-				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
-
 				if (0 != draw.m_streamMask)
 				{
+					const uint64_t newFlags = draw.m_stateFlags;
+					uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
+					currentState.m_stateFlags = newFlags;
+
+					if (0 != (BGFX_STATE_PT_MASK & changedFlags) )
+					{
+						primIndex = uint8_t( (newFlags&BGFX_STATE_PT_MASK)>>BGFX_STATE_PT_SHIFT);
+					}
+
+					const uint64_t newStencil = draw.m_stencil;
+					uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
+					currentState.m_stencil = newStencil;
+
+					if (resetState
+					||  commandListChanged)
+					{
+						wasCompute = false;
+						commandListChanged = false;
+
+						m_commandList->SetGraphicsRootSignature(m_rootSignature);
+						ID3D12DescriptorHeap* heaps[] = {
+							m_samplerAllocator.getHeap(),
+							scratchBuffer.getHeap(),
+						};
+						m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
+
+						currentPso             = NULL;
+						currentBindHash        = 0;
+						currentSamplerStateIdx = kInvalidHandle;
+						currentProgram         = BGFX_INVALID_HANDLE;
+						currentState.clear();
+						currentState.m_scissor = !draw.m_scissor;
+						changedFlags = BGFX_STATE_MASK;
+						changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
+						currentState.m_stateFlags = newFlags;
+						currentState.m_stencil    = newStencil;
+
+						currentBind.clear();
+
+						const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
+						primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
+					}
+
+					bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
+					rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
+
 					currentState.m_streamMask             = draw.m_streamMask;
 					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
 					currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
@@ -6891,23 +6879,23 @@ namespace bgfx { namespace d3d12
 						}
 					}
 
-					ID3D12PipelineState* pso =
-						getPipelineState(state
-							, draw.m_stencil
-							, numStreams
-							, layouts
-							, key.m_program
-							, uint8_t(draw.m_instanceDataStride/16)
-							);
+					ID3D12PipelineState* pso = getPipelineState(
+						  state
+						, draw.m_stencil
+						, numStreams
+						, layouts
+						, key.m_program
+						, uint8_t(draw.m_instanceDataStride/16)
+						);
 
-					uint16_t scissor = draw.m_scissor;
-					uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
+					const uint32_t bindHash = bx::hash<bx::HashMurmur2A>(renderBind.m_bind, sizeof(renderBind.m_bind) );
+
 					if (currentBindHash != bindHash
 					||  0 != changedStencil
 					|| (hasFactor && blendFactor != draw.m_rgba)
 					|| (0 != (BGFX_STATE_PT_MASK & changedFlags)
 					||  prim.m_topology != s_primInfo[primIndex].m_topology)
-					||  currentState.m_scissor != scissor
+					||  currentState.m_scissor != draw.m_scissor
 					||  pso != currentPso
 					||  hasOcclusionQuery)
 					{
@@ -7053,6 +7041,7 @@ namespace bgfx { namespace d3d12
 						m_commandList->IASetPrimitiveTopology(prim.m_topology);
 					}
 
+					const uint16_t scissor = draw.m_scissor;
 					if (currentState.m_scissor != scissor)
 					{
 						currentState.m_scissor = scissor;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -54,14 +54,14 @@ namespace bgfx
 #if BGFX_CONFIG_USE_TINYSTL
 	void* TinyStlAllocator::static_allocate(size_t _bytes)
 	{
-		return BX_ALLOC(g_allocator, _bytes);
+		return bx::alloc(g_allocator, _bytes);
 	}
 
 	void TinyStlAllocator::static_deallocate(void* _ptr, size_t /*_bytes*/)
 	{
 		if (NULL != _ptr)
 		{
-			BX_FREE(g_allocator, _ptr);
+			bx::free(g_allocator, _ptr);
 		}
 	}
 #endif // BGFX_CONFIG_USE_TINYSTL
@@ -199,7 +199,7 @@ namespace bgfx
 					}
 					else
 					{
-						bx::alignedFree(this, _ptr, _align, _file, _line);
+						bx::alignedFree(this, _ptr, _align, bx::Location(_file, _line) );
 					}
 				}
 
@@ -220,7 +220,7 @@ namespace bgfx
 					return ::malloc(_size);
 				}
 
-				return bx::alignedAlloc(this, _size, _align, _file, _line);
+				return bx::alignedAlloc(this, _size, _align, bx::Location(_file, _line) );
 			}
 
 			if (kNaturalAlignment >= _align)
@@ -237,7 +237,7 @@ namespace bgfx
 				return ::realloc(_ptr, _size);
 			}
 
-			return bx::alignedRealloc(this, _ptr, _size, _align, _file, _line);
+			return bx::alignedRealloc(this, _ptr, _size, _align, bx::Location(_file, _line) );
 		}
 
 		void checkLeaks();
@@ -1913,6 +1913,7 @@ namespace bgfx
 		m_flipped = true;
 		m_debug   = BGFX_DEBUG_NONE;
 		m_frameTimeLast = bx::getHPCounter();
+		m_flipAfterRender = !!(m_init.resolution.reset & BGFX_RESET_FLIP_AFTER_RENDER);
 
 		m_submit->create(_init.limits.minResourceCbSize);
 
@@ -1969,8 +1970,8 @@ namespace bgfx
 		frameNoRenderWait();
 
 		m_encoderHandle = bx::createHandleAlloc(g_allocator, _init.limits.maxEncoders);
-		m_encoder       = (EncoderImpl*)BX_ALIGNED_ALLOC(g_allocator, sizeof(EncoderImpl)*_init.limits.maxEncoders, BX_ALIGNOF(EncoderImpl) );
-		m_encoderStats  = (EncoderStats*)BX_ALLOC(g_allocator, sizeof(EncoderStats)*_init.limits.maxEncoders);
+		m_encoder       = (EncoderImpl*)bx::alignedAlloc(g_allocator, sizeof(EncoderImpl)*_init.limits.maxEncoders, BX_ALIGNOF(EncoderImpl) );
+		m_encoderStats  = (EncoderStats*)bx::alloc(g_allocator, sizeof(EncoderStats)*_init.limits.maxEncoders);
 		for (uint32_t ii = 0, num = _init.limits.maxEncoders; ii < num; ++ii)
 		{
 			BX_PLACEMENT_NEW(&m_encoder[ii], EncoderImpl);
@@ -2080,8 +2081,8 @@ namespace bgfx
 			m_encoder[ii].~EncoderImpl();
 		}
 
-		BX_ALIGNED_FREE(g_allocator, m_encoder, BX_ALIGNOF(EncoderImpl) );
-		BX_FREE(g_allocator, m_encoderStats);
+		bx::alignedFree(g_allocator, m_encoder, BX_ALIGNOF(EncoderImpl) );
+		bx::free(g_allocator, m_encoderStats);
 
 		m_dynVertexBufferAllocator.compact();
 		m_dynIndexBufferAllocator.compact();
@@ -3562,21 +3563,21 @@ namespace bgfx
 		switch (errorState)
 		{
 		case ErrorState::ContextAllocated:
-			BX_ALIGNED_DELETE(g_allocator, s_ctx, Context::kAlignment);
+			bx::deleteObject(g_allocator, s_ctx, Context::kAlignment);
 			s_ctx = NULL;
 			BX_FALLTHROUGH;
 
 		case ErrorState::Default:
 			if (NULL != s_callbackStub)
 			{
-				BX_DELETE(g_allocator, s_callbackStub);
+				bx::deleteObject(g_allocator, s_callbackStub);
 				s_callbackStub = NULL;
 			}
 
 			if (NULL != s_allocatorStub)
 			{
 				bx::DefaultAllocator allocator;
-				BX_DELETE(&allocator, s_allocatorStub);
+				bx::deleteObject(&allocator, s_allocatorStub);
 				s_allocatorStub = NULL;
 			}
 
@@ -3598,7 +3599,7 @@ namespace bgfx
 		ctx->shutdown();
 		BX_ASSERT(NULL == s_ctx, "bgfx is should be uninitialized here.");
 
-		BX_ALIGNED_DELETE(g_allocator, ctx, Context::kAlignment);
+		bx::deleteObject(g_allocator, ctx, Context::kAlignment);
 
 		BX_TRACE("Shutdown complete.");
 
@@ -3609,14 +3610,14 @@ namespace bgfx
 
 		if (NULL != s_callbackStub)
 		{
-			BX_DELETE(g_allocator, s_callbackStub);
+			bx::deleteObject(g_allocator, s_callbackStub);
 			s_callbackStub = NULL;
 		}
 
 		if (NULL != s_allocatorStub)
 		{
 			bx::DefaultAllocator allocator;
-			BX_DELETE(&allocator, s_allocatorStub);
+			bx::deleteObject(&allocator, s_allocatorStub);
 			s_allocatorStub = NULL;
 		}
 
@@ -4065,7 +4066,7 @@ namespace bgfx
 	const Memory* alloc(uint32_t _size)
 	{
 		BX_ASSERT(0 < _size, "Invalid memory operation. _size is 0.");
-		Memory* mem = (Memory*)BX_ALLOC(g_allocator, sizeof(Memory) + _size);
+		Memory* mem = (Memory*)bx::alloc(g_allocator, sizeof(Memory) + _size);
 		mem->size = _size;
 		mem->data = (uint8_t*)mem + sizeof(Memory);
 		return mem;
@@ -4088,7 +4089,7 @@ namespace bgfx
 
 	const Memory* makeRef(const void* _data, uint32_t _size, ReleaseFn _releaseFn, void* _userData)
 	{
-		MemoryRef* memRef = (MemoryRef*)BX_ALLOC(g_allocator, sizeof(MemoryRef) );
+		MemoryRef* memRef = (MemoryRef*)bx::alloc(g_allocator, sizeof(MemoryRef) );
 		memRef->mem.size  = _size;
 		memRef->mem.data  = (uint8_t*)_data;
 		memRef->releaseFn = _releaseFn;
@@ -4113,7 +4114,7 @@ namespace bgfx
 				memRef->releaseFn(mem->data, memRef->userData);
 			}
 		}
-		BX_FREE(g_allocator, mem);
+		bx::free(g_allocator, mem);
 	}
 
 	void setDebug(uint32_t _debug)

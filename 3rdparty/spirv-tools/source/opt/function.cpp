@@ -15,9 +15,7 @@
 #include "source/opt/function.h"
 
 #include <ostream>
-#include <sstream>
 
-#include "function.h"
 #include "ir_context.h"
 #include "source/util/bit_vector.h"
 
@@ -264,7 +262,7 @@ std::string Function::PrettyPrint(uint32_t options) const {
   std::ostringstream str;
   ForEachInst([&str, options](const Instruction* inst) {
     str << inst->PrettyPrint(options);
-    if (inst->opcode() != SpvOpFunctionEnd) {
+    if (inst->opcode() != spv::Op::OpFunctionEnd) {
       str << std::endl;
     }
   });

@@ -157,7 +157,7 @@ namespace {
     }
 
     // Print helpful usage message to stdout, and exit
-    void usage(const char* const name, const char* const msg = 0)
+    void usage(const char* const name, const char* const msg = nullptr)
     {
         if (msg)
             std::cout << msg << std::endl << std::endl;
@@ -245,7 +245,7 @@ namespace {
                 verbosity = 1;
 
                 if (a < argc) {
-                    char* end_ptr = 0;
+                    char* end_ptr = nullptr;
                     int verb = ::strtol(argv[a], &end_ptr, 10);
                     // If we have not read to the end of the string or
                     // the string contained no elements, then we do not want to
@@ -352,13 +352,11 @@ int main(int argc, char** argv)
     int                      opts;
     int                      verbosity;
 
-#ifdef use_cpp11
     // handle errors by exiting
     spv::spirvbin_t::registerErrorHandler(errHandler);
 
     // Log messages to std::cout
     spv::spirvbin_t::registerLogHandler(logHandler);
-#endif
 
     if (argc < 2)
         usage(argv[0]);

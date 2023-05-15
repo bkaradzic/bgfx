@@ -136,10 +136,10 @@ class Module {
   std::vector<const Instruction*> GetConstants() const;
 
   // Return result id of global value with |opcode|, 0 if not present.
-  uint32_t GetGlobalValue(SpvOp opcode) const;
+  uint32_t GetGlobalValue(spv::Op opcode) const;
 
   // Add global value with |opcode|, |result_id| and |type_id|
-  void AddGlobalValue(SpvOp opcode, uint32_t result_id, uint32_t type_id);
+  void AddGlobalValue(spv::Op opcode, uint32_t result_id, uint32_t type_id);
 
   inline uint32_t id_bound() const { return header_.bound; }
 

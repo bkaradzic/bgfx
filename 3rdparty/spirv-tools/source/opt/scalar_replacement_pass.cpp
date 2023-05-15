@@ -19,19 +19,18 @@
 #include <tuple>
 #include <utility>
 
-#include "source/enum_string_mapping.h"
 #include "source/extensions.h"
 #include "source/opt/reflect.h"
 #include "source/opt/types.h"
 #include "source/util/make_unique.h"
-#include "types.h"
-
-static const uint32_t kDebugValueOperandValueIndex = 5;
-static const uint32_t kDebugValueOperandExpressionIndex = 6;
-static const uint32_t kDebugDeclareOperandVariableIndex = 5;
 
 namespace spvtools {
 namespace opt {
+namespace {
+constexpr uint32_t kDebugValueOperandValueIndex = 5;
+constexpr uint32_t kDebugValueOperandExpressionIndex = 6;
+constexpr uint32_t kDebugDeclareOperandVariableIndex = 5;
+}  // namespace
 
 Pass::Status ScalarReplacementPass::Process() {
   Status status = Status::SuccessWithoutChange;
@@ -56,7 +55,7 @@ Pass::Status ScalarReplacementPass::ProcessFunction(Function* function) {
   for (auto iter = entry.begin(); iter != entry.end(); ++iter) {
     // Function storage class OpVariables must appear as the first instructions
     // of the entry block.
-    if (iter->opcode() != SpvOpVariable) break;
+    if (iter->opcode() != spv::Op::OpVariable) break;
 
     Instruction* varInst = &*iter;
     if (CanReplaceVariable(varInst)) {
@@ -105,29 +104,29 @@ Pass::Status ScalarReplacementPass::ReplaceVariable(
         }
         if (!IsAnnotationInst(user->opcode())) {
           switch (user->opcode()) {
-            case SpvOpLoad:
+            case spv::Op::OpLoad:
               if (ReplaceWholeLoad(user, replacements)) {
                 dead.push_back(user);
               } else {
                 return false;
               }
               break;
-            case SpvOpStore:
+            case spv::Op::OpStore:
               if (ReplaceWholeStore(user, replacements)) {
                 dead.push_back(user);
               } else {
                 return false;
               }
               break;
-            case SpvOpAccessChain:
-            case SpvOpInBoundsAccessChain:
+            case spv::Op::OpAccessChain:
+            case spv::Op::OpInBoundsAccessChain:
               if (ReplaceAccessChain(user, replacements))
                 dead.push_back(user);
               else
                 return false;
               break;
-            case SpvOpName:
-            case SpvOpMemberName:
+            case spv::Op::OpName:
+            case spv::Op::OpMemberName:
               break;
             default:
               assert(false && "Unexpected opcode");
@@ -155,7 +154,7 @@ Pass::Status ScalarReplacementPass::ReplaceVariable(
 
   // Attempt to further scalarize.
   for (auto var : replacements) {
-    if (var->opcode() == SpvOpVariable) {
+    if (var->opcode() == spv::Op::OpVariable) {
       if (get_def_use_mgr()->NumUsers(var) == 0) {
         context()->KillInst(var);
       } else if (CanReplaceVariable(var)) {
@@ -179,7 +178,7 @@ bool ScalarReplacementPass::ReplaceWholeDebugDeclare(
   int32_t idx = 0;
   for (const auto* var : replacements) {
     Instruction* insert_before = var->NextNode();
-    while (insert_before->opcode() == SpvOpVariable)
+    while (insert_before->opcode() == spv::Op::OpVariable)
       insert_before = insert_before->NextNode();
     assert(insert_before != nullptr && "unexpected end of list");
     Instruction* added_dbg_value =
@@ -190,7 +189,7 @@ bool ScalarReplacementPass::ReplaceWholeDebugDeclare(
     if (added_dbg_value == nullptr) return false;
     added_dbg_value->AddOperand(
         {SPV_OPERAND_TYPE_ID,
-         {context()->get_constant_mgr()->GetSIntConst(idx)}});
+         {context()->get_constant_mgr()->GetSIntConstId(idx)}});
     added_dbg_value->SetOperand(kDebugValueOperandExpressionIndex,
                                 {deref_expr->result_id()});
     if (context()->AreAnalysesValid(IRContext::Analysis::kAnalysisDefUse)) {
@@ -216,7 +215,7 @@ bool ScalarReplacementPass::ReplaceWholeDebugValue(
     // Append 'Indexes' operand.
     new_dbg_value->AddOperand(
         {SPV_OPERAND_TYPE_ID,
-         {context()->get_constant_mgr()->GetSIntConst(idx)}});
+         {context()->get_constant_mgr()->GetSIntConstId(idx)}});
     // Insert the new DebugValue to the basic block.
     auto* added_instr = dbg_value->InsertBefore(std::move(new_dbg_value));
     get_def_use_mgr()->AnalyzeInstDefUse(added_instr);
@@ -236,7 +235,7 @@ bool ScalarReplacementPass::ReplaceWholeLoad(
   BasicBlock::iterator where(load);
   for (auto var : replacements) {
     // Create a load of each replacement variable.
-    if (var->opcode() != SpvOpVariable) {
+    if (var->opcode() != spv::Op::OpVariable) {
       loads.push_back(var);
       continue;
     }
@@ -247,7 +246,7 @@ bool ScalarReplacementPass::ReplaceWholeLoad(
       return false;
     }
     std::unique_ptr<Instruction> newLoad(
-        new Instruction(context(), SpvOpLoad, type->result_id(), loadId,
+        new Instruction(context(), spv::Op::OpLoad, type->result_id(), loadId,
                         std::initializer_list<Operand>{
                             {SPV_OPERAND_TYPE_ID, {var->result_id()}}}));
     // Copy memory access attributes which start at index 1. Index 0 is the
@@ -269,8 +268,9 @@ bool ScalarReplacementPass::ReplaceWholeLoad(
     return false;
   }
   where = load;
-  std::unique_ptr<Instruction> compositeConstruct(new Instruction(
-      context(), SpvOpCompositeConstruct, load->type_id(), compositeId, {}));
+  std::unique_ptr<Instruction> compositeConstruct(
+      new Instruction(context(), spv::Op::OpCompositeConstruct, load->type_id(),
+                      compositeId, {}));
   for (auto l : loads) {
     Operand op(SPV_OPERAND_TYPE_ID,
                std::initializer_list<uint32_t>{l->result_id()});
@@ -294,7 +294,7 @@ bool ScalarReplacementPass::ReplaceWholeStore(
   uint32_t elementIndex = 0;
   for (auto var : replacements) {
     // Create the extract.
-    if (var->opcode() != SpvOpVariable) {
+    if (var->opcode() != spv::Op::OpVariable) {
       elementIndex++;
       continue;
     }
@@ -305,7 +305,7 @@ bool ScalarReplacementPass::ReplaceWholeStore(
       return false;
     }
     std::unique_ptr<Instruction> extract(new Instruction(
-        context(), SpvOpCompositeExtract, type->result_id(), extractId,
+        context(), spv::Op::OpCompositeExtract, type->result_id(), extractId,
         std::initializer_list<Operand>{
             {SPV_OPERAND_TYPE_ID, {storeInput}},
             {SPV_OPERAND_TYPE_LITERAL_INTEGER, {elementIndex++}}}));
@@ -316,7 +316,7 @@ bool ScalarReplacementPass::ReplaceWholeStore(
 
     // Create the store.
     std::unique_ptr<Instruction> newStore(
-        new Instruction(context(), SpvOpStore, 0, 0,
+        new Instruction(context(), spv::Op::OpStore, 0, 0,
                         std::initializer_list<Operand>{
                             {SPV_OPERAND_TYPE_ID, {var->result_id()}},
                             {SPV_OPERAND_TYPE_ID, {extractId}}}));
@@ -390,7 +390,7 @@ bool ScalarReplacementPass::CreateReplacementVariables(
 
   uint32_t elem = 0;
   switch (type->opcode()) {
-    case SpvOpTypeStruct:
+    case spv::Op::OpTypeStruct:
       type->ForEachInOperand(
           [this, inst, &elem, replacements, &components_used](uint32_t* id) {
             if (!components_used || components_used->count(elem)) {
@@ -401,7 +401,7 @@ bool ScalarReplacementPass::CreateReplacementVariables(
             elem++;
           });
       break;
-    case SpvOpTypeArray:
+    case spv::Op::OpTypeArray:
       for (uint32_t i = 0; i != GetArrayLength(type); ++i) {
         if (!components_used || components_used->count(i)) {
           CreateVariable(type->GetSingleWordInOperand(0u), inst, i,
@@ -413,8 +413,8 @@ bool ScalarReplacementPass::CreateReplacementVariables(
       }
       break;
 
-    case SpvOpTypeMatrix:
-    case SpvOpTypeVector:
+    case spv::Op::OpTypeMatrix:
+    case spv::Op::OpTypeVector:
       for (uint32_t i = 0; i != GetNumElements(type); ++i) {
         CreateVariable(type->GetSingleWordInOperand(0u), inst, i, replacements);
       }
@@ -440,20 +440,20 @@ void ScalarReplacementPass::TransferAnnotations(
   // no type or member decorations that are necessary to transfer.
   for (auto inst :
        get_decoration_mgr()->GetDecorationsFor(source->result_id(), false)) {
-    assert(inst->opcode() == SpvOpDecorate);
-    uint32_t decoration = inst->GetSingleWordInOperand(1u);
-    if (decoration == SpvDecorationInvariant ||
-        decoration == SpvDecorationRestrict) {
+    assert(inst->opcode() == spv::Op::OpDecorate);
+    auto decoration = spv::Decoration(inst->GetSingleWordInOperand(1u));
+    if (decoration == spv::Decoration::Invariant ||
+        decoration == spv::Decoration::Restrict) {
       for (auto var : *replacements) {
         if (var == nullptr) {
           continue;
         }
 
-        std::unique_ptr<Instruction> annotation(
-            new Instruction(context(), SpvOpDecorate, 0, 0,
-                            std::initializer_list<Operand>{
-                                {SPV_OPERAND_TYPE_ID, {var->result_id()}},
-                                {SPV_OPERAND_TYPE_DECORATION, {decoration}}}));
+        std::unique_ptr<Instruction> annotation(new Instruction(
+            context(), spv::Op::OpDecorate, 0, 0,
+            std::initializer_list<Operand>{
+                {SPV_OPERAND_TYPE_ID, {var->result_id()}},
+                {SPV_OPERAND_TYPE_DECORATION, {uint32_t(decoration)}}}));
         for (uint32_t i = 2; i < inst->NumInOperands(); ++i) {
           Operand copy(inst->GetInOperand(i));
           annotation->AddOperand(std::move(copy));
@@ -466,60 +466,32 @@ void ScalarReplacementPass::TransferAnnotations(
 }
 
 void ScalarReplacementPass::CreateVariable(
-    uint32_t typeId, Instruction* varInst, uint32_t index,
+    uint32_t type_id, Instruction* var_inst, uint32_t index,
     std::vector<Instruction*>* replacements) {
-  uint32_t ptrId = GetOrCreatePointerType(typeId);
+  uint32_t ptr_id = GetOrCreatePointerType(type_id);
   uint32_t id = TakeNextId();
 
   if (id == 0) {
     replacements->push_back(nullptr);
   }
 
-  std::unique_ptr<Instruction> variable(new Instruction(
-      context(), SpvOpVariable, ptrId, id,
-      std::initializer_list<Operand>{
-          {SPV_OPERAND_TYPE_STORAGE_CLASS, {SpvStorageClassFunction}}}));
+  std::unique_ptr<Instruction> variable(
+      new Instruction(context(), spv::Op::OpVariable, ptr_id, id,
+                      std::initializer_list<Operand>{
+                          {SPV_OPERAND_TYPE_STORAGE_CLASS,
+                           {uint32_t(spv::StorageClass::Function)}}}));
 
-  BasicBlock* block = context()->get_instr_block(varInst);
+  BasicBlock* block = context()->get_instr_block(var_inst);
   block->begin().InsertBefore(std::move(variable));
   Instruction* inst = &*block->begin();
 
   // If varInst was initialized, make sure to initialize its replacement.
-  GetOrCreateInitialValue(varInst, index, inst);
+  GetOrCreateInitialValue(var_inst, index, inst);
   get_def_use_mgr()->AnalyzeInstDefUse(inst);
   context()->set_instr_block(inst, block);
 
-  // Copy decorations from the member to the new variable.
-  Instruction* typeInst = GetStorageType(varInst);
-  for (auto dec_inst :
-       get_decoration_mgr()->GetDecorationsFor(typeInst->result_id(), false)) {
-    uint32_t decoration;
-    if (dec_inst->opcode() != SpvOpMemberDecorate) {
-      continue;
-    }
-
-    if (dec_inst->GetSingleWordInOperand(1) != index) {
-      continue;
-    }
-
-    decoration = dec_inst->GetSingleWordInOperand(2u);
-    switch (decoration) {
-      case SpvDecorationRelaxedPrecision: {
-        std::unique_ptr<Instruction> new_dec_inst(
-            new Instruction(context(), SpvOpDecorate, 0, 0, {}));
-        new_dec_inst->AddOperand(Operand(SPV_OPERAND_TYPE_ID, {id}));
-        for (uint32_t i = 2; i < dec_inst->NumInOperandWords(); ++i) {
-          new_dec_inst->AddOperand(Operand(dec_inst->GetInOperand(i)));
-        }
-        context()->AddAnnotationInst(std::move(new_dec_inst));
-      } break;
-      default:
-        break;
-    }
-  }
-
-  // Update the DebugInfo debug information.
-  inst->UpdateDebugInfoFrom(varInst);
+  CopyDecorationsToVariable(var_inst, inst, index);
+  inst->UpdateDebugInfoFrom(var_inst);
 
   replacements->push_back(inst);
 }
@@ -528,57 +500,17 @@ uint32_t ScalarReplacementPass::GetOrCreatePointerType(uint32_t id) {
   auto iter = pointee_to_pointer_.find(id);
   if (iter != pointee_to_pointer_.end()) return iter->second;
 
-  analysis::Type* pointeeTy;
-  std::unique_ptr<analysis::Pointer> pointerTy;
-  std::tie(pointeeTy, pointerTy) =
-      context()->get_type_mgr()->GetTypeAndPointerType(id,
-                                                       SpvStorageClassFunction);
-  uint32_t ptrId = 0;
-  if (pointeeTy->IsUniqueType()) {
-    // Non-ambiguous type, just ask the type manager for an id.
-    ptrId = context()->get_type_mgr()->GetTypeInstruction(pointerTy.get());
-    pointee_to_pointer_[id] = ptrId;
-    return ptrId;
-  }
-
-  // Ambiguous type. We must perform a linear search to try and find the right
-  // type.
-  for (auto global : context()->types_values()) {
-    if (global.opcode() == SpvOpTypePointer &&
-        global.GetSingleWordInOperand(0u) == SpvStorageClassFunction &&
-        global.GetSingleWordInOperand(1u) == id) {
-      if (get_decoration_mgr()->GetDecorationsFor(id, false).empty()) {
-        // Only reuse a decoration-less pointer of the correct type.
-        ptrId = global.result_id();
-        break;
-      }
-    }
-  }
-
-  if (ptrId != 0) {
-    pointee_to_pointer_[id] = ptrId;
-    return ptrId;
-  }
-
-  ptrId = TakeNextId();
-  context()->AddType(MakeUnique<Instruction>(
-      context(), SpvOpTypePointer, 0, ptrId,
-      std::initializer_list<Operand>{
-          {SPV_OPERAND_TYPE_STORAGE_CLASS, {SpvStorageClassFunction}},
-          {SPV_OPERAND_TYPE_ID, {id}}}));
-  Instruction* ptr = &*--context()->types_values_end();
-  get_def_use_mgr()->AnalyzeInstDefUse(ptr);
-  pointee_to_pointer_[id] = ptrId;
-  // Register with the type manager if necessary.
-  context()->get_type_mgr()->RegisterType(ptrId, *pointerTy);
-
-  return ptrId;
+  analysis::TypeManager* type_mgr = context()->get_type_mgr();
+  uint32_t ptr_type_id =
+      type_mgr->FindPointerToType(id, spv::StorageClass::Function);
+  pointee_to_pointer_[id] = ptr_type_id;
+  return ptr_type_id;
 }
 
 void ScalarReplacementPass::GetOrCreateInitialValue(Instruction* source,
                                                     uint32_t index,
                                                     Instruction* newVar) {
-  assert(source->opcode() == SpvOpVariable);
+  assert(source->opcode() == spv::Op::OpVariable);
   if (source->NumInOperands() < 2) return;
 
   uint32_t initId = source->GetSingleWordInOperand(1u);
@@ -586,14 +518,14 @@ void ScalarReplacementPass::GetOrCreateInitialValue(Instruction* source,
   Instruction* init = get_def_use_mgr()->GetDef(initId);
   uint32_t newInitId = 0;
   // TODO(dnovillo): Refactor this with constant propagation.
-  if (init->opcode() == SpvOpConstantNull) {
+  if (init->opcode() == spv::Op::OpConstantNull) {
     // Initialize to appropriate NULL.
     auto iter = type_to_null_.find(storageId);
     if (iter == type_to_null_.end()) {
       newInitId = TakeNextId();
       type_to_null_[storageId] = newInitId;
       context()->AddGlobalValue(
-          MakeUnique<Instruction>(context(), SpvOpConstantNull, storageId,
+          MakeUnique<Instruction>(context(), spv::Op::OpConstantNull, storageId,
                                   newInitId, std::initializer_list<Operand>{}));
       Instruction* newNull = &*--context()->types_values_end();
       get_def_use_mgr()->AnalyzeInstDefUse(newNull);
@@ -604,18 +536,19 @@ void ScalarReplacementPass::GetOrCreateInitialValue(Instruction* source,
     // Create a new constant extract.
     newInitId = TakeNextId();
     context()->AddGlobalValue(MakeUnique<Instruction>(
-        context(), SpvOpSpecConstantOp, storageId, newInitId,
+        context(), spv::Op::OpSpecConstantOp, storageId, newInitId,
         std::initializer_list<Operand>{
-            {SPV_OPERAND_TYPE_SPEC_CONSTANT_OP_NUMBER, {SpvOpCompositeExtract}},
+            {SPV_OPERAND_TYPE_SPEC_CONSTANT_OP_NUMBER,
+             {uint32_t(spv::Op::OpCompositeExtract)}},
             {SPV_OPERAND_TYPE_ID, {init->result_id()}},
             {SPV_OPERAND_TYPE_LITERAL_INTEGER, {index}}}));
     Instruction* newSpecConst = &*--context()->types_values_end();
     get_def_use_mgr()->AnalyzeInstDefUse(newSpecConst);
-  } else if (init->opcode() == SpvOpConstantComposite) {
+  } else if (init->opcode() == spv::Op::OpConstantComposite) {
     // Get the appropriate index constant.
     newInitId = init->GetSingleWordInOperand(index);
     Instruction* element = get_def_use_mgr()->GetDef(newInitId);
-    if (element->opcode() == SpvOpUndef) {
+    if (element->opcode() == spv::Op::OpUndef) {
       // Undef is not a valid initializer for a variable.
       newInitId = 0;
     }
@@ -630,7 +563,7 @@ void ScalarReplacementPass::GetOrCreateInitialValue(Instruction* source,
 
 uint64_t ScalarReplacementPass::GetArrayLength(
     const Instruction* arrayType) const {
-  assert(arrayType->opcode() == SpvOpTypeArray);
+  assert(arrayType->opcode() == spv::Op::OpTypeArray);
   const Instruction* length =
       get_def_use_mgr()->GetDef(arrayType->GetSingleWordInOperand(1u));
   return context()
@@ -640,8 +573,8 @@ uint64_t ScalarReplacementPass::GetArrayLength(
 }
 
 uint64_t ScalarReplacementPass::GetNumElements(const Instruction* type) const {
-  assert(type->opcode() == SpvOpTypeVector ||
-         type->opcode() == SpvOpTypeMatrix);
+  assert(type->opcode() == spv::Op::OpTypeVector ||
+         type->opcode() == spv::Op::OpTypeMatrix);
   const Operand& op = type->GetInOperand(1u);
   assert(op.words.size() <= 2);
   uint64_t len = 0;
@@ -659,7 +592,7 @@ bool ScalarReplacementPass::IsSpecConstant(uint32_t id) const {
 
 Instruction* ScalarReplacementPass::GetStorageType(
     const Instruction* inst) const {
-  assert(inst->opcode() == SpvOpVariable);
+  assert(inst->opcode() == spv::Op::OpVariable);
 
   uint32_t ptrTypeId = inst->type_id();
   uint32_t typeId =
@@ -669,10 +602,11 @@ Instruction* ScalarReplacementPass::GetStorageType(
 
 bool ScalarReplacementPass::CanReplaceVariable(
     const Instruction* varInst) const {
-  assert(varInst->opcode() == SpvOpVariable);
+  assert(varInst->opcode() == spv::Op::OpVariable);
 
   // Can only replace function scope variables.
-  if (varInst->GetSingleWordInOperand(0u) != SpvStorageClassFunction) {
+  if (spv::StorageClass(varInst->GetSingleWordInOperand(0u)) !=
+      spv::StorageClass::Function) {
     return false;
   }
 
@@ -702,14 +636,14 @@ bool ScalarReplacementPass::CheckType(const Instruction* typeInst) const {
   }
 
   switch (typeInst->opcode()) {
-    case SpvOpTypeStruct:
+    case spv::Op::OpTypeStruct:
       // Don't bother with empty structs or very large structs.
       if (typeInst->NumInOperands() == 0 ||
           IsLargerThanSizeLimit(typeInst->NumInOperands())) {
         return false;
       }
       return true;
-    case SpvOpTypeArray:
+    case spv::Op::OpTypeArray:
       if (IsSpecConstant(typeInst->GetSingleWordInOperand(1u))) {
         return false;
       }
@@ -721,12 +655,12 @@ bool ScalarReplacementPass::CheckType(const Instruction* typeInst) const {
       // re-enabled.
       //// Specifically including matrix and vector in an attempt to reduce the
       //// number of vector registers required.
-      // case SpvOpTypeMatrix:
-      // case SpvOpTypeVector:
+      // case spv::Op::OpTypeMatrix:
+      // case spv::Op::OpTypeVector:
       //  if (IsLargerThanSizeLimit(GetNumElements(typeInst))) return false;
       //  return true;
 
-    case SpvOpTypeRuntimeArray:
+    case spv::Op::OpTypeRuntimeArray:
     default:
       return false;
   }
@@ -737,26 +671,28 @@ bool ScalarReplacementPass::CheckTypeAnnotations(
   for (auto inst :
        get_decoration_mgr()->GetDecorationsFor(typeInst->result_id(), false)) {
     uint32_t decoration;
-    if (inst->opcode() == SpvOpDecorate) {
+    if (inst->opcode() == spv::Op::OpDecorate) {
       decoration = inst->GetSingleWordInOperand(1u);
     } else {
-      assert(inst->opcode() == SpvOpMemberDecorate);
+      assert(inst->opcode() == spv::Op::OpMemberDecorate);
       decoration = inst->GetSingleWordInOperand(2u);
     }
 
-    switch (decoration) {
-      case SpvDecorationRowMajor:
-      case SpvDecorationColMajor:
-      case SpvDecorationArrayStride:
-      case SpvDecorationMatrixStride:
-      case SpvDecorationCPacked:
-      case SpvDecorationInvariant:
-      case SpvDecorationRestrict:
-      case SpvDecorationOffset:
-      case SpvDecorationAlignment:
-      case SpvDecorationAlignmentId:
-      case SpvDecorationMaxByteOffset:
-      case SpvDecorationRelaxedPrecision:
+    switch (spv::Decoration(decoration)) {
+      case spv::Decoration::RowMajor:
+      case spv::Decoration::ColMajor:
+      case spv::Decoration::ArrayStride:
+      case spv::Decoration::MatrixStride:
+      case spv::Decoration::CPacked:
+      case spv::Decoration::Invariant:
+      case spv::Decoration::Restrict:
+      case spv::Decoration::Offset:
+      case spv::Decoration::Alignment:
+      case spv::Decoration::AlignmentId:
+      case spv::Decoration::MaxByteOffset:
+      case spv::Decoration::RelaxedPrecision:
+      case spv::Decoration::AliasedPointer:
+      case spv::Decoration::RestrictPointer:
         break;
       default:
         return false;
@@ -769,14 +705,16 @@ bool ScalarReplacementPass::CheckTypeAnnotations(
 bool ScalarReplacementPass::CheckAnnotations(const Instruction* varInst) const {
   for (auto inst :
        get_decoration_mgr()->GetDecorationsFor(varInst->result_id(), false)) {
-    assert(inst->opcode() == SpvOpDecorate);
-    uint32_t decoration = inst->GetSingleWordInOperand(1u);
+    assert(inst->opcode() == spv::Op::OpDecorate);
+    auto decoration = spv::Decoration(inst->GetSingleWordInOperand(1u));
     switch (decoration) {
-      case SpvDecorationInvariant:
-      case SpvDecorationRestrict:
-      case SpvDecorationAlignment:
-      case SpvDecorationAlignmentId:
-      case SpvDecorationMaxByteOffset:
+      case spv::Decoration::Invariant:
+      case spv::Decoration::Restrict:
+      case spv::Decoration::Alignment:
+      case spv::Decoration::AlignmentId:
+      case spv::Decoration::MaxByteOffset:
+      case spv::Decoration::AliasedPointer:
+      case spv::Decoration::RestrictPointer:
         break;
       default:
         return false;
@@ -816,8 +754,8 @@ bool ScalarReplacementPass::CheckUses(const Instruction* inst,
     // Annotations are check as a group separately.
     if (!IsAnnotationInst(user->opcode())) {
       switch (user->opcode()) {
-        case SpvOpAccessChain:
-        case SpvOpInBoundsAccessChain:
+        case spv::Op::OpAccessChain:
+        case spv::Op::OpInBoundsAccessChain:
           if (index == 2u && user->NumInOperands() > 1) {
             uint32_t id = user->GetSingleWordInOperand(1u);
             const Instruction* opInst = get_def_use_mgr()->GetDef(id);
@@ -835,16 +773,16 @@ bool ScalarReplacementPass::CheckUses(const Instruction* inst,
             ok = false;
           }
           break;
-        case SpvOpLoad:
+        case spv::Op::OpLoad:
           if (!CheckLoad(user, index)) ok = false;
           stats->num_full_accesses++;
           break;
-        case SpvOpStore:
+        case spv::Op::OpStore:
           if (!CheckStore(user, index)) ok = false;
           stats->num_full_accesses++;
           break;
-        case SpvOpName:
-        case SpvOpMemberName:
+        case spv::Op::OpName:
+        case spv::Op::OpMemberName:
           break;
         default:
           ok = false;
@@ -861,24 +799,24 @@ bool ScalarReplacementPass::CheckUsesRelaxed(const Instruction* inst) const {
   get_def_use_mgr()->ForEachUse(
       inst, [this, &ok](const Instruction* user, uint32_t index) {
         switch (user->opcode()) {
-          case SpvOpAccessChain:
-          case SpvOpInBoundsAccessChain:
+          case spv::Op::OpAccessChain:
+          case spv::Op::OpInBoundsAccessChain:
             if (index != 2u) {
               ok = false;
             } else {
               if (!CheckUsesRelaxed(user)) ok = false;
             }
             break;
-          case SpvOpLoad:
+          case spv::Op::OpLoad:
             if (!CheckLoad(user, index)) ok = false;
             break;
-          case SpvOpStore:
+          case spv::Op::OpStore:
             if (!CheckStore(user, index)) ok = false;
             break;
-          case SpvOpImageTexelPointer:
+          case spv::Op::OpImageTexelPointer:
             if (!CheckImageTexelPointer(index)) ok = false;
             break;
-          case SpvOpExtInst:
+          case spv::Op::OpExtInst:
             if (user->GetCommonDebugOpcode() != CommonDebugInfoDebugDeclare ||
                 !CheckDebugDeclare(index))
               ok = false;
@@ -900,7 +838,8 @@ bool ScalarReplacementPass::CheckLoad(const Instruction* inst,
                                       uint32_t index) const {
   if (index != 2u) return false;
   if (inst->NumInOperands() >= 2 &&
-      inst->GetSingleWordInOperand(1u) & SpvMemoryAccessVolatileMask)
+      inst->GetSingleWordInOperand(1u) &
+          uint32_t(spv::MemoryAccessMask::Volatile))
     return false;
   return true;
 }
@@ -909,7 +848,8 @@ bool ScalarReplacementPass::CheckStore(const Instruction* inst,
                                        uint32_t index) const {
   if (index != 0u) return false;
   if (inst->NumInOperands() >= 3 &&
-      inst->GetSingleWordInOperand(2u) & SpvMemoryAccessVolatileMask)
+      inst->GetSingleWordInOperand(2u) &
+          uint32_t(spv::MemoryAccessMask::Volatile))
     return false;
   return true;
 }
@@ -936,11 +876,11 @@ ScalarReplacementPass::GetUsedComponents(Instruction* inst) {
   def_use_mgr->WhileEachUser(inst, [&result, def_use_mgr,
                                     this](Instruction* use) {
     switch (use->opcode()) {
-      case SpvOpLoad: {
+      case spv::Op::OpLoad: {
         // Look for extract from the load.
         std::vector<uint32_t> t;
         if (def_use_mgr->WhileEachUser(use, [&t](Instruction* use2) {
-              if (use2->opcode() != SpvOpCompositeExtract ||
+              if (use2->opcode() != spv::Op::OpCompositeExtract ||
                   use2->NumInOperands() <= 1) {
                 return false;
               }
@@ -954,13 +894,13 @@ ScalarReplacementPass::GetUsedComponents(Instruction* inst) {
           return false;
         }
       }
-      case SpvOpName:
-      case SpvOpMemberName:
-      case SpvOpStore:
+      case spv::Op::OpName:
+      case spv::Op::OpMemberName:
+      case spv::Op::OpStore:
         // No components are used.
         return true;
-      case SpvOpAccessChain:
-      case SpvOpInBoundsAccessChain: {
+      case spv::Op::OpAccessChain:
+      case spv::Op::OpInBoundsAccessChain: {
         // Add the first index it if is a constant.
         // TODO: Could be improved by checking if the address is used in a load.
         analysis::ConstantManager* const_mgr = context()->get_constant_mgr();
@@ -988,21 +928,85 @@ ScalarReplacementPass::GetUsedComponents(Instruction* inst) {
 
 uint64_t ScalarReplacementPass::GetMaxLegalIndex(
     const Instruction* var_inst) const {
-  assert(var_inst->opcode() == SpvOpVariable &&
+  assert(var_inst->opcode() == spv::Op::OpVariable &&
          "|var_inst| must be a variable instruction.");
   Instruction* type = GetStorageType(var_inst);
   switch (type->opcode()) {
-    case SpvOpTypeStruct:
+    case spv::Op::OpTypeStruct:
       return type->NumInOperands();
-    case SpvOpTypeArray:
+    case spv::Op::OpTypeArray:
       return GetArrayLength(type);
-    case SpvOpTypeMatrix:
-    case SpvOpTypeVector:
+    case spv::Op::OpTypeMatrix:
+    case spv::Op::OpTypeVector:
       return GetNumElements(type);
     default:
       return 0;
   }
   return 0;
+}
+
+void ScalarReplacementPass::CopyDecorationsToVariable(Instruction* from,
+                                                      Instruction* to,
+                                                      uint32_t member_index) {
+  CopyPointerDecorationsToVariable(from, to);
+  CopyNecessaryMemberDecorationsToVariable(from, to, member_index);
+}
+
+void ScalarReplacementPass::CopyPointerDecorationsToVariable(Instruction* from,
+                                                             Instruction* to) {
+  // The RestrictPointer and AliasedPointer decorations are copied to all
+  // members even if the new variable does not contain a pointer. It does
+  // not hurt to do so.
+  for (auto dec_inst :
+       get_decoration_mgr()->GetDecorationsFor(from->result_id(), false)) {
+    uint32_t decoration;
+    decoration = dec_inst->GetSingleWordInOperand(1u);
+    switch (spv::Decoration(decoration)) {
+      case spv::Decoration::AliasedPointer:
+      case spv::Decoration::RestrictPointer: {
+        std::unique_ptr<Instruction> new_dec_inst(dec_inst->Clone(context()));
+        new_dec_inst->SetInOperand(0, {to->result_id()});
+        context()->AddAnnotationInst(std::move(new_dec_inst));
+      } break;
+      default:
+        break;
+    }
+  }
+}
+
+void ScalarReplacementPass::CopyNecessaryMemberDecorationsToVariable(
+    Instruction* from, Instruction* to, uint32_t member_index) {
+  Instruction* type_inst = GetStorageType(from);
+  for (auto dec_inst :
+       get_decoration_mgr()->GetDecorationsFor(type_inst->result_id(), false)) {
+    uint32_t decoration;
+    if (dec_inst->opcode() == spv::Op::OpMemberDecorate) {
+      if (dec_inst->GetSingleWordInOperand(1) != member_index) {
+        continue;
+      }
+
+      decoration = dec_inst->GetSingleWordInOperand(2u);
+      switch (spv::Decoration(decoration)) {
+        case spv::Decoration::ArrayStride:
+        case spv::Decoration::Alignment:
+        case spv::Decoration::AlignmentId:
+        case spv::Decoration::MaxByteOffset:
+        case spv::Decoration::MaxByteOffsetId:
+        case spv::Decoration::RelaxedPrecision: {
+          std::unique_ptr<Instruction> new_dec_inst(
+              new Instruction(context(), spv::Op::OpDecorate, 0, 0, {}));
+          new_dec_inst->AddOperand(
+              Operand(SPV_OPERAND_TYPE_ID, {to->result_id()}));
+          for (uint32_t i = 2; i < dec_inst->NumInOperandWords(); ++i) {
+            new_dec_inst->AddOperand(Operand(dec_inst->GetInOperand(i)));
+          }
+          context()->AddAnnotationInst(std::move(new_dec_inst));
+        } break;
+        default:
+          break;
+      }
+    }
+  }
 }
 
 }  // namespace opt

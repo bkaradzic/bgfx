@@ -505,6 +505,8 @@ void DecodeResourceLimits(TBuiltInResource* resources, char* config)
             resources->maxTaskWorkGroupSizeZ_EXT = value;
         else if (tokenStr == "MaxMeshViewCountEXT")
             resources->maxMeshViewCountEXT = value;
+        else if (tokenStr == "MaxDualSourceDrawBuffersEXT")
+            resources->maxDualSourceDrawBuffersEXT = value;
         else if (tokenStr == "nonInductiveForLoops")
             resources->limits.nonInductiveForLoops = (value != 0);
         else if (tokenStr == "whileLoops")

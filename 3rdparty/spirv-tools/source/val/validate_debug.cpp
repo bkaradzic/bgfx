@@ -12,11 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/val/validate.h"
-
-#include "source/opcode.h"
 #include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
+#include "source/val/validate.h"
 #include "source/val/validation_state.h"
 
 namespace spvtools {
@@ -26,7 +24,7 @@ namespace {
 spv_result_t ValidateMemberName(ValidationState_t& _, const Instruction* inst) {
   const auto type_id = inst->GetOperandAs<uint32_t>(0);
   const auto type = _.FindDef(type_id);
-  if (!type || SpvOpTypeStruct != type->opcode()) {
+  if (!type || spv::Op::OpTypeStruct != type->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpMemberName Type <id> " << _.getIdName(type_id)
            << " is not a struct type.";
@@ -45,7 +43,7 @@ spv_result_t ValidateMemberName(ValidationState_t& _, const Instruction* inst) {
 spv_result_t ValidateLine(ValidationState_t& _, const Instruction* inst) {
   const auto file_id = inst->GetOperandAs<uint32_t>(0);
   const auto file = _.FindDef(file_id);
-  if (!file || SpvOpString != file->opcode()) {
+  if (!file || spv::Op::OpString != file->opcode()) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpLine Target <id> " << _.getIdName(file_id)
            << " is not an OpString.";
@@ -57,10 +55,10 @@ spv_result_t ValidateLine(ValidationState_t& _, const Instruction* inst) {
 
 spv_result_t DebugPass(ValidationState_t& _, const Instruction* inst) {
   switch (inst->opcode()) {
-    case SpvOpMemberName:
+    case spv::Op::OpMemberName:
       if (auto error = ValidateMemberName(_, inst)) return error;
       break;
-    case SpvOpLine:
+    case spv::Op::OpLine:
       if (auto error = ValidateLine(_, inst)) return error;
       break;
     default:

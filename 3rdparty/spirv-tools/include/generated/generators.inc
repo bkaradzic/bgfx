@@ -34,3 +34,4 @@
 {33, "DragonJoker", "ShaderWriter", "DragonJoker ShaderWriter"},
 {34, "Rayan Hatout", "SPIRVSmith", "Rayan Hatout SPIRVSmith"},
 {35, "Saarland University", "Shady", "Saarland University Shady"},
+{36, "Taichi Graphics", "Taichi", "Taichi Graphics Taichi"},

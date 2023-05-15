@@ -72,7 +72,7 @@ static constexpr float M_XYZ2RGB[] =
 // Converts color representation from CIE XYZ to RGB color-space.
 Color xyzToRgb(const Color& xyz)
 {
-	Color rgb(bx::init::None);
+	Color rgb(bx::InitNone);
 	rgb.x = M_XYZ2RGB[0] * xyz.x + M_XYZ2RGB[3] * xyz.y + M_XYZ2RGB[6] * xyz.z;
 	rgb.y = M_XYZ2RGB[1] * xyz.x + M_XYZ2RGB[4] * xyz.y + M_XYZ2RGB[7] * xyz.z;
 	rgb.z = M_XYZ2RGB[2] * xyz.x + M_XYZ2RGB[5] * xyz.y + M_XYZ2RGB[8] * xyz.z;
@@ -333,7 +333,7 @@ struct ProceduralSky
 
 		bx::AllocatorI* allocator = entry::getAllocator();
 
-		ScreenPosVertex* vertices = (ScreenPosVertex*)BX_ALLOC(allocator
+		ScreenPosVertex* vertices = (ScreenPosVertex*)bx::alloc(allocator
 			, verticalCount * horizontalCount * sizeof(ScreenPosVertex)
 			);
 
@@ -347,7 +347,7 @@ struct ProceduralSky
 			}
 		}
 
-		uint16_t* indices = (uint16_t*)BX_ALLOC(allocator
+		uint16_t* indices = (uint16_t*)bx::alloc(allocator
 			, (verticalCount - 1) * (horizontalCount - 1) * 6 * sizeof(uint16_t)
 			);
 
@@ -369,8 +369,8 @@ struct ProceduralSky
 		m_vbh = bgfx::createVertexBuffer(bgfx::copy(vertices, sizeof(ScreenPosVertex) * verticalCount * horizontalCount), ScreenPosVertex::ms_layout);
 		m_ibh = bgfx::createIndexBuffer(bgfx::copy(indices, sizeof(uint16_t) * k));
 
-		BX_FREE(allocator, indices);
-		BX_FREE(allocator, vertices);
+		bx::free(allocator, indices);
+		bx::free(allocator, vertices);
 	}
 
 	void shutdown()

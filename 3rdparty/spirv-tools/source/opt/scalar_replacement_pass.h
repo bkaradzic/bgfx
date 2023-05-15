@@ -33,7 +33,7 @@ namespace opt {
 // Documented in optimizer.hpp
 class ScalarReplacementPass : public MemPass {
  private:
-  static const uint32_t kDefaultLimit = 100;
+  static constexpr uint32_t kDefaultLimit = 100;
 
  public:
   ScalarReplacementPass(uint32_t limit = kDefaultLimit)
@@ -104,10 +104,10 @@ class ScalarReplacementPass : public MemPass {
   // Returns true if the uses of |inst| are acceptable for scalarization.
   //
   // Recursively checks all the uses of |inst|. For |inst| specifically, only
-  // allows SpvOpAccessChain, SpvOpInBoundsAccessChain, SpvOpLoad and
-  // SpvOpStore. Access chains must have the first index be a compile-time
-  // constant. Subsequent uses of access chains (including other access chains)
-  // are checked in a more relaxed manner.
+  // allows spv::Op::OpAccessChain, spv::Op::OpInBoundsAccessChain,
+  // spv::Op::OpLoad and spv::Op::OpStore. Access chains must have the first
+  // index be a compile-time constant. Subsequent uses of access chains
+  // (including other access chains) are checked in a more relaxed manner.
   bool CheckUses(const Instruction* inst) const;
 
   // Helper function for the above |CheckUses|.
@@ -262,9 +262,26 @@ class ScalarReplacementPass : public MemPass {
   // that we will be willing to split.
   bool IsLargerThanSizeLimit(uint64_t length) const;
 
+  // Copies all relevant decorations from `from` to `to`. This includes
+  // decorations applied to the variable, and to the members of the type.
+  // It is assumed that `to` is a variable that is intended to replace the
+  // `member_index`th member of `from`.
+  void CopyDecorationsToVariable(Instruction* from, Instruction* to,
+                                 uint32_t member_index);
+
+  // Copies pointer related decoration from `from` to `to` if they exist.
+  void CopyPointerDecorationsToVariable(Instruction* from, Instruction* to);
+
+  // Copies decorations that are needed from the `member_index` of `from` to
+  // `to, if there was one.
+  void CopyNecessaryMemberDecorationsToVariable(Instruction* from,
+                                                Instruction* to,
+                                                uint32_t member_index);
+
   // Limit on the number of members in an object that will be replaced.
   // 0 means there is no limit.
   uint32_t max_num_elements_;
+
   // This has to be big enough to fit "scalar-replacement=" followed by a
   // uint32_t number written in decimal (so 10 digits), and then a
   // terminating nul.

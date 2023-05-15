@@ -26,7 +26,7 @@ TrueTypeHandle loadTtf(FontManager* _fm, const char* _filePath)
 	if (NULL != data)
 	{
 		TrueTypeHandle handle = _fm->createTtf( (uint8_t*)data, size);
-		BX_FREE(entry::getAllocator(), data);
+		bx::free(entry::getAllocator(), data);
 		return handle;
 	}
 

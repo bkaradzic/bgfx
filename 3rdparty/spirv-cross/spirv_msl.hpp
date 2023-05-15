@@ -339,9 +339,24 @@ public:
 		bool dispatch_base = false;
 		bool texture_1D_as_2D = false;
 
-		// Enable use of MSL 2.0 indirect argument buffers.
+		// Enable use of Metal argument buffers.
 		// MSL 2.0 must also be enabled.
 		bool argument_buffers = false;
+
+		// Defines Metal argument buffer tier levels.
+		// Uses same values as Metal MTLArgumentBuffersTier enumeration.
+		enum class ArgumentBuffersTier
+		{
+			Tier1 = 0,
+			Tier2 = 1,
+		};
+
+		// When using Metal argument buffers, indicates the Metal argument buffer tier level supported by the Metal platform.
+		// Ignored when Options::argument_buffers is disabled.
+		// - Tier1 supports writable images on macOS, but not on iOS.
+		// - Tier2 supports writable images on macOS and iOS, and higher resource count limits.
+		// Tier capabilities based on recommendations from Apple engineering.
+		ArgumentBuffersTier argument_buffers_tier = ArgumentBuffersTier::Tier1;
 
 		// Ensures vertex and instance indices start at zero. This reflects the behavior of HLSL with SV_VertexID and SV_InstanceID.
 		bool enable_base_index_zero = false;
@@ -471,6 +486,15 @@ public:
 		// bug is fixed in Metal; it is provided as an option so it can be enabled
 		// only when the bug is present.
 		bool check_discarded_frag_stores = false;
+
+		// If set, Lod operands to OpImageSample*DrefExplicitLod for 1D and 2D array images
+		// will be implemented using a gradient instead of passing the level operand directly.
+		// Some Metal devices have a bug where the level() argument to depth2d_array<T>::sample_compare()
+		// in a fragment shader is biased by some unknown amount, possibly dependent on the
+		// partial derivatives of the texture coordinates. This is a workaround that is only
+		// expected to be needed until the bug is fixed in Metal; it is provided as an option
+		// so it can be enabled only when the bug is present.
+		bool sample_dref_lod_array_as_grad = false;
 
 		bool is_ios() const
 		{
@@ -849,7 +873,7 @@ protected:
 	bool is_non_native_row_major_matrix(uint32_t id) override;
 	bool member_is_non_native_row_major_matrix(const SPIRType &type, uint32_t index) override;
 	std::string convert_row_major_matrix(std::string exp_str, const SPIRType &exp_type, uint32_t physical_type_id,
-	                                     bool is_packed) override;
+	                                     bool is_packed, bool relaxed) override;
 
 	bool is_tesc_shader() const;
 	bool is_tese_shader() const;

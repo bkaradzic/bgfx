@@ -682,10 +682,14 @@ void CompilerHLSL::emit_builtin_outputs_in_struct()
 			// If point_size_compat is enabled, just ignore PointSize.
 			// PointSize does not exist in HLSL, but some code bases might want to be able to use these shaders,
 			// even if it means working around the missing feature.
-			if (hlsl_options.point_size_compat)
-				break;
-			else
+			if (legacy)
+			{
+				type = "float";
+				semantic = "PSIZE";
+			}
+			else if (!hlsl_options.point_size_compat)
 				SPIRV_CROSS_THROW("Unsupported builtin in HLSL.");
+			break;
 
 		case BuiltInLayer:
 		case BuiltInPrimitiveId:
@@ -720,10 +724,8 @@ void CompilerHLSL::emit_builtin_primitive_outputs_in_struct()
 		{
 		case BuiltInLayer:
 		{
-			const ExecutionModel model = get_entry_point().model;
-			if (hlsl_options.shader_model < 50 ||
-			    (model != ExecutionModelGeometry && model != ExecutionModelMeshEXT))
-				SPIRV_CROSS_THROW("Render target array index output is only supported in GS/MS 5.0 or higher.");
+			if (hlsl_options.shader_model < 50)
+				SPIRV_CROSS_THROW("Render target array index output is only supported in SM 5.0 or higher.");
 			type = "uint";
 			semantic = "SV_RenderTargetArrayIndex";
 			break;
@@ -1016,6 +1018,7 @@ void CompilerHLSL::emit_interface_block_in_struct(const SPIRVariable &var, unord
 
 	string binding;
 	bool use_location_number = true;
+	bool need_matrix_unroll = false;
 	bool legacy = hlsl_options.shader_model <= 30;
 	if (execution.model == ExecutionModelFragment && var.storage == StorageClassOutput)
 	{
@@ -1031,6 +1034,12 @@ void CompilerHLSL::emit_interface_block_in_struct(const SPIRVariable &var, unord
 		if (legacy) // COLOR must be a four-component vector on legacy shader model targets (HLSL ERR_COLOR_4COMP)
 			type.vecsize = 4;
 	}
+	else if (var.storage == StorageClassInput && execution.model == ExecutionModelVertex)
+	{
+		need_matrix_unroll = true;
+		if (legacy) // Inputs must be floating-point in legacy targets.
+			type.basetype = SPIRType::Float;
+	}
 
 	const auto get_vacant_location = [&]() -> uint32_t {
 		for (uint32_t i = 0; i < 64; i++)
@@ -1038,8 +1047,6 @@ void CompilerHLSL::emit_interface_block_in_struct(const SPIRVariable &var, unord
 				return i;
 		SPIRV_CROSS_THROW("All locations from 0 to 63 are exhausted.");
 	};
-
-	bool need_matrix_unroll = var.storage == StorageClassInput && execution.model == ExecutionModelVertex;
 
 	auto name = to_name(var.self);
 	if (use_location_number)
@@ -1221,7 +1228,7 @@ void CompilerHLSL::emit_builtin_variables()
 			break;
 
 		case BuiltInPointSize:
-			if (hlsl_options.point_size_compat)
+			if (hlsl_options.point_size_compat || hlsl_options.shader_model <= 30)
 			{
 				// Just emit the global variable, it will be ignored.
 				type = "float";
@@ -1799,8 +1806,10 @@ void CompilerHLSL::emit_resources()
 		if (is_hidden_variable(var, true))
 			continue;
 
-		if (var.storage != StorageClassOutput &&
-		    var.storage != StorageClassTaskPayloadWorkgroupEXT)
+		if (var.storage == StorageClassTaskPayloadWorkgroupEXT && is_mesh_shader)
+			continue;
+
+		if (var.storage != StorageClassOutput)
 		{
 			if (!variable_is_lut(var))
 			{
@@ -1810,6 +1819,7 @@ void CompilerHLSL::emit_resources()
 				switch (var.storage)
 				{
 				case StorageClassWorkgroup:
+				case StorageClassTaskPayloadWorkgroupEXT:
 					storage = "groupshared";
 					break;
 
@@ -2564,6 +2574,19 @@ void CompilerHLSL::emit_rayquery_function(const char *commited, const char *cand
 	emit_op(ops[0], ops[1], join(to_expression(ops[2]), is_commited ? commited : candidate), false);
 }
 
+void CompilerHLSL::emit_mesh_tasks(SPIRBlock &block)
+{
+	if (block.mesh.payload != 0)
+	{
+		statement("DispatchMesh(", to_unpacked_expression(block.mesh.groups[0]), ", ", to_unpacked_expression(block.mesh.groups[1]), ", ",
+		    to_unpacked_expression(block.mesh.groups[2]), ", ", to_unpacked_expression(block.mesh.payload), ");");
+	}
+	else
+	{
+		SPIRV_CROSS_THROW("Amplification shader in HLSL must have payload");
+	}
+}
+
 void CompilerHLSL::emit_buffer_block(const SPIRVariable &var)
 {
 	auto &type = get<SPIRType>(var.basetype);
@@ -2809,6 +2832,8 @@ string CompilerHLSL::get_inner_entry_point_name() const
 		return "comp_main";
 	else if (execution.model == ExecutionModelMeshEXT)
 		return "mesh_main";
+	else if (execution.model == ExecutionModelTaskEXT)
+		return "task_main";
 	else
 		SPIRV_CROSS_THROW("Unsupported execution model.");
 }
@@ -2922,8 +2947,8 @@ void CompilerHLSL::emit_hlsl_entry_point()
 
 	switch (execution.model)
 	{
+	case ExecutionModelTaskEXT:
 	case ExecutionModelMeshEXT:
-	case ExecutionModelMeshNV:
 	case ExecutionModelGLCompute:
 	{
 		if (execution.model == ExecutionModelMeshEXT)
@@ -3196,7 +3221,8 @@ void CompilerHLSL::emit_hlsl_entry_point()
 	if (execution.model == ExecutionModelVertex ||
 	    execution.model == ExecutionModelFragment ||
 	    execution.model == ExecutionModelGLCompute ||
-	    execution.model == ExecutionModelMeshEXT)
+	    execution.model == ExecutionModelMeshEXT ||
+	    execution.model == ExecutionModelTaskEXT)
 	{
 		// For mesh shaders, we receive special arguments that we must pass down as function arguments.
 		// HLSL does not support proper reference types for passing these IO blocks,
@@ -3218,8 +3244,8 @@ void CompilerHLSL::emit_hlsl_entry_point()
 
 		// Copy builtins from globals to return struct.
 		active_output_builtins.for_each_bit([&](uint32_t i) {
-			// PointSize doesn't exist in HLSL.
-			if (i == BuiltInPointSize)
+			// PointSize doesn't exist in HLSL SM 4+.
+			if (i == BuiltInPointSize && !legacy)
 				return;
 
 			switch (static_cast<BuiltIn>(i))
@@ -3485,9 +3511,9 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 	else
 	{
 		auto &imgformat = get<SPIRType>(imgtype.image.type);
-		if (imgformat.basetype != SPIRType::Float)
+		if (hlsl_options.shader_model < 67 && imgformat.basetype != SPIRType::Float)
 		{
-			SPIRV_CROSS_THROW("Sampling non-float textures is not supported in HLSL.");
+			SPIRV_CROSS_THROW("Sampling non-float textures is not supported in HLSL SM < 6.7.");
 		}
 
 		if (hlsl_options.shader_model >= 40)
@@ -3498,7 +3524,7 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 			{
 				if (gather)
 				{
-					SPIRV_CROSS_THROW("GatherCmp does not exist in HLSL.");
+					texop += ".GatherCmp";
 				}
 				else if (lod || grad_x || grad_y)
 				{
@@ -4115,10 +4141,16 @@ void CompilerHLSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop,
 		emit_unary_func_op(result_type, id, args[0], "round");
 		break;
 
+	case GLSLstd450Trunc:
+		emit_unary_func_op(result_type, id, args[0], "trunc");
+		break;
+
 	case GLSLstd450Acosh:
 	case GLSLstd450Asinh:
 	case GLSLstd450Atanh:
-		SPIRV_CROSS_THROW("Inverse hyperbolics are not supported on HLSL.");
+		// These are not supported in HLSL, always emulate them.
+		emit_emulated_ahyper_op(result_type, id, args[0], op);
+		break;
 
 	case GLSLstd450FMix:
 	case GLSLstd450IMix:
@@ -6228,7 +6260,7 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 	case OpRayQueryGenerateIntersectionKHR:
 	{
 		flush_variable_declaration(ops[0]);
-		statement(to_expression(ops[0]), ".CommitProceduralPrimitiveHit(", ops[1], ");");
+		statement(to_expression(ops[0]), ".CommitProceduralPrimitiveHit(", to_expression(ops[1]), ");");
 		break;
 	}
 	case OpRayQueryConfirmIntersectionKHR:
@@ -6340,7 +6372,6 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 		statement("SetMeshOutputCounts(", to_unpacked_expression(ops[0]), ", ", to_unpacked_expression(ops[1]), ");");
 		break;
 	}
-
 	default:
 		CompilerGLSL::emit_instruction(instruction);
 		break;

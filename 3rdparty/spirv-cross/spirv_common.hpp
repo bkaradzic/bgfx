@@ -644,7 +644,8 @@ struct SPIRExtension : IVariant
 		SPV_AMD_shader_trinary_minmax,
 		SPV_AMD_gcn_shader,
 		NonSemanticDebugPrintf,
-		NonSemanticShaderDebugInfo
+		NonSemanticShaderDebugInfo,
+		NonSemanticGeneric
 	};
 
 	explicit SPIRExtension(Extension ext_)

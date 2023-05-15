@@ -479,6 +479,9 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_RELAX_NAN_CHECKS:
 		options->glsl.relax_nan_checks = value != 0;
 		break;
+	case SPVC_COMPILER_OPTION_GLSL_ENABLE_ROW_MAJOR_LOAD_WORKAROUND:
+		options->glsl.enable_row_major_load_workaround = value != 0;
+		break;
 #endif
 
 #if SPIRV_CROSS_C_API_HLSL
@@ -730,6 +733,14 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 
 	case SPVC_COMPILER_OPTION_MSL_CHECK_DISCARDED_FRAG_STORES:
 		options->msl.check_discarded_frag_stores = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_ARGUMENT_BUFFERS_TIER:
+		options->msl.argument_buffers_tier = static_cast<CompilerMSL::Options::ArgumentBuffersTier>(value);
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_SAMPLE_DREF_LOD_ARRAY_AS_GRAD:
+		options->msl.sample_dref_lod_array_as_grad = value != 0;
 		break;
 #endif
 
@@ -2522,6 +2533,51 @@ void spvc_constant_get_subconstants(spvc_constant constant, const spvc_constant_
 spvc_type_id spvc_constant_get_type(spvc_constant constant)
 {
 	return constant->constant_type;
+}
+
+void spvc_constant_set_scalar_fp16(spvc_constant constant, unsigned column, unsigned row, unsigned short value)
+{
+	constant->m.c[column].r[row].u32 = value;
+}
+
+void spvc_constant_set_scalar_fp32(spvc_constant constant, unsigned column, unsigned row, float value)
+{
+	constant->m.c[column].r[row].f32 = value;
+}
+
+void spvc_constant_set_scalar_fp64(spvc_constant constant, unsigned column, unsigned row, double value)
+{
+	constant->m.c[column].r[row].f64 = value;
+}
+
+void spvc_constant_set_scalar_u32(spvc_constant constant, unsigned column, unsigned row, unsigned value)
+{
+	constant->m.c[column].r[row].u32 = value;
+}
+
+void spvc_constant_set_scalar_i32(spvc_constant constant, unsigned column, unsigned row, int value)
+{
+	constant->m.c[column].r[row].i32 = value;
+}
+
+void spvc_constant_set_scalar_u16(spvc_constant constant, unsigned column, unsigned row, unsigned short value)
+{
+	constant->m.c[column].r[row].u32 = uint32_t(value);
+}
+
+void spvc_constant_set_scalar_i16(spvc_constant constant, unsigned column, unsigned row, signed short value)
+{
+	constant->m.c[column].r[row].u32 = uint32_t(value);
+}
+
+void spvc_constant_set_scalar_u8(spvc_constant constant, unsigned column, unsigned row, unsigned char value)
+{
+	constant->m.c[column].r[row].u32 = uint32_t(value);
+}
+
+void spvc_constant_set_scalar_i8(spvc_constant constant, unsigned column, unsigned row, signed char value)
+{
+	constant->m.c[column].r[row].u32 = uint32_t(value);
 }
 
 spvc_bool spvc_compiler_get_binary_offset_for_decoration(spvc_compiler compiler, spvc_variable_id id,

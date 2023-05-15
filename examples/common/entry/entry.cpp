@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -530,10 +530,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 	int runApp(AppI* _app, int _argc, const char* const* _argv)
 	{
+		setWindowSize(kDefaultWindowHandle, s_width, s_height);
+
 		_app->init(_argc, _argv, s_width, s_height);
 		bgfx::frame();
-
-		setWindowSize(kDefaultWindowHandle, s_width, s_height);
 
 #if BX_PLATFORM_EMSCRIPTEN
 		s_app = _app;
@@ -566,7 +566,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			return;
 		}
 
-		AppI** apps = (AppI**)BX_ALLOC(g_allocator, s_numApps*sizeof(AppI*) );
+		AppI** apps = (AppI**)bx::alloc(g_allocator, s_numApps*sizeof(AppI*) );
 
 		uint32_t ii = 0;
 		for (AppI* app = getFirstApp(); NULL != app; app = app->getNext() )
@@ -589,7 +589,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			ai->m_next = NULL;
 		}
 
-		BX_FREE(g_allocator, apps);
+		bx::free(g_allocator, apps);
 	}
 
 	int main(int _argc, const char* const* _argv)
@@ -666,10 +666,10 @@ restart:
 
 		cmdShutdown();
 
-		BX_DELETE(g_allocator, s_fileReader);
+		bx::deleteObject(g_allocator, s_fileReader);
 		s_fileReader = NULL;
 
-		BX_DELETE(g_allocator, s_fileWriter);
+		bx::deleteObject(g_allocator, s_fileWriter);
 		s_fileWriter = NULL;
 
 		return result;
@@ -1010,14 +1010,14 @@ restart:
 
 	void* TinyStlAllocator::static_allocate(size_t _bytes)
 	{
-		return BX_ALLOC(getAllocator(), _bytes);
+		return bx::alloc(getAllocator(), _bytes);
 	}
 
 	void TinyStlAllocator::static_deallocate(void* _ptr, size_t /*_bytes*/)
 	{
 		if (NULL != _ptr)
 		{
-			BX_FREE(getAllocator(), _ptr);
+			bx::free(getAllocator(), _ptr);
 		}
 	}
 

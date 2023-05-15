@@ -20,7 +20,6 @@
 #include <vector>
 
 #include "source/opt/def_use_manager.h"
-#include "source/opt/ir_context.h"
 #include "source/opt/log.h"
 #include "source/opt/reflect.h"
 
@@ -40,7 +39,7 @@ Pass::Status EliminateDeadConstantPass::Process() {
     context()->get_def_use_mgr()->ForEachUse(
         const_id, [&count](Instruction* user, uint32_t index) {
           (void)index;
-          SpvOp op = user->opcode();
+          spv::Op op = user->opcode();
           if (!(IsAnnotationInst(op) || IsDebug1Inst(op) || IsDebug2Inst(op) ||
                 IsDebug3Inst(op))) {
             ++count;
@@ -59,9 +58,9 @@ Pass::Status EliminateDeadConstantPass::Process() {
     Instruction* inst = *working_list.begin();
     // Back propagate if the instruction contains IDs in its operands.
     switch (inst->opcode()) {
-      case SpvOp::SpvOpConstantComposite:
-      case SpvOp::SpvOpSpecConstantComposite:
-      case SpvOp::SpvOpSpecConstantOp:
+      case spv::Op::OpConstantComposite:
+      case spv::Op::OpSpecConstantComposite:
+      case spv::Op::OpSpecConstantOp:
         for (uint32_t i = 0; i < inst->NumInOperands(); i++) {
           // SpecConstantOp instruction contains 'opcode' as its operand. Need
           // to exclude such operands when decreasing uses.

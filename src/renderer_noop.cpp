@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -280,7 +280,7 @@ namespace bgfx { namespace noop
 
 	void rendererDestroy()
 	{
-		BX_DELETE(g_allocator, s_renderNOOP);
+		bx::deleteObject(g_allocator, s_renderNOOP);
 		s_renderNOOP = NULL;
 	}
 } /* namespace noop */ } // namespace bgfx

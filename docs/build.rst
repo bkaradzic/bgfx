@@ -83,7 +83,7 @@ Build
 -----
 
 bgfx uses `GENie - Project generator tool <https://github.com/bkaradzic/genie#genie---project-generator-tool>`__
-to generate project files for various platform. Binaries for Linux, OSX, and Windows are included in
+to generate project files for various platform. Binaries for Linux, macOS, and Windows are included in
 bx repository.
 
 General
@@ -174,7 +174,7 @@ Amalgamated Build
 For ease of integration to other build system bgfx library can be built
 with single .cpp file. It's only necessary to build
 `src/amalgamated.cpp <https://github.com/bkaradzic/bgfx/blob/master/src/amalgamated.cpp>`__
-(for OSX/iOS use
+(for macOS/iOS/iPadOS/tvOS use
 `src/amalgamated.mm <https://github.com/bkaradzic/bgfx/blob/master/src/amalgamated.mm>`__
 instead) inside different build system.
 
