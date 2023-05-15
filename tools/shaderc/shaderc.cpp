@@ -954,7 +954,7 @@ namespace bgfx
 		return hash;
 	}
 
-	void addFragData(Preprocessor& _preprocessor, char* _data, uint32_t _idx, bool _comma)
+	void addFragData(Preprocessor& _preprocessor, char* _data, uint32_t _idx, bool _comma, std::string& outputType)
 	{
 		char find[32];
 		bx::snprintf(find, sizeof(find), "gl_FragData[%d]", _idx);
@@ -965,8 +965,9 @@ namespace bgfx
 		strReplace(_data, find, replace);
 
 		_preprocessor.writef(
-			" \\\n\t%sout vec4 bgfx_FragData%d : SV_TARGET%d"
+			" \\\n\t%sout %s bgfx_FragData%d : SV_TARGET%d"
 			, _comma ? ", " : "  "
+			, outputType.c_str()
 			, _idx
 			, _idx
 			);
@@ -1710,7 +1711,16 @@ namespace bgfx
 		}
 		else // Vertex/Fragment
 		{
+			std::string outputType = "vec4";
 			bx::StringView shader(input);
+			bx::StringView entryTest = bx::strFind(shader, "BGFX_FRAG_OUTPUT_TYPE");
+			if (!entryTest.isEmpty() ) {
+				bx::StringView insert = bx::strFind(bx::StringView(entryTest.getPtr(), shader.getTerm() ), "\n");
+				if (!insert.isEmpty() ) {
+					outputType.assign(entryTest.getPtr() + 22, insert.getPtr() );
+				}
+			}
+
 			bx::StringView entry = bx::strFind(shader, "void main()");
 			if (entry.isEmpty() )
 			{
@@ -1748,12 +1758,12 @@ namespace bgfx
 						if (hasFragColor)
 						{
 							preprocessor.writef("#define gl_FragColor bgfx_FragColor\n");
-							preprocessor.writef("out mediump vec4 bgfx_FragColor;\n");
+							preprocessor.writef("out mediump %s bgfx_FragColor;\n", outputType.c_str());
 						}
 						else if (numFragData)
 						{
 							preprocessor.writef("#define gl_FragData bgfx_FragData\n");
-							preprocessor.writef("out mediump vec4 bgfx_FragData[gl_MaxDrawBuffers];\n");
+							preprocessor.writef("out mediump %s bgfx_FragData[gl_MaxDrawBuffers];\n", outputType.c_str());
 						}
 					}
 
@@ -1896,7 +1906,7 @@ namespace bgfx
 
 						if (hasFragCoord)
 						{
-							preprocessor.writef(" \\\n\tvec4 gl_FragCoord : SV_POSITION");
+							preprocessor.writef(" \\\n\t%s gl_FragCoord : SV_POSITION", outputType.c_str());
 							++arg;
 						}
 
@@ -1924,7 +1934,7 @@ namespace bgfx
 							{
 								if (hasFragData[ii])
 								{
-									addFragData(preprocessor, input, ii, arg++ > 0);
+									addFragData(preprocessor, input, ii, arg++ > 0, outputType);
 								}
 							}
 							else
@@ -2515,8 +2525,9 @@ namespace bgfx
 									if (!bx::findIdentifierMatch(input, "gl_FragColor").isEmpty() )
 									{
 										bx::stringPrintf(code
-											, "out vec4 bgfx_FragColor;\n"
+											, "out %s bgfx_FragColor;\n"
 											  "#define gl_FragColor bgfx_FragColor\n"
+											, outputType.c_str()
 											);
 									}
 								}
