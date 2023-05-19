@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tools &mdash; bgfx 1.118.8367 documentation</title>
+  <title>Tools &mdash; bgfx 1.118.8481 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -31,7 +31,7 @@
             <a href="index.html" class="icon icon-home"> bgfx
           </a>
               <div class="version">
-                1.118.8367
+                1.118.8481
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -52,6 +52,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#shader-compiler-shaderc">Shader Compiler (shaderc)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#defines">Defines</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#predefined-uniforms">Predefined Uniforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vertex-shader-attributes">Vertex Shader Attributes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#options">Options</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#building-shaders">Building shaders</a></li>
 </ul>
 </li>
@@ -372,6 +374,92 @@ This file cannot include comments, and typically only one is necessary.</p></li>
 </table>
 </div></blockquote>
 <p>For more info, see the <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/bgfx_shader.sh">shader helper macros</a>.</p>
+</section>
+<section id="vertex-shader-attributes">
+<h3>Vertex Shader Attributes<a class="headerlink" href="#vertex-shader-attributes" title="Permalink to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">$input</span></code> tokens for vertex shader can be only following:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 46%" />
+<col style="width: 54%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Attribute</p></th>
+<th class="head"><p>bgfx::Attrib::Enum</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>a_position</p></td>
+<td><p>Position</p></td>
+</tr>
+<tr class="row-odd"><td><p>a_normal</p></td>
+<td><p>Normal</p></td>
+</tr>
+<tr class="row-even"><td><p>a_tangent</p></td>
+<td><p>Tangent</p></td>
+</tr>
+<tr class="row-odd"><td><p>a_bitangent</p></td>
+<td><p>Bitangent</p></td>
+</tr>
+<tr class="row-even"><td><p>a_color0</p></td>
+<td><p>Color0</p></td>
+</tr>
+<tr class="row-odd"><td><p>a_color1</p></td>
+<td><p>Color1</p></td>
+</tr>
+<tr class="row-even"><td><p>a_color2</p></td>
+<td><p>Color2</p></td>
+</tr>
+<tr class="row-odd"><td><p>a_color3</p></td>
+<td><p>Color3</p></td>
+</tr>
+<tr class="row-even"><td><p>a_indices</p></td>
+<td><p>Indices</p></td>
+</tr>
+<tr class="row-odd"><td><p>a_weight</p></td>
+<td><p>Weight</p></td>
+</tr>
+<tr class="row-even"><td><p>a_texcoord0</p></td>
+<td><p>TexCoord0</p></td>
+</tr>
+<tr class="row-odd"><td><p>a_texcoord1</p></td>
+<td><p>TexCoord1</p></td>
+</tr>
+<tr class="row-even"><td><p>a_texcoord2</p></td>
+<td><p>TexCoord2</p></td>
+</tr>
+<tr class="row-odd"><td><p>a_texcoord3</p></td>
+<td><p>TexCoord3</p></td>
+</tr>
+<tr class="row-even"><td><p>a_texcoord4</p></td>
+<td><p>TexCoord4</p></td>
+</tr>
+<tr class="row-odd"><td><p>a_texcoord5</p></td>
+<td><p>TexCoord5</p></td>
+</tr>
+<tr class="row-even"><td><p>a_texcoord6</p></td>
+<td><p>TexCoord6</p></td>
+</tr>
+<tr class="row-odd"><td><p>a_texcoord7</p></td>
+<td><p>TexCoord7</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>In <code class="docutils literal notranslate"><span class="pre">varying.def.sc</span></code>, instance buffer input must use <code class="docutils literal notranslate"><span class="pre">i_dataN</span></code> as identifier where <code class="docutils literal notranslate"><span class="pre">N</span></code> is the index
+of the attribute in the buffer. Type must be <code class="docutils literal notranslate"><span class="pre">vec4</span></code>, and the stride must be multiple of 16.
+The semantic must be <code class="docutils literal notranslate"><span class="pre">TEXCOORDN</span></code> with a decreasing index starting from <code class="docutils literal notranslate"><span class="pre">TEXCOORD7</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">vec4</span> <span class="n">i_data0</span> <span class="p">:</span> <span class="n">TEXCOORD7</span><span class="p">;</span>
+<span class="n">vec4</span> <span class="n">i_data1</span> <span class="p">:</span> <span class="n">TEXCOORD6</span><span class="p">;</span>
+<span class="n">vec4</span> <span class="n">i_data2</span> <span class="p">:</span> <span class="n">TEXCOORD5</span><span class="p">;</span>
+<span class="n">vec4</span> <span class="n">i_data3</span> <span class="p">:</span> <span class="n">TEXCOORD4</span><span class="p">;</span>
+<span class="n">vec4</span> <span class="n">i_data4</span> <span class="p">:</span> <span class="n">TEXCOORD3</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="options">
+<h3>Options<a class="headerlink" href="#options" title="Permalink to this heading">¶</a></h3>
 <p>Options:</p>
 <blockquote>
 <div><dl class="option-list">
@@ -607,7 +695,7 @@ aspect ratio will be preserved)</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2010-2022, Branimir Karadžić.</p>
+    <p>&#169; Copyright 2010-2023, Branimir Karadžić.</p>
   </div>
 
    
