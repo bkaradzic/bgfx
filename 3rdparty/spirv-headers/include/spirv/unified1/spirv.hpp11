@@ -2705,46 +2705,46 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
 
 // Overload bitwise operators for mask bit combining
 
-inline ImageOperandsMask operator|(ImageOperandsMask a, ImageOperandsMask b) { return ImageOperandsMask(unsigned(a) | unsigned(b)); }
-inline ImageOperandsMask operator&(ImageOperandsMask a, ImageOperandsMask b) { return ImageOperandsMask(unsigned(a) & unsigned(b)); }
-inline ImageOperandsMask operator^(ImageOperandsMask a, ImageOperandsMask b) { return ImageOperandsMask(unsigned(a) ^ unsigned(b)); }
-inline ImageOperandsMask operator~(ImageOperandsMask a) { return ImageOperandsMask(~unsigned(a)); }
-inline FPFastMathModeMask operator|(FPFastMathModeMask a, FPFastMathModeMask b) { return FPFastMathModeMask(unsigned(a) | unsigned(b)); }
-inline FPFastMathModeMask operator&(FPFastMathModeMask a, FPFastMathModeMask b) { return FPFastMathModeMask(unsigned(a) & unsigned(b)); }
-inline FPFastMathModeMask operator^(FPFastMathModeMask a, FPFastMathModeMask b) { return FPFastMathModeMask(unsigned(a) ^ unsigned(b)); }
-inline FPFastMathModeMask operator~(FPFastMathModeMask a) { return FPFastMathModeMask(~unsigned(a)); }
-inline SelectionControlMask operator|(SelectionControlMask a, SelectionControlMask b) { return SelectionControlMask(unsigned(a) | unsigned(b)); }
-inline SelectionControlMask operator&(SelectionControlMask a, SelectionControlMask b) { return SelectionControlMask(unsigned(a) & unsigned(b)); }
-inline SelectionControlMask operator^(SelectionControlMask a, SelectionControlMask b) { return SelectionControlMask(unsigned(a) ^ unsigned(b)); }
-inline SelectionControlMask operator~(SelectionControlMask a) { return SelectionControlMask(~unsigned(a)); }
-inline LoopControlMask operator|(LoopControlMask a, LoopControlMask b) { return LoopControlMask(unsigned(a) | unsigned(b)); }
-inline LoopControlMask operator&(LoopControlMask a, LoopControlMask b) { return LoopControlMask(unsigned(a) & unsigned(b)); }
-inline LoopControlMask operator^(LoopControlMask a, LoopControlMask b) { return LoopControlMask(unsigned(a) ^ unsigned(b)); }
-inline LoopControlMask operator~(LoopControlMask a) { return LoopControlMask(~unsigned(a)); }
-inline FunctionControlMask operator|(FunctionControlMask a, FunctionControlMask b) { return FunctionControlMask(unsigned(a) | unsigned(b)); }
-inline FunctionControlMask operator&(FunctionControlMask a, FunctionControlMask b) { return FunctionControlMask(unsigned(a) & unsigned(b)); }
-inline FunctionControlMask operator^(FunctionControlMask a, FunctionControlMask b) { return FunctionControlMask(unsigned(a) ^ unsigned(b)); }
-inline FunctionControlMask operator~(FunctionControlMask a) { return FunctionControlMask(~unsigned(a)); }
-inline MemorySemanticsMask operator|(MemorySemanticsMask a, MemorySemanticsMask b) { return MemorySemanticsMask(unsigned(a) | unsigned(b)); }
-inline MemorySemanticsMask operator&(MemorySemanticsMask a, MemorySemanticsMask b) { return MemorySemanticsMask(unsigned(a) & unsigned(b)); }
-inline MemorySemanticsMask operator^(MemorySemanticsMask a, MemorySemanticsMask b) { return MemorySemanticsMask(unsigned(a) ^ unsigned(b)); }
-inline MemorySemanticsMask operator~(MemorySemanticsMask a) { return MemorySemanticsMask(~unsigned(a)); }
-inline MemoryAccessMask operator|(MemoryAccessMask a, MemoryAccessMask b) { return MemoryAccessMask(unsigned(a) | unsigned(b)); }
-inline MemoryAccessMask operator&(MemoryAccessMask a, MemoryAccessMask b) { return MemoryAccessMask(unsigned(a) & unsigned(b)); }
-inline MemoryAccessMask operator^(MemoryAccessMask a, MemoryAccessMask b) { return MemoryAccessMask(unsigned(a) ^ unsigned(b)); }
-inline MemoryAccessMask operator~(MemoryAccessMask a) { return MemoryAccessMask(~unsigned(a)); }
-inline KernelProfilingInfoMask operator|(KernelProfilingInfoMask a, KernelProfilingInfoMask b) { return KernelProfilingInfoMask(unsigned(a) | unsigned(b)); }
-inline KernelProfilingInfoMask operator&(KernelProfilingInfoMask a, KernelProfilingInfoMask b) { return KernelProfilingInfoMask(unsigned(a) & unsigned(b)); }
-inline KernelProfilingInfoMask operator^(KernelProfilingInfoMask a, KernelProfilingInfoMask b) { return KernelProfilingInfoMask(unsigned(a) ^ unsigned(b)); }
-inline KernelProfilingInfoMask operator~(KernelProfilingInfoMask a) { return KernelProfilingInfoMask(~unsigned(a)); }
-inline RayFlagsMask operator|(RayFlagsMask a, RayFlagsMask b) { return RayFlagsMask(unsigned(a) | unsigned(b)); }
-inline RayFlagsMask operator&(RayFlagsMask a, RayFlagsMask b) { return RayFlagsMask(unsigned(a) & unsigned(b)); }
-inline RayFlagsMask operator^(RayFlagsMask a, RayFlagsMask b) { return RayFlagsMask(unsigned(a) ^ unsigned(b)); }
-inline RayFlagsMask operator~(RayFlagsMask a) { return RayFlagsMask(~unsigned(a)); }
-inline FragmentShadingRateMask operator|(FragmentShadingRateMask a, FragmentShadingRateMask b) { return FragmentShadingRateMask(unsigned(a) | unsigned(b)); }
-inline FragmentShadingRateMask operator&(FragmentShadingRateMask a, FragmentShadingRateMask b) { return FragmentShadingRateMask(unsigned(a) & unsigned(b)); }
-inline FragmentShadingRateMask operator^(FragmentShadingRateMask a, FragmentShadingRateMask b) { return FragmentShadingRateMask(unsigned(a) ^ unsigned(b)); }
-inline FragmentShadingRateMask operator~(FragmentShadingRateMask a) { return FragmentShadingRateMask(~unsigned(a)); }
+constexpr ImageOperandsMask operator|(ImageOperandsMask a, ImageOperandsMask b) { return ImageOperandsMask(unsigned(a) | unsigned(b)); }
+constexpr ImageOperandsMask operator&(ImageOperandsMask a, ImageOperandsMask b) { return ImageOperandsMask(unsigned(a) & unsigned(b)); }
+constexpr ImageOperandsMask operator^(ImageOperandsMask a, ImageOperandsMask b) { return ImageOperandsMask(unsigned(a) ^ unsigned(b)); }
+constexpr ImageOperandsMask operator~(ImageOperandsMask a) { return ImageOperandsMask(~unsigned(a)); }
+constexpr FPFastMathModeMask operator|(FPFastMathModeMask a, FPFastMathModeMask b) { return FPFastMathModeMask(unsigned(a) | unsigned(b)); }
+constexpr FPFastMathModeMask operator&(FPFastMathModeMask a, FPFastMathModeMask b) { return FPFastMathModeMask(unsigned(a) & unsigned(b)); }
+constexpr FPFastMathModeMask operator^(FPFastMathModeMask a, FPFastMathModeMask b) { return FPFastMathModeMask(unsigned(a) ^ unsigned(b)); }
+constexpr FPFastMathModeMask operator~(FPFastMathModeMask a) { return FPFastMathModeMask(~unsigned(a)); }
+constexpr SelectionControlMask operator|(SelectionControlMask a, SelectionControlMask b) { return SelectionControlMask(unsigned(a) | unsigned(b)); }
+constexpr SelectionControlMask operator&(SelectionControlMask a, SelectionControlMask b) { return SelectionControlMask(unsigned(a) & unsigned(b)); }
+constexpr SelectionControlMask operator^(SelectionControlMask a, SelectionControlMask b) { return SelectionControlMask(unsigned(a) ^ unsigned(b)); }
+constexpr SelectionControlMask operator~(SelectionControlMask a) { return SelectionControlMask(~unsigned(a)); }
+constexpr LoopControlMask operator|(LoopControlMask a, LoopControlMask b) { return LoopControlMask(unsigned(a) | unsigned(b)); }
+constexpr LoopControlMask operator&(LoopControlMask a, LoopControlMask b) { return LoopControlMask(unsigned(a) & unsigned(b)); }
+constexpr LoopControlMask operator^(LoopControlMask a, LoopControlMask b) { return LoopControlMask(unsigned(a) ^ unsigned(b)); }
+constexpr LoopControlMask operator~(LoopControlMask a) { return LoopControlMask(~unsigned(a)); }
+constexpr FunctionControlMask operator|(FunctionControlMask a, FunctionControlMask b) { return FunctionControlMask(unsigned(a) | unsigned(b)); }
+constexpr FunctionControlMask operator&(FunctionControlMask a, FunctionControlMask b) { return FunctionControlMask(unsigned(a) & unsigned(b)); }
+constexpr FunctionControlMask operator^(FunctionControlMask a, FunctionControlMask b) { return FunctionControlMask(unsigned(a) ^ unsigned(b)); }
+constexpr FunctionControlMask operator~(FunctionControlMask a) { return FunctionControlMask(~unsigned(a)); }
+constexpr MemorySemanticsMask operator|(MemorySemanticsMask a, MemorySemanticsMask b) { return MemorySemanticsMask(unsigned(a) | unsigned(b)); }
+constexpr MemorySemanticsMask operator&(MemorySemanticsMask a, MemorySemanticsMask b) { return MemorySemanticsMask(unsigned(a) & unsigned(b)); }
+constexpr MemorySemanticsMask operator^(MemorySemanticsMask a, MemorySemanticsMask b) { return MemorySemanticsMask(unsigned(a) ^ unsigned(b)); }
+constexpr MemorySemanticsMask operator~(MemorySemanticsMask a) { return MemorySemanticsMask(~unsigned(a)); }
+constexpr MemoryAccessMask operator|(MemoryAccessMask a, MemoryAccessMask b) { return MemoryAccessMask(unsigned(a) | unsigned(b)); }
+constexpr MemoryAccessMask operator&(MemoryAccessMask a, MemoryAccessMask b) { return MemoryAccessMask(unsigned(a) & unsigned(b)); }
+constexpr MemoryAccessMask operator^(MemoryAccessMask a, MemoryAccessMask b) { return MemoryAccessMask(unsigned(a) ^ unsigned(b)); }
+constexpr MemoryAccessMask operator~(MemoryAccessMask a) { return MemoryAccessMask(~unsigned(a)); }
+constexpr KernelProfilingInfoMask operator|(KernelProfilingInfoMask a, KernelProfilingInfoMask b) { return KernelProfilingInfoMask(unsigned(a) | unsigned(b)); }
+constexpr KernelProfilingInfoMask operator&(KernelProfilingInfoMask a, KernelProfilingInfoMask b) { return KernelProfilingInfoMask(unsigned(a) & unsigned(b)); }
+constexpr KernelProfilingInfoMask operator^(KernelProfilingInfoMask a, KernelProfilingInfoMask b) { return KernelProfilingInfoMask(unsigned(a) ^ unsigned(b)); }
+constexpr KernelProfilingInfoMask operator~(KernelProfilingInfoMask a) { return KernelProfilingInfoMask(~unsigned(a)); }
+constexpr RayFlagsMask operator|(RayFlagsMask a, RayFlagsMask b) { return RayFlagsMask(unsigned(a) | unsigned(b)); }
+constexpr RayFlagsMask operator&(RayFlagsMask a, RayFlagsMask b) { return RayFlagsMask(unsigned(a) & unsigned(b)); }
+constexpr RayFlagsMask operator^(RayFlagsMask a, RayFlagsMask b) { return RayFlagsMask(unsigned(a) ^ unsigned(b)); }
+constexpr RayFlagsMask operator~(RayFlagsMask a) { return RayFlagsMask(~unsigned(a)); }
+constexpr FragmentShadingRateMask operator|(FragmentShadingRateMask a, FragmentShadingRateMask b) { return FragmentShadingRateMask(unsigned(a) | unsigned(b)); }
+constexpr FragmentShadingRateMask operator&(FragmentShadingRateMask a, FragmentShadingRateMask b) { return FragmentShadingRateMask(unsigned(a) & unsigned(b)); }
+constexpr FragmentShadingRateMask operator^(FragmentShadingRateMask a, FragmentShadingRateMask b) { return FragmentShadingRateMask(unsigned(a) ^ unsigned(b)); }
+constexpr FragmentShadingRateMask operator~(FragmentShadingRateMask a) { return FragmentShadingRateMask(~unsigned(a)); }
 
 }  // end namespace spv
 
