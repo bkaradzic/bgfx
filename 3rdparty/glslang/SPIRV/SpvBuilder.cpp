@@ -1373,7 +1373,7 @@ bool Builder::containsType(Id typeId, spv::Op typeOp, unsigned int width) const
 }
 
 // return true if the type is a pointer to PhysicalStorageBufferEXT or an
-// array of such pointers. These require restrict/aliased decorations.
+// contains such a pointer. These require restrict/aliased decorations.
 bool Builder::containsPhysicalStorageBufferOrArray(Id typeId) const
 {
     const Instruction& instr = *module.getInstruction(typeId);
@@ -1385,6 +1385,12 @@ bool Builder::containsPhysicalStorageBufferOrArray(Id typeId) const
         return getTypeStorageClass(typeId) == StorageClassPhysicalStorageBufferEXT;
     case OpTypeArray:
         return containsPhysicalStorageBufferOrArray(getContainedTypeId(typeId));
+    case OpTypeStruct:
+        for (int m = 0; m < instr.getNumOperands(); ++m) {
+            if (containsPhysicalStorageBufferOrArray(instr.getIdOperand(m)))
+                return true;
+        }
+        return false;
     default:
         return false;
     }
