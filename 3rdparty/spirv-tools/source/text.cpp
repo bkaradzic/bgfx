@@ -544,7 +544,8 @@ spv_result_t spvTextEncodeOpcode(const spvtools::AssemblyGrammar& grammar,
     std::string equal_sign;
     error = context->getWord(&equal_sign, &nextPosition);
     if ("=" != equal_sign)
-      return context->diagnostic() << "'=' expected after result id.";
+      return context->diagnostic() << "'=' expected after result id but found '"
+                                   << equal_sign << "'.";
 
     // The <opcode> after the '=' sign.
     context->setPosition(nextPosition);
