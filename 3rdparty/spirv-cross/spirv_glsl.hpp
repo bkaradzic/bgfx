@@ -477,6 +477,8 @@ protected:
 
 	virtual bool builtin_translates_to_nonarray(spv::BuiltIn builtin) const;
 
+	virtual bool is_user_type_structured(uint32_t id) const;
+
 	void emit_copy_logical_type(uint32_t lhs_id, uint32_t lhs_type_id, uint32_t rhs_id, uint32_t rhs_type_id,
 	                            SmallVector<uint32_t> chain);
 

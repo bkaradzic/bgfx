@@ -9858,6 +9858,9 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 	bool pending_array_enclose = false;
 	bool dimension_flatten = false;
 
+	// If we are translating access to a structured buffer, the first subscript '._m0' must be hidden
+	bool hide_first_subscript = count > 1 && is_user_type_structured(base);
+
 	const auto append_index = [&](uint32_t index, bool is_literal, bool is_ptr_chain = false) {
 		AccessChainFlags mod_flags = flags;
 		if (!is_literal)
@@ -10044,32 +10047,40 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 			if (index >= type->member_types.size())
 				SPIRV_CROSS_THROW("Member index is out of bounds!");
 
-			BuiltIn builtin = BuiltInMax;
-			if (is_member_builtin(*type, index, &builtin) && access_chain_needs_stage_io_builtin_translation(base))
+			if (hide_first_subscript)
 			{
-				if (access_chain_is_arrayed)
-				{
-					expr += ".";
-					expr += builtin_to_glsl(builtin, type->storage);
-				}
-				else
-					expr = builtin_to_glsl(builtin, type->storage);
+				// First "._m0" subscript has been hidden, subsequent fields must be emitted even for structured buffers
+				hide_first_subscript = false;
 			}
 			else
 			{
-				// If the member has a qualified name, use it as the entire chain
-				string qual_mbr_name = get_member_qualified_name(type_id, index);
-				if (!qual_mbr_name.empty())
-					expr = qual_mbr_name;
-				else if (flatten_member_reference)
-					expr += join("_", to_member_name(*type, index));
+				BuiltIn builtin = BuiltInMax;
+				if (is_member_builtin(*type, index, &builtin) && access_chain_needs_stage_io_builtin_translation(base))
+				{
+					if (access_chain_is_arrayed)
+					{
+						expr += ".";
+						expr += builtin_to_glsl(builtin, type->storage);
+					}
+					else
+						expr = builtin_to_glsl(builtin, type->storage);
+				}
 				else
 				{
-					// Any pointer de-refences for values are handled in the first access chain.
-					// For pointer chains, the pointer-ness is resolved through an array access.
-					// The only time this is not true is when accessing array of SSBO/UBO.
-					// This case is explicitly handled.
-					expr += to_member_reference(base, *type, index, ptr_chain || i != 0);
+					// If the member has a qualified name, use it as the entire chain
+					string qual_mbr_name = get_member_qualified_name(type_id, index);
+					if (!qual_mbr_name.empty())
+						expr = qual_mbr_name;
+					else if (flatten_member_reference)
+						expr += join("_", to_member_name(*type, index));
+					else
+					{
+						// Any pointer de-refences for values are handled in the first access chain.
+						// For pointer chains, the pointer-ness is resolved through an array access.
+						// The only time this is not true is when accessing array of SSBO/UBO.
+						// This case is explicitly handled.
+						expr += to_member_reference(base, *type, index, ptr_chain || i != 0);
+					}
 				}
 			}
 
@@ -15585,6 +15596,11 @@ void CompilerGLSL::flatten_buffer_block(VariableID id)
 bool CompilerGLSL::builtin_translates_to_nonarray(spv::BuiltIn /*builtin*/) const
 {
 	return false; // GLSL itself does not need to translate array builtin types to non-array builtin types
+}
+
+bool CompilerGLSL::is_user_type_structured(uint32_t /*id*/) const
+{
+	return false; // GLSL itself does not have structured user type, but HLSL does with StructuredBuffer and RWStructuredBuffer resources.
 }
 
 bool CompilerGLSL::check_atomic_image(uint32_t id)

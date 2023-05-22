@@ -10902,26 +10902,29 @@ string CompilerMSL::to_function_args(const TextureFunctionArguments &args, bool 
 			// Therefore, dP/dx = dP/dy = exp2(lod)/extent.
 			// (Subtracting 0.5 before exponentiation gives better results.)
 			string grad_opt, extent;
+			VariableID base_img = img;
+			if (auto *combined = maybe_get<SPIRCombinedImageSampler>(img))
+				base_img = combined->image;
 			switch (imgtype.image.dim)
 			{
 			case Dim1D:
 				grad_opt = "2d";
-				extent = join("float2(", to_expression(img), ".get_width(), 1.0)");
+				extent = join("float2(", to_expression(base_img), ".get_width(), 1.0)");
 				break;
 			case Dim2D:
 				grad_opt = "2d";
-				extent = join("float2(", to_expression(img), ".get_width(), ", to_expression(img), ".get_height())");
+				extent = join("float2(", to_expression(base_img), ".get_width(), ", to_expression(base_img), ".get_height())");
 				break;
 			case DimCube:
 				if (imgtype.image.arrayed && msl_options.emulate_cube_array)
 				{
 					grad_opt = "2d";
-					extent = join("float2(", to_expression(img), ".get_width())");
+					extent = join("float2(", to_expression(base_img), ".get_width())");
 				}
 				else
 				{
 					grad_opt = "cube";
-					extent = join("float3(", to_expression(img), ".get_width())");
+					extent = join("float3(", to_expression(base_img), ".get_width())");
 				}
 				break;
 			default:
