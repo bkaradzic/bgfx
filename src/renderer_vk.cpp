@@ -527,10 +527,12 @@ VK_IMPORT_DEVICE
 	};
 	BX_STATIC_ASSERT(VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE == BX_COUNTOF(s_allocScopeName)-1);
 
+	constexpr size_t kMinAlignment = 8;
+
 	static void* VKAPI_PTR allocationFunction(void* _userData, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
 	{
 		BX_UNUSED(_userData);
-		return bx::alignedAlloc(g_allocator, _size, bx::max(_alignment, 8), bx::Location(s_allocScopeName[_allocationScope], 0) );
+		return bx::alignedAlloc(g_allocator, _size, bx::max(kMinAlignment, _alignment), bx::Location(s_allocScopeName[_allocationScope], 0) );
 	}
 
 	static void* VKAPI_PTR reallocationFunction(void* _userData, void* _original, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
@@ -540,7 +542,7 @@ VK_IMPORT_DEVICE
 			bx::alignedFree(g_allocator, _original, 0);
 			return NULL;
 		}
-		return bx::alignedRealloc(g_allocator, _original, _size, bx::max(_alignment, 8), bx::Location(s_allocScopeName[_allocationScope], 0) );
+		return bx::alignedRealloc(g_allocator, _original, _size, bx::max(kMinAlignment, _alignment), bx::Location(s_allocScopeName[_allocationScope], 0) );
 	}
 
 	static void VKAPI_PTR freeFunction(void* _userData, void* _memory)
