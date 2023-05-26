@@ -529,14 +529,18 @@ VK_IMPORT_DEVICE
 
 	static void* VKAPI_PTR allocationFunction(void* _userData, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
 	{
-		BX_UNUSED(_userData, _allocationScope);
-		return bx::alignedAlloc(g_allocator, _size, _alignment, bx::Location(s_allocScopeName[_allocationScope], 0) );
+		BX_UNUSED(_userData);
+		return bx::alignedAlloc(g_allocator, _size, bx::max(_alignment, 8), bx::Location(s_allocScopeName[_allocationScope], 0) );
 	}
 
 	static void* VKAPI_PTR reallocationFunction(void* _userData, void* _original, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
 	{
-		BX_UNUSED(_userData, _allocationScope);
-		return bx::alignedRealloc(g_allocator, _original, _size, _alignment, bx::Location(s_allocScopeName[_allocationScope], 0) );
+		BX_UNUSED(_userData);
+		if (_size == 0) {
+			bx::alignedFree(g_allocator, _original, 0);
+			return NULL;
+		}
+		return bx::alignedRealloc(g_allocator, _original, _size, bx::max(_alignment, 8), bx::Location(s_allocScopeName[_allocationScope], 0) );
 	}
 
 	static void VKAPI_PTR freeFunction(void* _userData, void* _memory)
@@ -548,7 +552,7 @@ VK_IMPORT_DEVICE
 			return;
 		}
 
-		bx::alignedFree(g_allocator, _memory, 8);
+		bx::alignedFree(g_allocator, _memory, 0);
 	}
 
 	static void VKAPI_PTR internalAllocationNotification(void* _userData, size_t _size, VkInternalAllocationType _allocationType, VkSystemAllocationScope _allocationScope)
