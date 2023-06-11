@@ -76,6 +76,7 @@ namespace bgfx
 	// 4.2    420               11.0     vhdgf+c  5.0
 	// 4.3    430      vhdgf+c
 	// 4.4    440
+	// 4.6    460
 	//
 	// SPIR-V profile naming convention:
 	//  spirv<SPIR-V version>-<Vulkan version>
@@ -120,6 +121,7 @@ namespace bgfx
 		{  ShadingLang::GLSL,  420,    "420"        },
 		{  ShadingLang::GLSL,  430,    "430"        },
 		{  ShadingLang::GLSL,  440,    "440"        },
+		{  ShadingLang::GLSL,  460,    "460"        },
 	};
 
 	static const char* s_ARB_shader_texture_lod[] =
