@@ -886,6 +886,7 @@ struct bgfx_resolution_t
 	uint reset; /// Reset parameters.
 	ubyte numBackBuffers; /// Number of back buffers.
 	ubyte maxFrameLatency; /// Maximum frame latency.
+	ubyte scaleDebug; /// Scale factor for debug view.
 }
 
 /// Configurable runtime limits parameters.

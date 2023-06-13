@@ -757,7 +757,7 @@ namespace bgfx
 
 	struct TextVideoMemBlitter
 	{
-		void init();
+		void init(uint8_t scale);
 		void shutdown();
 
 		TextureHandle m_texture;
@@ -765,6 +765,7 @@ namespace bgfx
 		TransientIndexBuffer* m_ib;
 		VertexLayout m_layout;
 		ProgramHandle m_program;
+		uint8_t m_scale;
 	};
 
 	struct RendererContextI;
@@ -3249,7 +3250,7 @@ namespace bgfx
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			m_submit->m_textVideoMem->resize(_small, (uint16_t)m_init.resolution.width, (uint16_t)m_init.resolution.height);
+			m_submit->m_textVideoMem->resize(_small, (uint16_t)m_init.resolution.width / m_init.resolution.scaleDebug , (uint16_t)m_init.resolution.height / m_init.resolution.scaleDebug );
 			m_submit->m_textVideoMem->clear(_attr);
 		}
 
