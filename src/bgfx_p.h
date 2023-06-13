@@ -3165,6 +3165,8 @@ namespace bgfx
 
 		BGFX_API_FUNC(void reset(uint32_t _width, uint32_t _height, uint32_t _flags, TextureFormat::Enum _format) )
 		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+
 			const TextureFormat::Enum format = TextureFormat::Count != _format ? _format : m_init.resolution.format;
 
 			if (!g_platformDataChangedSinceReset
