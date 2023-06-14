@@ -1338,6 +1338,7 @@ pub const Caps = extern struct {
         reset: u32,
         numBackBuffers: u8,
         maxFrameLatency: u8,
+        scaleDebug: u8,
     };
 
 pub const Init = extern struct {

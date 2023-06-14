@@ -639,6 +639,7 @@ typedef struct bgfx_resolution_s
     uint32_t             reset;              /** Reset parameters.                        */
     uint8_t              numBackBuffers;     /** Number of back buffers.                  */
     uint8_t              maxFrameLatency;    /** Maximum frame latency.                   */
+    uint8_t              scaleDebug;         /** Scale factor for debug view.             */
 
 } bgfx_resolution_t;
 

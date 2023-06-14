@@ -669,7 +669,7 @@ namespace bgfx
 	static const uint32_t numBatchVertices = numCharsPerBatch*4;
 	static const uint32_t numBatchIndices  = numCharsPerBatch*6;
 
-	void TextVideoMemBlitter::init()
+	void TextVideoMemBlitter::init(uint8_t scale)
 	{
 		BGFX_CHECK_API_THREAD();
 		m_layout
@@ -709,6 +709,7 @@ namespace bgfx
 
 		m_vb = s_ctx->createTransientVertexBuffer(numBatchVertices*m_layout.m_stride, &m_layout);
 		m_ib = s_ctx->createTransientIndexBuffer(numBatchIndices*2);
+		m_scale = bx::max<uint8_t>(scale, 1);
 	}
 
 	void TextVideoMemBlitter::shutdown()
@@ -789,7 +790,8 @@ namespace bgfx
 		const float texelHeightHalf = RendererType::Direct3D9 == g_caps.rendererType ? texelHeight*0.5f : 0.0f;
 		const float utop       = (_mem.m_small ? 0.0f :  8.0f)*texelHeight + texelHeightHalf;
 		const float ubottom    = (_mem.m_small ? 8.0f : 24.0f)*texelHeight + texelHeightHalf;
-		const float fontHeight = (_mem.m_small ? 8.0f : 16.0f);
+		const float fontHeight = (_mem.m_small ? 8.0f : 16.0f)*_blitter.m_scale;
+		const float fontWidth  = 8.0f * _blitter.m_scale;
 
 		_renderCtx->blitSetup(_blitter);
 
@@ -828,10 +830,10 @@ namespace bgfx
 
 						Vertex vert[4] =
 						{
-							{ (xx  )*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, utop },
-							{ (xx+1)*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth - texelWidthHalf, utop },
-							{ (xx+1)*8.0f, (yy+1)*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth - texelWidthHalf, ubottom },
-							{ (xx  )*8.0f, (yy+1)*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, ubottom },
+							{ (xx  )*fontWidth, (yy  )*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, utop },
+							{ (xx+1)*fontWidth, (yy  )*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth - texelWidthHalf, utop },
+							{ (xx+1)*fontWidth, (yy+1)*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth - texelWidthHalf, ubottom },
+							{ (xx  )*fontWidth, (yy+1)*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, ubottom },
 						};
 
 						bx::memCopy(vertex, vert, sizeof(vert) );
@@ -1893,6 +1895,7 @@ namespace bgfx
 		m_init.resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
 		m_init.resolution.numBackBuffers  = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
 		m_init.resolution.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, BGFX_CONFIG_MAX_FRAME_LATENCY);
+		m_init.resolution.scaleDebug      = bx::clamp<uint8_t>(_init.resolution.scaleDebug, 1, BGFX_CONFIG_MAX_SCALE_DEBUG);
 		dump(m_init.resolution);
 
 		if (true
@@ -2029,7 +2032,7 @@ namespace bgfx
 
 		dumpCaps();
 
-		m_textVideoMemBlitter.init();
+		m_textVideoMemBlitter.init(m_init.resolution.scaleDebug);
 		m_clearQuad.init();
 
 		m_submit->m_transientVb = createTransientVertexBuffer(_init.limits.transientVbSize);
@@ -3433,6 +3436,7 @@ namespace bgfx
 		, reset(BGFX_RESET_NONE)
 		, numBackBuffers(2)
 		, maxFrameLatency(0)
+		, scaleDebug(0)
 	{
 	}
 
