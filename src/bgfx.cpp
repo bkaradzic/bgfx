@@ -709,7 +709,7 @@ namespace bgfx
 
 		m_vb = s_ctx->createTransientVertexBuffer(numBatchVertices*m_layout.m_stride, &m_layout);
 		m_ib = s_ctx->createTransientIndexBuffer(numBatchIndices*2);
-		m_scale = scale;
+		m_scale = bx::max<uint8_t>(scale, 1);
 	}
 
 	void TextVideoMemBlitter::shutdown()
@@ -1895,7 +1895,7 @@ namespace bgfx
 		m_init.resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
 		m_init.resolution.numBackBuffers  = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
 		m_init.resolution.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, BGFX_CONFIG_MAX_FRAME_LATENCY);
-		m_init.resolution.scaleDebug      = bx::max<uint8_t>(_init.resolution.scaleDebug, 1);
+		m_init.resolution.scaleDebug      = bx::clamp<uint8_t>(_init.resolution.scaleDebug, 1, BGFX_CONFIG_MAX_SCALE_DEBUG);
 		dump(m_init.resolution);
 
 		if (true
