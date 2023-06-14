@@ -3250,7 +3250,12 @@ namespace bgfx
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			m_submit->m_textVideoMem->resize(_small, (uint16_t)m_init.resolution.width / m_init.resolution.scaleDebug , (uint16_t)m_init.resolution.height / m_init.resolution.scaleDebug );
+			const uint8_t debugTextScale = m_init.resolution.debugTextScale;
+			m_submit->m_textVideoMem->resize(
+				  _small
+				, (uint16_t)m_init.resolution.width  / debugTextScale
+				, (uint16_t)m_init.resolution.height / debugTextScale
+				);
 			m_submit->m_textVideoMem->clear(_attr);
 		}
 

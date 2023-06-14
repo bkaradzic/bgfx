@@ -2093,7 +2093,7 @@ public static partial class bgfx
 		public uint reset;
 		public byte numBackBuffers;
 		public byte maxFrameLatency;
-		public byte scaleDebug;
+		public byte debugTextScale;
 	}
 	
 	public unsafe struct Init

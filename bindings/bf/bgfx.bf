@@ -2114,7 +2114,7 @@ public static class bgfx
 		public uint32 reset;
 		public uint8 numBackBuffers;
 		public uint8 maxFrameLatency;
-		public uint8 scaleDebug;
+		public uint8 debugTextScale;
 	}
 	
 	[CRepr]

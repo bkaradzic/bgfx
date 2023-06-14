@@ -1895,7 +1895,7 @@ namespace bgfx
 		m_init.resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
 		m_init.resolution.numBackBuffers  = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
 		m_init.resolution.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, BGFX_CONFIG_MAX_FRAME_LATENCY);
-		m_init.resolution.scaleDebug      = bx::clamp<uint8_t>(_init.resolution.scaleDebug, 1, BGFX_CONFIG_MAX_SCALE_DEBUG);
+		m_init.resolution.debugTextScale  = bx::clamp<uint8_t>(_init.resolution.debugTextScale, 1, BGFX_CONFIG_DEBUG_TEXT_MAX_SCALE);
 		dump(m_init.resolution);
 
 		if (true
@@ -2032,7 +2032,7 @@ namespace bgfx
 
 		dumpCaps();
 
-		m_textVideoMemBlitter.init(m_init.resolution.scaleDebug);
+		m_textVideoMemBlitter.init(m_init.resolution.debugTextScale);
 		m_clearQuad.init();
 
 		m_submit->m_transientVb = createTransientVertexBuffer(_init.limits.transientVbSize);
@@ -3436,7 +3436,7 @@ namespace bgfx
 		, reset(BGFX_RESET_NONE)
 		, numBackBuffers(2)
 		, maxFrameLatency(0)
-		, scaleDebug(0)
+		, debugTextScale(0)
 	{
 	}
 
