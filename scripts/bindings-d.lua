@@ -15,6 +15,8 @@ import bindbc.common.types: va_list;
 
 $version
 
+alias ViewId = ushort;
+
 $types
 $structs
 mixin(joinFnBinds((){
@@ -68,7 +70,7 @@ end
 -- 	return (name:gsub("^%l", string.upper))
 -- end
 
-local usEnSubs = {["Color"] = "Colour", ["Rasterize"] = "Rasterise", ["Initialize"] = "Initialise"}
+local usEnSubs = {Color = "Colour", Rasterize = "Rasterise", Initialize = "Initialise"}
 local function toIntlEn(name)
 	local change = false
 	for us, intl in pairs(usEnSubs) do
@@ -355,7 +357,7 @@ function converter.structs(st, name)
 		end
 		yield("\t\t]);")
 		yield("\t\treturn ret;")
-		yield("\t}())););")
+		yield("\t}()));")
 	end
 	
 	yield("}")
@@ -380,6 +382,14 @@ function converter.types(typ)
 		yield("}")
 		yield(typ.name .. " invalidHandle(){ return " .. typ.name .. "(ushort.max); }")
 	
+	elseif typ.funcptr then
+		local args = {}
+		for _, arg in ipairs(func.args) do
+			table.insert(args, convFnArgType(arg) .. " " .. convName(arg.name:sub(2)) .. def)
+		end
+		
+		yield(string.format("alias %s = extern(C++) %s function(%s);", func.name, convType(func.ret), table.concat(args, ", ")))
+		
 	elseif typ.enum then
 		local typeName = typ.name:gsub("::Enum", "")
 		yield("enum " .. typeName .. "{")
@@ -410,6 +420,10 @@ function converter.types(typ)
 	
 	elseif typ.bits ~= nil then
 		local typeName = convName(typ.name)
+		if typeName == "Caps" then
+			typeName = "CapFlags"
+		end
+		
 		local enumType = "uint"
 		if typ.bits == 64 then
 			enumType = "ulong"
@@ -433,17 +447,57 @@ function converter.types(typ)
 		
 		yield("alias " .. typeName .. "_ = " .. enumType .. ";")
 		yield("enum " .. typeName .. ": " .. typeName .. "_{")
+		
+		local function getValOr(name)
+			local t = typeName
+			if typeName == "State" then
+				if hasPrefix(name, "Write") then
+					t = t .. name:sub(1, 5)
+					name = name:sub(6)
+				elseif hasPrefix(name, "DepthTest") then
+					t = t .. name:sub(1, 9)
+					name = name:sub(10)
+				elseif hasPrefix(name, "Cull") then
+					t = t .. name:sub(1, 4)
+					name = name:sub(5)
+				end
+			elseif typeName == "Sampler" then
+				if hasPrefix(name, "Min") then
+					t = t .. name:sub(1, 3)
+					name = name:sub(4)
+				elseif hasPrefix(name, "Mag") then
+					t = t .. name:sub(1, 3)
+					name = name:sub(4)
+				elseif hasPrefix(name, "Mip") then
+					t = t .. name:sub(1, 3)
+					name = name:sub(4)
+				elseif hasPrefix(name, "U") then
+					t = t .. name:sub(1, 1)
+					name = name:sub(2)
+				elseif hasPrefix(name, "V") then
+					t = t .. name:sub(1, 1)
+					name = name:sub(2)
+				elseif hasPrefix(name, "W") then
+					t = t .. name:sub(1, 1)
+					name = name:sub(2)
+				elseif hasPrefix(name, "Compare") then
+					t = t .. name:sub(1, 7)
+					name = name:sub(8)
+				end
+			end
+			return t .. "." .. convName(toCamelCase(name))
+		end
+		
 		for idx, flag in ipairs(typ.flag) do
 			local value = flag.value
 			if value ~= nil then
 				value = hexStr(value, typ.bits)
 			else
 				for _, name in ipairs(flag) do
-					local fixedName = convName(toCamelCase(name))
 					if value ~= nil then
-						value = value .. " | " .. fixedName
+						value = value .. " | " .. getValOr(name)
 					else
-						value = fixedName
+						value = getValOr(name)
 					end
 				end
 			end
