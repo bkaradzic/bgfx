@@ -1455,7 +1455,6 @@ version(BindBgfx_Static)
 	 * _handle = Vertex buffer.
 	 * _startVertex = First instance data.
 	 * _num = Number of data instances.
-	 * Set instance data buffer for draw primitive.
 	 */
 	void bgfx_encoder_set_instance_data_from_vertex_buffer(bgfx_encoder_t* _this, bgfx_vertex_buffer_handle_t _handle, uint _startVertex, uint _num);
 	
@@ -1976,7 +1975,6 @@ version(BindBgfx_Static)
 	 * _handle = Vertex buffer.
 	 * _startVertex = First instance data.
 	 * _num = Number of data instances.
-	 * Set instance data buffer for draw primitive.
 	 */
 	void bgfx_set_instance_data_from_vertex_buffer(bgfx_vertex_buffer_handle_t _handle, uint _startVertex, uint _num);
 	
@@ -3766,7 +3764,6 @@ else
 		 * _handle = Vertex buffer.
 		 * _startVertex = First instance data.
 		 * _num = Number of data instances.
-		 * Set instance data buffer for draw primitive.
 		 */
 		alias da_bgfx_encoder_set_instance_data_from_vertex_buffer = void function(bgfx_encoder_t* _this, bgfx_vertex_buffer_handle_t _handle, uint _startVertex, uint _num);
 		da_bgfx_encoder_set_instance_data_from_vertex_buffer bgfx_encoder_set_instance_data_from_vertex_buffer;
@@ -4333,7 +4330,6 @@ else
 		 * _handle = Vertex buffer.
 		 * _startVertex = First instance data.
 		 * _num = Number of data instances.
-		 * Set instance data buffer for draw primitive.
 		 */
 		alias da_bgfx_set_instance_data_from_vertex_buffer = void function(bgfx_vertex_buffer_handle_t _handle, uint _startVertex, uint _num);
 		da_bgfx_set_instance_data_from_vertex_buffer bgfx_set_instance_data_from_vertex_buffer;

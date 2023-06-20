@@ -2596,7 +2596,6 @@ BGFX_C_API void bgfx_encoder_set_instance_data_buffer(bgfx_encoder_t* _this, con
  * @param[in] _handle Vertex buffer.
  * @param[in] _startVertex First instance data.
  * @param[in] _num Number of data instances.
- *  Set instance data buffer for draw primitive.
  *
  */
 BGFX_C_API void bgfx_encoder_set_instance_data_from_vertex_buffer(bgfx_encoder_t* _this, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);
@@ -3180,7 +3179,6 @@ BGFX_C_API void bgfx_set_instance_data_buffer(const bgfx_instance_data_buffer_t*
  * @param[in] _handle Vertex buffer.
  * @param[in] _startVertex First instance data.
  * @param[in] _num Number of data instances.
- *  Set instance data buffer for draw primitive.
  *
  */
 BGFX_C_API void bgfx_set_instance_data_from_vertex_buffer(bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);

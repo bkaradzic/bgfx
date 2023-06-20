@@ -1700,7 +1700,7 @@ pub const Init = extern struct {
         /// Set instance data buffer for draw primitive.
         /// <param name="_handle">Vertex buffer.</param>
         /// <param name="_startVertex">First instance data.</param>
-        /// <param name="_num">Number of data instances. Set instance data buffer for draw primitive.</param>
+        /// <param name="_num">Number of data instances.</param>
         pub inline fn setInstanceDataFromVertexBuffer(self: ?*Encoder, _handle: VertexBufferHandle, _startVertex: u32, _num: u32) void {
             return bgfx_encoder_set_instance_data_from_vertex_buffer(self, _handle, _startVertex, _num);
         }
@@ -3067,7 +3067,7 @@ extern fn bgfx_encoder_set_instance_data_buffer(self: ?*Encoder, _idb: [*c]const
 /// Set instance data buffer for draw primitive.
 /// <param name="_handle">Vertex buffer.</param>
 /// <param name="_startVertex">First instance data.</param>
-/// <param name="_num">Number of data instances. Set instance data buffer for draw primitive.</param>
+/// <param name="_num">Number of data instances.</param>
 extern fn bgfx_encoder_set_instance_data_from_vertex_buffer(self: ?*Encoder, _handle: VertexBufferHandle, _startVertex: u32, _num: u32) void;
 
 /// Set instance data buffer for draw primitive.
@@ -3498,7 +3498,7 @@ extern fn bgfx_set_instance_data_buffer(_idb: [*c]const InstanceDataBuffer, _sta
 /// Set instance data buffer for draw primitive.
 /// <param name="_handle">Vertex buffer.</param>
 /// <param name="_startVertex">First instance data.</param>
-/// <param name="_num">Number of data instances. Set instance data buffer for draw primitive.</param>
+/// <param name="_num">Number of data instances.</param>
 pub inline fn setInstanceDataFromVertexBuffer(_handle: VertexBufferHandle, _startVertex: u32, _num: u32) void {
     return bgfx_set_instance_data_from_vertex_buffer(_handle, _startVertex, _num);
 }
