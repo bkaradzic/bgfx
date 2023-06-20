@@ -3,9 +3,9 @@ local idl = codegen.idl "bgfx.idl"
 
 local template = [[
 /+
-+ ┌──────────────────────────────┐
++ ┌==============================┐
 + │ AUTO GENERATED! DO NOT EDIT! │
-+ └──────────────────────────────┘
++ └==============================┘
 +/
 module bgfx;
 
@@ -16,8 +16,77 @@ import bindbc.common.types: va_list;
 $version
 
 alias ViewId = ushort;
+enum invalidHandle(T) = T(ushort.max);
+
+alias ReleaseFn = void function(void* _ptr, void* _userData);
 
 $types
+pragma(inline,true) nothrow @nogc pure @safe{
+	StateBlend_ blendFuncSeparate(StateBlend_ srcRGB, StateBlend_ dstRGB, StateBlend_ srcA, StateBlend_ dstA){
+		return (srcRGB | ((dstRGB) << 4)) | ((srcA | (dstA << 4)) << 8);
+	}
+	
+	///Blend equation separate.
+	StateBlendEquation_ blendEquationSeparate(StateBlendEquation_ equationRGB, StateBlendEquation_ equationA){
+		return equationRGB | (equationA << 3);
+	}
+	
+	///Blend function.
+	StateBlend_ blendFunc(StateBlend_ src, StateBlend_ dst){ return blendFuncSeparate(src, dst, src, dst); }
+	
+	///Blend equation.
+	StateBlendEquation_ blendEquation(StateBlendEquation_ equation){ return blendEquationSeparate(equation, equation); }
+	
+	///Utility predefined blend modes.
+	enum StateBlendFunc: StateBlend_{
+		///Additive blending.
+		add = blendFunc(StateBlend.one, StateBlend.one),
+		
+		///Alpha blend.
+		alpha = blendFunc(StateBlend.srcAlpha, StateBlend.invSrcAlpha),
+		
+		///Selects darker color of blend.
+		darken = blendFunc(StateBlend.one, StateBlend.one) | blendEquation(StateBlendEquation.min),
+		
+		///Selects lighter color of blend.
+		lighten = blendFunc(StateBlend.one, StateBlend.one) | blendEquation(StateBlendEquation.max),
+		
+		///Multiplies colors.
+		multiply = blendFunc(StateBlend.dstColor, StateBlend.zero),
+		
+		///Opaque pixels will cover the pixels directly below them without any math or algorithm applied to them.
+		normal = blendFunc(StateBlend.one, StateBlend.invSrcAlpha),
+		
+		///Multiplies the inverse of the blend and base colors.
+		screen = blendFunc(StateBlend.one, StateBlend.invSrcColor),
+		
+		///Decreases the brightness of the base color based on the value of the blend color.
+		linearBurn = blendFunc(StateBlend.dstColor, StateBlend.invDstColor) | blendEquation(StateBlendEquation.sub),
+	}
+	
+	StateBlend_ blendFuncRTx(StateBlend_ src, StateBlend_ dst){
+		return cast(uint)(src >> StateBlend.shift) | (cast(uint)(dst >> StateBlend.shift) << 4);
+	}
+	
+	StateBlend_ blendFuncRTxE(StateBlend_ src, StateBlend_ dst, StateBlendEquation_ equation){
+		return blendFuncRTx(src, dst) | (cast(uint)(equation >> StateBlendEquation.shift) << 8);
+	}
+	
+	StateBlend_ blendFuncRT1(StateBlend_ src, StateBlend_ dst){ return blendFuncRTx(src, dst) <<  0; }
+	StateBlend_ blendFuncRT2(StateBlend_ src, StateBlend_ dst){ return blendFuncRTx(src, dst) << 11; }
+	StateBlend_ blendFuncRT3(StateBlend_ src, StateBlend_ dst){ return blendFuncRTx(src, dst) << 22; }
+	
+	StateBlend_ blendFuncRT1E(StateBlend_ src, StateBlend_ dst, StateBlendEquation_ equation){
+		return blendFuncRTxE(src, dst, equation) <<  0;
+	}
+	StateBlend_ blendFuncRT2E(StateBlend_ src, StateBlend_ dst, StateBlendEquation_ equation){
+		return blendFuncRTxE(src, dst, equation) << 11;
+	}
+	StateBlend_ blendFuncRT3E(StateBlend_ src, StateBlend_ dst, StateBlendEquation_ equation){
+		return blendFuncRTxE(src, dst, equation) << 22;
+	}
+}
+
 $structs
 mixin(joinFnBinds((){
 	string[][] ret;
@@ -25,12 +94,16 @@ mixin(joinFnBinds((){
 		$funcs
 	]);
 	return ret;
-}()));
+}(), __MODULE__, $membersWithFns));
 
 static if(!staticBinding):
 import bindbc.loader;
 
-mixin(makeDynloadFns("Bgfx", makeLibPaths(["bgfx", "bgfxRelease", "bgfxDebug"]), [__MODULE__]));
+debug{
+	mixin(makeDynloadFns("Bgfx", makeLibPaths(["bgfx-shared-libDebug", "bgfxDebug", "bgfx"]), [__MODULE__]));
+}else{
+	mixin(makeDynloadFns("Bgfx", makeLibPaths(["bgfx-shared-libRelease", "bgfxRelease", "bgfx"]), [__MODULE__]));
+}
 ]]
 
 local dKeywords = {"abstract", "alias", "align", "asm", "assert", "auto", "bool", "break", "byte", "case", "cast", "catch", "char", "class", "const", "continue", "dchar", "debug", "default", "delegate", "deprecated", "do", "double", "else", "enum", "export", "extern", "false", "final", "finally", "float", "for", "foreach", "foreach_reverse", "function", "goto", "if", "immutable", "import", "in", "inout", "int", "interface", "invariant", "is", "lazy", "long", "macro", "mixin", "module", "new", "nothrow", "null", "out", "override", "package", "pragma", "private", "protected", "public", "pure", "real", "ref", "return", "scope", "shared", "short", "static", "struct", "super", "switch", "synchronized", "template", "this", "throw", "true", "try", "typeid", "typeof", "ubyte", "uint", "ulong", "union", "unittest", "ushort", "version", "void", "wchar", "while", "with"}
@@ -52,18 +125,48 @@ local function hasSuffix(str, suffix)
 	return suffix == "" or str:sub(-#suffix) == suffix
 end
 
+local enumTypes = {}
+local membersWithFns = ""
+
+local capsWords = {"Mip", "Id", "Rw", "Rt", "Pci", "Srgb", "Pt", "Ccw", "2d", "3d", "Msaa"}
+local capsRepl = {
+	hidpi = "hiDPI", lineaa = "lineAA", maxanisotropy = "maxAnisotropy",
+	notequal = "notEqual", gequal = "gEqual", lequal = "lEqual",
+	decrsat = "decrSat", incrsat = "incrSat", revsub = "revSub",
+	linestrip = "lineStrip", tristrip = "triStrip",
+}
+
+local function abbrevsToUpper(name)
+	if name:len() >= 3 then
+		for _, abbrev in pairs(capsWords) do
+			name = name:gsub(abbrev, function(s0)
+				return s0:upper()
+			end)
+		end
+		for from, to in pairs(capsRepl) do
+			name =  name:gsub(from, to)
+		end
+	end
+	return name
+end
+
 local function toCamelCase(name)
+	if name:len() >= 3 then
+		name = name:sub(0, 1) .. name:sub(2, -2):gsub("_", "") .. name:sub(-1)
+	end
 	if name:find("%u%u+%l") then
-		return name:gsub("(%u-)(%u%l)", function(s0, s1)
+		name = name:gsub("(%u-)(%u%l)", function(s0, s1)
 			return s0:lower() .. s1
 		end)
+	else
+		name = (name:gsub("^([^%l]*)(%l?)", function(s0, s1)
+			if s1 ~= nil then
+				return s0:lower() .. s1
+			end
+			return s0:lower()
+		end))
 	end
-	return (name:gsub("^([^%l]*)(%l?)", function(s0, s1)
-		if s1 ~= nil then
-			return s0:lower() .. s1
-		end
-		return s0:lower()
-	end))
+	return abbrevsToUpper(name)
 end
 
 -- local function toPascalCase(name)
@@ -126,15 +229,28 @@ local function convSomeType(arg, isFnArg)
 		end
 		type = type:gsub("::Enum", "") --fix enums
 		type = type:gsub("%s+%*", "*") --remove spacing before `*`
-		type = type:gsub("([^&]-)%s?&", "ref %1") --change `&` suffix to `ref` prefix
-		--if isFnArg then --(not needed at this point)
-		--	type = type:gsub("%[[^%]]+%]", "*") --change `[n]` to `*`
-		--end
-		type = type:gsub("const%s+([A-Za-z_][A-Za-z0-9_]*)%*", "const(%1)*") --change `const x*` to `const(x)*`
-	end
-	
-	if arg.array ~= nil then
-		type = type .. convArray(arg.array)
+
+		if isFnArg then
+			for _, enum in pairs(enumTypes) do --fix C++ linkage errors
+				if type == enum then
+					type = string.format("bgfx.%s.%s.Enum", enum:lower(), enum)
+				else
+					type = (type:gsub("(" .. enum .. ")([^A-Za-z0-9_])", function(s0, s1)
+						return string.format("bgfx.%s.%s.Enum", enum:lower(), enum) .. s1
+					end))
+				end
+			end
+			type = type:gsub("([^&]-)%s?&", "ref %1") --change `&` suffix to `ref` prefix
+			if arg.array ~= nil then
+				type = type .. "*" --append *
+			end
+		else
+			type = type:gsub("([^&]-)%s?&", "%1*") --change `&` to `*`
+			if arg.array ~= nil then
+				type = type .. convArray(arg.array) --append [n]
+			end
+		end
+		type = type:gsub("const%s+([A-Za-z_][A-Za-z0-9_]*)%s*%*", "const(%1)*") --change `const x*` to `const(x)*`
 	end
 	
 	return type
@@ -150,6 +266,7 @@ end
 
 local valSubs = {
 	NULL = "null",
+	UINT8_MAX = "ubyte.max",
 	UINT16_MAX = "ushort.max",
 	UINT32_MAX = "uint.max",
 	
@@ -160,17 +277,25 @@ local valSubs = {
 	BGFX_STENCIL_NONE = "Stencil.none",
 	BGFX_TEXTURE_NONE = "Texture.none",
 	BGFX_SAMPLER_NONE = "Sampler.none",
-	BGFX_SAMPLER_U_CLAMP = "Sampler.uClamp",
-	BGFX_SAMPLER_V_CLAMP = "Sampler.vClamp",
-	BGFX_RESOLVE_AUTO_GEN_MIPS = "Resolve.autoGenMips",
+	BGFX_RESET_NONE = "Reset.none",
+	BGFX_SAMPLER_U_CLAMP = "SamplerU.clamp",
+	BGFX_SAMPLER_V_CLAMP = "SamplerV.clamp",
+	BGFX_RESOLVE_AUTO_GEN_MIPS = "Resolve.autoGenMIPs",
+	["ViewMode::Default"] = "ViewMode.default_",
 }
-local function convVal(arg)
+local function convVal(arg, type)
 	local val = string.format("%s", arg)
-	
 	for from, to in pairs(valSubs) do
 		if val:find(from) then
-			val = val:gsub(from, to)
+			if from == "BGFX_INVALID_HANDLE" then
+				val = val:gsub(from, to .. "!" .. type)
+			else
+				val = val:gsub(from, to)
+			end
 		end
+	end
+	if val:find("INT32_MAX") then
+		val = val:gsub("INT32_MAX", "int.max")
 	end
 	val = convArray(val)
 	
@@ -182,6 +307,7 @@ local function convStructType(arg)
 end
 
 local function convName(name)
+	name = abbrevsToUpper(name)
 	if contains(dKeywords, name) then
 		return name .. "_"
 	end
@@ -199,8 +325,9 @@ local function genVersion()
 end
 
 local function genStructMemberFn(func) --NOTE: this does not work on nested structs
-	if func.class ~= nil then
+	if func.class ~= nil and func.conly == nil then
 		local st = allStructs[func.class]
+		local attribs = ""
 		if func.comments ~= nil then
 			if #st.fns > 0 then
 				table.insert(st.fns, "")
@@ -243,12 +370,23 @@ local function genStructMemberFn(func) --NOTE: this does not work on nested stru
 		for _, arg in ipairs(func.args) do
 			local def = ""
 			if arg.default ~= nil then
-				def = string.format("=%s", convVal(arg.default))
+				def = string.format("=%s", convVal(arg.default, convFnArgType(arg)))
 			end
-			table.insert(args, convFnArgType(arg) .. " " .. convName(arg.name:sub(2)) .. def)
+			if arg.fulltype == "..." then
+				table.insert(args, "..." .. def)
+			else
+				table.insert(args, convFnArgType(arg) .. " " .. convName(arg.name:sub(2)) .. def)
+			end
 		end
 		
-		table.insert(st.fns, string.format("[q{%s}, q{%s}, q{%s}, `%s`],", convType(func.ret), func.name, table.concat(args, ", "), "C++"))
+		if func.const ~= nil then
+			attribs = "const"
+		end
+		if attribs ~= "" then
+			attribs = ", q{" .. attribs .. "}"
+		end
+		
+		table.insert(st.fns, string.format("[q{%s}, q{%s}, q{%s}, `C++`%s],", convType(func.ret), func.name, table.concat(args, ", "), attribs))
 	end
 end
 
@@ -297,6 +435,8 @@ function gen.gen()
 					table.insert(tmp, "")
 				end
 			end
+		elseif what == "membersWithFns" then
+			table.insert(tmp, "\"" .. membersWithFns .. "\"")
 		else
 			for _, object in ipairs(idl[what]) do
 				local co = coroutine.create(converter[what])
@@ -325,7 +465,7 @@ function converter.structs(st, name)
 		yield(line)
 	end
 	
-	yield("struct " .. name .. "{")
+	yield("extern(C++, \"bgfx\") struct " .. name .. "{")
 	
 	local subN = 0
 	for subName, subStruct in pairs(st.subs) do
@@ -349,15 +489,16 @@ function converter.structs(st, name)
 	end
 	
 	if #st.fns > 0 then
-		yield("\tmixin(joinFnBinds((){")
+		membersWithFns = membersWithFns .. name .. ", "
+		yield("\textern(D) mixin(joinFnBinds((){")
 		yield("\t\tstring[][] ret;")
 		yield("\t\tret ~= makeFnBinds([")
 		for _, line in ipairs(st.fns) do
 			yield("\t\t\t" .. line)
 		end
-		yield("\t\t]);")
+		yield("\t\t], true);")
 		yield("\t\treturn ret;")
-		yield("\t}()));")
+		yield("\t}(), typeof(this).stringof));")
 	end
 	
 	yield("}")
@@ -377,22 +518,32 @@ function converter.types(typ)
 	end
 	
 	if typ.handle then ---hnadle
-		yield("struct " .. typ.name .. "{")
+		yield("extern(C++, \"bgfx\") struct " .. typ.name .. "{")
 		yield("\tushort idx;")
 		yield("}")
-		yield(typ.name .. " invalidHandle(){ return " .. typ.name .. "(ushort.max); }")
+		--yield(typ.name .. " invalidHandle(){ return " .. typ.name .. "(ushort.max); }")
 	
 	elseif typ.funcptr then
 		local args = {}
 		for _, arg in ipairs(func.args) do
-			table.insert(args, convFnArgType(arg) .. " " .. convName(arg.name:sub(2)) .. def)
+			if arg.fulltype == "..." then
+				table.insert(args, "..." .. def)
+			else
+				table.insert(args, convFnArgType(arg) .. " " .. convName(arg.name:sub(2)) .. def)
+			end
 		end
 		
 		yield(string.format("alias %s = extern(C++) %s function(%s);", func.name, convType(func.ret), table.concat(args, ", ")))
 		
 	elseif typ.enum then
-		local typeName = typ.name:gsub("::Enum", "")
-		yield("enum " .. typeName .. "{")
+		local typeName = abbrevsToUpper(typ.name:gsub("::Enum", ""))
+		local otherName = string.format("bgfx.%s.%s.Enum", typeName:lower(), typeName)
+		
+		yield("static import bgfx." .. typeName:lower() .. ";")
+		yield("enum " .. typeName .. ": " .. otherName .. "{")
+		table.insert(enumTypes, typeName)
+		
+		local vals = ""
 		for idx, enum in ipairs(typ.enum) do
 			local comments = ""
 			if enum.comment ~= nil then
@@ -407,17 +558,40 @@ function converter.types(typ)
 				end
 			end
 			local name = convName(toCamelCase(enum.name))
-			yield("\t" .. name .. "," .. comments)
+			yield("\t" .. name .. " = " .. otherName .. "." .. name .. ",")
+			vals = vals .. name .. ","
 			
 			local intlName = toIntlEn(enum.name)
 			if intlName ~= nil then
-				yield("\t" .. convName(toCamelCase(intlName)) .. " = " .. name .. ",")
+				yield("\t" .. convName(toCamelCase(intlName)) .. " = " .. otherName .. "." .. name .. ",")
 			end
 		end
-		yield("\t");
-		yield("\t" .. "count,")
+		
+		local enumFile = string.format([[
+/+
++ ┌==============================┐
++ │ AUTO GENERATED! DO NOT EDIT! │
++ └==============================┘
++/
+module bgfx.%s;
+import bgfx;
+
+///NOTE: Do NOT use this module! Use the enum with the same name in `bgfx/package.d` instead.
+extern(C++, "bgfx") package final abstract class %s{
+	enum Enum{
+		%scount
+	}
+}
+]], typeName:lower(), typeName, vals)
+		outputfile = "../bindings/d/" .. typeName:lower() .. ".d"
+		local out = assert(io.open(outputfile, "wb"))
+		out:write(enumFile)
+		out:close()
+		print("Generating: " .. outputfile)
+		
+		yield("\t" .. "count = " .. otherName .. ".count,")
 		yield("}")
-	
+		
 	elseif typ.bits ~= nil then
 		local typeName = convName(typ.name)
 		if typeName == "Caps" then
@@ -485,7 +659,7 @@ function converter.types(typ)
 					name = name:sub(8)
 				end
 			end
-			return t .. "." .. convName(toCamelCase(name))
+			return abbrevsToUpper(t) .. "." .. convName(toCamelCase(name))
 		end
 		
 		for idx, flag in ipairs(typ.flag) do
@@ -556,8 +730,8 @@ function converter.types(typ)
 				typeName,
 				typeName,
 				enumType,
-				("shift"),
-				("mask")))
+				(typeName .. ".shift"),
+				(typeName .. ".mask")))
 			if intlName ~= nil then
 				yield("alias to" .. intlName .. " = to" .. typeName .. ";")
 			end
@@ -596,6 +770,10 @@ function converter.types(typ)
 			table.insert(st.fields, "\t" .. convStructMember(member) .. ";" .. comments)
 		end
 		
+		if typ.ctor ~= nil then
+			table.insert(st.fns, "[q{void}, q{this}, q{}, `C++`],")
+		end
+		
 		if typ.namespace ~= nil then
 			if allStructs[typ.namespace] ~= nil then
 				allStructs[typ.namespace].subs[typ.name] = st
@@ -612,7 +790,12 @@ function converter.types(typ)
 end
 
 function converter.funcs(func)
-	if func.class == nil then
+	if func.class == nil and func.conly == nil then
+		local extern = "C++, \"bgfx\""
+		local attribs = ""
+		if func.cfunc ~= nil and func.name ~= "init" then --what the is "cfunc" even meant to mean?
+			return
+		end
 		if func.comments ~= nil then
 			yield("/**")
 			for _, line in ipairs(func.comments) do
@@ -652,12 +835,20 @@ function converter.funcs(func)
 		for _, arg in ipairs(func.args) do
 			local def = ""
 			if arg.default ~= nil then
-				def = string.format("=%s", convVal(arg.default))
+				def = string.format("=%s", convVal(arg.default, convFnArgType(arg)))
 			end
-			table.insert(args, convFnArgType(arg) .. " " .. convName(arg.name:sub(2)) .. def)
+			if arg.fulltype == "..." then
+				table.insert(args, "..." .. def)
+			else
+				table.insert(args, convFnArgType(arg) .. " " .. convName(arg.name:sub(2)) .. def)
+			end
 		end
 		
-		yield(string.format("[q{%s}, q{%s}, q{%s}, `%s`],", convType(func.ret), func.name, table.concat(args, ", "), "C++"))
+		if attribs ~= "" then
+			attribs = ", q{" .. attribs .. "}"
+		end
+		
+		yield(string.format("[q{%s}, q{%s}, q{%s}, `%s`%s],", convType(func.ret), func.name, table.concat(args, ", "), extern, attribs))
 	end
 end
 

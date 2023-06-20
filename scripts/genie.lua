@@ -79,7 +79,7 @@ newaction {
 			csgen.write(csgen.gen_dllname(), "../bindings/cs/bgfx_dllname.cs")
 
 			local dgen = require "bindings-d"
-			dgen.write(dgen.gen(), "../bindings/d/bgfx.d")
+			dgen.write(dgen.gen(), "../bindings/d/package.d")
 
 			local csgen = require "bindings-bf"
 			csgen.write(csgen.gen(), "../bindings/bf/bgfx.bf")
