@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(120)
+version(121)
 
 typedef "bool"
 typedef "char"
@@ -2376,21 +2376,11 @@ func.Encoder.setInstanceDataBuffer
 	.num   "uint32_t"                  --- Number of data instances.
 
 --- Set instance data buffer for draw primitive.
-func.Encoder.setInstanceDataBuffer { cpponly }
-	"void"
-	.handle      "VertexBufferHandle" --- Vertex buffer.
-
---- Set instance data buffer for draw primitive.
 func.Encoder.setInstanceDataBuffer { cname = "set_instance_data_from_vertex_buffer" }
 	"void"
 	.handle      "VertexBufferHandle" --- Vertex buffer.
 	.startVertex "uint32_t"           --- First instance data.
 	.num         "uint32_t"           --- Number of data instances.
-
- --- Set instance data buffer for draw primitive.
-func.Encoder.setInstanceDataBuffer { cpponly }
-	"void"
-	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 
 --- Set instance data buffer for draw primitive.
 func.Encoder.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_vertex_buffer" }
@@ -2956,21 +2946,11 @@ func.setInstanceDataBuffer
 	.num   "uint32_t"                  --- Number of data instances.
 
 --- Set instance data buffer for draw primitive.
-func.setInstanceDataBuffer { cpponly }
-	"void"
-	.handle      "VertexBufferHandle" --- Vertex buffer.
-
---- Set instance data buffer for draw primitive.
 func.setInstanceDataBuffer { cname = "set_instance_data_from_vertex_buffer" }
 	"void"
 	.handle      "VertexBufferHandle" --- Vertex buffer.
 	.startVertex "uint32_t"           --- First instance data.
 	.num         "uint32_t"           --- Number of data instances.
-
- --- Set instance data buffer for draw primitive.
-func.setInstanceDataBuffer { cpponly }
-	"void"
-	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 
 --- Set instance data buffer for draw primitive.
 func.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_vertex_buffer" }

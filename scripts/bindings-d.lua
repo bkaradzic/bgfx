@@ -770,7 +770,7 @@ extern(C++, "bgfx") package final abstract class %s{
 			table.insert(st.fields, "\t" .. convStructMember(member) .. ";" .. comments)
 		end
 		
-		if typ.ctor ~= nil then
+		if typ.ctor ~= nil and typ.name ~= "PlatformData" then
 			table.insert(st.fns, "[q{void}, q{this}, q{}, `C++`],")
 		end
 		
