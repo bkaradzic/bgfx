@@ -60,7 +60,7 @@ Supported Languages
 -  `C/C++ API documentation <https://bkaradzic.github.io/bgfx/bgfx.html>`__
 -  `Beef API bindings <https://github.com/bkaradzic/bgfx/tree/master/bindings/bf>`__
 -  `C# language API bindings #1 <https://github.com/bkaradzic/bgfx/tree/master/bindings/cs>`__
--  `D language API bindings <https://github.com/GoaLitiuM/bindbc-bgfx>`__
+-  `D language API bindings <https://github.com/BindBC/bindbc-bgfx>`__
 -  `Go language API bindings <https://github.com/james4k/go-bgfx>`__
 -  `Haskell language API bindings <https://github.com/haskell-game/bgfx>`__
 -  `Lightweight Java Game Library 3 bindings <https://github.com/LWJGL/lwjgl3#lwjgl---lightweight-java-game-library-3>`__
