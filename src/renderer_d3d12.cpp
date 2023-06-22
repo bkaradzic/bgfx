@@ -3438,7 +3438,7 @@ namespace bgfx { namespace d3d12
 			if (isValid(m_fbh) )
 			{
 				FrameBufferD3D12& frameBuffer = m_frameBuffers[m_fbh.idx];
-				frameBuffer.clear(m_commandList, _clear, _palette);
+				frameBuffer.clear(m_commandList, _clear, _palette, _rect, _num);
 			}
 			else
 			{
