@@ -39,6 +39,9 @@ namespace bgfx { namespace gl
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLSWAPBUFFERSPROC)(EGLDisplay dpy, EGLSurface surface);
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLSWAPINTERVALPROC)(EGLDisplay dpy, EGLint interval);
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLTERMINATEPROC)(EGLDisplay dpy);
+	typedef EGLSurface  (EGLAPIENTRY* PFNEGLCREATEPBUFFERSURFACEPROC)(EGLDisplay display, EGLConfig config, EGLint const * attrib_list);
+    typedef EGLSurface  (EGLAPIENTRY* PFNEGLGETCURRENTSURFACEPROC)(EGLint readdraw);
+	typedef EGLContext  (EGLAPIENTRY* PFNEGLGETCURRENTCONTEXTPROC)(void);	
 
 #define EGL_IMPORT                                                          \
 	EGL_IMPORT_FUNC(PFNEGLCHOOSECONFIGPROC,        eglChooseConfig);        \
@@ -54,7 +57,10 @@ namespace bgfx { namespace gl
 	EGL_IMPORT_FUNC(PGNEGLQUERYSTRINGPROC,         eglQueryString);         \
 	EGL_IMPORT_FUNC(PFNEGLSWAPBUFFERSPROC,         eglSwapBuffers);         \
 	EGL_IMPORT_FUNC(PFNEGLSWAPINTERVALPROC,        eglSwapInterval);        \
-	EGL_IMPORT_FUNC(PFNEGLTERMINATEPROC,           eglTerminate);
+	EGL_IMPORT_FUNC(PFNEGLTERMINATEPROC,           eglTerminate);           \
+	EGL_IMPORT_FUNC(PFNEGLCREATEPBUFFERSURFACEPROC,eglCreatePbufferSurface);\
+	EGL_IMPORT_FUNC(PFNEGLGETCURRENTSURFACEPROC   ,eglGetCurrentSurface);   \
+	EGL_IMPORT_FUNC(PFNEGLGETCURRENTCONTEXTPROC   ,eglGetCurrentContext);
 
 #define EGL_IMPORT_FUNC(_proto, _func) _proto _func
 EGL_IMPORT
@@ -109,7 +115,16 @@ EGL_IMPORT
 		{
             EGLSurface defaultSurface = eglGetCurrentSurface(EGL_DRAW);
 
-			m_surface = eglCreateWindowSurface(m_display, _config, _nwh, NULL);
+ 			if(NULL == _nwh)
+			{
+				// Create an EGL pbuffer surface
+				m_surface = eglCreatePbufferSurface(m_display, _config, NULL);
+			}
+		    else
+		    {
+				m_surface = eglCreateWindowSurface(m_display, _config, _nwh, NULL);
+		    }
+			
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 
 			m_context = eglCreateContext(m_display, _config, _context, s_contextAttrs);
@@ -180,7 +195,7 @@ EGL_IMPORT
 			}
 #	endif // BX_PLATFORM_WINDOWS
 
-			m_display = eglGetDisplay(ndt);
+            m_display = eglGetDisplay(NULL == ndt ? EGL_DEFAULT_DISPLAY : ndt);
 			BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display %p", m_display);
 
 			EGLint major = 0;
@@ -212,10 +227,14 @@ EGL_IMPORT
             uint32_t msaaSamples = msaa == 0 ? 0 : 1<<msaa;
 			m_msaaContext = true;
 #endif // BX_PLATFORM_ANDROID
+           
+		    bool headless = NULL == nwh;
 
 			EGLint attrs[] =
 			{
 				EGL_RENDERABLE_TYPE, (gles >= 30) ? EGL_OPENGL_ES3_BIT_KHR : EGL_OPENGL_ES2_BIT,
+
+				EGL_SURFACE_TYPE, headless ? EGL_PBUFFER_BIT : EGL_WINDOW_BIT,
 
 				EGL_BLUE_SIZE, 8,
 				EGL_GREEN_SIZE, 8,
@@ -274,7 +293,16 @@ EGL_IMPORT
 			vc_dispmanx_update_submit_sync(dispmanUpdate);
 #	endif // BX_PLATFORM_ANDROID
 
-			m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
+            if(headless)
+			{
+				// Create an EGL pbuffer surface
+				EGLint pbAttribs[] = { EGL_WIDTH, static_cast<EGLint>(_width), EGL_HEIGHT, static_cast<EGLint>(_height), EGL_NONE };
+				m_surface = eglCreatePbufferSurface(m_display, m_config, pbAttribs);
+			}
+		    else
+		    {
+				m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
+		    }
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 
 			const bool hasEglKhrCreateContext = !bx::findIdentifierMatch(extensions, "EGL_KHR_create_context").isEmpty();
