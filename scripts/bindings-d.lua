@@ -12,6 +12,7 @@ module bgfx;
 import bindbc.bgfx.config;
 
 import bindbc.common.types: va_list;
+static import bgfx.fakeenum;
 
 $version
 
@@ -233,10 +234,10 @@ local function convSomeType(arg, isFnArg)
 		if isFnArg then
 			for _, enum in pairs(enumTypes) do --fix C++ linkage errors
 				if type == enum then
-					type = string.format("bgfx.%s.%s.Enum", enum:lower(), enum)
+					type = string.format("bgfx.fakeenum.%s.Enum", enum)
 				else
 					type = (type:gsub("(" .. enum .. ")([^A-Za-z0-9_])", function(s0, s1)
-						return string.format("bgfx.%s.%s.Enum", enum:lower(), enum) .. s1
+						return string.format("bgfx.fakeenum.%s.Enum", enum) .. s1
 					end))
 				end
 			end
@@ -394,6 +395,18 @@ local converter = {}
 local yield = coroutine.yield
 local gen = {}
 
+gen.fakeEnumFile = [[
+/+
++ ┌==============================┐
++ │ AUTO GENERATED! DO NOT EDIT! │
++ └==============================┘
++/
+module bgfx.fakeenum;
+
+//NOTE: Do NOT use this module! Use the enums with the same names in `bgfx/package.d` instead.
+package:
+]]
+
 function gen.gen()
 	local indent = ""
 	local idx = 1;
@@ -537,9 +550,9 @@ function converter.types(typ)
 		
 	elseif typ.enum then
 		local typeName = abbrevsToUpper(typ.name:gsub("::Enum", ""))
-		local otherName = string.format("bgfx.%s.%s.Enum", typeName:lower(), typeName)
+		local otherName = string.format("bgfx.fakeenum.%s.Enum", typeName)
 		
-		yield("static import bgfx." .. typeName:lower() .. ";")
+		yield("")
 		yield("enum " .. typeName .. ": " .. otherName .. "{")
 		table.insert(enumTypes, typeName)
 		
@@ -567,27 +580,13 @@ function converter.types(typ)
 			end
 		end
 		
-		local enumFile = string.format([[
-/+
-+ ┌==============================┐
-+ │ AUTO GENERATED! DO NOT EDIT! │
-+ └==============================┘
-+/
-module bgfx.%s;
-import bgfx;
-
-///NOTE: Do NOT use this module! Use the enum with the same name in `bgfx/package.d` instead.
+		gen.fakeEnumFile = gen.fakeEnumFile .. string.format([[
 extern(C++, "bgfx") package final abstract class %s{
 	enum Enum{
 		%scount
 	}
 }
-]], typeName:lower(), typeName, vals)
-		outputfile = "../bindings/d/" .. typeName:lower() .. ".d"
-		local out = assert(io.open(outputfile, "wb"))
-		out:write(enumFile)
-		out:close()
-		print("Generating: " .. outputfile)
+]], typeName, vals)
 		
 		yield("\t" .. "count = " .. otherName .. ".count,")
 		yield("}")

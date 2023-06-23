@@ -80,6 +80,7 @@ newaction {
 
 			local dgen = require "bindings-d"
 			dgen.write(dgen.gen(), "../bindings/d/package.d")
+			dgen.write(dgen.fakeEnumFile, "../bindings/d/fakeenum.d")
 
 			local csgen = require "bindings-bf"
 			csgen.write(csgen.gen(), "../bindings/bf/bgfx.bf")
