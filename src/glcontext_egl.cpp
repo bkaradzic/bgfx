@@ -39,6 +39,9 @@ namespace bgfx { namespace gl
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLSWAPBUFFERSPROC)(EGLDisplay dpy, EGLSurface surface);
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLSWAPINTERVALPROC)(EGLDisplay dpy, EGLint interval);
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLTERMINATEPROC)(EGLDisplay dpy);
+	typedef EGLSurface  (EGLAPIENTRY* PFNEGLCREATEPBUFFERSURFACEPROC)(EGLDisplay display, EGLConfig config, EGLint const * attrib_list);
+    typedef EGLSurface  (EGLAPIENTRY* PFNEGLGETCURRENTSURFACEPROC)(EGLint readdraw);
+	typedef EGLContext  (EGLAPIENTRY* PFNEGLGETCURRENTCONTEXTPROC)(void);	
 
 #define EGL_IMPORT                                                          \
 	EGL_IMPORT_FUNC(PFNEGLCHOOSECONFIGPROC,        eglChooseConfig);        \
@@ -54,7 +57,10 @@ namespace bgfx { namespace gl
 	EGL_IMPORT_FUNC(PGNEGLQUERYSTRINGPROC,         eglQueryString);         \
 	EGL_IMPORT_FUNC(PFNEGLSWAPBUFFERSPROC,         eglSwapBuffers);         \
 	EGL_IMPORT_FUNC(PFNEGLSWAPINTERVALPROC,        eglSwapInterval);        \
-	EGL_IMPORT_FUNC(PFNEGLTERMINATEPROC,           eglTerminate);
+	EGL_IMPORT_FUNC(PFNEGLTERMINATEPROC,           eglTerminate);           \
+	EGL_IMPORT_FUNC(PFNEGLCREATEPBUFFERSURFACEPROC,eglCreatePbufferSurface);\
+	EGL_IMPORT_FUNC(PFNEGLGETCURRENTSURFACEPROC   ,eglGetCurrentSurface);   \
+	EGL_IMPORT_FUNC(PFNEGLGETCURRENTCONTEXTPROC   ,eglGetCurrentContext);
 
 #define EGL_IMPORT_FUNC(_proto, _func) _proto _func
 EGL_IMPORT
@@ -189,7 +195,7 @@ EGL_IMPORT
 			}
 #	endif // BX_PLATFORM_WINDOWS
 
-			m_display = eglGetDisplay(NULL == ndt ? EGL_DEFAULT_DISPLAY : ndt);
+            m_display = eglGetDisplay(NULL == ndt ? EGL_DEFAULT_DISPLAY : ndt);
 			BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display %p", m_display);
 
 			EGLint major = 0;
