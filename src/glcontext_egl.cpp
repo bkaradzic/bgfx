@@ -25,42 +25,42 @@ namespace bgfx { namespace gl
 
 	typedef void (*EGLPROC)(void);
 
-	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLCHOOSECONFIGPROC)(EGLDisplay dpy, const EGLint *attrib_list,	EGLConfig *configs, EGLint config_size,	EGLint *num_config);
-	typedef EGLContext  (EGLAPIENTRY* PFNEGLCREATECONTEXTPROC)(EGLDisplay dpy, EGLConfig config, EGLContext share_context, const EGLint *attrib_list);
-	typedef EGLSurface  (EGLAPIENTRY* PFNEGLCREATEWINDOWSURFACEPROC)(EGLDisplay dpy, EGLConfig config, EGLNativeWindowType win, const EGLint *attrib_list);
-	typedef EGLint      (EGLAPIENTRY* PFNEGLGETERRORPROC)(void);
-	typedef EGLDisplay  (EGLAPIENTRY* PFNEGLGETDISPLAYPROC)(EGLNativeDisplayType display_id);
-	typedef EGLPROC     (EGLAPIENTRY* PFNEGLGETPROCADDRESSPROC)(const char *procname);
-	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLINITIALIZEPROC)(EGLDisplay dpy, EGLint *major, EGLint *minor);
-	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLMAKECURRENTPROC)(EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx);
+	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLCHOOSECONFIGPROC)(EGLDisplay dpy, const EGLint* attrib_list, EGLConfig* configs, EGLint config_size, EGLint* num_config);
+	typedef EGLContext  (EGLAPIENTRY* PFNEGLCREATECONTEXTPROC)(EGLDisplay dpy, EGLConfig config, EGLContext share_context, const EGLint* attrib_list);
+	typedef EGLSurface  (EGLAPIENTRY* PFNEGLCREATEPBUFFERSURFACEPROC)(EGLDisplay display, EGLConfig config, EGLint const* attrib_list);
+	typedef EGLSurface  (EGLAPIENTRY* PFNEGLCREATEWINDOWSURFACEPROC)(EGLDisplay dpy, EGLConfig config, EGLNativeWindowType win, const EGLint* attrib_list);
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLDESTROYCONTEXTPROC)(EGLDisplay dpy, EGLContext ctx);
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLDESTROYSURFACEPROC)(EGLDisplay dpy, EGLSurface surface);
-	typedef const char* (EGLAPIENTRY* PGNEGLQUERYSTRINGPROC)(EGLDisplay dpy, EGLint name);
+	typedef EGLContext  (EGLAPIENTRY* PFNEGLGETCURRENTCONTEXTPROC)(void);
+	typedef EGLSurface  (EGLAPIENTRY* PFNEGLGETCURRENTSURFACEPROC)(EGLint readdraw);
+	typedef EGLDisplay  (EGLAPIENTRY* PFNEGLGETDISPLAYPROC)(EGLNativeDisplayType display_id);
+	typedef EGLint      (EGLAPIENTRY* PFNEGLGETERRORPROC)(void);
+	typedef EGLPROC     (EGLAPIENTRY* PFNEGLGETPROCADDRESSPROC)(const char* procname);
+	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLINITIALIZEPROC)(EGLDisplay dpy, EGLint* major, EGLint* minor);
+	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLMAKECURRENTPROC)(EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx);
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLSWAPBUFFERSPROC)(EGLDisplay dpy, EGLSurface surface);
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLSWAPINTERVALPROC)(EGLDisplay dpy, EGLint interval);
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLTERMINATEPROC)(EGLDisplay dpy);
-	typedef EGLSurface  (EGLAPIENTRY* PFNEGLCREATEPBUFFERSURFACEPROC)(EGLDisplay display, EGLConfig config, EGLint const * attrib_list);
-    typedef EGLSurface  (EGLAPIENTRY* PFNEGLGETCURRENTSURFACEPROC)(EGLint readdraw);
-	typedef EGLContext  (EGLAPIENTRY* PFNEGLGETCURRENTCONTEXTPROC)(void);	
+	typedef const char* (EGLAPIENTRY* PGNEGLQUERYSTRINGPROC)(EGLDisplay dpy, EGLint name);
 
-#define EGL_IMPORT                                                          \
-	EGL_IMPORT_FUNC(PFNEGLCHOOSECONFIGPROC,        eglChooseConfig);        \
-	EGL_IMPORT_FUNC(PFNEGLCREATECONTEXTPROC,       eglCreateContext);       \
-	EGL_IMPORT_FUNC(PFNEGLCREATEWINDOWSURFACEPROC, eglCreateWindowSurface); \
-	EGL_IMPORT_FUNC(PFNEGLGETDISPLAYPROC,          eglGetDisplay);          \
-	EGL_IMPORT_FUNC(PFNEGLGETERRORPROC,            eglGetError);            \
-	EGL_IMPORT_FUNC(PFNEGLGETPROCADDRESSPROC,      eglGetProcAddress);      \
-	EGL_IMPORT_FUNC(PFNEGLDESTROYCONTEXTPROC,      eglDestroyContext);      \
-	EGL_IMPORT_FUNC(PFNEGLDESTROYSURFACEPROC,      eglDestroySurface);      \
-	EGL_IMPORT_FUNC(PFNEGLINITIALIZEPROC,          eglInitialize);          \
-	EGL_IMPORT_FUNC(PFNEGLMAKECURRENTPROC,         eglMakeCurrent);         \
-	EGL_IMPORT_FUNC(PGNEGLQUERYSTRINGPROC,         eglQueryString);         \
-	EGL_IMPORT_FUNC(PFNEGLSWAPBUFFERSPROC,         eglSwapBuffers);         \
-	EGL_IMPORT_FUNC(PFNEGLSWAPINTERVALPROC,        eglSwapInterval);        \
-	EGL_IMPORT_FUNC(PFNEGLTERMINATEPROC,           eglTerminate);           \
-	EGL_IMPORT_FUNC(PFNEGLCREATEPBUFFERSURFACEPROC,eglCreatePbufferSurface);\
-	EGL_IMPORT_FUNC(PFNEGLGETCURRENTSURFACEPROC   ,eglGetCurrentSurface);   \
-	EGL_IMPORT_FUNC(PFNEGLGETCURRENTCONTEXTPROC   ,eglGetCurrentContext);
+#define EGL_IMPORT                                                            \
+	EGL_IMPORT_FUNC(PFNEGLCHOOSECONFIGPROC,         eglChooseConfig);         \
+	EGL_IMPORT_FUNC(PFNEGLCREATECONTEXTPROC,        eglCreateContext);        \
+	EGL_IMPORT_FUNC(PFNEGLCREATEPBUFFERSURFACEPROC, eglCreatePbufferSurface); \
+	EGL_IMPORT_FUNC(PFNEGLCREATEWINDOWSURFACEPROC,  eglCreateWindowSurface);  \
+	EGL_IMPORT_FUNC(PFNEGLDESTROYCONTEXTPROC,       eglDestroyContext);       \
+	EGL_IMPORT_FUNC(PFNEGLDESTROYSURFACEPROC,       eglDestroySurface);       \
+	EGL_IMPORT_FUNC(PFNEGLGETCURRENTCONTEXTPROC,    eglGetCurrentContext);    \
+	EGL_IMPORT_FUNC(PFNEGLGETCURRENTSURFACEPROC,    eglGetCurrentSurface);    \
+	EGL_IMPORT_FUNC(PFNEGLGETDISPLAYPROC,           eglGetDisplay);           \
+	EGL_IMPORT_FUNC(PFNEGLGETERRORPROC,             eglGetError);             \
+	EGL_IMPORT_FUNC(PFNEGLGETPROCADDRESSPROC,       eglGetProcAddress);       \
+	EGL_IMPORT_FUNC(PFNEGLINITIALIZEPROC,           eglInitialize);           \
+	EGL_IMPORT_FUNC(PFNEGLMAKECURRENTPROC,          eglMakeCurrent);          \
+	EGL_IMPORT_FUNC(PFNEGLSWAPBUFFERSPROC,          eglSwapBuffers);          \
+	EGL_IMPORT_FUNC(PFNEGLSWAPINTERVALPROC,         eglSwapInterval);         \
+	EGL_IMPORT_FUNC(PFNEGLTERMINATEPROC,            eglTerminate);            \
+	EGL_IMPORT_FUNC(PGNEGLQUERYSTRINGPROC,          eglQueryString);          \
 
 #define EGL_IMPORT_FUNC(_proto, _func) _proto _func
 EGL_IMPORT
@@ -113,18 +113,17 @@ EGL_IMPORT
 			: m_nwh(_nwh)
 			, m_display(_display)
 		{
-            EGLSurface defaultSurface = eglGetCurrentSurface(EGL_DRAW);
+			EGLSurface defaultSurface = eglGetCurrentSurface(EGL_DRAW);
 
- 			if(NULL == _nwh)
+			if (EGLNativeWindowType(0) == _nwh)
 			{
-				// Create an EGL pbuffer surface
 				m_surface = eglCreatePbufferSurface(m_display, _config, NULL);
 			}
-		    else
-		    {
+			else
+			{
 				m_surface = eglCreateWindowSurface(m_display, _config, _nwh, NULL);
-		    }
-			
+			}
+
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 
 			m_context = eglCreateContext(m_display, _config, _context, s_contextAttrs);
@@ -134,15 +133,17 @@ EGL_IMPORT
 			GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 0.0f) );
 			GL_CHECK(glClear(GL_COLOR_BUFFER_BIT) );
 			swapBuffers();
+
 			GL_CHECK(glClear(GL_COLOR_BUFFER_BIT) );
 			swapBuffers();
-            eglMakeCurrent(m_display, defaultSurface, defaultSurface, _context);
+
+			eglMakeCurrent(m_display, defaultSurface, defaultSurface, _context);
 		}
 
 		~SwapChainGL()
 		{
-            EGLSurface defaultSurface = eglGetCurrentSurface(EGL_DRAW);
-            EGLContext defaultContext = eglGetCurrentContext();
+			EGLSurface defaultSurface = eglGetCurrentSurface(EGL_DRAW);
+			EGLContext defaultContext = eglGetCurrentContext();
 
 			eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 			eglDestroyContext(m_display, m_context);
@@ -172,6 +173,8 @@ EGL_IMPORT
 
 	void GlContext::create(uint32_t _width, uint32_t _height, uint32_t _flags)
 	{
+		BX_UNUSED(_flags);
+
 #	if BX_PLATFORM_RPI
 		bcm_host_init();
 #	endif // BX_PLATFORM_RPI
@@ -227,8 +230,8 @@ EGL_IMPORT
             uint32_t msaaSamples = msaa == 0 ? 0 : 1<<msaa;
 			m_msaaContext = true;
 #endif // BX_PLATFORM_ANDROID
-           
-		    bool headless = NULL == nwh;
+
+			const bool headless = EGLNativeWindowType(0) == nwh;
 
 			EGLint attrs[] =
 			{
@@ -293,16 +296,23 @@ EGL_IMPORT
 			vc_dispmanx_update_submit_sync(dispmanUpdate);
 #	endif // BX_PLATFORM_ANDROID
 
-            if(headless)
+			if (headless)
 			{
-				// Create an EGL pbuffer surface
-				EGLint pbAttribs[] = { EGL_WIDTH, static_cast<EGLint>(_width), EGL_HEIGHT, static_cast<EGLint>(_height), EGL_NONE };
+				EGLint pbAttribs[] =
+				{
+					EGL_WIDTH,  EGLint(_width),
+					EGL_HEIGHT, EGLint(_height),
+
+					EGL_NONE
+				};
+
 				m_surface = eglCreatePbufferSurface(m_display, m_config, pbAttribs);
 			}
-		    else
-		    {
+			else
+			{
 				m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
-		    }
+			}
+
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 
 			const bool hasEglKhrCreateContext = !bx::findIdentifierMatch(extensions, "EGL_KHR_create_context").isEmpty();
