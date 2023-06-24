@@ -4138,29 +4138,25 @@ namespace bgfx { namespace gl
 
 		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _flags = 0)
 		{
-			if (_width  != 0
-			||  _height != 0)
+			if (!m_glctx.isValid() )
 			{
-				if (!m_glctx.isValid() )
-				{
-					m_glctx.create(_width, _height, _flags);
+				m_glctx.create(_width, _height, _flags);
 
 #if BX_PLATFORM_IOS
-					// iOS: need to figure out how to deal with FBO created by context.
-					m_backBufferFbo = m_msaaBackBufferFbo = m_glctx.getFbo();
+				// iOS: need to figure out how to deal with FBO created by context.
+				m_backBufferFbo = m_msaaBackBufferFbo = m_glctx.getFbo();
 #endif // BX_PLATFORM_IOS
-				}
-				else
-				{
-					destroyMsaaFbo();
+			}
+			else
+			{
+				destroyMsaaFbo();
 
-					m_glctx.resize(_width, _height, _flags);
+				m_glctx.resize(_width, _height, _flags);
 
-					uint32_t msaa = (_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
-					msaa = bx::uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
+				uint32_t msaa = (_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+				msaa = bx::uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
 
-					createMsaaFbo(_width, _height, msaa);
-				}
+				createMsaaFbo(_width, _height, msaa);
 			}
 
 			m_flip = true;

@@ -300,8 +300,8 @@ EGL_IMPORT
 			{
 				EGLint pbAttribs[] =
 				{
-					EGL_WIDTH,  EGLint(_width),
-					EGL_HEIGHT, EGLint(_height),
+					EGL_WIDTH,  EGLint(1),
+					EGL_HEIGHT, EGLint(1),
 
 					EGL_NONE
 				};
