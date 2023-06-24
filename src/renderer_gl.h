@@ -150,14 +150,6 @@ typedef uint64_t GLuint64;
 #		include <GLES2/gl2ext.h>
 #	endif // BGFX_CONFIG_RENDERER_
 
-#	if BGFX_USE_EGL
-#		include "glcontext_egl.h"
-#	endif // BGFX_USE_EGL
-
-#	if BGFX_USE_HTML5
-#		include "glcontext_html5.h"
-#	endif // BGFX_USE_EGL
-
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
 #include "renderer.h"
@@ -1168,17 +1160,19 @@ typedef uint64_t GLuint64;
 #	define GL_TEXTURE_LOD_BIAS 0x8501
 #endif // GL_TEXTURE_LOD_BIAS
 
-#if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#if BGFX_USE_EGL
+#	include "glcontext_egl.h"
+#elif BGFX_USE_HTML5
+#	include "glcontext_html5.h"
+#elif BGFX_USE_GLX
 #	include "glcontext_glx.h"
+#elif BGFX_USE_WGL
+#	include "glcontext_wgl.h"
 #elif BX_PLATFORM_OSX
 #	include "glcontext_nsgl.h"
 #elif BX_PLATFORM_IOS
 #	include "glcontext_eagl.h"
 #endif // BX_PLATFORM_
-
-#if BGFX_USE_WGL
-#	include "glcontext_wgl.h"
-#endif // BGFX_USE_WGL
 
 #ifndef GL_APIENTRY
 #	define GL_APIENTRY APIENTRY
