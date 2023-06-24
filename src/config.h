@@ -90,7 +90,6 @@
 #		define BGFX_CONFIG_RENDERER_OPENGL (0 \
 					|| BX_PLATFORM_BSD        \
 					|| BX_PLATFORM_LINUX      \
-					|| BX_PLATFORM_OSX        \
 					|| BX_PLATFORM_WINDOWS    \
 					? BGFX_CONFIG_RENDERER_OPENGL_MIN_VERSION : 0)
 #	endif // BGFX_CONFIG_RENDERER_OPENGL
@@ -105,7 +104,6 @@
 #		define BGFX_CONFIG_RENDERER_OPENGLES (0 \
 					|| BX_PLATFORM_ANDROID      \
 					|| BX_PLATFORM_EMSCRIPTEN   \
-					|| BX_PLATFORM_IOS          \
 					|| BX_PLATFORM_RPI          \
 					|| BX_PLATFORM_NX           \
 					? BGFX_CONFIG_RENDERER_OPENGLES_MIN_VERSION : 0)
