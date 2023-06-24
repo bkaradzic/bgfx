@@ -41,11 +41,10 @@ class InstBuffAddrCheckPass : public InstrumentPass {
 
   const char* name() const override { return "inst-buff-addr-check-pass"; }
 
- private:
-  // Return byte alignment of type |type_id|. Must be int, float, vector,
-  // matrix, struct, array or physical pointer. Uses std430 alignment.
-  uint32_t GetTypeAlignment(uint32_t type_id);
+  bool InstrumentFunction(Function* func, uint32_t stage_idx,
+                          InstProcessFunction& pfn) override;
 
+ private:
   // Return byte length of type |type_id|. Must be int, float, vector, matrix,
   // struct, array or physical pointer. Uses std430 alignment and sizes.
   uint32_t GetTypeLength(uint32_t type_id);

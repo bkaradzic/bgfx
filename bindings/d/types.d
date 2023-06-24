@@ -18,7 +18,7 @@ enum expandEnum(EnumType, string fqnEnumType = EnumType.stringof) = (){
 
 extern(C) @nogc nothrow:
 
-enum uint BGFX_API_VERSION = 118;
+enum uint BGFX_API_VERSION = 121;
 
 alias bgfx_view_id_t = ushort;
 
@@ -886,6 +886,7 @@ struct bgfx_resolution_t
 	uint reset; /// Reset parameters.
 	ubyte numBackBuffers; /// Number of back buffers.
 	ubyte maxFrameLatency; /// Maximum frame latency.
+	ubyte debugTextScale; /// Scale factor for debug text.
 }
 
 /// Configurable runtime limits parameters.

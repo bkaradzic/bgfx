@@ -202,7 +202,7 @@ struct BgfxCallback : public bgfx::CallbackI
 		m_writer = BX_NEW(entry::getAllocator(), AviWriter)(entry::getFileWriter() );
 		if (!m_writer->open("temp/capture.avi", _width, _height, 60, _yflip) )
 		{
-			BX_DELETE(entry::getAllocator(), m_writer);
+			bx::deleteObject(entry::getAllocator(), m_writer);
 			m_writer = NULL;
 		}
 	}
@@ -212,7 +212,7 @@ struct BgfxCallback : public bgfx::CallbackI
 		if (NULL != m_writer)
 		{
 			m_writer->close();
-			BX_DELETE(entry::getAllocator(), m_writer);
+			bx::deleteObject(entry::getAllocator(), m_writer);
 			m_writer = NULL;
 		}
 	}
@@ -257,7 +257,7 @@ public:
 				}
 				else
 				{
-					bx::alignedFree(this, _ptr, _align, _file, _line);
+					bx::alignedFree(this, _ptr, _align, bx::Location(_file, _line) );
 				}
 			}
 
@@ -274,7 +274,7 @@ public:
 				return ptr;
 			}
 
-			return bx::alignedAlloc(this, _size, _align, _file, _line);
+			return bx::alignedAlloc(this, _size, _align, bx::Location(_file, _line) );
 		}
 
 		if (kNaturalAlignment >= _align)
@@ -292,7 +292,7 @@ public:
 			return ptr;
 		}
 
-		return bx::alignedRealloc(this, _ptr, _size, _align, _file, _line);
+		return bx::alignedRealloc(this, _ptr, _size, _align, bx::Location(_file, _line) );
 	}
 
 	void dumpStats() const

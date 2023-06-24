@@ -136,6 +136,49 @@ Predefined Uniforms
 For more info, see the `shader helper macros
 <https://github.com/bkaradzic/bgfx/blob/master/src/bgfx_shader.sh>`__.
 
+Vertex Shader Attributes
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+``$input`` tokens for vertex shader can be only following:
+
+  ================ ===================
+  Attribute        bgfx::Attrib::Enum
+  ================ ===================
+  a_position       Position
+  a_normal         Normal
+  a_tangent        Tangent
+  a_bitangent      Bitangent
+  a_color0         Color0
+  a_color1         Color1
+  a_color2         Color2
+  a_color3         Color3
+  a_indices        Indices
+  a_weight         Weight
+  a_texcoord0      TexCoord0
+  a_texcoord1      TexCoord1
+  a_texcoord2      TexCoord2
+  a_texcoord3      TexCoord3
+  a_texcoord4      TexCoord4
+  a_texcoord5      TexCoord5
+  a_texcoord6      TexCoord6
+  a_texcoord7      TexCoord7
+  ================ ===================
+
+In ``varying.def.sc``, instance buffer input must use ``i_dataN`` as identifier where ``N`` is the index
+of the attribute in the buffer. Type must be ``vec4``, and the stride must be multiple of 16.
+The semantic must be ``TEXCOORDN`` with a decreasing index starting from ``TEXCOORD7``.
+
+::
+
+  vec4 i_data0 : TEXCOORD7;
+  vec4 i_data1 : TEXCOORD6;
+  vec4 i_data2 : TEXCOORD5;
+  vec4 i_data3 : TEXCOORD4;
+  vec4 i_data4 : TEXCOORD3;
+
+Options
+~~~~~~~
+
 Options:
 
   -h, --help                Display this help and exit.

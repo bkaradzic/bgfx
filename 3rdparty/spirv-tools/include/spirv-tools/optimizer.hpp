@@ -97,12 +97,24 @@ class Optimizer {
   // Registers passes that attempt to improve performance of generated code.
   // This sequence of passes is subject to constant review and will change
   // from time to time.
+  //
+  // If |preserve_interface| is true, all non-io variables in the entry point
+  // interface are considered live and are not eliminated.
+  // |preserve_interface| should be true if HLSL is generated
+  // from the SPIR-V bytecode.
   Optimizer& RegisterPerformancePasses();
+  Optimizer& RegisterPerformancePasses(bool preserve_interface);
 
   // Registers passes that attempt to improve the size of generated code.
   // This sequence of passes is subject to constant review and will change
   // from time to time.
+  //
+  // If |preserve_interface| is true, all non-io variables in the entry point
+  // interface are considered live and are not eliminated.
+  // |preserve_interface| should be true if HLSL is generated
+  // from the SPIR-V bytecode.
   Optimizer& RegisterSizePasses();
+  Optimizer& RegisterSizePasses(bool preserve_interface);
 
   // Registers passes that attempt to legalize the generated code.
   //
@@ -112,7 +124,13 @@ class Optimizer {
   //
   // This sequence of passes is subject to constant review and will change
   // from time to time.
+  //
+  // If |preserve_interface| is true, all non-io variables in the entry point
+  // interface are considered live and are not eliminated.
+  // |preserve_interface| should be true if HLSL is generated
+  // from the SPIR-V bytecode.
   Optimizer& RegisterLegalizationPasses();
+  Optimizer& RegisterLegalizationPasses(bool preserve_interface);
 
   // Register passes specified in the list of |flags|.  Each flag must be a
   // string of a form accepted by Optimizer::FlagHasValidForm().
@@ -525,8 +543,10 @@ Optimizer::PassToken CreateDeadInsertElimPass();
 // If |remove_outputs| is true, allow outputs to be removed from the interface.
 // This is only safe if the caller knows that there is no corresponding input
 // variable in the following shader. It is false by default.
-Optimizer::PassToken CreateAggressiveDCEPass(bool preserve_interface = false,
-                                             bool remove_outputs = false);
+Optimizer::PassToken CreateAggressiveDCEPass();
+Optimizer::PassToken CreateAggressiveDCEPass(bool preserve_interface);
+Optimizer::PassToken CreateAggressiveDCEPass(bool preserve_interface,
+                                             bool remove_outputs);
 
 // Creates a remove-unused-interface-variables pass.
 // Removes variables referenced on the |OpEntryPoint| instruction that are not
@@ -749,16 +769,8 @@ Optimizer::PassToken CreateCombineAccessChainsPass();
 // The instrumentation will read and write buffers in debug
 // descriptor set |desc_set|. It will write |shader_id| in each output record
 // to identify the shader module which generated the record.
-// |desc_length_enable| controls instrumentation of runtime descriptor array
-// references, |desc_init_enable| controls instrumentation of descriptor
-// initialization checking, and |buff_oob_enable| controls instrumentation
-// of storage and uniform buffer bounds checking, all of which require input
-// buffer support. |texbuff_oob_enable| controls instrumentation of texel
-// buffers, which does not require input buffer support.
-Optimizer::PassToken CreateInstBindlessCheckPass(
-    uint32_t desc_set, uint32_t shader_id, bool desc_length_enable = false,
-    bool desc_init_enable = false, bool buff_oob_enable = false,
-    bool texbuff_oob_enable = false);
+Optimizer::PassToken CreateInstBindlessCheckPass(uint32_t desc_set,
+                                                 uint32_t shader_id);
 
 // Create a pass to instrument physical buffer address checking
 // This pass instruments all physical buffer address references to check that

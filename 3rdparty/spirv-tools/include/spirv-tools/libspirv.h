@@ -286,6 +286,13 @@ typedef enum spv_operand_type_t {
   // An optional packed vector format
   SPV_OPERAND_TYPE_OPTIONAL_PACKED_VECTOR_FORMAT,
 
+  // Concrete operand types for cooperative matrix.
+  SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_OPERANDS,
+  // An optional cooperative matrix operands
+  SPV_OPERAND_TYPE_OPTIONAL_COOPERATIVE_MATRIX_OPERANDS,
+  SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_LAYOUT,
+  SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_USE,
+
   // This is a sentinel value, and does not represent an operand type.
   // It should come last.
   SPV_OPERAND_TYPE_NUM_OPERAND_TYPES,
@@ -402,6 +409,19 @@ typedef struct spv_parsed_instruction_t {
   const spv_parsed_operand_t* operands;
   uint16_t num_operands;
 } spv_parsed_instruction_t;
+
+typedef struct spv_parsed_header_t {
+  // The magic number of the SPIR-V module.
+  uint32_t magic;
+  // Version number.
+  uint32_t version;
+  // Generator's magic number.
+  uint32_t generator;
+  // IDs bound for this module (0 < id < bound).
+  uint32_t bound;
+  // reserved.
+  uint32_t reserved;
+} spv_parsed_header_t;
 
 typedef struct spv_const_binary_t {
   const uint32_t* code;

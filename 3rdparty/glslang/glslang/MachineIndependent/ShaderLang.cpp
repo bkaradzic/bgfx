@@ -1542,11 +1542,10 @@ int ShLinkExt(
     TShHandleBase* base = reinterpret_cast<TShHandleBase*>(linkHandle);
     TLinker* linker = static_cast<TLinker*>(base->getAsLinker());
 
-    SetThreadPoolAllocator(linker->getPool());
-
     if (linker == nullptr)
         return 0;
-
+    
+    SetThreadPoolAllocator(linker->getPool());
     linker->infoSink.info.erase();
 
     for (int i = 0; i < numHandles; ++i) {

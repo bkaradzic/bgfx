@@ -50,10 +50,10 @@ Supported platforms:
 
  * Android (14+, ARM, x86, MIPS)
  * FreeBSD
- * iOS (iPhone, iPad, AppleTV)
+ * iOS/iPadOS/tvOS (iPhone, iPad, AppleTV)
  * Linux
  * MIPS Creator CI20
- * OSX (10.12+)
+ * macOS (11+)
  * PlayStation 4
  * RaspberryPi
  * UWP (Universal Windows, Xbox One)
@@ -62,9 +62,10 @@ Supported platforms:
 
 Supported compilers:
 
- * Clang 3.3 and above
- * GCC 5 and above
- * VS2017 and above
+ * Clang 11 and above
+ * GCC 8 and above
+ * VS2019 and above
+ * Apple clang 12 and above
 
 Languages:
 

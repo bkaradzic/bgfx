@@ -215,6 +215,10 @@ const char* ExecutionModeString(int mode)
     case ExecutionModeNoGlobalOffsetINTEL:      return "NoGlobalOffsetINTEL";
     case ExecutionModeNumSIMDWorkitemsINTEL:    return "NumSIMDWorkitemsINTEL";
 
+    case ExecutionModeNonCoherentColorAttachmentReadEXT:        return "NonCoherentColorAttachmentReadEXT";
+    case ExecutionModeNonCoherentDepthAttachmentReadEXT:        return "NonCoherentDepthAttachmentReadEXT";
+    case ExecutionModeNonCoherentStencilAttachmentReadEXT:      return "NonCoherentStencilAttachmentReadEXT";
+
     case ExecutionModeCeiling:
     default: return "Bad";
     }
@@ -247,6 +251,7 @@ const char* StorageClassString(int StorageClass)
     case StorageClassPhysicalStorageBufferEXT: return "PhysicalStorageBufferEXT";
     case StorageClassTaskPayloadWorkgroupEXT:  return "TaskPayloadWorkgroupEXT";
     case StorageClassHitObjectAttributeNV:     return "HitObjectAttributeNV";
+    case StorageClassTileImageEXT:             return "TileImageEXT";
     default: return "Bad";
     }
 }
@@ -313,7 +318,7 @@ const char* DecorationString(int decoration)
     case DecorationPerPrimitiveNV:              return "PerPrimitiveNV";
     case DecorationPerViewNV:                   return "PerViewNV";
     case DecorationPerTaskNV:                   return "PerTaskNV";
-    
+
     case DecorationPerVertexKHR:                return "PerVertexKHR";
 
     case DecorationNonUniformEXT:           return "DecorationNonUniformEXT";
@@ -404,6 +409,7 @@ const char* BuiltInString(int builtIn)
     case BuiltInRayTminKHR:                  return "RayTminKHR";
     case BuiltInRayTmaxKHR:                  return "RayTmaxKHR";
     case BuiltInCullMaskKHR:                 return "CullMaskKHR";
+    case BuiltInHitTriangleVertexPositionsKHR: return "HitTriangleVertexPositionsKHR";
     case BuiltInInstanceCustomIndexKHR:      return "InstanceCustomIndexKHR";
     case BuiltInRayGeometryIndexKHR:         return "RayGeometryIndexKHR";
     case BuiltInObjectToWorldKHR:            return "ObjectToWorldKHR";
@@ -463,6 +469,7 @@ const char* DimensionString(int dim)
     case 4:  return "Rect";
     case 5:  return "Buffer";
     case 6:  return "SubpassData";
+    case DimTileImageDataEXT:  return "TileImageDataEXT";
 
     default: return "Bad";
     }
@@ -577,7 +584,7 @@ const char* ImageChannelOrderString(int format)
     case 17: return "sRGBA";
     case 18: return "sBGRA";
 
-    default: 
+    default:
         return "Bad";
     }
 }
@@ -863,7 +870,7 @@ const char* CapabilityString(int info)
     case 22: return "Int16";
     case 23: return "TessellationPointSize";
     case 24: return "GeometryPointSize";
-    case 25: return "ImageGatherExtended"; 
+    case 25: return "ImageGatherExtended";
     case 26: return "Bad";
     case 27: return "StorageImageMultisample";
     case 28: return "UniformBufferArrayDynamicIndexing";
@@ -950,6 +957,8 @@ const char* CapabilityString(int info)
     case CapabilityRayQueryKHR:                     return "RayQueryKHR";
     case CapabilityRayTracingProvisionalKHR:        return "RayTracingProvisionalKHR";
     case CapabilityRayTraversalPrimitiveCullingKHR: return "RayTraversalPrimitiveCullingKHR";
+    case CapabilityRayTracingPositionFetchKHR:      return "RayTracingPositionFetchKHR";
+    case CapabilityRayQueryPositionFetchKHR:        return "RayQueryPositionFetchKHR";
     case CapabilityComputeDerivativeGroupQuadsNV:   return "ComputeDerivativeGroupQuadsNV";
     case CapabilityComputeDerivativeGroupLinearNV:  return "ComputeDerivativeGroupLinearNV";
     case CapabilityFragmentBarycentricKHR:          return "FragmentBarycentricKHR";
@@ -988,6 +997,10 @@ const char* CapabilityString(int info)
     case CapabilityFragmentShaderSampleInterlockEXT:        return "CapabilityFragmentShaderSampleInterlockEXT";
     case CapabilityFragmentShaderPixelInterlockEXT:         return "CapabilityFragmentShaderPixelInterlockEXT";
     case CapabilityFragmentShaderShadingRateInterlockEXT:   return "CapabilityFragmentShaderShadingRateInterlockEXT";
+
+    case CapabilityTileImageColorReadAccessEXT:           return "TileImageColorReadAccessEXT";
+    case CapabilityTileImageDepthReadAccessEXT:           return "TileImageDepthReadAccessEXT";
+    case CapabilityTileImageStencilReadAccessEXT:         return "TileImageStencilReadAccessEXT";
 
     case CapabilityFragmentShadingRateKHR:                  return "FragmentShadingRateKHR";
 
@@ -1452,6 +1465,7 @@ const char* OpcodeString(int op)
     case OpRayQueryGetWorldRayOriginKHR:                                      return "OpRayQueryGetWorldRayOriginKHR";
     case OpRayQueryGetIntersectionObjectToWorldKHR:                           return "OpRayQueryGetIntersectionObjectToWorldKHR";
     case OpRayQueryGetIntersectionWorldToObjectKHR:                           return "OpRayQueryGetIntersectionWorldToObjectKHR";
+    case OpRayQueryGetIntersectionTriangleVertexPositionsKHR:                 return "OpRayQueryGetIntersectionTriangleVertexPositionsKHR";
 
     case OpTypeCooperativeMatrixNV:         return "OpTypeCooperativeMatrixNV";
     case OpCooperativeMatrixLoadNV:         return "OpCooperativeMatrixLoadNV";
@@ -1497,6 +1511,10 @@ const char* OpcodeString(int op)
     case OpHitObjectIsMissNV:                   return "OpHitObjectIsMissNV";
     case OpHitObjectGetShaderBindingTableRecordIndexNV: return "OpHitObjectGetShaderBindingTableRecordIndexNV";
     case OpHitObjectGetShaderRecordBufferHandleNV:   return "OpHitObjectGetShaderRecordBufferHandleNV";
+
+    case OpColorAttachmentReadEXT:          return "OpColorAttachmentReadEXT";
+    case OpDepthAttachmentReadEXT:          return "OpDepthAttachmentReadEXT";
+    case OpStencilAttachmentReadEXT:        return "OpStencilAttachmentReadEXT";
 
     default:
         return "Bad";
@@ -2235,11 +2253,11 @@ void Parameterize()
     InstructionDesc[OpBitFieldSExtract].operands.push(OperandId, "'Base'");
     InstructionDesc[OpBitFieldSExtract].operands.push(OperandId, "'Offset'");
     InstructionDesc[OpBitFieldSExtract].operands.push(OperandId, "'Count'");
-    
+
     InstructionDesc[OpBitFieldUExtract].operands.push(OperandId, "'Base'");
     InstructionDesc[OpBitFieldUExtract].operands.push(OperandId, "'Offset'");
     InstructionDesc[OpBitFieldUExtract].operands.push(OperandId, "'Count'");
-    
+
     InstructionDesc[OpBitReverse].operands.push(OperandId, "'Base'");
 
     InstructionDesc[OpBitCount].operands.push(OperandId, "'Base'");
@@ -2919,7 +2937,7 @@ void Parameterize()
     InstructionDesc[OpTerminateRayNV].setResultAndType(false, false);
 
     InstructionDesc[OpTerminateRayKHR].setResultAndType(false, false);
-    
+
     InstructionDesc[OpExecuteCallableNV].operands.push(OperandId, "SBT Record Index");
     InstructionDesc[OpExecuteCallableNV].operands.push(OperandId, "CallableData ID");
     InstructionDesc[OpExecuteCallableNV].setResultAndType(false, false);
@@ -3025,13 +3043,17 @@ void Parameterize()
     InstructionDesc[OpRayQueryGetIntersectionWorldToObjectKHR].operands.push(OperandId, "'Committed'");
     InstructionDesc[OpRayQueryGetIntersectionWorldToObjectKHR].setResultAndType(true, true);
 
+    InstructionDesc[OpRayQueryGetIntersectionTriangleVertexPositionsKHR].operands.push(OperandId, "'RayQuery'");
+    InstructionDesc[OpRayQueryGetIntersectionTriangleVertexPositionsKHR].operands.push(OperandId, "'Committed'");
+    InstructionDesc[OpRayQueryGetIntersectionWorldToObjectKHR].setResultAndType(true, true);
+
     InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandId, "'Sampled Image'");
     InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandId, "'Coordinate'");
     InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandId, "'Granularity'");
     InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandId, "'Coarse'");
     InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandImageOperands, "", true);
     InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandVariableIds, "", true);
-    
+
     InstructionDesc[OpWritePackedPrimitiveIndices4x8NV].operands.push(OperandId, "'Index Offset'");
     InstructionDesc[OpWritePackedPrimitiveIndices4x8NV].operands.push(OperandId, "'Packed Indices'");
 
@@ -3077,7 +3099,7 @@ void Parameterize()
     InstructionDesc[OpReadClockKHR].operands.push(OperandScope, "'Scope'");
 
     InstructionDesc[OpTypeHitObjectNV].setResultAndType(true, false);
-    
+
     InstructionDesc[OpHitObjectGetShaderRecordBufferHandleNV].operands.push(OperandId, "'HitObject'");
     InstructionDesc[OpHitObjectGetShaderRecordBufferHandleNV].setResultAndType(true, true);
 
@@ -3095,7 +3117,7 @@ void Parameterize()
 
     InstructionDesc[OpHitObjectGetHitKindNV].operands.push(OperandId, "'HitObject'");
     InstructionDesc[OpHitObjectGetHitKindNV].setResultAndType(true, true);
-    
+
     InstructionDesc[OpHitObjectGetPrimitiveIndexNV].operands.push(OperandId, "'HitObject'");
     InstructionDesc[OpHitObjectGetPrimitiveIndexNV].setResultAndType(true, true);
 
@@ -3151,7 +3173,7 @@ void Parameterize()
     InstructionDesc[OpHitObjectExecuteShaderNV].operands.push(OperandId, "'HitObject'");
     InstructionDesc[OpHitObjectExecuteShaderNV].operands.push(OperandId, "'Payload'");
     InstructionDesc[OpHitObjectExecuteShaderNV].setResultAndType(false, false);
-    
+
     InstructionDesc[OpHitObjectRecordHitNV].operands.push(OperandId, "'HitObject'");
     InstructionDesc[OpHitObjectRecordHitNV].operands.push(OperandId, "'Acceleration Structure'");
     InstructionDesc[OpHitObjectRecordHitNV].operands.push(OperandId, "'InstanceId'");
@@ -3260,6 +3282,11 @@ void Parameterize()
     InstructionDesc[OpHitObjectTraceRayMotionNV].operands.push(OperandId, "'Time'");
     InstructionDesc[OpHitObjectTraceRayMotionNV].operands.push(OperandId, "'Payload'");
     InstructionDesc[OpHitObjectTraceRayMotionNV].setResultAndType(false, false);
+
+    InstructionDesc[OpColorAttachmentReadEXT].operands.push(OperandId, "'Attachment'");
+    InstructionDesc[OpColorAttachmentReadEXT].operands.push(OperandId, "'Sample'", true);
+    InstructionDesc[OpStencilAttachmentReadEXT].operands.push(OperandId, "'Sample'", true);
+    InstructionDesc[OpDepthAttachmentReadEXT].operands.push(OperandId, "'Sample'", true);
 }
 
 }; // end spv namespace

@@ -343,6 +343,7 @@ void TScanContext::fillInKeywordMap()
 
     (*KeywordMap)["const"] =                   CONST;
     (*KeywordMap)["uniform"] =                 UNIFORM;
+    (*KeywordMap)["tileImageEXT"] =            TILEIMAGEEXT;
     (*KeywordMap)["buffer"] =                  BUFFER;
     (*KeywordMap)["in"] =                      IN;
     (*KeywordMap)["out"] =                     OUT;
@@ -685,6 +686,10 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["texture2DRect"] =           TEXTURE2DRECT;
     (*KeywordMap)["texture1DArray"] =          TEXTURE1DARRAY;
 
+    (*KeywordMap)["attachmentEXT"] =           ATTACHMENTEXT;
+    (*KeywordMap)["iattachmentEXT"] =          IATTACHMENTEXT;
+    (*KeywordMap)["uattachmentEXT"] =          UATTACHMENTEXT;
+
     (*KeywordMap)["subpassInput"] =            SUBPASSINPUT;
     (*KeywordMap)["subpassInputMS"] =          SUBPASSINPUTMS;
     (*KeywordMap)["isubpassInput"] =           ISUBPASSINPUT;
@@ -942,6 +947,7 @@ int TScanContext::tokenizeIdentifier()
     switch (keyword) {
     case CONST:
     case UNIFORM:
+    case TILEIMAGEEXT:
     case IN:
     case OUT:
     case INOUT:
@@ -1658,6 +1664,9 @@ int TScanContext::tokenizeIdentifier()
     case ISUBPASSINPUTMS:
     case USUBPASSINPUT:
     case USUBPASSINPUTMS:
+    case ATTACHMENTEXT:
+    case IATTACHMENTEXT:
+    case UATTACHMENTEXT:
         if (parseContext.spvVersion.vulkan > 0)
             return keyword;
         else

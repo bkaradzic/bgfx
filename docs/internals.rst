@@ -35,7 +35,7 @@ Encoder API can be obtained by calling ``bgfx::begin``. bgfx by default allows 8
 Customization
 -------------
 
-By default each platform has sane default values. For example on Windows default renderer is DirectX, on Linux it is OpenGL, and on OSX it's Metal. On Windows platform almost all rendering backends are available. For OpenGL ES on desktop you can find more information at:- `OpenGL ES 2.0 and EGL on desktop <http://www.g-truc.net/post-0457.html>`__
+By default each platform has sane default values. For example on Windows default renderer is DirectX, on Linux it is OpenGL, and on macOS it's Metal. On Windows platform almost all rendering backends are available. For OpenGL ES on desktop you can find more information at:- `OpenGL ES 2.0 and EGL on desktop <http://www.g-truc.net/post-0457.html>`__
 
 If you're targeting specific mobile hardware, you can find GLES support in their official SDKs: `Adreno
 SDK <http://developer.qualcomm.com/mobile-development/mobile-technologies/gaming-graphics-optimization-adreno/tools-and-resources>`__, `Mali SDK <http://www.malideveloper.com/>`__, `PowerVR SDK <http://www.imgtec.com/powervr/insider/sdkdownloads/>`__.

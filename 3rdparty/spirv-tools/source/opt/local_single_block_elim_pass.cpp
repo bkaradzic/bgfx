@@ -18,7 +18,6 @@
 
 #include <vector>
 
-#include "source/opt/iterator.h"
 #include "source/util/string_utils.h"
 
 namespace spvtools {
@@ -287,6 +286,8 @@ void LocalSingleBlockLoadStoreElimPass::InitExtensions() {
       "SPV_KHR_non_semantic_info",
       "SPV_KHR_uniform_group_instructions",
       "SPV_KHR_fragment_shader_barycentric",
+      "SPV_KHR_vulkan_memory_model",
+      "SPV_NV_bindless_texture",
   });
 }
 

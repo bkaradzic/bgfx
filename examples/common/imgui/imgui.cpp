@@ -507,13 +507,13 @@ static OcornutImguiContext s_ctx;
 static void* memAlloc(size_t _size, void* _userData)
 {
 	BX_UNUSED(_userData);
-	return BX_ALLOC(s_ctx.m_allocator, _size);
+	return bx::alloc(s_ctx.m_allocator, _size);
 }
 
 static void memFree(void* _ptr, void* _userData)
 {
 	BX_UNUSED(_userData);
-	BX_FREE(s_ctx.m_allocator, _ptr);
+	bx::free(s_ctx.m_allocator, _ptr);
 }
 
 void imguiCreate(float _fontSize, bx::AllocatorI* _allocator)

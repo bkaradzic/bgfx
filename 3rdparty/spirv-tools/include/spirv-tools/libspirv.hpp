@@ -31,6 +31,11 @@ using MessageConsumer = std::function<void(
     const spv_position_t& /* position */, const char* /* message */
     )>;
 
+using HeaderParser = std::function<spv_result_t(
+    const spv_endianness_t endianess, const spv_parsed_header_t& instruction)>;
+using InstructionParser =
+    std::function<spv_result_t(const spv_parsed_instruction_t& instruction)>;
+
 // C++ RAII wrapper around the C context object spv_context.
 class Context {
  public:
@@ -335,6 +340,23 @@ class SpirvTools {
   bool Disassemble(const uint32_t* binary, size_t binary_size,
                    std::string* text,
                    uint32_t options = kDefaultDisassembleOption) const;
+
+  // Parses a SPIR-V binary, specified as counted sequence of 32-bit words.
+  // Parsing feedback is provided via two callbacks provided as std::function.
+  // In a valid parse the parsed-header callback is called once, and
+  // then the parsed-instruction callback is called once for each instruction
+  // in the stream.
+  // Returns true on successful parsing.
+  // If diagnostic is non-null, a diagnostic is emitted on failed parsing.
+  // If diagnostic is null the context's message consumer
+  // will be used to emit any errors. If a callback returns anything other than
+  // SPV_SUCCESS, then that status code is returned, no further callbacks are
+  // issued, and no additional diagnostics are emitted.
+  // This is a wrapper around the C API spvBinaryParse.
+  bool Parse(const std::vector<uint32_t>& binary,
+             const HeaderParser& header_parser,
+             const InstructionParser& instruction_parser,
+             spv_diagnostic* diagnostic = nullptr);
 
   // Validates the given SPIR-V |binary|. Returns true if no issues are found.
   // Otherwise, returns false and communicates issues via the message consumer

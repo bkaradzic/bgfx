@@ -724,10 +724,8 @@ void CompilerHLSL::emit_builtin_primitive_outputs_in_struct()
 		{
 		case BuiltInLayer:
 		{
-			const ExecutionModel model = get_entry_point().model;
-			if (hlsl_options.shader_model < 50 ||
-			    (model != ExecutionModelGeometry && model != ExecutionModelMeshEXT))
-				SPIRV_CROSS_THROW("Render target array index output is only supported in GS/MS 5.0 or higher.");
+			if (hlsl_options.shader_model < 50)
+				SPIRV_CROSS_THROW("Render target array index output is only supported in SM 5.0 or higher.");
 			type = "uint";
 			semantic = "SV_RenderTargetArrayIndex";
 			break;
@@ -1808,8 +1806,10 @@ void CompilerHLSL::emit_resources()
 		if (is_hidden_variable(var, true))
 			continue;
 
-		if (var.storage != StorageClassOutput &&
-		    var.storage != StorageClassTaskPayloadWorkgroupEXT)
+		if (var.storage == StorageClassTaskPayloadWorkgroupEXT && is_mesh_shader)
+			continue;
+
+		if (var.storage != StorageClassOutput)
 		{
 			if (!variable_is_lut(var))
 			{
@@ -1819,6 +1819,7 @@ void CompilerHLSL::emit_resources()
 				switch (var.storage)
 				{
 				case StorageClassWorkgroup:
+				case StorageClassTaskPayloadWorkgroupEXT:
 					storage = "groupshared";
 					break;
 
@@ -2573,6 +2574,19 @@ void CompilerHLSL::emit_rayquery_function(const char *commited, const char *cand
 	emit_op(ops[0], ops[1], join(to_expression(ops[2]), is_commited ? commited : candidate), false);
 }
 
+void CompilerHLSL::emit_mesh_tasks(SPIRBlock &block)
+{
+	if (block.mesh.payload != 0)
+	{
+		statement("DispatchMesh(", to_unpacked_expression(block.mesh.groups[0]), ", ", to_unpacked_expression(block.mesh.groups[1]), ", ",
+		    to_unpacked_expression(block.mesh.groups[2]), ", ", to_unpacked_expression(block.mesh.payload), ");");
+	}
+	else
+	{
+		SPIRV_CROSS_THROW("Amplification shader in HLSL must have payload");
+	}
+}
+
 void CompilerHLSL::emit_buffer_block(const SPIRVariable &var)
 {
 	auto &type = get<SPIRType>(var.basetype);
@@ -2589,11 +2603,30 @@ void CompilerHLSL::emit_buffer_block(const SPIRVariable &var)
 		bool is_readonly = flags.get(DecorationNonWritable) && !is_hlsl_force_storage_buffer_as_uav(var.self);
 		bool is_coherent = flags.get(DecorationCoherent) && !is_readonly;
 		bool is_interlocked = interlocked_resources.count(var.self) > 0;
-		const char *type_name = "ByteAddressBuffer ";
-		if (!is_readonly)
-			type_name = is_interlocked ? "RasterizerOrderedByteAddressBuffer " : "RWByteAddressBuffer ";
+
+		auto to_structuredbuffer_subtype_name = [this](const SPIRType &parent_type) -> std::string
+		{
+			if (parent_type.basetype == SPIRType::Struct && parent_type.member_types.size() == 1)
+			{
+				// Use type of first struct member as a StructuredBuffer will have only one '._m0' field in SPIR-V
+				const auto &member0_type = this->get<SPIRType>(parent_type.member_types.front());
+				return this->type_to_glsl(member0_type);
+			}
+			else
+			{
+				// Otherwise, this StructuredBuffer only has a basic subtype, e.g. StructuredBuffer<int>
+				return this->type_to_glsl(parent_type);
+			}
+		};
+
+		std::string type_name;
+		if (is_user_type_structured(var.self))
+			type_name = join(is_readonly ? "" : is_interlocked ? "RasterizerOrdered" : "RW", "StructuredBuffer<", to_structuredbuffer_subtype_name(type), ">");
+		else
+			type_name = is_readonly ? "ByteAddressBuffer" : is_interlocked ? "RasterizerOrderedByteAddressBuffer" : "RWByteAddressBuffer";
+
 		add_resource_name(var.self);
-		statement(is_coherent ? "globallycoherent " : "", type_name, to_name(var.self), type_to_array_glsl(type),
+		statement(is_coherent ? "globallycoherent " : "", type_name, " ", to_name(var.self), type_to_array_glsl(type),
 		          to_resource_binding(var), ";");
 	}
 	else
@@ -2818,6 +2851,8 @@ string CompilerHLSL::get_inner_entry_point_name() const
 		return "comp_main";
 	else if (execution.model == ExecutionModelMeshEXT)
 		return "mesh_main";
+	else if (execution.model == ExecutionModelTaskEXT)
+		return "task_main";
 	else
 		SPIRV_CROSS_THROW("Unsupported execution model.");
 }
@@ -2931,8 +2966,8 @@ void CompilerHLSL::emit_hlsl_entry_point()
 
 	switch (execution.model)
 	{
+	case ExecutionModelTaskEXT:
 	case ExecutionModelMeshEXT:
-	case ExecutionModelMeshNV:
 	case ExecutionModelGLCompute:
 	{
 		if (execution.model == ExecutionModelMeshEXT)
@@ -3205,7 +3240,8 @@ void CompilerHLSL::emit_hlsl_entry_point()
 	if (execution.model == ExecutionModelVertex ||
 	    execution.model == ExecutionModelFragment ||
 	    execution.model == ExecutionModelGLCompute ||
-	    execution.model == ExecutionModelMeshEXT)
+	    execution.model == ExecutionModelMeshEXT ||
+	    execution.model == ExecutionModelTaskEXT)
 	{
 		// For mesh shaders, we receive special arguments that we must pass down as function arguments.
 		// HLSL does not support proper reference types for passing these IO blocks,
@@ -3494,9 +3530,9 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 	else
 	{
 		auto &imgformat = get<SPIRType>(imgtype.image.type);
-		if (imgformat.basetype != SPIRType::Float)
+		if (hlsl_options.shader_model < 67 && imgformat.basetype != SPIRType::Float)
 		{
-			SPIRV_CROSS_THROW("Sampling non-float textures is not supported in HLSL.");
+			SPIRV_CROSS_THROW("Sampling non-float textures is not supported in HLSL SM < 6.7.");
 		}
 
 		if (hlsl_options.shader_model >= 40)
@@ -3507,7 +3543,7 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 			{
 				if (gather)
 				{
-					SPIRV_CROSS_THROW("GatherCmp does not exist in HLSL.");
+					texop += ".GatherCmp";
 				}
 				else if (lod || grad_x || grad_y)
 				{
@@ -4952,6 +4988,12 @@ void CompilerHLSL::emit_access_chain(const Instruction &instruction)
 
 		auto *backing_variable = maybe_get_backing_variable(ops[2]);
 
+		if (backing_variable != nullptr && is_user_type_structured(backing_variable->self))
+		{
+			CompilerGLSL::emit_instruction(instruction);
+			return;
+		}
+
 		string base;
 		if (to_plain_buffer_length != 0)
 			base = access_chain(ops[2], &ops[3], to_plain_buffer_length, get<SPIRType>(ops[0]));
@@ -6243,7 +6285,7 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 	case OpRayQueryGenerateIntersectionKHR:
 	{
 		flush_variable_declaration(ops[0]);
-		statement(to_expression(ops[0]), ".CommitProceduralPrimitiveHit(", ops[1], ");");
+		statement(to_expression(ops[0]), ".CommitProceduralPrimitiveHit(", to_expression(ops[1]), ");");
 		break;
 	}
 	case OpRayQueryConfirmIntersectionKHR:
@@ -6355,7 +6397,6 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 		statement("SetMeshOutputCounts(", to_unpacked_expression(ops[0]), ", ", to_unpacked_expression(ops[1]), ");");
 		break;
 	}
-
 	default:
 		CompilerGLSL::emit_instruction(instruction);
 		break;
@@ -6676,4 +6717,18 @@ void CompilerHLSL::set_hlsl_force_storage_buffer_as_uav(uint32_t desc_set, uint3
 bool CompilerHLSL::builtin_translates_to_nonarray(spv::BuiltIn builtin) const
 {
 	return (builtin == BuiltInSampleMask);
+}
+
+bool CompilerHLSL::is_user_type_structured(uint32_t id) const
+{
+	if (hlsl_options.preserve_structured_buffers)
+	{
+		// Compare left hand side of string only as these user types can contain more meta data such as their subtypes,
+		// e.g. "structuredbuffer:int"
+		const std::string &user_type = get_decoration_string(id, DecorationUserTypeGOOGLE);
+		return user_type.compare(0, 16, "structuredbuffer") == 0 ||
+		       user_type.compare(0, 18, "rwstructuredbuffer") == 0 ||
+		       user_type.compare(0, 33, "rasterizerorderedstructuredbuffer") == 0;
+	}
+	return false;
 }

@@ -318,7 +318,7 @@ namespace entry
 
 		void release(const Event* _event) const
 		{
-			BX_DELETE(getAllocator(), const_cast<Event*>(_event) );
+			bx::deleteObject(getAllocator(), const_cast<Event*>(_event) );
 		}
 
 	private:

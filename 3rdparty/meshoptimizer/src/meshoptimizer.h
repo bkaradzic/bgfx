@@ -1,5 +1,5 @@
 /**
- * meshoptimizer - version 0.18
+ * meshoptimizer - version 0.19
  *
  * Copyright (C) 2016-2023, by Arseny Kapoulkine (arseny.kapoulkine@gmail.com)
  * Report bugs and download new versions at https://github.com/zeux/meshoptimizer
@@ -12,7 +12,7 @@
 #include <stddef.h>
 
 /* Version macro; major * 1000 + minor * 10 + patch */
-#define MESHOPTIMIZER_VERSION 180 /* 0.18 */
+#define MESHOPTIMIZER_VERSION 190 /* 0.19 */
 
 /* If no API is defined, assume default */
 #ifndef MESHOPTIMIZER_API
@@ -304,13 +304,22 @@ MESHOPTIMIZER_EXPERIMENTAL void meshopt_decodeFilterExp(void* buffer, size_t cou
  * Input data must contain 4 floats for every quaternion (count*4 total).
  *
  * meshopt_encodeFilterExp encodes arbitrary (finite) floating-point data with 8-bit exponent and K-bit integer mantissa (1 <= K <= 24).
- * Mantissa is shared between all components of a given vector as defined by stride; stride must be divisible by 4.
+ * Exponent can be shared between all components of a given vector as defined by stride or all values of a given component; stride must be divisible by 4.
  * Input data must contain stride/4 floats for every vector (count*stride/4 total).
- * When individual (scalar) encoding is desired, simply pass stride=4 and adjust count accordingly.
  */
+enum meshopt_EncodeExpMode
+{
+    /* When encoding exponents, use separate values for each component (maximum quality) */
+    meshopt_EncodeExpSeparate,
+    /* When encoding exponents, use shared value for all components of each vector (better compression) */
+    meshopt_EncodeExpSharedVector,
+    /* When encoding exponents, use shared value for each component of all vectors (best compression) */
+    meshopt_EncodeExpSharedComponent,
+};
+
 MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeFilterOct(void* destination, size_t count, size_t stride, int bits, const float* data);
 MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeFilterQuat(void* destination, size_t count, size_t stride, int bits, const float* data);
-MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeFilterExp(void* destination, size_t count, size_t stride, int bits, const float* data);
+MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeFilterExp(void* destination, size_t count, size_t stride, int bits, const float* data, enum meshopt_EncodeExpMode mode);
 
 /**
  * Simplification options
@@ -337,6 +346,17 @@ enum
  * result_error can be NULL; when it's not NULL, it will contain the resulting (relative) error after simplification
  */
 MESHOPTIMIZER_API size_t meshopt_simplify(unsigned int* destination, const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, size_t target_index_count, float target_error, unsigned int options, float* result_error);
+
+/**
+ * Experimental: Mesh simplifier with attribute metric
+ * The algorithm ehnahces meshopt_simplify by incorporating attribute values into the error metric used to prioritize simplification order; see meshopt_simplify documentation for details.
+ * Note that the number of attributes affects memory requirements and running time; this algorithm requires ~1.5x more memory and time compared to meshopt_simplify when using 4 scalar attributes.
+ *
+ * vertex_attributes should have attribute_count floats for each vertex
+ * attribute_weights should have attribute_count floats in total; the weights determine relative priority of attributes between each other and wrt position. The recommended weight range is [1e-3..1e-1], assuming attribute data is in [0..1] range.
+ * TODO target_error/result_error currently use combined distance+attribute error; this may change in the future
+ */
+MESHOPTIMIZER_EXPERIMENTAL size_t meshopt_simplifyWithAttributes(unsigned int* destination, const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, const float* vertex_attributes, size_t vertex_attributes_stride, const float* attribute_weights, size_t attribute_count, size_t target_index_count, float target_error, unsigned int options, float* result_error);
 
 /**
  * Experimental: Mesh simplifier (sloppy)
@@ -618,6 +638,8 @@ inline int meshopt_decodeIndexSequence(T* destination, size_t index_count, const
 template <typename T>
 inline size_t meshopt_simplify(T* destination, const T* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, size_t target_index_count, float target_error, unsigned int options = 0, float* result_error = 0);
 template <typename T>
+inline size_t meshopt_simplifyWithAttributes(T* destination, const T* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, const float* vertex_attributes, size_t vertex_attributes_stride, const float* attribute_weights, size_t attribute_count, size_t target_index_count, float target_error, unsigned int options = 0, float* result_error = 0);
+template <typename T>
 inline size_t meshopt_simplifySloppy(T* destination, const T* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, size_t target_index_count, float target_error, float* result_error = 0);
 template <typename T>
 inline size_t meshopt_stripify(T* destination, const T* indices, size_t index_count, size_t vertex_count, T restart_index);
@@ -740,6 +762,13 @@ public:
 		T* result = static_cast<T*>(Storage::allocate(size > size_t(-1) / sizeof(T) ? size_t(-1) : size * sizeof(T)));
 		blocks[count++] = result;
 		return result;
+	}
+
+	void deallocate(void* ptr)
+	{
+		assert(count > 0 && blocks[count - 1] == ptr);
+		Storage::deallocate(ptr);
+		count--;
 	}
 
 private:
@@ -957,6 +986,15 @@ inline size_t meshopt_simplify(T* destination, const T* indices, size_t index_co
 	meshopt_IndexAdapter<T> out(destination, 0, index_count);
 
 	return meshopt_simplify(out.data, in.data, index_count, vertex_positions, vertex_count, vertex_positions_stride, target_index_count, target_error, options, result_error);
+}
+
+template <typename T>
+inline size_t meshopt_simplifyWithAttributes(T* destination, const T* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, const float* vertex_attributes, size_t vertex_attributes_stride, const float* attribute_weights, size_t attribute_count, size_t target_index_count, float target_error, unsigned int options, float* result_error)
+{
+    meshopt_IndexAdapter<T> in(0, indices, index_count);
+    meshopt_IndexAdapter<T> out(destination, 0, index_count);
+
+    return meshopt_simplifyWithAttributes(out.data, in.data, index_count, vertex_positions, vertex_count, vertex_positions_stride, vertex_attributes, vertex_attributes_stride, attribute_weights, attribute_count, target_index_count, target_error, options, result_error);
 }
 
 template <typename T>

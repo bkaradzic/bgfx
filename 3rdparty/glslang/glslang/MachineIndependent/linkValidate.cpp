@@ -271,6 +271,9 @@ void TIntermediate::mergeModes(TInfoSink& infoSink, TIntermediate& unit)
 
     MERGE_TRUE(earlyFragmentTests);
     MERGE_TRUE(postDepthCoverage);
+    MERGE_TRUE(nonCoherentColorAttachmentReadEXT);
+    MERGE_TRUE(nonCoherentDepthAttachmentReadEXT);
+    MERGE_TRUE(nonCoherentStencilAttachmentReadEXT);
 
     if (depthLayout == EldNone)
         depthLayout = unit.depthLayout;
@@ -1617,7 +1620,7 @@ bool TIntermediate::userOutputUsed() const
     return found;
 }
 
-// Accumulate locations used for inputs, outputs, and uniforms, payload and callable data
+// Accumulate locations used for inputs, outputs, and uniforms, payload, callable data, and tileImageEXT
 // and check for collisions as the accumulation is done.
 //
 // Returns < 0 if no collision, >= 0 if collision and the value returned is a colliding value.
@@ -1639,6 +1642,8 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
         set = 2;
     else if (qualifier.storage == EvqBuffer)
         set = 3;
+    else if (qualifier.storage == EvqTileImageEXT)
+        set = 4;
     else if (qualifier.isAnyPayload())
         setRT = 0;
     else if (qualifier.isAnyCallable())
@@ -1731,7 +1736,10 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
         }
 
         // combine location and component ranges
-        TIoRange range(locationRange, componentRange, type.getBasicType(), qualifier.hasIndex() ? qualifier.getIndex() : 0);
+        TBasicType basicTy = type.getBasicType();
+        if (basicTy == EbtSampler && type.getSampler().isAttachmentEXT())
+            basicTy = type.getSampler().type;
+        TIoRange range(locationRange, componentRange, basicTy, qualifier.hasIndex() ? qualifier.getIndex() : 0);
 
         // check for collisions, except for vertex inputs on desktop targeting OpenGL
         if (! (!isEsProfile() && language == EShLangVertex && qualifier.isPipeInput()) || spvVersion.vulkan > 0)
@@ -1760,6 +1768,19 @@ int TIntermediate::checkLocationRange(int set, const TIoRange& range, const TTyp
             typeCollision = true;
             return std::max(range.location.start, usedIo[set][r].location.start);
         }
+    }
+
+    // check typeCollision between tileImageEXT and out
+    if (set == 4 || set == 1) {
+      // if the set is "tileImageEXT", check against "out" and vice versa
+      int againstSet = (set == 4) ? 1 : 4;
+      for (size_t r = 0; r < usedIo[againstSet].size(); ++r) {
+        if (range.location.overlap(usedIo[againstSet][r].location) && type.getBasicType() != usedIo[againstSet][r].basicType) {
+            // aliased-type mismatch
+            typeCollision = true;
+            return std::max(range.location.start, usedIo[againstSet][r].location.start);
+        }
+      }
     }
 
     return -1; // no collision

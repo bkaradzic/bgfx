@@ -141,18 +141,12 @@
 
 #include "graphics_robust_access_pass.h"
 
-#include <algorithm>
-#include <cstring>
 #include <functional>
 #include <initializer_list>
-#include <limits>
 #include <utility>
 
-#include "constants.h"
-#include "def_use_manager.h"
 #include "function.h"
 #include "ir_context.h"
-#include "module.h"
 #include "pass.h"
 #include "source/diagnostic.h"
 #include "source/util/make_unique.h"

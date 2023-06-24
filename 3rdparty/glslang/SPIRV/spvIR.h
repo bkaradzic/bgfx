@@ -386,7 +386,7 @@ public:
         if (lineInstruction != nullptr) {
             lineInstruction->dump(out);
         }
-        
+
         // OpFunction
         functionInstruction.dump(out);
 

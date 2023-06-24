@@ -675,6 +675,7 @@ struct CLIArguments
 	bool msl_force_sample_rate_shading = false;
 	bool msl_manual_helper_invocation_updates = true;
 	bool msl_check_discarded_frag_stores = false;
+	bool msl_sample_dref_lod_array_as_grad = false;
 	const char *msl_combined_sampler_suffix = nullptr;
 	bool glsl_emit_push_constant_as_ubo = false;
 	bool glsl_emit_ubo_as_plain_uniforms = false;
@@ -731,6 +732,7 @@ struct CLIArguments
 	bool hlsl_nonwritable_uav_texture_as_srv = false;
 	bool hlsl_enable_16bit_types = false;
 	bool hlsl_flatten_matrix_vertex_input_semantics = false;
+	bool hlsl_preserve_structured_buffers = false;
 	HLSLBindingFlags hlsl_binding_flags = 0;
 	bool vulkan_semantics = false;
 	bool flatten_multidimensional_arrays = false;
@@ -838,6 +840,7 @@ static void print_help_hlsl()
 	                "\t\tOpName reflection information must be intact.\n"
 	                "\t[--hlsl-enable-16bit-types]:\n\t\tEnables native use of half/int16_t/uint16_t and ByteAddressBuffer interaction with these types. Requires SM 6.2.\n"
 	                "\t[--hlsl-flatten-matrix-vertex-input-semantics]:\n\t\tEmits matrix vertex inputs with input semantics as if they were independent vectors, e.g. TEXCOORD{2,3,4} rather than matrix form TEXCOORD2_{0,1,2}.\n"
+	                "\t[--hlsl-preserve-structured-buffers]:\n\t\tEmit SturucturedBuffer<T> rather than ByteAddressBuffer. Requires UserTypeGOOGLE to be emitted. Intended for DXC roundtrips.\n"
 	);
 	// clang-format on
 }
@@ -859,7 +862,7 @@ static void print_help_msl()
 	                "\t[--msl-domain-lower-left]:\n\t\tUse a lower-left tessellation domain.\n"
 	                "\t[--msl-argument-buffers]:\n\t\tEmit Metal argument buffers instead of discrete resource bindings.\n"
 	                "\t\tRequires MSL 2.0 to be enabled.\n"
-	                "\t[--msl-argument-buffers-tier]:\n\t\tWhen using Metal argument buffers, indicate the Metal argument buffer tier level supported by the Metal platform.\n"
+	                "\t[--msl-argument-buffer-tier]:\n\t\tWhen using Metal argument buffers, indicate the Metal argument buffer tier level supported by the Metal platform.\n"
 	                "\t\tUses same values as Metal MTLArgumentBuffersTier enumeration (0 = Tier1, 1 = Tier2).\n"
 	                "\t\tSetting this value also enables msl-argument-buffers.\n"
 	                "\t[--msl-texture-buffer-native]:\n\t\tEnable native support for texel buffers. Otherwise, it is emulated as a normal texture.\n"
@@ -947,6 +950,10 @@ static void print_help_msl()
 	                "\t\tSome Metal devices have a bug where stores to resources from a fragment shader\n"
 	                "\t\tcontinue to execute, even when the fragment is discarded. These checks\n"
 	                "\t\tprevent these stores from executing.\n"
+	                "\t[--msl-sample-dref-lod-array-as-grad]:\n\t\tUse a gradient instead of a level argument.\n"
+	                "\t\tSome Metal devices have a bug where the level() argument to\n"
+	                "\t\tdepth2d_array<T>::sample_compare() in a fragment shader is biased by some\n"
+	                "\t\tunknown amount. This prevents the bias from being added.\n"
 	                "\t[--msl-combined-sampler-suffix <suffix>]:\n\t\tUses a custom suffix for combined samplers.\n");
 	// clang-format on
 }
@@ -1221,6 +1228,7 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		msl_opts.force_sample_rate_shading = args.msl_force_sample_rate_shading;
 		msl_opts.manual_helper_invocation_updates = args.msl_manual_helper_invocation_updates;
 		msl_opts.check_discarded_frag_stores = args.msl_check_discarded_frag_stores;
+		msl_opts.sample_dref_lod_array_as_grad = args.msl_sample_dref_lod_array_as_grad;
 		msl_opts.ios_support_base_vertex_instance = true;
 		msl_comp->set_msl_options(msl_opts);
 		for (auto &v : args.msl_discrete_descriptor_sets)
@@ -1415,6 +1423,7 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		hlsl_opts.nonwritable_uav_texture_as_srv = args.hlsl_nonwritable_uav_texture_as_srv;
 		hlsl_opts.enable_16bit_types = args.hlsl_enable_16bit_types;
 		hlsl_opts.flatten_matrix_vertex_input_semantics = args.hlsl_flatten_matrix_vertex_input_semantics;
+		hlsl_opts.preserve_structured_buffers = args.hlsl_preserve_structured_buffers;
 		hlsl->set_hlsl_options(hlsl_opts);
 		hlsl->set_resource_binding_flags(args.hlsl_binding_flags);
 		if (args.hlsl_base_vertex_index_explicit_binding)
@@ -1616,6 +1625,7 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--hlsl-enable-16bit-types", [&args](CLIParser &) { args.hlsl_enable_16bit_types = true; });
 	cbs.add("--hlsl-flatten-matrix-vertex-input-semantics",
 	        [&args](CLIParser &) { args.hlsl_flatten_matrix_vertex_input_semantics = true; });
+	cbs.add("--hlsl-preserve-structured-buffers", [&args](CLIParser &) { args.hlsl_preserve_structured_buffers = true; });
 	cbs.add("--vulkan-semantics", [&args](CLIParser &) { args.vulkan_semantics = true; });
 	cbs.add("-V", [&args](CLIParser &) { args.vulkan_semantics = true; });
 	cbs.add("--flatten-multidimensional-arrays", [&args](CLIParser &) { args.flatten_multidimensional_arrays = true; });
@@ -1774,6 +1784,8 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--msl-no-manual-helper-invocation-updates",
 	        [&args](CLIParser &) { args.msl_manual_helper_invocation_updates = false; });
 	cbs.add("--msl-check-discarded-frag-stores", [&args](CLIParser &) { args.msl_check_discarded_frag_stores = true; });
+	cbs.add("--msl-sample-dref-lod-array-as-grad",
+	        [&args](CLIParser &) { args.msl_sample_dref_lod_array_as_grad = true; });
 	cbs.add("--msl-combined-sampler-suffix", [&args](CLIParser &parser) {
 		args.msl_combined_sampler_suffix = parser.next_string();
 	});

@@ -109,7 +109,7 @@ void cmdInit()
 
 void cmdShutdown()
 {
-	BX_DELETE(entry::getAllocator(), s_cmdContext);
+	bx::deleteObject(entry::getAllocator(), s_cmdContext);
 }
 
 void cmdAdd(const char* _name, ConsoleFn _fn, void* _userData)

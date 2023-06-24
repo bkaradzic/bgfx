@@ -127,9 +127,9 @@ ExampleTerrain(const char* _name, const char* _description, const char* _url)
 
 		m_terrain.m_mode      = 0;
 		m_terrain.m_dirty     = true;
-		m_terrain.m_vertices  = (PosTexCoord0Vertex*)BX_ALLOC(entry::getAllocator(), num * sizeof(PosTexCoord0Vertex) );
-		m_terrain.m_indices   = (uint16_t*)BX_ALLOC(entry::getAllocator(), num * sizeof(uint16_t) * 6);
-		m_terrain.m_heightMap = (uint8_t*)BX_ALLOC(entry::getAllocator(), num);
+		m_terrain.m_vertices  = (PosTexCoord0Vertex*)bx::alloc(entry::getAllocator(), num * sizeof(PosTexCoord0Vertex) );
+		m_terrain.m_indices   = (uint16_t*)bx::alloc(entry::getAllocator(), num * sizeof(uint16_t) * 6);
+		m_terrain.m_heightMap = (uint8_t*)bx::alloc(entry::getAllocator(), num);
 
 		bx::mtxSRT(m_terrain.m_transform, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 		bx::memSet(m_terrain.m_heightMap, 0, sizeof(uint8_t) * s_terrainSize * s_terrainSize);
@@ -181,9 +181,9 @@ ExampleTerrain(const char* _name, const char* _description, const char* _url)
 		bgfx::frame();
 
 		bx::AllocatorI* allocator = entry::getAllocator();
-		BX_FREE(allocator, m_terrain.m_vertices);
-		BX_FREE(allocator, m_terrain.m_indices);
-		BX_FREE(allocator, m_terrain.m_heightMap);
+		bx::free(allocator, m_terrain.m_vertices);
+		bx::free(allocator, m_terrain.m_indices);
+		bx::free(allocator, m_terrain.m_heightMap);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();

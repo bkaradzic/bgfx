@@ -827,6 +827,7 @@ enum TOperator {
     EOpSubpassLoadMS,
     EOpSparseImageLoad,
     EOpSparseImageLoadLod,
+    EOpColorAttachmentReadEXT, // Fragment only
 
     EOpImageGuardEnd,
 
@@ -1090,6 +1091,13 @@ enum TOperator {
     // Shader Clock Ops
     EOpReadClockSubgroupKHR,
     EOpReadClockDeviceKHR,
+
+    // GL_EXT_ray_tracing_position_fetch
+    EOpRayQueryGetIntersectionTriangleVertexPositionsEXT,
+
+    // Shader tile image ops
+    EOpStencilAttachmentReadEXT, // Fragment only
+    EOpDepthAttachmentReadEXT, // Fragment only
 };
 
 class TIntermTraverser;
@@ -1393,6 +1401,7 @@ struct TCrackedTextureOp {
     bool subpass;
     bool lodClamp;
     bool fragMask;
+    bool attachmentEXT;
 };
 
 //
@@ -1449,6 +1458,7 @@ public:
         cracked.gather = false;
         cracked.grad = false;
         cracked.subpass = false;
+        cracked.attachmentEXT = false;
         cracked.lodClamp = false;
         cracked.fragMask = false;
 
@@ -1608,6 +1618,9 @@ public:
         case EOpSubpassLoad:
         case EOpSubpassLoadMS:
             cracked.subpass = true;
+            break;
+        case EOpColorAttachmentReadEXT:
+            cracked.attachmentEXT = true;
             break;
 #endif
         default:

@@ -17,8 +17,6 @@
 #include "source/opt/local_single_store_elim_pass.h"
 
 #include "source/cfa.h"
-#include "source/latest_version_glsl_std_450_header.h"
-#include "source/opt/iterator.h"
 #include "source/util/string_utils.h"
 
 namespace spvtools {
@@ -138,6 +136,8 @@ void LocalSingleStoreElimPass::InitExtensionAllowList() {
       "SPV_KHR_non_semantic_info",
       "SPV_KHR_uniform_group_instructions",
       "SPV_KHR_fragment_shader_barycentric",
+      "SPV_KHR_vulkan_memory_model",
+      "SPV_NV_bindless_texture",
   });
 }
 bool LocalSingleStoreElimPass::ProcessVariable(Instruction* var_inst) {

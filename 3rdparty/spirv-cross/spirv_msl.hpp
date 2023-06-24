@@ -487,6 +487,15 @@ public:
 		// only when the bug is present.
 		bool check_discarded_frag_stores = false;
 
+		// If set, Lod operands to OpImageSample*DrefExplicitLod for 1D and 2D array images
+		// will be implemented using a gradient instead of passing the level operand directly.
+		// Some Metal devices have a bug where the level() argument to depth2d_array<T>::sample_compare()
+		// in a fragment shader is biased by some unknown amount, possibly dependent on the
+		// partial derivatives of the texture coordinates. This is a workaround that is only
+		// expected to be needed until the bug is fixed in Metal; it is provided as an option
+		// so it can be enabled only when the bug is present.
+		bool sample_dref_lod_array_as_grad = false;
+
 		bool is_ios() const
 		{
 			return platform == iOS;
@@ -1023,7 +1032,7 @@ protected:
 	void add_pragma_line(const std::string &line);
 	void add_typedef_line(const std::string &line);
 	void emit_barrier(uint32_t id_exe_scope, uint32_t id_mem_scope, uint32_t id_mem_sem);
-	void emit_array_copy(const std::string &lhs, uint32_t lhs_id, uint32_t rhs_id,
+	bool emit_array_copy(const char *expr, uint32_t lhs_id, uint32_t rhs_id,
 	                     spv::StorageClass lhs_storage, spv::StorageClass rhs_storage) override;
 	void build_implicit_builtins();
 	uint32_t build_constant_uint_array_pointer();

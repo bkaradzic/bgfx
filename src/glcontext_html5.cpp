@@ -31,7 +31,7 @@ namespace bgfx { namespace gl
 		SwapChainGL(int _context, const char* _canvas)
 			: m_context(_context)
 		{
-			m_canvas = (char*)BX_ALLOC(g_allocator, strlen(_canvas) + 1);
+			m_canvas = (char*)bx::alloc(g_allocator, strlen(_canvas) + 1);
 			strcpy(m_canvas, _canvas);
 
 			makeCurrent();
@@ -45,7 +45,7 @@ namespace bgfx { namespace gl
 		~SwapChainGL()
 		{
 			EMSCRIPTEN_CHECK(emscripten_webgl_destroy_context(m_context) );
-			BX_FREE(g_allocator, m_canvas);
+			bx::free(g_allocator, m_canvas);
 		}
 
 		void makeCurrent()
@@ -107,7 +107,7 @@ namespace bgfx { namespace gl
 				m_current = NULL;
 			}
 
-			BX_DELETE(g_allocator, m_primary);
+			bx::deleteObject(g_allocator, m_primary);
 			m_primary = NULL;
 		}
 	}
@@ -171,7 +171,7 @@ namespace bgfx { namespace gl
 
 	void GlContext::destroySwapChain(SwapChainGL* _swapChain)
 	{
-		BX_DELETE(g_allocator, _swapChain);
+		bx::deleteObject(g_allocator, _swapChain);
 	}
 
 	void GlContext::swap(SwapChainGL* /* _swapChain */)

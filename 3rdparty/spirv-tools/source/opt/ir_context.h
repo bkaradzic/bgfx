@@ -645,6 +645,17 @@ class IRContext {
   // all have the same stage.
   spv::ExecutionModel GetStage();
 
+  // Returns true of the current target environment is at least that of the
+  // given environment.
+  bool IsTargetEnvAtLeast(spv_target_env env) {
+    // A bit of a hack. We assume that the target environments are appended to
+    // the enum, so that there is an appropriate order.
+    return syntax_context_->target_env >= env;
+  }
+
+  // Return the target environment for the current context.
+  spv_target_env GetTargetEnv() const { return syntax_context_->target_env; }
+
  private:
   // Builds the def-use manager from scratch, even if it was already valid.
   void BuildDefUseManager() {

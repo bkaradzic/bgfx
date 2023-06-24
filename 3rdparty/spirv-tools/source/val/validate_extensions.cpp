@@ -18,22 +18,18 @@
 #include <string>
 #include <vector>
 
-#include "spirv/unified1/NonSemanticClspvReflection.h"
-
 #include "NonSemanticShaderDebugInfo100.h"
 #include "OpenCLDebugInfo100.h"
 #include "source/common_debug_info.h"
-#include "source/diagnostic.h"
 #include "source/enum_string_mapping.h"
 #include "source/extensions.h"
 #include "source/latest_version_glsl_std_450_header.h"
 #include "source/latest_version_opencl_std_header.h"
-#include "source/opcode.h"
 #include "source/spirv_constant.h"
-#include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
 #include "source/val/validate.h"
 #include "source/val/validation_state.h"
+#include "spirv/unified1/NonSemanticClspvReflection.h"
 
 namespace spvtools {
 namespace val {

@@ -505,7 +505,7 @@ namespace entry
 			{
 				bx::AllocatorI* allocator = getAllocator();
 				uint32_t size = (uint32_t)bx::getSize(reader);
-				void* data = BX_ALLOC(allocator, size + 1);
+				void* data = bx::alloc(allocator, size + 1);
 				bx::read(reader, data, size, bx::ErrorAssert{});
 				bx::close(reader);
 				((char*)data)[size] = '\0';
@@ -514,7 +514,7 @@ namespace entry
 					DBG("SDL game controller add mapping failed: %s", SDL_GetError());
 				}
 
-				BX_FREE(allocator, data);
+				bx::free(allocator, data);
 			}
 
 			bool exit = false;

@@ -1,4 +1,4 @@
-// dear imgui, v1.89.3 WIP
+// dear imgui, v1.89.7 WIP
 // (drawing and font code)
 
 /*
@@ -26,13 +26,12 @@ Index of this file:
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "imgui.h"
-#ifndef IMGUI_DISABLE
-
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 
+#include "imgui.h"
+#ifndef IMGUI_DISABLE
 #include "imgui_internal.h"
 #ifdef IMGUI_ENABLE_FREETYPE
 #include "misc/freetype/imgui_freetype.h"
@@ -389,6 +388,8 @@ void ImDrawList::_ResetForNewFrame()
     IM_STATIC_ASSERT(IM_OFFSETOF(ImDrawCmd, ClipRect) == 0);
     IM_STATIC_ASSERT(IM_OFFSETOF(ImDrawCmd, TextureId) == sizeof(ImVec4));
     IM_STATIC_ASSERT(IM_OFFSETOF(ImDrawCmd, VtxOffset) == sizeof(ImVec4) + sizeof(ImTextureID));
+    if (_Splitter._Count > 1)
+        _Splitter.Merge(this);
 
     CmdBuffer.resize(0);
     IdxBuffer.resize(0);
@@ -2382,7 +2383,12 @@ static bool ImFontAtlasBuildWithStbTruetype(ImFontAtlas* atlas)
         ImFontBuildDstData& dst_tmp = dst_tmp_array[src_tmp.DstIndex];
         src_tmp.SrcRanges = cfg.GlyphRanges ? cfg.GlyphRanges : atlas->GetGlyphRangesDefault();
         for (const ImWchar* src_range = src_tmp.SrcRanges; src_range[0] && src_range[1]; src_range += 2)
+        {
+            // Check for valid range. This may also help detect *some* dangling pointers, because a common
+            // user error is to setup ImFontConfig::GlyphRanges with a pointer to data that isn't persistent.
+            IM_ASSERT(src_range[0] <= src_range[1]);
             src_tmp.GlyphsHighest = ImMax(src_tmp.GlyphsHighest, (int)src_range[1]);
+        }
         dst_tmp.SrcCount++;
         dst_tmp.GlyphsHighest = ImMax(dst_tmp.GlyphsHighest, src_tmp.GlyphsHighest);
     }
@@ -2547,13 +2553,10 @@ static bool ImFontAtlasBuildWithStbTruetype(ImFontAtlas* atlas)
     // 9. Setup ImFont and glyphs for runtime
     for (int src_i = 0; src_i < src_tmp_array.Size; src_i++)
     {
-        ImFontBuildSrcData& src_tmp = src_tmp_array[src_i];
-        if (src_tmp.GlyphsCount == 0)
-            continue;
-
         // When merging fonts with MergeMode=true:
         // - We can have multiple input fonts writing into a same destination font.
         // - dst_font->ConfigData is != from cfg which is our source configuration.
+        ImFontBuildSrcData& src_tmp = src_tmp_array[src_i];
         ImFontConfig& cfg = atlas->ConfigData[src_i];
         ImFont* dst_font = cfg.DstFont;
 
@@ -2617,6 +2620,9 @@ void ImFontAtlasBuildPackCustomRects(ImFontAtlas* atlas, void* stbrp_context_opa
 
     ImVector<ImFontAtlasCustomRect>& user_rects = atlas->CustomRects;
     IM_ASSERT(user_rects.Size >= 1); // We expect at least the default custom rects to be registered, else something went wrong.
+#ifdef __GNUC__
+    if (user_rects.Size < 1) { __builtin_unreachable(); } // Workaround for GCC bug if IM_ASSERT() is defined to conditionally throw (see #5343)
+#endif
 
     ImVector<stbrp_rect> pack_rects;
     pack_rects.resize(user_rects.Size);
@@ -3194,7 +3200,25 @@ void ImFont::BuildLookupTable()
     SetGlyphVisible((ImWchar)' ', false);
     SetGlyphVisible((ImWchar)'\t', false);
 
-    // Ellipsis character is required for rendering elided text. We prefer using U+2026 (horizontal ellipsis).
+    // Setup Fallback character
+    const ImWchar fallback_chars[] = { (ImWchar)IM_UNICODE_CODEPOINT_INVALID, (ImWchar)'?', (ImWchar)' ' };
+    FallbackGlyph = FindGlyphNoFallback(FallbackChar);
+    if (FallbackGlyph == NULL)
+    {
+        FallbackChar = FindFirstExistingGlyph(this, fallback_chars, IM_ARRAYSIZE(fallback_chars));
+        FallbackGlyph = FindGlyphNoFallback(FallbackChar);
+        if (FallbackGlyph == NULL)
+        {
+            FallbackGlyph = &Glyphs.back();
+            FallbackChar = (ImWchar)FallbackGlyph->Codepoint;
+        }
+    }
+    FallbackAdvanceX = FallbackGlyph->AdvanceX;
+    for (int i = 0; i < max_codepoint + 1; i++)
+        if (IndexAdvanceX[i] < 0.0f)
+            IndexAdvanceX[i] = FallbackAdvanceX;
+
+    // Setup Ellipsis character. It is required for rendering elided text. We prefer using U+2026 (horizontal ellipsis).
     // However some old fonts may contain ellipsis at U+0085. Here we auto-detect most suitable ellipsis character.
     // FIXME: Note that 0x2026 is rarely included in our font ranges. Because of this we are more likely to use three individual dots.
     const ImWchar ellipsis_chars[] = { (ImWchar)0x2026, (ImWchar)0x0085 };
@@ -3215,25 +3239,6 @@ void ImFont::BuildLookupTable()
         EllipsisCharStep = (glyph->X1 - glyph->X0) + 1.0f;
         EllipsisWidth = EllipsisCharStep * 3.0f - 1.0f;
     }
-
-    // Setup fallback character
-    const ImWchar fallback_chars[] = { (ImWchar)IM_UNICODE_CODEPOINT_INVALID, (ImWchar)'?', (ImWchar)' ' };
-    FallbackGlyph = FindGlyphNoFallback(FallbackChar);
-    if (FallbackGlyph == NULL)
-    {
-        FallbackChar = FindFirstExistingGlyph(this, fallback_chars, IM_ARRAYSIZE(fallback_chars));
-        FallbackGlyph = FindGlyphNoFallback(FallbackChar);
-        if (FallbackGlyph == NULL)
-        {
-            FallbackGlyph = &Glyphs.back();
-            FallbackChar = (ImWchar)FallbackGlyph->Codepoint;
-        }
-    }
-
-    FallbackAdvanceX = FallbackGlyph->AdvanceX;
-    for (int i = 0; i < max_codepoint + 1; i++)
-        if (IndexAdvanceX[i] < 0.0f)
-            IndexAdvanceX[i] = FallbackAdvanceX;
 }
 
 // API is designed this way to avoid exposing the 4K page size
@@ -3784,6 +3789,7 @@ void ImGui::RenderArrow(ImDrawList* draw_list, ImVec2 pos, ImU32 col, ImGuiDir d
 
 void ImGui::RenderBullet(ImDrawList* draw_list, ImVec2 pos, ImU32 col)
 {
+    // FIXME-OPT: This should be baked in font.
     draw_list->AddCircleFilled(pos, draw_list->_Data->FontSize * 0.20f, col, 8);
 }
 

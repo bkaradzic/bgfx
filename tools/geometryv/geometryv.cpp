@@ -169,7 +169,7 @@ struct Camera
 {
 	Camera()
 	{
-		init(bx::init::Zero, 2.0f, 0.01f, 100.0f);
+		init(bx::InitZero, 2.0f, 0.01f, 100.0f);
 	}
 
 	void init(const bx::Vec3& _center, float _distance, float _near, float _far)
@@ -265,8 +265,8 @@ struct Camera
 
 	struct Interp3f
 	{
-		bx::Vec3 curr = bx::init::None;
-		bx::Vec3 dest = bx::init::None;
+		bx::Vec3 curr = bx::InitNone;
+		bx::Vec3 dest = bx::InitNone;
 	};
 
 	Interp3f m_target;

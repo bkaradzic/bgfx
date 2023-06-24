@@ -923,7 +923,7 @@ namespace bgfx { namespace gl
 		{ "OES_texture_half_float_linear",            false,                             true  },
 		{ "OES_texture_stencil8",                     false,                             true  },
 		{ "OES_texture_storage_multisample_2d_array", false,                             true  },
-		{ "OES_vertex_array_object",                  false,                             !BX_PLATFORM_IOS },
+		{ "OES_vertex_array_object",                  false,                             true  },
 		{ "OES_vertex_half_float",                    false,                             true  },
 		{ "OES_vertex_type_10_10_10_2",               false,                             true  },
 
@@ -2695,10 +2695,7 @@ namespace bgfx { namespace gl
 					}
 				}
 
-				for (uint32_t ii = BX_ENABLED(BX_PLATFORM_IOS) ? TextureFormat::Unknown : 0 // skip test on iOS!
-					; ii < TextureFormat::Count
-					; ++ii
-					)
+				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
 					if (TextureFormat::Unknown != ii
 					&&  TextureFormat::UnknownDepth != ii)
@@ -3533,11 +3530,11 @@ namespace bgfx { namespace gl
 		{
 			if (NULL != m_uniforms[_handle.idx])
 			{
-				BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+				bx::free(g_allocator, m_uniforms[_handle.idx]);
 			}
 
 			uint32_t size = g_uniformTypeSize[_type]*_num;
-			void* data = BX_ALLOC(g_allocator, size);
+			void* data = bx::alloc(g_allocator, size);
 			bx::memSet(data, 0, size);
 			m_uniforms[_handle.idx] = data;
 			m_uniformReg.add(_handle, _name);
@@ -3545,7 +3542,7 @@ namespace bgfx { namespace gl
 
 		void destroyUniform(UniformHandle _handle) override
 		{
-			BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+			bx::free(g_allocator, m_uniforms[_handle.idx]);
 			m_uniforms[_handle.idx] = NULL;
 			m_uniformReg.remove(_handle);
 		}
@@ -3567,7 +3564,7 @@ namespace bgfx { namespace gl
 			m_glctx.makeCurrent(swapChain);
 
 			uint32_t length = width*height*4;
-			uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
+			uint8_t* data = (uint8_t*)bx::alloc(g_allocator, length);
 
 			GL_CHECK(glReadPixels(0
 				, 0
@@ -3591,7 +3588,7 @@ namespace bgfx { namespace gl
 				, length
 				, true
 				);
-			BX_FREE(g_allocator, data);
+			bx::free(g_allocator, data);
 		}
 
 		void updateViewName(ViewId _id, const char* _name) override
@@ -3695,12 +3692,9 @@ namespace bgfx { namespace gl
 			GL_CHECK(glActiveTexture(GL_TEXTURE0) );
 			GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_textures[_blitter.m_texture.idx].m_id) );
 
-			if (!BX_ENABLED(BX_PLATFORM_OSX) )
+			if (m_samplerObjectSupport)
 			{
-				if (m_samplerObjectSupport)
-				{
-					GL_CHECK(glBindSampler(0, 0) );
-				}
+				GL_CHECK(glBindSampler(0, 0) );
 			}
 		}
 
@@ -4141,29 +4135,20 @@ namespace bgfx { namespace gl
 
 		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _flags = 0)
 		{
-			if (_width  != 0
-			||  _height != 0)
+			if (!m_glctx.isValid() )
 			{
-				if (!m_glctx.isValid() )
-				{
-					m_glctx.create(_width, _height, _flags);
+				m_glctx.create(_width, _height, _flags);
+			}
+			else
+			{
+				destroyMsaaFbo();
 
-#if BX_PLATFORM_IOS
-					// iOS: need to figure out how to deal with FBO created by context.
-					m_backBufferFbo = m_msaaBackBufferFbo = m_glctx.getFbo();
-#endif // BX_PLATFORM_IOS
-				}
-				else
-				{
-					destroyMsaaFbo();
+				m_glctx.resize(_width, _height, _flags);
 
-					m_glctx.resize(_width, _height, _flags);
+				uint32_t msaa = (_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+				msaa = bx::uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
 
-					uint32_t msaa = (_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
-					msaa = bx::uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
-
-					createMsaaFbo(_width, _height, msaa);
-				}
+				createMsaaFbo(_width, _height, msaa);
 			}
 
 			m_flip = true;
@@ -4295,7 +4280,7 @@ namespace bgfx { namespace gl
 			if (m_resolution.reset&BGFX_RESET_CAPTURE)
 			{
 				m_captureSize = m_resolution.width*m_resolution.height*4;
-				m_capture = BX_REALLOC(g_allocator, m_capture, m_captureSize);
+				m_capture = bx::realloc(g_allocator, m_capture, m_captureSize);
 				g_callback->captureBegin(m_resolution.width, m_resolution.height, m_resolution.width*4, TextureFormat::BGRA8, true);
 			}
 			else
@@ -4338,7 +4323,7 @@ namespace bgfx { namespace gl
 			if (NULL != m_capture)
 			{
 				g_callback->captureEnd();
-				BX_FREE(g_allocator, m_capture);
+				bx::free(g_allocator, m_capture);
 				m_capture = NULL;
 				m_captureSize = 0;
 			}
@@ -4357,7 +4342,7 @@ namespace bgfx { namespace gl
 
 				if (cached)
 				{
-					void* data = BX_ALLOC(g_allocator, length);
+					void* data = bx::alloc(g_allocator, length);
 					if (g_callback->cacheRead(_id, data, length) )
 					{
 						bx::Error err;
@@ -4369,7 +4354,7 @@ namespace bgfx { namespace gl
 						GL_CHECK(glProgramBinary(programId, format, reader.getDataPtr(), (GLsizei)reader.remaining() ) );
 					}
 
-					BX_FREE(g_allocator, data);
+					bx::free(g_allocator, data);
 				}
 
 #if BGFX_CONFIG_RENDERER_OPENGL
@@ -4393,13 +4378,13 @@ namespace bgfx { namespace gl
 				if (0 < programLength)
 				{
 					uint32_t length = programLength + 4;
-					uint8_t* data = (uint8_t*)BX_ALLOC(g_allocator, length);
+					uint8_t* data = (uint8_t*)bx::alloc(g_allocator, length);
 					GL_CHECK(glGetProgramBinary(programId, programLength, NULL, &format, &data[4]) );
 					*(uint32_t*)data = format;
 
 					g_callback->cacheWrite(_id, data, length);
 
-					BX_FREE(g_allocator, data);
+					bx::free(g_allocator, data);
 				}
 			}
 		}
@@ -4833,7 +4818,7 @@ namespace bgfx { namespace gl
 		s_renderGL = BX_NEW(g_allocator, RendererContextGL);
 		if (!s_renderGL->init(_init) )
 		{
-			BX_DELETE(g_allocator, s_renderGL);
+			bx::deleteObject(g_allocator, s_renderGL);
 			s_renderGL = NULL;
 		}
 		return s_renderGL;
@@ -4842,7 +4827,7 @@ namespace bgfx { namespace gl
 	void rendererDestroy()
 	{
 		s_renderGL->shutdown();
-		BX_DELETE(g_allocator, s_renderGL);
+		bx::deleteObject(g_allocator, s_renderGL);
 		s_renderGL = NULL;
 	}
 
@@ -5789,7 +5774,7 @@ namespace bgfx { namespace gl
 			uint8_t* temp = NULL;
 			if (convert)
 			{
-				temp = (uint8_t*)BX_ALLOC(g_allocator, ti.width*ti.height*4);
+				temp = (uint8_t*)bx::alloc(g_allocator, ti.width*ti.height*4);
 			}
 
 			const uint16_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
@@ -5925,7 +5910,7 @@ namespace bgfx { namespace gl
 
 			if (NULL != temp)
 			{
-				BX_FREE(g_allocator, temp);
+				bx::free(g_allocator, temp);
 			}
 		}
 
@@ -5997,7 +5982,7 @@ namespace bgfx { namespace gl
 		if (convert
 		||  !unpackRowLength)
 		{
-			temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*height);
+			temp = (uint8_t*)bx::alloc(g_allocator, rectpitch*height);
 		}
 		else if (unpackRowLength)
 		{
@@ -6072,7 +6057,7 @@ namespace bgfx { namespace gl
 
 		if (NULL != temp)
 		{
-			BX_FREE(g_allocator, temp);
+			bx::free(g_allocator, temp);
 		}
 	}
 
@@ -6538,16 +6523,16 @@ namespace bgfx { namespace gl
 					const bool usesPacking      = !bx::findIdentifierMatch(code, s_ARB_shading_language_packing).isEmpty();
 					const bool usesInterpQ      = !bx::findIdentifierMatch(code, s_intepolationQualifier).isEmpty();
 
-					uint32_t version = BX_ENABLED(BX_PLATFORM_OSX) ? 120
-						:  usesTextureArray
+					uint32_t version = false
+						|| usesTextureArray
 						|| usesTexture3D
 						|| usesIUsamplers
 						|| usesVertexID
 						|| usesUint
 						|| usesTexelFetch
 						|| usesGpuShader5
-						|| usesInterpQ   ? 130
-						: usesTextureLod ? 120
+						|| usesInterpQ
+						? 130
 						: 120
 						;
 
@@ -6602,30 +6587,14 @@ namespace bgfx { namespace gl
 					if (usesTextureArray)
 					{
 						bx::write(&writer, "#extension GL_EXT_texture_array : enable\n", &err);
-
-						if (BX_ENABLED(BX_PLATFORM_OSX) )
-						{
-							bx::write(&writer, "#define texture2DArrayLod texture2DArray\n", &err);
-						}
-						else
-						{
-							bx::write(&writer, "#define texture2DArrayLodEXT texture2DArrayLod\n", &err);
-							bx::write(&writer, "#define textureArray texture\n", &err);
-						}
+						bx::write(&writer, "#define texture2DArrayLodEXT texture2DArrayLod\n", &err);
+						bx::write(&writer, "#define textureArray texture\n", &err);
 					}
 
 					if (usesTexture3D)
 					{
 						bx::write(&writer, "#define texture3DEXT texture3D\n", &err);
-
-						if (BX_ENABLED(BX_PLATFORM_OSX) )
-						{
-							bx::write(&writer, "#define texture3DLodEXT texture3D\n", &err);
-						}
-						else
-						{
-							bx::write(&writer, "#define texture3DLodEXT texture3DLod\n", &err);
-						}
+						bx::write(&writer, "#define texture3DLodEXT texture3DLod\n", &err);
 					}
 
 					if (130 <= version)
@@ -7076,7 +7045,7 @@ namespace bgfx { namespace gl
 				// GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER.
 				GL_CHECK(glDrawBuffer(GL_NONE) );
 			}
-			else if (g_caps.limits.maxFBAttachments > 0)
+			else if (g_caps.limits.maxFBAttachments > 1)
 			{
 				GL_CHECK(glDrawBuffers(colorIdx, buffers) );
 			}
@@ -7496,8 +7465,7 @@ namespace bgfx { namespace gl
 
 		uint32_t frameQueryIdx = UINT32_MAX;
 
-		if (m_timerQuerySupport
-		&&  !BX_ENABLED(BX_PLATFORM_OSX) )
+		if (m_timerQuerySupport)
 		{
 			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
 		}
@@ -7576,7 +7544,7 @@ namespace bgfx { namespace gl
 			  _render
 			, m_gpuTimer
 			, s_viewName
-			, m_timerQuerySupport && !BX_ENABLED(BX_PLATFORM_OSX)
+			, m_timerQuerySupport
 			);
 
 		if (m_occlusionQuerySupport)

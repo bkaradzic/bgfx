@@ -18,7 +18,6 @@
 
 #include <string>
 
-#include "source/diagnostic.h"
 #include "source/opcode.h"
 #include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
@@ -211,6 +210,7 @@ uint32_t GetPlaneCoordSize(const ImageTypeInfo& info) {
     case spv::Dim::Dim2D:
     case spv::Dim::Rect:
     case spv::Dim::SubpassData:
+    case spv::Dim::TileImageDataEXT:
       plane_size = 2;
       break;
     case spv::Dim::Dim3D:
@@ -219,6 +219,7 @@ uint32_t GetPlaneCoordSize(const ImageTypeInfo& info) {
       plane_size = 3;
       break;
     case spv::Dim::Max:
+    default:
       assert(0);
       break;
   }
@@ -296,7 +297,6 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
                           spv::ImageOperandsMask::ConstOffsets |
                           spv::ImageOperandsMask::Offsets)) > 1) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
-           << _.VkErrorID(4662)
            << "Image Operands Offset, ConstOffset, ConstOffsets, Offsets "
               "cannot be used together";
   }
@@ -854,6 +854,28 @@ spv_result_t ValidateTypeImage(ValidationState_t& _, const Instruction* inst) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Dim SubpassData requires format Unknown";
     }
+  } else if (info.dim == spv::Dim::TileImageDataEXT) {
+    if (_.IsVoidType(info.sampled_type)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Dim TileImageDataEXT requires Sampled Type to be not "
+                "OpTypeVoid";
+    }
+    if (info.sampled != 2) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Dim TileImageDataEXT requires Sampled to be 2";
+    }
+    if (info.format != spv::ImageFormat::Unknown) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Dim TileImageDataEXT requires format Unknown";
+    }
+    if (info.depth != 0) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Dim TileImageDataEXT requires Depth to be 0";
+    }
+    if (info.arrayed != 0) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Dim TileImageDataEXT requires Arrayed to be 0";
+    }
   } else {
     if (info.multisampled && (info.sampled == 2) &&
         !_.HasCapability(spv::Capability::StorageImageMultisample)) {
@@ -919,6 +941,8 @@ spv_result_t ValidateTypeSampledImage(ValidationState_t& _,
   }
   // OpenCL requires Sampled=0, checked elsewhere.
   // Vulkan uses the Sampled=1 case.
+  // If Dim is TileImageDataEXT, Sampled must be 2 and this is validated
+  // elsewhere.
   if ((info.sampled != 0) && (info.sampled != 1)) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << _.VkErrorID(4657)
@@ -1116,6 +1140,12 @@ spv_result_t ValidateImageTexelPointer(ValidationState_t& _,
   if (info.dim == spv::Dim::SubpassData) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Image Dim SubpassData cannot be used with OpImageTexelPointer";
+  }
+
+  if (info.dim == spv::Dim::TileImageDataEXT) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Image Dim TileImageDataEXT cannot be used with "
+              "OpImageTexelPointer";
   }
 
   const uint32_t coord_type = _.GetOperandTypeId(inst, 3);
@@ -1624,6 +1654,12 @@ spv_result_t ValidateImageRead(ValidationState_t& _, const Instruction* inst) {
                 spvOpcodeString(opcode));
   }
 
+  if (info.dim == spv::Dim::TileImageDataEXT) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Image Dim TileImageDataEXT cannot be used with "
+           << spvOpcodeString(opcode);
+  }
+
   if (_.GetIdOpcode(info.sampled_type) != spv::Op::OpTypeVoid) {
     const uint32_t result_component_type =
         _.GetComponentType(actual_result_type);
@@ -1684,6 +1720,11 @@ spv_result_t ValidateImageWrite(ValidationState_t& _, const Instruction* inst) {
   if (info.dim == spv::Dim::SubpassData) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Image 'Dim' cannot be SubpassData";
+  }
+
+  if (info.dim == spv::Dim::TileImageDataEXT) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Image 'Dim' cannot be TileImageDataEXT";
   }
 
   if (spv_result_t result = ValidateImageReadWrite(_, inst, info))
@@ -1900,9 +1941,21 @@ spv_result_t ValidateImageQueryFormatOrOrder(ValidationState_t& _,
            << "Expected Result Type to be int scalar type";
   }
 
-  if (_.GetIdOpcode(_.GetOperandTypeId(inst, 2)) != spv::Op::OpTypeImage) {
+  const uint32_t image_type = _.GetOperandTypeId(inst, 2);
+  if (_.GetIdOpcode(image_type) != spv::Op::OpTypeImage) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected operand to be of type OpTypeImage";
+  }
+
+  ImageTypeInfo info;
+  if (!GetImageTypeInfo(_, image_type, &info)) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Corrupt image type definition";
+  }
+
+  if (info.dim == spv::Dim::TileImageDataEXT) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Image 'Dim' cannot be TileImageDataEXT";
   }
   return SPV_SUCCESS;
 }
@@ -1996,11 +2049,11 @@ spv_result_t ValidateImageQueryLod(ValidationState_t& _,
            << " components, but given only " << actual_coord_size;
   }
 
-  // The operad is a sampled image.
+  // The operand is a sampled image.
   // The sampled image type is already checked to be parameterized by an image
   // type with Sampled=0 or Sampled=1.  Vulkan bans Sampled=0, and so we have
   // Sampled=1.  So the validator already enforces Vulkan VUID 4659:
-  //   OpImageQuerySizeLod must only consume an “Image” operand whose type has
+  //   OpImageQuerySizeLod must only consume an "Image" operand whose type has
   //   its "Sampled" operand set to 1
   return SPV_SUCCESS;
 }

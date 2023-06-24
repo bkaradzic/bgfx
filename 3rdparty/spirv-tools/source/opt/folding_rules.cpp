@@ -14,7 +14,6 @@
 
 #include "source/opt/folding_rules.h"
 
-#include <climits>
 #include <limits>
 #include <memory>
 #include <utility>
@@ -1656,8 +1655,11 @@ std::vector<Operand> GetExtractOperandsForElementOfCompositeConstruct(
 
   analysis::Type* result_type = type_mgr->GetType(inst->type_id());
   if (result_type->AsVector() == nullptr) {
-    uint32_t id = inst->GetSingleWordInOperand(result_index);
-    return {Operand(SPV_OPERAND_TYPE_ID, {id})};
+    if (result_index < inst->NumInOperands()) {
+      uint32_t id = inst->GetSingleWordInOperand(result_index);
+      return {Operand(SPV_OPERAND_TYPE_ID, {id})};
+    }
+    return {};
   }
 
   // If the result type is a vector, then vector operands are concatenated.
@@ -2882,8 +2884,12 @@ FoldingRule UpdateImageOperands() {
                "Offset and ConstOffset may not be used together");
         if (offset_operand_index < inst->NumOperands()) {
           if (constants[offset_operand_index]) {
-            image_operands =
-                image_operands | uint32_t(spv::ImageOperandsMask::ConstOffset);
+            if (constants[offset_operand_index]->IsZero()) {
+              inst->RemoveInOperand(offset_operand_index);
+            } else {
+              image_operands = image_operands |
+                               uint32_t(spv::ImageOperandsMask::ConstOffset);
+            }
             image_operands =
                 image_operands & ~uint32_t(spv::ImageOperandsMask::Offset);
             inst->SetInOperand(operand_index, {image_operands});
