@@ -60,6 +60,7 @@ class PipeStorage;
 class NamedBarrier;
 class AccelerationStructureNV;
 class CooperativeMatrixNV;
+class CooperativeMatrixKHR;
 class RayQueryKHR;
 class HitObjectNV;
 
@@ -100,6 +101,7 @@ class Type {
     kNamedBarrier,
     kAccelerationStructureNV,
     kCooperativeMatrixNV,
+    kCooperativeMatrixKHR,
     kRayQueryKHR,
     kHitObjectNV,
     kLast
@@ -201,6 +203,7 @@ class Type {
   DeclareCastMethod(NamedBarrier)
   DeclareCastMethod(AccelerationStructureNV)
   DeclareCastMethod(CooperativeMatrixNV)
+  DeclareCastMethod(CooperativeMatrixKHR)
   DeclareCastMethod(RayQueryKHR)
   DeclareCastMethod(HitObjectNV)
 #undef DeclareCastMethod
@@ -622,6 +625,38 @@ class CooperativeMatrixNV : public Type {
   const uint32_t scope_id_;
   const uint32_t rows_id_;
   const uint32_t columns_id_;
+};
+
+class CooperativeMatrixKHR : public Type {
+ public:
+  CooperativeMatrixKHR(const Type* type, const uint32_t scope,
+                       const uint32_t rows, const uint32_t columns,
+                       const uint32_t use);
+  CooperativeMatrixKHR(const CooperativeMatrixKHR&) = default;
+
+  std::string str() const override;
+
+  CooperativeMatrixKHR* AsCooperativeMatrixKHR() override { return this; }
+  const CooperativeMatrixKHR* AsCooperativeMatrixKHR() const override {
+    return this;
+  }
+
+  size_t ComputeExtraStateHash(size_t hash, SeenTypes* seen) const override;
+
+  const Type* component_type() const { return component_type_; }
+  uint32_t scope_id() const { return scope_id_; }
+  uint32_t rows_id() const { return rows_id_; }
+  uint32_t columns_id() const { return columns_id_; }
+  uint32_t use_id() const { return use_id_; }
+
+ private:
+  bool IsSameImpl(const Type* that, IsSameCache*) const override;
+
+  const Type* component_type_;
+  const uint32_t scope_id_;
+  const uint32_t rows_id_;
+  const uint32_t columns_id_;
+  const uint32_t use_id_;
 };
 
 #define DefineParameterlessType(type, name)                                \

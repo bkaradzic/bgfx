@@ -552,8 +552,8 @@ spv_result_t ValidateTypeForwardPointer(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
-spv_result_t ValidateTypeCooperativeMatrixNV(ValidationState_t& _,
-                                             const Instruction* inst) {
+spv_result_t ValidateTypeCooperativeMatrix(ValidationState_t& _,
+                                           const Instruction* inst) {
   const auto component_type_index = 1;
   const auto component_type_id =
       inst->GetOperandAs<uint32_t>(component_type_index);
@@ -561,7 +561,7 @@ spv_result_t ValidateTypeCooperativeMatrixNV(ValidationState_t& _,
   if (!component_type || (spv::Op::OpTypeFloat != component_type->opcode() &&
                           spv::Op::OpTypeInt != component_type->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeCooperativeMatrixNV Component Type <id> "
+           << "OpTypeCooperativeMatrix Component Type <id> "
            << _.getIdName(component_type_id)
            << " is not a scalar numerical type.";
   }
@@ -572,7 +572,7 @@ spv_result_t ValidateTypeCooperativeMatrixNV(ValidationState_t& _,
   if (!scope || !_.IsIntScalarType(scope->type_id()) ||
       !spvOpcodeIsConstant(scope->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeCooperativeMatrixNV Scope <id> " << _.getIdName(scope_id)
+           << "OpTypeCooperativeMatrix Scope <id> " << _.getIdName(scope_id)
            << " is not a constant instruction with scalar integer type.";
   }
 
@@ -582,7 +582,7 @@ spv_result_t ValidateTypeCooperativeMatrixNV(ValidationState_t& _,
   if (!rows || !_.IsIntScalarType(rows->type_id()) ||
       !spvOpcodeIsConstant(rows->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeCooperativeMatrixNV Rows <id> " << _.getIdName(rows_id)
+           << "OpTypeCooperativeMatrix Rows <id> " << _.getIdName(rows_id)
            << " is not a constant instruction with scalar integer type.";
   }
 
@@ -592,8 +592,20 @@ spv_result_t ValidateTypeCooperativeMatrixNV(ValidationState_t& _,
   if (!cols || !_.IsIntScalarType(cols->type_id()) ||
       !spvOpcodeIsConstant(cols->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << "OpTypeCooperativeMatrixNV Cols <id> " << _.getIdName(cols_id)
+           << "OpTypeCooperativeMatrix Cols <id> " << _.getIdName(cols_id)
            << " is not a constant instruction with scalar integer type.";
+  }
+
+  if (inst->opcode() == spv::Op::OpTypeCooperativeMatrixKHR) {
+    const auto use_index = 5;
+    const auto use_id = inst->GetOperandAs<uint32_t>(use_index);
+    const auto use = _.FindDef(use_id);
+    if (!use || !_.IsIntScalarType(use->type_id()) ||
+        !spvOpcodeIsConstant(use->opcode())) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "OpTypeCooperativeMatrixKHR Use <id> " << _.getIdName(use_id)
+             << " is not a constant instruction with scalar integer type.";
+    }
   }
 
   return SPV_SUCCESS;
@@ -640,7 +652,8 @@ spv_result_t TypePass(ValidationState_t& _, const Instruction* inst) {
       if (auto error = ValidateTypeForwardPointer(_, inst)) return error;
       break;
     case spv::Op::OpTypeCooperativeMatrixNV:
-      if (auto error = ValidateTypeCooperativeMatrixNV(_, inst)) return error;
+    case spv::Op::OpTypeCooperativeMatrixKHR:
+      if (auto error = ValidateTypeCooperativeMatrix(_, inst)) return error;
       break;
     default:
       break;

@@ -627,7 +627,8 @@ Instruction* InstructionFolder::FoldInstructionToConstant(
     Instruction* inst, std::function<uint32_t(uint32_t)> id_map) const {
   analysis::ConstantManager* const_mgr = context_->get_constant_mgr();
 
-  if (!inst->IsFoldableByFoldScalar() && !HasConstFoldingRule(inst)) {
+  if (!inst->IsFoldableByFoldScalar() && !inst->IsFoldableByFoldVector() &&
+      !GetConstantFoldingRules().HasFoldingRule(inst)) {
     return nullptr;
   }
   // Collect the values of the constant parameters.
@@ -661,29 +662,58 @@ Instruction* InstructionFolder::FoldInstructionToConstant(
     }
   }
 
-  uint32_t result_val = 0;
   bool successful = false;
+
   // If all parameters are constant, fold the instruction to a constant.
-  if (!missing_constants && inst->IsFoldableByFoldScalar()) {
-    result_val = FoldScalars(inst->opcode(), constants);
-    successful = true;
+  if (inst->IsFoldableByFoldScalar()) {
+    uint32_t result_val = 0;
+
+    if (!missing_constants) {
+      result_val = FoldScalars(inst->opcode(), constants);
+      successful = true;
+    }
+
+    if (!successful) {
+      successful = FoldIntegerOpToConstant(inst, id_map, &result_val);
+    }
+
+    if (successful) {
+      const analysis::Constant* result_const =
+          const_mgr->GetConstant(const_mgr->GetType(inst), {result_val});
+      Instruction* folded_inst =
+          const_mgr->GetDefiningInstruction(result_const, inst->type_id());
+      return folded_inst;
+    }
+  } else if (inst->IsFoldableByFoldVector()) {
+    std::vector<uint32_t> result_val;
+
+    if (!missing_constants) {
+      if (Instruction* inst_type =
+              context_->get_def_use_mgr()->GetDef(inst->type_id())) {
+        result_val = FoldVectors(
+            inst->opcode(), inst_type->GetSingleWordInOperand(1), constants);
+        successful = true;
+      }
+    }
+
+    if (successful) {
+      const analysis::Constant* result_const =
+          const_mgr->GetNumericVectorConstantWithWords(
+              const_mgr->GetType(inst)->AsVector(), result_val);
+      Instruction* folded_inst =
+          const_mgr->GetDefiningInstruction(result_const, inst->type_id());
+      return folded_inst;
+    }
   }
 
-  if (!successful && inst->IsFoldableByFoldScalar()) {
-    successful = FoldIntegerOpToConstant(inst, id_map, &result_val);
-  }
-
-  if (successful) {
-    const analysis::Constant* result_const =
-        const_mgr->GetConstant(const_mgr->GetType(inst), {result_val});
-    Instruction* folded_inst =
-        const_mgr->GetDefiningInstruction(result_const, inst->type_id());
-    return folded_inst;
-  }
   return nullptr;
 }
 
 bool InstructionFolder::IsFoldableType(Instruction* type_inst) const {
+  return IsFoldableScalarType(type_inst) || IsFoldableVectorType(type_inst);
+}
+
+bool InstructionFolder::IsFoldableScalarType(Instruction* type_inst) const {
   // Support 32-bit integers.
   if (type_inst->opcode() == spv::Op::OpTypeInt) {
     return type_inst->GetSingleWordInOperand(0) == 32;
@@ -691,6 +721,19 @@ bool InstructionFolder::IsFoldableType(Instruction* type_inst) const {
   // Support booleans.
   if (type_inst->opcode() == spv::Op::OpTypeBool) {
     return true;
+  }
+  // Nothing else yet.
+  return false;
+}
+
+bool InstructionFolder::IsFoldableVectorType(Instruction* type_inst) const {
+  // Support vectors with foldable components
+  if (type_inst->opcode() == spv::Op::OpTypeVector) {
+    uint32_t component_type_id = type_inst->GetSingleWordInOperand(0);
+    Instruction* def_component_type =
+        context_->get_def_use_mgr()->GetDef(component_type_id);
+    return def_component_type != nullptr &&
+           IsFoldableScalarType(def_component_type);
   }
   // Nothing else yet.
   return false;

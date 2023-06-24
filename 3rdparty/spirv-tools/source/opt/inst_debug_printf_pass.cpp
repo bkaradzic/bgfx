@@ -165,8 +165,10 @@ void InstDebugPrintfPass::GenOutputCode(
           GenOutputValues(opnd_inst, &val_ids, &builder);
         }
       });
-  GenDebugStreamWrite(uid2offset_[printf_inst->unique_id()], stage_idx, val_ids,
-                      &builder);
+  GenDebugStreamWrite(
+      builder.GetUintConstantId(shader_id_),
+      builder.GetUintConstantId(uid2offset_[printf_inst->unique_id()]),
+      GenStageInfo(stage_idx, &builder), val_ids, &builder);
   context()->KillInst(printf_inst);
 }
 

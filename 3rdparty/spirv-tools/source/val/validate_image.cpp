@@ -297,7 +297,6 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
                           spv::ImageOperandsMask::ConstOffsets |
                           spv::ImageOperandsMask::Offsets)) > 1) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
-           << _.VkErrorID(4662)
            << "Image Operands Offset, ConstOffset, ConstOffsets, Offsets "
               "cannot be used together";
   }

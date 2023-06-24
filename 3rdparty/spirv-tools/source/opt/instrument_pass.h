@@ -196,7 +196,8 @@ class InstrumentPass : public Pass {
   // Because the code that is generated checks against the size of the buffer
   // before writing, the size of the debug out buffer can be used by the
   // validation layer to control the number of error records that are written.
-  void GenDebugStreamWrite(uint32_t instruction_idx, uint32_t stage_idx,
+  void GenDebugStreamWrite(uint32_t shader_id, uint32_t instruction_idx_id,
+                           uint32_t stage_info_id,
                            const std::vector<uint32_t>& validation_ids,
                            InstructionBuilder* builder);
 
@@ -214,7 +215,7 @@ class InstrumentPass : public Pass {
   uint32_t GenDebugDirectRead(const std::vector<uint32_t>& offset_ids,
                               InstructionBuilder* builder);
 
-  uint32_t GenReadFunctionCall(uint32_t func_id,
+  uint32_t GenReadFunctionCall(uint32_t return_id, uint32_t func_id,
                                const std::vector<uint32_t>& args,
                                InstructionBuilder* builder);
 
@@ -323,8 +324,7 @@ class InstrumentPass : public Pass {
 
   // Return id for output function. Define if it doesn't exist with
   // |val_spec_param_cnt| validation-specific uint32 parameters.
-  uint32_t GetStreamWriteFunctionId(uint32_t stage_idx,
-                                    uint32_t val_spec_param_cnt);
+  uint32_t GetStreamWriteFunctionId(uint32_t val_spec_param_cnt);
 
   // Return id for input function taking |param_cnt| uint32 parameters. Define
   // if it doesn't exist.
@@ -355,34 +355,11 @@ class InstrumentPass : public Pass {
                                uint32_t field_value_id,
                                InstructionBuilder* builder);
 
-  // Generate instructions into |builder| which will write the members
-  // of the debug output record common for all stages and validations at
-  // |base_off|.
-  void GenCommonStreamWriteCode(uint32_t record_sz, uint32_t instruction_idx,
-                                uint32_t stage_idx, uint32_t base_off,
-                                InstructionBuilder* builder);
-
-  // Generate instructions into |builder| which will write
-  // |uint_frag_coord_id| at |component| of the record at |base_offset_id| of
-  // the debug output buffer .
-  void GenFragCoordEltDebugOutputCode(uint32_t base_offset_id,
-                                      uint32_t uint_frag_coord_id,
-                                      uint32_t component,
-                                      InstructionBuilder* builder);
-
   // Generate instructions into |builder| which will load |var_id| and return
   // its result id.
   uint32_t GenVarLoad(uint32_t var_id, InstructionBuilder* builder);
 
-  // Generate instructions into |builder| which will load the uint |builtin_id|
-  // and write it into the debug output buffer at |base_off| + |builtin_off|.
-  void GenBuiltinOutputCode(uint32_t builtin_id, uint32_t builtin_off,
-                            uint32_t base_off, InstructionBuilder* builder);
-
-  // Generate instructions into |builder| which will write the |stage_idx|-
-  // specific members of the debug output stream at |base_off|.
-  void GenStageStreamWriteCode(uint32_t stage_idx, uint32_t base_off,
-                               InstructionBuilder* builder);
+  uint32_t GenStageInfo(uint32_t stage_idx, InstructionBuilder* builder);
 
   // Return true if instruction must be in the same block that its result
   // is used.
