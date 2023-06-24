@@ -2109,7 +2109,8 @@ Function* Builder::makeFunctionEntry(Decoration precision, Id returnType, const 
     return function;
 }
 
-Id Builder::makeDebugFunction(Function* function, Id nameId, Id funcTypeId) {
+Id Builder::makeDebugFunction([[maybe_unused]] Function* function, Id nameId, Id funcTypeId)
+{
     assert(function != nullptr);
     assert(nameId != 0);
     assert(funcTypeId != 0);

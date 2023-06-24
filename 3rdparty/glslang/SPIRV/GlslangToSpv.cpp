@@ -3393,7 +3393,7 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
             break;
 
 
-    
+
         case glslang::EOpHitObjectRecordHitNV:
         case glslang::EOpHitObjectRecordHitMotionNV:
         case glslang::EOpHitObjectRecordHitWithIndexNV:
@@ -3573,7 +3573,7 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
             } else if (arg == 2) {
                 continue;
             }
-        } 
+        }
 #endif
 
         // for l-values, pass the address, for r-values, pass the value
@@ -3617,8 +3617,8 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
              } else if ((arg == 10 && glslangOp == glslang::EOpTraceKHR) ||
                         (arg == 11 && glslangOp == glslang::EOpTraceRayMotionNV) ||
                         (arg == 1  && glslangOp == glslang::EOpExecuteCallableKHR) ||
-                        (arg == 1  && glslangOp == glslang::EOpHitObjectExecuteShaderNV) || 
-                        (arg == 11 && glslangOp == glslang::EOpHitObjectTraceRayNV) || 
+                        (arg == 1  && glslangOp == glslang::EOpHitObjectExecuteShaderNV) ||
+                        (arg == 11 && glslangOp == glslang::EOpHitObjectTraceRayNV) ||
                         (arg == 12 && glslangOp == glslang::EOpHitObjectTraceRayMotionNV)) {
                  const int set = glslangOp == glslang::EOpExecuteCallableKHR ? 1 : 0;
                  const int location = glslangOperands[arg]->getAsConstantUnion()->getConstArray()[0].getUConst();
@@ -4501,7 +4501,7 @@ spv::Id TGlslangToSpvTraverser::convertGlslangToSpvType(const glslang::TType& ty
         builder.addCapability(spv::CapabilityShaderInvocationReorderNV);
         spvType = builder.makeHitObjectNVType();
     }
-    break;    
+    break;
 #ifndef GLSLANG_WEB
     case glslang::EbtSpirvType: {
         // GL_EXT_spirv_intrinsics
@@ -7200,7 +7200,7 @@ spv::Id TGlslangToSpvTraverser::createUnaryOperation(glslang::TOperator op, OpDe
     case glslang::EOpHitObjectGetShaderRecordBufferHandleNV:
         unaryOp = spv::OpHitObjectGetShaderRecordBufferHandleNV;
         break;
-    
+
 #endif
 
     case glslang::EOpCopyObject:
@@ -9068,7 +9068,7 @@ spv::Id TGlslangToSpvTraverser::createMiscOperation(glslang::TOperator op, spv::
             builder.createNoResultOp(spv::OpReorderThreadWithHitObjectNV, operands);
         }
         return 0;
-    
+
     }
         break;
 #endif // GLSLANG_WEB
@@ -10036,27 +10036,32 @@ int GetSpirvGeneratorVersion()
 }
 
 // Write SPIR-V out to a binary file
-void OutputSpvBin(const std::vector<unsigned int>& spirv, const char* baseName)
+bool OutputSpvBin(const std::vector<unsigned int>& spirv, const char* baseName)
 {
     std::ofstream out;
     out.open(baseName, std::ios::binary | std::ios::out);
-    if (out.fail())
+    if (out.fail()) {
         printf("ERROR: Failed to open file: %s\n", baseName);
+        return false;
+    }
     for (int i = 0; i < (int)spirv.size(); ++i) {
         unsigned int word = spirv[i];
         out.write((const char*)&word, 4);
     }
     out.close();
+    return true;
 }
 
 // Write SPIR-V out to a text file with 32-bit hexadecimal words
-void OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName, const char* varName)
+bool OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName, const char* varName)
 {
 #if !defined(GLSLANG_WEB)
     std::ofstream out;
     out.open(baseName, std::ios::binary | std::ios::out);
-    if (out.fail())
+    if (out.fail()) {
         printf("ERROR: Failed to open file: %s\n", baseName);
+        return false;
+    }
     out << "\t// " <<
         GetSpirvGeneratorVersion() <<
         GLSLANG_VERSION_MAJOR << "." << GLSLANG_VERSION_MINOR << "." << GLSLANG_VERSION_PATCH <<
@@ -10083,6 +10088,7 @@ void OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName, 
     }
     out.close();
 #endif
+    return true;
 }
 
 //

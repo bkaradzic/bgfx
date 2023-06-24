@@ -318,7 +318,7 @@ const char* DecorationString(int decoration)
     case DecorationPerPrimitiveNV:              return "PerPrimitiveNV";
     case DecorationPerViewNV:                   return "PerViewNV";
     case DecorationPerTaskNV:                   return "PerTaskNV";
-    
+
     case DecorationPerVertexKHR:                return "PerVertexKHR";
 
     case DecorationNonUniformEXT:           return "DecorationNonUniformEXT";
@@ -584,7 +584,7 @@ const char* ImageChannelOrderString(int format)
     case 17: return "sRGBA";
     case 18: return "sBGRA";
 
-    default: 
+    default:
         return "Bad";
     }
 }
@@ -870,7 +870,7 @@ const char* CapabilityString(int info)
     case 22: return "Int16";
     case 23: return "TessellationPointSize";
     case 24: return "GeometryPointSize";
-    case 25: return "ImageGatherExtended"; 
+    case 25: return "ImageGatherExtended";
     case 26: return "Bad";
     case 27: return "StorageImageMultisample";
     case 28: return "UniformBufferArrayDynamicIndexing";
@@ -2253,11 +2253,11 @@ void Parameterize()
     InstructionDesc[OpBitFieldSExtract].operands.push(OperandId, "'Base'");
     InstructionDesc[OpBitFieldSExtract].operands.push(OperandId, "'Offset'");
     InstructionDesc[OpBitFieldSExtract].operands.push(OperandId, "'Count'");
-    
+
     InstructionDesc[OpBitFieldUExtract].operands.push(OperandId, "'Base'");
     InstructionDesc[OpBitFieldUExtract].operands.push(OperandId, "'Offset'");
     InstructionDesc[OpBitFieldUExtract].operands.push(OperandId, "'Count'");
-    
+
     InstructionDesc[OpBitReverse].operands.push(OperandId, "'Base'");
 
     InstructionDesc[OpBitCount].operands.push(OperandId, "'Base'");
@@ -2937,7 +2937,7 @@ void Parameterize()
     InstructionDesc[OpTerminateRayNV].setResultAndType(false, false);
 
     InstructionDesc[OpTerminateRayKHR].setResultAndType(false, false);
-    
+
     InstructionDesc[OpExecuteCallableNV].operands.push(OperandId, "SBT Record Index");
     InstructionDesc[OpExecuteCallableNV].operands.push(OperandId, "CallableData ID");
     InstructionDesc[OpExecuteCallableNV].setResultAndType(false, false);
@@ -3053,7 +3053,7 @@ void Parameterize()
     InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandId, "'Coarse'");
     InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandImageOperands, "", true);
     InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandVariableIds, "", true);
-    
+
     InstructionDesc[OpWritePackedPrimitiveIndices4x8NV].operands.push(OperandId, "'Index Offset'");
     InstructionDesc[OpWritePackedPrimitiveIndices4x8NV].operands.push(OperandId, "'Packed Indices'");
 
@@ -3099,7 +3099,7 @@ void Parameterize()
     InstructionDesc[OpReadClockKHR].operands.push(OperandScope, "'Scope'");
 
     InstructionDesc[OpTypeHitObjectNV].setResultAndType(true, false);
-    
+
     InstructionDesc[OpHitObjectGetShaderRecordBufferHandleNV].operands.push(OperandId, "'HitObject'");
     InstructionDesc[OpHitObjectGetShaderRecordBufferHandleNV].setResultAndType(true, true);
 
@@ -3117,7 +3117,7 @@ void Parameterize()
 
     InstructionDesc[OpHitObjectGetHitKindNV].operands.push(OperandId, "'HitObject'");
     InstructionDesc[OpHitObjectGetHitKindNV].setResultAndType(true, true);
-    
+
     InstructionDesc[OpHitObjectGetPrimitiveIndexNV].operands.push(OperandId, "'HitObject'");
     InstructionDesc[OpHitObjectGetPrimitiveIndexNV].setResultAndType(true, true);
 
@@ -3173,7 +3173,7 @@ void Parameterize()
     InstructionDesc[OpHitObjectExecuteShaderNV].operands.push(OperandId, "'HitObject'");
     InstructionDesc[OpHitObjectExecuteShaderNV].operands.push(OperandId, "'Payload'");
     InstructionDesc[OpHitObjectExecuteShaderNV].setResultAndType(false, false);
-    
+
     InstructionDesc[OpHitObjectRecordHitNV].operands.push(OperandId, "'HitObject'");
     InstructionDesc[OpHitObjectRecordHitNV].operands.push(OperandId, "'Acceleration Structure'");
     InstructionDesc[OpHitObjectRecordHitNV].operands.push(OperandId, "'InstanceId'");

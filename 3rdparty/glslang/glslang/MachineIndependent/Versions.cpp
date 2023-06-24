@@ -556,7 +556,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_NV_mesh_shader 1\n"
             "#define GL_NV_cooperative_matrix 1\n"
             "#define GL_NV_integer_cooperative_matrix 1\n"
-            "#define GL_NV_shader_execution_reorder 1\n"
+            "#define GL_NV_shader_invocation_reorder 1\n"
 
             "#define GL_EXT_shader_explicit_arithmetic_types 1\n"
             "#define GL_EXT_shader_explicit_arithmetic_types_int8 1\n"

@@ -1788,14 +1788,15 @@ public:
                             }
     // for block reference (first parameter must be EbtReference)
     explicit TType(TBasicType t, const TType &p, const TString& n) :
-                            basicType(t), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false),
-                            arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr)
+                            basicType(t), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false), coopmat(false),
+                            arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr), typeParameters(nullptr)
 #ifndef GLSLANG_WEB
                             , spirvType(nullptr)
 #endif
                             {
                                 assert(t == EbtReference);
                                 typeName = NewPoolTString(n.c_str());
+                                sampler.clear();
                                 qualifier.clear();
                                 qualifier.storage = p.qualifier.storage;
                                 referentType = p.clone();
