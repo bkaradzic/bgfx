@@ -553,23 +553,26 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			{
 				if ([m_device respondsToSelector: @selector(supportsFamily:)])
 				{
-					if ([m_device supportsFamily: MTLGPUFamily(1004) /*MTLGPUFamilyApple4*/])
+					if ([m_device supportsFamily: MTLGPUFamilyApple4])
 					{
 						g_caps.vendorId = BGFX_PCI_ID_APPLE;
 
-						if ([m_device supportsFamily: MTLGPUFamily(1008) /*MTLGPUFamilyApple8*/])
+#if ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 130000) || (__IPHONE_OS_VERSION_MAX_ALLOWED >= 160000))
+						if ([m_device supportsFamily: MTLGPUFamilyApple8])
 						{
 							g_caps.deviceId = 1008;
 						}
-						else if ([m_device supportsFamily: MTLGPUFamily(1007) /*MTLGPUFamilyApple7*/])
+						else
+#endif
+						if ([m_device supportsFamily: MTLGPUFamilyApple7])
 						{
 							g_caps.deviceId = 1007;
 						}
-						else if ([m_device supportsFamily: MTLGPUFamily(1006) /*MTLGPUFamilyApple6*/])
+						else if ([m_device supportsFamily: MTLGPUFamilyApple6])
 						{
 							g_caps.deviceId = 1006;
 						}
-						else if ([m_device supportsFamily: MTLGPUFamily(1005) /*MTLGPUFamilyApple5*/])
+						else if ([m_device supportsFamily: MTLGPUFamilyApple5])
 						{
 							g_caps.deviceId = 1005;
 						}
