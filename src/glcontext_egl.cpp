@@ -42,6 +42,7 @@ namespace bgfx { namespace gl
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLSWAPINTERVALPROC)(EGLDisplay dpy, EGLint interval);
 	typedef EGLBoolean  (EGLAPIENTRY* PFNEGLTERMINATEPROC)(EGLDisplay dpy);
 	typedef const char* (EGLAPIENTRY* PGNEGLQUERYSTRINGPROC)(EGLDisplay dpy, EGLint name);
+	typedef EGLBoolean  (EGLAPIENTRY* PGNEGLBINDAPIPROC)(EGLenum api);
 
 #define EGL_IMPORT                                                            \
 	EGL_IMPORT_FUNC(PFNEGLCHOOSECONFIGPROC,         eglChooseConfig);         \
@@ -61,6 +62,7 @@ namespace bgfx { namespace gl
 	EGL_IMPORT_FUNC(PFNEGLSWAPINTERVALPROC,         eglSwapInterval);         \
 	EGL_IMPORT_FUNC(PFNEGLTERMINATEPROC,            eglTerminate);            \
 	EGL_IMPORT_FUNC(PGNEGLQUERYSTRINGPROC,          eglQueryString);          \
+	EGL_IMPORT_FUNC(PGNEGLBINDAPIPROC,              eglBindAPI);              \
 
 #define EGL_IMPORT_FUNC(_proto, _func) _proto _func
 EGL_IMPORT
@@ -220,10 +222,16 @@ EGL_IMPORT
 			BX_TRACE("Supported EGL extensions:");
 			dumpExtensions(extensions);
 
+#if BGFX_CONFIG_RENDERER_OPENGL
+			// choose OpenGL API for EGL, by default it uses OpenGL ES
+			EGLBoolean ok = eglBindAPI(EGL_OPENGL_API);
+			BGFX_FATAL(ok, Fatal::UnableToInitialize, "Could not set API! error: %d", eglGetError());
+#endif //BGFX_CONFIG_RENDERER_OPENG
+
 			// https://www.khronos.org/registry/EGL/extensions/ANDROID/EGL_ANDROID_recordable.txt
 			const bool hasEglAndroidRecordable = !bx::findIdentifierMatch(extensions, "EGL_ANDROID_recordable").isEmpty();
 
-			const uint32_t gles = BGFX_CONFIG_RENDERER_OPENGLES;
+			const uint32_t glVersion = BGFX_CONFIG_RENDERER_OPENGL ? BGFX_CONFIG_RENDERER_OPENGL : BGFX_CONFIG_RENDERER_OPENGLES;
 
 #if BX_PLATFORM_ANDROID
 			uint32_t msaa = (_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
@@ -235,7 +243,11 @@ EGL_IMPORT
 
 			EGLint attrs[] =
 			{
-				EGL_RENDERABLE_TYPE, (gles >= 30) ? EGL_OPENGL_ES3_BIT_KHR : EGL_OPENGL_ES2_BIT,
+#				if  BGFX_CONFIG_RENDERER_OPENGL
+					EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+#				else
+					EGL_RENDERABLE_TYPE, (glVersion >= 30) ? EGL_OPENGL_ES3_BIT_KHR : EGL_OPENGL_ES2_BIT,
+#				endif
 
 				EGL_SURFACE_TYPE, headless ? EGL_PBUFFER_BIT : EGL_WINDOW_BIT,
 
@@ -329,11 +341,15 @@ EGL_IMPORT
 #	else
 				if (hasEglKhrCreateContext)
 				{
+#					if BGFX_CONFIG_RENDERER_OPENGL
+						bx::write(&writer, EGLint(EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR), bx::ErrorAssert{} );
+						bx::write(&writer, EGLint(EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR), bx::ErrorAssert{} );
+#					endif
 					bx::write(&writer, EGLint(EGL_CONTEXT_MAJOR_VERSION_KHR), bx::ErrorAssert{} );
-					bx::write(&writer, EGLint(gles / 10), bx::ErrorAssert{} );
+					bx::write(&writer, EGLint(glVersion / 10), bx::ErrorAssert{} );
 
 					bx::write(&writer, EGLint(EGL_CONTEXT_MINOR_VERSION_KHR), bx::ErrorAssert{} );
-					bx::write(&writer, EGLint(gles % 10), bx::ErrorAssert{} );
+					bx::write(&writer, EGLint(glVersion % 10), bx::ErrorAssert{} );
 
 					flags |= BGFX_CONFIG_DEBUG && hasEglKhrNoError ? 0
 						| EGL_CONTEXT_FLAG_NO_ERROR_BIT_KHR
@@ -356,7 +372,7 @@ EGL_IMPORT
 #	endif // BX_PLATFORM_RPI
 				{
 					bx::write(&writer, EGLint(EGL_CONTEXT_CLIENT_VERSION), bx::ErrorAssert{} );
-					bx::write(&writer, EGLint(gles / 10), bx::ErrorAssert{} );
+					bx::write(&writer, EGLint(glVersion / 10), bx::ErrorAssert{} );
 				}
 
 				bx::write(&writer, EGLint(EGL_NONE), bx::ErrorAssert{} );
@@ -496,13 +512,22 @@ EGL_IMPORT
 		BX_TRACE("Import:");
 
 #	if BX_PLATFORM_WINDOWS || BX_PLATFORM_LINUX
-		void* glesv2 = bx::dlopen("libGLESv2." BX_DL_EXT);
+#		if BX_PLATFORM_WINDOWS
+#			define LIBRARY_NAME "libGL.dll"
+#		elif BX_PLATFORM_LINUX
+#			if BGFX_CONFIG_RENDERER_OPENGL
+#				define LIBRARY_NAME "libGL.so.1"
+#			else
+#				define LIBRARY_NAME "libGLESv2.so.2"
+#			endif
+#		endif
+		void* lib = bx::dlopen(LIBRARY_NAME);
 
 #		define GL_EXTENSION(_optional, _proto, _func, _import)                           \
 			{                                                                            \
 				if (NULL == _func)                                                       \
 				{                                                                        \
-					_func = bx::dlsym<_proto>(glesv2, #_import);                         \
+					_func = bx::dlsym<_proto>(lib, #_import);                         \
 					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                   \
 					BGFX_FATAL(_optional || NULL != _func                                \
 						, Fatal::UnableToInitialize                                      \
