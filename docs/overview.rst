@@ -35,16 +35,14 @@ Supported Platforms
 ~~~~~~~~~~~~~~~~~~~
 
 -  Android (14+, ARM, x86, MIPS)
--  FreeBSD
 -  iOS/iPadOS/tvOS (iPhone, iPad, AppleTV)
 -  Linux
--  MIPS Creator CI20
 -  macOS (11+)
 -  PlayStation 4
 -  RaspberryPi
 -  UWP (Universal Windows, Xbox One)
 -  Wasm/Emscripten
--  Windows (XP, Vista, 7, 8, 10)
+-  Windows (7+)
 
 Supported Compilers
 ~~~~~~~~~~~~~~~~~~~
