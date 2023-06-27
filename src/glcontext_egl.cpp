@@ -15,6 +15,18 @@
 #			include <bcm_host.h>
 #		endif // BX_PLATFORM_RPI
 
+#define _EGL_CHECK(_check, _call)                                   \
+	BX_MACRO_BLOCK_BEGIN                                            \
+		EGLBoolean success = _call;                                 \
+		_check(success, #_call "; EGL error 0x%x", eglGetError() ); \
+	BX_MACRO_BLOCK_END
+
+#if BGFX_CONFIG_DEBUG
+#	define EGL_CHECK(_call) _EGL_CHECK(BX_ASSERT, _call)
+#else
+#	define EGL_CHECK(_call) _call
+#endif // BGFX_CONFIG_DEBUG
+
 namespace bgfx { namespace gl
 {
 #ifndef EGL_CONTEXT_FLAG_NO_ERROR_BIT_KHR
@@ -139,7 +151,7 @@ EGL_IMPORT
 			GL_CHECK(glClear(GL_COLOR_BUFFER_BIT) );
 			swapBuffers();
 
-			eglMakeCurrent(m_display, defaultSurface, defaultSurface, _context);
+			EGL_CHECK(eglMakeCurrent(m_display, defaultSurface, defaultSurface, _context) );
 		}
 
 		~SwapChainGL()
@@ -147,20 +159,20 @@ EGL_IMPORT
 			EGLSurface defaultSurface = eglGetCurrentSurface(EGL_DRAW);
 			EGLContext defaultContext = eglGetCurrentContext();
 
-			eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-			eglDestroyContext(m_display, m_context);
-			eglDestroySurface(m_display, m_surface);
-            eglMakeCurrent(m_display, defaultSurface, defaultSurface, defaultContext);
+			EGL_CHECK(eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) );
+			EGL_CHECK(eglDestroyContext(m_display, m_context) );
+			EGL_CHECK(eglDestroySurface(m_display, m_surface) );
+			EGL_CHECK(eglMakeCurrent(m_display, defaultSurface, defaultSurface, defaultContext) );
 		}
 
 		void makeCurrent()
 		{
-			eglMakeCurrent(m_display, m_surface, m_surface, m_context);
+			EGL_CHECK(eglMakeCurrent(m_display, m_surface, m_surface, m_context) );
 		}
 
 		void swapBuffers()
 		{
-			eglSwapBuffers(m_display, m_surface);
+			EGL_CHECK(eglSwapBuffers(m_display, m_surface) );
 		}
 
 		EGLNativeWindowType m_nwh;
@@ -407,10 +419,10 @@ EGL_IMPORT
 	{
 		if (NULL != m_display)
 		{
-			eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-			eglDestroyContext(m_display, m_context);
-			eglDestroySurface(m_display, m_surface);
-			eglTerminate(m_display);
+			EGL_CHECK(eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) );
+			EGL_CHECK(eglDestroyContext(m_display, m_context) );
+			EGL_CHECK(eglDestroySurface(m_display, m_surface) );
+			EGL_CHECK(eglTerminate(m_display) );
 			m_context = NULL;
 		}
 
@@ -447,7 +459,7 @@ EGL_IMPORT
 		if (NULL != m_display)
 		{
 			bool vsync = !!(_flags&BGFX_RESET_VSYNC);
-			eglSwapInterval(m_display, vsync ? 1 : 0);
+			EGL_CHECK(eglSwapInterval(m_display, vsync ? 1 : 0) );
 		}
 	}
 
@@ -481,7 +493,7 @@ EGL_IMPORT
 		{
 			if (NULL != m_display)
 			{
-				eglSwapBuffers(m_display, m_surface);
+				EGL_CHECK(eglSwapBuffers(m_display, m_surface) );
 			}
 		}
 		else
@@ -500,7 +512,7 @@ EGL_IMPORT
 			{
 				if (NULL != m_display)
 				{
-					eglMakeCurrent(m_display, m_surface, m_surface, m_context);
+					EGL_CHECK(eglMakeCurrent(m_display, m_surface, m_surface, m_context) );
 				}
 			}
 			else
