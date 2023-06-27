@@ -432,20 +432,22 @@ function gen.gen()
 			for _, fn in ipairs(idl.funcs) do
 				genStructMemberFn(fn)
 			end
-			for name, object in pairs(allStructs) do
-				local co = coroutine.create(converter[what])
-				local any
-				while true do
-					local ok, v = coroutine.resume(co, object, name, indent:len())
-					assert(ok, debug.traceback(co, v))
-					if not v then
-						break
+			for _, object in ipairs(idl["types"]) do
+				if object.struct ~= nil and object.namespace == nil then
+					local co = coroutine.create(converter[what])
+					local any
+					while true do
+						local ok, v = coroutine.resume(co, allStructs[object.name], object.name, indent:len())
+						assert(ok, debug.traceback(co, v))
+						if not v then
+							break
+						end
+						table.insert(tmp, v)
+						any = true
 					end
-					table.insert(tmp, v)
-					any = true
-				end
-				if any and tmp[#tmp] ~= "" then
-					table.insert(tmp, "")
+					if any and tmp[#tmp] ~= "" then
+						table.insert(tmp, "")
+					end
 				end
 			end
 		elseif what == "membersWithFns" then
