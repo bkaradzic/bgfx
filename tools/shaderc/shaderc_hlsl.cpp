@@ -368,7 +368,7 @@ namespace bgfx { namespace hlsl
 			UniformType::Enum type = findUniformType(desc);
 			if (UniformType::Count != type)
 			{
-				Uniform un;
+				Uniform un = Uniform();
 				un.name = '$' == name[0] ? name + 1 : name;
 				un.type = isSampler(desc.Type)
 					? UniformType::Enum(kUniformSamplerBit | type)
@@ -481,7 +481,7 @@ namespace bgfx { namespace hlsl
 							if (UniformType::Count != uniformType
 							&&  0 != (varDesc.uFlags & D3D_SVF_USED) )
 							{
-								Uniform un;
+								Uniform un = Uniform();
 								un.name = varDesc.Name;
 								un.type = uniformType;
 								un.num = uint8_t(constDesc.Elements);
@@ -535,7 +535,7 @@ namespace bgfx { namespace hlsl
 
 					if (!end.isEmpty())
 					{
-						Uniform un;
+						Uniform un = Uniform();
 						un.name.assign(bindDesc.Name, (end.getPtr() - bindDesc.Name) );
 						un.type = UniformType::Enum(kUniformSamplerBit | UniformType::Sampler);
 						un.num = 1;
