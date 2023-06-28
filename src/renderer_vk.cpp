@@ -9,7 +9,7 @@
 #	include <bx/pixelformat.h>
 #	include "renderer_vk.h"
 #	include "shader_spirv.h"
-# include "cuda_interop.h"
+#	include "cuda_interop.h"
 
 #if BX_PLATFORM_OSX
 #	import <Cocoa/Cocoa.h>
@@ -19,6 +19,16 @@
 #endif // BX_PLATFORM_OSX
 
 #define VK_MAX_PHYSICAL_DEVICES 16
+
+#if BGFX_EXIT_ON_ALLOC_FAILURE
+#	define VK_MEM_CHECK(_call)                                                                            \
+		BX_MACRO_BLOCK_BEGIN                                                                              \
+			VkResult vkresult = _call;                                                                    \
+			BGFX_FATAL(VK_SUCCESS == vkresult, Fatal::UnableToCreateTexture, #_call "; VK alloc error 0x%x: %s", vkresult, getName(vkresult) ); \
+		BX_MACRO_BLOCK_END
+#else
+#	define VK_MEM_CHECK VK_CHECK
+#endif
 
 namespace bgfx { namespace vk
 {
@@ -2378,7 +2388,7 @@ VK_IMPORT_DEVICE
 
 			VkDeviceMemory stagingMemory;
 			VkBuffer stagingBuffer;
-			VK_CHECK(createReadbackBuffer(size, &stagingBuffer, &stagingMemory) );
+			VK_MEM_CHECK(createReadbackBuffer(size, &stagingBuffer, &stagingMemory) );
 
 			texture.m_readback.copyImageToBuffer(
 				  m_commandBuffer
@@ -2615,7 +2625,7 @@ VK_IMPORT_DEVICE
 
 			VkDeviceMemory stagingMemory;
 			VkBuffer stagingBuffer;
-			VK_CHECK(createReadbackBuffer(size, &stagingBuffer, &stagingMemory) );
+			VK_MEM_CHECK(createReadbackBuffer(size, &stagingBuffer, &stagingMemory) );
 
 			readBackBuffer(frameBuffer, stagingBuffer, stagingMemory, callback, _filePath);
 
@@ -2879,7 +2889,7 @@ VK_IMPORT_DEVICE
 					release(m_captureMemory);
 
 					m_captureSize = captureSize;
-					VK_CHECK(createReadbackBuffer(m_captureSize, &m_captureBuffer, &m_captureMemory) );
+					VK_MEM_CHECK(createReadbackBuffer(m_captureSize, &m_captureBuffer, &m_captureMemory) );
 				}
 
 				g_callback->captureBegin(m_resolution.width, m_resolution.height, dstPitch, TextureFormat::BGRA8, false);
@@ -3637,7 +3647,7 @@ VK_IMPORT_DEVICE
 				;
 
 			VkImageView view;
-			VK_CHECK(texture.createView(0, texture.m_numSides, _mip, _numMips, _type, aspectMask, false, &view) );
+			VK_MEM_CHECK(texture.createView(0, texture.m_numSides, _mip, _numMips, _type, aspectMask, false, &view) );
 			m_imageViewCache.add(hashKey, view, _handle.idx);
 
 			return view;
@@ -4833,7 +4843,7 @@ VK_DESTROY
 		bci.queueFamilyIndexCount = 0;
 		bci.pQueueFamilyIndices   = NULL;
 
-		VK_CHECK(vkCreateBuffer(
+		VK_MEM_CHECK(vkCreateBuffer(
 			  device
 			, &bci
 			, allocatorCb
@@ -4853,7 +4863,7 @@ VK_DESTROY
 		if (VK_SUCCESS != result)
 		{
 			flags &= ~VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-			VK_CHECK(s_renderVK->allocateMemory(&mr, flags, &m_deviceMem) );
+			VK_MEM_CHECK(s_renderVK->allocateMemory(&mr, flags, &m_deviceMem) );
 		}
 
 		m_size = (uint32_t)mr.size;
@@ -4975,12 +4985,12 @@ VK_DESTROY
 
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 		const VkDevice device = s_renderVK->m_device;
-		VK_CHECK(vkCreateBuffer(device, &bci, allocatorCb, &m_buffer) );
+		VK_MEM_CHECK(vkCreateBuffer(device, &bci, allocatorCb, &m_buffer) );
 
 		VkMemoryRequirements mr;
 		vkGetBufferMemoryRequirements(device, m_buffer, &mr);
 
-		VK_CHECK(s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_deviceMem) );
+		VK_MEM_CHECK(s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_deviceMem) );
 
 		VK_CHECK(vkBindBufferMemory(device, m_buffer, m_deviceMem, 0) );
 
@@ -4996,7 +5006,7 @@ VK_DESTROY
 
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingMem;
-		VK_CHECK(s_renderVK->createStagingBuffer(_size, &stagingBuffer, &stagingMem, _data) );
+		VK_MEM_CHECK(s_renderVK->createStagingBuffer(_size, &stagingBuffer, &stagingMem, _data) );
 
 		VkBufferCopy region;
 		region.srcOffset = 0;
@@ -5600,7 +5610,7 @@ VK_DESTROY
 		vkCmdResetQueryPool(commandBuffer, m_queryPool, 0, count);
 
 		const uint32_t size = count * sizeof(uint64_t);
-		result = s_renderVK->createReadbackBuffer(size, &m_readback, &m_readbackMemory);
+		VK_MEM_CHECK(result = s_renderVK->createReadbackBuffer(size, &m_readback, &m_readbackMemory));
 
 		if (VK_SUCCESS != result)
 		{
@@ -5752,7 +5762,7 @@ VK_DESTROY
 		vkCmdResetQueryPool(commandBuffer, m_queryPool, 0, count);
 
 		const uint32_t size = count * sizeof(uint32_t);
-		result = s_renderVK->createReadbackBuffer(size, &m_readback, &m_readbackMemory);
+		VK_MEM_CHECK(result = s_renderVK->createReadbackBuffer(size, &m_readback, &m_readbackMemory));
 
 		if (VK_SUCCESS != result)
 		{
@@ -6083,7 +6093,7 @@ VK_DESTROY
 			ici.pNext = &emici;
 		}
 
-		result = vkCreateImage(device, &ici, allocatorCb, &m_textureImage);
+		VK_MEM_CHECK(result = vkCreateImage(device, &ici, allocatorCb, &m_textureImage));
 		if (VK_SUCCESS != result)
 		{
 			BX_TRACE("Create texture image error: vkCreateImage failed %d: %s.", result, getName(result) );
@@ -6093,7 +6103,7 @@ VK_DESTROY
 		VkMemoryRequirements imageMemReq;
 		vkGetImageMemoryRequirements(device, m_textureImage, &imageMemReq);
 
-		result = s_renderVK->allocateMemory(&imageMemReq, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_textureDeviceMem, (!needResolve && enableExport));
+		VK_MEM_CHECK(result = s_renderVK->allocateMemory(&imageMemReq, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_textureDeviceMem, (!needResolve && enableExport)));
 		if (VK_SUCCESS != result)
 		{
 			BX_TRACE("Create texture image error: allocateMemory failed %d: %s.", result, getName(result) );
@@ -6125,7 +6135,7 @@ VK_DESTROY
 				ici_resolve.pNext = &emici;
 			}
 
-			result = vkCreateImage(device, &ici_resolve, allocatorCb, &m_singleMsaaImage);
+			VK_MEM_CHECK(result = vkCreateImage(device, &ici_resolve, allocatorCb, &m_singleMsaaImage));
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Create texture image error: vkCreateImage failed %d: %s.", result, getName(result) );
@@ -6134,7 +6144,7 @@ VK_DESTROY
 
 			vkGetImageMemoryRequirements(device, m_singleMsaaImage, &imageMemReq_resolve);
 
-			result = s_renderVK->allocateMemory(&imageMemReq_resolve, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_singleMsaaDeviceMem, enableExport);
+			VK_MEM_CHECK(result = s_renderVK->allocateMemory(&imageMemReq_resolve, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_singleMsaaDeviceMem, enableExport));
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Create texture image error: allocateMemory failed %d: %s.", result, getName(result) );
@@ -6397,7 +6407,7 @@ VK_DESTROY
 
 				VkBuffer stagingBuffer;
 				VkDeviceMemory stagingDeviceMem;
-				VK_CHECK(s_renderVK->createStagingBuffer(totalMemSize, &stagingBuffer, &stagingDeviceMem) );
+				VK_MEM_CHECK(s_renderVK->createStagingBuffer(totalMemSize, &stagingBuffer, &stagingDeviceMem) );
 
 				uint8_t* mappedMemory;
 				VK_CHECK(vkMapMemory(
@@ -6512,7 +6522,7 @@ VK_DESTROY
 
 		VkBuffer stagingBuffer = VK_NULL_HANDLE;
 		VkDeviceMemory stagingDeviceMem = VK_NULL_HANDLE;
-		VK_CHECK(s_renderVK->createStagingBuffer(size, &stagingBuffer, &stagingDeviceMem, data) );
+		VK_MEM_CHECK(s_renderVK->createStagingBuffer(size, &stagingBuffer, &stagingDeviceMem, data) );
 
 		if (VK_IMAGE_VIEW_TYPE_3D == m_type)
 		{
