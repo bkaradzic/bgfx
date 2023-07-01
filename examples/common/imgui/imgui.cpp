@@ -188,6 +188,8 @@ struct OcornutImguiContext
 
 	void create(float _fontSize, bx::AllocatorI* _allocator)
 	{
+		IMGUI_CHECKVERSION();
+
 		m_allocator = _allocator;
 
 		if (NULL == _allocator)
