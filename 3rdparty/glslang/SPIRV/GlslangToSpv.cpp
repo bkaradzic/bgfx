@@ -1580,7 +1580,12 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(unsigned int spvVersion,
     builder.setSource(TranslateSourceLanguage(glslangIntermediate->getSource(), glslangIntermediate->getProfile()),
                       glslangIntermediate->getVersion());
 
-    if (options.generateDebugInfo) {
+    if (options.emitNonSemanticShaderDebugSource)
+            this->options.emitNonSemanticShaderDebugInfo = true;
+    if (options.emitNonSemanticShaderDebugInfo)
+            this->options.generateDebugInfo = true;
+
+    if (this->options.generateDebugInfo) {
         builder.setEmitOpLines();
         builder.setSourceFile(glslangIntermediate->getSourceFile());
 
@@ -1607,8 +1612,8 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(unsigned int spvVersion,
             builder.addInclude(iItr->first, iItr->second);
     }
 
-    builder.setEmitNonSemanticShaderDebugInfo(options.emitNonSemanticShaderDebugInfo);
-    builder.setEmitNonSemanticShaderDebugSource(options.emitNonSemanticShaderDebugSource);
+    builder.setEmitNonSemanticShaderDebugInfo(this->options.emitNonSemanticShaderDebugInfo);
+    builder.setEmitNonSemanticShaderDebugSource(this->options.emitNonSemanticShaderDebugSource);
 
     stdBuiltins = builder.import("GLSL.std.450");
 
