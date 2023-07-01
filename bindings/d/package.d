@@ -971,6 +971,218 @@ pragma(inline,true) nothrow @nogc pure @safe{
 	}
 }
 
+///Renderer capabilities.
+extern(C++, "bgfx") struct Caps{
+	///Renderer runtime limits.
+	extern(C++, "bgfx") struct Limits{
+		uint maxDrawCalls; ///Maximum number of draw calls.
+		uint maxBlits; ///Maximum number of blit calls.
+		uint maxTextureSize; ///Maximum texture size.
+		uint maxTextureLayers; ///Maximum texture layers.
+		uint maxViews; ///Maximum number of views.
+		uint maxFrameBuffers; ///Maximum number of frame buffer handles.
+		uint maxFBAttachments; ///Maximum number of frame buffer attachments.
+		uint maxPrograms; ///Maximum number of program handles.
+		uint maxShaders; ///Maximum number of shader handles.
+		uint maxTextures; ///Maximum number of texture handles.
+		uint maxTextureSamplers; ///Maximum number of texture samplers.
+		uint maxComputeBindings; ///Maximum number of compute bindings.
+		uint maxVertexLayouts; ///Maximum number of vertex format layouts.
+		uint maxVertexStreams; ///Maximum number of vertex streams.
+		uint maxIndexBuffers; ///Maximum number of index buffer handles.
+		uint maxVertexBuffers; ///Maximum number of vertex buffer handles.
+		uint maxDynamicIndexBuffers; ///Maximum number of dynamic index buffer handles.
+		uint maxDynamicVertexBuffers; ///Maximum number of dynamic vertex buffer handles.
+		uint maxUniforms; ///Maximum number of uniform handles.
+		uint maxOcclusionQueries; ///Maximum number of occlusion query handles.
+		uint maxEncoders; ///Maximum number of encoder threads.
+		uint minResourceCbSize; ///Minimum resource command buffer size.
+		uint transientVbSize; ///Maximum transient vertex buffer size.
+		uint transientIbSize; ///Maximum transient index buffer size.
+	}
+	///GPU info.
+	extern(C++, "bgfx") struct GPU{
+		ushort vendorID; ///Vendor PCI id. See `BGFX_PCI_ID_*`.
+		ushort deviceID; ///Device id.
+	}
+	
+	RendererType rendererType; ///Renderer backend type. See: `bgfx::RendererType`
+	
+	/**
+	Supported functionality.
+	  @attention See `BGFX_CAPS_*` flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
+	*/
+	ulong supported;
+	ushort vendorID; ///Selected GPU vendor PCI id.
+	ushort deviceID; ///Selected GPU device id.
+	bool homogeneousDepth; ///True when NDC depth is in [-1, 1] range, otherwise its [0, 1].
+	bool originBottomLeft; ///True when NDC origin is at bottom left.
+	ubyte numGPUs; ///Number of enumerated GPUs.
+	GPU[4] gpu; ///Enumerated GPUs.
+	Limits limits; ///Renderer runtime limits.
+	
+	/**
+	Supported texture format capabilities flags:
+	  - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - Texture format is not supported.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_2D` - Texture format is supported.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB` - Texture as sRGB format is supported.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED` - Texture format is emulated.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_3D` - Texture format is supported.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB` - Texture as sRGB format is supported.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED` - Texture format is emulated.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_CUBE` - Texture format is supported.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB` - Texture as sRGB format is supported.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED` - Texture format is emulated.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_VERTEX` - Texture format can be used from vertex shader.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ` - Texture format can be used as image
+	    and read from.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE` - Texture format can be used as image
+	    and written to.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER` - Texture format can be used as frame
+	    buffer.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` - Texture format can be used as MSAA
+	    frame buffer.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_MSAA` - Texture can be sampled as MSAA.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
+	    mips.
+	*/
+	ushort[TextureFormat.count] formats;
+}
+
+///Internal data.
+extern(C++, "bgfx") struct InternalData{
+	const(Caps)* caps; ///Renderer capabilities.
+	void* context; ///GL context, or D3D device.
+}
+
+///Platform data.
+extern(C++, "bgfx") struct PlatformData{
+	void* ndt; ///Native display type (*nix specific).
+	
+	/**
+	Native window handle. If `NULL`, bgfx will create a headless
+	context/device, provided the rendering API supports it.
+	*/
+	void* nwh;
+	
+	/**
+	GL context, D3D device, or Vulkan device. If `NULL`, bgfx
+	will create context/device.
+	*/
+	void* context;
+	
+	/**
+	GL back-buffer, or D3D render target view. If `NULL` bgfx will
+	create back-buffer color surface.
+	*/
+	void* backBuffer;
+	
+	/**
+	Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
+	depth/stencil surface.
+	*/
+	void* backBufferDS;
+}
+
+///Backbuffer resolution and reset parameters.
+extern(C++, "bgfx") struct Resolution{
+	TextureFormat format; ///Backbuffer format.
+	uint width; ///Backbuffer width.
+	uint height; ///Backbuffer height.
+	uint reset; ///Reset parameters.
+	ubyte numBackBuffers; ///Number of back buffers.
+	ubyte maxFrameLatency; ///Maximum frame latency.
+	ubyte debugTextScale; ///Scale factor for debug text.
+	extern(D) mixin(joinFnBinds((){
+		string[][] ret;
+		ret ~= makeFnBinds([
+			[q{void}, q{this}, q{}, `C++`],
+		], true);
+		return ret;
+	}(), typeof(this).stringof));
+}
+
+///Initialization parameters used by `bgfx::init`.
+extern(C++, "bgfx") struct Init{
+	///Configurable runtime limits parameters.
+	extern(C++, "bgfx") struct Limits{
+		ushort maxEncoders; ///Maximum number of encoder threads.
+		uint minResourceCbSize; ///Minimum resource command buffer size.
+		uint transientVbSize; ///Maximum transient vertex buffer size.
+		uint transientIbSize; ///Maximum transient index buffer size.
+	}
+	
+	/**
+	Select rendering backend. When set to RendererType::Count
+	a default rendering backend will be selected appropriate to the platform.
+	See: `bgfx::RendererType`
+	*/
+	RendererType type;
+	
+	/**
+	Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
+	GPUs will be prioritised.
+	  - `BGFX_PCI_ID_NONE` - Autoselect adapter.
+	  - `BGFX_PCI_ID_SOFTWARE_RASTERIZER` - Software rasterizer.
+	  - `BGFX_PCI_ID_AMD` - AMD adapter.
+	  - `BGFX_PCI_ID_APPLE` - Apple adapter.
+	  - `BGFX_PCI_ID_INTEL` - Intel adapter.
+	  - `BGFX_PCI_ID_NVIDIA` - NVIDIA adapter.
+	  - `BGFX_PCI_ID_MICROSOFT` - Microsoft adapter.
+	*/
+	ushort vendorID;
+	
+	/**
+	Device ID. If set to 0 it will select first device, or device with
+	matching ID.
+	*/
+	ushort deviceID;
+	ulong capabilities; ///Capabilities initialization mask (default: UINT64_MAX).
+	bool debug_; ///Enable device for debugging.
+	bool profile; ///Enable device for profiling.
+	PlatformData platformData; ///Platform data.
+	Resolution resolution; ///Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
+	Limits limits; ///Configurable runtime limits parameters.
+	
+	/**
+	Provide application specific callback interface.
+	See: `bgfx::CallbackI`
+	*/
+	void* callback;
+	
+	/**
+	Custom allocator. When a custom allocator is not
+	specified, bgfx uses the CRT allocator. Bgfx assumes
+	custom allocator is thread safe.
+	*/
+	void* allocator;
+	extern(D) mixin(joinFnBinds((){
+		string[][] ret;
+		ret ~= makeFnBinds([
+			[q{void}, q{this}, q{}, `C++`],
+		], true);
+		return ret;
+	}(), typeof(this).stringof));
+}
+
+/**
+Memory must be obtained by calling `bgfx::alloc`, `bgfx::copy`, or `bgfx::makeRef`.
+@attention It is illegal to create this structure on stack and pass it to any bgfx API.
+*/
+extern(C++, "bgfx") struct Memory{
+	ubyte* data; ///Pointer to data.
+	uint size; ///Data size.
+}
+
+///Transient index buffer.
+extern(C++, "bgfx") struct TransientIndexBuffer{
+	ubyte* data; ///Pointer to data.
+	uint size; ///Data size.
+	uint startIndex; ///First index.
+	IndexBufferHandle handle; ///Index buffer handle.
+	bool isIndex16; ///Index buffer format is 16-bits if true, otherwise it is 32-bit.
+}
+
 ///Transient vertex buffer.
 extern(C++, "bgfx") struct TransientVertexBuffer{
 	ubyte* data; ///Pointer to data.
@@ -981,10 +1193,14 @@ extern(C++, "bgfx") struct TransientVertexBuffer{
 	VertexLayoutHandle layoutHandle; ///Vertex layout handle.
 }
 
-///Encoder stats.
-extern(C++, "bgfx") struct EncoderStats{
-	long cpuTimeBegin; ///Encoder thread CPU submit begin time.
-	long cpuTimeEnd; ///Encoder thread CPU submit end time.
+///Instance data buffer info.
+extern(C++, "bgfx") struct InstanceDataBuffer{
+	ubyte* data; ///Pointer to data.
+	uint size; ///Data size.
+	uint offset; ///Offset in vertex buffer.
+	uint num; ///Number of instances.
+	ushort stride; ///Vertex buffer stride.
+	VertexBufferHandle handle; ///Vertex buffer object handle.
 }
 
 ///Texture info.
@@ -998,6 +1214,111 @@ extern(C++, "bgfx") struct TextureInfo{
 	ubyte numMIPs; ///Number of MIP maps.
 	ubyte bitsPerPixel; ///Format bits per pixel.
 	bool cubeMap; ///Texture is cubemap.
+}
+
+///Uniform info.
+extern(C++, "bgfx") struct UniformInfo{
+	char[256] name; ///Uniform name.
+	UniformType type; ///Uniform type.
+	ushort num; ///Number of elements in array.
+}
+
+///Frame buffer texture attachment info.
+extern(C++, "bgfx") struct Attachment{
+	Access access; ///Attachment access. See `Access::Enum`.
+	TextureHandle handle; ///Render target texture handle.
+	ushort mip; ///Mip level.
+	ushort layer; ///Cubemap side or depth layer/slice to use.
+	ushort numLayers; ///Number of texture layer/slice(s) in array to use.
+	ubyte resolve; ///Resolve flags. See: `BGFX_RESOLVE_*`
+	extern(D) mixin(joinFnBinds((){
+		string[][] ret;
+		ret ~= makeFnBinds([
+			/**
+			Init attachment.
+			Params:
+				handle = Render target texture handle.
+				access = Access. See `Access::Enum`.
+				layer = Cubemap side or depth layer/slice to use.
+				numLayers = Number of texture layer/slice(s) in array to use.
+				mip = Mip level.
+				resolve = Resolve flags. See: `BGFX_RESOLVE_*`
+			*/
+			[q{void}, q{init}, q{TextureHandle handle, bgfx.fakeenum.Access.Enum access=Access.write, ushort layer=0, ushort numLayers=1, ushort mip=0, ubyte resolve=Resolve.autoGenMIPs}, `C++`],
+		], true);
+		return ret;
+	}(), typeof(this).stringof));
+}
+
+///Transform data.
+extern(C++, "bgfx") struct Transform{
+	float* data; ///Pointer to first 4x4 matrix.
+	ushort num; ///Number of matrices.
+}
+
+///View stats.
+extern(C++, "bgfx") struct ViewStats{
+	char[256] name; ///View name.
+	ViewId view; ///View id.
+	long cpuTimeBegin; ///CPU (submit) begin time.
+	long cpuTimeEnd; ///CPU (submit) end time.
+	long gpuTimeBegin; ///GPU begin time.
+	long gpuTimeEnd; ///GPU end time.
+	uint gpuFrameNum; ///Frame which generated gpuTimeBegin, gpuTimeEnd.
+}
+
+///Encoder stats.
+extern(C++, "bgfx") struct EncoderStats{
+	long cpuTimeBegin; ///Encoder thread CPU submit begin time.
+	long cpuTimeEnd; ///Encoder thread CPU submit end time.
+}
+
+/**
+Renderer statistics data.
+@remarks All time values are high-resolution timestamps, while
+time frequencies define timestamps-per-second for that hardware.
+*/
+extern(C++, "bgfx") struct Stats{
+	long cpuTimeFrame; ///CPU time between two `bgfx::frame` calls.
+	long cpuTimeBegin; ///Render thread CPU submit begin time.
+	long cpuTimeEnd; ///Render thread CPU submit end time.
+	long cpuTimerFreq; ///CPU timer frequency. Timestamps-per-second
+	long gpuTimeBegin; ///GPU frame begin time.
+	long gpuTimeEnd; ///GPU frame end time.
+	long gpuTimerFreq; ///GPU timer frequency.
+	long waitRender; ///Time spent waiting for render backend thread to finish issuing draw commands to underlying graphics API.
+	long waitSubmit; ///Time spent waiting for submit thread to advance to next frame.
+	uint numDraw; ///Number of draw calls submitted.
+	uint numCompute; ///Number of compute calls submitted.
+	uint numBlit; ///Number of blit calls submitted.
+	uint maxGpuLatency; ///GPU driver latency.
+	uint gpuFrameNum; ///Frame which generated gpuTimeBegin, gpuTimeEnd.
+	ushort numDynamicIndexBuffers; ///Number of used dynamic index buffers.
+	ushort numDynamicVertexBuffers; ///Number of used dynamic vertex buffers.
+	ushort numFrameBuffers; ///Number of used frame buffers.
+	ushort numIndexBuffers; ///Number of used index buffers.
+	ushort numOcclusionQueries; ///Number of used occlusion queries.
+	ushort numPrograms; ///Number of used programs.
+	ushort numShaders; ///Number of used shaders.
+	ushort numTextures; ///Number of used textures.
+	ushort numUniforms; ///Number of used uniforms.
+	ushort numVertexBuffers; ///Number of used vertex buffers.
+	ushort numVertexLayouts; ///Number of used vertex layouts.
+	long textureMemoryUsed; ///Estimate of texture memory used.
+	long rtMemoryUsed; ///Estimate of render target memory used.
+	int transientVbUsed; ///Amount of transient vertex buffer used.
+	int transientIbUsed; ///Amount of transient index buffer used.
+	uint[Topology.count] numPrims; ///Number of primitives rendered.
+	long gpuMemoryMax; ///Maximum available GPU memory for application.
+	long gpuMemoryUsed; ///Amount of GPU memory used by the application.
+	ushort width; ///Backbuffer width in pixels.
+	ushort height; ///Backbuffer height in pixels.
+	ushort textWidth; ///Debug text width in characters.
+	ushort textHeight; ///Debug text height in characters.
+	ushort numViews; ///Number of view stats.
+	ViewStats* viewStats; ///Array of View stats.
+	ubyte numEncoders; ///Number of encoders used during frame.
+	EncoderStats* encoderStats; ///Array of encoder stats.
 }
 
 ///Vertex layout.
@@ -1086,161 +1407,6 @@ extern(C++, "bgfx") struct VertexLayout{
 		], true);
 		return ret;
 	}(), typeof(this).stringof));
-}
-
-///Backbuffer resolution and reset parameters.
-extern(C++, "bgfx") struct Resolution{
-	TextureFormat format; ///Backbuffer format.
-	uint width; ///Backbuffer width.
-	uint height; ///Backbuffer height.
-	uint reset; ///Reset parameters.
-	ubyte numBackBuffers; ///Number of back buffers.
-	ubyte maxFrameLatency; ///Maximum frame latency.
-	ubyte debugTextScale; ///Scale factor for debug text.
-	extern(D) mixin(joinFnBinds((){
-		string[][] ret;
-		ret ~= makeFnBinds([
-			[q{void}, q{this}, q{}, `C++`],
-		], true);
-		return ret;
-	}(), typeof(this).stringof));
-}
-
-///View stats.
-extern(C++, "bgfx") struct ViewStats{
-	char[256] name; ///View name.
-	ViewId view; ///View id.
-	long cpuTimeBegin; ///CPU (submit) begin time.
-	long cpuTimeEnd; ///CPU (submit) end time.
-	long gpuTimeBegin; ///GPU begin time.
-	long gpuTimeEnd; ///GPU end time.
-	uint gpuFrameNum; ///Frame which generated gpuTimeBegin, gpuTimeEnd.
-}
-
-/**
-Renderer statistics data.
-@remarks All time values are high-resolution timestamps, while
-time frequencies define timestamps-per-second for that hardware.
-*/
-extern(C++, "bgfx") struct Stats{
-	long cpuTimeFrame; ///CPU time between two `bgfx::frame` calls.
-	long cpuTimeBegin; ///Render thread CPU submit begin time.
-	long cpuTimeEnd; ///Render thread CPU submit end time.
-	long cpuTimerFreq; ///CPU timer frequency. Timestamps-per-second
-	long gpuTimeBegin; ///GPU frame begin time.
-	long gpuTimeEnd; ///GPU frame end time.
-	long gpuTimerFreq; ///GPU timer frequency.
-	long waitRender; ///Time spent waiting for render backend thread to finish issuing draw commands to underlying graphics API.
-	long waitSubmit; ///Time spent waiting for submit thread to advance to next frame.
-	uint numDraw; ///Number of draw calls submitted.
-	uint numCompute; ///Number of compute calls submitted.
-	uint numBlit; ///Number of blit calls submitted.
-	uint maxGpuLatency; ///GPU driver latency.
-	uint gpuFrameNum; ///Frame which generated gpuTimeBegin, gpuTimeEnd.
-	ushort numDynamicIndexBuffers; ///Number of used dynamic index buffers.
-	ushort numDynamicVertexBuffers; ///Number of used dynamic vertex buffers.
-	ushort numFrameBuffers; ///Number of used frame buffers.
-	ushort numIndexBuffers; ///Number of used index buffers.
-	ushort numOcclusionQueries; ///Number of used occlusion queries.
-	ushort numPrograms; ///Number of used programs.
-	ushort numShaders; ///Number of used shaders.
-	ushort numTextures; ///Number of used textures.
-	ushort numUniforms; ///Number of used uniforms.
-	ushort numVertexBuffers; ///Number of used vertex buffers.
-	ushort numVertexLayouts; ///Number of used vertex layouts.
-	long textureMemoryUsed; ///Estimate of texture memory used.
-	long rtMemoryUsed; ///Estimate of render target memory used.
-	int transientVbUsed; ///Amount of transient vertex buffer used.
-	int transientIbUsed; ///Amount of transient index buffer used.
-	uint[Topology.count] numPrims; ///Number of primitives rendered.
-	long gpuMemoryMax; ///Maximum available GPU memory for application.
-	long gpuMemoryUsed; ///Amount of GPU memory used by the application.
-	ushort width; ///Backbuffer width in pixels.
-	ushort height; ///Backbuffer height in pixels.
-	ushort textWidth; ///Debug text width in characters.
-	ushort textHeight; ///Debug text height in characters.
-	ushort numViews; ///Number of view stats.
-	ViewStats* viewStats; ///Array of View stats.
-	ubyte numEncoders; ///Number of encoders used during frame.
-	EncoderStats* encoderStats; ///Array of encoder stats.
-}
-
-///Renderer capabilities.
-extern(C++, "bgfx") struct Caps{
-	///Renderer runtime limits.
-	extern(C++, "bgfx") struct Limits{
-		uint maxDrawCalls; ///Maximum number of draw calls.
-		uint maxBlits; ///Maximum number of blit calls.
-		uint maxTextureSize; ///Maximum texture size.
-		uint maxTextureLayers; ///Maximum texture layers.
-		uint maxViews; ///Maximum number of views.
-		uint maxFrameBuffers; ///Maximum number of frame buffer handles.
-		uint maxFBAttachments; ///Maximum number of frame buffer attachments.
-		uint maxPrograms; ///Maximum number of program handles.
-		uint maxShaders; ///Maximum number of shader handles.
-		uint maxTextures; ///Maximum number of texture handles.
-		uint maxTextureSamplers; ///Maximum number of texture samplers.
-		uint maxComputeBindings; ///Maximum number of compute bindings.
-		uint maxVertexLayouts; ///Maximum number of vertex format layouts.
-		uint maxVertexStreams; ///Maximum number of vertex streams.
-		uint maxIndexBuffers; ///Maximum number of index buffer handles.
-		uint maxVertexBuffers; ///Maximum number of vertex buffer handles.
-		uint maxDynamicIndexBuffers; ///Maximum number of dynamic index buffer handles.
-		uint maxDynamicVertexBuffers; ///Maximum number of dynamic vertex buffer handles.
-		uint maxUniforms; ///Maximum number of uniform handles.
-		uint maxOcclusionQueries; ///Maximum number of occlusion query handles.
-		uint maxEncoders; ///Maximum number of encoder threads.
-		uint minResourceCbSize; ///Minimum resource command buffer size.
-		uint transientVbSize; ///Maximum transient vertex buffer size.
-		uint transientIbSize; ///Maximum transient index buffer size.
-	}
-	///GPU info.
-	extern(C++, "bgfx") struct GPU{
-		ushort vendorID; ///Vendor PCI id. See `BGFX_PCI_ID_*`.
-		ushort deviceID; ///Device id.
-	}
-	
-	RendererType rendererType; ///Renderer backend type. See: `bgfx::RendererType`
-	
-	/**
-	Supported functionality.
-	  @attention See `BGFX_CAPS_*` flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
-	*/
-	ulong supported;
-	ushort vendorID; ///Selected GPU vendor PCI id.
-	ushort deviceID; ///Selected GPU device id.
-	bool homogeneousDepth; ///True when NDC depth is in [-1, 1] range, otherwise its [0, 1].
-	bool originBottomLeft; ///True when NDC origin is at bottom left.
-	ubyte numGPUs; ///Number of enumerated GPUs.
-	GPU[4] gpu; ///Enumerated GPUs.
-	Limits limits; ///Renderer runtime limits.
-	
-	/**
-	Supported texture format capabilities flags:
-	  - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - Texture format is not supported.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_2D` - Texture format is supported.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB` - Texture as sRGB format is supported.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED` - Texture format is emulated.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_3D` - Texture format is supported.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB` - Texture as sRGB format is supported.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED` - Texture format is emulated.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_CUBE` - Texture format is supported.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB` - Texture as sRGB format is supported.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED` - Texture format is emulated.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_VERTEX` - Texture format can be used from vertex shader.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ` - Texture format can be used as image
-	    and read from.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE` - Texture format can be used as image
-	    and written to.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER` - Texture format can be used as frame
-	    buffer.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` - Texture format can be used as MSAA
-	    frame buffer.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_MSAA` - Texture can be sampled as MSAA.
-	  - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
-	    mips.
-	*/
-	ushort[TextureFormat.count] formats;
 }
 
 /**
@@ -1723,172 +1889,6 @@ extern(C++, "bgfx") struct Encoder{
 		], true);
 		return ret;
 	}(), typeof(this).stringof));
-}
-
-///Internal data.
-extern(C++, "bgfx") struct InternalData{
-	const(Caps)* caps; ///Renderer capabilities.
-	void* context; ///GL context, or D3D device.
-}
-
-///Uniform info.
-extern(C++, "bgfx") struct UniformInfo{
-	char[256] name; ///Uniform name.
-	UniformType type; ///Uniform type.
-	ushort num; ///Number of elements in array.
-}
-
-///Platform data.
-extern(C++, "bgfx") struct PlatformData{
-	void* ndt; ///Native display type (*nix specific).
-	
-	/**
-	Native window handle. If `NULL`, bgfx will create a headless
-	context/device, provided the rendering API supports it.
-	*/
-	void* nwh;
-	
-	/**
-	GL context, D3D device, or Vulkan device. If `NULL`, bgfx
-	will create context/device.
-	*/
-	void* context;
-	
-	/**
-	GL back-buffer, or D3D render target view. If `NULL` bgfx will
-	create back-buffer color surface.
-	*/
-	void* backBuffer;
-	
-	/**
-	Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
-	depth/stencil surface.
-	*/
-	void* backBufferDS;
-}
-
-///Instance data buffer info.
-extern(C++, "bgfx") struct InstanceDataBuffer{
-	ubyte* data; ///Pointer to data.
-	uint size; ///Data size.
-	uint offset; ///Offset in vertex buffer.
-	uint num; ///Number of instances.
-	ushort stride; ///Vertex buffer stride.
-	VertexBufferHandle handle; ///Vertex buffer object handle.
-}
-
-///Initialization parameters used by `bgfx::init`.
-extern(C++, "bgfx") struct Init{
-	///Configurable runtime limits parameters.
-	extern(C++, "bgfx") struct Limits{
-		ushort maxEncoders; ///Maximum number of encoder threads.
-		uint minResourceCbSize; ///Minimum resource command buffer size.
-		uint transientVbSize; ///Maximum transient vertex buffer size.
-		uint transientIbSize; ///Maximum transient index buffer size.
-	}
-	
-	/**
-	Select rendering backend. When set to RendererType::Count
-	a default rendering backend will be selected appropriate to the platform.
-	See: `bgfx::RendererType`
-	*/
-	RendererType type;
-	
-	/**
-	Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
-	GPUs will be prioritised.
-	  - `BGFX_PCI_ID_NONE` - Autoselect adapter.
-	  - `BGFX_PCI_ID_SOFTWARE_RASTERIZER` - Software rasterizer.
-	  - `BGFX_PCI_ID_AMD` - AMD adapter.
-	  - `BGFX_PCI_ID_APPLE` - Apple adapter.
-	  - `BGFX_PCI_ID_INTEL` - Intel adapter.
-	  - `BGFX_PCI_ID_NVIDIA` - NVIDIA adapter.
-	  - `BGFX_PCI_ID_MICROSOFT` - Microsoft adapter.
-	*/
-	ushort vendorID;
-	
-	/**
-	Device ID. If set to 0 it will select first device, or device with
-	matching ID.
-	*/
-	ushort deviceID;
-	ulong capabilities; ///Capabilities initialization mask (default: UINT64_MAX).
-	bool debug_; ///Enable device for debugging.
-	bool profile; ///Enable device for profiling.
-	PlatformData platformData; ///Platform data.
-	Resolution resolution; ///Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
-	Limits limits; ///Configurable runtime limits parameters.
-	
-	/**
-	Provide application specific callback interface.
-	See: `bgfx::CallbackI`
-	*/
-	void* callback;
-	
-	/**
-	Custom allocator. When a custom allocator is not
-	specified, bgfx uses the CRT allocator. Bgfx assumes
-	custom allocator is thread safe.
-	*/
-	void* allocator;
-	extern(D) mixin(joinFnBinds((){
-		string[][] ret;
-		ret ~= makeFnBinds([
-			[q{void}, q{this}, q{}, `C++`],
-		], true);
-		return ret;
-	}(), typeof(this).stringof));
-}
-
-///Frame buffer texture attachment info.
-extern(C++, "bgfx") struct Attachment{
-	Access access; ///Attachment access. See `Access::Enum`.
-	TextureHandle handle; ///Render target texture handle.
-	ushort mip; ///Mip level.
-	ushort layer; ///Cubemap side or depth layer/slice to use.
-	ushort numLayers; ///Number of texture layer/slice(s) in array to use.
-	ubyte resolve; ///Resolve flags. See: `BGFX_RESOLVE_*`
-	extern(D) mixin(joinFnBinds((){
-		string[][] ret;
-		ret ~= makeFnBinds([
-			/**
-			Init attachment.
-			Params:
-				handle = Render target texture handle.
-				access = Access. See `Access::Enum`.
-				layer = Cubemap side or depth layer/slice to use.
-				numLayers = Number of texture layer/slice(s) in array to use.
-				mip = Mip level.
-				resolve = Resolve flags. See: `BGFX_RESOLVE_*`
-			*/
-			[q{void}, q{init}, q{TextureHandle handle, bgfx.fakeenum.Access.Enum access=Access.write, ushort layer=0, ushort numLayers=1, ushort mip=0, ubyte resolve=Resolve.autoGenMIPs}, `C++`],
-		], true);
-		return ret;
-	}(), typeof(this).stringof));
-}
-
-///Transient index buffer.
-extern(C++, "bgfx") struct TransientIndexBuffer{
-	ubyte* data; ///Pointer to data.
-	uint size; ///Data size.
-	uint startIndex; ///First index.
-	IndexBufferHandle handle; ///Index buffer handle.
-	bool isIndex16; ///Index buffer format is 16-bits if true, otherwise it is 32-bit.
-}
-
-/**
-Memory must be obtained by calling `bgfx::alloc`, `bgfx::copy`, or `bgfx::makeRef`.
-@attention It is illegal to create this structure on stack and pass it to any bgfx API.
-*/
-extern(C++, "bgfx") struct Memory{
-	ubyte* data; ///Pointer to data.
-	uint size; ///Data size.
-}
-
-///Transform data.
-extern(C++, "bgfx") struct Transform{
-	float* data; ///Pointer to first 4x4 matrix.
-	ushort num; ///Number of matrices.
 }
 
 mixin(joinFnBinds((){
@@ -3596,7 +3596,7 @@ mixin(joinFnBinds((){
 		
 	]);
 	return ret;
-}(), __MODULE__, "VertexLayout, Resolution, Encoder, Init, Attachment, "));
+}(), __MODULE__, "Resolution, Init, Attachment, VertexLayout, Encoder, "));
 
 static if(!staticBinding):
 import bindbc.loader;
