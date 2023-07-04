@@ -82,7 +82,13 @@ EGL_IMPORT
 
 	void* eglOpen()
 	{
-		void* handle = bx::dlopen("libEGL." BX_DL_EXT);
+#		if BX_PLATFORM_LINUX
+#			define EGL_LIBRARY_NAME "libEGL.so.1"
+#		else
+#			define EGL_LIBRARY_NAME "libEGL." BX_DL_EXT
+#       endif
+
+	    void* handle = bx::dlopen(EGL_LIBRARY_NAME);
 		BGFX_FATAL(NULL != handle, Fatal::UnableToInitialize, "Failed to load libEGL dynamic library.");
 
 #define EGL_IMPORT_FUNC(_proto, _func)         \
