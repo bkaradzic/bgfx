@@ -16,10 +16,12 @@ static import bgfx.fakeenum;
 
 $version
 
-alias ViewId = ushort;
+alias ViewID = ushort;
+deprecated("Please use `ViewID` instead.") alias ViewId = ushort;
+
 enum invalidHandle(T) = T(ushort.max);
 
-alias ReleaseFn = void function(void* _ptr, void* _userData);
+alias ReleaseFn = void function(void* ptr, void* userData);
 
 $types
 pragma(inline,true) nothrow @nogc pure @safe{
@@ -129,10 +131,10 @@ end
 local enumTypes = {}
 local membersWithFns = ""
 
-local capsWords = {"Mip", "Id", "Rw", "Rt", "Pci", "Srgb", "Pt", "Ccw", "2d", "3d", "Msaa"}
+local capsWords = {"Mip", "Id", "Rw", "Vb", "Ib", "Cb", "Rt", "Pci", "Srgb", "Pt", "Ccw", "2d", "3d", "Msaa"}
 local capsRepl = {
 	hidpi = "hiDPI", lineaa = "lineAA", maxanisotropy = "maxAnisotropy",
-	notequal = "notEqual", gequal = "gEqual", lequal = "lEqual",
+	notequal = "notEqual", gequal = "gEqual", Lequal = "LEqual", lequal = "lEqual",
 	decrsat = "decrSat", incrsat = "incrSat", revsub = "revSub",
 	linestrip = "lineStrip", tristrip = "triStrip",
 }
@@ -174,7 +176,12 @@ end
 -- 	return (name:gsub("^%l", string.upper))
 -- end
 
-local usEnSubs = {Color = "Colour", Rasterize = "Rasterise", Initialize = "Initialise"}
+local usEnSubs = {
+	color = "colour", Color = "Colour",
+	rasterize = "rasterise", Rasterize = "Rasterise",
+	initialize = "initialise", Initialize = "Initialise",
+	ccw = "acw", CCW = "ACW",
+}
 local function toIntlEn(name)
 	local change = false
 	for us, intl in pairs(usEnSubs) do
@@ -252,6 +259,7 @@ local function convSomeType(arg, isFnArg)
 			end
 		end
 		type = type:gsub("const%s+([A-Za-z_][A-Za-z0-9_]*)%s*%*", "const(%1)*") --change `const x*` to `const(x)*`
+		type = abbrevsToUpper(type)
 	end
 	
 	return type
@@ -526,7 +534,7 @@ function converter.types(typ)
 		else
 			yield("/**")
 			for _, comment in ipairs(typ.comments) do
-				yield("* " .. comment)
+				yield(comment)
 			end
 			yield("*/")
 		end
@@ -538,9 +546,11 @@ function converter.types(typ)
 		yield("}")
 		--yield(typ.name .. " invalidHandle(){ return " .. typ.name .. "(ushort.max); }")
 	
+	-- For some reason, this has never worked, so I'm commenting it out just in case it does start working suddenly. :P
+	--[[
 	elseif typ.funcptr then
 		local args = {}
-		for _, arg in ipairs(func.args) do
+		for _, arg in ipairs(typ.args) do
 			if arg.fulltype == "..." then
 				table.insert(args, "..." .. def)
 			else
@@ -548,13 +558,12 @@ function converter.types(typ)
 			end
 		end
 		
-		yield(string.format("alias %s = extern(C++) %s function(%s);", func.name, convType(func.ret), table.concat(args, ", ")))
-		
+		yield(string.format("alias %s = extern(C++) %s function(%s);", typ.name, convType(typ.ret), table.concat(args, ", ")))
+	--]]
 	elseif typ.enum then
 		local typeName = abbrevsToUpper(typ.name:gsub("::Enum", ""))
-		local otherName = string.format("bgfx.fakeenum.%s.Enum", typeName)
+		local otherName = string.format("bgfx.fakeenum.%s.Enum", typ.name:gsub("::Enum", ""))
 		
-		yield("")
 		yield("enum " .. typeName .. ": " .. otherName .. "{")
 		table.insert(enumTypes, typeName)
 		
@@ -682,20 +691,20 @@ extern(C++, "bgfx") package final abstract class %s{
 				if #flag.comment == 1 then
 					comments = " ///" .. flag.comment[1]
 				else
-					yield("/**")
+					yield("\t/**")
 					for _, comment in ipairs(flag.comment) do
-						yield(comment)
+						yield("\t" .. comment)
 					end
-					yield("*/")
+					yield("\t*/")
 				end
 			end
 			
 			local name = convName(toCamelCase(flag.name))
 			yield("\t" .. name .. string.rep(" ", maxLen+2 - name:len()) .. "= " .. value .. "," .. comments)
 			
-			local intlName = toIntlEn(flag.name)
+			local intlName = toIntlEn(name)
 			if intlName ~= nil then
-				intlName = convName(toCamelCase(intlName))
+				intlName = intlName
 				yield("\t" .. intlName .. string.rep(" ", maxLen+2 - intlName:len()) .. "= " .. name .. ",")
 			end
 		end
