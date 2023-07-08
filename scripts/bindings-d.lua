@@ -491,11 +491,11 @@ function converter.structs(st, name)
 	yield("extern(C++, \"bgfx\") struct " .. name .. "{")
 	
 	local subN = 0
-	for subName, subStruct in pairs(st.subs) do
+	for _, subStruct in ipairs(st.subs) do
 		subN = subN + 1
 		local co = coroutine.create(converter.structs)
 		while true do
-			local ok, v = coroutine.resume(co, subStruct, subName)
+			local ok, v = coroutine.resume(co, subStruct, subStruct.name)
 			assert(ok, debug.traceback(co, v))
 			if not v then
 				break
@@ -747,7 +747,7 @@ extern(C++, "bgfx") package final abstract class %s{
 			end
 		end
 	elseif typ.struct ~= nil then
-		local st = {comments = {}, fields = {}, fns = {}, subs = {}}
+		local st = {name = typ.name, comments = {}, fields = {}, fns = {}, subs = {}}
 		
 		if typ.comments ~= nil then
 			if #typ.comments == 1 then
@@ -784,13 +784,13 @@ extern(C++, "bgfx") package final abstract class %s{
 			table.insert(st.fns, "[q{void}, q{this}, q{}, `C++`],")
 		end
 		
-		if typ.namespace ~= nil then
+		if typ.namespace ~= nil then --if this is a sub-struct
 			if allStructs[typ.namespace] ~= nil then
-				allStructs[typ.namespace].subs[typ.name] = st
+				table.insert(allStructs[typ.namespace].subs, st)
 			else
-				allStructs[typ.namespace] = {subs = {[typ.name] = st}}
+				allStructs[typ.namespace] = {subs = {st}}
 			end
-		else
+		else --otherwise it's top-level
 			if allStructs[typ.name] ~= nil then
 				st.subs = allStructs[typ.name].subs
 			end

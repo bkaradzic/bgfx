@@ -963,6 +963,11 @@ pragma(inline,true) nothrow @nogc pure @safe{
 
 ///Renderer capabilities.
 extern(C++, "bgfx") struct Caps{
+	///GPU info.
+	extern(C++, "bgfx") struct GPU{
+		ushort vendorID; ///Vendor PCI id. See `BGFX_PCI_ID_*`.
+		ushort deviceID; ///Device id.
+	}
 	///Renderer runtime limits.
 	extern(C++, "bgfx") struct Limits{
 		uint maxDrawCalls; ///Maximum number of draw calls.
@@ -989,11 +994,6 @@ extern(C++, "bgfx") struct Caps{
 		uint minResourceCBSize; ///Minimum resource command buffer size.
 		uint transientVBSize; ///Maximum transient vertex buffer size.
 		uint transientIBSize; ///Maximum transient index buffer size.
-	}
-	///GPU info.
-	extern(C++, "bgfx") struct GPU{
-		ushort vendorID; ///Vendor PCI id. See `BGFX_PCI_ID_*`.
-		ushort deviceID; ///Device id.
 	}
 	
 	RendererType rendererType; ///Renderer backend type. See: `bgfx::RendererType`
