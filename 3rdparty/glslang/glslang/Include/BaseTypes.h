@@ -134,6 +134,8 @@ enum TStorageQualifier {
     EvqFragDepth,
     EvqFragStencil,
 
+    EvqTileImageEXT,
+
     // end of list
     EvqLast
 };
@@ -324,6 +326,8 @@ enum TBuiltInVariable {
     EbvCoreMaxIDARM,
     EbvWarpIDARM,
     EbvWarpMaxIDARM,
+
+    EbvPositionFetch,
 
     EbvLast
 };

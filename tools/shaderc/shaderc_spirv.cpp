@@ -37,14 +37,14 @@ namespace bgfx
 
 	void* TinyStlAllocator::static_allocate(size_t _bytes)
 	{
-		return BX_ALLOC(g_allocator, _bytes);
+		return bx::alloc(g_allocator, _bytes);
 	}
 
 	void TinyStlAllocator::static_deallocate(void* _ptr, size_t /*_bytes*/)
 	{
 		if (NULL != _ptr)
 		{
-			BX_FREE(g_allocator, _ptr);
+			bx::free(g_allocator, _ptr);
 		}
 	}
 } // namespace bgfx

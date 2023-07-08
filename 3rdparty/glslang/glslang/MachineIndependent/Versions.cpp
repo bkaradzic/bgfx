@@ -354,6 +354,8 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_spirv_intrinsics]            = EBhDisable;
     extensionBehavior[E_GL_EXT_mesh_shader]                 = EBhDisable;
     extensionBehavior[E_GL_EXT_opacity_micromap]            = EBhDisable;
+    extensionBehavior[E_GL_EXT_ray_tracing_position_fetch]  = EBhDisable;
+    extensionBehavior[E_GL_EXT_shader_tile_image]           = EBhDisable;
 
     // OVR extensions
     extensionBehavior[E_GL_OVR_multiview]                = EBhDisable;
@@ -522,6 +524,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_ray_query 1\n"
             "#define GL_EXT_ray_flags_primitive_culling 1\n"
             "#define GL_EXT_ray_cull_mask 1\n"
+            "#define GL_EXT_ray_tracing_position_fetch 1\n"
             "#define GL_EXT_spirv_intrinsics 1\n"
             "#define GL_EXT_mesh_shader 1\n"
 
@@ -553,7 +556,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_NV_mesh_shader 1\n"
             "#define GL_NV_cooperative_matrix 1\n"
             "#define GL_NV_integer_cooperative_matrix 1\n"
-            "#define GL_NV_shader_execution_reorder 1\n"
+            "#define GL_NV_shader_invocation_reorder 1\n"
 
             "#define GL_EXT_shader_explicit_arithmetic_types 1\n"
             "#define GL_EXT_shader_explicit_arithmetic_types_int8 1\n"

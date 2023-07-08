@@ -45,6 +45,7 @@ class ConvertToHalfPass : public Pass {
   // Return true if |inst| returns scalar, vector or matrix type with base
   // float and |width|
   bool IsFloat(Instruction* inst, uint32_t width);
+  bool IsStruct(Instruction* inst);
 
   // Return true if |inst| is decorated with RelaxedPrecision
   bool IsDecoratedRelaxed(Instruction* inst);

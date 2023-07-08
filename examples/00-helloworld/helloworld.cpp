@@ -90,9 +90,12 @@ public:
 
 			// Use debug font to print information about this example.
 			bgfx::dbgTextClear();
+
+			const bgfx::Stats* stats = bgfx::getStats();
+
 			bgfx::dbgTextImage(
-				  bx::max<uint16_t>(uint16_t(m_width /2/8 ), 20)-20
-				, bx::max<uint16_t>(uint16_t(m_height/2/16),  6)-6
+				  bx::max<uint16_t>(uint16_t(stats->textWidth/2), 20)-20
+				, bx::max<uint16_t>(uint16_t(stats->textHeight/2),  6)-6
 				, 40
 				, 12
 				, s_logo
@@ -103,7 +106,6 @@ public:
 			bgfx::dbgTextPrintf(80, 1, 0x0f, "\x1b[;0m    \x1b[;1m    \x1b[; 2m    \x1b[; 3m    \x1b[; 4m    \x1b[; 5m    \x1b[; 6m    \x1b[; 7m    \x1b[0m");
 			bgfx::dbgTextPrintf(80, 2, 0x0f, "\x1b[;8m    \x1b[;9m    \x1b[;10m    \x1b[;11m    \x1b[;12m    \x1b[;13m    \x1b[;14m    \x1b[;15m    \x1b[0m");
 
-			const bgfx::Stats* stats = bgfx::getStats();
 			bgfx::dbgTextPrintf(0, 2, 0x0f, "Backbuffer %dW x %dH in pixels, debug text %dW x %dH in characters."
 				, stats->width
 				, stats->height

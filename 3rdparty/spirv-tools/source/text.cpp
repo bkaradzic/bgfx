@@ -402,7 +402,8 @@ spv_result_t spvTextEncodeOperand(const spvtools::AssemblyGrammar& grammar,
     case SPV_OPERAND_TYPE_OPTIONAL_MEMORY_ACCESS:
     case SPV_OPERAND_TYPE_SELECTION_CONTROL:
     case SPV_OPERAND_TYPE_DEBUG_INFO_FLAGS:
-    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_INFO_FLAGS: {
+    case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_INFO_FLAGS:
+    case SPV_OPERAND_TYPE_OPTIONAL_COOPERATIVE_MATRIX_OPERANDS: {
       uint32_t value;
       if (auto error = grammar.parseMaskOperand(type, textValue, &value)) {
         return context->diagnostic(error)
@@ -544,7 +545,8 @@ spv_result_t spvTextEncodeOpcode(const spvtools::AssemblyGrammar& grammar,
     std::string equal_sign;
     error = context->getWord(&equal_sign, &nextPosition);
     if ("=" != equal_sign)
-      return context->diagnostic() << "'=' expected after result id.";
+      return context->diagnostic() << "'=' expected after result id but found '"
+                                   << equal_sign << "'.";
 
     // The <opcode> after the '=' sign.
     context->setPosition(nextPosition);

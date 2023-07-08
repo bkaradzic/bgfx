@@ -1095,11 +1095,11 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		{
 			if (NULL != m_uniforms[_handle.idx])
 			{
-				BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+				bx::free(g_allocator, m_uniforms[_handle.idx]);
 			}
 
 			const uint32_t size = bx::alignUp(g_uniformTypeSize[_type]*_num, 16);
-			void* data = BX_ALLOC(g_allocator, size);
+			void* data = bx::alloc(g_allocator, size);
 			bx::memSet(data, 0, size);
 			m_uniforms[_handle.idx] = data;
 			m_uniformReg.add(_handle, _name);
@@ -1107,7 +1107,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 		void destroyUniform(UniformHandle _handle) override
 		{
-			BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+			bx::free(g_allocator, m_uniforms[_handle.idx]);
 			m_uniforms[_handle.idx] = NULL;
 			m_uniformReg.remove(_handle);
 		}
@@ -1134,7 +1134,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			uint32_t width  = m_screenshotTarget.width();
 			uint32_t height = m_screenshotTarget.height();
 			uint32_t length = width*height*4;
-			uint8_t* data   = (uint8_t*)BX_ALLOC(g_allocator, length);
+			uint8_t* data   = (uint8_t*)bx::alloc(g_allocator, length);
 
 			MTLRegion region = { { 0, 0, 0 }, { width, height, 1 } };
 
@@ -1150,7 +1150,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				, false
 				);
 
-			BX_FREE(g_allocator, data);
+			bx::free(g_allocator, data);
 
 			m_commandBuffer = m_cmd.alloc();
 		}
@@ -1433,7 +1433,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			if (m_resolution.reset&BGFX_RESET_CAPTURE)
 			{
 				m_captureSize = m_resolution.width*m_resolution.height*4;
-				m_capture = BX_REALLOC(g_allocator, m_capture, m_captureSize);
+				m_capture = bx::realloc(g_allocator, m_capture, m_captureSize);
 				g_callback->captureBegin(m_resolution.width, m_resolution.height, m_resolution.width*4, TextureFormat::BGRA8, false);
 			}
 			else
@@ -1525,7 +1525,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			if (NULL != m_capture)
 			{
 				g_callback->captureEnd();
-				BX_FREE(g_allocator, m_capture);
+				bx::free(g_allocator, m_capture);
 				m_capture     = NULL;
 				m_captureSize = 0;
 			}
@@ -2558,7 +2558,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		s_renderMtl = BX_NEW(g_allocator, RendererContextMtl);
 		if (!s_renderMtl->init(_init) )
 		{
-			BX_DELETE(g_allocator, s_renderMtl);
+			bx::deleteObject(g_allocator, s_renderMtl);
 			s_renderMtl = NULL;
 		}
 		return s_renderMtl;
@@ -2567,7 +2567,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 	void rendererDestroy()
 	{
 		s_renderMtl->shutdown();
-		BX_DELETE(g_allocator, s_renderMtl);
+		bx::deleteObject(g_allocator, s_renderMtl);
 		s_renderMtl = NULL;
 	}
 
@@ -2731,7 +2731,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		m_fsh = NULL;
 		if (NULL != m_computePS)
 		{
-			BX_DELETE(g_allocator, m_computePS);
+			bx::deleteObject(g_allocator, m_computePS);
 			m_computePS = NULL;
 		}
 	}
@@ -2763,7 +2763,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		{
 			if (NULL == m_dynamic)
 			{
-				m_dynamic = (uint8_t*)BX_ALLOC(g_allocator, m_size);
+				m_dynamic = (uint8_t*)bx::alloc(g_allocator, m_size);
 			}
 
 			bx::memCopy(m_dynamic + _offset, _data, _size);
@@ -2961,7 +2961,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			uint8_t* temp = NULL;
 			if (convert)
 			{
-				temp = (uint8_t*)BX_ALLOC(g_allocator, ti.width*ti.height*4);
+				temp = (uint8_t*)bx::alloc(g_allocator, ti.width*ti.height*4);
 			}
 
 			for (uint16_t side = 0; side < numSides; ++side)
@@ -3037,7 +3037,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 			if (NULL != temp)
 			{
-				BX_FREE(g_allocator, temp);
+				bx::free(g_allocator, temp);
 			}
 		}
 	}
@@ -3070,7 +3070,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 		if (convert)
 		{
-			temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*_rect.m_height);
+			temp = (uint8_t*)bx::alloc(g_allocator, rectpitch*_rect.m_height);
 			bimg::imageDecodeToBgra8(
 				  g_allocator
 				, temp
@@ -3134,7 +3134,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 		if (NULL != temp)
 		{
-			BX_FREE(g_allocator, temp);
+			bx::free(g_allocator, temp);
 		}
 	}
 
@@ -3551,7 +3551,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 	{
 		if (NULL != m_swapChain)
 		{
-			BX_DELETE(g_allocator, m_swapChain);
+			bx::deleteObject(g_allocator, m_swapChain);
 			m_swapChain = NULL;
 		}
 

@@ -1963,11 +1963,11 @@ namespace bgfx { namespace d3d11
 		{
 			if (NULL != m_uniforms[_handle.idx])
 			{
-				BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+				bx::free(g_allocator, m_uniforms[_handle.idx]);
 			}
 
 			const uint32_t size = bx::alignUp(g_uniformTypeSize[_type]*_num, 16);
-			void* data = BX_ALLOC(g_allocator, size);
+			void* data = bx::alloc(g_allocator, size);
 			bx::memSet(data, 0, size);
 			m_uniforms[_handle.idx] = data;
 			m_uniformReg.add(_handle, _name);
@@ -1975,7 +1975,7 @@ namespace bgfx { namespace d3d11
 
 		void destroyUniform(UniformHandle _handle) override
 		{
-			BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+			bx::free(g_allocator, m_uniforms[_handle.idx]);
 			m_uniforms[_handle.idx] = NULL;
 			m_uniformReg.remove(_handle);
 		}
@@ -3643,7 +3643,7 @@ namespace bgfx { namespace d3d11
 		s_renderD3D11 = BX_NEW(g_allocator, RendererContextD3D11);
 		if (!s_renderD3D11->init(_init) )
 		{
-			BX_DELETE(g_allocator, s_renderD3D11);
+			bx::deleteObject(g_allocator, s_renderD3D11);
 			s_renderD3D11 = NULL;
 		}
 		return s_renderD3D11;
@@ -3652,7 +3652,7 @@ namespace bgfx { namespace d3d11
 	void rendererDestroy()
 	{
 		s_renderD3D11->shutdown();
-		BX_DELETE(g_allocator, s_renderD3D11);
+		bx::deleteObject(g_allocator, s_renderD3D11);
 		s_renderD3D11 = NULL;
 	}
 
@@ -4449,7 +4449,7 @@ namespace bgfx { namespace d3d11
 						if (convert)
 						{
 							uint32_t srcpitch = mip.m_width*bpp/8;
-							temp = (uint8_t*)BX_ALLOC(g_allocator, srcpitch*mip.m_height);
+							temp = (uint8_t*)bx::alloc(g_allocator, srcpitch*mip.m_height);
 							bimg::imageDecodeToBgra8(g_allocator, temp, mip.m_data, mip.m_width, mip.m_height, srcpitch, mip.m_format);
 
 							srd[kk].pSysMem = temp;
@@ -4467,17 +4467,17 @@ namespace bgfx { namespace d3d11
 							switch (m_textureFormat)
 							{
 							case TextureFormat::R5G6B5:
-								temp = (uint8_t*)BX_ALLOC(g_allocator, srd[kk].SysMemPitch*mip.m_height);
+								temp = (uint8_t*)bx::alloc(g_allocator, srd[kk].SysMemPitch*mip.m_height);
 								bimg::imageConvert(temp, 16, bx::packB5G6R5, mip.m_data, bx::unpackR5G6B5, srd[kk].SysMemPitch*mip.m_height);
 								srd[kk].pSysMem = temp;
 								break;
 							case TextureFormat::RGBA4:
-								temp = (uint8_t*)BX_ALLOC(g_allocator, srd[kk].SysMemPitch*mip.m_height);
+								temp = (uint8_t*)bx::alloc(g_allocator, srd[kk].SysMemPitch*mip.m_height);
 								bimg::imageConvert(temp, 16, bx::packBgra4, mip.m_data, bx::unpackRgba4, srd[kk].SysMemPitch*mip.m_height);
 								srd[kk].pSysMem = temp;
 								break;
 							case TextureFormat::RGB5A1:
-								temp = (uint8_t*)BX_ALLOC(g_allocator, srd[kk].SysMemPitch*mip.m_height);
+								temp = (uint8_t*)bx::alloc(g_allocator, srd[kk].SysMemPitch*mip.m_height);
 								bimg::imageConvert(temp, 16, bx::packBgr5a1, mip.m_data, bx::unpackRgb5a1, srd[kk].SysMemPitch*mip.m_height);
 								srd[kk].pSysMem = temp;
 								break;
@@ -4713,7 +4713,7 @@ namespace bgfx { namespace d3d11
 				{
 					for (uint32_t lod = 0, num = ti.numMips; lod < num; ++lod)
 					{
-						BX_FREE(g_allocator, const_cast<void*>(srd[kk].pSysMem) );
+						bx::free(g_allocator, const_cast<void*>(srd[kk].pSysMem) );
 						++kk;
 					}
 				}
@@ -4801,7 +4801,7 @@ namespace bgfx { namespace d3d11
 
 		if (convert)
 		{
-			temp = (uint8_t*)BX_ALLOC(g_allocator, slicepitch);
+			temp = (uint8_t*)bx::alloc(g_allocator, slicepitch);
 			bimg::imageDecodeToBgra8(g_allocator, temp, data, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			data = temp;
 
@@ -4820,7 +4820,7 @@ namespace bgfx { namespace d3d11
 
 		if (NULL != temp)
 		{
-			BX_FREE(g_allocator, temp);
+			bx::free(g_allocator, temp);
 		}
 	}
 

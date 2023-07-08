@@ -28,7 +28,7 @@ void* load(bx::FileReaderI* _reader, bx::AllocatorI* _allocator, const char* _fi
 	if (bx::open(_reader, _filePath) )
 	{
 		uint32_t size = (uint32_t)bx::getSize(_reader);
-		void* data = BX_ALLOC(_allocator, size);
+		void* data = bx::alloc(_allocator, size);
 		bx::read(_reader, data, size, bx::ErrorAssert{});
 		bx::close(_reader);
 		if (NULL != _size)
@@ -57,7 +57,7 @@ void* load(const char* _filePath, uint32_t* _size)
 
 void unload(void* _ptr)
 {
-	BX_FREE(entry::getAllocator(), _ptr);
+	bx::free(entry::getAllocator(), _ptr);
 }
 
 static const bgfx::Memory* loadMem(bx::FileReaderI* _reader, const char* _filePath)
@@ -81,7 +81,7 @@ static void* loadMem(bx::FileReaderI* _reader, bx::AllocatorI* _allocator, const
 	if (bx::open(_reader, _filePath) )
 	{
 		uint32_t size = (uint32_t)bx::getSize(_reader);
-		void* data = BX_ALLOC(_allocator, size);
+		void* data = bx::alloc(_allocator, size);
 		bx::read(_reader, data, size, bx::ErrorAssert{});
 		bx::close(_reader);
 
@@ -416,7 +416,7 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 
 				if (_ramcopy)
 				{
-					group.m_vertices = (uint8_t*)BX_ALLOC(allocator, group.m_numVertices*stride);
+					group.m_vertices = (uint8_t*)bx::alloc(allocator, group.m_numVertices*stride);
 					bx::memCopy(group.m_vertices, mem->data, mem->size);
 				}
 
@@ -441,16 +441,16 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 				uint32_t compressedSize;
 				bx::read(_reader, compressedSize, &err);
 
-				void* compressedVertices = BX_ALLOC(allocator, compressedSize);
+				void* compressedVertices = bx::alloc(allocator, compressedSize);
 				bx::read(_reader, compressedVertices, compressedSize, &err);
 
 				meshopt_decodeVertexBuffer(mem->data, group.m_numVertices, stride, (uint8_t*)compressedVertices, compressedSize);
 
-				BX_FREE(allocator, compressedVertices);
+				bx::free(allocator, compressedVertices);
 
 				if (_ramcopy)
 				{
-					group.m_vertices = (uint8_t*)BX_ALLOC(allocator, group.m_numVertices*stride);
+					group.m_vertices = (uint8_t*)bx::alloc(allocator, group.m_numVertices*stride);
 					bx::memCopy(group.m_vertices, mem->data, mem->size);
 				}
 
@@ -467,7 +467,7 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 
 				if (_ramcopy)
 				{
-					group.m_indices = (uint16_t*)BX_ALLOC(allocator, group.m_numIndices*2);
+					group.m_indices = (uint16_t*)bx::alloc(allocator, group.m_numIndices*2);
 					bx::memCopy(group.m_indices, mem->data, mem->size);
 				}
 
@@ -484,17 +484,17 @@ void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)
 				uint32_t compressedSize;
 				bx::read(_reader, compressedSize, &err);
 
-				void* compressedIndices = BX_ALLOC(allocator, compressedSize);
+				void* compressedIndices = bx::alloc(allocator, compressedSize);
 
 				bx::read(_reader, compressedIndices, compressedSize, &err);
 
 				meshopt_decodeIndexBuffer(mem->data, group.m_numIndices, 2, (uint8_t*)compressedIndices, compressedSize);
 
-				BX_FREE(allocator, compressedIndices);
+				bx::free(allocator, compressedIndices);
 
 				if (_ramcopy)
 				{
-					group.m_indices = (uint16_t*)BX_ALLOC(allocator, group.m_numIndices*2);
+					group.m_indices = (uint16_t*)bx::alloc(allocator, group.m_numIndices*2);
 					bx::memCopy(group.m_indices, mem->data, mem->size);
 				}
 
@@ -562,12 +562,12 @@ void Mesh::unload()
 
 		if (NULL != group.m_vertices)
 		{
-			BX_FREE(allocator, group.m_vertices);
+			bx::free(allocator, group.m_vertices);
 		}
 
 		if (NULL != group.m_indices)
 		{
-			BX_FREE(allocator, group.m_indices);
+			bx::free(allocator, group.m_indices);
 		}
 	}
 	m_groups.clear();
@@ -683,13 +683,13 @@ void meshUnload(Mesh* _mesh)
 
 MeshState* meshStateCreate()
 {
-	MeshState* state = (MeshState*)BX_ALLOC(entry::getAllocator(), sizeof(MeshState) );
+	MeshState* state = (MeshState*)bx::alloc(entry::getAllocator(), sizeof(MeshState) );
 	return state;
 }
 
 void meshStateDestroy(MeshState* _meshState)
 {
-	BX_FREE(entry::getAllocator(), _meshState);
+	bx::free(entry::getAllocator(), _meshState);
 }
 
 void meshSubmit(const Mesh* _mesh, bgfx::ViewId _id, bgfx::ProgramHandle _program, const float* _mtx, uint64_t _state)

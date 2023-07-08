@@ -2093,6 +2093,7 @@ public static partial class bgfx
 		public uint reset;
 		public byte numBackBuffers;
 		public byte maxFrameLatency;
+		public byte debugTextScale;
 	}
 	
 	public unsafe struct Init
@@ -3826,7 +3827,7 @@ public static partial class bgfx
 	///
 	/// <param name="_handle">Vertex buffer.</param>
 	/// <param name="_startVertex">First instance data.</param>
-	/// <param name="_num">Number of data instances. Set instance data buffer for draw primitive.</param>
+	/// <param name="_num">Number of data instances.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_instance_data_from_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void encoder_set_instance_data_from_vertex_buffer(Encoder* _this, VertexBufferHandle _handle, uint _startVertex, uint _num);
@@ -4404,7 +4405,7 @@ public static partial class bgfx
 	///
 	/// <param name="_handle">Vertex buffer.</param>
 	/// <param name="_startVertex">First instance data.</param>
-	/// <param name="_num">Number of data instances. Set instance data buffer for draw primitive.</param>
+	/// <param name="_num">Number of data instances.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_set_instance_data_from_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void set_instance_data_from_vertex_buffer(VertexBufferHandle _handle, uint _startVertex, uint _num);

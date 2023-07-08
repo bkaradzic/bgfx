@@ -321,7 +321,12 @@ public:
         inputPrimitive(ElgNone), outputPrimitive(ElgNone),
         pixelCenterInteger(false), originUpperLeft(false),texCoordBuiltinRedeclared(false),
         vertexSpacing(EvsNone), vertexOrder(EvoNone), interlockOrdering(EioNone), pointMode(false), earlyFragmentTests(false),
-        postDepthCoverage(false), earlyAndLateFragmentTestsAMD(false), depthLayout(EldNone), stencilLayout(ElsNone),
+        postDepthCoverage(false), earlyAndLateFragmentTestsAMD(false),
+        nonCoherentColorAttachmentReadEXT(false),
+        nonCoherentDepthAttachmentReadEXT(false),
+        nonCoherentStencilAttachmentReadEXT(false),
+        depthLayout(EldNone),
+        stencilLayout(ElsNone),
         hlslFunctionality1(false),
         blendEquations(0), xfbMode(false), multiStream(false),
         layoutOverrideCoverage(false),
@@ -638,6 +643,9 @@ public:
     bool getXfbMode() const { return false; }
     bool isMultiStream() const { return false; }
     TLayoutGeometry getOutputPrimitive() const { return ElgNone; }
+    bool getNonCoherentColorAttachmentReadEXT() const { return false; }
+    bool getNonCoherentDepthAttachmentReadEXT() const { return false; }
+    bool getNonCoherentStencilAttachmentReadEXT() const { return false; }
     bool getPostDepthCoverage() const { return false; }
     bool getEarlyFragmentTests() const { return false; }
     TLayoutDepth getDepth() const { return EldNone; }
@@ -894,6 +902,12 @@ public:
         return true;
     }
     TLayoutGeometry getOutputPrimitive() const { return outputPrimitive; }
+    void setNonCoherentColorAttachmentReadEXT() { nonCoherentColorAttachmentReadEXT = true; }
+    bool getNonCoherentColorAttachmentReadEXT() const { return nonCoherentColorAttachmentReadEXT; }
+    void setNonCoherentDepthAttachmentReadEXT() { nonCoherentDepthAttachmentReadEXT = true; }
+    bool getNonCoherentDepthAttachmentReadEXT() const { return nonCoherentDepthAttachmentReadEXT; }
+    void setNonCoherentStencilAttachmentReadEXT() { nonCoherentStencilAttachmentReadEXT = true; }
+    bool getNonCoherentStencilAttachmentReadEXT() const { return nonCoherentStencilAttachmentReadEXT; }
     void setPostDepthCoverage() { postDepthCoverage = true; }
     bool getPostDepthCoverage() const { return postDepthCoverage; }
     void setEarlyFragmentTests() { earlyFragmentTests = true; }
@@ -1215,6 +1229,9 @@ protected:
     bool earlyFragmentTests;
     bool postDepthCoverage;
     bool earlyAndLateFragmentTestsAMD;
+    bool nonCoherentColorAttachmentReadEXT;
+    bool nonCoherentDepthAttachmentReadEXT;
+    bool nonCoherentStencilAttachmentReadEXT;
     TLayoutDepth depthLayout;
     TLayoutStencil stencilLayout;
     bool hlslFunctionality1;

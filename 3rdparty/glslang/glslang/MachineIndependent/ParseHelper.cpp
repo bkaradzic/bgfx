@@ -2467,6 +2467,7 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
     case EOpRayQueryGetIntersectionObjectRayOrigin:
     case EOpRayQueryGetIntersectionObjectToWorld:
     case EOpRayQueryGetIntersectionWorldToObject:
+    case EOpRayQueryGetIntersectionTriangleVertexPositionsEXT:
         if (!(*argp)[1]->getAsConstantUnion())
             error(loc, "argument must be compile-time constant", "committed", "");
         break;
@@ -3811,7 +3812,10 @@ void TParseContext::samplerCheck(const TSourceLoc& loc, const TType& type, const
             // non-uniform sampler
             // not yet:  okay if it has an initializer
             // if (! initializer)
-            error(loc, "sampler/image types can only be used in uniform variables or function parameters:", type.getBasicTypeString().c_str(), identifier.c_str());
+            if (type.getSampler().isAttachmentEXT() && type.getQualifier().storage != EvqTileImageEXT)
+                 error(loc, "can only be used in tileImageEXT variables or function parameters:", type.getBasicTypeString().c_str(), identifier.c_str());
+             else if (type.getQualifier().storage != EvqTileImageEXT)
+                 error(loc, "sampler/image types can only be used in uniform variables or function parameters:", type.getBasicTypeString().c_str(), identifier.c_str());
         }
     }
 }
@@ -4013,7 +4017,7 @@ void TParseContext::globalQualifierTypeCheck(const TSourceLoc& loc, const TQuali
         switch (language) {
         case EShLangVertex:
             if (publicType.basicType == EbtStruct) {
-                error(loc, "cannot be a structure or array", GetStorageQualifierString(qualifier.storage), "");
+                error(loc, "cannot be a structure", GetStorageQualifierString(qualifier.storage), "");
                 return;
             }
             if (publicType.arraySizes) {
@@ -4228,7 +4232,7 @@ void TParseContext::mergeQualifiers(const TSourceLoc& loc, TQualifier& dst, cons
                 if (dstSpirvDecorate.decorates.find(decorateString.first) != dstSpirvDecorate.decorates.end())
                     error(loc, "too many SPIR-V decorate qualifiers", "spirv_decorate_string", "(decoration=%u)", decorateString.first);
                 else
-                    dstSpirvDecorate.decorates.insert(decorateString);
+                    dstSpirvDecorate.decorateStrings.insert(decorateString);
             }
         } else {
             dst.spirvDecorate = src.spirvDecorate;
@@ -5172,6 +5176,7 @@ void TParseContext::paramCheckFixStorage(const TSourceLoc& loc, const TStorageQu
     case EvqIn:
     case EvqOut:
     case EvqInOut:
+    case EvqTileImageEXT:
         type.getQualifier().storage = qualifier;
         break;
     case EvqGlobal:
@@ -5777,6 +5782,22 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
                 publicType.shaderQualifiers.earlyFragmentTests = true;
             }
             publicType.shaderQualifiers.postDepthCoverage = true;
+            return;
+        }
+        /* id is transformed into lower case in the beginning of this function. */
+        if (id == "non_coherent_color_attachment_readext") {
+            requireExtensions(loc, 1, &E_GL_EXT_shader_tile_image, "non_coherent_color_attachment_readEXT");
+            publicType.shaderQualifiers.nonCoherentColorAttachmentReadEXT = true;
+            return;
+        }
+        if (id == "non_coherent_depth_attachment_readext") {
+            requireExtensions(loc, 1, &E_GL_EXT_shader_tile_image, "non_coherent_depth_attachment_readEXT");
+            publicType.shaderQualifiers.nonCoherentDepthAttachmentReadEXT = true;
+            return;
+        }
+        if (id == "non_coherent_stencil_attachment_readext") {
+            requireExtensions(loc, 1, &E_GL_EXT_shader_tile_image, "non_coherent_stencil_attachment_readEXT");
+            publicType.shaderQualifiers.nonCoherentStencilAttachmentReadEXT = true;
             return;
         }
         for (TLayoutDepth depth = (TLayoutDepth)(EldNone + 1); depth < EldCount; depth = (TLayoutDepth)(depth+1)) {
@@ -6473,6 +6494,8 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
         case EvqBuffer:
             if (type.getBasicType() == EbtBlock)
                 error(loc, "cannot apply to uniform or buffer block", "location", "");
+            else if (type.getBasicType() == EbtSampler && type.getSampler().isAttachmentEXT())
+                error(loc, "only applies to", "location", "%s with storage tileImageEXT", type.getBasicTypeString().c_str());
             break;
         case EvqtaskPayloadSharedEXT:
             error(loc, "cannot apply to taskPayloadSharedEXT", "location", "");
@@ -6486,6 +6509,8 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
         case EvqHitObjectAttrNV:
             break;
 #endif
+        case EvqTileImageEXT:
+            break;
         default:
             error(loc, "can only apply to uniform, buffer, in, or out storage qualifiers", "location", "");
             break;
@@ -6495,10 +6520,10 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
         int repeated = intermediate.addUsedLocation(qualifier, type, typeCollision);
         if (repeated >= 0 && ! typeCollision)
             error(loc, "overlapping use of location", "location", "%d", repeated);
-        // "fragment-shader outputs ... if two variables are placed within the same
+        // "fragment-shader outputs/tileImageEXT ... if two variables are placed within the same
         // location, they must have the same underlying type (floating-point or integer)"
-        if (typeCollision && language == EShLangFragment && qualifier.isPipeOutput())
-            error(loc, "fragment outputs sharing the same location must be the same basic type", "location", "%d", repeated);
+        if (typeCollision && language == EShLangFragment && (qualifier.isPipeOutput() || qualifier.storage == EvqTileImageEXT))
+            error(loc, "fragment outputs or tileImageEXTs sharing the same location", "location", "%d must be the same basic type", repeated);
     }
 
 #ifndef GLSLANG_WEB
@@ -6582,7 +6607,7 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
                        !qualifier.hasAttachment() &&
                        !qualifier.hasBufferReference())
                     error(loc, "uniform/buffer blocks require layout(binding=X)", "binding", "");
-                else if (spvVersion.vulkan > 0 && type.getBasicType() == EbtSampler)
+                else if (spvVersion.vulkan > 0 && type.getBasicType() == EbtSampler && !type.getSampler().isAttachmentEXT())
                     error(loc, "sampler/texture/image requires layout(binding=X)", "binding", "");
             }
         }
@@ -6644,6 +6669,8 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
 
     // input attachment
     if (type.isSubpass()) {
+        if (extensionTurnedOn(E_GL_EXT_shader_tile_image))
+	    error(loc, "can not be used with GL_EXT_shader_tile_image enabled", type.getSampler().getString().c_str(), "");
         if (! qualifier.hasAttachment())
             error(loc, "requires an input_attachment_index layout qualifier", "subpass", "");
     } else {
@@ -6811,6 +6838,14 @@ void TParseContext::layoutQualifierCheck(const TSourceLoc& loc, const TQualifier
             error(loc, "cannot be used with shaderRecordNV", "set", "");
 
     }
+
+    if (qualifier.storage == EvqTileImageEXT) {
+        if (qualifier.hasSet())
+            error(loc, "cannot be used with tileImageEXT", "set", "");
+        if (!qualifier.hasLocation())
+            error(loc, "can only be used with an explicit location", "tileImageEXT", "");
+    }
+
     if (qualifier.storage == EvqHitAttr && qualifier.hasLayout()) {
         error(loc, "cannot apply layout qualifiers to hitAttributeNV variable", "hitAttributeNV", "");
     }
@@ -6850,6 +6885,12 @@ void TParseContext::checkNoShaderLayouts(const TSourceLoc& loc, const TShaderQua
         error(loc, message, "early_fragment_tests", "");
     if (shaderQualifiers.postDepthCoverage)
         error(loc, message, "post_depth_coverage", "");
+    if (shaderQualifiers.nonCoherentColorAttachmentReadEXT)
+        error(loc, message, "non_coherent_color_attachment_readEXT", "");
+    if (shaderQualifiers.nonCoherentDepthAttachmentReadEXT)
+        error(loc, message, "non_coherent_depth_attachment_readEXT", "");
+    if (shaderQualifiers.nonCoherentStencilAttachmentReadEXT)
+        error(loc, message, "non_coherent_stencil_attachment_readEXT", "");
     if (shaderQualifiers.primitives != TQualifier::layoutNotSet) {
         if (language == EShLangMesh)
             error(loc, message, "max_primitives", "");
@@ -9029,7 +9070,8 @@ void TParseContext::fixBlockUniformOffsets(TQualifier& qualifier, TTypeList& typ
             // "The specified offset must be a multiple
             // of the base alignment of the type of the block member it qualifies, or a compile-time error results."
             if (! IsMultipleOfPow2(memberQualifier.layoutOffset, memberAlignment))
-                error(memberLoc, "must be a multiple of the member's alignment", "offset", "");
+                error(memberLoc, "must be a multiple of the member's alignment", "offset",
+                    "(layout offset = %d | member alignment = %d)", memberQualifier.layoutOffset, memberAlignment);
 
             // GLSL: "It is a compile-time error to specify an offset that is smaller than the offset of the previous
             // member in the block or that lies within the previous member of the block"
@@ -9457,6 +9499,24 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
             intermediate.setPostDepthCoverage();
         else
             error(loc, "can only apply to 'in'", "post_coverage_coverage", "");
+    }
+    if (publicType.shaderQualifiers.nonCoherentColorAttachmentReadEXT) {
+        if (publicType.qualifier.storage == EvqVaryingIn)
+            intermediate.setNonCoherentColorAttachmentReadEXT();
+        else
+            error(loc, "can only apply to 'in'", "non_coherent_color_attachment_readEXT", "");
+    }
+    if (publicType.shaderQualifiers.nonCoherentDepthAttachmentReadEXT) {
+        if (publicType.qualifier.storage == EvqVaryingIn)
+            intermediate.setNonCoherentDepthAttachmentReadEXT();
+        else
+            error(loc, "can only apply to 'in'", "non_coherent_depth_attachment_readEXT", "");
+    }
+    if (publicType.shaderQualifiers.nonCoherentStencilAttachmentReadEXT) {
+        if (publicType.qualifier.storage == EvqVaryingIn)
+            intermediate.setNonCoherentStencilAttachmentReadEXT();
+        else
+            error(loc, "can only apply to 'in'", "non_coherent_stencil_attachment_readEXT", "");
     }
     if (publicType.shaderQualifiers.hasBlendEquation()) {
         if (publicType.qualifier.storage != EvqVaryingOut)

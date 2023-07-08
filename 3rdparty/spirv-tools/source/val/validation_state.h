@@ -610,6 +610,11 @@ class ValidationState_t {
   bool IsPointerType(uint32_t id) const;
   bool IsAccelerationStructureType(uint32_t id) const;
   bool IsCooperativeMatrixType(uint32_t id) const;
+  bool IsCooperativeMatrixNVType(uint32_t id) const;
+  bool IsCooperativeMatrixKHRType(uint32_t id) const;
+  bool IsCooperativeMatrixAType(uint32_t id) const;
+  bool IsCooperativeMatrixBType(uint32_t id) const;
+  bool IsCooperativeMatrixAccType(uint32_t id) const;
   bool IsFloatCooperativeMatrixType(uint32_t id) const;
   bool IsIntCooperativeMatrixType(uint32_t id) const;
   bool IsUnsignedIntCooperativeMatrixType(uint32_t id) const;

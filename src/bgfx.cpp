@@ -54,14 +54,14 @@ namespace bgfx
 #if BGFX_CONFIG_USE_TINYSTL
 	void* TinyStlAllocator::static_allocate(size_t _bytes)
 	{
-		return BX_ALLOC(g_allocator, _bytes);
+		return bx::alloc(g_allocator, _bytes);
 	}
 
 	void TinyStlAllocator::static_deallocate(void* _ptr, size_t /*_bytes*/)
 	{
 		if (NULL != _ptr)
 		{
-			BX_FREE(g_allocator, _ptr);
+			bx::free(g_allocator, _ptr);
 		}
 	}
 #endif // BGFX_CONFIG_USE_TINYSTL
@@ -199,7 +199,7 @@ namespace bgfx
 					}
 					else
 					{
-						bx::alignedFree(this, _ptr, _align, _file, _line);
+						bx::alignedFree(this, _ptr, _align, bx::Location(_file, _line) );
 					}
 				}
 
@@ -220,7 +220,7 @@ namespace bgfx
 					return ::malloc(_size);
 				}
 
-				return bx::alignedAlloc(this, _size, _align, _file, _line);
+				return bx::alignedAlloc(this, _size, _align, bx::Location(_file, _line) );
 			}
 
 			if (kNaturalAlignment >= _align)
@@ -237,7 +237,7 @@ namespace bgfx
 				return ::realloc(_ptr, _size);
 			}
 
-			return bx::alignedRealloc(this, _ptr, _size, _align, _file, _line);
+			return bx::alignedRealloc(this, _ptr, _size, _align, bx::Location(_file, _line) );
 		}
 
 		void checkLeaks();
@@ -669,7 +669,7 @@ namespace bgfx
 	static const uint32_t numBatchVertices = numCharsPerBatch*4;
 	static const uint32_t numBatchIndices  = numCharsPerBatch*6;
 
-	void TextVideoMemBlitter::init()
+	void TextVideoMemBlitter::init(uint8_t scale)
 	{
 		BGFX_CHECK_API_THREAD();
 		m_layout
@@ -709,6 +709,7 @@ namespace bgfx
 
 		m_vb = s_ctx->createTransientVertexBuffer(numBatchVertices*m_layout.m_stride, &m_layout);
 		m_ib = s_ctx->createTransientIndexBuffer(numBatchIndices*2);
+		m_scale = bx::max<uint8_t>(scale, 1);
 	}
 
 	void TextVideoMemBlitter::shutdown()
@@ -789,7 +790,8 @@ namespace bgfx
 		const float texelHeightHalf = RendererType::Direct3D9 == g_caps.rendererType ? texelHeight*0.5f : 0.0f;
 		const float utop       = (_mem.m_small ? 0.0f :  8.0f)*texelHeight + texelHeightHalf;
 		const float ubottom    = (_mem.m_small ? 8.0f : 24.0f)*texelHeight + texelHeightHalf;
-		const float fontHeight = (_mem.m_small ? 8.0f : 16.0f);
+		const float fontHeight = (_mem.m_small ? 8.0f : 16.0f)*_blitter.m_scale;
+		const float fontWidth  = 8.0f * _blitter.m_scale;
 
 		_renderCtx->blitSetup(_blitter);
 
@@ -828,10 +830,10 @@ namespace bgfx
 
 						Vertex vert[4] =
 						{
-							{ (xx  )*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, utop },
-							{ (xx+1)*8.0f, (yy  )*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth - texelWidthHalf, utop },
-							{ (xx+1)*8.0f, (yy+1)*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth - texelWidthHalf, ubottom },
-							{ (xx  )*8.0f, (yy+1)*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, ubottom },
+							{ (xx  )*fontWidth, (yy  )*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, utop },
+							{ (xx+1)*fontWidth, (yy  )*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth - texelWidthHalf, utop },
+							{ (xx+1)*fontWidth, (yy+1)*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth - texelWidthHalf, ubottom },
+							{ (xx  )*fontWidth, (yy+1)*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth - texelWidthHalf, ubottom },
 						};
 
 						bx::memCopy(vertex, vert, sizeof(vert) );
@@ -1888,25 +1890,36 @@ namespace bgfx
 
 	bool Context::init(const Init& _init)
 	{
-		BX_ASSERT(!m_rendererInitialized, "Already initialized?");
+		if (m_rendererInitialized)
+		{
+			BX_TRACE("Already initialized!");
+			return false;
+		}
+
+		m_headless = true
+			&&  RendererType::Noop != _init.type
+			&&  NULL == _init.platformData.ndt
+			&&  NULL == _init.platformData.nwh
+			&&  NULL == _init.platformData.context
+			&&  NULL == _init.platformData.backBuffer
+			&&  NULL == _init.platformData.backBufferDS
+			;
+		BX_WARN(!m_headless, "bgfx platform data like window handle or backbuffer is not set, creating headless device.");
+
+		if (m_headless
+		&&  0 != _init.resolution.width
+		&&  0 != _init.resolution.height)
+		{
+			BX_TRACE("Initializing headless mode, resolution of non-existing backbuffer can't be larger than 0x0!");
+			return false;
+		}
 
 		m_init = _init;
 		m_init.resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
 		m_init.resolution.numBackBuffers  = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
-		m_init.resolution.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, BGFX_CONFIG_MAX_FRAME_LATENCY);
+		m_init.resolution.maxFrameLatency =   bx::min<uint8_t>(_init.resolution.maxFrameLatency,   BGFX_CONFIG_MAX_FRAME_LATENCY);
+		m_init.resolution.debugTextScale  = bx::clamp<uint8_t>(_init.resolution.debugTextScale, 1, BGFX_CONFIG_DEBUG_TEXT_MAX_SCALE);
 		dump(m_init.resolution);
-
-		if (true
-		&&  RendererType::Noop != m_init.type
-		&&  NULL == m_init.platformData.ndt
-		&&  NULL == m_init.platformData.nwh
-		&&  NULL == m_init.platformData.context
-		&&  NULL == m_init.platformData.backBuffer
-		&&  NULL == m_init.platformData.backBufferDS
-		   )
-		{
-			BX_TRACE("bgfx platform data like window handle or backbuffer is not set, creating headless device.");
-		}
 
 		bx::memCopy(&g_platformData, &m_init.platformData, sizeof(PlatformData) );
 
@@ -1971,8 +1984,8 @@ namespace bgfx
 		frameNoRenderWait();
 
 		m_encoderHandle = bx::createHandleAlloc(g_allocator, _init.limits.maxEncoders);
-		m_encoder       = (EncoderImpl*)BX_ALIGNED_ALLOC(g_allocator, sizeof(EncoderImpl)*_init.limits.maxEncoders, BX_ALIGNOF(EncoderImpl) );
-		m_encoderStats  = (EncoderStats*)BX_ALLOC(g_allocator, sizeof(EncoderStats)*_init.limits.maxEncoders);
+		m_encoder       = (EncoderImpl*)bx::alignedAlloc(g_allocator, sizeof(EncoderImpl)*_init.limits.maxEncoders, BX_ALIGNOF(EncoderImpl) );
+		m_encoderStats  = (EncoderStats*)bx::alloc(g_allocator, sizeof(EncoderStats)*_init.limits.maxEncoders);
 		for (uint32_t ii = 0, num = _init.limits.maxEncoders; ii < num; ++ii)
 		{
 			BX_PLACEMENT_NEW(&m_encoder[ii], EncoderImpl);
@@ -2030,7 +2043,7 @@ namespace bgfx
 
 		dumpCaps();
 
-		m_textVideoMemBlitter.init();
+		m_textVideoMemBlitter.init(m_init.resolution.debugTextScale);
 		m_clearQuad.init();
 
 		m_submit->m_transientVb = createTransientVertexBuffer(_init.limits.transientVbSize);
@@ -2082,8 +2095,8 @@ namespace bgfx
 			m_encoder[ii].~EncoderImpl();
 		}
 
-		BX_ALIGNED_FREE(g_allocator, m_encoder, BX_ALIGNOF(EncoderImpl) );
-		BX_FREE(g_allocator, m_encoderStats);
+		bx::alignedFree(g_allocator, m_encoder, BX_ALIGNOF(EncoderImpl) );
+		bx::free(g_allocator, m_encoderStats);
 
 		m_dynVertexBufferAllocator.compact();
 		m_dynIndexBufferAllocator.compact();
@@ -3434,6 +3447,7 @@ namespace bgfx
 		, reset(BGFX_RESET_NONE)
 		, numBackBuffers(2)
 		, maxFrameLatency(0)
+		, debugTextScale(0)
 	{
 	}
 
@@ -3564,21 +3578,21 @@ namespace bgfx
 		switch (errorState)
 		{
 		case ErrorState::ContextAllocated:
-			BX_ALIGNED_DELETE(g_allocator, s_ctx, Context::kAlignment);
+			bx::deleteObject(g_allocator, s_ctx, Context::kAlignment);
 			s_ctx = NULL;
 			BX_FALLTHROUGH;
 
 		case ErrorState::Default:
 			if (NULL != s_callbackStub)
 			{
-				BX_DELETE(g_allocator, s_callbackStub);
+				bx::deleteObject(g_allocator, s_callbackStub);
 				s_callbackStub = NULL;
 			}
 
 			if (NULL != s_allocatorStub)
 			{
 				bx::DefaultAllocator allocator;
-				BX_DELETE(&allocator, s_allocatorStub);
+				bx::deleteObject(&allocator, s_allocatorStub);
 				s_allocatorStub = NULL;
 			}
 
@@ -3600,7 +3614,7 @@ namespace bgfx
 		ctx->shutdown();
 		BX_ASSERT(NULL == s_ctx, "bgfx is should be uninitialized here.");
 
-		BX_ALIGNED_DELETE(g_allocator, ctx, Context::kAlignment);
+		bx::deleteObject(g_allocator, ctx, Context::kAlignment);
 
 		BX_TRACE("Shutdown complete.");
 
@@ -3611,14 +3625,14 @@ namespace bgfx
 
 		if (NULL != s_callbackStub)
 		{
-			BX_DELETE(g_allocator, s_callbackStub);
+			bx::deleteObject(g_allocator, s_callbackStub);
 			s_callbackStub = NULL;
 		}
 
 		if (NULL != s_allocatorStub)
 		{
 			bx::DefaultAllocator allocator;
-			BX_DELETE(&allocator, s_allocatorStub);
+			bx::deleteObject(&allocator, s_allocatorStub);
 			s_allocatorStub = NULL;
 		}
 
@@ -4067,7 +4081,7 @@ namespace bgfx
 	const Memory* alloc(uint32_t _size)
 	{
 		BX_ASSERT(0 < _size, "Invalid memory operation. _size is 0.");
-		Memory* mem = (Memory*)BX_ALLOC(g_allocator, sizeof(Memory) + _size);
+		Memory* mem = (Memory*)bx::alloc(g_allocator, sizeof(Memory) + _size);
 		mem->size = _size;
 		mem->data = (uint8_t*)mem + sizeof(Memory);
 		return mem;
@@ -4090,7 +4104,7 @@ namespace bgfx
 
 	const Memory* makeRef(const void* _data, uint32_t _size, ReleaseFn _releaseFn, void* _userData)
 	{
-		MemoryRef* memRef = (MemoryRef*)BX_ALLOC(g_allocator, sizeof(MemoryRef) );
+		MemoryRef* memRef = (MemoryRef*)bx::alloc(g_allocator, sizeof(MemoryRef) );
 		memRef->mem.size  = _size;
 		memRef->mem.data  = (uint8_t*)_data;
 		memRef->releaseFn = _releaseFn;
@@ -4115,7 +4129,7 @@ namespace bgfx
 				memRef->releaseFn(mem->data, memRef->userData);
 			}
 		}
-		BX_FREE(g_allocator, mem);
+		bx::free(g_allocator, mem);
 	}
 
 	void setDebug(uint32_t _debug)

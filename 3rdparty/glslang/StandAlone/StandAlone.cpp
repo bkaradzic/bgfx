@@ -258,6 +258,17 @@ public:
         text.append("\n");
     }
 
+    void addText(std::string preambleText)
+    {
+        fixLine(preambleText);
+
+        Processes.push_back("preamble-text");
+        Processes.back().append(preambleText);
+
+        text.append(preambleText);
+        text.append("\n");
+    }
+
 protected:
     void fixLine(std::string& line)
     {
@@ -714,7 +725,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         HlslDxPositionW = true;
                     } else if (lowerword == "enhanced-msgs") {
                         EnhancedMsgs = true;
-                    } else if (lowerword == "auto-sampled-textures") { 
+                    } else if (lowerword == "auto-sampled-textures") {
                         autoSampledTextures = true;
                     } else if (lowerword == "invert-y" ||  // synonyms
                                lowerword == "iy") {
@@ -727,6 +738,13 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                     } else if (lowerword == "no-storage-format" || // synonyms
                                lowerword == "nsf") {
                         Options |= EOptionNoStorageFormat;
+                    } else if (lowerword == "preamble-text" ||
+                               lowerword == "p") {
+                        if (argc > 1)
+                            UserPreamble.addText(argv[1]);
+                        else
+                            Error("expects <text>", argv[0]);
+                        bumpArg();
                     } else if (lowerword == "relaxed-errors") {
                         Options |= EOptionRelaxedErrors;
                     } else if (lowerword == "reflect-strict-array-suffix") {
@@ -925,6 +943,9 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
 #endif
                 else
                     Error("unknown -O option");
+                break;
+            case 'P':
+                UserPreamble.addText(getStringOperand("-P<text>"));
                 break;
             case 'R':
                 VulkanRulesRelaxed = true;
@@ -1505,9 +1526,11 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                     if (! (Options & EOptionMemoryLeakMode)) {
                         printf("%s", logger.getAllMessages().c_str());
                         if (Options & EOptionOutputHexadecimal) {
-                            glslang::OutputSpvHex(spirv, GetBinaryName((EShLanguage)stage), variableName);
+                            if (!glslang::OutputSpvHex(spirv, GetBinaryName((EShLanguage)stage), variableName))
+                              exit(EFailUsage);
                         } else {
-                            glslang::OutputSpvBin(spirv, GetBinaryName((EShLanguage)stage));
+                            if (!glslang::OutputSpvBin(spirv, GetBinaryName((EShLanguage)stage)))
+                              exit(EFailUsage);
                         }
 
                         outputFiles.push_back(GetBinaryName((EShLanguage)stage));
@@ -1832,7 +1855,7 @@ void CompileFile(const char* fileName, ShHandle compiler)
     SetMessageOptions(messages);
 
     if (UserPreamble.isSet())
-        Error("-D and -U options require -l (linking)\n");
+        Error("-D, -U and -P options require -l (linking)\n");
 
     for (int i = 0; i < ((Options & EOptionMemoryLeakMode) ? 100 : 1); ++i) {
         for (int j = 0; j < ((Options & EOptionMemoryLeakMode) ? 100 : 1); ++j) {
@@ -1902,6 +1925,9 @@ void usage()
            "              is searched first, followed by left-to-right order of -I\n"
            "  -Od         disables optimization; may cause illegal SPIR-V for HLSL\n"
            "  -Os         optimizes SPIR-V to minimize size\n"
+           "  -P<text> | --preamble-text <text> | --P <text>\n"
+           "              inject custom preamble text, which is treated as if it\n"
+           "              appeared immediately after the version declaration (if any).\n"
            "  -R          use relaxed verification rules for generating Vulkan SPIR-V,\n"
            "              allowing the use of default uniforms, atomic_uints, and\n"
            "              gl_VertexID and gl_InstanceID keywords.\n"
@@ -1949,7 +1975,7 @@ void usage()
            "                                    without explicit bindings\n"
            "  --auto-map-locations | --aml      automatically locate input/output lacking\n"
            "                                    'location' (fragile, not cross stage)\n"
-           "  --auto-sampled-textures           Removes sampler variables and converts\n" 
+           "  --auto-sampled-textures           Removes sampler variables and converts\n"
            "                                    existing textures to sampled textures\n"
            "  --client {vulkan<ver>|opengl<ver>} see -V and -G\n"
            "  --depfile <file>                  writes depfile for build systems\n"

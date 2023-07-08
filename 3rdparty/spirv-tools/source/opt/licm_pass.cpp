@@ -84,7 +84,7 @@ Pass::Status LICMPass::AnalyseAndHoistFromBB(
   bool modified = false;
   std::function<bool(Instruction*)> hoist_inst =
       [this, &loop, &modified](Instruction* inst) {
-        if (loop->ShouldHoistInstruction(this->context(), inst)) {
+        if (loop->ShouldHoistInstruction(*inst)) {
           if (!HoistInstruction(loop, inst)) {
             return false;
           }

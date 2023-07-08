@@ -156,7 +156,8 @@ bool AggressiveDCEPass::AllExtensionsSupported() const {
            "Expecting an import of an extension's instruction set.");
     const std::string extension_name = inst.GetInOperand(0).AsString();
     if (spvtools::utils::starts_with(extension_name, "NonSemantic.") &&
-        extension_name != "NonSemantic.Shader.DebugInfo.100") {
+        (extension_name != "NonSemantic.Shader.DebugInfo.100") &&
+        (extension_name != "NonSemantic.DebugPrintf")) {
       return false;
     }
   }
@@ -993,6 +994,7 @@ void AggressiveDCEPass::InitExtensions() {
       "SPV_KHR_non_semantic_info",
       "SPV_KHR_uniform_group_instructions",
       "SPV_KHR_fragment_shader_barycentric",
+      "SPV_NV_bindless_texture",
   });
 }
 

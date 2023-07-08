@@ -173,8 +173,19 @@ spv_result_t NumConsumedLocations(ValidationState_t& _, const Instruction* type,
       }
       break;
     }
+    case spv::Op::OpTypePointer: {
+      if (_.addressing_model() ==
+              spv::AddressingModel::PhysicalStorageBuffer64 &&
+          type->GetOperandAs<spv::StorageClass>(1) ==
+              spv::StorageClass::PhysicalStorageBuffer) {
+        *num_locations = 1;
+        break;
+      }
+      [[fallthrough]];
+    }
     default:
-      break;
+      return _.diag(SPV_ERROR_INVALID_DATA, type)
+             << "Invalid type to assign a location";
   }
 
   return SPV_SUCCESS;
@@ -206,6 +217,14 @@ uint32_t NumConsumedComponents(ValidationState_t& _, const Instruction* type) {
       // Skip the array.
       return NumConsumedComponents(_,
                                    _.FindDef(type->GetOperandAs<uint32_t>(1)));
+    case spv::Op::OpTypePointer:
+      if (_.addressing_model() ==
+              spv::AddressingModel::PhysicalStorageBuffer64 &&
+          type->GetOperandAs<spv::StorageClass>(1) ==
+              spv::StorageClass::PhysicalStorageBuffer) {
+        return 2;
+      }
+      break;
     default:
       // This is an error that is validated elsewhere.
       break;
@@ -363,12 +382,12 @@ spv_result_t GetLocationsForVariable(
       sub_type = _.FindDef(sub_type_id);
     }
 
-    for (uint32_t array_idx = 0; array_idx < array_size; ++array_idx) {
-      uint32_t num_locations = 0;
-      if (auto error = NumConsumedLocations(_, sub_type, &num_locations))
-        return error;
+    uint32_t num_locations = 0;
+    if (auto error = NumConsumedLocations(_, sub_type, &num_locations))
+      return error;
+    uint32_t num_components = NumConsumedComponents(_, sub_type);
 
-      uint32_t num_components = NumConsumedComponents(_, sub_type);
+    for (uint32_t array_idx = 0; array_idx < array_size; ++array_idx) {
       uint32_t array_location = location + (num_locations * array_idx);
       uint32_t start = array_location * 4;
       if (kMaxLocations <= start) {
@@ -388,6 +407,7 @@ spv_result_t GetLocationsForVariable(
       for (uint32_t i = start; i < end; ++i) {
         if (!locs->insert(i).second) {
           return _.diag(SPV_ERROR_INVALID_DATA, entry_point)
+                 << (is_output ? _.VkErrorID(8722) : _.VkErrorID(8721))
                  << "Entry-point has conflicting " << storage_class
                  << " location assignment at location " << i / 4
                  << ", component " << i % 4;
@@ -459,6 +479,7 @@ spv_result_t GetLocationsForVariable(
             uint32_t check = 4 * l + c;
             if (!locations->insert(check).second) {
               return _.diag(SPV_ERROR_INVALID_DATA, entry_point)
+                     << (is_output ? _.VkErrorID(8722) : _.VkErrorID(8721))
                      << "Entry-point has conflicting " << storage_class
                      << " location assignment at location " << l
                      << ", component " << c;
@@ -476,6 +497,7 @@ spv_result_t GetLocationsForVariable(
         for (uint32_t l = start; l < end; ++l) {
           if (!locations->insert(l).second) {
             return _.diag(SPV_ERROR_INVALID_DATA, entry_point)
+                   << (is_output ? _.VkErrorID(8722) : _.VkErrorID(8721))
                    << "Entry-point has conflicting " << storage_class
                    << " location assignment at location " << l / 4
                    << ", component " << l % 4;

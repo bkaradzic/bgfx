@@ -19,6 +19,24 @@
 namespace spvtools {
 namespace opt {
 
+bool InstBuffAddrCheckPass::InstrumentFunction(Function* func,
+                                               uint32_t stage_idx,
+                                               InstProcessFunction& pfn) {
+  // The bindless instrumentation pass adds functions that use
+  // BufferDeviceAddress They should not be instrumented by this pass.
+  Instruction* func_name_inst =
+      context()->GetNames(func->DefInst().result_id()).begin()->second;
+  if (func_name_inst) {
+    static const std::string kPrefix{"inst_bindless_"};
+    std::string func_name = func_name_inst->GetOperand(1).AsString();
+    if (func_name.size() >= kPrefix.size() &&
+        func_name.compare(0, kPrefix.size(), kPrefix) == 0) {
+      return false;
+    }
+  }
+  return InstrumentPass::InstrumentFunction(func, stage_idx, pfn);
+}
+
 uint32_t InstBuffAddrCheckPass::CloneOriginalReference(
     Instruction* ref_inst, InstructionBuilder* builder) {
   // Clone original ref with new result id (if load)
@@ -95,7 +113,9 @@ void InstBuffAddrCheckPass::GenCheckCode(
   Instruction* hi_uptr_inst = builder.AddUnaryOp(
       GetUintId(), spv::Op::OpUConvert, rshift_uptr_inst->result_id());
   GenDebugStreamWrite(
-      uid2offset_[ref_inst->unique_id()], stage_idx,
+      builder.GetUintConstantId(shader_id_),
+      builder.GetUintConstantId(uid2offset_[ref_inst->unique_id()]),
+      GenStageInfo(stage_idx, &builder),
       {error_id, lo_uptr_inst->result_id(), hi_uptr_inst->result_id()},
       &builder);
   // Gen zero for invalid load. If pointer type, need to convert uint64
@@ -132,48 +152,13 @@ void InstBuffAddrCheckPass::GenCheckCode(
   context()->KillInst(ref_inst);
 }
 
-uint32_t InstBuffAddrCheckPass::GetTypeAlignment(uint32_t type_id) {
-  Instruction* type_inst = get_def_use_mgr()->GetDef(type_id);
-  switch (type_inst->opcode()) {
-    case spv::Op::OpTypeFloat:
-    case spv::Op::OpTypeInt:
-    case spv::Op::OpTypeVector:
-      return GetTypeLength(type_id);
-    case spv::Op::OpTypeMatrix:
-      return GetTypeAlignment(type_inst->GetSingleWordInOperand(0));
-    case spv::Op::OpTypeArray:
-    case spv::Op::OpTypeRuntimeArray:
-      return GetTypeAlignment(type_inst->GetSingleWordInOperand(0));
-    case spv::Op::OpTypeStruct: {
-      uint32_t max = 0;
-      type_inst->ForEachInId([&max, this](const uint32_t* iid) {
-        uint32_t alignment = GetTypeAlignment(*iid);
-        max = (alignment > max) ? alignment : max;
-      });
-      return max;
-    }
-    case spv::Op::OpTypePointer:
-      assert(spv::StorageClass(type_inst->GetSingleWordInOperand(0)) ==
-                 spv::StorageClass::PhysicalStorageBufferEXT &&
-             "unexpected pointer type");
-      return 8u;
-    default:
-      assert(false && "unexpected type");
-      return 0;
-  }
-}
-
 uint32_t InstBuffAddrCheckPass::GetTypeLength(uint32_t type_id) {
   Instruction* type_inst = get_def_use_mgr()->GetDef(type_id);
   switch (type_inst->opcode()) {
     case spv::Op::OpTypeFloat:
     case spv::Op::OpTypeInt:
       return type_inst->GetSingleWordInOperand(0) / 8u;
-    case spv::Op::OpTypeVector: {
-      uint32_t raw_cnt = type_inst->GetSingleWordInOperand(1);
-      uint32_t adj_cnt = (raw_cnt == 3u) ? 4u : raw_cnt;
-      return adj_cnt * GetTypeLength(type_inst->GetSingleWordInOperand(0));
-    }
+    case spv::Op::OpTypeVector:
     case spv::Op::OpTypeMatrix:
       return type_inst->GetSingleWordInOperand(1) *
              GetTypeLength(type_inst->GetSingleWordInOperand(0));
@@ -189,18 +174,19 @@ uint32_t InstBuffAddrCheckPass::GetTypeLength(uint32_t type_id) {
       return cnt * GetTypeLength(type_inst->GetSingleWordInOperand(0));
     }
     case spv::Op::OpTypeStruct: {
-      uint32_t len = 0;
-      type_inst->ForEachInId([&len, this](const uint32_t* iid) {
-        // Align struct length
-        uint32_t alignment = GetTypeAlignment(*iid);
-        uint32_t mod = len % alignment;
-        uint32_t diff = (mod != 0) ? alignment - mod : 0;
-        len += diff;
-        // Increment struct length by component length
-        uint32_t comp_len = GetTypeLength(*iid);
-        len += comp_len;
+      // Figure out the location of the last byte of the last member of the
+      // structure.
+      uint32_t last_offset = 0, last_len = 0;
+
+      get_decoration_mgr()->ForEachDecoration(
+          type_id, uint32_t(spv::Decoration::Offset),
+          [&last_offset](const Instruction& deco_inst) {
+            last_offset = deco_inst.GetSingleWordInOperand(3);
+          });
+      type_inst->ForEachInId([&last_len, this](const uint32_t* iid) {
+        last_len = GetTypeLength(*iid);
       });
-      return len;
+      return last_offset + last_len;
     }
     case spv::Op::OpTypeRuntimeArray:
     default:

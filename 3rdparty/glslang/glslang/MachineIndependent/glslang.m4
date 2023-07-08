@@ -279,6 +279,7 @@ GLSLANG_WEB_EXCLUDE_ON
 %token <lex> SPIRV_INSTRUCTION SPIRV_EXECUTION_MODE SPIRV_EXECUTION_MODE_ID
 %token <lex> SPIRV_DECORATE SPIRV_DECORATE_ID SPIRV_DECORATE_STRING
 %token <lex> SPIRV_TYPE SPIRV_STORAGE_CLASS SPIRV_BY_REFERENCE SPIRV_LITERAL
+%token <lex> ATTACHMENTEXT IATTACHMENTEXT UATTACHMENTEXT
 
 GLSLANG_WEB_EXCLUDE_OFF
 
@@ -304,7 +305,7 @@ GLSLANG_WEB_EXCLUDE_OFF
 %token <lex> BREAK CONTINUE DO ELSE FOR IF DISCARD RETURN SWITCH CASE DEFAULT
 %token <lex> TERMINATE_INVOCATION
 %token <lex> TERMINATE_RAY IGNORE_INTERSECTION
-%token <lex> UNIFORM SHARED BUFFER
+%token <lex> UNIFORM SHARED BUFFER TILEIMAGEEXT
 %token <lex> FLAT SMOOTH LAYOUT
 
 GLSLANG_WEB_EXCLUDE_ON
@@ -378,7 +379,7 @@ GLSLANG_WEB_EXCLUDE_ON
 %type <interm.type> spirv_storage_class_qualifier
 %type <interm.type> spirv_decorate_qualifier
 %type <interm.intermNode> spirv_decorate_parameter_list spirv_decorate_parameter
-%type <interm.intermNode> spirv_decorate_id_parameter_list
+%type <interm.intermNode> spirv_decorate_id_parameter_list spirv_decorate_id_parameter
 %type <interm.intermNode> spirv_decorate_string_parameter_list
 %type <interm.type> spirv_type_specifier
 %type <interm.spirvTypeParams> spirv_type_parameter_list spirv_type_parameter
@@ -1475,6 +1476,11 @@ storage_qualifier
         parseContext.globalCheck($1.loc, "uniform");
         $$.init($1.loc);
         $$.qualifier.storage = EvqUniform;
+    }
+    | TILEIMAGEEXT {
+        parseContext.globalCheck($1.loc, "tileImageEXT");
+        $$.init($1.loc);
+        $$.qualifier.storage = EvqTileImageEXT;
     }
     | SHARED {
         parseContext.globalCheck($1.loc, "shared");
@@ -3446,6 +3452,24 @@ GLSLANG_WEB_EXCLUDE_ON
         $$.sampler.set(EbtFloat, Esd2D);
         $$.sampler.yuv = true;
     }
+    | ATTACHMENTEXT {
+        parseContext.requireStage($1.loc, EShLangFragment, "attachmentEXT input");
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setAttachmentEXT(EbtFloat);
+    }
+    | IATTACHMENTEXT {
+        parseContext.requireStage($1.loc, EShLangFragment, "attachmentEXT input");
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setAttachmentEXT(EbtInt);
+    }
+    | UATTACHMENTEXT {
+        parseContext.requireStage($1.loc, EShLangFragment, "attachmentEXT input");
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.setAttachmentEXT(EbtUint);
+    }
     | SUBPASSINPUT {
         parseContext.requireStage($1.loc, EShLangFragment, "subpass input");
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
@@ -4347,21 +4371,31 @@ spirv_decorate_parameter
     }
 
 spirv_decorate_id_parameter_list
-    : constant_expression {
-        if ($1->getBasicType() != EbtFloat &&
-            $1->getBasicType() != EbtInt &&
-            $1->getBasicType() != EbtUint &&
-            $1->getBasicType() != EbtBool)
-            parseContext.error($1->getLoc(), "this type not allowed", $1->getType().getBasicString(), "");
+    : spirv_decorate_id_parameter {
         $$ = parseContext.intermediate.makeAggregate($1);
     }
-    | spirv_decorate_id_parameter_list COMMA constant_expression {
-        if ($3->getBasicType() != EbtFloat &&
-            $3->getBasicType() != EbtInt &&
-            $3->getBasicType() != EbtUint &&
-            $3->getBasicType() != EbtBool)
-            parseContext.error($3->getLoc(), "this type not allowed", $3->getType().getBasicString(), "");
+    | spirv_decorate_id_parameter_list COMMA spirv_decorate_id_parameter {
         $$ = parseContext.intermediate.growAggregate($1, $3);
+    }
+
+spirv_decorate_id_parameter
+    : variable_identifier {
+        if ($1->getAsConstantUnion() || $1->getAsSymbolNode())
+            $$ = $1;
+        else
+            parseContext.error($1->getLoc(), "only allow constants or variables which are not elements of a composite", "", "");
+    }
+    | FLOATCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.d, EbtFloat, $1.loc, true);
+    }
+    | INTCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.i, $1.loc, true);
+    }
+    | UINTCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.u, $1.loc, true);
+    }
+    | BOOLCONSTANT {
+        $$ = parseContext.intermediate.addConstantUnion($1.b, $1.loc, true);
     }
 
 spirv_decorate_string_parameter_list

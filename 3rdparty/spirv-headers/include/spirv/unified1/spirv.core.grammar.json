@@ -4103,6 +4103,43 @@
       "version" : "1.4"
     },
     {
+      "opname" : "OpColorAttachmentReadEXT",
+      "class"  : "Image",
+      "opcode" : 4160,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Attachment'" },
+        { "kind" : "IdRef", "name" : "'Sample'", "quantifier" : "?" }
+      ],
+      "capabilities": [ "TileImageColorReadAccessEXT" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpDepthAttachmentReadEXT",
+      "class"  : "Image",
+      "opcode" : 4161,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Sample'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "TileImageDepthReadAccessEXT" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpStencilAttachmentReadEXT",
+      "class"  : "Image",
+      "opcode" : 4162,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Sample'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "TileImageStencilReadAccessEXT" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpTerminateInvocation",
       "class"  : "Control-Flow",
       "opcode" : 4416,
@@ -4455,6 +4492,77 @@
       "capabilities" : [ "DotProductKHR" ],
       "extensions" : [ "SPV_KHR_integer_dot_product" ],
       "version" : "1.6"
+    },
+    {
+      "opname" : "OpTypeCooperativeMatrixKHR",
+      "class"  : "Type-Declaration",
+      "opcode" : 4456,
+      "operands" : [
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",        "name" : "'Component Type'" },
+        { "kind" : "IdScope",      "name" : "'Scope'" },
+        { "kind" : "IdRef",        "name" : "'Rows'" },
+        { "kind" : "IdRef",        "name" : "'Columns'" },
+        { "kind" : "IdRef",        "name" : "'Use'" }
+      ],
+      "capabilities" : [ "CooperativeMatrixKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpCooperativeMatrixLoadKHR",
+      "class"  : "Memory",
+      "opcode" : 4457,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",             "name" : "'Pointer'" },
+        { "kind" : "IdRef",             "name" : "'MemoryLayout'" },
+        { "kind" : "IdRef",             "name" : "'Stride'", "quantifier": "?" },
+        { "kind" : "MemoryAccess",      "name" : "'Memory Operand'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "CooperativeMatrixKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpCooperativeMatrixStoreKHR",
+      "class"  : "Memory",
+      "opcode" : 4458,
+      "operands" : [
+        { "kind" : "IdRef",             "name" : "'Pointer'" },
+        { "kind" : "IdRef",             "name" : "'Object'" },
+        { "kind" : "IdRef",             "name" : "'MemoryLayout'" },
+        { "kind" : "IdRef",             "name" : "'Stride'", "quantifier": "?" },
+        { "kind" : "MemoryAccess",      "name" : "'Memory Operand'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "CooperativeMatrixKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpCooperativeMatrixMulAddKHR",
+      "class"  : "Arithmetic",
+      "opcode" : 4459,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",             "name" : "'A'" },
+        { "kind" : "IdRef",             "name" : "'B'" },
+        { "kind" : "IdRef",             "name" : "'C'" },
+        { "kind" : "CooperativeMatrixOperands", "name" : "'Cooperative Matrix Operands'", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "CooperativeMatrixKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpCooperativeMatrixLengthKHR",
+      "class"  : "Miscellaneous",
+      "opcode" : 4460,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",        "name" : "'Type'" }
+      ],
+      "capabilities" : [ "CooperativeMatrixKHR" ],
+      "version" : "None"
     },
     {
         "opname" : "OpTypeRayQueryKHR",
@@ -5444,6 +5552,25 @@
       ],
       "capabilities" : [ "RayTracingMotionBlurNV" ],
       "extensions" : [ "SPV_NV_ray_tracing_motion_blur" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpRayQueryGetIntersectionTriangleVertexPositionsKHR",
+      "class"  : "Reserved",
+      "opcode" : 5340,
+        "operands" : [
+            { "kind" : "IdResultType" },
+            { "kind" : "IdResult" },
+            {
+                "kind" : "IdRef",
+                "name" : "'RayQuery'"
+            },
+            {
+                "kind" : "IdRef",
+                "name" : "'Intersection'"
+            }
+        ],
+      "capabilities" : [ "RayQueryPositionFetchKHR" ],
       "version" : "None"
     },
     {
@@ -10028,6 +10155,10 @@
         {
           "enumerant" : "SYCL",
           "value" : 7
+        },
+        {
+          "enumerant" : "HERO_C",
+          "value" : 8
         }
       ]
     },
@@ -10474,6 +10605,24 @@
           "version" : "1.2"
         },
         {
+          "enumerant" : "NonCoherentColorAttachmentReadEXT",
+          "value" : 4169,
+          "capabilities" : [ "TileImageColorReadAccessEXT" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "NonCoherentDepthAttachmentReadEXT",
+          "value" : 4170,
+          "capabilities" : [ "TileImageDepthReadAccessEXT" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "NonCoherentStencilAttachmentReadEXT",
+          "value" : 4171,
+          "capabilities" : [ "TileImageStencilReadAccessEXT" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "SubgroupUniformControlFlowKHR",
           "value" : 4421,
           "capabilities" : [ "Shader" ],
@@ -10888,6 +11037,12 @@
           "version" : "1.3"
         },
         {
+          "enumerant" : "TileImageEXT",
+          "value" : 4172,
+          "capabilities" : [ "TileImageColorReadAccessEXT" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "CallableDataNV",
           "value" : 5328,
           "extensions" : [ "SPV_NV_ray_tracing" , "SPV_KHR_ray_tracing" ],
@@ -11061,6 +11216,12 @@
           "enumerant" : "SubpassData",
           "value" : 6,
           "capabilities" : [ "InputAttachment" ]
+        },
+        {
+          "enumerant" : "TileImageDataEXT",
+          "value" : 4173,
+          "capabilities" : [ "TileImageColorReadAccessEXT" ],
+          "version" : "None"
         }
       ]
     },
@@ -11519,6 +11680,16 @@
         {
           "enumerant" : "UnormInt101010_2",
           "value" : 16,
+          "capabilities" : [ "Kernel" ]
+        },
+        {
+          "enumerant" : "UnsignedIntRaw10EXT",
+          "value" : 19,
+          "capabilities" : [ "Kernel" ]
+        },
+        {
+          "enumerant" : "UnsignedIntRaw12EXT",
+          "value" : 20,
           "capabilities" : [ "Kernel" ]
         }
       ]
@@ -13471,6 +13642,12 @@
           "version" : "None"
         },
         {
+          "enumerant" : "HitTriangleVertexPositionsKHR",
+          "value" : 5335,
+          "capabilities" : [ "RayTracingPositionFetchKHR" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "IncomingRayFlagsNV",
           "value" : 5351,
           "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
@@ -13998,6 +14175,24 @@
           "enumerant" : "CoreBuiltinsARM",
           "value" : 4165,
           "extensions" : [ "SPV_ARM_core_builtins" ]
+        },
+        {
+          "enumerant" : "TileImageColorReadAccessEXT",
+          "value" : 4166,
+          "extensions" : [ "SPV_EXT_shader_tile_image" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "TileImageDepthReadAccessEXT",
+          "value" : 4167,
+          "extensions" : [ "SPV_EXT_shader_tile_image" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "TileImageStencilReadAccessEXT",
+          "value" : 4168,
+          "extensions" : [ "SPV_EXT_shader_tile_image" ],
+          "version" : "None"
         },
         {
           "enumerant" : "FragmentShadingRateKHR",
@@ -14543,6 +14738,13 @@
           "version" : "1.5"
         },
         {
+          "enumerant" : "RayTracingPositionFetchKHR",
+          "value" : 5336,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_ray_tracing_position_fetch" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "RayTracingNV",
           "value" : 5340,
           "capabilities" : [ "Shader" ],
@@ -14671,6 +14873,13 @@
           "enumerant" : "BindlessTextureNV",
           "value" : 5390,
           "extensions" : [ "SPV_NV_bindless_texture" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RayQueryPositionFetchKHR",
+          "value" : 5391,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_ray_tracing_position_fetch" ],
           "version" : "None"
         },
         {
@@ -14981,6 +15190,12 @@
           "version" : "None"
         },
         {
+          "enumerant" : "CooperativeMatrixKHR",
+          "value" : 6022,
+          "extensions" : [ "SPV_KHR_cooperative_matrix" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "BitInstructions",
           "value" : 6025,
           "extensions" : [ "SPV_KHR_bit_instructions" ],
@@ -15142,6 +15357,90 @@
           "value" : 0,
           "extensions" : [ "SPV_KHR_integer_dot_product" ],
           "version" : "1.6"
+        }
+      ]
+    },
+    {
+      "category" : "BitEnum",
+      "kind" : "CooperativeMatrixOperands",
+      "enumerants" : [
+        {
+          "enumerant" : "None",
+          "value" : "0x0000",
+          "capabilities" : [ "CooperativeMatrixKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MatrixASignedComponents",
+          "value" : "0x0001",
+          "capabilities" : [ "CooperativeMatrixKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MatrixBSignedComponents",
+          "value" : "0x0002",
+          "capabilities" : [ "CooperativeMatrixKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MatrixCSignedComponents",
+          "value" : "0x0004",
+          "capabilities" : [ "CooperativeMatrixKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MatrixResultSignedComponents",
+          "value" : "0x0008",
+          "capabilities" : [ "CooperativeMatrixKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SaturatingAccumulation",
+          "value" : "0x0010",
+          "capabilities" : [ "CooperativeMatrixKHR" ],
+          "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "ValueEnum",
+      "kind" : "CooperativeMatrixLayout",
+      "enumerants" : [
+        {
+          "enumerant" : "RowMajorKHR",
+          "value" : 0,
+          "capabilities" : [ "CooperativeMatrixKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ColumnMajorKHR",
+          "value" : 1,
+          "capabilities" : [ "CooperativeMatrixKHR" ],
+          "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "ValueEnum",
+      "kind" : "CooperativeMatrixUse",
+      "enumerants" : [
+        {
+          "enumerant" : "MatrixAKHR",
+          "value" : 0,
+          "capabilities" : [ "CooperativeMatrixKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MatrixBKHR",
+          "value" : 1,
+          "capabilities" : [ "CooperativeMatrixKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MatrixAccumulatorKHR",
+          "value" : 2,
+          "capabilities" : [ "CooperativeMatrixKHR" ],
+          "version" : "None"
         }
       ]
     },

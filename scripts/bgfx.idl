@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(118)
+version(121)
 
 typedef "bool"
 typedef "char"
@@ -791,6 +791,7 @@ struct.Resolution { ctor }
 	.reset           "uint32_t"            --- Reset parameters.
 	.numBackBuffers  "uint8_t"             --- Number of back buffers.
 	.maxFrameLatency "uint8_t"             --- Maximum frame latency.
+	.debugTextScale  "uint8_t"             --- Scale factor for debug text.
 
 --- Configurable runtime limits parameters.
 struct.Limits { namespace = "Init" }
@@ -2375,21 +2376,11 @@ func.Encoder.setInstanceDataBuffer
 	.num   "uint32_t"                  --- Number of data instances.
 
 --- Set instance data buffer for draw primitive.
-func.Encoder.setInstanceDataBuffer { cpponly }
-	"void"
-	.handle      "VertexBufferHandle" --- Vertex buffer.
-
---- Set instance data buffer for draw primitive.
 func.Encoder.setInstanceDataBuffer { cname = "set_instance_data_from_vertex_buffer" }
 	"void"
 	.handle      "VertexBufferHandle" --- Vertex buffer.
 	.startVertex "uint32_t"           --- First instance data.
 	.num         "uint32_t"           --- Number of data instances.
-
- --- Set instance data buffer for draw primitive.
-func.Encoder.setInstanceDataBuffer { cpponly }
-	"void"
-	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 
 --- Set instance data buffer for draw primitive.
 func.Encoder.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_vertex_buffer" }
@@ -2955,21 +2946,11 @@ func.setInstanceDataBuffer
 	.num   "uint32_t"                  --- Number of data instances.
 
 --- Set instance data buffer for draw primitive.
-func.setInstanceDataBuffer { cpponly }
-	"void"
-	.handle      "VertexBufferHandle" --- Vertex buffer.
-
---- Set instance data buffer for draw primitive.
 func.setInstanceDataBuffer { cname = "set_instance_data_from_vertex_buffer" }
 	"void"
 	.handle      "VertexBufferHandle" --- Vertex buffer.
 	.startVertex "uint32_t"           --- First instance data.
 	.num         "uint32_t"           --- Number of data instances.
-
- --- Set instance data buffer for draw primitive.
-func.setInstanceDataBuffer { cpponly }
-	"void"
-	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 
 --- Set instance data buffer for draw primitive.
 func.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_vertex_buffer" }
