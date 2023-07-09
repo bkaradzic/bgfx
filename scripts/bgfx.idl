@@ -2132,6 +2132,7 @@ func.resetView
 func.begin { cname = "encoder_begin" }
 	"Encoder*"        --- Encoder.
 	.forThread "bool" --- Explicitly request an encoder for a worker thread.
+	 { default = false }
 
 --- End submitting draw calls from thread.
 func["end"] { cname = "encoder_end" }
