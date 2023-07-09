@@ -964,12 +964,12 @@ pragma(inline,true) nothrow @nogc pure @safe{
 ///Renderer capabilities.
 extern(C++, "bgfx") struct Caps{
 	///GPU info.
-	extern(C++, "bgfx") struct GPU{
+	extern(C++) struct GPU{
 		ushort vendorID; ///Vendor PCI id. See `BGFX_PCI_ID_*`.
 		ushort deviceID; ///Device id.
 	}
 	///Renderer runtime limits.
-	extern(C++, "bgfx") struct Limits{
+	extern(C++) struct Limits{
 		uint maxDrawCalls; ///Maximum number of draw calls.
 		uint maxBlits; ///Maximum number of blit calls.
 		uint maxTextureSize; ///Maximum texture size.
@@ -1095,7 +1095,7 @@ extern(C++, "bgfx") struct Resolution{
 ///Initialization parameters used by `bgfx::init`.
 extern(C++, "bgfx") struct Init{
 	///Configurable runtime limits parameters.
-	extern(C++, "bgfx") struct Limits{
+	extern(C++) struct Limits{
 		ushort maxEncoders; ///Maximum number of encoder threads.
 		uint minResourceCBSize; ///Minimum resource command buffer size.
 		uint transientVBSize; ///Maximum transient vertex buffer size.
@@ -3018,7 +3018,7 @@ mixin(joinFnBinds((){
 		Params:
 			forThread = Explicitly request an encoder for a worker thread.
 		*/
-		[q{Encoder*}, q{begin}, q{bool forThread}, `C++, "bgfx"`],
+		[q{Encoder*}, q{begin}, q{bool forThread=false}, `C++, "bgfx"`],
 		
 		/**
 		* End submitting draw calls from thread.

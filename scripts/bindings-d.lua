@@ -445,7 +445,7 @@ function gen.gen()
 					local co = coroutine.create(converter[what])
 					local any
 					while true do
-						local ok, v = coroutine.resume(co, allStructs[object.name], object.name, indent:len())
+						local ok, v = coroutine.resume(co, allStructs[object.name], object.name, true, indent:len())
 						assert(ok, debug.traceback(co, v))
 						if not v then
 							break
@@ -483,19 +483,23 @@ function gen.gen()
 	return r
 end
 
-function converter.structs(st, name)
+function converter.structs(st, name, topLvl)
 	for _, line in ipairs(st.comments) do
 		yield(line)
 	end
 	
-	yield("extern(C++, \"bgfx\") struct " .. name .. "{")
+	if topLvl then
+		yield("extern(C++, \"bgfx\") struct " .. name .. "{")
+	else
+		yield("extern(C++) struct " .. name .. "{")
+	end
 	
 	local subN = 0
 	for _, subStruct in ipairs(st.subs) do
 		subN = subN + 1
 		local co = coroutine.create(converter.structs)
 		while true do
-			local ok, v = coroutine.resume(co, subStruct, subStruct.name)
+			local ok, v = coroutine.resume(co, subStruct, subStruct.name, false)
 			assert(ok, debug.traceback(co, v))
 			if not v then
 				break
