@@ -1358,13 +1358,6 @@ extern(C++, "bgfx") struct VertexLayout{
 			[q{void}, q{decode}, q{bgfx.fakeenum.Attrib.Enum attrib, ref ubyte num, ref bgfx.fakeenum.AttribType.Enum type, ref bool normalized, ref bool asInt}, `C++`, q{const}],
 			
 			/**
-			Returns `true` if VertexLayout contains attribute.
-			Params:
-				attrib = Attribute semantics. See: `bgfx::Attrib`
-			*/
-			[q{bool}, q{has}, q{bgfx.fakeenum.Attrib.Enum attrib}, `C++`, q{const}],
-			
-			/**
 			Skip `_num` bytes in vertex stream.
 			Params:
 				num = Number of bytes to skip.
@@ -1375,25 +1368,6 @@ extern(C++, "bgfx") struct VertexLayout{
 			End VertexLayout.
 			*/
 			[q{void}, q{end}, q{}, `C++`],
-			
-			/**
-			Returns relative attribute offset from the vertex.
-			Params:
-				attrib = Attribute semantics. See: `bgfx::Attrib`
-			*/
-			[q{ushort}, q{getOffset}, q{bgfx.fakeenum.Attrib.Enum attrib}, `C++`, q{const}],
-			
-			/**
-			Returns vertex stride.
-			*/
-			[q{ushort}, q{getStride}, q{}, `C++`, q{const}],
-			
-			/**
-			Returns size of vertex buffer for number of vertices.
-			Params:
-				num = Number of vertices.
-			*/
-			[q{uint}, q{getSize}, q{uint num}, `C++`, q{const}],
 		], true);
 		return ret;
 	}(), typeof(this).stringof));
