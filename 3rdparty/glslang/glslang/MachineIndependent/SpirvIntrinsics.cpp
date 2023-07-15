@@ -45,6 +45,15 @@
 
 namespace glslang {
 
+bool TSpirvTypeParameter::operator==(const TSpirvTypeParameter& rhs) const
+{
+    if (constant != nullptr)
+        return constant->getConstArray() == rhs.constant->getConstArray();
+
+    assert(type != nullptr);
+    return *type == *rhs.type;
+}
+
 //
 // Handle SPIR-V requirements
 //
@@ -283,11 +292,16 @@ TSpirvTypeParameters* TParseContext::makeSpirvTypeParameters(const TSourceLoc& l
         constant->getBasicType() != EbtBool &&
         constant->getBasicType() != EbtString)
         error(loc, "this type not allowed", constant->getType().getBasicString(), "");
-    else {
-        assert(constant);
+    else
         spirvTypeParams->push_back(TSpirvTypeParameter(constant));
-    }
 
+    return spirvTypeParams;
+}
+
+TSpirvTypeParameters* TParseContext::makeSpirvTypeParameters(const TSourceLoc& loc, const TPublicType& type)
+{
+    TSpirvTypeParameters* spirvTypeParams = new TSpirvTypeParameters;
+    spirvTypeParams->push_back(TSpirvTypeParameter(new TType(type)));
     return spirvTypeParams;
 }
 
