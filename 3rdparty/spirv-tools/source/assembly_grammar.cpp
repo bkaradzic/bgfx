@@ -184,7 +184,7 @@ CapabilitySet AssemblyGrammar::filterCapsAgainstTargetEnv(
       // spvOperandTableValueLookup() filters capabilities internally
       // according to the current target environment by itself. So we
       // should be safe to add this capability if the lookup succeeds.
-      cap_set.Add(cap_array[i]);
+      cap_set.insert(cap_array[i]);
     }
   }
   return cap_set;

@@ -718,9 +718,9 @@ void IRContext::AddCombinatorsForExtension(Instruction* extension) {
 }
 
 void IRContext::InitializeCombinators() {
-  get_feature_mgr()->GetCapabilities()->ForEach([this](spv::Capability cap) {
-    AddCombinatorsForCapability(uint32_t(cap));
-  });
+  for (auto capability : *get_feature_mgr()->GetCapabilities()) {
+    AddCombinatorsForCapability(uint32_t(capability));
+  }
 
   for (auto& extension : module()->ext_inst_imports()) {
     AddCombinatorsForExtension(&extension);
