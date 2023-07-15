@@ -7187,6 +7187,35 @@ void CompilerMSL::emit_custom_functions()
 			end_scope();
 			end_scope_decl();
 			statement("");
+			break;
+
+		case SPVFuncImplRayQueryIntersectionParams:
+			statement("intersection_params spvMakeIntersectionParams(uint flags)");
+			begin_scope();
+			statement("intersection_params ip;");
+			statement("if ((flags & ", RayFlagsOpaqueKHRMask, ") != 0)");
+			statement("    ip.force_opacity(forced_opacity::opaque);");
+			statement("if ((flags & ", RayFlagsNoOpaqueKHRMask, ") != 0)");
+			statement("    ip.force_opacity(forced_opacity::non_opaque);");
+			statement("if ((flags & ", RayFlagsTerminateOnFirstHitKHRMask, ") != 0)");
+			statement("    ip.accept_any_intersection(true);");
+			// RayFlagsSkipClosestHitShaderKHRMask is not available in MSL
+			statement("if ((flags & ", RayFlagsCullBackFacingTrianglesKHRMask, ") != 0)");
+			statement("    ip.set_triangle_cull_mode(triangle_cull_mode::back);");
+			statement("if ((flags & ", RayFlagsCullFrontFacingTrianglesKHRMask, ") != 0)");
+			statement("    ip.set_triangle_cull_mode(triangle_cull_mode::front);");
+			statement("if ((flags & ", RayFlagsCullOpaqueKHRMask, ") != 0)");
+			statement("    ip.set_opacity_cull_mode(opacity_cull_mode::opaque);");
+			statement("if ((flags & ", RayFlagsCullNoOpaqueKHRMask, ") != 0)");
+			statement("    ip.set_opacity_cull_mode(opacity_cull_mode::non_opaque);");
+			statement("if ((flags & ", RayFlagsSkipTrianglesKHRMask, ") != 0)");
+			statement("    ip.set_geometry_cull_mode(geometry_cull_mode::triangle);");
+			statement("if ((flags & ", RayFlagsSkipAABBsKHRMask, ") != 0)");
+			statement("    ip.set_geometry_cull_mode(geometry_cull_mode::bounding_box);");
+			statement("return ip;");
+			end_scope();
+			statement("");
+			break;
 
 		default:
 			break;
@@ -9237,10 +9266,11 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 	case OpRayQueryInitializeKHR:
 	{
 		flush_variable_declaration(ops[0]);
+		add_spv_func_and_recompile(SPVFuncImplRayQueryIntersectionParams);
 
 		statement(to_expression(ops[0]), ".reset(", "ray(", to_expression(ops[4]), ", ", to_expression(ops[6]), ", ",
 		          to_expression(ops[5]), ", ", to_expression(ops[7]), "), ", to_expression(ops[1]),
-		          ", intersection_params());");
+		          ", spvMakeIntersectionParams(", to_expression(ops[2]), "));");
 		break;
 	}
 	case OpRayQueryProceedKHR:
