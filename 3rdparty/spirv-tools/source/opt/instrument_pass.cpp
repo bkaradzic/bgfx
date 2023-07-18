@@ -233,11 +233,12 @@ uint32_t InstrumentPass::GenStageInfo(uint32_t stage_idx,
       uint32_t load_id = GenVarLoad(
           context()->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::VertexIndex)),
           builder);
-      ids[1] = load_id;
+      ids[1] = GenUintCastCode(load_id, builder);
+
       load_id = GenVarLoad(context()->GetBuiltinInputVarId(
                                uint32_t(spv::BuiltIn::InstanceIndex)),
                            builder);
-      ids[2] = load_id;
+      ids[2] = GenUintCastCode(load_id, builder);
     } break;
     case spv::ExecutionModel::GLCompute:
     case spv::ExecutionModel::TaskNV:

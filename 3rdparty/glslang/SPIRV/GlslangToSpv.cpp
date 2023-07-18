@@ -4515,50 +4515,56 @@ spv::Id TGlslangToSpvTraverser::convertGlslangToSpvType(const glslang::TType& ty
 
         std::vector<spv::IdImmediate> operands;
         for (const auto& typeParam : spirvType.typeParams) {
-            // Constant expression
-            if (typeParam.constant->isLiteral()) {
-                if (typeParam.constant->getBasicType() == glslang::EbtFloat) {
-                    float floatValue = static_cast<float>(typeParam.constant->getConstArray()[0].getDConst());
-                    unsigned literal;
-                    static_assert(sizeof(literal) == sizeof(floatValue), "sizeof(unsigned) != sizeof(float)");
-                    memcpy(&literal, &floatValue, sizeof(literal));
-                    operands.push_back({false, literal});
-                } else if (typeParam.constant->getBasicType() == glslang::EbtInt) {
-                    unsigned literal = typeParam.constant->getConstArray()[0].getIConst();
-                    operands.push_back({false, literal});
-                } else if (typeParam.constant->getBasicType() == glslang::EbtUint) {
-                    unsigned literal = typeParam.constant->getConstArray()[0].getUConst();
-                    operands.push_back({false, literal});
-                } else if (typeParam.constant->getBasicType() == glslang::EbtBool) {
-                    unsigned literal = typeParam.constant->getConstArray()[0].getBConst();
-                    operands.push_back({false, literal});
-                } else if (typeParam.constant->getBasicType() == glslang::EbtString) {
-                    auto str = typeParam.constant->getConstArray()[0].getSConst()->c_str();
-                    unsigned literal = 0;
-                    char* literalPtr = reinterpret_cast<char*>(&literal);
-                    unsigned charCount = 0;
-                    char ch = 0;
-                    do {
-                        ch = *(str++);
-                        *(literalPtr++) = ch;
-                        ++charCount;
-                        if (charCount == 4) {
-                            operands.push_back({false, literal});
-                            literalPtr = reinterpret_cast<char*>(&literal);
-                            charCount = 0;
-                        }
-                    } while (ch != 0);
-
-                    // Partial literal is padded with 0
-                    if (charCount > 0) {
-                        for (; charCount < 4; ++charCount)
-                            *(literalPtr++) = 0;
+            if (typeParam.constant != nullptr) {
+                // Constant expression
+                if (typeParam.constant->isLiteral()) {
+                    if (typeParam.constant->getBasicType() == glslang::EbtFloat) {
+                        float floatValue = static_cast<float>(typeParam.constant->getConstArray()[0].getDConst());
+                        unsigned literal;
+                        static_assert(sizeof(literal) == sizeof(floatValue), "sizeof(unsigned) != sizeof(float)");
+                        memcpy(&literal, &floatValue, sizeof(literal));
                         operands.push_back({false, literal});
-                    }
+                    } else if (typeParam.constant->getBasicType() == glslang::EbtInt) {
+                        unsigned literal = typeParam.constant->getConstArray()[0].getIConst();
+                        operands.push_back({false, literal});
+                    } else if (typeParam.constant->getBasicType() == glslang::EbtUint) {
+                        unsigned literal = typeParam.constant->getConstArray()[0].getUConst();
+                        operands.push_back({false, literal});
+                    } else if (typeParam.constant->getBasicType() == glslang::EbtBool) {
+                        unsigned literal = typeParam.constant->getConstArray()[0].getBConst();
+                        operands.push_back({false, literal});
+                    } else if (typeParam.constant->getBasicType() == glslang::EbtString) {
+                        auto str = typeParam.constant->getConstArray()[0].getSConst()->c_str();
+                        unsigned literal = 0;
+                        char* literalPtr = reinterpret_cast<char*>(&literal);
+                        unsigned charCount = 0;
+                        char ch = 0;
+                        do {
+                            ch = *(str++);
+                            *(literalPtr++) = ch;
+                            ++charCount;
+                            if (charCount == 4) {
+                                operands.push_back({false, literal});
+                                literalPtr = reinterpret_cast<char*>(&literal);
+                                charCount = 0;
+                            }
+                        } while (ch != 0);
+
+                        // Partial literal is padded with 0
+                        if (charCount > 0) {
+                            for (; charCount < 4; ++charCount)
+                                *(literalPtr++) = 0;
+                            operands.push_back({false, literal});
+                        }
+                    } else
+                        assert(0); // Unexpected type
                 } else
-                    assert(0); // Unexpected type
-            } else
-                operands.push_back({true, createSpvConstant(*typeParam.constant)});
+                    operands.push_back({true, createSpvConstant(*typeParam.constant)});
+            } else {
+                // Type specifier
+                assert(typeParam.type != nullptr);
+                operands.push_back({true, convertGlslangToSpvType(*typeParam.type)});
+            }
         }
 
         assert(spirvInst.set == ""); // Currently, couldn't be extended instructions.

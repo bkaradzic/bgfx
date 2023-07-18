@@ -10159,6 +10159,14 @@
         {
           "enumerant" : "HERO_C",
           "value" : 8
+        },
+        {
+          "enumerant" : "NZSL",
+          "value" : 9
+        },
+        {
+          "enumerant" : "WGSL",
+          "value" : 10
         }
       ]
     },

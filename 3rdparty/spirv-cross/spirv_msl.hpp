@@ -795,6 +795,7 @@ protected:
 		SPVFuncImplConvertYCbCrBT601,
 		SPVFuncImplConvertYCbCrBT2020,
 		SPVFuncImplDynamicImageSampler,
+		SPVFuncImplRayQueryIntersectionParams,
 	};
 
 	// If the underlying resource has been used for comparison then duplicate loads of that resource must be too

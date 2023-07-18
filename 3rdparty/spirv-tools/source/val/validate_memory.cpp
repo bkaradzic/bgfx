@@ -1737,9 +1737,10 @@ spv_result_t ValidateCooperativeMatrixLoadStoreKHR(ValidationState_t& _,
       storage_class != spv::StorageClass::StorageBuffer &&
       storage_class != spv::StorageClass::PhysicalStorageBuffer) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
-           << opname << " storage class for pointer type <id> "
+           << _.VkErrorID(8973) << opname
+           << " storage class for pointer type <id> "
            << _.getIdName(pointer_type_id)
-           << " is not Workgroup or StorageBuffer.";
+           << " is not Workgroup, StorageBuffer, or PhysicalStorageBuffer.";
   }
 
   const auto pointee_id = pointer_type->GetOperandAs<uint32_t>(2);

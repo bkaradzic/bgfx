@@ -21,6 +21,7 @@
 #include "source/opcode.h"
 #include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
+#include "source/util/make_unique.h"
 #include "source/val/basic_block.h"
 #include "source/val/construct.h"
 #include "source/val/function.h"
@@ -359,14 +360,16 @@ void ValidationState_t::RegisterCapability(spv::Capability cap) {
   // Avoid redundant work.  Otherwise the recursion could induce work
   // quadrdatic in the capability dependency depth. (Ok, not much, but
   // it's something.)
-  if (module_capabilities_.Contains(cap)) return;
+  if (module_capabilities_.contains(cap)) return;
 
-  module_capabilities_.Add(cap);
+  module_capabilities_.insert(cap);
   spv_operand_desc desc;
   if (SPV_SUCCESS == grammar_.lookupOperand(SPV_OPERAND_TYPE_CAPABILITY,
                                             uint32_t(cap), &desc)) {
-    CapabilitySet(desc->numCapabilities, desc->capabilities)
-        .ForEach([this](spv::Capability c) { RegisterCapability(c); });
+    for (auto capability :
+         CapabilitySet(desc->numCapabilities, desc->capabilities)) {
+      RegisterCapability(capability);
+    }
   }
 
   switch (cap) {
@@ -418,9 +421,9 @@ void ValidationState_t::RegisterCapability(spv::Capability cap) {
 }
 
 void ValidationState_t::RegisterExtension(Extension ext) {
-  if (module_extensions_.Contains(ext)) return;
+  if (module_extensions_.contains(ext)) return;
 
-  module_extensions_.Add(ext);
+  module_extensions_.insert(ext);
 
   switch (ext) {
     case kSPV_AMD_gpu_shader_half_float:
@@ -1000,6 +1003,23 @@ bool ValidationState_t::IsUnsignedIntVectorType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
   if (!inst) {
     return false;
+  }
+
+  if (inst->opcode() == spv::Op::OpTypeVector) {
+    return IsUnsignedIntScalarType(GetComponentType(id));
+  }
+
+  return false;
+}
+
+bool ValidationState_t::IsUnsignedIntScalarOrVectorType(uint32_t id) const {
+  const Instruction* inst = FindDef(id);
+  if (!inst) {
+    return false;
+  }
+
+  if (inst->opcode() == spv::Op::OpTypeInt) {
+    return inst->GetOperandAs<uint32_t>(2) == 0;
   }
 
   if (inst->opcode() == spv::Op::OpTypeVector) {
@@ -2245,6 +2265,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-OpEntryPoint-08721);
     case 8722:
       return VUID_WRAP(VUID-StandaloneSpirv-OpEntryPoint-08722);
+    case 8973:
+      return VUID_WRAP(VUID-StandaloneSpirv-Pointer-08973);
     default:
       return "";  // unknown id
   }

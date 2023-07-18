@@ -445,7 +445,7 @@ function gen.gen()
 					local co = coroutine.create(converter[what])
 					local any
 					while true do
-						local ok, v = coroutine.resume(co, allStructs[object.name], object.name, indent:len())
+						local ok, v = coroutine.resume(co, allStructs[object.name], object.name, true, indent:len())
 						assert(ok, debug.traceback(co, v))
 						if not v then
 							break
@@ -483,19 +483,23 @@ function gen.gen()
 	return r
 end
 
-function converter.structs(st, name)
+function converter.structs(st, name, topLvl)
 	for _, line in ipairs(st.comments) do
 		yield(line)
 	end
 	
-	yield("extern(C++, \"bgfx\") struct " .. name .. "{")
+	if topLvl then
+		yield("extern(C++, \"bgfx\") struct " .. name .. "{")
+	else
+		yield("extern(C++) struct " .. name .. "{")
+	end
 	
 	local subN = 0
-	for subName, subStruct in pairs(st.subs) do
+	for _, subStruct in ipairs(st.subs) do
 		subN = subN + 1
 		local co = coroutine.create(converter.structs)
 		while true do
-			local ok, v = coroutine.resume(co, subStruct, subName)
+			local ok, v = coroutine.resume(co, subStruct, subStruct.name, false)
 			assert(ok, debug.traceback(co, v))
 			if not v then
 				break
@@ -747,7 +751,7 @@ extern(C++, "bgfx") package final abstract class %s{
 			end
 		end
 	elseif typ.struct ~= nil then
-		local st = {comments = {}, fields = {}, fns = {}, subs = {}}
+		local st = {name = typ.name, comments = {}, fields = {}, fns = {}, subs = {}}
 		
 		if typ.comments ~= nil then
 			if #typ.comments == 1 then
@@ -784,13 +788,13 @@ extern(C++, "bgfx") package final abstract class %s{
 			table.insert(st.fns, "[q{void}, q{this}, q{}, `C++`],")
 		end
 		
-		if typ.namespace ~= nil then
+		if typ.namespace ~= nil then --if this is a sub-struct
 			if allStructs[typ.namespace] ~= nil then
-				allStructs[typ.namespace].subs[typ.name] = st
+				table.insert(allStructs[typ.namespace].subs, st)
 			else
-				allStructs[typ.namespace] = {subs = {[typ.name] = st}}
+				allStructs[typ.namespace] = {subs = {st}}
 			end
-		else
+		else --otherwise it's top-level
 			if allStructs[typ.name] ~= nil then
 				st.subs = allStructs[typ.name].subs
 			end
