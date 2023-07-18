@@ -474,7 +474,7 @@ namespace bgfx { namespace d3d12
 
 	static inline D3D12_HEAP_PROPERTIES ID3D12DeviceGetCustomHeapProperties(ID3D12Device *device, uint32_t nodeMask, D3D12_HEAP_TYPE heapType)
 	{
-#if BX_COMPILER_MSVC
+#if BX_COMPILER_MSVC || BX_WINDOWS_CLANG
 		return device->GetCustomHeapProperties(nodeMask, heapType);
 #else
 		D3D12_HEAP_PROPERTIES ret;
@@ -525,7 +525,7 @@ namespace bgfx { namespace d3d12
 			void* ptr;
 			DX_CHECK(resource->Map(0, NULL, &ptr) );
 			D3D12_RESOURCE_ALLOCATION_INFO rai;
-#if BX_COMPILER_MSVC
+#if BX_COMPILER_MSVC || BX_WINDOWS_CLANG
 			rai = _device->GetResourceAllocationInfo(1, 1, _resourceDesc);
 #else
 			_device->GetResourceAllocationInfo(&rai, 1, 1, _resourceDesc);
@@ -626,7 +626,7 @@ namespace bgfx { namespace d3d12
 
 	inline D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandleHeapStart(ID3D12DescriptorHeap* _heap)
 	{
-#if BX_COMPILER_MSVC
+#if BX_COMPILER_MSVC || BX_WINDOWS_CLANG
 		return _heap->GetCPUDescriptorHandleForHeapStart();
 #else
 		D3D12_CPU_DESCRIPTOR_HANDLE handle;
@@ -637,7 +637,7 @@ namespace bgfx { namespace d3d12
 
 	inline D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandleHeapStart(ID3D12DescriptorHeap* _heap)
 	{
-#if BX_COMPILER_MSVC
+#if BX_COMPILER_MSVC || BX_WINDOWS_CLANG
 		return _heap->GetGPUDescriptorHandleForHeapStart();
 #else
 		D3D12_GPU_DESCRIPTOR_HANDLE handle;
@@ -648,7 +648,7 @@ namespace bgfx { namespace d3d12
 
 	inline D3D12_RESOURCE_DESC getResourceDesc(ID3D12Resource* _resource)
 	{
-#if BX_COMPILER_MSVC
+#if BX_COMPILER_MSVC || BX_WINDOWS_CLANG
 		return _resource->GetDesc();
 #else
 		D3D12_RESOURCE_DESC desc;
