@@ -573,11 +573,14 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					{
 						g_caps.vendorId = BGFX_PCI_ID_APPLE;
 
+#if ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 130000) || (__IPHONE_OS_VERSION_MAX_ALLOWED >= 160000))
 						if ([m_device supportsFamily: MTLGPUFamilyApple8])
 						{
 							g_caps.deviceId = 1008;
 						}
-						else if ([m_device supportsFamily: MTLGPUFamilyApple7])
+						else
+#endif
+						if ([m_device supportsFamily: MTLGPUFamilyApple7])
 						{
 							g_caps.deviceId = 1007;
 						}
@@ -2355,7 +2358,11 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 					if (NULL != reflection)
 					{
+#if ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 130000) || (__IPHONE_OS_VERSION_MAX_ALLOWED >= 160000))
 						processArguments(pso, reflection.vertexBindings, reflection.fragmentBindings);
+#else
+						processArguments(pso, reflection.vertexArguments, reflection.fragmentArguments);
+#endif
 					}
 				}
 
@@ -2402,7 +2409,11 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					, MTLPipelineOptionBufferTypeInfo
 					, &reflection
 					);
+#if ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 130000) || (__IPHONE_OS_VERSION_MAX_ALLOWED >= 160000))
 				processArguments(pso, reflection.bindings, NULL);
+#else
+				processArguments(pso, reflection.arguments, NULL);
+#endif
 
 				for (uint32_t ii = 0; ii < 3; ++ii)
 				{
