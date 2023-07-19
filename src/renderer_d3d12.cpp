@@ -3136,7 +3136,7 @@ namespace bgfx { namespace d3d12
 				bx::Error err;
 				read(&rd, dxbc, &err);
 
-				bool patchShader = !dxbc.shader.aon9;
+				bool patchShader = !dxbc.shader.aon9 && !dxbc.shader.dxil;
 				if (BX_ENABLED(BGFX_CONFIG_DEBUG)
 				&&  patchShader)
 				{

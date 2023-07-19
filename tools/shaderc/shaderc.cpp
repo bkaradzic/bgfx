@@ -103,6 +103,7 @@ namespace bgfx
 		{  ShadingLang::HLSL,  300,    "s_3_0"      },
 		{  ShadingLang::HLSL,  400,    "s_4_0"      },
 		{  ShadingLang::HLSL,  500,    "s_5_0"      },
+		{  ShadingLang::HLSL,  610,    "s_6_1"      }, // This is a part of an ugly hack to enable SM6.1 barycentrics
 		{  ShadingLang::Metal, 1000,   "metal"      },
 		{  ShadingLang::PSSL,  1000,   "pssl"       },
 		{  ShadingLang::SpirV, 1010,   "spirv"      },
