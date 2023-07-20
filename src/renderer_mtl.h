@@ -976,6 +976,7 @@ namespace bgfx { namespace mtl
 			if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED))
 			{
 				MTL_RELEASE(m_ptr);
+				MTL_RELEASE(m_ptrMsaa);
 			}
 			MTL_RELEASE(m_ptrStencil);
 			for (uint32_t ii = 0; ii < m_numMips; ++ii)
