@@ -2216,6 +2216,7 @@ func.Encoder.setTransform
 	                   --- to be used for other draw primitive call.
 	.mtx "const void*" --- Pointer to first matrix in array.
 	.num "uint16_t"    --- Number of matrices in array.
+	 { default = 1 }
 
 ---  Set model matrix from matrix cache for draw primitive.
 func.Encoder.setTransform { cname = "set_transform_cached" }
