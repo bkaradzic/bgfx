@@ -1039,7 +1039,7 @@ func.VertexLayout.decode { const }
 	.asInt      "bool &"             { out } --- Attribute is packed as int.
 
 --- Returns `true` if VertexLayout contains attribute.
-func.VertexLayout.has { const }
+func.VertexLayout.has { const, conly, cppinline }
 	"bool"                 --- True if VertexLayout contains attribute.
 	.attrib "Attrib::Enum" --- Attribute semantics. See: `bgfx::Attrib`
 
@@ -1054,16 +1054,16 @@ func.VertexLayout["end"]
 	"void"
 
 --- Returns relative attribute offset from the vertex.
-func.VertexLayout.getOffset { const , cpponly }
+func.VertexLayout.getOffset { const, cppinline }
 	"uint16_t"                --- Relative attribute offset from the vertex.
 	.attrib    "Attrib::Enum" --- Attribute semantics. See: `bgfx::Attrib`
 
 --- Returns vertex stride.
-func.VertexLayout.getStride { const , cpponly }
+func.VertexLayout.getStride { const, cppinline }
 	"uint16_t" --- Vertex stride.
 
 --- Returns size of vertex buffer for number of vertices.
-func.VertexLayout.getSize { const, cpponly }
+func.VertexLayout.getSize { const, cppinline }
 	"uint32_t"      --- Size of vertex buffer for number of vertices.
 	.num "uint32_t" --- Number of vertices.
 
@@ -2216,6 +2216,7 @@ func.Encoder.setTransform
 	                   --- to be used for other draw primitive call.
 	.mtx "const void*" --- Pointer to first matrix in array.
 	.num "uint16_t"    --- Number of matrices in array.
+	 { default = 1 }
 
 ---  Set model matrix from matrix cache for draw primitive.
 func.Encoder.setTransform { cname = "set_transform_cached" }

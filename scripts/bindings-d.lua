@@ -334,7 +334,7 @@ local function genVersion()
 end
 
 local function genStructMemberFn(func) --NOTE: this does not work on nested structs
-	if func.class ~= nil and func.conly == nil then
+	if func.class ~= nil and func.conly == nil and func.cppinline == nil then
 		local st = allStructs[func.class]
 		local attribs = ""
 		if func.comments ~= nil then
@@ -804,7 +804,7 @@ extern(C++, "bgfx") package final abstract class %s{
 end
 
 function converter.funcs(func)
-	if func.class == nil and func.conly == nil then
+	if func.class == nil and func.conly == nil and func.cppinline == nil then
 		local extern = "C++, \"bgfx\""
 		local attribs = ""
 		if func.cfunc ~= nil and func.name ~= "init" then --what the is "cfunc" even meant to mean?
