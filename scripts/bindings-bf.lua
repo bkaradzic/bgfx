@@ -357,6 +357,8 @@ function converter.funcs(func)
 
 	if func.cpponly then
 		return
+	elseif func.cppinline and not func.conly then
+		return
 	end
 
 	if func.comments ~= nil then

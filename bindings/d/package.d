@@ -1461,7 +1461,7 @@ extern(C++, "bgfx") struct Encoder{
 				mtx = Pointer to first matrix in array.
 				num = Number of matrices in array.
 			*/
-			[q{uint}, q{setTransform}, q{const(void)* mtx, ushort num}, `C++`],
+			[q{uint}, q{setTransform}, q{const(void)* mtx, ushort num=1}, `C++`],
 			
 			/**
 			 Set model matrix from matrix cache for draw primitive.
