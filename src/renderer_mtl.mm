@@ -3400,15 +3400,18 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			m_backBufferStencil = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 		}
 
+		if (NULL != m_backBufferColorMsaa)
+		{
+			release(m_backBufferColorMsaa);
+		}
+
 		if (sampleCount > 1)
 		{
-			if (NULL != m_backBufferColorMsaa)
-			{
-				release(m_backBufferColorMsaa);
-			}
-
 			desc.pixelFormat = m_metalLayer.pixelFormat;
 			m_backBufferColorMsaa = s_renderMtl->m_device.newTextureWithDescriptor(desc);
+		}
+		else {
+			m_backBufferColorMsaa = NULL;
 		}
 
 		bx::HashMurmur2A murmur;
