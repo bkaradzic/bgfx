@@ -1305,88 +1305,88 @@ namespace bgfx
 			if (!eol.isEmpty() )
 			{
 				eol.set(eol.getPtr() + 1, parse.getTerm() );
-
-				bx::StringView precision;
-				bx::StringView interpolation;
-				bx::StringView typen = nextWord(parse);
-
-				if (0 == bx::strCmp(typen, "lowp", 4)
-				||  0 == bx::strCmp(typen, "mediump", 7)
-				||  0 == bx::strCmp(typen, "highp", 5) )
-				{
-					precision = typen;
-					typen = nextWord(parse);
-				}
-
-				if (0 == bx::strCmp(typen, "flat", 4)
-				||  0 == bx::strCmp(typen, "smooth", 6)
-				||  0 == bx::strCmp(typen, "noperspective", 13)
-				||  0 == bx::strCmp(typen, "centroid", 8) )
-				{
-					if ('f' == _options.shaderType
-					||   profile->lang == ShadingLang::GLSL
-					||   profile->lang == ShadingLang::ESSL)
-					{
-						interpolation = typen;
-						usesInterpolationQualifiers = true;
-					}
-
-					typen = nextWord(parse);
-				}
-
-				bx::StringView name   = nextWord(parse);
-				bx::StringView column = bx::strSubstr(parse, 0, 1);
-				bx::StringView semantics;
-				if (0 == bx::strCmp(column, ":", 1) )
-				{
-					parse = bx::strLTrimSpace(bx::StringView(parse.getPtr() + 1, parse.getTerm() ) );
-					semantics = nextWord(parse);
-				}
-
-				bx::StringView assign = bx::strSubstr(parse, 0, 1);
-				bx::StringView init;
-				if (0 == bx::strCmp(assign, "=", 1))
-				{
-					parse = bx::strLTrimSpace(bx::StringView(parse.getPtr() + 1, parse.getTerm() ) );
-					init.set(parse.getPtr(), eol.getPtr() );
-				}
-
-				if (!typen.isEmpty()
-				&&  !name.isEmpty()
-				&&  !semantics.isEmpty() )
-				{
-					Varying var;
-					if (!precision.isEmpty() )
-					{
-						var.m_precision.assign(precision.getPtr(), precision.getTerm() );
-					}
-
-					if (!interpolation.isEmpty() )
-					{
-						var.m_interpolation.assign(interpolation.getPtr(), interpolation.getTerm() );
-					}
-
-					var.m_type.assign(typen.getPtr(), typen.getTerm() );
-					var.m_name.assign(name.getPtr(), name.getTerm() );
-					var.m_semantics.assign(semantics.getPtr(), semantics.getTerm() );
-
-					if (profile->lang == ShadingLang::HLSL
-					&&  profile->id < 400
-					&&  var.m_semantics == "BITANGENT")
-					{
-						var.m_semantics = "BINORMAL";
-					}
-
-					if (!init.isEmpty() )
-					{
-						var.m_init.assign(init.getPtr(), init.getTerm() );
-					}
-
-					varyingMap.insert(std::make_pair(var.m_name, var) );
-				}
-
-				parse = bx::strLTrimSpace(bx::strFindNl(bx::StringView(eol.getPtr(), term.getTerm() ) ) );
 			}
+
+			bx::StringView precision;
+			bx::StringView interpolation;
+			bx::StringView typen = nextWord(parse);
+
+			if (0 == bx::strCmp(typen, "lowp", 4)
+			||  0 == bx::strCmp(typen, "mediump", 7)
+			||  0 == bx::strCmp(typen, "highp", 5) )
+			{
+				precision = typen;
+				typen = nextWord(parse);
+			}
+
+			if (0 == bx::strCmp(typen, "flat", 4)
+			||  0 == bx::strCmp(typen, "smooth", 6)
+			||  0 == bx::strCmp(typen, "noperspective", 13)
+			||  0 == bx::strCmp(typen, "centroid", 8) )
+			{
+				if ('f' == _options.shaderType
+				||   profile->lang == ShadingLang::GLSL
+				||   profile->lang == ShadingLang::ESSL)
+				{
+					interpolation = typen;
+					usesInterpolationQualifiers = true;
+				}
+
+				typen = nextWord(parse);
+			}
+
+			bx::StringView name   = nextWord(parse);
+			bx::StringView column = bx::strSubstr(parse, 0, 1);
+			bx::StringView semantics;
+			if (0 == bx::strCmp(column, ":", 1) )
+			{
+				parse = bx::strLTrimSpace(bx::StringView(parse.getPtr() + 1, parse.getTerm() ) );
+				semantics = nextWord(parse);
+			}
+
+			bx::StringView assign = bx::strSubstr(parse, 0, 1);
+			bx::StringView init;
+			if (0 == bx::strCmp(assign, "=", 1))
+			{
+				parse = bx::strLTrimSpace(bx::StringView(parse.getPtr() + 1, parse.getTerm() ) );
+				init.set(parse.getPtr(), eol.getPtr() );
+			}
+
+			if (!typen.isEmpty()
+			&&  !name.isEmpty()
+			&&  !semantics.isEmpty() )
+			{
+				Varying var;
+				if (!precision.isEmpty() )
+				{
+					var.m_precision.assign(precision.getPtr(), precision.getTerm() );
+				}
+
+				if (!interpolation.isEmpty() )
+				{
+					var.m_interpolation.assign(interpolation.getPtr(), interpolation.getTerm() );
+				}
+
+				var.m_type.assign(typen.getPtr(), typen.getTerm() );
+				var.m_name.assign(name.getPtr(), name.getTerm() );
+				var.m_semantics.assign(semantics.getPtr(), semantics.getTerm() );
+
+				if (profile->lang == ShadingLang::HLSL
+				&&  profile->id < 400
+				&&  var.m_semantics == "BITANGENT")
+				{
+					var.m_semantics = "BINORMAL";
+				}
+
+				if (!init.isEmpty() )
+				{
+					var.m_init.assign(init.getPtr(), init.getTerm() );
+				}
+
+				varyingMap.insert(std::make_pair(var.m_name, var) );
+			}
+
+			parse = bx::strLTrimSpace(bx::strFindNl(bx::StringView(eol.getPtr(), term.getTerm() ) ) );
 		}
 
 		bool raw = _options.raw;
