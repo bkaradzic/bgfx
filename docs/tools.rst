@@ -71,6 +71,7 @@ Some differences between bgfx's shaderc flavor of GLSL and vanilla GLSL:
 -  ``bool/int`` uniforms are not allowed; all uniforms must be ``float``.
 -  Attributes and varyings can only be accessed from ``main()``.
 -  ``SAMPLER2D/3D/CUBE/etc.`` macros replace the ``sampler2D/3D/Cube/etc.`` tokens.
+- Sampler names should not end with ``Texture``, ``Sampler``, or ``SamplerComparison``.
 -  ``vec2/3/4_splat(<value>)`` replaces the ``vec2/3/4(<value>)`` constructor.
    ``vec2/3/4`` constructors with multiple values are still valid.
 -  ``mtxFromCols/mtxFromRows`` must be used for constructing matrices.
@@ -207,7 +208,7 @@ Options:
                             Can be 0–3.
   --Werror                  Treat warnings as errors.
 
-Building shaders
+Building Shaders
 ~~~~~~~~~~~~~~~~
 
 Shaders can be compiled for all renderers by using the ``shaderc`` tool.
