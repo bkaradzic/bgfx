@@ -533,7 +533,7 @@ namespace bgfx { namespace hlsl
 					if (end.isEmpty())
 						end = bx::strFind(bindDesc.Name, "Texture");
 
-					if (!end.isEmpty())
+					if (!end.isEmpty() )
 					{
 						Uniform un;
 						un.name.assign(bindDesc.Name, (end.getPtr() - bindDesc.Name) );

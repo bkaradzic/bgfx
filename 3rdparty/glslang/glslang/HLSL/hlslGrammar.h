@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2016-2018 Google, Inc.
 // Copyright (C) 2016 LunarG, Inc.
+// Copyright (C) 2023 Mobica Limited.
 //
 // All rights reserved.
 //
@@ -72,7 +73,8 @@ namespace glslang {
         bool acceptSamplerState();
         bool acceptFullySpecifiedType(TType&, const TAttributes&);
         bool acceptFullySpecifiedType(TType&, TIntermNode*& nodeList, const TAttributes&, bool forbidDeclarators = false);
-        bool acceptQualifier(TQualifier&);
+        bool acceptPreQualifier(TQualifier&);
+        bool acceptPostQualifier(TQualifier&);
         bool acceptLayoutQualifierList(TQualifier&);
         bool acceptType(TType&);
         bool acceptType(TType&, TIntermNode*& nodeList);

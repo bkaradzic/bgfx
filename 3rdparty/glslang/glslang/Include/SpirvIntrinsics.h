@@ -98,12 +98,23 @@ struct TSpirvInstruction {
 struct TSpirvTypeParameter {
     POOL_ALLOCATOR_NEW_DELETE(GetThreadPoolAllocator())
 
-    TSpirvTypeParameter(const TIntermConstantUnion* arg) { constant = arg; }
+    TSpirvTypeParameter(const TIntermConstantUnion* arg)
+    {
+        constant = arg;
+        type = nullptr;
+    }
 
-    bool operator==(const TSpirvTypeParameter& rhs) const { return constant == rhs.constant; }
+    TSpirvTypeParameter(const TType *arg)
+    {
+        constant = nullptr;
+        type = arg;
+    }
+
+    bool operator==(const TSpirvTypeParameter& rhs) const;
     bool operator!=(const TSpirvTypeParameter& rhs) const { return !operator==(rhs); }
 
-    const TIntermConstantUnion* constant;
+    const TIntermConstantUnion* constant; // Constant expression
+    const TType* type;                    // Type specifier
 };
 
 typedef TVector<TSpirvTypeParameter> TSpirvTypeParameters;

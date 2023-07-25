@@ -37,3 +37,4 @@
 {36, "Taichi Graphics", "Taichi", "Taichi Graphics Taichi"},
 {37, "heroseh", "Hero C Compiler", "heroseh Hero C Compiler"},
 {38, "Meta", "SparkSL", "Meta SparkSL"},
+{39, "SirLynix", "Nazara ShaderLang Compiler", "SirLynix Nazara ShaderLang Compiler"},

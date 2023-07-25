@@ -7187,6 +7187,35 @@ void CompilerMSL::emit_custom_functions()
 			end_scope();
 			end_scope_decl();
 			statement("");
+			break;
+
+		case SPVFuncImplRayQueryIntersectionParams:
+			statement("intersection_params spvMakeIntersectionParams(uint flags)");
+			begin_scope();
+			statement("intersection_params ip;");
+			statement("if ((flags & ", RayFlagsOpaqueKHRMask, ") != 0)");
+			statement("    ip.force_opacity(forced_opacity::opaque);");
+			statement("if ((flags & ", RayFlagsNoOpaqueKHRMask, ") != 0)");
+			statement("    ip.force_opacity(forced_opacity::non_opaque);");
+			statement("if ((flags & ", RayFlagsTerminateOnFirstHitKHRMask, ") != 0)");
+			statement("    ip.accept_any_intersection(true);");
+			// RayFlagsSkipClosestHitShaderKHRMask is not available in MSL
+			statement("if ((flags & ", RayFlagsCullBackFacingTrianglesKHRMask, ") != 0)");
+			statement("    ip.set_triangle_cull_mode(triangle_cull_mode::back);");
+			statement("if ((flags & ", RayFlagsCullFrontFacingTrianglesKHRMask, ") != 0)");
+			statement("    ip.set_triangle_cull_mode(triangle_cull_mode::front);");
+			statement("if ((flags & ", RayFlagsCullOpaqueKHRMask, ") != 0)");
+			statement("    ip.set_opacity_cull_mode(opacity_cull_mode::opaque);");
+			statement("if ((flags & ", RayFlagsCullNoOpaqueKHRMask, ") != 0)");
+			statement("    ip.set_opacity_cull_mode(opacity_cull_mode::non_opaque);");
+			statement("if ((flags & ", RayFlagsSkipTrianglesKHRMask, ") != 0)");
+			statement("    ip.set_geometry_cull_mode(geometry_cull_mode::triangle);");
+			statement("if ((flags & ", RayFlagsSkipAABBsKHRMask, ") != 0)");
+			statement("    ip.set_geometry_cull_mode(geometry_cull_mode::bounding_box);");
+			statement("return ip;");
+			end_scope();
+			statement("");
+			break;
 
 		default:
 			break;
@@ -9137,6 +9166,16 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		break;
 	}
 
+	// Legacy sub-group stuff ...
+	case OpSubgroupBallotKHR:
+	case OpSubgroupFirstInvocationKHR:
+	case OpSubgroupReadInvocationKHR:
+	case OpSubgroupAllKHR:
+	case OpSubgroupAnyKHR:
+	case OpSubgroupAllEqualKHR:
+		emit_subgroup_op(instruction);
+		break;
+
 	// SPV_INTEL_shader_integer_functions2
 	case OpUCountLeadingZerosINTEL:
 		MSL_UFOP(clz);
@@ -9227,10 +9266,11 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 	case OpRayQueryInitializeKHR:
 	{
 		flush_variable_declaration(ops[0]);
+		add_spv_func_and_recompile(SPVFuncImplRayQueryIntersectionParams);
 
 		statement(to_expression(ops[0]), ".reset(", "ray(", to_expression(ops[4]), ", ", to_expression(ops[6]), ", ",
 		          to_expression(ops[5]), ", ", to_expression(ops[7]), "), ", to_expression(ops[1]),
-		          ", intersection_params());");
+		          ", spvMakeIntersectionParams(", to_expression(ops[2]), "));");
 		break;
 	}
 	case OpRayQueryProceedKHR:
@@ -15149,6 +15189,10 @@ void CompilerMSL::emit_subgroup_op(const Instruction &i)
 		case OpGroupNonUniformBallotFindLSB:
 		case OpGroupNonUniformBallotFindMSB:
 		case OpGroupNonUniformBallotBitCount:
+		case OpSubgroupBallotKHR:
+		case OpSubgroupAllKHR:
+		case OpSubgroupAnyKHR:
+		case OpSubgroupAllEqualKHR:
 			if (!msl_options.supports_msl_version(2, 2))
 				SPIRV_CROSS_THROW("Ballot ops on iOS requires Metal 2.2 and up.");
 			break;
@@ -15159,6 +15203,7 @@ void CompilerMSL::emit_subgroup_op(const Instruction &i)
 		case OpGroupNonUniformShuffleDown:
 		case OpGroupNonUniformQuadSwap:
 		case OpGroupNonUniformQuadBroadcast:
+		case OpSubgroupReadInvocationKHR:
 			break;
 		}
 	}
@@ -15174,14 +15219,31 @@ void CompilerMSL::emit_subgroup_op(const Instruction &i)
 		case OpGroupNonUniformShuffleXor:
 		case OpGroupNonUniformShuffleUp:
 		case OpGroupNonUniformShuffleDown:
+		case OpSubgroupReadInvocationKHR:
 			break;
 		}
 	}
 
-	uint32_t result_type = ops[0];
-	uint32_t id = ops[1];
+	uint32_t op_idx = 0;
+	uint32_t result_type = ops[op_idx++];
+	uint32_t id = ops[op_idx++];
 
-	auto scope = static_cast<Scope>(evaluate_constant_u32(ops[2]));
+	Scope scope;
+	switch (op)
+	{
+	case OpSubgroupBallotKHR:
+	case OpSubgroupFirstInvocationKHR:
+	case OpSubgroupReadInvocationKHR:
+	case OpSubgroupAllKHR:
+	case OpSubgroupAnyKHR:
+	case OpSubgroupAllEqualKHR:
+		// These earlier instructions don't have the scope operand.
+		scope = ScopeSubgroup;
+		break;
+	default:
+		scope = static_cast<Scope>(evaluate_constant_u32(ops[op_idx++]));
+		break;
+	}
 	if (scope != ScopeSubgroup)
 		SPIRV_CROSS_THROW("Only subgroup scope is supported.");
 
@@ -15195,47 +15257,50 @@ void CompilerMSL::emit_subgroup_op(const Instruction &i)
 		break;
 
 	case OpGroupNonUniformBroadcast:
-		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvSubgroupBroadcast");
+	case OpSubgroupReadInvocationKHR:
+		emit_binary_func_op(result_type, id, ops[op_idx], ops[op_idx + 1], "spvSubgroupBroadcast");
 		break;
 
 	case OpGroupNonUniformBroadcastFirst:
-		emit_unary_func_op(result_type, id, ops[3], "spvSubgroupBroadcastFirst");
+	case OpSubgroupFirstInvocationKHR:
+		emit_unary_func_op(result_type, id, ops[op_idx], "spvSubgroupBroadcastFirst");
 		break;
 
 	case OpGroupNonUniformBallot:
-		emit_unary_func_op(result_type, id, ops[3], "spvSubgroupBallot");
+	case OpSubgroupBallotKHR:
+		emit_unary_func_op(result_type, id, ops[op_idx], "spvSubgroupBallot");
 		break;
 
 	case OpGroupNonUniformInverseBallot:
-		emit_binary_func_op(result_type, id, ops[3], builtin_subgroup_invocation_id_id, "spvSubgroupBallotBitExtract");
+		emit_binary_func_op(result_type, id, ops[op_idx], builtin_subgroup_invocation_id_id, "spvSubgroupBallotBitExtract");
 		break;
 
 	case OpGroupNonUniformBallotBitExtract:
-		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvSubgroupBallotBitExtract");
+		emit_binary_func_op(result_type, id, ops[op_idx], ops[op_idx + 1], "spvSubgroupBallotBitExtract");
 		break;
 
 	case OpGroupNonUniformBallotFindLSB:
-		emit_binary_func_op(result_type, id, ops[3], builtin_subgroup_size_id, "spvSubgroupBallotFindLSB");
+		emit_binary_func_op(result_type, id, ops[op_idx], builtin_subgroup_size_id, "spvSubgroupBallotFindLSB");
 		break;
 
 	case OpGroupNonUniformBallotFindMSB:
-		emit_binary_func_op(result_type, id, ops[3], builtin_subgroup_size_id, "spvSubgroupBallotFindMSB");
+		emit_binary_func_op(result_type, id, ops[op_idx], builtin_subgroup_size_id, "spvSubgroupBallotFindMSB");
 		break;
 
 	case OpGroupNonUniformBallotBitCount:
 	{
-		auto operation = static_cast<GroupOperation>(ops[3]);
+		auto operation = static_cast<GroupOperation>(ops[op_idx++]);
 		switch (operation)
 		{
 		case GroupOperationReduce:
-			emit_binary_func_op(result_type, id, ops[4], builtin_subgroup_size_id, "spvSubgroupBallotBitCount");
+			emit_binary_func_op(result_type, id, ops[op_idx], builtin_subgroup_size_id, "spvSubgroupBallotBitCount");
 			break;
 		case GroupOperationInclusiveScan:
-			emit_binary_func_op(result_type, id, ops[4], builtin_subgroup_invocation_id_id,
+			emit_binary_func_op(result_type, id, ops[op_idx], builtin_subgroup_invocation_id_id,
 			                    "spvSubgroupBallotInclusiveBitCount");
 			break;
 		case GroupOperationExclusiveScan:
-			emit_binary_func_op(result_type, id, ops[4], builtin_subgroup_invocation_id_id,
+			emit_binary_func_op(result_type, id, ops[op_idx], builtin_subgroup_invocation_id_id,
 			                    "spvSubgroupBallotExclusiveBitCount");
 			break;
 		default:
@@ -15245,57 +15310,60 @@ void CompilerMSL::emit_subgroup_op(const Instruction &i)
 	}
 
 	case OpGroupNonUniformShuffle:
-		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvSubgroupShuffle");
+		emit_binary_func_op(result_type, id, ops[op_idx], ops[op_idx + 1], "spvSubgroupShuffle");
 		break;
 
 	case OpGroupNonUniformShuffleXor:
-		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvSubgroupShuffleXor");
+		emit_binary_func_op(result_type, id, ops[op_idx], ops[op_idx + 1], "spvSubgroupShuffleXor");
 		break;
 
 	case OpGroupNonUniformShuffleUp:
-		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvSubgroupShuffleUp");
+		emit_binary_func_op(result_type, id, ops[op_idx], ops[op_idx + 1], "spvSubgroupShuffleUp");
 		break;
 
 	case OpGroupNonUniformShuffleDown:
-		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvSubgroupShuffleDown");
+		emit_binary_func_op(result_type, id, ops[op_idx], ops[op_idx + 1], "spvSubgroupShuffleDown");
 		break;
 
 	case OpGroupNonUniformAll:
+	case OpSubgroupAllKHR:
 		if (msl_options.use_quadgroup_operation())
-			emit_unary_func_op(result_type, id, ops[3], "quad_all");
+			emit_unary_func_op(result_type, id, ops[op_idx], "quad_all");
 		else
-			emit_unary_func_op(result_type, id, ops[3], "simd_all");
+			emit_unary_func_op(result_type, id, ops[op_idx], "simd_all");
 		break;
 
 	case OpGroupNonUniformAny:
+	case OpSubgroupAnyKHR:
 		if (msl_options.use_quadgroup_operation())
-			emit_unary_func_op(result_type, id, ops[3], "quad_any");
+			emit_unary_func_op(result_type, id, ops[op_idx], "quad_any");
 		else
-			emit_unary_func_op(result_type, id, ops[3], "simd_any");
+			emit_unary_func_op(result_type, id, ops[op_idx], "simd_any");
 		break;
 
 	case OpGroupNonUniformAllEqual:
-		emit_unary_func_op(result_type, id, ops[3], "spvSubgroupAllEqual");
+	case OpSubgroupAllEqualKHR:
+		emit_unary_func_op(result_type, id, ops[op_idx], "spvSubgroupAllEqual");
 		break;
 
 		// clang-format off
 #define MSL_GROUP_OP(op, msl_op) \
 case OpGroupNonUniform##op: \
 	{ \
-		auto operation = static_cast<GroupOperation>(ops[3]); \
+		auto operation = static_cast<GroupOperation>(ops[op_idx++]); \
 		if (operation == GroupOperationReduce) \
-			emit_unary_func_op(result_type, id, ops[4], "simd_" #msl_op); \
+			emit_unary_func_op(result_type, id, ops[op_idx], "simd_" #msl_op); \
 		else if (operation == GroupOperationInclusiveScan) \
-			emit_unary_func_op(result_type, id, ops[4], "simd_prefix_inclusive_" #msl_op); \
+			emit_unary_func_op(result_type, id, ops[op_idx], "simd_prefix_inclusive_" #msl_op); \
 		else if (operation == GroupOperationExclusiveScan) \
-			emit_unary_func_op(result_type, id, ops[4], "simd_prefix_exclusive_" #msl_op); \
+			emit_unary_func_op(result_type, id, ops[op_idx], "simd_prefix_exclusive_" #msl_op); \
 		else if (operation == GroupOperationClusteredReduce) \
 		{ \
 			/* Only cluster sizes of 4 are supported. */ \
-			uint32_t cluster_size = evaluate_constant_u32(ops[5]); \
+			uint32_t cluster_size = evaluate_constant_u32(ops[op_idx + 1]); \
 			if (cluster_size != 4) \
 				SPIRV_CROSS_THROW("Metal only supports quad ClusteredReduce."); \
-			emit_unary_func_op(result_type, id, ops[4], "quad_" #msl_op); \
+			emit_unary_func_op(result_type, id, ops[op_idx], "quad_" #msl_op); \
 		} \
 		else \
 			SPIRV_CROSS_THROW("Invalid group operation."); \
@@ -15311,9 +15379,9 @@ case OpGroupNonUniform##op: \
 #define MSL_GROUP_OP(op, msl_op) \
 case OpGroupNonUniform##op: \
 	{ \
-		auto operation = static_cast<GroupOperation>(ops[3]); \
+		auto operation = static_cast<GroupOperation>(ops[op_idx++]); \
 		if (operation == GroupOperationReduce) \
-			emit_unary_func_op(result_type, id, ops[4], "simd_" #msl_op); \
+			emit_unary_func_op(result_type, id, ops[op_idx], "simd_" #msl_op); \
 		else if (operation == GroupOperationInclusiveScan) \
 			SPIRV_CROSS_THROW("Metal doesn't support InclusiveScan for OpGroupNonUniform" #op "."); \
 		else if (operation == GroupOperationExclusiveScan) \
@@ -15321,10 +15389,10 @@ case OpGroupNonUniform##op: \
 		else if (operation == GroupOperationClusteredReduce) \
 		{ \
 			/* Only cluster sizes of 4 are supported. */ \
-			uint32_t cluster_size = evaluate_constant_u32(ops[5]); \
+			uint32_t cluster_size = evaluate_constant_u32(ops[op_idx + 1]); \
 			if (cluster_size != 4) \
 				SPIRV_CROSS_THROW("Metal only supports quad ClusteredReduce."); \
-			emit_unary_func_op(result_type, id, ops[4], "quad_" #msl_op); \
+			emit_unary_func_op(result_type, id, ops[op_idx], "quad_" #msl_op); \
 		} \
 		else \
 			SPIRV_CROSS_THROW("Invalid group operation."); \
@@ -15334,9 +15402,9 @@ case OpGroupNonUniform##op: \
 #define MSL_GROUP_OP_CAST(op, msl_op, type) \
 case OpGroupNonUniform##op: \
 	{ \
-		auto operation = static_cast<GroupOperation>(ops[3]); \
+		auto operation = static_cast<GroupOperation>(ops[op_idx++]); \
 		if (operation == GroupOperationReduce) \
-			emit_unary_func_op_cast(result_type, id, ops[4], "simd_" #msl_op, type, type); \
+			emit_unary_func_op_cast(result_type, id, ops[op_idx], "simd_" #msl_op, type, type); \
 		else if (operation == GroupOperationInclusiveScan) \
 			SPIRV_CROSS_THROW("Metal doesn't support InclusiveScan for OpGroupNonUniform" #op "."); \
 		else if (operation == GroupOperationExclusiveScan) \
@@ -15344,10 +15412,10 @@ case OpGroupNonUniform##op: \
 		else if (operation == GroupOperationClusteredReduce) \
 		{ \
 			/* Only cluster sizes of 4 are supported. */ \
-			uint32_t cluster_size = evaluate_constant_u32(ops[5]); \
+			uint32_t cluster_size = evaluate_constant_u32(ops[op_idx + 1]); \
 			if (cluster_size != 4) \
 				SPIRV_CROSS_THROW("Metal only supports quad ClusteredReduce."); \
-			emit_unary_func_op_cast(result_type, id, ops[4], "quad_" #msl_op, type, type); \
+			emit_unary_func_op_cast(result_type, id, ops[op_idx], "quad_" #msl_op, type, type); \
 		} \
 		else \
 			SPIRV_CROSS_THROW("Invalid group operation."); \
@@ -15371,11 +15439,11 @@ case OpGroupNonUniform##op: \
 #undef MSL_GROUP_OP_CAST
 
 	case OpGroupNonUniformQuadSwap:
-		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvQuadSwap");
+		emit_binary_func_op(result_type, id, ops[op_idx], ops[op_idx + 1], "spvQuadSwap");
 		break;
 
 	case OpGroupNonUniformQuadBroadcast:
-		emit_binary_func_op(result_type, id, ops[3], ops[4], "spvQuadBroadcast");
+		emit_binary_func_op(result_type, id, ops[op_idx], ops[op_idx + 1], "spvQuadBroadcast");
 		break;
 
 	default:
@@ -16644,12 +16712,15 @@ CompilerMSL::SPVFuncImpl CompilerMSL::OpCodePreprocessor::get_spv_func_impl(Op o
 	}
 
 	case OpGroupNonUniformBroadcast:
+	case OpSubgroupReadInvocationKHR:
 		return SPVFuncImplSubgroupBroadcast;
 
 	case OpGroupNonUniformBroadcastFirst:
+	case OpSubgroupFirstInvocationKHR:
 		return SPVFuncImplSubgroupBroadcastFirst;
 
 	case OpGroupNonUniformBallot:
+	case OpSubgroupBallotKHR:
 		return SPVFuncImplSubgroupBallot;
 
 	case OpGroupNonUniformInverseBallot:
@@ -16666,6 +16737,7 @@ CompilerMSL::SPVFuncImpl CompilerMSL::OpCodePreprocessor::get_spv_func_impl(Op o
 		return SPVFuncImplSubgroupBallotBitCount;
 
 	case OpGroupNonUniformAllEqual:
+	case OpSubgroupAllEqualKHR:
 		return SPVFuncImplSubgroupAllEqual;
 
 	case OpGroupNonUniformShuffle:

@@ -240,7 +240,7 @@ bool IsEnabledByExtension(ValidationState_t& _, uint32_t capability) {
 
   ExtensionSet operand_exts(operand_desc->numExtensions,
                             operand_desc->extensions);
-  if (operand_exts.IsEmpty()) return false;
+  if (operand_exts.empty()) return false;
 
   return _.HasAnyOfExtensions(operand_exts);
 }

@@ -32,6 +32,20 @@
 #define VK_NO_STDINT_H
 #define VK_NO_PROTOTYPES
 #include <vulkan-local/vulkan.h>
+
+// vulkan.h pulls X11 crap...
+#if defined(None)
+#	undef None
+#endif // defined(None)
+
+#if defined(Success)
+#	undef Success
+#endif // defined(Success)
+
+#if defined(Status)
+#	undef Status
+#endif // defined(Status)
+
 #include "renderer.h"
 #include "debug_renderdoc.h"
 

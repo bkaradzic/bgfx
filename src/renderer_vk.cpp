@@ -1416,6 +1416,7 @@ VK_IMPORT_INSTANCE
 				{
 					VkPhysicalDeviceProperties pdp;
 					vkGetPhysicalDeviceProperties(physicalDevices[ii], &pdp);
+
 					BX_TRACE("Physical device %d:", ii);
 					BX_TRACE("\t          Name: %s", pdp.deviceName);
 					BX_TRACE("\t   API version: %d.%d.%d"
@@ -1429,13 +1430,18 @@ VK_IMPORT_INSTANCE
 					BX_TRACE("\t      DeviceId: %x", pdp.deviceID);
 					BX_TRACE("\t          Type: %d", pdp.deviceType);
 
+					if (VK_PHYSICAL_DEVICE_TYPE_CPU == pdp.deviceType)
+					{
+						pdp.vendorID = BGFX_PCI_ID_SOFTWARE_RASTERIZER;
+					}
+
 					g_caps.gpu[ii].vendorId = uint16_t(pdp.vendorID);
 					g_caps.gpu[ii].deviceId = uint16_t(pdp.deviceID);
 					++g_caps.numGPUs;
 
 					if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||            0 != g_caps.deviceId)
 					&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || pdp.vendorID == g_caps.vendorId)
-					&&   (0 == g_caps.deviceId                || pdp.deviceID == g_caps.deviceId) )
+					&&   (               0 == g_caps.deviceId || pdp.deviceID == g_caps.deviceId) )
 					{
 						if (pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
 						||  pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
@@ -1445,7 +1451,7 @@ VK_IMPORT_INSTANCE
 
 						physicalDeviceIdx = ii;
 					}
-					else
+					else if (UINT32_MAX == physicalDeviceIdx)
 					{
 						if (pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
 						{

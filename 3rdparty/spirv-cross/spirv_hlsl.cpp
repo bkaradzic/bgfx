@@ -2254,6 +2254,20 @@ void CompilerHLSL::emit_resources()
 		end_scope();
 		statement("");
 	}
+
+	if (is_mesh_shader && options.vertex.flip_vert_y)
+	{
+		statement("float4 spvFlipVertY(float4 v)");
+		begin_scope();
+		statement("return float4(v.x, -v.y, v.z, v.w);");
+		end_scope();
+		statement("");
+		statement("float spvFlipVertY(float v)");
+		begin_scope();
+		statement("return -v;");
+		end_scope();
+		statement("");
+	}
 }
 
 void CompilerHLSL::emit_texture_size_variants(uint64_t variant_mask, const char *vecsize_qualifier, bool uav,
@@ -4950,6 +4964,19 @@ void CompilerHLSL::write_access_chain(const SPIRAccessChain &chain, uint32_t val
 void CompilerHLSL::emit_store(const Instruction &instruction)
 {
 	auto ops = stream(instruction);
+	if (options.vertex.flip_vert_y)
+	{
+		auto *expr = maybe_get<SPIRExpression>(ops[0]);
+		if (expr != nullptr && expr->access_meshlet_position_y)
+		{
+			auto lhs = to_dereferenced_expression(ops[0]);
+			auto rhs = to_unpacked_expression(ops[1]);
+			statement(lhs, " = spvFlipVertY(", rhs, ");");
+			register_write(ops[0]);
+			return;
+		}
+	}
+
 	auto *chain = maybe_get<SPIRAccessChain>(ops[0]);
 	if (chain)
 		write_access_chain(*chain, ops[1], {});
@@ -6055,6 +6082,11 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 		inherit_expression_dependencies(id, ops[3]);
 		break;
 	}
+
+	case OpAtomicFAddEXT:
+	case OpAtomicFMinEXT:
+	case OpAtomicFMaxEXT:
+		SPIRV_CROSS_THROW("Floating-point atomics are not supported in HLSL.");
 
 	case OpAtomicCompareExchange:
 	case OpAtomicExchange:

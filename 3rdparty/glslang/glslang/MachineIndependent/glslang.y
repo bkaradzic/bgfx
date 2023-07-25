@@ -4439,6 +4439,9 @@ spirv_type_parameter
     : constant_expression {
         $$ = parseContext.makeSpirvTypeParameters($1->getLoc(), $1->getAsConstantUnion());
     }
+    | type_specifier_nonarray {
+        $$ = parseContext.makeSpirvTypeParameters($1.loc, $1);
+    }
 
 spirv_instruction_qualifier
     : SPIRV_INSTRUCTION LEFT_PAREN spirv_instruction_qualifier_list RIGHT_PAREN {

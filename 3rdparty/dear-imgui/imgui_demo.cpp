@@ -1,10 +1,12 @@
-// dear imgui, v1.89.7 WIP
+// dear imgui, v1.89.8 WIP
 // (demo code)
 
 // Help:
 // - Read FAQ at http://dearimgui.com/faq
-// - Newcomers, read 'Programmer guide' in imgui.cpp for notes on how to setup Dear ImGui in your codebase.
 // - Call and read ImGui::ShowDemoWindow() in imgui_demo.cpp. All applications in examples/ are doing that.
+// - Need help integrating Dear ImGui in your codebase?
+//   - Read Getting Started https://github.com/ocornut/imgui/wiki/Getting-Started
+//   - Read 'Programmer guide' in imgui.cpp for notes on how to setup Dear ImGui in your codebase.
 // Read imgui.cpp for more details, documentation and comments.
 // Get the latest version at https://github.com/ocornut/imgui
 
@@ -91,11 +93,7 @@ Index of this file:
 #include <math.h>           // sqrtf, powf, cosf, sinf, floorf, ceilf
 #include <stdio.h>          // vsnprintf, sscanf, printf
 #include <stdlib.h>         // NULL, malloc, free, atoi
-#if defined(_MSC_VER) && _MSC_VER <= 1500 // MSVC 2008 or earlier
-#include <stddef.h>         // intptr_t
-#else
 #include <stdint.h>         // intptr_t
-#endif
 
 // Visual Studio warnings
 #ifdef _MSC_VER
@@ -776,7 +774,7 @@ static void ShowDemoWindowWidgets()
         // - Full-form (any contents):    if (IsItemHovered(...) && BeginTooltip()) { Text("Hello"); EndTooltip(); }
 
         HelpMarker(
-            "Tooltip are typically created by using the IsItemHovered() + SetTooltip() functions over any kind of item.\n\n"
+            "Tooltip are typically created by using a IsItemHovered() + SetTooltip() sequence.\n\n"
             "We provide a helper SetItemTooltip() function to perform the two with standards flags.");
 
         ImVec2 sz = ImVec2(-FLT_MIN, 0.0f);
@@ -794,13 +792,25 @@ static void ShowDemoWindowWidgets()
             ImGui::EndTooltip();
         }
 
-        ImGui::SeparatorText("Custom");
+        ImGui::SeparatorText("Always On");
 
         // Showcase NOT relying on a IsItemHovered() to emit a tooltip.
-        static bool always_on = false;
-        ImGui::Checkbox("Always On", &always_on);
-        if (always_on)
+        // Here the tooltip is always emitted when 'always_on == true'.
+        static int always_on = 0;
+        ImGui::RadioButton("Off", &always_on, 0);
+        ImGui::SameLine();
+        ImGui::RadioButton("Always On (Simple)", &always_on, 1);
+        ImGui::SameLine();
+        ImGui::RadioButton("Always On (Advanced)", &always_on, 2);
+        if (always_on == 1)
             ImGui::SetTooltip("I am following you around.");
+        else if (always_on == 2 && ImGui::BeginTooltip())
+        {
+            ImGui::ProgressBar(sinf((float)ImGui::GetTime()) * 0.5f + 0.5f, ImVec2(ImGui::GetFontSize() * 25, 0.0f));
+            ImGui::EndTooltip();
+        }
+
+        ImGui::SeparatorText("Custom");
 
         // The following examples are passed for documentation purpose but may not be useful to most users.
         // Passing ImGuiHoveredFlags_Tooltip to IsItemHovered() will pull ImGuiHoveredFlags flags values from
@@ -1248,16 +1258,16 @@ static void ShowDemoWindowWidgets()
         IMGUI_DEMO_MARKER("Widgets/Selectables/Basic");
         if (ImGui::TreeNode("Basic"))
         {
-            static bool selection[5] = { false, true, false, false, false };
+            static bool selection[5] = { false, true, false, false };
             ImGui::Selectable("1. I am selectable", &selection[0]);
             ImGui::Selectable("2. I am selectable", &selection[1]);
-            ImGui::Text("(I am not selectable)");
-            ImGui::Selectable("4. I am selectable", &selection[3]);
-            if (ImGui::Selectable("5. I am double clickable", selection[4], ImGuiSelectableFlags_AllowDoubleClick))
+            ImGui::Selectable("3. I am selectable", &selection[2]);
+            if (ImGui::Selectable("4. I am double clickable", selection[3], ImGuiSelectableFlags_AllowDoubleClick))
                 if (ImGui::IsMouseDoubleClicked(0))
-                    selection[4] = !selection[4];
+                    selection[3] = !selection[3];
             ImGui::TreePop();
         }
+
         IMGUI_DEMO_MARKER("Widgets/Selectables/Single Selection");
         if (ImGui::TreeNode("Selection State: Single Selection"))
         {
@@ -1289,17 +1299,18 @@ static void ShowDemoWindowWidgets()
             }
             ImGui::TreePop();
         }
-        IMGUI_DEMO_MARKER("Widgets/Selectables/Rendering more text into the same line");
-        if (ImGui::TreeNode("Rendering more text into the same line"))
+        IMGUI_DEMO_MARKER("Widgets/Selectables/Rendering more items on the same line");
+        if (ImGui::TreeNode("Rendering more items on the same line"))
         {
-            // Using the Selectable() override that takes "bool* p_selected" parameter,
-            // this function toggle your bool value automatically.
+            // (1) Using SetNextItemAllowOverlap()
+            // (2) Using the Selectable() override that takes "bool* p_selected" parameter, the bool value is toggled automatically.
             static bool selected[3] = { false, false, false };
-            ImGui::Selectable("main.c",    &selected[0]); ImGui::SameLine(300); ImGui::Text(" 2,345 bytes");
-            ImGui::Selectable("Hello.cpp", &selected[1]); ImGui::SameLine(300); ImGui::Text("12,345 bytes");
-            ImGui::Selectable("Hello.h",   &selected[2]); ImGui::SameLine(300); ImGui::Text(" 2,345 bytes");
+            ImGui::SetNextItemAllowOverlap(); ImGui::Selectable("main.c",    &selected[0]); ImGui::SameLine(); ImGui::SmallButton("Link 1");
+            ImGui::SetNextItemAllowOverlap(); ImGui::Selectable("Hello.cpp", &selected[1]); ImGui::SameLine(); ImGui::SmallButton("Link 2");
+            ImGui::SetNextItemAllowOverlap(); ImGui::Selectable("Hello.h",   &selected[2]); ImGui::SameLine(); ImGui::SmallButton("Link 3");
             ImGui::TreePop();
         }
+
         IMGUI_DEMO_MARKER("Widgets/Selectables/In columns");
         if (ImGui::TreeNode("In columns"))
         {
@@ -1335,6 +1346,7 @@ static void ShowDemoWindowWidgets()
             }
             ImGui::TreePop();
         }
+
         IMGUI_DEMO_MARKER("Widgets/Selectables/Grid");
         if (ImGui::TreeNode("Grid"))
         {
@@ -1468,6 +1480,7 @@ static void ShowDemoWindowWidgets()
             ImGui::TreePop();
         }
 
+        IMGUI_DEMO_MARKER("Widgets/Text Input/Completion, History, Edit Callbacks");
         if (ImGui::TreeNode("Completion, History, Edit Callbacks"))
         {
             struct Funcs
@@ -1564,6 +1577,18 @@ static void ShowDemoWindowWidgets()
                 my_str.push_back(0);
             Funcs::MyInputTextMultiline("##MyStr", &my_str, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16));
             ImGui::Text("Data: %p\nSize: %d\nCapacity: %d", (void*)my_str.begin(), my_str.size(), my_str.capacity());
+            ImGui::TreePop();
+        }
+
+        IMGUI_DEMO_MARKER("Widgets/Text Input/Miscellaneous");
+        if (ImGui::TreeNode("Miscellaneous"))
+        {
+            static char buf1[16];
+            static ImGuiInputTextFlags flags = ImGuiInputTextFlags_EscapeClearsAll;
+            ImGui::CheckboxFlags("ImGuiInputTextFlags_EscapeClearsAll", &flags, ImGuiInputTextFlags_EscapeClearsAll);
+            ImGui::CheckboxFlags("ImGuiInputTextFlags_ReadOnly", &flags, ImGuiInputTextFlags_ReadOnly);
+            ImGui::CheckboxFlags("ImGuiInputTextFlags_NoUndoRedo", &flags, ImGuiInputTextFlags_NoUndoRedo);
+            ImGui::InputText("Hello", buf1, IM_ARRAYSIZE(buf1), flags);
             ImGui::TreePop();
         }
 
@@ -2430,7 +2455,8 @@ static void ShowDemoWindowWidgets()
             "IsItemHovered() = %d\n"
             "IsItemHovered(_AllowWhenBlockedByPopup) = %d\n"
             "IsItemHovered(_AllowWhenBlockedByActiveItem) = %d\n"
-            "IsItemHovered(_AllowWhenOverlapped) = %d\n"
+            "IsItemHovered(_AllowWhenOverlappedByItem) = %d\n"
+            "IsItemHovered(_AllowWhenOverlappedByWindow) = %d\n"
             "IsItemHovered(_AllowWhenDisabled) = %d\n"
             "IsItemHovered(_RectOnly) = %d\n"
             "IsItemActive() = %d\n"
@@ -2449,7 +2475,8 @@ static void ShowDemoWindowWidgets()
             ImGui::IsItemHovered(),
             ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup),
             ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem),
-            ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlapped),
+            ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlappedByItem),
+            ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenOverlappedByWindow),
             ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled),
             ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly),
             ImGui::IsItemActive(),
@@ -2779,11 +2806,11 @@ static void ShowDemoWindowLayout()
         // Text
         IMGUI_DEMO_MARKER("Layout/Basic Horizontal Layout/SameLine");
         ImGui::Text("Two items: Hello"); ImGui::SameLine();
-        ImGui::TextColored(ImVec4(1,1,0,1), "Sailor");
+        ImGui::TextColored(ImVec4(1, 1, 0, 1), "Sailor");
 
         // Adjust spacing
         ImGui::Text("More spacing: Hello"); ImGui::SameLine(0, 20);
-        ImGui::TextColored(ImVec4(1,1,0,1), "Sailor");
+        ImGui::TextColored(ImVec4(1, 1, 0, 1), "Sailor");
 
         // Button
         ImGui::AlignTextToFramePadding();
@@ -3378,6 +3405,36 @@ static void ShowDemoWindowLayout()
                 break;
             }
         }
+
+        ImGui::TreePop();
+    }
+
+    IMGUI_DEMO_MARKER("Layout/Overlap Mode");
+    if (ImGui::TreeNode("Overlap Mode"))
+    {
+        static bool enable_allow_overlap = true;
+
+        HelpMarker(
+            "Hit-testing is by default performed in item submission order, which generally is perceived as 'back-to-front'.\n\n"
+            "By using SetNextItemAllowOverlap() you can notify that an item may be overlapped by another. Doing so alters the hovering logic: items using AllowOverlap mode requires an extra frame to accept hovered state.");
+        ImGui::Checkbox("Enable AllowOverlap", &enable_allow_overlap);
+
+        ImVec2 button1_pos = ImGui::GetCursorScreenPos();
+        ImVec2 button2_pos = ImVec2(button1_pos.x + 50.0f, button1_pos.y + 50.0f);
+        if (enable_allow_overlap)
+            ImGui::SetNextItemAllowOverlap();
+        ImGui::Button("Button 1", ImVec2(80, 80));
+        ImGui::SetCursorScreenPos(button2_pos);
+        ImGui::Button("Button 2", ImVec2(80, 80));
+
+        // This is typically used with width-spanning items.
+        // (note that Selectable() has a dedicated flag ImGuiSelectableFlags_AllowOverlap, which is a shortcut
+        // for using SetNextItemAllowOverlap(). For demo purpose we use SetNextItemAllowOverlap() here.)
+        if (enable_allow_overlap)
+            ImGui::SetNextItemAllowOverlap();
+        ImGui::Selectable("Some Selectable", false);
+        ImGui::SameLine();
+        ImGui::SmallButton("++");
 
         ImGui::TreePop();
     }
@@ -5482,7 +5539,7 @@ static void ShowDemoWindowTables()
                         ImGui::Button(label, ImVec2(-FLT_MIN, 0.0f));
                     else if (contents_type == CT_Selectable || contents_type == CT_SelectableSpanRow)
                     {
-                        ImGuiSelectableFlags selectable_flags = (contents_type == CT_SelectableSpanRow) ? ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap : ImGuiSelectableFlags_None;
+                        ImGuiSelectableFlags selectable_flags = (contents_type == CT_SelectableSpanRow) ? ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap : ImGuiSelectableFlags_None;
                         if (ImGui::Selectable(label, item_is_selected, selectable_flags, ImVec2(0, row_min_height)))
                         {
                             if (ImGui::GetIO().KeyCtrl)
