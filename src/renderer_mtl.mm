@@ -2337,7 +2337,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 					if (NULL != reflection)
 					{
-#if ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 130000) || (__IPHONE_OS_VERSION_MAX_ALLOWED >= 160000))
+#if BX_XCODE_14
 						processArguments(pso, reflection.vertexBindings, reflection.fragmentBindings);
 #else
 						processArguments(pso, reflection.vertexArguments, reflection.fragmentArguments);
@@ -2388,7 +2388,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					, MTLPipelineOptionBufferTypeInfo
 					, &reflection
 					);
-#if ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 130000) || (__IPHONE_OS_VERSION_MAX_ALLOWED >= 160000))
+#if BX_XCODE_14
 				processArguments(pso, reflection.bindings, NULL);
 #else
 				processArguments(pso, reflection.arguments, NULL);
