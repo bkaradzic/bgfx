@@ -6770,6 +6770,20 @@ VK_DESTROY
 			}
 		}
 #elif BX_PLATFORM_LINUX
+#if     WL_EGL_PLATFORM
+		{
+			if (NULL != vkCreateWaylandSurfaceKHR)
+			{
+				VkWaylandSurfaceCreateInfoKHR sci;
+				sci.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
+				sci.pNext = NULL;
+				sci.flags = 0;
+				sci.display = (wl_display*)g_platformData.ndt;
+                sci.surface = (wl_surface*)0xb8a220; //FIXME
+				result = vkCreateWaylandSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+			}
+		}
+#else
 		{
 			if (NULL != vkCreateXlibSurfaceKHR)
 			{
@@ -6806,6 +6820,7 @@ VK_DESTROY
 				}
 			}
 		}
+#endif // WL_EGL_PLATFORM
 #elif BX_PLATFORM_OSX
 		{
 			if (NULL != vkCreateMacOSSurfaceMVK)
