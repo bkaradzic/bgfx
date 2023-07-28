@@ -28,7 +28,7 @@ namespace entry
 	static uint32_t s_height = ENTRY_DEFAULT_HEIGHT;
 	static bool s_exit = false;
 
-	static bx::FileReaderI* s_fileReader = NULL;
+    bx::FileReaderI* s_fileReader = NULL;
 	static bx::FileWriterI* s_fileWriter = NULL;
 
 	extern bx::AllocatorI* getDefaultAllocator();
@@ -596,7 +596,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	{
 		//DBG(BX_COMPILER_NAME " / " BX_CPU_NAME " / " BX_ARCH_NAME " / " BX_PLATFORM_NAME);
 
-		s_fileReader = BX_NEW(g_allocator, FileReader);
+        if (NULL == s_fileReader)
+        {
+            s_fileReader = BX_NEW(g_allocator, FileReader);
+        }
 		s_fileWriter = BX_NEW(g_allocator, FileWriter);
 
 		cmdInit();

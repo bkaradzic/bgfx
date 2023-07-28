@@ -27,6 +27,9 @@ extern "C"
 
 namespace entry
 {
+    extern bx::FileReaderI* s_fileReader;
+    extern bx::AllocatorI* getDefaultAllocator();
+
 	struct GamepadRemap
 	{
 		uint16_t  m_keyCode;
@@ -186,6 +189,11 @@ namespace entry
 			static const char* const argv[] = { "android.so" };
 			m_mte.m_argc = BX_COUNTOF(argv);
 			m_mte.m_argv = argv;
+
+            if (NULL == s_fileReader)
+            {
+                s_fileReader = BX_NEW(getDefaultAllocator(), FileReaderAndroid)(m_app->activity->assetManager, NULL);
+            }
 
 			while (0 == m_app->destroyRequested)
 			{
@@ -554,14 +562,14 @@ namespace entry
 	{
 		BX_UNUSED(_thread);
 
-		int32_t result = chdir("/sdcard/bgfx/examples/runtime");
-		BX_ASSERT(0 == result
-			, "Failed to chdir to directory (errno: %d, android.permission.WRITE_EXTERNAL_STORAGE?)."
-			, errno
-			);
+//		int32_t result = chdir("/sdcard/bgfx/examples/runtime");
+//		BX_ASSERT(0 == result
+//			, "Failed to chdir to directory (errno: %d, android.permission.WRITE_EXTERNAL_STORAGE?)."
+//			, errno
+//			);
 
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
-		result = main(self->m_argc, self->m_argv);
+		int32_t result = main(self->m_argc, self->m_argv);
 		return result;
 	}
 
