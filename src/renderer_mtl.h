@@ -1162,7 +1162,7 @@ namespace bgfx { namespace mtl
 		uint64_t m_elapsed;
 		uint64_t m_frequency;
 
-		Result m_result[4*2];
+		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
 		bx::RingBufferControl m_control;
 	};
 
