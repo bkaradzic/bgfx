@@ -156,6 +156,7 @@ enum OperandClass {
     OperandKernelEnqueueFlags,
     OperandKernelProfilingInfo,
     OperandCapability,
+    OperandCooperativeMatrixOperands,
 
     OperandOpcode,
 
