@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <functional>
@@ -203,6 +204,14 @@ class EnumSet {
     }
   }
 
+  // Creates a set initialized with the content of the range [begin; end[.
+  template <class InputIt>
+  EnumSet(InputIt begin, InputIt end) : EnumSet() {
+    for (; begin != end; ++begin) {
+      insert(*begin);
+    }
+  }
+
   // Copies the EnumSet `other` into a new EnumSet.
   EnumSet(const EnumSet& other)
       : buckets_(other.buckets_), size_(other.size_) {}
@@ -254,6 +263,15 @@ class EnumSet {
   // Returns an iterator to the inserted element, or the element preventing
   // insertion.
   iterator insert(const_iterator, T&& value) { return insert(value).first; }
+
+  // Inserts all the values in the range [`first`; `last[.
+  // Similar to `std::unordered_set::insert`.
+  template <class InputIt>
+  void insert(InputIt first, InputIt last) {
+    for (auto it = first; it != last; ++it) {
+      insert(*it);
+    }
+  }
 
   // Removes the value `value` into the set.
   // Similar to `std::unordered_set::erase`.

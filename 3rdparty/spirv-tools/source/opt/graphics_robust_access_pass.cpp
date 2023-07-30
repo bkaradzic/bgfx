@@ -573,9 +573,9 @@ uint32_t GraphicsRobustAccessPass::GetGlslInsts() {
       context()->module()->AddExtInstImport(std::move(import_inst));
       module_status_.modified = true;
       context()->AnalyzeDefUse(inst);
-      // Reanalyze the feature list, since we added an extended instruction
-      // set improt.
-      context()->get_feature_mgr()->Analyze(context()->module());
+      // Invalidates the feature manager, since we added an extended instruction
+      // set import.
+      context()->ResetFeatureManager();
     }
   }
   return module_status_.glsl_insts_id;

@@ -155,6 +155,7 @@ const char* spvOperandTypeStr(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_LITERAL_INTEGER:
     case SPV_OPERAND_TYPE_OPTIONAL_LITERAL_INTEGER:
     case SPV_OPERAND_TYPE_OPTIONAL_LITERAL_NUMBER:
+    case SPV_OPERAND_TYPE_LITERAL_FLOAT:
       return "literal number";
     case SPV_OPERAND_TYPE_OPTIONAL_TYPED_LITERAL_INTEGER:
       return "possibly multi-word literal integer";
@@ -332,6 +333,7 @@ bool spvOperandIsConcrete(spv_operand_type_t type) {
   }
   switch (type) {
     case SPV_OPERAND_TYPE_LITERAL_INTEGER:
+    case SPV_OPERAND_TYPE_LITERAL_FLOAT:
     case SPV_OPERAND_TYPE_EXTENSION_INSTRUCTION_NUMBER:
     case SPV_OPERAND_TYPE_SPEC_CONSTANT_OP_NUMBER:
     case SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER:

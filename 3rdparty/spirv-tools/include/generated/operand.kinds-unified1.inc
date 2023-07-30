@@ -27,6 +27,7 @@ static const spv::Capability pygen_variable_caps_FPGALatencyControlINTEL[] = {sp
 static const spv::Capability pygen_variable_caps_FPGALoopControlsINTEL[] = {spv::Capability::FPGALoopControlsINTEL};
 static const spv::Capability pygen_variable_caps_FPGAMemoryAccessesINTEL[] = {spv::Capability::FPGAMemoryAccessesINTEL};
 static const spv::Capability pygen_variable_caps_FPGAMemoryAttributesINTEL[] = {spv::Capability::FPGAMemoryAttributesINTEL};
+static const spv::Capability pygen_variable_caps_FPMaxErrorINTEL[] = {spv::Capability::FPMaxErrorINTEL};
 static const spv::Capability pygen_variable_caps_FragmentBarycentricNVFragmentBarycentricKHR[] = {spv::Capability::FragmentBarycentricNV, spv::Capability::FragmentBarycentricKHR};
 static const spv::Capability pygen_variable_caps_FragmentDensityEXTShadingRateNV[] = {spv::Capability::FragmentDensityEXT, spv::Capability::ShadingRateNV};
 static const spv::Capability pygen_variable_caps_FragmentFullyCoveredEXT[] = {spv::Capability::FragmentFullyCoveredEXT};
@@ -169,6 +170,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_INTEL_debug_module[] = 
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_device_side_avc_motion_estimation[] = {spvtools::Extension::kSPV_INTEL_device_side_avc_motion_estimation};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_float_controls2[] = {spvtools::Extension::kSPV_INTEL_float_controls2};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_fp_fast_math_mode[] = {spvtools::Extension::kSPV_INTEL_fp_fast_math_mode};
+static const spvtools::Extension pygen_variable_exts_SPV_INTEL_fp_max_error[] = {spvtools::Extension::kSPV_INTEL_fp_max_error};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_fpga_argument_interfaces[] = {spvtools::Extension::kSPV_INTEL_fpga_argument_interfaces};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_fpga_buffer_location[] = {spvtools::Extension::kSPV_INTEL_fpga_buffer_location};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_fpga_cluster_attributes[] = {spvtools::Extension::kSPV_INTEL_fpga_cluster_attributes};
@@ -855,6 +857,7 @@ static const spv_operand_desc_t pygen_variable_DecorationEntries[] = {
   {"SingleElementVectorINTEL", 6085, 1, pygen_variable_caps_VectorComputeINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
   {"VectorComputeCallableFunctionINTEL", 6087, 1, pygen_variable_caps_VectorComputeINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
   {"MediaBlockIOINTEL", 6140, 1, pygen_variable_caps_VectorComputeINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"FPMaxErrorDecorationINTEL", 6170, 1, pygen_variable_caps_FPMaxErrorINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_FLOAT}, 0xffffffffu, 0xffffffffu},
   {"LatencyControlLabelINTEL", 6172, 1, pygen_variable_caps_FPGALatencyControlINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0xffffffffu, 0xffffffffu},
   {"LatencyControlConstraintINTEL", 6173, 1, pygen_variable_caps_FPGALatencyControlINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0xffffffffu, 0xffffffffu},
   {"ConduitKernelArgumentINTEL", 6175, 1, pygen_variable_caps_FPGAArgumentInterfacesINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
@@ -1272,6 +1275,7 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"BFloat16ConversionINTEL", 6115, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_bfloat16_conversion, {}, 0xffffffffu, 0xffffffffu},
   {"SplitBarrierINTEL", 6141, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_split_barrier, {}, 0xffffffffu, 0xffffffffu},
   {"FPGAKernelAttributesv2INTEL", 6161, 1, pygen_variable_caps_FPGAKernelAttributesINTEL, 1, pygen_variable_exts_SPV_INTEL_kernel_attributes, {}, 0xffffffffu, 0xffffffffu},
+  {"FPMaxErrorINTEL", 6169, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_fp_max_error, {}, 0xffffffffu, 0xffffffffu},
   {"FPGALatencyControlINTEL", 6171, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_fpga_latency_control, {}, 0xffffffffu, 0xffffffffu},
   {"FPGAArgumentInterfacesINTEL", 6174, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_fpga_argument_interfaces, {}, 0xffffffffu, 0xffffffffu},
   {"GroupUniformArithmeticKHR", 6400, 0, nullptr, 1, pygen_variable_exts_SPV_KHR_uniform_group_instructions, {}, 0xffffffffu, 0xffffffffu}
@@ -1299,12 +1303,12 @@ static const spv_operand_desc_t pygen_variable_PackedVectorFormatEntries[] = {
 };
 
 static const spv_operand_desc_t pygen_variable_CooperativeMatrixOperandsEntries[] = {
-  {"None", 0x0000, 1, pygen_variable_caps_CooperativeMatrixKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
-  {"MatrixASignedComponents", 0x0001, 1, pygen_variable_caps_CooperativeMatrixKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
-  {"MatrixBSignedComponents", 0x0002, 1, pygen_variable_caps_CooperativeMatrixKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
-  {"MatrixCSignedComponents", 0x0004, 1, pygen_variable_caps_CooperativeMatrixKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
-  {"MatrixResultSignedComponents", 0x0008, 1, pygen_variable_caps_CooperativeMatrixKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
-  {"SaturatingAccumulation", 0x0010, 1, pygen_variable_caps_CooperativeMatrixKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
+  {"NoneKHR", 0x0000, 1, pygen_variable_caps_CooperativeMatrixKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"MatrixASignedComponentsKHR", 0x0001, 1, pygen_variable_caps_CooperativeMatrixKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"MatrixBSignedComponentsKHR", 0x0002, 1, pygen_variable_caps_CooperativeMatrixKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"MatrixCSignedComponentsKHR", 0x0004, 1, pygen_variable_caps_CooperativeMatrixKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"MatrixResultSignedComponentsKHR", 0x0008, 1, pygen_variable_caps_CooperativeMatrixKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"SaturatingAccumulationKHR", 0x0010, 1, pygen_variable_caps_CooperativeMatrixKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_CooperativeMatrixLayoutEntries[] = {

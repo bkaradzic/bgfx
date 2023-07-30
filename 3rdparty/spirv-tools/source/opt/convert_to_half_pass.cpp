@@ -63,6 +63,10 @@ bool ConvertToHalfPass::IsRelaxed(uint32_t id) {
 
 void ConvertToHalfPass::AddRelaxed(uint32_t id) { relaxed_ids_set_.insert(id); }
 
+bool ConvertToHalfPass::CanRelaxOpOperands(Instruction* inst) {
+  return image_ops_.count(inst->opcode()) == 0;
+}
+
 analysis::Type* ConvertToHalfPass::FloatScalarType(uint32_t width) {
   analysis::Float float_ty(width);
   return context()->get_type_mgr()->GetRegisteredType(&float_ty);
@@ -313,7 +317,8 @@ bool ConvertToHalfPass::CloseRelaxInst(Instruction* inst) {
   relax = true;
   get_def_use_mgr()->ForEachUser(inst, [&relax, this](Instruction* uinst) {
     if (uinst->result_id() == 0 || !IsFloat(uinst, 32) ||
-        (!IsDecoratedRelaxed(uinst) && !IsRelaxed(uinst->result_id()))) {
+        (!IsDecoratedRelaxed(uinst) && !IsRelaxed(uinst->result_id())) ||
+        !CanRelaxOpOperands(uinst)) {
       relax = false;
       return;
     }

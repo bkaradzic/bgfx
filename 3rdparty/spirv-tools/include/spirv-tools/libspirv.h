@@ -143,6 +143,7 @@ typedef enum spv_operand_type_t {
   // may be larger than 32, which would require such a typed literal value to
   // occupy multiple SPIR-V words.
   SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER,
+  SPV_OPERAND_TYPE_LITERAL_FLOAT,  // Always 32-bit float.
 
   // Set 3:  The literal string operand type.
   SPV_OPERAND_TYPE_LITERAL_STRING,
