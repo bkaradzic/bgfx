@@ -1230,7 +1230,7 @@ VK_IMPORT
 						BX_TRACE("\t%s", layer.m_name);
 					}
 				}
-#if BX_PLATFORM_OSX
+#if BX_PLATFORM_OSX || WL_EGL_PLATFORM
 				uint32_t numEnabledExtensions = headless ? 0 : 3;
 
 				const char* enabledExtension[Extension::Count + 3] =
@@ -6776,9 +6776,10 @@ VK_DESTROY
 			}
 		}
 #elif BX_PLATFORM_LINUX
-#if     WL_EGL_PLATFORM
 		{
-			if (NULL != vkCreateWaylandSurfaceKHR)
+#if     WL_EGL_PLATFORM
+			if ((strcmp(getenv("XDG_SESSION_TYPE"), "wayland") == 0)
+			&& ((void*)0xfffffff < g_platformData.nwh) )// This is not ideal but needed for XWayland
 			{
 				VkWaylandSurfaceCreateInfoKHR sci;
 				sci.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
@@ -6788,45 +6789,46 @@ VK_DESTROY
 				sci.surface = (wl_surface*)((wl_egl_window*)g_platformData.nwh)->surface;
 				result = vkCreateWaylandSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
 			}
-		}
-#else
-		{
-			if (NULL != vkCreateXlibSurfaceKHR)
+			else
+#endif // WL_EGL_PLATFORM
 			{
-				VkXlibSurfaceCreateInfoKHR sci;
-				sci.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
-				sci.pNext = NULL;
-				sci.flags  = 0;
-				sci.dpy    = (Display*)g_platformData.ndt;
-				sci.window = (Window)m_nwh;
-				result = vkCreateXlibSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
-			}
-
-			if (VK_SUCCESS != result)
-			{
-				void* xcbdll = bx::dlopen("libX11-xcb.so.1");
-
-				if (NULL != xcbdll
-				&&  NULL != vkCreateXcbSurfaceKHR)
+				if (NULL != vkCreateXlibSurfaceKHR)
 				{
-					typedef xcb_connection_t* (*PFN_XGETXCBCONNECTION)(Display*);
-					PFN_XGETXCBCONNECTION XGetXCBConnection = (PFN_XGETXCBCONNECTION)bx::dlsym(xcbdll, "XGetXCBConnection");
+					VkXlibSurfaceCreateInfoKHR sci;
+					sci.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
+					sci.pNext = NULL;
+					sci.flags  = 0;
+					sci.dpy    = (Display*)g_platformData.ndt;
+					sci.window = (Window)m_nwh;
+					result = vkCreateXlibSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+				}
 
-					union { void* ptr; xcb_window_t window; } cast = { m_nwh };
+				if (VK_SUCCESS != result)
+				{
+					void* xcbdll = bx::dlopen("libX11-xcb.so.1");
 
-					VkXcbSurfaceCreateInfoKHR sci;
-					sci.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-					sci.pNext      = NULL;
-					sci.flags      = 0;
-					sci.connection = XGetXCBConnection( (Display*)g_platformData.ndt);
-					sci.window     = cast.window;
-					result = vkCreateXcbSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+					if (NULL != xcbdll
+					&&  NULL != vkCreateXcbSurfaceKHR)
+					{
+						typedef xcb_connection_t* (*PFN_XGETXCBCONNECTION)(Display*);
+						PFN_XGETXCBCONNECTION XGetXCBConnection = (PFN_XGETXCBCONNECTION)bx::dlsym(xcbdll, "XGetXCBConnection");
 
-					bx::dlclose(xcbdll);
+						union { void* ptr; xcb_window_t window; } cast = { m_nwh };
+
+						VkXcbSurfaceCreateInfoKHR sci;
+						sci.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+						sci.pNext      = NULL;
+						sci.flags      = 0;
+						sci.connection = XGetXCBConnection( (Display*)g_platformData.ndt);
+						sci.window     = cast.window;
+						result = vkCreateXcbSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+
+						bx::dlclose(xcbdll);
+					}
 				}
 			}
 		}
-#endif // WL_EGL_PLATFORM
+
 #elif BX_PLATFORM_OSX
 		{
 			if (NULL != vkCreateMacOSSurfaceMVK)

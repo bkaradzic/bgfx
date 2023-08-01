@@ -17,10 +17,13 @@
 #elif BX_PLATFORM_LINUX
 #	if WL_EGL_PLATFORM
 #		define VK_USE_PLATFORM_WAYLAND_KHR
-#		define KHR_SURFACE_EXTENSION_NAME VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME
+#	endif // WL_EGL_PLATFORM
+#	define VK_USE_PLATFORM_XLIB_KHR
+#	define VK_USE_PLATFORM_XCB_KHR
+#	if WL_EGL_PLATFORM
+#		define KHR_SURFACE_EXTENSION_NAME VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME, \
+		VK_KHR_XCB_SURFACE_EXTENSION_NAME
 #	else
-#		define VK_USE_PLATFORM_XLIB_KHR
-#		define VK_USE_PLATFORM_XCB_KHR
 #		define KHR_SURFACE_EXTENSION_NAME VK_KHR_XCB_SURFACE_EXTENSION_NAME
 #	endif // WL_EGL_PLATFORM
 #	define VK_IMPORT_INSTANCE_PLATFORM VK_IMPORT_INSTANCE_LINUX
@@ -75,6 +78,12 @@
 			/* VK_KHR_wayland_surface */                                                      \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateWaylandSurfaceKHR);                        \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceWaylandPresentationSupportKHR); \
+			/* VK_KHR_xlib_surface */                                                         \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateXlibSurfaceKHR);                           \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceXlibPresentationSupportKHR);    \
+			/* VK_KHR_xcb_surface */                                                          \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateXcbSurfaceKHR);                            \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceXcbPresentationSupportKHR);     \
 
 #else
 #define VK_IMPORT_INSTANCE_LINUX                                                           \
