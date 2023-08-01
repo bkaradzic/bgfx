@@ -17,6 +17,10 @@
 #	import <Metal/Metal.h>
 #endif // BX_PLATFORM_OSX
 
+#if WL_EGL_PLATFORM
+#	include <wayland-egl-backend.h>
+#endif
+
 namespace bgfx { namespace vk
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -6779,7 +6783,7 @@ VK_DESTROY
 				sci.pNext = NULL;
 				sci.flags = 0;
 				sci.display = (wl_display*)g_platformData.ndt;
-                sci.surface = (wl_surface*)0xb8a220; //FIXME
+				sci.surface = (wl_surface*)((wl_egl_window*)g_platformData.nwh)->surface;
 				result = vkCreateWaylandSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
 			}
 		}
