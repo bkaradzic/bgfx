@@ -11,10 +11,14 @@
 #	define KHR_SURFACE_EXTENSION_NAME VK_KHR_ANDROID_SURFACE_EXTENSION_NAME
 #	define VK_IMPORT_INSTANCE_PLATFORM VK_IMPORT_INSTANCE_ANDROID
 #elif BX_PLATFORM_LINUX
+#if WL_EGL_PLATFORM
+#	define VK_USE_PLATFORM_WAYLAND_KHR
+#	define KHR_SURFACE_EXTENSION_NAME VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME
+#else
 #	define VK_USE_PLATFORM_XLIB_KHR
 #	define VK_USE_PLATFORM_XCB_KHR
-//#	define VK_USE_PLATFORM_WAYLAND_KHR
 #	define KHR_SURFACE_EXTENSION_NAME VK_KHR_XCB_SURFACE_EXTENSION_NAME
+#endif // WL_EGL_PLATFORM
 #	define VK_IMPORT_INSTANCE_PLATFORM VK_IMPORT_INSTANCE_LINUX
 #elif BX_PLATFORM_WINDOWS
 #	define VK_USE_PLATFORM_WIN32_KHR
@@ -62,6 +66,14 @@
 			/* VK_KHR_android_surface */                               \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateAndroidSurfaceKHR); \
 
+#if WL_EGL_PLATFORM
+#define VK_IMPORT_INSTANCE_LINUX                                                              \
+			/* VK_KHR_wayland_surface */                                                      \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateWaylandSurfaceKHR);                        \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceWaylandPresentationSupportKHR); \
+
+
+#else
 #define VK_IMPORT_INSTANCE_LINUX                                                           \
 			/* VK_KHR_xlib_surface */                                                      \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateXlibSurfaceKHR);                        \
@@ -70,9 +82,7 @@
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateXcbSurfaceKHR);                         \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceXcbPresentationSupportKHR);  \
 
-//			/* VK_KHR_wayland_surface */
-//			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateWaylandSurfaceKHR);
-//			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceWaylandPresentationSupportKHR);
+#endif // WL_EGL_PLATFORM
 
 #define VK_IMPORT_INSTANCE_WINDOWS                                                          \
 			/* VK_KHR_win32_surface */                                                      \
