@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(121)
+version(122)
 
 typedef "bool"
 typedef "char"
@@ -393,6 +393,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.VertexAttribHalf       --- Vertex attribute half-float is supported.
 	.VertexAttribUint10     --- Vertex attribute 10_10_10_2 is supported.
 	.VertexId               --- Rendering with VertexID only is supported.
+	.PrimitiveId            --- PrimitiveID is available in fragment shader.
 	.ViewportLayerArray     --- Viewport layer is available in vertex shader.
 	.DrawIndirectCount      --- Draw indirect with indirect count is supported.
 	.TextureCompareAll      --- All texture compare modes are supported.

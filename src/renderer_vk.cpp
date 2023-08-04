@@ -1570,6 +1570,7 @@ VK_IMPORT_INSTANCE
 				m_deviceFeatures.shaderClipDistance   = supportedFeatures.shaderClipDistance;
 				m_deviceFeatures.shaderCullDistance   = supportedFeatures.shaderCullDistance;
 				m_deviceFeatures.shaderResourceMinLod = supportedFeatures.shaderResourceMinLod;
+				m_deviceFeatures.geometryShader = supportedFeatures.geometryShader;
 
 				m_lineAASupport = true
 					&& s_extension[Extension::EXT_line_rasterization].m_supported
@@ -1608,6 +1609,7 @@ VK_IMPORT_INSTANCE
 					| BGFX_CAPS_VERTEX_ATTRIB_HALF
 					| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 					| BGFX_CAPS_VERTEX_ID
+					| (m_deviceFeatures.geometryShader ? BGFX_CAPS_PRIMITIVE_ID : 0)
 					);
 
 				g_caps.supported |= 0

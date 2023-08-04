@@ -708,11 +708,14 @@ pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000004000000;
 /// Rendering with VertexID only is supported.
 pub const CapsFlags_VertexId: CapsFlags               = 0x0000000008000000;
 
+/// PrimitiveID is available in fragment shader.
+pub const CapsFlags_PrimitiveId: CapsFlags            = 0x0000000010000000;
+
 /// Viewport layer is available in vertex shader.
-pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000010000000;
+pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000020000000;
 
 /// Draw indirect with indirect count is supported.
-pub const CapsFlags_DrawIndirectCount: CapsFlags      = 0x0000000020000000;
+pub const CapsFlags_DrawIndirectCount: CapsFlags      = 0x0000000040000000;
 
 /// All texture compare modes are supported.
 pub const CapsFlags_TextureCompareAll: CapsFlags      = 0x0000000000300000;

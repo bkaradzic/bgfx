@@ -1235,6 +1235,9 @@ namespace bgfx { namespace d3d11
 					| ((m_featureLevel >= D3D_FEATURE_LEVEL_11_1)
 						? BGFX_CAPS_IMAGE_RW
 						: 0)
+					| ((m_featureLevel >= D3D_FEATURE_LEVEL_11_0)
+						? BGFX_CAPS_PRIMITIVE_ID
+						: 0)
 					);
 
 				m_timerQuerySupport   = m_featureLevel >= D3D_FEATURE_LEVEL_10_0;
