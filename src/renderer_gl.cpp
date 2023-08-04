@@ -2897,6 +2897,13 @@ namespace bgfx { namespace gl
 					;
 
 				g_caps.supported |= false
+					|| BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 32)
+					|| (m_gles3 && !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) && BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 32) )
+					? BGFX_CAPS_PRIMITIVE_ID
+					: 0
+					;
+
+				g_caps.supported |= false
 					|| s_extension[Extension::ARB_texture_cube_map_array].m_supported
 					|| s_extension[Extension::EXT_texture_cube_map_array].m_supported
 					? BGFX_CAPS_TEXTURE_CUBE_ARRAY

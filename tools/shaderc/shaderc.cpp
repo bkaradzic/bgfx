@@ -1853,7 +1853,12 @@ namespace bgfx
 						const bool hasFragCoord   = !bx::strFind(input, "gl_FragCoord").isEmpty() || profile->id >= 400;
 						const bool hasFragDepth   = !bx::strFind(input, "gl_FragDepth").isEmpty();
 						const bool hasFrontFacing = !bx::strFind(input, "gl_FrontFacing").isEmpty();
-						const bool hasPrimitiveId = !bx::strFind(input, "gl_PrimitiveID").isEmpty();
+						const bool hasPrimitiveId = !bx::strFind(input, "gl_PrimitiveID").isEmpty() && BGFX_CAPS_PRIMITIVE_ID;
+
+						if (!hasPrimitiveId)
+						{
+							preprocessor.writef("#define gl_PrimitiveID 0\n");
+						}
 
 						bool hasFragData[8] = {};
 						uint32_t numFragData = 0;

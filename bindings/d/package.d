@@ -10,7 +10,7 @@ import bindbc.bgfx.config;
 import bindbc.common.types: va_list;
 static import bgfx.fakeenum;
 
-enum uint apiVersion = 121;
+enum uint apiVersion = 122;
 
 alias ViewID = ushort;
 deprecated("Please use `ViewID` instead.") alias ViewId = ushort;
@@ -521,8 +521,9 @@ enum CapFlags: CapFlags_{
 	vertexAttribHalf        = 0x0000_0000_0200_0000, ///Vertex attribute half-float is supported.
 	vertexAttribUint10      = 0x0000_0000_0400_0000, ///Vertex attribute 10_10_10_2 is supported.
 	vertexID                = 0x0000_0000_0800_0000, ///Rendering with VertexID only is supported.
-	viewportLayerArray      = 0x0000_0000_1000_0000, ///Viewport layer is available in vertex shader.
-	drawIndirectCount       = 0x0000_0000_2000_0000, ///Draw indirect with indirect count is supported.
+	primitiveID             = 0x0000_0000_1000_0000, ///PrimitiveID is available in fragment shader.
+	viewportLayerArray      = 0x0000_0000_2000_0000, ///Viewport layer is available in vertex shader.
+	drawIndirectCount       = 0x0000_0000_4000_0000, ///Draw indirect with indirect count is supported.
 	textureCompareAll       = 0x0000_0000_0030_0000, ///All texture compare modes are supported.
 }
 

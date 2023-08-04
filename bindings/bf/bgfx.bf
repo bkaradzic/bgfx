@@ -1148,14 +1148,19 @@ public static class bgfx
 		VertexId               = 0x0000000008000000,
 	
 		/// <summary>
+		/// PrimitiveID is available in fragment shader.
+		/// </summary>
+		PrimitiveId            = 0x0000000010000000,
+	
+		/// <summary>
 		/// Viewport layer is available in vertex shader.
 		/// </summary>
-		ViewportLayerArray     = 0x0000000010000000,
+		ViewportLayerArray     = 0x0000000020000000,
 	
 		/// <summary>
 		/// Draw indirect with indirect count is supported.
 		/// </summary>
-		DrawIndirectCount      = 0x0000000020000000,
+		DrawIndirectCount      = 0x0000000040000000,
 	
 		/// <summary>
 		/// All texture compare modes are supported.

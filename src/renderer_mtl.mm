@@ -632,6 +632,11 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				| BGFX_CAPS_VERTEX_ID
 				);
 
+			g_caps.supported |= m_device.supportsFamily(MTLGPUFamilyApple7)
+				? BGFX_CAPS_PRIMITIVE_ID
+				: 0
+				;
+
 			// Reference(s):
 			// - Metal feature set tables
 			//   https://web.archive.org/web/20230330111145/https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf
