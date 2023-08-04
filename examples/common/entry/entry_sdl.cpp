@@ -1160,6 +1160,25 @@ namespace entry
 #	endif // BX_PLATFORM_*
 	}
 
+	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType(WindowHandle _handle)
+	{
+		SDL_SysWMinfo wmi;
+		SDL_VERSION(&wmi.version);
+		if (!SDL_GetWindowWMInfo(s_ctx.m_window[_handle.idx], &wmi) )
+		{
+			return bgfx::NativeWindowHandleType::Default;
+		}
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#		if ENTRY_CONFIG_USE_WAYLAND
+		if (wmi.subsystem == SDL_SYSWM_WAYLAND)
+			return bgfx::NativeWindowHandleType::Wayland;
+		else
+#		endif // ENTRY_CONFIG_USE_WAYLAND
+			return bgfx::NativeWindowHandleType::Default;
+#	else
+		return bgfx::NativeWindowHandleType::Default;
+#	endif // BX_PLATFORM_*
+	}
 
 	int32_t MainThreadEntry::threadFunc(bx::Thread* _thread, void* _userData)
 	{

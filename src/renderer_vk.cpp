@@ -6778,8 +6778,7 @@ VK_DESTROY
 #elif BX_PLATFORM_LINUX
 		{
 #if     WL_EGL_PLATFORM
-			if ((strcmp(getenv("XDG_SESSION_TYPE"), "wayland") == 0)
-			&& ((void*)0xfffffff < g_platformData.nwh) )// This is not ideal but needed for XWayland
+			if (g_platformData.type == bgfx::NativeWindowHandleType::Wayland)
 			{
 				VkWaylandSurfaceCreateInfoKHR sci;
 				sci.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
