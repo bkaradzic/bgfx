@@ -33,8 +33,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef GLSLANG_WEB
-
 //
 // GL_EXT_spirv_intrinsics
 //
@@ -76,7 +74,7 @@ TSpirvRequirement* TParseContext::makeSpirvRequirement(const TSourceLoc& loc, co
             spirvReq->capabilities.insert(capability->getAsConstantUnion()->getConstArray()[0].getIConst());
         }
     } else
-        error(loc, "unknow SPIR-V requirement", name.c_str(), "");
+        error(loc, "unknown SPIR-V requirement", name.c_str(), "");
 
     return spirvReq;
 }
@@ -298,7 +296,8 @@ TSpirvTypeParameters* TParseContext::makeSpirvTypeParameters(const TSourceLoc& l
     return spirvTypeParams;
 }
 
-TSpirvTypeParameters* TParseContext::makeSpirvTypeParameters(const TSourceLoc& loc, const TPublicType& type)
+TSpirvTypeParameters* TParseContext::makeSpirvTypeParameters(const TSourceLoc& /* loc */,
+                                                             const TPublicType& type)
 {
     TSpirvTypeParameters* spirvTypeParams = new TSpirvTypeParameters;
     spirvTypeParams->push_back(TSpirvTypeParameter(new TType(type)));
@@ -359,5 +358,3 @@ TSpirvInstruction* TParseContext::mergeSpirvInstruction(const TSourceLoc& loc, T
 }
 
 } // end namespace glslang
-
-#endif // GLSLANG_WEB

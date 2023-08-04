@@ -82,6 +82,7 @@
 #include "source/opt/strength_reduction_pass.h"
 #include "source/opt/strip_debug_info_pass.h"
 #include "source/opt/strip_nonsemantic_info_pass.h"
+#include "source/opt/trim_capabilities_pass.h"
 #include "source/opt/unify_const_pass.h"
 #include "source/opt/upgrade_memory_model.h"
 #include "source/opt/vector_dce.h"

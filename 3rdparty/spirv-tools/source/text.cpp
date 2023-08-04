@@ -312,6 +312,17 @@ spv_result_t spvTextEncodeOperand(const spvtools::AssemblyGrammar& grammar,
       }
     } break;
 
+    case SPV_OPERAND_TYPE_LITERAL_FLOAT: {
+      // The current operand is a 32-bit float.
+      // That's just how the grammar works.
+      spvtools::IdType expected_type = {
+          32, false, spvtools::IdTypeClass::kScalarFloatType};
+      if (auto error = context->binaryEncodeNumericLiteral(
+              textValue, error_code_for_literals, expected_type, pInst)) {
+        return error;
+      }
+    } break;
+
     case SPV_OPERAND_TYPE_OPTIONAL_LITERAL_NUMBER:
       // This is a context-independent literal number which can be a 32-bit
       // number of floating point value.

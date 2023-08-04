@@ -2038,6 +2038,10 @@ spv_number_kind_t Differ::GetNumberKind(const IdInstructions& id_to,
       // Always unsigned integers.
       *number_bit_width = 32;
       return SPV_NUMBER_UNSIGNED_INT;
+    case SPV_OPERAND_TYPE_LITERAL_FLOAT:
+      // Always float.
+      *number_bit_width = 32;
+      return SPV_NUMBER_FLOATING;
     case SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER:
     case SPV_OPERAND_TYPE_OPTIONAL_TYPED_LITERAL_INTEGER:
       switch (inst.opcode()) {

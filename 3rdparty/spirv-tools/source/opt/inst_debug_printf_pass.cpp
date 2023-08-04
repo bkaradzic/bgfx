@@ -241,15 +241,7 @@ Pass::Status InstDebugPrintfPass::ProcessImpl() {
     }
   }
   if (!non_sem_set_seen) {
-    for (auto c_itr = context()->module()->extension_begin();
-         c_itr != context()->module()->extension_end(); ++c_itr) {
-      const std::string ext_name = c_itr->GetInOperand(0).AsString();
-      if (ext_name == "SPV_KHR_non_semantic_info") {
-        context()->KillInst(&*c_itr);
-        break;
-      }
-    }
-    context()->get_feature_mgr()->RemoveExtension(kSPV_KHR_non_semantic_info);
+    context()->RemoveExtension(kSPV_KHR_non_semantic_info);
   }
   return Status::SuccessWithChange;
 }

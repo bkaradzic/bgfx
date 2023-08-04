@@ -743,7 +743,7 @@ static void fillEdgeQuadrics(Quadric* vertex_quadrics, const unsigned int* indic
 {
 	for (size_t i = 0; i < index_count; i += 3)
 	{
-		static const int next[3] = {1, 2, 0};
+		static const int next[4] = {1, 2, 0, 1};
 
 		for (int e = 0; e < 3; ++e)
 		{
@@ -769,7 +769,7 @@ static void fillEdgeQuadrics(Quadric* vertex_quadrics, const unsigned int* indic
 			if (kHasOpposite[k0][k1] && remap[i1] > remap[i0])
 				continue;
 
-			unsigned int i2 = indices[i + next[next[e]]];
+			unsigned int i2 = indices[i + next[e + 1]];
 
 			// we try hard to maintain border edge geometry; seam edges can move more freely
 			// due to topological restrictions on collapses, seam quadrics slightly improves collapse structure but aren't critical

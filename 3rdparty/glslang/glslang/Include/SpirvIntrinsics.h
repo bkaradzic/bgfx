@@ -35,8 +35,6 @@
 
 #pragma once
 
-#ifndef GLSLANG_WEB
-
 //
 // GL_EXT_spirv_intrinsics
 //
@@ -135,5 +133,3 @@ struct TSpirvType {
 };
 
 } // end namespace glslang
-
-#endif // GLSLANG_WEB

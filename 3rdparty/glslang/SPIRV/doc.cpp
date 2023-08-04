@@ -790,6 +790,21 @@ const char* MemoryAccessString(int mem)
     }
 }
 
+const int CooperativeMatrixOperandsCeiling = 6;
+
+const char* CooperativeMatrixOperandsString(int op)
+{
+    switch (op) {
+    case CooperativeMatrixOperandsMatrixASignedComponentsShift:  return "ASignedComponents";
+    case CooperativeMatrixOperandsMatrixBSignedComponentsShift:  return "BSignedComponents";
+    case CooperativeMatrixOperandsMatrixCSignedComponentsShift:  return "CSignedComponents";
+    case CooperativeMatrixOperandsMatrixResultSignedComponentsShift:  return "ResultSignedComponents";
+    case CooperativeMatrixOperandsSaturatingAccumulationShift:   return "SaturatingAccumulation";
+
+    default: return "Bad";
+    }
+}
+
 const char* ScopeString(int mem)
 {
     switch (mem) {
@@ -993,6 +1008,7 @@ const char* CapabilityString(int info)
     case CapabilityVariablePointers:                    return "VariablePointers";
 
     case CapabilityCooperativeMatrixNV:     return "CooperativeMatrixNV";
+    case CapabilityCooperativeMatrixKHR:    return "CooperativeMatrixKHR";
     case CapabilityShaderSMBuiltinsNV:      return "ShaderSMBuiltinsNV";
 
     case CapabilityFragmentShaderSampleInterlockEXT:        return "CapabilityFragmentShaderSampleInterlockEXT";
@@ -1473,6 +1489,11 @@ const char* OpcodeString(int op)
     case OpCooperativeMatrixStoreNV:        return "OpCooperativeMatrixStoreNV";
     case OpCooperativeMatrixMulAddNV:       return "OpCooperativeMatrixMulAddNV";
     case OpCooperativeMatrixLengthNV:       return "OpCooperativeMatrixLengthNV";
+    case OpTypeCooperativeMatrixKHR:        return "OpTypeCooperativeMatrixKHR";
+    case OpCooperativeMatrixLoadKHR:        return "OpCooperativeMatrixLoadKHR";
+    case OpCooperativeMatrixStoreKHR:       return "OpCooperativeMatrixStoreKHR";
+    case OpCooperativeMatrixMulAddKHR:      return "OpCooperativeMatrixMulAddKHR";
+    case OpCooperativeMatrixLengthKHR:      return "OpCooperativeMatrixLengthKHR";
     case OpDemoteToHelperInvocationEXT:     return "OpDemoteToHelperInvocationEXT";
     case OpIsHelperInvocationEXT:           return "OpIsHelperInvocationEXT";
 
@@ -1536,6 +1557,7 @@ EnumParameters LoopControlParams[FunctionControlCeiling];
 EnumParameters SelectionControlParams[SelectControlCeiling];
 EnumParameters FunctionControlParams[FunctionControlCeiling];
 EnumParameters MemoryAccessParams[MemoryAccessCeiling];
+EnumParameters CooperativeMatrixOperandsParams[CooperativeMatrixOperandsCeiling];
 
 // Set up all the parameterizing descriptions of the opcodes, operands, etc.
 void Parameterize()
@@ -1630,6 +1652,8 @@ void Parameterize()
         InstructionDesc[OpModuleProcessed].setResultAndType(false, false);
         InstructionDesc[OpTypeCooperativeMatrixNV].setResultAndType(true, false);
         InstructionDesc[OpCooperativeMatrixStoreNV].setResultAndType(false, false);
+        InstructionDesc[OpTypeCooperativeMatrixKHR].setResultAndType(true, false);
+        InstructionDesc[OpCooperativeMatrixStoreKHR].setResultAndType(false, false);
         InstructionDesc[OpBeginInvocationInterlockEXT].setResultAndType(false, false);
         InstructionDesc[OpEndInvocationInterlockEXT].setResultAndType(false, false);
 
@@ -1701,6 +1725,7 @@ void Parameterize()
         OperandClassParams[OperandKernelEnqueueFlags].set(0, KernelEnqueueFlagsString, nullptr);
         OperandClassParams[OperandKernelProfilingInfo].set(0, KernelProfilingInfoString, nullptr, true);
         OperandClassParams[OperandCapability].set(0, CapabilityString, nullptr);
+        OperandClassParams[OperandCooperativeMatrixOperands].set(CooperativeMatrixOperandsCeiling, CooperativeMatrixOperandsString, CooperativeMatrixOperandsParams, true);
         OperandClassParams[OperandOpcode].set(OpCodeMask + 1, OpcodeString, nullptr);
 
         // set name of operator, an initial set of <id> style operands, and the description
@@ -3092,6 +3117,34 @@ void Parameterize()
         InstructionDesc[OpCooperativeMatrixMulAddNV].operands.push(OperandId, "'C'");
 
         InstructionDesc[OpCooperativeMatrixLengthNV].operands.push(OperandId, "'Type'");
+
+        InstructionDesc[OpTypeCooperativeMatrixKHR].operands.push(OperandId, "'Component Type'");
+        InstructionDesc[OpTypeCooperativeMatrixKHR].operands.push(OperandId, "'Scope'");
+        InstructionDesc[OpTypeCooperativeMatrixKHR].operands.push(OperandId, "'Rows'");
+        InstructionDesc[OpTypeCooperativeMatrixKHR].operands.push(OperandId, "'Columns'");
+        InstructionDesc[OpTypeCooperativeMatrixKHR].operands.push(OperandId, "'Use'");
+
+        InstructionDesc[OpCooperativeMatrixLoadKHR].operands.push(OperandId, "'Pointer'");
+        InstructionDesc[OpCooperativeMatrixLoadKHR].operands.push(OperandId, "'Memory Layout'");
+        InstructionDesc[OpCooperativeMatrixLoadKHR].operands.push(OperandId, "'Stride'");
+        InstructionDesc[OpCooperativeMatrixLoadKHR].operands.push(OperandMemoryAccess, "'Memory Access'");
+        InstructionDesc[OpCooperativeMatrixLoadKHR].operands.push(OperandLiteralNumber, "", true);
+        InstructionDesc[OpCooperativeMatrixLoadKHR].operands.push(OperandId, "", true);
+
+        InstructionDesc[OpCooperativeMatrixStoreKHR].operands.push(OperandId, "'Pointer'");
+        InstructionDesc[OpCooperativeMatrixStoreKHR].operands.push(OperandId, "'Object'");
+        InstructionDesc[OpCooperativeMatrixStoreKHR].operands.push(OperandId, "'Memory Layout'");
+        InstructionDesc[OpCooperativeMatrixStoreKHR].operands.push(OperandId, "'Stride'");
+        InstructionDesc[OpCooperativeMatrixStoreKHR].operands.push(OperandMemoryAccess, "'Memory Access'");
+        InstructionDesc[OpCooperativeMatrixStoreKHR].operands.push(OperandLiteralNumber, "", true);
+        InstructionDesc[OpCooperativeMatrixStoreKHR].operands.push(OperandId, "", true);
+
+        InstructionDesc[OpCooperativeMatrixMulAddKHR].operands.push(OperandId, "'A'");
+        InstructionDesc[OpCooperativeMatrixMulAddKHR].operands.push(OperandId, "'B'");
+        InstructionDesc[OpCooperativeMatrixMulAddKHR].operands.push(OperandId, "'C'");
+        InstructionDesc[OpCooperativeMatrixMulAddKHR].operands.push(OperandCooperativeMatrixOperands, "'Cooperative Matrix Operands'", true);
+
+        InstructionDesc[OpCooperativeMatrixLengthKHR].operands.push(OperandId, "'Type'");
 
         InstructionDesc[OpDemoteToHelperInvocationEXT].setResultAndType(false, false);
 

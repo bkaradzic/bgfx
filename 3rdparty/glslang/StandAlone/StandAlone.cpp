@@ -158,13 +158,11 @@ void ProcessConfigFile()
 {
     if (ConfigFile.size() == 0)
         *GetResources() = *GetDefaultResources();
-#ifndef GLSLANG_WEB
     else {
         char* configString = ReadFileData(ConfigFile.c_str());
         DecodeResourceLimits(GetResources(),  configString);
         FreeFileData(configString);
     }
-#endif
 }
 
 int ReflectOptions = EShReflectionDefault;
@@ -1342,7 +1340,6 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         shader->setPreamble(PreambleString.c_str());
         shader->addProcesses(Processes);
 
-#ifndef GLSLANG_WEB
         // Set IO mapper binding shift values
         for (int r = 0; r < glslang::EResCount; ++r) {
             const glslang::TResourceType res = glslang::TResourceType(r);
@@ -1374,7 +1371,6 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         }
 
         shader->setUniformLocationBase(uniformBase);
-#endif
 
         if (VulkanRulesRelaxed) {
             for (auto& storageOverride : blockStorageOverrides) {
@@ -1434,7 +1430,6 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
 
         const int defaultVersion = Options & EOptionDefaultDesktop ? 110 : 100;
 
-#ifndef GLSLANG_WEB
         if (Options & EOptionOutputPreprocessed) {
             std::string str;
             if (shader->preprocess(GetResources(), defaultVersion, ENoProfile, false, false, messages, &str, includer)) {
@@ -1446,7 +1441,6 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
             StderrIfNonEmpty(shader->getInfoDebugLog());
             continue;
         }
-#endif
 
         if (! shader->parse(GetResources(), defaultVersion, false, messages, includer))
             CompileFailed = true;
@@ -1470,13 +1464,11 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
     if (! (Options & EOptionOutputPreprocessed) && ! program.link(messages))
         LinkFailed = true;
 
-#ifndef GLSLANG_WEB
     // Map IO
     if (Options & EOptionSpv) {
         if (!program.mapIO())
             LinkFailed = true;
     }
-#endif
 
     // Report
     if (! (Options & EOptionSuppressInfolog) &&
@@ -1485,13 +1477,11 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         PutsIfNonEmpty(program.getInfoDebugLog());
     }
 
-#ifndef GLSLANG_WEB
     // Reflect
     if (Options & EOptionDumpReflection) {
         program.buildReflection(ReflectOptions);
         program.dumpReflection();
     }
-#endif
 
     std::vector<std::string> outputFiles;
 
@@ -1534,10 +1524,8 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                         }
 
                         outputFiles.push_back(GetBinaryName((EShLanguage)stage));
-#ifndef GLSLANG_WEB
                         if (!SpvToolsDisassembler && (Options & EOptionHumanReadableSpv))
                             spv::Disassemble(std::cout, spirv);
-#endif
                     }
                 }
             }
@@ -1632,13 +1620,11 @@ int singleMain()
         workList.add(item.get());
     });
 
-#ifndef GLSLANG_WEB
     if (Options & EOptionDumpConfig) {
         printf("%s", GetDefaultTBuiltInResourceString().c_str());
         if (workList.empty())
             return ESuccess;
     }
-#endif
 
     if (Options & EOptionDumpBareVersion) {
         printf("%d:%d.%d.%d%s\n", glslang::GetSpirvGeneratorVersion(), GLSLANG_VERSION_MAJOR, GLSLANG_VERSION_MINOR,
@@ -1884,7 +1870,7 @@ void CompileFile(const char* fileName, ShHandle compiler)
 //
 void usage()
 {
-    printf("Usage: glslangValidator [option]... [file]...\n"
+    printf("Usage: glslang [option]... [file]...\n"
            "\n"
            "'file' can end in .<stage> for auto-stage classification, where <stage> is:\n"
            "    .conf   to provide a config file that replaces the default configuration\n"
@@ -2089,8 +2075,7 @@ void usage()
            "  --variable-name <name>\n"
            "  --vn <name>                       creates a C header file that contains a\n"
            "                                    uint32_t array named <name>\n"
-           "                                    initialized with the shader binary code\n"
-           );
+           "                                    initialized with the shader binary code\n");
 
     exit(EFailUsage);
 }

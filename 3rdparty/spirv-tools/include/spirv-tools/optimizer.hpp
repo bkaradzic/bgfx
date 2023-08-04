@@ -981,6 +981,17 @@ Optimizer::PassToken CreateRemoveDontInlinePass();
 // object, currently the pass would remove accesschain pointer argument passed
 // to the function
 Optimizer::PassToken CreateFixFuncCallArgumentsPass();
+
+// Creates a trim-capabilities pass.
+// This pass removes unused capabilities for a given module, and if possible,
+// associated extensions.
+// See `trim_capabilities.h` for the list of supported capabilities.
+//
+// If the module contains unsupported capabilities, this pass will ignore them.
+// This should be fine in most cases, but could yield to incorrect results if
+// the unknown capability interacts with one of the trimmed capabilities.
+Optimizer::PassToken CreateTrimCapabilitiesPass();
+
 }  // namespace spvtools
 
 #endif  // INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_

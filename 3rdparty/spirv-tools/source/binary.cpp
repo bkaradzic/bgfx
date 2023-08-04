@@ -546,6 +546,13 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
       parsed_operand.number_bit_width = 32;
       break;
 
+    case SPV_OPERAND_TYPE_LITERAL_FLOAT:
+      // These are regular single-word literal float operands.
+      parsed_operand.type = SPV_OPERAND_TYPE_LITERAL_FLOAT;
+      parsed_operand.number_kind = SPV_NUMBER_FLOATING;
+      parsed_operand.number_bit_width = 32;
+      break;
+
     case SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER:
     case SPV_OPERAND_TYPE_OPTIONAL_TYPED_LITERAL_INTEGER:
       parsed_operand.type = SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER;

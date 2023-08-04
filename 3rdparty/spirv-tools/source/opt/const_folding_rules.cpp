@@ -967,6 +967,11 @@ const analysis::Constant* FoldScalarFPDivide(
     return FoldFPScalarDivideByZero(result_type, numerator, const_mgr);
   }
 
+  uint32_t width = denominator->type()->AsFloat()->width();
+  if (width != 32 && width != 64) {
+    return nullptr;
+  }
+
   const analysis::FloatConstant* denominator_float =
       denominator->AsFloatConstant();
   if (denominator_float && denominator->GetValueAsDouble() == -0.0) {
