@@ -19,7 +19,7 @@
 
 #if WL_EGL_PLATFORM
 #	include <wayland-egl-backend.h>
-#endif
+#endif // WL_EGL_PLATFORM
 
 namespace bgfx { namespace vk
 {
