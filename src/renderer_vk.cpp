@@ -6832,16 +6832,31 @@ VK_DESTROY
 			if (NULL != vkCreateMacOSSurfaceMVK)
 			{
 				NSWindow* window    = (NSWindow*)(m_nwh);
-				NSView* contentView = (NSView*)window.contentView;
-				CAMetalLayer* layer = [CAMetalLayer layer];
+				CAMetalLayer* layer = (CAMetalLayer*)(m_nwh);
+
+				if ([window isKindOfClass:[NSWindow class]])
+				{
+					NSView *contentView = (NSView *)window.contentView;
+					layer               = [CAMetalLayer layer];
+
+					[contentView setWantsLayer : YES];
+					[contentView setLayer : layer];
+				}
+				else if ([layer isKindOfClass:[CAMetalLayer class]])
+				{
+					NSView *contentView = (NSView *)layer.delegate;
+					window              = contentView.window;
+				}
+				else
+				{
+					BX_WARN(0, "Unable to create MoltenVk surface. Please set platform data window to an NSWindow or CAMetalLayer");
+					return result;
+				}
 
 				if (m_resolution.reset & BGFX_RESET_HIDPI)
 				{
 					layer.contentsScale = [window backingScaleFactor];
 				}
-
-				[contentView setWantsLayer : YES];
-				[contentView setLayer : layer];
 
 				VkMacOSSurfaceCreateInfoMVK sci;
 				sci.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
