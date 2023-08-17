@@ -9,6 +9,7 @@
 extern bool entry_process_events(uint32_t* _width, uint32_t* _height, uint32_t* _debug, uint32_t* _reset);
 extern void* entry_get_default_native_window_handle(void);
 extern void* entry_get_native_display_handle(void);
+extern bgfx_native_window_handle_type_t entry_get_native_window_handle_type(void);
 
 uint16_t uint16_max(uint16_t _a, uint16_t _b)
 {
@@ -29,6 +30,7 @@ int32_t _main_(int32_t _argc, char** _argv)
 
 	init.platformData.nwh = entry_get_default_native_window_handle();
 	init.platformData.ndt = entry_get_native_display_handle();
+	init.platformData.type = entry_get_native_window_handle_type();
 
 	bgfx_init(&init);
 	bgfx_reset(width, height, reset, init.resolution.format);
