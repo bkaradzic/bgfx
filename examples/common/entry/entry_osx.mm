@@ -725,6 +725,11 @@ namespace entry
 		return NULL;
 	}
 
+	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType(WindowHandle _handle)
+	{
+		return bgfx::NativeWindowHandleType::Default;
+	}
+
 } // namespace entry
 
 @implementation AppDelegate

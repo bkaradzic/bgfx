@@ -427,6 +427,11 @@ namespace entry
 	{
 		return NULL;
 	}
+
+	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType(WindowHandle _handle)
+	{
+		return bgfx::NativeWindowHandleType::Default;
+	}
 }
 
 int main(int _argc, const char* const* _argv)

@@ -50,21 +50,24 @@ namespace entry
 
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #		if ENTRY_CONFIG_USE_WAYLAND
-		wl_egl_window *win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
-		if(!win_impl)
-		{
-			int width, height;
-			SDL_GetWindowSize(_window, &width, &height);
-			struct wl_surface* surface = wmi.info.wl.surface;
-			if(!surface)
-				return nullptr;
-			win_impl = wl_egl_window_create(surface, width, height);
-			SDL_SetWindowData(_window, "wl_egl_window", win_impl);
-		}
-		return (void*)(uintptr_t)win_impl;
-#		else
-		return (void*)wmi.info.x11.window;
-#		endif
+			if (wmi.subsystem == SDL_SYSWM_WAYLAND)
+				{
+					wl_egl_window *win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
+					if(!win_impl)
+					{
+						int width, height;
+						SDL_GetWindowSize(_window, &width, &height);
+						struct wl_surface* surface = wmi.info.wl.surface;
+						if(!surface)
+							return nullptr;
+						win_impl = wl_egl_window_create(surface, width, height);
+						SDL_SetWindowData(_window, "wl_egl_window", win_impl);
+					}
+					return (void*)(uintptr_t)win_impl;
+				}
+			else
+#		endif // ENTRY_CONFIG_USE_WAYLAND
+				return (void*)wmi.info.x11.window;
 #	elif BX_PLATFORM_OSX || BX_PLATFORM_IOS
 		return wmi.info.cocoa.window;
 #	elif BX_PLATFORM_WINDOWS
@@ -1145,15 +1148,35 @@ namespace entry
 		{
 			return NULL;
 		}
-
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #		if ENTRY_CONFIG_USE_WAYLAND
-		return wmi.info.wl.display;
-#		else
-		return wmi.info.x11.display;
+			if (wmi.subsystem == SDL_SYSWM_WAYLAND)
+				return wmi.info.wl.display;
+			else
 #		endif // ENTRY_CONFIG_USE_WAYLAND
+				return wmi.info.x11.display;
 #	else
 		return NULL;
+#	endif // BX_PLATFORM_*
+	}
+
+	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType(WindowHandle _handle)
+	{
+		SDL_SysWMinfo wmi;
+		SDL_VERSION(&wmi.version);
+		if (!SDL_GetWindowWMInfo(s_ctx.m_window[_handle.idx], &wmi) )
+		{
+			return bgfx::NativeWindowHandleType::Default;
+		}
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#		if ENTRY_CONFIG_USE_WAYLAND
+		if (wmi.subsystem == SDL_SYSWM_WAYLAND)
+			return bgfx::NativeWindowHandleType::Wayland;
+		else
+#		endif // ENTRY_CONFIG_USE_WAYLAND
+			return bgfx::NativeWindowHandleType::Default;
+#	else
+		return bgfx::NativeWindowHandleType::Default;
 #	endif // BX_PLATFORM_*
 	}
 

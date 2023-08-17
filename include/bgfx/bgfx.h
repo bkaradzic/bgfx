@@ -403,6 +403,22 @@ namespace bgfx
 		};
 	};
 
+	/// Native window handle type.
+	///
+	/// @attention C99's equivalent binding is `bgfx_native_window_handle_type_t`.
+	///
+
+	struct NativeWindowHandleType
+	{
+		 enum Enum
+		 {
+		       Default = 0, //!< Platform default handle type (X11 on Linux).
+		       Wayland,     //!< Wayland.
+
+		       Count
+		 };
+	};
+
 	static const uint16_t kInvalidHandle = UINT16_MAX;
 
 	BGFX_HANDLE(DynamicIndexBufferHandle)
@@ -622,15 +638,16 @@ namespace bgfx
 	{
 		PlatformData();
 
-		void* ndt;          //!< Native display type (*nix specific).
-		void* nwh;          //!< Native window handle. If `NULL`, bgfx will create a headless
-		                    ///  context/device, provided the rendering API supports it.
-		void* context;      //!< GL context, D3D device, or Vulkan device. If `NULL`, bgfx
-		                    ///  will create context/device.
-		void* backBuffer;   //!< GL back-buffer, or D3D render target view. If `NULL` bgfx will
-		                    ///  create back-buffer color surface.
-		void* backBufferDS; //!< Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
-		                    ///  depth/stencil surface.
+		void* ndt;                         //!< Native display type (*nix specific).
+		void* nwh;                         //!< Native window handle. If `NULL`, bgfx will create a headless
+		                                   ///  context/device, provided the rendering API supports it.
+		void* context;                     //!< GL context, D3D device, or Vulkan device. If `NULL`, bgfx
+		                                   ///  will create context/device.
+		void* backBuffer;                  //!< GL back-buffer, or D3D render target view. If `NULL` bgfx will
+		                                   ///  create back-buffer color surface.
+		void* backBufferDS;                //!< Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
+		                                   ///  depth/stencil surface.
+		NativeWindowHandleType::Enum type; //!< Handle type. Needed for platforms having more than one option.
 	};
 
 	/// Backbuffer resolution and reset parameters.

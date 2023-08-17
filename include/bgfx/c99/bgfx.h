@@ -392,6 +392,19 @@ typedef enum bgfx_view_mode
 } bgfx_view_mode_t;
 
 /**
+ * Native window handle type..
+ *
+ */
+typedef enum bgfx_native_window_handle_type
+{
+    BGFX_NATIVE_WINDOW_HANDLE_TYPE_DEFAULT,   /** ( 0) Platform default handle type (X11 on Linux) */
+    BGFX_NATIVE_WINDOW_HANDLE_TYPE_WAYLAND,   /** ( 1) Wayland. */
+
+    BGFX_NATIVE_WINDOW_HANDLE_TYPE_COUNT
+
+} bgfx_native_window_handle_type_t;
+
+/**
  * Render frame enum.
  *
  */
@@ -624,6 +637,11 @@ typedef struct bgfx_platform_data_s
      * depth/stencil surface.
      */
     void*                backBufferDS;
+
+    /**
+     * Handle type. Needed for platforms having more than one option.
+     */
+     bgfx_native_window_handle_type_t type;
 
 } bgfx_platform_data_t;
 

@@ -875,6 +875,19 @@ namespace entry
 #	endif // BX_PLATFORM_*
 	}
 
+	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType(WindowHandle _handle)
+	{
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#		if ENTRY_CONFIG_USE_WAYLAND
+		return bgfx::NativeWindowHandleType::Wayland;
+#		else
+		return bgfx::NativeWindowHandleType::Default;
+#		endif // ENTRY_CONFIG_USE_WAYLAND
+#	else
+		return bgfx::NativeWindowHandleType::Default;
+#	endif // BX_PLATFORM_*
+	}
+
 	int32_t MainThreadEntry::threadFunc(bx::Thread* _thread, void* _userData)
 	{
 		BX_UNUSED(_thread);
