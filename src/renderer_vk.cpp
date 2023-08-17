@@ -17,9 +17,9 @@
 #	import <Metal/Metal.h>
 #endif // BX_PLATFORM_OSX
 
-#if WL_EGL_PLATFORM
+#if defined(WL_EGL_PLATFORM)
 #	include <wayland-egl-backend.h>
-#endif // WL_EGL_PLATFORM
+#endif // defined(WL_EGL_PLATFORM)
 
 namespace bgfx { namespace vk
 {
@@ -1230,7 +1230,7 @@ VK_IMPORT
 						BX_TRACE("\t%s", layer.m_name);
 					}
 				}
-#if BX_PLATFORM_OSX || WL_EGL_PLATFORM
+#if BX_PLATFORM_OSX || defined(WL_EGL_PLATFORM)
 				uint32_t numEnabledExtensions = headless ? 0 : 3;
 
 				const char* enabledExtension[Extension::Count + 3] =
@@ -6777,7 +6777,7 @@ VK_DESTROY
 		}
 #elif BX_PLATFORM_LINUX
 		{
-#if     WL_EGL_PLATFORM
+#if     defined(WL_EGL_PLATFORM)
 			if (g_platformData.type == bgfx::NativeWindowHandleType::Wayland)
 			{
 				VkWaylandSurfaceCreateInfoKHR sci;
@@ -6789,7 +6789,7 @@ VK_DESTROY
 				result = vkCreateWaylandSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
 			}
 			else
-#endif // WL_EGL_PLATFORM
+#endif // defined(WL_EGL_PLATFORM)
 			{
 				if (NULL != vkCreateXlibSurfaceKHR)
 				{
