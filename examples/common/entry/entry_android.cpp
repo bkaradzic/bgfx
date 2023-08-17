@@ -552,6 +552,7 @@ namespace entry
 
 	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType(WindowHandle _handle)
 	{
+		BX_UNUSED(_handle);
 		return bgfx::NativeWindowHandleType::Default;
 	}
 
