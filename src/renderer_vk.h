@@ -6,26 +6,22 @@
 #ifndef BGFX_RENDERER_VK_H_HEADER_GUARD
 #define BGFX_RENDERER_VK_H_HEADER_GUARD
 
-#ifndef WL_EGL_PLATFORM
-#	define WL_EGL_PLATFORM 0
-#endif // WL_EGL_PLATFORM
-
 #if BX_PLATFORM_ANDROID
 #	define VK_USE_PLATFORM_ANDROID_KHR
 #	define KHR_SURFACE_EXTENSION_NAME VK_KHR_ANDROID_SURFACE_EXTENSION_NAME
 #	define VK_IMPORT_INSTANCE_PLATFORM VK_IMPORT_INSTANCE_ANDROID
 #elif BX_PLATFORM_LINUX
-#	if WL_EGL_PLATFORM
+#	if defined(WL_EGL_PLATFORM)
 #		define VK_USE_PLATFORM_WAYLAND_KHR
-#	endif // WL_EGL_PLATFORM
+#	endif // defined(WL_EGL_PLATFORM)
 #	define VK_USE_PLATFORM_XLIB_KHR
 #	define VK_USE_PLATFORM_XCB_KHR
-#	if WL_EGL_PLATFORM
+#	if defined(WL_EGL_PLATFORM)
 #		define KHR_SURFACE_EXTENSION_NAME VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME, \
 		VK_KHR_XCB_SURFACE_EXTENSION_NAME
 #	else
 #		define KHR_SURFACE_EXTENSION_NAME VK_KHR_XCB_SURFACE_EXTENSION_NAME
-#	endif // WL_EGL_PLATFORM
+#	endif // defined(WL_EGL_PLATFORM)
 #	define VK_IMPORT_INSTANCE_PLATFORM VK_IMPORT_INSTANCE_LINUX
 #elif BX_PLATFORM_WINDOWS
 #	define VK_USE_PLATFORM_WIN32_KHR
@@ -73,7 +69,7 @@
 			/* VK_KHR_android_surface */                               \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateAndroidSurfaceKHR); \
 
-#if WL_EGL_PLATFORM
+#if defined(WL_EGL_PLATFORM)
 #define VK_IMPORT_INSTANCE_LINUX                                                              \
 			/* VK_KHR_wayland_surface */                                                      \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateWaylandSurfaceKHR);                        \
@@ -94,7 +90,7 @@
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateXcbSurfaceKHR);                         \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceXcbPresentationSupportKHR);  \
 
-#endif // WL_EGL_PLATFORM
+#endif // defined(WL_EGL_PLATFORM)
 
 #define VK_IMPORT_INSTANCE_WINDOWS                                                          \
 			/* VK_KHR_win32_surface */                                                      \
