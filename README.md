@@ -21,7 +21,7 @@
 [![Join the chat at https://discord.gg/9eMbv7J](https://img.shields.io/discord/712512073522872352?color=%237289DA&label=bgfx&logo=discord&logoColor=white)](https://discord.gg/9eMbv7J)
 
  * [GitHub Discussions](https://github.com/bkaradzic/bgfx/discussions)
- * [Discord Chat](https://discord.gg/9eMbv7J)
+ * [Discord Chat](https://discord.gg/g99upRc9pf)
  * [GitHub Actions](https://github.com/bkaradzic/bgfx/actions)
 
 [What is it?](https://bkaradzic.github.io/bgfx/overview.html)
