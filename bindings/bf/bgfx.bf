@@ -2017,6 +2017,22 @@ public static class bgfx
 	}
 	
 	[AllowDuplicates]
+	public enum NativeWindowHandleType : uint32
+	{
+		/// <summary>
+		/// Platform default handle type (X11 on Linux).
+		/// </summary>
+		Default,
+	
+		/// <summary>
+		/// Wayland.
+		/// </summary>
+		Wayland,
+	
+		Count
+	}
+	
+	[AllowDuplicates]
 	public enum RenderFrame : uint32
 	{
 		/// <summary>
@@ -2108,6 +2124,7 @@ public static class bgfx
 		public void* context;
 		public void* backBuffer;
 		public void* backBufferDS;
+		public NativeWindowHandleType type;
 	}
 	
 	[CRepr]
