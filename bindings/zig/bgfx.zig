@@ -1260,6 +1260,16 @@ pub const ViewMode = enum(c_int) {
     Count
 };
 
+pub const NativeWindowHandleType = enum(c_int) {
+    /// Platform default handle type (X11 on Linux).
+    Default,
+
+    /// Wayland.
+    Wayland,
+
+    Count
+};
+
 pub const RenderFrame = enum(c_int) {
     /// Renderer context is not created yet.
     NoContext,
@@ -1332,6 +1342,7 @@ pub const Caps = extern struct {
         context: ?*anyopaque,
         backBuffer: ?*anyopaque,
         backBufferDS: ?*anyopaque,
+        type: NativeWindowHandleType,
     };
 
     pub const Resolution = extern struct {

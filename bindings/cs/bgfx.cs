@@ -2002,6 +2002,21 @@ public static partial class bgfx
 		Count
 	}
 	
+	public enum NativeWindowHandleType
+	{
+		/// <summary>
+		/// Platform default handle type (X11 on Linux).
+		/// </summary>
+		Default,
+	
+		/// <summary>
+		/// Wayland.
+		/// </summary>
+		Wayland,
+	
+		Count
+	}
+	
 	public enum RenderFrame
 	{
 		/// <summary>
@@ -2088,6 +2103,7 @@ public static partial class bgfx
 		public void* context;
 		public void* backBuffer;
 		public void* backBufferDS;
+		public NativeWindowHandleType type;
 	}
 	
 	public unsafe struct Resolution

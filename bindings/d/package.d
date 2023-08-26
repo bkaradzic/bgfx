@@ -839,6 +839,13 @@ enum ViewMode: bgfx.fakeenum.ViewMode.Enum{
 	count = bgfx.fakeenum.ViewMode.Enum.count,
 }
 
+///Native window handle type.
+enum NativeWindowHandleType: bgfx.fakeenum.NativeWindowHandleType.Enum{
+	default_ = bgfx.fakeenum.NativeWindowHandleType.Enum.default_,
+	wayland = bgfx.fakeenum.NativeWindowHandleType.Enum.wayland,
+	count = bgfx.fakeenum.NativeWindowHandleType.Enum.count,
+}
+
 ///Render frame enum.
 enum RenderFrame: bgfx.fakeenum.RenderFrame.Enum{
 	noContext = bgfx.fakeenum.RenderFrame.Enum.noContext,
@@ -1073,6 +1080,7 @@ extern(C++, "bgfx") struct PlatformData{
 	depth/stencil surface.
 	*/
 	void* backBufferDS;
+	NativeWindowHandleType type; ///Handle type. Needed for platforms having more than one option.
 }
 
 ///Backbuffer resolution and reset parameters.
