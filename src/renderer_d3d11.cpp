@@ -2263,8 +2263,8 @@ namespace bgfx { namespace d3d11
 			if (NULL == m_backBufferDepthStencil)
 			{
 				D3D11_TEXTURE2D_DESC dsd;
-				dsd.Width  = m_scd.width;
-				dsd.Height = m_scd.height;
+				dsd.Width  = bx::uint32_max(m_scd.width,  1);
+				dsd.Height = bx::uint32_max(m_scd.height,  1);
 				dsd.MipLevels  = 1;
 				dsd.ArraySize  = 1;
 				dsd.Format     = DXGI_FORMAT_D24_UNORM_S8_UINT;
