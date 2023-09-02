@@ -26,14 +26,18 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 
 namespace bgfx
 {
-	static bx::DefaultAllocator s_allocator;
-	bx::AllocatorI* g_allocator = &s_allocator;
-
 	struct TinyStlAllocator
 	{
 		static void* static_allocate(size_t _bytes);
 		static void static_deallocate(void* _ptr, size_t /*_bytes*/);
 	};
+} // namespace bgfx
+
+#ifndef BRTSHADERC_LIBRARY
+namespace bgfx
+{
+	static bx::DefaultAllocator s_allocator;
+	bx::AllocatorI* g_allocator = &s_allocator;
 
 	void* TinyStlAllocator::static_allocate(size_t _bytes)
 	{
@@ -48,6 +52,7 @@ namespace bgfx
 		}
 	}
 } // namespace bgfx
+#endif // BRTSHADERC_LIBRARY
 
 #define TINYSTL_ALLOCATOR bgfx::TinyStlAllocator
 #include <tinystl/allocator.h>

@@ -615,3 +615,5 @@ if _OPTIONS["with-tools"] then
 	dofile "geometryc.lua"
 	dofile "geometryv.lua"
 end
+
+dofile "brtshaderc.lua"
