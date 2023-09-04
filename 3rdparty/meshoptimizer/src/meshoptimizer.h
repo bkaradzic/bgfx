@@ -512,7 +512,7 @@ struct meshopt_Bounds
  * For backface culling with orthographic projection, use the following formula to reject backfacing clusters:
  *   dot(view, cone_axis) >= cone_cutoff
  *
- * For perspective projection, you can the formula that needs cone apex in addition to axis & cutoff:
+ * For perspective projection, you can use the formula that needs cone apex in addition to axis & cutoff:
  *   dot(normalize(cone_apex - camera_position), cone_axis) >= cone_cutoff
  *
  * Alternatively, you can use the formula that doesn't need cone apex and uses bounding sphere instead:
@@ -577,19 +577,25 @@ inline int meshopt_quantizeUnorm(float v, int N);
 inline int meshopt_quantizeSnorm(float v, int N);
 
 /**
- * Quantize a float into half-precision floating point value
+ * Quantize a float into half-precision (as defined by IEEE-754 fp16) floating point value
  * Generates +-inf for overflow, preserves NaN, flushes denormals to zero, rounds to nearest
  * Representable magnitude range: [6e-5; 65504]
  * Maximum relative reconstruction error: 5e-4
  */
-inline unsigned short meshopt_quantizeHalf(float v);
+MESHOPTIMIZER_API unsigned short meshopt_quantizeHalf(float v);
 
 /**
- * Quantize a float into a floating point value with a limited number of significant mantissa bits
+ * Quantize a float into a floating point value with a limited number of significant mantissa bits, preserving the IEEE-754 fp32 binary representation
  * Generates +-inf for overflow, preserves NaN, flushes denormals to zero, rounds to nearest
  * Assumes N is in a valid mantissa precision range, which is 1..23
  */
-inline float meshopt_quantizeFloat(float v, int N);
+MESHOPTIMIZER_API float meshopt_quantizeFloat(float v, int N);
+
+/**
+ * Reverse quantization of a half-precision (as defined by IEEE-754 fp16) floating point value
+ * Preserves Inf/NaN, flushes denormals to zero
+ */
+MESHOPTIMIZER_API float meshopt_dequantizeHalf(unsigned short h);
 #endif
 
 /**
@@ -683,50 +689,6 @@ inline int meshopt_quantizeSnorm(float v, int N)
 	v = (v <= +1) ? v : +1;
 
 	return int(v * scale + round);
-}
-
-inline unsigned short meshopt_quantizeHalf(float v)
-{
-	union { float f; unsigned int ui; } u = {v};
-	unsigned int ui = u.ui;
-
-	int s = (ui >> 16) & 0x8000;
-	int em = ui & 0x7fffffff;
-
-	/* bias exponent and round to nearest; 112 is relative exponent bias (127-15) */
-	int h = (em - (112 << 23) + (1 << 12)) >> 13;
-
-	/* underflow: flush to zero; 113 encodes exponent -14 */
-	h = (em < (113 << 23)) ? 0 : h;
-
-	/* overflow: infinity; 143 encodes exponent 16 */
-	h = (em >= (143 << 23)) ? 0x7c00 : h;
-
-	/* NaN; note that we convert all types of NaN to qNaN */
-	h = (em > (255 << 23)) ? 0x7e00 : h;
-
-	return (unsigned short)(s | h);
-}
-
-inline float meshopt_quantizeFloat(float v, int N)
-{
-	union { float f; unsigned int ui; } u = {v};
-	unsigned int ui = u.ui;
-
-	const int mask = (1 << (23 - N)) - 1;
-	const int round = (1 << (23 - N)) >> 1;
-
-	int e = ui & 0x7f800000;
-	unsigned int rui = (ui + round) & ~mask;
-
-	/* round all numbers except inf/nan; this is important to make sure nan doesn't overflow into -0 */
-	ui = e == 0x7f800000 ? ui : rui;
-
-	/* flush denormals to zero */
-	ui = e == 0 ? 0 : ui;
-
-	u.ui = ui;
-	return u.f;
 }
 #endif
 
