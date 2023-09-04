@@ -1295,7 +1295,10 @@ string CompilerGLSL::to_interpolation_qualifiers(const Bitset &flags)
 	if (flags.get(DecorationInvariant) && (options.es || options.version >= 120))
 		res += "invariant ";
 	if (flags.get(DecorationPerPrimitiveEXT))
-	    res += "perprimitiveEXT ";
+	{
+		res += "perprimitiveEXT ";
+		require_extension_internal("GL_EXT_mesh_shader");
+	}
 
 	if (flags.get(DecorationExplicitInterpAMD))
 	{
@@ -1486,6 +1489,10 @@ const char *CompilerGLSL::format_to_glsl(spv::ImageFormat format)
 		return "rg8i";
 	case ImageFormatR16i:
 		return "r16i";
+	case ImageFormatR64i:
+		return "r64i";
+	case ImageFormatR64ui:
+		return "r64ui";
 	default:
 	case ImageFormatUnknown:
 		return nullptr;
@@ -3155,6 +3162,10 @@ bool CompilerGLSL::should_force_emit_builtin_block(StorageClass storage)
 		should_force = true;
 	}
 
+	// Either glslang bug or oversight, but global invariant position does not work in mesh shaders.
+	if (get_execution_model() == ExecutionModelMeshEXT && position_invariant)
+		should_force = true;
+
 	return should_force;
 }
 
@@ -3295,11 +3306,13 @@ void CompilerGLSL::emit_declared_builtin_block(StorageClass storage, ExecutionMo
 			auto &m = ir.meta[var.self].decoration;
 			if (m.builtin && builtin_is_per_vertex_set(m.builtin_type))
 			{
+				// For mesh/tesc output, Clip/Cull is an array-of-array. Look at innermost array type
+				// for correct result.
 				global_builtins.set(m.builtin_type);
 				if (m.builtin_type == BuiltInCullDistance)
-					cull_distance_size = to_array_size_literal(type);
+					cull_distance_size = to_array_size_literal(type, 0);
 				else if (m.builtin_type == BuiltInClipDistance)
-					clip_distance_size = to_array_size_literal(type);
+					clip_distance_size = to_array_size_literal(type, 0);
 
 				if (is_block_builtin(m.builtin_type) && m.decoration_flags.get(DecorationXfbStride) &&
 				    m.decoration_flags.get(DecorationXfbBuffer) && m.decoration_flags.get(DecorationOffset))
@@ -3403,6 +3416,8 @@ void CompilerGLSL::emit_declared_builtin_block(StorageClass storage, ExecutionMo
 		auto itr = builtin_xfb_offsets.find(BuiltInPosition);
 		if (itr != end(builtin_xfb_offsets))
 			statement("layout(xfb_offset = ", itr->second, ") vec4 gl_Position;");
+		else if (position_invariant)
+			statement("invariant vec4 gl_Position;");
 		else
 			statement("vec4 gl_Position;");
 	}
@@ -3499,6 +3514,8 @@ void CompilerGLSL::emit_resources()
 		break;
 	}
 
+	bool global_invariant_position = position_invariant && (options.es || options.version >= 120);
+
 	// Emit custom gl_PerVertex for SSO compatibility.
 	if (options.separate_shader_objects && !options.es && execution.model != ExecutionModelFragment)
 	{
@@ -3509,11 +3526,13 @@ void CompilerGLSL::emit_resources()
 		case ExecutionModelTessellationEvaluation:
 			emit_declared_builtin_block(StorageClassInput, execution.model);
 			emit_declared_builtin_block(StorageClassOutput, execution.model);
+			global_invariant_position = false;
 			break;
 
 		case ExecutionModelVertex:
 		case ExecutionModelMeshEXT:
 			emit_declared_builtin_block(StorageClassOutput, execution.model);
+			global_invariant_position = false;
 			break;
 
 		default:
@@ -3523,6 +3542,7 @@ void CompilerGLSL::emit_resources()
 	else if (should_force_emit_builtin_block(StorageClassOutput))
 	{
 		emit_declared_builtin_block(StorageClassOutput, execution.model);
+		global_invariant_position = false;
 	}
 	else if (execution.geometry_passthrough)
 	{
@@ -3543,7 +3563,7 @@ void CompilerGLSL::emit_resources()
 			statement("");
 	}
 
-	if (position_invariant && (options.es || options.version >= 120))
+	if (global_invariant_position)
 	{
 		statement("invariant gl_Position;");
 		statement("");
@@ -10051,8 +10071,14 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 
 				switch (builtin)
 				{
-				// case BuiltInCullDistance: // These are already arrays, need to figure out rules for these in tess/geom.
-				// case BuiltInClipDistance:
+				case BuiltInCullDistance:
+				case BuiltInClipDistance:
+					if (type->array.size() == 1) // Red herring. Only consider block IO for two-dimensional arrays here.
+					{
+						append_index(index, is_literal);
+						break;
+					}
+					// fallthrough
 				case BuiltInPosition:
 				case BuiltInPointSize:
 					if (mesh_shader)
@@ -15345,6 +15371,14 @@ string CompilerGLSL::image_type_glsl(const SPIRType &type, uint32_t id)
 
 	switch (imagetype.basetype)
 	{
+	case SPIRType::Int64:
+		res = "i64";
+		require_extension_internal("GL_EXT_shader_image_int64");
+		break;
+	case SPIRType::UInt64:
+		res = "u64";
+		require_extension_internal("GL_EXT_shader_image_int64");
+		break;
 	case SPIRType::Int:
 	case SPIRType::Short:
 	case SPIRType::SByte:

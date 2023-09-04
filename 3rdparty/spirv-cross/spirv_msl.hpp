@@ -358,6 +358,9 @@ public:
 		// Tier capabilities based on recommendations from Apple engineering.
 		ArgumentBuffersTier argument_buffers_tier = ArgumentBuffersTier::Tier1;
 
+		// Enables specifick argument buffer format with extra information to track SSBO-length
+		bool runtime_array_rich_descriptor = false;
+
 		// Ensures vertex and instance indices start at zero. This reflects the behavior of HLSL with SV_VertexID and SV_InstanceID.
 		bool enable_base_index_zero = false;
 
@@ -495,6 +498,12 @@ public:
 		// expected to be needed until the bug is fixed in Metal; it is provided as an option
 		// so it can be enabled only when the bug is present.
 		bool sample_dref_lod_array_as_grad = false;
+
+		// MSL doesn't guarantee coherence between writes and subsequent reads of read_write textures.
+		// This inserts fences before each read of a read_write texture to ensure coherency.
+		// If you're sure you never rely on this, you can set this to false for a possible performance improvement.
+		// Note: Only Apple's GPU compiler takes advantage of the lack of coherency, so make sure to test on Apple GPUs if you disable this.
+		bool readwrite_texture_fences = true;
 
 		bool is_ios() const
 		{
@@ -796,6 +805,9 @@ protected:
 		SPVFuncImplConvertYCbCrBT2020,
 		SPVFuncImplDynamicImageSampler,
 		SPVFuncImplRayQueryIntersectionParams,
+		SPVFuncImplVariableDescriptor,
+		SPVFuncImplVariableSizedDescriptor,
+		SPVFuncImplVariableDescriptorArray,
 	};
 
 	// If the underlying resource has been used for comparison then duplicate loads of that resource must be too
@@ -1178,11 +1190,12 @@ protected:
 	const MSLConstexprSampler *find_constexpr_sampler(uint32_t id) const;
 
 	std::unordered_set<uint32_t> buffers_requiring_array_length;
-	SmallVector<uint32_t> buffer_arrays_discrete;
 	SmallVector<std::pair<uint32_t, uint32_t>> buffer_aliases_argument;
 	SmallVector<uint32_t> buffer_aliases_discrete;
 	std::unordered_set<uint32_t> atomic_image_vars; // Emulate texture2D atomic operations
 	std::unordered_set<uint32_t> pull_model_inputs;
+
+	SmallVector<SPIRVariable *> entry_point_bindings;
 
 	// Must be ordered since array is in a specific order.
 	std::map<SetBindingPair, std::pair<uint32_t, uint32_t>> buffers_requiring_dynamic_offset;

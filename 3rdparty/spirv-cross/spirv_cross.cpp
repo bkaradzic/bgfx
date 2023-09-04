@@ -630,6 +630,14 @@ bool Compiler::is_array(const SPIRType &type) const
 	return !type.array.empty();
 }
 
+bool Compiler::is_runtime_size_array(const SPIRType &type)
+{
+	if (type.array.empty())
+		return false;
+	assert(type.array.size() == type.array_size_literal.size());
+	return type.array_size_literal.back() && type.array.back() == 0;
+}
+
 ShaderResources Compiler::get_shader_resources() const
 {
 	return get_shader_resources(nullptr);
@@ -995,37 +1003,45 @@ ShaderResources Compiler::get_shader_resources(const unordered_set<VariableID> *
 		{
 			res.shader_record_buffers.push_back({ var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self, ssbo_instance_name) });
 		}
-		// Images
-		else if (type.storage == StorageClassUniformConstant && type.basetype == SPIRType::Image &&
-		         type.image.sampled == 2)
-		{
-			res.storage_images.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
-		}
-		// Separate images
-		else if (type.storage == StorageClassUniformConstant && type.basetype == SPIRType::Image &&
-		         type.image.sampled == 1)
-		{
-			res.separate_images.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
-		}
-		// Separate samplers
-		else if (type.storage == StorageClassUniformConstant && type.basetype == SPIRType::Sampler)
-		{
-			res.separate_samplers.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
-		}
-		// Textures
-		else if (type.storage == StorageClassUniformConstant && type.basetype == SPIRType::SampledImage)
-		{
-			res.sampled_images.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
-		}
 		// Atomic counters
 		else if (type.storage == StorageClassAtomicCounter)
 		{
 			res.atomic_counters.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
 		}
-		// Acceleration structures
-		else if (type.storage == StorageClassUniformConstant && type.basetype == SPIRType::AccelerationStructure)
+		else if (type.storage == StorageClassUniformConstant)
 		{
-			res.acceleration_structures.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+			if (type.basetype == SPIRType::Image)
+			{
+				// Images
+				if (type.image.sampled == 2)
+				{
+					res.storage_images.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+				}
+				// Separate images
+				else if (type.image.sampled == 1)
+				{
+					res.separate_images.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+				}
+			}
+			// Separate samplers
+			else if (type.basetype == SPIRType::Sampler)
+			{
+				res.separate_samplers.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+			}
+			// Textures
+			else if (type.basetype == SPIRType::SampledImage)
+			{
+				res.sampled_images.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+			}
+			// Acceleration structures
+			else if (type.basetype == SPIRType::AccelerationStructure)
+			{
+				res.acceleration_structures.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+			}
+			else
+			{
+				res.gl_plain_uniforms.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+			}
 		}
 	});
 
