@@ -611,6 +611,18 @@ void ValidationState_t::RegisterSampledImageConsumer(uint32_t sampled_image_id,
   sampled_image_consumers_[sampled_image_id].push_back(consumer);
 }
 
+void ValidationState_t::RegisterQCOMImageProcessingTextureConsumer(
+    uint32_t texture_id, const Instruction* consumer0,
+    const Instruction* consumer1) {
+  if (HasDecoration(texture_id, spv::Decoration::WeightTextureQCOM) ||
+      HasDecoration(texture_id, spv::Decoration::BlockMatchTextureQCOM)) {
+    qcom_image_processing_consumers_.insert(consumer0->id());
+    if (consumer1) {
+      qcom_image_processing_consumers_.insert(consumer1->id());
+    }
+  }
+}
+
 void ValidationState_t::RegisterStorageClassConsumer(
     spv::StorageClass storage_class, Instruction* consumer) {
   if (spvIsVulkanEnv(context()->target_env)) {
@@ -668,39 +680,39 @@ void ValidationState_t::RegisterStorageClassConsumer(
   if (storage_class == spv::StorageClass::CallableDataKHR) {
     std::string errorVUID = VkErrorID(4704);
     function(consumer->function()->id())
-        ->RegisterExecutionModelLimitation([errorVUID](
-                                               spv::ExecutionModel model,
-                                               std::string* message) {
-          if (model != spv::ExecutionModel::RayGenerationKHR &&
-              model != spv::ExecutionModel::ClosestHitKHR &&
-              model != spv::ExecutionModel::CallableKHR &&
-              model != spv::ExecutionModel::MissKHR) {
-            if (message) {
-              *message = errorVUID +
-                         "CallableDataKHR Storage Class is limited to "
-                         "RayGenerationKHR, ClosestHitKHR, CallableKHR, and "
-                         "MissKHR execution model";
-            }
-            return false;
-          }
-          return true;
-        });
+        ->RegisterExecutionModelLimitation(
+            [errorVUID](spv::ExecutionModel model, std::string* message) {
+              if (model != spv::ExecutionModel::RayGenerationKHR &&
+                  model != spv::ExecutionModel::ClosestHitKHR &&
+                  model != spv::ExecutionModel::CallableKHR &&
+                  model != spv::ExecutionModel::MissKHR) {
+                if (message) {
+                  *message =
+                      errorVUID +
+                      "CallableDataKHR Storage Class is limited to "
+                      "RayGenerationKHR, ClosestHitKHR, CallableKHR, and "
+                      "MissKHR execution model";
+                }
+                return false;
+              }
+              return true;
+            });
   } else if (storage_class == spv::StorageClass::IncomingCallableDataKHR) {
     std::string errorVUID = VkErrorID(4705);
     function(consumer->function()->id())
-        ->RegisterExecutionModelLimitation([errorVUID](
-                                               spv::ExecutionModel model,
-                                               std::string* message) {
-          if (model != spv::ExecutionModel::CallableKHR) {
-            if (message) {
-              *message = errorVUID +
-                         "IncomingCallableDataKHR Storage Class is limited to "
-                         "CallableKHR execution model";
-            }
-            return false;
-          }
-          return true;
-        });
+        ->RegisterExecutionModelLimitation(
+            [errorVUID](spv::ExecutionModel model, std::string* message) {
+              if (model != spv::ExecutionModel::CallableKHR) {
+                if (message) {
+                  *message =
+                      errorVUID +
+                      "IncomingCallableDataKHR Storage Class is limited to "
+                      "CallableKHR execution model";
+                }
+                return false;
+              }
+              return true;
+            });
   } else if (storage_class == spv::StorageClass::RayPayloadKHR) {
     std::string errorVUID = VkErrorID(4698);
     function(consumer->function()->id())

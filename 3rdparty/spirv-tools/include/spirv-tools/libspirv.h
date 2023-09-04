@@ -294,6 +294,11 @@ typedef enum spv_operand_type_t {
   SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_LAYOUT,
   SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_USE,
 
+  // Enum type from SPV_INTEL_global_variable_fpga_decorations
+  SPV_OPERAND_TYPE_INITIALIZATION_MODE_QUALIFIER,
+  // Enum type from SPV_INTEL_global_variable_host_access
+  SPV_OPERAND_TYPE_HOST_ACCESS_QUALIFIER,
+
   // This is a sentinel value, and does not represent an operand type.
   // It should come last.
   SPV_OPERAND_TYPE_NUM_OPERAND_TYPES,

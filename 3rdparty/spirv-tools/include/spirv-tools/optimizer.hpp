@@ -992,6 +992,11 @@ Optimizer::PassToken CreateFixFuncCallArgumentsPass();
 // the unknown capability interacts with one of the trimmed capabilities.
 Optimizer::PassToken CreateTrimCapabilitiesPass();
 
+// Creates a switch-descriptorset pass.
+// This pass changes any DescriptorSet decorations with the value |ds_from| to
+// use the new value |ds_to|.
+Optimizer::PassToken CreateSwitchDescriptorSetPass(uint32_t ds_from,
+                                                   uint32_t ds_to);
 }  // namespace spvtools
 
 #endif  // INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_

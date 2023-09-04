@@ -220,6 +220,14 @@ spv_result_t ValidateExecutionLimitations(ValidationState_t& _,
 spv_result_t ValidateSmallTypeUses(ValidationState_t& _,
                                    const Instruction* inst);
 
+/// Validates restricted uses of QCOM decorated textures
+///
+/// The textures that are decorated with some of QCOM image processing
+/// decorations must be used in the specified QCOM image processing built-in
+/// functions and not used in any other image functions.
+spv_result_t ValidateQCOMImageProcessingTextureUsages(ValidationState_t& _,
+                                                      const Instruction* inst);
+
 /// @brief Validate the ID's within a SPIR-V binary
 ///
 /// @param[in] pInstructions array of instructions

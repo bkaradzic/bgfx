@@ -966,6 +966,8 @@ spv_result_t ValidateLoad(ValidationState_t& _, const Instruction* inst) {
     }
   }
 
+  _.RegisterQCOMImageProcessingTextureConsumer(pointer_id, inst, nullptr);
+
   return SPV_SUCCESS;
 }
 

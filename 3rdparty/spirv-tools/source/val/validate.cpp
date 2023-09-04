@@ -381,6 +381,8 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
   for (const auto& inst : vstate->ordered_instructions()) {
     if (auto error = ValidateExecutionLimitations(*vstate, &inst)) return error;
     if (auto error = ValidateSmallTypeUses(*vstate, &inst)) return error;
+    if (auto error = ValidateQCOMImageProcessingTextureUsages(*vstate, &inst))
+      return error;
   }
 
   return SPV_SUCCESS;

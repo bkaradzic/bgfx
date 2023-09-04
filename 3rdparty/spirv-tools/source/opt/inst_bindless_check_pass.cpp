@@ -132,50 +132,58 @@ void InstBindlessCheckPass::SetupInputBufferIds() {
 
 // clang-format off
 // GLSL:
-//bool inst_bindless_check_desc(uint shader_id, uint line, uvec4 stage_info, uint desc_set_idx, uint binding_idx, uint desc_idx,
-//                              uint offset)
+//bool inst_bindless_check_desc(uint shader_id, uint inst_num, uvec4 stage_info, uint desc_set, uint binding, uint desc_index,
+//                              uint byte_offset)
 //{
-//    if (desc_set_idx >= inst_bindless_input_buffer.desc_sets.length()) {
-//        // kInstErrorBindlessBounds
-//        inst_bindless_stream_write_6(shader_id, line, stage_info, 1, desc_set_idx, binding_idx, desc_idx, 0, 0);
-//        return false;
+//    uint error = 0u;
+//    uint param5 = 0u;
+//    uint param6 = 0u;
+//    uint num_bindings = 0u;
+//    uint init_state = 0u;
+//    if (desc_set >= 32u) {
+//        error = 1u;
 //    }
-//    DescriptorSetData set_data = inst_bindless_input_buffer.desc_sets[desc_set_idx];
-//    uvec2 ptr_vec = uvec2(set_data);
-//    if (ptr_vec.x == 0 && ptr_vec.y == 0) {
-//        // kInstErrorBindlessBounds
-//        inst_bindless_stream_write_6(shader_id, line, stage_info, 1, desc_set_idx, binding_idx, desc_idx, 0, 0);
-//        return false;
+//    inst_bindless_DescriptorSetData set_data;
+//    if (error == 0u) {
+//        set_data = inst_bindless_input_buffer.desc_sets[desc_set];
+//        uvec2 ptr_vec = uvec2(set_data);
+//        if ((ptr_vec.x == 0u) && (ptr_vec.y == 0u)) {
+//            error = 1u;
+//        }
 //    }
-//    uint num_bindings = set_data.num_bindings;
-//    if (binding_idx >= num_bindings) {
-//        // kInstErrorBindlessBounds
-//        inst_bindless_stream_write_6(shader_id, line, stage_info, 1, desc_set_idx, binding_idx, desc_idx, 0, 0);
-//        return false;
+//    if (error == 0u) {
+//        num_bindings = set_data.num_bindings;
+//        if (binding >= num_bindings) {
+//            error = 1u;
+//        }
 //    }
-//    uint binding_length = set_data.data[binding_idx];
-//    if (desc_idx >= binding_length) {
-//        // kInstErrorBindlessBounds
-//        inst_bindless_stream_write_6(shader_id, line, stage_info, 1, desc_set_idx, binding_idx, desc_idx, binding_length, 0);
-//        return false;
+//    if (error == 0u) {
+//        if (desc_index >= set_data.data[binding]) {
+//            error = 1u;
+//            param5 = set_data.data[binding];
+//        }
 //    }
-//    uint desc_records_start = set_data.data[num_bindings + binding_idx];
-//    uint init_or_len = set_data.data[desc_records_start + desc_idx];
-//    if (init_or_len == 0) {
-//        // kInstErrorBindlessUninit
-//        inst_bindless_stream_write_6(shader_id, line, stage_info, 2, desc_set_idx, binding_idx, desc_idx, 0, 0);
-//        return false;
+//    if (0u == error) {
+//        uint state_index = set_data.data[num_bindings + binding] + desc_index;
+//        init_state = set_data.data[state_index];
+//        if (init_state == 0u) {
+//            error = 2u;
+//        }
 //    }
-//    if (offset >= init_or_len) {
-//        // kInstErrorOOB
-//        inst_bindless_stream_write_6(shader_id, line, stage_info, 4, desc_set_idx, binding_idx, desc_idx, offset,
-//                                      init_or_len);
+//    if (error == 0u) {
+//        if (byte_offset >= init_state) {
+//            error = 4u;
+//            param5 = byte_offset;
+//            param6 = init_state;
+//        }
+//    }
+//    if (0u != error) {
+//        inst_bindless_stream_write_6(shader_id, inst_num, stage_info, error, desc_set, binding, desc_index, param5, param6);
 //        return false;
 //    }
 //    return true;
 //}
 // clang-format on
-
 uint32_t InstBindlessCheckPass::GenDescCheckFunctionId() {
   enum {
     kShaderId = 0,
@@ -205,235 +213,427 @@ uint32_t InstBindlessCheckPass::GenDescCheckFunctionId() {
 
   const std::vector<uint32_t> param_ids = AddParameters(*func, param_types);
 
+  const uint32_t func_uint_ptr =
+      type_mgr->FindPointerToType(GetUintId(), spv::StorageClass::Function);
   // Create block
   auto new_blk_ptr = MakeUnique<BasicBlock>(NewLabel(TakeNextId()));
   InstructionBuilder builder(
       context(), new_blk_ptr.get(),
       IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
+  Instruction* inst;
+  const uint32_t zero_id = builder.GetUintConstantId(0);
   const uint32_t false_id = builder.GetBoolConstantId(false);
   const uint32_t true_id = builder.GetBoolConstantId(true);
-  Instruction* inst;
+  const uint32_t uint_ptr = type_mgr->FindPointerToType(
+      GetUintId(), spv::StorageClass::PhysicalStorageBuffer);
 
+  inst = builder.AddBinaryOp(func_uint_ptr, spv::Op::OpVariable,
+                             uint32_t(spv::StorageClass::Function), zero_id);
+  const uint32_t error_var = inst->result_id();
+
+  inst = builder.AddBinaryOp(func_uint_ptr, spv::Op::OpVariable,
+                             uint32_t(spv::StorageClass::Function), zero_id);
+  const uint32_t param5_var = inst->result_id();
+
+  inst = builder.AddBinaryOp(func_uint_ptr, spv::Op::OpVariable,
+                             uint32_t(spv::StorageClass::Function), zero_id);
+  const uint32_t param6_var = inst->result_id();
+
+  inst = builder.AddBinaryOp(func_uint_ptr, spv::Op::OpVariable,
+                             uint32_t(spv::StorageClass::Function), zero_id);
+  const uint32_t num_bindings_var = inst->result_id();
+  inst = builder.AddBinaryOp(func_uint_ptr, spv::Op::OpVariable,
+                             uint32_t(spv::StorageClass::Function), zero_id);
+  const uint32_t init_status_var = inst->result_id();
+
+  const uint32_t desc_set_ptr_ptr = type_mgr->FindPointerToType(
+      desc_set_ptr_id_, spv::StorageClass::Function);
+
+  inst = builder.AddUnaryOp(desc_set_ptr_ptr, spv::Op::OpVariable,
+                            uint32_t(spv::StorageClass::Function));
+  const uint32_t desc_set_ptr_var = inst->result_id();
+  get_decoration_mgr()->AddDecoration(
+      desc_set_ptr_var, uint32_t(spv::Decoration::AliasedPointer));
+
+  uint32_t check_label_id = TakeNextId();
+  auto check_label = NewLabel(check_label_id);
+  uint32_t skip_label_id = TakeNextId();
+  auto skip_label = NewLabel(skip_label_id);
   inst = builder.AddBinaryOp(
       GetBoolId(), spv::Op::OpUGreaterThanEqual, param_ids[kDescSet],
       builder.GetUintConstantId(kDebugInputBindlessMaxDescSets));
   const uint32_t desc_cmp_id = inst->result_id();
 
-  uint32_t error_blk_id = TakeNextId();
-  uint32_t merge_blk_id = TakeNextId();
-  std::unique_ptr<Instruction> merge_label(NewLabel(merge_blk_id));
-  std::unique_ptr<Instruction> error_label(NewLabel(error_blk_id));
-  (void)builder.AddConditionalBranch(desc_cmp_id, error_blk_id, merge_blk_id,
-                                     merge_blk_id);
+  (void)builder.AddConditionalBranch(desc_cmp_id, check_label_id, skip_label_id,
+                                     skip_label_id);
   func->AddBasicBlock(std::move(new_blk_ptr));
 
-  // error return
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
+  // set error
+  new_blk_ptr = MakeUnique<BasicBlock>(std::move(check_label));
   builder.SetInsertPoint(&*new_blk_ptr);
-  (void)builder.AddUnaryOp(0, spv::Op::OpReturnValue, false_id);
+  builder.AddStore(error_var,
+                   builder.GetUintConstantId(kInstErrorBindlessBounds));
+  builder.AddBranch(skip_label_id);
   func->AddBasicBlock(std::move(new_blk_ptr));
 
   // check descriptor set table entry is non-null
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
+  new_blk_ptr = MakeUnique<BasicBlock>(std::move(skip_label));
   builder.SetInsertPoint(&*new_blk_ptr);
 
-  const uint32_t desc_set_ptr_ptr = type_mgr->FindPointerToType(
-      desc_set_ptr_id_, spv::StorageClass::StorageBuffer);
+  check_label_id = TakeNextId();
+  check_label = NewLabel(check_label_id);
+  skip_label_id = TakeNextId();
+  skip_label = NewLabel(skip_label_id);
+  inst = builder.AddLoad(GetUintId(), error_var);
+  uint32_t error_val_id = inst->result_id();
 
-  inst = builder.AddAccessChain(
-      desc_set_ptr_ptr, input_buffer_id_,
-      {builder.GetUintConstantId(0), param_ids[kDescSet]});
-  const uint32_t set_access_chain_id = inst->result_id();
-
-  inst = builder.AddLoad(desc_set_ptr_id_, set_access_chain_id);
-  const uint32_t desc_set_ptr_id = inst->result_id();
-
-  inst =
-      builder.AddUnaryOp(GetVecUintId(2), spv::Op::OpBitcast, desc_set_ptr_id);
-  const uint32_t ptr_as_uvec_id = inst->result_id();
-
-  inst = builder.AddCompositeExtract(GetUintId(), ptr_as_uvec_id, {0});
-  const uint32_t uvec_x = inst->result_id();
-
-  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpIEqual, uvec_x,
-                             builder.GetUintConstantId(0));
-  const uint32_t x_is_zero_id = inst->result_id();
-
-  inst = builder.AddCompositeExtract(GetUintId(), ptr_as_uvec_id, {1});
-  const uint32_t uvec_y = inst->result_id();
-
-  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpIEqual, uvec_y,
-                             builder.GetUintConstantId(0));
-  const uint32_t y_is_zero_id = inst->result_id();
-
-  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpLogicalAnd, x_is_zero_id,
-                             y_is_zero_id);
-  const uint32_t is_null_id = inst->result_id();
-
-  error_blk_id = TakeNextId();
-  merge_blk_id = TakeNextId();
-  merge_label = NewLabel(merge_blk_id);
-  error_label = NewLabel(error_blk_id);
-  (void)builder.AddConditionalBranch(is_null_id, error_blk_id, merge_blk_id,
-                                     merge_blk_id);
+  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpIEqual, error_val_id,
+                             zero_id);
+  uint32_t no_error_id = inst->result_id();
+  (void)builder.AddConditionalBranch(no_error_id, check_label_id, skip_label_id,
+                                     skip_label_id);
   func->AddBasicBlock(std::move(new_blk_ptr));
-  // error return
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
+
+  new_blk_ptr = MakeUnique<BasicBlock>(std::move(check_label));
   builder.SetInsertPoint(&*new_blk_ptr);
-  GenDebugStreamWrite(
-      param_ids[kShaderId], param_ids[kInstructionIndex], param_ids[kStageInfo],
-      {builder.GetUintConstantId(kInstErrorBindlessBounds), param_ids[kDescSet],
-       param_ids[kDescBinding], param_ids[kDescIndex],
-       builder.GetUintConstantId(0), builder.GetUintConstantId(0)},
-      &builder);
-  (void)builder.AddUnaryOp(0, spv::Op::OpReturnValue, false_id);
+
+  {
+    const uint32_t desc_set_ptr_ptr_sb = type_mgr->FindPointerToType(
+        desc_set_ptr_id_, spv::StorageClass::StorageBuffer);
+
+    inst = builder.AddAccessChain(desc_set_ptr_ptr_sb, input_buffer_id_,
+                                  {zero_id, param_ids[kDescSet]});
+    const uint32_t set_access_chain_id = inst->result_id();
+
+    inst = builder.AddLoad(desc_set_ptr_id_, set_access_chain_id);
+    const uint32_t desc_set_ptr_id = inst->result_id();
+
+    builder.AddStore(desc_set_ptr_var, desc_set_ptr_id);
+
+    inst = builder.AddUnaryOp(GetVecUintId(2), spv::Op::OpBitcast,
+                              desc_set_ptr_id);
+    const uint32_t ptr_as_uvec_id = inst->result_id();
+
+    inst = builder.AddCompositeExtract(GetUintId(), ptr_as_uvec_id, {0});
+    const uint32_t uvec_x = inst->result_id();
+
+    inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpIEqual, uvec_x, zero_id);
+    const uint32_t x_is_zero_id = inst->result_id();
+
+    inst = builder.AddCompositeExtract(GetUintId(), ptr_as_uvec_id, {1});
+    const uint32_t uvec_y = inst->result_id();
+
+    inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpIEqual, uvec_y, zero_id);
+    const uint32_t y_is_zero_id = inst->result_id();
+
+    inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpLogicalAnd, x_is_zero_id,
+                               y_is_zero_id);
+    const uint32_t is_null_id = inst->result_id();
+
+    const uint32_t error_label_id = TakeNextId();
+    auto error_label = NewLabel(error_label_id);
+    const uint32_t merge_label_id = TakeNextId();
+    auto merge_label = NewLabel(merge_label_id);
+    (void)builder.AddConditionalBranch(is_null_id, error_label_id,
+                                       merge_label_id, merge_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+    // set error
+    new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
+    builder.SetInsertPoint(&*new_blk_ptr);
+    builder.AddStore(error_var,
+                     builder.GetUintConstantId(kInstErrorBindlessBounds));
+    builder.AddBranch(merge_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+
+    new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
+    builder.SetInsertPoint(&*new_blk_ptr);
+    builder.AddBranch(skip_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+  }
+
+  new_blk_ptr = MakeUnique<BasicBlock>(std::move(skip_label));
+  builder.SetInsertPoint(&*new_blk_ptr);
+
+  check_label_id = TakeNextId();
+  check_label = NewLabel(check_label_id);
+  skip_label_id = TakeNextId();
+  skip_label = NewLabel(skip_label_id);
+
+  inst = builder.AddLoad(GetUintId(), error_var);
+  error_val_id = inst->result_id();
+
+  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpIEqual, error_val_id,
+                             zero_id);
+  no_error_id = inst->result_id();
+  (void)builder.AddConditionalBranch(no_error_id, check_label_id, skip_label_id,
+                                     skip_label_id);
   func->AddBasicBlock(std::move(new_blk_ptr));
 
   // check binding is in range
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
+  new_blk_ptr = MakeUnique<BasicBlock>(std::move(check_label));
   builder.SetInsertPoint(&*new_blk_ptr);
+  {
+    inst = builder.AddLoad(desc_set_ptr_id_, desc_set_ptr_var);
+    const uint32_t desc_set_ptr_id = inst->result_id();
 
-  const uint32_t uint_ptr = type_mgr->FindPointerToType(
-      GetUintId(), spv::StorageClass::PhysicalStorageBuffer);
+    inst = builder.AddAccessChain(uint_ptr, desc_set_ptr_id, {zero_id});
+    const uint32_t binding_access_chain_id = inst->result_id();
 
-  inst = builder.AddAccessChain(uint_ptr, desc_set_ptr_id,
-                                {builder.GetUintConstantId(0)});
-  const uint32_t binding_access_chain_id = inst->result_id();
+    inst = builder.AddLoad(GetUintId(), binding_access_chain_id, 8);
+    const uint32_t num_bindings_id = inst->result_id();
 
-  inst = builder.AddLoad(GetUintId(), binding_access_chain_id, 8);
-  const uint32_t num_bindings_id = inst->result_id();
+    builder.AddStore(num_bindings_var, num_bindings_id);
 
-  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpUGreaterThanEqual,
-                             param_ids[kDescBinding], num_bindings_id);
-  const uint32_t bindings_cmp_id = inst->result_id();
+    inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpUGreaterThanEqual,
+                               param_ids[kDescBinding], num_bindings_id);
+    const uint32_t bindings_cmp_id = inst->result_id();
 
-  error_blk_id = TakeNextId();
-  merge_blk_id = TakeNextId();
-  merge_label = NewLabel(merge_blk_id);
-  error_label = NewLabel(error_blk_id);
-  (void)builder.AddConditionalBranch(bindings_cmp_id, error_blk_id,
-                                     merge_blk_id, merge_blk_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-  // error return
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
-  builder.SetInsertPoint(&*new_blk_ptr);
-  GenDebugStreamWrite(
-      param_ids[kShaderId], param_ids[kInstructionIndex], param_ids[kStageInfo],
-      {builder.GetUintConstantId(kInstErrorBindlessBounds), param_ids[kDescSet],
-       param_ids[kDescBinding], param_ids[kDescIndex],
-       builder.GetUintConstantId(0), builder.GetUintConstantId(0)},
-      &builder);
-  (void)builder.AddUnaryOp(0, spv::Op::OpReturnValue, false_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
+    const uint32_t error_label_id = TakeNextId();
+    auto error_label = NewLabel(error_label_id);
+    const uint32_t merge_label_id = TakeNextId();
+    auto merge_label = NewLabel(merge_label_id);
+    (void)builder.AddConditionalBranch(bindings_cmp_id, error_label_id,
+                                       merge_label_id, merge_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+    // set error
+    new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
+    builder.SetInsertPoint(&*new_blk_ptr);
+    builder.AddStore(error_var,
+                     builder.GetUintConstantId(kInstErrorBindlessBounds));
+    builder.AddBranch(merge_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+
+    new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
+    builder.SetInsertPoint(&*new_blk_ptr);
+    builder.AddBranch(skip_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+  }
 
   // read binding length
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
+  new_blk_ptr = MakeUnique<BasicBlock>(std::move(skip_label));
   builder.SetInsertPoint(&*new_blk_ptr);
 
-  inst = builder.AddAccessChain(
-      uint_ptr, desc_set_ptr_id,
-      {{builder.GetUintConstantId(1), param_ids[kDescBinding]}});
-  const uint32_t length_ac_id = inst->result_id();
+  check_label_id = TakeNextId();
+  check_label = NewLabel(check_label_id);
+  skip_label_id = TakeNextId();
+  skip_label = NewLabel(skip_label_id);
 
-  inst = builder.AddLoad(GetUintId(), length_ac_id, sizeof(uint32_t));
-  const uint32_t length_id = inst->result_id();
+  inst = builder.AddLoad(GetUintId(), error_var);
+  error_val_id = inst->result_id();
 
-  // Check descriptor index in bounds
-  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpUGreaterThanEqual,
-                             param_ids[kDescIndex], length_id);
-  const uint32_t desc_idx_range_id = inst->result_id();
-
-  error_blk_id = TakeNextId();
-  merge_blk_id = TakeNextId();
-  merge_label = NewLabel(merge_blk_id);
-  error_label = NewLabel(error_blk_id);
-  (void)builder.AddConditionalBranch(desc_idx_range_id, error_blk_id,
-                                     merge_blk_id, merge_blk_id);
+  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpIEqual, error_val_id,
+                             zero_id);
+  no_error_id = inst->result_id();
+  (void)builder.AddConditionalBranch(no_error_id, check_label_id, skip_label_id,
+                                     skip_label_id);
   func->AddBasicBlock(std::move(new_blk_ptr));
-  // Error return
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
+
+  new_blk_ptr = MakeUnique<BasicBlock>(std::move(check_label));
   builder.SetInsertPoint(&*new_blk_ptr);
-  GenDebugStreamWrite(
-      param_ids[kShaderId], param_ids[kInstructionIndex], param_ids[kStageInfo],
-      {builder.GetUintConstantId(kInstErrorBindlessBounds), param_ids[kDescSet],
-       param_ids[kDescBinding], param_ids[kDescIndex], length_id,
-       builder.GetUintConstantId(0)},
-      &builder);
-  (void)builder.AddUnaryOp(0, spv::Op::OpReturnValue, false_id);
+  {
+    inst = builder.AddLoad(desc_set_ptr_id_, desc_set_ptr_var);
+    const uint32_t desc_set_ptr_id = inst->result_id();
+
+    inst = builder.AddAccessChain(
+        uint_ptr, desc_set_ptr_id,
+        {{builder.GetUintConstantId(1), param_ids[kDescBinding]}});
+    const uint32_t length_ac_id = inst->result_id();
+
+    inst = builder.AddLoad(GetUintId(), length_ac_id, sizeof(uint32_t));
+    const uint32_t length_id = inst->result_id();
+
+    // Check descriptor index in bounds
+    inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpUGreaterThanEqual,
+                               param_ids[kDescIndex], length_id);
+    const uint32_t desc_idx_range_id = inst->result_id();
+
+    const uint32_t error_label_id = TakeNextId();
+    auto error_label = NewLabel(error_label_id);
+    const uint32_t merge_label_id = TakeNextId();
+    auto merge_label = NewLabel(merge_label_id);
+    (void)builder.AddConditionalBranch(desc_idx_range_id, error_label_id,
+                                       merge_label_id, merge_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+    // set error
+    new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
+    builder.SetInsertPoint(&*new_blk_ptr);
+    builder.AddStore(error_var,
+                     builder.GetUintConstantId(kInstErrorBindlessBounds));
+    builder.AddStore(param5_var, length_id);
+    builder.AddBranch(merge_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+
+    new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
+    builder.SetInsertPoint(&*new_blk_ptr);
+    builder.AddBranch(skip_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+  }
+
+  new_blk_ptr = MakeUnique<BasicBlock>(std::move(skip_label));
+  builder.SetInsertPoint(&*new_blk_ptr);
+  inst = builder.AddLoad(GetUintId(), error_var);
+  error_val_id = inst->result_id();
+
+  check_label_id = TakeNextId();
+  check_label = NewLabel(check_label_id);
+  skip_label_id = TakeNextId();
+  skip_label = NewLabel(skip_label_id);
+
+  inst = builder.AddLoad(GetUintId(), error_var);
+  error_val_id = inst->result_id();
+  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpIEqual, zero_id,
+                             error_val_id);
+  no_error_id = inst->result_id();
+
+  (void)builder.AddConditionalBranch(no_error_id, check_label_id, skip_label_id,
+                                     skip_label_id);
   func->AddBasicBlock(std::move(new_blk_ptr));
 
   // Read descriptor init status
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
+  new_blk_ptr = MakeUnique<BasicBlock>(std::move(check_label));
   builder.SetInsertPoint(&*new_blk_ptr);
+  {
+    inst = builder.AddLoad(desc_set_ptr_id_, desc_set_ptr_var);
+    const uint32_t desc_set_ptr_id = inst->result_id();
 
-  inst = builder.AddIAdd(GetUintId(), num_bindings_id, param_ids[kDescBinding]);
-  const uint32_t state_offset_id = inst->result_id();
+    inst = builder.AddLoad(GetUintId(), num_bindings_var);
+    const uint32_t num_bindings_id = inst->result_id();
 
-  inst =
-      builder.AddAccessChain(uint_ptr, desc_set_ptr_id,
-                             {{builder.GetUintConstantId(1), state_offset_id}});
-  const uint32_t state_start_ac_id = inst->result_id();
+    inst =
+        builder.AddIAdd(GetUintId(), num_bindings_id, param_ids[kDescBinding]);
+    const uint32_t state_offset_id = inst->result_id();
 
-  inst = builder.AddLoad(GetUintId(), state_start_ac_id, sizeof(uint32_t));
-  const uint32_t state_start_id = inst->result_id();
+    inst = builder.AddAccessChain(
+        uint_ptr, desc_set_ptr_id,
+        {{builder.GetUintConstantId(1), state_offset_id}});
+    const uint32_t state_start_ac_id = inst->result_id();
 
-  inst = builder.AddIAdd(GetUintId(), state_start_id, param_ids[kDescIndex]);
-  const uint32_t state_entry_id = inst->result_id();
+    inst = builder.AddLoad(GetUintId(), state_start_ac_id, sizeof(uint32_t));
+    const uint32_t state_start_id = inst->result_id();
 
-  // Note: length starts from the beginning of the buffer, not the beginning of
-  // the data array
-  inst =
-      builder.AddAccessChain(uint_ptr, desc_set_ptr_id,
-                             {{builder.GetUintConstantId(1), state_entry_id}});
-  const uint32_t init_ac_id = inst->result_id();
+    inst = builder.AddIAdd(GetUintId(), state_start_id, param_ids[kDescIndex]);
+    const uint32_t state_entry_id = inst->result_id();
 
-  inst = builder.AddLoad(GetUintId(), init_ac_id, sizeof(uint32_t));
-  const uint32_t init_status_id = inst->result_id();
+    // Note: length starts from the beginning of the buffer, not the beginning
+    // of the data array
+    inst = builder.AddAccessChain(
+        uint_ptr, desc_set_ptr_id,
+        {{builder.GetUintConstantId(1), state_entry_id}});
+    const uint32_t init_ac_id = inst->result_id();
 
-  // Check for uninitialized descriptor
-  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpIEqual, init_status_id,
-                             builder.GetUintConstantId(0));
-  const uint32_t uninit_check_id = inst->result_id();
-  error_blk_id = TakeNextId();
-  merge_blk_id = TakeNextId();
-  merge_label = NewLabel(merge_blk_id);
-  error_label = NewLabel(error_blk_id);
-  (void)builder.AddConditionalBranch(uninit_check_id, error_blk_id,
-                                     merge_blk_id, merge_blk_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
-  builder.SetInsertPoint(&*new_blk_ptr);
-  GenDebugStreamWrite(
-      param_ids[kShaderId], param_ids[kInstructionIndex], param_ids[kStageInfo],
-      {builder.GetUintConstantId(kInstErrorBindlessUninit), param_ids[kDescSet],
-       param_ids[kDescBinding], param_ids[kDescIndex],
-       builder.GetUintConstantId(0), builder.GetUintConstantId(0)},
-      &builder);
-  (void)builder.AddUnaryOp(0, spv::Op::OpReturnValue, false_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
+    inst = builder.AddLoad(GetUintId(), init_ac_id, sizeof(uint32_t));
+    const uint32_t init_status_id = inst->result_id();
+
+    builder.AddStore(init_status_var, init_status_id);
+
+    // Check for uninitialized descriptor
+    inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpIEqual, init_status_id,
+                               zero_id);
+    const uint32_t uninit_check_id = inst->result_id();
+    const uint32_t error_label_id = TakeNextId();
+    auto error_label = NewLabel(error_label_id);
+    const uint32_t merge_label_id = TakeNextId();
+    auto merge_label = NewLabel(merge_label_id);
+    (void)builder.AddConditionalBranch(uninit_check_id, error_label_id,
+                                       merge_label_id, merge_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+    new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
+    builder.SetInsertPoint(&*new_blk_ptr);
+    builder.AddStore(error_var,
+                     builder.GetUintConstantId(kInstErrorBindlessUninit));
+    builder.AddBranch(merge_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+
+    new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
+    builder.SetInsertPoint(&*new_blk_ptr);
+    builder.AddBranch(skip_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+  }
 
   // Check for OOB.
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
+  new_blk_ptr = MakeUnique<BasicBlock>(std::move(skip_label));
   builder.SetInsertPoint(&*new_blk_ptr);
-  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpUGreaterThanEqual,
-                             param_ids[kByteOffset], init_status_id);
-  const uint32_t buf_offset_range_id = inst->result_id();
 
-  error_blk_id = TakeNextId();
-  merge_blk_id = TakeNextId();
-  merge_label = NewLabel(merge_blk_id);
-  error_label = NewLabel(error_blk_id);
-  (void)builder.AddConditionalBranch(buf_offset_range_id, error_blk_id,
-                                     merge_blk_id, merge_blk_id);
+  check_label_id = TakeNextId();
+  check_label = NewLabel(check_label_id);
+  skip_label_id = TakeNextId();
+  skip_label = NewLabel(skip_label_id);
+
+  inst = builder.AddLoad(GetUintId(), error_var);
+  error_val_id = inst->result_id();
+
+  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpIEqual, error_val_id,
+                             zero_id);
+  no_error_id = inst->result_id();
+  (void)builder.AddConditionalBranch(no_error_id, check_label_id, skip_label_id,
+                                     skip_label_id);
   func->AddBasicBlock(std::move(new_blk_ptr));
-  // Error return
+
+  new_blk_ptr = MakeUnique<BasicBlock>(std::move(check_label));
+  builder.SetInsertPoint(&*new_blk_ptr);
+  {
+    inst = builder.AddLoad(GetUintId(), init_status_var);
+    const uint32_t init_status_id = inst->result_id();
+
+    inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpUGreaterThanEqual,
+                               param_ids[kByteOffset], init_status_id);
+    const uint32_t buf_offset_range_id = inst->result_id();
+
+    const uint32_t error_label_id = TakeNextId();
+    const uint32_t merge_label_id = TakeNextId();
+    auto error_label = NewLabel(error_label_id);
+    auto merge_label = NewLabel(merge_label_id);
+    (void)builder.AddConditionalBranch(buf_offset_range_id, error_label_id,
+                                       merge_label_id, merge_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+
+    // set error
+    new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
+    builder.SetInsertPoint(&*new_blk_ptr);
+    builder.AddStore(error_var, builder.GetUintConstantId(kInstErrorOOB));
+    builder.AddStore(param5_var, param_ids[kByteOffset]);
+    builder.AddStore(param6_var, init_status_id);
+    builder.AddBranch(merge_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+
+    new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
+    builder.SetInsertPoint(&*new_blk_ptr);
+    builder.AddBranch(skip_label_id);
+    func->AddBasicBlock(std::move(new_blk_ptr));
+  }
+
+  // check for error
+  new_blk_ptr = MakeUnique<BasicBlock>(std::move(skip_label));
+  builder.SetInsertPoint(&*new_blk_ptr);
+  inst = builder.AddLoad(GetUintId(), error_var);
+  error_val_id = inst->result_id();
+
+  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpINotEqual, zero_id,
+                             error_val_id);
+  const uint32_t is_error_id = inst->result_id();
+
+  const uint32_t error_label_id = TakeNextId();
+  auto error_label = NewLabel(error_label_id);
+  const uint32_t merge_label_id = TakeNextId();
+  auto merge_label = NewLabel(merge_label_id);
+  (void)builder.AddConditionalBranch(is_error_id, error_label_id,
+                                     merge_label_id, merge_label_id);
+  func->AddBasicBlock(std::move(new_blk_ptr));
+
   new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
   builder.SetInsertPoint(&*new_blk_ptr);
+
+  // error output
+  inst = builder.AddLoad(GetUintId(), param5_var);
+  const uint32_t param5_val_id = inst->result_id();
+
+  inst = builder.AddLoad(GetUintId(), param6_var);
+  const uint32_t param6_val_id = inst->result_id();
+
   GenDebugStreamWrite(
       param_ids[kShaderId], param_ids[kInstructionIndex], param_ids[kStageInfo],
-      {builder.GetUintConstantId(kInstErrorOOB), param_ids[kDescSet],
-       param_ids[kDescBinding], param_ids[kDescIndex], param_ids[kByteOffset],
-       init_status_id},
+      {error_val_id, param_ids[kDescSet], param_ids[kDescBinding],
+       param_ids[kDescIndex], param5_val_id, param6_val_id},
       &builder);
   (void)builder.AddUnaryOp(0, spv::Op::OpReturnValue, false_id);
   func->AddBasicBlock(std::move(new_blk_ptr));

@@ -15,6 +15,7 @@
 #include "spirv-tools/optimizer.hpp"
 
 #include <cassert>
+#include <charconv>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -549,6 +550,39 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
              pass_args.c_str());
       return false;
     }
+  } else if (pass_name == "switch-descriptorset") {
+    if (pass_args.size() == 0) {
+      Error(consumer(), nullptr, {},
+            "--switch-descriptorset requires a from:to argument.");
+      return false;
+    }
+    uint32_t from_set, to_set;
+    const char* start = pass_args.data();
+    const char* end = pass_args.data() + pass_args.size();
+
+    auto result = std::from_chars(start, end, from_set);
+    if (result.ec != std::errc()) {
+      Errorf(consumer(), nullptr, {},
+             "Invalid argument for --switch-descriptorset: %s",
+             pass_args.c_str());
+      return false;
+    }
+    start = result.ptr;
+    if (start[0] != ':') {
+      Errorf(consumer(), nullptr, {},
+             "Invalid argument for --switch-descriptorset: %s",
+             pass_args.c_str());
+      return false;
+    }
+    start++;
+    result = std::from_chars(start, end, to_set);
+    if (result.ec != std::errc() || result.ptr != end) {
+      Errorf(consumer(), nullptr, {},
+             "Invalid argument for --switch-descriptorset: %s",
+             pass_args.c_str());
+      return false;
+    }
+    RegisterPass(CreateSwitchDescriptorSetPass(from_set, to_set));
   } else {
     Errorf(consumer(), nullptr, {},
            "Unknown flag '--%s'. Use --help for a list of valid flags",
@@ -1070,6 +1104,16 @@ Optimizer::PassToken CreateRemoveDontInlinePass() {
 Optimizer::PassToken CreateFixFuncCallArgumentsPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::FixFuncCallArgumentsPass>());
+}
+
+Optimizer::PassToken CreateTrimCapabilitiesPass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::TrimCapabilitiesPass>());
+}
+
+Optimizer::PassToken CreateSwitchDescriptorSetPass(uint32_t from, uint32_t to) {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::SwitchDescriptorSetPass>(from, to));
 }
 }  // namespace spvtools
 

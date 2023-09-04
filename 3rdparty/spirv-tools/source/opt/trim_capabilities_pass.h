@@ -27,6 +27,7 @@
 #include "source/opt/ir_context.h"
 #include "source/opt/module.h"
 #include "source/opt/pass.h"
+#include "source/spirv_target_env.h"
 
 namespace spvtools {
 namespace opt {
@@ -73,12 +74,18 @@ class TrimCapabilitiesPass : public Pass {
   // contains unsupported instruction, the pass could yield bad results.
   static constexpr std::array kSupportedCapabilities{
       // clang-format off
+      spv::Capability::FragmentShaderPixelInterlockEXT,
+      spv::Capability::FragmentShaderSampleInterlockEXT,
+      spv::Capability::FragmentShaderShadingRateInterlockEXT,
       spv::Capability::Groups,
       spv::Capability::Linkage,
       spv::Capability::MinLod,
       spv::Capability::Shader,
       spv::Capability::ShaderClockKHR,
-      spv::Capability::StorageInputOutput16
+      spv::Capability::StorageInputOutput16,
+      spv::Capability::StoragePushConstant16,
+      spv::Capability::StorageUniform16,
+      spv::Capability::StorageUniformBufferBlock16
       // clang-format on
   };
 
@@ -99,24 +106,54 @@ class TrimCapabilitiesPass : public Pass {
   TrimCapabilitiesPass(TrimCapabilitiesPass&&) = delete;
 
  private:
-  // Inserts every capability in `capabilities[capabilityCount]` supported by
-  // this pass into `output`.
-  inline void addSupportedCapabilitiesToSet(
-      uint32_t capabilityCount, const spv::Capability* const capabilities,
-      CapabilitySet* output) const {
+  // Inserts every capability listed by `descriptor` this pass supports into
+  // `output`. Expects a Descriptor like `spv_opcode_desc_t` or
+  // `spv_operand_desc_t`.
+  template <class Descriptor>
+  inline void addSupportedCapabilitiesToSet(const Descriptor* const descriptor,
+                                            CapabilitySet* output) const {
+    const uint32_t capabilityCount = descriptor->numCapabilities;
     for (uint32_t i = 0; i < capabilityCount; ++i) {
-      if (supportedCapabilities_.contains(capabilities[i])) {
-        output->insert(capabilities[i]);
+      const auto capability = descriptor->capabilities[i];
+      if (supportedCapabilities_.contains(capability)) {
+        output->insert(capability);
       }
     }
   }
 
-  // Given an `instruction`, determines the capabilities and extension it
-  // requires, and output them in `capabilities` and `extensions`. The returned
-  // capabilities form a subset of kSupportedCapabilities.
+  // Inserts every extension listed by `descriptor` required by the module into
+  // `output`. Expects a Descriptor like `spv_opcode_desc_t` or
+  // `spv_operand_desc_t`.
+  template <class Descriptor>
+  inline void addSupportedExtensionsToSet(const Descriptor* const descriptor,
+                                          ExtensionSet* output) const {
+    if (descriptor->minVersion <=
+        spvVersionForTargetEnv(context()->GetTargetEnv())) {
+      return;
+    }
+    output->insert(descriptor->extensions,
+                   descriptor->extensions + descriptor->numExtensions);
+  }
+
+  void addInstructionRequirementsForOpcode(spv::Op opcode,
+                                           CapabilitySet* capabilities,
+                                           ExtensionSet* extensions) const;
+  void addInstructionRequirementsForOperand(const Operand& operand,
+                                            CapabilitySet* capabilities,
+                                            ExtensionSet* extensions) const;
+
+  // Given an `instruction`, determines the capabilities it requires, and output
+  // them in `capabilities`. The returned capabilities form a subset of
+  // kSupportedCapabilities.
   void addInstructionRequirements(Instruction* instruction,
                                   CapabilitySet* capabilities,
                                   ExtensionSet* extensions) const;
+
+  // Given an operand `type` and `value`, adds the extensions it would require
+  // to `extensions`.
+  void AddExtensionsForOperand(const spv_operand_type_t type,
+                               const uint32_t value,
+                               ExtensionSet* extensions) const;
 
   // Returns the list of required capabilities and extensions for the module.
   // The returned capabilities form a subset of kSupportedCapabilities.
@@ -133,6 +170,9 @@ class TrimCapabilitiesPass : public Pass {
   // pass support requires it.
   Pass::Status TrimUnrequiredExtensions(
       const ExtensionSet& required_extensions) const;
+
+  // Returns if the analyzed module contains any forbidden capability.
+  bool HasForbiddenCapabilities() const;
 
  public:
   const char* name() const override { return "trim-capabilities"; }
