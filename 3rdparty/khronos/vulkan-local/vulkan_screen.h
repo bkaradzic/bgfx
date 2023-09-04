@@ -19,6 +19,7 @@ extern "C" {
 
 
 
+// VK_QNX_screen_surface is a preprocessor guard. Do not pass it to API calls.
 #define VK_QNX_screen_surface 1
 #define VK_QNX_SCREEN_SURFACE_SPEC_VERSION 1
 #define VK_QNX_SCREEN_SURFACE_EXTENSION_NAME "VK_QNX_screen_surface"
@@ -48,6 +49,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL vkGetPhysicalDeviceScreenPresentationSupportQNX(
 #endif
 
 
+// VK_QNX_external_memory_screen_buffer is a preprocessor guard. Do not pass it to API calls.
 #define VK_QNX_external_memory_screen_buffer 1
 #define VK_QNX_EXTERNAL_MEMORY_SCREEN_BUFFER_SPEC_VERSION 1
 #define VK_QNX_EXTERNAL_MEMORY_SCREEN_BUFFER_EXTENSION_NAME "VK_QNX_external_memory_screen_buffer"

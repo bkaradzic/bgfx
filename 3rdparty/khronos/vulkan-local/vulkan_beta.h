@@ -19,6 +19,7 @@ extern "C" {
 
 
 
+// VK_KHR_portability_subset is a preprocessor guard. Do not pass it to API calls.
 #define VK_KHR_portability_subset 1
 #define VK_KHR_PORTABILITY_SUBSET_SPEC_VERSION 1
 #define VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME "VK_KHR_portability_subset"
@@ -50,8 +51,9 @@ typedef struct VkPhysicalDevicePortabilitySubsetPropertiesKHR {
 
 
 
+// VK_KHR_video_encode_queue is a preprocessor guard. Do not pass it to API calls.
 #define VK_KHR_video_encode_queue 1
-#define VK_KHR_VIDEO_ENCODE_QUEUE_SPEC_VERSION 9
+#define VK_KHR_VIDEO_ENCODE_QUEUE_SPEC_VERSION 10
 #define VK_KHR_VIDEO_ENCODE_QUEUE_EXTENSION_NAME "VK_KHR_video_encode_queue"
 
 typedef enum VkVideoEncodeTuningModeKHR {
@@ -66,6 +68,7 @@ typedef VkFlags VkVideoEncodeFlagsKHR;
 
 typedef enum VkVideoEncodeCapabilityFlagBitsKHR {
     VK_VIDEO_ENCODE_CAPABILITY_PRECEDING_EXTERNALLY_ENCODED_BYTES_BIT_KHR = 0x00000001,
+    VK_VIDEO_ENCODE_CAPABILITY_INSUFFICIENT_BITSTREAM_BUFFER_RANGE_DETECTION_BIT_KHR = 0x00000002,
     VK_VIDEO_ENCODE_CAPABILITY_FLAG_BITS_MAX_ENUM_KHR = 0x7FFFFFFF
 } VkVideoEncodeCapabilityFlagBitsKHR;
 typedef VkFlags VkVideoEncodeCapabilityFlagsKHR;
@@ -221,10 +224,11 @@ VKAPI_ATTR void VKAPI_CALL vkCmdEncodeVideoKHR(
 #endif
 
 
+// VK_EXT_video_encode_h264 is a preprocessor guard. Do not pass it to API calls.
 #define VK_EXT_video_encode_h264 1
 #include "vk_video/vulkan_video_codec_h264std.h"
 #include "vk_video/vulkan_video_codec_h264std_encode.h"
-#define VK_EXT_VIDEO_ENCODE_H264_SPEC_VERSION 11
+#define VK_EXT_VIDEO_ENCODE_H264_SPEC_VERSION 12
 #define VK_EXT_VIDEO_ENCODE_H264_EXTENSION_NAME "VK_EXT_video_encode_h264"
 
 typedef enum VkVideoEncodeH264CapabilityFlagBitsEXT {
@@ -260,6 +264,8 @@ typedef enum VkVideoEncodeH264StdFlagBitsEXT {
     VK_VIDEO_ENCODE_H264_STD_DEBLOCKING_FILTER_DISABLED_BIT_EXT = 0x00008000,
     VK_VIDEO_ENCODE_H264_STD_DEBLOCKING_FILTER_ENABLED_BIT_EXT = 0x00010000,
     VK_VIDEO_ENCODE_H264_STD_DEBLOCKING_FILTER_PARTIAL_BIT_EXT = 0x00020000,
+    VK_VIDEO_ENCODE_H264_STD_SLICE_QP_DELTA_BIT_EXT = 0x00080000,
+    VK_VIDEO_ENCODE_H264_STD_DIFFERENT_SLICE_QP_DELTA_BIT_EXT = 0x00100000,
     VK_VIDEO_ENCODE_H264_STD_FLAG_BITS_MAX_ENUM_EXT = 0x7FFFFFFF
 } VkVideoEncodeH264StdFlagBitsEXT;
 typedef VkFlags VkVideoEncodeH264StdFlagsEXT;
@@ -417,10 +423,11 @@ typedef struct VkVideoEncodeH264GopRemainingFrameInfoEXT {
 
 
 
+// VK_EXT_video_encode_h265 is a preprocessor guard. Do not pass it to API calls.
 #define VK_EXT_video_encode_h265 1
 #include "vk_video/vulkan_video_codec_h265std.h"
 #include "vk_video/vulkan_video_codec_h265std_encode.h"
-#define VK_EXT_VIDEO_ENCODE_H265_SPEC_VERSION 11
+#define VK_EXT_VIDEO_ENCODE_H265_SPEC_VERSION 12
 #define VK_EXT_VIDEO_ENCODE_H265_EXTENSION_NAME "VK_EXT_video_encode_h265"
 
 typedef enum VkVideoEncodeH265CapabilityFlagBitsEXT {
@@ -458,6 +465,8 @@ typedef enum VkVideoEncodeH265StdFlagBitsEXT {
     VK_VIDEO_ENCODE_H265_STD_DEBLOCKING_FILTER_OVERRIDE_ENABLED_FLAG_SET_BIT_EXT = 0x00010000,
     VK_VIDEO_ENCODE_H265_STD_DEPENDENT_SLICE_SEGMENTS_ENABLED_FLAG_SET_BIT_EXT = 0x00020000,
     VK_VIDEO_ENCODE_H265_STD_DEPENDENT_SLICE_SEGMENT_FLAG_SET_BIT_EXT = 0x00040000,
+    VK_VIDEO_ENCODE_H265_STD_SLICE_QP_DELTA_BIT_EXT = 0x00080000,
+    VK_VIDEO_ENCODE_H265_STD_DIFFERENT_SLICE_QP_DELTA_BIT_EXT = 0x00100000,
     VK_VIDEO_ENCODE_H265_STD_FLAG_BITS_MAX_ENUM_EXT = 0x7FFFFFFF
 } VkVideoEncodeH265StdFlagBitsEXT;
 typedef VkFlags VkVideoEncodeH265StdFlagsEXT;
@@ -639,8 +648,122 @@ typedef struct VkVideoEncodeH265GopRemainingFrameInfoEXT {
 
 
 
+// VK_AMDX_shader_enqueue is a preprocessor guard. Do not pass it to API calls.
+#define VK_AMDX_shader_enqueue 1
+#define VK_AMDX_SHADER_ENQUEUE_SPEC_VERSION 1
+#define VK_AMDX_SHADER_ENQUEUE_EXTENSION_NAME "VK_AMDX_shader_enqueue"
+#define VK_SHADER_INDEX_UNUSED_AMDX       (~0U)
+typedef struct VkPhysicalDeviceShaderEnqueueFeaturesAMDX {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           shaderEnqueue;
+} VkPhysicalDeviceShaderEnqueueFeaturesAMDX;
+
+typedef struct VkPhysicalDeviceShaderEnqueuePropertiesAMDX {
+    VkStructureType    sType;
+    void*              pNext;
+    uint32_t           maxExecutionGraphDepth;
+    uint32_t           maxExecutionGraphShaderOutputNodes;
+    uint32_t           maxExecutionGraphShaderPayloadSize;
+    uint32_t           maxExecutionGraphShaderPayloadCount;
+    uint32_t           executionGraphDispatchAddressAlignment;
+} VkPhysicalDeviceShaderEnqueuePropertiesAMDX;
+
+typedef struct VkExecutionGraphPipelineScratchSizeAMDX {
+    VkStructureType    sType;
+    void*              pNext;
+    VkDeviceSize       size;
+} VkExecutionGraphPipelineScratchSizeAMDX;
+
+typedef struct VkExecutionGraphPipelineCreateInfoAMDX {
+    VkStructureType                           sType;
+    const void*                               pNext;
+    VkPipelineCreateFlags                     flags;
+    uint32_t                                  stageCount;
+    const VkPipelineShaderStageCreateInfo*    pStages;
+    const VkPipelineLibraryCreateInfoKHR*     pLibraryInfo;
+    VkPipelineLayout                          layout;
+    VkPipeline                                basePipelineHandle;
+    int32_t                                   basePipelineIndex;
+} VkExecutionGraphPipelineCreateInfoAMDX;
+
+typedef union VkDeviceOrHostAddressConstAMDX {
+    VkDeviceAddress    deviceAddress;
+    const void*        hostAddress;
+} VkDeviceOrHostAddressConstAMDX;
+
+typedef struct VkDispatchGraphInfoAMDX {
+    uint32_t                          nodeIndex;
+    uint32_t                          payloadCount;
+    VkDeviceOrHostAddressConstAMDX    payloads;
+    uint64_t                          payloadStride;
+} VkDispatchGraphInfoAMDX;
+
+typedef struct VkDispatchGraphCountInfoAMDX {
+    uint32_t                          count;
+    VkDeviceOrHostAddressConstAMDX    infos;
+    uint64_t                          stride;
+} VkDispatchGraphCountInfoAMDX;
+
+typedef struct VkPipelineShaderStageNodeCreateInfoAMDX {
+      VkStructureType    sType;
+    const void*          pNext;
+    const char*          pName;
+    uint32_t             index;
+} VkPipelineShaderStageNodeCreateInfoAMDX;
+
+typedef VkResult (VKAPI_PTR *PFN_vkCreateExecutionGraphPipelinesAMDX)(VkDevice                                        device, VkPipelineCache                 pipelineCache, uint32_t                                        createInfoCount, const VkExecutionGraphPipelineCreateInfoAMDX* pCreateInfos, const VkAllocationCallbacks*    pAllocator, VkPipeline*               pPipelines);
+typedef VkResult (VKAPI_PTR *PFN_vkGetExecutionGraphPipelineScratchSizeAMDX)(VkDevice                                        device, VkPipeline                                      executionGraph, VkExecutionGraphPipelineScratchSizeAMDX*         pSizeInfo);
+typedef VkResult (VKAPI_PTR *PFN_vkGetExecutionGraphPipelineNodeIndexAMDX)(VkDevice                                        device, VkPipeline                                      executionGraph, const VkPipelineShaderStageNodeCreateInfoAMDX*   pNodeInfo, uint32_t*                                       pNodeIndex);
+typedef void (VKAPI_PTR *PFN_vkCmdInitializeGraphScratchMemoryAMDX)(VkCommandBuffer                                 commandBuffer, VkDeviceAddress                                 scratch);
+typedef void (VKAPI_PTR *PFN_vkCmdDispatchGraphAMDX)(VkCommandBuffer                                 commandBuffer, VkDeviceAddress                                 scratch, const VkDispatchGraphCountInfoAMDX*              pCountInfo);
+typedef void (VKAPI_PTR *PFN_vkCmdDispatchGraphIndirectAMDX)(VkCommandBuffer                                 commandBuffer, VkDeviceAddress                                 scratch, const VkDispatchGraphCountInfoAMDX*              pCountInfo);
+typedef void (VKAPI_PTR *PFN_vkCmdDispatchGraphIndirectCountAMDX)(VkCommandBuffer                                 commandBuffer, VkDeviceAddress                                 scratch, VkDeviceAddress                                 countInfo);
+
+#ifndef VK_NO_PROTOTYPES
+VKAPI_ATTR VkResult VKAPI_CALL vkCreateExecutionGraphPipelinesAMDX(
+    VkDevice                                    device,
+    VkPipelineCache                             pipelineCache,
+    uint32_t                                    createInfoCount,
+    const VkExecutionGraphPipelineCreateInfoAMDX* pCreateInfos,
+    const VkAllocationCallbacks*                pAllocator,
+    VkPipeline*                                 pPipelines);
+
+VKAPI_ATTR VkResult VKAPI_CALL vkGetExecutionGraphPipelineScratchSizeAMDX(
+    VkDevice                                    device,
+    VkPipeline                                  executionGraph,
+    VkExecutionGraphPipelineScratchSizeAMDX*    pSizeInfo);
+
+VKAPI_ATTR VkResult VKAPI_CALL vkGetExecutionGraphPipelineNodeIndexAMDX(
+    VkDevice                                    device,
+    VkPipeline                                  executionGraph,
+    const VkPipelineShaderStageNodeCreateInfoAMDX* pNodeInfo,
+    uint32_t*                                   pNodeIndex);
+
+VKAPI_ATTR void VKAPI_CALL vkCmdInitializeGraphScratchMemoryAMDX(
+    VkCommandBuffer                             commandBuffer,
+    VkDeviceAddress                             scratch);
+
+VKAPI_ATTR void VKAPI_CALL vkCmdDispatchGraphAMDX(
+    VkCommandBuffer                             commandBuffer,
+    VkDeviceAddress                             scratch,
+    const VkDispatchGraphCountInfoAMDX*         pCountInfo);
+
+VKAPI_ATTR void VKAPI_CALL vkCmdDispatchGraphIndirectAMDX(
+    VkCommandBuffer                             commandBuffer,
+    VkDeviceAddress                             scratch,
+    const VkDispatchGraphCountInfoAMDX*         pCountInfo);
+
+VKAPI_ATTR void VKAPI_CALL vkCmdDispatchGraphIndirectCountAMDX(
+    VkCommandBuffer                             commandBuffer,
+    VkDeviceAddress                             scratch,
+    VkDeviceAddress                             countInfo);
+#endif
+
+
+// VK_NV_displacement_micromap is a preprocessor guard. Do not pass it to API calls.
 #define VK_NV_displacement_micromap 1
-#define VK_NV_DISPLACEMENT_MICROMAP_SPEC_VERSION 1
+#define VK_NV_DISPLACEMENT_MICROMAP_SPEC_VERSION 2
 #define VK_NV_DISPLACEMENT_MICROMAP_EXTENSION_NAME "VK_NV_displacement_micromap"
 
 typedef enum VkDisplacementMicromapFormatNV {
