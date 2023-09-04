@@ -37,12 +37,6 @@
 
 namespace glslang {
 
-void InitGlobalLock();
-void GetGlobalLock();
-void ReleaseGlobalLock();
-
-typedef unsigned int (*TThreadEntrypoint)(void*);
-
 void OS_DumpMemoryCounters();
 
 } // end namespace glslang

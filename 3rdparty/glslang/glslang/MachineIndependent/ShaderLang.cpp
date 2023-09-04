@@ -45,6 +45,7 @@
 #include <iostream>
 #include <sstream>
 #include <memory>
+#include <mutex>
 #include "SymbolTable.h"
 #include "ParseHelper.h"
 #include "Scan.h"
@@ -80,6 +81,9 @@ namespace { // anonymous namespace for file-local functions and symbols
 // Total number of successful initializers of glslang: a refcount
 // Shared global; access should be protected by a global mutex/critical section.
 int NumberOfClients = 0;
+
+// global initialization lock
+std::mutex init_lock;
 
 using namespace glslang;
 
@@ -417,18 +421,15 @@ void SetupBuiltinSymbolTable(int version, EProfile profile, const SpvVersion& sp
     TInfoSink infoSink;
 
     // Make sure only one thread tries to do this at a time
-    glslang::GetGlobalLock();
+    const std::lock_guard<std::mutex> lock(init_lock);
 
     // See if it's already been done for this version/profile combination
     int versionIndex = MapVersionToIndex(version);
     int spvVersionIndex = MapSpvVersionToIndex(spvVersion);
     int profileIndex = MapProfileToIndex(profile);
     int sourceIndex = MapSourceToIndex(source);
-    if (CommonSymbolTable[versionIndex][spvVersionIndex][profileIndex][sourceIndex][EPcGeneral]) {
-        glslang::ReleaseGlobalLock();
-
+    if (CommonSymbolTable[versionIndex][spvVersionIndex][profileIndex][sourceIndex][EPcGeneral])
         return;
-    }
 
     // Switch to a new pool
     TPoolAllocator& previousAllocator = GetThreadPoolAllocator();
@@ -475,8 +476,6 @@ void SetupBuiltinSymbolTable(int version, EProfile profile, const SpvVersion& sp
 
     delete builtInPoolAllocator;
     SetThreadPoolAllocator(&previousAllocator);
-
-    glslang::ReleaseGlobalLock();
 }
 
 // Function to Print all builtins
@@ -1297,12 +1296,10 @@ bool CompileDeferred(
 //
 int ShInitialize()
 {
-    glslang::InitGlobalLock();
-
     if (! InitProcess())
         return 0;
 
-    glslang::GetGlobalLock();
+    const std::lock_guard<std::mutex> lock(init_lock);
     ++NumberOfClients;
 
     if (PerProcessGPA == nullptr)
@@ -1313,7 +1310,6 @@ int ShInitialize()
     glslang::HlslScanContext::fillInKeywordMap();
 #endif
 
-    glslang::ReleaseGlobalLock();
     return 1;
 }
 
@@ -1372,14 +1368,11 @@ void ShDestruct(ShHandle handle)
 //
 int ShFinalize()
 {
-    glslang::GetGlobalLock();
+    const std::lock_guard<std::mutex> lock(init_lock);
     --NumberOfClients;
     assert(NumberOfClients >= 0);
-    bool finalize = NumberOfClients == 0;
-    if (! finalize) {
-        glslang::ReleaseGlobalLock();
+    if (NumberOfClients > 0)
         return 1;
-    }
 
     for (int version = 0; version < VersionCount; ++version) {
         for (int spvVersion = 0; spvVersion < SpvVersionCount; ++spvVersion) {
@@ -1417,7 +1410,6 @@ int ShFinalize()
     glslang::HlslScanContext::deleteKeywordMap();
 #endif
 
-    glslang::ReleaseGlobalLock();
     return 1;
 }
 

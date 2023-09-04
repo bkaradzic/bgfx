@@ -38,6 +38,7 @@
 //
 
 #include "ParseHelper.h"
+#include "Initialize.h"
 #include "Scan.h"
 
 #include "../OSDependent/osinclude.h"
@@ -2685,7 +2686,6 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
     }
 }
 
-extern bool PureOperatorBuiltins;
 
 // Deprecated!  Use PureOperatorBuiltins == true instead, in which case this
 // functionality is handled in builtInOpCheck() instead of here.
@@ -6324,9 +6324,6 @@ void TParseContext::layoutMemberLocationArrayCheck(const TSourceLoc& loc, bool m
 // Do layout error checking with respect to a type.
 void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
 {
-    if (extensionTurnedOn(E_GL_EXT_spirv_intrinsics))
-        return; // Skip any check if GL_EXT_spirv_intrinsics is turned on
-
     const TQualifier& qualifier = type.getQualifier();
 
     // first, intra-layout qualifier-only error checking
@@ -6380,6 +6377,7 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
         case EvqCallableData:
         case EvqCallableDataIn:
         case EvqHitObjectAttrNV:
+        case EvqSpirvStorageClass:
             break;
         case EvqTileImageEXT:
             break;
@@ -6436,7 +6434,7 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
         // an array of size N, all elements of the array from binding through binding + N - 1 must be within this
         // range."
         //
-        if (! type.isOpaque() && type.getBasicType() != EbtBlock)
+        if (!type.isOpaque() && type.getBasicType() != EbtBlock && type.getBasicType() != EbtSpirvType)
             error(loc, "requires block, or sampler/image, or atomic-counter type", "binding", "");
         if (type.getBasicType() == EbtSampler) {
             int lastBinding = qualifier.layoutBinding;

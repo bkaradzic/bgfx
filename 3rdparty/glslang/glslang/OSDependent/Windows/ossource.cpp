@@ -37,11 +37,9 @@
 #define STRICT
 #define VC_EXTRALEAN 1
 #include <windows.h>
-#include <cassert>
 #include <process.h>
 #include <psapi.h>
 #include <cstdio>
-#include <cstdint>
 
 //
 // This file contains the Window-OS-specific functions
@@ -52,28 +50,6 @@
 #endif
 
 namespace glslang {
-
-HANDLE GlobalLock;
-
-void InitGlobalLock()
-{
-    GlobalLock = CreateMutex(nullptr, false, nullptr);
-}
-
-void GetGlobalLock()
-{
-    WaitForSingleObject(GlobalLock, INFINITE);
-}
-
-void ReleaseGlobalLock()
-{
-    ReleaseMutex(GlobalLock);
-}
-
-unsigned int __stdcall EnterGenericThread (void* entry)
-{
-    return ((TThreadEntrypoint)entry)(nullptr);
-}
 
 //#define DUMP_COUNTERS
 

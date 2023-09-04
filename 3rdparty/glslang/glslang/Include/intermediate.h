@@ -1100,6 +1100,12 @@ enum TOperator {
     // Shader tile image ops
     EOpStencilAttachmentReadEXT, // Fragment only
     EOpDepthAttachmentReadEXT, // Fragment only
+
+    // Image processing
+    EOpImageSampleWeightedQCOM,
+    EOpImageBoxFilterQCOM,
+    EOpImageBlockMatchSADQCOM,
+    EOpImageBlockMatchSSDQCOM,
 };
 
 class TIntermTraverser;

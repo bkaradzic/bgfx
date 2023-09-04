@@ -55,6 +55,7 @@ namespace spv {
         #include "GLSL.ext.AMD.h"
         #include "GLSL.ext.NV.h"
         #include "GLSL.ext.ARM.h"
+        #include "GLSL.ext.QCOM.h"
     }
 }
 
@@ -311,7 +312,9 @@ const char* DecorationString(int decoration)
     case DecorationCeiling:
     default:  return "Bad";
 
-    case DecorationExplicitInterpAMD: return "ExplicitInterpAMD";
+    case DecorationWeightTextureQCOM:           return "DecorationWeightTextureQCOM";
+    case DecorationBlockMatchTextureQCOM:       return "DecorationBlockMatchTextureQCOM";
+    case DecorationExplicitInterpAMD:           return "ExplicitInterpAMD";
     case DecorationOverrideCoverageNV:          return "OverrideCoverageNV";
     case DecorationPassthroughNV:               return "PassthroughNV";
     case DecorationViewportRelativeNV:          return "ViewportRelativeNV";
@@ -1040,6 +1043,11 @@ const char* CapabilityString(int info)
     case CapabilityCoreBuiltinsARM:                             return "CoreBuiltinsARM";
 
     case CapabilityShaderInvocationReorderNV:                return "ShaderInvocationReorderNV";
+
+    case CapabilityTextureSampleWeightedQCOM:           return "TextureSampleWeightedQCOM";
+    case CapabilityTextureBoxFilterQCOM:                return "TextureBoxFilterQCOM";
+    case CapabilityTextureBlockMatchQCOM:               return "TextureBlockMatchQCOM";
+
     default: return "Bad";
     }
 }
@@ -1537,6 +1545,11 @@ const char* OpcodeString(int op)
     case OpColorAttachmentReadEXT:          return "OpColorAttachmentReadEXT";
     case OpDepthAttachmentReadEXT:          return "OpDepthAttachmentReadEXT";
     case OpStencilAttachmentReadEXT:        return "OpStencilAttachmentReadEXT";
+
+    case OpImageSampleWeightedQCOM:         return "OpImageSampleWeightedQCOM";
+    case OpImageBoxFilterQCOM:              return "OpImageBoxFilterQCOM";
+    case OpImageBlockMatchSADQCOM:          return "OpImageBlockMatchSADQCOM";
+    case OpImageBlockMatchSSDQCOM:          return "OpImageBlockMatchSSDQCOM";
 
     default:
         return "Bad";
@@ -3339,6 +3352,34 @@ void Parameterize()
         InstructionDesc[OpColorAttachmentReadEXT].operands.push(OperandId, "'Sample'", true);
         InstructionDesc[OpStencilAttachmentReadEXT].operands.push(OperandId, "'Sample'", true);
         InstructionDesc[OpDepthAttachmentReadEXT].operands.push(OperandId, "'Sample'", true);
+
+        InstructionDesc[OpImageSampleWeightedQCOM].operands.push(OperandId, "'source texture'");
+        InstructionDesc[OpImageSampleWeightedQCOM].operands.push(OperandId, "'texture coordinates'");
+        InstructionDesc[OpImageSampleWeightedQCOM].operands.push(OperandId, "'weights texture'");
+        InstructionDesc[OpImageSampleWeightedQCOM].operands.push(OperandImageOperands, "", true);
+        InstructionDesc[OpImageSampleWeightedQCOM].setResultAndType(true, true);
+
+        InstructionDesc[OpImageBoxFilterQCOM].operands.push(OperandId, "'source texture'");
+        InstructionDesc[OpImageBoxFilterQCOM].operands.push(OperandId, "'texture coordinates'");
+        InstructionDesc[OpImageBoxFilterQCOM].operands.push(OperandId, "'box size'");
+        InstructionDesc[OpImageBoxFilterQCOM].operands.push(OperandImageOperands, "", true);
+        InstructionDesc[OpImageBoxFilterQCOM].setResultAndType(true, true);
+
+        InstructionDesc[OpImageBlockMatchSADQCOM].operands.push(OperandId, "'target texture'");
+        InstructionDesc[OpImageBlockMatchSADQCOM].operands.push(OperandId, "'target coordinates'");
+        InstructionDesc[OpImageBlockMatchSADQCOM].operands.push(OperandId, "'reference texture'");
+        InstructionDesc[OpImageBlockMatchSADQCOM].operands.push(OperandId, "'reference coordinates'");
+        InstructionDesc[OpImageBlockMatchSADQCOM].operands.push(OperandId, "'block size'");
+        InstructionDesc[OpImageBlockMatchSADQCOM].operands.push(OperandImageOperands, "", true);
+        InstructionDesc[OpImageBlockMatchSADQCOM].setResultAndType(true, true);
+
+        InstructionDesc[OpImageBlockMatchSSDQCOM].operands.push(OperandId, "'target texture'");
+        InstructionDesc[OpImageBlockMatchSSDQCOM].operands.push(OperandId, "'target coordinates'");
+        InstructionDesc[OpImageBlockMatchSSDQCOM].operands.push(OperandId, "'reference texture'");
+        InstructionDesc[OpImageBlockMatchSSDQCOM].operands.push(OperandId, "'reference coordinates'");
+        InstructionDesc[OpImageBlockMatchSSDQCOM].operands.push(OperandId, "'block size'");
+        InstructionDesc[OpImageBlockMatchSSDQCOM].operands.push(OperandImageOperands, "", true);
+        InstructionDesc[OpImageBlockMatchSSDQCOM].setResultAndType(true, true);
     });
 }
 

@@ -36,49 +36,14 @@
 // This file contains the Linux-specific functions
 //
 #include "../osinclude.h"
-#include "../../../OGLCompilersDLL/InitializeDll.h"
 
-#include <pthread.h>
-#include <semaphore.h>
-#include <assert.h>
-#include <errno.h>
-#include <stdint.h>
 #include <cstdio>
-#include <sys/time.h>
 
 #if !defined(__Fuchsia__)
 #include <sys/resource.h>
 #endif
 
 namespace glslang {
-
-namespace {
-    pthread_mutex_t gMutex;
-}
-
-static void InitMutex(void)
-{
-  pthread_mutexattr_t mutexattr;
-  pthread_mutexattr_init(&mutexattr);
-  pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
-  pthread_mutex_init(&gMutex, &mutexattr);
-}
-
-void InitGlobalLock()
-{
-  static pthread_once_t once = PTHREAD_ONCE_INIT;
-  pthread_once(&once, InitMutex);
-}
-
-void GetGlobalLock()
-{
-  pthread_mutex_lock(&gMutex);
-}
-
-void ReleaseGlobalLock()
-{
-  pthread_mutex_unlock(&gMutex);
-}
 
 // #define DUMP_COUNTERS
 

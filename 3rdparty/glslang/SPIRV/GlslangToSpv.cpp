@@ -50,6 +50,7 @@ namespace spv {
     #include "GLSL.ext.AMD.h"
     #include "GLSL.ext.NV.h"
     #include "GLSL.ext.ARM.h"
+    #include "GLSL.ext.QCOM.h"
     #include "NonSemanticDebugPrintf.h"
 }
 
@@ -220,6 +221,7 @@ protected:
     spv::Id createNoArgOperation(glslang::TOperator op, spv::Decoration precision, spv::Id typeId);
     spv::Id getSymbolId(const glslang::TIntermSymbol* node);
     void addMeshNVDecoration(spv::Id id, int member, const glslang::TQualifier & qualifier);
+    void addImageProcessingQCOMDecoration(spv::Id id, spv::Decoration decor);
     spv::Id createSpvConstant(const glslang::TIntermTyped&);
     spv::Id createSpvConstantFromConstUnionArray(const glslang::TType& type, const glslang::TConstUnionArray&,
         int& nextConst, bool specConstant);
@@ -2012,7 +2014,7 @@ void TGlslangToSpvTraverser::visitSymbol(glslang::TIntermSymbol* symbol)
                 spv::StorageClass sc = builder.getStorageClass(id);
                 // Before SPIR-V 1.4, we only want to include Input and Output.
                 // Starting with SPIR-V 1.4, we want all globals.
-                if ((glslangIntermediate->getSpv().spv >= glslang::EShTargetSpv_1_4 && builder.isGlobalStorage(id)) ||
+                if ((glslangIntermediate->getSpv().spv >= glslang::EShTargetSpv_1_4 && builder.isGlobalVariable(id)) ||
                     (sc == spv::StorageClassInput || sc == spv::StorageClassOutput)) {
                     iOSet.insert(id);
                 }
@@ -3274,6 +3276,20 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
         builder.addExtension(spv::E_SPV_KHR_ray_tracing_position_fetch);
         builder.addCapability(spv::CapabilityRayQueryPositionFetchKHR);
         noReturnValue = true;
+        break;
+
+    case glslang::EOpImageSampleWeightedQCOM:
+        builder.addCapability(spv::CapabilityTextureSampleWeightedQCOM);
+        builder.addExtension(spv::E_SPV_QCOM_image_processing);
+        break;
+    case glslang::EOpImageBoxFilterQCOM:
+        builder.addCapability(spv::CapabilityTextureBoxFilterQCOM);
+        builder.addExtension(spv::E_SPV_QCOM_image_processing);
+        break;
+    case glslang::EOpImageBlockMatchSADQCOM:
+    case glslang::EOpImageBlockMatchSSDQCOM:
+        builder.addCapability(spv::CapabilityTextureBlockMatchQCOM);
+        builder.addExtension(spv::E_SPV_QCOM_image_processing);
         break;
 
     case glslang::EOpDebugPrintf:
@@ -4647,6 +4663,12 @@ bool TGlslangToSpvTraverser::filterMember(const glslang::TType& member)
     if (member.getFieldName() == "gl_SecondaryPositionNV" &&
         extensions.find("GL_NV_stereo_view_rendering") == extensions.end())
         return true;
+
+    if (glslangIntermediate->getStage() == EShLangMesh) {
+        if (member.getFieldName() == "gl_PrimitiveShadingRateEXT" &&
+            extensions.find("GL_EXT_fragment_shading_rate") == extensions.end())
+            return true;
+    }
 
     if (glslangIntermediate->getStage() != EShLangMesh) {
         if (member.getFieldName() == "gl_ViewportMask" &&
@@ -9017,6 +9039,27 @@ spv::Id TGlslangToSpvTraverser::createMiscOperation(glslang::TOperator op, spv::
         return 0;
 
     }
+
+    case glslang::EOpImageSampleWeightedQCOM:
+        typeId = builder.makeVectorType(builder.makeFloatType(32), 4);
+        opCode = spv::OpImageSampleWeightedQCOM;
+        addImageProcessingQCOMDecoration(operands[2], spv::DecorationWeightTextureQCOM);
+        break;
+    case glslang::EOpImageBoxFilterQCOM:
+        typeId = builder.makeVectorType(builder.makeFloatType(32), 4);
+        opCode = spv::OpImageBoxFilterQCOM;
+        break;
+    case glslang::EOpImageBlockMatchSADQCOM:
+        typeId = builder.makeVectorType(builder.makeFloatType(32), 4);
+        opCode = spv::OpImageBlockMatchSADQCOM;
+        addImageProcessingQCOMDecoration(operands[0], spv::DecorationBlockMatchTextureQCOM);
+        addImageProcessingQCOMDecoration(operands[2], spv::DecorationBlockMatchTextureQCOM);
+        break;
+    case glslang::EOpImageBlockMatchSSDQCOM:
+        typeId = builder.makeVectorType(builder.makeFloatType(32), 4);
+        opCode = spv::OpImageBlockMatchSSDQCOM;
+        addImageProcessingQCOMDecoration(operands[0], spv::DecorationBlockMatchTextureQCOM);
+        addImageProcessingQCOMDecoration(operands[2], spv::DecorationBlockMatchTextureQCOM);
         break;
     default:
         return 0;
@@ -9560,6 +9603,20 @@ void TGlslangToSpvTraverser::addMeshNVDecoration(spv::Id id, int member, const g
         if (qualifier.perTaskNV)
             builder.addDecoration(id, spv::DecorationPerTaskNV);
     }
+}
+
+void TGlslangToSpvTraverser::addImageProcessingQCOMDecoration(spv::Id id, spv::Decoration decor)
+{
+  spv::Op opc = builder.getOpCode(id);
+  if (opc == spv::OpSampledImage) {
+    id  = builder.getIdOperand(id, 0);
+    opc = builder.getOpCode(id);
+  }
+
+  if (opc == spv::OpLoad) {
+    spv::Id texid = builder.getIdOperand(id, 0);
+    builder.addDecoration(texid, decor);
+  }
 }
 
 // Make a full tree of instructions to build a SPIR-V specialization constant,
