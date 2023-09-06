@@ -1427,9 +1427,9 @@ VK_IMPORT_INSTANCE
 			{
 				BX_TRACE("---");
 
-				uint32_t numPhysicalDevices;
+				uint32_t totalPhysicalDevices;
 				result = vkEnumeratePhysicalDevices(m_instance
-					, &numPhysicalDevices
+					, &totalPhysicalDevices
 					, NULL
 					);
 
@@ -1439,22 +1439,45 @@ VK_IMPORT_INSTANCE
 					goto error;
 				}
 
-				if (numPhysicalDevices > VK_MAX_PHYSICAL_DEVICES)
+				if (totalPhysicalDevices > VK_MAX_PHYSICAL_DEVICES)
 				{
 					BX_TRACE("Init error: numPhysicalDevices exceeds the max supported number of devices (16)");
 					goto error;
 				}
 
-				VkPhysicalDevice physicalDevices[VK_MAX_PHYSICAL_DEVICES];
+				VkPhysicalDevice allPhysicalDevices[VK_MAX_PHYSICAL_DEVICES];
 				result = vkEnumeratePhysicalDevices(m_instance
-					, &numPhysicalDevices
-					, physicalDevices
+					, &totalPhysicalDevices
+					, allPhysicalDevices
 					);
 
 				if (VK_SUCCESS != result)
 				{
 					BX_TRACE("Init error: vkEnumeratePhysicalDevices failed %d: %s.", result, getName(result) );
 					goto error;
+				}
+
+				VkPhysicalDevice physicalDevices[VK_MAX_PHYSICAL_DEVICES];
+				uint32_t numPhysicalDevices = 0;
+				// Wayve custom device filters
+				for (uint32_t ii = 0, jj = 0; ii < totalPhysicalDevices; ++ii)
+				{
+					VkPhysicalDeviceProperties pdp;
+					vkGetPhysicalDeviceProperties(allPhysicalDevices[ii], &pdp);
+
+					// ignore all CPU / software implementations
+					if (pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_CPU)
+						continue;
+
+#if BGFX_CONFIG_CUDA_INTEROP
+					// if cuda interop is enabled, filter out all non-nvidia gpus, as they don't support cuda
+					if (pdp.vendorID != 0x10de)
+						continue;
+#endif
+
+					physicalDevices[jj] = allPhysicalDevices[ii];
+					++jj;
+					++numPhysicalDevices;
 				}
 
 				Extension physicalDeviceExtensions[VK_MAX_PHYSICAL_DEVICES][Extension::Count];
@@ -1477,7 +1500,7 @@ VK_IMPORT_INSTANCE
 					BX_TRACE("\tDriver version: %x", pdp.driverVersion);
 					BX_TRACE("\t      VendorId: %x", pdp.vendorID);
 					BX_TRACE("\t      DeviceId: %x", pdp.deviceID);
-					BX_TRACE("\t          Type: %d", pdp.deviceType);
+					2BX_TRACE("\t          Type: %d", pdp.deviceType);
 
 					g_caps.gpu[ii].vendorId = uint16_t(pdp.vendorID);
 					g_caps.gpu[ii].deviceId = uint16_t(pdp.deviceID);

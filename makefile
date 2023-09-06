@@ -113,7 +113,7 @@ wasm-release: .build/projects/gmake-wasm ## Build - Emscripten Release
 wasm: wasm-debug wasm-release ## Build - Emscripten Debug and Release
 
 .build/projects/gmake-linux:
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-gcc gmake
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --with-cuda --gcc=linux-gcc gmake
 linux-debug64: .build/projects/gmake-linux ## Build - Linux x64 Debug
 	$(MAKE) -R -C .build/projects/gmake-linux config=debug64
 linux-release64: .build/projects/gmake-linux ## Build - Linux x64 Release
