@@ -1500,7 +1500,7 @@ VK_IMPORT_INSTANCE
 					BX_TRACE("\tDriver version: %x", pdp.driverVersion);
 					BX_TRACE("\t      VendorId: %x", pdp.vendorID);
 					BX_TRACE("\t      DeviceId: %x", pdp.deviceID);
-					2BX_TRACE("\t          Type: %d", pdp.deviceType);
+					BX_TRACE("\t          Type: %d", pdp.deviceType);
 
 					g_caps.gpu[ii].vendorId = uint16_t(pdp.vendorID);
 					g_caps.gpu[ii].deviceId = uint16_t(pdp.deviceID);
