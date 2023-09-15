@@ -535,7 +535,7 @@ hot-reloading.
 -----------------------------------------------------------------------
 
 <a href="http://opensource.org/licenses/BSD-2-Clause" target="_blank">
-<img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
+<img align="right" src="https://opensource.org/wp-content/uploads/2022/10/osi-badge-dark.svg" width="100" height="137">
 </a>
 
 	Copyright 2010-2023 Branimir Karadzic
