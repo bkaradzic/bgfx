@@ -5272,7 +5272,7 @@ namespace bgfx
 			{
 				BGFX_PROFILER_SCOPE("bgfx/Render thread wait", 0xff2040ff);
 				int64_t start = bx::getHPCounter();
-				bool ok = m_renderSem.wait();
+				bool ok = m_renderSem.wait(10000);
 				BX_ASSERT(ok, "Semaphore wait failed."); BX_UNUSED(ok);
 				m_submit->m_waitRender = bx::getHPCounter() - start;
 				m_submit->m_perfStats.waitRender = m_submit->m_waitRender;
