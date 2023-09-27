@@ -531,6 +531,13 @@ hot-reloading.
 
 ![Equilibrium Engine screenshot](https://raw.githubusercontent.com/clibequilibrium/EquilibriumEngine/master/docs/city.png)
 
+## Pinhole Universe
+
+https://festina-lente-productions.com/pinhole-universe/ - Explore a generated
+world where you can zoom in on anything, forever.
+
+![Pinhole Universe capsule image](https://festina-lente-productions.com/ext/capsule_small.jpg)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
