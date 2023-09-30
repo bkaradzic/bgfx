@@ -90,8 +90,8 @@ namespace bgfx
 	struct Profile
 	{
 		ShadingLang::Enum lang;
-		uint32_t    id;
-		const char* name;
+		uint32_t id;
+		const bx::StringLiteral name;
 	};
 
 	static const Profile s_profiles[] =
@@ -1075,41 +1075,37 @@ namespace bgfx
 		return word;
 	}
 
-	bool compileShader(const char* _varying, const char* _comment, char* _shader, uint32_t _shaderLen, Options& _options, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
+	bool compileShader(const char* _varying, const char* _comment, char* _shader, uint32_t _shaderLen, const Options& _options, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
 	{
 		bx::ErrorAssert messageErr;
 
-		uint32_t profile_id = 0;
+		uint32_t profileId = 0;
 
-		const char* profile_opt = _options.profile.c_str();
-		if ('\0' != profile_opt[0])
+		const bx::StringView profileOpt(_options.profile.c_str() );
+		if (!profileOpt.isEmpty() )
 		{
 			const uint32_t count = BX_COUNTOF(s_profiles);
-			for (profile_id=0; profile_id<count; profile_id++ )
+			for (profileId = 0; profileId < count; ++profileId)
 			{
-				if (0 == bx::strCmp(profile_opt, s_profiles[profile_id].name) )
+				if (0 == bx::strCmp(profileOpt, s_profiles[profileId].name) )
 				{
-					break;
-				}
-				else if (s_profiles[profile_id].lang == ShadingLang::HLSL
-					 &&  0 == bx::strCmp(&profile_opt[1], s_profiles[profile_id].name) )
-				{
-					// This test is here to allow hlsl profile names e.g:
-					// cs_4_0, gs_5_0, etc...
-					// There's no check to ensure that the profile name matches the shader type set via the cli.
-					// This means that you can pass `hs_5_0` when compiling a fragment shader.
 					break;
 				}
 			}
 
-			if (profile_id == count)
+			if (profileId == count)
 			{
-				bx::write(_messageWriter, &messageErr, "Unknown profile: %s\n", profile_opt);
+				bx::write(_messageWriter, &messageErr, "Unknown profile: %S\n", &profileOpt);
 				return false;
 			}
 		}
+		else
+		{
+			bx::write(_messageWriter, &messageErr, "Shader profile must be specified.\n");
+			return false;
+		}
 
-		const Profile *profile = &s_profiles[profile_id];
+		const Profile* profile = &s_profiles[profileId];
 
 		Preprocessor preprocessor(_options.inputFilePath.c_str(), profile->lang == ShadingLang::ESSL, _messageWriter);
 
@@ -1152,17 +1148,17 @@ namespace bgfx
 		||  profile->lang == ShadingLang::ESSL)
 		{
 			bx::snprintf(glslDefine, BX_COUNTOF(glslDefine)
-					, "BGFX_SHADER_LANGUAGE_GLSL=%d"
-					, profile->id
-					);
+				, "BGFX_SHADER_LANGUAGE_GLSL=%d"
+				, profile->id
+				);
 		}
 
 		char hlslDefine[128];
 		if (profile->lang == ShadingLang::HLSL)
 		{
 			bx::snprintf(hlslDefine, BX_COUNTOF(hlslDefine)
-					, "BGFX_SHADER_LANGUAGE_HLSL=%d"
-					, profile->id);
+				, "BGFX_SHADER_LANGUAGE_HLSL=%d"
+				, profile->id);
 		}
 
 		const char* platform = _options.platform.c_str();
