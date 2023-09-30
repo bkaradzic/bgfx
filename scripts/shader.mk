@@ -63,15 +63,10 @@ FS_FLAGS=--platform windows -p s_5_0 -O 3
 CS_FLAGS=--platform windows -p s_5_0 -O 1
 SHADER_PATH=shaders/dx11
 else
-ifeq ($(TARGET), 2)
-VS_FLAGS=--platform nacl
-FS_FLAGS=--platform nacl
-SHADER_PATH=shaders/essl
-else
-ifeq ($(TARGET), 3)
-VS_FLAGS=--platform android
-FS_FLAGS=--platform android
-CS_FLAGS=--platform android
+ifeq ($(TARGET), $(filter $(TARGET), 2 3))
+VS_FLAGS=--platform android -p 100_es
+FS_FLAGS=--platform android -p 100_es
+CS_FLAGS=--platform android -p 300_es
 SHADER_PATH=shaders/essl
 else
 ifeq ($(TARGET), 4)
@@ -97,7 +92,6 @@ VS_FLAGS=--platform linux -p spirv
 FS_FLAGS=--platform linux -p spirv
 CS_FLAGS=--platform linux -p spirv
 SHADER_PATH=shaders/spirv
-endif
 endif
 endif
 endif
