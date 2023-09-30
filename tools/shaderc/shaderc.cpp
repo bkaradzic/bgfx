@@ -2234,7 +2234,7 @@ namespace bgfx
 								const bool usesTextureArray       = !bx::findIdentifierMatch(input, s_textureArray).isEmpty();
 								const bool usesPacking            = !bx::findIdentifierMatch(input, s_ARB_shading_language_packing).isEmpty();
 								const bool usesViewportLayerArray = !bx::findIdentifierMatch(input, s_ARB_shader_viewport_layer_array).isEmpty();
-								const bool usesUnsignedVecs        = !bx::findIdentifierMatch(preprocessedInput, s_unsignedVecs).isEmpty();
+								const bool usesUnsignedVecs       = !bx::findIdentifierMatch(preprocessedInput, s_unsignedVecs).isEmpty();
 
 								if (profile->lang != ShadingLang::ESSL)
 								{
@@ -2246,7 +2246,6 @@ namespace bgfx
 										) );
 
 									bx::stringPrintf(code, "#version %d\n", need130 ? 130 : glsl_profile);
-									glsl_profile = 130;
 
 									if (need130)
 									{
@@ -2370,7 +2369,8 @@ namespace bgfx
 								}
 								else
 								{
-									if ((glsl_profile < 300) && usesUnsignedVecs)
+									if (glsl_profile < 300
+									&&  usesUnsignedVecs)
 									{
 										glsl_profile = 300;
 									}
