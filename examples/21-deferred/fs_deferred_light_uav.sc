@@ -32,7 +32,7 @@ void main()
 	vec3 view = mul(u_view, vec4(wpos, 0.0) ).xyz;
 	view = -normalize(view);
 
-    ivec2 coord = ivec2(gl_FragCoord.xy);
+	ivec2 coord = ivec2(gl_FragCoord.xy);
 
 	vec3 lightColor = calcLight(wpos, normal, view, u_lightPosRadius[0].xyz, u_lightPosRadius[0].w, u_lightRgbInnerR[0].xyz, u_lightRgbInnerR[0].w);
 	vec4 color = imageLoad(i_light, coord);
