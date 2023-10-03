@@ -158,13 +158,11 @@ void ProcessConfigFile()
 {
     if (ConfigFile.size() == 0)
         *GetResources() = *GetDefaultResources();
-#ifndef GLSLANG_WEB
     else {
         char* configString = ReadFileData(ConfigFile.c_str());
         DecodeResourceLimits(GetResources(),  configString);
         FreeFileData(configString);
     }
-#endif
 }
 
 int ReflectOptions = EShReflectionDefault;
@@ -255,6 +253,17 @@ public:
         Processes.back().append(undef);
 
         text.append(undef);
+        text.append("\n");
+    }
+
+    void addText(std::string preambleText)
+    {
+        fixLine(preambleText);
+
+        Processes.push_back("preamble-text");
+        Processes.back().append(preambleText);
+
+        text.append(preambleText);
         text.append("\n");
     }
 
@@ -714,7 +723,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         HlslDxPositionW = true;
                     } else if (lowerword == "enhanced-msgs") {
                         EnhancedMsgs = true;
-                    } else if (lowerword == "auto-sampled-textures") { 
+                    } else if (lowerword == "auto-sampled-textures") {
                         autoSampledTextures = true;
                     } else if (lowerword == "invert-y" ||  // synonyms
                                lowerword == "iy") {
@@ -727,6 +736,13 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                     } else if (lowerword == "no-storage-format" || // synonyms
                                lowerword == "nsf") {
                         Options |= EOptionNoStorageFormat;
+                    } else if (lowerword == "preamble-text" ||
+                               lowerword == "p") {
+                        if (argc > 1)
+                            UserPreamble.addText(argv[1]);
+                        else
+                            Error("expects <text>", argv[0]);
+                        bumpArg();
                     } else if (lowerword == "relaxed-errors") {
                         Options |= EOptionRelaxedErrors;
                     } else if (lowerword == "reflect-strict-array-suffix") {
@@ -925,6 +941,9 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
 #endif
                 else
                     Error("unknown -O option");
+                break;
+            case 'P':
+                UserPreamble.addText(getStringOperand("-P<text>"));
                 break;
             case 'R':
                 VulkanRulesRelaxed = true;
@@ -1321,7 +1340,6 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         shader->setPreamble(PreambleString.c_str());
         shader->addProcesses(Processes);
 
-#ifndef GLSLANG_WEB
         // Set IO mapper binding shift values
         for (int r = 0; r < glslang::EResCount; ++r) {
             const glslang::TResourceType res = glslang::TResourceType(r);
@@ -1353,7 +1371,6 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         }
 
         shader->setUniformLocationBase(uniformBase);
-#endif
 
         if (VulkanRulesRelaxed) {
             for (auto& storageOverride : blockStorageOverrides) {
@@ -1413,7 +1430,6 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
 
         const int defaultVersion = Options & EOptionDefaultDesktop ? 110 : 100;
 
-#ifndef GLSLANG_WEB
         if (Options & EOptionOutputPreprocessed) {
             std::string str;
             if (shader->preprocess(GetResources(), defaultVersion, ENoProfile, false, false, messages, &str, includer)) {
@@ -1425,7 +1441,6 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
             StderrIfNonEmpty(shader->getInfoDebugLog());
             continue;
         }
-#endif
 
         if (! shader->parse(GetResources(), defaultVersion, false, messages, includer))
             CompileFailed = true;
@@ -1449,13 +1464,11 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
     if (! (Options & EOptionOutputPreprocessed) && ! program.link(messages))
         LinkFailed = true;
 
-#ifndef GLSLANG_WEB
     // Map IO
     if (Options & EOptionSpv) {
         if (!program.mapIO())
             LinkFailed = true;
     }
-#endif
 
     // Report
     if (! (Options & EOptionSuppressInfolog) &&
@@ -1464,13 +1477,11 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         PutsIfNonEmpty(program.getInfoDebugLog());
     }
 
-#ifndef GLSLANG_WEB
     // Reflect
     if (Options & EOptionDumpReflection) {
         program.buildReflection(ReflectOptions);
         program.dumpReflection();
     }
-#endif
 
     std::vector<std::string> outputFiles;
 
@@ -1505,16 +1516,16 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                     if (! (Options & EOptionMemoryLeakMode)) {
                         printf("%s", logger.getAllMessages().c_str());
                         if (Options & EOptionOutputHexadecimal) {
-                            glslang::OutputSpvHex(spirv, GetBinaryName((EShLanguage)stage), variableName);
+                            if (!glslang::OutputSpvHex(spirv, GetBinaryName((EShLanguage)stage), variableName))
+                              exit(EFailUsage);
                         } else {
-                            glslang::OutputSpvBin(spirv, GetBinaryName((EShLanguage)stage));
+                            if (!glslang::OutputSpvBin(spirv, GetBinaryName((EShLanguage)stage)))
+                              exit(EFailUsage);
                         }
 
                         outputFiles.push_back(GetBinaryName((EShLanguage)stage));
-#ifndef GLSLANG_WEB
                         if (!SpvToolsDisassembler && (Options & EOptionHumanReadableSpv))
                             spv::Disassemble(std::cout, spirv);
-#endif
                     }
                 }
             }
@@ -1609,13 +1620,11 @@ int singleMain()
         workList.add(item.get());
     });
 
-#ifndef GLSLANG_WEB
     if (Options & EOptionDumpConfig) {
         printf("%s", GetDefaultTBuiltInResourceString().c_str());
         if (workList.empty())
             return ESuccess;
     }
-#endif
 
     if (Options & EOptionDumpBareVersion) {
         printf("%d:%d.%d.%d%s\n", glslang::GetSpirvGeneratorVersion(), GLSLANG_VERSION_MAJOR, GLSLANG_VERSION_MINOR,
@@ -1832,7 +1841,7 @@ void CompileFile(const char* fileName, ShHandle compiler)
     SetMessageOptions(messages);
 
     if (UserPreamble.isSet())
-        Error("-D and -U options require -l (linking)\n");
+        Error("-D, -U and -P options require -l (linking)\n");
 
     for (int i = 0; i < ((Options & EOptionMemoryLeakMode) ? 100 : 1); ++i) {
         for (int j = 0; j < ((Options & EOptionMemoryLeakMode) ? 100 : 1); ++j) {
@@ -1861,7 +1870,7 @@ void CompileFile(const char* fileName, ShHandle compiler)
 //
 void usage()
 {
-    printf("Usage: glslangValidator [option]... [file]...\n"
+    printf("Usage: glslang [option]... [file]...\n"
            "\n"
            "'file' can end in .<stage> for auto-stage classification, where <stage> is:\n"
            "    .conf   to provide a config file that replaces the default configuration\n"
@@ -1902,6 +1911,9 @@ void usage()
            "              is searched first, followed by left-to-right order of -I\n"
            "  -Od         disables optimization; may cause illegal SPIR-V for HLSL\n"
            "  -Os         optimizes SPIR-V to minimize size\n"
+           "  -P<text> | --preamble-text <text> | --P <text>\n"
+           "              inject custom preamble text, which is treated as if it\n"
+           "              appeared immediately after the version declaration (if any).\n"
            "  -R          use relaxed verification rules for generating Vulkan SPIR-V,\n"
            "              allowing the use of default uniforms, atomic_uints, and\n"
            "              gl_VertexID and gl_InstanceID keywords.\n"
@@ -1949,7 +1961,7 @@ void usage()
            "                                    without explicit bindings\n"
            "  --auto-map-locations | --aml      automatically locate input/output lacking\n"
            "                                    'location' (fragile, not cross stage)\n"
-           "  --auto-sampled-textures           Removes sampler variables and converts\n" 
+           "  --auto-sampled-textures           Removes sampler variables and converts\n"
            "                                    existing textures to sampled textures\n"
            "  --client {vulkan<ver>|opengl<ver>} see -V and -G\n"
            "  --depfile <file>                  writes depfile for build systems\n"
@@ -2063,8 +2075,7 @@ void usage()
            "  --variable-name <name>\n"
            "  --vn <name>                       creates a C header file that contains a\n"
            "                                    uint32_t array named <name>\n"
-           "                                    initialized with the shader binary code\n"
-           );
+           "                                    initialized with the shader binary code\n");
 
     exit(EFailUsage);
 }

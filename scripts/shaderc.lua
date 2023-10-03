@@ -96,6 +96,7 @@ project "spirv-opt"
 	configuration { "vs*" }
 		buildoptions {
 			"/wd4127", -- warning C4127: conditional expression is constant
+			"/wd4267", -- warning C4267: 'argument': conversion from '' to '', possible loss of data
 			"/wd4389", -- warning C4389: '==': signed/unsigned mismatch
 			"/wd4702", -- warning C4702: unreachable code
 			"/wd4706", -- warning C4706: assignment within conditional expression

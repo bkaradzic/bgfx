@@ -103,7 +103,7 @@ public:
         stringIds[file_c_str] = strId;
         return strId;
     }
-    spv::Id getSourceFile() const 
+    spv::Id getSourceFile() const
     {
         return sourceFileStringId;
     }
@@ -203,7 +203,9 @@ public:
     Id makeImageType(Id sampledType, Dim, bool depth, bool arrayed, bool ms, unsigned sampled, ImageFormat format);
     Id makeSamplerType();
     Id makeSampledImageType(Id imageType);
-    Id makeCooperativeMatrixType(Id component, Id scope, Id rows, Id cols);
+    Id makeCooperativeMatrixTypeKHR(Id component, Id scope, Id rows, Id cols, Id use);
+    Id makeCooperativeMatrixTypeNV(Id component, Id scope, Id rows, Id cols);
+    Id makeCooperativeMatrixTypeWithSameShape(Id component, Id otherType);
     Id makeGenericType(spv::Op opcode, std::vector<spv::IdImmediate>& operands);
 
     // SPIR-V NonSemantic Shader DebugInfo Instructions
@@ -259,6 +261,7 @@ public:
     ImageFormat getImageTypeFormat(Id typeId) const
         { return (ImageFormat)module.getInstruction(typeId)->getImmediateOperand(6); }
     Id getResultingAccessChainType() const;
+    Id getIdOperand(Id resultId, int idx) { return module.getInstruction(resultId)->getIdOperand(idx); }
 
     bool isPointer(Id resultId)      const { return isPointerType(getTypeId(resultId)); }
     bool isScalar(Id resultId)       const { return isScalarType(getTypeId(resultId)); }
@@ -283,11 +286,10 @@ public:
     bool isMatrixType(Id typeId)       const { return getTypeClass(typeId) == OpTypeMatrix; }
     bool isStructType(Id typeId)       const { return getTypeClass(typeId) == OpTypeStruct; }
     bool isArrayType(Id typeId)        const { return getTypeClass(typeId) == OpTypeArray; }
-#ifdef GLSLANG_WEB
-    bool isCooperativeMatrixType(Id typeId)const { return false; }
-#else
-    bool isCooperativeMatrixType(Id typeId)const { return getTypeClass(typeId) == OpTypeCooperativeMatrixNV; }
-#endif
+    bool isCooperativeMatrixType(Id typeId)const
+    {
+        return getTypeClass(typeId) == OpTypeCooperativeMatrixKHR || getTypeClass(typeId) == OpTypeCooperativeMatrixNV;
+    }
     bool isAggregateType(Id typeId)    const
         { return isArrayType(typeId) || isStructType(typeId) || isCooperativeMatrixType(typeId); }
     bool isImageType(Id typeId)        const { return getTypeClass(typeId) == OpTypeImage; }
@@ -464,8 +466,10 @@ public:
     // Create an OpArrayLength instruction
     Id createArrayLength(Id base, unsigned int member);
 
+    // Create an OpCooperativeMatrixLengthKHR instruction
+    Id createCooperativeMatrixLengthKHR(Id type);
     // Create an OpCooperativeMatrixLengthNV instruction
-    Id createCooperativeMatrixLength(Id type);
+    Id createCooperativeMatrixLengthNV(Id type);
 
     // Create an OpCompositeExtract instruction
     Id createCompositeExtract(Id composite, Id typeId, unsigned index);
@@ -700,11 +704,6 @@ public:
         // Accumulate whether anything in the chain of structures has coherent decorations.
         struct CoherentFlags {
             CoherentFlags() { clear(); }
-#ifdef GLSLANG_WEB
-            void clear() { }
-            bool isVolatile() const { return false; }
-            CoherentFlags operator |=(const CoherentFlags &other) { return *this; }
-#else
             bool isVolatile() const { return volatil; }
             bool isNonUniform() const { return nonUniform; }
             bool anyCoherent() const {
@@ -749,7 +748,6 @@ public:
                 nonUniform |= other.nonUniform;
                 return *this;
             }
-#endif
         };
         CoherentFlags coherentFlags;
     };
@@ -835,14 +833,12 @@ public:
     // Prune unreachable blocks in the CFG and remove unneeded decorations.
     void postProcessCFG();
 
-#ifndef GLSLANG_WEB
     // Add capabilities, extensions based on instructions in the module.
     void postProcessFeatures();
     // Hook to visit each instruction in a block in a function
     void postProcess(Instruction&);
     // Hook to visit each non-32-bit sized float/int operation in a block.
     void postProcessType(const Instruction&, spv::Id typeId);
-#endif
 
     void dump(std::vector<unsigned int>&) const;
 

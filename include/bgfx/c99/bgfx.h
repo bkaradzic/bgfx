@@ -392,6 +392,19 @@ typedef enum bgfx_view_mode
 } bgfx_view_mode_t;
 
 /**
+ * Native window handle type..
+ *
+ */
+typedef enum bgfx_native_window_handle_type
+{
+    BGFX_NATIVE_WINDOW_HANDLE_TYPE_DEFAULT,   /** ( 0) Platform default handle type (X11 on Linux) */
+    BGFX_NATIVE_WINDOW_HANDLE_TYPE_WAYLAND,   /** ( 1) Wayland. */
+
+    BGFX_NATIVE_WINDOW_HANDLE_TYPE_COUNT
+
+} bgfx_native_window_handle_type_t;
+
+/**
  * Render frame enum.
  *
  */
@@ -625,6 +638,11 @@ typedef struct bgfx_platform_data_s
      */
     void*                backBufferDS;
 
+    /**
+     * Handle type. Needed for platforms having more than one option.
+     */
+     bgfx_native_window_handle_type_t type;
+
 } bgfx_platform_data_t;
 
 /**
@@ -639,6 +657,7 @@ typedef struct bgfx_resolution_s
     uint32_t             reset;              /** Reset parameters.                        */
     uint8_t              numBackBuffers;     /** Number of back buffers.                  */
     uint8_t              maxFrameLatency;    /** Maximum frame latency.                   */
+    uint8_t              debugTextScale;     /** Scale factor for debug text.             */
 
 } bgfx_resolution_t;
 
@@ -2595,7 +2614,6 @@ BGFX_C_API void bgfx_encoder_set_instance_data_buffer(bgfx_encoder_t* _this, con
  * @param[in] _handle Vertex buffer.
  * @param[in] _startVertex First instance data.
  * @param[in] _num Number of data instances.
- *  Set instance data buffer for draw primitive.
  *
  */
 BGFX_C_API void bgfx_encoder_set_instance_data_from_vertex_buffer(bgfx_encoder_t* _this, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);
@@ -3179,7 +3197,6 @@ BGFX_C_API void bgfx_set_instance_data_buffer(const bgfx_instance_data_buffer_t*
  * @param[in] _handle Vertex buffer.
  * @param[in] _startVertex First instance data.
  * @param[in] _num Number of data instances.
- *  Set instance data buffer for draw primitive.
  *
  */
 BGFX_C_API void bgfx_set_instance_data_from_vertex_buffer(bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);

@@ -1169,6 +1169,12 @@ namespace entry
 		return NULL;
 	}
 
+	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType(WindowHandle _handle)
+	{
+		BX_UNUSED(_handle);
+		return bgfx::NativeWindowHandleType::Default;
+	}
+
 	int32_t MainThreadEntry::threadFunc(bx::Thread* /*_thread*/, void* _userData)
 	{
 		MainThreadEntry* self = (MainThreadEntry*)_userData;

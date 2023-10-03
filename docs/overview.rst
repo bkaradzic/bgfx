@@ -35,23 +35,22 @@ Supported Platforms
 ~~~~~~~~~~~~~~~~~~~
 
 -  Android (14+, ARM, x86, MIPS)
--  FreeBSD
--  iOS (iPhone, iPad, AppleTV)
+-  iOS/iPadOS/tvOS (iPhone, iPad, AppleTV)
 -  Linux
--  MIPS Creator CI20
--  OSX (10.12+)
+-  macOS (11+)
 -  PlayStation 4
 -  RaspberryPi
 -  UWP (Universal Windows, Xbox One)
 -  Wasm/Emscripten
--  Windows (XP, Vista, 7, 8, 10)
+-  Windows (7+)
 
 Supported Compilers
 ~~~~~~~~~~~~~~~~~~~
 
--  Clang 3.3 and above
--  GCC 5 and above
--  vs2017 and above
+-  Clang 11 and above
+-  GCC 8 and above
+-  VS2019 and above
+-  Apple clang 12 and above
 
 Supported Languages
 ~~~~~~~~~~~~~~~~~~~
@@ -59,7 +58,7 @@ Supported Languages
 -  `C/C++ API documentation <https://bkaradzic.github.io/bgfx/bgfx.html>`__
 -  `Beef API bindings <https://github.com/bkaradzic/bgfx/tree/master/bindings/bf>`__
 -  `C# language API bindings #1 <https://github.com/bkaradzic/bgfx/tree/master/bindings/cs>`__
--  `D language API bindings <https://github.com/GoaLitiuM/bindbc-bgfx>`__
+-  `D language API bindings <https://github.com/BindBC/bindbc-bgfx>`__
 -  `Go language API bindings <https://github.com/james4k/go-bgfx>`__
 -  `Haskell language API bindings <https://github.com/haskell-game/bgfx>`__
 -  `Lightweight Java Game Library 3 bindings <https://github.com/LWJGL/lwjgl3#lwjgl---lightweight-java-game-library-3>`__
@@ -123,13 +122,13 @@ Other Debuggers and Profilers
 +-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
 | Name        | OS              | DX9   | DX11   | DX12 | Metal | GL   | GLES | Vulkan| Source |
 +=============+=================+=======+========+======+=======+======+======+=======+========+
-| APITrace    | Linux/OSX/Win   | |x|   | |x|    |      |       | |x|  | |x|  |       | |x|    |
+| APITrace    | Linux/macOS/Win | |x|   | |x|    |      |       | |x|  | |x|  |       | |x|    |
 +-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
 | CodeXL      | Linux/Win       |       |        |      |       | |x|  |      |       |        |
 +-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
 | Dissector   | Win             | |x|   |        |      |       |      |      |       | |x|    |
 +-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
-| IntelGPA    | Linux/OSX/Win   | |x|   | |x|    |      |       |      | |x|  |       |        |
+| IntelGPA    | Linux/macOS/Win | |x|   | |x|    |      |       |      | |x|  |       |        |
 +-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
 | Nsight      | Win             | |x|   | |x|    |      |       | |x|  |      |       |        |
 +-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
@@ -196,7 +195,7 @@ Contributors
 Chronological order:
 
  - Branimir Karadžić (`@bkaradzic <https://github.com/bkaradzic>`__)
- - Garett Bass (`@garettbass <https://github.com/garettbass>`__) - OSX port.
+ - Garett Bass (`@garettbass <https://github.com/garettbass>`__) - macOS port.
  - Jeremie Roy (`@jeremieroy <https://github.com/jeremieroy>`__) -
    `10-font <examples.html#font>`__,
    and `11-fontsdf <examples.html#fontsdf>`__ examples.
@@ -221,7 +220,7 @@ Chronological order:
  - Andre Weissflog (`@floooh <https://github.com/floooh>`__) - Alternative build system fips.
  - Andrew Johnson (`@ajohnson23 <https://github.com/ajohnson23>`__) - TeamCity build.
  - Tony McCrary (`@enleeten <https://github.com/enleeten>`__) - Java language API bindings.
- - Attila Kocsis (`@attilaz <https://github.com/attilaz>`__) - Metal rendering backend, various OSX
+ - Attila Kocsis (`@attilaz <https://github.com/attilaz>`__) - Metal rendering backend, various macOS
    and iOS improvements and bug fixes, `39-assao <examples.html#assao>`__ example.
  - Richard Gale (`@RichardGale <https://github.com/RichardGale>`__) - Emscripten entry input
    handling.
@@ -287,6 +286,7 @@ Chronological order:
  - Preetish Kakkar (`@blackhole <https://github.com/preetishkakkar>`__) - `49-hextile <examples.html#49-hextile>`__ example.
  - Biswapriyo Nath (`@Biswa96 <https://github.com/Biswa96>`__) - GitHub Actions CI.
  - Raziel Alphadios (`@RazielXYZ <https://github.com/RazielXYZ>`__) - Various fixes and improvements.
+ - IchorDev (`@IchorDev <https://github.com/ichordev>`__) - Improved D language bindings.
 
 and `others <https://github.com/bkaradzic/bgfx/graphs/contributors>`__...
 

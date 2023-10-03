@@ -1283,7 +1283,7 @@ namespace bgfx { namespace d3d12
 						);
 				}
 				m_samplerAllocator.create(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
-					, 1024
+					, 2048
 					, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
 					);
 
@@ -1358,6 +1358,7 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_IMAGE_RW
 					| BGFX_CAPS_VIEWPORT_LAYER_ARRAY
 					| BGFX_CAPS_DRAW_INDIRECT_COUNT
+					| BGFX_CAPS_PRIMITIVE_ID
 					);
 				g_caps.limits.maxTextureSize     = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 				g_caps.limits.maxTextureLayers   = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
@@ -2011,11 +2012,11 @@ namespace bgfx { namespace d3d12
 		{
 			if (NULL != m_uniforms[_handle.idx])
 			{
-				BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+				bx::free(g_allocator, m_uniforms[_handle.idx]);
 			}
 
 			const uint32_t size = bx::alignUp(g_uniformTypeSize[_type] * _num, 16);
-			void* data = BX_ALLOC(g_allocator, size);
+			void* data = bx::alloc(g_allocator, size);
 			bx::memSet(data, 0, size);
 			m_uniforms[_handle.idx] = data;
 			m_uniformReg.add(_handle, _name);
@@ -2023,7 +2024,7 @@ namespace bgfx { namespace d3d12
 
 		void destroyUniform(UniformHandle _handle) override
 		{
-			BX_FREE(g_allocator, m_uniforms[_handle.idx]);
+			bx::free(g_allocator, m_uniforms[_handle.idx]);
 			m_uniforms[_handle.idx] = NULL;
 			m_uniformReg.remove(_handle);
 		}
@@ -2995,7 +2996,7 @@ namespace bgfx { namespace d3d12
 
 			if (cached)
 			{
-				cachedData = BX_ALLOC(g_allocator, length);
+				cachedData = bx::alloc(g_allocator, length);
 				if (g_callback->cacheRead(hash, cachedData, length) )
 				{
 					BX_TRACE("Loading cached compute PSO (size %d).", length);
@@ -3040,7 +3041,7 @@ namespace bgfx { namespace d3d12
 
 			if (NULL != cachedData)
 			{
-				BX_FREE(g_allocator, cachedData);
+				bx::free(g_allocator, cachedData);
 			}
 
 			return pso;
@@ -3276,7 +3277,7 @@ namespace bgfx { namespace d3d12
 
 			if (cached)
 			{
-				cachedData = BX_ALLOC(g_allocator, length);
+				cachedData = bx::alloc(g_allocator, length);
 				if (g_callback->cacheRead(hash, cachedData, length) )
 				{
 					BX_TRACE("Loading cached graphics PSO (size %d).", length);
@@ -3328,7 +3329,7 @@ namespace bgfx { namespace d3d12
 
 			if (NULL != cachedData)
 			{
-				BX_FREE(g_allocator, cachedData);
+				bx::free(g_allocator, cachedData);
 			}
 
 			return pso;
@@ -3439,7 +3440,7 @@ namespace bgfx { namespace d3d12
 			if (isValid(m_fbh) )
 			{
 				FrameBufferD3D12& frameBuffer = m_frameBuffers[m_fbh.idx];
-				frameBuffer.clear(m_commandList, _clear, _palette);
+				frameBuffer.clear(m_commandList, _clear, _palette, _rect, _num);
 			}
 			else
 			{
@@ -3643,7 +3644,7 @@ namespace bgfx { namespace d3d12
 		s_renderD3D12 = BX_NEW(g_allocator, RendererContextD3D12);
 		if (!s_renderD3D12->init(_init) )
 		{
-			BX_DELETE(g_allocator, s_renderD3D12);
+			bx::deleteObject(g_allocator, s_renderD3D12);
 			s_renderD3D12 = NULL;
 		}
 		return s_renderD3D12;
@@ -3652,7 +3653,7 @@ namespace bgfx { namespace d3d12
 	void rendererDestroy()
 	{
 		s_renderD3D12->shutdown();
-		BX_DELETE(g_allocator, s_renderD3D12);
+		bx::deleteObject(g_allocator, s_renderD3D12);
 		s_renderD3D12 = NULL;
 	}
 
@@ -3841,7 +3842,7 @@ namespace bgfx { namespace d3d12
 
 	void DescriptorAllocatorD3D12::create(D3D12_DESCRIPTOR_HEAP_TYPE _type, uint16_t _maxDescriptors, uint16_t _numDescriptorsPerBlock)
 	{
-		m_handleAlloc = bx::createHandleAlloc(g_allocator, _maxDescriptors);
+		m_handleAlloc = bx::createHandleAlloc(g_allocator, _maxDescriptors/_numDescriptorsPerBlock);
 		m_numDescriptorsPerBlock = _numDescriptorsPerBlock;
 
 		ID3D12Device* device = s_renderD3D12->m_device;
@@ -3872,6 +3873,7 @@ namespace bgfx { namespace d3d12
 	uint16_t DescriptorAllocatorD3D12::alloc(ID3D12Resource* _ptr, const D3D12_SHADER_RESOURCE_VIEW_DESC* _desc)
 	{
 		uint16_t idx = m_handleAlloc->alloc();
+		BX_ASSERT(bx::kInvalidHandle != idx, "DescriptorAllocatorD3D12 is out of memory.");
 
 		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = { m_cpuHandle.ptr + idx * m_incrementSize };
 
@@ -3887,6 +3889,7 @@ namespace bgfx { namespace d3d12
 	uint16_t DescriptorAllocatorD3D12::alloc(const uint32_t* _flags, uint32_t _num, const float _palette[][4])
 	{
 		uint16_t idx = m_handleAlloc->alloc();
+		BX_ASSERT(bx::kInvalidHandle != idx, "DescriptorAllocatorD3D12 is out of memory.");
 
 		ID3D12Device* device   = s_renderD3D12->m_device;
 		uint32_t maxAnisotropy = s_renderD3D12->m_maxAnisotropy;
@@ -4175,8 +4178,8 @@ namespace bgfx { namespace d3d12
 			, (void**)&m_commandSignature[DrawIndexed]
 			) );
 
-		m_cmds[Draw       ] = BX_ALLOC(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndirectCommand) );
-		m_cmds[DrawIndexed] = BX_ALLOC(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndexedIndirectCommand) );
+		m_cmds[Draw       ] = bx::alloc(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndirectCommand) );
+		m_cmds[DrawIndexed] = bx::alloc(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndexedIndirectCommand) );
 
 		uint32_t cmdSize = bx::max<uint32_t>(sizeof(DrawIndirectCommand), sizeof(DrawIndexedIndirectCommand) );
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_indirect); ++ii)
@@ -4192,8 +4195,8 @@ namespace bgfx { namespace d3d12
 
 	void BatchD3D12::destroy()
 	{
-		BX_FREE(g_allocator, m_cmds[0]);
-		BX_FREE(g_allocator, m_cmds[1]);
+		bx::free(g_allocator, m_cmds[0]);
+		bx::free(g_allocator, m_cmds[1]);
 
 		DX_RELEASE(m_commandSignature[0], 0);
 		DX_RELEASE(m_commandSignature[1], 0);
@@ -4984,7 +4987,7 @@ namespace bgfx { namespace d3d12
 		uint64_t requiredSize = 0;
 
 		const size_t sizeInBytes = size_t(sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(uint32_t) + sizeof(uint64_t) ) * _numSubresources;
-		D3D12_PLACED_SUBRESOURCE_FOOTPRINT* layouts = (D3D12_PLACED_SUBRESOURCE_FOOTPRINT*)BX_ALLOC(g_allocator, sizeInBytes);
+		D3D12_PLACED_SUBRESOURCE_FOOTPRINT* layouts = (D3D12_PLACED_SUBRESOURCE_FOOTPRINT*)bx::alloc(g_allocator, sizeInBytes);
 		uint64_t* rowSizesInBytes = (uint64_t*)(layouts + _numSubresources);
 		uint32_t* numRows         = (uint32_t*)(rowSizesInBytes + _numSubresources);
 
@@ -5013,7 +5016,7 @@ namespace bgfx { namespace d3d12
 			, _srcData
 			);
 
-		BX_FREE(g_allocator, layouts);
+		bx::free(g_allocator, layouts);
 
 		return result;
 	}
@@ -5113,7 +5116,7 @@ namespace bgfx { namespace d3d12
 							const uint32_t slice = bx::strideAlign(bx::max<uint32_t>(mip.m_height, 4)*pitch, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 							const uint32_t size  = slice*mip.m_depth;
 
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, size);
+							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, size);
 							bimg::imageDecodeToBgra8(
 								  g_allocator
 								, temp
@@ -5134,7 +5137,7 @@ namespace bgfx { namespace d3d12
 							const uint32_t slice = bx::strideAlign( (mip.m_height/blockInfo.blockHeight)*pitch,           D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 							const uint32_t size  = slice*mip.m_depth;
 
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, size);
+							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, size);
 							bimg::imageCopy(temp
 									,  mip.m_height/blockInfo.blockHeight
 									, (mip.m_width /blockInfo.blockWidth )*mip.m_blockSize
@@ -5152,7 +5155,7 @@ namespace bgfx { namespace d3d12
 							const uint32_t pitch = bx::strideAlign(mip.m_width*mip.m_bpp / 8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 							const uint32_t slice = bx::strideAlign(mip.m_height*pitch,        D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, slice*mip.m_depth);
+							uint8_t* temp = (uint8_t*)bx::alloc(g_allocator, slice*mip.m_depth);
 							bimg::imageCopy(temp
 									, mip.m_height
 									, mip.m_width*mip.m_bpp/8
@@ -5389,7 +5392,7 @@ namespace bgfx { namespace d3d12
 				{
 					for (uint32_t lod = 0, num = ti.numMips; lod < num; ++lod)
 					{
-						BX_FREE(g_allocator, const_cast<void*>(srd[kk].pData) );
+						bx::free(g_allocator, const_cast<void*>(srd[kk].pData) );
 						++kk;
 					}
 				}
@@ -5489,7 +5492,7 @@ namespace bgfx { namespace d3d12
 
 		if (convert)
 		{
-			temp = (uint8_t*)BX_ALLOC(g_allocator, slicepitch);
+			temp = (uint8_t*)bx::alloc(g_allocator, slicepitch);
 			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat));
 			srcData = temp;
 
@@ -5530,7 +5533,7 @@ namespace bgfx { namespace d3d12
 
 		if (NULL != temp)
 		{
-			BX_FREE(g_allocator, temp);
+			bx::free(g_allocator, temp);
 		}
 
 		D3D12_RANGE writeRange = { 0, numRows*rowPitch };

@@ -20,6 +20,11 @@ struct NVGLUframebuffer
   bgfx::ViewId viewId;
 };
 
+// These are additional flags on top of NVGimageFlags.
+enum NVGimageFlagsGL {
+	NVG_IMAGE_NODELETE = 1<<16, // Do not delete GL texture handle.
+};
+
 ///
 NVGcontext* nvgCreate(int32_t _edgeaa, bgfx::ViewId _viewId, bx::AllocatorI* _allocator);
 
@@ -75,5 +80,8 @@ void nvgluDeleteFramebuffer(NVGLUframebuffer* _framebuffer);
 
 ///
 void nvgluSetViewFramebuffer(bgfx::ViewId _viewId, NVGLUframebuffer* _framebuffer);
+
+///
+int nvgCreateBgfxTexture(struct NVGcontext *_ctx, bgfx::TextureHandle _id, int _width, int _height, int _flags);
 
 #endif // NANOVG_BGFX_H_HEADER_GUARD

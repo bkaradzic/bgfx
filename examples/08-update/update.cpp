@@ -247,6 +247,7 @@ public:
 		init.vendorId = args.m_pciId;
 		init.platformData.nwh  = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
 		init.platformData.ndt  = entry::getNativeDisplayHandle();
+		init.platformData.type = entry::getNativeWindowHandleType(entry::kDefaultWindowHandle);
 		init.resolution.width  = m_width;
 		init.resolution.height = m_height;
 		init.resolution.reset  = m_reset;
@@ -738,7 +739,10 @@ public:
 					;
 
 				bgfx::setViewClear(viewId, BGFX_CLEAR_COLOR, colorRGB8);
-				bgfx::setViewRect(viewId, 0,0,512,512);
+
+				const float maxBorder = 64.0f;
+				const uint16_t border = uint16_t(bx::abs(bx::sin(time * 4.0f)*0.5f+0.5f)*maxBorder);
+				bgfx::setViewRect(viewId, border, border, 512-border*2, 512-border*2);
 
 				bgfx::touch(viewId);
 			}

@@ -36,6 +36,7 @@
 #ifndef HLSLATTRIBUTES_H_
 #define HLSLATTRIBUTES_H_
 
+#include <cstdint>
 #include <unordered_map>
 #include <functional>
 

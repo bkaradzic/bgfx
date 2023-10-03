@@ -180,19 +180,19 @@ namespace bgfx
 			ATCE,         //!< ATCE RGBA 8 BPP explicit alpha
 			ATCI,         //!< ATCI RGBA 8 BPP interpolated alpha
 			ASTC4x4,      //!< ASTC 4x4 8.0 BPP
-			ASTC5x4,	  //!< ASTC 5x4 6.40 BPP
+			ASTC5x4,      //!< ASTC 5x4 6.40 BPP
 			ASTC5x5,      //!< ASTC 5x5 5.12 BPP
-			ASTC6x5,	  //!< ASTC 6x5 4.27 BPP
+			ASTC6x5,      //!< ASTC 6x5 4.27 BPP
 			ASTC6x6,      //!< ASTC 6x6 3.56 BPP
 			ASTC8x5,      //!< ASTC 8x5 3.20 BPP
 			ASTC8x6,      //!< ASTC 8x6 2.67 BPP
-			ASTC8x8,	  //!< ASTC 8x8 2.00 BPP
+			ASTC8x8,      //!< ASTC 8x8 2.00 BPP
 			ASTC10x5,     //!< ASTC 10x5 2.56 BPP
-			ASTC10x6,	  //!< ASTC 10x6 2.13 BPP
-			ASTC10x8,	  //!< ASTC 10x8 1.60 BPP
-			ASTC10x10,	  //!< ASTC 10x10 1.28 BPP
-			ASTC12x10,	  //!< ASTC 12x10 1.07 BPP
-			ASTC12x12,	  //!< ASTC 12x12 0.89 BPP
+			ASTC10x6,     //!< ASTC 10x6 2.13 BPP
+			ASTC10x8,     //!< ASTC 10x8 1.60 BPP
+			ASTC10x10,    //!< ASTC 10x10 1.28 BPP
+			ASTC12x10,    //!< ASTC 12x10 1.07 BPP
+			ASTC12x12,    //!< ASTC 12x12 0.89 BPP
 
 			Unknown,      // Compressed formats above.
 
@@ -401,6 +401,22 @@ namespace bgfx
 
 			Count
 		};
+	};
+
+	/// Native window handle type.
+	///
+	/// @attention C99's equivalent binding is `bgfx_native_window_handle_type_t`.
+	///
+
+	struct NativeWindowHandleType
+	{
+		 enum Enum
+		 {
+		       Default = 0, //!< Platform default handle type (X11 on Linux).
+		       Wayland,     //!< Wayland.
+
+		       Count
+		 };
 	};
 
 	static const uint16_t kInvalidHandle = UINT16_MAX;
@@ -622,15 +638,16 @@ namespace bgfx
 	{
 		PlatformData();
 
-		void* ndt;          //!< Native display type (*nix specific).
-		void* nwh;          //!< Native window handle. If `NULL`, bgfx will create a headless
-		                    ///  context/device, provided the rendering API supports it.
-		void* context;      //!< GL context, D3D device, or Vulkan device. If `NULL`, bgfx
-		                    ///  will create context/device.
-		void* backBuffer;   //!< GL back-buffer, or D3D render target view. If `NULL` bgfx will
-		                    ///  create back-buffer color surface.
-		void* backBufferDS; //!< Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
-		                    ///  depth/stencil surface.
+		void* ndt;                         //!< Native display type (*nix specific).
+		void* nwh;                         //!< Native window handle. If `NULL`, bgfx will create a headless
+		                                   ///  context/device, provided the rendering API supports it.
+		void* context;                     //!< GL context, D3D device, or Vulkan device. If `NULL`, bgfx
+		                                   ///  will create context/device.
+		void* backBuffer;                  //!< GL back-buffer, or D3D render target view. If `NULL` bgfx will
+		                                   ///  create back-buffer color surface.
+		void* backBufferDS;                //!< Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
+		                                   ///  depth/stencil surface.
+		NativeWindowHandleType::Enum type; //!< Handle type. Needed for platforms having more than one option.
 	};
 
 	/// Backbuffer resolution and reset parameters.
@@ -647,6 +664,7 @@ namespace bgfx
 		uint32_t reset;             //!< Reset parameters.
 		uint8_t  numBackBuffers;    //!< Number of back buffers.
 		uint8_t  maxFrameLatency;   //!< Maximum frame latency.
+		uint8_t  debugTextScale;    //!< Scale factor for debug text.
 	};
 
 	/// Initialization parameters used by `bgfx::init`.

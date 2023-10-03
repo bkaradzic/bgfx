@@ -16,13 +16,11 @@
 
 // Validates correctness of atomic SPIR-V instructions.
 
-#include "source/val/validate.h"
-
-#include "source/diagnostic.h"
 #include "source/opcode.h"
 #include "source/spirv_target_env.h"
 #include "source/util/bitutils.h"
 #include "source/val/instruction.h"
+#include "source/val/validate.h"
 #include "source/val/validate_memory_semantics.h"
 #include "source/val/validate_scopes.h"
 #include "source/val/validation_state.h"

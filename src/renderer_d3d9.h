@@ -166,7 +166,7 @@ namespace bgfx { namespace d3d9
 
 				if (NULL != m_dynamic)
 				{
-					BX_FREE(g_allocator, m_dynamic);
+					bx::free(g_allocator, m_dynamic);
 					m_dynamic = NULL;
 				}
 			}
@@ -219,7 +219,7 @@ namespace bgfx { namespace d3d9
 
 				if (NULL != m_dynamic)
 				{
-					BX_FREE(g_allocator, m_dynamic);
+					bx::free(g_allocator, m_dynamic);
 					m_dynamic = NULL;
 				}
 			}

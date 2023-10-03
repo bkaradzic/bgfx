@@ -22,9 +22,6 @@
 namespace spvtools {
 namespace opt {
 namespace {
-// Common Parameter Positions
-constexpr int kInstCommonParamInstIdx = 0;
-constexpr int kInstCommonParamCnt = 1;
 // Indices of operands in SPIR-V instructions
 constexpr int kEntryPointFunctionIdInIdx = 1;
 }  // namespace
@@ -216,34 +213,6 @@ void InstrumentPass::GenDebugOutputFieldCode(uint32_t base_offset_id,
   (void)builder->AddStore(achain_inst->result_id(), val_id);
 }
 
-void InstrumentPass::GenCommonStreamWriteCode(uint32_t record_sz,
-                                              uint32_t inst_id,
-                                              uint32_t stage_idx,
-                                              uint32_t base_offset_id,
-                                              InstructionBuilder* builder) {
-  // Store record size
-  GenDebugOutputFieldCode(base_offset_id, kInstCommonOutSize,
-                          builder->GetUintConstantId(record_sz), builder);
-  // Store Shader Id
-  GenDebugOutputFieldCode(base_offset_id, kInstCommonOutShaderId,
-                          builder->GetUintConstantId(shader_id_), builder);
-  // Store Instruction Idx
-  GenDebugOutputFieldCode(base_offset_id, kInstCommonOutInstructionIdx, inst_id,
-                          builder);
-  // Store Stage Idx
-  GenDebugOutputFieldCode(base_offset_id, kInstCommonOutStageIdx,
-                          builder->GetUintConstantId(stage_idx), builder);
-}
-
-void InstrumentPass::GenFragCoordEltDebugOutputCode(
-    uint32_t base_offset_id, uint32_t uint_frag_coord_id, uint32_t element,
-    InstructionBuilder* builder) {
-  Instruction* element_val_inst =
-      builder->AddCompositeExtract(GetUintId(), uint_frag_coord_id, {element});
-  GenDebugOutputFieldCode(base_offset_id, kInstFragOutFragCoordX + element,
-                          element_val_inst->result_id(), builder);
-}
-
 uint32_t InstrumentPass::GenVarLoad(uint32_t var_id,
                                     InstructionBuilder* builder) {
   Instruction* var_inst = get_def_use_mgr()->GetDef(var_id);
@@ -252,28 +221,24 @@ uint32_t InstrumentPass::GenVarLoad(uint32_t var_id,
   return load_inst->result_id();
 }
 
-void InstrumentPass::GenBuiltinOutputCode(uint32_t builtin_id,
-                                          uint32_t builtin_off,
-                                          uint32_t base_offset_id,
-                                          InstructionBuilder* builder) {
-  // Load and store builtin
-  uint32_t load_id = GenVarLoad(builtin_id, builder);
-  GenDebugOutputFieldCode(base_offset_id, builtin_off, load_id, builder);
-}
-
-void InstrumentPass::GenStageStreamWriteCode(uint32_t stage_idx,
-                                             uint32_t base_offset_id,
-                                             InstructionBuilder* builder) {
+uint32_t InstrumentPass::GenStageInfo(uint32_t stage_idx,
+                                      InstructionBuilder* builder) {
+  std::vector<uint32_t> ids(4, builder->GetUintConstantId(0));
+  ids[0] = builder->GetUintConstantId(stage_idx);
+  // %289 = OpCompositeConstruct %v4uint %uint_0 %285 %288 %uint_0
   // TODO(greg-lunarg): Add support for all stages
   switch (spv::ExecutionModel(stage_idx)) {
     case spv::ExecutionModel::Vertex: {
       // Load and store VertexId and InstanceId
-      GenBuiltinOutputCode(
+      uint32_t load_id = GenVarLoad(
           context()->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::VertexIndex)),
-          kInstVertOutVertexIndex, base_offset_id, builder);
-      GenBuiltinOutputCode(context()->GetBuiltinInputVarId(
+          builder);
+      ids[1] = GenUintCastCode(load_id, builder);
+
+      load_id = GenVarLoad(context()->GetBuiltinInputVarId(
                                uint32_t(spv::BuiltIn::InstanceIndex)),
-                           kInstVertOutInstanceIndex, base_offset_id, builder);
+                           builder);
+      ids[2] = GenUintCastCode(load_id, builder);
     } break;
     case spv::ExecutionModel::GLCompute:
     case spv::ExecutionModel::TaskNV:
@@ -284,56 +249,50 @@ void InstrumentPass::GenStageStreamWriteCode(uint32_t stage_idx,
       uint32_t load_id = GenVarLoad(context()->GetBuiltinInputVarId(uint32_t(
                                         spv::BuiltIn::GlobalInvocationId)),
                                     builder);
-      Instruction* x_inst =
-          builder->AddCompositeExtract(GetUintId(), load_id, {0});
-      Instruction* y_inst =
-          builder->AddCompositeExtract(GetUintId(), load_id, {1});
-      Instruction* z_inst =
-          builder->AddCompositeExtract(GetUintId(), load_id, {2});
-      GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdX,
-                              x_inst->result_id(), builder);
-      GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdY,
-                              y_inst->result_id(), builder);
-      GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdZ,
-                              z_inst->result_id(), builder);
+      for (uint32_t u = 0; u < 3u; ++u) {
+        ids[u + 1] = builder->AddCompositeExtract(GetUintId(), load_id, {u})
+                         ->result_id();
+      }
     } break;
     case spv::ExecutionModel::Geometry: {
       // Load and store PrimitiveId and InvocationId.
-      GenBuiltinOutputCode(
+      uint32_t load_id = GenVarLoad(
           context()->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::PrimitiveId)),
-          kInstGeomOutPrimitiveId, base_offset_id, builder);
-      GenBuiltinOutputCode(
+          builder);
+      ids[1] = load_id;
+      load_id = GenVarLoad(
           context()->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::InvocationId)),
-          kInstGeomOutInvocationId, base_offset_id, builder);
+          builder);
+      ids[2] = load_id;
     } break;
     case spv::ExecutionModel::TessellationControl: {
       // Load and store InvocationId and PrimitiveId
-      GenBuiltinOutputCode(
+      uint32_t load_id = GenVarLoad(
           context()->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::InvocationId)),
-          kInstTessCtlOutInvocationId, base_offset_id, builder);
-      GenBuiltinOutputCode(
+          builder);
+      ids[1] = load_id;
+      load_id = GenVarLoad(
           context()->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::PrimitiveId)),
-          kInstTessCtlOutPrimitiveId, base_offset_id, builder);
+          builder);
+      ids[2] = load_id;
     } break;
     case spv::ExecutionModel::TessellationEvaluation: {
       // Load and store PrimitiveId and TessCoord.uv
-      GenBuiltinOutputCode(
-          context()->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::PrimitiveId)),
-          kInstTessEvalOutPrimitiveId, base_offset_id, builder);
       uint32_t load_id = GenVarLoad(
+          context()->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::PrimitiveId)),
+          builder);
+      ids[1] = load_id;
+      load_id = GenVarLoad(
           context()->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::TessCoord)),
           builder);
       Instruction* uvec3_cast_inst =
           builder->AddUnaryOp(GetVec3UintId(), spv::Op::OpBitcast, load_id);
       uint32_t uvec3_cast_id = uvec3_cast_inst->result_id();
-      Instruction* u_inst =
-          builder->AddCompositeExtract(GetUintId(), uvec3_cast_id, {0});
-      Instruction* v_inst =
-          builder->AddCompositeExtract(GetUintId(), uvec3_cast_id, {1});
-      GenDebugOutputFieldCode(base_offset_id, kInstTessEvalOutTessCoordU,
-                              u_inst->result_id(), builder);
-      GenDebugOutputFieldCode(base_offset_id, kInstTessEvalOutTessCoordV,
-                              v_inst->result_id(), builder);
+      for (uint32_t u = 0; u < 2u; ++u) {
+        ids[u + 2] =
+            builder->AddCompositeExtract(GetUintId(), uvec3_cast_id, {u})
+                ->result_id();
+      }
     } break;
     case spv::ExecutionModel::Fragment: {
       // Load FragCoord and convert to Uint
@@ -342,9 +301,13 @@ void InstrumentPass::GenStageStreamWriteCode(uint32_t stage_idx,
           context()->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::FragCoord)));
       Instruction* uint_frag_coord_inst = builder->AddUnaryOp(
           GetVec4UintId(), spv::Op::OpBitcast, frag_coord_inst->result_id());
-      for (uint32_t u = 0; u < 2u; ++u)
-        GenFragCoordEltDebugOutputCode(
-            base_offset_id, uint_frag_coord_inst->result_id(), u, builder);
+      for (uint32_t u = 0; u < 2u; ++u) {
+        ids[u + 1] =
+            builder
+                ->AddCompositeExtract(GetUintId(),
+                                      uint_frag_coord_inst->result_id(), {u})
+                ->result_id();
+      }
     } break;
     case spv::ExecutionModel::RayGenerationNV:
     case spv::ExecutionModel::IntersectionNV:
@@ -356,33 +319,26 @@ void InstrumentPass::GenStageStreamWriteCode(uint32_t stage_idx,
       uint32_t launch_id = GenVarLoad(
           context()->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::LaunchIdNV)),
           builder);
-      Instruction* x_launch_inst =
-          builder->AddCompositeExtract(GetUintId(), launch_id, {0});
-      Instruction* y_launch_inst =
-          builder->AddCompositeExtract(GetUintId(), launch_id, {1});
-      Instruction* z_launch_inst =
-          builder->AddCompositeExtract(GetUintId(), launch_id, {2});
-      GenDebugOutputFieldCode(base_offset_id, kInstRayTracingOutLaunchIdX,
-                              x_launch_inst->result_id(), builder);
-      GenDebugOutputFieldCode(base_offset_id, kInstRayTracingOutLaunchIdY,
-                              y_launch_inst->result_id(), builder);
-      GenDebugOutputFieldCode(base_offset_id, kInstRayTracingOutLaunchIdZ,
-                              z_launch_inst->result_id(), builder);
+      for (uint32_t u = 0; u < 3u; ++u) {
+        ids[u + 1] = builder->AddCompositeExtract(GetUintId(), launch_id, {u})
+                         ->result_id();
+      }
     } break;
     default: { assert(false && "unsupported stage"); } break;
   }
+  return builder->AddCompositeConstruct(GetVec4UintId(), ids)->result_id();
 }
 
 void InstrumentPass::GenDebugStreamWrite(
-    uint32_t instruction_idx, uint32_t stage_idx,
+    uint32_t shader_id, uint32_t instruction_idx_id, uint32_t stage_info_id,
     const std::vector<uint32_t>& validation_ids, InstructionBuilder* builder) {
   // Call debug output function. Pass func_idx, instruction_idx and
   // validation ids as args.
   uint32_t val_id_cnt = static_cast<uint32_t>(validation_ids.size());
-  std::vector<uint32_t> args = {builder->GetUintConstantId(instruction_idx)};
+  std::vector<uint32_t> args = {shader_id, instruction_idx_id, stage_info_id};
   (void)args.insert(args.end(), validation_ids.begin(), validation_ids.end());
-  (void)builder->AddFunctionCall(
-      GetVoidId(), GetStreamWriteFunctionId(stage_idx, val_id_cnt), args);
+  (void)builder->AddFunctionCall(GetVoidId(),
+                                 GetStreamWriteFunctionId(val_id_cnt), args);
 }
 
 bool InstrumentPass::AllConstant(const std::vector<uint32_t>& ids) {
@@ -398,11 +354,12 @@ uint32_t InstrumentPass::GenDebugDirectRead(
   // Call debug input function. Pass func_idx and offset ids as args.
   const uint32_t off_id_cnt = static_cast<uint32_t>(offset_ids.size());
   const uint32_t input_func_id = GetDirectReadFunctionId(off_id_cnt);
-  return GenReadFunctionCall(input_func_id, offset_ids, builder);
+  return GenReadFunctionCall(GetUintId(), input_func_id, offset_ids, builder);
 }
 
 uint32_t InstrumentPass::GenReadFunctionCall(
-    uint32_t func_id, const std::vector<uint32_t>& func_call_args,
+    uint32_t return_id, uint32_t func_id,
+    const std::vector<uint32_t>& func_call_args,
     InstructionBuilder* ref_builder) {
   // If optimizing direct reads and the call has already been generated,
   // use its result
@@ -423,8 +380,7 @@ uint32_t InstrumentPass::GenReadFunctionCall(
     builder.SetInsertPoint(insert_before);
   }
   uint32_t res_id =
-      builder.AddFunctionCall(GetUintId(), func_id, func_call_args)
-          ->result_id();
+      builder.AddFunctionCall(return_id, func_id, func_call_args)->result_id();
   if (insert_in_first_block) call2id_[func_call_args] = res_id;
   return res_id;
 }
@@ -562,6 +518,19 @@ analysis::RuntimeArray* InstrumentPass::GetRuntimeArray(
   analysis::Type* type = context()->get_type_mgr()->GetRegisteredType(&r);
   assert(type && type->AsRuntimeArray());
   return type->AsRuntimeArray();
+}
+
+analysis::Array* InstrumentPass::GetArray(const analysis::Type* element,
+                                          uint32_t length) {
+  uint32_t length_id = context()->get_constant_mgr()->GetUIntConstId(length);
+  analysis::Array::LengthInfo length_info{
+      length_id, {analysis::Array::LengthInfo::Case::kConstant, length}};
+
+  analysis::Array r(element, length_info);
+
+  analysis::Type* type = context()->get_type_mgr()->GetRegisteredType(&r);
+  assert(type && type->AsArray());
+  return type->AsArray();
 }
 
 analysis::Function* InstrumentPass::GetFunction(
@@ -804,18 +773,27 @@ uint32_t InstrumentPass::GetVoidId() {
   return void_id_;
 }
 
-uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
-                                                  uint32_t val_spec_param_cnt) {
+uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t param_cnt) {
+  enum {
+    kShaderId = 0,
+    kInstructionIndex = 1,
+    kStageInfo = 2,
+    kFirstParam = 3,
+  };
   // Total param count is common params plus validation-specific
   // params
-  uint32_t param_cnt = kInstCommonParamCnt + val_spec_param_cnt;
   if (param2output_func_id_[param_cnt] == 0) {
     // Create function
     param2output_func_id_[param_cnt] = TakeNextId();
     analysis::TypeManager* type_mgr = context()->get_type_mgr();
 
-    const std::vector<const analysis::Type*> param_types(param_cnt,
-                                                         GetInteger(32, false));
+    const analysis::Type* uint_type = GetInteger(32, false);
+    const analysis::Vector v4uint(uint_type, 4);
+    const analysis::Type* v4uint_type = type_mgr->GetRegisteredType(&v4uint);
+
+    std::vector<const analysis::Type*> param_types(kFirstParam + param_cnt,
+                                                   uint_type);
+    param_types[kStageInfo] = v4uint_type;
     std::unique_ptr<Function> output_func = StartFunction(
         param2output_func_id_[param_cnt], type_mgr->GetVoidType(), param_types);
 
@@ -828,10 +806,10 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
         context(), &*new_blk_ptr,
         IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
     // Gen test if debug output buffer size will not be exceeded.
-    uint32_t val_spec_offset = kInstStageOutCnt;
-    uint32_t obuf_record_sz = val_spec_offset + val_spec_param_cnt;
-    uint32_t buf_id = GetOutputBufferId();
-    uint32_t buf_uint_ptr_id = GetOutputBufferPtrId();
+    const uint32_t val_spec_offset = kInstStageOutCnt;
+    const uint32_t obuf_record_sz = val_spec_offset + param_cnt;
+    const uint32_t buf_id = GetOutputBufferId();
+    const uint32_t buf_uint_ptr_id = GetOutputBufferPtrId();
     Instruction* obuf_curr_sz_ac_inst = builder.AddAccessChain(
         buf_uint_ptr_id, buf_id,
         {builder.GetUintConstantId(kDebugOutputSizeOffset)});
@@ -871,13 +849,26 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
     new_blk_ptr = MakeUnique<BasicBlock>(std::move(write_label));
     builder.SetInsertPoint(&*new_blk_ptr);
     // Generate common and stage-specific debug record members
-    GenCommonStreamWriteCode(obuf_record_sz, param_ids[kInstCommonParamInstIdx],
-                             stage_idx, obuf_curr_sz_id, &builder);
-    GenStageStreamWriteCode(stage_idx, obuf_curr_sz_id, &builder);
+    GenDebugOutputFieldCode(obuf_curr_sz_id, kInstCommonOutSize,
+                            builder.GetUintConstantId(obuf_record_sz),
+                            &builder);
+    // Store Shader Id
+    GenDebugOutputFieldCode(obuf_curr_sz_id, kInstCommonOutShaderId,
+                            param_ids[kShaderId], &builder);
+    // Store Instruction Idx
+    GenDebugOutputFieldCode(obuf_curr_sz_id, kInstCommonOutInstructionIdx,
+                            param_ids[kInstructionIndex], &builder);
+    // Store stage info. Stage Idx + 3 words of stage-specific data.
+    for (uint32_t i = 0; i < 4; ++i) {
+      Instruction* field =
+          builder.AddCompositeExtract(GetUintId(), param_ids[kStageInfo], {i});
+      GenDebugOutputFieldCode(obuf_curr_sz_id, kInstCommonOutStageIdx + i,
+                              field->result_id(), &builder);
+    }
     // Gen writes of validation specific data
-    for (uint32_t i = 0; i < val_spec_param_cnt; ++i) {
+    for (uint32_t i = 0; i < param_cnt; ++i) {
       GenDebugOutputFieldCode(obuf_curr_sz_id, val_spec_offset + i,
-                              param_ids[kInstCommonParamCnt + i], &builder);
+                              param_ids[kFirstParam + i], &builder);
     }
     // Close write block and gen merge block
     (void)builder.AddBranch(merge_blk_id);

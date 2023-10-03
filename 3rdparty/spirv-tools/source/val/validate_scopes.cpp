@@ -14,7 +14,6 @@
 
 #include "source/val/validate_scopes.h"
 
-#include "source/diagnostic.h"
 #include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
 #include "source/val/validation_state.h"
@@ -240,7 +239,7 @@ spv_result_t ValidateMemoryScope(ValidationState_t& _, const Instruction* inst,
                !_.HasCapability(spv::Capability::SubgroupBallotKHR) &&
                !_.HasCapability(spv::Capability::SubgroupVoteKHR)) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << _.VkErrorID(6997) << spvOpcodeString(opcode)
+             << _.VkErrorID(7951) << spvOpcodeString(opcode)
              << ": in Vulkan 1.0 environment Memory Scope is can not be "
                 "Subgroup without SubgroupBallotKHR or SubgroupVoteKHR "
                 "declared";

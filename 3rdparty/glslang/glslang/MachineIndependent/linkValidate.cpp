@@ -57,13 +57,11 @@ namespace glslang {
 //
 void TIntermediate::error(TInfoSink& infoSink, const char* message, EShLanguage unitStage)
 {
-#ifndef GLSLANG_WEB
     infoSink.info.prefix(EPrefixError);
     if (unitStage < EShLangCount)
         infoSink.info << "Linking " << StageName(getStage()) << " and " << StageName(unitStage) << " stages: " << message << "\n";
     else
         infoSink.info << "Linking " << StageName(language) << " stage: " << message << "\n";
-#endif
 
     ++numErrors;
 }
@@ -71,13 +69,11 @@ void TIntermediate::error(TInfoSink& infoSink, const char* message, EShLanguage 
 // Link-time warning.
 void TIntermediate::warn(TInfoSink& infoSink, const char* message, EShLanguage unitStage)
 {
-#ifndef GLSLANG_WEB
     infoSink.info.prefix(EPrefixWarning);
     if (unitStage < EShLangCount)
         infoSink.info << "Linking " << StageName(language) << " and " << StageName(unitStage) << " stages: " << message << "\n";
     else
         infoSink.info << "Linking " << StageName(language) << " stage: " << message << "\n";
-#endif
 }
 
 // TODO: 4.4 offset/align:  "Two blocks linked together in the same program with the same block
@@ -89,11 +85,9 @@ void TIntermediate::warn(TInfoSink& infoSink, const char* message, EShLanguage u
 //
 void TIntermediate::merge(TInfoSink& infoSink, TIntermediate& unit)
 {
-#if !defined(GLSLANG_WEB)
     mergeCallGraphs(infoSink, unit);
     mergeModes(infoSink, unit);
     mergeTrees(infoSink, unit);
-#endif
 }
 
 //
@@ -160,8 +154,6 @@ void TIntermediate::mergeCallGraphs(TInfoSink& infoSink, TIntermediate& unit)
 
     callGraph.insert(callGraph.end(), unit.callGraph.begin(), unit.callGraph.end());
 }
-
-#if !defined(GLSLANG_WEB)
 
 #define MERGE_MAX(member) member = std::max(member, unit.member)
 #define MERGE_TRUE(member) if (unit.member) member = unit.member;
@@ -271,6 +263,9 @@ void TIntermediate::mergeModes(TInfoSink& infoSink, TIntermediate& unit)
 
     MERGE_TRUE(earlyFragmentTests);
     MERGE_TRUE(postDepthCoverage);
+    MERGE_TRUE(nonCoherentColorAttachmentReadEXT);
+    MERGE_TRUE(nonCoherentDepthAttachmentReadEXT);
+    MERGE_TRUE(nonCoherentStencilAttachmentReadEXT);
 
     if (depthLayout == EldNone)
         depthLayout = unit.depthLayout;
@@ -377,8 +372,6 @@ void TIntermediate::mergeTrees(TInfoSink& infoSink, TIntermediate& unit)
     mergeLinkerObjects(infoSink, linkerObjects, unitLinkerObjects, unit.getStage());
     ioAccessed.insert(unit.ioAccessed.begin(), unit.ioAccessed.end());
 }
-
-#endif
 
 static const TString& getNameForIdMap(TIntermSymbol* symbol)
 {
@@ -856,7 +849,6 @@ void TIntermediate::mergeImplicitArraySizes(TType& type, const TType& unitType)
 //
 void TIntermediate::mergeErrorCheck(TInfoSink& infoSink, const TIntermSymbol& symbol, const TIntermSymbol& unitSymbol, EShLanguage unitStage)
 {
-#if !defined(GLSLANG_WEB)
     bool crossStage = getStage() != unitStage;
     bool writeTypeComparison = false;
     bool errorReported = false;
@@ -1184,7 +1176,6 @@ void TIntermediate::mergeErrorCheck(TInfoSink& infoSink, const TIntermSymbol& sy
           }
         }
     }
-#endif
 }
 
 void TIntermediate::sharedBlockCheck(TInfoSink& infoSink)
@@ -1231,7 +1222,6 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
     // overlap/alias/missing I/O, etc.
     inOutLocationCheck(infoSink);
 
-#ifndef GLSLANG_WEB
     if (getNumPushConstants() > 1)
         error(infoSink, "Only one push_constant block is allowed per stage");
 
@@ -1389,7 +1379,6 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
     } finalLinkTraverser;
 
     treeRoot->traverse(&finalLinkTraverser);
-#endif
 }
 
 //
@@ -1617,7 +1606,7 @@ bool TIntermediate::userOutputUsed() const
     return found;
 }
 
-// Accumulate locations used for inputs, outputs, and uniforms, payload and callable data
+// Accumulate locations used for inputs, outputs, and uniforms, payload, callable data, and tileImageEXT
 // and check for collisions as the accumulation is done.
 //
 // Returns < 0 if no collision, >= 0 if collision and the value returned is a colliding value.
@@ -1630,7 +1619,6 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
     typeCollision = false;
 
     int set;
-    int setRT;
     if (qualifier.isPipeInput())
         set = 0;
     else if (qualifier.isPipeOutput())
@@ -1639,12 +1627,14 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
         set = 2;
     else if (qualifier.storage == EvqBuffer)
         set = 3;
+    else if (qualifier.storage == EvqTileImageEXT)
+        set = 4;
     else if (qualifier.isAnyPayload())
-        setRT = 0;
+        set = 0;
     else if (qualifier.isAnyCallable())
-        setRT = 1;
+        set = 1;
     else if (qualifier.isHitObjectAttrNV())
-        setRT = 2;
+        set = 2;
     else
         return -1;
 
@@ -1683,13 +1673,14 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
     // For raytracing IO (payloads and callabledata) each declaration occupies a single
     // slot irrespective of type.
     int collision = -1; // no collision
-#ifndef GLSLANG_WEB
     if (qualifier.isAnyPayload() || qualifier.isAnyCallable() || qualifier.isHitObjectAttrNV()) {
         TRange range(qualifier.layoutLocation, qualifier.layoutLocation);
-        collision = checkLocationRT(setRT, qualifier.layoutLocation);
+        collision = checkLocationRT(set, qualifier.layoutLocation);
         if (collision < 0)
-            usedIoRT[setRT].push_back(range);
-    } else if (size == 2 && type.getBasicType() == EbtDouble && type.getVectorSize() == 3 &&
+            usedIoRT[set].push_back(range);
+        return collision;
+    }
+    if (size == 2 && type.getBasicType() == EbtDouble && type.getVectorSize() == 3 &&
         (qualifier.isPipeInput() || qualifier.isPipeOutput())) {
         // Dealing with dvec3 in/out split across two locations.
         // Need two io-ranges.
@@ -1715,31 +1706,33 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
             if (collision < 0)
                 usedIo[set].push_back(range2);
         }
-    } else
-#endif
-    {
-        // Not a dvec3 in/out split across two locations, generic path.
-        // Need a single IO-range block.
-
-        TRange locationRange(qualifier.layoutLocation, qualifier.layoutLocation + size - 1);
-        TRange componentRange(0, 3);
-        if (qualifier.hasComponent() || type.getVectorSize() > 0) {
-            int consumedComponents = type.getVectorSize() * (type.getBasicType() == EbtDouble ? 2 : 1);
-            if (qualifier.hasComponent())
-                componentRange.start = qualifier.layoutComponent;
-            componentRange.last  = componentRange.start + consumedComponents - 1;
-        }
-
-        // combine location and component ranges
-        TIoRange range(locationRange, componentRange, type.getBasicType(), qualifier.hasIndex() ? qualifier.getIndex() : 0);
-
-        // check for collisions, except for vertex inputs on desktop targeting OpenGL
-        if (! (!isEsProfile() && language == EShLangVertex && qualifier.isPipeInput()) || spvVersion.vulkan > 0)
-            collision = checkLocationRange(set, range, type, typeCollision);
-
-        if (collision < 0)
-            usedIo[set].push_back(range);
+        return collision;
     }
+
+    // Not a dvec3 in/out split across two locations, generic path.
+    // Need a single IO-range block.
+
+    TRange locationRange(qualifier.layoutLocation, qualifier.layoutLocation + size - 1);
+    TRange componentRange(0, 3);
+    if (qualifier.hasComponent() || type.getVectorSize() > 0) {
+        int consumedComponents = type.getVectorSize() * (type.getBasicType() == EbtDouble ? 2 : 1);
+        if (qualifier.hasComponent())
+            componentRange.start = qualifier.layoutComponent;
+        componentRange.last  = componentRange.start + consumedComponents - 1;
+    }
+
+    // combine location and component ranges
+    TBasicType basicTy = type.getBasicType();
+    if (basicTy == EbtSampler && type.getSampler().isAttachmentEXT())
+        basicTy = type.getSampler().type;
+    TIoRange range(locationRange, componentRange, basicTy, qualifier.hasIndex() ? qualifier.getIndex() : 0);
+
+    // check for collisions, except for vertex inputs on desktop targeting OpenGL
+    if (! (!isEsProfile() && language == EShLangVertex && qualifier.isPipeInput()) || spvVersion.vulkan > 0)
+        collision = checkLocationRange(set, range, type, typeCollision);
+
+    if (collision < 0)
+        usedIo[set].push_back(range);
 
     return collision;
 }
@@ -1760,6 +1753,19 @@ int TIntermediate::checkLocationRange(int set, const TIoRange& range, const TTyp
             typeCollision = true;
             return std::max(range.location.start, usedIo[set][r].location.start);
         }
+    }
+
+    // check typeCollision between tileImageEXT and out
+    if (set == 4 || set == 1) {
+      // if the set is "tileImageEXT", check against "out" and vice versa
+      int againstSet = (set == 4) ? 1 : 4;
+      for (size_t r = 0; r < usedIo[againstSet].size(); ++r) {
+        if (range.location.overlap(usedIo[againstSet][r].location) && type.getBasicType() != usedIo[againstSet][r].basicType) {
+            // aliased-type mismatch
+            typeCollision = true;
+            return std::max(range.location.start, usedIo[againstSet][r].location.start);
+        }
+      }
     }
 
     return -1; // no collision
@@ -1825,10 +1831,8 @@ int TIntermediate::computeTypeLocationSize(const TType& type, EShLanguage stage)
         if (type.isSizedArray() && !type.getQualifier().isPerView())
             return type.getOuterArraySize() * computeTypeLocationSize(elementType, stage);
         else {
-#ifndef GLSLANG_WEB
             // unset perViewNV attributes for arrayed per-view outputs: "perviewNV vec4 v[MAX_VIEWS][3];"
             elementType.getQualifier().perViewNV = false;
-#endif
             return computeTypeLocationSize(elementType, stage);
         }
     }
@@ -1903,8 +1907,6 @@ int TIntermediate::computeTypeUniformLocationSize(const TType& type)
 
     return 1;
 }
-
-#ifndef GLSLANG_WEB
 
 // Accumulate xfb buffer ranges and check for collisions as the accumulation is done.
 //
@@ -2023,8 +2025,6 @@ unsigned int TIntermediate::computeTypeXfbSize(const TType& type, bool& contains
     }
 }
 
-#endif
-
 const int baseAlignmentVec4Std140 = 16;
 
 // Return the size and alignment of a component of the given type.
@@ -2032,10 +2032,6 @@ const int baseAlignmentVec4Std140 = 16;
 // Return value is the alignment..
 int TIntermediate::getBaseAlignmentScalar(const TType& type, int& size)
 {
-#ifdef GLSLANG_WEB
-    size = 4; return 4;
-#endif
-
     switch (type.getBasicType()) {
     case EbtInt64:
     case EbtUint64:
@@ -2375,7 +2371,6 @@ int TIntermediate::computeBufferReferenceTypeSize(const TType& type)
     return size;
 }
 
-#ifndef GLSLANG_WEB
 bool TIntermediate::isIoResizeArray(const TType& type, EShLanguage language) {
     return type.isArray() &&
             ((language == EShLangGeometry    && type.getQualifier().storage == EvqVaryingIn) ||
@@ -2387,6 +2382,5 @@ bool TIntermediate::isIoResizeArray(const TType& type, EShLanguage language) {
             (language == EShLangMesh && type.getQualifier().storage == EvqVaryingOut &&
                 !type.getQualifier().perTaskNV));
 }
-#endif // not GLSLANG_WEB
 
 } // end namespace glslang

@@ -248,7 +248,7 @@ namespace ps
 				Particle& particle = m_particles[m_num];
 				m_num++;
 
-				bx::Vec3 pos(bx::init::None);
+				bx::Vec3 pos(bx::InitNone);
 				switch (m_shape)
 				{
 					default:
@@ -281,7 +281,7 @@ namespace ps
 						break;
 				}
 
-				bx::Vec3 dir(bx::init::None);
+				bx::Vec3 dir(bx::InitNone);
 				switch (m_direction)
 				{
 					default:
@@ -331,8 +331,8 @@ namespace ps
 
 			bx::Aabb aabb =
 			{
-				{  bx::kInfinity,  bx::kInfinity,  bx::kInfinity },
-				{ -bx::kInfinity, -bx::kInfinity, -bx::kInfinity },
+				{  bx::kFloatInfinity,  bx::kFloatInfinity,  bx::kFloatInfinity },
+				{ -bx::kFloatInfinity, -bx::kFloatInfinity, -bx::kFloatInfinity },
 			};
 
 			for (uint32_t jj = 0, num = m_num, current = _first
@@ -452,7 +452,7 @@ namespace ps
 			}
 
 			m_emitterAlloc = bx::createHandleAlloc(m_allocator, _maxEmitters);
-			m_emitter = (Emitter*)BX_ALLOC(m_allocator, sizeof(Emitter)*_maxEmitters);
+			m_emitter = (Emitter*)bx::alloc(m_allocator, sizeof(Emitter)*_maxEmitters);
 
 			PosColorTexCoord0Vertex::init();
 
@@ -482,7 +482,7 @@ namespace ps
 			bgfx::destroy(s_texColor);
 
 			bx::destroyHandleAlloc(m_allocator, m_emitterAlloc);
-			BX_FREE(m_allocator, m_emitter);
+			bx::free(m_allocator, m_emitter);
 
 			m_allocator = NULL;
 		}
@@ -554,7 +554,7 @@ namespace ps
 						);
 					PosColorTexCoord0Vertex* vertices = (PosColorTexCoord0Vertex*)tvb.data;
 
-					ParticleSort* particleSort = (ParticleSort*)BX_ALLOC(m_allocator, max*sizeof(ParticleSort) );
+					ParticleSort* particleSort = (ParticleSort*)bx::alloc(m_allocator, max*sizeof(ParticleSort) );
 
 					uint32_t pos = 0;
 					for (uint16_t ii = 0, numEmitters = m_emitterAlloc->getNumHandles(); ii < numEmitters; ++ii)
@@ -595,7 +595,7 @@ namespace ps
 						index[5] = idx*4+0;
 					}
 
-					BX_FREE(m_allocator, particleSort);
+					bx::free(m_allocator, particleSort);
 
 					bgfx::setState(0
 						| BGFX_STATE_WRITE_RGB
@@ -687,12 +687,12 @@ namespace ps
 		m_shape     = _shape;
 		m_direction = _direction;
 		m_max       = _maxParticles;
-		m_particles = (Particle*)BX_ALLOC(s_ctx.m_allocator, m_max*sizeof(Particle) );
+		m_particles = (Particle*)bx::alloc(s_ctx.m_allocator, m_max*sizeof(Particle) );
 	}
 
 	void Emitter::destroy()
 	{
-		BX_FREE(s_ctx.m_allocator, m_particles);
+		bx::free(s_ctx.m_allocator, m_particles);
 		m_particles = NULL;
 	}
 

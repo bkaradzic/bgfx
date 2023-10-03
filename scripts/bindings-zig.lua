@@ -405,6 +405,8 @@ function converter.funcs(params)
 	local func = params.obj
 	if func.cpponly then
 		return
+	elseif func.cppinline and not func.conly then
+		return
 	end
 
 	-- skip for now, don't know how to handle variadic functions

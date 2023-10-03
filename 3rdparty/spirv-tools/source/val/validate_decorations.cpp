@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 
-#include "source/binary.h"
 #include "source/diagnostic.h"
 #include "source/opcode.h"
 #include "source/spirv_constant.h"
@@ -45,13 +44,6 @@ struct PairHash {
     const uint32_t b = pair.second;
     const uint32_t rotated_b = (b >> 2) | ((b & 3) << 30);
     return a ^ rotated_b;
-  }
-};
-
-// A functor for hashing decoration types.
-struct SpvDecorationHash {
-  std::size_t operator()(spv::Decoration dec) const {
-    return static_cast<std::size_t>(dec);
   }
 };
 
@@ -460,7 +452,16 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
     return ds;
   };
 
-  const auto& members = getStructMembers(struct_id, vstate);
+  // If we are checking physical storage buffer pointers, we may not actually
+  // have a struct here. Instead, pretend we have a struct with a single member
+  // at offset 0.
+  const auto& struct_type = vstate.FindDef(struct_id);
+  std::vector<uint32_t> members;
+  if (struct_type->opcode() == spv::Op::OpTypeStruct) {
+    members = getStructMembers(struct_id, vstate);
+  } else {
+    members.push_back(struct_id);
+  }
 
   // To check for member overlaps, we want to traverse the members in
   // offset order.
@@ -469,31 +470,38 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
     uint32_t offset;
   };
   std::vector<MemberOffsetPair> member_offsets;
-  member_offsets.reserve(members.size());
-  for (uint32_t memberIdx = 0, numMembers = uint32_t(members.size());
-       memberIdx < numMembers; memberIdx++) {
-    uint32_t offset = 0xffffffff;
-    auto member_decorations =
-        vstate.id_member_decorations(struct_id, memberIdx);
-    for (auto decoration = member_decorations.begin;
-         decoration != member_decorations.end; ++decoration) {
-      assert(decoration->struct_member_index() == (int)memberIdx);
-      switch (decoration->dec_type()) {
-        case spv::Decoration::Offset:
-          offset = decoration->params()[0];
-          break;
-        default:
-          break;
+
+  // With physical storage buffers, we might be checking layouts that do not
+  // originate from a structure.
+  if (struct_type->opcode() == spv::Op::OpTypeStruct) {
+    member_offsets.reserve(members.size());
+    for (uint32_t memberIdx = 0, numMembers = uint32_t(members.size());
+         memberIdx < numMembers; memberIdx++) {
+      uint32_t offset = 0xffffffff;
+      auto member_decorations =
+          vstate.id_member_decorations(struct_id, memberIdx);
+      for (auto decoration = member_decorations.begin;
+           decoration != member_decorations.end; ++decoration) {
+        assert(decoration->struct_member_index() == (int)memberIdx);
+        switch (decoration->dec_type()) {
+          case spv::Decoration::Offset:
+            offset = decoration->params()[0];
+            break;
+          default:
+            break;
+        }
       }
+      member_offsets.push_back(
+          MemberOffsetPair{memberIdx, incoming_offset + offset});
     }
-    member_offsets.push_back(
-        MemberOffsetPair{memberIdx, incoming_offset + offset});
+    std::stable_sort(
+        member_offsets.begin(), member_offsets.end(),
+        [](const MemberOffsetPair& lhs, const MemberOffsetPair& rhs) {
+          return lhs.offset < rhs.offset;
+        });
+  } else {
+    member_offsets.push_back({0, 0});
   }
-  std::stable_sort(
-      member_offsets.begin(), member_offsets.end(),
-      [](const MemberOffsetPair& lhs, const MemberOffsetPair& rhs) {
-        return lhs.offset < rhs.offset;
-      });
 
   // Now scan from lowest offset to highest offset.
   uint32_t nextValidOffset = 0;
@@ -1031,6 +1039,8 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
   std::unordered_set<uint32_t> uses_push_constant;
   for (const auto& inst : vstate.ordered_instructions()) {
     const auto& words = inst.words();
+    auto type_id = inst.type_id();
+    const Instruction* type_inst = vstate.FindDef(type_id);
     if (spv::Op::OpVariable == inst.opcode()) {
       const auto var_id = inst.id();
       // For storage class / decoration combinations, see Vulkan 14.5.4 "Offset
@@ -1283,6 +1293,23 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
             }
           }
         }
+      }
+    } else if (type_inst && type_inst->opcode() == spv::Op::OpTypePointer &&
+               type_inst->GetOperandAs<spv::StorageClass>(1u) ==
+                   spv::StorageClass::PhysicalStorageBuffer) {
+      const bool scalar_block_layout = vstate.options()->scalar_block_layout;
+      MemberConstraints constraints;
+      const bool buffer = true;
+      const auto data_type_id = type_inst->GetOperandAs<uint32_t>(2u);
+      const auto* data_type_inst = vstate.FindDef(data_type_id);
+      if (data_type_inst->opcode() == spv::Op::OpTypeStruct) {
+        ComputeMemberConstraintsForStruct(&constraints, data_type_id,
+                                          LayoutConstraints(), vstate);
+      }
+      if (auto res = checkLayout(data_type_id, "PhysicalStorageBuffer", "Block",
+                                 !buffer, scalar_block_layout, 0, constraints,
+                                 vstate)) {
+        return res;
       }
     }
   }

@@ -357,7 +357,8 @@ void InstructionDisassembler::EmitOperand(const spv_parsed_instruction_t& inst,
       stream_ << opcode_desc->name;
     } break;
     case SPV_OPERAND_TYPE_LITERAL_INTEGER:
-    case SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER: {
+    case SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER:
+    case SPV_OPERAND_TYPE_LITERAL_FLOAT: {
       SetRed();
       EmitNumericLiteral(&stream_, inst, operand);
       ResetColor();

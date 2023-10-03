@@ -292,7 +292,7 @@ void inputInit()
 
 void inputShutdown()
 {
-	BX_DELETE(entry::getAllocator(), s_input);
+	bx::deleteObject(entry::getAllocator(), s_input);
 }
 
 void inputAddBindings(const char* _name, const InputBinding* _bindings)

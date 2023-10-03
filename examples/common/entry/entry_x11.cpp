@@ -771,6 +771,12 @@ namespace entry
 		return s_ctx.m_display;
 	}
 
+	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType(WindowHandle _handle)
+	{
+		BX_UNUSED(_handle);
+		return bgfx::NativeWindowHandleType::Default;
+	}
+
 } // namespace entry
 
 int main(int _argc, const char* const* _argv)

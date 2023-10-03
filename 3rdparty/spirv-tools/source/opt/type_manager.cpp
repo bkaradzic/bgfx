@@ -178,7 +178,7 @@ void TypeManager::RemoveId(uint32_t id) {
   if (iter == id_to_type_.end()) return;
 
   auto& type = iter->second;
-  if (!type->IsUniqueType(true)) {
+  if (!type->IsUniqueType()) {
     auto tIter = type_to_id_.find(type);
     if (tIter != type_to_id_.end() && tIter->second == id) {
       // |type| currently maps to |id|.
@@ -423,6 +423,23 @@ uint32_t TypeManager::GetTypeInstruction(const Type* type) {
               {SPV_OPERAND_TYPE_ID, {coop_mat->columns_id()}}});
       break;
     }
+    case Type::kCooperativeMatrixKHR: {
+      auto coop_mat = type->AsCooperativeMatrixKHR();
+      uint32_t const component_type =
+          GetTypeInstruction(coop_mat->component_type());
+      if (component_type == 0) {
+        return 0;
+      }
+      typeInst = MakeUnique<Instruction>(
+          context(), spv::Op::OpTypeCooperativeMatrixKHR, 0, id,
+          std::initializer_list<Operand>{
+              {SPV_OPERAND_TYPE_ID, {component_type}},
+              {SPV_OPERAND_TYPE_SCOPE_ID, {coop_mat->scope_id()}},
+              {SPV_OPERAND_TYPE_ID, {coop_mat->rows_id()}},
+              {SPV_OPERAND_TYPE_ID, {coop_mat->columns_id()}},
+              {SPV_OPERAND_TYPE_ID, {coop_mat->use_id()}}});
+      break;
+    }
     default:
       assert(false && "Unexpected type");
       break;
@@ -437,7 +454,7 @@ uint32_t TypeManager::FindPointerToType(uint32_t type_id,
                                         spv::StorageClass storage_class) {
   Type* pointeeTy = GetType(type_id);
   Pointer pointerTy(pointeeTy, storage_class);
-  if (pointeeTy->IsUniqueType(true)) {
+  if (pointeeTy->IsUniqueType()) {
     // Non-ambiguous type. Get the pointer type through the type manager.
     return GetTypeInstruction(&pointerTy);
   }
@@ -626,6 +643,14 @@ Type* TypeManager::RebuildType(const Type& type) {
       rebuilt_ty = MakeUnique<CooperativeMatrixNV>(
           RebuildType(*component_type), cm_type->scope_id(), cm_type->rows_id(),
           cm_type->columns_id());
+      break;
+    }
+    case Type::kCooperativeMatrixKHR: {
+      const CooperativeMatrixKHR* cm_type = type.AsCooperativeMatrixKHR();
+      const Type* component_type = cm_type->component_type();
+      rebuilt_ty = MakeUnique<CooperativeMatrixKHR>(
+          RebuildType(*component_type), cm_type->scope_id(), cm_type->rows_id(),
+          cm_type->columns_id(), cm_type->use_id());
       break;
     }
     default:
@@ -862,6 +887,12 @@ Type* TypeManager::RecordIfTypeDefinition(const Instruction& inst) {
                                      inst.GetSingleWordInOperand(1),
                                      inst.GetSingleWordInOperand(2),
                                      inst.GetSingleWordInOperand(3));
+      break;
+    case spv::Op::OpTypeCooperativeMatrixKHR:
+      type = new CooperativeMatrixKHR(
+          GetType(inst.GetSingleWordInOperand(0)),
+          inst.GetSingleWordInOperand(1), inst.GetSingleWordInOperand(2),
+          inst.GetSingleWordInOperand(3), inst.GetSingleWordInOperand(4));
       break;
     case spv::Op::OpTypeRayQueryKHR:
       type = new RayQueryKHR();

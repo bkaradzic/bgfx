@@ -317,7 +317,7 @@ class ValidationState_t {
 
   /// Returns true if the capability is enabled in the module.
   bool HasCapability(spv::Capability cap) const {
-    return module_capabilities_.Contains(cap);
+    return module_capabilities_.contains(cap);
   }
 
   /// Returns a reference to the set of capabilities in the module.
@@ -328,7 +328,7 @@ class ValidationState_t {
 
   /// Returns true if the extension is enabled in the module.
   bool HasExtension(Extension ext) const {
-    return module_extensions_.Contains(ext);
+    return module_extensions_.contains(ext);
   }
 
   /// Returns true if any of the capabilities is enabled, or if |capabilities|
@@ -485,6 +485,13 @@ class ValidationState_t {
   void RegisterSampledImageConsumer(uint32_t sampled_image_id,
                                     Instruction* consumer);
 
+  // Record a cons_id as a consumer of texture_id
+  // if texture 'texture_id' has a QCOM image processing decoration
+  // and consumer is a load or a sampled image instruction
+  void RegisterQCOMImageProcessingTextureConsumer(uint32_t texture_id,
+                                                  const Instruction* consumer0,
+                                                  const Instruction* consumer1);
+
   // Record a function's storage class consumer instruction
   void RegisterStorageClassConsumer(spv::StorageClass storage_class,
                                     Instruction* consumer);
@@ -602,6 +609,7 @@ class ValidationState_t {
   bool IsIntScalarOrVectorType(uint32_t id) const;
   bool IsUnsignedIntScalarType(uint32_t id) const;
   bool IsUnsignedIntVectorType(uint32_t id) const;
+  bool IsUnsignedIntScalarOrVectorType(uint32_t id) const;
   bool IsSignedIntScalarType(uint32_t id) const;
   bool IsSignedIntVectorType(uint32_t id) const;
   bool IsBoolScalarType(uint32_t id) const;
@@ -610,6 +618,11 @@ class ValidationState_t {
   bool IsPointerType(uint32_t id) const;
   bool IsAccelerationStructureType(uint32_t id) const;
   bool IsCooperativeMatrixType(uint32_t id) const;
+  bool IsCooperativeMatrixNVType(uint32_t id) const;
+  bool IsCooperativeMatrixKHRType(uint32_t id) const;
+  bool IsCooperativeMatrixAType(uint32_t id) const;
+  bool IsCooperativeMatrixBType(uint32_t id) const;
+  bool IsCooperativeMatrixAccType(uint32_t id) const;
   bool IsFloatCooperativeMatrixType(uint32_t id) const;
   bool IsIntCooperativeMatrixType(uint32_t id) const;
   bool IsUnsignedIntCooperativeMatrixType(uint32_t id) const;
@@ -786,6 +799,13 @@ class ValidationState_t {
     current_layout_section_ = section;
   }
 
+  // Check if instruction 'id' is a consumer of a texture decorated
+  // with a QCOM image processing decoration
+  bool IsQCOMImageProcessingTextureConsumer(uint32_t id) {
+    return qcom_image_processing_consumers_.find(id) !=
+           qcom_image_processing_consumers_.end();
+  }
+
  private:
   ValidationState_t(const ValidationState_t&);
 
@@ -819,6 +839,10 @@ class ValidationState_t {
   /// OpSampledImage instruction.
   std::unordered_map<uint32_t, std::vector<Instruction*>>
       sampled_image_consumers_;
+
+  /// Stores load instructions that load textures used
+  //  in QCOM image processing functions
+  std::unordered_set<uint32_t> qcom_image_processing_consumers_;
 
   /// A map of operand IDs and their names defined by the OpName instruction
   std::unordered_map<uint32_t, std::string> operand_names_;

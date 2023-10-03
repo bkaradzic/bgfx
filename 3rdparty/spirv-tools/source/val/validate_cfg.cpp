@@ -12,11 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
 #include <cassert>
 #include <functional>
 #include <iostream>
-#include <iterator>
 #include <map>
 #include <string>
 #include <tuple>
@@ -28,7 +26,6 @@
 #include "source/cfa.h"
 #include "source/opcode.h"
 #include "source/spirv_constant.h"
-#include "source/spirv_target_env.h"
 #include "source/spirv_validator_options.h"
 #include "source/val/basic_block.h"
 #include "source/val/construct.h"
@@ -671,7 +668,8 @@ spv_result_t ValidateStructuredSelections(
       // previously.
       const bool true_label_unseen = seen.insert(true_label).second;
       const bool false_label_unseen = seen.insert(false_label).second;
-      if (!merge && true_label_unseen && false_label_unseen) {
+      if ((!merge || merge->opcode() == spv::Op::OpLoopMerge) &&
+          true_label_unseen && false_label_unseen) {
         return _.diag(SPV_ERROR_INVALID_CFG, terminator)
                << "Selection must be structured";
       }

@@ -630,6 +630,14 @@ bool Compiler::is_array(const SPIRType &type) const
 	return !type.array.empty();
 }
 
+bool Compiler::is_runtime_size_array(const SPIRType &type)
+{
+	if (type.array.empty())
+		return false;
+	assert(type.array.size() == type.array_size_literal.size());
+	return type.array_size_literal.back() && type.array.back() == 0;
+}
+
 ShaderResources Compiler::get_shader_resources() const
 {
 	return get_shader_resources(nullptr);
@@ -995,37 +1003,45 @@ ShaderResources Compiler::get_shader_resources(const unordered_set<VariableID> *
 		{
 			res.shader_record_buffers.push_back({ var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self, ssbo_instance_name) });
 		}
-		// Images
-		else if (type.storage == StorageClassUniformConstant && type.basetype == SPIRType::Image &&
-		         type.image.sampled == 2)
-		{
-			res.storage_images.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
-		}
-		// Separate images
-		else if (type.storage == StorageClassUniformConstant && type.basetype == SPIRType::Image &&
-		         type.image.sampled == 1)
-		{
-			res.separate_images.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
-		}
-		// Separate samplers
-		else if (type.storage == StorageClassUniformConstant && type.basetype == SPIRType::Sampler)
-		{
-			res.separate_samplers.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
-		}
-		// Textures
-		else if (type.storage == StorageClassUniformConstant && type.basetype == SPIRType::SampledImage)
-		{
-			res.sampled_images.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
-		}
 		// Atomic counters
 		else if (type.storage == StorageClassAtomicCounter)
 		{
 			res.atomic_counters.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
 		}
-		// Acceleration structures
-		else if (type.storage == StorageClassUniformConstant && type.basetype == SPIRType::AccelerationStructure)
+		else if (type.storage == StorageClassUniformConstant)
 		{
-			res.acceleration_structures.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+			if (type.basetype == SPIRType::Image)
+			{
+				// Images
+				if (type.image.sampled == 2)
+				{
+					res.storage_images.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+				}
+				// Separate images
+				else if (type.image.sampled == 1)
+				{
+					res.separate_images.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+				}
+			}
+			// Separate samplers
+			else if (type.basetype == SPIRType::Sampler)
+			{
+				res.separate_samplers.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+			}
+			// Textures
+			else if (type.basetype == SPIRType::SampledImage)
+			{
+				res.sampled_images.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+			}
+			// Acceleration structures
+			else if (type.basetype == SPIRType::AccelerationStructure)
+			{
+				res.acceleration_structures.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+			}
+			else
+			{
+				res.gl_plain_uniforms.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+			}
 		}
 	});
 
@@ -5446,17 +5462,54 @@ void Compiler::analyze_interlocked_resource_usage()
 
 bool Compiler::type_is_array_of_pointers(const SPIRType &type) const
 {
+	if (!type_is_top_level_array(type))
+		return false;
+
+	// BDA types must have parent type hierarchy.
+	if (!type.parent_type)
+		return false;
+
+	// Punch through all array layers.
+	auto *parent = &get<SPIRType>(type.parent_type);
+	while (type_is_top_level_array(*parent))
+		parent = &get<SPIRType>(parent->parent_type);
+
+	return type_is_top_level_pointer(*parent);
+}
+
+bool Compiler::type_is_top_level_pointer(const SPIRType &type) const
+{
 	if (!type.pointer)
 		return false;
 
-	// If parent type has same pointer depth, we must have an array of pointers.
-	return type.pointer_depth == get<SPIRType>(type.parent_type).pointer_depth;
+	// Function pointers, should not be hit by valid SPIR-V.
+	// Parent type will be SPIRFunction instead.
+	if (type.basetype == SPIRType::Unknown)
+		return false;
+
+	// Some types are synthesized in-place without complete type hierarchy and might not have parent types,
+	// but these types are never array-of-pointer or any complicated BDA type, infer reasonable defaults.
+	if (type.parent_type)
+		return type.pointer_depth > get<SPIRType>(type.parent_type).pointer_depth;
+	else
+		return true;
 }
 
 bool Compiler::type_is_top_level_physical_pointer(const SPIRType &type) const
 {
-	return type.pointer && type.storage == StorageClassPhysicalStorageBuffer &&
-	       type.pointer_depth > get<SPIRType>(type.parent_type).pointer_depth;
+	return type_is_top_level_pointer(type) && type.storage == StorageClassPhysicalStorageBuffer;
+}
+
+bool Compiler::type_is_top_level_array(const SPIRType &type) const
+{
+	if (type.array.empty())
+		return false;
+
+	// If we have pointer and array, we infer pointer-to-array as it's the only meaningful thing outside BDA.
+	if (type.parent_type)
+		return type.array.size() > get<SPIRType>(type.parent_type).array.size();
+	else
+		return !type.pointer;
 }
 
 bool Compiler::flush_phi_required(BlockID from, BlockID to) const

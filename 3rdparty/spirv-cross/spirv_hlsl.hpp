@@ -145,6 +145,11 @@ public:
 
 		// Rather than emitting main() for the entry point, use the name in SPIR-V.
 		bool use_entry_point_name = false;
+
+		// Preserve (RW)StructuredBuffer types if the input source was HLSL.
+		// This relies on UserTypeGOOGLE to encode the buffer type either as "structuredbuffer" or "rwstructuredbuffer"
+		// whereas the type can be extended with an optional subtype, e.g. "structuredbuffer:int".
+		bool preserve_structured_buffers = false;
 	};
 
 	explicit CompilerHLSL(std::vector<uint32_t> spirv_)
@@ -280,6 +285,7 @@ private:
 	void emit_struct_member(const SPIRType &type, uint32_t member_type_id, uint32_t index, const std::string &qualifier,
 	                        uint32_t base_offset = 0) override;
 	void emit_rayquery_function(const char *commited, const char *candidate, const uint32_t *ops);
+	void emit_mesh_tasks(SPIRBlock &block) override;
 
 	const char *to_storage_qualifiers_glsl(const SPIRVariable &var) override;
 	void replace_illegal_names() override;
@@ -396,6 +402,9 @@ private:
 
 	// Returns true for BuiltInSampleMask because gl_SampleMask[] is an array in SPIR-V, but SV_Coverage is a scalar in HLSL.
 	bool builtin_translates_to_nonarray(spv::BuiltIn builtin) const override;
+
+	// Returns true if the specified ID has a UserTypeGOOGLE decoration for StructuredBuffer or RWStructuredBuffer resources.
+	bool is_user_type_structured(uint32_t id) const override;
 
 	std::vector<TypeID> composite_selection_workaround_types;
 

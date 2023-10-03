@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(118)
+version(122)
 
 typedef "bool"
 typedef "char"
@@ -393,6 +393,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.VertexAttribHalf       --- Vertex attribute half-float is supported.
 	.VertexAttribUint10     --- Vertex attribute 10_10_10_2 is supported.
 	.VertexId               --- Rendering with VertexID only is supported.
+	.PrimitiveId            --- PrimitiveID is available in fragment shader.
 	.ViewportLayerArray     --- Viewport layer is available in vertex shader.
 	.DrawIndirectCount      --- Draw indirect with indirect count is supported.
 	.TextureCompareAll      --- All texture compare modes are supported.
@@ -689,6 +690,12 @@ enum.ViewMode { underscore, comment = "View modes:" }
 	.DepthDescending --- Sort draw call depth in descending order.
 	()
 
+--- Native window handle type.
+enum.NativeWindowHandleType { underscore, comment = "Native Window handle type:" }
+	.Default         --- Platform default handle type (X11 on Linux).
+	.Wayland      	 --- Wayland.
+	()
+
 --- Render frame enum.
 enum.RenderFrame { underscore, comment = "" }
 	.NoContext --- Renderer context is not created yet.
@@ -773,15 +780,16 @@ struct.InternalData
 
 --- Platform data.
 struct.PlatformData { ctor }
-	.ndt          "void*" --- Native display type (*nix specific).
-	.nwh          "void*" --- Native window handle. If `NULL`, bgfx will create a headless
-	                      --- context/device, provided the rendering API supports it.
-	.context      "void*" --- GL context, D3D device, or Vulkan device. If `NULL`, bgfx
-						  --- will create context/device.
-	.backBuffer   "void*" --- GL back-buffer, or D3D render target view. If `NULL` bgfx will
-	                      --- create back-buffer color surface.
-	.backBufferDS "void*" --- Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
-	                      --- depth/stencil surface.
+	.ndt          "void*" 							--- Native display type (*nix specific).
+	.nwh          "void*" 							--- Native window handle. If `NULL`, bgfx will create a headless
+													--- context/device, provided the rendering API supports it.
+	.context      "void*" 							--- GL context, D3D device, or Vulkan device. If `NULL`, bgfx
+													--- will create context/device.
+	.backBuffer   "void*" 							--- GL back-buffer, or D3D render target view. If `NULL` bgfx will
+													--- create back-buffer color surface.
+	.backBufferDS "void*" 							--- Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
+													--- depth/stencil surface.
+	.type		  "NativeWindowHandleType::Enum" 	--- Handle type. Needed for platforms having more than one option.
 
 --- Backbuffer resolution and reset parameters.
 struct.Resolution { ctor }
@@ -791,6 +799,7 @@ struct.Resolution { ctor }
 	.reset           "uint32_t"            --- Reset parameters.
 	.numBackBuffers  "uint8_t"             --- Number of back buffers.
 	.maxFrameLatency "uint8_t"             --- Maximum frame latency.
+	.debugTextScale  "uint8_t"             --- Scale factor for debug text.
 
 --- Configurable runtime limits parameters.
 struct.Limits { namespace = "Init" }
@@ -1038,7 +1047,7 @@ func.VertexLayout.decode { const }
 	.asInt      "bool &"             { out } --- Attribute is packed as int.
 
 --- Returns `true` if VertexLayout contains attribute.
-func.VertexLayout.has { const }
+func.VertexLayout.has { const, conly, cppinline }
 	"bool"                 --- True if VertexLayout contains attribute.
 	.attrib "Attrib::Enum" --- Attribute semantics. See: `bgfx::Attrib`
 
@@ -1053,16 +1062,16 @@ func.VertexLayout["end"]
 	"void"
 
 --- Returns relative attribute offset from the vertex.
-func.VertexLayout.getOffset { const , cpponly }
+func.VertexLayout.getOffset { const, cppinline }
 	"uint16_t"                --- Relative attribute offset from the vertex.
 	.attrib    "Attrib::Enum" --- Attribute semantics. See: `bgfx::Attrib`
 
 --- Returns vertex stride.
-func.VertexLayout.getStride { const , cpponly }
+func.VertexLayout.getStride { const, cppinline }
 	"uint16_t" --- Vertex stride.
 
 --- Returns size of vertex buffer for number of vertices.
-func.VertexLayout.getSize { const, cpponly }
+func.VertexLayout.getSize { const, cppinline }
 	"uint32_t"      --- Size of vertex buffer for number of vertices.
 	.num "uint32_t" --- Number of vertices.
 
@@ -2131,6 +2140,7 @@ func.resetView
 func.begin { cname = "encoder_begin" }
 	"Encoder*"        --- Encoder.
 	.forThread "bool" --- Explicitly request an encoder for a worker thread.
+	 { default = false }
 
 --- End submitting draw calls from thread.
 func["end"] { cname = "encoder_end" }
@@ -2214,6 +2224,7 @@ func.Encoder.setTransform
 	                   --- to be used for other draw primitive call.
 	.mtx "const void*" --- Pointer to first matrix in array.
 	.num "uint16_t"    --- Number of matrices in array.
+	 { default = 1 }
 
 ---  Set model matrix from matrix cache for draw primitive.
 func.Encoder.setTransform { cname = "set_transform_cached" }
@@ -2375,21 +2386,11 @@ func.Encoder.setInstanceDataBuffer
 	.num   "uint32_t"                  --- Number of data instances.
 
 --- Set instance data buffer for draw primitive.
-func.Encoder.setInstanceDataBuffer { cpponly }
-	"void"
-	.handle      "VertexBufferHandle" --- Vertex buffer.
-
---- Set instance data buffer for draw primitive.
 func.Encoder.setInstanceDataBuffer { cname = "set_instance_data_from_vertex_buffer" }
 	"void"
 	.handle      "VertexBufferHandle" --- Vertex buffer.
 	.startVertex "uint32_t"           --- First instance data.
 	.num         "uint32_t"           --- Number of data instances.
-
- --- Set instance data buffer for draw primitive.
-func.Encoder.setInstanceDataBuffer { cpponly }
-	"void"
-	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 
 --- Set instance data buffer for draw primitive.
 func.Encoder.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_vertex_buffer" }
@@ -2955,21 +2956,11 @@ func.setInstanceDataBuffer
 	.num   "uint32_t"                  --- Number of data instances.
 
 --- Set instance data buffer for draw primitive.
-func.setInstanceDataBuffer { cpponly }
-	"void"
-	.handle      "VertexBufferHandle" --- Vertex buffer.
-
---- Set instance data buffer for draw primitive.
 func.setInstanceDataBuffer { cname = "set_instance_data_from_vertex_buffer" }
 	"void"
 	.handle      "VertexBufferHandle" --- Vertex buffer.
 	.startVertex "uint32_t"           --- First instance data.
 	.num         "uint32_t"           --- Number of data instances.
-
- --- Set instance data buffer for draw primitive.
-func.setInstanceDataBuffer { cpponly }
-	"void"
-	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 
 --- Set instance data buffer for draw primitive.
 func.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_vertex_buffer" }

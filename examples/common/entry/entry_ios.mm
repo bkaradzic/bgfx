@@ -150,7 +150,7 @@ namespace entry
 	{
 		if (kDefaultWindowHandle.idx == _handle.idx)
 		{
-			return s_ctx.m_window;
+			return s_ctx->m_window;
 		}
 
 		return NULL;
@@ -159,6 +159,12 @@ namespace entry
 	void* getNativeDisplayHandle()
 	{
 		return NULL;
+	}
+
+	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType(WindowHandle _handle)
+	{
+		BX_UNUSED(_handle);
+		return bgfx::NativeWindowHandleType::Default;
 	}
 
 } // namespace entry

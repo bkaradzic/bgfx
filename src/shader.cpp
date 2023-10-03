@@ -250,7 +250,7 @@ namespace bgfx
 
 			if (!_err->isOk() ) { return; }
 
-			uint8_t* shaderCode = (uint8_t*)BX_ALLOC(g_allocator, shaderSize);
+			uint8_t* shaderCode = (uint8_t*)bx::alloc(g_allocator, shaderSize);
 			bx::read(_reader, shaderCode, shaderSize, _err);
 
 			bx::MemoryReader reader(shaderCode, shaderSize);
@@ -258,7 +258,7 @@ namespace bgfx
 
 			bx::write(_writer, '\0', _err);
 
-			BX_FREE(g_allocator, shaderCode);
+			bx::free(g_allocator, shaderCode);
 		}
 		else
 		{

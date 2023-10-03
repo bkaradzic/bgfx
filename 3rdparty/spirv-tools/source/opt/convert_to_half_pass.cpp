@@ -39,6 +39,13 @@ bool ConvertToHalfPass::IsFloat(Instruction* inst, uint32_t width) {
   return Pass::IsFloat(ty_id, width);
 }
 
+bool ConvertToHalfPass::IsStruct(Instruction* inst) {
+  uint32_t ty_id = inst->type_id();
+  if (ty_id == 0) return false;
+  Instruction* ty_inst = Pass::GetBaseType(ty_id);
+  return (ty_inst->opcode() == spv::Op::OpTypeStruct);
+}
+
 bool ConvertToHalfPass::IsDecoratedRelaxed(Instruction* inst) {
   uint32_t r_id = inst->result_id();
   for (auto r_inst : get_decoration_mgr()->GetDecorationsFor(r_id, false))
@@ -55,6 +62,10 @@ bool ConvertToHalfPass::IsRelaxed(uint32_t id) {
 }
 
 void ConvertToHalfPass::AddRelaxed(uint32_t id) { relaxed_ids_set_.insert(id); }
+
+bool ConvertToHalfPass::CanRelaxOpOperands(Instruction* inst) {
+  return image_ops_.count(inst->opcode()) == 0;
+}
 
 analysis::Type* ConvertToHalfPass::FloatScalarType(uint32_t width) {
   analysis::Float float_ty(width);
@@ -294,6 +305,7 @@ bool ConvertToHalfPass::CloseRelaxInst(Instruction* inst) {
   bool relax = true;
   inst->ForEachInId([&relax, this](uint32_t* idp) {
     Instruction* op_inst = get_def_use_mgr()->GetDef(*idp);
+    if (IsStruct(op_inst)) relax = false;
     if (!IsFloat(op_inst, 32)) return;
     if (!IsRelaxed(*idp)) relax = false;
   });
@@ -305,7 +317,8 @@ bool ConvertToHalfPass::CloseRelaxInst(Instruction* inst) {
   relax = true;
   get_def_use_mgr()->ForEachUser(inst, [&relax, this](Instruction* uinst) {
     if (uinst->result_id() == 0 || !IsFloat(uinst, 32) ||
-        (!IsDecoratedRelaxed(uinst) && !IsRelaxed(uinst->result_id()))) {
+        (!IsDecoratedRelaxed(uinst) && !IsRelaxed(uinst->result_id())) ||
+        !CanRelaxOpOperands(uinst)) {
       relax = false;
       return;
     }
