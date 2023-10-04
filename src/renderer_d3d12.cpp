@@ -5387,7 +5387,7 @@ namespace bgfx { namespace d3d12
 			if (0 != kk)
 			{
 				kk = 0;
-				for (uint8_t side = 0; side < numSides; ++side)
+				for (uint16_t side = 0; side < numSides; ++side)
 				{
 					for (uint32_t lod = 0, num = ti.numMips; lod < num; ++lod)
 					{
@@ -5455,7 +5455,6 @@ namespace bgfx { namespace d3d12
 	{
 		D3D12_RESOURCE_STATES state = setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 
-		const uint32_t subres = _mip + (_side * m_numMips);
 		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		uint32_t rectpitch    = _rect.m_width*bpp/8;
 		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat)))
@@ -5475,6 +5474,8 @@ namespace bgfx { namespace d3d12
 		box.right  = box.left + _rect.m_width;
 		box.bottom = box.top  + _rect.m_height;
 
+		uint32_t layer = 0;
+
 		if (TextureD3D12::Texture3D == m_type)
 		{
 			box.front = _z;
@@ -5482,9 +5483,12 @@ namespace bgfx { namespace d3d12
 		}
 		else
 		{
+			layer = _z * (TextureD3D12::TextureCube == m_type ? 6 : 1);
 			box.front = 0;
 			box.back  = 1;
 		}
+
+		const uint32_t subres = _mip + ((layer + _side) * m_numMips);
 
 		uint8_t* srcData = _mem->data;
 		uint8_t* temp = NULL;
