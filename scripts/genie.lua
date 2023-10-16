@@ -367,7 +367,7 @@ function exampleProjectDefaults()
 		kind "ConsoleApp"
 		targetextension ".so"
 		linkoptions {
-			"-shared"
+			"-shared",
 		}
 		links {
 			"EGL",
