@@ -366,6 +366,9 @@ function exampleProjectDefaults()
 	configuration { "android*" }
 		kind "ConsoleApp"
 		targetextension ".so"
+		linkoptions {
+			"-shared"
+		}
 		links {
 			"EGL",
 			"GLESv2",
@@ -373,12 +376,12 @@ function exampleProjectDefaults()
 
 	configuration { "android*", "Debug" }
 		linkoptions {
-			"-shared -Wl,-soname,lib" .. project().name .. "Debug.so"
+			"-Wl,-soname,lib" .. project().name .. "Debug.so"
 		}
 
 	configuration { "android*", "Release" }
 		linkoptions {
-			"-shared -Wl,-soname,lib" .. project().name .. "Release.so"
+			"-Wl,-soname,lib" .. project().name .. "Release.so"
 		}
 
 	configuration { "wasm*" }
