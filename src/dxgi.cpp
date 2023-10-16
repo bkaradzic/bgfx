@@ -142,9 +142,9 @@ namespace bgfx
 	template<typename T>
 	static bool trySetSwapChain(IInspectable* nativeWindow, Dxgi::SwapChainI* swapChain, HRESULT* hr)
 	{
-		ISwapChainPanelNative* swapChainPanelNative;
+		ISwapChainPanelNative* swapChainPanelNative = NULL;
 
-		if (FAILED(nativeWindow->QueryInterface(__uuidof(T), (void**)&swapChainPanelNative))
+		if (NULL != nativeWindow && FAILED(nativeWindow->QueryInterface(__uuidof(T), (void**)&swapChainPanelNative))
 		||  NULL == swapChainPanelNative)
 		{
 			return false;
