@@ -374,6 +374,16 @@ function exampleProjectDefaults()
 			"GLESv2",
 		}
 
+	configuration { "android*", "Debug" }
+		linkoptions {
+			"-Wl,-soname,lib" .. project().name .. "Debug.so"
+		}
+
+	configuration { "android*", "Release" }
+		linkoptions {
+			"-Wl,-soname,lib" .. project().name .. "Release.so"
+		}
+
 	configuration { "wasm*" }
 		kind "ConsoleApp"
 
