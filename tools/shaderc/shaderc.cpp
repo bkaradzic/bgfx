@@ -1036,11 +1036,11 @@ namespace bgfx
 				{
 					lang = profile.lang;
 					bx::printf("\n");
-					bx::printf("           %-20s %s\n", profile.name.getCPtr(), getName(profile.lang) );
+					bx::printf("           %-20S %s\n", &profile.name, getName(profile.lang) );
 				}
 				else
 				{
-					bx::printf("           %s\n", profile.name.getCPtr());
+					bx::printf("           %S\n", &profile.name);
 				}
 
 			}
