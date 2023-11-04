@@ -1048,20 +1048,25 @@ ShaderResources Compiler::get_shader_resources(const unordered_set<VariableID> *
 	return res;
 }
 
-bool Compiler::type_is_block_like(const SPIRType &type) const
+bool Compiler::type_is_top_level_block(const SPIRType &type) const
 {
 	if (type.basetype != SPIRType::Struct)
 		return false;
+	return has_decoration(type.self, DecorationBlock) || has_decoration(type.self, DecorationBufferBlock);
+}
 
-	if (has_decoration(type.self, DecorationBlock) || has_decoration(type.self, DecorationBufferBlock))
-	{
+bool Compiler::type_is_block_like(const SPIRType &type) const
+{
+	if (type_is_top_level_block(type))
 		return true;
-	}
 
-	// Block-like types may have Offset decorations.
-	for (uint32_t i = 0; i < uint32_t(type.member_types.size()); i++)
-		if (has_member_decoration(type.self, i, DecorationOffset))
-			return true;
+	if (type.basetype == SPIRType::Struct)
+	{
+		// Block-like types may have Offset decorations.
+		for (uint32_t i = 0; i < uint32_t(type.member_types.size()); i++)
+			if (has_member_decoration(type.self, i, DecorationOffset))
+				return true;
+	}
 
 	return false;
 }
@@ -5458,6 +5463,36 @@ void Compiler::analyze_interlocked_resource_usage()
 		interlocked_is_complex =
 		    !handler.use_critical_section || handler.interlock_function_id != ir.default_entry_point;
 	}
+}
+
+// Helper function
+bool Compiler::check_internal_recursion(const SPIRType &type, std::unordered_set<uint32_t> &checked_ids)
+{
+	if (type.basetype != SPIRType::Struct)
+		return false;
+
+	if (checked_ids.count(type.self))
+		return true;
+
+	// Recurse into struct members
+	bool is_recursive = false;
+	checked_ids.insert(type.self);
+	uint32_t mbr_cnt = uint32_t(type.member_types.size());
+	for (uint32_t mbr_idx = 0; !is_recursive && mbr_idx < mbr_cnt; mbr_idx++)
+	{
+		uint32_t mbr_type_id = type.member_types[mbr_idx];
+		auto &mbr_type = get<SPIRType>(mbr_type_id);
+		is_recursive |= check_internal_recursion(mbr_type, checked_ids);
+	}
+	checked_ids.erase(type.self);
+	return is_recursive;
+}
+
+// Return whether the struct type contains a structural recursion nested somewhere within its content.
+bool Compiler::type_contains_recursion(const SPIRType &type)
+{
+	std::unordered_set<uint32_t> checked_ids;
+	return check_internal_recursion(type, checked_ids);
 }
 
 bool Compiler::type_is_array_of_pointers(const SPIRType &type) const

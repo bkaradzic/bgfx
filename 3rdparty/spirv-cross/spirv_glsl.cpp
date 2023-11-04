@@ -553,7 +553,7 @@ void CompilerGLSL::find_static_extensions()
 			SPIRV_CROSS_THROW("GL_EXT_buffer_reference requires ESSL 320.");
 		else if (!options.es && options.version < 450)
 			SPIRV_CROSS_THROW("GL_EXT_buffer_reference requires GLSL 450.");
-		require_extension_internal("GL_EXT_buffer_reference");
+		require_extension_internal("GL_EXT_buffer_reference2");
 	}
 	else if (ir.addressing_model != AddressingModelLogical)
 	{
@@ -2465,6 +2465,10 @@ void CompilerGLSL::emit_buffer_block_native(const SPIRVariable &var)
 		i++;
 	}
 
+	// Don't declare empty blocks in GLSL, this is not allowed.
+	if (type_is_empty(type) && !backend.supports_empty_struct)
+		statement("int empty_struct_member;");
+
 	// var.self can be used as a backup name for the block name,
 	// so we need to make sure we don't disturb the name here on a recompile.
 	// It will need to be reset if we have to recompile.
@@ -2803,6 +2807,9 @@ string CompilerGLSL::constant_value_macro_name(uint32_t id)
 void CompilerGLSL::emit_specialization_constant_op(const SPIRConstantOp &constant)
 {
 	auto &type = get<SPIRType>(constant.basetype);
+	// This will break. It is bogus and should not be legal.
+	if (type_is_top_level_block(type))
+		return;
 	add_resource_name(constant.self);
 	auto name = to_name(constant.self);
 	statement("const ", variable_decl(type, name), " = ", constant_op_expression(constant), ";");
@@ -2831,6 +2838,10 @@ int CompilerGLSL::get_constant_mapping_to_workgroup_component(const SPIRConstant
 void CompilerGLSL::emit_constant(const SPIRConstant &constant)
 {
 	auto &type = get<SPIRType>(constant.constant_type);
+
+	// This will break. It is bogus and should not be legal.
+	if (type_is_top_level_block(type))
+		return;
 
 	SpecializationConstant wg_x, wg_y, wg_z;
 	ID workgroup_size_id = get_work_group_size_specialization_constants(wg_x, wg_y, wg_z);
@@ -3581,6 +3592,10 @@ void CompilerGLSL::emit_resources()
 		{
 			auto &id = ir.ids[id_];
 
+			// Skip declaring any bogus constants or undefs which use block types.
+			// We don't declare block types directly, so this will never work.
+			// Should not be legal SPIR-V, so this is considered a workaround.
+
 			if (id.get_type() == TypeConstant)
 			{
 				auto &c = id.get<SPIRConstant>();
@@ -3636,6 +3651,10 @@ void CompilerGLSL::emit_resources()
 				auto &type = this->get<SPIRType>(undef.basetype);
 				// OpUndef can be void for some reason ...
 				if (type.basetype == SPIRType::Void)
+					return;
+
+				// This will break. It is bogus and should not be legal.
+				if (type_is_top_level_block(type))
 					return;
 
 				string initializer;
@@ -10139,10 +10158,11 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 				if (!pending_array_enclose)
 					expr += "]";
 			}
-			// Some builtins are arrays in SPIR-V but not in other languages, e.g. gl_SampleMask[] is an array in SPIR-V but not in Metal.
-			// By throwing away the index, we imply the index was 0, which it must be for gl_SampleMask.
-			else if (!builtin_translates_to_nonarray(BuiltIn(get_decoration(base, DecorationBuiltIn))))
+			else if (index_is_literal || !builtin_translates_to_nonarray(BuiltIn(get_decoration(base, DecorationBuiltIn))))
 			{
+				// Some builtins are arrays in SPIR-V but not in other languages, e.g. gl_SampleMask[] is an array in SPIR-V but not in Metal.
+				// By throwing away the index, we imply the index was 0, which it must be for gl_SampleMask.
+				// For literal indices we are working on composites, so we ignore this since we have already converted to proper array.
 				append_index(index, is_literal);
 			}
 
@@ -17718,6 +17738,25 @@ void CompilerGLSL::cast_from_variable_load(uint32_t source_id, std::string &expr
 		expr = bitcast_expression(expr_type, expected_type, expr);
 }
 
+SPIRType::BaseType CompilerGLSL::get_builtin_basetype(BuiltIn builtin, SPIRType::BaseType default_type)
+{
+	// TODO: Fill in for more builtins.
+	switch (builtin)
+	{
+	case BuiltInLayer:
+	case BuiltInPrimitiveId:
+	case BuiltInViewportIndex:
+	case BuiltInFragStencilRefEXT:
+	case BuiltInSampleMask:
+	case BuiltInPrimitiveShadingRateKHR:
+	case BuiltInShadingRateKHR:
+		return SPIRType::Int;
+
+	default:
+		return default_type;
+	}
+}
+
 void CompilerGLSL::cast_to_variable_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type)
 {
 	auto *var = maybe_get_backing_variable(target_id);
@@ -17729,24 +17768,7 @@ void CompilerGLSL::cast_to_variable_store(uint32_t target_id, std::string &expr,
 		return;
 
 	auto builtin = static_cast<BuiltIn>(get_decoration(target_id, DecorationBuiltIn));
-	auto expected_type = expr_type.basetype;
-
-	// TODO: Fill in for more builtins.
-	switch (builtin)
-	{
-	case BuiltInLayer:
-	case BuiltInPrimitiveId:
-	case BuiltInViewportIndex:
-	case BuiltInFragStencilRefEXT:
-	case BuiltInSampleMask:
-	case BuiltInPrimitiveShadingRateKHR:
-	case BuiltInShadingRateKHR:
-		expected_type = SPIRType::Int;
-		break;
-
-	default:
-		break;
-	}
+	auto expected_type = get_builtin_basetype(builtin, expr_type.basetype);
 
 	if (expected_type != expr_type.basetype)
 	{
