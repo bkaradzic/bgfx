@@ -1040,5 +1040,5 @@ extern "C" void* entry_get_native_display_handle()
 
 extern "C" bgfx::NativeWindowHandleType::Enum entry_get_native_window_handle_type()
 {
-	return entry::getNativeWindowHandleType(entry::kDefaultWindowHandle);
+	return entry::getNativeWindowHandleType();
 }

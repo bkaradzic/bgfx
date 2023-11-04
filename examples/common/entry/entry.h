@@ -299,7 +299,7 @@ namespace entry
 	void* getNativeDisplayHandle();
 
 	///
-	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType(WindowHandle _handle);
+	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType();
 
 	///
 	void setCurrentDir(const char* _dir);

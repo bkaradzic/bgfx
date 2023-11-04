@@ -875,7 +875,7 @@ namespace entry
 #	endif // BX_PLATFORM_*
 	}
 
-	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType(WindowHandle _handle)
+	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType()
 	{
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 #		if ENTRY_CONFIG_USE_WAYLAND
