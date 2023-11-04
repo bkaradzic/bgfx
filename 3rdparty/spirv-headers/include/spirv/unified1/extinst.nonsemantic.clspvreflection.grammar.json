@@ -1,5 +1,5 @@
 {
-  "revision" : 5,
+  "revision" : 6,
   "instructions" : [
     {
       "opname" : "Kernel",
@@ -394,6 +394,16 @@
       { "kind" : "IdRef", "name" : "Offset" },
       { "kind" : "IdRef", "name" : "Size"},
       { "kind" : "IdRef", "name" : "BufferSize"}
+      ]
+    },
+    {
+    "opname" : "NormalizedSamplerMaskPushConstant",
+    "opcode" : 41,
+    "operands" : [
+      { "kind" : "IdRef", "name" : "Kernel" },
+      { "kind" : "IdRef", "name" : "Ordinal" },
+      { "kind" : "IdRef", "name" : "Offset" },
+      { "kind" : "IdRef", "name" : "Size" }
       ]
     }
   ],

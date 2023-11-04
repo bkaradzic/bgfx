@@ -5768,6 +5768,38 @@
       "version" : "None"
     },
     {
+      "opname" : "OpFetchMicroTriangleVertexPositionNV",
+      "class"  : "Reserved",
+      "opcode" : 5300,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Accel'" },
+        { "kind" : "IdRef", "name" : "'Instance Id'" },
+        { "kind" : "IdRef", "name" : "'Geometry Index'" },
+        { "kind" : "IdRef", "name" : "'Primitive Index'" },
+        { "kind" : "IdRef", "name" : "'Barycentric'" }
+      ],
+      "capabilities" : [ "DisplacementMicromapNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpFetchMicroTriangleVertexBarycentricNV",
+      "class"  : "Reserved",
+      "opcode" : 5301,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Accel'" },
+        { "kind" : "IdRef", "name" : "'Instance Id'" },
+        { "kind" : "IdRef", "name" : "'Geometry Index'" },
+        { "kind" : "IdRef", "name" : "'Primitive Index'" },
+        { "kind" : "IdRef", "name" : "'Barycentric'" }
+      ],
+      "capabilities" : [ "DisplacementMicromapNV" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpReportIntersectionNV",
       "class"  : "Reserved",
       "opcode" : 5334,
@@ -10547,6 +10579,11 @@
           "enumerant" : "WGSL",
           "value" : 10,
 	  "version" : "1.0"
+        },
+        {
+          "enumerant" : "Slang",
+          "value" : 11,
+	  "version" : "1.0"
         }
       ]
     },
@@ -11741,31 +11778,26 @@
         {
           "enumerant" : "None",
           "value" : 0,
-          "capabilities" : [ "Kernel" ],
           "version": "1.0"
         },
         {
           "enumerant" : "ClampToEdge",
           "value" : 1,
-          "capabilities" : [ "Kernel" ],
           "version": "1.0"
         },
         {
           "enumerant" : "Clamp",
           "value" : 2,
-          "capabilities" : [ "Kernel" ],
           "version": "1.0"
         },
         {
           "enumerant" : "Repeat",
           "value" : 3,
-          "capabilities" : [ "Kernel" ],
           "version": "1.0"
         },
         {
           "enumerant" : "RepeatMirrored",
           "value" : 4,
-          "capabilities" : [ "Kernel" ],
           "version": "1.0"
         }
       ]
@@ -11777,13 +11809,11 @@
         {
           "enumerant" : "Nearest",
           "value" : 0,
-          "capabilities" : [ "Kernel" ],
           "version": "1.0"
         },
         {
           "enumerant" : "Linear",
           "value" : 1,
-          "capabilities" : [ "Kernel" ],
           "version": "1.0"
         }
       ]
@@ -13016,8 +13046,7 @@
           "version" : "None",
           "parameters" : [
             { "kind" : "LiteralInteger", "name" : "'Offset'" }
-          ],
-          "version": "1.0"
+          ]
         },
         {
           "enumerant" : "PerPrimitiveNV",
@@ -13372,6 +13401,30 @@
           "version" : "None"
         },
         {
+          "enumerant" : "StridesizeINTEL",
+          "value" : 5883,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Stride Size'" }
+          ],
+          "capabilities" : [ "FPGAMemoryAttributesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "WordsizeINTEL",
+          "value" : 5884,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Word Size'" }
+          ],
+          "capabilities" : [ "FPGAMemoryAttributesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "TrueDualPortINTEL",
+          "value" : 5885,
+          "capabilities" : [ "FPGAMemoryAttributesINTEL" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "BurstCoalesceINTEL",
           "value" : 5899,
           "capabilities" : [ "FPGAMemoryAccessesINTEL" ],
@@ -13641,6 +13694,26 @@
           "enumerant" : "StableKernelArgumentINTEL",
           "value" : 6183,
           "capabilities" : [ "FPGAArgumentInterfacesINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CacheControlLoadINTEL",
+          "value" : 6442,
+          "capabilities" : [ "CacheControlsINTEL" ],
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Cache Level'" },
+            { "kind" : "LoadCacheControl", "name" : "'Cache Control'" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CacheControlStoreINTEL",
+          "value" : 6443,
+          "capabilities" : [ "CacheControlsINTEL" ],
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Cache Level'" },
+            { "kind" : "StoreCacheControl", "name" : "'Cache Control'" }
+          ],
           "version" : "None"
         }
       ]
@@ -14465,6 +14538,18 @@
           "version" : "None"
         },
         {
+          "enumerant" : "HitMicroTriangleVertexPositionsNV",
+          "value" : 5337,
+          "capabilities" : [ "RayTracingDisplacementMicromapNV" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "HitMicroTriangleVertexBarycentricsNV",
+          "value" : 5344,
+          "capabilities" : [ "RayTracingDisplacementMicromapNV" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "IncomingRayFlagsNV",
           "value" : 5351,
           "capabilities" : [ "RayTracingNV" , "RayTracingKHR" ],
@@ -14511,6 +14596,18 @@
           "value" : 5377,
           "capabilities" : [ "ShaderSMBuiltinsNV" ],
           "extensions" : [ "SPV_NV_shader_sm_builtins" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "HitKindFrontFacingMicroTriangleNV",
+          "value" : 5405,
+          "capabilities" : [ "RayTracingDisplacementMicromapNV" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "HitKindBackFacingMicroTriangleNV",
+          "value" : 5406,
+          "capabilities" : [ "RayTracingDisplacementMicromapNV" ],
           "version" : "None"
         },
         {
@@ -15748,6 +15845,13 @@
           "version" : "1.6"
         },
         {
+          "enumerant" : "DisplacementMicromapNV",
+          "value" : 5380,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_NV_displacement_micromap" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "RayTracingOpacityMicromapEXT",
           "value" : 5381,
           "capabilities" : [ "RayQueryKHR","RayTracingKHR" ],
@@ -15772,6 +15876,13 @@
           "value" : 5391,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_KHR_ray_tracing_position_fetch" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RayTracingDisplacementMicromapNV",
+          "value" : 5409,
+          "capabilities" : [ "RayTracingKHR" ],
+          "extensions" : [ "SPV_NV_displacement_micromap" ],
           "version" : "None"
         },
         {
@@ -16190,6 +16301,12 @@
           "value" : 6400,
           "extensions" : [ "SPV_KHR_uniform_group_instructions"],
           "version" : "None"
+        },
+        {
+          "enumerant" : "CacheControlsINTEL",
+          "value" : 6441,
+          "extensions" : [ "SPV_INTEL_cache_controls" ],
+          "version" : "None"
         }
       ]
     },
@@ -16362,6 +16479,72 @@
       ]
     },
     {
+      "category" : "ValueEnum",
+      "kind" : "LoadCacheControl",
+      "enumerants" : [
+        {
+          "enumerant" : "UncachedINTEL",
+          "value" : 0,
+          "capabilities" : [ "CacheControlsINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CachedINTEL",
+          "value" : 1,
+          "capabilities" : [ "CacheControlsINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "StreamingINTEL",
+          "value" : 2,
+          "capabilities" : [ "CacheControlsINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "InvalidateAfterReadINTEL",
+          "value" : 3,
+          "capabilities" : [ "CacheControlsINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ConstCachedINTEL",
+          "value" : 4,
+          "capabilities" : [ "CacheControlsINTEL" ],
+          "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "ValueEnum",
+      "kind" : "StoreCacheControl",
+      "enumerants" : [
+        {
+          "enumerant" : "UncachedINTEL",
+          "value" : 0,
+          "capabilities" : [ "CacheControlsINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "WriteThroughINTEL",
+          "value" : 1,
+          "capabilities" : [ "CacheControlsINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "WriteBackINTEL",
+          "value" : 2,
+          "capabilities" : [ "CacheControlsINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "StreamingINTEL",
+          "value" : 3,
+          "capabilities" : [ "CacheControlsINTEL" ],
+          "version" : "None"
+        }
+      ]
+    },
+    {
       "category" : "Id",
       "kind" : "IdResultType",
       "doc" : "Reference to an <id> representing the result's type of the enclosing instruction"
@@ -16395,6 +16578,11 @@
       "category" : "Literal",
       "kind" : "LiteralString",
       "doc" : "A null-terminated stream of characters consuming an integral number of words"
+    },
+    {
+      "category" : "Literal",
+      "kind" : "LiteralFloat",
+      "doc" : "A float consuming one word"
     },
     {
       "category" : "Literal",
