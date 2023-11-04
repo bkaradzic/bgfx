@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>API Reference &mdash; bgfx 1.121.8531 documentation</title>
+  <title>API Reference &mdash; bgfx 1.123.8604 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -31,7 +31,7 @@
             <a href="index.html" class="icon icon-home"> bgfx
           </a>
               <div class="version">
-                1.121.8531
+                1.123.8604
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -726,12 +726,6 @@
 </dd></dl>
 
 <dl class="cpp macro">
-<dt class="sig sig-object cpp" id="c.BGFX_RESET_FULLSCREEN">
-<span class="target" id="defines_8h_1a7a573880db4afc7107e36ea61dc36586"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_RESET_FULLSCREEN</span></span></span><a class="headerlink" href="#c.BGFX_RESET_FULLSCREEN" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Not supported yet. </p>
-</dd></dl>
-
-<dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.BGFX_RESET_MSAA_X2">
 <span class="target" id="defines_8h_1a11369bfec092c6aecb55c344696cffa8"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_RESET_MSAA_X2</span></span></span><a class="headerlink" href="#c.BGFX_RESET_MSAA_X2" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Enable 2x MSAA. </p>
@@ -753,6 +747,12 @@
 <dt class="sig sig-object cpp" id="c.BGFX_RESET_MSAA_X16">
 <span class="target" id="defines_8h_1a7fc0d9a43da20edb2670854c393127c7"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_RESET_MSAA_X16</span></span></span><a class="headerlink" href="#c.BGFX_RESET_MSAA_X16" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Enable 16x MSAA. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_RESET_FULLSCREEN">
+<span class="target" id="defines_8h_1a7a573880db4afc7107e36ea61dc36586"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_RESET_FULLSCREEN</span></span></span><a class="headerlink" href="#c.BGFX_RESET_FULLSCREEN" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Not supported yet. </p>
 </dd></dl>
 
 <dl class="cpp macro">
@@ -807,6 +807,18 @@
 <dt class="sig sig-object cpp" id="c.BGFX_RESET_DEPTH_CLAMP">
 <span class="target" id="defines_8h_1af06b6eb7e824929310fd5fb2b2a5e7c4"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_RESET_DEPTH_CLAMP</span></span></span><a class="headerlink" href="#c.BGFX_RESET_DEPTH_CLAMP" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Enable depth clamp. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_RESET_SUSPEND">
+<span class="target" id="defines_8h_1a82e7b9d7a4bb12c42b5a6481ba394048"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_RESET_SUSPEND</span></span></span><a class="headerlink" href="#c.BGFX_RESET_SUSPEND" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Suspend rendering. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_RESET_TRANSPARENT_BACKBUFFER">
+<span class="target" id="defines_8h_1abfadb20e9e79a3abf1c31ef0e2c29643"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_RESET_TRANSPARENT_BACKBUFFER</span></span></span><a class="headerlink" href="#c.BGFX_RESET_TRANSPARENT_BACKBUFFER" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Transparent backbuffer. Availability depends on: <code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_TRANSPARENT_BACKBUFFER</span></code>. </p>
 </dd></dl>
 
 </section>
@@ -1052,12 +1064,6 @@
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx12RendererType4Enum3AgcE">
 <span id="_CPPv3N4bgfx12RendererType4Enum3AgcE"></span><span id="_CPPv2N4bgfx12RendererType4Enum3AgcE"></span><span class="target" id="structbgfx_1_1_renderer_type_1a23d258e890027d7deff9d971e2493a32aa33dbbf0d8c3c0571de5ced9ee09d559"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Agc</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx12RendererType4Enum3AgcE" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>AGC. </p>
-</dd></dl>
-
-<dl class="cpp enumerator">
-<dt class="sig sig-object cpp" id="_CPPv4N4bgfx12RendererType4Enum9Direct3D9E">
-<span id="_CPPv3N4bgfx12RendererType4Enum9Direct3D9E"></span><span id="_CPPv2N4bgfx12RendererType4Enum9Direct3D9E"></span><span class="target" id="structbgfx_1_1_renderer_type_1a23d258e890027d7deff9d971e2493a32a10c968bd17c9feceefb823dd2ada0e1e"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Direct3D9</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx12RendererType4Enum9Direct3D9E" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Direct3D 9.0. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
@@ -2046,6 +2052,12 @@ It is only necessary to use these APIs in conjunction with creating windows.</p>
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx12PlatformData12backBufferDSE">
 <span id="_CPPv3N4bgfx12PlatformData12backBufferDSE"></span><span id="_CPPv2N4bgfx12PlatformData12backBufferDSE"></span><span id="bgfx::PlatformData::backBufferDS__voidP"></span><span class="target" id="structbgfx_1_1_platform_data_1ae1dce3718ab484415ac7b8377aec5dab"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">backBufferDS</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx12PlatformData12backBufferDSE" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Backbuffer depth/stencil. If <code class="docutils literal notranslate"><span class="pre">NULL</span></code>, bgfx will create a back-buffer depth/stencil surface. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx12PlatformData4typeE">
+<span id="_CPPv3N4bgfx12PlatformData4typeE"></span><span id="_CPPv2N4bgfx12PlatformData4typeE"></span><span id="bgfx::PlatformData::type__NativeWindowHandleType::Enum"></span><span class="target" id="structbgfx_1_1_platform_data_1ad7c81a981aafc126708246dfdb2421d6"></span><span class="n"><span class="pre">NativeWindowHandleType</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">Enum</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">type</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx12PlatformData4typeE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Handle type. Needed for platforms having more than one option. </p>
 </dd></dl>
 
 </div>

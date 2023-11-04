@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Building &mdash; bgfx 1.121.8531 documentation</title>
+  <title>Building &mdash; bgfx 1.123.8604 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -31,7 +31,7 @@
             <a href="index.html" class="icon icon-home"> bgfx
           </a>
               <div class="version">
-                1.121.8531
+                1.123.8604
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -119,12 +119,12 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">bgfx</span>
 </pre></div>
 </div>
-<p>Generate Visual Studio 2017 project files:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span>\<span class="n">bx</span>\<span class="n">tools</span>\<span class="nb">bin</span>\<span class="n">windows</span>\<span class="n">genie</span> <span class="o">--</span><span class="k">with</span><span class="o">-</span><span class="n">examples</span> <span class="n">vs2017</span>
+<p>Generate Visual Studio 2019 project files:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span>\<span class="n">bx</span>\<span class="n">tools</span>\<span class="nb">bin</span>\<span class="n">windows</span>\<span class="n">genie</span> <span class="o">--</span><span class="k">with</span><span class="o">-</span><span class="n">examples</span> <span class="n">vs2019</span>
 </pre></div>
 </div>
-<p>Open bgfx solution in Visual Studio 2017:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="o">.</span><span class="n">build</span>\<span class="n">projects</span>\<span class="n">vs2017</span>\<span class="n">bgfx</span><span class="o">.</span><span class="n">sln</span>
+<p>Open bgfx solution in Visual Studio 2019:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="o">.</span><span class="n">build</span>\<span class="n">projects</span>\<span class="n">vs2019</span>\<span class="n">bgfx</span><span class="o">.</span><span class="n">sln</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -195,12 +195,12 @@ directory structure. Deleting .build directory at any time is safe.</p>
 </section>
 <section id="id1">
 <h3>Windows<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h3>
-<p>Visual Studio 2017 command line:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">vs2017</span><span class="o">-</span><span class="n">release64</span>
+<p>Visual Studio 2019 command line:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">vs2019</span><span class="o">-</span><span class="n">release64</span>
 </pre></div>
 </div>
-<p>Visual Studio 2017 IDE:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="o">.</span><span class="n">build</span><span class="o">/</span><span class="n">projects</span><span class="o">/</span><span class="n">vs2017</span><span class="o">/</span><span class="n">bgfx</span><span class="o">.</span><span class="n">sln</span>
+<p>Visual Studio 2019 IDE:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="o">.</span><span class="n">build</span><span class="o">/</span><span class="n">projects</span><span class="o">/</span><span class="n">vs2019</span><span class="o">/</span><span class="n">bgfx</span><span class="o">.</span><span class="n">sln</span>
 </pre></div>
 </div>
 </section>
@@ -235,7 +235,7 @@ configuration file, it has to be set manually for each example project:</p>
 </section>
 <section id="winrt-uwp">
 <h3>WinRT / UWP<a class="headerlink" href="#winrt-uwp" title="Permalink to this heading">¶</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span>\<span class="n">bx</span>\<span class="n">tools</span>\<span class="nb">bin</span>\<span class="n">windows</span>\<span class="n">genie</span> <span class="o">--</span><span class="n">vs</span><span class="o">=</span><span class="n">winstore100</span> <span class="n">vs2017</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span>\<span class="n">bx</span>\<span class="n">tools</span>\<span class="nb">bin</span>\<span class="n">windows</span>\<span class="n">genie</span> <span class="o">--</span><span class="n">vs</span><span class="o">=</span><span class="n">winstore100</span> <span class="n">vs2019</span>
 </pre></div>
 </div>
 <p>Build the resulting solution and deploy to device.</p>
@@ -257,7 +257,7 @@ instead) inside different build system.</p>
 <section id="tools">
 <h2>Tools<a class="headerlink" href="#tools" title="Permalink to this heading">¶</a></h2>
 <p>To build bgfx project files for tools, use <code class="docutils literal notranslate"><span class="pre">--with-tools</span></code> option:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span>\<span class="n">bx</span>\<span class="n">tools</span>\<span class="nb">bin</span>\<span class="n">windows</span>\<span class="n">genie</span> <span class="o">--</span><span class="k">with</span><span class="o">-</span><span class="n">tools</span> <span class="n">vs2017</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span>\<span class="n">bx</span>\<span class="n">tools</span>\<span class="nb">bin</span>\<span class="n">windows</span>\<span class="n">genie</span> <span class="o">--</span><span class="k">with</span><span class="o">-</span><span class="n">tools</span> <span class="n">vs2019</span>
 </pre></div>
 </div>
 </section>
