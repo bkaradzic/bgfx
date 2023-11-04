@@ -226,6 +226,7 @@ typedef struct glslang_spv_options_s {
     bool validate;
     bool emit_nonsemantic_shader_debug_info;
     bool emit_nonsemantic_shader_debug_source;
+    bool compile_only;
 } glslang_spv_options_t;
 
 #ifdef __cplusplus

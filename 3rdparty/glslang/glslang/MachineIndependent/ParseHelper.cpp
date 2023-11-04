@@ -1243,6 +1243,8 @@ TIntermAggregate* TParseContext::handleFunctionDefinition(const TSourceLoc& loc,
             error(loc, "function cannot take any parameter(s)", function.getName().c_str(), "");
         if (function.getType().getBasicType() != EbtVoid)
             error(loc, "", function.getType().getBasicTypeString().c_str(), "entry point cannot return a value");
+        if (function.getLinkType() != ELinkNone)
+            error(loc, "main function cannot be exported", "", "");
     }
 
     //
@@ -1279,6 +1281,7 @@ TIntermAggregate* TParseContext::handleFunctionDefinition(const TSourceLoc& loc,
         } else
             paramNodes = intermediate.growAggregate(paramNodes, intermediate.addSymbol(*param.type, loc), loc);
     }
+    paramNodes->setLinkType(function.getLinkType());
     intermediate.setAggregateOperator(paramNodes, EOpParameters, TType(EbtVoid), loc);
     loopNestingLevel = 0;
     statementNestingLevel = 0;
@@ -2169,6 +2172,37 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         }
         break;
     }
+
+    case EOpTexture:
+    case EOpTextureLod:
+    {
+        if ((fnCandidate.getParamCount() > 2) && ((*argp)[1]->getAsTyped()->getType().getBasicType() == EbtFloat) &&
+            ((*argp)[1]->getAsTyped()->getType().getVectorSize() == 4) && fnCandidate[0].type->getSampler().shadow) {
+            featureString = fnCandidate.getName();
+            if (callNode.getOp() == EOpTexture)
+                featureString += "(..., float bias)";
+            else
+                featureString += "(..., float lod)";
+            feature = featureString.c_str();
+
+            if ((fnCandidate[0].type->getSampler().dim == Esd2D && fnCandidate[0].type->getSampler().arrayed) || //2D Array Shadow
+                (fnCandidate[0].type->getSampler().dim == EsdCube && fnCandidate[0].type->getSampler().arrayed && fnCandidate.getParamCount() > 3) || // Cube Array Shadow
+                (fnCandidate[0].type->getSampler().dim == EsdCube && callNode.getOp() == EOpTextureLod)) { // Cube Shadow
+                requireExtensions(loc, 1, &E_GL_EXT_texture_shadow_lod, feature);
+                if (isEsProfile()) {
+                    if (version < 320 &&
+                        !extensionsTurnedOn(Num_AEP_texture_cube_map_array, AEP_texture_cube_map_array))
+                        error(loc, "GL_EXT_texture_shadow_lod not supported for this ES version", feature, "");
+                    else
+                        profileRequires(loc, EEsProfile, 320, nullptr, feature);
+                } else { // Desktop
+                    profileRequires(loc, ~EEsProfile, 130, nullptr, feature);
+                }
+            }
+        }
+        break;
+    }
+
     case EOpSparseTextureGather:
     case EOpSparseTextureGatherOffset:
     case EOpSparseTextureGatherOffsets:
@@ -2283,10 +2317,34 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
             if (callNode.getOp() == EOpTextureOffset) {
                 TSampler s = arg0->getType().getSampler();
                 if (s.is2D() && s.isArrayed() && s.isShadow()) {
-                    if (isEsProfile())
+                    if (
+                        ((*argp)[1]->getAsTyped()->getType().getBasicType() == EbtFloat) && 
+                        ((*argp)[1]->getAsTyped()->getType().getVectorSize() == 4) &&
+                        (fnCandidate.getParamCount() == 4)) {
+                        featureString = fnCandidate.getName() + " for sampler2DArrayShadow";
+                        feature = featureString.c_str();
+                        requireExtensions(loc, 1, &E_GL_EXT_texture_shadow_lod, feature);
+                        profileRequires(loc, EEsProfile, 300, nullptr, feature);
+                        profileRequires(loc, ~EEsProfile, 130, nullptr, feature);
+                    }
+                    else if (isEsProfile())
                         error(loc, "TextureOffset does not support sampler2DArrayShadow : ", "sampler", "ES Profile");
                     else if (version <= 420)
                         error(loc, "TextureOffset does not support sampler2DArrayShadow : ", "sampler", "version <= 420");
+                }
+            }
+
+            if (callNode.getOp() == EOpTextureLodOffset) {
+                TSampler s = arg0->getType().getSampler();
+                if (s.is2D() && s.isArrayed() && s.isShadow() &&
+                    ((*argp)[1]->getAsTyped()->getType().getBasicType() == EbtFloat) &&
+                    ((*argp)[1]->getAsTyped()->getType().getVectorSize() == 4) &&
+                    (fnCandidate.getParamCount() == 4)) {
+                        featureString = fnCandidate.getName() + " for sampler2DArrayShadow";
+                        feature = featureString.c_str();
+                        profileRequires(loc, EEsProfile, 300, nullptr, feature);
+                        profileRequires(loc, ~EEsProfile, 130, nullptr, feature);
+                        requireExtensions(loc, 1, &E_GL_EXT_texture_shadow_lod, feature);
                 }
             }
         }
@@ -2514,11 +2572,18 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         }
 
         const TIntermTyped* base = TIntermediate::findLValueBase(arg0, true , true);
-        const TType* refType = (base->getType().isReference()) ? base->getType().getReferentType() : nullptr;
-        const TQualifier& qualifier = (refType != nullptr) ? refType->getQualifier() : base->getType().getQualifier();
-        if (qualifier.storage != EvqShared && qualifier.storage != EvqBuffer && qualifier.storage != EvqtaskPayloadSharedEXT)
-            error(loc,"Atomic memory function can only be used for shader storage block member or shared variable.",
-            fnCandidate.getName().c_str(), "");
+        const char* errMsg = "Only l-values corresponding to shader block storage or shared variables can be used with "
+                             "atomic memory functions.";
+        if (base) {
+            const TType* refType = (base->getType().isReference()) ? base->getType().getReferentType() : nullptr;
+            const TQualifier& qualifier =
+                (refType != nullptr) ? refType->getQualifier() : base->getType().getQualifier();
+            if (qualifier.storage != EvqShared && qualifier.storage != EvqBuffer &&
+                qualifier.storage != EvqtaskPayloadSharedEXT)
+                error(loc, errMsg, fnCandidate.getName().c_str(), "");
+        } else {
+            error(loc, errMsg, fnCandidate.getName().c_str(), "");
+        }
 
         break;
     }

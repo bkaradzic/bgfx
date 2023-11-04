@@ -626,10 +626,8 @@ void TParseContextBase::growGlobalUniformBlock(const TSourceLoc& loc, TType& mem
     if (symbol) {
         if (memberType != symbol->getType()) {
             TString err;
-            err += "\"" + memberType.getCompleteString() + "\"";
-            err += " versus ";
-            err += "\"" + symbol->getType().getCompleteString() + "\"";
-            error(loc, "Types must match:", memberType.getFieldName().c_str(), err.c_str());
+            err += "Redeclaration: already declared as \"" + symbol->getType().getCompleteString() + "\"";
+            error(loc, "", memberName.c_str(), err.c_str());
         }
         return;
     }

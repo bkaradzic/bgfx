@@ -414,6 +414,10 @@ const char* BuiltInString(int builtIn)
     case BuiltInRayTmaxKHR:                  return "RayTmaxKHR";
     case BuiltInCullMaskKHR:                 return "CullMaskKHR";
     case BuiltInHitTriangleVertexPositionsKHR: return "HitTriangleVertexPositionsKHR";
+    case BuiltInHitMicroTriangleVertexPositionsNV: return "HitMicroTriangleVertexPositionsNV";
+    case BuiltInHitMicroTriangleVertexBarycentricsNV: return "HitMicroTriangleVertexBarycentricsNV";
+    case BuiltInHitKindFrontFacingMicroTriangleNV: return "HitKindFrontFacingMicroTriangleNV";
+    case BuiltInHitKindBackFacingMicroTriangleNV: return "HitKindBackFacingMicroTriangleNV";
     case BuiltInInstanceCustomIndexKHR:      return "InstanceCustomIndexKHR";
     case BuiltInRayGeometryIndexKHR:         return "RayGeometryIndexKHR";
     case BuiltInObjectToWorldKHR:            return "ObjectToWorldKHR";
@@ -798,11 +802,11 @@ const int CooperativeMatrixOperandsCeiling = 6;
 const char* CooperativeMatrixOperandsString(int op)
 {
     switch (op) {
-    case CooperativeMatrixOperandsMatrixASignedComponentsShift:  return "ASignedComponents";
-    case CooperativeMatrixOperandsMatrixBSignedComponentsShift:  return "BSignedComponents";
-    case CooperativeMatrixOperandsMatrixCSignedComponentsShift:  return "CSignedComponents";
-    case CooperativeMatrixOperandsMatrixResultSignedComponentsShift:  return "ResultSignedComponents";
-    case CooperativeMatrixOperandsSaturatingAccumulationShift:   return "SaturatingAccumulation";
+    case CooperativeMatrixOperandsMatrixASignedComponentsKHRShift:  return "ASignedComponentsKHR";
+    case CooperativeMatrixOperandsMatrixBSignedComponentsKHRShift:  return "BSignedComponentsKHR";
+    case CooperativeMatrixOperandsMatrixCSignedComponentsKHRShift:  return "CSignedComponentsKHR";
+    case CooperativeMatrixOperandsMatrixResultSignedComponentsKHRShift:  return "ResultSignedComponentsKHR";
+    case CooperativeMatrixOperandsSaturatingAccumulationKHRShift:   return "SaturatingAccumulationKHR";
 
     default: return "Bad";
     }
@@ -977,6 +981,8 @@ const char* CapabilityString(int info)
     case CapabilityRayTracingProvisionalKHR:        return "RayTracingProvisionalKHR";
     case CapabilityRayTraversalPrimitiveCullingKHR: return "RayTraversalPrimitiveCullingKHR";
     case CapabilityRayTracingPositionFetchKHR:      return "RayTracingPositionFetchKHR";
+    case CapabilityDisplacementMicromapNV:           return "DisplacementMicromapNV";
+    case CapabilityRayTracingDisplacementMicromapNV: return "CapabilityRayTracingDisplacementMicromapNV";
     case CapabilityRayQueryPositionFetchKHR:        return "RayQueryPositionFetchKHR";
     case CapabilityComputeDerivativeGroupQuadsNV:   return "ComputeDerivativeGroupQuadsNV";
     case CapabilityComputeDerivativeGroupLinearNV:  return "ComputeDerivativeGroupLinearNV";
@@ -1541,6 +1547,9 @@ const char* OpcodeString(int op)
     case OpHitObjectIsMissNV:                   return "OpHitObjectIsMissNV";
     case OpHitObjectGetShaderBindingTableRecordIndexNV: return "OpHitObjectGetShaderBindingTableRecordIndexNV";
     case OpHitObjectGetShaderRecordBufferHandleNV:   return "OpHitObjectGetShaderRecordBufferHandleNV";
+
+    case OpFetchMicroTriangleVertexBarycentricNV:       return "OpFetchMicroTriangleVertexBarycentricNV";
+    case OpFetchMicroTriangleVertexPositionNV:    return "OpFetchMicroTriangleVertexPositionNV";
 
     case OpColorAttachmentReadEXT:          return "OpColorAttachmentReadEXT";
     case OpDepthAttachmentReadEXT:          return "OpDepthAttachmentReadEXT";
@@ -3082,7 +3091,7 @@ void Parameterize()
 
         InstructionDesc[OpRayQueryGetIntersectionTriangleVertexPositionsKHR].operands.push(OperandId, "'RayQuery'");
         InstructionDesc[OpRayQueryGetIntersectionTriangleVertexPositionsKHR].operands.push(OperandId, "'Committed'");
-        InstructionDesc[OpRayQueryGetIntersectionWorldToObjectKHR].setResultAndType(true, true);
+        InstructionDesc[OpRayQueryGetIntersectionTriangleVertexPositionsKHR].setResultAndType(true, true);
 
         InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandId, "'Sampled Image'");
         InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandId, "'Coordinate'");
@@ -3347,6 +3356,20 @@ void Parameterize()
         InstructionDesc[OpHitObjectTraceRayMotionNV].operands.push(OperandId, "'Time'");
         InstructionDesc[OpHitObjectTraceRayMotionNV].operands.push(OperandId, "'Payload'");
         InstructionDesc[OpHitObjectTraceRayMotionNV].setResultAndType(false, false);
+
+        InstructionDesc[OpFetchMicroTriangleVertexBarycentricNV].operands.push(OperandId, "'Acceleration Structure'");
+        InstructionDesc[OpFetchMicroTriangleVertexBarycentricNV].operands.push(OperandId, "'Instance ID'");
+        InstructionDesc[OpFetchMicroTriangleVertexBarycentricNV].operands.push(OperandId, "'Geometry Index'");
+        InstructionDesc[OpFetchMicroTriangleVertexBarycentricNV].operands.push(OperandId, "'Primitive Index'");
+        InstructionDesc[OpFetchMicroTriangleVertexBarycentricNV].operands.push(OperandId, "'Barycentrics'");
+        InstructionDesc[OpFetchMicroTriangleVertexBarycentricNV].setResultAndType(true, true);
+
+        InstructionDesc[OpFetchMicroTriangleVertexPositionNV].operands.push(OperandId, "'Acceleration Structure'");
+        InstructionDesc[OpFetchMicroTriangleVertexPositionNV].operands.push(OperandId, "'Instance ID'");
+        InstructionDesc[OpFetchMicroTriangleVertexPositionNV].operands.push(OperandId, "'Geometry Index'");
+        InstructionDesc[OpFetchMicroTriangleVertexPositionNV].operands.push(OperandId, "'Primitive Index'");
+        InstructionDesc[OpFetchMicroTriangleVertexPositionNV].operands.push(OperandId, "'Barycentrics'");
+        InstructionDesc[OpFetchMicroTriangleVertexPositionNV].setResultAndType(true, true);
 
         InstructionDesc[OpColorAttachmentReadEXT].operands.push(OperandId, "'Attachment'");
         InstructionDesc[OpColorAttachmentReadEXT].operands.push(OperandId, "'Sample'", true);

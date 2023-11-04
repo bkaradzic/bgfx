@@ -483,9 +483,13 @@ void Builder::postProcessFeatures() {
 }
 
 // comment in header
-void Builder::postProcess() {
-  postProcessCFG();
-  postProcessFeatures();
+void Builder::postProcess(bool compileOnly)
+{
+    // postProcessCFG needs an entrypoint to determine what is reachable, but if we are not creating an "executable" shader, we don't have an entrypoint
+    if (!compileOnly)
+        postProcessCFG();
+
+    postProcessFeatures();
 }
 
 }; // end spv namespace
