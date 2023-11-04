@@ -60,11 +60,7 @@ public:
 		init.resolution.reset  = m_reset;
 		bgfx::init(init);
 
-		const bgfx::RendererType::Enum renderer = bgfx::getRendererType();
-		float texelHalf = bgfx::RendererType::Direct3D9 == renderer ? 0.5f : 0.0f;
-		bool originBottomLeft = bgfx::RendererType::OpenGL == renderer
-		|| bgfx::RendererType::OpenGLES == renderer;
-		m_vd.init(originBottomLeft, texelHalf);
+		m_vd.init(bgfx::getCaps()->originBottomLeft);
 		m_vd.setup(uint16_t(m_width), uint16_t(m_height) );
 
 		// Enable debug text.

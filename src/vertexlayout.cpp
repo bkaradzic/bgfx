@@ -14,15 +14,6 @@
 
 namespace bgfx
 {
-	static const uint8_t s_attribTypeSizeD3D9[AttribType::Count][4] =
-	{
-		{  4,  4,  4,  4 }, // Uint8
-		{  4,  4,  4,  4 }, // Uint10
-		{  4,  4,  8,  8 }, // Int16
-		{  4,  4,  8,  8 }, // Half
-		{  4,  8, 12, 16 }, // Float
-	};
-
 	static const uint8_t s_attribTypeSizeD3D1x[AttribType::Count][4] =
 	{
 		{  1,  2,  4,  4 }, // Uint8
@@ -43,9 +34,8 @@ namespace bgfx
 
 	static const uint8_t (*s_attribTypeSize[])[AttribType::Count][4] =
 	{
-		&s_attribTypeSizeD3D9,  // Noop
+		&s_attribTypeSizeD3D1x, // Noop
 		&s_attribTypeSizeD3D1x, // Agc
-		&s_attribTypeSizeD3D9,  // Direct3D9
 		&s_attribTypeSizeD3D1x, // Direct3D11
 		&s_attribTypeSizeD3D1x, // Direct3D12
 		&s_attribTypeSizeD3D1x, // Gnm
@@ -55,7 +45,7 @@ namespace bgfx
 		&s_attribTypeSizeGl,    // OpenGL
 		&s_attribTypeSizeD3D1x, // Vulkan
 		&s_attribTypeSizeD3D1x, // WebGPU
-		&s_attribTypeSizeD3D9,  // Count
+		&s_attribTypeSizeD3D1x, // Count
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeSize) == RendererType::Count+1);
 

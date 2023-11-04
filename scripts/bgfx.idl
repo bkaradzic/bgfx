@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(122)
+version(123)
 
 typedef "bool"
 typedef "char"
@@ -458,7 +458,6 @@ enum.Fatal { underscore, comment = "" }
 enum.RendererType { comment = "Renderer types:" }
 	.Noop       --- No rendering.
 	.Agc        --- AGC
-	.Direct3D9  --- Direct3D 9.0
 	.Direct3D11 --- Direct3D 11.0
 	.Direct3D12 --- Direct3D 12.0
 	.Gnm        --- GNM

@@ -14,7 +14,7 @@ extern(C++, "bgfx") package final abstract class Fatal{
 }
 extern(C++, "bgfx") package final abstract class RendererType{
 	enum Enum{
-		noop,agc,direct3D9,direct3D11,direct3D12,gnm,metal,nvn,openGLES,openGL,vulkan,webGPU,count
+		noop,agc,direct3D11,direct3D12,gnm,metal,nvn,openGLES,openGL,vulkan,webGPU,count
 	}
 }
 extern(C++, "bgfx") package final abstract class Access{
@@ -70,6 +70,11 @@ extern(C++, "bgfx") package final abstract class TopologySort{
 extern(C++, "bgfx") package final abstract class ViewMode{
 	enum Enum{
 		default_,sequential,depthAscending,depthDescending,count
+	}
+}
+extern(C++, "bgfx") package final abstract class NativeWindowHandleType{
+	enum Enum{
+		default_,wayland,count
 	}
 }
 extern(C++, "bgfx") package final abstract class RenderFrame{

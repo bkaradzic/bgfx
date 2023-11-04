@@ -63,7 +63,7 @@ struct PosTexCoord0Vertex
 
 bgfx::VertexLayout PosTexCoord0Vertex::ms_layout;
 
-void screenSpaceTriangle(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f, float _offsetX = 0.0f, float _offsetY = 0.0f)
+void screenSpaceQuad(bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f, float _offsetX = 0.0f, float _offsetY = 0.0f)
 {
 	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout) )
 	{
@@ -76,15 +76,13 @@ void screenSpaceTriangle(float _textureWidth, float _textureHeight, float _texel
 		const float miny = 0.0f - _offsetY;
 		const float maxy = _height * 2.0f - _offsetY;
 
-		const float texelHalfW = _texelHalf / _textureWidth;
-		const float texelHalfH = _texelHalf / _textureHeight;
-		const float minu = -1.0f + texelHalfW;
-		const float maxu = 1.0f + texelHalfW;
+		const float minu = -1.0f;
+		const float maxu =  1.0f;
 
 		const float zz = 0.0f;
 
-		float minv = texelHalfH;
-		float maxv = 2.0f + texelHalfH;
+		float minv = 0.0f;
+		float maxv = 2.0f;
 
 		if (_originBottomLeft)
 		{
@@ -193,7 +191,6 @@ struct AppState
 
 	uint32_t m_currFrame{UINT32_MAX};
 	float m_lightRotation = 0.0f;
-	float m_texelHalf = 0.0f;
 	float m_fovY = 60.0f;
 	float m_animationTime = 0.0f;
 
@@ -262,7 +259,7 @@ struct MagnifierWidget
 
 		bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_ALWAYS | BGFX_STATE_BLEND_ALPHA);
 		bgfx::setTexture(0, state.s_color, m_widgetTexture);
-		screenSpaceTriangle(float(m_widgetWidth), float(m_widgetHeight), state.m_texelHalf, false, scaleX, scaleY, offsetX, offsetY);
+		screenSpaceQuad(false, scaleX, scaleY, offsetX, offsetY);
 		bgfx::submit(view, state.m_copyLinearToGammaProgram);
 	}
 
@@ -291,7 +288,7 @@ struct MagnifierWidget
 		bgfx::setViewFrameBuffer(view, m_content.m_buffer);
 		bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
 		bgfx::setTexture(0, state.s_color, srcTexture, BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
-		screenSpaceTriangle(float(state.m_width), float(state.m_height), state.m_texelHalf, false, scaleX, scaleY, offsetX, offsetY);
+		screenSpaceQuad(false, scaleX, scaleY, offsetX, offsetY);
 		bgfx::submit(view, state.m_copyLinearToGammaProgram);
 		++view;
 	}
@@ -420,10 +417,6 @@ public:
 		// Init "prev" matrices, will be same for first frame
 		cameraGetViewMtx(m_state.m_view);
 		bx::mtxProj(m_state.m_proj, m_state.m_fovY, float(m_state.m_size[0]) / float(m_state.m_size[1]), 0.01f, 100.0f, bgfx::getCaps()->homogeneousDepth);
-
-		// Get renderer capabilities info.
-		const bgfx::RendererType::Enum renderer = bgfx::getRendererType();
-		m_state.m_texelHalf = bgfx::RendererType::Direct3D9 == renderer ? 0.5f : 0.0f;
 
 		const uint32_t magnifierSize = 32;
 		m_magnifierWidget.init(magnifierSize, magnifierSize);
@@ -600,7 +593,7 @@ public:
 				bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
 				bgfx::setState(0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
 				bgfx::setTexture(0, m_state.s_color, srcTexture, BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
-				screenSpaceTriangle(float(m_state.m_width), float(m_state.m_height), m_state.m_texelHalf, caps->originBottomLeft);
+				screenSpaceQuad(caps->originBottomLeft);
 				bgfx::submit(view, m_state.m_copyLinearToGammaProgram);
 			}
 

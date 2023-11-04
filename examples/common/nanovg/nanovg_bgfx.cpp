@@ -137,7 +137,6 @@ namespace
 		bgfx::UniformHandle u_scissorExtScale;
 		bgfx::UniformHandle u_extentRadius;
 		bgfx::UniformHandle u_params;
-		bgfx::UniformHandle u_halfTexel;
 
 		bgfx::UniformHandle s_tex;
 
@@ -267,15 +266,6 @@ namespace
 		gl->u_extentRadius    = bgfx::createUniform("u_extentRadius",    bgfx::UniformType::Vec4);
 		gl->u_params          = bgfx::createUniform("u_params",          bgfx::UniformType::Vec4);
 		gl->s_tex             = bgfx::createUniform("s_tex",             bgfx::UniformType::Sampler);
-
-		if (bgfx::getRendererType() == bgfx::RendererType::Direct3D9)
-		{
-			gl->u_halfTexel   = bgfx::createUniform("u_halfTexel",       bgfx::UniformType::Vec4);
-		}
-		else
-		{
-			gl->u_halfTexel.idx = bgfx::kInvalidHandle;
-		}
 
 		s_nvgLayout
 			.begin()
@@ -549,12 +539,6 @@ namespace
 			if (tex != NULL)
 			{
 				handle = tex->id;
-
-				if (bgfx::isValid(gl->u_halfTexel) )
-				{
-					float halfTexel[4] = { 0.5f / tex->width, 0.5f / tex->height };
-					bgfx::setUniform(gl->u_halfTexel, halfTexel);
-				}
 			}
 		}
 
@@ -1083,11 +1067,6 @@ _cleanup:
 		bgfx::destroy(gl->u_extentRadius);
 		bgfx::destroy(gl->u_params);
 		bgfx::destroy(gl->s_tex);
-
-		if (bgfx::isValid(gl->u_halfTexel) )
-		{
-			bgfx::destroy(gl->u_halfTexel);
-		}
 
 		for (uint32_t ii = 0, num = gl->ntextures; ii < num; ++ii)
 		{

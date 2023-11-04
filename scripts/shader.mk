@@ -15,7 +15,7 @@ ifndef TARGET
 .PHONY: all
 all:
 	@echo Usage: make TARGET=# [clean, all, rebuild]
-	@echo "  TARGET=0 (hlsl  - d3d9  / Windows only!)"
+	@echo "  TARGET=0 (hlsl  - d3d11 / Windows only!)"
 	@echo "  TARGET=1 (hlsl  - d3d11 / Windows only!)"
 	@echo "  TARGET=3 (essl  - android)"
 	@echo "  TARGET=4 (glsl)"
@@ -52,12 +52,7 @@ else
 
 ADDITIONAL_INCLUDES?=
 
-ifeq ($(TARGET), 0)
-VS_FLAGS=--platform windows -p s_3_0 -O 3
-FS_FLAGS=--platform windows -p s_3_0 -O 3
-SHADER_PATH=shaders/dx9
-else
-ifeq ($(TARGET), 1)
+ifeq ($(TARGET), $(filter $(TARGET), 0 1))
 VS_FLAGS=--platform windows -p s_5_0 -O 3
 FS_FLAGS=--platform windows -p s_5_0 -O 3
 CS_FLAGS=--platform windows -p s_5_0 -O 1
@@ -92,7 +87,6 @@ VS_FLAGS=--platform linux -p spirv
 FS_FLAGS=--platform linux -p spirv
 CS_FLAGS=--platform linux -p spirv
 SHADER_PATH=shaders/spirv
-endif
 endif
 endif
 endif
