@@ -37,7 +37,6 @@
 	|| BX_PLATFORM_WINDOWS              \
 	)
 #define BGFX_PLATFORM_SUPPORTS_GLSL (0  \
-	|| BX_PLATFORM_BSD                  \
 	|| BX_PLATFORM_LINUX                \
 	|| BX_PLATFORM_OSX                  \
 	|| BX_PLATFORM_WINDOWS              \

@@ -14,7 +14,7 @@
 #	error "GLFW 3.2 or later is required"
 #endif // GLFW_VERSION_MINOR < 2
 
-#if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#if BX_PLATFORM_LINUX
 #	if ENTRY_CONFIG_USE_WAYLAND
 #		include <wayland-egl.h>
 #		define GLFW_EXPOSE_NATIVE_WAYLAND
@@ -44,7 +44,7 @@ namespace entry
 {
 	static void* glfwNativeWindowHandle(GLFWwindow* _window)
 	{
-#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#	if BX_PLATFORM_LINUX
 # 		if ENTRY_CONFIG_USE_WAYLAND
 		wl_egl_window *win_impl = (wl_egl_window*)glfwGetWindowUserPointer(_window);
 		if(!win_impl)
@@ -72,7 +72,7 @@ namespace entry
 	{
 		if(!_window)
 			return;
-#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#	if BX_PLATFORM_LINUX
 #		if ENTRY_CONFIG_USE_WAYLAND
 		wl_egl_window *win_impl = (wl_egl_window*)glfwGetWindowUserPointer(_window);
 		if(win_impl)
@@ -864,7 +864,7 @@ namespace entry
 
 	void* getNativeDisplayHandle()
 	{
-#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#	if BX_PLATFORM_LINUX
 #		if ENTRY_CONFIG_USE_WAYLAND
 		return glfwGetWaylandDisplay();
 #		else
@@ -877,7 +877,7 @@ namespace entry
 
 	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType()
 	{
-#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#	if BX_PLATFORM_LINUX
 #		if ENTRY_CONFIG_USE_WAYLAND
 		return bgfx::NativeWindowHandleType::Wayland;
 #		else
