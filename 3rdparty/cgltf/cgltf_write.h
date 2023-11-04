@@ -153,7 +153,6 @@ typedef struct {
 			context->extension_flags |= CGLTF_EXTENSION_FLAG_TEXTURE_TRANSFORM; \
 			cgltf_write_texture_transform(context, &info.transform); \
 		} \
-		cgltf_write_extras(context, &info.extras); \
 		cgltf_write_line(context, "}"); }
 
 #define CGLTF_WRITE_NORMAL_TEXTURE_INFO(label, info) if (info.texture) { \
@@ -165,7 +164,6 @@ typedef struct {
 			context->extension_flags |= CGLTF_EXTENSION_FLAG_TEXTURE_TRANSFORM; \
 			cgltf_write_texture_transform(context, &info.transform); \
 		} \
-		cgltf_write_extras(context, &info.extras); \
 		cgltf_write_line(context, "}"); }
 
 #define CGLTF_WRITE_OCCLUSION_TEXTURE_INFO(label, info) if (info.texture) { \
@@ -177,7 +175,6 @@ typedef struct {
 			context->extension_flags |= CGLTF_EXTENSION_FLAG_TEXTURE_TRANSFORM; \
 			cgltf_write_texture_transform(context, &info.transform); \
 		} \
-		cgltf_write_extras(context, &info.extras); \
 		cgltf_write_line(context, "}"); }
 
 #ifndef CGLTF_CONSTS
@@ -1058,14 +1055,11 @@ static void cgltf_write_accessor(cgltf_write_context* context, const cgltf_acces
 		cgltf_write_sizeprop(context, "byteOffset", (int)accessor->sparse.indices_byte_offset, 0);
 		CGLTF_WRITE_IDXPROP("bufferView", accessor->sparse.indices_buffer_view, context->data->buffer_views);
 		cgltf_write_intprop(context, "componentType", cgltf_int_from_component_type(accessor->sparse.indices_component_type), 0);
-		cgltf_write_extras(context, &accessor->sparse.indices_extras);
 		cgltf_write_line(context, "}");
 		cgltf_write_line(context, "\"values\": {");
 		cgltf_write_sizeprop(context, "byteOffset", (int)accessor->sparse.values_byte_offset, 0);
 		CGLTF_WRITE_IDXPROP("bufferView", accessor->sparse.values_buffer_view, context->data->buffer_views);
-		cgltf_write_extras(context, &accessor->sparse.values_extras);
 		cgltf_write_line(context, "}");
-		cgltf_write_extras(context, &accessor->sparse.extras);
 		cgltf_write_line(context, "}");
 	}
 	cgltf_write_extras(context, &accessor->extras);
