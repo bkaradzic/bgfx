@@ -100,7 +100,6 @@ namespace bgfx
 		{  ShadingLang::ESSL,  300,    "300_es"     },
 		{  ShadingLang::ESSL,  310,    "310_es"     },
 		{  ShadingLang::ESSL,  320,    "320_es"     },
-		{  ShadingLang::HLSL,  300,    "s_3_0"      },
 		{  ShadingLang::HLSL,  400,    "s_4_0"      },
 		{  ShadingLang::HLSL,  500,    "s_5_0"      },
 		{  ShadingLang::Metal, 1000,   "metal"      },

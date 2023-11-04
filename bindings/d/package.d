@@ -10,7 +10,7 @@ import bindbc.bgfx.config;
 import bindbc.common.types: va_list;
 static import bgfx.fakeenum;
 
-enum uint apiVersion = 122;
+enum uint apiVersion = 123;
 
 alias ViewID = ushort;
 deprecated("Please use `ViewID` instead.") alias ViewId = ushort;
@@ -592,7 +592,6 @@ enum Fatal: bgfx.fakeenum.Fatal.Enum{
 enum RendererType: bgfx.fakeenum.RendererType.Enum{
 	noop = bgfx.fakeenum.RendererType.Enum.noop,
 	agc = bgfx.fakeenum.RendererType.Enum.agc,
-	direct3D9 = bgfx.fakeenum.RendererType.Enum.direct3D9,
 	direct3D11 = bgfx.fakeenum.RendererType.Enum.direct3D11,
 	direct3D12 = bgfx.fakeenum.RendererType.Enum.direct3D12,
 	gnm = bgfx.fakeenum.RendererType.Enum.gnm,

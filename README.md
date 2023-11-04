@@ -32,7 +32,6 @@ rendering library.
 
 Supported rendering backends:
 
- * Direct3D 9
  * Direct3D 11
  * Direct3D 12
  * GNM (only for licensed PS4 developers, search DevNet forums for source)

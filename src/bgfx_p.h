@@ -236,7 +236,6 @@ namespace stl = std;
 
 #define BGFX_RENDERER_NOOP_NAME       "Noop"
 #define BGFX_RENDERER_AGC_NAME        "AGC"
-#define BGFX_RENDERER_DIRECT3D9_NAME  "Direct3D 9"
 #define BGFX_RENDERER_DIRECT3D11_NAME "Direct3D 11"
 #define BGFX_RENDERER_DIRECT3D12_NAME "Direct3D 12"
 #define BGFX_RENDERER_GNM_NAME        "GNM"

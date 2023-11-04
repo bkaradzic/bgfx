@@ -89,7 +89,6 @@ static const uint16_t s_planeIndices[] =
 };
 
 static bool s_oglNdc = false;
-static float s_texelHalf = 0.0f;
 
 static uint32_t s_viewMask = 0;
 
@@ -1797,7 +1796,6 @@ public:
 
 		const bgfx::Caps* caps = bgfx::getCaps();
 		s_oglNdc    = caps->homogeneousDepth;
-		s_texelHalf = bgfx::RendererType::Direct3D9 == caps->rendererType ? 0.5f : 0.0f;
 
 		// Imgui
 		imguiCreate();
@@ -2187,7 +2185,7 @@ public:
 			//update settings
 			s_uniforms.m_params.m_ambientPass     = 1.0f;
 			s_uniforms.m_params.m_lightingPass    = 1.0f;
-			s_uniforms.m_params.m_texelHalf       = s_texelHalf;
+			s_uniforms.m_params.m_texelHalf       = 0.0f;
 			s_uniforms.m_svparams.m_useStencilTex = float(m_useStencilTexture);
 
 			//set picked bunny model

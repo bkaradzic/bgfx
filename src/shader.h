@@ -10,6 +10,9 @@
 
 namespace bgfx
 {
+	BX_ERROR_RESULT(kShaderInvalidHeader,      BX_MAKEFOURCC('S', 'H', 0, 1) );
+	BX_ERROR_RESULT(kShaderInvalidInstruction, BX_MAKEFOURCC('S', 'H', 0, 2) );
+
 	struct DescriptorType
 	{
 		enum Enum
