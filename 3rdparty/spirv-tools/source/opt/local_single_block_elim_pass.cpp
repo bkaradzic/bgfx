@@ -278,6 +278,7 @@ void LocalSingleBlockLoadStoreElimPass::InitExtensions() {
                                 "SPV_KHR_ray_query",
                                 "SPV_EXT_fragment_invocation_density",
                                 "SPV_EXT_physical_storage_buffer",
+                                "SPV_KHR_physical_storage_buffer",
                                 "SPV_KHR_terminate_invocation",
                                 "SPV_KHR_subgroup_uniform_control_flow",
                                 "SPV_KHR_integer_dot_product",
@@ -287,7 +288,9 @@ void LocalSingleBlockLoadStoreElimPass::InitExtensions() {
                                 "SPV_KHR_fragment_shader_barycentric",
                                 "SPV_KHR_vulkan_memory_model",
                                 "SPV_NV_bindless_texture",
-                                "SPV_EXT_shader_atomic_float_add"});
+                                "SPV_EXT_shader_atomic_float_add",
+                                "SPV_EXT_fragment_shader_interlock",
+                                "SPV_NV_compute_shader_derivatives"});
 }
 
 }  // namespace opt

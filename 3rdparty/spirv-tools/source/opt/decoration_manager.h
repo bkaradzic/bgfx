@@ -142,7 +142,7 @@ class DecorationManager {
                         uint32_t decoration_value);
 
   // Add |decoration, decoration_value| of |inst_id, member| to module.
-  void AddMemberDecoration(uint32_t member, uint32_t inst_id,
+  void AddMemberDecoration(uint32_t inst_id, uint32_t member,
                            uint32_t decoration, uint32_t decoration_value);
 
   friend bool operator==(const DecorationManager&, const DecorationManager&);

@@ -252,6 +252,8 @@ class IRContext {
   inline void AddType(std::unique_ptr<Instruction>&& t);
   // Appends a constant, global variable, or OpUndef instruction to this module.
   inline void AddGlobalValue(std::unique_ptr<Instruction>&& v);
+  // Prepends a function declaration to this module.
+  inline void AddFunctionDeclaration(std::unique_ptr<Function>&& f);
   // Appends a function to this module.
   inline void AddFunction(std::unique_ptr<Function>&& f);
 
@@ -1211,6 +1213,10 @@ void IRContext::AddGlobalValue(std::unique_ptr<Instruction>&& v) {
     get_def_use_mgr()->AnalyzeInstDefUse(&*v);
   }
   module()->AddGlobalValue(std::move(v));
+}
+
+void IRContext::AddFunctionDeclaration(std::unique_ptr<Function>&& f) {
+  module()->AddFunctionDeclaration(std::move(f));
 }
 
 void IRContext::AddFunction(std::unique_ptr<Function>&& f) {

@@ -216,6 +216,10 @@ const char* spvOperandTypeStr(spv_operand_type_t type) {
       return "initialization mode qualifier";
     case SPV_OPERAND_TYPE_HOST_ACCESS_QUALIFIER:
       return "host access qualifier";
+    case SPV_OPERAND_TYPE_LOAD_CACHE_CONTROL:
+      return "load cache control";
+    case SPV_OPERAND_TYPE_STORE_CACHE_CONTROL:
+      return "store cache control";
     case SPV_OPERAND_TYPE_IMAGE:
     case SPV_OPERAND_TYPE_OPTIONAL_IMAGE:
       return "image";
@@ -354,6 +358,8 @@ bool spvOperandIsConcrete(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_USE:
     case SPV_OPERAND_TYPE_INITIALIZATION_MODE_QUALIFIER:
     case SPV_OPERAND_TYPE_HOST_ACCESS_QUALIFIER:
+    case SPV_OPERAND_TYPE_LOAD_CACHE_CONTROL:
+    case SPV_OPERAND_TYPE_STORE_CACHE_CONTROL:
       return true;
     default:
       break;

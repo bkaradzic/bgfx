@@ -16,6 +16,7 @@ static const spv::Capability pygen_variable_caps_DemoteToHelperInvocation[] = {s
 static const spv::Capability pygen_variable_caps_DemoteToHelperInvocationEXT[] = {spv::Capability::DemoteToHelperInvocationEXT};
 static const spv::Capability pygen_variable_caps_DerivativeControl[] = {spv::Capability::DerivativeControl};
 static const spv::Capability pygen_variable_caps_DeviceEnqueue[] = {spv::Capability::DeviceEnqueue};
+static const spv::Capability pygen_variable_caps_DisplacementMicromapNV[] = {spv::Capability::DisplacementMicromapNV};
 static const spv::Capability pygen_variable_caps_DotProduct[] = {spv::Capability::DotProduct};
 static const spv::Capability pygen_variable_caps_DotProductKHR[] = {spv::Capability::DotProductKHR};
 static const spv::Capability pygen_variable_caps_ExpectAssumeKHR[] = {spv::Capability::ExpectAssumeKHR};
@@ -557,6 +558,8 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"SetMeshOutputsEXT", spv::Op::OpSetMeshOutputsEXT, 1, pygen_variable_caps_MeshShadingEXT, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"GroupNonUniformPartitionNV", spv::Op::OpGroupNonUniformPartitionNV, 1, pygen_variable_caps_GroupNonUniformPartitionedNV, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_NV_shader_subgroup_partitioned, 0xffffffffu, 0xffffffffu},
   {"WritePackedPrimitiveIndices4x8NV", spv::Op::OpWritePackedPrimitiveIndices4x8NV, 1, pygen_variable_caps_MeshShadingNV, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 1, pygen_variable_exts_SPV_NV_mesh_shader, 0xffffffffu, 0xffffffffu},
+  {"FetchMicroTriangleVertexPositionNV", spv::Op::OpFetchMicroTriangleVertexPositionNV, 1, pygen_variable_caps_DisplacementMicromapNV, 7, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"FetchMicroTriangleVertexBarycentricNV", spv::Op::OpFetchMicroTriangleVertexBarycentricNV, 1, pygen_variable_caps_DisplacementMicromapNV, 7, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"ReportIntersectionKHR", spv::Op::OpReportIntersectionKHR, 2, pygen_variable_caps_RayTracingNVRayTracingKHR, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 2, pygen_variable_exts_SPV_NV_ray_tracingSPV_KHR_ray_tracing, 0xffffffffu, 0xffffffffu},
   {"ReportIntersectionNV", spv::Op::OpReportIntersectionNV, 2, pygen_variable_caps_RayTracingNVRayTracingKHR, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 2, pygen_variable_exts_SPV_NV_ray_tracingSPV_KHR_ray_tracing, 0xffffffffu, 0xffffffffu},
   {"IgnoreIntersectionNV", spv::Op::OpIgnoreIntersectionNV, 1, pygen_variable_caps_RayTracingNV, 0, {}, 0, 0, 1, pygen_variable_exts_SPV_NV_ray_tracing, 0xffffffffu, 0xffffffffu},

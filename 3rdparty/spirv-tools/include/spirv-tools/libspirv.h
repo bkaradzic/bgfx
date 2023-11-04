@@ -298,6 +298,10 @@ typedef enum spv_operand_type_t {
   SPV_OPERAND_TYPE_INITIALIZATION_MODE_QUALIFIER,
   // Enum type from SPV_INTEL_global_variable_host_access
   SPV_OPERAND_TYPE_HOST_ACCESS_QUALIFIER,
+  // Enum type from SPV_INTEL_cache_controls
+  SPV_OPERAND_TYPE_LOAD_CACHE_CONTROL,
+  // Enum type from SPV_INTEL_cache_controls
+  SPV_OPERAND_TYPE_STORE_CACHE_CONTROL,
 
   // This is a sentinel value, and does not represent an operand type.
   // It should come last.

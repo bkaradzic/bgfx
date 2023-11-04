@@ -693,16 +693,11 @@ spv_result_t ValidateImageReadWrite(ValidationState_t& _,
              << "storage image";
     }
 
-    if (info.multisampled == 1 &&
+    if (info.multisampled == 1 && info.arrayed == 1 && info.sampled == 2 &&
         !_.HasCapability(spv::Capability::ImageMSArray)) {
-#if 0
-      // TODO(atgoo@github.com) The description of this rule in the spec
-      // is unclear and Glslang doesn't declare ImageMSArray. Need to clarify
-      // and reenable.
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-          << "Capability ImageMSArray is required to access storage "
-          << "image";
-#endif
+             << "Capability ImageMSArray is required to access storage "
+             << "image";
     }
   } else if (info.sampled != 0) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)

@@ -901,7 +901,7 @@ Type* TypeManager::RecordIfTypeDefinition(const Instruction& inst) {
       type = new HitObjectNV();
       break;
     default:
-      SPIRV_UNIMPLEMENTED(consumer_, "unhandled type");
+      assert(false && "Type not handled by the type manager.");
       break;
   }
 
@@ -943,12 +943,10 @@ void TypeManager::AttachDecoration(const Instruction& inst, Type* type) {
       }
       if (Struct* st = type->AsStruct()) {
         st->AddMemberDecoration(index, std::move(data));
-      } else {
-        SPIRV_UNIMPLEMENTED(consumer_, "OpMemberDecorate non-struct type");
       }
     } break;
     default:
-      SPIRV_UNREACHABLE(consumer_);
+      assert(false && "Unexpected opcode for a decoration instruction.");
       break;
   }
 }

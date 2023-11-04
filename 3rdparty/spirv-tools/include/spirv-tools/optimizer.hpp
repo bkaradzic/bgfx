@@ -766,11 +766,9 @@ Optimizer::PassToken CreateCombineAccessChainsPass();
 // potentially de-optimizing the instrument code, for example, inlining
 // the debug record output function throughout the module.
 //
-// The instrumentation will read and write buffers in debug
-// descriptor set |desc_set|. It will write |shader_id| in each output record
+// The instrumentation will write |shader_id| in each output record
 // to identify the shader module which generated the record.
-Optimizer::PassToken CreateInstBindlessCheckPass(uint32_t desc_set,
-                                                 uint32_t shader_id);
+Optimizer::PassToken CreateInstBindlessCheckPass(uint32_t shader_id);
 
 // Create a pass to instrument physical buffer address checking
 // This pass instruments all physical buffer address references to check that
@@ -791,8 +789,7 @@ Optimizer::PassToken CreateInstBindlessCheckPass(uint32_t desc_set,
 // The instrumentation will read and write buffers in debug
 // descriptor set |desc_set|. It will write |shader_id| in each output record
 // to identify the shader module which generated the record.
-Optimizer::PassToken CreateInstBuffAddrCheckPass(uint32_t desc_set,
-                                                 uint32_t shader_id);
+Optimizer::PassToken CreateInstBuffAddrCheckPass(uint32_t shader_id);
 
 // Create a pass to instrument OpDebugPrintf instructions.
 // This pass replaces all OpDebugPrintf instructions with instructions to write
@@ -997,6 +994,12 @@ Optimizer::PassToken CreateTrimCapabilitiesPass();
 // use the new value |ds_to|.
 Optimizer::PassToken CreateSwitchDescriptorSetPass(uint32_t ds_from,
                                                    uint32_t ds_to);
+
+// Creates an invocation interlock placement pass.
+// This pass ensures that an entry point will have at most one
+// OpBeginInterlockInvocationEXT and one OpEndInterlockInvocationEXT, in that
+// order.
+Optimizer::PassToken CreateInvocationInterlockPlacementPass();
 }  // namespace spvtools
 
 #endif  // INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_

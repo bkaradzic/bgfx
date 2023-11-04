@@ -922,9 +922,9 @@ spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
         }
       }
 
-      if (vstate.HasCapability(
-              spv::Capability::WorkgroupMemoryExplicitLayoutKHR) &&
-          num_workgroup_variables > 0 &&
+      const bool workgroup_blocks_allowed = vstate.HasCapability(
+          spv::Capability::WorkgroupMemoryExplicitLayoutKHR);
+      if (workgroup_blocks_allowed && num_workgroup_variables > 0 &&
           num_workgroup_variables_with_block > 0) {
         if (num_workgroup_variables != num_workgroup_variables_with_block) {
           return vstate.diag(SPV_ERROR_INVALID_BINARY, vstate.FindDef(entry_point))
@@ -945,6 +945,13 @@ spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
                     "Entry point id "
                  << entry_point << " does not meet this requirement.";
         }
+      } else if (!workgroup_blocks_allowed &&
+                 num_workgroup_variables_with_block > 0) {
+        return vstate.diag(SPV_ERROR_INVALID_BINARY,
+                           vstate.FindDef(entry_point))
+               << "Workgroup Storage Class variables can't be decorated with "
+                  "Block unless declaring the WorkgroupMemoryExplicitLayoutKHR "
+                  "capability.";
       }
     }
   }
