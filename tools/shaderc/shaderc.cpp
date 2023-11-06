@@ -1054,7 +1054,7 @@ namespace bgfx
 			  "      --verbose                 Be verbose.\n"
 
 			  "\n"
-			  "(Vulkan and DirectX):\n"
+			  "(Vulkan, DirectX and Metal):\n"
 
 			  "\n"
 			  "      --debug                   Debug information.\n"

@@ -199,7 +199,7 @@ Options:
   --varyingdef <file path>  A varying.def.sc's file path.
   --verbose                 Be verbose.
 
-(Vulkan and DirectX):
+(Vulkan, DirectX and Metal):
 
   --debug                   Debug information.
 
