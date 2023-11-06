@@ -199,9 +199,12 @@ Options:
   --varyingdef <file path>  A varying.def.sc's file path.
   --verbose                 Be verbose.
 
-(DX9 and DX11 only):
+(Vulkan, DirectX and Metal):
 
   --debug                   Debug information.
+
+(DirectX only):
+
   --disasm                  Disassemble a compiled shader.
   -O <level>                Set optimization level.
                             Can be 0–3.

@@ -286,6 +286,7 @@ namespace bgfx { namespace metal
 			| EShMsgReadHlsl
 			| EShMsgVulkanRules
 			| EShMsgSpvRules
+			| EShMsgDebugInfo
 			);
 
 		shader->setEntryPoint("main");
@@ -494,7 +495,10 @@ namespace bgfx { namespace metal
 				std::vector<uint32_t> spirv;
 
 				glslang::SpvOptions options;
-				options.disableOptimizer = false;
+				options.disableOptimizer = _options.debugInformation;
+				options.generateDebugInfo = _options.debugInformation;
+				options.emitNonSemanticShaderDebugInfo = _options.debugInformation;
+				options.emitNonSemanticShaderDebugSource = _options.debugInformation;
 
 				glslang::GlslangToSpv(*intermediate, spirv, &options);
 
