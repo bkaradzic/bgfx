@@ -4245,7 +4245,7 @@ namespace bgfx { namespace d3d12
 				D3D12_VERTEX_BUFFER_VIEW& vbv = _vbv[numStreams];
 				vbv.BufferLocation = vb.m_gpuVA + stream.m_startVertex * stride;
 				vbv.StrideInBytes  = layout.m_stride;
-				vbv.SizeInBytes    = vb.m_size;
+				vbv.SizeInBytes    = _outNumVertices * vbv.StrideInBytes;
 
 				_outNumVertices = bx::uint32_min(UINT32_MAX == _draw.m_numVertices
 					? vb.m_size/stride
