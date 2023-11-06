@@ -4240,18 +4240,18 @@ namespace bgfx { namespace d3d12
 
 				const uint16_t layoutIdx = !isValid(vb.m_layoutHandle) ? stream.m_layoutHandle.idx : vb.m_layoutHandle.idx;
 				const VertexLayout& layout = s_renderD3D12->m_vertexLayouts[layoutIdx];
-				uint32_t stride = layout.m_stride;
-
-				D3D12_VERTEX_BUFFER_VIEW& vbv = _vbv[numStreams];
-				vbv.BufferLocation = vb.m_gpuVA + stream.m_startVertex * stride;
-				vbv.StrideInBytes  = layout.m_stride;
-				vbv.SizeInBytes    = _outNumVertices * vbv.StrideInBytes;
-
+				const uint32_t stride = layout.m_stride;
+				
 				_outNumVertices = bx::uint32_min(UINT32_MAX == _draw.m_numVertices
 					? vb.m_size/stride
 					: _draw.m_numVertices
 					, _outNumVertices
 					);
+
+				D3D12_VERTEX_BUFFER_VIEW& vbv = _vbv[numStreams];
+				vbv.BufferLocation = vb.m_gpuVA + stream.m_startVertex * stride;
+				vbv.StrideInBytes  = stride;
+				vbv.SizeInBytes    = _outNumVertices * stride;
 			}
 		}
 
