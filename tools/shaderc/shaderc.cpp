@@ -1054,10 +1054,15 @@ namespace bgfx
 			  "      --verbose                 Be verbose.\n"
 
 			  "\n"
-			  "(DX9 and DX11 only):\n"
+			  "(Vulkan and DirectX):\n"
 
 			  "\n"
 			  "      --debug                   Debug information.\n"
+
+			  "\n"
+			  "(DirectX only):\n"
+
+			  "\n"
 			  "      --disasm                  Disassemble compiled shader.\n"
 			  "  -O <level>                    Set optimization level. Can be 0 to 3.\n"
 			  "      --Werror                  Treat warnings as errors.\n"
