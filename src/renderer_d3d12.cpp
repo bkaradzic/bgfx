@@ -804,6 +804,8 @@ namespace bgfx { namespace d3d12
 			}
 #endif // USE_D3D12_DYNAMIC_LIB
 
+			m_device = (ID3D12Device*)g_platformData.context;
+
 #if !BX_PLATFORM_LINUX
 			if (!m_dxgi.init(g_caps) )
 			{
@@ -815,6 +817,7 @@ namespace bgfx { namespace d3d12
 
 			HRESULT hr;
 
+			if (NULL == m_device)
 			{
 #if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 				if (_init.debug
@@ -911,12 +914,13 @@ namespace bgfx { namespace d3d12
 					m_device->SetDebugErrorFilterX(0x8EC9B15C, D3D12XBOX_DEBUG_FILTER_FLAG_DISABLE_OUTPUT);
 				}
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
-			}
 
 			if (FAILED(hr) )
 			{
 				BX_TRACE("Init error: Unable to create Direct3D12 device.");
 				goto error;
+			}
+
 			}
 
 #if !BX_PLATFORM_LINUX
@@ -4241,7 +4245,7 @@ namespace bgfx { namespace d3d12
 				const uint16_t layoutIdx = !isValid(vb.m_layoutHandle) ? stream.m_layoutHandle.idx : vb.m_layoutHandle.idx;
 				const VertexLayout& layout = s_renderD3D12->m_vertexLayouts[layoutIdx];
 				const uint32_t stride = layout.m_stride;
-				
+
 				_outNumVertices = bx::uint32_min(UINT32_MAX == _draw.m_numVertices
 					? vb.m_size/stride
 					: _draw.m_numVertices
