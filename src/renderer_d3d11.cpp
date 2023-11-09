@@ -1831,6 +1831,18 @@ namespace bgfx { namespace d3d11
 			return m_textures[_handle.idx].create(_mem, _flags, _skip);
 		}
 
+		void* createTextureWrapped(TextureHandle /*_handle*/, void* /*_platform_specific_wrapping_data*/) override
+		{
+			BX_ASSERT(0, "Not implemented yet");
+			return nullptr;
+		}
+
+		TextureRef createTextureWrappedRef(TextureHandle /*_handle*/, void* /*_platform_specific_wrapping_data*/) override
+		{
+			BX_ASSERT(0, "Not implemented yet");
+			return {};
+		}
+
 		void updateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/) override
 		{
 		}

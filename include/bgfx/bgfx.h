@@ -2811,6 +2811,14 @@ namespace bgfx
 		, const Memory* _mem = NULL
 		);
 
+
+	/// Create a texture from a existing native neture
+	///
+	/// @param[in] _platform_specific_wrapping_data structure with platform-specific details
+	TextureHandle createTextureWrapped(
+		void* _platform_specific_wrapping_data
+	    );
+
 	/// Create texture with size based on back-buffer ratio. Texture will maintain ratio
 	/// if back buffer resolution changes.
 	///

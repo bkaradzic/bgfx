@@ -2298,6 +2298,18 @@ VK_IMPORT_DEVICE
 			return m_textures[_handle.idx].create(m_commandBuffer, _mem, _flags, _skip);
 		}
 
+		void* createTextureWrapped(TextureHandle /*_handle*/, void* /*_specific_platform_wrapping_data*/) override
+		{
+			BX_ASSERT(0, "Not implemented yet");
+			return nullptr;
+		}
+
+		TextureRef createTextureWrappedRef(TextureHandle /*_handle*/, void* /*_specific_platform_wrapping_data*/) override
+		{
+			BX_ASSERT(0, "Not implemented yet");
+			return {};
+		}
+
 		void updateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/) override
 		{
 		}

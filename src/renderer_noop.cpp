@@ -162,6 +162,18 @@ namespace bgfx { namespace noop
 			return NULL;
 		}
 
+		void* createTextureWrapped(TextureHandle /*_handle*/, void* /*_platform_specific_wrapping_data*/) override
+		{
+			BX_ASSERT(0, "Not implemented yet");
+			return nullptr;
+		}
+
+		TextureRef createTextureWrappedRef(TextureHandle /*_handle*/, void* /*_platform_specific_wrapping_data*/) override
+		{
+			BX_ASSERT(0, "Not implemented yet");
+			return {};
+		}
+
 		void updateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/) override
 		{
 		}

@@ -3148,6 +3148,24 @@ namespace bgfx
 				}
 				break;
 
+			case CommandBuffer::CreateTextureWrapped:
+			{
+				BGFX_PROFILER_SCOPE("CreateTextureWrapped", 0xff2040ff);
+
+				TextureHandle handle;
+				_cmdbuf.read(handle);
+
+				void* _platform_specific_wrapping_data;
+				_cmdbuf.read(_platform_specific_wrapping_data);
+
+				void* ptr = m_renderCtx->createTextureWrapped(handle, _platform_specific_wrapping_data);
+				if (NULL != ptr)
+				{
+					setDirectAccessPtr(handle, ptr);
+				}
+			}
+			break;
+
 			case CommandBuffer::UpdateTexture:
 				{
 					BGFX_PROFILER_SCOPE("UpdateTexture", 0xff2040ff);
@@ -4888,6 +4906,11 @@ namespace bgfx
 	{
 		BX_ASSERT(_width > 0 && _height > 0, "Invalid texture size (width %d, height %d).", _width, _height);
 		return createTexture2D(BackbufferRatio::Count, _width, _height, _hasMips, _numLayers, _format, _flags, _mem);
+	}
+
+	TextureHandle createTextureWrapped(void* _platform_specific_wrapping_data)
+	{
+		return s_ctx->createTextureWrapped(_platform_specific_wrapping_data);
 	}
 
 	TextureHandle createTexture2D(BackbufferRatio::Enum _ratio, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags)

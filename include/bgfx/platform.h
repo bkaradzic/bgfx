@@ -12,6 +12,9 @@
 
 #include "bgfx.h"
 
+struct  ID3D12Resource;
+enum D3D12_RESOURCE_STATES;
+
 namespace bgfx
 {
 	/// Render frame enum.
@@ -130,6 +133,12 @@ namespace bgfx
 		, TextureFormat::Enum _format
 		, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE
 		);
+
+	/// Specific application data for wrapping DX12 external resources
+	struct D3D12TextureWrapped {
+		ID3D12Resource* resource;
+		D3D12_RESOURCE_STATES state;
+	};
 
 } // namespace bgfx
 
