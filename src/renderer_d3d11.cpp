@@ -874,8 +874,6 @@ namespace bgfx { namespace d3d11
 			}
 #endif // USE_D3D11_DYNAMIC_LIB
 
-			m_device = (ID3D11Device*)g_platformData.context;
-
 			if (!m_dxgi.init(g_caps) )
 			{
 				goto error;
@@ -883,8 +881,10 @@ namespace bgfx { namespace d3d11
 
 			errorState = ErrorState::LoadedDXGI;
 
-			if (NULL != m_device)
+			if (NULL != g_platformData.context)
 			{
+				m_device = (ID3D11Device*)g_platformData.context;
+
 				m_device->AddRef();
 				m_device->GetImmediateContext(&m_deviceCtx);
 

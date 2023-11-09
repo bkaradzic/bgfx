@@ -804,8 +804,6 @@ namespace bgfx { namespace d3d12
 			}
 #endif // USE_D3D12_DYNAMIC_LIB
 
-			m_device = (ID3D12Device*)g_platformData.context;
-
 #if !BX_PLATFORM_LINUX
 			if (!m_dxgi.init(g_caps) )
 			{
@@ -817,7 +815,14 @@ namespace bgfx { namespace d3d12
 
 			HRESULT hr;
 
-			if (NULL == m_device)
+			if (NULL != g_platformData.context)
+			{
+				m_device = (ID3D12Device*)g_platformData.context;
+
+				m_device->AddRef();
+				hr = S_OK;
+			}
+			else
 			{
 #if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 				if (_init.debug
@@ -915,12 +920,11 @@ namespace bgfx { namespace d3d12
 				}
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 
-			if (FAILED(hr) )
-			{
-				BX_TRACE("Init error: Unable to create Direct3D12 device.");
-				goto error;
-			}
-
+				if (FAILED(hr) )
+				{
+					BX_TRACE("Init error: Unable to create Direct3D12 device.");
+					goto error;
+				}
 			}
 
 #if !BX_PLATFORM_LINUX
