@@ -2623,7 +2623,6 @@ namespace bgfx
 	BGFX_RENDERER_CONTEXT(nvn);
 	BGFX_RENDERER_CONTEXT(gl);
 	BGFX_RENDERER_CONTEXT(vk);
-	BGFX_RENDERER_CONTEXT(webgpu);
 
 #undef BGFX_RENDERER_CONTEXT
 
@@ -2651,7 +2650,6 @@ namespace bgfx
 		{ gl::rendererCreate,     gl::rendererDestroy,     BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGLES   }, // OpenGLES
 		{ gl::rendererCreate,     gl::rendererDestroy,     BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGL     }, // OpenGL
 		{ vk::rendererCreate,     vk::rendererDestroy,     BGFX_RENDERER_VULKAN_NAME,     !!BGFX_CONFIG_RENDERER_VULKAN     }, // Vulkan
-		{ webgpu::rendererCreate, webgpu::rendererDestroy, BGFX_RENDERER_WEBGPU_NAME,     !!BGFX_CONFIG_RENDERER_WEBGPU     }, // WebGPU
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_rendererCreator) == RendererType::Count);
 

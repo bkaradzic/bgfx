@@ -14,7 +14,7 @@ extern(C++, "bgfx") package final abstract class Fatal{
 }
 extern(C++, "bgfx") package final abstract class RendererType{
 	enum Enum{
-		noop,agc,direct3D11,direct3D12,gnm,metal,nvn,openGLES,openGL,vulkan,webGPU,count
+		noop,agc,direct3D11,direct3D12,gnm,metal,nvn,openGLES,openGL,vulkan,count
 	}
 }
 extern(C++, "bgfx") package final abstract class Access{

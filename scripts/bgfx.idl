@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(123)
+version(124)
 
 typedef "bool"
 typedef "char"
@@ -466,7 +466,6 @@ enum.RendererType { comment = "Renderer types:" }
 	.OpenGLES   --- OpenGL ES 2.0+
 	.OpenGL     --- OpenGL 2.1+
 	.Vulkan     --- Vulkan
-	.WebGPU     --- WebGPU
 	()
 
 --- Access mode enum.
