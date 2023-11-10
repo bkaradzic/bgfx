@@ -10,7 +10,7 @@ import bindbc.bgfx.config;
 import bindbc.common.types: va_list;
 static import bgfx.fakeenum;
 
-enum uint apiVersion = 123;
+enum uint apiVersion = 124;
 
 alias ViewID = ushort;
 deprecated("Please use `ViewID` instead.") alias ViewId = ushort;
@@ -600,7 +600,6 @@ enum RendererType: bgfx.fakeenum.RendererType.Enum{
 	openGLES = bgfx.fakeenum.RendererType.Enum.openGLES,
 	openGL = bgfx.fakeenum.RendererType.Enum.openGL,
 	vulkan = bgfx.fakeenum.RendererType.Enum.vulkan,
-	webGPU = bgfx.fakeenum.RendererType.Enum.webGPU,
 	count = bgfx.fakeenum.RendererType.Enum.count,
 }
 

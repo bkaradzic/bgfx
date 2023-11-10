@@ -18,7 +18,6 @@
 #include "renderer_noop.cpp"
 #include "renderer_nvn.cpp"
 #include "renderer_vk.cpp"
-#include "renderer_webgpu.cpp"
 #include "shader.cpp"
 #include "shader_dxbc.cpp"
 #include "shader_spirv.cpp"
