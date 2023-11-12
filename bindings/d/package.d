@@ -1007,7 +1007,7 @@ extern(C++, "bgfx") struct Caps{
 	Supported functionality.
 	  @attention See `BGFX_CAPS_*` flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
 	*/
-	c_uint64 supported;
+	uc_int64 supported;
 	ushort vendorID; ///Selected GPU vendor PCI id.
 	ushort deviceID; ///Selected GPU device id.
 	bool homogeneousDepth; ///True when NDC depth is in [-1, 1] range, otherwise its [0, 1].
@@ -1132,7 +1132,7 @@ extern(C++, "bgfx") struct Init{
 	matching ID.
 	*/
 	ushort deviceID;
-	c_uint64 capabilities; ///Capabilities initialization mask (default: UINT64_MAX).
+	uc_int64 capabilities; ///Capabilities initialization mask (default: UINT64_MAX).
 	bool debug_; ///Enable device for debugging.
 	bool profile; ///Enable device for profiling.
 	PlatformData platformData; ///Platform data.
@@ -1415,7 +1415,7 @@ extern(C++, "bgfx") struct Encoder{
 				rgba = Sets blend factor used by `BGFX_STATE_BLEND_FACTOR` and
 			  `BGFX_STATE_BLEND_INV_FACTOR` blend modes.
 			*/
-			{q{void}, q{setState}, q{c_uint64 state, uint rgba=0}, ext: `C++`},
+			{q{void}, q{setState}, q{uc_int64 state, uint rgba=0}, ext: `C++`},
 			
 			/**
 			Set condition for rendering.
@@ -2462,7 +2462,7 @@ mixin(joinFnBinds((){
 			format = Texture format. See: `TextureFormat::Enum`.
 			flags = Texture flags. See `BGFX_TEXTURE_*`.
 		*/
-		{q{bool}, q{isTextureValid}, q{ushort depth, bool cubeMap, ushort numLayers, bgfx.fakeenum.TextureFormat.Enum format, c_uint64 flags}, ext: `C++, "bgfx"`},
+		{q{bool}, q{isTextureValid}, q{ushort depth, bool cubeMap, ushort numLayers, bgfx.fakeenum.TextureFormat.Enum format, uc_int64 flags}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Validate frame buffer parameters.
@@ -2499,7 +2499,7 @@ mixin(joinFnBinds((){
 			skip = Skip top level mips when parsing texture.
 			info = When non-`NULL` is specified it returns parsed texture information.
 		*/
-		{q{TextureHandle}, q{createTexture}, q{const(Memory)* mem, c_uint64 flags, ubyte skip=0, TextureInfo* info=null}, ext: `C++, "bgfx"`},
+		{q{TextureHandle}, q{createTexture}, q{const(Memory)* mem, uc_int64 flags, ubyte skip=0, TextureInfo* info=null}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Create 2D texture.
@@ -2520,7 +2520,7 @@ mixin(joinFnBinds((){
 		`_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
 		1, expected memory layout is texture and all mips together for each array element.
 		*/
-		{q{TextureHandle}, q{createTexture2D}, q{ushort width, ushort height, bool hasMIPs, ushort numLayers, bgfx.fakeenum.TextureFormat.Enum format, c_uint64 flags, const(Memory)* mem=null}, ext: `C++, "bgfx"`},
+		{q{TextureHandle}, q{createTexture2D}, q{ushort width, ushort height, bool hasMIPs, ushort numLayers, bgfx.fakeenum.TextureFormat.Enum format, uc_int64 flags, const(Memory)* mem=null}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Create texture with size based on back-buffer ratio. Texture will maintain ratio
@@ -2538,7 +2538,7 @@ mixin(joinFnBinds((){
 		- `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 		  sampling.
 		*/
-		{q{TextureHandle}, q{createTexture2D}, q{bgfx.fakeenum.BackbufferRatio.Enum ratio, bool hasMIPs, ushort numLayers, bgfx.fakeenum.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none}, ext: `C++, "bgfx"`},
+		{q{TextureHandle}, q{createTexture2D}, q{bgfx.fakeenum.BackbufferRatio.Enum ratio, bool hasMIPs, ushort numLayers, bgfx.fakeenum.TextureFormat.Enum format, uc_int64 flags=Texture.none|Sampler.none}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Create 3D texture.
@@ -2558,7 +2558,7 @@ mixin(joinFnBinds((){
 		`_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
 		1, expected memory layout is texture and all mips together for each array element.
 		*/
-		{q{TextureHandle}, q{createTexture3D}, q{ushort width, ushort height, ushort depth, bool hasMIPs, bgfx.fakeenum.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null}, ext: `C++, "bgfx"`},
+		{q{TextureHandle}, q{createTexture3D}, q{ushort width, ushort height, ushort depth, bool hasMIPs, bgfx.fakeenum.TextureFormat.Enum format, uc_int64 flags=Texture.none|Sampler.none, const(Memory)* mem=null}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Create Cube texture.
@@ -2578,7 +2578,7 @@ mixin(joinFnBinds((){
 		`_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
 		1, expected memory layout is texture and all mips together for each array element.
 		*/
-		{q{TextureHandle}, q{createTextureCube}, q{ushort size, bool hasMIPs, ushort numLayers, bgfx.fakeenum.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null}, ext: `C++, "bgfx"`},
+		{q{TextureHandle}, q{createTextureCube}, q{ushort size, bool hasMIPs, ushort numLayers, bgfx.fakeenum.TextureFormat.Enum format, uc_int64 flags=Texture.none|Sampler.none, const(Memory)* mem=null}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Update 2D texture.
@@ -2698,7 +2698,7 @@ mixin(joinFnBinds((){
 		- `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 		  sampling.
 		*/
-		{q{FrameBufferHandle}, q{createFrameBuffer}, q{ushort width, ushort height, bgfx.fakeenum.TextureFormat.Enum format, c_uint64 textureFlags=SamplerU.clamp|SamplerV.clamp}, ext: `C++, "bgfx"`},
+		{q{FrameBufferHandle}, q{createFrameBuffer}, q{ushort width, ushort height, bgfx.fakeenum.TextureFormat.Enum format, uc_int64 textureFlags=SamplerU.clamp|SamplerV.clamp}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Create frame buffer with size based on back-buffer ratio. Frame buffer will maintain ratio
@@ -2714,7 +2714,7 @@ mixin(joinFnBinds((){
 		- `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 		  sampling.
 		*/
-		{q{FrameBufferHandle}, q{createFrameBuffer}, q{bgfx.fakeenum.BackbufferRatio.Enum ratio, bgfx.fakeenum.TextureFormat.Enum format, c_uint64 textureFlags=SamplerU.clamp|SamplerV.clamp}, ext: `C++, "bgfx"`},
+		{q{FrameBufferHandle}, q{createFrameBuffer}, q{bgfx.fakeenum.BackbufferRatio.Enum ratio, bgfx.fakeenum.TextureFormat.Enum format, uc_int64 textureFlags=SamplerU.clamp|SamplerV.clamp}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Create MRT frame buffer from texture handles (simple).
@@ -3076,7 +3076,7 @@ mixin(joinFnBinds((){
 		- `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 		  sampling.
 		*/
-		{q{size_t}, q{overrideInternal}, q{TextureHandle handle, ushort width, ushort height, ubyte numMIPs, bgfx.fakeenum.TextureFormat.Enum format, c_uint64 flags}, ext: `C++, "bgfx"`},
+		{q{size_t}, q{overrideInternal}, q{TextureHandle handle, ushort width, ushort height, ubyte numMIPs, bgfx.fakeenum.TextureFormat.Enum format, uc_int64 flags}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Sets a debug marker. This allows you to group graphics calls together for easy browsing in
@@ -3111,7 +3111,7 @@ mixin(joinFnBinds((){
 			rgba = Sets blend factor used by `BGFX_STATE_BLEND_FACTOR` and
 		  `BGFX_STATE_BLEND_INV_FACTOR` blend modes.
 		*/
-		{q{void}, q{setState}, q{c_uint64 state, uint rgba=0}, ext: `C++, "bgfx"`},
+		{q{void}, q{setState}, q{uc_int64 state, uint rgba=0}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set condition for rendering.
