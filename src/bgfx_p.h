@@ -92,13 +92,13 @@ namespace bgfx
 		}                                             \
 	BX_MACRO_BLOCK_END
 
-#define _BGFX_ASSERT(_condition, _format, ...)                                                          \
-	BX_MACRO_BLOCK_BEGIN                                                                                \
-		if (!BX_IGNORE_C4127(_condition) )                                                              \
-		{                                                                                               \
-			BX_TRACE("ASSERT " _format, ##__VA_ARGS__);                                                 \
-			bgfx::fatal(__FILE__, uint16_t(__LINE__), bgfx::Fatal::DebugCheck, _format, ##__VA_ARGS__); \
-		}                                                                                               \
+#define _BGFX_ASSERT(_condition, _format, ...)                                                                 \
+	BX_MACRO_BLOCK_BEGIN                                                                                       \
+		if (!BX_IGNORE_C4127(_condition)                                                                       \
+		&&  bx::assertFunction(bx::Location::current(), "ASSERT " #_condition " -> " _format, ##__VA_ARGS__) ) \
+		{                                                                                                      \
+			bgfx::fatal(__FILE__, uint16_t(__LINE__), bgfx::Fatal::DebugCheck, _format, ##__VA_ARGS__);        \
+		}                                                                                                      \
 	BX_MACRO_BLOCK_END
 
 #define BGFX_FATAL(_condition, _err, _format, ...)                             \
