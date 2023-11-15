@@ -907,6 +907,7 @@ namespace bgfx
 			CreateShader,
 			CreateProgram,
 			CreateTexture,
+			CreateTextureWrapped,
 			UpdateTexture,
 			ResizeTexture,
 			CreateFrameBuffer,
@@ -3076,6 +3077,8 @@ namespace bgfx
 		virtual void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) = 0;
 		virtual void destroyProgram(ProgramHandle _handle) = 0;
 		virtual void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip) = 0;
+		virtual void* createTextureWrapped(TextureHandle _handle, void *_platform_specific_wrapping_data) = 0;
+		virtual TextureRef createTextureWrappedRef(TextureHandle _handle, void* _platform_specific_wrapping_data) = 0;
 		virtual void updateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip) = 0;
 		virtual void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) = 0;
 		virtual void updateTextureEnd() = 0;
@@ -4566,6 +4569,20 @@ namespace bgfx
 
 			setDebugNameForHandle(handle);
 
+			return handle;
+		}
+
+		BGFX_API_FUNC(TextureHandle createTextureWrapped(void* _specific_platform_wrapping_data))
+		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+			TextureHandle handle = { m_textureHandle.alloc() };
+			m_textureRef[handle.idx] = m_renderCtx->createTextureWrappedRef(handle, _specific_platform_wrapping_data);
+
+			BX_WARN(isValid(handle), "Failed to allocate texture handle.");
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateTextureWrapped);
+			cmdbuf.write(handle);
+			cmdbuf.write(_specific_platform_wrapping_data);
+			setDebugNameForHandle(handle);
 			return handle;
 		}
 

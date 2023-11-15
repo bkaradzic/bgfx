@@ -1840,6 +1840,42 @@ namespace bgfx { namespace d3d12
 			return m_textures[_handle.idx].create(_mem, _flags, _skip);
 		}
 
+		void* createTextureWrapped(TextureHandle _handle, void* _specific_platform_wrapping_data) override
+		{
+			return m_textures[_handle.idx].create(_specific_platform_wrapping_data);
+		}
+
+		TextureRef createTextureWrappedRef(TextureHandle _handle, void* _specific_platform_wrapping_data) override
+		{
+			TextureRef ref{};
+			auto* wrap = static_cast<D3D12TextureWrapped*>(_specific_platform_wrapping_data);
+			wrap->resource->AddRef();
+			const auto& desc = wrap->resource->GetDesc();
+			const bool renderTarget = (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0;
+			const bool writeOnly = (desc.Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) != 0;
+			const bool computeWrite = (desc.Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) != 0;
+
+			uint64_t _flags = {};
+			_flags |= renderTarget ? BGFX_TEXTURE_RT : 0;
+			_flags |= writeOnly ? BGFX_TEXTURE_RT_WRITE_ONLY : 0;
+			_flags |= computeWrite ? BGFX_TEXTURE_COMPUTE_WRITE : 0;
+			ref.init(
+				BackbufferRatio::Equal,
+				(uint16_t)desc.Width,
+				(uint16_t)desc.Height,
+				1 /*depth*/,
+				TextureFormat::RGBA8,
+				desc.Width * desc.Height * 4,
+				1,
+				1,
+				true,
+				true,
+				false,
+				_flags
+			);
+			return ref;
+		}
+
 		void updateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/) override
 		{
 		}
@@ -4730,6 +4766,7 @@ namespace bgfx { namespace d3d12
 		m_layoutHandle = _layoutHandle;
 	}
 
+
 	void ShaderD3D12::create(const Memory* _mem)
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
@@ -5424,6 +5461,72 @@ namespace bgfx { namespace d3d12
 		}
 
 		return m_directAccessPtr;
+	}
+
+	void* TextureD3D12::create(void* _specific_platform_wrapping_data)
+	{
+		*this = {}; //Probably not necessary but for safety
+		auto* wrap = static_cast<D3D12TextureWrapped*>(_specific_platform_wrapping_data);
+		m_ptr = wrap->resource;
+		const auto& desc = m_ptr->GetDesc();
+		m_width = desc.Width;
+		m_height = desc.Height;
+
+		m_textureFormat = TextureFormat::RGBA8;
+
+		const TextureFormatInfo& tfi = s_textureFormat[m_textureFormat];
+		bx::memSet(&m_srvd, 0, sizeof(m_srvd));
+		m_srvd.Shader4ComponentMapping = tfi.m_mapping;
+		m_srvd.Format = (m_flags & BGFX_TEXTURE_SRGB) ? tfi.m_fmtSrgb : tfi.m_fmtSrv;
+		m_uavd.Format = tfi.m_fmtSrv;
+
+		m_requestedFormat = TextureFormat::RGBA8;
+
+		const bool renderTarget = (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0;
+		const bool writeOnly = (desc.Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) != 0;
+		const bool computeWrite = (desc.Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) != 0;
+
+		m_flags={};
+		m_flags |= renderTarget ?  BGFX_TEXTURE_RT : 0;
+		m_flags |= writeOnly ? BGFX_TEXTURE_RT_WRITE_ONLY : 0;
+		m_flags |= computeWrite ? BGFX_TEXTURE_COMPUTE_WRITE : 0;
+
+		switch (desc.Dimension)
+		{
+		case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
+			m_depth = 1;
+			m_numLayers = 1;
+			m_type = Texture2D;
+			m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+			m_srvd.Texture2D.MostDetailedMip = 0;
+			m_srvd.Texture2D.MipLevels = desc.MipLevels;
+			m_srvd.Texture2D.PlaneSlice = 0;
+			m_srvd.Texture2D.ResourceMinLODClamp = 0.0f;
+			m_uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+			m_uavd.Texture2D.MipSlice = 0;
+			m_uavd.Texture2D.PlaneSlice = 0;
+			break;
+		default:
+			_BGFX_ASSERT(false, "No implemented");
+		}
+
+		m_numMips = desc.MipLevels;
+		D3D12_RESOURCE_STATES nextState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		if (writeOnly) {
+			nextState = D3D12_RESOURCE_STATE_COMMON;
+		}
+		if (renderTarget) {
+			nextState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		}
+
+		ID3D12Device* device = s_renderD3D12->m_device;
+		ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
+
+		m_state = wrap->state;
+		setState(commandList, s_heapProperties[HeapProperty::Texture].m_state);
+		setState(commandList, nextState);
+
+		return nullptr;
 	}
 
 	void TextureD3D12::destroy()
