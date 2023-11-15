@@ -2301,6 +2301,39 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
+		void createFence(FenceHandle _handle, uint64_t _initialValue, uint64_t _flags) override
+		{
+			m_fences[_handle.idx] = FenceD3D12();
+			DX_CHECK(m_device->CreateFence(0
+				, D3D12_FENCE_FLAG_NONE
+				, IID_ID3D12Fence
+				, (void**)&m_fences[_handle.idx].m_fence
+			));
+			m_fences[_handle.idx].m_fence->SetName(L"User fence");
+		}
+
+		void fenceSignal(FenceHandle _handle, uint64_t _value) override
+		{
+			DX_CHECK(m_cmd.m_commandQueue->Signal(m_fences[_handle.idx].m_fence, _value));
+		}
+
+		void fenceWaitCPUSide(FenceHandle _handle, uint64_t _value) override
+		{
+			if (m_fences[_handle.idx].m_fence->GetCompletedValue() < _value)
+			{
+				HANDLE event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+				DX_CHECK(m_fences[_handle.idx].m_fence->SetEventOnCompletion(_value, event));
+				BX_ASSERT(WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0, "Error waiting fence event");
+			}
+		}
+
+		void destroyFence(FenceHandle _handle) override
+		{
+			m_fences[_handle.idx].m_fence->Release();
+			m_fences[_handle.idx].m_fence = NULL;
+		}
+
+
 		void preReset()
 		{
 			finishAll();
@@ -3660,6 +3693,7 @@ namespace bgfx { namespace d3d12
 		ShaderD3D12 m_shaders[BGFX_CONFIG_MAX_SHADERS];
 		ProgramD3D12 m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		TextureD3D12 m_textures[BGFX_CONFIG_MAX_TEXTURES];
+		FenceD3D12 m_fences[BGFX_CONFIG_MAX_FENCES];
 		VertexLayout m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
 		FrameBufferD3D12 m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];

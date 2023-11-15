@@ -305,6 +305,15 @@ namespace bgfx { namespace d3d12
 		uint8_t m_numPredefined;
 	};
 
+	struct FenceD3D12
+	{
+		FenceD3D12() : m_fence(NULL)
+		{
+
+		}
+		ID3D12Fence* m_fence;
+	};
+
 	struct TextureD3D12
 	{
 		enum Enum

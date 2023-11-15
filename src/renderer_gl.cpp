@@ -3383,6 +3383,26 @@ namespace bgfx { namespace gl
 			return {};
 		}
 
+		void createFence(FenceHandle /*_handle*/, uint64_t /*_initialValue*/, uint64_t /*_flags*/) override
+		{
+			BX_ASSERT(0, "Not implemented yet");
+		}
+
+		void fenceSignal(FenceHandle  /*_handle*/, uint64_t /*_value*/) override
+		{
+			BX_ASSERT(0, "Not implemented yet");
+		}
+
+		void fenceWaitCPUSide(FenceHandle  /*_handle*/, uint64_t /*_value*/) override
+		{
+			BX_ASSERT(0, "Not implemented yet");
+		}
+
+		void destroyFence(FenceHandle /*_handle*/) override
+		{
+			BX_ASSERT(0, "Not implemented yet");
+		}
+
 		void updateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/) override
 		{
 		}

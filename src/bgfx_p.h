@@ -908,6 +908,7 @@ namespace bgfx
 			CreateProgram,
 			CreateTexture,
 			CreateTextureWrapped,
+			FenceSignal,
 			UpdateTexture,
 			ResizeTexture,
 			CreateFrameBuffer,
@@ -3078,6 +3079,11 @@ namespace bgfx
 		virtual void destroyProgram(ProgramHandle _handle) = 0;
 		virtual void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip) = 0;
 		virtual void* createTextureWrapped(TextureHandle _handle, void *_platform_specific_wrapping_data) = 0;
+		virtual void createFence(FenceHandle _handle, uint64_t _initialValue, uint64_t _flags) = 0;
+		virtual void fenceSignal(FenceHandle _handle, uint64_t _value) = 0;
+		virtual void fenceWaitCPUSide(FenceHandle _handle, uint64_t _value) = 0;
+		virtual void destroyFence(FenceHandle _handle) = 0;
+
 		virtual TextureRef createTextureWrappedRef(TextureHandle _handle, void* _platform_specific_wrapping_data) = 0;
 		virtual void updateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip) = 0;
 		virtual void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) = 0;
@@ -3101,6 +3107,7 @@ namespace bgfx
 		virtual void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) = 0;
 		virtual void blitSetup(TextVideoMemBlitter& _blitter) = 0;
 		virtual void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) = 0;
+
 	};
 
 	inline RendererContextI::~RendererContextI()
@@ -4586,6 +4593,34 @@ namespace bgfx
 			return handle;
 		}
 
+		BGFX_API_FUNC(FenceHandle createFence(uint64_t _initialValue, uint64_t _flags))
+		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+			FenceHandle handle = { m_fenceHandle.alloc() };
+			m_renderCtx->createFence(handle, _initialValue, _flags);
+			return handle;
+		}
+
+		BGFX_API_FUNC(void fenceSignal(FenceHandle _handle, uint64_t _value))
+		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::FenceSignal);
+			cmdbuf.write(_handle);
+			cmdbuf.write(_value);
+		}
+
+		BGFX_API_FUNC(void fenceWaitCPUSide(FenceHandle _handle, uint64_t _value))
+		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+			m_renderCtx->fenceWaitCPUSide(_handle, _value);
+		}
+
+		BGFX_API_FUNC(void destroyFence(FenceHandle _handle))
+		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+			m_renderCtx->destroyFence(_handle);
+		}
+
 		BGFX_API_FUNC(void setName(TextureHandle _handle, const bx::StringView& _name) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
@@ -5345,6 +5380,7 @@ namespace bgfx
 		bx::HandleAllocT<BGFX_CONFIG_MAX_SHADERS> m_shaderHandle;
 		bx::HandleAllocT<BGFX_CONFIG_MAX_PROGRAMS> m_programHandle;
 		bx::HandleAllocT<BGFX_CONFIG_MAX_TEXTURES> m_textureHandle;
+		bx::HandleAllocT<BGFX_CONFIG_MAX_TEXTURES> m_fenceHandle;
 		bx::HandleAllocT<BGFX_CONFIG_MAX_FRAME_BUFFERS> m_frameBufferHandle;
 		bx::HandleAllocT<BGFX_CONFIG_MAX_UNIFORMS> m_uniformHandle;
 		bx::HandleAllocT<BGFX_CONFIG_MAX_OCCLUSION_QUERIES> m_occlusionQueryHandle;

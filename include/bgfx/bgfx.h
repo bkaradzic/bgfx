@@ -431,6 +431,7 @@ namespace bgfx
 	BGFX_HANDLE(UniformHandle)
 	BGFX_HANDLE(VertexBufferHandle)
 	BGFX_HANDLE(VertexLayoutHandle)
+	BGFX_HANDLE(FenceHandle)
 
 	/// Callback interface to implement application specific behavior.
 	/// Cached items are currently used for OpenGL and Direct3D 12 binary
@@ -622,6 +623,7 @@ namespace bgfx
 		/// @attention C99's equivalent binding is `bgfx_callback_vtbl.capture_frame`.
 		///
 		virtual void captureFrame(const void* _data, uint32_t _size) = 0;
+
 	};
 
 	inline CallbackI::~CallbackI()
@@ -2818,6 +2820,13 @@ namespace bgfx
 	TextureHandle createTextureWrapped(
 		void* _platform_specific_wrapping_data
 	    );
+
+
+	FenceHandle createFence(uint64_t _initialValue, uint64_t _flags = 0);
+	void fenceSignal(FenceHandle _handle, uint64_t _value);
+	void fenceWaitCPUSide(FenceHandle _handle, uint64_t _value);
+	void destroy(FenceHandle _handle);
+
 
 	/// Create texture with size based on back-buffer ratio. Texture will maintain ratio
 	/// if back buffer resolution changes.

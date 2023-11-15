@@ -3166,6 +3166,17 @@ namespace bgfx
 			}
 			break;
 
+			case CommandBuffer::FenceSignal:
+			{
+				BGFX_PROFILER_SCOPE("FenceSignal", 0xff2040ff);
+				FenceHandle handle;
+				_cmdbuf.read(handle);
+				uint64_t value;
+				_cmdbuf.read(value);
+				m_renderCtx->fenceSignal(handle, value);
+			}
+			break;
+
 			case CommandBuffer::UpdateTexture:
 				{
 					BGFX_PROFILER_SCOPE("UpdateTexture", 0xff2040ff);
@@ -4911,6 +4922,26 @@ namespace bgfx
 	TextureHandle createTextureWrapped(void* _platform_specific_wrapping_data)
 	{
 		return s_ctx->createTextureWrapped(_platform_specific_wrapping_data);
+	}
+
+	FenceHandle createFence(uint64_t _initialValue, uint64_t _flags)
+	{
+		return s_ctx->createFence(_initialValue, _flags);
+	}
+
+	void fenceSignal(FenceHandle _handle, uint64_t _value)
+	{
+		return s_ctx->fenceSignal(_handle, _value);
+	}
+
+	void fenceWaitCPUSide(FenceHandle _handle, uint64_t _value)
+	{
+		return s_ctx->fenceWaitCPUSide(_handle, _value);
+	}
+
+	void destroy(FenceHandle _handle)
+	{
+		s_ctx->destroyFence(_handle);
 	}
 
 	TextureHandle createTexture2D(BackbufferRatio::Enum _ratio, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags)
