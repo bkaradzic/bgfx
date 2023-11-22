@@ -1547,7 +1547,7 @@ namespace bgfx
 				}
 				else
 				{
-					if (profile->lang != ShadingLang::PSSL)
+					if (profile->lang == ShadingLang::PSSL)
 					{
 						preprocessor.writef(getPsslPreamble() );
 					}
