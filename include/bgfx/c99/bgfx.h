@@ -1657,6 +1657,8 @@ BGFX_C_API void bgfx_destroy_indirect_buffer(bgfx_indirect_buffer_handle_t _hand
 
 /**
  * Create shader from memory buffer.
+ * @remarks
+ *   Shader binary is obtained by compiling shader offline with shaderc command line tool.
  *
  * @param[in] _mem Shader binary.
  *

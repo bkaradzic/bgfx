@@ -2617,6 +2617,9 @@ namespace bgfx
 	///
 	/// @returns Shader handle.
 	///
+	/// @remarks
+	///   Shader binary is obtained by compiling shader offline with shaderc command line tool.
+	///
 	/// @attention C99's equivalent binding is `bgfx_create_shader`.
 	///
 	ShaderHandle createShader(const Memory* _mem);

@@ -481,6 +481,10 @@ Resources
 Shaders and Programs
 ~~~~~~~~~~~~~~~~~~~~
 
+.. note::
+
+    Shaders must be compiled with offline command line too shaderc.
+
 .. doxygenfunction:: bgfx::createShader
 .. doxygenfunction:: bgfx::getShaderUniforms
 .. doxygenfunction:: bgfx::destroy(ShaderHandle _handle)

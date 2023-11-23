@@ -2959,6 +2959,8 @@ public static partial class bgfx
 	
 	/// <summary>
 	/// Create shader from memory buffer.
+	/// @remarks
+	///   Shader binary is obtained by compiling shader offline with shaderc command line tool.
 	/// </summary>
 	///
 	/// <param name="_mem">Shader binary.</param>

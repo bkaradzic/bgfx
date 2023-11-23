@@ -2401,6 +2401,8 @@ pub inline fn destroyIndirectBuffer(_handle: IndirectBufferHandle) void {
 extern fn bgfx_destroy_indirect_buffer(_handle: IndirectBufferHandle) void;
 
 /// Create shader from memory buffer.
+/// @remarks
+///   Shader binary is obtained by compiling shader offline with shaderc command line tool.
 /// <param name="_mem">Shader binary.</param>
 pub inline fn createShader(_mem: [*c]const Memory) ShaderHandle {
     return bgfx_create_shader(_mem);

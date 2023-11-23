@@ -1563,6 +1563,10 @@ func.destroy { cname = "destroy_indirect_buffer" }
 	.handle "IndirectBufferHandle" --- Indirect buffer handle.
 
 --- Create shader from memory buffer.
+---
+--- @remarks
+---   Shader binary is obtained by compiling shader offline with shaderc command line tool.
+---
 func.createShader
 	"ShaderHandle"       --- Shader handle.
 	.mem "const Memory*" --- Shader binary.
