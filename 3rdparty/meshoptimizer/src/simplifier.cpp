@@ -580,7 +580,7 @@ static float quadricError(const Quadric& Q, const QuadricGrad* G, size_t attribu
 	}
 
 	// TODO: weight normalization is breaking attribute error somehow
-	float s = 1;// Q.w == 0.f ? 0.f : 1.f / Q.w;
+	float s = 1; // Q.w == 0.f ? 0.f : 1.f / Q.w;
 
 	return fabsf(r) * s;
 }
@@ -1325,7 +1325,7 @@ static void fillCellQuadrics(Quadric* cell_quadrics, const unsigned int* indices
 
 static void fillCellReservoirs(Reservoir* cell_reservoirs, size_t cell_count, const Vector3* vertex_positions, const float* vertex_colors, size_t vertex_colors_stride, size_t vertex_count, const unsigned int* vertex_cells)
 {
-	static const float dummy_color[] = { 0.f, 0.f, 0.f };
+	static const float dummy_color[] = {0.f, 0.f, 0.f};
 
 	size_t vertex_colors_stride_float = vertex_colors_stride / sizeof(float);
 
@@ -1380,7 +1380,7 @@ static void fillCellRemap(unsigned int* cell_remap, float* cell_errors, size_t c
 
 static void fillCellRemap(unsigned int* cell_remap, float* cell_errors, size_t cell_count, const unsigned int* vertex_cells, const Reservoir* cell_reservoirs, const Vector3* vertex_positions, const float* vertex_colors, size_t vertex_colors_stride, float color_weight, size_t vertex_count)
 {
-	static const float dummy_color[] = { 0.f, 0.f, 0.f };
+	static const float dummy_color[] = {0.f, 0.f, 0.f};
 
 	size_t vertex_colors_stride_float = vertex_colors_stride / sizeof(float);
 
@@ -1611,7 +1611,7 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 	}
 
 #if TRACE
-	printf("result: %d triangles, error: %e; total %d passes\n", int(result_count), sqrtf(result_error), int(pass_count));
+	printf("result: %d triangles, error: %e; total %d passes\n", int(result_count / 3), sqrtf(result_error), int(pass_count));
 #endif
 
 #ifndef NDEBUG
