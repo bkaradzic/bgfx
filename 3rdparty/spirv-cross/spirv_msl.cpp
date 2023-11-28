@@ -189,6 +189,11 @@ bool CompilerMSL::is_msl_resource_binding_used(ExecutionModel model, uint32_t de
 	return itr != end(resource_bindings) && itr->second.second;
 }
 
+bool CompilerMSL::is_var_runtime_size_array(const SPIRVariable &var) const
+{
+	return is_runtime_size_array(get_variable_data_type(var)) && get_resource_array_size(var.self) == 0;
+}
+
 // Returns the size of the array of resources used by the variable with the specified id.
 // The returned value is retrieved from the resource binding added using add_msl_resource_binding().
 uint32_t CompilerMSL::get_resource_array_size(uint32_t id) const
@@ -1269,8 +1274,7 @@ void CompilerMSL::emit_entry_point_declarations()
 			args.push_back(join("max_anisotropy(", s.max_anisotropy, ")"));
 		if (s.lod_clamp_enable)
 		{
-			args.push_back(join("lod_clamp(", convert_to_string(s.lod_clamp_min, current_locale_radix_character), ", ",
-			                    convert_to_string(s.lod_clamp_max, current_locale_radix_character), ")"));
+			args.push_back(join("lod_clamp(", format_float(s.lod_clamp_min), ", ", format_float(s.lod_clamp_max), ")"));
 		}
 
 		// If we would emit no arguments, then omit the parentheses entirely. Otherwise,
@@ -1361,7 +1365,7 @@ void CompilerMSL::emit_entry_point_declarations()
 		const auto &type = get_variable_data_type(var);
 		const auto &buffer_type = get_variable_element_type(var);
 		const string name = to_name(var.self);
-		if (is_runtime_size_array(type))
+		if (is_var_runtime_size_array(var))
 		{
 			if (msl_options.argument_buffers_tier < Options::ArgumentBuffersTier::Tier2)
 			{
@@ -4771,8 +4775,16 @@ void CompilerMSL::ensure_member_packing_rules_msl(SPIRType &ib_type, uint32_t in
 
 		if (elems_per_stride == 3)
 			SPIRV_CROSS_THROW("Cannot use ArrayStride of 3 elements in remapping scenarios.");
-		else if (elems_per_stride > 4)
+		else if (elems_per_stride > 4 && elems_per_stride != 8)
 			SPIRV_CROSS_THROW("Cannot represent vectors with more than 4 elements in MSL.");
+
+		if (elems_per_stride == 8)
+		{
+			if (mbr_type.width == 16)
+				add_spv_func_and_recompile(SPVFuncImplPaddedStd140);
+			else
+				SPIRV_CROSS_THROW("Unexpected type in std140 wide array resolve.");
+		}
 
 		auto physical_type = mbr_type;
 		physical_type.vecsize = elems_per_stride;
@@ -4805,13 +4817,20 @@ void CompilerMSL::ensure_member_packing_rules_msl(SPIRType &ib_type, uint32_t in
 
 		if (elems_per_stride == 3)
 			SPIRV_CROSS_THROW("Cannot use ArrayStride of 3 elements in remapping scenarios.");
-		else if (elems_per_stride > 4)
+		else if (elems_per_stride > 4 && elems_per_stride != 8)
 			SPIRV_CROSS_THROW("Cannot represent vectors with more than 4 elements in MSL.");
 
-		bool row_major = has_member_decoration(ib_type.self, index, DecorationRowMajor);
+		if (elems_per_stride == 8)
+		{
+			if (mbr_type.basetype != SPIRType::Half)
+				SPIRV_CROSS_THROW("Unexpected type in std140 wide matrix stride resolve.");
+			add_spv_func_and_recompile(SPVFuncImplPaddedStd140);
+		}
 
+		bool row_major = has_member_decoration(ib_type.self, index, DecorationRowMajor);
 		auto physical_type = mbr_type;
 		physical_type.parent_type = 0;
+
 		if (row_major)
 			physical_type.columns = elems_per_stride;
 		else
@@ -5110,6 +5129,13 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 			{
 				auto lhs_expr = to_enclosed_expression(lhs_expression);
 				auto column_index = lhs_expr.find_last_of('[');
+
+				// Get rid of any ".data" half8 handling here, we're casting to scalar anyway.
+				auto end_column_index = lhs_expr.find_last_of(']');
+				auto end_dot_index = lhs_expr.find_last_of('.');
+				if (end_dot_index != string::npos && end_dot_index > end_column_index)
+					lhs_expr.resize(end_dot_index);
+
 				if (column_index != string::npos)
 				{
 					statement("((", cast_addr_space, " ", type_to_glsl(write_type), "*)&",
@@ -5120,7 +5146,9 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 
 			lhs_e->need_transpose = true;
 		}
-		else if ((is_matrix(physical_type) || is_array(physical_type)) && physical_type.vecsize > type.vecsize)
+		else if ((is_matrix(physical_type) || is_array(physical_type)) &&
+		         physical_type.vecsize <= 4 &&
+		         physical_type.vecsize > type.vecsize)
 		{
 			assert(type.vecsize >= 1 && type.vecsize <= 3);
 
@@ -5177,19 +5205,26 @@ string CompilerMSL::unpack_expression_type(string expr_str, const SPIRType &type
 		".x",
 		".xy",
 		".xyz",
+		"",
 	};
 
+	// TODO: Move everything to the template wrapper?
+	bool uses_std140_wrapper = physical_type && physical_type->vecsize > 4;
+
 	if (physical_type && is_vector(*physical_type) && is_array(*physical_type) &&
+	    !uses_std140_wrapper &&
 	    physical_type->vecsize > type.vecsize && !expression_ends_with(expr_str, swizzle_lut[type.vecsize - 1]))
 	{
 		// std140 array cases for vectors.
 		assert(type.vecsize >= 1 && type.vecsize <= 3);
 		return enclose_expression(expr_str) + swizzle_lut[type.vecsize - 1];
 	}
-	else if (physical_type && is_matrix(*physical_type) && is_vector(type) && physical_type->vecsize > type.vecsize)
+	else if (physical_type && is_matrix(*physical_type) && is_vector(type) &&
+	         !uses_std140_wrapper &&
+	         physical_type->vecsize > type.vecsize)
 	{
 		// Extract column from padded matrix.
-		assert(type.vecsize >= 1 && type.vecsize <= 3);
+		assert(type.vecsize >= 1 && type.vecsize <= 4);
 		return enclose_expression(expr_str) + swizzle_lut[type.vecsize - 1];
 	}
 	else if (is_matrix(type))
@@ -5211,6 +5246,7 @@ string CompilerMSL::unpack_expression_type(string expr_str, const SPIRType &type
 		string unpack_expr = join(base_type, columns, "x", vecsize, "(");
 
 		const char *load_swiz = "";
+		const char *data_swiz = physical_vecsize > 4 ? ".data" : "";
 
 		if (physical_vecsize != vecsize)
 			load_swiz = swizzle_lut[vecsize - 1];
@@ -5223,7 +5259,7 @@ string CompilerMSL::unpack_expression_type(string expr_str, const SPIRType &type
 			if (packed)
 				unpack_expr += join(base_type, physical_vecsize, "(", expr_str, "[", i, "]", ")", load_swiz);
 			else
-				unpack_expr += join(expr_str, "[", i, "]", load_swiz);
+				unpack_expr += join(expr_str, "[", i, "]", data_swiz, load_swiz);
 		}
 
 		unpack_expr += ")";
@@ -7331,6 +7367,15 @@ void CompilerMSL::emit_custom_functions()
 			}
 			break;
 
+		case SPVFuncImplPaddedStd140:
+			// .data is used in access chain.
+			statement("template <typename T>");
+			statement("struct spvPaddedStd140 { alignas(16) T data; };");
+			statement("template <typename T, int n>");
+			statement("using spvPaddedStd140Matrix = spvPaddedStd140<T>[n];");
+			statement("");
+			break;
+
 		default:
 			break;
 		}
@@ -8334,7 +8379,7 @@ bool CompilerMSL::is_out_of_bounds_tessellation_level(uint32_t id_lhs)
 	       (builtin == BuiltInTessLevelOuter && c->scalar() == 3);
 }
 
-void CompilerMSL::prepare_access_chain_for_scalar_access(std::string &expr, const SPIRType &type,
+bool CompilerMSL::prepare_access_chain_for_scalar_access(std::string &expr, const SPIRType &type,
                                                          spv::StorageClass storage, bool &is_packed)
 {
 	// If there is any risk of writes happening with the access chain in question,
@@ -8348,7 +8393,10 @@ void CompilerMSL::prepare_access_chain_for_scalar_access(std::string &expr, cons
 
 		// Further indexing should happen with packed rules (array index, not swizzle).
 		is_packed = true;
+		return true;
 	}
+	else
+		return false;
 }
 
 bool CompilerMSL::access_chain_needs_stage_io_builtin_translation(uint32_t base)
@@ -10503,7 +10551,7 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 			// Manufacture automatic sampler arg for SampledImage texture
 			if (arg_type.image.dim != DimBuffer)
 			{
-				if (arg_type.array.empty() || is_runtime_size_array(arg_type))
+				if (arg_type.array.empty() || (var ? is_var_runtime_size_array(*var) : is_runtime_size_array(arg_type)))
 				{
 					decl += join(", ", sampler_type(arg_type, arg.id), " ", to_sampler_expression(name_id));
 				}
@@ -11693,8 +11741,7 @@ string CompilerMSL::to_buffer_size_expression(uint32_t id)
 		auto array_expr = expr.substr(index);
 		if (auto var = maybe_get_backing_variable(id))
 		{
-			auto &var_type = get<SPIRType>(var->basetype);
-			if (is_runtime_size_array(var_type))
+			if (is_var_runtime_size_array(*var))
 			{
 				if (!msl_options.runtime_array_rich_descriptor)
 					SPIRV_CROSS_THROW("OpArrayLength requires rich descriptor format");
@@ -11773,6 +11820,7 @@ void CompilerMSL::emit_fixup()
 string CompilerMSL::to_struct_member(const SPIRType &type, uint32_t member_type_id, uint32_t index,
                                      const string &qualifier)
 {
+	uint32_t orig_member_type_id = member_type_id;
 	if (member_is_remapped_physical_type(type, index))
 		member_type_id = get_extended_member_decoration(type.self, index, SPIRVCrossDecorationPhysicalTypeID);
 	auto &physical_type = get<SPIRType>(member_type_id);
@@ -11884,7 +11932,24 @@ string CompilerMSL::to_struct_member(const SPIRType &type, uint32_t member_type_
 		array_type = type_to_array_glsl(physical_type);
 	}
 
-	auto result = join(pack_pfx, type_to_glsl(*declared_type, orig_id, true), " ", qualifier,
+	string decl_type;
+	if (declared_type->vecsize > 4)
+	{
+		auto orig_type = get<SPIRType>(orig_member_type_id);
+		if (is_matrix(orig_type) && row_major)
+			swap(orig_type.vecsize, orig_type.columns);
+		orig_type.columns = 1;
+		decl_type = type_to_glsl(orig_type, orig_id, true);
+
+		if (declared_type->columns > 1)
+			decl_type = join("spvPaddedStd140Matrix<", decl_type, ", ", declared_type->columns, ">");
+		else
+			decl_type = join("spvPaddedStd140<", decl_type, ">");
+	}
+	else
+		decl_type = type_to_glsl(*declared_type, orig_id, true);
+
+	auto result = join(pack_pfx, decl_type, " ", qualifier,
 	                   to_member_name(type, index), member_attribute_qualifier(type, index), array_type, ";");
 
 	is_using_builtin_array = false;
@@ -13227,7 +13292,7 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 				uint32_t array_size = to_array_size_literal(type);
 
 				is_using_builtin_array = true;
-				if (is_runtime_size_array(type))
+				if (is_var_runtime_size_array(var))
 				{
 					add_spv_func_and_recompile(SPVFuncImplVariableDescriptorArray);
 					if (!ep_args.empty())
@@ -13289,7 +13354,7 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 			if (!ep_args.empty())
 				ep_args += ", ";
 			ep_args += sampler_type(type, var_id) + " " + r.name;
-			if (is_runtime_size_array(type))
+			if (is_var_runtime_size_array(var))
 				ep_args += "_ [[buffer(" + convert_to_string(r.index) + ")]]";
 			else
 				ep_args += " [[sampler(" + convert_to_string(r.index) + ")]]";
@@ -13307,7 +13372,7 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 				if (r.plane > 0)
 					ep_args += join(plane_name_suffix, r.plane);
 
-				if (is_runtime_size_array(type))
+				if (is_var_runtime_size_array(var))
 					ep_args += "_ [[buffer(" + convert_to_string(r.index) + ")";
 				else
 					ep_args += " [[texture(" + convert_to_string(r.index) + ")";
@@ -13338,17 +13403,21 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 		}
 		case SPIRType::AccelerationStructure:
 		{
-			if (is_runtime_size_array(type))
+			if (is_var_runtime_size_array(var))
 			{
 				add_spv_func_and_recompile(SPVFuncImplVariableDescriptor);
 				const auto &parent_type = get<SPIRType>(type.parent_type);
-				ep_args += ", const device spvDescriptor<" + type_to_glsl(parent_type) + ">* " +
+				if (!ep_args.empty())
+					ep_args += ", ";
+				ep_args += "const device spvDescriptor<" + type_to_glsl(parent_type) + ">* " +
 				           to_restrict(var_id, true) + r.name + "_";
 				ep_args += " [[buffer(" + convert_to_string(r.index) + ")]]";
 			}
 			else
 			{
-				ep_args += ", " + type_to_glsl(type, var_id) + " " + r.name;
+				if (!ep_args.empty())
+					ep_args += ", ";
+				ep_args += type_to_glsl(type, var_id) + " " + r.name;
 				ep_args += " [[buffer(" + convert_to_string(r.index) + ")]]";
 			}
 			break;
@@ -13440,7 +13509,7 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 				entry_func.fixup_hooks_in.push_back(
 				    [this, &type, &var, var_id]()
 				    {
-					    bool is_array_type = !type.array.empty() && !is_runtime_size_array(type);
+					    bool is_array_type = !type.array.empty() && !is_var_runtime_size_array(var);
 
 					    uint32_t desc_set = get_decoration(var_id, DecorationDescriptorSet);
 					    if (descriptor_set_is_argument_buffer(desc_set))
@@ -14056,7 +14125,7 @@ uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::Base
 	}
 	else
 	{
-		if (is_runtime_size_array(type))
+		if (is_var_runtime_size_array(var))
 		{
 			basetype = SPIRType::Struct;
 			binding_stride = 1;
@@ -14214,7 +14283,7 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 		else
 			decl = join(cv_qualifier, type_to_glsl(type, arg.id));
 	}
-	else if (is_runtime_size_array(type))
+	else if (is_var_runtime_size_array(var))
 	{
 		const auto *parent_type = &get<SPIRType>(type.parent_type);
 		auto type_name = type_to_glsl(*parent_type, arg.id);
@@ -14316,7 +14385,7 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 				decl += join("[", array_size, "]");
 			}
 		}
-		else if (is_runtime_size_array(type))
+		else if (is_var_runtime_size_array(var))
 		{
 			decl += " " + to_expression(name_id);
 		}
@@ -14366,7 +14435,7 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 	}
 	else if (type_is_image || type_is_tlas)
 	{
-		if (is_runtime_size_array(type))
+		if (is_var_runtime_size_array(var))
 		{
 			decl = address_space + " " + decl + " " + to_expression(name_id);
 		}
@@ -14595,6 +14664,7 @@ const std::unordered_set<std::string> &CompilerMSL::get_illegal_func_names()
 		"assert",
 		"fmin3",
 		"fmax3",
+		"divide",
 		"VARIABLE_TRACEPOINT",
 		"STATIC_DATA_TRACEPOINT",
 		"STATIC_DATA_TRACEPOINT_V",

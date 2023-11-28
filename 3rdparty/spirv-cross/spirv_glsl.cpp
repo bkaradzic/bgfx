@@ -5936,7 +5936,7 @@ string CompilerGLSL::convert_half_to_string(const SPIRConstant &c, uint32_t col,
 		type.basetype = SPIRType::Half;
 		type.vecsize = 1;
 		type.columns = 1;
-		res = join(type_to_glsl(type), "(", convert_to_string(float_value, current_locale_radix_character), ")");
+		res = join(type_to_glsl(type), "(", format_float(float_value), ")");
 	}
 
 	return res;
@@ -6004,7 +6004,7 @@ string CompilerGLSL::convert_float_to_string(const SPIRConstant &c, uint32_t col
 	}
 	else
 	{
-		res = convert_to_string(float_value, current_locale_radix_character);
+		res = format_float(float_value);
 		if (backend.float_literal_suffix)
 			res += "f";
 	}
@@ -6087,7 +6087,7 @@ std::string CompilerGLSL::convert_double_to_string(const SPIRConstant &c, uint32
 	}
 	else
 	{
-		res = convert_to_string(double_value, current_locale_radix_character);
+		res = format_double(double_value);
 		if (backend.double_literal_suffix)
 			res += "lf";
 	}
@@ -10176,6 +10176,16 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 			type_id = type->parent_type;
 			type = &get<SPIRType>(type_id);
 
+			// If the physical type has an unnatural vecsize,
+			// we must assume it's a faked struct where the .data member
+			// is used for the real payload.
+			if (physical_type && (is_vector(*type) || is_scalar(*type)))
+			{
+				auto &phys = get<SPIRType>(physical_type);
+				if (phys.vecsize > 4)
+					expr += ".data";
+			}
+
 			access_chain_is_arrayed = true;
 		}
 		// For structs, the index refers to a constant, which indexes into the members, possibly through a redirection mapping.
@@ -10261,6 +10271,16 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 				expr += to_unpacked_expression(index, register_expression_read);
 			expr += "]";
 
+			// If the physical type has an unnatural vecsize,
+			// we must assume it's a faked struct where the .data member
+			// is used for the real payload.
+			if (physical_type)
+			{
+				auto &phys = get<SPIRType>(physical_type);
+				if (phys.vecsize > 4 || phys.columns > 4)
+					expr += ".data";
+			}
+
 			type_id = type->parent_type;
 			type = &get<SPIRType>(type_id);
 		}
@@ -10275,6 +10295,18 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 				if (column_index != string::npos)
 				{
 					deferred_index = expr.substr(column_index);
+
+					auto end_deferred_index = deferred_index.find_last_of(']');
+					if (end_deferred_index != string::npos && end_deferred_index + 1 != deferred_index.size())
+					{
+						// If we have any data member fixups, it must be transposed so that it refers to this index.
+						// E.g. [0].data followed by [1] would be shuffled to [1][0].data which is wrong,
+						// and needs to be [1].data[0] instead.
+						end_deferred_index++;
+						deferred_index = deferred_index.substr(end_deferred_index) +
+						                 deferred_index.substr(0, end_deferred_index);
+					}
+
 					expr.resize(column_index);
 				}
 			}
@@ -10353,8 +10385,14 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 
 			if (row_major_matrix_needs_conversion && !ignore_potential_sliced_writes)
 			{
-				prepare_access_chain_for_scalar_access(expr, get<SPIRType>(type->parent_type), effective_storage,
-				                                       is_packed);
+				if (prepare_access_chain_for_scalar_access(expr, get<SPIRType>(type->parent_type), effective_storage,
+				                                           is_packed))
+				{
+					// We're in a pointer context now, so just remove any member dereference.
+					auto first_index = deferred_index.find_first_of('[');
+					if (first_index != string::npos && first_index != 0)
+						deferred_index = deferred_index.substr(first_index);
+				}
 			}
 
 			if (access_meshlet_position_y)
@@ -10413,8 +10451,9 @@ void CompilerGLSL::check_physical_type_cast(std::string &, const SPIRType *, uin
 {
 }
 
-void CompilerGLSL::prepare_access_chain_for_scalar_access(std::string &, const SPIRType &, spv::StorageClass, bool &)
+bool CompilerGLSL::prepare_access_chain_for_scalar_access(std::string &, const SPIRType &, spv::StorageClass, bool &)
 {
+	return false;
 }
 
 string CompilerGLSL::to_flattened_struct_member(const string &basename, const SPIRType &type, uint32_t index)
@@ -14957,6 +14996,17 @@ string CompilerGLSL::convert_row_major_matrix(string exp_str, const SPIRType &ex
 		auto column_expr = exp_str.substr(column_index);
 		exp_str.resize(column_index);
 
+		auto end_deferred_index = column_expr.find_last_of(']');
+		if (end_deferred_index != string::npos && end_deferred_index + 1 != column_expr.size())
+		{
+			// If we have any data member fixups, it must be transposed so that it refers to this index.
+			// E.g. [0].data followed by [1] would be shuffled to [1][0].data which is wrong,
+			// and needs to be [1].data[0] instead.
+			end_deferred_index++;
+			column_expr = column_expr.substr(end_deferred_index) +
+			              column_expr.substr(0, end_deferred_index);
+		}
+
 		auto transposed_expr = type_to_glsl_constructor(exp_type) + "(";
 
 		// Loading a column from a row-major matrix. Unroll the load.
@@ -15051,7 +15101,12 @@ string CompilerGLSL::flags_to_qualifiers_glsl(const SPIRType &type, const Bitset
 	{
 		auto &execution = get_entry_point();
 
-		if (flags.get(DecorationRelaxedPrecision))
+		if (type.basetype == SPIRType::UInt && is_legacy_es())
+		{
+			// HACK: This is a bool. See comment in type_to_glsl().
+			qual += "lowp ";
+		}
+		else if (flags.get(DecorationRelaxedPrecision))
 		{
 			bool implied_fmediump = type.basetype == SPIRType::Float &&
 			                        options.fragment.default_float_precision == Options::Mediump &&
@@ -15585,7 +15640,11 @@ string CompilerGLSL::type_to_glsl(const SPIRType &type, uint32_t id)
 	if (type.basetype == SPIRType::UInt && is_legacy())
 	{
 		if (options.es)
-			SPIRV_CROSS_THROW("Unsigned integers are not supported on legacy ESSL.");
+			// HACK: spirv-cross changes bools into uints and generates code which compares them to
+			// zero. Input code will have already been validated as not to have contained any uints,
+			// so any remaining uints must in fact be bools. However, simply returning "bool" here
+			// will result in invalid code. Instead, return an int.
+			return backend.basic_int_type;
 		else
 			require_extension_internal("GL_EXT_gpu_shader4");
 	}
@@ -18634,3 +18693,22 @@ uint32_t CompilerGLSL::type_to_location_count(const SPIRType &type) const
 
 	return count;
 }
+
+std::string CompilerGLSL::format_float(float value) const
+{
+	if (float_formatter)
+		return float_formatter->format_float(value);
+
+	// default behavior
+	return convert_to_string(value, current_locale_radix_character);
+}
+
+std::string CompilerGLSL::format_double(double value) const
+{
+	if (float_formatter)
+		return float_formatter->format_double(value);
+
+	// default behavior
+	return convert_to_string(value, current_locale_radix_character);
+}
+
