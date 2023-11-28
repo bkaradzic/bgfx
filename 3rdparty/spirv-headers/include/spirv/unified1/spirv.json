@@ -630,9 +630,6 @@
                     "SingleElementVectorINTEL": 6085,
                     "VectorComputeCallableFunctionINTEL": 6087,
                     "MediaBlockIOINTEL": 6140,
-                    "InitModeINTEL": 6147,
-                    "ImplementInRegisterMapINTEL": 6148,
-                    "HostAccessINTEL": 6168,
                     "FPMaxErrorDecorationINTEL": 6170,
                     "LatencyControlLabelINTEL": 6172,
                     "LatencyControlConstraintINTEL": 6173,
@@ -645,6 +642,9 @@
                     "MMHostInterfaceMaxBurstINTEL": 6181,
                     "MMHostInterfaceWaitRequestINTEL": 6182,
                     "StableKernelArgumentINTEL": 6183,
+                    "HostAccessINTEL": 6188,
+                    "InitModeINTEL": 6190,
+                    "ImplementInRegisterMapINTEL": 6191,
                     "CacheControlLoadINTEL": 6442,
                     "CacheControlStoreINTEL": 6443
                 }
@@ -1178,12 +1178,12 @@
                     "DebugInfoModuleINTEL": 6114,
                     "BFloat16ConversionINTEL": 6115,
                     "SplitBarrierINTEL": 6141,
-                    "GlobalVariableFPGADecorationsINTEL": 6146,
                     "FPGAKernelAttributesv2INTEL": 6161,
-                    "GlobalVariableHostAccessINTEL": 6167,
                     "FPMaxErrorINTEL": 6169,
                     "FPGALatencyControlINTEL": 6171,
                     "FPGAArgumentInterfacesINTEL": 6174,
+                    "GlobalVariableHostAccessINTEL": 6187,
+                    "GlobalVariableFPGADecorationsINTEL": 6189,
                     "GroupUniformArithmeticKHR": 6400,
                     "CacheControlsINTEL": 6441
                 }
