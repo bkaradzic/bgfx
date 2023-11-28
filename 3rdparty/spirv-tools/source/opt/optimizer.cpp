@@ -446,6 +446,11 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
   } else if (pass_name == "relax-float-ops") {
     RegisterPass(CreateRelaxFloatOpsPass());
   } else if (pass_name == "inst-debug-printf") {
+    // This private option is not for user consumption.
+    // It is here to assist in debugging and fixing the debug printf
+    // instrumentation pass.
+    // For users who wish to utilize debug printf, see the white paper at
+    // https://www.lunarg.com/wp-content/uploads/2021/08/Using-Debug-Printf-02August2021.pdf
     RegisterPass(CreateInstDebugPrintfPass(7, 23));
   } else if (pass_name == "simplify-instructions") {
     RegisterPass(CreateSimplificationPass());

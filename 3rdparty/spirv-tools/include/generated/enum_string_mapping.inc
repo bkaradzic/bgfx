@@ -708,18 +708,18 @@ const char* CapabilityToString(spv::Capability capability) {
       return "BFloat16ConversionINTEL";
     case spv::Capability::SplitBarrierINTEL:
       return "SplitBarrierINTEL";
-    case spv::Capability::GlobalVariableFPGADecorationsINTEL:
-      return "GlobalVariableFPGADecorationsINTEL";
     case spv::Capability::FPGAKernelAttributesv2INTEL:
       return "FPGAKernelAttributesv2INTEL";
-    case spv::Capability::GlobalVariableHostAccessINTEL:
-      return "GlobalVariableHostAccessINTEL";
     case spv::Capability::FPMaxErrorINTEL:
       return "FPMaxErrorINTEL";
     case spv::Capability::FPGALatencyControlINTEL:
       return "FPGALatencyControlINTEL";
     case spv::Capability::FPGAArgumentInterfacesINTEL:
       return "FPGAArgumentInterfacesINTEL";
+    case spv::Capability::GlobalVariableHostAccessINTEL:
+      return "GlobalVariableHostAccessINTEL";
+    case spv::Capability::GlobalVariableFPGADecorationsINTEL:
+      return "GlobalVariableFPGADecorationsINTEL";
     case spv::Capability::GroupUniformArithmeticKHR:
       return "GroupUniformArithmeticKHR";
     case spv::Capability::CacheControlsINTEL:
