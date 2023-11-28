@@ -43,6 +43,7 @@
 #include "spirv.hpp"
 #include "GlslangToSpv.h"
 #include "SpvBuilder.h"
+#include "SpvTools.h"
 namespace spv {
     #include "GLSL.std.450.h"
     #include "GLSL.ext.KHR.h"
@@ -66,6 +67,7 @@ namespace spv {
 #include <iomanip>
 #include <list>
 #include <map>
+#include <optional>
 #include <stack>
 #include <string>
 #include <vector>
@@ -164,6 +166,7 @@ protected:
     spv::Id convertGlslangToSpvType(const glslang::TType& type, bool forwardReferenceOnly = false);
     spv::Id convertGlslangToSpvType(const glslang::TType& type, glslang::TLayoutPacking, const glslang::TQualifier&,
         bool lastBufferBlockMember, bool forwardReferenceOnly = false);
+    void applySpirvDecorate(const glslang::TType& type, spv::Id id, std::optional<int> member);
     bool filterMember(const glslang::TType& member);
     spv::Id convertGlslangStructToSpvType(const glslang::TType&, const glslang::TTypeList* glslangStruct,
                                           glslang::TLayoutPacking, const glslang::TQualifier&);
@@ -4705,6 +4708,64 @@ spv::Id TGlslangToSpvTraverser::convertGlslangToSpvType(const glslang::TType& ty
     return spvType;
 }
 
+// Apply SPIR-V decorations to the SPIR-V object (provided by SPIR-V ID). If member index is provided, the
+// decorations are applied to this member.
+void TGlslangToSpvTraverser::applySpirvDecorate(const glslang::TType& type, spv::Id id, std::optional<int> member)
+{
+    assert(type.getQualifier().hasSpirvDecorate());
+
+    const glslang::TSpirvDecorate& spirvDecorate = type.getQualifier().getSpirvDecorate();
+
+    // Add spirv_decorate
+    for (auto& decorate : spirvDecorate.decorates) {
+        if (!decorate.second.empty()) {
+            std::vector<unsigned> literals;
+            TranslateLiterals(decorate.second, literals);
+            if (member.has_value())
+                builder.addMemberDecoration(id, *member, static_cast<spv::Decoration>(decorate.first), literals);
+            else
+                builder.addDecoration(id, static_cast<spv::Decoration>(decorate.first), literals);
+        } else {
+            if (member.has_value())
+                builder.addMemberDecoration(id, *member, static_cast<spv::Decoration>(decorate.first));
+            else
+                builder.addDecoration(id, static_cast<spv::Decoration>(decorate.first));
+        }
+    }
+
+    // Add spirv_decorate_id
+    if (member.has_value()) {
+        // spirv_decorate_id not applied to members
+        assert(spirvDecorate.decorateIds.empty());
+    } else {
+        for (auto& decorateId : spirvDecorate.decorateIds) {
+            std::vector<spv::Id> operandIds;
+            assert(!decorateId.second.empty());
+            for (auto extraOperand : decorateId.second) {
+                if (extraOperand->getQualifier().isFrontEndConstant())
+                    operandIds.push_back(createSpvConstant(*extraOperand));
+                else
+                    operandIds.push_back(getSymbolId(extraOperand->getAsSymbolNode()));
+            }
+            builder.addDecorationId(id, static_cast<spv::Decoration>(decorateId.first), operandIds);
+        }
+    }
+
+    // Add spirv_decorate_string
+    for (auto& decorateString : spirvDecorate.decorateStrings) {
+        std::vector<const char*> strings;
+        assert(!decorateString.second.empty());
+        for (auto extraOperand : decorateString.second) {
+            const char* string = extraOperand->getConstArray()[0].getSConst()->c_str();
+            strings.push_back(string);
+        }
+        if (member.has_value())
+            builder.addMemberDecoration(id, *member, static_cast<spv::Decoration>(decorateString.first), strings);
+        else
+            builder.addDecoration(id, static_cast<spv::Decoration>(decorateString.first), strings);
+    }
+}
+
 // TODO: this functionality should exist at a higher level, in creating the AST
 //
 // Identify interface members that don't have their required extension turned on.
@@ -4943,37 +5004,9 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
             builder.addExtension(spv::E_SPV_NV_geometry_shader_passthrough);
         }
 
-        //
-        // Add SPIR-V decorations for members (GL_EXT_spirv_intrinsics)
-        //
-        if (glslangMember.getQualifier().hasSprivDecorate()) {
-            const glslang::TSpirvDecorate& spirvDecorate = glslangMember.getQualifier().getSpirvDecorate();
-
-            // Add spirv_decorate
-            for (auto& decorate : spirvDecorate.decorates) {
-                if (!decorate.second.empty()) {
-                    std::vector<unsigned> literals;
-                    TranslateLiterals(decorate.second, literals);
-                    builder.addMemberDecoration(spvType, member, static_cast<spv::Decoration>(decorate.first), literals);
-                }
-                else
-                    builder.addMemberDecoration(spvType, member, static_cast<spv::Decoration>(decorate.first));
-            }
-
-            // spirv_decorate_id not applied to members
-            assert(spirvDecorate.decorateIds.empty());
-
-            // Add spirv_decorate_string
-            for (auto& decorateString : spirvDecorate.decorateStrings) {
-                std::vector<const char*> strings;
-                assert(!decorateString.second.empty());
-                for (auto extraOperand : decorateString.second) {
-                    const char* string = extraOperand->getConstArray()[0].getSConst()->c_str();
-                    strings.push_back(string);
-                }
-                builder.addDecoration(spvType, static_cast<spv::Decoration>(decorateString.first), strings);
-            }
-        }
+        // Add SPIR-V decorations (GL_EXT_spirv_intrinsics)
+        if (glslangMember.getQualifier().hasSpirvDecorate())
+            applySpirvDecorate(glslangMember, spvType, member);
     }
 
     // Decorate the structure
@@ -5462,7 +5495,7 @@ void TGlslangToSpvTraverser::makeFunctions(const glslang::TIntermSequence& glslF
         spv::Function* function = builder.makeFunctionEntry(
             TranslatePrecisionDecoration(glslFunction->getType()), convertGlslangToSpvType(glslFunction->getType()),
             glslFunction->getName().c_str(), convertGlslangLinkageToSpv(glslFunction->getLinkType()), paramTypes,
-            paramNames, paramDecorations, &functionBlock);
+            paramDecorations, &functionBlock);
         builder.setupDebugFunctionEntry(function, glslFunction->getName().c_str(), glslFunction->getLoc().line,
                                         paramTypes, paramNames);
         if (implicitThis)
@@ -9598,47 +9631,9 @@ spv::Id TGlslangToSpvTraverser::getSymbolId(const glslang::TIntermSymbol* symbol
             spv::DecorationRestrictPointerEXT : spv::DecorationAliasedPointerEXT);
     }
 
-    //
-    // Add SPIR-V decorations for structure (GL_EXT_spirv_intrinsics)
-    //
-    if (symbol->getType().getQualifier().hasSprivDecorate()) {
-        const glslang::TSpirvDecorate& spirvDecorate = symbol->getType().getQualifier().getSpirvDecorate();
-
-        // Add spirv_decorate
-        for (auto& decorate : spirvDecorate.decorates) {
-            if (!decorate.second.empty()) {
-                std::vector<unsigned> literals;
-                TranslateLiterals(decorate.second, literals);
-                builder.addDecoration(id, static_cast<spv::Decoration>(decorate.first), literals);
-            }
-            else
-                builder.addDecoration(id, static_cast<spv::Decoration>(decorate.first));
-        }
-
-        // Add spirv_decorate_id
-        for (auto& decorateId : spirvDecorate.decorateIds) {
-            std::vector<spv::Id> operandIds;
-            assert(!decorateId.second.empty());
-            for (auto extraOperand : decorateId.second) {
-                if (extraOperand->getQualifier().isFrontEndConstant())
-                    operandIds.push_back(createSpvConstant(*extraOperand));
-                else
-                    operandIds.push_back(getSymbolId(extraOperand->getAsSymbolNode()));
-            }
-            builder.addDecorationId(id, static_cast<spv::Decoration>(decorateId.first), operandIds);
-        }
-
-        // Add spirv_decorate_string
-        for (auto& decorateString : spirvDecorate.decorateStrings) {
-            std::vector<const char*> strings;
-            assert(!decorateString.second.empty());
-            for (auto extraOperand : decorateString.second) {
-                const char* string = extraOperand->getConstArray()[0].getSConst()->c_str();
-                strings.push_back(string);
-            }
-            builder.addDecoration(id, static_cast<spv::Decoration>(decorateString.first), strings);
-        }
-    }
+    // Add SPIR-V decorations (GL_EXT_spirv_intrinsics)
+    if (symbol->getType().getQualifier().hasSpirvDecorate())
+        applySpirvDecorate(symbol->getType(), id, {});
 
     return id;
 }

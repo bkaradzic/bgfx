@@ -512,6 +512,7 @@ void HlslScanContext::fillInKeywordMap()
     (*SemanticMap)["SV_PRIMITIVEID"] =            EbvPrimitiveId;
     (*SemanticMap)["SV_OUTPUTCONTROLPOINTID"] =   EbvInvocationId;
     (*SemanticMap)["SV_ISFRONTFACE"] =            EbvFace;
+    (*SemanticMap)["SV_VIEWID"] =                 EbvViewIndex;
     (*SemanticMap)["SV_INSTANCEID"] =             EbvInstanceIndex;
     (*SemanticMap)["SV_INSIDETESSFACTOR"] =       EbvTessLevelInner;
     (*SemanticMap)["SV_GSINSTANCEID"] =           EbvInvocationId;

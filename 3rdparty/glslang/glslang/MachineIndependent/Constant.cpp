@@ -628,12 +628,12 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
 
         case EOpIsNan:
         {
-            newConstArray[i].setBConst(IsNan(unionArray[i].getDConst()));
+            newConstArray[i].setBConst(std::isnan(unionArray[i].getDConst()));
             break;
         }
         case EOpIsInf:
         {
-            newConstArray[i].setBConst(IsInfinity(unionArray[i].getDConst()));
+            newConstArray[i].setBConst(std::isinf(unionArray[i].getDConst()));
             break;
         }
 

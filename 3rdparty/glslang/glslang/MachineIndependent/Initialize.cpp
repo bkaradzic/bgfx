@@ -144,10 +144,10 @@ EProfile EDesktopProfile = static_cast<EProfile>(ENoProfile | ECoreProfile | ECo
                                                   { EBadProfile } };
     const Versioning* Es300Desktop130 = &Es300Desktop130Version[0];
 
-    const Versioning Es310Desktop420Version[] = { { EEsProfile,      0, 310, 0, nullptr },
-                                                  { EDesktopProfile, 0, 420, 0, nullptr },
+    const Versioning Es310Desktop400Version[] = { { EEsProfile,      0, 310, 0, nullptr },
+                                                  { EDesktopProfile, 0, 400, 0, nullptr },
                                                   { EBadProfile } };
-    const Versioning* Es310Desktop420 = &Es310Desktop420Version[0];
+    const Versioning* Es310Desktop400 = &Es310Desktop400Version[0];
 
     const Versioning Es310Desktop450Version[] = { { EEsProfile,      0, 310, 0, nullptr },
                                                   { EDesktopProfile, 0, 450, 0, nullptr },
@@ -246,14 +246,14 @@ const BuiltInFunction BaseFunctions[] = {
     { EOpGreaterThanEqual, "greaterThanEqual", 2,   TypeU,     ClassBNS,     Es300Desktop130 },
     { EOpVectorEqual,      "equal",            2,   TypeU,     ClassBNS,     Es300Desktop130 },
     { EOpVectorNotEqual,   "notEqual",         2,   TypeU,     ClassBNS,     Es300Desktop130 },
-    { EOpAtomicAdd,        "atomicAdd",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop420 },
-    { EOpAtomicMin,        "atomicMin",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop420 },
-    { EOpAtomicMax,        "atomicMax",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop420 },
-    { EOpAtomicAnd,        "atomicAnd",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop420 },
-    { EOpAtomicOr,         "atomicOr",         2,   TypeIU,    ClassV1FIOCV, Es310Desktop420 },
-    { EOpAtomicXor,        "atomicXor",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop420 },
-    { EOpAtomicExchange,   "atomicExchange",   2,   TypeIU,    ClassV1FIOCV, Es310Desktop420 },
-    { EOpAtomicCompSwap,   "atomicCompSwap",   3,   TypeIU,    ClassV1FIOCV, Es310Desktop420 },
+    { EOpAtomicAdd,        "atomicAdd",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop400 },
+    { EOpAtomicMin,        "atomicMin",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop400 },
+    { EOpAtomicMax,        "atomicMax",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop400 },
+    { EOpAtomicAnd,        "atomicAnd",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop400 },
+    { EOpAtomicOr,         "atomicOr",         2,   TypeIU,    ClassV1FIOCV, Es310Desktop400 },
+    { EOpAtomicXor,        "atomicXor",        2,   TypeIU,    ClassV1FIOCV, Es310Desktop400 },
+    { EOpAtomicExchange,   "atomicExchange",   2,   TypeIU,    ClassV1FIOCV, Es310Desktop400 },
+    { EOpAtomicCompSwap,   "atomicCompSwap",   3,   TypeIU,    ClassV1FIOCV, Es310Desktop400 },
     { EOpMix,              "mix",              3,   TypeB,     ClassRegular, Es310Desktop450 },
     { EOpMix,              "mix",              3,   TypeIU,    ClassLB,      Es310Desktop450 },
 

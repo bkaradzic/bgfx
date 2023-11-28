@@ -2590,6 +2590,18 @@ TIntermConstantUnion* TIntermediate::addConstantUnion(double d, TBasicType baseT
 {
     assert(baseType == EbtFloat || baseType == EbtDouble || baseType == EbtFloat16);
 
+    if (isEsProfile() && (baseType == EbtFloat || baseType == EbtFloat16)) {
+        int exponent = 0;
+        frexp(d, &exponent);
+        int minExp = baseType == EbtFloat ? -126 : -14;
+        int maxExp = baseType == EbtFloat ? 127 : 15;
+        if (exponent > maxExp) { //overflow, d = inf
+            d = std::numeric_limits<double>::infinity();
+        } else if (exponent < minExp) { //underflow, d = 0.0;
+            d = 0.0;
+        }
+    }
+
     TConstUnionArray unionArray(1);
     unionArray[0].setDConst(d);
 
@@ -2647,28 +2659,42 @@ TIntermTyped* TIntermediate::addSwizzle(TSwizzleSelectors<selectorType>& selecto
 // 'swizzleOkay' says whether or not it is okay to consider a swizzle
 // a valid part of the dereference chain.
 //
-// 'BufferReferenceOk' says if type is buffer_reference, the routine stop to find the most left node.
+// 'bufferReferenceOk' says if type is buffer_reference, the routine will stop to find the most left node.
 //
+// 'proc' is an optional function to run on each node that is processed during the traversal. 'proc' must
+// return true to continue the traversal, or false to end the traversal early.
 //
 
-const TIntermTyped* TIntermediate::findLValueBase(const TIntermTyped* node, bool swizzleOkay , bool bufferReferenceOk)
+const TIntermTyped* TIntermediate::traverseLValueBase(const TIntermTyped* node, bool swizzleOkay,
+                                                      bool bufferReferenceOk,
+                                                      std::function<bool(const TIntermNode&)> proc)
 {
     do {
         const TIntermBinary* binary = node->getAsBinaryNode();
-        if (binary == nullptr)
+        if (binary == nullptr) {
+            if (proc) {
+                proc(*node);
+            }
             return node;
+        }
         TOperator op = binary->getOp();
-        if (op != EOpIndexDirect && op != EOpIndexIndirect && op != EOpIndexDirectStruct && op != EOpVectorSwizzle && op != EOpMatrixSwizzle)
+        if (op != EOpIndexDirect && op != EOpIndexIndirect && op != EOpIndexDirectStruct && op != EOpVectorSwizzle &&
+            op != EOpMatrixSwizzle)
             return nullptr;
-        if (! swizzleOkay) {
+        if (!swizzleOkay) {
             if (op == EOpVectorSwizzle || op == EOpMatrixSwizzle)
                 return nullptr;
             if ((op == EOpIndexDirect || op == EOpIndexIndirect) &&
                 (binary->getLeft()->getType().isVector() || binary->getLeft()->getType().isScalar()) &&
-                ! binary->getLeft()->getType().isArray())
+                !binary->getLeft()->getType().isArray())
                 return nullptr;
         }
-        node = node->getAsBinaryNode()->getLeft();
+        if (proc) {
+            if (!proc(*node)) {
+                return node;
+            }
+        }
+        node = binary->getLeft();
         if (bufferReferenceOk && node->isReference())
             return node;
     } while (true);

@@ -5,6 +5,8 @@
 
 #include "shaderc.h"
 
+#include <iostream> // std::cout
+
 BX_PRAGMA_DIAGNOSTIC_PUSH()
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4100) // error C4100: 'inclusionDepth' : unreferenced formal parameter
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4265) // error C4265: 'spv::spirvbin_t': class has virtual functions, but destructor is not virtual
@@ -15,8 +17,9 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'u
 #define ENABLE_OPT 1
 #include <ShaderLang.h>
 #include <ResourceLimits.h>
-#include <SPIRV/SPVRemapper.h>
 #include <SPIRV/GlslangToSpv.h>
+#include <SPIRV/SPVRemapper.h>
+#include <SPIRV/SpvTools.h>
 #define SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS
 #include <spirv_msl.hpp>
 #include <spirv_reflect.hpp>
@@ -488,8 +491,6 @@ namespace bgfx { namespace metal
 				{
 					program->dumpReflection();
 				}
-
-				BX_UNUSED(spv::MemorySemanticsAllMemory);
 
 				glslang::TIntermediate* intermediate = program->getIntermediate(stage);
 				std::vector<uint32_t> spirv;

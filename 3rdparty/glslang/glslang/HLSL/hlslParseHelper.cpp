@@ -9551,6 +9551,8 @@ bool HlslParseContext::isInputBuiltIn(const TQualifier& qualifier) const
         return language == EShLangTessEvaluation;
     case EbvTessCoord:
         return language == EShLangTessEvaluation;
+    case EbvViewIndex:
+        return language != EShLangCompute;
     default:
         return false;
     }

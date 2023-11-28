@@ -2571,7 +2571,7 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
             requireExtensions(loc, 1, &E_GL_EXT_shader_atomic_float2, fnCandidate.getName().c_str());
         }
 
-        const TIntermTyped* base = TIntermediate::findLValueBase(arg0, true , true);
+        const TIntermTyped* base = TIntermediate::traverseLValueBase(arg0, true, true);
         const char* errMsg = "Only l-values corresponding to shader block storage or shared variables can be used with "
                              "atomic memory functions.";
         if (base) {
@@ -2591,20 +2591,57 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
     case EOpInterpolateAtCentroid:
     case EOpInterpolateAtSample:
     case EOpInterpolateAtOffset:
-    case EOpInterpolateAtVertex:
-        // Make sure the first argument is an interpolant, or an array element of an interpolant
+    case EOpInterpolateAtVertex: {
         if (arg0->getType().getQualifier().storage != EvqVaryingIn) {
-            // It might still be an array element.
+            // Traverse down the left branch of arg0 to ensure this argument is a valid interpolant.
             //
-            // We could check more, but the semantics of the first argument are already met; the
-            // only way to turn an array into a float/vec* is array dereference and swizzle.
+            // For desktop GL >4.3 we effectively only need to ensure that arg0 represents an l-value from an
+            // input declaration.
             //
-            // ES and desktop 4.3 and earlier:  swizzles may not be used
-            // desktop 4.4 and later: swizzles may be used
-            bool swizzleOkay = (!isEsProfile()) && (version >= 440);
-            const TIntermTyped* base = TIntermediate::findLValueBase(arg0, swizzleOkay);
-            if (base == nullptr || base->getType().getQualifier().storage != EvqVaryingIn)
-                error(loc, "first argument must be an interpolant, or interpolant-array element", fnCandidate.getName().c_str(), "");
+            // For desktop GL <= 4.3 and ES, we must also ensure that swizzling is not used
+            //
+            // For ES, we must also ensure that a field selection operator (i.e., '.') is not used on a named
+            // struct.
+
+            const bool esProfile = isEsProfile();
+            const bool swizzleOkay = !esProfile && (version >= 440);
+
+            std::string interpolantErrorMsg = "first argument must be an interpolant, or interpolant-array element";
+            bool isValid = true; // Assume that the interpolant is valid until we find a condition making it invalid
+            bool isIn = false;   // Checks whether or not the interpolant is a shader input
+            bool structAccessOp = false; // Whether or not the previous node in the chain is a struct accessor
+            TIntermediate::traverseLValueBase(
+                arg0, swizzleOkay, false,
+                [&isValid, &isIn, &interpolantErrorMsg, esProfile, &structAccessOp](const TIntermNode& n) -> bool {
+                    auto* type = n.getAsTyped();
+                    if (type) {
+                        if (type->getType().getQualifier().storage == EvqVaryingIn) {
+                            isIn = true;
+                        }
+                        // If a field accessor was used, it can only be used to access a field with an input block, not a struct.
+                        if (structAccessOp && (type->getType().getBasicType() != EbtBlock)) {
+                            interpolantErrorMsg +=
+                                ". Using the field of a named struct as an interpolant argument is not "
+                                "allowed (ES-only).";
+                            isValid = false;
+                        }
+                    }
+
+                    // ES has different requirements for interpolants than GL
+                    if (esProfile) {
+                        // Swizzling will be taken care of by the 'swizzleOkay' argument passsed to traverseLValueBase,
+                        // so we only ned to check whether or not a field accessor has been used with a named struct.
+                        auto* binary = n.getAsBinaryNode();
+                        if (binary && (binary->getOp() == EOpIndexDirectStruct)) {
+                            structAccessOp = true;
+                        }
+                    }
+                    // Don't continue traversing if we know we have an invalid interpolant at this point.
+                    return isValid;
+                });
+            if (!isIn || !isValid) {
+                error(loc, interpolantErrorMsg.c_str(), fnCandidate.getName().c_str(), "");
+            }
         }
 
         if (callNode.getOp() == EOpInterpolateAtVertex) {
@@ -2620,7 +2657,7 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
                 }
             }
         }
-        break;
+    } break;
 
     case EOpEmitStreamVertex:
     case EOpEndStreamPrimitive:
@@ -4191,8 +4228,8 @@ void TParseContext::mergeQualifiers(const TSourceLoc& loc, TQualifier& dst, cons
     dst.spirvStorageClass = src.spirvStorageClass;
 
     // SPIR-V decorate qualifiers (GL_EXT_spirv_intrinsics)
-    if (src.hasSprivDecorate()) {
-        if (dst.hasSprivDecorate()) {
+    if (src.hasSpirvDecorate()) {
+        if (dst.hasSpirvDecorate()) {
             const TSpirvDecorate& srcSpirvDecorate = src.getSpirvDecorate();
             TSpirvDecorate& dstSpirvDecorate = dst.getSpirvDecorate();
             for (auto& decorate : srcSpirvDecorate.decorates) {
@@ -6326,8 +6363,7 @@ void TParseContext::layoutObjectCheck(const TSourceLoc& loc, const TSymbol& symb
         switch (qualifier.storage) {
         case EvqVaryingIn:
         case EvqVaryingOut:
-            if (!type.getQualifier().isTaskMemory() &&
-                !type.getQualifier().hasSprivDecorate() &&
+            if (!type.getQualifier().isTaskMemory() && !type.getQualifier().hasSpirvDecorate() &&
                 (type.getBasicType() != EbtBlock ||
                  (!(*type.getStruct())[0].type->getQualifier().hasLocation() &&
                    (*type.getStruct())[0].type->getQualifier().builtIn == EbvNone)))
@@ -8540,7 +8576,7 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
             memberQualifier.storage = EvqtaskPayloadSharedEXT;
         if (memberQualifier.storage == EvqSpirvStorageClass)
             error(memberLoc, "member cannot have a spirv_storage_class qualifier", memberType.getFieldName().c_str(), "");
-        if (memberQualifier.hasSprivDecorate() && !memberQualifier.getSpirvDecorate().decorateIds.empty())
+        if (memberQualifier.hasSpirvDecorate() && !memberQualifier.getSpirvDecorate().decorateIds.empty())
             error(memberLoc, "member cannot have a spirv_decorate_id qualifier", memberType.getFieldName().c_str(), "");
         if ((currentBlockQualifier.storage == EvqUniform || currentBlockQualifier.storage == EvqBuffer) && (memberQualifier.isInterpolation() || memberQualifier.isAuxiliary()))
             error(memberLoc, "member of uniform or buffer block cannot have an auxiliary or interpolation qualifier", memberType.getFieldName().c_str(), "");

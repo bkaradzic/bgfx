@@ -1075,7 +1075,7 @@ public:
     }
 
     // GL_EXT_spirv_intrinsics
-    bool hasSprivDecorate() const { return spirvDecorate != nullptr; }
+    bool hasSpirvDecorate() const { return spirvDecorate != nullptr; }
     void setSpirvDecorate(int decoration, const TIntermAggregate* args = nullptr);
     void setSpirvDecorateId(int decoration, const TIntermAggregate* args);
     void setSpirvDecorateString(int decoration, const TIntermAggregate* args);
@@ -2096,7 +2096,7 @@ public:
         const auto appendInt  = [&](int i)          { typeString.append(std::to_string(i).c_str()); };
 
         if (getQualifiers) {
-          if (qualifier.hasSprivDecorate())
+          if (qualifier.hasSpirvDecorate())
             appendStr(qualifier.getSpirvDecorateQualifierString().c_str());
 
           if (qualifier.hasLayout()) {

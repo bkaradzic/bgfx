@@ -43,11 +43,12 @@
 #include "../Public/ShaderLang.h"
 #include "Versions.h"
 
+#include <algorithm>
+#include <array>
+#include <functional>
+#include <set>
 #include <string>
 #include <vector>
-#include <algorithm>
-#include <set>
-#include <array>
 
 class TInfoSink;
 
@@ -572,7 +573,8 @@ public:
     TIntermTyped* foldSwizzle(TIntermTyped* node, TSwizzleSelectors<TVectorSelector>& fields, const TSourceLoc&);
 
     // Tree ops
-    static const TIntermTyped* findLValueBase(const TIntermTyped*, bool swizzleOkay , bool BufferReferenceOk = false);
+    static const TIntermTyped* traverseLValueBase(const TIntermTyped*, bool swizzleOkay, bool bufferReferenceOk = false,
+                                                  std::function<bool(const TIntermNode&)> proc = {});
 
     // Linkage related
     void addSymbolLinkageNodes(TIntermAggregate*& linkage, EShLanguage, TSymbolTable&);
