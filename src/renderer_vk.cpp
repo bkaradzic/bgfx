@@ -1161,7 +1161,7 @@ VK_IMPORT_DEVICE
 #elif BX_PLATFORM_ANDROID
 				"libvulkan.so"
 #elif BX_PLATFORM_OSX
-				"libvulkan.dylib"
+				"libMoltenVK.dylib"
 #else
 				"libvulkan.so.1"
 #endif // BX_PLATFORM_*
@@ -1230,21 +1230,12 @@ VK_IMPORT
 						BX_TRACE("\t%s", layer.m_name);
 					}
 				}
-#if BX_PLATFORM_OSX || defined(WL_EGL_PLATFORM)
-				uint32_t numEnabledExtensions = headless ? 0 : 3;
 
-				const char* enabledExtension[Extension::Count + 3] =
-#else
 				uint32_t numEnabledExtensions = headless ? 0 : 2;
-
 				const char* enabledExtension[Extension::Count + 2] =
-#endif
 				{
 					VK_KHR_SURFACE_EXTENSION_NAME,
 					KHR_SURFACE_EXTENSION_NAME,
-#if BX_PLATFORM_OSX
-					VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
-#endif
 				};
 
 				for (uint32_t ii = 0; ii < Extension::Count; ++ii)
@@ -1306,11 +1297,9 @@ VK_IMPORT
 				VkInstanceCreateInfo ici;
 				ici.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 				ici.pNext = NULL;
-#if BX_PLATFORM_OSX
-				ici.flags = 0 | VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-#else
-				ici.flags = 0;
-#endif
+				ici.flags = 0
+					| (BX_ENABLED(BX_PLATFORM_OSX) ? VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR : 0)
+					;
 				ici.pApplicationInfo        = &appInfo;
 				ici.enabledLayerCount       = numEnabledLayers;
 				ici.ppEnabledLayerNames     = enabledLayer;
