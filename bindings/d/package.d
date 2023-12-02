@@ -3078,7 +3078,7 @@ mixin(joinFnBinds((){
 		- `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 		  sampling.
 		*/
-		{q{size_t}, q{overrideInternal}, q{TextureHandle handle, ushort width, ushort height, ubyte numMIPs, bgfx.fakeenum.TextureFormat.Enum format, c_uint64 flags}, ext: `C++, "bgfx"`},
+		{q{size_t}, q{overrideInternal}, q{TextureHandle handle, ushort width, ushort height, ubyte numMIPs, bgfx.fakeenum.TextureFormat.Enum format, c_uint64 flags=Texture.none | Sampler.none}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Sets a debug marker. This allows you to group graphics calls together for easy browsing in
@@ -3160,7 +3160,7 @@ mixin(joinFnBinds((){
 			mtx = Pointer to first matrix in array.
 			num = Number of matrices in array.
 		*/
-		{q{uint}, q{setTransform}, q{const(void)* mtx, ushort num}, ext: `C++, "bgfx"`},
+		{q{uint}, q{setTransform}, q{const(void)* mtx, ushort num=1}, ext: `C++, "bgfx"`},
 		
 		/**
 		*  Set model matrix from matrix cache for draw primitive.
