@@ -39,6 +39,7 @@
 #define VK_NO_STDINT_H
 #define VK_NO_PROTOTYPES
 #include <vulkan-local/vulkan.h>
+#include <vulkan-local/vulkan_beta.h>
 
 // vulkan.h pulls X11 crap...
 #if defined(None)

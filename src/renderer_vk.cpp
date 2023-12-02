@@ -287,8 +287,8 @@ VK_IMPORT_DEVICE
 	{
 		enum Enum
 		{
-			VK_LAYER_LUNARG_standard_validation,
 			VK_LAYER_KHRONOS_validation,
+			VK_LAYER_LUNARG_standard_validation,
 
 			Count
 		};
@@ -303,8 +303,8 @@ VK_IMPORT_DEVICE
 	//
 	static Layer s_layer[] =
 	{
-		{ "VK_LAYER_LUNARG_standard_validation", 1, { false, false }, { false, false } },
 		{ "VK_LAYER_KHRONOS_validation",         1, { false, false }, { false, false } },
+		{ "VK_LAYER_LUNARG_standard_validation", 1, { false, false }, { false, false } },
 		{ "",                                    0, { false, false }, { false, false } },
 	};
 	BX_STATIC_ASSERT(Layer::Count == BX_COUNTOF(s_layer)-1);
@@ -337,15 +337,15 @@ VK_IMPORT_DEVICE
 	{
 		enum Enum
 		{
-			EXT_debug_utils,
-			EXT_debug_report,
-			EXT_memory_budget,
-			KHR_get_physical_device_properties2,
 			EXT_conservative_rasterization,
-			EXT_line_rasterization,
-			EXT_shader_viewport_index_layer,
 			EXT_custom_border_color,
+			EXT_debug_report,
+			EXT_debug_utils,
+			EXT_line_rasterization,
+			EXT_memory_budget,
+			EXT_shader_viewport_index_layer,
 			KHR_draw_indirect_count,
+			KHR_get_physical_device_properties2,
 
 			Count
 		};
@@ -362,15 +362,15 @@ VK_IMPORT_DEVICE
 	//
 	static Extension s_extension[] =
 	{
+		{ "VK_EXT_conservative_rasterization",      1, false, false, true,                                                          Layer::Count },
+		{ "VK_EXT_custom_border_color",             1, false, false, true,                                                          Layer::Count },
+		{ "VK_EXT_debug_report",                    1, false, false, false,                                                         Layer::Count },
 		{ "VK_EXT_debug_utils",                     1, false, false, BGFX_CONFIG_DEBUG_OBJECT_NAME || BGFX_CONFIG_DEBUG_ANNOTATION, Layer::Count },
-		{ "VK_EXT_debug_report",                    1, false, false, false                                                        , Layer::Count },
-		{ "VK_EXT_memory_budget",                   1, false, false, true                                                         , Layer::Count },
-		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true                                                         , Layer::Count },
-		{ "VK_EXT_conservative_rasterization",      1, false, false, true                                                         , Layer::Count },
-		{ "VK_EXT_line_rasterization",              1, false, false, true                                                         , Layer::Count },
-		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true                                                         , Layer::Count },
-		{ "VK_EXT_custom_border_color",             1, false, false, true                                                         , Layer::Count },
-		{ "VK_KHR_draw_indirect_count",             1, false, false, true                                                         , Layer::Count },
+		{ "VK_EXT_line_rasterization",              1, false, false, true,                                                          Layer::Count },
+		{ "VK_EXT_memory_budget",                   1, false, false, true,                                                          Layer::Count },
+		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_draw_indirect_count",             1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true,                                                          Layer::Count },
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
 
@@ -1214,7 +1214,6 @@ VK_IMPORT
 				}
 
 				uint32_t numEnabledLayers = 0;
-
 				const char* enabledLayer[Layer::Count];
 
 				BX_TRACE("Enabled instance layers:");
@@ -1231,12 +1230,14 @@ VK_IMPORT
 					}
 				}
 
-				uint32_t numEnabledExtensions = headless ? 0 : 2;
-				const char* enabledExtension[Extension::Count + 2] =
+				uint32_t numEnabledExtensions = 0;
+				const char* enabledExtension[Extension::Count + 2];
+
+				if (!headless)
 				{
-					VK_KHR_SURFACE_EXTENSION_NAME,
-					KHR_SURFACE_EXTENSION_NAME,
-				};
+					enabledExtension[numEnabledExtensions++] = VK_KHR_SURFACE_EXTENSION_NAME;
+					enabledExtension[numEnabledExtensions++] = KHR_SURFACE_EXTENSION_NAME;
+				}
 
 				for (uint32_t ii = 0; ii < Extension::Count; ++ii)
 				{
@@ -1244,8 +1245,7 @@ VK_IMPORT
 					const LayerInfo& layerInfo = s_layer[extension.m_layer].m_instance;
 
 					const bool layerEnabled = false
-						|| extension.m_layer == Layer::Count
-						|| (layerInfo.m_supported && layerInfo.m_initialize)
+						|| extension.m_layer == Layer::Count  || (layerInfo.m_supported && layerInfo.m_initialize)
 						;
 
 					if (extension.m_supported
@@ -1770,7 +1770,6 @@ VK_IMPORT_INSTANCE
 
 			{
 				uint32_t numEnabledLayers = 0;
-
 				const char* enabledLayer[Layer::Count];
 
 				BX_TRACE("Enabled device layers:");
@@ -1786,30 +1785,29 @@ VK_IMPORT_INSTANCE
 						BX_TRACE("\t%s", layer.m_name);
 					}
 				}
-#if BX_PLATFORM_OSX
-				uint32_t numEnabledExtensions = headless ? 1 : 3;
 
-				const char* enabledExtension[Extension::Count + 3] =
-#else
-				uint32_t numEnabledExtensions = headless ? 1 : 2;
+				uint32_t numEnabledExtensions = 0;
+				const char* enabledExtension[Extension::Count + 3];
 
-				const char* enabledExtension[Extension::Count + 2] =
-#endif
+				enabledExtension[numEnabledExtensions++] = VK_KHR_MAINTENANCE1_EXTENSION_NAME;
+
+				if (!headless)
 				{
-					VK_KHR_MAINTENANCE1_EXTENSION_NAME,
-					VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-#if BX_PLATFORM_OSX
-					"VK_KHR_portability_subset",
-#endif
-				};
+					enabledExtension[numEnabledExtensions++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+				}
+
+				if (BX_ENABLED(BX_PLATFORM_OSX) )
+				{
+					enabledExtension[numEnabledExtensions++] = VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME;
+				}
 
 				for (uint32_t ii = 0; ii < Extension::Count; ++ii)
 				{
 					const Extension& extension = s_extension[ii];
 
-					bool layerEnabled = extension.m_layer == Layer::Count ||
-										(s_layer[extension.m_layer].m_device.m_supported &&
-										 s_layer[extension.m_layer].m_device.m_initialize);
+					bool layerEnabled = extension.m_layer == Layer::Count
+						|| (s_layer[extension.m_layer].m_device.m_supported	&& s_layer[extension.m_layer].m_device.m_initialize)
+						;
 
 					if (extension.m_supported
 					&&  extension.m_initialize
