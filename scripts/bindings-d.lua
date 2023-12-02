@@ -228,20 +228,20 @@ local function convArray(array)
 end
 
 local typeSubs = {
-	uint32_t  = "uint",     int32_t = "int",
-	uint16_t  = "ushort",   int16_t = "short",
-	uint64_t  = "c_uint64", int64_t = "c_int64",
-	uint8_t   = "ubyte",    int8_t  = "byte",
-	uintptr_t = "size_t"
+	{"uint32_t",  "uint"},     {"int32_t", "int"},
+	{"uint16_t",  "ushort"},   {"int16_t", "short"},
+	{"uint64_t",  "c_uint64"}, {"int64_t", "c_int64"},
+	{"uint8_t",   "ubyte"},    {"int8_t",  "byte"},
+	{"uintptr_t", "size_t"}
 }
 local function convSomeType(arg, isFnArg)
 	local type = arg.fulltype
 	if type == "bx::AllocatorI*" or type == "CallbackI*" then
 		type = "void*"
 	else
-		for from, to in pairs(typeSubs) do
-			if type:find(from) then
-				type = type:gsub(from, to)
+		for _, item in ipairs(typeSubs) do
+			if type:find(item[1]) then
+				type = type:gsub(item[1], item[2])
 				break
 			end
 		end

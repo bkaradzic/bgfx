@@ -2715,6 +2715,7 @@ func.overrideInternal { cname = "override_internal_texture" }
 	                               ---   mode.
 	                               --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 	                               ---   sampling.
+	{ default = "BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE" }
 
 -- Legacy API:
 
@@ -2795,6 +2796,7 @@ func.setTransform
 	                   --- to be used for other draw primitive call.
 	.mtx "const void*" --- Pointer to first matrix in array.
 	.num "uint16_t"    --- Number of matrices in array.
+	 { default = 1 }
 
 ---  Set model matrix from matrix cache for draw primitive.
 func.setTransform { cname = "set_transform_cached" }
