@@ -2855,7 +2855,7 @@ namespace bgfx
 
 					m_exit = true;
 				}
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case CommandBuffer::End:
 				end = true;
@@ -3572,7 +3572,7 @@ namespace bgfx
 		case ErrorState::ContextAllocated:
 			bx::deleteObject(g_allocator, s_ctx, Context::kAlignment);
 			s_ctx = NULL;
-			BX_FALLTHROUGH;
+			[[fallthrough]];
 
 		case ErrorState::Default:
 			if (NULL != s_callbackStub)

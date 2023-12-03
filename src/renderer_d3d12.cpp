@@ -1581,24 +1581,24 @@ namespace bgfx { namespace d3d12
 			case ErrorState::CreatedCommandQueue:
 				m_device->SetPrivateDataInterface(IID_ID3D12CommandQueue, NULL);
 				m_cmd.shutdown();
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case ErrorState::CreatedDXGIFactory:
 				DX_RELEASE(m_device,  0);
 #if !BX_PLATFORM_LINUX
 				m_dxgi.shutdown();
 #endif // !BX_PLATFORM_LINUX
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 #if USE_D3D12_DYNAMIC_LIB
 			case ErrorState::LoadedDXGI:
 			case ErrorState::LoadedD3D12:
 				bx::dlclose(m_d3d12Dll);
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case ErrorState::LoadedKernel32:
 				bx::dlclose(m_kernel32Dll);
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 #endif // USE_D3D12_DYNAMIC_LIB
 			case ErrorState::Default:

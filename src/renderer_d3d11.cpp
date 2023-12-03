@@ -1635,13 +1635,13 @@ namespace bgfx { namespace d3d11
 #endif // USE_D3D11_DYNAMIC_LIB
 
 				m_dxgi.shutdown();
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 #if USE_D3D11_DYNAMIC_LIB
 			case ErrorState::LoadedD3D11:
 				bx::dlclose(m_d3d11Dll);
 				m_d3d11Dll = NULL;
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 #endif // USE_D3D11_DYNAMIC_LIB
 
 			case ErrorState::Default:

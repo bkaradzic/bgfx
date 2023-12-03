@@ -2047,7 +2047,7 @@ VK_IMPORT_DEVICE
 				{
 					m_gpuTimer.shutdown();
 				}
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case ErrorState::DescriptorCreated:
 				for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
@@ -2056,19 +2056,19 @@ VK_IMPORT_DEVICE
 				}
 				vkDestroy(m_pipelineCache);
 				vkDestroy(m_descriptorPool);
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case ErrorState::SwapChainCreated:
 				m_backBuffer.destroy();
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case ErrorState::CommandQueueCreated:
 				m_cmd.shutdown();
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case ErrorState::DeviceCreated:
 				vkDestroyDevice(m_device, m_allocatorCb);
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case ErrorState::InstanceCreated:
 				if (VK_NULL_HANDLE != m_debugReportCallback)
@@ -2077,14 +2077,14 @@ VK_IMPORT_DEVICE
 				}
 
 				vkDestroyInstance(m_instance, m_allocatorCb);
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case ErrorState::LoadedVulkan1:
 				bx::dlclose(m_vulkan1Dll);
 				m_vulkan1Dll  = NULL;
 				m_allocatorCb = NULL;
 				unloadRenderDoc(m_renderDocDll);
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case ErrorState::Default:
 				break;
@@ -6604,15 +6604,15 @@ VK_DESTROY
 		{
 		case ErrorState::AttachmentsCreated:
 			releaseAttachments();
-			BX_FALLTHROUGH;
+			[[fallthrough]];
 
 		case ErrorState::SwapChainCreated:
 			releaseSwapChain();
-			BX_FALLTHROUGH;
+			[[fallthrough]];
 
 		case ErrorState::SurfaceCreated:
 			releaseSurface();
-			BX_FALLTHROUGH;
+			[[fallthrough]];
 
 		case ErrorState::Default:
 			break;
@@ -7418,7 +7418,7 @@ VK_DESTROY
 
 			case VK_ERROR_SURFACE_LOST_KHR:
 				m_needToRecreateSurface = true;
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case VK_ERROR_OUT_OF_DATE_KHR:
 			case VK_SUBOPTIMAL_KHR:
@@ -7469,7 +7469,7 @@ VK_DESTROY
 			{
 			case VK_ERROR_SURFACE_LOST_KHR:
 				m_needToRecreateSurface = true;
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case VK_ERROR_OUT_OF_DATE_KHR:
 			case VK_SUBOPTIMAL_KHR:

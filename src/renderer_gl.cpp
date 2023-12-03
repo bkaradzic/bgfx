@@ -1979,7 +1979,7 @@ namespace bgfx { namespace gl
 				{
 					return true;
 				}
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case TextureFormat::RGBA32F:
 				if (_writeOnly)

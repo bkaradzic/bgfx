@@ -653,7 +653,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 					{
 					case 4:
 						bx::fromString(&texcoord.z, argv[3]);
-						BX_FALLTHROUGH;
+						[[fallthrough]];
 
 					case 3:
 						bx::fromString(&texcoord.y, argv[2]);
