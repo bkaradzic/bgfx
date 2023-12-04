@@ -2049,7 +2049,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 								}
 								else
 								{
-									ps->m_bindingTypes[arg.index-1] = fragmentBit
+									ps->m_bindingTypes[arg.index-1] |= fragmentBit
 										? PipelineStateMtl::BindToFragmentShader
 										: PipelineStateMtl::BindToVertexShader
 										;
@@ -2067,7 +2067,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 							}
 							else
 							{
-								ps->m_bindingTypes[arg.index] = fragmentBit
+								ps->m_bindingTypes[arg.index] |= fragmentBit
 									? PipelineStateMtl::BindToFragmentShader
 									: PipelineStateMtl::BindToVertexShader
 									;
