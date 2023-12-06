@@ -95,7 +95,7 @@ mixin(joinFnBinds((){
 		$funcs
 	];
 	return ret;
-}()));
+}(), $membersWithFns));
 
 static if(!staticBinding):
 import bindbc.loader;

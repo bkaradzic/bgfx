@@ -3562,7 +3562,7 @@ mixin(joinFnBinds((){
 		
 	];
 	return ret;
-}()));
+}(), "Resolution, Init, Attachment, VertexLayout, Encoder, "));
 
 static if(!staticBinding):
 import bindbc.loader;
