@@ -843,7 +843,7 @@ namespace bgfx { namespace gl
 		{ "EXT_draw_instanced",                       false,                             true  }, // GLES2 extension.
 		{ "EXT_instanced_arrays",                     false,                             true  }, // GLES2 extension.
 		{ "EXT_frag_depth",                           false,                             true  }, // GLES2 extension.
-		{ "EXT_fragment_shader_barycentric",          false,                             true  },
+		{ "EXT_fragment_shader_barycentric",          BGFX_CONFIG_RENDERER_OPENGL >= 46, true  },
 		{ "EXT_framebuffer_blit",                     BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_framebuffer_object",                   BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_framebuffer_sRGB",                     BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
@@ -897,7 +897,7 @@ namespace bgfx { namespace gl
 		{ "NV_copy_image",                            false,                             true  },
 		{ "NV_draw_buffers",                          false,                             true  }, // GLES2 extension.
 		{ "NV_draw_instanced",                        false,                             true  }, // GLES2 extension.
-		{ "NV_fragment_shader_barycentric",           false,                             true  },
+		{ "NV_fragment_shader_barycentric",           BGFX_CONFIG_RENDERER_OPENGL >= 46, true  },
 		{ "NV_instanced_arrays",                      false,                             true  }, // GLES2 extension.
 		{ "NV_occlusion_query",                       false,                             true  },
 		{ "NV_texture_border_clamp",                  false,                             true  }, // GLES2 extension.
@@ -6874,7 +6874,7 @@ namespace bgfx { namespace gl
 			}
 			else if (GL_FRAGMENT_SHADER == m_type)
 			{
-				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL   >= 45))
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL   >= 46))
 				{
 					int32_t codeLen = (int32_t)bx::strLen(code);
 					int32_t tempLen = codeLen + (4<<10);
@@ -6882,31 +6882,31 @@ namespace bgfx { namespace gl
 					bx::StaticMemoryBlockWriter writer(temp, tempLen);
 
 					bx::write(&writer
-						, "#version 450\n"
+						, "#version 460\n"
 						, &err
 					);
 
 					if (!bx::findIdentifierMatch(code, s_EXT_fragment_shader_barycentric).isEmpty())
 					{
-						if (s_extension[Extension::EXT_fragment_shader_barycentric].m_supported)
+						if (s_extension[Extension::NV_fragment_shader_barycentric].m_supported)
 						{
 							bx::write(&writer,
-								"#extension GL_EXT_fragment_shader_barycentric : enable\n"
-								"#define gl_BaryCoord        gl_BaryCoordEXT\n"
-								"#define gl_BaryCoordNoPersp gl_BaryCoordNoPerspEXT\n", &err
-								);
-						}
-						else if (s_extension[Extension::NV_fragment_shader_barycentric].m_supported)
-						{
-							bx::write(&writer,
-								"#extension GL_NV_fragment_shader_barycentric : enable\n"
+								"#extension GL_NV_fragment_shader_barycentric : require\n"
 								"#define gl_BaryCoord        gl_BaryCoordNV\n"
 								"#define gl_BaryCoordNoPersp gl_BaryCoordNoPerspNV\n", &err
 								);
 						}
+						else if (s_extension[Extension::EXT_fragment_shader_barycentric].m_supported)
+						{
+							bx::write(&writer,
+								"#extension GL_EXT_fragment_shader_barycentric : require\n"
+								"#define gl_BaryCoord        gl_BaryCoordEXT\n"
+								"#define gl_BaryCoordNoPersp gl_BaryCoordNoPerspEXT\n", &err
+								);
+						}
 					}
 
-					int32_t verLen = bx::strLen("#version 450\n");
+					int32_t verLen = bx::strLen("#version 460\n");
 					bx::write(&writer, code.getPtr()+verLen, codeLen-verLen, &err);
 					bx::write(&writer, '\0', &err);
 
