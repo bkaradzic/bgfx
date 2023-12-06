@@ -12214,7 +12214,7 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 		else
 			quals = member_location_attribute_qualifier(type, index);
 
-		if (builtin == BuiltInBaryCoordKHR || builtin == BuiltInBaryCoordNoPerspKHR)
+		if (builtin == BuiltInBaryCoordKHR)
 		{
 			if (has_member_decoration(type.self, index, DecorationFlat) ||
 			    has_member_decoration(type.self, index, DecorationCentroid) ||
@@ -12232,35 +12232,38 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 		// FragCoord builtin; it's always noperspective on Metal.
 		if (!type_is_integral(mbr_type) && (!is_builtin || builtin != BuiltInFragCoord))
 		{
-			if (has_member_decoration(type.self, index, DecorationFlat))
+			if (builtin != BuiltInBaryCoordKHR && builtin != BuiltInBaryCoordNoPerspKHR)
 			{
-				if (!quals.empty())
-					quals += ", ";
-				quals += "flat";
-			}
-			else if (has_member_decoration(type.self, index, DecorationCentroid))
-			{
-				if (!quals.empty())
-					quals += ", ";
-				if (has_member_decoration(type.self, index, DecorationNoPerspective))
-					quals += "centroid_no_perspective";
-				else
-					quals += "centroid_perspective";
-			}
-			else if (has_member_decoration(type.self, index, DecorationSample))
-			{
-				if (!quals.empty())
-					quals += ", ";
-				if (has_member_decoration(type.self, index, DecorationNoPerspective))
-					quals += "sample_no_perspective";
-				else
-					quals += "sample_perspective";
-			}
-			else if (has_member_decoration(type.self, index, DecorationNoPerspective))
-			{
-				if (!quals.empty())
-					quals += ", ";
-				quals += "center_no_perspective";
+				if (has_member_decoration(type.self, index, DecorationFlat))
+				{
+					if (!quals.empty())
+						quals += ", ";
+					quals += "flat";
+				}
+				else if (has_member_decoration(type.self, index, DecorationCentroid))
+				{
+					if (!quals.empty())
+						quals += ", ";
+					if (has_member_decoration(type.self, index, DecorationNoPerspective))
+						quals += "centroid_no_perspective";
+					else
+						quals += "centroid_perspective";
+				}
+				else if (has_member_decoration(type.self, index, DecorationSample))
+				{
+					if (!quals.empty())
+						quals += ", ";
+					if (has_member_decoration(type.self, index, DecorationNoPerspective))
+						quals += "sample_no_perspective";
+					else
+						quals += "sample_perspective";
+				}
+				else if (has_member_decoration(type.self, index, DecorationNoPerspective))
+				{
+					if (!quals.empty())
+						quals += ", ";
+					quals += "center_no_perspective";
+				}
 			}
 		}
 

@@ -526,6 +526,8 @@ void HlslScanContext::fillInKeywordMap()
     (*SemanticMap)["SV_DEPTHGREATEREQUAL"] =      EbvFragDepthGreater;
     (*SemanticMap)["SV_DEPTHLESSEQUAL"] =         EbvFragDepthLesser;
     (*SemanticMap)["SV_STENCILREF"] =             EbvFragStencilRef;
+    (*SemanticMap)["SV_BARYCENTRICS"] =           EbvBaryCoordEXT;
+    (*SemanticMap)["SV_BARYCENTRICS1"] =          EbvBaryCoordNoPerspEXT;
 }
 
 void HlslScanContext::deleteKeywordMap()

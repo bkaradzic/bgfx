@@ -400,6 +400,11 @@ namespace bgfx { namespace mtl
 			return m_obj.depth24Stencil8PixelFormatSupported;
 #endif // BX_PLATFORM_IOS
 		}
+
+		bool supportsShaderBarycentricCoordinates()
+		{
+			return [m_obj supportsShaderBarycentricCoordinates];
+		}
 	MTL_CLASS_END
 
 	MTL_CLASS(Function)

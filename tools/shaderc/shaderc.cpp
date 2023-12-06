@@ -144,6 +144,13 @@ namespace bgfx
 		// "shadow1DProjLod",
 	};
 
+	static const char* s_EXT_fragment_shader_barycentric[] =
+		{
+			"gl_BaryCoord",
+			"gl_BaryCoordNoPersp",
+			NULL
+		};
+
 	static const char* s_EXT_shader_texture_lod[] =
 	{
 		"texture2DLod",
@@ -1718,6 +1725,8 @@ namespace bgfx
 			}
 			else
 			{
+				bool hasBaryCoord = !bx::findIdentifierMatch(input, s_EXT_fragment_shader_barycentric).isEmpty();
+
 				if (profile->lang == ShadingLang::GLSL
 				||  profile->lang == ShadingLang::ESSL)
 				{
@@ -1729,6 +1738,10 @@ namespace bgfx
 							"#define shadow2D(_sampler, _coord) bgfxShadow2D(_sampler, _coord).x\n"
 							"#define shadow2DProj(_sampler, _coord) bgfxShadow2DProj(_sampler, _coord).x\n"
 							);
+					}
+					else
+					{
+						hasBaryCoord = false;
 					}
 
 					// gl_FragColor and gl_FragData are deprecated for essl > 300
@@ -1755,6 +1768,14 @@ namespace bgfx
 							preprocessor.writef("#define gl_FragData bgfx_FragData\n");
 							preprocessor.writef("out mediump vec4 bgfx_FragData[gl_MaxDrawBuffers];\n");
 						}
+					}
+
+					if (!hasBaryCoord)
+					{
+						preprocessor.writef(
+							"#define gl_BaryCoord vec3_splat(0.0)\n"
+							"#define gl_BaryCoordNoPersp vec3_splat(0.0)\n"
+							);
 					}
 
 					for (InOut::const_iterator it = shaderInputs.begin(), itEnd = shaderInputs.end(); it != itEnd; ++it)
@@ -1808,6 +1829,8 @@ namespace bgfx
 					if (profile->lang == ShadingLang::PSSL)
 					{
 						preprocessor.writef(getPsslPreamble() );
+
+						hasBaryCoord = false;
 					}
 
 					preprocessor.writef(
@@ -1887,6 +1910,22 @@ namespace bgfx
 							{
 								insert = strInsert(const_cast<char*>(insert.getPtr()+1), "\ngl_FragColor = bgfx_VoidFrag;\n");
 							}
+						}
+
+						if (profile->lang == ShadingLang::HLSL)
+						{
+							if (profile->id < 610)
+							{
+								hasBaryCoord = false;
+							}
+						}
+
+						if (!hasBaryCoord)
+						{
+							preprocessor.writef(
+								"#define gl_BaryCoord vec3_splat(0.0)\n"
+								"#define gl_BaryCoordNoPersp vec3_splat(0.0)\n"
+								);
 						}
 
 						preprocessor.writef("#define void_main()");
@@ -1973,6 +2012,18 @@ namespace bgfx
 								bx::write(_messageWriter, &messageErr, "gl_PrimitiveID builtin is not supported by D3D9 HLSL.\n");
 								return false;
 							}
+						}
+
+						if (hasBaryCoord)
+						{
+							preprocessor.writef(
+								" \\\n\t%sfloat3 gl_BaryCoord : SV_Barycentrics"
+								, arg++ > 0 ? ", " : "  "
+							);
+							preprocessor.writef(
+								" \\\n\t%snoperspective float3 gl_BaryCoordNoPersp : SV_Barycentrics1"
+								, arg++ > 0 ? ", " : "  "
+							);
 						}
 
 						preprocessor.writef(
@@ -2212,6 +2263,14 @@ namespace bgfx
 								else if (glsl_profile < 310)
 								{
 									glsl_profile = 310;
+								}
+							}
+
+							if ('f' == _options.shaderType)
+							{
+								if (hasBaryCoord && profile->lang == ShadingLang::GLSL)
+								{
+									glsl_profile = 450;
 								}
 							}
 
