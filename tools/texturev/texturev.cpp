@@ -1222,34 +1222,60 @@ void associate()
 		}
 	}
 #elif BX_PLATFORM_LINUX
-	std::string str;
-	str += "#/bin/bash\n\n";
+
+	std::string mimeType;
+
+	auto associate = [&mimeType](const char* _ext)
+	{
+		std::string tmp;
+		bx::stringPrintf(tmp, "default texturev.desktop image/%s", _ext);
+
+		bx::ProcessReader reader;
+		bx::Error err;
+		if (bx::open(&reader, "xdg-mime", tmp.c_str(), &err) )
+		{
+			bx::close(&reader);
+		}
+		else
+		{
+			bx::printf("Failed to associate MIME type image/%s (error: \"%S\")!\n", _ext, &err.getMessage() );
+		}
+
+		bx::stringPrintf(mimeType, "image/%s;", _ext);
+	};
 
 	for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
 	{
-		const char* ext = s_supportedExt[ii];
-		bx::stringPrintf(str, "xdg-mime default texturev.desktop image/%s\n", ext);
+		associate(s_supportedExt[ii]);
 	}
 
-	bx::stringPrintf(str, "xdg-mime default texturev.desktop image/x-dds\n");
-
-	str += "\n";
+	associate("x-dds");
 
 	bx::FileWriter writer;
 	bx::Error err;
-	if (bx::open(&writer, "/tmp/texturev.sh", false, &err) )
+	if (bx::open(&writer, "/usr/share/applications/texturev.desktop", false, &err) )
 	{
-		bx::write(&writer, str.c_str(), uint32_t(str.length()), &err);
+		bx::write(&writer, &err
+			, "[Desktop Entry]\n"
+			  "Version=%d.%d.%d\n"
+			  "Type=Application\n"
+			  "Name=texturev\n"
+			  "GenericName=bgfx Image/Texture Viewer\n"
+			  "Exec=texturev %%U\n"
+			  "Terminal=false\n"
+			  "Categories=Graphics\n"
+			  "StartupNotify=true\n"
+			  "MimeType=%s\n"
+			, BGFX_TEXTUREV_VERSION_MAJOR
+			, BGFX_TEXTUREV_VERSION_MINOR
+			, BGFX_API_VERSION
+			, mimeType.c_str()
+			);
 		bx::close(&writer);
-
-		if (err.isOk() )
-		{
-			bx::ProcessReader reader;
-			if (bx::open(&reader, "/bin/bash", "/tmp/texturev.sh", &err) )
-			{
-				bx::close(&reader);
-			}
-		}
+	}
+	else
+	{
+		bx::printf("Failed to create texturev desktop entry (error: \"%S\")! Permissions (try sudo)?!\n", &err.getMessage() );
 	}
 #endif // BX_PLATFORM_WINDOWS
 }
