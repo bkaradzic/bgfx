@@ -849,7 +849,7 @@ namespace bgfx { namespace d3d12
 									bx::memSet(&osver, 0 , sizeof(RTL_OSVERSIONINFOW));
 									const HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
 								    if (hMod) {
-										LONG (WINAPI* rtlGetVersionPtr) (PRTL_OSVERSIONINFOW) = reinterpret_cast<LONG (WINAPI*)(PRTL_OSVERSIONINFOW)>(::GetProcAddress(hMod, "RtlGetVersion"));
+										FARPROC (WINAPI* rtlGetVersionPtr) (PRTL_OSVERSIONINFOW) = reinterpret_cast<FARPROC (WINAPI*)(PRTL_OSVERSIONINFOW)>(::GetProcAddress(hMod, "RtlGetVersion"));
 								        if (rtlGetVersionPtr != nullptr) {
 								            rtlGetVersionPtr(&osver);
 											if (osver.dwBuildNumber > 0) {
