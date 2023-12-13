@@ -33,9 +33,9 @@ Supported Platforms
 ~~~~~~~~~~~~~~~~~~~
 
 -  Android (14+, ARM, x86, MIPS)
--  iOS/iPadOS/tvOS (iPhone, iPad, AppleTV)
+-  iOS/iPadOS/tvOS (16.0+)
 -  Linux
--  macOS (11+)
+-  macOS (13.0+)
 -  PlayStation 4
 -  RaspberryPi
 -  UWP (Universal Windows, Xbox One)
