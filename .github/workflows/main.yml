@@ -178,8 +178,8 @@ jobs:
           { config: debug, binsuffix: Debug },
           { config: release, binsuffix: Release },
         ]
-    name: osx-arm64-${{ matrix.config }}
-    runs-on: macos-13-arm64
+    name: osx-x64-${{ matrix.config }}
+    runs-on: macos-13
     steps:
       - name: Checkout bgfx
         uses: actions/checkout@v3
@@ -198,14 +198,14 @@ jobs:
       - name: Build
         run: |
           cd bgfx
-          make -j$(sysctl -n hw.physicalcpu) osx-arm64-${{ matrix.config }}
+          make -j$(sysctl -n hw.physicalcpu) osx-x64-${{ matrix.config }}
       - name: Check
         run: |
           cd bgfx
-          ls -lash ".build/osx-arm64/bin"
-          ".build/osx-arm64/bin/geometryc${{ matrix.binsuffix}}" --version
-          ".build/osx-arm64/bin/shaderc${{ matrix.binsuffix}}" --version
-          ".build/osx-arm64/bin/texturec${{ matrix.binsuffix}}" --version
+          ls -lash ".build/osx-x64/bin"
+          ".build/osx-x64/bin/geometryc${{ matrix.binsuffix}}" --version
+          ".build/osx-x64/bin/shaderc${{ matrix.binsuffix}}" --version
+          ".build/osx-x64/bin/texturec${{ matrix.binsuffix}}" --version
   android:
     strategy:
       fail-fast: true
