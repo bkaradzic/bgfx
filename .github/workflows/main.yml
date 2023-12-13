@@ -179,7 +179,7 @@ jobs:
           { config: release, binsuffix: Release },
         ]
     name: osx-x64-${{ matrix.config }}
-    runs-on: macos-13
+    runs-on: macos-latest
     steps:
       - name: Checkout bgfx
         uses: actions/checkout@v3
