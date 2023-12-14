@@ -2656,27 +2656,70 @@ namespace bgfx
 	bool windowsVersionIs(Condition::Enum _op, uint32_t _version)
 	{
 #if BX_PLATFORM_WINDOWS
-		static const uint8_t s_condition[] =
-		{
-			VER_LESS_EQUAL,
-			VER_GREATER_EQUAL,
-		};
-
-		OSVERSIONINFOEXA ovi;
-		bx::memSet(&ovi, 0, sizeof(ovi) );
+		RTL_OSVERSIONINFOW ovi;
+		bx::memSet(&ovi, 0 , sizeof(ovi));
 		ovi.dwOSVersionInfoSize = sizeof(ovi);
-		// _WIN32_WINNT_WINBLUE 0x0603
-		// _WIN32_WINNT_WIN8    0x0602
-		// _WIN32_WINNT_WIN7    0x0601
-		// _WIN32_WINNT_VISTA   0x0600
-		ovi.dwMajorVersion = HIBYTE(_version);
-		ovi.dwMinorVersion = LOBYTE(_version);
-		DWORDLONG cond = 0;
-		VER_SET_CONDITION(cond, VER_MAJORVERSION, s_condition[_op]);
-		VER_SET_CONDITION(cond, VER_MINORVERSION, s_condition[_op]);
-		return !!VerifyVersionInfoA(&ovi, VER_MAJORVERSION | VER_MINORVERSION, cond);
+		const HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
+		if (NULL != hMod)
+		{
+			FARPROC (WINAPI* rtlGetVersionPtr) (PRTL_OSVERSIONINFOW) = reinterpret_cast<FARPROC (WINAPI*)(PRTL_OSVERSIONINFOW)>(GetProcAddress(hMod, "RtlGetVersion"));
+			if (NULL != rtlGetVersionPtr)
+			{
+				rtlGetVersionPtr(&ovi);
+				if (ovi.dwMajorVersion == 0)
+				{
+					return false;
+				}
+			}
+		}
+		const DWORD cMajorVersion = HIBYTE(_version);
+		const DWORD cMinorVersion = LOBYTE(_version);
+		switch (_op)
+		{
+			case Condition::LessEqual:
+				return ovi.dwMajorVersion <= cMajorVersion && ovi.dwMinorVersion <= cMinorVersion;
+			case Condition::GreaterEqual:
+				return ovi.dwMajorVersion >= cMajorVersion && ovi.dwMinorVersion >= cMinorVersion;
+			default:
+				return false;
+		}
 #else
 		BX_UNUSED(_op, _version);
+		return false;
+#endif // BX_PLATFORM_WINDOWS
+	}
+
+	bool windowsBuildIs(Condition::Enum _op, uint32_t _build)
+	{
+#if BX_PLATFORM_WINDOWS
+		RTL_OSVERSIONINFOW ovi;
+		bx::memSet(&ovi, 0 , sizeof(ovi));
+		ovi.dwOSVersionInfoSize = sizeof(ovi);
+		const HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
+		if (NULL != hMod)
+		{
+			FARPROC (WINAPI* rtlGetVersionPtr) (PRTL_OSVERSIONINFOW) = reinterpret_cast<FARPROC (WINAPI*)(PRTL_OSVERSIONINFOW)>(GetProcAddress(hMod, "RtlGetVersion"));
+			if (NULL != rtlGetVersionPtr)
+			{
+				rtlGetVersionPtr(&ovi);
+				if (ovi.dwBuildNumber == 0)
+				{
+					return false;
+				}
+			}
+		}
+
+		switch (_op)
+		{
+			case Condition::LessEqual:
+				return ovi.dwBuildNumber <= _build;
+			case Condition::GreaterEqual:
+				return ovi.dwBuildNumber >= _build;
+			default:
+				return false;
+		}
+#else
+		BX_UNUSED(_op, _build);
 		return false;
 #endif // BX_PLATFORM_WINDOWS
 	}
@@ -2701,7 +2744,7 @@ namespace bgfx
 
 				if (BX_ENABLED(BX_PLATFORM_WINDOWS) )
 				{
-					if (windowsVersionIs(Condition::GreaterEqual, 0x0602) )
+					if (windowsVersionIs(Condition::GreaterEqual, 0x0603) )
 					{
 						score += RendererType::Direct3D11 == renderer ? 20 : 0;
 						score += RendererType::Direct3D12 == renderer ? 10 : 0;

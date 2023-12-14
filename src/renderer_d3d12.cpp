@@ -844,29 +844,18 @@ namespace bgfx { namespace d3d12
 
 								if (SUCCEEDED(hr))
 								{
-									//This is the least ugly way to get the windows build that still works past win10 without deprecation warnings or needing app manifests
-									RTL_OSVERSIONINFOW osver;
-									bx::memSet(&osver, 0 , sizeof(RTL_OSVERSIONINFOW));
-									const HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
-								    if (hMod) {
-										FARPROC (WINAPI* rtlGetVersionPtr) (PRTL_OSVERSIONINFOW) = reinterpret_cast<FARPROC (WINAPI*)(PRTL_OSVERSIONINFOW)>(::GetProcAddress(hMod, "RtlGetVersion"));
-								        if (rtlGetVersionPtr != nullptr) {
-								            rtlGetVersionPtr(&osver);
-											if (osver.dwBuildNumber > 0) {
-												osver.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOW);
-											}
-								        }
-								    }
-
 									// https://discordapp.com/channels/590611987420020747/593519198995742733/703642988345032804
 									// D3D12 Bug Number: 26131261
 									// There is a bug in the D3D12 validation that causes example-21 to fail when using UAV
 									// Setting SetEnableSynchronizedCommandQueueValidation below to false avoids the bug
 									// It was fixed in (probably) the first windows 11 sdk, 22000
 									// However, the fix causes any dx12 context with validation to break if this is set to false, so we can't do that anymore
-									if (osver.dwOSVersionInfoSize > 0 && osver.dwBuildNumber >= 22000) {
+									if (windowsBuildIs(Condition::GreaterEqual, 22000))
+									{
 										debug1->SetEnableGPUBasedValidation(true);
-									} else {
+									}
+									else
+									{
 										debug1->SetEnableSynchronizedCommandQueueValidation(false);
 									}
 								}

@@ -429,6 +429,8 @@ namespace bgfx
 
 	bool windowsVersionIs(Condition::Enum _op, uint32_t _version);
 
+	bool windowsBuildIs(Condition::Enum _op, uint32_t _build);
+
 	constexpr bool isShaderType(uint32_t _magic, char _type)
 	{
 		return uint32_t(_type) == (_magic & BX_MAKEFOURCC(0xff, 0, 0, 0) );
