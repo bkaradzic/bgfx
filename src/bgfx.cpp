@@ -2670,6 +2670,7 @@ namespace bgfx
 				{
 					return false;
 				}
+				ovi.dwBuildNumber =  UINT32_MAX == _build ? UINT32_MAX : ovi.dwBuildNumber;
 			}
 		}
 		// _WIN32_WINNT_WIN10   0x0A00
@@ -2682,23 +2683,9 @@ namespace bgfx
 		switch (_op)
 		{
 			case Condition::LessEqual:
-				if (_build != UINT32_MAX)
-				{
-					return (ovi.dwMajorVersion < cMajorVersion || (ovi.dwMajorVersion == cMajorVersion && ovi.dwMinorVersion <= cMinorVersion)) && ovi.dwBuildNumber <= _build;
-				}
-				else
-				{
-					return ovi.dwMajorVersion < cMajorVersion || (ovi.dwMajorVersion == cMajorVersion && ovi.dwMinorVersion <= cMinorVersion);
-				}
+				return (ovi.dwMajorVersion < cMajorVersion || (ovi.dwMajorVersion == cMajorVersion && ovi.dwMinorVersion <= cMinorVersion)) && ovi.dwBuildNumber <= _build;
 			case Condition::GreaterEqual:
-				if (_build != UINT32_MAX)
-				{
-					return (ovi.dwMajorVersion > cMajorVersion || (ovi.dwMajorVersion == cMajorVersion && ovi.dwMinorVersion >= cMinorVersion)) && ovi.dwBuildNumber >= _build;
-				}
-				else
-				{
-					return ovi.dwMajorVersion > cMajorVersion || (ovi.dwMajorVersion == cMajorVersion && ovi.dwMinorVersion >= cMinorVersion);
-				}
+				return (ovi.dwMajorVersion > cMajorVersion || (ovi.dwMajorVersion == cMajorVersion && ovi.dwMinorVersion >= cMinorVersion)) && ovi.dwBuildNumber >= _build;
 			default:
 				return false;
 		}
