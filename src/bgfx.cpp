@@ -2653,7 +2653,7 @@ namespace bgfx
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_rendererCreator) == RendererType::Count);
 
-	bool windowsVersionIs(Condition::Enum _op, uint32_t _version)
+	bool windowsVersionIs(Condition::Enum _op, uint32_t _version, uint32_t _build)
 	{
 #if BX_PLATFORM_WINDOWS
 		RTL_OSVERSIONINFOW ovi;
@@ -2662,7 +2662,7 @@ namespace bgfx
 		const HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
 		if (NULL != hMod)
 		{
-			FARPROC (WINAPI* rtlGetVersionPtr) (PRTL_OSVERSIONINFOW) = reinterpret_cast<FARPROC (WINAPI*)(PRTL_OSVERSIONINFOW)>(GetProcAddress(hMod, "RtlGetVersion"));
+			FARPROC (WINAPI* rtlGetVersionPtr) (PRTL_OSVERSIONINFOW) = reinterpret_cast<FARPROC (WINAPI*)(PRTL_OSVERSIONINFOW)>(bx::dlsym(hMod, "RtlGetVersion"));
 			if (NULL != rtlGetVersionPtr)
 			{
 				rtlGetVersionPtr(&ovi);
@@ -2672,54 +2672,38 @@ namespace bgfx
 				}
 			}
 		}
+		// _WIN32_IE_WIN10      0x0A00
+		// _WIN32_WINNT_WINBLUE 0x0603
+		// _WIN32_WINNT_WIN8    0x0602
+		// _WIN32_WINNT_WIN7    0x0601
+		// _WIN32_WINNT_VISTA   0x0600
 		const DWORD cMajorVersion = HIBYTE(_version);
 		const DWORD cMinorVersion = LOBYTE(_version);
 		switch (_op)
 		{
 			case Condition::LessEqual:
-				return ovi.dwMajorVersion <= cMajorVersion && ovi.dwMinorVersion <= cMinorVersion;
-			case Condition::GreaterEqual:
-				return ovi.dwMajorVersion >= cMajorVersion && ovi.dwMinorVersion >= cMinorVersion;
-			default:
-				return false;
-		}
-#else
-		BX_UNUSED(_op, _version);
-		return false;
-#endif // BX_PLATFORM_WINDOWS
-	}
-
-	bool windowsBuildIs(Condition::Enum _op, uint32_t _build)
-	{
-#if BX_PLATFORM_WINDOWS
-		RTL_OSVERSIONINFOW ovi;
-		bx::memSet(&ovi, 0 , sizeof(ovi));
-		ovi.dwOSVersionInfoSize = sizeof(ovi);
-		const HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
-		if (NULL != hMod)
-		{
-			FARPROC (WINAPI* rtlGetVersionPtr) (PRTL_OSVERSIONINFOW) = reinterpret_cast<FARPROC (WINAPI*)(PRTL_OSVERSIONINFOW)>(GetProcAddress(hMod, "RtlGetVersion"));
-			if (NULL != rtlGetVersionPtr)
-			{
-				rtlGetVersionPtr(&ovi);
-				if (ovi.dwBuildNumber == 0)
+				if (_build != UINT32_MAX)
 				{
-					return false;
+					return (ovi.dwMajorVersion < cMajorVersion || (ovi.dwMajorVersion == cMajorVersion && ovi.dwMinorVersion <= cMinorVersion)) && ovi.dwBuildNumber <= _build;
 				}
-			}
-		}
-
-		switch (_op)
-		{
-			case Condition::LessEqual:
-				return ovi.dwBuildNumber <= _build;
+				else
+				{
+					return ovi.dwMajorVersion < cMajorVersion || (ovi.dwMajorVersion == cMajorVersion && ovi.dwMinorVersion <= cMinorVersion);
+				}
 			case Condition::GreaterEqual:
-				return ovi.dwBuildNumber >= _build;
+				if (_build != UINT32_MAX)
+				{
+					return (ovi.dwMajorVersion > cMajorVersion || (ovi.dwMajorVersion == cMajorVersion && ovi.dwMinorVersion >= cMinorVersion)) && ovi.dwBuildNumber >= _build;
+				}
+				else
+				{
+					return ovi.dwMajorVersion > cMajorVersion || (ovi.dwMajorVersion == cMajorVersion && ovi.dwMinorVersion >= cMinorVersion);
+				}
 			default:
 				return false;
 		}
 #else
-		BX_UNUSED(_op, _build);
+		BX_UNUSED(_op, _version, _build);
 		return false;
 #endif // BX_PLATFORM_WINDOWS
 	}

@@ -850,7 +850,7 @@ namespace bgfx { namespace d3d12
 									// Setting SetEnableSynchronizedCommandQueueValidation below to false avoids the bug
 									// It was fixed in (probably) the first windows 11 sdk, 22000
 									// However, the fix causes any dx12 context with validation to break if this is set to false, so we can't do that anymore
-									if (windowsBuildIs(Condition::GreaterEqual, 22000))
+									if (windowsVersionIs(Condition::GreaterEqual, 0x0A00, 22000))
 									{
 										debug1->SetEnableGPUBasedValidation(true);
 									}
