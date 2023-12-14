@@ -2728,7 +2728,7 @@ namespace bgfx
 
 				if (BX_ENABLED(BX_PLATFORM_WINDOWS) )
 				{
-					if (windowsVersionIs(Condition::GreaterEqual, 0x0603) )
+					if (windowsVersionIs(Condition::GreaterEqual, 0x0602) )
 					{
 						score += RendererType::Direct3D11 == renderer ? 20 : 0;
 						score += RendererType::Direct3D12 == renderer ? 10 : 0;
