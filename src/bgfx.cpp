@@ -2672,7 +2672,7 @@ namespace bgfx
 				}
 			}
 		}
-		// _WIN32_IE_WIN10      0x0A00
+		// _WIN32_WINNT_WIN10   0x0A00
 		// _WIN32_WINNT_WINBLUE 0x0603
 		// _WIN32_WINNT_WIN8    0x0602
 		// _WIN32_WINNT_WIN7    0x0601
