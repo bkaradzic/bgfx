@@ -844,13 +844,20 @@ namespace bgfx { namespace d3d12
 
 								if (SUCCEEDED(hr))
 								{
-//									debug1->SetEnableGPUBasedValidation(true);
-
 									// https://discordapp.com/channels/590611987420020747/593519198995742733/703642988345032804
 									// D3D12 Bug Number: 26131261
 									// There is a bug in the D3D12 validation that causes example-21 to fail when using UAV
-									// Setting this function below to false avoids the bug
-									debug1->SetEnableSynchronizedCommandQueueValidation(false);
+									// Setting SetEnableSynchronizedCommandQueueValidation below to false avoids the bug
+									// It was fixed in (probably) the first windows 11 sdk, 22000
+									// However, the fix causes any dx12 context with validation to break if this is set to false, so we can't do that anymore
+									if (windowsVersionIs(Condition::GreaterEqual, 0x0A00, 22000))
+									{
+										debug1->SetEnableGPUBasedValidation(true);
+									}
+									else
+									{
+										debug1->SetEnableSynchronizedCommandQueueValidation(false);
+									}
 								}
 
 								DX_RELEASE(debug1, 1);
