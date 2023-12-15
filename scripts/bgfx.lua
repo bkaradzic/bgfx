@@ -153,6 +153,11 @@ function bgfxProjectBase(_kind, _defines)
 			path.join(BGFX_DIR, "3rdparty/khronos"),
 		}
 
+	configuration { "wasm*" }
+		linkoptions {
+			"-sGL_ENABLE_GET_PROC_ADDRESS",
+		}
+
 	configuration {}
 
 	includedirs {
