@@ -306,10 +306,10 @@ engine v3.0.
 http://www.dogbytegames.com/off_the_road.html - A sandbox off-road driving
 simulator.
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=IUmxqAWdXvk" 
-target="_blank"><img src="http://img.youtube.com/vi/IUmxqAWdXvk/0.jpg" 
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=RgnIReFkbyU" 
+target="_blank"><img src="http://img.youtube.com/vi/RgnIReFkbyU/hq720.jpg" 
 alt="Off The Road"
-width="640" height="480" border="0" /></a>
+width="640" height="360" border="0" /></a>
 
 ## Coal Burnout
 
