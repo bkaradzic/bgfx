@@ -362,6 +362,7 @@ function exampleProjectDefaults()
 		kind "ConsoleApp"
 
 		linkoptions {
+			"-sGL_ENABLE_GET_PROC_ADDRESS",
 			"-s TOTAL_MEMORY=32MB",
 			"-s ALLOW_MEMORY_GROWTH=1",
 			"--preload-file ../../../examples/runtime@/"
