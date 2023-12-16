@@ -6835,9 +6835,22 @@ namespace bgfx { namespace gl
 				char* temp = (char*)alloca(tempLen);
 				bx::StaticMemoryBlockWriter writer(temp, tempLen);
 
+				int32_t verLen = 0;
+				if (s_renderGL->m_gles3)
+				{
+					const char* str = "#version 310 es\n";
+					verLen = bx::strLen(str);
+					bx::write(&writer, &err, str);
+				}
+				else
+				{
+					const char* str = "#version 430\n";
+					verLen = bx::strLen(str);
+					bx::write(&writer, &err, str);
+				}
+
 				bx::write(&writer
-					, "#version 430\n"
-					  "#define texture2DLod             textureLod\n"
+					, "#define texture2DLod             textureLod\n"
 					  "#define texture2DLodOffset       textureLodOffset\n"
 					  "#define texture2DArrayLod        textureLod\n"
 					  "#define texture2DArrayLodOffset  textureLodOffset\n"
@@ -6849,7 +6862,6 @@ namespace bgfx { namespace gl
 					, &err
 					);
 
-				int32_t verLen = bx::strLen("#version 430\n");
 				bx::write(&writer, code.getPtr()+verLen, codeLen-verLen, &err);
 				bx::write(&writer, '\0', &err);
 
