@@ -689,7 +689,7 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
         case EOpConvInt64ToBool:
             newConstArray[i].setBConst(unionArray[i].getI64Const() != 0); break;
         case EOpConvUint64ToBool:
-            newConstArray[i].setBConst(unionArray[i].getI64Const() != 0); break;
+            newConstArray[i].setBConst(unionArray[i].getU64Const() != 0); break;
         case EOpConvFloat16ToBool:
             newConstArray[i].setBConst(unionArray[i].getDConst() != 0); break;
 

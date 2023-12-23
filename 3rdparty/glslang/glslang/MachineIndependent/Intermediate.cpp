@@ -2317,6 +2317,40 @@ TIntermAggregate* TIntermediate::growAggregate(TIntermNode* left, TIntermNode* r
     return aggNode;
 }
 
+TIntermAggregate* TIntermediate::mergeAggregate(TIntermNode* left, TIntermNode* right)
+{
+    if (left == nullptr && right == nullptr)
+        return nullptr;
+
+    TIntermAggregate* aggNode = nullptr;
+    if (left != nullptr)
+        aggNode = left->getAsAggregate();
+    if (aggNode == nullptr || aggNode->getOp() != EOpNull) {
+        aggNode = new TIntermAggregate;
+        if (left != nullptr)
+            aggNode->getSequence().push_back(left);
+    }
+
+    TIntermAggregate* rhsagg = right->getAsAggregate();
+    if (rhsagg == nullptr || rhsagg->getOp() != EOpNull)
+        aggNode->getSequence().push_back(right);
+    else
+        aggNode->getSequence().insert(aggNode->getSequence().end(),
+                                      rhsagg->getSequence().begin(),
+                                      rhsagg->getSequence().end());
+
+    return aggNode;
+}
+
+TIntermAggregate* TIntermediate::mergeAggregate(TIntermNode* left, TIntermNode* right, const TSourceLoc& loc)
+{
+    TIntermAggregate* aggNode = mergeAggregate(left, right);
+    if (aggNode)
+        aggNode->setLoc(loc);
+
+    return aggNode;
+}
+
 //
 // Turn an existing node into an aggregate.
 //
@@ -2821,10 +2855,9 @@ void TIntermediate::addSymbolLinkageNodes(TIntermAggregate*& linkage, EShLanguag
     //}
 
     if (language == EShLangVertex) {
-        // the names won't be found in the symbol table unless the versions are right,
-        // so version logic does not need to be repeated here
         addSymbolLinkageNode(linkage, symbolTable, "gl_VertexID");
-        addSymbolLinkageNode(linkage, symbolTable, "gl_InstanceID");
+        if ((version < 140 && requestedExtensions.find(E_GL_EXT_draw_instanced) != requestedExtensions.end()) || version >= 140)
+            addSymbolLinkageNode(linkage, symbolTable, "gl_InstanceID");
     }
 
     // Add a child to the root node for the linker objects

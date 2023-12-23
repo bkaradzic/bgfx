@@ -993,17 +993,25 @@ TIntermTyped* TParseContext::handleDotDereference(const TSourceLoc& loc, TInterm
                 break;
             }
         }
+
         if (fieldFound) {
-            if (base->getType().getQualifier().isFrontEndConstant())
-                result = intermediate.foldDereference(base, member, loc);
-            else {
-                blockMemberExtensionCheck(loc, base, member, field);
-                TIntermTyped* index = intermediate.addConstantUnion(member, loc);
-                result = intermediate.addIndex(EOpIndexDirectStruct, base, index, loc);
-                result->setType(*(*fields)[member].type);
-                if ((*fields)[member].type->getQualifier().isIo())
-                    intermediate.addIoAccessed(field);
+            if (spvVersion.vulkan != 0 && spvVersion.vulkanRelaxed)
+                result = vkRelaxedRemapDotDereference(loc, *base, *(*fields)[member].type, field);
+
+            if (result == base)
+            {
+                if (base->getType().getQualifier().isFrontEndConstant())
+                    result = intermediate.foldDereference(base, member, loc);
+                else {
+                    blockMemberExtensionCheck(loc, base, member, field);
+                    TIntermTyped* index = intermediate.addConstantUnion(member, loc);
+                    result = intermediate.addIndex(EOpIndexDirectStruct, base, index, loc);
+                    result->setType(*(*fields)[member].type);
+                    if ((*fields)[member].type->getQualifier().isIo())
+                        intermediate.addIoAccessed(field);
+                }
             }
+
             inheritMemoryQualifiers(base->getQualifier(), result->getWritableType().getQualifier());
         } else {
             auto baseSymbol = base;
@@ -1655,7 +1663,9 @@ TIntermNode* TParseContext::handleReturnValue(const TSourceLoc& loc, TIntermType
         }
     } else {
         if (value->getType().isTexture() || value->getType().isImage()) {
-            if (!extensionTurnedOn(E_GL_ARB_bindless_texture))
+            if (spvVersion.spv != 0)
+                error(loc, "sampler or image cannot be used as return type when generating SPIR-V", "return", "");
+            else if (!extensionTurnedOn(E_GL_ARB_bindless_texture))
                 error(loc, "sampler or image can be used as return type only when the extension GL_ARB_bindless_texture enabled", "return", "");
         }
         branch = intermediate.addBranch(EOpReturn, value, loc);
@@ -7357,12 +7367,14 @@ void TParseContext::coopMatTypeParametersCheck(const TSourceLoc& loc, const TPub
     }
 }
 
-bool TParseContext::vkRelaxedRemapUniformVariable(const TSourceLoc& loc, TString& identifier, const TPublicType&,
+bool TParseContext::vkRelaxedRemapUniformVariable(const TSourceLoc& loc, TString& identifier, const TPublicType& publicType,
     TArraySizes*, TIntermTyped* initializer, TType& type)
 {
+    vkRelaxedRemapUniformMembers(loc, publicType, type, identifier);
+
     if (parsingBuiltins || symbolTable.atBuiltInLevel() || !symbolTable.atGlobalLevel() ||
         type.getQualifier().storage != EvqUniform ||
-        !(type.containsNonOpaque()|| type.getBasicType() == EbtAtomicUint)) {
+        !(type.containsNonOpaque() || type.getBasicType() == EbtAtomicUint || (type.containsSampler() && type.isStruct()))) {
         return false;
     }
 
@@ -7434,6 +7446,251 @@ bool TParseContext::vkRelaxedRemapUniformVariable(const TSourceLoc& loc, TString
     mergeObjectLayoutQualifiers(updatedBlock->getWritableType().getQualifier(), type.getQualifier(), true);
 
     return true;
+}
+
+template <typename Function>
+static void ForEachOpaque(const TType& type, const TString& path, Function callback)
+{
+    auto recursion = [&callback](const TType& type, const TString& path, bool skipArray, auto& recursion) -> void {
+        if (!skipArray && type.isArray())
+        {
+            std::vector<int> indices(type.getArraySizes()->getNumDims());
+            for (int flatIndex = 0;
+                 flatIndex < type.getArraySizes()->getCumulativeSize();
+                 ++flatIndex)
+            {
+                TString subscriptPath = path;
+                for (size_t dimIndex = 0; dimIndex < indices.size(); ++dimIndex)
+                {
+                    int index = indices[dimIndex];
+                    subscriptPath.append("[");
+                    subscriptPath.append(String(index));
+                    subscriptPath.append("]");
+                }
+
+                recursion(type, subscriptPath, true, recursion);
+
+                for (size_t dimIndex = 0; dimIndex < indices.size(); ++dimIndex)
+                {
+                    ++indices[dimIndex];
+                    if (indices[dimIndex] < type.getArraySizes()->getDimSize(dimIndex))
+                        break;
+                    else
+                        indices[dimIndex] = 0;
+                }
+            }
+        }
+
+        else if (type.isStruct() && type.containsOpaque())
+        {
+            const TTypeList& types = *type.getStruct();
+            for (const TTypeLoc& typeLoc : types)
+            {
+                TString nextPath = path;
+                nextPath.append(".");
+                nextPath.append(typeLoc.type->getFieldName());
+
+                recursion(*(typeLoc.type), nextPath, false, recursion);
+            }
+        }
+
+        else if (type.isOpaque())
+        {
+            callback(type, path);
+        }
+    };
+
+    recursion(type, path, false, recursion);
+}
+
+void TParseContext::vkRelaxedRemapUniformMembers(const TSourceLoc& loc, const TPublicType& publicType, const TType& type,
+    const TString& identifier)
+{
+    if (!type.isStruct() || !type.containsOpaque())
+        return;
+
+    ForEachOpaque(type, identifier,
+                  [&publicType, &loc, this](const TType& type, const TString& path) {
+                      TArraySizes arraySizes = {};
+                      if (type.getArraySizes()) arraySizes = *type.getArraySizes();
+                      TTypeParameters typeParameters = {};
+                      if (type.getTypeParameters()) typeParameters = *type.getTypeParameters();
+
+                      TPublicType memberType{};
+                      memberType.basicType = type.getBasicType();
+                      memberType.sampler = type.getSampler();
+                      memberType.qualifier = type.getQualifier();
+                      memberType.vectorSize = type.getVectorSize();
+                      memberType.matrixCols = type.getMatrixCols();
+                      memberType.matrixRows = type.getMatrixRows();
+                      memberType.coopmatNV = type.isCoopMatNV();
+                      memberType.coopmatKHR = type.isCoopMatKHR();
+                      memberType.arraySizes = nullptr;
+                      memberType.userDef = nullptr;
+                      memberType.loc = loc;
+                      memberType.typeParameters = (type.getTypeParameters() ? &typeParameters : nullptr);
+                      memberType.spirvType = nullptr;
+
+                      memberType.qualifier.storage = publicType.qualifier.storage;
+                      memberType.shaderQualifiers = publicType.shaderQualifiers;
+
+                      TString& structMemberName = *NewPoolTString(path.c_str()); // A copy is required due to declareVariable() signature.
+                      declareVariable(loc, structMemberName, memberType, nullptr, nullptr);
+                  });
+}
+
+void TParseContext::vkRelaxedRemapFunctionParameter(TFunction* function, TParameter& param, std::vector<int>* newParams)
+{
+    function->addParameter(param);
+
+    if (!param.type->isStruct() || !param.type->containsOpaque())
+        return;
+
+    ForEachOpaque(*param.type, (param.name ? *param.name : param.type->getFieldName()),
+                  [function, param, newParams](const TType& type, const TString& path) {
+                      TString* memberName = NewPoolTString(path.c_str());
+
+                      TType* memberType = new TType();
+                      memberType->shallowCopy(type);
+                      memberType->getQualifier().storage = param.type->getQualifier().storage;
+                      memberType->clearArraySizes();
+
+                      TParameter memberParam = {};
+                      memberParam.name = memberName;
+                      memberParam.type = memberType;
+                      memberParam.defaultValue = nullptr;
+                      function->addParameter(memberParam);
+                      if (newParams)
+                          newParams->push_back(function->getParamCount()-1);
+                  });
+}
+
+//
+// Generates a valid GLSL dereferencing string for the input TIntermNode
+//
+struct AccessChainTraverser : public TIntermTraverser {
+    AccessChainTraverser() : TIntermTraverser(false, false, true)
+    {}
+
+    TString path = "";
+
+    bool visitBinary(TVisit, TIntermBinary* binary) override {
+        if (binary->getOp() == EOpIndexDirectStruct)
+        {
+            const TTypeList& members = *binary->getLeft()->getType().getStruct();
+            const TTypeLoc& member =
+                members[binary->getRight()->getAsConstantUnion()->getConstArray()[0].getIConst()];
+            TString memberName = member.type->getFieldName();
+
+            if (path != "")
+                path.append(".");
+
+            path.append(memberName);
+        }
+
+        if (binary->getOp() == EOpIndexDirect)
+        {
+            const TConstUnionArray& indices = binary->getRight()->getAsConstantUnion()->getConstArray();
+            for (int index = 0; index < indices.size(); ++index)
+            {
+                path.append("[");
+                path.append(String(indices[index].getIConst()));
+                path.append("]");
+            }
+        }
+
+        return true;
+    }
+
+    void visitSymbol(TIntermSymbol* symbol) override {
+        if (!IsAnonymous(symbol->getName()))
+            path.append(symbol->getName());
+    }
+};
+
+TIntermNode* TParseContext::vkRelaxedRemapFunctionArgument(const TSourceLoc& loc, TFunction* function, TIntermTyped* intermTyped)
+{
+    AccessChainTraverser accessChainTraverser{};
+    intermTyped->traverse(&accessChainTraverser);
+
+    TParameter param = { NewPoolTString(accessChainTraverser.path.c_str()), new TType };
+    param.type->shallowCopy(intermTyped->getType());
+
+    std::vector<int> newParams = {};
+    vkRelaxedRemapFunctionParameter(function, param, &newParams);
+
+    if (intermTyped->getType().isOpaque())
+    {
+        TIntermNode* remappedArgument = intermTyped;
+        {
+            TIntermSymbol* intermSymbol = nullptr;
+            TSymbol* symbol = symbolTable.find(*param.name);
+            if (symbol && symbol->getAsVariable())
+                intermSymbol = intermediate.addSymbol(*symbol->getAsVariable(), loc);
+            else
+            {
+                TVariable* variable = new TVariable(param.name, *param.type);
+                intermSymbol = intermediate.addSymbol(*variable, loc);
+            }
+
+            remappedArgument = intermSymbol;
+        }
+
+        return remappedArgument;
+    }
+    else if (!(intermTyped->isStruct() && intermTyped->getType().containsOpaque()))
+        return intermTyped;
+    else
+    {
+        TIntermNode* remappedArgument = intermTyped;
+        {
+            TSymbol* symbol = symbolTable.find(*param.name);
+            if (symbol && symbol->getAsVariable())
+                remappedArgument = intermediate.addSymbol(*symbol->getAsVariable(), loc);
+        }
+
+        if (!newParams.empty())
+            remappedArgument = intermediate.makeAggregate(remappedArgument, loc);
+
+        for (int paramIndex : newParams)
+        {
+            TParameter& newParam = function->operator[](paramIndex);
+            TIntermSymbol* intermSymbol = nullptr;
+            TSymbol* symbol = symbolTable.find(*newParam.name);
+            if (symbol && symbol->getAsVariable())
+                intermSymbol = intermediate.addSymbol(*symbol->getAsVariable(), loc);
+            else
+            {
+                TVariable* variable = new TVariable(newParam.name, *newParam.type);
+                intermSymbol = intermediate.addSymbol(*variable, loc);
+            }
+
+            remappedArgument = intermediate.growAggregate(remappedArgument, intermSymbol);
+        }
+
+        return remappedArgument;
+    }
+}
+
+TIntermTyped* TParseContext::vkRelaxedRemapDotDereference(const TSourceLoc&, TIntermTyped& base, const TType& member,
+    const TString& identifier)
+{
+    if (!member.isOpaque())
+        return &base;
+
+    AccessChainTraverser traverser{};
+    base.traverse(&traverser);
+    if (!traverser.path.empty())
+        traverser.path.append(".");
+    traverser.path.append(identifier);
+
+    const TSymbol* symbol = symbolTable.find(traverser.path);
+    if (!symbol)
+        return &base;
+
+    TIntermTyped* result = intermediate.addSymbol(*symbol->getAsVariable());
+    result->setType(symbol->getType());
+    return result;
 }
 
 //
