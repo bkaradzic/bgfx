@@ -176,8 +176,9 @@ Instruction* FoldSpecConstantOpAndCompositePass::FoldWithInstructionFolder(
   Instruction* new_const_inst =
       context()->get_instruction_folder().FoldInstructionToConstant(
           inst.get(), identity_map);
-  assert(new_const_inst != nullptr &&
-         "Failed to fold instruction that must be folded.");
+
+  // new_const_inst == null indicates we cannot fold this spec constant
+  if (!new_const_inst) return nullptr;
 
   // Get the instruction before |pos| to insert after.  |pos| cannot be the
   // first instruction in the list because its type has to come first.

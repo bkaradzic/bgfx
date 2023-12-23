@@ -77,12 +77,13 @@ class InstrumentPass : public Pass {
   // set |desc_set| for debug input and output buffers and writes |shader_id|
   // into debug output records. |opt_direct_reads| indicates that the pass
   // will see direct input buffer reads and should prepare to optimize them.
-  InstrumentPass(uint32_t desc_set, uint32_t shader_id,
-                 bool opt_direct_reads = false)
+  InstrumentPass(uint32_t desc_set, uint32_t shader_id, bool opt_direct_reads,
+                 bool use_stage_info)
       : Pass(),
         desc_set_(desc_set),
         shader_id_(shader_id),
-        opt_direct_reads_(opt_direct_reads) {}
+        opt_direct_reads_(opt_direct_reads),
+        use_stage_info_(use_stage_info) {}
 
   // Initialize state for instrumentation of module.
   void InitializeInstrument();
@@ -312,7 +313,11 @@ class InstrumentPass : public Pass {
 
   // Optimize direct debug input buffer reads. Specifically, move all such
   // reads with constant args to first block and reuse them.
-  bool opt_direct_reads_{false};
+  const bool opt_direct_reads_;
+
+  // Set true if the instrumentation needs to know the current stage.
+  // Note that this does not work with multi-stage modules.
+  const bool use_stage_info_;
 };
 
 }  // namespace opt

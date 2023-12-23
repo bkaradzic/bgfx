@@ -29,7 +29,7 @@ namespace opt {
 class InstBindlessCheckPass : public InstrumentPass {
  public:
   InstBindlessCheckPass(uint32_t shader_id)
-      : InstrumentPass(0, shader_id, true) {}
+      : InstrumentPass(0, shader_id, true, true) {}
 
   ~InstBindlessCheckPass() override = default;
 

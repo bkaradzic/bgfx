@@ -28,10 +28,10 @@ namespace opt {
 class InstDebugPrintfPass : public InstrumentPass {
  public:
   // For test harness only
-  InstDebugPrintfPass() : InstrumentPass(7, 23) {}
+  InstDebugPrintfPass() : InstrumentPass(7, 23, false, false) {}
   // For all other interfaces
   InstDebugPrintfPass(uint32_t desc_set, uint32_t shader_id)
-      : InstrumentPass(desc_set, shader_id) {}
+      : InstrumentPass(desc_set, shader_id, false, false) {}
 
   ~InstDebugPrintfPass() override = default;
 
@@ -52,9 +52,7 @@ class InstDebugPrintfPass : public InstrumentPass {
   // validation and write a record to the end of the stream, if enough space
   // in the buffer remains. The record will contain the index of the function
   // and instruction within that function |func_idx, instruction_idx| which
-  // generated the record. It will also contain additional information to
-  // identify the instance of the shader, depending on the stage |stage_idx|
-  // of the shader. Finally, the record will contain validation-specific
+  // generated the record. Finally, the record will contain validation-specific
   // data contained in |validation_ids| which will identify the validation
   // error as well as the values involved in the error.
   //
@@ -83,9 +81,6 @@ class InstDebugPrintfPass : public InstrumentPass {
   //     Record Size
   //     Shader ID
   //     Instruction Index
-  //     Stage
-  //     Stage-specific Word 0
-  //     Stage-specific Word 1
   //     ...
   //     Validation Error Code
   //     Validation-specific Word 0
@@ -93,8 +88,8 @@ class InstDebugPrintfPass : public InstrumentPass {
   //     Validation-specific Word 2
   //     ...
   //
-  // Each record consists of three subsections: members common across all
-  // validation, members specific to the stage, and members specific to a
+  // Each record consists of two subsections: members common across all
+  // validation and members specific to a
   // validation.
   //
   // The Record Size is the number of 32-bit words in the record, including
@@ -105,18 +100,6 @@ class InstDebugPrintfPass : public InstrumentPass {
   //
   // The Instruction Index is the position of the instruction within the
   // SPIR-V file which is in error.
-  //
-  // The Stage is the pipeline stage which has generated the error as defined
-  // by the SpvExecutionModel_ enumeration. This is used to interpret the
-  // following Stage-specific words.
-  //
-  // The Stage-specific Words identify which invocation of the shader generated
-  // the error. Every stage will write a fixed number of words. Vertex shaders
-  // will write the Vertex and Instance ID. Fragment shaders will write
-  // FragCoord.xy. Compute shaders will write the GlobalInvocation ID.
-  // The tessellation eval shader will write the Primitive ID and TessCoords.uv.
-  // The tessellation control shader and geometry shader will write the
-  // Primitive ID and Invocation ID.
   //
   // The Validation Error Code specifies the exact error which has occurred.
   // These are enumerated with the kInstError* static consts. This allows
@@ -131,7 +114,6 @@ class InstDebugPrintfPass : public InstrumentPass {
   // before writing, the size of the debug out buffer can be used by the
   // validation layer to control the number of error records that are written.
   void GenDebugStreamWrite(uint32_t shader_id, uint32_t instruction_idx_id,
-                           uint32_t stage_info_id,
                            const std::vector<uint32_t>& validation_ids,
                            InstructionBuilder* builder);
 
@@ -144,7 +126,7 @@ class InstDebugPrintfPass : public InstrumentPass {
   // If |ref_inst_itr| is an OpDebugPrintf, return in |new_blocks| the result
   // of replacing it with buffer write instructions within its block at
   // |ref_block_itr|.  The instructions write a record to the printf
-  // output buffer stream including |function_idx, instruction_idx, stage_idx|
+  // output buffer stream including |function_idx, instruction_idx|
   // and removes the OpDebugPrintf. The block at |ref_block_itr| can just be
   // replaced with the block in |new_blocks|. Besides the buffer writes, this
   // block will comprise all instructions preceding and following
@@ -162,7 +144,6 @@ class InstDebugPrintfPass : public InstrumentPass {
   // DebugPrintf.
   void GenDebugPrintfCode(BasicBlock::iterator ref_inst_itr,
                           UptrVectorIterator<BasicBlock> ref_block_itr,
-                          uint32_t stage_idx,
                           std::vector<std::unique_ptr<BasicBlock>>* new_blocks);
 
   // Generate a sequence of uint32 instructions in |builder| (if necessary)
@@ -175,7 +156,7 @@ class InstDebugPrintfPass : public InstrumentPass {
   // Generate instructions to write a record containing the operands of
   // |printf_inst| arguments to printf buffer, adding new code to the end of
   // the last block in |new_blocks|. Kill OpDebugPrintf instruction.
-  void GenOutputCode(Instruction* printf_inst, uint32_t stage_idx,
+  void GenOutputCode(Instruction* printf_inst,
                      std::vector<std::unique_ptr<BasicBlock>>* new_blocks);
 
   // Set the name for a function or global variable, names will be

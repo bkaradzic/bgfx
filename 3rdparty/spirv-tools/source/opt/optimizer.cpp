@@ -560,7 +560,7 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
             "--switch-descriptorset requires a from:to argument.");
       return false;
     }
-    uint32_t from_set, to_set;
+    uint32_t from_set = 0, to_set = 0;
     const char* start = pass_args.data();
     const char* end = pass_args.data() + pass_args.size();
 

@@ -213,14 +213,14 @@ uint32_t InstrumentPass::GenStageInfo(uint32_t stage_idx,
       load_id = GenVarLoad(
           context()->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::InvocationId)),
           builder);
-      ids[2] = load_id;
+      ids[2] = GenUintCastCode(load_id, builder);
     } break;
     case spv::ExecutionModel::TessellationControl: {
       // Load and store InvocationId and PrimitiveId
       uint32_t load_id = GenVarLoad(
           context()->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::InvocationId)),
           builder);
-      ids[1] = load_id;
+      ids[1] = GenUintCastCode(load_id, builder);
       load_id = GenVarLoad(
           context()->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::PrimitiveId)),
           builder);
@@ -653,44 +653,50 @@ bool InstrumentPass::InstProcessCallTreeFromRoots(InstProcessFunction& pfn,
 }
 
 bool InstrumentPass::InstProcessEntryPointCallTree(InstProcessFunction& pfn) {
-  // Make sure all entry points have the same execution model. Do not
-  // instrument if they do not.
-  // TODO(greg-lunarg): Handle mixed stages. Technically, a shader module
-  // can contain entry points with different execution models, although
-  // such modules will likely be rare as GLSL and HLSL are geared toward
-  // one model per module. In such cases we will need
-  // to clone any functions which are in the call trees of entrypoints
-  // with differing execution models.
-  spv::ExecutionModel stage = context()->GetStage();
-  // Check for supported stages
-  if (stage != spv::ExecutionModel::Vertex &&
-      stage != spv::ExecutionModel::Fragment &&
-      stage != spv::ExecutionModel::Geometry &&
-      stage != spv::ExecutionModel::GLCompute &&
-      stage != spv::ExecutionModel::TessellationControl &&
-      stage != spv::ExecutionModel::TessellationEvaluation &&
-      stage != spv::ExecutionModel::TaskNV &&
-      stage != spv::ExecutionModel::MeshNV &&
-      stage != spv::ExecutionModel::RayGenerationNV &&
-      stage != spv::ExecutionModel::IntersectionNV &&
-      stage != spv::ExecutionModel::AnyHitNV &&
-      stage != spv::ExecutionModel::ClosestHitNV &&
-      stage != spv::ExecutionModel::MissNV &&
-      stage != spv::ExecutionModel::CallableNV &&
-      stage != spv::ExecutionModel::TaskEXT &&
-      stage != spv::ExecutionModel::MeshEXT) {
-    if (consumer()) {
-      std::string message = "Stage not supported by instrumentation";
-      consumer()(SPV_MSG_ERROR, 0, {0, 0, 0}, message.c_str());
+  uint32_t stage_id;
+  if (use_stage_info_) {
+    // Make sure all entry points have the same execution model. Do not
+    // instrument if they do not.
+    // TODO(greg-lunarg): Handle mixed stages. Technically, a shader module
+    // can contain entry points with different execution models, although
+    // such modules will likely be rare as GLSL and HLSL are geared toward
+    // one model per module. In such cases we will need
+    // to clone any functions which are in the call trees of entrypoints
+    // with differing execution models.
+    spv::ExecutionModel stage = context()->GetStage();
+    // Check for supported stages
+    if (stage != spv::ExecutionModel::Vertex &&
+        stage != spv::ExecutionModel::Fragment &&
+        stage != spv::ExecutionModel::Geometry &&
+        stage != spv::ExecutionModel::GLCompute &&
+        stage != spv::ExecutionModel::TessellationControl &&
+        stage != spv::ExecutionModel::TessellationEvaluation &&
+        stage != spv::ExecutionModel::TaskNV &&
+        stage != spv::ExecutionModel::MeshNV &&
+        stage != spv::ExecutionModel::RayGenerationNV &&
+        stage != spv::ExecutionModel::IntersectionNV &&
+        stage != spv::ExecutionModel::AnyHitNV &&
+        stage != spv::ExecutionModel::ClosestHitNV &&
+        stage != spv::ExecutionModel::MissNV &&
+        stage != spv::ExecutionModel::CallableNV &&
+        stage != spv::ExecutionModel::TaskEXT &&
+        stage != spv::ExecutionModel::MeshEXT) {
+      if (consumer()) {
+        std::string message = "Stage not supported by instrumentation";
+        consumer()(SPV_MSG_ERROR, 0, {0, 0, 0}, message.c_str());
+      }
+      return false;
     }
-    return false;
+    stage_id = static_cast<uint32_t>(stage);
+  } else {
+    stage_id = 0;
   }
   // Add together the roots of all entry points
   std::queue<uint32_t> roots;
   for (auto& e : get_module()->entry_points()) {
     roots.push(e.GetSingleWordInOperand(kEntryPointFunctionIdInIdx));
   }
-  bool modified = InstProcessCallTreeFromRoots(pfn, &roots, uint32_t(stage));
+  bool modified = InstProcessCallTreeFromRoots(pfn, &roots, stage_id);
   return modified;
 }
 

@@ -29,9 +29,10 @@ namespace opt {
 class InstBuffAddrCheckPass : public InstrumentPass {
  public:
   // For test harness only
-  InstBuffAddrCheckPass() : InstrumentPass(0, 23) {}
+  InstBuffAddrCheckPass() : InstrumentPass(0, 23, false, true) {}
   // For all other interfaces
-  InstBuffAddrCheckPass(uint32_t shader_id) : InstrumentPass(0, shader_id) {}
+  InstBuffAddrCheckPass(uint32_t shader_id)
+      : InstrumentPass(0, shader_id, false, true) {}
 
   ~InstBuffAddrCheckPass() override = default;
 

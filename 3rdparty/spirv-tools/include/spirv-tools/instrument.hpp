@@ -73,81 +73,11 @@ static const int kInstCommonOutShaderId = 1;
 // which generated the validation error.
 static const int kInstCommonOutInstructionIdx = 2;
 
-// This is the stage which generated the validation error. This word is used
-// to determine the contents of the next two words in the record.
-// 0:Vert, 1:TessCtrl, 2:TessEval, 3:Geom, 4:Frag, 5:Compute
-static const int kInstCommonOutStageIdx = 3;
-static const int kInstCommonOutCnt = 4;
-
-// Stage-specific Stream Record Offsets
-//
-// Each stage will contain different values in the next set of words of the
-// record used to identify which instantiation of the shader generated the
-// validation error.
-//
-// Vertex Shader Output Record Offsets
-static const int kInstVertOutVertexIndex = kInstCommonOutCnt;
-static const int kInstVertOutInstanceIndex = kInstCommonOutCnt + 1;
-static const int kInstVertOutUnused = kInstCommonOutCnt + 2;
-
-// Frag Shader Output Record Offsets
-static const int kInstFragOutFragCoordX = kInstCommonOutCnt;
-static const int kInstFragOutFragCoordY = kInstCommonOutCnt + 1;
-static const int kInstFragOutUnused = kInstCommonOutCnt + 2;
-
-// Compute Shader Output Record Offsets
-static const int kInstCompOutGlobalInvocationIdX = kInstCommonOutCnt;
-static const int kInstCompOutGlobalInvocationIdY = kInstCommonOutCnt + 1;
-static const int kInstCompOutGlobalInvocationIdZ = kInstCommonOutCnt + 2;
-
-// Tessellation Control Shader Output Record Offsets
-static const int kInstTessCtlOutInvocationId = kInstCommonOutCnt;
-static const int kInstTessCtlOutPrimitiveId = kInstCommonOutCnt + 1;
-static const int kInstTessCtlOutUnused = kInstCommonOutCnt + 2;
-
-// Tessellation Eval Shader Output Record Offsets
-static const int kInstTessEvalOutPrimitiveId = kInstCommonOutCnt;
-static const int kInstTessEvalOutTessCoordU = kInstCommonOutCnt + 1;
-static const int kInstTessEvalOutTessCoordV = kInstCommonOutCnt + 2;
-
-// Geometry Shader Output Record Offsets
-static const int kInstGeomOutPrimitiveId = kInstCommonOutCnt;
-static const int kInstGeomOutInvocationId = kInstCommonOutCnt + 1;
-static const int kInstGeomOutUnused = kInstCommonOutCnt + 2;
-
-// Ray Tracing Shader Output Record Offsets
-static const int kInstRayTracingOutLaunchIdX = kInstCommonOutCnt;
-static const int kInstRayTracingOutLaunchIdY = kInstCommonOutCnt + 1;
-static const int kInstRayTracingOutLaunchIdZ = kInstCommonOutCnt + 2;
-
-// Mesh Shader Output Record Offsets
-static const int kInstMeshOutGlobalInvocationIdX = kInstCommonOutCnt;
-static const int kInstMeshOutGlobalInvocationIdY = kInstCommonOutCnt + 1;
-static const int kInstMeshOutGlobalInvocationIdZ = kInstCommonOutCnt + 2;
-
-// Task Shader Output Record Offsets
-static const int kInstTaskOutGlobalInvocationIdX = kInstCommonOutCnt;
-static const int kInstTaskOutGlobalInvocationIdY = kInstCommonOutCnt + 1;
-static const int kInstTaskOutGlobalInvocationIdZ = kInstCommonOutCnt + 2;
-
-// Size of Common and Stage-specific Members
-static const int kInstStageOutCnt = kInstCommonOutCnt + 3;
-
 // Debug Buffer Bindings
 //
 // These are the bindings for the different buffers which are
 // read or written by the instrumentation passes.
 //
-// This is the output buffer written by InstBindlessCheckPass,
-// InstBuffAddrCheckPass, and possibly other future validations.
-static const int kDebugOutputBindingStream = 0;
-
-// The binding for the input buffer read by InstBindlessCheckPass.
-static const int kDebugInputBindingBindless = 1;
-
-// The binding for the input buffer read by InstBuffAddrCheckPass.
-static const int kDebugInputBindingBuffAddr = 2;
-
 // This is the output buffer written by InstDebugPrintfPass.
 static const int kDebugOutputPrintfStream = 3;
 

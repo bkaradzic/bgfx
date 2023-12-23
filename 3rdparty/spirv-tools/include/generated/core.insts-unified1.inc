@@ -43,7 +43,7 @@ static const spv::Capability pygen_variable_caps_IntegerFunctions2INTEL[] = {spv
 static const spv::Capability pygen_variable_caps_Kernel[] = {spv::Capability::Kernel};
 static const spv::Capability pygen_variable_caps_KernelImageQuery[] = {spv::Capability::Kernel, spv::Capability::ImageQuery};
 static const spv::Capability pygen_variable_caps_LiteralSampler[] = {spv::Capability::LiteralSampler};
-static const spv::Capability pygen_variable_caps_LongConstantCompositeINTEL[] = {spv::Capability::LongConstantCompositeINTEL};
+static const spv::Capability pygen_variable_caps_LongCompositesINTEL[] = {spv::Capability::LongCompositesINTEL};
 static const spv::Capability pygen_variable_caps_Matrix[] = {spv::Capability::Matrix};
 static const spv::Capability pygen_variable_caps_MemoryAccessAliasingINTEL[] = {spv::Capability::MemoryAccessAliasingINTEL};
 static const spv::Capability pygen_variable_caps_MeshShadingEXT[] = {spv::Capability::MeshShadingEXT};
@@ -826,9 +826,10 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"RayQueryGetIntersectionWorldToObjectKHR", spv::Op::OpRayQueryGetIntersectionWorldToObjectKHR, 1, pygen_variable_caps_RayQueryKHR, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_ray_query, 0xffffffffu, 0xffffffffu},
   {"AtomicFAddEXT", spv::Op::OpAtomicFAddEXT, 3, pygen_variable_caps_AtomicFloat16AddEXTAtomicFloat32AddEXTAtomicFloat64AddEXT, 6, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_MEMORY_SEMANTICS_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_EXT_shader_atomic_float_add, 0xffffffffu, 0xffffffffu},
   {"TypeBufferSurfaceINTEL", spv::Op::OpTypeBufferSurfaceINTEL, 1, pygen_variable_caps_VectorComputeINTEL, 2, {SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ACCESS_QUALIFIER}, 1, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
-  {"TypeStructContinuedINTEL", spv::Op::OpTypeStructContinuedINTEL, 1, pygen_variable_caps_LongConstantCompositeINTEL, 1, {SPV_OPERAND_TYPE_VARIABLE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
-  {"ConstantCompositeContinuedINTEL", spv::Op::OpConstantCompositeContinuedINTEL, 1, pygen_variable_caps_LongConstantCompositeINTEL, 1, {SPV_OPERAND_TYPE_VARIABLE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
-  {"SpecConstantCompositeContinuedINTEL", spv::Op::OpSpecConstantCompositeContinuedINTEL, 1, pygen_variable_caps_LongConstantCompositeINTEL, 1, {SPV_OPERAND_TYPE_VARIABLE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"TypeStructContinuedINTEL", spv::Op::OpTypeStructContinuedINTEL, 1, pygen_variable_caps_LongCompositesINTEL, 1, {SPV_OPERAND_TYPE_VARIABLE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"ConstantCompositeContinuedINTEL", spv::Op::OpConstantCompositeContinuedINTEL, 1, pygen_variable_caps_LongCompositesINTEL, 1, {SPV_OPERAND_TYPE_VARIABLE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"SpecConstantCompositeContinuedINTEL", spv::Op::OpSpecConstantCompositeContinuedINTEL, 1, pygen_variable_caps_LongCompositesINTEL, 1, {SPV_OPERAND_TYPE_VARIABLE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"CompositeConstructContinuedINTEL", spv::Op::OpCompositeConstructContinuedINTEL, 1, pygen_variable_caps_LongCompositesINTEL, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_VARIABLE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"ConvertFToBF16INTEL", spv::Op::OpConvertFToBF16INTEL, 1, pygen_variable_caps_BFloat16ConversionINTEL, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"ConvertBF16ToFINTEL", spv::Op::OpConvertBF16ToFINTEL, 1, pygen_variable_caps_BFloat16ConversionINTEL, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"ControlBarrierArriveINTEL", spv::Op::OpControlBarrierArriveINTEL, 1, pygen_variable_caps_SplitBarrierINTEL, 3, {SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_MEMORY_SEMANTICS_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},

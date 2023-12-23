@@ -19,6 +19,7 @@ static const spv::Capability pygen_variable_caps_FPFastMathModeINTEL[] = {spv::C
 static const spv::Capability pygen_variable_caps_FPGAArgumentInterfacesINTEL[] = {spv::Capability::FPGAArgumentInterfacesINTEL};
 static const spv::Capability pygen_variable_caps_FPGABufferLocationINTEL[] = {spv::Capability::FPGABufferLocationINTEL};
 static const spv::Capability pygen_variable_caps_FPGAClusterAttributesINTEL[] = {spv::Capability::FPGAClusterAttributesINTEL};
+static const spv::Capability pygen_variable_caps_FPGAClusterAttributesV2INTEL[] = {spv::Capability::FPGAClusterAttributesV2INTEL};
 static const spv::Capability pygen_variable_caps_FPGADSPControlINTEL[] = {spv::Capability::FPGADSPControlINTEL};
 static const spv::Capability pygen_variable_caps_FPGAInvocationPipeliningAttributesINTEL[] = {spv::Capability::FPGAInvocationPipeliningAttributesINTEL};
 static const spv::Capability pygen_variable_caps_FPGAKernelAttributesINTEL[] = {spv::Capability::FPGAKernelAttributesINTEL};
@@ -193,7 +194,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_INTEL_global_variable_h
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_inline_assembly[] = {spvtools::Extension::kSPV_INTEL_inline_assembly};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_io_pipes[] = {spvtools::Extension::kSPV_INTEL_io_pipes};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_kernel_attributes[] = {spvtools::Extension::kSPV_INTEL_kernel_attributes};
-static const spvtools::Extension pygen_variable_exts_SPV_INTEL_long_constant_composite[] = {spvtools::Extension::kSPV_INTEL_long_constant_composite};
+static const spvtools::Extension pygen_variable_exts_SPV_INTEL_long_composites[] = {spvtools::Extension::kSPV_INTEL_long_composites};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_loop_fuse[] = {spvtools::Extension::kSPV_INTEL_loop_fuse};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_media_block_io[] = {spvtools::Extension::kSPV_INTEL_media_block_io};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_memory_access_aliasing[] = {spvtools::Extension::kSPV_INTEL_memory_access_aliasing};
@@ -888,6 +889,7 @@ static const spv_operand_desc_t pygen_variable_DecorationEntries[] = {
   {"SingleElementVectorINTEL", 6085, 1, pygen_variable_caps_VectorComputeINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
   {"VectorComputeCallableFunctionINTEL", 6087, 1, pygen_variable_caps_VectorComputeINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
   {"MediaBlockIOINTEL", 6140, 1, pygen_variable_caps_VectorComputeINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"StallFreeINTEL", 6151, 1, pygen_variable_caps_FPGAClusterAttributesV2INTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
   {"FPMaxErrorDecorationINTEL", 6170, 1, pygen_variable_caps_FPMaxErrorINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_FLOAT}, 0xffffffffu, 0xffffffffu},
   {"LatencyControlLabelINTEL", 6172, 1, pygen_variable_caps_FPGALatencyControlINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0xffffffffu, 0xffffffffu},
   {"LatencyControlConstraintINTEL", 6173, 1, pygen_variable_caps_FPGALatencyControlINTEL, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0xffffffffu, 0xffffffffu},
@@ -1313,12 +1315,13 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"GroupNonUniformRotateKHR", 6026, 1, pygen_variable_caps_GroupNonUniform, 1, pygen_variable_exts_SPV_KHR_subgroup_rotate, {}, 0xffffffffu, 0xffffffffu},
   {"AtomicFloat32AddEXT", 6033, 0, nullptr, 1, pygen_variable_exts_SPV_EXT_shader_atomic_float_add, {}, 0xffffffffu, 0xffffffffu},
   {"AtomicFloat64AddEXT", 6034, 0, nullptr, 1, pygen_variable_exts_SPV_EXT_shader_atomic_float_add, {}, 0xffffffffu, 0xffffffffu},
-  {"LongConstantCompositeINTEL", 6089, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_long_constant_composite, {}, 0xffffffffu, 0xffffffffu},
+  {"LongCompositesINTEL", 6089, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_long_composites, {}, 0xffffffffu, 0xffffffffu},
   {"OptNoneINTEL", 6094, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_optnone, {}, 0xffffffffu, 0xffffffffu},
   {"AtomicFloat16AddEXT", 6095, 0, nullptr, 1, pygen_variable_exts_SPV_EXT_shader_atomic_float16_add, {}, 0xffffffffu, 0xffffffffu},
   {"DebugInfoModuleINTEL", 6114, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_debug_module, {}, 0xffffffffu, 0xffffffffu},
   {"BFloat16ConversionINTEL", 6115, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_bfloat16_conversion, {}, 0xffffffffu, 0xffffffffu},
   {"SplitBarrierINTEL", 6141, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_split_barrier, {}, 0xffffffffu, 0xffffffffu},
+  {"FPGAClusterAttributesV2INTEL", 6150, 1, pygen_variable_caps_FPGAClusterAttributesINTEL, 1, pygen_variable_exts_SPV_INTEL_fpga_cluster_attributes, {}, 0xffffffffu, 0xffffffffu},
   {"FPGAKernelAttributesv2INTEL", 6161, 1, pygen_variable_caps_FPGAKernelAttributesINTEL, 1, pygen_variable_exts_SPV_INTEL_kernel_attributes, {}, 0xffffffffu, 0xffffffffu},
   {"FPMaxErrorINTEL", 6169, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_fp_max_error, {}, 0xffffffffu, 0xffffffffu},
   {"FPGALatencyControlINTEL", 6171, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_fpga_latency_control, {}, 0xffffffffu, 0xffffffffu},
