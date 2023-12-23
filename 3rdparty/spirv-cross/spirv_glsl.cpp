@@ -223,7 +223,7 @@ static const char *to_pls_layout(PlsFormat format)
 	}
 }
 
-static SPIRType::BaseType pls_format_to_basetype(PlsFormat format)
+static std::pair<spv::Op, SPIRType::BaseType> pls_format_to_basetype(PlsFormat format)
 {
 	switch (format)
 	{
@@ -234,17 +234,17 @@ static SPIRType::BaseType pls_format_to_basetype(PlsFormat format)
 	case PlsRGB10A2:
 	case PlsRGBA8:
 	case PlsRG16:
-		return SPIRType::Float;
+		return std::make_pair(spv::OpTypeFloat, SPIRType::Float);
 
 	case PlsRGBA8I:
 	case PlsRG16I:
-		return SPIRType::Int;
+		return std::make_pair(spv::OpTypeInt, SPIRType::Int);
 
 	case PlsRGB10A2UI:
 	case PlsRGBA8UI:
 	case PlsRG16UI:
 	case PlsR32UI:
-		return SPIRType::UInt;
+		return std::make_pair(spv::OpTypeInt, SPIRType::UInt);
 	}
 }
 
@@ -1529,7 +1529,7 @@ uint32_t CompilerGLSL::type_to_packed_alignment(const SPIRType &type, const Bits
 {
 	// If using PhysicalStorageBufferEXT storage class, this is a pointer,
 	// and is 64-bit.
-	if (type_is_top_level_physical_pointer(type))
+	if (is_physical_pointer(type))
 	{
 		if (!type.pointer)
 			SPIRV_CROSS_THROW("Types in PhysicalStorageBufferEXT must be pointers.");
@@ -1544,7 +1544,7 @@ uint32_t CompilerGLSL::type_to_packed_alignment(const SPIRType &type, const Bits
 		else
 			SPIRV_CROSS_THROW("AddressingModelPhysicalStorageBuffer64EXT must be used for PhysicalStorageBufferEXT.");
 	}
-	else if (type_is_top_level_array(type))
+	else if (is_array(type))
 	{
 		uint32_t minimum_alignment = 1;
 		if (packing_is_vec4_padded(packing))
@@ -1652,7 +1652,7 @@ uint32_t CompilerGLSL::type_to_packed_size(const SPIRType &type, const Bitset &f
 {
 	// If using PhysicalStorageBufferEXT storage class, this is a pointer,
 	// and is 64-bit.
-	if (type_is_top_level_physical_pointer(type))
+	if (is_physical_pointer(type))
 	{
 		if (!type.pointer)
 			SPIRV_CROSS_THROW("Types in PhysicalStorageBufferEXT must be pointers.");
@@ -1662,7 +1662,7 @@ uint32_t CompilerGLSL::type_to_packed_size(const SPIRType &type, const Bitset &f
 		else
 			SPIRV_CROSS_THROW("AddressingModelPhysicalStorageBuffer64EXT must be used for PhysicalStorageBufferEXT.");
 	}
-	else if (type_is_top_level_array(type))
+	else if (is_array(type))
 	{
 		uint32_t packed_size = to_array_size_literal(type) * type_to_packed_array_stride(type, flags, packing);
 
@@ -1840,7 +1840,7 @@ bool CompilerGLSL::buffer_is_packing_standard(const SPIRType &type, BufferPackin
 			}
 
 			// Verify array stride rules.
-			if (type_is_top_level_array(memb_type) &&
+			if (is_array(memb_type) &&
 			    type_to_packed_array_stride(memb_type, member_flags, packing) !=
 			    type_struct_member_array_stride(type, i))
 			{
@@ -2489,7 +2489,7 @@ void CompilerGLSL::emit_buffer_block_flattened(const SPIRVariable &var)
 	SPIRType::BaseType basic_type;
 	if (get_common_basic_type(type, basic_type))
 	{
-		SPIRType tmp;
+		SPIRType tmp { OpTypeVector };
 		tmp.basetype = basic_type;
 		tmp.vecsize = 4;
 		if (basic_type != SPIRType::Float && basic_type != SPIRType::Int && basic_type != SPIRType::UInt)
@@ -3926,6 +3926,7 @@ void CompilerGLSL::emit_output_variable_initializer(const SPIRVariable &var)
 				auto &member_type = get<SPIRType>(member_type_id);
 				auto array_type = member_type;
 				array_type.parent_type = member_type_id;
+				array_type.op = OpTypeArray;
 				array_type.array.push_back(array_size);
 				array_type.array_size_literal.push_back(true);
 
@@ -3949,10 +3950,9 @@ void CompilerGLSL::emit_output_variable_initializer(const SPIRVariable &var)
 					if (is_control_point)
 					{
 						uint32_t ids = ir.increase_bound_by(3);
-						SPIRType uint_type;
+						auto &uint_type = set<SPIRType>(ids, OpTypeInt);
 						uint_type.basetype = SPIRType::UInt;
 						uint_type.width = 32;
-						set<SPIRType>(ids, uint_type);
 						set<SPIRExpression>(ids + 1, builtin_to_glsl(BuiltInInvocationId, StorageClassInput), ids, true);
 						set<SPIRConstant>(ids + 2, ids, i, false);
 						invocation_id = ids + 1;
@@ -5148,7 +5148,7 @@ string CompilerGLSL::to_rerolled_array_expression(const SPIRType &parent_type,
 	                        type.basetype == SPIRType::Boolean &&
 	                        backend.boolean_in_struct_remapped_type != SPIRType::Boolean;
 
-	SPIRType tmp_type;
+	SPIRType tmp_type { OpNop };
 	if (remapped_boolean)
 	{
 		tmp_type = get<SPIRType>(type.parent_type);
@@ -5169,7 +5169,7 @@ string CompilerGLSL::to_rerolled_array_expression(const SPIRType &parent_type,
 	for (uint32_t i = 0; i < size; i++)
 	{
 		auto subexpr = join(base_expr, "[", convert_to_string(i), "]");
-		if (!type_is_top_level_array(parent))
+		if (!is_array(parent))
 		{
 			if (remapped_boolean)
 				subexpr = join(type_to_glsl(tmp_type), "(", subexpr, ")");
@@ -5195,7 +5195,7 @@ string CompilerGLSL::to_composite_constructor_expression(const SPIRType &parent_
 	                        type.basetype == SPIRType::Boolean &&
 	                        backend.boolean_in_struct_remapped_type != SPIRType::Boolean;
 
-	if (type_is_top_level_array(type))
+	if (is_array(type))
 	{
 		reroll_array = !backend.array_is_value_type ||
 		               (block_like_type && !backend.array_is_value_type_in_buffer_blocks);
@@ -5748,7 +5748,7 @@ string CompilerGLSL::constant_expression(const SPIRConstant &c,
 {
 	auto &type = get<SPIRType>(c.constant_type);
 
-	if (type_is_top_level_pointer(type))
+	if (is_pointer(type))
 	{
 		return backend.null_pointer_literal;
 	}
@@ -5763,21 +5763,21 @@ string CompilerGLSL::constant_expression(const SPIRConstant &c,
 		// with Offset = 0, using no ArrayStride on the enclosed array type.
 		// A particular CTS test hits this scenario.
 		bool array_type_decays = inside_block_like_struct_scope &&
-		                         type_is_top_level_array(type) &&
+		                         is_array(type) &&
 		                         !backend.array_is_value_type_in_buffer_blocks;
 
 		// Allow Metal to use the array<T> template to make arrays a value type
 		bool needs_trailing_tracket = false;
 		if (backend.use_initializer_list && backend.use_typed_initializer_list && type.basetype == SPIRType::Struct &&
-		    !type_is_top_level_array(type))
+		    !is_array(type))
 		{
 			res = type_to_glsl_constructor(type) + "{ ";
 		}
 		else if (backend.use_initializer_list && backend.use_typed_initializer_list && backend.array_is_value_type &&
-		         type_is_top_level_array(type) && !array_type_decays)
+		         is_array(type) && !array_type_decays)
 		{
 			const auto *p_type = &type;
-			SPIRType tmp_type;
+			SPIRType tmp_type { OpNop };
 
 			if (inside_struct_scope &&
 			    backend.boolean_in_struct_remapped_type != SPIRType::Boolean &&
@@ -5818,7 +5818,7 @@ string CompilerGLSL::constant_expression(const SPIRConstant &c,
 					res += to_name(elem);
 				else
 				{
-					if (!type_is_top_level_array(type) && type.basetype == SPIRType::Struct)
+					if (!is_array(type) && type.basetype == SPIRType::Struct)
 					{
 						// When we get down to emitting struct members, override the block-like information.
 						// For constants, we can freely mix and match block-like state.
@@ -5916,7 +5916,7 @@ string CompilerGLSL::convert_half_to_string(const SPIRConstant &c, uint32_t col,
 	// of complicated workarounds, just value-cast to the half type always.
 	if (std::isnan(float_value) || std::isinf(float_value))
 	{
-		SPIRType type;
+		SPIRType type { OpTypeFloat };
 		type.basetype = SPIRType::Half;
 		type.vecsize = 1;
 		type.columns = 1;
@@ -5932,7 +5932,7 @@ string CompilerGLSL::convert_half_to_string(const SPIRConstant &c, uint32_t col,
 	}
 	else
 	{
-		SPIRType type;
+		SPIRType type { OpTypeFloat };
 		type.basetype = SPIRType::Half;
 		type.vecsize = 1;
 		type.columns = 1;
@@ -5952,8 +5952,8 @@ string CompilerGLSL::convert_float_to_string(const SPIRConstant &c, uint32_t col
 		// Use special representation.
 		if (!is_legacy())
 		{
-			SPIRType out_type;
-			SPIRType in_type;
+			SPIRType out_type { OpTypeFloat };
+			SPIRType in_type { OpTypeInt };
 			out_type.basetype = SPIRType::Float;
 			in_type.basetype = SPIRType::UInt;
 			out_type.vecsize = 1;
@@ -6022,8 +6022,8 @@ std::string CompilerGLSL::convert_double_to_string(const SPIRConstant &c, uint32
 		// Use special representation.
 		if (!is_legacy())
 		{
-			SPIRType out_type;
-			SPIRType in_type;
+			SPIRType out_type { OpTypeFloat };
+			SPIRType in_type { OpTypeInt };
 			out_type.basetype = SPIRType::Double;
 			in_type.basetype = SPIRType::UInt64;
 			out_type.vecsize = 1;
@@ -6731,7 +6731,7 @@ SPIRType CompilerGLSL::binary_op_bitcast_helper(string &cast_op0, string &cast_o
 
 	// Create a fake type so we can bitcast to it.
 	// We only deal with regular arithmetic types here like int, uints and so on.
-	SPIRType expected_type;
+	SPIRType expected_type{type0.op};
 	expected_type.basetype = input_type;
 	expected_type.vecsize = type0.vecsize;
 	expected_type.columns = type0.columns;
@@ -7085,7 +7085,9 @@ void CompilerGLSL::emit_bitfield_insert_op(uint32_t result_type, uint32_t result
 	auto op2_expr = to_unpacked_expression(op2);
 	auto op3_expr = to_unpacked_expression(op3);
 
-	SPIRType target_type;
+	assert(offset_count_type == SPIRType::UInt || offset_count_type == SPIRType::Int);
+	SPIRType target_type { OpTypeInt };
+	target_type.width = 32;
 	target_type.vecsize = 1;
 	target_type.basetype = offset_count_type;
 
@@ -7876,7 +7878,7 @@ bool CompilerGLSL::expression_is_constant_null(uint32_t id) const
 bool CompilerGLSL::expression_is_non_value_type_array(uint32_t ptr)
 {
 	auto &type = expression_type(ptr);
-	if (!type_is_top_level_array(get_pointee_type(type)))
+	if (!is_array(get_pointee_type(type)))
 		return false;
 
 	if (!backend.array_is_value_type)
@@ -9610,6 +9612,8 @@ string CompilerGLSL::builtin_to_glsl(BuiltIn builtin, StorageClass storage)
 		return "gl_TessLevelInner";
 	case BuiltInTessCoord:
 		return "gl_TessCoord";
+	case BuiltInPatchVertices:
+		return "gl_PatchVerticesIn";
 	case BuiltInFragCoord:
 		return "gl_FragCoord";
 	case BuiltInPointCoord:
@@ -9912,16 +9916,21 @@ void CompilerGLSL::access_chain_internal_append_index(std::string &expr, uint32_
 	if (ptr_chain && access_chain_is_arrayed)
 	{
 		size_t split_pos = expr.find_last_of(']');
-		string expr_front = expr.substr(0, split_pos);
-		string expr_back = expr.substr(split_pos);
-		expr = expr_front + " + " +  enclose_expression(idx_expr) + expr_back;
+		size_t enclose_split = expr.find_last_of(')');
+
+		// If we have already enclosed the expression, don't try to be clever, it will break.
+		if (split_pos > enclose_split || enclose_split == string::npos)
+		{
+			string expr_front = expr.substr(0, split_pos);
+			string expr_back = expr.substr(split_pos);
+			expr = expr_front + " + " + enclose_expression(idx_expr) + expr_back;
+			return;
+		}
 	}
-	else
-	{
-		expr += "[";
-		expr += idx_expr;
-		expr += "]";
-	}
+
+	expr += "[";
+	expr += idx_expr;
+	expr += "]";
 }
 
 bool CompilerGLSL::access_chain_needs_stage_io_builtin_translation(uint32_t)
@@ -9956,6 +9965,7 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 	// Start traversing type hierarchy at the proper non-pointer types,
 	// but keep type_id referencing the original pointer for use below.
 	uint32_t type_id = expression_type_id(base);
+	const auto *type = &get_pointee_type(type_id);
 
 	if (!backend.native_pointers)
 	{
@@ -9965,13 +9975,10 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 		// Wrapped buffer reference pointer types will need to poke into the internal "value" member before
 		// continuing the access chain.
 		if (should_dereference(base))
-		{
-			auto &type = get<SPIRType>(type_id);
-			expr = dereference_expression(type, expr);
-		}
+			expr = dereference_expression(get<SPIRType>(type_id), expr);
 	}
-
-	const auto *type = &get_pointee_type(type_id);
+	else if (should_dereference(base) && type->basetype != SPIRType::Struct && !ptr_chain)
+		expr = join("(", dereference_expression(*type, expr), ")");
 
 	bool access_chain_is_arrayed = expr.find_first_of('[') != string::npos;
 	bool row_major_matrix_needs_conversion = is_non_native_row_major_matrix(base);
@@ -10012,9 +10019,21 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 			index &= 0x7fffffffu;
 		}
 
-		// Pointer chains
+		bool ptr_chain_array_entry = ptr_chain && i == 0 && is_array(*type);
+
+		if (ptr_chain_array_entry)
+		{
+			// This is highly unusual code, since normally we'd use plain AccessChain, but it's still allowed.
+			// We are considered to have a pointer to array and one element shifts by one array at a time.
+			// If we use normal array indexing, we'll first decay to pointer, and lose the array-ness,
+			// so we have to take pointer to array explicitly.
+			if (!should_dereference(base))
+				expr = enclose_expression(address_of_expression(expr));
+		}
+
 		if (ptr_chain && i == 0)
 		{
+			// Pointer chains
 			// If we are flattening multidimensional arrays, only create opening bracket on first
 			// array index.
 			if (options.flatten_multidimensional_arrays)
@@ -10059,6 +10078,12 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 			}
 
 			access_chain_is_arrayed = true;
+
+			// Explicitly enclose the expression if this is one of the weird pointer-to-array cases.
+			// We don't want any future indexing to add to this array dereference.
+			// Enclosing the expression blocks that and avoids any shenanigans with operand priority.
+			if (ptr_chain_array_entry)
+				expr = join("(", expr, ")");
 		}
 		// Arrays
 		else if (!type->array.empty())
@@ -15340,9 +15365,16 @@ string CompilerGLSL::pls_decl(const PlsRemap &var)
 {
 	auto &variable = get<SPIRVariable>(var.id);
 
-	SPIRType type;
-	type.vecsize = pls_format_to_components(var.format);
-	type.basetype = pls_format_to_basetype(var.format);
+	auto op_and_basetype = pls_format_to_basetype(var.format);
+
+	SPIRType type { op_and_basetype.first };
+	type.basetype = op_and_basetype.second;
+	auto vecsize = pls_format_to_components(var.format);
+	if (vecsize > 1)
+	{
+		type.op = OpTypeVector;
+		type.vecsize = vecsize;
+	}
 
 	return join(to_pls_layout(var.format), to_pls_qualifiers_glsl(variable), type_to_glsl(type), " ",
 	            to_name(variable.self));
@@ -17653,7 +17685,7 @@ bool CompilerGLSL::unroll_array_to_complex_store(uint32_t target_id, uint32_t so
 	else
 		array_expr = to_expression(type.array.back());
 
-	SPIRType target_type;
+	SPIRType target_type { OpTypeInt };
 	target_type.basetype = SPIRType::Int;
 
 	statement("for (int i = 0; i < int(", array_expr, "); i++)");
@@ -17718,7 +17750,7 @@ void CompilerGLSL::unroll_array_from_complex_load(uint32_t target_id, uint32_t s
 			statement(new_expr, "[i] = gl_in[i].", expr, ";");
 		else if (is_sample_mask)
 		{
-			SPIRType target_type;
+			SPIRType target_type { OpTypeInt };
 			target_type.basetype = SPIRType::Int;
 			statement(new_expr, "[i] = ", bitcast_expression(target_type, type.basetype, join(expr, "[i]")), ";");
 		}

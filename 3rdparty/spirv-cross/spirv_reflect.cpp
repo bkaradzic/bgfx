@@ -291,7 +291,7 @@ static bool naturally_emit_type(const SPIRType &type)
 bool CompilerReflection::type_is_reference(const SPIRType &type) const
 {
 	// Physical pointers and arrays of physical pointers need to refer to the pointee's type.
-	return type_is_top_level_physical_pointer(type) ||
+	return is_physical_pointer(type) ||
 	       (type_is_array_of_pointers(type) && type.storage == StorageClassPhysicalStorageBuffer);
 }
 
@@ -341,7 +341,7 @@ void CompilerReflection::emit_type(uint32_t type_id, bool &emitted_open_tag)
 	json_stream->emit_json_key_object("_" + std::to_string(type_id));
 	json_stream->emit_json_key_value("name", name);
 
-	if (type_is_top_level_physical_pointer(type))
+	if (is_physical_pointer(type))
 	{
 		json_stream->emit_json_key_value("type", "_" + std::to_string(type.parent_type));
 		json_stream->emit_json_key_value("physical_pointer", true);
@@ -404,7 +404,7 @@ void CompilerReflection::emit_type_member(const SPIRType &type, uint32_t index)
 
 void CompilerReflection::emit_type_array(const SPIRType &type)
 {
-	if (!type_is_top_level_physical_pointer(type) && !type.array.empty())
+	if (!is_physical_pointer(type) && !type.array.empty())
 	{
 		json_stream->emit_json_key_array("array");
 		// Note that we emit the zeros here as a means of identifying
@@ -444,7 +444,7 @@ void CompilerReflection::emit_type_member_qualifiers(const SPIRType &type, uint3
 		if (dec.decoration_flags.get(DecorationRowMajor))
 			json_stream->emit_json_key_value("row_major", true);
 
-		if (type_is_top_level_physical_pointer(membertype))
+		if (is_physical_pointer(membertype))
 			json_stream->emit_json_key_value("physical_pointer", true);
 	}
 }

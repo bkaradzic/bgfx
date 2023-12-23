@@ -2432,7 +2432,7 @@ void CompilerHLSL::analyze_meshlet_writes()
 		uint32_t op_ptr = op_type + 2;
 		uint32_t op_var = op_type + 3;
 
-		auto &type = set<SPIRType>(op_type);
+		auto &type = set<SPIRType>(op_type, OpTypeStruct);
 		type.basetype = SPIRType::Struct;
 		set_name(op_type, block_name);
 		set_decoration(op_type, DecorationBlock);
@@ -4508,7 +4508,7 @@ void CompilerHLSL::read_access_chain(string *expr, const string &lhs, const SPIR
 {
 	auto &type = get<SPIRType>(chain.basetype);
 
-	SPIRType target_type;
+	SPIRType target_type { is_scalar(type) ? OpTypeInt : type.op };
 	target_type.basetype = SPIRType::UInt;
 	target_type.vecsize = type.vecsize;
 	target_type.columns = type.columns;
@@ -4755,7 +4755,7 @@ void CompilerHLSL::write_access_chain_array(const SPIRAccessChain &chain, uint32
 
 	uint32_t id = ir.increase_bound_by(2);
 	uint32_t int_type_id = id + 1;
-	SPIRType int_type;
+	SPIRType int_type { OpTypeInt };
 	int_type.basetype = SPIRType::Int;
 	int_type.width = 32;
 	set<SPIRType>(int_type_id, int_type);
@@ -4843,7 +4843,7 @@ void CompilerHLSL::write_access_chain(const SPIRAccessChain &chain, uint32_t val
 	// Make sure we trigger a read of the constituents in the access chain.
 	track_expression_read(chain.self);
 
-	SPIRType target_type;
+	SPIRType target_type { is_scalar(type) ? OpTypeInt : type.op };
 	target_type.basetype = SPIRType::UInt;
 	target_type.vecsize = type.vecsize;
 	target_type.columns = type.columns;
@@ -6583,14 +6583,14 @@ VariableID CompilerHLSL::remap_num_workgroups_builtin()
 	uint32_t block_pointer_type_id = offset + 2;
 	uint32_t variable_id = offset + 3;
 
-	SPIRType uint_type;
+	SPIRType uint_type { OpTypeVector };
 	uint_type.basetype = SPIRType::UInt;
 	uint_type.width = 32;
 	uint_type.vecsize = 3;
 	uint_type.columns = 1;
 	set<SPIRType>(uint_type_id, uint_type);
 
-	SPIRType block_type;
+	SPIRType block_type { OpTypeStruct };
 	block_type.basetype = SPIRType::Struct;
 	block_type.member_types.push_back(uint_type_id);
 	set<SPIRType>(block_type_id, block_type);

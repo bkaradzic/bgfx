@@ -627,15 +627,22 @@ bool Compiler::is_matrix(const SPIRType &type) const
 
 bool Compiler::is_array(const SPIRType &type) const
 {
-	return !type.array.empty();
+	return type.op == OpTypeArray || type.op == OpTypeRuntimeArray;
+}
+
+bool Compiler::is_pointer(const SPIRType &type) const
+{
+	return type.op == OpTypePointer && type.basetype != SPIRType::Unknown; // Ignore function pointers.
+}
+
+bool Compiler::is_physical_pointer(const SPIRType &type) const
+{
+	return type.op == OpTypePointer && type.storage == StorageClassPhysicalStorageBuffer;
 }
 
 bool Compiler::is_runtime_size_array(const SPIRType &type)
 {
-	if (type.array.empty())
-		return false;
-	assert(type.array.size() == type.array_size_literal.size());
-	return type.array_size_literal.back() && type.array.back() == 0;
+	return type.op == OpTypeRuntimeArray;
 }
 
 ShaderResources Compiler::get_shader_resources() const
@@ -2738,8 +2745,8 @@ void Compiler::CombinedImageSamplerHandler::register_combined_image_sampler(SPIR
 		auto ptr_type_id = id + 1;
 		auto combined_id = id + 2;
 		auto &base = compiler.expression_type(image_id);
-		auto &type = compiler.set<SPIRType>(type_id);
-		auto &ptr_type = compiler.set<SPIRType>(ptr_type_id);
+		auto &type = compiler.set<SPIRType>(type_id, OpTypeSampledImage);
+		auto &ptr_type = compiler.set<SPIRType>(ptr_type_id, OpTypePointer);
 
 		type = base;
 		type.self = type_id;
@@ -2998,7 +3005,7 @@ bool Compiler::CombinedImageSamplerHandler::handle(Op opcode, const uint32_t *ar
 		{
 			// Have to invent the sampled image type.
 			sampled_type = compiler.ir.increase_bound_by(1);
-			auto &type = compiler.set<SPIRType>(sampled_type);
+			auto &type = compiler.set<SPIRType>(sampled_type, OpTypeSampledImage);
 			type = compiler.expression_type(args[2]);
 			type.self = sampled_type;
 			type.basetype = SPIRType::SampledImage;
@@ -3017,7 +3024,7 @@ bool Compiler::CombinedImageSamplerHandler::handle(Op opcode, const uint32_t *ar
 
 		// Make a new type, pointer to OpTypeSampledImage, so we can make a variable of this type.
 		// We will probably have this type lying around, but it doesn't hurt to make duplicates for internal purposes.
-		auto &type = compiler.set<SPIRType>(type_id);
+		auto &type = compiler.set<SPIRType>(type_id, OpTypePointer);
 		auto &base = compiler.get<SPIRType>(sampled_type);
 		type = base;
 		type.pointer = true;
@@ -3063,11 +3070,10 @@ VariableID Compiler::build_dummy_sampler_for_combined_images()
 		auto ptr_type_id = offset + 1;
 		auto var_id = offset + 2;
 
-		SPIRType sampler_type;
-		auto &sampler = set<SPIRType>(type_id);
+		auto &sampler = set<SPIRType>(type_id, OpTypeSampler);
 		sampler.basetype = SPIRType::Sampler;
 
-		auto &ptr_sampler = set<SPIRType>(ptr_type_id);
+		auto &ptr_sampler = set<SPIRType>(ptr_type_id, OpTypePointer);
 		ptr_sampler = sampler;
 		ptr_sampler.self = type_id;
 		ptr_sampler.storage = StorageClassUniformConstant;
@@ -5497,7 +5503,7 @@ bool Compiler::type_contains_recursion(const SPIRType &type)
 
 bool Compiler::type_is_array_of_pointers(const SPIRType &type) const
 {
-	if (!type_is_top_level_array(type))
+	if (!is_array(type))
 		return false;
 
 	// BDA types must have parent type hierarchy.
@@ -5506,45 +5512,10 @@ bool Compiler::type_is_array_of_pointers(const SPIRType &type) const
 
 	// Punch through all array layers.
 	auto *parent = &get<SPIRType>(type.parent_type);
-	while (type_is_top_level_array(*parent))
+	while (is_array(*parent))
 		parent = &get<SPIRType>(parent->parent_type);
 
-	return type_is_top_level_pointer(*parent);
-}
-
-bool Compiler::type_is_top_level_pointer(const SPIRType &type) const
-{
-	if (!type.pointer)
-		return false;
-
-	// Function pointers, should not be hit by valid SPIR-V.
-	// Parent type will be SPIRFunction instead.
-	if (type.basetype == SPIRType::Unknown)
-		return false;
-
-	// Some types are synthesized in-place without complete type hierarchy and might not have parent types,
-	// but these types are never array-of-pointer or any complicated BDA type, infer reasonable defaults.
-	if (type.parent_type)
-		return type.pointer_depth > get<SPIRType>(type.parent_type).pointer_depth;
-	else
-		return true;
-}
-
-bool Compiler::type_is_top_level_physical_pointer(const SPIRType &type) const
-{
-	return type_is_top_level_pointer(type) && type.storage == StorageClassPhysicalStorageBuffer;
-}
-
-bool Compiler::type_is_top_level_array(const SPIRType &type) const
-{
-	if (type.array.empty())
-		return false;
-
-	// If we have pointer and array, we infer pointer-to-array as it's the only meaningful thing outside BDA.
-	if (type.parent_type)
-		return type.array.size() > get<SPIRType>(type.parent_type).array.size();
-	else
-		return !type.pointer;
+	return is_pointer(*parent);
 }
 
 bool Compiler::flush_phi_required(BlockID from, BlockID to) const
