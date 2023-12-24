@@ -35,6 +35,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <array>
+
 // Partial implementation of std::span for C++11
 // Replace with std::span if repo standard is bumped to C++20
 //
