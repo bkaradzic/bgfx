@@ -685,17 +685,18 @@ namespace bgfx
 			DxbcBuiltin::Enum valueType;
 			DxbcComponentType::Enum componentType;
 			uint32_t registerIndex;
+			uint32_t stream;
 			uint8_t mask;
 			uint8_t readWriteMask;
-			uint8_t stream;
 		};
 
 		uint32_t key;
 		stl::vector<Element> elements;
 	};
 
-	int32_t read(bx::ReaderSeekerI* _reader, DxbcSignature& _signature, bx::Error* _err);
-	int32_t write(bx::WriterI* _writer, const DxbcSignature& _signature, bx::Error* _err);
+	int32_t read(bx::ReaderSeekerI* _reader, DxbcSignature& _signature, bool _readStream, bx::Error* _err);
+	int32_t write(bx::WriterI* _writer, const DxbcSignature& _signature, bool _writeStream, bx::Error* _err);
+	int32_t toString(char* _out, int32_t _size, const DxbcSignature::Element& _element);
 
 	struct DxbcShader
 	{
