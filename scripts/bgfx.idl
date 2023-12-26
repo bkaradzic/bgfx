@@ -1160,9 +1160,10 @@ func.getRendererName
 	"const char*"              --- Name of renderer.
 	.type "RendererType::Enum" --- Renderer backend type. See: `bgfx::RendererType`
 
+--- Fill bgfx::Init struct with default values, before using it to initialize the library.
 func.initCtor { cfunc }
 	"void"
-	.init "Init*"
+	.init "Init*" --- Pointer to structure to be initialized. See: `bgfx::Init` for more info.
 
 --- Initialize the bgfx library.
 func.init { cfunc }
