@@ -400,17 +400,17 @@ namespace bgfx
 
 		for (size_t ii = 0; ii < includeDirs.size(); ++ii)
 		{
-			BX_TRACE("\t  include :%s\n", includeDirs[ii].c_str());
+			BX_TRACE("\t  include :%s\n", includeDirs[ii].c_str() );
 		}
 
 		for (size_t ii = 0; ii < defines.size(); ++ii)
 		{
-			BX_TRACE("\t  define :%s\n", defines[ii].c_str());
+			BX_TRACE("\t  define :%s\n", defines[ii].c_str() );
 		}
 
 		for (size_t ii = 0; ii < dependencies.size(); ++ii)
 		{
-			BX_TRACE("\t  dependency :%s\n", dependencies[ii].c_str());
+			BX_TRACE("\t  dependency :%s\n", dependencies[ii].c_str() );
 		}
 	}
 
@@ -1345,7 +1345,7 @@ namespace bgfx
 
 				bx::StringView assign = bx::strSubstr(parse, 0, 1);
 				bx::StringView init;
-				if (0 == bx::strCmp(assign, "=", 1))
+				if (0 == bx::strCmp(assign, "=", 1) )
 				{
 					parse = bx::strLTrimSpace(bx::StringView(parse.getPtr() + 1, parse.getTerm() ) );
 					init.set(parse.getPtr(), eol.getPtr() );
@@ -1508,7 +1508,7 @@ namespace bgfx
 			{
 				bx::write(_shaderWriter, uint16_t(0), &err);
 
-				uint32_t shaderSize = (uint32_t)bx::strLen(input);
+				const uint32_t shaderSize = (uint32_t)bx::strLen(input);
 				bx::write(_shaderWriter, shaderSize, &err);
 				bx::write(_shaderWriter, input, shaderSize, &err);
 				bx::write(_shaderWriter, uint8_t(0), &err);
@@ -2352,11 +2352,11 @@ namespace bgfx
 											);
 									}
 
-									if (need130 || (glsl_profile >= 130))
+									if (need130 || (glsl_profile >= 130) )
 									{
 										bx::stringPrintf(code
-											, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
-											  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
+											, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord) )\n"
+											  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord) )\n"
 											);
 									}
 									else
@@ -2416,7 +2416,8 @@ namespace bgfx
 										bx::stringPrintf(code, "#extension GL_OES_texture_3D : enable\n");
 									}
 
-									if ((glsl_profile < 300) && (!bx::findIdentifierMatch(input, s_EXT_shadow_samplers).isEmpty()))
+									if (glsl_profile < 300
+									&&  !bx::findIdentifierMatch(input, s_EXT_shadow_samplers).isEmpty() )
 									{
 										bx::stringPrintf(code
 											, "#extension GL_EXT_shadow_samplers : enable\n"
@@ -2446,7 +2447,8 @@ namespace bgfx
 											);
 									}
 
-									if ((glsl_profile < 300) && (!bx::findIdentifierMatch(input, "gl_FragDepth").isEmpty() ))
+									if (glsl_profile < 300
+									&&  !bx::findIdentifierMatch(input, "gl_FragDepth").isEmpty() )
 									{
 										bx::stringPrintf(code
 											, "#extension GL_EXT_frag_depth : enable\n"
@@ -2539,8 +2541,8 @@ namespace bgfx
 									);
 
 								bx::stringPrintf(code
-									, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
-									  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
+									, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord) )\n"
+									  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord) )\n"
 									);
 							}
 
@@ -2649,7 +2651,8 @@ namespace bgfx
 
 		bool consoleOut = cmdLine.hasArg("stdout");
 		const char* outFilePath = cmdLine.findOption('o');
-		if (NULL == outFilePath && !consoleOut)
+		if (NULL == outFilePath
+		&&  !consoleOut)
 		{
 			help("Output file name must be specified or use \"--stdout\" to output to stdout.");
 			return bx::kExitFailure;
@@ -2798,6 +2801,7 @@ namespace bgfx
 				const char* varyingdef = cmdLine.findOption("varyingdef", defaultVarying.c_str() );
 				attribdef.load(varyingdef);
 				varying = attribdef.getData();
+
 				if (NULL     != varying
 				&&  *varying != '\0')
 				{
@@ -2809,11 +2813,12 @@ namespace bgfx
 				}
 			}
 
-			const size_t padding    = 16384;
-			uint32_t size = (uint32_t)bx::getSize(&reader);
-			char* data = new char[size+padding+1];
-			size = (uint32_t)bx::read(&reader, data, size, bx::ErrorAssert{});
+			int32_t size = bx::getSize(&reader);
+			const int32_t total = size + 16384;
+			char* data = new char[total];
+			size = bx::read(&reader, data, size, bx::ErrorAssert{});
 
+			// Trim UTF-8 BOM
 			if (data[0] == '\xef'
 			&&  data[1] == '\xbb'
 			&&  data[2] == '\xbf')
@@ -2822,38 +2827,65 @@ namespace bgfx
 				size -= 3;
 			}
 
+			const char ch = data[0];
+			if (false // https://en.wikipedia.org/wiki/Byte_order_mark#Byte_order_marks_by_encoding
+			||  '\x00' == ch
+			||  '\x0e' == ch
+			||  '\x2b' == ch
+			||  '\x84' == ch
+			||  '\xdd' == ch
+			||  '\xf7' == ch
+			||  '\xfb' == ch
+			||  '\xfe' == ch
+			||  '\xff' == ch
+			   )
+			{
+				bx::printf("Shader input file has unsupported BOM.\n");
+				return bx::kExitFailure;
+			}
+
 			// Compiler generates "error X3000: syntax error: unexpected end of file"
 			// if input doesn't have empty line at EOF.
 			data[size] = '\n';
-			bx::memSet(&data[size+1], 0, padding);
+			bx::memSet(&data[size+1], 0, total-size-1);
 			bx::close(&reader);
 
-			bx::FileWriter* writer = NULL;
-
-			if (!consoleOut)
 			{
-				if (!bin2c.isEmpty())
+				bx::FileWriter* writer = NULL;
+
+				if (!consoleOut)
 				{
-					writer = new Bin2cWriter(bin2c);
-				}
-				else
-				{
-					writer = new bx::FileWriter;
+					if (!bin2c.isEmpty() )
+					{
+						writer = new Bin2cWriter(bin2c);
+					}
+					else
+					{
+						writer = new bx::FileWriter;
+					}
+
+					if (!bx::open(writer, outFilePath) )
+					{
+						bx::printf("Unable to open output file '%s'.\n", outFilePath);
+						return bx::kExitFailure;
+					}
 				}
 
-				if (!bx::open(writer, outFilePath))
+				compiled = compileShader(
+						  varying
+						, commandLineComment.c_str()
+						, data
+						, size
+						, options
+						, consoleOut ? bx::getStdOut() : writer
+						, bx::getStdOut()
+						);
+
+				if (!consoleOut)
 				{
-					bx::printf("Unable to open output file '%s'.\n", outFilePath);
-					return bx::kExitFailure;
+					bx::close(writer);
+					delete writer;
 				}
-			}
-
-			compiled = compileShader(varying, commandLineComment.c_str(), data, size, options, consoleOut ? bx::getStdOut() : writer, bx::getStdOut());
-
-			if (!consoleOut)
-			{
-				bx::close(writer);
-				delete writer;
 			}
 		}
 
