@@ -2305,6 +2305,7 @@ VK_IMPORT_DEVICE
 			uint32_t height = bx::uint32_max(1, texture.m_height >> _mip);
 			uint32_t pitch  = texture.m_readback.pitch(_mip);
 			uint32_t size = height * pitch;
+			size *= bx::uint32_max(1, texture.m_numLayers);
 
 			VkDeviceMemory stagingMemory;
 			VkBuffer stagingBuffer;
@@ -2320,7 +2321,8 @@ VK_IMPORT_DEVICE
 
 			kick(true);
 
-			texture.m_readback.readback(stagingMemory, 0, _data, _mip);
+			uint32_t memRead = texture.m_readback.readback(stagingMemory, 0, _data, _mip);
+			BX_ASSERT(memRead == size, "Readback did not copy the same amount of memory as allocated in stagingBuffer");
 
 			vkDestroy(stagingBuffer);
 			vkDestroy(stagingMemory);
@@ -4031,7 +4033,7 @@ VK_IMPORT_DEVICE
 				const uint32_t height = _swapChain.m_sci.imageExtent.height;
 
 				ReadbackVK readback;
-				readback.create(image, width, height, _swapChain.m_colorFormat);
+				readback.create(image, width, height, 1 /*numLayer*/, _swapChain.m_colorFormat);
 				const uint32_t pitch = readback.pitch();
 
 				readback.copyImageToBuffer(m_commandBuffer, _buffer, layout, VK_IMAGE_ASPECT_COLOR_BIT);
@@ -5594,12 +5596,13 @@ VK_DESTROY
 		}
 	}
 
-	void ReadbackVK::create(VkImage _image, uint32_t _width, uint32_t _height, TextureFormat::Enum _format)
+	void ReadbackVK::create(VkImage _image, uint32_t _width, uint32_t _height, uint32_t _numLayers, TextureFormat::Enum _format)
 	{
 		m_image  = _image;
 		m_width  = _width;
 		m_height = _height;
 		m_format = _format;
+		m_numLayers = _numLayers;
 	}
 
 	void ReadbackVK::destroy()
@@ -5626,9 +5629,6 @@ VK_DESTROY
 			, _layout
 			, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 			, _mip
-			, 1
-			, 0
-			, 1
 			);
 
 		VkBufferImageCopy bic;
@@ -5638,7 +5638,7 @@ VK_DESTROY
 		bic.imageSubresource.aspectMask     = _aspect;
 		bic.imageSubresource.mipLevel       = _mip;
 		bic.imageSubresource.baseArrayLayer = 0;
-		bic.imageSubresource.layerCount     = 1;
+		bic.imageSubresource.layerCount     = m_numLayers;
 		bic.imageOffset = { 0, 0, 0 };
 		bic.imageExtent = { mipWidth, mipHeight, 1 };
 
@@ -5665,20 +5665,20 @@ VK_DESTROY
 			, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 			, _layout
 			, _mip
-			, 1
-			, 0
-			, 1
 			);
 	}
 
-	void ReadbackVK::readback(VkDeviceMemory _memory, VkDeviceSize _offset, void* _data, uint8_t _mip) const
+	uint32_t ReadbackVK::readback(VkDeviceMemory _memory, VkDeviceSize _offset, void* _data, uint8_t _mip) const
 	{
 		if (m_image == VK_NULL_HANDLE)
 		{
-			return;
+			return 0;
 		}
 
 		uint32_t mipHeight = bx::uint32_max(1, m_height >> _mip);
+		// for texture arrays we iterate over each layer as well.
+		mipHeight *= bx::uint32_max(1, m_numLayers);
+
 		uint32_t rowPitch = pitch(_mip);
 
 		uint8_t* src;
@@ -5686,14 +5686,17 @@ VK_DESTROY
 		src += _offset;
 		uint8_t* dst = (uint8_t*)_data;
 
+		uint32_t memRead = 0;
 		for (uint32_t yy = 0; yy < mipHeight; ++yy)
 		{
 			bx::memCopy(dst, src, rowPitch);
 			src += rowPitch;
 			dst += rowPitch;
+			memRead += rowPitch;
 		}
 
 		vkUnmapMemory(s_renderVK->m_device, _memory);
+		return memRead;
 	}
 
 	VkResult TextureVK::create(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint64_t _flags, VkFormat _format)
@@ -6130,7 +6133,7 @@ VK_DESTROY
 
 			bx::free(g_allocator, imageInfos);
 
-			m_readback.create(m_textureImage, m_width, m_height, TextureFormat::Enum(m_textureFormat) );
+			m_readback.create(m_textureImage, m_width, m_height, m_numLayers, TextureFormat::Enum(m_textureFormat) );
 		}
 
 		return m_directAccessPtr;
