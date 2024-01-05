@@ -568,6 +568,16 @@ https://prototwin.com - Online industrial simulation software for manufacturing 
 
 ![ProtoTwin - Simulation for Industrial Automation](https://github.com/bkaradzic/bgfx/assets/37254625/7aac600f-2687-468f-8d60-441c45ec14a3)
 
+## WARCANA
+
+WARCANA is a fantasy inspired base defence, RTS game with a deck-building mechanic. 
+Face hundreds of thousands of unrelenting monsters in a battle royale between 30 other 
+mighty magicians. Build your deck. Prepare your defences. Summon your armies. 
+Survive the onslaught.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=UioR5ptCFYU" 
+target="_blank"><img src="http://img.youtube.com/vi/UioR5ptCFYU/0.jpg" 
+alt="WARCANA Announcement Trailer" width="640" height="480" border="0" /></a>
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
