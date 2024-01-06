@@ -46,7 +46,7 @@ Supported rendering backends:
 
 Supported platforms:
 
- * Android (14+, ARM, x86, MIPS)
+ * Android (14+)
  * iOS/iPadOS/tvOS (16.0+)
  * Linux
  * macOS (13.0+)
