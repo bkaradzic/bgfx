@@ -102,60 +102,6 @@ RenderDoc `How do I ...? <https://renderdoc.org/docs/how/index.html>`__ document
 `Shader debugging <https://software.intel.com/en-us/articles/shader-debugging-for-bgfx-rendering-engine>`__
 with RenderDoc and MSVC.
 
-IntelGPA
-~~~~~~~~
-
-Right click **Intel GPA Monitor** tray icon, choose preferences, check
-"Auto-detect launched applications" option. Find ``InjectionList.txt``
-in GPA directory and add ``examples-*`` to the list.
-
-Download:
-`IntelGPA <https://software.intel.com/en-us/vcsource/tools/intel-gpa>`__
-
-Other Debuggers and Profilers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. |x| unicode:: U+2713 .. CHECK MARK
-
-+-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
-| Name        | OS              | DX9   | DX11   | DX12 | Metal | GL   | GLES | Vulkan| Source |
-+=============+=================+=======+========+======+=======+======+======+=======+========+
-| APITrace    | Linux/macOS/Win | |x|   | |x|    |      |       | |x|  | |x|  |       | |x|    |
-+-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
-| CodeXL      | Linux/Win       |       |        |      |       | |x|  |      |       |        |
-+-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
-| Dissector   | Win             | |x|   |        |      |       |      |      |       | |x|    |
-+-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
-| IntelGPA    | Linux/macOS/Win | |x|   | |x|    |      |       |      | |x|  |       |        |
-+-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
-| Nsight      | Win             | |x|   | |x|    |      |       | |x|  |      |       |        |
-+-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
-| PerfHUD     | Win             | |x|   | |x|    |      |       |      |      |       |        |
-+-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
-| PerfStudio  | Win             |       | |x|    | |x|  |       | |x|  | |x|  |       |        |
-+-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
-| PIX         | Win             |       |        | |x|  |       |      |      |       |        |
-+-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
-| RGP         | Win             |       |        | |x|  |       |      |      | |x|   |        |
-+-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
-| RenderDoc   | Win/Linux       |       | |x|    |      |       | |x|  |      | |x|   | |x|    |
-+-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
-| vogl        | Linux           |       |        |      |       | |x|  |      |       | |x|    |
-+-------------+-----------------+-------+--------+------+-------+------+------+-------+--------+
-
-Download:
-
-- `APITrace <https://apitrace.github.io/>`__
-- `CodeXL <http://developer.amd.com/tools-and-sdks/opencl-zone/codexl/>`__
-- `Dissector <https://github.com/imccown/Dissector>`__
-- `GPU PerfStudio <http://developer.amd.com/tools-and-sdks/graphics-development/gpu-perfstudio/>`__
-- `Linux Graphics Debugger <https://developer.nvidia.com/linux-graphics-debugger>`__
-- `Nsight <https://developer.nvidia.com/nsight-graphics>`__
-- `PIX <https://blogs.msdn.microsoft.com/pix/>`__
-- `PerfHUD <https://developer.nvidia.com/nvidia-perfhud>`__
-- `RGP (Radeon GPU Profiler) <https://github.com/GPUOpen-Tools/Radeon-GPUProfiler/releases>`__
-- `vogl <https://github.com/ValveSoftware/vogl>`__
-
 SDL, GLFW, etc.
 ---------------
 
@@ -290,6 +236,8 @@ and `others <https://github.com/bkaradzic/bgfx/graphs/contributors>`__...
 
 Repository visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. image:: https://api.star-history.com/svg?repos=bkaradzic/bgfx&type=Date
 
 .. raw:: html
 
