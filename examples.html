@@ -1,21 +1,21 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Examples &mdash; bgfx 1.123.8604 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script src="_static/documentation_options.js?v=952e7839"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -28,14 +28,18 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> bgfx
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            bgfx
           </a>
               <div class="version">
                 1.123.8604
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -120,8 +124,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Examples</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Examples</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -131,28 +135,28 @@
            <div itemprop="articleBody">
              
   <section id="examples">
-<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">¶</a></h1>
+<h1>Examples<a class="headerlink" href="#examples" title="Link to this heading">¶</a></h1>
 <p>Most of the examples require shader/texture/mesh data to be loaded. When
 running examples your current directory should be examples/runtime.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&lt;bgfx_path&gt;/examples/runtime $ ../../.build/&lt;config&gt;/bin/example-00-helloworldDebug
 </pre></div>
 </div>
 <section id="helloworld">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/00-helloworld">00-helloworld</a><a class="headerlink" href="#helloworld" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/00-helloworld">00-helloworld</a><a class="headerlink" href="#helloworld" title="Link to this heading">¶</a></h2>
 <p>Initialization and debug text.</p>
 <figure class="align-default">
 <img alt="example-00-helloworld" src="https://github.com/bkaradzic/bgfx/raw/master/examples/00-helloworld/screenshot.png" />
 </figure>
 </section>
 <section id="cubes">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/01-cubes/cubes.cpp">01-cubes</a><a class="headerlink" href="#cubes" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/01-cubes/cubes.cpp">01-cubes</a><a class="headerlink" href="#cubes" title="Link to this heading">¶</a></h2>
 <p>Rendering simple static mesh.</p>
 <figure class="align-default">
 <img alt="example-01-cubes" src="https://github.com/bkaradzic/bgfx/raw/master/examples/01-cubes/screenshot.png" />
 </figure>
 </section>
 <section id="metaballs">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/02-metaballs">02-metaballs</a><a class="headerlink" href="#metaballs" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/02-metaballs">02-metaballs</a><a class="headerlink" href="#metaballs" title="Link to this heading">¶</a></h2>
 <p>Rendering with transient buffers and embedding shaders.</p>
 <div class="emscripten">
   <progress value="0" max="100" id="progress" hidden=1></progress>
@@ -245,113 +249,105 @@ running examples your current directory should be examples/runtime.</p>
 </script>
 <script async type="text/javascript" src="example-02-metaballsRelease.bc.js"></script></section>
 <section id="raymarch">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/03-raymarch">03-raymarch</a><a class="headerlink" href="#raymarch" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/03-raymarch">03-raymarch</a><a class="headerlink" href="#raymarch" title="Link to this heading">¶</a></h2>
 <p>Updating shader uniforms.</p>
 <figure class="align-default">
 <img alt="example-03-raymarch" src="https://github.com/bkaradzic/bgfx/raw/master/examples/03-raymarch/screenshot.png" />
 </figure>
 </section>
 <section id="mesh">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/04-mesh">04-mesh</a><a class="headerlink" href="#mesh" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/04-mesh">04-mesh</a><a class="headerlink" href="#mesh" title="Link to this heading">¶</a></h2>
 <p>Loading meshes.</p>
 <figure class="align-default">
 <img alt="example-04-mesh" src="https://github.com/bkaradzic/bgfx/raw/master/examples/04-mesh/screenshot.png" />
 </figure>
 </section>
 <section id="instancing">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/05-instancing">05-instancing</a><a class="headerlink" href="#instancing" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/05-instancing">05-instancing</a><a class="headerlink" href="#instancing" title="Link to this heading">¶</a></h2>
 <p>Geometry instancing.</p>
 <figure class="align-default">
 <img alt="example-05-instancing" src="https://github.com/bkaradzic/bgfx/raw/master/examples/05-instancing/screenshot.png" />
 </figure>
 </section>
 <section id="bump">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/06-bump">06-bump</a><a class="headerlink" href="#bump" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/06-bump">06-bump</a><a class="headerlink" href="#bump" title="Link to this heading">¶</a></h2>
 <p>Loading textures.</p>
 <figure class="align-default">
 <img alt="example-06-bump" src="https://github.com/bkaradzic/bgfx/raw/master/examples/06-bump/screenshot.png" />
 </figure>
 </section>
 <section id="callback">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/07-callback">07-callback</a><a class="headerlink" href="#callback" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/07-callback">07-callback</a><a class="headerlink" href="#callback" title="Link to this heading">¶</a></h2>
 <p>Implementing application specific callbacks for taking screen shots,
 caching OpenGL binary shaders, and video capture.</p>
 </section>
 <section id="update">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/08-update">08-update</a><a class="headerlink" href="#update" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/08-update">08-update</a><a class="headerlink" href="#update" title="Link to this heading">¶</a></h2>
 <p>Updating textures.</p>
 </section>
 <section id="hdr">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/09-hdr">09-hdr</a><a class="headerlink" href="#hdr" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/09-hdr">09-hdr</a><a class="headerlink" href="#hdr" title="Link to this heading">¶</a></h2>
 <p>Using multiple views with frame buffers, and view order remapping.</p>
 <figure class="align-default">
 <img alt="example-09-hdr" src="https://github.com/bkaradzic/bgfx/raw/master/examples/09-hdr/screenshot.png" />
 </figure>
 </section>
 <section id="font">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/10-font">10-font</a><a class="headerlink" href="#font" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/10-font">10-font</a><a class="headerlink" href="#font" title="Link to this heading">¶</a></h2>
 <p>Use the font system to display text and styled text.</p>
 <figure class="align-default">
 <img alt="example-10-font" src="https://github.com/bkaradzic/bgfx/raw/master/examples/10-font/screenshot.png" />
 </figure>
 </section>
 <section id="fontsdf">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/11-fontsdf">11-fontsdf</a><a class="headerlink" href="#fontsdf" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/11-fontsdf">11-fontsdf</a><a class="headerlink" href="#fontsdf" title="Link to this heading">¶</a></h2>
 <p>Use a single distance field font to render text of various size.</p>
 <figure class="align-default">
 <img alt="example-11-fontsdf" src="https://github.com/bkaradzic/bgfx/raw/master/examples/11-fontsdf/screenshot.png" />
 </figure>
 </section>
 <section id="lod">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/12-lod">12-lod</a><a class="headerlink" href="#lod" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/12-lod">12-lod</a><a class="headerlink" href="#lod" title="Link to this heading">¶</a></h2>
 <p>Mesh LOD transitions.</p>
 <figure class="align-default">
 <img alt="example-12-lod" src="https://github.com/bkaradzic/bgfx/raw/master/examples/12-lod/screenshot.png" />
 </figure>
 </section>
 <section id="stencil">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/13-stencil">13-stencil</a><a class="headerlink" href="#stencil" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/13-stencil">13-stencil</a><a class="headerlink" href="#stencil" title="Link to this heading">¶</a></h2>
 <p>Stencil reflections and shadows.</p>
 <figure class="align-default">
 <img alt="example-13-stencil" src="https://github.com/bkaradzic/bgfx/raw/master/examples/13-stencil/screenshot.png" />
 </figure>
 </section>
 <section id="shadowvolumes">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/14-shadowvolumes">14-shadowvolumes</a><a class="headerlink" href="#shadowvolumes" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/14-shadowvolumes">14-shadowvolumes</a><a class="headerlink" href="#shadowvolumes" title="Link to this heading">¶</a></h2>
 <p>Shadow volumes.</p>
 <figure class="align-default">
 <img alt="example-14-shadowvolumes" src="https://github.com/bkaradzic/bgfx/raw/master/examples/14-shadowvolumes/screenshot.png" />
 </figure>
 </section>
 <section id="shadowmaps-simple">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/15-shadowmaps-simple">15-shadowmaps-simple</a><a class="headerlink" href="#shadowmaps-simple" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/15-shadowmaps-simple">15-shadowmaps-simple</a><a class="headerlink" href="#shadowmaps-simple" title="Link to this heading">¶</a></h2>
 <figure class="align-default">
 <img alt="example-15-shadowmaps-simple" src="https://github.com/bkaradzic/bgfx/raw/master/examples/15-shadowmaps-simple/screenshot.png" />
 </figure>
 </section>
 <section id="shadowmaps">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/16-shadowmaps">16-shadowmaps</a><a class="headerlink" href="#shadowmaps" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/16-shadowmaps">16-shadowmaps</a><a class="headerlink" href="#shadowmaps" title="Link to this heading">¶</a></h2>
 <figure class="align-default">
 <img alt="example-16-shadowmaps" src="https://github.com/bkaradzic/bgfx/raw/master/examples/16-shadowmaps/screenshot.png" />
 </figure>
 </section>
 <section id="drawstress">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/17-drawstress">17-drawstress</a><a class="headerlink" href="#drawstress" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/17-drawstress">17-drawstress</a><a class="headerlink" href="#drawstress" title="Link to this heading">¶</a></h2>
 <section id="hz">
-<h3>60Hz<a class="headerlink" href="#hz" title="Permalink to this heading">¶</a></h3>
+<h3>60Hz<a class="headerlink" href="#hz" title="Link to this heading">¶</a></h3>
 <p>Draw stress is CPU stress test to show what is the maximum number of
 draw calls while maintaining 60Hz frame rate. bgfx currently has default
 limit of 64K draw calls per frame. You can increase this limit by
 changing <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_DRAW_CALLS</span></code>.</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 19%" />
-<col style="width: 18%" />
-<col style="width: 16%" />
-<col style="width: 27%" />
-<col style="width: 8%" />
-<col style="width: 11%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>CPU</p></th>
 <th class="head"><p>Renderer</p></th>
@@ -806,18 +802,10 @@ changing <code class="docutils literal notranslate"><span class="pre">BGFX_CONFI
 </ul>
 </section>
 <section id="hz-test-for-browsers">
-<h3>30Hz (test for browsers)<a class="headerlink" href="#hz-test-for-browsers" title="Permalink to this heading">¶</a></h3>
+<h3>30Hz (test for browsers)<a class="headerlink" href="#hz-test-for-browsers" title="Link to this heading">¶</a></h3>
 <p>By default browsers are using vsync, and don’t have option to turn it
 off programmatically.</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 19%" />
-<col style="width: 14%" />
-<col style="width: 14%" />
-<col style="width: 31%" />
-<col style="width: 8%" />
-<col style="width: 12%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>CPU</p></th>
 <th class="head"><p>Renderer</p></th>
@@ -938,106 +926,106 @@ off programmatically.</p>
 </section>
 </section>
 <section id="ibl">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/18-ibl">18-ibl</a><a class="headerlink" href="#ibl" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/18-ibl">18-ibl</a><a class="headerlink" href="#ibl" title="Link to this heading">¶</a></h2>
 <p>Image-based lighting.</p>
 <figure class="align-default">
 <img alt="example-18-ibl" src="https://github.com/bkaradzic/bgfx/raw/master/examples/18-ibl/screenshot.png" />
 </figure>
 </section>
 <section id="oit">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/19-oit">19-oit</a><a class="headerlink" href="#oit" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/19-oit">19-oit</a><a class="headerlink" href="#oit" title="Link to this heading">¶</a></h2>
 <p>Weighted, Blended Order-Independent Transparency</p>
 <figure class="align-default">
 <img alt="example-19-oit" src="https://github.com/bkaradzic/bgfx/raw/master/examples/19-oit/screenshot.png" />
 </figure>
 </section>
 <section id="nanovg">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/20-nanovg">20-nanovg</a><a class="headerlink" href="#nanovg" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/20-nanovg">20-nanovg</a><a class="headerlink" href="#nanovg" title="Link to this heading">¶</a></h2>
 <p>NanoVG is small antialiased vector graphics rendering library.</p>
 <figure class="align-default">
 <img alt="example-20-nanovg" src="https://github.com/bkaradzic/bgfx/raw/master/examples/20-nanovg/screenshot.png" />
 </figure>
 </section>
 <section id="deferred">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/21-deferred">21-deferred</a><a class="headerlink" href="#deferred" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/21-deferred">21-deferred</a><a class="headerlink" href="#deferred" title="Link to this heading">¶</a></h2>
 <p>MRT rendering and deferred shading.</p>
 <figure class="align-default">
 <img alt="example-21-deferred" src="https://github.com/bkaradzic/bgfx/raw/master/examples/21-deferred/screenshot.png" />
 </figure>
 </section>
 <section id="windows">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/22-windows">22-windows</a><a class="headerlink" href="#windows" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/22-windows">22-windows</a><a class="headerlink" href="#windows" title="Link to this heading">¶</a></h2>
 <p>Rendering into multiple windows.</p>
 </section>
 <section id="vectordisplay">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/23-vectordisplay">23-vectordisplay</a><a class="headerlink" href="#vectordisplay" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/23-vectordisplay">23-vectordisplay</a><a class="headerlink" href="#vectordisplay" title="Link to this heading">¶</a></h2>
 <p>Rendering lines as oldschool vectors.</p>
 <figure class="align-default">
 <img alt="example-23-vectordisplay" src="https://github.com/bkaradzic/bgfx/raw/master/examples/23-vectordisplay/screenshot.png" />
 </figure>
 </section>
 <section id="nbody">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/24-nbody">24-nbody</a><a class="headerlink" href="#nbody" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/24-nbody">24-nbody</a><a class="headerlink" href="#nbody" title="Link to this heading">¶</a></h2>
 <p>N-body simulation with compute shaders using buffers.</p>
 <figure class="align-default">
 <img alt="example-24-nbody" src="https://github.com/bkaradzic/bgfx/raw/master/examples/24-nbody/screenshot.png" />
 </figure>
 </section>
 <section id="c99">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/25-c99">25-c99</a><a class="headerlink" href="#c99" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/25-c99">25-c99</a><a class="headerlink" href="#c99" title="Link to this heading">¶</a></h2>
 <p>Initialization and debug text with C99 API.</p>
 </section>
 <section id="occlusion">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/26-occlusion">26-occlusion</a><a class="headerlink" href="#occlusion" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/26-occlusion">26-occlusion</a><a class="headerlink" href="#occlusion" title="Link to this heading">¶</a></h2>
 <p>Using occlusion query for conditional rendering.</p>
 <figure class="align-default">
 <img alt="example-26-occlusion" src="https://github.com/bkaradzic/bgfx/raw/master/examples/26-occlusion/screenshot.png" />
 </figure>
 </section>
 <section id="terrain">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/27-terrain">27-terrain</a><a class="headerlink" href="#terrain" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/27-terrain">27-terrain</a><a class="headerlink" href="#terrain" title="Link to this heading">¶</a></h2>
 <p>Terrain painting example.</p>
 <figure class="align-default">
 <img alt="example-27-terrain" src="https://github.com/bkaradzic/bgfx/raw/master/examples/27-terrain/screenshot.png" />
 </figure>
 </section>
 <section id="wireframe">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/28-wireframe">28-wireframe</a><a class="headerlink" href="#wireframe" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/28-wireframe">28-wireframe</a><a class="headerlink" href="#wireframe" title="Link to this heading">¶</a></h2>
 <p>Drawing wireframe mesh.</p>
 <figure class="align-default">
 <img alt="example-28-wireframe" src="https://github.com/bkaradzic/bgfx/raw/master/examples/28-wireframe/screenshot.png" />
 </figure>
 </section>
 <section id="debugdraw">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/29-debugdraw">29-debugdraw</a><a class="headerlink" href="#debugdraw" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/29-debugdraw">29-debugdraw</a><a class="headerlink" href="#debugdraw" title="Link to this heading">¶</a></h2>
 <p>Debug draw.</p>
 <figure class="align-default">
 <img alt="example-29-debugdraw" src="https://github.com/bkaradzic/bgfx/raw/master/examples/29-debugdraw/screenshot.png" />
 </figure>
 </section>
 <section id="picking">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/30-picking">30-picking</a><a class="headerlink" href="#picking" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/30-picking">30-picking</a><a class="headerlink" href="#picking" title="Link to this heading">¶</a></h2>
 <p>Mouse picking via GPU readback.</p>
 <figure class="align-default">
 <img alt="example-30-picking" src="https://github.com/bkaradzic/bgfx/raw/master/examples/30-picking/screenshot.png" />
 </figure>
 </section>
 <section id="rsm">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/31-rsm">31-rsm</a><a class="headerlink" href="#rsm" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/31-rsm">31-rsm</a><a class="headerlink" href="#rsm" title="Link to this heading">¶</a></h2>
 <p>Global Illumination with Reflective Shadow Map.</p>
 <figure class="align-default">
 <img alt="example-31-rsm" src="https://github.com/bkaradzic/bgfx/raw/master/examples/31-rsm/screenshot.png" />
 </figure>
 </section>
 <section id="particles">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/32-particles">32-particles</a><a class="headerlink" href="#particles" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/32-particles">32-particles</a><a class="headerlink" href="#particles" title="Link to this heading">¶</a></h2>
 <p>Particles.</p>
 <figure class="align-default">
 <img alt="example-32-particles" src="https://github.com/bkaradzic/bgfx/raw/master/examples/32-particles/screenshot.png" />
 </figure>
 </section>
 <section id="pom">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/33-pom">33-pom</a><a class="headerlink" href="#pom" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/33-pom">33-pom</a><a class="headerlink" href="#pom" title="Link to this heading">¶</a></h2>
 <p>Parallax occlusion mapping.</p>
 <dl class="simple">
 <dt>Reference(s):</dt><dd><ul class="simple">
@@ -1050,28 +1038,28 @@ off programmatically.</p>
 </figure>
 </section>
 <section id="mvs">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/34-mvs">34-mvs</a><a class="headerlink" href="#mvs" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/34-mvs">34-mvs</a><a class="headerlink" href="#mvs" title="Link to this heading">¶</a></h2>
 <p>Multiple vertex streams.</p>
 <figure class="align-default">
 <img alt="example-34-mvs" src="https://github.com/bkaradzic/bgfx/raw/master/examples/34-mvs/screenshot.png" />
 </figure>
 </section>
 <section id="dynamic">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/35-dynamic">35-dynamic</a><a class="headerlink" href="#dynamic" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/35-dynamic">35-dynamic</a><a class="headerlink" href="#dynamic" title="Link to this heading">¶</a></h2>
 <p>Dynamic buffers update.</p>
 <figure class="align-default">
 <img alt="example-35-dynamic" src="https://github.com/bkaradzic/bgfx/raw/master/examples/35-dynamic/screenshot.png" />
 </figure>
 </section>
 <section id="sky">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/36-sky">36-sky</a><a class="headerlink" href="#sky" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/36-sky">36-sky</a><a class="headerlink" href="#sky" title="Link to this heading">¶</a></h2>
 <p>Perez dynamic sky model.</p>
 <figure class="align-default">
 <img alt="example-36-sky" src="https://github.com/bkaradzic/bgfx/raw/master/examples/36-sky/screenshot.png" />
 </figure>
 </section>
 <section id="gpudrivenrendering">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/37-gpudrivenrendering">37-gpudrivenrendering</a><a class="headerlink" href="#gpudrivenrendering" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/37-gpudrivenrendering">37-gpudrivenrendering</a><a class="headerlink" href="#gpudrivenrendering" title="Link to this heading">¶</a></h2>
 <p>GPU-Driven Rendering.</p>
 <dl class="simple">
 <dt>Reference(s):</dt><dd><ul class="simple">
@@ -1086,7 +1074,7 @@ off programmatically.</p>
 </figure>
 </section>
 <section id="bloom">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/38-bloom">38-bloom</a><a class="headerlink" href="#bloom" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/38-bloom">38-bloom</a><a class="headerlink" href="#bloom" title="Link to this heading">¶</a></h2>
 <p>Bloom.</p>
 <dl class="simple">
 <dt>Reference(s):</dt><dd><ul class="simple">
@@ -1099,7 +1087,7 @@ off programmatically.</p>
 </figure>
 </section>
 <section id="assao">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/39-assao">39-assao</a><a class="headerlink" href="#assao" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/39-assao">39-assao</a><a class="headerlink" href="#assao" title="Link to this heading">¶</a></h2>
 <p>Adaptive Screen Space Ambient Occlusion.</p>
 <dl class="simple">
 <dt>Reference(s):</dt><dd><ul class="simple">
@@ -1112,14 +1100,14 @@ off programmatically.</p>
 </figure>
 </section>
 <section id="svt">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/40-svt">40-svt</a><a class="headerlink" href="#svt" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/40-svt">40-svt</a><a class="headerlink" href="#svt" title="Link to this heading">¶</a></h2>
 <p>Sparse Virtual Textures.</p>
 <figure class="align-default">
 <img alt="example-40-svt" src="https://github.com/bkaradzic/bgfx/raw/master/examples/40-svt/screenshot.png" />
 </figure>
 </section>
 <section id="tess">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/41-tess">41-tess</a><a class="headerlink" href="#tess" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/41-tess">41-tess</a><a class="headerlink" href="#tess" title="Link to this heading">¶</a></h2>
 <p>Adaptive GPU Tessellation with Compute Shaders</p>
 <dl class="simple">
 <dt>Reference(s):</dt><dd><ul class="simple">
@@ -1132,7 +1120,7 @@ off programmatically.</p>
 </figure>
 </section>
 <section id="bunnylod">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/42-bunnylod">42-bunnylod</a><a class="headerlink" href="#bunnylod" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/42-bunnylod">42-bunnylod</a><a class="headerlink" href="#bunnylod" title="Link to this heading">¶</a></h2>
 <p>Simple Polygon Reduction</p>
 <dl class="simple">
 <dt>Reference(s):</dt><dd><ul class="simple">
@@ -1146,7 +1134,7 @@ off programmatically.</p>
 </figure>
 </section>
 <section id="denoise">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/43-denoise">43-denoise</a><a class="headerlink" href="#denoise" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/43-denoise">43-denoise</a><a class="headerlink" href="#denoise" title="Link to this heading">¶</a></h2>
 <p>Denoise</p>
 <dl class="simple">
 <dt>Reference(s):</dt><dd><ul class="simple">
@@ -1161,14 +1149,14 @@ off programmatically.</p>
 </figure>
 </section>
 <section id="sss">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/44-sss">44-sss</a><a class="headerlink" href="#sss" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/44-sss">44-sss</a><a class="headerlink" href="#sss" title="Link to this heading">¶</a></h2>
 <p>Screen-Space Shadows</p>
 <figure class="align-default">
 <img alt="example-44-sss" src="https://github.com/bkaradzic/bgfx/raw/master/examples/44-sss/screenshot.png" />
 </figure>
 </section>
 <section id="bokeh">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/45-bokeh">45-bokeh</a><a class="headerlink" href="#bokeh" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/45-bokeh">45-bokeh</a><a class="headerlink" href="#bokeh" title="Link to this heading">¶</a></h2>
 <p>Bokeh Depth of Field</p>
 <dl class="simple">
 <dt>Reference(s):</dt><dd><ul class="simple">
@@ -1181,7 +1169,7 @@ off programmatically.</p>
 </figure>
 </section>
 <section id="fsr">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/46-fsr">46-fsr</a><a class="headerlink" href="#fsr" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/46-fsr">46-fsr</a><a class="headerlink" href="#fsr" title="Link to this heading">¶</a></h2>
 <p>AMD FidelityFX Super Resolution - high-quality solution for producing high resolution frames
 from lower resolution inputs.</p>
 <figure class="align-default">
@@ -1189,7 +1177,7 @@ from lower resolution inputs.</p>
 </figure>
 </section>
 <section id="pixelformats">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/47-pixelformats">47-pixelformats</a><a class="headerlink" href="#pixelformats" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/47-pixelformats">47-pixelformats</a><a class="headerlink" href="#pixelformats" title="Link to this heading">¶</a></h2>
 <p>Pixel Formats</p>
 <p>View and test texture formats</p>
 <figure class="align-default">
@@ -1197,7 +1185,7 @@ from lower resolution inputs.</p>
 </figure>
 </section>
 <section id="drawindirect">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/48-drawindirect">48-drawindirect</a><a class="headerlink" href="#drawindirect" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/48-drawindirect">48-drawindirect</a><a class="headerlink" href="#drawindirect" title="Link to this heading">¶</a></h2>
 <p>Draw Indirect</p>
 <p>Simple example of indirect rendering + an implementation of multidraw indirect</p>
 <dl class="simple">
@@ -1212,7 +1200,7 @@ from lower resolution inputs.</p>
 </figure>
 </section>
 <section id="hextile">
-<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/49-hextile">49-hextile</a><a class="headerlink" href="#hextile" title="Permalink to this heading">¶</a></h2>
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/49-hextile">49-hextile</a><a class="headerlink" href="#hextile" title="Link to this heading">¶</a></h2>
 <p>Realtime Hex-Tiling</p>
 <p>Simple example of how to use Hex-tiling in real time, ported from <a class="reference external" href="https://github.com/mmikk/hextile-demo">https://github.com/mmikk/hextile-demo</a></p>
 <dl class="simple">

@@ -1,21 +1,21 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Overview &mdash; bgfx 1.123.8604 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script src="_static/documentation_options.js?v=952e7839"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -28,14 +28,18 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> bgfx
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            bgfx
           </a>
               <div class="version">
                 1.123.8604
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -54,8 +58,6 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#debugging-and-profiling">Debugging and Profiling</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#renderdoc">RenderDoc</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#intelgpa">IntelGPA</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#other-debuggers-and-profilers">Other Debuggers and Profilers</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#sdl-glfw-etc">SDL, GLFW, etc.</a></li>
@@ -87,8 +89,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Overview</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Overview</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -98,16 +100,16 @@
            <div itemprop="articleBody">
              
   <section id="overview">
-<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h1>
+<h1>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h1>
 <section id="what-is-it">
-<h2>What is it?<a class="headerlink" href="#what-is-it" title="Permalink to this heading">¶</a></h2>
+<h2>What is it?<a class="headerlink" href="#what-is-it" title="Link to this heading">¶</a></h2>
 <p>Cross-platform, graphics API agnostic, “Bring Your Own Engine/Framework” style rendering library,
 licensed under permissive BSD-2 clause open source license.</p>
 <p>
 <iframe src="https://ghbtns.com/github-btn.html?user=bkaradzic&repo=bgfx&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
 <iframe src="https://ghbtns.com/github-btn.html?user=bkaradzic&repo=bgfx&type=fork&count=true&size=large" frameborder="0" scrolling="0" width="158px" height="30px"></iframe>
 </p><section id="supported-rendering-backends">
-<h3>Supported rendering backends<a class="headerlink" href="#supported-rendering-backends" title="Permalink to this heading">¶</a></h3>
+<h3>Supported rendering backends<a class="headerlink" href="#supported-rendering-backends" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>Direct3D 11</p></li>
 <li><p>Direct3D 12</p></li>
@@ -123,12 +125,12 @@ licensed under permissive BSD-2 clause open source license.</p>
 </ul>
 </section>
 <section id="supported-platforms">
-<h3>Supported Platforms<a class="headerlink" href="#supported-platforms" title="Permalink to this heading">¶</a></h3>
+<h3>Supported Platforms<a class="headerlink" href="#supported-platforms" title="Link to this heading">¶</a></h3>
 <ul class="simple">
-<li><p>Android (14+, ARM, x86, MIPS)</p></li>
-<li><p>iOS/iPadOS/tvOS (iPhone, iPad, AppleTV)</p></li>
+<li><p>Android (14+)</p></li>
+<li><p>iOS/iPadOS/tvOS (16.0+)</p></li>
 <li><p>Linux</p></li>
-<li><p>macOS (11+)</p></li>
+<li><p>macOS (13.0+)</p></li>
 <li><p>PlayStation 4</p></li>
 <li><p>RaspberryPi</p></li>
 <li><p>UWP (Universal Windows, Xbox One)</p></li>
@@ -137,7 +139,7 @@ licensed under permissive BSD-2 clause open source license.</p>
 </ul>
 </section>
 <section id="supported-compilers">
-<h3>Supported Compilers<a class="headerlink" href="#supported-compilers" title="Permalink to this heading">¶</a></h3>
+<h3>Supported Compilers<a class="headerlink" href="#supported-compilers" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>Clang 11 and above</p></li>
 <li><p>GCC 8 and above</p></li>
@@ -146,7 +148,7 @@ licensed under permissive BSD-2 clause open source license.</p>
 </ul>
 </section>
 <section id="supported-languages">
-<h3>Supported Languages<a class="headerlink" href="#supported-languages" title="Permalink to this heading">¶</a></h3>
+<h3>Supported Languages<a class="headerlink" href="#supported-languages" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><a class="reference external" href="https://bkaradzic.github.io/bgfx/bgfx.html">C/C++ API documentation</a></p></li>
 <li><p><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/bindings/bf">Beef API bindings</a></p></li>
@@ -166,13 +168,13 @@ licensed under permissive BSD-2 clause open source license.</p>
 </ul>
 </section>
 <section id="project-page">
-<h3>Project Page<a class="headerlink" href="#project-page" title="Permalink to this heading">¶</a></h3>
+<h3>Project Page<a class="headerlink" href="#project-page" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><a class="reference external" href="https://github.com/bkaradzic/bgfx">https://github.com/bkaradzic/bgfx</a></p></li>
 </ul>
 </section>
 <section id="contact">
-<h3>Contact<a class="headerlink" href="#contact" title="Permalink to this heading">¶</a></h3>
+<h3>Contact<a class="headerlink" href="#contact" title="Link to this heading">¶</a></h3>
 <blockquote>
 <div><ul class="simple">
 <li><p><a class="reference external" href="https://github.com/bkaradzic/bgfx/discussions">GitHub Discussions</a></p></li>
@@ -184,9 +186,9 @@ licensed under permissive BSD-2 clause open source license.</p>
 </section>
 </section>
 <section id="debugging-and-profiling">
-<h2>Debugging and Profiling<a class="headerlink" href="#debugging-and-profiling" title="Permalink to this heading">¶</a></h2>
+<h2>Debugging and Profiling<a class="headerlink" href="#debugging-and-profiling" title="Link to this heading">¶</a></h2>
 <section id="renderdoc">
-<h3>RenderDoc<a class="headerlink" href="#renderdoc" title="Permalink to this heading">¶</a></h3>
+<h3>RenderDoc<a class="headerlink" href="#renderdoc" title="Link to this heading">¶</a></h3>
 <p>Loading of RenderDoc is integrated in bgfx when using DX11 or OpenGL
 renderer. You can drop in <code class="docutils literal notranslate"><span class="pre">renderdoc.dll</span></code> from RenderDoc distribution
 into working directory, and it will be automatically loaded during bgfx
@@ -197,183 +199,9 @@ initialization. This allows frame capture at any time by pressing
 <p><a class="reference external" href="https://software.intel.com/en-us/articles/shader-debugging-for-bgfx-rendering-engine">Shader debugging</a>
 with RenderDoc and MSVC.</p>
 </section>
-<section id="intelgpa">
-<h3>IntelGPA<a class="headerlink" href="#intelgpa" title="Permalink to this heading">¶</a></h3>
-<p>Right click <strong>Intel GPA Monitor</strong> tray icon, choose preferences, check
-“Auto-detect launched applications” option. Find <code class="docutils literal notranslate"><span class="pre">InjectionList.txt</span></code>
-in GPA directory and add <code class="docutils literal notranslate"><span class="pre">examples-*</span></code> to the list.</p>
-<p>Download:
-<a class="reference external" href="https://software.intel.com/en-us/vcsource/tools/intel-gpa">IntelGPA</a></p>
-</section>
-<section id="other-debuggers-and-profilers">
-<h3>Other Debuggers and Profilers<a class="headerlink" href="#other-debuggers-and-profilers" title="Permalink to this heading">¶</a></h3>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 15%" />
-<col style="width: 20%" />
-<col style="width: 8%" />
-<col style="width: 9%" />
-<col style="width: 7%" />
-<col style="width: 8%" />
-<col style="width: 7%" />
-<col style="width: 7%" />
-<col style="width: 8%" />
-<col style="width: 9%" />
-</colgroup>
-<thead>
-<tr class="row-odd"><th class="head"><p>Name</p></th>
-<th class="head"><p>OS</p></th>
-<th class="head"><p>DX9</p></th>
-<th class="head"><p>DX11</p></th>
-<th class="head"><p>DX12</p></th>
-<th class="head"><p>Metal</p></th>
-<th class="head"><p>GL</p></th>
-<th class="head"><p>GLES</p></th>
-<th class="head"><p>Vulkan</p></th>
-<th class="head"><p>Source</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>APITrace</p></td>
-<td><p>Linux/macOS/Win</p></td>
-<td><p>✓</p></td>
-<td><p>✓</p></td>
-<td></td>
-<td></td>
-<td><p>✓</p></td>
-<td><p>✓</p></td>
-<td></td>
-<td><p>✓</p></td>
-</tr>
-<tr class="row-odd"><td><p>CodeXL</p></td>
-<td><p>Linux/Win</p></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td><p>✓</p></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><p>Dissector</p></td>
-<td><p>Win</p></td>
-<td><p>✓</p></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td><p>✓</p></td>
-</tr>
-<tr class="row-odd"><td><p>IntelGPA</p></td>
-<td><p>Linux/macOS/Win</p></td>
-<td><p>✓</p></td>
-<td><p>✓</p></td>
-<td></td>
-<td></td>
-<td></td>
-<td><p>✓</p></td>
-<td></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><p>Nsight</p></td>
-<td><p>Win</p></td>
-<td><p>✓</p></td>
-<td><p>✓</p></td>
-<td></td>
-<td></td>
-<td><p>✓</p></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><p>PerfHUD</p></td>
-<td><p>Win</p></td>
-<td><p>✓</p></td>
-<td><p>✓</p></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><p>PerfStudio</p></td>
-<td><p>Win</p></td>
-<td></td>
-<td><p>✓</p></td>
-<td><p>✓</p></td>
-<td></td>
-<td><p>✓</p></td>
-<td><p>✓</p></td>
-<td></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><p>PIX</p></td>
-<td><p>Win</p></td>
-<td></td>
-<td></td>
-<td><p>✓</p></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><p>RGP</p></td>
-<td><p>Win</p></td>
-<td></td>
-<td></td>
-<td><p>✓</p></td>
-<td></td>
-<td></td>
-<td></td>
-<td><p>✓</p></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><p>RenderDoc</p></td>
-<td><p>Win/Linux</p></td>
-<td></td>
-<td><p>✓</p></td>
-<td></td>
-<td></td>
-<td><p>✓</p></td>
-<td></td>
-<td><p>✓</p></td>
-<td><p>✓</p></td>
-</tr>
-<tr class="row-even"><td><p>vogl</p></td>
-<td><p>Linux</p></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td><p>✓</p></td>
-<td></td>
-<td></td>
-<td><p>✓</p></td>
-</tr>
-</tbody>
-</table>
-<p>Download:</p>
-<ul class="simple">
-<li><p><a class="reference external" href="https://apitrace.github.io/">APITrace</a></p></li>
-<li><p><a class="reference external" href="http://developer.amd.com/tools-and-sdks/opencl-zone/codexl/">CodeXL</a></p></li>
-<li><p><a class="reference external" href="https://github.com/imccown/Dissector">Dissector</a></p></li>
-<li><p><a class="reference external" href="http://developer.amd.com/tools-and-sdks/graphics-development/gpu-perfstudio/">GPU PerfStudio</a></p></li>
-<li><p><a class="reference external" href="https://developer.nvidia.com/linux-graphics-debugger">Linux Graphics Debugger</a></p></li>
-<li><p><a class="reference external" href="https://developer.nvidia.com/nsight-graphics">Nsight</a></p></li>
-<li><p><a class="reference external" href="https://blogs.msdn.microsoft.com/pix/">PIX</a></p></li>
-<li><p><a class="reference external" href="https://developer.nvidia.com/nvidia-perfhud">PerfHUD</a></p></li>
-<li><p><a class="reference external" href="https://github.com/GPUOpen-Tools/Radeon-GPUProfiler/releases">RGP (Radeon GPU Profiler)</a></p></li>
-<li><p><a class="reference external" href="https://github.com/ValveSoftware/vogl">vogl</a></p></li>
-</ul>
-</section>
 </section>
 <section id="sdl-glfw-etc">
-<h2>SDL, GLFW, etc.<a class="headerlink" href="#sdl-glfw-etc" title="Permalink to this heading">¶</a></h2>
+<h2>SDL, GLFW, etc.<a class="headerlink" href="#sdl-glfw-etc" title="Link to this heading">¶</a></h2>
 <p>It is possible to use bgfx with SDL, GLFW and similar cross platform
 windowing libraries. The main requirement is that windowing library
 provides access to native window handle that’s used to create Direct3D
@@ -398,7 +226,7 @@ preprocessor define.</p>
 </div>
 </section>
 <section id="getting-involved">
-<h2>Getting Involved<a class="headerlink" href="#getting-involved" title="Permalink to this heading">¶</a></h2>
+<h2>Getting Involved<a class="headerlink" href="#getting-involved" title="Link to this heading">¶</a></h2>
 <p>Everyone is welcome to contribute to bgfx by submitting bug reports, testing on different
 platforms, writing examples (see <a class="reference external" href="https://github.com/bkaradzic/bgfx/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+needed%22">ideas</a>),
 improving documentation, profiling and optimizing, etc.</p>
@@ -408,7 +236,7 @@ improving documentation, profiling and optimizing, etc.</p>
 licensing terms.</strong></p>
 </div>
 <section id="contributors">
-<h3>Contributors<a class="headerlink" href="#contributors" title="Permalink to this heading">¶</a></h3>
+<h3>Contributors<a class="headerlink" href="#contributors" title="Link to this heading">¶</a></h3>
 <p>Chronological order:</p>
 <blockquote>
 <div><ul class="simple">
@@ -509,7 +337,8 @@ and <a class="reference external" href="examples.html#bokeh">45-bokeh</a> exampl
 <p>and <a class="reference external" href="https://github.com/bkaradzic/bgfx/graphs/contributors">others</a>…</p>
 </section>
 <section id="repository-visualization">
-<h3>Repository visualization<a class="headerlink" href="#repository-visualization" title="Permalink to this heading">¶</a></h3>
+<h3>Repository visualization<a class="headerlink" href="#repository-visualization" title="Link to this heading">¶</a></h3>
+<img alt="https://api.star-history.com/svg?repos=bkaradzic/bgfx&amp;type=Date" src="https://api.star-history.com/svg?repos=bkaradzic/bgfx&amp;type=Date" />
 <p>
 <iframe width="694" height="390" src="https://www.youtube.com/embed/5ZeN_d_-BHo" frameborder="0" allowfullscreen></iframe>
 </p></section>
