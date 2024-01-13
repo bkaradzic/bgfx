@@ -1,4 +1,4 @@
-// dear imgui, v1.90.1 WIP
+// dear imgui, v1.90.2 WIP
 // (main code and documentation)
 
 // Help:
@@ -21,7 +21,7 @@
 // please post in https://github.com/ocornut/imgui/discussions if you cannot find a solution in resources above.
 // Everything else should be asked in 'Issues'! We are building a database of cross-linked knowledge there.
 
-// Copyright (c) 2014-2023 Omar Cornut
+// Copyright (c) 2014-2024 Omar Cornut
 // Developed by Omar Cornut and every direct or indirect contributors to the GitHub.
 // See LICENSE.txt for copyright and licensing details (standard MIT License).
 // This library is free but needs your support to sustain development and maintenance.
@@ -3606,8 +3606,11 @@ void ImGui::Initialize()
 // This function is merely here to free heap allocations.
 void ImGui::Shutdown()
 {
-    // The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE (which would happen if we never called NewFrame)
     ImGuiContext& g = *GImGui;
+    IM_ASSERT_USER_ERROR(g.IO.BackendPlatformUserData == NULL, "Forgot to shutdown Platform backend?");
+    IM_ASSERT_USER_ERROR(g.IO.BackendRendererUserData == NULL, "Forgot to shutdown Renderer backend?");
+
+    // The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE (which would happen if we never called NewFrame)
     if (g.IO.Fonts && g.FontAtlasOwnedByContext)
     {
         g.IO.Fonts->Locked = false;
@@ -4786,11 +4789,15 @@ void ImGui::NewFrame()
     UpdateDebugToolStackQueries();
     UpdateDebugToolFlashStyleColor();
     if (g.DebugLocateFrames > 0 && --g.DebugLocateFrames == 0)
-        g.DebugLocateId = 0;
-    if (g.DebugLogClipperAutoDisableFrames > 0 && --g.DebugLogClipperAutoDisableFrames == 0)
     {
-        DebugLog("(Debug Log: Auto-disabled ImGuiDebugLogFlags_EventClipper after 2 frames)\n");
-        g.DebugLogFlags &= ~ImGuiDebugLogFlags_EventClipper;
+        g.DebugLocateId = 0;
+        g.DebugBreakInLocateId = false;
+    }
+    if (g.DebugLogAutoDisableFrames > 0 && --g.DebugLogAutoDisableFrames == 0)
+    {
+        DebugLog("(Debug Log: Auto-disabled some ImGuiDebugLogFlags after 2 frames)\n");
+        g.DebugLogFlags &= ~g.DebugLogAutoDisableFlags;
+        g.DebugLogAutoDisableFlags = ImGuiDebugLogFlags_None;
     }
 
     // Create implicit/fallback window - which we will only render it if the user has added something to it.
@@ -6081,28 +6088,40 @@ static inline void ClampWindowPos(ImGuiWindow* window, const ImRect& visibility_
     window->Pos = ImClamp(window->Pos, visibility_rect.Min - size_for_clamping, visibility_rect.Max);
 }
 
+static void RenderWindowOuterSingleBorder(ImGuiWindow* window, int border_n, ImU32 border_col, float border_size)
+{
+    const ImGuiResizeBorderDef& def = resize_border_def[border_n];
+    const float rounding = window->WindowRounding;
+    const ImRect border_r = GetResizeBorderRect(window, border_n, rounding, 0.0f);
+    window->DrawList->PathArcTo(ImLerp(border_r.Min, border_r.Max, def.SegmentN1) + ImVec2(0.5f, 0.5f) + def.InnerDir * rounding, rounding, def.OuterAngle - IM_PI * 0.25f, def.OuterAngle);
+    window->DrawList->PathArcTo(ImLerp(border_r.Min, border_r.Max, def.SegmentN2) + ImVec2(0.5f, 0.5f) + def.InnerDir * rounding, rounding, def.OuterAngle, def.OuterAngle + IM_PI * 0.25f);
+    window->DrawList->PathStroke(border_col, ImDrawFlags_None, border_size);
+}
+
 static void ImGui::RenderWindowOuterBorders(ImGuiWindow* window)
 {
     ImGuiContext& g = *GImGui;
-    float rounding = window->WindowRounding;
-    float border_size = window->WindowBorderSize;
-    if (border_size > 0.0f && !(window->Flags & ImGuiWindowFlags_NoBackground))
-        window->DrawList->AddRect(window->Pos, window->Pos + window->Size, GetColorU32(ImGuiCol_Border), rounding, 0, border_size);
-
+    const float border_size = window->WindowBorderSize;
+    const ImU32 border_col = GetColorU32(ImGuiCol_Border);
+    if (border_size > 0.0f && (window->Flags & ImGuiWindowFlags_NoBackground) == 0)
+        window->DrawList->AddRect(window->Pos, window->Pos + window->Size, border_col, window->WindowRounding, 0, window->WindowBorderSize);
+    else if (border_size > 0.0f)
+    {
+        if (window->ChildFlags & ImGuiChildFlags_ResizeX) // Similar code as 'resize_border_mask' computation in UpdateWindowManualResize() but we specifically only always draw explicit child resize border.
+            RenderWindowOuterSingleBorder(window, 1, border_col, border_size);
+        if (window->ChildFlags & ImGuiChildFlags_ResizeY)
+            RenderWindowOuterSingleBorder(window, 3, border_col, border_size);
+    }
     if (window->ResizeBorderHovered != -1 || window->ResizeBorderHeld != -1)
     {
         const int border_n = (window->ResizeBorderHeld != -1) ? window->ResizeBorderHeld : window->ResizeBorderHovered;
-        const ImGuiResizeBorderDef& def = resize_border_def[border_n];
-        const ImRect border_r = GetResizeBorderRect(window, border_n, rounding, 0.0f);
-        const ImU32 border_col = GetColorU32((window->ResizeBorderHeld != -1) ? ImGuiCol_SeparatorActive : ImGuiCol_SeparatorHovered);
-        window->DrawList->PathArcTo(ImLerp(border_r.Min, border_r.Max, def.SegmentN1) + ImVec2(0.5f, 0.5f) + def.InnerDir * rounding, rounding, def.OuterAngle - IM_PI * 0.25f, def.OuterAngle);
-        window->DrawList->PathArcTo(ImLerp(border_r.Min, border_r.Max, def.SegmentN2) + ImVec2(0.5f, 0.5f) + def.InnerDir * rounding, rounding, def.OuterAngle, def.OuterAngle + IM_PI * 0.25f);
-        window->DrawList->PathStroke(border_col, 0, ImMax(2.0f, border_size)); // Thicker than usual
+        const ImU32 border_col_resizing = GetColorU32((window->ResizeBorderHeld != -1) ? ImGuiCol_SeparatorActive : ImGuiCol_SeparatorHovered);
+        RenderWindowOuterSingleBorder(window, border_n, border_col_resizing, ImMax(2.0f, window->WindowBorderSize)); // Thicker than usual
     }
     if (g.Style.FrameBorderSize > 0 && !(window->Flags & ImGuiWindowFlags_NoTitleBar))
     {
         float y = window->Pos.y + window->TitleBarHeight() - 1;
-        window->DrawList->AddLine(ImVec2(window->Pos.x + border_size, y), ImVec2(window->Pos.x + window->Size.x - border_size, y), GetColorU32(ImGuiCol_Border), g.Style.FrameBorderSize);
+        window->DrawList->AddLine(ImVec2(window->Pos.x + border_size, y), ImVec2(window->Pos.x + window->Size.x - border_size, y), border_col, g.Style.FrameBorderSize);
     }
 }
 
@@ -6357,6 +6376,10 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
     const bool window_just_created = (window == NULL);
     if (window_just_created)
         window = CreateNewWindow(name, flags);
+
+    // [DEBUG] Debug break requested by user
+    if (g.DebugBreakInWindow == window->ID)
+        IM_DEBUG_BREAK();
 
     // Automatically disable manual moving/resizing when NoInputs is set
     if ((flags & ImGuiWindowFlags_NoInputs) == ImGuiWindowFlags_NoInputs)
@@ -8135,7 +8158,7 @@ const char* ImGui::GetKeyName(ImGuiKey key)
 }
 
 // ImGuiMod_Shortcut is translated to either Ctrl or Super.
-void ImGui::GetKeyChordName(ImGuiKeyChord key_chord, char* out_buf, int out_buf_size)
+const char* ImGui::GetKeyChordName(ImGuiKeyChord key_chord, char* out_buf, int out_buf_size)
 {
     ImGuiContext& g = *GImGui;
     if (key_chord & ImGuiMod_Shortcut)
@@ -8146,6 +8169,7 @@ void ImGui::GetKeyChordName(ImGuiKeyChord key_chord, char* out_buf, int out_buf_
         (key_chord & ImGuiMod_Alt) ? "Alt+" : "",
         (key_chord & ImGuiMod_Super) ? (g.IO.ConfigMacOSXBehaviors ? "Cmd+" : "Super+") : "",
         GetKeyName((ImGuiKey)(key_chord & ~ImGuiMod_Mask_)));
+    return out_buf;
 }
 
 // t0 = previous time (e.g.: g.Time - g.IO.DeltaTime)
@@ -8220,11 +8244,15 @@ static void ImGui::UpdateKeyRoutingTable(ImGuiKeyRoutingTable* rt)
             rt->EntriesNext.push_back(*routing_entry); // Write alive ones into new buffer
 
             // Apply routing to owner if there's no owner already (RoutingCurr == None at this point)
+            // This is the result of previous frame's SetShortcutRouting() call.
             if (routing_entry->Mods == g.IO.KeyMods)
             {
                 ImGuiKeyOwnerData* owner_data = GetKeyOwnerData(&g, key);
                 if (owner_data->OwnerCurr == ImGuiKeyOwner_None)
+                {
                     owner_data->OwnerCurr = routing_entry->RoutingCurr;
+                    //IMGUI_DEBUG_LOG("SetKeyOwner(%s, owner_id=0x%08X) via Routing\n", GetKeyName(key), routing_entry->RoutingCurr);
+                }
             }
         }
 
@@ -8346,9 +8374,14 @@ bool ImGui::SetShortcutRouting(ImGuiKeyChord key_chord, ImGuiID owner_id, ImGuiI
     else
         IM_ASSERT(ImIsPowerOfTwo(flags & ImGuiInputFlags_RouteMask_)); // Check that only 1 routing flag is used
 
+    // [DEBUG] Debug break requested by user
+    if (g.DebugBreakInShortcutRouting == key_chord)
+        IM_DEBUG_BREAK();
+
     if (flags & ImGuiInputFlags_RouteUnlessBgFocused)
         if (g.NavWindow == NULL)
             return false;
+    // Note how ImGuiInputFlags_RouteAlways won't set routing and thus won't set owner. May want to rework this?
     if (flags & ImGuiInputFlags_RouteAlways)
         return true;
 
@@ -8412,13 +8445,28 @@ bool ImGui::IsKeyPressed(ImGuiKey key, ImGuiID owner_id, ImGuiInputFlags flags)
     if (t < 0.0f)
         return false;
     IM_ASSERT((flags & ~ImGuiInputFlags_SupportedByIsKeyPressed) == 0); // Passing flags not supported by this function!
+    if (flags & (ImGuiInputFlags_RepeatRateMask_ | ImGuiInputFlags_RepeatUntilMask_)) // Setting any _RepeatXXX option enables _Repeat
+        flags |= ImGuiInputFlags_Repeat;
 
     bool pressed = (t == 0.0f);
-    if (!pressed && ((flags & ImGuiInputFlags_Repeat) != 0))
+    if (!pressed && (flags & ImGuiInputFlags_Repeat) != 0)
     {
         float repeat_delay, repeat_rate;
         GetTypematicRepeatRate(flags, &repeat_delay, &repeat_rate);
         pressed = (t > repeat_delay) && GetKeyPressedAmount(key, repeat_delay, repeat_rate) > 0;
+        if (pressed && (flags & ImGuiInputFlags_RepeatUntilMask_))
+        {
+            // Slightly bias 'key_pressed_time' as DownDuration is an accumulation of DeltaTime which we compare to an absolute time value.
+            // Ideally we'd replace DownDuration with KeyPressedTime but it would break user's code.
+            ImGuiContext& g = *GImGui;
+            double key_pressed_time = g.Time - t + 0.00001f;
+            if ((flags & ImGuiInputFlags_RepeatUntilKeyModsChange) && (g.LastKeyModsChangeTime > key_pressed_time))
+                pressed = false;
+            if ((flags & ImGuiInputFlags_RepeatUntilKeyModsChangeFromNone) && (g.LastKeyModsChangeFromNoneTime > key_pressed_time))
+                pressed = false;
+            if ((flags & ImGuiInputFlags_RepeatUntilOtherKeyPress) && (g.LastKeyboardKeyPressTime > key_pressed_time))
+                pressed = false;
+        }
     }
     if (!pressed)
         return false;
@@ -8470,7 +8518,7 @@ bool ImGui::IsMouseClicked(ImGuiMouseButton button, ImGuiID owner_id, ImGuiInput
     const float t = g.IO.MouseDownDuration[button];
     if (t < 0.0f)
         return false;
-    IM_ASSERT((flags & ~ImGuiInputFlags_SupportedByIsKeyPressed) == 0); // Passing flags not supported by this function!
+    IM_ASSERT((flags & ~ImGuiInputFlags_SupportedByIsMouseClicked) == 0); // Passing flags not supported by this function! // FIXME: Could support RepeatRate and RepeatUntil flags here.
 
     const bool repeat = (flags & ImGuiInputFlags_Repeat) != 0;
     const bool pressed = (t == 0.0f) || (repeat && t > g.IO.KeyRepeatDelay && CalcTypematicRepeatAmount(t - g.IO.DeltaTime, t, g.IO.KeyRepeatDelay, g.IO.KeyRepeatRate) > 0);
@@ -8708,7 +8756,9 @@ static void ImGui::UpdateKeyboardInputs()
             GetKeyData(ImGuiMod_Super)->Down = io.KeySuper;
         }
     }
+#endif
 
+    // Import legacy ImGuiNavInput_ io inputs and convert to gamepad keys
 #ifndef IMGUI_DISABLE_OBSOLETE_KEYIO
     const bool nav_gamepad_active = (io.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad) != 0 && (io.BackendFlags & ImGuiBackendFlags_HasGamepad) != 0;
     if (io.BackendUsingLegacyNavInputArray && nav_gamepad_active)
@@ -8732,7 +8782,6 @@ static void ImGui::UpdateKeyboardInputs()
         #undef NAV_MAP_KEY
     }
 #endif
-#endif
 
     // Update aliases
     for (int n = 0; n < ImGuiMouseButton_COUNT; n++)
@@ -8740,15 +8789,20 @@ static void ImGui::UpdateKeyboardInputs()
     UpdateAliasKey(ImGuiKey_MouseWheelX, io.MouseWheelH != 0.0f, io.MouseWheelH);
     UpdateAliasKey(ImGuiKey_MouseWheelY, io.MouseWheel != 0.0f, io.MouseWheel);
 
-    // Synchronize io.KeyMods and io.KeyXXX values.
+    // Synchronize io.KeyMods and io.KeyCtrl/io.KeyShift/etc. values.
     // - New backends (1.87+): send io.AddKeyEvent(ImGuiMod_XXX) ->                                      -> (here) deriving io.KeyMods + io.KeyXXX from key array.
     // - Legacy backends:      set io.KeyXXX bools               -> (above) set key array from io.KeyXXX -> (here) deriving io.KeyMods + io.KeyXXX from key array.
     // So with legacy backends the 4 values will do a unnecessary back-and-forth but it makes the code simpler and future facing.
+    const ImGuiKeyChord prev_key_mods = io.KeyMods;
     io.KeyMods = GetMergedModsFromKeys();
     io.KeyCtrl = (io.KeyMods & ImGuiMod_Ctrl) != 0;
     io.KeyShift = (io.KeyMods & ImGuiMod_Shift) != 0;
     io.KeyAlt = (io.KeyMods & ImGuiMod_Alt) != 0;
     io.KeySuper = (io.KeyMods & ImGuiMod_Super) != 0;
+    if (prev_key_mods != io.KeyMods)
+        g.LastKeyModsChangeTime = g.Time;
+    if (prev_key_mods != io.KeyMods && prev_key_mods == 0)
+        g.LastKeyModsChangeFromNoneTime = g.Time;
 
     // Clear gamepad data if disabled
     if ((io.BackendFlags & ImGuiBackendFlags_HasGamepad) == 0)
@@ -8764,6 +8818,14 @@ static void ImGui::UpdateKeyboardInputs()
         ImGuiKeyData* key_data = &io.KeysData[i];
         key_data->DownDurationPrev = key_data->DownDuration;
         key_data->DownDuration = key_data->Down ? (key_data->DownDuration < 0.0f ? 0.0f : key_data->DownDuration + io.DeltaTime) : -1.0f;
+        if (key_data->DownDuration == 0.0f)
+        {
+            ImGuiKey key = (ImGuiKey)(ImGuiKey_KeysData_OFFSET + i);
+            if (IsKeyboardKey(key))
+                g.LastKeyboardKeyPressTime = g.Time;
+            else if (key == ImGuiKey_ReservedForModCtrl || key == ImGuiKey_ReservedForModShift || key == ImGuiKey_ReservedForModAlt || key == ImGuiKey_ReservedForModSuper)
+                g.LastKeyboardKeyPressTime = g.Time;
+        }
     }
 
     // Update keys/input owner (named keys only): one entry per key
@@ -8777,6 +8839,7 @@ static void ImGui::UpdateKeyboardInputs()
         owner_data->LockThisFrame = owner_data->LockUntilRelease = owner_data->LockUntilRelease && key_data->Down;  // Clear LockUntilRelease when key is not Down anymore
     }
 
+    // Update key routing (for e.g. shortcuts)
     UpdateKeyRoutingTable(&g.KeysRoutingTable);
 }
 
@@ -9220,10 +9283,11 @@ bool ImGui::TestKeyOwner(ImGuiKey key, ImGuiID owner_id)
 // - SetKeyOwner(..., Any or None, Lock) : set lock
 void ImGui::SetKeyOwner(ImGuiKey key, ImGuiID owner_id, ImGuiInputFlags flags)
 {
+    ImGuiContext& g = *GImGui;
     IM_ASSERT(IsNamedKeyOrModKey(key) && (owner_id != ImGuiKeyOwner_Any || (flags & (ImGuiInputFlags_LockThisFrame | ImGuiInputFlags_LockUntilRelease)))); // Can only use _Any with _LockXXX flags (to eat a key away without an ID to retrieve it)
     IM_ASSERT((flags & ~ImGuiInputFlags_SupportedBySetKeyOwner) == 0); // Passing flags not supported by this function!
+    //IMGUI_DEBUG_LOG("SetKeyOwner(%s, owner_id=0x%08X, flags=%08X)\n", GetKeyName(key), owner_id, flags);
 
-    ImGuiContext& g = *GImGui;
     ImGuiKeyOwnerData* owner_data = GetKeyOwnerData(&g, key);
     owner_data->OwnerCurr = owner_data->OwnerNext = owner_id;
 
@@ -9285,18 +9349,26 @@ bool ImGui::IsKeyChordPressed(ImGuiKeyChord key_chord, ImGuiID owner_id, ImGuiIn
     ImGuiKey key = (ImGuiKey)(key_chord & ~ImGuiMod_Mask_);
     if (key == ImGuiKey_None)
         key = ConvertSingleModFlagToKey(&g, mods);
-    if (!IsKeyPressed(key, owner_id, (flags & (ImGuiInputFlags_Repeat | (ImGuiInputFlags)ImGuiInputFlags_RepeatRateMask_))))
+    if (!IsKeyPressed(key, owner_id, (flags & ImGuiInputFlags_RepeatMask_)))
         return false;
     return true;
 }
 
 bool ImGui::Shortcut(ImGuiKeyChord key_chord, ImGuiID owner_id, ImGuiInputFlags flags)
 {
+    //ImGuiContext& g = *GImGui;
+    //IMGUI_DEBUG_LOG("Shortcut(%s, owner_id=0x%08X, flags=%X)\n", GetKeyChordName(key_chord, g.TempBuffer.Data, g.TempBuffer.Size), owner_id, flags);
+
     // When using (owner_id == 0/Any): SetShortcutRouting() will use CurrentFocusScopeId and filter with this, so IsKeyPressed() is fine with he 0/Any.
     if ((flags & ImGuiInputFlags_RouteMask_) == 0)
         flags |= ImGuiInputFlags_RouteFocused;
     if (!SetShortcutRouting(key_chord, owner_id, flags))
         return false;
+
+    // Default repeat behavior for Shortcut()
+    // So e.g. pressing Ctrl+W and releasing Ctrl while holding W will not trigger the W shortcut.
+    if ((flags & ImGuiInputFlags_RepeatUntilMask_) == 0)
+        flags |= ImGuiInputFlags_RepeatUntilKeyModsChange;
 
     if (!IsKeyChordPressed(key_chord, owner_id, flags))
         return false;
@@ -11834,7 +11906,7 @@ void ImGui::NavUpdateCreateMoveRequest()
         g.NavMoveScrollFlags = ImGuiScrollFlags_None;
         if (window && !g.NavWindowingTarget && !(window->Flags & ImGuiWindowFlags_NoNavInputs))
         {
-            const ImGuiInputFlags repeat_mode = ImGuiInputFlags_Repeat | (ImGuiInputFlags)ImGuiInputFlags_RepeatRateNavMove;
+            const ImGuiInputFlags repeat_mode = ImGuiInputFlags_Repeat | ImGuiInputFlags_RepeatRateNavMove;
             if (!IsActiveIdUsingNavDir(ImGuiDir_Left)  && ((nav_gamepad_active && IsKeyPressed(ImGuiKey_GamepadDpadLeft,  ImGuiKeyOwner_None, repeat_mode)) || (nav_keyboard_active && IsKeyPressed(ImGuiKey_LeftArrow,  ImGuiKeyOwner_None, repeat_mode)))) { g.NavMoveDir = ImGuiDir_Left; }
             if (!IsActiveIdUsingNavDir(ImGuiDir_Right) && ((nav_gamepad_active && IsKeyPressed(ImGuiKey_GamepadDpadRight, ImGuiKeyOwner_None, repeat_mode)) || (nav_keyboard_active && IsKeyPressed(ImGuiKey_RightArrow, ImGuiKeyOwner_None, repeat_mode)))) { g.NavMoveDir = ImGuiDir_Right; }
             if (!IsActiveIdUsingNavDir(ImGuiDir_Up)    && ((nav_gamepad_active && IsKeyPressed(ImGuiKey_GamepadDpadUp,    ImGuiKeyOwner_None, repeat_mode)) || (nav_keyboard_active && IsKeyPressed(ImGuiKey_UpArrow,    ImGuiKeyOwner_None, repeat_mode)))) { g.NavMoveDir = ImGuiDir_Up; }
@@ -12322,6 +12394,7 @@ static void ImGui::NavUpdateWindowing()
     }
 
     // Start CTRL+Tab or Square+L/R window selection
+    // (g.ConfigNavWindowingKeyNext/g.ConfigNavWindowingKeyPrev defaults are ImGuiMod_Ctrl|ImGuiKey_Tab and ImGuiMod_Ctrl|ImGuiMod_Shift|ImGuiKey_Tab)
     const ImGuiID owner_id = ImHashStr("###NavUpdateWindowing");
     const bool nav_gamepad_active = (io.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad) != 0 && (io.BackendFlags & ImGuiBackendFlags_HasGamepad) != 0;
     const bool nav_keyboard_active = (io.ConfigFlags & ImGuiConfigFlags_NavEnableKeyboard) != 0;
@@ -13792,14 +13865,15 @@ static void RenderViewportsThumbnails()
 // Draw an arbitrary US keyboard layout to visualize translated keys
 void ImGui::DebugRenderKeyboardPreview(ImDrawList* draw_list)
 {
-    const ImVec2 key_size = ImVec2(35.0f, 35.0f);
-    const float  key_rounding = 3.0f;
-    const ImVec2 key_face_size = ImVec2(25.0f, 25.0f);
-    const ImVec2 key_face_pos = ImVec2(5.0f, 3.0f);
-    const float  key_face_rounding = 2.0f;
-    const ImVec2 key_label_pos = ImVec2(7.0f, 4.0f);
+    const float scale = ImGui::GetFontSize() / 13.0f;
+    const ImVec2 key_size = ImVec2(35.0f, 35.0f) * scale;
+    const float  key_rounding = 3.0f * scale;
+    const ImVec2 key_face_size = ImVec2(25.0f, 25.0f) * scale;
+    const ImVec2 key_face_pos = ImVec2(5.0f, 3.0f) * scale;
+    const float  key_face_rounding = 2.0f * scale;
+    const ImVec2 key_label_pos = ImVec2(7.0f, 4.0f) * scale;
     const ImVec2 key_step = ImVec2(key_size.x - 1.0f, key_size.y - 1.0f);
-    const float  key_row_offset = 9.0f;
+    const float  key_row_offset = 9.0f * scale;
 
     ImVec2 board_min = GetCursorScreenPos();
     ImVec2 board_max = ImVec2(board_min.x + 3 * key_step.x + 2 * key_row_offset + 10.0f, board_min.y + 3 * key_step.y + 10.0f);
@@ -13953,6 +14027,9 @@ void ImGui::ShowMetricsWindow(bool* p_open)
         return;
     }
 
+    // [DEBUG] Clear debug breaks hooks after exactly one cycle.
+    DebugBreakClearData();
+
     // Basic info
     Text("Dear ImGui %s", GetVersion());
     Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
@@ -14012,24 +14089,16 @@ void ImGui::ShowMetricsWindow(bool* p_open)
     // Tools
     if (TreeNode("Tools"))
     {
-        bool show_encoding_viewer = TreeNode("UTF-8 Encoding viewer");
-        SameLine();
-        MetricsHelpMarker("You can also call ImGui::DebugTextEncoding() from your code with a given string to test that your UTF-8 encoding settings are correct.");
-        if (show_encoding_viewer)
-        {
-            static char buf[100] = "";
-            SetNextItemWidth(-FLT_MIN);
-            InputText("##Text", buf, IM_ARRAYSIZE(buf));
-            if (buf[0] != 0)
-                DebugTextEncoding(buf);
-            TreePop();
-        }
-
+        // Debug Break features
         // The Item Picker tool is super useful to visually select an item and break into the call-stack of where it was submitted.
-        if (Checkbox("Show Item Picker", &g.DebugItemPickerActive) && g.DebugItemPickerActive)
-            DebugStartItemPicker();
+        SeparatorTextEx(0, "Debug breaks", NULL, CalcTextSize("(?)").x + g.Style.SeparatorTextPadding.x);
         SameLine();
         MetricsHelpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.");
+        if (Checkbox("Show Item Picker", &g.DebugItemPickerActive) && g.DebugItemPickerActive)
+            DebugStartItemPicker();
+        Checkbox("Show \"Debug Break\" buttons in other sections", &g.IO.ConfigDebugIsDebuggerPresent);
+
+        SeparatorText("Visualize");
 
         Checkbox("Show Debug Log", &cfg->ShowDebugLog);
         SameLine();
@@ -14102,9 +14171,23 @@ void ImGui::ShowMetricsWindow(bool* p_open)
         }
         Checkbox("Show groups rectangles", &g.DebugShowGroupRects); // Storing in context as this is used by group code and prefers to be in hot-data
 
+        SeparatorText("Validate");
+
         Checkbox("Debug Begin/BeginChild return value", &io.ConfigDebugBeginReturnValueLoop);
         SameLine();
         MetricsHelpMarker("Some calls to Begin()/BeginChild() will return false.\n\nWill cycle through window depths then repeat. Windows should be flickering while running.");
+
+        Checkbox("UTF-8 Encoding viewer", &cfg->ShowTextEncodingViewer);
+        SameLine();
+        MetricsHelpMarker("You can also call ImGui::DebugTextEncoding() from your code with a given string to test that your UTF-8 encoding settings are correct.");
+        if (cfg->ShowTextEncodingViewer)
+        {
+            static char buf[64] = "";
+            SetNextItemWidth(-FLT_MIN);
+            InputText("##DebugTextEncodingBuf", buf, IM_ARRAYSIZE(buf));
+            if (buf[0] != 0)
+                DebugTextEncoding(buf);
+        }
 
         TreePop();
     }
@@ -14340,7 +14423,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
         Text("KEY OWNERS");
         {
             Indent();
-            if (BeginChild("##owners", ImVec2(-FLT_MIN, GetTextLineHeightWithSpacing() * 6), ImGuiChildFlags_FrameStyle | ImGuiChildFlags_ResizeY, ImGuiWindowFlags_NoSavedSettings))
+            if (BeginChild("##owners", ImVec2(-FLT_MIN, GetTextLineHeightWithSpacing() * 8), ImGuiChildFlags_FrameStyle | ImGuiChildFlags_ResizeY, ImGuiWindowFlags_NoSavedSettings))
                 for (ImGuiKey key = ImGuiKey_NamedKey_BEGIN; key < ImGuiKey_NamedKey_END; key = (ImGuiKey)(key + 1))
                 {
                     ImGuiKeyOwnerData* owner_data = GetKeyOwnerData(&g, key);
@@ -14354,9 +14437,11 @@ void ImGui::ShowMetricsWindow(bool* p_open)
             Unindent();
         }
         Text("SHORTCUT ROUTING");
+        SameLine();
+        MetricsHelpMarker("Declared shortcut routes automatically set key owner when mods matches.");
         {
             Indent();
-            if (BeginChild("##routes", ImVec2(-FLT_MIN, GetTextLineHeightWithSpacing() * 6), ImGuiChildFlags_FrameStyle | ImGuiChildFlags_ResizeY, ImGuiWindowFlags_NoSavedSettings))
+            if (BeginChild("##routes", ImVec2(-FLT_MIN, GetTextLineHeightWithSpacing() * 8), ImGuiChildFlags_FrameStyle | ImGuiChildFlags_ResizeY, ImGuiWindowFlags_NoSavedSettings))
                 for (ImGuiKey key = ImGuiKey_NamedKey_BEGIN; key < ImGuiKey_NamedKey_END; key = (ImGuiKey)(key + 1))
                 {
                     ImGuiKeyRoutingTable* rt = &g.KeysRoutingTable;
@@ -14364,9 +14449,15 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                     {
                         char key_chord_name[64];
                         ImGuiKeyRoutingData* routing_data = &rt->Entries[idx];
-                        GetKeyChordName(key | routing_data->Mods, key_chord_name, IM_ARRAYSIZE(key_chord_name));
-                        Text("%s: 0x%08X", key_chord_name, routing_data->RoutingCurr);
+                        ImGuiKeyChord key_chord = key | routing_data->Mods;
+                        Text("%s: 0x%08X", GetKeyChordName(key_chord, key_chord_name, IM_ARRAYSIZE(key_chord_name)), routing_data->RoutingCurr);
                         DebugLocateItemOnHover(routing_data->RoutingCurr);
+                        if (g.IO.ConfigDebugIsDebuggerPresent)
+                        {
+                            SameLine();
+                            if (DebugBreakButton("**DebugBreak**", "in SetShortcutRouting() for this KeyChord"))
+                                g.DebugBreakInShortcutRouting = key_chord;
+                        }
                         idx = routing_data->NextEntryIndex;
                     }
                 }
@@ -14476,6 +14567,64 @@ void ImGui::ShowMetricsWindow(bool* p_open)
 #endif // #ifdef IMGUI_HAS_DOCK
 
     End();
+}
+
+void ImGui::DebugBreakClearData()
+{
+    // Those fields are scattered in their respective subsystem to stay in hot-data locations
+    ImGuiContext& g = *GImGui;
+    g.DebugBreakInWindow = 0;
+    g.DebugBreakInTable = 0;
+    g.DebugBreakInShortcutRouting = ImGuiKey_None;
+}
+
+void ImGui::DebugBreakButtonTooltip(bool keyboard_only, const char* description_of_location)
+{
+    if (!BeginItemTooltip())
+        return;
+    Text("To call IM_DEBUG_BREAK() %s:", description_of_location);
+    Separator();
+    TextUnformatted(keyboard_only ? "- Press 'Pause/Break' on keyboard." : "- Press 'Pause/Break' on keyboard.\n- or Click (may alter focus/active id).\n- or navigate using keyboard and press space.");
+    Separator();
+    TextUnformatted("Choose one way that doesn't interfere with what you are trying to debug!\nYou need a debugger attached or this will crash!");
+    EndTooltip();
+}
+
+// Special button that doesn't take focus, doesn't take input owner, and can be activated without a click etc.
+// In order to reduce interferences with the contents we are trying to debug into.
+bool ImGui::DebugBreakButton(const char* label, const char* description_of_location)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    if (window->SkipItems)
+        return false;
+
+    ImGuiContext& g = *GImGui;
+    const ImGuiID id = window->GetID(label);
+    const ImVec2 label_size = CalcTextSize(label, NULL, true);
+    ImVec2 pos = window->DC.CursorPos + ImVec2(0.0f, window->DC.CurrLineTextBaseOffset);
+    ImVec2 size = ImVec2(label_size.x + g.Style.FramePadding.x * 2.0f, label_size.y);
+
+    const ImRect bb(pos, pos + size);
+    ItemSize(size, 0.0f);
+    if (!ItemAdd(bb, id))
+        return false;
+
+    // WE DO NOT USE ButtonEx() or ButtonBehavior() in order to reduce our side-effects.
+    bool hovered = ItemHoverable(bb, id, g.CurrentItemFlags);
+    bool pressed = hovered && (IsKeyChordPressed(g.DebugBreakKeyChord) || IsMouseClicked(0) || g.NavActivateId == id);
+    DebugBreakButtonTooltip(false, description_of_location);
+
+    ImVec4 col4f = GetStyleColorVec4(hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
+    ImVec4 hsv;
+    ColorConvertRGBtoHSV(col4f.x, col4f.y, col4f.z, hsv.x, hsv.y, hsv.z);
+    ColorConvertHSVtoRGB(hsv.x + 0.20f, hsv.y, hsv.z, col4f.x, col4f.y, col4f.z);
+
+    RenderNavHighlight(bb, id);
+    RenderFrame(bb.Min, bb.Max, GetColorU32(col4f), true, g.Style.FrameRounding);
+    RenderTextClipped(bb.Min, bb.Max, label, NULL, &label_size, g.Style.ButtonTextAlign, &bb);
+
+    IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags);
+    return pressed;
 }
 
 // [DEBUG] Display contents of Columns
@@ -14816,6 +14965,9 @@ void ImGui::DebugNodeWindow(ImGuiWindow* window, const char* label)
     if (window->MemoryCompacted)
         TextDisabled("Note: some memory buffers have been compacted/freed.");
 
+    if (g.IO.ConfigDebugIsDebuggerPresent && DebugBreakButton("**DebugBreak**", "in Begin()"))
+        g.DebugBreakInWindow = window->ID;
+
     ImGuiWindowFlags flags = window->Flags;
     DebugNodeDrawList(window, window->Viewport, window->DrawList, "DrawList");
     BulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), ContentSize (%.1f,%.1f) Ideal (%.1f,%.1f)", window->Pos.x, window->Pos.y, window->Size.x, window->Size.y, window->ContentSize.x, window->ContentSize.y, window->ContentSizeIdeal.x, window->ContentSizeIdeal.y);
@@ -14920,6 +15072,29 @@ void ImGui::DebugLogV(const char* fmt, va_list args)
 #endif
 }
 
+// FIXME-LAYOUT: To be done automatically via layout mode once we rework ItemSize/ItemAdd into ItemLayout.
+static void SameLineOrWrap(const ImVec2& size)
+{
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+    ImVec2 pos(window->DC.CursorPosPrevLine.x + g.Style.ItemSpacing.x, window->DC.CursorPosPrevLine.y);
+    if (window->ClipRect.Contains(ImRect(pos, pos + size)))
+        ImGui::SameLine();
+}
+
+static void ShowDebugLogFlag(const char* name, ImGuiDebugLogFlags flags)
+{
+    ImGuiContext& g = *GImGui;
+    ImVec2 size(ImGui::GetFrameHeight() + g.Style.ItemInnerSpacing.x + ImGui::CalcTextSize(name).x, ImGui::GetFrameHeight());
+    SameLineOrWrap(size); // FIXME-LAYOUT: To be done automatically once we rework ItemSize/ItemAdd into ItemLayout.
+    if (ImGui::CheckboxFlags(name, &g.DebugLogFlags, flags) && g.IO.KeyShift && (g.DebugLogFlags & flags) != 0)
+    {
+        g.DebugLogAutoDisableFrames = 2;
+        g.DebugLogAutoDisableFlags |= flags;
+    }
+    ImGui::SetItemTooltip("Hold SHIFT when clicking to enable for 2 frames only (useful for spammy log entries)");
+}
+
 void ImGui::ShowDebugLogWindow(bool* p_open)
 {
     ImGuiContext& g = *GImGui;
@@ -14932,13 +15107,13 @@ void ImGui::ShowDebugLogWindow(bool* p_open)
     }
 
     CheckboxFlags("All", &g.DebugLogFlags, ImGuiDebugLogFlags_EventMask_);
-    SameLine(); CheckboxFlags("ActiveId", &g.DebugLogFlags, ImGuiDebugLogFlags_EventActiveId);
-    SameLine(); CheckboxFlags("Focus", &g.DebugLogFlags, ImGuiDebugLogFlags_EventFocus);
-    SameLine(); CheckboxFlags("Popup", &g.DebugLogFlags, ImGuiDebugLogFlags_EventPopup);
-    SameLine(); CheckboxFlags("Nav", &g.DebugLogFlags, ImGuiDebugLogFlags_EventNav);
-    SameLine(); if (CheckboxFlags("Clipper", &g.DebugLogFlags, ImGuiDebugLogFlags_EventClipper)) { g.DebugLogClipperAutoDisableFrames = 2; } if (IsItemHovered()) SetTooltip("Clipper log auto-disabled after 2 frames");
-    //SameLine(); CheckboxFlags("Selection", &g.DebugLogFlags, ImGuiDebugLogFlags_EventSelection);
-    SameLine(); CheckboxFlags("IO", &g.DebugLogFlags, ImGuiDebugLogFlags_EventIO);
+    ShowDebugLogFlag("ActiveId", ImGuiDebugLogFlags_EventActiveId);
+    ShowDebugLogFlag("Clipper", ImGuiDebugLogFlags_EventClipper);
+    ShowDebugLogFlag("Focus", ImGuiDebugLogFlags_EventFocus);
+    ShowDebugLogFlag("IO", ImGuiDebugLogFlags_EventIO);
+    ShowDebugLogFlag("Nav", ImGuiDebugLogFlags_EventNav);
+    ShowDebugLogFlag("Popup", ImGuiDebugLogFlags_EventPopup);
+    //ShowDebugLogFlag("Selection", ImGuiDebugLogFlags_EventSelection);
 
     if (SmallButton("Clear"))
     {
@@ -15027,6 +15202,7 @@ void ImGui::DebugLocateItem(ImGuiID target_id)
     ImGuiContext& g = *GImGui;
     g.DebugLocateId = target_id;
     g.DebugLocateFrames = 2;
+    g.DebugBreakInLocateId = false;
 }
 
 void ImGui::DebugLocateItemOnHover(ImGuiID target_id)
@@ -15036,11 +15212,24 @@ void ImGui::DebugLocateItemOnHover(ImGuiID target_id)
     ImGuiContext& g = *GImGui;
     DebugLocateItem(target_id);
     GetForegroundDrawList(g.CurrentWindow)->AddRect(g.LastItemData.Rect.Min - ImVec2(3.0f, 3.0f), g.LastItemData.Rect.Max + ImVec2(3.0f, 3.0f), DEBUG_LOCATE_ITEM_COLOR);
+
+    // Can't easily use a context menu here because it will mess with focus, active id etc.
+    if (g.IO.ConfigDebugIsDebuggerPresent && g.MouseStationaryTimer > 1.0f)
+    {
+        DebugBreakButtonTooltip(false, "in ItemAdd()");
+        if (IsKeyChordPressed(g.DebugBreakKeyChord))
+            g.DebugBreakInLocateId = true;
+    }
 }
 
 void ImGui::DebugLocateItemResolveWithLastItem()
 {
     ImGuiContext& g = *GImGui;
+
+    // [DEBUG] Debug break requested by user
+    if (g.DebugBreakInLocateId)
+        IM_DEBUG_BREAK();
+
     ImGuiLastItemData item_data = g.LastItemData;
     g.DebugLocateId = 0;
     ImDrawList* draw_list = GetForegroundDrawList(g.CurrentWindow);
