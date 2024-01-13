@@ -40,7 +40,7 @@ extern "C" {
 /* Bumped if ABI or API breaks backwards compatibility. */
 #define SPVC_C_API_VERSION_MAJOR 0
 /* Bumped if APIs or enumerations are added in a backwards compatible way. */
-#define SPVC_C_API_VERSION_MINOR 58
+#define SPVC_C_API_VERSION_MINOR 59
 /* Bumped if internal implementation details change. */
 #define SPVC_C_API_VERSION_PATCH 0
 
@@ -1052,6 +1052,8 @@ SPVC_PUBLIC_API int spvc_constant_get_scalar_i16(spvc_constant constant, unsigne
 SPVC_PUBLIC_API unsigned spvc_constant_get_scalar_u8(spvc_constant constant, unsigned column, unsigned row);
 SPVC_PUBLIC_API int spvc_constant_get_scalar_i8(spvc_constant constant, unsigned column, unsigned row);
 SPVC_PUBLIC_API void spvc_constant_get_subconstants(spvc_constant constant, const spvc_constant_id **constituents, size_t *count);
+SPVC_PUBLIC_API unsigned long long spvc_constant_get_scalar_u64(spvc_constant constant, unsigned column, unsigned row);
+SPVC_PUBLIC_API long long spvc_constant_get_scalar_i64(spvc_constant constant, unsigned column, unsigned row);
 SPVC_PUBLIC_API spvc_type_id spvc_constant_get_type(spvc_constant constant);
 
 /*
@@ -1062,6 +1064,8 @@ SPVC_PUBLIC_API void spvc_constant_set_scalar_fp32(spvc_constant constant, unsig
 SPVC_PUBLIC_API void spvc_constant_set_scalar_fp64(spvc_constant constant, unsigned column, unsigned row, double value);
 SPVC_PUBLIC_API void spvc_constant_set_scalar_u32(spvc_constant constant, unsigned column, unsigned row, unsigned value);
 SPVC_PUBLIC_API void spvc_constant_set_scalar_i32(spvc_constant constant, unsigned column, unsigned row, int value);
+SPVC_PUBLIC_API void spvc_constant_set_scalar_u64(spvc_constant constant, unsigned column, unsigned row, unsigned long long value);
+SPVC_PUBLIC_API void spvc_constant_set_scalar_i64(spvc_constant constant, unsigned column, unsigned row, long long value);
 SPVC_PUBLIC_API void spvc_constant_set_scalar_u16(spvc_constant constant, unsigned column, unsigned row, unsigned short value);
 SPVC_PUBLIC_API void spvc_constant_set_scalar_i16(spvc_constant constant, unsigned column, unsigned row, signed short value);
 SPVC_PUBLIC_API void spvc_constant_set_scalar_u8(spvc_constant constant, unsigned column, unsigned row, unsigned char value);

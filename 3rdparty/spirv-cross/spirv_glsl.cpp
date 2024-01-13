@@ -1797,8 +1797,20 @@ bool CompilerGLSL::buffer_is_packing_standard(const SPIRType &type, BufferPackin
 		if (packing_is_hlsl(packing))
 		{
 			// If a member straddles across a vec4 boundary, alignment is actually vec4.
-			uint32_t begin_word = actual_offset / 16;
-			uint32_t end_word = (actual_offset + packed_size - 1) / 16;
+			uint32_t target_offset;
+
+			// If we intend to use explicit packing, we must check for improper straddle with that offset.
+			// In implicit packing, we must check with implicit offset, since the explicit offset
+			// might have already accounted for the straddle, and we'd miss the alignment promotion to vec4.
+			// This is important when packing sub-structs that don't support packoffset().
+			if (packing_has_flexible_offset(packing))
+				target_offset = actual_offset;
+			else
+				target_offset = offset;
+
+			uint32_t begin_word = target_offset / 16;
+			uint32_t end_word = (target_offset + packed_size - 1) / 16;
+
 			if (begin_word != end_word)
 				packed_alignment = max<uint32_t>(packed_alignment, 16u);
 		}
@@ -14136,6 +14148,66 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		break;
 	}
 
+	case OpImageSampleWeightedQCOM:
+	case OpImageBoxFilterQCOM:
+	case OpImageBlockMatchSSDQCOM:
+	case OpImageBlockMatchSADQCOM:
+	{
+		require_extension_internal("GL_QCOM_image_processing");
+		uint32_t result_type_id = ops[0];
+		uint32_t id = ops[1];
+		string expr;
+		switch (opcode)
+		{
+		case OpImageSampleWeightedQCOM:
+			expr = "textureWeightedQCOM";
+			break;
+		case OpImageBoxFilterQCOM:
+			expr = "textureBoxFilterQCOM";
+			break;
+		case OpImageBlockMatchSSDQCOM:
+			expr = "textureBlockMatchSSDQCOM";
+			break;
+		case OpImageBlockMatchSADQCOM:
+			expr = "textureBlockMatchSADQCOM";
+			break;
+		default:
+			SPIRV_CROSS_THROW("Invalid opcode for QCOM_image_processing.");
+		}
+		expr += "(";
+
+		bool forward = false;
+		expr += to_expression(ops[2]);
+		expr += ", " + to_expression(ops[3]);
+
+		switch (opcode)
+		{
+		case OpImageSampleWeightedQCOM:
+			expr += ", " + to_non_uniform_aware_expression(ops[4]);
+			break;
+		case OpImageBoxFilterQCOM:
+			expr += ", " + to_expression(ops[4]);
+			break;
+		case OpImageBlockMatchSSDQCOM:
+		case OpImageBlockMatchSADQCOM:
+			expr += ", " + to_non_uniform_aware_expression(ops[4]);
+			expr += ", " + to_expression(ops[5]);
+			expr += ", " + to_expression(ops[6]);
+			break;
+		default:
+			SPIRV_CROSS_THROW("Invalid opcode for QCOM_image_processing.");
+		}
+
+		expr += ")";
+		emit_op(result_type_id, id, expr, forward);
+
+		inherit_expression_dependencies(id, ops[3]);
+		if (opcode == OpImageBlockMatchSSDQCOM || opcode == OpImageBlockMatchSADQCOM)
+			inherit_expression_dependencies(id, ops[5]);
+
+		break;
+	}
+
 	// Compute
 	case OpControlBarrier:
 	case OpMemoryBarrier:
@@ -15471,7 +15543,7 @@ string CompilerGLSL::type_to_array_glsl(const SPIRType &type)
 	}
 }
 
-string CompilerGLSL::image_type_glsl(const SPIRType &type, uint32_t id)
+string CompilerGLSL::image_type_glsl(const SPIRType &type, uint32_t id, bool /*member*/)
 {
 	auto &imagetype = get<SPIRType>(type.image.type);
 	string res;

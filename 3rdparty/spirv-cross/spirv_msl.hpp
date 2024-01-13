@@ -862,8 +862,8 @@ protected:
 	// GCC workaround of lambdas calling protected functions (for older GCC versions)
 	std::string variable_decl(const SPIRType &type, const std::string &name, uint32_t id = 0) override;
 
-	std::string image_type_glsl(const SPIRType &type, uint32_t id = 0) override;
-	std::string sampler_type(const SPIRType &type, uint32_t id);
+	std::string image_type_glsl(const SPIRType &type, uint32_t id, bool member) override;
+	std::string sampler_type(const SPIRType &type, uint32_t id, bool member);
 	std::string builtin_to_glsl(spv::BuiltIn builtin, spv::StorageClass storage) override;
 	std::string to_func_call_arg(const SPIRFunction::Parameter &arg, uint32_t id) override;
 	std::string to_name(uint32_t id, bool allow_alias = true) const override;
@@ -977,7 +977,7 @@ protected:
 	void emit_interface_block(uint32_t ib_var_id);
 	bool maybe_emit_array_assignment(uint32_t id_lhs, uint32_t id_rhs);
 	bool is_var_runtime_size_array(const SPIRVariable &var) const;
-	uint32_t get_resource_array_size(uint32_t id) const;
+	uint32_t get_resource_array_size(const SPIRType &type, uint32_t id) const;
 
 	void fix_up_shader_inputs_outputs();
 

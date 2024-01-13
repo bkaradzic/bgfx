@@ -2552,6 +2552,16 @@ int spvc_constant_get_scalar_i32(spvc_constant constant, unsigned column, unsign
 	return constant->scalar_i32(column, row);
 }
 
+unsigned long long spvc_constant_get_scalar_u64(spvc_constant constant, unsigned column, unsigned row)
+{
+	return constant->scalar_u64(column, row);
+}
+
+long long spvc_constant_get_scalar_i64(spvc_constant constant, unsigned column, unsigned row)
+{
+	return constant->scalar_i64(column, row);
+}
+
 unsigned spvc_constant_get_scalar_u16(spvc_constant constant, unsigned column, unsigned row)
 {
 	return constant->scalar_u16(column, row);
@@ -2607,6 +2617,16 @@ void spvc_constant_set_scalar_u32(spvc_constant constant, unsigned column, unsig
 void spvc_constant_set_scalar_i32(spvc_constant constant, unsigned column, unsigned row, int value)
 {
 	constant->m.c[column].r[row].i32 = value;
+}
+
+void spvc_constant_set_scalar_u64(spvc_constant constant, unsigned column, unsigned row, unsigned long long value)
+{
+	constant->m.c[column].r[row].u64 = value;
+}
+
+void spvc_constant_set_scalar_i64(spvc_constant constant, unsigned column, unsigned row, long long value)
+{
+	constant->m.c[column].r[row].i64 = value;
 }
 
 void spvc_constant_set_scalar_u16(spvc_constant constant, unsigned column, unsigned row, unsigned short value)

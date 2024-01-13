@@ -438,7 +438,7 @@ protected:
 	virtual void emit_struct_member(const SPIRType &type, uint32_t member_type_id, uint32_t index,
 	                                const std::string &qualifier = "", uint32_t base_offset = 0);
 	virtual void emit_struct_padding_target(const SPIRType &type);
-	virtual std::string image_type_glsl(const SPIRType &type, uint32_t id = 0);
+	virtual std::string image_type_glsl(const SPIRType &type, uint32_t id = 0, bool member = false);
 	std::string constant_expression(const SPIRConstant &c,
 	                                bool inside_block_like_struct_scope = false,
 	                                bool inside_struct_scope = false);
