@@ -51,6 +51,7 @@
 //                                                including identifying what extensions are needed if a version does not allow a symbol
 //
 
+#include <array>
 #include "Initialize.h"
 #include "span.h"
 
@@ -6280,7 +6281,7 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
             {
                 if ((ms || image) && shadow)
                     continue;
-                if (ms && profile != EEsProfile && version < 150)
+                if (ms && profile != EEsProfile && version < 140)
                     continue;
                 if (ms && image && profile == EEsProfile)
                     continue;
