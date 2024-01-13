@@ -137,6 +137,16 @@ static bool Has16BitCapability(const FeatureManager* feature_manager) {
 // Handler names follow the following convention:
 //  Handler_<Opcode>_<Capability>()
 
+static std::optional<spv::Capability> Handler_OpTypeFloat_Float16(
+    const Instruction* instruction) {
+  assert(instruction->opcode() == spv::Op::OpTypeFloat &&
+         "This handler only support OpTypeFloat opcodes.");
+
+  const uint32_t size =
+      instruction->GetSingleWordInOperand(kOpTypeFloatSizeIndex);
+  return size == 16 ? std::optional(spv::Capability::Float16) : std::nullopt;
+}
+
 static std::optional<spv::Capability> Handler_OpTypeFloat_Float64(
     const Instruction* instruction) {
   assert(instruction->opcode() == spv::Op::OpTypeFloat &&
@@ -274,6 +284,16 @@ static std::optional<spv::Capability> Handler_OpTypePointer_StorageUniform16(
                         : std::nullopt;
 }
 
+static std::optional<spv::Capability> Handler_OpTypeInt_Int16(
+    const Instruction* instruction) {
+  assert(instruction->opcode() == spv::Op::OpTypeInt &&
+         "This handler only support OpTypeInt opcodes.");
+
+  const uint32_t size =
+      instruction->GetSingleWordInOperand(kOpTypeIntSizeIndex);
+  return size == 16 ? std::optional(spv::Capability::Int16) : std::nullopt;
+}
+
 static std::optional<spv::Capability> Handler_OpTypeInt_Int64(
     const Instruction* instruction) {
   assert(instruction->opcode() == spv::Op::OpTypeInt &&
@@ -341,12 +361,14 @@ Handler_OpImageSparseRead_StorageImageReadWithoutFormat(
 }
 
 // Opcode of interest to determine capabilities requirements.
-constexpr std::array<std::pair<spv::Op, OpcodeHandler>, 10> kOpcodeHandlers{{
+constexpr std::array<std::pair<spv::Op, OpcodeHandler>, 12> kOpcodeHandlers{{
     // clang-format off
     {spv::Op::OpImageRead,         Handler_OpImageRead_StorageImageReadWithoutFormat},
     {spv::Op::OpImageSparseRead,   Handler_OpImageSparseRead_StorageImageReadWithoutFormat},
+    {spv::Op::OpTypeFloat,         Handler_OpTypeFloat_Float16 },
     {spv::Op::OpTypeFloat,         Handler_OpTypeFloat_Float64 },
     {spv::Op::OpTypeImage,         Handler_OpTypeImage_ImageMSArray},
+    {spv::Op::OpTypeInt,           Handler_OpTypeInt_Int16 },
     {spv::Op::OpTypeInt,           Handler_OpTypeInt_Int64 },
     {spv::Op::OpTypePointer,       Handler_OpTypePointer_StorageInputOutput16},
     {spv::Op::OpTypePointer,       Handler_OpTypePointer_StoragePushConstant16},
