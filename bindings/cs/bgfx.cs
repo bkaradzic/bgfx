@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -2516,6 +2516,12 @@ public static partial class bgfx
 	[DllImport(DllName, EntryPoint="bgfx_get_renderer_name", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe IntPtr get_renderer_name(RendererType _type);
 	
+	/// <summary>
+	/// Fill bgfx::Init struct with default values, before using it to initialize the library.
+	/// </summary>
+	///
+	/// <param name="_init">Pointer to structure to be initialized. See: `bgfx::Init` for more info.</param>
+	///
 	[DllImport(DllName, EntryPoint="bgfx_init_ctor", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void init_ctor(Init* _init);
 	

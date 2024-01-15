@@ -1128,6 +1128,13 @@ BGFX_C_API uint8_t bgfx_get_supported_renderers(uint8_t _max, bgfx_renderer_type
  *
  */
 BGFX_C_API const char* bgfx_get_renderer_name(bgfx_renderer_type_t _type);
+
+/**
+ * Fill bgfx::Init struct with default values, before using it to initialize the library.
+ *
+ * @param[in] _init Pointer to structure to be initialized. See: `bgfx::Init` for more info.
+ *
+ */
 BGFX_C_API void bgfx_init_ctor(bgfx_init_t* _init);
 
 /**

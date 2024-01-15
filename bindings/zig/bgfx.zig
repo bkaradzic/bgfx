@@ -1,4 +1,4 @@
-// Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+// Copyright 2011-2024 Branimir Karadzic. All rights reserved.
 // License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 
 
@@ -2058,6 +2058,8 @@ pub inline fn getRendererName(_type: RendererType) [*c]const u8 {
 }
 extern fn bgfx_get_renderer_name(_type: RendererType) [*c]const u8;
 
+/// Fill bgfx::Init struct with default values, before using it to initialize the library.
+/// <param name="_init">Pointer to structure to be initialized. See: `bgfx::Init` for more info.</param>
 pub inline fn initCtor(_init: [*c]Init) void {
     return bgfx_init_ctor(_init);
 }

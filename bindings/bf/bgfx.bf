@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -2564,6 +2564,12 @@ public static class bgfx
 	[LinkName("bgfx_get_renderer_name")]
 	public static extern char8* get_renderer_name(RendererType _type);
 	
+	/// <summary>
+	/// Fill bgfx::Init struct with default values, before using it to initialize the library.
+	/// </summary>
+	///
+	/// <param name="_init">Pointer to structure to be initialized. See: `bgfx::Init` for more info.</param>
+	///
 	[LinkName("bgfx_init_ctor")]
 	public static extern void init_ctor(Init* _init);
 	
