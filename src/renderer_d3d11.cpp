@@ -6230,7 +6230,7 @@ namespace bgfx { namespace d3d11
 
 							currentState.m_stream[idx].m_layoutHandle = draw.m_stream[idx].m_layoutHandle;
 							currentState.m_stream[idx].m_handle       = draw.m_stream[idx].m_handle;
-							currentState.m_stream[idx].m_startVertex  = draw.m_stream[idx].m_startVertex;
+							currentState.m_stream[idx].m_offset       = draw.m_stream[idx].m_offset;
 
 							const uint16_t handle = draw.m_stream[idx].m_handle.idx;
 							const VertexBufferD3D11& vb = m_vertexBuffers[handle];
@@ -6242,7 +6242,7 @@ namespace bgfx { namespace d3d11
 
 							buffers[numStreams] = vb.m_ptr;
 							strides[numStreams] = stride;
-							offsets[numStreams] = draw.m_stream[idx].m_startVertex * stride;
+							offsets[numStreams] = draw.m_stream[idx].m_offset;
 							layouts[numStreams]   = &layout;
 
 							numVertices = bx::uint32_min(UINT32_MAX == draw.m_numVertices

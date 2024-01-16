@@ -4636,7 +4636,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 						currentState.m_stream[idx].m_layoutHandle   = draw.m_stream[idx].m_layoutHandle;
 						currentState.m_stream[idx].m_handle         = draw.m_stream[idx].m_handle;
-						currentState.m_stream[idx].m_startVertex    = draw.m_stream[idx].m_startVertex;
+						currentState.m_stream[idx].m_offset         = draw.m_stream[idx].m_offset;
 
 						const uint16_t handle = draw.m_stream[idx].m_handle.idx;
 						const VertexBufferMtl& vb = m_vertexBuffers[handle];
@@ -4653,7 +4653,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 							: draw.m_numVertices
 							, numVertices
 							);
-						const uint32_t offset = draw.m_stream[idx].m_startVertex * stride;
+						const uint32_t offset = draw.m_stream[idx].m_offset;
 
 						rce.setVertexBuffer(vb.m_ptr, offset, idx+1);
 					}

@@ -4264,7 +4264,7 @@ namespace bgfx { namespace d3d12
 					);
 
 				D3D12_VERTEX_BUFFER_VIEW& vbv = _vbv[numStreams];
-				vbv.BufferLocation = vb.m_gpuVA + stream.m_startVertex * stride;
+				vbv.BufferLocation = vb.m_gpuVA + stream.m_offset;
 				vbv.StrideInBytes  = stride;
 				vbv.SizeInBytes    = _outNumVertices * stride;
 			}
@@ -6886,7 +6886,7 @@ namespace bgfx { namespace d3d12
 
 							currentState.m_stream[idx].m_layoutHandle = draw.m_stream[idx].m_layoutHandle;
 							currentState.m_stream[idx].m_handle       = draw.m_stream[idx].m_handle;
-							currentState.m_stream[idx].m_startVertex  = draw.m_stream[idx].m_startVertex;
+							currentState.m_stream[idx].m_offset       = draw.m_stream[idx].m_offset;
 
 							uint16_t handle = draw.m_stream[idx].m_handle.idx;
 							const VertexBufferD3D12& vb = m_vertexBuffers[handle];
