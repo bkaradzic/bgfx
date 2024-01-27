@@ -1840,8 +1840,8 @@ namespace bgfx
 		uint32_t m_numX;
 		uint32_t m_numY;
 		uint32_t m_numZ;
-		uint16_t m_startIndirect;
-		uint16_t m_numIndirect;
+		uint32_t m_startIndirect;
+		uint32_t m_numIndirect;
 		uint16_t m_numMatrices;
 		uint8_t  m_submitFlags;
 		uint8_t  m_uniformIdx;
@@ -2777,7 +2777,7 @@ namespace bgfx
 
 		void submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth, uint8_t _flags);
 
-		void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, uint8_t _flags)
+		void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start, uint32_t _num, uint32_t _depth, uint8_t _flags)
 		{
 			m_draw.m_startIndirect  = _start;
 			m_draw.m_numIndirect    = _num;
@@ -2786,7 +2786,7 @@ namespace bgfx
 			submit(_id, _program, handle, _depth, _flags);
 		}
 
-		void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags)
+		void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags)
 		{
 			m_draw.m_numIndirectIndex = _numIndex;
 			m_draw.m_numIndirectBuffer = _numHandle;
@@ -2795,7 +2795,7 @@ namespace bgfx
 
 		void dispatch(ViewId _id, ProgramHandle _handle, uint32_t _ngx, uint32_t _ngy, uint32_t _ngz, uint8_t _flags);
 
-		void dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+		void dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint32_t _start, uint32_t _num, uint8_t _flags)
 		{
 			m_compute.m_indirectBuffer = _indirectHandle;
 			m_compute.m_startIndirect  = _start;

@@ -1517,8 +1517,8 @@ namespace bgfx
 			  ViewId _id
 			, ProgramHandle _program
 			, IndirectBufferHandle _indirectHandle
-			, uint16_t _start = 0
-			, uint16_t _num = 1
+			, uint32_t _start = 0
+			, uint32_t _num = 1
 			, uint32_t _depth = 0
 			, uint8_t _flags = BGFX_DISCARD_ALL
 			);
@@ -1544,7 +1544,7 @@ namespace bgfx
 			  ViewId _id
 			, ProgramHandle _program
 			, IndirectBufferHandle _indirectHandle
-			, uint16_t _start
+			, uint32_t _start
 			, IndexBufferHandle _numHandle
 			, uint32_t _numIndex = 0
 			, uint16_t _numMax = UINT16_MAX
@@ -1675,8 +1675,8 @@ namespace bgfx
 			  ViewId _id
 			, ProgramHandle _handle
 			, IndirectBufferHandle _indirectHandle
-			, uint16_t _start = 0
-			, uint16_t _num   = 1
+			, uint32_t _start = 0
+			, uint32_t _num   = 1
 			, uint8_t _flags  = BGFX_DISCARD_ALL
 			);
 
@@ -3994,8 +3994,8 @@ namespace bgfx
 		  ViewId _id
 		, ProgramHandle _program
 		, IndirectBufferHandle _indirectHandle
-		, uint16_t _start = 0
-		, uint16_t _num   = 1
+		, uint32_t _start = 0
+		, uint32_t _num   = 1
 		, uint32_t _depth = 0
 		, uint8_t _flags  = BGFX_DISCARD_ALL
 		);
@@ -4021,7 +4021,7 @@ namespace bgfx
 		  ViewId _id
 		, ProgramHandle _program
 		, IndirectBufferHandle _indirectHandle
-		, uint16_t _start
+		, uint32_t _start
 		, IndexBufferHandle _numHandle
 		, uint32_t _numIndex = 0
 		, uint16_t _numMax = UINT16_MAX
@@ -4152,8 +4152,8 @@ namespace bgfx
 		  ViewId _id
 		, ProgramHandle _handle
 		, IndirectBufferHandle _indirectHandle
-		, uint16_t _start = 0
-		, uint16_t _num   = 1
+		, uint32_t _start = 0
+		, uint32_t _num   = 1
 		, uint8_t _flags  = BGFX_DISCARD_ALL
 		);
 

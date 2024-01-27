@@ -10,7 +10,7 @@ import bindbc.bgfx.config;
 import bindbc.common.types: c_int64, c_uint64, va_list;
 static import bgfx.fakeenum;
 
-enum uint apiVersion = 124;
+enum uint apiVersion = 125;
 
 alias ViewID = ushort;
 
@@ -1701,7 +1701,7 @@ extern(C++, "bgfx") struct Encoder{
 				depth = Depth for sorting.
 				flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 			*/
-			{q{void}, q{submit}, q{ViewID id, ProgramHandle program, IndirectBufferHandle indirectHandle, ushort start=0, ushort num=1, uint depth=0, ubyte flags=Discard.all}, ext: `C++`},
+			{q{void}, q{submit}, q{ViewID id, ProgramHandle program, IndirectBufferHandle indirectHandle, uint start=0, uint num=1, uint depth=0, ubyte flags=Discard.all}, ext: `C++`},
 			
 			/**
 			Submit primitive for rendering with index and instance data info and
@@ -1719,7 +1719,7 @@ extern(C++, "bgfx") struct Encoder{
 				depth = Depth for sorting.
 				flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 			*/
-			{q{void}, q{submit}, q{ViewID id, ProgramHandle program, IndirectBufferHandle indirectHandle, ushort start, IndexBufferHandle numHandle, uint numIndex=0, ushort numMax=ushort.max, uint depth=0, ubyte flags=Discard.all}, ext: `C++`},
+			{q{void}, q{submit}, q{ViewID id, ProgramHandle program, IndirectBufferHandle indirectHandle, uint start, IndexBufferHandle numHandle, uint numIndex=0, ushort numMax=ushort.max, uint depth=0, ubyte flags=Discard.all}, ext: `C++`},
 			
 			/**
 			Set compute index buffer.
@@ -1799,7 +1799,7 @@ extern(C++, "bgfx") struct Encoder{
 				num = Number of dispatches.
 				flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 			*/
-			{q{void}, q{dispatch}, q{ViewID id, ProgramHandle program, IndirectBufferHandle indirectHandle, ushort start=0, ushort num=1, ubyte flags=Discard.all}, ext: `C++`},
+			{q{void}, q{dispatch}, q{ViewID id, ProgramHandle program, IndirectBufferHandle indirectHandle, uint start=0, uint num=1, ubyte flags=Discard.all}, ext: `C++`},
 			
 			/**
 			Discard previously set state for draw or compute call.
@@ -3409,7 +3409,7 @@ mixin(joinFnBinds((){
 			depth = Depth for sorting.
 			flags = Which states to discard for next draw. See `BGFX_DISCARD_*`.
 		*/
-		{q{void}, q{submit}, q{ViewID id, ProgramHandle program, IndirectBufferHandle indirectHandle, ushort start=0, ushort num=1, uint depth=0, ubyte flags=Discard.all}, ext: `C++, "bgfx"`},
+		{q{void}, q{submit}, q{ViewID id, ProgramHandle program, IndirectBufferHandle indirectHandle, uint start=0, uint num=1, uint depth=0, ubyte flags=Discard.all}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Submit primitive for rendering with index and instance data info and
@@ -3427,7 +3427,7 @@ mixin(joinFnBinds((){
 			depth = Depth for sorting.
 			flags = Which states to discard for next draw. See `BGFX_DISCARD_*`.
 		*/
-		{q{void}, q{submit}, q{ViewID id, ProgramHandle program, IndirectBufferHandle indirectHandle, ushort start, IndexBufferHandle numHandle, uint numIndex=0, ushort numMax=ushort.max, uint depth=0, ubyte flags=Discard.all}, ext: `C++, "bgfx"`},
+		{q{void}, q{submit}, q{ViewID id, ProgramHandle program, IndirectBufferHandle indirectHandle, uint start, IndexBufferHandle numHandle, uint numIndex=0, ushort numMax=ushort.max, uint depth=0, ubyte flags=Discard.all}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set compute index buffer.
