@@ -2947,6 +2947,7 @@ namespace bgfx { namespace gl
 				if (m_vaoSupport)
 				{
 					GL_CHECK(glGenVertexArrays(1, &m_vao) );
+					GL_CHECK(glBindVertexArray(m_vao) );
 				}
 
 				m_samplerObjectSupport = false
@@ -3659,13 +3660,9 @@ namespace bgfx { namespace gl
 		void submitBlit(BlitState& _bs, uint16_t _view);
 
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;
+
 		void blitSetup(TextVideoMemBlitter& _blitter) override
 		{
-			if (0 != m_vao)
-			{
-				GL_CHECK(glBindVertexArray(m_vao) );
-			}
-
 			uint32_t width  = m_resolution.width;
 			uint32_t height = m_resolution.height;
 
@@ -3840,6 +3837,13 @@ namespace bgfx { namespace gl
 					m_glctx.makeCurrent(NULL);
 					m_currentFbo = frameBuffer.m_fbo[0];
 				}
+			}
+
+			if (0 != m_vao)
+			{
+				GL_CHECK(glDeleteVertexArrays(1, &m_vao) );
+				GL_CHECK(glGenVertexArrays(1, &m_vao) );
+				GL_CHECK(glBindVertexArray(m_vao) );
 			}
 
 			if (m_srgbWriteControlSupport)
@@ -4543,10 +4547,9 @@ namespace bgfx { namespace gl
 			}
 			else
 			{
-				const GLuint defaultVao = m_vao;
-				if (0 != defaultVao)
+				if (0 != m_vao)
 				{
-					GL_CHECK(glBindVertexArray(defaultVao) );
+					GL_CHECK(glBindVertexArray(m_vao) );
 				}
 
 				GL_CHECK(glDisable(GL_SCISSOR_TEST) );
@@ -7456,19 +7459,9 @@ namespace bgfx { namespace gl
 
 		BGFX_GL_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
 
-		if (1 < m_numWindows
-		&&  m_vaoSupport)
+		if (0 != m_vao)
 		{
-			m_vaoSupport = false;
-			GL_CHECK(glBindVertexArray(0) );
-			GL_CHECK(glDeleteVertexArrays(1, &m_vao) );
-			m_vao = 0;
-		}
-
-		const GLuint defaultVao = m_vao;
-		if (0 != defaultVao)
-		{
-			GL_CHECK(glBindVertexArray(defaultVao) );
+			GL_CHECK(glBindVertexArray(m_vao) );
 		}
 
 		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
@@ -8556,11 +8549,6 @@ namespace bgfx { namespace gl
 
 			blitMsaaFbo();
 
-			if (m_vaoSupport)
-			{
-				GL_CHECK(glBindVertexArray(m_vao) );
-			}
-
 			if (0 < _render->m_numRenderItems)
 			{
 				if (0 != (m_resolution.reset & BGFX_RESET_FLUSH_AFTER_RENDER) )
@@ -8817,6 +8805,11 @@ namespace bgfx { namespace gl
 			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 
 			BGFX_GL_PROFILER_END();
+		}
+
+		if (0 != m_vao)
+		{
+			GL_CHECK(glBindVertexArray(0) );
 		}
 	}
 } } // namespace bgfx
