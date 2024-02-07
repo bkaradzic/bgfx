@@ -570,6 +570,12 @@ namespace bgfx { namespace metal
 					{
 						spirv_cross::CompilerMSL msl(std::move(spirv) );
 
+						spirv_cross::CompilerMSL::Options mslOptions{};
+
+						mslOptions.msl_version = spirv_cross::CompilerMSL::Options::make_msl_version(2, 2);
+
+						msl.set_msl_options(mslOptions);
+
 						auto executionModel = msl.get_execution_model();
 						spirv_cross::MSLResourceBinding newBinding;
 						newBinding.stage = executionModel;
