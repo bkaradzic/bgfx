@@ -4253,7 +4253,7 @@ namespace bgfx { namespace d3d12
 				VertexBufferD3D12& vb = s_renderD3D12->m_vertexBuffers[handle];
 				vb.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-				const uint16_t layoutIdx = !isValid(vb.m_layoutHandle) ? stream.m_layoutHandle.idx : vb.m_layoutHandle.idx;
+				const uint16_t layoutIdx = isValid(stream.m_layoutHandle) ? stream.m_layoutHandle.idx : vb.m_layoutHandle.idx;
 				const VertexLayout& layout = s_renderD3D12->m_vertexLayouts[layoutIdx];
 				const uint32_t stride = layout.m_stride;
 
