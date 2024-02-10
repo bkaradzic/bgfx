@@ -358,6 +358,21 @@ static int cgltf_int_from_component_type(cgltf_component_type ctype)
 	}
 }
 
+static int cgltf_int_from_primitive_type(cgltf_primitive_type ctype)
+{
+	switch (ctype)
+	{
+		case cgltf_primitive_type_points: return 0;
+		case cgltf_primitive_type_lines: return 1;
+		case cgltf_primitive_type_line_loop: return 2;
+		case cgltf_primitive_type_line_strip: return 3;
+		case cgltf_primitive_type_triangles: return 4;
+		case cgltf_primitive_type_triangle_strip: return 5;
+		case cgltf_primitive_type_triangle_fan: return 6;
+		default: return -1;
+	}
+}
+
 static const char* cgltf_str_from_alpha_mode(cgltf_alpha_mode alpha_mode)
 {
 	switch (alpha_mode)
@@ -453,7 +468,7 @@ static void cgltf_write_asset(cgltf_write_context* context, const cgltf_asset* a
 
 static void cgltf_write_primitive(cgltf_write_context* context, const cgltf_primitive* prim)
 {
-	cgltf_write_intprop(context, "mode", (int) prim->type, 4);
+	cgltf_write_intprop(context, "mode", cgltf_int_from_primitive_type(prim->type), 4);
 	CGLTF_WRITE_IDXPROP("indices", prim->indices, context->data->accessors);
 	CGLTF_WRITE_IDXPROP("material", prim->material, context->data->materials);
 	cgltf_write_line(context, "\"attributes\": {");
