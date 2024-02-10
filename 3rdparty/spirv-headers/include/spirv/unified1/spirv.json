@@ -6,7 +6,7 @@
             "Comment":
             [
                 [
-                    "Copyright (c) 2014-2020 The Khronos Group Inc.",
+                    "Copyright (c) 2014-2024 The Khronos Group Inc.",
                     "",
                     "Permission is hereby granted, free of charge, to any person obtaining a copy",
                     "of this software and/or associated documentation files (the \"Materials\"),",
@@ -79,7 +79,8 @@
                     "HERO_C": 8,
                     "NZSL": 9,
                     "WGSL": 10,
-                    "Slang": 11
+                    "Slang": 11,
+                    "Zig": 12
                 }
             },
             {
@@ -202,6 +203,8 @@
                     "StencilRefUnchangedBackAMD": 5082,
                     "StencilRefGreaterBackAMD": 5083,
                     "StencilRefLessBackAMD": 5084,
+                    "QuadDerivativesKHR": 5088,
+                    "RequireFullQuadsKHR": 5089,
                     "OutputLinesEXT": 5269,
                     "OutputLinesNV": 5269,
                     "OutputPrimitivesEXT": 5270,
@@ -226,6 +229,8 @@
                     "NoGlobalOffsetINTEL": 5895,
                     "NumSIMDWorkitemsINTEL": 5896,
                     "SchedulerTargetFmaxMhzINTEL": 5903,
+                    "MaximallyReconvergesKHR": 6023,
+                    "FPFastMathDefault": 6028,
                     "StreamingInterfaceINTEL": 6154,
                     "RegisterMapInterfaceINTEL": 6160,
                     "NamedBarrierCountINTEL": 6417
@@ -448,8 +453,11 @@
                     "NSZ": 2,
                     "AllowRecip": 3,
                     "Fast": 4,
+                    "AllowContract": 16,
                     "AllowContractFastINTEL": 16,
-                    "AllowReassocINTEL": 17
+                    "AllowReassoc": 17,
+                    "AllowReassocINTEL": 17,
+                    "AllowTransform": 18
                 }
             },
             {
@@ -1052,6 +1060,7 @@
                     "Int64ImageEXT": 5016,
                     "ShaderClockKHR": 5055,
                     "ShaderEnqueueAMDX": 5067,
+                    "QuadControlKHR": 5087,
                     "SampleMaskOverrideCoverageNV": 5249,
                     "GeometryShaderPassthroughNV": 5251,
                     "ShaderViewportIndexLayerEXT": 5254,
@@ -1171,6 +1180,7 @@
                     "CooperativeMatrixKHR": 6022,
                     "BitInstructions": 6025,
                     "GroupNonUniformRotateKHR": 6026,
+                    "FloatControls2": 6029,
                     "AtomicFloat32AddEXT": 6033,
                     "AtomicFloat64AddEXT": 6034,
                     "LongCompositesINTEL": 6089,
@@ -1187,6 +1197,7 @@
                     "GlobalVariableHostAccessINTEL": 6187,
                     "GlobalVariableFPGADecorationsINTEL": 6189,
                     "GroupUniformArithmeticKHR": 6400,
+                    "MaskedGatherScatterINTEL": 6427,
                     "CacheControlsINTEL": 6441
                 }
             },
@@ -1781,6 +1792,8 @@
                     "OpFinalizeNodePayloadsAMDX": 5075,
                     "OpFinishWritingNodePayloadAMDX": 5078,
                     "OpInitializeNodePayloadsAMDX": 5090,
+                    "OpGroupNonUniformQuadAllKHR": 5110,
+                    "OpGroupNonUniformQuadAnyKHR": 5111,
                     "OpHitObjectRecordHitMotionNV": 5249,
                     "OpHitObjectRecordHitWithIndexMotionNV": 5250,
                     "OpHitObjectRecordMissMotionNV": 5251,
@@ -2102,7 +2115,9 @@
                     "OpGroupBitwiseXorKHR": 6405,
                     "OpGroupLogicalAndKHR": 6406,
                     "OpGroupLogicalOrKHR": 6407,
-                    "OpGroupLogicalXorKHR": 6408
+                    "OpGroupLogicalXorKHR": 6408,
+                    "OpMaskedGatherINTEL": 6428,
+                    "OpMaskedScatterINTEL": 6429
                 }
             }
         ]

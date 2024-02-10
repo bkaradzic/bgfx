@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <registry>
     <!--
-    Copyright (c) 2015 The Khronos Group Inc.
+    Copyright (c) 2015-2024 The Khronos Group Inc.
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and/or associated documentation files (the
@@ -91,7 +91,8 @@
         <id value="38"  vendor="Meta" tool="SparkSL" comment="Contact Dunfan Lu, dunfanlu@meta.com, https://sparkar.facebook.com/ar-studio/learn/sparksl/sparksl-overview"/>
         <id value="39"  vendor="SirLynix" tool="Nazara ShaderLang Compiler" comment="Contact Jérôme Leclercq, https://github.com/NazaraEngine/ShaderLang"/>
         <id value="40"  vendor="NVIDIA" tool="Slang Compiler" comment="Contact Theresa Foley, tfoley@nvidia.com, https://github.com/shader-slang/slang/"/>
-        <unused start="41" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
+        <id value="41"  vendor="Zig Software Foundation" tool="Zig Compiler" comment="Contact Robin Voetter, https://github.com/Snektron"/>
+        <unused start="42" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
     </ids>
 
     <!-- SECTION: SPIR-V Opcodes and Enumerants -->
@@ -248,7 +249,8 @@
     <!-- Reserved FP fast math mode bits -->
     <ids type="FPFastMathMode" start="0" end="15" vendor="Khronos" comment="Reserved FPFastMathMode bits, not available to vendors - see the SPIR-V Specification"/>
     <ids type="FPFastMathMode" start="16" end="17" vendor="Intel" comment="Contact michael.kinsner@intel.com"/>
-    <ids type="FPFastMathMode" start="18" end="31" comment="Unreserved bits reservable for use by vendors"/>
+    <ids type="FPFastMathMode" start="18" end="18" vendor="khronos" comment="Reserved FPFastMathMode bit, not available to vendors - see SPV_KHR_float_controls2"/>
+    <ids type="FPFastMathMode" start="19" end="31" comment="Unreserved bits reservable for use by vendors"/>
 
 
     <!-- SECTION: SPIR-V Memory Operand Bit Reservations -->

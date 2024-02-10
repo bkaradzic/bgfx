@@ -1,6 +1,6 @@
 {
   "copyright" : [
-    "Copyright (c) 2014-2020 The Khronos Group Inc.",
+    "Copyright (c) 2014-2024 The Khronos Group Inc.",
     "",
     "Permission is hereby granted, free of charge, to any person obtaining a copy",
     "of this software and/or associated documentation files (the \"Materials\"),",
@@ -5247,6 +5247,30 @@
       "version" : "None"
     },
     {
+      "opname" : "OpGroupNonUniformQuadAllKHR",
+      "class"  : "Non-Uniform",
+      "opcode" : 5110,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Predicate'" }
+      ],
+      "capabilities" : [ "QuadControlKHR" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGroupNonUniformQuadAnyKHR",
+      "class"  : "Non-Uniform",
+      "opcode" : 5111,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Predicate'" }
+      ],
+      "capabilities" : [ "QuadControlKHR" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpHitObjectRecordHitMotionNV",
       "class"  : "Reserved",
       "opcode" : 5249,
@@ -9758,6 +9782,34 @@
       ],
       "capabilities" : [ "GroupUniformArithmeticKHR" ],
       "version" : "None"
+    },
+    {
+      "opname" : "OpMaskedGatherINTEL",
+      "class"  : "Memory",
+      "opcode" : 6428,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",           "name" : "'PtrVector'" },
+        { "kind" : "LiteralInteger",  "name" : "'Alignment'" },
+        { "kind" : "IdRef",           "name" : "'Mask'" },
+        { "kind" : "IdRef",           "name" : "'FillEmpty'" }
+      ],
+      "capabilities" : [ "MaskedGatherScatterINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpMaskedScatterINTEL",
+      "class"  : "Memory",
+      "opcode" : 6429,
+      "operands" : [
+        { "kind" : "IdRef",           "name" : "'InputVector'" },
+        { "kind" : "IdRef",           "name" : "'PtrVector'" },
+        { "kind" : "LiteralInteger",  "name" : "'Alignment'" },
+        { "kind" : "IdRef",           "name" : "'Mask'" }
+      ],
+      "capabilities" : [ "MaskedGatherScatterINTEL" ],
+      "version" : "None"
     }
   ],
   "operand_kinds" : [
@@ -9962,15 +10014,33 @@
           "version" : "1.0"
         },
         {
+          "enumerant" : "AllowContract",
+          "value" : "0x10000",
+          "capabilities" : [ "FloatControls2", "FPFastMathModeINTEL" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "AllowContractFastINTEL",
           "value" : "0x10000",
-          "capabilities" : [ "FPFastMathModeINTEL" ],
+          "capabilities" : [ "FloatControls2", "FPFastMathModeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AllowReassoc",
+          "value" : "0x20000",
+          "capabilities" : [ "FloatControls2", "FPFastMathModeINTEL" ],
           "version" : "None"
         },
         {
           "enumerant" : "AllowReassocINTEL",
           "value" : "0x20000",
-          "capabilities" : [ "FPFastMathModeINTEL" ],
+          "capabilities" : [ "FloatControls2", "FPFastMathModeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AllowTransform",
+          "value" : "0x40000",
+          "capabilities" : [ "FloatControls2" ],
           "version" : "None"
         }
       ]
@@ -10595,6 +10665,11 @@
         {
           "enumerant" : "Slang",
           "value" : 11,
+          "version" : "1.0"
+        },
+        {
+          "enumerant" : "Zig",
+          "value" : 12,
           "version" : "1.0"
         }
       ]
@@ -11270,6 +11345,18 @@
           "version": "None"
         },
         {
+          "enumerant": "QuadDerivativesKHR",
+          "value": 5088,
+          "capabilities": [ "QuadControlKHR" ],
+          "version": "None"
+        },
+        {
+          "enumerant" : "RequireFullQuadsKHR",
+          "value" : 5089,
+          "capabilities" : [ "QuadControlKHR" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "OutputLinesNV",
           "value" : 5269,
           "capabilities" : [ "MeshShadingNV", "MeshShadingEXT" ],
@@ -11467,6 +11554,23 @@
           "version" : "None"
         },
         {
+          "enumerant" : "MaximallyReconvergesKHR",
+          "value" : 6023,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_maximal_reconvergence" ],
+          "version" : "None"
+	},
+	{
+          "enumerant" : "FPFastMathDefault",
+          "value" : 6028,
+          "parameters" : [
+            { "kind" : "IdRef", "name" : "'Target Type'" },
+            { "kind" : "IdRef", "name" : "'Fast-Math Mode'" }
+	        ],
+          "capabilities" : [ "FloatControls2" ],
+          "version" : "None"
+	},
+	{
           "enumerant" : "StreamingInterfaceINTEL",
           "value" : 6154,
           "parameters" : [
@@ -12900,7 +13004,7 @@
         {
           "enumerant" : "FPFastMathMode",
           "value" : 40,
-          "capabilities" : [ "Kernel" ],
+          "capabilities" : [ "Kernel", "FloatControls2" ],
           "parameters" : [
             { "kind" : "FPFastMathMode", "name" : "'Fast-Math Mode'" }
           ],
@@ -15475,6 +15579,12 @@
           "version" : "None"
         },
         {
+          "enumerant" : "QuadControlKHR",
+          "value" : 5087,
+          "extensions" : [ "SPV_KHR_quad_control" ],
+          "version" : "None"
+        },		
+        {
           "enumerant" : "SampleMaskOverrideCoverageNV",
           "value" : 5249,
           "capabilities" : [ "SampleRateShading" ],
@@ -16230,6 +16340,12 @@
           "version" : "None"
         },
         {
+          "enumerant" : "FloatControls2",
+          "value" : 6029,
+          "extensions" : [ "SPV_KHR_float_controls2" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "AtomicFloat32AddEXT",
           "value" : 6033,
           "extensions" : [ "SPV_EXT_shader_atomic_float_add" ],
@@ -16326,6 +16442,12 @@
           "value" : 6400,
           "extensions" : [ "SPV_KHR_uniform_group_instructions"],
           "version" : "None"
+        },
+        {
+          "enumerant" : "MaskedGatherScatterINTEL",
+	  "value" : 6427,
+	  "extensions" : [ "SPV_INTEL_masked_gather_scatter"],
+	  "version" : "None"
         },
         {
           "enumerant" : "CacheControlsINTEL",
