@@ -1,7 +1,7 @@
 /**
  * meshoptimizer - version 0.20
  *
- * Copyright (C) 2016-2023, by Arseny Kapoulkine (arseny.kapoulkine@gmail.com)
+ * Copyright (C) 2016-2024, by Arseny Kapoulkine (arseny.kapoulkine@gmail.com)
  * Report bugs and download new versions at https://github.com/zeux/meshoptimizer
  *
  * This library is distributed under the MIT License. See notice at the end of this file.
@@ -486,7 +486,7 @@ struct meshopt_Meshlet
  * meshlet_vertices must contain enough space for all meshlets, worst case size is equal to max_meshlets * max_vertices
  * meshlet_triangles must contain enough space for all meshlets, worst case size is equal to max_meshlets * max_triangles * 3
  * vertex_positions should have float3 position in the first 12 bytes of each vertex
- * max_vertices and max_triangles must not exceed implementation limits (max_vertices <= 255 - not 256!, max_triangles <= 512)
+ * max_vertices and max_triangles must not exceed implementation limits (max_vertices <= 255 - not 256!, max_triangles <= 512; max_triangles must be divisible by 4)
  * cone_weight should be set to 0 when cone culling is not used, and a value between 0 and 1 otherwise to balance between cluster size and cone culling efficiency
  */
 MESHOPTIMIZER_API size_t meshopt_buildMeshlets(struct meshopt_Meshlet* meshlets, unsigned int* meshlet_vertices, unsigned char* meshlet_triangles, const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, size_t max_vertices, size_t max_triangles, float cone_weight);
@@ -1050,7 +1050,7 @@ inline void meshopt_spatialSortTriangles(T* destination, const T* indices, size_
 #endif
 
 /**
- * Copyright (c) 2016-2023 Arseny Kapoulkine
+ * Copyright (c) 2016-2024 Arseny Kapoulkine
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
