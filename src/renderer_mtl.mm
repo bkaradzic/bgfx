@@ -4411,7 +4411,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					{
 						const VertexBufferMtl& vb = m_vertexBuffers[compute.m_indirectBuffer.idx];
 
-						uint32_t numDrawIndirect = UINT16_MAX == compute.m_numIndirect
+						uint32_t numDrawIndirect = UINT32_MAX == compute.m_numIndirect
 						? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 						: compute.m_numIndirect
 						;
@@ -4866,7 +4866,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 							const MTLIndexType indexFormat = isIndex16 ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
 							const IndexBufferMtl& ib       = m_indexBuffers[draw.m_indexBuffer.idx];
 
-							numDrawIndirect = UINT16_MAX == draw.m_numIndirect
+							numDrawIndirect = UINT32_MAX == draw.m_numIndirect
 								? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 								: draw.m_numIndirect
 								;
@@ -4878,7 +4878,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 						}
 						else
 						{
-							numDrawIndirect = UINT16_MAX == draw.m_numIndirect
+							numDrawIndirect = UINT32_MAX == draw.m_numIndirect
 								? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 								: draw.m_numIndirect
 								;

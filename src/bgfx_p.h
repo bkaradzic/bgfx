@@ -1755,12 +1755,12 @@ namespace bgfx
 				m_submitFlags = isIndex16() ? 0 : BGFX_SUBMIT_INTERNAL_INDEX32;
 			}
 
-			m_startIndirect = 0;
-			m_numIndirect = UINT16_MAX;
+			m_startIndirect    = 0;
+			m_numIndirect      = UINT32_MAX;
 			m_numIndirectIndex = 0;
-			m_indirectBuffer.idx = kInvalidHandle;
+			m_indirectBuffer.idx    = kInvalidHandle;
 			m_numIndirectBuffer.idx = kInvalidHandle;
-			m_occlusionQuery.idx = kInvalidHandle;
+			m_occlusionQuery.idx    = kInvalidHandle;
 		}
 
 		bool setStreamBit(uint8_t _stream, VertexBufferHandle _handle)
@@ -1789,10 +1789,10 @@ namespace bgfx
 		uint32_t m_numVertices;
 		uint32_t m_instanceDataOffset;
 		uint32_t m_numInstances;
-		uint16_t m_instanceDataStride;
-		uint16_t m_startIndirect;
-		uint16_t m_numIndirect;
+		uint32_t m_startIndirect;
+		uint32_t m_numIndirect;
 		uint32_t m_numIndirectIndex;
+		uint16_t m_instanceDataStride;
 		uint16_t m_numMatrices;
 		uint16_t m_scissor;
 		uint8_t  m_submitFlags;
@@ -1829,7 +1829,7 @@ namespace bgfx
 			m_submitFlags        = 0;
 			m_indirectBuffer.idx = kInvalidHandle;
 			m_startIndirect      = 0;
-			m_numIndirect        = UINT16_MAX;
+			m_numIndirect        = UINT32_MAX;
 		}
 
 		uint32_t m_uniformBegin;
@@ -2786,9 +2786,9 @@ namespace bgfx
 			submit(_id, _program, handle, _depth, _flags);
 		}
 
-		void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags)
+		void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex, uint32_t _numMax, uint32_t _depth, uint8_t _flags)
 		{
-			m_draw.m_numIndirectIndex = _numIndex;
+			m_draw.m_numIndirectIndex  = _numIndex;
 			m_draw.m_numIndirectBuffer = _numHandle;
 			submit(_id, _program, _indirectHandle, _start, _numMax, _depth, _flags);
 		}

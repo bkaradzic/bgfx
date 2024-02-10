@@ -8449,7 +8449,7 @@ VK_DESTROY
 					{
 						const VertexBufferVK& vb = m_vertexBuffers[compute.m_indirectBuffer.idx];
 
-						uint32_t numDrawIndirect = UINT16_MAX == compute.m_numIndirect
+						uint32_t numDrawIndirect = UINT32_MAX == compute.m_numIndirect
 							? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 							: compute.m_numIndirect
 							;
@@ -8765,7 +8765,7 @@ VK_DESTROY
 					{
 						const VertexBufferVK& vb = m_vertexBuffers[draw.m_indirectBuffer.idx];
 						bufferIndirect = vb.m_buffer;
-						numDrawIndirect = UINT16_MAX == draw.m_numIndirect
+						numDrawIndirect = UINT32_MAX == draw.m_numIndirect
 							? vb.m_size / BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 							: draw.m_numIndirect
 							;

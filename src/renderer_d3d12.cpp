@@ -4300,7 +4300,7 @@ namespace bgfx { namespace d3d12
 				);
 
 			const VertexBufferD3D12& indirect = s_renderD3D12->m_vertexBuffers[_draw.m_indirectBuffer.idx];
-			const uint32_t numDrawIndirect = UINT16_MAX == _draw.m_numIndirect
+			const uint32_t numDrawIndirect = UINT32_MAX == _draw.m_numIndirect
 				? indirect.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 				: _draw.m_numIndirect
 				;
@@ -6749,7 +6749,7 @@ namespace bgfx { namespace d3d12
 					{
 						const VertexBufferD3D12& indirect = m_vertexBuffers[compute.m_indirectBuffer.idx];
 
-						uint32_t numDrawIndirect = UINT16_MAX == compute.m_numIndirect
+						uint32_t numDrawIndirect = UINT32_MAX == compute.m_numIndirect
 							? indirect.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 							: compute.m_numIndirect
 							;

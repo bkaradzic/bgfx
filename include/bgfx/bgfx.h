@@ -1547,7 +1547,7 @@ namespace bgfx
 			, uint32_t _start
 			, IndexBufferHandle _numHandle
 			, uint32_t _numIndex = 0
-			, uint16_t _numMax = UINT16_MAX
+			, uint32_t _numMax = UINT32_MAX
 			, uint32_t _depth = 0
 			, uint8_t _flags = BGFX_DISCARD_ALL
 			);
@@ -4024,7 +4024,7 @@ namespace bgfx
 		, uint32_t _start
 		, IndexBufferHandle _numHandle
 		, uint32_t _numIndex = 0
-		, uint16_t _numMax = UINT16_MAX
+		, uint32_t _numMax = UINT32_MAX
 		, uint32_t _depth = 0
 		, uint8_t _flags = BGFX_DISCARD_ALL
 		);

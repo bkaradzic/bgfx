@@ -1324,7 +1324,7 @@ namespace bgfx { namespace gl
 		{
 			while (s_vertexAttribArraysPendingDisable)
 			{
-				uint32_t index = bx::uint32_cnttz(s_vertexAttribArraysPendingDisable);
+				uint32_t index = bx::countTrailingZeros(s_vertexAttribArraysPendingDisable);
 				uint64_t mask  = ~(UINT64_C(1) << index);
 				s_vertexAttribArraysPendingDisable   &= mask;
 				s_currentlyEnabledVertexAttribArrays &= mask;
@@ -1333,7 +1333,7 @@ namespace bgfx { namespace gl
 
 			while (s_vertexAttribArraysPendingEnable)
 			{
-				uint32_t index = bx::uint32_cnttz(s_vertexAttribArraysPendingEnable);
+				uint32_t index = bx::countTrailingZeros(s_vertexAttribArraysPendingEnable);
 				uint64_t mask  = UINT64_C(1) << index;
 				s_vertexAttribArraysPendingEnable    &= ~mask;
 				s_currentlyEnabledVertexAttribArrays |= mask;
@@ -1851,7 +1851,7 @@ namespace bgfx { namespace gl
 		if (_array)
 		{
 			glTexStorage3D(target
-				, 1 + GLsizei(bx::log2( (int32_t)_dim) )
+				, 1 + GLsizei(bx::ceilLog2( (int32_t)_dim) )
 				, internalFmt
 				, _dim
 				, _dim
@@ -7727,7 +7727,7 @@ namespace bgfx { namespace gl
 									GL_CHECK(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, vb.m_id) );
 								}
 
-								uint32_t numDrawIndirect = UINT16_MAX == compute.m_numIndirect
+								uint32_t numDrawIndirect = UINT32_MAX == compute.m_numIndirect
 									? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 									: compute.m_numIndirect
 									;
@@ -8399,7 +8399,7 @@ namespace bgfx { namespace gl
 									: GL_UNSIGNED_INT
 									;
 
-								numDrawIndirect = UINT16_MAX == draw.m_numIndirect
+								numDrawIndirect = UINT32_MAX == draw.m_numIndirect
 									? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 									: draw.m_numIndirect
 									;
@@ -8426,7 +8426,7 @@ namespace bgfx { namespace gl
 							}
 							else
 							{
-								numDrawIndirect = UINT16_MAX == draw.m_numIndirect
+								numDrawIndirect = UINT32_MAX == draw.m_numIndirect
 									? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 									: draw.m_numIndirect
 									;

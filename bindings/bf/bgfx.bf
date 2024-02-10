@@ -4000,7 +4000,7 @@ public static class bgfx
 	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_encoder_submit_indirect_count")]
-	public static extern void encoder_submit_indirect_count(Encoder* _this, ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32 _start, IndexBufferHandle _numHandle, uint32 _numIndex, uint16 _numMax, uint32 _depth, uint8 _flags);
+	public static extern void encoder_submit_indirect_count(Encoder* _this, ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32 _start, IndexBufferHandle _numHandle, uint32 _numIndex, uint32 _numMax, uint32 _depth, uint8 _flags);
 	
 	/// <summary>
 	/// Set compute index buffer.
@@ -4576,7 +4576,7 @@ public static class bgfx
 	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_submit_indirect_count")]
-	public static extern void submit_indirect_count(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32 _start, IndexBufferHandle _numHandle, uint32 _numIndex, uint16 _numMax, uint32 _depth, uint8 _flags);
+	public static extern void submit_indirect_count(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32 _start, IndexBufferHandle _numHandle, uint32 _numIndex, uint32 _numMax, uint32 _depth, uint8 _flags);
 	
 	/// <summary>
 	/// Set compute index buffer.
