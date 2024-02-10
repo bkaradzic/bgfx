@@ -470,7 +470,8 @@ spv_result_t InstructionPass(ValidationState_t& _, const Instruction* inst) {
     }
     _.set_addressing_model(inst->GetOperandAs<spv::AddressingModel>(0));
     _.set_memory_model(inst->GetOperandAs<spv::MemoryModel>(1));
-  } else if (opcode == spv::Op::OpExecutionMode) {
+  } else if (opcode == spv::Op::OpExecutionMode ||
+             opcode == spv::Op::OpExecutionModeId) {
     const uint32_t entry_point = inst->word(1);
     _.RegisterExecutionModeForEntryPoint(entry_point,
                                          spv::ExecutionMode(inst->word(2)));

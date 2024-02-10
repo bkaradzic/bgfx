@@ -171,6 +171,19 @@ bool ConvertToHalfPass::RemoveRelaxedDecoration(uint32_t id) {
 
 bool ConvertToHalfPass::GenHalfArith(Instruction* inst) {
   bool modified = false;
+  // If this is a OpCompositeExtract instruction and has a struct operand, we
+  // should not relax this instruction. Doing so could cause a mismatch between
+  // the result type and the struct member type.
+  bool hasStructOperand = false;
+  if (inst->opcode() == spv::Op::OpCompositeExtract) {
+    inst->ForEachInId([&hasStructOperand, this](uint32_t* idp) {
+      Instruction* op_inst = get_def_use_mgr()->GetDef(*idp);
+      if (IsStruct(op_inst)) hasStructOperand = true;
+    });
+    if (hasStructOperand) {
+      return false;
+    }
+  }
   // Convert all float32 based operands to float16 equivalent and change
   // instruction type to float16 equivalent.
   inst->ForEachInId([&inst, &modified, this](uint32_t* idp) {
@@ -303,12 +316,19 @@ bool ConvertToHalfPass::CloseRelaxInst(Instruction* inst) {
   if (closure_ops_.count(inst->opcode()) == 0) return false;
   // Can relax if all float operands are relaxed
   bool relax = true;
-  inst->ForEachInId([&relax, this](uint32_t* idp) {
+  bool hasStructOperand = false;
+  inst->ForEachInId([&relax, &hasStructOperand, this](uint32_t* idp) {
     Instruction* op_inst = get_def_use_mgr()->GetDef(*idp);
-    if (IsStruct(op_inst)) relax = false;
+    if (IsStruct(op_inst)) hasStructOperand = true;
     if (!IsFloat(op_inst, 32)) return;
     if (!IsRelaxed(*idp)) relax = false;
   });
+  // If the instruction has a struct operand, we should not relax it, even if
+  // all its uses are relaxed. Doing so could cause a mismatch between the
+  // result type and the struct member type.
+  if (hasStructOperand) {
+    return false;
+  }
   if (relax) {
     AddRelaxed(inst->result_id());
     return true;

@@ -534,6 +534,8 @@ bool spvOpcodeIsNonUniformGroupOperation(spv::Op opcode) {
     case spv::Op::OpGroupNonUniformQuadBroadcast:
     case spv::Op::OpGroupNonUniformQuadSwap:
     case spv::Op::OpGroupNonUniformRotateKHR:
+    case spv::Op::OpGroupNonUniformQuadAllKHR:
+    case spv::Op::OpGroupNonUniformQuadAnyKHR:
       return true;
     default:
       return false;

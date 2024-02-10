@@ -2125,6 +2125,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-None-04644);
     case 4645:
       return VUID_WRAP(VUID-StandaloneSpirv-None-04645);
+    case 4650:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpControlBarrier-04650);
     case 4651:
       return VUID_WRAP(VUID-StandaloneSpirv-OpVariable-04651);
     case 4652:
@@ -2257,6 +2259,24 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-PushConstant-06808);
     case 6925:
       return VUID_WRAP(VUID-StandaloneSpirv-Uniform-06925);
+    case 7041:
+      return VUID_WRAP(VUID-PrimitivePointIndicesEXT-PrimitivePointIndicesEXT-07041);
+    case 7043:
+      return VUID_WRAP(VUID-PrimitivePointIndicesEXT-PrimitivePointIndicesEXT-07043);
+    case 7044:
+      return VUID_WRAP(VUID-PrimitivePointIndicesEXT-PrimitivePointIndicesEXT-07044);
+    case 7047:
+      return VUID_WRAP(VUID-PrimitiveLineIndicesEXT-PrimitiveLineIndicesEXT-07047);
+    case 7049:
+      return VUID_WRAP(VUID-PrimitiveLineIndicesEXT-PrimitiveLineIndicesEXT-07049);
+    case 7050:
+      return VUID_WRAP(VUID-PrimitiveLineIndicesEXT-PrimitiveLineIndicesEXT-07050);
+    case 7053:
+      return VUID_WRAP(VUID-PrimitiveTriangleIndicesEXT-PrimitiveTriangleIndicesEXT-07053);
+    case 7055:
+      return VUID_WRAP(VUID-PrimitiveTriangleIndicesEXT-PrimitiveTriangleIndicesEXT-07055);
+    case 7056:
+      return VUID_WRAP(VUID-PrimitiveTriangleIndicesEXT-PrimitiveTriangleIndicesEXT-07056);
     case 7102:
       return VUID_WRAP(VUID-StandaloneSpirv-MeshEXT-07102);
     case 7320:

@@ -606,6 +606,25 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag,
       return false;
     }
     RegisterPass(CreateSwitchDescriptorSetPass(from_set, to_set));
+  } else if (pass_name == "modify-maximal-reconvergence") {
+    if (pass_args.size() == 0) {
+      Error(consumer(), nullptr, {},
+            "--modify-maximal-reconvergence requires an argument");
+      return false;
+    }
+    if (pass_args == "add") {
+      RegisterPass(CreateModifyMaximalReconvergencePass(true));
+    } else if (pass_args == "remove") {
+      RegisterPass(CreateModifyMaximalReconvergencePass(false));
+    } else {
+      Errorf(consumer(), nullptr, {},
+             "Invalid argument for --modify-maximal-reconvergence: %s (must be "
+             "'add' or 'remove')",
+             pass_args.c_str());
+      return false;
+    }
+  } else if (pass_name == "trim-capabilities") {
+    RegisterPass(CreateTrimCapabilitiesPass());
   } else {
     Errorf(consumer(), nullptr, {},
            "Unknown flag '--%s'. Use --help for a list of valid flags",
@@ -1140,6 +1159,11 @@ Optimizer::PassToken CreateSwitchDescriptorSetPass(uint32_t from, uint32_t to) {
 Optimizer::PassToken CreateInvocationInterlockPlacementPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::InvocationInterlockPlacementPass>());
+}
+
+Optimizer::PassToken CreateModifyMaximalReconvergencePass(bool add) {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::ModifyMaximalReconvergence>(add));
 }
 }  // namespace spvtools
 

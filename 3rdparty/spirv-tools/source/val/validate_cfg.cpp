@@ -190,6 +190,8 @@ spv_result_t ValidateBranchConditional(ValidationState_t& _,
               "ID of an OpLabel instruction";
   }
 
+  // A similar requirement for SPV_KHR_maximal_reconvergence is deferred until
+  // entry point call trees have been reconrded.
   if (_.version() >= SPV_SPIRV_VERSION_WORD(1, 6) && true_id == false_id) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "In SPIR-V 1.6 or later, True Label and False Label must be "
@@ -875,6 +877,95 @@ spv_result_t StructuredControlFlowChecks(
   return SPV_SUCCESS;
 }
 
+spv_result_t MaximalReconvergenceChecks(ValidationState_t& _) {
+  // Find all the entry points with the MaximallyReconvergencesKHR execution
+  // mode.
+  std::unordered_set<uint32_t> maximal_funcs;
+  std::unordered_set<uint32_t> maximal_entry_points;
+  for (auto entry_point : _.entry_points()) {
+    const auto* exec_modes = _.GetExecutionModes(entry_point);
+    if (exec_modes &&
+        exec_modes->count(spv::ExecutionMode::MaximallyReconvergesKHR)) {
+      maximal_entry_points.insert(entry_point);
+      maximal_funcs.insert(entry_point);
+    }
+  }
+
+  if (maximal_entry_points.empty()) {
+    return SPV_SUCCESS;
+  }
+
+  // Find all the functions reachable from a maximal reconvergence entry point.
+  for (const auto& func : _.functions()) {
+    const auto& entry_points = _.EntryPointReferences(func.id());
+    for (auto id : entry_points) {
+      if (maximal_entry_points.count(id)) {
+        maximal_funcs.insert(func.id());
+        break;
+      }
+    }
+  }
+
+  // Check for conditional branches with the same true and false targets.
+  for (const auto& inst : _.ordered_instructions()) {
+    if (inst.opcode() == spv::Op::OpBranchConditional) {
+      const auto true_id = inst.GetOperandAs<uint32_t>(1);
+      const auto false_id = inst.GetOperandAs<uint32_t>(2);
+      if (true_id == false_id && maximal_funcs.count(inst.function()->id())) {
+        return _.diag(SPV_ERROR_INVALID_ID, &inst)
+               << "In entry points using the MaximallyReconvergesKHR execution "
+                  "mode, True Label and False Label must be different labels";
+      }
+    }
+  }
+
+  // Check for invalid multiple predecessors. Only loop headers, continue
+  // targets, merge targets or switch targets or defaults may have multiple
+  // unique predecessors.
+  for (const auto& func : _.functions()) {
+    if (!maximal_funcs.count(func.id())) continue;
+
+    for (const auto* block : func.ordered_blocks()) {
+      std::unordered_set<uint32_t> unique_preds;
+      const auto* preds = block->predecessors();
+      if (!preds) continue;
+
+      for (const auto* pred : *preds) {
+        unique_preds.insert(pred->id());
+      }
+      if (unique_preds.size() < 2) continue;
+
+      const auto* terminator = block->terminator();
+      const auto index = terminator - &_.ordered_instructions()[0];
+      const auto* pre_terminator = &_.ordered_instructions()[index - 1];
+      if (pre_terminator->opcode() == spv::Op::OpLoopMerge) continue;
+
+      const auto* label = _.FindDef(block->id());
+      bool ok = false;
+      for (const auto& pair : label->uses()) {
+        const auto* use_inst = pair.first;
+        switch (use_inst->opcode()) {
+          case spv::Op::OpSelectionMerge:
+          case spv::Op::OpLoopMerge:
+          case spv::Op::OpSwitch:
+            ok = true;
+            break;
+          default:
+            break;
+        }
+      }
+      if (!ok) {
+        return _.diag(SPV_ERROR_INVALID_CFG, label)
+               << "In entry points using the MaximallyReconvergesKHR "
+                  "execution mode, this basic block must not have multiple "
+                  "unique predecessors";
+      }
+    }
+  }
+
+  return SPV_SUCCESS;
+}
+
 spv_result_t PerformCfgChecks(ValidationState_t& _) {
   for (auto& function : _.functions()) {
     // Check all referenced blocks are defined within a function
@@ -999,6 +1090,11 @@ spv_result_t PerformCfgChecks(ValidationState_t& _) {
         return error;
     }
   }
+
+  if (auto error = MaximalReconvergenceChecks(_)) {
+    return error;
+  }
+
   return SPV_SUCCESS;
 }
 

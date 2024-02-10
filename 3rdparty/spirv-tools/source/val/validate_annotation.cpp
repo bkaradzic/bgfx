@@ -267,6 +267,34 @@ spv_result_t ValidateDecorate(ValidationState_t& _, const Instruction* inst) {
     }
   }
 
+  if (decoration == spv::Decoration::FPFastMathMode) {
+    if (_.HasDecoration(target_id, spv::Decoration::NoContraction)) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "FPFastMathMode and NoContraction cannot decorate the same "
+                "target";
+    }
+    auto mask = inst->GetOperandAs<spv::FPFastMathModeMask>(2);
+    if ((mask & spv::FPFastMathModeMask::AllowTransform) !=
+            spv::FPFastMathModeMask::MaskNone &&
+        ((mask & (spv::FPFastMathModeMask::AllowContract |
+                  spv::FPFastMathModeMask::AllowReassoc)) !=
+         (spv::FPFastMathModeMask::AllowContract |
+          spv::FPFastMathModeMask::AllowReassoc))) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "AllowReassoc and AllowContract must be specified when "
+                "AllowTransform is specified";
+    }
+  }
+
+  // This is checked from both sides since we register decorations as we go.
+  if (decoration == spv::Decoration::NoContraction) {
+    if (_.HasDecoration(target_id, spv::Decoration::FPFastMathMode)) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "FPFastMathMode and NoContraction cannot decorate the same "
+                "target";
+    }
+  }
+
   if (DecorationTakesIdParameters(decoration)) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "Decorations taking ID parameters may not be used with "

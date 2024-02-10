@@ -65,6 +65,7 @@
 #include "source/opt/loop_unroller.h"
 #include "source/opt/loop_unswitch_pass.h"
 #include "source/opt/merge_return_pass.h"
+#include "source/opt/modify_maximal_reconvergence.h"
 #include "source/opt/null_pass.h"
 #include "source/opt/private_to_local_pass.h"
 #include "source/opt/reduce_load_size.h"

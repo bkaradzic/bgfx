@@ -448,6 +448,17 @@ void TrimCapabilitiesPass::addInstructionRequirementsForOperand(
     return;
   }
 
+  // If the Vulkan memory model is declared and any instruction uses Device
+  // scope, the VulkanMemoryModelDeviceScope capability must be declared. This
+  // rule cannot be covered by the grammar, so must be checked explicitly.
+  if (operand.type == SPV_OPERAND_TYPE_SCOPE_ID) {
+    const Instruction* memory_model = context()->GetMemoryModel();
+    if (memory_model && memory_model->GetSingleWordInOperand(1u) ==
+                            uint32_t(spv::MemoryModel::Vulkan)) {
+      capabilities->insert(spv::Capability::VulkanMemoryModelDeviceScope);
+    }
+  }
+
   // case 1: Operand is a single value, can directly lookup.
   if (!spvOperandIsConcreteMask(operand.type)) {
     const spv_operand_desc_t* desc = {};

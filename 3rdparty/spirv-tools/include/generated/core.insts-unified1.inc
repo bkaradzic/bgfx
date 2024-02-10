@@ -44,6 +44,7 @@ static const spv::Capability pygen_variable_caps_Kernel[] = {spv::Capability::Ke
 static const spv::Capability pygen_variable_caps_KernelImageQuery[] = {spv::Capability::Kernel, spv::Capability::ImageQuery};
 static const spv::Capability pygen_variable_caps_LiteralSampler[] = {spv::Capability::LiteralSampler};
 static const spv::Capability pygen_variable_caps_LongCompositesINTEL[] = {spv::Capability::LongCompositesINTEL};
+static const spv::Capability pygen_variable_caps_MaskedGatherScatterINTEL[] = {spv::Capability::MaskedGatherScatterINTEL};
 static const spv::Capability pygen_variable_caps_Matrix[] = {spv::Capability::Matrix};
 static const spv::Capability pygen_variable_caps_MemoryAccessAliasingINTEL[] = {spv::Capability::MemoryAccessAliasingINTEL};
 static const spv::Capability pygen_variable_caps_MeshShadingEXT[] = {spv::Capability::MeshShadingEXT};
@@ -51,6 +52,7 @@ static const spv::Capability pygen_variable_caps_MeshShadingNV[] = {spv::Capabil
 static const spv::Capability pygen_variable_caps_NamedBarrier[] = {spv::Capability::NamedBarrier};
 static const spv::Capability pygen_variable_caps_PipeStorage[] = {spv::Capability::PipeStorage};
 static const spv::Capability pygen_variable_caps_Pipes[] = {spv::Capability::Pipes};
+static const spv::Capability pygen_variable_caps_QuadControlKHR[] = {spv::Capability::QuadControlKHR};
 static const spv::Capability pygen_variable_caps_RayQueryKHR[] = {spv::Capability::RayQueryKHR};
 static const spv::Capability pygen_variable_caps_RayQueryPositionFetchKHR[] = {spv::Capability::RayQueryPositionFetchKHR};
 static const spv::Capability pygen_variable_caps_RayTracingKHR[] = {spv::Capability::RayTracingKHR};
@@ -520,6 +522,8 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"FinalizeNodePayloadsAMDX", spv::Op::OpFinalizeNodePayloadsAMDX, 1, pygen_variable_caps_ShaderEnqueueAMDX, 1, {SPV_OPERAND_TYPE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"FinishWritingNodePayloadAMDX", spv::Op::OpFinishWritingNodePayloadAMDX, 1, pygen_variable_caps_ShaderEnqueueAMDX, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"InitializeNodePayloadsAMDX", spv::Op::OpInitializeNodePayloadsAMDX, 1, pygen_variable_caps_ShaderEnqueueAMDX, 4, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"GroupNonUniformQuadAllKHR", spv::Op::OpGroupNonUniformQuadAllKHR, 1, pygen_variable_caps_QuadControlKHR, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"GroupNonUniformQuadAnyKHR", spv::Op::OpGroupNonUniformQuadAnyKHR, 1, pygen_variable_caps_QuadControlKHR, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"HitObjectRecordHitMotionNV", spv::Op::OpHitObjectRecordHitMotionNV, 2, pygen_variable_caps_ShaderInvocationReorderNVRayTracingMotionBlurNV, 14, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"HitObjectRecordHitWithIndexMotionNV", spv::Op::OpHitObjectRecordHitWithIndexMotionNV, 2, pygen_variable_caps_ShaderInvocationReorderNVRayTracingMotionBlurNV, 13, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"HitObjectRecordMissMotionNV", spv::Op::OpHitObjectRecordMissMotionNV, 2, pygen_variable_caps_ShaderInvocationReorderNVRayTracingMotionBlurNV, 7, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
@@ -841,5 +845,7 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"GroupBitwiseXorKHR", spv::Op::OpGroupBitwiseXorKHR, 1, pygen_variable_caps_GroupUniformArithmeticKHR, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"GroupLogicalAndKHR", spv::Op::OpGroupLogicalAndKHR, 1, pygen_variable_caps_GroupUniformArithmeticKHR, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"GroupLogicalOrKHR", spv::Op::OpGroupLogicalOrKHR, 1, pygen_variable_caps_GroupUniformArithmeticKHR, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
-  {"GroupLogicalXorKHR", spv::Op::OpGroupLogicalXorKHR, 1, pygen_variable_caps_GroupUniformArithmeticKHR, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu}
+  {"GroupLogicalXorKHR", spv::Op::OpGroupLogicalXorKHR, 1, pygen_variable_caps_GroupUniformArithmeticKHR, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"MaskedGatherINTEL", spv::Op::OpMaskedGatherINTEL, 1, pygen_variable_caps_MaskedGatherScatterINTEL, 6, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"MaskedScatterINTEL", spv::Op::OpMaskedScatterINTEL, 1, pygen_variable_caps_MaskedGatherScatterINTEL, 4, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_ID}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu}
 };
