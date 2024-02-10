@@ -1938,10 +1938,14 @@ void CompilerMSL::extract_global_variables_from_function(uint32_t func_id, std::
 				// When using the pointer, we need to know which variable it is actually loaded from.
 				uint32_t base_id = ops[2];
 				auto *var = maybe_get_backing_variable(base_id);
-				if (var && atomic_image_vars_emulated.count(var->self))
+				if (var)
 				{
-					if (!get<SPIRType>(var->basetype).array.empty())
-						SPIRV_CROSS_THROW("Cannot emulate array of storage images with atomics. Use MSL 3.1 for native support.");
+					if (atomic_image_vars_emulated.count(var->self) &&
+					    !get<SPIRType>(var->basetype).array.empty())
+					{
+						SPIRV_CROSS_THROW(
+								"Cannot emulate array of storage images with atomics. Use MSL 3.1 for native support.");
+					}
 
 					if (global_var_ids.find(base_id) != global_var_ids.end())
 						added_arg_ids.insert(base_id);
@@ -7412,19 +7416,28 @@ void CompilerMSL::emit_custom_functions()
 			break;
 
 		case SPVFuncImplVariableDescriptorArray:
-			statement("template<typename T>");
-			statement("struct spvDescriptorArray");
-			begin_scope();
-			statement("spvDescriptorArray(const device spvDescriptor<T>* ptr) : ptr(ptr)");
-			begin_scope();
-			end_scope();
-			statement("const device T& operator [] (size_t i) const");
-			begin_scope();
-			statement("return ptr[i].value;");
-			end_scope();
-			statement("const device spvDescriptor<T>* ptr;");
-			end_scope_decl();
-			statement("");
+			if (spv_function_implementations.count(SPVFuncImplVariableDescriptor) != 0)
+			{
+				statement("template<typename T>");
+				statement("struct spvDescriptorArray");
+				begin_scope();
+				statement("spvDescriptorArray(const device spvDescriptor<T>* ptr) : ptr(ptr)");
+				begin_scope();
+				end_scope();
+				statement("const device T& operator [] (size_t i) const");
+				begin_scope();
+				statement("return ptr[i].value;");
+				end_scope();
+				statement("const device spvDescriptor<T>* ptr;");
+				end_scope_decl();
+				statement("");
+			}
+			else
+			{
+				statement("template<typename T>");
+				statement("struct spvDescriptorArray;");
+				statement("");
+			}
 
 			if (msl_options.runtime_array_rich_descriptor &&
 			    spv_function_implementations.count(SPVFuncImplVariableSizedDescriptor) != 0)
@@ -7455,6 +7468,22 @@ void CompilerMSL::emit_custom_functions()
 			statement("struct spvPaddedStd140 { alignas(16) T data; };");
 			statement("template <typename T, int n>");
 			statement("using spvPaddedStd140Matrix = spvPaddedStd140<T>[n];");
+			statement("");
+			break;
+
+		case SPVFuncImplReduceAdd:
+			// Metal doesn't support __builtin_reduce_add or simd_reduce_add, so we need this.
+			// Metal also doesn't support the other vector builtins, which would have been useful to make this a single template.
+
+			statement("template <typename T>");
+			statement("T reduce_add(vec<T, 2> v) { return v.x + v.y; }");
+
+			statement("template <typename T>");
+			statement("T reduce_add(vec<T, 3> v) { return v.x + v.y + v.z; }");
+
+			statement("template <typename T>");
+			statement("T reduce_add(vec<T, 4> v) { return v.x + v.y + v.z + v.w; }");
+
 			statement("");
 			break;
 
@@ -9641,6 +9670,132 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		break;
 	}
 
+	case OpSDot:
+	case OpUDot:
+	case OpSUDot:
+	{
+		uint32_t result_type = ops[0];
+		uint32_t id = ops[1];
+		uint32_t vec1 = ops[2];
+		uint32_t vec2 = ops[3];
+
+		auto &input_type1 = expression_type(vec1);
+		auto &input_type2 = expression_type(vec2);
+
+		string vec1input, vec2input;
+		auto input_size = input_type1.vecsize;
+		if (instruction.length == 5)
+		{
+			if (ops[4] == PackedVectorFormatPackedVectorFormat4x8Bit)
+			{
+				string type = opcode == OpSDot || opcode == OpSUDot ? "char4" : "uchar4";
+				vec1input = join("as_type<", type, ">(", to_expression(vec1), ")");
+				type = opcode == OpSDot ? "char4" : "uchar4";
+				vec2input = join("as_type<", type, ">(", to_expression(vec2), ")");
+				input_size = 4;
+			}
+			else
+				SPIRV_CROSS_THROW("Packed vector formats other than 4x8Bit for integer dot product is not supported.");
+		}
+		else
+		{
+			// Inputs are sign or zero-extended to their target width.
+			SPIRType::BaseType vec1_expected_type =
+					opcode != OpUDot ?
+					to_signed_basetype(input_type1.width) :
+					to_unsigned_basetype(input_type1.width);
+
+			SPIRType::BaseType vec2_expected_type =
+					opcode != OpSDot ?
+					to_unsigned_basetype(input_type2.width) :
+					to_signed_basetype(input_type2.width);
+
+			vec1input = bitcast_expression(vec1_expected_type, vec1);
+			vec2input = bitcast_expression(vec2_expected_type, vec2);
+		}
+
+		auto &type = get<SPIRType>(result_type);
+
+		// We'll get the appropriate sign-extend or zero-extend, no matter which type we cast to here.
+		// The addition in reduce_add is sign-invariant.
+		auto result_type_cast = join(type_to_glsl(type), input_size);
+
+		string exp = join("reduce_add(",
+		                  result_type_cast, "(", vec1input, ") * ",
+		                  result_type_cast, "(", vec2input, "))");
+
+		emit_op(result_type, id, exp, should_forward(vec1) && should_forward(vec2));
+		inherit_expression_dependencies(id, vec1);
+		inherit_expression_dependencies(id, vec2);
+		break;
+	}
+
+	case OpSDotAccSat:
+	case OpUDotAccSat:
+	case OpSUDotAccSat:
+	{
+		uint32_t result_type = ops[0];
+		uint32_t id = ops[1];
+		uint32_t vec1 = ops[2];
+		uint32_t vec2 = ops[3];
+		uint32_t acc = ops[4];
+
+		auto input_type1 = expression_type(vec1);
+		auto input_type2 = expression_type(vec2);
+
+		string vec1input, vec2input;
+		if (instruction.length == 6)
+		{
+			if (ops[5] == PackedVectorFormatPackedVectorFormat4x8Bit)
+			{
+				string type = opcode == OpSDotAccSat || opcode == OpSUDotAccSat ? "char4" : "uchar4";
+				vec1input = join("as_type<", type, ">(", to_expression(vec1), ")");
+				type = opcode == OpSDotAccSat ? "char4" : "uchar4";
+				vec2input = join("as_type<", type, ">(", to_expression(vec2), ")");
+				input_type1.vecsize = 4;
+				input_type2.vecsize = 4;
+			}
+			else
+				SPIRV_CROSS_THROW("Packed vector formats other than 4x8Bit for integer dot product is not supported.");
+		}
+		else
+		{
+			// Inputs are sign or zero-extended to their target width.
+			SPIRType::BaseType vec1_expected_type =
+					opcode != OpUDotAccSat ?
+					to_signed_basetype(input_type1.width) :
+					to_unsigned_basetype(input_type1.width);
+
+			SPIRType::BaseType vec2_expected_type =
+					opcode != OpSDotAccSat ?
+					to_unsigned_basetype(input_type2.width) :
+					to_signed_basetype(input_type2.width);
+
+			vec1input = bitcast_expression(vec1_expected_type, vec1);
+			vec2input = bitcast_expression(vec2_expected_type, vec2);
+		}
+
+		auto &type = get<SPIRType>(result_type);
+
+		SPIRType::BaseType pre_saturate_type =
+				opcode != OpUDotAccSat ?
+				to_signed_basetype(type.width) :
+				to_unsigned_basetype(type.width);
+
+		input_type1.basetype = pre_saturate_type;
+		input_type2.basetype = pre_saturate_type;
+
+		string exp = join(type_to_glsl(type), "(addsat(reduce_add(",
+		                  type_to_glsl(input_type1), "(", vec1input, ") * ",
+		                  type_to_glsl(input_type2), "(", vec2input, ")), ",
+						  bitcast_expression(pre_saturate_type, acc), "))");
+
+		emit_op(result_type, id, exp, should_forward(vec1) && should_forward(vec2));
+		inherit_expression_dependencies(id, vec1);
+		inherit_expression_dependencies(id, vec2);
+		break;
+	}
+
 	default:
 		CompilerGLSL::emit_instruction(instruction);
 		break;
@@ -10052,6 +10207,9 @@ void CompilerMSL::emit_atomic_func_op(uint32_t result_type, uint32_t result_id, 
 		// Emulate texture2D atomic operations
 		if (res_type.storage == StorageClassUniformConstant && res_type.basetype == SPIRType::Image)
 		{
+			auto &flags = ir.get_decoration_bitset(var->self);
+			if (decoration_flags_signal_volatile(flags))
+				exp += "volatile ";
 			exp += "device";
 		}
 		else
@@ -12708,6 +12866,11 @@ string CompilerMSL::get_argument_address_space(const SPIRVariable &argument)
 	return get_type_address_space(type, argument.self, true);
 }
 
+bool CompilerMSL::decoration_flags_signal_volatile(const Bitset &flags)
+{
+	return flags.get(DecorationVolatile) || flags.get(DecorationCoherent);
+}
+
 string CompilerMSL::get_type_address_space(const SPIRType &type, uint32_t id, bool argument)
 {
 	// This can be called for variable pointer contexts as well, so be very careful about which method we choose.
@@ -12817,7 +12980,7 @@ string CompilerMSL::get_type_address_space(const SPIRType &type, uint32_t id, bo
 		addr_space = type.pointer || (argument && type.basetype == SPIRType::ControlPointArray) ? "thread" : "";
 	}
 
-	return join(flags.get(DecorationVolatile) || flags.get(DecorationCoherent) ? "volatile " : "", addr_space);
+	return join(decoration_flags_signal_volatile(flags) ? "volatile " : "", addr_space);
 }
 
 const char *CompilerMSL::to_restrict(uint32_t id, bool space)
@@ -13551,7 +13714,9 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 			// Emulate texture2D atomic operations
 			if (atomic_image_vars_emulated.count(var.self))
 			{
-				ep_args += ", device atomic_" + type_to_glsl(get<SPIRType>(basetype.image.type), 0);
+				auto &flags = ir.get_decoration_bitset(var.self);
+				const char *cv_flags = decoration_flags_signal_volatile(flags) ? "volatile " : "";
+				ep_args += join(", ", cv_flags, "device atomic_", type_to_glsl(get<SPIRType>(basetype.image.type), 0));
 				ep_args += "* " + r.name + "_atomic";
 				ep_args += " [[buffer(" + convert_to_string(r.secondary_index) + ")";
 				if (interlocked_resources.count(var_id))
@@ -14646,7 +14811,9 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 	auto *backing_var = maybe_get_backing_variable(name_id);
 	if (backing_var && atomic_image_vars_emulated.count(backing_var->self))
 	{
-		decl += ", device atomic_" + type_to_glsl(get<SPIRType>(var_type.image.type), 0);
+		auto &flags = ir.get_decoration_bitset(backing_var->self);
+		const char *cv_flags = decoration_flags_signal_volatile(flags) ? "volatile " : "";
+		decl += join(", ", cv_flags, "device atomic_", type_to_glsl(get<SPIRType>(var_type.image.type), 0));
 		decl += "* " + to_expression(name_id) + "_atomic";
 	}
 
@@ -17265,6 +17432,14 @@ CompilerMSL::SPVFuncImpl CompilerMSL::OpCodePreprocessor::get_spv_func_impl(Op o
 
 	case OpGroupNonUniformQuadSwap:
 		return SPVFuncImplQuadSwap;
+
+	case OpSDot:
+	case OpUDot:
+	case OpSUDot:
+	case OpSDotAccSat:
+	case OpUDotAccSat:
+	case OpSUDotAccSat:
+		return SPVFuncImplReduceAdd;
 
 	default:
 		break;

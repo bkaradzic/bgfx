@@ -833,7 +833,9 @@ protected:
 	bool buffer_is_packing_standard(const SPIRType &type, BufferPackingStandard packing,
 	                                uint32_t *failed_index = nullptr, uint32_t start_offset = 0,
 	                                uint32_t end_offset = ~(0u));
-	std::string buffer_to_packing_standard(const SPIRType &type, bool support_std430_without_scalar_layout);
+	std::string buffer_to_packing_standard(const SPIRType &type,
+	                                       bool support_std430_without_scalar_layout,
+	                                       bool support_enhanced_layouts);
 
 	uint32_t type_to_packed_base_size(const SPIRType &type, BufferPackingStandard packing);
 	uint32_t type_to_packed_alignment(const SPIRType &type, const Bitset &flags, BufferPackingStandard packing);
