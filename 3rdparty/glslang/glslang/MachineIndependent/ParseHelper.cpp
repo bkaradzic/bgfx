@@ -1351,6 +1351,10 @@ TIntermTyped* TParseContext::handleFunctionCall(const TSourceLoc& loc, TFunction
             //  - a user function.
 
             // Error check for a function requiring specific extensions present.
+            if (builtIn &&
+                (fnCandidate->getBuiltInOp() == EOpSubgroupQuadAll || fnCandidate->getBuiltInOp() == EOpSubgroupQuadAny))
+                requireExtensions(loc, 1, &E_GL_EXT_shader_quad_control, fnCandidate->getName().c_str());
+
             if (builtIn && fnCandidate->getNumExtensions())
                 requireExtensions(loc, fnCandidate->getNumExtensions(), fnCandidate->getExtensions(), fnCandidate->getName().c_str());
 
@@ -3986,6 +3990,18 @@ void TParseContext::globalQualifierFixCheck(const TSourceLoc& loc, TQualifier& q
     // Storage qualifier isn't ready for memberQualifierCheck, we should skip invariantCheck for it.
     if (!isMemberCheck || structNestingLevel > 0)
         invariantCheck(loc, qualifier);
+
+    if (qualifier.isFullQuads()) {
+        if (qualifier.storage != EvqVaryingIn)
+            error(loc, "can only apply to input layout", "full_quads ", "");
+        intermediate.setReqFullQuadsMode();
+    }
+
+    if (qualifier.isQuadDeriv()) {
+        if (qualifier.storage != EvqVaryingIn)
+            error(loc, "can only apply to input layout", "quad_derivatives", "");
+        intermediate.setQuadDerivMode();
+    }
 }
 
 //
@@ -5859,6 +5875,15 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
             publicType.shaderQualifiers.layoutOverrideCoverage = true;
             return;
         }
+        if (id == "full_quads")
+        {
+            const char* feature = "full_quads qualifier";
+            requireProfile(loc, ECompatibilityProfile | ECoreProfile | EEsProfile, feature);
+            profileRequires(loc, ECoreProfile | ECompatibilityProfile, 140, E_GL_EXT_shader_quad_control, feature);
+            profileRequires(loc, EEsProfile, 310, E_GL_EXT_shader_quad_control, feature);
+            publicType.qualifier.layoutFullQuads = true;
+            return;
+        }
     }
     if (language == EShLangVertex ||
         language == EShLangTessControl ||
@@ -5905,6 +5930,16 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
     if (id == "primitive_culling") {
         requireExtensions(loc, 1, &E_GL_EXT_ray_flags_primitive_culling, "primitive culling");
         publicType.shaderQualifiers.layoutPrimitiveCulling = true;
+        return;
+    }
+
+    if (id == "quad_derivatives")
+    {
+        const char* feature = "quad_derivatives qualifier";
+        requireProfile(loc, ECompatibilityProfile | ECoreProfile | EEsProfile, feature);
+        profileRequires(loc, ECoreProfile | ECompatibilityProfile, 140, E_GL_EXT_shader_quad_control, feature);
+        profileRequires(loc, EEsProfile, 310, E_GL_EXT_shader_quad_control, feature);
+        publicType.qualifier.layoutQuadDeriv = true;
         return;
     }
 
@@ -6336,6 +6371,10 @@ void TParseContext::mergeObjectLayoutQualifiers(TQualifier& dst, const TQualifie
             dst.layoutSecondaryViewportRelativeOffset = src.layoutSecondaryViewportRelativeOffset;
         if (src.layoutShaderRecord)
             dst.layoutShaderRecord = true;
+        if (src.layoutFullQuads)
+            dst.layoutFullQuads = true;
+        if (src.layoutQuadDeriv)
+            dst.layoutQuadDeriv = true;
         if (src.layoutBindlessSampler)
             dst.layoutBindlessSampler = true;
         if (src.layoutBindlessImage)

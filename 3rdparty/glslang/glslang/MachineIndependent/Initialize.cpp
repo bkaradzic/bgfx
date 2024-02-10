@@ -2,7 +2,7 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2016 LunarG, Inc.
 // Copyright (C) 2015-2020 Google, Inc.
-// Copyright (C) 2017 ARM Limited.
+// Copyright (C) 2017, 2022-2024 Arm Limited.
 // Modifications Copyright (C) 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
@@ -2099,6 +2099,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "%s     subgroupShuffleXor(%s, uint);\n",
             "%s     subgroupShuffleUp(%s, uint delta);\n",
             "%s     subgroupShuffleDown(%s, uint delta);\n",
+            "%s     subgroupRotate(%s, uint);\n",
+            "%s     subgroupClusteredRotate(%s, uint, uint);\n",
             "%s     subgroupAdd(%s);\n",
             "%s     subgroupMul(%s);\n",
             "%s     subgroupMin(%s);\n",
@@ -2224,6 +2226,15 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangTask].append(
             "void subgroupMemoryBarrierShared();"
             "\n"
+            );
+    }
+
+    // GL_EXT_shader_quad_control
+    if ((profile == EEsProfile && version >= 310) ||
+        (profile != EEsProfile && version >= 140)) {
+        commonBuiltins.append(
+            "bool subgroupQuadAll(bool);\n"
+            "bool subgroupQuadAny(bool);\n"
             );
     }
 
@@ -8661,6 +8672,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("subgroupShuffleXor",              1, &E_GL_KHR_shader_subgroup_shuffle);
             symbolTable.setFunctionExtensions("subgroupShuffleUp",               1, &E_GL_KHR_shader_subgroup_shuffle_relative);
             symbolTable.setFunctionExtensions("subgroupShuffleDown",             1, &E_GL_KHR_shader_subgroup_shuffle_relative);
+            symbolTable.setFunctionExtensions("subgroupRotate",                  1, &E_GL_KHR_shader_subgroup_rotate);
+            symbolTable.setFunctionExtensions("subgroupClusteredRotate",         1, &E_GL_KHR_shader_subgroup_rotate);
             symbolTable.setFunctionExtensions("subgroupAdd",                     1, &E_GL_KHR_shader_subgroup_arithmetic);
             symbolTable.setFunctionExtensions("subgroupMul",                     1, &E_GL_KHR_shader_subgroup_arithmetic);
             symbolTable.setFunctionExtensions("subgroupMin",                     1, &E_GL_KHR_shader_subgroup_arithmetic);
@@ -8777,6 +8790,13 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setVariableExtensions("gl_ShadingRateFlag4VerticalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
             symbolTable.setVariableExtensions("gl_ShadingRateFlag2HorizontalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
             symbolTable.setVariableExtensions("gl_ShadingRateFlag4HorizontalPixelsEXT", 1, &E_GL_EXT_fragment_shading_rate);
+        }
+
+        // GL_EXT_shader_quad_control
+        if ((profile != EEsProfile && version >= 140) ||
+            (profile == EEsProfile && version >= 310)) {
+            symbolTable.setFunctionExtensions("subgroupQuadAll",                     1,  &E_GL_KHR_shader_subgroup_vote);
+            symbolTable.setFunctionExtensions("subgroupQuadAny",                     1,  &E_GL_KHR_shader_subgroup_vote);
         }
 
         // GL_EXT_shader_tile_image
@@ -9915,6 +9935,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.relateToOperator("subgroupShuffleXor",              EOpSubgroupShuffleXor);
             symbolTable.relateToOperator("subgroupShuffleUp",               EOpSubgroupShuffleUp);
             symbolTable.relateToOperator("subgroupShuffleDown",             EOpSubgroupShuffleDown);
+            symbolTable.relateToOperator("subgroupRotate",                  EOpSubgroupRotate);
+            symbolTable.relateToOperator("subgroupClusteredRotate",         EOpSubgroupClusteredRotate);
             symbolTable.relateToOperator("subgroupAdd",                     EOpSubgroupAdd);
             symbolTable.relateToOperator("subgroupMul",                     EOpSubgroupMul);
             symbolTable.relateToOperator("subgroupMin",                     EOpSubgroupMin);
@@ -9975,6 +9997,13 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         if (profile == EEsProfile) {
             symbolTable.relateToOperator("shadow2DEXT",              EOpTexture);
             symbolTable.relateToOperator("shadow2DProjEXT",          EOpTextureProj);
+        }
+
+        // GL_EXT_shader_quad_control
+        if ((profile == EEsProfile && version >= 310) ||
+            (profile != EEsProfile && version >= 140)) {
+            symbolTable.relateToOperator("subgroupQuadAll",                     EOpSubgroupQuadAll);
+            symbolTable.relateToOperator("subgroupQuadAny",                     EOpSubgroupQuadAny);
         }
 
         if ((profile == EEsProfile && version >= 310) ||

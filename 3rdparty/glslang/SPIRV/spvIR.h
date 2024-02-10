@@ -56,6 +56,7 @@
 #include <memory>
 #include <vector>
 #include <set>
+#include <optional>
 
 namespace spv {
 
@@ -190,6 +191,12 @@ protected:
 // SPIR-V IR block.
 //
 
+struct DebugSourceLocation {
+    int line;
+    int column;
+    spv::Id fileId;
+};
+
 class Block {
 public:
     Block(Id id, Function& parent);
@@ -200,6 +207,28 @@ public:
     Id getId() { return instructions.front()->getResultId(); }
 
     Function& getParent() const { return parent; }
+    // Returns true if the source location is actually updated.
+    // Note we still need the builder to insert the line marker instruction. This is just a tracker.
+    bool updateDebugSourceLocation(int line, int column, spv::Id fileId) {
+        if (currentSourceLoc && currentSourceLoc->line == line && currentSourceLoc->column == column &&
+            currentSourceLoc->fileId == fileId) {
+            return false;
+        }
+
+        currentSourceLoc = DebugSourceLocation{line, column, fileId};
+        return true;
+    }
+    // Returns true if the scope is actually updated.
+    // Note we still need the builder to insert the debug scope instruction. This is just a tracker.
+    bool updateDebugScope(spv::Id scopeId) {
+        assert(scopeId);
+        if (currentDebugScope && *currentDebugScope == scopeId) {
+            return false;
+        }
+
+        currentDebugScope = scopeId;
+        return true;
+    }
     void addInstruction(std::unique_ptr<Instruction> inst);
     void addPredecessor(Block* pred) { predecessors.push_back(pred); pred->successors.push_back(this);}
     void addLocalVariable(std::unique_ptr<Instruction> inst) { localVariables.push_back(std::move(inst)); }
@@ -291,6 +320,12 @@ protected:
     std::vector<Block*> predecessors, successors;
     std::vector<std::unique_ptr<Instruction> > localVariables;
     Function& parent;
+
+    // Track source location of the last source location marker instruction.
+    std::optional<DebugSourceLocation> currentSourceLoc;
+
+    // Track scope of the last debug scope instruction.
+    std::optional<spv::Id> currentDebugScope;
 
     // track whether this block is known to be uncreachable (not necessarily
     // true for all unreachable blocks, but should be set at least

@@ -1,5 +1,6 @@
 //
 // Copyright (C) 2014-2015 LunarG, Inc.
+// Copyright (C) 2022-2024 Arm Limited.
 // Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
@@ -198,6 +199,7 @@ const char* ExecutionModeString(int mode)
     case ExecutionModeStencilRefGreaterBackAMD:      return "StencilRefGreaterBackAMD";
     case ExecutionModeStencilRefReplacingEXT:        return "StencilRefReplacingEXT";
     case ExecutionModeSubgroupUniformControlFlowKHR: return "SubgroupUniformControlFlow";
+    case ExecutionModeMaximallyReconvergesKHR:       return "MaximallyReconverges";
 
     case ExecutionModeOutputLinesNV:                 return "OutputLinesNV";
     case ExecutionModeOutputPrimitivesNV:            return "OutputPrimitivesNV";
@@ -216,6 +218,9 @@ const char* ExecutionModeString(int mode)
     case ExecutionModeMaxWorkDimINTEL:          return "MaxWorkDimINTEL";
     case ExecutionModeNoGlobalOffsetINTEL:      return "NoGlobalOffsetINTEL";
     case ExecutionModeNumSIMDWorkitemsINTEL:    return "NumSIMDWorkitemsINTEL";
+
+    case ExecutionModeRequireFullQuadsKHR:      return "RequireFullQuadsKHR";
+    case ExecutionModeQuadDerivativesKHR:       return "QuadDerivativesKHR";
 
     case ExecutionModeNonCoherentColorAttachmentReadEXT:        return "NonCoherentColorAttachmentReadEXT";
     case ExecutionModeNonCoherentDepthAttachmentReadEXT:        return "NonCoherentDepthAttachmentReadEXT";
@@ -938,6 +943,7 @@ const char* CapabilityString(int info)
     case CapabilitySubgroupBallotKHR: return "SubgroupBallotKHR";
     case CapabilityDrawParameters:    return "DrawParameters";
     case CapabilitySubgroupVoteKHR:   return "SubgroupVoteKHR";
+    case CapabilityGroupNonUniformRotateKHR: return "CapabilityGroupNonUniformRotateKHR";
 
     case CapabilityStorageUniformBufferBlock16: return "StorageUniformBufferBlock16";
     case CapabilityStorageUniform16:            return "StorageUniform16";
@@ -1032,6 +1038,7 @@ const char* CapabilityString(int info)
 
     case CapabilityDemoteToHelperInvocationEXT:             return "DemoteToHelperInvocationEXT";
     case CapabilityShaderClockKHR:                          return "ShaderClockKHR";
+    case CapabilityQuadControlKHR:                          return "QuadControlKHR";
     case CapabilityInt64ImageEXT:                           return "Int64ImageEXT";
 
     case CapabilityIntegerFunctions2INTEL:              return "CapabilityIntegerFunctions2INTEL";
@@ -1432,9 +1439,15 @@ const char* OpcodeString(int op)
     case 4430: return "OpSubgroupAllEqualKHR";
     case 4432: return "OpSubgroupReadInvocationKHR";
 
+    case OpGroupNonUniformQuadAllKHR: return "OpGroupNonUniformQuadAllKHR";
+    case OpGroupNonUniformQuadAnyKHR: return "OpGroupNonUniformQuadAnyKHR";
+
     case OpAtomicFAddEXT: return "OpAtomicFAddEXT";
     case OpAtomicFMinEXT: return "OpAtomicFMinEXT";
     case OpAtomicFMaxEXT: return "OpAtomicFMaxEXT";
+
+    case OpAssumeTrueKHR: return "OpAssumeTrueKHR";
+    case OpExpectKHR: return "OpExpectKHR";
 
     case 5000: return "OpGroupIAddNonUniformAMD";
     case 5001: return "OpGroupFAddNonUniformAMD";
@@ -1471,6 +1484,8 @@ const char* OpcodeString(int op)
     case OpWritePackedPrimitiveIndices4x8NV: return "OpWritePackedPrimitiveIndices4x8NV";
     case OpEmitMeshTasksEXT:                 return "OpEmitMeshTasksEXT";
     case OpSetMeshOutputsEXT:                return "OpSetMeshOutputsEXT";
+
+    case OpGroupNonUniformRotateKHR:         return "OpGroupNonUniformRotateKHR";
 
     case OpTypeRayQueryKHR:                                                   return "OpTypeRayQueryKHR";
     case OpRayQueryInitializeKHR:                                             return "OpRayQueryInitializeKHR";
@@ -1678,7 +1693,7 @@ void Parameterize()
         InstructionDesc[OpCooperativeMatrixStoreKHR].setResultAndType(false, false);
         InstructionDesc[OpBeginInvocationInterlockEXT].setResultAndType(false, false);
         InstructionDesc[OpEndInvocationInterlockEXT].setResultAndType(false, false);
-
+        InstructionDesc[OpAssumeTrueKHR].setResultAndType(false, false);
         // Specific additional context-dependent operands
 
         ExecutionModeOperands[ExecutionModeInvocations].push(OperandLiteralNumber, "'Number of <<Invocation,invocations>>'");
@@ -2457,6 +2472,11 @@ void Parameterize()
         InstructionDesc[OpAtomicFAddEXT].operands.push(OperandMemorySemantics, "'Semantics'");
         InstructionDesc[OpAtomicFAddEXT].operands.push(OperandId, "'Value'");
 
+        InstructionDesc[OpAssumeTrueKHR].operands.push(OperandId, "'Condition'");
+
+        InstructionDesc[OpExpectKHR].operands.push(OperandId, "'Value'");
+        InstructionDesc[OpExpectKHR].operands.push(OperandId, "'ExpectedValue'");
+
         InstructionDesc[OpAtomicISub].operands.push(OperandId, "'Pointer'");
         InstructionDesc[OpAtomicISub].operands.push(OperandScope, "'Scope'");
         InstructionDesc[OpAtomicISub].operands.push(OperandMemorySemantics, "'Semantics'");
@@ -2885,6 +2905,11 @@ void Parameterize()
         InstructionDesc[OpSubgroupAllEqualKHR].operands.push(OperandScope, "'Execution'");
         InstructionDesc[OpSubgroupAllEqualKHR].operands.push(OperandId, "'Predicate'");
 
+        InstructionDesc[OpGroupNonUniformRotateKHR].operands.push(OperandScope, "'Execution'");
+        InstructionDesc[OpGroupNonUniformRotateKHR].operands.push(OperandId, "'X'");
+        InstructionDesc[OpGroupNonUniformRotateKHR].operands.push(OperandId, "'Delta'");
+        InstructionDesc[OpGroupNonUniformRotateKHR].operands.push(OperandId, "'ClusterSize'", true);
+
         InstructionDesc[OpSubgroupReadInvocationKHR].operands.push(OperandId, "'Value'");
         InstructionDesc[OpSubgroupReadInvocationKHR].operands.push(OperandId, "'Index'");
 
@@ -2931,6 +2956,8 @@ void Parameterize()
 
         InstructionDesc[OpGroupNonUniformPartitionNV].operands.push(OperandId, "X");
 
+        InstructionDesc[OpGroupNonUniformQuadAllKHR].operands.push(OperandId, "'Predicate'");
+        InstructionDesc[OpGroupNonUniformQuadAnyKHR].operands.push(OperandId, "'Predicate'");
         InstructionDesc[OpTypeAccelerationStructureKHR].setResultAndType(true, false);
 
         InstructionDesc[OpTraceNV].operands.push(OperandId, "'Acceleration Structure'");
