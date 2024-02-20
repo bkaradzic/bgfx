@@ -2046,12 +2046,14 @@ namespace bgfx
 
 		m_submit->m_transientVb = createTransientVertexBuffer(_init.limits.transientVbSize);
 		m_submit->m_transientIb = createTransientIndexBuffer(_init.limits.transientIbSize);
+		m_submit->m_startupFlipLatch = -1;
 		frame();
 
 		if (BX_ENABLED(BGFX_CONFIG_MULTITHREADED) )
 		{
 			m_submit->m_transientVb = createTransientVertexBuffer(_init.limits.transientVbSize);
 			m_submit->m_transientIb = createTransientIndexBuffer(_init.limits.transientIbSize);
+			m_submit->m_startupFlipLatch = -1;
 			frame();
 		}
 
@@ -2402,7 +2404,7 @@ namespace bgfx
 	void Context::flip()
 	{
 		if (m_rendererInitialized
-		&& !m_flipped)
+		&& !m_flipped && ++m_render->m_startupFlipLatch > 0)
 		{
 			m_renderCtx->flip();
 			m_flipped = true;

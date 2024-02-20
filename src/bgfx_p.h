@@ -2361,6 +2361,9 @@ namespace bgfx
 
 		CommandBuffer m_cmdPre;
 		CommandBuffer m_cmdPost;
+		// This is a large negative number so that during startup, the incremental by the render thread will not make it positive
+		// When the main thread signals the render thread to start present next frame, the main thread sets this to -1. 
+		int64_t m_startupFlipLatch = -10000;
 
 		template<typename Ty, uint32_t Max>
 		struct FreeHandle
