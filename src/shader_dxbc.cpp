@@ -1970,6 +1970,7 @@ namespace bgfx
 		size += bx::read(_reader, _dxbc.header, _err);
 		_dxbc.shader.shex = false;
 		_dxbc.shader.aon9 = false;
+		_dxbc.shader.dxil = false;
 
 		for (uint32_t ii = 0; ii < _dxbc.header.numChunks; ++ii)
 		{
@@ -2038,6 +2039,14 @@ namespace bgfx
 			case BX_MAKEFOURCC('P', 'S', 'O', '2'): // Pipeline State Object 2
 			case BX_MAKEFOURCC('X', 'N', 'A', 'P'): // ?
 			case BX_MAKEFOURCC('X', 'N', 'A', 'S'): // ?
+				size += chunkSize;
+				break;
+
+			// Detect if it's DXIL
+			case BX_MAKEFOURCC('H', 'A', 'S', 'H'):
+			case BX_MAKEFOURCC('P', 'S', 'V', '0'):
+			case BX_MAKEFOURCC('D', 'X', 'I', 'L'):
+				_dxbc.shader.dxil = true;
 				size += chunkSize;
 				break;
 

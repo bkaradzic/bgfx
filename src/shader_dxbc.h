@@ -703,6 +703,7 @@ namespace bgfx
 		stl::vector<uint8_t> byteCode;
 		bool shex;
 		bool aon9;
+		bool dxil;
 	};
 
 	struct DxbcSFI0
