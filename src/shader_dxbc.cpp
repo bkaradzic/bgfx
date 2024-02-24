@@ -1723,11 +1723,10 @@ namespace bgfx
 			case DxbcOperandType::Imm64:
 				for (uint32_t jj = 0; jj < operand.num; ++jj)
 				{
-					union { uint32_t i; float f; } cast = { operand.un.imm32[jj] };
 					size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
 								, "%s%f"
 								, 0 == jj ? "(" : ", "
-								, cast.f
+								, bx::bit_cast<float>(operand.un.imm32[jj])
 								);
 				}
 
