@@ -605,13 +605,6 @@ namespace bgfx
 		release( (const Memory*)_mem);
 	}
 
-	inline uint32_t castfu(float _value)
-	{
-		union {	float fl; uint32_t ui; } un;
-		un.fl = _value;
-		return un.ui;
-	}
-
 	inline uint64_t packStencil(uint32_t _fstencil, uint32_t _bstencil)
 	{
 		return (uint64_t(_bstencil)<<32)|uint64_t(_fstencil);
