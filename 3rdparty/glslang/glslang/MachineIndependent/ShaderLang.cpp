@@ -633,6 +633,7 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
             infoSink.info.message(EPrefixError, "#version: mesh/task shaders require es profile with version 320 or above, or non-es profile with version 450 or above");
             version = profile == EEsProfile ? 320 : 450;
         }
+        break;
     default:
         break;
     }

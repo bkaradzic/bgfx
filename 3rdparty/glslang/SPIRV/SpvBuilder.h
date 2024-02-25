@@ -326,8 +326,6 @@ public:
     // See if a resultId is valid for use as an initializer.
     bool isValidInitializer(Id resultId) const { return isConstant(resultId) || isGlobalVariable(resultId); }
 
-    bool isRayTracingOpCode(Op opcode) const;
-
     int getScalarTypeWidth(Id typeId) const
     {
         Id scalarTypeId = getScalarTypeId(typeId);

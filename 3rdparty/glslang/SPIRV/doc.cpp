@@ -1037,11 +1037,14 @@ const char* CapabilityString(int info)
     case CapabilityFragmentShadingRateKHR:                  return "FragmentShadingRateKHR";
 
     case CapabilityDemoteToHelperInvocationEXT:             return "DemoteToHelperInvocationEXT";
+    case CapabilityAtomicFloat16VectorNV:                   return "AtomicFloat16VectorNV";
     case CapabilityShaderClockKHR:                          return "ShaderClockKHR";
     case CapabilityQuadControlKHR:                          return "QuadControlKHR";
     case CapabilityInt64ImageEXT:                           return "Int64ImageEXT";
 
     case CapabilityIntegerFunctions2INTEL:              return "CapabilityIntegerFunctions2INTEL";
+
+    case CapabilityExpectAssumeKHR:                         return "ExpectAssumeKHR";
 
     case CapabilityAtomicFloat16AddEXT:                     return "AtomicFloat16AddEXT";
     case CapabilityAtomicFloat32AddEXT:                     return "AtomicFloat32AddEXT";

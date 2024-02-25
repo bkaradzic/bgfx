@@ -1350,7 +1350,7 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
             error(infoSink, "At least one shader must specify a layout(max_vertices = value)");
         if (primitives == TQualifier::layoutNotSet)
             error(infoSink, "At least one shader must specify a layout(max_primitives = value)");
-        // fall through
+        [[fallthrough]];
     case EShLangTask:
         if (numTaskNVBlocks > 1)
             error(infoSink, "Only one taskNV interface block is allowed per shader");
