@@ -266,9 +266,94 @@ namespace bgfx { namespace metal
 		return size;
 	}
 
+	static spv_target_env getSpirvTargetVersion(uint32_t _version, bx::WriterI* _messageWriter)
+	{
+		bx::ErrorAssert err;
+
+		switch (_version)
+		{
+		case 1000:
+		case 1110:
+		case 1210:
+			return SPV_ENV_VULKAN_1_0;
+		case 2011:
+		case 2111:
+		case 2211:
+			return SPV_ENV_VULKAN_1_1;
+		case 2314:
+		case 2414:
+		case 3014:
+		case 3114:
+			return SPV_ENV_VULKAN_1_1_SPIRV_1_4;
+		default:
+			bx::write(_messageWriter, &err, "Warning: Unknown SPIR-V version requested. Returning SPV_ENV_VULKAN_1_0 as default.\n");
+			return SPV_ENV_VULKAN_1_0;
+		}
+	}
+
+	static glslang::EShTargetLanguageVersion getGlslangTargetSpirvVersion(uint32_t _version, bx::WriterI* _messageWriter)
+	{
+		bx::ErrorAssert err;
+
+		switch (_version)
+		{
+		case 1000:
+		case 1110:
+		case 1210:
+			return glslang::EShTargetSpv_1_0;
+		case 2011:
+		case 2111:
+		case 2211:
+			return glslang::EShTargetSpv_1_1;
+		case 2314:
+		case 2414:
+		case 3014:
+		case 3114:
+			return glslang::EShTargetSpv_1_4;
+		default:
+			bx::write(_messageWriter, &err, "Warning: Unknown SPIR-V version requested. Returning EShTargetSpv_1_0 as default.\n");
+			return glslang::EShTargetSpv_1_0;
+		}
+	}
+
+	static spirv_cross::CompilerMSL::Options::Platform getMslPlatform(const std::string& _platform)
+	{
+		return "ios" == _platform
+			? spirv_cross::CompilerMSL::Options::Platform::iOS
+			: spirv_cross::CompilerMSL::Options::Platform::macOS;
+	}
+
+	static void getMSLVersion(const uint32_t _version, uint32_t& _major, uint32_t& _minor, bx::WriterI* _messageWriter)
+	{
+		bx::ErrorAssert err;
+
+		_major = _version / 1000;
+		_minor = (_version / 100) % 10;
+
+		switch (_version)
+		{
+		case 1000:
+		case 1110:
+		case 1210:
+		case 2011:
+		case 2111:
+		case 2211:
+		case 2314:
+		case 2414:
+		case 3014:
+		case 3114:
+			return;
+		default:
+			bx::write(_messageWriter, &err, "Warning: Unknown MSL version requested. Returning 1.0 as default.\n");
+			_major = 1;
+			_minor = 0;
+		}
+	}
+
 	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter, bool _firstPass)
 	{
 		BX_UNUSED(_version);
+		_version = 4000;
 
 		bx::ErrorAssert messageErr;
 
@@ -294,6 +379,7 @@ namespace bgfx { namespace metal
 
 		shader->setEntryPoint("main");
 		shader->setAutoMapBindings(true);
+		shader->setEnvTarget(glslang::EShTargetSpv, getGlslangTargetSpirvVersion(_version, _messageWriter));
 		const int textureBindingOffset = 16;
 		shader->setShiftBinding(glslang::EResTexture, textureBindingOffset);
 		shader->setShiftBinding(glslang::EResSampler, textureBindingOffset);
@@ -503,7 +589,7 @@ namespace bgfx { namespace metal
 
 				glslang::GlslangToSpv(*intermediate, spirv, &options);
 
-				spvtools::Optimizer opt(SPV_ENV_VULKAN_1_0);
+				spvtools::Optimizer opt(getSpirvTargetVersion(_version, _messageWriter));
 
 				auto print_msg_to_stderr = [_messageWriter, &messageErr](
 					  spv_message_level_t
@@ -536,7 +622,7 @@ namespace bgfx { namespace metal
 				{
 					if (g_verbose)
 					{
-						glslang::SpirvToolsDisassemble(std::cout, spirv, SPV_ENV_VULKAN_1_0);
+						glslang::SpirvToolsDisassemble(std::cout, spirv, getSpirvTargetVersion(_version, _messageWriter));
 					}
 
 					spirv_cross::CompilerReflection refl(spirv);
@@ -566,9 +652,22 @@ namespace bgfx { namespace metal
 
 					bx::Error err;
 
-					if (_version == BX_MAKEFOURCC('M', 'T', 'L', 0) )
 					{
 						spirv_cross::CompilerMSL msl(std::move(spirv) );
+
+						// Configure MSL cross compiler
+						spirv_cross::CompilerMSL::Options mslOptions = msl.get_msl_options();
+						{
+							// - Platform
+							mslOptions.platform = getMslPlatform(_options.platform);
+
+							// - MSL Version
+							uint32_t major, minor;
+							getMSLVersion(_version, major, minor, _messageWriter);
+							mslOptions.set_msl_version(major, minor);
+
+						}
+						msl.set_msl_options(mslOptions);
 
 						auto executionModel = msl.get_execution_model();
 						spirv_cross::MSLResourceBinding newBinding;
@@ -683,14 +782,7 @@ namespace bgfx { namespace metal
 						uint8_t nul = 0;
 						bx::write(_shaderWriter, nul, &err);
 					}
-					else
-					{
-						uint32_t shaderSize = (uint32_t)spirv.size() * sizeof(uint32_t);
-						bx::write(_shaderWriter, shaderSize, &err);
-						bx::write(_shaderWriter, spirv.data(), shaderSize, &err);
-						uint8_t nul = 0;
-						bx::write(_shaderWriter, nul, &err);
-					}
+
 					//
 					const uint8_t numAttr = (uint8_t)program->getNumLiveAttributes();
 					bx::write(_shaderWriter, numAttr, &err);
