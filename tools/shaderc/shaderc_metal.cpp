@@ -469,7 +469,8 @@ namespace bgfx { namespace metal
 							// If the line declares a uniform, merge all next
 							// lines until we encounter a semicolon.
 							bx::StringView lineEnd = strFind(strLine, ";");
-							while (lineEnd.isEmpty() && !reader.isDone()) {
+							while (lineEnd.isEmpty() && !reader.isDone())
+							{
 								bx::StringView nextLine = reader.next();
 								strLine.set(strLine.getPtr(), nextLine.getTerm());
 								lineEnd = strFind(nextLine, ";");
@@ -652,138 +653,135 @@ namespace bgfx { namespace metal
 
 					bx::Error err;
 
+					spirv_cross::CompilerMSL msl(std::move(spirv) );
+
+					// Configure MSL cross compiler
+					spirv_cross::CompilerMSL::Options mslOptions = msl.get_msl_options();
 					{
-						spirv_cross::CompilerMSL msl(std::move(spirv) );
+						// - Platform
+						mslOptions.platform = getMslPlatform(_options.platform);
 
-						// Configure MSL cross compiler
-						spirv_cross::CompilerMSL::Options mslOptions = msl.get_msl_options();
-						{
-							// - Platform
-							mslOptions.platform = getMslPlatform(_options.platform);
+						// - MSL Version
+						uint32_t major, minor;
+						getMSLVersion(_version, major, minor, _messageWriter);
+						mslOptions.set_msl_version(major, minor);
 
-							// - MSL Version
-							uint32_t major, minor;
-							getMSLVersion(_version, major, minor, _messageWriter);
-							mslOptions.set_msl_version(major, minor);
+					}
+					msl.set_msl_options(mslOptions);
 
-						}
-						msl.set_msl_options(mslOptions);
+					auto executionModel = msl.get_execution_model();
+					spirv_cross::MSLResourceBinding newBinding;
+					newBinding.stage = executionModel;
 
-						auto executionModel = msl.get_execution_model();
-						spirv_cross::MSLResourceBinding newBinding;
-						newBinding.stage = executionModel;
+					spirv_cross::ShaderResources resources = msl.get_shader_resources();
 
-						spirv_cross::ShaderResources resources = msl.get_shader_resources();
-
-						spirv_cross::SmallVector<spirv_cross::EntryPoint> entryPoints = msl.get_entry_points_and_stages();
-						if (!entryPoints.empty() )
-						{
-							msl.rename_entry_point(
-								  entryPoints[0].name
-								, "xlatMtlMain"
-								, entryPoints[0].execution_model
-								);
-						}
-
-						for (auto& resource : resources.uniform_buffers)
-						{
-							unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-							unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
-							newBinding.desc_set   = set;
-							newBinding.binding    = binding;
-							newBinding.msl_buffer = 0;
-							msl.add_msl_resource_binding(newBinding);
-
-							msl.set_name(resource.id, "_mtl_u");
-						}
-
-						for (auto& resource : resources.storage_buffers)
-						{
-							unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-							unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
-							newBinding.desc_set   = set;
-							newBinding.binding    = binding;
-							newBinding.msl_buffer = binding + 1;
-							msl.add_msl_resource_binding(newBinding);
-						}
-
-						for (auto& resource : resources.separate_samplers)
-						{
-							unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-							unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
-							newBinding.desc_set    = set;
-							newBinding.binding     = binding;
-							newBinding.msl_texture = binding - textureBindingOffset;
-							newBinding.msl_sampler = binding - textureBindingOffset;
-							msl.add_msl_resource_binding(newBinding);
-						}
-
-						for (auto& resource : resources.separate_images)
-						{
-							std::string name = msl.get_name(resource.id);
-							if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
-							{
-								msl.set_name(resource.id, name.substr(0, name.length() - 7) );
-							}
-
-							unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-							unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
-							newBinding.desc_set    = set;
-							newBinding.binding     = binding;
-							newBinding.msl_texture = binding - textureBindingOffset;
-							newBinding.msl_sampler = binding - textureBindingOffset;
-							msl.add_msl_resource_binding(newBinding);
-						}
-
-						for (auto& resource : resources.storage_images)
-						{
-							std::string name = msl.get_name(resource.id);
-
-							unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-							unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
-							newBinding.desc_set    = set;
-							newBinding.binding     = binding;
-							newBinding.msl_texture = binding - textureBindingOffset;
-							newBinding.msl_sampler = binding - textureBindingOffset;
-							msl.add_msl_resource_binding(newBinding);
-						}
-
-						std::string source = msl.compile();
-
-						// fix https://github.com/bkaradzic/bgfx/issues/2822
-						// insert struct member which declares point size, defaulted to 1
-						if ('v' == _options.shaderType)
-						{
-							const bx::StringView xlatMtlMainOut("xlatMtlMain_out\n{");
-							size_t pos = source.find(xlatMtlMainOut.getPtr() );
-
-							if (pos != std::string::npos)
-							{
-								pos += xlatMtlMainOut.getLength();
-								source.insert(pos, "\n\tfloat bgfx_metal_pointSize [[point_size]] = 1;");
-							}
-						}
-
-						if ('c' == _options.shaderType)
-						{
-							for (int i = 0; i < 3; ++i)
-							{
-								uint16_t dim = (uint16_t)msl.get_execution_mode_argument(
-									  spv::ExecutionMode::ExecutionModeLocalSize
-									, i
-									);
-								bx::write(_shaderWriter, dim, &err);
-							}
-						}
-
-						uint32_t shaderSize = (uint32_t)source.size();
-						bx::write(_shaderWriter, shaderSize, &err);
-						bx::write(_shaderWriter, source.c_str(), shaderSize, &err);
-						uint8_t nul = 0;
-						bx::write(_shaderWriter, nul, &err);
+					spirv_cross::SmallVector<spirv_cross::EntryPoint> entryPoints = msl.get_entry_points_and_stages();
+					if (!entryPoints.empty() )
+					{
+						msl.rename_entry_point(
+								entryPoints[0].name
+							, "xlatMtlMain"
+							, entryPoints[0].execution_model
+							);
 					}
 
-					//
+					for (auto& resource : resources.uniform_buffers)
+					{
+						unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+						unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
+						newBinding.desc_set   = set;
+						newBinding.binding    = binding;
+						newBinding.msl_buffer = 0;
+						msl.add_msl_resource_binding(newBinding);
+
+						msl.set_name(resource.id, "_mtl_u");
+					}
+
+					for (auto& resource : resources.storage_buffers)
+					{
+						unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+						unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
+						newBinding.desc_set   = set;
+						newBinding.binding    = binding;
+						newBinding.msl_buffer = binding + 1;
+						msl.add_msl_resource_binding(newBinding);
+					}
+
+					for (auto& resource : resources.separate_samplers)
+					{
+						unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+						unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
+						newBinding.desc_set    = set;
+						newBinding.binding     = binding;
+						newBinding.msl_texture = binding - textureBindingOffset;
+						newBinding.msl_sampler = binding - textureBindingOffset;
+						msl.add_msl_resource_binding(newBinding);
+					}
+
+					for (auto& resource : resources.separate_images)
+					{
+						std::string name = msl.get_name(resource.id);
+						if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
+						{
+							msl.set_name(resource.id, name.substr(0, name.length() - 7) );
+						}
+
+						unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+						unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
+						newBinding.desc_set    = set;
+						newBinding.binding     = binding;
+						newBinding.msl_texture = binding - textureBindingOffset;
+						newBinding.msl_sampler = binding - textureBindingOffset;
+						msl.add_msl_resource_binding(newBinding);
+					}
+
+					for (auto& resource : resources.storage_images)
+					{
+						std::string name = msl.get_name(resource.id);
+
+						unsigned set     = msl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+						unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
+						newBinding.desc_set    = set;
+						newBinding.binding     = binding;
+						newBinding.msl_texture = binding - textureBindingOffset;
+						newBinding.msl_sampler = binding - textureBindingOffset;
+						msl.add_msl_resource_binding(newBinding);
+					}
+
+					std::string source = msl.compile();
+
+					// fix https://github.com/bkaradzic/bgfx/issues/2822
+					// insert struct member which declares point size, defaulted to 1
+					if ('v' == _options.shaderType)
+					{
+						const bx::StringView xlatMtlMainOut("xlatMtlMain_out\n{");
+						size_t pos = source.find(xlatMtlMainOut.getPtr() );
+
+						if (pos != std::string::npos)
+						{
+							pos += xlatMtlMainOut.getLength();
+							source.insert(pos, "\n\tfloat bgfx_metal_pointSize [[point_size]] = 1;");
+						}
+					}
+
+					if ('c' == _options.shaderType)
+					{
+						for (int i = 0; i < 3; ++i)
+						{
+							uint16_t dim = (uint16_t)msl.get_execution_mode_argument(
+									spv::ExecutionMode::ExecutionModeLocalSize
+								, i
+								);
+							bx::write(_shaderWriter, dim, &err);
+						}
+					}
+
+					uint32_t shaderSize = (uint32_t)source.size();
+					bx::write(_shaderWriter, shaderSize, &err);
+					bx::write(_shaderWriter, source.c_str(), shaderSize, &err);
+					uint8_t nul = 0;
+					bx::write(_shaderWriter, nul, &err);
+
 					const uint8_t numAttr = (uint8_t)program->getNumLiveAttributes();
 					bx::write(_shaderWriter, numAttr, &err);
 
