@@ -678,7 +678,7 @@ namespace bgfx { namespace metal
 					if (!entryPoints.empty() )
 					{
 						msl.rename_entry_point(
-								entryPoints[0].name
+							entryPoints[0].name
 							, "xlatMtlMain"
 							, entryPoints[0].execution_model
 							);
@@ -768,7 +768,7 @@ namespace bgfx { namespace metal
 						for (int i = 0; i < 3; ++i)
 						{
 							uint16_t dim = (uint16_t)msl.get_execution_mode_argument(
-									spv::ExecutionMode::ExecutionModeLocalSize
+								spv::ExecutionMode::ExecutionModeLocalSize
 								, i
 								);
 							bx::write(_shaderWriter, dim, &err);
