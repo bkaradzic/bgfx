@@ -540,6 +540,7 @@ enum class Decoration : unsigned {
     NoUnsignedWrap = 4470,
     WeightTextureQCOM = 4487,
     BlockMatchTextureQCOM = 4488,
+    BlockMatchSamplerQCOM = 4499,
     ExplicitInterpAMD = 4999,
     NodeSharesPayloadLimitsWithAMDX = 5019,
     NodeMaxPayloadsAMDX = 5020,
@@ -1075,6 +1076,7 @@ enum class Capability : unsigned {
     TextureSampleWeightedQCOM = 4484,
     TextureBoxFilterQCOM = 4485,
     TextureBlockMatchQCOM = 4486,
+    TextureBlockMatch2QCOM = 4498,
     Float16ImageAMD = 5008,
     ImageGatherBiasLodAMD = 5009,
     FragmentMaskAMD = 5010,
@@ -1148,6 +1150,7 @@ enum class Capability : unsigned {
     ShaderInvocationReorderNV = 5383,
     BindlessTextureNV = 5390,
     RayQueryPositionFetchKHR = 5391,
+    AtomicFloat16VectorNV = 5404,
     RayTracingDisplacementMicromapNV = 5409,
     SubgroupShuffleINTEL = 5568,
     SubgroupBufferBlockIOINTEL = 5569,
@@ -1779,6 +1782,10 @@ enum class Op : unsigned {
     OpImageBoxFilterQCOM = 4481,
     OpImageBlockMatchSSDQCOM = 4482,
     OpImageBlockMatchSADQCOM = 4483,
+    OpImageBlockMatchWindowSSDQCOM = 4500,
+    OpImageBlockMatchWindowSADQCOM = 4501,
+    OpImageBlockMatchGatherSSDQCOM = 4502,
+    OpImageBlockMatchGatherSADQCOM = 4503,
     OpGroupIAddNonUniformAMD = 5000,
     OpGroupFAddNonUniformAMD = 5001,
     OpGroupFMinNonUniformAMD = 5002,
@@ -2512,6 +2519,10 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpImageBoxFilterQCOM: *hasResult = true; *hasResultType = true; break;
     case Op::OpImageBlockMatchSSDQCOM: *hasResult = true; *hasResultType = true; break;
     case Op::OpImageBlockMatchSADQCOM: *hasResult = true; *hasResultType = true; break;
+    case Op::OpImageBlockMatchWindowSSDQCOM: *hasResult = true; *hasResultType = true; break;
+    case Op::OpImageBlockMatchWindowSADQCOM: *hasResult = true; *hasResultType = true; break;
+    case Op::OpImageBlockMatchGatherSSDQCOM: *hasResult = true; *hasResultType = true; break;
+    case Op::OpImageBlockMatchGatherSADQCOM: *hasResult = true; *hasResultType = true; break;
     case Op::OpGroupIAddNonUniformAMD: *hasResult = true; *hasResultType = true; break;
     case Op::OpGroupFAddNonUniformAMD: *hasResult = true; *hasResultType = true; break;
     case Op::OpGroupFMinNonUniformAMD: *hasResult = true; *hasResultType = true; break;
