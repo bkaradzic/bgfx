@@ -1,4 +1,4 @@
-// dear imgui, v1.90.2
+// dear imgui, v1.90.4
 // (widgets code)
 
 /*
@@ -1995,7 +1995,7 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*old_getter)(void*
 // - DataTypeGetInfo()
 // - DataTypeFormatString()
 // - DataTypeApplyOp()
-// - DataTypeApplyOpFromText()
+// - DataTypeApplyFromText()
 // - DataTypeCompare()
 // - DataTypeClamp()
 // - GetMinimumStepAtDecimalPrecision
