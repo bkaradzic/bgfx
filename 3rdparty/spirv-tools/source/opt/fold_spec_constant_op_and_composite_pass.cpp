@@ -115,20 +115,9 @@ bool FoldSpecConstantOpAndCompositePass::ProcessOpSpecConstantOp(
          "The first in-operand of OpSpecConstantOp instruction must be of "
          "SPV_OPERAND_TYPE_SPEC_CONSTANT_OP_NUMBER type");
 
-  switch (static_cast<spv::Op>(inst->GetSingleWordInOperand(0))) {
-    case spv::Op::OpCompositeExtract:
-    case spv::Op::OpVectorShuffle:
-    case spv::Op::OpCompositeInsert:
-    case spv::Op::OpQuantizeToF16:
-      folded_inst = FoldWithInstructionFolder(pos);
-      break;
-    default:
-      // TODO: This should use the instruction folder as well, but some folding
-      // rules are missing.
-
-      // Component-wise operations.
-      folded_inst = DoComponentWiseOperation(pos);
-      break;
+  folded_inst = FoldWithInstructionFolder(pos);
+  if (!folded_inst) {
+    folded_inst = DoComponentWiseOperation(pos);
   }
   if (!folded_inst) return false;
 

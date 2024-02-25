@@ -1120,7 +1120,7 @@ spv_result_t BuiltInsValidator::ValidateF32ArrHelper(
 
   if (num_components != 0) {
     uint64_t actual_num_components = 0;
-    if (!_.GetConstantValUint64(type_inst->word(3), &actual_num_components)) {
+    if (!_.EvalConstantValUint64(type_inst->word(3), &actual_num_components)) {
       assert(0 && "Array type definition is corrupt");
     }
     if (actual_num_components != num_components) {
