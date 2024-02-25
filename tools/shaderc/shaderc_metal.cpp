@@ -353,7 +353,6 @@ namespace bgfx { namespace metal
 	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter, bool _firstPass)
 	{
 		BX_UNUSED(_version);
-		_version = 4000;
 
 		bx::ErrorAssert messageErr;
 
