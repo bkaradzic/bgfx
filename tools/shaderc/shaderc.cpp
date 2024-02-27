@@ -77,6 +77,25 @@ namespace bgfx
 	// 4.3    430      vhdgf+c
 	// 4.4    440
 	//
+	// Metal Shading Language (MSL) profile naming convention:
+	//  metal<MSL version>-<SPIR-V version>
+	//
+	// See section "Compiler Options Controlling the Language Version" from the
+	// MSL spec for the correlation between MSL version and platform OS version:
+	//	https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf
+	//
+	// MSL version | SPIR-V version | shaderc encoding
+	//    1.0      |       1.0      |      1000         (deprecated)
+	//    1.1      |       1.0      |      1110
+	//    1.2      |       1.0      |      1210
+	//    2.0      |       1.1      |      2011
+	//    2.1      |       1.1      |      2111
+	//    2.2      |       1.1      |      2211
+	//    2.3      |       1.4      |      2314
+	//    2.4      |       1.4      |      2414
+	//    3.0      |       1.4      |      3014
+	//    3.1      |       1.4      |      3114
+	//
 	// SPIR-V profile naming convention:
 	//  spirv<SPIR-V version>-<Vulkan version>
 	//
@@ -102,7 +121,17 @@ namespace bgfx
 		{  ShadingLang::ESSL,  320,    "320_es"     },
 		{  ShadingLang::HLSL,  400,    "s_4_0"      },
 		{  ShadingLang::HLSL,  500,    "s_5_0"      },
-		{  ShadingLang::Metal, 1000,   "metal"      },
+		{  ShadingLang::Metal, 1210,   "metal"      },
+		{  ShadingLang::Metal, 1000,   "metal10-10" },
+		{  ShadingLang::Metal, 1110,   "metal11-10" },
+		{  ShadingLang::Metal, 1210,   "metal12-10" },
+		{  ShadingLang::Metal, 2011,   "metal20-11" },
+		{  ShadingLang::Metal, 2111,   "metal21-11" },
+		{  ShadingLang::Metal, 2211,   "metal22-11" },
+		{  ShadingLang::Metal, 2314,   "metal23-14" },
+		{  ShadingLang::Metal, 2414,   "metal24-14" },
+		{  ShadingLang::Metal, 3014,   "metal30-14" },
+		{  ShadingLang::Metal, 3114,   "metal31-14" },
 		{  ShadingLang::PSSL,  1000,   "pssl"       },
 		{  ShadingLang::SpirV, 1010,   "spirv"      },
 		{  ShadingLang::SpirV, 1010,   "spirv10-10" },
@@ -1187,14 +1216,18 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "ios") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_IOS=1");
-			if (profile->lang == ShadingLang::Metal)
-			{
-				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_METAL=1");
-			}
-			else
+			if (profile->lang != ShadingLang::Metal)
 			{
 				preprocessor.setDefine(glslDefine);
 			}
+			char temp[32];
+			bx::snprintf(
+				temp
+				, sizeof(temp)
+				, "BGFX_SHADER_LANGUAGE_METAL=%d"
+				, (profile->lang == ShadingLang::Metal) ? profile->id : 0
+			);
+			preprocessor.setDefine(temp);
 		}
 		else if (0 == bx::strCmpI(platform, "linux") )
 		{
@@ -1517,7 +1550,7 @@ namespace bgfx
 			}
 			else if (profile->lang == ShadingLang::Metal)
 			{
-				compiled = compileMetalShader(_options, BX_MAKEFOURCC('M', 'T', 'L', 0), input, _shaderWriter, _messageWriter);
+				compiled = compileMetalShader(_options, profile->id, input, _shaderWriter, _messageWriter);
 			}
 			else if (profile->lang == ShadingLang::SpirV)
 			{
@@ -1674,7 +1707,7 @@ namespace bgfx
 
 							if (profile->lang == ShadingLang::Metal)
 							{
-								compiled = compileMetalShader(_options, BX_MAKEFOURCC('M', 'T', 'L', 0), code, _shaderWriter, _messageWriter);
+								compiled = compileMetalShader(_options, profile->id, code, _shaderWriter, _messageWriter);
 							}
 							else if (profile->lang == ShadingLang::SpirV)
 							{
@@ -2580,7 +2613,7 @@ namespace bgfx
 
 							if (profile->lang == ShadingLang::Metal)
 							{
-								compiled = compileMetalShader(_options, BX_MAKEFOURCC('M', 'T', 'L', 0), code, _shaderWriter, _messageWriter);
+								compiled = compileMetalShader(_options, profile->id, code, _shaderWriter, _messageWriter);
 							}
 							else if (profile->lang == ShadingLang::SpirV)
 							{
