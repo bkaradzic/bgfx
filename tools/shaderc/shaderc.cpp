@@ -1036,7 +1036,7 @@ namespace bgfx
 
 			  "\n"
 			  "Options:\n"
-			  "  -h, --help            	       Display this help and exit.\n"
+			  "  -h, --help                    Display this help and exit.\n"
 			  "  -v, --version                 Output version information and exit.\n"
 			  "  -f <file path>                Input's file path.\n"
 			  "  -i <include path>             Include path. (for multiple paths use -i multiple times)\n"
@@ -1213,22 +1213,6 @@ namespace bgfx
 			preprocessor.setDefine("BX_PLATFORM_EMSCRIPTEN=1");
 			preprocessor.setDefine(glslDefine);
 		}
-		else if (0 == bx::strCmpI(platform, "ios") )
-		{
-			preprocessor.setDefine("BX_PLATFORM_IOS=1");
-			if (profile->lang != ShadingLang::Metal)
-			{
-				preprocessor.setDefine(glslDefine);
-			}
-			char temp[32];
-			bx::snprintf(
-				temp
-				, sizeof(temp)
-				, "BGFX_SHADER_LANGUAGE_METAL=%d"
-				, (profile->lang == ShadingLang::Metal) ? profile->id : 0
-			);
-			preprocessor.setDefine(temp);
-		}
 		else if (0 == bx::strCmpI(platform, "linux") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_LINUX=1");
@@ -1241,20 +1225,28 @@ namespace bgfx
 				preprocessor.setDefine(glslDefine);
 			}
 		}
-		else if (0 == bx::strCmpI(platform, "osx") )
+		else if (0 == bx::strCmpI(platform, "ios") || (0 == bx::strCmpI(platform, "osx")) )
 		{
-			preprocessor.setDefine("BX_PLATFORM_OSX=1");
+			if (0 == bx::strCmpI(platform, "osx"))
+			{
+				preprocessor.setDefine("BX_PLATFORM_OSX=1");
+			}
+			else
+			{
+				preprocessor.setDefine("BX_PLATFORM_IOS=1");
+			}
+
 			if (profile->lang != ShadingLang::Metal)
 			{
 				preprocessor.setDefine(glslDefine);
 			}
-			char temp[256];
+			char temp[32];
 			bx::snprintf(
-				  temp
+				temp
 				, sizeof(temp)
 				, "BGFX_SHADER_LANGUAGE_METAL=%d"
 				, (profile->lang == ShadingLang::Metal) ? profile->id : 0
-				);
+			);
 			preprocessor.setDefine(temp);
 		}
 		else if (0 == bx::strCmpI(platform, "windows") )
@@ -2846,7 +2838,7 @@ namespace bgfx
 				}
 			}
 
-			int32_t size = bx::getSize(&reader);
+			int32_t size = (int32_t)bx::getSize(&reader);
 			const int32_t total = size + 16384;
 			char* data = new char[total];
 			size = bx::read(&reader, data, size, bx::ErrorAssert{});
