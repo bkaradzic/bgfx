@@ -1715,8 +1715,10 @@ BinaryScalarFoldingRule FoldBinaryIntegerOperation(uint64_t (*op)(uint64_t,
         assert(result_type != nullptr && a != nullptr && b != nullptr);
         const analysis::Integer* integer_type = result_type->AsInteger();
         assert(integer_type != nullptr);
-        assert(integer_type == a->type()->AsInteger());
-        assert(integer_type == b->type()->AsInteger());
+        assert(a->type()->kind() == analysis::Type::kInteger);
+        assert(b->type()->kind() == analysis::Type::kInteger);
+        assert(integer_type->width() == a->type()->AsInteger()->width());
+        assert(integer_type->width() == b->type()->AsInteger()->width());
 
         // In SPIR-V, all operations support unsigned types, but the way they
         // are interpreted depends on the opcode. This is why we use the

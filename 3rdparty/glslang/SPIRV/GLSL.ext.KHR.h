@@ -60,5 +60,6 @@ static const char* const E_SPV_KHR_ray_tracing_position_fetch   = "SPV_KHR_ray_t
 static const char* const E_SPV_KHR_cooperative_matrix           = "SPV_KHR_cooperative_matrix";
 static const char* const E_SPV_KHR_maximal_reconvergence        = "SPV_KHR_maximal_reconvergence";
 static const char* const E_SPV_KHR_subgroup_rotate              = "SPV_KHR_subgroup_rotate";
+static const char* const E_SPV_KHR_expect_assume                = "SPV_KHR_expect_assume";
 
 #endif  // #ifndef GLSLextKHR_H

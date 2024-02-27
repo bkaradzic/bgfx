@@ -3100,7 +3100,7 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
 
           uint32_t vector_count = inst->word(6);
           uint64_t const_val;
-          if (!_.GetConstantValUint64(vector_count, &const_val)) {
+          if (!_.EvalConstantValUint64(vector_count, &const_val)) {
             return _.diag(SPV_ERROR_INVALID_DATA, inst)
                    << ext_inst_name()
                    << ": Vector Count must be 32-bit integer OpConstant";
@@ -3191,7 +3191,7 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
           uint32_t component_count = inst->word(6);
           if (vulkanDebugInfo) {
             uint64_t const_val;
-            if (!_.GetConstantValUint64(component_count, &const_val)) {
+            if (!_.EvalConstantValUint64(component_count, &const_val)) {
               return _.diag(SPV_ERROR_INVALID_DATA, inst)
                      << ext_inst_name()
                      << ": Component Count must be 32-bit integer OpConstant";

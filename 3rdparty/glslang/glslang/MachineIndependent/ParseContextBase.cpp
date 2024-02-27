@@ -257,6 +257,7 @@ void TParseContextBase::rValueErrorCheck(const TSourceLoc& loc, const char* op, 
             case EOpVectorSwizzle:
             case EOpMatrixSwizzle:
                 rValueErrorCheck(loc, op, binaryNode->getLeft());
+                break;
             default:
                 break;
             }

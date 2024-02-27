@@ -1091,6 +1091,10 @@ enum TOperator {
     EOpWaveActiveCountBits,              // Will decompose to subgroupBallotBitCount(subgroupBallot()).
     EOpWavePrefixCountBits,              // Will decompose to subgroupBallotInclusiveBitCount(subgroupBallot()).
 
+    // GL_EXT_expect_assume
+    EOpAssumeEXT,
+    EOpExpectEXT,
+
     // Shader Clock Ops
     EOpReadClockSubgroupKHR,
     EOpReadClockDeviceKHR,

@@ -24,21 +24,6 @@ namespace spvtools {
 namespace val {
 namespace {
 
-// Returns, as an int64_t, the literal value from an OpConstant or the
-// default value of an OpSpecConstant, assuming it is an integral type.
-// For signed integers, relies the rule that literal value is sign extended
-// to fill out to word granularity.  Assumes that the constant value
-// has
-int64_t ConstantLiteralAsInt64(uint32_t width,
-                               const std::vector<uint32_t>& const_words) {
-  const uint32_t lo_word = const_words[3];
-  if (width <= 32) return int32_t(lo_word);
-  assert(width <= 64);
-  assert(const_words.size() > 4);
-  const uint32_t hi_word = const_words[4];  // Must exist, per spec.
-  return static_cast<int64_t>(uint64_t(lo_word) | uint64_t(hi_word) << 32);
-}
-
 // Validates that type declarations are unique, unless multiple declarations
 // of the same data type are allowed by the specification.
 // (see section 2.8 Types and Variables)
@@ -252,29 +237,17 @@ spv_result_t ValidateTypeArray(ValidationState_t& _, const Instruction* inst) {
            << " is not a constant integer type.";
   }
 
-  switch (length->opcode()) {
-    case spv::Op::OpSpecConstant:
-    case spv::Op::OpConstant: {
-      auto& type_words = const_result_type->words();
-      const bool is_signed = type_words[3] > 0;
-      const uint32_t width = type_words[2];
-      const int64_t ivalue = ConstantLiteralAsInt64(width, length->words());
-      if (ivalue == 0 || (ivalue < 0 && is_signed)) {
-        return _.diag(SPV_ERROR_INVALID_ID, inst)
-               << "OpTypeArray Length <id> " << _.getIdName(length_id)
-               << " default value must be at least 1: found " << ivalue;
-      }
-    } break;
-    case spv::Op::OpConstantNull:
+  int64_t length_value;
+  if (_.EvalConstantValInt64(length_id, &length_value)) {
+    auto& type_words = const_result_type->words();
+    const bool is_signed = type_words[3] > 0;
+    if (length_value == 0 || (length_value < 0 && is_signed)) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "OpTypeArray Length <id> " << _.getIdName(length_id)
-             << " default value must be at least 1.";
-    case spv::Op::OpSpecConstantOp:
-      // Assume it's OK, rather than try to evaluate the operation.
-      break;
-    default:
-      assert(0 && "bug in spvOpcodeIsConstant() or result type isn't int");
+             << " default value must be at least 1: found " << length_value;
+    }
   }
+
   return SPV_SUCCESS;
 }
 

@@ -167,6 +167,7 @@ Optimizer& Optimizer::RegisterLegalizationPasses(bool preserve_interface) {
           .RegisterPass(CreateDeadInsertElimPass())
           .RegisterPass(CreateReduceLoadSizePass())
           .RegisterPass(CreateAggressiveDCEPass(preserve_interface))
+          .RegisterPass(CreateRemoveUnusedInterfaceVariablesPass())
           .RegisterPass(CreateInterpolateFixupPass())
           .RegisterPass(CreateInvocationInterlockPlacementPass());
 }

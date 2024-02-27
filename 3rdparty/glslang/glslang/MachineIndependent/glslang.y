@@ -494,7 +494,7 @@ function_call_header_with_parameters
         }
         else
         {
-            TParameter param = { 0, new TType };
+            TParameter param = { 0, new TType, {} };
             param.type->shallowCopy($2->getType());
 
             $1.function->addParameter(param);
@@ -513,7 +513,7 @@ function_call_header_with_parameters
         }
         else
         {
-            TParameter param = { 0, new TType };
+            TParameter param = { 0, new TType, {} };
             param.type->shallowCopy($3->getType());
 
             $1.function->addParameter(param);
@@ -1068,7 +1068,7 @@ parameter_declarator
         }
         parseContext.reservedErrorCheck($2.loc, *$2.string);
 
-        TParameter param = {$2.string, new TType($1)};
+        TParameter param = {$2.string, new TType($1), {}};
         $$.loc = $2.loc;
         $$.param = param;
     }
@@ -1086,7 +1086,7 @@ parameter_declarator
         parseContext.arraySizeRequiredCheck($3.loc, *$3.arraySizes);
         parseContext.reservedErrorCheck($2.loc, *$2.string);
 
-        TParameter param = { $2.string, type };
+        TParameter param = { $2.string, type, {} };
 
         $$.loc = $2.loc;
         $$.param = param;
@@ -1139,7 +1139,7 @@ parameter_declaration
 
 parameter_type_specifier
     : type_specifier {
-        TParameter param = { 0, new TType($1) };
+        TParameter param = { 0, new TType($1), {} };
         $$.param = param;
         if ($1.arraySizes)
             parseContext.arraySizeRequiredCheck($1.loc, *$1.arraySizes);
