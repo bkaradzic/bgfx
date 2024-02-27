@@ -664,7 +664,6 @@ namespace bgfx { namespace metal
 						uint32_t major, minor;
 						getMSLVersion(_version, major, minor, _messageWriter);
 						mslOptions.set_msl_version(major, minor);
-
 					}
 					msl.set_msl_options(mslOptions);
 
@@ -775,10 +774,10 @@ namespace bgfx { namespace metal
 						}
 					}
 
-					uint32_t shaderSize = (uint32_t)source.size();
+					const uint32_t shaderSize = (uint32_t)source.size();
 					bx::write(_shaderWriter, shaderSize, &err);
 					bx::write(_shaderWriter, source.c_str(), shaderSize, &err);
-					uint8_t nul = 0;
+					const uint8_t nul = 0;
 					bx::write(_shaderWriter, nul, &err);
 
 					const uint8_t numAttr = (uint8_t)program->getNumLiveAttributes();
