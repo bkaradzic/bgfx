@@ -69,7 +69,7 @@ extern "C" {
 #define VK_API_VERSION_1_0 VK_MAKE_API_VERSION(0, 1, 0, 0)// Patch version should always be set to 0
 
 // Version of this file
-#define VK_HEADER_VERSION 277
+#define VK_HEADER_VERSION 278
 
 // Complete version of this file
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 3, VK_HEADER_VERSION)
@@ -184,7 +184,7 @@ typedef enum VkResult {
     VK_OPERATION_NOT_DEFERRED_KHR = 1000268003,
     VK_ERROR_INVALID_VIDEO_STD_PARAMETERS_KHR = -1000299000,
     VK_ERROR_COMPRESSION_EXHAUSTED_EXT = -1000338000,
-    VK_ERROR_INCOMPATIBLE_SHADER_BINARY_EXT = 1000482000,
+    VK_INCOMPATIBLE_SHADER_BINARY_EXT = 1000482000,
     VK_ERROR_OUT_OF_POOL_MEMORY_KHR = VK_ERROR_OUT_OF_POOL_MEMORY,
     VK_ERROR_INVALID_EXTERNAL_HANDLE_KHR = VK_ERROR_INVALID_EXTERNAL_HANDLE,
     VK_ERROR_FRAGMENTATION_EXT = VK_ERROR_FRAGMENTATION,
@@ -193,6 +193,7 @@ typedef enum VkResult {
     VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS_KHR = VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS,
     VK_PIPELINE_COMPILE_REQUIRED_EXT = VK_PIPELINE_COMPILE_REQUIRED,
     VK_ERROR_PIPELINE_COMPILE_REQUIRED_EXT = VK_PIPELINE_COMPILE_REQUIRED,
+    VK_ERROR_INCOMPATIBLE_SHADER_BINARY_EXT = VK_INCOMPATIBLE_SHADER_BINARY_EXT,
     VK_RESULT_MAX_ENUM = 0x7FFFFFFF
 } VkResult;
 
@@ -767,6 +768,9 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_HOST_IMAGE_COPY_DEVICE_PERFORMANCE_QUERY_EXT = 1000270009,
     VK_STRUCTURE_TYPE_MEMORY_MAP_INFO_KHR = 1000271000,
     VK_STRUCTURE_TYPE_MEMORY_UNMAP_INFO_KHR = 1000271001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT = 1000272000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT = 1000272001,
+    VK_STRUCTURE_TYPE_MEMORY_MAP_PLACED_INFO_EXT = 1000272002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_2_FEATURES_EXT = 1000273000,
     VK_STRUCTURE_TYPE_SURFACE_PRESENT_MODE_EXT = 1000274000,
     VK_STRUCTURE_TYPE_SURFACE_PRESENT_SCALING_CAPABILITIES_EXT = 1000274001,
@@ -1105,6 +1109,7 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_SET_DESCRIPTOR_BUFFER_OFFSETS_INFO_EXT = 1000545007,
     VK_STRUCTURE_TYPE_BIND_DESCRIPTOR_BUFFER_EMBEDDED_SAMPLERS_INFO_EXT = 1000545008,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_POOL_OVERALLOCATION_FEATURES_NV = 1000546000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV = 1000563000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES,
     VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
@@ -2424,6 +2429,11 @@ typedef enum VkPipelineStageFlagBits {
     VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF
 } VkPipelineStageFlagBits;
 typedef VkFlags VkPipelineStageFlags;
+
+typedef enum VkMemoryMapFlagBits {
+    VK_MEMORY_MAP_PLACED_BIT_EXT = 0x00000001,
+    VK_MEMORY_MAP_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF
+} VkMemoryMapFlagBits;
 typedef VkFlags VkMemoryMapFlags;
 
 typedef enum VkSparseMemoryBindFlagBits {
@@ -10495,6 +10505,11 @@ VKAPI_ATTR VkResult VKAPI_CALL vkGetPipelineExecutableInternalRepresentationsKHR
 #define VK_KHR_map_memory2 1
 #define VK_KHR_MAP_MEMORY_2_SPEC_VERSION  1
 #define VK_KHR_MAP_MEMORY_2_EXTENSION_NAME "VK_KHR_map_memory2"
+
+typedef enum VkMemoryUnmapFlagBitsKHR {
+    VK_MEMORY_UNMAP_RESERVE_BIT_EXT = 0x00000001,
+    VK_MEMORY_UNMAP_FLAG_BITS_MAX_ENUM_KHR = 0x7FFFFFFF
+} VkMemoryUnmapFlagBitsKHR;
 typedef VkFlags VkMemoryUnmapFlagsKHR;
 typedef struct VkMemoryMapInfoKHR {
     VkStructureType     sType;
@@ -10588,6 +10603,10 @@ typedef enum VkVideoEncodeTuningModeKHR {
     VK_VIDEO_ENCODE_TUNING_MODE_LOSSLESS_KHR = 4,
     VK_VIDEO_ENCODE_TUNING_MODE_MAX_ENUM_KHR = 0x7FFFFFFF
 } VkVideoEncodeTuningModeKHR;
+
+typedef enum VkVideoEncodeFlagBitsKHR {
+    VK_VIDEO_ENCODE_FLAG_BITS_MAX_ENUM_KHR = 0x7FFFFFFF
+} VkVideoEncodeFlagBitsKHR;
 typedef VkFlags VkVideoEncodeFlagsKHR;
 
 typedef enum VkVideoEncodeCapabilityFlagBitsKHR {
@@ -15182,6 +15201,32 @@ VKAPI_ATTR void VKAPI_CALL vkGetImageSubresourceLayout2EXT(
 #endif
 
 
+// VK_EXT_map_memory_placed is a preprocessor guard. Do not pass it to API calls.
+#define VK_EXT_map_memory_placed 1
+#define VK_EXT_MAP_MEMORY_PLACED_SPEC_VERSION 1
+#define VK_EXT_MAP_MEMORY_PLACED_EXTENSION_NAME "VK_EXT_map_memory_placed"
+typedef struct VkPhysicalDeviceMapMemoryPlacedFeaturesEXT {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           memoryMapPlaced;
+    VkBool32           memoryMapRangePlaced;
+    VkBool32           memoryUnmapReserve;
+} VkPhysicalDeviceMapMemoryPlacedFeaturesEXT;
+
+typedef struct VkPhysicalDeviceMapMemoryPlacedPropertiesEXT {
+    VkStructureType    sType;
+    void*              pNext;
+    VkDeviceSize       minPlacedMemoryMapAlignment;
+} VkPhysicalDeviceMapMemoryPlacedPropertiesEXT;
+
+typedef struct VkMemoryMapPlacedInfoEXT {
+    VkStructureType    sType;
+    const void*        pNext;
+    void*              pPlacedAddress;
+} VkMemoryMapPlacedInfoEXT;
+
+
+
 // VK_EXT_shader_atomic_float2 is a preprocessor guard. Do not pass it to API calls.
 #define VK_EXT_shader_atomic_float2 1
 #define VK_EXT_SHADER_ATOMIC_FLOAT_2_SPEC_VERSION 1
@@ -19065,6 +19110,18 @@ typedef struct VkPhysicalDeviceDescriptorPoolOverallocationFeaturesNV {
     void*              pNext;
     VkBool32           descriptorPoolOverallocation;
 } VkPhysicalDeviceDescriptorPoolOverallocationFeaturesNV;
+
+
+
+// VK_NV_shader_atomic_float16_vector is a preprocessor guard. Do not pass it to API calls.
+#define VK_NV_shader_atomic_float16_vector 1
+#define VK_NV_SHADER_ATOMIC_FLOAT16_VECTOR_SPEC_VERSION 1
+#define VK_NV_SHADER_ATOMIC_FLOAT16_VECTOR_EXTENSION_NAME "VK_NV_shader_atomic_float16_vector"
+typedef struct VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           shaderFloat16VectorAtomics;
+} VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV;
 
 
 

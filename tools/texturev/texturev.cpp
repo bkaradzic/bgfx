@@ -253,15 +253,6 @@ struct RendererTypeRemap
 	bgfx::RendererType::Enum type;
 };
 
-static RendererTypeRemap s_rendererTypeRemap[] =
-{
-	{ "gl",    bgfx::RendererType::OpenGL     },
-	{ "d3d11", bgfx::RendererType::Direct3D11 },
-	{ "d3d11", bgfx::RendererType::Direct3D12 },
-	{ "vk",    bgfx::RendererType::Vulkan     },
-	{ "mtl",   bgfx::RendererType::Metal      },
-};
-
 struct View
 {
 	View()
@@ -1483,11 +1474,7 @@ int _main_(int _argc, char** _argv)
 
 	const char* filePath = _argc < 2 ? "" : _argv[1];
 
-	std::string path = filePath;
-	{
-		bx::FilePath fp(filePath);
-		view.updateFileList(fp);
-	}
+	view.updateFileList(filePath);
 
 	int exitcode = bx::kExitSuccess;
 	bgfx::TextureHandle texture = BGFX_INVALID_HANDLE;
@@ -1880,11 +1867,15 @@ int _main_(int _argc, char** _argv)
 
 			if (view.m_files)
 			{
+				ImGui::PushFont(ImGui::Font::Mono);
+				const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
+				ImGui::PopFont();
+
 				char temp[bx::kMaxFilePath];
 				bx::snprintf(temp, BX_COUNTOF(temp), "%s##File", view.m_path.getCPtr() );
 
 				ImGui::SetNextWindowSize(
-					  ImVec2(400.0f, 400.0f)
+					  ImVec2(400.0f, 20*itemHeight)
 					, ImGuiCond_FirstUseEver
 					);
 
@@ -1893,7 +1884,6 @@ int _main_(int _argc, char** _argv)
 					if (ImGui::BeginChild("##file_list", ImVec2(0.0f, 0.0f) ) )
 					{
 						ImGui::PushFont(ImGui::Font::Mono);
-						const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
 						const float listHeight =
 							  bx::max(1.0f, bx::floor(ImGui::GetWindowHeight()/itemHeight) )
 							* itemHeight
@@ -1907,26 +1897,23 @@ int _main_(int _argc, char** _argv)
 							ImGuiListClipper clipper;
 							clipper.Begin(itemCount, itemHeight);
 
-							int32_t start = clipper.DisplayStart;
-							int32_t end   = clipper.DisplayEnd;
+							const  int32_t index = int32_t(view.m_fileIndex);
+							static int32_t oldIndex  = index;
+							const  int32_t direction = bx::clamp(index - oldIndex, -1, 1);
+							oldIndex = index;
 
-							const int32_t index = int32_t(view.m_fileIndex);
-							if (index <= start)
-							{
-								ImGui::SetScrollY(ImGui::GetScrollY() - (start-index+1)*itemHeight);
-							}
-							else if (index >= end)
-							{
-								ImGui::SetScrollY(ImGui::GetScrollY() + (index-end+1)*itemHeight);
-							}
+							bool currentVisible = false;
 
 							while (clipper.Step() )
 							{
+								currentVisible |= index > clipper.DisplayStart && index < clipper.DisplayEnd;
+
 								for (int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
 								{
 									ImGui::PushID(pos);
 
-									bool isSelected = uint32_t(pos) == view.m_fileIndex;
+									bool isSelected = pos == index;
+
 									if (ImGui::Selectable(view.m_fileList[pos].c_str(), &isSelected) )
 									{
 										view.m_fileIndex = pos;
@@ -1934,6 +1921,13 @@ int _main_(int _argc, char** _argv)
 
 									ImGui::PopID();
 								}
+							}
+
+							if (0 != direction && !currentVisible)
+							{
+								const int32_t num  = int32_t(listHeight / itemHeight);
+								const int32_t posY = index + (1 == direction ? 1-num : 0);
+								ImGui::SetScrollY(posY*itemHeight);
 							}
 
 							clipper.End();

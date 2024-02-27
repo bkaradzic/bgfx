@@ -558,6 +558,64 @@ spv_result_t ValidateLocations(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+spv_result_t ValidateStorageClass(ValidationState_t& _,
+                                  const Instruction* entry_point) {
+  bool has_push_constant = false;
+  bool has_ray_payload = false;
+  bool has_hit_attribute = false;
+  bool has_callable_data = false;
+  for (uint32_t i = 3; i < entry_point->operands().size(); ++i) {
+    auto interface_id = entry_point->GetOperandAs<uint32_t>(i);
+    auto interface_var = _.FindDef(interface_id);
+    auto storage_class = interface_var->GetOperandAs<spv::StorageClass>(2);
+    switch (storage_class) {
+      case spv::StorageClass::PushConstant: {
+        if (has_push_constant) {
+          return _.diag(SPV_ERROR_INVALID_DATA, entry_point)
+                 << _.VkErrorID(6673)
+                 << "Entry-point has more than one variable with the "
+                    "PushConstant storage class in the interface";
+        }
+        has_push_constant = true;
+        break;
+      }
+      case spv::StorageClass::IncomingRayPayloadKHR: {
+        if (has_ray_payload) {
+          return _.diag(SPV_ERROR_INVALID_DATA, entry_point)
+                 << _.VkErrorID(4700)
+                 << "Entry-point has more than one variable with the "
+                    "IncomingRayPayloadKHR storage class in the interface";
+        }
+        has_ray_payload = true;
+        break;
+      }
+      case spv::StorageClass::HitAttributeKHR: {
+        if (has_hit_attribute) {
+          return _.diag(SPV_ERROR_INVALID_DATA, entry_point)
+                 << _.VkErrorID(4702)
+                 << "Entry-point has more than one variable with the "
+                    "HitAttributeKHR storage class in the interface";
+        }
+        has_hit_attribute = true;
+        break;
+      }
+      case spv::StorageClass::IncomingCallableDataKHR: {
+        if (has_callable_data) {
+          return _.diag(SPV_ERROR_INVALID_DATA, entry_point)
+                 << _.VkErrorID(4706)
+                 << "Entry-point has more than one variable with the "
+                    "IncomingCallableDataKHR storage class in the interface";
+        }
+        has_callable_data = true;
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return SPV_SUCCESS;
+}
+
 }  // namespace
 
 spv_result_t ValidateInterfaces(ValidationState_t& _) {
@@ -574,6 +632,9 @@ spv_result_t ValidateInterfaces(ValidationState_t& _) {
     for (auto& inst : _.ordered_instructions()) {
       if (inst.opcode() == spv::Op::OpEntryPoint) {
         if (auto error = ValidateLocations(_, &inst)) {
+          return error;
+        }
+        if (auto error = ValidateStorageClass(_, &inst)) {
           return error;
         }
       }

@@ -262,6 +262,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_maximal_reconvergence]                   = EBhDisable;
 
     extensionBehavior[E_GL_EXT_fragment_shader_barycentric]             = EBhDisable;
+    extensionBehavior[E_GL_EXT_expect_assume]                           = EBhDisable;
 
     extensionBehavior[E_GL_KHR_cooperative_matrix]                      = EBhDisable;
 
@@ -304,6 +305,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_NV_integer_cooperative_matrix]            = EBhDisable;
     extensionBehavior[E_GL_NV_shader_invocation_reorder]             = EBhDisable;
     extensionBehavior[E_GL_NV_displacement_micromap]                 = EBhDisable;
+    extensionBehavior[E_GL_NV_shader_atomic_fp16_vector]             = EBhDisable;
 
     // ARM
     extensionBehavior[E_GL_ARM_shader_core_builtins]                 = EBhDisable;
@@ -764,7 +766,7 @@ void TParseVersions::profileRequires(const TSourceLoc& loc, int profileMask, int
             switch (getExtensionBehavior(extensions[i])) {
             case EBhWarn:
                 infoSink.info.message(EPrefixWarning, ("extension " + TString(extensions[i]) + " is being used for " + featureDesc).c_str(), loc);
-                // fall through
+                [[fallthrough]];
             case EBhRequire:
             case EBhEnable:
                 okay = true;

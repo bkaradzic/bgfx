@@ -1176,6 +1176,10 @@ Id Builder::makeAccelerationStructureType()
         groupedTypes[OpTypeAccelerationStructureKHR].push_back(type);
         constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
         module.mapInstruction(type);
+        if (emitNonSemanticShaderDebugInfo) {
+            spv::Id debugType = makeCompositeDebugType({}, "accelerationStructure", NonSemanticShaderDebugInfo100Structure, true);
+            debugId[type->getResultId()] = debugType;
+        }
     } else {
         type = groupedTypes[OpTypeAccelerationStructureKHR].back();
     }
@@ -1191,6 +1195,10 @@ Id Builder::makeRayQueryType()
         groupedTypes[OpTypeRayQueryKHR].push_back(type);
         constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
         module.mapInstruction(type);
+        if (emitNonSemanticShaderDebugInfo) {
+            spv::Id debugType = makeCompositeDebugType({}, "rayQuery", NonSemanticShaderDebugInfo100Structure, true);
+            debugId[type->getResultId()] = debugType;
+        }
     } else {
         type = groupedTypes[OpTypeRayQueryKHR].back();
     }
@@ -1470,17 +1478,6 @@ bool Builder::isSpecConstantOpCode(Op opcode) const
     case OpSpecConstant:
     case OpSpecConstantComposite:
     case OpSpecConstantOp:
-        return true;
-    default:
-        return false;
-    }
-}
-
-bool Builder::isRayTracingOpCode(Op opcode) const
-{
-    switch (opcode) {
-    case OpTypeAccelerationStructureKHR:
-    case OpTypeRayQueryKHR:
         return true;
     default:
         return false;
@@ -2368,7 +2365,7 @@ Id Builder::createVariable(Decoration precision, StorageClass storageClass, Id t
         constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(inst));
         module.mapInstruction(inst);
 
-        if (emitNonSemanticShaderDebugInfo && !isRayTracingOpCode(getOpCode(type)))
+        if (emitNonSemanticShaderDebugInfo)
         {
             auto const debugResultId = createDebugGlobalVariable(debugId[type], name, inst->getResultId());
             debugId[inst->getResultId()] = debugResultId;

@@ -495,7 +495,7 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
     }
 
     uint64_t array_size = 0;
-    if (!_.GetConstantValUint64(type_inst->word(3), &array_size)) {
+    if (!_.EvalConstantValUint64(type_inst->word(3), &array_size)) {
       assert(0 && "Array type definition is corrupt");
     }
 
@@ -1118,7 +1118,10 @@ spv_result_t ValidateImageTexelPointer(ValidationState_t& _,
   const auto ptr_type = result_type->GetOperandAs<uint32_t>(2);
   const auto ptr_opcode = _.GetIdOpcode(ptr_type);
   if (ptr_opcode != spv::Op::OpTypeInt && ptr_opcode != spv::Op::OpTypeFloat &&
-      ptr_opcode != spv::Op::OpTypeVoid) {
+      ptr_opcode != spv::Op::OpTypeVoid &&
+      !(ptr_opcode == spv::Op::OpTypeVector &&
+        _.HasCapability(spv::Capability::AtomicFloat16VectorNV) &&
+        _.IsFloat16Vector2Or4Type(ptr_type))) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Result Type to be OpTypePointer whose Type operand "
               "must be a scalar numerical type or OpTypeVoid";
@@ -1142,7 +1145,14 @@ spv_result_t ValidateImageTexelPointer(ValidationState_t& _,
            << "Corrupt image type definition";
   }
 
-  if (info.sampled_type != ptr_type) {
+  if (info.sampled_type != ptr_type &&
+      !(_.HasCapability(spv::Capability::AtomicFloat16VectorNV) &&
+        _.IsFloat16Vector2Or4Type(ptr_type) &&
+        _.GetIdOpcode(info.sampled_type) == spv::Op::OpTypeFloat &&
+        ((_.GetDimension(ptr_type) == 2 &&
+          info.format == spv::ImageFormat::Rg16f) ||
+         (_.GetDimension(ptr_type) == 4 &&
+          info.format == spv::ImageFormat::Rgba16f)))) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Image 'Sampled Type' to be the same as the Type "
               "pointed to by Result Type";
@@ -1200,7 +1210,7 @@ spv_result_t ValidateImageTexelPointer(ValidationState_t& _,
 
   if (info.multisampled == 0) {
     uint64_t ms = 0;
-    if (!_.GetConstantValUint64(inst->GetOperandAs<uint32_t>(4), &ms) ||
+    if (!_.EvalConstantValUint64(inst->GetOperandAs<uint32_t>(4), &ms) ||
         ms != 0) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Expected Sample for Image with MS 0 to be a valid <id> for "
@@ -1213,7 +1223,10 @@ spv_result_t ValidateImageTexelPointer(ValidationState_t& _,
         (info.format != spv::ImageFormat::R64ui) &&
         (info.format != spv::ImageFormat::R32f) &&
         (info.format != spv::ImageFormat::R32i) &&
-        (info.format != spv::ImageFormat::R32ui)) {
+        (info.format != spv::ImageFormat::R32ui) &&
+        !((info.format == spv::ImageFormat::Rg16f ||
+           info.format == spv::ImageFormat::Rgba16f) &&
+          _.HasCapability(spv::Capability::AtomicFloat16VectorNV))) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << _.VkErrorID(4658)
              << "Expected the Image Format in Image to be R64i, R64ui, R32f, "

@@ -95,6 +95,8 @@ GLSLANG_EXPORT void glslang_program_SPIRV_generate_with_options(glslang_program_
 
     const glslang::TIntermediate* intermediate = program->program->getIntermediate(c_shader_stage(stage));
 
+    program->spirv.clear();
+
     glslang::GlslangToSpv(*intermediate, program->spirv, &logger, reinterpret_cast<glslang::SpvOptions*>(spv_options));
 
     program->loggerMessages = logger.getAllMessages();
