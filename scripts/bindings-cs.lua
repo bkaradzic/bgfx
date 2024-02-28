@@ -129,6 +129,35 @@ local function convert_ret_type(arg)
 	return ctype
 end
 
+local function convert_default_arg(arg)
+	
+	local cvalue = tostring(arg.default)
+
+	if cvalue == "UINT8_MAX" then
+		cvalue = "byte.MaxValue"
+	elseif cvalue == "UINT16_MAX" then
+		cvalue = "ushort.MaxValue"
+	elseif cvalue == "UINT32_MAX" then
+		cvalue = "uint.MaxValue"	
+	elseif cvalue == "INT32_MAX" then
+		cvalue = "int.MaxValue"
+	elseif cvalue == "NULL" then
+		cvalue = "default"
+	elseif hasPrefix(cvalue, "BGFX_") then 
+		--cvalue = "("..convert_type(arg)..")(" .. format_default_enum_value(cvalue) .. ")" 		
+		
+		local type = convert_type(arg)
+		cvalue = cvalue:lower()
+				:gsub("_%l", string.upper)
+				:gsub("bgfx_([%a-Z]+)_", "("..type..")%1Flags.")
+				:gsub('_','')
+	else
+		cvalue = cvalue:gsub("::", ".") 	--Convert C++ Enum::Value to C# Enum.Value 
+	end
+
+	return cvalue
+end
+
 local converter = {}
 local yield = coroutine.yield
 local indent = ""
@@ -180,6 +209,9 @@ local function FlagBlock(typ)
 	elseif typ.bits == 16 then
 		format = "0x%04x"
 		enumType = " : ushort"
+	elseif typ.bits == 8 then
+		format = "0x%02x"
+		enumType = " : byte"
 	end
 
 	yield("[Flags]")
@@ -267,9 +299,17 @@ function converter.types(typ)
 	if typ.handle then
 		lastCombinedFlagBlock()
 
-		yield("public struct " .. typ.name .. " {")
-        yield("    public ushort idx;")
-        yield("    public bool Valid => idx != UInt16.MaxValue;")
+	yield("public readonly struct " .. typ.name .. " : IEquatable<"..typ.name..">\n")
+	yield("{")
+	yield("	public readonly ushort idx;")
+	yield("	public static readonly " .. typ.name .. " Invalid = new " .. typ.name .. "(ushort.MaxValue);")
+	yield("	public " .. typ.name .. "(ushort index) => idx = index;")
+	yield("	public bool Valid => this != Invalid;")
+	yield("	public override bool Equals(object? obj) => obj is " .. typ.name .. " handle && handle == this;")
+	yield("	public override int GetHashCode() => idx.GetHashCode();")
+	yield("	public bool Equals(" .. typ.name .. " other) => this.idx == other.idx;")
+	yield("	public static bool operator ==(" .. typ.name .. " left, " .. typ.name .. " right) => left.Equals(right);")
+	yield("	public static bool operator !=(" .. typ.name .. " left, " .. typ.name .. " right) => !(left == right);")
         yield("}")
 	elseif hasSuffix(typ.name, "::Enum") then
 		lastCombinedFlagBlock()
@@ -355,6 +395,15 @@ function converter.types(typ)
 
 		local skip = false
 
+		if typ.comments ~= nil then
+			yield("/// <summary>")
+			for _, line in ipairs(typ.comments) do
+				yield("/// " .. line)
+			end
+			yield("/// </summary>")
+			yield("///")
+		end
+
 		if typ.namespace ~= nil then
 			if namespace ~= typ.namespace then
 				yield("public unsafe struct " .. typ.namespace)
@@ -374,9 +423,22 @@ function converter.types(typ)
 		end
 
 		for _, member in ipairs(typ.struct) do
+
+			if member.comment ~= nil then
+				local comment = table.concat(member.comment, " ")
+
+				yield(indent .. "\t/// <summary>"
+					.. comment
+					.. "</summary>"
+					)
+
+				hasParams = true
+			end
+
 			yield(
 				indent .. "\tpublic " .. convert_struct_member(member) .. ";"
 				)
+
 		end
 
 		yield(indent .. "}")
@@ -428,15 +490,79 @@ function converter.funcs(func)
 	end
 
 	local args = {}
+	local hasDefaultInvalidHandle = false
+
 	if func.this ~= nil then
 		args[1] = func.this_type.type .. "* _this"
 	end
 	for _, arg in ipairs(func.args) do
-		table.insert(args, convert_type(arg) .. " " .. arg.name)
+
+		local argStr = convert_type(arg) .. " " .. arg.name;
+
+
+		if arg.default ~= nil then
+
+			if arg.default == "BGFX_INVALID_HANDLE" then
+				hasDefaultInvalidHandle = true
+			else
+				argStr = argStr .. " = " .. convert_default_arg(arg)
+			end
+		end
+
+		table.insert(args, argStr)
 	end
 	yield("public static extern unsafe " .. convert_ret_type(func.ret) .. " " .. func.cname
 		.. "(" .. table.concat(args, ", ") .. ");")
+
+	if hasDefaultInvalidHandle then
+
+		if func.comments ~= nil then
+			yield("/// <summary>")
+			for _, line in ipairs(func.comments) do
+				yield("/// " .. line)
+			end
+			yield("/// </summary>")
+			yield("///")
+
+			local hasParams = false
+
+			for _, arg in ipairs(func.args) do
+				if arg.comment ~= nil then
+					local comment = table.concat(arg.comment, " ")
+
+					yield("/// <param name=\""
+						.. arg.name
+						.. "\">"
+						.. comment
+						.. "</param>"
+						)
+
+					hasParams = true
+				end
+			end
+
+			if hasParams then
+				yield("///")
+			end
+		end
+		table.remove(args, #args)
+		yield("public static unsafe " .. convert_ret_type(func.ret) .. " " .. func.cname
+			.. "(" .. table.concat(args, ", ") .. ") =>")
+		yield(func.cname .. "(")
+		if func.this ~= nil then
+		yield("_this,")
+		end
+		for _, arg in pairs(func.args) do
+			if next(func.args,_) == nil then
+		   		yield(convert_type(arg) .. ".Invalid);")
+			else
+				yield(arg.name ..',')
+			end
+		end
+
+	end
 end
+
 
 -- printtable("idl types", idl.types)
 -- printtable("idl funcs", idl.funcs)
