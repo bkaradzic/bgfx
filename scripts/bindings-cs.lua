@@ -299,18 +299,12 @@ function converter.types(typ)
 	if typ.handle then
 		lastCombinedFlagBlock()
 
-	yield("public readonly struct " .. typ.name .. " : IEquatable<"..typ.name..">\n")
-	yield("{")
-	yield("	public readonly ushort idx;")
+	yield("public struct " .. typ.name .. " {")	
+	yield("	public ushort idx;")
 	yield("	public static readonly " .. typ.name .. " Invalid = new " .. typ.name .. "(ushort.MaxValue);")
 	yield("	public " .. typ.name .. "(ushort index) => idx = index;")
-	yield("	public bool Valid => this != Invalid;")
-	yield("	public override bool Equals(object? obj) => obj is " .. typ.name .. " handle && handle == this;")
-	yield("	public override int GetHashCode() => idx.GetHashCode();")
-	yield("	public bool Equals(" .. typ.name .. " other) => this.idx == other.idx;")
-	yield("	public static bool operator ==(" .. typ.name .. " left, " .. typ.name .. " right) => left.Equals(right);")
-	yield("	public static bool operator !=(" .. typ.name .. " left, " .. typ.name .. " right) => !(left == right);")
-        yield("}")
+	yield("	public bool Valid => this.idx != Invalid.idx;")
+       yield("}")
 	elseif hasSuffix(typ.name, "::Enum") then
 		lastCombinedFlagBlock()
 

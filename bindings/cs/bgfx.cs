@@ -2520,172 +2520,88 @@ public static partial class bgfx
 	{
 	}
 	
-	public readonly struct DynamicIndexBufferHandle : IEquatable<DynamicIndexBufferHandle>
-
-	{
-		public readonly ushort idx;
+	public struct DynamicIndexBufferHandle {
+		public ushort idx;
 		public static readonly DynamicIndexBufferHandle Invalid = new DynamicIndexBufferHandle(ushort.MaxValue);
 		public DynamicIndexBufferHandle(ushort index) => idx = index;
-		public bool Valid => this != Invalid;
-		public override bool Equals(object? obj) => obj is DynamicIndexBufferHandle handle && handle == this;
-		public override int GetHashCode() => idx.GetHashCode();
-		public bool Equals(DynamicIndexBufferHandle other) => this.idx == other.idx;
-		public static bool operator ==(DynamicIndexBufferHandle left, DynamicIndexBufferHandle right) => left.Equals(right);
-		public static bool operator !=(DynamicIndexBufferHandle left, DynamicIndexBufferHandle right) => !(left == right);
+		public bool Valid => this.idx != Invalid.idx;
 	}
 	
-	public readonly struct DynamicVertexBufferHandle : IEquatable<DynamicVertexBufferHandle>
-
-	{
-		public readonly ushort idx;
+	public struct DynamicVertexBufferHandle {
+		public ushort idx;
 		public static readonly DynamicVertexBufferHandle Invalid = new DynamicVertexBufferHandle(ushort.MaxValue);
 		public DynamicVertexBufferHandle(ushort index) => idx = index;
-		public bool Valid => this != Invalid;
-		public override bool Equals(object? obj) => obj is DynamicVertexBufferHandle handle && handle == this;
-		public override int GetHashCode() => idx.GetHashCode();
-		public bool Equals(DynamicVertexBufferHandle other) => this.idx == other.idx;
-		public static bool operator ==(DynamicVertexBufferHandle left, DynamicVertexBufferHandle right) => left.Equals(right);
-		public static bool operator !=(DynamicVertexBufferHandle left, DynamicVertexBufferHandle right) => !(left == right);
+		public bool Valid => this.idx != Invalid.idx;
 	}
 	
-	public readonly struct FrameBufferHandle : IEquatable<FrameBufferHandle>
-
-	{
-		public readonly ushort idx;
+	public struct FrameBufferHandle {
+		public ushort idx;
 		public static readonly FrameBufferHandle Invalid = new FrameBufferHandle(ushort.MaxValue);
 		public FrameBufferHandle(ushort index) => idx = index;
-		public bool Valid => this != Invalid;
-		public override bool Equals(object? obj) => obj is FrameBufferHandle handle && handle == this;
-		public override int GetHashCode() => idx.GetHashCode();
-		public bool Equals(FrameBufferHandle other) => this.idx == other.idx;
-		public static bool operator ==(FrameBufferHandle left, FrameBufferHandle right) => left.Equals(right);
-		public static bool operator !=(FrameBufferHandle left, FrameBufferHandle right) => !(left == right);
+		public bool Valid => this.idx != Invalid.idx;
 	}
 	
-	public readonly struct IndexBufferHandle : IEquatable<IndexBufferHandle>
-
-	{
-		public readonly ushort idx;
+	public struct IndexBufferHandle {
+		public ushort idx;
 		public static readonly IndexBufferHandle Invalid = new IndexBufferHandle(ushort.MaxValue);
 		public IndexBufferHandle(ushort index) => idx = index;
-		public bool Valid => this != Invalid;
-		public override bool Equals(object? obj) => obj is IndexBufferHandle handle && handle == this;
-		public override int GetHashCode() => idx.GetHashCode();
-		public bool Equals(IndexBufferHandle other) => this.idx == other.idx;
-		public static bool operator ==(IndexBufferHandle left, IndexBufferHandle right) => left.Equals(right);
-		public static bool operator !=(IndexBufferHandle left, IndexBufferHandle right) => !(left == right);
+		public bool Valid => this.idx != Invalid.idx;
 	}
 	
-	public readonly struct IndirectBufferHandle : IEquatable<IndirectBufferHandle>
-
-	{
-		public readonly ushort idx;
+	public struct IndirectBufferHandle {
+		public ushort idx;
 		public static readonly IndirectBufferHandle Invalid = new IndirectBufferHandle(ushort.MaxValue);
 		public IndirectBufferHandle(ushort index) => idx = index;
-		public bool Valid => this != Invalid;
-		public override bool Equals(object? obj) => obj is IndirectBufferHandle handle && handle == this;
-		public override int GetHashCode() => idx.GetHashCode();
-		public bool Equals(IndirectBufferHandle other) => this.idx == other.idx;
-		public static bool operator ==(IndirectBufferHandle left, IndirectBufferHandle right) => left.Equals(right);
-		public static bool operator !=(IndirectBufferHandle left, IndirectBufferHandle right) => !(left == right);
+		public bool Valid => this.idx != Invalid.idx;
 	}
 	
-	public readonly struct OcclusionQueryHandle : IEquatable<OcclusionQueryHandle>
-
-	{
-		public readonly ushort idx;
+	public struct OcclusionQueryHandle {
+		public ushort idx;
 		public static readonly OcclusionQueryHandle Invalid = new OcclusionQueryHandle(ushort.MaxValue);
 		public OcclusionQueryHandle(ushort index) => idx = index;
-		public bool Valid => this != Invalid;
-		public override bool Equals(object? obj) => obj is OcclusionQueryHandle handle && handle == this;
-		public override int GetHashCode() => idx.GetHashCode();
-		public bool Equals(OcclusionQueryHandle other) => this.idx == other.idx;
-		public static bool operator ==(OcclusionQueryHandle left, OcclusionQueryHandle right) => left.Equals(right);
-		public static bool operator !=(OcclusionQueryHandle left, OcclusionQueryHandle right) => !(left == right);
+		public bool Valid => this.idx != Invalid.idx;
 	}
 	
-	public readonly struct ProgramHandle : IEquatable<ProgramHandle>
-
-	{
-		public readonly ushort idx;
+	public struct ProgramHandle {
+		public ushort idx;
 		public static readonly ProgramHandle Invalid = new ProgramHandle(ushort.MaxValue);
 		public ProgramHandle(ushort index) => idx = index;
-		public bool Valid => this != Invalid;
-		public override bool Equals(object? obj) => obj is ProgramHandle handle && handle == this;
-		public override int GetHashCode() => idx.GetHashCode();
-		public bool Equals(ProgramHandle other) => this.idx == other.idx;
-		public static bool operator ==(ProgramHandle left, ProgramHandle right) => left.Equals(right);
-		public static bool operator !=(ProgramHandle left, ProgramHandle right) => !(left == right);
+		public bool Valid => this.idx != Invalid.idx;
 	}
 	
-	public readonly struct ShaderHandle : IEquatable<ShaderHandle>
-
-	{
-		public readonly ushort idx;
+	public struct ShaderHandle {
+		public ushort idx;
 		public static readonly ShaderHandle Invalid = new ShaderHandle(ushort.MaxValue);
 		public ShaderHandle(ushort index) => idx = index;
-		public bool Valid => this != Invalid;
-		public override bool Equals(object? obj) => obj is ShaderHandle handle && handle == this;
-		public override int GetHashCode() => idx.GetHashCode();
-		public bool Equals(ShaderHandle other) => this.idx == other.idx;
-		public static bool operator ==(ShaderHandle left, ShaderHandle right) => left.Equals(right);
-		public static bool operator !=(ShaderHandle left, ShaderHandle right) => !(left == right);
+		public bool Valid => this.idx != Invalid.idx;
 	}
 	
-	public readonly struct TextureHandle : IEquatable<TextureHandle>
-
-	{
-		public readonly ushort idx;
+	public struct TextureHandle {
+		public ushort idx;
 		public static readonly TextureHandle Invalid = new TextureHandle(ushort.MaxValue);
 		public TextureHandle(ushort index) => idx = index;
-		public bool Valid => this != Invalid;
-		public override bool Equals(object? obj) => obj is TextureHandle handle && handle == this;
-		public override int GetHashCode() => idx.GetHashCode();
-		public bool Equals(TextureHandle other) => this.idx == other.idx;
-		public static bool operator ==(TextureHandle left, TextureHandle right) => left.Equals(right);
-		public static bool operator !=(TextureHandle left, TextureHandle right) => !(left == right);
+		public bool Valid => this.idx != Invalid.idx;
 	}
 	
-	public readonly struct UniformHandle : IEquatable<UniformHandle>
-
-	{
-		public readonly ushort idx;
+	public struct UniformHandle {
+		public ushort idx;
 		public static readonly UniformHandle Invalid = new UniformHandle(ushort.MaxValue);
 		public UniformHandle(ushort index) => idx = index;
-		public bool Valid => this != Invalid;
-		public override bool Equals(object? obj) => obj is UniformHandle handle && handle == this;
-		public override int GetHashCode() => idx.GetHashCode();
-		public bool Equals(UniformHandle other) => this.idx == other.idx;
-		public static bool operator ==(UniformHandle left, UniformHandle right) => left.Equals(right);
-		public static bool operator !=(UniformHandle left, UniformHandle right) => !(left == right);
+		public bool Valid => this.idx != Invalid.idx;
 	}
 	
-	public readonly struct VertexBufferHandle : IEquatable<VertexBufferHandle>
-
-	{
-		public readonly ushort idx;
+	public struct VertexBufferHandle {
+		public ushort idx;
 		public static readonly VertexBufferHandle Invalid = new VertexBufferHandle(ushort.MaxValue);
 		public VertexBufferHandle(ushort index) => idx = index;
-		public bool Valid => this != Invalid;
-		public override bool Equals(object? obj) => obj is VertexBufferHandle handle && handle == this;
-		public override int GetHashCode() => idx.GetHashCode();
-		public bool Equals(VertexBufferHandle other) => this.idx == other.idx;
-		public static bool operator ==(VertexBufferHandle left, VertexBufferHandle right) => left.Equals(right);
-		public static bool operator !=(VertexBufferHandle left, VertexBufferHandle right) => !(left == right);
+		public bool Valid => this.idx != Invalid.idx;
 	}
 	
-	public readonly struct VertexLayoutHandle : IEquatable<VertexLayoutHandle>
-
-	{
-		public readonly ushort idx;
+	public struct VertexLayoutHandle {
+		public ushort idx;
 		public static readonly VertexLayoutHandle Invalid = new VertexLayoutHandle(ushort.MaxValue);
 		public VertexLayoutHandle(ushort index) => idx = index;
-		public bool Valid => this != Invalid;
-		public override bool Equals(object? obj) => obj is VertexLayoutHandle handle && handle == this;
-		public override int GetHashCode() => idx.GetHashCode();
-		public bool Equals(VertexLayoutHandle other) => this.idx == other.idx;
-		public static bool operator ==(VertexLayoutHandle left, VertexLayoutHandle right) => left.Equals(right);
-		public static bool operator !=(VertexLayoutHandle left, VertexLayoutHandle right) => !(left == right);
+		public bool Valid => this.idx != Invalid.idx;
 	}
 	
 
