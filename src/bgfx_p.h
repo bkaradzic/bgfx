@@ -2667,7 +2667,7 @@ namespace bgfx
 			if (m_draw.setStreamBit(_stream, _tvb->handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
-				stream.m_offset        = _tvb->offset + _offset;
+				stream.m_offset        = _tvb->startVertex * _tvb->stride + _offset;
 				stream.m_handle        = _tvb->handle;
 				stream.m_layoutHandle  = isValid(_layoutHandle) ? _layoutHandle : _tvb->layoutHandle;
 				m_numVertices[_stream] = bx::min(bx::uint32_imax(0, (_tvb->size - _offset) / _tvb->stride), _numVertices);
@@ -3987,7 +3987,7 @@ namespace bgfx
 				tvb = (TransientVertexBuffer*)bx::alignedAlloc(g_allocator, size, 16);
 				tvb->data = (uint8_t *)tvb + bx::alignUp(sizeof(TransientVertexBuffer), 16);
 				tvb->size = _size;
-				tvb->offset = 0;
+				tvb->startVertex = 0;
 				tvb->stride = stride;
 				tvb->handle = handle;
 				tvb->layoutHandle = layoutHandle;
@@ -4016,7 +4016,7 @@ namespace bgfx
 
 			_tvb->data         = &dvb.data[offset];
 			_tvb->size         = _size;
-			_tvb->offset       = bx::strideAlign(offset, _stride);
+			_tvb->startVertex  = bx::strideAlign(offset, _stride) / _stride;
 			_tvb->stride       = _stride;
 			_tvb->handle       = dvb.handle;
 			_tvb->layoutHandle = _layoutHandle;

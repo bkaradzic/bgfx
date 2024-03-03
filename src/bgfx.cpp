@@ -3832,20 +3832,6 @@ namespace bgfx
 		BGFX_ENCODER(setVertexBuffer(_stream, _tvb, _startVertex * _tvb->stride, _numVertices, _layoutHandle) );
 	}
 
-	void Encoder::setVertexBufferWithOffset(
-		uint8_t _stream
-		, const TransientVertexBuffer* _tvb
-		, uint32_t _offset
-		, uint32_t _numVertices
-		, VertexLayoutHandle _layoutHandle
-	)
-	{
-		BX_ASSERT(NULL != _tvb, "_tvb can't be NULL");
-		BGFX_CHECK_HANDLE("setVertexBuffer", s_ctx->m_vertexBufferHandle, _tvb->handle);
-		BGFX_CHECK_HANDLE_INVALID_OK("setVertexBuffer", s_ctx->m_layoutHandle, _layoutHandle);
-		BGFX_ENCODER(setVertexBuffer(_stream, _tvb, _offset, _numVertices, _layoutHandle));
-	}
-
 	void Encoder::setVertexBuffer(uint8_t _stream, const TransientVertexBuffer* _tvb)
 	{
 		setVertexBuffer(_stream, _tvb, 0, UINT32_MAX);
@@ -4359,19 +4345,6 @@ namespace bgfx
 		return s_ctx->getAvailTransientVertexBuffer(_num * _stride, _stride) / _stride;
 	}
 
-	uint32_t getAvailTransientVertexBufferWithSize(uint32_t _size, const VertexLayout& _layout)
-	{
-		BX_ASSERT(0 < _size, "Requesting 0 bytes.");
-		BX_ASSERT(isValid(_layout), "Invalid VertexLayout.");
-		return s_ctx->getAvailTransientVertexBuffer(_size, _layout.m_stride);
-	}
-
-	uint32_t getAvailTransientVertexBufferWithSize(uint32_t _size, uint16_t _stride)
-	{
-		BX_ASSERT(0 < _size, "Requesting 0 bytes.");
-		return s_ctx->getAvailTransientVertexBuffer(_size, _stride);
-	}
-
 	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num, bool _index32)
 	{
 		BX_ASSERT(NULL != _tib, "_tib can't be NULL");
@@ -4414,29 +4387,6 @@ namespace bgfx
 			, _num
 			, _tvb->size / _layout.m_stride
 			);
-	}
-
-	void allocTransientVertexBufferWithSize(TransientVertexBuffer* _tvb, uint32_t _size, const VertexLayout& _layout)
-	{
-		BX_ASSERT(NULL != _tvb, "_tvb can't be NULL");
-		BX_ASSERT(0 < _size, "Requesting 0 vertices.");
-		BX_ASSERT(isValid(_layout), "Invalid VertexLayout.");
-
-		VertexLayoutHandle layoutHandle;
-		{
-			BGFX_MUTEX_SCOPE(s_ctx->m_resourceApiLock);
-			layoutHandle = s_ctx->findOrCreateVertexLayout(_layout, true);
-		}
-		BX_ASSERT(isValid(layoutHandle), "Failed to allocate vertex layout handle (BGFX_CONFIG_MAX_VERTEX_LAYOUTS, max: %d).", BGFX_CONFIG_MAX_VERTEX_LAYOUTS);
-
-		s_ctx->allocTransientVertexBuffer(_tvb, _size, layoutHandle, _layout.m_stride);
-
-		BX_ASSERT(_size == _tvb->size
-			, "Failed to allocate transient vertex buffer (memory requested %d, available %d). "
-			"Use bgfx::getAvailTransient* functions to ensure availability."
-			, _size
-			, _tvb->size
-		);
 	}
 
 	bool allocTransientBuffers(bgfx::TransientVertexBuffer* _tvb, const bgfx::VertexLayout& _layout, uint32_t _numVertices, bgfx::TransientIndexBuffer* _tib, uint32_t _numIndices, bool _index32)
@@ -5585,18 +5535,6 @@ namespace bgfx
 	{
 		BGFX_CHECK_ENCODER0();
 		s_ctx->m_encoder0->setVertexBuffer(_stream, _tvb);
-	}
-
-	void setVertexBufferWithOffset(
-		uint8_t _stream
-		, const TransientVertexBuffer* _tvb
-		, uint32_t _offset
-		, uint32_t _numVertices
-		, VertexLayoutHandle _layoutHandle
-	)
-	{
-		BGFX_CHECK_ENCODER0();
-		s_ctx->m_encoder0->setVertexBufferWithOffset(_stream, _tvb, _offset, _numVertices, _layoutHandle);
 	}
 
 	void setVertexCount(uint32_t _numVertices)

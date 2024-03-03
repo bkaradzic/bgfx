@@ -867,7 +867,7 @@ namespace bgfx
 	{
 		uint8_t* data;                      //!< Pointer to data.
 		uint32_t size;                      //!< Data size.
-		uint32_t offset;                    //!< Offset in buffer.
+		uint32_t startVertex;               //!< First vertex.
 		uint16_t stride;                    //!< Vertex stride.
 		VertexBufferHandle handle;          //!< Vertex buffer handle.
 		VertexLayoutHandle layoutHandle;    //!< Vertex layout handle.
@@ -1400,25 +1400,6 @@ namespace bgfx
 			, uint32_t _numVertices
 			, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE
 			);
-
-		/// Set vertex buffer for draw primitive.
-		///
-		/// @param[in] _stream Vertex stream.
-		/// @param[in] _tvb Transient vertex buffer.
-		/// @param[in] _offset Offset of first vertex to render.
-		/// @param[in] _numVertices Number of vertices to render.
-		/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is
-		///   used, vertex layout used for creation of vertex buffer will be used.
-		///
-		/// @attention C99's equivalent binding is `bgfx_encoder_set_transient_vertex_buffer`.
-		///
-		void setVertexBufferWithOffset(
-			uint8_t _stream
-			, const TransientVertexBuffer* _tvb
-			, uint32_t _offset
-			, uint32_t _numVertices
-			, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE
-		);
 
 		/// Set number of vertices for auto generated vertices use in conjunction
 		/// with gl_VertexID.
@@ -2684,21 +2665,6 @@ namespace bgfx
 		, uint32_t _num
 		, const VertexLayout& _layout
 		);
-
-	/// Allocate transient vertex buffer.
-	///
-	/// @param[out] _tvb TransientVertexBuffer structure will be filled, and will be valid
-	///   for the duration of frame, and can be reused for multiple draw calls.
-	/// @param[in] _size Size of buffer to allocate.
-	/// @param[in] _layout Vertex layout.
-	///
-	/// @attention C99's equivalent binding is `TODO`.
-	///
-	void allocTransientVertexBufferWithSize(
-		TransientVertexBuffer* _tvb
-		, uint32_t _size
-		, const VertexLayout& _layout
-	);
 
 	/// Check for required space and allocate transient vertex and index
 	/// buffers. If both space requirements are satisfied function returns
@@ -4035,25 +4001,6 @@ namespace bgfx
 		, uint32_t _numVertices
 		, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE
 		);
-
-	/// Set vertex buffer for draw primitive.
-	///
-	/// @param[in] _stream Vertex stream.
-	/// @param[in] _tvb Transient vertex buffer.
-	/// @param[in] _offset Offset of first vertex to render.
-	/// @param[in] _numVertices Number of vertices to render.
-	/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is
-	///   used, vertex layout used for creation of vertex buffer will be used.
-	///
-	/// @attention C99's equivalent binding is `bgfx_set_transient_vertex_buffer`.
-	///
-	void setVertexBufferWithOffset(
-		uint8_t _stream
-		, const TransientVertexBuffer* _tvb
-		, uint32_t _offset
-		, uint32_t _numVertices
-		, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE
-	);
 
 	/// Set number of vertices for auto generated vertices use in conjunction
 	/// with gl_VertexID.
