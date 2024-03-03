@@ -3777,7 +3777,6 @@ namespace bgfx
 	{
 		BGFX_CHECK_HANDLE("setVertexBuffer", s_ctx->m_vertexBufferHandle, _handle);
 		BGFX_CHECK_HANDLE_INVALID_OK("setVertexBuffer", s_ctx->m_layoutHandle, _layoutHandle);
-		const VertexBuffer& vb = s_ctx->m_vertexBuffers[_handle.idx];
 		BGFX_ENCODER(setVertexBuffer(_stream, _handle, _offset, _numVertices, _layoutHandle));
 	}
 
