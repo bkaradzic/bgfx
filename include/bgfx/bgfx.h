@@ -1452,13 +1452,15 @@ namespace bgfx
 		/// @param[in] _handle Vertex buffer.
 		/// @param[in] _offset Offset of first instance data.
 		/// @param[in] _num Number of data instances.
+		/// @param[in] _stride Instance stride. Must be multiple of 16.
 		///
-		/// @attention C99's equivalent binding is `TODO`.
+		/// @attention C99's equivalent binding is `bgfx_encoder_set_instance_data_with_offset_from_vertex_buffer`.
 		///
 		void setInstanceDataBufferWithOffset(
 			VertexBufferHandle _handle
 			, uint32_t _offset
 			, uint32_t _num
+			, uint16_t _stride
 		);
 
 
@@ -1481,13 +1483,15 @@ namespace bgfx
 		/// @param[in] _handle Vertex buffer.
 		/// @param[in] _offset Offset of first instance data.
 		/// @param[in] _num Number of data instances.
+		/// @param[in] _stride Instance stride. Must be multiple of 16.
 		///
-		/// @attention C99's equivalent binding is `TODO`.
+		/// @attention C99's equivalent binding is `bgfx_encoder_set_instance_data_with_offset_from_dynamic_vertex_buffer`.
 		///
 		void setInstanceDataBufferWithOffset(
 			DynamicVertexBufferHandle _handle
 			, uint32_t _offset
 			, uint32_t _num
+			, uint16_t _stride
 		);
 
 		/// Set number of instances for auto generated instances use in conjunction
@@ -2635,6 +2639,19 @@ namespace bgfx
 		  uint32_t _num
 		, uint16_t _stride
 		);
+
+	/// Returns number of requested or maximum available instance buffer bytes.
+	///
+	/// @param[in] _size Size of required instance buffer.
+	/// @param[in] _stride Stride per instance.
+	///
+	/// @attention C99's equivalent binding is `bgfx_get_avail_instance_data_buffer_size`.
+	///
+	uint32_t getAvailInstanceDataBufferSize(
+		  uint32_t _size
+		, uint16_t _stride
+	);
+
 
 	/// Allocate transient index buffer.
 	///
@@ -4053,6 +4070,7 @@ namespace bgfx
 	/// @param[in] _handle Vertex buffer.
 	/// @param[in] _offset Offset of first instance data.
 	/// @param[in] _num Number of data instances.
+	/// @param[in] _stride Instance stride. Must be multiple of 16.
 	///
 	/// @attention C99's equivalent binding is `bgfx_set_instance_data_from_vertex_buffer`.
 	///
@@ -4060,6 +4078,7 @@ namespace bgfx
 		VertexBufferHandle _handle
 		, uint32_t _offset
 		, uint32_t _num
+		, uint16_t _stride
 	);
 
 	/// Set instance data buffer for draw primitive.
@@ -4081,6 +4100,7 @@ namespace bgfx
 	/// @param[in] _handle Vertex buffer.
 	/// @param[in] _offset Offset of first instance data.
 	/// @param[in] _num Number of data instances.
+	/// @param[in] _stride Instance stride. Must be multiple of 16.
 	///
 	/// @attention C99's equivalent binding is `bgfx_set_instance_data_from_dynamic_vertex_buffer`.
 	///
@@ -4088,6 +4108,7 @@ namespace bgfx
 		DynamicVertexBufferHandle _handle
 		, uint32_t _offset
 		, uint32_t _num
+		, uint16_t _stride
 	);
 
 	/// Set number of instances for auto generated instances use in conjunction

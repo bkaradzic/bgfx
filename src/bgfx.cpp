@@ -3861,11 +3861,11 @@ namespace bgfx
 		BGFX_ENCODER(setInstanceDataBuffer(_handle, _startVertex * vb.m_stride, _num, vb.m_stride) );
 	}
 
-	void Encoder::setInstanceDataBufferWithOffset(VertexBufferHandle _handle, uint32_t _offset, uint32_t _num)
+	void Encoder::setInstanceDataBufferWithOffset(VertexBufferHandle _handle, uint32_t _offset, uint32_t _num, uint16_t _stride)
 	{
 		BGFX_CHECK_HANDLE("setInstanceDataBuffer", s_ctx->m_vertexBufferHandle, _handle);
-		const VertexBuffer& vb = s_ctx->m_vertexBuffers[_handle.idx];
-		BGFX_ENCODER(setInstanceDataBuffer(_handle, _offset, _num, vb.m_stride));
+		BX_ASSERT(bx::isAligned(_stride, 16), "Stride must be multiple of 16.");
+		BGFX_ENCODER(setInstanceDataBuffer(_handle, _offset, _num, _stride));
 	}
 
 	void Encoder::setInstanceDataBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num)
@@ -3879,14 +3879,15 @@ namespace bgfx
 			) );
 	}
 
-	void Encoder::setInstanceDataBufferWithOffset(DynamicVertexBufferHandle _handle, uint32_t _offset, uint32_t _num)
+	void Encoder::setInstanceDataBufferWithOffset(DynamicVertexBufferHandle _handle, uint32_t _offset, uint32_t _num, uint16_t _stride)
 	{
 		BGFX_CHECK_HANDLE("setInstanceDataBuffer", s_ctx->m_dynamicVertexBufferHandle, _handle);
+		BX_ASSERT(bx::isAligned(_stride, 16), "Stride must be multiple of 16.");
 		const DynamicVertexBuffer& dvb = s_ctx->m_dynamicVertexBuffers[_handle.idx];
 		BGFX_ENCODER(setInstanceDataBuffer(dvb.m_handle
 			, dvb.m_startOffset + _offset
 			, _num
-			, dvb.m_stride
+			, _stride
 		));
 	}
 
@@ -4343,6 +4344,12 @@ namespace bgfx
 	{
 		BX_ASSERT(0 < _num, "Requesting 0 instances.");
 		return s_ctx->getAvailTransientVertexBuffer(_num * _stride, _stride) / _stride;
+	}
+
+	uint32_t getAvailInstanceDataBufferSize(uint32_t _size, uint16_t _stride)
+	{
+		BX_ASSERT(0 < _size, "Requesting 0 bytes.");
+		return s_ctx->getAvailTransientVertexBuffer(_size, _stride);
 	}
 
 	void allocTransientIndexBuffer(TransientIndexBuffer* _tib, uint32_t _num, bool _index32)
@@ -5561,10 +5568,10 @@ namespace bgfx
 		s_ctx->m_encoder0->setInstanceDataBuffer(_handle, _startVertex, _num);
 	}
 
-	void setInstanceDataBufferWithOffset(VertexBufferHandle _handle, uint32_t _offset, uint32_t _num)
+	void setInstanceDataBufferWithOffset(VertexBufferHandle _handle, uint32_t _offset, uint32_t _num, uint16_t _stride)
 	{
 		BGFX_CHECK_ENCODER0();
-		s_ctx->m_encoder0->setInstanceDataBufferWithOffset(_handle, _offset, _num);
+		s_ctx->m_encoder0->setInstanceDataBufferWithOffset(_handle, _offset, _num, _stride);
 	}
 
 	void setInstanceDataBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num)
@@ -5573,10 +5580,10 @@ namespace bgfx
 		s_ctx->m_encoder0->setInstanceDataBuffer(_handle, _startVertex, _num);
 	}
 
-	void setInstanceDataBufferWithOffset(DynamicVertexBufferHandle _handle, uint32_t _offset, uint32_t _num)
+	void setInstanceDataBufferWithOffset(DynamicVertexBufferHandle _handle, uint32_t _offset, uint32_t _num, uint16_t _stride)
 	{
 		BGFX_CHECK_ENCODER0();
-		s_ctx->m_encoder0->setInstanceDataBufferWithOffset(_handle, _offset, _num);
+		s_ctx->m_encoder0->setInstanceDataBufferWithOffset(_handle, _offset, _num, _stride);
 	}
 
 	void setInstanceCount(uint32_t _numInstances)
