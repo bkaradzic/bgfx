@@ -1457,6 +1457,24 @@ func.createDynamicVertexBuffer
 	                                   ---   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on
 	                                   ---       index buffers.
 
+--- Create empty dynamic vertex buffer.
+func.createDynamicVertexBufferWithSize { cname = "create_dynamic_vertex_buffer_with_size" }
+	"DynamicVertexBufferHandle"        --- Dynamic vertex buffer handle.
+	.size        "uint32_t"            --- Size of buffer.
+	.layout      "const VertexLayout&" --- Vertex layout.
+	.flags       "uint16_t"            --- Buffer creation flags.
+	 { default = "BGFX_BUFFER_NONE" }  ---   - `BGFX_BUFFER_NONE` - No flags.
+	                                   ---   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
+	                                   ---   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer
+	                                   ---       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.
+	                                   ---   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.
+	                                   ---   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of
+	                                   ---       data is passed. If this flag is not specified, and more data is passed on update, the buffer
+	                                   ---       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic
+	                                   ---       buffers.
+	                                   ---   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on
+	                                   ---       index buffers.
+
 --- Create dynamic vertex buffer and initialize it.
 func.createDynamicVertexBuffer { cname = "create_dynamic_vertex_buffer_mem" }
 	"DynamicVertexBufferHandle"        --- Dynamic vertex buffer handle.
@@ -1482,6 +1500,13 @@ func.update { cname = "update_dynamic_vertex_buffer" }
 	.startVertex "uint32_t"                  --- Start vertex.
 	.mem         "const Memory*"             --- Vertex buffer data.
 
+--- Update dynamic vertex buffer.
+func.updateWithOffset { cname = "update_dynamic_vertex_buffer_with_offset" }
+	"void"
+	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer handle.
+	.offset      "uint32_t"                  --- Offset of data.
+	.mem         "const Memory*"             --- Vertex buffer data.
+
 --- Destroy dynamic vertex buffer.
 func.destroy { cname = "destroy_dynamic_vertex_buffer" }
 	"void"
@@ -1504,6 +1529,12 @@ func.getAvailTransientVertexBuffer
 func.getAvailInstanceDataBuffer
 	"uint32_t"         --- Number of requested or maximum available instance buffer slots.
 	.num    "uint32_t" --- Number of required instances.
+	.stride "uint16_t" --- Stride per instance.
+
+--- Returns number of requested or maximum available instance buffer bytes.
+func.getAvailInstanceDataBufferSize
+	"uint32_t"         --- Size of required instance buffer.
+	.size   "uint32_t" --- Number of required instances.
 	.stride "uint16_t" --- Stride per instance.
 
 --- Allocate transient index buffer.
@@ -1551,6 +1582,15 @@ func.allocInstanceDataBuffer
 	                                      --- for duration of frame, and can be reused for multiple draw
 	                                      --- calls.
 	.num    "uint32_t"                    --- Number of instances.
+	.stride "uint16_t"                    --- Instance stride. Must be multiple of 16.
+
+--- Allocate instance data buffer.
+func.allocInstanceDataBufferWithSize
+	"void"
+	.idb    "InstanceDataBuffer*" { out } --- InstanceDataBuffer structure will be filled, and will be valid
+	                                      --- for duration of frame, and can be reused for multiple draw
+	                                      --- calls.
+	.size   "uint32_t"                    --- Buffer size.
 	.stride "uint16_t"                    --- Instance stride. Must be multiple of 16.
 
 --- Create draw indirect buffer.
@@ -2317,6 +2357,18 @@ func.Encoder.setVertexBuffer { cname = "set_vertex_buffer_with_layout" }
 	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set vertex buffer for draw primitive.
+func.Encoder.setVertexBufferWithOffset { cname = "set_vertex_buffer_with_offset" }
+	"void"
+	.stream       "uint8_t"            --- Vertex stream.
+	.handle       "VertexBufferHandle" --- Vertex buffer.
+	.offset       "uint32_t"           --- Offset of first vertex to render.
+	.numVertices  "uint32_t"           --- Number of vertices to render.
+	.layoutHandle "VertexLayoutHandle" --- Vertex layout for aliasing vertex buffer. If invalid
+	                                   --- handle is used, vertex layout used for creation
+	                                   --- of vertex buffer will be used.
+	 { default = "BGFX_INVALID_HANDLE" }
+
+--- Set vertex buffer for draw primitive.
 func.Encoder.setVertexBuffer { cpponly }
 	"void"
 	.stream      "uint8_t"                   --- Vertex stream.
@@ -2335,6 +2387,18 @@ func.Encoder.setVertexBuffer { cname = "set_dynamic_vertex_buffer_with_layout" }
 	.stream       "uint8_t"                   --- Vertex stream.
 	.handle       "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 	.startVertex  "uint32_t"                  --- First vertex to render.
+	.numVertices  "uint32_t"                  --- Number of vertices to render.
+	.layoutHandle "VertexLayoutHandle"        --- Vertex layout for aliasing vertex buffer. If invalid
+	                                          --- handle is used, vertex layout used for creation
+	                                          --- of vertex buffer will be used.
+	 { default = "BGFX_INVALID_HANDLE" }
+
+--- Set vertex buffer for draw primitive.
+func.Encoder.setVertexBufferWithOffset { cname = "set_dynamic_vertex_buffer_with_offset" }
+	"void"
+	.stream       "uint8_t"                   --- Vertex stream.
+	.handle       "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
+	.offset       "uint32_t"                  --- Offset of first vertex to render.
 	.numVertices  "uint32_t"                  --- Number of vertices to render.
 	.layoutHandle "VertexLayoutHandle"        --- Vertex layout for aliasing vertex buffer. If invalid
 	                                          --- handle is used, vertex layout used for creation
@@ -2396,11 +2460,27 @@ func.Encoder.setInstanceDataBuffer { cname = "set_instance_data_from_vertex_buff
 	.num         "uint32_t"           --- Number of data instances.
 
 --- Set instance data buffer for draw primitive.
+func.Encoder.setInstanceDataBufferWithOffset { cname = "set_instance_data_from_vertex_buffer_with_offset" }
+	"void"
+	.handle      "VertexBufferHandle" --- Vertex buffer.
+	.offset      "uint32_t"           --- Offset of first instance data.
+	.num         "uint32_t"           --- Number of data instances.
+	.stride      "uint16_t"           --- Instance stride. Must be multiple of 16.
+
+--- Set instance data buffer for draw primitive.
 func.Encoder.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_vertex_buffer" }
 	"void"
 	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 	.startVertex "uint32_t"                  --- First instance data.
 	.num         "uint32_t"                  --- Number of data instances.
+
+--- Set instance data buffer for draw primitive.
+func.Encoder.setInstanceDataBufferWithOffset { cname = "set_instance_data_from_dynamic_vertex_buffer_with_offset" }
+	"void"
+	.handle      "DynamicVertexBufferHandle" --- Vertex buffer.
+	.offset      "uint32_t"                  --- Offset of first instance data.
+	.num         "uint32_t"                  --- Number of data instances.
+	.stride      "uint16_t"                  --- Instance stride. Must be multiple of 16.
 
 --- Set number of instances for auto generated instances use in conjunction
 --- with gl_InstanceID.
@@ -2886,6 +2966,18 @@ func.setVertexBuffer { cname = "set_vertex_buffer_with_layout" }
 	                                         --- of vertex buffer will be used.
 	 { default = "BGFX_INVALID_HANDLE" }
 
+ --- Set vertex buffer for draw primitive.
+func.setVertexBufferWithOffset { cname = "set_vertex_buffer_with_offset" }
+	"void"
+	.stream      "uint8_t"                   --- Vertex stream.
+	.handle      "VertexBufferHandle"        --- Vertex buffer.
+	.offset      "uint32_t"                  --- Offset of first vertex to render.
+	.numVertices "uint32_t"                  --- Number of vertices to render.
+	.layoutHandle "VertexLayoutHandle"       --- Vertex layout for aliasing vertex buffer. If invalid
+	                                         --- handle is used, vertex layout used for creation
+	                                         --- of vertex buffer will be used.
+	 { default = "BGFX_INVALID_HANDLE" }
+
 --- Set vertex buffer for draw primitive.
 func.setVertexBuffer { cpponly }
 	"void"
@@ -2912,6 +3004,17 @@ func.setVertexBuffer { cname = "set_dynamic_vertex_buffer_with_layout" }
 	                                         --- of vertex buffer will be used.
 	 { default = "BGFX_INVALID_HANDLE" }
 
+--- Set vertex buffer for draw primitive.
+func.setVertexBufferWithOffset { cname = "set_dynamic_vertex_buffer_with_offset" }
+	"void"
+	.stream      "uint8_t"                   --- Vertex stream.
+	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
+	.offset      "uint32_t"                  --- Offset of first vertex to render.
+	.numVertices "uint32_t"                  --- Number of vertices to render.
+	.layoutHandle "VertexLayoutHandle"       --- Vertex layout for aliasing vertex buffer. If invalid
+	                                         --- handle is used, vertex layout used for creation
+	                                         --- of vertex buffer will be used.
+	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set vertex buffer for draw primitive.
 func.setVertexBuffer { cpponly }
@@ -2968,11 +3071,27 @@ func.setInstanceDataBuffer { cname = "set_instance_data_from_vertex_buffer" }
 	.num         "uint32_t"           --- Number of data instances.
 
 --- Set instance data buffer for draw primitive.
+func.setInstanceDataBufferWithOffset { cname = "set_instance_data_from_vertex_buffer_with_offset" }
+	"void"
+	.handle      "VertexBufferHandle" --- Vertex buffer.
+	.offset      "uint32_t"           --- First instance data.
+	.num         "uint32_t"           --- Number of data instances.
+	.stride      "uint16_t"           --- Instance stride. Must be multiple of 16.
+
+--- Set instance data buffer for draw primitive.
 func.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_vertex_buffer" }
 	"void"
 	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 	.startVertex "uint32_t"                  --- First instance data.
 	.num         "uint32_t"                  --- Number of data instances.
+
+--- Set instance data buffer for draw primitive.
+func.setInstanceDataBufferWithOffset { cname = "set_instance_data_from_dynamic_vertex_buffer_with_offset" }
+	"void"
+	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
+	.offset      "uint32_t"                  --- First instance data.
+	.num         "uint32_t"                  --- Number of data instances.
+	.stride      "uint16_t"           --- Instance stride. Must be multiple of 16.
 
 --- Set number of instances for auto generated instances use in conjunction
 --- with gl_InstanceID.

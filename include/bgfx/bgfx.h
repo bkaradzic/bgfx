@@ -1304,13 +1304,13 @@ namespace bgfx
 		///
 		/// @param[in] _stream Vertex stream.
 		/// @param[in] _handle Vertex buffer.
-		/// @param[in] _offset First vertex to render.
+		/// @param[in] _offset Offset of first vertex to render.
 		/// @param[in] _numVertices Number of vertices to render.
 		/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is
 		///   used, vertex layout used for creation of vertex buffer will be used.
 		/// @param[in] _offset Offset of data in buffer.
 		///
-		/// @attention C99's equivalent binding is `bgfx_encoder_set_vertex_buffer`.
+		/// @attention C99's equivalent binding is `bgfx_encoder_set_vertex_buffer_with_offset`.
 		///
 		void setVertexBufferWithOffset(
 			uint8_t _stream
@@ -1360,7 +1360,7 @@ namespace bgfx
 		/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is
 		///   used, vertex layout used for creation of vertex buffer will be used.
 		///
-		/// @attention C99's equivalent binding is `bgfx_encoder_set_dynamic_vertex_buffer`.
+		/// @attention C99's equivalent binding is `bgfx_encoder_set_dynamic_vertex_buffer_with_offset`.
 		///
 		void setVertexBufferWithOffset(
 			uint8_t _stream
@@ -1454,7 +1454,7 @@ namespace bgfx
 		/// @param[in] _num Number of data instances.
 		/// @param[in] _stride Instance stride. Must be multiple of 16.
 		///
-		/// @attention C99's equivalent binding is `bgfx_encoder_set_instance_data_with_offset_from_vertex_buffer`.
+		/// @attention C99's equivalent binding is `bgfx_encoder_set_instance_data_from_vertex_buffer_with_offset`.
 		///
 		void setInstanceDataBufferWithOffset(
 			VertexBufferHandle _handle
@@ -1470,7 +1470,7 @@ namespace bgfx
 		/// @param[in] _start First instance data.
 		/// @param[in] _num Number of data instances.
 		///
-		/// @attention C99's equivalent binding is `bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer`.
+		/// @attention C99's equivalent binding is `bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer_with_offset`.
 		///
 		void setInstanceDataBuffer(
 			  DynamicVertexBufferHandle _handle
@@ -2544,7 +2544,7 @@ namespace bgfx
 
 	/// Create empty dynamic vertex buffer.
 	///
-	/// @param[in] _size Size of buffer
+	/// @param[in] _size Size of buffer.
 	/// @param[in] _layout Vertex layout.
 	/// @param[in] _flags Buffer creation flags.
 	///   - `BGFX_BUFFER_NONE` - No flags.
@@ -2560,7 +2560,7 @@ namespace bgfx
 	///       index buffers.
 	/// @returns Dynamic vertex buffer handle.
 	///
-	/// @attention C99's equivalent binding is `TODO`.
+	/// @attention C99's equivalent binding is `bgfx_create_dynamic_vertex_buffer_with_size`.
 	///
 	DynamicVertexBufferHandle createDynamicVertexBufferWithSize(
 		uint32_t _size
@@ -2588,7 +2588,7 @@ namespace bgfx
 	/// @param[in] _offset Offset of data.
 	/// @param[in] _mem Vertex buffer data.
 	///
-	/// @attention C99's equivalent binding is `TODO`.
+	/// @attention C99's equivalent binding is `bgfx_update_dynamic_vertex_buffer_with_offset`.
 	///
 	void updateWithOffset(
 		DynamicVertexBufferHandle _handle
@@ -2729,7 +2729,7 @@ namespace bgfx
 	/// @param[in] _size Buffer size.
 	/// @param[in] _stride Instance stride. Must be multiple of 16.
 	///
-	/// @attention C99's equivalent binding is `TODO`.
+	/// @attention C99's equivalent binding is `bgfx_alloc_instance_data_buffer_with_size`.
 	///
 	void allocInstanceDataBufferWithSize(
 		InstanceDataBuffer* _idb
@@ -3928,7 +3928,7 @@ namespace bgfx
 	/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is
 	///   used, vertex layout used for creation of vertex buffer will be used.
 	///
-	/// @attention C99's equivalent binding is `TODO`.
+	/// @attention C99's equivalent binding is `bgfx_set_vertex_buffer_with_offset`.
 	///
 	void setVertexBufferWithOffset(
 		uint8_t _stream
@@ -3978,7 +3978,7 @@ namespace bgfx
 	/// @param[in] _layoutHandle Vertex layout for aliasing vertex buffer. If invalid handle is
 	///   used, vertex layout used for creation of vertex buffer will be used.
 	///
-	/// @attention C99's equivalent binding is `TODO`.
+	/// @attention C99's equivalent binding is `bgfx_set_dynamic_vertex_buffer_with_offset`.
 	///
 	void setVertexBufferWithOffset(
 		uint8_t _stream
@@ -4072,7 +4072,7 @@ namespace bgfx
 	/// @param[in] _num Number of data instances.
 	/// @param[in] _stride Instance stride. Must be multiple of 16.
 	///
-	/// @attention C99's equivalent binding is `bgfx_set_instance_data_from_vertex_buffer`.
+	/// @attention C99's equivalent binding is `bgfx_set_instance_data_from_vertex_buffer_with_offset`.
 	///
 	void setInstanceDataBufferWithOffset(
 		VertexBufferHandle _handle
@@ -4102,7 +4102,7 @@ namespace bgfx
 	/// @param[in] _num Number of data instances.
 	/// @param[in] _stride Instance stride. Must be multiple of 16.
 	///
-	/// @attention C99's equivalent binding is `bgfx_set_instance_data_from_dynamic_vertex_buffer`.
+	/// @attention C99's equivalent binding is `bgfx_set_instance_data_from_dynamic_vertex_buffer_with_offset`.
 	///
 	void setInstanceDataBufferWithOffset(
 		DynamicVertexBufferHandle _handle
