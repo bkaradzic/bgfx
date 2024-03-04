@@ -1470,7 +1470,7 @@ namespace bgfx
 		/// @param[in] _start First instance data.
 		/// @param[in] _num Number of data instances.
 		///
-		/// @attention C99's equivalent binding is `bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer_with_offset`.
+		/// @attention C99's equivalent binding is `bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer`.
 		///
 		void setInstanceDataBuffer(
 			  DynamicVertexBufferHandle _handle
@@ -1485,7 +1485,7 @@ namespace bgfx
 		/// @param[in] _num Number of data instances.
 		/// @param[in] _stride Instance stride. Must be multiple of 16.
 		///
-		/// @attention C99's equivalent binding is `bgfx_encoder_set_instance_data_with_offset_from_dynamic_vertex_buffer`.
+		/// @attention C99's equivalent binding is `bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer_with_offset`.
 		///
 		void setInstanceDataBufferWithOffset(
 			DynamicVertexBufferHandle _handle
