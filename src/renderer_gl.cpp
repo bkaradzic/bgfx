@@ -2265,6 +2265,10 @@ namespace bgfx { namespace gl
 
 			ErrorState::Enum errorState = ErrorState::Default;
 
+			s_currentlyEnabledVertexAttribArrays = 0;
+			s_vertexAttribArraysPendingDisable   = 0;
+			s_vertexAttribArraysPendingEnable    = 0;
+
 			if (_init.debug
 			||  _init.profile)
 			{
