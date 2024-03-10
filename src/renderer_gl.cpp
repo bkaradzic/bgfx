@@ -1274,6 +1274,13 @@ namespace bgfx { namespace gl
 	static uint64_t s_vertexAttribArraysPendingDisable   = 0;
 	static uint64_t s_vertexAttribArraysPendingEnable    = 0;
 
+	void initLazyEnabledVertexAttributes()
+	{
+		s_currentlyEnabledVertexAttribArrays = 0;
+		s_vertexAttribArraysPendingDisable   = 0;
+		s_vertexAttribArraysPendingEnable    = 0;
+	}
+
 	void lazyEnableVertexAttribArray(GLuint index)
 	{
 		if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
@@ -2265,9 +2272,7 @@ namespace bgfx { namespace gl
 
 			ErrorState::Enum errorState = ErrorState::Default;
 
-			s_currentlyEnabledVertexAttribArrays = 0;
-			s_vertexAttribArraysPendingDisable   = 0;
-			s_vertexAttribArraysPendingEnable    = 0;
+			initLazyEnabledVertexAttributes();
 
 			if (_init.debug
 			||  _init.profile)
