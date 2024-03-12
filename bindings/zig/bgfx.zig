@@ -3681,10 +3681,10 @@ extern fn bgfx_dispatch(_id: ViewId, _program: ProgramHandle, _numX: u32, _numY:
 /// <param name="_start">First element in indirect buffer.</param>
 /// <param name="_num">Number of dispatches.</param>
 /// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
-pub inline fn dispatchIndirect(_id: ViewId, _program: ProgramHandle, _indirectHandle: IndirectBufferHandle, _start: u16, _num: u16, _flags: u8) void {
+pub inline fn dispatchIndirect(_id: ViewId, _program: ProgramHandle, _indirectHandle: IndirectBufferHandle, _start: u32, _num: u32, _flags: u8) void {
     return bgfx_dispatch_indirect(_id, _program, _indirectHandle, _start, _num, _flags);
 }
-extern fn bgfx_dispatch_indirect(_id: ViewId, _program: ProgramHandle, _indirectHandle: IndirectBufferHandle, _start: u16, _num: u16, _flags: u8) void;
+extern fn bgfx_dispatch_indirect(_id: ViewId, _program: ProgramHandle, _indirectHandle: IndirectBufferHandle, _start: u32, _num: u32, _flags: u8) void;
 
 /// Discard previously set state for draw or compute call.
 /// <param name="_flags">Draw/compute states to discard.</param>

@@ -3133,9 +3133,9 @@ func.dispatch { cname = "dispatch_indirect" }
 	.id             "ViewId"               --- View id.
 	.program        "ProgramHandle"        --- Compute program.
 	.indirectHandle "IndirectBufferHandle" --- Indirect buffer.
-	.start          "uint16_t"             --- First element in indirect buffer.
+	.start          "uint32_t"             --- First element in indirect buffer.
 	 { default = 0 }
-	.num            "uint16_t"             --- Number of dispatches.
+	.num            "uint32_t"             --- Number of dispatches.
 	 { default = 1 }
 	.flags   "uint8_t"                     --- Discard or preserve states. See `BGFX_DISCARD_*`.
 	 { default = "BGFX_DISCARD_ALL" }
