@@ -3507,7 +3507,7 @@ mixin(joinFnBinds((){
 			num = Number of dispatches.
 			flags = Discard or preserve states. See `BGFX_DISCARD_*`.
 		*/
-		{q{void}, q{dispatch}, q{ViewID id, ProgramHandle program, IndirectBufferHandle indirectHandle, ushort start=0, ushort num=1, ubyte flags=Discard.all}, ext: `C++, "bgfx"`},
+		{q{void}, q{dispatch}, q{ViewID id, ProgramHandle program, IndirectBufferHandle indirectHandle, uint start=0, uint num=1, ubyte flags=Discard.all}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Discard previously set state for draw or compute call.
