@@ -749,7 +749,7 @@ extern(C++, "bgfx") package final abstract class %s{
 		
 		if typ.helper then
 			yield(string.format(
-				"%s_ to%s(%s v){ return (v << %s) & %s; }",
+				"%s_ to%s(%s v) nothrow @nogc pure @safe{ return (v << %s) & %s; }",
 				typeName,
 				typeName,
 				enumType,

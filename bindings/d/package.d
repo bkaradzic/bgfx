@@ -105,7 +105,7 @@ enum StateAlphaRef: StateAlphaRef_{
 	shift  = 40, ///Alpha reference bit shift
 	mask   = 0x0000_FF00_0000_0000, ///Alpha reference bit mask
 }
-StateAlphaRef_ toStateAlphaRef(ulong v){ return (v << StateAlphaRef.shift) & StateAlphaRef.mask; }
+StateAlphaRef_ toStateAlphaRef(ulong v) nothrow @nogc pure @safe{ return (v << StateAlphaRef.shift) & StateAlphaRef.mask; }
 
 alias StatePT_ = ulong;
 enum StatePT: StatePT_{
@@ -123,7 +123,7 @@ enum StatePointSize: StatePointSize_{
 	shift  = 52, ///Point size bit shift
 	mask   = 0x00F0_0000_0000_0000, ///Point size bit mask
 }
-StatePointSize_ toStatePointSize(ulong v){ return (v << StatePointSize.shift) & StatePointSize.mask; }
+StatePointSize_ toStatePointSize(ulong v) nothrow @nogc pure @safe{ return (v << StatePointSize.shift) & StatePointSize.mask; }
 
 /**
 Enable MSAA write when writing into MSAA frame buffer.
@@ -160,7 +160,7 @@ enum StencilFuncRef: StencilFuncRef_{
 	shift  = 0,
 	mask   = 0x0000_00FF,
 }
-StencilFuncRef_ toStencilFuncRef(uint v){ return (v << StencilFuncRef.shift) & StencilFuncRef.mask; }
+StencilFuncRef_ toStencilFuncRef(uint v) nothrow @nogc pure @safe{ return (v << StencilFuncRef.shift) & StencilFuncRef.mask; }
 
 ///Set stencil rmask value.
 alias StencilFuncRmask_ = uint;
@@ -168,7 +168,7 @@ enum StencilFuncRmask: StencilFuncRmask_{
 	shift  = 8,
 	mask   = 0x0000_FF00,
 }
-StencilFuncRmask_ toStencilFuncRmask(uint v){ return (v << StencilFuncRmask.shift) & StencilFuncRmask.mask; }
+StencilFuncRmask_ toStencilFuncRmask(uint v) nothrow @nogc pure @safe{ return (v << StencilFuncRmask.shift) & StencilFuncRmask.mask; }
 
 alias Stencil_ = uint;
 enum Stencil: Stencil_{
@@ -427,7 +427,7 @@ enum SamplerBorderColor: SamplerBorderColor_{
 	mask   = 0x0F00_0000,
 }
 alias SamplerBorderColour = SamplerBorderColor;
-SamplerBorderColor_ toSamplerBorderColor(uint v){ return (v << SamplerBorderColor.shift) & SamplerBorderColor.mask; }
+SamplerBorderColor_ toSamplerBorderColor(uint v) nothrow @nogc pure @safe{ return (v << SamplerBorderColor.shift) & SamplerBorderColor.mask; }
 alias toSamplerBorderColour = toSamplerBorderColor;
 
 alias SamplerReserved_ = uint;
