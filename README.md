@@ -602,9 +602,10 @@ based on Lua, with excellent performance and easy customization.
 
 ## Crypt of the NecroDancer
 
-Crypt of the NecroDancer is an award-winning hardcore roguelike rhythm game.
-Move to the music and deliver beatdowns to the beat!
-The game uses bgfx on Windows, macOS, Linux, Nintendo Switch and PlayStation 4.
+https://braceyourselfgames.com/crypt-of-the-necrodancer/ - Crypt of the NecroDancer
+is an award-winning hardcore roguelike rhythm game. Move to the music and deliver
+beatdowns to the beat! The game uses bgfx on Windows, macOS, Linux, Nintendo
+Switch and PlayStation 4.
 
 ![Crypt of the NecroDancer screenshot](https://raw.githubusercontent.com/Marukyu/marukyu.github.io/misc-assets/247080_20240322072858_1.png)
 
