@@ -600,6 +600,14 @@ based on Lua, with excellent performance and easy customization.
 
 ![RedFrontier](https://github.com/ejoy/vaststars/blob/master/screenshot/startup.jpg)
 
+## Crypt of the NecroDancer
+
+Crypt of the NecroDancer is an award-winning hardcore roguelike rhythm game.
+Move to the music and deliver beatdowns to the beat!
+The game uses bgfx on Windows, macOS, Linux, Nintendo Switch and PlayStation 4.
+
+![Crypt of the NecroDancer screenshot](https://raw.githubusercontent.com/Marukyu/marukyu.github.io/misc-assets/247080_20240322072858_1.png)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
