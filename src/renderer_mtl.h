@@ -33,6 +33,29 @@
 		BGFX_PROFILER_END();    \
 	BX_MACRO_BLOCK_END
 
+#ifndef BX_XCODE_14
+#   define BX_XCODE_14          ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 130000) || \
+                                 (__IPHONE_OS_VERSION_MAX_ALLOWED >= 160000))
+#endif
+#ifndef BX_XCODE_13
+#   define BX_XCODE_13          ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 120000) || \
+                                 (__IPHONE_OS_VERSION_MAX_ALLOWED >= 150000))
+#endif
+#ifndef BX_XCODE_12
+#   define BX_XCODE_12          ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 110000) || \
+                                 (__IPHONE_OS_VERSION_MAX_ALLOWED >= 140000))
+#endif
+
+#if !(BX_PLATFORM_IOS || (BX_PLATFORM_OSX && BX_XCODE_12))
+#   define MTLGPUFamilyApple6 MTLGPUFamily(1006)
+#endif
+#if !((BX_PLATFORM_IOS || BX_PLATFORM_OSX) && BX_XCODE_12)
+#   define MTLGPUFamilyApple7 MTLGPUFamily(1007)
+#endif
+#if !(BX_XCODE_14 || (BX_PLATFORM_IOS && BX_XCODE_13))
+#   define MTLGPUFamilyApple8 MTLGPUFamily(1008)
+#endif
+
 namespace bgfx { namespace mtl
 {
 	//runtime os check
