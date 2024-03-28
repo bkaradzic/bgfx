@@ -3830,7 +3830,7 @@ namespace bgfx { namespace d3d11
 		}
 		else if (m_dynamic)
 		{
-#if USE_D3D11_STAGING_BUFFER
+#if BGFX_CONFIG_RENDERER_DIRECT3D11_USE_STAGING_BUFFER
 			desc.Usage          = D3D11_USAGE_DEFAULT;
 			desc.CPUAccessFlags = 0;
 
@@ -3855,7 +3855,7 @@ namespace bgfx { namespace d3d11
 				, NULL
 				, &m_ptr
 				) );
-#endif // USE_D3D11_STAGING_BUFFER
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D11_USE_STAGING_BUFFER
 		}
 		else
 		{
@@ -3887,7 +3887,7 @@ namespace bgfx { namespace d3d11
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 		BX_ASSERT(m_dynamic, "Must be dynamic!");
 
-#if USE_D3D11_STAGING_BUFFER
+#if BGFX_CONFIG_RENDERER_DIRECT3D11_USE_STAGING_BUFFER
 		BX_UNUSED(_discard);
 
 		D3D11_MAPPED_SUBRESOURCE mapped;
