@@ -671,8 +671,8 @@ namespace bgfx
 			||  m_small  != _small)
 			{
 				m_small  = _small;
-				m_width  = (uint16_t)width;
-				m_height = (uint16_t)height;
+				m_width  = bx::narrowCast<uint16_t>(width);
+				m_height = bx::narrowCast<uint16_t>(height);
 
 				uint32_t size = m_size;
 				m_size = m_width * m_height;
@@ -945,6 +945,14 @@ namespace bgfx
 		{
 			align(BX_ALIGNOF(Type) );
 			write(reinterpret_cast<const uint8_t*>(&_in), sizeof(Type) );
+		}
+
+		void write(const bx::StringView& _str)
+		{
+			const uint16_t len = bx::narrowCast<uint16_t>(_str.getLength()+1);
+			write(len);
+			write(_str.getPtr(), len-1);
+			write('\0');
 		}
 
 		void read(void* _data, uint32_t _size)
@@ -1382,7 +1390,7 @@ namespace bgfx
 			uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, num, BGFX_CONFIG_MAX_MATRIX_CACHE - 1);
 			BX_WARN(first+num < BGFX_CONFIG_MAX_MATRIX_CACHE, "Matrix cache overflow. %d (max: %d)", first+num, BGFX_CONFIG_MAX_MATRIX_CACHE);
 			num = bx::min(num, BGFX_CONFIG_MAX_MATRIX_CACHE-1-first);
-			*_num = (uint16_t)num;
+			*_num = bx::narrowCast<uint16_t>(num);
 			return first;
 		}
 
@@ -1576,7 +1584,7 @@ namespace bgfx
 
 		void writeUniform(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num = 1);
 		void writeUniformHandle(UniformType::Enum _type, uint16_t _loc, UniformHandle _handle, uint16_t _num = 1);
-		void writeMarker(const char* _marker);
+		void writeMarker(const bx::StringView& _name);
 
 	private:
 		UniformBuffer(uint32_t _size)
@@ -2478,7 +2486,7 @@ namespace bgfx
 			}
 		}
 
-		void setMarker(const char* _name)
+		void setMarker(const bx::StringView& _name)
 		{
 			UniformBuffer::update(&m_frame->m_uniformBuffer[m_uniformIdx]);
 			UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
@@ -2494,7 +2502,7 @@ namespace bgfx
 					, _handle.idx
 					, getName(_handle)
 					);
-				m_uniformSet.insert(_handle.idx);
+//				m_uniformSet.insert(_handle.idx);
 			}
 
 			UniformBuffer::update(&m_frame->m_uniformBuffer[m_uniformIdx]);
@@ -2543,7 +2551,7 @@ namespace bgfx
 
 		uint16_t setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 		{
-			uint16_t scissor = (uint16_t)m_frame->m_frameCache.m_rectCache.add(_x, _y, _width, _height);
+			uint16_t scissor = bx::narrowCast<uint16_t>(m_frame->m_frameCache.m_rectCache.add(_x, _y, _width, _height) );
 			m_draw.m_scissor = scissor;
 			return scissor;
 		}
@@ -3086,7 +3094,7 @@ namespace bgfx
 		virtual void updateViewName(ViewId _id, const char* _name) = 0;
 		virtual void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) = 0;
 		virtual void invalidateOcclusionQuery(OcclusionQueryHandle _handle) = 0;
-		virtual void setMarker(const char* _marker, uint16_t _len) = 0;
+		virtual void setMarker(const char* _name, uint16_t _len) = 0;
 		virtual void setName(Handle _handle, const char* _name, uint16_t _len) = 0;
 		virtual void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) = 0;
 		virtual void blitSetup(TextVideoMemBlitter& _blitter) = 0;
@@ -4906,7 +4914,7 @@ namespace bgfx
 					cmdbuf.write(handle);
 					cmdbuf.write(uniform.m_type);
 					cmdbuf.write(uniform.m_num);
-					uint8_t len = (uint8_t)bx::strLen(_name)+1;
+					uint8_t len = bx::narrowCast<uint8_t>(bx::strLen(_name)+1);
 					cmdbuf.write(len);
 					cmdbuf.write(_name, len);
 				}
@@ -4938,7 +4946,7 @@ namespace bgfx
 			cmdbuf.write(handle);
 			cmdbuf.write(_type);
 			cmdbuf.write(_num);
-			uint8_t len = (uint8_t)bx::strLen(_name)+1;
+			uint8_t len = bx::narrowCast<uint8_t>(bx::strLen(_name)+1);
 			cmdbuf.write(len);
 			cmdbuf.write(_name, len);
 
@@ -5075,15 +5083,13 @@ namespace bgfx
 			m_colorPaletteDirty = 2;
 		}
 
-		BGFX_API_FUNC(void setViewName(ViewId _id, const char* _name) )
+		BGFX_API_FUNC(void setViewName(ViewId _id, const bx::StringView& _name) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateViewName);
 			cmdbuf.write(_id);
-			uint16_t len = (uint16_t)bx::strLen(_name)+1;
-			cmdbuf.write(len);
-			cmdbuf.write(_name, len);
+			cmdbuf.write(_name);
 		}
 
 		BGFX_API_FUNC(void setViewRect(ViewId _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height) )

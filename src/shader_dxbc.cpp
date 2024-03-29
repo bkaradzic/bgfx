@@ -1726,7 +1726,7 @@ namespace bgfx
 					size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
 								, "%s%f"
 								, 0 == jj ? "(" : ", "
-								, bx::bit_cast<float>(operand.un.imm32[jj])
+								, bx::bitCast<float>(operand.un.imm32[jj])
 								);
 				}
 

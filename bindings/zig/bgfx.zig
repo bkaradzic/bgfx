@@ -1549,9 +1549,10 @@ pub const Init = extern struct {
     pub const Encoder = opaque {
         /// Sets a debug marker. This allows you to group graphics calls together for easy browsing in
         /// graphics debugging tools.
-        /// <param name="_marker">Marker string.</param>
-        pub inline fn setMarker(self: ?*Encoder, _marker: [*c]const u8) void {
-            return bgfx_encoder_set_marker(self, _marker);
+        /// <param name="_name">Marker name.</param>
+        /// <param name="_len">Marker name length (if length is INT32_MAX, it's expected that _name is zero terminated string.</param>
+        pub inline fn setMarker(self: ?*Encoder, _name: [*c]const u8, _len: i32) void {
+            return bgfx_encoder_set_marker(self, _name, _len);
         }
         /// Set render states for draw primitive.
         /// @remarks
@@ -2811,10 +2812,11 @@ extern fn bgfx_set_palette_color_rgba8(_index: u8, _rgba: u32) void;
 ///        +------ view id
 /// <param name="_id">View id.</param>
 /// <param name="_name">View name.</param>
-pub inline fn setViewName(_id: ViewId, _name: [*c]const u8) void {
-    return bgfx_set_view_name(_id, _name);
+/// <param name="_len">View name length (if length is INT32_MAX, it's expected that _name is zero terminated string.</param>
+pub inline fn setViewName(_id: ViewId, _name: [*c]const u8, _len: i32) void {
+    return bgfx_set_view_name(_id, _name, _len);
 }
-extern fn bgfx_set_view_name(_id: ViewId, _name: [*c]const u8) void;
+extern fn bgfx_set_view_name(_id: ViewId, _name: [*c]const u8, _len: i32) void;
 
 /// Set view rectangle. Draw primitive outside view will be clipped.
 /// <param name="_id">View id.</param>
@@ -2941,8 +2943,9 @@ extern fn bgfx_encoder_end(_encoder: ?*Encoder) void;
 
 /// Sets a debug marker. This allows you to group graphics calls together for easy browsing in
 /// graphics debugging tools.
-/// <param name="_marker">Marker string.</param>
-extern fn bgfx_encoder_set_marker(self: ?*Encoder, _marker: [*c]const u8) void;
+/// <param name="_name">Marker name.</param>
+/// <param name="_len">Marker name length (if length is INT32_MAX, it's expected that _name is zero terminated string.</param>
+extern fn bgfx_encoder_set_marker(self: ?*Encoder, _name: [*c]const u8, _len: i32) void;
 
 /// Set render states for draw primitive.
 /// @remarks
@@ -3303,11 +3306,12 @@ extern fn bgfx_override_internal_texture(_handle: TextureHandle, _width: u16, _h
 
 /// Sets a debug marker. This allows you to group graphics calls together for easy browsing in
 /// graphics debugging tools.
-/// <param name="_marker">Marker string.</param>
-pub inline fn setMarker(_marker: [*c]const u8) void {
-    return bgfx_set_marker(_marker);
+/// <param name="_name">Marker name.</param>
+/// <param name="_len">Marker name length (if length is INT32_MAX, it's expected that _name is zero terminated string.</param>
+pub inline fn setMarker(_name: [*c]const u8, _len: i32) void {
+    return bgfx_set_marker(_name, _len);
 }
-extern fn bgfx_set_marker(_marker: [*c]const u8) void;
+extern fn bgfx_set_marker(_name: [*c]const u8, _len: i32) void;
 
 /// Set render states for draw primitive.
 /// @remarks

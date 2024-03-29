@@ -225,15 +225,6 @@ namespace bgfx
 
 			if (kNaturalAlignment >= _align)
 			{
-#if BGFX_CONFIG_MEMORY_TRACKING
-				if (NULL == _ptr)
-				{
-					bx::MutexScope scope(m_mutex);
-					++m_numBlocks;
-					m_maxBlocks = bx::max(m_maxBlocks, m_numBlocks);
-				}
-#endif // BGFX_CONFIG_MEMORY_TRACKING
-
 				return ::realloc(_ptr, _size);
 			}
 
@@ -1514,24 +1505,26 @@ namespace bgfx
 
 	void UniformBuffer::writeUniform(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num)
 	{
-		uint32_t opcode = encodeOpcode(_type, _loc, _num, true);
+		const uint32_t opcode = encodeOpcode(_type, _loc, _num, true);
 		write(opcode);
 		write(_value, g_uniformTypeSize[_type]*_num);
 	}
 
 	void UniformBuffer::writeUniformHandle(UniformType::Enum _type, uint16_t _loc, UniformHandle _handle, uint16_t _num)
 	{
-		uint32_t opcode = encodeOpcode(_type, _loc, _num, false);
+		const uint32_t opcode = encodeOpcode(_type, _loc, _num, false);
 		write(opcode);
 		write(&_handle, sizeof(UniformHandle) );
 	}
 
-	void UniformBuffer::writeMarker(const char* _marker)
+	void UniformBuffer::writeMarker(const bx::StringView& _name)
 	{
-		uint16_t num = (uint16_t)bx::strLen(_marker)+1;
-		uint32_t opcode = encodeOpcode(bgfx::UniformType::Count, 0, num, true);
+		const uint16_t num = bx::narrowCast<uint16_t>(_name.getLength()+1);
+		const uint32_t opcode = encodeOpcode(bgfx::UniformType::Count, 0, num, true);
 		write(opcode);
-		write(_marker, num);
+		write(_name.getPtr(), num-1);
+		const char zero = '\0';
+		write(&zero, 1);
 	}
 
 	struct CapsFlags
@@ -2521,8 +2514,9 @@ namespace bgfx
 			uint16_t copy;
 			UniformBuffer::decodeOpcode(opcode, type, loc, num, copy);
 
-			uint32_t size = g_uniformTypeSize[type]*num;
+			const uint32_t size = g_uniformTypeSize[type]*num;
 			const char* data = _uniformBuffer->read(size);
+
 			if (UniformType::Count > type)
 			{
 				if (copy)
@@ -3661,9 +3655,9 @@ namespace bgfx
 
 #define BGFX_ENCODER(_func) reinterpret_cast<EncoderImpl*>(this)->_func
 
-	void Encoder::setMarker(const char* _marker)
+	void Encoder::setMarker(const char* _name, int32_t _len)
 	{
-		BGFX_ENCODER(setMarker(_marker) );
+		BGFX_ENCODER(setMarker(bx::StringView(_name, _len) ) );
 	}
 
 	void Encoder::setState(uint64_t _state, uint32_t _rgba)
@@ -5215,10 +5209,10 @@ namespace bgfx
 		return id < BGFX_CONFIG_MAX_VIEWS;
 	}
 
-	void setViewName(ViewId _id, const char* _name)
+	void setViewName(ViewId _id, const char* _name, int32_t _len)
 	{
 		BX_ASSERT(checkView(_id), "Invalid view id: %d", _id);
-		s_ctx->setViewName(_id, _name);
+		s_ctx->setViewName(_id, bx::StringView(_name, _len) );
 	}
 
 	void setViewRect(ViewId _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
@@ -5290,10 +5284,10 @@ namespace bgfx
 	BGFX_FATAL(NULL != s_ctx->m_encoder0, Fatal::DebugCheck \
 		, "bgfx is configured to allow only encoder API. See: `BGFX_CONFIG_ENCODER_API_ONLY`.")
 
-	void setMarker(const char* _marker)
+	void setMarker(const char* _name, int32_t _len)
 	{
 		BGFX_CHECK_ENCODER0();
-		s_ctx->m_encoder0->setMarker(_marker);
+		s_ctx->m_encoder0->setMarker(_name, _len);
 	}
 
 	void setState(uint64_t _state, uint32_t _rgba)

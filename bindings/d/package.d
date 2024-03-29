@@ -10,7 +10,7 @@ import bindbc.bgfx.config;
 import bindbc.common.types: c_int64, c_uint64, va_list;
 static import bgfx.fakeenum;
 
-enum uint apiVersion = 126;
+enum uint apiVersion = 127;
 
 alias ViewID = ushort;
 
@@ -1386,9 +1386,11 @@ extern(C++, "bgfx") struct Encoder{
 			Sets a debug marker. This allows you to group graphics calls together for easy browsing in
 			graphics debugging tools.
 			Params:
-				marker = Marker string.
+				name = Marker name.
+				len = Marker name length (if length is INT32_MAX, it's expected
+			that _name is zero terminated string.
 			*/
-			{q{void}, q{setMarker}, q{const(char)* marker}, ext: `C++`},
+			{q{void}, q{setMarker}, q{const(char)* name, int len=int.max}, ext: `C++`},
 			
 			/**
 			Set render states for draw primitive.
@@ -2872,8 +2874,10 @@ mixin(joinFnBinds((){
 		Params:
 			id = View id.
 			name = View name.
+			len = View name length (if length is INT32_MAX, it's expected
+		that _name is zero terminated string.
 		*/
-		{q{void}, q{setViewName}, q{ViewID id, const(char)* name}, ext: `C++, "bgfx"`},
+		{q{void}, q{setViewName}, q{ViewID id, const(char)* name, int len=int.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set view rectangle. Draw primitive outside view will be clipped.
@@ -3084,9 +3088,11 @@ mixin(joinFnBinds((){
 		* Sets a debug marker. This allows you to group graphics calls together for easy browsing in
 		* graphics debugging tools.
 		Params:
-			marker = Marker string.
+			name = Marker name.
+			len = Marker name length (if length is INT32_MAX, it's expected
+		that _name is zero terminated string.
 		*/
-		{q{void}, q{setMarker}, q{const(char)* marker}, ext: `C++, "bgfx"`},
+		{q{void}, q{setMarker}, q{const(char)* name, int len=int.max}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set render states for draw primitive.

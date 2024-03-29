@@ -277,6 +277,25 @@ VK_IMPORT_DEVICE
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
+	struct ImageTest
+	{
+		VkImageType        type;
+		VkImageUsageFlags  usage;
+		VkImageCreateFlags flags;
+		uint32_t           formatCaps[2];
+	};
+
+	static const ImageTest s_imageTest[] =
+	{
+		{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_SAMPLED_BIT,                  0,                                   { BGFX_CAPS_FORMAT_TEXTURE_2D,          BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB   } },
+		{ VK_IMAGE_TYPE_3D, VK_IMAGE_USAGE_SAMPLED_BIT,                  0,                                   { BGFX_CAPS_FORMAT_TEXTURE_3D,          BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB   } },
+		{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_SAMPLED_BIT,                  VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, { BGFX_CAPS_FORMAT_TEXTURE_CUBE,        BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB } },
+		{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,         0,                                   { BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER, 0                                  } },
+		{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0,                                   { BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER, 0                                  } },
+		{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_STORAGE_BIT,                  0,                                   { BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ,  0                                  } },
+		{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_STORAGE_BIT,                  0,                                   { BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE, 0                                  } },
+	};
+
 	struct LayerInfo
 	{
 		bool m_supported;
@@ -535,30 +554,25 @@ VK_IMPORT_DEVICE
 
 	static void* VKAPI_PTR allocationFunction(void* _userData, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
 	{
-		BX_UNUSED(_userData);
-		return bx::alignedAlloc(g_allocator, _size, bx::max(kMinAlignment, _alignment), bx::Location(s_allocScopeName[_allocationScope], 0) );
+		bx::AllocatorI* allocator = (bx::AllocatorI*)_userData;
+		return allocator->realloc(NULL, _size, bx::max(kMinAlignment, _alignment), s_allocScopeName[_allocationScope], 0);
 	}
 
 	static void* VKAPI_PTR reallocationFunction(void* _userData, void* _original, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
 	{
-		BX_UNUSED(_userData);
-		if (_size == 0) {
-			bx::alignedFree(g_allocator, _original, 0);
-			return NULL;
-		}
-		return bx::alignedRealloc(g_allocator, _original, _size, bx::max(kMinAlignment, _alignment), bx::Location(s_allocScopeName[_allocationScope], 0) );
+		bx::AllocatorI* allocator = (bx::AllocatorI*)_userData;
+		return allocator->realloc(_original, _size, bx::max(kMinAlignment, _alignment), s_allocScopeName[_allocationScope], 0);
 	}
 
 	static void VKAPI_PTR freeFunction(void* _userData, void* _memory)
 	{
-		BX_UNUSED(_userData);
-
 		if (NULL == _memory)
 		{
 			return;
 		}
 
-		bx::alignedFree(g_allocator, _memory, 0);
+		bx::AllocatorI* allocator = (bx::AllocatorI*)_userData;
+		allocator->realloc(_memory, 0, 0, "vkFree", 0);
 	}
 
 	static void VKAPI_PTR internalAllocationNotification(void* _userData, size_t _size, VkInternalAllocationType _allocationType, VkSystemAllocationScope _allocationScope)
@@ -636,26 +650,17 @@ VK_IMPORT_DEVICE
 	};
 
 	VkBool32 VKAPI_PTR debugReportCb(
-		VkDebugReportFlagsEXT _flags,
-		VkDebugReportObjectTypeEXT _objectType,
-		uint64_t _object,
-		size_t _location,
-		int32_t _messageCode,
-		const char* _layerPrefix,
-		const char* _message,
-		void* _userData
-	)
+		  VkDebugReportFlagsEXT _flags
+		, VkDebugReportObjectTypeEXT _objectType
+		, uint64_t _object
+		, size_t _location
+		, int32_t _messageCode
+		, const char* _layerPrefix
+		, const char* _message
+		, void* _userData
+		)
 	{
-		BX_UNUSED(_flags
-			, _objectType
-			, _object
-			, _location
-			, _messageCode
-			, _layerPrefix
-			, _message
-			, _userData
-			, s_debugReportObjectType
-		);
+		BX_UNUSED(_flags, _objectType, _object, _location, _messageCode, _layerPrefix, _message, _userData, s_debugReportObjectType);
 
 		// For more info about 'VUID-VkSwapchainCreateInfoKHR-imageExtent-01274'
 		// check https://github.com/KhronosGroup/Vulkan-Docs/issues/1144
@@ -666,6 +671,7 @@ VK_IMPORT_DEVICE
 		{
 			return VK_FALSE;
 		}
+
 		BX_TRACE("%c%c%c%c%c %19s, %s, %d: %s"
 			, 0 != (_flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT        ) ? 'I' : '-'
 			, 0 != (_flags & VK_DEBUG_REPORT_WARNING_BIT_EXT            ) ? 'W' : '-'
@@ -677,6 +683,7 @@ VK_IMPORT_DEVICE
 			, _messageCode
 			, _message
 			);
+
 		return VK_FALSE;
 	}
 
@@ -774,6 +781,7 @@ VK_IMPORT_DEVICE
 					, layerProperties[layer].implementationVersion
 					, layerProperties[layer].description
 					);
+
 				uint32_t numExtensionProperties;
 				result = enumerateExtensionProperties(_physicalDevice
 					, layerProperties[layer].layerName
@@ -793,7 +801,7 @@ VK_IMPORT_DEVICE
 
 					for (uint32_t extension = 0; extension < numExtensionProperties; ++extension)
 					{
-						bool supported = updateExtension(
+						const bool supported = updateExtension(
 							  extensionProperties[extension].extensionName
 							, extensionProperties[extension].specVersion
 							, VK_NULL_HANDLE == _physicalDevice
@@ -1077,7 +1085,8 @@ VK_IMPORT_DEVICE
 		imb.subresourceRange.levelCount     = _levelCount;
 		imb.subresourceRange.baseArrayLayer = _baseArrayLayer;
 		imb.subresourceRange.layerCount     = _layerCount;
-		vkCmdPipelineBarrier(_commandBuffer
+		vkCmdPipelineBarrier(
+			  _commandBuffer
 			, srcStageMask
 			, dstStageMask
 			, 0
@@ -1308,6 +1317,7 @@ VK_IMPORT
 
 				if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 				{
+					s_allocationCb.pUserData = g_allocator;
 					m_allocatorCb = &s_allocationCb;
 					BX_UNUSED(s_allocationCb);
 				}
@@ -1637,83 +1647,63 @@ VK_IMPORT_INSTANCE
 					}
 				}
 
+				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
-					struct ImageTest
+					uint16_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+
+					const bool depth = bimg::isDepth(bimg::TextureFormat::Enum(ii) );
+					VkFormat fmt = depth
+						? s_textureFormat[ii].m_fmtDsv
+						: s_textureFormat[ii].m_fmt
+						;
+
+					for (uint32_t jj = 0, num = depth ? 1 : 2; jj < num; ++jj)
 					{
-						VkImageType        type;
-						VkImageUsageFlags  usage;
-						VkImageCreateFlags flags;
-						uint32_t           formatCaps[2];
-					};
-
-					const ImageTest imageTest[] =
-					{
-						{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_SAMPLED_BIT,                  0,                                   { BGFX_CAPS_FORMAT_TEXTURE_2D,          BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB   } },
-						{ VK_IMAGE_TYPE_3D, VK_IMAGE_USAGE_SAMPLED_BIT,                  0,                                   { BGFX_CAPS_FORMAT_TEXTURE_3D,          BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB   } },
-						{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_SAMPLED_BIT,                  VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, { BGFX_CAPS_FORMAT_TEXTURE_CUBE,        BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB } },
-						{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,         0,                                   { BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER, 0                                  } },
-						{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0,                                   { BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER, 0                                  } },
-						{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_STORAGE_BIT,                  0,                                   { BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ,  0                                  } },
-						{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_STORAGE_BIT,                  0,                                   { BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE, 0                                  } },
-					};
-
-					for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
-					{
-						uint16_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
-
-						const bool depth = bimg::isDepth(bimg::TextureFormat::Enum(ii) );
-						VkFormat fmt = depth
-							? s_textureFormat[ii].m_fmtDsv
-							: s_textureFormat[ii].m_fmt
-							;
-
-						for (uint32_t jj = 0, num = depth ? 1 : 2; jj < num; ++jj)
+						if (VK_FORMAT_UNDEFINED != fmt)
 						{
-							if (VK_FORMAT_UNDEFINED != fmt)
+							for (uint32_t test = 0; test < BX_COUNTOF(s_imageTest); ++test)
 							{
-								for (uint32_t test = 0; test < BX_COUNTOF(imageTest); ++test)
+								const ImageTest& it = s_imageTest[test];
+
+								VkImageFormatProperties ifp;
+								result = vkGetPhysicalDeviceImageFormatProperties(
+									  m_physicalDevice
+									, fmt
+									, it.type
+									, VK_IMAGE_TILING_OPTIMAL
+									, it.usage
+									, it.flags
+									, &ifp
+									);
+
+								if (VK_SUCCESS == result)
 								{
-									const ImageTest& it = imageTest[test];
+									support |= it.formatCaps[jj];
 
-									VkImageFormatProperties ifp;
-									result = vkGetPhysicalDeviceImageFormatProperties(m_physicalDevice
-										, fmt
-										, it.type
-										, VK_IMAGE_TILING_OPTIMAL
-										, it.usage
-										, it.flags
-										, &ifp
-										);
-
-									if (VK_SUCCESS == result)
+									const bool multisample = VK_SAMPLE_COUNT_1_BIT < ifp.sampleCounts;
+									if (it.usage & VK_IMAGE_USAGE_SAMPLED_BIT)
 									{
-										support |= it.formatCaps[jj];
+										support |= 0
+											| BGFX_CAPS_FORMAT_TEXTURE_VERTEX
+											| (multisample ? BGFX_CAPS_FORMAT_TEXTURE_MSAA : 0)
+											;
+									}
 
-										const bool multisample = VK_SAMPLE_COUNT_1_BIT < ifp.sampleCounts;
-										if (it.usage & VK_IMAGE_USAGE_SAMPLED_BIT)
-										{
-											support |= 0
-												| BGFX_CAPS_FORMAT_TEXTURE_VERTEX
-												| (multisample ? BGFX_CAPS_FORMAT_TEXTURE_MSAA : 0)
-												;
-										}
-
-										if (it.usage & (VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) )
-										{
-											support |= 0
-												| BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
-												| (multisample ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA : 0)
-												;
-										}
+									if (it.usage & (VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) )
+									{
+										support |= 0
+											| BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
+											| (multisample ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA : 0)
+											;
 									}
 								}
 							}
-
-							fmt = s_textureFormat[ii].m_fmtSrgb;
 						}
 
-						g_caps.formats[ii] = support;
+						fmt = s_textureFormat[ii].m_fmtSrgb;
 					}
+
+					g_caps.formats[ii] = support;
 				}
 
 				vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
@@ -1844,7 +1834,7 @@ VK_IMPORT_INSTANCE
 				dci.ppEnabledLayerNames  = enabledLayer;
 				dci.enabledExtensionCount   = numEnabledExtensions;
 				dci.ppEnabledExtensionNames = enabledExtension;
-				dci.pEnabledFeatures = &m_deviceFeatures;
+				dci.pEnabledFeatures        = &m_deviceFeatures;
 
 				result = vkCreateDevice(
 					  m_physicalDevice

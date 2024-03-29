@@ -625,9 +625,9 @@ BGFX_C_API void bgfx_set_palette_color_rgba8(uint8_t _index, uint32_t _rgba)
 	bgfx::setPaletteColor(_index, _rgba);
 }
 
-BGFX_C_API void bgfx_set_view_name(bgfx_view_id_t _id, const char* _name)
+BGFX_C_API void bgfx_set_view_name(bgfx_view_id_t _id, const char* _name, int32_t _len)
 {
-	bgfx::setViewName((bgfx::ViewId)_id, _name);
+	bgfx::setViewName((bgfx::ViewId)_id, _name, _len);
 }
 
 BGFX_C_API void bgfx_set_view_rect(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
@@ -691,10 +691,10 @@ BGFX_C_API void bgfx_encoder_end(bgfx_encoder_t* _encoder)
 	bgfx::end((bgfx::Encoder*)_encoder);
 }
 
-BGFX_C_API void bgfx_encoder_set_marker(bgfx_encoder_t* _this, const char* _marker)
+BGFX_C_API void bgfx_encoder_set_marker(bgfx_encoder_t* _this, const char* _name, int32_t _len)
 {
 	bgfx::Encoder* This = (bgfx::Encoder*)_this;
-	This->setMarker(_marker);
+	This->setMarker(_name, _len);
 }
 
 BGFX_C_API void bgfx_encoder_set_state(bgfx_encoder_t* _this, uint64_t _state, uint32_t _rgba)
@@ -999,9 +999,9 @@ BGFX_C_API uintptr_t bgfx_override_internal_texture(bgfx_texture_handle_t _handl
 	return bgfx::overrideInternal(handle.cpp, _width, _height, _numMips, (bgfx::TextureFormat::Enum)_format, _flags);
 }
 
-BGFX_C_API void bgfx_set_marker(const char* _marker)
+BGFX_C_API void bgfx_set_marker(const char* _name, int32_t _len)
 {
-	bgfx::setMarker(_marker);
+	bgfx::setMarker(_name, _len);
 }
 
 BGFX_C_API void bgfx_set_state(uint64_t _state, uint32_t _rgba)

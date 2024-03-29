@@ -1053,13 +1053,16 @@ namespace bgfx
 	///
 	struct Encoder
 	{
-		/// Sets a debug marker. This allows you to group
-		/// graphics calls together for easy browsing in
-		/// graphics debugging tools.
+		/// Sets a debug marker. This allows you to group graphics calls together for easy
+		/// browsing in graphics debugging tools.
+		///
+		/// @param[in] _name Marker name.
+		/// @param[in] _len Marker name length (if length is INT32_MAX, it's expected that _name
+		///   is zero terminated string.
 		///
 		/// @attention C99's equivalent binding is `bgfx_encoder_set_marker`.
 		///
-		void setMarker(const char* _marker);
+		void setMarker(const char* _name, int32_t _len = INT32_MAX);
 
 		/// Set render states for draw primitive.
 		///
@@ -3337,6 +3340,8 @@ namespace bgfx
 	///
 	/// @param[in] _id View id.
 	/// @param[in] _name View name.
+	/// @param[in] _len View name length (if length is INT32_MAX, it's expected that _name
+	///   is zero terminated string.
 	///
 	/// @remarks
 	///   This is debug only feature.
@@ -3354,6 +3359,7 @@ namespace bgfx
 	void setViewName(
 		  ViewId _id
 		, const char* _name
+		, int32_t _len = INT32_MAX
 		);
 
 	/// Set view rectangle. Draw primitive outside view will be clipped.
@@ -3534,11 +3540,16 @@ namespace bgfx
 	///
 	void resetView(ViewId _id);
 
-	/// Sets debug marker.
+	/// Sets a debug marker. This allows you to group graphics calls together for easy
+	/// browsing in graphics debugging tools.
+	///
+	/// @param[in] _name Marker name.
+	/// @param[in] _len Marker name length (if length is INT32_MAX, it's expected that _name
+	///   is zero terminated string.
 	///
 	/// @attention C99's equivalent binding is `bgfx_set_marker`.
 	///
-	void setMarker(const char* _marker);
+	void setMarker(const char* _name, int32_t _len = INT32_MAX);
 
 	/// Set render states for draw primitive.
 	///

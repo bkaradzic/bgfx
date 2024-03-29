@@ -3496,9 +3496,10 @@ public static class bgfx
 	///
 	/// <param name="_id">View id.</param>
 	/// <param name="_name">View name.</param>
+	/// <param name="_len">View name length (if length is INT32_MAX, it's expected that _name is zero terminated string.</param>
 	///
 	[LinkName("bgfx_set_view_name")]
-	public static extern void set_view_name(ViewId _id, char8* _name);
+	public static extern void set_view_name(ViewId _id, char8* _name, int _len);
 	
 	/// <summary>
 	/// Set view rectangle. Draw primitive outside view will be clipped.
@@ -3651,10 +3652,11 @@ public static class bgfx
 	/// graphics debugging tools.
 	/// </summary>
 	///
-	/// <param name="_marker">Marker string.</param>
+	/// <param name="_name">Marker name.</param>
+	/// <param name="_len">Marker name length (if length is INT32_MAX, it's expected that _name is zero terminated string.</param>
 	///
 	[LinkName("bgfx_encoder_set_marker")]
-	public static extern void encoder_set_marker(Encoder* _this, char8* _marker);
+	public static extern void encoder_set_marker(Encoder* _this, char8* _name, int _len);
 	
 	/// <summary>
 	/// Set render states for draw primitive.
@@ -4219,10 +4221,11 @@ public static class bgfx
 	/// graphics debugging tools.
 	/// </summary>
 	///
-	/// <param name="_marker">Marker string.</param>
+	/// <param name="_name">Marker name.</param>
+	/// <param name="_len">Marker name length (if length is INT32_MAX, it's expected that _name is zero terminated string.</param>
 	///
 	[LinkName("bgfx_set_marker")]
-	public static extern void set_marker(char8* _marker);
+	public static extern void set_marker(char8* _name, int _len);
 	
 	/// <summary>
 	/// Set render states for draw primitive.

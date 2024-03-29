@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(126)
+version(127)
 
 typedef "bool"
 typedef "char"
@@ -2017,8 +2017,10 @@ func.setPaletteColor { cname = "set_palette_color_rgba8" }
 ---
 func.setViewName
 	"void"
-	.id   "ViewId"      --- View id.
-	.name "const char*" --- View name.
+	.id   "ViewId"           --- View id.
+	.name "const char*"      --- View name.
+	.len    "int32_t"        --- View name length (if length is INT32_MAX, it's expected
+	 { default = INT32_MAX } --- that _name is zero terminated string.
 
 --- Set view rectangle. Draw primitive outside view will be clipped.
 func.setViewRect
@@ -2154,7 +2156,9 @@ func["end"] { cname = "encoder_end" }
 --- graphics debugging tools.
 func.Encoder.setMarker
 	"void"
-	.marker "const char*" --- Marker string.
+	.name   "const char*"       --- Marker name.
+	.len    "int32_t"           --- Marker name length (if length is INT32_MAX, it's expected
+	 { default = INT32_MAX }    --- that _name is zero terminated string.
 
 --- Set render states for draw primitive.
 ---
@@ -2724,7 +2728,9 @@ func.overrideInternal { cname = "override_internal_texture" }
 --- graphics debugging tools.
 func.setMarker
 	"void"
-	.marker "const char*" --- Marker string.
+	.name   "const char*"    --- Marker name.
+	.len    "int32_t"        --- Marker name length (if length is INT32_MAX, it's expected
+	 { default = INT32_MAX } --- that _name is zero terminated string.
 
 --- Set render states for draw primitive.
 ---

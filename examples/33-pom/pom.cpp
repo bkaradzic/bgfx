@@ -45,7 +45,7 @@ uint32_t packF4u(float _x, float _y = 0.0f, float _z = 0.0f, float _w = 0.0f)
 	arr.value[2] = uint8_t(_z * 127.0f + 128.0f);
 	arr.value[3] = uint8_t(_w * 127.0f + 128.0f);
 
-	return bx::bit_cast<uint32_t>(arr);
+	return bx::bitCast<uint32_t>(arr);
 }
 
 static PosTangentBitangentTexcoordVertex s_cubeVertices[24] =

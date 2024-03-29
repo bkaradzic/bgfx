@@ -362,7 +362,7 @@ public:
 
 			if (bgfx::isValid(m_rb) )
 			{
-				struct Packed { uint8_t bgra[4]; } arr = bx::bit_cast<Packed>(m_lumBgra8);
+				struct Packed { uint8_t bgra[4]; } arr = bx::bitCast<Packed>(m_lumBgra8);
 				float exponent = arr.bgra[3] / 255.0f * 255.0f - 128.0f;
 				float lumAvg = arr.bgra[2] / 255.0f * bx::exp2(exponent);
 
