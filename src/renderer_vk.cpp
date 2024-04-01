@@ -550,7 +550,7 @@ VK_IMPORT_DEVICE
 	};
 	BX_STATIC_ASSERT(VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE == BX_COUNTOF(s_allocScopeName)-1);
 
-	constexpr size_t kMinAlignment = 8;
+	constexpr size_t kMinAlignment = 16;
 
 	static void* VKAPI_PTR allocationFunction(void* _userData, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
 	{
@@ -572,7 +572,7 @@ VK_IMPORT_DEVICE
 		}
 
 		bx::AllocatorI* allocator = (bx::AllocatorI*)_userData;
-		allocator->realloc(_memory, 0, 0, "vkFree", 0);
+		allocator->realloc(_memory, 0, kMinAlignment, "vkFree", 0);
 	}
 
 	static void VKAPI_PTR internalAllocationNotification(void* _userData, size_t _size, VkInternalAllocationType _allocationType, VkSystemAllocationScope _allocationScope)
