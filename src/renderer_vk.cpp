@@ -555,24 +555,32 @@ VK_IMPORT_DEVICE
 	static void* VKAPI_PTR allocationFunction(void* _userData, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
 	{
 		bx::AllocatorI* allocator = (bx::AllocatorI*)_userData;
-		return allocator->realloc(NULL, _size, bx::max(kMinAlignment, _alignment), s_allocScopeName[_allocationScope], 0);
+		return bx::alignedAlloc(allocator, _size, bx::max(kMinAlignment, _alignment), bx::Location(s_allocScopeName[_allocationScope], 0) );
 	}
 
-	static void* VKAPI_PTR reallocationFunction(void* _userData, void* _original, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
+	static void* VKAPI_PTR reallocationFunction(void* _userData, void* _ptr, size_t _size, size_t _alignment, VkSystemAllocationScope _allocationScope)
 	{
 		bx::AllocatorI* allocator = (bx::AllocatorI*)_userData;
-		return allocator->realloc(_original, _size, bx::max(kMinAlignment, _alignment), s_allocScopeName[_allocationScope], 0);
+
+		BX_UNUSED(_userData);
+		if (0 == _size)
+		{
+			bx::alignedFree(allocator, _ptr, 0);
+			return NULL;
+		}
+
+		return bx::alignedRealloc(allocator, _ptr, _size, bx::max(kMinAlignment, _alignment), bx::Location(s_allocScopeName[_allocationScope], 0) );
 	}
 
-	static void VKAPI_PTR freeFunction(void* _userData, void* _memory)
+	static void VKAPI_PTR freeFunction(void* _userData, void* _ptr)
 	{
-		if (NULL == _memory)
+		if (NULL == _ptr)
 		{
 			return;
 		}
 
 		bx::AllocatorI* allocator = (bx::AllocatorI*)_userData;
-		allocator->realloc(_memory, 0, kMinAlignment, "vkFree", 0);
+		bx::alignedFree(allocator, _ptr, kMinAlignment);
 	}
 
 	static void VKAPI_PTR internalAllocationNotification(void* _userData, size_t _size, VkInternalAllocationType _allocationType, VkSystemAllocationScope _allocationScope)
