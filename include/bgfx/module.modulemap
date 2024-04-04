@@ -1,0 +1,8 @@
+module bgfx {
+    header "platform.h"
+    header "embedded_shader.h"
+    header "c99/bgfx.h"
+    header "defines.h"
+
+    export *
+}
