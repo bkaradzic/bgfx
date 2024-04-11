@@ -414,6 +414,11 @@ function exampleProjectDefaults()
 			"-framework UIKit",
 			"-weak_framework Metal",
 		}
+		xcodecopyresources {
+			{ "shaders/metal", {
+				os.matchfiles(path.join(BGFX_DIR, "examples/runtime/shaders/metal/**.bin"))
+			}}
+		}
 
 	configuration { "xcode*", "ios" }
 		kind "WindowedApp"

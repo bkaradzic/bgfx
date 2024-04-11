@@ -56,6 +56,8 @@ projgen: ## Generate project files for all configurations.
 	$(GENIE)              --with-examples                            --gcc=wasm2js         gmake
 	$(GENIE)              --with-combined-examples                   --gcc=ios-arm         gmake
 	$(GENIE)              --with-combined-examples                   --gcc=ios-arm64       gmake
+	$(GENIE)              --with-combined-examples                   --gcc=ios-simulator   gmake
+	$(GENIE)              --with-combined-examples                   --gcc=tvos-simulator  gmake
 	$(GENIE)              --with-combined-examples                   --gcc=rpi             gmake
 
 idl: ## Generate code from IDL.
@@ -214,6 +216,14 @@ ios-arm64-debug: .build/projects/gmake-ios-arm64 ## Build - iOS ARM64 Debug
 ios-arm64-release: .build/projects/gmake-ios-arm64 ## Build - iOS ARM64 Release
 	$(MAKE) -R -C .build/projects/gmake-ios-arm64 config=release
 ios-arm64: ios-arm64-debug ios-arm64-release ## Build - iOS ARM64 Debug and Release
+
+.build/projects/gmake-ios-simulator:
+	$(GENIE) --gcc=ios-simulator gmake
+ios-simulator-debug: .build/projects/gmake-ios-simulator ## Build - iOS Simulator Debug
+	$(MAKE) -R -C .build/projects/gmake-ios-simulator config=debug
+ios-simulator-release: .build/projects/gmake-ios-simulator ## Build - iOS Simulator Release
+	$(MAKE) -R -C .build/projects/gmake-ios-simulator config=release
+ios-simulator: ios-simulator-debug ios-simulator-release ## Build - iOS Simulator Debug and Release
 
 .build/projects/gmake-rpi:
 	$(GENIE) --gcc=rpi gmake
