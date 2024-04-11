@@ -609,6 +609,12 @@ Switch and PlayStation 4.
 
 ![Crypt of the NecroDancer screenshot](https://raw.githubusercontent.com/Marukyu/marukyu.github.io/misc-assets/247080_20240322072858_1.png)
 
+## Tomb4Plus
+
+https://www.github.com/SaracenOne/Tomb4Plus - Tomb4Plus is an open source reimplementation of the Tomb Raider: The Last Revelation engine. It is an enhanced fork of original Tomb4 project which supports the Level Editor runtime and aims for full compatibility with the unofficial binary-patched scripting extensions used by many custom levels. Tomb4Plus also replaces the original legacy Direct3D renderer with bgfx.
+
+![Tomb4Plus screenshot](https://raw.githubusercontent.com/SaracenOne/Tomb4Plus/level_editor_v2/.github/images/preview.png)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
