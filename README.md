@@ -611,7 +611,7 @@ Switch and PlayStation 4.
 
 ## Tomb4Plus
 
-https://www.github.com/SaracenOne/Tomb4Plus - Tomb4Plus is an open source reimplementation of the Tomb Raider: The Last Revelation engine. It is an enhanced fork of original Tomb4 project which supports the Level Editor runtime and aims for full compatibility with the unofficial binary-patched scripting extensions used by many custom levels. Tomb4Plus also replaces the original legacy Direct3D renderer with bgfx.
+https://www.github.com/SaracenOne/Tomb4Plus - Tomb4Plus is an open source reimplementation of the Tomb Raider: The Last Revelation engine. It is an enhanced fork of the original [Tomb4](https://github.com/Trxyebeep/TOMB4) reimplementation project which focuses on supporting the Level Editor runtime and aims for full compatibility with the unofficial binary-patched scripting extensions used by many custom levels. Tomb4Plus also replaces the original legacy Direct3D renderer with bgfx.
 
 ![Tomb4Plus screenshot](https://raw.githubusercontent.com/SaracenOne/Tomb4Plus/level_editor_v2/.github/images/preview.png)
 
