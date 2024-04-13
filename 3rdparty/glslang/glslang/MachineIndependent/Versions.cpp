@@ -264,11 +264,14 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_fragment_shader_barycentric]             = EBhDisable;
     extensionBehavior[E_GL_EXT_expect_assume]                           = EBhDisable;
 
+    extensionBehavior[E_GL_EXT_control_flow_attributes2]                = EBhDisable;
+
     extensionBehavior[E_GL_KHR_cooperative_matrix]                      = EBhDisable;
 
     // #line and #include
     extensionBehavior[E_GL_GOOGLE_cpp_style_line_directive]          = EBhDisable;
     extensionBehavior[E_GL_GOOGLE_include_directive]                 = EBhDisable;
+    extensionBehavior[E_GL_ARB_shading_language_include]             = EBhDisable;
 
     extensionBehavior[E_GL_AMD_shader_ballot]                        = EBhDisable;
     extensionBehavior[E_GL_AMD_shader_trinary_minmax]                = EBhDisable;
@@ -312,6 +315,7 @@ void TParseVersions::initializeExtensionBehavior()
 
     // QCOM
     extensionBehavior[E_GL_QCOM_image_processing]                    = EBhDisable;
+    extensionBehavior[E_GL_QCOM_image_processing2]                   = EBhDisable;
 
     // AEP
     extensionBehavior[E_GL_ANDROID_extension_pack_es31a]             = EBhDisable;
@@ -443,6 +447,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_shader_non_constant_global_initializers 1\n"
 
             "#define GL_QCOM_image_processing 1\n"
+            "#define GL_QCOM_image_processing2 1\n"
             ;
 
             if (version >= 300) {
@@ -569,6 +574,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_NV_shader_invocation_reorder 1\n"
 
             "#define GL_QCOM_image_processing 1\n"
+            "#define GL_QCOM_image_processing2 1\n"
 
             "#define GL_EXT_shader_explicit_arithmetic_types 1\n"
             "#define GL_EXT_shader_explicit_arithmetic_types_int8 1\n"
@@ -590,6 +596,8 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_fragment_shader_barycentric 1\n"
             "#define GL_EXT_shader_quad_control 1\n"
             "#define GL_EXT_texture_array 1\n"
+
+            "#define GL_EXT_control_flow_attributes2 1\n"
             ;
 
         if (spvVersion.spv == 0) {
@@ -982,6 +990,8 @@ void TParseVersions::updateExtensionBehavior(int line, const char* extension, co
     else if (strcmp(extension, "GL_OES_tessellation_shader") == 0)
         updateExtensionBehavior(line, "GL_OES_shader_io_blocks", behaviorString);
     else if (strcmp(extension, "GL_GOOGLE_include_directive") == 0)
+        updateExtensionBehavior(line, "GL_GOOGLE_cpp_style_line_directive", behaviorString);
+    else if (strcmp(extension, "GL_ARB_shading_language_include") == 0)
         updateExtensionBehavior(line, "GL_GOOGLE_cpp_style_line_directive", behaviorString);
     // subgroup_* to subgroup_basic
     else if (strcmp(extension, "GL_KHR_shader_subgroup_vote") == 0)

@@ -4233,6 +4233,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
            "vec4 textureBoxFilterQCOM(sampler2D, vec2, vec2);"
            "vec4 textureBlockMatchSADQCOM(sampler2D, uvec2, sampler2D, uvec2, uvec2);"
            "vec4 textureBlockMatchSSDQCOM(sampler2D, uvec2, sampler2D, uvec2, uvec2);"
+
+           "vec4 textureBlockMatchWindowSSDQCOM(sampler2D, uvec2, sampler2D, uvec2, uvec2);"
+           "vec4 textureBlockMatchWindowSADQCOM(sampler2D, uvec2, sampler2D, uvec2, uvec2);"
+           "vec4 textureBlockMatchGatherSSDQCOM(sampler2D, uvec2, sampler2D, uvec2, uvec2);"
+           "vec4 textureBlockMatchGatherSADQCOM(sampler2D, uvec2, sampler2D, uvec2, uvec2);"
            "\n");
     }
 
@@ -8909,10 +8914,16 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 
         if ((profile == EEsProfile && version >= 310) ||
             (profile != EEsProfile && version >= 140)) {
+
             symbolTable.setFunctionExtensions("textureWeightedQCOM",      1, &E_GL_QCOM_image_processing);
             symbolTable.setFunctionExtensions("textureBoxFilterQCOM",     1, &E_GL_QCOM_image_processing);
             symbolTable.setFunctionExtensions("textureBlockMatchSADQCOM", 1, &E_GL_QCOM_image_processing);
             symbolTable.setFunctionExtensions("textureBlockMatchSSDQCOM", 1, &E_GL_QCOM_image_processing);
+
+            symbolTable.setFunctionExtensions("textureBlockMatchWindowSSDQCOM", 1, &E_GL_QCOM_image_processing2);
+            symbolTable.setFunctionExtensions("textureBlockMatchWindowSADQCOM", 1, &E_GL_QCOM_image_processing2);
+            symbolTable.setFunctionExtensions("textureBlockMatchGatherSSDQCOM", 1, &E_GL_QCOM_image_processing2);
+            symbolTable.setFunctionExtensions("textureBlockMatchGatherSADQCOM", 1, &E_GL_QCOM_image_processing2);
         }
         break;
 
@@ -10117,6 +10128,11 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.relateToOperator("textureBoxFilterQCOM",     EOpImageBoxFilterQCOM);
             symbolTable.relateToOperator("textureBlockMatchSADQCOM", EOpImageBlockMatchSADQCOM);
             symbolTable.relateToOperator("textureBlockMatchSSDQCOM", EOpImageBlockMatchSSDQCOM);
+
+            symbolTable.relateToOperator("textureBlockMatchWindowSSDQCOM", EOpImageBlockMatchWindowSSDQCOM);
+            symbolTable.relateToOperator("textureBlockMatchWindowSADQCOM", EOpImageBlockMatchWindowSADQCOM);
+            symbolTable.relateToOperator("textureBlockMatchGatherSSDQCOM", EOpImageBlockMatchGatherSSDQCOM);
+            symbolTable.relateToOperator("textureBlockMatchGatherSADQCOM", EOpImageBlockMatchGatherSADQCOM);
         }
 
         if (profile != EEsProfile && spvVersion.spv == 0) {

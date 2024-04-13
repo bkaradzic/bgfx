@@ -1111,6 +1111,12 @@ enum TOperator {
     EOpImageBoxFilterQCOM,
     EOpImageBlockMatchSADQCOM,
     EOpImageBlockMatchSSDQCOM,
+
+    // Image processing2
+    EOpImageBlockMatchWindowSSDQCOM,
+    EOpImageBlockMatchWindowSADQCOM,
+    EOpImageBlockMatchGatherSSDQCOM,
+    EOpImageBlockMatchGatherSADQCOM,
 };
 
 enum TLinkType {

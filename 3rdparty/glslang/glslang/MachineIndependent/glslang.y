@@ -508,7 +508,10 @@ function_call_header_with_parameters
             && $3->getType().containsOpaque())
         {
             TIntermNode* remappedNode = parseContext.vkRelaxedRemapFunctionArgument($2.loc, $1.function, $3);
-            $$.intermNode = parseContext.intermediate.mergeAggregate($1.intermNode, remappedNode, $2.loc);
+            if (remappedNode == $3)
+                $$.intermNode = parseContext.intermediate.growAggregate($1.intermNode, $3, $2.loc);
+            else
+                $$.intermNode = parseContext.intermediate.mergeAggregate($1.intermNode, remappedNode, $2.loc);
             $$.function = $1.function;
         }
         else
@@ -1756,6 +1759,7 @@ type_parameter_specifier_list
     : type_specifier {
         $$ = new TTypeParameters;
         $$->arraySizes = new TArraySizes;
+        $$->spirvType = $1.spirvType;
         $$->basicType = $1.basicType;
     }
     | unary_expression {
@@ -3950,7 +3954,8 @@ iteration_statement
         $$ = $1;
     }
     | attribute iteration_statement_nonattributed {
-        parseContext.requireExtensions($2->getLoc(), 1, &E_GL_EXT_control_flow_attributes, "attribute");
+        const char * extensions[2] = { E_GL_EXT_control_flow_attributes, E_GL_EXT_control_flow_attributes2 };
+        parseContext.requireExtensions($2->getLoc(), 2, extensions, "attribute");
         parseContext.handleLoopAttributes(*$1, $2);
         $$ = $2;
     }

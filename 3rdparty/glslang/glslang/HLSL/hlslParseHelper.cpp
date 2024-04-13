@@ -9658,6 +9658,10 @@ void HlslParseContext::correctOutput(TQualifier& qualifier)
     if (language != EShLangTessControl)
         qualifier.patch = false;
 
+    // Fixes Test/hlsl.entry-inout.vert (SV_Position will not become a varying).
+    if (qualifier.builtIn == EbvNone)
+        qualifier.builtIn = qualifier.declaredBuiltIn;
+
     switch (qualifier.builtIn) {
     case EbvFragDepth:
         intermediate.setDepthReplacing();

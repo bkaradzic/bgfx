@@ -1434,7 +1434,8 @@ int ShCompile(
     int /*debugOptions*/,
     int defaultVersion,        // use 100 for ES environment, 110 for desktop
     bool forwardCompatible,    // give errors for use of deprecated features
-    EShMessages messages       // warnings/errors/AST; things to print out
+    EShMessages messages,       // warnings/errors/AST; things to print out,
+    const char *shaderFileName // the filename
     )
 {
     // Map the generic handle to the C++ object
@@ -1450,6 +1451,9 @@ int ShCompile(
 
     compiler->infoSink.info.erase();
     compiler->infoSink.debug.erase();
+    compiler->infoSink.info.setShaderFileName(shaderFileName);
+    compiler->infoSink.debug.setShaderFileName(shaderFileName);
+
 
     TIntermediate intermediate(compiler->getLanguage());
     TShader::ForbidIncluder includer;

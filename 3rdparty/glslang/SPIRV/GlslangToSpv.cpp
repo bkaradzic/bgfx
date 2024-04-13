@@ -228,6 +228,7 @@ protected:
     spv::Id getSymbolId(const glslang::TIntermSymbol* node);
     void addMeshNVDecoration(spv::Id id, int member, const glslang::TQualifier & qualifier);
     void addImageProcessingQCOMDecoration(spv::Id id, spv::Decoration decor);
+    void addImageProcessing2QCOMDecoration(spv::Id id, bool isForGather);
     spv::Id createSpvConstant(const glslang::TIntermTyped&);
     spv::Id createSpvConstantFromConstUnionArray(const glslang::TType& type, const glslang::TConstUnionArray&,
         int& nextConst, bool specConstant);
@@ -2006,8 +2007,9 @@ void TGlslangToSpvTraverser::finishSpv(bool compileOnly)
         }
 
         // finish off the entry-point SPV instruction by adding the Input/Output <id>
-        for (auto it = iOSet.cbegin(); it != iOSet.cend(); ++it)
-            entryPoint->addIdOperand(*it);
+        entryPoint->reserveOperands(iOSet.size());
+        for (auto id : iOSet)
+            entryPoint->addIdOperand(id);
     }
 
     // Add capabilities, extensions, remove unneeded decorations, etc.,
@@ -3368,6 +3370,20 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
     case glslang::EOpImageBlockMatchSSDQCOM:
         builder.addCapability(spv::CapabilityTextureBlockMatchQCOM);
         builder.addExtension(spv::E_SPV_QCOM_image_processing);
+        break;
+
+    case glslang::EOpImageBlockMatchWindowSSDQCOM:
+    case glslang::EOpImageBlockMatchWindowSADQCOM:
+        builder.addCapability(spv::CapabilityTextureBlockMatchQCOM);
+        builder.addExtension(spv::E_SPV_QCOM_image_processing);
+        builder.addCapability(spv::CapabilityTextureBlockMatch2QCOM);
+        builder.addExtension(spv::E_SPV_QCOM_image_processing2);
+        break;
+
+    case glslang::EOpImageBlockMatchGatherSSDQCOM:
+    case glslang::EOpImageBlockMatchGatherSADQCOM:
+        builder.addCapability(spv::CapabilityTextureBlockMatch2QCOM);
+        builder.addExtension(spv::E_SPV_QCOM_image_processing2);
         break;
 
     case glslang::EOpFetchMicroTriangleVertexPositionNV:
@@ -9268,6 +9284,30 @@ spv::Id TGlslangToSpvTraverser::createMiscOperation(glslang::TOperator op, spv::
         opCode = spv::OpFetchMicroTriangleVertexPositionNV;
         break;
 
+    case glslang::EOpImageBlockMatchWindowSSDQCOM:
+        typeId = builder.makeVectorType(builder.makeFloatType(32), 4);
+        opCode = spv::OpImageBlockMatchWindowSSDQCOM;
+        addImageProcessing2QCOMDecoration(operands[0], false);
+        addImageProcessing2QCOMDecoration(operands[2], false);
+        break;
+    case glslang::EOpImageBlockMatchWindowSADQCOM:
+        typeId = builder.makeVectorType(builder.makeFloatType(32), 4);
+        opCode = spv::OpImageBlockMatchWindowSADQCOM;
+        addImageProcessing2QCOMDecoration(operands[0], false);
+        addImageProcessing2QCOMDecoration(operands[2], false);
+        break;
+    case glslang::EOpImageBlockMatchGatherSSDQCOM:
+        typeId = builder.makeVectorType(builder.makeFloatType(32), 4);
+        opCode = spv::OpImageBlockMatchGatherSSDQCOM;
+        addImageProcessing2QCOMDecoration(operands[0], true);
+        addImageProcessing2QCOMDecoration(operands[2], true);
+        break;
+    case glslang::EOpImageBlockMatchGatherSADQCOM:
+        typeId = builder.makeVectorType(builder.makeFloatType(32), 4);
+        opCode = spv::OpImageBlockMatchGatherSADQCOM;
+        addImageProcessing2QCOMDecoration(operands[0], true);
+        addImageProcessing2QCOMDecoration(operands[2], true);
+        break;
     default:
         return 0;
     }
@@ -9788,6 +9828,36 @@ void TGlslangToSpvTraverser::addImageProcessingQCOMDecoration(spv::Id id, spv::D
   }
 }
 
+void TGlslangToSpvTraverser::addImageProcessing2QCOMDecoration(spv::Id id, bool isForGather)
+{
+  if (isForGather) {
+    return addImageProcessingQCOMDecoration(id, spv::DecorationBlockMatchTextureQCOM);
+  }
+
+  auto addDecor =
+    [this](spv::Id id, spv::Decoration decor) {
+      spv::Id tsopc = this->builder.getOpCode(id);
+      if (tsopc == spv::OpLoad) {
+        spv::Id tsid = this->builder.getIdOperand(id, 0);
+        if (this->glslangIntermediate->getSpv().spv >= glslang::EShTargetSpv_1_4) {
+          assert(iOSet.count(tsid) > 0);
+        }
+        this->builder.addDecoration(tsid, decor);
+      }
+    };
+
+  spv::Id opc = builder.getOpCode(id);
+  bool isInterfaceObject = (opc != spv::OpSampledImage);
+
+  if (!isInterfaceObject) {
+    addDecor(builder.getIdOperand(id, 0), spv::DecorationBlockMatchTextureQCOM);
+    addDecor(builder.getIdOperand(id, 1), spv::DecorationBlockMatchSamplerQCOM);
+  } else {
+    addDecor(id, spv::DecorationBlockMatchTextureQCOM);
+    addDecor(id, spv::DecorationBlockMatchSamplerQCOM);
+  }
+}
+
 // Make a full tree of instructions to build a SPIR-V specialization constant,
 // or regular constant if possible.
 //
@@ -10153,7 +10223,6 @@ spv::Id TGlslangToSpvTraverser::getExtBuiltins(const char* name)
     if (extBuiltinMap.find(name) != extBuiltinMap.end())
         return extBuiltinMap[name];
     else {
-        builder.addExtension(name);
         spv::Id extBuiltins = builder.import(name);
         extBuiltinMap[name] = extBuiltins;
         return extBuiltins;

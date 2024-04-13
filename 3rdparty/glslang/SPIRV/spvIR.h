@@ -97,6 +97,10 @@ public:
     Instruction(Id resultId, Id typeId, Op opCode) : resultId(resultId), typeId(typeId), opCode(opCode), block(nullptr) { }
     explicit Instruction(Op opCode) : resultId(NoResult), typeId(NoType), opCode(opCode), block(nullptr) { }
     virtual ~Instruction() {}
+    void reserveOperands(size_t count) {
+        operands.reserve(count);
+        idOperand.reserve(count);
+    }
     void addIdOperand(Id id) {
         // ids can't be 0
         assert(id);
@@ -398,6 +402,7 @@ public:
 
     void setDebugLineInfo(Id fileName, int line, int column) {
         lineInstruction = std::unique_ptr<Instruction>{new Instruction(OpLine)};
+        lineInstruction->reserveOperands(3);
         lineInstruction->addIdOperand(fileName);
         lineInstruction->addImmediateOperand(line);
         lineInstruction->addImmediateOperand(column);
@@ -521,6 +526,7 @@ __inline Function::Function(Id id, Id resultType, Id functionType, Id firstParam
       linkType(linkage)
 {
     // OpFunction
+    functionInstruction.reserveOperands(2);
     functionInstruction.addImmediateOperand(FunctionControlMaskNone);
     functionInstruction.addIdOperand(functionType);
     parent.mapInstruction(&functionInstruction);

@@ -319,6 +319,7 @@ const char* DecorationString(int decoration)
 
     case DecorationWeightTextureQCOM:           return "DecorationWeightTextureQCOM";
     case DecorationBlockMatchTextureQCOM:       return "DecorationBlockMatchTextureQCOM";
+    case DecorationBlockMatchSamplerQCOM:       return "DecorationBlockMatchSamplerQCOM";
     case DecorationExplicitInterpAMD:           return "ExplicitInterpAMD";
     case DecorationOverrideCoverageNV:          return "OverrideCoverageNV";
     case DecorationPassthroughNV:               return "PassthroughNV";
@@ -1577,6 +1578,10 @@ const char* OpcodeString(int op)
     case OpImageBoxFilterQCOM:              return "OpImageBoxFilterQCOM";
     case OpImageBlockMatchSADQCOM:          return "OpImageBlockMatchSADQCOM";
     case OpImageBlockMatchSSDQCOM:          return "OpImageBlockMatchSSDQCOM";
+    case OpImageBlockMatchWindowSSDQCOM:    return "OpImageBlockMatchWindowSSDQCOM";
+    case OpImageBlockMatchWindowSADQCOM:    return "OpImageBlockMatchWindowSADQCOM";
+    case OpImageBlockMatchGatherSSDQCOM:    return "OpImageBlockMatchGatherSSDQCOM";
+    case OpImageBlockMatchGatherSADQCOM:    return "OpImageBlockMatchGatherSADQCOM";
 
     default:
         return "Bad";
@@ -3433,6 +3438,38 @@ void Parameterize()
         InstructionDesc[OpImageBlockMatchSSDQCOM].operands.push(OperandId, "'block size'");
         InstructionDesc[OpImageBlockMatchSSDQCOM].operands.push(OperandImageOperands, "", true);
         InstructionDesc[OpImageBlockMatchSSDQCOM].setResultAndType(true, true);
+
+        InstructionDesc[OpImageBlockMatchWindowSSDQCOM].operands.push(OperandId, "'target texture'");
+        InstructionDesc[OpImageBlockMatchWindowSSDQCOM].operands.push(OperandId, "'target coordinates'");
+        InstructionDesc[OpImageBlockMatchWindowSSDQCOM].operands.push(OperandId, "'reference texture'");
+        InstructionDesc[OpImageBlockMatchWindowSSDQCOM].operands.push(OperandId, "'reference coordinates'");
+        InstructionDesc[OpImageBlockMatchWindowSSDQCOM].operands.push(OperandId, "'block size'");
+        InstructionDesc[OpImageBlockMatchWindowSSDQCOM].operands.push(OperandImageOperands, "", true);
+        InstructionDesc[OpImageBlockMatchWindowSSDQCOM].setResultAndType(true, true);
+
+        InstructionDesc[OpImageBlockMatchWindowSADQCOM].operands.push(OperandId, "'target texture'");
+        InstructionDesc[OpImageBlockMatchWindowSADQCOM].operands.push(OperandId, "'target coordinates'");
+        InstructionDesc[OpImageBlockMatchWindowSADQCOM].operands.push(OperandId, "'reference texture'");
+        InstructionDesc[OpImageBlockMatchWindowSADQCOM].operands.push(OperandId, "'reference coordinates'");
+        InstructionDesc[OpImageBlockMatchWindowSADQCOM].operands.push(OperandId, "'block size'");
+        InstructionDesc[OpImageBlockMatchWindowSADQCOM].operands.push(OperandImageOperands, "", true);
+        InstructionDesc[OpImageBlockMatchWindowSADQCOM].setResultAndType(true, true);
+
+        InstructionDesc[OpImageBlockMatchGatherSSDQCOM].operands.push(OperandId, "'target texture'");
+        InstructionDesc[OpImageBlockMatchGatherSSDQCOM].operands.push(OperandId, "'target coordinates'");
+        InstructionDesc[OpImageBlockMatchGatherSSDQCOM].operands.push(OperandId, "'reference texture'");
+        InstructionDesc[OpImageBlockMatchGatherSSDQCOM].operands.push(OperandId, "'reference coordinates'");
+        InstructionDesc[OpImageBlockMatchGatherSSDQCOM].operands.push(OperandId, "'block size'");
+        InstructionDesc[OpImageBlockMatchGatherSSDQCOM].operands.push(OperandImageOperands, "", true);
+        InstructionDesc[OpImageBlockMatchGatherSSDQCOM].setResultAndType(true, true);
+
+        InstructionDesc[OpImageBlockMatchGatherSADQCOM].operands.push(OperandId, "'target texture'");
+        InstructionDesc[OpImageBlockMatchGatherSADQCOM].operands.push(OperandId, "'target coordinates'");
+        InstructionDesc[OpImageBlockMatchGatherSADQCOM].operands.push(OperandId, "'reference texture'");
+        InstructionDesc[OpImageBlockMatchGatherSADQCOM].operands.push(OperandId, "'reference coordinates'");
+        InstructionDesc[OpImageBlockMatchGatherSADQCOM].operands.push(OperandId, "'block size'");
+        InstructionDesc[OpImageBlockMatchGatherSADQCOM].operands.push(OperandImageOperands, "", true);
+        InstructionDesc[OpImageBlockMatchGatherSADQCOM].setResultAndType(true, true);
     });
 }
 
