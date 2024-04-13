@@ -824,7 +824,8 @@ protected:
 		SPVFuncImplVariableSizedDescriptor,
 		SPVFuncImplVariableDescriptorArray,
 		SPVFuncImplPaddedStd140,
-		SPVFuncImplReduceAdd
+		SPVFuncImplReduceAdd,
+		SPVFuncImplImageFence
 	};
 
 	// If the underlying resource has been used for comparison then duplicate loads of that resource must be too
@@ -1225,6 +1226,9 @@ protected:
 	uint32_t argument_buffer_discrete_mask = 0;
 	uint32_t argument_buffer_device_storage_mask = 0;
 
+	void emit_argument_buffer_aliased_descriptor(const SPIRVariable &aliased_var,
+	                                             const SPIRVariable &base_var);
+
 	void analyze_argument_buffers();
 	bool descriptor_set_is_argument_buffer(uint32_t desc_set) const;
 	MSLResourceBinding &get_argument_buffer_resource(uint32_t desc_set, uint32_t arg_idx);
@@ -1239,14 +1243,13 @@ protected:
 	uint32_t build_msl_interpolant_type(uint32_t type_id, bool is_noperspective);
 
 	bool suppress_missing_prototypes = false;
+	bool suppress_incompatible_pointer_types_discard_qualifiers = false;
 
 	void add_spv_func_and_recompile(SPVFuncImpl spv_func);
 
 	void activate_argument_buffer_resources();
 
 	bool type_is_msl_framebuffer_fetch(const SPIRType &type) const;
-	bool type_is_pointer(const SPIRType &type) const;
-	bool type_is_pointer_to_pointer(const SPIRType &type) const;
 	bool is_supported_argument_buffer_type(const SPIRType &type) const;
 
 	bool variable_storage_requires_stage_io(spv::StorageClass storage) const;

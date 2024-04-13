@@ -2568,7 +2568,7 @@ const char *CompilerGLSL::to_storage_qualifiers_glsl(const SPIRVariable &var)
 			return var.storage == StorageClassInput ? "in " : "out ";
 	}
 	else if (var.storage == StorageClassUniformConstant || var.storage == StorageClassUniform ||
-	         var.storage == StorageClassPushConstant)
+	         var.storage == StorageClassPushConstant || var.storage == StorageClassAtomicCounter)
 	{
 		return "uniform ";
 	}
@@ -16747,8 +16747,11 @@ bool CompilerGLSL::attempt_emit_loop_header(SPIRBlock &block, SPIRBlock::Method 
 
 		bool condition_is_temporary = forced_temporaries.find(block.condition) == end(forced_temporaries);
 
+		bool flushes_phi = flush_phi_required(block.self, block.true_block) ||
+		                   flush_phi_required(block.self, block.false_block);
+
 		// This can work! We only did trivial things which could be forwarded in block body!
-		if (current_count == statement_count && condition_is_temporary)
+		if (!flushes_phi && current_count == statement_count && condition_is_temporary)
 		{
 			switch (continue_type)
 			{
@@ -16827,7 +16830,10 @@ bool CompilerGLSL::attempt_emit_loop_header(SPIRBlock &block, SPIRBlock::Method 
 
 		bool condition_is_temporary = forced_temporaries.find(child.condition) == end(forced_temporaries);
 
-		if (current_count == statement_count && condition_is_temporary)
+		bool flushes_phi = flush_phi_required(child.self, child.true_block) ||
+		                   flush_phi_required(child.self, child.false_block);
+
+		if (!flushes_phi && current_count == statement_count && condition_is_temporary)
 		{
 			uint32_t target_block = child.true_block;
 

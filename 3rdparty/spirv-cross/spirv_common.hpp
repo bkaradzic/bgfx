@@ -1121,6 +1121,9 @@ struct SPIRVariable : IVariant
 	// Set to true while we're inside the for loop.
 	bool loop_variable_enable = false;
 
+	// Used to find global LUTs
+	bool is_written_to = false;
+
 	SPIRFunction::Parameter *parameter = nullptr;
 
 	SPIRV_CROSS_DECLARE_CLONE(SPIRVariable)
@@ -1667,6 +1670,8 @@ enum ExtendedDecorations
 	// class that is convertible to the standard matrix type, to work around the
 	// lack of constructors in the 'threadgroup' address space.
 	SPIRVCrossDecorationWorkgroupStruct,
+
+	SPIRVCrossDecorationOverlappingBinding,
 
 	SPIRVCrossDecorationCount
 };
