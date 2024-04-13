@@ -6252,6 +6252,24 @@
       "version" : "None"
     },
     {
+      "opname" : "OpRawAccessChainNV",
+      "class"  : "Memory",
+      "opcode" : 5398,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",          "name" : "'Base'" },
+        { "kind" : "IdRef",          "name" : "'Byte stride'" },
+        { "kind" : "IdRef",          "name" : "'Element index'" },
+        { "kind" : "IdRef",          "name" : "'Byte offset'" },
+        { "kind" : "RawAccessChainOperands", "quantifier" : "?" }
+      ],
+      "capabilities" : [
+        "RawAccessChainsNV"
+      ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpSubgroupShuffleINTEL",
       "class"  : "Group",
       "opcode" : 5571,
@@ -10668,6 +10686,28 @@
       ]
     },
     {
+      "category" : "BitEnum",
+      "kind" : "RawAccessChainOperands",
+      "enumerants" : [
+        {
+          "enumerant" : "None",
+          "value" : "0x0000"
+        },
+        {
+          "enumerant" : "RobustnessPerComponentNV",
+          "value" : "0x0001",
+          "capabilities" : [ "RawAccessChainsNV" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RobustnessPerElementNV",
+          "value" : "0x0002",
+          "capabilities" : [ "RawAccessChainsNV" ],
+          "version" : "None"
+        }
+      ]
+    },
+    {
       "category" : "ValueEnum",
       "kind" : "SourceLanguage",
       "enumerants" : [
@@ -11659,6 +11699,33 @@
             { "kind" : "LiteralInteger", "name" : "'Barrier Count'" }
           ],
           "capabilities" : [ "VectorComputeINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MaximumRegistersINTEL",
+          "value" : 6461,
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Number of Registers'" }
+          ],
+          "capabilities" : [ "RegisterLimitsINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MaximumRegistersIdINTEL",
+          "value" : 6462,
+          "parameters" : [
+            { "kind" : "IdRef", "name" : "'Number of Registers'" }
+          ],
+          "capabilities" : [ "RegisterLimitsINTEL" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "NamedMaximumRegistersINTEL",
+          "value" : 6463,
+          "parameters" : [
+            { "kind" : "NamedMaximumNumberOfRegisters", "name" : "'Named Maximum Number of Registers'" }
+          ],
+          "capabilities" : [ "RegisterLimitsINTEL" ],
           "version" : "None"
         }
       ]
@@ -16057,6 +16124,12 @@
           "version" : "None"
         },
         {
+          "enumerant" : "RawAccessChainsNV",
+          "value" : 5414,
+          "extensions" : [ "SPV_NV_raw_access_chains" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "SubgroupShuffleINTEL",
           "value" : 5568,
           "extensions" : [ "SPV_INTEL_subgroups" ],
@@ -16497,6 +16570,12 @@
           "value" : 6441,
           "extensions" : [ "SPV_INTEL_cache_controls" ],
           "version" : "None"
+        },
+        {
+          "enumerant" : "RegisterLimitsINTEL",
+          "value" : 6460,
+          "extensions" : [ "SPV_INTEL_maximum_registers" ],
+          "version" : "None"
         }
       ]
     },
@@ -16730,6 +16809,18 @@
           "enumerant" : "StreamingINTEL",
           "value" : 3,
           "capabilities" : [ "CacheControlsINTEL" ],
+          "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "ValueEnum",
+      "kind" : "NamedMaximumNumberOfRegisters",
+      "enumerants" : [
+        {
+          "enumerant" : "AutoINTEL",
+          "value" : 0,
+          "capabilities" : [ "RegisterLimitsINTEL" ],
           "version" : "None"
         }
       ]

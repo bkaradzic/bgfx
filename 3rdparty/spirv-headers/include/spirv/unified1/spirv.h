@@ -219,6 +219,9 @@ typedef enum SpvExecutionMode_ {
     SpvExecutionModeStreamingInterfaceINTEL = 6154,
     SpvExecutionModeRegisterMapInterfaceINTEL = 6160,
     SpvExecutionModeNamedBarrierCountINTEL = 6417,
+    SpvExecutionModeMaximumRegistersINTEL = 6461,
+    SpvExecutionModeMaximumRegistersIdINTEL = 6462,
+    SpvExecutionModeNamedMaximumRegistersINTEL = 6463,
     SpvExecutionModeMax = 0x7fffffff,
 } SpvExecutionMode;
 
@@ -1156,6 +1159,7 @@ typedef enum SpvCapability_ {
     SpvCapabilityRayQueryPositionFetchKHR = 5391,
     SpvCapabilityAtomicFloat16VectorNV = 5404,
     SpvCapabilityRayTracingDisplacementMicromapNV = 5409,
+    SpvCapabilityRawAccessChainsNV = 5414,
     SpvCapabilitySubgroupShuffleINTEL = 5568,
     SpvCapabilitySubgroupBufferBlockIOINTEL = 5569,
     SpvCapabilitySubgroupImageBlockIOINTEL = 5570,
@@ -1229,6 +1233,7 @@ typedef enum SpvCapability_ {
     SpvCapabilityGroupUniformArithmeticKHR = 6400,
     SpvCapabilityMaskedGatherScatterINTEL = 6427,
     SpvCapabilityCacheControlsINTEL = 6441,
+    SpvCapabilityRegisterLimitsINTEL = 6460,
     SpvCapabilityMax = 0x7fffffff,
 } SpvCapability;
 
@@ -1396,6 +1401,23 @@ typedef enum SpvStoreCacheControl_ {
     SpvStoreCacheControlStreamingINTEL = 3,
     SpvStoreCacheControlMax = 0x7fffffff,
 } SpvStoreCacheControl;
+
+typedef enum SpvNamedMaximumNumberOfRegisters_ {
+    SpvNamedMaximumNumberOfRegistersAutoINTEL = 0,
+    SpvNamedMaximumNumberOfRegistersMax = 0x7fffffff,
+} SpvNamedMaximumNumberOfRegisters;
+
+typedef enum SpvRawAccessChainOperandsShift_ {
+    SpvRawAccessChainOperandsRobustnessPerComponentNVShift = 0,
+    SpvRawAccessChainOperandsRobustnessPerElementNVShift = 1,
+    SpvRawAccessChainOperandsMax = 0x7fffffff,
+} SpvRawAccessChainOperandsShift;
+
+typedef enum SpvRawAccessChainOperandsMask_ {
+    SpvRawAccessChainOperandsMaskNone = 0,
+    SpvRawAccessChainOperandsRobustnessPerComponentNVMask = 0x00000001,
+    SpvRawAccessChainOperandsRobustnessPerElementNVMask = 0x00000002,
+} SpvRawAccessChainOperandsMask;
 
 typedef enum SpvOp_ {
     SpvOpNop = 0,
@@ -1874,6 +1896,7 @@ typedef enum SpvOp_ {
     SpvOpConvertUToSampledImageNV = 5395,
     SpvOpConvertSampledImageToUNV = 5396,
     SpvOpSamplerImageAddressingModeNV = 5397,
+    SpvOpRawAccessChainNV = 5398,
     SpvOpSubgroupShuffleINTEL = 5571,
     SpvOpSubgroupShuffleDownINTEL = 5572,
     SpvOpSubgroupShuffleUpINTEL = 5573,
@@ -2608,6 +2631,7 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpConvertUToSampledImageNV: *hasResult = true; *hasResultType = true; break;
     case SpvOpConvertSampledImageToUNV: *hasResult = true; *hasResultType = true; break;
     case SpvOpSamplerImageAddressingModeNV: *hasResult = false; *hasResultType = false; break;
+    case SpvOpRawAccessChainNV: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupShuffleINTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupShuffleDownINTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupShuffleUpINTEL: *hasResult = true; *hasResultType = true; break;
