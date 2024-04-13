@@ -254,36 +254,23 @@ spv_result_t GetLocationsForVariable(
   // equal. Also track Patch and PerTaskNV decorations.
   bool has_location = false;
   uint32_t location = 0;
-  bool has_component = false;
   uint32_t component = 0;
   bool has_index = false;
   uint32_t index = 0;
   bool has_patch = false;
   bool has_per_task_nv = false;
   bool has_per_vertex_khr = false;
+  // Duplicate Location, Component, Index are checked elsewhere.
   for (auto& dec : _.id_decorations(variable->id())) {
     if (dec.dec_type() == spv::Decoration::Location) {
-      if (has_location && dec.params()[0] != location) {
-        return _.diag(SPV_ERROR_INVALID_DATA, variable)
-               << "Variable has conflicting location decorations";
-      }
       has_location = true;
       location = dec.params()[0];
     } else if (dec.dec_type() == spv::Decoration::Component) {
-      if (has_component && dec.params()[0] != component) {
-        return _.diag(SPV_ERROR_INVALID_DATA, variable)
-               << "Variable has conflicting component decorations";
-      }
-      has_component = true;
       component = dec.params()[0];
     } else if (dec.dec_type() == spv::Decoration::Index) {
       if (!is_output || !is_fragment) {
         return _.diag(SPV_ERROR_INVALID_DATA, variable)
                << "Index can only be applied to Fragment output variables";
-      }
-      if (has_index && dec.params()[0] != index) {
-        return _.diag(SPV_ERROR_INVALID_DATA, variable)
-               << "Variable has conflicting index decorations";
       }
       has_index = true;
       index = dec.params()[0];

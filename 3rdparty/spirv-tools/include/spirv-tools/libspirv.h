@@ -302,6 +302,12 @@ typedef enum spv_operand_type_t {
   SPV_OPERAND_TYPE_LOAD_CACHE_CONTROL,
   // Enum type from SPV_INTEL_cache_controls
   SPV_OPERAND_TYPE_STORE_CACHE_CONTROL,
+  // Enum type from SPV_INTEL_maximum_registers
+  SPV_OPERAND_TYPE_NAMED_MAXIMUM_NUMBER_OF_REGISTERS,
+  // Enum type from SPV_NV_raw_access_chains
+  SPV_OPERAND_TYPE_RAW_ACCESS_CHAIN_OPERANDS,
+  // Optional enum type from SPV_NV_raw_access_chains
+  SPV_OPERAND_TYPE_OPTIONAL_RAW_ACCESS_CHAIN_OPERANDS,
 
   // This is a sentinel value, and does not represent an operand type.
   // It should come last.
@@ -328,6 +334,7 @@ typedef enum spv_ext_inst_type_t {
   SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100,
   SPV_EXT_INST_TYPE_NONSEMANTIC_CLSPVREFLECTION,
   SPV_EXT_INST_TYPE_NONSEMANTIC_SHADER_DEBUGINFO_100,
+  SPV_EXT_INST_TYPE_NONSEMANTIC_VKSPREFLECTION,
 
   // Multiple distinct extended instruction set types could return this
   // value, if they are prefixed with NonSemantic. and are otherwise

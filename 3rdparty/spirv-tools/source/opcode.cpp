@@ -295,6 +295,7 @@ bool spvOpcodeReturnsLogicalVariablePointer(const spv::Op opcode) {
     case spv::Op::OpPtrAccessChain:
     case spv::Op::OpLoad:
     case spv::Op::OpConstantNull:
+    case spv::Op::OpRawAccessChainNV:
       return true;
     default:
       return false;
@@ -309,6 +310,7 @@ int32_t spvOpcodeReturnsLogicalPointer(const spv::Op opcode) {
     case spv::Op::OpFunctionParameter:
     case spv::Op::OpImageTexelPointer:
     case spv::Op::OpCopyObject:
+    case spv::Op::OpRawAccessChainNV:
       return true;
     default:
       return false;
@@ -754,6 +756,7 @@ bool spvOpcodeIsAccessChain(spv::Op opcode) {
     case spv::Op::OpInBoundsAccessChain:
     case spv::Op::OpPtrAccessChain:
     case spv::Op::OpInBoundsPtrAccessChain:
+    case spv::Op::OpRawAccessChainNV:
       return true;
     default:
       return false;

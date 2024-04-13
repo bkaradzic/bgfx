@@ -94,6 +94,13 @@ spv_result_t ValidateInterfaces(ValidationState_t& _);
 /// @return SPV_SUCCESS if no errors are found.
 spv_result_t ValidateFloatControls2(ValidationState_t& _);
 
+/// @brief Validates duplicated execution modes for each entry point.
+///
+/// @param[in] _ the validation state of the module
+///
+/// @return SPV_SUCCESS if no errors are found.
+spv_result_t ValidateDuplicateExecutionModes(ValidationState_t& _);
+
 /// @brief Validates memory instructions
 ///
 /// @param[in] _ the validation state of the module

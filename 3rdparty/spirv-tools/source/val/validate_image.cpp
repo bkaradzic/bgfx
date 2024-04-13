@@ -982,6 +982,10 @@ bool IsAllowedSampledImageOperand(spv::Op opcode, ValidationState_t& _) {
     case spv::Op::OpImageBoxFilterQCOM:
     case spv::Op::OpImageBlockMatchSSDQCOM:
     case spv::Op::OpImageBlockMatchSADQCOM:
+    case spv::Op::OpImageBlockMatchWindowSADQCOM:
+    case spv::Op::OpImageBlockMatchWindowSSDQCOM:
+    case spv::Op::OpImageBlockMatchGatherSADQCOM:
+    case spv::Op::OpImageBlockMatchGatherSSDQCOM:
       return true;
     case spv::Op::OpStore:
       if (_.HasCapability(spv::Capability::BindlessTextureNV)) return true;
@@ -2168,7 +2172,7 @@ spv_result_t ValidateImageProcessingQCOMDecoration(ValidationState_t& _, int id,
   int texture_id = ld_inst->GetOperandAs<int>(2);  // variable to load
   if (!_.HasDecoration(texture_id, decor)) {
     return _.diag(SPV_ERROR_INVALID_DATA, ld_inst)
-           << "Missing decoration WeightTextureQCOM/BlockMatchTextureQCOM";
+           << "Missing decoration " << _.SpvDecorationString(decor);
   }
 
   return SPV_SUCCESS;
@@ -2187,6 +2191,34 @@ spv_result_t ValidateImageProcessingQCOM(ValidationState_t& _,
     }
     case spv::Op::OpImageBlockMatchSSDQCOM:
     case spv::Op::OpImageBlockMatchSADQCOM: {
+      int tgt_idx = inst->GetOperandAs<int>(2);  // target
+      res = ValidateImageProcessingQCOMDecoration(
+          _, tgt_idx, spv::Decoration::BlockMatchTextureQCOM);
+      if (res != SPV_SUCCESS) break;
+      int ref_idx = inst->GetOperandAs<int>(4);  // reference
+      res = ValidateImageProcessingQCOMDecoration(
+          _, ref_idx, spv::Decoration::BlockMatchTextureQCOM);
+      break;
+    }
+    case spv::Op::OpImageBlockMatchWindowSSDQCOM:
+    case spv::Op::OpImageBlockMatchWindowSADQCOM: {
+      int tgt_idx = inst->GetOperandAs<int>(2);  // target
+      res = ValidateImageProcessingQCOMDecoration(
+          _, tgt_idx, spv::Decoration::BlockMatchTextureQCOM);
+      if (res != SPV_SUCCESS) break;
+      res = ValidateImageProcessingQCOMDecoration(
+          _, tgt_idx, spv::Decoration::BlockMatchSamplerQCOM);
+      if (res != SPV_SUCCESS) break;
+      int ref_idx = inst->GetOperandAs<int>(4);  // reference
+      res = ValidateImageProcessingQCOMDecoration(
+          _, ref_idx, spv::Decoration::BlockMatchTextureQCOM);
+      if (res != SPV_SUCCESS) break;
+      res = ValidateImageProcessingQCOMDecoration(
+          _, ref_idx, spv::Decoration::BlockMatchSamplerQCOM);
+      break;
+    }
+    case spv::Op::OpImageBlockMatchGatherSSDQCOM:
+    case spv::Op::OpImageBlockMatchGatherSADQCOM: {
       int tgt_idx = inst->GetOperandAs<int>(2);  // target
       res = ValidateImageProcessingQCOMDecoration(
           _, tgt_idx, spv::Decoration::BlockMatchTextureQCOM);
@@ -2326,6 +2358,10 @@ spv_result_t ImagePass(ValidationState_t& _, const Instruction* inst) {
     case spv::Op::OpImageBoxFilterQCOM:
     case spv::Op::OpImageBlockMatchSSDQCOM:
     case spv::Op::OpImageBlockMatchSADQCOM:
+    case spv::Op::OpImageBlockMatchWindowSADQCOM:
+    case spv::Op::OpImageBlockMatchWindowSSDQCOM:
+    case spv::Op::OpImageBlockMatchGatherSADQCOM:
+    case spv::Op::OpImageBlockMatchGatherSSDQCOM:
       return ValidateImageProcessingQCOM(_, inst);
 
     default:
@@ -2378,6 +2414,10 @@ bool IsImageInstruction(const spv::Op opcode) {
     case spv::Op::OpImageBoxFilterQCOM:
     case spv::Op::OpImageBlockMatchSSDQCOM:
     case spv::Op::OpImageBlockMatchSADQCOM:
+    case spv::Op::OpImageBlockMatchWindowSADQCOM:
+    case spv::Op::OpImageBlockMatchWindowSSDQCOM:
+    case spv::Op::OpImageBlockMatchGatherSADQCOM:
+    case spv::Op::OpImageBlockMatchGatherSSDQCOM:
       return true;
     default:
       break;
@@ -2395,6 +2435,11 @@ spv_result_t ValidateQCOMImageProcessingTextureUsages(ValidationState_t& _,
     case spv::Op::OpImageBoxFilterQCOM:
     case spv::Op::OpImageBlockMatchSSDQCOM:
     case spv::Op::OpImageBlockMatchSADQCOM:
+      break;
+    case spv::Op::OpImageBlockMatchWindowSADQCOM:
+    case spv::Op::OpImageBlockMatchWindowSSDQCOM:
+    case spv::Op::OpImageBlockMatchGatherSADQCOM:
+    case spv::Op::OpImageBlockMatchGatherSSDQCOM:
       break;
     default:
       for (size_t i = 0; i < inst->operands().size(); ++i) {

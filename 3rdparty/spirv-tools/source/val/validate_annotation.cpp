@@ -161,7 +161,8 @@ spv_result_t ValidateDecorationTarget(ValidationState_t& _, spv::Decoration dec,
     case spv::Decoration::RestrictPointer:
     case spv::Decoration::AliasedPointer:
       if (target->opcode() != spv::Op::OpVariable &&
-          target->opcode() != spv::Op::OpFunctionParameter) {
+          target->opcode() != spv::Op::OpFunctionParameter &&
+          target->opcode() != spv::Op::OpRawAccessChainNV) {
         return fail(0) << "must be a memory object declaration";
       }
       if (_.GetIdOpcode(target->type_id()) != spv::Op::OpTypePointer) {

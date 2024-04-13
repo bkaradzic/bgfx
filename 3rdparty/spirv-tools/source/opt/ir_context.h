@@ -84,7 +84,7 @@ class IRContext {
     kAnalysisTypes = 1 << 15,
     kAnalysisDebugInfo = 1 << 16,
     kAnalysisLiveness = 1 << 17,
-    kAnalysisEnd = 1 << 17
+    kAnalysisEnd = 1 << 18
   };
 
   using ProcessFunction = std::function<bool(Function*)>;

@@ -346,6 +346,7 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
       case spv::ExecutionMode::LocalSizeHintId:
       case spv::ExecutionMode::LocalSizeId:
       case spv::ExecutionMode::FPFastMathDefault:
+      case spv::ExecutionMode::MaximumRegistersIdINTEL:
         valid_mode = true;
         break;
       default:
@@ -723,6 +724,25 @@ spv_result_t ValidateMemoryModel(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+bool PerEntryExecutionMode(spv::ExecutionMode mode) {
+  switch (mode) {
+    // These execution modes can be specified multiple times per entry point.
+    case spv::ExecutionMode::DenormPreserve:
+    case spv::ExecutionMode::DenormFlushToZero:
+    case spv::ExecutionMode::SignedZeroInfNanPreserve:
+    case spv::ExecutionMode::RoundingModeRTE:
+    case spv::ExecutionMode::RoundingModeRTZ:
+    case spv::ExecutionMode::FPFastMathDefault:
+    case spv::ExecutionMode::RoundingModeRTPINTEL:
+    case spv::ExecutionMode::RoundingModeRTNINTEL:
+    case spv::ExecutionMode::FloatingPointModeALTINTEL:
+    case spv::ExecutionMode::FloatingPointModeIEEEINTEL:
+      return false;
+    default:
+      return true;
+  }
+}
+
 }  // namespace
 
 spv_result_t ValidateFloatControls2(ValidationState_t& _) {
@@ -804,6 +824,53 @@ spv_result_t ModeSettingPass(ValidationState_t& _, const Instruction* inst) {
     default:
       break;
   }
+  return SPV_SUCCESS;
+}
+
+spv_result_t ValidateDuplicateExecutionModes(ValidationState_t& _) {
+  using PerEntryKey = std::tuple<spv::ExecutionMode, uint32_t>;
+  using PerOperandKey = std::tuple<spv::ExecutionMode, uint32_t, uint32_t>;
+  std::set<PerEntryKey> seen_per_entry;
+  std::set<PerOperandKey> seen_per_operand;
+
+  const auto lookupMode = [&_](spv::ExecutionMode mode) -> std::string {
+    spv_operand_desc desc = nullptr;
+    if (_.grammar().lookupOperand(SPV_OPERAND_TYPE_EXECUTION_MODE,
+                                  static_cast<uint32_t>(mode),
+                                  &desc) == SPV_SUCCESS) {
+      return std::string(desc->name);
+    }
+    return "Unknown";
+  };
+
+  for (const auto& inst : _.ordered_instructions()) {
+    if (inst.opcode() != spv::Op::OpExecutionMode &&
+        inst.opcode() != spv::Op::OpExecutionModeId) {
+      continue;
+    }
+
+    const auto entry = inst.GetOperandAs<uint32_t>(0);
+    const auto mode = inst.GetOperandAs<spv::ExecutionMode>(1);
+    if (PerEntryExecutionMode(mode)) {
+      if (!seen_per_entry.insert(std::make_tuple(mode, entry)).second) {
+        return _.diag(SPV_ERROR_INVALID_ID, &inst)
+               << lookupMode(mode)
+               << " execution mode must not be specified multiple times per "
+                  "entry point";
+      }
+    } else {
+      // Execution modes allowed multiple times all take a single operand.
+      const auto operand = inst.GetOperandAs<uint32_t>(2);
+      if (!seen_per_operand.insert(std::make_tuple(mode, entry, operand))
+               .second) {
+        return _.diag(SPV_ERROR_INVALID_ID, &inst)
+               << lookupMode(mode)
+               << " execution mode must not be specified multiple times for "
+                  "the same entry point and operands";
+      }
+    }
+  }
+
   return SPV_SUCCESS;
 }
 

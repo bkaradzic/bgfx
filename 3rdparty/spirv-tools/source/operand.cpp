@@ -220,6 +220,11 @@ const char* spvOperandTypeStr(spv_operand_type_t type) {
       return "load cache control";
     case SPV_OPERAND_TYPE_STORE_CACHE_CONTROL:
       return "store cache control";
+    case SPV_OPERAND_TYPE_NAMED_MAXIMUM_NUMBER_OF_REGISTERS:
+      return "named maximum number of registers";
+    case SPV_OPERAND_TYPE_RAW_ACCESS_CHAIN_OPERANDS:
+    case SPV_OPERAND_TYPE_OPTIONAL_RAW_ACCESS_CHAIN_OPERANDS:
+      return "raw access chain operands";
     case SPV_OPERAND_TYPE_IMAGE:
     case SPV_OPERAND_TYPE_OPTIONAL_IMAGE:
       return "image";
@@ -360,6 +365,7 @@ bool spvOperandIsConcrete(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_HOST_ACCESS_QUALIFIER:
     case SPV_OPERAND_TYPE_LOAD_CACHE_CONTROL:
     case SPV_OPERAND_TYPE_STORE_CACHE_CONTROL:
+    case SPV_OPERAND_TYPE_NAMED_MAXIMUM_NUMBER_OF_REGISTERS:
       return true;
     default:
       break;
@@ -379,6 +385,7 @@ bool spvOperandIsConcreteMask(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_DEBUG_INFO_FLAGS:
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_INFO_FLAGS:
     case SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_OPERANDS:
+    case SPV_OPERAND_TYPE_RAW_ACCESS_CHAIN_OPERANDS:
       return true;
     default:
       break;
@@ -399,6 +406,7 @@ bool spvOperandIsOptional(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_OPTIONAL_PACKED_VECTOR_FORMAT:
     case SPV_OPERAND_TYPE_OPTIONAL_COOPERATIVE_MATRIX_OPERANDS:
     case SPV_OPERAND_TYPE_OPTIONAL_CIV:
+    case SPV_OPERAND_TYPE_OPTIONAL_RAW_ACCESS_CHAIN_OPERANDS:
       return true;
     default:
       break;

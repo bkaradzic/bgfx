@@ -517,13 +517,24 @@ void TypeManager::CreateDecoration(uint32_t target,
   context()->get_def_use_mgr()->AnalyzeInstUse(inst);
 }
 
-Type* TypeManager::RebuildType(const Type& type) {
+Type* TypeManager::RebuildType(uint32_t type_id, const Type& type) {
+  assert(type_id != 0);
+
   // The comparison and hash on the type pool will avoid inserting the rebuilt
   // type if an equivalent type already exists. The rebuilt type will be deleted
   // when it goes out of scope at the end of the function in that case. Repeated
   // insertions of the same Type will, at most, keep one corresponding object in
   // the type pool.
   std::unique_ptr<Type> rebuilt_ty;
+
+  // If |type_id| is already present in the type pool, return the existing type.
+  // This saves extra work in the type builder and prevents running into
+  // circular issues (https://github.com/KhronosGroup/SPIRV-Tools/issues/5623).
+  Type* pool_ty = GetType(type_id);
+  if (pool_ty != nullptr) {
+    return pool_ty;
+  }
+
   switch (type.kind()) {
 #define DefineNoSubtypeCase(kind)             \
   case Type::k##kind:                         \
@@ -550,43 +561,46 @@ Type* TypeManager::RebuildType(const Type& type) {
     case Type::kVector: {
       const Vector* vec_ty = type.AsVector();
       const Type* ele_ty = vec_ty->element_type();
-      rebuilt_ty =
-          MakeUnique<Vector>(RebuildType(*ele_ty), vec_ty->element_count());
+      rebuilt_ty = MakeUnique<Vector>(RebuildType(GetId(ele_ty), *ele_ty),
+                                      vec_ty->element_count());
       break;
     }
     case Type::kMatrix: {
       const Matrix* mat_ty = type.AsMatrix();
       const Type* ele_ty = mat_ty->element_type();
-      rebuilt_ty =
-          MakeUnique<Matrix>(RebuildType(*ele_ty), mat_ty->element_count());
+      rebuilt_ty = MakeUnique<Matrix>(RebuildType(GetId(ele_ty), *ele_ty),
+                                      mat_ty->element_count());
       break;
     }
     case Type::kImage: {
       const Image* image_ty = type.AsImage();
       const Type* ele_ty = image_ty->sampled_type();
-      rebuilt_ty =
-          MakeUnique<Image>(RebuildType(*ele_ty), image_ty->dim(),
-                            image_ty->depth(), image_ty->is_arrayed(),
-                            image_ty->is_multisampled(), image_ty->sampled(),
-                            image_ty->format(), image_ty->access_qualifier());
+      rebuilt_ty = MakeUnique<Image>(
+          RebuildType(GetId(ele_ty), *ele_ty), image_ty->dim(),
+          image_ty->depth(), image_ty->is_arrayed(),
+          image_ty->is_multisampled(), image_ty->sampled(), image_ty->format(),
+          image_ty->access_qualifier());
       break;
     }
     case Type::kSampledImage: {
       const SampledImage* image_ty = type.AsSampledImage();
       const Type* ele_ty = image_ty->image_type();
-      rebuilt_ty = MakeUnique<SampledImage>(RebuildType(*ele_ty));
+      rebuilt_ty =
+          MakeUnique<SampledImage>(RebuildType(GetId(ele_ty), *ele_ty));
       break;
     }
     case Type::kArray: {
       const Array* array_ty = type.AsArray();
-      rebuilt_ty =
-          MakeUnique<Array>(array_ty->element_type(), array_ty->length_info());
+      const Type* ele_ty = array_ty->element_type();
+      rebuilt_ty = MakeUnique<Array>(RebuildType(GetId(ele_ty), *ele_ty),
+                                     array_ty->length_info());
       break;
     }
     case Type::kRuntimeArray: {
       const RuntimeArray* array_ty = type.AsRuntimeArray();
       const Type* ele_ty = array_ty->element_type();
-      rebuilt_ty = MakeUnique<RuntimeArray>(RebuildType(*ele_ty));
+      rebuilt_ty =
+          MakeUnique<RuntimeArray>(RebuildType(GetId(ele_ty), *ele_ty));
       break;
     }
     case Type::kStruct: {
@@ -594,7 +608,7 @@ Type* TypeManager::RebuildType(const Type& type) {
       std::vector<const Type*> subtypes;
       subtypes.reserve(struct_ty->element_types().size());
       for (const auto* ele_ty : struct_ty->element_types()) {
-        subtypes.push_back(RebuildType(*ele_ty));
+        subtypes.push_back(RebuildType(GetId(ele_ty), *ele_ty));
       }
       rebuilt_ty = MakeUnique<Struct>(subtypes);
       Struct* rebuilt_struct = rebuilt_ty->AsStruct();
@@ -611,7 +625,7 @@ Type* TypeManager::RebuildType(const Type& type) {
     case Type::kPointer: {
       const Pointer* pointer_ty = type.AsPointer();
       const Type* ele_ty = pointer_ty->pointee_type();
-      rebuilt_ty = MakeUnique<Pointer>(RebuildType(*ele_ty),
+      rebuilt_ty = MakeUnique<Pointer>(RebuildType(GetId(ele_ty), *ele_ty),
                                        pointer_ty->storage_class());
       break;
     }
@@ -621,9 +635,10 @@ Type* TypeManager::RebuildType(const Type& type) {
       std::vector<const Type*> param_types;
       param_types.reserve(function_ty->param_types().size());
       for (const auto* param_ty : function_ty->param_types()) {
-        param_types.push_back(RebuildType(*param_ty));
+        param_types.push_back(RebuildType(GetId(param_ty), *param_ty));
       }
-      rebuilt_ty = MakeUnique<Function>(RebuildType(*ret_ty), param_types);
+      rebuilt_ty = MakeUnique<Function>(RebuildType(GetId(ret_ty), *ret_ty),
+                                        param_types);
       break;
     }
     case Type::kForwardPointer: {
@@ -633,7 +648,7 @@ Type* TypeManager::RebuildType(const Type& type) {
       const Pointer* target_ptr = forward_ptr_ty->target_pointer();
       if (target_ptr) {
         rebuilt_ty->AsForwardPointer()->SetTargetPointer(
-            RebuildType(*target_ptr)->AsPointer());
+            RebuildType(GetId(target_ptr), *target_ptr)->AsPointer());
       }
       break;
     }
@@ -641,16 +656,17 @@ Type* TypeManager::RebuildType(const Type& type) {
       const CooperativeMatrixNV* cm_type = type.AsCooperativeMatrixNV();
       const Type* component_type = cm_type->component_type();
       rebuilt_ty = MakeUnique<CooperativeMatrixNV>(
-          RebuildType(*component_type), cm_type->scope_id(), cm_type->rows_id(),
-          cm_type->columns_id());
+          RebuildType(GetId(component_type), *component_type),
+          cm_type->scope_id(), cm_type->rows_id(), cm_type->columns_id());
       break;
     }
     case Type::kCooperativeMatrixKHR: {
       const CooperativeMatrixKHR* cm_type = type.AsCooperativeMatrixKHR();
       const Type* component_type = cm_type->component_type();
       rebuilt_ty = MakeUnique<CooperativeMatrixKHR>(
-          RebuildType(*component_type), cm_type->scope_id(), cm_type->rows_id(),
-          cm_type->columns_id(), cm_type->use_id());
+          RebuildType(GetId(component_type), *component_type),
+          cm_type->scope_id(), cm_type->rows_id(), cm_type->columns_id(),
+          cm_type->use_id());
       break;
     }
     default:
@@ -669,7 +685,7 @@ Type* TypeManager::RebuildType(const Type& type) {
 void TypeManager::RegisterType(uint32_t id, const Type& type) {
   // Rebuild |type| so it and all its constituent types are owned by the type
   // pool.
-  Type* rebuilt = RebuildType(type);
+  Type* rebuilt = RebuildType(id, type);
   assert(rebuilt->IsSame(&type));
   id_to_type_[id] = rebuilt;
   if (GetId(rebuilt) == 0) {

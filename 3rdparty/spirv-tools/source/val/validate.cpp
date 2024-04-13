@@ -144,6 +144,9 @@ spv_result_t ValidateEntryPoints(ValidationState_t& _) {
   if (auto error = ValidateFloatControls2(_)) {
     return error;
   }
+  if (auto error = ValidateDuplicateExecutionModes(_)) {
+    return error;
+  }
 
   return SPV_SUCCESS;
 }

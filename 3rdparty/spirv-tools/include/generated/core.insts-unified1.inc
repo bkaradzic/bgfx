@@ -53,6 +53,7 @@ static const spv::Capability pygen_variable_caps_NamedBarrier[] = {spv::Capabili
 static const spv::Capability pygen_variable_caps_PipeStorage[] = {spv::Capability::PipeStorage};
 static const spv::Capability pygen_variable_caps_Pipes[] = {spv::Capability::Pipes};
 static const spv::Capability pygen_variable_caps_QuadControlKHR[] = {spv::Capability::QuadControlKHR};
+static const spv::Capability pygen_variable_caps_RawAccessChainsNV[] = {spv::Capability::RawAccessChainsNV};
 static const spv::Capability pygen_variable_caps_RayQueryKHR[] = {spv::Capability::RayQueryKHR};
 static const spv::Capability pygen_variable_caps_RayQueryPositionFetchKHR[] = {spv::Capability::RayQueryPositionFetchKHR};
 static const spv::Capability pygen_variable_caps_RayTracingKHR[] = {spv::Capability::RayTracingKHR};
@@ -597,6 +598,7 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"ConvertUToSampledImageNV", spv::Op::OpConvertUToSampledImageNV, 1, pygen_variable_caps_BindlessTextureNV, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"ConvertSampledImageToUNV", spv::Op::OpConvertSampledImageToUNV, 1, pygen_variable_caps_BindlessTextureNV, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SamplerImageAddressingModeNV", spv::Op::OpSamplerImageAddressingModeNV, 1, pygen_variable_caps_BindlessTextureNV, 1, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"RawAccessChainNV", spv::Op::OpRawAccessChainNV, 1, pygen_variable_caps_RawAccessChainsNV, 7, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_OPTIONAL_RAW_ACCESS_CHAIN_OPERANDS}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SubgroupShuffleINTEL", spv::Op::OpSubgroupShuffleINTEL, 1, pygen_variable_caps_SubgroupShuffleINTEL, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SubgroupShuffleDownINTEL", spv::Op::OpSubgroupShuffleDownINTEL, 1, pygen_variable_caps_SubgroupShuffleINTEL, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SubgroupShuffleUpINTEL", spv::Op::OpSubgroupShuffleUpINTEL, 1, pygen_variable_caps_SubgroupShuffleINTEL, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
