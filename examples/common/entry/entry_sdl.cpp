@@ -68,7 +68,7 @@ namespace entry
 			else
 #		endif // ENTRY_CONFIG_USE_WAYLAND
 				return (void*)wmi.info.x11.window;
-#	elif BX_PLATFORM_OSX || BX_PLATFORM_IOS
+#	elif BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 		return wmi.info.cocoa.window;
 #	elif BX_PLATFORM_WINDOWS
 		return wmi.info.win.window;

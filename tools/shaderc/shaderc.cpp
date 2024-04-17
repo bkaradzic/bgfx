@@ -1160,6 +1160,7 @@ namespace bgfx
 		preprocessor.setDefaultDefine("BX_PLATFORM_ANDROID");
 		preprocessor.setDefaultDefine("BX_PLATFORM_EMSCRIPTEN");
 		preprocessor.setDefaultDefine("BX_PLATFORM_IOS");
+		preprocessor.setDefaultDefine("BX_PLATFORM_VISIONOS");
 		preprocessor.setDefaultDefine("BX_PLATFORM_LINUX");
 		preprocessor.setDefaultDefine("BX_PLATFORM_OSX");
 		preprocessor.setDefaultDefine("BX_PLATFORM_PS4");
@@ -1225,11 +1226,18 @@ namespace bgfx
 				preprocessor.setDefine(glslDefine);
 			}
 		}
-		else if (0 == bx::strCmpI(platform, "ios") || (0 == bx::strCmpI(platform, "osx")) )
+		else if (
+			0 == bx::strCmpI(platform, "ios") ||
+			0 == bx::strCmpI(platform, "osx") ||
+			0 == bx::strCmpI(platform, "visionos")
+		)
 		{
 			if (0 == bx::strCmpI(platform, "osx"))
 			{
 				preprocessor.setDefine("BX_PLATFORM_OSX=1");
+			}
+			else if (0 == bx::strCmpI(platform, "visionos")) {
+				preprocessor.setDefine("BX_PLATFORM_VISIONOS=1");
 			}
 			else
 			{
