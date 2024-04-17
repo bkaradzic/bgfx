@@ -2824,6 +2824,7 @@ VK_IMPORT_DEVICE
 
 		void setFrameBuffer(FrameBufferHandle _fbh, bool _acquire = true)
 		{
+			BGFX_PROFILER_SCOPE("Vk::setFrameBuffer()", kColorFrame);
 			BX_ASSERT(false
 				  ||  isValid(_fbh)
 				  ||  NULL != m_backBuffer.m_nwh
@@ -4716,6 +4717,7 @@ VK_DESTROY
 
 	void BufferVK::update(VkCommandBuffer _commandBuffer, uint32_t _offset, uint32_t _size, void* _data, bool _discard)
 	{
+		BGFX_PROFILER_SCOPE("BufferVK::update", kColorFrame);
 		BX_UNUSED(_discard);
 
 		VkBuffer stagingBuffer;
@@ -5298,6 +5300,7 @@ VK_DESTROY
 
 	VkResult TimerQueryVK::init()
 	{
+		BGFX_PROFILER_SCOPE("TimerQueryVK::init", kColorFrame);
 		VkResult result = VK_SUCCESS;
 
 		const VkDevice device = s_renderVK->m_device;
@@ -5361,6 +5364,7 @@ VK_DESTROY
 
 	uint32_t TimerQueryVK::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
+		BGFX_PROFILER_SCOPE("TimerQueryVK::begin", kColorFrame);
 		while (0 == m_control.reserve(1) )
 		{
 			m_control.consume(1);
@@ -5388,6 +5392,7 @@ VK_DESTROY
 
 	void TimerQueryVK::end(uint32_t _idx)
 	{
+		BGFX_PROFILER_SCOPE("TimerQueryVK::end", kColorFrame);
 		Query& query = m_query[_idx];
 		query.m_ready = true;
 		query.m_completed = s_renderVK->m_cmd.m_submitted + s_renderVK->m_cmd.m_numFramesInFlight;
@@ -5450,6 +5455,7 @@ VK_DESTROY
 
 	VkResult OcclusionQueryVK::init()
 	{
+		BGFX_PROFILER_SCOPE("OcclusionQueryVK::init", kColorFrame);
 		VkResult result = VK_SUCCESS;
 
 		const VkDevice device = s_renderVK->m_device;
@@ -5506,6 +5512,7 @@ VK_DESTROY
 
 	void OcclusionQueryVK::begin(OcclusionQueryHandle _handle)
 	{
+		BGFX_PROFILER_SCOPE("OcclusionQueryVK::shutdown", kColorFrame);
 		m_control.reserve(1);
 
 		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
@@ -5516,6 +5523,7 @@ VK_DESTROY
 
 	void OcclusionQueryVK::end()
 	{
+		BGFX_PROFILER_SCOPE("OcclusionQueryVK::end", kColorFrame);
 		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
 
 		const OcclusionQueryHandle handle = m_handle[m_control.m_current];
@@ -5526,6 +5534,7 @@ VK_DESTROY
 
 	void OcclusionQueryVK::flush(Frame* _render)
 	{
+		BGFX_PROFILER_SCOPE("OcclusionQueryVK::flush", kColorFrame);
 		if (0 < m_control.available() )
 		{
 			VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
@@ -5614,6 +5623,7 @@ VK_DESTROY
 
 	void ReadbackVK::copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint8_t _mip) const
 	{
+		BGFX_PROFILER_SCOPE("ReadbackVK::copyImageToBuffer", kColorFrame);
 		uint32_t mipWidth  = bx::uint32_max(1, m_width  >> _mip);
 		uint32_t mipHeight = bx::uint32_max(1, m_height >> _mip);
 
@@ -6228,6 +6238,7 @@ VK_DESTROY
 
 	void TextureVK::resolve(VkCommandBuffer _commandBuffer, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip)
 	{
+		BGFX_PROFILER_SCOPE("TextureVK::resolve", kColorResource);
 		const bool needResolve = VK_NULL_HANDLE != m_singleMsaaImage;
 
 		const bool needMipGen = true
@@ -6303,6 +6314,7 @@ VK_DESTROY
 
 			for (uint32_t i = _mip + 1; i < m_numMips; i++)
 			{
+				BGFX_PROFILER_SCOPE("mipmap", kColorResource);
 				blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
 				blit.srcSubresource.mipLevel = i - 1;
 
@@ -6355,6 +6367,7 @@ VK_DESTROY
 
 	void TextureVK::copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy)
 	{
+		BGFX_PROFILER_SCOPE("TextureVK::copyBufferToTexture", kColorResource);
 		const VkImageLayout oldLayout = m_currentImageLayout == VK_IMAGE_LAYOUT_UNDEFINED
 			? m_sampledLayout
 			: m_currentImageLayout
@@ -7400,14 +7413,18 @@ VK_DESTROY
 			m_lastImageRenderedSemaphore = m_renderDoneSemaphore[m_currentSemaphore];
 			m_currentSemaphore = (m_currentSemaphore + 1) % m_numSwapchainImages;
 
-			VkResult result = vkAcquireNextImageKHR(
-				  device
-				, m_swapchain
-				, UINT64_MAX
-				, m_lastImageAcquiredSemaphore
-				, VK_NULL_HANDLE
-				, &m_backBufferColorIdx
-				);
+			VkResult result;
+			{
+				BGFX_PROFILER_SCOPE("vkAcquireNextImageKHR", kColorFrame);
+				result = vkAcquireNextImageKHR(
+					  device
+					, m_swapchain
+					, UINT64_MAX
+					, m_lastImageAcquiredSemaphore
+					, VK_NULL_HANDLE
+					, &m_backBufferColorIdx
+					);
+			}
 
 			switch (result)
 			{
@@ -7430,6 +7447,7 @@ VK_DESTROY
 
 			if (VK_NULL_HANDLE != m_backBufferFence[m_backBufferColorIdx])
 			{
+				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
 				VK_CHECK(vkWaitForFences(
 					  device
 					, 1
@@ -7449,6 +7467,7 @@ VK_DESTROY
 
 	void SwapChainVK::present()
 	{
+		BGFX_PROFILER_SCOPE("SwapChainVk::present", kColorFrame);
 		if (VK_NULL_HANDLE != m_swapchain
 		&&  m_needPresent)
 		{
@@ -7461,7 +7480,11 @@ VK_DESTROY
 			pi.pSwapchains        = &m_swapchain;
 			pi.pImageIndices      = &m_backBufferColorIdx;
 			pi.pResults           = NULL;
-			VkResult result = vkQueuePresentKHR(m_queue, &pi);
+			VkResult result;
+			{
+				BGFX_PROFILER_SCOPE("vkQueuePresentHKR", kColorFrame);
+				result = vkQueuePresentKHR(m_queue, &pi);
+			}
 
 			switch (result)
 			{
@@ -7835,7 +7858,10 @@ VK_DESTROY
 			const VkDevice device = s_renderVK->m_device;
 			CommandList& commandList = m_commandList[m_currentFrameInFlight];
 
-			result = vkWaitForFences(device, 1, &commandList.m_fence, VK_TRUE, UINT64_MAX);
+			{
+				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
+				result = vkWaitForFences(device, 1, &commandList.m_fence, VK_TRUE, UINT64_MAX);
+			}
 
 			if (VK_SUCCESS != result)
 			{
@@ -7931,6 +7957,7 @@ VK_DESTROY
 
 			if (_wait)
 			{
+				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
 				VK_CHECK(vkWaitForFences(device, 1, &m_completedFence, VK_TRUE, UINT64_MAX) );
 			}
 
@@ -7999,6 +8026,7 @@ VK_DESTROY
 
 	void RendererContextVK::submitBlit(BlitState& _bs, uint16_t _view)
 	{
+		BGFX_PROFILER_SCOPE("RendererContextVK::submitBlit", kColorFrame);
 		VkImageLayout srcLayouts[BGFX_CONFIG_MAX_BLIT_ITEMS];
 		VkImageLayout dstLayouts[BGFX_CONFIG_MAX_BLIT_ITEMS];
 
