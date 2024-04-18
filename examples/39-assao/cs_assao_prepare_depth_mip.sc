@@ -11,10 +11,10 @@ IMAGE2D_RO(s_viewspaceDepthSource1, r16f, 1);
 IMAGE2D_RO(s_viewspaceDepthSource2, r16f, 2);
 IMAGE2D_RO(s_viewspaceDepthSource3, r16f, 3);
 
-IMAGE2D_WR(s_target0, r16f, 4);
-IMAGE2D_WR(s_target1, r16f, 5);
-IMAGE2D_WR(s_target2, r16f, 6);
-IMAGE2D_WR(s_target3, r16f, 7);
+IMAGE2D_WO(s_target0, r16f, 4);
+IMAGE2D_WO(s_target1, r16f, 5);
+IMAGE2D_WO(s_target2, r16f, 6);
+IMAGE2D_WO(s_target3, r16f, 7);
 
 // calculate effect radius and fit our screen sampling pattern inside it
 void CalculateRadiusParameters( const float pixCenterLength, const vec2 pixelDirRBViewspaceSizeAtCenterZ, out float pixLookupRadiusMod, out float effectRadius, out float falloffCalcMulSq )

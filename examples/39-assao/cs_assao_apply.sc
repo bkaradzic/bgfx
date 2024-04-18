@@ -6,7 +6,7 @@
 #include "bgfx_compute.sh" 
 #include "uniforms.sh"
 
-IMAGE2D_WR(s_target, r8, 0);
+IMAGE2D_WO(s_target, r8, 0);
 SAMPLER2DARRAY(s_finalSSAO,  1); 
 
 // unpacking for edges; 2 bits per edge mean 4 gradient values (0, 0.33, 0.66, 1) for smoother transitions!

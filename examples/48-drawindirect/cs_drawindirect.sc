@@ -9,10 +9,10 @@
 BUFFER_RO(instanceDataIn, vec4, 0);
 
 // Output
-BUFFER_WR(indirectBuffer, uvec4, 1);
-BUFFER_WR(instanceBufferOut, vec4, 2);
+BUFFER_WO(indirectBuffer, uvec4, 1);
+BUFFER_WO(instanceBufferOut, vec4, 2);
 #ifdef INDIRECT_COUNT
-BUFFER_WR(indirectCountBuffer, int, 3);
+BUFFER_WO(indirectCountBuffer, int, 3);
 #endif
 
 uniform vec4 u_drawParams;

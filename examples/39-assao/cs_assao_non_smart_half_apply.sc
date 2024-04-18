@@ -6,7 +6,7 @@
 #include "bgfx_compute.sh" 
 #include "uniforms.sh"
 
-IMAGE2D_WR(s_target, r8, 0);
+IMAGE2D_WO(s_target, r8, 0);
 SAMPLER2DARRAY(s_finalSSAO, 1);
 
 // edge-ignorant blur & apply, skipping half pixels in checkerboard pattern (for the Lowest quality level 0 and Settings::SkipHalfPixelsOnLowQualityLevel == true )

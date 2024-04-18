@@ -2,11 +2,11 @@
 
 #include "uniforms.sh"
 
-BUFFER_WR(u_SubdBufferOut, uint, 1);
+BUFFER_WO(u_SubdBufferOut, uint, 1);
 BUFFER_RW(u_CulledSubdBuffer, uint, 2);
 BUFFER_RW(indirectBuffer, uvec4, 3);
 BUFFER_RW(atomicCounterBuffer, uint, 4);
-BUFFER_WR(u_SubdBufferIn, uint, 8);
+BUFFER_WO(u_SubdBufferIn, uint, 8);
 
 NUM_THREADS(1u, 1u, 1u)
 void main()
