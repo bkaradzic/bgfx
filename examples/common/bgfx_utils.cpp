@@ -185,6 +185,20 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const bx::FilePath& _f
 					);
 			unload(data);
 
+			if (NULL != _info)
+			{
+				bgfx::calcTextureSize(
+					*_info
+					, uint16_t(imageContainer->m_width)
+					, uint16_t(imageContainer->m_height)
+					, uint16_t(imageContainer->m_depth)
+					, imageContainer->m_cubeMap
+					, 1 < imageContainer->m_numMips
+					, imageContainer->m_numLayers
+					, bgfx::TextureFormat::Enum(imageContainer->m_format)
+				);
+			}
+
 			if (imageContainer->m_cubeMap)
 			{
 				handle = bgfx::createTextureCube(
@@ -225,20 +239,6 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const bx::FilePath& _f
 			{
 				const bx::StringView name(_filePath);
 				bgfx::setName(handle, name.getPtr(), name.getLength() );
-			}
-
-			if (NULL != _info)
-			{
-				bgfx::calcTextureSize(
-					  *_info
-					, uint16_t(imageContainer->m_width)
-					, uint16_t(imageContainer->m_height)
-					, uint16_t(imageContainer->m_depth)
-					, imageContainer->m_cubeMap
-					, 1 < imageContainer->m_numMips
-					, imageContainer->m_numLayers
-					, bgfx::TextureFormat::Enum(imageContainer->m_format)
-					);
 			}
 		}
 	}
