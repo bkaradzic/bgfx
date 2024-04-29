@@ -1953,7 +1953,8 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				{
 					BX_TRACE("arg: %s type:%d", utf8String(arg.name), arg.type);
 
-					if (arg.used)
+					if (   ( @available(macOS 13.0, iOS 16.0, *) && arg.used)
+						|| (!@available(macOS 13.0, iOS 16.0, *) && [arg isActive]))
 					{
 						if (arg.type == MTLBindingTypeBuffer)
 						{
@@ -2357,8 +2358,20 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					pso->m_rps = m_device.newRenderPipelineStateWithDescriptor(pd, MTLPipelineOptionBufferTypeInfo, &reflection);
 
 					if (NULL != reflection)
-					{
-						processArguments(pso, reflection.vertexBindings, reflection.fragmentBindings);
+                    {
+#if BX_PLATFORM_IOS
+                        if (@available(iOS 16.0, *)) {
+                            processArguments(pso, reflection.vertexBindings, reflection.fragmentBindings);
+                        } else {
+                            processArguments(pso, reflection.vertexArguments, reflection.fragmentArguments);
+                        }
+#elif BX_PLATFORM_OSX
+                        if (@available(macOS 13.0, *)) {
+                            processArguments(pso, reflection.vertexBindings, reflection.fragmentBindings);
+                        } else {
+                            processArguments(pso, reflection.vertexArguments, reflection.fragmentArguments);
+                        }
+#endif
 					}
 				}
 
@@ -2405,7 +2418,12 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					, MTLPipelineOptionBufferTypeInfo
 					, &reflection
 					);
-				processArguments(pso, reflection.bindings, NULL);
+
+					if (@available(macOS 13.0, iOS 16.0, *)) {
+						processArguments(pso, reflection.bindings, NULL);
+					} else {
+						processArguments(pso, reflection.arguments, NULL);
+					}
 
 				for (uint32_t ii = 0; ii < 3; ++ii)
 				{
