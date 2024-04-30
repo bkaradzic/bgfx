@@ -18,6 +18,8 @@
 
 #define UNIFORM_BUFFER_SIZE (8*1024*1024)
 
+#define SEMVER_INT(maj, min, patch) ((maj << 16) + (min << 8) + (patch))
+
 namespace bgfx { namespace mtl
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -431,10 +433,23 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 	struct RendererContextMtl;
 	static RendererContextMtl* s_renderMtl;
 
+	struct iOSVersion {
+		iOSVersion(int maj, int min, int patch) : version(SEMVER_INT(maj, min, patch)) {}
+		iOSVersion(uint32_t version) : version(version) {}
+		uint32_t version;
+	};
+	struct macOSVersion {
+		macOSVersion(int maj, int min, int patch) : version(SEMVER_INT(maj, min, patch)) {}
+		macOSVersion(uint32_t version) : version(version) {}
+		uint32_t version;
+	};
+
 	struct RendererContextMtl : public RendererContextI
 	{
 		RendererContextMtl()
-			: m_bufferIndex(0)
+			: m_iOSRuntimeVersion(0)
+			, m_macOSRuntimeVersion(0)
+			, m_bufferIndex(0)
 			, m_numWindows(0)
 			, m_rtMsaa(false)
 			, m_capture(NULL)
@@ -447,10 +462,55 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		{
 		}
 
+		inline bool atLeastOSVersion(macOSVersion macOS_minimum, iOSVersion iOS_minimum) {
+#if BX_PLATFORM_OSX
+			return m_macOSRuntimeVersion.version >= macOS_minimum.version;
+#elif BX_PLATFORM_IOS
+			return m_iOSRuntimeVersion.version >= iOS_minimum.version;
+#else
+			return false;
+#endif
+		}
+
 		bool init(const Init& _init)
 		{
 			BX_UNUSED(_init);
 			BX_TRACE("Init.");
+
+
+#if BX_PLATFORM_OSX
+			m_iOSRuntimeVersion = iOSVersion(0);
+			NSOperatingSystemVersion v = [[NSProcessInfo processInfo] operatingSystemVersion];
+			m_macOSRuntimeVersion = macOSVersion(v.majorVersion, v.minorVersion, v.patchVersion);
+#elif BX_PLATFORM_IOS
+			m_macOSRuntimeVersion = macOSVersion(0);
+			if (@available(iOS 8.0, *)) {
+				NSOperatingSystemVersion v = [[NSProcessInfo processInfo] operatingSystemVersion];
+				m_iOSRuntimeVersion = iOSVersion(v.majorVersion, v.minorVersion, v.patchVersion);
+			} else {
+				NSString *systemVersion = [[UIDevice currentDevice] systemVersion];
+
+				// Split the version string by '.'
+				NSArray *versionComponents = [systemVersion componentsSeparatedByString:@"."];
+
+				NSInteger majorVersion = 0;
+				NSInteger minorVersion = 0;
+				NSInteger patchVersion = 0;
+
+				// Extract major, minor, and patch version numbers
+				if (versionComponents.count >= 1) {
+					majorVersion = [versionComponents[0] integerValue];
+				}
+				if (versionComponents.count >= 2) {
+					minorVersion = [versionComponents[1] integerValue];
+				}
+				if (versionComponents.count >= 3) {
+					patchVersion = [versionComponents[2] integerValue];
+				}
+				m_iOSRuntimeVersion = iOSVersion(majorVersion, minorVersion, patchVersion);
+			}
+		}
+#endif
 
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
@@ -655,30 +715,22 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			// It is decremented by 1 because 1 entry is used for uniforms.
 			g_caps.limits.maxComputeBindings = bx::uint32_min(30, BGFX_MAX_COMPUTE_BINDINGS);
 
-			m_hasPixelFormatDepth32Float_Stencil8 = false
-				||  BX_ENABLED(BX_PLATFORM_OSX)
-				|| (BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("9.0.0") )
-				;
-
-			m_hasStoreActionStoreAndMultisampleResolve = false
-				|| (BX_ENABLED(BX_PLATFORM_OSX) && macOSVersionEqualOrGreater(10, 12, 0) )
-				|| (BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("10.0.0") )
-				;
-
-			m_macOS11Runtime = true
-				&& BX_ENABLED(BX_PLATFORM_OSX)
-				&& macOSVersionEqualOrGreater(10, 11, 0)
-				;
-
-			m_iOS9Runtime = true
-				&& BX_ENABLED(BX_PLATFORM_IOS)
-				&& iOSVersionEqualOrGreater("9.0.0")
-				;
+			m_hasPixelFormatDepth32Float_Stencil8 = atLeastOSVersion(macOSVersion(0), iOSVersion(9, 0, 0));
+			m_hasStoreActionStoreAndMultisampleResolve = atLeastOSVersion(macOSVersion(10, 12, 0), iOSVersion(10, 0, 0));
 
 			if (BX_ENABLED(BX_PLATFORM_OSX) )
 			{
 				s_textureFormat[TextureFormat::R8].m_fmtSrgb  = MTLPixelFormatInvalid;
 				s_textureFormat[TextureFormat::RG8].m_fmtSrgb = MTLPixelFormatInvalid;
+			}
+
+			if (!atLeastOSVersion(macOSVersion(11, 0, 0), iOSVersion(8, 0, 0))
+			||  (g_caps.vendorId == BGFX_PCI_ID_AMD))
+			{
+				s_textureFormat[bgfx::TextureFormat::R5G6B5].m_fmt = MTLPixelFormatInvalid;
+				s_textureFormat[bgfx::TextureFormat::B5G6R5].m_fmt = MTLPixelFormatInvalid;
+				s_textureFormat[bgfx::TextureFormat::BGRA4].m_fmt = MTLPixelFormatInvalid;
+				s_textureFormat[bgfx::TextureFormat::RGBA4].m_fmt = MTLPixelFormatInvalid;
 			}
 
 			const MTLReadWriteTextureTier rwTier = [m_device readWriteTextureSupport];
@@ -687,7 +739,8 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				: 0
 				;
 
-			if (!(iOSVersionEqualOrGreater("13.0.0") || macOSVersionEqualOrGreater(12, 0, 0))){
+			if (!atLeastOSVersion(macOSVersion(12, 0, 0), iOSVersion(13, 0, 0)))
+			{
 				s_textureFormat[TextureFormat::D16].m_fmt = MTLPixelFormatDepth32Float;
 			}
 
@@ -1953,8 +2006,15 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				{
 					BX_TRACE("arg: %s type:%d", utf8String(arg.name), arg.type);
 
-					if (   ( @available(macOS 13.0, iOS 16.0, *) && arg.used)
-						|| (!@available(macOS 13.0, iOS 16.0, *) && [arg isActive]))
+					bool active = false;
+					if (atLeastOSVersion(macOSVersion(13, 0, 0), iOSVersion(16, 0, 0)))
+					{
+						active = arg.used;
+					} else
+					{
+						active = [arg isActive];
+					}
+					if (active)
 					{
 						if (arg.type == MTLBindingTypeBuffer)
 						{
@@ -2358,20 +2418,12 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					pso->m_rps = m_device.newRenderPipelineStateWithDescriptor(pd, MTLPipelineOptionBufferTypeInfo, &reflection);
 
 					if (NULL != reflection)
-                    {
-#if BX_PLATFORM_IOS
-                        if (@available(iOS 16.0, *)) {
-                            processArguments(pso, reflection.vertexBindings, reflection.fragmentBindings);
-                        } else {
-                            processArguments(pso, reflection.vertexArguments, reflection.fragmentArguments);
-                        }
-#elif BX_PLATFORM_OSX
-                        if (@available(macOS 13.0, *)) {
-                            processArguments(pso, reflection.vertexBindings, reflection.fragmentBindings);
-                        } else {
-                            processArguments(pso, reflection.vertexArguments, reflection.fragmentArguments);
-                        }
-#endif
+					{
+						if (atLeastOSVersion(macOSVersion(13, 0, 0), iOSVersion(16, 0, 0))) {
+							processArguments(pso, reflection.vertexBindings, reflection.fragmentBindings);
+						} else {
+							processArguments(pso, reflection.vertexArguments, reflection.fragmentArguments);
+						}
 					}
 				}
 
@@ -2419,11 +2471,11 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					, &reflection
 					);
 
-					if (@available(macOS 13.0, iOS 16.0, *)) {
-						processArguments(pso, reflection.bindings, NULL);
-					} else {
-						processArguments(pso, reflection.arguments, NULL);
-					}
+				if (atLeastOSVersion(macOSVersion(13, 0, 0), iOSVersion(16, 0, 0))) {
+					processArguments(pso, reflection.bindings, NULL);
+				} else {
+					processArguments(pso, reflection.arguments, NULL);
+				}
 
 				for (uint32_t ii = 0; ii < 3; ++ii)
 				{
@@ -2520,8 +2572,8 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		TimerQueryMtl     m_gpuTimer;
 		CommandQueueMtl   m_cmd;
 
-		bool m_iOS9Runtime;
-		bool m_macOS11Runtime;
+		iOSVersion m_iOSRuntimeVersion; // one byte for major/minor/patch
+		macOSVersion m_macOSRuntimeVersion; // one byte for major/minor/patch
 		bool m_hasPixelFormatDepth32Float_Stencil8;
 		bool m_hasStoreActionStoreAndMultisampleResolve;
 
@@ -2948,8 +3000,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			desc.arrayLength      = ti.numLayers;
 			desc.swizzle          = tfi.m_mapping;
 
-			if (s_renderMtl->m_iOS9Runtime
-			||  s_renderMtl->m_macOS11Runtime)
+			if (s_renderMtl->atLeastOSVersion(macOSVersion(10, 11, 0), iOSVersion(9, 0, 0)))
 			{
 				desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 
@@ -2981,8 +3032,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				desc.textureType = MTLTextureType2DMultisample;
 				desc.sampleCount = sampleCount;
 
-				if (s_renderMtl->m_iOS9Runtime
-				||  s_renderMtl->m_macOS11Runtime)
+				if (s_renderMtl->atLeastOSVersion(macOSVersion(10, 11, 0), iOSVersion(9, 0, 0)))
 				{
 					desc.storageMode = (MTLStorageMode)(2 /* MTLStorageModePrivate */);
 				}
@@ -3148,8 +3198,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			desc.sampleCount = 1;
 			desc.arrayLength = 1;
 
-			if (s_renderMtl->m_iOS9Runtime
-			||  s_renderMtl->m_macOS11Runtime)
+			if (s_renderMtl->atLeastOSVersion(macOSVersion(10, 11, 0), iOSVersion(9, 0, 0)))
 			{
 				desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 				desc.storageMode  = BX_ENABLED(BX_PLATFORM_IOS)
@@ -3366,12 +3415,12 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 #if BX_PLATFORM_OSX
 #	if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
-		if (@available(macOS 10.13, *) )
+		if (s_renderMtl->m_macOSRuntimeVersion.version >= macOSVersion(10, 13, 0).version)
 		{
 			m_metalLayer.displaySyncEnabled = 0 != (_flags&BGFX_RESET_VSYNC);
 		}
 
-		if (@available(macOS 10.13.2, *) )
+		if (s_renderMtl->m_macOSRuntimeVersion.version >= macOSVersion(10, 13, 2).version)
 		{
 			m_metalLayer.maximumDrawableCount = bx::clamp<uint32_t>(
 				  _maximumDrawableCount != 0 ? _maximumDrawableCount : BGFX_CONFIG_MAX_FRAME_LATENCY
@@ -3408,8 +3457,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		desc.sampleCount = sampleCount;
 		desc.arrayLength = 1;
 
-		if (s_renderMtl->m_iOS9Runtime
-		||  s_renderMtl->m_macOS11Runtime)
+		if (s_renderMtl->atLeastOSVersion(macOSVersion(10, 11, 0), iOSVersion(9, 0, 0)))
 		{
 			desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 			desc.storageMode  = MTLStorageModePrivate;
@@ -3484,8 +3532,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				desc.sampleCount = 1;
 				desc.arrayLength = 1;
 
-				if (s_renderMtl->m_iOS9Runtime
-				||  s_renderMtl->m_macOS11Runtime)
+				if (s_renderMtl->atLeastOSVersion(macOSVersion(10, 11, 0), iOSVersion(9, 0, 0)))
 				{
 					desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 					desc.storageMode = BX_ENABLED(BX_PLATFORM_IOS)
@@ -3880,7 +3927,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					, MTLOriginMake(blit.m_dstX, blit.m_dstY, blit.m_dstZ)
 					);
 #if BX_PLATFORM_OSX
-				if (m_macOS11Runtime
+				if (m_macOSRuntimeVersion.version >= macOSVersion(10, 11, 0).version
 				&&  readBack)
 				{
 					m_blitCommandEncoder.synchronizeResource(dst.m_ptr);
@@ -3901,7 +3948,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					, MTLOriginMake(blit.m_dstX, blit.m_dstY, 0)
 					);
 #if BX_PLATFORM_OSX
-				if (m_macOS11Runtime
+				if (m_macOSRuntimeVersion.version >= macOSVersion(10, 11, 0).version
 				&&  readBack)
 				{
 					m_blitCommandEncoder.synchronizeTexture(dst.m_ptr, 0, blit.m_dstMip);
@@ -3964,8 +4011,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				m_textureDescriptor.sampleCount = 1;
 				m_textureDescriptor.arrayLength = 1;
 
-				if (m_iOS9Runtime
-				||  m_macOS11Runtime)
+				if (s_renderMtl->atLeastOSVersion(macOSVersion(10, 11, 0), iOSVersion(9, 0, 0)))
 				{
 					m_textureDescriptor.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 					m_textureDescriptor.storageMode = BX_ENABLED(BX_PLATFORM_IOS)
