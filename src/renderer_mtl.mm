@@ -450,7 +450,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 #endif
 
 #if BX_XCODE_15
-#	define VISION_OS_MINIMUM visionOS 1.0
+#	define VISION_OS_MINIMUM visionOS 1.0,
 #else
 #	define VISION_OS_MINIMUM
 #	warning "XCode 15 is required for visionOS"
