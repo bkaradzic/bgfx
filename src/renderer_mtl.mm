@@ -216,6 +216,8 @@ namespace bgfx { namespace mtl
 		bool                      m_autoGetMipmap;
 	};
 
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wunguarded-availability-new"
 	static TextureFormatInfo s_textureFormat[] =
 	{
 #define $0 MTLTextureSwizzleZero
@@ -344,6 +346,7 @@ namespace bgfx { namespace mtl
 #undef $B
 #undef $A
 	};
+	#pragma clang diagnostic pop
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
 	int32_t s_msaa[] =
@@ -485,7 +488,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 #define CHECK_FEATURE_AVAILABLE(feature, ...) if (@available(__VA_ARGS__)) { feature = true; } else { feature = false; }
 
-			CHECK_FEATURE_AVAILABLE(m_usesNewMetalAPI, macOS 13.0, iOS 16.0, tvOS 16.0, macCatalyst 16.0, VISION_OS_MINIMUM *);
+			CHECK_FEATURE_AVAILABLE(m_usesMTLBindings, macOS 13.0, iOS 16.0, tvOS 16.0, macCatalyst 16.0, VISION_OS_MINIMUM *);
 			CHECK_FEATURE_AVAILABLE(m_hasCPUCacheModesAndStorageModes, iOS 9.0, macOS 10.11, macCatalyst 13.1, tvOS 9.0, VISION_OS_MINIMUM *);
 			CHECK_FEATURE_AVAILABLE(m_hasSynchronizeResource, macOS 10.11, macCatalyst 13.0, *);
 			CHECK_FEATURE_AVAILABLE(m_hasVSync, macOS 10.13, macCatalyst 13.1, *);
@@ -1972,6 +1975,9 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			m_renderCommandEncoder.setStencilReferenceValue(ref);
 		}
 
+		#pragma clang diagnostic push
+		#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+		#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
 		void processArguments(
 			  PipelineStateMtl* ps
 			, NSArray<id<MTLBinding>>* _vertexArgs
@@ -1992,7 +1998,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				{
 					BX_TRACE("arg: %s type:%d", utf8String(arg.name), arg.type);
 
-					if ((!m_usesNewMetalAPI && [arg isActive]) || (m_usesNewMetalAPI && arg.used))
+					if ((!m_usesMTLBindings && [(MTLArgument*)arg isActive]) || (m_usesMTLBindings && arg.used))
 					{
 						if (arg.type == MTLBindingTypeBuffer)
 						{
@@ -2140,6 +2146,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				}
 			}
 		}
+		#pragma clang diagnostic pop
 
 		PipelineStateMtl* getPipelineState(
 			  uint64_t _state
@@ -2397,11 +2404,15 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 					if (NULL != reflection)
 					{
-						if (m_usesNewMetalAPI) {
+						#pragma clang diagnostic push
+						#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+						#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
+						if (m_usesMTLBindings) {
 							processArguments(pso, reflection.vertexBindings, reflection.fragmentBindings);
 						} else {
 							processArguments(pso, reflection.vertexArguments, reflection.fragmentArguments);
 						}
+						#pragma clang diagnostic pop
 					}
 				}
 
@@ -2449,11 +2460,15 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					, &reflection
 					);
 
-				if (m_usesNewMetalAPI) {
+				#pragma clang diagnostic push
+				#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+				#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
+				if (m_usesMTLBindings) {
 					processArguments(pso, reflection.bindings, NULL);
 				} else {
 					processArguments(pso, reflection.arguments, NULL);
 				}
+				#pragma clang diagnostic pop
 
 				for (uint32_t ii = 0; ii < 3; ++ii)
 				{
@@ -2554,7 +2569,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		bool m_hasStoreActionStoreAndMultisampleResolve;
 		bool m_hasCPUCacheModesAndStorageModes;
 		bool m_hasSynchronizeResource;
-		bool m_usesNewMetalAPI;
+		bool m_usesMTLBindings;
 		bool m_hasVSync;
 		bool m_hasMaximumDrawableCount;
 
