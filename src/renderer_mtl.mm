@@ -9,6 +9,7 @@
 
 #include "renderer_mtl.h"
 #include "renderer.h"
+#include <bx/macros.h>
 
 #if BX_PLATFORM_OSX
 #	include <Cocoa/Cocoa.h>
@@ -216,6 +217,8 @@ namespace bgfx { namespace mtl
 		bool                      m_autoGetMipmap;
 	};
 
+	BX_PRAGMA_DIAGNOSTIC_PUSH();
+	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunguarded-availability-new");
 	static TextureFormatInfo s_textureFormat[] =
 	{
 #define $0 MTLTextureSwizzleZero
@@ -344,6 +347,7 @@ namespace bgfx { namespace mtl
 #undef $B
 #undef $A
 	};
+	BX_PRAGMA_DIAGNOSTIC_POP();
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
 	int32_t s_msaa[] =
@@ -425,6 +429,37 @@ static const char* s_accessNames[] = {
 
 BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames count");
 
+#ifndef __IPHONE_OS_VERSION_MAX_ALLOWED
+#define __IPHONE_OS_VERSION_MAX_ALLOWED 0
+#endif
+#ifndef __MAC_OS_X_VERSION_MAX_ALLOWED
+#define __MAC_OS_X_VERSION_MAX_ALLOWED 0
+#endif
+
+#ifndef BX_XCODE_15
+#   define BX_XCODE_15          ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 140000) || \
+                                 (__IPHONE_OS_VERSION_MAX_ALLOWED >= 170000))
+#endif
+#ifndef BX_XCODE_14
+#   define BX_XCODE_14          ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 130000) || \
+                                 (__IPHONE_OS_VERSION_MAX_ALLOWED >= 160000))
+#endif
+#ifndef BX_XCODE_13
+#   define BX_XCODE_13          ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 120000) || \
+                                 (__IPHONE_OS_VERSION_MAX_ALLOWED >= 150000))
+#endif
+#ifndef BX_XCODE_12
+#   define BX_XCODE_12          ((__MAC_OS_X_VERSION_MAX_ALLOWED >= 110000) || \
+                                 (__IPHONE_OS_VERSION_MAX_ALLOWED >= 140000))
+#endif
+
+#if BX_XCODE_15
+#	define VISION_OS_MINIMUM visionOS 1.0,
+#else
+#	define VISION_OS_MINIMUM
+#	warning "XCode 15 is required for visionOS"
+#endif
+
 #define SHADER_FUNCTION_NAME "xlatMtlMain"
 #define SHADER_UNIFORM_NAME  "_mtl_u"
 
@@ -451,6 +486,14 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		{
 			BX_UNUSED(_init);
 			BX_TRACE("Init.");
+
+#define CHECK_FEATURE_AVAILABLE(feature, ...) if (@available(__VA_ARGS__)) { feature = true; } else { feature = false; }
+
+			CHECK_FEATURE_AVAILABLE(m_usesMTLBindings, macOS 13.0, iOS 16.0, tvOS 16.0, macCatalyst 16.0, VISION_OS_MINIMUM *);
+			CHECK_FEATURE_AVAILABLE(m_hasCPUCacheModesAndStorageModes, iOS 9.0, macOS 10.11, macCatalyst 13.1, tvOS 9.0, VISION_OS_MINIMUM *);
+			CHECK_FEATURE_AVAILABLE(m_hasSynchronizeResource, macOS 10.11, macCatalyst 13.0, *);
+			CHECK_FEATURE_AVAILABLE(m_hasVSync, macOS 10.13, macCatalyst 13.1, *);
+			CHECK_FEATURE_AVAILABLE(m_hasMaximumDrawableCount, iOS 11.2, macOS 10.13.2, macCatalyst 13.1, tvOS 11.2, VISION_OS_MINIMUM *);
 
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
@@ -655,30 +698,27 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			// It is decremented by 1 because 1 entry is used for uniforms.
 			g_caps.limits.maxComputeBindings = bx::uint32_min(30, BGFX_MAX_COMPUTE_BINDINGS);
 
-			m_hasPixelFormatDepth32Float_Stencil8 = false
-				||  BX_ENABLED(BX_PLATFORM_OSX)
-				|| (BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("9.0.0") )
-				;
+			CHECK_FEATURE_AVAILABLE(m_hasPixelFormatDepth32Float_Stencil8, iOS 9.0, macOS 10.11, macCatalyst 13.1, tvOS 9.0, VISION_OS_MINIMUM *);
+			CHECK_FEATURE_AVAILABLE(m_hasStoreActionStoreAndMultisampleResolve, iOS 10.0, macOS 10.12, macCatalyst 13.1, tvOS 10.0, VISION_OS_MINIMUM *);
 
-			m_hasStoreActionStoreAndMultisampleResolve = false
-				|| (BX_ENABLED(BX_PLATFORM_OSX) && macOSVersionEqualOrGreater(10, 12, 0) )
-				|| (BX_ENABLED(BX_PLATFORM_IOS) && iOSVersionEqualOrGreater("10.0.0") )
-				;
-
-			m_macOS11Runtime = true
-				&& BX_ENABLED(BX_PLATFORM_OSX)
-				&& macOSVersionEqualOrGreater(10, 11, 0)
-				;
-
-			m_iOS9Runtime = true
-				&& BX_ENABLED(BX_PLATFORM_IOS)
-				&& iOSVersionEqualOrGreater("9.0.0")
-				;
-
-			if (BX_ENABLED(BX_PLATFORM_OSX) )
+			if (BX_ENABLED(BX_PLATFORM_OSX))
 			{
 				s_textureFormat[TextureFormat::R8].m_fmtSrgb  = MTLPixelFormatInvalid;
 				s_textureFormat[TextureFormat::RG8].m_fmtSrgb = MTLPixelFormatInvalid;
+			}
+
+			bool hasPacked16Formats;
+			CHECK_FEATURE_AVAILABLE(hasPacked16Formats, iOS 8.0, macOS 11.0, macCatalyst 14.0, tvOS 9.0, VISION_OS_MINIMUM *);
+			if (g_caps.vendorId == BGFX_PCI_ID_AMD)
+			{
+				hasPacked16Formats = false;
+			}
+			if (!hasPacked16Formats)
+			{
+				s_textureFormat[bgfx::TextureFormat::R5G6B5].m_fmt = MTLPixelFormatInvalid;
+				s_textureFormat[bgfx::TextureFormat::B5G6R5].m_fmt = MTLPixelFormatInvalid;
+				s_textureFormat[bgfx::TextureFormat::BGRA4].m_fmt = MTLPixelFormatInvalid;
+				s_textureFormat[bgfx::TextureFormat::RGBA4].m_fmt = MTLPixelFormatInvalid;
 			}
 
 			const MTLReadWriteTextureTier rwTier = [m_device readWriteTextureSupport];
@@ -687,7 +727,10 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				: 0
 				;
 
-			if (!(iOSVersionEqualOrGreater("13.0.0") || macOSVersionEqualOrGreater(12, 0, 0))){
+			bool hasD16Format;
+			CHECK_FEATURE_AVAILABLE(hasD16Format, iOS 13.0, macOS 10.12, macCatalyst 13.1, tvOS 13.0, VISION_OS_MINIMUM *);
+			if (!hasD16Format)
+			{
 				s_textureFormat[TextureFormat::D16].m_fmt = MTLPixelFormatDepth32Float;
 			}
 
@@ -1933,6 +1976,9 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			m_renderCommandEncoder.setStencilReferenceValue(ref);
 		}
 
+		BX_PRAGMA_DIAGNOSTIC_PUSH();
+		BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunguarded-availability-new");
+		BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wincompatible-pointer-types");
 		void processArguments(
 			  PipelineStateMtl* ps
 			, NSArray<id<MTLBinding>>* _vertexArgs
@@ -1953,7 +1999,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				{
 					BX_TRACE("arg: %s type:%d", utf8String(arg.name), arg.type);
 
-					if (arg.used)
+					if ((!m_usesMTLBindings && [(MTLArgument*)arg isActive]) || (m_usesMTLBindings && arg.used))
 					{
 						if (arg.type == MTLBindingTypeBuffer)
 						{
@@ -2101,6 +2147,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				}
 			}
 		}
+		BX_PRAGMA_DIAGNOSTIC_POP();
 
 		PipelineStateMtl* getPipelineState(
 			  uint64_t _state
@@ -2358,7 +2405,15 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 					if (NULL != reflection)
 					{
-						processArguments(pso, reflection.vertexBindings, reflection.fragmentBindings);
+						BX_PRAGMA_DIAGNOSTIC_PUSH();
+						BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunguarded-availability-new");
+						BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wincompatible-pointer-types");
+						if (m_usesMTLBindings) {
+							processArguments(pso, reflection.vertexBindings, reflection.fragmentBindings);
+						} else {
+							processArguments(pso, reflection.vertexArguments, reflection.fragmentArguments);
+						}
+						BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 				}
 
@@ -2405,7 +2460,16 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					, MTLPipelineOptionBufferTypeInfo
 					, &reflection
 					);
-				processArguments(pso, reflection.bindings, NULL);
+
+				BX_PRAGMA_DIAGNOSTIC_PUSH();
+				BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunguarded-availability-new");
+				BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wincompatible-pointer-types");
+				if (m_usesMTLBindings) {
+					processArguments(pso, reflection.bindings, NULL);
+				} else {
+					processArguments(pso, reflection.arguments, NULL);
+				}
+				BX_PRAGMA_DIAGNOSTIC_POP();
 
 				for (uint32_t ii = 0; ii < 3; ++ii)
 				{
@@ -2502,10 +2566,13 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		TimerQueryMtl     m_gpuTimer;
 		CommandQueueMtl   m_cmd;
 
-		bool m_iOS9Runtime;
-		bool m_macOS11Runtime;
 		bool m_hasPixelFormatDepth32Float_Stencil8;
 		bool m_hasStoreActionStoreAndMultisampleResolve;
+		bool m_hasCPUCacheModesAndStorageModes;
+		bool m_hasSynchronizeResource;
+		bool m_usesMTLBindings;
+		bool m_hasVSync;
+		bool m_hasMaximumDrawableCount;
 
 		Buffer   m_uniformBuffer;
 		Buffer   m_uniformBuffers[BGFX_CONFIG_MAX_FRAME_LATENCY];
@@ -2930,8 +2997,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			desc.arrayLength      = ti.numLayers;
 			desc.swizzle          = tfi.m_mapping;
 
-			if (s_renderMtl->m_iOS9Runtime
-			||  s_renderMtl->m_macOS11Runtime)
+			if (s_renderMtl->m_hasCPUCacheModesAndStorageModes)
 			{
 				desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 
@@ -2963,8 +3029,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				desc.textureType = MTLTextureType2DMultisample;
 				desc.sampleCount = sampleCount;
 
-				if (s_renderMtl->m_iOS9Runtime
-				||  s_renderMtl->m_macOS11Runtime)
+				if (s_renderMtl->m_hasCPUCacheModesAndStorageModes)
 				{
 					desc.storageMode = (MTLStorageMode)(2 /* MTLStorageModePrivate */);
 				}
@@ -3130,8 +3195,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			desc.sampleCount = 1;
 			desc.arrayLength = 1;
 
-			if (s_renderMtl->m_iOS9Runtime
-			||  s_renderMtl->m_macOS11Runtime)
+			if (s_renderMtl->m_hasCPUCacheModesAndStorageModes)
 			{
 				desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 				desc.storageMode  = BX_ENABLED(BX_PLATFORM_IOS)
@@ -3348,12 +3412,12 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 #if BX_PLATFORM_OSX
 #	if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
-		if (@available(macOS 10.13, *) )
+		if (s_renderMtl->m_hasVSync)
 		{
 			m_metalLayer.displaySyncEnabled = 0 != (_flags&BGFX_RESET_VSYNC);
 		}
 
-		if (@available(macOS 10.13.2, *) )
+		if (s_renderMtl->m_hasMaximumDrawableCount)
 		{
 			m_metalLayer.maximumDrawableCount = bx::clamp<uint32_t>(
 				  _maximumDrawableCount != 0 ? _maximumDrawableCount : BGFX_CONFIG_MAX_FRAME_LATENCY
@@ -3390,8 +3454,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		desc.sampleCount = sampleCount;
 		desc.arrayLength = 1;
 
-		if (s_renderMtl->m_iOS9Runtime
-		||  s_renderMtl->m_macOS11Runtime)
+		if (s_renderMtl->m_hasCPUCacheModesAndStorageModes)
 		{
 			desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 			desc.storageMode  = MTLStorageModePrivate;
@@ -3466,8 +3529,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				desc.sampleCount = 1;
 				desc.arrayLength = 1;
 
-				if (s_renderMtl->m_iOS9Runtime
-				||  s_renderMtl->m_macOS11Runtime)
+				if (s_renderMtl->m_hasCPUCacheModesAndStorageModes)
 				{
 					desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 					desc.storageMode = BX_ENABLED(BX_PLATFORM_IOS)
@@ -3862,8 +3924,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					, MTLOriginMake(blit.m_dstX, blit.m_dstY, blit.m_dstZ)
 					);
 #if BX_PLATFORM_OSX
-				if (m_macOS11Runtime
-				&&  readBack)
+				if (m_hasSynchronizeResource && readBack)
 				{
 					m_blitCommandEncoder.synchronizeResource(dst.m_ptr);
 				}
@@ -3883,8 +3944,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					, MTLOriginMake(blit.m_dstX, blit.m_dstY, 0)
 					);
 #if BX_PLATFORM_OSX
-				if (m_macOS11Runtime
-				&&  readBack)
+				if (m_hasSynchronizeResource && readBack)
 				{
 					m_blitCommandEncoder.synchronizeTexture(dst.m_ptr, 0, blit.m_dstMip);
 				}
@@ -3946,8 +4006,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				m_textureDescriptor.sampleCount = 1;
 				m_textureDescriptor.arrayLength = 1;
 
-				if (m_iOS9Runtime
-				||  m_macOS11Runtime)
+				if (s_renderMtl->m_hasCPUCacheModesAndStorageModes)
 				{
 					m_textureDescriptor.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 					m_textureDescriptor.storageMode = BX_ENABLED(BX_PLATFORM_IOS)
