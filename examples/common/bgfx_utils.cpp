@@ -39,7 +39,7 @@ void* load(bx::FileReaderI* _reader, bx::AllocatorI* _allocator, const bx::FileP
 	}
 	else
 	{
-		DBG("Failed to open: %s.", _filePath);
+		DBG("Failed to open: %s.", _filePath.getCPtr() );
 	}
 
 	if (NULL != _size)
@@ -72,7 +72,7 @@ static const bgfx::Memory* loadMem(bx::FileReaderI* _reader, const bx::FilePath&
 		return mem;
 	}
 
-	DBG("Failed to load %s.", _filePath);
+	DBG("Failed to load %s.", _filePath.getCPtr() );
 	return NULL;
 }
 
@@ -92,7 +92,7 @@ static void* loadMem(bx::FileReaderI* _reader, bx::AllocatorI* _allocator, const
 		return data;
 	}
 
-	DBG("Failed to load %s.", _filePath);
+	DBG("Failed to load %s.", _filePath.getCPtr() );
 	return NULL;
 }
 
