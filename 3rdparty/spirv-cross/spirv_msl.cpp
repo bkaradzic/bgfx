@@ -12758,7 +12758,7 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 		else
 			quals = member_location_attribute_qualifier(type, index);
 
-		if (builtin == BuiltInBaryCoordKHR || builtin == BuiltInBaryCoordNoPerspKHR)
+		if (builtin == BuiltInBaryCoordKHR)
 		{
 			if (has_member_decoration(type.self, index, DecorationFlat) ||
 			    has_member_decoration(type.self, index, DecorationCentroid) ||
@@ -12776,6 +12776,8 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 		// FragCoord builtin; it's always noperspective on Metal.
 		if (!type_is_integral(mbr_type) && (!is_builtin || builtin != BuiltInFragCoord))
 		{
+			if (builtin != BuiltInBaryCoordKHR && builtin != BuiltInBaryCoordNoPerspKHR)
+			{
 			if (has_member_decoration(type.self, index, DecorationFlat))
 			{
 				if (!quals.empty())
@@ -12806,6 +12808,7 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 					quals += ", ";
 				quals += "center_no_perspective";
 			}
+		}
 		}
 
 		if (!quals.empty())
