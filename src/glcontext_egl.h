@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -10,10 +10,19 @@
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+
+// EGL pulls X11 crap...
+#if defined(None)
+#	undef None
+#endif // defined(None)
+
 #if defined(Success)
-// X11 defines Success
 #	undef Success
 #endif // defined(Success)
+
+#if defined(Status)
+#	undef Status
+#endif // defined(Status)
 
 namespace bgfx { namespace gl
 {

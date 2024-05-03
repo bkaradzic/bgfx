@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -10,7 +10,6 @@
 #include "bgfx.h"
 
 #define BGFX_EMBEDDED_SHADER_DXBC(...)
-#define BGFX_EMBEDDED_SHADER_DX9BC(...)
 #define BGFX_EMBEDDED_SHADER_PSSL(...)
 #define BGFX_EMBEDDED_SHADER_ESSL(...)
 #define BGFX_EMBEDDED_SHADER_GLSL(...)
@@ -18,10 +17,6 @@
 #define BGFX_EMBEDDED_SHADER_NVN(...)
 #define BGFX_EMBEDDED_SHADER_SPIRV(...)
 
-#define BGFX_PLATFORM_SUPPORTS_DX9BC (0 \
-	|| BX_PLATFORM_LINUX                \
-	|| BX_PLATFORM_WINDOWS              \
-	)
 #define BGFX_PLATFORM_SUPPORTS_DXBC (0  \
 	|| BX_PLATFORM_LINUX                \
 	|| BX_PLATFORM_WINDOWS              \
@@ -42,7 +37,6 @@
 	|| BX_PLATFORM_WINDOWS              \
 	)
 #define BGFX_PLATFORM_SUPPORTS_GLSL (0  \
-	|| BX_PLATFORM_BSD                  \
 	|| BX_PLATFORM_LINUX                \
 	|| BX_PLATFORM_OSX                  \
 	|| BX_PLATFORM_WINDOWS              \
@@ -61,12 +55,6 @@
 	|| BX_PLATFORM_WINDOWS              \
 	|| BX_PLATFORM_OSX                  \
 	)
-
-#if BGFX_PLATFORM_SUPPORTS_DX9BC
-#	undef  BGFX_EMBEDDED_SHADER_DX9BC
-#	define BGFX_EMBEDDED_SHADER_DX9BC(_renderer, _name) \
-	{ _renderer, BX_CONCATENATE(_name, _dx9 ), BX_COUNTOF(BX_CONCATENATE(_name, _dx9 ) ) },
-#endif // BGFX_PLATFORM_SUPPORTS_DX9BC
 
 #if BGFX_PLATFORM_SUPPORTS_DXBC
 #	undef  BGFX_EMBEDDED_SHADER_DXBC
@@ -109,7 +97,6 @@
 		#_name,                                                                            \
 		{                                                                                  \
 			BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Agc,        _name)              \
-			BGFX_EMBEDDED_SHADER_DX9BC(bgfx::RendererType::Direct3D9,  _name)              \
 			BGFX_EMBEDDED_SHADER_DXBC (bgfx::RendererType::Direct3D11, _name)              \
 			BGFX_EMBEDDED_SHADER_DXBC (bgfx::RendererType::Direct3D12, _name)              \
 			BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Gnm,        _name)              \
@@ -118,7 +105,6 @@
 			BGFX_EMBEDDED_SHADER_ESSL (bgfx::RendererType::OpenGLES,   _name)              \
 			BGFX_EMBEDDED_SHADER_GLSL (bgfx::RendererType::OpenGL,     _name)              \
 			BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::Vulkan,     _name)              \
-			BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::WebGPU,     _name)              \
 			{ bgfx::RendererType::Noop,  (const uint8_t*)"VSH\x5\x0\x0\x0\x0\x0\x0", 10 }, \
 			{ bgfx::RendererType::Count, NULL, 0 }                                         \
 		}                                                                                  \

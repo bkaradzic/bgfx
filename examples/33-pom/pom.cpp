@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -37,29 +37,15 @@ struct PosTangentBitangentTexcoordVertex
 
 bgfx::VertexLayout PosTangentBitangentTexcoordVertex::ms_layout;
 
-uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
-{
-	union
-	{
-		uint32_t ui32;
-		uint8_t arr[4];
-	} un;
-
-	un.arr[0] = _x;
-	un.arr[1] = _y;
-	un.arr[2] = _z;
-	un.arr[3] = _w;
-
-	return un.ui32;
-}
-
 uint32_t packF4u(float _x, float _y = 0.0f, float _z = 0.0f, float _w = 0.0f)
 {
-	const uint8_t xx = uint8_t(_x*127.0f + 128.0f);
-	const uint8_t yy = uint8_t(_y*127.0f + 128.0f);
-	const uint8_t zz = uint8_t(_z*127.0f + 128.0f);
-	const uint8_t ww = uint8_t(_w*127.0f + 128.0f);
-	return packUint32(xx, yy, zz, ww);
+	struct Packed { uint8_t value[4]; } arr = { 0 };
+	arr.value[0] = uint8_t(_x * 127.0f + 128.0f);
+	arr.value[1] = uint8_t(_y * 127.0f + 128.0f);
+	arr.value[2] = uint8_t(_z * 127.0f + 128.0f);
+	arr.value[3] = uint8_t(_w * 127.0f + 128.0f);
+
+	return bx::bitCast<uint32_t>(arr);
 }
 
 static PosTangentBitangentTexcoordVertex s_cubeVertices[24] =
@@ -130,6 +116,7 @@ public:
 		init.vendorId = args.m_pciId;
 		init.platformData.nwh  = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
 		init.platformData.ndt  = entry::getNativeDisplayHandle();
+		init.platformData.type = entry::getNativeWindowHandleType();
 		init.resolution.width  = m_width;
 		init.resolution.height = m_height;
 		init.resolution.reset  = m_reset;

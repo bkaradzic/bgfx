@@ -32,7 +32,7 @@ local type_actions = {
 
 local function cfunc(f)
 	return function(func)
-		if not func.cpponly then
+		if (not func.cpponly) and (not func.cppinline or func.conly) then
 			return f(func)
 		end
 	end

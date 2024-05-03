@@ -21,7 +21,7 @@
 [![Join the chat at https://discord.gg/9eMbv7J](https://img.shields.io/discord/712512073522872352?color=%237289DA&label=bgfx&logo=discord&logoColor=white)](https://discord.gg/9eMbv7J)
 
  * [GitHub Discussions](https://github.com/bkaradzic/bgfx/discussions)
- * [Discord Chat](https://discord.gg/9eMbv7J)
+ * [Discord Chat](https://discord.gg/g99upRc9pf)
  * [GitHub Actions](https://github.com/bkaradzic/bgfx/actions)
 
 [What is it?](https://bkaradzic.github.io/bgfx/overview.html)
@@ -32,7 +32,6 @@ rendering library.
 
 Supported rendering backends:
 
- * Direct3D 9
  * Direct3D 11
  * Direct3D 12
  * GNM (only for licensed PS4 developers, search DevNet forums for source)
@@ -44,21 +43,18 @@ Supported rendering backends:
  * Vulkan
  * WebGL 1.0
  * WebGL 2.0
- * WebGPU/Dawn (experimental)
 
 Supported platforms:
 
- * Android (14+, ARM, x86, MIPS)
- * FreeBSD
- * iOS/iPadOS/tvOS (iPhone, iPad, AppleTV)
+ * Android (14+)
+ * iOS/iPadOS/tvOS (16.0+)
  * Linux
- * MIPS Creator CI20
- * macOS (11+)
+ * macOS (13.0+)
  * PlayStation 4
  * RaspberryPi
  * UWP (Universal Windows, Xbox One)
  * Wasm/Emscripten
- * Windows (XP, Vista, 7, 8, 10)
+ * Windows (7+)
 
 Supported compilers:
 
@@ -72,7 +68,7 @@ Languages:
  * [C/C++ API documentation](https://bkaradzic.github.io/bgfx/bgfx.html)
  * [Beef API bindings](https://github.com/bkaradzic/bgfx/tree/master/bindings/bf)
  * [C# language API bindings #1](https://github.com/bkaradzic/bgfx/tree/master/bindings/cs)
- * [D language API bindings](https://github.com/GoaLitiuM/bindbc-bgfx)
+ * [D language API bindings](https://github.com/BindBC/bindbc-bgfx)
  * [Go language API bindings](https://github.com/james4k/go-bgfx)
  * [Haskell language API bindings](https://github.com/haskell-game/bgfx)
  * [Lightweight Java Game Library 3 bindings](https://github.com/LWJGL/lwjgl3)
@@ -310,10 +306,10 @@ engine v3.0.
 http://www.dogbytegames.com/off_the_road.html - A sandbox off-road driving
 simulator.
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=IUmxqAWdXvk" 
-target="_blank"><img src="http://img.youtube.com/vi/IUmxqAWdXvk/0.jpg" 
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=RgnIReFkbyU" 
+target="_blank"><img src="http://img.youtube.com/vi/RgnIReFkbyU/hq720.jpg" 
 alt="Off The Road"
-width="640" height="480" border="0" /></a>
+width="640" height="360" border="0" /></a>
 
 ## Coal Burnout
 
@@ -533,14 +529,100 @@ hot-reloading.
 
 ![Equilibrium Engine screenshot](https://raw.githubusercontent.com/clibequilibrium/EquilibriumEngine/master/docs/city.png)
 
+## Pinhole Universe
+
+https://festina-lente-productions.com/pinhole-universe/ - Explore a generated
+world where you can zoom in on anything, forever.
+
+![Pinhole Universe capsule image](https://festina-lente-productions.com/ext/capsule_small.jpg)
+
+## Unavowed (Nintendo Switch version only)
+
+https://www.nintendo.com/us/store/products/unavowed-switch/ - A demon has possessed you
+and used your body to tear a swath of bloodshed through New York. You are now free, but
+life as you knew it is over. Your only path forward is joining the Unavowed - an ancient
+society dedicated to stopping evil. No matter what the cost.
+
+![Unavowed Title](https://assets.nintendo.com/image/upload/c_limit,f_auto,h_1000,q_auto,w_1700/v1/ncom/en_US/games/switch/u/unavowed-switch/Video/posters/Unavowed_Switch_Trailer_NOA)
+
+## The Excavation of Hob's Barrow (Nintendo Switch version only)
+
+https://www.nintendo.com/us/store/products/the-excavation-of-hobs-barrow-switch/ - A folk
+horror narrative-driven adventure. Explore the isolated moors of rural Victorian England
+as you uncover the mysteries of Hob's Barrow. The answers lie in the soil...
+
+![The Excavation of Hob's Barrow Title](https://assets.nintendo.com/image/upload/c_limit,f_auto,h_1000,q_auto,w_1700/v1/ncom/en_US/games/switch/t/the-excavation-of-hobs-barrow-switch/Video/posters/The_Excavation_of_Hob_s_Barrow)
+
+## Primordia (Nintendo Switch version only)
+
+https://www.nintendo.com/us/store/products/primordia-switch/ - Life has ceased. Man is
+but a myth. And now, even the machines have begun to fail. Lead Horatio Nullbuilt and his
+sarcastic sidekick Crispin on a journey through the crumbling world of Primordia, facing
+malfunctioning robots, ancient secrets, and an implacable, power-hungry foe.
+
+![Primordia Title](https://assets.nintendo.com/image/upload/c_limit,f_auto,h_1000,q_auto,w_1700/v1/ncom/en_US/games/switch/p/primordia-switch/Video/posters/Primordia_Trailer)
+
+## ProtoTwin
+
+https://prototwin.com - Online industrial simulation software for manufacturing and material handling.
+
+![ProtoTwin - Simulation for Industrial Automation](https://github.com/bkaradzic/bgfx/assets/37254625/7aac600f-2687-468f-8d60-441c45ec14a3)
+
+## WARCANA
+
+WARCANA is a fantasy inspired base defence, RTS game with a deck-building mechanic. 
+Face hundreds of thousands of unrelenting monsters in a battle royale between 30 other 
+mighty magicians. Build your deck. Prepare your defences. Summon your armies. 
+Survive the onslaught.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=UioR5ptCFYU" 
+target="_blank"><img src="http://img.youtube.com/vi/UioR5ptCFYU/0.jpg" 
+alt="WARCANA Announcement Trailer" width="640" height="480" border="0" /></a>
+
+## DiskBoard
+
+https://www.diskboard.com - DiskBoard is the ultimate tool that can help you measure
+the performance and monitor the health of your hardware. All of your devices are
+presented in a clean and easy to understand view. The tests offer extensive
+customization options, allowing you to simulate various workloads. The intuitive
+visuals provide clear insights, benchmark comparisons, and performance guidelines.
+Join a community of tech enthusiasts, compare your device's prowess, and witness
+your hardware shine!
+
+![Diskboard screenshot](https://www.diskboard.com/assets/diskboard3.png)
+
+## Ant
+
+https://github.com/ejoy/ant - Ant is an open-source game engine focused on mobile platforms. It is implemented
+based on Lua, with excellent performance and easy customization.
+
+[Red Frontier Game using Ant Game Engine](https://github.com/ejoy/vaststars)
+
+![RedFrontier](https://github.com/ejoy/vaststars/blob/master/screenshot/startup.jpg)
+
+## Crypt of the NecroDancer
+
+https://braceyourselfgames.com/crypt-of-the-necrodancer/ - Crypt of the NecroDancer
+is an award-winning hardcore roguelike rhythm game. Move to the music and deliver
+beatdowns to the beat! The game uses bgfx on Windows, macOS, Linux, Nintendo
+Switch and PlayStation 4.
+
+![Crypt of the NecroDancer screenshot](https://raw.githubusercontent.com/Marukyu/marukyu.github.io/misc-assets/247080_20240322072858_1.png)
+
+## Tomb4Plus
+
+https://www.github.com/SaracenOne/Tomb4Plus - Tomb4Plus is an open source reimplementation of the Tomb Raider: The Last Revelation engine. It is an enhanced fork of the original [Tomb4](https://github.com/Trxyebeep/TOMB4) reimplementation project which focuses on supporting the Level Editor runtime and aims for full compatibility with the unofficial binary-patched scripting extensions used by many custom levels. Tomb4Plus also replaces the original legacy Direct3D renderer with bgfx.
+
+![Tomb4Plus screenshot](https://raw.githubusercontent.com/SaracenOne/Tomb4Plus/level_editor_v2/.github/images/preview.png)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
 <a href="http://opensource.org/licenses/BSD-2-Clause" target="_blank">
-<img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
+<img align="right" src="https://opensource.org/wp-content/uploads/2022/10/osi-badge-dark.svg" width="100" height="137">
 </a>
 
-	Copyright 2010-2023 Branimir Karadzic
+	Copyright 2010-2024 Branimir Karadzic
 	
 	Redistribution and use in source and binary forms, with or without modification,
 	are permitted provided that the following conditions are met:

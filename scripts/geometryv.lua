@@ -51,13 +51,19 @@ project ("geometryv")
 		links   { "glfw3" }
 
 		configuration { "linux or freebsd" }
-			links {
-				"Xrandr",
-				"Xinerama",
-				"Xi",
-				"Xxf86vm",
-				"Xcursor",
-			}
+			if _OPTIONS["with-wayland"] then
+				links {
+					"wayland-egl",
+				}
+			else
+				links {
+					"Xrandr",
+					"Xinerama",
+					"Xi",
+					"Xxf86vm",
+					"Xcursor",
+				}
+			end
 
 		configuration { "osx*" }
 			linkoptions {

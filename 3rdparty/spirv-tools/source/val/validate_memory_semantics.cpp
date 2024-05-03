@@ -203,15 +203,12 @@ spv_result_t ValidateMemorySemantics(ValidationState_t& _,
                 "storage class";
     }
 
-#if 0
-    // TODO(atgoo@github.com): this check fails Vulkan CTS, reenable once fixed.
     if (opcode == spv::Op::OpControlBarrier && value && !includes_storage_class) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << spvOpcodeString(opcode)
+             << _.VkErrorID(4650) << spvOpcodeString(opcode)
              << ": expected Memory Semantics to include a Vulkan-supported "
                 "storage class if Memory Semantics is not None";
     }
-#endif
   }
 
   if (opcode == spv::Op::OpAtomicFlagClear &&

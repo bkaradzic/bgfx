@@ -3,7 +3,7 @@ local idl = codegen.idl "bgfx.idl"
 
 local csharp_template = [[
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -29,7 +29,7 @@ public static partial class bgfx
 
 local csharp_dllname_template = [[
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -386,6 +386,8 @@ end
 function converter.funcs(func)
 
 	if func.cpponly then
+		return
+	elseif func.cppinline and not func.conly then
 		return
 	end
 

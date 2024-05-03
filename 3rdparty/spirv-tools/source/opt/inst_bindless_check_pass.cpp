@@ -39,143 +39,13 @@ constexpr int kSpvTypeImageArrayed = 3;
 constexpr int kSpvTypeImageMS = 4;
 }  // namespace
 
-void InstBindlessCheckPass::SetupInputBufferIds() {
-  if (input_buffer_id_ != 0) {
-    return;
-  }
-  AddStorageBufferExt();
-  if (!get_feature_mgr()->HasExtension(kSPV_KHR_physical_storage_buffer)) {
-    context()->AddExtension("SPV_KHR_physical_storage_buffer");
-  }
-  context()->AddCapability(spv::Capability::PhysicalStorageBufferAddresses);
-  Instruction* memory_model = get_module()->GetMemoryModel();
-  // TODO should this be just Physical64?
-  memory_model->SetInOperand(
-      0u, {uint32_t(spv::AddressingModel::PhysicalStorageBuffer64)});
-
-  analysis::DecorationManager* deco_mgr = get_decoration_mgr();
-  analysis::TypeManager* type_mgr = context()->get_type_mgr();
-  constexpr uint32_t width = 32u;
-
-  // declare the DescriptorSetData struct
-  analysis::Struct* desc_set_struct =
-      GetStruct({type_mgr->GetUIntType(), GetUintRuntimeArrayType(width)});
-  desc_set_type_id_ = type_mgr->GetTypeInstruction(desc_set_struct);
-  // By the Vulkan spec, a pre-existing struct containing a RuntimeArray
-  // must be a block, and will therefore be decorated with Block. Therefore
-  // the undecorated type returned here will not be pre-existing and can
-  // safely be decorated. Since this type is now decorated, it is out of
-  // sync with the TypeManager and therefore the TypeManager must be
-  // invalidated after this pass.
-  assert(context()->get_def_use_mgr()->NumUses(desc_set_type_id_) == 0 &&
-         "used struct type returned");
-  deco_mgr->AddDecoration(desc_set_type_id_, uint32_t(spv::Decoration::Block));
-  deco_mgr->AddMemberDecoration(desc_set_type_id_, 0,
-                                uint32_t(spv::Decoration::Offset), 0);
-  deco_mgr->AddMemberDecoration(desc_set_type_id_, 1,
-                                uint32_t(spv::Decoration::Offset), 4);
-  context()->AddDebug2Inst(
-      NewGlobalName(desc_set_type_id_, "DescriptorSetData"));
-  context()->AddDebug2Inst(NewMemberName(desc_set_type_id_, 0, "num_bindings"));
-  context()->AddDebug2Inst(NewMemberName(desc_set_type_id_, 1, "data"));
-
-  // declare buffer address reference to DescriptorSetData
-  desc_set_ptr_id_ = type_mgr->FindPointerToType(
-      desc_set_type_id_, spv::StorageClass::PhysicalStorageBuffer);
-  // runtime array of buffer addresses
-  analysis::Type* rarr_ty = GetArray(type_mgr->GetType(desc_set_ptr_id_),
-                                     kDebugInputBindlessMaxDescSets);
-  deco_mgr->AddDecorationVal(type_mgr->GetId(rarr_ty),
-                             uint32_t(spv::Decoration::ArrayStride), 8u);
-
-  // declare the InputBuffer type, a struct wrapper around the runtime array
-  analysis::Struct* input_buffer_struct = GetStruct({rarr_ty});
-  input_buffer_struct_id_ = type_mgr->GetTypeInstruction(input_buffer_struct);
-  deco_mgr->AddDecoration(input_buffer_struct_id_,
-                          uint32_t(spv::Decoration::Block));
-  deco_mgr->AddMemberDecoration(input_buffer_struct_id_, 0,
-                                uint32_t(spv::Decoration::Offset), 0);
-  context()->AddDebug2Inst(
-      NewGlobalName(input_buffer_struct_id_, "InputBuffer"));
-  context()->AddDebug2Inst(
-      NewMemberName(input_buffer_struct_id_, 0, "desc_sets"));
-
-  input_buffer_ptr_id_ = type_mgr->FindPointerToType(
-      input_buffer_struct_id_, spv::StorageClass::StorageBuffer);
-
-  // declare the input_buffer global variable
-  input_buffer_id_ = TakeNextId();
-
-  const std::vector<Operand> var_operands = {
-      {spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER,
-       {uint32_t(spv::StorageClass::StorageBuffer)}},
-  };
-  auto new_var_op = spvtools::MakeUnique<Instruction>(
-      context(), spv::Op::OpVariable, input_buffer_ptr_id_, input_buffer_id_,
-      var_operands);
-
-  context()->AddGlobalValue(std::move(new_var_op));
-  context()->AddDebug2Inst(NewGlobalName(input_buffer_id_, "input_buffer"));
-  deco_mgr->AddDecorationVal(
-      input_buffer_id_, uint32_t(spv::Decoration::DescriptorSet), desc_set_);
-  deco_mgr->AddDecorationVal(input_buffer_id_,
-                             uint32_t(spv::Decoration::Binding),
-                             GetInputBufferBinding());
-  if (get_module()->version() >= SPV_SPIRV_VERSION_WORD(1, 4)) {
-    // Add the new buffer to all entry points.
-    for (auto& entry : get_module()->entry_points()) {
-      entry.AddOperand({SPV_OPERAND_TYPE_ID, {input_buffer_id_}});
-      context()->AnalyzeUses(&entry);
-    }
-  }
-}
-
+// This is a stub function for use with Import linkage
 // clang-format off
 // GLSL:
-//bool inst_bindless_check_desc(uint shader_id, uint line, uvec4 stage_info, uint desc_set_idx, uint binding_idx, uint desc_idx,
-//                              uint offset)
-//{
-//    if (desc_set_idx >= inst_bindless_input_buffer.desc_sets.length()) {
-//        // kInstErrorBindlessBounds
-//        inst_bindless_stream_write_6(shader_id, line, stage_info, 1, desc_set_idx, binding_idx, desc_idx, 0, 0);
-//        return false;
-//    }
-//    DescriptorSetData set_data = inst_bindless_input_buffer.desc_sets[desc_set_idx];
-//    uvec2 ptr_vec = uvec2(set_data);
-//    if (ptr_vec.x == 0 && ptr_vec.y == 0) {
-//        // kInstErrorBindlessBounds
-//        inst_bindless_stream_write_6(shader_id, line, stage_info, 1, desc_set_idx, binding_idx, desc_idx, 0, 0);
-//        return false;
-//    }
-//    uint num_bindings = set_data.num_bindings;
-//    if (binding_idx >= num_bindings) {
-//        // kInstErrorBindlessBounds
-//        inst_bindless_stream_write_6(shader_id, line, stage_info, 1, desc_set_idx, binding_idx, desc_idx, 0, 0);
-//        return false;
-//    }
-//    uint binding_length = set_data.data[binding_idx];
-//    if (desc_idx >= binding_length) {
-//        // kInstErrorBindlessBounds
-//        inst_bindless_stream_write_6(shader_id, line, stage_info, 1, desc_set_idx, binding_idx, desc_idx, binding_length, 0);
-//        return false;
-//    }
-//    uint desc_records_start = set_data.data[num_bindings + binding_idx];
-//    uint init_or_len = set_data.data[desc_records_start + desc_idx];
-//    if (init_or_len == 0) {
-//        // kInstErrorBindlessUninit
-//        inst_bindless_stream_write_6(shader_id, line, stage_info, 2, desc_set_idx, binding_idx, desc_idx, 0, 0);
-//        return false;
-//    }
-//    if (offset >= init_or_len) {
-//        // kInstErrorOOB
-//        inst_bindless_stream_write_6(shader_id, line, stage_info, 4, desc_set_idx, binding_idx, desc_idx, offset,
-//                                      init_or_len);
-//        return false;
-//    }
-//    return true;
+//bool inst_bindless_check_desc(const uint shader_id, const uint inst_num, const uvec4 stage_info, const uint desc_set,
+//                              const uint binding, const uint desc_index, const uint byte_offset) {
 //}
 // clang-format on
-
 uint32_t InstBindlessCheckPass::GenDescCheckFunctionId() {
   enum {
     kShaderId = 0,
@@ -187,11 +57,10 @@ uint32_t InstBindlessCheckPass::GenDescCheckFunctionId() {
     kByteOffset = 6,
     kNumArgs
   };
-  if (desc_check_func_id_ != 0) {
-    return desc_check_func_id_;
+  if (check_desc_func_id_ != 0) {
+    return check_desc_func_id_;
   }
 
-  SetupInputBufferIds();
   analysis::TypeManager* type_mgr = context()->get_type_mgr();
   const analysis::Integer* uint_type = GetInteger(32, false);
   const analysis::Vector v4uint(uint_type, 4);
@@ -203,262 +72,32 @@ uint32_t InstBindlessCheckPass::GenDescCheckFunctionId() {
   std::unique_ptr<Function> func =
       StartFunction(func_id, type_mgr->GetBoolType(), param_types);
 
-  const std::vector<uint32_t> param_ids = AddParameters(*func, param_types);
-
-  // Create block
-  auto new_blk_ptr = MakeUnique<BasicBlock>(NewLabel(TakeNextId()));
-  InstructionBuilder builder(
-      context(), new_blk_ptr.get(),
-      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
-  const uint32_t false_id = builder.GetBoolConstantId(false);
-  const uint32_t true_id = builder.GetBoolConstantId(true);
-  Instruction* inst;
-
-  inst = builder.AddBinaryOp(
-      GetBoolId(), spv::Op::OpUGreaterThanEqual, param_ids[kDescSet],
-      builder.GetUintConstantId(kDebugInputBindlessMaxDescSets));
-  const uint32_t desc_cmp_id = inst->result_id();
-
-  uint32_t error_blk_id = TakeNextId();
-  uint32_t merge_blk_id = TakeNextId();
-  std::unique_ptr<Instruction> merge_label(NewLabel(merge_blk_id));
-  std::unique_ptr<Instruction> error_label(NewLabel(error_blk_id));
-  (void)builder.AddConditionalBranch(desc_cmp_id, error_blk_id, merge_blk_id,
-                                     merge_blk_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-
-  // error return
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
-  builder.SetInsertPoint(&*new_blk_ptr);
-  (void)builder.AddUnaryOp(0, spv::Op::OpReturnValue, false_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-
-  // check descriptor set table entry is non-null
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
-  builder.SetInsertPoint(&*new_blk_ptr);
-
-  const uint32_t desc_set_ptr_ptr = type_mgr->FindPointerToType(
-      desc_set_ptr_id_, spv::StorageClass::StorageBuffer);
-
-  inst = builder.AddAccessChain(
-      desc_set_ptr_ptr, input_buffer_id_,
-      {builder.GetUintConstantId(0), param_ids[kDescSet]});
-  const uint32_t set_access_chain_id = inst->result_id();
-
-  inst = builder.AddLoad(desc_set_ptr_id_, set_access_chain_id);
-  const uint32_t desc_set_ptr_id = inst->result_id();
-
-  inst =
-      builder.AddUnaryOp(GetVecUintId(2), spv::Op::OpBitcast, desc_set_ptr_id);
-  const uint32_t ptr_as_uvec_id = inst->result_id();
-
-  inst = builder.AddCompositeExtract(GetUintId(), ptr_as_uvec_id, {0});
-  const uint32_t uvec_x = inst->result_id();
-
-  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpIEqual, uvec_x,
-                             builder.GetUintConstantId(0));
-  const uint32_t x_is_zero_id = inst->result_id();
-
-  inst = builder.AddCompositeExtract(GetUintId(), ptr_as_uvec_id, {1});
-  const uint32_t uvec_y = inst->result_id();
-
-  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpIEqual, uvec_y,
-                             builder.GetUintConstantId(0));
-  const uint32_t y_is_zero_id = inst->result_id();
-
-  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpLogicalAnd, x_is_zero_id,
-                             y_is_zero_id);
-  const uint32_t is_null_id = inst->result_id();
-
-  error_blk_id = TakeNextId();
-  merge_blk_id = TakeNextId();
-  merge_label = NewLabel(merge_blk_id);
-  error_label = NewLabel(error_blk_id);
-  (void)builder.AddConditionalBranch(is_null_id, error_blk_id, merge_blk_id,
-                                     merge_blk_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-  // error return
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
-  builder.SetInsertPoint(&*new_blk_ptr);
-  GenDebugStreamWrite(
-      param_ids[kShaderId], param_ids[kInstructionIndex], param_ids[kStageInfo],
-      {builder.GetUintConstantId(kInstErrorBindlessBounds), param_ids[kDescSet],
-       param_ids[kDescBinding], param_ids[kDescIndex],
-       builder.GetUintConstantId(0), builder.GetUintConstantId(0)},
-      &builder);
-  (void)builder.AddUnaryOp(0, spv::Op::OpReturnValue, false_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-
-  // check binding is in range
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
-  builder.SetInsertPoint(&*new_blk_ptr);
-
-  const uint32_t uint_ptr = type_mgr->FindPointerToType(
-      GetUintId(), spv::StorageClass::PhysicalStorageBuffer);
-
-  inst = builder.AddAccessChain(uint_ptr, desc_set_ptr_id,
-                                {builder.GetUintConstantId(0)});
-  const uint32_t binding_access_chain_id = inst->result_id();
-
-  inst = builder.AddLoad(GetUintId(), binding_access_chain_id, 8);
-  const uint32_t num_bindings_id = inst->result_id();
-
-  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpUGreaterThanEqual,
-                             param_ids[kDescBinding], num_bindings_id);
-  const uint32_t bindings_cmp_id = inst->result_id();
-
-  error_blk_id = TakeNextId();
-  merge_blk_id = TakeNextId();
-  merge_label = NewLabel(merge_blk_id);
-  error_label = NewLabel(error_blk_id);
-  (void)builder.AddConditionalBranch(bindings_cmp_id, error_blk_id,
-                                     merge_blk_id, merge_blk_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-  // error return
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
-  builder.SetInsertPoint(&*new_blk_ptr);
-  GenDebugStreamWrite(
-      param_ids[kShaderId], param_ids[kInstructionIndex], param_ids[kStageInfo],
-      {builder.GetUintConstantId(kInstErrorBindlessBounds), param_ids[kDescSet],
-       param_ids[kDescBinding], param_ids[kDescIndex],
-       builder.GetUintConstantId(0), builder.GetUintConstantId(0)},
-      &builder);
-  (void)builder.AddUnaryOp(0, spv::Op::OpReturnValue, false_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-
-  // read binding length
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
-  builder.SetInsertPoint(&*new_blk_ptr);
-
-  inst = builder.AddAccessChain(
-      uint_ptr, desc_set_ptr_id,
-      {{builder.GetUintConstantId(1), param_ids[kDescBinding]}});
-  const uint32_t length_ac_id = inst->result_id();
-
-  inst = builder.AddLoad(GetUintId(), length_ac_id, sizeof(uint32_t));
-  const uint32_t length_id = inst->result_id();
-
-  // Check descriptor index in bounds
-  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpUGreaterThanEqual,
-                             param_ids[kDescIndex], length_id);
-  const uint32_t desc_idx_range_id = inst->result_id();
-
-  error_blk_id = TakeNextId();
-  merge_blk_id = TakeNextId();
-  merge_label = NewLabel(merge_blk_id);
-  error_label = NewLabel(error_blk_id);
-  (void)builder.AddConditionalBranch(desc_idx_range_id, error_blk_id,
-                                     merge_blk_id, merge_blk_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-  // Error return
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
-  builder.SetInsertPoint(&*new_blk_ptr);
-  GenDebugStreamWrite(
-      param_ids[kShaderId], param_ids[kInstructionIndex], param_ids[kStageInfo],
-      {builder.GetUintConstantId(kInstErrorBindlessBounds), param_ids[kDescSet],
-       param_ids[kDescBinding], param_ids[kDescIndex], length_id,
-       builder.GetUintConstantId(0)},
-      &builder);
-  (void)builder.AddUnaryOp(0, spv::Op::OpReturnValue, false_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-
-  // Read descriptor init status
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
-  builder.SetInsertPoint(&*new_blk_ptr);
-
-  inst = builder.AddIAdd(GetUintId(), num_bindings_id, param_ids[kDescBinding]);
-  const uint32_t state_offset_id = inst->result_id();
-
-  inst =
-      builder.AddAccessChain(uint_ptr, desc_set_ptr_id,
-                             {{builder.GetUintConstantId(1), state_offset_id}});
-  const uint32_t state_start_ac_id = inst->result_id();
-
-  inst = builder.AddLoad(GetUintId(), state_start_ac_id, sizeof(uint32_t));
-  const uint32_t state_start_id = inst->result_id();
-
-  inst = builder.AddIAdd(GetUintId(), state_start_id, param_ids[kDescIndex]);
-  const uint32_t state_entry_id = inst->result_id();
-
-  // Note: length starts from the beginning of the buffer, not the beginning of
-  // the data array
-  inst =
-      builder.AddAccessChain(uint_ptr, desc_set_ptr_id,
-                             {{builder.GetUintConstantId(1), state_entry_id}});
-  const uint32_t init_ac_id = inst->result_id();
-
-  inst = builder.AddLoad(GetUintId(), init_ac_id, sizeof(uint32_t));
-  const uint32_t init_status_id = inst->result_id();
-
-  // Check for uninitialized descriptor
-  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpIEqual, init_status_id,
-                             builder.GetUintConstantId(0));
-  const uint32_t uninit_check_id = inst->result_id();
-  error_blk_id = TakeNextId();
-  merge_blk_id = TakeNextId();
-  merge_label = NewLabel(merge_blk_id);
-  error_label = NewLabel(error_blk_id);
-  (void)builder.AddConditionalBranch(uninit_check_id, error_blk_id,
-                                     merge_blk_id, merge_blk_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
-  builder.SetInsertPoint(&*new_blk_ptr);
-  GenDebugStreamWrite(
-      param_ids[kShaderId], param_ids[kInstructionIndex], param_ids[kStageInfo],
-      {builder.GetUintConstantId(kInstErrorBindlessUninit), param_ids[kDescSet],
-       param_ids[kDescBinding], param_ids[kDescIndex],
-       builder.GetUintConstantId(0), builder.GetUintConstantId(0)},
-      &builder);
-  (void)builder.AddUnaryOp(0, spv::Op::OpReturnValue, false_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-
-  // Check for OOB.
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
-  builder.SetInsertPoint(&*new_blk_ptr);
-  inst = builder.AddBinaryOp(GetBoolId(), spv::Op::OpUGreaterThanEqual,
-                             param_ids[kByteOffset], init_status_id);
-  const uint32_t buf_offset_range_id = inst->result_id();
-
-  error_blk_id = TakeNextId();
-  merge_blk_id = TakeNextId();
-  merge_label = NewLabel(merge_blk_id);
-  error_label = NewLabel(error_blk_id);
-  (void)builder.AddConditionalBranch(buf_offset_range_id, error_blk_id,
-                                     merge_blk_id, merge_blk_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-  // Error return
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(error_label));
-  builder.SetInsertPoint(&*new_blk_ptr);
-  GenDebugStreamWrite(
-      param_ids[kShaderId], param_ids[kInstructionIndex], param_ids[kStageInfo],
-      {builder.GetUintConstantId(kInstErrorOOB), param_ids[kDescSet],
-       param_ids[kDescBinding], param_ids[kDescIndex], param_ids[kByteOffset],
-       init_status_id},
-      &builder);
-  (void)builder.AddUnaryOp(0, spv::Op::OpReturnValue, false_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-
-  // Success return
-  new_blk_ptr = MakeUnique<BasicBlock>(std::move(merge_label));
-  builder.SetInsertPoint(&*new_blk_ptr);
-  (void)builder.AddUnaryOp(0, spv::Op::OpReturnValue, true_id);
-  func->AddBasicBlock(std::move(new_blk_ptr));
-
   func->SetFunctionEnd(EndFunction());
 
-  context()->AddFunction(std::move(func));
-  context()->AddDebug2Inst(NewGlobalName(func_id, "desc_check"));
+  static const std::string func_name{"inst_bindless_check_desc"};
+  context()->AddFunctionDeclaration(std::move(func));
+  context()->AddDebug2Inst(NewName(func_id, func_name));
+  std::vector<Operand> operands{
+      {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {func_id}},
+      {spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER,
+       {uint32_t(spv::Decoration::LinkageAttributes)}},
+      {spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_STRING,
+       utils::MakeVector(func_name.c_str())},
+      {spv_operand_type_t::SPV_OPERAND_TYPE_LINKAGE_TYPE,
+       {uint32_t(spv::LinkageType::Import)}},
+  };
+  get_decoration_mgr()->AddDecoration(spv::Op::OpDecorate, operands);
 
-  desc_check_func_id_ = func_id;
+  check_desc_func_id_ = func_id;
   // Make sure function doesn't get processed by
   // InstrumentPass::InstProcessCallTreeFromRoots()
   param2output_func_id_[3] = func_id;
-  return desc_check_func_id_;
+  return check_desc_func_id_;
 }
 
 // clang-format off
 // GLSL:
-// result = inst_bindless_desc_check(shader_id, inst_idx, stage_info, desc_set, binding, desc_idx, offset);
+// result = inst_bindless_check_desc(shader_id, inst_idx, stage_info, desc_set, binding, desc_idx, offset);
 //
 // clang-format on
 uint32_t InstBindlessCheckPass::GenDescCheckCall(
@@ -934,8 +573,7 @@ uint32_t InstBindlessCheckPass::GenLastByteIdx(RefAnalysis* ref,
 }
 
 void InstBindlessCheckPass::GenCheckCode(
-    uint32_t check_id, uint32_t error_id, uint32_t offset_id,
-    uint32_t length_id, uint32_t stage_idx, RefAnalysis* ref,
+    uint32_t check_id, RefAnalysis* ref,
     std::vector<std::unique_ptr<BasicBlock>>* new_blocks) {
   BasicBlock* back_blk_ptr = &*new_blocks->back();
   InstructionBuilder builder(
@@ -964,31 +602,7 @@ void InstBindlessCheckPass::GenCheckCode(
   // Gen invalid block
   new_blk_ptr.reset(new BasicBlock(std::move(invalid_label)));
   builder.SetInsertPoint(&*new_blk_ptr);
-  if (error_id != 0) {
-    const uint32_t u_shader_id = builder.GetUintConstantId(shader_id_);
-    const uint32_t u_inst_id =
-        builder.GetUintConstantId(ref->ref_inst->unique_id());
-    const uint32_t shader_info_id = GenStageInfo(stage_idx, &builder);
-    const uint32_t u_set_id = builder.GetUintConstantId(ref->set);
-    const uint32_t u_binding_id = builder.GetUintConstantId(ref->binding);
-    const uint32_t u_index_id = GenUintCastCode(ref->desc_idx_id, &builder);
-    const uint32_t u_length_id = GenUintCastCode(length_id, &builder);
-    if (offset_id != 0) {
-      const uint32_t u_offset_id = GenUintCastCode(offset_id, &builder);
-      // Buffer OOB
-      GenDebugStreamWrite(u_shader_id, u_inst_id, shader_info_id,
-                          {error_id, u_set_id, u_binding_id, u_index_id,
-                           u_offset_id, u_length_id},
-                          &builder);
-    } else {
-      // Uninitialized Descriptor - Return additional unused zero so all error
-      // modes will use same debug stream write function
-      GenDebugStreamWrite(u_shader_id, u_inst_id, shader_info_id,
-                          {error_id, u_set_id, u_binding_id, u_index_id,
-                           u_length_id, builder.GetUintConstantId(0)},
-                          &builder);
-    }
-  }
+
   // Generate a ConstantNull, converting to uint64 if the type cannot be a null.
   if (new_ref_id != 0) {
     analysis::TypeManager* type_mgr = context()->get_type_mgr();
@@ -1083,7 +697,7 @@ void InstBindlessCheckPass::GenDescCheckCode(
   // Generate runtime initialization/bounds test code with true branch
   // being full reference and false branch being zero
   // for the referenced value.
-  GenCheckCode(check_id, 0, 0, 0, stage_idx, &ref, new_blocks);
+  GenCheckCode(check_id, &ref, new_blocks);
 
   // Move original block's remaining code into remainder/merge block and add
   // to new blocks
@@ -1110,7 +724,20 @@ void InstBindlessCheckPass::InitializeInstBindlessCheck() {
 }
 
 Pass::Status InstBindlessCheckPass::ProcessImpl() {
-  bool modified = false;
+  // The memory model and linkage must always be updated for spirv-link to work
+  // correctly.
+  AddStorageBufferExt();
+  if (!get_feature_mgr()->HasExtension(kSPV_KHR_physical_storage_buffer)) {
+    context()->AddExtension("SPV_KHR_physical_storage_buffer");
+  }
+
+  context()->AddCapability(spv::Capability::PhysicalStorageBufferAddresses);
+  Instruction* memory_model = get_module()->GetMemoryModel();
+  memory_model->SetInOperand(
+      0u, {uint32_t(spv::AddressingModel::PhysicalStorageBuffer64)});
+
+  context()->AddCapability(spv::Capability::Linkage);
+
   InstProcessFunction pfn =
       [this](BasicBlock::iterator ref_inst_itr,
              UptrVectorIterator<BasicBlock> ref_block_itr, uint32_t stage_idx,
@@ -1119,8 +746,10 @@ Pass::Status InstBindlessCheckPass::ProcessImpl() {
                                 new_blocks);
       };
 
-  modified = InstProcessEntryPointCallTree(pfn);
-  return modified ? Status::SuccessWithChange : Status::SuccessWithoutChange;
+  InstProcessEntryPointCallTree(pfn);
+  // This pass always changes the memory model, so that linking will work
+  // properly.
+  return Status::SuccessWithChange;
 }
 
 Pass::Status InstBindlessCheckPass::Process() {

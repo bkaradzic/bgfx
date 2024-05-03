@@ -1,18 +1,16 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef BGFX_RENDERER_GL_H_HEADER_GUARD
 #define BGFX_RENDERER_GL_H_HEADER_GUARD
 
-#define BGFX_USE_EGL (BGFX_CONFIG_RENDERER_OPENGLES && (0 \
-	|| BX_PLATFORM_ANDROID                                \
-	|| BX_PLATFORM_BSD                                    \
-	|| BX_PLATFORM_LINUX                                  \
-	|| BX_PLATFORM_NX                                     \
-	|| BX_PLATFORM_RPI                                    \
-	|| BX_PLATFORM_WINDOWS                                \
+#define BGFX_USE_EGL ( (BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES) && (0 \
+	|| BX_PLATFORM_ANDROID                                                                  \
+	|| BX_PLATFORM_LINUX                                                                    \
+	|| BX_PLATFORM_NX                                                                       \
+	|| BX_PLATFORM_RPI                                                                      \
 	) )
 
 #define BGFX_USE_HTML5 (BGFX_CONFIG_RENDERER_OPENGLES && (0 \
@@ -23,13 +21,7 @@
 	|| BX_PLATFORM_WINDOWS                              \
 	) )
 
-#define BGFX_USE_GLX (BGFX_CONFIG_RENDERER_OPENGL && (0 \
-	|| BX_PLATFORM_BSD                                  \
-	|| BX_PLATFORM_LINUX                                \
-	) )
-
 #define BGFX_USE_GL_DYNAMIC_LIB (0 \
-	|| BX_PLATFORM_BSD             \
 	|| BX_PLATFORM_LINUX           \
 	|| BX_PLATFORM_WINDOWS         \
 	)
@@ -68,7 +60,7 @@
 #	if BGFX_CONFIG_RENDERER_OPENGL >= 31
 #		include <gl/glcorearb.h>
 #	else
-#		if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#		if BX_PLATFORM_LINUX
 #			define GL_PROTOTYPES
 #			define GL_GLEXT_LEGACY
 #			include <GL/gl.h>
@@ -1139,8 +1131,6 @@ typedef uint64_t GLuint64;
 #	include "glcontext_egl.h"
 #elif BGFX_USE_HTML5
 #	include "glcontext_html5.h"
-#elif BGFX_USE_GLX
-#	include "glcontext_glx.h"
 #elif BGFX_USE_WGL
 #	include "glcontext_wgl.h"
 #endif // BGFX_USE_*
@@ -1171,14 +1161,14 @@ namespace bgfx { namespace gl
 
 	const char* glEnumName(GLenum _enum);
 
-#define _GL_CHECK(_check, _call) \
-				BX_MACRO_BLOCK_BEGIN \
-					/*BX_TRACE(#_call);*/ \
-					_call; \
-					GLenum gl_err = glGetError(); \
-					_check(0 == gl_err, #_call "; GL error 0x%x: %s", gl_err, glEnumName(gl_err) ); \
-					BX_UNUSED(gl_err); \
-				BX_MACRO_BLOCK_END
+#define _GL_CHECK(_check, _call)                                                                    \
+	BX_MACRO_BLOCK_BEGIN                                                                \
+		/*BX_TRACE(#_call);*/                                                           \
+		_call;                                                                          \
+		GLenum gl_err = glGetError();                                                   \
+		_check(0 == gl_err, #_call "; GL error 0x%x: %s", gl_err, glEnumName(gl_err) ); \
+		BX_UNUSED(gl_err);                                                              \
+	BX_MACRO_BLOCK_END
 
 #define IGNORE_GL_ERROR_CHECK(...) BX_NOOP()
 

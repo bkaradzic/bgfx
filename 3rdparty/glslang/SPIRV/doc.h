@@ -156,6 +156,7 @@ enum OperandClass {
     OperandKernelEnqueueFlags,
     OperandKernelProfilingInfo,
     OperandCapability,
+    OperandCooperativeMatrixOperands,
 
     OperandOpcode,
 
@@ -239,8 +240,8 @@ public:
     OperandParameters operands;
 
 protected:
-    int typePresent   : 1;
-    int resultPresent : 1;
+    bool typePresent   : 1;
+    bool resultPresent : 1;
 };
 
 // The set of objects that hold all the instruction/operand

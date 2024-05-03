@@ -1,4 +1,4 @@
-// Copyright (c) 2020 The Khronos Group Inc.
+// Copyright (c) 2020-2024 The Khronos Group Inc.
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and/or associated documentation files (the
@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 enum {
-    NonSemanticClspvReflectionRevision = 5,
+    NonSemanticClspvReflectionRevision = 6,
     NonSemanticClspvReflectionRevision_BitWidthPadding = 0x7fffffff
 };
 
@@ -78,6 +78,7 @@ enum NonSemanticClspvReflectionInstructions {
     NonSemanticClspvReflectionPrintfInfo = 38,
     NonSemanticClspvReflectionPrintfBufferStorageBuffer = 39,
     NonSemanticClspvReflectionPrintfBufferPointerPushConstant = 40,
+    NonSemanticClspvReflectionNormalizedSamplerMaskPushConstant = 41,
     NonSemanticClspvReflectionInstructionsMax = 0x7fffffff
 };
 

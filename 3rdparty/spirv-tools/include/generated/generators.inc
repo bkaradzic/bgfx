@@ -37,3 +37,8 @@
 {36, "Taichi Graphics", "Taichi", "Taichi Graphics Taichi"},
 {37, "heroseh", "Hero C Compiler", "heroseh Hero C Compiler"},
 {38, "Meta", "SparkSL", "Meta SparkSL"},
+{39, "SirLynix", "Nazara ShaderLang Compiler", "SirLynix Nazara ShaderLang Compiler"},
+{40, "NVIDIA", "Slang Compiler", "NVIDIA Slang Compiler"},
+{41, "Zig Software Foundation", "Zig Compiler", "Zig Software Foundation Zig Compiler"},
+{42, "Rendong Liang", "spq", "Rendong Liang spq"},
+{43, "LLVM", "LLVM SPIR-V Backend", "LLVM LLVM SPIR-V Backend"},

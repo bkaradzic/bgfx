@@ -1,5 +1,7 @@
 const char* ExtensionToString(Extension extension) {
   switch (extension) {
+    case Extension::kSPV_AMDX_shader_enqueue:
+      return "SPV_AMDX_shader_enqueue";
     case Extension::kSPV_AMD_gcn_shader:
       return "SPV_AMD_gcn_shader";
     case Extension::kSPV_AMD_gpu_shader_half_float:
@@ -70,6 +72,8 @@ const char* ExtensionToString(Extension extension) {
       return "SPV_INTEL_bfloat16_conversion";
     case Extension::kSPV_INTEL_blocking_pipes:
       return "SPV_INTEL_blocking_pipes";
+    case Extension::kSPV_INTEL_cache_controls:
+      return "SPV_INTEL_cache_controls";
     case Extension::kSPV_INTEL_debug_module:
       return "SPV_INTEL_debug_module";
     case Extension::kSPV_INTEL_device_side_avc_motion_estimation:
@@ -78,6 +82,8 @@ const char* ExtensionToString(Extension extension) {
       return "SPV_INTEL_float_controls2";
     case Extension::kSPV_INTEL_fp_fast_math_mode:
       return "SPV_INTEL_fp_fast_math_mode";
+    case Extension::kSPV_INTEL_fp_max_error:
+      return "SPV_INTEL_fp_max_error";
     case Extension::kSPV_INTEL_fpga_argument_interfaces:
       return "SPV_INTEL_fpga_argument_interfaces";
     case Extension::kSPV_INTEL_fpga_buffer_location:
@@ -100,16 +106,24 @@ const char* ExtensionToString(Extension extension) {
       return "SPV_INTEL_fpga_reg";
     case Extension::kSPV_INTEL_function_pointers:
       return "SPV_INTEL_function_pointers";
+    case Extension::kSPV_INTEL_global_variable_fpga_decorations:
+      return "SPV_INTEL_global_variable_fpga_decorations";
+    case Extension::kSPV_INTEL_global_variable_host_access:
+      return "SPV_INTEL_global_variable_host_access";
     case Extension::kSPV_INTEL_inline_assembly:
       return "SPV_INTEL_inline_assembly";
     case Extension::kSPV_INTEL_io_pipes:
       return "SPV_INTEL_io_pipes";
     case Extension::kSPV_INTEL_kernel_attributes:
       return "SPV_INTEL_kernel_attributes";
-    case Extension::kSPV_INTEL_long_constant_composite:
-      return "SPV_INTEL_long_constant_composite";
+    case Extension::kSPV_INTEL_long_composites:
+      return "SPV_INTEL_long_composites";
     case Extension::kSPV_INTEL_loop_fuse:
       return "SPV_INTEL_loop_fuse";
+    case Extension::kSPV_INTEL_masked_gather_scatter:
+      return "SPV_INTEL_masked_gather_scatter";
+    case Extension::kSPV_INTEL_maximum_registers:
+      return "SPV_INTEL_maximum_registers";
     case Extension::kSPV_INTEL_media_block_io:
       return "SPV_INTEL_media_block_io";
     case Extension::kSPV_INTEL_memory_access_aliasing:
@@ -146,6 +160,8 @@ const char* ExtensionToString(Extension extension) {
       return "SPV_KHR_expect_assume";
     case Extension::kSPV_KHR_float_controls:
       return "SPV_KHR_float_controls";
+    case Extension::kSPV_KHR_float_controls2:
+      return "SPV_KHR_float_controls2";
     case Extension::kSPV_KHR_fragment_shader_barycentric:
       return "SPV_KHR_fragment_shader_barycentric";
     case Extension::kSPV_KHR_fragment_shading_rate:
@@ -154,6 +170,8 @@ const char* ExtensionToString(Extension extension) {
       return "SPV_KHR_integer_dot_product";
     case Extension::kSPV_KHR_linkonce_odr:
       return "SPV_KHR_linkonce_odr";
+    case Extension::kSPV_KHR_maximal_reconvergence:
+      return "SPV_KHR_maximal_reconvergence";
     case Extension::kSPV_KHR_multiview:
       return "SPV_KHR_multiview";
     case Extension::kSPV_KHR_no_integer_wrap_decoration:
@@ -164,6 +182,8 @@ const char* ExtensionToString(Extension extension) {
       return "SPV_KHR_physical_storage_buffer";
     case Extension::kSPV_KHR_post_depth_coverage:
       return "SPV_KHR_post_depth_coverage";
+    case Extension::kSPV_KHR_quad_control:
+      return "SPV_KHR_quad_control";
     case Extension::kSPV_KHR_ray_cull_mask:
       return "SPV_KHR_ray_cull_mask";
     case Extension::kSPV_KHR_ray_query:
@@ -206,18 +226,24 @@ const char* ExtensionToString(Extension extension) {
       return "SPV_NV_compute_shader_derivatives";
     case Extension::kSPV_NV_cooperative_matrix:
       return "SPV_NV_cooperative_matrix";
+    case Extension::kSPV_NV_displacement_micromap:
+      return "SPV_NV_displacement_micromap";
     case Extension::kSPV_NV_fragment_shader_barycentric:
       return "SPV_NV_fragment_shader_barycentric";
     case Extension::kSPV_NV_geometry_shader_passthrough:
       return "SPV_NV_geometry_shader_passthrough";
     case Extension::kSPV_NV_mesh_shader:
       return "SPV_NV_mesh_shader";
+    case Extension::kSPV_NV_raw_access_chains:
+      return "SPV_NV_raw_access_chains";
     case Extension::kSPV_NV_ray_tracing:
       return "SPV_NV_ray_tracing";
     case Extension::kSPV_NV_ray_tracing_motion_blur:
       return "SPV_NV_ray_tracing_motion_blur";
     case Extension::kSPV_NV_sample_mask_override_coverage:
       return "SPV_NV_sample_mask_override_coverage";
+    case Extension::kSPV_NV_shader_atomic_fp16_vector:
+      return "SPV_NV_shader_atomic_fp16_vector";
     case Extension::kSPV_NV_shader_image_footprint:
       return "SPV_NV_shader_image_footprint";
     case Extension::kSPV_NV_shader_invocation_reorder:
@@ -234,6 +260,8 @@ const char* ExtensionToString(Extension extension) {
       return "SPV_NV_viewport_array2";
     case Extension::kSPV_QCOM_image_processing:
       return "SPV_QCOM_image_processing";
+    case Extension::kSPV_QCOM_image_processing2:
+      return "SPV_QCOM_image_processing2";
     case Extension::kSPV_VALIDATOR_ignore_type_decl_unique:
       return "SPV_VALIDATOR_ignore_type_decl_unique";
   }
@@ -243,8 +271,8 @@ const char* ExtensionToString(Extension extension) {
 
 
     bool GetExtensionFromString(const char* str, Extension* extension) {
-        static const char* known_ext_strs[] = { "SPV_AMD_gcn_shader", "SPV_AMD_gpu_shader_half_float", "SPV_AMD_gpu_shader_half_float_fetch", "SPV_AMD_gpu_shader_int16", "SPV_AMD_shader_ballot", "SPV_AMD_shader_early_and_late_fragment_tests", "SPV_AMD_shader_explicit_vertex_parameter", "SPV_AMD_shader_fragment_mask", "SPV_AMD_shader_image_load_store_lod", "SPV_AMD_shader_trinary_minmax", "SPV_AMD_texture_gather_bias_lod", "SPV_ARM_core_builtins", "SPV_EXT_demote_to_helper_invocation", "SPV_EXT_descriptor_indexing", "SPV_EXT_fragment_fully_covered", "SPV_EXT_fragment_invocation_density", "SPV_EXT_fragment_shader_interlock", "SPV_EXT_mesh_shader", "SPV_EXT_opacity_micromap", "SPV_EXT_physical_storage_buffer", "SPV_EXT_shader_atomic_float16_add", "SPV_EXT_shader_atomic_float_add", "SPV_EXT_shader_atomic_float_min_max", "SPV_EXT_shader_image_int64", "SPV_EXT_shader_stencil_export", "SPV_EXT_shader_tile_image", "SPV_EXT_shader_viewport_index_layer", "SPV_GOOGLE_decorate_string", "SPV_GOOGLE_hlsl_functionality1", "SPV_GOOGLE_user_type", "SPV_INTEL_arbitrary_precision_fixed_point", "SPV_INTEL_arbitrary_precision_floating_point", "SPV_INTEL_arbitrary_precision_integers", "SPV_INTEL_bfloat16_conversion", "SPV_INTEL_blocking_pipes", "SPV_INTEL_debug_module", "SPV_INTEL_device_side_avc_motion_estimation", "SPV_INTEL_float_controls2", "SPV_INTEL_fp_fast_math_mode", "SPV_INTEL_fpga_argument_interfaces", "SPV_INTEL_fpga_buffer_location", "SPV_INTEL_fpga_cluster_attributes", "SPV_INTEL_fpga_dsp_control", "SPV_INTEL_fpga_invocation_pipelining_attributes", "SPV_INTEL_fpga_latency_control", "SPV_INTEL_fpga_loop_controls", "SPV_INTEL_fpga_memory_accesses", "SPV_INTEL_fpga_memory_attributes", "SPV_INTEL_fpga_reg", "SPV_INTEL_function_pointers", "SPV_INTEL_inline_assembly", "SPV_INTEL_io_pipes", "SPV_INTEL_kernel_attributes", "SPV_INTEL_long_constant_composite", "SPV_INTEL_loop_fuse", "SPV_INTEL_media_block_io", "SPV_INTEL_memory_access_aliasing", "SPV_INTEL_optnone", "SPV_INTEL_runtime_aligned", "SPV_INTEL_shader_integer_functions2", "SPV_INTEL_split_barrier", "SPV_INTEL_subgroups", "SPV_INTEL_unstructured_loop_controls", "SPV_INTEL_usm_storage_classes", "SPV_INTEL_variable_length_array", "SPV_INTEL_vector_compute", "SPV_KHR_16bit_storage", "SPV_KHR_8bit_storage", "SPV_KHR_bit_instructions", "SPV_KHR_cooperative_matrix", "SPV_KHR_device_group", "SPV_KHR_expect_assume", "SPV_KHR_float_controls", "SPV_KHR_fragment_shader_barycentric", "SPV_KHR_fragment_shading_rate", "SPV_KHR_integer_dot_product", "SPV_KHR_linkonce_odr", "SPV_KHR_multiview", "SPV_KHR_no_integer_wrap_decoration", "SPV_KHR_non_semantic_info", "SPV_KHR_physical_storage_buffer", "SPV_KHR_post_depth_coverage", "SPV_KHR_ray_cull_mask", "SPV_KHR_ray_query", "SPV_KHR_ray_tracing", "SPV_KHR_ray_tracing_position_fetch", "SPV_KHR_shader_atomic_counter_ops", "SPV_KHR_shader_ballot", "SPV_KHR_shader_clock", "SPV_KHR_shader_draw_parameters", "SPV_KHR_storage_buffer_storage_class", "SPV_KHR_subgroup_rotate", "SPV_KHR_subgroup_uniform_control_flow", "SPV_KHR_subgroup_vote", "SPV_KHR_terminate_invocation", "SPV_KHR_uniform_group_instructions", "SPV_KHR_variable_pointers", "SPV_KHR_vulkan_memory_model", "SPV_KHR_workgroup_memory_explicit_layout", "SPV_NVX_multiview_per_view_attributes", "SPV_NV_bindless_texture", "SPV_NV_compute_shader_derivatives", "SPV_NV_cooperative_matrix", "SPV_NV_fragment_shader_barycentric", "SPV_NV_geometry_shader_passthrough", "SPV_NV_mesh_shader", "SPV_NV_ray_tracing", "SPV_NV_ray_tracing_motion_blur", "SPV_NV_sample_mask_override_coverage", "SPV_NV_shader_image_footprint", "SPV_NV_shader_invocation_reorder", "SPV_NV_shader_sm_builtins", "SPV_NV_shader_subgroup_partitioned", "SPV_NV_shading_rate", "SPV_NV_stereo_view_rendering", "SPV_NV_viewport_array2", "SPV_QCOM_image_processing", "SPV_VALIDATOR_ignore_type_decl_unique" };
-        static const Extension known_ext_ids[] = { Extension::kSPV_AMD_gcn_shader, Extension::kSPV_AMD_gpu_shader_half_float, Extension::kSPV_AMD_gpu_shader_half_float_fetch, Extension::kSPV_AMD_gpu_shader_int16, Extension::kSPV_AMD_shader_ballot, Extension::kSPV_AMD_shader_early_and_late_fragment_tests, Extension::kSPV_AMD_shader_explicit_vertex_parameter, Extension::kSPV_AMD_shader_fragment_mask, Extension::kSPV_AMD_shader_image_load_store_lod, Extension::kSPV_AMD_shader_trinary_minmax, Extension::kSPV_AMD_texture_gather_bias_lod, Extension::kSPV_ARM_core_builtins, Extension::kSPV_EXT_demote_to_helper_invocation, Extension::kSPV_EXT_descriptor_indexing, Extension::kSPV_EXT_fragment_fully_covered, Extension::kSPV_EXT_fragment_invocation_density, Extension::kSPV_EXT_fragment_shader_interlock, Extension::kSPV_EXT_mesh_shader, Extension::kSPV_EXT_opacity_micromap, Extension::kSPV_EXT_physical_storage_buffer, Extension::kSPV_EXT_shader_atomic_float16_add, Extension::kSPV_EXT_shader_atomic_float_add, Extension::kSPV_EXT_shader_atomic_float_min_max, Extension::kSPV_EXT_shader_image_int64, Extension::kSPV_EXT_shader_stencil_export, Extension::kSPV_EXT_shader_tile_image, Extension::kSPV_EXT_shader_viewport_index_layer, Extension::kSPV_GOOGLE_decorate_string, Extension::kSPV_GOOGLE_hlsl_functionality1, Extension::kSPV_GOOGLE_user_type, Extension::kSPV_INTEL_arbitrary_precision_fixed_point, Extension::kSPV_INTEL_arbitrary_precision_floating_point, Extension::kSPV_INTEL_arbitrary_precision_integers, Extension::kSPV_INTEL_bfloat16_conversion, Extension::kSPV_INTEL_blocking_pipes, Extension::kSPV_INTEL_debug_module, Extension::kSPV_INTEL_device_side_avc_motion_estimation, Extension::kSPV_INTEL_float_controls2, Extension::kSPV_INTEL_fp_fast_math_mode, Extension::kSPV_INTEL_fpga_argument_interfaces, Extension::kSPV_INTEL_fpga_buffer_location, Extension::kSPV_INTEL_fpga_cluster_attributes, Extension::kSPV_INTEL_fpga_dsp_control, Extension::kSPV_INTEL_fpga_invocation_pipelining_attributes, Extension::kSPV_INTEL_fpga_latency_control, Extension::kSPV_INTEL_fpga_loop_controls, Extension::kSPV_INTEL_fpga_memory_accesses, Extension::kSPV_INTEL_fpga_memory_attributes, Extension::kSPV_INTEL_fpga_reg, Extension::kSPV_INTEL_function_pointers, Extension::kSPV_INTEL_inline_assembly, Extension::kSPV_INTEL_io_pipes, Extension::kSPV_INTEL_kernel_attributes, Extension::kSPV_INTEL_long_constant_composite, Extension::kSPV_INTEL_loop_fuse, Extension::kSPV_INTEL_media_block_io, Extension::kSPV_INTEL_memory_access_aliasing, Extension::kSPV_INTEL_optnone, Extension::kSPV_INTEL_runtime_aligned, Extension::kSPV_INTEL_shader_integer_functions2, Extension::kSPV_INTEL_split_barrier, Extension::kSPV_INTEL_subgroups, Extension::kSPV_INTEL_unstructured_loop_controls, Extension::kSPV_INTEL_usm_storage_classes, Extension::kSPV_INTEL_variable_length_array, Extension::kSPV_INTEL_vector_compute, Extension::kSPV_KHR_16bit_storage, Extension::kSPV_KHR_8bit_storage, Extension::kSPV_KHR_bit_instructions, Extension::kSPV_KHR_cooperative_matrix, Extension::kSPV_KHR_device_group, Extension::kSPV_KHR_expect_assume, Extension::kSPV_KHR_float_controls, Extension::kSPV_KHR_fragment_shader_barycentric, Extension::kSPV_KHR_fragment_shading_rate, Extension::kSPV_KHR_integer_dot_product, Extension::kSPV_KHR_linkonce_odr, Extension::kSPV_KHR_multiview, Extension::kSPV_KHR_no_integer_wrap_decoration, Extension::kSPV_KHR_non_semantic_info, Extension::kSPV_KHR_physical_storage_buffer, Extension::kSPV_KHR_post_depth_coverage, Extension::kSPV_KHR_ray_cull_mask, Extension::kSPV_KHR_ray_query, Extension::kSPV_KHR_ray_tracing, Extension::kSPV_KHR_ray_tracing_position_fetch, Extension::kSPV_KHR_shader_atomic_counter_ops, Extension::kSPV_KHR_shader_ballot, Extension::kSPV_KHR_shader_clock, Extension::kSPV_KHR_shader_draw_parameters, Extension::kSPV_KHR_storage_buffer_storage_class, Extension::kSPV_KHR_subgroup_rotate, Extension::kSPV_KHR_subgroup_uniform_control_flow, Extension::kSPV_KHR_subgroup_vote, Extension::kSPV_KHR_terminate_invocation, Extension::kSPV_KHR_uniform_group_instructions, Extension::kSPV_KHR_variable_pointers, Extension::kSPV_KHR_vulkan_memory_model, Extension::kSPV_KHR_workgroup_memory_explicit_layout, Extension::kSPV_NVX_multiview_per_view_attributes, Extension::kSPV_NV_bindless_texture, Extension::kSPV_NV_compute_shader_derivatives, Extension::kSPV_NV_cooperative_matrix, Extension::kSPV_NV_fragment_shader_barycentric, Extension::kSPV_NV_geometry_shader_passthrough, Extension::kSPV_NV_mesh_shader, Extension::kSPV_NV_ray_tracing, Extension::kSPV_NV_ray_tracing_motion_blur, Extension::kSPV_NV_sample_mask_override_coverage, Extension::kSPV_NV_shader_image_footprint, Extension::kSPV_NV_shader_invocation_reorder, Extension::kSPV_NV_shader_sm_builtins, Extension::kSPV_NV_shader_subgroup_partitioned, Extension::kSPV_NV_shading_rate, Extension::kSPV_NV_stereo_view_rendering, Extension::kSPV_NV_viewport_array2, Extension::kSPV_QCOM_image_processing, Extension::kSPV_VALIDATOR_ignore_type_decl_unique };
+        static const char* known_ext_strs[] = { "SPV_AMDX_shader_enqueue", "SPV_AMD_gcn_shader", "SPV_AMD_gpu_shader_half_float", "SPV_AMD_gpu_shader_half_float_fetch", "SPV_AMD_gpu_shader_int16", "SPV_AMD_shader_ballot", "SPV_AMD_shader_early_and_late_fragment_tests", "SPV_AMD_shader_explicit_vertex_parameter", "SPV_AMD_shader_fragment_mask", "SPV_AMD_shader_image_load_store_lod", "SPV_AMD_shader_trinary_minmax", "SPV_AMD_texture_gather_bias_lod", "SPV_ARM_core_builtins", "SPV_EXT_demote_to_helper_invocation", "SPV_EXT_descriptor_indexing", "SPV_EXT_fragment_fully_covered", "SPV_EXT_fragment_invocation_density", "SPV_EXT_fragment_shader_interlock", "SPV_EXT_mesh_shader", "SPV_EXT_opacity_micromap", "SPV_EXT_physical_storage_buffer", "SPV_EXT_shader_atomic_float16_add", "SPV_EXT_shader_atomic_float_add", "SPV_EXT_shader_atomic_float_min_max", "SPV_EXT_shader_image_int64", "SPV_EXT_shader_stencil_export", "SPV_EXT_shader_tile_image", "SPV_EXT_shader_viewport_index_layer", "SPV_GOOGLE_decorate_string", "SPV_GOOGLE_hlsl_functionality1", "SPV_GOOGLE_user_type", "SPV_INTEL_arbitrary_precision_fixed_point", "SPV_INTEL_arbitrary_precision_floating_point", "SPV_INTEL_arbitrary_precision_integers", "SPV_INTEL_bfloat16_conversion", "SPV_INTEL_blocking_pipes", "SPV_INTEL_cache_controls", "SPV_INTEL_debug_module", "SPV_INTEL_device_side_avc_motion_estimation", "SPV_INTEL_float_controls2", "SPV_INTEL_fp_fast_math_mode", "SPV_INTEL_fp_max_error", "SPV_INTEL_fpga_argument_interfaces", "SPV_INTEL_fpga_buffer_location", "SPV_INTEL_fpga_cluster_attributes", "SPV_INTEL_fpga_dsp_control", "SPV_INTEL_fpga_invocation_pipelining_attributes", "SPV_INTEL_fpga_latency_control", "SPV_INTEL_fpga_loop_controls", "SPV_INTEL_fpga_memory_accesses", "SPV_INTEL_fpga_memory_attributes", "SPV_INTEL_fpga_reg", "SPV_INTEL_function_pointers", "SPV_INTEL_global_variable_fpga_decorations", "SPV_INTEL_global_variable_host_access", "SPV_INTEL_inline_assembly", "SPV_INTEL_io_pipes", "SPV_INTEL_kernel_attributes", "SPV_INTEL_long_composites", "SPV_INTEL_loop_fuse", "SPV_INTEL_masked_gather_scatter", "SPV_INTEL_maximum_registers", "SPV_INTEL_media_block_io", "SPV_INTEL_memory_access_aliasing", "SPV_INTEL_optnone", "SPV_INTEL_runtime_aligned", "SPV_INTEL_shader_integer_functions2", "SPV_INTEL_split_barrier", "SPV_INTEL_subgroups", "SPV_INTEL_unstructured_loop_controls", "SPV_INTEL_usm_storage_classes", "SPV_INTEL_variable_length_array", "SPV_INTEL_vector_compute", "SPV_KHR_16bit_storage", "SPV_KHR_8bit_storage", "SPV_KHR_bit_instructions", "SPV_KHR_cooperative_matrix", "SPV_KHR_device_group", "SPV_KHR_expect_assume", "SPV_KHR_float_controls", "SPV_KHR_float_controls2", "SPV_KHR_fragment_shader_barycentric", "SPV_KHR_fragment_shading_rate", "SPV_KHR_integer_dot_product", "SPV_KHR_linkonce_odr", "SPV_KHR_maximal_reconvergence", "SPV_KHR_multiview", "SPV_KHR_no_integer_wrap_decoration", "SPV_KHR_non_semantic_info", "SPV_KHR_physical_storage_buffer", "SPV_KHR_post_depth_coverage", "SPV_KHR_quad_control", "SPV_KHR_ray_cull_mask", "SPV_KHR_ray_query", "SPV_KHR_ray_tracing", "SPV_KHR_ray_tracing_position_fetch", "SPV_KHR_shader_atomic_counter_ops", "SPV_KHR_shader_ballot", "SPV_KHR_shader_clock", "SPV_KHR_shader_draw_parameters", "SPV_KHR_storage_buffer_storage_class", "SPV_KHR_subgroup_rotate", "SPV_KHR_subgroup_uniform_control_flow", "SPV_KHR_subgroup_vote", "SPV_KHR_terminate_invocation", "SPV_KHR_uniform_group_instructions", "SPV_KHR_variable_pointers", "SPV_KHR_vulkan_memory_model", "SPV_KHR_workgroup_memory_explicit_layout", "SPV_NVX_multiview_per_view_attributes", "SPV_NV_bindless_texture", "SPV_NV_compute_shader_derivatives", "SPV_NV_cooperative_matrix", "SPV_NV_displacement_micromap", "SPV_NV_fragment_shader_barycentric", "SPV_NV_geometry_shader_passthrough", "SPV_NV_mesh_shader", "SPV_NV_raw_access_chains", "SPV_NV_ray_tracing", "SPV_NV_ray_tracing_motion_blur", "SPV_NV_sample_mask_override_coverage", "SPV_NV_shader_atomic_fp16_vector", "SPV_NV_shader_image_footprint", "SPV_NV_shader_invocation_reorder", "SPV_NV_shader_sm_builtins", "SPV_NV_shader_subgroup_partitioned", "SPV_NV_shading_rate", "SPV_NV_stereo_view_rendering", "SPV_NV_viewport_array2", "SPV_QCOM_image_processing", "SPV_QCOM_image_processing2", "SPV_VALIDATOR_ignore_type_decl_unique" };
+        static const Extension known_ext_ids[] = { Extension::kSPV_AMDX_shader_enqueue, Extension::kSPV_AMD_gcn_shader, Extension::kSPV_AMD_gpu_shader_half_float, Extension::kSPV_AMD_gpu_shader_half_float_fetch, Extension::kSPV_AMD_gpu_shader_int16, Extension::kSPV_AMD_shader_ballot, Extension::kSPV_AMD_shader_early_and_late_fragment_tests, Extension::kSPV_AMD_shader_explicit_vertex_parameter, Extension::kSPV_AMD_shader_fragment_mask, Extension::kSPV_AMD_shader_image_load_store_lod, Extension::kSPV_AMD_shader_trinary_minmax, Extension::kSPV_AMD_texture_gather_bias_lod, Extension::kSPV_ARM_core_builtins, Extension::kSPV_EXT_demote_to_helper_invocation, Extension::kSPV_EXT_descriptor_indexing, Extension::kSPV_EXT_fragment_fully_covered, Extension::kSPV_EXT_fragment_invocation_density, Extension::kSPV_EXT_fragment_shader_interlock, Extension::kSPV_EXT_mesh_shader, Extension::kSPV_EXT_opacity_micromap, Extension::kSPV_EXT_physical_storage_buffer, Extension::kSPV_EXT_shader_atomic_float16_add, Extension::kSPV_EXT_shader_atomic_float_add, Extension::kSPV_EXT_shader_atomic_float_min_max, Extension::kSPV_EXT_shader_image_int64, Extension::kSPV_EXT_shader_stencil_export, Extension::kSPV_EXT_shader_tile_image, Extension::kSPV_EXT_shader_viewport_index_layer, Extension::kSPV_GOOGLE_decorate_string, Extension::kSPV_GOOGLE_hlsl_functionality1, Extension::kSPV_GOOGLE_user_type, Extension::kSPV_INTEL_arbitrary_precision_fixed_point, Extension::kSPV_INTEL_arbitrary_precision_floating_point, Extension::kSPV_INTEL_arbitrary_precision_integers, Extension::kSPV_INTEL_bfloat16_conversion, Extension::kSPV_INTEL_blocking_pipes, Extension::kSPV_INTEL_cache_controls, Extension::kSPV_INTEL_debug_module, Extension::kSPV_INTEL_device_side_avc_motion_estimation, Extension::kSPV_INTEL_float_controls2, Extension::kSPV_INTEL_fp_fast_math_mode, Extension::kSPV_INTEL_fp_max_error, Extension::kSPV_INTEL_fpga_argument_interfaces, Extension::kSPV_INTEL_fpga_buffer_location, Extension::kSPV_INTEL_fpga_cluster_attributes, Extension::kSPV_INTEL_fpga_dsp_control, Extension::kSPV_INTEL_fpga_invocation_pipelining_attributes, Extension::kSPV_INTEL_fpga_latency_control, Extension::kSPV_INTEL_fpga_loop_controls, Extension::kSPV_INTEL_fpga_memory_accesses, Extension::kSPV_INTEL_fpga_memory_attributes, Extension::kSPV_INTEL_fpga_reg, Extension::kSPV_INTEL_function_pointers, Extension::kSPV_INTEL_global_variable_fpga_decorations, Extension::kSPV_INTEL_global_variable_host_access, Extension::kSPV_INTEL_inline_assembly, Extension::kSPV_INTEL_io_pipes, Extension::kSPV_INTEL_kernel_attributes, Extension::kSPV_INTEL_long_composites, Extension::kSPV_INTEL_loop_fuse, Extension::kSPV_INTEL_masked_gather_scatter, Extension::kSPV_INTEL_maximum_registers, Extension::kSPV_INTEL_media_block_io, Extension::kSPV_INTEL_memory_access_aliasing, Extension::kSPV_INTEL_optnone, Extension::kSPV_INTEL_runtime_aligned, Extension::kSPV_INTEL_shader_integer_functions2, Extension::kSPV_INTEL_split_barrier, Extension::kSPV_INTEL_subgroups, Extension::kSPV_INTEL_unstructured_loop_controls, Extension::kSPV_INTEL_usm_storage_classes, Extension::kSPV_INTEL_variable_length_array, Extension::kSPV_INTEL_vector_compute, Extension::kSPV_KHR_16bit_storage, Extension::kSPV_KHR_8bit_storage, Extension::kSPV_KHR_bit_instructions, Extension::kSPV_KHR_cooperative_matrix, Extension::kSPV_KHR_device_group, Extension::kSPV_KHR_expect_assume, Extension::kSPV_KHR_float_controls, Extension::kSPV_KHR_float_controls2, Extension::kSPV_KHR_fragment_shader_barycentric, Extension::kSPV_KHR_fragment_shading_rate, Extension::kSPV_KHR_integer_dot_product, Extension::kSPV_KHR_linkonce_odr, Extension::kSPV_KHR_maximal_reconvergence, Extension::kSPV_KHR_multiview, Extension::kSPV_KHR_no_integer_wrap_decoration, Extension::kSPV_KHR_non_semantic_info, Extension::kSPV_KHR_physical_storage_buffer, Extension::kSPV_KHR_post_depth_coverage, Extension::kSPV_KHR_quad_control, Extension::kSPV_KHR_ray_cull_mask, Extension::kSPV_KHR_ray_query, Extension::kSPV_KHR_ray_tracing, Extension::kSPV_KHR_ray_tracing_position_fetch, Extension::kSPV_KHR_shader_atomic_counter_ops, Extension::kSPV_KHR_shader_ballot, Extension::kSPV_KHR_shader_clock, Extension::kSPV_KHR_shader_draw_parameters, Extension::kSPV_KHR_storage_buffer_storage_class, Extension::kSPV_KHR_subgroup_rotate, Extension::kSPV_KHR_subgroup_uniform_control_flow, Extension::kSPV_KHR_subgroup_vote, Extension::kSPV_KHR_terminate_invocation, Extension::kSPV_KHR_uniform_group_instructions, Extension::kSPV_KHR_variable_pointers, Extension::kSPV_KHR_vulkan_memory_model, Extension::kSPV_KHR_workgroup_memory_explicit_layout, Extension::kSPV_NVX_multiview_per_view_attributes, Extension::kSPV_NV_bindless_texture, Extension::kSPV_NV_compute_shader_derivatives, Extension::kSPV_NV_cooperative_matrix, Extension::kSPV_NV_displacement_micromap, Extension::kSPV_NV_fragment_shader_barycentric, Extension::kSPV_NV_geometry_shader_passthrough, Extension::kSPV_NV_mesh_shader, Extension::kSPV_NV_raw_access_chains, Extension::kSPV_NV_ray_tracing, Extension::kSPV_NV_ray_tracing_motion_blur, Extension::kSPV_NV_sample_mask_override_coverage, Extension::kSPV_NV_shader_atomic_fp16_vector, Extension::kSPV_NV_shader_image_footprint, Extension::kSPV_NV_shader_invocation_reorder, Extension::kSPV_NV_shader_sm_builtins, Extension::kSPV_NV_shader_subgroup_partitioned, Extension::kSPV_NV_shading_rate, Extension::kSPV_NV_stereo_view_rendering, Extension::kSPV_NV_viewport_array2, Extension::kSPV_QCOM_image_processing, Extension::kSPV_QCOM_image_processing2, Extension::kSPV_VALIDATOR_ignore_type_decl_unique };
         const auto b = std::begin(known_ext_strs);
         const auto e = std::end(known_ext_strs);
         const auto found = std::equal_range(
@@ -472,6 +500,8 @@ const char* CapabilityToString(spv::Capability capability) {
       return "TextureBoxFilterQCOM";
     case spv::Capability::TextureBlockMatchQCOM:
       return "TextureBlockMatchQCOM";
+    case spv::Capability::TextureBlockMatch2QCOM:
+      return "TextureBlockMatch2QCOM";
     case spv::Capability::Float16ImageAMD:
       return "Float16ImageAMD";
     case spv::Capability::ImageGatherBiasLodAMD:
@@ -486,6 +516,10 @@ const char* CapabilityToString(spv::Capability capability) {
       return "Int64ImageEXT";
     case spv::Capability::ShaderClockKHR:
       return "ShaderClockKHR";
+    case spv::Capability::ShaderEnqueueAMDX:
+      return "ShaderEnqueueAMDX";
+    case spv::Capability::QuadControlKHR:
+      return "QuadControlKHR";
     case spv::Capability::SampleMaskOverrideCoverageNV:
       return "SampleMaskOverrideCoverageNV";
     case spv::Capability::GeometryShaderPassthroughNV:
@@ -566,6 +600,8 @@ const char* CapabilityToString(spv::Capability capability) {
       return "FragmentShaderPixelInterlockEXT";
     case spv::Capability::DemoteToHelperInvocation:
       return "DemoteToHelperInvocation";
+    case spv::Capability::DisplacementMicromapNV:
+      return "DisplacementMicromapNV";
     case spv::Capability::RayTracingOpacityMicromapEXT:
       return "RayTracingOpacityMicromapEXT";
     case spv::Capability::ShaderInvocationReorderNV:
@@ -574,6 +610,12 @@ const char* CapabilityToString(spv::Capability capability) {
       return "BindlessTextureNV";
     case spv::Capability::RayQueryPositionFetchKHR:
       return "RayQueryPositionFetchKHR";
+    case spv::Capability::AtomicFloat16VectorNV:
+      return "AtomicFloat16VectorNV";
+    case spv::Capability::RayTracingDisplacementMicromapNV:
+      return "RayTracingDisplacementMicromapNV";
+    case spv::Capability::RawAccessChainsNV:
+      return "RawAccessChainsNV";
     case spv::Capability::SubgroupShuffleINTEL:
       return "SubgroupShuffleINTEL";
     case spv::Capability::SubgroupBufferBlockIOINTEL:
@@ -674,12 +716,14 @@ const char* CapabilityToString(spv::Capability capability) {
       return "BitInstructions";
     case spv::Capability::GroupNonUniformRotateKHR:
       return "GroupNonUniformRotateKHR";
+    case spv::Capability::FloatControls2:
+      return "FloatControls2";
     case spv::Capability::AtomicFloat32AddEXT:
       return "AtomicFloat32AddEXT";
     case spv::Capability::AtomicFloat64AddEXT:
       return "AtomicFloat64AddEXT";
-    case spv::Capability::LongConstantCompositeINTEL:
-      return "LongConstantCompositeINTEL";
+    case spv::Capability::LongCompositesINTEL:
+      return "LongCompositesINTEL";
     case spv::Capability::OptNoneINTEL:
       return "OptNoneINTEL";
     case spv::Capability::AtomicFloat16AddEXT:
@@ -690,14 +734,28 @@ const char* CapabilityToString(spv::Capability capability) {
       return "BFloat16ConversionINTEL";
     case spv::Capability::SplitBarrierINTEL:
       return "SplitBarrierINTEL";
+    case spv::Capability::FPGAClusterAttributesV2INTEL:
+      return "FPGAClusterAttributesV2INTEL";
     case spv::Capability::FPGAKernelAttributesv2INTEL:
       return "FPGAKernelAttributesv2INTEL";
+    case spv::Capability::FPMaxErrorINTEL:
+      return "FPMaxErrorINTEL";
     case spv::Capability::FPGALatencyControlINTEL:
       return "FPGALatencyControlINTEL";
     case spv::Capability::FPGAArgumentInterfacesINTEL:
       return "FPGAArgumentInterfacesINTEL";
+    case spv::Capability::GlobalVariableHostAccessINTEL:
+      return "GlobalVariableHostAccessINTEL";
+    case spv::Capability::GlobalVariableFPGADecorationsINTEL:
+      return "GlobalVariableFPGADecorationsINTEL";
     case spv::Capability::GroupUniformArithmeticKHR:
       return "GroupUniformArithmeticKHR";
+    case spv::Capability::MaskedGatherScatterINTEL:
+      return "MaskedGatherScatterINTEL";
+    case spv::Capability::CacheControlsINTEL:
+      return "CacheControlsINTEL";
+    case spv::Capability::RegisterLimitsINTEL:
+      return "RegisterLimitsINTEL";
     case spv::Capability::Max:
       assert(0 && "Attempting to convert spv::Capability::Max to string");
       return "";

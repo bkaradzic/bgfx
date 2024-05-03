@@ -8,8 +8,8 @@
 
 BUFFER_RO(prevPositionBuffer,    vec4, 0);
 BUFFER_RO(currPositionBuffer,    vec4, 1);
-BUFFER_WR(outPrevPositionBuffer, vec4, 2);
-BUFFER_WR(outCurrPositionBuffer, vec4, 3);
+BUFFER_WO(outPrevPositionBuffer, vec4, 2);
+BUFFER_WO(outCurrPositionBuffer, vec4, 3);
 
 #define GROUP_SIZE 512
 SHARED vec3 otherEntries[GROUP_SIZE];

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -940,7 +940,7 @@ namespace bgfx
 
 		if (_instruction.opcode >= SpvOpcode::Count)
 		{
-			BX_ERROR_SET(_err, BGFX_SHADER_SPIRV_INVALID_INSTRUCTION, "SPIR-V: Invalid instruction.");
+			BX_ERROR_SET(_err, kShaderInvalidInstruction, "SPIR-V: Invalid instruction.");
 			return size;
 		}
 
@@ -1158,7 +1158,7 @@ namespace bgfx
 		||  _spirv.header.magic != SPIRV_MAGIC
 		   )
 		{
-			BX_ERROR_SET(_err, BGFX_SHADER_SPIRV_INVALID_HEADER, "SPIR-V: Invalid header.");
+			BX_ERROR_SET(_err, kShaderInvalidHeader, "SPIR-V: Invalid header.");
 			return size;
 		}
 
@@ -1198,7 +1198,7 @@ namespace bgfx
 						, instruction.length
 						, getName(instruction.opcode)
 						);
-				BX_ERROR_SET(_err, BGFX_SHADER_SPIRV_INVALID_INSTRUCTION, "SPIR-V: Invalid instruction.");
+				BX_ERROR_SET(_err, kShaderInvalidInstruction, "SPIR-V: Invalid instruction.");
 				return;
 			}
 

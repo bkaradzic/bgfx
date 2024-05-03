@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+# Copyright 2011-2024 Branimir Karadzic. All rights reserved.
 # License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 #
 
@@ -40,9 +40,9 @@ all:
 #reused @make -s --no-print-directory build -C 34-mvs
 #reused @make -s --no-print-directory build -C 35-dynamic
 	@make -s --no-print-directory build -C 36-sky
-#	@make -s --no-print-directory build -C 37-gpudrivenrendering
+	@make -s --no-print-directory build -C 37-gpudrivenrendering
 	@make -s --no-print-directory build -C 38-bloom
-#	@make -s --no-print-directory build -C 39-assao
+	@make -s --no-print-directory build -C 39-assao
 	@make -s --no-print-directory build -C 40-svt
 	@make -s --no-print-directory build -C 41-tess
 	@make -s --no-print-directory build -C 42-bunnylod
@@ -91,9 +91,9 @@ rebuild:
 #reused @make -s --no-print-directory rebuild -C 34-mvs
 #reused @make -s --no-print-directory rebuild -C 35-dynamic
 	@make -s --no-print-directory rebuild -C 36-sky
-#	@make -s --no-print-directory rebuild -C 37-gpudrivenrendering
+	@make -s --no-print-directory rebuild -C 37-gpudrivenrendering
 	@make -s --no-print-directory rebuild -C 38-bloom
-#	@make -s --no-print-directory rebuild -C 39-assao
+	@make -s --no-print-directory rebuild -C 39-assao
 	@make -s --no-print-directory rebuild -C 40-svt
 	@make -s --no-print-directory rebuild -C 41-tess
 	@make -s --no-print-directory rebuild -C 42-bunnylod

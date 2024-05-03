@@ -28,8 +28,8 @@ namespace opt {
 // external design may change as the layer evolves.
 class InstBindlessCheckPass : public InstrumentPass {
  public:
-  InstBindlessCheckPass(uint32_t desc_set, uint32_t shader_id)
-      : InstrumentPass(desc_set, shader_id, kInstValidationIdBindless, true) {}
+  InstBindlessCheckPass(uint32_t shader_id)
+      : InstrumentPass(0, shader_id, true, true) {}
 
   ~InstBindlessCheckPass() override = default;
 
@@ -43,8 +43,6 @@ class InstBindlessCheckPass : public InstrumentPass {
                         UptrVectorIterator<BasicBlock> ref_block_itr,
                         uint32_t stage_idx,
                         std::vector<std::unique_ptr<BasicBlock>>* new_blocks);
-
-  void SetupInputBufferIds();
 
   uint32_t GenDescCheckFunctionId();
 
@@ -107,8 +105,7 @@ class InstBindlessCheckPass : public InstrumentPass {
   // writes debug error output utilizing |ref|, |error_id|, |length_id| and
   // |stage_idx|. Generate merge block for valid and invalid branches. Kill
   // original reference.
-  void GenCheckCode(uint32_t check_id, uint32_t error_id, uint32_t offset_id,
-                    uint32_t length_id, uint32_t stage_idx, RefAnalysis* ref,
+  void GenCheckCode(uint32_t check_id, RefAnalysis* ref,
                     std::vector<std::unique_ptr<BasicBlock>>* new_blocks);
 
   // Initialize state for instrumenting bindless checking
@@ -124,11 +121,7 @@ class InstBindlessCheckPass : public InstrumentPass {
   // Mapping from variable to binding
   std::unordered_map<uint32_t, uint32_t> var2binding_;
 
-  uint32_t desc_check_func_id_{0};
-  uint32_t desc_set_type_id_{0};
-  uint32_t desc_set_ptr_id_{0};
-  uint32_t input_buffer_struct_id_{0};
-  uint32_t input_buffer_ptr_id_{0};
+  uint32_t check_desc_func_id_{0};
 };
 
 }  // namespace opt

@@ -46,11 +46,11 @@ Reset
 .. doxygenfunction:: bgfx::reset
 
 .. doxygendefine:: BGFX_RESET_NONE
-.. doxygendefine:: BGFX_RESET_FULLSCREEN
 .. doxygendefine:: BGFX_RESET_MSAA_X2
 .. doxygendefine:: BGFX_RESET_MSAA_X4
 .. doxygendefine:: BGFX_RESET_MSAA_X8
 .. doxygendefine:: BGFX_RESET_MSAA_X16
+.. doxygendefine:: BGFX_RESET_FULLSCREEN
 .. doxygendefine:: BGFX_RESET_VSYNC
 .. doxygendefine:: BGFX_RESET_MAXANISOTROPY
 .. doxygendefine:: BGFX_RESET_CAPTURE
@@ -60,6 +60,8 @@ Reset
 .. doxygendefine:: BGFX_RESET_HDR10
 .. doxygendefine:: BGFX_RESET_HIDPI
 .. doxygendefine:: BGFX_RESET_DEPTH_CLAMP
+.. doxygendefine:: BGFX_RESET_SUSPEND
+.. doxygendefine:: BGFX_RESET_TRANSPARENT_BACKBUFFER
 
 Frame
 *****
@@ -478,6 +480,10 @@ Resources
 
 Shaders and Programs
 ~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+
+    Shaders must be compiled with offline command line too shaderc.
 
 .. doxygenfunction:: bgfx::createShader
 .. doxygenfunction:: bgfx::getShaderUniforms

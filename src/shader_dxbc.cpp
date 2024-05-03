@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -1230,7 +1230,7 @@ namespace bgfx
 				_instruction.primitiveTopology = DxbcPrimitiveTopology::Enum( (token & UINT32_C(0x0001f800) ) >> 11);
 				break;
 
-			case DxbcOpcode::DCL_INPUT_PS: BX_FALLTHROUGH;
+			case DxbcOpcode::DCL_INPUT_PS: [[fallthrough]];
 			case DxbcOpcode::DCL_INPUT_PS_SIV:
 				// 0       1       2       3
 				// 76543210765432107654321076543210
@@ -1395,12 +1395,12 @@ namespace bgfx
 		_instruction.numOperands = info.numOperands;
 		switch (info.numOperands)
 		{
-		case 6: size += read(_reader, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
-		case 5: size += read(_reader, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
-		case 4: size += read(_reader, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
-		case 3: size += read(_reader, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
-		case 2: size += read(_reader, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
-		case 1: size += read(_reader, _instruction.operand[currOp++], _err); BX_FALLTHROUGH;
+		case 6: size += read(_reader, _instruction.operand[currOp++], _err); [[fallthrough]];
+		case 5: size += read(_reader, _instruction.operand[currOp++], _err); [[fallthrough]];
+		case 4: size += read(_reader, _instruction.operand[currOp++], _err); [[fallthrough]];
+		case 3: size += read(_reader, _instruction.operand[currOp++], _err); [[fallthrough]];
+		case 2: size += read(_reader, _instruction.operand[currOp++], _err); [[fallthrough]];
+		case 1: size += read(_reader, _instruction.operand[currOp++], _err); [[fallthrough]];
 		case 0:
 			if (0 < info.numValues)
 			{
@@ -1471,7 +1471,7 @@ namespace bgfx
 				token |= (_instruction.primitiveTopology << 11) & UINT32_C(0x0001f800);
 				break;
 
-			case DxbcOpcode::DCL_INPUT_PS: BX_FALLTHROUGH;
+			case DxbcOpcode::DCL_INPUT_PS: [[fallthrough]];
 			case DxbcOpcode::DCL_INPUT_PS_SIV:
 				token |= (_instruction.interpolation << 11) & UINT32_C(0x0000f800);
 				break;
@@ -1723,11 +1723,10 @@ namespace bgfx
 			case DxbcOperandType::Imm64:
 				for (uint32_t jj = 0; jj < operand.num; ++jj)
 				{
-					union { uint32_t i; float f; } cast = { operand.un.imm32[jj] };
 					size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
 								, "%s%f"
 								, 0 == jj ? "(" : ", "
-								, cast.f
+								, bx::bitCast<float>(operand.un.imm32[jj])
 								);
 				}
 
@@ -1991,7 +1990,7 @@ namespace bgfx
 			{
 			case DXBC_CHUNK_SHADER_EX:
 				_dxbc.shader.shex = true;
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case DXBC_CHUNK_SHADER:
 				size += read(_reader, _dxbc.shader, _err);

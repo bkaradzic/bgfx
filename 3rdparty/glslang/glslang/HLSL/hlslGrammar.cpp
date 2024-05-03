@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2016-2018 Google, Inc.
 // Copyright (C) 2016 LunarG, Inc.
+// Copyright (C) 2023 Mobica Limited.
 //
 // All rights reserved.
 //
@@ -390,6 +391,7 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& nodeList)
     case EvqOut:
     case EvqInOut:
         parseContext.error(token.loc, "in/out qualifiers are only valid on parameters", token.string->c_str(), "");
+        break;
     default:
         break;
     }
@@ -594,6 +596,7 @@ bool HlslGrammar::acceptControlDeclaration(TIntermNode*& node)
 // fully_specified_type
 //      : type_specifier
 //      | type_qualifier type_specifier
+//      | type_specifier type_qualifier
 //
 bool HlslGrammar::acceptFullySpecifiedType(TType& type, const TAttributes& attributes)
 {
@@ -605,7 +608,7 @@ bool HlslGrammar::acceptFullySpecifiedType(TType& type, TIntermNode*& nodeList, 
     // type_qualifier
     TQualifier qualifier;
     qualifier.clear();
-    if (! acceptQualifier(qualifier))
+    if (! acceptPreQualifier(qualifier))
         return false;
     TSourceLoc loc = token.loc;
 
@@ -619,6 +622,10 @@ bool HlslGrammar::acceptFullySpecifiedType(TType& type, TIntermNode*& nodeList, 
 
         return false;
     }
+
+    // type_qualifier
+    if (! acceptPostQualifier(qualifier))
+       return false;
 
     if (type.getBasicType() == EbtBlock) {
         // the type was a block, which set some parts of the qualifier
@@ -634,7 +641,7 @@ bool HlslGrammar::acceptFullySpecifiedType(TType& type, TIntermNode*& nodeList, 
             parseContext.declareBlock(loc, type);
     } else {
         // Some qualifiers are set when parsing the type.  Merge those with
-        // whatever comes from acceptQualifier.
+        // whatever comes from acceptPreQualifier and acceptPostQualifier.
         assert(qualifier.layoutFormat == ElfNone);
 
         qualifier.layoutFormat = type.getQualifier().layoutFormat;
@@ -660,7 +667,7 @@ bool HlslGrammar::acceptFullySpecifiedType(TType& type, TIntermNode*& nodeList, 
 //
 // Zero or more of these, so this can't return false.
 //
-bool HlslGrammar::acceptQualifier(TQualifier& qualifier)
+bool HlslGrammar::acceptPreQualifier(TQualifier& qualifier)
 {
     do {
         switch (peek()) {
@@ -759,6 +766,25 @@ bool HlslGrammar::acceptQualifier(TQualifier& qualifier)
                 return false;
             break;
 
+        default:
+            return true;
+        }
+        advanceToken();
+    } while (true);
+}
+
+// type_qualifier
+//      : qualifier qualifier ...
+//
+// Zero or more of these, so this can't return false.
+//
+bool HlslGrammar::acceptPostQualifier(TQualifier& qualifier)
+{
+    do {
+        switch (peek()) {
+        case EHTokConst:
+            qualifier.storage = EvqConst;
+            break;
         default:
             return true;
         }

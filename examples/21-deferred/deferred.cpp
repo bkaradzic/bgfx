@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -18,8 +18,6 @@ constexpr bgfx::ViewId kRenderPassLight        = 2;
 constexpr bgfx::ViewId kRenderPassCombine      = 3;
 constexpr bgfx::ViewId kRenderPassDebugLights  = 4;
 constexpr bgfx::ViewId kRenderPassDebugGBuffer = 5;
-
-static float s_texelHalf = 0.0f;
 
 struct PosNormalTangentTexcoordVertex
 {
@@ -136,7 +134,7 @@ static const uint16_t s_cubeIndices[36] =
 	21, 23, 22,
 };
 
-void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
+void screenSpaceQuad(bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
 {
 	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout) )
 	{
@@ -149,15 +147,13 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 		const float miny = 0.0f;
 		const float maxy = _height*2.0f;
 
-		const float texelHalfW = _texelHalf/_textureWidth;
-		const float texelHalfH = _texelHalf/_textureHeight;
-		const float minu = -1.0f + texelHalfW;
-		const float maxu =  1.0f + texelHalfH;
+		const float minu = -1.0f;
+		const float maxu =  1.0f;
 
 		const float zz = 0.0f;
 
-		float minv = texelHalfH;
-		float maxv = 2.0f + texelHalfH;
+		float minv = 0.0f;
+		float maxv = 2.0f;
 
 		if (_originBottomLeft)
 		{
@@ -213,6 +209,7 @@ public:
 		init.vendorId = args.m_pciId;
 		init.platformData.nwh  = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
 		init.platformData.ndt  = entry::getNativeDisplayHandle();
+		init.platformData.type = entry::getNativeWindowHandleType();
 		init.resolution.width  = m_width;
 		init.resolution.height = m_height;
 		init.resolution.reset  = m_reset;
@@ -333,8 +330,6 @@ public:
 		imguiCreate();
 
 		m_timeOffset = bx::getHPCounter();
-		const bgfx::RendererType::Enum renderer = bgfx::getRendererType();
-		s_texelHalf = bgfx::RendererType::Direct3D9 == renderer ? 0.5f : 0.0f;
 
 		// Get renderer capabilities info.
 		m_caps = bgfx::getCaps();
@@ -689,7 +684,7 @@ public:
 				// Clear UAV texture
 				if (m_useUav)
 				{
-					screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
+					screenSpaceQuad(m_caps->originBottomLeft);
 					bgfx::setViewFrameBuffer(kRenderPassClearUav, BGFX_INVALID_HANDLE);
 					bgfx::setState(0);
 					bgfx::setImage(2, m_lightBufferTex, 0, bgfx::Access::ReadWrite, bgfx::TextureFormat::RGBA8);
@@ -816,7 +811,7 @@ public:
 							| BGFX_STATE_WRITE_A
 							| BGFX_STATE_BLEND_ADD
 							);
-						screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
+						screenSpaceQuad(m_caps->originBottomLeft);
 
 						if (bgfx::isValid(m_lightTaProgram)
 						&&  m_useTArray)
@@ -845,7 +840,7 @@ public:
 					| BGFX_STATE_WRITE_RGB
 					| BGFX_STATE_WRITE_A
 					);
-				screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
+				screenSpaceQuad(m_caps->originBottomLeft);
 
 				if (bgfx::isValid(m_lightTaProgram)
 				&&  m_useTArray)

@@ -1,23 +1,13 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #ifndef BGFX_RENDERER_D3D_H_HEADER_GUARD
 #define BGFX_RENDERER_D3D_H_HEADER_GUARD
 
-#if 0 // BGFX_CONFIG_DEBUG && BGFX_CONFIG_RENDERER_DIRECT3D9 && !(BX_COMPILER_GCC || BX_COMPILER_CLANG)
-#	include <sal.h>
-#	include <dxerr.h>
-#	if BX_COMPILER_MSVC
-#		pragma comment(lib, "dxerr.lib")
-#	endif // BX_COMPILER_MSVC
-#	define DX_CHECK_EXTRA_F " (%s): %s"
-#	define DX_CHECK_EXTRA_ARGS , DXGetErrorString(__hr__), DXGetErrorDescription(__hr__)
-#else
-#	define DX_CHECK_EXTRA_F ""
-#	define DX_CHECK_EXTRA_ARGS
-#endif // BGFX_CONFIG_DEBUG && BGFX_CONFIG_RENDERER_DIRECT3D9
+#define DX_CHECK_EXTRA_F ""
+#define DX_CHECK_EXTRA_ARGS
 
 #ifndef DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
 #	define DXGI_ERROR_NOT_CURRENTLY_AVAILABLE HRESULT(0x887A0022)

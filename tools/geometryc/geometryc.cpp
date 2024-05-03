@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -121,8 +121,8 @@ static bx::Vec3 s_axisVectors[6] =
 struct CoordinateSystem
 {
 	bx::Handedness::Enum m_handedness;
-	Axis::Enum         m_up;
-	Axis::Enum         m_forward;
+	Axis::Enum           m_up;
+	Axis::Enum           m_forward;
 };
 
 struct CoordinateSystemMapping
@@ -141,11 +141,11 @@ static const CoordinateSystemMapping s_coordinateSystemMappings[] =
 
 struct Mesh
 {
-	Vec3Array		m_positions;
-	Vec3Array		m_normals;
-	Vec3Array		m_texcoords;
-	TriangleArray	m_triangles;
-	GroupArray		m_groups;
+	Vec3Array     m_positions;
+	Vec3Array     m_normals;
+	Vec3Array     m_texcoords;
+	TriangleArray m_triangles;
+	GroupArray    m_groups;
 
 	CoordinateSystem m_coordinateSystem;
 };
@@ -506,8 +506,8 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 
 	// Coordinate system is right-handed, but up/forward is not defined, but +Y Up, +Z Forward seems to be a common default
 	_mesh->m_coordinateSystem.m_handedness = bx::Handedness::Right;
-	_mesh->m_coordinateSystem.m_up = Axis::PositiveY;
-	_mesh->m_coordinateSystem.m_forward = Axis::PositiveZ;
+	_mesh->m_coordinateSystem.m_up         = Axis::PositiveY;
+	_mesh->m_coordinateSystem.m_forward    = Axis::PositiveZ;
 
 	uint32_t num = 0;
 
@@ -559,6 +559,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 						bx::StringView triplet(argv[edge + 1]);
 						bx::StringView vertex(triplet);
 						bx::StringView texcoord = bx::strFind(triplet, '/');
+
 						if (!texcoord.isEmpty() )
 						{
 							vertex.set(vertex.getPtr(), texcoord.getPtr() );
@@ -591,7 +592,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 
 					switch (edge)
 					{
-					case 0:	case 1:	case 2:
+					case 0: case 1: case 2:
 						triangle.m_index[edge] = index;
 						if (2 == edge)
 						{
@@ -652,7 +653,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 					{
 					case 4:
 						bx::fromString(&texcoord.z, argv[3]);
-						BX_FALLTHROUGH;
+						[[fallthrough]];
 
 					case 3:
 						bx::fromString(&texcoord.y, argv[2]);
@@ -705,32 +706,22 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 
 				group.m_material = material;
 			}
-// unsupported tags
-// 				else if (0 == bx::strCmp(argv[0], "mtllib") )
-// 				{
-// 				}
-// 				else if (0 == bx::strCmp(argv[0], "o") )
-// 				{
-// 				}
-// 				else if (0 == bx::strCmp(argv[0], "s") )
-// 				{
-// 				}
 		}
 
 		++num;
 	}
 
 	group.m_numTriangles = (uint32_t)(_mesh->m_triangles.size() ) - group.m_startTriangle;
+
 	if (0 < group.m_numTriangles)
 	{
 		_mesh->m_groups.push_back(group);
 		group.m_startTriangle = (uint32_t)(_mesh->m_triangles.size() );
-		group.m_numTriangles = 0;
+		group.m_numTriangles  = 0;
 	}
 
 	bx::printf("obj parser # %d\n", num);
 }
-
 
 void gltfReadFloat(const float* _accessorData, cgltf_size _accessorNumComponents, cgltf_size _index, cgltf_float* _out, cgltf_size _outElementSize)
 {
@@ -759,10 +750,10 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 			cgltf_size numVertex = primitive->attributes[0].data->count;
 
 			int32_t basePositionIndex = (int32_t)_mesh->m_positions.size();
-			int32_t baseNormalIndex = (int32_t)_mesh->m_normals.size();
+			int32_t baseNormalIndex   = (int32_t)_mesh->m_normals.size();
 			int32_t baseTexcoordIndex = (int32_t)_mesh->m_texcoords.size();
 
-			bool hasNormal = false;
+			bool hasNormal   = false;
 			bool hasTexcoord = false;
 
 			for (cgltf_size attributeIndex = 0; attributeIndex < primitive->attributes_count; ++attributeIndex)
@@ -835,9 +826,9 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 						Index3 index;
 						int32_t vertexIndex = int32_t(cgltf_accessor_read_index(accessor, v+i) );
 						index.m_position = basePositionIndex + vertexIndex;
-						index.m_normal = hasNormal ? baseNormalIndex + vertexIndex : -1;
+						index.m_normal   = hasNormal   ? baseNormalIndex   + vertexIndex : -1;
 						index.m_texcoord = hasTexcoord ? baseTexcoordIndex + vertexIndex : -1;
-						index.m_vbc = _hasBc ? i : 0;
+						index.m_vbc      = _hasBc      ? i                               :  0;
 						triangle.m_index[i] = index;
 					}
 					_mesh->m_triangles.push_back(triangle);
@@ -853,9 +844,9 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 						Index3 index;
 						int32_t vertexIndex = int32_t(v * 3 + i);
 						index.m_position = basePositionIndex + vertexIndex;
-						index.m_normal = hasNormal ? baseNormalIndex + vertexIndex : -1;
+						index.m_normal   = hasNormal   ? baseNormalIndex   + vertexIndex : -1;
 						index.m_texcoord = hasTexcoord ? baseTexcoordIndex + vertexIndex : -1;
-						index.m_vbc = _hasBc ? i : 0;
+						index.m_vbc      = _hasBc      ? i                               :  0;
 						triangle.m_index[i] = index;
 					}
 					_mesh->m_triangles.push_back(triangle);
@@ -863,6 +854,7 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 			}
 
 			_group->m_numTriangles = (uint32_t)(_mesh->m_triangles.size() ) - _group->m_startTriangle;
+
 			if (0 < _group->m_numTriangles)
 			{
 				_mesh->m_groups.push_back(*_group);
@@ -873,7 +865,9 @@ void processGltfNode(cgltf_node* _node, Mesh* _mesh, Group* _group, bool _hasBc)
 	}
 
 	for (cgltf_size childIndex = 0; childIndex < _node->children_count; ++childIndex)
+	{
 		processGltfNode(_node->children[childIndex], _mesh, _group, _hasBc);
+	}
 }
 
 void parseGltf(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc, const bx::StringView& _path)
@@ -931,7 +925,7 @@ void help(const char* _error = NULL)
 
 	bx::printf(
 		  "geometryc, bgfx geometry compiler tool, version %d.%d.%d.\n"
-		  "Copyright 2011-2023 Branimir Karadzic. All rights reserved.\n"
+		  "Copyright 2011-2024 Branimir Karadzic. All rights reserved.\n"
 		  "License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE\n\n"
 		, BGFX_GEOMETRYC_VERSION_MAJOR
 		, BGFX_GEOMETRYC_VERSION_MINOR
@@ -1113,7 +1107,7 @@ int main(int _argc, const char* _argv[])
 		float transform[16];
 		bx::mtxMul(transform, meshInvTranform, outTransform);
 
-		if ( mtxDeterminant(transform) < 0.0f )
+		if (mtxDeterminant(transform) < 0.0f )
 		{
 			changeWinding = !changeWinding;
 		}
@@ -1121,7 +1115,7 @@ int main(int _argc, const char* _argv[])
 		float identity[16];
 		bx::mtxIdentity(identity);
 
-		if ( 0 != bx::memCmp(identity, transform, sizeof(transform) ) )
+		if (0 != bx::memCmp(identity, transform, sizeof(transform) ) )
 		{
 			for (Vec3Array::iterator it = mesh.m_positions.begin(), itEnd = mesh.m_positions.end(); it != itEnd; ++it)
 			{
@@ -1136,31 +1130,32 @@ int main(int _argc, const char* _argv[])
 	}
 
 
-	bool hasColor = false;
-	bool hasNormal = false;
+	bool hasColor    = false;
+	bool hasNormal   = false;
 	bool hasTexcoord = false;
+
 	{
-		for (TriangleArray::iterator jt = mesh.m_triangles.begin(), jtEnd = mesh.m_triangles.end(); jt != jtEnd && !hasTexcoord; ++jt)
+		for (TriangleArray::iterator it = mesh.m_triangles.begin(), itEnd = mesh.m_triangles.end(); it != itEnd && !hasTexcoord; ++it)
 		{
 			for (uint32_t i = 0; i < 3; ++i)
 			{
-				hasTexcoord |= -1 != jt->m_index[i].m_texcoord;
+				hasTexcoord |= -1 != it->m_index[i].m_texcoord;
 			}
 		}
 
-		for (TriangleArray::iterator jt = mesh.m_triangles.begin(), jtEnd = mesh.m_triangles.end(); jt != jtEnd && !hasNormal; ++jt)
+		for (TriangleArray::iterator it = mesh.m_triangles.begin(), itEnd = mesh.m_triangles.end(); it != itEnd && !hasNormal; ++it)
 		{
 			for (uint32_t i = 0; i < 3; ++i)
 			{
-				hasNormal |= -1 != jt->m_index[i].m_normal;
+				hasNormal |= -1 != it->m_index[i].m_normal;
 			}
 		}
 
 		if (changeWinding)
 		{
-			for (TriangleArray::iterator jt = mesh.m_triangles.begin(), jtEnd = mesh.m_triangles.end(); jt != jtEnd; ++jt)
+			for (TriangleArray::iterator it = mesh.m_triangles.begin(), itEnd = mesh.m_triangles.end(); it != itEnd; ++it)
 			{
-				bx::swap(jt->m_index[1], jt->m_index[2]);
+				bx::swap(it->m_index[1], it->m_index[2]);
 			}
 		}
 	}

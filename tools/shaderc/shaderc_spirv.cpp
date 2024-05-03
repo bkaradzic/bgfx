@@ -1,9 +1,11 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
 #include "shaderc.h"
+
+#include <iostream> // std::cout
 
 BX_PRAGMA_DIAGNOSTIC_PUSH()
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4100) // error C4100: 'inclusionDepth' : unreferenced formal parameter
@@ -17,7 +19,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'u
 #include <ResourceLimits.h>
 #include <SPIRV/SPVRemapper.h>
 #include <SPIRV/GlslangToSpv.h>
-#include <webgpu/webgpu_cpp.h>
+#include <SPIRV/SpvTools.h>
 #define SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS
 #include <spirv_msl.hpp>
 #include <spirv_reflect.hpp>
@@ -373,9 +375,11 @@ namespace bgfx { namespace spirv
 		return size;
 	}
 
-	static spv_target_env getSpirvTargetVersion(uint32_t version)
+	static spv_target_env getSpirvTargetVersion(uint32_t _version, bx::WriterI* _messageWriter)
 	{
-		switch (version)
+		bx::ErrorAssert err;
+
+		switch (_version)
 		{
 			case 1010:
 				return SPV_ENV_VULKAN_1_0;
@@ -388,14 +392,16 @@ namespace bgfx { namespace spirv
 			case 1613:
 				return SPV_ENV_VULKAN_1_3;
 			default:
-				BX_ASSERT(0, "Unknown SPIR-V version requested. Returning SPV_ENV_VULKAN_1_0 as default.");
+				bx::write(_messageWriter, &err, "Warning: Unknown SPIR-V version requested. Returning SPV_ENV_VULKAN_1_0 as default.\n");
 				return SPV_ENV_VULKAN_1_0;
 		}
 	}
 
-	static glslang::EShTargetClientVersion getGlslangTargetVulkanVersion(uint32_t version)
+	static glslang::EShTargetClientVersion getGlslangTargetVulkanVersion(uint32_t _version, bx::WriterI* _messageWriter)
 	{
-		switch (version)
+		bx::ErrorAssert err;
+
+		switch (_version)
 		{
 			case 1010:
 				return glslang::EShTargetVulkan_1_0;
@@ -407,14 +413,16 @@ namespace bgfx { namespace spirv
 			case 1613:
 				return glslang::EShTargetVulkan_1_3;
 			default:
-				BX_ASSERT(0, "Unknown SPIR-V version requested. Returning EShTargetVulkan_1_0 as default.");
+				bx::write(_messageWriter, &err, "Warning: Unknown SPIR-V version requested. Returning EShTargetVulkan_1_0 as default.\n");
 				return glslang::EShTargetVulkan_1_0;
 		}
 	}
 
-	static glslang::EShTargetLanguageVersion getGlslangTargetSpirvVersion(uint32_t version)
+	static glslang::EShTargetLanguageVersion getGlslangTargetSpirvVersion(uint32_t _version, bx::WriterI* _messageWriter)
 	{
-		switch (version)
+		bx::ErrorAssert err;
+
+		switch (_version)
 		{
 			case 1010:
 				return glslang::EShTargetSpv_1_0;
@@ -427,7 +435,7 @@ namespace bgfx { namespace spirv
 			case 1613:
 				return glslang::EShTargetSpv_1_6;
 			default:
-				BX_ASSERT(0, "Unknown SPIR-V version requested. Returning EShTargetSpv_1_0 as default.");
+				bx::write(_messageWriter, &err, "Warning: Unknown SPIR-V version requested. Returning EShTargetSpv_1_0 as default.\n");
 				return glslang::EShTargetSpv_1_0;
 		}
 	}
@@ -461,13 +469,14 @@ namespace bgfx { namespace spirv
 			| EShMsgReadHlsl
 			| EShMsgVulkanRules
 			| EShMsgSpvRules
+			| EShMsgDebugInfo
 			);
 
 		shader->setEntryPoint("main");
 		shader->setAutoMapBindings(true);
 		shader->setEnvInput(glslang::EShSourceHlsl, stage, glslang::EShClientVulkan, s_GLSL_VULKAN_CLIENT_VERSION);
-		shader->setEnvClient(glslang::EShClientVulkan, getGlslangTargetVulkanVersion(_version));
-		shader->setEnvTarget(glslang::EShTargetSpv, getGlslangTargetSpirvVersion(_version));
+		shader->setEnvClient(glslang::EShClientVulkan, getGlslangTargetVulkanVersion(_version, _messageWriter));
+		shader->setEnvTarget(glslang::EShTargetSpv, getGlslangTargetSpirvVersion(_version, _messageWriter));
 
 		// Reserve two spots for the stage UBOs
 		shader->setShiftBinding(glslang::EResUbo, (stage == EShLanguage::EShLangFragment ? kSpirvFragmentBinding : kSpirvVertexBinding));
@@ -698,17 +707,18 @@ namespace bgfx { namespace spirv
 					program->dumpReflection();
 				}
 
-				BX_UNUSED(spv::MemorySemanticsAllMemory);
-
 				glslang::TIntermediate* intermediate = program->getIntermediate(stage);
 				std::vector<uint32_t> spirv;
 
 				glslang::SpvOptions options;
-				options.disableOptimizer = false;
+				options.disableOptimizer = _options.debugInformation;
+				options.generateDebugInfo = _options.debugInformation;
+				options.emitNonSemanticShaderDebugInfo = _options.debugInformation;
+				options.emitNonSemanticShaderDebugSource = _options.debugInformation;
 
 				glslang::GlslangToSpv(*intermediate, spirv, &options);
 
-				spvtools::Optimizer opt(getSpirvTargetVersion(_version));
+				spvtools::Optimizer opt(getSpirvTargetVersion(_version, _messageWriter));
 
 				auto print_msg_to_stderr = [_messageWriter, &messageErr](
 					  spv_message_level_t
@@ -741,7 +751,7 @@ namespace bgfx { namespace spirv
 				{
 					if (g_verbose)
 					{
-						glslang::SpirvToolsDisassemble(std::cout, spirv, getSpirvTargetVersion(_version));
+						glslang::SpirvToolsDisassemble(std::cout, spirv, getSpirvTargetVersion(_version, _messageWriter));
 					}
 
 					spirv_cross::CompilerReflection refl(spirv);

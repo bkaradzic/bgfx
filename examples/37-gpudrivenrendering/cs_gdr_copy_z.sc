@@ -6,7 +6,7 @@
 #include "bgfx_compute.sh"
 
 SAMPLER2D(s_texOcclusionDepth, 0);
-IMAGE2D_WR(s_texOcclusionDepthOut, r32f, 1);
+IMAGE2D_WO(s_texOcclusionDepthOut, r32f, 1);
 
 uniform vec4 u_inputRTSize;
 

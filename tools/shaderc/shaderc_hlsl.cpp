@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -533,7 +533,7 @@ namespace bgfx { namespace hlsl
 					if (end.isEmpty())
 						end = bx::strFind(bindDesc.Name, "Texture");
 
-					if (!end.isEmpty())
+					if (!end.isEmpty() )
 					{
 						Uniform un;
 						un.name.assign(bindDesc.Name, (end.getPtr() - bindDesc.Name) );

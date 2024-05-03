@@ -173,7 +173,7 @@ bool RangeSliderFloat(const char* label, float* v1, float* v2, float v_min, floa
         return false;
     }
 
-    const bool hovered = ItemHoverable(frame_bb, id);
+    const bool hovered = ItemHoverable(frame_bb, id, g.LastItemData.InFlags);
     if (hovered)
         SetHoveredID(id);
 
@@ -183,13 +183,12 @@ bool RangeSliderFloat(const char* label, float* v1, float* v2, float v_min, floa
 
     // Tabbing or CTRL-clicking on Slider turns it into an input box
     bool start_text_input = false;
-    const bool tab_focus_requested = (GetItemStatusFlags() & ImGuiItemStatusFlags_FocusedByTabbing) != 0;
-    if (tab_focus_requested || (hovered && g.IO.MouseClicked[0]))
+    if (hovered && g.IO.MouseClicked[0])
     {
         SetActiveID(id, window);
         FocusWindow(window);
 
-        if (tab_focus_requested || g.IO.KeyCtrl)
+        if (g.IO.KeyCtrl)
         {
             start_text_input = true;
             g.TempInputId = 0;

@@ -420,14 +420,16 @@ void LocalAccessChainConvertPass::InitExtensions() {
        "SPV_EXT_demote_to_helper_invocation", "SPV_EXT_descriptor_indexing",
        "SPV_NV_fragment_shader_barycentric",
        "SPV_NV_compute_shader_derivatives", "SPV_NV_shader_image_footprint",
-       "SPV_NV_shading_rate", "SPV_NV_mesh_shader", "SPV_NV_ray_tracing",
-       "SPV_KHR_ray_tracing", "SPV_KHR_ray_query",
+       "SPV_NV_shading_rate", "SPV_NV_mesh_shader", "SPV_EXT_mesh_shader",
+       "SPV_NV_ray_tracing", "SPV_KHR_ray_tracing", "SPV_KHR_ray_query",
        "SPV_EXT_fragment_invocation_density", "SPV_KHR_terminate_invocation",
        "SPV_KHR_subgroup_uniform_control_flow", "SPV_KHR_integer_dot_product",
        "SPV_EXT_shader_image_int64", "SPV_KHR_non_semantic_info",
        "SPV_KHR_uniform_group_instructions",
        "SPV_KHR_fragment_shader_barycentric", "SPV_KHR_vulkan_memory_model",
-       "SPV_NV_bindless_texture"});
+       "SPV_NV_bindless_texture", "SPV_EXT_shader_atomic_float_add",
+       "SPV_EXT_fragment_shader_interlock",
+       "SPV_NV_compute_shader_derivatives"});
 }
 
 bool LocalAccessChainConvertPass::AnyIndexIsOutOfBounds(

@@ -498,7 +498,7 @@ const Constant* ConstantManager::GetIntConst(uint64_t val, int32_t bitWidth,
     int32_t num_of_bit_to_ignore = 64 - bitWidth;
     val = static_cast<int64_t>(val << num_of_bit_to_ignore) >>
           num_of_bit_to_ignore;
-  } else {
+  } else if (bitWidth < 64) {
     // Clear the upper bit that are not used.
     uint64_t mask = ((1ull << bitWidth) - 1);
     val &= mask;
@@ -511,7 +511,7 @@ const Constant* ConstantManager::GetIntConst(uint64_t val, int32_t bitWidth,
   // If the value is more than 32-bit, we need to split the operands into two
   // 32-bit integers.
   return GetConstant(
-      int_type, {static_cast<uint32_t>(val >> 32), static_cast<uint32_t>(val)});
+      int_type, {static_cast<uint32_t>(val), static_cast<uint32_t>(val >> 32)});
 }
 
 uint32_t ConstantManager::GetUIntConstId(uint32_t val) {

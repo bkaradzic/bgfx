@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -137,7 +137,6 @@ namespace
 		bgfx::UniformHandle u_scissorExtScale;
 		bgfx::UniformHandle u_extentRadius;
 		bgfx::UniformHandle u_params;
-		bgfx::UniformHandle u_halfTexel;
 
 		bgfx::UniformHandle s_tex;
 
@@ -267,15 +266,6 @@ namespace
 		gl->u_extentRadius    = bgfx::createUniform("u_extentRadius",    bgfx::UniformType::Vec4);
 		gl->u_params          = bgfx::createUniform("u_params",          bgfx::UniformType::Vec4);
 		gl->s_tex             = bgfx::createUniform("s_tex",             bgfx::UniformType::Sampler);
-
-		if (bgfx::getRendererType() == bgfx::RendererType::Direct3D9)
-		{
-			gl->u_halfTexel   = bgfx::createUniform("u_halfTexel",       bgfx::UniformType::Vec4);
-		}
-		else
-		{
-			gl->u_halfTexel.idx = bgfx::kInvalidHandle;
-		}
 
 		s_nvgLayout
 			.begin()
@@ -549,12 +539,6 @@ namespace
 			if (tex != NULL)
 			{
 				handle = tex->id;
-
-				if (bgfx::isValid(gl->u_halfTexel) )
-				{
-					float halfTexel[4] = { 0.5f / tex->width, 0.5f / tex->height };
-					bgfx::setUniform(gl->u_halfTexel, halfTexel);
-				}
 			}
 		}
 
@@ -572,8 +556,12 @@ namespace
 	static void fan(uint32_t _start, uint32_t _count)
 	{
 		uint32_t numTris = _count-2;
+		BX_ASSERT(_count >= 3, "less than one triangle");
+		BX_ASSERT(_start + ((numTris - 1) * 3) + 2 <= UINT16_MAX, "index overflow");
 		bgfx::TransientIndexBuffer tib;
 		bgfx::allocTransientIndexBuffer(&tib, numTris*3);
+		BX_ASSERT(tib.size == numTris*3*(tib.isIndex16 ? 2 : 4), "did not get enough room for indices");
+
 		uint16_t* data = (uint16_t*)tib.data;
 		for (uint32_t ii = 0; ii < numTris; ++ii)
 		{
@@ -839,6 +827,7 @@ _cleanup:
 		return count;
 	}
 
+	static int glnvg__mini(int a, int b) { return a < b ? a : b; }
 	static int glnvg__maxi(int a, int b) { return a > b ? a : b; }
 
 	static struct GLNVGcall* glnvg__allocCall(struct GLNVGcontext* gl)
@@ -872,11 +861,15 @@ _cleanup:
 
 	static int glnvg__allocVerts(GLNVGcontext* gl, int n)
 	{
+		// Before calling this function, make sure that glnvg__flushIfNeeded()
+		// is called, before allocating the NVGCall.
 		int ret = 0;
+		BX_ASSERT(gl->nverts + n <= UINT16_MAX, "index overflow is imminent, please flush.");
 		if (gl->nverts+n > gl->cverts)
 		{
 			NVGvertex* verts;
 			int cverts = glnvg__maxi(gl->nverts + n, 4096) + gl->cverts/2; // 1.5x Overallocate
+			cverts = glnvg__mini(cverts, UINT16_MAX);
 			verts = (NVGvertex*)bx::realloc(gl->allocator, gl->verts, sizeof(NVGvertex) * cverts);
 			if (verts == NULL) return -1;
 			gl->verts = verts;
@@ -908,6 +901,12 @@ _cleanup:
 		vtx->v = v;
 	}
 
+	static void glnvg__flushIfNeeded(struct GLNVGcontext *gl, int nverts) {
+		if (gl->nverts + nverts > UINT16_MAX) {
+			nvgRenderFlush(gl);
+		}
+	}
+
 	static void nvgRenderFill(
 		  void* _userPtr
 		, NVGpaint* paint
@@ -920,11 +919,13 @@ _cleanup:
 		)
 	{
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
+		int maxverts = glnvg__maxVertCount(paths, npaths) + 6;
+		glnvg__flushIfNeeded(gl, maxverts);
 
 		struct GLNVGcall* call = glnvg__allocCall(gl);
 		struct NVGvertex* quad;
 		struct GLNVGfragUniforms* frag;
-		int i, maxverts, offset;
+		int i, offset;
 
 		call->type = GLNVG_FILL;
 		call->pathOffset = glnvg__allocPaths(gl, npaths);
@@ -938,7 +939,6 @@ _cleanup:
 		}
 
 		// Allocate vertices for all the paths.
-		maxverts = glnvg__maxVertCount(paths, npaths) + 6;
 		offset = glnvg__allocVerts(gl, maxverts);
 
 		for (i = 0; i < npaths; i++)
@@ -1006,9 +1006,11 @@ _cleanup:
 		)
 	{
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
+		int maxverts = glnvg__maxVertCount(paths, npaths);
+		glnvg__flushIfNeeded(gl, maxverts);
 
 		struct GLNVGcall* call = glnvg__allocCall(gl);
-		int i, maxverts, offset;
+		int i, offset;
 
 		call->type = GLNVG_STROKE;
 		call->pathOffset = glnvg__allocPaths(gl, npaths);
@@ -1017,7 +1019,6 @@ _cleanup:
 		call->blendFunc = glnvg__blendCompositeOperation(compositeOperation);
 
 		// Allocate vertices for all the paths.
-		maxverts = glnvg__maxVertCount(paths, npaths);
 		offset = glnvg__allocVerts(gl, maxverts);
 
 		for (i = 0; i < npaths; i++)
@@ -1025,6 +1026,7 @@ _cleanup:
 			struct GLNVGpath* copy = &gl->paths[call->pathOffset + i];
 			const struct NVGpath* path = &paths[i];
 			bx::memSet(copy, 0, sizeof(struct GLNVGpath) );
+			BX_ASSERT(path->nfill == 0, "strokes should not have any fill");
 			if (path->nstroke)
 			{
 				copy->strokeOffset = offset;
@@ -1043,6 +1045,8 @@ _cleanup:
 									   const struct NVGvertex* verts, int nverts)
 	{
 		struct GLNVGcontext* gl = (struct GLNVGcontext*)_userPtr;
+		glnvg__flushIfNeeded(gl, nverts);
+
 		struct GLNVGcall* call = glnvg__allocCall(gl);
 		struct GLNVGfragUniforms* frag;
 
@@ -1083,11 +1087,6 @@ _cleanup:
 		bgfx::destroy(gl->u_extentRadius);
 		bgfx::destroy(gl->u_params);
 		bgfx::destroy(gl->s_tex);
-
-		if (bgfx::isValid(gl->u_halfTexel) )
-		{
-			bgfx::destroy(gl->u_halfTexel);
-		}
 
 		for (uint32_t ii = 0, num = gl->ntextures; ii < num; ++ii)
 		{

@@ -73,6 +73,7 @@ public:
 		init.vendorId = args.m_pciId;
 		init.platformData.nwh  = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
 		init.platformData.ndt  = entry::getNativeDisplayHandle();
+		init.platformData.type = entry::getNativeWindowHandleType();
 		init.resolution.width  = m_width;
 		init.resolution.height = m_height;
 		init.resolution.reset  = m_reset;
@@ -268,21 +269,16 @@ public:
 			float view[16];
 			bx::mtxLookAt(view, eye, at);
 
-			float centering = 0.0f;
-			if (bgfx::getRendererType() == bgfx::RendererType::Direct3D9) {
-				centering = -0.5f;
-			}
-
 			// Setup a top-left ortho matrix for screen space drawing.
 			const bgfx::Caps* caps = bgfx::getCaps();
 			{
 				float ortho[16];
 				bx::mtxOrtho(
 					  ortho
-					, centering
-					, m_width  + centering
-					, m_height + centering
-					, centering
+					, 0.0f
+					, float(m_width)
+					, float(m_height)
+					, 0.0f
 					, 0.0f
 					, 100.0f
 					, 0.0f

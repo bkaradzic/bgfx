@@ -94,7 +94,7 @@ spv_result_t GetExtractInsertValueType(ValidationState_t& _,
           break;
         }
 
-        if (!_.GetConstantValUint64(type_inst->word(3), &array_size)) {
+        if (!_.EvalConstantValUint64(type_inst->word(3), &array_size)) {
           assert(0 && "Array type definition is corrupt");
         }
         if (component_index >= array_size) {
@@ -289,7 +289,7 @@ spv_result_t ValidateCompositeConstruct(ValidationState_t& _,
       }
 
       uint64_t array_size = 0;
-      if (!_.GetConstantValUint64(array_inst->word(3), &array_size)) {
+      if (!_.EvalConstantValUint64(array_inst->word(3), &array_size)) {
         assert(0 && "Array type definition is corrupt");
       }
 

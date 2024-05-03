@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -486,13 +486,13 @@ namespace bgfx { namespace d3d12
 
 	static inline D3D12_HEAP_PROPERTIES ID3D12DeviceGetCustomHeapProperties(ID3D12Device *device, uint32_t nodeMask, D3D12_HEAP_TYPE heapType)
 	{
-#if BX_COMPILER_MSVC
+#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
 		return device->GetCustomHeapProperties(nodeMask, heapType);
 #else
 		D3D12_HEAP_PROPERTIES ret;
 		device->GetCustomHeapProperties(&ret, nodeMask, heapType);
 		return ret;
-#endif // BX_COMPILER_MSVC
+#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
 	}
 
 	static void initHeapProperties(ID3D12Device* _device, D3D12_HEAP_PROPERTIES& _properties)
@@ -537,11 +537,11 @@ namespace bgfx { namespace d3d12
 			void* ptr;
 			DX_CHECK(resource->Map(0, NULL, &ptr) );
 			D3D12_RESOURCE_ALLOCATION_INFO rai;
-#if BX_COMPILER_MSVC
+#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
 			rai = _device->GetResourceAllocationInfo(1, 1, _resourceDesc);
 #else
 			_device->GetResourceAllocationInfo(&rai, 1, 1, _resourceDesc);
-#endif // BX_COMPILER_MSVC
+#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
 			bx::memSet(ptr, 0, size_t(rai.SizeInBytes) );
 			resource->Unmap(0, NULL);
 		}
@@ -638,35 +638,35 @@ namespace bgfx { namespace d3d12
 
 	inline D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandleHeapStart(ID3D12DescriptorHeap* _heap)
 	{
-#if BX_COMPILER_MSVC
+#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
 		return _heap->GetCPUDescriptorHandleForHeapStart();
 #else
 		D3D12_CPU_DESCRIPTOR_HANDLE handle;
 		_heap->GetCPUDescriptorHandleForHeapStart(&handle);
 		return handle;
-#endif // BX_COMPILER_MSVC
+#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
 	}
 
 	inline D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandleHeapStart(ID3D12DescriptorHeap* _heap)
 	{
-#if BX_COMPILER_MSVC
+#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
 		return _heap->GetGPUDescriptorHandleForHeapStart();
 #else
 		D3D12_GPU_DESCRIPTOR_HANDLE handle;
 		_heap->GetGPUDescriptorHandleForHeapStart(&handle);
 		return handle;
-#endif // BX_COMPILER_MSVC
+#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
 	}
 
 	inline D3D12_RESOURCE_DESC getResourceDesc(ID3D12Resource* _resource)
 	{
-#if BX_COMPILER_MSVC
+#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
 		return _resource->GetDesc();
 #else
 		D3D12_RESOURCE_DESC desc;
 		_resource->GetDesc(&desc);
 		return desc;
-#endif // BX_COMPILER_MSVC
+#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
 	}
 
 #if BGFX_CONFIG_DEBUG_ANNOTATION && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
@@ -827,6 +827,14 @@ namespace bgfx { namespace d3d12
 
 			HRESULT hr;
 
+			if (NULL != g_platformData.context)
+			{
+				m_device = (ID3D12Device*)g_platformData.context;
+
+				m_device->AddRef();
+				hr = S_OK;
+			}
+			else
 			{
 #if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 				if (_init.debug
@@ -848,13 +856,20 @@ namespace bgfx { namespace d3d12
 
 								if (SUCCEEDED(hr))
 								{
-//									debug1->SetEnableGPUBasedValidation(true);
-
 									// https://discordapp.com/channels/590611987420020747/593519198995742733/703642988345032804
 									// D3D12 Bug Number: 26131261
 									// There is a bug in the D3D12 validation that causes example-21 to fail when using UAV
-									// Setting this function below to false avoids the bug
-									debug1->SetEnableSynchronizedCommandQueueValidation(false);
+									// Setting SetEnableSynchronizedCommandQueueValidation below to false avoids the bug
+									// It was fixed in (probably) the first windows 11 sdk, 22000
+									// However, the fix causes any dx12 context with validation to break if this is set to false, so we can't do that anymore
+									if (windowsVersionIs(Condition::GreaterEqual, 0x0A00, 22000))
+									{
+										debug1->SetEnableGPUBasedValidation(true);
+									}
+									else
+									{
+										debug1->SetEnableSynchronizedCommandQueueValidation(false);
+									}
 								}
 
 								DX_RELEASE(debug1, 1);
@@ -923,12 +938,12 @@ namespace bgfx { namespace d3d12
 					m_device->SetDebugErrorFilterX(0x8EC9B15C, D3D12XBOX_DEBUG_FILTER_FLAG_DISABLE_OUTPUT);
 				}
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
-			}
 
-			if (FAILED(hr) )
-			{
-				BX_TRACE("Init error: Unable to create Direct3D12 device.");
-				goto error;
+				if (FAILED(hr) )
+				{
+					BX_TRACE("Init error: Unable to create Direct3D12 device.");
+					goto error;
+				}
 			}
 
 #if !BX_PLATFORM_LINUX
@@ -1371,6 +1386,7 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_IMAGE_RW
 					| BGFX_CAPS_VIEWPORT_LAYER_ARRAY
 					| BGFX_CAPS_DRAW_INDIRECT_COUNT
+					| BGFX_CAPS_PRIMITIVE_ID
 					);
 				g_caps.limits.maxTextureSize     = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 				g_caps.limits.maxTextureLayers   = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
@@ -1586,24 +1602,24 @@ namespace bgfx { namespace d3d12
 			case ErrorState::CreatedCommandQueue:
 				m_device->SetPrivateDataInterface(IID_ID3D12CommandQueue, NULL);
 				m_cmd.shutdown();
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case ErrorState::CreatedDXGIFactory:
 				DX_RELEASE(m_device,  0);
 #if !BX_PLATFORM_LINUX
 				m_dxgi.shutdown();
 #endif // !BX_PLATFORM_LINUX
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 #if USE_D3D12_DYNAMIC_LIB
 			case ErrorState::LoadedDXGI:
 			case ErrorState::LoadedD3D12:
 				bx::dlclose(m_d3d12Dll);
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case ErrorState::LoadedKernel32:
 				bx::dlclose(m_kernel32Dll);
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 #endif // USE_D3D12_DYNAMIC_LIB
 			case ErrorState::Default:
@@ -4253,18 +4269,18 @@ namespace bgfx { namespace d3d12
 
 				const uint16_t layoutIdx = !isValid(vb.m_layoutHandle) ? stream.m_layoutHandle.idx : vb.m_layoutHandle.idx;
 				const VertexLayout& layout = s_renderD3D12->m_vertexLayouts[layoutIdx];
-				uint32_t stride = layout.m_stride;
-
-				D3D12_VERTEX_BUFFER_VIEW& vbv = _vbv[numStreams];
-				vbv.BufferLocation = vb.m_gpuVA + stream.m_startVertex * stride;
-				vbv.StrideInBytes  = layout.m_stride;
-				vbv.SizeInBytes    = vb.m_size;
+				const uint32_t stride = layout.m_stride;
 
 				_outNumVertices = bx::uint32_min(UINT32_MAX == _draw.m_numVertices
 					? vb.m_size/stride
 					: _draw.m_numVertices
 					, _outNumVertices
 					);
+
+				D3D12_VERTEX_BUFFER_VIEW& vbv = _vbv[numStreams];
+				vbv.BufferLocation = vb.m_gpuVA + stream.m_startVertex * stride;
+				vbv.StrideInBytes  = stride;
+				vbv.SizeInBytes    = _outNumVertices * stride;
 			}
 		}
 
@@ -4298,7 +4314,7 @@ namespace bgfx { namespace d3d12
 				);
 
 			const VertexBufferD3D12& indirect = s_renderD3D12->m_vertexBuffers[_draw.m_indirectBuffer.idx];
-			const uint32_t numDrawIndirect = UINT16_MAX == _draw.m_numIndirect
+			const uint32_t numDrawIndirect = UINT32_MAX == _draw.m_numIndirect
 				? indirect.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 				: _draw.m_numIndirect
 				;
@@ -5400,7 +5416,7 @@ namespace bgfx { namespace d3d12
 			if (0 != kk)
 			{
 				kk = 0;
-				for (uint8_t side = 0; side < numSides; ++side)
+				for (uint16_t side = 0; side < numSides; ++side)
 				{
 					for (uint32_t lod = 0, num = ti.numMips; lod < num; ++lod)
 					{
@@ -5468,7 +5484,6 @@ namespace bgfx { namespace d3d12
 	{
 		D3D12_RESOURCE_STATES state = setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 
-		const uint32_t subres = _mip + (_side * m_numMips) + (m_type == Texture3D ? 0 : _z * m_numMips);
 		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		uint32_t rectpitch    = _rect.m_width*bpp/8;
 		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat)))
@@ -5488,6 +5503,8 @@ namespace bgfx { namespace d3d12
 		box.right  = box.left + _rect.m_width;
 		box.bottom = box.top  + _rect.m_height;
 
+		uint32_t layer = 0;
+
 		if (TextureD3D12::Texture3D == m_type)
 		{
 			box.front = _z;
@@ -5495,9 +5512,12 @@ namespace bgfx { namespace d3d12
 		}
 		else
 		{
+			layer = _z * (TextureD3D12::TextureCube == m_type ? 6 : 1);
 			box.front = 0;
 			box.back = _depth;
 		}
+
+		const uint32_t subres = _mip + (_side * m_numMips) + (m_type == Texture3D ? 0 : _z * m_numMips);
 
 		uint8_t* srcData = _mem->data;
 		uint8_t* temp = NULL;
@@ -6743,7 +6763,7 @@ namespace bgfx { namespace d3d12
 					{
 						const VertexBufferD3D12& indirect = m_vertexBuffers[compute.m_indirectBuffer.idx];
 
-						uint32_t numDrawIndirect = UINT16_MAX == compute.m_numIndirect
+						uint32_t numDrawIndirect = UINT32_MAX == compute.m_numIndirect
 							? indirect.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 							: compute.m_numIndirect
 							;

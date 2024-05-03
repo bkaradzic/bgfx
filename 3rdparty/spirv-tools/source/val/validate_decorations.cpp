@@ -922,9 +922,9 @@ spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
         }
       }
 
-      if (vstate.HasCapability(
-              spv::Capability::WorkgroupMemoryExplicitLayoutKHR) &&
-          num_workgroup_variables > 0 &&
+      const bool workgroup_blocks_allowed = vstate.HasCapability(
+          spv::Capability::WorkgroupMemoryExplicitLayoutKHR);
+      if (workgroup_blocks_allowed && num_workgroup_variables > 0 &&
           num_workgroup_variables_with_block > 0) {
         if (num_workgroup_variables != num_workgroup_variables_with_block) {
           return vstate.diag(SPV_ERROR_INVALID_BINARY, vstate.FindDef(entry_point))
@@ -945,6 +945,13 @@ spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
                     "Entry point id "
                  << entry_point << " does not meet this requirement.";
         }
+      } else if (!workgroup_blocks_allowed &&
+                 num_workgroup_variables_with_block > 0) {
+        return vstate.diag(SPV_ERROR_INVALID_BINARY,
+                           vstate.FindDef(entry_point))
+               << "Workgroup Storage Class variables can't be decorated with "
+                  "Block unless declaring the WorkgroupMemoryExplicitLayoutKHR "
+                  "capability.";
       }
     }
   }
@@ -1318,21 +1325,14 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
 
 // Returns true if |decoration| cannot be applied to the same id more than once.
 bool AtMostOncePerId(spv::Decoration decoration) {
-  return decoration == spv::Decoration::ArrayStride;
+  return decoration != spv::Decoration::UserSemantic &&
+         decoration != spv::Decoration::FuncParamAttr;
 }
 
 // Returns true if |decoration| cannot be applied to the same member more than
 // once.
 bool AtMostOncePerMember(spv::Decoration decoration) {
-  switch (decoration) {
-    case spv::Decoration::Offset:
-    case spv::Decoration::MatrixStride:
-    case spv::Decoration::RowMajor:
-    case spv::Decoration::ColMajor:
-      return true;
-    default:
-      return false;
-  }
+  return decoration != spv::Decoration::UserSemantic;
 }
 
 spv_result_t CheckDecorationsCompatibility(ValidationState_t& vstate) {
@@ -1549,7 +1549,8 @@ spv_result_t CheckNonWritableDecoration(ValidationState_t& vstate,
     const auto opcode = inst.opcode();
     const auto type_id = inst.type_id();
     if (opcode != spv::Op::OpVariable &&
-        opcode != spv::Op::OpFunctionParameter) {
+        opcode != spv::Op::OpFunctionParameter &&
+        opcode != spv::Op::OpRawAccessChainNV) {
       return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
              << "Target of NonWritable decoration must be a memory object "
                 "declaration (a variable or a function parameter)";
@@ -1562,10 +1563,11 @@ spv_result_t CheckNonWritableDecoration(ValidationState_t& vstate,
         vstate.features().nonwritable_var_in_function_or_private) {
       // New permitted feature in SPIR-V 1.4.
     } else if (
-        // It may point to a UBO, SSBO, or storage image.
+        // It may point to a UBO, SSBO, storage image, or raw access chain.
         vstate.IsPointerToUniformBlock(type_id) ||
         vstate.IsPointerToStorageBuffer(type_id) ||
-        vstate.IsPointerToStorageImage(type_id)) {
+        vstate.IsPointerToStorageImage(type_id) ||
+        opcode == spv::Op::OpRawAccessChainNV) {
     } else {
       return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
              << "Target of NonWritable decoration is invalid: must point to a "

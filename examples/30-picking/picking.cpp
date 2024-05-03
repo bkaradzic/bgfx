@@ -40,6 +40,7 @@ public:
 		init.vendorId = args.m_pciId;
 		init.platformData.nwh  = entry::getNativeWindowHandle(entry::kDefaultWindowHandle);
 		init.platformData.ndt  = entry::getNativeDisplayHandle();
+		init.platformData.type = entry::getNativeWindowHandleType();
 		init.resolution.width  = m_width;
 		init.resolution.height = m_height;
 		init.resolution.reset  = m_reset;
@@ -334,14 +335,6 @@ public:
 						uint8_t gg = *x++;
 						uint8_t bb = *x++;
 						uint8_t aa = *x++;
-
-						if (bgfx::RendererType::Direct3D9 == caps->rendererType)
-						{
-							// Comes back as BGRA
-							uint8_t temp = rr;
-							rr = bb;
-							bb = temp;
-						}
 
 						if (0 == (rr|gg|bb) ) // Skip background
 						{

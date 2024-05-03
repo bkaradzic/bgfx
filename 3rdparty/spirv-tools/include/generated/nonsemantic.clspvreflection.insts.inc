@@ -40,5 +40,6 @@ static const spv_ext_inst_desc_t nonsemantic_clspvreflection_entries[] = {
   {"ProgramScopeVariablePointerPushConstant", 37, 0, nullptr, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_NONE}},
   {"PrintfInfo", 38, 0, nullptr, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_VARIABLE_ID, SPV_OPERAND_TYPE_NONE}},
   {"PrintfBufferStorageBuffer", 39, 0, nullptr, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_NONE}},
-  {"PrintfBufferPointerPushConstant", 40, 0, nullptr, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_NONE}}
+  {"PrintfBufferPointerPushConstant", 40, 0, nullptr, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_NONE}},
+  {"NormalizedSamplerMaskPushConstant", 41, 0, nullptr, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_NONE}}
 };

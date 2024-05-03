@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2023 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2024 Branimir Karadzic. All rights reserved.
 -- License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 --
 
@@ -185,44 +185,6 @@ function bgfxProjectBase(_kind, _defines)
 		path.join(BGFX_DIR, "src/renderer_nvn.h"),
 	})
 
-	if _OPTIONS["with-webgpu"] then
-		defines {
-			"BGFX_CONFIG_RENDERER_WEBGPU=1",
-			"BGFX_CONFIG_DEBUG_ANNOTATION=0", -- does not work
-		}
-
-		local generator = "out/Cmake"
-
-		configuration { "wasm*" }
-			defines {
-				"BGFX_CONFIG_RENDERER_OPENGL=0",
-				"BGFX_CONFIG_RENDERER_OPENGLES=0",
-			}
-
-		configuration { "not wasm*" }
-			includedirs {
-				path.join(DAWN_DIR, "src/include"),
-				path.join(DAWN_DIR, "third_party/vulkan-deps/vulkan-headers/src/include"),
-				path.join(DAWN_DIR, generator, "gen/src/include"),
-			}
-
-			files {
-				path.join(DAWN_DIR, generator, "gen/src/dawn/webgpu_cpp.cpp"),
-			}
-		configuration { "vs*" }
-			defines {
-				"NTDDI_VERSION=NTDDI_WIN10_RS2",
-
-				-- We can't say `=_WIN32_WINNT_WIN10` here because some files do
-				-- `#if WINVER < 0x0600` without including windows.h before,
-				-- and then _WIN32_WINNT_WIN10 isn't yet known to be 0x0A00.
-				"_WIN32_WINNT=0x0A00",
-				"WINVER=0x0A00",
-			}
-
-		configuration {}
-    end
-
 	if _OPTIONS["with-amalgamated"] then
 		excludes {
 			path.join(BGFX_DIR, "src/bgfx.cpp"),
@@ -291,60 +253,4 @@ function bgfxProject(_name, _kind, _defines)
 		bgfxProjectBase(_kind, _defines)
 
 		copyLib()
-end
-
-if _OPTIONS["with-webgpu"] then
-	function usesWebGPU()
-		configuration { "wasm*" }
-			linkoptions {
-				"-s USE_WEBGPU=1",
-			}
-
-		configuration { "not wasm*" }
-			local generator = "out/Cmake"
-
-			includedirs {
-				path.join(DAWN_DIR, "src/include"),
-				path.join(DAWN_DIR, generator, "gen/src/include"),
-			}
-
-			libdirs {
-				path.join(DAWN_DIR, generator),
-				path.join(DAWN_DIR, generator, "src/common/Debug"),
-				path.join(DAWN_DIR, generator, "src/dawn/Debug"),
-				path.join(DAWN_DIR, generator, "src/dawn_native/Debug"),
-				path.join(DAWN_DIR, generator, "src/dawn_platform/Debug"),
-				path.join(DAWN_DIR, generator, "third_party/tint/src/Debug"),
-				path.join(DAWN_DIR, generator, "third_party/vulkan-deps/spirv-tools/src/source/Debug"),
-				path.join(DAWN_DIR, generator, "third_party/vulkan-deps/spirv-tools/src/source/opt/Debug"),
-				path.join(DAWN_DIR, generator, "third_party/vulkan-deps/spirv-cross/src/Debug"),
-			}
-
-			links {
-				-- shared
-				--"dawn_proc_shared",
-				--"dawn_native_shared",
-				--"shaderc_spvc_shared",
-				-- static
-				"dawn_common",
-				"dawn_proc",
-				"dawn_native",
-				"dawn_platform",
-				----"shaderc",
-				"tint",
-				"SPIRV-Tools",
-				"SPIRV-Tools-opt",
-				"spirv-cross-cored",
-				"spirv-cross-hlsld",
-				"spirv-cross-glsld",
-				"spirv-cross-msld",
-				--"spirv-cross-reflectd",
-			}
-
-			removeflags {
-				"FatalWarnings",
-			}
-
-		configuration {}
-	end
 end

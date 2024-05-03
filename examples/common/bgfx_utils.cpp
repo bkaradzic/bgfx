@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -23,7 +23,7 @@ namespace stl = tinystl;
 
 #include <bimg/decode.h>
 
-void* load(bx::FileReaderI* _reader, bx::AllocatorI* _allocator, const char* _filePath, uint32_t* _size)
+void* load(bx::FileReaderI* _reader, bx::AllocatorI* _allocator, const bx::FilePath& _filePath, uint32_t* _size)
 {
 	if (bx::open(_reader, _filePath) )
 	{
@@ -50,7 +50,7 @@ void* load(bx::FileReaderI* _reader, bx::AllocatorI* _allocator, const char* _fi
 	return NULL;
 }
 
-void* load(const char* _filePath, uint32_t* _size)
+void* load(const bx::FilePath& _filePath, uint32_t* _size)
 {
 	return load(entry::getFileReader(), entry::getAllocator(), _filePath, _size);
 }
@@ -60,7 +60,7 @@ void unload(void* _ptr)
 	bx::free(entry::getAllocator(), _ptr);
 }
 
-static const bgfx::Memory* loadMem(bx::FileReaderI* _reader, const char* _filePath)
+static const bgfx::Memory* loadMem(bx::FileReaderI* _reader, const bx::FilePath& _filePath)
 {
 	if (bx::open(_reader, _filePath) )
 	{
@@ -76,7 +76,7 @@ static const bgfx::Memory* loadMem(bx::FileReaderI* _reader, const char* _filePa
 	return NULL;
 }
 
-static void* loadMem(bx::FileReaderI* _reader, bx::AllocatorI* _allocator, const char* _filePath, uint32_t* _size)
+static void* loadMem(bx::FileReaderI* _reader, bx::AllocatorI* _allocator, const bx::FilePath& _filePath, uint32_t* _size)
 {
 	if (bx::open(_reader, _filePath) )
 	{
@@ -96,52 +96,50 @@ static void* loadMem(bx::FileReaderI* _reader, bx::AllocatorI* _allocator, const
 	return NULL;
 }
 
-static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name)
+static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const bx::StringView& _name)
 {
-	char filePath[512];
-
-	const char* shaderPath = "???";
+	bx::FilePath filePath("shaders/");
 
 	switch (bgfx::getRendererType() )
 	{
 	case bgfx::RendererType::Noop:
-	case bgfx::RendererType::Direct3D9:  shaderPath = "shaders/dx9/";   break;
 	case bgfx::RendererType::Direct3D11:
-	case bgfx::RendererType::Direct3D12: shaderPath = "shaders/dx11/";  break;
+	case bgfx::RendererType::Direct3D12: filePath.join("dx11");  break;
 	case bgfx::RendererType::Agc:
-	case bgfx::RendererType::Gnm:        shaderPath = "shaders/pssl/";  break;
-	case bgfx::RendererType::Metal:      shaderPath = "shaders/metal/"; break;
-	case bgfx::RendererType::Nvn:        shaderPath = "shaders/nvn/";   break;
-	case bgfx::RendererType::OpenGL:     shaderPath = "shaders/glsl/";  break;
-	case bgfx::RendererType::OpenGLES:   shaderPath = "shaders/essl/";  break;
-	case bgfx::RendererType::Vulkan:     shaderPath = "shaders/spirv/"; break;
-	case bgfx::RendererType::WebGPU:     shaderPath = "shaders/spirv/"; break;
+	case bgfx::RendererType::Gnm:        filePath.join("pssl");  break;
+	case bgfx::RendererType::Metal:      filePath.join("metal"); break;
+	case bgfx::RendererType::Nvn:        filePath.join("nvn");   break;
+	case bgfx::RendererType::OpenGL:     filePath.join("glsl");  break;
+	case bgfx::RendererType::OpenGLES:   filePath.join("essl");  break;
+	case bgfx::RendererType::Vulkan:     filePath.join("spirv"); break;
 
 	case bgfx::RendererType::Count:
 		BX_ASSERT(false, "You should not be here!");
 		break;
 	}
 
-	bx::strCopy(filePath, BX_COUNTOF(filePath), shaderPath);
-	bx::strCat(filePath, BX_COUNTOF(filePath), _name);
-	bx::strCat(filePath, BX_COUNTOF(filePath), ".bin");
+	char fileName[512];
+	bx::strCopy(fileName, BX_COUNTOF(fileName), _name);
+	bx::strCat(fileName, BX_COUNTOF(fileName), ".bin");
 
-	bgfx::ShaderHandle handle = bgfx::createShader(loadMem(_reader, filePath) );
-	bgfx::setName(handle, _name);
+	filePath.join(fileName);
+
+	bgfx::ShaderHandle handle = bgfx::createShader(loadMem(_reader, filePath.getCPtr() ) );
+	bgfx::setName(handle, _name.getPtr(), _name.getLength() );
 
 	return handle;
 }
 
-bgfx::ShaderHandle loadShader(const char* _name)
+bgfx::ShaderHandle loadShader(const bx::StringView& _name)
 {
 	return loadShader(entry::getFileReader(), _name);
 }
 
-bgfx::ProgramHandle loadProgram(bx::FileReaderI* _reader, const char* _vsName, const char* _fsName)
+bgfx::ProgramHandle loadProgram(bx::FileReaderI* _reader, const bx::StringView& _vsName, const bx::StringView& _fsName)
 {
 	bgfx::ShaderHandle vsh = loadShader(_reader, _vsName);
 	bgfx::ShaderHandle fsh = BGFX_INVALID_HANDLE;
-	if (NULL != _fsName)
+	if (!_fsName.isEmpty() )
 	{
 		fsh = loadShader(_reader, _fsName);
 	}
@@ -149,7 +147,7 @@ bgfx::ProgramHandle loadProgram(bx::FileReaderI* _reader, const char* _vsName, c
 	return bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
 }
 
-bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
+bgfx::ProgramHandle loadProgram(const bx::StringView& _vsName, const bx::StringView& _fsName)
 {
 	return loadProgram(entry::getFileReader(), _vsName, _fsName);
 }
@@ -161,7 +159,7 @@ static void imageReleaseCb(void* _ptr, void* _userData)
 	bimg::imageFree(imageContainer);
 }
 
-bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath, uint64_t _flags, uint8_t _skip, bgfx::TextureInfo* _info, bimg::Orientation::Enum* _orientation)
+bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const bx::FilePath& _filePath, uint64_t _flags, uint8_t _skip, bgfx::TextureInfo* _info, bimg::Orientation::Enum* _orientation)
 {
 	BX_UNUSED(_skip);
 	bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
@@ -186,6 +184,20 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 					, imageContainer
 					);
 			unload(data);
+
+			if (NULL != _info)
+			{
+				bgfx::calcTextureSize(
+					*_info
+					, uint16_t(imageContainer->m_width)
+					, uint16_t(imageContainer->m_height)
+					, uint16_t(imageContainer->m_depth)
+					, imageContainer->m_cubeMap
+					, 1 < imageContainer->m_numMips
+					, imageContainer->m_numLayers
+					, bgfx::TextureFormat::Enum(imageContainer->m_format)
+				);
+			}
 
 			if (imageContainer->m_cubeMap)
 			{
@@ -225,21 +237,8 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 
 			if (bgfx::isValid(handle) )
 			{
-				bgfx::setName(handle, _filePath);
-			}
-
-			if (NULL != _info)
-			{
-				bgfx::calcTextureSize(
-					  *_info
-					, uint16_t(imageContainer->m_width)
-					, uint16_t(imageContainer->m_height)
-					, uint16_t(imageContainer->m_depth)
-					, imageContainer->m_cubeMap
-					, 1 < imageContainer->m_numMips
-					, imageContainer->m_numLayers
-					, bgfx::TextureFormat::Enum(imageContainer->m_format)
-					);
+				const bx::StringView name(_filePath);
+				bgfx::setName(handle, name.getPtr(), name.getLength() );
 			}
 		}
 	}
@@ -247,12 +246,12 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 	return handle;
 }
 
-bgfx::TextureHandle loadTexture(const char* _name, uint64_t _flags, uint8_t _skip, bgfx::TextureInfo* _info, bimg::Orientation::Enum* _orientation)
+bgfx::TextureHandle loadTexture(const bx::FilePath& _filePath, uint64_t _flags, uint8_t _skip, bgfx::TextureInfo* _info, bimg::Orientation::Enum* _orientation)
 {
-	return loadTexture(entry::getFileReader(), _name, _flags, _skip, _info, _orientation);
+	return loadTexture(entry::getFileReader(), _filePath, _flags, _skip, _info, _orientation);
 }
 
-bimg::ImageContainer* imageLoad(const char* _filePath, bgfx::TextureFormat::Enum _dstFormat)
+bimg::ImageContainer* imageLoad(const bx::FilePath& _filePath, bgfx::TextureFormat::Enum _dstFormat)
 {
 	uint32_t size = 0;
 	void* data = loadMem(entry::getFileReader(), entry::getAllocator(), _filePath, &size);
@@ -662,7 +661,7 @@ Mesh* meshLoad(bx::ReaderSeekerI* _reader, bool _ramcopy)
 	return mesh;
 }
 
-Mesh* meshLoad(const char* _filePath, bool _ramcopy)
+Mesh* meshLoad(const bx::FilePath& _filePath, bool _ramcopy)
 {
 	bx::FileReaderI* reader = entry::getFileReader();
 	if (bx::open(reader, _filePath) )
@@ -712,7 +711,6 @@ static RendererTypeRemap s_rendererTypeRemap[] =
 {
 	{ "d3d11", bgfx::RendererType::Direct3D11 },
 	{ "d3d12", bgfx::RendererType::Direct3D12 },
-	{ "d3d9",  bgfx::RendererType::Direct3D9  },
 	{ "gl",    bgfx::RendererType::OpenGL     },
 	{ "mtl",   bgfx::RendererType::Metal      },
 	{ "noop",  bgfx::RendererType::Noop       },
@@ -766,10 +764,6 @@ Args::Args(int _argc, const char* const* _argv)
 	else if (cmdLine.hasArg("noop") )
 	{
 		m_type = bgfx::RendererType::Noop;
-	}
-	if (cmdLine.hasArg("d3d9") )
-	{
-		m_type = bgfx::RendererType::Direct3D9;
 	}
 	else if (cmdLine.hasArg("d3d11") )
 	{

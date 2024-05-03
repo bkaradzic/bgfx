@@ -402,7 +402,7 @@ TIntermTyped* HlslParseContext::handleLvalue(const TSourceLoc& loc, const char* 
         case EOpLeftShiftAssign:
         case EOpRightShiftAssign:
             isModifyOp = true;
-            // fall through...
+            [[fallthrough]];
         case EOpAssign:
             {
                 // Since this is an lvalue, we'll convert an image load to a sequence like this
@@ -4507,13 +4507,13 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             int cmpValues = 0;  // 1 if there is a compare value (handier than a bool below)
 
             switch (op) {
-            case EOpMethodGatherCmpRed:   cmpValues = 1;  // fall through
+            case EOpMethodGatherCmpRed:   cmpValues = 1;  [[fallthrough]];
             case EOpMethodGatherRed:      channel = 0; break;
-            case EOpMethodGatherCmpGreen: cmpValues = 1;  // fall through
+            case EOpMethodGatherCmpGreen: cmpValues = 1;  [[fallthrough]];
             case EOpMethodGatherGreen:    channel = 1; break;
-            case EOpMethodGatherCmpBlue:  cmpValues = 1;  // fall through
+            case EOpMethodGatherCmpBlue:  cmpValues = 1;  [[fallthrough]];
             case EOpMethodGatherBlue:     channel = 2; break;
-            case EOpMethodGatherCmpAlpha: cmpValues = 1;  // fall through
+            case EOpMethodGatherCmpAlpha: cmpValues = 1;  [[fallthrough]];
             case EOpMethodGatherAlpha:    channel = 3; break;
             default:                      assert(0);   break;
             }
@@ -9551,6 +9551,8 @@ bool HlslParseContext::isInputBuiltIn(const TQualifier& qualifier) const
         return language == EShLangTessEvaluation;
     case EbvTessCoord:
         return language == EShLangTessEvaluation;
+    case EbvViewIndex:
+        return language != EShLangCompute;
     default:
         return false;
     }
@@ -9655,6 +9657,10 @@ void HlslParseContext::correctOutput(TQualifier& qualifier)
         qualifier.clearXfbLayout();
     if (language != EShLangTessControl)
         qualifier.patch = false;
+
+    // Fixes Test/hlsl.entry-inout.vert (SV_Position will not become a varying).
+    if (qualifier.builtIn == EbvNone)
+        qualifier.builtIn = qualifier.declaredBuiltIn;
 
     switch (qualifier.builtIn) {
     case EbvFragDepth:
