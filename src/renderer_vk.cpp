@@ -375,6 +375,7 @@ VK_IMPORT_DEVICE
 #	elif BX_PLATFORM_NX
 			NN_vi_surface,
 #	endif
+			KHR_fragment_shader_barycentric,
 
 			Count
 		};
@@ -413,6 +414,7 @@ VK_IMPORT_DEVICE
 #	elif BX_PLATFORM_NX
 		{ VK_NN_VI_SURFACE_EXTENSION_NAME,          1, false, false, true,                                                          Layer::Count },
 #	endif
+		{ "VK_KHR_fragment_shader_barycentric",     1, false, false, true,                                                          Layer::Count },
 	};
 	static_assert(Extension::Count == BX_COUNTOF(s_extension) );
 
@@ -1175,9 +1177,11 @@ VK_IMPORT_DEVICE
 			const void* nextFeatures = NULL;
 			VkPhysicalDeviceLineRasterizationFeaturesEXT lineRasterizationFeatures;
 			VkPhysicalDeviceCustomBorderColorFeaturesEXT customBorderColorFeatures;
+			VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR fragmentShaderBarycentricFeatures;
 
 			bx::memSet(&lineRasterizationFeatures, 0, sizeof(lineRasterizationFeatures) );
 			bx::memSet(&customBorderColorFeatures, 0, sizeof(customBorderColorFeatures) );
+			bx::memSet(&fragmentShaderBarycentricFeatures, 0, sizeof(fragmentShaderBarycentricFeatures) );
 
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
@@ -1243,6 +1247,7 @@ VK_IMPORT
 				s_extension[Extension::EXT_shader_viewport_index_layer].m_initialize = !!(_init.capabilities & BGFX_CAPS_VIEWPORT_LAYER_ARRAY);
 				s_extension[Extension::EXT_conservative_rasterization ].m_initialize = !!(_init.capabilities & BGFX_CAPS_CONSERVATIVE_RASTER );
 				s_extension[Extension::KHR_draw_indirect_count        ].m_initialize = !!(_init.capabilities & BGFX_CAPS_DRAW_INDIRECT_COUNT );
+				s_extension[Extension::KHR_fragment_shader_barycentric].m_initialize = !!(_init.capabilities & BGFX_CAPS_FRAGMENT_BARYCENTRIC);
 
 				dumpExtensions(VK_NULL_HANDLE, s_extension);
 
@@ -1576,6 +1581,14 @@ VK_IMPORT_INSTANCE
 						customBorderColorFeatures.pNext = NULL;
 					}
 
+					if (s_extension[Extension::KHR_fragment_shader_barycentric].m_supported)
+					{
+						next->pNext = (VkBaseOutStructure*)&fragmentShaderBarycentricFeatures;
+						next = (VkBaseOutStructure*)&fragmentShaderBarycentricFeatures;
+						fragmentShaderBarycentricFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR;
+						fragmentShaderBarycentricFeatures.pNext = NULL;
+					}
+
 					nextFeatures = deviceFeatures2.pNext;
 
 					vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
@@ -1652,6 +1665,7 @@ VK_IMPORT_INSTANCE
 					| (s_extension[Extension::EXT_conservative_rasterization ].m_supported ? BGFX_CAPS_CONSERVATIVE_RASTER  : 0)
 					| (s_extension[Extension::EXT_shader_viewport_index_layer].m_supported ? BGFX_CAPS_VIEWPORT_LAYER_ARRAY : 0)
 					| (s_extension[Extension::KHR_draw_indirect_count        ].m_supported && indirectDrawSupport ? BGFX_CAPS_DRAW_INDIRECT_COUNT : 0)
+					| (s_extension[Extension::KHR_fragment_shader_barycentric].m_supported ? BGFX_CAPS_FRAGMENT_BARYCENTRIC : 0)
 					;
 
 				const uint32_t maxAttachments = bx::min<uint32_t>(m_deviceProperties.limits.maxFragmentOutputAttachments, m_deviceProperties.limits.maxColorAttachments);

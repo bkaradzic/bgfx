@@ -43,6 +43,7 @@ namespace bgfx { namespace noop
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 				| BGFX_CAPS_VERTEX_ID
 				| BGFX_CAPS_VIEWPORT_LAYER_ARRAY
+				| BGFX_CAPS_FRAGMENT_BARYCENTRIC
 				;
 
 			// Pretend all features are available for all texture formats.

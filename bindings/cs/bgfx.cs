@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2025 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -1051,120 +1051,125 @@ public static partial class bgfx
 		FragmentOrdering       = 0x0000000000000080,
 	
 		/// <summary>
+		/// Fragment barycentric coordinates are available in fragment shader.
+		/// </summary>
+		FragmentBarycentric    = 0x0000000000000100,
+	
+		/// <summary>
 		/// Graphics debugger is present.
 		/// </summary>
-		GraphicsDebugger       = 0x0000000000000100,
+		GraphicsDebugger       = 0x0000000000000200,
 	
 		/// <summary>
 		/// HDR10 rendering is supported.
 		/// </summary>
-		Hdr10                  = 0x0000000000000200,
+		Hdr10                  = 0x0000000000000400,
 	
 		/// <summary>
 		/// HiDPI rendering is supported.
 		/// </summary>
-		Hidpi                  = 0x0000000000000400,
+		Hidpi                  = 0x0000000000000800,
 	
 		/// <summary>
 		/// Image Read/Write is supported.
 		/// </summary>
-		ImageRw                = 0x0000000000000800,
+		ImageRw                = 0x0000000000001000,
 	
 		/// <summary>
 		/// 32-bit indices are supported.
 		/// </summary>
-		Index32                = 0x0000000000001000,
+		Index32                = 0x0000000000002000,
 	
 		/// <summary>
 		/// Instancing is supported.
 		/// </summary>
-		Instancing             = 0x0000000000002000,
+		Instancing             = 0x0000000000004000,
 	
 		/// <summary>
 		/// Occlusion query is supported.
 		/// </summary>
-		OcclusionQuery         = 0x0000000000004000,
+		OcclusionQuery         = 0x0000000000008000,
 	
 		/// <summary>
 		/// PrimitiveID is available in fragment shader.
 		/// </summary>
-		PrimitiveId            = 0x0000000000008000,
+		PrimitiveId            = 0x0000000000010000,
 	
 		/// <summary>
 		/// Renderer is on separate thread.
 		/// </summary>
-		RendererMultithreaded  = 0x0000000000010000,
+		RendererMultithreaded  = 0x0000000000020000,
 	
 		/// <summary>
 		/// Multiple windows are supported.
 		/// </summary>
-		SwapChain              = 0x0000000000020000,
+		SwapChain              = 0x0000000000040000,
 	
 		/// <summary>
 		/// Texture blit is supported.
 		/// </summary>
-		TextureBlit            = 0x0000000000040000,
+		TextureBlit            = 0x0000000000080000,
 	
 		/// <summary>
 		/// Texture compare less equal mode is supported.
 		/// </summary>
-		TextureCompareLequal   = 0x0000000000080000,
-		TextureCompareReserved = 0x0000000000100000,
+		TextureCompareLequal   = 0x0000000000100000,
+		TextureCompareReserved = 0x0000000000200000,
 	
 		/// <summary>
 		/// Cubemap texture array is supported.
 		/// </summary>
-		TextureCubeArray       = 0x0000000000200000,
+		TextureCubeArray       = 0x0000000000400000,
 	
 		/// <summary>
 		/// CPU direct access to GPU texture memory.
 		/// </summary>
-		TextureDirectAccess    = 0x0000000000400000,
+		TextureDirectAccess    = 0x0000000000800000,
 	
 		/// <summary>
 		/// Read-back texture is supported.
 		/// </summary>
-		TextureReadBack        = 0x0000000000800000,
+		TextureReadBack        = 0x0000000001000000,
 	
 		/// <summary>
 		/// 2D texture array is supported.
 		/// </summary>
-		Texture2dArray         = 0x0000000001000000,
+		Texture2dArray         = 0x0000000002000000,
 	
 		/// <summary>
 		/// 3D textures are supported.
 		/// </summary>
-		Texture3d              = 0x0000000002000000,
+		Texture3d              = 0x0000000004000000,
 	
 		/// <summary>
 		/// Transparent back buffer supported.
 		/// </summary>
-		TransparentBackbuffer  = 0x0000000004000000,
+		TransparentBackbuffer  = 0x0000000008000000,
 	
 		/// <summary>
 		/// Vertex attribute half-float is supported.
 		/// </summary>
-		VertexAttribHalf       = 0x0000000008000000,
+		VertexAttribHalf       = 0x0000000010000000,
 	
 		/// <summary>
 		/// Vertex attribute 10_10_10_2 is supported.
 		/// </summary>
-		VertexAttribUint10     = 0x0000000010000000,
+		VertexAttribUint10     = 0x0000000020000000,
 	
 		/// <summary>
 		/// Rendering with VertexID only is supported.
 		/// </summary>
-		VertexId               = 0x0000000020000000,
+		VertexId               = 0x0000000040000000,
 	
 		/// <summary>
 		/// Viewport layer is available in vertex shader.
 		/// </summary>
-		ViewportLayerArray     = 0x0000000040000000,
+		ViewportLayerArray     = 0x0000000080000000,
 	
 		/// <summary>
 		/// All texture compare modes are supported.
 		/// </summary>
-		TextureCompareAll      = 0x0000000000180000,
+		TextureCompareAll      = 0x0000000000300000,
 	}
 	
 	[Flags]
