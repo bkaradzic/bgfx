@@ -9,6 +9,7 @@
 
 #include "renderer_mtl.h"
 #include "renderer.h"
+#include <bx/macros.h>
 
 #if BX_PLATFORM_OSX
 #	include <Cocoa/Cocoa.h>
@@ -216,8 +217,8 @@ namespace bgfx { namespace mtl
 		bool                      m_autoGetMipmap;
 	};
 
-	#pragma clang diagnostic push
-	#pragma clang diagnostic ignored "-Wunguarded-availability-new"
+	BX_PRAGMA_DIAGNOSTIC_PUSH();
+	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunguarded-availability-new");
 	static TextureFormatInfo s_textureFormat[] =
 	{
 #define $0 MTLTextureSwizzleZero
@@ -346,7 +347,7 @@ namespace bgfx { namespace mtl
 #undef $B
 #undef $A
 	};
-	#pragma clang diagnostic pop
+	BX_PRAGMA_DIAGNOSTIC_POP();
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
 	int32_t s_msaa[] =
@@ -1975,9 +1976,9 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			m_renderCommandEncoder.setStencilReferenceValue(ref);
 		}
 
-		#pragma clang diagnostic push
-		#pragma clang diagnostic ignored "-Wunguarded-availability-new"
-		#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
+		BX_PRAGMA_DIAGNOSTIC_PUSH();
+		BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunguarded-availability-new");
+		BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wincompatible-pointer-types");
 		void processArguments(
 			  PipelineStateMtl* ps
 			, NSArray<id<MTLBinding>>* _vertexArgs
@@ -2146,7 +2147,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				}
 			}
 		}
-		#pragma clang diagnostic pop
+		BX_PRAGMA_DIAGNOSTIC_POP();
 
 		PipelineStateMtl* getPipelineState(
 			  uint64_t _state
@@ -2404,15 +2405,15 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 					if (NULL != reflection)
 					{
-						#pragma clang diagnostic push
-						#pragma clang diagnostic ignored "-Wunguarded-availability-new"
-						#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
+						BX_PRAGMA_DIAGNOSTIC_PUSH();
+						BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunguarded-availability-new");
+						BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wincompatible-pointer-types");
 						if (m_usesMTLBindings) {
 							processArguments(pso, reflection.vertexBindings, reflection.fragmentBindings);
 						} else {
 							processArguments(pso, reflection.vertexArguments, reflection.fragmentArguments);
 						}
-						#pragma clang diagnostic pop
+						BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 				}
 
@@ -2460,15 +2461,15 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					, &reflection
 					);
 
-				#pragma clang diagnostic push
-				#pragma clang diagnostic ignored "-Wunguarded-availability-new"
-				#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
+				BX_PRAGMA_DIAGNOSTIC_PUSH();
+				BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunguarded-availability-new");
+				BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wincompatible-pointer-types");
 				if (m_usesMTLBindings) {
 					processArguments(pso, reflection.bindings, NULL);
 				} else {
 					processArguments(pso, reflection.arguments, NULL);
 				}
-				#pragma clang diagnostic pop
+				BX_PRAGMA_DIAGNOSTIC_POP();
 
 				for (uint32_t ii = 0; ii < 3; ++ii)
 				{
