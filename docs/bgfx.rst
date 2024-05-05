@@ -318,7 +318,7 @@ State Flags
 .. doxygendefine:: BGFX_STATE_BLEND_FACTOR
 .. doxygendefine:: BGFX_STATE_BLEND_INV_FACTOR
 
-**Blend Equaation**
+**Blend Equation**
 
 .. doxygendefine:: BGFX_STATE_BLEND_EQUATION_ADD
 .. doxygendefine:: BGFX_STATE_BLEND_EQUATION_SUB
@@ -549,6 +549,20 @@ Textures
 
 .. doxygenstruct:: bgfx::TextureFormat
     :members:
+
+**Texture Flags**
+
+.. doxygendefine:: BGFX_TEXTURE_MSAA_SAMPLE
+.. doxygendefine:: BGFX_TEXTURE_RT
+.. doxygendefine:: BGFX_TEXTURE_COMPUTE_WRITE
+.. doxygendefine:: BGFX_TEXTURE_SRGB
+.. doxygendefine:: BGFX_TEXTURE_BLIT_DST
+.. doxygendefine:: BGFX_TEXTURE_READ_BACK
+.. doxygendefine:: BGFX_TEXTURE_RT_MSAA_X2
+.. doxygendefine:: BGFX_TEXTURE_RT_MSAA_X4
+.. doxygendefine:: BGFX_TEXTURE_RT_MSAA_X8
+.. doxygendefine:: BGFX_TEXTURE_RT_MSAA_X16
+.. doxygendefine:: BGFX_TEXTURE_RT_WRITE_ONLY
 
 .. doxygenfunction:: bgfx::isTextureValid
 
