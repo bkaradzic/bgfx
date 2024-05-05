@@ -4306,7 +4306,7 @@ All state is cleared after calling <cite>bgfx::submit</cite>.</p>
 <dd><p>1-Blend factor </p>
 </dd></dl>
 
-<p><strong>Blend Equaation</strong></p>
+<p><strong>Blend Equation</strong></p>
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.BGFX_STATE_BLEND_EQUATION_ADD">
 <span class="target" id="defines_8h_1a2ffd46032b927db10fcce998d1a3fddd"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_STATE_BLEND_EQUATION_ADD</span></span></span><a class="headerlink" href="#c.BGFX_STATE_BLEND_EQUATION_ADD" title="Link to this definition">¶</a><br /></dt>
@@ -5135,30 +5135,60 @@ Otherwise, use <cite>bgfx::setViewScissor</cite>.</p>
 </dl>
 </dd></dl>
 
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve function “bgfx::submit” with arguments (ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, uint32_t, uint8_t) in doxygen xml output for project “bgfx” from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t8uint32_t8uint32_t7uint8_t">
+<span id="_CPPv3N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t8uint32_t8uint32_t7uint8_t"></span><span id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t8uint32_t8uint32_t7uint8_t"></span><span id="bgfx::submit__ViewId.ProgramHandle.IndirectBufferHandle.uint32_t.uint32_t.uint32_t.uint8_t"></span><span class="target" id="namespacebgfx_1a2f2f7978b3f41bdeddc8000a59a520e6"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">submit</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">ViewId</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_id</span></span>, <span class="n"><span class="pre">ProgramHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_program</span></span>, <span class="n"><span class="pre">IndirectBufferHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_indirectHandle</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_start</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_num</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">1</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_depth</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span>, <span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_flags</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">BGFX_DISCARD_ALL</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t8uint32_t8uint32_t7uint8_t" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Submit primitive for rendering with index and instance data info from indirect buffer. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>Availability depends on: <code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_DRAW_INDIRECT</span></code>. </p>
+</dd>
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_submit_indirect</span></code>. </p>
+</dd>
+</dl>
 </p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span> <span class="n">void</span> <span class="n">submit</span><span class="p">(</span><span class="n">ViewId</span> <span class="n">_id</span><span class="p">,</span> <span class="n">ProgramHandle</span> <span class="n">_program</span><span class="p">,</span> <span class="n">IndirectBufferHandle</span> <span class="n">_indirectHandle</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_start</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_num</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_depth</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">uint8_t</span> <span class="n">_flags</span> <span class="o">=</span> <span class="n">BGFX_DISCARD_ALL</span><span class="p">)</span>
-<span class="o">-</span> <span class="n">void</span> <span class="n">submit</span><span class="p">(</span><span class="n">ViewId</span> <span class="n">_id</span><span class="p">,</span> <span class="n">ProgramHandle</span> <span class="n">_program</span><span class="p">,</span> <span class="n">IndirectBufferHandle</span> <span class="n">_indirectHandle</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_start</span><span class="p">,</span> <span class="n">IndexBufferHandle</span> <span class="n">_numHandle</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_numIndex</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_numMax</span> <span class="o">=</span> <span class="n">UINT32_MAX</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_depth</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">uint8_t</span> <span class="n">_flags</span> <span class="o">=</span> <span class="n">BGFX_DISCARD_ALL</span><span class="p">)</span>
-<span class="o">-</span> <span class="n">void</span> <span class="n">submit</span><span class="p">(</span><span class="n">ViewId</span> <span class="n">_id</span><span class="p">,</span> <span class="n">ProgramHandle</span> <span class="n">_program</span><span class="p">,</span> <span class="n">OcclusionQueryHandle</span> <span class="n">_occlusionQuery</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_depth</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">uint8_t</span> <span class="n">_flags</span> <span class="o">=</span> <span class="n">BGFX_DISCARD_ALL</span><span class="p">)</span>
-<span class="o">-</span> <span class="n">void</span> <span class="n">submit</span><span class="p">(</span><span class="n">ViewId</span> <span class="n">_id</span><span class="p">,</span> <span class="n">ProgramHandle</span> <span class="n">_program</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_depth</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">uint8_t</span> <span class="n">_flags</span> <span class="o">=</span> <span class="n">BGFX_DISCARD_ALL</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve function “bgfx::submit” with arguments (ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, IndexBufferHandle, uint32_t, uint16_t, uint32_t, uint8_t) in doxygen xml output for project “bgfx” from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_id</strong> – <strong>[in]</strong> View id. </p></li>
+<li><p><strong>_program</strong> – <strong>[in]</strong> Program. </p></li>
+<li><p><strong>_indirectHandle</strong> – <strong>[in]</strong> Indirect buffer. </p></li>
+<li><p><strong>_start</strong> – <strong>[in]</strong> First element in indirect buffer. </p></li>
+<li><p><strong>_num</strong> – <strong>[in]</strong> Number of draws. </p></li>
+<li><p><strong>_depth</strong> – <strong>[in]</strong> Depth for sorting. </p></li>
+<li><p><strong>_flags</strong> – <strong>[in]</strong> Discard or preserve states. See <code class="docutils literal notranslate"><span class="pre">BGFX_DISCARD_*</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t17IndexBufferHandle8uint32_t8uint32_t8uint32_t7uint8_t">
+<span id="_CPPv3N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t17IndexBufferHandle8uint32_t8uint32_t8uint32_t7uint8_t"></span><span id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t17IndexBufferHandle8uint32_t8uint32_t8uint32_t7uint8_t"></span><span id="bgfx::submit__ViewId.ProgramHandle.IndirectBufferHandle.uint32_t.IndexBufferHandle.uint32_t.uint32_t.uint32_t.uint8_t"></span><span class="target" id="namespacebgfx_1abcfcde2229e9c39e4564da3618712447"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">submit</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">ViewId</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_id</span></span>, <span class="n"><span class="pre">ProgramHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_program</span></span>, <span class="n"><span class="pre">IndirectBufferHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_indirectHandle</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_start</span></span>, <span class="n"><span class="pre">IndexBufferHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_numHandle</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_numIndex</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_numMax</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">UINT32_MAX</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_depth</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span>, <span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_flags</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">BGFX_DISCARD_ALL</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t17IndexBufferHandle8uint32_t8uint32_t8uint32_t7uint8_t" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Submit primitive for rendering with index and instance data info and draw count from indirect buffers. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>Availability depends on:<code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_DRAW_INDIRECT_COUNT</span></code>. </p>
+</dd>
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_submit_indirect_count</span></code>. </p>
+</dd>
+</dl>
 </p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span> <span class="n">void</span> <span class="n">submit</span><span class="p">(</span><span class="n">ViewId</span> <span class="n">_id</span><span class="p">,</span> <span class="n">ProgramHandle</span> <span class="n">_program</span><span class="p">,</span> <span class="n">IndirectBufferHandle</span> <span class="n">_indirectHandle</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_start</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_num</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_depth</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">uint8_t</span> <span class="n">_flags</span> <span class="o">=</span> <span class="n">BGFX_DISCARD_ALL</span><span class="p">)</span>
-<span class="o">-</span> <span class="n">void</span> <span class="n">submit</span><span class="p">(</span><span class="n">ViewId</span> <span class="n">_id</span><span class="p">,</span> <span class="n">ProgramHandle</span> <span class="n">_program</span><span class="p">,</span> <span class="n">IndirectBufferHandle</span> <span class="n">_indirectHandle</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_start</span><span class="p">,</span> <span class="n">IndexBufferHandle</span> <span class="n">_numHandle</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_numIndex</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_numMax</span> <span class="o">=</span> <span class="n">UINT32_MAX</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_depth</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">uint8_t</span> <span class="n">_flags</span> <span class="o">=</span> <span class="n">BGFX_DISCARD_ALL</span><span class="p">)</span>
-<span class="o">-</span> <span class="n">void</span> <span class="n">submit</span><span class="p">(</span><span class="n">ViewId</span> <span class="n">_id</span><span class="p">,</span> <span class="n">ProgramHandle</span> <span class="n">_program</span><span class="p">,</span> <span class="n">OcclusionQueryHandle</span> <span class="n">_occlusionQuery</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_depth</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">uint8_t</span> <span class="n">_flags</span> <span class="o">=</span> <span class="n">BGFX_DISCARD_ALL</span><span class="p">)</span>
-<span class="o">-</span> <span class="n">void</span> <span class="n">submit</span><span class="p">(</span><span class="n">ViewId</span> <span class="n">_id</span><span class="p">,</span> <span class="n">ProgramHandle</span> <span class="n">_program</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_depth</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">uint8_t</span> <span class="n">_flags</span> <span class="o">=</span> <span class="n">BGFX_DISCARD_ALL</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_id</strong> – <strong>[in]</strong> View id. </p></li>
+<li><p><strong>_program</strong> – <strong>[in]</strong> Program. </p></li>
+<li><p><strong>_indirectHandle</strong> – <strong>[in]</strong> Indirect buffer. </p></li>
+<li><p><strong>_start</strong> – <strong>[in]</strong> First element in indirect buffer. </p></li>
+<li><p><strong>_numHandle</strong> – <strong>[in]</strong> Buffer for number of draws. Must be created with <code class="docutils literal notranslate"><span class="pre">BGFX_BUFFER_INDEX32</span></code> and <code class="docutils literal notranslate"><span class="pre">BGFX_BUFFER_DRAW_INDIRECT</span></code>. </p></li>
+<li><p><strong>_numIndex</strong> – <strong>[in]</strong> Element in number buffer. </p></li>
+<li><p><strong>_numMax</strong> – <strong>[in]</strong> Max number of draws. </p></li>
+<li><p><strong>_depth</strong> – <strong>[in]</strong> Depth for sorting. </p></li>
+<li><p><strong>_flags</strong> – <strong>[in]</strong> Discard or preserve states. See <code class="docutils literal notranslate"><span class="pre">BGFX_DISCARD_*</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 <section id="compute">
@@ -5362,16 +5392,29 @@ Potential matches:
 </dl>
 </dd></dl>
 
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve function “bgfx::dispatch” with arguments (ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, uint8_t) in doxygen xml output for project “bgfx” from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t8uint32_t7uint8_t">
+<span id="_CPPv3N4bgfx8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t8uint32_t7uint8_t"></span><span id="_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t8uint32_t7uint8_t"></span><span id="bgfx::dispatch__ViewId.ProgramHandle.IndirectBufferHandle.uint32_t.uint32_t.uint8_t"></span><span class="target" id="namespacebgfx_1ad98c6bbe1af4773a59342b1945347e3c"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">dispatch</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">ViewId</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_id</span></span>, <span class="n"><span class="pre">ProgramHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_handle</span></span>, <span class="n"><span class="pre">IndirectBufferHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_indirectHandle</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_start</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_num</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">1</span></span>, <span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_flags</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">BGFX_DISCARD_ALL</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t8uint32_t7uint8_t" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Dispatch compute indirect. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_dispatch_indirect</span></code>. </p>
+</dd>
+</dl>
 </p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span> <span class="n">void</span> <span class="n">dispatch</span><span class="p">(</span><span class="n">ViewId</span> <span class="n">_id</span><span class="p">,</span> <span class="n">ProgramHandle</span> <span class="n">_handle</span><span class="p">,</span> <span class="n">IndirectBufferHandle</span> <span class="n">_indirectHandle</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_start</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_num</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">uint8_t</span> <span class="n">_flags</span> <span class="o">=</span> <span class="n">BGFX_DISCARD_ALL</span><span class="p">)</span>
-<span class="o">-</span> <span class="n">void</span> <span class="n">dispatch</span><span class="p">(</span><span class="n">ViewId</span> <span class="n">_id</span><span class="p">,</span> <span class="n">ProgramHandle</span> <span class="n">_handle</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_numX</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_numY</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">uint32_t</span> <span class="n">_numZ</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">uint8_t</span> <span class="n">_flags</span> <span class="o">=</span> <span class="n">BGFX_DISCARD_ALL</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_id</strong> – <strong>[in]</strong> View id. </p></li>
+<li><p><strong>_handle</strong> – <strong>[in]</strong> Compute program. </p></li>
+<li><p><strong>_indirectHandle</strong> – <strong>[in]</strong> Indirect buffer. </p></li>
+<li><p><strong>_start</strong> – <strong>[in]</strong> First element in indirect buffer. </p></li>
+<li><p><strong>_num</strong> – <strong>[in]</strong> Number of dispatches. </p></li>
+<li><p><strong>_flags</strong> – <strong>[in]</strong> Discard or preserve states. See <code class="docutils literal notranslate"><span class="pre">BGFX_DISCARD_*</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 <section id="blit">
@@ -7194,6 +7237,73 @@ Potential matches:
 </div>
 </dd></dl>
 
+<p><strong>Texture Flags</strong></p>
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_TEXTURE_MSAA_SAMPLE">
+<span class="target" id="defines_8h_1a76154ddf9e9faab72fa2ccff0c697c21"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_TEXTURE_MSAA_SAMPLE</span></span></span><a class="headerlink" href="#c.BGFX_TEXTURE_MSAA_SAMPLE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Texture will be used for MSAA sampling. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_TEXTURE_RT">
+<span class="target" id="defines_8h_1af21bb78cea0412a9b32725ad43ea083d"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_TEXTURE_RT</span></span></span><a class="headerlink" href="#c.BGFX_TEXTURE_RT" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Render target no MSAA. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_TEXTURE_COMPUTE_WRITE">
+<span class="target" id="defines_8h_1a462114d88d2071399c42e5cb765222c1"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_TEXTURE_COMPUTE_WRITE</span></span></span><a class="headerlink" href="#c.BGFX_TEXTURE_COMPUTE_WRITE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Texture will be used for compute write. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_TEXTURE_SRGB">
+<span class="target" id="defines_8h_1aebd7503e06444d5583290533187985eb"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_TEXTURE_SRGB</span></span></span><a class="headerlink" href="#c.BGFX_TEXTURE_SRGB" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Sample texture as sRGB. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_TEXTURE_BLIT_DST">
+<span class="target" id="defines_8h_1a11c19f016fcada66e1b1dd93b0bac7b9"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></span></span><a class="headerlink" href="#c.BGFX_TEXTURE_BLIT_DST" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Texture will be used as blit destination. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_TEXTURE_READ_BACK">
+<span class="target" id="defines_8h_1ad4152b462fea0ac4574859c63cd59d71"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_TEXTURE_READ_BACK</span></span></span><a class="headerlink" href="#c.BGFX_TEXTURE_READ_BACK" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Texture will be used for read back from GPU. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_TEXTURE_RT_MSAA_X2">
+<span class="target" id="defines_8h_1aab482f43f34de94220631240291e1113"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_TEXTURE_RT_MSAA_X2</span></span></span><a class="headerlink" href="#c.BGFX_TEXTURE_RT_MSAA_X2" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Render target MSAAx2 mode. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_TEXTURE_RT_MSAA_X4">
+<span class="target" id="defines_8h_1a396ec52846e523295010f5d53cf7cb1b"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_TEXTURE_RT_MSAA_X4</span></span></span><a class="headerlink" href="#c.BGFX_TEXTURE_RT_MSAA_X4" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Render target MSAAx4 mode. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_TEXTURE_RT_MSAA_X8">
+<span class="target" id="defines_8h_1af709d9d286ba1b99eae3484ba46ab719"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_TEXTURE_RT_MSAA_X8</span></span></span><a class="headerlink" href="#c.BGFX_TEXTURE_RT_MSAA_X8" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Render target MSAAx8 mode. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_TEXTURE_RT_MSAA_X16">
+<span class="target" id="defines_8h_1ac939cc04e1bb33d089943e6bac8dc94d"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_TEXTURE_RT_MSAA_X16</span></span></span><a class="headerlink" href="#c.BGFX_TEXTURE_RT_MSAA_X16" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Render target MSAAx16 mode. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_TEXTURE_RT_WRITE_ONLY">
+<span class="target" id="defines_8h_1a651e6b0cfbf8cfbb9f4b978857214ee5"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_TEXTURE_RT_WRITE_ONLY</span></span></span><a class="headerlink" href="#c.BGFX_TEXTURE_RT_WRITE_ONLY" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Render target will be used for writing. </p>
+</dd></dl>
+
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx14isTextureValidE8uint16_tb8uint16_tN13TextureFormat4EnumE8uint64_t">
 <span id="_CPPv3N4bgfx14isTextureValidE8uint16_tb8uint16_tN13TextureFormat4EnumE8uint64_t"></span><span id="_CPPv2N4bgfx14isTextureValidE8uint16_tb8uint16_tN13TextureFormat4EnumE8uint64_t"></span><span id="bgfx::isTextureValid__uint16_t.b.uint16_t.TextureFormat::Enum.uint64_t"></span><span class="target" id="namespacebgfx_1a3c7386558ec793583dd0ce0db77b8c17"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">isTextureValid</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_depth</span></span>, <span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_cubeMap</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_numLayers</span></span>, <a class="reference internal" href="#_CPPv4N4bgfx13TextureFormatE" title="bgfx::TextureFormat"><span class="n"><span class="pre">TextureFormat</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum"><span class="n"><span class="pre">Enum</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">_format</span></span>, <span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_flags</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx14isTextureValidE8uint16_tb8uint16_tN13TextureFormat4EnumE8uint64_t" title="Link to this definition">¶</a><br /></dt>
@@ -7722,7 +7832,7 @@ Potential matches:
 <li><p><strong>_width</strong> – <strong>[in]</strong> Texture width. </p></li>
 <li><p><strong>_height</strong> – <strong>[in]</strong> Texture height. </p></li>
 <li><p><strong>_format</strong> – <strong>[in]</strong> Texture format. See: <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span class="std std-ref"><span class="pre">TextureFormat::Enum</span></span></a></code>. </p></li>
-<li><p><strong>_textureFlags</strong> – <strong>[in]</strong> Default texture sampling mode is linear, and wrap mode is repeat.<ul>
+<li><p><strong>_textureFlags</strong> – <strong>[in]</strong> Texture creation (see <code class="docutils literal notranslate"><span class="pre">BGFX_TEXTURE_*</span></code>.), and sampler (see <code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_*</span></code>) flags. Default texture sampling mode is linear, and wrap mode is repeat.<ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</p></li>
 </ul>
@@ -7749,7 +7859,7 @@ Potential matches:
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>_ratio</strong> – <strong>[in]</strong> Frame buffer size in respect to back-buffer size. See: <code class="docutils literal notranslate"><span class="pre">BackbufferRatio::Enum</span></code>. </p></li>
 <li><p><strong>_format</strong> – <strong>[in]</strong> Texture format. See: <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span class="std std-ref"><span class="pre">TextureFormat::Enum</span></span></a></code>. </p></li>
-<li><p><strong>_textureFlags</strong> – <strong>[in]</strong> Default texture sampling mode is linear, and wrap mode is repeat.<ul>
+<li><p><strong>_textureFlags</strong> – <strong>[in]</strong> Texture creation (see <code class="docutils literal notranslate"><span class="pre">BGFX_TEXTURE_*</span></code>.), and sampler (see <code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_*</span></code>) flags. Default texture sampling mode is linear, and wrap mode is repeat.<ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</p></li>
 </ul>
