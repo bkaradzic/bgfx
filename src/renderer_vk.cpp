@@ -6251,11 +6251,12 @@ VK_DESTROY
 		const VkImageLayout oldLayout = m_currentImageLayout;
 		const VkImageLayout oldSingleMsaaLayout = m_currentSingleMsaaImageLayout;
 
-        auto numLayers = _numLayers;
-        if(m_type == VK_IMAGE_VIEW_TYPE_CUBE || VK_IMAGE_VIEW_TYPE_CUBE_ARRAY)
-        {
-            numLayers = m_numSides;
-        }
+		const uint32_t numLayers = false
+			|| m_type == VK_IMAGE_VIEW_TYPE_CUBE
+			|| m_type == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY
+			? m_numSides
+			: _numLayers
+			;
 
 		if (needResolve)
 		{
