@@ -408,8 +408,8 @@ function exampleProjectDefaults()
 			"-weak_framework Metal",
 		}
 
-	configuration { "ios* or tvos*" }
-		kind "ConsoleApp"
+	configuration { "ios* or tvos* or xros*" }
+		kind "WindowedApp"
 		linkoptions {
 			"-framework CoreFoundation",
 			"-framework Foundation",
@@ -418,6 +418,11 @@ function exampleProjectDefaults()
 			"-framework QuartzCore",
 			"-framework UIKit",
 			"-weak_framework Metal",
+		}
+		xcodecopyresources {
+			{ "shaders/metal", {
+				os.matchfiles(path.join(BGFX_DIR, "examples/runtime/shaders/metal/**.bin"))
+			}}
 		}
 
 	configuration { "xcode*", "ios" }
@@ -430,6 +435,12 @@ function exampleProjectDefaults()
 		kind "WindowedApp"
 		files {
 			path.join(BGFX_DIR, "examples/runtime/tvOS-Info.plist"),
+		}
+
+	configuration { "xcode*", "xros" }
+		kind "WindowedApp"
+		files {
+			path.join(BGFX_DIR, "examples/runtime/xros-info.plist"),
 		}
 
 	configuration {}
