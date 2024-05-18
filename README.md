@@ -611,9 +611,35 @@ Switch and PlayStation 4.
 
 ## Tomb4Plus
 
-https://www.github.com/SaracenOne/Tomb4Plus - Tomb4Plus is an open source reimplementation of the Tomb Raider: The Last Revelation engine. It is an enhanced fork of the original [Tomb4](https://github.com/Trxyebeep/TOMB4) reimplementation project which focuses on supporting the Level Editor runtime and aims for full compatibility with the unofficial binary-patched scripting extensions used by many custom levels. Tomb4Plus also replaces the original legacy Direct3D renderer with bgfx.
+https://www.github.com/SaracenOne/Tomb4Plus - Tomb4Plus is an open source
+reimplementation of the Tomb Raider: The Last Revelation engine. It is an
+enhanced fork of the original [Tomb4](https://github.com/Trxyebeep/TOMB4)
+reimplementation project which focuses on supporting the Level Editor runtime
+and aims for full compatibility with the unofficial binary-patched scripting
+extensions used by many custom levels. Tomb4Plus also replaces the original
+legacy Direct3D renderer with bgfx.
 
 ![Tomb4Plus screenshot](https://raw.githubusercontent.com/SaracenOne/Tomb4Plus/level_editor_v2/.github/images/preview.png)
+
+## Braid, Anniversary Edition
+
+https://play.google.com/store/apps/details?id=com.netflix.NGP.BraidAnniversaryEdition - 
+bgfx is used only in Android version of the game.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=U738YZG1k1I" 
+target="_blank"><img src="http://img.youtube.com/vi/U738YZG1k1I/0.jpg" 
+alt="Braid, Anniversary Edition"
+width="640" height="480" border="0" /></a>
+
+## Rotwood
+
+https://store.steampowered.com/app/2015270/Rotwood/ - Rotwood is an upcoming
+beat'em up, rogouelike video game developed and published by Klei Entertainment.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=SoTNhVPzmC8" 
+target="_blank"><img src="http://img.youtube.com/vi/SoTNhVPzmC8/0.jpg" 
+alt="Rotwood"
+width="640" height="480" border="0" /></a>
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
