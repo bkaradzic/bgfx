@@ -1712,20 +1712,89 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 		void clearQuad(ClearQuad& _clearQuad, const Rect& /*_rect*/, const Clear& _clear, const float _palette[][4])
 		{
+			bool clear_color;
+			bool clear_depth;
+			bool clear_stencil;
+
+			if (!isValid(m_fbh) || m_frameBuffers[m_fbh.idx].m_swapChain)
+			{
+				SwapChainMtl* swapChain =
+					!isValid(m_fbh) ?
+					m_mainFrameBuffer.m_swapChain :
+					m_frameBuffers[m_fbh.idx].m_swapChain;
+				if (NULL != swapChain->m_backBufferColorMsaa)
+				{
+					clear_color = swapChain->m_backBufferColorMsaa != NULL;
+				}
+				else
+				{
+					clear_color = (NULL != m_screenshotTarget ? m_screenshotTarget.m_obj : swapChain->currentDrawableTexture()) != NULL;
+				}
+
+				clear_depth = swapChain->m_backBufferDepth != NULL;
+				clear_stencil = swapChain->m_backBufferStencil != NULL;
+			}
+			else
+			{
+				FrameBufferMtl& frameBuffer = m_frameBuffers[m_fbh.idx];
+
+				clear_color = false;
+				for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
+				{
+					const TextureMtl& texture = m_textures[frameBuffer.m_colorHandle[ii].idx];
+					clear_color = (texture.m_ptrMsaa ? texture.m_ptrMsaa : texture.m_ptr) != NULL;
+					if (clear_color)
+					{
+						break;
+					}
+				}
+
+				if (isValid(frameBuffer.m_depthHandle))
+				{
+					const TextureMtl& texture = m_textures[frameBuffer.m_depthHandle.idx];
+					clear_depth = (texture.m_ptrMsaa ? texture.m_ptrMsaa : texture.m_ptr) != NULL;
+					clear_stencil = texture.m_ptrStencil != NULL;
+
+					if (texture.m_textureFormat == TextureFormat::D24S8)
+					{
+						if (texture.m_ptr.pixelFormat() == 255 /* Depth24Unorm_Stencil8 */
+						||  texture.m_ptr.pixelFormat() == 260 /* Depth32Float_Stencil8 */)
+						{
+							clear_stencil = clear_depth;
+						}
+						else
+						{
+							clear_stencil = (texture.m_ptrMsaa ? texture.m_ptrMsaa : texture.m_ptrStencil) != NULL;
+						}
+					}
+				}
+				else
+				{
+					clear_depth = false;
+					clear_stencil = false;
+				}
+			}
+
 			uint64_t state = 0;
-			state |= _clear.m_flags & BGFX_CLEAR_COLOR ? BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A         : 0;
-			state |= _clear.m_flags & BGFX_CLEAR_DEPTH ? BGFX_STATE_DEPTH_TEST_ALWAYS|BGFX_STATE_WRITE_Z : 0;
+			if (clear_color) {
+				state |= _clear.m_flags & BGFX_CLEAR_COLOR ? BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A         : 0;
+			}
+			if (clear_depth) {
+				state |= _clear.m_flags & BGFX_CLEAR_DEPTH ? BGFX_STATE_DEPTH_TEST_ALWAYS|BGFX_STATE_WRITE_Z : 0;
+			}
 
 			uint64_t stencil = 0;
-			stencil |= _clear.m_flags & BGFX_CLEAR_STENCIL ? 0
-				| BGFX_STENCIL_TEST_ALWAYS
-				| BGFX_STENCIL_FUNC_REF(_clear.m_stencil)
-				| BGFX_STENCIL_FUNC_RMASK(0xff)
-				| BGFX_STENCIL_OP_FAIL_S_REPLACE
-				| BGFX_STENCIL_OP_FAIL_Z_REPLACE
-				| BGFX_STENCIL_OP_PASS_Z_REPLACE
-				: 0
-				;
+			if (clear_stencil) {
+				stencil |= _clear.m_flags & BGFX_CLEAR_STENCIL ? 0
+					| BGFX_STENCIL_TEST_ALWAYS
+					| BGFX_STENCIL_FUNC_REF(_clear.m_stencil)
+					| BGFX_STENCIL_FUNC_RMASK(0xff)
+					| BGFX_STENCIL_OP_FAIL_S_REPLACE
+					| BGFX_STENCIL_OP_FAIL_Z_REPLACE
+					| BGFX_STENCIL_OP_PASS_Z_REPLACE
+					: 0
+					;
+			}
 
 			setDepthStencilState(state, stencil);
 
