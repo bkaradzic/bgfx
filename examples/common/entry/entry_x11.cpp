@@ -336,8 +336,13 @@ namespace entry
 			m_display = XOpenDisplay(NULL);
 			if (NULL == m_display)
 			{
-				bx::printf("XOpenDisplay failed: DISPLAY environment variable must be set.\n\n");
-				return bx::kExitFailure;
+				// Use `DISPLAY` enviroment variable to pick display. If `DISPLAY` is not set try ":0"
+				m_display = XOpenDisplay(":0");
+				if (NULL == m_display)
+				{
+					bx::printf("XOpenDisplay failed: DISPLAY environment variable must be set.\n\n");
+					return bx::kExitFailure;
+				}
 			}
 
 			int32_t screen = DefaultScreen(m_display);
