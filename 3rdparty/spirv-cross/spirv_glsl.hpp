@@ -477,7 +477,7 @@ protected:
 		uint32_t coord = 0, coord_components = 0, dref = 0;
 		uint32_t grad_x = 0, grad_y = 0, lod = 0, offset = 0;
 		uint32_t bias = 0, component = 0, sample = 0, sparse_texel = 0, min_lod = 0;
-		bool nonuniform_expression = false;
+		bool nonuniform_expression = false, has_array_offsets = false;
 	};
 	virtual std::string to_function_args(const TextureFunctionArguments &args, bool *p_forward);
 
@@ -564,8 +564,8 @@ protected:
 
 	Options options;
 
-	virtual std::string type_to_array_glsl(
-	    const SPIRType &type); // Allow Metal to use the array<T> template to make arrays a value type
+	// Allow Metal to use the array<T> template to make arrays a value type
+	virtual std::string type_to_array_glsl(const SPIRType &type, uint32_t variable_id);
 	std::string to_array_size(const SPIRType &type, uint32_t index);
 	uint32_t to_array_size_literal(const SPIRType &type, uint32_t index) const;
 	uint32_t to_array_size_literal(const SPIRType &type) const;
@@ -933,6 +933,15 @@ protected:
 		PolyfillMatrixInverse2x2 = 1 << 6,
 		PolyfillMatrixInverse3x3 = 1 << 7,
 		PolyfillMatrixInverse4x4 = 1 << 8,
+		PolyfillNMin16 = 1 << 9,
+		PolyfillNMin32 = 1 << 10,
+		PolyfillNMin64 = 1 << 11,
+		PolyfillNMax16 = 1 << 12,
+		PolyfillNMax32 = 1 << 13,
+		PolyfillNMax64 = 1 << 14,
+		PolyfillNClamp16 = 1 << 15,
+		PolyfillNClamp32 = 1 << 16,
+		PolyfillNClamp64 = 1 << 17,
 	};
 
 	uint32_t required_polyfills = 0;

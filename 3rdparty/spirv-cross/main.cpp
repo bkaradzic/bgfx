@@ -675,11 +675,13 @@ struct CLIArguments
 	bool msl_force_sample_rate_shading = false;
 	bool msl_manual_helper_invocation_updates = true;
 	bool msl_check_discarded_frag_stores = false;
+	bool msl_force_fragment_with_side_effects_execution = false;
 	bool msl_sample_dref_lod_array_as_grad = false;
 	bool msl_runtime_array_rich_descriptor = false;
 	bool msl_replace_recursive_inputs = false;
 	bool msl_readwrite_texture_fences = true;
 	bool msl_agx_manual_cube_grad_fixup = false;
+	bool msl_input_attachment_is_ds_attachment = false;
 	const char *msl_combined_sampler_suffix = nullptr;
 	bool glsl_emit_push_constant_as_ubo = false;
 	bool glsl_emit_ubo_as_plain_uniforms = false;
@@ -872,6 +874,10 @@ static void print_help_msl()
 	                "\t[--msl-runtime-array-rich-descriptor]:\n\t\tWhen declaring a runtime array of SSBOs, declare an array of {ptr, len} pairs to support OpArrayLength.\n"
 	                "\t[--msl-replace-recursive-inputs]:\n\t\tWorks around a Metal 3.1 regression bug, which causes an infinite recursion crash during Metal's analysis of an entry point input structure that itself contains internal recursion.\n"
 	                "\t[--msl-texture-buffer-native]:\n\t\tEnable native support for texel buffers. Otherwise, it is emulated as a normal texture.\n"
+	                "\t[--msl-input-attachment-is-ds-attachment]:\n\t\tAdds a simple depth passthrough in fragment shaders when they do not modify the depth value.\n"
+	                "\t\tRequired to force Metal to write to the depth/stencil attachment post fragment execution.\n"
+	                "\t\tOtherwise, Metal may optimize the write to pre fragment execution which goes against the Vulkan spec.\n"
+	                "\t\tOnly required if an input attachment and depth/stencil attachment reference the same resource.\n"
 	                "\t[--msl-framebuffer-fetch]:\n\t\tImplement subpass inputs with frame buffer fetch.\n"
 	                "\t\tEmits [[color(N)]] inputs in fragment stage.\n"
 	                "\t\tRequires an Apple GPU.\n"
@@ -956,6 +962,15 @@ static void print_help_msl()
 	                "\t\tSome Metal devices have a bug where stores to resources from a fragment shader\n"
 	                "\t\tcontinue to execute, even when the fragment is discarded. These checks\n"
 	                "\t\tprevent these stores from executing.\n"
+	                "\t[--msl-force-frag-execution]:\n\t\tEnforces fragment execution to avoid early discard by Metal\n"
+	                "\t\tMetal will prematurely discard fragments before execution when side effects are present.\n"
+	                "\t\tThis condition is triggered under the following conditions (side effect operations happen before discard):\n"
+	                "\t\t\t1. Pre fragment depth test fails.\n"
+	                "\t\t\t2. Modify depth value in fragment shader to constant value known at compile time.\n"
+	                "\t\t\t3. Constant value will not pass post fragment depth test.\n"
+	                "\t\t\t4. Fragment is always discarded in fragment execution.\n"
+	                "\t\tHowever, Vulkan expects fragment shader to be executed since it cannot be discarded until the discard\n"
+	                "\t\tpresent in the fragment execution, which would also execute the operations with side effects.\n"
 	                "\t[--msl-sample-dref-lod-array-as-grad]:\n\t\tUse a gradient instead of a level argument.\n"
 	                "\t\tSome Metal devices have a bug where the level() argument to\n"
 	                "\t\tdepth2d_array<T>::sample_compare() in a fragment shader is biased by some\n"
@@ -1242,10 +1257,12 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		msl_opts.force_sample_rate_shading = args.msl_force_sample_rate_shading;
 		msl_opts.manual_helper_invocation_updates = args.msl_manual_helper_invocation_updates;
 		msl_opts.check_discarded_frag_stores = args.msl_check_discarded_frag_stores;
+		msl_opts.force_fragment_with_side_effects_execution = args.msl_force_fragment_with_side_effects_execution;
 		msl_opts.sample_dref_lod_array_as_grad = args.msl_sample_dref_lod_array_as_grad;
 		msl_opts.ios_support_base_vertex_instance = true;
 		msl_opts.runtime_array_rich_descriptor = args.msl_runtime_array_rich_descriptor;
 		msl_opts.replace_recursive_inputs = args.msl_replace_recursive_inputs;
+		msl_opts.input_attachment_is_ds_attachment = args.msl_input_attachment_is_ds_attachment;
 		msl_opts.readwrite_texture_fences = args.msl_readwrite_texture_fences;
 		msl_opts.agx_manual_cube_grad_fixup = args.msl_agx_manual_cube_grad_fixup;
 		msl_comp->set_msl_options(msl_opts);
@@ -1800,6 +1817,7 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--msl-no-manual-helper-invocation-updates",
 	        [&args](CLIParser &) { args.msl_manual_helper_invocation_updates = false; });
 	cbs.add("--msl-check-discarded-frag-stores", [&args](CLIParser &) { args.msl_check_discarded_frag_stores = true; });
+	cbs.add("--msl-force-frag-with-side-effects-execution", [&args](CLIParser &) { args.msl_force_fragment_with_side_effects_execution = true; });
 	cbs.add("--msl-sample-dref-lod-array-as-grad",
 	        [&args](CLIParser &) { args.msl_sample_dref_lod_array_as_grad = true; });
 	cbs.add("--msl-no-readwrite-texture-fences", [&args](CLIParser &) { args.msl_readwrite_texture_fences = false; });
@@ -1811,6 +1829,7 @@ static int main_inner(int argc, char *argv[])
 	        [&args](CLIParser &) { args.msl_runtime_array_rich_descriptor = true; });
 	cbs.add("--msl-replace-recursive-inputs",
 	        [&args](CLIParser &) { args.msl_replace_recursive_inputs = true; });
+	cbs.add("--msl-input-attachment-is-ds-attachment", [&args](CLIParser &) { args.msl_input_attachment_is_ds_attachment = true; });
 	cbs.add("--extension", [&args](CLIParser &parser) { args.extensions.push_back(parser.next_string()); });
 	cbs.add("--rename-entry-point", [&args](CLIParser &parser) {
 		auto old_name = parser.next_string();

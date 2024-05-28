@@ -639,7 +639,8 @@ void CompilerGLSL::find_static_extensions()
 
 void CompilerGLSL::require_polyfill(Polyfill polyfill, bool relaxed)
 {
-	uint32_t &polyfills = (relaxed && options.es) ? required_polyfills_relaxed : required_polyfills;
+	uint32_t &polyfills = (relaxed && (options.es || options.vulkan_semantics)) ?
+	                      required_polyfills_relaxed : required_polyfills;
 
 	if ((polyfills & polyfill) == 0)
 	{
@@ -715,7 +716,7 @@ string CompilerGLSL::compile()
 
 		if (required_polyfills != 0)
 			emit_polyfills(required_polyfills, false);
-		if (options.es && required_polyfills_relaxed != 0)
+		if ((options.es || options.vulkan_semantics) && required_polyfills_relaxed != 0)
 			emit_polyfills(required_polyfills_relaxed, true);
 
 		emit_function(get<SPIRFunction>(ir.default_entry_point), Bitset());
@@ -2434,7 +2435,7 @@ void CompilerGLSL::emit_buffer_reference_block(uint32_t type_id, bool forward_de
 		else
 		{
 			auto &pointee_type = get_pointee_type(type);
-			statement(type_to_glsl(pointee_type), " value", type_to_array_glsl(pointee_type), ";");
+			statement(type_to_glsl(pointee_type), " value", type_to_array_glsl(pointee_type, 0), ";");
 		}
 
 		end_scope_decl();
@@ -2513,7 +2514,7 @@ void CompilerGLSL::emit_buffer_block_native(const SPIRVariable &var)
 	// It will need to be reset if we have to recompile.
 	preserve_alias_on_reset(var.self);
 	add_resource_name(var.self);
-	end_scope_decl(to_name(var.self) + type_to_array_glsl(type));
+	end_scope_decl(to_name(var.self) + type_to_array_glsl(type, var.self));
 	statement("");
 }
 
@@ -2780,7 +2781,7 @@ void CompilerGLSL::emit_interface_block(const SPIRVariable &var)
 			}
 
 			add_resource_name(var.self);
-			end_scope_decl(join(to_name(var.self), type_to_array_glsl(type)));
+			end_scope_decl(join(to_name(var.self), type_to_array_glsl(type, var.self)));
 			statement("");
 		}
 	}
@@ -3977,7 +3978,7 @@ void CompilerGLSL::emit_output_variable_initializer(const SPIRVariable &var)
 				auto &c = get<SPIRConstant>(var.initializer);
 				for (uint32_t j = 0; j < array_size; j++)
 					exprs.push_back(to_expression(get<SPIRConstant>(c.subconstants[j]).subconstants[i]));
-				statement("const ", type_to_glsl(array_type), " ", lut_name, type_to_array_glsl(array_type), " = ",
+				statement("const ", type_to_glsl(array_type), " ", lut_name, type_to_array_glsl(array_type, 0), " = ",
 				          type_to_glsl_constructor(array_type), "(", merge(exprs, ", "), ");");
 			}
 
@@ -4035,7 +4036,7 @@ void CompilerGLSL::emit_output_variable_initializer(const SPIRVariable &var)
 	else if (is_control_point)
 	{
 		auto lut_name = join("_", var.self, "_init");
-		statement("const ", type_to_glsl(type), " ", lut_name, type_to_array_glsl(type),
+		statement("const ", type_to_glsl(type), " ", lut_name, type_to_array_glsl(type, 0),
 		          " = ", to_expression(var.initializer), ";");
 		entry_func.fixup_hooks_in.push_back([&, lut_name]() {
 			statement(to_expression(var.self), "[gl_InvocationID] = ", lut_name, "[gl_InvocationID];");
@@ -4060,7 +4061,7 @@ void CompilerGLSL::emit_output_variable_initializer(const SPIRVariable &var)
 	{
 		auto lut_name = join("_", var.self, "_init");
 		statement("const ", type_to_glsl(type), " ", lut_name,
-		          type_to_array_glsl(type), " = ", to_expression(var.initializer), ";");
+		          type_to_array_glsl(type, var.self), " = ", to_expression(var.initializer), ";");
 		entry_func.fixup_hooks_in.push_back([&, lut_name, is_patch]() {
 			if (is_patch)
 			{
@@ -4841,6 +4842,109 @@ void CompilerGLSL::emit_polyfills(uint32_t polyfills, bool relaxed)
 		          "* (1.0 / dot(m[0], t));");
 		end_scope();
 		statement("");
+	}
+
+	if (!relaxed)
+	{
+		static const Polyfill polys[3][3] = {
+			{ PolyfillNMin16, PolyfillNMin32, PolyfillNMin64 },
+			{ PolyfillNMax16, PolyfillNMax32, PolyfillNMax64 },
+			{ PolyfillNClamp16, PolyfillNClamp32, PolyfillNClamp64 },
+		};
+
+		static const GLSLstd450 glsl_ops[] = { GLSLstd450NMin, GLSLstd450NMax, GLSLstd450NClamp };
+		static const char *spv_ops[] = { "spvNMin", "spvNMax", "spvNClamp" };
+		bool has_poly = false;
+
+		for (uint32_t i = 0; i < 3; i++)
+		{
+			for (uint32_t j = 0; j < 3; j++)
+			{
+				if ((polyfills & polys[i][j]) == 0)
+					continue;
+
+				const char *types[3][4] = {
+					{ "float16_t", "f16vec2", "f16vec3", "f16vec4" },
+					{ "float",     "vec2",    "vec3",    "vec4" },
+					{ "double",    "dvec2",   "dvec3",   "dvec4" },
+				};
+
+				for (uint32_t k = 0; k < 4; k++)
+				{
+					auto *type = types[j][k];
+
+					if (i < 2)
+					{
+						statement("spirv_instruction(set = \"GLSL.std.450\", id = ", glsl_ops[i], ") ",
+						          type, " ", spv_ops[i], "(", type, ", ", type, ");");
+					}
+					else
+					{
+						statement("spirv_instruction(set = \"GLSL.std.450\", id = ", glsl_ops[i], ") ",
+						          type, " ", spv_ops[i], "(", type, ", ", type, ", ", type, ");");
+					}
+
+					has_poly = true;
+				}
+			}
+		}
+
+		if (has_poly)
+			statement("");
+	}
+	else
+	{
+		// Mediump intrinsics don't work correctly, so wrap the intrinsic in an outer shell that ensures mediump
+		// propagation.
+
+		static const Polyfill polys[3][3] = {
+			{ PolyfillNMin16, PolyfillNMin32, PolyfillNMin64 },
+			{ PolyfillNMax16, PolyfillNMax32, PolyfillNMax64 },
+			{ PolyfillNClamp16, PolyfillNClamp32, PolyfillNClamp64 },
+		};
+
+		static const char *spv_ops[] = { "spvNMin", "spvNMax", "spvNClamp" };
+
+		for (uint32_t i = 0; i < 3; i++)
+		{
+			for (uint32_t j = 0; j < 3; j++)
+			{
+				if ((polyfills & polys[i][j]) == 0)
+					continue;
+
+				const char *types[3][4] = {
+					{ "float16_t", "f16vec2", "f16vec3", "f16vec4" },
+					{ "float",     "vec2",    "vec3",    "vec4" },
+					{ "double",    "dvec2",   "dvec3",   "dvec4" },
+				};
+
+				for (uint32_t k = 0; k < 4; k++)
+				{
+					auto *type = types[j][k];
+
+					if (i < 2)
+					{
+						statement("mediump ", type, " ", spv_ops[i], "Relaxed(",
+						          "mediump ", type, " a, mediump ", type, " b)");
+						begin_scope();
+						statement("mediump ", type, " res = ", spv_ops[i], "(a, b);");
+						statement("return res;");
+						end_scope();
+						statement("");
+					}
+					else
+					{
+						statement("mediump ", type, " ", spv_ops[i], "Relaxed(",
+						          "mediump ", type, " a, mediump ", type, " b, mediump ", type, " c)");
+						begin_scope();
+						statement("mediump ", type, " res = ", spv_ops[i], "(a, b, c);");
+						statement("return res;");
+						end_scope();
+						statement("");
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -7847,6 +7951,7 @@ std::string CompilerGLSL::to_texture_op(const Instruction &i, bool sparse, bool 
 	args.grad_x = grad_x;
 	args.grad_y = grad_y;
 	args.lod = lod;
+	args.has_array_offsets = coffsets != 0;
 
 	if (coffsets)
 		args.offset = coffsets;
@@ -8864,23 +8969,97 @@ void CompilerGLSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop,
 	case GLSLstd450NMin:
 	case GLSLstd450NMax:
 	{
-		emit_nminmax_op(result_type, id, args[0], args[1], op);
+		if (options.vulkan_semantics)
+		{
+			require_extension_internal("GL_EXT_spirv_intrinsics");
+			bool relaxed = has_decoration(id, DecorationRelaxedPrecision);
+			Polyfill poly = {};
+			switch (get<SPIRType>(result_type).width)
+			{
+			case 16:
+				poly = op == GLSLstd450NMin ? PolyfillNMin16 : PolyfillNMax16;
+				break;
+
+			case 32:
+				poly = op == GLSLstd450NMin ? PolyfillNMin32 : PolyfillNMax32;
+				break;
+
+			case 64:
+				poly = op == GLSLstd450NMin ? PolyfillNMin64 : PolyfillNMax64;
+				break;
+
+			default:
+				SPIRV_CROSS_THROW("Invalid bit width for NMin/NMax.");
+			}
+
+			require_polyfill(poly, relaxed);
+
+			// Function return decorations are broken, so need to do double polyfill.
+			if (relaxed)
+				require_polyfill(poly, false);
+
+			const char *op_str;
+			if (relaxed)
+				op_str = op == GLSLstd450NMin ? "spvNMinRelaxed" : "spvNMaxRelaxed";
+			else
+				op_str = op == GLSLstd450NMin ? "spvNMin" : "spvNMax";
+
+			emit_binary_func_op(result_type, id, args[0], args[1], op_str);
+		}
+		else
+		{
+			emit_nminmax_op(result_type, id, args[0], args[1], op);
+		}
 		break;
 	}
 
 	case GLSLstd450NClamp:
 	{
-		// Make sure we have a unique ID here to avoid aliasing the extra sub-expressions between clamp and NMin sub-op.
-		// IDs cannot exceed 24 bits, so we can make use of the higher bits for some unique flags.
-		uint32_t &max_id = extra_sub_expressions[id | EXTRA_SUB_EXPRESSION_TYPE_AUX];
-		if (!max_id)
-			max_id = ir.increase_bound_by(1);
+		if (options.vulkan_semantics)
+		{
+			require_extension_internal("GL_EXT_spirv_intrinsics");
+			bool relaxed = has_decoration(id, DecorationRelaxedPrecision);
+			Polyfill poly = {};
+			switch (get<SPIRType>(result_type).width)
+			{
+			case 16:
+				poly = PolyfillNClamp16;
+				break;
 
-		// Inherit precision qualifiers.
-		ir.meta[max_id] = ir.meta[id];
+			case 32:
+				poly = PolyfillNClamp32;
+				break;
 
-		emit_nminmax_op(result_type, max_id, args[0], args[1], GLSLstd450NMax);
-		emit_nminmax_op(result_type, id, max_id, args[2], GLSLstd450NMin);
+			case 64:
+				poly = PolyfillNClamp64;
+				break;
+
+			default:
+				SPIRV_CROSS_THROW("Invalid bit width for NMin/NMax.");
+			}
+
+			require_polyfill(poly, relaxed);
+
+			// Function return decorations are broken, so need to do double polyfill.
+			if (relaxed)
+				require_polyfill(poly, false);
+
+			emit_trinary_func_op(result_type, id, args[0], args[1], args[2], relaxed ? "spvNClampRelaxed" : "spvNClamp");
+		}
+		else
+		{
+			// Make sure we have a unique ID here to avoid aliasing the extra sub-expressions between clamp and NMin sub-op.
+			// IDs cannot exceed 24 bits, so we can make use of the higher bits for some unique flags.
+			uint32_t &max_id = extra_sub_expressions[id | EXTRA_SUB_EXPRESSION_TYPE_AUX];
+			if (!max_id)
+				max_id = ir.increase_bound_by(1);
+
+			// Inherit precision qualifiers.
+			ir.meta[max_id] = ir.meta[id];
+
+			emit_nminmax_op(result_type, max_id, args[0], args[1], GLSLstd450NMax);
+			emit_nminmax_op(result_type, id, max_id, args[2], GLSLstd450NMin);
+		}
 		break;
 	}
 
@@ -11610,6 +11789,10 @@ uint32_t CompilerGLSL::get_integer_width_for_instruction(const Instruction &inst
 	case OpUGreaterThanEqual:
 		return expression_type(ops[2]).width;
 
+	case OpSMulExtended:
+	case OpUMulExtended:
+		return get<SPIRType>(get<SPIRType>(ops[0]).member_types[0]).width;
+
 	default:
 	{
 		// We can look at result type which is more robust.
@@ -12167,6 +12350,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		auto &callee = get<SPIRFunction>(func);
 		auto &return_type = get<SPIRType>(callee.return_type);
 		bool pure = function_is_pure(callee);
+		bool control_dependent = function_is_control_dependent(callee);
 
 		bool callee_has_out_variables = false;
 		bool emit_return_value_as_argument = false;
@@ -12198,7 +12382,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 
 		if (emit_return_value_as_argument)
 		{
-			statement(type_to_glsl(return_type), " ", to_name(id), type_to_array_glsl(return_type), ";");
+			statement(type_to_glsl(return_type), " ", to_name(id), type_to_array_glsl(return_type, 0), ";");
 			arglist.push_back(to_name(id));
 		}
 
@@ -12259,6 +12443,9 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		}
 		else
 			statement(funexpr, ";");
+
+		if (control_dependent)
+			register_control_dependent_expression(id);
 
 		break;
 	}
@@ -15166,7 +15353,7 @@ string CompilerGLSL::variable_decl(const SPIRType &type, const string &name, uin
 {
 	string type_name = type_to_glsl(type, id);
 	remap_variable_type_name(type, name, type_name);
-	return join(type_name, " ", name, type_to_array_glsl(type));
+	return join(type_name, " ", name, type_to_array_glsl(type, id));
 }
 
 bool CompilerGLSL::variable_decl_is_remapped_storage(const SPIRVariable &var, StorageClass storage) const
@@ -15523,7 +15710,7 @@ string CompilerGLSL::to_array_size(const SPIRType &type, uint32_t index)
 		return "";
 }
 
-string CompilerGLSL::type_to_array_glsl(const SPIRType &type)
+string CompilerGLSL::type_to_array_glsl(const SPIRType &type, uint32_t)
 {
 	if (type.pointer && type.storage == StorageClassPhysicalStorageBufferEXT && type.basetype != SPIRType::Struct)
 	{
@@ -16087,7 +16274,7 @@ void CompilerGLSL::emit_function_prototype(SPIRFunction &func, const Bitset &ret
 	auto &type = get<SPIRType>(func.return_type);
 	decl += flags_to_qualifiers_glsl(type, return_flags);
 	decl += type_to_glsl(type);
-	decl += type_to_array_glsl(type);
+	decl += type_to_array_glsl(type, 0);
 	decl += " ";
 
 	if (func.self == ir.default_entry_point)
