@@ -33,15 +33,19 @@ extern "C" {
 #else
 #define SPIRV_TOOLS_EXPORT __declspec(dllimport)
 #endif
+#define SPIRV_TOOLS_LOCAL
 #else
 #if defined(SPIRV_TOOLS_IMPLEMENTATION)
 #define SPIRV_TOOLS_EXPORT __attribute__((visibility("default")))
+#define SPIRV_TOOLS_LOCAL __attribute__((visibility("hidden")))
 #else
 #define SPIRV_TOOLS_EXPORT
+#define SPIRV_TOOLS_LOCAL
 #endif
 #endif
 #else
 #define SPIRV_TOOLS_EXPORT
+#define SPIRV_TOOLS_LOCAL
 #endif
 
 // Helpers

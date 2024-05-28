@@ -519,6 +519,8 @@ spv_result_t ValidateLocations(ValidationState_t& _,
   std::unordered_set<uint32_t> input_locations;
   std::unordered_set<uint32_t> output_locations_index0;
   std::unordered_set<uint32_t> output_locations_index1;
+  std::unordered_set<uint32_t> patch_locations_index0;
+  std::unordered_set<uint32_t> patch_locations_index1;
   std::unordered_set<uint32_t> seen;
   for (uint32_t i = 3; i < entry_point->operands().size(); ++i) {
     auto interface_id = entry_point->GetOperandAs<uint32_t>(i);
@@ -531,6 +533,26 @@ spv_result_t ValidateLocations(ValidationState_t& _,
     if (!seen.insert(interface_id).second) {
       // Pre-1.4 an interface variable could be listed multiple times in an
       // entry point. Validation for 1.4 or later is done elsewhere.
+      continue;
+    }
+
+    // The two Tessellation stages have a "Patch" variable that interface with
+    // the Location mechanism, but are not suppose to be tied to the "normal"
+    // input/output Location.
+    // TODO - SPIR-V allows the Patch decoration to be applied to struct
+    // members, but is not allowed in GLSL/HLSL
+    bool has_patch = false;
+    for (auto& dec : _.id_decorations(interface_var->id())) {
+      if (dec.dec_type() == spv::Decoration::Patch) {
+        has_patch = true;
+        if (auto error = GetLocationsForVariable(_, entry_point, interface_var,
+                                                 &patch_locations_index0,
+                                                 &patch_locations_index1))
+          return error;
+        break;
+      }
+    }
+    if (has_patch) {
       continue;
     }
 

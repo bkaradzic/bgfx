@@ -349,7 +349,8 @@ spv_result_t CheckMemoryAccess(ValidationState_t& _, const Instruction* inst,
 
   if (mask & uint32_t(spv::MemoryAccessMask::MakePointerVisibleKHR)) {
     if (inst->opcode() == spv::Op::OpStore ||
-        inst->opcode() == spv::Op::OpCooperativeMatrixStoreNV) {
+        inst->opcode() == spv::Op::OpCooperativeMatrixStoreNV ||
+        inst->opcode() == spv::Op::OpCooperativeMatrixStoreKHR) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "MakePointerVisibleKHR cannot be used with OpStore.";
     }

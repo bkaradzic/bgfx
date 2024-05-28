@@ -914,7 +914,15 @@ spv_result_t ValidateTypeImage(ValidationState_t& _, const Instruction* inst) {
 
     if (info.dim == spv::Dim::SubpassData && info.arrayed != 0) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << _.VkErrorID(6214) << "Dim SubpassData requires Arrayed to be 0";
+             << _.VkErrorID(6214)
+             << "Dim SubpassData requires Arrayed to be 0 in the Vulkan "
+                "environment";
+    }
+
+    if (info.dim == spv::Dim::Rect) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << _.VkErrorID(9638)
+             << "Dim must not be Rect in the Vulkan environment";
     }
   }
 
@@ -2161,7 +2169,8 @@ spv_result_t ValidateImageProcessingQCOMDecoration(ValidationState_t& _, int id,
                                                    spv::Decoration decor) {
   const Instruction* si_inst = nullptr;
   const Instruction* ld_inst = _.FindDef(id);
-  if (ld_inst->opcode() == spv::Op::OpSampledImage) {
+  bool is_intf_obj = (ld_inst->opcode() == spv::Op::OpSampledImage);
+  if (is_intf_obj == true) {
     si_inst = ld_inst;
     int t_idx = si_inst->GetOperandAs<int>(2);  // texture
     ld_inst = _.FindDef(t_idx);
@@ -2173,6 +2182,56 @@ spv_result_t ValidateImageProcessingQCOMDecoration(ValidationState_t& _, int id,
   if (!_.HasDecoration(texture_id, decor)) {
     return _.diag(SPV_ERROR_INVALID_DATA, ld_inst)
            << "Missing decoration " << _.SpvDecorationString(decor);
+  }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t ValidateImageProcessing2QCOMWindowDecoration(ValidationState_t& _,
+                                                          int id) {
+  const Instruction* ld_inst = _.FindDef(id);
+  bool is_intf_obj = (ld_inst->opcode() != spv::Op::OpSampledImage);
+  if (is_intf_obj == true) {
+    if (ld_inst->opcode() != spv::Op::OpLoad) {
+      return _.diag(SPV_ERROR_INVALID_DATA, ld_inst) << "Expect to see OpLoad";
+    }
+    int texture_id = ld_inst->GetOperandAs<int>(2);  // variable to load
+    spv::Decoration decor = spv::Decoration::BlockMatchTextureQCOM;
+    if (!_.HasDecoration(texture_id, decor)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, ld_inst)
+             << "Missing decoration " << _.SpvDecorationString(decor);
+    }
+    decor = spv::Decoration::BlockMatchSamplerQCOM;
+    if (!_.HasDecoration(texture_id, decor)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, ld_inst)
+             << "Missing decoration " << _.SpvDecorationString(decor);
+    }
+  } else {
+    const Instruction* si_inst = ld_inst;
+    int t_idx = si_inst->GetOperandAs<int>(2);  // texture
+    const Instruction* t_ld_inst = _.FindDef(t_idx);
+    if (t_ld_inst->opcode() != spv::Op::OpLoad) {
+      return _.diag(SPV_ERROR_INVALID_DATA, t_ld_inst)
+             << "Expect to see OpLoad";
+    }
+    int texture_id = t_ld_inst->GetOperandAs<int>(2);  // variable to load
+    spv::Decoration decor = spv::Decoration::BlockMatchTextureQCOM;
+    if (!_.HasDecoration(texture_id, decor)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, ld_inst)
+             << "Missing decoration " << _.SpvDecorationString(decor);
+    }
+    int s_idx = si_inst->GetOperandAs<int>(3);  // sampler
+    const Instruction* s_ld_inst = _.FindDef(s_idx);
+    if (s_ld_inst->opcode() != spv::Op::OpLoad) {
+      return _.diag(SPV_ERROR_INVALID_DATA, s_ld_inst)
+             << "Expect to see OpLoad";
+    }
+    int sampler_id = s_ld_inst->GetOperandAs<int>(2);  // variable to load
+    decor = spv::Decoration::BlockMatchSamplerQCOM;
+    if (!_.HasDecoration(sampler_id, decor)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, ld_inst)
+             << "Missing decoration " << _.SpvDecorationString(decor);
+    }
   }
 
   return SPV_SUCCESS;
@@ -2203,18 +2262,10 @@ spv_result_t ValidateImageProcessingQCOM(ValidationState_t& _,
     case spv::Op::OpImageBlockMatchWindowSSDQCOM:
     case spv::Op::OpImageBlockMatchWindowSADQCOM: {
       int tgt_idx = inst->GetOperandAs<int>(2);  // target
-      res = ValidateImageProcessingQCOMDecoration(
-          _, tgt_idx, spv::Decoration::BlockMatchTextureQCOM);
-      if (res != SPV_SUCCESS) break;
-      res = ValidateImageProcessingQCOMDecoration(
-          _, tgt_idx, spv::Decoration::BlockMatchSamplerQCOM);
+      res = ValidateImageProcessing2QCOMWindowDecoration(_, tgt_idx);
       if (res != SPV_SUCCESS) break;
       int ref_idx = inst->GetOperandAs<int>(4);  // reference
-      res = ValidateImageProcessingQCOMDecoration(
-          _, ref_idx, spv::Decoration::BlockMatchTextureQCOM);
-      if (res != SPV_SUCCESS) break;
-      res = ValidateImageProcessingQCOMDecoration(
-          _, ref_idx, spv::Decoration::BlockMatchSamplerQCOM);
+      res = ValidateImageProcessing2QCOMWindowDecoration(_, ref_idx);
       break;
     }
     case spv::Op::OpImageBlockMatchGatherSSDQCOM:

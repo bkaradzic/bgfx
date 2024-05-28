@@ -37,14 +37,14 @@ struct DescriptorSetAndBinding;
 // provides methods for registering optimization passes and optimizing.
 //
 // Instances of this class provides basic thread-safety guarantee.
-class Optimizer {
+class SPIRV_TOOLS_EXPORT Optimizer {
  public:
   // The token for an optimization pass. It is returned via one of the
   // Create*Pass() standalone functions at the end of this header file and
   // consumed by the RegisterPass() method. Tokens are one-time objects that
   // only support move; copying is not allowed.
   struct PassToken {
-    struct Impl;  // Opaque struct for holding internal data.
+    struct SPIRV_TOOLS_LOCAL Impl;  // Opaque struct for holding internal data.
 
     PassToken(std::unique_ptr<Impl>);
 
@@ -239,7 +239,7 @@ class Optimizer {
   Optimizer& SetValidateAfterAll(bool validate);
 
  private:
-  struct Impl;                  // Opaque struct for holding internal data.
+  struct SPIRV_TOOLS_LOCAL Impl;  // Opaque struct for holding internal data.
   std::unique_ptr<Impl> impl_;  // Unique pointer to internal data.
 };
 
@@ -746,53 +746,6 @@ Optimizer::PassToken CreateReduceLoadSizePass(
 // This pass looks for access chains fed by other access chains and combines
 // them into a single instruction where possible.
 Optimizer::PassToken CreateCombineAccessChainsPass();
-
-// Create a pass to instrument bindless descriptor checking
-// This pass instruments all bindless references to check that descriptor
-// array indices are inbounds, and if the descriptor indexing extension is
-// enabled, that the descriptor has been initialized. If the reference is
-// invalid, a record is written to the debug output buffer (if space allows)
-// and a null value is returned. This pass is designed to support bindless
-// validation in the Vulkan validation layers.
-//
-// TODO(greg-lunarg): Add support for buffer references. Currently only does
-// checking for image references.
-//
-// Dead code elimination should be run after this pass as the original,
-// potentially invalid code is not removed and could cause undefined behavior,
-// including crashes. It may also be beneficial to run Simplification
-// (ie Constant Propagation), DeadBranchElim and BlockMerge after this pass to
-// optimize instrument code involving the testing of compile-time constants.
-// It is also generally recommended that this pass (and all
-// instrumentation passes) be run after any legalization and optimization
-// passes. This will give better analysis for the instrumentation and avoid
-// potentially de-optimizing the instrument code, for example, inlining
-// the debug record output function throughout the module.
-//
-// The instrumentation will write |shader_id| in each output record
-// to identify the shader module which generated the record.
-Optimizer::PassToken CreateInstBindlessCheckPass(uint32_t shader_id);
-
-// Create a pass to instrument physical buffer address checking
-// This pass instruments all physical buffer address references to check that
-// all referenced bytes fall in a valid buffer. If the reference is
-// invalid, a record is written to the debug output buffer (if space allows)
-// and a null value is returned. This pass is designed to support buffer
-// address validation in the Vulkan validation layers.
-//
-// Dead code elimination should be run after this pass as the original,
-// potentially invalid code is not removed and could cause undefined behavior,
-// including crashes. Instruction simplification would likely also be
-// beneficial. It is also generally recommended that this pass (and all
-// instrumentation passes) be run after any legalization and optimization
-// passes. This will give better analysis for the instrumentation and avoid
-// potentially de-optimizing the instrument code, for example, inlining
-// the debug record output function throughout the module.
-//
-// The instrumentation will read and write buffers in debug
-// descriptor set |desc_set|. It will write |shader_id| in each output record
-// to identify the shader module which generated the record.
-Optimizer::PassToken CreateInstBuffAddrCheckPass(uint32_t shader_id);
 
 // Create a pass to instrument OpDebugPrintf instructions.
 // This pass replaces all OpDebugPrintf instructions with instructions to write

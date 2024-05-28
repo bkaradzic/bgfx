@@ -623,6 +623,14 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
 
           seen[next_offset % 16] = true;
         }
+      } else if (spv::Op::OpTypeMatrix == element_inst->opcode()) {
+        // Matrix stride would be on the array element in the struct.
+        const auto stride = constraint.matrix_stride;
+        if (!IsAlignedTo(stride, alignment)) {
+          return fail(memberIdx)
+                 << "is a matrix with stride " << stride
+                 << " not satisfying alignment to " << alignment;
+        }
       }
 
       // Proceed to the element in case it is an array.
@@ -675,7 +683,16 @@ bool checkForRequiredDecoration(uint32_t struct_id,
                                 spv::Op type, ValidationState_t& vstate) {
   const auto& members = getStructMembers(struct_id, vstate);
   for (size_t memberIdx = 0; memberIdx < members.size(); memberIdx++) {
-    const auto id = members[memberIdx];
+    auto id = members[memberIdx];
+    if (type == spv::Op::OpTypeMatrix) {
+      // Matrix decorations also apply to arrays of matrices.
+      auto memberInst = vstate.FindDef(id);
+      while (memberInst->opcode() == spv::Op::OpTypeArray ||
+             memberInst->opcode() == spv::Op::OpTypeRuntimeArray) {
+        memberInst = vstate.FindDef(memberInst->GetOperandAs<uint32_t>(1u));
+      }
+      id = memberInst->id();
+    }
     if (type != vstate.FindDef(id)->opcode()) continue;
     bool found = false;
     for (auto& dec : vstate.id_decorations(id)) {
