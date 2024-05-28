@@ -1,5 +1,5 @@
 {
-  "revision" : 1,
+  "revision" : 2,
   "instructions" : [
     {
       "opname" : "Configuration",
@@ -12,7 +12,8 @@
         {"kind" : "LiteralString", "name" : "EntryPoint" },
         {"kind" : "LiteralInteger", "name" : "groupCountX" },
         {"kind" : "LiteralInteger", "name" : "groupCountY" },
-        {"kind" : "LiteralInteger", "name" : "groupCountZ" }
+        {"kind" : "LiteralInteger", "name" : "groupCountZ" },
+        {"kind" : "LiteralInteger", "name" : "dispatchId" }
       ]
     },
     {
