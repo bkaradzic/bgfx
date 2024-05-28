@@ -483,6 +483,58 @@ void Builder::postProcessFeatures() {
     }
 }
 
+// SPIR-V requires that any instruction consuming the result of an OpSampledImage
+// be in the same block as the OpSampledImage instruction. This pass goes finds
+// uses of OpSampledImage where that is not the case and duplicates the
+// OpSampledImage to be immediately before the instruction that consumes it.
+// The old OpSampledImage is left in place, potentially with no users.
+void Builder::postProcessSamplers()
+{
+    // first, find all OpSampledImage instructions and store them in a map.
+    std::map<Id, Instruction*> sampledImageInstrs;
+    for (auto f: module.getFunctions()) {
+	for (auto b: f->getBlocks()) {
+	    for (auto &i: b->getInstructions()) {
+		if (i->getOpCode() == spv::OpSampledImage) {
+		    sampledImageInstrs[i->getResultId()] = i.get();
+		}
+	    }
+	}
+    }
+    // next find all uses of the given ids and rewrite them if needed.
+    for (auto f: module.getFunctions()) {
+	for (auto b: f->getBlocks()) {
+            auto &instrs = b->getInstructions();
+            for (size_t idx = 0; idx < instrs.size(); idx++) {
+                Instruction *i = instrs[idx].get();
+                for (int opnum = 0; opnum < i->getNumOperands(); opnum++) {
+                    // Is this operand of the current instruction the result of an OpSampledImage?
+                    if (i->isIdOperand(opnum) &&
+                        sampledImageInstrs.count(i->getIdOperand(opnum)))
+                    {
+                        Instruction *opSampImg = sampledImageInstrs[i->getIdOperand(opnum)];
+                        if (i->getBlock() != opSampImg->getBlock()) {
+                            Instruction *newInstr = new Instruction(getUniqueId(),
+                                                                    opSampImg->getTypeId(),
+                                                                    spv::OpSampledImage);
+                            newInstr->addIdOperand(opSampImg->getIdOperand(0));
+                            newInstr->addIdOperand(opSampImg->getIdOperand(1));
+                            newInstr->setBlock(b);
+
+                            // rewrite the user of the OpSampledImage to use the new instruction.
+                            i->setIdOperand(opnum, newInstr->getResultId());
+                            // insert the new OpSampledImage right before the current instruction.
+                            instrs.insert(instrs.begin() + idx,
+                                    std::unique_ptr<Instruction>(newInstr));
+                            idx++;
+                        }
+                    }
+                }
+            }
+	}
+    }
+}
+
 // comment in header
 void Builder::postProcess(bool compileOnly)
 {
@@ -491,6 +543,7 @@ void Builder::postProcess(bool compileOnly)
         postProcessCFG();
 
     postProcessFeatures();
+    postProcessSamplers();
 }
 
 }; // end spv namespace

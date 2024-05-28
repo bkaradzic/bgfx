@@ -962,14 +962,11 @@ TIntermTyped* HlslParseContext::handleDotDereference(const TSourceLoc& loc, TInt
                 return addConstructor(loc, base, type);
             }
         }
-        if (base->getVectorSize() == 1) {
+        // Use EOpIndexDirect (below) with vec1.x so that it remains l-value (Test/hlsl.swizzle.vec1.comp)
+        if (base->getVectorSize() == 1 && selectors.size() > 1) {
             TType scalarType(base->getBasicType(), EvqTemporary, 1);
-            if (selectors.size() == 1)
-                return addConstructor(loc, base, scalarType);
-            else {
-                TType vectorType(base->getBasicType(), EvqTemporary, selectors.size());
-                return addConstructor(loc, addConstructor(loc, base, scalarType), vectorType);
-            }
+            TType vectorType(base->getBasicType(), EvqTemporary, selectors.size());
+            return addConstructor(loc, addConstructor(loc, base, scalarType), vectorType);
         }
 
         if (base->getType().getQualifier().isFrontEndConstant())

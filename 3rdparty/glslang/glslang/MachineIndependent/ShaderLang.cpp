@@ -788,7 +788,7 @@ bool ProcessDeferred(
     // set version/profile to defaultVersion/defaultProfile regardless of the #version
     // directive in the source code
     bool forceDefaultVersionAndProfile,
-    int overrideVersion, // overrides version specified by #verison or default version
+    int overrideVersion, // overrides version specified by #version or default version
     bool forwardCompatible,     // give errors for use of deprecated features
     EShMessages messages,       // warnings/errors/AST; things to print out
     TIntermediate& intermediate, // returned tree, etc.
@@ -2104,6 +2104,8 @@ const char* TProgram::getInfoDebugLog()
 //
 // Reflection implementation.
 //
+
+unsigned int TObjectReflection::layoutLocation() const { return type->getQualifier().layoutLocation; }
 
 bool TProgram::buildReflection(int opts)
 {

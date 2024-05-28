@@ -855,6 +855,8 @@ public:
     void postProcess(Instruction&);
     // Hook to visit each non-32-bit sized float/int operation in a block.
     void postProcessType(const Instruction&, spv::Id typeId);
+    // move OpSampledImage instructions to be next to their users.
+    void postProcessSamplers();
 
     void dump(std::vector<unsigned int>&) const;
 

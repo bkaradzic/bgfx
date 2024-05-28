@@ -3409,10 +3409,13 @@ Id Builder::createConstructor(Decoration precision, const std::vector<Id>& sourc
     }
 
     // If the result is a vector, make it from the gathered constituents.
-    if (constituents.size() > 0)
+    if (constituents.size() > 0) {
         result = createCompositeConstruct(resultTypeId, constituents);
-
-    return setPrecision(result, precision);
+        return setPrecision(result, precision);
+    } else {
+      // Precision was set when generating this component.
+      return result;
+    }
 }
 
 // Comments in header

@@ -1064,6 +1064,7 @@ const char* CapabilityString(int info)
     case CapabilityTextureSampleWeightedQCOM:           return "TextureSampleWeightedQCOM";
     case CapabilityTextureBoxFilterQCOM:                return "TextureBoxFilterQCOM";
     case CapabilityTextureBlockMatchQCOM:               return "TextureBlockMatchQCOM";
+    case CapabilityTextureBlockMatch2QCOM:              return "TextureBlockMatch2QCOM";
 
     default: return "Bad";
     }

@@ -9209,8 +9209,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_RayTmaxNV",              EbvRayTmax,            symbolTable);
             BuiltInVariable("gl_RayTmaxEXT",             EbvRayTmax,            symbolTable);
             BuiltInVariable("gl_CullMaskEXT",            EbvCullMask,           symbolTable);
-            BuiltInVariable("gl_HitTNV",                 EbvHitT,               symbolTable);
-            BuiltInVariable("gl_HitTEXT",                EbvHitT,               symbolTable);
             BuiltInVariable("gl_HitKindNV",              EbvHitKind,            symbolTable);
             BuiltInVariable("gl_HitKindEXT",             EbvHitKind,            symbolTable);
             BuiltInVariable("gl_ObjectToWorldNV",        EbvObjectToWorld,      symbolTable);
@@ -9228,6 +9226,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_HitMicroTriangleVertexBarycentricsNV", EbvMicroTriangleBaryNV, symbolTable);
             BuiltInVariable("gl_HitKindFrontFacingMicroTriangleNV", EbvHitKindFrontFacingMicroTriangleNV, symbolTable);
             BuiltInVariable("gl_HitKindBackFacingMicroTriangleNV", EbvHitKindBackFacingMicroTriangleNV, symbolTable);
+
+            // gl_HitT variables are aliases of their gl_RayTmax counterparts.
+            RetargetVariable("gl_HitTNV",                "gl_RayTmaxNV",        symbolTable);
+            RetargetVariable("gl_HitTEXT",               "gl_RayTmaxEXT",       symbolTable);
 
             // GL_ARB_shader_ballot
             symbolTable.setVariableExtensions("gl_SubGroupSizeARB",       1, &E_GL_ARB_shader_ballot);

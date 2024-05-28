@@ -745,6 +745,8 @@ public:
     GLSLANG_EXPORT void dump() const;
     static TObjectReflection badReflection() { return TObjectReflection(); }
 
+    GLSLANG_EXPORT unsigned int layoutLocation() const;
+
     std::string name;
     int offset;
     int glDefineType;

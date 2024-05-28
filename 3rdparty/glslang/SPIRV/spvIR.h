@@ -107,6 +107,14 @@ public:
         operands.push_back(id);
         idOperand.push_back(true);
     }
+    // This method is potentially dangerous as it can break assumptions
+    // about SSA and lack of forward references.
+    void setIdOperand(unsigned idx, Id id) {
+        assert(id);
+        assert(idOperand[idx]);
+        operands[idx] = id;
+    }
+
     void addImmediateOperand(unsigned int immediate) {
         operands.push_back(immediate);
         idOperand.push_back(false);
@@ -238,7 +246,7 @@ public:
     void addLocalVariable(std::unique_ptr<Instruction> inst) { localVariables.push_back(std::move(inst)); }
     const std::vector<Block*>& getPredecessors() const { return predecessors; }
     const std::vector<Block*>& getSuccessors() const { return successors; }
-    const std::vector<std::unique_ptr<Instruction> >& getInstructions() const {
+    std::vector<std::unique_ptr<Instruction> >& getInstructions() {
         return instructions;
     }
     const std::vector<std::unique_ptr<Instruction> >& getLocalVariables() const { return localVariables; }
