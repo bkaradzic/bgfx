@@ -34,6 +34,7 @@
 	|| BX_PLATFORM_LINUX                \
 	|| BX_PLATFORM_OSX                  \
 	|| BX_PLATFORM_RPI                  \
+	|| BX_PLATFORM_VISIONOS             \
 	|| BX_PLATFORM_WINDOWS              \
 	)
 #define BGFX_PLATFORM_SUPPORTS_GLSL (0  \
@@ -44,6 +45,7 @@
 #define BGFX_PLATFORM_SUPPORTS_METAL (0 \
 	|| BX_PLATFORM_IOS                  \
 	|| BX_PLATFORM_OSX                  \
+	|| BX_PLATFORM_VISIONOS             \
 	)
 #define BGFX_PLATFORM_SUPPORTS_NVN (0   \
 	|| BX_PLATFORM_NX                   \

@@ -63,6 +63,7 @@
 #		define BGFX_CONFIG_RENDERER_METAL (0 \
 					|| BX_PLATFORM_IOS       \
 					|| BX_PLATFORM_OSX       \
+					|| BX_PLATFORM_VISIONOS \
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_METAL
 
