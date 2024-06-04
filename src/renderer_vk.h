@@ -263,10 +263,19 @@
 					_check(VK_SUCCESS == vkresult, #_call "; VK error 0x%x: %s", vkresult, getName(vkresult) ); \
 				BX_MACRO_BLOCK_END
 
+#define _VK_TRACE(_var, _call)                                                                                  \
+				BX_MACRO_BLOCK_BEGIN                                                                            \
+					/*BX_TRACE(#_call);*/                                                                       \
+					_var = _call;                                                                               \
+					BX_WARN(VK_SUCCESS == _var, #_call "; VK error 0x%x: %s", _var, getName(_var) );            \
+				BX_MACRO_BLOCK_END
+
 #if BGFX_CONFIG_DEBUG
 #	define VK_CHECK(_call) _VK_CHECK(BX_ASSERT, _call)
+#	define VK_TRACE(_variable, _call) _VK_TRACE(_variable, _call)
 #else
 #	define VK_CHECK(_call) _call
+#	define VK_TRACE(_variable, _call) _variable = _call
 #endif // BGFX_CONFIG_DEBUG
 
 #if BGFX_CONFIG_DEBUG_ANNOTATION
@@ -757,6 +766,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 
 		VkSemaphore m_presentDoneSemaphore[kMaxBackBuffers];
 		VkSemaphore m_renderDoneSemaphore[kMaxBackBuffers];
+		VkFence     m_renderDoneFence[kMaxBackBuffers];
 		uint32_t    m_currentSemaphore;
 
 		VkSemaphore m_lastImageRenderedSemaphore;

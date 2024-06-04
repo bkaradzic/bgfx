@@ -1285,7 +1285,7 @@ VK_IMPORT
 
 				if (NULL != vkEnumerateInstanceVersion)
 				{
-					result = vkEnumerateInstanceVersion(&vulkanApiVersionSelector);
+					VK_TRACE(result, vkEnumerateInstanceVersion(&vulkanApiVersionSelector));
 
 					if (VK_SUCCESS != result)
 					{
@@ -1330,11 +1330,11 @@ VK_IMPORT
 					BX_UNUSED(s_allocationCb);
 				}
 
-				result = vkCreateInstance(
+				VK_TRACE(result, vkCreateInstance(
 					  &ici
 					, m_allocatorCb
 					, &m_instance
-					);
+					));
 
 				if (VK_SUCCESS != result)
 				{
@@ -1382,11 +1382,11 @@ VK_IMPORT_INSTANCE
 					| VK_DEBUG_REPORT_ERROR_BIT_EXT
 					| VK_DEBUG_REPORT_WARNING_BIT_EXT
 					;
-				result = vkCreateDebugReportCallbackEXT(m_instance
+				VK_TRACE(result, vkCreateDebugReportCallbackEXT(m_instance
 					, &drcb
 					, m_allocatorCb
 					, &m_debugReportCallback
-					);
+					));
 				BX_WARN(VK_SUCCESS == result, "vkCreateDebugReportCallbackEXT failed %d: %s.", result, getName(result) );
 			}
 
@@ -1394,10 +1394,10 @@ VK_IMPORT_INSTANCE
 				BX_TRACE("---");
 
 				uint32_t numPhysicalDevices;
-				result = vkEnumeratePhysicalDevices(m_instance
+				VK_TRACE(result, vkEnumeratePhysicalDevices(m_instance
 					, &numPhysicalDevices
 					, NULL
-					);
+					));
 
 				if (VK_SUCCESS != result)
 				{
@@ -1407,10 +1407,10 @@ VK_IMPORT_INSTANCE
 
 				VkPhysicalDevice physicalDevices[4];
 				numPhysicalDevices = bx::min<uint32_t>(numPhysicalDevices, BX_COUNTOF(physicalDevices) );
-				result = vkEnumeratePhysicalDevices(m_instance
+				VK_TRACE(result, vkEnumeratePhysicalDevices(m_instance
 					, &numPhysicalDevices
 					, physicalDevices
-					);
+					));
 
 				if (VK_SUCCESS != result)
 				{
@@ -1674,7 +1674,7 @@ VK_IMPORT_INSTANCE
 								const ImageTest& it = s_imageTest[test];
 
 								VkImageFormatProperties ifp;
-								result = vkGetPhysicalDeviceImageFormatProperties(
+								VK_TRACE(result, vkGetPhysicalDeviceImageFormatProperties(
 									  m_physicalDevice
 									, fmt
 									, it.type
@@ -1682,7 +1682,7 @@ VK_IMPORT_INSTANCE
 									, it.usage
 									, it.flags
 									, &ifp
-									);
+									));
 
 								if (VK_SUCCESS == result)
 								{
@@ -1844,12 +1844,12 @@ VK_IMPORT_INSTANCE
 				dci.ppEnabledExtensionNames = enabledExtension;
 				dci.pEnabledFeatures        = &m_deviceFeatures;
 
-				result = vkCreateDevice(
+				VK_TRACE(result, vkCreateDevice(
 					  m_physicalDevice
 					, &dci
 					, m_allocatorCb
 					, &m_device
-					);
+					));
 
 				if (VK_SUCCESS != result)
 				{
@@ -1954,7 +1954,7 @@ VK_IMPORT_DEVICE
 				dpci.poolSizeCount = BX_COUNTOF(dps);
 				dpci.pPoolSizes    = dps;
 
-				result = vkCreateDescriptorPool(m_device, &dpci, m_allocatorCb, &m_descriptorPool);
+				VK_TRACE(result, vkCreateDescriptorPool(m_device, &dpci, m_allocatorCb, &m_descriptorPool));
 
 				if (VK_SUCCESS != result)
 				{
@@ -1968,7 +1968,7 @@ VK_IMPORT_DEVICE
 				pcci.flags = 0;
 				pcci.initialDataSize = 0;
 				pcci.pInitialData    = NULL;
-				result = vkCreatePipelineCache(m_device, &pcci, m_allocatorCb, &m_pipelineCache);
+				VK_TRACE(result, vkCreatePipelineCache(m_device, &pcci, m_allocatorCb, &m_pipelineCache));
 
 				if (VK_SUCCESS != result)
 				{
@@ -3294,7 +3294,7 @@ VK_IMPORT_DEVICE
 			rpi.dependencyCount = BX_COUNTOF(dep);
 			rpi.pDependencies   = dep;
 
-			result = vkCreateRenderPass(m_device, &rpi, m_allocatorCb, &renderPass);
+			VK_TRACE(result, vkCreateRenderPass(m_device, &rpi, m_allocatorCb, &renderPass));
 
 			if (VK_SUCCESS != result)
 			{
@@ -4326,7 +4326,7 @@ VK_IMPORT_DEVICE
 				if (searchIndex >= 0)
 				{
 					ma.memoryTypeIndex = searchIndex;
-					result = vkAllocateMemory(m_device, &ma, m_allocatorCb, memory);
+					VK_TRACE(result, vkAllocateMemory(m_device, &ma, m_allocatorCb, memory));
 				}
 			}
 			while (result != VK_SUCCESS
@@ -4349,7 +4349,7 @@ VK_IMPORT_DEVICE
 			bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			bci.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
-			result = vkCreateBuffer(m_device, &bci, m_allocatorCb, _buffer);
+			VK_TRACE(result, vkCreateBuffer(m_device, &bci, m_allocatorCb, _buffer));
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Create host buffer error: vkCreateBuffer failed %d: %s.", result, getName(result) );
@@ -4373,7 +4373,7 @@ VK_IMPORT_DEVICE
 				return result;
 			}
 
-			result = vkBindBufferMemory(m_device, *_buffer, *_memory, 0);
+			VK_TRACE(result, vkBindBufferMemory(m_device, *_buffer, *_memory, 0));
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Create host buffer error: vkBindBufferMemory failed %d: %s.", result, getName(result) );
@@ -4383,7 +4383,7 @@ VK_IMPORT_DEVICE
 			if (_data != NULL)
 			{
 				void* dst;
-				result = vkMapMemory(m_device, *_memory, 0, _size, 0, &dst);
+				VK_TRACE(result, vkMapMemory(m_device, *_memory, 0, _size, 0, &dst));
 				if (VK_SUCCESS != result)
 				{
 					BX_TRACE("Create host buffer error: vkMapMemory failed %d: %s.", result, getName(result) );
@@ -5316,7 +5316,7 @@ VK_DESTROY
 		qpci.queryCount = count;
 		qpci.pipelineStatistics = 0;
 
-		result = vkCreateQueryPool(device, &qpci, s_renderVK->m_allocatorCb, &m_queryPool);
+		VK_TRACE(result, vkCreateQueryPool(device, &qpci, s_renderVK->m_allocatorCb, &m_queryPool));
 
 		if (VK_SUCCESS != result)
 		{
@@ -5334,7 +5334,7 @@ VK_DESTROY
 			return result;
 		}
 
-		result = vkMapMemory(device, m_readbackMemory, 0, VK_WHOLE_SIZE, 0, (void**)&m_queryResult);
+		VK_TRACE(result, vkMapMemory(device, m_readbackMemory, 0, VK_WHOLE_SIZE, 0, (void**)&m_queryResult));
 
 		if (VK_SUCCESS != result)
 		{
@@ -5471,7 +5471,7 @@ VK_DESTROY
 		qpci.queryCount = count;
 		qpci.pipelineStatistics = 0;
 
-		result = vkCreateQueryPool(device, &qpci, s_renderVK->m_allocatorCb, &m_queryPool);
+		VK_TRACE(result, vkCreateQueryPool(device, &qpci, s_renderVK->m_allocatorCb, &m_queryPool));
 
 		if (VK_SUCCESS != result)
 		{
@@ -5489,7 +5489,7 @@ VK_DESTROY
 			return result;
 		}
 
-		result = vkMapMemory(device, m_readbackMemory, 0, VK_WHOLE_SIZE, 0, (void**)&m_queryResult);
+		VK_TRACE(result, vkMapMemory(device, m_readbackMemory, 0, VK_WHOLE_SIZE, 0, (void**)&m_queryResult));
 
 		if (VK_SUCCESS != result)
 		{
@@ -5794,7 +5794,7 @@ VK_DESTROY
 			;
 		ici.tiling        = VK_IMAGE_TILING_OPTIMAL;
 
-		result = vkCreateImage(device, &ici, allocatorCb, &m_textureImage);
+		VK_TRACE(result, vkCreateImage(device, &ici, allocatorCb, &m_textureImage));
 		if (VK_SUCCESS != result)
 		{
 			BX_TRACE("Create texture image error: vkCreateImage failed %d: %s.", result, getName(result) );
@@ -5811,7 +5811,7 @@ VK_DESTROY
 			return result;
 		}
 
-		result = vkBindImageMemory(device, m_textureImage, m_textureDeviceMem, 0);
+		VK_TRACE(result, vkBindImageMemory(device, m_textureImage, m_textureDeviceMem, 0));
 		if (VK_SUCCESS != result)
 		{
 			BX_TRACE("Create texture image error: vkBindImageMemory failed %d: %s.", result, getName(result) );
@@ -5837,7 +5837,7 @@ VK_DESTROY
 			ici_resolve.usage &= ~VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 			ici_resolve.flags &= ~VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
-			result = vkCreateImage(device, &ici_resolve, allocatorCb, &m_singleMsaaImage);
+			VK_TRACE(result, vkCreateImage(device, &ici_resolve, allocatorCb, &m_singleMsaaImage));
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Create texture image error: vkCreateImage failed %d: %s.", result, getName(result) );
@@ -5854,7 +5854,7 @@ VK_DESTROY
 				return result;
 			}
 
-			result = vkBindImageMemory(device, m_singleMsaaImage, m_singleMsaaDeviceMem, 0);
+			VK_TRACE(result, vkBindImageMemory(device, m_singleMsaaImage, m_singleMsaaDeviceMem, 0));
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Create texture image error: vkBindImageMemory failed %d: %s.", result, getName(result) );
@@ -6482,12 +6482,12 @@ VK_DESTROY
 
 		VkImageView view = VK_NULL_HANDLE;
 
-		result = vkCreateImageView(
+		VK_TRACE(result, vkCreateImageView(
 			  s_renderVK->m_device
 			, &viewInfo
 			, s_renderVK->m_allocatorCb
 			, &view
-			);
+			));
 
 		if (VK_SUCCESS != result)
 		{
@@ -6577,6 +6577,7 @@ VK_DESTROY
 				m_backBufferFence[ii]          = VK_NULL_HANDLE;
 				m_presentDoneSemaphore[ii]     = VK_NULL_HANDLE;
 				m_renderDoneSemaphore[ii]      = VK_NULL_HANDLE;
+				m_renderDoneFence[ii]          = VK_NULL_HANDLE;
 			}
 
 			m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
@@ -6766,7 +6767,7 @@ VK_DESTROY
 				sci.flags     = 0;
 				sci.hinstance = (HINSTANCE)GetModuleHandle(NULL);
 				sci.hwnd      = (HWND)m_nwh;
-				result = vkCreateWin32SurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+				VK_TRACE(result, vkCreateWin32SurfaceKHR(instance, &sci, allocatorCb, &m_surface));
 			}
 		}
 #elif BX_PLATFORM_ANDROID
@@ -6778,7 +6779,7 @@ VK_DESTROY
 				sci.pNext = NULL;
 				sci.flags = 0;
 				sci.window = (ANativeWindow*)m_nwh;
-				result = vkCreateAndroidSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+				VK_TRACE(result, vkCreateAndroidSurfaceKHR(instance, &sci, allocatorCb, &m_surface));
 			}
 		}
 #elif BX_PLATFORM_LINUX
@@ -6792,7 +6793,7 @@ VK_DESTROY
 				sci.flags = 0;
 				sci.display = (wl_display*)g_platformData.ndt;
 				sci.surface = (wl_surface*)((wl_egl_window*)m_nwh)->surface;
-				result = vkCreateWaylandSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+				VK_TRACE(result, vkCreateWaylandSurfaceKHR(instance, &sci, allocatorCb, &m_surface));
 			}
 			else
 #endif // defined(WL_EGL_PLATFORM)
@@ -6805,7 +6806,7 @@ VK_DESTROY
 					sci.flags  = 0;
 					sci.dpy    = (Display*)g_platformData.ndt;
 					sci.window = (Window)m_nwh;
-					result = vkCreateXlibSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+					VK_TRACE(result, vkCreateXlibSurfaceKHR(instance, &sci, allocatorCb, &m_surface));
 				}
 
 				if (VK_SUCCESS != result)
@@ -6826,7 +6827,7 @@ VK_DESTROY
 						sci.flags      = 0;
 						sci.connection = XGetXCBConnection( (Display*)g_platformData.ndt);
 						sci.window     = cast.window;
-						result = vkCreateXcbSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+						VK_TRACE(result, vkCreateXcbSurfaceKHR(instance, &sci, allocatorCb, &m_surface));
 
 						bx::dlclose(xcbdll);
 					}
@@ -6870,7 +6871,7 @@ VK_DESTROY
 				sci.pNext = NULL;
 				sci.flags = 0;
 				sci.pView = (__bridge void*)layer;
-				result = vkCreateMacOSSurfaceMVK(instance, &sci, allocatorCb, &m_surface);
+				VK_TRACE(result, vkCreateMacOSSurfaceMVK(instance, &sci, allocatorCb, &m_surface));
 			}
 		}
 #else
@@ -6889,7 +6890,7 @@ VK_DESTROY
 		const uint32_t queueFamily = s_renderVK->m_globalQueueFamily;
 
 		VkBool32 surfaceSupported;
-		result = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamily, m_surface, &surfaceSupported);
+		VK_TRACE(result, vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamily, m_surface, &surfaceSupported));
 
 		if (VK_SUCCESS != result
 		||  !surfaceSupported)
@@ -6915,7 +6916,7 @@ VK_DESTROY
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 
 		VkSurfaceCapabilitiesKHR surfaceCapabilities;
-		result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_surface, &surfaceCapabilities);
+		VK_TRACE(result, vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_surface, &surfaceCapabilities));
 
 		if (VK_SUCCESS != result)
 		{
@@ -7012,7 +7013,7 @@ VK_DESTROY
 		m_sci.presentMode        = s_presentMode[presentModeIdx].mode;
 		m_sci.clipped            = VK_FALSE;
 
-		result = vkCreateSwapchainKHR(device, &m_sci, allocatorCb, &m_swapchain);
+		VK_TRACE(result, vkCreateSwapchainKHR(device, &m_sci, allocatorCb, &m_swapchain));
 		if (VK_SUCCESS != result)
 		{
 			BX_TRACE("Create swapchain error: vkCreateSwapchainKHR failed %d: %s.", result, getName(result) );
@@ -7021,7 +7022,7 @@ VK_DESTROY
 
 		m_sci.oldSwapchain = m_swapchain;
 
-		result = vkGetSwapchainImagesKHR(device, m_swapchain, &m_numSwapchainImages, NULL);
+		VK_TRACE(result, vkGetSwapchainImagesKHR(device, m_swapchain, &m_numSwapchainImages, NULL));
 		if (VK_SUCCESS != result)
 		{
 			BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR failed %d: %s.", result, getName(result) );
@@ -7046,7 +7047,7 @@ VK_DESTROY
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
-		result = vkGetSwapchainImagesKHR(device, m_swapchain, &m_numSwapchainImages, &m_backBufferColorImage[0]);
+		VK_TRACE(result, vkGetSwapchainImagesKHR(device, m_swapchain, &m_numSwapchainImages, &m_backBufferColorImage[0]));
 		if (VK_SUCCESS != result && VK_INCOMPLETE != result)
 		{
 			BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR failed %d: %s."
@@ -7076,7 +7077,7 @@ VK_DESTROY
 		{
 			ivci.image = m_backBufferColorImage[ii];
 
-			result = vkCreateImageView(device, &ivci, allocatorCb, &m_backBufferColorImageView[ii]);
+			VK_TRACE(result, vkCreateImageView(device, &ivci, allocatorCb, &m_backBufferColorImageView[ii]));
 
 			if (VK_SUCCESS != result)
 			{
@@ -7094,8 +7095,11 @@ VK_DESTROY
 
 		for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
 		{
-			if (VK_SUCCESS != vkCreateSemaphore(device, &sci, allocatorCb, &m_presentDoneSemaphore[ii])
-			||  VK_SUCCESS != vkCreateSemaphore(device, &sci, allocatorCb, &m_renderDoneSemaphore[ii]) )
+			VkResult result_present, result_render;
+			VK_TRACE(result_present, vkCreateSemaphore(device, &sci, allocatorCb, &m_presentDoneSemaphore[ii]));
+			VK_TRACE(result_render, vkCreateSemaphore(device, &sci, allocatorCb, &m_renderDoneSemaphore[ii]));
+			if (VK_SUCCESS != result_present
+			||  VK_SUCCESS != result_render )
 			{
 				BX_TRACE("Create swapchain error: vkCreateSemaphore failed %d: %s.", result, getName(result) );
 				return result;
@@ -7118,6 +7122,7 @@ VK_DESTROY
 			release(m_backBufferColorImageView[ii]);
 
 			m_backBufferFence[ii] = VK_NULL_HANDLE;
+			m_renderDoneFence[ii] = VK_NULL_HANDLE;
 
 			release(m_presentDoneSemaphore[ii]);
 			release(m_renderDoneSemaphore[ii]);
@@ -7252,7 +7257,7 @@ VK_DESTROY
 			fci.height = m_sci.imageExtent.height;
 			fci.layers = 1;
 
-			result = vkCreateFramebuffer(device, &fci, allocatorCb, &m_backBufferFrameBuffer[ii]);
+			VK_TRACE(result, vkCreateFramebuffer(device, &fci, allocatorCb, &m_backBufferFrameBuffer[ii]));
 
 			if (VK_SUCCESS != result)
 			{
@@ -7278,12 +7283,12 @@ VK_DESTROY
 		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
 
 		uint32_t numPresentModes;
-		result = vkGetPhysicalDeviceSurfacePresentModesKHR(
+		VK_TRACE(result, vkGetPhysicalDeviceSurfacePresentModesKHR(
 			  physicalDevice
 			, m_surface
 			, &numPresentModes
 			, NULL
-			);
+			));
 
 		if (VK_SUCCESS != result)
 		{
@@ -7293,12 +7298,12 @@ VK_DESTROY
 
 		VkPresentModeKHR presentModes[16];
 		numPresentModes = bx::min<uint32_t>(numPresentModes, BX_COUNTOF(presentModes) );
-		result = vkGetPhysicalDeviceSurfacePresentModesKHR(
+		VK_TRACE(result, vkGetPhysicalDeviceSurfacePresentModesKHR(
 			  physicalDevice
 			, m_surface
 			, &numPresentModes
 			, presentModes
-			);
+			));
 
 		if (VK_SUCCESS != result)
 		{
@@ -7341,7 +7346,7 @@ VK_DESTROY
 		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
 
 		uint32_t numSurfaceFormats;
-		result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_surface, &numSurfaceFormats, NULL);
+		VK_TRACE(result, vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_surface, &numSurfaceFormats, NULL));
 
 		if (VK_SUCCESS != result)
 		{
@@ -7350,7 +7355,7 @@ VK_DESTROY
 		}
 
 		VkSurfaceFormatKHR* surfaceFormats = (VkSurfaceFormatKHR*)bx::alloc(g_allocator, numSurfaceFormats * sizeof(VkSurfaceFormatKHR) );
-		result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_surface, &numSurfaceFormats, surfaceFormats);
+		VK_TRACE(result, vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_surface, &numSurfaceFormats, surfaceFormats));
 
 		if (VK_SUCCESS != result)
 		{
@@ -7417,21 +7422,38 @@ VK_DESTROY
 		{
 			const VkDevice device = s_renderVK->m_device;
 
+			// Before we acquire the next frame, wait for the cyclically-next frame (i.e.,
+			// the (numSwapChainImages-1)th frame ago in time) to be done.
+			// (Note that currentSemaphore is already pointing to the next frame index at this time.)
+			VkFence readyForReuse = m_renderDoneFence[m_currentSemaphore];
+			if (readyForReuse != VK_NULL_HANDLE) {
+				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
+				VK_CHECK(vkWaitForFences(
+					  device
+					, 1
+					, &readyForReuse
+					, VK_TRUE
+					, UINT64_MAX
+					) );
+			}
+
 			m_lastImageAcquiredSemaphore = m_presentDoneSemaphore[m_currentSemaphore];
 			m_lastImageRenderedSemaphore = m_renderDoneSemaphore[m_currentSemaphore];
+			// Note that starting from the next line, the "currentSemaphore" actually
+			// corresponds to the next frame, from this funtions point of view.
 			m_currentSemaphore = (m_currentSemaphore + 1) % m_numSwapchainImages;
 
 			VkResult result;
 			{
 				BGFX_PROFILER_SCOPE("vkAcquireNextImageKHR", kColorFrame);
-				result = vkAcquireNextImageKHR(
+				VK_TRACE(result, vkAcquireNextImageKHR(
 					  device
 					, m_swapchain
 					, UINT64_MAX
 					, m_lastImageAcquiredSemaphore
 					, VK_NULL_HANDLE
 					, &m_backBufferColorIdx
-					);
+					));
 			}
 
 			switch (result)
@@ -7453,16 +7475,28 @@ VK_DESTROY
 				return false;
 			}
 
-			if (VK_NULL_HANDLE != m_backBufferFence[m_backBufferColorIdx])
-			{
-				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
-				VK_CHECK(vkWaitForFences(
-					  device
-					, 1
-					, &m_backBufferFence[m_backBufferColorIdx]
-					, VK_TRUE
-					, UINT64_MAX
-					) );
+			// We already waited for the frame which we expect to get from vkAcquireNextImageKHR
+			// above to have completed rendering. But in case we did get some other frame,
+			// which is not exactly clear to me under which circumstances that could happen,
+			// we will also wait on that frame to complete rendering. That would make it
+			// "safe" to start rendering to it, but does by no means mean that it got presented
+			// correctly. In general, I believe that the code below would exactly never run,
+			// but I'll put it in to have it also handle this case, like it was in bgfx for
+			// the last three years, since @pezcode wrote the original version.
+			// I'll put in a warning. If you ever see this warning, please report on issue
+			// #3302 on Github.
+			if (m_backBufferFence[m_backBufferColorIdx] != VK_NULL_HANDLE) {
+				BX_WARN(m_backBufferFence[m_backBufferColorIdx] != readyForReuse, "Got unexpected image from the swap chain. Please report on issue #3302 on Github.");
+				if (m_backBufferFence[m_backBufferColorIdx] != readyForReuse) {
+					BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
+					VK_CHECK(vkWaitForFences(
+						  device
+						, 1
+						, &m_backBufferFence[m_backBufferColorIdx]
+						, VK_TRUE
+						, UINT64_MAX
+						) );
+				}
 			}
 
 			transitionImage(_commandBuffer);
@@ -7491,7 +7525,7 @@ VK_DESTROY
 			VkResult result;
 			{
 				BGFX_PROFILER_SCOPE("vkQueuePresentHKR", kColorFrame);
-				result = vkQueuePresentKHR(m_queue, &pi);
+				VK_TRACE(result, vkQueuePresentKHR(m_queue, &pi));
 			}
 
 			switch (result)
@@ -7800,12 +7834,12 @@ VK_DESTROY
 
 		for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 		{
-			result = vkCreateCommandPool(
+			VK_TRACE(result, vkCreateCommandPool(
 				  s_renderVK->m_device
 				, &cpci
 				, s_renderVK->m_allocatorCb
 				, &m_commandList[ii].m_commandPool
-				);
+				));
 
 			if (VK_SUCCESS != result)
 			{
@@ -7815,11 +7849,11 @@ VK_DESTROY
 
 			cbai.commandPool = m_commandList[ii].m_commandPool;
 
-			result = vkAllocateCommandBuffers(
+			VK_TRACE(result, vkAllocateCommandBuffers(
 				  s_renderVK->m_device
 				, &cbai
 				, &m_commandList[ii].m_commandBuffer
-				);
+				));
 
 			if (VK_SUCCESS != result)
 			{
@@ -7827,12 +7861,12 @@ VK_DESTROY
 				return result;
 			}
 
-			result = vkCreateFence(
+			VK_TRACE(result, vkCreateFence(
 				  s_renderVK->m_device
 				, &fci
 				, s_renderVK->m_allocatorCb
 				, &m_commandList[ii].m_fence
-				);
+				));
 
 			if (VK_SUCCESS != result)
 			{
@@ -7868,7 +7902,7 @@ VK_DESTROY
 
 			{
 				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
-				result = vkWaitForFences(device, 1, &commandList.m_fence, VK_TRUE, UINT64_MAX);
+				VK_TRACE(result, vkWaitForFences(device, 1, &commandList.m_fence, VK_TRUE, UINT64_MAX));
 			}
 
 			if (VK_SUCCESS != result)
@@ -7877,7 +7911,7 @@ VK_DESTROY
 				return result;
 			}
 
-			result = vkResetCommandPool(device, commandList.m_commandPool, 0);
+			VK_TRACE(result, vkResetCommandPool(device, commandList.m_commandPool, 0));
 
 			if (VK_SUCCESS != result)
 			{
@@ -7891,7 +7925,7 @@ VK_DESTROY
 			cbi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 			cbi.pInheritanceInfo = NULL;
 
-			result = vkBeginCommandBuffer(commandList.m_commandBuffer, &cbi);
+			VK_TRACE(result, vkBeginCommandBuffer(commandList.m_commandBuffer, &cbi));
 
 			if (VK_SUCCESS != result)
 			{
@@ -9214,6 +9248,7 @@ VK_DESTROY
 				m_cmd.addSignalSemaphore(fb.m_swapChain.m_lastImageRenderedSemaphore);
 				fb.m_swapChain.m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 
+				fb.m_swapChain.m_renderDoneFence[fb.m_swapChain.m_currentSemaphore] = m_cmd.m_currentFence;
 				fb.m_swapChain.m_backBufferFence[fb.m_swapChain.m_backBufferColorIdx] = m_cmd.m_currentFence;
 			}
 		}
