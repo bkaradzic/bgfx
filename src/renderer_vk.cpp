@@ -7422,6 +7422,10 @@ VK_DESTROY
 		{
 			const VkDevice device = s_renderVK->m_device;
 
+			// The meaning of currentSemaphore is the one that will be used for the last
+			// frame in flight (instead of the next one, like it was until June 2024).
+			m_currentSemaphore = (m_currentSemaphore + 1) % m_numSwapchainImages;
+
 			// Before we acquire the next frame, wait for the cyclically-next frame (i.e.,
 			// the (numSwapChainImages-1)th frame ago in time) to be done.
 			// (Note that currentSemaphore is already pointing to the next frame index at this time.)
@@ -7439,9 +7443,6 @@ VK_DESTROY
 
 			m_lastImageAcquiredSemaphore = m_presentDoneSemaphore[m_currentSemaphore];
 			m_lastImageRenderedSemaphore = m_renderDoneSemaphore[m_currentSemaphore];
-			// Note that starting from the next line, the "currentSemaphore" actually
-			// corresponds to the next frame, from this funtions point of view.
-			m_currentSemaphore = (m_currentSemaphore + 1) % m_numSwapchainImages;
 
 			VkResult result;
 			{
@@ -7486,7 +7487,9 @@ VK_DESTROY
 			// I'll put in a warning. If you ever see this warning, please report on issue
 			// #3302 on Github.
 			if (m_backBufferFence[m_backBufferColorIdx] != VK_NULL_HANDLE) {
-				BX_WARN(m_backBufferFence[m_backBufferColorIdx] == readyForReuse, "Got unexpected image from the swap chain. Please report on issue #3302 on Github.");
+				BX_WARN(m_backBufferFence[m_backBufferColorIdx] == readyForReuse,
+					"Got unexpected image from the swap chain. Got frame %u, with current semaphore index %u. "
+					"Please report on issue #3302 on Github.", m_backBufferColorIdx, m_currentSemaphore);
 				if (m_backBufferFence[m_backBufferColorIdx] != readyForReuse) {
 					BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
 					VK_CHECK(vkWaitForFences(
