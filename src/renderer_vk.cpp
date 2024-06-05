@@ -7092,7 +7092,10 @@ VK_DESTROY
 		sci.pNext = NULL;
 		sci.flags = 0;
 
-		for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
+		// We will make a fully filled pool of semaphores and cycle through those.
+		// This is to make sure we have enough, even in the case where there are
+		// more frames in flight than images on the swapchain.
+		for (uint32_t ii = 0; ii < kMaxBackBuffers; ++ii)
 		{
 			if (VK_SUCCESS != vkCreateSemaphore(device, &sci, allocatorCb, &m_presentDoneSemaphore[ii])
 			||  VK_SUCCESS != vkCreateSemaphore(device, &sci, allocatorCb, &m_renderDoneSemaphore[ii]) )
@@ -7118,7 +7121,10 @@ VK_DESTROY
 			release(m_backBufferColorImageView[ii]);
 
 			m_backBufferFence[ii] = VK_NULL_HANDLE;
+		}
 
+		for (uint32_t ii = 0; ii < kMaxBackBuffers; ++ii)
+		{
 			release(m_presentDoneSemaphore[ii]);
 			release(m_renderDoneSemaphore[ii]);
 		}
@@ -7419,7 +7425,7 @@ VK_DESTROY
 
 			m_lastImageAcquiredSemaphore = m_presentDoneSemaphore[m_currentSemaphore];
 			m_lastImageRenderedSemaphore = m_renderDoneSemaphore[m_currentSemaphore];
-			m_currentSemaphore = (m_currentSemaphore + 1) % m_numSwapchainImages;
+			m_currentSemaphore = (m_currentSemaphore + 1) % kMaxBackBuffers;
 
 			VkResult result;
 			{
