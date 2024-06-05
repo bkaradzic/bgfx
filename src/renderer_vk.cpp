@@ -4422,34 +4422,37 @@ VK_IMPORT_DEVICE
 			return createHostBuffer(_size, flags, _buffer, _memory, _data);
 		}
 
-		StagingBufferVK allocFromScratchStagingBuffer(uint32_t _size, const void *_data = NULL)
+		StagingBufferVK allocFromScratchStagingBuffer(uint32_t _size, uint32_t _align, const void *_data = NULL)
 		{
 			BGFX_PROFILER_SCOPE("allocFromScratchStagingBuffer", kColorResource);
 			StagingBufferVK result;
 			ScratchBufferVK &scratch = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
-			if (scratch.m_pos + _size <= scratch.m_size && _size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRACH_BUFFER)
-			{
-				result.m_isFromScratch = true;
-				result.m_size = _size;
-				result.m_offset = scratch.m_pos;
-				result.m_buffer = scratch.m_buffer;
-				result.m_deviceMem = scratch.m_deviceMem;
-				result.m_data = scratch.m_data + result.m_offset;
-				if (_data != NULL)
-				{
-					BGFX_PROFILER_SCOPE("copy to scratch", kColorResource);
-					bx::memCopy(result.m_data, _data, _size);
+			if (_size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRACH_BUFFER) {
+				uint32_t scratchOffset = scratch.alloc(_size, _align);
+				if (scratchOffset != UINT32_MAX) {
+					result.m_isFromScratch = true;
+					result.m_size = _size;
+					result.m_offset = scratchOffset;
+					result.m_buffer = scratch.m_buffer;
+					result.m_deviceMem = scratch.m_deviceMem;
+					result.m_data = scratch.m_data + result.m_offset;
+					if (_data != NULL)
+					{
+						BGFX_PROFILER_SCOPE("copy to scratch", kColorResource);
+						bx::memCopy(result.m_data, _data, _size);
+					}
+					size_t totalSize = bx::strideAlign(_size, scratch.m_align);
+					scratch.m_pos += totalSize;
+					return result;
 				}
-				size_t totalSize = bx::strideAlign(_size, scratch.m_align);
-				scratch.m_pos += totalSize;
-			} else
-			{
-				result.m_isFromScratch = false;
-				VK_CHECK(createStagingBuffer(_size, &result.m_buffer, &result.m_deviceMem, _data));
-				result.m_size = _size;
-				result.m_offset = 0;
-				result.m_data = NULL;
 			}
+
+			// Not enough space or too big, we will create a new staging buffer on the spot.
+			result.m_isFromScratch = false;
+			VK_CHECK(createStagingBuffer(_size, &result.m_buffer, &result.m_deviceMem, _data));
+			result.m_size = _size;
+			result.m_offset = 0;
+			result.m_data = NULL;
 			return result;
 		}
 
@@ -4700,21 +4703,35 @@ VK_DESTROY
 		m_pos = 0;
 	}
 
-	uint32_t ScratchBufferVK::write(const void* _data, uint32_t _size)
+	uint32_t ScratchBufferVK::alloc(uint32_t _size, uint32_t _minAlign)
 	{
-		BX_ASSERT(m_pos + _size <= m_size, "Out of scratch buffer memory");
+		const uint32_t align = bx::uint32_lcm(m_align, _minAlign);
+		const uint32_t dstOffset = bx::strideAlign(m_pos, align);
+		if (dstOffset + _size <= m_size)
+		{
+			m_pos = dstOffset;
+			return dstOffset;
+		} else
+		{
+			return UINT32_MAX;
+		}
+	}
 
-		const uint32_t offset = m_pos;
+	uint32_t ScratchBufferVK::write(const void* _data, uint32_t _size, uint32_t _minAlign)
+	{
+		uint32_t dstOffset = alloc(_size, _minAlign);
+		BX_ASSERT(dstOffset != UINT32_MAX, "Not enough space on ScratchBuffer left to allocate %u bytes with alignment %u.", _size, _minAlign);
 
 		if (_size > 0)
 		{
-			bx::memCopy(&m_data[m_pos], _data, _size);
+			bx::memCopy(&m_data[dstOffset], _data, _size);
 			const uint32_t alignedSize = bx::strideAlign(_size, m_align);
-			m_pos += alignedSize;
+			m_pos = dstOffset + alignedSize;
 		}
 
-		return offset;
+		return dstOffset;
 	}
+
 
 	void ScratchBufferVK::flush()
 	{
@@ -4781,7 +4798,7 @@ VK_DESTROY
 		BGFX_PROFILER_SCOPE("BufferVK::update", kColorFrame);
 		BX_UNUSED(_discard);
 
-		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(_size, _data);
+		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(_size, 1, _data);
 
 		VkBufferCopy region;
 		region.srcOffset = stagingBuffer.m_offset;
@@ -6162,7 +6179,7 @@ VK_DESTROY
 			{
 				const VkDevice device = s_renderVK->m_device;
 
-				StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(totalMemSize);
+				StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(totalMemSize, bpp * 8);
 				uint8_t* mappedMemory;
 
 				if (!stagingBuffer.m_isFromScratch)
@@ -6286,7 +6303,7 @@ VK_DESTROY
 			};
 		}
 
-		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(size, data);
+		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(size, bpp * 8, data);
 		region.bufferOffset += stagingBuffer.m_offset;
 
 		if (VK_IMAGE_VIEW_TYPE_3D == m_type)
