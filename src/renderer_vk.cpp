@@ -7486,7 +7486,7 @@ VK_DESTROY
 			// I'll put in a warning. If you ever see this warning, please report on issue
 			// #3302 on Github.
 			if (m_backBufferFence[m_backBufferColorIdx] != VK_NULL_HANDLE) {
-				BX_WARN(m_backBufferFence[m_backBufferColorIdx] != readyForReuse, "Got unexpected image from the swap chain. Please report on issue #3302 on Github.");
+				BX_WARN(m_backBufferFence[m_backBufferColorIdx] == readyForReuse, "Got unexpected image from the swap chain. Please report on issue #3302 on Github.");
 				if (m_backBufferFence[m_backBufferColorIdx] != readyForReuse) {
 					BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
 					VK_CHECK(vkWaitForFences(
