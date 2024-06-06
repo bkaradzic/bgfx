@@ -705,7 +705,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 	{
 		SwapChainVK()
 			: m_nwh(NULL)
-			, m_swapchain(VK_NULL_HANDLE)
+			, m_swapChain(VK_NULL_HANDLE)
 			, m_lastImageRenderedSemaphore(VK_NULL_HANDLE)
 			, m_lastImageAcquiredSemaphore(VK_NULL_HANDLE)
 			, m_backBufferColorMsaaImageView(VK_NULL_HANDLE)
@@ -746,8 +746,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 		TextureFormat::Enum m_depthFormat;
 
 		VkSurfaceKHR   m_surface;
-		VkSwapchainKHR m_swapchain;
-		uint32_t       m_numSwapchainImages;
+		VkSwapchainKHR m_swapChain;
+		uint32_t       m_numSwapChainImages;
 		VkImageLayout  m_backBufferColorImageLayout[kMaxBackBuffers];
 		VkImage        m_backBufferColorImage[kMaxBackBuffers];
 		VkImageView    m_backBufferColorImageView[kMaxBackBuffers];

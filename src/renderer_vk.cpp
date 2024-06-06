@@ -1914,9 +1914,9 @@ VK_IMPORT_DEVICE
 					m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
 					m_textVideoMem.clear();
 
-					for (uint8_t ii = 0; ii < BX_COUNTOF(m_swapchainFormats); ++ii)
+					for (uint8_t ii = 0; ii < BX_COUNTOF(m_swapChainFormats); ++ii)
 					{
-						m_swapchainFormats[ii] = TextureFormat::Enum(ii);
+						m_swapChainFormats[ii] = TextureFormat::Enum(ii);
 					}
 
 					result = m_backBuffer.create(UINT16_MAX, g_platformData.nwh, m_resolution.width, m_resolution.height, m_resolution.format);
@@ -2763,12 +2763,14 @@ VK_IMPORT_DEVICE
 				| BGFX_RESET_DEPTH_CLAMP
 				);
 
-			// Note: m_needToRefreshSwapchain is deliberately ignored when deciding whether to recreate the swapchain
-			// because it can happen several frames before submit is called with the new resolution.
-			// Instead, vkAcquireNextImageKHR and all draws to the backbuffer are skipped until the window size is updated.
-			// That also fixes a related issue where VK_ERROR_OUT_OF_DATE_KHR is returned from
-			// vkQueuePresentKHR when the window doesn't exist anymore, and vkGetPhysicalDeviceSurfaceCapabilitiesKHR
-			// fails with VK_ERROR_SURFACE_LOST_KHR.
+			// Note: m_needToRefreshSwapchain is deliberately ignored when deciding whether to
+			// recreate the swapchain because it can happen several frames before submit is called
+			// with the new resolution.
+			//
+			// Instead, vkAcquireNextImageKHR and all draws to the backbuffer are skipped until
+			// the window size is updated. That also fixes a related issue where VK_ERROR_OUT_OF_DATE_KHR
+			// is returned from vkQueuePresentKHR when the window doesn't exist anymore, and
+			// vkGetPhysicalDeviceSurfaceCapabilitiesKHR fails with VK_ERROR_SURFACE_LOST_KHR.
 
 			if (false
 			||  m_resolution.format != _resolution.format
@@ -4431,7 +4433,7 @@ VK_IMPORT_DEVICE
 		bool m_timerQuerySupport;
 
 		FrameBufferVK m_backBuffer;
-		TextureFormat::Enum m_swapchainFormats[TextureFormat::Count];
+		TextureFormat::Enum m_swapChainFormats[TextureFormat::Count];
 
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
@@ -6645,7 +6647,7 @@ VK_DESTROY
 
 	void SwapChainVK::destroy()
 	{
-		if (VK_NULL_HANDLE != m_swapchain)
+		if (VK_NULL_HANDLE != m_swapChain)
 		{
 			releaseFrameBuffer();
 			releaseAttachments();
@@ -7012,41 +7014,47 @@ VK_DESTROY
 		m_sci.presentMode        = s_presentMode[presentModeIdx].mode;
 		m_sci.clipped            = VK_FALSE;
 
-		result = vkCreateSwapchainKHR(device, &m_sci, allocatorCb, &m_swapchain);
+		result = vkCreateSwapchainKHR(device, &m_sci, allocatorCb, &m_swapChain);
 		if (VK_SUCCESS != result)
 		{
 			BX_TRACE("Create swapchain error: vkCreateSwapchainKHR failed %d: %s.", result, getName(result) );
 			return result;
 		}
 
-		m_sci.oldSwapchain = m_swapchain;
+		m_sci.oldSwapchain = m_swapChain;
 
-		result = vkGetSwapchainImagesKHR(device, m_swapchain, &m_numSwapchainImages, NULL);
+		result = vkGetSwapchainImagesKHR(device, m_swapChain, &m_numSwapChainImages, NULL);
 		if (VK_SUCCESS != result)
 		{
 			BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR failed %d: %s.", result, getName(result) );
 			return result;
 		}
 
-		if (m_numSwapchainImages < m_sci.minImageCount)
+		BX_TRACE("Create swapchain numSwapChainImages %d, minImageCount %d, BX_COUNTOF(m_backBufferColorImage) %d"
+			, m_numSwapChainImages
+			, m_sci.minImageCount
+			, BX_COUNTOF(m_backBufferColorImage)
+			);
+
+		if (m_numSwapChainImages < m_sci.minImageCount)
 		{
 			BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR: numSwapchainImages %d < minImageCount %d."
-				, m_numSwapchainImages
+				, m_numSwapChainImages
 				, m_sci.minImageCount
 				);
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
-		if (m_numSwapchainImages > BX_COUNTOF(m_backBufferColorImage) )
+		if (m_numSwapChainImages > BX_COUNTOF(m_backBufferColorImage) )
 		{
 			BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR: numSwapchainImages %d > countof(m_backBufferColorImage) %d."
-				, m_numSwapchainImages
+				, m_numSwapChainImages
 				, BX_COUNTOF(m_backBufferColorImage)
 				);
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
-		result = vkGetSwapchainImagesKHR(device, m_swapchain, &m_numSwapchainImages, &m_backBufferColorImage[0]);
+		result = vkGetSwapchainImagesKHR(device, m_swapChain, &m_numSwapChainImages, &m_backBufferColorImage[0]);
 		if (VK_SUCCESS != result && VK_INCOMPLETE != result)
 		{
 			BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR failed %d: %s."
@@ -7072,7 +7080,7 @@ VK_DESTROY
 		ivci.subresourceRange.baseArrayLayer = 0;
 		ivci.subresourceRange.layerCount     = 1;
 
-		for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
+		for (uint32_t ii = 0; ii < m_numSwapChainImages; ++ii)
 		{
 			ivci.image = m_backBufferColorImage[ii];
 
@@ -7129,7 +7137,7 @@ VK_DESTROY
 			release(m_renderDoneSemaphore[ii]);
 		}
 
-		release(m_swapchain);
+		release(m_swapChain);
 	}
 
 	VkResult SwapChainVK::createAttachments(VkCommandBuffer _commandBuffer)
@@ -7231,7 +7239,7 @@ VK_DESTROY
 			return result;
 		}
 
-		for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
+		for (uint32_t ii = 0; ii < m_numSwapChainImages; ++ii)
 		{
 			uint32_t numAttachments = 2;
 			::VkImageView attachments[3] =
@@ -7387,9 +7395,9 @@ VK_DESTROY
 				{
 					selectedFormat = requested;
 					if (0 != ii
-					&&  s_renderVK->m_swapchainFormats[_format] != selectedFormat)
+					&&  s_renderVK->m_swapChainFormats[_format] != selectedFormat)
 					{
-						s_renderVK->m_swapchainFormats[_format] = selectedFormat;
+						s_renderVK->m_swapChainFormats[_format] = selectedFormat;
 						BX_TRACE(
 							"findSurfaceFormat: Surface format %s not found! Defaulting to %s."
 							, bimg::getName(bimg::TextureFormat::Enum(_format) )
@@ -7413,7 +7421,7 @@ VK_DESTROY
 
 	bool SwapChainVK::acquire(VkCommandBuffer _commandBuffer)
 	{
-		if (VK_NULL_HANDLE == m_swapchain
+		if (VK_NULL_HANDLE == m_swapChain
 		||  m_needToRefreshSwapchain)
 		{
 			return false;
@@ -7432,7 +7440,7 @@ VK_DESTROY
 				BGFX_PROFILER_SCOPE("vkAcquireNextImageKHR", kColorFrame);
 				result = vkAcquireNextImageKHR(
 					  device
-					, m_swapchain
+					, m_swapChain
 					, UINT64_MAX
 					, m_lastImageAcquiredSemaphore
 					, VK_NULL_HANDLE
@@ -7482,7 +7490,7 @@ VK_DESTROY
 	void SwapChainVK::present()
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVk::present", kColorFrame);
-		if (VK_NULL_HANDLE != m_swapchain
+		if (VK_NULL_HANDLE != m_swapChain
 		&&  m_needPresent)
 		{
 			VkPresentInfoKHR pi;
@@ -7491,7 +7499,7 @@ VK_DESTROY
 			pi.waitSemaphoreCount = 1;
 			pi.pWaitSemaphores    = &m_lastImageRenderedSemaphore;
 			pi.swapchainCount     = 1;
-			pi.pSwapchains        = &m_swapchain;
+			pi.pSwapchains        = &m_swapChain;
 			pi.pImageIndices      = &m_backBufferColorIdx;
 			pi.pResults           = NULL;
 			VkResult result;
