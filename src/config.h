@@ -324,6 +324,22 @@ BX_STATIC_ASSERT(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS m
 #	define BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE (2<<20)
 #endif // BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE
 
+#ifndef BGFX_CONFIG_PER_FRAME_SCRATCH_STAGING_BUFFER_SIZE
+/// Amount of scratch buffer size (per in-flight frame) that will be reserved
+/// for staging data for copying to the device (such as vertex buffer data,
+/// texture data, etc). This buffer will be used instead of allocating memory
+/// on device separately for every data copy.
+/// Note: Currently only used by the Vulkan backend.
+#   define BGFX_CONFIG_PER_FRAME_SCRATCH_STAGING_BUFFER_SIZE (32<<20)
+#endif
+
+#ifndef BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRACH_BUFFER
+/// The threshold of data size above which the staging scratch buffer will
+/// not be used, but instead a separate device memory allocation will take
+/// place to stage the data for copying to device.
+#   define BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRACH_BUFFER (16 << 20)
+#endif
+
 #ifndef BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT
 #	define BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT 5
 #endif // BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT

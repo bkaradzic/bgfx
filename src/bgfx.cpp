@@ -2537,6 +2537,7 @@ namespace bgfx
 
 	void Context::flushTextureUpdateBatch(CommandBuffer& _cmdbuf)
 	{
+		BGFX_PROFILER_SCOPE("flushTextureUpdateBatch", 0xff2040ff);
 		if (m_textureUpdateBatch.sort() )
 		{
 			const uint32_t pos = _cmdbuf.m_pos;

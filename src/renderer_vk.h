@@ -389,6 +389,15 @@ VK_DESTROY_FUNC(DescriptorSet);
 		HashMap m_hashMap;
 	};
 
+	struct StagingBufferVK {
+		VkBuffer m_buffer;
+		VkDeviceMemory m_deviceMem;
+		uint8_t *m_data;
+		uint32_t m_size;
+		uint32_t m_offset;
+		bool m_isFromScratch;
+	};
+
 	class ScratchBufferVK
 	{
 	public:
@@ -400,7 +409,9 @@ VK_DESTROY_FUNC(DescriptorSet);
 		{
 		}
 
-		void create(uint32_t _size, uint32_t _count);
+		void create(uint32_t _size, uint32_t _count, VkBufferUsageFlags _usage, uint32_t align);
+		void createUniform(uint32_t _size, uint32_t _count);
+		void createStaging(uint32_t _size);
 		void destroy();
 		void reset();
 		uint32_t write(const void* _data, uint32_t _size);
@@ -411,6 +422,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		uint8_t* m_data;
 		uint32_t m_size;
 		uint32_t m_pos;
+		uint32_t m_align;
 	};
 
 	struct BufferVK
