@@ -51,7 +51,14 @@
 #	define BGFX_MUTEX_SCOPE(_mutex) BX_NOOP()
 #endif // BGFX_CONFIG_MULTITHREADED
 
-#if BGFX_CONFIG_PROFILER
+#if BGFX_CONFIG_PROFILER_TRACY
+#include <tracy_bgfx.h>
+#	define BGFX_PROFILER_SCOPE(_name, _abgr)            BGFX_PROFILER_TRACY_SCOPE(_name, _abgr)
+#	define BGFX_PROFILER_BEGIN(_name, _abgr)            BGFX_PROFILER_TRACY_BEGIN(_name, _abgr)
+#	define BGFX_PROFILER_BEGIN_LITERAL(_name, _abgr)    BGFX_PROFILER_TRACY_BEGIN_LITERAL(_name, _abgr)
+#	define BGFX_PROFILER_END()                          BGFX_PROFILER_TRACY_END()
+#	define BGFX_PROFILER_SET_CURRENT_THREAD_NAME(_name) tracy::SetThreadName(_name)
+#elif BGFX_CONFIG_PROFILER
 #	define BGFX_PROFILER_SCOPE(_name, _abgr)            ProfilerScope BX_CONCATENATE(profilerScope, __LINE__)(_name, _abgr, __FILE__, uint16_t(__LINE__) )
 #	define BGFX_PROFILER_BEGIN(_name, _abgr)            g_callback->profilerBegin(_name, _abgr, __FILE__, uint16_t(__LINE__) )
 #	define BGFX_PROFILER_BEGIN_LITERAL(_name, _abgr)    g_callback->profilerBeginLiteral(_name, _abgr, __FILE__, uint16_t(__LINE__) )
@@ -63,7 +70,7 @@
 #	define BGFX_PROFILER_BEGIN_LITERAL(_name, _abgr)    BX_NOOP()
 #	define BGFX_PROFILER_END()                          BX_NOOP()
 #	define BGFX_PROFILER_SET_CURRENT_THREAD_NAME(_name) BX_NOOP()
-#endif // BGFX_PROFILER_SCOPE
+#endif // BGFX_PROFILER
 
 namespace bgfx
 {
@@ -5199,7 +5206,7 @@ namespace bgfx
 				return true;
 			}
 
-			BGFX_PROFILER_SCOPE("bgfx/API thread wait", 0xff2040ff);
+			BGFX_PROFILER_SCOPE("bgfx/API thread wait", 0x404040ff);
 			int64_t start = bx::getHPCounter();
 			bool ok = m_apiSem.wait(_msecs);
 			if (ok)
@@ -5224,7 +5231,7 @@ namespace bgfx
 		{
 			if (!m_singleThreaded)
 			{
-				BGFX_PROFILER_SCOPE("bgfx/Render thread wait", 0xff2040ff);
+				BGFX_PROFILER_SCOPE("bgfx/Render thread wait", 0x404040ff);
 				int64_t start = bx::getHPCounter();
 				bool ok = m_renderSem.wait();
 				BX_ASSERT(ok, "Semaphore wait failed."); BX_UNUSED(ok);

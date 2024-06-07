@@ -11,6 +11,30 @@
 #	include <bx/uint32_t.h>
 #	include "emscripten.h"
 
+#if BGFX_CONFIG_PROFILER_TRACY
+#	define glQueryCounter bgfx::gl::glQueryCounter
+#	define glQueryObjectui64v bgfx::gl::glQueryObjectui64v
+#	define glGetQueryObjectui64v bgfx::gl::glGetQueryObjectui64v
+#	define glGetQueryObjectiv bgfx::gl::glGetQueryObjectiv
+#	define glGetQueryiv bgfx::gl::glGetQueryiv
+#	define glGetInteger64v bgfx::gl::glGetInteger64v
+#	define glGenQueries bgfx::gl::glGenQueries
+#	include "public/tracy/TracyOpenGL.hpp"
+#	undef glQueryCounter
+#	undef glQueryObjectui64v
+#	undef glGetQueryObjectui64v
+#	undef glGetQueryObjectiv
+#	undef glGetQueryiv
+#	undef glGetInteger64v
+#	undef glGenQueries
+
+#	define BGFX_GL_PROFILER_SCOPE(_name, _abgr) TracyGpuZoneC(_name, BGFX_ABGR_TO_RGB(_abgr))
+#else
+#	define BGFX_GL_PROFILER_SCOPE(_name, _abgr) BX_NOOP()
+#endif
+
+
+
 namespace bgfx { namespace gl
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -2262,6 +2286,7 @@ namespace bgfx { namespace gl
 
 		bool init(const Init& _init)
 		{
+			BGFX_PROFILER_SCOPE("RendererContextGL::init", kColorFrame);
 			struct ErrorState
 			{
 				enum Enum
@@ -3201,6 +3226,10 @@ namespace bgfx { namespace gl
 				m_needPresent = false;
 			}
 
+#if BGFX_CONFIG_PROFILER_TRACY
+			TracyGpuContext;
+#endif
+
 			return true;
 
 		error:
@@ -3271,11 +3300,13 @@ namespace bgfx { namespace gl
 		{
 			if (m_flip)
 			{
+				BGFX_PROFILER_SCOPE("RendererContextGL::flip", kColorFrame);
 				for (uint32_t ii = 1, num = m_numWindows; ii < num; ++ii)
 				{
 					FrameBufferGL& frameBuffer = m_frameBuffers[m_windows[ii].idx];
 					if (frameBuffer.m_needPresent)
 					{
+						BGFX_PROFILER_SCOPE("RendererContextGL::flip / window", kColorFrame);
 						m_glctx.swap(frameBuffer.m_swapChain);
 						frameBuffer.m_needPresent = false;
 					}
@@ -3289,6 +3320,10 @@ namespace bgfx { namespace gl
 					m_glctx.swap();
 					m_needPresent = false;
 				}
+
+#if BGFX_CONFIG_PROFILER_TRACY
+				TracyGpuCollect;
+#endif
 			}
 		}
 
@@ -3563,6 +3598,7 @@ namespace bgfx { namespace gl
 
 		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
 		{
+			BGFX_GL_PROFILER_SCOPE("requestScreenshot", kColorFrame);
 			SwapChainGL* swapChain = NULL;
 			uint32_t width  = m_resolution.width;
 			uint32_t height = m_resolution.height;
@@ -3713,6 +3749,7 @@ namespace bgfx { namespace gl
 			const uint32_t numVertices = _numIndices*4/6;
 			if (0 < numVertices)
 			{
+				BGFX_GL_PROFILER_SCOPE("blitRender", kColorDraw);
 				m_indexBuffers[_blitter.m_ib->handle.idx].update(0, _numIndices*2, _blitter.m_ib->data);
 				m_vertexBuffers[_blitter.m_vb->handle.idx].update(0, numVertices*_blitter.m_layout.m_stride, _blitter.m_vb->data);
 
@@ -4497,6 +4534,7 @@ namespace bgfx { namespace gl
 
 		void clearQuad(ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, uint32_t _height, const float _palette[][4])
 		{
+			BGFX_GL_PROFILER_SCOPE("clearQuad", kColorDraw);
 			uint32_t numMrt = 1;
 			FrameBufferHandle fbh = m_fbh;
 			if (isValid(fbh) )
@@ -5959,6 +5997,7 @@ namespace bgfx { namespace gl
 
 	void TextureGL::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
+		BGFX_GL_PROFILER_SCOPE("TextureGL::update", kColorResource);
 		const uint32_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		const uint32_t rectpitch = _rect.m_width*bpp/8;
 		uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
@@ -6198,6 +6237,7 @@ namespace bgfx { namespace gl
 
 	void TextureGL::resolve(uint8_t _resolve) const
 	{
+		BGFX_GL_PROFILER_SCOPE("TextureGL::resolve", kColorResource);
 		const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
 		if (renderTarget
 		&&  1 < m_numMips
@@ -7459,6 +7499,7 @@ namespace bgfx { namespace gl
 
 	void RendererContextGL::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
+		BGFX_GL_PROFILER_SCOPE("submit", kColorFrame);
 		if (_render->m_capture)
 		{
 			renderDocTriggerCapture();

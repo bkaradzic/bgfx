@@ -6,6 +6,7 @@
 #include "bgfx_p.h"
 
 #if BGFX_CONFIG_RENDERER_VULKAN
+#	include <bx/string.h>
 #	include <bx/pixelformat.h>
 #	include "renderer_vk.h"
 #	include "shader_spirv.h"
@@ -20,6 +21,76 @@
 #if defined(WL_EGL_PLATFORM)
 #	include <wayland-egl-backend.h>
 #endif // defined(WL_EGL_PLATFORM)
+
+// A regular scope, without adding timer queries to the VkCommandBuffer.
+#define BGFX_VK_PROFILER_SCOPE(_name, _abgr, _cmd_buf)                     \
+	struct ProfilerScopeVK                                                 \
+	{                                                                      \
+		VkCommandBuffer m_commandBuffer;                                   \
+		BX_FORCE_INLINE ProfilerScopeVK(VkCommandBuffer _cmdbuf)           \
+		{                                                                  \
+			m_commandBuffer = _cmdbuf;                                     \
+			BGFX_VK_PROFILER_BEGIN_LITERAL(_name, _abgr);                  \
+		}                                                                  \
+		BX_FORCE_INLINE ~ProfilerScopeVK()                                 \
+		{                                                                  \
+			BGFX_VK_PROFILER_END();                                        \
+		}                                                                  \
+	};                                                                     \
+	ProfilerScopeVK BX_CONCATENATE(profilerScopeVk, __LINE__) (_cmd_buf)
+
+
+// Primitives for profiling GPU work: takes a profilerContext and commandBuffer.
+#if BGFX_CONFIG_PROFILER_TRACY
+#	include "tracy_bgfx_vulkan.h"
+#	define BGFX_VK_PROFILER_BEGIN_LITERAL_CMDBUF(_name, _abgr, _ctx, _cmdBuf) BGFX_VK_PROFILER_TRACY_BEGIN_LITERAL(_name, _abgr, _ctx, _cmdBuf)
+#	define BGFX_VK_PROFILER_BEGIN_CMDBUF(_name, _abgr, _ctx, _cmdBuf)         BGFX_VK_PROFILER_TRACY_BEGIN(_name, _abgr, _ctx, _cmdBuf)
+#	define BGFX_VK_PROFILER_END_CMDBUF(_ctx, _cmdBuf)                         BGFX_VK_PROFILER_TRACY_END(_ctx, _cmdBuf)
+#	define BGFX_VK_PROFILER_COLLECT_CMDBUF(_ctx, _cmdBuf)                     TracyVkCollect(((tracy::VkCtx*)(_ctx)), _cmdBuf)
+#else
+#	define BGFX_VK_PROFILER_BEGIN_LITERAL_CMDBUF(_name, _abgr, _ctx, _cmdBuf) BX_NOOP()
+#	define BGFX_VK_PROFILER_BEGIN_CMDBUF(_name, _abgr, _ctx, _cmdBuf)         BX_NOOP()
+#	define BGFX_VK_PROFILER_END_CMDBUF(_ctx, _cmdBuf)                         BX_NOOP()
+#	define BGFX_VK_PROFILER_COLLECT_CMDBUF(_ctx, _cmdBuf)                     BX_NOOP()
+#endif
+
+// A scope with timing on the VkCommandBuffer.
+#define BGFX_VK_PROFILER_SCOPE_CMDBUF(_name, _abgr, _ctx, _cmd_buf)                                     \
+	struct BX_CONCATENATE(ProfilerScopeVK, __LINE__)                                                    \
+	{                                                                                                   \
+		VkCommandBuffer m_commandBuffer;                                                                \
+		void* m_ctx;                                                                                    \
+		BX_FORCE_INLINE BX_CONCATENATE(ProfilerScopeVK, __LINE__)(void *_pctx, VkCommandBuffer _cmdbuf) \
+		{                                                                                               \
+			m_ctx = _pctx;                                                                              \
+			m_commandBuffer = _cmdbuf;                                                                  \
+			BGFX_VK_PROFILER_BEGIN_LITERAL(_name, _abgr);                                               \
+			BGFX_VK_PROFILER_BEGIN_LITERAL_CMDBUF(_name, _abgr, _pctx, _cmdbuf);                        \
+		}                                                                                               \
+		BX_FORCE_INLINE ~BX_CONCATENATE(ProfilerScopeVK, __LINE__)()                                    \
+		{                                                                                               \
+			BGFX_VK_PROFILER_END_CMDBUF(m_ctx, m_commandBuffer);                                        \
+			BGFX_VK_PROFILER_END();                                                                     \
+		}                                                                                               \
+	};                                                                                                  \
+	BX_CONCATENATE(ProfilerScopeVK, __LINE__) BX_CONCATENATE(profilerScopeVk, __LINE__) (_ctx, _cmd_buf)
+
+// Helper primitives for profiling GPU work: takes a RendererContextVK::CommandQueueVK::CommandList
+#define BGFX_VK_PROFILER_BEGIN_LITERAL_CMDLIST(_name, _abgr, _cmdList) BGFX_VK_PROFILER_BEGIN_LITERAL_CMDBUF(_name, _abgr, _cmdList.m_profilerCtx, _cmdList.m_commandBuffer)
+#define BGFX_VK_PROFILER_BEGIN_CMDLIST(_name, _abgr, _cmdList) BGFX_VK_PROFILER_BEGIN_CMDBUF(_name, _abgr, _cmdList.m_profilerCtx, _cmdList.m_commandBuffer)
+#define BGFX_VK_PROFILER_END_CMDLIST(_cmdList) BGFX_VK_PROFILER_END_CMDBUF(_cmdList.m_profilerCtx, _cmdList.m_commandBuffer)
+
+// Helper macros for making profiled scopes that will profile GPU work as well: takes command list.
+#define BGFX_VK_PROFILER_SCOPE_CMDLIST(_name, _abgr, _cmdList) \
+	BGFX_VK_PROFILER_SCOPE_CMDBUF(_name, _abgr, _cmdList.m_profilerCtx, _cmdList.m_commandBuffer)
+
+#define BGFX_VK_PROFILER_SCOPE_CMDLIST_CURRENT_FRAME_IN_FLIGHT_CTX(_name, _abgr, _renderCtx) \
+	BGFX_VK_PROFILER_SCOPE_CMDLIST(_name, _abgr, _renderCtx->m_cmd.m_commandList[_renderCtx->m_cmd.m_currentFrameInFlight])
+
+#define BGFX_VK_PROFILER_SCOPE_CMDLIST_CURRENT_FRAME_IN_FLIGHT(_name, _abgr) \
+	BGFX_VK_PROFILER_SCOPE_CMDLIST_CURRENT_FRAME_IN_FLIGHT_CTX(_name, _abgr, s_renderVK) \
+
+
 
 namespace bgfx { namespace vk
 {
@@ -2660,6 +2731,7 @@ VK_IMPORT_DEVICE
 			const uint32_t numVertices = _numIndices*4/6;
 			if (0 < numVertices && m_backBuffer.isRenderable() )
 			{
+				BGFX_VK_PROFILER_SCOPE_CMDLIST_CURRENT_FRAME_IN_FLIGHT_CTX("blit", kColorDraw, this);
 				m_indexBuffers[_blitter.m_ib->handle.idx].update(m_commandBuffer, 0, _numIndices*2, _blitter.m_ib->data);
 				m_vertexBuffers[_blitter.m_vb->handle.idx].update(m_commandBuffer, 0, numVertices*_blitter.m_layout.m_stride, _blitter.m_vb->data, true);
 
@@ -4290,6 +4362,7 @@ VK_IMPORT_DEVICE
 
 		void kick(bool _finishAll = false)
 		{
+			BGFX_PROFILER_SCOPE("RendererContextVK::kick", kColorFrame);
 			m_cmd.kick(_finishAll);
 			VK_CHECK(m_cmd.alloc(&m_commandBuffer) );
 			m_cmd.finish(_finishAll);
@@ -4313,6 +4386,7 @@ VK_IMPORT_DEVICE
 
 		VkResult allocateMemory(const VkMemoryRequirements* requirements, VkMemoryPropertyFlags propertyFlags, ::VkDeviceMemory* memory) const
 		{
+			BGFX_PROFILER_SCOPE("allocateMemory", kColorResource);
 			VkMemoryAllocateInfo ma;
 			ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 			ma.pNext = NULL;
@@ -4339,6 +4413,7 @@ VK_IMPORT_DEVICE
 
 		VkResult createHostBuffer(uint32_t _size, VkMemoryPropertyFlags _flags, ::VkBuffer* _buffer, ::VkDeviceMemory* _memory, const void* _data = NULL)
 		{
+			BGFX_PROFILER_SCOPE("createHostBuffer", kColorResource);
 			VkResult result = VK_SUCCESS;
 
 			VkBufferCreateInfo bci;
@@ -4659,6 +4734,7 @@ VK_DESTROY
 
 	void ScratchBufferVK::flush()
 	{
+		BGFX_PROFILER_SCOPE("ScratchBufferVK::flush()", kColorResource);
 		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.limits;
 		VkDevice device = s_renderVK->m_device;
 
@@ -4676,6 +4752,7 @@ VK_DESTROY
 
 	void BufferVK::create(VkCommandBuffer _commandBuffer, uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride)
 	{
+		BGFX_PROFILER_SCOPE("ScratchBufferVK::create()", kColorResource);
 		BX_UNUSED(_stride);
 
 		m_size    = _size;
@@ -4719,8 +4796,8 @@ VK_DESTROY
 
 	void BufferVK::update(VkCommandBuffer _commandBuffer, uint32_t _offset, uint32_t _size, void* _data, bool _discard)
 	{
-		BGFX_PROFILER_SCOPE("BufferVK::update", kColorFrame);
 		BX_UNUSED(_discard);
+		BGFX_VK_PROFILER_SCOPE_CMDLIST_CURRENT_FRAME_IN_FLIGHT("BufferVK::update", kColorResource);
 
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingMem;
@@ -4761,6 +4838,7 @@ VK_DESTROY
 
 	void ShaderVK::create(const Memory* _mem)
 	{
+		BGFX_PROFILER_SCOPE("ShaderVK::create()", kColorResource);
 		bx::MemoryReader reader(_mem->data, _mem->size);
 
 		bx::ErrorAssert err;
@@ -5625,7 +5703,7 @@ VK_DESTROY
 
 	void ReadbackVK::copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint8_t _mip) const
 	{
-		BGFX_PROFILER_SCOPE("ReadbackVK::copyImageToBuffer", kColorFrame);
+		BGFX_VK_PROFILER_SCOPE_CMDLIST_CURRENT_FRAME_IN_FLIGHT("ReadbackVK::copyImageToBuffer", kColorResource);
 		uint32_t mipWidth  = bx::uint32_max(1, m_width  >> _mip);
 		uint32_t mipHeight = bx::uint32_max(1, m_height >> _mip);
 
@@ -5640,6 +5718,7 @@ VK_DESTROY
 			, 0
 			, 1
 			);
+
 
 		VkBufferImageCopy bic;
 		bic.bufferOffset = 0;
@@ -5683,6 +5762,7 @@ VK_DESTROY
 
 	void ReadbackVK::readback(VkDeviceMemory _memory, VkDeviceSize _offset, void* _data, uint8_t _mip) const
 	{
+		BGFX_VK_PROFILER_SCOPE_CMDLIST_CURRENT_FRAME_IN_FLIGHT("ReadbackVK::readback", kColorResource);
 		if (m_image == VK_NULL_HANDLE)
 		{
 			return;
@@ -5708,6 +5788,7 @@ VK_DESTROY
 
 	VkResult TextureVK::create(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint64_t _flags, VkFormat _format)
 	{
+		BGFX_VK_PROFILER_SCOPE_CMDLIST_CURRENT_FRAME_IN_FLIGHT("TextureVK::create", kColorResource);
 		BX_ASSERT(0 != (_flags & BGFX_TEXTURE_RT_MASK), "");
 		_flags |= BGFX_TEXTURE_RT_WRITE_ONLY;
 
@@ -5742,6 +5823,7 @@ VK_DESTROY
 
 	VkResult TextureVK::createImages(VkCommandBuffer _commandBuffer)
 	{
+		BGFX_VK_PROFILER_SCOPE_CMDLIST_CURRENT_FRAME_IN_FLIGHT("TextureVK::createImages", kColorResource);
 		VkResult result = VK_SUCCESS;
 
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
@@ -5871,6 +5953,7 @@ VK_DESTROY
 
 	void* TextureVK::create(VkCommandBuffer _commandBuffer, const Memory* _mem, uint64_t _flags, uint8_t _skip)
 	{
+		BGFX_VK_PROFILER_SCOPE_CMDLIST_CURRENT_FRAME_IN_FLIGHT("TextureVK::create", kColorResource);
 		bimg::ImageContainer imageContainer;
 
 		if (bimg::imageParse(imageContainer, _mem->data, _mem->size) )
@@ -6168,6 +6251,7 @@ VK_DESTROY
 
 	void TextureVK::update(VkCommandBuffer _commandBuffer, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
+		BGFX_VK_PROFILER_SCOPE_CMDLIST_CURRENT_FRAME_IN_FLIGHT("TextureVK::update", kColorResource);
 		const uint32_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		uint32_t rectpitch = _rect.m_width * bpp / 8;
 		uint32_t slicepitch = rectpitch * _rect.m_height;
@@ -6377,7 +6461,7 @@ VK_DESTROY
 
 	void TextureVK::copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy)
 	{
-		BGFX_PROFILER_SCOPE("TextureVK::copyBufferToTexture", kColorResource);
+		BGFX_VK_PROFILER_SCOPE_CMDLIST_CURRENT_FRAME_IN_FLIGHT("TextureVK::copyBufferToTexture", kColorResource);
 		const VkImageLayout oldLayout = m_currentImageLayout == VK_IMAGE_LAYOUT_UNDEFINED
 			? m_sampledLayout
 			: m_currentImageLayout
@@ -7469,7 +7553,7 @@ VK_DESTROY
 
 			if (VK_NULL_HANDLE != m_backBufferFence[m_backBufferColorIdx])
 			{
-				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
+				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorWait);
 				VK_CHECK(vkWaitForFences(
 					  device
 					, 1
@@ -7796,7 +7880,7 @@ VK_DESTROY
 		VkCommandPoolCreateInfo cpci;
 		cpci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		cpci.pNext = NULL;
-		cpci.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+		cpci.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		cpci.queueFamilyIndex = m_queueFamily;
 
 		VkCommandBufferAllocateInfo cbai;
@@ -7853,6 +7937,21 @@ VK_DESTROY
 				BX_TRACE("Create command queue error: vkCreateFence failed %d: %s.", result, getName(result) );
 				return result;
 			}
+
+#if BGFX_CONFIG_PROFILER_TRACY
+			m_commandList[ii].m_profilerCtx = TracyVkContextCalibrated(
+				  s_renderVK->m_instance
+				, s_renderVK->m_physicalDevice
+				, s_renderVK->m_device
+				, s_renderVK->m_globalQueue
+				, m_commandList[ii].m_commandBuffer
+				, vkGetInstanceProcAddr
+				, vkGetDeviceProcAddr
+				);
+			char nameBuf[128];
+			bx::snprintf(nameBuf, sizeof(nameBuf), "Vulkan Frame-in-Flight %d", ii);
+			TracyVkContextName(((TracyVkCtx)m_commandList[ii].m_profilerCtx), nameBuf, bx::strLen(nameBuf));
+#endif
 		}
 
 		return result;
@@ -7865,6 +7964,12 @@ VK_DESTROY
 
 		for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 		{
+#if BGFX_CONFIG_PROFILER_TRACY
+			if (m_commandList[ii].m_profilerCtx != NULL)
+			{
+				TracyVkDestroy((TracyVkCtx)(m_commandList[ii].m_profilerCtx));
+			}
+#endif
 			vkDestroy(m_commandList[ii].m_fence);
 			m_commandList[ii].m_commandBuffer = VK_NULL_HANDLE;
 			vkDestroy(m_commandList[ii].m_commandPool);
@@ -7881,7 +7986,7 @@ VK_DESTROY
 			CommandList& commandList = m_commandList[m_currentFrameInFlight];
 
 			{
-				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
+				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorWait);
 				result = vkWaitForFences(device, 1, &commandList.m_fence, VK_TRUE, UINT64_MAX);
 			}
 
@@ -7906,6 +8011,8 @@ VK_DESTROY
 			cbi.pInheritanceInfo = NULL;
 
 			result = vkBeginCommandBuffer(commandList.m_commandBuffer, &cbi);
+
+			BGFX_VK_PROFILER_COLLECT_CMDBUF(m_commandList[m_currentFrameInFlight].m_profilerCtx, m_commandList[m_currentFrameInFlight].m_commandBuffer);
 
 			if (VK_SUCCESS != result)
 			{
@@ -7979,7 +8086,7 @@ VK_DESTROY
 
 			if (_wait)
 			{
-				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
+				BGFX_PROFILER_SCOPE("CommandQueue::kick vkWaitForFences", kColorWait);
 				VK_CHECK(vkWaitForFences(device, 1, &m_completedFence, VK_TRUE, UINT64_MAX) );
 			}
 
@@ -8180,7 +8287,8 @@ VK_DESTROY
 			renderDocTriggerCapture();
 		}
 
-		BGFX_VK_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
+		BGFX_VK_PROFILER_BEGIN_LITERAL_CMDLIST("rendererSubmit", kColorFrame, m_cmd.m_commandList[m_cmd.m_currentFrameInFlight]);
+		BGFX_VK_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorFrame);
 
 		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
@@ -8395,6 +8503,7 @@ VK_DESTROY
 						setViewType(view, "C");
 						BGFX_VK_PROFILER_BEGIN(view, kColorCompute);
 					}
+					BGFX_VK_PROFILER_SCOPE_CMDLIST_CURRENT_FRAME_IN_FLIGHT("compute", kColorCompute);
 
 					// renderpass external subpass dependencies handle graphics -> compute and compute -> graphics
 					// but not compute -> compute (possibly also across views if they contain no draw calls)
@@ -9234,6 +9343,8 @@ VK_DESTROY
 				fb.m_swapChain.m_backBufferFence[fb.m_swapChain.m_backBufferColorIdx] = m_cmd.m_currentFence;
 			}
 		}
+
+		BGFX_VK_PROFILER_END_CMDLIST(m_cmd.m_commandList[m_cmd.m_currentFrameInFlight]);
 
 		kick();
 	}

@@ -26,6 +26,7 @@ namespace bgfx
 	constexpr uint32_t kColorCompute  = toAbgr8(0xa7, 0xdb, 0xd8);
 	constexpr uint32_t kColorMarker   = toAbgr8(0xff, 0x00, 0x00);
 	constexpr uint32_t kColorResource = toAbgr8(0xff, 0x40, 0x20);
+	constexpr uint32_t kColorWait     = toAbgr8(0x40, 0x40, 0x40);
 
 	struct BlitState
 	{

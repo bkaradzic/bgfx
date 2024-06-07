@@ -73,6 +73,8 @@ project ("texturev")
 		configuration {}
 	end
 
+	using_tracy()
+
 	configuration { "vs*" }
 		linkoptions {
 			"/ignore:4199", -- LNK4199: /DELAYLOAD:*.dll ignored; no imports found from *.dll

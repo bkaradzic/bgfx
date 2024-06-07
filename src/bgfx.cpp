@@ -1887,6 +1887,8 @@ namespace bgfx
 			return false;
 		}
 
+		BGFX_PROFILER_SET_CURRENT_THREAD_NAME("Main Thread");
+
 		m_headless = true
 			&&  RendererType::Noop != _init.type
 			&&  NULL == _init.platformData.ndt

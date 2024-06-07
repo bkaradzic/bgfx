@@ -31,6 +31,11 @@ newoption {
 }
 
 newoption {
+	trigger = "with-profiler-tracy",
+	description = "Enable build with intrusive Tracy profiling. Note that you are always responsible for linking Tracy with your own program.",
+}
+
+newoption {
 	trigger = "with-shared-lib",
 	description = "Enable building shared library.",
 }
@@ -196,9 +201,53 @@ end
 
 if _OPTIONS["with-profiler"] then
 	defines {
-		"ENTRY_CONFIG_PROFILER=1",
 		"BGFX_CONFIG_PROFILER=1",
 	}
+end
+
+if _OPTIONS["with-profiler"]
+or _OPTIONS["with-profiler-tracy"] then
+	defines {
+		"ENTRY_CONFIG_PROFILER=1",
+	}
+end
+
+if _OPTIONS["with-profiler-tracy"] then
+	defines {
+		"ENTRY_CONFIG_PROFILER_TRACY=1",
+	}
+	project "TracyClient"
+		kind "StaticLib"
+		files {
+			path.join(BGFX_THIRD_PARTY_DIR, "tracy/public/TracyClient.cpp"),
+		}
+		defines {
+			"TRACY_ENABLE=1"
+		}
+		includedirs {
+			path.join(BGFX_THIRD_PARTY_DIR, "tracy/public")
+		}
+		configuration { "linux-*" }
+			buildoptions {
+				"-fPIC",
+				"-Wno-shadow",
+				"-Wno-unused-parameter",
+			}
+end
+
+function using_tracy()
+	if _OPTIONS["with-profiler-tracy"] then
+		links {
+			"TracyClient",
+		}
+		defines {
+			"BGFX_CONFIG_PROFILER_TRACY=1",
+		}
+		includedirs {
+			path.join(BGFX_DIR, "3rdparty/tracy")
+		}
+
+	end
 end
 
 function exampleProjectDefaults()
@@ -225,6 +274,7 @@ function exampleProjectDefaults()
 	}
 
 	using_bx()
+	using_tracy()
 
 	if _OPTIONS["with-sdl"] then
 		defines { "ENTRY_CONFIG_USE_SDL=1" }

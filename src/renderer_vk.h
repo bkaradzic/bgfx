@@ -865,6 +865,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 			VkCommandPool m_commandPool = VK_NULL_HANDLE;
 			VkCommandBuffer m_commandBuffer = VK_NULL_HANDLE;
 			VkFence m_fence = VK_NULL_HANDLE;
+			void *m_profilerCtx = NULL;
 		};
 
 		CommandList m_commandList[BGFX_CONFIG_MAX_FRAME_LATENCY];

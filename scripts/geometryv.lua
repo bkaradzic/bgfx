@@ -25,6 +25,7 @@ project ("geometryv")
 	}
 
 	using_bx()
+	using_tracy()
 
 	if _OPTIONS["with-sdl"] then
 		defines { "ENTRY_CONFIG_USE_SDL=1" }

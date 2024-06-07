@@ -100,6 +100,7 @@ function bgfxProjectBase(_kind, _defines)
 	defines (_defines)
 
 	using_bx()
+	using_tracy()
 
 	if _OPTIONS["with-glfw"] then
 		defines {
