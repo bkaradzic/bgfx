@@ -23,6 +23,14 @@ project "texturec"
 		"bimg",
 	}
 
+	if _OPTIONS["with-libheif"] then
+		links {
+			"heif",
+		}
+
+		configuration {}
+	end
+
 	using_bx()
 
 	configuration { "mingw-*" }

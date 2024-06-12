@@ -50,6 +50,11 @@ newoption {
 	description = "Enable building examples.",
 }
 
+newoption {
+	trigger = "with-libheif",
+	description = "Enable building bimg with libheif HEIF and AVIF file format decoder.",
+}
+
 newaction {
 	trigger = "idl",
 	description = "Generate bgfx interface source code",

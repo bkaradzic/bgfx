@@ -1,3 +1,8 @@
+--
+-- Copyright 2010-2024 Branimir Karadzic. All rights reserved.
+-- License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
+--
+
 project ("geometryv")
 	uuid (os.uuid("geometryv") )
 	kind "ConsoleApp"

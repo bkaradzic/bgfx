@@ -1,4 +1,9 @@
-project ("texturev")
+--
+-- Copyright 2010-2024 Branimir Karadzic. All rights reserved.
+-- License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
+--
+
+project "texturev"
 	uuid (os.uuid("texturev") )
 	kind "ConsoleApp"
 
@@ -69,6 +74,14 @@ project ("texturev")
 			linkoptions {
 				"-framework CoreVideo",
 			}
+
+		configuration {}
+	end
+
+	if _OPTIONS["with-libheif"] then
+		links {
+			"heif",
+		}
 
 		configuration {}
 	end
