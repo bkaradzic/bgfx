@@ -4798,7 +4798,7 @@ VK_DESTROY
 		BGFX_PROFILER_SCOPE("BufferVK::update", kColorFrame);
 		BX_UNUSED(_discard);
 
-		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(_size, 1, _data);
+		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(_size, 8, _data);
 
 		VkBufferCopy region;
 		region.srcOffset = stagingBuffer.m_offset;
@@ -6179,7 +6179,7 @@ VK_DESTROY
 			{
 				const VkDevice device = s_renderVK->m_device;
 
-				StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(totalMemSize, bpp * 8);
+				StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(totalMemSize, blockInfo.blockSize);
 				uint8_t* mappedMemory;
 
 				if (!stagingBuffer.m_isFromScratch)
@@ -6265,11 +6265,13 @@ VK_DESTROY
 		const uint32_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		uint32_t rectpitch = _rect.m_width * bpp / 8;
 		uint32_t slicepitch = rectpitch * _rect.m_height;
+		uint32_t align = bpp * 8;
 		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) ) )
 		{
 			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
 			rectpitch  = (_rect.m_width  / blockInfo.blockWidth ) * blockInfo.blockSize;
 			slicepitch = (_rect.m_height / blockInfo.blockHeight) * rectpitch;
+			align = blockInfo.blockSize;
 		}
 		const uint32_t srcpitch = UINT16_MAX == _pitch ? rectpitch : _pitch;
 		const uint32_t size     = UINT16_MAX == _pitch ? slicepitch  * _depth: _rect.m_height * _pitch * _depth;
@@ -6303,7 +6305,7 @@ VK_DESTROY
 			};
 		}
 
-		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(size, bpp * 8, data);
+		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(size, align, data);
 		region.bufferOffset += stagingBuffer.m_offset;
 
 		if (VK_IMAGE_VIEW_TYPE_3D == m_type)
