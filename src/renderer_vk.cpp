@@ -4441,8 +4441,6 @@ VK_IMPORT_DEVICE
 						BGFX_PROFILER_SCOPE("copy to scratch", kColorResource);
 						bx::memCopy(result.m_data, _data, _size);
 					}
-					size_t totalSize = bx::strideAlign(_size, scratch.m_align);
-					scratch.m_pos += totalSize;
 					return result;
 				}
 			}
@@ -4709,7 +4707,7 @@ VK_DESTROY
 		const uint32_t dstOffset = bx::strideAlign(m_pos, align);
 		if (dstOffset + _size <= m_size)
 		{
-			m_pos = dstOffset;
+			m_pos = dstOffset + _size;
 			return dstOffset;
 		} else
 		{
@@ -4725,8 +4723,6 @@ VK_DESTROY
 		if (_size > 0)
 		{
 			bx::memCopy(&m_data[dstOffset], _data, _size);
-			const uint32_t alignedSize = bx::strideAlign(_size, m_align);
-			m_pos = dstOffset + alignedSize;
 		}
 
 		return dstOffset;
