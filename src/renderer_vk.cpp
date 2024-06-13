@@ -4287,6 +4287,10 @@ VK_IMPORT_DEVICE
 
 			if (0 != depthAspectMask)
 			{
+				attachments[mrt].colorAttachment = VK_ATTACHMENT_UNUSED;
+				// The above is meaningless and not required by the spec, but Khronos
+				// Validation Layer has a conditional jump depending on this, even
+				// without VK_IMAGE_ASPECT_COLOR_BIT set. Valgrind found this.
 				attachments[mrt].aspectMask = depthAspectMask;
 				attachments[mrt].clearValue.depthStencil.stencil = _clear.m_stencil;
 				attachments[mrt].clearValue.depthStencil.depth   = _clear.m_depth;
@@ -4425,11 +4429,14 @@ VK_IMPORT_DEVICE
 		StagingBufferVK allocFromScratchStagingBuffer(uint32_t _size, uint32_t _align, const void *_data = NULL)
 		{
 			BGFX_PROFILER_SCOPE("allocFromScratchStagingBuffer", kColorResource);
+			bx::printf(" -- allocFromScratchStagingBuffer(%u, %u, %p) --\n", _size, _align, _data);
 			StagingBufferVK result;
 			ScratchBufferVK &scratch = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
-			if (_size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRACH_BUFFER) {
+			if (_size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRACH_BUFFER)
+			{
 				uint32_t scratchOffset = scratch.alloc(_size, _align);
-				if (scratchOffset != UINT32_MAX) {
+				if (scratchOffset != UINT32_MAX)
+				{
 					result.m_isFromScratch = true;
 					result.m_size = _size;
 					result.m_offset = scratchOffset;
@@ -4703,6 +4710,7 @@ VK_DESTROY
 
 	uint32_t ScratchBufferVK::alloc(uint32_t _size, uint32_t _minAlign)
 	{
+		bx::printf(" -- ScratchBufferVK::alloc(%u, %u) -- \n", _size, _minAlign);
 		const uint32_t align = bx::uint32_lcm(m_align, _minAlign);
 		const uint32_t dstOffset = bx::strideAlign(m_pos, align);
 		if (dstOffset + _size <= m_size)
@@ -6199,6 +6207,8 @@ VK_DESTROY
 					bx::memCopy(mappedMemory, imageInfos[ii].data, imageInfos[ii].size);
 					mappedMemory += imageInfos[ii].size;
 					bufferCopyInfo[ii].bufferOffset += stagingBuffer.m_offset;
+					BX_ASSERT(bufferCopyInfo[ii].bufferOffset % blockInfo.blockSize == 0,
+							"Alignment for subimage %u is not aligned correctly (%u).", ii, bufferCopyInfo[ii].bufferOffset, blockInfo.blockSize);
 				}
 
 				if (!stagingBuffer.m_isFromScratch)
@@ -6303,6 +6313,9 @@ VK_DESTROY
 
 		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(size, align, data);
 		region.bufferOffset += stagingBuffer.m_offset;
+		BX_ASSERT(region.bufferOffset % align == 0,
+				"Alignment for image (mip %u, z %s) is not aligned correctly (%u).",
+				_mip, _z, region.bufferOffset, align);
 
 		if (VK_IMAGE_VIEW_TYPE_3D == m_type)
 		{
@@ -6480,6 +6493,14 @@ VK_DESTROY
 
 		setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
+		const bimg::ImageBlockInfo &bi = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat));
+		for (uint32_t ii = 0; ii < _bufferImageCopyCount; ++ii)
+		{
+			bx::printf(" -- BufferImageCopy[%u].bufferOffset = %u (align = %u, texture format=%s)\n",
+					ii, _bufferImageCopy[ii].bufferOffset, bi.blockSize, bimg::getName(bimg::TextureFormat::Enum(m_textureFormat)));
+			BX_ASSERT(_bufferImageCopy[ii].bufferOffset % bi.blockSize == 0, "Buffer image copy offset (%u) is not aligned correctly (%u)",
+					_bufferImageCopy[ii].bufferOffset, bi.blockSize);
+		}
 		vkCmdCopyBufferToImage(
 			  _commandBuffer
 			, _stagingBuffer
@@ -7887,6 +7908,7 @@ VK_DESTROY
 		m_queue = _queue;
 		m_numFramesInFlight = bx::clamp<uint32_t>(_numFramesInFlight, 1, BGFX_CONFIG_MAX_FRAME_LATENCY);
 		m_activeCommandBuffer = VK_NULL_HANDLE;
+		m_consumeIndex = 0;
 
 		return reset();
 	}
