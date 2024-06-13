@@ -4429,7 +4429,6 @@ VK_IMPORT_DEVICE
 		StagingBufferVK allocFromScratchStagingBuffer(uint32_t _size, uint32_t _align, const void *_data = NULL)
 		{
 			BGFX_PROFILER_SCOPE("allocFromScratchStagingBuffer", kColorResource);
-			bx::printf(" -- allocFromScratchStagingBuffer(%u, %u, %p) --\n", _size, _align, _data);
 			StagingBufferVK result;
 			ScratchBufferVK &scratch = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
 			if (_size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRACH_BUFFER)
@@ -4710,7 +4709,6 @@ VK_DESTROY
 
 	uint32_t ScratchBufferVK::alloc(uint32_t _size, uint32_t _minAlign)
 	{
-		bx::printf(" -- ScratchBufferVK::alloc(%u, %u) -- \n", _size, _minAlign);
 		const uint32_t align = bx::uint32_lcm(m_align, _minAlign);
 		const uint32_t dstOffset = bx::strideAlign(m_pos, align);
 		if (dstOffset + _size <= m_size)
@@ -6493,14 +6491,6 @@ VK_DESTROY
 
 		setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-		const bimg::ImageBlockInfo &bi = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat));
-		for (uint32_t ii = 0; ii < _bufferImageCopyCount; ++ii)
-		{
-			bx::printf(" -- BufferImageCopy[%u].bufferOffset = %u (align = %u, texture format=%s)\n",
-					ii, _bufferImageCopy[ii].bufferOffset, bi.blockSize, bimg::getName(bimg::TextureFormat::Enum(m_textureFormat)));
-			BX_ASSERT(_bufferImageCopy[ii].bufferOffset % bi.blockSize == 0, "Buffer image copy offset (%u) is not aligned correctly (%u)",
-					_bufferImageCopy[ii].bufferOffset, bi.blockSize);
-		}
 		vkCmdCopyBufferToImage(
 			  _commandBuffer
 			, _stagingBuffer
