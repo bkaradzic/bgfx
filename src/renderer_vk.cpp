@@ -1325,8 +1325,15 @@ VK_IMPORT
 
 				if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 				{
-					s_allocationCb.pUserData = g_allocator;
-					m_allocatorCb = &s_allocationCb;
+					// Validation layer is calling freeFunction with pointers that are not allocated
+					// via callback mechanism. This is bug in validation layer, and work-around
+					// would be to keep track of allocated pointers and ignore those that are not
+					// allocated by it.
+					//
+					// Anyhow we just let VK take care of memory, until they fix the issue...
+					//
+					// s_allocationCb.pUserData = g_allocator;
+					// m_allocatorCb = &s_allocationCb;
 					BX_UNUSED(s_allocationCb);
 				}
 
