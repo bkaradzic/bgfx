@@ -6180,8 +6180,8 @@ VK_DESTROY
 			if (totalMemSize > 0)
 			{
 				const VkDevice device = s_renderVK->m_device;
-
-				StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(totalMemSize, blockInfo.blockSize);
+				const bimg::ImageBlockInfo &dstBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat));
+				StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(totalMemSize, dstBlockInfo.blockSize);
 				uint8_t* mappedMemory;
 
 				if (!stagingBuffer.m_isFromScratch)
@@ -6205,8 +6205,11 @@ VK_DESTROY
 					bx::memCopy(mappedMemory, imageInfos[ii].data, imageInfos[ii].size);
 					mappedMemory += imageInfos[ii].size;
 					bufferCopyInfo[ii].bufferOffset += stagingBuffer.m_offset;
-					BX_ASSERT(bufferCopyInfo[ii].bufferOffset % blockInfo.blockSize == 0,
-							"Alignment for subimage %u is not aligned correctly (%u).", ii, bufferCopyInfo[ii].bufferOffset, blockInfo.blockSize);
+					BX_ASSERT(
+						  bx::uint32_mod(bufferCopyInfo[ii].bufferOffset, dstBlockInfo.blockSize) == 0
+						, "Alignment for subimage %u is not aligned correctly (%u)."
+						, ii, bufferCopyInfo[ii].bufferOffset, dstBlockInfo.blockSize
+						);
 				}
 
 				if (!stagingBuffer.m_isFromScratch)
@@ -6267,15 +6270,14 @@ VK_DESTROY
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::update", kColorResource);
 		const uint32_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
+		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
 		uint32_t rectpitch = _rect.m_width * bpp / 8;
 		uint32_t slicepitch = rectpitch * _rect.m_height;
-		uint32_t align = bpp * 8;
+		uint32_t align = blockInfo.blockSize;
 		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) ) )
 		{
-			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
 			rectpitch  = (_rect.m_width  / blockInfo.blockWidth ) * blockInfo.blockSize;
 			slicepitch = (_rect.m_height / blockInfo.blockHeight) * rectpitch;
-			align = blockInfo.blockSize;
 		}
 		const uint32_t srcpitch = UINT16_MAX == _pitch ? rectpitch : _pitch;
 		const uint32_t size     = UINT16_MAX == _pitch ? slicepitch  * _depth: _rect.m_height * _pitch * _depth;
@@ -6491,6 +6493,16 @@ VK_DESTROY
 
 		setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
+
+		bimg::TextureFormat::Enum tf = bimg::TextureFormat::Enum(m_textureFormat);
+		const bimg::ImageBlockInfo &blockInfo = bimg::getBlockInfo(tf);
+		for (uint32_t i = 0; i < _bufferImageCopyCount; ++i) {
+			BX_ASSERT(
+				  bx::uint32_mod(_bufferImageCopy[i].bufferOffset, blockInfo.blockSize) == 0
+				, "Misaligned texture of type %s to offset %u, which is not a multiple of %u."
+				, bimg::getName(tf), _bufferImageCopy[i].bufferOffset, blockInfo.blockSize
+				);
+		}
 		vkCmdCopyBufferToImage(
 			  _commandBuffer
 			, _stagingBuffer
