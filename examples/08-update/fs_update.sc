@@ -8,8 +8,10 @@ $input v_texcoord0
 #include "../common/common.sh"
 
 SAMPLERCUBE(s_texCube, 0);
+uniform vec4 u_time;
 
 void main()
 {
-	gl_FragColor = textureCube(s_texCube, v_texcoord0);
+	float lod = (1.0 - cos(u_time.x)) * 4.0; // 0 to 8
+	gl_FragColor = textureCubeLod(s_texCube, v_texcoord0, lod);
 }

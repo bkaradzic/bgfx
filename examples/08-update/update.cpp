@@ -761,7 +761,7 @@ public:
 				if (bgfx::isValid(m_textureCube[ii]))
 				{
 					float mtx[16];
-					bx::mtxSRT(mtx, 0.65f, 0.65f, 0.65f, time, time*0.37f, 0.0f, -2.5f +ii*1.8f, 0.0f, 0.0f);
+					bx::mtxSRT(mtx, 0.65f, 0.65f, 0.65f, time, time*0.37f, 0.0f, -2.5f +ii*1.8f, 0.3f, 0.0f);
 
 					// Set model matrix for rendering.
 					bgfx::setTransform(mtx);
@@ -788,7 +788,7 @@ public:
 
 			const float aspectRatio = float(m_height)/float(m_width);
 			const float margin = 0.7f;
-			const float sizeX = 0.5f * numColumns * 2.3f + margin;
+			const float sizeX = 0.5f * (numColumns + 2) * 2.3f + margin;
 			const float sizeY = sizeX * aspectRatio;
 
 			const bgfx::Caps* caps = bgfx::getCaps();
@@ -798,7 +798,7 @@ public:
 			bx::mtxMul(worldToScreen, proj, projToScreen);
 
 			float mtx[16];
-			bx::mtxTranslate(mtx, -sizeX + margin + 1.0f, 1.9f, 0.0f);
+			bx::mtxTranslate(mtx, -sizeX + margin + 1.0f, 0.0f, 0.0f);
 
 			// Set model matrix for rendering.
 			bgfx::setTransform(mtx);
@@ -851,7 +851,7 @@ public:
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
 			{
-				bx::mtxTranslate(mtx, xpos + (ii%numColumns) * 2.3f, sizeY - margin - 2.8f + (ii/numColumns) * 2.3f, 0.0f);
+				bx::mtxTranslate(mtx, xpos + (1+ii%numColumns) * 2.3f, sizeY - margin - 2.8f + (ii/numColumns) * 2.3f, 0.0f);
 
 				// Set model matrix for rendering.
 				bgfx::setTransform(mtx);
