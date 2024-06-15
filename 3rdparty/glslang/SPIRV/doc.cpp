@@ -1035,6 +1035,8 @@ const char* CapabilityString(int info)
     case CapabilityTileImageDepthReadAccessEXT:           return "TileImageDepthReadAccessEXT";
     case CapabilityTileImageStencilReadAccessEXT:         return "TileImageStencilReadAccessEXT";
 
+    case CapabilityCooperativeMatrixLayoutsARM:             return "CooperativeMatrixLayoutsARM";
+
     case CapabilityFragmentShadingRateKHR:                  return "FragmentShadingRateKHR";
 
     case CapabilityDemoteToHelperInvocationEXT:             return "DemoteToHelperInvocationEXT";
@@ -1065,6 +1067,8 @@ const char* CapabilityString(int info)
     case CapabilityTextureBoxFilterQCOM:                return "TextureBoxFilterQCOM";
     case CapabilityTextureBlockMatchQCOM:               return "TextureBlockMatchQCOM";
     case CapabilityTextureBlockMatch2QCOM:              return "TextureBlockMatch2QCOM";
+
+    case CapabilityReplicatedCompositesEXT:             return "CapabilityReplicatedCompositesEXT";
 
     default: return "Bad";
     }
@@ -1443,6 +1447,7 @@ const char* OpcodeString(int op)
     case 4429: return "OpSubgroupAnyKHR";
     case 4430: return "OpSubgroupAllEqualKHR";
     case 4432: return "OpSubgroupReadInvocationKHR";
+    case 4433: return "OpExtInstWithForwardRefsKHR";
 
     case OpGroupNonUniformQuadAllKHR: return "OpGroupNonUniformQuadAllKHR";
     case OpGroupNonUniformQuadAnyKHR: return "OpGroupNonUniformQuadAnyKHR";
@@ -1583,6 +1588,10 @@ const char* OpcodeString(int op)
     case OpImageBlockMatchWindowSADQCOM:    return "OpImageBlockMatchWindowSADQCOM";
     case OpImageBlockMatchGatherSSDQCOM:    return "OpImageBlockMatchGatherSSDQCOM";
     case OpImageBlockMatchGatherSADQCOM:    return "OpImageBlockMatchGatherSADQCOM";
+
+    case OpConstantCompositeReplicateEXT: return "OpConstantCompositeReplicateEXT";
+    case OpSpecConstantCompositeReplicateEXT: return "OpSpecConstantCompositeReplicateEXT";
+    case OpCompositeConstructReplicateEXT: return "OpCompositeConstructReplicateEXT";
 
     default:
         return "Bad";
@@ -1889,6 +1898,10 @@ void Parameterize()
         InstructionDesc[OpExtInst].operands.push(OperandId, "'Set'");
         InstructionDesc[OpExtInst].operands.push(OperandLiteralNumber, "'Instruction'");
         InstructionDesc[OpExtInst].operands.push(OperandVariableIds, "'Operand 1', +\n'Operand 2', +\n...");
+
+        InstructionDesc[OpExtInstWithForwardRefsKHR].operands.push(OperandId, "'Set'");
+        InstructionDesc[OpExtInstWithForwardRefsKHR].operands.push(OperandLiteralNumber, "'Instruction'");
+        InstructionDesc[OpExtInstWithForwardRefsKHR].operands.push(OperandVariableIds, "'Operand 1', +\n'Operand 2', +\n...");
 
         InstructionDesc[OpLoad].operands.push(OperandId, "'Pointer'");
         InstructionDesc[OpLoad].operands.push(OperandMemoryAccess, "", true);
@@ -3471,6 +3484,10 @@ void Parameterize()
         InstructionDesc[OpImageBlockMatchGatherSADQCOM].operands.push(OperandId, "'block size'");
         InstructionDesc[OpImageBlockMatchGatherSADQCOM].operands.push(OperandImageOperands, "", true);
         InstructionDesc[OpImageBlockMatchGatherSADQCOM].setResultAndType(true, true);
+
+        InstructionDesc[OpConstantCompositeReplicateEXT].operands.push(OperandId, "'Value'");
+        InstructionDesc[OpSpecConstantCompositeReplicateEXT].operands.push(OperandId, "'Value'");
+        InstructionDesc[OpCompositeConstructReplicateEXT].operands.push(OperandId, "'Value'");
     });
 }
 

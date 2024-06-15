@@ -729,6 +729,11 @@ public:
         usePhysicalStorageBuffer = true;
     }
     bool usingPhysicalStorageBuffer() const { return usePhysicalStorageBuffer; }
+    void setReplicatedComposites()
+    {
+        useReplicatedComposites = true;
+    }
+    bool usingReplicatedComposites() const { return useReplicatedComposites; }
     void setUseVariablePointers()
     {
         useVariablePointers = true;
@@ -1242,6 +1247,7 @@ protected:
     bool subgroupUniformControlFlow;
     bool maximallyReconverges;
     bool usePhysicalStorageBuffer;
+    bool useReplicatedComposites { false };
 
     TSpirvRequirement* spirvRequirement;
     TSpirvExecutionMode* spirvExecutionMode;

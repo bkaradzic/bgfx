@@ -4558,6 +4558,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "const int gl_MatrixOperandsSaturatingAccumulation = 0x10;\n"
             "const int gl_CooperativeMatrixLayoutRowMajor = 0;\n"
             "const int gl_CooperativeMatrixLayoutColumnMajor = 1;\n"
+            "const int gl_CooperativeMatrixLayoutRowBlockedInterleavedARM = 4202;\n"
+            "const int gl_CooperativeMatrixLayoutColumnBlockedInterleavedARM = 4203;\n"
             "\n"
             );
     }

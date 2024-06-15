@@ -182,6 +182,10 @@ Id Builder::makeForwardPointer(StorageClass storageClass)
     constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
     module.mapInstruction(type);
 
+    if (emitNonSemanticShaderDebugInfo) {
+        const Id debugResultId = makeForwardPointerDebugType(storageClass);
+        debugId[type->getResultId()] = debugResultId;
+    }
     return type->getResultId();
 }
 
@@ -203,6 +207,15 @@ Id Builder::makePointerFromForwardPointer(StorageClass storageClass, Id forwardP
     groupedTypes[OpTypePointer].push_back(type);
     constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
     module.mapInstruction(type);
+
+    // If we are emitting nonsemantic debuginfo, we need to patch the debug pointer type
+    // that was emitted alongside the forward pointer, now that we have a pointee debug
+    // type for it to point to.
+    if (emitNonSemanticShaderDebugInfo) {
+        Instruction *debugForwardPointer = module.getInstruction(debugId[forwardPointerType]);
+        assert(debugId[pointee]);
+        debugForwardPointer->setIdOperand(2, debugId[pointee]);
+    }
 
     return type->getResultId();
 }
@@ -1045,6 +1058,29 @@ Id Builder::makePointerDebugType(StorageClass storageClass, Id const baseType)
     return type->getResultId();
 }
 
+// Emit a OpExtInstWithForwardRefsKHR nonsemantic instruction for a pointer debug type
+// where we don't have the pointee yet. Since we don't have the pointee yet, it just
+// points to itself and we rely on patching it later.
+Id Builder::makeForwardPointerDebugType(StorageClass storageClass)
+{
+    const Id scID = makeUintConstant(storageClass);
+
+    this->addExtension(spv::E_SPV_KHR_relaxed_extended_instruction);
+
+    Instruction *type = new Instruction(getUniqueId(), makeVoidType(), OpExtInstWithForwardRefsKHR);
+    type->addIdOperand(nonSemanticShaderDebugInfo);
+    type->addImmediateOperand(NonSemanticShaderDebugInfo100DebugTypePointer);
+    type->addIdOperand(type->getResultId());
+    type->addIdOperand(scID);
+    type->addIdOperand(makeUintConstant(0));
+
+    groupedDebugTypes[NonSemanticShaderDebugInfo100DebugTypePointer].push_back(type);
+    constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
+    module.mapInstruction(type);
+
+    return type->getResultId();
+}
+
 Id Builder::makeDebugSource(const Id fileName) {
     if (debugSourceId.find(fileName) != debugSourceId.end())
         return debugSourceId[fileName];
@@ -1484,12 +1520,14 @@ bool Builder::isConstantOpCode(Op opcode) const
     case OpConstantFalse:
     case OpConstant:
     case OpConstantComposite:
+    case OpConstantCompositeReplicateEXT:
     case OpConstantSampler:
     case OpConstantNull:
     case OpSpecConstantTrue:
     case OpSpecConstantFalse:
     case OpSpecConstant:
     case OpSpecConstantComposite:
+    case OpSpecConstantCompositeReplicateEXT:
     case OpSpecConstantOp:
         return true;
     default:
@@ -1506,6 +1544,7 @@ bool Builder::isSpecConstantOpCode(Op opcode) const
     case OpSpecConstant:
     case OpSpecConstantComposite:
     case OpSpecConstantOp:
+    case OpSpecConstantCompositeReplicateEXT:
         return true;
     default:
         return false;
@@ -1782,9 +1821,26 @@ Id Builder::findStructConstant(Id typeId, const std::vector<Id>& comps)
 // Comments in header
 Id Builder::makeCompositeConstant(Id typeId, const std::vector<Id>& members, bool specConstant)
 {
-    Op opcode = specConstant ? OpSpecConstantComposite : OpConstantComposite;
     assert(typeId);
     Op typeClass = getTypeClass(typeId);
+
+    bool replicate = false;
+    size_t numMembers = members.size();
+    if (useReplicatedComposites) {
+        // use replicate if all members are the same
+        replicate = numMembers > 0 &&
+            std::equal(members.begin() + 1, members.end(), members.begin());
+
+        if (replicate) {
+            numMembers = 1;
+            addCapability(spv::CapabilityReplicatedCompositesEXT);
+            addExtension(spv::E_SPV_EXT_replicated_composites);
+        }
+    }
+
+    Op opcode = replicate ?
+        (specConstant ? OpSpecConstantCompositeReplicateEXT : OpConstantCompositeReplicateEXT) :
+        (specConstant ? OpSpecConstantComposite : OpConstantComposite);
 
     switch (typeClass) {
     case OpTypeVector:
@@ -1812,7 +1868,7 @@ Id Builder::makeCompositeConstant(Id typeId, const std::vector<Id>& members, boo
 
     Instruction* c = new Instruction(getUniqueId(), typeId, opcode);
     c->reserveOperands(members.size());
-    for (int op = 0; op < (int)members.size(); ++op)
+    for (size_t op = 0; op < numMembers; ++op)
         c->addIdOperand(members[op]);
     constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(c));
     if (typeClass == OpTypeStruct)
@@ -2928,7 +2984,17 @@ Id Builder::smearScalar(Decoration precision, Id scalar, Id vectorType)
         auto result_id = makeCompositeConstant(vectorType, members, isSpecConstant(scalar));
         smear = module.getInstruction(result_id);
     } else {
-        smear = new Instruction(getUniqueId(), vectorType, OpCompositeConstruct);
+        bool replicate = useReplicatedComposites && (numComponents > 0);
+
+        if (replicate) {
+            numComponents = 1;
+            addCapability(spv::CapabilityReplicatedCompositesEXT);
+            addExtension(spv::E_SPV_EXT_replicated_composites);
+        }
+
+        Op opcode = replicate ? OpCompositeConstructReplicateEXT : OpCompositeConstruct;
+
+        smear = new Instruction(getUniqueId(), vectorType, opcode);
         smear->reserveOperands(numComponents);
         for (int c = 0; c < numComponents; ++c)
             smear->addIdOperand(scalar);
@@ -3321,9 +3387,25 @@ Id Builder::createCompositeConstruct(Id typeId, const std::vector<Id>& constitue
                                                  [&](spv::Id id) { return isSpecConstant(id); }));
     }
 
-    Instruction* op = new Instruction(getUniqueId(), typeId, OpCompositeConstruct);
+    bool replicate = false;
+    size_t numConstituents = constituents.size();
+
+    if (useReplicatedComposites) {
+        replicate = numConstituents > 0 &&
+            std::equal(constituents.begin() + 1, constituents.end(), constituents.begin());
+    }
+
+    if (replicate) {
+        numConstituents = 1;
+        addCapability(spv::CapabilityReplicatedCompositesEXT);
+        addExtension(spv::E_SPV_EXT_replicated_composites);
+    }
+
+    Op opcode = replicate ? OpCompositeConstructReplicateEXT : OpCompositeConstruct;
+
+    Instruction* op = new Instruction(getUniqueId(), typeId, opcode);
     op->reserveOperands(constituents.size());
-    for (int c = 0; c < (int)constituents.size(); ++c)
+    for (size_t c = 0; c < numConstituents; ++c)
         op->addIdOperand(constituents[c]);
     addInstruction(std::unique_ptr<Instruction>(op));
 
@@ -3456,6 +3538,13 @@ Id Builder::createMatrixConstructor(Decoration precision, const std::vector<Id>&
         }
 
         return setPrecision(createCompositeConstruct(resultTypeId, matrixColumns), precision);
+    }
+
+    // Detect a matrix being constructed from a repeated vector of the correct size.
+    // Create the composite directly from it.
+    if ((int)sources.size() == numCols && isVector(sources[0]) && getNumComponents(sources[0]) == numRows &&
+        std::equal(sources.begin() + 1, sources.end(), sources.begin())) {
+        return setPrecision(createCompositeConstruct(resultTypeId, sources), precision);
     }
 
     // Otherwise, will use a two step process
