@@ -1310,7 +1310,7 @@ static void fillCellQuadrics(Quadric* cell_quadrics, const unsigned int* indices
 		unsigned int c1 = vertex_cells[i1];
 		unsigned int c2 = vertex_cells[i2];
 
-		bool single_cell = (c0 == c1) & (c0 == c2);
+		int single_cell = (c0 == c1) & (c0 == c2);
 
 		Quadric Q;
 		quadricFromTriangle(Q, vertex_positions[i0], vertex_positions[i1], vertex_positions[i2], single_cell ? 3.f : 1.f);
