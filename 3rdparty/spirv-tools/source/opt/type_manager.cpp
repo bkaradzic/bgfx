@@ -454,12 +454,7 @@ uint32_t TypeManager::FindPointerToType(uint32_t type_id,
                                         spv::StorageClass storage_class) {
   Type* pointeeTy = GetType(type_id);
   Pointer pointerTy(pointeeTy, storage_class);
-  if (pointeeTy->IsUniqueType()) {
-    // Non-ambiguous type. Get the pointer type through the type manager.
-    return GetTypeInstruction(&pointerTy);
-  }
 
-  // Ambiguous type, do a linear search.
   Module::inst_iterator type_itr = context()->module()->types_values_begin();
   for (; type_itr != context()->module()->types_values_end(); ++type_itr) {
     const Instruction* type_inst = &*type_itr;
@@ -472,8 +467,10 @@ uint32_t TypeManager::FindPointerToType(uint32_t type_id,
   }
 
   // Must create the pointer type.
-  // TODO(1841): Handle id overflow.
   uint32_t resultId = context()->TakeNextId();
+  if (resultId == 0) {
+    return 0;
+  }
   std::unique_ptr<Instruction> type_inst(
       new Instruction(context(), spv::Op::OpTypePointer, 0, resultId,
                       {{spv_operand_type_t::SPV_OPERAND_TYPE_STORAGE_CLASS,

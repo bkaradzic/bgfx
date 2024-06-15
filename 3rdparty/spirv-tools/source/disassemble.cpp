@@ -194,7 +194,27 @@ spv_result_t DisassembleTargetInstruction(
   return SPV_SUCCESS;
 }
 
+uint32_t GetLineLengthWithoutColor(const std::string line) {
+  // Currently, every added color is in the form \x1b...m, so instead of doing a
+  // lot of string comparisons with spvtools::clr::* strings, we just ignore
+  // those ranges.
+  uint32_t length = 0;
+  for (size_t i = 0; i < line.size(); ++i) {
+    if (line[i] == '\x1b') {
+      do {
+        ++i;
+      } while (line[i] != 'm');
+      continue;
+    }
+
+    ++length;
+  }
+
+  return length;
+}
+
 constexpr int kStandardIndent = 15;
+constexpr uint32_t kCommentColumn = 50;
 }  // namespace
 
 namespace disassemble {
@@ -212,7 +232,8 @@ InstructionDisassembler::InstructionDisassembler(const AssemblyGrammar& grammar,
       comment_(spvIsInBitfield(SPV_BINARY_TO_TEXT_OPTION_COMMENT, options)),
       show_byte_offset_(
           spvIsInBitfield(SPV_BINARY_TO_TEXT_OPTION_SHOW_BYTE_OFFSET, options)),
-      name_mapper_(std::move(name_mapper)) {}
+      name_mapper_(std::move(name_mapper)),
+      last_instruction_comment_alignment_(0) {}
 
 void InstructionDisassembler::EmitHeaderSpirv() { stream_ << "; SPIR-V\n"; }
 
@@ -246,45 +267,117 @@ void InstructionDisassembler::EmitInstruction(
     const spv_parsed_instruction_t& inst, size_t inst_byte_offset) {
   auto opcode = static_cast<spv::Op>(inst.opcode);
 
+  // To better align the comments (if any), write the instruction to a line
+  // first so its length can be readily available.
+  std::ostringstream line;
+
   if (inst.result_id) {
     SetBlue();
     const std::string id_name = name_mapper_(inst.result_id);
     if (indent_)
-      stream_ << std::setw(std::max(0, indent_ - 3 - int(id_name.size())));
-    stream_ << "%" << id_name;
+      line << std::setw(std::max(0, indent_ - 3 - int(id_name.size())));
+    line << "%" << id_name;
     ResetColor();
-    stream_ << " = ";
+    line << " = ";
   } else {
-    stream_ << std::string(indent_, ' ');
+    line << std::string(indent_, ' ');
   }
 
-  stream_ << "Op" << spvOpcodeString(opcode);
+  line << "Op" << spvOpcodeString(opcode);
 
   for (uint16_t i = 0; i < inst.num_operands; i++) {
     const spv_operand_type_t type = inst.operands[i].type;
     assert(type != SPV_OPERAND_TYPE_NONE);
     if (type == SPV_OPERAND_TYPE_RESULT_ID) continue;
-    stream_ << " ";
-    EmitOperand(inst, i);
+    line << " ";
+    EmitOperand(line, inst, i);
+  }
+
+  // For the sake of comment generation, store information from some
+  // instructions for the future.
+  if (comment_) {
+    GenerateCommentForDecoratedId(inst);
+  }
+
+  std::ostringstream comments;
+  const char* comment_separator = "";
+
+  if (show_byte_offset_) {
+    SetGrey(comments);
+    auto saved_flags = comments.flags();
+    auto saved_fill = comments.fill();
+    comments << comment_separator << "0x" << std::setw(8) << std::hex
+             << std::setfill('0') << inst_byte_offset;
+    comments.flags(saved_flags);
+    comments.fill(saved_fill);
+    ResetColor(comments);
+    comment_separator = ", ";
   }
 
   if (comment_ && opcode == spv::Op::OpName) {
     const spv_parsed_operand_t& operand = inst.operands[0];
     const uint32_t word = inst.words[operand.offset];
-    stream_ << "  ; id %" << word;
+    comments << comment_separator << "id %" << word;
+    comment_separator = ", ";
   }
 
-  if (show_byte_offset_) {
-    SetGrey();
-    auto saved_flags = stream_.flags();
-    auto saved_fill = stream_.fill();
-    stream_ << " ; 0x" << std::setw(8) << std::hex << std::setfill('0')
-            << inst_byte_offset;
-    stream_.flags(saved_flags);
-    stream_.fill(saved_fill);
-    ResetColor();
+  if (comment_ && inst.result_id && id_comments_.count(inst.result_id) > 0) {
+    comments << comment_separator << id_comments_[inst.result_id].str();
+    comment_separator = ", ";
   }
+
+  stream_ << line.str();
+
+  if (!comments.str().empty()) {
+    // Align the comments
+    const uint32_t line_length = GetLineLengthWithoutColor(line.str());
+    uint32_t align = std::max(
+        {line_length + 2, last_instruction_comment_alignment_, kCommentColumn});
+    // Round up the alignment to a multiple of 4 for more niceness.
+    align = (align + 3) & ~0x3u;
+    last_instruction_comment_alignment_ = align;
+
+    stream_ << std::string(align - line_length, ' ') << "; " << comments.str();
+  } else {
+    last_instruction_comment_alignment_ = 0;
+  }
+
   stream_ << "\n";
+}
+
+void InstructionDisassembler::GenerateCommentForDecoratedId(
+    const spv_parsed_instruction_t& inst) {
+  assert(comment_);
+  auto opcode = static_cast<spv::Op>(inst.opcode);
+
+  std::ostringstream partial;
+  uint32_t id = 0;
+  const char* separator = "";
+
+  switch (opcode) {
+    case spv::Op::OpDecorate:
+      // Take everything after `OpDecorate %id` and associate it with id.
+      id = inst.words[inst.operands[0].offset];
+      for (uint16_t i = 1; i < inst.num_operands; i++) {
+        partial << separator;
+        separator = " ";
+        EmitOperand(partial, inst, i);
+      }
+      break;
+    default:
+      break;
+  }
+
+  if (id == 0) {
+    return;
+  }
+
+  // Add the new comment to the comments of this id
+  std::ostringstream& id_comment = id_comments_[id];
+  if (!id_comment.str().empty()) {
+    id_comment << ", ";
+  }
+  id_comment << partial.str();
 }
 
 void InstructionDisassembler::EmitSectionComment(
@@ -316,36 +409,37 @@ void InstructionDisassembler::EmitSectionComment(
   }
 }
 
-void InstructionDisassembler::EmitOperand(const spv_parsed_instruction_t& inst,
-                                          const uint16_t operand_index) {
+void InstructionDisassembler::EmitOperand(std::ostream& stream,
+                                          const spv_parsed_instruction_t& inst,
+                                          const uint16_t operand_index) const {
   assert(operand_index < inst.num_operands);
   const spv_parsed_operand_t& operand = inst.operands[operand_index];
   const uint32_t word = inst.words[operand.offset];
   switch (operand.type) {
     case SPV_OPERAND_TYPE_RESULT_ID:
       assert(false && "<result-id> is not supposed to be handled here");
-      SetBlue();
-      stream_ << "%" << name_mapper_(word);
+      SetBlue(stream);
+      stream << "%" << name_mapper_(word);
       break;
     case SPV_OPERAND_TYPE_ID:
     case SPV_OPERAND_TYPE_TYPE_ID:
     case SPV_OPERAND_TYPE_SCOPE_ID:
     case SPV_OPERAND_TYPE_MEMORY_SEMANTICS_ID:
-      SetYellow();
-      stream_ << "%" << name_mapper_(word);
+      SetYellow(stream);
+      stream << "%" << name_mapper_(word);
       break;
     case SPV_OPERAND_TYPE_EXTENSION_INSTRUCTION_NUMBER: {
       spv_ext_inst_desc ext_inst;
-      SetRed();
+      SetRed(stream);
       if (grammar_.lookupExtInst(inst.ext_inst_type, word, &ext_inst) ==
           SPV_SUCCESS) {
-        stream_ << ext_inst->name;
+        stream << ext_inst->name;
       } else {
         if (!spvExtInstIsNonSemantic(inst.ext_inst_type)) {
           assert(false && "should have caught this earlier");
         } else {
           // for non-semantic instruction sets we can just print the number
-          stream_ << word;
+          stream << word;
         }
       }
     } break;
@@ -353,27 +447,27 @@ void InstructionDisassembler::EmitOperand(const spv_parsed_instruction_t& inst,
       spv_opcode_desc opcode_desc;
       if (grammar_.lookupOpcode(spv::Op(word), &opcode_desc))
         assert(false && "should have caught this earlier");
-      SetRed();
-      stream_ << opcode_desc->name;
+      SetRed(stream);
+      stream << opcode_desc->name;
     } break;
     case SPV_OPERAND_TYPE_LITERAL_INTEGER:
     case SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER:
     case SPV_OPERAND_TYPE_LITERAL_FLOAT: {
-      SetRed();
-      EmitNumericLiteral(&stream_, inst, operand);
-      ResetColor();
+      SetRed(stream);
+      EmitNumericLiteral(&stream, inst, operand);
+      ResetColor(stream);
     } break;
     case SPV_OPERAND_TYPE_LITERAL_STRING: {
-      stream_ << "\"";
-      SetGreen();
+      stream << "\"";
+      SetGreen(stream);
 
       std::string str = spvDecodeLiteralStringOperand(inst, operand_index);
       for (char const& c : str) {
-        if (c == '"' || c == '\\') stream_ << '\\';
-        stream_ << c;
+        if (c == '"' || c == '\\') stream << '\\';
+        stream << c;
       }
-      ResetColor();
-      stream_ << '"';
+      ResetColor(stream);
+      stream << '"';
     } break;
     case SPV_OPERAND_TYPE_CAPABILITY:
     case SPV_OPERAND_TYPE_SOURCE_LANGUAGE:
@@ -415,7 +509,7 @@ void InstructionDisassembler::EmitOperand(const spv_parsed_instruction_t& inst,
       spv_operand_desc entry;
       if (grammar_.lookupOperand(operand.type, word, &entry))
         assert(false && "should have caught this earlier");
-      stream_ << entry->name;
+      stream << entry->name;
     } break;
     case SPV_OPERAND_TYPE_FP_FAST_MATH_MODE:
     case SPV_OPERAND_TYPE_FUNCTION_CONTROL:
@@ -426,26 +520,27 @@ void InstructionDisassembler::EmitOperand(const spv_parsed_instruction_t& inst,
     case SPV_OPERAND_TYPE_DEBUG_INFO_FLAGS:
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_INFO_FLAGS:
     case SPV_OPERAND_TYPE_RAW_ACCESS_CHAIN_OPERANDS:
-      EmitMaskOperand(operand.type, word);
+      EmitMaskOperand(stream, operand.type, word);
       break;
     default:
       if (spvOperandIsConcreteMask(operand.type)) {
-        EmitMaskOperand(operand.type, word);
+        EmitMaskOperand(stream, operand.type, word);
       } else if (spvOperandIsConcrete(operand.type)) {
         spv_operand_desc entry;
         if (grammar_.lookupOperand(operand.type, word, &entry))
           assert(false && "should have caught this earlier");
-        stream_ << entry->name;
+        stream << entry->name;
       } else {
         assert(false && "unhandled or invalid case");
       }
       break;
   }
-  ResetColor();
+  ResetColor(stream);
 }
 
-void InstructionDisassembler::EmitMaskOperand(const spv_operand_type_t type,
-                                              const uint32_t word) {
+void InstructionDisassembler::EmitMaskOperand(std::ostream& stream,
+                                              const spv_operand_type_t type,
+                                              const uint32_t word) const {
   // Scan the mask from least significant bit to most significant bit.  For each
   // set bit, emit the name of that bit. Separate multiple names with '|'.
   uint32_t remaining_word = word;
@@ -457,8 +552,8 @@ void InstructionDisassembler::EmitMaskOperand(const spv_operand_type_t type,
       spv_operand_desc entry;
       if (grammar_.lookupOperand(type, mask, &entry))
         assert(false && "should have caught this earlier");
-      if (num_emitted) stream_ << "|";
-      stream_ << entry->name;
+      if (num_emitted) stream << "|";
+      stream << entry->name;
       num_emitted++;
     }
   }
@@ -467,28 +562,35 @@ void InstructionDisassembler::EmitMaskOperand(const spv_operand_type_t type,
     // of the 0 value. In many cases, that's "None".
     spv_operand_desc entry;
     if (SPV_SUCCESS == grammar_.lookupOperand(type, 0, &entry))
-      stream_ << entry->name;
+      stream << entry->name;
   }
 }
 
-void InstructionDisassembler::ResetColor() {
-  if (color_) stream_ << spvtools::clr::reset{print_};
+void InstructionDisassembler::ResetColor(std::ostream& stream) const {
+  if (color_) stream << spvtools::clr::reset{print_};
 }
-void InstructionDisassembler::SetGrey() {
-  if (color_) stream_ << spvtools::clr::grey{print_};
+void InstructionDisassembler::SetGrey(std::ostream& stream) const {
+  if (color_) stream << spvtools::clr::grey{print_};
 }
-void InstructionDisassembler::SetBlue() {
-  if (color_) stream_ << spvtools::clr::blue{print_};
+void InstructionDisassembler::SetBlue(std::ostream& stream) const {
+  if (color_) stream << spvtools::clr::blue{print_};
 }
-void InstructionDisassembler::SetYellow() {
-  if (color_) stream_ << spvtools::clr::yellow{print_};
+void InstructionDisassembler::SetYellow(std::ostream& stream) const {
+  if (color_) stream << spvtools::clr::yellow{print_};
 }
-void InstructionDisassembler::SetRed() {
-  if (color_) stream_ << spvtools::clr::red{print_};
+void InstructionDisassembler::SetRed(std::ostream& stream) const {
+  if (color_) stream << spvtools::clr::red{print_};
 }
-void InstructionDisassembler::SetGreen() {
-  if (color_) stream_ << spvtools::clr::green{print_};
+void InstructionDisassembler::SetGreen(std::ostream& stream) const {
+  if (color_) stream << spvtools::clr::green{print_};
 }
+
+void InstructionDisassembler::ResetColor() { ResetColor(stream_); }
+void InstructionDisassembler::SetGrey() { SetGrey(stream_); }
+void InstructionDisassembler::SetBlue() { SetBlue(stream_); }
+void InstructionDisassembler::SetYellow() { SetYellow(stream_); }
+void InstructionDisassembler::SetRed() { SetRed(stream_); }
+void InstructionDisassembler::SetGreen() { SetGreen(stream_); }
 }  // namespace disassemble
 
 std::string spvInstructionBinaryToText(const spv_target_env env,

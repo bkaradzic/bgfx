@@ -582,11 +582,13 @@ std::function<bool(unsigned)> spvOperandCanBeForwardDeclaredFunction(
 }
 
 std::function<bool(unsigned)> spvDbgInfoExtOperandCanBeForwardDeclaredFunction(
-    spv_ext_inst_type_t ext_type, uint32_t key) {
+    spv::Op opcode, spv_ext_inst_type_t ext_type, uint32_t key) {
   // The Vulkan debug info extended instruction set is non-semantic so allows no
-  // forward references ever
+  // forward references except if used through OpExtInstWithForwardRefsKHR.
   if (ext_type == SPV_EXT_INST_TYPE_NONSEMANTIC_SHADER_DEBUGINFO_100) {
-    return [](unsigned) { return false; };
+    return [opcode](unsigned) {
+      return opcode == spv::Op::OpExtInstWithForwardRefsKHR;
+    };
   }
 
   // TODO(https://gitlab.khronos.org/spirv/SPIR-V/issues/532): Forward

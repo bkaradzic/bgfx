@@ -227,8 +227,7 @@ spv_result_t spvTextEncodeOperand(const spvtools::AssemblyGrammar& grammar,
 
       // Set the extended instruction type.
       // The import set id is the 3rd operand of OpExtInst.
-      if (spv::Op(pInst->opcode) == spv::Op::OpExtInst &&
-          pInst->words.size() == 4) {
+      if (spvIsExtendedInstruction(pInst->opcode) && pInst->words.size() == 4) {
         auto ext_inst_type = context->getExtInstTypeForId(pInst->words[3]);
         if (ext_inst_type == SPV_EXT_INST_TYPE_NONE) {
           return context->diagnostic()

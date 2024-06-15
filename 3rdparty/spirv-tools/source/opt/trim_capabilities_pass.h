@@ -81,6 +81,11 @@ class TrimCapabilitiesPass : public Pass {
       spv::Capability::FragmentShaderPixelInterlockEXT,
       spv::Capability::FragmentShaderSampleInterlockEXT,
       spv::Capability::FragmentShaderShadingRateInterlockEXT,
+      spv::Capability::GroupNonUniform,
+      spv::Capability::GroupNonUniformArithmetic,
+      spv::Capability::GroupNonUniformClustered,
+      spv::Capability::GroupNonUniformPartitionedNV,
+      spv::Capability::GroupNonUniformVote,
       spv::Capability::Groups,
       spv::Capability::ImageMSArray,
       spv::Capability::Int16,
@@ -99,7 +104,6 @@ class TrimCapabilitiesPass : public Pass {
       spv::Capability::StorageUniform16,
       spv::Capability::StorageUniformBufferBlock16,
       spv::Capability::VulkanMemoryModelDeviceScope,
-      spv::Capability::GroupNonUniformPartitionedNV
       // clang-format on
   };
 

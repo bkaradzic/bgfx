@@ -52,6 +52,7 @@ spv_result_t ValidateAdjacency(ValidationState_t& _) {
             adjacency_status == IN_NEW_FUNCTION ? IN_ENTRY_BLOCK : PHI_VALID;
         break;
       case spv::Op::OpExtInst:
+      case spv::Op::OpExtInstWithForwardRefsKHR:
         // If it is a debug info instruction, we do not change the status to
         // allow debug info instructions before OpVariable in a function.
         // TODO(https://gitlab.khronos.org/spirv/SPIR-V/issues/533): We need

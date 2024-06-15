@@ -399,6 +399,33 @@ ExtensionSet getExtensionsRelatedTo(const CapabilitySet& capabilities,
 
   return output;
 }
+
+bool hasOpcodeConflictingCapabilities(spv::Op opcode) {
+  switch (opcode) {
+    case spv::Op::OpBeginInvocationInterlockEXT:
+    case spv::Op::OpEndInvocationInterlockEXT:
+    case spv::Op::OpGroupNonUniformIAdd:
+    case spv::Op::OpGroupNonUniformFAdd:
+    case spv::Op::OpGroupNonUniformIMul:
+    case spv::Op::OpGroupNonUniformFMul:
+    case spv::Op::OpGroupNonUniformSMin:
+    case spv::Op::OpGroupNonUniformUMin:
+    case spv::Op::OpGroupNonUniformFMin:
+    case spv::Op::OpGroupNonUniformSMax:
+    case spv::Op::OpGroupNonUniformUMax:
+    case spv::Op::OpGroupNonUniformFMax:
+    case spv::Op::OpGroupNonUniformBitwiseAnd:
+    case spv::Op::OpGroupNonUniformBitwiseOr:
+    case spv::Op::OpGroupNonUniformBitwiseXor:
+    case spv::Op::OpGroupNonUniformLogicalAnd:
+    case spv::Op::OpGroupNonUniformLogicalOr:
+    case spv::Op::OpGroupNonUniformLogicalXor:
+      return true;
+    default:
+      return false;
+  }
+}
+
 }  // namespace
 
 TrimCapabilitiesPass::TrimCapabilitiesPass()
@@ -416,10 +443,7 @@ TrimCapabilitiesPass::TrimCapabilitiesPass()
 void TrimCapabilitiesPass::addInstructionRequirementsForOpcode(
     spv::Op opcode, CapabilitySet* capabilities,
     ExtensionSet* extensions) const {
-  // Ignoring OpBeginInvocationInterlockEXT and OpEndInvocationInterlockEXT
-  // because they have three possible capabilities, only one of which is needed
-  if (opcode == spv::Op::OpBeginInvocationInterlockEXT ||
-      opcode == spv::Op::OpEndInvocationInterlockEXT) {
+  if (hasOpcodeConflictingCapabilities(opcode)) {
     return;
   }
 

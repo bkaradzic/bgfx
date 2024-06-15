@@ -62,6 +62,7 @@ static const spv::Capability pygen_variable_caps_RayTracingMotionBlurNV[] = {spv
 static const spv::Capability pygen_variable_caps_RayTracingNV[] = {spv::Capability::RayTracingNV};
 static const spv::Capability pygen_variable_caps_RayTracingNVRayTracingKHR[] = {spv::Capability::RayTracingNV, spv::Capability::RayTracingKHR};
 static const spv::Capability pygen_variable_caps_RayTracingNVRayTracingKHRRayQueryKHR[] = {spv::Capability::RayTracingNV, spv::Capability::RayTracingKHR, spv::Capability::RayQueryKHR};
+static const spv::Capability pygen_variable_caps_ReplicatedCompositesEXT[] = {spv::Capability::ReplicatedCompositesEXT};
 static const spv::Capability pygen_variable_caps_Shader[] = {spv::Capability::Shader};
 static const spv::Capability pygen_variable_caps_ShaderBitInstructions[] = {spv::Capability::Shader, spv::Capability::BitInstructions};
 static const spv::Capability pygen_variable_caps_ShaderClockKHR[] = {spv::Capability::ShaderClockKHR};
@@ -109,6 +110,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_KHR_integer_dot_product
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_ray_query[] = {spvtools::Extension::kSPV_KHR_ray_query};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_ray_tracing[] = {spvtools::Extension::kSPV_KHR_ray_tracing};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_ray_tracingSPV_KHR_ray_query[] = {spvtools::Extension::kSPV_KHR_ray_tracing, spvtools::Extension::kSPV_KHR_ray_query};
+static const spvtools::Extension pygen_variable_exts_SPV_KHR_relaxed_extended_instruction[] = {spvtools::Extension::kSPV_KHR_relaxed_extended_instruction};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_shader_ballot[] = {spvtools::Extension::kSPV_KHR_shader_ballot};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_subgroup_vote[] = {spvtools::Extension::kSPV_KHR_subgroup_vote};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_terminate_invocation[] = {spvtools::Extension::kSPV_KHR_terminate_invocation};
@@ -477,6 +479,7 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"SubgroupAllEqualKHR", spv::Op::OpSubgroupAllEqualKHR, 1, pygen_variable_caps_SubgroupVoteKHR, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_subgroup_vote, 0xffffffffu, 0xffffffffu},
   {"GroupNonUniformRotateKHR", spv::Op::OpGroupNonUniformRotateKHR, 1, pygen_variable_caps_GroupNonUniformRotateKHR, 6, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_OPTIONAL_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SubgroupReadInvocationKHR", spv::Op::OpSubgroupReadInvocationKHR, 1, pygen_variable_caps_SubgroupBallotKHR, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_shader_ballot, 0xffffffffu, 0xffffffffu},
+  {"ExtInstWithForwardRefsKHR", spv::Op::OpExtInstWithForwardRefsKHR, 0, nullptr, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_EXTENSION_INSTRUCTION_NUMBER, SPV_OPERAND_TYPE_VARIABLE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_relaxed_extended_instruction, 0xffffffffu, 0xffffffffu},
   {"TraceRayKHR", spv::Op::OpTraceRayKHR, 1, pygen_variable_caps_RayTracingKHR, 11, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 1, pygen_variable_exts_SPV_KHR_ray_tracing, 0xffffffffu, 0xffffffffu},
   {"ExecuteCallableKHR", spv::Op::OpExecuteCallableKHR, 1, pygen_variable_caps_RayTracingKHR, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 1, pygen_variable_exts_SPV_KHR_ray_tracing, 0xffffffffu, 0xffffffffu},
   {"ConvertUToAccelerationStructureKHR", spv::Op::OpConvertUToAccelerationStructureKHR, 2, pygen_variable_caps_RayTracingKHRRayQueryKHR, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 2, pygen_variable_exts_SPV_KHR_ray_tracingSPV_KHR_ray_query, 0xffffffffu, 0xffffffffu},
@@ -499,6 +502,9 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"CooperativeMatrixStoreKHR", spv::Op::OpCooperativeMatrixStoreKHR, 1, pygen_variable_caps_CooperativeMatrixKHR, 5, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_OPTIONAL_ID, SPV_OPERAND_TYPE_OPTIONAL_MEMORY_ACCESS}, 0, 0, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"CooperativeMatrixMulAddKHR", spv::Op::OpCooperativeMatrixMulAddKHR, 1, pygen_variable_caps_CooperativeMatrixKHR, 6, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_OPTIONAL_COOPERATIVE_MATRIX_OPERANDS}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"CooperativeMatrixLengthKHR", spv::Op::OpCooperativeMatrixLengthKHR, 1, pygen_variable_caps_CooperativeMatrixKHR, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"ConstantCompositeReplicateEXT", spv::Op::OpConstantCompositeReplicateEXT, 1, pygen_variable_caps_ReplicatedCompositesEXT, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"SpecConstantCompositeReplicateEXT", spv::Op::OpSpecConstantCompositeReplicateEXT, 1, pygen_variable_caps_ReplicatedCompositesEXT, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
+  {"CompositeConstructReplicateEXT", spv::Op::OpCompositeConstructReplicateEXT, 1, pygen_variable_caps_ReplicatedCompositesEXT, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"TypeRayQueryKHR", spv::Op::OpTypeRayQueryKHR, 1, pygen_variable_caps_RayQueryKHR, 1, {SPV_OPERAND_TYPE_RESULT_ID}, 1, 0, 1, pygen_variable_exts_SPV_KHR_ray_query, 0xffffffffu, 0xffffffffu},
   {"RayQueryInitializeKHR", spv::Op::OpRayQueryInitializeKHR, 1, pygen_variable_caps_RayQueryKHR, 8, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 1, pygen_variable_exts_SPV_KHR_ray_query, 0xffffffffu, 0xffffffffu},
   {"RayQueryTerminateKHR", spv::Op::OpRayQueryTerminateKHR, 1, pygen_variable_caps_RayQueryKHR, 1, {SPV_OPERAND_TYPE_ID}, 0, 0, 1, pygen_variable_exts_SPV_KHR_ray_query, 0xffffffffu, 0xffffffffu},

@@ -473,7 +473,7 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
       if (!word) return diagnostic(SPV_ERROR_INVALID_ID) << "Id is 0";
       parsed_operand.type = SPV_OPERAND_TYPE_ID;
 
-      if (opcode == spv::Op::OpExtInst && parsed_operand.offset == 3) {
+      if (spvIsExtendedInstruction(opcode) && parsed_operand.offset == 3) {
         // The current word is the extended instruction set Id.
         // Set the extended instruction set type for the current instruction.
         auto ext_inst_type_iter = _.import_id_to_ext_inst_type.find(word);
@@ -494,7 +494,7 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
       break;
 
     case SPV_OPERAND_TYPE_EXTENSION_INSTRUCTION_NUMBER: {
-      assert(spv::Op::OpExtInst == opcode);
+      assert(spvIsExtendedInstruction(opcode));
       assert(inst->ext_inst_type != SPV_EXT_INST_TYPE_NONE);
       spv_ext_inst_desc ext_inst;
       if (grammar_.lookupExtInst(inst->ext_inst_type, word, &ext_inst) ==

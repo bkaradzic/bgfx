@@ -140,6 +140,6 @@ std::function<bool(unsigned)> spvOperandCanBeForwardDeclaredFunction(
 // of the operand can be forward declared. This function will
 // used in the SSA validation stage of the pipeline
 std::function<bool(unsigned)> spvDbgInfoExtOperandCanBeForwardDeclaredFunction(
-    spv_ext_inst_type_t ext_type, uint32_t key);
+    spv::Op opcode, spv_ext_inst_type_t ext_type, uint32_t key);
 
 #endif  // SOURCE_OPERAND_H_

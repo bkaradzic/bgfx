@@ -225,6 +225,7 @@ int32_t spvOpcodeIsSpecConstant(const spv::Op opcode) {
     case spv::Op::OpSpecConstantFalse:
     case spv::Op::OpSpecConstant:
     case spv::Op::OpSpecConstantComposite:
+    case spv::Op::OpSpecConstantCompositeReplicateEXT:
     case spv::Op::OpSpecConstantOp:
       return true;
     default:
@@ -238,6 +239,7 @@ int32_t spvOpcodeIsConstant(const spv::Op opcode) {
     case spv::Op::OpConstantFalse:
     case spv::Op::OpConstant:
     case spv::Op::OpConstantComposite:
+    case spv::Op::OpConstantCompositeReplicateEXT:
     case spv::Op::OpConstantSampler:
     case spv::Op::OpConstantNull:
     case spv::Op::OpConstantFunctionPointerINTEL:
@@ -245,6 +247,7 @@ int32_t spvOpcodeIsConstant(const spv::Op opcode) {
     case spv::Op::OpSpecConstantFalse:
     case spv::Op::OpSpecConstant:
     case spv::Op::OpSpecConstantComposite:
+    case spv::Op::OpSpecConstantCompositeReplicateEXT:
     case spv::Op::OpSpecConstantOp:
       return true;
     default:
@@ -711,6 +714,16 @@ bool spvOpcodeIsImageSample(const spv::Op opcode) {
     case spv::Op::OpImageSparseSampleExplicitLod:
     case spv::Op::OpImageSparseSampleDrefImplicitLod:
     case spv::Op::OpImageSparseSampleDrefExplicitLod:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool spvIsExtendedInstruction(const spv::Op opcode) {
+  switch (opcode) {
+    case spv::Op::OpExtInst:
+    case spv::Op::OpExtInstWithForwardRefsKHR:
       return true;
     default:
       return false;

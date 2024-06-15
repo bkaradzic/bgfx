@@ -856,6 +856,12 @@ Optimizer::PassToken CreateAmdExtToKhrPass();
 // propagated into their final positions.
 Optimizer::PassToken CreateInterpolateFixupPass();
 
+// Replace OpExtInst instructions with OpExtInstWithForwardRefsKHR when
+// the instruction contains a forward reference to another debug instuction.
+// Replace OpExtInstWithForwardRefsKHR with OpExtInst when there are no forward
+// reference to another debug instruction.
+Optimizer::PassToken CreateOpExtInstWithForwardReferenceFixupPass();
+
 // Removes unused components from composite input variables. Current
 // implementation just removes trailing unused components from input arrays
 // and structs. The pass performs best after maximizing dead code removal.
