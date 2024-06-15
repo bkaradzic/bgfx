@@ -78,19 +78,24 @@ class Split
 {
 public:
 	Split(const bx::StringView& _str, char _ch)
-	: m_str(_str)
-	, m_token(_str.getPtr(), bx::strFind(_str, _ch).getPtr() )
-	, m_ch(_ch)
+		: m_str(_str)
+		, m_token(_str.getPtr(), bx::strFind(_str, _ch).getPtr() )
+		, m_ch(_ch)
 	{
 	}
 
 	bx::StringView next()
 	{
 		bx::StringView result = m_token;
+
 		m_token = bx::strTrim(
-			  bx::StringView(m_token.getTerm()+1, bx::strFind(bx::StringView(m_token.getTerm()+1, m_str.getTerm() ), m_ch).getPtr() )
+			  bx::StringView(
+				  m_token.getTerm()+1
+				, bx::strFind(bx::StringView(m_token.getTerm()+1, m_str.getTerm() ), m_ch).getPtr()
+				)
 			, " \t\n"
 			);
+
 		return result;
 	}
 
@@ -124,11 +129,12 @@ bool openFileSelectionDialog(
 	, const bx::StringView& _filter
 	)
 {
-#if BX_PLATFORM_LINUX
+	bx::Error err;
+
 	char tmp[4096];
 	bx::StaticMemoryBlockWriter writer(tmp, sizeof(tmp) );
 
-	bx::Error err;
+#if BX_PLATFORM_LINUX
 	bx::write(&writer, &err
 		, "--file-selection%s --title \"%.*s\" --filename \"%s\""
 		, FileSelectionDialogType::Save == _type ? " --save" : ""
@@ -167,9 +173,13 @@ bool openFileSelectionDialog(
 			}
 		}
 	}
+
 #elif BX_PLATFORM_WINDOWS
-	if (_type < 0 || _type >= BX_COUNTOF(s_getFileNameA))
+	if (_type <  0
+	||  _type >= BX_COUNTOF(s_getFileNameA) )
+	{
 		return false;
+	}
 
 	char out[bx::kMaxFilePath] = { '\0' };
 
@@ -180,11 +190,6 @@ bool openFileSelectionDialog(
 	ofn.file       = out;
 	ofn.maxFile    = sizeof(out);
 	ofn.flags      = s_getFileNameA[_type].m_flags;
-
-	char tmp[4096];
-	bx::StaticMemoryBlockWriter writer(tmp, sizeof(tmp) );
-
-	bx::Error err;
 
 	ofn.title = tmp;
 	bx::write(&writer, &err, "%.*s", _title.getLength(),  _title.getPtr() );
@@ -229,13 +234,13 @@ bool openFileSelectionDialog(
 	bx::write(&writer, '\0', &err);
 
 	if (err.isOk()
-	&& s_getFileNameA[_type].m_function(&ofn))
+	&&  s_getFileNameA[_type].m_function(&ofn) )
 	{
 		_inOutFilePath.set(ofn.file);
 		return true;
 	}
 #else
-	BX_UNUSED(_inOutFilePath, _type, _title, _filter);
+	BX_UNUSED(_inOutFilePath, _type, _title, _filter, err, tmp, writer);
 #endif // BX_PLATFORM_LINUX
 
 	return false;
