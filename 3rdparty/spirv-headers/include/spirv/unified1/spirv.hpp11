@@ -1045,6 +1045,7 @@ enum class Capability : unsigned {
     TileImageColorReadAccessEXT = 4166,
     TileImageDepthReadAccessEXT = 4167,
     TileImageStencilReadAccessEXT = 4168,
+    CooperativeMatrixLayoutsARM = 4201,
     FragmentShadingRateKHR = 4422,
     SubgroupBallotKHR = 4423,
     DrawParameters = 4427,
@@ -1208,6 +1209,7 @@ enum class Capability : unsigned {
     DotProductKHR = 6019,
     RayCullMaskKHR = 6020,
     CooperativeMatrixKHR = 6022,
+    ReplicatedCompositesEXT = 6024,
     BitInstructions = 6025,
     GroupNonUniformRotateKHR = 6026,
     FloatControls2 = 6029,
@@ -1357,6 +1359,8 @@ enum class CooperativeMatrixOperandsMask : unsigned {
 enum class CooperativeMatrixLayout : unsigned {
     RowMajorKHR = 0,
     ColumnMajorKHR = 1,
+    RowBlockedInterleavedARM = 4202,
+    ColumnBlockedInterleavedARM = 4203,
     Max = 0x7fffffff,
 };
 
@@ -1771,6 +1775,7 @@ enum class Op : unsigned {
     OpSubgroupAllEqualKHR = 4430,
     OpGroupNonUniformRotateKHR = 4431,
     OpSubgroupReadInvocationKHR = 4432,
+    OpExtInstWithForwardRefsKHR = 4433,
     OpTraceRayKHR = 4445,
     OpExecuteCallableKHR = 4446,
     OpConvertUToAccelerationStructureKHR = 4447,
@@ -1793,6 +1798,9 @@ enum class Op : unsigned {
     OpCooperativeMatrixStoreKHR = 4458,
     OpCooperativeMatrixMulAddKHR = 4459,
     OpCooperativeMatrixLengthKHR = 4460,
+    OpConstantCompositeReplicateEXT = 4461,
+    OpSpecConstantCompositeReplicateEXT = 4462,
+    OpCompositeConstructReplicateEXT = 4463,
     OpTypeRayQueryKHR = 4472,
     OpRayQueryInitializeKHR = 4473,
     OpRayQueryTerminateKHR = 4474,
@@ -2515,6 +2523,7 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpSubgroupAllEqualKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpGroupNonUniformRotateKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupReadInvocationKHR: *hasResult = true; *hasResultType = true; break;
+    case Op::OpExtInstWithForwardRefsKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpTraceRayKHR: *hasResult = false; *hasResultType = false; break;
     case Op::OpExecuteCallableKHR: *hasResult = false; *hasResultType = false; break;
     case Op::OpConvertUToAccelerationStructureKHR: *hasResult = true; *hasResultType = true; break;
@@ -2531,6 +2540,9 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpCooperativeMatrixStoreKHR: *hasResult = false; *hasResultType = false; break;
     case Op::OpCooperativeMatrixMulAddKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpCooperativeMatrixLengthKHR: *hasResult = true; *hasResultType = true; break;
+    case Op::OpConstantCompositeReplicateEXT: *hasResult = true; *hasResultType = true; break;
+    case Op::OpSpecConstantCompositeReplicateEXT: *hasResult = true; *hasResultType = true; break;
+    case Op::OpCompositeConstructReplicateEXT: *hasResult = true; *hasResultType = true; break;
     case Op::OpTypeRayQueryKHR: *hasResult = true; *hasResultType = false; break;
     case Op::OpRayQueryInitializeKHR: *hasResult = false; *hasResultType = false; break;
     case Op::OpRayQueryTerminateKHR: *hasResult = false; *hasResultType = false; break;
@@ -2602,14 +2614,14 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpWritePackedPrimitiveIndices4x8NV: *hasResult = false; *hasResultType = false; break;
     case Op::OpFetchMicroTriangleVertexPositionNV: *hasResult = true; *hasResultType = true; break;
     case Op::OpFetchMicroTriangleVertexBarycentricNV: *hasResult = true; *hasResultType = true; break;
-    case Op::OpReportIntersectionNV: *hasResult = true; *hasResultType = true; break;
+    case Op::OpReportIntersectionKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpIgnoreIntersectionNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpTerminateRayNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpTraceNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpTraceMotionNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpTraceRayMotionNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpRayQueryGetIntersectionTriangleVertexPositionsKHR: *hasResult = true; *hasResultType = true; break;
-    case Op::OpTypeAccelerationStructureNV: *hasResult = true; *hasResultType = false; break;
+    case Op::OpTypeAccelerationStructureKHR: *hasResult = true; *hasResultType = false; break;
     case Op::OpExecuteCallableNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpTypeCooperativeMatrixNV: *hasResult = true; *hasResultType = false; break;
     case Op::OpCooperativeMatrixLoadNV: *hasResult = true; *hasResultType = true; break;
@@ -3630,6 +3642,7 @@ inline const char* CapabilityToString(Capability value) {
     case CapabilityTileImageColorReadAccessEXT: return "TileImageColorReadAccessEXT";
     case CapabilityTileImageDepthReadAccessEXT: return "TileImageDepthReadAccessEXT";
     case CapabilityTileImageStencilReadAccessEXT: return "TileImageStencilReadAccessEXT";
+    case CapabilityCooperativeMatrixLayoutsARM: return "CooperativeMatrixLayoutsARM";
     case CapabilityFragmentShadingRateKHR: return "FragmentShadingRateKHR";
     case CapabilitySubgroupBallotKHR: return "SubgroupBallotKHR";
     case CapabilityDrawParameters: return "DrawParameters";
@@ -3768,6 +3781,7 @@ inline const char* CapabilityToString(Capability value) {
     case CapabilityDotProduct: return "DotProduct";
     case CapabilityRayCullMaskKHR: return "RayCullMaskKHR";
     case CapabilityCooperativeMatrixKHR: return "CooperativeMatrixKHR";
+    case CapabilityReplicatedCompositesEXT: return "ReplicatedCompositesEXT";
     case CapabilityBitInstructions: return "BitInstructions";
     case CapabilityGroupNonUniformRotateKHR: return "GroupNonUniformRotateKHR";
     case CapabilityFloatControls2: return "FloatControls2";
@@ -3870,6 +3884,8 @@ inline const char* CooperativeMatrixLayoutToString(CooperativeMatrixLayout value
     switch (value) {
     case CooperativeMatrixLayoutRowMajorKHR: return "RowMajorKHR";
     case CooperativeMatrixLayoutColumnMajorKHR: return "ColumnMajorKHR";
+    case CooperativeMatrixLayoutRowBlockedInterleavedARM: return "RowBlockedInterleavedARM";
+    case CooperativeMatrixLayoutColumnBlockedInterleavedARM: return "ColumnBlockedInterleavedARM";
     default: return "Unknown";
     }
 }
@@ -4286,6 +4302,7 @@ inline const char* OpToString(Op value) {
     case OpSubgroupAllEqualKHR: return "OpSubgroupAllEqualKHR";
     case OpGroupNonUniformRotateKHR: return "OpGroupNonUniformRotateKHR";
     case OpSubgroupReadInvocationKHR: return "OpSubgroupReadInvocationKHR";
+    case OpExtInstWithForwardRefsKHR: return "OpExtInstWithForwardRefsKHR";
     case OpTraceRayKHR: return "OpTraceRayKHR";
     case OpExecuteCallableKHR: return "OpExecuteCallableKHR";
     case OpConvertUToAccelerationStructureKHR: return "OpConvertUToAccelerationStructureKHR";
@@ -4302,6 +4319,9 @@ inline const char* OpToString(Op value) {
     case OpCooperativeMatrixStoreKHR: return "OpCooperativeMatrixStoreKHR";
     case OpCooperativeMatrixMulAddKHR: return "OpCooperativeMatrixMulAddKHR";
     case OpCooperativeMatrixLengthKHR: return "OpCooperativeMatrixLengthKHR";
+    case OpConstantCompositeReplicateEXT: return "OpConstantCompositeReplicateEXT";
+    case OpSpecConstantCompositeReplicateEXT: return "OpSpecConstantCompositeReplicateEXT";
+    case OpCompositeConstructReplicateEXT: return "OpCompositeConstructReplicateEXT";
     case OpTypeRayQueryKHR: return "OpTypeRayQueryKHR";
     case OpRayQueryInitializeKHR: return "OpRayQueryInitializeKHR";
     case OpRayQueryTerminateKHR: return "OpRayQueryTerminateKHR";
