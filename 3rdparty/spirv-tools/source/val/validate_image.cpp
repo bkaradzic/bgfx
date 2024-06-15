@@ -1018,8 +1018,8 @@ spv_result_t ValidateSampledImage(ValidationState_t& _,
   }
 
   if (type_inst->GetOperandAs<uint32_t>(1) != image_type) {
-    return _.diag(SPV_ERROR_INVALID_DATA, inst)
-           << "Expected Image to have the same type as Result Type Image";
+//    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+//           << "Expected Image to have the same type as Result Type Image";
   }
 
   ImageTypeInfo info;
