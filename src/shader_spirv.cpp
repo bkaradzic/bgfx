@@ -17,12 +17,8 @@ namespace bgfx
 #define SPV_OPERAND_7(_a0, _a1, _a2, _a3, _a4, _a5, _a6) SPV_OPERAND_1(_a0), SPV_OPERAND_6(_a1, _a2, _a3, _a4, _a5, _a6)
 #define SPV_OPERAND_8(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7) SPV_OPERAND_1(_a0), SPV_OPERAND_7(_a1, _a2, _a3, _a4, _a5, _a6, _a7)
 #define SPV_OPERAND_9(_a0, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8) SPV_OPERAND_1(_a0), SPV_OPERAND_8(_a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8)
-#if BX_COMPILER_MSVC && (!defined(_MSVC_TRADITIONAL) || _MSVC_TRADITIONAL)
-// Workaround MSVS bug...
-#	define SPV_OPERAND(...) { BX_MACRO_DISPATCHER(SPV_OPERAND_, __VA_ARGS__) BX_VA_ARGS_PASS(__VA_ARGS__) }
-#else
-#	define SPV_OPERAND(...) { BX_MACRO_DISPATCHER(SPV_OPERAND_, __VA_ARGS__)(__VA_ARGS__) }
-#endif // BX_COMPILER_MSVC
+#define SPV_OPERAND(...) { BX_MACRO_DISPATCHER(SPV_OPERAND_, __VA_ARGS__)(__VA_ARGS__) }
+
 #define _ Count
 
 	bool isDebug(SpvOpcode::Enum _opcode)
