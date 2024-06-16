@@ -136,7 +136,9 @@ static const InputBinding s_bindingApp[] =
 
 const char* s_resetCmd =
 	"view zoom 1.0\n"
-	"view rotate 0\n"
+	"view rotate x 0\n"
+	"view rotate y 0\n"
+	"view rotate z 0\n"
 	"view cubemap\n"
 	"view pan\n"
 	"view ev\n"
@@ -160,8 +162,11 @@ static const InputBinding s_bindingView[] =
 	{ entry::Key::Plus,      entry::Modifier::None,       1, NULL, "view zoom +0.1"          },
 	{ entry::Key::Minus,     entry::Modifier::None,       1, NULL, "view zoom -0.1"          },
 
-	{ entry::Key::KeyZ,      entry::Modifier::None,       1, NULL, "view rotate -90"         },
-	{ entry::Key::KeyZ,      entry::Modifier::LeftShift,  1, NULL, "view rotate +90"         },
+	{ entry::Key::KeyZ,      entry::Modifier::None,       1, NULL, "view rotate z -90"       },
+	{ entry::Key::KeyZ,      entry::Modifier::LeftShift,  1, NULL, "view rotate z +90"       },
+
+	{ entry::Key::KeyX,      entry::Modifier::None,       1, NULL, "view rotate x +180"      },
+	{ entry::Key::KeyY,      entry::Modifier::None,       1, NULL, "view rotate y +180"      },
 
 	{ entry::Key::Up,        entry::Modifier::None,       1, NULL, "view pan\n"
 	                                                               "view file-up"            },
@@ -273,7 +278,6 @@ struct View
 		, m_angx(0.0f)
 		, m_angy(0.0f)
 		, m_zoom(1.0f)
-		, m_angle(0.0f)
 		, m_orientation(0.0f)
 		, m_flipH(0.0f)
 		, m_flipV(0.0f)
@@ -290,6 +294,10 @@ struct View
 		, m_sdf(false)
 		, m_inLinear(false)
 	{
+		m_rotate[0] = 0.0f;
+		m_rotate[1] = 0.0f;
+		m_rotate[2] = 0.0f;
+
 		load();
 
 		m_textureInfo.format = bgfx::TextureFormat::Count;
@@ -476,24 +484,28 @@ struct View
 			{
 				if (_argc >= 3)
 				{
-					float angle;
-					bx::fromString(&angle, _argv[2]);
+					int8_t axis = bx::clamp(bx::toLower(_argv[2][0]) - 'x', 0, 2);
 
-					if (_argv[2][0] == '+'
-					||  _argv[2][0] == '-')
+					float angle;
+					bx::fromString(&angle, _argv[3]);
+
+					if (_argv[3][0] == '+'
+					||  _argv[3][0] == '-')
 					{
-						m_angle += bx::toRad(angle);
+						m_rotate[axis] += bx::toRad(angle);
 					}
 					else
 					{
-						m_angle = bx::toRad(angle);
+						m_rotate[axis] = bx::toRad(angle);
 					}
 
-					m_angle = bx::wrap(m_angle, bx::kPi*2.0f);
+					m_rotate[axis] = bx::wrap(m_rotate[axis], bx::kPi*2.0f);
 				}
 				else
 				{
-					m_angle = 0.0f;
+					m_rotate[0] = 0.0f;
+					m_rotate[1] = 0.0f;
+					m_rotate[2] = 0.0f;
 				}
 			}
 			else if (0 == bx::strCmp(_argv[1], "orientation") )
@@ -516,7 +528,8 @@ struct View
 						{
 							float angle;
 							bx::fromString(&angle, _argv[3]);
-							*dst = bx::toRad(angle);
+							angle = bx::toRad(angle);
+							*dst = bx::wrap(angle, bx::kPi*2.0f);
 						}
 						else
 						{
@@ -869,7 +882,7 @@ struct View
 	float    m_angx;
 	float    m_angy;
 	float    m_zoom;
-	float    m_angle;
+	float    m_rotate[3];
 	float    m_orientation;
 	float    m_flipH;
 	float    m_flipV;
@@ -1451,7 +1464,9 @@ int _main_(int _argc, char** _argv)
 	Interpolator scale(1.0f);
 	Interpolator posx(0.0f);
 	Interpolator posy(0.0f);
-	InterpolatorAngle angle(0.0f);
+	InterpolatorAngle rotateX(0.0f);
+	InterpolatorAngle rotateY(0.0f);
+	InterpolatorAngle rotateZ(0.0f);
 	InterpolatorAngle angx(0.0f);
 	InterpolatorAngle angy(0.0f);
 
@@ -1467,7 +1482,9 @@ int _main_(int _argc, char** _argv)
 			|| scale.isActive()
 			|| posx.isActive()
 			|| posy.isActive()
-			|| angle.isActive()
+			|| rotateX.isActive()
+			|| rotateY.isActive()
+			|| rotateZ.isActive()
 			|| angx.isActive()
 			|| angy.isActive()
 			;
@@ -1983,7 +2000,9 @@ int _main_(int _argc, char** _argv)
 
 				keyBindingHelp("LMB+drag",  "Pan.");
 				keyBindingHelp("=/- or MW", "Zoom in/out.");
-				keyBindingHelp("z/Z",       "Rotate.");
+				keyBindingHelp("x",         "Horizontal flip (z-axis relative).");
+				keyBindingHelp("y",         "Vertical flip (z-axis relative).");
+				keyBindingHelp("z/Z",       "Rotate around Z axis.");
 				keyBindingHelp("0",         "Reset.");
 				keyBindingHelp("1",         "Fit to window.");
 				ImGui::NextLine();
@@ -2174,7 +2193,7 @@ int _main_(int _argc, char** _argv)
 			bgfx::dbgTextClear();
 
 			float orientation[16];
-			bx::mtxRotateXYZ(orientation, view.m_flipH, view.m_flipV, angle.getValue()+view.m_orientation);
+			bx::mtxRotateXYZ(orientation, rotateY.getValue()+view.m_flipH, rotateX.getValue()+view.m_flipV, rotateZ.getValue()+view.m_orientation);
 
 			if (view.m_fit)
 			{
@@ -2192,7 +2211,9 @@ int _main_(int _argc, char** _argv)
 			}
 
 			zoom.set(view.m_zoom, transitionTime);
-			angle.set(view.m_angle, transitionTime);
+			rotateX.set(view.m_rotate[0], transitionTime);
+			rotateY.set(view.m_rotate[1], transitionTime);
+			rotateZ.set(view.m_rotate[2], transitionTime);
 			angx.set(view.m_angx, transitionTime);
 			angy.set(view.m_angy, transitionTime);
 
