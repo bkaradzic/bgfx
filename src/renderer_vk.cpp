@@ -1987,11 +1987,13 @@ VK_IMPORT_DEVICE
 			{
 				const uint32_t size = 128;
 				const uint32_t count = BGFX_CONFIG_MAX_DRAW_CALLS;
+
 				for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 				{
 					BX_TRACE("Create scratch buffer %d", ii);
 					m_scratchBuffer[ii].createUniform(size, count);
 				}
+
 				for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 				{
 					BX_TRACE("Create scratch staging buffer %d", ii);
@@ -4436,11 +4438,14 @@ VK_IMPORT_DEVICE
 		StagingBufferVK allocFromScratchStagingBuffer(uint32_t _size, uint32_t _align, const void *_data = NULL)
 		{
 			BGFX_PROFILER_SCOPE("allocFromScratchStagingBuffer", kColorResource);
+
 			StagingBufferVK result;
 			ScratchBufferVK &scratch = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
+
 			if (_size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRACH_BUFFER)
 			{
-				uint32_t scratchOffset = scratch.alloc(_size, _align);
+				const uint32_t scratchOffset = scratch.alloc(_size, _align);
+
 				if (scratchOffset != UINT32_MAX)
 				{
 					result.m_isFromScratch = true;
@@ -4449,21 +4454,26 @@ VK_IMPORT_DEVICE
 					result.m_buffer = scratch.m_buffer;
 					result.m_deviceMem = scratch.m_deviceMem;
 					result.m_data = scratch.m_data + result.m_offset;
+
 					if (_data != NULL)
 					{
 						BGFX_PROFILER_SCOPE("copy to scratch", kColorResource);
 						bx::memCopy(result.m_data, _data, _size);
 					}
+
 					return result;
 				}
 			}
 
 			// Not enough space or too big, we will create a new staging buffer on the spot.
 			result.m_isFromScratch = false;
+
 			VK_CHECK(createStagingBuffer(_size, &result.m_buffer, &result.m_deviceMem, _data));
+
 			result.m_size = _size;
 			result.m_offset = 0;
 			result.m_data = NULL;
+
 			return result;
 		}
 
@@ -4474,6 +4484,7 @@ VK_IMPORT_DEVICE
 				| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 				| VK_MEMORY_PROPERTY_HOST_CACHED_BIT
 				;
+
 			return createHostBuffer(_size, flags, _buffer, _memory, NULL);
 		}
 
@@ -4689,6 +4700,7 @@ VK_DESTROY
 	{
 		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.limits;
 		const uint32_t align = uint32_t(deviceLimits.minUniformBufferOffsetAlignment);
+
 		create(_size, _count, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, align);
 	}
 
@@ -4696,6 +4708,7 @@ VK_DESTROY
 	{
 		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.limits;
 		const uint32_t align = uint32_t(deviceLimits.optimalBufferCopyOffsetAlignment);
+
 		create(_size, 1, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, align);
 	}
 
@@ -4718,14 +4731,14 @@ VK_DESTROY
 	{
 		const uint32_t align = bx::uint32_lcm(m_align, _minAlign);
 		const uint32_t dstOffset = bx::strideAlign(m_pos, align);
+
 		if (dstOffset + _size <= m_size)
 		{
 			m_pos = dstOffset + _size;
 			return dstOffset;
-		} else
-		{
-			return UINT32_MAX;
 		}
+
+		return UINT32_MAX;
 	}
 
 	uint32_t ScratchBufferVK::write(const void* _data, uint32_t _size, uint32_t _minAlign)
@@ -6188,7 +6201,9 @@ VK_DESTROY
 			{
 				const VkDevice device = s_renderVK->m_device;
 				const bimg::ImageBlockInfo &dstBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat));
+
 				StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(totalMemSize, dstBlockInfo.blockSize);
+
 				uint8_t* mappedMemory;
 
 				if (!stagingBuffer.m_isFromScratch)
@@ -6201,7 +6216,8 @@ VK_DESTROY
 						, 0
 						, (void**)&mappedMemory
 						) );
-				} else
+				}
+				else
 				{
 					mappedMemory = stagingBuffer.m_data;
 				}
@@ -6500,7 +6516,6 @@ VK_DESTROY
 
 		setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-
 		bimg::TextureFormat::Enum tf = bimg::TextureFormat::Enum(m_textureFormat);
 		const bimg::ImageBlockInfo &blockInfo = bimg::getBlockInfo(tf);
 		for (uint32_t i = 0; i < _bufferImageCopyCount; ++i) {
@@ -6510,6 +6525,7 @@ VK_DESTROY
 				, bimg::getName(tf), _bufferImageCopy[i].bufferOffset, blockInfo.blockSize
 				);
 		}
+
 		vkCmdCopyBufferToImage(
 			  _commandBuffer
 			, _stagingBuffer
@@ -9371,6 +9387,7 @@ VK_DESTROY
 			BGFX_PROFILER_SCOPE("scratchBuffer::flush", kColorResource);
 			scratchBuffer.flush();
 		}
+
 		{
 			BGFX_PROFILER_SCOPE("scratchStagingBuffer::flush", kColorResource);
 			scratchStagingBuffer.flush();
