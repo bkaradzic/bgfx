@@ -2172,7 +2172,6 @@ namespace bgfx
 
 			m_perfStats.viewStats = m_viewStats;
 
-			bx::printf(" -- Clearing m_renderItemBind -- \n");
 			bx::memSet(&m_renderItemBind[0], 0, sizeof(m_renderItemBind));
 		}
 
