@@ -1700,6 +1700,9 @@ namespace bgfx
 					bind.m_idx = kInvalidHandle;
 					bind.m_type = 0;
 					bind.m_samplerFlags = 0;
+					bind.m_format = 0;
+					bind.m_access = 0;
+					bind.m_mip = 0;
 				}
 			}
 		};
@@ -2168,6 +2171,8 @@ namespace bgfx
 			bx::memSet(m_occlusion, 0xff, sizeof(m_occlusion) );
 
 			m_perfStats.viewStats = m_viewStats;
+
+			bx::memSet(&m_renderItemBind[0], 0, sizeof(m_renderItemBind));
 		}
 
 		~Frame()
@@ -2445,6 +2450,13 @@ namespace bgfx
 	{
 		EncoderImpl()
 		{
+			// Although it will be cleared by the discard(), the fact that the
+			// struct is padded to have a size equal to the cache line size,
+			// will leaves bytes uninitialized. This will influence the hashing
+			// as it reads those bytes too. To make this deterministic, we will
+			// clear all bytes (inclusively the padding) before we start.
+			bx::memSet(&m_bind, 0, sizeof(m_bind));
+
 			discard(BGFX_DISCARD_ALL);
 		}
 
@@ -2725,6 +2737,9 @@ namespace bgfx
 				? BGFX_SAMPLER_INTERNAL_DEFAULT
 				: _flags
 				;
+			bind.m_format = 0;
+			bind.m_access = 0;
+			bind.m_mip    = 0;
 
 			if (isValid(_sampler) )
 			{
