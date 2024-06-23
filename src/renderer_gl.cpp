@@ -6546,6 +6546,7 @@ namespace bgfx { namespace gl
 						|| usesVertexID
 						|| usesUint
 						|| usesTexelFetch
+					    || usesGpuShader4
 						|| usesGpuShader5
 						|| usesInterpQ
 						? 130
