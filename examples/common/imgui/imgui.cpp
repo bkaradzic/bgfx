@@ -561,6 +561,7 @@ namespace ImGui
 
 } // namespace ImGui
 
+#ifndef BGFX_NO_STB_IMPL
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505); // error C4505: '' : unreferenced local function has been removed
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-function"); // warning: 'int rect_width_compare(const void*, const void*)' defined but not used
 BX_PRAGMA_DIAGNOSTIC_PUSH();
@@ -587,3 +588,4 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits"); // warning: comparison 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb/stb_truetype.h>
 BX_PRAGMA_DIAGNOSTIC_POP();
+#endif
