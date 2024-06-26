@@ -4,15 +4,11 @@
 #
 
 UNAME := $(shell uname)
-ifeq ($(UNAME),$(filter $(UNAME),Linux Darwin FreeBSD GNU/kFreeBSD))
+ifeq ($(UNAME),$(filter $(UNAME),Linux Darwin))
 ifeq ($(UNAME),$(filter $(UNAME),Darwin))
 OS=darwin
 else
-ifeq ($(UNAME),$(filter $(UNAME),FreeBSD GNU/kFreeBSD))
-OS=bsd
-else
 OS=linux
-endif
 endif
 
 help:
@@ -41,19 +37,16 @@ clean: ## Clean all intermediate files.
 
 projgen: ## Generate project files for all configurations.
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib                       vs2019
-	$(GENIE) --with-tools --with-combined-examples                   --vs=winstore100      vs2019
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=mingw-gcc       gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-gcc       gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx-x64         gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx-arm64       gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=osx           xcode9
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=ios           xcode9
-	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=freebsd         gmake
 	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=android-arm     gmake
 	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=android-arm64   gmake
 	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=android-x86     gmake
 	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=android-x86_64  gmake
-	$(GENIE)              --with-examples                            --gcc=wasm2js         gmake
 	$(GENIE)              --with-combined-examples                   --gcc=ios-arm         gmake
 	$(GENIE)              --with-combined-examples                   --gcc=ios-arm64       gmake
 	$(GENIE)              --with-combined-examples                   --gcc=rpi             gmake
@@ -94,14 +87,6 @@ android-x86_64-release: .build/projects/gmake-android-x86_64 ## Build - Android 
 	$(MAKE) -R -C .build/projects/gmake-android-x86_64 config=release
 android-x86_64: android-x86_64-debug android-x86_64-release ## Build - Android x86_64 Debug and Release
 
-.build/projects/gmake-wasm2js: # Wasm2JS: The JavaScript fallback for web builds when Wasm is not supported by browser
-	$(GENIE) --gcc=wasm2js --with-combined-examples gmake
-wasm2js-debug: .build/projects/gmake-wasm2js ## Build - Emscripten Debug
-	$(MAKE) -R -C .build/projects/gmake-wasm2js config=debug
-wasm2js-release: .build/projects/gmake-wasm2js ## Build - Emscripten Release
-	$(MAKE) -R -C .build/projects/gmake-wasm2js config=release
-wasm2js: wasm2js-debug wasm2js-release ## Build - Emscripten Debug and Release
-
 .build/projects/gmake-wasm:
 	$(GENIE) --gcc=wasm --with-combined-examples gmake
 wasm-debug: .build/projects/gmake-wasm ## Build - Emscripten Debug
@@ -117,18 +102,6 @@ linux-debug64: .build/projects/gmake-linux ## Build - Linux x64 Debug
 linux-release64: .build/projects/gmake-linux ## Build - Linux x64 Release
 	$(MAKE) -R -C .build/projects/gmake-linux config=release64
 linux: linux-debug64 linux-release64 ## Build - Linux x86/x64 Debug and Release
-
-.build/projects/gmake-freebsd:
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=freebsd gmake
-freebsd-debug32: .build/projects/gmake-freebsd ## Build - FreeBSD x86 Debug
-	$(MAKE) -R -C .build/projects/gmake-freebsd config=debug32
-freebsd-release32: .build/projects/gmake-freebsd ## Build - FreeBSD x86 Release
-	$(MAKE) -R -C .build/projects/gmake-freebsd config=release32
-freebsd-debug64: .build/projects/gmake-freebsd ## Build - FreeBSD x86 Debug
-	$(MAKE) -R -C .build/projects/gmake-freebsd config=debug64
-freebsd-release64: .build/projects/gmake-freebsd ## Build - FreeBSD x86 Release
-	$(MAKE) -R -C .build/projects/gmake-freebsd config=release64
-freebsd: freebsd-debug32 freebsd-release32 freebsd-debug64 freebsd-release64 ## Build - FreeBSD x86/x64 Debug and Release
 
 .build/projects/gmake-mingw-gcc:
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --os=windows --gcc=mingw-gcc gmake
@@ -165,18 +138,6 @@ vs2019-debug64: .build/projects/vs2019 ## Build - vs2019 x64 Debug
 vs2019-release64: .build/projects/vs2019 ## Build - vs2019 x64 Release
 	devenv .build/projects/vs2019/bgfx.sln /Build "Release|x64"
 vs2019: vs2019-debug32 vs2019-release32 vs2019-debug64 vs2019-release64 ## Build - vs2019 x86/x64 Debug and Release
-
-.build/projects/vs2019-winstore100:
-	$(GENIE) --with-combined-examples --vs=winstore100 vs2019
-vs2019-winstore100-debug32: .build/projects/vs2019-winstore100 ## Build - vs2019-winstore100 x86 Debug
-	devenv .build/projects/vs2019-winstore100/bgfx.sln /Build "Debug|Win32"
-vs2019-winstore100-release32: .build/projects/vs2019-winstore100 ## Build - vs2019-winstore100 x86 Release
-	devenv .build/projects/vs2019-winstore100/bgfx.sln /Build "Release|Win32"
-vs2019-winstore100-debug64: .build/projects/vs2019-winstore100 ## Build - vs2019-winstore100 x64 Debug
-	devenv .build/projects/vs2019-winstore100/bgfx.sln /Build "Debug|x64"
-vs2019-winstore100-release64: .build/projects/vs2019-winstore100 ## Build - vs2019-winstore100 x64 Release
-	devenv .build/projects/vs2019-winstore100/bgfx.sln /Build "Release|x64"
-vs2019-winstore100: vs2019-winstore100-debug32 vs2019-winstore100-release32 vs2019-winstore100-debug64 vs2019-winstore100-release64 ## Build - vs2019-winstore100 x86/x64 Debug and Release
 
 .build/projects/gmake-osx-x64:
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx-x64 gmake
@@ -250,20 +211,12 @@ docs:
 SILENT ?= @
 
 UNAME := $(shell uname)
-ifeq ($(UNAME),$(filter $(UNAME),Linux Darwin FreeBSD GNU/kFreeBSD))
+ifeq ($(UNAME),$(filter $(UNAME),Linux Darwin))
 ifeq ($(UNAME),$(filter $(UNAME),Darwin))
 OS=darwin
 BUILD_PROJECT_DIR=gmake-osx-x64
 BUILD_OUTPUT_DIR=osx-x64
 BUILD_TOOLS_CONFIG=release
-BUILD_TOOLS_SUFFIX=Release
-EXE=
-else
-ifeq ($(UNAME),$(filter $(UNAME),FreeBSD GNU/kFreeBSD))
-OS=bsd
-BUILD_PROJECT_DIR=gmake-freebsd
-BUILD_OUTPUT_DIR=freebsd64_gcc
-BUILD_TOOLS_CONFIG=release64
 BUILD_TOOLS_SUFFIX=Release
 EXE=
 else
@@ -273,7 +226,6 @@ BUILD_OUTPUT_DIR=linux64_gcc
 BUILD_TOOLS_CONFIG=release64
 BUILD_TOOLS_SUFFIX=Release
 EXE=
-endif
 endif
 else
 OS=windows
