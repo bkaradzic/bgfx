@@ -18,7 +18,7 @@ static unsigned int findStripFirst(const unsigned int buffer[][3], unsigned int 
 	for (size_t i = 0; i < buffer_size; ++i)
 	{
 		unsigned int va = valence[buffer[i][0]], vb = valence[buffer[i][1]], vc = valence[buffer[i][2]];
-		unsigned int v = (va < vb && va < vc) ? va : (vb < vc) ? vb : vc;
+		unsigned int v = (va < vb && va < vc) ? va : (vb < vc ? vb : vc);
 
 		if (v < iv)
 		{

@@ -1,5 +1,5 @@
 /**
- * meshoptimizer - version 0.20
+ * meshoptimizer - version 0.21
  *
  * Copyright (C) 2016-2024, by Arseny Kapoulkine (arseny.kapoulkine@gmail.com)
  * Report bugs and download new versions at https://github.com/zeux/meshoptimizer
@@ -12,7 +12,7 @@
 #include <stddef.h>
 
 /* Version macro; major * 1000 + minor * 10 + patch */
-#define MESHOPTIMIZER_VERSION 200 /* 0.20 */
+#define MESHOPTIMIZER_VERSION 210 /* 0.21 */
 
 /* If no API is defined, assume default */
 #ifndef MESHOPTIMIZER_API
@@ -311,12 +311,12 @@ MESHOPTIMIZER_EXPERIMENTAL void meshopt_decodeFilterExp(void* buffer, size_t cou
  */
 enum meshopt_EncodeExpMode
 {
-    /* When encoding exponents, use separate values for each component (maximum quality) */
-    meshopt_EncodeExpSeparate,
-    /* When encoding exponents, use shared value for all components of each vector (better compression) */
-    meshopt_EncodeExpSharedVector,
-    /* When encoding exponents, use shared value for each component of all vectors (best compression) */
-    meshopt_EncodeExpSharedComponent,
+	/* When encoding exponents, use separate values for each component (maximum quality) */
+	meshopt_EncodeExpSeparate,
+	/* When encoding exponents, use shared value for all components of each vector (better compression) */
+	meshopt_EncodeExpSharedVector,
+	/* When encoding exponents, use shared value for each component of all vectors (best compression) */
+	meshopt_EncodeExpSharedComponent,
 };
 
 MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeFilterOct(void* destination, size_t count, size_t stride, int bits, const float* data);
@@ -328,8 +328,12 @@ MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeFilterExp(void* destination, size_
  */
 enum
 {
-    /* Do not move vertices that are located on the topological border (vertices on triangle edges that don't have a paired triangle). Useful for simplifying portions of the larger mesh. */
-    meshopt_SimplifyLockBorder = 1 << 0,
+	/* Do not move vertices that are located on the topological border (vertices on triangle edges that don't have a paired triangle). Useful for simplifying portions of the larger mesh. */
+	meshopt_SimplifyLockBorder = 1 << 0,
+	/* Improve simplification performance assuming input indices are a sparse subset of the mesh. Note that error becomes relative to subset extents. */
+	meshopt_SimplifySparse = 1 << 1,
+	/* Treat error limit and resulting error as absolute instead of relative to mesh extents. */
+	meshopt_SimplifyErrorAbsolute = 1 << 2,
 };
 
 /**
@@ -969,10 +973,10 @@ inline size_t meshopt_simplify(T* destination, const T* indices, size_t index_co
 template <typename T>
 inline size_t meshopt_simplifyWithAttributes(T* destination, const T* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, const float* vertex_attributes, size_t vertex_attributes_stride, const float* attribute_weights, size_t attribute_count, const unsigned char* vertex_lock, size_t target_index_count, float target_error, unsigned int options, float* result_error)
 {
-    meshopt_IndexAdapter<T> in(NULL, indices, index_count);
-    meshopt_IndexAdapter<T> out(destination, NULL, index_count);
+	meshopt_IndexAdapter<T> in(NULL, indices, index_count);
+	meshopt_IndexAdapter<T> out(destination, NULL, index_count);
 
-    return meshopt_simplifyWithAttributes(out.data, in.data, index_count, vertex_positions, vertex_count, vertex_positions_stride, vertex_attributes, vertex_attributes_stride, attribute_weights, attribute_count, vertex_lock, target_index_count, target_error, options, result_error);
+	return meshopt_simplifyWithAttributes(out.data, in.data, index_count, vertex_positions, vertex_count, vertex_positions_stride, vertex_attributes, vertex_attributes_stride, attribute_weights, attribute_count, vertex_lock, target_index_count, target_error, options, result_error);
 }
 
 template <typename T>

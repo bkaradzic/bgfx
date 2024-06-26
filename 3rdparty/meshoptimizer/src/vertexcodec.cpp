@@ -245,7 +245,7 @@ static unsigned char* encodeBytes(unsigned char* data, unsigned char* data_end, 
 			}
 		}
 
-		int bitslog2 = (best_bits == 1) ? 0 : (best_bits == 2) ? 1 : (best_bits == 4) ? 2 : 3;
+		int bitslog2 = (best_bits == 1) ? 0 : (best_bits == 2 ? 1 : (best_bits == 4 ? 2 : 3));
 		assert((1 << bitslog2) == best_bits);
 
 		size_t header_offset = i / kByteGroupSize;
