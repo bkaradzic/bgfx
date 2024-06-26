@@ -602,6 +602,9 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 			reset(m_renderPipelineDescriptor);
 			m_renderPipelineDescriptor.colorAttachments[0].pixelFormat = getSwapChainPixelFormat(m_mainFrameBuffer.m_swapChain);
+#if BX_PLATFORM_VISIONOS
+			m_renderPipelineDescriptor.depthAttachmentPixelFormat = cp_layer_renderer_configuration_get_depth_format(m_mainFrameBuffer.m_swapChain->m_layerRendererConfiguration);
+#endif
 			m_renderPipelineDescriptor.vertexFunction   = m_screenshotBlitProgram.m_vsh->m_function;
 			m_renderPipelineDescriptor.fragmentFunction = m_screenshotBlitProgram.m_fsh->m_function;
 			m_screenshotBlitRenderPipelineState         = m_device.newRenderPipelineStateWithDescriptor(m_renderPipelineDescriptor);
@@ -1041,7 +1044,8 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		MTLPixelFormat getSwapChainPixelFormat(SwapChainMtl *swapChain)
 		{
 #if BX_PLATFORM_VISIONOS
-			return MTLPixelFormatBGRA8Unorm_sRGB;
+			cp_layer_renderer_configuration_t layerConfiguration = cp_layer_renderer_get_configuration(swapChain->m_layerRenderer);
+			return cp_layer_renderer_configuration_get_color_format(layerConfiguration);
 #else
 			return swapChain->m_metalLayer.pixelFormat;
 #endif // BX_PLATFORM_VISIONOS
@@ -1294,6 +1298,32 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		{
 			BX_UNUSED(_blitter);
 		}
+	
+#if BX_PLATFORM_VISIONOS
+		void calculateViewPorts(MTLViewport (&viewports)[2]) {
+			const int viewCount = 2;
+			for (int i = 0; i < viewCount; i++) {
+				cp_view_t view = cp_drawable_get_view(m_mainFrameBuffer.m_swapChain->m_drawable, i);
+				cp_view_texture_map_t texture_map = cp_view_get_view_texture_map(view);
+				viewports[i] = cp_view_texture_map_get_viewport(texture_map);
+			}
+		}
+
+		void setVertexAmplification(RenderCommandEncoder& _rce) {
+			MTLVertexAmplificationViewMapping mapping0;
+			MTLVertexAmplificationViewMapping mapping1;
+
+			mapping0.renderTargetArrayIndexOffset = 0;
+			mapping1.renderTargetArrayIndexOffset = 1;
+
+			mapping0.viewportArrayIndexOffset = 1;
+			mapping1.viewportArrayIndexOffset = 2;
+
+			MTLVertexAmplificationViewMapping mappings[] = { mapping0, mapping1 };
+
+			_rce.setVertexAmplificationCount(2, mappings);
+		}
+#endif
 
 		void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) override
 		{
@@ -1336,11 +1366,20 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				m_renderCommandEncoderFrameBufferHandle = fbh;
 				MTL_RELEASE(renderPassDescriptor);
 
+#if BX_PLATFORM_VISIONOS
+				if (cp_layer_renderer_configuration_get_layout(m_mainFrameBuffer.m_swapChain->m_layerRendererConfiguration) == cp_layer_renderer_layout_layered) {
+					MTLViewport viewports[2];
+					calculateViewPorts(viewports);
+					rce.setViewports(viewports, 2);
+					setVertexAmplification(rce);
+				}
+#else
 				MTLViewport viewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f };
 				rce.setViewport(viewport);
 
 				MTLScissorRect rc = { 0, 0, width, height };
 				rce.setScissorRect(rc);
+#endif
 
 				rce.setCullMode(MTLCullModeNone);
 
@@ -1431,7 +1470,6 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					if (NULL != frameBuffer.m_swapChain->m_drawable)
 					{
 #if BX_PLATFORM_VISIONOS
-						cp_frame_start_submission(frameBuffer.m_swapChain->m_frame);
 						cp_drawable_encode_present(frameBuffer.m_swapChain->m_drawable, m_commandBuffer);
 						cp_frame_end_submission(frameBuffer.m_swapChain->m_frame);
 #else
@@ -1879,9 +1917,22 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 						: swapChain->currentDrawableTexture()
 						;
 				}
+#if BX_PLATFORM_VISIONOS
+				Texture texture = cp_drawable_get_depth_texture(swapChain->m_drawable, 0);
+				_renderPassDescriptor.depthAttachment.texture   = texture;
+				_renderPassDescriptor.stencilAttachment.texture = swapChain->m_backBufferStencil;
 
+				cp_layer_renderer_configuration_t layerConfiguration = cp_layer_renderer_get_configuration(swapChain->m_layerRenderer);
+				cp_layer_renderer_layout layout = cp_layer_renderer_configuration_get_layout(layerConfiguration);
+				if (layout == cp_layer_renderer_layout_layered) {
+					_renderPassDescriptor.renderTargetArrayLength = cp_drawable_get_view_count(swapChain->m_drawable);
+				} else {
+					_renderPassDescriptor.renderTargetArrayLength = 1;
+				}
+#else
 				_renderPassDescriptor.depthAttachment.texture   = swapChain->m_backBufferDepth;
 				_renderPassDescriptor.stencilAttachment.texture = swapChain->m_backBufferStencil;
+#endif
 			}
 			else
 			{
@@ -2254,7 +2305,11 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 						: 1
 						;
 					pd.colorAttachments[0].pixelFormat = swapChain->currentDrawableTexture().pixelFormat;
-					pd.depthAttachmentPixelFormat      = swapChain->m_backBufferDepth.m_obj.pixelFormat;
+#if BX_PLATFORM_VISIONOS
+					pd.depthAttachmentPixelFormat      = cp_layer_renderer_configuration_get_depth_format(swapChain->m_layerRendererConfiguration);
+#else
+					pd.depthAttachmentPixelFormat       = swapChain->m_backBufferDepth.m_obj.pixelFormat;
+#endif
 					pd.stencilAttachmentPixelFormat    = swapChain->m_backBufferStencil.m_obj.pixelFormat;
 				}
 				else
@@ -2354,6 +2409,12 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 				pd.vertexFunction   = program.m_vsh->m_function;
 				pd.fragmentFunction = program.m_fsh != NULL ? program.m_fsh->m_function : NULL;
+#if BX_PLATFORM_VISIONOS
+				if (cp_layer_renderer_configuration_get_layout(m_mainFrameBuffer.m_swapChain->m_layerRendererConfiguration) == cp_layer_renderer_layout_layered) {
+					auto properties = cp_layer_renderer_get_properties(m_mainFrameBuffer.m_swapChain->m_layerRenderer);
+					pd.maxVertexAmplificationCount = cp_layer_renderer_properties_get_view_count(properties);
+				}
+#endif
 
 				VertexDescriptor vertexDesc = m_vertexDescriptor;
 				reset(vertexDesc);
@@ -3339,6 +3400,13 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		{
 			cp_layer_renderer_t layerRenderer = (cp_layer_renderer_t)_nwh;
 			m_layerRenderer = layerRenderer;
+			m_layerRendererConfiguration = cp_layer_renderer_get_configuration(m_layerRenderer);
+			
+			if (cp_layer_renderer_configuration_get_layout(m_layerRendererConfiguration) == cp_layer_renderer_layout_dedicated) {
+				BX_WARN(false, "Dedicated layer renderer layout is not supported.");
+			}
+			
+			retain(m_layerRendererConfiguration);
 			retain(m_layerRenderer);
 		}
 #else
@@ -3513,8 +3581,13 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			release(m_backBufferDepth);
 		}
 
+#if BX_PLATFORM_VISIONOS
+		if (m_drawable) {
+			m_backBufferDepth = cp_drawable_get_depth_texture(m_drawable, 0);
+		}
+#else
 		m_backBufferDepth = s_renderMtl->m_device.newTextureWithDescriptor(desc);
-
+#endif
 		if (NULL != m_backBufferStencil)
 		{
 			release(m_backBufferStencil);
@@ -3567,6 +3640,15 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			m_frame = cp_layer_renderer_query_next_frame(m_layerRenderer);
 			if (m_frame)
 			{
+				cp_frame_timing_t timing = cp_frame_predict_timing(m_frame);
+				if (timing == nullptr) { return nullptr; }
+				
+				cp_frame_start_update(m_frame);
+				
+				cp_frame_end_update(m_frame);
+				
+				cp_time_wait_until(cp_frame_timing_get_optimal_input_time(timing));
+				cp_frame_start_submission(m_frame);
 				m_drawable = cp_frame_query_drawable(m_frame);
 			}
 #else
@@ -4390,6 +4472,14 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 						rce.setTriangleFillMode(wireframe ? MTLTriangleFillModeLines : MTLTriangleFillModeFill);
 
+#if BX_PLATFORM_VISIONOS
+						if (cp_layer_renderer_configuration_get_layout(m_mainFrameBuffer.m_swapChain->m_layerRendererConfiguration) == cp_layer_renderer_layout_layered) {
+							MTLViewport viewports[2];
+							calculateViewPorts(viewports);
+							rce.setViewports(viewports, 1);
+							setVertexAmplification(rce);
+						}
+#else
 						MTLViewport vp;
 						vp.originX = viewState.m_rect.m_x;
 						vp.originY = viewState.m_rect.m_y;
@@ -4407,6 +4497,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 						};
 						rce.setScissorRect(sciRect);
 
+#endif
 						if (BGFX_CLEAR_NONE != (clr.m_flags & BGFX_CLEAR_MASK)
 							&& !clearWithRenderPass)
 						{
