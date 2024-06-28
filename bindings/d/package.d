@@ -10,7 +10,7 @@ import bindbc.bgfx.config;
 import bindbc.common.types: c_int64, c_uint64, va_list;
 static import bgfx.fakeenum;
 
-enum uint apiVersion = 127;
+enum uint apiVersion = 128;
 
 alias ViewID = ushort;
 
@@ -497,33 +497,33 @@ enum CapFlags: CapFlags_{
 	compute                 = 0x0000_0000_0000_0004, ///Compute shaders are supported.
 	conservativeRaster      = 0x0000_0000_0000_0008, ///Conservative rasterization is supported.
 	drawIndirect            = 0x0000_0000_0000_0010, ///Draw indirect is supported.
-	fragmentDepth           = 0x0000_0000_0000_0020, ///Fragment depth is available in fragment shader.
-	fragmentOrdering        = 0x0000_0000_0000_0040, ///Fragment ordering is available in fragment shader.
-	graphicsDebugger        = 0x0000_0000_0000_0080, ///Graphics debugger is present.
-	hdr10                   = 0x0000_0000_0000_0100, ///HDR10 rendering is supported.
-	hiDPI                   = 0x0000_0000_0000_0200, ///HiDPI rendering is supported.
-	imageRW                 = 0x0000_0000_0000_0400, ///Image Read/Write is supported.
-	index32                 = 0x0000_0000_0000_0800, ///32-bit indices are supported.
-	instancing              = 0x0000_0000_0000_1000, ///Instancing is supported.
-	occlusionQuery          = 0x0000_0000_0000_2000, ///Occlusion query is supported.
-	rendererMultithreaded   = 0x0000_0000_0000_4000, ///Renderer is on separate thread.
-	swapChain               = 0x0000_0000_0000_8000, ///Multiple windows are supported.
-	texture2DArray          = 0x0000_0000_0001_0000, ///2D texture array is supported.
-	texture3D               = 0x0000_0000_0002_0000, ///3D textures are supported.
+	drawIndirectCount       = 0x0000_0000_0000_0020, ///Draw indirect with indirect count is supported.
+	fragmentDepth           = 0x0000_0000_0000_0040, ///Fragment depth is available in fragment shader.
+	fragmentOrdering        = 0x0000_0000_0000_0080, ///Fragment ordering is available in fragment shader.
+	graphicsDebugger        = 0x0000_0000_0000_0100, ///Graphics debugger is present.
+	hdr10                   = 0x0000_0000_0000_0200, ///HDR10 rendering is supported.
+	hiDPI                   = 0x0000_0000_0000_0400, ///HiDPI rendering is supported.
+	imageRW                 = 0x0000_0000_0000_0800, ///Image Read/Write is supported.
+	index32                 = 0x0000_0000_0000_1000, ///32-bit indices are supported.
+	instancing              = 0x0000_0000_0000_2000, ///Instancing is supported.
+	occlusionQuery          = 0x0000_0000_0000_4000, ///Occlusion query is supported.
+	primitiveID             = 0x0000_0000_0000_8000, ///PrimitiveID is available in fragment shader.
+	rendererMultithreaded   = 0x0000_0000_0001_0000, ///Renderer is on separate thread.
+	swapChain               = 0x0000_0000_0002_0000, ///Multiple windows are supported.
 	textureBlit             = 0x0000_0000_0004_0000, ///Texture blit is supported.
-	transparentBackbuffer   = 0x0000_0000_0008_0000, ///Transparent back buffer supported.
+	textureCompareLEqual    = 0x0000_0000_0008_0000, ///Texture compare less equal mode is supported.
 	textureCompareReserved  = 0x0000_0000_0010_0000,
-	textureCompareLEqual    = 0x0000_0000_0020_0000, ///Texture compare less equal mode is supported.
-	textureCubeArray        = 0x0000_0000_0040_0000, ///Cubemap texture array is supported.
-	textureDirectAccess     = 0x0000_0000_0080_0000, ///CPU direct access to GPU texture memory.
-	textureReadBack         = 0x0000_0000_0100_0000, ///Read-back texture is supported.
-	vertexAttribHalf        = 0x0000_0000_0200_0000, ///Vertex attribute half-float is supported.
-	vertexAttribUint10      = 0x0000_0000_0400_0000, ///Vertex attribute 10_10_10_2 is supported.
-	vertexID                = 0x0000_0000_0800_0000, ///Rendering with VertexID only is supported.
-	primitiveID             = 0x0000_0000_1000_0000, ///PrimitiveID is available in fragment shader.
-	viewportLayerArray      = 0x0000_0000_2000_0000, ///Viewport layer is available in vertex shader.
-	drawIndirectCount       = 0x0000_0000_4000_0000, ///Draw indirect with indirect count is supported.
-	textureCompareAll       = 0x0000_0000_0030_0000, ///All texture compare modes are supported.
+	textureCubeArray        = 0x0000_0000_0020_0000, ///Cubemap texture array is supported.
+	textureDirectAccess     = 0x0000_0000_0040_0000, ///CPU direct access to GPU texture memory.
+	textureReadBack         = 0x0000_0000_0080_0000, ///Read-back texture is supported.
+	texture2DArray          = 0x0000_0000_0100_0000, ///2D texture array is supported.
+	texture3D               = 0x0000_0000_0200_0000, ///3D textures are supported.
+	transparentBackbuffer   = 0x0000_0000_0400_0000, ///Transparent back buffer supported.
+	vertexAttribHalf        = 0x0000_0000_0800_0000, ///Vertex attribute half-float is supported.
+	vertexAttribUint10      = 0x0000_0000_1000_0000, ///Vertex attribute 10_10_10_2 is supported.
+	vertexID                = 0x0000_0000_2000_0000, ///Rendering with VertexID only is supported.
+	viewportLayerArray      = 0x0000_0000_4000_0000, ///Viewport layer is available in vertex shader.
+	textureCompareAll       = 0x0000_0000_0018_0000, ///All texture compare modes are supported.
 }
 
 alias CapsFormat_ = uint;

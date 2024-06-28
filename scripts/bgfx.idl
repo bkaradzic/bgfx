@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(127)
+version(128)
 
 typedef "bool"
 typedef "char"
@@ -370,6 +370,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.Compute                --- Compute shaders are supported.
 	.ConservativeRaster     --- Conservative rasterization is supported.
 	.DrawIndirect           --- Draw indirect is supported.
+	.DrawIndirectCount      --- Draw indirect with indirect count is supported.
 	.FragmentDepth          --- Fragment depth is available in fragment shader.
 	.FragmentOrdering       --- Fragment ordering is available in fragment shader.
 	.GraphicsDebugger       --- Graphics debugger is present.
@@ -379,23 +380,23 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.Index32                --- 32-bit indices are supported.
 	.Instancing             --- Instancing is supported.
 	.OcclusionQuery         --- Occlusion query is supported.
+	.PrimitiveId            --- PrimitiveID is available in fragment shader.
 	.RendererMultithreaded  --- Renderer is on separate thread.
 	.SwapChain              --- Multiple windows are supported.
-	.Texture_2dArray        --- 2D texture array is supported.
-	.Texture_3d             --- 3D textures are supported.
 	.TextureBlit            --- Texture blit is supported.
-	.TransparentBackbuffer  --- Transparent back buffer supported.
-	.TextureCompareReserved
 	.TextureCompareLequal   --- Texture compare less equal mode is supported.
+	.TextureCompareReserved
 	.TextureCubeArray       --- Cubemap texture array is supported.
 	.TextureDirectAccess    --- CPU direct access to GPU texture memory.
 	.TextureReadBack        --- Read-back texture is supported.
+	.Texture_2dArray        --- 2D texture array is supported.
+	.Texture_3d             --- 3D textures are supported.
+	.TransparentBackbuffer  --- Transparent back buffer supported.
 	.VertexAttribHalf       --- Vertex attribute half-float is supported.
 	.VertexAttribUint10     --- Vertex attribute 10_10_10_2 is supported.
 	.VertexId               --- Rendering with VertexID only is supported.
-	.PrimitiveId            --- PrimitiveID is available in fragment shader.
 	.ViewportLayerArray     --- Viewport layer is available in vertex shader.
-	.DrawIndirectCount      --- Draw indirect with indirect count is supported.
+
 	.TextureCompareAll      --- All texture compare modes are supported.
 	 { "TextureCompareReserved", "TextureCompareLequal" }
 	()

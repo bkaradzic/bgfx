@@ -641,84 +641,84 @@ pub const CapsFlags_ConservativeRaster: CapsFlags     = 0x0000000000000008;
 /// Draw indirect is supported.
 pub const CapsFlags_DrawIndirect: CapsFlags           = 0x0000000000000010;
 
+/// Draw indirect with indirect count is supported.
+pub const CapsFlags_DrawIndirectCount: CapsFlags      = 0x0000000000000020;
+
 /// Fragment depth is available in fragment shader.
-pub const CapsFlags_FragmentDepth: CapsFlags          = 0x0000000000000020;
+pub const CapsFlags_FragmentDepth: CapsFlags          = 0x0000000000000040;
 
 /// Fragment ordering is available in fragment shader.
-pub const CapsFlags_FragmentOrdering: CapsFlags       = 0x0000000000000040;
+pub const CapsFlags_FragmentOrdering: CapsFlags       = 0x0000000000000080;
 
 /// Graphics debugger is present.
-pub const CapsFlags_GraphicsDebugger: CapsFlags       = 0x0000000000000080;
+pub const CapsFlags_GraphicsDebugger: CapsFlags       = 0x0000000000000100;
 
 /// HDR10 rendering is supported.
-pub const CapsFlags_Hdr10: CapsFlags                  = 0x0000000000000100;
+pub const CapsFlags_Hdr10: CapsFlags                  = 0x0000000000000200;
 
 /// HiDPI rendering is supported.
-pub const CapsFlags_Hidpi: CapsFlags                  = 0x0000000000000200;
+pub const CapsFlags_Hidpi: CapsFlags                  = 0x0000000000000400;
 
 /// Image Read/Write is supported.
-pub const CapsFlags_ImageRw: CapsFlags                = 0x0000000000000400;
+pub const CapsFlags_ImageRw: CapsFlags                = 0x0000000000000800;
 
 /// 32-bit indices are supported.
-pub const CapsFlags_Index32: CapsFlags                = 0x0000000000000800;
+pub const CapsFlags_Index32: CapsFlags                = 0x0000000000001000;
 
 /// Instancing is supported.
-pub const CapsFlags_Instancing: CapsFlags             = 0x0000000000001000;
+pub const CapsFlags_Instancing: CapsFlags             = 0x0000000000002000;
 
 /// Occlusion query is supported.
-pub const CapsFlags_OcclusionQuery: CapsFlags         = 0x0000000000002000;
+pub const CapsFlags_OcclusionQuery: CapsFlags         = 0x0000000000004000;
+
+/// PrimitiveID is available in fragment shader.
+pub const CapsFlags_PrimitiveId: CapsFlags            = 0x0000000000008000;
 
 /// Renderer is on separate thread.
-pub const CapsFlags_RendererMultithreaded: CapsFlags  = 0x0000000000004000;
+pub const CapsFlags_RendererMultithreaded: CapsFlags  = 0x0000000000010000;
 
 /// Multiple windows are supported.
-pub const CapsFlags_SwapChain: CapsFlags              = 0x0000000000008000;
-
-/// 2D texture array is supported.
-pub const CapsFlags_Texture2DArray: CapsFlags         = 0x0000000000010000;
-
-/// 3D textures are supported.
-pub const CapsFlags_Texture3D: CapsFlags              = 0x0000000000020000;
+pub const CapsFlags_SwapChain: CapsFlags              = 0x0000000000020000;
 
 /// Texture blit is supported.
 pub const CapsFlags_TextureBlit: CapsFlags            = 0x0000000000040000;
 
-/// Transparent back buffer supported.
-pub const CapsFlags_TransparentBackbuffer: CapsFlags  = 0x0000000000080000;
+/// Texture compare less equal mode is supported.
+pub const CapsFlags_TextureCompareLequal: CapsFlags   = 0x0000000000080000;
 pub const CapsFlags_TextureCompareReserved: CapsFlags = 0x0000000000100000;
 
-/// Texture compare less equal mode is supported.
-pub const CapsFlags_TextureCompareLequal: CapsFlags   = 0x0000000000200000;
-
 /// Cubemap texture array is supported.
-pub const CapsFlags_TextureCubeArray: CapsFlags       = 0x0000000000400000;
+pub const CapsFlags_TextureCubeArray: CapsFlags       = 0x0000000000200000;
 
 /// CPU direct access to GPU texture memory.
-pub const CapsFlags_TextureDirectAccess: CapsFlags    = 0x0000000000800000;
+pub const CapsFlags_TextureDirectAccess: CapsFlags    = 0x0000000000400000;
 
 /// Read-back texture is supported.
-pub const CapsFlags_TextureReadBack: CapsFlags        = 0x0000000001000000;
+pub const CapsFlags_TextureReadBack: CapsFlags        = 0x0000000000800000;
+
+/// 2D texture array is supported.
+pub const CapsFlags_Texture2DArray: CapsFlags         = 0x0000000001000000;
+
+/// 3D textures are supported.
+pub const CapsFlags_Texture3D: CapsFlags              = 0x0000000002000000;
+
+/// Transparent back buffer supported.
+pub const CapsFlags_TransparentBackbuffer: CapsFlags  = 0x0000000004000000;
 
 /// Vertex attribute half-float is supported.
-pub const CapsFlags_VertexAttribHalf: CapsFlags       = 0x0000000002000000;
+pub const CapsFlags_VertexAttribHalf: CapsFlags       = 0x0000000008000000;
 
 /// Vertex attribute 10_10_10_2 is supported.
-pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000004000000;
+pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000010000000;
 
 /// Rendering with VertexID only is supported.
-pub const CapsFlags_VertexId: CapsFlags               = 0x0000000008000000;
-
-/// PrimitiveID is available in fragment shader.
-pub const CapsFlags_PrimitiveId: CapsFlags            = 0x0000000010000000;
+pub const CapsFlags_VertexId: CapsFlags               = 0x0000000020000000;
 
 /// Viewport layer is available in vertex shader.
-pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000020000000;
-
-/// Draw indirect with indirect count is supported.
-pub const CapsFlags_DrawIndirectCount: CapsFlags      = 0x0000000040000000;
+pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000040000000;
 
 /// All texture compare modes are supported.
-pub const CapsFlags_TextureCompareAll: CapsFlags      = 0x0000000000300000;
+pub const CapsFlags_TextureCompareAll: CapsFlags      = 0x0000000000180000;
 
 pub const CapsFormatFlags = u32;
 /// Texture format is not supported.
