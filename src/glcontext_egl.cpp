@@ -181,12 +181,12 @@ EGL_IMPORT
 #	endif // BX_PLATFORM_WINDOWS
 
 			m_display = eglGetDisplay(ndt);
-			BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display %p", m_display);
+			BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create EGL display %p", m_display);
 
 			EGLint major = 0;
 			EGLint minor = 0;
 			EGLBoolean success = eglInitialize(m_display, &major, &minor);
-			BGFX_FATAL(success && major >= 1 && minor >= 3, Fatal::UnableToInitialize, "Failed to initialize %d.%d", major, minor);
+			BGFX_FATAL(success && major >= 1 && minor >= 3, Fatal::UnableToInitialize, "Failed to initialize EGL %d.%d", major, minor);
 
 			BX_TRACE("EGL info:");
 			const char* clientApis = eglQueryString(m_display, EGL_CLIENT_APIS);
