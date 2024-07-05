@@ -641,6 +641,16 @@ target="_blank"><img src="http://img.youtube.com/vi/SoTNhVPzmC8/0.jpg"
 alt="Rotwood"
 width="640" height="480" border="0" /></a>
 
+## Cubzh
+
+https://app.cu.bzh/ - Cubzh is a User Generated Social Universe, an online
+platform where all items, avatars, games, and experiences are made by users
+from the community.
+
+Source: https://github.com/cubzh/cubzh
+
+![Cubzh screenshot](https://camo.githubusercontent.com/154159f42f526cc87357d24419133d99d8996ee2a16513ae5b5d31bd7e06bc5d/68747470733a2f2f6672616d657275736572636f6e74656e742e636f6d2f696d616765732f4957384c7147575239496e696b7542534a6c5a664578647631412e77656270)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
