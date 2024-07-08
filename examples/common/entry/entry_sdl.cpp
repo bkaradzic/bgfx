@@ -217,22 +217,6 @@ namespace entry
 			{
 				_eventQueue.postAxisEvent(_handle, _gamepad, _axis, _value);
 
-				if (Key::None != s_axisDpad[_axis].first)
-				{
-					if (_value == 0)
-					{
-						_eventQueue.postKeyEvent(_handle, s_axisDpad[_axis].first,  0, false);
-						_eventQueue.postKeyEvent(_handle, s_axisDpad[_axis].second, 0, false);
-					}
-					else
-					{
-						_eventQueue.postKeyEvent(_handle
-								, 0 > _value ? s_axisDpad[_axis].first : s_axisDpad[_axis].second
-								, 0
-								, true
-								);
-					}
-				}
 			}
 		}
 
@@ -702,16 +686,14 @@ namespace entry
 						}
 						break;
 
+					// Ignore Joystick events. Example's Gamepad concept mirrors SDL Game Controller.
+					// Game Controllers are higher level wrapper around Joystick and both events come through.
+					// Respond to only the controller events. Controller events are properly remapped.
 					case SDL_JOYAXISMOTION:
-						{
-							const SDL_JoyAxisEvent& jev = event.jaxis;
-							GamepadHandle handle = findGamepad(jev.which);
-							if (isValid(handle) )
-							{
-								GamepadAxis::Enum axis = translateGamepadAxis(jev.axis);
-								m_gamepad[handle.idx].update(m_eventQueue, defaultWindow, handle, axis, jev.value);
-							}
-						}
+					case SDL_JOYBUTTONDOWN:
+					case SDL_JOYBUTTONUP:
+					case SDL_JOYDEVICEADDED:
+					case SDL_JOYDEVICEREMOVED:
 						break;
 
 					case SDL_CONTROLLERAXISMOTION:
@@ -722,23 +704,6 @@ namespace entry
 							{
 								GamepadAxis::Enum axis = translateGamepadAxis(aev.axis);
 								m_gamepad[handle.idx].update(m_eventQueue, defaultWindow, handle, axis, aev.value);
-							}
-						}
-						break;
-
-					case SDL_JOYBUTTONDOWN:
-					case SDL_JOYBUTTONUP:
-						{
-							const SDL_JoyButtonEvent& bev = event.jbutton;
-							GamepadHandle handle = findGamepad(bev.which);
-
-							if (isValid(handle) )
-							{
-								Key::Enum key = translateGamepad(bev.button);
-								if (Key::Count != key)
-								{
-									m_eventQueue.postKeyEvent(defaultWindow, key, 0, event.type == SDL_JOYBUTTONDOWN);
-								}
 							}
 						}
 						break;
@@ -755,31 +720,6 @@ namespace entry
 								{
 									m_eventQueue.postKeyEvent(defaultWindow, key, 0, event.type == SDL_CONTROLLERBUTTONDOWN);
 								}
-							}
-						}
-						break;
-
-					case SDL_JOYDEVICEADDED:
-						{
-							GamepadHandle handle = { m_gamepadAlloc.alloc() };
-							if (isValid(handle) )
-							{
-								const SDL_JoyDeviceEvent& jev = event.jdevice;
-								m_gamepad[handle.idx].create(jev);
-								m_eventQueue.postGamepadEvent(defaultWindow, handle, true);
-							}
-						}
-						break;
-
-					case SDL_JOYDEVICEREMOVED:
-						{
-							const SDL_JoyDeviceEvent& jev = event.jdevice;
-							GamepadHandle handle = findGamepad(jev.which);
-							if (isValid(handle) )
-							{
-								m_gamepad[handle.idx].destroy();
-								m_gamepadAlloc.free(handle.idx);
-								m_eventQueue.postGamepadEvent(defaultWindow, handle, false);
 							}
 						}
 						break;
@@ -1164,7 +1104,7 @@ namespace entry
 	{
 		SDL_SysWMinfo wmi;
 		SDL_VERSION(&wmi.version);
-		if (!SDL_GetWindowWMInfo(s_ctx.m_window[kDefaultWindowHandle], &wmi) )
+		if (!SDL_GetWindowWMInfo(s_ctx.m_window[kDefaultWindowHandle.idx], &wmi) )
 		{
 			return bgfx::NativeWindowHandleType::Default;
 		}
