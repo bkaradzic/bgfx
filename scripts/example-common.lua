@@ -38,6 +38,10 @@ project ("example-common")
 		path.join(BGFX_DIR, "examples/common/**.h"),
 	}
 
+	defines {
+		"USE_ENTRY=1",
+	}
+
 	using_bx()
 
 	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-gnm"),
