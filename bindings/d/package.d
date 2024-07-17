@@ -163,12 +163,12 @@ enum StencilFuncRef: StencilFuncRef_{
 StencilFuncRef_ toStencilFuncRef(uint v) nothrow @nogc pure @safe{ return (v << StencilFuncRef.shift) & StencilFuncRef.mask; }
 
 ///Set stencil rmask value.
-alias StencilFuncRmask_ = uint;
-enum StencilFuncRmask: StencilFuncRmask_{
+alias StencilFuncRMask_ = uint;
+enum StencilFuncRMask: StencilFuncRMask_{
 	shift  = 8,
 	mask   = 0x0000_FF00,
 }
-StencilFuncRmask_ toStencilFuncRmask(uint v) nothrow @nogc pure @safe{ return (v << StencilFuncRmask.shift) & StencilFuncRmask.mask; }
+StencilFuncRMask_ toStencilFuncRMask(uint v) nothrow @nogc pure @safe{ return (v << StencilFuncRMask.shift) & StencilFuncRMask.mask; }
 
 alias Stencil_ = uint;
 enum Stencil: Stencil_{
