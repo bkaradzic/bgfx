@@ -433,6 +433,9 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 #ifndef __MAC_OS_X_VERSION_MAX_ALLOWED
 #	define __MAC_OS_X_VERSION_MAX_ALLOWED 0
 #endif
+#ifndef __VISION_OS_VERSION_MAX_ALLOWED
+#	define __VISION_OS_VERSION_MAX_ALLOWED 0
+#endif
 
 #ifndef BX_XCODE_15
 #	define BX_XCODE_15 (0                          \
@@ -462,11 +465,10 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 	)
 #endif // BX_XCODE_12
 
-#if BX_XCODE_15
+#if __VISION_OS_VERSION_MAX_ALLOWED >= 10000
 #	define VISION_OS_MINIMUM visionOS 1.0,
 #else
 #	define VISION_OS_MINIMUM
-#	warning "XCode 15 is required for visionOS"
 #endif
 
 #define SHADER_FUNCTION_NAME "xlatMtlMain"
