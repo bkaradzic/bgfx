@@ -533,6 +533,13 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 				, TextureFormat::Unknown
 				, TextureFormat::UnknownDepth
 				);
+		
+#if BX_PLATFORM_VISIONOS
+			m_deviceAnchor = ar_device_anchor_create();
+			m_worldTracking = ar_world_tracking_provider_create(ar_world_tracking_configuration_create());
+			m_arSession = ar_session_create();
+			ar_session_run(m_arSession, ar_data_providers_create_with_data_providers(m_worldTracking, nil));
+#endif
 			m_numWindows = 1;
 
 #if BX_PLATFORM_VISIONOS
@@ -908,6 +915,13 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			MTL_RELEASE(m_vertexDescriptor);
 			MTL_RELEASE(m_textureDescriptor);
 			MTL_RELEASE(m_samplerDescriptor);
+		
+#if BX_PLATFORM_VISIONOS
+			ar_session_stop(m_arSession);
+			MTL_RELEASE(m_arSession);
+			MTL_RELEASE(m_worldTracking);
+			MTL_RELEASE(m_deviceAnchor);
+#endif
 
 			m_mainFrameBuffer.destroy();
 
@@ -1454,6 +1468,19 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			return false;
 		}
 
+#if BX_PLATFORM_VISIONOS
+		void createPoseForTiming(cp_frame_timing_t timing, ar_world_tracking_provider_t world_tracking)
+		{
+			cp_time_t presentationTime = cp_frame_timing_get_presentation_time(timing);
+			CFTimeInterval queryTime = cp_time_to_cf_time_interval(presentationTime);
+			ar_device_anchor_query_status_t status = ar_world_tracking_provider_query_device_anchor_at_timestamp(world_tracking, queryTime, m_deviceAnchor);
+			if (status != ar_device_anchor_query_status_success)
+			{
+				BX_WARN(false, "Device anchor query failed.")
+			}
+		}
+#endif
+		
 		void flip() override
 		{
 			if (NULL == m_commandBuffer)
@@ -1472,6 +1499,12 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 					if (NULL != frameBuffer.m_swapChain->m_drawable)
 					{
 #if BX_PLATFORM_VISIONOS
+						if (m_worldTracking != NULL)
+						{
+							auto timingInfo = cp_drawable_get_frame_timing(frameBuffer.m_swapChain->m_drawable);
+							createPoseForTiming(timingInfo, m_worldTracking);
+							cp_drawable_set_device_anchor(frameBuffer.m_swapChain->m_drawable, m_deviceAnchor);
+						}
 						cp_drawable_encode_present(frameBuffer.m_swapChain->m_drawable, m_commandBuffer);
 						cp_frame_end_submission(frameBuffer.m_swapChain->m_frame);
 #else
@@ -2708,6 +2741,11 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 		Resolution m_resolution;
 		void* m_capture;
 		uint32_t m_captureSize;
+#if BX_PLATFORM_VISIONOS
+		ar_session_t m_arSession;
+		ar_world_tracking_provider_t m_worldTracking;
+		ar_device_anchor_t m_deviceAnchor;
+#endif
 
 		// descriptors
 		RenderPipelineDescriptor m_renderPipelineDescriptor;
