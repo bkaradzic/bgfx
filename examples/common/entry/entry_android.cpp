@@ -189,9 +189,10 @@ namespace entry
 
 			while (0 == m_app->destroyRequested)
 			{
-				int32_t num;
 				android_poll_source* source;
-				/*int32_t id =*/ ALooper_pollAll(-1, NULL, &num, (void**)&source);
+				int32_t result = ALooper_pollOnce(-1, NULL, NULL, reinterpret_cast<void**>(&source));
+
+				BX_ASSERT(ALOOPER_POLL_ERROR != result, "ALooper_pollOnce returned an error.");
 
 				if (NULL != source)
 				{
