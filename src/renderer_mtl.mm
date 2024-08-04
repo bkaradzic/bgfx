@@ -3457,11 +3457,12 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 
 	SwapChainMtl::~SwapChainMtl()
 	{
-		MTL_RELEASE(m_metalLayer);
 #if BX_PLATFORM_VISIONOS
 		MTL_RELEASE(m_layerRenderer);
-#endif // BX_PLATFORM_VISIONOS
+#else
+		MTL_RELEASE(m_metalLayer);
 		MTL_RELEASE(m_drawable);
+#endif // BX_PLATFORM_VISIONOS
 
 		MTL_RELEASE(m_drawableTexture);
 
