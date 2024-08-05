@@ -11,7 +11,7 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/CAEAGLLayer.h>
 
-#if __IPHONE_8_0 && !TARGET_IPHONE_SIMULATOR  // check if sdk/target supports metal
+#if __IPHONE_13_0 // From iOS 13 Simulators support metal
 #   import <Metal/Metal.h>
 #   import <QuartzCore/CAMetalLayer.h>
 #   define HAS_METAL_SDK

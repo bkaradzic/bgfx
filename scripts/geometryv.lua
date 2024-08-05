@@ -175,7 +175,7 @@ project ("geometryv")
 			"-framework UIKit",
 		}
 
-	configuration { "xcode4", "ios" }
+	configuration { "xcode*", "ios" }
 		kind "WindowedApp"
 
 	configuration { "qnx*" }
