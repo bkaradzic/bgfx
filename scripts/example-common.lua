@@ -95,6 +95,18 @@ project ("example-common")
 			path.join(BGFX_DIR, "examples/common/**.mm"),
 		}
 
+	configuration { "xros*" }
+		files {
+			path.join(BGFX_DIR, "examples/common/**.swift"),
+			path.join(BGFX_DIR, "examples/common/**.hpp"),
+			path.join(BGFX_DIR, "examples/common/**.modulemap"),
+		}
+		xcodeprojectopts {
+			SWIFT_VERSION = "5.0",
+			SWIFT_OBJC_BRIDGING_HEADER = path.join(BGFX_DIR, "examples/common/entry/swift_adapter.h"),
+			SWIFT_OBJC_INTEROP_MODE = "objcxx",
+		}
+
 	configuration { "winstore* or durango"}
 		files {
 			path.join(BGFX_DIR, "examples/common/**.cx"),
