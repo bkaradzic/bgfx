@@ -4801,13 +4801,13 @@ namespace bgfx
 			result &= bx::isAlphaNum(*ptr) || '_' == *ptr;
 		}
 
-		BGFX_ERROR_CHECK(false
-			|| result
-			, _err
-			, BGFX_ERROR_IDENTIFIER_VALIDATION
-			, "Identifier contains invalid characters. Identifier must be the alphabet character, number, or underscore."
-			, ""
-			);
+		// BGFX_ERROR_CHECK(false
+		// 	|| result
+		// 	, _err
+		// 	, BGFX_ERROR_IDENTIFIER_VALIDATION
+		// 	, "Identifier contains invalid characters. Identifier must be the alphabet character, number, or underscore."
+		// 	, ""
+		// 	);
 	}
 
 	void calcTextureSize(TextureInfo& _info, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format)
