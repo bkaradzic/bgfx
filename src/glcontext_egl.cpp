@@ -71,6 +71,7 @@ namespace bgfx { namespace gl
 	EGL_IMPORT_FUNC(PFNEGLGETPROCADDRESSPROC,       eglGetProcAddress);       \
 	EGL_IMPORT_FUNC(PFNEGLINITIALIZEPROC,           eglInitialize);           \
 	EGL_IMPORT_FUNC(PFNEGLMAKECURRENTPROC,          eglMakeCurrent);          \
+	EGL_IMPORT_FUNC(PFNEGLRELEASETHREADPROC,        eglReleaseThread);        \
 	EGL_IMPORT_FUNC(PFNEGLSWAPBUFFERSPROC,          eglSwapBuffers);          \
 	EGL_IMPORT_FUNC(PFNEGLSWAPINTERVALPROC,         eglSwapInterval);         \
 	EGL_IMPORT_FUNC(PFNEGLTERMINATEPROC,            eglTerminate);            \
@@ -433,6 +434,7 @@ EGL_IMPORT
 			m_context = NULL;
 		}
 
+		EGL_CHECK(eglReleaseThread() );
 		eglClose(m_eglLibrary);
 
 #	if BX_PLATFORM_RPI
