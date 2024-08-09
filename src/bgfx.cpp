@@ -1413,7 +1413,6 @@ namespace bgfx
 			viewRemap[m_viewRemap[ii] ] = ViewId(ii);
 
 			View& view = m_view[ii];
-			Rect rect(0, 0, uint16_t(m_resolution.width), uint16_t(m_resolution.height) );
 
 			if (isValid(view.m_fbh) )
 			{
@@ -1425,20 +1424,17 @@ namespace bgfx
 
 				if (BackbufferRatio::Count != bbRatio)
 				{
+                    Rect rect(0, 0, uint16_t(m_resolution.width), uint16_t(m_resolution.height) );
+
 					getTextureSizeFromRatio(bbRatio, rect.m_width, rect.m_height);
-				}
-				else
-				{
-					rect.m_width  = fbr.m_width;
-					rect.m_height = fbr.m_height;
-				}
-			}
 
-			view.m_rect.intersect(rect);
+                    view.m_rect.intersect(rect);
 
-			if (!view.m_scissor.isZero() )
-			{
-				view.m_scissor.intersect(rect);
+                    if (!view.m_scissor.isZero() )
+                    {
+                        view.m_scissor.intersect(rect);
+                    }
+				}
 			}
 		}
 
