@@ -546,9 +546,9 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			m_numWindows = 1;
 
 #if BX_PLATFORM_VISIONOS
-			if ((m_mainFrameBuffer.m_swapChain->m_useLayerRenderer
-				&& NULL == m_mainFrameBuffer.m_swapChain->m_layerRenderer)
-				|| NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer)
+			bool useLayerRenderer = m_mainFrameBuffer.m_swapChain->m_useLayerRenderer;
+			if ((useLayerRenderer && NULL == m_mainFrameBuffer.m_swapChain->m_layerRenderer)
+				|| (!useLayerRenderer && NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer))
 #else
 			if (NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer)
 #endif // BX_PLATFORM_VISIONOS
