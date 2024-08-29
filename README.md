@@ -659,7 +659,7 @@ the stunning followup to the multi-award winning World of Goo.
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=q3XVl53Ajsk" 
 target="_blank"><img src="http://img.youtube.com/vi/q3XVl53Ajsk/0.jpg" 
-alt="Rotwood"
+alt="World Of Goo 2"
 width="640" height="480" border="0" /></a>
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
