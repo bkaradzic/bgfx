@@ -858,9 +858,9 @@ namespace bgfx { namespace d3d12
 									{
 										debug1->SetEnableSynchronizedCommandQueueValidation(false);
 									}
-								}
 
-								DX_RELEASE(debug1, 1);
+									DX_RELEASE(debug1, 1);
+								}
 							}
 #endif // BX_PLATFORM_WINDOWS
 						}
