@@ -397,6 +397,7 @@ public:
     void samplerCheck(const TSourceLoc&, const TType&, const TString& identifier, TIntermTyped* initializer);
     void atomicUintCheck(const TSourceLoc&, const TType&, const TString& identifier);
     void accStructCheck(const TSourceLoc & loc, const TType & type, const TString & identifier);
+    void hitObjectNVCheck(const TSourceLoc & loc, const TType & type, const TString & identifier);
     void transparentOpaqueCheck(const TSourceLoc&, const TType&, const TString& identifier);
     void memberQualifierCheck(glslang::TPublicType&);
     void globalQualifierFixCheck(const TSourceLoc&, TQualifier&, bool isMemberCheck = false, const TPublicType* publicType = nullptr);

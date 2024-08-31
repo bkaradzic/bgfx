@@ -44,6 +44,7 @@
 
 #include "SpvTools.h"
 #include "spirv-tools/optimizer.hpp"
+#include "glslang/MachineIndependent/localintermediate.h"
 
 namespace glslang {
 
@@ -218,9 +219,20 @@ void SpirvToolsTransform(const glslang::TIntermediate& intermediate, std::vector
     optimizer.RegisterPass(spvtools::CreateCFGCleanupPass());
 
     spvtools::OptimizerOptions spvOptOptions;
+    if (options->optimizerAllowExpandedIDBound)
+        spvOptOptions.set_max_id_bound(0x3FFFFFFF);
     optimizer.SetTargetEnv(MapToSpirvToolsEnv(intermediate.getSpv(), logger));
     spvOptOptions.set_run_validator(false); // The validator may run as a separate step later on
     optimizer.Run(spirv.data(), spirv.size(), &spirv, spvOptOptions);
+
+    if (options->optimizerAllowExpandedIDBound) {
+        if (spirv.size() > 3 && spirv[3] > kDefaultMaxIdBound) {
+            spvtools::Optimizer optimizer2(target_env);
+            optimizer2.SetMessageConsumer(OptimizerMesssageConsumer);
+            optimizer2.RegisterPass(spvtools::CreateCompactIdsPass());
+            optimizer2.Run(spirv.data(), spirv.size(), &spirv, spvOptOptions);
+        }
+    }
 }
 
 bool SpirvToolsAnalyzeDeadOutputStores(spv_target_env target_env, std::vector<unsigned int>& spirv,

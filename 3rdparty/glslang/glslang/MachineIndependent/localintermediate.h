@@ -99,7 +99,8 @@ private:
 // A "call" is a pair: <caller, callee>.
 // There can be duplicates. General assumption is the list is small.
 struct TCall {
-    TCall(const TString& pCaller, const TString& pCallee) : caller(pCaller), callee(pCallee) { }
+    TCall(const TString& pCaller, const TString& pCallee)
+        : caller(pCaller), callee(pCallee), visited(false), currentPath(false), errorGiven(false) { }
     TString caller;
     TString callee;
     bool visited;
@@ -123,8 +124,8 @@ struct TRange {
 // within the same location range, component range, and index value.  Locations don't alias unless
 // all other dimensions of their range overlap.
 struct TIoRange {
-    TIoRange(TRange location, TRange component, TBasicType basicType, int index, bool centroid, bool smooth, bool flat)
-        : location(location), component(component), basicType(basicType), index(index), centroid(centroid), smooth(smooth), flat(flat)
+    TIoRange(TRange location, TRange component, TBasicType basicType, int index, bool centroid, bool smooth, bool flat, bool sample, bool patch)
+        : location(location), component(component), basicType(basicType), index(index), centroid(centroid), smooth(smooth), flat(flat), sample(sample), patch(patch)
     {
     }
     bool overlap(const TIoRange& rhs) const
@@ -138,6 +139,8 @@ struct TIoRange {
     bool centroid;
     bool smooth;
     bool flat;
+    bool sample;
+    bool patch;
 };
 
 // An offset range is a 2-D rectangle; the set of (binding, offset) pairs all lying
