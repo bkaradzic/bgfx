@@ -383,6 +383,7 @@ static const unsigned char* decodeVertexBlock(const unsigned char* data, const u
 	unsigned char transposed[kVertexBlockSizeBytes];
 
 	size_t vertex_count_aligned = (vertex_count + kByteGroupSize - 1) & ~(kByteGroupSize - 1);
+	assert(vertex_count <= vertex_count_aligned);
 
 	for (size_t k = 0; k < vertex_size; ++k)
 	{
@@ -1246,3 +1247,4 @@ int meshopt_decodeVertexBuffer(void* destination, size_t vertex_count, size_t ve
 #undef SIMD_WASM
 #undef SIMD_FALLBACK
 #undef SIMD_TARGET
+#undef SIMD_LATENCYOPT
