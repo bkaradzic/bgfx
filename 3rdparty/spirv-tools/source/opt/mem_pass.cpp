@@ -43,6 +43,8 @@ bool MemPass::IsBaseTargetType(const Instruction* typeInst) const {
     case spv::Op::OpTypeSampler:
     case spv::Op::OpTypeSampledImage:
     case spv::Op::OpTypePointer:
+    case spv::Op::OpTypeCooperativeMatrixNV:
+    case spv::Op::OpTypeCooperativeMatrixKHR:
       return true;
     default:
       break;

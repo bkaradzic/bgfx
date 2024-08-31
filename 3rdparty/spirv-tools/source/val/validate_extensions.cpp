@@ -2962,11 +2962,37 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
                  << "expected operand Format to be a pointer";
         }
 
-        if (format_storage_class != spv::StorageClass::UniformConstant) {
-          return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                 << ext_inst_name() << ": "
-                 << "expected Format storage class to be UniformConstant";
+        if (_.HasExtension(
+                Extension::kSPV_EXT_relaxed_printf_string_address_space)) {
+          if (format_storage_class != spv::StorageClass::UniformConstant &&
+              // Extension SPV_EXT_relaxed_printf_string_address_space allows
+              // format strings in Global, Local, Private and Generic address
+              // spaces
+
+              // Global
+              format_storage_class != spv::StorageClass::CrossWorkgroup &&
+              // Local
+              format_storage_class != spv::StorageClass::Workgroup &&
+              // Private
+              format_storage_class != spv::StorageClass::Function &&
+              // Generic
+              format_storage_class != spv::StorageClass::Generic) {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << ext_inst_name() << ": "
+                   << "expected Format storage class to be UniformConstant, "
+                      "Crossworkgroup, Workgroup, Function, or Generic";
+          }
+        } else {
+          if (format_storage_class != spv::StorageClass::UniformConstant) {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << ext_inst_name() << ": "
+                   << "expected Format storage class to be UniformConstant";
+          }
         }
+
+        // If pointer points to an array, get the type of an element
+        if (_.IsIntArrayType(format_data_type))
+          format_data_type = _.GetComponentType(format_data_type);
 
         if (!_.IsIntScalarType(format_data_type) ||
             _.GetBitWidth(format_data_type) != 8) {

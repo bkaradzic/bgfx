@@ -31,11 +31,14 @@ bool IsDecorationBinding(Instruction* inst) {
 
 Pass::Status DescriptorScalarReplacement::Process() {
   bool modified = false;
-
   std::vector<Instruction*> vars_to_kill;
 
   for (Instruction& var : context()->types_values()) {
-    if (descsroautil::IsDescriptorArray(context(), &var)) {
+    bool is_candidate =
+        flatten_arrays_ && descsroautil::IsDescriptorArray(context(), &var);
+    is_candidate |= flatten_composites_ &&
+                    descsroautil::IsDescriptorStruct(context(), &var);
+    if (is_candidate) {
       modified = true;
       if (!ReplaceCandidate(&var)) {
         return Status::Failure;

@@ -751,6 +751,8 @@ void CopyPropagateArrays::UpdateUses(Instruction* original_ptr_inst,
           uint32_t pointee_type_id =
               pointer_type->GetSingleWordInOperand(kTypePointerPointeeInIdx);
           uint32_t copy = GenerateCopy(original_ptr_inst, pointee_type_id, use);
+          assert(copy != 0 &&
+                 "Should not be updating uses unless we know it can be done.");
 
           context()->ForgetUses(use);
           use->SetInOperand(index, {copy});

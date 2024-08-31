@@ -827,14 +827,19 @@ Optimizer::PassToken CreateReplaceDescArrayAccessUsingVarIndexPass();
 
 // Create descriptor scalar replacement pass.
 // This pass replaces every array variable |desc| that has a DescriptorSet and
-// Binding decorations with a new variable for each element of the array.
-// Suppose |desc| was bound at binding |b|.  Then the variable corresponding to
-// |desc[i]| will have binding |b+i|.  The descriptor set will be the same.  It
-// is assumed that no other variable already has a binding that will used by one
-// of the new variables.  If not, the pass will generate invalid Spir-V.  All
-// accesses to |desc| must be OpAccessChain instructions with a literal index
-// for the first index.
+// Binding decorations with a new variable for each element of the
+// array/composite. Suppose |desc| was bound at binding |b|.  Then the variable
+// corresponding to |desc[i]| will have binding |b+i|.  The descriptor set will
+// be the same.  It is assumed that no other variable already has a binding that
+// will used by one of the new variables.  If not, the pass will generate
+// invalid Spir-V.  All accesses to |desc| must be OpAccessChain instructions
+// with a literal index for the first index. This variant flattens both
+// composites and arrays.
 Optimizer::PassToken CreateDescriptorScalarReplacementPass();
+// This variant flattens only composites.
+Optimizer::PassToken CreateDescriptorCompositeScalarReplacementPass();
+// This variant flattens only arrays.
+Optimizer::PassToken CreateDescriptorArrayScalarReplacementPass();
 
 // Create a pass to replace each OpKill instruction with a function call to a
 // function that has a single OpKill.  Also replace each OpTerminateInvocation

@@ -183,7 +183,44 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst) {
       if (!_.GetPointerTypeInfo(pointer_type, &data_type, &storage_class)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << spvOpcodeString(opcode)
-               << ": expected Pointer to be of type OpTypePointer";
+               << ": expected Pointer to be a pointer type";
+      }
+
+      // If the pointer is an untyped pointer, get the data type elsewhere.
+      if (data_type == 0) {
+        switch (opcode) {
+          case spv::Op::OpAtomicLoad:
+          case spv::Op::OpAtomicExchange:
+          case spv::Op::OpAtomicFAddEXT:
+          case spv::Op::OpAtomicCompareExchange:
+          case spv::Op::OpAtomicCompareExchangeWeak:
+          case spv::Op::OpAtomicIIncrement:
+          case spv::Op::OpAtomicIDecrement:
+          case spv::Op::OpAtomicIAdd:
+          case spv::Op::OpAtomicISub:
+          case spv::Op::OpAtomicSMin:
+          case spv::Op::OpAtomicUMin:
+          case spv::Op::OpAtomicFMinEXT:
+          case spv::Op::OpAtomicSMax:
+          case spv::Op::OpAtomicUMax:
+          case spv::Op::OpAtomicFMaxEXT:
+          case spv::Op::OpAtomicAnd:
+          case spv::Op::OpAtomicOr:
+          case spv::Op::OpAtomicXor:
+            data_type = inst->type_id();
+            break;
+          case spv::Op::OpAtomicFlagTestAndSet:
+          case spv::Op::OpAtomicFlagClear:
+            return _.diag(SPV_ERROR_INVALID_ID, inst)
+                   << "Untyped pointers are not supported by atomic flag "
+                      "instructions";
+            break;
+          case spv::Op::OpAtomicStore:
+            data_type = _.FindDef(inst->GetOperandAs<uint32_t>(3))->type_id();
+            break;
+          default:
+            break;
+        }
       }
 
       // Can't use result_type because OpAtomicStore doesn't have a result
