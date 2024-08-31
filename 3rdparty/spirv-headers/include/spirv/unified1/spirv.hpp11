@@ -377,6 +377,7 @@ enum class ImageChannelDataType : unsigned {
     UnormInt101010_2 = 16,
     UnsignedIntRaw10EXT = 19,
     UnsignedIntRaw12EXT = 20,
+    UnormInt2_101010EXT = 21,
     Max = 0x7fffffff,
 };
 
@@ -1075,6 +1076,7 @@ enum class Capability : unsigned {
     RoundingModeRTZ = 4468,
     RayQueryProvisionalKHR = 4471,
     RayQueryKHR = 4472,
+    UntypedPointersKHR = 4473,
     RayTraversalPrimitiveCullingKHR = 4478,
     RayTracingKHR = 4479,
     TextureSampleWeightedQCOM = 4484,
@@ -1228,6 +1230,7 @@ enum class Capability : unsigned {
     FPGAArgumentInterfacesINTEL = 6174,
     GlobalVariableHostAccessINTEL = 6187,
     GlobalVariableFPGADecorationsINTEL = 6189,
+    SubgroupBufferPrefetchINTEL = 6220,
     GroupUniformArithmeticKHR = 6400,
     MaskedGatherScatterINTEL = 6427,
     CacheControlsINTEL = 6441,
@@ -1417,6 +1420,10 @@ enum class RawAccessChainOperandsMask : unsigned {
     MaskNone = 0,
     RobustnessPerComponentNV = 0x00000001,
     RobustnessPerElementNV = 0x00000002,
+};
+
+enum class FPEncoding : unsigned {
+    Max = 0x7fffffff,
 };
 
 enum class Op : unsigned {
@@ -1768,8 +1775,16 @@ enum class Op : unsigned {
     OpDepthAttachmentReadEXT = 4161,
     OpStencilAttachmentReadEXT = 4162,
     OpTerminateInvocation = 4416,
+    OpTypeUntypedPointerKHR = 4417,
+    OpUntypedVariableKHR = 4418,
+    OpUntypedAccessChainKHR = 4419,
+    OpUntypedInBoundsAccessChainKHR = 4420,
     OpSubgroupBallotKHR = 4421,
     OpSubgroupFirstInvocationKHR = 4422,
+    OpUntypedPtrAccessChainKHR = 4423,
+    OpUntypedInBoundsPtrAccessChainKHR = 4424,
+    OpUntypedArrayLengthKHR = 4425,
+    OpUntypedPrefetchKHR = 4426,
     OpSubgroupAllKHR = 4428,
     OpSubgroupAnyKHR = 4429,
     OpSubgroupAllEqualKHR = 4430,
@@ -2147,6 +2162,7 @@ enum class Op : unsigned {
     OpConvertBF16ToFINTEL = 6117,
     OpControlBarrierArriveINTEL = 6142,
     OpControlBarrierWaitINTEL = 6143,
+    OpSubgroupBlockPrefetchINTEL = 6221,
     OpGroupIMulKHR = 6401,
     OpGroupFMulKHR = 6402,
     OpGroupBitwiseAndKHR = 6403,
@@ -2516,8 +2532,16 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpDepthAttachmentReadEXT: *hasResult = true; *hasResultType = true; break;
     case Op::OpStencilAttachmentReadEXT: *hasResult = true; *hasResultType = true; break;
     case Op::OpTerminateInvocation: *hasResult = false; *hasResultType = false; break;
+    case Op::OpTypeUntypedPointerKHR: *hasResult = true; *hasResultType = false; break;
+    case Op::OpUntypedVariableKHR: *hasResult = true; *hasResultType = true; break;
+    case Op::OpUntypedAccessChainKHR: *hasResult = true; *hasResultType = true; break;
+    case Op::OpUntypedInBoundsAccessChainKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupBallotKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupFirstInvocationKHR: *hasResult = true; *hasResultType = true; break;
+    case Op::OpUntypedPtrAccessChainKHR: *hasResult = true; *hasResultType = true; break;
+    case Op::OpUntypedInBoundsPtrAccessChainKHR: *hasResult = true; *hasResultType = true; break;
+    case Op::OpUntypedArrayLengthKHR: *hasResult = true; *hasResultType = true; break;
+    case Op::OpUntypedPrefetchKHR: *hasResult = false; *hasResultType = false; break;
     case Op::OpSubgroupAllKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupAnyKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupAllEqualKHR: *hasResult = true; *hasResultType = true; break;
@@ -2884,6 +2908,7 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpConvertBF16ToFINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpControlBarrierArriveINTEL: *hasResult = false; *hasResultType = false; break;
     case Op::OpControlBarrierWaitINTEL: *hasResult = false; *hasResultType = false; break;
+    case Op::OpSubgroupBlockPrefetchINTEL: *hasResult = false; *hasResultType = false; break;
     case Op::OpGroupIMulKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpGroupFMulKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpGroupBitwiseAndKHR: *hasResult = true; *hasResultType = true; break;
@@ -3218,6 +3243,7 @@ inline const char* ImageChannelDataTypeToString(ImageChannelDataType value) {
     case ImageChannelDataTypeUnormInt101010_2: return "UnormInt101010_2";
     case ImageChannelDataTypeUnsignedIntRaw10EXT: return "UnsignedIntRaw10EXT";
     case ImageChannelDataTypeUnsignedIntRaw12EXT: return "UnsignedIntRaw12EXT";
+    case ImageChannelDataTypeUnormInt2_101010EXT: return "UnormInt2_101010EXT";
     default: return "Unknown";
     }
 }
@@ -3670,6 +3696,7 @@ inline const char* CapabilityToString(Capability value) {
     case CapabilityRoundingModeRTZ: return "RoundingModeRTZ";
     case CapabilityRayQueryProvisionalKHR: return "RayQueryProvisionalKHR";
     case CapabilityRayQueryKHR: return "RayQueryKHR";
+    case CapabilityUntypedPointersKHR: return "UntypedPointersKHR";
     case CapabilityRayTraversalPrimitiveCullingKHR: return "RayTraversalPrimitiveCullingKHR";
     case CapabilityRayTracingKHR: return "RayTracingKHR";
     case CapabilityTextureSampleWeightedQCOM: return "TextureSampleWeightedQCOM";
@@ -3800,6 +3827,7 @@ inline const char* CapabilityToString(Capability value) {
     case CapabilityFPGAArgumentInterfacesINTEL: return "FPGAArgumentInterfacesINTEL";
     case CapabilityGlobalVariableHostAccessINTEL: return "GlobalVariableHostAccessINTEL";
     case CapabilityGlobalVariableFPGADecorationsINTEL: return "GlobalVariableFPGADecorationsINTEL";
+    case CapabilitySubgroupBufferPrefetchINTEL: return "SubgroupBufferPrefetchINTEL";
     case CapabilityGroupUniformArithmeticKHR: return "GroupUniformArithmeticKHR";
     case CapabilityMaskedGatherScatterINTEL: return "MaskedGatherScatterINTEL";
     case CapabilityCacheControlsINTEL: return "CacheControlsINTEL";
@@ -3941,6 +3969,12 @@ inline const char* StoreCacheControlToString(StoreCacheControl value) {
 inline const char* NamedMaximumNumberOfRegistersToString(NamedMaximumNumberOfRegisters value) {
     switch (value) {
     case NamedMaximumNumberOfRegistersAutoINTEL: return "AutoINTEL";
+    default: return "Unknown";
+    }
+}
+
+inline const char* FPEncodingToString(FPEncoding value) {
+    switch (value) {
     default: return "Unknown";
     }
 }
@@ -4295,8 +4329,16 @@ inline const char* OpToString(Op value) {
     case OpDepthAttachmentReadEXT: return "OpDepthAttachmentReadEXT";
     case OpStencilAttachmentReadEXT: return "OpStencilAttachmentReadEXT";
     case OpTerminateInvocation: return "OpTerminateInvocation";
+    case OpTypeUntypedPointerKHR: return "OpTypeUntypedPointerKHR";
+    case OpUntypedVariableKHR: return "OpUntypedVariableKHR";
+    case OpUntypedAccessChainKHR: return "OpUntypedAccessChainKHR";
+    case OpUntypedInBoundsAccessChainKHR: return "OpUntypedInBoundsAccessChainKHR";
     case OpSubgroupBallotKHR: return "OpSubgroupBallotKHR";
     case OpSubgroupFirstInvocationKHR: return "OpSubgroupFirstInvocationKHR";
+    case OpUntypedPtrAccessChainKHR: return "OpUntypedPtrAccessChainKHR";
+    case OpUntypedInBoundsPtrAccessChainKHR: return "OpUntypedInBoundsPtrAccessChainKHR";
+    case OpUntypedArrayLengthKHR: return "OpUntypedArrayLengthKHR";
+    case OpUntypedPrefetchKHR: return "OpUntypedPrefetchKHR";
     case OpSubgroupAllKHR: return "OpSubgroupAllKHR";
     case OpSubgroupAnyKHR: return "OpSubgroupAnyKHR";
     case OpSubgroupAllEqualKHR: return "OpSubgroupAllEqualKHR";
@@ -4663,6 +4705,7 @@ inline const char* OpToString(Op value) {
     case OpConvertBF16ToFINTEL: return "OpConvertBF16ToFINTEL";
     case OpControlBarrierArriveINTEL: return "OpControlBarrierArriveINTEL";
     case OpControlBarrierWaitINTEL: return "OpControlBarrierWaitINTEL";
+    case OpSubgroupBlockPrefetchINTEL: return "OpSubgroupBlockPrefetchINTEL";
     case OpGroupIMulKHR: return "OpGroupIMulKHR";
     case OpGroupFMulKHR: return "OpGroupFMulKHR";
     case OpGroupBitwiseAndKHR: return "OpGroupBitwiseAndKHR";
