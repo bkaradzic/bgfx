@@ -38,6 +38,7 @@
 #define _COMPILER_INTERFACE_INCLUDED_
 
 #include "../Include/ResourceLimits.h"
+#include "../Include/visibility.h"
 #include "../MachineIndependent/Versions.h"
 
 #include <cstring>
@@ -47,22 +48,6 @@
     #define C_DECL __cdecl
 #else
     #define C_DECL
-#endif
-
-#ifdef GLSLANG_IS_SHARED_LIBRARY
-    #ifdef _WIN32
-        #ifdef GLSLANG_EXPORTING
-            #define GLSLANG_EXPORT __declspec(dllexport)
-        #else
-            #define GLSLANG_EXPORT __declspec(dllimport)
-        #endif
-    #elif __GNUC__ >= 4
-        #define GLSLANG_EXPORT __attribute__((visibility("default")))
-    #endif
-#endif // GLSLANG_IS_SHARED_LIBRARY
-
-#ifndef GLSLANG_EXPORT
-#define GLSLANG_EXPORT
 #endif
 
 //
@@ -270,6 +255,7 @@ enum EShMessages : unsigned {
     EShMsgBuiltinSymbolTable   = (1 << 14), // print the builtin symbol table
     EShMsgEnhanced             = (1 << 15), // enhanced message readability
     EShMsgAbsolutePath         = (1 << 16), // Output Absolute path for messages
+    EShMsgDisplayErrorColumn   = (1 << 17), // Display error message column aswell as line
     LAST_ELEMENT_MARKER(EShMsgCount),
 };
 
@@ -508,6 +494,9 @@ public:
     GLSLANG_EXPORT void setGlobalUniformBinding(unsigned int binding);
     GLSLANG_EXPORT void setAtomicCounterBlockSet(unsigned int set);
     GLSLANG_EXPORT void setAtomicCounterBlockBinding(unsigned int binding);
+
+    GLSLANG_EXPORT void addSourceText(const char* text, size_t len);
+    GLSLANG_EXPORT void setSourceFile(const char* file);
 
     // For setting up the environment (cleared to nothingness in the constructor).
     // These must be called so that parsing is done for the right source language and

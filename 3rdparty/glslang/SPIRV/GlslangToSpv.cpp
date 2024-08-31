@@ -4372,7 +4372,14 @@ spv::Id TGlslangToSpvTraverser::createSpvVariable(const glslang::TIntermSymbol* 
         initializer = builder.makeNullConstant(spvType);
     }
 
-    return builder.createVariable(spv::NoPrecision, storageClass, spvType, name, initializer, false);
+    spv::Id var = builder.createVariable(spv::NoPrecision, storageClass, spvType, name, initializer, false);
+    std::vector<spv::Decoration> topLevelDecorations;
+    glslang::TQualifier typeQualifier = node->getType().getQualifier();
+    TranslateMemoryDecoration(typeQualifier, topLevelDecorations, glslangIntermediate->usingVulkanMemoryModel());
+    for (auto deco : topLevelDecorations) {
+        builder.addDecoration(var, deco);
+    }
+    return var;
 }
 
 // Return type Id of the sampled type.
@@ -5404,13 +5411,16 @@ void TGlslangToSpvTraverser::updateMemberOffset(const glslang::TType& structType
             memberAlignment = componentAlignment;
 
         // Don't add unnecessary padding after this member
-        if (memberType.isMatrix()) {
-            if (matrixLayout == glslang::ElmRowMajor)
-                memberSize -= componentSize * (4 - memberType.getMatrixCols());
-            else
-                memberSize -= componentSize * (4 - memberType.getMatrixRows());
-        } else if (memberType.isArray())
-            memberSize -= componentSize * (4 - memberType.getVectorSize());
+        // (undo std140 bumping size to a mutliple of vec4)
+        if (explicitLayout == glslang::ElpStd140) {
+            if (memberType.isMatrix()) {
+                if (matrixLayout == glslang::ElmRowMajor)
+                    memberSize -= componentSize * (4 - memberType.getMatrixCols());
+                else
+                    memberSize -= componentSize * (4 - memberType.getMatrixRows());
+            } else if (memberType.isArray())
+                memberSize -= componentSize * (4 - memberType.getVectorSize());
+        }
     }
 
     // Bump up to member alignment
@@ -5518,12 +5528,16 @@ void TGlslangToSpvTraverser::makeFunctions(const glslang::TIntermSequence& glslF
         glslang::TIntermAggregate* glslFunction = glslFunctions[f]->getAsAggregate();
         if (! glslFunction || glslFunction->getOp() != glslang::EOpFunction)
             continue;
+
+        builder.setDebugSourceLocation(glslFunction->getLoc().line, glslFunction->getLoc().getFilename());
+
         if (isShaderEntryPoint(glslFunction)) {
+            // For HLSL, the entry function is actually a compiler generated function to resolve the difference of
+            // entry function signature between HLSL and SPIR-V. So we don't emit debug information for that.
             if (glslangIntermediate->getSource() != glslang::EShSourceHlsl) {
-                builder.setupDebugFunctionEntry(shaderEntry, glslangIntermediate->getEntryPointMangledName().c_str(),
-                                                glslFunction->getLoc().line,
-                                                std::vector<spv::Id>(), // main function has no param
-                                                std::vector<char const*>());
+                builder.setupFunctionDebugInfo(shaderEntry, glslangIntermediate->getEntryPointMangledName().c_str(),
+                                               std::vector<spv::Id>(), // main function has no param
+                                               std::vector<char const*>());
             }
             continue;
         }
@@ -5576,8 +5590,7 @@ void TGlslangToSpvTraverser::makeFunctions(const glslang::TIntermSequence& glslF
             TranslatePrecisionDecoration(glslFunction->getType()), convertGlslangToSpvType(glslFunction->getType()),
             glslFunction->getName().c_str(), convertGlslangLinkageToSpv(glslFunction->getLinkType()), paramTypes,
             paramDecorations, &functionBlock);
-        builder.setupDebugFunctionEntry(function, glslFunction->getName().c_str(), glslFunction->getLoc().line,
-                                        paramTypes, paramNames);
+        builder.setupFunctionDebugInfo(function, glslFunction->getName().c_str(), paramTypes, paramNames);
         if (implicitThis)
             function->setImplicitThis();
 
@@ -6440,6 +6453,9 @@ spv::Id TGlslangToSpvTraverser::handleUserFunctionCall(const glslang::TIntermAgg
             rValues.push_back(accessChainLoad(*argTypes.back()));
         }
     }
+
+    // Reset source location to the function call location after argument evaluation
+    builder.setDebugSourceLocation(node->getLoc().line, node->getLoc().getFilename());
 
     // 2. Allocate space for anything needing a copy, and if it's "in" or "inout"
     // copy the original into that space.

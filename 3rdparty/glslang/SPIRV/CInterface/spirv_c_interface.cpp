@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "glslang/Include/glslang_c_interface.h"
 
+#include <cstring>
+#include "glslang/Public/ShaderLang.h"
 #include "SPIRV/GlslangToSpv.h"
 #include "SPIRV/Logger.h"
 #include "SPIRV/SpvTools.h"
