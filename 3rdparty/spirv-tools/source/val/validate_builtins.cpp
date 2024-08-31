@@ -97,11 +97,15 @@ spv_result_t GetUnderlyingType(ValidationState_t& _,
 spv::StorageClass GetStorageClass(const Instruction& inst) {
   switch (inst.opcode()) {
     case spv::Op::OpTypePointer:
+    case spv::Op::OpTypeUntypedPointerKHR:
     case spv::Op::OpTypeForwardPointer: {
       return spv::StorageClass(inst.word(2));
     }
     case spv::Op::OpVariable: {
       return spv::StorageClass(inst.word(3));
+    }
+    case spv::Op::OpUntypedVariableKHR: {
+      return spv::StorageClass(inst.word(4));
     }
     case spv::Op::OpGenericCastToPtrExplicit: {
       return spv::StorageClass(inst.word(4));

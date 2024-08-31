@@ -250,7 +250,8 @@ spv_result_t ValidateReturnValue(ValidationState_t& _,
   }
 
   if (_.addressing_model() == spv::AddressingModel::Logical &&
-      spv::Op::OpTypePointer == value_type->opcode() &&
+      (spv::Op::OpTypePointer == value_type->opcode() ||
+       spv::Op::OpTypeUntypedPointerKHR == value_type->opcode()) &&
       !_.features().variable_pointers && !_.options()->relax_logical_pointer) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpReturnValue value's type <id> "

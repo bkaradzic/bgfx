@@ -117,6 +117,15 @@ spv_result_t ValidateAdjacency(ValidationState_t& _) {
                     "first instructions in the first block.";
         }
         break;
+      case spv::Op::OpUntypedVariableKHR:
+        if (inst.GetOperandAs<spv::StorageClass>(2) ==
+                spv::StorageClass::Function &&
+            adjacency_status != IN_ENTRY_BLOCK) {
+          return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                 << "All OpUntypedVariableKHR instructions in a function must "
+                    "be the first instructions in the first block.";
+        }
+        break;
       default:
         adjacency_status = PHI_AND_VAR_INVALID;
         break;
