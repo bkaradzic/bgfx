@@ -136,6 +136,7 @@ local capsRepl = {
 	decrsat = "decrSat", incrsat = "incrSat", revsub = "revSub",
 	linestrip = "lineStrip", tristrip = "triStrip",
 	bstencil = "bStencil", fstencil = "fStencil",
+	Rmask = "RMask",
 }
 
 local function abbrevsToUpper(name)
