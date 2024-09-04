@@ -503,7 +503,7 @@ static float rescalePositions(Vector3* result, const float* vertex_positions_dat
 	return extent;
 }
 
-static void rescaleAttributes(float* result, const float* vertex_attributes_data, size_t vertex_count, size_t vertex_attributes_stride, const float* attribute_weights, size_t attribute_count, const unsigned int* sparse_remap)
+static void rescaleAttributes(float* result, const float* vertex_attributes_data, size_t vertex_count, size_t vertex_attributes_stride, const float* attribute_weights, size_t attribute_count, const unsigned int* attribute_remap, const unsigned int* sparse_remap)
 {
 	size_t vertex_attributes_stride_float = vertex_attributes_stride / sizeof(float);
 
@@ -513,14 +513,15 @@ static void rescaleAttributes(float* result, const float* vertex_attributes_data
 
 		for (size_t k = 0; k < attribute_count; ++k)
 		{
-			float a = vertex_attributes_data[ri * vertex_attributes_stride_float + k];
+			unsigned int rk = attribute_remap[k];
+			float a = vertex_attributes_data[ri * vertex_attributes_stride_float + rk];
 
-			result[i * attribute_count + k] = a * attribute_weights[k];
+			result[i * attribute_count + k] = a * attribute_weights[rk];
 		}
 	}
 }
 
-static const size_t kMaxAttributes = 16;
+static const size_t kMaxAttributes = 32;
 
 struct Quadric
 {
@@ -597,7 +598,7 @@ static void quadricAdd(QuadricGrad* G, const QuadricGrad* R, size_t attribute_co
 	}
 }
 
-static float quadricError(const Quadric& Q, const Vector3& v)
+static float quadricEval(const Quadric& Q, const Vector3& v)
 {
 	float rx = Q.b0;
 	float ry = Q.b1;
@@ -620,6 +621,12 @@ static float quadricError(const Quadric& Q, const Vector3& v)
 	r += ry * v.y;
 	r += rz * v.z;
 
+	return r;
+}
+
+static float quadricError(const Quadric& Q, const Vector3& v)
+{
+	float r = quadricEval(Q, v);
 	float s = Q.w == 0.f ? 0.f : 1.f / Q.w;
 
 	return fabsf(r) * s;
@@ -627,26 +634,7 @@ static float quadricError(const Quadric& Q, const Vector3& v)
 
 static float quadricError(const Quadric& Q, const QuadricGrad* G, size_t attribute_count, const Vector3& v, const float* va)
 {
-	float rx = Q.b0;
-	float ry = Q.b1;
-	float rz = Q.b2;
-
-	rx += Q.a10 * v.y;
-	ry += Q.a21 * v.z;
-	rz += Q.a20 * v.x;
-
-	rx *= 2;
-	ry *= 2;
-	rz *= 2;
-
-	rx += Q.a00 * v.x;
-	ry += Q.a11 * v.y;
-	rz += Q.a22 * v.z;
-
-	float r = Q.c;
-	r += rx * v.x;
-	r += ry * v.y;
-	r += rz * v.z;
+	float r = quadricEval(Q, v);
 
 	// see quadricFromAttributes for general derivation; here we need to add the parts of (eval(pos) - attr)^2 that depend on attr
 	for (size_t k = 0; k < attribute_count; ++k)
@@ -654,14 +642,11 @@ static float quadricError(const Quadric& Q, const QuadricGrad* G, size_t attribu
 		float a = va[k];
 		float g = v.x * G[k].gx + v.y * G[k].gy + v.z * G[k].gz + G[k].gw;
 
-		r += a * a * Q.w;
-		r -= 2 * a * g;
+		r += a * (a * Q.w - 2 * g);
 	}
 
-	// TODO: weight normalization is breaking attribute error somehow
-	float s = 1; // Q.w == 0.f ? 0.f : 1.f / Q.w;
-
-	return fabsf(r) * s;
+	// note: unlike position error, we do not normalize by Q.w to retain edge scaling as described in quadricFromAttributes
+	return fabsf(r);
 }
 
 static void quadricFromPlane(Quadric& Q, float a, float b, float c, float d, float w)
@@ -702,20 +687,24 @@ static void quadricFromTriangle(Quadric& Q, const Vector3& p0, const Vector3& p1
 static void quadricFromTriangleEdge(Quadric& Q, const Vector3& p0, const Vector3& p1, const Vector3& p2, float weight)
 {
 	Vector3 p10 = {p1.x - p0.x, p1.y - p0.y, p1.z - p0.z};
-	float length = normalize(p10);
 
-	// p20p = length of projection of p2-p0 onto normalize(p1 - p0)
+	// edge length; keep squared length around for projection correction
+	float lengthsq = p10.x * p10.x + p10.y * p10.y + p10.z * p10.z;
+	float length = sqrtf(lengthsq);
+
+	// p20p = length of projection of p2-p0 onto p1-p0; note that p10 is unnormalized so we need to correct it later
 	Vector3 p20 = {p2.x - p0.x, p2.y - p0.y, p2.z - p0.z};
 	float p20p = p20.x * p10.x + p20.y * p10.y + p20.z * p10.z;
 
-	// normal = altitude of triangle from point p2 onto edge p1-p0
-	Vector3 normal = {p20.x - p10.x * p20p, p20.y - p10.y * p20p, p20.z - p10.z * p20p};
-	normalize(normal);
+	// perp = perpendicular vector from p2 to line segment p1-p0
+	// note: since p10 is unnormalized we need to correct the projection; we scale p20 instead to take advantage of normalize below
+	Vector3 perp = {p20.x * lengthsq - p10.x * p20p, p20.y * lengthsq - p10.y * p20p, p20.z * lengthsq - p10.z * p20p};
+	normalize(perp);
 
-	float distance = normal.x * p0.x + normal.y * p0.y + normal.z * p0.z;
+	float distance = perp.x * p0.x + perp.y * p0.y + perp.z * p0.z;
 
 	// note: the weight is scaled linearly with edge length; this has to match the triangle weight
-	quadricFromPlane(Q, normal.x, normal.y, normal.z, -distance, length * weight);
+	quadricFromPlane(Q, perp.x, perp.y, perp.z, -distance, length * weight);
 }
 
 static void quadricFromAttributes(Quadric& Q, QuadricGrad* G, const Vector3& p0, const Vector3& p1, const Vector3& p2, const float* va0, const float* va1, const float* va2, size_t attribute_count)
@@ -728,16 +717,21 @@ static void quadricFromAttributes(Quadric& Q, QuadricGrad* G, const Vector3& p0,
 	Vector3 p10 = {p1.x - p0.x, p1.y - p0.y, p1.z - p0.z};
 	Vector3 p20 = {p2.x - p0.x, p2.y - p0.y, p2.z - p0.z};
 
-	// weight is scaled linearly with edge length
+	// normal = cross(p1 - p0, p2 - p0)
 	Vector3 normal = {p10.y * p20.z - p10.z * p20.y, p10.z * p20.x - p10.x * p20.z, p10.x * p20.y - p10.y * p20.x};
-	float area = sqrtf(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
-	float w = sqrtf(area); // TODO this needs more experimentation
+	float area = sqrtf(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z) * 0.5f;
+
+	// quadric is weighted with the square of edge length (= area)
+	// this equalizes the units with the positional error (which, after normalization, is a square of distance)
+	// as a result, a change in weighted attribute of 1 along distance d is approximately equivalent to a change in position of d
+	float w = area;
 
 	// we compute gradients using barycentric coordinates; barycentric coordinates can be computed as follows:
 	// v = (d11 * d20 - d01 * d21) / denom
 	// w = (d00 * d21 - d01 * d20) / denom
 	// u = 1 - v - w
 	// here v0, v1 are triangle edge vectors, v2 is a vector from point to triangle corner, and dij = dot(vi, vj)
+	// note: v2 and d20/d21 can not be evaluated here as v2 is effectively an unknown variable; we need these only as variables for derivation of gradients
 	const Vector3& v0 = p10;
 	const Vector3& v1 = p20;
 	float d00 = v0.x * v0.x + v0.y * v0.y + v0.z * v0.z;
@@ -747,7 +741,7 @@ static void quadricFromAttributes(Quadric& Q, QuadricGrad* G, const Vector3& p0,
 	float denomr = denom == 0 ? 0.f : 1.f / denom;
 
 	// precompute gradient factors
-	// these are derived by directly computing derivative of eval(pos) = a0 * u + a1 * v + a2 * w and factoring out common factors that are shared between attributes
+	// these are derived by directly computing derivative of eval(pos) = a0 * u + a1 * v + a2 * w and factoring out expressions that are shared between attributes
 	float gx1 = (d11 * v0.x - d01 * v1.x) * denomr;
 	float gx2 = (d00 * v1.x - d01 * v0.x) * denomr;
 	float gy1 = (d11 * v0.y - d01 * v1.y) * denomr;
@@ -772,6 +766,7 @@ static void quadricFromAttributes(Quadric& Q, QuadricGrad* G, const Vector3& p0,
 
 		// quadric encodes (eval(pos)-attr)^2; this means that the resulting expansion needs to compute, for example, pos.x * pos.y * K
 		// since quadrics already encode factors for pos.x * pos.y, we can accumulate almost everything in basic quadric fields
+		// note: for simplicity we scale all factors by weight here instead of outside the loop
 		Q.a00 += w * (gx * gx);
 		Q.a11 += w * (gy * gy);
 		Q.a22 += w * (gz * gz);
@@ -859,7 +854,7 @@ static void fillEdgeQuadrics(Quadric* vertex_quadrics, const unsigned int* indic
 	}
 }
 
-static void fillAttributeQuadrics(Quadric* attribute_quadrics, QuadricGrad* attribute_gradients, const unsigned int* indices, size_t index_count, const Vector3* vertex_positions, const float* vertex_attributes, size_t attribute_count, const unsigned int* remap)
+static void fillAttributeQuadrics(Quadric* attribute_quadrics, QuadricGrad* attribute_gradients, const unsigned int* indices, size_t index_count, const Vector3* vertex_positions, const float* vertex_attributes, size_t attribute_count)
 {
 	for (size_t i = 0; i < index_count; i += 3)
 	{
@@ -871,14 +866,13 @@ static void fillAttributeQuadrics(Quadric* attribute_quadrics, QuadricGrad* attr
 		QuadricGrad G[kMaxAttributes];
 		quadricFromAttributes(QA, G, vertex_positions[i0], vertex_positions[i1], vertex_positions[i2], &vertex_attributes[i0 * attribute_count], &vertex_attributes[i1 * attribute_count], &vertex_attributes[i2 * attribute_count], attribute_count);
 
-		// TODO: This blends together attribute weights across attribute discontinuities, which is probably not a great idea
-		quadricAdd(attribute_quadrics[remap[i0]], QA);
-		quadricAdd(attribute_quadrics[remap[i1]], QA);
-		quadricAdd(attribute_quadrics[remap[i2]], QA);
+		quadricAdd(attribute_quadrics[i0], QA);
+		quadricAdd(attribute_quadrics[i1], QA);
+		quadricAdd(attribute_quadrics[i2], QA);
 
-		quadricAdd(&attribute_gradients[remap[i0] * attribute_count], G, attribute_count);
-		quadricAdd(&attribute_gradients[remap[i1] * attribute_count], G, attribute_count);
-		quadricAdd(&attribute_gradients[remap[i2] * attribute_count], G, attribute_count);
+		quadricAdd(&attribute_gradients[i0 * attribute_count], G, attribute_count);
+		quadricAdd(&attribute_gradients[i1 * attribute_count], G, attribute_count);
+		quadricAdd(&attribute_gradients[i2 * attribute_count], G, attribute_count);
 	}
 }
 
@@ -923,7 +917,13 @@ static bool hasTriangleFlips(const EdgeAdjacency& adjacency, const Vector3* vert
 
 		// early-out when at least one triangle flips due to a collapse
 		if (hasTriangleFlip(vertex_positions[a], vertex_positions[b], v0, v1))
+		{
+#if TRACE >= 2
+			printf("edge block %d -> %d: flip welded %d %d %d\n", i0, i1, a, i0, b);
+#endif
+
 			return true;
+		}
 	}
 
 	return false;
@@ -1026,16 +1026,31 @@ static void rankEdgeCollapses(Collapse* collapses, size_t collapse_count, const 
 		float ei = quadricError(vertex_quadrics[remap[i0]], vertex_positions[i1]);
 		float ej = quadricError(vertex_quadrics[remap[j0]], vertex_positions[j1]);
 
+#if TRACE >= 2
+		float di = ei, dj = ej;
+#endif
+
 		if (attribute_count)
 		{
-			ei += quadricError(attribute_quadrics[remap[i0]], &attribute_gradients[remap[i0] * attribute_count], attribute_count, vertex_positions[i1], &vertex_attributes[i1 * attribute_count]);
-			ej += quadricError(attribute_quadrics[remap[j0]], &attribute_gradients[remap[j0] * attribute_count], attribute_count, vertex_positions[j1], &vertex_attributes[j1 * attribute_count]);
+			// note: ideally we would evaluate max/avg of attribute errors for seam edges, but it's not clear if it's worth the extra cost
+			ei += quadricError(attribute_quadrics[i0], &attribute_gradients[i0 * attribute_count], attribute_count, vertex_positions[i1], &vertex_attributes[i1 * attribute_count]);
+			ej += quadricError(attribute_quadrics[j0], &attribute_gradients[j0 * attribute_count], attribute_count, vertex_positions[j1], &vertex_attributes[j1 * attribute_count]);
 		}
 
 		// pick edge direction with minimal error
 		c.v0 = ei <= ej ? i0 : j0;
 		c.v1 = ei <= ej ? i1 : j1;
 		c.error = ei <= ej ? ei : ej;
+
+#if TRACE >= 2
+		if (i0 == j0) // c.bidi has been overwritten
+			printf("edge eval %d -> %d: error %f (pos %f, attr %f)\n", c.v0, c.v1,
+				sqrtf(c.error), sqrtf(ei <= ej ? di : dj), sqrtf(ei <= ej ? ei - di : ej - dj));
+		else
+			printf("edge eval %d -> %d: error %f (pos %f, attr %f); reverse %f (pos %f, attr %f)\n", c.v0, c.v1,
+				sqrtf(ei <= ej ? ei : ej), sqrtf(ei <= ej ? di : dj), sqrtf(ei <= ej ? ei - di : ej - dj),
+				sqrtf(ei <= ej ? ej : ei), sqrtf(ei <= ej ? dj : di), sqrtf(ei <= ej ? ej - dj : ei - di));
+#endif
 	}
 }
 
@@ -1117,6 +1132,8 @@ static size_t performEdgeCollapses(unsigned int* collapse_remap, unsigned char* 
 		unsigned int r0 = remap[i0];
 		unsigned int r1 = remap[i1];
 
+		unsigned char kind = vertex_kind[i0];
+
 		// we don't collapse vertices that had source or target vertex involved in a collapse
 		// it's important to not move the vertices twice since it complicates the tracking/remapping logic
 		// it's important to not move other vertices towards a moved vertex to preserve error since we don't re-rank collapses mid-pass
@@ -1135,6 +1152,10 @@ static size_t performEdgeCollapses(unsigned int* collapse_remap, unsigned char* 
 			continue;
 		}
 
+#if TRACE >= 2
+		printf("edge commit %d -> %d: kind %d->%d, error %f\n", i0, i1, vertex_kind[i0], vertex_kind[i1], sqrtf(c.error));
+#endif
+
 		assert(collapse_remap[r0] == r0);
 		assert(collapse_remap[r1] == r1);
 
@@ -1142,26 +1163,35 @@ static size_t performEdgeCollapses(unsigned int* collapse_remap, unsigned char* 
 
 		if (attribute_count)
 		{
-			quadricAdd(attribute_quadrics[r1], attribute_quadrics[r0]);
-			quadricAdd(&attribute_gradients[r1 * attribute_count], &attribute_gradients[r0 * attribute_count], attribute_count);
+			quadricAdd(attribute_quadrics[i1], attribute_quadrics[i0]);
+			quadricAdd(&attribute_gradients[i1 * attribute_count], &attribute_gradients[i0 * attribute_count], attribute_count);
+
+			// note: this is intentionally missing handling for Kind_Complex; we assume that complex vertices have similar attribute values so just using the primary vertex is fine
+			if (kind == Kind_Seam)
+			{
+				// seam collapses involve two edges so we need to update attribute quadrics for both target vertices; position quadrics are shared
+				unsigned int s0 = wedge[i0], s1 = wedge[i1];
+
+				quadricAdd(attribute_quadrics[s1], attribute_quadrics[s0]);
+				quadricAdd(&attribute_gradients[s1 * attribute_count], &attribute_gradients[s0 * attribute_count], attribute_count);
+			}
 		}
 
-		if (vertex_kind[i0] == Kind_Complex)
+		if (kind == Kind_Complex)
 		{
+			// remap all vertices in the complex to the target vertex
 			unsigned int v = i0;
 
 			do
 			{
-				collapse_remap[v] = r1;
+				collapse_remap[v] = i1;
 				v = wedge[v];
 			} while (v != i0);
 		}
-		else if (vertex_kind[i0] == Kind_Seam)
+		else if (kind == Kind_Seam)
 		{
 			// remap v0 to v1 and seam pair of v0 to seam pair of v1
-			unsigned int s0 = wedge[i0];
-			unsigned int s1 = wedge[i1];
-
+			unsigned int s0 = wedge[i0], s1 = wedge[i1];
 			assert(s0 != i0 && s1 != i1);
 			assert(wedge[s0] == i0 && wedge[s1] == i1);
 
@@ -1179,7 +1209,7 @@ static size_t performEdgeCollapses(unsigned int* collapse_remap, unsigned char* 
 		collapse_locked[r1] = 1;
 
 		// border edges collapse 1 triangle, other edges collapse 2 or more
-		triangle_collapses += (vertex_kind[i0] == Kind_Border) ? 1 : 2;
+		triangle_collapses += (kind == Kind_Border) ? 1 : 2;
 		edge_collapses++;
 
 		result_error = result_error < c.error ? c.error : result_error;
@@ -1546,12 +1576,11 @@ static float interpolate(float y, float x0, float y0, float x1, float y1, float 
 
 } // namespace meshopt
 
-#ifndef NDEBUG
-// Note: this is only exposed for debug visualization purposes; do *not* use these in debug builds
-MESHOPTIMIZER_API unsigned char* meshopt_simplifyDebugKind = NULL;
-MESHOPTIMIZER_API unsigned int* meshopt_simplifyDebugLoop = NULL;
-MESHOPTIMIZER_API unsigned int* meshopt_simplifyDebugLoopBack = NULL;
-#endif
+// Note: this is only exposed for debug visualization purposes; do *not* use
+enum
+{
+	meshopt_SimplifyInternalDebug = 1 << 30
+};
 
 size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indices, size_t index_count, const float* vertex_positions_data, size_t vertex_count, size_t vertex_positions_stride, const float* vertex_attributes_data, size_t vertex_attributes_stride, const float* attribute_weights, size_t attribute_count, const unsigned char* vertex_lock, size_t target_index_count, float target_error, unsigned int options, float* out_result_error)
 {
@@ -1561,10 +1590,13 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 	assert(vertex_positions_stride >= 12 && vertex_positions_stride <= 256);
 	assert(vertex_positions_stride % sizeof(float) == 0);
 	assert(target_index_count <= index_count);
-	assert((options & ~(meshopt_SimplifyLockBorder | meshopt_SimplifySparse | meshopt_SimplifyErrorAbsolute)) == 0);
+	assert(target_error >= 0);
+	assert((options & ~(meshopt_SimplifyLockBorder | meshopt_SimplifySparse | meshopt_SimplifyErrorAbsolute | meshopt_SimplifyInternalDebug)) == 0);
 	assert(vertex_attributes_stride >= attribute_count * sizeof(float) && vertex_attributes_stride <= 256);
 	assert(vertex_attributes_stride % sizeof(float) == 0);
 	assert(attribute_count <= kMaxAttributes);
+	for (size_t i = 0; i < attribute_count; ++i)
+		assert(attribute_weights[i] >= 0);
 
 	meshopt_Allocator allocator;
 
@@ -1616,8 +1648,17 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 
 	if (attribute_count)
 	{
+		unsigned int attribute_remap[kMaxAttributes];
+
+		// remap attributes to only include ones with weight > 0 to minimize memory/compute overhead for quadrics
+		size_t attributes_used = 0;
+		for (size_t i = 0; i < attribute_count; ++i)
+			if (attribute_weights[i] > 0)
+				attribute_remap[attributes_used++] = unsigned(i);
+
+		attribute_count = attributes_used;
 		vertex_attributes = allocator.allocate<float>(vertex_count * attribute_count);
-		rescaleAttributes(vertex_attributes, vertex_attributes_data, vertex_count, vertex_attributes_stride, attribute_weights, attribute_count, sparse_remap);
+		rescaleAttributes(vertex_attributes, vertex_attributes_data, vertex_count, vertex_attributes_stride, attribute_weights, attribute_count, attribute_remap, sparse_remap);
 	}
 
 	Quadric* vertex_quadrics = allocator.allocate<Quadric>(vertex_count);
@@ -1639,7 +1680,7 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 	fillEdgeQuadrics(vertex_quadrics, result, index_count, vertex_positions, remap, vertex_kind, loop, loopback);
 
 	if (attribute_count)
-		fillAttributeQuadrics(attribute_quadrics, attribute_gradients, result, index_count, vertex_positions, vertex_attributes, attribute_count, remap);
+		fillAttributeQuadrics(attribute_quadrics, attribute_gradients, result, index_count, vertex_positions, vertex_attributes, attribute_count);
 
 #if TRACE
 	size_t pass_count = 0;
@@ -1671,6 +1712,10 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 		if (edge_collapse_count == 0)
 			break;
 
+#if TRACE
+		printf("pass %d:%c", int(pass_count++), TRACE >= 2 ? '\n' : ' ');
+#endif
+
 		rankEdgeCollapses(edge_collapses, edge_collapse_count, vertex_positions, vertex_attributes, vertex_quadrics, attribute_quadrics, attribute_gradients, attribute_count, remap);
 
 		sortEdgeCollapses(collapse_order, edge_collapses, edge_collapse_count);
@@ -1681,10 +1726,6 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 			collapse_remap[i] = unsigned(i);
 
 		memset(collapse_locked, 0, vertex_count);
-
-#if TRACE
-		printf("pass %d: ", int(pass_count++));
-#endif
 
 		size_t collapses = performEdgeCollapses(collapse_remap, collapse_locked, vertex_quadrics, attribute_quadrics, attribute_gradients, attribute_count, edge_collapses, edge_collapse_count, collapse_order, remap, wedge, vertex_kind, vertex_positions, adjacency, triangle_collapse_goal, error_limit, result_error);
 
@@ -1705,16 +1746,20 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 	printf("result: %d triangles, error: %e; total %d passes\n", int(result_count / 3), sqrtf(result_error), int(pass_count));
 #endif
 
-#ifndef NDEBUG
-	if (meshopt_simplifyDebugKind)
-		memcpy(meshopt_simplifyDebugKind, vertex_kind, vertex_count);
+	// if debug visualization data is requested, fill it instead of index data; for simplicity, this doesn't work with sparsity
+	if ((options & meshopt_SimplifyInternalDebug) && !sparse_remap)
+	{
+		assert(Kind_Count <= 8 && vertex_count < (1 << 28)); // 3 bit kind, 1 bit loop
 
-	if (meshopt_simplifyDebugLoop)
-		memcpy(meshopt_simplifyDebugLoop, loop, vertex_count * sizeof(unsigned int));
+		for (size_t i = 0; i < result_count; i += 3)
+		{
+			unsigned int a = result[i + 0], b = result[i + 1], c = result[i + 2];
 
-	if (meshopt_simplifyDebugLoopBack)
-		memcpy(meshopt_simplifyDebugLoopBack, loopback, vertex_count * sizeof(unsigned int));
-#endif
+			result[i + 0] |= (vertex_kind[a] << 28) | (unsigned(loop[a] == b || loopback[b] == a) << 31);
+			result[i + 1] |= (vertex_kind[b] << 28) | (unsigned(loop[b] == c || loopback[c] == b) << 31);
+			result[i + 2] |= (vertex_kind[c] << 28) | (unsigned(loop[c] == a || loopback[a] == c) << 31);
+		}
+	}
 
 	// convert resulting indices back into the dense space of the larger mesh
 	if (sparse_remap)

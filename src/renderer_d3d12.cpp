@@ -858,9 +858,9 @@ namespace bgfx { namespace d3d12
 									{
 										debug1->SetEnableSynchronizedCommandQueueValidation(false);
 									}
-								}
 
-								DX_RELEASE(debug1, 1);
+									DX_RELEASE(debug1, 1);
+								}
 							}
 #endif // BX_PLATFORM_WINDOWS
 						}
@@ -1101,7 +1101,7 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS13 options13; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &options13, sizeof(options13)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS13 options13; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS13, &options13, sizeof(options13)));)
 			{
 				BX_TRACE("D3D12 options 13:");
 				BX_TRACE("\tUnrestrictedBufferTextureCopyPitchSupported %d", options13.UnrestrictedBufferTextureCopyPitchSupported);
@@ -1113,7 +1113,7 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS14 options14; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &options14, sizeof(options14)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS14 options14; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS14, &options14, sizeof(options14)));)
 			{
 				BX_TRACE("D3D12 options 14:");
 				BX_TRACE("\tAdvancedTextureOpsSupported %d", options14.AdvancedTextureOpsSupported);
@@ -1122,7 +1122,7 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS15 options15; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &options15, sizeof(options15)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS15 options15; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS15, &options15, sizeof(options15)));)
 			{
 				BX_TRACE("D3D12 options 15:");
 				BX_TRACE("\tTriangleFanSupported %d", options15.TriangleFanSupported);

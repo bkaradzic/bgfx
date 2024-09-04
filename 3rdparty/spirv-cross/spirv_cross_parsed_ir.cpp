@@ -783,6 +783,8 @@ uint32_t ParsedIR::get_member_decoration(TypeID id, uint32_t index, Decoration d
 		return dec.stream;
 	case DecorationSpecId:
 		return dec.spec_id;
+	case DecorationMatrixStride:
+		return dec.matrix_stride;
 	case DecorationIndex:
 		return dec.index;
 	default:

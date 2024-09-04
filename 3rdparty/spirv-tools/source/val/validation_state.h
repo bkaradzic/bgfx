@@ -606,6 +606,7 @@ class ValidationState_t {
   bool IsFloatScalarOrVectorType(uint32_t id) const;
   bool IsFloatMatrixType(uint32_t id) const;
   bool IsIntScalarType(uint32_t id) const;
+  bool IsIntArrayType(uint32_t id) const;
   bool IsIntVectorType(uint32_t id) const;
   bool IsIntScalarOrVectorType(uint32_t id) const;
   bool IsUnsignedIntScalarType(uint32_t id) const;
@@ -647,6 +648,9 @@ class ValidationState_t {
   bool ContainsType(uint32_t id,
                     const std::function<bool(const Instruction*)>& f,
                     bool traverse_all_types = true) const;
+
+  // Returns true if |id| is type id that contains an untyped pointer.
+  bool ContainsUntypedPointer(uint32_t id) const;
 
   // Returns type_id if id has type or zero otherwise.
   uint32_t GetTypeId(uint32_t id) const;

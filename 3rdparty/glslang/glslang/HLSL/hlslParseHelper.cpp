@@ -43,8 +43,6 @@
 #include "../MachineIndependent/Scan.h"
 #include "../MachineIndependent/preprocessor/PpContext.h"
 
-#include "../OSDependent/osinclude.h"
-
 #include <algorithm>
 #include <functional>
 #include <cctype>
@@ -6059,7 +6057,7 @@ void HlslParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fn
         unaryArg = callNode.getAsUnaryNode()->getOperand();
         arg0 = unaryArg;
     }
-    const TIntermSequence& aggArgs = *argp;  // only valid when unaryArg is nullptr
+    const TIntermSequence& aggArgs = argp ? *argp : TIntermSequence();  // only valid when unaryArg is nullptr
 
     switch (callNode.getOp()) {
     case EOpTextureGather:

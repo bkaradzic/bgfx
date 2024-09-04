@@ -38,7 +38,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include "../glslang/Include/Common.h"
 
 namespace spv {
 

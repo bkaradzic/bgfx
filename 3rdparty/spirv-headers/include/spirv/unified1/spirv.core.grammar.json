@@ -27,7 +27,7 @@
   "magic_number" : "0x07230203",
   "major_version" : 1,
   "minor_version" : 6,
-  "revision" : 1,
+  "revision" : 4,
   "instruction_printing_class" : [
     {
       "tag"     : "@exclude"
@@ -330,7 +330,8 @@
       "opcode" : 22,
       "operands" : [
         { "kind" : "IdResult" },
-        { "kind" : "LiteralInteger", "name" : "'Width'" }
+        { "kind" : "LiteralInteger", "name" : "'Width'" },
+        { "kind" : "FPEncoding", "quantifier" : "?", "name" : "'Floating Point Encoding'" }
       ],
       "version": "1.0"
     },
@@ -753,7 +754,10 @@
         { "kind" : "MemoryAccess", "quantifier" : "?" },
         { "kind" : "MemoryAccess", "quantifier" : "?" }
       ],
-      "capabilities" : [ "Addresses" ],
+      "capabilities" : [
+        "Addresses",
+        "UntypedPointersKHR"
+      ],
       "version": "1.0"
     },
     {
@@ -4440,6 +4444,61 @@
       "version" : "1.6"
     },
     {
+      "opname" : "OpTypeUntypedPointerKHR",
+      "class" : "Type-Declaration",
+      "opcode" : 4417,
+      "capabilities" : [
+        "UntypedPointersKHR"
+      ],
+      "version" : "None",
+      "operands" : [
+        { "kind" : "IdResult" },
+        { "kind" : "StorageClass" }
+      ]
+    },
+    {
+      "opname" : "OpUntypedVariableKHR",
+      "class" : "Memory",
+      "opcode" : 4418,
+      "capabilities" : [ "UntypedPointersKHR" ],
+      "version" : "None",
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "StorageClass" },
+        { "kind" : "IdRef", "quantifier" : "?",  "name" : "'Data Type'" },
+        { "kind" : "IdRef", "quantifier" : "?", "name" : "'Initializer'" }
+      ]
+    },
+    {
+      "opname" : "OpUntypedAccessChainKHR",
+      "class" : "Memory",
+      "opcode" : 4419,
+      "capabilities" : [ "UntypedPointersKHR" ],
+      "version" : "None",
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",                            "name" : "'Base Type'" },
+        { "kind" : "IdRef",                            "name" : "'Base'" },
+        { "kind" : "IdRef",        "quantifier" : "*", "name" : "'Indexes'" }
+      ]
+    },
+    {
+      "opname" : "OpUntypedInBoundsAccessChainKHR",
+      "class" : "Memory",
+      "opcode" : 4420,
+      "capabilities" : [ "UntypedPointersKHR" ],
+      "version" : "None",
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",                            "name" : "'Base Type'" },
+        { "kind" : "IdRef",                            "name" : "'Base'" },
+        { "kind" : "IdRef",        "quantifier" : "*", "name" : "'Indexes'" }
+      ]
+    },
+    {
       "opname" : "OpSubgroupBallotKHR",
       "class"  : "Group",
       "opcode" : 4421,
@@ -4464,6 +4523,64 @@
       "capabilities" : [ "SubgroupBallotKHR" ],
       "extensions" : [ "SPV_KHR_shader_ballot" ],
       "version" : "None"
+    },
+    {
+      "opname" : "OpUntypedPtrAccessChainKHR",
+      "class"  : "Memory",
+      "opcode" : 4423,
+      "capabilities" : [ "UntypedPointersKHR" ],
+      "version" : "None",
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",                            "name" : "'Base Type'" },
+        { "kind" : "IdRef",                            "name" : "'Base'" },
+        { "kind" : "IdRef",                            "name" : "'Element'" },
+        { "kind" : "IdRef",        "quantifier" : "*", "name" : "'Indexes'" }
+      ]
+    },
+    {
+      "opname" : "OpUntypedInBoundsPtrAccessChainKHR",
+      "class"  : "Memory",
+      "opcode" : 4424,
+      "capabilities" : [ "UntypedPointersKHR" ],
+      "version" : "None",
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",                            "name" : "'Base Type'" },
+        { "kind" : "IdRef",                            "name" : "'Base'" },
+        { "kind" : "IdRef",                            "name" : "'Element'" },
+        { "kind" : "IdRef",        "quantifier" : "*", "name" : "'Indexes'" }
+      ]
+    },
+    {
+      "opname" : "OpUntypedArrayLengthKHR",
+      "class"  : "Memory",
+      "opcode" : 4425,
+      "capabilities" : [ "UntypedPointersKHR" ],
+      "version" : "None",
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",                            "name" : "'Structure'" },
+        { "kind" : "IdRef",                            "name" : "'Pointer'" },
+        { "kind" : "LiteralInteger",                   "name" : "'Array member'" }
+      ]
+    },
+    {
+      "opname" : "OpUntypedPrefetchKHR",
+      "class"  : "Memory",
+      "opcode" : 4426,
+      "capabilities" : [ "UntypedPointersKHR" ],
+      "version" : "None",
+      "operands" : [
+        { "kind" : "IdRef",                            "name" : "'Pointer Type'" },
+        { "kind" : "IdRef",                            "name" : "'Num Bytes'" },
+        { "kind" : "IdRef",        "quantifier" : "?", "name" : "'RW'" },
+        { "kind" : "IdRef",        "quantifier" : "?", "name" : "'Locality'" },
+        { "kind" : "IdRef",        "quantifier" : "?", "name" : "'Cache Type'" }
+      ]
     },
     {
       "opname" : "OpSubgroupAllKHR",
@@ -9804,6 +9921,18 @@
       "version" : "None"
     },
     {
+      "opname" : "OpSubgroupBlockPrefetchINTEL",
+      "class"  : "Group",
+      "opcode" : 6221,
+      "operands" : [
+        { "kind" : "IdRef", "name" : "'Ptr'" },
+        { "kind" : "IdRef", "name" : "'NumBytes'" },
+        { "kind" : "MemoryAccess", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "SubgroupBufferPrefetchINTEL" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpGroupIMulKHR",
       "class"  : "Group",
       "opcode" : 6401,
@@ -12575,6 +12704,11 @@
         {
           "enumerant" : "UnsignedIntRaw12EXT",
           "value" : 20,
+          "version": "1.0"
+        },
+        {
+          "enumerant" : "UnormInt2_101010EXT",
+          "value" : 21,
           "version": "1.0"
         }
       ]
@@ -15646,6 +15780,12 @@
           "version" : "None"
         },
         {
+          "enumerant" : "UntypedPointersKHR",
+          "value" : 4473,
+          "extensions" : [ "SPV_KHR_untyped_pointers" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "RayTraversalPrimitiveCullingKHR",
           "value" : 4478,
           "capabilities" : [ "RayQueryKHR","RayTracingKHR" ],
@@ -16616,6 +16756,12 @@
           "version" : "None"
         },
         {
+          "enumerant" : "SubgroupBufferPrefetchINTEL",
+          "value" : 6220,
+          "extensions": [ "SPV_INTEL_subgroup_buffer_prefetch" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "GroupUniformArithmeticKHR",
           "value" : 6400,
           "extensions" : [ "SPV_KHR_uniform_group_instructions"],
@@ -16895,6 +17041,12 @@
           "capabilities" : [ "RegisterLimitsINTEL" ],
           "version" : "None"
         }
+      ]
+    },
+    {
+      "category" : "ValueEnum",
+      "kind" : "FPEncoding",
+      "enumerants" : [
       ]
     },
     {

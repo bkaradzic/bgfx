@@ -1,5 +1,5 @@
 {
-  "revision" : 2,
+  "revision" : 3,
   "instructions" : [
     {
       "opname" : "Configuration",
@@ -65,7 +65,9 @@
         { "kind" : "LiteralInteger", "name" : "offset" },
         { "kind" : "LiteralInteger", "name" : "memorySize" },
         { "kind" : "LiteralInteger", "name" : "memoryType" },
-        { "kind" : "LiteralInteger", "name" : "bindOffset" }
+        { "kind" : "LiteralInteger", "name" : "bindOffset" },
+        { "kind" : "LiteralInteger", "name" : "viewFlags" },
+        { "kind" : "LiteralInteger", "name" : "viewFormat" }
       ]
     },
     {

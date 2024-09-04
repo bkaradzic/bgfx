@@ -87,6 +87,7 @@ cgltf_size cgltf_write(const cgltf_options* options, char* buffer, cgltf_size si
 #define CGLTF_EXTENSION_FLAG_MATERIALS_IRIDESCENCE (1 << 15)
 #define CGLTF_EXTENSION_FLAG_MATERIALS_ANISOTROPY (1 << 16)
 #define CGLTF_EXTENSION_FLAG_MATERIALS_DISPERSION (1 << 17)
+#define CGLTF_EXTENSION_FLAG_TEXTURE_WEBP          (1 << 18)
 
 typedef struct {
 	char* buffer;
@@ -506,7 +507,7 @@ static void cgltf_write_primitive(cgltf_write_context* context, const cgltf_prim
 			context->extension_flags |= CGLTF_EXTENSION_FLAG_DRACO_MESH_COMPRESSION;
 			if (prim->attributes_count == 0 || prim->indices == 0)
 			{
-				context->required_extension_flags |= CGLTF_EXTENSION_FLAG_DRACO_MESH_COMPRESSION;				 
+				context->required_extension_flags |= CGLTF_EXTENSION_FLAG_DRACO_MESH_COMPRESSION;
 			}
 
 			cgltf_write_line(context, "\"KHR_draco_mesh_compression\": {");
@@ -732,7 +733,7 @@ static void cgltf_write_material(cgltf_write_context* context, const cgltf_mater
 			{
 				cgltf_write_floatarrayprop(context, "attenuationColor", params->attenuation_color, 3);
 			}
-			if (params->attenuation_distance < FLT_MAX) 
+			if (params->attenuation_distance < FLT_MAX)
 			{
 				cgltf_write_floatprop(context, "attenuationDistance", params->attenuation_distance, FLT_MAX);
 			}
@@ -840,13 +841,21 @@ static void cgltf_write_texture(cgltf_write_context* context, const cgltf_textur
 	CGLTF_WRITE_IDXPROP("source", texture->image, context->data->images);
 	CGLTF_WRITE_IDXPROP("sampler", texture->sampler, context->data->samplers);
 
-	if (texture->has_basisu)
+	if (texture->has_basisu || texture->has_webp)
 	{
 		cgltf_write_line(context, "\"extensions\": {");
+		if (texture->has_basisu)
 		{
 			context->extension_flags |= CGLTF_EXTENSION_FLAG_TEXTURE_BASISU;
 			cgltf_write_line(context, "\"KHR_texture_basisu\": {");
 			CGLTF_WRITE_IDXPROP("source", texture->basisu_image, context->data->images);
+			cgltf_write_line(context, "}");
+		}
+		if (texture->has_webp)
+		{
+			context->extension_flags |= CGLTF_EXTENSION_FLAG_TEXTURE_WEBP;
+			cgltf_write_line(context, "\"EXT_texture_webp\": {");
+			CGLTF_WRITE_IDXPROP("source", texture->webp_image, context->data->images);
 			cgltf_write_line(context, "}");
 		}
 		cgltf_write_line(context, "}");
@@ -1279,6 +1288,9 @@ static void cgltf_write_extensions(cgltf_write_context* context, uint32_t extens
 	}
 	if (extension_flags & CGLTF_EXTENSION_FLAG_TEXTURE_BASISU) {
 		cgltf_write_stritem(context, "KHR_texture_basisu");
+	}
+	if (extension_flags & CGLTF_EXTENSION_FLAG_TEXTURE_WEBP) {
+		cgltf_write_stritem(context, "EXT_texture_webp");
 	}
 	if (extension_flags & CGLTF_EXTENSION_FLAG_MATERIALS_EMISSIVE_STRENGTH) {
 		cgltf_write_stritem(context, "KHR_materials_emissive_strength");

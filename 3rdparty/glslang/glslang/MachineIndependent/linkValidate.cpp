@@ -113,6 +113,28 @@ void TIntermediate::mergeUniformObjects(TInfoSink& infoSink, TIntermediate& unit
     mergeLinkerObjects(infoSink, linkerObjects, unitLinkerObjects, unit.getStage());
 }
 
+static inline bool isSameInterface(TIntermSymbol* symbol, EShLanguage stage, TIntermSymbol* unitSymbol, EShLanguage unitStage) {
+    return // 1) same stage and same shader interface
+        (stage == unitStage && symbol->getType().getShaderInterface() == unitSymbol->getType().getShaderInterface()) ||
+        // 2) accross stages and both are uniform or buffer
+        (symbol->getQualifier().storage == EvqUniform  && unitSymbol->getQualifier().storage == EvqUniform) ||
+        (symbol->getQualifier().storage == EvqBuffer   && unitSymbol->getQualifier().storage == EvqBuffer) ||
+        // 3) in/out matched across stage boundary
+        (stage < unitStage && symbol->getQualifier().storage == EvqVaryingOut  && unitSymbol->getQualifier().storage == EvqVaryingIn) ||
+        (unitStage < stage && symbol->getQualifier().storage == EvqVaryingIn && unitSymbol->getQualifier().storage == EvqVaryingOut);
+}
+
+static bool isSameSymbol(TIntermSymbol* symbol1, EShLanguage stage1, TIntermSymbol* symbol2, EShLanguage stage2) {
+    // If they are both blocks in the same shader interface,
+    // match by the block-name, not the identifier name.
+    if (symbol1->getType().getBasicType() == EbtBlock && symbol2->getType().getBasicType() == EbtBlock) {
+        if (isSameInterface(symbol1, stage1, symbol2, stage2)) {
+            return symbol1->getType().getTypeName() == symbol2->getType().getTypeName();
+        }
+    } else if (symbol1->getName() == symbol2->getName())
+        return true;
+    return false;
+}
 //
 // do error checking on the shader boundary in / out vars
 //
@@ -137,7 +159,32 @@ void TIntermediate::checkStageIO(TInfoSink& infoSink, TIntermediate& unit) {
     // do matching and error checking
     mergeLinkerObjects(infoSink, linkerObjects, unitLinkerObjects, unit.getStage());
 
-    // TODO: final check; make sure that any statically used `in` have matching `out` written to
+    // Check that all of our inputs have matching outputs from the previous stage.
+    // Only do this for Vulkan, since GL_ARB_separate_shader_objects allows for
+    // the in/out to not match
+    if (spvVersion.vulkan > 0) {
+        for (auto& nextStageInterm : unitLinkerObjects) {
+            auto* nextStageSymbol = nextStageInterm->getAsSymbolNode();
+            bool found = false;
+            for (auto& curStageInterm : linkerObjects) {
+                if (isSameSymbol(curStageInterm->getAsSymbolNode(), getStage(), nextStageSymbol, unit.getStage())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                TString errmsg;
+                errmsg.append("Input '");
+                if (nextStageSymbol->getType().getBasicType() == EbtBlock)
+                    errmsg.append(nextStageSymbol->getType().getTypeName());
+                else
+                    errmsg.append(nextStageSymbol->getName());
+                errmsg.append("' in ").append(StageName(unit.getStage()));
+                errmsg.append(" shader has no corresponding output in ").append(StageName(getStage())).append(" shader.");
+                error(infoSink, errmsg.c_str(), unit.getStage());
+            }
+        }
+    }
 }
 
 void TIntermediate::mergeCallGraphs(TInfoSink& infoSink, TIntermediate& unit)
@@ -511,17 +558,6 @@ void TIntermediate::mergeBodies(TInfoSink& infoSink, TIntermSequence& globals, c
     globals.insert(globals.end() - 1, unitGlobals.begin(), unitGlobals.end() - 1);
 }
 
-static inline bool isSameInterface(TIntermSymbol* symbol, EShLanguage stage, TIntermSymbol* unitSymbol, EShLanguage unitStage) {
-    return // 1) same stage and same shader interface
-        (stage == unitStage && symbol->getType().getShaderInterface() == unitSymbol->getType().getShaderInterface()) ||
-        // 2) accross stages and both are uniform or buffer
-        (symbol->getQualifier().storage == EvqUniform  && unitSymbol->getQualifier().storage == EvqUniform) ||
-        (symbol->getQualifier().storage == EvqBuffer   && unitSymbol->getQualifier().storage == EvqBuffer) ||
-        // 3) in/out matched across stage boundary
-        (stage < unitStage && symbol->getQualifier().storage == EvqVaryingOut  && unitSymbol->getQualifier().storage == EvqVaryingIn) ||
-        (unitStage < stage && symbol->getQualifier().storage == EvqVaryingIn && unitSymbol->getQualifier().storage == EvqVaryingOut);
-}
-
 //
 // Global Unfiform block stores any default uniforms (i.e. uniforms without a block)
 // If two linked stages declare the same member, they are meant to be the same uniform
@@ -707,24 +743,18 @@ void TIntermediate::mergeLinkerObjects(TInfoSink& infoSink, TIntermSequence& lin
     // Error check and merge the linker objects (duplicates should not be created)
     std::size_t initialNumLinkerObjects = linkerObjects.size();
     for (unsigned int unitLinkObj = 0; unitLinkObj < unitLinkerObjects.size(); ++unitLinkObj) {
+        TIntermSymbol* unitSymbol = unitLinkerObjects[unitLinkObj]->getAsSymbolNode();
         bool merge = true;
+
+        // Don't merge inputs backwards into previous stages
+        if (getStage() != unitStage && unitSymbol->getQualifier().storage == EvqVaryingIn)
+            merge = false;
+
         for (std::size_t linkObj = 0; linkObj < initialNumLinkerObjects; ++linkObj) {
             TIntermSymbol* symbol = linkerObjects[linkObj]->getAsSymbolNode();
-            TIntermSymbol* unitSymbol = unitLinkerObjects[unitLinkObj]->getAsSymbolNode();
             assert(symbol && unitSymbol);
 
-            bool isSameSymbol = false;
-            // If they are both blocks in the same shader interface,
-            // match by the block-name, not the identifier name.
-            if (symbol->getType().getBasicType() == EbtBlock && unitSymbol->getType().getBasicType() == EbtBlock) {
-                if (isSameInterface(symbol, getStage(), unitSymbol, unitStage)) {
-                    isSameSymbol = symbol->getType().getTypeName() == unitSymbol->getType().getTypeName();
-                }
-            }
-            else if (symbol->getName() == unitSymbol->getName())
-                isSameSymbol = true;
-
-            if (isSameSymbol) {
+            if (isSameSymbol(symbol, getStage(), unitSymbol, unitStage)) {
                 // filter out copy
                 merge = false;
 
@@ -1689,7 +1719,7 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
         // First range:
         TRange locationRange(qualifier.layoutLocation, qualifier.layoutLocation);
         TRange componentRange(0, 3);
-        TIoRange range(locationRange, componentRange, type.getBasicType(), 0, qualifier.centroid, qualifier.smooth, qualifier.flat);
+        TIoRange range(locationRange, componentRange, type.getBasicType(), 0, qualifier.centroid, qualifier.smooth, qualifier.flat, qualifier.sample, qualifier.patch);
 
         // check for collisions
         collision = checkLocationRange(set, range, type, typeCollision);
@@ -1699,7 +1729,7 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
             // Second range:
             TRange locationRange2(qualifier.layoutLocation + 1, qualifier.layoutLocation + 1);
             TRange componentRange2(0, 1);
-            TIoRange range2(locationRange2, componentRange2, type.getBasicType(), 0, qualifier.centroid, qualifier.smooth, qualifier.flat);
+            TIoRange range2(locationRange2, componentRange2, type.getBasicType(), 0, qualifier.centroid, qualifier.smooth, qualifier.flat, qualifier.sample, qualifier.patch);
 
             // check for collisions
             collision = checkLocationRange(set, range2, type, typeCollision);
@@ -1725,7 +1755,7 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
     TBasicType basicTy = type.getBasicType();
     if (basicTy == EbtSampler && type.getSampler().isAttachmentEXT())
         basicTy = type.getSampler().type;
-    TIoRange range(locationRange, componentRange, basicTy, qualifier.hasIndex() ? qualifier.getIndex() : 0, qualifier.centroid, qualifier.smooth, qualifier.flat);
+    TIoRange range(locationRange, componentRange, basicTy, qualifier.hasIndex() ? qualifier.getIndex() : 0, qualifier.centroid, qualifier.smooth, qualifier.flat, qualifier.sample, qualifier.patch);
 
     // check for collisions, except for vertex inputs on desktop targeting OpenGL
     if (! (!isEsProfile() && language == EShLangVertex && qualifier.isPipeInput()) || spvVersion.vulkan > 0)
@@ -1735,6 +1765,24 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
         usedIo[set].push_back(range);
 
     return collision;
+}
+
+// Check that two types can be stored in different components in the same location.
+// They must be the same type, except signed/unsigned integers are considered compatible.
+static bool checkCompatibleTypes(TBasicType t1, TBasicType t2) {
+    if (t1 != t2) {
+        if ((t1 == EbtInt8 && t2 == EbtUint8) ||
+            (t2 == EbtInt8 && t1 == EbtUint8) ||
+            (t1 == EbtInt16 && t2 == EbtUint16) ||
+            (t2 == EbtInt16 && t1 == EbtUint16)||
+            (t1 == EbtInt && t2 == EbtUint) ||
+            (t2 == EbtInt && t1 == EbtUint)||
+            (t1 == EbtInt64 && t2 == EbtUint64) ||
+            (t2 == EbtInt64 && t1 == EbtUint64)) {
+            return true;
+        }
+    }
+    return t1 == t2;
 }
 
 // Compare a new (the passed in) 'range' against the existing set, and see
@@ -1749,10 +1797,12 @@ int TIntermediate::checkLocationRange(int set, const TIoRange& range, const TTyp
             // there is a collision; pick one
             return std::max(range.location.start, usedIo[set][r].location.start);
         } else if (range.location.overlap(usedIo[set][r].location) &&
-                   (type.getBasicType() != usedIo[set][r].basicType ||
+                   (!checkCompatibleTypes(type.getBasicType(), usedIo[set][r].basicType) ||
                     type.getQualifier().centroid != usedIo[set][r].centroid ||
                     type.getQualifier().smooth != usedIo[set][r].smooth ||
-                    type.getQualifier().flat != usedIo[set][r].flat)) {
+                    type.getQualifier().flat != usedIo[set][r].flat ||
+                    type.getQualifier().sample != usedIo[set][r].sample ||
+                    type.getQualifier().patch != usedIo[set][r].patch)) {
             // aliased-type mismatch
             typeCollision = true;
             return std::max(range.location.start, usedIo[set][r].location.start);

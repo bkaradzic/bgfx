@@ -34,9 +34,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "StandAlone/DirStackFileIncluder.h"
 #include "glslang/Public/ResourceLimits.h"
+#include "glslang/Public/ShaderLang.h"
 #include "glslang/Include/ShHandle.h"
 
+#include "glslang/Include/BaseTypes.h"
 #include "glslang/Include/ResourceLimits.h"
+#include "glslang/Include/Types.h"
+#include "glslang/MachineIndependent/iomapper.h"
 #include "glslang/MachineIndependent/Versions.h"
 #include "glslang/MachineIndependent/localintermediate.h"
 
@@ -54,6 +58,7 @@ static_assert(int(GLSLANG_REFLECTION_COUNT) == EShReflectionCount, "");
 static_assert(int(GLSLANG_PROFILE_COUNT) == EProfileCount, "");
 static_assert(sizeof(glslang_limits_t) == sizeof(TLimits), "");
 static_assert(sizeof(glslang_resource_t) == sizeof(TBuiltInResource), "");
+static_assert(sizeof(glslang_version_t) == sizeof(glslang::Version), "");
 
 typedef struct glslang_shader_s {
     glslang::TShader* shader;
@@ -141,6 +146,11 @@ private:
     void* context;
 };
 
+GLSLANG_EXPORT void glslang_get_version(glslang_version_t* version)
+{
+    *reinterpret_cast<glslang::Version*>(version) = glslang::GetVersion();
+}
+
 GLSLANG_EXPORT int glslang_initialize_process() { return static_cast<int>(glslang::InitializeProcess()); }
 
 GLSLANG_EXPORT void glslang_finalize_process() { glslang::FinalizeProcess(); }
@@ -205,7 +215,9 @@ static int c_shader_messages(glslang_messages_t messages)
     CONVERT_MSG(GLSLANG_MSG_HLSL_LEGALIZATION_BIT, EShMsgHlslLegalization);
     CONVERT_MSG(GLSLANG_MSG_HLSL_DX9_COMPATIBLE_BIT, EShMsgHlslDX9Compatible);
     CONVERT_MSG(GLSLANG_MSG_BUILTIN_SYMBOL_TABLE_BIT, EShMsgBuiltinSymbolTable);
+    CONVERT_MSG(GLSLANG_MSG_ENHANCED, EShMsgEnhanced);
     CONVERT_MSG(GLSLANG_MSG_ABSOLUTE_PATH, EShMsgAbsolutePath);
+    CONVERT_MSG(GLSLANG_MSG_DISPLAY_ERROR_COLUMN, EShMsgDisplayErrorColumn);
     return res;
 #undef CONVERT_MSG
 }
@@ -368,9 +380,23 @@ GLSLANG_EXPORT void glslang_shader_set_glsl_version(glslang_shader_t* shader, in
     shader->shader->setOverrideVersion(version);
 }
 
+GLSLANG_EXPORT void glslang_shader_set_default_uniform_block_set_and_binding(glslang_shader_t* shader, unsigned int set, unsigned int binding) {
+    shader->shader->setGlobalUniformSet(set);
+    shader->shader->setGlobalUniformBinding(binding);
+}
+
+GLSLANG_EXPORT void glslang_shader_set_default_uniform_block_name(glslang_shader_t* shader, const char *name) {
+    shader->shader->setGlobalUniformBlockName(name);
+}
+
 GLSLANG_EXPORT const char* glslang_shader_get_preprocessed_code(glslang_shader_t* shader)
 {
     return shader->preprocessedGLSL.c_str();
+}
+
+GLSLANG_EXPORT void glslang_shader_set_preprocessed_code(glslang_shader_t* shader, const char* code)
+{
+    shader->preprocessedGLSL.assign(code);
 }
 
 GLSLANG_EXPORT int glslang_shader_preprocess(glslang_shader_t* shader, const glslang_input_t* input)
@@ -459,6 +485,11 @@ GLSLANG_EXPORT int glslang_program_map_io(glslang_program_t* program)
     return (int)program->program->mapIO();
 }
 
+GLSLANG_EXPORT int glslang_program_map_io_with_resolver_and_mapper(glslang_program_t* program, glslang_resolver_t* resolver, glslang_mapper_t* mapper)
+{
+    return (int)program->program->mapIO(reinterpret_cast<glslang::TDefaultGlslIoResolver*>(resolver), reinterpret_cast<glslang::TGlslIoMapper*>(mapper));
+}
+
 GLSLANG_EXPORT const char* glslang_program_get_info_log(glslang_program_t* program)
 {
     return program->program->getInfoLog();
@@ -467,4 +498,31 @@ GLSLANG_EXPORT const char* glslang_program_get_info_log(glslang_program_t* progr
 GLSLANG_EXPORT const char* glslang_program_get_info_debug_log(glslang_program_t* program)
 {
     return program->program->getInfoDebugLog();
+}
+
+GLSLANG_EXPORT glslang_mapper_t* glslang_glsl_mapper_create()
+{
+    return reinterpret_cast<glslang_mapper_t*>(new glslang::TGlslIoMapper());
+}
+
+GLSLANG_EXPORT void glslang_glsl_mapper_delete(glslang_mapper_t* mapper)
+{
+    if (!mapper)
+        return;
+
+    delete reinterpret_cast<glslang::TGlslIoMapper* >(mapper);
+}
+
+GLSLANG_EXPORT glslang_resolver_t* glslang_glsl_resolver_create(glslang_program_t* program, glslang_stage_t stage)
+{
+    glslang::TIntermediate* intermediate = program->program->getIntermediate(c_shader_stage(stage));
+    return reinterpret_cast<glslang_resolver_t*>(new glslang::TDefaultGlslIoResolver(reinterpret_cast<const glslang::TIntermediate&>(*intermediate)));
+}
+
+GLSLANG_EXPORT void glslang_glsl_resolver_delete(glslang_resolver_t* resolver)
+{
+    if (!resolver)
+        return;
+
+    delete reinterpret_cast<glslang::TDefaultGlslIoResolver* >(resolver);
 }

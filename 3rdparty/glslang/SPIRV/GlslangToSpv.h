@@ -53,6 +53,7 @@ struct SpvOptions {
     bool emitNonSemanticShaderDebugInfo {false};
     bool emitNonSemanticShaderDebugSource{ false };
     bool compileOnly{false};
+    bool optimizerAllowExpandedIDBound{false};
 };
 
 void GetSpirvVersion(std::string&);

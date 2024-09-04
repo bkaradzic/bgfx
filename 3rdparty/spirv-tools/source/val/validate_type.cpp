@@ -36,6 +36,7 @@ spv_result_t ValidateUniqueness(ValidationState_t& _, const Instruction* inst) {
   const auto opcode = inst->opcode();
   if (opcode != spv::Op::OpTypeArray && opcode != spv::Op::OpTypeRuntimeArray &&
       opcode != spv::Op::OpTypeStruct && opcode != spv::Op::OpTypePointer &&
+      opcode != spv::Op::OpTypeUntypedPointerKHR &&
       !_.RegisterUniqueTypeDeclaration(inst)) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Duplicate non-aggregate type declarations are not allowed. "
@@ -583,6 +584,33 @@ spv_result_t ValidateTypeCooperativeMatrix(ValidationState_t& _,
 
   return SPV_SUCCESS;
 }
+
+spv_result_t ValidateTypeUntypedPointerKHR(ValidationState_t& _,
+                                           const Instruction* inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    const auto sc = inst->GetOperandAs<spv::StorageClass>(1);
+    switch (sc) {
+      case spv::StorageClass::Workgroup:
+        if (!_.HasCapability(
+                spv::Capability::WorkgroupMemoryExplicitLayoutKHR)) {
+          return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << "Workgroup storage class untyped pointers in Vulkan "
+                    "require WorkgroupMemoryExplicitLayoutKHR be declared";
+        }
+        break;
+      case spv::StorageClass::StorageBuffer:
+      case spv::StorageClass::PhysicalStorageBuffer:
+      case spv::StorageClass::Uniform:
+      case spv::StorageClass::PushConstant:
+        break;
+      default:
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "In Vulkan, untyped pointers can only be used in an "
+                  "explicitly laid out storage class";
+    }
+  }
+  return SPV_SUCCESS;
+}
 }  // namespace
 
 spv_result_t TypePass(ValidationState_t& _, const Instruction* inst) {
@@ -627,6 +655,9 @@ spv_result_t TypePass(ValidationState_t& _, const Instruction* inst) {
     case spv::Op::OpTypeCooperativeMatrixNV:
     case spv::Op::OpTypeCooperativeMatrixKHR:
       if (auto error = ValidateTypeCooperativeMatrix(_, inst)) return error;
+      break;
+    case spv::Op::OpTypeUntypedPointerKHR:
+      if (auto error = ValidateTypeUntypedPointerKHR(_, inst)) return error;
       break;
     default:
       break;
