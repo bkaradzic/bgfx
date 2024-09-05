@@ -1479,7 +1479,7 @@ namespace bgfx { namespace gl
 				, _internalFormat
 				, _width
 				, _height
-				, false
+				, true
 				);
 		}
 		else
