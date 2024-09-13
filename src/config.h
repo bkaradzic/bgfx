@@ -333,11 +333,11 @@ BX_STATIC_ASSERT(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS m
 #   define BGFX_CONFIG_PER_FRAME_SCRATCH_STAGING_BUFFER_SIZE (32<<20)
 #endif
 
-#ifndef BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRACH_BUFFER
+#ifndef BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER
 /// The threshold of data size above which the staging scratch buffer will
 /// not be used, but instead a separate device memory allocation will take
 /// place to stage the data for copying to device.
-#   define BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRACH_BUFFER (16 << 20)
+#   define BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER (16 << 20)
 #endif
 
 #ifndef BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT
