@@ -4442,7 +4442,7 @@ VK_IMPORT_DEVICE
 			StagingBufferVK result;
 			ScratchBufferVK &scratch = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
 
-			if (_size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRACH_BUFFER)
+			if (_size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER)
 			{
 				const uint32_t scratchOffset = scratch.alloc(_size, _align);
 
