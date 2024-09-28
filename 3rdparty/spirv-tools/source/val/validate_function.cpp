@@ -156,9 +156,7 @@ spv_result_t ValidateFunctionParameter(ValidationState_t& _,
     param_nonarray_type_id =
         _.FindDef(param_nonarray_type_id)->GetOperandAs<uint32_t>(1u);
   }
-  if (_.GetIdOpcode(param_nonarray_type_id) == spv::Op::OpTypePointer ||
-      _.GetIdOpcode(param_nonarray_type_id) ==
-          spv::Op::OpTypeUntypedPointerKHR) {
+  if (_.GetIdOpcode(param_nonarray_type_id) == spv::Op::OpTypePointer) {
     auto param_nonarray_type = _.FindDef(param_nonarray_type_id);
     if (param_nonarray_type->GetOperandAs<spv::StorageClass>(1u) ==
         spv::StorageClass::PhysicalStorageBuffer) {
@@ -187,7 +185,7 @@ spv_result_t ValidateFunctionParameter(ValidationState_t& _,
                << ": can't specify both Aliased and Restrict for "
                   "PhysicalStorageBuffer pointer.";
       }
-    } else if (param_nonarray_type->opcode() == spv::Op::OpTypePointer) {
+    } else {
       const auto pointee_type_id =
           param_nonarray_type->GetOperandAs<uint32_t>(2);
       const auto pointee_type = _.FindDef(pointee_type_id);
@@ -290,8 +288,7 @@ spv_result_t ValidateFunctionCall(ValidationState_t& _,
     }
 
     if (_.addressing_model() == spv::AddressingModel::Logical) {
-      if ((parameter_type->opcode() == spv::Op::OpTypePointer ||
-           parameter_type->opcode() == spv::Op::OpTypeUntypedPointerKHR) &&
+      if (parameter_type->opcode() == spv::Op::OpTypePointer &&
           !_.options()->relax_logical_pointer) {
         spv::StorageClass sc =
             parameter_type->GetOperandAs<spv::StorageClass>(1u);
@@ -320,11 +317,9 @@ spv_result_t ValidateFunctionCall(ValidationState_t& _,
 
         // Validate memory object declaration requirements.
         if (argument->opcode() != spv::Op::OpVariable &&
-            argument->opcode() != spv::Op::OpUntypedVariableKHR &&
             argument->opcode() != spv::Op::OpFunctionParameter) {
-          const bool ssbo_vptr =
-              _.HasCapability(spv::Capability::VariablePointersStorageBuffer) &&
-              sc == spv::StorageClass::StorageBuffer;
+          const bool ssbo_vptr = _.features().variable_pointers &&
+                                 sc == spv::StorageClass::StorageBuffer;
           const bool wg_vptr =
               _.HasCapability(spv::Capability::VariablePointers) &&
               sc == spv::StorageClass::Workgroup;

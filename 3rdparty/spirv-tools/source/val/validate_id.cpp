@@ -165,8 +165,6 @@ spv_result_t IdPass(ValidationState_t& _, Instruction* inst) {
               !spvOpcodeIsDecoration(opcode) && opcode != spv::Op::OpFunction &&
               opcode != spv::Op::OpCooperativeMatrixLengthNV &&
               opcode != spv::Op::OpCooperativeMatrixLengthKHR &&
-              !spvOpcodeGeneratesUntypedPointer(opcode) &&
-              opcode != spv::Op::OpUntypedArrayLengthKHR &&
               !(opcode == spv::Op::OpSpecConstantOp &&
                 (spv::Op(inst->word(3)) ==
                      spv::Op::OpCooperativeMatrixLengthNV ||
@@ -187,8 +185,6 @@ spv_result_t IdPass(ValidationState_t& _, Instruction* inst) {
                      opcode != spv::Op::OpFunction &&
                      opcode != spv::Op::OpCooperativeMatrixLengthNV &&
                      opcode != spv::Op::OpCooperativeMatrixLengthKHR &&
-                     !spvOpcodeGeneratesUntypedPointer(opcode) &&
-                     opcode != spv::Op::OpUntypedArrayLengthKHR &&
                      !(opcode == spv::Op::OpSpecConstantOp &&
                        (spv::Op(inst->word(3)) ==
                             spv::Op::OpCooperativeMatrixLengthNV ||

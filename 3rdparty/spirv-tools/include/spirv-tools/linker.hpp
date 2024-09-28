@@ -16,6 +16,7 @@
 #define INCLUDE_SPIRV_TOOLS_LINKER_HPP_
 
 #include <cstdint>
+
 #include <memory>
 #include <vector>
 
@@ -62,17 +63,11 @@ class SPIRV_TOOLS_EXPORT LinkerOptions {
     use_highest_version_ = use_highest_vers;
   }
 
-  bool GetAllowPtrTypeMismatch() const { return allow_ptr_type_mismatch_; }
-  void SetAllowPtrTypeMismatch(bool allow_ptr_type_mismatch) {
-    allow_ptr_type_mismatch_ = allow_ptr_type_mismatch;
-  }
-
  private:
   bool create_library_{false};
   bool verify_ids_{false};
   bool allow_partial_linkage_{false};
   bool use_highest_version_{false};
-  bool allow_ptr_type_mismatch_{false};
 };
 
 // Links one or more SPIR-V modules into a new SPIR-V module. That is, combine

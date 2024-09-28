@@ -145,8 +145,7 @@ class Pass {
 
   // Returns the id whose value is the same as |object_to_copy| except its type
   // is |new_type_id|.  Any instructions needed to generate this value will be
-  // inserted before |insertion_position|. Returns 0 if a copy could not be
-  // done.
+  // inserted before |insertion_position|.
   uint32_t GenerateCopy(Instruction* object_to_copy, uint32_t new_type_id,
                         Instruction* insertion_position);
 

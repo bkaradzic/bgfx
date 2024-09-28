@@ -29,50 +29,27 @@ uint32_t GetLengthOfArrayType(IRContext* context, Instruction* type) {
   return length_const->GetU32();
 }
 
-bool HasDescriptorDecorations(IRContext* context, Instruction* var) {
-  const auto& decoration_mgr = context->get_decoration_mgr();
-  return decoration_mgr->HasDecoration(
-             var->result_id(), uint32_t(spv::Decoration::DescriptorSet)) &&
-         decoration_mgr->HasDecoration(var->result_id(),
-                                       uint32_t(spv::Decoration::Binding));
-}
-
-Instruction* GetVariableType(IRContext* context, Instruction* var) {
-  if (var->opcode() != spv::Op::OpVariable) {
-    return nullptr;
-  }
-
-  uint32_t ptr_type_id = var->type_id();
-  Instruction* ptr_type_inst = context->get_def_use_mgr()->GetDef(ptr_type_id);
-  if (ptr_type_inst->opcode() != spv::Op::OpTypePointer) {
-    return nullptr;
-  }
-
-  uint32_t var_type_id = ptr_type_inst->GetSingleWordInOperand(1);
-  return context->get_def_use_mgr()->GetDef(var_type_id);
-}
-
 }  // namespace
 
 namespace descsroautil {
 
 bool IsDescriptorArray(IRContext* context, Instruction* var) {
-  Instruction* var_type_inst = GetVariableType(context, var);
-  if (var_type_inst == nullptr) return false;
-  return var_type_inst->opcode() == spv::Op::OpTypeArray &&
-         HasDescriptorDecorations(context, var);
-}
-
-bool IsDescriptorStruct(IRContext* context, Instruction* var) {
-  Instruction* var_type_inst = GetVariableType(context, var);
-  if (var_type_inst == nullptr) return false;
-
-  while (var_type_inst->opcode() == spv::Op::OpTypeArray) {
-    var_type_inst = context->get_def_use_mgr()->GetDef(
-        var_type_inst->GetInOperand(0).AsId());
+  if (var->opcode() != spv::Op::OpVariable) {
+    return false;
   }
 
-  if (var_type_inst->opcode() != spv::Op::OpTypeStruct) return false;
+  uint32_t ptr_type_id = var->type_id();
+  Instruction* ptr_type_inst = context->get_def_use_mgr()->GetDef(ptr_type_id);
+  if (ptr_type_inst->opcode() != spv::Op::OpTypePointer) {
+    return false;
+  }
+
+  uint32_t var_type_id = ptr_type_inst->GetSingleWordInOperand(1);
+  Instruction* var_type_inst = context->get_def_use_mgr()->GetDef(var_type_id);
+  if (var_type_inst->opcode() != spv::Op::OpTypeArray &&
+      var_type_inst->opcode() != spv::Op::OpTypeStruct) {
+    return false;
+  }
 
   // All structures with descriptor assignments must be replaced by variables,
   // one for each of their members - with the exceptions of buffers.
@@ -80,7 +57,13 @@ bool IsDescriptorStruct(IRContext* context, Instruction* var) {
     return false;
   }
 
-  return HasDescriptorDecorations(context, var);
+  if (!context->get_decoration_mgr()->HasDecoration(
+          var->result_id(), uint32_t(spv::Decoration::DescriptorSet))) {
+    return false;
+  }
+
+  return context->get_decoration_mgr()->HasDecoration(
+      var->result_id(), uint32_t(spv::Decoration::Binding));
 }
 
 bool IsTypeOfStructuredBuffer(IRContext* context, const Instruction* type) {

@@ -32,16 +32,9 @@ namespace opt {
 // Documented in optimizer.hpp
 class DescriptorScalarReplacement : public Pass {
  public:
-  DescriptorScalarReplacement(bool flatten_composites, bool flatten_arrays)
-      : flatten_composites_(flatten_composites),
-        flatten_arrays_(flatten_arrays) {}
+  DescriptorScalarReplacement() {}
 
-  const char* name() const override {
-    if (flatten_composites_ && flatten_arrays_)
-      return "descriptor-scalar-replacement";
-    if (flatten_composites_) return "descriptor-compososite-scalar-replacement";
-    return "descriptor-array-scalar-replacement";
-  }
+  const char* name() const override { return "descriptor-scalar-replacement"; }
 
   Status Process() override;
 
@@ -148,9 +141,6 @@ class DescriptorScalarReplacement : public Pass {
   // array |var|. If the entry is |0|, then the variable has not been
   // created yet.
   std::map<Instruction*, std::vector<uint32_t>> replacement_variables_;
-
-  bool flatten_composites_;
-  bool flatten_arrays_;
 };
 
 }  // namespace opt

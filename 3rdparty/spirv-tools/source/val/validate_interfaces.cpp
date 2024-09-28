@@ -34,13 +34,11 @@ const uint32_t kMaxLocations = 4096 * 4;
 bool is_interface_variable(const Instruction* inst, bool is_spv_1_4) {
   if (is_spv_1_4) {
     // Starting in SPIR-V 1.4, all global variables are interface variables.
-    return (inst->opcode() == spv::Op::OpVariable ||
-            inst->opcode() == spv::Op::OpUntypedVariableKHR) &&
+    return inst->opcode() == spv::Op::OpVariable &&
            inst->GetOperandAs<spv::StorageClass>(2u) !=
                spv::StorageClass::Function;
   } else {
-    return (inst->opcode() == spv::Op::OpVariable ||
-            inst->opcode() == spv::Op::OpUntypedVariableKHR) &&
+    return inst->opcode() == spv::Op::OpVariable &&
            (inst->GetOperandAs<spv::StorageClass>(2u) ==
                 spv::StorageClass::Input ||
             inst->GetOperandAs<spv::StorageClass>(2u) ==
@@ -244,9 +242,8 @@ spv_result_t GetLocationsForVariable(
     std::unordered_set<uint32_t>* output_index1_locations) {
   const bool is_fragment = entry_point->GetOperandAs<spv::ExecutionModel>(0) ==
                            spv::ExecutionModel::Fragment;
-  const auto sc_index = 2u;
-  const bool is_output = variable->GetOperandAs<spv::StorageClass>(sc_index) ==
-                         spv::StorageClass::Output;
+  const bool is_output =
+      variable->GetOperandAs<spv::StorageClass>(2) == spv::StorageClass::Output;
   auto ptr_type_id = variable->GetOperandAs<uint32_t>(0);
   auto ptr_type = _.FindDef(ptr_type_id);
   auto type_id = ptr_type->GetOperandAs<uint32_t>(2);
@@ -528,9 +525,7 @@ spv_result_t ValidateLocations(ValidationState_t& _,
   for (uint32_t i = 3; i < entry_point->operands().size(); ++i) {
     auto interface_id = entry_point->GetOperandAs<uint32_t>(i);
     auto interface_var = _.FindDef(interface_id);
-    const auto sc_index = 2u;
-    auto storage_class =
-        interface_var->GetOperandAs<spv::StorageClass>(sc_index);
+    auto storage_class = interface_var->GetOperandAs<spv::StorageClass>(2);
     if (storage_class != spv::StorageClass::Input &&
         storage_class != spv::StorageClass::Output) {
       continue;

@@ -123,14 +123,12 @@ spv_result_t ValidateDecorationTarget(ValidationState_t& _, spv::Decoration dec,
     case spv::Decoration::ArrayStride:
       if (target->opcode() != spv::Op::OpTypeArray &&
           target->opcode() != spv::Op::OpTypeRuntimeArray &&
-          target->opcode() != spv::Op::OpTypePointer &&
-          target->opcode() != spv::Op::OpTypeUntypedPointerKHR) {
+          target->opcode() != spv::Op::OpTypePointer) {
         return fail(0) << "must be an array or pointer type";
       }
       break;
     case spv::Decoration::BuiltIn:
       if (target->opcode() != spv::Op::OpVariable &&
-          target->opcode() != spv::Op::OpUntypedVariableKHR &&
           !spvOpcodeIsConstant(target->opcode())) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << "BuiltIns can only target variables, structure members or "
@@ -141,8 +139,7 @@ spv_result_t ValidateDecorationTarget(ValidationState_t& _, spv::Decoration dec,
         if (!spvOpcodeIsConstant(target->opcode())) {
           return fail(0) << "must be a constant for WorkgroupSize";
         }
-      } else if (target->opcode() != spv::Op::OpVariable &&
-                 target->opcode() != spv::Op::OpUntypedVariableKHR) {
+      } else if (target->opcode() != spv::Op::OpVariable) {
         return fail(0) << "must be a variable";
       }
       break;
@@ -164,12 +161,11 @@ spv_result_t ValidateDecorationTarget(ValidationState_t& _, spv::Decoration dec,
     case spv::Decoration::RestrictPointer:
     case spv::Decoration::AliasedPointer:
       if (target->opcode() != spv::Op::OpVariable &&
-          target->opcode() != spv::Op::OpUntypedVariableKHR &&
           target->opcode() != spv::Op::OpFunctionParameter &&
           target->opcode() != spv::Op::OpRawAccessChainNV) {
         return fail(0) << "must be a memory object declaration";
       }
-      if (!_.IsPointerType(target->type_id())) {
+      if (_.GetIdOpcode(target->type_id()) != spv::Op::OpTypePointer) {
         return fail(0) << "must be a pointer type";
       }
       break;
@@ -180,8 +176,7 @@ spv_result_t ValidateDecorationTarget(ValidationState_t& _, spv::Decoration dec,
     case spv::Decoration::Binding:
     case spv::Decoration::DescriptorSet:
     case spv::Decoration::InputAttachmentIndex:
-      if (target->opcode() != spv::Op::OpVariable &&
-          target->opcode() != spv::Op::OpUntypedVariableKHR) {
+      if (target->opcode() != spv::Op::OpVariable) {
         return fail(0) << "must be a variable";
       }
       break;
