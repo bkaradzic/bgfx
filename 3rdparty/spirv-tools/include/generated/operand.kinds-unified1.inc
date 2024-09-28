@@ -211,7 +211,6 @@ static const spvtools::Extension pygen_variable_exts_SPV_INTEL_optnone[] = {spvt
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_runtime_aligned[] = {spvtools::Extension::kSPV_INTEL_runtime_aligned};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_shader_integer_functions2[] = {spvtools::Extension::kSPV_INTEL_shader_integer_functions2};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_split_barrier[] = {spvtools::Extension::kSPV_INTEL_split_barrier};
-static const spvtools::Extension pygen_variable_exts_SPV_INTEL_subgroup_buffer_prefetch[] = {spvtools::Extension::kSPV_INTEL_subgroup_buffer_prefetch};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_subgroups[] = {spvtools::Extension::kSPV_INTEL_subgroups};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_unstructured_loop_controls[] = {spvtools::Extension::kSPV_INTEL_unstructured_loop_controls};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_usm_storage_classes[] = {spvtools::Extension::kSPV_INTEL_usm_storage_classes};
@@ -249,7 +248,6 @@ static const spvtools::Extension pygen_variable_exts_SPV_KHR_subgroup_rotate[] =
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_subgroup_uniform_control_flow[] = {spvtools::Extension::kSPV_KHR_subgroup_uniform_control_flow};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_subgroup_vote[] = {spvtools::Extension::kSPV_KHR_subgroup_vote};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_uniform_group_instructions[] = {spvtools::Extension::kSPV_KHR_uniform_group_instructions};
-static const spvtools::Extension pygen_variable_exts_SPV_KHR_untyped_pointers[] = {spvtools::Extension::kSPV_KHR_untyped_pointers};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_variable_pointers[] = {spvtools::Extension::kSPV_KHR_variable_pointers};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_vulkan_memory_model[] = {spvtools::Extension::kSPV_KHR_vulkan_memory_model};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_workgroup_memory_explicit_layout[] = {spvtools::Extension::kSPV_KHR_workgroup_memory_explicit_layout};
@@ -727,8 +725,7 @@ static const spv_operand_desc_t pygen_variable_ImageChannelDataTypeEntries[] = {
   {"UnormInt24", 15, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1,0), 0xffffffffu},
   {"UnormInt101010_2", 16, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1,0), 0xffffffffu},
   {"UnsignedIntRaw10EXT", 19, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1,0), 0xffffffffu},
-  {"UnsignedIntRaw12EXT", 20, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1,0), 0xffffffffu},
-  {"UnormInt2_101010EXT", 21, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1,0), 0xffffffffu}
+  {"UnsignedIntRaw12EXT", 20, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1,0), 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_FPRoundingModeEntries[] = {
@@ -1218,7 +1215,6 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"RoundingModeRTZ", 4468, 0, nullptr, 1, pygen_variable_exts_SPV_KHR_float_controls, {}, SPV_SPIRV_VERSION_WORD(1,4), 0xffffffffu},
   {"RayQueryProvisionalKHR", 4471, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_KHR_ray_query, {}, 0xffffffffu, 0xffffffffu},
   {"RayQueryKHR", 4472, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_KHR_ray_query, {}, 0xffffffffu, 0xffffffffu},
-  {"UntypedPointersKHR", 4473, 0, nullptr, 1, pygen_variable_exts_SPV_KHR_untyped_pointers, {}, 0xffffffffu, 0xffffffffu},
   {"RayTraversalPrimitiveCullingKHR", 4478, 2, pygen_variable_caps_RayQueryKHRRayTracingKHR, 2, pygen_variable_exts_SPV_KHR_ray_querySPV_KHR_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
   {"RayTracingKHR", 4479, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_KHR_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
   {"TextureSampleWeightedQCOM", 4484, 0, nullptr, 1, pygen_variable_exts_SPV_QCOM_image_processing, {}, 0xffffffffu, 0xffffffffu},
@@ -1372,7 +1368,6 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"FPGAArgumentInterfacesINTEL", 6174, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_fpga_argument_interfaces, {}, 0xffffffffu, 0xffffffffu},
   {"GlobalVariableHostAccessINTEL", 6187, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_global_variable_host_access, {}, 0xffffffffu, 0xffffffffu},
   {"GlobalVariableFPGADecorationsINTEL", 6189, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_global_variable_fpga_decorations, {}, 0xffffffffu, 0xffffffffu},
-  {"SubgroupBufferPrefetchINTEL", 6220, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_subgroup_buffer_prefetch, {}, 0xffffffffu, 0xffffffffu},
   {"GroupUniformArithmeticKHR", 6400, 0, nullptr, 1, pygen_variable_exts_SPV_KHR_uniform_group_instructions, {}, 0xffffffffu, 0xffffffffu},
   {"MaskedGatherScatterINTEL", 6427, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_masked_gather_scatter, {}, 0xffffffffu, 0xffffffffu},
   {"CacheControlsINTEL", 6441, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_cache_controls, {}, 0xffffffffu, 0xffffffffu},
@@ -1444,10 +1439,6 @@ static const spv_operand_desc_t pygen_variable_StoreCacheControlEntries[] = {
 
 static const spv_operand_desc_t pygen_variable_NamedMaximumNumberOfRegistersEntries[] = {
   {"AutoINTEL", 0, 1, pygen_variable_caps_RegisterLimitsINTEL, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
-};
-
-static const spv_operand_desc_t pygen_variable_FPEncodingEntries[] = {
-  {"place holder", 0, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(999,0), 0}
 };
 
 static const spv_operand_desc_t pygen_variable_DebugInfoFlagsEntries[] = {
@@ -1618,7 +1609,6 @@ static const spv_operand_desc_group_t pygen_variable_OperandInfoTable[] = {
   {SPV_OPERAND_TYPE_LOAD_CACHE_CONTROL, ARRAY_SIZE(pygen_variable_LoadCacheControlEntries), pygen_variable_LoadCacheControlEntries},
   {SPV_OPERAND_TYPE_STORE_CACHE_CONTROL, ARRAY_SIZE(pygen_variable_StoreCacheControlEntries), pygen_variable_StoreCacheControlEntries},
   {SPV_OPERAND_TYPE_NAMED_MAXIMUM_NUMBER_OF_REGISTERS, ARRAY_SIZE(pygen_variable_NamedMaximumNumberOfRegistersEntries), pygen_variable_NamedMaximumNumberOfRegistersEntries},
-  {SPV_OPERAND_TYPE_FPENCODING, ARRAY_SIZE(pygen_variable_FPEncodingEntries), pygen_variable_FPEncodingEntries},
   {SPV_OPERAND_TYPE_DEBUG_INFO_FLAGS, ARRAY_SIZE(pygen_variable_DebugInfoFlagsEntries), pygen_variable_DebugInfoFlagsEntries},
   {SPV_OPERAND_TYPE_DEBUG_BASE_TYPE_ATTRIBUTE_ENCODING, ARRAY_SIZE(pygen_variable_DebugBaseTypeAttributeEncodingEntries), pygen_variable_DebugBaseTypeAttributeEncodingEntries},
   {SPV_OPERAND_TYPE_DEBUG_COMPOSITE_TYPE, ARRAY_SIZE(pygen_variable_DebugCompositeTypeEntries), pygen_variable_DebugCompositeTypeEntries},
@@ -1635,6 +1625,5 @@ static const spv_operand_desc_group_t pygen_variable_OperandInfoTable[] = {
   {SPV_OPERAND_TYPE_OPTIONAL_RAW_ACCESS_CHAIN_OPERANDS, ARRAY_SIZE(pygen_variable_RawAccessChainOperandsEntries), pygen_variable_RawAccessChainOperandsEntries},
   {SPV_OPERAND_TYPE_OPTIONAL_ACCESS_QUALIFIER, ARRAY_SIZE(pygen_variable_AccessQualifierEntries), pygen_variable_AccessQualifierEntries},
   {SPV_OPERAND_TYPE_OPTIONAL_PACKED_VECTOR_FORMAT, ARRAY_SIZE(pygen_variable_PackedVectorFormatEntries), pygen_variable_PackedVectorFormatEntries},
-  {SPV_OPERAND_TYPE_OPTIONAL_COOPERATIVE_MATRIX_OPERANDS, ARRAY_SIZE(pygen_variable_CooperativeMatrixOperandsEntries), pygen_variable_CooperativeMatrixOperandsEntries},
-  {SPV_OPERAND_TYPE_OPTIONAL_FPENCODING, ARRAY_SIZE(pygen_variable_FPEncodingEntries), pygen_variable_FPEncodingEntries}
+  {SPV_OPERAND_TYPE_OPTIONAL_COOPERATIVE_MATRIX_OPERANDS, ARRAY_SIZE(pygen_variable_CooperativeMatrixOperandsEntries), pygen_variable_CooperativeMatrixOperandsEntries}
 };

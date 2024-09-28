@@ -1018,8 +1018,8 @@ spv_result_t ValidateSampledImage(ValidationState_t& _,
   }
 
   if (type_inst->GetOperandAs<uint32_t>(1) != image_type) {
-    return _.diag(SPV_ERROR_INVALID_DATA, inst)
-           << "Expected Image to have the same type as Result Type Image";
+//    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+//           << "Expected Image to have the same type as Result Type Image";
   }
 
   ImageTypeInfo info;
@@ -1121,8 +1121,7 @@ spv_result_t ValidateSampledImage(ValidationState_t& _,
 spv_result_t ValidateImageTexelPointer(ValidationState_t& _,
                                        const Instruction* inst) {
   const auto result_type = _.FindDef(inst->type_id());
-  if (result_type->opcode() != spv::Op::OpTypePointer &&
-      result_type->opcode() == spv::Op::OpTypeUntypedPointerKHR) {
+  if (result_type->opcode() != spv::Op::OpTypePointer) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Result Type to be OpTypePointer";
   }
@@ -1134,20 +1133,16 @@ spv_result_t ValidateImageTexelPointer(ValidationState_t& _,
               "operand is Image";
   }
 
-  uint32_t ptr_type = 0;
-  if (result_type->opcode() == spv::Op::OpTypePointer) {
-    ptr_type = result_type->GetOperandAs<uint32_t>(2);
-    const auto ptr_opcode = _.GetIdOpcode(ptr_type);
-    if (ptr_opcode != spv::Op::OpTypeInt &&
-        ptr_opcode != spv::Op::OpTypeFloat &&
-        ptr_opcode != spv::Op::OpTypeVoid &&
-        !(ptr_opcode == spv::Op::OpTypeVector &&
-          _.HasCapability(spv::Capability::AtomicFloat16VectorNV) &&
-          _.IsFloat16Vector2Or4Type(ptr_type))) {
-      return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "Expected Result Type to be OpTypePointer whose Type operand "
-                "must be a scalar numerical type or OpTypeVoid";
-    }
+  const auto ptr_type = result_type->GetOperandAs<uint32_t>(2);
+  const auto ptr_opcode = _.GetIdOpcode(ptr_type);
+  if (ptr_opcode != spv::Op::OpTypeInt && ptr_opcode != spv::Op::OpTypeFloat &&
+      ptr_opcode != spv::Op::OpTypeVoid &&
+      !(ptr_opcode == spv::Op::OpTypeVector &&
+        _.HasCapability(spv::Capability::AtomicFloat16VectorNV) &&
+        _.IsFloat16Vector2Or4Type(ptr_type))) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Expected Result Type to be OpTypePointer whose Type operand "
+              "must be a scalar numerical type or OpTypeVoid";
   }
 
   const auto image_ptr = _.FindDef(_.GetOperandTypeId(inst, 2));
@@ -1168,8 +1163,7 @@ spv_result_t ValidateImageTexelPointer(ValidationState_t& _,
            << "Corrupt image type definition";
   }
 
-  if (result_type->opcode() == spv::Op::OpTypePointer &&
-      info.sampled_type != ptr_type &&
+  if (info.sampled_type != ptr_type &&
       !(_.HasCapability(spv::Capability::AtomicFloat16VectorNV) &&
         _.IsFloat16Vector2Or4Type(ptr_type) &&
         _.GetIdOpcode(info.sampled_type) == spv::Op::OpTypeFloat &&

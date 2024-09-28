@@ -364,10 +364,6 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag,
     RegisterPass(CreateSpreadVolatileSemanticsPass());
   } else if (pass_name == "descriptor-scalar-replacement") {
     RegisterPass(CreateDescriptorScalarReplacementPass());
-  } else if (pass_name == "descriptor-composite-scalar-replacement") {
-    RegisterPass(CreateDescriptorCompositeScalarReplacementPass());
-  } else if (pass_name == "descriptor-array-scalar-replacement") {
-    RegisterPass(CreateDescriptorArrayScalarReplacementPass());
   } else if (pass_name == "eliminate-dead-code-aggressive") {
     RegisterPass(CreateAggressiveDCEPass(preserve_interface));
   } else if (pass_name == "eliminate-insert-extract") {
@@ -1063,20 +1059,7 @@ Optimizer::PassToken CreateSpreadVolatileSemanticsPass() {
 
 Optimizer::PassToken CreateDescriptorScalarReplacementPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::DescriptorScalarReplacement>(
-          /* flatten_composites= */ true, /* flatten_arrays= */ true));
-}
-
-Optimizer::PassToken CreateDescriptorCompositeScalarReplacementPass() {
-  return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::DescriptorScalarReplacement>(
-          /* flatten_composites= */ true, /* flatten_arrays= */ false));
-}
-
-Optimizer::PassToken CreateDescriptorArrayScalarReplacementPass() {
-  return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::DescriptorScalarReplacement>(
-          /* flatten_composites= */ false, /* flatten_arrays= */ true));
+      MakeUnique<opt::DescriptorScalarReplacement>());
 }
 
 Optimizer::PassToken CreateWrapOpKillPass() {

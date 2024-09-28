@@ -324,7 +324,6 @@ bool IsTypeNullable(const std::vector<uint32_t>& instruction,
       }
       return true;
     }
-    case spv::Op::OpTypeUntypedPointerKHR:
     case spv::Op::OpTypePointer:
       if (spv::StorageClass(instruction[2]) ==
           spv::StorageClass::PhysicalStorageBuffer) {

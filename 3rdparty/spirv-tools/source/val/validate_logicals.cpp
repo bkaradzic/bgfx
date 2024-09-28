@@ -159,11 +159,9 @@ spv_result_t LogicalsPass(ValidationState_t& _, const Instruction* inst) {
 
         const spv::Op type_opcode = type_inst->opcode();
         switch (type_opcode) {
-          case spv::Op::OpTypeUntypedPointerKHR:
           case spv::Op::OpTypePointer: {
             if (_.addressing_model() == spv::AddressingModel::Logical &&
-                !_.HasCapability(
-                    spv::Capability::VariablePointersStorageBuffer))
+                !_.features().variable_pointers)
               return _.diag(SPV_ERROR_INVALID_DATA, inst)
                      << "Using pointers with OpSelect requires capability "
                      << "VariablePointers or VariablePointersStorageBuffer";
