@@ -158,5 +158,4 @@ static const uint8_t vs_clear_mtl[593] =
 	0x72, 0x6e, 0x20, 0x6f, 0x75, 0x74, 0x3b, 0x0a, 0x7d, 0x0a, 0x0a, 0x00, 0x01, 0x01, 0x00, 0x10, // rn out;.}.......
 	0x00,                                                                                           // .
 };
-extern const uint8_t* vs_clear_pssl;
-extern const uint32_t vs_clear_pssl_size;
+static const uint8_t vs_clear_pssl[1] = {0};

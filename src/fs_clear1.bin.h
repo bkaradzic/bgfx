@@ -142,5 +142,4 @@ static const uint8_t fs_clear1_mtl[517] =
 	0x20, 0x20, 0x72, 0x65, 0x74, 0x75, 0x72, 0x6e, 0x20, 0x6f, 0x75, 0x74, 0x3b, 0x0a, 0x7d, 0x0a, //   return out;.}.
 	0x0a, 0x00, 0x00, 0x20, 0x00,                                                                   // ... .
 };
-extern const uint8_t* fs_clear1_pssl;
-extern const uint32_t fs_clear1_pssl_size;
+static const uint8_t fs_clear1_pssl[1] = {0};
