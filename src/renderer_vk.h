@@ -31,13 +31,19 @@
 #	define VK_USE_PLATFORM_MACOS_MVK
 #	define KHR_SURFACE_EXTENSION_NAME  VK_MVK_MACOS_SURFACE_EXTENSION_NAME
 #	define VK_IMPORT_INSTANCE_PLATFORM VK_IMPORT_INSTANCE_MACOS
+#elif BX_PLATFORM_NX
+# define VK_USE_PLATFORM_VI_NN
+#	define KHR_SURFACE_EXTENSION_NAME  VK_NN_VI_SURFACE_EXTENSION_NAME
+#	define VK_IMPORT_INSTANCE_PLATFORM VK_IMPORT_INSTANCE_NX
 #else
 #	define KHR_SURFACE_EXTENSION_NAME ""
 #	define VK_IMPORT_INSTANCE_PLATFORM
 #endif // BX_PLATFORM_*
 
 #define VK_NO_STDINT_H
+#if !BX_PLATFORM_NX
 #define VK_NO_PROTOTYPES
+#endif
 #include <vulkan-local/vulkan.h>
 #include <vulkan-local/vulkan_beta.h>
 
@@ -101,6 +107,10 @@
 #define VK_IMPORT_INSTANCE_MACOS                                     \
 			/* VK_MVK_macos_surface */                               \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateMacOSSurfaceMVK); \
+
+#define VK_IMPORT_INSTANCE_NX \
+			/* VK_NN_vi_surface */                              \
+			VK_IMPORT_INSTANCE_FUNC(true, vkCreateViSurfaceNN); \
 
 #define VK_IMPORT_INSTANCE                                                             \
 			VK_IMPORT_INSTANCE_FUNC(false, vkDestroyInstance);                         \

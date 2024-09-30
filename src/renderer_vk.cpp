@@ -1172,6 +1172,7 @@ VK_IMPORT_DEVICE
 
 			setGraphicsDebuggerPresent(NULL != m_renderDocDll);
 
+#if defined(VK_NO_PROTOTYPES)
 			m_vulkan1Dll = bx::dlopen(
 #if BX_PLATFORM_WINDOWS
 				"vulkan-1.dll"
@@ -1202,6 +1203,21 @@ VK_IMPORT_DEVICE
 VK_IMPORT
 
 #undef VK_IMPORT_FUNC
+
+#else // VK_NO_PROTOTYPES
+
+ 			vkGetInstanceProcAddr = ::vkGetInstanceProcAddr;
+			vkGetDeviceProcAddr = ::vkGetDeviceProcAddr;
+#define VK_IMPORT_FUNC(_optional, _func)                      \
+	if (NULL == _func) {                                        \
+	  _func = (PFN_##_func)vkGetInstanceProcAddr(NULL, #_func); \
+	  BX_TRACE("\t%p " #_func, _func);                          \
+	  imported &= _optional || NULL != _func;                   \
+	} while(0)
+
+VK_IMPORT
+#undef VK_IMPORT_FUNC
+#endif // VK_NO_PROTOTYPES
 
 			if (!imported)
 			{
@@ -7021,6 +7037,16 @@ VK_DESTROY
 				sci.pView = (__bridge void*)layer;
 				result = vkCreateMacOSSurfaceMVK(instance, &sci, allocatorCb, &m_surface);
 			}
+		}
+#elif BX_PLATFORM_NX
+		if (NULL != vkCreateViSurfaceNN)
+		{
+			VkViSurfaceCreateInfoNN sci;
+			sci.sType  = VK_STRUCTURE_TYPE_VI_SURFACE_CREATE_INFO_NN;
+			sci.pNext  = NULL;
+			sci.flags  = 0;
+			sci.window = m_nwh;
+			result = vkCreateViSurfaceNN(instance, &sci, allocatorCb, &m_surface);
 		}
 #else
 #	error "Figure out KHR surface..."
