@@ -128,6 +128,39 @@ EGL_IMPORT
 	}
 #endif // BGFX_USE_GL_DYNAMIC_LIB
 
+
+#if defined(WL_EGL_PLATFORM)
+#define WL_EGL_IMPORT                                                                              \
+	WL_EGL_FUNC(struct wl_egl_window *, wl_egl_window_create, (struct wl_surface *, int, int))     \
+	WL_EGL_FUNC(void, wl_egl_window_destroy, (struct wl_egl_window *))                             \
+	WL_EGL_FUNC(void, wl_egl_window_resize, (struct wl_egl_window *, int, int, int, int))          \
+	WL_EGL_FUNC(void, wl_egl_window_get_attached_size, (struct wl_egl_window *, int *, int *))     \
+
+#define WL_EGL_FUNC(rt, fname, params) \
+    typedef rt(*PFNWLEGL_##fname) params; \
+    PFNWLEGL_##fname BGFX_WAYLAND_##fname;
+WL_EGL_IMPORT
+#undef WL_EGL_FUNC
+
+	void *waylandEglOpen() {
+		void *so = bx::dlopen("libwayland-egl.so.1");
+		BGFX_FATAL(so != NULL, Fatal::UnableToInitialize, "Could not dlopen() libwayland-egl.so.1");
+
+#define WL_EGL_FUNC(rt, fname, params) BGFX_WAYLAND_##fname = (PFNWLEGL_##fname) bx::dlsym(so, #fname);
+		WL_EGL_IMPORT
+#undef WL_EGL_FUNC
+
+		return so;
+	}
+
+	void waylandEglClose(void *so) {
+		bx::dlclose(so);
+#define WL_EGL_FUNC(rt, fname, params) BGFX_WAYLAND_##fname = NULL;
+		WL_EGL_IMPORT
+#undef WL_EGL_FUNC
+	}
+#endif
+
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func = NULL
 #	include "glimports.h"
 
@@ -335,9 +368,11 @@ EGL_IMPORT
 
 #	if BX_PLATFORM_LINUX && defined(WL_EGL_PLATFORM)
 			if (g_platformData.type == NativeWindowHandleType::Wayland) {
+				m_waylandEglLibrary = waylandEglOpen();
+
 				// A wl_surface needs to be first wrapped in a wl_egl_window
 				// before it can be used to create the EGLSurface.
-				m_egl_window = wl_egl_window_create((wl_surface*)nwh, _width, _height);
+				m_egl_window = BGFX_WAYLAND_wl_egl_window_create((wl_surface*)nwh, _width, _height);
 				nwh = m_egl_window;
 			}
 #	endif
@@ -444,7 +479,9 @@ EGL_IMPORT
 			EGL_CHECK(eglDestroySurface(m_display, m_surface) );
 #	if BX_PLATFORM_LINUX && defined(WL_EGL_PLATFORM)
 			if (m_egl_window) {
-				wl_egl_window_destroy(m_egl_window);
+				BGFX_WAYLAND_wl_egl_window_destroy(m_egl_window);
+				waylandEglClose(m_waylandEglLibrary);
+				m_waylandEglLibrary = NULL;
 			}
 #	endif
 			EGL_CHECK(eglTerminate(m_display) );
@@ -453,6 +490,7 @@ EGL_IMPORT
 
 		EGL_CHECK(eglReleaseThread() );
 		eglClose(m_eglLibrary);
+		m_eglLibrary = NULL;
 
 #	if BX_PLATFORM_RPI
 		bcm_host_deinit();
@@ -480,7 +518,7 @@ EGL_IMPORT
 		EMSCRIPTEN_CHECK(emscripten_set_canvas_element_size(HTML5_TARGET_CANVAS_SELECTOR, _width, _height) );
 #	elif BX_PLATFORM_LINUX && defined(WL_EGL_PLATFORM)
 		if (NULL != m_egl_window) {
-			wl_egl_window_resize(m_egl_window, _width, _height, 0, 0);
+			BGFX_WAYLAND_wl_egl_window_resize(m_egl_window, _width, _height, 0, 0);
 		}
 #	else
 		BX_UNUSED(_width, _height);
