@@ -7022,6 +7022,16 @@ VK_DESTROY
 				result = vkCreateMacOSSurfaceMVK(instance, &sci, allocatorCb, &m_surface);
 			}
 		}
+#elif BX_PLATFORM_NX
+		if (NULL != vkCreateViSurfaceNN)
+		{
+			VkViSurfaceCreateInfoNN sci;
+			sci.sType  = VK_STRUCTURE_TYPE_VI_SURFACE_CREATE_INFO_NN;
+			sci.pNext  = NULL;
+			sci.flags  = 0;
+			sci.window = m_nwh;
+			result = vkCreateViSurfaceNN(instance, &sci, allocatorCb, &m_surface);
+		}
 #else
 #	error "Figure out KHR surface..."
 #endif // BX_PLATFORM_
