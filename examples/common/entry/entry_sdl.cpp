@@ -8,9 +8,6 @@
 #if ENTRY_CONFIG_USE_SDL
 
 #if BX_PLATFORM_LINUX
-#	if ENTRY_CONFIG_USE_WAYLAND
-#		include <wayland-egl.h>
-#	endif
 #elif BX_PLATFORM_WINDOWS
 #	define SDL_MAIN_HANDLED
 #endif
@@ -68,16 +65,6 @@ namespace entry
 	{
 		if(!_window)
 			return;
-#	if BX_PLATFORM_LINUX
-#		if ENTRY_CONFIG_USE_WAYLAND
-		wl_egl_window *win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
-		if(win_impl)
-		{
-			SDL_SetWindowData(_window, "wl_egl_window", nullptr);
-			wl_egl_window_destroy(win_impl);
-		}
-#		endif
-#	endif
 		SDL_DestroyWindow(_window);
 	}
 

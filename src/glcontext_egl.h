@@ -37,6 +37,7 @@ namespace bgfx { namespace gl
 			, m_display(NULL)
 			, m_surface(NULL)
 #if BX_PLATFORM_LINUX && defined(WL_EGL_PLATFORM)
+			, m_waylandEglLibrary(NULL)
 			, m_egl_window(NULL)
 #endif
 			, m_msaaContext(false)
@@ -67,6 +68,7 @@ namespace bgfx { namespace gl
 		EGLDisplay m_display;
 		EGLSurface m_surface;
 #if BX_PLATFORM_LINUX && defined(WL_EGL_PLATFORM)
+		void *m_waylandEglLibrary;
 		struct wl_egl_window *m_egl_window;
 #endif
 		// true when MSAA is handled by the context instead of using MSAA FBO
