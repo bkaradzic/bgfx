@@ -51,20 +51,7 @@ namespace entry
 #	if BX_PLATFORM_LINUX
 #		if ENTRY_CONFIG_USE_WAYLAND
 			if (wmi.subsystem == SDL_SYSWM_WAYLAND)
-				{
-					wl_egl_window *win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
-					if(!win_impl)
-					{
-						int width, height;
-						SDL_GetWindowSize(_window, &width, &height);
-						struct wl_surface* surface = wmi.info.wl.surface;
-						if(!surface)
-							return nullptr;
-						win_impl = wl_egl_window_create(surface, width, height);
-						SDL_SetWindowData(_window, "wl_egl_window", win_impl);
-					}
-					return (void*)(uintptr_t)win_impl;
-				}
+				return (void*)wmi.info.wl.surface;
 			else
 #		endif // ENTRY_CONFIG_USE_WAYLAND
 				return (void*)wmi.info.x11.window;
