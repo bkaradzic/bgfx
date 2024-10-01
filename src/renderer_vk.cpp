@@ -17,10 +17,6 @@
 #	import <Metal/Metal.h>
 #endif // BX_PLATFORM_OSX
 
-#if defined(WL_EGL_PLATFORM)
-#	include <wayland-egl-backend.h>
-#endif // defined(WL_EGL_PLATFORM)
-
 namespace bgfx { namespace vk
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -6932,7 +6928,7 @@ VK_DESTROY
 		}
 #elif BX_PLATFORM_LINUX
 		{
-#if     defined(WL_EGL_PLATFORM)
+#	if defined(WL_EGL_PLATFORM)
 			if (g_platformData.type == bgfx::NativeWindowHandleType::Wayland)
 			{
 				VkWaylandSurfaceCreateInfoKHR sci;
@@ -6944,7 +6940,7 @@ VK_DESTROY
 				result = vkCreateWaylandSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
 			}
 			else
-#endif // defined(WL_EGL_PLATFORM)
+#	endif // defined(WL_EGL_PLATFORM)
 			{
 				if (NULL != vkCreateXlibSurfaceKHR)
 				{
