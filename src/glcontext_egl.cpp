@@ -29,7 +29,7 @@
 
 #if defined(WL_EGL_PLATFORM)
 #	include <wayland-egl.h>
-#endif
+#endif // defined(WL_EGL_PLATFORM)
 
 namespace bgfx { namespace gl
 {
@@ -128,38 +128,42 @@ EGL_IMPORT
 	}
 #endif // BGFX_USE_GL_DYNAMIC_LIB
 
-
 #if defined(WL_EGL_PLATFORM)
-#define WL_EGL_IMPORT                                                                              \
-	WL_EGL_FUNC(struct wl_egl_window *, wl_egl_window_create, (struct wl_surface *, int, int))     \
-	WL_EGL_FUNC(void, wl_egl_window_destroy, (struct wl_egl_window *))                             \
-	WL_EGL_FUNC(void, wl_egl_window_resize, (struct wl_egl_window *, int, int, int, int))          \
-	WL_EGL_FUNC(void, wl_egl_window_get_attached_size, (struct wl_egl_window *, int *, int *))     \
+#	define WL_EGL_IMPORT                                                                            \
+		WL_EGL_FUNC(struct wl_egl_window *, wl_egl_window_create, (struct wl_surface *, int, int) ) \
+		WL_EGL_FUNC(void, wl_egl_window_destroy, (struct wl_egl_window *))                          \
+		WL_EGL_FUNC(void, wl_egl_window_resize, (struct wl_egl_window *, int, int, int, int))       \
+		WL_EGL_FUNC(void, wl_egl_window_get_attached_size, (struct wl_egl_window *, int *, int *) ) \
 
-#define WL_EGL_FUNC(rt, fname, params) \
-    typedef rt(*PFNWLEGL_##fname) params; \
-    PFNWLEGL_##fname BGFX_WAYLAND_##fname;
+#	define WL_EGL_FUNC(rt, fname, params)     \
+		typedef rt(*PFNWLEGL_##fname) params; \
+		PFNWLEGL_##fname BGFX_WAYLAND_##fname;
+
 WL_EGL_IMPORT
-#undef WL_EGL_FUNC
 
-	void *waylandEglOpen() {
-		void *so = bx::dlopen("libwayland-egl.so.1");
-		BGFX_FATAL(so != NULL, Fatal::UnableToInitialize, "Could not dlopen() libwayland-egl.so.1");
+#	undef WL_EGL_FUNC
 
-#define WL_EGL_FUNC(rt, fname, params) BGFX_WAYLAND_##fname = (PFNWLEGL_##fname) bx::dlsym(so, #fname);
+	void* waylandEglOpen()
+	{
+		void* handle = bx::dlopen("libwayland-egl.so.1");
+		BGFX_FATAL(handle != NULL, Fatal::UnableToInitialize, "Could not dlopen() libwayland-egl.so.1");
+
+#	define WL_EGL_FUNC(rt, fname, params) BGFX_WAYLAND_##fname = (PFNWLEGL_##fname) bx::dlsym(handle, #fname);
 		WL_EGL_IMPORT
-#undef WL_EGL_FUNC
+#	undef WL_EGL_FUNC
 
-		return so;
+		return handle;
 	}
 
-	void waylandEglClose(void *so) {
-		bx::dlclose(so);
-#define WL_EGL_FUNC(rt, fname, params) BGFX_WAYLAND_##fname = NULL;
+	void waylandEglClose(void* _handle)
+	{
+		bx::dlclose(_handle);
+
+#	define WL_EGL_FUNC(rt, fname, params) BGFX_WAYLAND_##fname = NULL;
 		WL_EGL_IMPORT
-#undef WL_EGL_FUNC
+#	undef WL_EGL_FUNC
 	}
-#endif
+#endif // defined(WL_EGL_PLATFORM)
 
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func = NULL
 #	include "glimports.h"
@@ -238,7 +242,7 @@ WL_EGL_IMPORT
 		bcm_host_init();
 #	endif // BX_PLATFORM_RPI
 
-		m_eglLibrary = eglOpen();
+		m_eglDll = eglOpen();
 
 		if (NULL == g_platformData.context)
 		{
@@ -257,7 +261,7 @@ WL_EGL_IMPORT
 			}
 #	endif // BX_PLATFORM_WINDOWS
 
-            m_display = eglGetDisplay(NULL == ndt ? EGL_DEFAULT_DISPLAY : ndt);
+			m_display = eglGetDisplay(NULL == ndt ? EGL_DEFAULT_DISPLAY : ndt);
 			BGFX_FATAL(m_display != EGL_NO_DISPLAY, Fatal::UnableToInitialize, "Failed to create display %p", m_display);
 
 			EGLint major = 0;
@@ -366,16 +370,18 @@ WL_EGL_IMPORT
 			vc_dispmanx_update_submit_sync(dispmanUpdate);
 #	endif // BX_PLATFORM_ANDROID
 
-#	if BX_PLATFORM_LINUX && defined(WL_EGL_PLATFORM)
-			if (g_platformData.type == NativeWindowHandleType::Wayland) {
-				m_waylandEglLibrary = waylandEglOpen();
+#	if defined(WL_EGL_PLATFORM)
+			if (g_platformData.type == NativeWindowHandleType::Wayland)
+			{
+				m_waylandEglDll = waylandEglOpen();
 
 				// A wl_surface needs to be first wrapped in a wl_egl_window
 				// before it can be used to create the EGLSurface.
-				m_egl_window = BGFX_WAYLAND_wl_egl_window_create((wl_surface*)nwh, _width, _height);
-				nwh = m_egl_window;
+				m_eglWindow = BGFX_WAYLAND_wl_egl_window_create( (wl_surface*)nwh, _width, _height);
+				nwh = m_eglWindow;
 			}
-#	endif
+#	endif // defined(WL_EGL_PLATFORM)
+
 			if (headless)
 			{
 				EGLint pbAttribs[] =
@@ -477,20 +483,23 @@ WL_EGL_IMPORT
 			EGL_CHECK(eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) );
 			EGL_CHECK(eglDestroyContext(m_display, m_context) );
 			EGL_CHECK(eglDestroySurface(m_display, m_surface) );
-#	if BX_PLATFORM_LINUX && defined(WL_EGL_PLATFORM)
-			if (m_egl_window) {
-				BGFX_WAYLAND_wl_egl_window_destroy(m_egl_window);
-				waylandEglClose(m_waylandEglLibrary);
-				m_waylandEglLibrary = NULL;
+
+#	if defined(WL_EGL_PLATFORM)
+			if (m_eglWindow)
+			{
+				BGFX_WAYLAND_wl_egl_window_destroy(m_eglWindow);
+				waylandEglClose(m_waylandEglDll);
+				m_waylandEglDll = NULL;
 			}
-#	endif
+#	endif // defined(WL_EGL_PLATFORM)
+
 			EGL_CHECK(eglTerminate(m_display) );
 			m_context = NULL;
 		}
 
 		EGL_CHECK(eglReleaseThread() );
-		eglClose(m_eglLibrary);
-		m_eglLibrary = NULL;
+		eglClose(m_eglDll);
+		m_eglDll = NULL;
 
 #	if BX_PLATFORM_RPI
 		bcm_host_deinit();
@@ -516,9 +525,10 @@ WL_EGL_IMPORT
 		}
 #	elif BX_PLATFORM_EMSCRIPTEN
 		EMSCRIPTEN_CHECK(emscripten_set_canvas_element_size(HTML5_TARGET_CANVAS_SELECTOR, _width, _height) );
-#	elif BX_PLATFORM_LINUX && defined(WL_EGL_PLATFORM)
-		if (NULL != m_egl_window) {
-			BGFX_WAYLAND_wl_egl_window_resize(m_egl_window, _width, _height, 0, 0);
+#	elif defined(WL_EGL_PLATFORM)
+		if (NULL != m_eglWindow)
+		{
+			BGFX_WAYLAND_wl_egl_window_resize(m_eglWindow, _width, _height, 0, 0);
 		}
 #	else
 		BX_UNUSED(_width, _height);
