@@ -11,6 +11,7 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
+
 // EGL pulls X11 crap...
 #if defined(None)
 #	undef None
@@ -35,6 +36,9 @@ namespace bgfx { namespace gl
 			, m_context(NULL)
 			, m_display(NULL)
 			, m_surface(NULL)
+#if BX_PLATFORM_LINUX && defined(WL_EGL_PLATFORM)
+			, m_egl_window(NULL)
+#endif
 			, m_msaaContext(false)
 		{
 		}
@@ -62,6 +66,9 @@ namespace bgfx { namespace gl
 		EGLContext m_context;
 		EGLDisplay m_display;
 		EGLSurface m_surface;
+#if BX_PLATFORM_LINUX && defined(WL_EGL_PLATFORM)
+		struct wl_egl_window *m_egl_window;
+#endif
 		// true when MSAA is handled by the context instead of using MSAA FBO
 		bool m_msaaContext;
 	};

@@ -290,6 +290,8 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 			}
 		}
 	}
+#else
+	ImGui::Text("Renderer: %s", bgfx::getRendererName(bgfx::getRendererType()));
 #endif // 0
 
 	const bgfx::Stats* stats = bgfx::getStats();
