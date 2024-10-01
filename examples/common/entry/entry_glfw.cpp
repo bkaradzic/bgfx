@@ -46,18 +46,8 @@ namespace entry
 	{
 #	if BX_PLATFORM_LINUX
 # 		if ENTRY_CONFIG_USE_WAYLAND
-		wl_egl_window *win_impl = (wl_egl_window*)glfwGetWindowUserPointer(_window);
-		if(!win_impl)
-		{
-			int width, height;
-			glfwGetWindowSize(_window, &width, &height);
-			struct wl_surface* surface = (struct wl_surface*)glfwGetWaylandWindow(_window);
-			if(!surface)
-				return nullptr;
-			win_impl = wl_egl_window_create(surface, width, height);
-			glfwSetWindowUserPointer(_window, (void*)(uintptr_t)win_impl);
-		}
-		return (void*)(uintptr_t)win_impl;
+		struct wl_surface* surface = (struct wl_surface*)glfwGetWaylandWindow(_window);
+		return (void*)surface;
 #		else
 		return (void*)(uintptr_t)glfwGetX11Window(_window);
 #		endif

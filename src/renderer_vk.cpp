@@ -6940,7 +6940,7 @@ VK_DESTROY
 				sci.pNext = NULL;
 				sci.flags = 0;
 				sci.display = (wl_display*)g_platformData.ndt;
-				sci.surface = (wl_surface*)((wl_egl_window*)m_nwh)->surface;
+				sci.surface = (wl_surface*)m_nwh;
 				result = vkCreateWaylandSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
 			}
 			else
