@@ -362,6 +362,20 @@ VK_IMPORT_DEVICE
 			KHR_draw_indirect_count,
 			KHR_get_physical_device_properties2,
 
+#	if BX_PLATFORM_ANDROID
+			KHR_android_surface,
+#	elif BX_PLATFORM_LINUX
+			KHR_wayland_surface,
+			KHR_xlib_surface,
+			KHR_xcb_surface,
+#	elif BX_PLATFORM_WINDOWS
+			KHR_win32_surface,
+#	elif BX_PLATFORM_OSX
+			MVK_macos_surface,
+#	elif BX_PLATFORM_NX
+			NN_vi_surface,
+#	endif
+
 			Count
 		};
 
@@ -386,6 +400,19 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_draw_indirect_count",             1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true,                                                          Layer::Count },
+#	if BX_PLATFORM_ANDROID
+		{ VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,    1, false, false, true,                                                          Layer::Count },
+#	elif BX_PLATFORM_LINUX
+		{ VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME,    1, false, false, true,                                                          Layer::Count },
+		{ VK_KHR_XLIB_SURFACE_EXTENSION_NAME,       1, false, false, true,                                                          Layer::Count },
+		{ VK_KHR_XCB_SURFACE_EXTENSION_NAME,        1, false, false, true,                                                          Layer::Count },
+#	elif BX_PLATFORM_WINDOWS
+		{ VK_KHR_WIN32_SURFACE_EXTENSION_NAME,      1, false, false, true,                                                          Layer::Count },
+#	elif BX_PLATFORM_OSX
+		{ VK_MVK_MACOS_SURFACE_EXTENSION_NAME,      1, false, false, true,                                                          Layer::Count },
+#	elif BX_PLATFORM_NX
+		{ VK_NN_VI_SURFACE_EXTENSION_NAME,          1, false, false, true,                                                          Layer::Count },
+#	endif
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
 
@@ -1178,7 +1205,7 @@ VK_IMPORT_DEVICE
 #else
 				"libvulkan.so.1"
 #endif // BX_PLATFORM_*
-					);
+				);
 
 			if (NULL == m_vulkan1Dll)
 			{
@@ -1244,12 +1271,11 @@ VK_IMPORT
 				}
 
 				uint32_t numEnabledExtensions = 0;
-				const char* enabledExtension[Extension::Count + 2];
+				const char* enabledExtension[Extension::Count + 1];
 
 				if (!headless)
 				{
 					enabledExtension[numEnabledExtensions++] = VK_KHR_SURFACE_EXTENSION_NAME;
-					enabledExtension[numEnabledExtensions++] = KHR_SURFACE_EXTENSION_NAME;
 				}
 
 				for (uint32_t ii = 0; ii < Extension::Count; ++ii)
@@ -6928,9 +6954,10 @@ VK_DESTROY
 		}
 #elif BX_PLATFORM_LINUX
 		{
-#	if defined(WL_EGL_PLATFORM)
 			if (g_platformData.type == bgfx::NativeWindowHandleType::Wayland)
 			{
+				BGFX_FATAL(s_extension[Extension::KHR_wayland_surface].m_supported, Fatal::UnableToInitialize, VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME " not supported");
+				BGFX_FATAL(NULL != vkCreateWaylandSurfaceKHR, Fatal::UnableToInitialize, "vkCreateWaylandSurfaceKHR == 0");
 				VkWaylandSurfaceCreateInfoKHR sci;
 				sci.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
 				sci.pNext = NULL;
@@ -6940,10 +6967,10 @@ VK_DESTROY
 				result = vkCreateWaylandSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
 			}
 			else
-#	endif // defined(WL_EGL_PLATFORM)
 			{
-				if (NULL != vkCreateXlibSurfaceKHR)
+				if (s_extension[Extension::KHR_xlib_surface].m_supported)
 				{
+					BGFX_FATAL(NULL != vkCreateXlibSurfaceKHR, Fatal::UnableToInitialize, "vkCreateXlibSurfaceKHR == 0")
 					VkXlibSurfaceCreateInfoKHR sci;
 					sci.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
 					sci.pNext = NULL;
@@ -6953,7 +6980,7 @@ VK_DESTROY
 					result = vkCreateXlibSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
 				}
 
-				if (VK_SUCCESS != result)
+				if (VK_SUCCESS != result && s_extension[Extension::KHR_xcb_surface].m_supported)
 				{
 					void* xcbdll = bx::dlopen("libX11-xcb.so.1");
 
@@ -6964,6 +6991,8 @@ VK_DESTROY
 						PFN_XGETXCBCONNECTION XGetXCBConnection = (PFN_XGETXCBCONNECTION)bx::dlsym(xcbdll, "XGetXCBConnection");
 
 						union { void* ptr; xcb_window_t window; } cast = { m_nwh };
+
+						BGFX_FATAL(NULL != vkCreateXcbSurfaceKHR, Fatal::UnableToInitialize, "vkCreateXcbSurfaceKHR == 0")
 
 						VkXcbSurfaceCreateInfoKHR sci;
 						sci.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;

@@ -46,12 +46,10 @@ namespace entry
 		}
 
 #	if BX_PLATFORM_LINUX
-#		if ENTRY_CONFIG_USE_WAYLAND
-			if (wmi.subsystem == SDL_SYSWM_WAYLAND)
-				return (void*)wmi.info.wl.surface;
-			else
-#		endif // ENTRY_CONFIG_USE_WAYLAND
-				return (void*)wmi.info.x11.window;
+		if (wmi.subsystem == SDL_SYSWM_WAYLAND)
+			return (void*)wmi.info.wl.surface;
+		else
+			return (void*)wmi.info.x11.window;
 #	elif BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 		return wmi.info.cocoa.window;
 #	elif BX_PLATFORM_WINDOWS
@@ -59,13 +57,6 @@ namespace entry
 #   elif BX_PLATFORM_ANDROID
 		return wmi.info.android.window;
 #	endif // BX_PLATFORM_
-	}
-
-	static void sdlDestroyWindow(SDL_Window* _window)
-	{
-		if(!_window)
-			return;
-		SDL_DestroyWindow(_window);
 	}
 
 	static uint8_t translateKeyModifiers(uint16_t _sdl)
@@ -779,7 +770,7 @@ namespace entry
 									if (isValid(handle) )
 									{
 										m_eventQueue.postWindowEvent(handle);
-										sdlDestroyWindow(m_window[handle.idx]);
+										SDL_DestroyWindow(m_window[handle.idx]);
 										m_window[handle.idx] = NULL;
 									}
 								}
@@ -873,7 +864,7 @@ namespace entry
 			while (bgfx::RenderFrame::NoContext != bgfx::renderFrame() ) {};
 			m_thread.shutdown();
 
-			sdlDestroyWindow(m_window[0]);
+			SDL_DestroyWindow(m_window[0]);
 			SDL_Quit();
 
 			return m_thread.getExitCode();
@@ -1063,12 +1054,10 @@ namespace entry
 			return NULL;
 		}
 #	if BX_PLATFORM_LINUX
-#		if ENTRY_CONFIG_USE_WAYLAND
-			if (wmi.subsystem == SDL_SYSWM_WAYLAND)
-				return wmi.info.wl.display;
-			else
-#		endif // ENTRY_CONFIG_USE_WAYLAND
-				return wmi.info.x11.display;
+		if (wmi.subsystem == SDL_SYSWM_WAYLAND)
+			return wmi.info.wl.display;
+		else
+			return wmi.info.x11.display;
 #	else
 		return NULL;
 #	endif // BX_PLATFORM_*
@@ -1083,13 +1072,11 @@ namespace entry
 			return bgfx::NativeWindowHandleType::Default;
 		}
 #	if BX_PLATFORM_LINUX
-#		if ENTRY_CONFIG_USE_WAYLAND
 		if (wmi.subsystem == SDL_SYSWM_WAYLAND)
 		{
 			return bgfx::NativeWindowHandleType::Wayland;
 		}
 		else
-#		endif // ENTRY_CONFIG_USE_WAYLAND
 		{
 			return bgfx::NativeWindowHandleType::Default;
 		}

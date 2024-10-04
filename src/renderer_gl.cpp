@@ -7151,7 +7151,7 @@ namespace bgfx { namespace gl
 	void FrameBufferGL::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)
 	{
 		BX_UNUSED(_format, _depthFormat);
-		m_swapChain = s_renderGL->m_glctx.createSwapChain(_nwh);
+		m_swapChain = s_renderGL->m_glctx.createSwapChain(_nwh, _width, _height);
 		m_width     = _width;
 		m_height    = _height;
 		m_numTh     = 0;
