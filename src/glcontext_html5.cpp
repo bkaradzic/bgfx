@@ -86,7 +86,7 @@ namespace bgfx { namespace gl
 		}
 		else
 		{
-			m_primary = createSwapChain((void*)canvas);
+			m_primary = createSwapChain((void*)canvas, (int)_width, (int)_height) );
 		}
 
 		if (0 != _width
@@ -122,9 +122,10 @@ namespace bgfx { namespace gl
 		EMSCRIPTEN_CHECK(emscripten_set_canvas_element_size(m_primary->m_canvas, (int) _width, (int) _height) );
 	}
 
-	SwapChainGL* GlContext::createSwapChain(void* _nwh)
+	SwapChainGL* GlContext::createSwapChain(void* _nwh, int _width, int _height)
 	{
 		emscripten_webgl_init_context_attributes(&s_attrs);
+		BX_UNUSED(_width, _height);
 
 		// Work around bug https://bugs.chromium.org/p/chromium/issues/detail?id=1045643 in Chrome
 		// by having alpha always enabled.

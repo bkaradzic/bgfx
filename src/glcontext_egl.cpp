@@ -124,7 +124,7 @@ EGL_IMPORT
 	}
 #endif // BGFX_USE_GL_DYNAMIC_LIB
 
-#if defined(WL_EGL_PLATFORM)
+#if BX_PLATFORM_LINUX
 #	define WL_EGL_IMPORT                                                                            \
 		WL_EGL_FUNC(struct wl_egl_window *, wl_egl_window_create, (struct wl_surface *, int, int) ) \
 		WL_EGL_FUNC(void, wl_egl_window_destroy, (struct wl_egl_window *))                          \
@@ -159,7 +159,7 @@ WL_EGL_IMPORT
 		WL_EGL_IMPORT
 #	undef WL_EGL_FUNC
 	}
-#endif // defined(WL_EGL_PLATFORM)
+#endif // BX_PLATFORM_LINUX
 
 #	define GL_IMPORT(_optional, _proto, _func, _import) _proto _func = NULL
 #	include "glimports.h"
@@ -168,11 +168,16 @@ WL_EGL_IMPORT
 
 	struct SwapChainGL
 	{
-		SwapChainGL(EGLDisplay _display, EGLConfig _config, EGLContext _context, EGLNativeWindowType _nwh)
+		SwapChainGL(EGLDisplay _display, EGLConfig _config, EGLContext _context, EGLNativeWindowType _nwh, int _width, int _height)
 			: m_nwh(_nwh)
 			, m_display(_display)
+#	if BX_PLATFORM_LINUX
+			, m_eglWindow(NULL)
+#	endif
 		{
 			EGLSurface defaultSurface = eglGetCurrentSurface(EGL_DRAW);
+
+			BX_UNUSED(_width, _height);
 
 			if (EGLNativeWindowType(0) == _nwh)
 			{
@@ -180,6 +185,15 @@ WL_EGL_IMPORT
 			}
 			else
 			{
+#	if BX_PLATFORM_LINUX
+				if (g_platformData.type == NativeWindowHandleType::Wayland)
+				{
+					// A wl_surface needs to be first wrapped in a wl_egl_window
+					// before it can be used to create the EGLSurface.
+					m_eglWindow = BGFX_WAYLAND_wl_egl_window_create( (wl_surface*)_nwh, _width, _height);
+					_nwh = (EGLNativeWindowType) m_eglWindow;
+				}
+#	endif
 				m_surface = eglCreateWindowSurface(m_display, _config, _nwh, NULL);
 			}
 
@@ -207,6 +221,12 @@ WL_EGL_IMPORT
 			EGL_CHECK(eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) );
 			EGL_CHECK(eglDestroyContext(m_display, m_context) );
 			EGL_CHECK(eglDestroySurface(m_display, m_surface) );
+#	if BX_PLATFORM_LINUX
+			if (m_eglWindow)
+			{
+				BGFX_WAYLAND_wl_egl_window_destroy(m_eglWindow);
+			}
+#	endif
 			EGL_CHECK(eglMakeCurrent(m_display, defaultSurface, defaultSurface, defaultContext) );
 		}
 
@@ -224,6 +244,9 @@ WL_EGL_IMPORT
 		EGLContext m_context;
 		EGLDisplay m_display;
 		EGLSurface m_surface;
+#	if BX_PLATFORM_LINUX
+		wl_egl_window *m_eglWindow;
+#	endif
 	};
 
 #	if BX_PLATFORM_RPI
@@ -366,17 +389,12 @@ WL_EGL_IMPORT
 			vc_dispmanx_update_submit_sync(dispmanUpdate);
 #	endif // BX_PLATFORM_ANDROID
 
-#	if defined(WL_EGL_PLATFORM)
+#	if BX_PLATFORM_LINUX
 			if (g_platformData.type == NativeWindowHandleType::Wayland)
 			{
 				m_waylandEglDll = waylandEglOpen();
-
-				// A wl_surface needs to be first wrapped in a wl_egl_window
-				// before it can be used to create the EGLSurface.
-				m_eglWindow = BGFX_WAYLAND_wl_egl_window_create( (wl_surface*)nwh, _width, _height);
-				nwh = m_eglWindow;
 			}
-#	endif // defined(WL_EGL_PLATFORM)
+#	endif
 
 			if (headless)
 			{
@@ -392,6 +410,15 @@ WL_EGL_IMPORT
 			}
 			else
 			{
+#	if BX_PLATFORM_LINUX
+				if (g_platformData.type == NativeWindowHandleType::Wayland)
+				{
+					// A wl_surface needs to be first wrapped in a wl_egl_window
+					// before it can be used to create the EGLSurface.
+					m_eglWindow = BGFX_WAYLAND_wl_egl_window_create( (wl_surface*)nwh, _width, _height);
+					nwh = (EGLNativeWindowType) m_eglWindow;
+				}
+#	endif
 				m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
 			}
 
@@ -474,20 +501,21 @@ WL_EGL_IMPORT
 
 	void GlContext::destroy()
 	{
+		BX_TRACE("GLContext::destroy()");
 		if (NULL != m_display)
 		{
 			EGL_CHECK(eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) );
 			EGL_CHECK(eglDestroyContext(m_display, m_context) );
 			EGL_CHECK(eglDestroySurface(m_display, m_surface) );
 
-#	if defined(WL_EGL_PLATFORM)
+#	if BX_PLATFORM_LINUX
 			if (m_eglWindow)
 			{
 				BGFX_WAYLAND_wl_egl_window_destroy(m_eglWindow);
 				waylandEglClose(m_waylandEglDll);
 				m_waylandEglDll = NULL;
 			}
-#	endif // defined(WL_EGL_PLATFORM)
+#	endif
 
 			EGL_CHECK(eglTerminate(m_display) );
 			m_context = NULL;
@@ -521,7 +549,7 @@ WL_EGL_IMPORT
 		}
 #	elif BX_PLATFORM_EMSCRIPTEN
 		EMSCRIPTEN_CHECK(emscripten_set_canvas_element_size(HTML5_TARGET_CANVAS_SELECTOR, _width, _height) );
-#	elif defined(WL_EGL_PLATFORM)
+#	elif BX_PLATFORM_LINUX
 		if (NULL != m_eglWindow)
 		{
 			BGFX_WAYLAND_wl_egl_window_resize(m_eglWindow, _width, _height, 0, 0);
@@ -549,9 +577,9 @@ WL_EGL_IMPORT
 			;
 	}
 
-	SwapChainGL* GlContext::createSwapChain(void* _nwh)
+	SwapChainGL* GlContext::createSwapChain(void* _nwh, int _width, int _height)
 	{
-		return BX_NEW(g_allocator, SwapChainGL)(m_display, m_config, m_context, (EGLNativeWindowType)_nwh);
+		return BX_NEW(g_allocator, SwapChainGL)(m_display, m_config, m_context, (EGLNativeWindowType)_nwh, _width, _height);
 	}
 
 	void GlContext::destroySwapChain(SwapChainGL* _swapChain)

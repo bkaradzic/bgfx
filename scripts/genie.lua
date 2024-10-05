@@ -21,11 +21,6 @@ newoption {
 }
 
 newoption {
-	trigger = "with-wayland",
-	description = "Enable Wayland support.",
-}
-
-newoption {
 	trigger = "with-profiler",
 	description = "Enable build with intrusive profiler.",
 }
@@ -187,10 +182,6 @@ end
 function copyLib()
 end
 
-if _OPTIONS["with-wayland"] then
-	defines { "WL_EGL_PLATFORM=1" }
-end
-
 if _OPTIONS["with-sdl"] then
 	if os.is("windows") then
 		if not os.getenv("SDL2_DIR") then
@@ -244,15 +235,6 @@ function exampleProjectDefaults()
 	if _OPTIONS["with-glfw"] then
 		defines { "ENTRY_CONFIG_USE_GLFW=1" }
 		links   { "glfw3" }
-
-		configuration { "linux or freebsd" }
-			links {
-				"Xrandr",
-				"Xinerama",
-				"Xi",
-				"Xxf86vm",
-				"Xcursor",
-			}
 
 		configuration { "osx*" }
 			linkoptions {

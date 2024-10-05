@@ -204,6 +204,20 @@ public:
 							m_fbh[viewId].idx = bgfx::kInvalidHandle;
 						}
 
+						// Before we reattach a SwapChain to the window
+						// we must actually free up the previous one.
+						// The DestroyFrameBuffer command goes in the
+						// cmdPost CommandBuffer, which happens after
+						// the frame. The CreateFrameBuffer command goes
+						// int the cmdPre CommandBuffer, which happens
+						// at the beginning of the frame. Without this
+						// bgfx::frame() call, the creation would happen
+						// before it's destroyed, which would cause
+						// the platform window to have two SwapChains
+						// associated with it.
+						// Ideally, we have an operation of ResizeFrameBuffer.
+						bgfx::frame();
+
 						win.m_nwh    = m_state.m_nwh;
 						win.m_width  = m_state.m_width;
 						win.m_height = m_state.m_height;
@@ -276,6 +290,7 @@ public:
 			int64_t now = bx::getHPCounter();
 			float time = (float)( (now-m_timeOffset)/double(bx::getHPFrequency() ) );
 
+			bgfx::dbgTextClear();
 			if (NULL != m_bindings)
 			{
 				bgfx::dbgTextPrintf(0, 1, 0x2f, "Press 'c' to create or 'd' to destroy window.");
