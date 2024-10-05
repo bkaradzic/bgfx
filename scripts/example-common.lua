@@ -79,12 +79,6 @@ project ("example-common")
 		}
 	end
 
-	if _OPTIONS["with-wayland"] then
-		defines {
-			"ENTRY_CONFIG_USE_WAYLAND=1",
-		}
-	end
-
 	configuration { "android-*" }
 		includedirs {
 			path.join(BGFX_DIR, "3rdparty/native_app_glue")
