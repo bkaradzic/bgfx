@@ -851,14 +851,18 @@ namespace entry
 
 						if (utf16[0] >= 0xD800 && utf16[0] <= 0xDBFF) {
 							m_surrogate = utf16[0];
-						} else {
+						}
+						else
+						{
 							int utf16_len;
 							if (utf16[0] >= 0xDC00 && utf16[0] <= 0xDFFF) {
 								utf16[1] = utf16[0];
 								utf16[0] = m_surrogate;
 								m_surrogate = 0;
 								utf16_len = 2;
-							} else {
+							}
+							else
+							{
 								utf16_len = 1;
 							}
 

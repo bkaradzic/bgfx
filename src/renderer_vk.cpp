@@ -4175,10 +4175,10 @@ VK_IMPORT_DEVICE
 				{
 				case UniformType::Mat3:
 				case UniformType::Mat3|kUniformFragmentBit:
-					 {
+					{
 						 float* value = (float*)data;
 						 for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3*16, value += 9)
-						 {
+						{
 							 Matrix4 mtx;
 							 mtx.un.val[ 0] = value[0];
 							 mtx.un.val[ 1] = value[1];
@@ -6540,7 +6540,8 @@ VK_DESTROY
 
 		bimg::TextureFormat::Enum tf = bimg::TextureFormat::Enum(m_textureFormat);
 		const bimg::ImageBlockInfo &blockInfo = bimg::getBlockInfo(tf);
-		for (uint32_t i = 0; i < _bufferImageCopyCount; ++i) {
+		for (uint32_t i = 0; i < _bufferImageCopyCount; ++i)
+		{
 			BX_ASSERT(
 				  bx::uint32_mod(_bufferImageCopy[i].bufferOffset, blockInfo.blockSize) == 0
 				, "Misaligned texture of type %s to offset %u, which is not a multiple of %u."

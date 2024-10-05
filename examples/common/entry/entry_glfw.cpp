@@ -44,7 +44,8 @@ namespace entry
 		if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
 		{
 			return glfwGetWaylandWindow(_window);
-		} else
+		}
+		else
 		{
 			return (void*)(uintptr_t)glfwGetX11Window(_window);
 		}
@@ -838,7 +839,8 @@ namespace entry
 		if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
 		{
 			return glfwGetWaylandDisplay();
-		} else
+		}
+		else
 		{
 			return glfwGetX11Display();
 		}
@@ -853,7 +855,8 @@ namespace entry
 		if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
 		{
 			return bgfx::NativeWindowHandleType::Wayland;
-		} else
+		}
+		else
 		{
 			return bgfx::NativeWindowHandleType::Default;
 		}

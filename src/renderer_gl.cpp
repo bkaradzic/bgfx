@@ -3060,7 +3060,8 @@ namespace bgfx { namespace gl
 				}
 
 #if BGFX_CONFIG_RENDERER_OPENGLES && (BGFX_CONFIG_RENDERER_OPENGLES < 30)
-				if (!m_maxMsaa  && s_extension[Extension::IMG_multisampled_render_to_texture].m_supported) {
+				if (!m_maxMsaa  && s_extension[Extension::IMG_multisampled_render_to_texture].m_supported)
+				{
 					GL_CHECK(glGetIntegerv(GL_MAX_SAMPLES_IMG, &m_maxMsaa) );
 				}
 #endif // BGFX_CONFIG_RENDERER_OPENGLES < 30
@@ -7121,7 +7122,9 @@ namespace bgfx { namespace gl
 								{
 									attachment = GL_DEPTH_ATTACHMENT;
 								}
-							} else {
+							}
+							else
+							{
 								attachment = GL_COLOR_ATTACHMENT0 + colorIdx;
 								++colorIdx;
 							}

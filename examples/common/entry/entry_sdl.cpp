@@ -47,9 +47,13 @@ namespace entry
 
 #	if BX_PLATFORM_LINUX
 		if (wmi.subsystem == SDL_SYSWM_WAYLAND)
+		{
 			return (void*)wmi.info.wl.surface;
+		}
 		else
+		{
 			return (void*)wmi.info.x11.window;
+		}
 #	elif BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 		return wmi.info.cocoa.window;
 #	elif BX_PLATFORM_WINDOWS
