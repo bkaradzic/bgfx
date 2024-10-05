@@ -34,7 +34,7 @@ Supported Platforms
 
 -  Android (14+)
 -  iOS/iPadOS/tvOS (16.0+)
--  Linux
+-  Linux (both X11 and Wayland)
 -  macOS (13.0+)
 -  PlayStation 4
 -  RaspberryPi
