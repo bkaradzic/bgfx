@@ -48,9 +48,8 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Building</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#getting-source">Getting Source</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick Start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dependencies-getting-the-source">Dependencies &amp; Getting the source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quick-start-for-windows">Quick Start for Windows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#android">Android</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#linux">Linux</a></li>
@@ -58,9 +57,10 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#build">Build</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#general">General</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#general-makefile-wrapper">General (Makefile wrapper)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#general-directly-with-genie">General (Directly with GENie)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id1">Windows</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#xcode">Xcode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#macos">macOS</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id2">Linux</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#winrt-uwp">WinRT / UWP</a></li>
 </ul>
@@ -103,21 +103,24 @@
              
   <section id="building">
 <h1>Building<a class="headerlink" href="#building" title="Link to this heading">¶</a></h1>
-<section id="dependencies">
-<h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading">¶</a></h2>
-<p><a class="reference external" href="https://github.com/bkaradzic/bx">https://github.com/bkaradzic/bx</a></p>
-<p><a class="reference external" href="https://github.com/bkaradzic/bimg">https://github.com/bkaradzic/bimg</a></p>
-</section>
-<section id="getting-source">
-<h2>Getting Source<a class="headerlink" href="#getting-source" title="Link to this heading">¶</a></h2>
+<section id="dependencies-getting-the-source">
+<h2>Dependencies &amp; Getting the source<a class="headerlink" href="#dependencies-getting-the-source" title="Link to this heading">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="https://github.com/bkaradzic/bx">https://github.com/bkaradzic/bx</a></p></li>
+<li><p><a class="reference external" href="https://github.com/bkaradzic/bimg">https://github.com/bkaradzic/bimg</a></p></li>
+</ul>
+</div></blockquote>
+<p>The directories for <cite>bx</cite>, <cite>bimg</cite>, and <cite>bgfx</cite> should all be siblings of each other.
+So clone the repositories next to each other:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">bkaradzic</span><span class="o">/</span><span class="n">bx</span><span class="o">.</span><span class="n">git</span>
 <span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">bkaradzic</span><span class="o">/</span><span class="n">bimg</span><span class="o">.</span><span class="n">git</span>
 <span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">bkaradzic</span><span class="o">/</span><span class="n">bgfx</span><span class="o">.</span><span class="n">git</span>
 </pre></div>
 </div>
 </section>
-<section id="quick-start">
-<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">¶</a></h2>
+<section id="quick-start-for-windows">
+<h2>Quick Start for Windows<a class="headerlink" href="#quick-start-for-windows" title="Link to this heading">¶</a></h2>
 <p>These are step for users who use Windows with Visual Studio.</p>
 <p>Enter bgfx directory:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">bgfx</span>
@@ -178,17 +181,19 @@ You must use use <strong>cmd.exe</strong> with provided makefiles.</p>
 <section id="build">
 <h2>Build<a class="headerlink" href="#build" title="Link to this heading">¶</a></h2>
 <p>bgfx uses <a class="reference external" href="https://github.com/bkaradzic/genie#genie---project-generator-tool">GENie - Project generator tool</a>
-to generate project files for various platform. Binaries for Linux, macOS, and Windows are included in
-bx repository.</p>
-<section id="general">
-<h3>General<a class="headerlink" href="#general" title="Link to this heading">¶</a></h3>
+to generate project files for various platforms. Binaries of GENie for Linux, macOS, and Windows are included in
+the bx repository. GENie can generate a useful list of options relevant to the project using the
+<code class="docutils literal notranslate"><span class="pre">--help</span></code> flag. Most platform-specific examples below do not explicitly use the <code class="docutils literal notranslate"><span class="pre">genie</span></code> executable, but a convenience
+makefile instead. For more control, you can directly use <code class="docutils literal notranslate"><span class="pre">genie</span></code> to generate the project files.</p>
+<section id="general-makefile-wrapper">
+<h3>General (Makefile wrapper)<a class="headerlink" href="#general-makefile-wrapper" title="Link to this heading">¶</a></h3>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">bgfx</span>
 <span class="n">make</span>
 </pre></div>
 </div>
-<p>After calling <code class="docutils literal notranslate"><span class="pre">make</span></code>, .build/projects/* directory will be generated.
-All intermediate files generated by compiler will be inside .build
-directory structure. Deleting .build directory at any time is safe.</p>
+<p>After calling <code class="docutils literal notranslate"><span class="pre">make</span></code>, some directories in <code class="docutils literal notranslate"><span class="pre">.build/projects/\*</span></code> will be generated.
+All intermediate files, libraries and executables generated by the compiler will be inside this
+<code class="docutils literal notranslate"><span class="pre">.build</span></code> directory structure. Deleting <code class="docutils literal notranslate"><span class="pre">.build</span></code> directory at any time is safe.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="o">&lt;</span><span class="n">configuration</span><span class="o">&gt;</span>
 </pre></div>
 </div>
@@ -196,6 +201,49 @@ directory structure. Deleting .build directory at any time is safe.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">linux</span><span class="o">-</span><span class="n">release64</span><span class="p">,</span> <span class="n">wasm</span><span class="o">-</span><span class="n">debug</span><span class="p">,</span> <span class="n">wasm</span><span class="o">-</span><span class="n">release</span><span class="p">,</span> <span class="n">osx</span><span class="o">-</span><span class="n">debug</span><span class="p">,</span> <span class="n">osx</span><span class="o">-</span><span class="n">release</span><span class="p">,</span> <span class="n">android</span><span class="o">-</span><span class="n">arm64</span><span class="o">-</span><span class="n">release</span><span class="p">,</span> <span class="n">etc</span><span class="o">.</span>
 </pre></div>
 </div>
+</section>
+<section id="general-directly-with-genie">
+<h3>General (Directly with GENie)<a class="headerlink" href="#general-directly-with-genie" title="Link to this heading">¶</a></h3>
+<p>Inspect the available options by invoking GENie with the <code class="docutils literal notranslate"><span class="pre">--help</span></code> option (where <code class="docutils literal notranslate"><span class="pre">&lt;platform&gt;</span></code> is <code class="docutils literal notranslate"><span class="pre">linux</span></code>, <code class="docutils literal notranslate"><span class="pre">windows</span></code>, or <code class="docutils literal notranslate"><span class="pre">darwin</span></code>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">../</span><span class="n">bx</span><span class="o">/</span><span class="n">tools</span><span class="o">/</span><span class="nb">bin</span><span class="o">/&lt;</span><span class="n">platform</span><span class="o">&gt;/</span><span class="n">genie</span> <span class="o">--</span><span class="n">help</span>
+</pre></div>
+</div>
+<p>Select the options you want, such as:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--with-tools</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--with-amalgamated</span></code> (see below)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--with-shared-lib</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--with-profiler</span></code> (see <a class="reference external" href="https://bkaradzic.github.io/bgfx/bgfx.html#_CPPv4N4bgfx9CallbackIE">https://bkaradzic.github.io/bgfx/bgfx.html#_CPPv4N4bgfx9CallbackIE</a>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--with-examples</span></code> (see <a class="reference external" href="https://bkaradzic.github.io/bgfx/examples.html">https://bkaradzic.github.io/bgfx/examples.html</a>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--with-sdl</span></code> to use SDL2 for the examples.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--with-glfw</span></code> to use GLFW3 for the examples.</p></li>
+</ul>
+</div></blockquote>
+<p>There are also many platform-specific options.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you wish to use the OpenGL backend, specifying a minimum API version is possible through setting
+the <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG</span></code> environment variable when running <code class="docutils literal notranslate"><span class="pre">genie</span></code>. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Unix:</span>
+<span class="n">export</span> <span class="n">BGFX_CONFIG</span><span class="o">=</span><span class="n">RENDERER_OPENGL_MIN_VERSION</span><span class="o">=</span><span class="mi">40</span>
+<span class="c1"># Windows:</span>
+<span class="nb">set</span> <span class="n">BGFX_CONFIG</span><span class="o">=</span><span class="n">RENDERER_OPENGL_MIN_VERSION</span><span class="o">=</span><span class="mi">40</span>
+
+<span class="o">../</span><span class="n">bx</span><span class="o">/</span><span class="n">tools</span><span class="o">/</span><span class="nb">bin</span><span class="o">/&lt;</span><span class="n">platform</span><span class="o">&gt;/</span><span class="n">genie</span> <span class="o">&lt;...</span> <span class="n">your</span> <span class="n">options</span> <span class="o">...&gt;</span>
+</pre></div>
+</div>
+<p>The same can be done for OpenGL ES.</p>
+</div>
+<p>Then generate your project files with the options.
+Your project folder is in <code class="docutils literal notranslate"><span class="pre">.build/projects/</span></code>.
+For more help on specific platforms, see below and read the <code class="docutils literal notranslate"><span class="pre">makefile</span></code> in the bgfx repository) for examples on how to use GENie.</p>
+<p>For gmake projects, specify compile using:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">config</span><span class="o">=&lt;</span><span class="n">config</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">C</span> <span class="o">.</span><span class="n">build</span><span class="o">/</span><span class="n">projects</span><span class="o">/&lt;</span><span class="n">platform</span><span class="o">&gt;-</span><span class="n">gmake</span>
+</pre></div>
+</div>
+<p>Where <code class="docutils literal notranslate"><span class="pre">&lt;config&gt;</span></code> is something like <code class="docutils literal notranslate"><span class="pre">release64</span></code>, <code class="docutils literal notranslate"><span class="pre">debug64</span></code> (or equivalent 32 bit), and
+<code class="docutils literal notranslate"><span class="pre">&lt;platform&gt;</span></code> is the platform you chose.</p>
 </section>
 <section id="id1">
 <h3>Windows<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
@@ -208,20 +256,21 @@ directory structure. Deleting .build directory at any time is safe.</p>
 </pre></div>
 </div>
 </section>
-<section id="xcode">
-<h3>Xcode<a class="headerlink" href="#xcode" title="Link to this heading">¶</a></h3>
-<p>Xcode command line:</p>
+<section id="macos">
+<h3>macOS<a class="headerlink" href="#macos" title="Link to this heading">¶</a></h3>
+<p>There are two options when working on macOS: Xcode command-line builds, or within the XCode graphical development environment.</p>
+<p>For the Xcode command line:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">osx</span><span class="o">-</span><span class="n">release</span>
 <span class="n">cd</span> <span class="n">examples</span><span class="o">/</span><span class="n">runtime</span>
 <span class="o">../../.</span><span class="n">build</span><span class="o">/</span><span class="n">osx64_clang</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">examples</span><span class="o">.</span><span class="n">app</span><span class="o">/</span><span class="n">Contents</span><span class="o">/</span><span class="n">MacOS</span><span class="o">/</span><span class="n">examplesRelease</span>
 </pre></div>
 </div>
-<p>Xcode IDE:</p>
+<p>Or for Xcode IDE:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">../</span><span class="n">bx</span><span class="o">/</span><span class="n">tools</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">darwin</span><span class="o">/</span><span class="n">genie</span> <span class="o">--</span><span class="k">with</span><span class="o">-</span><span class="n">combined</span><span class="o">-</span><span class="n">examples</span> <span class="o">--</span><span class="n">xcode</span><span class="o">=</span><span class="n">osx</span> <span class="n">xcode9</span>
 <span class="nb">open</span> <span class="o">.</span><span class="n">build</span><span class="o">/</span><span class="n">projects</span><span class="o">/</span><span class="n">xcode9</span><span class="o">-</span><span class="n">osx</span><span class="o">/</span><span class="n">bgfx</span><span class="o">.</span><span class="n">xcworkspace</span>
 </pre></div>
 </div>
-<p>Due to <a class="reference external" href="https://github.com/bkaradzic/genie/blob/master/docs/scripting-reference.md#debugdirpath">inability</a>
+<p>Due to the <a class="reference external" href="https://github.com/bkaradzic/genie/blob/master/docs/scripting-reference.md#debugdirpath">inability</a>
 to set working directory for an Xcode project from <a class="reference external" href="https://github.com/bkaradzic/genie#genie---project-generator-tool">GENie</a>
 configuration file, it has to be set manually for each example project:</p>
 <ol class="arabic simple">
@@ -236,13 +285,15 @@ configuration file, it has to be set manually for each example project:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">linux</span><span class="o">-</span><span class="n">release64</span>
 </pre></div>
 </div>
+<p>For more options, see <a class="reference external" href="#general-directly-with-genie">General (directly with GENie)</a>.</p>
 </section>
 <section id="winrt-uwp">
 <h3>WinRT / UWP<a class="headerlink" href="#winrt-uwp" title="Link to this heading">¶</a></h3>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span>\<span class="n">bx</span>\<span class="n">tools</span>\<span class="nb">bin</span>\<span class="n">windows</span>\<span class="n">genie</span> <span class="o">--</span><span class="n">vs</span><span class="o">=</span><span class="n">winstore100</span> <span class="n">vs2019</span>
 </pre></div>
 </div>
-<p>Build the resulting solution and deploy to device.</p>
+<p>For more options, see <a class="reference external" href="#general-directly-with-genie">General (directly with GENie)</a>.
+Build the resulting solution and deploy to device.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Shaders will need to be compiled with the appropriate target profile for your platform.</p>
@@ -251,12 +302,12 @@ configuration file, it has to be set manually for each example project:</p>
 </section>
 <section id="amalgamated-build">
 <h2>Amalgamated Build<a class="headerlink" href="#amalgamated-build" title="Link to this heading">¶</a></h2>
-<p>For ease of integration to other build system bgfx library can be built
-with single .cpp file. It’s only necessary to build
+<p>For ease of integration with other build systems, the bgfx library can be built
+with a single .cpp file. It’s only necessary to build
 <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/amalgamated.cpp">src/amalgamated.cpp</a>
 (for macOS/iOS/iPadOS/tvOS use
 <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/amalgamated.mm">src/amalgamated.mm</a>
-instead) inside different build system.</p>
+instead) inside a different build system.</p>
 </section>
 <section id="tools">
 <h2>Tools<a class="headerlink" href="#tools" title="Link to this heading">¶</a></h2>
@@ -277,7 +328,7 @@ instead) inside different build system.</p>
 <li><p><a class="reference external" href="https://github.com/ataulien/bgfx-cmake">https://github.com/ataulien/bgfx-cmake</a></p></li>
 </ul>
 </div></blockquote>
-<p><strong>fips</strong> is a highlevel build system wrapper written in Python for C/C++ projects.
+<p><strong>fips</strong> is a high-level build system wrapper written in Python for C/C++ projects.
 <a class="reference external" href="https://github.com/floooh/fips#fips">https://github.com/floooh/fips#fips</a></p>
 <p><strong>Conan</strong> package
 <a class="reference external" href="https://github.com/firefalcom/bgfx-conan">https://github.com/firefalcom/bgfx-conan</a></p>

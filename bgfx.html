@@ -1101,7 +1101,8 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>_x, _y</strong> – <strong>[in]</strong> 2D position from top-left. </p></li>
+<li><p><strong>_x</strong> – <strong>[in]</strong> The X coordinate (2D position from top-left) </p></li>
+<li><p><strong>_y</strong> – <strong>[in]</strong> The Y coordinate (2D position from top-left) </p></li>
 <li><p><strong>_attr</strong> – <strong>[in]</strong> Color palette. Where top 4-bits represent index of background, and bottom 4-bits represent foreground color from standard VGA text palette (ANSI escape codes). </p></li>
 <li><p><strong>_format</strong> – <strong>[in]</strong> <code class="docutils literal notranslate"><span class="pre">printf</span></code> style format.</p></li>
 </ul>
@@ -1121,7 +1122,8 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>_x, _y</strong> – <strong>[in]</strong> 2D position from top-left. </p></li>
+<li><p><strong>_x</strong> – <strong>[in]</strong> The X coordinate (2D position from top-left) </p></li>
+<li><p><strong>_y</strong> – <strong>[in]</strong> The Y coordinate (2D position from top-left) </p></li>
 <li><p><strong>_attr</strong> – <strong>[in]</strong> Color palette. Where top 4-bits represent index of background, and bottom 4-bits represent foreground color from standard VGA text palette (ANSI escape codes). </p></li>
 <li><p><strong>_format</strong> – <strong>[in]</strong> <code class="docutils literal notranslate"><span class="pre">printf</span></code> style format. </p></li>
 <li><p><strong>_argList</strong> – <strong>[in]</strong> additional arguments for format string</p></li>
@@ -1142,8 +1144,10 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>_x, _y</strong> – <strong>[in]</strong> 2D position from top-left. </p></li>
-<li><p><strong>_width, _height</strong> – <strong>[in]</strong> Image width and height. </p></li>
+<li><p><strong>_x</strong> – <strong>[in]</strong> The X coordinate (2D position from top-left) </p></li>
+<li><p><strong>_y</strong> – <strong>[in]</strong> The Y coordinate (2D position from top-left) </p></li>
+<li><p><strong>_width</strong> – <strong>[in]</strong> Image width </p></li>
+<li><p><strong>_height</strong> – <strong>[in]</strong> Image height </p></li>
 <li><p><strong>_data</strong> – <strong>[in]</strong> Raw image data (character/attribute raw encoding). </p></li>
 <li><p><strong>_pitch</strong> – <strong>[in]</strong> Image pitch in bytes.</p></li>
 </ul>
@@ -1621,7 +1625,7 @@
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.BGFX_CAPS_DRAW_INDIRECT_COUNT">
 <span class="target" id="defines_8h_1ae16a915be9005a3d605b06db4a40f573"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_DRAW_INDIRECT_COUNT</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_DRAW_INDIRECT_COUNT" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Draw indirect with indirect count is supported. All texture compare modes are supported. </p>
+<dd><p>Draw indirect with indirect count is supported. </p>
 </dd></dl>
 
 <dl class="cpp macro">
@@ -1863,6 +1867,12 @@
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx5Stats13maxGpuLatencyE">
 <span id="_CPPv3N4bgfx5Stats13maxGpuLatencyE"></span><span id="_CPPv2N4bgfx5Stats13maxGpuLatencyE"></span><span id="bgfx::Stats::maxGpuLatency__uint32_t"></span><span class="target" id="structbgfx_1_1_stats_1a009e15fb4e8339ed5259d6451d180de5"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">maxGpuLatency</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx5Stats13maxGpuLatencyE" title="Link to this definition">¶</a><br /></dt>
 <dd><p>GPU driver latency. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx5Stats11gpuFrameNumE">
+<span id="_CPPv3N4bgfx5Stats11gpuFrameNumE"></span><span id="_CPPv2N4bgfx5Stats11gpuFrameNumE"></span><span id="bgfx::Stats::gpuFrameNum__uint32_t"></span><span class="target" id="structbgfx_1_1_stats_1a0b085db5f2ce186e88dbc48589afce2a"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">gpuFrameNum</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx5Stats11gpuFrameNumE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Frame which generated gpuTimeBegin, gpuTimeEnd. </p>
 </dd></dl>
 
 <dl class="cpp var">
@@ -2695,7 +2705,10 @@ It is only necessary to use these APIs in conjunction with creating windows.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>_index</strong> – <strong>[in]</strong> Index into palette. </p></li>
-<li><p><strong>_r, _g, _b, _a</strong> – <strong>[in]</strong> RGBA floating point values.</p></li>
+<li><p><strong>_r</strong> – <strong>[in]</strong> Red value (RGBA floating point values) </p></li>
+<li><p><strong>_g</strong> – <strong>[in]</strong> Green value (RGBA floating point values) </p></li>
+<li><p><strong>_b</strong> – <strong>[in]</strong> Blue value (RGBA floating point values) </p></li>
+<li><p><strong>_a</strong> – <strong>[in]</strong> Alpha value (RGBA floating point values)</p></li>
 </ul>
 </dd>
 </dl>
