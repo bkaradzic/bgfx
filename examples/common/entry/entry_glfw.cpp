@@ -10,9 +10,9 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-#if GLFW_VERSION_MINOR < 2
-#	error "GLFW 3.2 or later is required"
-#endif // GLFW_VERSION_MINOR < 2
+#if !(GLFW_VERSION_MAJOR > 3 || (GLFW_VERSION_MAJOR == 3 && GLFW_VERSION_MINOR >= 4) )
+#	error "GLFW 3.4 or later is required"
+#endif // GLFW_VERSION_*
 
 #if BX_PLATFORM_LINUX
 #	define GLFW_EXPOSE_NATIVE_WAYLAND
@@ -41,14 +41,12 @@ namespace entry
 	static void* glfwNativeWindowHandle(GLFWwindow* _window)
 	{
 #	if BX_PLATFORM_LINUX
-		if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+		if (GLFW_PLATFORM_WAYLAND == glfwGetPlatform() )
 		{
 			return glfwGetWaylandWindow(_window);
 		}
-		else
-		{
-			return (void*)(uintptr_t)glfwGetX11Window(_window);
-		}
+
+		return (void*)uintptr_t(glfwGetX11Window(_window) );
 #	elif BX_PLATFORM_OSX
 		return glfwGetCocoaWindow(_window);
 #	elif BX_PLATFORM_WINDOWS
@@ -836,14 +834,12 @@ namespace entry
 	void* getNativeDisplayHandle()
 	{
 #	if BX_PLATFORM_LINUX
-		if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+		if (GLFW_PLATFORM_WAYLAND == glfwGetPlatform() )
 		{
 			return glfwGetWaylandDisplay();
 		}
-		else
-		{
-			return glfwGetX11Display();
-		}
+
+		return glfwGetX11Display();
 #	else
 		return NULL;
 #	endif // BX_PLATFORM_*
@@ -852,17 +848,13 @@ namespace entry
 	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType()
 	{
 #	if BX_PLATFORM_LINUX
-		if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+		if (GLFW_PLATFORM_WAYLAND == glfwGetPlatform() )
 		{
 			return bgfx::NativeWindowHandleType::Wayland;
 		}
-		else
-		{
-			return bgfx::NativeWindowHandleType::Default;
-		}
-#	else
+#	endif // BX_PLATFORM_LINUX
+
 		return bgfx::NativeWindowHandleType::Default;
-#	endif // BX_PLATFORM_*
 	}
 
 	int32_t MainThreadEntry::threadFunc(bx::Thread* _thread, void* _userData)
