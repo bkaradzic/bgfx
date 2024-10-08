@@ -7100,6 +7100,12 @@ VK_DESTROY
 		const VkDevice device = s_renderVK->m_device;
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 
+		// Waiting for the device to be idle seems to get rid of VK_DEVICE_LOST
+		// upon resizing the window quickly. (See https://github.com/mpv-player/mpv/issues/8360
+		// and https://github.com/bkaradzic/bgfx/issues/3227).
+		result = vkDeviceWaitIdle(device);
+		BX_WARN(VK_SUCCESS == result, "Create swapchain error: vkDeviceWaitIdle() failed: %d: %s", result, getName(result));
+
 		VkSurfaceCapabilitiesKHR surfaceCapabilities;
 		result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_surface, &surfaceCapabilities);
 
