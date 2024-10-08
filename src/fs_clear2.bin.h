@@ -164,5 +164,4 @@ static const uint8_t fs_clear2_mtl[610] =
 	0x65, 0x74, 0x75, 0x72, 0x6e, 0x20, 0x6f, 0x75, 0x74, 0x3b, 0x0a, 0x7d, 0x0a, 0x0a, 0x00, 0x00, // eturn out;.}....
 	0x30, 0x00,                                                                                     // 0.
 };
-extern const uint8_t* fs_clear2_pssl;
-extern const uint32_t fs_clear2_pssl_size;
+static const uint8_t fs_clear2_pssl[1] = {0};
