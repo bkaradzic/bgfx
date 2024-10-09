@@ -9522,6 +9522,8 @@ bool HlslParseContext::isInputBuiltIn(const TQualifier& qualifier) const
     case EbvSampleMask:
     case EbvSamplePosition:
     case EbvViewportIndex:
+    case EbvBaryCoordEXT:
+    case EbvBaryCoordNoPerspEXT:
         return language == EShLangFragment;
     case EbvGlobalInvocationId:
     case EbvLocalInvocationIndex:
