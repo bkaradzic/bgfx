@@ -6732,11 +6732,10 @@ VK_DESTROY
 			m_sci.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
 			m_sci.queueFamilyIndexCount = 0;
 			m_sci.pQueueFamilyIndices   = NULL;
-			#ifdef BX_PLATFORM_NX
-			m_sci.preTransform          = VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR;
-			#else
-			m_sci.preTransform          = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-			#endif
+			m_sci.preTransform          = BX_ENABLED(BX_PLATFORM_NX)
+				? VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR
+				: VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
+				;
 			m_sci.oldSwapchain          = VK_NULL_HANDLE;
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
