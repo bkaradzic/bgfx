@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2023 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2024 Branimir Karadzic. All rights reserved.
 -- License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 --
 
@@ -38,6 +38,10 @@ project ("example-common")
 		path.join(BGFX_DIR, "examples/common/**.h"),
 	}
 
+	defines {
+		"USE_ENTRY=1",
+	}
+
 	using_bx()
 
 	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-gnm"),
@@ -72,12 +76,6 @@ project ("example-common")
 	if _OPTIONS["with-glfw"] then
 		defines {
 			"ENTRY_CONFIG_USE_GLFW=1",
-		}
-	end
-
-	if _OPTIONS["with-wayland"] then
-		defines {
-			"ENTRY_CONFIG_USE_WAYLAND=1",
 		}
 	end
 

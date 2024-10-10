@@ -44,27 +44,19 @@
 #if ENABLE_OPT
 #include <vector>
 #include <ostream>
+#include <unordered_set>
 #include "spirv-tools/libspirv.h"
 #endif
 
-#include "glslang/MachineIndependent/localintermediate.h"
+#include "glslang/MachineIndependent/Versions.h"
+#include "GlslangToSpv.h"
 #include "Logger.h"
 
 namespace glslang {
 
-struct SpvOptions {
-    bool generateDebugInfo {false};
-    bool stripDebugInfo {false};
-    bool disableOptimizer {true};
-    bool optimizeSize {false};
-    bool disassemble {false};
-    bool validate {false};
-    bool emitNonSemanticShaderDebugInfo {false};
-    bool emitNonSemanticShaderDebugSource{ false };
-    bool compileOnly{false};
-};
-
 #if ENABLE_OPT
+
+class TIntermediate;
 
 // Translate glslang's view of target versioning to what SPIRV-Tools uses.
 spv_target_env MapToSpirvToolsEnv(const SpvVersion& spvVersion, spv::SpvBuildLogger* logger);

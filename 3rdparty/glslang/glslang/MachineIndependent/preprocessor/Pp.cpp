@@ -374,7 +374,7 @@ namespace {
     int op_div(int a, int b) { return a == INT_MIN && b == -1 ? 0 : a / b; }
     int op_mod(int a, int b) { return a == INT_MIN && b == -1 ? 0 : a % b; }
     int op_pos(int a) { return a; }
-    int op_neg(int a) { return -a; }
+    int op_neg(int a) { return a == INT_MIN ? INT_MIN : -a; }
     int op_cmpl(int a) { return ~a; }
     int op_not(int a) { return !a; }
 
@@ -973,7 +973,8 @@ int TPpContext::readCPPline(TPpToken* ppToken)
             break;
         case PpAtomInclude:
             if(!parseContext.isReadingHLSL()) {
-                parseContext.ppRequireExtensions(ppToken->loc, 1, &E_GL_GOOGLE_include_directive, "#include");
+                const std::array exts = { E_GL_GOOGLE_include_directive, E_GL_ARB_shading_language_include };
+                parseContext.ppRequireExtensions(ppToken->loc, exts, "#include");
             }
             token = CPPinclude(ppToken);
             break;

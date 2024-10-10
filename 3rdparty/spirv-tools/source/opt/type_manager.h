@@ -260,7 +260,9 @@ class TypeManager {
   // Returns an equivalent pointer to |type| built in terms of pointers owned by
   // |type_pool_|. For example, if |type| is a vec3 of bool, it will be rebuilt
   // replacing the bool subtype with one owned by |type_pool_|.
-  Type* RebuildType(const Type& type);
+  //
+  // The re-built type will have ID |type_id|.
+  Type* RebuildType(uint32_t type_id, const Type& type);
 
   // Completes the incomplete type |type|, by replaces all references to
   // ForwardPointer by the defining Pointer.

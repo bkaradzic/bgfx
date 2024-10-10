@@ -1,5 +1,5 @@
 --
--- Copyright 2010-2023 Branimir Karadzic. All rights reserved.
+-- Copyright 2010-2024 Branimir Karadzic. All rights reserved.
 -- License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 --
 
@@ -18,11 +18,6 @@ newoption {
 newoption {
 	trigger = "with-glfw",
 	description = "Enable GLFW entry.",
-}
-
-newoption {
-	trigger = "with-wayland",
-	description = "Use Wayland backend.",
 }
 
 newoption {
@@ -48,6 +43,11 @@ newoption {
 newoption {
 	trigger = "with-examples",
 	description = "Enable building examples.",
+}
+
+newoption {
+	trigger = "with-libheif",
+	description = "Enable building bimg with libheif HEIF and AVIF file format decoder.",
 }
 
 newaction {
@@ -106,7 +106,7 @@ newaction {
 		f:close()
 		io.output(path.join(MODULE_DIR, "src/version.h"))
 		io.write("/*\n")
-		io.write(" * Copyright 2011-2023 Branimir Karadzic. All rights reserved.\n")
+		io.write(" * Copyright 2011-2024 Branimir Karadzic. All rights reserved.\n")
 		io.write(" * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE\n")
 		io.write(" */\n")
 		io.write("\n")
@@ -182,10 +182,6 @@ end
 function copyLib()
 end
 
-if _OPTIONS["with-wayland"] then
-	defines { "WL_EGL_PLATFORM=1" }
-end
-
 if _OPTIONS["with-sdl"] then
 	if os.is("windows") then
 		if not os.getenv("SDL2_DIR") then
@@ -230,13 +226,6 @@ function exampleProjectDefaults()
 		defines { "ENTRY_CONFIG_USE_SDL=1" }
 		links   { "SDL2" }
 
-		configuration { "linux or freebsd" }
-			if _OPTIONS["with-wayland"]  then
-				links {
-					"wayland-egl",
-				}
-			end
-
 		configuration { "osx*" }
 			libdirs { "$(SDL2_DIR)/lib" }
 
@@ -246,21 +235,6 @@ function exampleProjectDefaults()
 	if _OPTIONS["with-glfw"] then
 		defines { "ENTRY_CONFIG_USE_GLFW=1" }
 		links   { "glfw3" }
-
-		configuration { "linux or freebsd" }
-			if _OPTIONS["with-wayland"] then
-				links {
-					"wayland-egl",
-				}
-			else
-				links {
-					"Xrandr",
-					"Xinerama",
-					"Xi",
-					"Xxf86vm",
-					"Xcursor",
-				}
-			end
 
 		configuration { "osx*" }
 			linkoptions {
@@ -362,6 +336,7 @@ function exampleProjectDefaults()
 		kind "ConsoleApp"
 
 		linkoptions {
+			"-sGL_ENABLE_GET_PROC_ADDRESS",
 			"-s TOTAL_MEMORY=32MB",
 			"-s ALLOW_MEMORY_GROWTH=1",
 			"--preload-file ../../../examples/runtime@/"

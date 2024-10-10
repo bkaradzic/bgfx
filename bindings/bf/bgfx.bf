@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -1037,69 +1037,69 @@ public static class bgfx
 		DrawIndirect           = 0x0000000000000010,
 	
 		/// <summary>
+		/// Draw indirect with indirect count is supported.
+		/// </summary>
+		DrawIndirectCount      = 0x0000000000000020,
+	
+		/// <summary>
 		/// Fragment depth is available in fragment shader.
 		/// </summary>
-		FragmentDepth          = 0x0000000000000020,
+		FragmentDepth          = 0x0000000000000040,
 	
 		/// <summary>
 		/// Fragment ordering is available in fragment shader.
 		/// </summary>
-		FragmentOrdering       = 0x0000000000000040,
+		FragmentOrdering       = 0x0000000000000080,
 	
 		/// <summary>
 		/// Graphics debugger is present.
 		/// </summary>
-		GraphicsDebugger       = 0x0000000000000080,
+		GraphicsDebugger       = 0x0000000000000100,
 	
 		/// <summary>
 		/// HDR10 rendering is supported.
 		/// </summary>
-		Hdr10                  = 0x0000000000000100,
+		Hdr10                  = 0x0000000000000200,
 	
 		/// <summary>
 		/// HiDPI rendering is supported.
 		/// </summary>
-		Hidpi                  = 0x0000000000000200,
+		Hidpi                  = 0x0000000000000400,
 	
 		/// <summary>
 		/// Image Read/Write is supported.
 		/// </summary>
-		ImageRw                = 0x0000000000000400,
+		ImageRw                = 0x0000000000000800,
 	
 		/// <summary>
 		/// 32-bit indices are supported.
 		/// </summary>
-		Index32                = 0x0000000000000800,
+		Index32                = 0x0000000000001000,
 	
 		/// <summary>
 		/// Instancing is supported.
 		/// </summary>
-		Instancing             = 0x0000000000001000,
+		Instancing             = 0x0000000000002000,
 	
 		/// <summary>
 		/// Occlusion query is supported.
 		/// </summary>
-		OcclusionQuery         = 0x0000000000002000,
+		OcclusionQuery         = 0x0000000000004000,
+	
+		/// <summary>
+		/// PrimitiveID is available in fragment shader.
+		/// </summary>
+		PrimitiveId            = 0x0000000000008000,
 	
 		/// <summary>
 		/// Renderer is on separate thread.
 		/// </summary>
-		RendererMultithreaded  = 0x0000000000004000,
+		RendererMultithreaded  = 0x0000000000010000,
 	
 		/// <summary>
 		/// Multiple windows are supported.
 		/// </summary>
-		SwapChain              = 0x0000000000008000,
-	
-		/// <summary>
-		/// 2D texture array is supported.
-		/// </summary>
-		Texture2dArray         = 0x0000000000010000,
-	
-		/// <summary>
-		/// 3D textures are supported.
-		/// </summary>
-		Texture3d              = 0x0000000000020000,
+		SwapChain              = 0x0000000000020000,
 	
 		/// <summary>
 		/// Texture blit is supported.
@@ -1107,65 +1107,65 @@ public static class bgfx
 		TextureBlit            = 0x0000000000040000,
 	
 		/// <summary>
-		/// Transparent back buffer supported.
-		/// </summary>
-		TransparentBackbuffer  = 0x0000000000080000,
-		TextureCompareReserved = 0x0000000000100000,
-	
-		/// <summary>
 		/// Texture compare less equal mode is supported.
 		/// </summary>
-		TextureCompareLequal   = 0x0000000000200000,
+		TextureCompareLequal   = 0x0000000000080000,
+		TextureCompareReserved = 0x0000000000100000,
 	
 		/// <summary>
 		/// Cubemap texture array is supported.
 		/// </summary>
-		TextureCubeArray       = 0x0000000000400000,
+		TextureCubeArray       = 0x0000000000200000,
 	
 		/// <summary>
 		/// CPU direct access to GPU texture memory.
 		/// </summary>
-		TextureDirectAccess    = 0x0000000000800000,
+		TextureDirectAccess    = 0x0000000000400000,
 	
 		/// <summary>
 		/// Read-back texture is supported.
 		/// </summary>
-		TextureReadBack        = 0x0000000001000000,
+		TextureReadBack        = 0x0000000000800000,
+	
+		/// <summary>
+		/// 2D texture array is supported.
+		/// </summary>
+		Texture2dArray         = 0x0000000001000000,
+	
+		/// <summary>
+		/// 3D textures are supported.
+		/// </summary>
+		Texture3d              = 0x0000000002000000,
+	
+		/// <summary>
+		/// Transparent back buffer supported.
+		/// </summary>
+		TransparentBackbuffer  = 0x0000000004000000,
 	
 		/// <summary>
 		/// Vertex attribute half-float is supported.
 		/// </summary>
-		VertexAttribHalf       = 0x0000000002000000,
+		VertexAttribHalf       = 0x0000000008000000,
 	
 		/// <summary>
 		/// Vertex attribute 10_10_10_2 is supported.
 		/// </summary>
-		VertexAttribUint10     = 0x0000000004000000,
+		VertexAttribUint10     = 0x0000000010000000,
 	
 		/// <summary>
 		/// Rendering with VertexID only is supported.
 		/// </summary>
-		VertexId               = 0x0000000008000000,
-	
-		/// <summary>
-		/// PrimitiveID is available in fragment shader.
-		/// </summary>
-		PrimitiveId            = 0x0000000010000000,
+		VertexId               = 0x0000000020000000,
 	
 		/// <summary>
 		/// Viewport layer is available in vertex shader.
 		/// </summary>
-		ViewportLayerArray     = 0x0000000020000000,
-	
-		/// <summary>
-		/// Draw indirect with indirect count is supported.
-		/// </summary>
-		DrawIndirectCount      = 0x0000000040000000,
+		ViewportLayerArray     = 0x0000000040000000,
 	
 		/// <summary>
 		/// All texture compare modes are supported.
 		/// </summary>
-		TextureCompareAll      = 0x0000000000300000,
+		TextureCompareAll      = 0x0000000000180000,
 	}
 	
 	[AllowDuplicates]
@@ -2564,6 +2564,12 @@ public static class bgfx
 	[LinkName("bgfx_get_renderer_name")]
 	public static extern char8* get_renderer_name(RendererType _type);
 	
+	/// <summary>
+	/// Fill bgfx::Init struct with default values, before using it to initialize the library.
+	/// </summary>
+	///
+	/// <param name="_init">Pointer to structure to be initialized. See: `bgfx::Init` for more info.</param>
+	///
 	[LinkName("bgfx_init_ctor")]
 	public static extern void init_ctor(Init* _init);
 	
@@ -3005,6 +3011,8 @@ public static class bgfx
 	
 	/// <summary>
 	/// Create shader from memory buffer.
+	/// @remarks
+	///   Shader binary is obtained by compiling shader offline with shaderc command line tool.
 	/// </summary>
 	///
 	/// <param name="_mem">Shader binary.</param>
@@ -3488,9 +3496,10 @@ public static class bgfx
 	///
 	/// <param name="_id">View id.</param>
 	/// <param name="_name">View name.</param>
+	/// <param name="_len">View name length (if length is INT32_MAX, it's expected that _name is zero terminated string.</param>
 	///
 	[LinkName("bgfx_set_view_name")]
-	public static extern void set_view_name(ViewId _id, char8* _name);
+	public static extern void set_view_name(ViewId _id, char8* _name, int _len);
 	
 	/// <summary>
 	/// Set view rectangle. Draw primitive outside view will be clipped.
@@ -3643,10 +3652,11 @@ public static class bgfx
 	/// graphics debugging tools.
 	/// </summary>
 	///
-	/// <param name="_marker">Marker string.</param>
+	/// <param name="_name">Marker name.</param>
+	/// <param name="_len">Marker name length (if length is INT32_MAX, it's expected that _name is zero terminated string.</param>
 	///
 	[LinkName("bgfx_encoder_set_marker")]
-	public static extern void encoder_set_marker(Encoder* _this, char8* _marker);
+	public static extern void encoder_set_marker(Encoder* _this, char8* _name, int _len);
 	
 	/// <summary>
 	/// Set render states for draw primitive.
@@ -3973,7 +3983,7 @@ public static class bgfx
 	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_encoder_submit_indirect")]
-	public static extern void encoder_submit_indirect(Encoder* _this, ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint32 _depth, uint8 _flags);
+	public static extern void encoder_submit_indirect(Encoder* _this, ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32 _start, uint32 _num, uint32 _depth, uint8 _flags);
 	
 	/// <summary>
 	/// Submit primitive for rendering with index and instance data info and
@@ -3992,7 +4002,7 @@ public static class bgfx
 	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_encoder_submit_indirect_count")]
-	public static extern void encoder_submit_indirect_count(Encoder* _this, ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, IndexBufferHandle _numHandle, uint32 _numIndex, uint16 _numMax, uint32 _depth, uint8 _flags);
+	public static extern void encoder_submit_indirect_count(Encoder* _this, ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32 _start, IndexBufferHandle _numHandle, uint32 _numIndex, uint32 _numMax, uint32 _depth, uint8 _flags);
 	
 	/// <summary>
 	/// Set compute index buffer.
@@ -4088,7 +4098,7 @@ public static class bgfx
 	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_encoder_dispatch_indirect")]
-	public static extern void encoder_dispatch_indirect(Encoder* _this, ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint8 _flags);
+	public static extern void encoder_dispatch_indirect(Encoder* _this, ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32 _start, uint32 _num, uint8 _flags);
 	
 	/// <summary>
 	/// Discard previously set state for draw or compute call.
@@ -4211,10 +4221,11 @@ public static class bgfx
 	/// graphics debugging tools.
 	/// </summary>
 	///
-	/// <param name="_marker">Marker string.</param>
+	/// <param name="_name">Marker name.</param>
+	/// <param name="_len">Marker name length (if length is INT32_MAX, it's expected that _name is zero terminated string.</param>
 	///
 	[LinkName("bgfx_set_marker")]
-	public static extern void set_marker(char8* _marker);
+	public static extern void set_marker(char8* _name, int _len);
 	
 	/// <summary>
 	/// Set render states for draw primitive.
@@ -4549,7 +4560,7 @@ public static class bgfx
 	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_submit_indirect")]
-	public static extern void submit_indirect(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint32 _depth, uint8 _flags);
+	public static extern void submit_indirect(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32 _start, uint32 _num, uint32 _depth, uint8 _flags);
 	
 	/// <summary>
 	/// Submit primitive for rendering with index and instance data info and
@@ -4568,7 +4579,7 @@ public static class bgfx
 	/// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_submit_indirect_count")]
-	public static extern void submit_indirect_count(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, IndexBufferHandle _numHandle, uint32 _numIndex, uint16 _numMax, uint32 _depth, uint8 _flags);
+	public static extern void submit_indirect_count(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32 _start, IndexBufferHandle _numHandle, uint32 _numIndex, uint32 _numMax, uint32 _depth, uint8 _flags);
 	
 	/// <summary>
 	/// Set compute index buffer.
@@ -4664,7 +4675,7 @@ public static class bgfx
 	/// <param name="_flags">Discard or preserve states. See `BGFX_DISCARD_*`.</param>
 	///
 	[LinkName("bgfx_dispatch_indirect")]
-	public static extern void dispatch_indirect(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16 _start, uint16 _num, uint8 _flags);
+	public static extern void dispatch_indirect(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32 _start, uint32 _num, uint8 _flags);
 	
 	/// <summary>
 	/// Discard previously set state for draw or compute call.

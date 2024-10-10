@@ -138,7 +138,7 @@ void InstDebugPrintfPass::GenOutputValues(Instruction* val_inst,
 }
 
 void InstDebugPrintfPass::GenOutputCode(
-    Instruction* printf_inst, uint32_t stage_idx,
+    Instruction* printf_inst,
     std::vector<std::unique_ptr<BasicBlock>>* new_blocks) {
   BasicBlock* back_blk_ptr = &*new_blocks->back();
   InstructionBuilder builder(
@@ -168,14 +168,14 @@ void InstDebugPrintfPass::GenOutputCode(
       });
   GenDebugStreamWrite(
       builder.GetUintConstantId(shader_id_),
-      builder.GetUintConstantId(uid2offset_[printf_inst->unique_id()]),
-      GenStageInfo(stage_idx, &builder), val_ids, &builder);
+      builder.GetUintConstantId(uid2offset_[printf_inst->unique_id()]), val_ids,
+      &builder);
   context()->KillInst(printf_inst);
 }
 
 void InstDebugPrintfPass::GenDebugPrintfCode(
     BasicBlock::iterator ref_inst_itr,
-    UptrVectorIterator<BasicBlock> ref_block_itr, uint32_t stage_idx,
+    UptrVectorIterator<BasicBlock> ref_block_itr,
     std::vector<std::unique_ptr<BasicBlock>>* new_blocks) {
   // If not DebugPrintf OpExtInst, return.
   Instruction* printf_inst = &*ref_inst_itr;
@@ -191,7 +191,7 @@ void InstDebugPrintfPass::GenDebugPrintfCode(
   MovePreludeCode(ref_inst_itr, ref_block_itr, &new_blk_ptr);
   new_blocks->push_back(std::move(new_blk_ptr));
   // Generate instructions to output printf args to printf buffer
-  GenOutputCode(printf_inst, stage_idx, new_blocks);
+  GenOutputCode(printf_inst, new_blocks);
   // Caller expects at least two blocks with last block containing remaining
   // code, so end block after instrumentation, create remainder block, and
   // branch to it
@@ -301,8 +301,7 @@ uint32_t InstDebugPrintfPass::GetStreamWriteFunctionId(uint32_t param_cnt) {
   enum {
     kShaderId = 0,
     kInstructionIndex = 1,
-    kStageInfo = 2,
-    kFirstParam = 3,
+    kFirstParam = 2,
   };
   // Total param count is common params plus validation-specific
   // params
@@ -312,12 +311,9 @@ uint32_t InstDebugPrintfPass::GetStreamWriteFunctionId(uint32_t param_cnt) {
     analysis::TypeManager* type_mgr = context()->get_type_mgr();
 
     const analysis::Type* uint_type = GetInteger(32, false);
-    const analysis::Vector v4uint(uint_type, 4);
-    const analysis::Type* v4uint_type = type_mgr->GetRegisteredType(&v4uint);
 
     std::vector<const analysis::Type*> param_types(kFirstParam + param_cnt,
                                                    uint_type);
-    param_types[kStageInfo] = v4uint_type;
     std::unique_ptr<Function> output_func = StartFunction(
         param2output_func_id_[param_cnt], type_mgr->GetVoidType(), param_types);
 
@@ -330,8 +326,8 @@ uint32_t InstDebugPrintfPass::GetStreamWriteFunctionId(uint32_t param_cnt) {
         context(), &*new_blk_ptr,
         IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
     // Gen test if debug output buffer size will not be exceeded.
-    const uint32_t val_spec_offset = kInstStageOutCnt;
-    const uint32_t obuf_record_sz = val_spec_offset + param_cnt;
+    const uint32_t first_param_offset = kInstCommonOutInstructionIdx + 1;
+    const uint32_t obuf_record_sz = first_param_offset + param_cnt;
     const uint32_t buf_id = GetOutputBufferId();
     const uint32_t buf_uint_ptr_id = GetOutputBufferPtrId();
     Instruction* obuf_curr_sz_ac_inst = builder.AddAccessChain(
@@ -382,16 +378,9 @@ uint32_t InstDebugPrintfPass::GetStreamWriteFunctionId(uint32_t param_cnt) {
     // Store Instruction Idx
     GenDebugOutputFieldCode(obuf_curr_sz_id, kInstCommonOutInstructionIdx,
                             param_ids[kInstructionIndex], &builder);
-    // Store stage info. Stage Idx + 3 words of stage-specific data.
-    for (uint32_t i = 0; i < 4; ++i) {
-      Instruction* field =
-          builder.AddCompositeExtract(GetUintId(), param_ids[kStageInfo], {i});
-      GenDebugOutputFieldCode(obuf_curr_sz_id, kInstCommonOutStageIdx + i,
-                              field->result_id(), &builder);
-    }
     // Gen writes of validation specific data
     for (uint32_t i = 0; i < param_cnt; ++i) {
-      GenDebugOutputFieldCode(obuf_curr_sz_id, val_spec_offset + i,
+      GenDebugOutputFieldCode(obuf_curr_sz_id, first_param_offset + i,
                               param_ids[kFirstParam + i], &builder);
     }
     // Close write block and gen merge block
@@ -416,12 +405,12 @@ uint32_t InstDebugPrintfPass::GetStreamWriteFunctionId(uint32_t param_cnt) {
 }
 
 void InstDebugPrintfPass::GenDebugStreamWrite(
-    uint32_t shader_id, uint32_t instruction_idx_id, uint32_t stage_info_id,
+    uint32_t shader_id, uint32_t instruction_idx_id,
     const std::vector<uint32_t>& validation_ids, InstructionBuilder* builder) {
   // Call debug output function. Pass func_idx, instruction_idx and
   // validation ids as args.
   uint32_t val_id_cnt = static_cast<uint32_t>(validation_ids.size());
-  std::vector<uint32_t> args = {shader_id, instruction_idx_id, stage_info_id};
+  std::vector<uint32_t> args = {shader_id, instruction_idx_id};
   (void)args.insert(args.end(), validation_ids.begin(), validation_ids.end());
   (void)builder->AddFunctionCall(GetVoidId(),
                                  GetStreamWriteFunctionId(val_id_cnt), args);
@@ -455,10 +444,10 @@ Pass::Status InstDebugPrintfPass::ProcessImpl() {
   // Perform printf instrumentation on each entry point function in module
   InstProcessFunction pfn =
       [this](BasicBlock::iterator ref_inst_itr,
-             UptrVectorIterator<BasicBlock> ref_block_itr, uint32_t stage_idx,
+             UptrVectorIterator<BasicBlock> ref_block_itr,
+             [[maybe_unused]] uint32_t stage_idx,
              std::vector<std::unique_ptr<BasicBlock>>* new_blocks) {
-        return GenDebugPrintfCode(ref_inst_itr, ref_block_itr, stage_idx,
-                                  new_blocks);
+        return GenDebugPrintfCode(ref_inst_itr, ref_block_itr, new_blocks);
       };
   (void)InstProcessEntryPointCallTree(pfn);
   // Remove DebugPrintf OpExtInstImport instruction

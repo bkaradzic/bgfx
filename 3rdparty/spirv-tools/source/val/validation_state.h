@@ -602,6 +602,7 @@ class ValidationState_t {
   bool IsVoidType(uint32_t id) const;
   bool IsFloatScalarType(uint32_t id) const;
   bool IsFloatVectorType(uint32_t id) const;
+  bool IsFloat16Vector2Or4Type(uint32_t id) const;
   bool IsFloatScalarOrVectorType(uint32_t id) const;
   bool IsFloatMatrixType(uint32_t id) const;
   bool IsIntScalarType(uint32_t id) const;
@@ -646,10 +647,6 @@ class ValidationState_t {
   bool ContainsType(uint32_t id,
                     const std::function<bool(const Instruction*)>& f,
                     bool traverse_all_types = true) const;
-
-  // Gets value from OpConstant and OpSpecConstant as uint64.
-  // Returns false on failure (no instruction, wrong instruction, not int).
-  bool GetConstantValUint64(uint32_t id, uint64_t* val) const;
 
   // Returns type_id if id has type or zero otherwise.
   uint32_t GetTypeId(uint32_t id) const;
@@ -724,6 +721,14 @@ class ValidationState_t {
   void RegisterPointerToStorageImage(uint32_t type_id) {
     pointer_to_storage_image_.insert(type_id);
   }
+
+  // Tries to evaluate a any scalar integer OpConstant as uint64.
+  // OpConstantNull is defined as zero for scalar int (will return true)
+  // OpSpecConstant* return false since their values cannot be relied upon
+  // during validation.
+  bool EvalConstantValUint64(uint32_t id, uint64_t* val) const;
+  // Same as EvalConstantValUint64 but returns a signed int
+  bool EvalConstantValInt64(uint32_t id, int64_t* val) const;
 
   // Tries to evaluate a 32-bit signed or unsigned scalar integer constant.
   // Returns tuple <is_int32, is_const_int32, value>.

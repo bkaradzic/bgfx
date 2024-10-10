@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "glslang/Include/glslang_c_interface.h"
 
+#include <cstring>
+#include "glslang/Public/ShaderLang.h"
 #include "SPIRV/GlslangToSpv.h"
 #include "SPIRV/Logger.h"
 #include "SPIRV/SpvTools.h"
@@ -94,6 +96,8 @@ GLSLANG_EXPORT void glslang_program_SPIRV_generate_with_options(glslang_program_
     spv::SpvBuildLogger logger;
 
     const glslang::TIntermediate* intermediate = program->program->getIntermediate(c_shader_stage(stage));
+
+    program->spirv.clear();
 
     glslang::GlslangToSpv(*intermediate, program->spirv, &logger, reinterpret_cast<glslang::SpvOptions*>(spv_options));
 

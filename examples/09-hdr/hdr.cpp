@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -362,9 +362,10 @@ public:
 
 			if (bgfx::isValid(m_rb) )
 			{
-				union { uint32_t color; uint8_t bgra[4]; } cast = { m_lumBgra8 };
-				float exponent = cast.bgra[3]/255.0f * 255.0f - 128.0f;
-				float lumAvg   = cast.bgra[2]/255.0f * bx::exp2(exponent);
+				struct Packed { uint8_t bgra[4]; } arr = bx::bitCast<Packed>(m_lumBgra8);
+				float exponent = arr.bgra[3] / 255.0f * 255.0f - 128.0f;
+				float lumAvg = arr.bgra[2] / 255.0f * bx::exp2(exponent);
+
 				ImGui::SliderFloat("Lum Avg", &lumAvg, 0.0f, 1.0f);
 			}
 

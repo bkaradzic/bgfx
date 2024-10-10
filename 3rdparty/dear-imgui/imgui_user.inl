@@ -77,5 +77,4 @@ namespace ImGui
 #include "widgets/file_list.inl"
 #include "widgets/gizmo.inl"
 #include "widgets/markdown.inl"
-#include "widgets/memory_editor.inl"
 #include "widgets/range_slider.inl"

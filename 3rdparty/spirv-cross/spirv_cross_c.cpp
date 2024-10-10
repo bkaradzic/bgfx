@@ -516,6 +516,10 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_HLSL_FLATTEN_MATRIX_VERTEX_INPUT_SEMANTICS:
 		options->hlsl.flatten_matrix_vertex_input_semantics = value != 0;
 		break;
+
+	case SPVC_COMPILER_OPTION_HLSL_USE_ENTRY_POINT_NAME:
+		options->hlsl.use_entry_point_name = value != 0;
+		break;
 #endif
 
 #if SPIRV_CROSS_C_API_MSL
@@ -741,6 +745,22 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 
 	case SPVC_COMPILER_OPTION_MSL_SAMPLE_DREF_LOD_ARRAY_AS_GRAD:
 		options->msl.sample_dref_lod_array_as_grad = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_READWRITE_TEXTURE_FENCES:
+		options->msl.readwrite_texture_fences = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_REPLACE_RECURSIVE_INPUTS:
+		options->msl.replace_recursive_inputs = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_AGX_MANUAL_CUBE_GRAD_FIXUP:
+		options->msl.agx_manual_cube_grad_fixup = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_FORCE_FRAGMENT_WITH_SIDE_EFFECTS_EXECUTION:
+		options->msl.force_fragment_with_side_effects_execution = value != 0;
 		break;
 #endif
 
@@ -1330,6 +1350,34 @@ spvc_result spvc_compiler_msl_add_resource_binding(spvc_compiler compiler,
 	bind.msl_buffer = binding->msl_buffer;
 	bind.msl_texture = binding->msl_texture;
 	bind.msl_sampler = binding->msl_sampler;
+	msl.add_msl_resource_binding(bind);
+	return SPVC_SUCCESS;
+#else
+	(void)binding;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
+}
+
+spvc_result spvc_compiler_msl_add_resource_binding_2(spvc_compiler compiler,
+                                                     const spvc_msl_resource_binding_2 *binding)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	MSLResourceBinding bind;
+	bind.binding = binding->binding;
+	bind.desc_set = binding->desc_set;
+	bind.stage = static_cast<spv::ExecutionModel>(binding->stage);
+	bind.msl_buffer = binding->msl_buffer;
+	bind.msl_texture = binding->msl_texture;
+	bind.msl_sampler = binding->msl_sampler;
+	bind.count = binding->count;
 	msl.add_msl_resource_binding(bind);
 	return SPVC_SUCCESS;
 #else
@@ -2540,6 +2588,16 @@ int spvc_constant_get_scalar_i32(spvc_constant constant, unsigned column, unsign
 	return constant->scalar_i32(column, row);
 }
 
+unsigned long long spvc_constant_get_scalar_u64(spvc_constant constant, unsigned column, unsigned row)
+{
+	return constant->scalar_u64(column, row);
+}
+
+long long spvc_constant_get_scalar_i64(spvc_constant constant, unsigned column, unsigned row)
+{
+	return constant->scalar_i64(column, row);
+}
+
 unsigned spvc_constant_get_scalar_u16(spvc_constant constant, unsigned column, unsigned row)
 {
 	return constant->scalar_u16(column, row);
@@ -2595,6 +2653,16 @@ void spvc_constant_set_scalar_u32(spvc_constant constant, unsigned column, unsig
 void spvc_constant_set_scalar_i32(spvc_constant constant, unsigned column, unsigned row, int value)
 {
 	constant->m.c[column].r[row].i32 = value;
+}
+
+void spvc_constant_set_scalar_u64(spvc_constant constant, unsigned column, unsigned row, unsigned long long value)
+{
+	constant->m.c[column].r[row].u64 = value;
+}
+
+void spvc_constant_set_scalar_i64(spvc_constant constant, unsigned column, unsigned row, long long value)
+{
+	constant->m.c[column].r[row].i64 = value;
 }
 
 void spvc_constant_set_scalar_u16(spvc_constant constant, unsigned column, unsigned row, unsigned short value)
@@ -2770,6 +2838,22 @@ void spvc_msl_resource_binding_init(spvc_msl_resource_binding *binding)
 	binding->msl_texture = binding_default.msl_texture;
 	binding->msl_sampler = binding_default.msl_sampler;
 	binding->stage = static_cast<SpvExecutionModel>(binding_default.stage);
+#else
+	memset(binding, 0, sizeof(*binding));
+#endif
+}
+
+void spvc_msl_resource_binding_init_2(spvc_msl_resource_binding_2 *binding)
+{
+#if SPIRV_CROSS_C_API_MSL
+	MSLResourceBinding binding_default;
+	binding->desc_set = binding_default.desc_set;
+	binding->binding = binding_default.binding;
+	binding->msl_buffer = binding_default.msl_buffer;
+	binding->msl_texture = binding_default.msl_texture;
+	binding->msl_sampler = binding_default.msl_sampler;
+	binding->stage = static_cast<SpvExecutionModel>(binding_default.stage);
+	binding->count = 0;
 #else
 	memset(binding, 0, sizeof(*binding));
 #endif

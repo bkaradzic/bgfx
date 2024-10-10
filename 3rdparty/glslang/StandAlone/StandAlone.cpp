@@ -44,11 +44,10 @@
 #include "glslang/Public/ResourceLimits.h"
 #include "Worklist.h"
 #include "DirStackFileIncluder.h"
-#include "./../glslang/Include/ShHandle.h"
 #include "./../glslang/Public/ShaderLang.h"
+#include "../glslang/MachineIndependent/localintermediate.h"
 #include "../SPIRV/GlslangToSpv.h"
 #include "../SPIRV/GLSL.std.450.h"
-#include "../SPIRV/doc.h"
 #include "../SPIRV/disassemble.h"
 
 #include <array>
@@ -109,6 +108,7 @@ enum TOptions : uint64_t {
     EOptionInvertY = (1ull << 30),
     EOptionDumpBareVersion = (1ull << 31),
     EOptionCompileOnly = (1ull << 32),
+    EOptionDisplayErrorColumn = (1ull << 33),
 };
 bool targetHlslFunctionality1 = false;
 bool SpvToolsDisassembler = false;
@@ -181,6 +181,7 @@ bool HlslEnable16BitTypes = false;
 bool HlslDX9compatible = false;
 bool HlslDxPositionW = false;
 bool EnhancedMsgs = false;
+bool AbsolutePath = false;
 bool DumpBuiltinSymbols = false;
 std::vector<std::string> IncludeDirectoryList;
 
@@ -726,6 +727,8 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         HlslDxPositionW = true;
                     } else if (lowerword == "enhanced-msgs") {
                         EnhancedMsgs = true;
+                    } else if (lowerword == "absolute-path") {
+                        AbsolutePath = true;
                     } else if (lowerword == "auto-sampled-textures") {
                         autoSampledTextures = true;
                     } else if (lowerword == "invert-y" ||  // synonyms
@@ -894,6 +897,8 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         Options |= EOptionDumpVersions;
                     } else if (lowerword == "no-link") {
                         Options |= EOptionCompileOnly;
+                    } else if (lowerword == "error-column") {
+                        Options |= EOptionDisplayErrorColumn;
                     } else if (lowerword == "help") {
                         usage();
                         break;
@@ -1158,6 +1163,10 @@ void SetMessageOptions(EShMessages& messages)
         messages = (EShMessages)(messages | EShMsgBuiltinSymbolTable);
     if (EnhancedMsgs)
         messages = (EShMessages)(messages | EShMsgEnhanced);
+    if (AbsolutePath)
+        messages = (EShMessages)(messages | EShMsgAbsolutePath);
+    if (Options & EOptionDisplayErrorColumn)
+        messages = (EShMessages)(messages | EShMsgDisplayErrorColumn);
 }
 
 //
@@ -1188,6 +1197,7 @@ void CompileShaders(glslang::TWorklist& worklist)
             ShHandle compiler = ShConstructCompiler(FindLanguage(workItem->name), 0);
             if (compiler == nullptr)
                 return;
+
 
             CompileFile(workItem->name.c_str(), compiler);
 
@@ -1497,6 +1507,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
 
     std::vector<std::string> outputFiles;
 
+#ifdef ENABLE_SPIRV
     // Dump SPIR-V
     if (Options & EOptionSpv) {
         CompileOrLinkFailed.fetch_or(CompileFailed);
@@ -1559,6 +1570,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
             }
         }
     }
+#endif
 
     CompileOrLinkFailed.fetch_or(CompileFailed);
     CompileOrLinkFailed.fetch_or(LinkFailed);
@@ -1657,21 +1669,31 @@ int singleMain()
     }
 
     if (Options & EOptionDumpBareVersion) {
-        printf("%d:%d.%d.%d%s\n", glslang::GetSpirvGeneratorVersion(), GLSLANG_VERSION_MAJOR, GLSLANG_VERSION_MINOR,
+        int spirvGeneratorVersion = 0;
+#ifdef ENABLE_SPIRV
+        spirvGeneratorVersion = glslang::GetSpirvGeneratorVersion();
+#endif
+        printf("%d:%d.%d.%d%s\n", spirvGeneratorVersion, GLSLANG_VERSION_MAJOR, GLSLANG_VERSION_MINOR,
                 GLSLANG_VERSION_PATCH, GLSLANG_VERSION_FLAVOR);
         if (workList.empty())
             return ESuccess;
     } else if (Options & EOptionDumpVersions) {
-        printf("Glslang Version: %d:%d.%d.%d%s\n", glslang::GetSpirvGeneratorVersion(), GLSLANG_VERSION_MAJOR,
+        int spirvGeneratorVersion = 0;
+#ifdef ENABLE_SPIRV
+        spirvGeneratorVersion = glslang::GetSpirvGeneratorVersion();
+#endif
+        printf("Glslang Version: %d:%d.%d.%d%s\n", spirvGeneratorVersion, GLSLANG_VERSION_MAJOR,
                 GLSLANG_VERSION_MINOR, GLSLANG_VERSION_PATCH, GLSLANG_VERSION_FLAVOR);
         printf("ESSL Version: %s\n", glslang::GetEsslVersionString());
         printf("GLSL Version: %s\n", glslang::GetGlslVersionString());
         std::string spirvVersion;
+#if ENABLE_SPIRV
         glslang::GetSpirvVersion(spirvVersion);
+#endif
         printf("SPIR-V Version %s\n", spirvVersion.c_str());
         printf("GLSL.std.450 Version %d, Revision %d\n", GLSLstd450Version, GLSLstd450Revision);
         printf("Khronos Tool ID %d\n", glslang::GetKhronosToolId());
-        printf("SPIR-V Generator Version %d\n", glslang::GetSpirvGeneratorVersion());
+        printf("SPIR-V Generator Version %d\n", spirvGeneratorVersion);
         printf("GL_KHR_vulkan_glsl version %d\n", 100);
         printf("ARB_GL_gl_spirv version %d\n", 100);
         if (workList.empty())
@@ -1877,7 +1899,7 @@ void CompileFile(const char* fileName, ShHandle compiler)
         for (int j = 0; j < ((Options & EOptionMemoryLeakMode) ? 100 : 1); ++j) {
             // ret = ShCompile(compiler, shaderStrings, NumShaderStrings, lengths, EShOptNone, &Resources, Options, (Options & EOptionDefaultDesktop) ? 110 : 100, false, messages);
             ret = ShCompile(compiler, &shaderString, 1, nullptr, EShOptNone, GetResources(), 0,
-                            (Options & EOptionDefaultDesktop) ? 110 : 100, false, messages);
+                            (Options & EOptionDefaultDesktop) ? 110 : 100, false, messages, fileName);
             // const char* multi[12] = { "# ve", "rsion", " 300 e", "s", "\n#err",
             //                         "or should be l", "ine 1", "string 5\n", "float glo", "bal",
             //                         ";\n#error should be line 2\n void main() {", "global = 2.3;}" };
@@ -1992,6 +2014,7 @@ void usage()
            "                                    without explicit bindings\n"
            "  --auto-map-locations | --aml      automatically locate input/output lacking\n"
            "                                    'location' (fragile, not cross stage)\n"
+           "  --absolute-path                   Prints absolute path for messages\n"
            "  --auto-sampled-textures           Removes sampler variables and converts\n"
            "                                    existing textures to sampled textures\n"
            "  --client {vulkan<ver>|opengl<ver>} see -V and -G\n"
@@ -2016,6 +2039,7 @@ void usage()
            "                                    shaders compatible with DirectX\n"
            "  --invert-y | --iy                 invert position.Y output in vertex shader\n"
            "  --enhanced-msgs                   print more readable error messages (GLSL only)\n"
+           "  --error-column                    display the column of the error along the line\n"
            "  --keep-uncalled | --ku            don't eliminate uncalled functions\n"
            "  --nan-clamp                       favor non-NaN operand in min, max, and clamp\n"
            "  --no-storage-format | --nsf       use Unknown image format\n"
@@ -2158,6 +2182,20 @@ char* ReadFileData(const char* fileName)
         count++;
 
     fseek(in, 0, SEEK_SET);
+
+    if (count > 3) {
+        unsigned char head[3];
+        if (fread(head, 1, 3, in) == 3) {
+            if (head[0] == 0xef && head[1] == 0xbb && head[2] == 0xbf) {
+                // skip BOM
+                count -= 3;
+            } else {
+                fseek(in, 0, SEEK_SET);
+            }
+        } else {
+            Error("can't read input file");
+        }
+    }
 
     char* return_data = (char*)malloc(count + 1);  // freed in FreeFileData()
     if ((int)fread(return_data, 1, count, in) != count) {

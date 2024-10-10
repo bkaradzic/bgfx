@@ -46,10 +46,10 @@ Supported rendering backends:
 
 Supported platforms:
 
- * Android (14+, ARM, x86, MIPS)
- * iOS/iPadOS/tvOS (iPhone, iPad, AppleTV)
+ * Android (14+)
+ * iOS/iPadOS/tvOS (16.0+)
  * Linux
- * macOS (11+)
+ * macOS (13.0+)
  * PlayStation 4
  * RaspberryPi
  * UWP (Universal Windows, Xbox One)
@@ -306,10 +306,10 @@ engine v3.0.
 http://www.dogbytegames.com/off_the_road.html - A sandbox off-road driving
 simulator.
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=IUmxqAWdXvk" 
-target="_blank"><img src="http://img.youtube.com/vi/IUmxqAWdXvk/0.jpg" 
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=RgnIReFkbyU" 
+target="_blank"><img src="http://img.youtube.com/vi/RgnIReFkbyU/hq720.jpg" 
 alt="Off The Road"
-width="640" height="480" border="0" /></a>
+width="640" height="360" border="0" /></a>
 
 ## Coal Burnout
 
@@ -562,6 +562,106 @@ malfunctioning robots, ancient secrets, and an implacable, power-hungry foe.
 
 ![Primordia Title](https://assets.nintendo.com/image/upload/c_limit,f_auto,h_1000,q_auto,w_1700/v1/ncom/en_US/games/switch/p/primordia-switch/Video/posters/Primordia_Trailer)
 
+## ProtoTwin
+
+https://prototwin.com - Online industrial simulation software for manufacturing and material handling.
+
+![ProtoTwin - Simulation for Industrial Automation](https://github.com/bkaradzic/bgfx/assets/37254625/7aac600f-2687-468f-8d60-441c45ec14a3)
+
+## WARCANA
+
+WARCANA is a fantasy inspired base defence, RTS game with a deck-building mechanic. 
+Face hundreds of thousands of unrelenting monsters in a battle royale between 30 other 
+mighty magicians. Build your deck. Prepare your defences. Summon your armies. 
+Survive the onslaught.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=UioR5ptCFYU" 
+target="_blank"><img src="http://img.youtube.com/vi/UioR5ptCFYU/0.jpg" 
+alt="WARCANA Announcement Trailer" width="640" height="480" border="0" /></a>
+
+## DiskBoard
+
+https://www.diskboard.com - DiskBoard is the ultimate tool that can help you measure
+the performance and monitor the health of your hardware. All of your devices are
+presented in a clean and easy to understand view. The tests offer extensive
+customization options, allowing you to simulate various workloads. The intuitive
+visuals provide clear insights, benchmark comparisons, and performance guidelines.
+Join a community of tech enthusiasts, compare your device's prowess, and witness
+your hardware shine!
+
+![Diskboard screenshot](https://www.diskboard.com/assets/diskboard3.png)
+
+## Ant
+
+https://github.com/ejoy/ant - Ant is an open-source game engine focused on mobile platforms. It is implemented
+based on Lua, with excellent performance and easy customization.
+
+[Red Frontier Game using Ant Game Engine](https://github.com/ejoy/vaststars)
+
+![RedFrontier](https://github.com/ejoy/vaststars/blob/master/screenshot/startup.jpg)
+
+## Crypt of the NecroDancer
+
+https://braceyourselfgames.com/crypt-of-the-necrodancer/ - Crypt of the NecroDancer
+is an award-winning hardcore roguelike rhythm game. Move to the music and deliver
+beatdowns to the beat! The game uses bgfx on Windows, macOS, Linux, Nintendo
+Switch and PlayStation 4.
+
+![Crypt of the NecroDancer screenshot](https://raw.githubusercontent.com/Marukyu/marukyu.github.io/misc-assets/247080_20240322072858_1.png)
+
+## Tomb4Plus
+
+https://www.github.com/SaracenOne/Tomb4Plus - Tomb4Plus is an open source
+reimplementation of the Tomb Raider: The Last Revelation engine. It is an
+enhanced fork of the original [Tomb4](https://github.com/Trxyebeep/TOMB4)
+reimplementation project which focuses on supporting the Level Editor runtime
+and aims for full compatibility with the unofficial binary-patched scripting
+extensions used by many custom levels. Tomb4Plus also replaces the original
+legacy Direct3D renderer with bgfx.
+
+![Tomb4Plus screenshot](https://raw.githubusercontent.com/SaracenOne/Tomb4Plus/level_editor_v2/.github/images/preview.png)
+
+## Braid, Anniversary Edition
+
+https://play.google.com/store/apps/details?id=com.netflix.NGP.BraidAnniversaryEdition - 
+bgfx is used only in Android version of the game.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=U738YZG1k1I" 
+target="_blank"><img src="http://img.youtube.com/vi/U738YZG1k1I/0.jpg" 
+alt="Braid, Anniversary Edition"
+width="640" height="480" border="0" /></a>
+
+## Rotwood
+
+https://store.steampowered.com/app/2015270/Rotwood/ - Rotwood is an upcoming
+beat'em up, rogouelike video game developed and published by Klei Entertainment.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=SoTNhVPzmC8" 
+target="_blank"><img src="http://img.youtube.com/vi/SoTNhVPzmC8/0.jpg" 
+alt="Rotwood"
+width="640" height="480" border="0" /></a>
+
+## Cubzh
+
+https://app.cu.bzh/ - Cubzh is a User Generated Social Universe, an online
+platform where all items, avatars, games, and experiences are made by users
+from the community.
+
+Source: https://github.com/cubzh/cubzh
+
+![Cubzh screenshot](https://camo.githubusercontent.com/154159f42f526cc87357d24419133d99d8996ee2a16513ae5b5d31bd7e06bc5d/68747470733a2f2f6672616d657275736572636f6e74656e742e636f6d2f696d616765732f4957384c7147575239496e696b7542534a6c5a664578647631412e77656270)
+
+## World Of Goo 2
+
+https://store.epicgames.com/en-US/p/world-of-goo-2 - Build bridges, 
+grow towers, terraform terrain, and fuel flying machines in 
+the stunning followup to the multi-award winning World of Goo.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=q3XVl53Ajsk" 
+target="_blank"><img src="http://img.youtube.com/vi/q3XVl53Ajsk/0.jpg" 
+alt="World Of Goo 2"
+width="640" height="480" border="0" /></a>
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
@@ -569,7 +669,7 @@ malfunctioning robots, ancient secrets, and an implacable, power-hungry foe.
 <img align="right" src="https://opensource.org/wp-content/uploads/2022/10/osi-badge-dark.svg" width="100" height="137">
 </a>
 
-	Copyright 2010-2023 Branimir Karadzic
+	Copyright 2010-2024 Branimir Karadzic
 	
 	Redistribution and use in source and binary forms, with or without modification,
 	are permitted provided that the following conditions are met:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -290,6 +290,8 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 			}
 		}
 	}
+#else
+	ImGui::Text("Renderer: %s", bgfx::getRendererName(bgfx::getRendererType()));
 #endif // 0
 
 	const bgfx::Stats* stats = bgfx::getStats();

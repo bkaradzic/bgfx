@@ -1459,132 +1459,6 @@ FoldingRule FactorAddMuls() {
   };
 }
 
-// Replaces |inst| inplace with an FMA instruction |(x*y)+a|.
-void ReplaceWithFma(Instruction* inst, uint32_t x, uint32_t y, uint32_t a) {
-  uint32_t ext =
-      inst->context()->get_feature_mgr()->GetExtInstImportId_GLSLstd450();
-
-  if (ext == 0) {
-    inst->context()->AddExtInstImport("GLSL.std.450");
-    ext = inst->context()->get_feature_mgr()->GetExtInstImportId_GLSLstd450();
-    assert(ext != 0 &&
-           "Could not add the GLSL.std.450 extended instruction set");
-  }
-
-  std::vector<Operand> operands;
-  operands.push_back({SPV_OPERAND_TYPE_ID, {ext}});
-  operands.push_back({SPV_OPERAND_TYPE_LITERAL_INTEGER, {GLSLstd450Fma}});
-  operands.push_back({SPV_OPERAND_TYPE_ID, {x}});
-  operands.push_back({SPV_OPERAND_TYPE_ID, {y}});
-  operands.push_back({SPV_OPERAND_TYPE_ID, {a}});
-
-  inst->SetOpcode(spv::Op::OpExtInst);
-  inst->SetInOperands(std::move(operands));
-}
-
-// Folds a multiple and add into an Fma.
-//
-// Cases:
-// (x * y) + a = Fma x y a
-// a + (x * y) = Fma x y a
-bool MergeMulAddArithmetic(IRContext* context, Instruction* inst,
-                           const std::vector<const analysis::Constant*>&) {
-  assert(inst->opcode() == spv::Op::OpFAdd);
-
-  if (!inst->IsFloatingPointFoldingAllowed()) {
-    return false;
-  }
-
-  analysis::DefUseManager* def_use_mgr = context->get_def_use_mgr();
-  for (int i = 0; i < 2; i++) {
-    uint32_t op_id = inst->GetSingleWordInOperand(i);
-    Instruction* op_inst = def_use_mgr->GetDef(op_id);
-
-    if (op_inst->opcode() != spv::Op::OpFMul) {
-      continue;
-    }
-
-    if (!op_inst->IsFloatingPointFoldingAllowed()) {
-      continue;
-    }
-
-    uint32_t x = op_inst->GetSingleWordInOperand(0);
-    uint32_t y = op_inst->GetSingleWordInOperand(1);
-    uint32_t a = inst->GetSingleWordInOperand((i + 1) % 2);
-    ReplaceWithFma(inst, x, y, a);
-    return true;
-  }
-  return false;
-}
-
-// Replaces |sub| inplace with an FMA instruction |(x*y)+a| where |a| first gets
-// negated if |negate_addition| is true, otherwise |x| gets negated.
-void ReplaceWithFmaAndNegate(Instruction* sub, uint32_t x, uint32_t y,
-                             uint32_t a, bool negate_addition) {
-  uint32_t ext =
-      sub->context()->get_feature_mgr()->GetExtInstImportId_GLSLstd450();
-
-  if (ext == 0) {
-    sub->context()->AddExtInstImport("GLSL.std.450");
-    ext = sub->context()->get_feature_mgr()->GetExtInstImportId_GLSLstd450();
-    assert(ext != 0 &&
-           "Could not add the GLSL.std.450 extended instruction set");
-  }
-
-  InstructionBuilder ir_builder(
-      sub->context(), sub,
-      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
-
-  Instruction* neg = ir_builder.AddUnaryOp(sub->type_id(), spv::Op::OpFNegate,
-                                           negate_addition ? a : x);
-  uint32_t neg_op = neg->result_id();  // -a : -x
-
-  std::vector<Operand> operands;
-  operands.push_back({SPV_OPERAND_TYPE_ID, {ext}});
-  operands.push_back({SPV_OPERAND_TYPE_LITERAL_INTEGER, {GLSLstd450Fma}});
-  operands.push_back({SPV_OPERAND_TYPE_ID, {negate_addition ? x : neg_op}});
-  operands.push_back({SPV_OPERAND_TYPE_ID, {y}});
-  operands.push_back({SPV_OPERAND_TYPE_ID, {negate_addition ? neg_op : a}});
-
-  sub->SetOpcode(spv::Op::OpExtInst);
-  sub->SetInOperands(std::move(operands));
-}
-
-// Folds a multiply and subtract into an Fma and negation.
-//
-// Cases:
-// (x * y) - a = Fma x y -a
-// a - (x * y) = Fma -x y a
-bool MergeMulSubArithmetic(IRContext* context, Instruction* sub,
-                           const std::vector<const analysis::Constant*>&) {
-  assert(sub->opcode() == spv::Op::OpFSub);
-
-  if (!sub->IsFloatingPointFoldingAllowed()) {
-    return false;
-  }
-
-  analysis::DefUseManager* def_use_mgr = context->get_def_use_mgr();
-  for (int i = 0; i < 2; i++) {
-    uint32_t op_id = sub->GetSingleWordInOperand(i);
-    Instruction* mul = def_use_mgr->GetDef(op_id);
-
-    if (mul->opcode() != spv::Op::OpFMul) {
-      continue;
-    }
-
-    if (!mul->IsFloatingPointFoldingAllowed()) {
-      continue;
-    }
-
-    uint32_t x = mul->GetSingleWordInOperand(0);
-    uint32_t y = mul->GetSingleWordInOperand(1);
-    uint32_t a = sub->GetSingleWordInOperand((i + 1) % 2);
-    ReplaceWithFmaAndNegate(sub, x, y, a, i == 0);
-    return true;
-  }
-  return false;
-}
-
 FoldingRule IntMultipleBy1() {
   return [](IRContext*, Instruction* inst,
             const std::vector<const analysis::Constant*>& constants) {
@@ -1733,27 +1607,26 @@ bool CompositeConstructFeedingExtract(
 }
 
 // Walks the indexes chain from |start| to |end| of an OpCompositeInsert or
-// OpCompositeExtract instruction, and returns the type of the final element
-// being accessed.
-const analysis::Type* GetElementType(uint32_t type_id,
-                                     Instruction::iterator start,
-                                     Instruction::iterator end,
-                                     const analysis::TypeManager* type_mgr) {
-  const analysis::Type* type = type_mgr->GetType(type_id);
+// OpCompositeExtract instruction, and returns the type id of the final element
+// being accessed. Returns 0 if a valid type could not be found.
+uint32_t GetElementType(uint32_t type_id, Instruction::iterator start,
+                        Instruction::iterator end,
+                        const analysis::DefUseManager* def_use_manager) {
   for (auto index : make_range(std::move(start), std::move(end))) {
+    const Instruction* type_inst = def_use_manager->GetDef(type_id);
     assert(index.type == SPV_OPERAND_TYPE_LITERAL_INTEGER &&
            index.words.size() == 1);
-    if (auto* array_type = type->AsArray()) {
-      type = array_type->element_type();
-    } else if (auto* matrix_type = type->AsMatrix()) {
-      type = matrix_type->element_type();
-    } else if (auto* struct_type = type->AsStruct()) {
-      type = struct_type->element_types()[index.words[0]];
+    if (type_inst->opcode() == spv::Op::OpTypeArray) {
+      type_id = type_inst->GetSingleWordInOperand(0);
+    } else if (type_inst->opcode() == spv::Op::OpTypeMatrix) {
+      type_id = type_inst->GetSingleWordInOperand(0);
+    } else if (type_inst->opcode() == spv::Op::OpTypeStruct) {
+      type_id = type_inst->GetSingleWordInOperand(index.words[0]);
     } else {
-      type = nullptr;
+      return 0;
     }
   }
-  return type;
+  return type_id;
 }
 
 // Returns true of |inst_1| and |inst_2| have the same indexes that will be used
@@ -1838,16 +1711,11 @@ bool CompositeExtractFeedingConstruct(
   // The last check it to see that the object being extracted from is the
   // correct type.
   Instruction* original_inst = def_use_mgr->GetDef(original_id);
-  analysis::TypeManager* type_mgr = context->get_type_mgr();
-  const analysis::Type* original_type =
+  uint32_t original_type_id =
       GetElementType(original_inst->type_id(), first_element_inst->begin() + 3,
-                     first_element_inst->end() - 1, type_mgr);
+                     first_element_inst->end() - 1, def_use_mgr);
 
-  if (original_type == nullptr) {
-    return false;
-  }
-
-  if (inst->type_id() != type_mgr->GetId(original_type)) {
+  if (inst->type_id() != original_type_id) {
     return false;
   }
 
@@ -2137,13 +2005,15 @@ bool DoInsertedValuesCoverEntireObject(
   return true;
 }
 
-// Returns the type of the element that immediately contains the element being
-// inserted by the OpCompositeInsert instruction |inst|.
-const analysis::Type* GetContainerType(Instruction* inst) {
+// Returns id of the type of the element that immediately contains the element
+// being inserted by the OpCompositeInsert instruction |inst|. Returns 0 if it
+// could not be found.
+uint32_t GetContainerTypeId(Instruction* inst) {
   assert(inst->opcode() == spv::Op::OpCompositeInsert);
-  analysis::TypeManager* type_mgr = inst->context()->get_type_mgr();
-  return GetElementType(inst->type_id(), inst->begin() + 4, inst->end() - 1,
-                        type_mgr);
+  analysis::DefUseManager* def_use_manager = inst->context()->get_def_use_mgr();
+  uint32_t container_type_id = GetElementType(
+      inst->type_id(), inst->begin() + 4, inst->end() - 1, def_use_manager);
+  return container_type_id;
 }
 
 // Returns an OpCompositeConstruct instruction that build an object with
@@ -2190,18 +2060,20 @@ bool CompositeInsertToCompositeConstruct(
   if (inst->NumInOperands() < 3) return false;
 
   std::map<uint32_t, uint32_t> values_inserted = GetInsertedValues(inst);
-  const analysis::Type* container_type = GetContainerType(inst);
-  if (container_type == nullptr) {
-    return false;
-  }
-
-  if (!DoInsertedValuesCoverEntireObject(container_type, values_inserted)) {
+  uint32_t container_type_id = GetContainerTypeId(inst);
+  if (container_type_id == 0) {
     return false;
   }
 
   analysis::TypeManager* type_mgr = context->get_type_mgr();
-  Instruction* construct = BuildCompositeConstruct(
-      type_mgr->GetId(container_type), values_inserted, inst);
+  const analysis::Type* container_type = type_mgr->GetType(container_type_id);
+  assert(container_type && "GetContainerTypeId returned a bad id.");
+  if (!DoInsertedValuesCoverEntireObject(container_type, values_inserted)) {
+    return false;
+  }
+
+  Instruction* construct =
+      BuildCompositeConstruct(container_type_id, values_inserted, inst);
   InsertConstructedObject(inst, construct);
   return true;
 }
@@ -2941,7 +2813,6 @@ void FoldingRules::AddFoldingRules() {
   rules_[spv::Op::OpFAdd].push_back(MergeAddSubArithmetic());
   rules_[spv::Op::OpFAdd].push_back(MergeGenericAddSubArithmetic());
   rules_[spv::Op::OpFAdd].push_back(FactorAddMuls());
-  rules_[spv::Op::OpFAdd].push_back(MergeMulAddArithmetic);
 
   rules_[spv::Op::OpFDiv].push_back(RedundantFDiv());
   rules_[spv::Op::OpFDiv].push_back(ReciprocalFDiv());
@@ -2962,7 +2833,6 @@ void FoldingRules::AddFoldingRules() {
   rules_[spv::Op::OpFSub].push_back(MergeSubNegateArithmetic());
   rules_[spv::Op::OpFSub].push_back(MergeSubAddArithmetic());
   rules_[spv::Op::OpFSub].push_back(MergeSubSubArithmetic());
-  rules_[spv::Op::OpFSub].push_back(MergeMulSubArithmetic);
 
   rules_[spv::Op::OpIAdd].push_back(RedundantIAdd());
   rules_[spv::Op::OpIAdd].push_back(MergeAddNegateArithmetic());

@@ -88,6 +88,9 @@ void IRContext::BuildInvalidAnalyses(IRContext::Analysis set) {
   if (set & kAnalysisDebugInfo) {
     BuildDebugInfoManager();
   }
+  if (set & kAnalysisLiveness) {
+    BuildLivenessManager();
+  }
 }
 
 void IRContext::InvalidateAnalysesExceptFor(

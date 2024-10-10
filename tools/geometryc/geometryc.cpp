@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -653,7 +653,7 @@ void parseObj(char* _data, uint32_t _size, Mesh* _mesh, bool _hasBc)
 					{
 					case 4:
 						bx::fromString(&texcoord.z, argv[3]);
-						BX_FALLTHROUGH;
+						[[fallthrough]];
 
 					case 3:
 						bx::fromString(&texcoord.y, argv[2]);
@@ -925,7 +925,7 @@ void help(const char* _error = NULL)
 
 	bx::printf(
 		  "geometryc, bgfx geometry compiler tool, version %d.%d.%d.\n"
-		  "Copyright 2011-2023 Branimir Karadzic. All rights reserved.\n"
+		  "Copyright 2011-2024 Branimir Karadzic. All rights reserved.\n"
 		  "License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE\n\n"
 		, BGFX_GEOMETRYC_VERSION_MAJOR
 		, BGFX_GEOMETRYC_VERSION_MINOR

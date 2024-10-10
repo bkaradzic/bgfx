@@ -2,7 +2,7 @@ $input a_position, a_color0, i_data0, i_data1, i_data2, i_data3, i_data4
 $output v_color0
 
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 

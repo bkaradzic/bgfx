@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -68,11 +68,15 @@ public:
 	static void remapIndices(uint32_t* _indices, uint32_t _num)
 	{
 		uint32_t target = 0;
-		for (uint32_t i = 0; i < _num; i++) {
+		for (uint32_t i = 0; i < _num; i++)
+		{
 			uint32_t map = _indices[i];
-			if (i != map) {
+			if (i != map)
+			{
 				_indices[i] = _indices[map];
-			} else {
+			}
+			else
+			{
 				_indices[i] = target;
 				++target;
 			}

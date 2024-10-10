@@ -415,7 +415,7 @@ public:
 				}
 				else
 				{
-					bgfx::submit(0, m_program, m_indirect_buffer_handle, 0, uint16_t(numToDraw));
+					bgfx::submit(0, m_program, m_indirect_buffer_handle, 0, numToDraw);
 				}
 			}
 			else

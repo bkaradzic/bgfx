@@ -62,7 +62,7 @@ IMAGE2D_RO(s_normalmapSource, rgba8, 2);
 BUFFER_RO(s_loadCounter, uint, 3); 
 SAMPLER2D(s_importanceMap,  4); 
 IMAGE2D_ARRAY_RO(s_baseSSAO, rg8, 5);
-IMAGE2D_ARRAY_WR(s_target, rg8, 6);
+IMAGE2D_ARRAY_WO(s_target, rg8, 6);
 
 // packing/unpacking for edges; 2 bits per edge mean 4 gradient values (0, 0.33, 0.66, 1) for smoother transitions!
 float PackEdges( vec4 edgesLRTB )

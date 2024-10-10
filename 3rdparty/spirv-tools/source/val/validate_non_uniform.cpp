@@ -389,20 +389,25 @@ spv_result_t ValidateGroupNonUniformRotateKHR(ValidationState_t& _,
 
   if (inst->words().size() > 6) {
     const uint32_t cluster_size_op_id = inst->GetOperandAs<uint32_t>(5);
-    const uint32_t cluster_size_type = _.GetTypeId(cluster_size_op_id);
+    const Instruction* cluster_size_inst = _.FindDef(cluster_size_op_id);
+    const uint32_t cluster_size_type =
+        cluster_size_inst ? cluster_size_inst->type_id() : 0;
     if (!_.IsUnsignedIntScalarType(cluster_size_type)) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "ClusterSize must be a scalar of integer type, whose "
                 "Signedness operand is 0.";
     }
 
-    uint64_t cluster_size;
-    if (!_.GetConstantValUint64(cluster_size_op_id, &cluster_size)) {
+    if (!spvOpcodeIsConstant(cluster_size_inst->opcode())) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "ClusterSize must come from a constant instruction.";
     }
 
-    if ((cluster_size == 0) || ((cluster_size & (cluster_size - 1)) != 0)) {
+    uint64_t cluster_size;
+    const bool valid_const =
+        _.EvalConstantValUint64(cluster_size_op_id, &cluster_size);
+    if (valid_const &&
+        ((cluster_size == 0) || ((cluster_size & (cluster_size - 1)) != 0))) {
       return _.diag(SPV_WARNING, inst)
              << "Behavior is undefined unless ClusterSize is at least 1 and a "
                 "power of 2.";
@@ -422,9 +427,14 @@ spv_result_t NonUniformPass(ValidationState_t& _, const Instruction* inst) {
   const spv::Op opcode = inst->opcode();
 
   if (spvOpcodeIsNonUniformGroupOperation(opcode)) {
-    const uint32_t execution_scope = inst->GetOperandAs<uint32_t>(2);
-    if (auto error = ValidateExecutionScope(_, inst, execution_scope)) {
-      return error;
+    // OpGroupNonUniformQuadAllKHR and OpGroupNonUniformQuadAnyKHR don't have
+    // scope paramter
+    if ((opcode != spv::Op::OpGroupNonUniformQuadAllKHR) &&
+        (opcode != spv::Op::OpGroupNonUniformQuadAnyKHR)) {
+      const uint32_t execution_scope = inst->GetOperandAs<uint32_t>(2);
+      if (auto error = ValidateExecutionScope(_, inst, execution_scope)) {
+        return error;
+      }
     }
   }
 

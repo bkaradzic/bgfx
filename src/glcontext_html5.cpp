@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -71,7 +71,7 @@ namespace bgfx { namespace gl
 
 		const char* canvas = (const char*) g_platformData.nwh;
 
-		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = (EMSCRIPTEN_WEBGL_CONTEXT_HANDLE) g_platformData.context;
+		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = bx::narrowCast<EMSCRIPTEN_WEBGL_CONTEXT_HANDLE>((uintptr_t) g_platformData.context);
 		if (context > 0)
 		{
 			if (emscripten_webgl_get_context_attributes(context, &s_attrs) >= 0)
@@ -86,7 +86,7 @@ namespace bgfx { namespace gl
 		}
 		else
 		{
-			m_primary = createSwapChain((void*)canvas);
+			m_primary = createSwapChain((void*)canvas, (int)_width, (int)_height) );
 		}
 
 		if (0 != _width
@@ -122,9 +122,10 @@ namespace bgfx { namespace gl
 		EMSCRIPTEN_CHECK(emscripten_set_canvas_element_size(m_primary->m_canvas, (int) _width, (int) _height) );
 	}
 
-	SwapChainGL* GlContext::createSwapChain(void* _nwh)
+	SwapChainGL* GlContext::createSwapChain(void* _nwh, int _width, int _height)
 	{
 		emscripten_webgl_init_context_attributes(&s_attrs);
+		BX_UNUSED(_width, _height);
 
 		// Work around bug https://bugs.chromium.org/p/chromium/issues/detail?id=1045643 in Chrome
 		// by having alpha always enabled.

@@ -318,7 +318,7 @@ State Flags
 .. doxygendefine:: BGFX_STATE_BLEND_FACTOR
 .. doxygendefine:: BGFX_STATE_BLEND_INV_FACTOR
 
-**Blend Equaation**
+**Blend Equation**
 
 .. doxygendefine:: BGFX_STATE_BLEND_EQUATION_ADD
 .. doxygendefine:: BGFX_STATE_BLEND_EQUATION_SUB
@@ -426,8 +426,8 @@ In Views, all draw commands are executed **after** blit and compute commands.
 
 .. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
 .. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
-.. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start = 0, uint16_t _num = 1, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
-.. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex = 0, uint16_t _numMax = UINT16_MAX, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
+.. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start = 0, uint32_t _num = 1, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
+.. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex = 0, uint32_t _numMax = UINT32_MAX, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
 
 
 Compute
@@ -458,7 +458,7 @@ Dispatch
 In Views, all draw commands are executed **after** blit and compute commands.
 
 .. doxygenfunction:: bgfx::dispatch(ViewId _id, ProgramHandle _handle, uint32_t _numX = 1, uint32_t _numY = 1, uint32_t _numZ = 1, uint8_t _flags = BGFX_DISCARD_ALL)
-.. doxygenfunction:: bgfx::dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start = 0, uint16_t _num = 1, uint8_t _flags = BGFX_DISCARD_ALL)
+.. doxygenfunction:: bgfx::dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint32_t _start = 0, uint32_t _num = 1, uint8_t _flags = BGFX_DISCARD_ALL)
 
 Blit
 ~~~~
@@ -480,6 +480,10 @@ Resources
 
 Shaders and Programs
 ~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+
+    Shaders must be compiled with offline command line too shaderc.
 
 .. doxygenfunction:: bgfx::createShader
 .. doxygenfunction:: bgfx::getShaderUniforms
@@ -545,6 +549,20 @@ Textures
 
 .. doxygenstruct:: bgfx::TextureFormat
     :members:
+
+**Texture Flags**
+
+.. doxygendefine:: BGFX_TEXTURE_MSAA_SAMPLE
+.. doxygendefine:: BGFX_TEXTURE_RT
+.. doxygendefine:: BGFX_TEXTURE_COMPUTE_WRITE
+.. doxygendefine:: BGFX_TEXTURE_SRGB
+.. doxygendefine:: BGFX_TEXTURE_BLIT_DST
+.. doxygendefine:: BGFX_TEXTURE_READ_BACK
+.. doxygendefine:: BGFX_TEXTURE_RT_MSAA_X2
+.. doxygendefine:: BGFX_TEXTURE_RT_MSAA_X4
+.. doxygendefine:: BGFX_TEXTURE_RT_MSAA_X8
+.. doxygendefine:: BGFX_TEXTURE_RT_MSAA_X16
+.. doxygendefine:: BGFX_TEXTURE_RT_WRITE_ONLY
 
 .. doxygenfunction:: bgfx::isTextureValid
 

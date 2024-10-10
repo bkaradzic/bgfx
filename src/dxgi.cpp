@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -278,7 +278,7 @@ namespace bgfx
 		{
 			AdapterI* adapter;
 			for (uint32_t ii = 0
-				; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, reinterpret_cast<IDXGIAdapter**>(&adapter) ) && ii < BX_COUNTOF(_caps.gpu)
+				; ii < BX_COUNTOF(_caps.gpu) && DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, reinterpret_cast<IDXGIAdapter**>(&adapter) )
 				; ++ii
 				)
 			{

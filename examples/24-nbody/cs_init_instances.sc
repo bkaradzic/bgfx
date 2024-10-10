@@ -6,8 +6,8 @@
 #include "bgfx_compute.sh"
 #include "uniforms.sh"
 
-BUFFER_WR(prevPositionBuffer, vec4, 0);
-BUFFER_WR(currPositionBuffer, vec4, 1);
+BUFFER_WO(prevPositionBuffer, vec4, 0);
+BUFFER_WO(currPositionBuffer, vec4, 1);
 
 uint rotl(uint _x, uint _r)
 {

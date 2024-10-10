@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -287,7 +287,7 @@ namespace bgfx { namespace hlsl
 		const uint32_t D3DSIO_END = 0x0000FFFF;
 		const uint32_t D3DSI_OPCODE_MASK = 0x0000FFFF;
 		const uint32_t D3DSI_COMMENTSIZE_MASK = 0x7FFF0000;
-		const uint32_t CTAB_CONSTANT = MAKEFOURCC('C', 'T', 'A', 'B');
+		const uint32_t CTAB_CONSTANT = BX_MAKEFOURCC('C', 'T', 'A', 'B');
 
 		// parse the shader blob for the constant table
 		const size_t codeSize = _code->GetBufferSize();

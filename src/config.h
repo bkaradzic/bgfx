@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -60,10 +60,10 @@
 #	endif // BGFX_CONFIG_RENDERER_GNM
 
 #	ifndef BGFX_CONFIG_RENDERER_METAL
-#		define BGFX_CONFIG_RENDERER_METAL (0           \
-					|| (BX_PLATFORM_IOS && BX_CPU_ARM) \
-					|| (BX_PLATFORM_IOS && BX_CPU_X86) \
-					|| (BX_PLATFORM_OSX >= 101100)     \
+#		define BGFX_CONFIG_RENDERER_METAL (0 \
+					|| BX_PLATFORM_IOS       \
+					|| BX_PLATFORM_OSX       \
+					|| BX_PLATFORM_VISIONOS \
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_METAL
 
@@ -165,6 +165,10 @@
 #ifndef BGFX_CONFIG_RENDERER_USE_EXTENSIONS
 #	define BGFX_CONFIG_RENDERER_USE_EXTENSIONS 1
 #endif // BGFX_CONFIG_RENDERER_USE_EXTENSIONS
+
+#ifndef BGFX_CONFIG_RENDERER_DIRECT3D11_USE_STAGING_BUFFER
+#	define BGFX_CONFIG_RENDERER_DIRECT3D11_USE_STAGING_BUFFER 0
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D11_USE_STAGING_BUFFER
 
 /// Enable use of tinystl.
 #ifndef BGFX_CONFIG_USE_TINYSTL
@@ -319,6 +323,22 @@ BX_STATIC_ASSERT(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS m
 #ifndef BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE
 #	define BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE (2<<20)
 #endif // BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE
+
+#ifndef BGFX_CONFIG_PER_FRAME_SCRATCH_STAGING_BUFFER_SIZE
+/// Amount of scratch buffer size (per in-flight frame) that will be reserved
+/// for staging data for copying to the device (such as vertex buffer data,
+/// texture data, etc). This buffer will be used instead of allocating memory
+/// on device separately for every data copy.
+/// Note: Currently only used by the Vulkan backend.
+#   define BGFX_CONFIG_PER_FRAME_SCRATCH_STAGING_BUFFER_SIZE (32<<20)
+#endif
+
+#ifndef BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER
+/// The threshold of data size above which the staging scratch buffer will
+/// not be used, but instead a separate device memory allocation will take
+/// place to stage the data for copying to device.
+#   define BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER (16 << 20)
+#endif
 
 #ifndef BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT
 #	define BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT 5

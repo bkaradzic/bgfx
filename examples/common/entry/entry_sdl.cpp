@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -8,9 +8,6 @@
 #if ENTRY_CONFIG_USE_SDL
 
 #if BX_PLATFORM_LINUX
-#	if ENTRY_CONFIG_USE_WAYLAND
-#		include <wayland-egl.h>
-#	endif
 #elif BX_PLATFORM_WINDOWS
 #	define SDL_MAIN_HANDLED
 #endif
@@ -49,49 +46,21 @@ namespace entry
 		}
 
 #	if BX_PLATFORM_LINUX
-#		if ENTRY_CONFIG_USE_WAYLAND
-			if (wmi.subsystem == SDL_SYSWM_WAYLAND)
-				{
-					wl_egl_window *win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
-					if(!win_impl)
-					{
-						int width, height;
-						SDL_GetWindowSize(_window, &width, &height);
-						struct wl_surface* surface = wmi.info.wl.surface;
-						if(!surface)
-							return nullptr;
-						win_impl = wl_egl_window_create(surface, width, height);
-						SDL_SetWindowData(_window, "wl_egl_window", win_impl);
-					}
-					return (void*)(uintptr_t)win_impl;
-				}
-			else
-#		endif // ENTRY_CONFIG_USE_WAYLAND
-				return (void*)wmi.info.x11.window;
-#	elif BX_PLATFORM_OSX || BX_PLATFORM_IOS
+		if (wmi.subsystem == SDL_SYSWM_WAYLAND)
+		{
+			return (void*)wmi.info.wl.surface;
+		}
+		else
+		{
+			return (void*)wmi.info.x11.window;
+		}
+#	elif BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 		return wmi.info.cocoa.window;
 #	elif BX_PLATFORM_WINDOWS
 		return wmi.info.win.window;
 #   elif BX_PLATFORM_ANDROID
 		return wmi.info.android.window;
 #	endif // BX_PLATFORM_
-	}
-
-	static void sdlDestroyWindow(SDL_Window* _window)
-	{
-		if(!_window)
-			return;
-#	if BX_PLATFORM_LINUX
-#		if ENTRY_CONFIG_USE_WAYLAND
-		wl_egl_window *win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
-		if(win_impl)
-		{
-			SDL_SetWindowData(_window, "wl_egl_window", nullptr);
-			wl_egl_window_destroy(win_impl);
-		}
-#		endif
-#	endif
-		SDL_DestroyWindow(_window);
 	}
 
 	static uint8_t translateKeyModifiers(uint16_t _sdl)
@@ -217,22 +186,6 @@ namespace entry
 			{
 				_eventQueue.postAxisEvent(_handle, _gamepad, _axis, _value);
 
-				if (Key::None != s_axisDpad[_axis].first)
-				{
-					if (_value == 0)
-					{
-						_eventQueue.postKeyEvent(_handle, s_axisDpad[_axis].first,  0, false);
-						_eventQueue.postKeyEvent(_handle, s_axisDpad[_axis].second, 0, false);
-					}
-					else
-					{
-						_eventQueue.postKeyEvent(_handle
-								, 0 > _value ? s_axisDpad[_axis].first : s_axisDpad[_axis].second
-								, 0
-								, true
-								);
-					}
-				}
 			}
 		}
 
@@ -702,16 +655,14 @@ namespace entry
 						}
 						break;
 
+					// Ignore Joystick events. Example's Gamepad concept mirrors SDL Game Controller.
+					// Game Controllers are higher level wrapper around Joystick and both events come through.
+					// Respond to only the controller events. Controller events are properly remapped.
 					case SDL_JOYAXISMOTION:
-						{
-							const SDL_JoyAxisEvent& jev = event.jaxis;
-							GamepadHandle handle = findGamepad(jev.which);
-							if (isValid(handle) )
-							{
-								GamepadAxis::Enum axis = translateGamepadAxis(jev.axis);
-								m_gamepad[handle.idx].update(m_eventQueue, defaultWindow, handle, axis, jev.value);
-							}
-						}
+					case SDL_JOYBUTTONDOWN:
+					case SDL_JOYBUTTONUP:
+					case SDL_JOYDEVICEADDED:
+					case SDL_JOYDEVICEREMOVED:
 						break;
 
 					case SDL_CONTROLLERAXISMOTION:
@@ -722,23 +673,6 @@ namespace entry
 							{
 								GamepadAxis::Enum axis = translateGamepadAxis(aev.axis);
 								m_gamepad[handle.idx].update(m_eventQueue, defaultWindow, handle, axis, aev.value);
-							}
-						}
-						break;
-
-					case SDL_JOYBUTTONDOWN:
-					case SDL_JOYBUTTONUP:
-						{
-							const SDL_JoyButtonEvent& bev = event.jbutton;
-							GamepadHandle handle = findGamepad(bev.which);
-
-							if (isValid(handle) )
-							{
-								Key::Enum key = translateGamepad(bev.button);
-								if (Key::Count != key)
-								{
-									m_eventQueue.postKeyEvent(defaultWindow, key, 0, event.type == SDL_JOYBUTTONDOWN);
-								}
 							}
 						}
 						break;
@@ -755,31 +689,6 @@ namespace entry
 								{
 									m_eventQueue.postKeyEvent(defaultWindow, key, 0, event.type == SDL_CONTROLLERBUTTONDOWN);
 								}
-							}
-						}
-						break;
-
-					case SDL_JOYDEVICEADDED:
-						{
-							GamepadHandle handle = { m_gamepadAlloc.alloc() };
-							if (isValid(handle) )
-							{
-								const SDL_JoyDeviceEvent& jev = event.jdevice;
-								m_gamepad[handle.idx].create(jev);
-								m_eventQueue.postGamepadEvent(defaultWindow, handle, true);
-							}
-						}
-						break;
-
-					case SDL_JOYDEVICEREMOVED:
-						{
-							const SDL_JoyDeviceEvent& jev = event.jdevice;
-							GamepadHandle handle = findGamepad(jev.which);
-							if (isValid(handle) )
-							{
-								m_gamepad[handle.idx].destroy();
-								m_gamepadAlloc.free(handle.idx);
-								m_eventQueue.postGamepadEvent(defaultWindow, handle, false);
 							}
 						}
 						break;
@@ -865,7 +774,7 @@ namespace entry
 									if (isValid(handle) )
 									{
 										m_eventQueue.postWindowEvent(handle);
-										sdlDestroyWindow(m_window[handle.idx]);
+										SDL_DestroyWindow(m_window[handle.idx]);
 										m_window[handle.idx] = NULL;
 									}
 								}
@@ -959,7 +868,7 @@ namespace entry
 			while (bgfx::RenderFrame::NoContext != bgfx::renderFrame() ) {};
 			m_thread.shutdown();
 
-			sdlDestroyWindow(m_window[0]);
+			SDL_DestroyWindow(m_window[0]);
 			SDL_Quit();
 
 			return m_thread.getExitCode();
@@ -1149,12 +1058,10 @@ namespace entry
 			return NULL;
 		}
 #	if BX_PLATFORM_LINUX
-#		if ENTRY_CONFIG_USE_WAYLAND
-			if (wmi.subsystem == SDL_SYSWM_WAYLAND)
-				return wmi.info.wl.display;
-			else
-#		endif // ENTRY_CONFIG_USE_WAYLAND
-				return wmi.info.x11.display;
+		if (wmi.subsystem == SDL_SYSWM_WAYLAND)
+			return wmi.info.wl.display;
+		else
+			return wmi.info.x11.display;
 #	else
 		return NULL;
 #	endif // BX_PLATFORM_*
@@ -1164,18 +1071,16 @@ namespace entry
 	{
 		SDL_SysWMinfo wmi;
 		SDL_VERSION(&wmi.version);
-		if (!SDL_GetWindowWMInfo(s_ctx.m_window[kDefaultWindowHandle], &wmi) )
+		if (!SDL_GetWindowWMInfo(s_ctx.m_window[kDefaultWindowHandle.idx], &wmi) )
 		{
 			return bgfx::NativeWindowHandleType::Default;
 		}
 #	if BX_PLATFORM_LINUX
-#		if ENTRY_CONFIG_USE_WAYLAND
 		if (wmi.subsystem == SDL_SYSWM_WAYLAND)
 		{
 			return bgfx::NativeWindowHandleType::Wayland;
 		}
 		else
-#		endif // ENTRY_CONFIG_USE_WAYLAND
 		{
 			return bgfx::NativeWindowHandleType::Default;
 		}

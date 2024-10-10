@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -371,9 +371,9 @@ namespace bgfx
 					{
 						switch (num)
 						{
-						default: *packed++ = uint8_t(*_input++ * 127.0f + 128.0f); BX_FALLTHROUGH;
-						case 3:  *packed++ = uint8_t(*_input++ * 127.0f + 128.0f); BX_FALLTHROUGH;
-						case 2:  *packed++ = uint8_t(*_input++ * 127.0f + 128.0f); BX_FALLTHROUGH;
+						default: *packed++ = uint8_t(*_input++ * 127.0f + 128.0f); [[fallthrough]];
+						case 3:  *packed++ = uint8_t(*_input++ * 127.0f + 128.0f); [[fallthrough]];
+						case 2:  *packed++ = uint8_t(*_input++ * 127.0f + 128.0f); [[fallthrough]];
 						case 1:  *packed++ = uint8_t(*_input++ * 127.0f + 128.0f);
 						}
 					}
@@ -381,9 +381,9 @@ namespace bgfx
 					{
 						switch (num)
 						{
-						default: *packed++ = uint8_t(*_input++ * 255.0f); BX_FALLTHROUGH;
-						case 3:  *packed++ = uint8_t(*_input++ * 255.0f); BX_FALLTHROUGH;
-						case 2:  *packed++ = uint8_t(*_input++ * 255.0f); BX_FALLTHROUGH;
+						default: *packed++ = uint8_t(*_input++ * 255.0f); [[fallthrough]];
+						case 3:  *packed++ = uint8_t(*_input++ * 255.0f); [[fallthrough]];
+						case 2:  *packed++ = uint8_t(*_input++ * 255.0f); [[fallthrough]];
 						case 1:  *packed++ = uint8_t(*_input++ * 255.0f);
 						}
 					}
@@ -392,9 +392,9 @@ namespace bgfx
 				{
 					switch (num)
 					{
-					default: *packed++ = uint8_t(*_input++); BX_FALLTHROUGH;
-					case 3:  *packed++ = uint8_t(*_input++); BX_FALLTHROUGH;
-					case 2:  *packed++ = uint8_t(*_input++); BX_FALLTHROUGH;
+					default: *packed++ = uint8_t(*_input++); [[fallthrough]];
+					case 3:  *packed++ = uint8_t(*_input++); [[fallthrough]];
+					case 2:  *packed++ = uint8_t(*_input++); [[fallthrough]];
 					case 1:  *packed++ = uint8_t(*_input++);
 					}
 				}
@@ -410,9 +410,9 @@ namespace bgfx
 					{
 						switch (num)
 						{
-						default: BX_FALLTHROUGH;
-						case 3:                packed |= uint32_t(*_input++ * 511.0f + 512.0f); BX_FALLTHROUGH;
-						case 2: packed <<= 10; packed |= uint32_t(*_input++ * 511.0f + 512.0f); BX_FALLTHROUGH;
+						default: [[fallthrough]];
+						case 3:                packed |= uint32_t(*_input++ * 511.0f + 512.0f); [[fallthrough]];
+						case 2: packed <<= 10; packed |= uint32_t(*_input++ * 511.0f + 512.0f); [[fallthrough]];
 						case 1: packed <<= 10; packed |= uint32_t(*_input++ * 511.0f + 512.0f);
 						}
 					}
@@ -420,9 +420,9 @@ namespace bgfx
 					{
 						switch (num)
 						{
-						default: BX_FALLTHROUGH;
-						case 3:                packed |= uint32_t(*_input++ * 1023.0f); BX_FALLTHROUGH;
-						case 2: packed <<= 10; packed |= uint32_t(*_input++ * 1023.0f); BX_FALLTHROUGH;
+						default: [[fallthrough]];
+						case 3:                packed |= uint32_t(*_input++ * 1023.0f); [[fallthrough]];
+						case 2: packed <<= 10; packed |= uint32_t(*_input++ * 1023.0f); [[fallthrough]];
 						case 1: packed <<= 10; packed |= uint32_t(*_input++ * 1023.0f);
 						}
 					}
@@ -431,9 +431,9 @@ namespace bgfx
 				{
 					switch (num)
 					{
-					default: BX_FALLTHROUGH;
-					case 3:                packed |= uint32_t(*_input++); BX_FALLTHROUGH;
-					case 2: packed <<= 10; packed |= uint32_t(*_input++); BX_FALLTHROUGH;
+					default: [[fallthrough]];
+					case 3:                packed |= uint32_t(*_input++); [[fallthrough]];
+					case 2: packed <<= 10; packed |= uint32_t(*_input++); [[fallthrough]];
 					case 1: packed <<= 10; packed |= uint32_t(*_input++);
 					}
 				}
@@ -450,9 +450,9 @@ namespace bgfx
 					{
 						switch (num)
 						{
-						default: *packed++ = int16_t(*_input++ * 32767.0f); BX_FALLTHROUGH;
-						case 3:  *packed++ = int16_t(*_input++ * 32767.0f); BX_FALLTHROUGH;
-						case 2:  *packed++ = int16_t(*_input++ * 32767.0f); BX_FALLTHROUGH;
+						default: *packed++ = int16_t(*_input++ * 32767.0f); [[fallthrough]];
+						case 3:  *packed++ = int16_t(*_input++ * 32767.0f); [[fallthrough]];
+						case 2:  *packed++ = int16_t(*_input++ * 32767.0f); [[fallthrough]];
 						case 1:  *packed++ = int16_t(*_input++ * 32767.0f);
 						}
 					}
@@ -460,9 +460,9 @@ namespace bgfx
 					{
 						switch (num)
 						{
-						default: *packed++ = int16_t(*_input++ * 65535.0f - 32768.0f); BX_FALLTHROUGH;
-						case 3:  *packed++ = int16_t(*_input++ * 65535.0f - 32768.0f); BX_FALLTHROUGH;
-						case 2:  *packed++ = int16_t(*_input++ * 65535.0f - 32768.0f); BX_FALLTHROUGH;
+						default: *packed++ = int16_t(*_input++ * 65535.0f - 32768.0f); [[fallthrough]];
+						case 3:  *packed++ = int16_t(*_input++ * 65535.0f - 32768.0f); [[fallthrough]];
+						case 2:  *packed++ = int16_t(*_input++ * 65535.0f - 32768.0f); [[fallthrough]];
 						case 1:  *packed++ = int16_t(*_input++ * 65535.0f - 32768.0f);
 						}
 					}
@@ -471,9 +471,9 @@ namespace bgfx
 				{
 					switch (num)
 					{
-					default: *packed++ = int16_t(*_input++); BX_FALLTHROUGH;
-					case 3:  *packed++ = int16_t(*_input++); BX_FALLTHROUGH;
-					case 2:  *packed++ = int16_t(*_input++); BX_FALLTHROUGH;
+					default: *packed++ = int16_t(*_input++); [[fallthrough]];
+					case 3:  *packed++ = int16_t(*_input++); [[fallthrough]];
+					case 2:  *packed++ = int16_t(*_input++); [[fallthrough]];
 					case 1:  *packed++ = int16_t(*_input++);
 					}
 				}
@@ -485,9 +485,9 @@ namespace bgfx
 				uint16_t* packed = (uint16_t*)data;
 				switch (num)
 				{
-				default: *packed++ = bx::halfFromFloat(*_input++); BX_FALLTHROUGH;
-				case 3:  *packed++ = bx::halfFromFloat(*_input++); BX_FALLTHROUGH;
-				case 2:  *packed++ = bx::halfFromFloat(*_input++); BX_FALLTHROUGH;
+				default: *packed++ = bx::halfFromFloat(*_input++); [[fallthrough]];
+				case 3:  *packed++ = bx::halfFromFloat(*_input++); [[fallthrough]];
+				case 2:  *packed++ = bx::halfFromFloat(*_input++); [[fallthrough]];
 				case 1:  *packed++ = bx::halfFromFloat(*_input++);
 				}
 			}
@@ -526,9 +526,9 @@ namespace bgfx
 				{
 					switch (num)
 					{
-					default: *_output++ = (float(*packed++) - 128.0f)*1.0f/127.0f; BX_FALLTHROUGH;
-					case 3:  *_output++ = (float(*packed++) - 128.0f)*1.0f/127.0f; BX_FALLTHROUGH;
-					case 2:  *_output++ = (float(*packed++) - 128.0f)*1.0f/127.0f; BX_FALLTHROUGH;
+					default: *_output++ = (float(*packed++) - 128.0f)*1.0f/127.0f; [[fallthrough]];
+					case 3:  *_output++ = (float(*packed++) - 128.0f)*1.0f/127.0f; [[fallthrough]];
+					case 2:  *_output++ = (float(*packed++) - 128.0f)*1.0f/127.0f; [[fallthrough]];
 					case 1:  *_output++ = (float(*packed++) - 128.0f)*1.0f/127.0f;
 					}
 				}
@@ -536,9 +536,9 @@ namespace bgfx
 				{
 					switch (num)
 					{
-					default: *_output++ = float(*packed++)*1.0f/255.0f; BX_FALLTHROUGH;
-					case 3:  *_output++ = float(*packed++)*1.0f/255.0f; BX_FALLTHROUGH;
-					case 2:  *_output++ = float(*packed++)*1.0f/255.0f; BX_FALLTHROUGH;
+					default: *_output++ = float(*packed++)*1.0f/255.0f; [[fallthrough]];
+					case 3:  *_output++ = float(*packed++)*1.0f/255.0f; [[fallthrough]];
+					case 2:  *_output++ = float(*packed++)*1.0f/255.0f; [[fallthrough]];
 					case 1:  *_output++ = float(*packed++)*1.0f/255.0f;
 					}
 				}
@@ -552,9 +552,9 @@ namespace bgfx
 				{
 					switch (num)
 					{
-					default: BX_FALLTHROUGH;
-					case 3: *_output++ = (float(packed & 0x3ff) - 512.0f)*1.0f/511.0f; packed >>= 10; BX_FALLTHROUGH;
-					case 2: *_output++ = (float(packed & 0x3ff) - 512.0f)*1.0f/511.0f; packed >>= 10; BX_FALLTHROUGH;
+					default: [[fallthrough]];
+					case 3: *_output++ = (float(packed & 0x3ff) - 512.0f)*1.0f/511.0f; packed >>= 10; [[fallthrough]];
+					case 2: *_output++ = (float(packed & 0x3ff) - 512.0f)*1.0f/511.0f; packed >>= 10; [[fallthrough]];
 					case 1: *_output++ = (float(packed & 0x3ff) - 512.0f)*1.0f/511.0f;
 					}
 				}
@@ -562,9 +562,9 @@ namespace bgfx
 				{
 					switch (num)
 					{
-					default: BX_FALLTHROUGH;
-					case 3: *_output++ = float(packed & 0x3ff)*1.0f/1023.0f; packed >>= 10; BX_FALLTHROUGH;
-					case 2: *_output++ = float(packed & 0x3ff)*1.0f/1023.0f; packed >>= 10; BX_FALLTHROUGH;
+					default: [[fallthrough]];
+					case 3: *_output++ = float(packed & 0x3ff)*1.0f/1023.0f; packed >>= 10; [[fallthrough]];
+					case 2: *_output++ = float(packed & 0x3ff)*1.0f/1023.0f; packed >>= 10; [[fallthrough]];
 					case 1: *_output++ = float(packed & 0x3ff)*1.0f/1023.0f;
 					}
 				}
@@ -578,9 +578,9 @@ namespace bgfx
 				{
 					switch (num)
 					{
-					default: *_output++ = float(*packed++)*1.0f/32767.0f; BX_FALLTHROUGH;
-					case 3:  *_output++ = float(*packed++)*1.0f/32767.0f; BX_FALLTHROUGH;
-					case 2:  *_output++ = float(*packed++)*1.0f/32767.0f; BX_FALLTHROUGH;
+					default: *_output++ = float(*packed++)*1.0f/32767.0f; [[fallthrough]];
+					case 3:  *_output++ = float(*packed++)*1.0f/32767.0f; [[fallthrough]];
+					case 2:  *_output++ = float(*packed++)*1.0f/32767.0f; [[fallthrough]];
 					case 1:  *_output++ = float(*packed++)*1.0f/32767.0f;
 					}
 				}
@@ -588,9 +588,9 @@ namespace bgfx
 				{
 					switch (num)
 					{
-					default: *_output++ = (float(*packed++) + 32768.0f)*1.0f/65535.0f; BX_FALLTHROUGH;
-					case 3:  *_output++ = (float(*packed++) + 32768.0f)*1.0f/65535.0f; BX_FALLTHROUGH;
-					case 2:  *_output++ = (float(*packed++) + 32768.0f)*1.0f/65535.0f; BX_FALLTHROUGH;
+					default: *_output++ = (float(*packed++) + 32768.0f)*1.0f/65535.0f; [[fallthrough]];
+					case 3:  *_output++ = (float(*packed++) + 32768.0f)*1.0f/65535.0f; [[fallthrough]];
+					case 2:  *_output++ = (float(*packed++) + 32768.0f)*1.0f/65535.0f; [[fallthrough]];
 					case 1:  *_output++ = (float(*packed++) + 32768.0f)*1.0f/65535.0f;
 					}
 				}
@@ -602,9 +602,9 @@ namespace bgfx
 				uint16_t* packed = (uint16_t*)data;
 				switch (num)
 				{
-				default: *_output++ = bx::halfToFloat(*packed++); BX_FALLTHROUGH;
-				case 3:  *_output++ = bx::halfToFloat(*packed++); BX_FALLTHROUGH;
-				case 2:  *_output++ = bx::halfToFloat(*packed++); BX_FALLTHROUGH;
+				default: *_output++ = bx::halfToFloat(*packed++); [[fallthrough]];
+				case 3:  *_output++ = bx::halfToFloat(*packed++); [[fallthrough]];
+				case 2:  *_output++ = bx::halfToFloat(*packed++); [[fallthrough]];
 				case 1:  *_output++ = bx::halfToFloat(*packed++);
 				}
 			}
@@ -618,9 +618,9 @@ namespace bgfx
 
 		switch (num)
 		{
-		case 1: *_output++ = 0.0f; BX_FALLTHROUGH;
-		case 2: *_output++ = 0.0f; BX_FALLTHROUGH;
-		case 3: *_output++ = 0.0f; BX_FALLTHROUGH;
+		case 1: *_output++ = 0.0f; [[fallthrough]];
+		case 2: *_output++ = 0.0f; [[fallthrough]];
+		case 3: *_output++ = 0.0f; [[fallthrough]];
 		default: break;
 		}
 	}

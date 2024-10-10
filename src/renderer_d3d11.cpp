@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -1635,13 +1635,13 @@ namespace bgfx { namespace d3d11
 #endif // USE_D3D11_DYNAMIC_LIB
 
 				m_dxgi.shutdown();
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 #if USE_D3D11_DYNAMIC_LIB
 			case ErrorState::LoadedD3D11:
 				bx::dlclose(m_d3d11Dll);
 				m_d3d11Dll = NULL;
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 #endif // USE_D3D11_DYNAMIC_LIB
 
 			case ErrorState::Default:
@@ -3399,10 +3399,10 @@ namespace bgfx { namespace d3d11
 				{
 				case UniformType::Mat3:
 				case UniformType::Mat3|kUniformFragmentBit:
-					 {
+					{
 						 float* value = (float*)data;
 						 for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3*16, value += 9)
-						 {
+						{
 							 Matrix4 mtx;
 							 mtx.un.val[ 0] = value[0];
 							 mtx.un.val[ 1] = value[1];
@@ -3830,7 +3830,7 @@ namespace bgfx { namespace d3d11
 		}
 		else if (m_dynamic)
 		{
-#if USE_D3D11_STAGING_BUFFER
+#if BGFX_CONFIG_RENDERER_DIRECT3D11_USE_STAGING_BUFFER
 			desc.Usage          = D3D11_USAGE_DEFAULT;
 			desc.CPUAccessFlags = 0;
 
@@ -3855,7 +3855,7 @@ namespace bgfx { namespace d3d11
 				, NULL
 				, &m_ptr
 				) );
-#endif // USE_D3D11_STAGING_BUFFER
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D11_USE_STAGING_BUFFER
 		}
 		else
 		{
@@ -3887,7 +3887,7 @@ namespace bgfx { namespace d3d11
 		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
 		BX_ASSERT(m_dynamic, "Must be dynamic!");
 
-#if USE_D3D11_STAGING_BUFFER
+#if BGFX_CONFIG_RENDERER_DIRECT3D11_USE_STAGING_BUFFER
 		BX_UNUSED(_discard);
 
 		D3D11_MAPPED_SUBRESOURCE mapped;
@@ -5877,7 +5877,7 @@ namespace bgfx { namespace d3d11
 						const VertexBufferD3D11& vb = m_vertexBuffers[compute.m_indirectBuffer.idx];
 						ID3D11Buffer* ptr = vb.m_ptr;
 
-						uint32_t numDrawIndirect = UINT16_MAX == compute.m_numIndirect
+						uint32_t numDrawIndirect = UINT32_MAX == compute.m_numIndirect
 							? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 							: compute.m_numIndirect
 							;
@@ -6332,7 +6332,7 @@ namespace bgfx { namespace d3d11
 
 						if (isValid(draw.m_indexBuffer) )
 						{
-							numDrawIndirect = UINT16_MAX == draw.m_numIndirect
+							numDrawIndirect = UINT32_MAX == draw.m_numIndirect
 								? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 								: draw.m_numIndirect
 								;
@@ -6346,7 +6346,7 @@ namespace bgfx { namespace d3d11
 						}
 						else
 						{
-							numDrawIndirect = UINT16_MAX == draw.m_numIndirect
+							numDrawIndirect = UINT32_MAX == draw.m_numIndirect
 								? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 								: draw.m_numIndirect
 								;

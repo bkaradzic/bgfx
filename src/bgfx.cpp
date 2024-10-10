@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -12,7 +12,7 @@
 
 #include "topology.h"
 
-#if BX_PLATFORM_OSX || BX_PLATFORM_IOS
+#if BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 #	include <objc/message.h>
 #elif BX_PLATFORM_WINDOWS
 #	ifndef WIN32_LEAN_AND_MEAN
@@ -225,15 +225,6 @@ namespace bgfx
 
 			if (kNaturalAlignment >= _align)
 			{
-#if BGFX_CONFIG_MEMORY_TRACKING
-				if (NULL == _ptr)
-				{
-					bx::MutexScope scope(m_mutex);
-					++m_numBlocks;
-					m_maxBlocks = bx::max(m_maxBlocks, m_numBlocks);
-				}
-#endif // BGFX_CONFIG_MEMORY_TRACKING
-
 				return ::realloc(_ptr, _size);
 			}
 
@@ -1514,24 +1505,26 @@ namespace bgfx
 
 	void UniformBuffer::writeUniform(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num)
 	{
-		uint32_t opcode = encodeOpcode(_type, _loc, _num, true);
+		const uint32_t opcode = encodeOpcode(_type, _loc, _num, true);
 		write(opcode);
 		write(_value, g_uniformTypeSize[_type]*_num);
 	}
 
 	void UniformBuffer::writeUniformHandle(UniformType::Enum _type, uint16_t _loc, UniformHandle _handle, uint16_t _num)
 	{
-		uint32_t opcode = encodeOpcode(_type, _loc, _num, false);
+		const uint32_t opcode = encodeOpcode(_type, _loc, _num, false);
 		write(opcode);
 		write(&_handle, sizeof(UniformHandle) );
 	}
 
-	void UniformBuffer::writeMarker(const char* _marker)
+	void UniformBuffer::writeMarker(const bx::StringView& _name)
 	{
-		uint16_t num = (uint16_t)bx::strLen(_marker)+1;
-		uint32_t opcode = encodeOpcode(bgfx::UniformType::Count, 0, num, true);
+		const uint16_t num = bx::narrowCast<uint16_t>(_name.getLength()+1);
+		const uint32_t opcode = encodeOpcode(bgfx::UniformType::Count, 0, num, true);
 		write(opcode);
-		write(_marker, num);
+		write(_name.getPtr(), num-1);
+		const char zero = '\0';
+		write(&zero, 1);
 	}
 
 	struct CapsFlags
@@ -2420,7 +2413,7 @@ namespace bgfx
 		}
 	}
 
-#if BX_PLATFORM_OSX || BX_PLATFORM_IOS
+#if BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 	struct NSAutoreleasePoolScope
 	{
 		NSAutoreleasePoolScope()
@@ -2444,7 +2437,7 @@ namespace bgfx
 	{
 		BGFX_PROFILER_SCOPE("bgfx::renderFrame", 0xff2040ff);
 
-#if BX_PLATFORM_OSX || BX_PLATFORM_IOS
+#if BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 		NSAutoreleasePoolScope pool;
 #endif // BX_PLATFORM_OSX
 
@@ -2521,8 +2514,9 @@ namespace bgfx
 			uint16_t copy;
 			UniformBuffer::decodeOpcode(opcode, type, loc, num, copy);
 
-			uint32_t size = g_uniformTypeSize[type]*num;
+			const uint32_t size = g_uniformTypeSize[type]*num;
 			const char* data = _uniformBuffer->read(size);
+
 			if (UniformType::Count > type)
 			{
 				if (copy)
@@ -2543,6 +2537,7 @@ namespace bgfx
 
 	void Context::flushTextureUpdateBatch(CommandBuffer& _cmdbuf)
 	{
+		BGFX_PROFILER_SCOPE("flushTextureUpdateBatch", 0xff2040ff);
 		if (m_textureUpdateBatch.sort() )
 		{
 			const uint32_t pos = _cmdbuf.m_pos;
@@ -2641,11 +2636,11 @@ namespace bgfx
 		{ d3d11::rendererCreate,  d3d11::rendererDestroy,  BGFX_RENDERER_DIRECT3D11_NAME, !!BGFX_CONFIG_RENDERER_DIRECT3D11 }, // Direct3D11
 		{ d3d12::rendererCreate,  d3d12::rendererDestroy,  BGFX_RENDERER_DIRECT3D12_NAME, !!BGFX_CONFIG_RENDERER_DIRECT3D12 }, // Direct3D12
 		{ gnm::rendererCreate,    gnm::rendererDestroy,    BGFX_RENDERER_GNM_NAME,        !!BGFX_CONFIG_RENDERER_GNM        }, // GNM
-#if BX_PLATFORM_OSX || BX_PLATFORM_IOS
+#if BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 		{ mtl::rendererCreate,    mtl::rendererDestroy,    BGFX_RENDERER_METAL_NAME,      !!BGFX_CONFIG_RENDERER_METAL      }, // Metal
 #else
 		{ noop::rendererCreate,   noop::rendererDestroy,   BGFX_RENDERER_NOOP_NAME,       false                             }, // Noop
-#endif // BX_PLATFORM_OSX || BX_PLATFORM_IOS
+#endif // BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 		{ nvn::rendererCreate,    nvn::rendererDestroy,    BGFX_RENDERER_NVN_NAME,        !!BGFX_CONFIG_RENDERER_NVN        }, // NVN
 		{ gl::rendererCreate,     gl::rendererDestroy,     BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGLES   }, // OpenGLES
 		{ gl::rendererCreate,     gl::rendererDestroy,     BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGL     }, // OpenGL
@@ -2653,30 +2648,44 @@ namespace bgfx
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_rendererCreator) == RendererType::Count);
 
-	bool windowsVersionIs(Condition::Enum _op, uint32_t _version)
+	bool windowsVersionIs(Condition::Enum _op, uint32_t _version, uint32_t _build)
 	{
 #if BX_PLATFORM_WINDOWS
-		static const uint8_t s_condition[] =
-		{
-			VER_LESS_EQUAL,
-			VER_GREATER_EQUAL,
-		};
-
-		OSVERSIONINFOEXA ovi;
-		bx::memSet(&ovi, 0, sizeof(ovi) );
+		RTL_OSVERSIONINFOW ovi;
+		bx::memSet(&ovi, 0 , sizeof(ovi));
 		ovi.dwOSVersionInfoSize = sizeof(ovi);
+		const HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
+		if (NULL != hMod)
+		{
+			FARPROC (WINAPI* rtlGetVersionPtr) (PRTL_OSVERSIONINFOW) = reinterpret_cast<FARPROC (WINAPI*)(PRTL_OSVERSIONINFOW)>(bx::dlsym(hMod, "RtlGetVersion"));
+			if (NULL != rtlGetVersionPtr)
+			{
+				rtlGetVersionPtr(&ovi);
+				if (ovi.dwMajorVersion == 0)
+				{
+					return false;
+				}
+				ovi.dwBuildNumber =  UINT32_MAX == _build ? UINT32_MAX : ovi.dwBuildNumber;
+			}
+		}
+		// _WIN32_WINNT_WIN10   0x0A00
 		// _WIN32_WINNT_WINBLUE 0x0603
 		// _WIN32_WINNT_WIN8    0x0602
 		// _WIN32_WINNT_WIN7    0x0601
 		// _WIN32_WINNT_VISTA   0x0600
-		ovi.dwMajorVersion = HIBYTE(_version);
-		ovi.dwMinorVersion = LOBYTE(_version);
-		DWORDLONG cond = 0;
-		VER_SET_CONDITION(cond, VER_MAJORVERSION, s_condition[_op]);
-		VER_SET_CONDITION(cond, VER_MINORVERSION, s_condition[_op]);
-		return !!VerifyVersionInfoA(&ovi, VER_MAJORVERSION | VER_MINORVERSION, cond);
+		const DWORD cMajorVersion = HIBYTE(_version);
+		const DWORD cMinorVersion = LOBYTE(_version);
+		switch (_op)
+		{
+			case Condition::LessEqual:
+				return (ovi.dwMajorVersion < cMajorVersion || (ovi.dwMajorVersion == cMajorVersion && ovi.dwMinorVersion <= cMinorVersion)) && ovi.dwBuildNumber <= _build;
+			case Condition::GreaterEqual:
+				return (ovi.dwMajorVersion > cMajorVersion || (ovi.dwMajorVersion == cMajorVersion && ovi.dwMinorVersion >= cMinorVersion)) && ovi.dwBuildNumber >= _build;
+			default:
+				return false;
+		}
 #else
-		BX_UNUSED(_op, _version);
+		BX_UNUSED(_op, _version, _build);
 		return false;
 #endif // BX_PLATFORM_WINDOWS
 	}
@@ -2727,12 +2736,11 @@ namespace bgfx
 				else if (BX_ENABLED(BX_PLATFORM_OSX) )
 				{
 					score += RendererType::Metal    == renderer ? 20 : 0;
-					score += RendererType::OpenGL   == renderer ? 10 : 0;
+					score += RendererType::Vulkan   == renderer ? 10 : 0;
 				}
-				else if (BX_ENABLED(BX_PLATFORM_IOS) )
+				else if (BX_ENABLED(BX_PLATFORM_IOS) || BX_ENABLED(BX_PLATFORM_VISIONOS))
 				{
 					score += RendererType::Metal    == renderer ? 20 : 0;
-					score += RendererType::OpenGLES == renderer ? 10 : 0;
 				}
 				else if (BX_ENABLED(0
 					 ||  BX_PLATFORM_ANDROID
@@ -2856,7 +2864,7 @@ namespace bgfx
 
 					m_exit = true;
 				}
-				BX_FALLTHROUGH;
+				[[fallthrough]];
 
 			case CommandBuffer::End:
 				end = true;
@@ -3573,7 +3581,7 @@ namespace bgfx
 		case ErrorState::ContextAllocated:
 			bx::deleteObject(g_allocator, s_ctx, Context::kAlignment);
 			s_ctx = NULL;
-			BX_FALLTHROUGH;
+			[[fallthrough]];
 
 		case ErrorState::Default:
 			if (NULL != s_callbackStub)
@@ -3648,9 +3656,9 @@ namespace bgfx
 
 #define BGFX_ENCODER(_func) reinterpret_cast<EncoderImpl*>(this)->_func
 
-	void Encoder::setMarker(const char* _marker)
+	void Encoder::setMarker(const char* _name, int32_t _len)
 	{
-		BGFX_ENCODER(setMarker(_marker) );
+		BGFX_ENCODER(setMarker(bx::StringView(_name, _len) ) );
 	}
 
 	void Encoder::setState(uint64_t _state, uint32_t _rgba)
@@ -3879,7 +3887,7 @@ namespace bgfx
 		BGFX_ENCODER(submit(_id, _program, _occlusionQuery, _depth, _flags) );
 	}
 
-	void Encoder::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, uint8_t _flags)
+	void Encoder::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start, uint32_t _num, uint32_t _depth, uint8_t _flags)
 	{
 		BGFX_CHECK_HANDLE_INVALID_OK("submit", s_ctx->m_programHandle, _program);
 		BGFX_CHECK_HANDLE("submit", s_ctx->m_vertexBufferHandle, _indirectHandle);
@@ -3887,7 +3895,7 @@ namespace bgfx
 		BGFX_ENCODER(submit(_id, _program, _indirectHandle, _start, _num, _depth, _flags) );
 	}
 
-	void Encoder::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags)
+	void Encoder::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex, uint32_t _numMax, uint32_t _depth, uint8_t _flags)
 	{
 		BGFX_CHECK_HANDLE_INVALID_OK("submit", s_ctx->m_programHandle, _program);
 		BGFX_CHECK_HANDLE("submit", s_ctx->m_vertexBufferHandle, _indirectHandle);
@@ -3968,7 +3976,7 @@ namespace bgfx
 		BGFX_ENCODER(dispatch(_id, _program, _numX, _numY, _numZ, _flags) );
 	}
 
-	void Encoder::dispatch(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+	void Encoder::dispatch(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start, uint32_t _num, uint8_t _flags)
 	{
 		BGFX_CHECK_CAPS(BGFX_CAPS_DRAW_INDIRECT, "Dispatch indirect is not supported!");
 		BGFX_CHECK_CAPS(BGFX_CAPS_COMPUTE, "Compute is not supported!");
@@ -5202,10 +5210,10 @@ namespace bgfx
 		return id < BGFX_CONFIG_MAX_VIEWS;
 	}
 
-	void setViewName(ViewId _id, const char* _name)
+	void setViewName(ViewId _id, const char* _name, int32_t _len)
 	{
 		BX_ASSERT(checkView(_id), "Invalid view id: %d", _id);
-		s_ctx->setViewName(_id, _name);
+		s_ctx->setViewName(_id, bx::StringView(_name, _len) );
 	}
 
 	void setViewRect(ViewId _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
@@ -5277,10 +5285,10 @@ namespace bgfx
 	BGFX_FATAL(NULL != s_ctx->m_encoder0, Fatal::DebugCheck \
 		, "bgfx is configured to allow only encoder API. See: `BGFX_CONFIG_ENCODER_API_ONLY`.")
 
-	void setMarker(const char* _marker)
+	void setMarker(const char* _name, int32_t _len)
 	{
 		BGFX_CHECK_ENCODER0();
-		s_ctx->m_encoder0->setMarker(_marker);
+		s_ctx->m_encoder0->setMarker(_name, _len);
 	}
 
 	void setState(uint64_t _state, uint32_t _rgba)
@@ -5487,13 +5495,13 @@ namespace bgfx
 		s_ctx->m_encoder0->submit(_id, _program, _occlusionQuery, _depth, _flags);
 	}
 
-	void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, uint8_t _flags)
+	void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start, uint32_t _num, uint32_t _depth, uint8_t _flags)
 	{
 		BGFX_CHECK_ENCODER0();
 		s_ctx->m_encoder0->submit(_id, _program, _indirectHandle, _start, _num, _depth, _flags);
 	}
 
-	void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex, uint16_t _numMax, uint32_t _depth, uint8_t _flags)
+	void submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex, uint32_t _numMax, uint32_t _depth, uint8_t _flags)
 	{
 		BGFX_CHECK_ENCODER0();
 		s_ctx->m_encoder0->submit(_id, _program, _indirectHandle, _start, _numHandle, _numIndex, _numMax, _depth, _flags);
@@ -5541,7 +5549,7 @@ namespace bgfx
 		s_ctx->m_encoder0->dispatch(_id, _handle, _numX, _numY, _numZ, _flags);
 	}
 
-	void dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+	void dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint32_t _start, uint32_t _num, uint8_t _flags)
 	{
 		BGFX_CHECK_ENCODER0();
 		s_ctx->m_encoder0->dispatch(_id, _handle, _indirectHandle, _start, _num, _flags);

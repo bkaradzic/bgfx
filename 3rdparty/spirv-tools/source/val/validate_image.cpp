@@ -495,7 +495,7 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
     }
 
     uint64_t array_size = 0;
-    if (!_.GetConstantValUint64(type_inst->word(3), &array_size)) {
+    if (!_.EvalConstantValUint64(type_inst->word(3), &array_size)) {
       assert(0 && "Array type definition is corrupt");
     }
 
@@ -914,7 +914,15 @@ spv_result_t ValidateTypeImage(ValidationState_t& _, const Instruction* inst) {
 
     if (info.dim == spv::Dim::SubpassData && info.arrayed != 0) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << _.VkErrorID(6214) << "Dim SubpassData requires Arrayed to be 0";
+             << _.VkErrorID(6214)
+             << "Dim SubpassData requires Arrayed to be 0 in the Vulkan "
+                "environment";
+    }
+
+    if (info.dim == spv::Dim::Rect) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << _.VkErrorID(9638)
+             << "Dim must not be Rect in the Vulkan environment";
     }
   }
 
@@ -982,6 +990,10 @@ bool IsAllowedSampledImageOperand(spv::Op opcode, ValidationState_t& _) {
     case spv::Op::OpImageBoxFilterQCOM:
     case spv::Op::OpImageBlockMatchSSDQCOM:
     case spv::Op::OpImageBlockMatchSADQCOM:
+    case spv::Op::OpImageBlockMatchWindowSADQCOM:
+    case spv::Op::OpImageBlockMatchWindowSSDQCOM:
+    case spv::Op::OpImageBlockMatchGatherSADQCOM:
+    case spv::Op::OpImageBlockMatchGatherSSDQCOM:
       return true;
     case spv::Op::OpStore:
       if (_.HasCapability(spv::Capability::BindlessTextureNV)) return true;
@@ -993,7 +1005,8 @@ bool IsAllowedSampledImageOperand(spv::Op opcode, ValidationState_t& _) {
 
 spv_result_t ValidateSampledImage(ValidationState_t& _,
                                   const Instruction* inst) {
-  if (_.GetIdOpcode(inst->type_id()) != spv::Op::OpTypeSampledImage) {
+  auto type_inst = _.FindDef(inst->type_id());
+  if (type_inst->opcode() != spv::Op::OpTypeSampledImage) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Result Type to be OpTypeSampledImage.";
   }
@@ -1002,6 +1015,11 @@ spv_result_t ValidateSampledImage(ValidationState_t& _,
   if (_.GetIdOpcode(image_type) != spv::Op::OpTypeImage) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Image to be of type OpTypeImage.";
+  }
+
+  if (type_inst->GetOperandAs<uint32_t>(1) != image_type) {
+//    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+//           << "Expected Image to have the same type as Result Type Image";
   }
 
   ImageTypeInfo info;
@@ -1118,7 +1136,10 @@ spv_result_t ValidateImageTexelPointer(ValidationState_t& _,
   const auto ptr_type = result_type->GetOperandAs<uint32_t>(2);
   const auto ptr_opcode = _.GetIdOpcode(ptr_type);
   if (ptr_opcode != spv::Op::OpTypeInt && ptr_opcode != spv::Op::OpTypeFloat &&
-      ptr_opcode != spv::Op::OpTypeVoid) {
+      ptr_opcode != spv::Op::OpTypeVoid &&
+      !(ptr_opcode == spv::Op::OpTypeVector &&
+        _.HasCapability(spv::Capability::AtomicFloat16VectorNV) &&
+        _.IsFloat16Vector2Or4Type(ptr_type))) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Result Type to be OpTypePointer whose Type operand "
               "must be a scalar numerical type or OpTypeVoid";
@@ -1142,7 +1163,14 @@ spv_result_t ValidateImageTexelPointer(ValidationState_t& _,
            << "Corrupt image type definition";
   }
 
-  if (info.sampled_type != ptr_type) {
+  if (info.sampled_type != ptr_type &&
+      !(_.HasCapability(spv::Capability::AtomicFloat16VectorNV) &&
+        _.IsFloat16Vector2Or4Type(ptr_type) &&
+        _.GetIdOpcode(info.sampled_type) == spv::Op::OpTypeFloat &&
+        ((_.GetDimension(ptr_type) == 2 &&
+          info.format == spv::ImageFormat::Rg16f) ||
+         (_.GetDimension(ptr_type) == 4 &&
+          info.format == spv::ImageFormat::Rgba16f)))) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Image 'Sampled Type' to be the same as the Type "
               "pointed to by Result Type";
@@ -1200,7 +1228,7 @@ spv_result_t ValidateImageTexelPointer(ValidationState_t& _,
 
   if (info.multisampled == 0) {
     uint64_t ms = 0;
-    if (!_.GetConstantValUint64(inst->GetOperandAs<uint32_t>(4), &ms) ||
+    if (!_.EvalConstantValUint64(inst->GetOperandAs<uint32_t>(4), &ms) ||
         ms != 0) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Expected Sample for Image with MS 0 to be a valid <id> for "
@@ -1213,7 +1241,10 @@ spv_result_t ValidateImageTexelPointer(ValidationState_t& _,
         (info.format != spv::ImageFormat::R64ui) &&
         (info.format != spv::ImageFormat::R32f) &&
         (info.format != spv::ImageFormat::R32i) &&
-        (info.format != spv::ImageFormat::R32ui)) {
+        (info.format != spv::ImageFormat::R32ui) &&
+        !((info.format == spv::ImageFormat::Rg16f ||
+           info.format == spv::ImageFormat::Rgba16f) &&
+          _.HasCapability(spv::Capability::AtomicFloat16VectorNV))) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << _.VkErrorID(4658)
              << "Expected the Image Format in Image to be R64i, R64ui, R32f, "
@@ -2144,7 +2175,8 @@ spv_result_t ValidateImageProcessingQCOMDecoration(ValidationState_t& _, int id,
                                                    spv::Decoration decor) {
   const Instruction* si_inst = nullptr;
   const Instruction* ld_inst = _.FindDef(id);
-  if (ld_inst->opcode() == spv::Op::OpSampledImage) {
+  bool is_intf_obj = (ld_inst->opcode() == spv::Op::OpSampledImage);
+  if (is_intf_obj == true) {
     si_inst = ld_inst;
     int t_idx = si_inst->GetOperandAs<int>(2);  // texture
     ld_inst = _.FindDef(t_idx);
@@ -2155,7 +2187,57 @@ spv_result_t ValidateImageProcessingQCOMDecoration(ValidationState_t& _, int id,
   int texture_id = ld_inst->GetOperandAs<int>(2);  // variable to load
   if (!_.HasDecoration(texture_id, decor)) {
     return _.diag(SPV_ERROR_INVALID_DATA, ld_inst)
-           << "Missing decoration WeightTextureQCOM/BlockMatchTextureQCOM";
+           << "Missing decoration " << _.SpvDecorationString(decor);
+  }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t ValidateImageProcessing2QCOMWindowDecoration(ValidationState_t& _,
+                                                          int id) {
+  const Instruction* ld_inst = _.FindDef(id);
+  bool is_intf_obj = (ld_inst->opcode() != spv::Op::OpSampledImage);
+  if (is_intf_obj == true) {
+    if (ld_inst->opcode() != spv::Op::OpLoad) {
+      return _.diag(SPV_ERROR_INVALID_DATA, ld_inst) << "Expect to see OpLoad";
+    }
+    int texture_id = ld_inst->GetOperandAs<int>(2);  // variable to load
+    spv::Decoration decor = spv::Decoration::BlockMatchTextureQCOM;
+    if (!_.HasDecoration(texture_id, decor)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, ld_inst)
+             << "Missing decoration " << _.SpvDecorationString(decor);
+    }
+    decor = spv::Decoration::BlockMatchSamplerQCOM;
+    if (!_.HasDecoration(texture_id, decor)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, ld_inst)
+             << "Missing decoration " << _.SpvDecorationString(decor);
+    }
+  } else {
+    const Instruction* si_inst = ld_inst;
+    int t_idx = si_inst->GetOperandAs<int>(2);  // texture
+    const Instruction* t_ld_inst = _.FindDef(t_idx);
+    if (t_ld_inst->opcode() != spv::Op::OpLoad) {
+      return _.diag(SPV_ERROR_INVALID_DATA, t_ld_inst)
+             << "Expect to see OpLoad";
+    }
+    int texture_id = t_ld_inst->GetOperandAs<int>(2);  // variable to load
+    spv::Decoration decor = spv::Decoration::BlockMatchTextureQCOM;
+    if (!_.HasDecoration(texture_id, decor)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, ld_inst)
+             << "Missing decoration " << _.SpvDecorationString(decor);
+    }
+    int s_idx = si_inst->GetOperandAs<int>(3);  // sampler
+    const Instruction* s_ld_inst = _.FindDef(s_idx);
+    if (s_ld_inst->opcode() != spv::Op::OpLoad) {
+      return _.diag(SPV_ERROR_INVALID_DATA, s_ld_inst)
+             << "Expect to see OpLoad";
+    }
+    int sampler_id = s_ld_inst->GetOperandAs<int>(2);  // variable to load
+    decor = spv::Decoration::BlockMatchSamplerQCOM;
+    if (!_.HasDecoration(sampler_id, decor)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, ld_inst)
+             << "Missing decoration " << _.SpvDecorationString(decor);
+    }
   }
 
   return SPV_SUCCESS;
@@ -2174,6 +2256,26 @@ spv_result_t ValidateImageProcessingQCOM(ValidationState_t& _,
     }
     case spv::Op::OpImageBlockMatchSSDQCOM:
     case spv::Op::OpImageBlockMatchSADQCOM: {
+      int tgt_idx = inst->GetOperandAs<int>(2);  // target
+      res = ValidateImageProcessingQCOMDecoration(
+          _, tgt_idx, spv::Decoration::BlockMatchTextureQCOM);
+      if (res != SPV_SUCCESS) break;
+      int ref_idx = inst->GetOperandAs<int>(4);  // reference
+      res = ValidateImageProcessingQCOMDecoration(
+          _, ref_idx, spv::Decoration::BlockMatchTextureQCOM);
+      break;
+    }
+    case spv::Op::OpImageBlockMatchWindowSSDQCOM:
+    case spv::Op::OpImageBlockMatchWindowSADQCOM: {
+      int tgt_idx = inst->GetOperandAs<int>(2);  // target
+      res = ValidateImageProcessing2QCOMWindowDecoration(_, tgt_idx);
+      if (res != SPV_SUCCESS) break;
+      int ref_idx = inst->GetOperandAs<int>(4);  // reference
+      res = ValidateImageProcessing2QCOMWindowDecoration(_, ref_idx);
+      break;
+    }
+    case spv::Op::OpImageBlockMatchGatherSSDQCOM:
+    case spv::Op::OpImageBlockMatchGatherSADQCOM: {
       int tgt_idx = inst->GetOperandAs<int>(2);  // target
       res = ValidateImageProcessingQCOMDecoration(
           _, tgt_idx, spv::Decoration::BlockMatchTextureQCOM);
@@ -2313,6 +2415,10 @@ spv_result_t ImagePass(ValidationState_t& _, const Instruction* inst) {
     case spv::Op::OpImageBoxFilterQCOM:
     case spv::Op::OpImageBlockMatchSSDQCOM:
     case spv::Op::OpImageBlockMatchSADQCOM:
+    case spv::Op::OpImageBlockMatchWindowSADQCOM:
+    case spv::Op::OpImageBlockMatchWindowSSDQCOM:
+    case spv::Op::OpImageBlockMatchGatherSADQCOM:
+    case spv::Op::OpImageBlockMatchGatherSSDQCOM:
       return ValidateImageProcessingQCOM(_, inst);
 
     default:
@@ -2365,6 +2471,10 @@ bool IsImageInstruction(const spv::Op opcode) {
     case spv::Op::OpImageBoxFilterQCOM:
     case spv::Op::OpImageBlockMatchSSDQCOM:
     case spv::Op::OpImageBlockMatchSADQCOM:
+    case spv::Op::OpImageBlockMatchWindowSADQCOM:
+    case spv::Op::OpImageBlockMatchWindowSSDQCOM:
+    case spv::Op::OpImageBlockMatchGatherSADQCOM:
+    case spv::Op::OpImageBlockMatchGatherSSDQCOM:
       return true;
     default:
       break;
@@ -2382,6 +2492,11 @@ spv_result_t ValidateQCOMImageProcessingTextureUsages(ValidationState_t& _,
     case spv::Op::OpImageBoxFilterQCOM:
     case spv::Op::OpImageBlockMatchSSDQCOM:
     case spv::Op::OpImageBlockMatchSADQCOM:
+      break;
+    case spv::Op::OpImageBlockMatchWindowSADQCOM:
+    case spv::Op::OpImageBlockMatchWindowSSDQCOM:
+    case spv::Op::OpImageBlockMatchGatherSADQCOM:
+    case spv::Op::OpImageBlockMatchGatherSSDQCOM:
       break;
     default:
       for (size_t i = 0; i < inst->operands().size(); ++i) {

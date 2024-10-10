@@ -97,8 +97,10 @@ spv_result_t ValidateExecutionScope(ValidationState_t& _,
     // Vulkan 1.1 specific rules
     if (_.context()->target_env != SPV_ENV_VULKAN_1_0) {
       // Scope for Non Uniform Group Operations must be limited to Subgroup
-      if (spvOpcodeIsNonUniformGroupOperation(opcode) &&
-          value != spv::Scope::Subgroup) {
+      if ((spvOpcodeIsNonUniformGroupOperation(opcode) &&
+           (opcode != spv::Op::OpGroupNonUniformQuadAllKHR) &&
+           (opcode != spv::Op::OpGroupNonUniformQuadAnyKHR)) &&
+          (value != spv::Scope::Subgroup)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << _.VkErrorID(4642) << spvOpcodeString(opcode)
                << ": in Vulkan environment Execution scope is limited to "
@@ -178,6 +180,8 @@ spv_result_t ValidateExecutionScope(ValidationState_t& _,
   // Scope for execution must be limited to Workgroup or Subgroup for
   // non-uniform operations
   if (spvOpcodeIsNonUniformGroupOperation(opcode) &&
+      opcode != spv::Op::OpGroupNonUniformQuadAllKHR &&
+      opcode != spv::Op::OpGroupNonUniformQuadAnyKHR &&
       value != spv::Scope::Subgroup && value != spv::Scope::Workgroup) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << spvOpcodeString(opcode)

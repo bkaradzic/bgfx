@@ -14,11 +14,13 @@
 #include "imgui.h"
 #include "../bgfx_utils.h"
 
-//#define USE_ENTRY 1
-
 #ifndef USE_ENTRY
 #	define USE_ENTRY 0
 #endif // USE_ENTRY
+
+#ifndef USE_LOCAL_STB
+#	define USE_LOCAL_STB 1
+#endif // USE_LOCAL_STB
 
 #if USE_ENTRY
 #	include "../entry/entry.h"
@@ -66,10 +68,13 @@ struct OcornutImguiContext
 	void render(ImDrawData* _drawData)
 	{
 		// Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
-		int fb_width = (int)(_drawData->DisplaySize.x * _drawData->FramebufferScale.x);
-		int fb_height = (int)(_drawData->DisplaySize.y * _drawData->FramebufferScale.y);
-		if (fb_width <= 0 || fb_height <= 0)
+		int32_t dispWidth  = _drawData->DisplaySize.x * _drawData->FramebufferScale.x;
+		int32_t dispHeight = _drawData->DisplaySize.y * _drawData->FramebufferScale.y;
+		if (dispWidth  <= 0
+		||  dispHeight <= 0)
+		{
 			return;
+		}
 
 		bgfx::setViewName(m_viewId, "ImGui");
 		bgfx::setViewMode(m_viewId, bgfx::ViewMode::Sequential);
@@ -137,11 +142,13 @@ struct OcornutImguiContext
 					if (NULL != cmd->TextureId)
 					{
 						union { ImTextureID ptr; struct { bgfx::TextureHandle handle; uint8_t flags; uint8_t mip; } s; } texture = { cmd->TextureId };
+
 						state |= 0 != (IMGUI_FLAGS_ALPHA_BLEND & texture.s.flags)
 							? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 							: BGFX_STATE_NONE
 							;
 						th = texture.s.handle;
+
 						if (0 != texture.s.mip)
 						{
 							const float lodEnabled[4] = { float(texture.s.mip), 1.0f, 0.0f, 0.0f };
@@ -161,8 +168,8 @@ struct OcornutImguiContext
 					clipRect.z = (cmd->ClipRect.z - clipPos.x) * clipScale.x;
 					clipRect.w = (cmd->ClipRect.w - clipPos.y) * clipScale.y;
 
-					if (clipRect.x <  fb_width
-					&&  clipRect.y <  fb_height
+					if (clipRect.x <  dispWidth
+					&&  clipRect.y <  dispHeight
 					&&  clipRect.z >= 0.0f
 					&&  clipRect.w >= 0.0f)
 					{
@@ -465,10 +472,10 @@ struct OcornutImguiContext
 
 #if USE_ENTRY
 		uint8_t modifiers = inputGetModifiersState();
-		io.AddKeyEvent(ImGuiKey_ModShift, 0 != (modifiers & (entry::Modifier::LeftShift | entry::Modifier::RightShift) ) );
-		io.AddKeyEvent(ImGuiKey_ModCtrl,  0 != (modifiers & (entry::Modifier::LeftCtrl  | entry::Modifier::RightCtrl ) ) );
-		io.AddKeyEvent(ImGuiKey_ModAlt,   0 != (modifiers & (entry::Modifier::LeftAlt   | entry::Modifier::RightAlt  ) ) );
-		io.AddKeyEvent(ImGuiKey_ModSuper, 0 != (modifiers & (entry::Modifier::LeftMeta  | entry::Modifier::RightMeta ) ) );
+		io.AddKeyEvent(ImGuiMod_Shift, 0 != (modifiers & (entry::Modifier::LeftShift | entry::Modifier::RightShift) ) );
+		io.AddKeyEvent(ImGuiMod_Ctrl,  0 != (modifiers & (entry::Modifier::LeftCtrl  | entry::Modifier::RightCtrl ) ) );
+		io.AddKeyEvent(ImGuiMod_Alt,   0 != (modifiers & (entry::Modifier::LeftAlt   | entry::Modifier::RightAlt  ) ) );
+		io.AddKeyEvent(ImGuiMod_Super, 0 != (modifiers & (entry::Modifier::LeftMeta  | entry::Modifier::RightMeta ) ) );
 		for (int32_t ii = 0; ii < (int32_t)entry::Key::Count; ++ii)
 		{
 			io.AddKeyEvent(m_keyMap[ii], inputGetKeyState(entry::Key::Enum(ii) ) );
@@ -561,15 +568,29 @@ namespace ImGui
 
 } // namespace ImGui
 
+#if USE_LOCAL_STB
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505); // error C4505: '' : unreferenced local function has been removed
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-function"); // warning: 'int rect_width_compare(const void*, const void*)' defined but not used
-BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunknown-pragmas")
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits"); // warning: comparison is always true due to limited range of data type
-#define STBTT_malloc(_size, _userData) memAlloc(_size, _userData)
-#define STBTT_free(_ptr, _userData) memFree(_ptr, _userData)
-#define STB_RECT_PACK_IMPLEMENTATION
-#include <stb/stb_rect_pack.h>
-#define STB_TRUETYPE_IMPLEMENTATION
-#include <stb/stb_truetype.h>
-BX_PRAGMA_DIAGNOSTIC_POP();
+
+#	define STBTT_ifloor(_a)   int32_t(bx::floor(_a) )
+#	define STBTT_iceil(_a)    int32_t(bx::ceil(_a) )
+#	define STBTT_sqrt(_a)     bx::sqrt(_a)
+#	define STBTT_pow(_a, _b)  bx::pow(_a, _b)
+#	define STBTT_fmod(_a, _b) bx::mod(_a, _b)
+#	define STBTT_cos(_a)      bx::cos(_a)
+#	define STBTT_acos(_a)     bx::acos(_a)
+#	define STBTT_fabs(_a)     bx::abs(_a)
+#	define STBTT_strlen(_str) bx::strLen(_str)
+
+#	define STBTT_memcpy(_dst, _src, _numBytes) bx::memCopy(_dst, _src, _numBytes)
+#	define STBTT_memset(_dst, _ch, _numBytes)  bx::memSet(_dst, _ch, _numBytes)
+#	define STBTT_malloc(_size, _userData)      memAlloc(_size, _userData)
+#	define STBTT_free(_ptr, _userData)         memFree(_ptr, _userData)
+
+#	define STB_RECT_PACK_IMPLEMENTATION
+#	include <stb/stb_rect_pack.h>
+#	define STB_TRUETYPE_IMPLEMENTATION
+#	include <stb/stb_truetype.h>
+#endif // USE_LOCAL_STB

@@ -71,26 +71,6 @@ uint32_t GetArrayStride(uint32_t array_id, ValidationState_t& vstate) {
   return 0;
 }
 
-// Returns true if the given variable has a BuiltIn decoration.
-bool isBuiltInVar(uint32_t var_id, ValidationState_t& vstate) {
-  const auto& decorations = vstate.id_decorations(var_id);
-  return std::any_of(decorations.begin(), decorations.end(),
-                     [](const Decoration& d) {
-                       return spv::Decoration::BuiltIn == d.dec_type();
-                     });
-}
-
-// Returns true if the given structure type has any members with BuiltIn
-// decoration.
-bool isBuiltInStruct(uint32_t struct_id, ValidationState_t& vstate) {
-  const auto& decorations = vstate.id_decorations(struct_id);
-  return std::any_of(
-      decorations.begin(), decorations.end(), [](const Decoration& d) {
-        return spv::Decoration::BuiltIn == d.dec_type() &&
-               Decoration::kInvalidMember != d.struct_member_index();
-      });
-}
-
 // Returns true if the given structure type has a Block decoration.
 bool isBlock(uint32_t struct_id, ValidationState_t& vstate) {
   const auto& decorations = vstate.id_decorations(struct_id);
@@ -623,6 +603,14 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
 
           seen[next_offset % 16] = true;
         }
+      } else if (spv::Op::OpTypeMatrix == element_inst->opcode()) {
+        // Matrix stride would be on the array element in the struct.
+        const auto stride = constraint.matrix_stride;
+        if (!IsAlignedTo(stride, alignment)) {
+          return fail(memberIdx)
+                 << "is a matrix with stride " << stride
+                 << " not satisfying alignment to " << alignment;
+        }
       }
 
       // Proceed to the element in case it is an array.
@@ -675,7 +663,16 @@ bool checkForRequiredDecoration(uint32_t struct_id,
                                 spv::Op type, ValidationState_t& vstate) {
   const auto& members = getStructMembers(struct_id, vstate);
   for (size_t memberIdx = 0; memberIdx < members.size(); memberIdx++) {
-    const auto id = members[memberIdx];
+    auto id = members[memberIdx];
+    if (type == spv::Op::OpTypeMatrix) {
+      // Matrix decorations also apply to arrays of matrices.
+      auto memberInst = vstate.FindDef(id);
+      while (memberInst->opcode() == spv::Op::OpTypeArray ||
+             memberInst->opcode() == spv::Op::OpTypeRuntimeArray) {
+        memberInst = vstate.FindDef(memberInst->GetOperandAs<uint32_t>(1u));
+      }
+      id = memberInst->id();
+    }
     if (type != vstate.FindDef(id)->opcode()) continue;
     bool found = false;
     for (auto& dec : vstate.id_decorations(id)) {
@@ -769,6 +766,8 @@ spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
     int num_workgroup_variables_with_aliased = 0;
     for (const auto& desc : descs) {
       std::unordered_set<Instruction*> seen_vars;
+      std::unordered_set<spv::BuiltIn> input_var_builtin;
+      std::unordered_set<spv::BuiltIn> output_var_builtin;
       for (auto interface : desc.interfaces) {
         Instruction* var_instr = vstate.FindDef(interface);
         if (!var_instr || spv::Op::OpVariable != var_instr->opcode()) {
@@ -812,33 +811,70 @@ spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
         // to.
         const uint32_t type_id = ptr_instr->word(3);
         Instruction* type_instr = vstate.FindDef(type_id);
-        if (type_instr && spv::Op::OpTypeStruct == type_instr->opcode() &&
-            isBuiltInStruct(type_id, vstate)) {
-          if (!isBlock(type_id, vstate)) {
-            return vstate.diag(SPV_ERROR_INVALID_DATA, vstate.FindDef(type_id))
-                   << vstate.VkErrorID(4919)
-                   << "Interface struct has no Block decoration but has "
-                      "BuiltIn members. "
-                      "Location decorations must be used on each member of "
-                      "OpVariable with a structure type that is a block not "
-                      "decorated with Location.";
+        const bool is_struct =
+            type_instr && spv::Op::OpTypeStruct == type_instr->opcode();
+
+        // Search all Built-in (on the variable or the struct)
+        bool has_built_in = false;
+        for (auto& dec :
+             vstate.id_decorations(is_struct ? type_id : interface)) {
+          if (dec.dec_type() != spv::Decoration::BuiltIn) continue;
+          has_built_in = true;
+
+          if (!spvIsVulkanEnv(vstate.context()->target_env)) continue;
+
+          const spv::BuiltIn builtin = dec.builtin();
+          if (storage_class == spv::StorageClass::Input) {
+            if (!input_var_builtin.insert(builtin).second) {
+              return vstate.diag(SPV_ERROR_INVALID_ID, var_instr)
+                     << vstate.VkErrorID(9658)
+                     << "OpEntryPoint contains duplicate input variables "
+                        "with "
+                     << vstate.grammar().lookupOperandName(
+                            SPV_OPERAND_TYPE_BUILT_IN, (uint32_t)builtin)
+                     << " builtin";
+            }
           }
-          if (storage_class == spv::StorageClass::Input)
-            ++num_builtin_block_inputs;
-          if (storage_class == spv::StorageClass::Output)
-            ++num_builtin_block_outputs;
-          if (num_builtin_block_inputs > 1 || num_builtin_block_outputs > 1)
-            break;
+          if (storage_class == spv::StorageClass::Output) {
+            if (!output_var_builtin.insert(builtin).second) {
+              return vstate.diag(SPV_ERROR_INVALID_ID, var_instr)
+                     << vstate.VkErrorID(9659)
+                     << "OpEntryPoint contains duplicate output variables "
+                        "with "
+                     << vstate.grammar().lookupOperandName(
+                            SPV_OPERAND_TYPE_BUILT_IN, (uint32_t)builtin)
+                     << " builtin";
+            }
+          }
+        }
+
+        if (has_built_in) {
           if (auto error = CheckBuiltInVariable(interface, vstate))
             return error;
-        } else if (isBuiltInVar(interface, vstate)) {
-          if (auto error = CheckBuiltInVariable(interface, vstate))
-            return error;
+
+          if (is_struct) {
+            if (!isBlock(type_id, vstate)) {
+              return vstate.diag(SPV_ERROR_INVALID_DATA,
+                                 vstate.FindDef(type_id))
+                     << vstate.VkErrorID(4919)
+                     << "Interface struct has no Block decoration but has "
+                        "BuiltIn members. "
+                        "Location decorations must be used on each member of "
+                        "OpVariable with a structure type that is a block not "
+                        "decorated with Location.";
+            }
+            if (storage_class == spv::StorageClass::Input)
+              ++num_builtin_block_inputs;
+            if (storage_class == spv::StorageClass::Output)
+              ++num_builtin_block_outputs;
+            if (num_builtin_block_inputs > 1 || num_builtin_block_outputs > 1)
+              break;
+          }
         }
 
         if (storage_class == spv::StorageClass::Workgroup) {
           ++num_workgroup_variables;
-          if (type_instr && spv::Op::OpTypeStruct == type_instr->opcode()) {
+          if (is_struct) {
             if (hasDecoration(type_id, spv::Decoration::Block, vstate))
               ++num_workgroup_variables_with_block;
             if (hasDecoration(var_instr->id(), spv::Decoration::Aliased,
@@ -1325,21 +1361,14 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
 
 // Returns true if |decoration| cannot be applied to the same id more than once.
 bool AtMostOncePerId(spv::Decoration decoration) {
-  return decoration == spv::Decoration::ArrayStride;
+  return decoration != spv::Decoration::UserSemantic &&
+         decoration != spv::Decoration::FuncParamAttr;
 }
 
 // Returns true if |decoration| cannot be applied to the same member more than
 // once.
 bool AtMostOncePerMember(spv::Decoration decoration) {
-  switch (decoration) {
-    case spv::Decoration::Offset:
-    case spv::Decoration::MatrixStride:
-    case spv::Decoration::RowMajor:
-    case spv::Decoration::ColMajor:
-      return true;
-    default:
-      return false;
-  }
+  return decoration != spv::Decoration::UserSemantic;
 }
 
 spv_result_t CheckDecorationsCompatibility(ValidationState_t& vstate) {
@@ -1556,7 +1585,8 @@ spv_result_t CheckNonWritableDecoration(ValidationState_t& vstate,
     const auto opcode = inst.opcode();
     const auto type_id = inst.type_id();
     if (opcode != spv::Op::OpVariable &&
-        opcode != spv::Op::OpFunctionParameter) {
+        opcode != spv::Op::OpFunctionParameter &&
+        opcode != spv::Op::OpRawAccessChainNV) {
       return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
              << "Target of NonWritable decoration must be a memory object "
                 "declaration (a variable or a function parameter)";
@@ -1569,10 +1599,11 @@ spv_result_t CheckNonWritableDecoration(ValidationState_t& vstate,
         vstate.features().nonwritable_var_in_function_or_private) {
       // New permitted feature in SPIR-V 1.4.
     } else if (
-        // It may point to a UBO, SSBO, or storage image.
+        // It may point to a UBO, SSBO, storage image, or raw access chain.
         vstate.IsPointerToUniformBlock(type_id) ||
         vstate.IsPointerToStorageBuffer(type_id) ||
-        vstate.IsPointerToStorageImage(type_id)) {
+        vstate.IsPointerToStorageImage(type_id) ||
+        opcode == spv::Op::OpRawAccessChainNV) {
     } else {
       return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
              << "Target of NonWritable decoration is invalid: must point to a "
@@ -1653,6 +1684,7 @@ spv_result_t CheckIntegerWrapDecoration(ValidationState_t& vstate,
     case spv::Op::OpSNegate:
       return SPV_SUCCESS;
     case spv::Op::OpExtInst:
+    case spv::Op::OpExtInstWithForwardRefsKHR:
       // TODO(dneto): Only certain extended instructions allow these
       // decorations.  For now allow anything.
       return SPV_SUCCESS;

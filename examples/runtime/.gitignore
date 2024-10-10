@@ -1,4 +1,5 @@
 *.dll
+*.dylib
 *.so
 *.pdb
 imgui*
