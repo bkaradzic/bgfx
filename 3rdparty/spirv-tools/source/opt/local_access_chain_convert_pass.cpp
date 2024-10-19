@@ -429,7 +429,8 @@ void LocalAccessChainConvertPass::InitExtensions() {
        "SPV_KHR_fragment_shader_barycentric", "SPV_KHR_vulkan_memory_model",
        "SPV_NV_bindless_texture", "SPV_EXT_shader_atomic_float_add",
        "SPV_EXT_fragment_shader_interlock",
-       "SPV_NV_compute_shader_derivatives"});
+       "SPV_KHR_compute_shader_derivatives", "SPV_NV_cooperative_matrix",
+       "SPV_KHR_cooperative_matrix", "SPV_KHR_ray_tracing_position_fetch"});
 }
 
 bool LocalAccessChainConvertPass::AnyIndexIsOutOfBounds(

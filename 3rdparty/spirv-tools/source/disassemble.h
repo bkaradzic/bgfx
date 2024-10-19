@@ -58,6 +58,11 @@ class InstructionDisassembler {
   // Emits the assembly text for the given instruction.
   void EmitInstruction(const spv_parsed_instruction_t& inst,
                        size_t inst_byte_offset);
+  // Same as EmitInstruction, but only for block instructions (including
+  // OpLabel) and useful for nested indentation.  If nested indentation is not
+  // desired, EmitInstruction can still be used for block instructions.
+  void EmitInstructionInBlock(const spv_parsed_instruction_t& inst,
+                              size_t inst_byte_offset, uint32_t block_indent);
 
   // Emits a comment between different sections of the module.
   void EmitSectionComment(const spv_parsed_instruction_t& inst,
@@ -82,6 +87,10 @@ class InstructionDisassembler {
   void SetRed(std::ostream& stream) const;
   void SetGreen(std::ostream& stream) const;
 
+  void EmitInstructionImpl(const spv_parsed_instruction_t& inst,
+                           size_t inst_byte_offset, uint32_t block_indent,
+                           bool is_in_block);
+
   // Emits an operand for the given instruction, where the instruction
   // is at offset words from the start of the binary.
   void EmitOperand(std::ostream& stream, const spv_parsed_instruction_t& inst,
@@ -97,10 +106,11 @@ class InstructionDisassembler {
 
   const spvtools::AssemblyGrammar& grammar_;
   std::ostream& stream_;
-  const bool print_;   // Should we also print to the standard output stream?
-  const bool color_;   // Should we print in colour?
-  const int indent_;   // How much to indent. 0 means don't indent
-  const int comment_;  // Should we comment the source
+  const bool print_;  // Should we also print to the standard output stream?
+  const bool color_;  // Should we print in colour?
+  const int indent_;  // How much to indent. 0 means don't indent
+  const bool nested_indent_;     // Whether indentation should indicate nesting
+  const int comment_;            // Should we comment the source
   const bool show_byte_offset_;  // Should we print byte offset, in hex?
   spvtools::NameMapper name_mapper_;
 

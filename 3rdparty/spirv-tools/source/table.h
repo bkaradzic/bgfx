@@ -22,6 +22,8 @@
 typedef struct spv_opcode_desc_t {
   const char* name;
   const spv::Op opcode;
+  const uint32_t numAliases;
+  const char** aliases;
   const uint32_t numCapabilities;
   const spv::Capability* capabilities;
   // operandTypes[0..numTypes-1] describe logical operands for the instruction.
@@ -47,6 +49,8 @@ typedef struct spv_opcode_desc_t {
 typedef struct spv_operand_desc_t {
   const char* name;
   const uint32_t value;
+  const uint32_t numAliases;
+  const char** aliases;
   const uint32_t numCapabilities;
   const spv::Capability* capabilities;
   // A set of extensions that enable this feature. If empty then this operand

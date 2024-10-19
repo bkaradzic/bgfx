@@ -525,6 +525,28 @@ uint32_t ConstantManager::GetNullConstId(const Type* type) {
   return GetDefiningInstruction(c)->result_id();
 }
 
+const Constant* ConstantManager::GenerateIntegerConstant(
+    const analysis::Integer* integer_type, uint64_t result) {
+  assert(integer_type != nullptr);
+
+  std::vector<uint32_t> words;
+  if (integer_type->width() == 64) {
+    // In the 64-bit case, two words are needed to represent the value.
+    words = {static_cast<uint32_t>(result),
+             static_cast<uint32_t>(result >> 32)};
+  } else {
+    // In all other cases, only a single word is needed.
+    assert(integer_type->width() <= 32);
+    if (integer_type->IsSigned()) {
+      result = utils::SignExtendValue(result, integer_type->width());
+    } else {
+      result = utils::ZeroExtendValue(result, integer_type->width());
+    }
+    words = {static_cast<uint32_t>(result)};
+  }
+  return GetConstant(integer_type, words);
+}
+
 std::vector<const analysis::Constant*> Constant::GetVectorComponents(
     analysis::ConstantManager* const_mgr) const {
   std::vector<const analysis::Constant*> components;

@@ -102,7 +102,7 @@ spv_result_t spvOpcodeTableNameLookup(spv_target_env env,
   const auto version = spvVersionForTargetEnv(env);
   for (uint64_t opcodeIndex = 0; opcodeIndex < table->count; ++opcodeIndex) {
     const spv_opcode_desc_t& entry = table->entries[opcodeIndex];
-    // We considers the current opcode as available as long as
+    // We consider the current opcode as available as long as
     // 1. The target environment satisfies the minimal requirement of the
     //    opcode; or
     // 2. There is at least one extension enabling this opcode.
@@ -110,13 +110,34 @@ spv_result_t spvOpcodeTableNameLookup(spv_target_env env,
     // Note that the second rule assumes the extension enabling this instruction
     // is indeed requested in the SPIR-V code; checking that should be
     // validator's work.
-    if (((version >= entry.minVersion && version <= entry.lastVersion) ||
-         entry.numExtensions > 0u || entry.numCapabilities > 0u) &&
-        nameLength == strlen(entry.name) &&
-        !strncmp(name, entry.name, nameLength)) {
-      // NOTE: Found out Opcode!
-      *pEntry = &entry;
-      return SPV_SUCCESS;
+    if ((version >= entry.minVersion && version <= entry.lastVersion) ||
+        entry.numExtensions > 0u || entry.numCapabilities > 0u) {
+      // Exact match case.
+      if (nameLength == strlen(entry.name) &&
+          !strncmp(name, entry.name, nameLength)) {
+        *pEntry = &entry;
+        return SPV_SUCCESS;
+      }
+      // Lack of binary search really hurts here. There isn't an easy filter to
+      // apply before checking aliases since we need to handle promotion from
+      // vendor to KHR/EXT and KHR/EXT to core. It would require a sure-fire way
+      // of dropping suffices. Fortunately, most lookup are based on token
+      // value.
+      //
+      // If this was a binary search we could iterate between the lower and
+      // upper bounds.
+      if (entry.numAliases > 0) {
+        for (uint32_t aliasIndex = 0; aliasIndex < entry.numAliases;
+             aliasIndex++) {
+          // Skip Op prefix. Should this be encoded in the table instead?
+          const auto alias = entry.aliases[aliasIndex] + 2;
+          const size_t aliasLength = strlen(alias);
+          if (nameLength == aliasLength && !strncmp(name, alias, nameLength)) {
+            *pEntry = &entry;
+            return SPV_SUCCESS;
+          }
+        }
+      }
     }
   }
 
@@ -133,8 +154,8 @@ spv_result_t spvOpcodeTableValueLookup(spv_target_env env,
   const auto beg = table->entries;
   const auto end = table->entries + table->count;
 
-  spv_opcode_desc_t needle = {"",    opcode, 0, nullptr, 0,   {},
-                              false, false,  0, nullptr, ~0u, ~0u};
+  spv_opcode_desc_t needle = {"", opcode, 0,     nullptr, 0,       {},  0,
+                              {}, false,  false, 0,       nullptr, ~0u, ~0u};
 
   auto comp = [](const spv_opcode_desc_t& lhs, const spv_opcode_desc_t& rhs) {
     return lhs.opcode < rhs.opcode;
@@ -188,6 +209,7 @@ const char* spvOpcodeString(const uint32_t opcode) {
   const auto end = kOpcodeTableEntries + ARRAY_SIZE(kOpcodeTableEntries);
   spv_opcode_desc_t needle = {"",    static_cast<spv::Op>(opcode),
                               0,     nullptr,
+                              0,     {},
                               0,     {},
                               false, false,
                               0,     nullptr,
@@ -276,6 +298,7 @@ int32_t spvOpcodeIsComposite(const spv::Op opcode) {
     case spv::Op::OpTypeMatrix:
     case spv::Op::OpTypeArray:
     case spv::Op::OpTypeStruct:
+    case spv::Op::OpTypeRuntimeArray:
     case spv::Op::OpTypeCooperativeMatrixNV:
     case spv::Op::OpTypeCooperativeMatrixKHR:
       return true;
@@ -287,8 +310,11 @@ int32_t spvOpcodeIsComposite(const spv::Op opcode) {
 bool spvOpcodeReturnsLogicalVariablePointer(const spv::Op opcode) {
   switch (opcode) {
     case spv::Op::OpVariable:
+    case spv::Op::OpUntypedVariableKHR:
     case spv::Op::OpAccessChain:
     case spv::Op::OpInBoundsAccessChain:
+    case spv::Op::OpUntypedAccessChainKHR:
+    case spv::Op::OpUntypedInBoundsAccessChainKHR:
     case spv::Op::OpFunctionParameter:
     case spv::Op::OpImageTexelPointer:
     case spv::Op::OpCopyObject:
@@ -296,6 +322,7 @@ bool spvOpcodeReturnsLogicalVariablePointer(const spv::Op opcode) {
     case spv::Op::OpPhi:
     case spv::Op::OpFunctionCall:
     case spv::Op::OpPtrAccessChain:
+    case spv::Op::OpUntypedPtrAccessChainKHR:
     case spv::Op::OpLoad:
     case spv::Op::OpConstantNull:
     case spv::Op::OpRawAccessChainNV:
@@ -308,8 +335,11 @@ bool spvOpcodeReturnsLogicalVariablePointer(const spv::Op opcode) {
 int32_t spvOpcodeReturnsLogicalPointer(const spv::Op opcode) {
   switch (opcode) {
     case spv::Op::OpVariable:
+    case spv::Op::OpUntypedVariableKHR:
     case spv::Op::OpAccessChain:
     case spv::Op::OpInBoundsAccessChain:
+    case spv::Op::OpUntypedAccessChainKHR:
+    case spv::Op::OpUntypedInBoundsAccessChainKHR:
     case spv::Op::OpFunctionParameter:
     case spv::Op::OpImageTexelPointer:
     case spv::Op::OpCopyObject:
@@ -351,6 +381,7 @@ int32_t spvOpcodeGeneratesType(spv::Op op) {
     // spv::Op::OpTypeAccelerationStructureNV
     case spv::Op::OpTypeRayQueryKHR:
     case spv::Op::OpTypeHitObjectNV:
+    case spv::Op::OpTypeUntypedPointerKHR:
       return true;
     default:
       // In particular, OpTypeForwardPointer does not generate a type,
@@ -787,6 +818,19 @@ bool spvOpcodeIsBit(spv::Op opcode) {
     case spv::Op::OpNot:
     case spv::Op::OpBitReverse:
     case spv::Op::OpBitCount:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool spvOpcodeGeneratesUntypedPointer(spv::Op opcode) {
+  switch (opcode) {
+    case spv::Op::OpUntypedVariableKHR:
+    case spv::Op::OpUntypedAccessChainKHR:
+    case spv::Op::OpUntypedInBoundsAccessChainKHR:
+    case spv::Op::OpUntypedPtrAccessChainKHR:
+    case spv::Op::OpUntypedInBoundsPtrAccessChainKHR:
       return true;
     default:
       return false;

@@ -27,6 +27,7 @@
 
 #include "source/enum_set.h"
 #include "source/enum_string_mapping.h"
+#include "source/ext_inst.h"
 #include "source/opt/ir_context.h"
 #include "source/opt/reflect.h"
 #include "source/spirv_target_env.h"
@@ -49,6 +50,9 @@ constexpr uint32_t kOpTypeImageSampledIndex = kOpTypeImageMSIndex + 1;
 constexpr uint32_t kOpTypeImageFormatIndex = kOpTypeImageSampledIndex + 1;
 constexpr uint32_t kOpImageReadImageIndex = 0;
 constexpr uint32_t kOpImageSparseReadImageIndex = 0;
+constexpr uint32_t kOpExtInstSetInIndex = 0;
+constexpr uint32_t kOpExtInstInstructionInIndex = 1;
+constexpr uint32_t kOpExtInstImportNameInIndex = 0;
 
 // DFS visit of the type defined by `instruction`.
 // If `condition` is true, children of the current node are visited.
@@ -514,6 +518,35 @@ void TrimCapabilitiesPass::addInstructionRequirementsForOperand(
   }
 }
 
+void TrimCapabilitiesPass::addInstructionRequirementsForExtInst(
+    Instruction* instruction, CapabilitySet* capabilities) const {
+  assert(instruction->opcode() == spv::Op::OpExtInst &&
+         "addInstructionRequirementsForExtInst must be passed an OpExtInst "
+         "instruction");
+
+  const auto* def_use_mgr = context()->get_def_use_mgr();
+
+  const Instruction* extInstImport = def_use_mgr->GetDef(
+      instruction->GetSingleWordInOperand(kOpExtInstSetInIndex));
+  uint32_t extInstruction =
+      instruction->GetSingleWordInOperand(kOpExtInstInstructionInIndex);
+
+  const Operand& extInstSet =
+      extInstImport->GetInOperand(kOpExtInstImportNameInIndex);
+
+  spv_ext_inst_type_t instructionSet =
+      spvExtInstImportTypeGet(extInstSet.AsString().c_str());
+
+  spv_ext_inst_desc desc = {};
+  auto result =
+      context()->grammar().lookupExtInst(instructionSet, extInstruction, &desc);
+  if (result != SPV_SUCCESS) {
+    return;
+  }
+
+  addSupportedCapabilitiesToSet(desc, capabilities);
+}
+
 void TrimCapabilitiesPass::addInstructionRequirements(
     Instruction* instruction, CapabilitySet* capabilities,
     ExtensionSet* extensions) const {
@@ -523,8 +556,12 @@ void TrimCapabilitiesPass::addInstructionRequirements(
     return;
   }
 
-  addInstructionRequirementsForOpcode(instruction->opcode(), capabilities,
-                                      extensions);
+  if (instruction->opcode() == spv::Op::OpExtInst) {
+    addInstructionRequirementsForExtInst(instruction, capabilities);
+  } else {
+    addInstructionRequirementsForOpcode(instruction->opcode(), capabilities,
+                                        extensions);
+  }
 
   // Second case: one of the opcode operand is gated by a capability.
   const uint32_t operandCount = instruction->NumOperands();
