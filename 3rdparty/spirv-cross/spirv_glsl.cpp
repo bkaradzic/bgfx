@@ -2764,6 +2764,8 @@ void CompilerGLSL::emit_interface_block(const SPIRVariable &var)
 				block_qualifier = "patch ";
 			else if (has_decoration(var.self, DecorationPerPrimitiveEXT))
 				block_qualifier = "perprimitiveEXT ";
+			else if (has_decoration(var.self, DecorationPerVertexKHR))
+				block_qualifier = "pervertexEXT ";
 			else
 				block_qualifier = "";
 
@@ -3691,11 +3693,11 @@ void CompilerGLSL::emit_resources()
 				auto &type = this->get<SPIRType>(undef.basetype);
 				// OpUndef can be void for some reason ...
 				if (type.basetype == SPIRType::Void)
-					return;
+					continue;
 
 				// This will break. It is bogus and should not be legal.
 				if (type_is_top_level_block(type))
-					return;
+					continue;
 
 				string initializer;
 				if (options.force_zero_initialized_variables && type_can_zero_initialize(type))
@@ -14481,6 +14483,50 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		break;
 	}
 
+	case OpImageBlockMatchWindowSSDQCOM:
+	case OpImageBlockMatchWindowSADQCOM:
+	case OpImageBlockMatchGatherSSDQCOM:
+	case OpImageBlockMatchGatherSADQCOM:
+	{
+		require_extension_internal("GL_QCOM_image_processing2");
+		uint32_t result_type_id = ops[0];
+		uint32_t id = ops[1];
+		string expr;
+		switch (opcode)
+		{
+		case OpImageBlockMatchWindowSSDQCOM:
+			expr = "textureBlockMatchWindowSSDQCOM";
+			break;
+		case OpImageBlockMatchWindowSADQCOM:
+			expr = "textureBlockMatchWindowSADQCOM";
+			break;
+		case OpImageBlockMatchGatherSSDQCOM:
+			expr = "textureBlockMatchGatherSSDQCOM";
+			break;
+		case OpImageBlockMatchGatherSADQCOM:
+			expr = "textureBlockMatchGatherSADQCOM";
+			break;
+		default:
+			SPIRV_CROSS_THROW("Invalid opcode for QCOM_image_processing2.");
+		}
+		expr += "(";
+
+		bool forward = false;
+		expr += to_expression(ops[2]);
+		expr += ", " + to_expression(ops[3]);
+
+		expr += ", " + to_non_uniform_aware_expression(ops[4]);
+		expr += ", " + to_expression(ops[5]);
+		expr += ", " + to_expression(ops[6]);
+
+		expr += ")";
+		emit_op(result_type_id, id, expr, forward);
+
+		inherit_expression_dependencies(id, ops[3]);
+		inherit_expression_dependencies(id, ops[5]);
+		break;
+	}
+
 	// Compute
 	case OpControlBarrier:
 	case OpMemoryBarrier:
@@ -17608,7 +17654,7 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 
 		if (!collapsed_switch)
 		{
-			if (block_like_switch || is_legacy_es())
+			if (block_like_switch || is_legacy())
 			{
 				// ESSL 1.0 is not guaranteed to support do/while.
 				if (is_legacy_es())
@@ -17638,7 +17684,7 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 				// Default case.
 				if (!block_like_switch)
 				{
-					if (is_legacy_es())
+					if (is_legacy())
 						statement("else");
 					else
 						statement("default:");
@@ -17646,7 +17692,7 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 			}
 			else
 			{
-				if (is_legacy_es())
+				if (is_legacy())
 				{
 					statement((i ? "else " : ""), "if (", to_legacy_case_label(block.condition, literals, label_suffix),
 					          ")");
@@ -17698,7 +17744,7 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 
 			if (block.default_block == block.next_block)
 			{
-				if (is_legacy_es())
+				if (is_legacy())
 					statement("else");
 				else
 					statement("default:");
@@ -17712,7 +17758,7 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 
 		if (!collapsed_switch)
 		{
-			if (block_like_switch && !is_legacy_es())
+			if ((block_like_switch || is_legacy()) && !is_legacy_es())
 				end_scope_decl("while(false)");
 			else
 				end_scope();

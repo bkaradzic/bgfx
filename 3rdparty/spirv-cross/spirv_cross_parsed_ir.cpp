@@ -564,7 +564,8 @@ Bitset ParsedIR::get_buffer_block_type_flags(const SPIRType &type) const
 Bitset ParsedIR::get_buffer_block_flags(const SPIRVariable &var) const
 {
 	auto &type = get<SPIRType>(var.basetype);
-	assert(type.basetype == SPIRType::Struct);
+	if (type.basetype != SPIRType::Struct)
+		SPIRV_CROSS_THROW("Cannot get buffer block flags for non-buffer variable.");
 
 	// Some flags like non-writable, non-readable are actually found
 	// as member decorations. If all members have a decoration set, propagate

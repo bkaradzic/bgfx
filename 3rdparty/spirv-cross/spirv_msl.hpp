@@ -838,7 +838,8 @@ protected:
 		SPVFuncImplPaddedStd140,
 		SPVFuncImplReduceAdd,
 		SPVFuncImplImageFence,
-		SPVFuncImplTextureCast
+		SPVFuncImplTextureCast,
+		SPVFuncImplMulExtended,
 	};
 
 	// If the underlying resource has been used for comparison then duplicate loads of that resource must be too
