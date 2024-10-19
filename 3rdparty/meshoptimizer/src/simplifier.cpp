@@ -288,14 +288,14 @@ enum VertexKind
 };
 
 // manifold vertices can collapse onto anything
-// border/seam vertices can only be collapsed onto border/seam respectively
+// border/seam vertices can collapse onto border/seam respectively, or locked
 // complex vertices can collapse onto complex/locked
 // a rule of thumb is that collapsing kind A into kind B preserves the kind B in the target vertex
 // for example, while we could collapse Complex into Manifold, this would mean the target vertex isn't Manifold anymore
 const unsigned char kCanCollapse[Kind_Count][Kind_Count] = {
     {1, 1, 1, 1, 1},
-    {0, 1, 0, 0, 0},
-    {0, 0, 1, 0, 0},
+    {0, 1, 0, 0, 1},
+    {0, 0, 1, 0, 1},
     {0, 0, 0, 1, 1},
     {0, 0, 0, 0, 0},
 };
@@ -369,12 +369,7 @@ static void classifyVertices(unsigned char* result, unsigned int* loop, unsigned
 	{
 		if (remap[i] == i)
 		{
-			if (vertex_lock && vertex_lock[sparse_remap ? sparse_remap[i] : i])
-			{
-				// vertex is explicitly locked
-				result[i] = Kind_Locked;
-			}
-			else if (wedge[i] == i)
+			if (wedge[i] == i)
 			{
 				// no attribute seam, need to check if it's manifold
 				unsigned int openi = openinc[i], openo = openout[i];
@@ -407,7 +402,7 @@ static void classifyVertices(unsigned char* result, unsigned int* loop, unsigned
 				if (openiv != ~0u && openiv != i && openov != ~0u && openov != i &&
 				    openiw != ~0u && openiw != w && openow != ~0u && openow != w)
 				{
-					if (remap[openiv] == remap[openow] && remap[openov] == remap[openiw])
+					if (remap[openiv] == remap[openow] && remap[openov] == remap[openiw] && remap[openiv] != remap[openov])
 					{
 						result[i] = Kind_Seam;
 					}
@@ -436,6 +431,18 @@ static void classifyVertices(unsigned char* result, unsigned int* loop, unsigned
 
 			result[i] = result[remap[i]];
 		}
+	}
+
+	if (vertex_lock)
+	{
+		// vertex_lock may lock any wedge, not just the primary vertex, so we need to lock the primary vertex and relock any wedges
+		for (size_t i = 0; i < vertex_count; ++i)
+			if (vertex_lock[sparse_remap ? sparse_remap[i] : i])
+				result[remap[i]] = Kind_Locked;
+
+		for (size_t i = 0; i < vertex_count; ++i)
+			if (result[remap[i]] == Kind_Locked)
+				result[i] = Kind_Locked;
 	}
 
 	if (options & meshopt_SimplifyLockBorder)
@@ -947,7 +954,7 @@ static size_t boundEdgeCollapses(const EdgeAdjacency& adjacency, size_t vertex_c
 	return (index_count - dual_count / 2) + 3;
 }
 
-static size_t pickEdgeCollapses(Collapse* collapses, size_t collapse_capacity, const unsigned int* indices, size_t index_count, const unsigned int* remap, const unsigned char* vertex_kind, const unsigned int* loop)
+static size_t pickEdgeCollapses(Collapse* collapses, size_t collapse_capacity, const unsigned int* indices, size_t index_count, const unsigned int* remap, const unsigned char* vertex_kind, const unsigned int* loop, const unsigned int* loopback)
 {
 	size_t collapse_count = 0;
 
@@ -986,6 +993,16 @@ static size_t pickEdgeCollapses(Collapse* collapses, size_t collapse_capacity, c
 			// loop[] tracks half edges so we only need to check i0->i1
 			if (k0 == k1 && (k0 == Kind_Border || k0 == Kind_Seam) && loop[i0] != i1)
 				continue;
+
+			if (k0 == Kind_Locked || k1 == Kind_Locked)
+			{
+				// the same check as above, but for border/seam -> locked collapses
+				// loop[] and loopback[] track half edges so we only need to check one of them
+				if ((k0 == Kind_Border || k0 == Kind_Seam) && loop[i0] != i1)
+					continue;
+				if ((k1 == Kind_Border || k1 == Kind_Seam) && loopback[i1] != i0)
+					continue;
+			}
 
 			// edge can be collapsed in either direction - we will pick the one with minimum error
 			// note: we evaluate error later during collapse ranking, here we just tag the edge as bidirectional
@@ -1026,7 +1043,7 @@ static void rankEdgeCollapses(Collapse* collapses, size_t collapse_count, const 
 		float ei = quadricError(vertex_quadrics[remap[i0]], vertex_positions[i1]);
 		float ej = quadricError(vertex_quadrics[remap[j0]], vertex_positions[j1]);
 
-#if TRACE >= 2
+#if TRACE >= 3
 		float di = ei, dj = ej;
 #endif
 
@@ -1042,30 +1059,36 @@ static void rankEdgeCollapses(Collapse* collapses, size_t collapse_count, const 
 		c.v1 = ei <= ej ? i1 : j1;
 		c.error = ei <= ej ? ei : ej;
 
-#if TRACE >= 2
+#if TRACE >= 3
 		if (i0 == j0) // c.bidi has been overwritten
 			printf("edge eval %d -> %d: error %f (pos %f, attr %f)\n", c.v0, c.v1,
-				sqrtf(c.error), sqrtf(ei <= ej ? di : dj), sqrtf(ei <= ej ? ei - di : ej - dj));
+			    sqrtf(c.error), sqrtf(ei <= ej ? di : dj), sqrtf(ei <= ej ? ei - di : ej - dj));
 		else
 			printf("edge eval %d -> %d: error %f (pos %f, attr %f); reverse %f (pos %f, attr %f)\n", c.v0, c.v1,
-				sqrtf(ei <= ej ? ei : ej), sqrtf(ei <= ej ? di : dj), sqrtf(ei <= ej ? ei - di : ej - dj),
-				sqrtf(ei <= ej ? ej : ei), sqrtf(ei <= ej ? dj : di), sqrtf(ei <= ej ? ej - dj : ei - di));
+			    sqrtf(ei <= ej ? ei : ej), sqrtf(ei <= ej ? di : dj), sqrtf(ei <= ej ? ei - di : ej - dj),
+			    sqrtf(ei <= ej ? ej : ei), sqrtf(ei <= ej ? dj : di), sqrtf(ei <= ej ? ej - dj : ei - di));
 #endif
 	}
 }
 
 static void sortEdgeCollapses(unsigned int* sort_order, const Collapse* collapses, size_t collapse_count)
 {
-	const int sort_bits = 11;
+	// we use counting sort to order collapses by error; since the exact sort order is not as critical,
+	// only top 12 bits of exponent+mantissa (8 bits of exponent and 4 bits of mantissa) are used.
+	// to avoid excessive stack usage, we clamp the exponent range as collapses with errors much higher than 1 are not useful.
+	const unsigned int sort_bits = 12;
+	const unsigned int sort_bins = 2048 + 512; // exponent range [-127, 32)
 
 	// fill histogram for counting sort
-	unsigned int histogram[1 << sort_bits];
+	unsigned int histogram[sort_bins];
 	memset(histogram, 0, sizeof(histogram));
 
 	for (size_t i = 0; i < collapse_count; ++i)
 	{
 		// skip sign bit since error is non-negative
-		unsigned int key = (collapses[i].errorui << 1) >> (32 - sort_bits);
+		unsigned int error = collapses[i].errorui;
+		unsigned int key = (error << 1) >> (32 - sort_bits);
+		key = key < sort_bins ? key : sort_bins - 1;
 
 		histogram[key]++;
 	}
@@ -1073,7 +1096,7 @@ static void sortEdgeCollapses(unsigned int* sort_order, const Collapse* collapse
 	// compute offsets based on histogram data
 	size_t histogram_sum = 0;
 
-	for (size_t i = 0; i < 1 << sort_bits; ++i)
+	for (size_t i = 0; i < sort_bins; ++i)
 	{
 		size_t count = histogram[i];
 		histogram[i] = unsigned(histogram_sum);
@@ -1086,13 +1109,15 @@ static void sortEdgeCollapses(unsigned int* sort_order, const Collapse* collapse
 	for (size_t i = 0; i < collapse_count; ++i)
 	{
 		// skip sign bit since error is non-negative
-		unsigned int key = (collapses[i].errorui << 1) >> (32 - sort_bits);
+		unsigned int error = collapses[i].errorui;
+		unsigned int key = (error << 1) >> (32 - sort_bits);
+		key = key < sort_bins ? key : sort_bins - 1;
 
 		sort_order[histogram[key]++] = unsigned(i);
 	}
 }
 
-static size_t performEdgeCollapses(unsigned int* collapse_remap, unsigned char* collapse_locked, Quadric* vertex_quadrics, Quadric* attribute_quadrics, QuadricGrad* attribute_gradients, size_t attribute_count, const Collapse* collapses, size_t collapse_count, const unsigned int* collapse_order, const unsigned int* remap, const unsigned int* wedge, const unsigned char* vertex_kind, const Vector3* vertex_positions, const EdgeAdjacency& adjacency, size_t triangle_collapse_goal, float error_limit, float& result_error)
+static size_t performEdgeCollapses(unsigned int* collapse_remap, unsigned char* collapse_locked, const Collapse* collapses, size_t collapse_count, const unsigned int* collapse_order, const unsigned int* remap, const unsigned int* wedge, const unsigned char* vertex_kind, const unsigned int* loop, const unsigned int* loopback, const Vector3* vertex_positions, const EdgeAdjacency& adjacency, size_t triangle_collapse_goal, float error_limit, float& result_error)
 {
 	size_t edge_collapses = 0;
 	size_t triangle_collapses = 0;
@@ -1102,7 +1127,7 @@ static size_t performEdgeCollapses(unsigned int* collapse_remap, unsigned char* 
 	size_t edge_collapse_goal = triangle_collapse_goal / 2;
 
 #if TRACE
-	size_t stats[4] = {};
+	size_t stats[7] = {};
 #endif
 
 	for (size_t i = 0; i < collapse_count; ++i)
@@ -1112,10 +1137,16 @@ static size_t performEdgeCollapses(unsigned int* collapse_remap, unsigned char* 
 		TRACESTATS(0);
 
 		if (c.error > error_limit)
+		{
+			TRACESTATS(4);
 			break;
+		}
 
 		if (triangle_collapses >= triangle_collapse_goal)
+		{
+			TRACESTATS(5);
 			break;
+		}
 
 		// we limit the error in each pass based on the error of optimal last collapse; since many collapses will be locked
 		// as they will share vertices with other successfull collapses, we need to increase the acceptable error by some factor
@@ -1123,8 +1154,11 @@ static size_t performEdgeCollapses(unsigned int* collapse_remap, unsigned char* 
 
 		// on average, each collapse is expected to lock 6 other collapses; to avoid degenerate passes on meshes with odd
 		// topology, we only abort if we got over 1/6 collapses accordingly.
-		if (c.error > error_goal && triangle_collapses > triangle_collapse_goal / 6)
+		if (c.error > error_goal && c.error > result_error && triangle_collapses > triangle_collapse_goal / 6)
+		{
+			TRACESTATS(6);
 			break;
+		}
 
 		unsigned int i0 = c.v0;
 		unsigned int i1 = c.v1;
@@ -1159,24 +1193,6 @@ static size_t performEdgeCollapses(unsigned int* collapse_remap, unsigned char* 
 		assert(collapse_remap[r0] == r0);
 		assert(collapse_remap[r1] == r1);
 
-		quadricAdd(vertex_quadrics[r1], vertex_quadrics[r0]);
-
-		if (attribute_count)
-		{
-			quadricAdd(attribute_quadrics[i1], attribute_quadrics[i0]);
-			quadricAdd(&attribute_gradients[i1 * attribute_count], &attribute_gradients[i0 * attribute_count], attribute_count);
-
-			// note: this is intentionally missing handling for Kind_Complex; we assume that complex vertices have similar attribute values so just using the primary vertex is fine
-			if (kind == Kind_Seam)
-			{
-				// seam collapses involve two edges so we need to update attribute quadrics for both target vertices; position quadrics are shared
-				unsigned int s0 = wedge[i0], s1 = wedge[i1];
-
-				quadricAdd(attribute_quadrics[s1], attribute_quadrics[s0]);
-				quadricAdd(&attribute_gradients[s1 * attribute_count], &attribute_gradients[s0 * attribute_count], attribute_count);
-			}
-		}
-
 		if (kind == Kind_Complex)
 		{
 			// remap all vertices in the complex to the target vertex
@@ -1190,10 +1206,19 @@ static size_t performEdgeCollapses(unsigned int* collapse_remap, unsigned char* 
 		}
 		else if (kind == Kind_Seam)
 		{
-			// remap v0 to v1 and seam pair of v0 to seam pair of v1
-			unsigned int s0 = wedge[i0], s1 = wedge[i1];
-			assert(s0 != i0 && s1 != i1);
-			assert(wedge[s0] == i0 && wedge[s1] == i1);
+			// for seam collapses we need to move the seam pair together; this is a bit tricky to compute since we need to rely on edge loops as target vertex may be locked (and thus have more than two wedges)
+			unsigned int s0 = wedge[i0];
+			unsigned int s1 = loop[i0] == i1 ? loopback[s0] : loop[s0];
+			assert(s0 != i0 && wedge[s0] == i0);
+			assert(s1 != ~0u && remap[s1] == r1);
+
+			// additional asserts to verify that the seam pair is consistent
+			assert(kind != vertex_kind[i1] || s1 == wedge[i1]);
+			assert(loop[i0] == i1 || loopback[i0] == i1);
+			assert(loop[s0] == s1 || loopback[s0] == s1);
+
+			// note: this should never happen due to the assertion above, but when disabled if we ever hit this case we'll get a memory safety issue; for now play it safe
+			s1 = (s1 != ~0u) ? s1 : wedge[i1];
 
 			collapse_remap[i0] = i1;
 			collapse_remap[s0] = s1;
@@ -1205,6 +1230,8 @@ static size_t performEdgeCollapses(unsigned int* collapse_remap, unsigned char* 
 			collapse_remap[i0] = i1;
 		}
 
+		// note: we technically don't need to lock r1 if it's a locked vertex, as it can't move and its quadric won't be used
+		// however, this results in slightly worse error on some meshes because the locked collapses get an unfair advantage wrt scheduling
 		collapse_locked[r0] = 1;
 		collapse_locked[r1] = 1;
 
@@ -1216,14 +1243,48 @@ static size_t performEdgeCollapses(unsigned int* collapse_remap, unsigned char* 
 	}
 
 #if TRACE
-	float error_goal_perfect = edge_collapse_goal < collapse_count ? collapses[collapse_order[edge_collapse_goal]].error : 0.f;
+	float error_goal_last = edge_collapse_goal < collapse_count ? 1.5f * collapses[collapse_order[edge_collapse_goal]].error : FLT_MAX;
+	float error_goal_limit = error_goal_last < error_limit ? error_goal_last : error_limit;
 
-	printf("removed %d triangles, error %e (goal %e); evaluated %d/%d collapses (done %d, skipped %d, invalid %d)\n",
-	    int(triangle_collapses), sqrtf(result_error), sqrtf(error_goal_perfect),
-	    int(stats[0]), int(collapse_count), int(edge_collapses), int(stats[1]), int(stats[2]));
+	printf("removed %d triangles, error %e (goal %e); evaluated %d/%d collapses (done %d, skipped %d, invalid %d); %s\n",
+	    int(triangle_collapses), sqrtf(result_error), sqrtf(error_goal_limit),
+	    int(stats[0]), int(collapse_count), int(edge_collapses), int(stats[1]), int(stats[2]),
+	    stats[4] ? "error limit" : (stats[5] ? "count limit" : (stats[6] ? "error goal" : "out of collapses")));
 #endif
 
 	return edge_collapses;
+}
+
+static void updateQuadrics(const unsigned int* collapse_remap, size_t vertex_count, Quadric* vertex_quadrics, Quadric* attribute_quadrics, QuadricGrad* attribute_gradients, size_t attribute_count, const Vector3* vertex_positions, const unsigned int* remap, float& vertex_error)
+{
+	for (size_t i = 0; i < vertex_count; ++i)
+	{
+		if (collapse_remap[i] == i)
+			continue;
+
+		unsigned int i0 = unsigned(i);
+		unsigned int i1 = collapse_remap[i];
+
+		unsigned int r0 = remap[i0];
+		unsigned int r1 = remap[i1];
+
+		// ensure we only update vertex_quadrics once: primary vertex must be moved if any wedge is moved
+		if (i0 == r0)
+			quadricAdd(vertex_quadrics[r1], vertex_quadrics[r0]);
+
+		if (attribute_count)
+		{
+			quadricAdd(attribute_quadrics[i1], attribute_quadrics[i0]);
+			quadricAdd(&attribute_gradients[i1 * attribute_count], &attribute_gradients[i0 * attribute_count], attribute_count);
+
+			if (i0 == r0)
+			{
+				// when attributes are used, distance error needs to be recomputed as collapses don't track it; it is safe to do this after the quadric adjustment
+				float derr = quadricError(vertex_quadrics[r0], vertex_positions[r1]);
+				vertex_error = vertex_error < derr ? derr : vertex_error;
+			}
+		}
+	}
 }
 
 static size_t remapIndexBuffer(unsigned int* indices, size_t index_count, const unsigned int* collapse_remap)
@@ -1257,15 +1318,179 @@ static void remapEdgeLoops(unsigned int* loop, size_t vertex_count, const unsign
 {
 	for (size_t i = 0; i < vertex_count; ++i)
 	{
+		// note: this is a no-op for vertices that were remapped
+		// ideally we would clear the loop entries for those for consistency, even though they aren't going to be used
+		// however, the remapping process needs loop information for remapped vertices, so this would require a separate pass
 		if (loop[i] != ~0u)
 		{
 			unsigned int l = loop[i];
 			unsigned int r = collapse_remap[l];
 
 			// i == r is a special case when the seam edge is collapsed in a direction opposite to where loop goes
-			loop[i] = (i == r) ? loop[l] : r;
+			if (i == r)
+				loop[i] = (loop[l] != ~0u) ? collapse_remap[loop[l]] : ~0u;
+			else
+				loop[i] = r;
 		}
 	}
+}
+
+static unsigned int follow(unsigned int* parents, unsigned int index)
+{
+	while (index != parents[index])
+	{
+		unsigned int parent = parents[index];
+		parents[index] = parents[parent];
+		index = parent;
+	}
+
+	return index;
+}
+
+static size_t buildComponents(unsigned int* components, size_t vertex_count, const unsigned int* indices, size_t index_count, const unsigned int* remap)
+{
+	for (size_t i = 0; i < vertex_count; ++i)
+		components[i] = unsigned(i);
+
+	// compute a unique (but not sequential!) index for each component via union-find
+	for (size_t i = 0; i < index_count; i += 3)
+	{
+		static const int next[4] = {1, 2, 0, 1};
+
+		for (int e = 0; e < 3; ++e)
+		{
+			unsigned int i0 = indices[i + e];
+			unsigned int i1 = indices[i + next[e]];
+
+			unsigned int r0 = remap[i0];
+			unsigned int r1 = remap[i1];
+
+			r0 = follow(components, r0);
+			r1 = follow(components, r1);
+
+			// merge components with larger indices into components with smaller indices
+			// this guarantees that the root of the component is always the one with the smallest index
+			if (r0 != r1)
+				components[r0 < r1 ? r1 : r0] = r0 < r1 ? r0 : r1;
+		}
+	}
+
+	// make sure each element points to the component root *before* we renumber the components
+	for (size_t i = 0; i < vertex_count; ++i)
+		if (remap[i] == i)
+			components[i] = follow(components, unsigned(i));
+
+	unsigned int next_component = 0;
+
+	// renumber components using sequential indices
+	// a sequential pass is sufficient because component root always has the smallest index
+	// note: it is unsafe to use follow() in this pass because we're replacing component links with sequential indices inplace
+	for (size_t i = 0; i < vertex_count; ++i)
+	{
+		if (remap[i] == i)
+		{
+			unsigned int root = components[i];
+			assert(root <= i); // make sure we already computed the component for non-roots
+			components[i] = (root == i) ? next_component++ : components[root];
+		}
+		else
+		{
+			assert(remap[i] < i); // make sure we already computed the component
+			components[i] = components[remap[i]];
+		}
+	}
+
+	return next_component;
+}
+
+static void measureComponents(float* component_errors, size_t component_count, const unsigned int* components, const Vector3* vertex_positions, size_t vertex_count)
+{
+	memset(component_errors, 0, component_count * 4 * sizeof(float));
+
+	// compute approximate sphere center for each component as an average
+	for (size_t i = 0; i < vertex_count; ++i)
+	{
+		unsigned int c = components[i];
+		assert(components[i] < component_count);
+
+		Vector3 v = vertex_positions[i]; // copy avoids aliasing issues
+
+		component_errors[c * 4 + 0] += v.x;
+		component_errors[c * 4 + 1] += v.y;
+		component_errors[c * 4 + 2] += v.z;
+		component_errors[c * 4 + 3] += 1; // weight
+	}
+
+	// complete the center computation, and reinitialize [3] as a radius
+	for (size_t i = 0; i < component_count; ++i)
+	{
+		float w = component_errors[i * 4 + 3];
+		float iw = w == 0.f ? 0.f : 1.f / w;
+
+		component_errors[i * 4 + 0] *= iw;
+		component_errors[i * 4 + 1] *= iw;
+		component_errors[i * 4 + 2] *= iw;
+		component_errors[i * 4 + 3] = 0; // radius
+	}
+
+	// compute squared radius for each component
+	for (size_t i = 0; i < vertex_count; ++i)
+	{
+		unsigned int c = components[i];
+
+		float dx = vertex_positions[i].x - component_errors[c * 4 + 0];
+		float dy = vertex_positions[i].y - component_errors[c * 4 + 1];
+		float dz = vertex_positions[i].z - component_errors[c * 4 + 2];
+		float r = dx * dx + dy * dy + dz * dz;
+
+		component_errors[c * 4 + 3] = component_errors[c * 4 + 3] < r ? r : component_errors[c * 4 + 3];
+	}
+
+	// we've used the output buffer as scratch space, so we need to move the results to proper indices
+	for (size_t i = 0; i < component_count; ++i)
+	{
+#if TRACE >= 2
+		printf("component %d: center %f %f %f, error %e\n", int(i),
+		    component_errors[i * 4 + 0], component_errors[i * 4 + 1], component_errors[i * 4 + 2], sqrtf(component_errors[i * 4 + 3]));
+#endif
+		// note: we keep the squared error to make it match quadric error metric
+		component_errors[i] = component_errors[i * 4 + 3];
+	}
+}
+
+static size_t pruneComponents(unsigned int* indices, size_t index_count, const unsigned int* components, const float* component_errors, size_t component_count, float error_cutoff, float& nexterror)
+{
+	size_t write = 0;
+
+	for (size_t i = 0; i < index_count; i += 3)
+	{
+		unsigned int c = components[indices[i]];
+		assert(c == components[indices[i + 1]] && c == components[indices[i + 2]]);
+
+		if (component_errors[c] > error_cutoff)
+		{
+			indices[write + 0] = indices[i + 0];
+			indices[write + 1] = indices[i + 1];
+			indices[write + 2] = indices[i + 2];
+			write += 3;
+		}
+	}
+
+#if TRACE
+	size_t pruned_components = 0;
+	for (size_t i = 0; i < component_count; ++i)
+		pruned_components += (component_errors[i] >= nexterror && component_errors[i] <= error_cutoff);
+
+	printf("pruned %d triangles in %d components (goal %e)\n", int((index_count - write) / 3), int(pruned_components), sqrtf(error_cutoff));
+#endif
+
+	// update next error with the smallest error of the remaining components for future pruning
+	nexterror = FLT_MAX;
+	for (size_t i = 0; i < component_count; ++i)
+		if (component_errors[i] > error_cutoff)
+			nexterror = nexterror > component_errors[i] ? component_errors[i] : nexterror;
+
+	return write;
 }
 
 struct CellHasher
@@ -1591,7 +1816,7 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 	assert(vertex_positions_stride % sizeof(float) == 0);
 	assert(target_index_count <= index_count);
 	assert(target_error >= 0);
-	assert((options & ~(meshopt_SimplifyLockBorder | meshopt_SimplifySparse | meshopt_SimplifyErrorAbsolute | meshopt_SimplifyInternalDebug)) == 0);
+	assert((options & ~(meshopt_SimplifyLockBorder | meshopt_SimplifySparse | meshopt_SimplifyErrorAbsolute | meshopt_SimplifyPrune | meshopt_SimplifyInternalDebug)) == 0);
 	assert(vertex_attributes_stride >= attribute_count * sizeof(float) && vertex_attributes_stride <= 256);
 	assert(vertex_attributes_stride % sizeof(float) == 0);
 	assert(attribute_count <= kMaxAttributes);
@@ -1682,6 +1907,28 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 	if (attribute_count)
 		fillAttributeQuadrics(attribute_quadrics, attribute_gradients, result, index_count, vertex_positions, vertex_attributes, attribute_count);
 
+	unsigned int* components = NULL;
+	float* component_errors = NULL;
+	size_t component_count = 0;
+	float component_nexterror = 0;
+
+	if (options & meshopt_SimplifyPrune)
+	{
+		components = allocator.allocate<unsigned int>(vertex_count);
+		component_count = buildComponents(components, vertex_count, result, index_count, remap);
+
+		component_errors = allocator.allocate<float>(component_count * 4); // overallocate for temporary use inside measureComponents
+		measureComponents(component_errors, component_count, components, vertex_positions, vertex_count);
+
+		component_nexterror = FLT_MAX;
+		for (size_t i = 0; i < component_count; ++i)
+			component_nexterror = component_nexterror > component_errors[i] ? component_errors[i] : component_nexterror;
+
+#if TRACE
+		printf("components: %d (min error %e)\n", int(component_count), sqrtf(component_nexterror));
+#endif
+	}
+
 #if TRACE
 	size_t pass_count = 0;
 #endif
@@ -1695,6 +1942,7 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 
 	size_t result_count = index_count;
 	float result_error = 0;
+	float vertex_error = 0;
 
 	// target_error input is linear; we need to adjust it to match quadricError units
 	float error_scale = (options & meshopt_SimplifyErrorAbsolute) ? vertex_scale : 1.f;
@@ -1705,7 +1953,7 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 		// note: throughout the simplification process adjacency structure reflects welded topology for result-in-progress
 		updateEdgeAdjacency(adjacency, result, result_count, vertex_count, remap);
 
-		size_t edge_collapse_count = pickEdgeCollapses(edge_collapses, collapse_capacity, result, result_count, remap, vertex_kind, loop);
+		size_t edge_collapse_count = pickEdgeCollapses(edge_collapses, collapse_capacity, result, result_count, remap, vertex_kind, loop, loopback);
 		assert(edge_collapse_count <= collapse_capacity);
 
 		// no edges can be collapsed any more due to topology restrictions
@@ -1727,11 +1975,16 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 
 		memset(collapse_locked, 0, vertex_count);
 
-		size_t collapses = performEdgeCollapses(collapse_remap, collapse_locked, vertex_quadrics, attribute_quadrics, attribute_gradients, attribute_count, edge_collapses, edge_collapse_count, collapse_order, remap, wedge, vertex_kind, vertex_positions, adjacency, triangle_collapse_goal, error_limit, result_error);
+		size_t collapses = performEdgeCollapses(collapse_remap, collapse_locked, edge_collapses, edge_collapse_count, collapse_order, remap, wedge, vertex_kind, loop, loopback, vertex_positions, adjacency, triangle_collapse_goal, error_limit, result_error);
 
 		// no edges can be collapsed any more due to hitting the error limit or triangle collapse limit
 		if (collapses == 0)
 			break;
+
+		updateQuadrics(collapse_remap, vertex_count, vertex_quadrics, attribute_quadrics, attribute_gradients, attribute_count, vertex_positions, remap, vertex_error);
+
+		// updateQuadrics will update vertex error if we use attributes, but if we don't then result_error and vertex_error are equivalent
+		vertex_error = attribute_count == 0 ? result_error : vertex_error;
 
 		remapEdgeLoops(loop, vertex_count, collapse_remap);
 		remapEdgeLoops(loopback, vertex_count, collapse_remap);
@@ -1740,6 +1993,33 @@ size_t meshopt_simplifyEdge(unsigned int* destination, const unsigned int* indic
 		assert(new_count < result_count);
 
 		result_count = new_count;
+
+		if ((options & meshopt_SimplifyPrune) && result_count > target_index_count && component_nexterror <= vertex_error)
+			result_count = pruneComponents(result, result_count, components, component_errors, component_count, vertex_error, component_nexterror);
+	}
+
+	// we're done with the regular simplification but we're still short of the target; try pruning more aggressively towards error_limit
+	while ((options & meshopt_SimplifyPrune) && result_count > target_index_count && component_nexterror <= error_limit)
+	{
+#if TRACE
+		printf("pass %d: cleanup; ", int(pass_count++));
+#endif
+
+		float component_cutoff = component_nexterror * 1.5f < error_limit ? component_nexterror * 1.5f : error_limit;
+
+		// track maximum error in eligible components as we are increasing resulting error
+		float component_maxerror = 0;
+		for (size_t i = 0; i < component_count; ++i)
+			if (component_errors[i] > component_maxerror && component_errors[i] <= component_cutoff)
+				component_maxerror = component_errors[i];
+
+		size_t new_count = pruneComponents(result, result_count, components, component_errors, component_count, component_cutoff, component_nexterror);
+		if (new_count == result_count)
+			break;
+
+		result_count = new_count;
+		result_error = result_error < component_maxerror ? component_maxerror : result_error;
+		vertex_error = vertex_error < component_maxerror ? component_maxerror : vertex_error;
 	}
 
 #if TRACE
@@ -1845,7 +2125,7 @@ size_t meshopt_simplifySloppy(unsigned int* destination, const unsigned int* ind
 		    (triangles <= target_index_count / 3) ? "under" : "over");
 #endif
 
-		float tip = interpolate(float(target_index_count / 3), float(min_grid), float(min_triangles), float(grid_size), float(triangles), float(max_grid), float(max_triangles));
+		float tip = interpolate(float(size_t(target_index_count / 3)), float(min_grid), float(min_triangles), float(grid_size), float(triangles), float(max_grid), float(max_triangles));
 
 		if (triangles <= target_index_count / 3)
 		{
@@ -2017,7 +2297,10 @@ size_t meshopt_simplifyPoints(unsigned int* destination, const float* vertex_pos
 	unsigned int* cell_remap = allocator.allocate<unsigned int>(cell_count);
 	float* cell_errors = allocator.allocate<float>(cell_count);
 
-	fillCellRemap(cell_remap, cell_errors, cell_count, vertex_cells, cell_reservoirs, vertex_positions, vertex_colors, vertex_colors_stride, color_weight * color_weight, vertex_count);
+	// we scale the color weight to bring it to the same scale as position so that error addition makes sense
+	float color_weight_scaled = color_weight * (min_grid == 1 ? 1.f : 1.f / (min_grid - 1));
+
+	fillCellRemap(cell_remap, cell_errors, cell_count, vertex_cells, cell_reservoirs, vertex_positions, vertex_colors, vertex_colors_stride, color_weight_scaled * color_weight_scaled, vertex_count);
 
 	// copy results to the output
 	assert(cell_count <= target_vertex_count);
