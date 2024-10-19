@@ -3491,4 +3491,4 @@ void Parameterize()
     });
 }
 
-}; // end spv namespace
+} // end spv namespace

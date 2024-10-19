@@ -439,6 +439,43 @@ Id Builder::makeCooperativeMatrixTypeKHR(Id component, Id scope, Id rows, Id col
     constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
     module.mapInstruction(type);
 
+    if (emitNonSemanticShaderDebugInfo)
+    {
+        // Find a name for one of the parameters. It can either come from debuginfo for another
+        // type, or an OpName from a constant.
+        auto const findName = [&](Id id) {
+            Id id2 = debugId[id];
+            for (auto &t : groupedDebugTypes[NonSemanticShaderDebugInfo100DebugTypeBasic]) {
+                if (t->getResultId() == id2) {
+                    for (auto &s : strings) {
+                        if (s->getResultId() == t->getIdOperand(2)) {
+                            return s->getNameString();
+                        }
+                    }
+                }
+            }
+            for (auto &t : names) {
+                if (t->getIdOperand(0) == id) {
+                    return t->getNameString();
+                }
+            }
+            return "unknown";
+        };
+        std::string debugName = "coopmat<";
+        debugName += std::string(findName(component)) + ", ";
+        if (isConstantScalar(scope)) {
+            debugName += std::string("gl_Scope") + std::string(spv::ScopeToString((spv::Scope)getConstantScalar(scope))) + ", ";
+        } else {
+            debugName += std::string(findName(scope)) + ", ";
+        }
+        debugName += std::string(findName(rows)) + ", ";
+        debugName += std::string(findName(cols)) + ">";
+        // There's no nonsemantic debug info instruction for cooperative matrix types,
+        // use opaque composite instead.
+        auto const debugResultId = makeCompositeDebugType({}, debugName.c_str(), NonSemanticShaderDebugInfo100Structure, true);
+        debugId[type->getResultId()] = debugResultId;
+    }
+
     return type->getResultId();
 }
 
@@ -2182,6 +2219,10 @@ void Builder::addInstruction(std::unique_ptr<Instruction> inst) {
     buildPoint->addInstruction(std::move(inst));
 }
 
+void Builder::addInstructionNoDebugInfo(std::unique_ptr<Instruction> inst) {
+    buildPoint->addInstruction(std::move(inst));
+}
+
 // Comments in header
 Function* Builder::makeEntryPoint(const char* entryPoint)
 {
@@ -2320,7 +2361,7 @@ Id Builder::makeDebugFunction([[maybe_unused]] Function* function, Id nameId, Id
     return funcId;
 }
 
-Id Builder::makeDebugLexicalBlock(uint32_t line) {
+Id Builder::makeDebugLexicalBlock(uint32_t line, uint32_t column) {
     assert(!currentDebugScopeId.empty());
 
     Id lexId = getUniqueId();
@@ -2330,7 +2371,7 @@ Id Builder::makeDebugLexicalBlock(uint32_t line) {
     lex->addImmediateOperand(NonSemanticShaderDebugInfo100DebugLexicalBlock);
     lex->addIdOperand(makeDebugSource(currentFileId));
     lex->addIdOperand(makeUintConstant(line));
-    lex->addIdOperand(makeUintConstant(0)); // column
+    lex->addIdOperand(makeUintConstant(column)); // column
     lex->addIdOperand(currentDebugScopeId.top()); // scope
     constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(lex));
     module.mapInstruction(lex);
@@ -2363,10 +2404,14 @@ void Builder::makeReturn(bool implicit, Id retVal)
 }
 
 // Comments in header
-void Builder::enterLexicalBlock(uint32_t line)
+void Builder::enterLexicalBlock(uint32_t line, uint32_t column)
 {
+    if (!emitNonSemanticShaderDebugInfo) {
+        return;
+    }
+
     // Generate new lexical scope debug instruction
-    Id lexId = makeDebugLexicalBlock(line);
+    Id lexId = makeDebugLexicalBlock(line, column);
     currentDebugScopeId.push(lexId);
     dirtyScopeTracker = true;
 }
@@ -2374,6 +2419,10 @@ void Builder::enterLexicalBlock(uint32_t line)
 // Comments in header
 void Builder::leaveLexicalBlock()
 {
+    if (!emitNonSemanticShaderDebugInfo) {
+        return;
+    }
+
     // Pop current scope from stack and clear current scope
     currentDebugScopeId.pop();
     dirtyScopeTracker = true;
@@ -3659,6 +3708,7 @@ Builder::If::If(Id cond, unsigned int ctrl, Builder& gb) :
     // Save the current block, so that we can add in the flow control split when
     // makeEndIf is called.
     headerBlock = builder.getBuildPoint();
+    builder.createSelectionMerge(mergeBlock, control);
 
     function->addBlock(thenBlock);
     builder.setBuildPoint(thenBlock);
@@ -3668,7 +3718,7 @@ Builder::If::If(Id cond, unsigned int ctrl, Builder& gb) :
 void Builder::If::makeBeginElse()
 {
     // Close out the "then" by having it jump to the mergeBlock
-    builder.createBranch(mergeBlock);
+    builder.createBranch(true, mergeBlock);
 
     // Make the first else block and add it to the function
     elseBlock = new Block(builder.getUniqueId(), *function);
@@ -3682,11 +3732,10 @@ void Builder::If::makeBeginElse()
 void Builder::If::makeEndIf()
 {
     // jump to the merge block
-    builder.createBranch(mergeBlock);
+    builder.createBranch(true, mergeBlock);
 
     // Go back to the headerBlock and make the flow control split
     builder.setBuildPoint(headerBlock);
-    builder.createSelectionMerge(mergeBlock, control);
     if (elseBlock)
         builder.createConditionalBranch(condition, thenBlock, elseBlock);
     else
@@ -3732,10 +3781,10 @@ void Builder::makeSwitch(Id selector, unsigned int control, int numSegments, con
 }
 
 // Comments in header
-void Builder::addSwitchBreak()
+void Builder::addSwitchBreak(bool implicit)
 {
     // branch to the top of the merge block stack
-    createBranch(switchMerges.top());
+    createBranch(implicit, switchMerges.top());
     createAndSetNoPredecessorBlock("post-switch-break");
 }
 
@@ -3746,7 +3795,7 @@ void Builder::nextSwitchSegment(std::vector<Block*>& segmentBlock, int nextSegme
     if (lastSegment >= 0) {
         // Close out previous segment by jumping, if necessary, to next segment
         if (! buildPoint->isTerminated())
-            createBranch(segmentBlock[nextSegment]);
+            createBranch(true, segmentBlock[nextSegment]);
     }
     Block* block = segmentBlock[nextSegment];
     block->getParent().addBlock(block);
@@ -3758,7 +3807,7 @@ void Builder::endSwitch(std::vector<Block*>& /*segmentBlock*/)
 {
     // Close out previous segment by jumping, if necessary, to next segment
     if (! buildPoint->isTerminated())
-        addSwitchBreak();
+        addSwitchBreak(true);
 
     switchMerges.top()->getParent().addBlock(switchMerges.top());
     setBuildPoint(switchMerges.top());
@@ -3791,14 +3840,14 @@ Builder::LoopBlocks& Builder::makeNewLoop()
 
 void Builder::createLoopContinue()
 {
-    createBranch(&loops.top().continue_target);
+    createBranch(false, &loops.top().continue_target);
     // Set up a block for dead code.
     createAndSetNoPredecessorBlock("post-loop-continue");
 }
 
 void Builder::createLoopExit()
 {
-    createBranch(&loops.top().merge);
+    createBranch(false, &loops.top().merge);
     // Set up a block for dead code.
     createAndSetNoPredecessorBlock("post-loop-break");
 }
@@ -4240,11 +4289,16 @@ void Builder::createAndSetNoPredecessorBlock(const char* /*name*/)
 }
 
 // Comments in header
-void Builder::createBranch(Block* block)
+void Builder::createBranch(bool implicit, Block* block)
 {
     Instruction* branch = new Instruction(OpBranch);
     branch->addIdOperand(block->getId());
-    addInstruction(std::unique_ptr<Instruction>(branch));
+    if (implicit) {
+        addInstructionNoDebugInfo(std::unique_ptr<Instruction>(branch));
+    }
+    else {
+        addInstruction(std::unique_ptr<Instruction>(branch));
+    }
     block->addPredecessor(buildPoint);
 }
 
@@ -4277,7 +4331,10 @@ void Builder::createConditionalBranch(Id condition, Block* thenBlock, Block* els
     branch->addIdOperand(condition);
     branch->addIdOperand(thenBlock->getId());
     branch->addIdOperand(elseBlock->getId());
-    addInstruction(std::unique_ptr<Instruction>(branch));
+
+    // A conditional branch is always attached to a condition expression
+    addInstructionNoDebugInfo(std::unique_ptr<Instruction>(branch));
+
     thenBlock->addPredecessor(buildPoint);
     elseBlock->addPredecessor(buildPoint);
 }

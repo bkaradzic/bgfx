@@ -2772,6 +2772,20 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case OpGroupLogicalXorKHR: *hasResult = true; *hasResultType = true; break;
     }
 }
+
+inline const char* ScopeToString(Scope value) {
+    switch (value) {
+    case ScopeCrossDevice: return "CrossDevice";
+    case ScopeDevice: return "Device";
+    case ScopeWorkgroup: return "Workgroup";
+    case ScopeSubgroup: return "Subgroup";
+    case ScopeInvocation: return "Invocation";
+    case ScopeQueueFamily: return "QueueFamily";
+    case ScopeShaderCallKHR: return "ShaderCallKHR";
+    default: return "Unknown";
+    }
+}
+
 #endif /* SPV_ENABLE_UTILITY_CODE */
 
 // Overload bitwise operators for mask bit combining

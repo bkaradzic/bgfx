@@ -307,21 +307,6 @@ typedef TVector<TTypeLoc> TTypeList;
 
 typedef TVector<TString*> TIdentifierList;
 
-//
-// Following are a series of helper enums for managing layouts and qualifiers,
-// used for TPublicType, TType, others.
-//
-
-enum TLayoutPacking {
-    ElpNone,
-    ElpShared,      // default, but different than saying nothing
-    ElpStd140,
-    ElpStd430,
-    ElpPacked,
-    ElpScalar,
-    ElpCount        // If expanding, see bitfield width below
-};
-
 enum TLayoutMatrix {
     ElmNone,
     ElmRowMajor,

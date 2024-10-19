@@ -63,6 +63,7 @@ static_assert(sizeof(glslang_version_t) == sizeof(glslang::Version), "");
 typedef struct glslang_shader_s {
     glslang::TShader* shader;
     std::string preprocessedGLSL;
+    std::vector<std::string> baseResourceSetBinding;
 } glslang_shader_t;
 
 typedef struct glslang_program_s {
@@ -323,7 +324,7 @@ static EProfile c_shader_profile(glslang_profile_t profile)
 GLSLANG_EXPORT glslang_shader_t* glslang_shader_create(const glslang_input_t* input)
 {
     if (!input || !input->code) {
-        printf("Error creating shader: null input(%p)/input->code\n", input);
+        printf("Error creating shader: null input(%p)/input->code\n", (void*)input);
 
         if (input)
             printf("input->code = %p\n", input->code);
@@ -387,6 +388,16 @@ GLSLANG_EXPORT void glslang_shader_set_default_uniform_block_set_and_binding(gls
 
 GLSLANG_EXPORT void glslang_shader_set_default_uniform_block_name(glslang_shader_t* shader, const char *name) {
     shader->shader->setGlobalUniformBlockName(name);
+}
+
+GLSLANG_EXPORT void glslang_shader_set_resource_set_binding(glslang_shader_t* shader, const char *const *bindings, unsigned int num_bindings) {
+    shader->baseResourceSetBinding.clear();
+
+    for (unsigned int i = 0; i < num_bindings; ++i) {
+        shader->baseResourceSetBinding.push_back(std::string(bindings[i]));
+    }
+
+    shader->shader->setResourceSetBinding(shader->baseResourceSetBinding);
 }
 
 GLSLANG_EXPORT const char* glslang_shader_get_preprocessed_code(glslang_shader_t* shader)

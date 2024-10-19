@@ -3773,8 +3773,10 @@ compound_statement
         --parseContext.statementNestingLevel;
     }
       RIGHT_BRACE {
-        if ($3 && $3->getAsAggregate())
+        if ($3 && $3->getAsAggregate()) {
             $3->getAsAggregate()->setOperator(parseContext.intermediate.getDebugInfo() ? EOpScope : EOpSequence);
+            $3->getAsAggregate()->setEndLoc($5.loc);
+        }
         $$ = $3;
     }
     ;
@@ -3810,8 +3812,10 @@ compound_statement_no_new_scope
         $$ = 0;
     }
     | LEFT_BRACE statement_list RIGHT_BRACE {
-        if ($2 && $2->getAsAggregate())
+        if ($2 && $2->getAsAggregate()) {
             $2->getAsAggregate()->setOperator(EOpSequence);
+            $2->getAsAggregate()->setEndLoc($3.loc);
+        }
         $$ = $2;
     }
     ;

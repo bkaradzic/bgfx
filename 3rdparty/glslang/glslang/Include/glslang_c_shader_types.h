@@ -176,6 +176,7 @@ typedef enum {
     GLSLANG_MSG_ENHANCED                    = (1 << 15),
     GLSLANG_MSG_ABSOLUTE_PATH               = (1 << 16),
     GLSLANG_MSG_DISPLAY_ERROR_COLUMN        = (1 << 17),
+    GLSLANG_MSG_LINK_TIME_OPTIMIZATION_BIT  = (1 << 18),
     LAST_ELEMENT_MARKER(GLSLANG_MSG_COUNT),
 } glslang_messages_t;
 

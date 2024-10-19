@@ -1558,7 +1558,7 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(unsigned int spvVersion,
         else {
             builder.setEmitSpirvDebugInfo();
         }
-        builder.setDebugSourceFile(glslangIntermediate->getSourceFile());
+        builder.setDebugMainSourceFile(glslangIntermediate->getSourceFile());
 
         // Set the source shader's text. If for SPV version 1.0, include
         // a preamble in comments stating the OpModuleProcessed instructions.
@@ -2858,9 +2858,16 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
                                                             // SPIR-V, for an out parameter
     std::vector<spv::Id> temporaryLvalues;                  // temporaries to pass, as proxies for complexLValues
 
-    auto resultType = [&invertedType, &node, this](){ return invertedType != spv::NoType ?
-        invertedType :
-        convertGlslangToSpvType(node->getType()); };
+    auto resultType = [&invertedType, &node, this](){
+        if (invertedType != spv::NoType) {
+            return invertedType;
+        } else {
+            auto ret = convertGlslangToSpvType(node->getType());
+            // convertGlslangToSpvType may clobber the debug location, reset it
+            builder.setDebugSourceLocation(node->getLoc().line, node->getLoc().getFilename());
+            return ret;
+        }
+    };
 
     // try texturing
     result = createImageTextureFunctionCall(node);
@@ -2917,8 +2924,10 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
 
                 return false;
             } else {
-                if (node->getOp() == glslang::EOpScope)
-                    builder.enterLexicalBlock(0);
+                if (node->getOp() == glslang::EOpScope) {
+                    auto loc = node->getLoc();
+                    builder.enterLexicalBlock(loc.line, loc.column);
+                }
             }
         } else {
             if (sequenceDepth > 1 && node->getOp() == glslang::EOpScope)
@@ -2967,6 +2976,12 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
                 currentFunction->setDebugLineInfo(sourceFileId, loc.line, loc.column);
             }
         } else {
+            if (options.generateDebugInfo) {
+                if (glslangIntermediate->getSource() == glslang::EShSourceGlsl && node->getSequence().size() > 1) {
+                    auto endLoc = node->getSequence()[1]->getAsAggregate()->getEndLoc();
+                    builder.setDebugSourceLocation(endLoc.line, endLoc.getFilename());
+                }
+            }
             if (inEntryPoint)
                 entryPointTerminated = true;
             builder.leaveFunction();
@@ -4120,7 +4135,7 @@ bool TGlslangToSpvTraverser::visitSwitch(glslang::TVisit /* visit */, glslang::T
         if (codeSegments[s])
             codeSegments[s]->traverse(this);
         else
-            builder.addSwitchBreak();
+            builder.addSwitchBreak(true);
     }
     breakForLoop.pop();
 
@@ -4144,7 +4159,7 @@ void TGlslangToSpvTraverser::visitConstantUnion(glslang::TIntermConstantUnion* n
 bool TGlslangToSpvTraverser::visitLoop(glslang::TVisit /* visit */, glslang::TIntermLoop* node)
 {
     auto blocks = builder.makeNewLoop();
-    builder.createBranch(&blocks.head);
+    builder.createBranch(true, &blocks.head);
 
     // Loop control:
     std::vector<unsigned int> operands;
@@ -4161,7 +4176,7 @@ bool TGlslangToSpvTraverser::visitLoop(glslang::TVisit /* visit */, glslang::TIn
     builder.createLoopMerge(&blocks.merge, &blocks.continue_target, control, operands);
     if (node->testFirst() && node->getTest()) {
         spv::Block& test = builder.makeNewBlock();
-        builder.createBranch(&test);
+        builder.createBranch(true, &test);
 
         builder.setBuildPoint(&test);
         node->getTest()->traverse(this);
@@ -4172,22 +4187,22 @@ bool TGlslangToSpvTraverser::visitLoop(glslang::TVisit /* visit */, glslang::TIn
         breakForLoop.push(true);
         if (node->getBody())
             node->getBody()->traverse(this);
-        builder.createBranch(&blocks.continue_target);
+        builder.createBranch(true, &blocks.continue_target);
         breakForLoop.pop();
 
         builder.setBuildPoint(&blocks.continue_target);
         if (node->getTerminal())
             node->getTerminal()->traverse(this);
-        builder.createBranch(&blocks.head);
+        builder.createBranch(true, &blocks.head);
     } else {
         builder.setDebugSourceLocation(node->getLoc().line, node->getLoc().getFilename());
-        builder.createBranch(&blocks.body);
+        builder.createBranch(true, &blocks.body);
 
         breakForLoop.push(true);
         builder.setBuildPoint(&blocks.body);
         if (node->getBody())
             node->getBody()->traverse(this);
-        builder.createBranch(&blocks.continue_target);
+        builder.createBranch(true, &blocks.continue_target);
         breakForLoop.pop();
 
         builder.setBuildPoint(&blocks.continue_target);
@@ -4202,7 +4217,7 @@ bool TGlslangToSpvTraverser::visitLoop(glslang::TVisit /* visit */, glslang::TIn
             // TODO: unless there was a break/return/discard instruction
             // somewhere in the body, this is an infinite loop, so we should
             // issue a warning.
-            builder.createBranch(&blocks.head);
+            builder.createBranch(true, &blocks.head);
         }
     }
     builder.setBuildPoint(&blocks.merge);
@@ -4238,7 +4253,7 @@ bool TGlslangToSpvTraverser::visitBranch(glslang::TVisit /* visit */, glslang::T
         if (breakForLoop.top())
             builder.createLoopExit();
         else
-            builder.addSwitchBreak();
+            builder.addSwitchBreak(false);
         break;
     case glslang::EOpContinue:
         builder.createLoopContinue();
@@ -4868,7 +4883,7 @@ bool TGlslangToSpvTraverser::filterMember(const glslang::TType& member)
     }
 
     return false;
-};
+}
 
 // Do full recursive conversion of a glslang structure (or block) type to a SPIR-V Id.
 // explicitLayout can be kept the same throughout the hierarchical recursive walk.
@@ -10296,7 +10311,7 @@ spv::Id TGlslangToSpvTraverser::getExtBuiltins(const char* name)
     }
 }
 
-};  // end anonymous namespace
+} // end anonymous namespace
 
 namespace glslang {
 
@@ -10433,4 +10448,4 @@ void GlslangToSpv(const TIntermediate& intermediate, std::vector<unsigned int>& 
     GetThreadPoolAllocator().pop();
 }
 
-}; // end namespace glslang
+} // end namespace glslang

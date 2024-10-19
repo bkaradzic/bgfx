@@ -548,4 +548,4 @@ void Builder::postProcess(bool compileOnly)
     postProcessSamplers();
 }
 
-}; // end spv namespace
+} // end spv namespace

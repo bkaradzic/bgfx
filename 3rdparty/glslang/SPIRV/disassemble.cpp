@@ -825,4 +825,4 @@ void Disassemble(std::ostream& out, const std::vector<unsigned int>& stream)
     SpirvStream.processInstructions();
 }
 
-}; // end namespace spv
+} // end namespace spv
