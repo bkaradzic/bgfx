@@ -43,6 +43,8 @@ bool MemPass::IsBaseTargetType(const Instruction* typeInst) const {
     case spv::Op::OpTypeSampler:
     case spv::Op::OpTypeSampledImage:
     case spv::Op::OpTypePointer:
+    case spv::Op::OpTypeCooperativeMatrixNV:
+    case spv::Op::OpTypeCooperativeMatrixKHR:
       return true;
     default:
       break;
@@ -413,6 +415,7 @@ void MemPass::RemoveBlock(Function::iterator* bi) {
 }
 
 bool MemPass::RemoveUnreachableBlocks(Function* func) {
+  if (func->IsDeclaration()) return false;
   bool modified = false;
 
   // Mark reachable all blocks reachable from the function's entry block.

@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "spirv-tools/libspirv.h"
+#include "libspirv.h"
 
 namespace spvtools {
 

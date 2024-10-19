@@ -162,4 +162,7 @@ bool spvOpcodeIsBit(spv::Op opcode);
 // Gets the name of an instruction, without the "Op" prefix.
 const char* spvOpcodeString(const spv::Op opcode);
 
+// Returns true for opcodes that generate an untyped pointer result.
+bool spvOpcodeGeneratesUntypedPointer(spv::Op opcode);
+
 #endif  // SOURCE_OPCODE_H_

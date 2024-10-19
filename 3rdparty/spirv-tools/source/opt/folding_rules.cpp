@@ -112,6 +112,12 @@ bool IsValidResult(T val) {
   }
 }
 
+// Returns true if `type` is a cooperative matrix.
+bool IsCooperativeMatrix(const analysis::Type* type) {
+  return type->kind() == analysis::Type::kCooperativeMatrixKHR ||
+         type->kind() == analysis::Type::kCooperativeMatrixNV;
+}
+
 const analysis::Constant* ConstInput(
     const std::vector<const analysis::Constant*>& constants) {
   return constants[0] ? constants[0] : constants[1];
@@ -180,8 +186,14 @@ std::vector<uint32_t> GetWordsFromNumericScalarOrVectorConstant(
 const analysis::Constant* ConvertWordsToNumericScalarOrVectorConstant(
     analysis::ConstantManager* const_mgr, const std::vector<uint32_t>& words,
     const analysis::Type* type) {
-  if (type->AsInteger() || type->AsFloat())
-    return const_mgr->GetConstant(type, words);
+  const spvtools::opt::analysis::Integer* int_type = type->AsInteger();
+
+  if (int_type && int_type->width() <= 32) {
+    assert(words.size() == 1);
+    return const_mgr->GenerateIntegerConstant(int_type, words[0]);
+  }
+
+  if (int_type || type->AsFloat()) return const_mgr->GetConstant(type, words);
   if (const auto* vec_type = type->AsVector())
     return const_mgr->GetNumericVectorConstantWithWords(vec_type, words);
   return nullptr;
@@ -307,6 +319,11 @@ FoldingRule ReciprocalFDiv() {
     analysis::ConstantManager* const_mgr = context->get_constant_mgr();
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
+
+    if (IsCooperativeMatrix(type)) {
+      return false;
+    }
+
     if (!inst->IsFloatingPointFoldingAllowed()) return false;
 
     uint32_t width = ElementWidth(type);
@@ -388,6 +405,11 @@ FoldingRule MergeNegateMulDivArithmetic() {
     analysis::ConstantManager* const_mgr = context->get_constant_mgr();
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
+
+    if (IsCooperativeMatrix(type)) {
+      return false;
+    }
+
     if (HasFloatingPoint(type) && !inst->IsFloatingPointFoldingAllowed())
       return false;
 
@@ -400,36 +422,37 @@ FoldingRule MergeNegateMulDivArithmetic() {
     if (width != 32 && width != 64) return false;
 
     spv::Op opcode = op_inst->opcode();
-    if (opcode == spv::Op::OpFMul || opcode == spv::Op::OpFDiv ||
-        opcode == spv::Op::OpIMul || opcode == spv::Op::OpSDiv ||
-        opcode == spv::Op::OpUDiv) {
-      std::vector<const analysis::Constant*> op_constants =
-          const_mgr->GetOperandConstants(op_inst);
-      // Merge negate into mul or div if one operand is constant.
-      if (op_constants[0] || op_constants[1]) {
-        bool zero_is_variable = op_constants[0] == nullptr;
-        const analysis::Constant* c = ConstInput(op_constants);
-        uint32_t neg_id = NegateConstant(const_mgr, c);
-        uint32_t non_const_id = zero_is_variable
-                                    ? op_inst->GetSingleWordInOperand(0u)
-                                    : op_inst->GetSingleWordInOperand(1u);
-        // Change this instruction to a mul/div.
-        inst->SetOpcode(op_inst->opcode());
-        if (opcode == spv::Op::OpFDiv || opcode == spv::Op::OpUDiv ||
-            opcode == spv::Op::OpSDiv) {
-          uint32_t op0 = zero_is_variable ? non_const_id : neg_id;
-          uint32_t op1 = zero_is_variable ? neg_id : non_const_id;
-          inst->SetInOperands(
-              {{SPV_OPERAND_TYPE_ID, {op0}}, {SPV_OPERAND_TYPE_ID, {op1}}});
-        } else {
-          inst->SetInOperands({{SPV_OPERAND_TYPE_ID, {non_const_id}},
-                               {SPV_OPERAND_TYPE_ID, {neg_id}}});
-        }
-        return true;
-      }
+    if (opcode != spv::Op::OpFMul && opcode != spv::Op::OpFDiv &&
+        opcode != spv::Op::OpIMul && opcode != spv::Op::OpSDiv) {
+      return false;
     }
 
-    return false;
+    std::vector<const analysis::Constant*> op_constants =
+        const_mgr->GetOperandConstants(op_inst);
+    // Merge negate into mul or div if one operand is constant.
+    if (op_constants[0] == nullptr && op_constants[1] == nullptr) {
+      return false;
+    }
+
+    bool zero_is_variable = op_constants[0] == nullptr;
+    const analysis::Constant* c = ConstInput(op_constants);
+    uint32_t neg_id = NegateConstant(const_mgr, c);
+    uint32_t non_const_id = zero_is_variable
+                                ? op_inst->GetSingleWordInOperand(0u)
+                                : op_inst->GetSingleWordInOperand(1u);
+    // Change this instruction to a mul/div.
+    inst->SetOpcode(op_inst->opcode());
+    if (opcode == spv::Op::OpFDiv || opcode == spv::Op::OpUDiv ||
+        opcode == spv::Op::OpSDiv) {
+      uint32_t op0 = zero_is_variable ? non_const_id : neg_id;
+      uint32_t op1 = zero_is_variable ? neg_id : non_const_id;
+      inst->SetInOperands(
+          {{SPV_OPERAND_TYPE_ID, {op0}}, {SPV_OPERAND_TYPE_ID, {op1}}});
+    } else {
+      inst->SetInOperands({{SPV_OPERAND_TYPE_ID, {non_const_id}},
+                           {SPV_OPERAND_TYPE_ID, {neg_id}}});
+    }
+    return true;
   };
 }
 
@@ -449,6 +472,11 @@ FoldingRule MergeNegateAddSubArithmetic() {
     analysis::ConstantManager* const_mgr = context->get_constant_mgr();
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
+
+    if (IsCooperativeMatrix(type)) {
+      return false;
+    }
+
     if (HasFloatingPoint(type) && !inst->IsFloatingPointFoldingAllowed())
       return false;
 
@@ -680,6 +708,11 @@ FoldingRule MergeMulMulArithmetic() {
     analysis::ConstantManager* const_mgr = context->get_constant_mgr();
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
+
+    if (IsCooperativeMatrix(type)) {
+      return false;
+    }
+
     if (HasFloatingPoint(type) && !inst->IsFloatingPointFoldingAllowed())
       return false;
 
@@ -734,6 +767,11 @@ FoldingRule MergeMulDivArithmetic() {
 
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
+
+    if (IsCooperativeMatrix(type)) {
+      return false;
+    }
+
     if (!inst->IsFloatingPointFoldingAllowed()) return false;
 
     uint32_t width = ElementWidth(type);
@@ -807,6 +845,11 @@ FoldingRule MergeMulNegateArithmetic() {
     analysis::ConstantManager* const_mgr = context->get_constant_mgr();
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
+
+    if (IsCooperativeMatrix(type)) {
+      return false;
+    }
+
     bool uses_float = HasFloatingPoint(type);
     if (uses_float && !inst->IsFloatingPointFoldingAllowed()) return false;
 
@@ -847,6 +890,11 @@ FoldingRule MergeDivDivArithmetic() {
     analysis::ConstantManager* const_mgr = context->get_constant_mgr();
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
+
+    if (IsCooperativeMatrix(type)) {
+      return false;
+    }
+
     if (!inst->IsFloatingPointFoldingAllowed()) return false;
 
     uint32_t width = ElementWidth(type);
@@ -920,6 +968,11 @@ FoldingRule MergeDivMulArithmetic() {
 
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
+
+    if (IsCooperativeMatrix(type)) {
+      return false;
+    }
+
     if (!inst->IsFloatingPointFoldingAllowed()) return false;
 
     uint32_t width = ElementWidth(type);
@@ -1062,6 +1115,11 @@ FoldingRule MergeSubNegateArithmetic() {
     analysis::ConstantManager* const_mgr = context->get_constant_mgr();
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
+
+    if (IsCooperativeMatrix(type)) {
+      return false;
+    }
+
     bool uses_float = HasFloatingPoint(type);
     if (uses_float && !inst->IsFloatingPointFoldingAllowed()) return false;
 
@@ -1110,6 +1168,11 @@ FoldingRule MergeAddAddArithmetic() {
            inst->opcode() == spv::Op::OpIAdd);
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
+
+    if (IsCooperativeMatrix(type)) {
+      return false;
+    }
+
     analysis::ConstantManager* const_mgr = context->get_constant_mgr();
     bool uses_float = HasFloatingPoint(type);
     if (uses_float && !inst->IsFloatingPointFoldingAllowed()) return false;
@@ -1158,6 +1221,11 @@ FoldingRule MergeAddSubArithmetic() {
            inst->opcode() == spv::Op::OpIAdd);
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
+
+    if (IsCooperativeMatrix(type)) {
+      return false;
+    }
+
     analysis::ConstantManager* const_mgr = context->get_constant_mgr();
     bool uses_float = HasFloatingPoint(type);
     if (uses_float && !inst->IsFloatingPointFoldingAllowed()) return false;
@@ -1218,6 +1286,11 @@ FoldingRule MergeSubAddArithmetic() {
            inst->opcode() == spv::Op::OpISub);
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
+
+    if (IsCooperativeMatrix(type)) {
+      return false;
+    }
+
     analysis::ConstantManager* const_mgr = context->get_constant_mgr();
     bool uses_float = HasFloatingPoint(type);
     if (uses_float && !inst->IsFloatingPointFoldingAllowed()) return false;
@@ -1284,6 +1357,11 @@ FoldingRule MergeSubSubArithmetic() {
            inst->opcode() == spv::Op::OpISub);
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
+
+    if (IsCooperativeMatrix(type)) {
+      return false;
+    }
+
     analysis::ConstantManager* const_mgr = context->get_constant_mgr();
     bool uses_float = HasFloatingPoint(type);
     if (uses_float && !inst->IsFloatingPointFoldingAllowed()) return false;
@@ -1377,6 +1455,11 @@ FoldingRule MergeGenericAddSubArithmetic() {
            inst->opcode() == spv::Op::OpIAdd);
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
+
+    if (IsCooperativeMatrix(type)) {
+      return false;
+    }
+
     bool uses_float = HasFloatingPoint(type);
     if (uses_float && !inst->IsFloatingPointFoldingAllowed()) return false;
 

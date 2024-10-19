@@ -250,7 +250,8 @@ spv_result_t ValidateReturnValue(ValidationState_t& _,
   }
 
   if (_.addressing_model() == spv::AddressingModel::Logical &&
-      spv::Op::OpTypePointer == value_type->opcode() &&
+      (spv::Op::OpTypePointer == value_type->opcode() ||
+       spv::Op::OpTypeUntypedPointerKHR == value_type->opcode()) &&
       !_.features().variable_pointers && !_.options()->relax_logical_pointer) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpReturnValue value's type <id> "
@@ -467,13 +468,13 @@ std::string ConstructErrorString(const Construct& construct,
 // headed by |target_block| branches to multiple case constructs.
 spv_result_t FindCaseFallThrough(
     ValidationState_t& _, BasicBlock* target_block, uint32_t* case_fall_through,
-    const BasicBlock* merge, const std::unordered_set<uint32_t>& case_targets,
-    Function* function) {
+    const Construct& switch_construct,
+    const std::unordered_set<uint32_t>& case_targets) {
+  const auto* merge = switch_construct.exit_block();
   std::vector<BasicBlock*> stack;
   stack.push_back(target_block);
   std::unordered_set<const BasicBlock*> visited;
   bool target_reachable = target_block->structurally_reachable();
-  int target_depth = function->GetBlockDepth(target_block);
   while (!stack.empty()) {
     auto block = stack.back();
     stack.pop_back();
@@ -491,9 +492,14 @@ spv_result_t FindCaseFallThrough(
     } else {
       // Exiting the case construct to non-merge block.
       if (!case_targets.count(block->id())) {
-        int depth = function->GetBlockDepth(block);
-        if ((depth < target_depth) ||
-            (depth == target_depth && block->is_type(kBlockTypeContinue))) {
+        // We have already filtered out the following:
+        //  * The switch's merge
+        //  * Other case targets
+        //  * Blocks in the same case construct
+        //
+        // So the only remaining valid branches are the structured exits from
+        // the overall selection construct of the switch.
+        if (switch_construct.IsStructuredExit(_, block)) {
           continue;
         }
 
@@ -525,9 +531,10 @@ spv_result_t FindCaseFallThrough(
 }
 
 spv_result_t StructuredSwitchChecks(ValidationState_t& _, Function* function,
-                                    const Instruction* switch_inst,
-                                    const BasicBlock* header,
-                                    const BasicBlock* merge) {
+                                    const Construct& switch_construct) {
+  const auto* header = switch_construct.entry_block();
+  const auto* merge = switch_construct.exit_block();
+  const auto* switch_inst = header->terminator();
   std::unordered_set<uint32_t> case_targets;
   for (uint32_t i = 1; i < switch_inst->operands().size(); i += 2) {
     uint32_t target = switch_inst->GetOperandAs<uint32_t>(i);
@@ -545,6 +552,7 @@ spv_result_t StructuredSwitchChecks(ValidationState_t& _, Function* function,
       break;
     }
   }
+
   std::unordered_map<uint32_t, uint32_t> seen_to_fall_through;
   for (uint32_t i = 1; i < switch_inst->operands().size(); i += 2) {
     uint32_t target = switch_inst->GetOperandAs<uint32_t>(i);
@@ -565,7 +573,7 @@ spv_result_t StructuredSwitchChecks(ValidationState_t& _, Function* function,
       }
 
       if (auto error = FindCaseFallThrough(_, target_block, &case_fall_through,
-                                           merge, case_targets, function)) {
+                                           switch_construct, case_targets)) {
         return error;
       }
 
@@ -838,6 +846,9 @@ spv_result_t StructuredControlFlowChecks(
       const auto* continue_target = next_inst.block();
       if (header->id() != continue_id) {
         for (auto pred : *continue_target->predecessors()) {
+          if (!pred->structurally_reachable()) {
+            continue;
+          }
           // Ignore back-edges from within the continue construct.
           bool is_back_edge = false;
           for (auto back_edge : back_edges) {
@@ -862,9 +873,7 @@ spv_result_t StructuredControlFlowChecks(
     // Checks rules for case constructs.
     if (construct.type() == ConstructType::kSelection &&
         header->terminator()->opcode() == spv::Op::OpSwitch) {
-      const auto terminator = header->terminator();
-      if (auto error =
-              StructuredSwitchChecks(_, function, terminator, header, merge)) {
+      if (auto error = StructuredSwitchChecks(_, function, construct)) {
         return error;
       }
     }

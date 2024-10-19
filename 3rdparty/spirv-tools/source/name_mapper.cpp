@@ -25,23 +25,14 @@
 #include "source/binary.h"
 #include "source/latest_version_spirv_header.h"
 #include "source/parsed_operand.h"
+#include "source/to_string.h"
 #include "spirv-tools/libspirv.h"
 
 namespace spvtools {
-namespace {
 
-// Converts a uint32_t to its string decimal representation.
-std::string to_string(uint32_t id) {
-  // Use stringstream, since some versions of Android compilers lack
-  // std::to_string.
-  std::stringstream os;
-  os << id;
-  return os.str();
+NameMapper GetTrivialNameMapper() {
+  return [](uint32_t i) { return spvtools::to_string(i); };
 }
-
-}  // anonymous namespace
-
-NameMapper GetTrivialNameMapper() { return to_string; }
 
 FriendlyNameMapper::FriendlyNameMapper(const spv_const_context context,
                                        const uint32_t* code,
@@ -218,6 +209,7 @@ spv_result_t FriendlyNameMapper::ParseInstruction(
     } break;
     case spv::Op::OpTypeFloat: {
       const auto bit_width = inst.words[2];
+      // TODO: Handle optional fpencoding enum once actually used.
       switch (bit_width) {
         case 16:
           SaveName(result_id, "half");
@@ -254,6 +246,11 @@ spv_result_t FriendlyNameMapper::ParseInstruction(
                               NameForEnumOperand(SPV_OPERAND_TYPE_STORAGE_CLASS,
                                                  inst.words[2]) +
                               "_" + NameForId(inst.words[3]));
+      break;
+    case spv::Op::OpTypeUntypedPointerKHR:
+      SaveName(result_id, std::string("_ptr_") +
+                              NameForEnumOperand(SPV_OPERAND_TYPE_STORAGE_CLASS,
+                                                 inst.words[2]));
       break;
     case spv::Op::OpTypePipe:
       SaveName(result_id,

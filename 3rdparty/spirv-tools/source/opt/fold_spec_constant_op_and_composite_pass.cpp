@@ -247,18 +247,7 @@ utils::SmallVector<uint32_t, 2> EncodeIntegerAsWords(const analysis::Type& type,
 
   // Truncate first_word if the |type| has width less than uint32.
   if (bit_width < bits_per_word) {
-    const uint32_t num_high_bits_to_mask = bits_per_word - bit_width;
-    const bool is_negative_after_truncation =
-        result_type_signed &&
-        utils::IsBitAtPositionSet(first_word, bit_width - 1);
-
-    if (is_negative_after_truncation) {
-      // Truncate and sign-extend |first_word|. No padding words will be
-      // added and |pad_value| can be left as-is.
-      first_word = utils::SetHighBits(first_word, num_high_bits_to_mask);
-    } else {
-      first_word = utils::ClearHighBits(first_word, num_high_bits_to_mask);
-    }
+    first_word = utils::SignExtendValue(first_word, bit_width);
   }
 
   utils::SmallVector<uint32_t, 2> words = {first_word};

@@ -64,10 +64,28 @@ spv_result_t spvOperandTableNameLookup(spv_target_env,
       // We consider the current operand as available as long as
       // it is in the grammar.  It might not be *valid* to use,
       // but that should be checked by the validator, not by parsing.
+      //
+      // Exact match case
       if (nameLength == strlen(entry.name) &&
           !strncmp(entry.name, name, nameLength)) {
         *pEntry = &entry;
         return SPV_SUCCESS;
+      }
+
+      // Check the aliases. Ideally we would have a version of the table sorted
+      // by name and then we could iterate between the lower and upper bounds to
+      // restrict the amount comparisons. Fortunately, name-based lookups are
+      // mostly restricted to the assembler.
+      if (entry.numAliases > 0) {
+        for (uint32_t aliasIndex = 0; aliasIndex < entry.numAliases;
+             aliasIndex++) {
+          const auto alias = entry.aliases[aliasIndex];
+          const size_t aliasLength = strlen(alias);
+          if (nameLength == aliasLength && !strncmp(name, alias, nameLength)) {
+            *pEntry = &entry;
+            return SPV_SUCCESS;
+          }
+        }
       }
     }
   }
@@ -83,7 +101,8 @@ spv_result_t spvOperandTableValueLookup(spv_target_env,
   if (!table) return SPV_ERROR_INVALID_TABLE;
   if (!pEntry) return SPV_ERROR_INVALID_POINTER;
 
-  spv_operand_desc_t needle = {"", value, 0, nullptr, 0, nullptr, {}, ~0u, ~0u};
+  spv_operand_desc_t needle = {"", value,   0,  nullptr, 0,  nullptr,
+                               0,  nullptr, {}, ~0u,     ~0u};
 
   auto comp = [](const spv_operand_desc_t& lhs, const spv_operand_desc_t& rhs) {
     return lhs.value < rhs.value;
@@ -252,6 +271,9 @@ const char* spvOperandTypeStr(spv_operand_type_t type) {
       return "OpenCL.DebugInfo.100 debug operation";
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_IMPORTED_ENTITY:
       return "OpenCL.DebugInfo.100 debug imported entity";
+    case SPV_OPERAND_TYPE_FPENCODING:
+    case SPV_OPERAND_TYPE_OPTIONAL_FPENCODING:
+      return "FP encoding";
 
     // The next values are for values returned from an instruction, not actually
     // an operand.  So the specific strings don't matter.  But let's add them
@@ -366,6 +388,7 @@ bool spvOperandIsConcrete(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_LOAD_CACHE_CONTROL:
     case SPV_OPERAND_TYPE_STORE_CACHE_CONTROL:
     case SPV_OPERAND_TYPE_NAMED_MAXIMUM_NUMBER_OF_REGISTERS:
+    case SPV_OPERAND_TYPE_FPENCODING:
       return true;
     default:
       break;
@@ -407,6 +430,7 @@ bool spvOperandIsOptional(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_OPTIONAL_COOPERATIVE_MATRIX_OPERANDS:
     case SPV_OPERAND_TYPE_OPTIONAL_CIV:
     case SPV_OPERAND_TYPE_OPTIONAL_RAW_ACCESS_CHAIN_OPERANDS:
+    case SPV_OPERAND_TYPE_OPTIONAL_FPENCODING:
       return true;
     default:
       break;
