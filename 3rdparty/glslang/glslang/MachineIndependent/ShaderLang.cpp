@@ -297,18 +297,21 @@ int CommonIndex(EProfile profile, EShLanguage language)
 //
 // To initialize per-stage shared tables, with the common table already complete.
 //
-void InitializeStageSymbolTable(TBuiltInParseables& builtInParseables, int version, EProfile profile, const SpvVersion& spvVersion,
+bool InitializeStageSymbolTable(TBuiltInParseables& builtInParseables, int version, EProfile profile, const SpvVersion& spvVersion,
                                 EShLanguage language, EShSource source, TInfoSink& infoSink, TSymbolTable** commonTable,
                                 TSymbolTable** symbolTables)
 {
     (*symbolTables[language]).adoptLevels(*commonTable[CommonIndex(profile, language)]);
-    InitializeSymbolTable(builtInParseables.getStageString(language), version, profile, spvVersion, language, source,
-                          infoSink, *symbolTables[language]);
+    if (!InitializeSymbolTable(builtInParseables.getStageString(language), version, profile, spvVersion, language, source,
+                          infoSink, *symbolTables[language]))
+        return false;
     builtInParseables.identifyBuiltIns(version, profile, spvVersion, language, *symbolTables[language]);
     if (profile == EEsProfile && version >= 300)
         (*symbolTables[language]).setNoBuiltInRedeclarations();
     if (version == 110)
         (*symbolTables[language]).setSeparateNameSpaces();
+
+    return true;
 }
 
 //
@@ -317,6 +320,7 @@ void InitializeStageSymbolTable(TBuiltInParseables& builtInParseables, int versi
 //
 bool InitializeSymbolTables(TInfoSink& infoSink, TSymbolTable** commonTable,  TSymbolTable** symbolTables, int version, EProfile profile, const SpvVersion& spvVersion, EShSource source)
 {
+    bool success = true;
     std::unique_ptr<TBuiltInParseables> builtInParseables(CreateBuiltInParseables(infoSink, source));
 
     if (builtInParseables == nullptr)
@@ -325,70 +329,70 @@ bool InitializeSymbolTables(TInfoSink& infoSink, TSymbolTable** commonTable,  TS
     builtInParseables->initialize(version, profile, spvVersion);
 
     // do the common tables
-    InitializeSymbolTable(builtInParseables->getCommonString(), version, profile, spvVersion, EShLangVertex, source,
+    success &= InitializeSymbolTable(builtInParseables->getCommonString(), version, profile, spvVersion, EShLangVertex, source,
                           infoSink, *commonTable[EPcGeneral]);
     if (profile == EEsProfile)
-        InitializeSymbolTable(builtInParseables->getCommonString(), version, profile, spvVersion, EShLangFragment, source,
+        success &= InitializeSymbolTable(builtInParseables->getCommonString(), version, profile, spvVersion, EShLangFragment, source,
                               infoSink, *commonTable[EPcFragment]);
 
     // do the per-stage tables
 
     // always have vertex and fragment
-    InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangVertex, source,
+    success &= InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangVertex, source,
                                infoSink, commonTable, symbolTables);
-    InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangFragment, source,
+    success &= InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangFragment, source,
                                infoSink, commonTable, symbolTables);
 
     // check for tessellation
     if ((profile != EEsProfile && version >= 150) ||
         (profile == EEsProfile && version >= 310)) {
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangTessControl, source,
+        success &= InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangTessControl, source,
                                    infoSink, commonTable, symbolTables);
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangTessEvaluation, source,
+        success &= InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangTessEvaluation, source,
                                    infoSink, commonTable, symbolTables);
     }
 
     // check for geometry
     if ((profile != EEsProfile && version >= 150) ||
         (profile == EEsProfile && version >= 310))
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangGeometry, source,
+        success &= InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangGeometry, source,
                                    infoSink, commonTable, symbolTables);
 
     // check for compute
     if ((profile != EEsProfile && version >= 420) ||
         (profile == EEsProfile && version >= 310))
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangCompute, source,
+        success &= InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangCompute, source,
                                    infoSink, commonTable, symbolTables);
 
     // check for ray tracing stages
     if (profile != EEsProfile && version >= 450) {
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangRayGen, source,
+        success &= InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangRayGen, source,
             infoSink, commonTable, symbolTables);
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangIntersect, source,
+        success &= InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangIntersect, source,
             infoSink, commonTable, symbolTables);
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangAnyHit, source,
+        success &= InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangAnyHit, source,
             infoSink, commonTable, symbolTables);
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangClosestHit, source,
+        success &= InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangClosestHit, source,
             infoSink, commonTable, symbolTables);
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangMiss, source,
+        success &= InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangMiss, source,
             infoSink, commonTable, symbolTables);
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangCallable, source,
+        success &= InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangCallable, source,
             infoSink, commonTable, symbolTables);
     }
 
     // check for mesh
     if ((profile != EEsProfile && version >= 450) ||
         (profile == EEsProfile && version >= 320))
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangMesh, source,
+        success &= InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangMesh, source,
                                    infoSink, commonTable, symbolTables);
 
     // check for task
     if ((profile != EEsProfile && version >= 450) ||
         (profile == EEsProfile && version >= 320))
-        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangTask, source,
+        success &= InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangTask, source,
                                    infoSink, commonTable, symbolTables);
 
-    return true;
+    return success;
 }
 
 bool AddContextSpecificSymbols(const TBuiltInResource* resources, TInfoSink& infoSink, TSymbolTable& symbolTable, int version,
@@ -400,7 +404,8 @@ bool AddContextSpecificSymbols(const TBuiltInResource* resources, TInfoSink& inf
         return false;
 
     builtInParseables->initialize(*resources, version, profile, spvVersion, language);
-    InitializeSymbolTable(builtInParseables->getCommonString(), version, profile, spvVersion, language, source, infoSink, symbolTable);
+    if (!InitializeSymbolTable(builtInParseables->getCommonString(), version, profile, spvVersion, language, source, infoSink, symbolTable))
+        return false;
     builtInParseables->identifyBuiltIns(version, profile, spvVersion, language, symbolTable, *resources);
 
     return true;
@@ -418,9 +423,10 @@ bool AddContextSpecificSymbols(const TBuiltInResource* resources, TInfoSink& inf
 // This only gets done the first time any thread needs a particular symbol table
 // (lazy evaluation).
 //
-void SetupBuiltinSymbolTable(int version, EProfile profile, const SpvVersion& spvVersion, EShSource source)
+bool SetupBuiltinSymbolTable(int version, EProfile profile, const SpvVersion& spvVersion, EShSource source)
 {
     TInfoSink infoSink;
+    bool success;
 
     // Make sure only one thread tries to do this at a time
 #ifndef DISABLE_THREAD_SUPPORT
@@ -432,8 +438,9 @@ void SetupBuiltinSymbolTable(int version, EProfile profile, const SpvVersion& sp
     int spvVersionIndex = MapSpvVersionToIndex(spvVersion);
     int profileIndex = MapProfileToIndex(profile);
     int sourceIndex = MapSourceToIndex(source);
-    if (CommonSymbolTable[versionIndex][spvVersionIndex][profileIndex][sourceIndex][EPcGeneral])
-        return;
+    if (CommonSymbolTable[versionIndex][spvVersionIndex][profileIndex][sourceIndex][EPcGeneral]) {
+        return true;
+    }
 
     // Switch to a new pool
     TPoolAllocator& previousAllocator = GetThreadPoolAllocator();
@@ -449,7 +456,10 @@ void SetupBuiltinSymbolTable(int version, EProfile profile, const SpvVersion& sp
         stageTables[stage] = new TSymbolTable;
 
     // Generate the local symbol tables using the new pool
-    InitializeSymbolTables(infoSink, commonTable, stageTables, version, profile, spvVersion, source);
+    if (!InitializeSymbolTables(infoSink, commonTable, stageTables, version, profile, spvVersion, source)) {
+        success = false;
+        goto cleanup;
+    }
 
     // Switch to the process-global pool
     SetThreadPoolAllocator(PerProcessGPA);
@@ -471,7 +481,9 @@ void SetupBuiltinSymbolTable(int version, EProfile profile, const SpvVersion& sp
             SharedSymbolTables[versionIndex][spvVersionIndex][profileIndex][sourceIndex][stage]->readOnly();
         }
     }
+    success = true;
 
+cleanup:
     // Clean up the local tables before deleting the pool they used.
     for (int precClass = 0; precClass < EPcCount; ++precClass)
         delete commonTable[precClass];
@@ -480,6 +492,8 @@ void SetupBuiltinSymbolTable(int version, EProfile profile, const SpvVersion& sp
 
     delete builtInPoolAllocator;
     SetThreadPoolAllocator(&previousAllocator);
+
+    return success;
 }
 
 // Function to Print all builtins
@@ -915,7 +929,9 @@ bool ProcessDeferred(
             intermediate.addSourceText(strings[numPre + s], lengths[numPre + s]);
         }
     }
-    SetupBuiltinSymbolTable(version, profile, spvVersion, source);
+    if (!SetupBuiltinSymbolTable(version, profile, spvVersion, source)) {
+        return false;
+    }
 
     TSymbolTable* cachedTable = SharedSymbolTables[MapVersionToIndex(version)]
                                                   [MapSpvVersionToIndex(spvVersion)]
@@ -1324,11 +1340,6 @@ int ShInitialize()
     if (PerProcessGPA == nullptr)
         PerProcessGPA = new TPoolAllocator();
 
-    glslang::TScanContext::fillInKeywordMap();
-#ifdef ENABLE_HLSL
-    glslang::HlslScanContext::fillInKeywordMap();
-#endif
-
     return 1;
 }
 
@@ -1416,11 +1427,6 @@ int ShFinalize()
         delete PerProcessGPA;
         PerProcessGPA = nullptr;
     }
-
-    glslang::TScanContext::deleteKeywordMap();
-#ifdef ENABLE_HLSL
-    glslang::HlslScanContext::deleteKeywordMap();
-#endif
 
     return 1;
 }
@@ -1725,6 +1731,10 @@ public:
     TDeferredCompiler(EShLanguage s, TInfoSink& i) : TCompiler(s, i) { }
     virtual bool compile(TIntermNode*, int = 0, EProfile = ENoProfile) { return true; }
 };
+
+TIoMapper* GetGlslIoMapper() {
+    return static_cast<TIoMapper*>(new TGlslIoMapper());
+}
 
 TShader::TShader(EShLanguage s)
     : stage(s), lengths(nullptr), stringNames(nullptr), preamble(""), overrideVersion(0)
@@ -2045,7 +2055,7 @@ bool TProgram::linkStage(EShLanguage stage, EShMessages messages)
 //
 // Return true if no errors.
 //
-bool TProgram::crossStageCheck(EShMessages) {
+bool TProgram::crossStageCheck(EShMessages messages) {
 
     // make temporary intermediates to hold the linkage symbols for each linking interface
     // while we do the checks
@@ -2098,6 +2108,13 @@ bool TProgram::crossStageCheck(EShMessages) {
     for (unsigned int i = 1; i < activeStages.size(); ++i) {
         activeStages[i - 1]->checkStageIO(*infoSink, *activeStages[i]);
         error |= (activeStages[i - 1]->getNumErrors() != 0);
+    }
+
+    // if requested, optimize cross stage IO
+    if (messages & EShMsgLinkTimeOptimization) {
+        for (unsigned int i = 1; i < activeStages.size(); ++i) {
+            activeStages[i - 1]->optimizeStageIO(*infoSink, *activeStages[i]);
+        }
     }
 
     return !error;
@@ -2174,6 +2191,12 @@ int TProgram::getNumAtomicCounters() const                            { return r
 const TObjectReflection& TProgram::getAtomicCounter(int index) const  { return reflection->getAtomicCounter(index); }
 void TProgram::dumpReflection() { if (reflection != nullptr) reflection->dump(); }
 
+TIoMapResolver* TProgram::getGlslIoResolver(EShLanguage stage) {
+    auto *intermediate = getIntermediate(stage);
+    if (!intermediate)
+        return NULL;
+    return static_cast<TIoMapResolver*>(new TDefaultGlslIoResolver(*intermediate));
+}
 //
 // I/O mapping implementation.
 //

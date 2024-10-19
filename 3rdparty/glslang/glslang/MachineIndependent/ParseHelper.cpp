@@ -9924,8 +9924,8 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
 
     if (publicType.shaderQualifiers.layoutDerivativeGroupQuads) {
         if (publicType.qualifier.storage == EvqVaryingIn) {
-            if ((intermediate.getLocalSize(0) & 1) ||
-                (intermediate.getLocalSize(1) & 1))
+            if ((intermediate.getLocalSizeSpecId(0) == TQualifier::layoutNotSet && (intermediate.getLocalSize(0) & 1)) ||
+                (intermediate.getLocalSizeSpecId(1) == TQualifier::layoutNotSet && (intermediate.getLocalSize(1) & 1)))
                 error(loc, "requires local_size_x and local_size_y to be multiple of two", "derivative_group_quadsNV", "");
             else
                 intermediate.setLayoutDerivativeMode(LayoutDerivativeGroupQuads);
@@ -9935,7 +9935,10 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
     }
     if (publicType.shaderQualifiers.layoutDerivativeGroupLinear) {
         if (publicType.qualifier.storage == EvqVaryingIn) {
-            if((intermediate.getLocalSize(0) *
+            if (intermediate.getLocalSizeSpecId(0) == TQualifier::layoutNotSet &&
+                intermediate.getLocalSizeSpecId(1) == TQualifier::layoutNotSet &&
+                intermediate.getLocalSizeSpecId(2) == TQualifier::layoutNotSet &&
+                (intermediate.getLocalSize(0) *
                 intermediate.getLocalSize(1) *
                 intermediate.getLocalSize(2)) % 4 != 0)
                 error(loc, "requires total group size to be multiple of four", "derivative_group_linearNV", "");

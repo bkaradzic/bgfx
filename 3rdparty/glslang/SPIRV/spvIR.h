@@ -189,6 +189,15 @@ public:
             out.push_back(operands[op]);
     }
 
+    const char *getNameString() const {
+        if (opCode == OpString) {
+            return (const char *)&operands[0];
+        } else {
+            assert(opCode == OpName);
+            return (const char *)&operands[1];
+        }
+    }
+
 protected:
     Instruction(const Instruction&);
     Id resultId;

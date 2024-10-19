@@ -1694,8 +1694,12 @@ typedef TVector<TStorageQualifier> TQualifierList;
 //
 class TIntermAggregate : public TIntermOperator {
 public:
-    TIntermAggregate() : TIntermOperator(EOpNull), userDefined(false), pragmaTable(nullptr) { }
-    TIntermAggregate(TOperator o) : TIntermOperator(o), pragmaTable(nullptr) { }
+    TIntermAggregate() : TIntermOperator(EOpNull), userDefined(false), pragmaTable(nullptr) { 
+        endLoc.init();
+    }
+    TIntermAggregate(TOperator o) : TIntermOperator(o), pragmaTable(nullptr) {
+        endLoc.init();
+    }
     ~TIntermAggregate() { delete pragmaTable; }
     virtual       TIntermAggregate* getAsAggregate()       { return this; }
     virtual const TIntermAggregate* getAsAggregate() const { return this; }
@@ -1719,6 +1723,9 @@ public:
     void setSpirvInstruction(const TSpirvInstruction& inst) { spirvInst = inst; }
     const TSpirvInstruction& getSpirvInstruction() const { return spirvInst; }
 
+    void setEndLoc(TSourceLoc loc) { endLoc = loc; }
+    TSourceLoc getEndLoc() const { return endLoc; }
+
     void setLinkType(TLinkType l) { linkType = l; }
     TLinkType getLinkType() const { return linkType; }
 protected:
@@ -1733,6 +1740,10 @@ protected:
     TPragmaTable* pragmaTable;
     TSpirvInstruction spirvInst;
     TLinkType linkType = ELinkNone;
+
+    // Marking the end source location of the aggregate.
+    // This is currently only set for a compound statement or a function body, pointing to '}'.
+    TSourceLoc endLoc;
 };
 
 //

@@ -169,7 +169,7 @@ void TType::buildMangledName(TString& mangledName) const
                 if (arraySizes->getDimNode(i)->getAsSymbolNode())
                     snprintf(buf, maxSize, "s%lld", arraySizes->getDimNode(i)->getAsSymbolNode()->getId());
                 else
-                    snprintf(buf, maxSize, "s%p", arraySizes->getDimNode(i));
+                    snprintf(buf, maxSize, "s%p", (void*)(arraySizes->getDimNode(i)));
             } else
                 snprintf(buf, maxSize, "%d", arraySizes->getDimSize(i));
             mangledName += '[';
