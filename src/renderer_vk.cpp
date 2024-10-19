@@ -6538,16 +6538,17 @@ VK_DESTROY
 
 		setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-		bimg::TextureFormat::Enum tf = bimg::TextureFormat::Enum(m_textureFormat);
-		const bimg::ImageBlockInfo &blockInfo = bimg::getBlockInfo(tf);
-		for (uint32_t i = 0; i < _bufferImageCopyCount; ++i)
+		bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(m_textureFormat);
+		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(format);
+		for (uint32_t ii = 0; ii < _bufferImageCopyCount; ++ii)
 		{
 			BX_ASSERT(
-				  bx::uint32_mod(_bufferImageCopy[i].bufferOffset, blockInfo.blockSize) == 0
+				  bx::uint32_mod(_bufferImageCopy[ii].bufferOffset, blockInfo.blockSize) == 0
 				, "Misaligned texture of type %s to offset %u, which is not a multiple of %u."
-				, bimg::getName(tf), _bufferImageCopy[i].bufferOffset, blockInfo.blockSize
+				, bimg::getName(format), _bufferImageCopy[ii].bufferOffset, blockInfo.blockSize
 				);
 		}
+		BX_UNUSED(blockInfo);
 
 		vkCmdCopyBufferToImage(
 			  _commandBuffer
