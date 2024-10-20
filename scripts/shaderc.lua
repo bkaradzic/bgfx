@@ -82,6 +82,8 @@ project "spirv-opt"
 		path.join(SPIRV_TOOLS, "source/text.h"),
 		path.join(SPIRV_TOOLS, "source/text_handler.cpp"),
 		path.join(SPIRV_TOOLS, "source/text_handler.h"),
+		path.join(SPIRV_TOOLS, "source/to_string.cpp"),
+		path.join(SPIRV_TOOLS, "source/to_string.h"),
 		path.join(SPIRV_TOOLS, "source/util/bit_vector.cpp"),
 		path.join(SPIRV_TOOLS, "source/util/bit_vector.h"),
 		path.join(SPIRV_TOOLS, "source/util/bitutils.h"),
