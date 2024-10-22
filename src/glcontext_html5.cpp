@@ -86,7 +86,7 @@ namespace bgfx { namespace gl
 		}
 		else
 		{
-			m_primary = createSwapChain((void*)canvas, (int)_width, (int)_height) );
+			m_primary = createSwapChain((void*)canvas, (int)_width, (int)_height);
 		}
 
 		if (0 != _width
