@@ -38,7 +38,9 @@ clean: ## Clean all intermediate files.
 projgen: ## Generate project files for all configurations.
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib                       vs2019
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=mingw-gcc       gmake
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=mingw-clang     gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-gcc       gmake
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-clang     gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx-x64         gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx-arm64       gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=osx           xcode9
@@ -95,13 +97,21 @@ wasm-release: .build/projects/gmake-wasm ## Build - Emscripten Release
 	$(MAKE) -R -C .build/projects/gmake-wasm config=release
 wasm: wasm-debug wasm-release ## Build - Emscripten Debug and Release
 
-.build/projects/gmake-linux:
+.build/projects/gmake-linux-gcc:
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-gcc gmake
-linux-debug64: .build/projects/gmake-linux ## Build - Linux x64 Debug
-	$(MAKE) -R -C .build/projects/gmake-linux config=debug64
-linux-release64: .build/projects/gmake-linux ## Build - Linux x64 Release
-	$(MAKE) -R -C .build/projects/gmake-linux config=release64
-linux: linux-debug64 linux-release64 ## Build - Linux x86/x64 Debug and Release
+linux-gcc-debug64: .build/projects/gmake-linux-gcc ## Build - Linux GCC x64 Debug
+	$(MAKE) -R -C .build/projects/gmake-linux-gcc config=debug64
+linux-gcc-release64: .build/projects/gmake-linux-gcc ## Build - Linux GCC x64 Release
+	$(MAKE) -R -C .build/projects/gmake-linux-gcc config=release64
+linux-gcc: linux-gcc-debug64 linux-gcc-release64 ## Build - Linux GCC x86/x64 Debug and Release
+
+.build/projects/gmake-linux-clang:
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-clang gmake
+linux-clang-debug64: .build/projects/gmake-linux-clang ## Build - Linux Clang x64 Debug
+	$(MAKE) -R -C .build/projects/gmake-linux-gcc config=debug64
+linux-clang-release64: .build/projects/gmake-linux-clang ## Build - Linux Clang x64 Release
+	$(MAKE) -R -C .build/projects/gmake-linux-clang config=release64
+linux-clang: linux-clang-debug64 linux-clang-release64 ## Build - Linux Clang x86/x64 Debug and Release
 
 .build/projects/gmake-mingw-gcc:
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --os=windows --gcc=mingw-gcc gmake
@@ -184,28 +194,6 @@ rpi-release: .build/projects/gmake-rpi ## Build - RasberryPi Release
 	$(MAKE) -R -C .build/projects/gmake-rpi config=release
 rpi: rpi-debug rpi-release ## Build - RasberryPi Debug and Release
 
-build-darwin: osx-x64
-
-build-linux: linux-debug64 linux-release64
-
-build-windows: mingw-gcc
-
-build: build-$(OS)
-
-rebuild-shaders:
-	$(MAKE) -R -C examples rebuild
-
-assets: # Build assets.
-	$(NINJA) -C scripts
-
-analyze:
-	cppcheck src/
-	cppcheck examples/
-
-docs:
-	doxygen scripts/bgfx.doxygen
-	markdown README.md > .build/docs/readme.html
-
 ###
 
 SILENT ?= @
@@ -214,8 +202,8 @@ UNAME := $(shell uname)
 ifeq ($(UNAME),$(filter $(UNAME),Linux Darwin))
 ifeq ($(UNAME),$(filter $(UNAME),Darwin))
 OS=darwin
-BUILD_PROJECT_DIR=gmake-osx-x64
-BUILD_OUTPUT_DIR=osx-x64
+BUILD_PROJECT_DIR=gmake-osx-arm64
+BUILD_OUTPUT_DIR=osx-arm64
 BUILD_TOOLS_CONFIG=release
 BUILD_TOOLS_SUFFIX=Release
 EXE=
@@ -260,41 +248,3 @@ tools: geometryc geometryv shaderc texturec texturev ## Build tools.
 
 clean-tools: ## Clean tools projects.
 	-$(SILENT) rm -r .build/projects/$(BUILD_PROJECT_DIR)
-
-dist-windows: .build/projects/gmake-mingw-gcc
-	$(SILENT) $(MAKE) -C .build/projects/gmake-mingw-gcc config=release64 -j 6 geometryc
-	$(SILENT) cp .build/win64_mingw-gcc/bin/geometrycRelease.exe tools/bin/windows/geometryc.exe
-	$(SILENT) $(MAKE) -C .build/projects/gmake-mingw-gcc config=release64 -j 6 geometryv
-	$(SILENT) cp .build/win64_mingw-gcc/bin/geometryvRelease.exe tools/bin/windows/geometryv.exe
-	$(SILENT) $(MAKE) -C .build/projects/gmake-mingw-gcc config=release64 -j 6 shaderc
-	$(SILENT) cp .build/win64_mingw-gcc/bin/shadercRelease.exe   tools/bin/windows/shaderc.exe
-	$(SILENT) $(MAKE) -C .build/projects/gmake-mingw-gcc config=release64 -j 6 texturec
-	$(SILENT) cp .build/win64_mingw-gcc/bin/texturecRelease.exe  tools/bin/windows/texturec.exe
-	$(SILENT) $(MAKE) -C .build/projects/gmake-mingw-gcc config=release64 -j 6 texturev
-	$(SILENT) cp .build/win64_mingw-gcc/bin/texturevRelease.exe tools/bin/windows/texturev.exe
-
-dist-linux: .build/projects/gmake-linux
-	$(SILENT) $(MAKE) -C .build/projects/gmake-linux     config=release64 -j 6 geometryc
-	$(SILENT) cp .build/linux64_gcc/bin/geometrycRelease tools/bin/linux/geometryc
-	$(SILENT) $(MAKE) -C .build/projects/gmake-linux     config=release64 -j 6 geometryv
-	$(SILENT) cp .build/linux64_gcc/bin/geometryvRelease tools/bin/linux/geometryv
-	$(SILENT) $(MAKE) -C .build/projects/gmake-linux     config=release64 -j 6 shaderc
-	$(SILENT) cp .build/linux64_gcc/bin/shadercRelease   tools/bin/linux/shaderc
-	$(SILENT) $(MAKE) -C .build/projects/gmake-linux     config=release64 -j 6 texturec
-	$(SILENT) cp .build/linux64_gcc/bin/texturecRelease  tools/bin/linux/texturec
-	$(SILENT) $(MAKE) -C .build/projects/gmake-linux     config=release64 -j 6 texturev
-	$(SILENT) cp .build/linux64_gcc/bin/texturevRelease  tools/bin/linux/texturev
-
-dist-darwin: .build/projects/gmake-osx-x64
-	$(SILENT) $(MAKE) -C .build/projects/gmake-osx-x64 config=release -j 6 geometryc
-	$(SILENT) cp .build/osx-x64/bin/geometrycRelease tools/bin/darwin/geometryc
-	$(SILENT) $(MAKE) -C .build/projects/gmake-osx-x64 config=release -j 6 geometryv
-	$(SILENT) cp .build/osx-x64/bin/geometryvRelease tools/bin/darwin/geometryv
-	$(SILENT) $(MAKE) -C .build/projects/gmake-osx-x64 config=release -j 6 shaderc
-	$(SILENT) cp .build/osx-x64/bin/shadercRelease tools/bin/darwin/shaderc
-	$(SILENT) $(MAKE) -C .build/projects/gmake-osx-x64 config=release -j 6 texturec
-	$(SILENT) cp .build/osx-x64/bin/texturecRelease tools/bin/darwin/texturec
-	$(SILENT) $(MAKE) -C .build/projects/gmake-osx-x64 config=release -j 6 texturev
-	$(SILENT) cp .build/osx-x64/bin/texturevRelease tools/bin/darwin/texturev
-
-dist: clean dist-windows dist-linux dist-darwin

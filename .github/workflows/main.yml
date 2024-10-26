@@ -105,7 +105,7 @@ jobs:
           { config: debug, binsuffix: Debug },
           { config: release, binsuffix: Release },
         ]
-    name: linux-${{ matrix.config }}64
+    name: linux-gcc-${{ matrix.config }}64
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout bgfx
@@ -126,7 +126,7 @@ jobs:
         run: |
           sudo apt install libgl-dev
           cd bgfx
-          make -j$(nproc) linux-${{ matrix.config }}64
+          make -j$(nproc) linux-gcc-${{ matrix.config }}64
       - name: Check
         run: |
           cd bgfx
