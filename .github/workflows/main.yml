@@ -20,7 +20,7 @@ jobs:
           { config: Release, platform: x64, bindir: 'win64_vs2019' },
         ]
     name: msvc-${{ matrix.config }}-${{ matrix.platform }}
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
       - name: Checkout bgfx
         uses: actions/checkout@v3
@@ -61,7 +61,7 @@ jobs:
           { msystem: CLANG64, project: 'mingw-clang', bindir: 'win64_mingw-clang' },
         ]
     name: mingw-${{ matrix.msystem }}
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - name: Checkout bgfx
         uses: actions/checkout@v3
@@ -106,7 +106,7 @@ jobs:
           { config: release, binsuffix: Release },
         ]
     name: linux-gcc-${{ matrix.config }}64
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout bgfx
         uses: actions/checkout@v3
@@ -143,7 +143,7 @@ jobs:
           { config: release, binsuffix: Release },
         ]
     name: osx-x64-${{ matrix.config }}
-    runs-on: macos-latest
+    runs-on: macos-14
     steps:
       - name: Checkout bgfx
         uses: actions/checkout@v3
@@ -178,7 +178,7 @@ jobs:
           { platform: arm64  },
         ]
     name: android-${{ matrix.platform }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: nttld/setup-ndk@v1
         id: setup-ndk
