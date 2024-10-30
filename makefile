@@ -108,7 +108,7 @@ linux-gcc: linux-gcc-debug64 linux-gcc-release64 ## Build - Linux GCC x86/x64 De
 .build/projects/gmake-linux-clang:
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-clang gmake
 linux-clang-debug64: .build/projects/gmake-linux-clang ## Build - Linux Clang x64 Debug
-	$(MAKE) -R -C .build/projects/gmake-linux-gcc config=debug64
+	$(MAKE) -R -C .build/projects/gmake-linux-clang config=debug64
 linux-clang-release64: .build/projects/gmake-linux-clang ## Build - Linux Clang x64 Release
 	$(MAKE) -R -C .build/projects/gmake-linux-clang config=release64
 linux-clang: linux-clang-debug64 linux-clang-release64 ## Build - Linux Clang x86/x64 Debug and Release
