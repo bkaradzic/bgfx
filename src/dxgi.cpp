@@ -469,56 +469,6 @@ namespace bgfx
 	{
 		HRESULT hr = S_OK;
 
-		uint32_t scdFlags = _scd.flags;
-
-#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
-		IDXGIFactory5* factory5;
-		hr = m_factory->QueryInterface(IID_IDXGIFactory5, (void**)&factory5);
-
-		if (SUCCEEDED(hr) )
-		{
-			BOOL allowTearing = false;
-			// BK - CheckFeatureSupport with DXGI_FEATURE_PRESENT_ALLOW_TEARING
-			//      will crash on pre Windows 8. Issue #1356.
-			hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
-			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
-
-			scdFlags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-			scdFlags |= false
-				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
-				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_DISCARD
-				? 0 // DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
-				: 0
-				;
-
-			m_tearingSupported = allowTearing;
-
-			DX_RELEASE_I(factory5);
-		}
-
-		DXGI_SWAP_CHAIN_DESC scd;
-		scd.BufferDesc.Width  = _scd.width;
-		scd.BufferDesc.Height = _scd.height;
-		scd.BufferDesc.RefreshRate.Numerator   = 1;
-		scd.BufferDesc.RefreshRate.Denominator = 60;
-		scd.BufferDesc.Format = _scd.format;
-		scd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-		scd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-		scd.SampleDesc.Count   = 1;
-		scd.SampleDesc.Quality = 0;
-		scd.BufferUsage  = _scd.bufferUsage;
-		scd.BufferCount  = _scd.bufferCount;
-		scd.OutputWindow = (HWND)_scd.nwh;
-		scd.Windowed     = _scd.windowed;
-		scd.SwapEffect   = _scd.swapEffect;
-		scd.Flags        = scdFlags;
-
-		hr = m_factory->CreateSwapChain(
-			  _device
-			, &scd
-			, reinterpret_cast<IDXGISwapChain**>(_swapChain)
-			);
-#else
 		DXGI_SWAP_CHAIN_DESC1 scd;
 		scd.Width  = _scd.width;
 		scd.Height = _scd.height;
@@ -531,8 +481,49 @@ namespace bgfx
 		scd.Scaling     = _scd.scaling;
 		scd.SwapEffect  = _scd.swapEffect;
 		scd.AlphaMode   = _scd.alphaMode;
-		scd.Flags       = scdFlags;
+		scd.Flags       = _scd.flags;
+		
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
+		IDXGIFactory5* factory5;
+		hr = m_factory->QueryInterface(IID_IDXGIFactory5, (void**)&factory5);
 
+		if (SUCCEEDED(hr) )
+		{
+			BOOL allowTearing = false;
+			// BK - CheckFeatureSupport with DXGI_FEATURE_PRESENT_ALLOW_TEARING
+			//      will crash on pre Windows 8. Issue #1356.
+			hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
+			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
+
+			scd.Flags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+			scd.Flags |= false
+				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
+				|| _scd.swapEffect == DXGI_SWAP_EFFECT_FLIP_DISCARD
+				? 0 // DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
+				: 0
+				;
+
+			m_tearingSupported = allowTearing;
+
+			DX_RELEASE_I(factory5);
+		}
+
+		DXGI_SWAP_CHAIN_FULLSCREEN_DESC scfd;
+		scfd.RefreshRate.Numerator   = 1;
+		scfd.RefreshRate.Denominator = 60;
+		scfd.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+		scfd.Scaling  = DXGI_MODE_SCALING_UNSPECIFIED;
+		scfd.Windowed = _scd.windowed;
+
+		hr = m_factory->CreateSwapChainForHwnd(
+			  _device
+			, (HWND)_scd.nwh
+			, &scd
+			, &scfd
+			, NULL
+			, reinterpret_cast<IDXGISwapChain1**>(_swapChain)
+		);
+#else
 		if (NULL == _scd.ndt)
 		{
 			hr = m_factory->CreateSwapChainForCoreWindow(
