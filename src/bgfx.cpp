@@ -1313,10 +1313,8 @@ namespace bgfx
 
 		m_draw.clear(_flags);
 		m_bind.clear(_flags);
-		if (_flags & BGFX_DISCARD_STATE)
-		{
-			m_uniformBegin = m_uniformEnd;
-		}
+
+		m_uniformBegin = m_uniformEnd;
 	}
 
 	void EncoderImpl::dispatch(ViewId _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
