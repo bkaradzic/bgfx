@@ -6939,6 +6939,7 @@ VK_DESTROY
 				sci.hinstance = (HINSTANCE)GetModuleHandle(NULL);
 				sci.hwnd      = (HWND)m_nwh;
 				result = vkCreateWin32SurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+				BX_WARN(VK_SUCCESS == result, "vkCreateWin32SurfaceKHR failed %d: %s.", result, getName(result) );
 			}
 		}
 #elif BX_PLATFORM_ANDROID
@@ -6951,14 +6952,16 @@ VK_DESTROY
 				sci.flags = 0;
 				sci.window = (ANativeWindow*)m_nwh;
 				result = vkCreateAndroidSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+				BX_WARN(VK_SUCCESS == result, "vkCreateAndroidSurfaceKHR failed %d: %s.", result, getName(result) );
 			}
 		}
 #elif BX_PLATFORM_LINUX
 		{
-			if (g_platformData.type == bgfx::NativeWindowHandleType::Wayland)
+			if (g_platformData.type == bgfx::NativeWindowHandleType::Wayland
+			&&  s_extension[Extension::KHR_wayland_surface].m_supported
+			&&  NULL != vkCreateWaylandSurfaceKHR
+			   )
 			{
-				BGFX_FATAL(s_extension[Extension::KHR_wayland_surface].m_supported, Fatal::UnableToInitialize, VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME " not supported");
-				BGFX_FATAL(NULL != vkCreateWaylandSurfaceKHR, Fatal::UnableToInitialize, "vkCreateWaylandSurfaceKHR == 0");
 				VkWaylandSurfaceCreateInfoKHR sci;
 				sci.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
 				sci.pNext = NULL;
@@ -6966,12 +6969,14 @@ VK_DESTROY
 				sci.display = (wl_display*)g_platformData.ndt;
 				sci.surface = (wl_surface*)m_nwh;
 				result = vkCreateWaylandSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+				BX_WARN(VK_SUCCESS == result, "vkCreateWaylandSurfaceKHR failed %d: %s.", result, getName(result) );
 			}
 			else
 			{
-				if (s_extension[Extension::KHR_xlib_surface].m_supported)
+				if (s_extension[Extension::KHR_xlib_surface].m_supported
+				&&  NULL != vkCreateXlibSurfaceKHR
+				   )
 				{
-					BGFX_FATAL(NULL != vkCreateXlibSurfaceKHR, Fatal::UnableToInitialize, "vkCreateXlibSurfaceKHR == 0")
 					VkXlibSurfaceCreateInfoKHR sci;
 					sci.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
 					sci.pNext = NULL;
@@ -6979,29 +6984,29 @@ VK_DESTROY
 					sci.dpy    = (Display*)g_platformData.ndt;
 					sci.window = (Window)m_nwh;
 					result = vkCreateXlibSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+					BX_WARN(VK_SUCCESS == result, "vkCreateXlibSurfaceKHR failed %d: %s.", result, getName(result) );
 				}
 
-				if (VK_SUCCESS != result && s_extension[Extension::KHR_xcb_surface].m_supported)
+				if (VK_SUCCESS != result
+				&&  s_extension[Extension::KHR_xcb_surface].m_supported
+				&&  NULL != vkCreateXcbSurfaceKHR
+				)
 				{
 					void* xcbdll = bx::dlopen("libX11-xcb.so.1");
 
-					if (NULL != xcbdll
-					&&  NULL != vkCreateXcbSurfaceKHR)
+					if (NULL != xcbdll)
 					{
 						typedef xcb_connection_t* (*PFN_XGETXCBCONNECTION)(Display*);
 						PFN_XGETXCBCONNECTION XGetXCBConnection = (PFN_XGETXCBCONNECTION)bx::dlsym(xcbdll, "XGetXCBConnection");
-
-						union { void* ptr; xcb_window_t window; } cast = { m_nwh };
-
-						BGFX_FATAL(NULL != vkCreateXcbSurfaceKHR, Fatal::UnableToInitialize, "vkCreateXcbSurfaceKHR == 0")
 
 						VkXcbSurfaceCreateInfoKHR sci;
 						sci.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
 						sci.pNext      = NULL;
 						sci.flags      = 0;
 						sci.connection = XGetXCBConnection( (Display*)g_platformData.ndt);
-						sci.window     = cast.window;
+						sci.window     = bx::narrowCast<xcb_window_t>(uintptr_t(m_nwh) );
 						result = vkCreateXcbSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+						BX_WARN(VK_SUCCESS == result, "vkCreateXcbSurfaceKHR failed %d: %s.", result, getName(result) );
 
 						bx::dlclose(xcbdll);
 					}
@@ -7046,6 +7051,7 @@ VK_DESTROY
 				sci.flags = 0;
 				sci.pView = (__bridge void*)layer;
 				result = vkCreateMacOSSurfaceMVK(instance, &sci, allocatorCb, &m_surface);
+				BX_WARN(VK_SUCCESS == result, "vkCreateMacOSSurfaceMVK failed %d: %s.", result, getName(result) );
 			}
 		}
 #elif BX_PLATFORM_NX
@@ -7057,6 +7063,7 @@ VK_DESTROY
 			sci.flags  = 0;
 			sci.window = m_nwh;
 			result = vkCreateViSurfaceNN(instance, &sci, allocatorCb, &m_surface);
+			BX_WARN(VK_SUCCESS == result, "vkCreateViSurfaceNN failed %d: %s.", result, getName(result) );
 		}
 #else
 #	error "Figure out KHR surface..."
