@@ -95,6 +95,24 @@ BGFX_C_API void bgfx_vertex_layout_end(bgfx_vertex_layout_t* _this)
 	This->end();
 }
 
+BGFX_C_API uint16_t bgfx_vertex_layout_get_offset(const bgfx_vertex_layout_t* _this, bgfx_attrib_t _attrib)
+{
+	const bgfx::VertexLayout* This = (const bgfx::VertexLayout*)_this;
+	return This->getOffset((bgfx::Attrib::Enum)_attrib);
+}
+
+BGFX_C_API uint16_t bgfx_vertex_layout_get_stride(const bgfx_vertex_layout_t* _this)
+{
+	const bgfx::VertexLayout* This = (const bgfx::VertexLayout*)_this;
+	return This->getStride();
+}
+
+BGFX_C_API uint32_t bgfx_vertex_layout_get_size(const bgfx_vertex_layout_t* _this, uint32_t _num)
+{
+	const bgfx::VertexLayout* This = (const bgfx::VertexLayout*)_this;
+	return This->getSize(_num);
+}
+
 BGFX_C_API void bgfx_vertex_pack(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _layout, void* _data, uint32_t _index)
 {
 	const bgfx::VertexLayout & layout = *(const bgfx::VertexLayout *)_layout;
@@ -618,6 +636,11 @@ BGFX_C_API void bgfx_destroy_occlusion_query(bgfx_occlusion_query_handle_t _hand
 BGFX_C_API void bgfx_set_palette_color(uint8_t _index, const float _rgba[4])
 {
 	bgfx::setPaletteColor(_index, _rgba);
+}
+
+BGFX_C_API void bgfx_set_palette_color_rgba32f(uint8_t _index, float _r, float _g, float _b, float _a)
+{
+	bgfx::setPaletteColor(_index, _r, _g, _b, _a);
 }
 
 BGFX_C_API void bgfx_set_palette_color_rgba8(uint8_t _index, uint32_t _rgba)
@@ -1280,6 +1303,9 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_vertex_layout_has,
 			bgfx_vertex_layout_skip,
 			bgfx_vertex_layout_end,
+			bgfx_vertex_layout_get_offset,
+			bgfx_vertex_layout_get_stride,
+			bgfx_vertex_layout_get_size,
 			bgfx_vertex_pack,
 			bgfx_vertex_unpack,
 			bgfx_vertex_convert,
@@ -1367,6 +1393,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_get_result,
 			bgfx_destroy_occlusion_query,
 			bgfx_set_palette_color,
+			bgfx_set_palette_color_rgba32f,
 			bgfx_set_palette_color_rgba8,
 			bgfx_set_view_name,
 			bgfx_set_view_rect,

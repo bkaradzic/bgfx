@@ -12,6 +12,8 @@
 
 #include "bgfx.h"
 
+#if !BGFX_IDL_CPP
+
 namespace bgfx
 {
 	/// Render frame enum.
@@ -132,5 +134,7 @@ namespace bgfx
 		);
 
 } // namespace bgfx
+
+#endif // BGFX_IDL_CPP
 
 #endif // BGFX_PLATFORM_H_HEADER_GUARD

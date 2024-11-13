@@ -2386,16 +2386,6 @@ public static partial class bgfx
 	public static extern unsafe void vertex_layout_decode(VertexLayout* _this, Attrib _attrib, byte * _num, AttribType* _type, bool* _normalized, bool* _asInt);
 	
 	/// <summary>
-	/// Returns `true` if VertexLayout contains attribute.
-	/// </summary>
-	///
-	/// <param name="_attrib">Attribute semantics. See: `bgfx::Attrib`</param>
-	///
-	[DllImport(DllName, EntryPoint="bgfx_vertex_layout_has", CallingConvention = CallingConvention.Cdecl)]
-	[return: MarshalAs(UnmanagedType.I1)]
-	public static extern unsafe bool vertex_layout_has(VertexLayout* _this, Attrib _attrib);
-	
-	/// <summary>
 	/// Skip `_num` bytes in vertex stream.
 	/// </summary>
 	///
@@ -3428,6 +3418,19 @@ public static partial class bgfx
 	///
 	[DllImport(DllName, EntryPoint="bgfx_set_palette_color", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe void set_palette_color(byte _index, float _rgba);
+	
+	/// <summary>
+	/// Set palette color value.
+	/// </summary>
+	///
+	/// <param name="_index">Index into palette.</param>
+	/// <param name="_r">Red value (RGBA floating point values)</param>
+	/// <param name="_g">Green value (RGBA floating point values)</param>
+	/// <param name="_b">Blue value (RGBA floating point values)</param>
+	/// <param name="_a">Alpha value (RGBA floating point values)</param>
+	///
+	[DllImport(DllName, EntryPoint="bgfx_set_palette_color_rgba32f", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void set_palette_color_rgba32f(byte _index, float _r, float _g, float _b, float _a);
 	
 	/// <summary>
 	/// Set palette color value.

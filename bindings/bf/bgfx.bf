@@ -2435,15 +2435,6 @@ public static class bgfx
 	public static extern void vertex_layout_decode(VertexLayout* _this, Attrib _attrib, uint8 * _num, AttribType* _type, bool* _normalized, bool* _asInt);
 	
 	/// <summary>
-	/// Returns `true` if VertexLayout contains attribute.
-	/// </summary>
-	///
-	/// <param name="_attrib">Attribute semantics. See: `bgfx::Attrib`</param>
-	///
-	[LinkName("bgfx_vertex_layout_has")]
-	public static extern bool vertex_layout_has(VertexLayout* _this, Attrib _attrib);
-	
-	/// <summary>
 	/// Skip `_num` bytes in vertex stream.
 	/// </summary>
 	///
@@ -3472,6 +3463,19 @@ public static class bgfx
 	///
 	[LinkName("bgfx_set_palette_color")]
 	public static extern void set_palette_color(uint8 _index, float _rgba);
+	
+	/// <summary>
+	/// Set palette color value.
+	/// </summary>
+	///
+	/// <param name="_index">Index into palette.</param>
+	/// <param name="_r">Red value (RGBA floating point values)</param>
+	/// <param name="_g">Green value (RGBA floating point values)</param>
+	/// <param name="_b">Blue value (RGBA floating point values)</param>
+	/// <param name="_a">Alpha value (RGBA floating point values)</param>
+	///
+	[LinkName("bgfx_set_palette_color_rgba32f")]
+	public static extern void set_palette_color_rgba32f(uint8 _index, float _r, float _g, float _b, float _a);
 	
 	/// <summary>
 	/// Set palette color value.
