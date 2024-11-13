@@ -32,7 +32,7 @@ local type_actions = {
 
 local function cfunc(f)
 	return function(func)
-		if (not func.cpponly) and (not func.cppinline or func.conly) then
+		if (not func.cpponly) or func.conly then
 			return f(func)
 		end
 	end
@@ -177,7 +177,9 @@ function typegen.structs(typedef)
 		if methods then
 			local m = {}
 			for _, func in ipairs(methods) do
-				m[#m+1] = cppdecl(func)
+				if not func.conly then
+					m[#m+1] = cppdecl(func)
+				end
 			end
 			methods = m
 		end

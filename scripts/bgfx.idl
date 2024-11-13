@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(128)
+version(129)
 
 typedef "bool"
 typedef "char"
@@ -801,7 +801,7 @@ struct.Resolution { ctor }
 	.debugTextScale  "uint8_t"             --- Scale factor for debug text.
 
 --- Configurable runtime limits parameters.
-struct.Limits { namespace = "Init" }
+struct.Limits { ctor, namespace = "Init" }
 	.maxEncoders       "uint16_t" --- Maximum number of encoder threads.
 	.minResourceCbSize "uint32_t" --- Minimum resource command buffer size.
 	.transientVbSize   "uint32_t" --- Maximum transient vertex buffer size.
@@ -1046,7 +1046,7 @@ func.VertexLayout.decode { const }
 	.asInt      "bool &"             { out } --- Attribute is packed as int.
 
 --- Returns `true` if VertexLayout contains attribute.
-func.VertexLayout.has { const, conly, cppinline }
+func.VertexLayout.has { const, cppinline }
 	"bool"                 --- True if VertexLayout contains attribute.
 	.attrib "Attrib::Enum" --- Attribute semantics. See: `bgfx::Attrib`
 
@@ -1656,7 +1656,7 @@ func.createTexture
 	"TextureHandle"                            --- Texture handle.
 	.mem   "const Memory*"                     --- DDS, KTX or PVR texture binary data.
 	.flags "uint64_t"                          --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
-	 { "BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE" } --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
+	 { default = "BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE" } --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
 	                                           --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
 	                                           ---   mode.
 	                                           --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
@@ -1676,7 +1676,7 @@ func.createTexture2D
 	                                           --- `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
 	.format    "TextureFormat::Enum"           --- Texture format. See: `TextureFormat::Enum`.
 	.flags     "uint64_t"                      --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
-	 { "BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE" } --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
+	 { default = "BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE" } --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
 	                                           --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
 	                                           ---   mode.
 	                                           --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
@@ -1997,6 +1997,15 @@ func.setPaletteColor
 	"void"
 	.index "uint8_t"        --- Index into palette.
 	.rgba  "const float[4]" --- RGBA floating point values.
+
+--- Set palette color value.
+func.setPaletteColor { cname = "set_palette_color_rgba32f" }
+	"void"
+	.index "uint8_t" --- Index into palette.
+	.r     "float"   --- Red value (RGBA floating point values)
+	.g     "float"   --- Green value (RGBA floating point values)
+	.b     "float"   --- Blue value (RGBA floating point values)
+	.a     "float"   --- Alpha value (RGBA floating point values)
 
 --- Set palette color value.
 func.setPaletteColor { cname = "set_palette_color_rgba8" }

@@ -1530,11 +1530,6 @@ pub const Init = extern struct {
         pub inline fn decode(self: *const VertexLayout, _attrib: Attrib, _num: [*c]u8 , _type: [*c]AttribType, _normalized: [*c]bool, _asInt: [*c]bool) void {
             return bgfx_vertex_layout_decode(self, _attrib, _num, _type, _normalized, _asInt);
         }
-        /// Returns `true` if VertexLayout contains attribute.
-        /// <param name="_attrib">Attribute semantics. See: `bgfx::Attrib`</param>
-        pub inline fn has(self: *const VertexLayout, _attrib: Attrib) bool {
-            return bgfx_vertex_layout_has(self, _attrib);
-        }
         /// Skip `_num` bytes in vertex stream.
         /// <param name="_num">Number of bytes to skip.</param>
         pub inline fn skip(self: *VertexLayout, _num: u8) *VertexLayout {
@@ -1958,10 +1953,6 @@ extern fn bgfx_vertex_layout_add(self: [*c]VertexLayout, _attrib: Attrib, _num: 
 /// <param name="_normalized">Attribute is normalized.</param>
 /// <param name="_asInt">Attribute is packed as int.</param>
 extern fn bgfx_vertex_layout_decode(self: [*c]const VertexLayout, _attrib: Attrib, _num: [*c]u8 , _type: [*c]AttribType, _normalized: [*c]bool, _asInt: [*c]bool) void;
-
-/// Returns `true` if VertexLayout contains attribute.
-/// <param name="_attrib">Attribute semantics. See: `bgfx::Attrib`</param>
-extern fn bgfx_vertex_layout_has(self: [*c]const VertexLayout, _attrib: Attrib) bool;
 
 /// Skip `_num` bytes in vertex stream.
 /// <param name="_num">Number of bytes to skip.</param>
@@ -2793,6 +2784,17 @@ pub inline fn setPaletteColor(_index: u8, _rgba: [4]f32) void {
     return bgfx_set_palette_color(_index, _rgba);
 }
 extern fn bgfx_set_palette_color(_index: u8, _rgba: [4]f32) void;
+
+/// Set palette color value.
+/// <param name="_index">Index into palette.</param>
+/// <param name="_r">Red value (RGBA floating point values)</param>
+/// <param name="_g">Green value (RGBA floating point values)</param>
+/// <param name="_b">Blue value (RGBA floating point values)</param>
+/// <param name="_a">Alpha value (RGBA floating point values)</param>
+pub inline fn setPaletteColorRgba32f(_index: u8, _r: f32, _g: f32, _b: f32, _a: f32) void {
+    return bgfx_set_palette_color_rgba32f(_index, _r, _g, _b, _a);
+}
+extern fn bgfx_set_palette_color_rgba32f(_index: u8, _r: f32, _g: f32, _b: f32, _a: f32) void;
 
 /// Set palette color value.
 /// <param name="_index">Index into palette.</param>

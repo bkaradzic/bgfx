@@ -1017,6 +1017,32 @@ BGFX_C_API bgfx_vertex_layout_t* bgfx_vertex_layout_skip(bgfx_vertex_layout_t* _
 BGFX_C_API void bgfx_vertex_layout_end(bgfx_vertex_layout_t* _this);
 
 /**
+ * Returns relative attribute offset from the vertex.
+ *
+ * @param[in] _attrib Attribute semantics. See: `bgfx::Attrib`
+ *
+ * @returns Relative attribute offset from the vertex.
+ *
+ */
+BGFX_C_API uint16_t bgfx_vertex_layout_get_offset(const bgfx_vertex_layout_t* _this, bgfx_attrib_t _attrib);
+
+/**
+ * Returns vertex stride.
+ *
+ */
+BGFX_C_API uint16_t bgfx_vertex_layout_get_stride(const bgfx_vertex_layout_t* _this);
+
+/**
+ * Returns size of vertex buffer for number of vertices.
+ *
+ * @param[in] _num Number of vertices.
+ *
+ * @returns Size of vertex buffer for number of vertices.
+ *
+ */
+BGFX_C_API uint32_t bgfx_vertex_layout_get_size(const bgfx_vertex_layout_t* _this, uint32_t _num);
+
+/**
  * Pack vertex attribute into vertex stream format.
  *
  * @param[in] _input Value to be packed into vertex stream.
@@ -2203,6 +2229,18 @@ BGFX_C_API void bgfx_destroy_occlusion_query(bgfx_occlusion_query_handle_t _hand
  *
  */
 BGFX_C_API void bgfx_set_palette_color(uint8_t _index, const float _rgba[4]);
+
+/**
+ * Set palette color value.
+ *
+ * @param[in] _index Index into palette.
+ * @param[in] _r Red value (RGBA floating point values)
+ * @param[in] _g Green value (RGBA floating point values)
+ * @param[in] _b Blue value (RGBA floating point values)
+ * @param[in] _a Alpha value (RGBA floating point values)
+ *
+ */
+BGFX_C_API void bgfx_set_palette_color_rgba32f(uint8_t _index, float _r, float _g, float _b, float _a);
 
 /**
  * Set palette color value.
@@ -3449,6 +3487,9 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_VERTEX_LAYOUT_HAS,
     BGFX_FUNCTION_ID_VERTEX_LAYOUT_SKIP,
     BGFX_FUNCTION_ID_VERTEX_LAYOUT_END,
+    BGFX_FUNCTION_ID_VERTEX_LAYOUT_GET_OFFSET,
+    BGFX_FUNCTION_ID_VERTEX_LAYOUT_GET_STRIDE,
+    BGFX_FUNCTION_ID_VERTEX_LAYOUT_GET_SIZE,
     BGFX_FUNCTION_ID_VERTEX_PACK,
     BGFX_FUNCTION_ID_VERTEX_UNPACK,
     BGFX_FUNCTION_ID_VERTEX_CONVERT,
@@ -3536,6 +3577,7 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_GET_RESULT,
     BGFX_FUNCTION_ID_DESTROY_OCCLUSION_QUERY,
     BGFX_FUNCTION_ID_SET_PALETTE_COLOR,
+    BGFX_FUNCTION_ID_SET_PALETTE_COLOR_RGBA32F,
     BGFX_FUNCTION_ID_SET_PALETTE_COLOR_RGBA8,
     BGFX_FUNCTION_ID_SET_VIEW_NAME,
     BGFX_FUNCTION_ID_SET_VIEW_RECT,
@@ -3651,6 +3693,9 @@ struct bgfx_interface_vtbl
     bool (*vertex_layout_has)(const bgfx_vertex_layout_t* _this, bgfx_attrib_t _attrib);
     bgfx_vertex_layout_t* (*vertex_layout_skip)(bgfx_vertex_layout_t* _this, uint8_t _num);
     void (*vertex_layout_end)(bgfx_vertex_layout_t* _this);
+    uint16_t (*vertex_layout_get_offset)(const bgfx_vertex_layout_t* _this, bgfx_attrib_t _attrib);
+    uint16_t (*vertex_layout_get_stride)(const bgfx_vertex_layout_t* _this);
+    uint32_t (*vertex_layout_get_size)(const bgfx_vertex_layout_t* _this, uint32_t _num);
     void (*vertex_pack)(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _layout, void* _data, uint32_t _index);
     void (*vertex_unpack)(float _output[4], bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _layout, const void* _data, uint32_t _index);
     void (*vertex_convert)(const bgfx_vertex_layout_t * _dstLayout, void* _dstData, const bgfx_vertex_layout_t * _srcLayout, const void* _srcData, uint32_t _num);
@@ -3738,6 +3783,7 @@ struct bgfx_interface_vtbl
     bgfx_occlusion_query_result_t (*get_result)(bgfx_occlusion_query_handle_t _handle, int32_t* _result);
     void (*destroy_occlusion_query)(bgfx_occlusion_query_handle_t _handle);
     void (*set_palette_color)(uint8_t _index, const float _rgba[4]);
+    void (*set_palette_color_rgba32f)(uint8_t _index, float _r, float _g, float _b, float _a);
     void (*set_palette_color_rgba8)(uint8_t _index, uint32_t _rgba);
     void (*set_view_name)(bgfx_view_id_t _id, const char* _name, int32_t _len);
     void (*set_view_rect)(bgfx_view_id_t _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height);

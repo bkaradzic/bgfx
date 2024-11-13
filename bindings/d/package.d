@@ -10,7 +10,7 @@ import bindbc.bgfx.config;
 import bindbc.common.types: c_int64, c_uint64, va_list;
 static import bgfx.fakeenum;
 
-enum uint apiVersion = 128;
+enum uint apiVersion = 129;
 
 alias ViewID = ushort;
 
@@ -1105,6 +1105,12 @@ extern(C++, "bgfx") struct Init{
 		uint minResourceCBSize; ///Minimum resource command buffer size.
 		uint transientVBSize; ///Maximum transient vertex buffer size.
 		uint transientIBSize; ///Maximum transient index buffer size.
+		extern(D) mixin(joinFnBinds((){
+			FnBind[] ret = [
+				{q{void}, q{this}, q{}, ext: `C++`},
+			];
+			return ret;
+		}()));
 	}
 	
 	/**
@@ -2503,7 +2509,7 @@ mixin(joinFnBinds((){
 			skip = Skip top level mips when parsing texture.
 			info = When non-`NULL` is specified it returns parsed texture information.
 		*/
-		{q{TextureHandle}, q{createTexture}, q{const(Memory)* mem, c_uint64 flags, ubyte skip=0, TextureInfo* info=null}, ext: `C++, "bgfx"`},
+		{q{TextureHandle}, q{createTexture}, q{const(Memory)* mem, c_uint64 flags=Texture.none|Sampler.none, ubyte skip=0, TextureInfo* info=null}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Create 2D texture.
@@ -2524,7 +2530,7 @@ mixin(joinFnBinds((){
 		`_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
 		1, expected memory layout is texture and all mips together for each array element.
 		*/
-		{q{TextureHandle}, q{createTexture2D}, q{ushort width, ushort height, bool hasMIPs, ushort numLayers, bgfx.fakeenum.TextureFormat.Enum format, c_uint64 flags, const(Memory)* mem=null}, ext: `C++, "bgfx"`},
+		{q{TextureHandle}, q{createTexture2D}, q{ushort width, ushort height, bool hasMIPs, ushort numLayers, bgfx.fakeenum.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Create texture with size based on back-buffer ratio. Texture will maintain ratio
@@ -2853,6 +2859,17 @@ mixin(joinFnBinds((){
 			rgba = RGBA floating point values.
 		*/
 		{q{void}, q{setPaletteColor}, q{ubyte index, const(float)* rgba}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Set palette color value.
+		Params:
+			index = Index into palette.
+			r = Red value (RGBA floating point values)
+			g = Green value (RGBA floating point values)
+			b = Blue value (RGBA floating point values)
+			a = Alpha value (RGBA floating point values)
+		*/
+		{q{void}, q{setPaletteColor}, q{ubyte index, float r, float g, float b, float a}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Set palette color value.
@@ -3568,7 +3585,7 @@ mixin(joinFnBinds((){
 		
 	];
 	return ret;
-}(), "Resolution, Init, Attachment, VertexLayout, Encoder, "));
+}(), "Resolution, Limits, Init, Attachment, VertexLayout, Encoder, "));
 
 static if(!staticBinding):
 import bindbc.loader;
