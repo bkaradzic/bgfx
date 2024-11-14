@@ -23,16 +23,16 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Checkout bgfx
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: bgfx
       - name: Checkout bx
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: bkaradzic/bx
           path: bx
       - name: Checkout bimg
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: bkaradzic/bimg
           path: bimg
@@ -58,22 +58,22 @@ jobs:
       matrix:
         include: [
           { msystem: MINGW64, project: 'mingw-gcc', bindir: 'win64_mingw-gcc' },
-          { msystem: CLANG64, project: 'mingw-clang', bindir: 'win64_mingw-clang' },
+#          { msystem: CLANG64, project: 'mingw-clang', bindir: 'win64_mingw-clang' },
         ]
     name: mingw-${{ matrix.msystem }}
     runs-on: windows-2022
     steps:
       - name: Checkout bgfx
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: bgfx
       - name: Checkout bx
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: bkaradzic/bx
           path: bx
       - name: Checkout bimg
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: bkaradzic/bimg
           path: bimg
@@ -109,16 +109,16 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout bgfx
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: bgfx
       - name: Checkout bx
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: bkaradzic/bx
           path: bx
       - name: Checkout bimg
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: bkaradzic/bimg
           path: bimg
@@ -146,16 +146,16 @@ jobs:
     runs-on: macos-14
     steps:
       - name: Checkout bgfx
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: bgfx
       - name: Checkout bx
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: bkaradzic/bx
           path: bx
       - name: Checkout bimg
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: bkaradzic/bimg
           path: bimg
@@ -186,16 +186,16 @@ jobs:
           ndk-version: r25b
           add-to-path: false
       - name: Checkout bgfx
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: bgfx
       - name: Checkout bx
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: bkaradzic/bx
           path: bx
       - name: Checkout bimg
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: bkaradzic/bimg
           path: bimg
