@@ -157,7 +157,7 @@ void hex2colTex(out vec4 color, out vec3 weights, vec2 uv,
 	vec2 uv3 = mul(uv - cen3, rot3) + cen3 + hash(vertex3);
 
 	// Fetch input
-	// We could simply use texture2D function, however, the sreen space derivatives could be broken 
+	// We could simply use texture2D function, however, the screen space derivatives could be broken 
 	// since we are using random offsets, we use texture2DGrad to make sure that we pass correct derivatives explicitly.
 	vec4 c1 = texture2DGrad(s_trx_d, uv1,
 		mul(dSTdx, rot1), mul(dSTdy, rot1));

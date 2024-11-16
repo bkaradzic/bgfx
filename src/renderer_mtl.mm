@@ -3792,7 +3792,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 			if (m_drawable != NULL)
 			{
 				m_drawableTexture = m_drawable.texture;
-				retain(m_drawable); // keep alive to be useable at 'flip'
+				retain(m_drawable); // keep alive to be usable at 'flip'
 				retain(m_drawableTexture);
 			}
 			else
@@ -5141,7 +5141,7 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNa
 										BGFX_FATAL(
 											  false
 											, Fatal::DebugCheck
-											, "Failed to set image with access: %s, format:%s is not supoort"
+											, "Failed to set image with access: %s, format:%s is not supported"
 											, s_accessNames[bind.m_access]
 											, bimg::getName(bimg::TextureFormat::Enum(bind.m_format) )
 											);
