@@ -50,7 +50,7 @@
 
 struct triangle {
 	int vertex[3];		// the 3 points (id) that make this tri
-	float normal[3];	// unit vector othogonal to this face
+	float normal[3];	// unit vector orthogonal to this face
 };
 
 struct array {
