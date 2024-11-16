@@ -5,7 +5,7 @@ different platforms, writing examples (see [Help Needed](https://github.com/bkar
 for ideas), improving documentation, profiling and optimizing, helping
 newcomers, telling others about bgfx, etc.
 
-If you have just quick oneliner question it's prefereable to ask it at chat
+If you have just quick oneliner question it's preferable to ask it at chat
 https://discord.gg/9eMbv7J instead opening new issue.
 
 ## Submitting bugs

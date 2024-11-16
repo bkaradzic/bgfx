@@ -1263,7 +1263,7 @@ bool TileGenerator::generate(const bx::FilePath& _filePath)
 		}
 	}
 
-	bx::debugPrintf("Finising\n");
+	bx::debugPrintf("Finishing\n");
 	// Write header
 	m_tileDataFile->writeInfo();
 	// Close tile file
