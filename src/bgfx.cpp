@@ -217,18 +217,30 @@ namespace bgfx
 					}
 #endif // BGFX_CONFIG_MEMORY_TRACKING
 
-					return ::malloc(_size);
+					void* ptr = ::malloc(_size);
+					BX_ASSERT(NULL != ptr, "Out of memory!");
+
+					return ptr;
 				}
 
-				return bx::alignedAlloc(this, _size, _align, bx::Location(_file, _line) );
+				void* ptr = bx::alignedAlloc(this, _size, _align, bx::Location(_file, _line) );
+				BX_ASSERT(NULL != ptr, "Out of memory!");
+
+				return ptr;
 			}
 
 			if (kNaturalAlignment >= _align)
 			{
-				return ::realloc(_ptr, _size);
+				void* ptr = ::realloc(_ptr, _size);
+				BX_ASSERT(NULL != ptr, "Out of memory!");
+
+				return ptr;
 			}
 
-			return bx::alignedRealloc(this, _ptr, _size, _align, bx::Location(_file, _line) );
+			void* ptr = bx::alignedRealloc(this, _ptr, _size, _align, bx::Location(_file, _line) );
+			BX_ASSERT(NULL != ptr, "Out of memory!");
+
+			return ptr;
 		}
 
 		void checkLeaks();
