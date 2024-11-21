@@ -762,7 +762,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		VkSemaphore m_lastImageAcquiredSemaphore;
 
 		bool m_needPresent;
-		bool m_needToRefreshSwapchain;
+		bool m_needToRecreateSwapchain;
 		bool m_needToRecreateSurface;
 
 		TextureVK   m_backBufferDepthStencil;
