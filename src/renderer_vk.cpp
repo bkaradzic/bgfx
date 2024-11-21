@@ -8599,20 +8599,17 @@ VK_DESTROY
 						restoreScissor = false;
 
 						// Clamp the rect to what's valid according to Vulkan.
-						if (NULL != fb.m_nwh)
+						rect.m_width = bx::min(rect.m_width, fb.m_width - rect.m_x);
+						rect.m_height = bx::min(rect.m_height, fb.m_height - rect.m_y);
+						if (_render->m_view[view].m_rect.m_width != rect.m_width
+						 || _render->m_view[view].m_rect.m_height != rect.m_height)
 						{
-							rect.m_width = bx::min(rect.m_width, fb.m_width - rect.m_x);
-							rect.m_height = bx::min(rect.m_height, fb.m_height - rect.m_y);
-							if (_render->m_view[view].m_rect.m_width != rect.m_width
-							 || _render->m_view[view].m_rect.m_height != rect.m_height)
-							{
-								BX_TRACE(
-									"Clamp render pass from %dx%d to %dx%d",
-									_render->m_view[view].m_rect.m_width,
-									_render->m_view[view].m_rect.m_height,
-									rect.m_width, rect.m_height
-								);
-							}
+							BX_TRACE(
+								"Clamp render pass from %dx%d to %dx%d",
+								_render->m_view[view].m_rect.m_width,
+								_render->m_view[view].m_rect.m_height,
+								rect.m_width, rect.m_height
+							);
 						}
 
 						rpbi.framebuffer = fb.m_currentFramebuffer;
