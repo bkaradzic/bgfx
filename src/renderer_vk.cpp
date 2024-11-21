@@ -2800,11 +2800,12 @@ VK_IMPORT_DEVICE
 				return suspended;
 			}
 
-			//BX_TRACE(
-			//	"updateResolution(%d, %d) m_resolution=(%d, %d)",
-			//	_resolution.width, _resolution.height,
-			//	m_resolution.width, m_resolution.height
-			//);
+			//BX_TRACE("updateResolution(%d, %d) m_resolution=(%d, %d)"
+			//	, _resolution.width
+			//	, _resolution.height
+			//	, m_resolution.width
+			//	, m_resolution.height
+			//	);
 
 			uint32_t flags = _resolution.reset & ~(0
 				| BGFX_RESET_SUSPEND
@@ -7176,7 +7177,12 @@ VK_DESTROY
 			);
 		if (width != m_resolution.width || height != m_resolution.height)
 		{
-			BX_TRACE("Clamped swapchain resolution from %dx%d to %dx%d", m_resolution.width, m_resolution.height, width, height);
+			BX_TRACE("Clamped swapchain resolution from %dx%d to %dx%d"
+					, m_resolution.width
+					, m_resolution.height
+					, width
+					, height
+					);
 		}
 
 		VkCompositeAlphaFlagBitsKHR compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
@@ -8604,12 +8610,12 @@ VK_DESTROY
 						if (_render->m_view[view].m_rect.m_width != rect.m_width
 						 || _render->m_view[view].m_rect.m_height != rect.m_height)
 						{
-							BX_TRACE(
-								"Clamp render pass from %dx%d to %dx%d",
-								_render->m_view[view].m_rect.m_width,
-								_render->m_view[view].m_rect.m_height,
-								rect.m_width, rect.m_height
-							);
+							BX_TRACE("Clamp render pass from %dx%d to %dx%d"
+								, _render->m_view[view].m_rect.m_width
+								, _render->m_view[view].m_rect.m_height
+								, rect.m_width
+								, rect.m_height
+								);
 						}
 
 						rpbi.framebuffer = fb.m_currentFramebuffer;
