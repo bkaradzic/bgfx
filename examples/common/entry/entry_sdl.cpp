@@ -133,22 +133,6 @@ namespace entry
 		return GamepadAxis::Enum(s_translateGamepadAxis[_sdl]);
 	}
 
-	struct AxisDpadRemap
-	{
-		Key::Enum first;
-		Key::Enum second;
-	};
-
-	static AxisDpadRemap s_axisDpad[] =
-	{
-		{ Key::GamepadLeft, Key::GamepadRight },
-		{ Key::GamepadUp,   Key::GamepadDown  },
-		{ Key::None,        Key::None         },
-		{ Key::GamepadLeft, Key::GamepadRight },
-		{ Key::GamepadUp,   Key::GamepadDown  },
-		{ Key::None,        Key::None         },
-	};
-
 	struct GamepadSDL
 	{
 		GamepadSDL()

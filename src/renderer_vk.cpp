@@ -2800,13 +2800,6 @@ VK_IMPORT_DEVICE
 				return suspended;
 			}
 
-			//BX_TRACE("updateResolution(%d, %d) m_resolution=(%d, %d)"
-			//	, _resolution.width
-			//	, _resolution.height
-			//	, m_resolution.width
-			//	, m_resolution.height
-			//	);
-
 			uint32_t flags = _resolution.reset & ~(0
 				| BGFX_RESET_SUSPEND
 				| BGFX_RESET_MAXANISOTROPY
@@ -5135,8 +5128,6 @@ VK_DESTROY
 		smci.flags    = 0;
 		smci.codeSize = m_code->size;
 		smci.pCode    = (const uint32_t*)m_code->data;
-
-//		disassemble(bx::getDebugOut(), m_code->data, m_code->size);
 
 		VK_CHECK(vkCreateShaderModule(
 			  s_renderVK->m_device
@@ -9438,7 +9429,6 @@ VK_DESTROY
 				}
 
 				tvm.printf(10, pos++, 0x8b, "      Indices: %7d ", statsNumIndices);
-//				tvm.printf(10, pos++, 0x8b, " Uniform size: %7d, Max: %7d ", _render->m_uniformEnd, _render->m_uniformMax);
 				tvm.printf(10, pos++, 0x8b, "     DVB size: %7d ", _render->m_vboffset);
 				tvm.printf(10, pos++, 0x8b, "     DIB size: %7d ", _render->m_iboffset);
 
