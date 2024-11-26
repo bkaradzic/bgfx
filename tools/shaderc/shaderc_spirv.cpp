@@ -528,7 +528,7 @@ namespace bgfx { namespace spirv
 					end   = start + 20;
 				}
 
-				printCode(_code.c_str(), line, start, end, column);
+				printCode(_code.c_str(), bx::uint32_satsub(line, 1), start, end, column);
 
 				bx::write(_messageWriter, &messageErr, "%s\n", log);
 			}
