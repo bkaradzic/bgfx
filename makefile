@@ -209,7 +209,7 @@ BUILD_TOOLS_SUFFIX=Release
 EXE=
 else
 OS=linux
-BUILD_PROJECT_DIR=gmake-linux
+BUILD_PROJECT_DIR=gmake-linux-gcc
 BUILD_OUTPUT_DIR=linux64_gcc
 BUILD_TOOLS_CONFIG=release64
 BUILD_TOOLS_SUFFIX=Release
