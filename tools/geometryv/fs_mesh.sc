@@ -61,4 +61,4 @@ void main()
 
 	gl_FragColor.xyz = evalSh(nn);
 	gl_FragColor.w = 1.0;
-} 
+}

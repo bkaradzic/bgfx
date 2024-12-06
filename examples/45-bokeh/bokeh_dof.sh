@@ -91,7 +91,7 @@ float BokehShapeFromAngle (float lobeCount, float radiusMin, float radiusDelta2x
 		return 1.0f;
 	}
 
-	// divide edge into some number of lobes 
+	// divide edge into some number of lobes
 	float invPeriod = lobeCount / (2.0 * 3.1415926);
 	float periodFraction = fract(angle * invPeriod + rotation);
 

@@ -101,7 +101,7 @@
 
 #define IMAGE2D_WO( _name, _format, _reg)                                                 \
 	WRITEONLY FORMAT(_format) RWTexture2D<COMP_ ## _format> _name : REGISTER(u, _reg);  \
-	
+
 #define UIMAGE2D_WO(_name, _format, _reg) IMAGE2D_WO(_name, _format, _reg)
 
 #define IMAGE2D_RW( _name, _format, _reg)                            \

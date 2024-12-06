@@ -9,7 +9,7 @@ uniform vec4 u_params;
 #define u_distanceMultiplier     u_params.y
 
 void main()
-{	
+{
 	vec4 color = textureCube(s_texColor, v_texcoord0.xyz);
 	int index = int(v_texcoord0.w*4.0 + 0.5);
 	float rgba[4];

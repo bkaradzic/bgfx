@@ -3,7 +3,7 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include "bgfx_compute.sh" 
+#include "bgfx_compute.sh"
 #include "uniforms.sh"
 
 IMAGE2D_WO(s_target, r8, 0);
@@ -14,7 +14,7 @@ SAMPLER2D(s_importanceMap, 1);
 CONST(float cSmoothenImportance) = 1.0;
 
 NUM_THREADS(8, 8, 1)
-void main() 
+void main()
 {
 	uvec2 dtID = uvec2(gl_GlobalInvocationID.xy);
 
@@ -31,7 +31,7 @@ void main()
 
 #if BGFX_SHADER_LANGUAGE_GLSL
 		halfPixel.y = -halfPixel.y;
-#endif 
+#endif
 		vec4 vals;
 		vals.x = texture2DLod(s_importanceMap, inUV + vec2( -halfPixel.x * 3, -halfPixel.y ), 0.0 ).x;
 		vals.y = texture2DLod(s_importanceMap, inUV + vec2( +halfPixel.x, -halfPixel.y * 3 ), 0.0 ).x;

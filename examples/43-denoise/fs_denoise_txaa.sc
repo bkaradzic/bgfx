@@ -39,7 +39,7 @@ vec3 FindNearestDepth(sampler2D _depthSampler, vec2 _texCoord) {
 	vec3 tcd7 = vec3(coord, texture2D(_depthSampler, coord).x);
 	coord = _texCoord + du + dv;
 	vec3 tcd8 = vec3(coord, texture2D(_depthSampler, coord).x);
-	
+
 	vec3 minTcd = tcd0;
 	if (tcd1.z < minTcd.z) minTcd = tcd1;
 	if (tcd2.z < minTcd.z) minTcd = tcd2;
@@ -86,7 +86,7 @@ void main()
 	vec2 texCoordPrev = GetTexCoordPrevious(texCoord, velocity);
 
 	vec3 colorPrev = texture2D(s_previousColor, texCoordPrev).xyz;
-	
+
 	// Sample local neighborhood for variance clipping
 	vec2 du = vec2(u_viewTexel.x, 0.0);
 	vec2 dv = vec2(0.0, u_viewTexel.y);

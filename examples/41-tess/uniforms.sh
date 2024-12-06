@@ -11,5 +11,3 @@ uniform vec4 u_params[2];
 
 #define COMPUTE_THREAD_COUNT 32u
 #define UPDATE_INDIRECT_VALUE_DIVIDE 32u
-
-
