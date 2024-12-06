@@ -3,7 +3,7 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include "bgfx_compute.sh" 
+#include "bgfx_compute.sh"
 #include "uniforms.sh"
 
 IMAGE2D_WO(s_target, r8, 0);
@@ -14,7 +14,7 @@ CONST(float cSmoothenImportance) = 1.0;
 
 // Shaders below only needed for adaptive quality level
 NUM_THREADS(8, 8, 1)
-void main() 
+void main()
 {
 	uvec2 dtID = uvec2(gl_GlobalInvocationID.xy);
 
@@ -40,11 +40,11 @@ void main()
 
 		float retVal = mix( maxVal, avgVal, cSmoothenImportance );
 
-		// sum the average; to avoid overflowing we assume max AO resolution is not bigger than 16384x16384; so quarter res (used here) will be 4096x4096, which leaves us with 8 bits per pixel 
+		// sum the average; to avoid overflowing we assume max AO resolution is not bigger than 16384x16384; so quarter res (used here) will be 4096x4096, which leaves us with 8 bits per pixel
 		uint sum = uint(saturate(retVal) * 255.0 + 0.5);
-    
+
 		// save every 9th to avoid InterlockedAdd congestion - since we're blurring, this is good enough; compensated by multiplying LoadCounterAvgDiv by 9
-#if BGFX_SHADER_LANGUAGE_GLSL 
+#if BGFX_SHADER_LANGUAGE_GLSL
 		if( ((dtID.x % 3) + ((dim.y-1-dtID.y) % 3)) == 0  )
 #else
 		if( ((dtID.x % 3) + (dtID.y % 3)) == 0  )

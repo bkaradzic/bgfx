@@ -550,7 +550,7 @@ typedef struct bgfx_caps_limits_s
 typedef struct bgfx_caps_s
 {
     bgfx_renderer_type_t rendererType;       /** Renderer backend type. See: `bgfx::RendererType` */
-    
+
     /**
      * Supported functionality.
      *   @attention See `BGFX_CAPS_*` flags at https://bkaradzic.github.io/bgfx/bgfx.html#available-caps
@@ -563,7 +563,7 @@ typedef struct bgfx_caps_s
     uint8_t              numGPUs;            /** Number of enumerated GPUs.               */
     bgfx_caps_gpu_t      gpu[4];             /** Enumerated GPUs.                         */
     bgfx_caps_limits_t   limits;             /** Renderer runtime limits.                 */
-    
+
     /**
      * Supported texture format capabilities flags:
      *   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - Texture format is not supported.
@@ -611,25 +611,25 @@ typedef struct bgfx_internal_data_s
 typedef struct bgfx_platform_data_s
 {
     void*                ndt;                /** Native display type (*nix specific).     */
-    
+
     /**
      * Native window handle. If `NULL`, bgfx will create a headless
      * context/device, provided the rendering API supports it.
      */
     void*                nwh;
-    
+
     /**
      * GL context, D3D device, or Vulkan device. If `NULL`, bgfx
      * will create context/device.
      */
     void*                context;
-    
+
     /**
      * GL back-buffer, or D3D render target view. If `NULL` bgfx will
      * create back-buffer color surface.
      */
     void*                backBuffer;
-    
+
     /**
      * Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
      * depth/stencil surface.
@@ -674,14 +674,14 @@ typedef struct bgfx_init_limits_s
  */
 typedef struct bgfx_init_s
 {
-    
+
     /**
      * Select rendering backend. When set to RendererType::Count
      * a default rendering backend will be selected appropriate to the platform.
      * See: `bgfx::RendererType`
      */
     bgfx_renderer_type_t type;
-    
+
     /**
      * Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
      * GPUs will be prioritised.
@@ -694,7 +694,7 @@ typedef struct bgfx_init_s
      *   - `BGFX_PCI_ID_MICROSOFT` - Microsoft adapter.
      */
     uint16_t             vendorId;
-    
+
     /**
      * Device ID. If set to 0 it will select first device, or device with
      * matching ID.
@@ -706,13 +706,13 @@ typedef struct bgfx_init_s
     bgfx_platform_data_t platformData;       /** Platform data.                           */
     bgfx_resolution_t    resolution;         /** Backbuffer resolution and reset parameters. See: `bgfx::Resolution`. */
     bgfx_init_limits_t   limits;             /** Configurable runtime limits parameters.  */
-    
+
     /**
      * Provide application specific callback interface.
      * See: `bgfx::CallbackI`
      */
     bgfx_callback_interface_t* callback;
-    
+
     /**
      * Custom allocator. When a custom allocator is not
      * specified, bgfx uses the CRT allocator. Bgfx assumes

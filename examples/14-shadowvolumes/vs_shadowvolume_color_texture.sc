@@ -6,7 +6,7 @@ $output v_texcoord0
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include "../common/common.sh" 
+#include "../common/common.sh"
 
 void main()
 {
@@ -14,4 +14,3 @@ void main()
 
 	v_texcoord0 = a_texcoord0;
 }
-

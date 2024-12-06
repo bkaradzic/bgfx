@@ -5,7 +5,7 @@ $input a_position
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include "../common/common.sh" 
+#include "../common/common.sh"
 
 void main()
 {

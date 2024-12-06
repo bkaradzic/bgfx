@@ -3,10 +3,10 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include "bgfx_compute.sh" 
+#include "bgfx_compute.sh"
 #include "uniforms.sh"
 
-IMAGE2D_RO(s_viewspaceDepthSource0, r16f, 0); 
+IMAGE2D_RO(s_viewspaceDepthSource0, r16f, 0);
 IMAGE2D_RO(s_viewspaceDepthSource1, r16f, 1);
 IMAGE2D_RO(s_viewspaceDepthSource2, r16f, 2);
 IMAGE2D_RO(s_viewspaceDepthSource3, r16f, 3);
@@ -26,7 +26,7 @@ void CalculateRadiusParameters( const float pixCenterLength, const vec2 pixelDir
 
     // when too close, on-screen sampling disk will grow beyond screen size; limit this to avoid closeup temporal artifacts
     const float tooCloseLimitMod = saturate( pixCenterLength * u_effectSamplingRadiusNearLimitRec ) * 0.8 + 0.2;
-    
+
     effectRadius *= tooCloseLimitMod;
 
     // 0.85 is to reduce the radius to allow for more samples on a slope to still stay within influence
@@ -37,13 +37,13 @@ void CalculateRadiusParameters( const float pixCenterLength, const vec2 pixelDir
 }
 
 NUM_THREADS(8, 8, 1)
-void main() 
+void main()
 {
 	uvec2 dtID = uvec2(gl_GlobalInvocationID.xy);
 
 	uvec2 dim = uvec2(u_rect.zw);
 	if (all(lessThan(dtID.xy, dim) ) )
-	{ 
+	{
 		ivec2 baseCoords = ivec2(dtID.xy) * 2;
 
 		vec4 depthsArr[4];
@@ -66,14 +66,14 @@ void main()
 		depthsArr[3].y = imageLoad(s_viewspaceDepthSource3, baseCoords + ivec2( 1, 0 )).x;
 		depthsArr[3].z = imageLoad(s_viewspaceDepthSource3, baseCoords + ivec2( 0, 1 )).x;
 		depthsArr[3].w = imageLoad(s_viewspaceDepthSource3, baseCoords + ivec2( 1, 1 )).x;
-		
+
 	    const uvec2 SVPosui         = uvec2( dtID.xy );
 		const uint pseudoRandomA    = (SVPosui.x ) + 2 * (SVPosui.y );
 
 		float dummyUnused1;
 		float dummyUnused2;
 		float falloffCalcMulSq, falloffCalcAdd;
- 
+
 		UNROLL
 		for( int i = 0; i < 4; i++ )
 		{

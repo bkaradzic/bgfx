@@ -39,4 +39,3 @@ void main()
 	color.xyz = toLinear(color.xyz)*l;
 	gl_FragColor = toGamma(color);
 }
-

@@ -2,7 +2,7 @@
  * Copyright 2011-2024 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
- 
+
 /*
  * Reference(s):
  * - Based on Virtual Texture Demo by Brad Blanchard
@@ -33,8 +33,8 @@ float MipLevel( vec2 uv, float size )
    return max( 0.5 * log2( d ), 0 );
 }
 
-// This function samples the page table and returns the page's 
-// position and mip level. 
+// This function samples the page table and returns the page's
+// position and mip level.
 vec3 SampleTable( vec2 uv, float mip )
 {
    vec2 offset = fract( uv * PageTableSize ) / PageTableSize;

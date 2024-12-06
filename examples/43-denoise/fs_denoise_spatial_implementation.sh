@@ -74,7 +74,7 @@ void main()
 			vec4 sampleColor = texture2D(s_color, sampleTexCoord);
 			vec3 sampleNormal = NormalDecode(texture2D(s_normal, sampleTexCoord).xyz);
 			float normalWeight = pow(saturate(dot(normal, sampleNormal)), u_sigmaNormal);
-			
+
 			float sampleDepth = texture2D(s_depth, sampleTexCoord).x;
 			float depthDelta = depth - sampleDepth;
 			float depthWeight = exp(-abs(depthDelta) / max(1e-5, u_sigmaDepth*u_sigmaDepth));

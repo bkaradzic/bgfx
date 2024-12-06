@@ -1200,5 +1200,3 @@ ENTRY_IMPLEMENT_MAIN(
 	, "Adaptive Screen Space Ambient Occlusion."
 	, "https://bkaradzic.github.io/bgfx/examples.html#assao"
 	);
-
-

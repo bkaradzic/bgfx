@@ -6,4 +6,4 @@
 #define ASSAO_QUALITY 3
 #define ASSAO_ADAPTIVE_BASE false
 
-#include "cs_assao_generate_q.sh" 
+#include "cs_assao_generate_q.sh"

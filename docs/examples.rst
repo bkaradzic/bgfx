@@ -689,7 +689,7 @@ Reference(s):
 
 .. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/48-drawindirect/screenshot.png
    :alt: example-48-drawindirect
-   
+
 
 `49-hextile  <https://github.com/bkaradzic/bgfx/tree/master/examples/49-hextile>`__
 ---------------------------------------------------------------------------------------------
