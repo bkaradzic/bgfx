@@ -46,7 +46,7 @@ namespace bgfx
 		&s_attribTypeSizeD3D1x, // Vulkan
 		&s_attribTypeSizeD3D1x, // Count
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeSize) == RendererType::Count+1);
+	static_assert(BX_COUNTOF(s_attribTypeSize) == RendererType::Count+1);
 
 	void initAttribTypeSizeTable(RendererType::Enum _type)
 	{
@@ -119,7 +119,7 @@ namespace bgfx
 		true,  // Half
 		true,  // Float
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeIsFloat) == AttribType::Count);
+	static_assert(BX_COUNTOF(s_attribTypeIsFloat) == AttribType::Count);
 
 	bool isFloat(AttribType::Enum _type)
 	{
@@ -147,7 +147,7 @@ namespace bgfx
 		"T6", "Attrib::TexCoord6",
 		"T7", "Attrib::TexCoord7",
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_attrName) == Attrib::Count*2);
+	static_assert(BX_COUNTOF(s_attrName) == Attrib::Count*2);
 
 	const char* getAttribNameShort(Attrib::Enum _attr)
 	{
@@ -189,7 +189,7 @@ namespace bgfx
 		{ Attrib::TexCoord6, 0x0016 },
 		{ Attrib::TexCoord7, 0x0017 },
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_attribToId) == Attrib::Count);
+	static_assert(BX_COUNTOF(s_attribToId) == Attrib::Count);
 
 	Attrib::Enum idToAttrib(uint16_t id)
 	{
@@ -227,7 +227,7 @@ namespace bgfx
 		{ AttribType::Half,   0x0003 },
 		{ AttribType::Float,  0x0004 },
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeToId) == AttribType::Count);
+	static_assert(BX_COUNTOF(s_attribTypeToId) == AttribType::Count);
 
 	AttribType::Enum idToAttribType(uint16_t id)
 	{

@@ -219,7 +219,7 @@ static const char* s_bindingName[] =
 	"Help",
 	"About",
 };
-BX_STATIC_ASSERT(Binding::Count == BX_COUNTOF(s_bindingName) );
+static_assert(Binding::Count == BX_COUNTOF(s_bindingName) );
 
 static const InputBinding* s_binding[] =
 {
@@ -228,7 +228,7 @@ static const InputBinding* s_binding[] =
 	s_bindingHelp,
 	s_bindingAbout,
 };
-BX_STATIC_ASSERT(Binding::Count == BX_COUNTOF(s_binding) );
+static_assert(Binding::Count == BX_COUNTOF(s_binding) );
 
 static const char* s_filter = ""
 	"All Image Formats (bmp, dds, exr, gif, gnf, jpg, jpeg, hdr, ktx, pgm, png, ppm, psd, pvr, tga) | *.bmp *.dds *.exr *.gif *.gnf *.jpg *.jpeg *.hdr *.ktx *.pgm *.png *.ppm *.psd *.pvr *.tga\n"

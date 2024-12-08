@@ -40,7 +40,7 @@ namespace bgfx { namespace gl
 		{ GL_POINTS,         1, 1, 0 },
 		{ GL_ZERO,           0, 0, 0 },
 	};
-	BX_STATIC_ASSERT(Topology::Count == BX_COUNTOF(s_primInfo)-1);
+	static_assert(Topology::Count == BX_COUNTOF(s_primInfo)-1);
 
 	static const char* s_attribName[] =
 	{
@@ -63,7 +63,7 @@ namespace bgfx { namespace gl
 		"a_texcoord6",
 		"a_texcoord7",
 	};
-	BX_STATIC_ASSERT(Attrib::Count == BX_COUNTOF(s_attribName) );
+	static_assert(Attrib::Count == BX_COUNTOF(s_attribName) );
 
 	static const char* s_instanceDataName[] =
 	{
@@ -73,7 +73,7 @@ namespace bgfx { namespace gl
 		"i_data3",
 		"i_data4",
 	};
-	BX_STATIC_ASSERT(BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT == BX_COUNTOF(s_instanceDataName) );
+	static_assert(BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT == BX_COUNTOF(s_instanceDataName) );
 
 	static const GLenum s_access[] =
 	{
@@ -81,7 +81,7 @@ namespace bgfx { namespace gl
 		GL_WRITE_ONLY,
 		GL_READ_WRITE,
 	};
-	BX_STATIC_ASSERT(Access::Count == BX_COUNTOF(s_access) );
+	static_assert(Access::Count == BX_COUNTOF(s_access) );
 
 	static const GLenum s_attribType[] =
 	{
@@ -91,7 +91,7 @@ namespace bgfx { namespace gl
 		GL_HALF_FLOAT,               // Half
 		GL_FLOAT,                    // Float
 	};
-	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
+	static_assert(AttribType::Count == BX_COUNTOF(s_attribType) );
 
 	struct Blend
 	{
@@ -320,7 +320,7 @@ namespace bgfx { namespace gl
 #undef $B
 #undef $A
 	};
-	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
+	static_assert(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
 	static bool s_textureFilter[TextureFormat::Count+1];
 
@@ -423,7 +423,7 @@ namespace bgfx { namespace gl
 		GL_DEPTH_COMPONENT32F, // D32F
 		GL_STENCIL_INDEX8,     // D0S8
 	};
-	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_rboFormat) );
+	static_assert(TextureFormat::Count == BX_COUNTOF(s_rboFormat) );
 
 	static GLenum s_imageFormat[] =
 	{
@@ -524,7 +524,7 @@ namespace bgfx { namespace gl
 		GL_ZERO,           // D32F
 		GL_ZERO,           // D0S8
 	};
-	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_imageFormat) );
+	static_assert(TextureFormat::Count == BX_COUNTOF(s_imageFormat) );
 
 	struct Extension
 	{
@@ -936,7 +936,7 @@ namespace bgfx { namespace gl
 		{ "WEBKIT_WEBGL_compressed_texture_s3tc",     false,                             true  },
 		{ "WEBKIT_WEBGL_depth_texture",               false,                             true  },
 	};
-	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
+	static_assert(Extension::Count == BX_COUNTOF(s_extension) );
 
 	static const char* s_ARB_shader_texture_lod[] =
 	{

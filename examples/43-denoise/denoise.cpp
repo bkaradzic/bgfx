@@ -527,7 +527,7 @@ public:
 					m_temporaryColor.m_buffer,
 					m_currentColor.m_buffer,
 				};
-				BX_STATIC_ASSERT(BX_COUNTOF(destBuffer) == DENOISE_MAX_PASSES);
+				static_assert(BX_COUNTOF(destBuffer) == DENOISE_MAX_PASSES);
 
 				const uint32_t denoisePasses = bx::min(DENOISE_MAX_PASSES, m_denoisePasses);
 

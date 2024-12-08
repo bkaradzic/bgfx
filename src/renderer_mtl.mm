@@ -47,7 +47,7 @@ namespace bgfx { namespace mtl
 		{ MTLPrimitiveTypeLineStrip,     2, 1, 1 },
 		{ MTLPrimitiveTypePoint,         1, 1, 0 },
 	};
-	BX_STATIC_ASSERT(Topology::Count == BX_COUNTOF(s_primInfo) );
+	static_assert(Topology::Count == BX_COUNTOF(s_primInfo) );
 
 	static const char* s_attribName[] =
 	{
@@ -70,7 +70,7 @@ namespace bgfx { namespace mtl
 		"a_texcoord6",
 		"a_texcoord7",
 	};
-	BX_STATIC_ASSERT(Attrib::Count == BX_COUNTOF(s_attribName) );
+	static_assert(Attrib::Count == BX_COUNTOF(s_attribName) );
 
 	static const char* s_instanceDataName[] =
 	{
@@ -80,7 +80,7 @@ namespace bgfx { namespace mtl
 		"i_data3",
 		"i_data4",
 	};
-	BX_STATIC_ASSERT(BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT == BX_COUNTOF(s_instanceDataName) );
+	static_assert(BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT == BX_COUNTOF(s_instanceDataName) );
 
 	static const MTLVertexFormat s_attribType[][4][2] = //type, count, normalized
 	{
@@ -125,7 +125,7 @@ namespace bgfx { namespace mtl
 			{ MTLVertexFormatFloat4, MTLVertexFormatFloat4 },
 		},
 	};
-	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
+	static_assert(AttribType::Count == BX_COUNTOF(s_attribType) );
 
 	static const MTLCullMode s_cullMode[] =
 	{
@@ -348,7 +348,7 @@ namespace bgfx { namespace mtl
 #undef $A
 	};
 	BX_PRAGMA_DIAGNOSTIC_POP();
-	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
+	static_assert(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
 	int32_t s_msaa[] =
 	{
@@ -425,7 +425,7 @@ static const char* s_accessNames[] = {
 	"Access::Write",
 	"Access::ReadWrite",
 };
-BX_STATIC_ASSERT(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames count");
+static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames count");
 
 #ifndef __IPHONE_OS_VERSION_MAX_ALLOWED
 #	define __IPHONE_OS_VERSION_MAX_ALLOWED 0

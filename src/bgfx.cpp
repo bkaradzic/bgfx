@@ -330,7 +330,7 @@ namespace bgfx
 		{ "VL",   "VertexLayout"        },
 		{ "?",    "?"                   },
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_typeName) == Handle::Count+1, "");
+	static_assert(BX_COUNTOF(s_typeName) == Handle::Count+1, "");
 
 	const Handle::TypeName& Handle::getTypeName(Handle::Enum _enum)
 	{
@@ -748,7 +748,7 @@ namespace bgfx
 		0xff4fe9fc, // Yellow
 		0xffeceeee, // White
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_paletteSrgb) == 16);
+	static_assert(BX_COUNTOF(s_paletteSrgb) == 16);
 
 	static const uint32_t s_paletteLinear[] =
 	{
@@ -769,7 +769,7 @@ namespace bgfx
 		0xff13cff8, // Yellow
 		0xffd5dada  // White
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_paletteLinear) == 16);
+	static_assert(BX_COUNTOF(s_paletteLinear) == 16);
 
 	void blit(RendererContextI* _renderCtx, TextVideoMemBlitter& _blitter, const TextVideoMem& _mem)
 	{
@@ -948,7 +948,7 @@ namespace bgfx
 		"mat3",
 		"mat4",
 	};
-	BX_STATIC_ASSERT(UniformType::Count == BX_COUNTOF(s_uniformTypeName) );
+	static_assert(UniformType::Count == BX_COUNTOF(s_uniformTypeName) );
 
 	const char* getUniformTypeName(UniformType::Enum _enum)
 	{
@@ -1824,7 +1824,7 @@ namespace bgfx
 		"LineStrip",
 		"Points",
 	};
-	BX_STATIC_ASSERT(Topology::Count == BX_COUNTOF(s_topologyName) );
+	static_assert(Topology::Count == BX_COUNTOF(s_topologyName) );
 
 	const char* getName(Topology::Enum _topology)
 	{
@@ -2656,7 +2656,7 @@ namespace bgfx
 		{ gl::rendererCreate,     gl::rendererDestroy,     BGFX_RENDERER_OPENGL_NAME,     !!BGFX_CONFIG_RENDERER_OPENGL     }, // OpenGL
 		{ vk::rendererCreate,     vk::rendererDestroy,     BGFX_RENDERER_VULKAN_NAME,     !!BGFX_CONFIG_RENDERER_VULKAN     }, // Vulkan
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_rendererCreator) == RendererType::Count);
+	static_assert(BX_COUNTOF(s_rendererCreator) == RendererType::Count);
 
 	bool windowsVersionIs(Condition::Enum _op, uint32_t _version, uint32_t _build)
 	{
@@ -5612,7 +5612,7 @@ extern "C"
 #endif // BGFX_CONFIG_PREFER_DISCRETE_GPU
 
 #define BGFX_TEXTURE_FORMAT_BIMG(_fmt) \
-	BX_STATIC_ASSERT(uint32_t(bgfx::TextureFormat::_fmt) == uint32_t(bimg::TextureFormat::_fmt) )
+	static_assert(uint32_t(bgfx::TextureFormat::_fmt) == uint32_t(bimg::TextureFormat::_fmt) )
 
 BGFX_TEXTURE_FORMAT_BIMG(BC1);
 BGFX_TEXTURE_FORMAT_BIMG(BC2);
@@ -5718,29 +5718,29 @@ BGFX_TEXTURE_FORMAT_BIMG(Count);
 
 #define FLAGS_MASK_TEST(_flags, _mask) ( (_flags) == ( (_flags) & (_mask) ) )
 
-BX_STATIC_ASSERT(FLAGS_MASK_TEST(0
+static_assert(FLAGS_MASK_TEST(0
 	| BGFX_SAMPLER_INTERNAL_DEFAULT
 	| BGFX_SAMPLER_INTERNAL_SHARED
 	, BGFX_SAMPLER_RESERVED_MASK
 	) );
 
-BX_STATIC_ASSERT(FLAGS_MASK_TEST(0
+static_assert(FLAGS_MASK_TEST(0
 	| BGFX_RESET_INTERNAL_FORCE
 	, BGFX_RESET_RESERVED_MASK
 	) );
 
-BX_STATIC_ASSERT(FLAGS_MASK_TEST(0
+static_assert(FLAGS_MASK_TEST(0
 	| BGFX_STATE_INTERNAL_SCISSOR
 	| BGFX_STATE_INTERNAL_OCCLUSION_QUERY
 	, BGFX_STATE_RESERVED_MASK
 	) );
 
-BX_STATIC_ASSERT(FLAGS_MASK_TEST(0
+static_assert(FLAGS_MASK_TEST(0
 	| BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE
 	, BGFX_SUBMIT_INTERNAL_RESERVED_MASK
 	) );
 
-BX_STATIC_ASSERT( (0
+static_assert( (0
 	| BGFX_STATE_ALPHA_REF_MASK
 	| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
 	| BGFX_STATE_BLEND_EQUATION_MASK
@@ -5774,9 +5774,9 @@ BX_STATIC_ASSERT( (0
 	^ BGFX_STATE_WRITE_MASK
 	) );
 
-BX_STATIC_ASSERT(FLAGS_MASK_TEST(BGFX_CAPS_TEXTURE_COMPARE_LEQUAL, BGFX_CAPS_TEXTURE_COMPARE_ALL) );
+static_assert(FLAGS_MASK_TEST(BGFX_CAPS_TEXTURE_COMPARE_LEQUAL, BGFX_CAPS_TEXTURE_COMPARE_ALL) );
 
-BX_STATIC_ASSERT( (0
+static_assert( (0
 	| BGFX_CAPS_ALPHA_TO_COVERAGE
 	| BGFX_CAPS_BLEND_INDEPENDENT
 	| BGFX_CAPS_COMPUTE

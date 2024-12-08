@@ -46,7 +46,7 @@ namespace bgfx { namespace vk
 		{ VK_PRIMITIVE_TOPOLOGY_POINT_LIST,     1, 1, 0 },
 		{ VK_PRIMITIVE_TOPOLOGY_MAX_ENUM,       0, 0, 0 },
 	};
-	BX_STATIC_ASSERT(Topology::Count == BX_COUNTOF(s_primInfo)-1);
+	static_assert(Topology::Count == BX_COUNTOF(s_primInfo)-1);
 
 	static MsaaSamplerVK s_msaa[] =
 	{
@@ -271,7 +271,7 @@ VK_IMPORT_DEVICE
 #undef $B
 #undef $A
 	};
-	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
+	static_assert(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
 	struct ImageTest
 	{
@@ -322,7 +322,7 @@ VK_IMPORT_DEVICE
 		{ "VK_LAYER_LUNARG_standard_validation", 1, { false, false }, { false, false } },
 		{ "",                                    0, { false, false }, { false, false } },
 	};
-	BX_STATIC_ASSERT(Layer::Count == BX_COUNTOF(s_layer)-1);
+	static_assert(Layer::Count == BX_COUNTOF(s_layer)-1);
 
 	void updateLayer(const char* _name, uint32_t _version, bool _instanceLayer)
 	{
@@ -414,7 +414,7 @@ VK_IMPORT_DEVICE
 		{ VK_NN_VI_SURFACE_EXTENSION_NAME,          1, false, false, true,                                                          Layer::Count },
 #	endif
 	};
-	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
+	static_assert(Extension::Count == BX_COUNTOF(s_extension) );
 
 	bool updateExtension(const char* _name, uint32_t _version, bool _instanceExt, Extension _extensions[Extension::Count])
 	{
@@ -482,7 +482,7 @@ VK_IMPORT_DEVICE
 			{ VK_FORMAT_R32G32B32A32_SFLOAT,     VK_FORMAT_R32G32B32A32_SFLOAT      },
 		},
 	};
-	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
+	static_assert(AttribType::Count == BX_COUNTOF(s_attribType) );
 
 	void fillVertexLayout(const ShaderVK* _vsh, VkPipelineVertexInputStateCreateInfo& _vertexInputState, const VertexLayout& _layout)
 	{
@@ -571,7 +571,7 @@ VK_IMPORT_DEVICE
 		"vkDevice",
 		"vkInstance",
 	};
-	BX_STATIC_ASSERT(VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE == BX_COUNTOF(s_allocScopeName)-1);
+	static_assert(VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE == BX_COUNTOF(s_allocScopeName)-1);
 
 	constexpr size_t kMinAlignment = 16;
 

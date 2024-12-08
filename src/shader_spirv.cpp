@@ -359,7 +359,7 @@ namespace bgfx
 		{ false, false, /* AtomicFlagClear,                         // 319 */ SPV_OPERAND(_) },
 		{ true,  true,  /* ImageSparseRead,                         // 320 */ SPV_OPERAND(_) },
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_spvOpcodeInfo) == SpvOpcode::Count);
+	static_assert(BX_COUNTOF(s_spvOpcodeInfo) == SpvOpcode::Count);
 
 	const char* s_spvOpcode[] =
 	{
@@ -686,7 +686,7 @@ namespace bgfx
 		"ImageSparseRead",
 		"",
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_spvOpcode)-1 == SpvOpcode::Count);
+	static_assert(BX_COUNTOF(s_spvOpcode)-1 == SpvOpcode::Count);
 
 	const char* getName(SpvOpcode::Enum _opcode)
 	{
@@ -800,7 +800,7 @@ namespace bgfx
 		"Alignment",
 		""
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_spvDecoration)-1 == SpvDecoration::Count);
+	static_assert(BX_COUNTOF(s_spvDecoration)-1 == SpvDecoration::Count);
 
 	const char* getName(SpvDecoration::Enum _enum)
 	{
@@ -831,7 +831,7 @@ namespace bgfx
 		"Image",
 		""
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_spvStorageClass)-1 == SpvStorageClass::Count);
+	static_assert(BX_COUNTOF(s_spvStorageClass)-1 == SpvStorageClass::Count);
 
 	const char* getName(SpvStorageClass::Enum _enum)
 	{
@@ -887,7 +887,7 @@ namespace bgfx
 		"InstanceIndex",
 		"",
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_spvBuiltin)-1 == SpvBuiltin::Count);
+	static_assert(BX_COUNTOF(s_spvBuiltin)-1 == SpvBuiltin::Count);
 
 	const char* getName(SpvBuiltin::Enum _enum)
 	{

@@ -81,7 +81,7 @@ static const char* s_easeFuncName[] =
 	"InOutBounce",
 	"OutInBounce",
 };
-BX_STATIC_ASSERT(BX_COUNTOF(s_easeFuncName) == bx::Easing::Count);
+static_assert(BX_COUNTOF(s_easeFuncName) == bx::Easing::Count);
 
 struct Emitter
 {

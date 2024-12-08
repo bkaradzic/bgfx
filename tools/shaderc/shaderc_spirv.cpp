@@ -302,7 +302,7 @@ namespace bgfx { namespace spirv
 		"a_texcoord6",
 		"a_texcoord7",
 	};
-	BX_STATIC_ASSERT(bgfx::Attrib::Count == BX_COUNTOF(s_attribName) );
+	static_assert(bgfx::Attrib::Count == BX_COUNTOF(s_attribName) );
 
 	bgfx::Attrib::Enum toAttribEnum(const bx::StringView& _name)
 	{

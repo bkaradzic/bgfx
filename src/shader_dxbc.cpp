@@ -238,7 +238,7 @@ namespace bgfx
 		{ 0, 0 }, // ITOD
 		{ 0, 0 }, // UTOD
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcOpcodeInfo) == DxbcOpcode::Count);
+	static_assert(BX_COUNTOF(s_dxbcOpcodeInfo) == DxbcOpcode::Count);
 
 	static const char* s_dxbcOpcode[] =
 	{
@@ -464,7 +464,7 @@ namespace bgfx
 		"itod",
 		"utod",
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcOpcode) == DxbcOpcode::Count);
+	static_assert(BX_COUNTOF(s_dxbcOpcode) == DxbcOpcode::Count);
 
 	const char* getName(DxbcOpcode::Enum _opcode)
 	{
@@ -488,7 +488,7 @@ namespace bgfx
 		"RawBuffer",        // RawBuffer
 		"StructuredBuffer", // StructuredBuffer
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcSrvType) == DxbcResourceDim::Count);
+	static_assert(BX_COUNTOF(s_dxbcSrvType) == DxbcResourceDim::Count);
 
 	const char* s_dxbcInterpolationName[] =
 	{
@@ -501,7 +501,7 @@ namespace bgfx
 		"linear sample",
 		"linear noperspective sample",
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcInterpolationName) == DxbcInterpolation::Count);
+	static_assert(BX_COUNTOF(s_dxbcInterpolationName) == DxbcInterpolation::Count);
 
 	const char *s_dxbcPrimitiveTopologyName[] =
 	{
@@ -520,7 +520,7 @@ namespace bgfx
 		"TriangleListAdj",
 		"TriangleStripAdj",
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcPrimitiveTopologyName) == DxbcPrimitiveTopology::Count);
+	static_assert(BX_COUNTOF(s_dxbcPrimitiveTopologyName) == DxbcPrimitiveTopology::Count);
 
 	const char *s_dxbcPrimitiveName[] = {
 		"",
@@ -564,7 +564,7 @@ namespace bgfx
 		"_31ControlPointPatch",
 		"_32ControlPointPatch",
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcPrimitiveName) == DxbcPrimitive::Count);
+	static_assert(BX_COUNTOF(s_dxbcPrimitiveName) == DxbcPrimitive::Count);
 
 	// mesa/src/gallium/state_trackers/d3d1x/d3d1xshader/defs/shortfiles.txt
 	static const char* s_dxbcOperandType[] =
@@ -611,7 +611,7 @@ namespace bgfx
 		"oDepthLE",                  // OutputDepthLessEqual
 		"vCycleCounter",             // CycleCounter
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcOperandType) == DxbcOperandType::Count);
+	static_assert(BX_COUNTOF(s_dxbcOperandType) == DxbcOperandType::Count);
 
 	static const char* s_dxbcCustomDataClass[] =
 	{
@@ -622,7 +622,7 @@ namespace bgfx
 		"ShaderMessage",
 		"ClipPlaneConstantMappingsForDx9",
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcCustomDataClass) == DxbcCustomDataClass::Count);
+	static_assert(BX_COUNTOF(s_dxbcCustomDataClass) == DxbcCustomDataClass::Count);
 
 #define DXBC_MAX_NAME_STRING 512
 
