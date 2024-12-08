@@ -3,7 +3,7 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include "bgfx_compute.sh" 
+#include "bgfx_compute.sh"
 #include "uniforms.sh"
 
 SAMPLER2D(s_depthSource, 0);
@@ -66,12 +66,12 @@ vec3 CalculateNormal( const vec4 edgesLRTB, vec3 pixCenterPos, vec3 pixLPos, vec
     pixelNormal += ( acceptedNormals.z ) * cross( pixRPos, pixBPos );
     pixelNormal += ( acceptedNormals.w ) * cross( pixBPos, pixLPos );
     pixelNormal = normalize( pixelNormal );
-    
+
     return pixelNormal;
 }
 
 NUM_THREADS(8, 8, 1)
-void main() 
+void main()
 {
 	uvec2 dtID = uvec2(gl_GlobalInvocationID.xy);
 
@@ -110,12 +110,12 @@ void main()
 		pixZs[2][2] = z3;
 #if BGFX_SHADER_LANGUAGE_GLSL
 		// left 2
-		pixZs[0][1] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2( -1, 0 ) ).x ); 
-		pixZs[0][2] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2( -1, -1 ) ).x ); 
+		pixZs[0][1] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2( -1, 0 ) ).x );
+		pixZs[0][2] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2( -1, -1 ) ).x );
 
 		// right 2
-		pixZs[3][1] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2(  2, 0 ) ).x ); 
-		pixZs[3][2] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2(  2, -1 ) ).x ); 
+		pixZs[3][1] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2(  2, 0 ) ).x );
+		pixZs[3][2] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2(  2, -1 ) ).x );
 
 		// top 2
 		pixZs[1][0] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2(  0, 1 ) ).x );
@@ -126,12 +126,12 @@ void main()
 		pixZs[2][3] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2(  1,  -2 ) ).x );
 #else
 		// left 2
-		pixZs[0][1] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2( -1, 0 ) ).x ); 
-		pixZs[0][2] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2( -1, 1 ) ).x ); 
+		pixZs[0][1] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2( -1, 0 ) ).x );
+		pixZs[0][2] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2( -1, 1 ) ).x );
 
 		// right 2
-		pixZs[3][1] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2(  2, 0 ) ).x ); 
-		pixZs[3][2] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2(  2, 1 ) ).x ); 
+		pixZs[3][1] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2(  2, 0 ) ).x );
+		pixZs[3][2] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2(  2, 1 ) ).x );
 
 		// top 2
 		pixZs[1][0] = ScreenSpaceToViewSpaceDepth(  texture2DLodOffset(s_depthSource, upperLeftUV, 0.0, ivec2(  0, -1 ) ).x );
@@ -164,13 +164,13 @@ void main()
 		// left 2
 		pixPos[0][1] = NDCToViewspace( upperLeftUV + viewportPixelSize * vec2( -1.0,  0.0), pixZs[0][1] );
 		//pixPos[0][2] = NDCToViewspace( upperLeftUV + viewportPixelSize * vec2( -1.0,  1.0), pixZs[0][2] );
-		// right 2                                                                                     
+		// right 2
 		//pixPos[3][1] = NDCToViewspace( upperLeftUV + viewportPixelSize * vec2(  2.0,  0.0), pixZs[3][1] );
 		pixPos[3][2] = NDCToViewspace( upperLeftUV + viewportPixelSize * vec2(  2.0,  1.0), pixZs[3][2] );
-		// top 2                                                                                       
+		// top 2
 		pixPos[1][0] = NDCToViewspace( upperLeftUV + viewportPixelSize * vec2( 0.0, -1.0 ), pixZs[1][0] );
 		//pixPos[2][0] = NDCToViewspace( upperLeftUV + viewportPixelSize * vec2( 1.0, -1.0 ), pixZs[2][0] );
-		// bottom 2                                                                                    
+		// bottom 2
 		//pixPos[1][3] = NDCToViewspace( upperLeftUV + viewportPixelSize * vec2( 0.0,  2.0 ), pixZs[1][3] );
 		pixPos[2][3] = NDCToViewspace( upperLeftUV + viewportPixelSize * vec2( 1.0,  2.0 ), pixZs[2][3] );
 

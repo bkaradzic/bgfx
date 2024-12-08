@@ -26,7 +26,7 @@ float nrand(in vec2 n)
 float n4rand_ss(in vec2 n)
 {
 	float nrnd0 = nrand( n + 0.07*fract( u_parameters.w ) );
-	float nrnd1 = nrand( n + 0.11*fract( u_parameters.w + 0.573953 ) );	
+	float nrnd1 = nrand( n + 0.11*fract( u_parameters.w + 0.573953 ) );
 	return 0.23*sqrt(-log(nrnd0+0.00001))*cos(2.0*3.141592*nrnd1)+0.5;
 }
 
@@ -40,17 +40,17 @@ void main()
 	vec3 normal = normalize(v_normal);
 
 	float occulsion = toLinear(texture2D(s_texLightmap, v_texcoord0).r);
-	
+
 	vec3 skyDirection = vec3(0.0, 0.0, 1.0);
-	
+
 	float diffuseSun = max(0.0, dot(normal, normalize(u_sunDirection.xyz)));
 	float diffuseSky = 1.0 + 0.5 * dot(normal, skyDirection);
-	
+
 	vec3 color = diffuseSun * u_sunLuminance.rgb + (diffuseSky * u_skyLuminance.rgb + 0.01) * occulsion;
 	color *= 0.5;
-	
+
 	//color = mix(color, (u_skyLuminance + u_sunLuminance)*0.3, v_fogFactor);
-	
+
 	gl_FragColor.xyz = color * u_parameters.z;
 	gl_FragColor.w = 1.0;
 	float r = n4rand_ss(gl_FragCoord.xy) / 40.0;

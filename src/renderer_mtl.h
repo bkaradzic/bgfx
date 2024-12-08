@@ -1072,7 +1072,7 @@ namespace bgfx { namespace mtl
 		void resize(FrameBufferMtl &_frameBuffer, uint32_t _width, uint32_t _height, uint32_t _flags, uint32_t _maximumDrawableCount);
 
 		id <MTLTexture> 	currentDrawableTexture();
-		
+
 		CAMetalLayer* m_metalLayer;
 #if BX_PLATFORM_VISIONOS
 		cp_layer_renderer_t m_layerRenderer;

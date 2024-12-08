@@ -29,7 +29,7 @@ void main()
 		// Expand out normal
 		n = n*2.0-1.0;
 		vec3 l = normalize(vec3(-0.8,0.75,-1.0));
-		light = max(0.0,dot(n,l)) * 1.2+ 0.3; 
+		light = max(0.0,dot(n,l)) * 1.2+ 0.3;
 	}
 
 	float ao = 1.0;
@@ -39,5 +39,4 @@ void main()
 	}
 
 	gl_FragColor = vec4(albedoColor * light * ao, 1.0f);
-} 
- 
+}

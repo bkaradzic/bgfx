@@ -1,8 +1,8 @@
 uniform vec4 u_params[19];
 uniform vec4 u_rect;
 
-#define u_viewportPixelSize					u_params[0].xy 
-#define u_halfViewportPixelSize				u_params[0].zw 
+#define u_viewportPixelSize					u_params[0].xy
+#define u_halfViewportPixelSize				u_params[0].zw
 #define u_depthUnpackConsts					u_params[1].xy
 #define u_ndcToViewMul						u_params[2].xy
 #define u_ndcToViewAdd						u_params[2].zw

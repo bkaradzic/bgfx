@@ -17,7 +17,7 @@ void main()
 	// Calculate normal.  Note that compressed normal is stored in the vertices
 	vec3 normalObjectSpace = a_normal.xyz*2.0+-1.0; // Normal is stored in [0,1], remap to [-1,1].
 
-	// Transform normal into view space.  
+	// Transform normal into view space.
 	v_normal = mul(u_modelView, vec4(normalObjectSpace, 0.0) ).xyz;
 	// Normalize to remove (uniform...) scaling
 	v_normal = normalize(v_normal);

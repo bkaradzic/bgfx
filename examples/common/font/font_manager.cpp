@@ -522,7 +522,7 @@ float FontManager::getKerning(FontHandle _handle, CodePoint _prevCodePoint, Code
 	if (isValid(cachedFont.masterFontHandle))
 	{
 		CachedFont& baseFont = m_cachedFonts[cachedFont.masterFontHandle.idx];
-		return baseFont.trueTypeFont->m_scale 
+		return baseFont.trueTypeFont->m_scale
 			* stbtt_GetCodepointKernAdvance(&baseFont.trueTypeFont->m_font, _prevCodePoint, _codePoint)
 			* cachedFont.fontInfo.scale;
 	}

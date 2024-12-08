@@ -86,4 +86,3 @@ void main()
 	gl_FragColor.xyz = mix(u_fogColor, final, fogFactor);
 	gl_FragColor.w   = 1.0;
 }
-

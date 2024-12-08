@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2013 Jeremie Roy. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */

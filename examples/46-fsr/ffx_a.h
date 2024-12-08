@@ -249,7 +249,7 @@
 //------------------------------------------------------------------------------------------------------------------------------
 // TODO
 // ====
-//  - Replace transcendentals with manual versions. 
+//  - Replace transcendentals with manual versions.
 //==============================================================================================================================
  #ifdef A_GCC
   A_STATIC AD1 AAbsD1(AD1 a){return __builtin_fabs(a);}
@@ -310,7 +310,7 @@
  A_STATIC AL1 AMaxL1(AL1 a,AL1 b){return a>b?a:b;}
  A_STATIC AU1 AMaxU1(AU1 a,AU1 b){return a>b?a:b;}
 //------------------------------------------------------------------------------------------------------------------------------
- // These follow the convention that A integer types don't have signage, until they are operated on. 
+ // These follow the convention that A integer types don't have signage, until they are operated on.
  A_STATIC AL1 AMaxSL1(AL1 a,AL1 b){return (ASL1_(a)>ASL1_(b))?a:b;}
  A_STATIC AU1 AMaxSU1(AU1 a,AU1 b){return (ASU1_(a)>ASU1_(b))?a:b;}
 //------------------------------------------------------------------------------------------------------------------------------
@@ -1071,7 +1071,7 @@
  #define AU1_AH1_AF1(a) AU1_AH1_AF1_x(AF1(a))
 //------------------------------------------------------------------------------------------------------------------------------
  AU1 AU1_AH2_AF2_x(AF2 a){return f32tof16(a.x)|(f32tof16(a.y)<<16);}
- #define AU1_AH2_AF2(a) AU1_AH2_AF2_x(AF2(a)) 
+ #define AU1_AH2_AF2(a) AU1_AH2_AF2_x(AF2(a))
  #define AU1_AB4Unorm_AF4(x) D3DCOLORtoUBYTE4(AF4(x))
 //------------------------------------------------------------------------------------------------------------------------------
  AF2 AF2_AH2_AU1_x(AU1 x){return AF2(f16tof32(x&0xFFFF),f16tof32(x>>16));}
@@ -1588,7 +1588,7 @@
 //  - V_CVT_F32_UBYTE{0,1,2,3} - Unsigned byte to float.
 //  - V_CVT_PKACC_U8_F32 - Float to unsigned byte (does bit-field insert into 32-bit integer).
 // V_PERM_B32 does byte packing with ability to zero fill bytes as well.
-//  - Can pull out byte values from two sources, and zero fill upper 8-bits of packed hi and lo. 
+//  - Can pull out byte values from two sources, and zero fill upper 8-bits of packed hi and lo.
 //------------------------------------------------------------------------------------------------------------------------------
 // BYTE : FLOAT - ABuc{0,1,2,3}{To,From}U1() - Designed for V_CVT_F32_UBYTE* and V_CVT_PKACCUM_U8_F32 ops.
 // ====   =====
@@ -1683,8 +1683,8 @@
 // ENCODING (without zero-based encoding)
 // ========
 //   0 = unused (can be used to mean something else)
-//   1 = lowest value 
-// 128 = exact zero center (zero based encoding 
+//   1 = lowest value
+// 128 = exact zero center (zero based encoding
 // 255 = highest value
 //------------------------------------------------------------------------------------------------------------------------------
 // Zero-based [Zb] flips the MSB bit of the byte (making 128 "exact zero" actually zero).
@@ -1696,8 +1696,8 @@
 //    1 : -126/512
 //    2 : -125/512
 //     ...
-//  128 : 0 
-//     ... 
+//  128 : 0
+//     ...
 //  255 : 127/512
 //      : 1/4 (just outside the encoding range)
 //==============================================================================================================================
@@ -1918,7 +1918,7 @@
   //  - Parabolic takes 8 clocks and 8 issue slots (only fract is non-packed).
   AH1 APSinH1(AH1 x){return x*abs(x)-x;}
   AH2 APSinH2(AH2 x){return x*abs(x)-x;} // AND,FMA
-  AH1 APCosH1(AH1 x){x=AFractH1(x*AH1_(0.5)+AH1_(0.75));x=x*AH1_(2.0)-AH1_(1.0);return APSinH1(x);} 
+  AH1 APCosH1(AH1 x){x=AFractH1(x*AH1_(0.5)+AH1_(0.75));x=x*AH1_(2.0)-AH1_(1.0);return APSinH1(x);}
   AH2 APCosH2(AH2 x){x=AFractH2(x*AH2_(0.5)+AH2_(0.75));x=x*AH2_(2.0)-AH2_(1.0);return APSinH2(x);} // 3x FMA, 2xFRACT, AND
   AH2 APSinCosH1(AH1 x){AH1 y=AFractH1(x*AH1_(0.5)+AH1_(0.75));y=y*AH1_(2.0)-AH1_(1.0);return APSinH2(AH2(x,y));}
  #endif
@@ -2152,9 +2152,9 @@
    return clamp(j.xxx,c*j.yyy,pow(c,j.zzz)*k.xxx+k.yyy);}
 //------------------------------------------------------------------------------------------------------------------------------
   // Note 'rcpX' is '1/x', where the 'x' is what would be used in AFromGamma().
-  AF1 AToGammaF1(AF1 c,AF1 rcpX){return pow(c,AF1_(rcpX));} 
-  AF2 AToGammaF2(AF2 c,AF1 rcpX){return pow(c,AF2_(rcpX));} 
-  AF3 AToGammaF3(AF3 c,AF1 rcpX){return pow(c,AF3_(rcpX));} 
+  AF1 AToGammaF1(AF1 c,AF1 rcpX){return pow(c,AF1_(rcpX));}
+  AF2 AToGammaF2(AF2 c,AF1 rcpX){return pow(c,AF2_(rcpX));}
+  AF3 AToGammaF3(AF3 c,AF1 rcpX){return pow(c,AF3_(rcpX));}
 //------------------------------------------------------------------------------------------------------------------------------
   AF1 AToPqF1(AF1 x){AF1 p=pow(x,AF1_(0.159302));
    return pow((AF1_(0.835938)+AF1_(18.8516)*p)/(AF1_(1.0)+AF1_(18.6875)*p),AF1_(78.8438));}
@@ -2188,9 +2188,9 @@
   AF3 AFrom709F3(AF3 c){AF3 j=AF3(0.081/4.5,1.0/4.5,1.0/0.45);AF2 k=AF2(1.0/1.099,0.099/1.099);
    return AZolSelF3(AZolSignedF3(c-j.xxx),c*j.yyy,pow(c*k.xxx+k.yyy,j.zzz));}
 //------------------------------------------------------------------------------------------------------------------------------
-  AF1 AFromGammaF1(AF1 c,AF1 x){return pow(c,AF1_(x));} 
-  AF2 AFromGammaF2(AF2 c,AF1 x){return pow(c,AF2_(x));} 
-  AF3 AFromGammaF3(AF3 c,AF1 x){return pow(c,AF3_(x));} 
+  AF1 AFromGammaF1(AF1 c,AF1 x){return pow(c,AF1_(x));}
+  AF2 AFromGammaF2(AF2 c,AF1 x){return pow(c,AF2_(x));}
+  AF3 AFromGammaF3(AF3 c,AF1 x){return pow(c,AF3_(x));}
 //------------------------------------------------------------------------------------------------------------------------------
   AF1 AFromPqF1(AF1 x){AF1 p=pow(x,AF1_(0.0126833));
    return pow(ASatF1(p-AF1_(0.835938))/(AF1_(18.8516)-AF1_(18.6875)*p),AF1_(6.27739));}
@@ -2292,14 +2292,14 @@
  // Details,
  //  LANE TO 8x8 MAPPING
  //  ===================
- //  00 01 08 09 10 11 18 19 
+ //  00 01 08 09 10 11 18 19
  //  02 03 0a 0b 12 13 1a 1b
  //  04 05 0c 0d 14 15 1c 1d
- //  06 07 0e 0f 16 17 1e 1f 
- //  20 21 28 29 30 31 38 39 
+ //  06 07 0e 0f 16 17 1e 1f
+ //  20 21 28 29 30 31 38 39
  //  22 23 2a 2b 32 33 3a 3b
  //  24 25 2c 2d 34 35 3c 3d
- //  26 27 2e 2f 36 37 3e 3f 
+ //  26 27 2e 2f 36 37 3e 3f
  AU2 ARmpRed8x8(AU1 a){return AU2(ABfiM(ABfe(a,2u,3u),a,1u),ABfiM(ABfe(a,3u,3u),ABfe(a,1u,2u),2u));}
 //==============================================================================================================================
  #ifdef A_HALF
@@ -2356,7 +2356,7 @@
 //   ...
 //  1023 = 2^(-14)*(1-2^(-10)) = 2^(-14)*(1-1/1024) ... last denormal value
 //  1024 = 2^(-14) = 1/16384 .......................... first normal value that still maps to integers
-//  2047 .............................................. last normal value that still maps to integers 
+//  2047 .............................................. last normal value that still maps to integers
 // Scaling limits,
 //  2^15 = 32768 ...................................... largest power of 2 scaling
 // Largest pow2 conversion mapping is at *32768,

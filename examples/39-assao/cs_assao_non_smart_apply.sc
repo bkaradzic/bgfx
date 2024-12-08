@@ -3,7 +3,7 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include "bgfx_compute.sh" 
+#include "bgfx_compute.sh"
 #include "uniforms.sh"
 
 IMAGE2D_WO(s_target, r8, 0);
@@ -11,7 +11,7 @@ SAMPLER2DARRAY(s_finalSSAO,	1);
 
 // edge-ignorant blur & apply (for the lowest quality level 0)
 NUM_THREADS(8, 8, 1)
-void main() 
+void main()
 {
 	uvec2 dtID = uvec2(gl_GlobalInvocationID.xy) + uvec2(u_rect.xy);
 	if (all(lessThan(dtID.xy, u_rect.zw) ) )
@@ -26,4 +26,3 @@ void main()
 		imageStore(s_target, ivec2(dtID.xy), avg.xxxx);
 	}
 }
-
