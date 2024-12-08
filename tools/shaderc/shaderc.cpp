@@ -51,7 +51,7 @@ namespace bgfx
 
 		"Unknown?!"
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_shadingLangName) == ShadingLang::Count+1, "ShadingLang::Enum and s_shadingLangName mismatch");
+	static_assert(BX_COUNTOF(s_shadingLangName) == ShadingLang::Count+1, "ShadingLang::Enum and s_shadingLangName mismatch");
 
 	const char* getName(ShadingLang::Enum _lang)
 	{
@@ -312,7 +312,7 @@ namespace bgfx
 		"mat3", "float3x3",
 		"mat4", "float4x4",
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_uniformTypeName) == UniformType::Count*2);
+	static_assert(BX_COUNTOF(s_uniformTypeName) == UniformType::Count*2);
 
 	static const char* s_allowedVertexShaderInputs[] =
 	{

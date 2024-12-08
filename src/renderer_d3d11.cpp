@@ -46,7 +46,7 @@ namespace bgfx { namespace d3d11
 		{ D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,     1, 1, 0 },
 		{ D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED,     0, 0, 0 },
 	};
-	BX_STATIC_ASSERT(Topology::Count == BX_COUNTOF(s_primInfo)-1);
+	static_assert(Topology::Count == BX_COUNTOF(s_primInfo)-1);
 
 	union Zero
 	{
@@ -300,7 +300,7 @@ namespace bgfx { namespace d3d11
 		{ DXGI_FORMAT_R32_TYPELESS,       DXGI_FORMAT_R32_FLOAT,             DXGI_FORMAT_D32_FLOAT,         DXGI_FORMAT_UNKNOWN              }, // D32F
 		{ DXGI_FORMAT_R24G8_TYPELESS,     DXGI_FORMAT_R24_UNORM_X8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_UNKNOWN              }, // D0S8
 	};
-	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
+	static_assert(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
 	static const D3D11_INPUT_ELEMENT_DESC s_attrib[] =
 	{
@@ -323,7 +323,7 @@ namespace bgfx { namespace d3d11
 		{ "TEXCOORD",     6, DXGI_FORMAT_R32G32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD",     7, DXGI_FORMAT_R32G32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
-	BX_STATIC_ASSERT(Attrib::Count == BX_COUNTOF(s_attrib) );
+	static_assert(Attrib::Count == BX_COUNTOF(s_attrib) );
 
 	static const DXGI_FORMAT s_attribType[][4][2] =
 	{
@@ -358,7 +358,7 @@ namespace bgfx { namespace d3d11
 			{ DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT },
 		},
 	};
-	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
+	static_assert(AttribType::Count == BX_COUNTOF(s_attribType) );
 
 	static D3D11_INPUT_ELEMENT_DESC* fillVertexLayout(uint8_t _stream, D3D11_INPUT_ELEMENT_DESC* _out, const VertexLayout& _layout)
 	{

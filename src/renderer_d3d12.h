@@ -397,7 +397,7 @@ namespace bgfx { namespace d3d12
 			, m_completedFence(0)
 			, m_control(BX_COUNTOF(m_commandList) )
 		{
-			BX_STATIC_ASSERT(BX_COUNTOF(m_commandList) == BX_COUNTOF(m_release) );
+			static_assert(BX_COUNTOF(m_commandList) == BX_COUNTOF(m_release) );
 		}
 
 		void init(ID3D12Device* _device);

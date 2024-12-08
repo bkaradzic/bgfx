@@ -272,7 +272,7 @@ namespace bgfx { namespace gl
 				}
 				BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "Failed to create context 0x%08x.", GetLastError() );
 
-				BX_STATIC_ASSERT(sizeof(contextAttrs) == sizeof(m_contextAttrs) );
+				static_assert(sizeof(contextAttrs) == sizeof(m_contextAttrs) );
 				bx::memCopy(m_contextAttrs, contextAttrs, sizeof(contextAttrs) );
 			}
 

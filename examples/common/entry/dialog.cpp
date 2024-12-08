@@ -118,7 +118,7 @@ s_getFileNameA[] =
 	{ GetOpenFileNameA, /* OFN_EXPLORER */ 0x00080000 | /* OFN_DONTADDTORECENT */ 0x02000000 | /* OFN_FILEMUSTEXIST */ 0x00001000 },
 	{ GetSaveFileNameA, /* OFN_EXPLORER */ 0x00080000 | /* OFN_DONTADDTORECENT */ 0x02000000                                      },
 };
-BX_STATIC_ASSERT(BX_COUNTOF(s_getFileNameA) == FileSelectionDialogType::Count);
+static_assert(BX_COUNTOF(s_getFileNameA) == FileSelectionDialogType::Count);
 #endif
 
 #if !BX_PLATFORM_OSX

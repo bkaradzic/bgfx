@@ -13,7 +13,7 @@
  */
 
 #define BGFX_C99_ENUM_CHECK(_enum, _c99enumcount) \
-	BX_STATIC_ASSERT(_enum::Count == _enum::Enum(_c99enumcount) )
+	static_assert(_enum::Count == _enum::Enum(_c99enumcount) )
 
 BGFX_C99_ENUM_CHECK(bgfx::Fatal,                BGFX_FATAL_COUNT);
 BGFX_C99_ENUM_CHECK(bgfx::RendererType,         BGFX_RENDERER_TYPE_COUNT);
@@ -30,7 +30,7 @@ BGFX_C99_ENUM_CHECK(bgfx::RenderFrame,          BGFX_RENDER_FRAME_COUNT);
 #undef BGFX_C99_ENUM_CHECK
 
 #define BGFX_C99_STRUCT_SIZE_CHECK(_cppstruct, _c99struct) \
-	BX_STATIC_ASSERT(sizeof(_cppstruct) == sizeof(_c99struct) )
+	static_assert(sizeof(_cppstruct) == sizeof(_c99struct) )
 
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::Memory,                bgfx_memory_t);
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::Transform,             bgfx_transform_t);

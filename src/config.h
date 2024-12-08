@@ -239,12 +239,12 @@
 
 // Cannot be configured via compiler options.
 #define BGFX_CONFIG_MAX_PROGRAMS (1<<BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM)
-BX_STATIC_ASSERT(bx::isPowerOf2(BGFX_CONFIG_MAX_PROGRAMS), "BGFX_CONFIG_MAX_PROGRAMS must be power of 2.");
+static_assert(bx::isPowerOf2(BGFX_CONFIG_MAX_PROGRAMS), "BGFX_CONFIG_MAX_PROGRAMS must be power of 2.");
 
 #ifndef BGFX_CONFIG_MAX_VIEWS
 #	define BGFX_CONFIG_MAX_VIEWS 256
 #endif // BGFX_CONFIG_MAX_VIEWS
-BX_STATIC_ASSERT(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS must be power of 2.");
+static_assert(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS must be power of 2.");
 
 #define BGFX_CONFIG_MAX_VIEW_NAME_RESERVED 6
 

@@ -120,7 +120,7 @@ static const uint64_t s_ptState[]
 	BGFX_STATE_PT_LINESTRIP,
 	BGFX_STATE_PT_POINTS,
 };
-BX_STATIC_ASSERT(BX_COUNTOF(s_ptState) == BX_COUNTOF(s_ptNames) );
+static_assert(BX_COUNTOF(s_ptState) == BX_COUNTOF(s_ptNames) );
 
 class ExampleCubes : public entry::AppI
 {

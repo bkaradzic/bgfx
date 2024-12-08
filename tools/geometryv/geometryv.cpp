@@ -67,7 +67,7 @@ static const char* s_attribShortNames[] =
 	"TC6", // TexCoord6
 	"TC7", // TexCoord7
 };
-BX_STATIC_ASSERT(BX_COUNTOF(s_attribShortNames) == bgfx::Attrib::Count);
+static_assert(BX_COUNTOF(s_attribShortNames) == bgfx::Attrib::Count);
 
 
 static const char* s_supportedExt[] =
@@ -150,7 +150,7 @@ static const char* s_bindingName[] =
 	"Help",
 	"About",
 };
-BX_STATIC_ASSERT(Binding::Count == BX_COUNTOF(s_bindingName) );
+static_assert(Binding::Count == BX_COUNTOF(s_bindingName) );
 
 static const InputBinding* s_binding[] =
 {
@@ -159,7 +159,7 @@ static const InputBinding* s_binding[] =
 	s_bindingHelp,
 	s_bindingAbout,
 };
-BX_STATIC_ASSERT(Binding::Count == BX_COUNTOF(s_binding) );
+static_assert(Binding::Count == BX_COUNTOF(s_binding) );
 
 static const char* s_filter = ""
 	"Bgfx geometry (bin) | *.bin\n"

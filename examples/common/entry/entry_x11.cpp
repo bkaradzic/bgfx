@@ -81,7 +81,7 @@ namespace entry
 		{ Key::GamepadUp,   Key::GamepadDown  },
 		{ Key::None,        Key::None         },
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_translateAxis) == BX_COUNTOF(s_axisDpad) );
+	static_assert(BX_COUNTOF(s_translateAxis) == BX_COUNTOF(s_axisDpad) );
 
 	struct Joystick
 	{
