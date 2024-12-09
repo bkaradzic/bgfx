@@ -10,10 +10,12 @@
 
 #define DXBC_CHUNK_HEADER BX_MAKEFOURCC('D', 'X', 'B', 'C')
 
+#ifdef None
 // on linux when trying to build with vulkan on and opengl off, this file is included after Xlib.h
 // which includes X.h, which in turn #define None 0
 // undefining so DxbcOperandModifier::None properly compiles
 #undef None
+#endif /* #ifdef None */
 
 namespace bgfx
 {
