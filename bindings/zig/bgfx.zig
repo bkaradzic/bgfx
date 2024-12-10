@@ -3720,3 +3720,5 @@ pub inline fn blit(_id: ViewId, _dst: TextureHandle, _dstMip: u8, _dstX: u16, _d
     return bgfx_blit(_id, _dst, _dstMip, _dstX, _dstY, _dstZ, _src, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
 }
 extern fn bgfx_blit(_id: ViewId, _dst: TextureHandle, _dstMip: u8, _dstX: u16, _dstY: u16, _dstZ: u16, _src: TextureHandle, _srcMip: u8, _srcX: u16, _srcY: u16, _srcZ: u16, _width: u16, _height: u16, _depth: u16) void;
+
+
