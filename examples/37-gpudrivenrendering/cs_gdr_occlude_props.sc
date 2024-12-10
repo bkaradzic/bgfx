@@ -51,7 +51,7 @@ void main()
 			//transform World space aaBox to NDC
 			vec4 clipPos = mul( u_viewProj, vec4(boxCorners[i], 1) );
 
-#if BGFX_SHADER_LANGUAGE_GLSL 
+#if BGFX_SHADER_LANGUAGE_GLSL
 			clipPos.z = 0.5 * ( clipPos.z + clipPos.w );
 #endif
 			clipPos.z = max(clipPos.z, 0);

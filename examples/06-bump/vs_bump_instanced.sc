@@ -18,7 +18,7 @@ void main()
 
 	vec3 wpos = instMul(model, vec4(a_position, 1.0) ).xyz;
 	gl_Position = mul(u_viewProj, vec4(wpos, 1.0) );
-	
+
 	vec4 normal = a_normal * 2.0 - 1.0;
 	vec3 wnormal = instMul(model, vec4(normal.xyz, 0.0) ).xyz;
 
@@ -33,7 +33,7 @@ void main()
 
 	v_wpos = wpos;
 
-	vec3 weyepos = mul(vec4(0.0, 0.0, 0.0, 1.0), u_view).xyz;		
+	vec3 weyepos = mul(vec4(0.0, 0.0, 0.0, 1.0), u_view).xyz;
 	v_view = instMul(weyepos - wpos, tbn);
 
 	v_texcoord0 = a_texcoord0;

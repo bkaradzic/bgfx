@@ -3,7 +3,7 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include "bgfx_compute.sh" 
+#include "bgfx_compute.sh"
 #include "uniforms.sh"
 
 // progressive poisson-like pattern; x, y are in [-1, 1] range, .z is length( vec2(x,y) ), .w is log2( z )
@@ -49,18 +49,18 @@ CONST(uint g_numTaps[5]) = { 3, 5, 12, 0, 0 };
 #define SSAO_DEPTH_MIPS_ENABLE_AT_QUALITY_PRESET                        (2)         // !!warning!! the MIP generation on the C++ side will be enabled on quality preset 2 regardless of this value, so if changing here, change the C++ side too
 #define SSAO_DEPTH_MIPS_GLOBAL_OFFSET                                   (-4.3)      // best noise/quality/performance tradeoff, found empirically
 //
-// !!warning!! the edge handling is hard-coded to 'disabled' on quality level 0, and enabled above, on the C++ side; while toggling it here will work for 
+// !!warning!! the edge handling is hard-coded to 'disabled' on quality level 0, and enabled above, on the C++ side; while toggling it here will work for
 // testing purposes, it will not yield performance gains (or correct results)
-#define SSAO_DEPTH_BASED_EDGES_ENABLE_AT_QUALITY_PRESET                 (1)     
+#define SSAO_DEPTH_BASED_EDGES_ENABLE_AT_QUALITY_PRESET                 (1)
 //
 #define SSAO_REDUCE_RADIUS_NEAR_SCREEN_BORDER_ENABLE_AT_QUALITY_PRESET  (99)        // 99 means disabled; only helpful if artifacts at the edges caused by lack of out of screen depth data are not acceptable with the depth sampler in either clamp or mirror modes
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SAMPLER2D(s_viewspaceDepthSource,  0); 
-SAMPLER2D(s_viewspaceDepthSourceMirror,  1); 
+SAMPLER2D(s_viewspaceDepthSource,  0);
+SAMPLER2D(s_viewspaceDepthSourceMirror,  1);
 IMAGE2D_RO(s_normalmapSource, rgba8, 2);
-BUFFER_RO(s_loadCounter, uint, 3); 
-SAMPLER2D(s_importanceMap,  4); 
+BUFFER_RO(s_loadCounter, uint, 3);
+SAMPLER2D(s_importanceMap,  4);
 IMAGE2D_ARRAY_RO(s_baseSSAO, rg8, 5);
 IMAGE2D_ARRAY_WO(s_target, rg8, 6);
 
@@ -96,7 +96,7 @@ void CalculateRadiusParameters( const float pixCenterLength, const vec2 pixelDir
 
     // when too close, on-screen sampling disk will grow beyond screen size; limit this to avoid closeup temporal artifacts
     const float tooCloseLimitMod = saturate( pixCenterLength * u_effectSamplingRadiusNearLimitRec ) * 0.8 + 0.2;
-    
+
     effectRadius *= tooCloseLimitMod;
 
     // 0.85 is to reduce the radius to allow for more samples on a slope to still stay within influence
@@ -169,7 +169,7 @@ void SSAOTapInner( const int qualityLevel, inout float obscuranceSum, inout floa
 
     float obscurance = CalculatePixelObscurance( pixelNormal, hitDelta, falloffCalcMulSq );
     float weight = 1.0;
- 
+
     if( qualityLevel >= SSAO_HALOING_REDUCTION_ENABLE_AT_QUALITY_PRESET )
     {
         //float reduct = max( 0, dot( hitDelta, negViewspaceDir ) );
@@ -198,7 +198,7 @@ void SSAOTap( const int qualityLevel, inout float obscuranceSum, inout float wei
     // snap to pixel center (more correct obscurance math, avoids artifacts)
     sampleOffset                    = round(sampleOffset);
 
-    // calculate MIP based on the sample distance from the centre, similar to as described 
+    // calculate MIP based on the sample distance from the centre, similar to as described
     // in http://graphics.cs.williams.edu/papers/SAOHPG12/.
     float mipLevel = ( qualityLevel < SSAO_DEPTH_MIPS_ENABLE_AT_QUALITY_PRESET )?(0):(samplePow2Len + mipOffset);
 
@@ -228,7 +228,7 @@ void SSAOTap( const int qualityLevel, inout float obscuranceSum, inout float wei
 }
 
 // this function is designed to only work with half/half depth at the moment - there's a couple of hardcoded paths that expect pixel/texel size, so it will not work for full res
-void GenerateSSAOShadowsInternal( out float outShadowTerm, out vec4 outEdges, out float outWeight, 
+void GenerateSSAOShadowsInternal( out float outShadowTerm, out vec4 outEdges, out float outWeight,
 	const vec2 SVPos, const int qualityLevel, bool adaptiveBase)
 {
     vec2 SVPosRounded = trunc( SVPos );
@@ -237,7 +237,7 @@ void GenerateSSAOShadowsInternal( out float outShadowTerm, out vec4 outEdges, ou
     const uint numberOfTaps = (adaptiveBase)?(SSAO_ADAPTIVE_TAP_BASE_COUNT) : ( g_numTaps[qualityLevel] );
     float pixZ, pixLZ, pixTZ, pixRZ, pixBZ;
 
-#if BGFX_SHADER_LANGUAGE_GLSL  
+#if BGFX_SHADER_LANGUAGE_GLSL
     vec4 valuesUL     = textureGather(s_viewspaceDepthSourceMirror, SVPosRounded * u_halfViewportPixelSize + vec2(0.0,u_halfViewportPixelSize.y), 0).wzyx;
     vec4 valuesBR     = textureGatherOffset(s_viewspaceDepthSourceMirror, SVPosRounded * u_halfViewportPixelSize + vec2(0.0,u_halfViewportPixelSize.y), ivec2( 1, -1 ), 0).wzyx;
 #else
@@ -246,7 +246,7 @@ void GenerateSSAOShadowsInternal( out float outShadowTerm, out vec4 outEdges, ou
 #endif
 
     // get this pixel's viewspace depth
-    pixZ = valuesUL.y; 
+    pixZ = valuesUL.y;
 
     // get left right top bottom neighbouring pixels for edge detection (gets compiled out on qualityLevel == 0)
     pixLZ   = valuesUL.x;
@@ -450,7 +450,7 @@ void GenerateSSAOShadowsInternal( out float outShadowTerm, out vec4 outEdges, ou
 
     // calculate fadeout (1 close, gradient, 0 far)
     float fadeOut = saturate( pixCenterPos.z * u_effectFadeOutMul + u_effectFadeOutAdd );
-  
+
     // Reduce the SSAO shadowing if we're on the edge to remove artifacts on edges (we don't care for the lower quality one)
     if( !adaptiveBase && (qualityLevel >= SSAO_DEPTH_BASED_EDGES_ENABLE_AT_QUALITY_PRESET) )
     {
@@ -464,20 +464,20 @@ void GenerateSSAOShadowsInternal( out float outShadowTerm, out vec4 outEdges, ou
 
         fadeOut *= saturate( 1.0 - edgeFadeoutFactor );
     }
-    
+
     // same as a bove, but a lot more conservative version
     // fadeOut *= saturate( dot( edgesLRTB, vec4( 0.9, 0.9, 0.9, 0.9 ) ) - 2.6 );
 
     // strength
     obscurance = u_effectShadowStrength * obscurance;
-    
+
     // clamp
     obscurance = min( obscurance, u_effectShadowClamp );
-    
+
     // fadeout
     obscurance *= fadeOut;
 
-    // conceptually switch to occlusion with the meaning being visibility (grows with visibility, occlusion == 1 implies full visibility), 
+    // conceptually switch to occlusion with the meaning being visibility (grows with visibility, occlusion == 1 implies full visibility),
     // to be in line with what is more commonly used.
     float occlusion = 1.0 - obscurance;
 
@@ -492,11 +492,11 @@ void GenerateSSAOShadowsInternal( out float outShadowTerm, out vec4 outEdges, ou
 }
 
 NUM_THREADS(8, 8, 1)
-void main() 
+void main()
 {
 	uvec2 dtID = uvec2(gl_GlobalInvocationID.xy) + uvec2(u_rect.xy);
 	if (all(lessThan(dtID.xy, u_rect.zw) ) )
-	{ 
+	{
 		float   outShadowTerm;
 		float   outWeight;
 		vec4  outEdges;
