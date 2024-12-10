@@ -482,7 +482,7 @@ namespace bgfx
 		scd.SwapEffect  = _scd.swapEffect;
 		scd.AlphaMode   = _scd.alphaMode;
 		scd.Flags       = _scd.flags;
-		
+
 #if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
 		IDXGIFactory5* factory5;
 		hr = m_factory->QueryInterface(IID_IDXGIFactory5, (void**)&factory5);

@@ -4,18 +4,18 @@ $input v_position, v_texcoord0
  * Copyright 2022 Preetish Kakkar. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
- 
+
  /*
 
 	Most of the code is inspired/ported from https://github.com/mmikk/hextile-demo/blob/main/hextile-demo/shader_lighting.hlsl
-	
+
 	The basic idea behind the algorithm is to use tiling & blending schema but instead of regular linear blending, the algorithm uses blending operator that prevents visual artifacts caused by linear blending
-	
+
 	We partition the uv-space on a triangle grid and compute the local triangle and the barycentric coordinates inside the triangle. We use a hash function to associate a random offset with each vertex of the triangle
 	grid and use this random offset to fetch the example texture.
-	
+
 	Finally, we blend the result using the barycentric coordinates as blending weights.
- 
+
  */
 
 #include "../common/common.sh"
@@ -56,7 +56,7 @@ mat2 LoadRot2x2(vec2 idx, float rotStrength)
 	float angle = abs(idx.x * idx.y) + abs(idx.x + idx.y) + M_PI;
 
 	// remap to +/-pi
-	//angle = fmod(angle, 2.0*M_PI); 
+	//angle = fmod(angle, 2.0*M_PI);
 	if (angle < 0.0) angle += 2.0 * M_PI;
 	if (angle > M_PI) angle -= 2.0 * M_PI;
 
@@ -108,7 +108,7 @@ void TriangleGrid(out float w1, out float w2, out float w3,
 	vec2 uv)
 {
 	// Scaling of the input
-	uv *= 2.0 * sqrt(3.0); // controls the size of the input with respect to the size of the tiles. 
+	uv *= 2.0 * sqrt(3.0); // controls the size of the input with respect to the size of the tiles.
 
 	// Skew input space into simplex triangle grid
 	const mat2 gridToSkewedGrid =
@@ -157,7 +157,7 @@ void hex2colTex(out vec4 color, out vec3 weights, vec2 uv,
 	vec2 uv3 = mul(uv - cen3, rot3) + cen3 + hash(vertex3);
 
 	// Fetch input
-	// We could simply use texture2D function, however, the screen space derivatives could be broken 
+	// We could simply use texture2D function, however, the screen space derivatives could be broken
 	// since we are using random offsets, we use texture2DGrad to make sure that we pass correct derivatives explicitly.
 	vec4 c1 = texture2DGrad(s_trx_d, uv1,
 		mul(dSTdx, rot1), mul(dSTdy, rot1));
@@ -175,7 +175,7 @@ void hex2colTex(out vec4 color, out vec3 weights, vec2 uv,
 	W /= (W.x + W.y + W.z);
 	if (r != 0.5) W = Gain3(W, r);
 
-	// blend weights with color linearly 
+	// blend weights with color linearly
 	// histogram preserving blending will be better but requires precompution step to create histogram texture
 	color = W.x * c1 + W.y * c2 + W.z * c3;
 	weights = ProduceHexWeights(W.xyz, vertex1, vertex2, vertex3);
@@ -202,16 +202,16 @@ void main()
 	vec3 sp = GetTileRate() * surfPosInWorld;
 
 	vec2 uv0 = vec2(sp.x, sp.z);
-		
-	if(u_useRegularTiling > 0.0) 
+
+	if(u_useRegularTiling > 0.0)
 	{
 		gl_FragColor = vec4(texture2D(s_trx_d, uv0.xy));
-	} 
-	else 
+	}
+	else
 	{
 		vec3 color, weights;
 		FetchColorAndWeight(color, weights, uv0);
-		
+
 		if (u_showWeights > 0.0)
 		{
 			gl_FragColor = vec4(weights, 1.0);
@@ -222,5 +222,5 @@ void main()
 		}
 	}
 
-	
+
 }

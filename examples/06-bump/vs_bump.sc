@@ -14,7 +14,7 @@ void main()
 	v_wpos = wpos;
 
 	gl_Position = mul(u_viewProj, vec4(wpos, 1.0) );
-	
+
 	vec4 normal = a_normal * 2.0 - 1.0;
 	vec4 tangent = a_tangent * 2.0 - 1.0;
 

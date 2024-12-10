@@ -3,11 +3,11 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include "bgfx_compute.sh" 
+#include "bgfx_compute.sh"
 #include "uniforms.sh"
 
 IMAGE2D_WO(s_target, r8, 0);
-SAMPLER2DARRAY(s_finalSSAO,  1); 
+SAMPLER2DARRAY(s_finalSSAO,  1);
 
 // unpacking for edges; 2 bits per edge mean 4 gradient values (0, 0.33, 0.66, 1) for smoother transitions!
 
@@ -24,7 +24,7 @@ vec4 UnpackEdges( float _packedVal )
 }
 
 NUM_THREADS(8, 8, 1)
-void main() 
+void main()
 {
 	uvec2 dtID = uvec2(gl_GlobalInvocationID.xy) + uvec2(u_rect.xy);
 	if (all(lessThan(dtID.xy, u_rect.zw) ) )
@@ -36,7 +36,7 @@ void main()
 		// calculate index in the four deinterleaved source array texture
 		int mx = (int(pixPos.x) % 2);
 #if BGFX_SHADER_LANGUAGE_GLSL
-		int dimy = imageSize(s_target).y; 
+		int dimy = imageSize(s_target).y;
 		int my = (int(dimy-1-pixPos.y) % 2);
 #else
 		int my = (int(pixPos.y) % 2);
@@ -47,7 +47,7 @@ void main()
 		int id = (1-mx) + (1-my)*2; // diagonal
 
 		vec2 centerVal = texelFetch(s_finalSSAO, ivec3(pixPosHalf, ic), 0 ).xy;
-    
+
 		ao = centerVal.x;
 
 	#if 1   // change to 0 if you want to disable last pass high-res blur (for debugging purposes, etc.)
@@ -58,7 +58,7 @@ void main()
 		// convert index shifts to sampling offsets
 		float fmx   = float(mx);
 		float fmy   = float(my);
-    
+
 		// in case of an edge, push sampling offsets away from the edge (towards pixel center)
 		float fmxe  = (edgesLRTB.y - edgesLRTB.x);
 		float fmye  = (edgesLRTB.w - edgesLRTB.z);
@@ -100,4 +100,3 @@ void main()
 		imageStore(s_target, ivec2(dtID.xy), ao.xxxx);
 	}
 }
-

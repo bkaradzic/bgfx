@@ -23,4 +23,3 @@ void main()
 	vec4 rgba = vec4(color, (1.0-edge)*opacity);
 	gl_FragColor = rgba;
 }
-

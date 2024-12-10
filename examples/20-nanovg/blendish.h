@@ -40,8 +40,8 @@ Revision 6 (2014-09-21)
 Summary
 -------
 
-Blendish is a small collection of drawing functions for NanoVG, designed to 
-replicate the look of the Blender 2.5+ User Interface. You can use these 
+Blendish is a small collection of drawing functions for NanoVG, designed to
+replicate the look of the Blender 2.5+ User Interface. You can use these
 functions to theme your UI library. Several metric constants for faithful
 reproduction are also included.
 
@@ -50,7 +50,7 @@ icons is unclear, they are not included in Blendishes repository, but a SVG
 template, "icons_template.svg" is provided, which you can use to build your own
 icon sheet.
 
-To use icons, you must first load the icon sheet using one of the 
+To use icons, you must first load the icon sheet using one of the
 nvgCreateImage*() functions and then pass the image handle to bndSetIconImage();
 otherwise, no icons will be drawn. See bndSetIconImage() for more information.
 
@@ -81,7 +81,7 @@ before including blendish.h, otherwise the file will be in header-only mode.
 #define BND_EXPORT
 #endif
 
-// if that typedef is provided elsewhere, you may define 
+// if that typedef is provided elsewhere, you may define
 // BLENDISH_NO_NVG_TYPEDEFS before including the header.
 #ifndef BLENDISH_NO_NVG_TYPEDEFS
 typedef struct NVGcontext NVGcontext;
@@ -119,14 +119,14 @@ typedef struct BNDnodeTheme {
     NVGcolor wiresColor;
     // color of text label when active
     NVGcolor textSelectedColor;
-    
+
     // inner color of active node (and dragged wire)
     NVGcolor activeNodeColor;
     // color of selected wire
     NVGcolor wireSelectColor;
     // color of background of node
     NVGcolor nodeBackdropColor;
-    
+
     // how much a noodle curves (0 to 10)
     int noodleCurving;
 } BNDnodeTheme;
@@ -192,7 +192,7 @@ typedef enum BNDcornerFlags {
     BND_CORNER_DOWN_RIGHT = 4,
     // sharp bottom left corner
     BND_CORNER_DOWN_LEFT = 8,
-    // all corners are sharp; 
+    // all corners are sharp;
     // you can invert a set of flags using ^= BND_CORNER_ALL
     BND_CORNER_ALL = 0xF,
     // top border is sharp
@@ -757,7 +757,7 @@ BND_EXPORT void bndSetTheme(BNDtheme theme);
 BND_EXPORT const BNDtheme *bndGetTheme();
 
 // designates an image handle as returned by nvgCreateImage*() as the themes'
-// icon sheet. The icon sheet format must be compatible to Blender 2.6's icon 
+// icon sheet. The icon sheet format must be compatible to Blender 2.6's icon
 // sheet; the order of icons does not matter.
 // A valid icon sheet is e.g. shown at
 // http://wiki.blender.org/index.php/Dev:2.5/Doc/How_to/Add_an_icon
@@ -789,7 +789,7 @@ BND_EXPORT void bndLabel(NVGcontext *ctx,
 // if label is not NULL, a label will be added to the widget
 // widget looks best when height is BND_WIDGET_HEIGHT
 BND_EXPORT void bndToolButton(NVGcontext *ctx,
-    float x, float y, float w, float h, int flags, BNDwidgetState state, 
+    float x, float y, float w, float h, int flags, BNDwidgetState state,
     int iconid, const char *label);
 
 // Draw a radio button with its lower left origin at (x,y) and size of (w,h),
@@ -799,9 +799,9 @@ BND_EXPORT void bndToolButton(NVGcontext *ctx,
 // if label is not NULL, a label will be added to the widget
 // widget looks best when height is BND_WIDGET_HEIGHT
 BND_EXPORT void bndRadioButton(NVGcontext *ctx,
-    float x, float y, float w, float h, int flags, BNDwidgetState state, 
+    float x, float y, float w, float h, int flags, BNDwidgetState state,
     int iconid, const char *label);
-    
+
 
 // Calculate the corresponding text position for given coordinates px/py
 // in a text field.
@@ -819,18 +819,18 @@ BND_EXPORT int bndTextFieldTextPosition(NVGcontext *ctx, float x, float y, float
 // if cend < cbegin, then no caret will be drawn
 // widget looks best when height is BND_WIDGET_HEIGHT
 BND_EXPORT void bndTextField(NVGcontext *ctx,
-    float x, float y, float w, float h, int flags, BNDwidgetState state, 
+    float x, float y, float w, float h, int flags, BNDwidgetState state,
     int iconid, const char *text, int cbegin, int cend);
-    
+
 // Draw an option button with its lower left origin at (x,y) and size of (w,h),
 // where flags is one or multiple flags from BNDcornerFlags and state denotes
 // the widgets current UI state.
 // if label is not NULL, a label will be added to the widget
 // widget looks best when height is BND_WIDGET_HEIGHT
 BND_EXPORT void bndOptionButton(NVGcontext *ctx,
-    float x, float y, float w, float h, BNDwidgetState state, 
+    float x, float y, float w, float h, BNDwidgetState state,
     const char *label);
-    
+
 // Draw a choice button with its lower left origin at (x,y) and size of (w,h),
 // where flags is one or multiple flags from BNDcornerFlags and state denotes
 // the widgets current UI state.
@@ -838,9 +838,9 @@ BND_EXPORT void bndOptionButton(NVGcontext *ctx,
 // if label is not NULL, a label will be added to the widget
 // widget looks best when height is BND_WIDGET_HEIGHT
 BND_EXPORT void bndChoiceButton(NVGcontext *ctx,
-    float x, float y, float w, float h, int flags, BNDwidgetState state, 
+    float x, float y, float w, float h, int flags, BNDwidgetState state,
     int iconid, const char *label);
-    
+
 // Draw a color button  with its lower left origin at (x,y) and size of (w,h),
 // where flags is one or multiple flags from BNDcornerFlags and state denotes
 // the widgets current UI state.
@@ -856,8 +856,8 @@ BND_EXPORT void bndColorButton(NVGcontext *ctx,
 // a ":" separator
 // widget looks best when height is BND_WIDGET_HEIGHT
 BND_EXPORT void bndNumberField(NVGcontext *ctx,
-    float x, float y, float w, float h, int flags, BNDwidgetState state, 
-    const char *label, const char *value);    
+    float x, float y, float w, float h, int flags, BNDwidgetState state,
+    const char *label, const char *value);
 
 // Draw slider control with its lower left origin at (x,y) and size of (w,h),
 // where flags is one or multiple flags from BNDcornerFlags and state denotes
@@ -868,7 +868,7 @@ BND_EXPORT void bndNumberField(NVGcontext *ctx,
 // a ":" separator
 // widget looks best when height is BND_WIDGET_HEIGHT
 BND_EXPORT void bndSlider(NVGcontext *ctx,
-    float x, float y, float w, float h, int flags, BNDwidgetState state, 
+    float x, float y, float w, float h, int flags, BNDwidgetState state,
     float progress, const char *label, const char *value);
 
 // Draw scrollbar with its lower left origin at (x,y) and size of (w,h),
@@ -878,9 +878,9 @@ BND_EXPORT void bndSlider(NVGcontext *ctx,
 // horizontal widget looks best when height is BND_SCROLLBAR_HEIGHT,
 // vertical looks best when width is BND_SCROLLBAR_WIDTH
 BND_EXPORT void bndScrollBar(NVGcontext *ctx,
-    float x, float y, float w, float h, BNDwidgetState state, 
+    float x, float y, float w, float h, BNDwidgetState state,
     float offset, float size);
-    
+
 // Draw a menu background with its lower left origin at (x,y) and size of (w,h),
 // where flags is one or multiple flags from BNDcornerFlags.
 BND_EXPORT void bndMenuBackground(NVGcontext *ctx,
@@ -899,7 +899,7 @@ BND_EXPORT void bndMenuLabel(NVGcontext *ctx,
 // if label is not NULL, a label will be added to the widget
 // widget looks best when height is BND_WIDGET_HEIGHT
 BND_EXPORT void bndMenuItem(NVGcontext *ctx,
-    float x, float y, float w, float h, BNDwidgetState state, 
+    float x, float y, float w, float h, BNDwidgetState state,
     int iconid, const char *label);
 
 // Draw a tooltip background with its lower left origin at (x,y) and size of (w,h)
@@ -909,7 +909,7 @@ BND_EXPORT void bndTooltipBackground(NVGcontext *ctx, float x, float y, float w,
 BND_EXPORT void bndNodePort(NVGcontext *ctx, float x, float y, BNDwidgetState state,
     NVGcolor color);
 
-// Draw a node wire originating at (x0,y0) and floating to (x1,y1), with 
+// Draw a node wire originating at (x0,y0) and floating to (x1,y1), with
 // a colored gradient based on the states state0 and state1:
 // BND_DEFAULT: default wire color
 // BND_HOVER: selected wire color
@@ -927,19 +927,19 @@ BND_EXPORT void bndColoredNodeWire(NVGcontext *ctx, float x0, float y0, float x1
 BND_EXPORT void bndNodeBackground(NVGcontext *ctx, float x, float y, float w, float h,
     BNDwidgetState state, int iconid, const char *label, NVGcolor titleColor);
 
-// Draw a window with the upper right and lower left splitter widgets into 
+// Draw a window with the upper right and lower left splitter widgets into
 // the rectangle at origin (x,y) and size (w, h)
 BND_EXPORT void bndSplitterWidgets(NVGcontext *ctx, float x, float y, float w, float h);
 
 // Draw the join area overlay stencil into the rectangle
 // at origin (x,y) and size (w,h)
-// vertical is 0 or 1 and designates the arrow orientation, 
+// vertical is 0 or 1 and designates the arrow orientation,
 // mirror is 0 or 1 and flips the arrow side
 BND_EXPORT void bndJoinAreaOverlay(NVGcontext *ctx, float x, float y, float w, float h,
     int vertical, int mirror);
 
 ////////////////////////////////////////////////////////////////////////////////
-        
+
 // Estimator Functions
 // -------------------
 // Use these functions to estimate sizes for widgets with your NVGcontext.
@@ -971,12 +971,12 @@ BND_EXPORT NVGcolor bndOffsetColor(NVGcolor color, int delta);
 BND_EXPORT void bndSelectCorners(float *radiuses, float r, int flags);
 
 // computes the upper and lower gradient colors for the inner box from a widget
-// theme and the widgets state. If flipActive is set and the state is 
+// theme and the widgets state. If flipActive is set and the state is
 // BND_ACTIVE, the upper and lower colors will be swapped.
 BND_EXPORT void bndInnerColors(NVGcolor *shade_top, NVGcolor *shade_down,
     const BNDwidgetTheme *theme, BNDwidgetState state, int flipActive);
 
-// computes the text color for a widget label from a widget theme and the 
+// computes the text color for a widget label from a widget theme and the
 // widgets state.
 BND_EXPORT NVGcolor bndTextColor(const BNDwidgetTheme *theme, BNDwidgetState state);
 
@@ -987,7 +987,7 @@ BND_EXPORT NVGcolor bndTextColor(const BNDwidgetTheme *theme, BNDwidgetState sta
 BND_EXPORT void bndScrollHandleRect(float *x, float *y, float *w, float *h,
     float offset, float size);
 
-// Add a rounded box path at position (x,y) with size (w,h) and a separate 
+// Add a rounded box path at position (x,y) with size (w,h) and a separate
 // radius for each corner listed in clockwise order, so that cr0 = top left,
 // cr1 = top right, cr2 = bottom right, cr3 = bottom left;
 // this is a low level drawing function: the path must be stroked or filled
@@ -1009,7 +1009,7 @@ BND_EXPORT void bndBevel(NVGcontext *ctx, float x, float y, float w, float h);
 // corners of the rounded box.
 BND_EXPORT void bndBevelInset(NVGcontext *ctx, float x, float y, float w, float h,
     float cr2, float cr3);
-    
+
 // Draw an icon with (x,y) as its upper left coordinate; the iconid selects
 // the icon from the sheet; use the BND_ICONID macro to build icon IDs.
 BND_EXPORT void bndIcon(NVGcontext *ctx, float x, float y, int iconid);
@@ -1020,7 +1020,7 @@ BND_EXPORT void bndIcon(NVGcontext *ctx, float x, float y, int iconid);
 BND_EXPORT void bndDropShadow(NVGcontext *ctx, float x, float y, float w, float h,
     float r, float feather, float alpha);
 
-// Draw the inner part of a widget box, with a gradient from shade_top to 
+// Draw the inner part of a widget box, with a gradient from shade_top to
 // shade_down. If h>w, the gradient will be horizontal instead of
 // vertical.
 BND_EXPORT void bndInnerBox(NVGcontext *ctx, float x, float y, float w, float h,
@@ -1040,7 +1040,7 @@ BND_EXPORT void bndOutlineBox(NVGcontext *ctx, float x, float y, float w, float 
 // if value is not NULL, label and value will be drawn with a ":" separator
 // inbetween.
 BND_EXPORT void bndIconLabelValue(NVGcontext *ctx, float x, float y, float w, float h,
-    int iconid, NVGcolor color, int align, float fontsize, const char *label, 
+    int iconid, NVGcolor color, int align, float fontsize, const char *label,
     const char *value);
 
 // Draw an optional icon specified by <iconid> and an optional label with
@@ -1049,7 +1049,7 @@ BND_EXPORT void bndIconLabelValue(NVGcontext *ctx, float x, float y, float w, fl
 // if label is not NULL, it will be drawn with the specified alignment, fontsize
 // and color.
 BND_EXPORT void bndNodeIconLabel(NVGcontext *ctx, float x, float y, float w, float h,
-    int iconid, NVGcolor color, NVGcolor shadowColor, int align, 
+    int iconid, NVGcolor color, NVGcolor shadowColor, int align,
     float fontsize, const char *label);
 
 // Calculate the corresponding text position for given coordinates px/py
@@ -1057,8 +1057,8 @@ BND_EXPORT void bndNodeIconLabel(NVGcontext *ctx, float x, float y, float w, flo
 // See bndIconLabelCaret for more info.
 BND_EXPORT int bndIconLabelTextPosition(NVGcontext *ctx, float x, float y, float w, float h,
     int iconid, float fontsize, const char *label, int px, int py);
-    
-// Draw an optional icon specified by <iconid>, an optional label and 
+
+// Draw an optional icon specified by <iconid>, an optional label and
 // a caret with given fontsize and color within a widget box.
 // if iconid is >= 0, an icon will be drawn and the labels remaining space
 // will be adjusted.
@@ -1068,9 +1068,9 @@ BND_EXPORT int bndIconLabelTextPosition(NVGcontext *ctx, float x, float y, float
 // cend must be >= cbegin and <= strlen(text) and denotes the end of the caret
 // if cend < cbegin, then no caret will be drawn
 BND_EXPORT void bndIconLabelCaret(NVGcontext *ctx, float x, float y, float w, float h,
-    int iconid, NVGcolor color, float fontsize, const char *label, 
+    int iconid, NVGcolor color, float fontsize, const char *label,
     NVGcolor caretcolor, int cbegin, int cend);
-    
+
 // Draw a checkmark for an option box with the given upper left coordinates
 // (ox,oy) with the specified color.
 BND_EXPORT void bndCheck(NVGcontext *ctx, float ox, float oy, NVGcolor color);
@@ -1086,7 +1086,7 @@ BND_EXPORT void bndUpDownArrow(NVGcontext *ctx, float x, float y, float s, NVGco
 BND_EXPORT void bndNodeArrowDown(NVGcontext *ctx, float x, float y, float s, NVGcolor color);
 
 // return the color of a node wire based on state
-// BND_HOVER indicates selected state, 
+// BND_HOVER indicates selected state,
 // BND_ACTIVE indicates dragged state
 BND_EXPORT NVGcolor bndNodeWireColor(const BNDnodeTheme *theme, BNDwidgetState state);
 
@@ -1258,10 +1258,10 @@ static BNDtheme bnd_theme = {
         {{{ 0.6,0.6,0.6,1 }}}, // color_inner
         {{{ 0.392,0.392,0.392,1 }}}, // color_inner_selected
         BND_COLOR_TEXT, // color_text
-        BND_COLOR_TEXT_SELECTED, // color_text_selected        
+        BND_COLOR_TEXT_SELECTED, // color_text_selected
         0, // shade_top
         0, // shade_down
-    },    
+    },
     // toolTheme
     {
         {{{ 0.098,0.098,0.098,1 }}}, // color_outline
@@ -1269,7 +1269,7 @@ static BNDtheme bnd_theme = {
         {{{ 0.6,0.6,0.6,1 }}}, // color_inner
         {{{ 0.392,0.392,0.392,1 }}}, // color_inner_selected
         BND_COLOR_TEXT, // color_text
-        BND_COLOR_TEXT_SELECTED, // color_text_selected        
+        BND_COLOR_TEXT_SELECTED, // color_text_selected
         15, // shade_top
         -15, // shade_down
     },
@@ -1280,7 +1280,7 @@ static BNDtheme bnd_theme = {
         {{{ 0.275,0.275,0.275,1 }}}, // color_inner
         {{{ 0.337,0.502,0.761,1 }}}, // color_inner_selected
         BND_COLOR_TEXT_SELECTED, // color_text
-        BND_COLOR_TEXT, // color_text_selected        
+        BND_COLOR_TEXT, // color_text_selected
         15, // shade_top
         -15, // shade_down
     },
@@ -1291,7 +1291,7 @@ static BNDtheme bnd_theme = {
         {{{ 0.6, 0.6, 0.6,1 }}}, // color_inner
         {{{ 0.6, 0.6, 0.6,1 }}}, // color_inner_selected
         BND_COLOR_TEXT, // color_text
-        BND_COLOR_TEXT_SELECTED, // color_text_selected        
+        BND_COLOR_TEXT_SELECTED, // color_text_selected
         0, // shade_top
         25, // shade_down
     },
@@ -1302,7 +1302,7 @@ static BNDtheme bnd_theme = {
         {{{ 0.275,0.275,0.275,1 }}}, // color_inner
         {{{ 0.275,0.275,0.275,1 }}}, // color_inner_selected
         BND_COLOR_TEXT, // color_text
-        BND_COLOR_TEXT_SELECTED, // color_text_selected        
+        BND_COLOR_TEXT_SELECTED, // color_text_selected
         15, // shade_top
         -15, // shade_down
     },
@@ -1313,7 +1313,7 @@ static BNDtheme bnd_theme = {
         {{{ 0.275,0.275,0.275,1 }}}, // color_inner
         {{{ 0.275,0.275,0.275,1 }}}, // color_inner_selected
         BND_COLOR_TEXT_SELECTED, // color_text
-        {{{ 0.8,0.8,0.8,1 }}}, // color_text_selected        
+        {{{ 0.8,0.8,0.8,1 }}}, // color_text_selected
         15, // shade_top
         -15, // shade_down
     },
@@ -1324,7 +1324,7 @@ static BNDtheme bnd_theme = {
         {{{ 0.706, 0.706, 0.706,1 }}}, // color_inner
         {{{ 0.6, 0.6, 0.6,1 }}}, // color_inner_selected
         BND_COLOR_TEXT, // color_text
-        BND_COLOR_TEXT_SELECTED, // color_text_selected        
+        BND_COLOR_TEXT_SELECTED, // color_text_selected
         -20, // shade_top
         0, // shade_down
     },
@@ -1335,7 +1335,7 @@ static BNDtheme bnd_theme = {
         {{{ 0.706, 0.706, 0.706,1 }}}, // color_inner
         {{{ 0.6, 0.6, 0.6,1 }}}, // color_inner_selected
         BND_COLOR_TEXT, // color_text
-        BND_COLOR_TEXT_SELECTED, // color_text_selected        
+        BND_COLOR_TEXT_SELECTED, // color_text_selected
         -20, // shade_top
         0, // shade_down
     },
@@ -1346,7 +1346,7 @@ static BNDtheme bnd_theme = {
         {{{ 0.314, 0.314, 0.314,0.706 }}}, // color_inner
         {{{ 0.392, 0.392, 0.392,0.706 }}}, // color_inner_selected
         BND_COLOR_TEXT, // color_text
-        BND_COLOR_TEXT_SELECTED, // color_text_selected        
+        BND_COLOR_TEXT_SELECTED, // color_text_selected
         5, // shade_top
         -5, // shade_down
     },
@@ -1357,7 +1357,7 @@ static BNDtheme bnd_theme = {
         {{{ 0.098, 0.098, 0.098, 0.902 }}}, // color_inner
         {{{ 0.176, 0.176, 0.176, 0.902 }}}, // color_inner_selected
         {{{ 0.627, 0.627, 0.627, 1 }}}, // color_text
-        BND_COLOR_TEXT_SELECTED, // color_text_selected        
+        BND_COLOR_TEXT_SELECTED, // color_text_selected
         0, // shade_top
         0, // shade_down
     },
@@ -1368,7 +1368,7 @@ static BNDtheme bnd_theme = {
         {{{ 0.098, 0.098, 0.098, 0.902 }}}, // color_inner
         {{{ 0.176, 0.176, 0.176, 0.902 }}}, // color_inner_selected
         {{{ 0.627, 0.627, 0.627, 1 }}}, // color_text
-        BND_COLOR_TEXT_SELECTED, // color_text_selected        
+        BND_COLOR_TEXT_SELECTED, // color_text_selected
         0, // shade_top
         0, // shade_down
     },
@@ -1379,7 +1379,7 @@ static BNDtheme bnd_theme = {
         {{{ 0,0,0,0 }}}, // color_inner
         {{{ 0.337,0.502,0.761,1 }}}, // color_inner_selected
         BND_COLOR_TEXT_SELECTED, // color_text
-        BND_COLOR_TEXT, // color_text_selected        
+        BND_COLOR_TEXT, // color_text_selected
         38, // shade_top
         0, // shade_down
     },
@@ -1421,21 +1421,21 @@ void bndSetFont(int font) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void bndLabel(NVGcontext *ctx, 
+void bndLabel(NVGcontext *ctx,
     float x, float y, float w, float h, int iconid, const char *label) {
     bndIconLabelValue(ctx,x,y,w,h,iconid,
         bnd_theme.regularTheme.textColor, BND_LEFT,
         BND_LABEL_FONT_SIZE, label, NULL);
 }
 
-void bndToolButton(NVGcontext *ctx, 
-    float x, float y, float w, float h, int flags, BNDwidgetState state, 
+void bndToolButton(NVGcontext *ctx,
+    float x, float y, float w, float h, int flags, BNDwidgetState state,
     int iconid, const char *label) {
     float cr[4];
     NVGcolor shade_top, shade_down;
-    
+
     bndSelectCorners(cr, BND_TOOL_RADIUS, flags);
-    bndBevelInset(ctx,x,y,w,h,cr[2],cr[3]);    
+    bndBevelInset(ctx,x,y,w,h,cr[2],cr[3]);
     bndInnerColors(&shade_top, &shade_down, &bnd_theme.toolTheme, state, 1);
     bndInnerBox(ctx,x,y,w,h,cr[0],cr[1],cr[2],cr[3], shade_top, shade_down);
     bndOutlineBox(ctx,x,y,w,h,cr[0],cr[1],cr[2],cr[3],
@@ -1445,14 +1445,14 @@ void bndToolButton(NVGcontext *ctx,
         BND_LABEL_FONT_SIZE, label, NULL);
 }
 
-void bndRadioButton(NVGcontext *ctx, 
-    float x, float y, float w, float h, int flags, BNDwidgetState state, 
+void bndRadioButton(NVGcontext *ctx,
+    float x, float y, float w, float h, int flags, BNDwidgetState state,
     int iconid, const char *label) {
     float cr[4];
     NVGcolor shade_top, shade_down;
-    
+
     bndSelectCorners(cr, BND_OPTION_RADIUS, flags);
-    bndBevelInset(ctx,x,y,w,h,cr[2],cr[3]);    
+    bndBevelInset(ctx,x,y,w,h,cr[2],cr[3]);
     bndInnerColors(&shade_top, &shade_down, &bnd_theme.radioTheme, state, 1);
     bndInnerBox(ctx,x,y,w,h,cr[0],cr[1],cr[2],cr[3], shade_top, shade_down);
     bndOutlineBox(ctx,x,y,w,h,cr[0],cr[1],cr[2],cr[3],
@@ -1468,14 +1468,14 @@ int bndTextFieldTextPosition(NVGcontext *ctx, float x, float y, float w, float h
         iconid, BND_LABEL_FONT_SIZE, text, px, py);
 }
 
-void bndTextField(NVGcontext *ctx, 
-    float x, float y, float w, float h, int flags, BNDwidgetState state, 
+void bndTextField(NVGcontext *ctx,
+    float x, float y, float w, float h, int flags, BNDwidgetState state,
     int iconid, const char *text, int cbegin, int cend) {
     float cr[4];
     NVGcolor shade_top, shade_down;
-    
+
     bndSelectCorners(cr, BND_TEXT_RADIUS, flags);
-    bndBevelInset(ctx,x,y,w,h,cr[2],cr[3]);    
+    bndBevelInset(ctx,x,y,w,h,cr[2],cr[3]);
     bndInnerColors(&shade_top, &shade_down, &bnd_theme.textFieldTheme, state, 0);
     bndInnerBox(ctx,x,y,w,h,cr[0],cr[1],cr[2],cr[3], shade_top, shade_down);
     bndOutlineBox(ctx,x,y,w,h,cr[0],cr[1],cr[2],cr[3],
@@ -1484,19 +1484,19 @@ void bndTextField(NVGcontext *ctx,
         cend = -1;
     }
     bndIconLabelCaret(ctx,x,y,w,h,iconid,
-        bndTextColor(&bnd_theme.textFieldTheme, state), BND_LABEL_FONT_SIZE, 
+        bndTextColor(&bnd_theme.textFieldTheme, state), BND_LABEL_FONT_SIZE,
         text, bnd_theme.textFieldTheme.itemColor, cbegin, cend);
 }
 
-void bndOptionButton(NVGcontext *ctx, 
-    float x, float y, float w, float h, BNDwidgetState state, 
+void bndOptionButton(NVGcontext *ctx,
+    float x, float y, float w, float h, BNDwidgetState state,
     const char *label) {
     float ox, oy;
     NVGcolor shade_top, shade_down;
-    
+
     ox = x;
     oy = y+h-BND_OPTION_HEIGHT-3;
-    
+
     bndBevelInset(ctx,ox,oy,
         BND_OPTION_WIDTH,BND_OPTION_HEIGHT,
         BND_OPTION_RADIUS,BND_OPTION_RADIUS);
@@ -1517,14 +1517,14 @@ void bndOptionButton(NVGcontext *ctx,
         BND_LABEL_FONT_SIZE, label, NULL);
 }
 
-void bndChoiceButton(NVGcontext *ctx, 
-    float x, float y, float w, float h, int flags, BNDwidgetState state, 
+void bndChoiceButton(NVGcontext *ctx,
+    float x, float y, float w, float h, int flags, BNDwidgetState state,
     int iconid, const char *label) {
     float cr[4];
     NVGcolor shade_top, shade_down;
-    
+
     bndSelectCorners(cr, BND_OPTION_RADIUS, flags);
-    bndBevelInset(ctx,x,y,w,h,cr[2],cr[3]);    
+    bndBevelInset(ctx,x,y,w,h,cr[2],cr[3]);
     bndInnerColors(&shade_top, &shade_down, &bnd_theme.choiceTheme, state, 1);
     bndInnerBox(ctx,x,y,w,h,cr[0],cr[1],cr[2],cr[3], shade_top, shade_down);
     bndOutlineBox(ctx,x,y,w,h,cr[0],cr[1],cr[2],cr[3],
@@ -1546,14 +1546,14 @@ void bndColorButton(NVGcontext *ctx,
         bndTransparent(bnd_theme.toolTheme.outlineColor));
 }
 
-void bndNumberField(NVGcontext *ctx, 
-    float x, float y, float w, float h, int flags, BNDwidgetState state, 
+void bndNumberField(NVGcontext *ctx,
+    float x, float y, float w, float h, int flags, BNDwidgetState state,
     const char *label, const char *value) {
     float cr[4];
     NVGcolor shade_top, shade_down;
-    
+
     bndSelectCorners(cr, BND_NUMBER_RADIUS, flags);
-    bndBevelInset(ctx,x,y,w,h,cr[2],cr[3]);    
+    bndBevelInset(ctx,x,y,w,h,cr[2],cr[3]);
     bndInnerColors(&shade_top, &shade_down, &bnd_theme.numberFieldTheme, state, 0);
     bndInnerBox(ctx,x,y,w,h,cr[0],cr[1],cr[2],cr[3], shade_top, shade_down);
     bndOutlineBox(ctx,x,y,w,h,cr[0],cr[1],cr[2],cr[3],
@@ -1567,12 +1567,12 @@ void bndNumberField(NVGcontext *ctx,
         bndTransparent(bnd_theme.numberFieldTheme.itemColor));
 }
 
-void bndSlider(NVGcontext *ctx, 
-    float x, float y, float w, float h, int flags, BNDwidgetState state, 
+void bndSlider(NVGcontext *ctx,
+    float x, float y, float w, float h, int flags, BNDwidgetState state,
     float progress, const char *label, const char *value) {
     float cr[4];
     NVGcolor shade_top, shade_down;
-    
+
     bndSelectCorners(cr, BND_NUMBER_RADIUS, flags);
     bndBevelInset(ctx,x,y,w,h,cr[2],cr[3]);
     bndInnerColors(&shade_top, &shade_down, &bnd_theme.sliderTheme, state, 0);
@@ -1588,11 +1588,11 @@ void bndSlider(NVGcontext *ctx,
             bnd_theme.sliderTheme.itemColor, bnd_theme.sliderTheme.shadeDown);
         shade_down = bndOffsetColor(
             bnd_theme.sliderTheme.itemColor, bnd_theme.sliderTheme.shadeTop);
-    }    
+    }
     nvgScissor(ctx,x,y,8+(w-8)*bnd_clamp(progress,0,1),h);
     bndInnerBox(ctx,x,y,w,h,cr[0],cr[1],cr[2],cr[3], shade_top, shade_down);
     nvgResetScissor(ctx);
-    
+
     bndOutlineBox(ctx,x,y,w,h,cr[0],cr[1],cr[2],cr[3],
         bndTransparent(bnd_theme.sliderTheme.outlineColor));
     bndIconLabelValue(ctx,x,y,w,h,-1,
@@ -1600,10 +1600,10 @@ void bndSlider(NVGcontext *ctx,
         BND_LABEL_FONT_SIZE, label, value);
 }
 
-void bndScrollBar(NVGcontext *ctx, 
-    float x, float y, float w, float h, BNDwidgetState state, 
+void bndScrollBar(NVGcontext *ctx,
+    float x, float y, float w, float h, BNDwidgetState state,
     float offset, float size) {
-    
+
     bndBevelInset(ctx,x,y,w,h,
         BND_SCROLLBAR_RADIUS, BND_SCROLLBAR_RADIUS);
     bndInnerBox(ctx,x,y,w,h,
@@ -1617,18 +1617,18 @@ void bndScrollBar(NVGcontext *ctx,
         BND_SCROLLBAR_RADIUS,BND_SCROLLBAR_RADIUS,
         BND_SCROLLBAR_RADIUS,BND_SCROLLBAR_RADIUS,
         bndTransparent(bnd_theme.scrollBarTheme.outlineColor));
-    
+
     NVGcolor itemColor = bndOffsetColor(
         bnd_theme.scrollBarTheme.itemColor,
         (state == BND_ACTIVE)?BND_SCROLLBAR_ACTIVE_SHADE:0);
 
     bndScrollHandleRect(&x,&y,&w,&h,offset,size);
-    
+
     bndInnerBox(ctx,x,y,w,h,
         BND_SCROLLBAR_RADIUS,BND_SCROLLBAR_RADIUS,
         BND_SCROLLBAR_RADIUS,BND_SCROLLBAR_RADIUS,
         bndOffsetColor(
-            itemColor, 3*bnd_theme.scrollBarTheme.shadeTop), 
+            itemColor, 3*bnd_theme.scrollBarTheme.shadeTop),
         bndOffsetColor(
             itemColor, 3*bnd_theme.scrollBarTheme.shadeDown));
     bndOutlineBox(ctx,x,y,w,h,
@@ -1637,11 +1637,11 @@ void bndScrollBar(NVGcontext *ctx,
         bndTransparent(bnd_theme.scrollBarTheme.outlineColor));
 }
 
-void bndMenuBackground(NVGcontext *ctx, 
+void bndMenuBackground(NVGcontext *ctx,
     float x, float y, float w, float h, int flags) {
     float cr[4];
     NVGcolor shade_top, shade_down;
-    
+
     bndSelectCorners(cr, BND_MENU_RADIUS, flags);
     bndInnerColors(&shade_top, &shade_down, &bnd_theme.menuTheme,
         BND_DEFAULT, 0);
@@ -1654,7 +1654,7 @@ void bndMenuBackground(NVGcontext *ctx,
 
 void bndTooltipBackground(NVGcontext *ctx, float x, float y, float w, float h) {
     NVGcolor shade_top, shade_down;
-    
+
     bndInnerColors(&shade_top, &shade_down, &bnd_theme.tooltipTheme,
         BND_DEFAULT, 0);
     bndInnerBox(ctx,x,y,w,h+1,
@@ -1667,21 +1667,21 @@ void bndTooltipBackground(NVGcontext *ctx, float x, float y, float w, float h) {
         BND_SHADOW_FEATHER,BND_SHADOW_ALPHA);
 }
 
-void bndMenuLabel(NVGcontext *ctx, 
+void bndMenuLabel(NVGcontext *ctx,
     float x, float y, float w, float h, int iconid, const char *label) {
     bndIconLabelValue(ctx,x,y,w,h,iconid,
         bnd_theme.menuTheme.textColor, BND_LEFT,
         BND_LABEL_FONT_SIZE, label, NULL);
 }
 
-void bndMenuItem(NVGcontext *ctx, 
-    float x, float y, float w, float h, BNDwidgetState state, 
+void bndMenuItem(NVGcontext *ctx,
+    float x, float y, float w, float h, BNDwidgetState state,
     int iconid, const char *label) {
     if (state != BND_DEFAULT) {
-        bndInnerBox(ctx,x,y,w,h,0,0,0,0, 
-            bndOffsetColor(bnd_theme.menuItemTheme.innerSelectedColor, 
-                bnd_theme.menuItemTheme.shadeTop), 
-            bndOffsetColor(bnd_theme.menuItemTheme.innerSelectedColor, 
+        bndInnerBox(ctx,x,y,w,h,0,0,0,0,
+            bndOffsetColor(bnd_theme.menuItemTheme.innerSelectedColor,
+                bnd_theme.menuItemTheme.shadeTop),
+            bndOffsetColor(bnd_theme.menuItemTheme.innerSelectedColor,
                 bnd_theme.menuItemTheme.shadeDown));
         state = BND_ACTIVE;
     }
@@ -1706,10 +1706,10 @@ void bndColoredNodeWire(NVGcontext *ctx, float x0, float y0, float x1, float y1,
     NVGcolor color0, NVGcolor color1) {
     float length = bnd_fmaxf(fabsf(x1 - x0),fabsf(y1 - y0));
     float delta = length*(float)bnd_theme.nodeTheme.noodleCurving/10.0f;
-    
+
     nvgBeginPath(ctx);
     nvgMoveTo(ctx, x0, y0);
-    nvgBezierTo(ctx, 
+    nvgBezierTo(ctx,
         x0 + delta, y0,
         x1 - delta, y1,
         x1, y1);
@@ -1718,8 +1718,8 @@ void bndColoredNodeWire(NVGcontext *ctx, float x0, float y0, float x1, float y1,
     nvgStrokeColor(ctx, colorw);
     nvgStrokeWidth(ctx, BND_NODE_WIRE_OUTLINE_WIDTH);
     nvgStroke(ctx);
-    nvgStrokePaint(ctx, nvgLinearGradient(ctx, 
-        x0, y0, x1, y1, 
+    nvgStrokePaint(ctx, nvgLinearGradient(ctx,
+        x0, y0, x1, y1,
         color0,
         color1));
     nvgStrokeWidth(ctx,BND_NODE_WIRE_WIDTH);
@@ -1737,17 +1737,17 @@ void bndNodeBackground(NVGcontext *ctx, float x, float y, float w, float h,
     BNDwidgetState state, int iconid, const char *label, NVGcolor titleColor) {
     bndInnerBox(ctx,x,y,w,BND_NODE_TITLE_HEIGHT+2,
         BND_NODE_RADIUS,BND_NODE_RADIUS,0,0,
-        bndTransparent(bndOffsetColor(titleColor, BND_BEVEL_SHADE)), 
+        bndTransparent(bndOffsetColor(titleColor, BND_BEVEL_SHADE)),
         bndTransparent(titleColor));
     bndInnerBox(ctx,x,y+float(BND_NODE_TITLE_HEIGHT-1),w,h+2-float(BND_NODE_TITLE_HEIGHT),
         0,0,BND_NODE_RADIUS,BND_NODE_RADIUS,
-        bndTransparent(bnd_theme.nodeTheme.nodeBackdropColor), 
+        bndTransparent(bnd_theme.nodeTheme.nodeBackdropColor),
         bndTransparent(bnd_theme.nodeTheme.nodeBackdropColor));
     bndNodeIconLabel(ctx,
         x+float(BND_NODE_ARROW_AREA_WIDTH),y,
         w-float(BND_NODE_ARROW_AREA_WIDTH)-float(BND_NODE_MARGIN_SIDE),BND_NODE_TITLE_HEIGHT,
-        iconid, bnd_theme.regularTheme.textColor, 
-        bndOffsetColor(titleColor, BND_BEVEL_SHADE), 
+        iconid, bnd_theme.regularTheme.textColor,
+        bndOffsetColor(titleColor, BND_BEVEL_SHADE),
         BND_LEFT, BND_LABEL_FONT_SIZE, label);
     NVGcolor arrowColor;
     NVGcolor borderColor;
@@ -1770,8 +1770,8 @@ void bndNodeBackground(NVGcontext *ctx, float x, float y, float w, float h,
         BND_NODE_RADIUS,BND_NODE_RADIUS,BND_NODE_RADIUS,BND_NODE_RADIUS,
         bndTransparent(borderColor));
     /*
-    bndNodeArrowDown(ctx, 
-        x + BND_NODE_MARGIN_SIDE, y + BND_NODE_TITLE_HEIGHT-4, 
+    bndNodeArrowDown(ctx,
+        x + BND_NODE_MARGIN_SIDE, y + BND_NODE_TITLE_HEIGHT-4,
         BND_NODE_ARROW_SIZE, arrowColor);
     */
     bndDropShadow(ctx,x,y,w,h,BND_NODE_RADIUS,
@@ -1784,7 +1784,7 @@ void bndSplitterWidgets(NVGcontext *ctx, float x, float y, float w, float h) {
     NVGcolor insetDark = bndTransparent(
         bndOffsetColor(bnd_theme.backgroundColor, -BND_SPLITTER_SHADE));
     NVGcolor inset = bndTransparent(bnd_theme.backgroundColor);
-    
+
     float x2 = x+w;
     float y2 = y+h;
 
@@ -1795,14 +1795,14 @@ void bndSplitterWidgets(NVGcontext *ctx, float x, float y, float w, float h) {
     nvgLineTo(ctx, x+9, y2);
     nvgMoveTo(ctx, x, y2-5);
     nvgLineTo(ctx, x+5, y2);
-    
+
     nvgMoveTo(ctx, x2-11, y);
     nvgLineTo(ctx, x2, y+11);
     nvgMoveTo(ctx, x2-7, y);
     nvgLineTo(ctx, x2, y+7);
     nvgMoveTo(ctx, x2-3, y);
     nvgLineTo(ctx, x2, y+3);
-    
+
     nvgStrokeColor(ctx, insetDark);
     nvgStroke(ctx);
 
@@ -1813,17 +1813,17 @@ void bndSplitterWidgets(NVGcontext *ctx, float x, float y, float w, float h) {
     nvgLineTo(ctx, x+7, y2);
     nvgMoveTo(ctx, x, y2-3);
     nvgLineTo(ctx, x+3, y2);
-    
+
     nvgMoveTo(ctx, x2-13, y);
     nvgLineTo(ctx, x2, y+13);
     nvgMoveTo(ctx, x2-9, y);
     nvgLineTo(ctx, x2, y+9);
     nvgMoveTo(ctx, x2-5, y);
     nvgLineTo(ctx, x2, y+5);
-    
+
     nvgStrokeColor(ctx, insetLight);
     nvgStroke(ctx);
-    
+
     nvgBeginPath(ctx);
     nvgMoveTo(ctx, x, y2-12);
     nvgLineTo(ctx, x+12, y2);
@@ -1831,28 +1831,28 @@ void bndSplitterWidgets(NVGcontext *ctx, float x, float y, float w, float h) {
     nvgLineTo(ctx, x+8, y2);
     nvgMoveTo(ctx, x, y2-4);
     nvgLineTo(ctx, x+4, y2);
-    
+
     nvgMoveTo(ctx, x2-12, y);
     nvgLineTo(ctx, x2, y+12);
     nvgMoveTo(ctx, x2-8, y);
     nvgLineTo(ctx, x2, y+8);
     nvgMoveTo(ctx, x2-4, y);
     nvgLineTo(ctx, x2, y+4);
-    
+
     nvgStrokeColor(ctx, inset);
     nvgStroke(ctx);
 }
 
 void bndJoinAreaOverlay(NVGcontext *ctx, float x, float y, float w, float h,
     int vertical, int mirror) {
-    
+
     if (vertical) {
         float u = w;
         w = h; h = u;
     }
-    
+
     float s = (w<h)?w:h;
-    
+
     float x0,y0,x1,y1;
     if (mirror) {
         x0 = w;
@@ -1866,13 +1866,13 @@ void bndJoinAreaOverlay(NVGcontext *ctx, float x, float y, float w, float h,
         x1 = w;
         y1 = h;
     }
-    
+
     float yc = (y0+y1)*0.5f;
     float s2 = s/2.0f;
     float s4 = s/4.0f;
     float s8 = s/8.0f;
     float x4 = x0+s4;
-    
+
     float points[][2] = {
         { x0,y0 },
         { x1,y0 },
@@ -1881,19 +1881,19 @@ void bndJoinAreaOverlay(NVGcontext *ctx, float x, float y, float w, float h,
         { x0,yc+s8 },
         { x4,yc+s8 },
         { x4,yc+s4 },
-        { x0+s2,yc },      
+        { x0+s2,yc },
         { x4,yc-s4 },
         { x4,yc-s8 },
         { x0,yc-s8 }
-    };  
-    
+    };
+
     nvgBeginPath(ctx);
     int count = sizeof(points) / (sizeof(float)*2);
     nvgMoveTo(ctx,x+points[0][vertical&1],y+points[0][(vertical&1)^1]);
     for (int i = 1; i < count; ++i) {
         nvgLineTo(ctx,x+points[i][vertical&1],y+points[i][(vertical&1)^1]);
     }
-    
+
     nvgFillColor(ctx, nvgRGBAf(0,0,0,0.3));
     nvgFill(ctx);
 }
@@ -1933,14 +1933,14 @@ float bndLabelHeight(NVGcontext *ctx, int iconid, const char *label, float width
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void bndRoundedBox(NVGcontext *ctx, float x, float y, float w, float h, 
+void bndRoundedBox(NVGcontext *ctx, float x, float y, float w, float h,
     float cr0, float cr1, float cr2, float cr3) {
     float d;
-    
+
     w = bnd_fmaxf(0, w);
     h = bnd_fmaxf(0, h);
     d = bnd_fminf(w, h);
-    
+
     nvgMoveTo(ctx, x,y+h*0.5f);
     nvgArcTo(ctx, x,y, x+w,y, bnd_fminf(cr0, d/2));
     nvgArcTo(ctx, x+w,y, x+w,y+h, bnd_fminf(cr1, d/2));
@@ -1967,12 +1967,12 @@ NVGcolor bndOffsetColor(NVGcolor color, int delta) {
 
 void bndBevel(NVGcontext *ctx, float x, float y, float w, float h) {
     nvgStrokeWidth(ctx, 1);
-    
+
     x += 0.5f;
     y += 0.5f;
     w -= 1;
     h -= 1;
-    
+
     nvgBeginPath(ctx);
     nvgMoveTo(ctx, x, y+h);
     nvgLineTo(ctx, x+w, y+h);
@@ -1980,7 +1980,7 @@ void bndBevel(NVGcontext *ctx, float x, float y, float w, float h) {
     nvgStrokeColor(ctx, bndTransparent(
         bndOffsetColor(bnd_theme.backgroundColor, -BND_BEVEL_SHADE)));
     nvgStroke(ctx);
-    
+
     nvgBeginPath(ctx);
     nvgMoveTo(ctx, x, y+h);
     nvgLineTo(ctx, x, y);
@@ -1993,20 +1993,20 @@ void bndBevel(NVGcontext *ctx, float x, float y, float w, float h) {
 void bndBevelInset(NVGcontext *ctx, float x, float y, float w, float h,
     float cr2, float cr3) {
     float d;
-    
+
     y -= 0.5f;
     d = bnd_fminf(w, h);
     cr2 = bnd_fminf(cr2, d/2);
     cr3 = bnd_fminf(cr3, d/2);
-    
+
     nvgBeginPath(ctx);
     nvgMoveTo(ctx, x+w,y+h-cr2);
     nvgArcTo(ctx, x+w,y+h, x,y+h, cr2);
     nvgArcTo(ctx, x,y+h, x,y, cr3);
-    
-    NVGcolor bevelColor = bndOffsetColor(bnd_theme.backgroundColor, 
+
+    NVGcolor bevelColor = bndOffsetColor(bnd_theme.backgroundColor,
         BND_INSET_BEVEL_SHADE);
-    
+
     nvgStrokeWidth(ctx, 1);
     nvgStrokePaint(ctx,
         nvgLinearGradient(ctx,
@@ -2027,12 +2027,12 @@ void bndBackground(NVGcontext *ctx, float x, float y, float w, float h) {
 void bndIcon(NVGcontext *ctx, float x, float y, int iconid) {
     int ix, iy, u, v;
     if (bnd_icon_image < 0) return; // no icons loaded
-    
+
     ix = iconid & 0xff;
     iy = (iconid>>8) & 0xff;
     u = BND_ICON_SHEET_OFFSET_X + ix*BND_ICON_SHEET_GRID;
     v = BND_ICON_SHEET_OFFSET_Y + iy*BND_ICON_SHEET_GRID;
-    
+
     nvgBeginPath(ctx);
     nvgRect(ctx,x,y,BND_ICON_SHEET_RES,BND_ICON_SHEET_RES);
     nvgFillPaint(ctx,
@@ -2045,11 +2045,11 @@ void bndIcon(NVGcontext *ctx, float x, float y, int iconid) {
 
 void bndDropShadow(NVGcontext *ctx, float x, float y, float w, float h,
     float r, float feather, float alpha) {
-    
+
     nvgBeginPath(ctx);
     y += feather;
     h -= feather;
-    
+
     nvgMoveTo(ctx, x-feather, y-feather);
     nvgLineTo(ctx, x, y-feather);
     nvgLineTo(ctx, x, y+h-feather);
@@ -2060,18 +2060,18 @@ void bndDropShadow(NVGcontext *ctx, float x, float y, float w, float h,
     nvgLineTo(ctx, x+w+feather, y+h+feather);
     nvgLineTo(ctx, x-feather, y+h+feather);
     nvgClosePath(ctx);
-    
+
     nvgFillPaint(ctx, nvgBoxGradient(ctx,
         x - feather*0.5f,y - feather*0.5f,
         w + feather,h+feather,
         r+feather*0.5f,
         feather,
-        nvgRGBAf(0,0,0,alpha*alpha), 
+        nvgRGBAf(0,0,0,alpha*alpha),
         nvgRGBAf(0,0,0,0)));
     nvgFill(ctx);
 }
 
-void bndInnerBox(NVGcontext *ctx, float x, float y, float w, float h, 
+void bndInnerBox(NVGcontext *ctx, float x, float y, float w, float h,
     float cr0, float cr1, float cr2, float cr3,
     NVGcolor shade_top, NVGcolor shade_down) {
     nvgBeginPath(ctx);
@@ -2100,7 +2100,7 @@ void bndSelectCorners(float *radiuses, float r, int flags) {
 }
 
 void bndInnerColors(
-    NVGcolor *shade_top, NVGcolor *shade_down, 
+    NVGcolor *shade_top, NVGcolor *shade_down,
     const BNDwidgetTheme *theme, BNDwidgetState state, int flipActive) {
 
     switch(state) {
@@ -2115,9 +2115,9 @@ void bndInnerColors(
         *shade_down = bndOffsetColor(color, theme->shadeDown);
     } break;
     case BND_ACTIVE: {
-        *shade_top = bndOffsetColor(theme->innerSelectedColor, 
+        *shade_top = bndOffsetColor(theme->innerSelectedColor,
             flipActive?theme->shadeDown:theme->shadeTop);
-        *shade_down = bndOffsetColor(theme->innerSelectedColor, 
+        *shade_down = bndOffsetColor(theme->innerSelectedColor,
             flipActive?theme->shadeTop:theme->shadeDown);
     } break;
     }
@@ -2128,15 +2128,15 @@ NVGcolor bndTextColor(const BNDwidgetTheme *theme, BNDwidgetState state) {
 }
 
 void bndIconLabelValue(NVGcontext *ctx, float x, float y, float w, float h,
-    int iconid, NVGcolor color, int align, float fontsize, const char *label, 
+    int iconid, NVGcolor color, int align, float fontsize, const char *label,
     const char *value) {
     float pleft = BND_PAD_LEFT;
     if (label) {
         if (iconid >= 0) {
             bndIcon(ctx,x+4,y+2,iconid);
             pleft += BND_ICON_SHEET_RES;
-        }    
-        
+        }
+
         if (bnd_font < 0) return;
         nvgFontFaceId(ctx, bnd_font);
         nvgFontSize(ctx, fontsize);
@@ -2146,7 +2146,7 @@ void bndIconLabelValue(NVGcontext *ctx, float x, float y, float w, float h,
             float label_width = nvgTextBounds(ctx, 1, 1, label, NULL, NULL);
             float sep_width = nvgTextBounds(ctx, 1, 1,
                 BND_LABEL_SEPARATOR, NULL, NULL);
-            
+
             nvgTextAlign(ctx, NVG_ALIGN_LEFT|NVG_ALIGN_BASELINE);
             x += pleft;
             if (align == BND_CENTER) {
@@ -2161,7 +2161,7 @@ void bndIconLabelValue(NVGcontext *ctx, float x, float y, float w, float h,
             x += sep_width;
             nvgText(ctx, x, y, value, NULL);
         } else {
-            nvgTextAlign(ctx, 
+            nvgTextAlign(ctx,
                 (align==BND_LEFT)?(NVG_ALIGN_LEFT|NVG_ALIGN_BASELINE):
                 (NVG_ALIGN_CENTER|NVG_ALIGN_BASELINE));
             nvgTextBox(ctx,x+pleft,y+float(BND_WIDGET_HEIGHT)-BND_TEXT_PAD_DOWN,
@@ -2173,7 +2173,7 @@ void bndIconLabelValue(NVGcontext *ctx, float x, float y, float w, float h,
 }
 
 void bndNodeIconLabel(NVGcontext *ctx, float x, float y, float w, float h,
-    int iconid, NVGcolor color, NVGcolor shadowColor, 
+    int iconid, NVGcolor color, NVGcolor shadowColor,
     int align, float fontsize, const char *label) {
     if (label && (bnd_font >= 0)) {
         nvgFontFaceId(ctx, bnd_font);
@@ -2256,7 +2256,7 @@ static void bndCaretPosition(NVGcontext *ctx, float x, float y,
 }
 
 void bndIconLabelCaret(NVGcontext *ctx, float x, float y, float w, float h,
-    int iconid, NVGcolor color, float fontsize, const char *label, 
+    int iconid, NVGcolor color, float fontsize, const char *label,
     NVGcolor caretcolor, int cbegin, int cend) {
     float pleft = BND_TEXT_RADIUS;
     if (!label) return;
@@ -2264,9 +2264,9 @@ void bndIconLabelCaret(NVGcontext *ctx, float x, float y, float w, float h,
         bndIcon(ctx,x+4,y+2,iconid);
         pleft += BND_ICON_SHEET_RES;
     }
-    
+
     if (bnd_font < 0) return;
-    
+
     x+=pleft;
     y+=BND_WIDGET_HEIGHT-BND_TEXT_PAD_DOWN;
 
@@ -2289,7 +2289,7 @@ void bndIconLabelCaret(NVGcontext *ctx, float x, float y, float w, float h,
             rows, nrows, &c0r, &c0x, &c0y);
         bndCaretPosition(ctx, x, y, desc, lh, label+cend,
             rows, nrows, &c1r, &c1x, &c1y);
-        
+
         nvgBeginPath(ctx);
         if (cbegin == cend) {
             nvgFillColor(ctx, nvgRGBf(0.337,0.502,0.761));
@@ -2309,7 +2309,7 @@ void bndIconLabelCaret(NVGcontext *ctx, float x, float y, float w, float h,
         }
         nvgFill(ctx);
     }
-    
+
     nvgBeginPath(ctx);
     nvgFillColor(ctx, color);
     nvgTextBox(ctx,x,y,w,label, NULL);

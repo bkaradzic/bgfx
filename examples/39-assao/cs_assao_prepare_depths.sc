@@ -3,12 +3,12 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include "bgfx_compute.sh" 
+#include "bgfx_compute.sh"
 #include "uniforms.sh"
 
 SAMPLER2D(s_depthSource, 0);
 
-IMAGE2D_WO(s_target0, r16f, 1); 
+IMAGE2D_WO(s_target0, r16f, 1);
 IMAGE2D_WO(s_target1, r16f, 2);
 IMAGE2D_WO(s_target2, r16f, 3);
 IMAGE2D_WO(s_target3, r16f, 4);
@@ -29,15 +29,15 @@ float ScreenSpaceToViewSpaceDepth( float screenDepth )
 
 
 NUM_THREADS(8, 8, 1)
-void main() 
+void main()
 {
 	uvec2 dtID = uvec2(gl_GlobalInvocationID.xy);
 
 	uvec2 dim = imageSize(s_target0).xy;
 	if (all(lessThan(dtID.xy, dim) ) )
-	{ 
+	{
 		ivec2 baseCoord = ivec2(dtID.xy) * 2;
-#if BGFX_SHADER_LANGUAGE_GLSL 
+#if BGFX_SHADER_LANGUAGE_GLSL
 		float a = texelFetch(s_depthSource, baseCoord + ivec2( 0, 1 ), 0).x;
 		float b = texelFetch(s_depthSource, baseCoord + ivec2( 1, 1 ), 0).x;
 		float c = texelFetch(s_depthSource, baseCoord + ivec2( 0, 0 ), 0).x;
@@ -55,4 +55,3 @@ void main()
 		imageStore(s_target3, ivec2(dtID.xy), ScreenSpaceToViewSpaceDepth( d ).xxxx);
 	}
 }
-

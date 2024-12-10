@@ -14,4 +14,3 @@ void main()
 {
 #include "fs_shadowmaps_color_lighting_main.sh"
 }
-

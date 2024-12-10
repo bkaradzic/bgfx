@@ -46,7 +46,7 @@ vec2 float32x3_to_oct(vec3 v) {
 
 	// Project the sphere onto the octahedron, and then onto the xy plane
 	vec2 p = v.xy * (1.0 / (abs(v.x) + abs(v.y) + abs(v.z)));
-	
+
 	// Reflect the folds of the lower hemisphere over the diagonals
 	return (v.z <= 0.0) ? ((1.0 - abs(p.yx)) * signNotZero(p)) : p;
 }
