@@ -85,7 +85,7 @@ linux-clang-release64: .build/projects/gmake-linux-clang ## Build - Linux Clang 
 linux-clang: linux-clang-debug64 linux-clang-release64 ## Build - Linux Clang x86/x64 Debug and Release
 
 .build/projects/gmake-mingw-gcc:
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --os=windows --gcc=mingw-gcc gmake
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=mingw-gcc gmake
 mingw-gcc-debug32: .build/projects/gmake-mingw-gcc ## Build - MinGW GCC x86 Debug
 	$(MAKE) -R -C .build/projects/gmake-mingw-gcc config=debug32
 mingw-gcc-release32: .build/projects/gmake-mingw-gcc ## Build - MinGW GCC x86 Release
@@ -97,7 +97,7 @@ mingw-gcc-release64: .build/projects/gmake-mingw-gcc ## Build - MinGW GCC x64 Re
 mingw-gcc: mingw-gcc-debug32 mingw-gcc-release32 mingw-gcc-debug64 mingw-gcc-release64 ## Build - MinGW GCC x86/x64 Debug and Release
 
 .build/projects/gmake-mingw-clang:
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --os=windows --gcc=mingw-clang gmake
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=mingw-clang gmake
 mingw-clang-debug32: .build/projects/gmake-mingw-clang ## Build - MinGW Clang x86 Debug
 	$(MAKE) -R -C .build/projects/gmake-mingw-clang config=debug32
 mingw-clang-release32: .build/projects/gmake-mingw-clang ## Build - MinGW Clang x86 Release
@@ -120,10 +120,8 @@ vs2022-release64: .build/projects/vs2022 ## Build - vs2022 x64 Release
 	devenv .build/projects/vs2022/bgfx.sln /Build "Release|x64"
 vs2022: vs2022-debug32 vs2022-release32 vs2022-debug64 vs2022-release64 ## Build - vs2022 x86/x64 Debug and Release
 
-osx-debug: osx-arm64-debug ## Build - macOS Universal Debug
-osx-release: osx-arm64-release ## Build - macOS Universal Release
-osx: osx-debug osx-release ## Build - macOS Universal Debug and Release
-
+.build/projects/gmake-osx-arm64:
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx-arm64 gmake
 osx-arm64-debug: .build/projects/gmake-osx-arm64 ## Build - macOS ARM Debug
 	$(MAKE) -C .build/projects/gmake-osx-arm64 config=debug
 osx-arm64-release: .build/projects/gmake-osx-arm64 ## Build - macOS ARM Release
