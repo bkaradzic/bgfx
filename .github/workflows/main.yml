@@ -14,10 +14,10 @@ jobs:
       fail-fast: true
       matrix:
         include: [
-          { config: Debug, platform: Win32, bindir: 'win32_vs2019' },
-          { config: Debug, platform: x64, bindir: 'win64_vs2019' },
-          { config: Release, platform: Win32, bindir: 'win32_vs2019' },
-          { config: Release, platform: x64, bindir: 'win64_vs2019' },
+          { config: Debug, platform: Win32, bindir: 'win32_vs2022' },
+          { config: Debug, platform: x64, bindir: 'win64_vs2022' },
+          { config: Release, platform: Win32, bindir: 'win32_vs2022' },
+          { config: Release, platform: x64, bindir: 'win64_vs2022' },
         ]
     name: msvc-${{ matrix.config }}-${{ matrix.platform }}
     runs-on: windows-2022
@@ -42,8 +42,8 @@ jobs:
         shell: cmd
         run: |
           cd bgfx
-          ..\bx\tools\bin\windows\genie.exe --with-tools --with-combined-examples --with-shared-lib vs2019
-          msbuild ".build/projects/vs2019/bgfx.sln" /m /v:minimal /p:Configuration=${{ matrix.config }} /p:Platform=${{ matrix.platform }}
+          ..\bx\tools\bin\windows\genie.exe --with-tools --with-combined-examples --with-shared-lib vs2022
+          msbuild ".build/projects/vs2022/bgfx.sln" /m /v:minimal /p:Configuration=${{ matrix.config }} /p:Platform=${{ matrix.platform }}
       - name: Check
         shell: cmd
         run: |
