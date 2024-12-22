@@ -6246,7 +6246,7 @@ VK_DESTROY
 					mappedMemory += imageInfos[ii].size;
 					bufferCopyInfo[ii].bufferOffset += stagingBuffer.m_offset;
 					BX_ASSERT(
-						  bx::uint32_mod(bufferCopyInfo[ii].bufferOffset, dstBlockInfo.blockSize) == 0
+						  bx::uint32_mod(bx::narrowCast<uint32_t>(bufferCopyInfo[ii].bufferOffset), dstBlockInfo.blockSize) == 0
 						, "Alignment for subimage %u is not aligned correctly (%u)."
 						, ii, bufferCopyInfo[ii].bufferOffset, dstBlockInfo.blockSize
 						);
@@ -6538,7 +6538,7 @@ VK_DESTROY
 		for (uint32_t ii = 0; ii < _bufferImageCopyCount; ++ii)
 		{
 			BX_ASSERT(
-				  bx::uint32_mod(_bufferImageCopy[ii].bufferOffset, blockInfo.blockSize) == 0
+				  bx::uint32_mod(bx::narrowCast<uint32_t>(_bufferImageCopy[ii].bufferOffset), blockInfo.blockSize) == 0
 				, "Misaligned texture of type %s to offset %u, which is not a multiple of %u."
 				, bimg::getName(format), _bufferImageCopy[ii].bufferOffset, blockInfo.blockSize
 				);
@@ -8596,10 +8596,10 @@ VK_DESTROY
 						restoreScissor = false;
 
 						// Clamp the rect to what's valid according to Vulkan.
-						rect.m_width = bx::min(rect.m_width, fb.m_width - rect.m_x);
-						rect.m_height = bx::min(rect.m_height, fb.m_height - rect.m_y);
-						if (_render->m_view[view].m_rect.m_width != rect.m_width
-						 || _render->m_view[view].m_rect.m_height != rect.m_height)
+						rect.m_width  = bx::min(rect.m_width,  bx::narrowCast<uint16_t>(fb.m_width)  - rect.m_x);
+						rect.m_height = bx::min(rect.m_height, bx::narrowCast<uint16_t>(fb.m_height) - rect.m_y);
+						if (_render->m_view[view].m_rect.m_width  != rect.m_width
+						||  _render->m_view[view].m_rect.m_height != rect.m_height)
 						{
 							BX_TRACE("Clamp render pass from %dx%d to %dx%d"
 								, _render->m_view[view].m_rect.m_width
