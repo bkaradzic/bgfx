@@ -15,14 +15,6 @@ namespace bgfx
 #	define SHADERC_CONFIG_HLSL BX_PLATFORM_WINDOWS
 #endif // SHADERC_CONFIG_HLSL
 
-#include <alloca.h>
-#include <stdint.h>
-#include <string.h>
-#include <algorithm>
-#include <string>
-#include <vector>
-#include <unordered_map>
-
 #include <bx/bx.h>
 #include <bx/debug.h>
 #include <bx/commandline.h>
@@ -32,6 +24,12 @@ namespace bgfx
 #include <bx/hash.h>
 #include <bx/file.h>
 #include "../../src/vertexlayout.h"
+
+#include <string.h>
+#include <algorithm>
+#include <string>
+#include <vector>
+#include <unordered_map>
 
 namespace bgfx
 {

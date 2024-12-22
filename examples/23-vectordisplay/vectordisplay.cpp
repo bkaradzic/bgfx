@@ -10,7 +10,6 @@
 //   https://web.archive.org/web/20120313001837/http://paulbourke.net/dataformats/hershey/
 //
 #include <float.h>  // FLT_EPSILON
-#include <alloca.h> // alloca
 
 #include <bx/math.h>
 
