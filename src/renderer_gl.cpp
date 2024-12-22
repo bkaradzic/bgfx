@@ -1634,7 +1634,7 @@ namespace bgfx { namespace gl
 		}
 		else
 		{
-			data = bx::alignPtr(alloca(size+16), 0, 16);
+			data = bx::alignPtr(BX_STACK_ALLOC(size+16), 0, 16);
 		}
 
 		flushGlError();
@@ -2338,7 +2338,7 @@ namespace bgfx { namespace gl
 			if (0 < numCmpFormats)
 			{
 				numCmpFormats = numCmpFormats > 256 ? 256 : numCmpFormats;
-				cmpFormat = (GLint*)alloca(sizeof(GLint)*numCmpFormats);
+				cmpFormat = (GLint*)BX_STACK_ALLOC(sizeof(GLint)*numCmpFormats);
 				GL_CHECK(glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, cmpFormat) );
 
 				for (GLint ii = 0; ii < numCmpFormats; ++ii)
@@ -5137,7 +5137,7 @@ namespace bgfx { namespace gl
 		}
 
 		uint32_t maxLength = bx::uint32_max(max0, max1);
-		char* name = (char*)alloca(maxLength + 1);
+		char* name = (char*)BX_STACK_ALLOC(maxLength + 1);
 
 		BX_TRACE("Program %d", m_id);
 		BX_TRACE("Attributes (%d):", activeAttribs);
@@ -6310,7 +6310,7 @@ namespace bgfx { namespace gl
 			&&  0 != bx::strCmp(code, "#version", 8) ) // #2000
 			{
 				int32_t tempLen = code.getLength() + (4<<10);
-				char* temp = (char*)alloca(tempLen);
+				char* temp = (char*)BX_STACK_ALLOC(tempLen);
 				bx::StaticMemoryBlockWriter writer(temp, tempLen);
 
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
@@ -6846,7 +6846,7 @@ namespace bgfx { namespace gl
 			{
 				int32_t codeLen = (int32_t)bx::strLen(code);
 				int32_t tempLen = codeLen + (4<<10);
-				char* temp = (char*)alloca(tempLen);
+				char* temp = (char*)BX_STACK_ALLOC(tempLen);
 				bx::StaticMemoryBlockWriter writer(temp, tempLen);
 
 				int32_t verLen = 0;
@@ -6918,7 +6918,7 @@ namespace bgfx { namespace gl
 				GLsizei len;
 				GL_CHECK(glGetShaderiv(m_id, GL_TRANSLATED_SHADER_SOURCE_LENGTH_ANGLE, &len) );
 
-				char* source = (char*)alloca(len);
+				char* source = (char*)BX_STACK_ALLOC(len);
 				GL_CHECK(glGetTranslatedShaderSourceANGLE(m_id, len, &len, source) );
 
 				BX_TRACE("ANGLE source (len: %d):\n%s\n####", len, source);

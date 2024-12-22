@@ -31,7 +31,7 @@ namespace bgfx
 						);
 		if (0 != result)
 		{
-			HMODULE* modules = (HMODULE*)alloca(size);
+			HMODULE* modules = (HMODULE*)BX_STACK_ALLOC(size);
 			result = EnumProcessModules(process
 				, modules
 				, size

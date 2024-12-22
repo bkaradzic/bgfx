@@ -339,7 +339,7 @@ void VectorDisplay::endDraw()
 
 	// from the list of points, build a list of lines
 	uint32_t nlines = (uint32_t)m_pendingPoints.size() - 1;
-	Line* lines = (Line*)alloca(nlines * sizeof(Line) );
+	Line* lines = (Line*)BX_STACK_ALLOC(nlines * sizeof(Line) );
 
 	float t = effectiveThickness();
 	int first_last_same = true
@@ -630,7 +630,7 @@ void VectorDisplay::drawFan(float _cx, float _cy, float _pa, float _a, float _t,
 	{
 		_t = -_t;
 		nsteps = (int32_t)bx::max(1.0f, bx::round(a2pa / (bx::kPi / 8.0f) ) );
-		angles = (float*)alloca(sizeof(float) * (nsteps + 1) );
+		angles = (float*)BX_STACK_ALLOC(sizeof(float) * (nsteps + 1) );
 		for (i = 0; i <= nsteps; i++)
 		{
 			angles[i] = _a + i * a2pa / nsteps;
@@ -639,7 +639,7 @@ void VectorDisplay::drawFan(float _cx, float _cy, float _pa, float _a, float _t,
 	else
 	{
 		nsteps = (int32_t)bx::max(1.0f, bx::round(pa2a / (bx::kPi / 8.0f) ) );
-		angles = (float*)alloca(sizeof(float) * (nsteps + 1) );
+		angles = (float*)BX_STACK_ALLOC(sizeof(float) * (nsteps + 1) );
 		for (i = 0; i <= nsteps; i++)
 		{
 			angles[i] = _pa + i * pa2a / nsteps;
