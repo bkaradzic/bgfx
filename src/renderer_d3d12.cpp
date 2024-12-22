@@ -606,7 +606,7 @@ namespace bgfx { namespace d3d12
 			va_end(argList);
 			temp[size] = '\0';
 
-			wchar_t* wtemp = (wchar_t*)alloca( (size+1)*2);
+			wchar_t* wtemp = (wchar_t*)BX_STACK_ALLOC( (size+1)*2);
 			mbstowcs(wtemp, temp, size+1);
 			_object->SetName(wtemp);
 		}
@@ -5083,7 +5083,7 @@ namespace bgfx { namespace d3d12
 			m_numMips = ti.numMips;
 			const uint16_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
 			const uint32_t numSrd   = numSides * ti.numMips;
-			D3D12_SUBRESOURCE_DATA* srd = (D3D12_SUBRESOURCE_DATA*)alloca(numSrd*sizeof(D3D12_SUBRESOURCE_DATA) );
+			D3D12_SUBRESOURCE_DATA* srd = (D3D12_SUBRESOURCE_DATA*)BX_STACK_ALLOC(numSrd*sizeof(D3D12_SUBRESOURCE_DATA) );
 
 			uint32_t kk = 0;
 
@@ -5224,7 +5224,7 @@ namespace bgfx { namespace d3d12
 				state              |= D3D12_RESOURCE_STATE_DEPTH_WRITE;
 				state              &= ~D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
-				clearValue = (D3D12_CLEAR_VALUE*)alloca(sizeof(D3D12_CLEAR_VALUE) );
+				clearValue = (D3D12_CLEAR_VALUE*)BX_STACK_ALLOC(sizeof(D3D12_CLEAR_VALUE) );
 				clearValue->Format = tfi.m_fmtDsv;
 				clearValue->DepthStencil.Depth   = 1.0f;
 				clearValue->DepthStencil.Stencil = 0;
@@ -5235,7 +5235,7 @@ namespace bgfx { namespace d3d12
 				state              |= D3D12_RESOURCE_STATE_RENDER_TARGET;
 				state              &= ~D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
-				clearValue = (D3D12_CLEAR_VALUE*)alloca(sizeof(D3D12_CLEAR_VALUE) );
+				clearValue = (D3D12_CLEAR_VALUE*)BX_STACK_ALLOC(sizeof(D3D12_CLEAR_VALUE) );
 				clearValue->Format = resourceDesc.Format;
 				clearValue->Color[0] = 0.0f;
 				clearValue->Color[1] = 0.0f;

@@ -707,7 +707,7 @@ uint16_t weldVertices(WeldedVertex* _output, const bgfx::VertexLayout& _layout, 
 	uint16_t numVertices = 0;
 
 	const uint32_t size = sizeof(uint16_t)*(hashSize + _num);
-	uint16_t* hashTable = (uint16_t*)alloca(size);
+	uint16_t* hashTable = (uint16_t*)BX_STACK_ALLOC(size);
 	bx::memSet(hashTable, 0xff, size);
 
 	uint16_t* next = hashTable + hashSize;

@@ -2089,7 +2089,7 @@ namespace bgfx { namespace d3d11
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
 				uint32_t size = _len*sizeof(wchar_t);
-				wchar_t* name = (wchar_t*)alloca(size+2);
+				wchar_t* name = (wchar_t*)BX_STACK_ALLOC(size+2);
 				name[_len] = L'\0';
 				mbstowcs(name, _marker, _len);
 				PIX_SETMARKER(kColorMarker, name);
@@ -4420,7 +4420,7 @@ namespace bgfx { namespace d3d11
 
 			const uint16_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
 			const uint32_t numSrd   = numSides * ti.numMips;
-			D3D11_SUBRESOURCE_DATA* srd = (D3D11_SUBRESOURCE_DATA*)alloca(numSrd*sizeof(D3D11_SUBRESOURCE_DATA) );
+			D3D11_SUBRESOURCE_DATA* srd = (D3D11_SUBRESOURCE_DATA*)BX_STACK_ALLOC(numSrd*sizeof(D3D11_SUBRESOURCE_DATA) );
 
 			uint32_t kk = 0;
 

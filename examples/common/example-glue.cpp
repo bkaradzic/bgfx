@@ -176,7 +176,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 
 	{
 		uint32_t num = entry::getNumApps();
-		const char** items = (const char**)alloca(num*sizeof(void*) );
+		const char** items = (const char**)BX_STACK_ALLOC(num*sizeof(void*) );
 
 		uint32_t ii = 0;
 		int32_t current = 0;
