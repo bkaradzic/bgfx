@@ -96,7 +96,8 @@
         <id value="43"  vendor="LLVM" tool="LLVM SPIR-V Backend" comment="Contact Michal Paszkowski, michal.paszkowski@intel.com, https://github.com/llvm/llvm-project/tree/main/llvm/lib/Target/SPIRV"/>
         <id value="44"  vendor="Robert Konrad" tool="Kongruent" comment="Contact Robert Konrad, https://github.com/Kode/Kongruent"/>
         <id value="45"  vendor="Kitsunebi Games" tool="Nuvk SPIR-V Emitter and DLSL compiler" comment="Contact Luna Nielsen, luna@foxgirls.gay, https://github.com/Inochi2D/nuvk"/>
-        <unused start="46" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
+        <id value="46"  vendor="Nintendo" comment="Contact Steve Urquhart, steve.urquhart@ntd.nintendo.com"/>
+        <unused start="47" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
     </ids>
 
     <!-- SECTION: SPIR-V Opcodes and Enumerants -->

@@ -4450,6 +4450,7 @@
       "capabilities" : [
         "UntypedPointersKHR"
       ],
+      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdResult" },
@@ -4461,6 +4462,7 @@
       "class" : "Memory",
       "opcode" : 4418,
       "capabilities" : [ "UntypedPointersKHR" ],
+      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4475,6 +4477,7 @@
       "class" : "Memory",
       "opcode" : 4419,
       "capabilities" : [ "UntypedPointersKHR" ],
+      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4489,6 +4492,7 @@
       "class" : "Memory",
       "opcode" : 4420,
       "capabilities" : [ "UntypedPointersKHR" ],
+      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4529,6 +4533,7 @@
       "class"  : "Memory",
       "opcode" : 4423,
       "capabilities" : [ "UntypedPointersKHR" ],
+      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4544,6 +4549,7 @@
       "class"  : "Memory",
       "opcode" : 4424,
       "capabilities" : [ "UntypedPointersKHR" ],
+      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4559,6 +4565,7 @@
       "class"  : "Memory",
       "opcode" : 4425,
       "capabilities" : [ "UntypedPointersKHR" ],
+      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4573,6 +4580,7 @@
       "class"  : "Memory",
       "opcode" : 4426,
       "capabilities" : [ "UntypedPointersKHR" ],
+      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdRef",                            "name" : "'Pointer Type'" },
@@ -5373,6 +5381,7 @@
         { "kind" : "IdRef", "name": "'Node Index'" }
       ],
       "capabilities" : [ "ShaderEnqueueAMDX" ],
+      "provisional" : true,
       "version" : "None"
     },
     {
@@ -5383,6 +5392,7 @@
         { "kind" : "IdRef", "name": "'Payload Array'" }
       ],
       "capabilities" : [ "ShaderEnqueueAMDX" ],
+      "provisional" : true,
       "version" : "None"
     },
     {
@@ -5394,6 +5404,7 @@
         { "kind" : "IdRef", "name": "'Payload Type'" }
       ],
       "capabilities" : [ "ShaderEnqueueAMDX" ],
+      "provisional" : true,
       "version" : "None"
     },
     {
@@ -5406,6 +5417,7 @@
         { "kind" : "IdRef", "name": "'Payload'" }
       ],
       "capabilities" : [ "ShaderEnqueueAMDX" ],
+      "provisional" : true,
       "version" : "None"
     },
     {
@@ -5418,6 +5430,7 @@
         { "kind" : "IdRef", "name": "'Payload Array'" }
       ],
       "capabilities" : [ "ShaderEnqueueAMDX" ],
+      "provisional" : true,
       "version" : "None"
     },
     {
@@ -5431,6 +5444,7 @@
         { "kind" : "IdRef", "name": "'Node Index'" }
       ],
       "capabilities" : [ "ShaderEnqueueAMDX" ],
+      "provisional" : true,
       "version": "None"
     },
     {
@@ -5442,6 +5456,7 @@
         { "kind" : "LiteralString", "name": "'Literal String'" }
       ],
       "capabilities" : [ "ShaderEnqueueAMDX" ],
+      "provisional" : true,
       "version": "None"
     },
     {
@@ -5453,6 +5468,7 @@
         { "kind" : "LiteralString", "name": "'Literal String'" }
       ],
       "capabilities" : [ "ShaderEnqueueAMDX" ],
+      "provisional" : true,
       "version": "None"
     },
     {
@@ -5952,6 +5968,18 @@
       "version" : "None"
     },
     {
+      "opname" : "OpCooperativeMatrixConvertNV",
+      "class"  : "Conversion",
+      "opcode" : 5293,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",             "name" : "'Matrix'" }
+      ],
+      "capabilities" : [ "CooperativeMatrixConversionsNV" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpEmitMeshTasksEXT",
       "class"  : "Reserved",
       "opcode" : 5294,
@@ -6266,6 +6294,195 @@
       "version" : "None"
     },
     {
+      "opname" : "OpCooperativeMatrixReduceNV",
+      "class"  : "Arithmetic",
+      "opcode" : 5366,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Matrix'" },
+        { "kind" : "CooperativeMatrixReduce",      "name" : "'Reduce'" },
+        { "kind" : "IdRef", "name" : "'CombineFunc'" }
+      ],
+      "capabilities" : [ "CooperativeMatrixReductionsNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpCooperativeMatrixLoadTensorNV",
+      "class"  : "Memory",
+      "opcode" : 5367,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",             "name" : "'Pointer'" },
+        { "kind" : "IdRef",             "name" : "'Object'" },
+        { "kind" : "IdRef",             "name" : "'TensorLayout'" },
+        { "kind" : "MemoryAccess",      "name" : "'Memory Operand'"},
+        { "kind" : "TensorAddressingOperands", "name" : "'Tensor Addressing Operands'"}
+      ],
+      "capabilities" : [ "CooperativeMatrixTensorAddressingNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpCooperativeMatrixStoreTensorNV",
+      "class"  : "Memory",
+      "opcode" : 5368,
+      "operands" : [
+        { "kind" : "IdRef",             "name" : "'Pointer'" },
+        { "kind" : "IdRef",             "name" : "'Object'" },
+        { "kind" : "IdRef",             "name" : "'TensorLayout'" },
+        { "kind" : "MemoryAccess",      "name" : "'Memory Operand'"},
+        { "kind" : "TensorAddressingOperands", "name" : "'Tensor Addressing Operands'"}
+      ],
+      "capabilities" : [ "CooperativeMatrixTensorAddressingNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpCooperativeMatrixPerElementOpNV",
+      "class"  : "Function",
+      "opcode" : 5369,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Matrix'" },
+        { "kind" : "IdRef", "name" : "'Func'" },
+        { "kind" : "IdRef",        "quantifier" : "*", "name" : "'Operands'" }
+      ],
+      "capabilities" : [ "CooperativeMatrixPerElementOperationsNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeTensorLayoutNV",
+      "class"  : "Type-Declaration",
+      "opcode" : 5370,
+      "operands" : [
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",             "name" : "'Dim'" },
+        { "kind" : "IdRef",             "name" : "'ClampMode'" }
+      ],
+      "capabilities" : [ "TensorAddressingNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeTensorViewNV",
+      "class"  : "Type-Declaration",
+      "opcode" : 5371,
+      "operands" : [
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",             "name" : "'Dim'" },
+        { "kind" : "IdRef",             "name" : "'HasDimensions'" },
+        { "kind" : "IdRef", "quantifier" : "*", "name" : "'p'" }
+      ],
+      "capabilities" : [ "TensorAddressingNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpCreateTensorLayoutNV",
+      "class"  : "Reserved",
+      "opcode" : 5372,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "TensorAddressingNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTensorLayoutSetDimensionNV",
+      "class"  : "Reserved",
+      "opcode" : 5373,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",                     "name" : "'TensorLayout'" },
+        { "kind" : "IdRef", "quantifier" : "*", "name" : "'Dim'" }
+
+      ],
+      "capabilities" : [ "TensorAddressingNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTensorLayoutSetStrideNV",
+      "class"  : "Reserved",
+      "opcode" : 5374,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",                     "name" : "'TensorLayout'" },
+        { "kind" : "IdRef", "quantifier" : "*", "name" : "'Stride'" }
+
+      ],
+      "capabilities" : [ "TensorAddressingNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTensorLayoutSliceNV",
+      "class"  : "Reserved",
+      "opcode" : 5375,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",                     "name" : "'TensorLayout'" },
+        { "kind" : "IdRef", "quantifier" : "*", "name" : "'Operands'" }
+
+      ],
+      "capabilities" : [ "TensorAddressingNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTensorLayoutSetClampValueNV",
+      "class"  : "Reserved",
+      "opcode" : 5376,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",                     "name" : "'TensorLayout'" },
+        { "kind" : "IdRef",                     "name" : "'Value'" }
+
+      ],
+      "capabilities" : [ "TensorAddressingNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpCreateTensorViewNV",
+      "class"  : "Reserved",
+      "opcode" : 5377,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "TensorAddressingNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTensorViewSetDimensionNV",
+      "class"  : "Reserved",
+      "opcode" : 5378,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",                     "name" : "'TensorView'" },
+        { "kind" : "IdRef", "quantifier" : "*", "name" : "'Dim'" }
+
+      ],
+      "capabilities" : [ "TensorAddressingNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTensorViewSetStrideNV",
+      "class"  : "Reserved",
+      "opcode" : 5379,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",                     "name" : "'TensorView'" },
+        { "kind" : "IdRef", "quantifier" : "*", "name" : "'Stride'" }
+
+      ],
+      "capabilities" : [ "TensorAddressingNV" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpDemoteToHelperInvocation",
       "class"  : "Control-Flow",
       "aliases" : ["OpDemoteToHelperInvocationEXT"],
@@ -6283,6 +6500,48 @@
       ],
       "capabilities" : [ "DemoteToHelperInvocation" ],
       "extensions" : [ "SPV_EXT_demote_to_helper_invocation" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTensorViewSetClipNV",
+      "class"  : "Reserved",
+      "opcode" : 5382,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",                     "name" : "'TensorView'" },
+        { "kind" : "IdRef",                     "name" : "'ClipRowOffset'" },
+        { "kind" : "IdRef",                     "name" : "'ClipRowSpan'" },
+        { "kind" : "IdRef",                     "name" : "'ClipColOffset'" },
+        { "kind" : "IdRef",                     "name" : "'ClipColSpan'" }
+      ],
+      "capabilities" : [ "TensorAddressingNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTensorLayoutSetBlockSizeNV",
+      "class"  : "Reserved",
+      "opcode" : 5384,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",                     "name" : "'TensorLayout'" },
+        { "kind" : "IdRef", "quantifier" : "*", "name" : "'BlockSize'" }
+
+      ],
+      "capabilities" : [ "TensorAddressingNV" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpCooperativeMatrixTransposeNV",
+      "class"  : "Conversion",
+      "opcode" : 5390,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Matrix'" }
+      ],
+      "capabilities" : [ "CooperativeMatrixConversionsNV" ],
       "version" : "None"
     },
     {
@@ -11367,6 +11626,7 @@
           "enumerant" : "CoalescingAMDX",
           "value" : 5069,
           "capabilities" : [ "ShaderEnqueueAMDX" ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -11376,6 +11636,7 @@
           "parameters" : [
             { "kind" : "IdRef", "name" : "'Is Entry'" }
           ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -11385,6 +11646,7 @@
           "parameters" : [
             { "kind" : "IdRef", "name" : "'Number of recursions'" }
           ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -11396,6 +11658,7 @@
             { "kind" : "IdRef", "name" : "'y size'" },
             { "kind" : "IdRef", "name" : "'z size'" }
           ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -11405,6 +11668,7 @@
           "parameters" : [
             { "kind" : "IdRef", "name" : "'Shader Index'" }
           ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -11416,6 +11680,7 @@
             { "kind" : "IdRef", "name" : "'y size'" },
             { "kind" : "IdRef", "name" : "'z size'" }
           ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -11480,6 +11745,7 @@
             { "kind" : "IdRef", "name" : "'Node Name'" },
             { "kind" : "IdRef", "name" : "'Shader Index'" }
           ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -11823,6 +12089,7 @@
           "enumerant" : "NodePayloadAMDX",
           "value" : 5068,
           "capabilities" : [ "ShaderEnqueueAMDX" ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -13166,6 +13433,7 @@
           "parameters" : [
             { "kind" : "IdRef", "name" : "'Payload Type'" }
           ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -13175,12 +13443,14 @@
           "parameters" : [
             { "kind" : "IdRef", "name" : "'Max number of payloads'" }
           ],
+          "provisional" : true,
           "version" : "None"
         },
         {
           "enumerant" : "TrackFinishWritingAMDX",
           "value" : 5078,
           "capabilities" : [ "ShaderEnqueueAMDX" ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -13190,6 +13460,7 @@
           "parameters" : [
             { "kind" : "IdRef", "name" : "'Node Name'" }
           ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -13199,12 +13470,14 @@
           "parameters" : [
             { "kind" : "IdRef", "name" : "'Base Index'" }
           ],
+          "provisional" : true,
           "version" : "None"
         },
         {
           "enumerant" : "PayloadNodeSparseArrayAMDX",
           "value" : 5099,
           "capabilities" : [ "ShaderEnqueueAMDX" ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -13214,12 +13487,14 @@
           "parameters" : [
             { "kind" : "IdRef", "name" : "'Array Size'" }
           ],
+          "provisional" : true,
           "version" : "None"
         },
         {
           "enumerant" : "PayloadDispatchIndirectAMDX",
           "value" : 5105,
           "capabilities" : [ "ShaderEnqueueAMDX" ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -14301,12 +14576,14 @@
           "enumerant" : "RemainingRecursionLevelsAMDX",
           "value" : 5021,
           "capabilities" : [ "ShaderEnqueueAMDX" ],
+          "provisional" : true,
           "version" : "None"
         },
         {
           "enumerant" : "ShaderIndexAMDX",
           "value" : 5073,
           "capabilities" : [ "ShaderEnqueueAMDX" ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -15397,6 +15674,7 @@
           "enumerant" : "UntypedPointersKHR",
           "value" : 4473,
           "extensions" : [ "SPV_KHR_untyped_pointers" ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -15490,6 +15768,7 @@
           "value" : 5067,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_AMDX_shader_enqueue" ],
+          "provisional" : true,
           "version" : "None"
         },
         {
@@ -15845,6 +16124,42 @@
           "enumerant" : "RawAccessChainsNV",
           "value" : 5414,
           "extensions" : [ "SPV_NV_raw_access_chains" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CooperativeMatrixReductionsNV",
+          "value" : 5430,
+          "extensions" : [ "SPV_NV_cooperative_matrix2" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CooperativeMatrixConversionsNV",
+          "value" : 5431,
+          "extensions" : [ "SPV_NV_cooperative_matrix2" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CooperativeMatrixPerElementOperationsNV",
+          "value" : 5432,
+          "extensions" : [ "SPV_NV_cooperative_matrix2" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CooperativeMatrixTensorAddressingNV",
+          "value" : 5433,
+          "extensions" : [ "SPV_NV_cooperative_matrix2" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CooperativeMatrixBlockLoadsNV",
+          "value" : 5434,
+          "extensions" : [ "SPV_NV_cooperative_matrix2" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "TensorAddressingNV",
+          "value" : 5439,
+          "extensions" : [ "SPV_NV_tensor_addressing" ],
           "version" : "None"
         },
         {
@@ -16451,6 +16766,87 @@
         {
           "enumerant" : "MatrixAccumulatorKHR",
           "value" : 2,
+          "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "BitEnum",
+      "kind" : "CooperativeMatrixReduce",
+      "enumerants" : [
+        {
+          "enumerant" : "Row",
+          "value" : "0x0001",
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Column",
+          "value" : "0x0002",
+          "version" : "None"
+        },
+        {
+          "enumerant" : "2x2",
+          "value" : "0x0004",
+          "version" : "None"
+        }
+      ]
+    },
+    {
+      "category" : "ValueEnum",
+      "kind" : "TensorClampMode",
+      "enumerants" : [
+        {
+          "enumerant" : "Undefined",
+          "value" : 0,
+          "version": "None"
+        },
+        {
+          "enumerant" : "Constant",
+          "value" : 1,
+          "version": "None"
+        },
+        {
+          "enumerant" : "ClampToEdge",
+          "value" : 2,
+          "version": "None"
+        },
+        {
+          "enumerant" : "Repeat",
+          "value" : 3,
+          "version": "None"
+        },
+        {
+          "enumerant" : "RepeatMirrored",
+          "value" : 4,
+          "version": "None"
+        }
+      ]
+    },
+    {
+      "category" : "BitEnum",
+      "kind" : "TensorAddressingOperands",
+      "enumerants" : [
+        {
+          "enumerant" : "None",
+          "value" : "0x0000",
+          "version" : "None"
+        },
+        {
+          "enumerant" : "TensorView",
+          "value" : "0x0001",
+          "parameters" : [
+            { "kind" : "IdRef" }
+          ],
+          "capabilities" : [ "CooperativeMatrixTensorAddressingNV" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DecodeFunc",
+          "value" : "0x0002",
+          "parameters" : [
+            { "kind" : "IdRef" }
+          ],
+          "capabilities" : [ "CooperativeMatrixBlockLoadsNV" ],
           "version" : "None"
         }
       ]
