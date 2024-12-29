@@ -67,6 +67,9 @@ enum TBasicType {
     EbtRayQuery,
     EbtHitObjectNV,
     EbtCoopmat,
+    EbtFunction,
+    EbtTensorLayoutNV,
+    EbtTensorViewNV,
     // SPIR-V type defined by spirv_type
     EbtSpirvType,
 
@@ -585,6 +588,30 @@ __inline bool isTypeFloat(TBasicType type)
         return true;
     default:
         return false;
+    }
+}
+
+__inline uint32_t GetNumBits(TBasicType type)
+{
+    switch (type) {
+    case EbtInt8:
+    case EbtUint8:
+        return 8;
+    case EbtFloat16:
+    case EbtInt16:
+    case EbtUint16:
+        return 16;
+    case EbtInt:
+    case EbtUint:
+    case EbtFloat:
+        return 32;
+    case EbtDouble:
+    case EbtInt64:
+    case EbtUint64:
+        return 64;
+    default:
+        assert(false);
+        return 0;
     }
 }
 

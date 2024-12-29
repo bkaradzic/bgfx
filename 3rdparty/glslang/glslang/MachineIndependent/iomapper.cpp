@@ -65,7 +65,7 @@ struct TVarEntryInfo {
     long long id;
     TIntermSymbol* symbol;
     bool live;
-    bool upgradedToPushConstant;
+    TLayoutPacking upgradedToPushConstantPacking; // ElpNone means it hasn't been upgraded
     int newBinding;
     int newSet;
     int newLocation;
@@ -74,7 +74,7 @@ struct TVarEntryInfo {
     EShLanguage stage;
 
     void clearNewAssignments() {
-        upgradedToPushConstant = false;
+        upgradedToPushConstantPacking = ElpNone;
         newBinding = -1;
         newSet = -1;
         newLocation = -1;
@@ -246,8 +246,11 @@ public:
             base->getWritableType().getQualifier().layoutComponent = at->second.newComponent;
         if (at->second.newIndex != -1)
             base->getWritableType().getQualifier().layoutIndex = at->second.newIndex;
-        if (at->second.upgradedToPushConstant)
+        if (at->second.upgradedToPushConstantPacking != ElpNone) {
             base->getWritableType().getQualifier().layoutPushConstant = true;
+            base->getWritableType().getQualifier().setBlockStorage(EbsPushConstant);
+            base->getWritableType().getQualifier().layoutPacking = at->second.upgradedToPushConstantPacking;
+        }
     }
 
   private:
@@ -1810,7 +1813,8 @@ bool TGlslIoMapper::doMap(TIoMapResolver* resolver, TInfoSink& infoSink) {
                 std::for_each(uniformVector.begin(), uniformVector.end(),
                                        [this](TVarLivePair& p) {
                 if (p.first == autoPushConstantBlockName) {
-                        p.second.upgradedToPushConstant = true;
+                        p.second.upgradedToPushConstantPacking = autoPushConstantBlockPacking;
+                        p.second.newSet = TQualifier::layoutSetEnd;
                     }
                 });
             }
@@ -1823,8 +1827,8 @@ bool TGlslIoMapper::doMap(TIoMapResolver* resolver, TInfoSink& infoSink) {
                 std::for_each(uniformVector.begin(), uniformVector.end(), [pUniformVarMap, stage](TVarLivePair p) {
                     auto at = pUniformVarMap[stage]->find(p.second.symbol->getAccessName());
                     if (at != pUniformVarMap[stage]->end() && at->second.id == p.second.id){
-                        if (p.second.upgradedToPushConstant) {
-                            at->second.upgradedToPushConstant = true;
+                        if (p.second.upgradedToPushConstantPacking != ElpNone) {
+                            at->second.upgradedToPushConstantPacking = p.second.upgradedToPushConstantPacking;
                         } else {
                             int resolvedBinding = at->second.newBinding;
                             at->second = p.second;

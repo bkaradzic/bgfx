@@ -1471,6 +1471,9 @@ public:
     bool isCoopmatNV() const { return coopmatNV; }
     bool isCoopmatKHR() const { return coopmatKHR; }
 
+    bool isTensorLayoutNV() const { return basicType == EbtTensorLayoutNV; }
+    bool isTensorViewNV() const { return basicType == EbtTensorViewNV; }
+
     void initType(const TSourceLoc& l)
     {
         basicType = EbtVoid;
@@ -1625,7 +1628,6 @@ public:
                                         assert(dimSize >= 0);
                                         coopmatKHRuse = static_cast<uint32_t>(dimSize) & 0b111;
                                         coopmatKHRUseValid = true;
-                                        p.typeParameters->arraySizes->removeLastSize();
                                     }
                                 }
                             }
@@ -1881,6 +1883,9 @@ public:
     bool isSpirvType() const { return getBasicType() == EbtSpirvType; }
     int getCoopMatKHRuse() const { return static_cast<int>(coopmatKHRuse); }
 
+    bool isTensorLayoutNV() const { return getBasicType() == EbtTensorLayoutNV; }
+    bool isTensorViewNV() const { return getBasicType() == EbtTensorViewNV; }
+
     // return true if this type contains any subtype which satisfies the given predicate.
     template <typename P>
     bool contains(P predicate) const
@@ -2106,6 +2111,8 @@ public:
         case EbtString:            return "string";
         case EbtSpirvType:         return "spirv_type";
         case EbtCoopmat:           return "coopmat";
+        case EbtTensorLayoutNV:    return "tensorLayoutNV";
+        case EbtTensorViewNV:      return "tensorViewNV";
         default:                   return "unknown type";
         }
     }
@@ -2416,16 +2423,20 @@ public:
                 appendStr(" ");
                 appendStr("coopmat");
               }
+              if (isTensorLayoutNV()) {
+                appendStr(" ");
+                appendStr("tensorLayoutNV");
+              }
+              if (isTensorViewNV()) {
+                appendStr(" ");
+                appendStr("tensorViewNV");
+              }
 
               appendStr("<");
               for (int i = 0; i < (int)typeParameters->arraySizes->getNumDims(); ++i) {
                 appendInt(typeParameters->arraySizes->getDimSize(i));
                 if (i != (int)typeParameters->arraySizes->getNumDims() - 1)
                   appendStr(", ");
-              }
-              if (coopmatKHRUseValid) {
-                  appendStr(", ");
-                  appendInt(coopmatKHRuse);
               }
               appendStr(">");
             }
@@ -2752,24 +2763,44 @@ public:
         return rv;
     }
 
+    bool tensorParameterOK(const TType& right) const
+    {
+        if (isTensorLayoutNV()) {
+            return right.isTensorLayoutNV() && right.typeParameters == nullptr && typeParameters != nullptr;
+        }
+        if (isTensorViewNV()) {
+            return right.isTensorViewNV() && right.typeParameters == nullptr && typeParameters != nullptr;
+        }
+        return false;
+    }
+
     bool sameCoopMatUse(const TType &right) const {
         return coopmatKHRuse == right.coopmatKHRuse;
     }
 
-    bool sameCoopMatShapeAndUse(const TType &right) const
+    bool sameCoopMatShape(const TType &right) const
     {
         if (!isCoopMat() || !right.isCoopMat() || isCoopMatKHR() != right.isCoopMatKHR())
+            return false;
+
+        // Skip bit width type parameter (first array size) for coopmatNV
+        int firstArrayDimToCompare = isCoopMatNV() ? 1 : 0;
+        int lastArrayDimToCompare = typeParameters->arraySizes->getNumDims() - (isCoopMatKHR() ? 1 : 0);
+        for (int i = firstArrayDimToCompare; i < lastArrayDimToCompare; ++i) {
+            if (typeParameters->arraySizes->getDimSize(i) != right.typeParameters->arraySizes->getDimSize(i))
+                return false;
+        }
+        return true;
+    }
+
+    bool sameCoopMatShapeAndUse(const TType &right) const
+    {
+        if (!sameCoopMatShape(right))
             return false;
 
         if (coopmatKHRuse != right.coopmatKHRuse)
             return false;
 
-        // Skip bit width type parameter (first array size) for coopmatNV
-        int firstArrayDimToCompare = isCoopMatNV() ? 1 : 0;
-        for (int i = firstArrayDimToCompare; i < typeParameters->arraySizes->getNumDims(); ++i) {
-            if (typeParameters->arraySizes->getDimSize(i) != right.typeParameters->arraySizes->getDimSize(i))
-                return false;
-        }
         return true;
     }
 
@@ -2827,7 +2858,9 @@ protected:
             typeParameters = new TTypeParameters;
             typeParameters->arraySizes = new TArraySizes;
             *typeParameters->arraySizes = *copyOf.typeParameters->arraySizes;
-            *typeParameters->spirvType = *copyOf.typeParameters->spirvType;
+            if (copyOf.typeParameters->spirvType) {
+                *typeParameters->spirvType = *copyOf.typeParameters->spirvType;
+            }
             typeParameters->basicType = copyOf.basicType;
         }
 

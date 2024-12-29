@@ -204,6 +204,13 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
 
     OutputTreeText(out, node, depth);
 
+    if (IsOpNumericConv(node->getAsOperator()->getOp())) {
+        out.debug << "Convert " << TType::getBasicString(node->getOperand()->getType().getBasicType()) << " to " << TType::getBasicString(node->getType().getBasicType());
+        out.debug << " (" << node->getCompleteString() << ")";
+        out.debug << "\n";
+        return true;
+    }
+
     switch (node->getOp()) {
     case EOpNegative:       out.debug << "Negate value";         break;
     case EOpVectorLogicalNot:
@@ -215,192 +222,6 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
     case EOpPreIncrement:   out.debug << "Pre-Increment";        break;
     case EOpPreDecrement:   out.debug << "Pre-Decrement";        break;
     case EOpCopyObject:     out.debug << "copy object";          break;
-
-    // * -> bool
-    case EOpConvInt8ToBool:    out.debug << "Convert int8_t to bool";  break;
-    case EOpConvUint8ToBool:   out.debug << "Convert uint8_t to bool"; break;
-    case EOpConvInt16ToBool:   out.debug << "Convert int16_t to bool"; break;
-    case EOpConvUint16ToBool:  out.debug << "Convert uint16_t to bool";break;
-    case EOpConvIntToBool:     out.debug << "Convert int to bool";     break;
-    case EOpConvUintToBool:    out.debug << "Convert uint to bool";    break;
-    case EOpConvInt64ToBool:   out.debug << "Convert int64 to bool";   break;
-    case EOpConvUint64ToBool:  out.debug << "Convert uint64 to bool";  break;
-    case EOpConvFloat16ToBool: out.debug << "Convert float16_t to bool";   break;
-    case EOpConvFloatToBool:   out.debug << "Convert float to bool";   break;
-    case EOpConvDoubleToBool:  out.debug << "Convert double to bool";  break;
-
-    // bool -> *
-    case EOpConvBoolToInt8:    out.debug << "Convert bool to int8_t";  break;
-    case EOpConvBoolToUint8:   out.debug << "Convert bool to uint8_t"; break;
-    case EOpConvBoolToInt16:   out.debug << "Convert bool to in16t_t"; break;
-    case EOpConvBoolToUint16:  out.debug << "Convert bool to uint16_t";break;
-    case EOpConvBoolToInt:     out.debug << "Convert bool to int"  ;   break;
-    case EOpConvBoolToUint:    out.debug << "Convert bool to uint";    break;
-    case EOpConvBoolToInt64:   out.debug << "Convert bool to int64"; break;
-    case EOpConvBoolToUint64:  out.debug << "Convert bool to uint64";break;
-    case EOpConvBoolToFloat16: out.debug << "Convert bool to float16_t";   break;
-    case EOpConvBoolToFloat:   out.debug << "Convert bool to float";   break;
-    case EOpConvBoolToDouble:  out.debug << "Convert bool to double";   break;
-
-    // int8_t -> (u)int*
-    case EOpConvInt8ToInt16:   out.debug << "Convert int8_t to int16_t";break;
-    case EOpConvInt8ToInt:     out.debug << "Convert int8_t to int";    break;
-    case EOpConvInt8ToInt64:   out.debug << "Convert int8_t to int64";   break;
-    case EOpConvInt8ToUint8:   out.debug << "Convert int8_t to uint8_t";break;
-    case EOpConvInt8ToUint16:  out.debug << "Convert int8_t to uint16_t";break;
-    case EOpConvInt8ToUint:    out.debug << "Convert int8_t to uint";    break;
-    case EOpConvInt8ToUint64:  out.debug << "Convert int8_t to uint64";   break;
-
-    // uint8_t -> (u)int*
-    case EOpConvUint8ToInt8:    out.debug << "Convert uint8_t to int8_t";break;
-    case EOpConvUint8ToInt16:   out.debug << "Convert uint8_t to int16_t";break;
-    case EOpConvUint8ToInt:     out.debug << "Convert uint8_t to int";    break;
-    case EOpConvUint8ToInt64:   out.debug << "Convert uint8_t to int64";   break;
-    case EOpConvUint8ToUint16:  out.debug << "Convert uint8_t to uint16_t";break;
-    case EOpConvUint8ToUint:    out.debug << "Convert uint8_t to uint";    break;
-    case EOpConvUint8ToUint64:  out.debug << "Convert uint8_t to uint64";   break;
-
-    // int8_t -> float*
-    case EOpConvInt8ToFloat16:  out.debug << "Convert int8_t to float16_t";break;
-    case EOpConvInt8ToFloat:    out.debug << "Convert int8_t to float";    break;
-    case EOpConvInt8ToDouble:   out.debug << "Convert int8_t to double";   break;
-
-    // uint8_t -> float*
-    case EOpConvUint8ToFloat16: out.debug << "Convert uint8_t to float16_t";break;
-    case EOpConvUint8ToFloat:   out.debug << "Convert uint8_t to float";    break;
-    case EOpConvUint8ToDouble:  out.debug << "Convert uint8_t to double";   break;
-
-    // int16_t -> (u)int*
-    case EOpConvInt16ToInt8:    out.debug << "Convert int16_t to int8_t";break;
-    case EOpConvInt16ToInt:     out.debug << "Convert int16_t to int";    break;
-    case EOpConvInt16ToInt64:   out.debug << "Convert int16_t to int64";   break;
-    case EOpConvInt16ToUint8:   out.debug << "Convert int16_t to uint8_t";break;
-    case EOpConvInt16ToUint16:  out.debug << "Convert int16_t to uint16_t";break;
-    case EOpConvInt16ToUint:    out.debug << "Convert int16_t to uint";    break;
-    case EOpConvInt16ToUint64:  out.debug << "Convert int16_t to uint64";   break;
-
-    // int16_t -> float*
-    case EOpConvInt16ToFloat16:  out.debug << "Convert int16_t to float16_t";break;
-    case EOpConvInt16ToFloat:    out.debug << "Convert int16_t to float";    break;
-    case EOpConvInt16ToDouble:   out.debug << "Convert int16_t to double";   break;
-
-    // uint16_t -> (u)int*
-    case EOpConvUint16ToInt8:    out.debug << "Convert uint16_t to int8_t";break;
-    case EOpConvUint16ToInt16:   out.debug << "Convert uint16_t to int16_t";break;
-    case EOpConvUint16ToInt:     out.debug << "Convert uint16_t to int";    break;
-    case EOpConvUint16ToInt64:   out.debug << "Convert uint16_t to int64";   break;
-    case EOpConvUint16ToUint8:   out.debug << "Convert uint16_t to uint8_t";break;
-    case EOpConvUint16ToUint:    out.debug << "Convert uint16_t to uint";    break;
-    case EOpConvUint16ToUint64:  out.debug << "Convert uint16_t to uint64";   break;
-
-    // uint16_t -> float*
-    case EOpConvUint16ToFloat16: out.debug << "Convert uint16_t to float16_t";break;
-    case EOpConvUint16ToFloat:   out.debug << "Convert uint16_t to float";    break;
-    case EOpConvUint16ToDouble:  out.debug << "Convert uint16_t to double";   break;
-
-    // int32_t -> (u)int*
-    case EOpConvIntToInt8:    out.debug << "Convert int to int8_t";break;
-    case EOpConvIntToInt16:   out.debug << "Convert int to int16_t";break;
-    case EOpConvIntToInt64:   out.debug << "Convert int to int64";   break;
-    case EOpConvIntToUint8:   out.debug << "Convert int to uint8_t";break;
-    case EOpConvIntToUint16:  out.debug << "Convert int to uint16_t";break;
-    case EOpConvIntToUint:    out.debug << "Convert int to uint";    break;
-    case EOpConvIntToUint64:  out.debug << "Convert int to uint64";   break;
-
-    // int32_t -> float*
-    case EOpConvIntToFloat16:  out.debug << "Convert int to float16_t";break;
-    case EOpConvIntToFloat:    out.debug << "Convert int to float";    break;
-    case EOpConvIntToDouble:   out.debug << "Convert int to double";   break;
-
-    // uint32_t -> (u)int*
-    case EOpConvUintToInt8:    out.debug << "Convert uint to int8_t";break;
-    case EOpConvUintToInt16:   out.debug << "Convert uint to int16_t";break;
-    case EOpConvUintToInt:     out.debug << "Convert uint to int";break;
-    case EOpConvUintToInt64:   out.debug << "Convert uint to int64";   break;
-    case EOpConvUintToUint8:   out.debug << "Convert uint to uint8_t";break;
-    case EOpConvUintToUint16:  out.debug << "Convert uint to uint16_t";break;
-    case EOpConvUintToUint64:  out.debug << "Convert uint to uint64";   break;
-
-    // uint32_t -> float*
-    case EOpConvUintToFloat16: out.debug << "Convert uint to float16_t";break;
-    case EOpConvUintToFloat:   out.debug << "Convert uint to float";    break;
-    case EOpConvUintToDouble:  out.debug << "Convert uint to double";   break;
-
-    // int64 -> (u)int*
-    case EOpConvInt64ToInt8:    out.debug << "Convert int64 to int8_t";  break;
-    case EOpConvInt64ToInt16:   out.debug << "Convert int64 to int16_t"; break;
-    case EOpConvInt64ToInt:     out.debug << "Convert int64 to int";   break;
-    case EOpConvInt64ToUint8:   out.debug << "Convert int64 to uint8_t";break;
-    case EOpConvInt64ToUint16:  out.debug << "Convert int64 to uint16_t";break;
-    case EOpConvInt64ToUint:    out.debug << "Convert int64 to uint";    break;
-    case EOpConvInt64ToUint64:  out.debug << "Convert int64 to uint64";   break;
-
-     // int64 -> float*
-    case EOpConvInt64ToFloat16:  out.debug << "Convert int64 to float16_t";break;
-    case EOpConvInt64ToFloat:    out.debug << "Convert int64 to float";    break;
-    case EOpConvInt64ToDouble:   out.debug << "Convert int64 to double";   break;
-
-    // uint64 -> (u)int*
-    case EOpConvUint64ToInt8:    out.debug << "Convert uint64 to int8_t";break;
-    case EOpConvUint64ToInt16:   out.debug << "Convert uint64 to int16_t";break;
-    case EOpConvUint64ToInt:     out.debug << "Convert uint64 to int";    break;
-    case EOpConvUint64ToInt64:   out.debug << "Convert uint64 to int64";   break;
-    case EOpConvUint64ToUint8:   out.debug << "Convert uint64 to uint8_t";break;
-    case EOpConvUint64ToUint16:  out.debug << "Convert uint64 to uint16";    break;
-    case EOpConvUint64ToUint:    out.debug << "Convert uint64 to uint";   break;
-
-    // uint64 -> float*
-    case EOpConvUint64ToFloat16: out.debug << "Convert uint64 to float16_t";break;
-    case EOpConvUint64ToFloat:   out.debug << "Convert uint64 to float";    break;
-    case EOpConvUint64ToDouble:  out.debug << "Convert uint64 to double";   break;
-
-    // float16_t -> int*
-    case EOpConvFloat16ToInt8:  out.debug << "Convert float16_t to int8_t"; break;
-    case EOpConvFloat16ToInt16: out.debug << "Convert float16_t to int16_t"; break;
-    case EOpConvFloat16ToInt:   out.debug << "Convert float16_t to int"; break;
-    case EOpConvFloat16ToInt64: out.debug << "Convert float16_t to int64"; break;
-
-    // float16_t -> uint*
-    case EOpConvFloat16ToUint8:  out.debug << "Convert float16_t to uint8_t"; break;
-    case EOpConvFloat16ToUint16: out.debug << "Convert float16_t to uint16_t"; break;
-    case EOpConvFloat16ToUint:   out.debug << "Convert float16_t to uint"; break;
-    case EOpConvFloat16ToUint64: out.debug << "Convert float16_t to uint64"; break;
-
-    // float16_t -> float*
-    case EOpConvFloat16ToFloat:  out.debug << "Convert float16_t to float"; break;
-    case EOpConvFloat16ToDouble: out.debug << "Convert float16_t to double"; break;
-
-    // float32 -> float*
-    case EOpConvFloatToFloat16: out.debug << "Convert float to float16_t"; break;
-    case EOpConvFloatToDouble:  out.debug << "Convert float to double"; break;
-
-    // float32_t -> int*
-    case EOpConvFloatToInt8:  out.debug << "Convert float to int8_t"; break;
-    case EOpConvFloatToInt16: out.debug << "Convert float to int16_t"; break;
-    case EOpConvFloatToInt:   out.debug << "Convert float to int"; break;
-    case EOpConvFloatToInt64: out.debug << "Convert float to int64"; break;
-
-    // float32_t -> uint*
-    case EOpConvFloatToUint8:  out.debug << "Convert float to uint8_t"; break;
-    case EOpConvFloatToUint16: out.debug << "Convert float to uint16_t"; break;
-    case EOpConvFloatToUint:   out.debug << "Convert float to uint"; break;
-    case EOpConvFloatToUint64: out.debug << "Convert float to uint64"; break;
-
-    // double -> float*
-    case EOpConvDoubleToFloat16: out.debug << "Convert double to float16_t"; break;
-    case EOpConvDoubleToFloat:   out.debug << "Convert double to float"; break;
-
-    // double -> int*
-    case EOpConvDoubleToInt8:  out.debug << "Convert double to int8_t"; break;
-    case EOpConvDoubleToInt16: out.debug << "Convert double to int16_t"; break;
-    case EOpConvDoubleToInt:   out.debug << "Convert double to int"; break;
-    case EOpConvDoubleToInt64: out.debug << "Convert double to int64"; break;
-
-    // float32_t -> uint*
-    case EOpConvDoubleToUint8:  out.debug << "Convert double to uint8_t"; break;
-    case EOpConvDoubleToUint16: out.debug << "Convert double to uint16_t"; break;
-    case EOpConvDoubleToUint:   out.debug << "Convert double to uint"; break;
-    case EOpConvDoubleToUint64: out.debug << "Convert double to uint64"; break;
 
     case EOpConvUint64ToPtr:  out.debug << "Convert uint64_t to pointer";   break;
     case EOpConvPtrToUint64:  out.debug << "Convert pointer to uint64_t";   break;
@@ -672,6 +493,17 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
     case EOpDeclare: out.debug << "Declare"; break;
 
     case EOpSpirvInst: out.debug << "spirv_instruction"; break;
+
+    case EOpCreateTensorLayoutNV:           out.debug << "createTensorLayoutNV"; break;
+    case EOpTensorLayoutSetBlockSizeNV:     out.debug << "setTensorLayoutBlockSizeNV"; break;
+    case EOpTensorLayoutSetDimensionNV:     out.debug << "setTensorLayoutDimensionNV"; break;
+    case EOpTensorLayoutSetStrideNV:        out.debug << "setTensorLayoutStrideNV"; break;
+    case EOpTensorLayoutSliceNV:            out.debug << "sliceTensorLayoutNV"; break;
+    case EOpTensorLayoutSetClampValueNV:    out.debug << "setTensorLayoutClampValueNV"; break;
+    case EOpCreateTensorViewNV:             out.debug << "createTensorViewNV"; break;
+    case EOpTensorViewSetDimensionNV:       out.debug << "setTensorViewDimensionsNV"; break;
+    case EOpTensorViewSetStrideNV:          out.debug << "setTensorViewStrideNV"; break;
+    case EOpTensorViewSetClipNV:            out.debug << "setTensorViewClipNV"; break;
 
     default: out.debug.message(EPrefixError, "Bad unary op");
     }
@@ -1113,7 +945,12 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpCooperativeMatrixMulAdd: out.debug << "MulAdd cooperative matrices KHR"; break;
     case EOpCooperativeMatrixLoadNV:  out.debug << "Load cooperative matrix NV"; break;
     case EOpCooperativeMatrixStoreNV:  out.debug << "Store cooperative matrix NV"; break;
+    case EOpCooperativeMatrixLoadTensorNV:  out.debug << "Load cooperative matrix tensor NV"; break;
+    case EOpCooperativeMatrixStoreTensorNV:  out.debug << "Store cooperative matrix tensor NV"; break;
     case EOpCooperativeMatrixMulAddNV: out.debug << "MulAdd cooperative matrices NV"; break;
+    case EOpCooperativeMatrixReduceNV: out.debug << "Reduce cooperative matrices"; break;
+    case EOpCooperativeMatrixPerElementOpNV: out.debug << "cooperative matrix per element op"; break;
+    case EOpCooperativeMatrixTransposeNV: out.debug << "Transpose cooperative matrix"; break;
 
     case EOpIsHelperInvocation: out.debug << "IsHelperInvocation"; break;
     case EOpDebugPrintf:  out.debug << "Debug printf";  break;
@@ -1155,6 +992,17 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpSpirvInst: out.debug << "spirv_instruction"; break;
     case EOpStencilAttachmentReadEXT: out.debug << "stencilAttachmentReadEXT"; break;
     case EOpDepthAttachmentReadEXT: out.debug << "depthAttachmentReadEXT"; break;
+
+    case EOpCreateTensorLayoutNV:           out.debug << "createTensorLayout"; break;
+    case EOpTensorLayoutSetBlockSizeNV:     out.debug << "setBlockSize"; break;
+    case EOpTensorLayoutSetDimensionNV:     out.debug << "setDimension"; break;
+    case EOpTensorLayoutSetStrideNV:        out.debug << "setStride"; break;
+    case EOpTensorLayoutSliceNV:            out.debug << "slice"; break;
+    case EOpTensorLayoutSetClampValueNV:    out.debug << "setClampValue"; break;
+    case EOpCreateTensorViewNV:             out.debug << "createTensorView"; break;
+    case EOpTensorViewSetDimensionNV:       out.debug << "setTensorViewDimensions"; break;
+    case EOpTensorViewSetStrideNV:          out.debug << "setTensorViewStride"; break;
+    case EOpTensorViewSetClipNV:            out.debug << "clipTensorView"; break;
 
     default: out.debug.message(EPrefixError, "Bad aggregation op");
     }
