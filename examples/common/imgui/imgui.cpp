@@ -68,8 +68,8 @@ struct OcornutImguiContext
 	void render(ImDrawData* _drawData)
 	{
 		// Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
-		int32_t dispWidth  = _drawData->DisplaySize.x * _drawData->FramebufferScale.x;
-		int32_t dispHeight = _drawData->DisplaySize.y * _drawData->FramebufferScale.y;
+		int32_t dispWidth  = int32_t(_drawData->DisplaySize.x * _drawData->FramebufferScale.x);
+		int32_t dispHeight = int32_t(_drawData->DisplaySize.y * _drawData->FramebufferScale.y);
 		if (dispWidth  <= 0
 		||  dispHeight <= 0)
 		{
