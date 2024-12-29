@@ -87,189 +87,9 @@ enum TOperator {
 
     EOpDeclare,        // Used by debugging to force declaration of variable in correct scope
 
-    // (u)int* -> bool
-    EOpConvInt8ToBool,
-    EOpConvUint8ToBool,
-    EOpConvInt16ToBool,
-    EOpConvUint16ToBool,
-    EOpConvIntToBool,
-    EOpConvUintToBool,
-    EOpConvInt64ToBool,
-    EOpConvUint64ToBool,
-
-    // float* -> bool
-    EOpConvFloat16ToBool,
-    EOpConvFloatToBool,
-    EOpConvDoubleToBool,
-
-    // bool -> (u)int*
-    EOpConvBoolToInt8,
-    EOpConvBoolToUint8,
-    EOpConvBoolToInt16,
-    EOpConvBoolToUint16,
-    EOpConvBoolToInt,
-    EOpConvBoolToUint,
-    EOpConvBoolToInt64,
-    EOpConvBoolToUint64,
-
-    // bool -> float*
-    EOpConvBoolToFloat16,
-    EOpConvBoolToFloat,
-    EOpConvBoolToDouble,
-
-    // int8_t -> (u)int*
-    EOpConvInt8ToInt16,
-    EOpConvInt8ToInt,
-    EOpConvInt8ToInt64,
-    EOpConvInt8ToUint8,
-    EOpConvInt8ToUint16,
-    EOpConvInt8ToUint,
-    EOpConvInt8ToUint64,
-
-    // uint8_t -> (u)int*
-    EOpConvUint8ToInt8,
-    EOpConvUint8ToInt16,
-    EOpConvUint8ToInt,
-    EOpConvUint8ToInt64,
-    EOpConvUint8ToUint16,
-    EOpConvUint8ToUint,
-    EOpConvUint8ToUint64,
-
-    // int8_t -> float*
-    EOpConvInt8ToFloat16,
-    EOpConvInt8ToFloat,
-    EOpConvInt8ToDouble,
-
-    // uint8_t -> float*
-    EOpConvUint8ToFloat16,
-    EOpConvUint8ToFloat,
-    EOpConvUint8ToDouble,
-
-    // int16_t -> (u)int*
-    EOpConvInt16ToInt8,
-    EOpConvInt16ToInt,
-    EOpConvInt16ToInt64,
-    EOpConvInt16ToUint8,
-    EOpConvInt16ToUint16,
-    EOpConvInt16ToUint,
-    EOpConvInt16ToUint64,
-
-    // uint16_t -> (u)int*
-    EOpConvUint16ToInt8,
-    EOpConvUint16ToInt16,
-    EOpConvUint16ToInt,
-    EOpConvUint16ToInt64,
-    EOpConvUint16ToUint8,
-    EOpConvUint16ToUint,
-    EOpConvUint16ToUint64,
-
-    // int16_t -> float*
-    EOpConvInt16ToFloat16,
-    EOpConvInt16ToFloat,
-    EOpConvInt16ToDouble,
-
-    // uint16_t -> float*
-    EOpConvUint16ToFloat16,
-    EOpConvUint16ToFloat,
-    EOpConvUint16ToDouble,
-
-    // int32_t -> (u)int*
-    EOpConvIntToInt8,
-    EOpConvIntToInt16,
-    EOpConvIntToInt64,
-    EOpConvIntToUint8,
-    EOpConvIntToUint16,
-    EOpConvIntToUint,
-    EOpConvIntToUint64,
-
-    // uint32_t -> (u)int*
-    EOpConvUintToInt8,
-    EOpConvUintToInt16,
-    EOpConvUintToInt,
-    EOpConvUintToInt64,
-    EOpConvUintToUint8,
-    EOpConvUintToUint16,
-    EOpConvUintToUint64,
-
-    // int32_t -> float*
-    EOpConvIntToFloat16,
-    EOpConvIntToFloat,
-    EOpConvIntToDouble,
-
-    // uint32_t -> float*
-    EOpConvUintToFloat16,
-    EOpConvUintToFloat,
-    EOpConvUintToDouble,
-
-    // int64_t -> (u)int*
-    EOpConvInt64ToInt8,
-    EOpConvInt64ToInt16,
-    EOpConvInt64ToInt,
-    EOpConvInt64ToUint8,
-    EOpConvInt64ToUint16,
-    EOpConvInt64ToUint,
-    EOpConvInt64ToUint64,
-
-    // uint64_t -> (u)int*
-    EOpConvUint64ToInt8,
-    EOpConvUint64ToInt16,
-    EOpConvUint64ToInt,
-    EOpConvUint64ToInt64,
-    EOpConvUint64ToUint8,
-    EOpConvUint64ToUint16,
-    EOpConvUint64ToUint,
-
-    // int64_t -> float*
-    EOpConvInt64ToFloat16,
-    EOpConvInt64ToFloat,
-    EOpConvInt64ToDouble,
-
-    // uint64_t -> float*
-    EOpConvUint64ToFloat16,
-    EOpConvUint64ToFloat,
-    EOpConvUint64ToDouble,
-
-    // float16_t -> (u)int*
-    EOpConvFloat16ToInt8,
-    EOpConvFloat16ToInt16,
-    EOpConvFloat16ToInt,
-    EOpConvFloat16ToInt64,
-    EOpConvFloat16ToUint8,
-    EOpConvFloat16ToUint16,
-    EOpConvFloat16ToUint,
-    EOpConvFloat16ToUint64,
-
-    // float16_t -> float*
-    EOpConvFloat16ToFloat,
-    EOpConvFloat16ToDouble,
-
-    // float -> (u)int*
-    EOpConvFloatToInt8,
-    EOpConvFloatToInt16,
-    EOpConvFloatToInt,
-    EOpConvFloatToInt64,
-    EOpConvFloatToUint8,
-    EOpConvFloatToUint16,
-    EOpConvFloatToUint,
-    EOpConvFloatToUint64,
-
-    // float -> float*
-    EOpConvFloatToFloat16,
-    EOpConvFloatToDouble,
-
-    // float64 _t-> (u)int*
-    EOpConvDoubleToInt8,
-    EOpConvDoubleToInt16,
-    EOpConvDoubleToInt,
-    EOpConvDoubleToInt64,
-    EOpConvDoubleToUint8,
-    EOpConvDoubleToUint16,
-    EOpConvDoubleToUint,
-    EOpConvDoubleToUint64,
-
-    // float64_t -> float*
-    EOpConvDoubleToFloat16,
-    EOpConvDoubleToFloat,
+    // Operator used to represent all conversions between int, float, and bool.
+    // The specific types are inferred from TBasicType.
+    EOpConvNumeric,
 
     // uint64_t <-> pointer
     EOpConvUint64ToPtr,
@@ -628,7 +448,24 @@ enum TOperator {
     EOpCooperativeMatrixMulAdd,
     EOpCooperativeMatrixLoadNV,
     EOpCooperativeMatrixStoreNV,
+    EOpCooperativeMatrixLoadTensorNV,
+    EOpCooperativeMatrixStoreTensorNV,
     EOpCooperativeMatrixMulAddNV,
+    EOpCooperativeMatrixReduceNV,
+    EOpCooperativeMatrixPerElementOpNV,
+    EOpCooperativeMatrixTransposeNV,
+
+    EOpCreateTensorLayoutNV,
+    EOpTensorLayoutSetBlockSizeNV,
+    EOpTensorLayoutSetDimensionNV,
+    EOpTensorLayoutSetStrideNV,
+    EOpTensorLayoutSliceNV,
+    EOpTensorLayoutSetClampValueNV,
+
+    EOpCreateTensorViewNV,
+    EOpTensorViewSetDimensionNV,
+    EOpTensorViewSetStrideNV,
+    EOpTensorViewSetClipNV,
 
     EOpBeginInvocationInterlock, // Fragment only
     EOpEndInvocationInterlock, // Fragment only
@@ -1119,6 +956,10 @@ enum TOperator {
     EOpImageBlockMatchGatherSADQCOM,
 };
 
+inline bool IsOpNumericConv(const TOperator op) {
+    return op == EOpConvNumeric;
+}
+
 enum TLinkType {
     ELinkNone,
     ELinkExport,
@@ -1356,11 +1197,19 @@ public:
     // if symbol is initialized as symbol(sym), the memory comes from the pool allocator of sym. If sym comes from
     // per process threadPoolAllocator, then it causes increased memory usage per compile
     // it is essential to use "symbol = sym" to assign to symbol
-    TIntermSymbol(long long i, const TString& n, const TType& t)
-        : TIntermTyped(t), id(i), flattenSubset(-1), constSubtree(nullptr) { name = n; }
+    TIntermSymbol(long long i, const TString& n, EShLanguage s, const TType& t, const TString* mn = nullptr)
+        : TIntermTyped(t), id(i), flattenSubset(-1), stage(s), constSubtree(nullptr) { 
+        name = n;
+        if (mn) {
+            mangledName = *mn;
+        } else {
+            mangledName = n;
+        }
+    }
     virtual long long getId() const { return id; }
     virtual void changeId(long long i) { id = i; }
     virtual const TString& getName() const { return name; }
+    virtual const TString& getMangledName() const { return mangledName; }
     virtual void traverse(TIntermTraverser*);
     virtual       TIntermSymbol* getAsSymbolNode()       { return this; }
     virtual const TIntermSymbol* getAsSymbolNode() const { return this; }
@@ -1376,11 +1225,14 @@ public:
     // This is meant for cases where a node has already been constructed, and
     // later on, it becomes necessary to switch to a different symbol.
     virtual void switchId(long long newId) { id = newId; }
+    EShLanguage getStage() const { return stage; }
 
 protected:
     long long id;                // the unique id of the symbol this node represents
     int flattenSubset;           // how deeply the flattened object rooted at id has been dereferenced
     TString name;                // the name of the symbol this node represents
+    EShLanguage stage;
+    TString mangledName;         // mangled function name, or a copy of name if not a function
     TConstUnionArray constArray; // if the symbol is a front-end compile-time constant, this is its value
     TIntermTyped* constSubtree;
 };

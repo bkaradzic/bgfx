@@ -52,6 +52,7 @@
 //
 
 #include <array>
+#include <sstream>
 #include "Initialize.h"
 #include "span.h"
 
@@ -4473,83 +4474,41 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "ucoopmatNV coopMatMulAddNV(ucoopmatNV A, ucoopmatNV B, ucoopmatNV C);\n"
             );
 
-        std::string cooperativeMatrixFuncs =
-            "void coopMatLoad(out coopmat m, volatile coherent int8_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent int16_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent int32_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent int64_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent uint8_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent uint16_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent uint32_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent uint64_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent float16_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent float[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent float64_t[] buf, uint element, uint stride, int matrixLayout);\n"
+        std::stringstream cooperativeMatrixFuncs;
 
-            "void coopMatLoad(out coopmat m, volatile coherent i8vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent i16vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent i32vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent i64vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent u8vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent u16vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent u32vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent u64vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent f16vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent f32vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent f64vec2[] buf, uint element, uint stride, int matrixLayout);\n"
+        {
+            static const char *allTypes[] =
+            {
+                "float", "vec2", "vec4",
+                "float16_t", "f16vec2", "f16vec4",
+                "double", "dvec2", "dvec4",
+                "int8_t", "i8vec2", "i8vec4",
+                "int16_t", "i16vec2", "i16vec4",
+                "int", "ivec2", "ivec4",
+                "int64_t", "i64vec2", "i64vec4",
+                "uint8_t", "u8vec2", "u8vec4",
+                "uint16_t", "u16vec2", "u16vec4",
+                "uint", "uvec2", "uvec4",
+                "uint64_t", "u64vec2", "u64vec4",
+            };
+            for (auto t : allTypes) {
+                cooperativeMatrixFuncs << "void coopMatLoad(out coopmat m, volatile coherent " << t << "[] buf, uint element, uint stride, int matrixLayout);\n";
+                cooperativeMatrixFuncs << "void coopMatStore(coopmat m, volatile coherent " << t << "[] buf, uint element, uint stride, int matrixLayout);\n";
+            }
+            // Just use uint8_t for buffer type, we have special matching rules to allow any conversion
+            cooperativeMatrixFuncs << "void coopMatLoadTensorNV(inout coopmat m, volatile coherent uint8_t[] buf, uint element, tensorLayoutNV t);\n";
+            cooperativeMatrixFuncs << "void coopMatLoadTensorNV(inout coopmat m, volatile coherent uint8_t[] buf, uint element, tensorLayoutNV t, tensorViewNV v);\n";
+            cooperativeMatrixFuncs << "void coopMatLoadTensorNV(inout coopmat m, volatile coherent uint8_t[] buf, uint element, tensorLayoutNV t, __function f);\n";
+            cooperativeMatrixFuncs << "void coopMatLoadTensorNV(inout coopmat m, volatile coherent uint8_t[] buf, uint element, tensorLayoutNV t, tensorViewNV v, __function f);\n";
+            cooperativeMatrixFuncs << "void coopMatStoreTensorNV(coopmat m, volatile coherent uint8_t[] buf, uint element, tensorLayoutNV t);\n";
+            cooperativeMatrixFuncs << "void coopMatStoreTensorNV(coopmat m, volatile coherent uint8_t[] buf, uint element, tensorLayoutNV t, tensorViewNV v);\n";
+        }
 
-            "void coopMatLoad(out coopmat m, volatile coherent i8vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent i16vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent i32vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent i64vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent u8vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent u16vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent u32vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent u64vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent f16vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent f32vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatLoad(out coopmat m, volatile coherent f64vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-
-            "void coopMatStore(coopmat m, volatile coherent int8_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent int16_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent int32_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent int64_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent uint8_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent uint16_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent uint32_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent uint64_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent float16_t[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent float[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent float64_t[] buf, uint element, uint stride, int matrixLayout);\n"
-
-            "void coopMatStore(coopmat m, volatile coherent i8vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent i16vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent i32vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent i64vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent u8vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent u16vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent u32vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent u64vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent f16vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent f32vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent f64vec2[] buf, uint element, uint stride, int matrixLayout);\n"
-
-            "void coopMatStore(coopmat m, volatile coherent i8vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent i16vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent i32vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent i64vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent u8vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent u16vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent u32vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent u64vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent f16vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent f32vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-            "void coopMatStore(coopmat m, volatile coherent f64vec4[] buf, uint element, uint stride, int matrixLayout);\n"
-
+        cooperativeMatrixFuncs <<
             "coopmat coopMatMulAdd(coopmat A, coopmat B, coopmat C);\n"
             "coopmat coopMatMulAdd(coopmat A, coopmat B, coopmat C, int matrixOperands);\n";
 
-        commonBuiltins.append(cooperativeMatrixFuncs.c_str());
+        commonBuiltins.append(cooperativeMatrixFuncs.str().c_str());
 
         commonBuiltins.append(
             "const int gl_MatrixUseA = 0;\n"
@@ -4562,6 +4521,83 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "const int gl_CooperativeMatrixLayoutColumnBlockedInterleavedARM = 4203;\n"
             "\n"
             );
+
+        commonBuiltins.append(
+            "void coopMatTransposeNV(out coopmat, coopmat);"
+            "void coopMatReduceNV(out coopmat, coopmat, int, __function);"
+            "void coopMatPerElementNV();"
+        );
+
+        commonBuiltins.append(
+            "const int gl_CooperativeMatrixReduceRowNV = 0x1;\n"
+            "const int gl_CooperativeMatrixReduceColumnNV = 0x2;\n"
+            "const int gl_CooperativeMatrixReduceRowAndColumnNV = 0x3;\n"
+            "const int gl_CooperativeMatrixReduce2x2NV = 0x4;\n"
+            "\n"
+            );
+
+        commonBuiltins.append(
+            "const int gl_CooperativeMatrixClampModeUndefinedNV = 0x0;\n"
+            "const int gl_CooperativeMatrixClampModeConstantNV = 0x1;\n"
+            "const int gl_CooperativeMatrixClampModeClampToEdgeNV = 0x2;\n"
+            "const int gl_CooperativeMatrixClampModeRepeatNV = 0x3;\n"
+            "const int gl_CooperativeMatrixClampModeMirrorRepeatNV = 0x4;\n"
+            "\n"
+            );
+
+        commonBuiltins.append(
+            "tensorLayoutNV createTensorLayoutNV(uint Dim);\n"
+            "tensorLayoutNV createTensorLayoutNV(uint Dim, uint Mode);\n"
+
+            "tensorLayoutNV setTensorLayoutBlockSizeNV(tensorLayoutNV t, uint blockSize0);\n"
+            "tensorLayoutNV setTensorLayoutBlockSizeNV(tensorLayoutNV t, uint blockSize0, uint blockSize1);\n"
+            "tensorLayoutNV setTensorLayoutBlockSizeNV(tensorLayoutNV t, uint blockSize0, uint blockSize1, uint blockSize2);\n"
+            "tensorLayoutNV setTensorLayoutBlockSizeNV(tensorLayoutNV t, uint blockSize0, uint blockSize1, uint blockSize2, uint blockSize3);\n"
+            "tensorLayoutNV setTensorLayoutBlockSizeNV(tensorLayoutNV t, uint blockSize0, uint blockSize1, uint blockSize2, uint blockSize3, uint blockSize4);\n"
+
+            "tensorLayoutNV setTensorLayoutDimensionNV(tensorLayoutNV t, uint dim0);\n"
+            "tensorLayoutNV setTensorLayoutDimensionNV(tensorLayoutNV t, uint dim0, uint dim1);\n"
+            "tensorLayoutNV setTensorLayoutDimensionNV(tensorLayoutNV t, uint dim0, uint dim1, uint dim2);\n"
+            "tensorLayoutNV setTensorLayoutDimensionNV(tensorLayoutNV t, uint dim0, uint dim1, uint dim2, uint dim3);\n"
+            "tensorLayoutNV setTensorLayoutDimensionNV(tensorLayoutNV t, uint dim0, uint dim1, uint dim2, uint dim3, uint dim4);\n"
+
+            "tensorLayoutNV setTensorLayoutStrideNV(tensorLayoutNV t, uint stride0);\n"
+            "tensorLayoutNV setTensorLayoutStrideNV(tensorLayoutNV t, uint stride0, uint stride1);\n"
+            "tensorLayoutNV setTensorLayoutStrideNV(tensorLayoutNV t, uint stride0, uint stride1, uint stride2);\n"
+            "tensorLayoutNV setTensorLayoutStrideNV(tensorLayoutNV t, uint stride0, uint stride1, uint stride2, uint stride3);\n"
+            "tensorLayoutNV setTensorLayoutStrideNV(tensorLayoutNV t, uint stride0, uint stride1, uint stride2, uint stride3, uint stride4);\n"
+
+            "tensorLayoutNV sliceTensorLayoutNV(tensorLayoutNV t, uint offset0, uint span0);\n"
+            "tensorLayoutNV sliceTensorLayoutNV(tensorLayoutNV t, uint offset0, uint span0, uint offset1, uint span1);\n"
+            "tensorLayoutNV sliceTensorLayoutNV(tensorLayoutNV t, uint offset0, uint span0, uint offset1, uint span1, uint offset2, uint span2);\n"
+            "tensorLayoutNV sliceTensorLayoutNV(tensorLayoutNV t, uint offset0, uint span0, uint offset1, uint span1, uint offset2, uint span2, uint offset3, uint span3);\n"
+            "tensorLayoutNV sliceTensorLayoutNV(tensorLayoutNV t, uint offset0, uint span0, uint offset1, uint span1, uint offset2, uint span2, uint offset3, uint span3, uint offset4, uint span4);\n"
+
+            "tensorLayoutNV setTensorLayoutClampValueNV(tensorLayoutNV t, uint value);\n"
+
+            "tensorViewNV createTensorViewNV(uint Dim);\n"
+            "tensorViewNV createTensorViewNV(uint Dim, bool HasDimensions);\n"
+            "tensorViewNV createTensorViewNV(uint Dim, bool HasDimensions, uint p0);\n"
+            "tensorViewNV createTensorViewNV(uint Dim, bool HasDimensions, uint p0, uint p1);\n"
+            "tensorViewNV createTensorViewNV(uint Dim, bool HasDimensions, uint p0, uint p1, uint p2);\n"
+            "tensorViewNV createTensorViewNV(uint Dim, bool HasDimensions, uint p0, uint p1, uint p2, uint p3);\n"
+            "tensorViewNV createTensorViewNV(uint Dim, bool HasDimensions, uint p0, uint p1, uint p2, uint p3, uint p4);\n"
+
+            "tensorViewNV setTensorViewDimensionsNV(tensorViewNV v, uint dim0);\n"
+            "tensorViewNV setTensorViewDimensionsNV(tensorViewNV v, uint dim0, uint dim1);\n"
+            "tensorViewNV setTensorViewDimensionsNV(tensorViewNV v, uint dim0, uint dim1, uint dim2);\n"
+            "tensorViewNV setTensorViewDimensionsNV(tensorViewNV v, uint dim0, uint dim1, uint dim2, uint dim3);\n"
+            "tensorViewNV setTensorViewDimensionsNV(tensorViewNV v, uint dim0, uint dim1, uint dim2, uint dim3, uint dim4);\n"
+
+            "tensorViewNV setTensorViewStrideNV(tensorViewNV v, uint stride0);\n"
+            "tensorViewNV setTensorViewStrideNV(tensorViewNV v, uint stride0, uint stride1);\n"
+            "tensorViewNV setTensorViewStrideNV(tensorViewNV v, uint stride0, uint stride1, uint stride2);\n"
+            "tensorViewNV setTensorViewStrideNV(tensorViewNV v, uint stride0, uint stride1, uint stride2, uint stride3);\n"
+            "tensorViewNV setTensorViewStrideNV(tensorViewNV v, uint stride0, uint stride1, uint stride2, uint stride3, uint stride4);\n"
+
+            "tensorViewNV setTensorViewClipNV(tensorViewNV v, uint clipRowOffset, uint clipRowSpan, uint clipColOffset, uint clipColSpan);\n"
+            "\n"
+        );
     }
 
     //============================================================================
@@ -9066,6 +9102,22 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("coopMatLoad",   1, &E_GL_KHR_cooperative_matrix);
             symbolTable.setFunctionExtensions("coopMatStore",  1, &E_GL_KHR_cooperative_matrix);
             symbolTable.setFunctionExtensions("coopMatMulAdd", 1, &E_GL_KHR_cooperative_matrix);
+
+            symbolTable.setFunctionExtensions("coopMatReduceNV",   1, &E_GL_NV_cooperative_matrix2);
+            symbolTable.setFunctionExtensions("coopMatPerElementNV",  1, &E_GL_NV_cooperative_matrix2);
+            symbolTable.setFunctionExtensions("coopMatTransposeNV",   1, &E_GL_NV_cooperative_matrix2);
+            
+            symbolTable.setFunctionExtensions("createTensorLayoutNV",           1, &E_GL_NV_cooperative_matrix2);
+            symbolTable.setFunctionExtensions("setTensorLayoutBlockSizeNV",     1, &E_GL_NV_cooperative_matrix2);
+            symbolTable.setFunctionExtensions("setTensorLayoutDimensionNV",     1, &E_GL_NV_cooperative_matrix2);
+            symbolTable.setFunctionExtensions("setTensorLayoutStrideNV",        1, &E_GL_NV_cooperative_matrix2);
+            symbolTable.setFunctionExtensions("sliceTensorLayoutNV",            1, &E_GL_NV_cooperative_matrix2);
+            symbolTable.setFunctionExtensions("setTensorLayoutClampValueNV",    1, &E_GL_NV_cooperative_matrix2);
+
+            symbolTable.setFunctionExtensions("createTensorViewNV",             1, &E_GL_NV_cooperative_matrix2);
+            symbolTable.setFunctionExtensions("setTensorViewDimensionsNV",      1, &E_GL_NV_cooperative_matrix2);
+            symbolTable.setFunctionExtensions("setTensorViewStrideNV",          1, &E_GL_NV_cooperative_matrix2);
+            symbolTable.setFunctionExtensions("setTensorViewClipNV",            1, &E_GL_NV_cooperative_matrix2);
         }
 
         if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
@@ -10240,6 +10292,25 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         symbolTable.relateToOperator("coopMatLoad",                EOpCooperativeMatrixLoad);
         symbolTable.relateToOperator("coopMatStore",               EOpCooperativeMatrixStore);
         symbolTable.relateToOperator("coopMatMulAdd",              EOpCooperativeMatrixMulAdd);
+
+        symbolTable.relateToOperator("coopMatLoadTensorNV",        EOpCooperativeMatrixLoadTensorNV);
+        symbolTable.relateToOperator("coopMatStoreTensorNV",       EOpCooperativeMatrixStoreTensorNV);
+
+        symbolTable.relateToOperator("coopMatReduceNV",            EOpCooperativeMatrixReduceNV);
+        symbolTable.relateToOperator("coopMatPerElementNV",        EOpCooperativeMatrixPerElementOpNV);
+        symbolTable.relateToOperator("coopMatTransposeNV",         EOpCooperativeMatrixTransposeNV);
+
+        symbolTable.relateToOperator("createTensorLayoutNV",         EOpCreateTensorLayoutNV);
+        symbolTable.relateToOperator("setTensorLayoutBlockSizeNV",   EOpTensorLayoutSetBlockSizeNV);
+        symbolTable.relateToOperator("setTensorLayoutDimensionNV",   EOpTensorLayoutSetDimensionNV);
+        symbolTable.relateToOperator("setTensorLayoutStrideNV",      EOpTensorLayoutSetStrideNV);
+        symbolTable.relateToOperator("sliceTensorLayoutNV",          EOpTensorLayoutSliceNV);
+        symbolTable.relateToOperator("setTensorLayoutClampValueNV",  EOpTensorLayoutSetClampValueNV);
+
+        symbolTable.relateToOperator("createTensorViewNV",           EOpCreateTensorViewNV);
+        symbolTable.relateToOperator("setTensorViewDimensionsNV",    EOpTensorViewSetDimensionNV);
+        symbolTable.relateToOperator("setTensorViewStrideNV",        EOpTensorViewSetStrideNV);
+        symbolTable.relateToOperator("setTensorViewClipNV",          EOpTensorViewSetClipNV);
 
         if (profile != EEsProfile && version >= 460) {
             symbolTable.relateToOperator("fetchMicroTriangleVertexPositionNV", EOpFetchMicroTriangleVertexPositionNV);

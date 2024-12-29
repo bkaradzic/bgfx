@@ -179,6 +179,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> FCOOPMATNV ICOOPMATNV UCOOPMATNV
 %token <lex> COOPMAT
 %token <lex> HITOBJECTNV HITOBJECTATTRNV
+%token <lex> TENSORLAYOUTNV TENSORVIEWNV
 
 // combined image/sampler
 %token <lex> SAMPLERCUBEARRAY SAMPLERCUBEARRAYSHADOW
@@ -275,7 +276,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 
 %token <lex> DOUBLECONSTANT INT16CONSTANT UINT16CONSTANT FLOAT16CONSTANT INT32CONSTANT UINT32CONSTANT
 %token <lex> INT64CONSTANT UINT64CONSTANT
-%token <lex> SUBROUTINE DEMOTE
+%token <lex> SUBROUTINE DEMOTE FUNCTION
 %token <lex> PAYLOADNV PAYLOADINNV HITATTRNV CALLDATANV CALLDATAINNV 
 %token <lex> PAYLOADEXT PAYLOADINEXT HITATTREXT CALLDATAEXT CALLDATAINEXT
 %token <lex> PATCH SAMPLE NONUNIFORM
@@ -3534,6 +3535,20 @@ type_specifier_nonarray
         $$.basicType = EbtCoopmat;
         $$.coopmatNV = false;
         $$.coopmatKHR = true;
+    }
+    | TENSORLAYOUTNV {
+        parseContext.tensorLayoutViewCheck($1.loc, "tensorLayoutNV", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtTensorLayoutNV;
+    }
+    | TENSORVIEWNV {
+        parseContext.tensorLayoutViewCheck($1.loc, "tensorViewNV", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtTensorViewNV;
+    }
+    | FUNCTION {
+        $$.init($1.loc);
+        $$.basicType = EbtFunction;
     }
     | spirv_type_specifier {
         parseContext.requireExtensions($1.loc, 1, &E_GL_EXT_spirv_intrinsics, "SPIR-V type specifier");

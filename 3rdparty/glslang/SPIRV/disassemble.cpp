@@ -36,6 +36,7 @@
 // Disassembler for SPIR-V.
 //
 
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
@@ -338,6 +339,18 @@ int SpirvStream::disassembleString()
     return decoderes.first;
 }
 
+static uint32_t popcount(uint32_t mask)
+{
+    uint32_t count = 0;
+    while (mask) {
+        if (mask & 1) {
+            count++;
+        }
+        mask >>= 1;
+    }
+    return count;
+}
+
 void SpirvStream::disassembleInstruction(Id resultId, Id /*typeId*/, Op opCode, int numOperands)
 {
     // Process the opcode
@@ -552,18 +565,41 @@ void SpirvStream::disassembleInstruction(Id resultId, Id /*typeId*/, Op opCode, 
                 numOperands -= disassembleString();
             return;
         case OperandMemoryAccess:
-            outputMask(OperandMemoryAccess, stream[word++]);
-            --numOperands;
-            // Aligned is the only memory access operand that uses an immediate
-            // value, and it is also the first operand that uses a value at all.
-            if (stream[word-1] & MemoryAccessAlignedMask) {
-                disassembleImmediates(1);
-                numOperands--;
-                if (numOperands)
+            {
+                outputMask(OperandMemoryAccess, stream[word++]);
+                --numOperands;
+                // Put a space after "None" if there are any remaining operands
+                if (numOperands && stream[word-1] == 0) {
                     out << " ";
+                }
+                uint32_t mask = stream[word-1];
+                // Aligned is the only memory access operand that uses an immediate
+                // value, and it is also the first operand that uses a value at all.
+                if (mask & MemoryAccessAlignedMask) {
+                    disassembleImmediates(1);
+                    numOperands--;
+                    if (numOperands)
+                        out << " ";
+                }
+
+                uint32_t bitCount = popcount(mask & (MemoryAccessMakePointerAvailableMask | MemoryAccessMakePointerVisibleMask));
+                disassembleIds(bitCount);
+                numOperands -= bitCount;
             }
-            disassembleIds(numOperands);
-            return;
+            break;
+        case OperandTensorAddressingOperands:
+            {
+                outputMask(OperandTensorAddressingOperands, stream[word++]);
+                --numOperands;
+                // Put a space after "None" if there are any remaining operands
+                if (numOperands && stream[word-1] == 0) {
+                    out << " ";
+                }
+                uint32_t bitCount = popcount(stream[word-1]);
+                disassembleIds(bitCount);
+                numOperands -= bitCount;
+            }
+            break;
         default:
             assert(operandClass >= OperandSource && operandClass < OperandOpcode);
 

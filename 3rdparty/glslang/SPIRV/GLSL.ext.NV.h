@@ -90,4 +90,10 @@ const char* const E_SPV_NV_displacement_micromap = "SPV_NV_displacement_micromap
 //SPV_NV_shader_atomic_fp16_vector
 const char* const E_SPV_NV_shader_atomic_fp16_vector = "SPV_NV_shader_atomic_fp16_vector";
 
+//SPV_NV_tensor_addressing
+const char* const E_SPV_NV_tensor_addressing = "SPV_NV_tensor_addressing";
+
+//SPV_NV_cooperative_matrix2
+const char* const E_SPV_NV_cooperative_matrix2 = "SPV_NV_cooperative_matrix2";
+
 #endif  // #ifndef GLSLextNV_H

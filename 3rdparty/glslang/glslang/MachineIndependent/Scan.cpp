@@ -752,6 +752,10 @@ const std::unordered_map<const char*, int, str_hash, str_eq> KeywordMap {
 
     {"hitObjectNV",HITOBJECTNV},
     {"hitObjectAttributeNV",HITOBJECTATTRNV},
+
+    {"__function",FUNCTION},
+    {"tensorLayoutNV",TENSORLAYOUTNV},
+    {"tensorViewNV",TENSORVIEWNV},
 };
 const std::unordered_set<const char*, str_hash, str_eq> ReservedSet {
     "common",
@@ -1804,6 +1808,15 @@ int TScanContext::tokenizeIdentifier()
         if (parseContext.symbolTable.atBuiltInLevel() ||
             (!parseContext.isEsProfile() && parseContext.version >= 460
                  && parseContext.extensionTurnedOn(E_GL_NV_shader_invocation_reorder)))
+            return keyword;
+        return identifierOrType();
+
+    case FUNCTION:
+    case TENSORLAYOUTNV:
+    case TENSORVIEWNV:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_NV_cooperative_matrix2))
             return keyword;
         return identifierOrType();
 

@@ -1396,7 +1396,7 @@ TIntermTyped* HlslParseContext::flattenAccess(long long uniqueId, int member, TS
 
         // If this is not the final flattening, accumulate the position and return
         // an object of the partially dereferenced type.
-        subsetSymbol = new TIntermSymbol(uniqueId, "flattenShadow", dereferencedType);
+        subsetSymbol = new TIntermSymbol(uniqueId, "flattenShadow", getLanguage(), dereferencedType);
         subsetSymbol->setFlattenSubset(newSubset);
     }
 
@@ -5806,6 +5806,7 @@ void HlslParseContext::addInputArgumentConversions(const TFunction& function, TI
                     internalAggregate->getWritableType().getQualifier().makeTemporary();
                     TIntermSymbol* internalSymbolNode = new TIntermSymbol(internalAggregate->getUniqueId(),
                                                                           internalAggregate->getName(),
+                                                                          getLanguage(),
                                                                           internalAggregate->getType());
                     internalSymbolNode->setLoc(arg->getLoc());
                     // This makes the deepest level, the member-wise copy

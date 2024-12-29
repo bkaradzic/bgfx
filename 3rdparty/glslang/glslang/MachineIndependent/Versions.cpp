@@ -165,7 +165,8 @@ void TParseVersions::initializeExtensionBehavior()
 
     const extensionData exts[] = { {E_GL_EXT_ray_tracing, EShTargetSpv_1_4},
                                    {E_GL_NV_ray_tracing_motion_blur, EShTargetSpv_1_4},
-                                   {E_GL_EXT_mesh_shader, EShTargetSpv_1_4}
+                                   {E_GL_EXT_mesh_shader, EShTargetSpv_1_4},
+                                   {E_GL_NV_cooperative_matrix2, EShTargetSpv_1_6}
                                  };
 
     for (size_t ii = 0; ii < sizeof(exts) / sizeof(exts[0]); ii++) {
@@ -310,6 +311,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_NV_shader_invocation_reorder]             = EBhDisable;
     extensionBehavior[E_GL_NV_displacement_micromap]                 = EBhDisable;
     extensionBehavior[E_GL_NV_shader_atomic_fp16_vector]             = EBhDisable;
+    extensionBehavior[E_GL_NV_cooperative_matrix2]                   = EBhDisable;
 
     // ARM
     extensionBehavior[E_GL_ARM_shader_core_builtins]                 = EBhDisable;
@@ -574,6 +576,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_NV_cooperative_matrix 1\n"
             "#define GL_NV_integer_cooperative_matrix 1\n"
             "#define GL_NV_shader_invocation_reorder 1\n"
+            "#define GL_NV_cooperative_matrix2 1\n"
 
             "#define GL_QCOM_image_processing 1\n"
             "#define GL_QCOM_image_processing2 1\n"
@@ -1021,6 +1024,8 @@ void TParseVersions::updateExtensionBehavior(int line, const char* extension, co
         updateExtensionBehavior(line, "GL_EXT_buffer_reference", behaviorString);
     else if (strcmp(extension, "GL_NV_integer_cooperative_matrix") == 0)
         updateExtensionBehavior(line, "GL_NV_cooperative_matrix", behaviorString);
+    else if (strcmp(extension, "GL_NV_cooperative_matrix2") == 0)
+        updateExtensionBehavior(line, "GL_KHR_cooperative_matrix", behaviorString);
     // subgroup extended types to explicit types
     else if (strcmp(extension, "GL_EXT_shader_subgroup_extended_types_int8") == 0)
         updateExtensionBehavior(line, "GL_EXT_shader_explicit_arithmetic_types_int8", behaviorString);
@@ -1377,6 +1382,14 @@ void TParseVersions::coopmatCheck(const TSourceLoc& loc, const char* op, bool bu
 {
     if (!builtIn) {
         const char* const extensions[] = {E_GL_KHR_cooperative_matrix};
+        requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, op);
+    }
+}
+
+void TParseVersions::tensorLayoutViewCheck(const TSourceLoc& loc, const char* op, bool builtIn)
+{
+    if (!builtIn) {
+        const char* const extensions[] = {E_GL_NV_cooperative_matrix2};
         requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, op);
     }
 }

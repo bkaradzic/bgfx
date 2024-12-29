@@ -650,6 +650,40 @@ namespace spv {
             case spv::OperandExecutionMode:
                 return nextInst;
 
+            case spv::OperandMemoryAccess:
+                {
+                    uint32_t mask = spv[word];
+                    if (mask & uint32_t(spv::MemoryAccessMask::MemoryAccessAlignedMask)) {
+                        ++word;
+                        --numOperands;
+                    }
+                    if (mask & uint32_t(spv::MemoryAccessMask::MemoryAccessMakePointerAvailableMask |
+                                        spv::MemoryAccessMask::MemoryAccessMakePointerVisibleMask)) {
+                        idFn(asId(word+1));
+                        ++word;
+                        --numOperands;
+                    }
+                    ++word;
+                }
+                break;
+
+            case spv::OperandTensorAddressingOperands:
+                {
+                    uint32_t mask = spv[word];
+                    if (mask & uint32_t(spv::TensorAddressingOperandsMask::TensorAddressingOperandsTensorViewMask)) {
+                        idFn(asId(word+1));
+                        ++word;
+                        --numOperands;
+                    }
+                    if (mask & uint32_t(spv::TensorAddressingOperandsMask::TensorAddressingOperandsDecodeFuncMask)) {
+                        idFn(asId(word+1));
+                        ++word;
+                        --numOperands;
+                    }
+                    ++word;
+                }
+                break;
+
             // Single word operands we simply ignore, as they hold no IDs
             case spv::OperandLiteralNumber:
             case spv::OperandSource:
@@ -674,7 +708,6 @@ namespace spv {
             case spv::OperandSelect:
             case spv::OperandLoop:
             case spv::OperandFunction:
-            case spv::OperandMemoryAccess:
             case spv::OperandGroupOperation:
             case spv::OperandKernelEnqueueFlags:
             case spv::OperandKernelProfilingInfo:

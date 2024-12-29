@@ -818,6 +818,18 @@ const char* CooperativeMatrixOperandsString(int op)
     }
 }
 
+const int TensorAddressingOperandsCeiling = 3;
+
+const char* TensorAddressingOperandsString(int op)
+{
+    switch (op) {
+    case TensorAddressingOperandsTensorViewShift:  return "TensorView";
+    case TensorAddressingOperandsDecodeFuncShift:  return "DecodeFunc";
+
+    default: return "Bad";
+    }
+}
+
 const char* ScopeString(int mem)
 {
     switch (mem) {
@@ -1025,6 +1037,13 @@ const char* CapabilityString(int info)
 
     case CapabilityCooperativeMatrixNV:     return "CooperativeMatrixNV";
     case CapabilityCooperativeMatrixKHR:    return "CooperativeMatrixKHR";
+    case CapabilityCooperativeMatrixReductionsNV:           return "CooperativeMatrixReductionsNV";
+    case CapabilityCooperativeMatrixConversionsNV:          return "CooperativeMatrixConversionsNV";
+    case CapabilityCooperativeMatrixPerElementOperationsNV: return "CooperativeMatrixPerElementOperationsNV";
+    case CapabilityCooperativeMatrixTensorAddressingNV:     return "CooperativeMatrixTensorAddressingNV";
+    case CapabilityCooperativeMatrixBlockLoadsNV:           return "CooperativeMatrixBlockLoadsNV";
+    case CapabilityTensorAddressingNV:                      return "TensorAddressingNV";
+
     case CapabilityShaderSMBuiltinsNV:      return "ShaderSMBuiltinsNV";
 
     case CapabilityFragmentShaderSampleInterlockEXT:        return "CapabilityFragmentShaderSampleInterlockEXT";
@@ -1536,6 +1555,25 @@ const char* OpcodeString(int op)
     case OpDemoteToHelperInvocationEXT:     return "OpDemoteToHelperInvocationEXT";
     case OpIsHelperInvocationEXT:           return "OpIsHelperInvocationEXT";
 
+    case OpCooperativeMatrixConvertNV:      return "OpCooperativeMatrixConvertNV";
+    case OpCooperativeMatrixTransposeNV:    return "OpCooperativeMatrixTransposeNV";
+    case OpCooperativeMatrixReduceNV:       return "OpCooperativeMatrixReduceNV";
+    case OpCooperativeMatrixLoadTensorNV:   return "OpCooperativeMatrixLoadTensorNV";
+    case OpCooperativeMatrixStoreTensorNV:  return "OpCooperativeMatrixStoreTensorNV";
+    case OpCooperativeMatrixPerElementOpNV: return "OpCooperativeMatrixPerElementOpNV";
+    case OpTypeTensorLayoutNV:              return "OpTypeTensorLayoutNV";
+    case OpTypeTensorViewNV:                return "OpTypeTensorViewNV";
+    case OpCreateTensorLayoutNV:            return "OpCreateTensorLayoutNV";
+    case OpTensorLayoutSetBlockSizeNV:      return "OpTensorLayoutSetBlockSizeNV";
+    case OpTensorLayoutSetDimensionNV:      return "OpTensorLayoutSetDimensionNV";
+    case OpTensorLayoutSetStrideNV:         return "OpTensorLayoutSetStrideNV";
+    case OpTensorLayoutSliceNV:             return "OpTensorLayoutSliceNV";
+    case OpTensorLayoutSetClampValueNV:     return "OpTensorLayoutSetClampValueNV";
+    case OpCreateTensorViewNV:              return "OpCreateTensorViewNV";
+    case OpTensorViewSetDimensionNV:        return "OpTensorViewSetDimensionNV";
+    case OpTensorViewSetStrideNV:           return "OpTensorViewSetStrideNV";
+    case OpTensorViewSetClipNV:             return "OpTensorViewSetClipNV";
+
     case OpBeginInvocationInterlockEXT:     return "OpBeginInvocationInterlockEXT";
     case OpEndInvocationInterlockEXT:       return "OpEndInvocationInterlockEXT";
 
@@ -1613,6 +1651,7 @@ EnumParameters SelectionControlParams[SelectControlCeiling];
 EnumParameters FunctionControlParams[FunctionControlCeiling];
 EnumParameters MemoryAccessParams[MemoryAccessCeiling];
 EnumParameters CooperativeMatrixOperandsParams[CooperativeMatrixOperandsCeiling];
+EnumParameters TensorAddressingOperandsParams[TensorAddressingOperandsCeiling];
 
 // Set up all the parameterizing descriptions of the opcodes, operands, etc.
 void Parameterize()
@@ -1712,6 +1751,9 @@ void Parameterize()
         InstructionDesc[OpBeginInvocationInterlockEXT].setResultAndType(false, false);
         InstructionDesc[OpEndInvocationInterlockEXT].setResultAndType(false, false);
         InstructionDesc[OpAssumeTrueKHR].setResultAndType(false, false);
+        InstructionDesc[OpTypeTensorLayoutNV].setResultAndType(true, false);
+        InstructionDesc[OpTypeTensorViewNV].setResultAndType(true, false);
+        InstructionDesc[OpCooperativeMatrixStoreTensorNV].setResultAndType(false, false);
         // Specific additional context-dependent operands
 
         ExecutionModeOperands[ExecutionModeInvocations].push(OperandLiteralNumber, "'Number of <<Invocation,invocations>>'");
@@ -1781,6 +1823,7 @@ void Parameterize()
         OperandClassParams[OperandKernelProfilingInfo].set(0, KernelProfilingInfoString, nullptr, true);
         OperandClassParams[OperandCapability].set(0, CapabilityString, nullptr);
         OperandClassParams[OperandCooperativeMatrixOperands].set(CooperativeMatrixOperandsCeiling, CooperativeMatrixOperandsString, CooperativeMatrixOperandsParams, true);
+        OperandClassParams[OperandTensorAddressingOperands].set(TensorAddressingOperandsCeiling, TensorAddressingOperandsString, TensorAddressingOperandsParams, true);
         OperandClassParams[OperandOpcode].set(OpCodeMask + 1, OpcodeString, nullptr);
 
         // set name of operator, an initial set of <id> style operands, and the description
@@ -3488,6 +3531,67 @@ void Parameterize()
         InstructionDesc[OpConstantCompositeReplicateEXT].operands.push(OperandId, "'Value'");
         InstructionDesc[OpSpecConstantCompositeReplicateEXT].operands.push(OperandId, "'Value'");
         InstructionDesc[OpCompositeConstructReplicateEXT].operands.push(OperandId, "'Value'");
+
+        InstructionDesc[OpCooperativeMatrixConvertNV].operands.push(OperandId, "'Value'");
+
+        InstructionDesc[OpCooperativeMatrixTransposeNV].operands.push(OperandId, "'Matrix'");
+
+        InstructionDesc[OpCooperativeMatrixReduceNV].operands.push(OperandId, "'Matrix'");
+        InstructionDesc[OpCooperativeMatrixReduceNV].operands.push(OperandLiteralNumber, "'ReduceMask'");
+        InstructionDesc[OpCooperativeMatrixReduceNV].operands.push(OperandId, "'CombineFunc'");
+
+        InstructionDesc[OpCooperativeMatrixPerElementOpNV].operands.push(OperandId, "'Matrix'");
+        InstructionDesc[OpCooperativeMatrixPerElementOpNV].operands.push(OperandId, "'Operation'");
+        InstructionDesc[OpCooperativeMatrixPerElementOpNV].operands.push(OperandVariableIds, "'Operands'");
+
+        InstructionDesc[OpCooperativeMatrixLoadTensorNV].operands.push(OperandId, "'Pointer'");
+        InstructionDesc[OpCooperativeMatrixLoadTensorNV].operands.push(OperandId, "'Object'");
+        InstructionDesc[OpCooperativeMatrixLoadTensorNV].operands.push(OperandId, "'TensorLayout'");
+        InstructionDesc[OpCooperativeMatrixLoadTensorNV].operands.push(OperandMemoryAccess, "'Memory Access'");
+        InstructionDesc[OpCooperativeMatrixLoadTensorNV].operands.push(OperandTensorAddressingOperands, "'Tensor Addressing Operands'");
+
+        InstructionDesc[OpCooperativeMatrixStoreTensorNV].operands.push(OperandId, "'Pointer'");
+        InstructionDesc[OpCooperativeMatrixStoreTensorNV].operands.push(OperandId, "'Object'");
+        InstructionDesc[OpCooperativeMatrixStoreTensorNV].operands.push(OperandId, "'TensorLayout'");
+        InstructionDesc[OpCooperativeMatrixStoreTensorNV].operands.push(OperandMemoryAccess, "'Memory Access'");
+        InstructionDesc[OpCooperativeMatrixStoreTensorNV].operands.push(OperandTensorAddressingOperands, "'Tensor Addressing Operands'");
+
+        InstructionDesc[OpCooperativeMatrixReduceNV].operands.push(OperandId, "'Matrix'");
+        InstructionDesc[OpCooperativeMatrixReduceNV].operands.push(OperandLiteralNumber, "'ReduceMask'");
+
+        InstructionDesc[OpTypeTensorLayoutNV].operands.push(OperandId, "'Dim'");
+        InstructionDesc[OpTypeTensorLayoutNV].operands.push(OperandId, "'ClampMode'");
+
+        InstructionDesc[OpTypeTensorViewNV].operands.push(OperandId, "'Dim'");
+        InstructionDesc[OpTypeTensorViewNV].operands.push(OperandId, "'HasDimensions'");
+        InstructionDesc[OpTypeTensorViewNV].operands.push(OperandVariableIds, "'p'");
+
+        InstructionDesc[OpTensorLayoutSetBlockSizeNV].operands.push(OperandId, "'TensorLayout'");
+        InstructionDesc[OpTensorLayoutSetBlockSizeNV].operands.push(OperandVariableIds, "'BlockSize'");
+
+        InstructionDesc[OpTensorLayoutSetDimensionNV].operands.push(OperandId, "'TensorLayout'");
+        InstructionDesc[OpTensorLayoutSetDimensionNV].operands.push(OperandVariableIds, "'Dim'");
+
+        InstructionDesc[OpTensorLayoutSetStrideNV].operands.push(OperandId, "'TensorLayout'");
+        InstructionDesc[OpTensorLayoutSetStrideNV].operands.push(OperandVariableIds, "'Stride'");
+
+        InstructionDesc[OpTensorLayoutSliceNV].operands.push(OperandId, "'TensorLayout'");
+        InstructionDesc[OpTensorLayoutSliceNV].operands.push(OperandVariableIds, "'Operands'");
+
+        InstructionDesc[OpTensorLayoutSetClampValueNV].operands.push(OperandId, "'TensorLayout'");
+        InstructionDesc[OpTensorLayoutSetClampValueNV].operands.push(OperandId, "'Value'");
+
+        InstructionDesc[OpTensorViewSetDimensionNV].operands.push(OperandId, "'TensorView'");
+        InstructionDesc[OpTensorViewSetDimensionNV].operands.push(OperandVariableIds, "'Dim'");
+
+        InstructionDesc[OpTensorViewSetStrideNV].operands.push(OperandId, "'TensorView'");
+        InstructionDesc[OpTensorViewSetStrideNV].operands.push(OperandVariableIds, "'Stride'");
+
+        InstructionDesc[OpTensorViewSetClipNV].operands.push(OperandId, "'TensorView'");
+        InstructionDesc[OpTensorViewSetClipNV].operands.push(OperandId, "'ClipRowOffset'");
+        InstructionDesc[OpTensorViewSetClipNV].operands.push(OperandId, "'ClipRowSpan'");
+        InstructionDesc[OpTensorViewSetClipNV].operands.push(OperandId, "'ClipColOffset'");
+        InstructionDesc[OpTensorViewSetClipNV].operands.push(OperandId, "'ClipColSpan'");
     });
 }
 
