@@ -20,7 +20,7 @@
                     "",
                     "MODIFICATIONS TO THIS FILE MAY MEAN IT NO LONGER ACCURATELY REFLECTS KHRONOS",
                     "STANDARDS. THE UNMODIFIED, NORMATIVE VERSIONS OF KHRONOS SPECIFICATIONS AND",
-                    "HEADER INFORMATION ARE LOCATED AT https://www.khronos.org/registry/ ",
+                    "HEADER INFORMATION ARE LOCATED AT https://www.khronos.org/registry/",
                     "",
                     "THE MATERIALS ARE PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS",
                     "OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,",
@@ -1146,6 +1146,12 @@
                     "AtomicFloat16VectorNV": 5404,
                     "RayTracingDisplacementMicromapNV": 5409,
                     "RawAccessChainsNV": 5414,
+                    "CooperativeMatrixReductionsNV": 5430,
+                    "CooperativeMatrixConversionsNV": 5431,
+                    "CooperativeMatrixPerElementOperationsNV": 5432,
+                    "CooperativeMatrixTensorAddressingNV": 5433,
+                    "CooperativeMatrixBlockLoadsNV": 5434,
+                    "TensorAddressingNV": 5439,
                     "SubgroupShuffleINTEL": 5568,
                     "SubgroupBufferBlockIOINTEL": 5569,
                     "SubgroupImageBlockIOINTEL": 5570,
@@ -1367,6 +1373,37 @@
                     "MatrixAKHR": 0,
                     "MatrixBKHR": 1,
                     "MatrixAccumulatorKHR": 2
+                }
+            },
+            {
+                "Name": "CooperativeMatrixReduce",
+                "Type": "Bit",
+                "Values":
+                {
+                    "Row": 0,
+                    "Column": 1,
+                    "CooperativeMatrixReduce2x2": 2
+                }
+            },
+            {
+                "Name": "TensorClampMode",
+                "Type": "Value",
+                "Values":
+                {
+                    "Undefined": 0,
+                    "Constant": 1,
+                    "ClampToEdge": 2,
+                    "Repeat": 3,
+                    "RepeatMirrored": 4
+                }
+            },
+            {
+                "Name": "TensorAddressingOperands",
+                "Type": "Bit",
+                "Values":
+                {
+                    "TensorView": 0,
+                    "DecodeFunc": 1
                 }
             },
             {
@@ -1900,6 +1937,7 @@
                     "OpReorderThreadWithHintNV": 5280,
                     "OpTypeHitObjectNV": 5281,
                     "OpImageSampleFootprintNV": 5283,
+                    "OpCooperativeMatrixConvertNV": 5293,
                     "OpEmitMeshTasksEXT": 5294,
                     "OpSetMeshOutputsEXT": 5295,
                     "OpGroupNonUniformPartitionNV": 5296,
@@ -1924,9 +1962,26 @@
                     "OpCooperativeMatrixLengthNV": 5362,
                     "OpBeginInvocationInterlockEXT": 5364,
                     "OpEndInvocationInterlockEXT": 5365,
+                    "OpCooperativeMatrixReduceNV": 5366,
+                    "OpCooperativeMatrixLoadTensorNV": 5367,
+                    "OpCooperativeMatrixStoreTensorNV": 5368,
+                    "OpCooperativeMatrixPerElementOpNV": 5369,
+                    "OpTypeTensorLayoutNV": 5370,
+                    "OpTypeTensorViewNV": 5371,
+                    "OpCreateTensorLayoutNV": 5372,
+                    "OpTensorLayoutSetDimensionNV": 5373,
+                    "OpTensorLayoutSetStrideNV": 5374,
+                    "OpTensorLayoutSliceNV": 5375,
+                    "OpTensorLayoutSetClampValueNV": 5376,
+                    "OpCreateTensorViewNV": 5377,
+                    "OpTensorViewSetDimensionNV": 5378,
+                    "OpTensorViewSetStrideNV": 5379,
                     "OpDemoteToHelperInvocation": 5380,
                     "OpDemoteToHelperInvocationEXT": 5380,
                     "OpIsHelperInvocationEXT": 5381,
+                    "OpTensorViewSetClipNV": 5382,
+                    "OpTensorLayoutSetBlockSizeNV": 5384,
+                    "OpCooperativeMatrixTransposeNV": 5390,
                     "OpConvertUToImageNV": 5391,
                     "OpConvertUToSamplerNV": 5392,
                     "OpConvertImageToUNV": 5393,
