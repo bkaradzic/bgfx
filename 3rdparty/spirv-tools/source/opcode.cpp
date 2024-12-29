@@ -382,6 +382,8 @@ int32_t spvOpcodeGeneratesType(spv::Op op) {
     case spv::Op::OpTypeRayQueryKHR:
     case spv::Op::OpTypeHitObjectNV:
     case spv::Op::OpTypeUntypedPointerKHR:
+    case spv::Op::OpTypeTensorLayoutNV:
+    case spv::Op::OpTypeTensorViewNV:
       return true;
     default:
       // In particular, OpTypeForwardPointer does not generate a type,
@@ -419,6 +421,7 @@ bool spvOpcodeIsLoad(const spv::Op opcode) {
     case spv::Op::OpImageSampleProjExplicitLod:
     case spv::Op::OpImageSampleProjDrefImplicitLod:
     case spv::Op::OpImageSampleProjDrefExplicitLod:
+    case spv::Op::OpImageSampleFootprintNV:
     case spv::Op::OpImageFetch:
     case spv::Op::OpImageGather:
     case spv::Op::OpImageDrefGather:
@@ -745,6 +748,7 @@ bool spvOpcodeIsImageSample(const spv::Op opcode) {
     case spv::Op::OpImageSparseSampleExplicitLod:
     case spv::Op::OpImageSparseSampleDrefImplicitLod:
     case spv::Op::OpImageSparseSampleDrefExplicitLod:
+    case spv::Op::OpImageSampleFootprintNV:
       return true;
     default:
       return false;

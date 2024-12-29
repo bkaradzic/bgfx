@@ -75,8 +75,8 @@ spv_result_t ModuleScopedInstructions(ValidationState_t& _,
 
         if (local_debug_info) {
           if (_.in_function_body() == false) {
-            // DebugScope, DebugNoScope, DebugDeclare, DebugValue must
-            // appear in a function body.
+            // TODO - Print the actual name of the instruction as this list is
+            // not complete (see ext_inst_name in ValidateExtInst() for example)
             return _.diag(SPV_ERROR_INVALID_LAYOUT, inst)
                    << "DebugScope, DebugNoScope, DebugDeclare, DebugValue "
                    << "of debug info extension must appear in a function "

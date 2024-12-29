@@ -44,3 +44,4 @@
 {43, "LLVM", "LLVM SPIR-V Backend", "LLVM LLVM SPIR-V Backend"},
 {44, "Robert Konrad", "Kongruent", "Robert Konrad Kongruent"},
 {45, "Kitsunebi Games", "Nuvk SPIR-V Emitter and DLSL compiler", "Kitsunebi Games Nuvk SPIR-V Emitter and DLSL compiler"},
+{46, "Nintendo", "", "Nintendo"},

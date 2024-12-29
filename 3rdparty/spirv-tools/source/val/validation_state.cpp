@@ -1290,8 +1290,9 @@ bool ValidationState_t::IsUnsigned64BitHandle(uint32_t id) const {
 }
 
 spv_result_t ValidationState_t::CooperativeMatrixShapesMatch(
-    const Instruction* inst, uint32_t m1, uint32_t m2) {
-  const auto m1_type = FindDef(m1);
+    const Instruction* inst, uint32_t result_type_id, uint32_t m2,
+    bool is_conversion, bool swap_row_col) {
+  const auto m1_type = FindDef(result_type_id);
   const auto m2_type = FindDef(m2);
 
   if (m1_type->opcode() != m2_type->opcode()) {
@@ -1306,6 +1307,10 @@ spv_result_t ValidationState_t::CooperativeMatrixShapesMatch(
   uint32_t m2_scope_id = m2_type->GetOperandAs<uint32_t>(2);
   uint32_t m2_rows_id = m2_type->GetOperandAs<uint32_t>(3);
   uint32_t m2_cols_id = m2_type->GetOperandAs<uint32_t>(4);
+
+  if (swap_row_col) {
+    std::swap(m1_rows_id, m1_cols_id);
+  }
 
   bool m1_is_int32 = false, m1_is_const_int32 = false, m2_is_int32 = false,
        m2_is_const_int32 = false;
@@ -1330,7 +1335,7 @@ spv_result_t ValidationState_t::CooperativeMatrixShapesMatch(
   if (m1_is_const_int32 && m2_is_const_int32 && m1_value != m2_value) {
     return diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected rows of Matrix type and Result Type to be "
-           << "identical";
+           << (swap_row_col ? "swapped with columns" : "identical");
   }
 
   std::tie(m1_is_int32, m1_is_const_int32, m1_value) =
@@ -1341,7 +1346,7 @@ spv_result_t ValidationState_t::CooperativeMatrixShapesMatch(
   if (m1_is_const_int32 && m2_is_const_int32 && m1_value != m2_value) {
     return diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected columns of Matrix type and Result Type to be "
-           << "identical";
+           << (swap_row_col ? "swapped with rows" : "identical");
   }
 
   if (m1_type->opcode() == spv::Op::OpTypeCooperativeMatrixKHR) {
@@ -1352,7 +1357,12 @@ spv_result_t ValidationState_t::CooperativeMatrixShapesMatch(
     std::tie(m2_is_int32, m2_is_const_int32, m2_value) =
         EvalInt32IfConst(m2_use_id);
 
-    if (m1_is_const_int32 && m2_is_const_int32 && m1_value != m2_value) {
+    if (m1_is_const_int32 && m2_is_const_int32 && m1_value != m2_value &&
+        // CooperativeMatrixConversionsNV allows conversions from Acc->A/B
+        !(is_conversion &&
+          HasCapability(spv::Capability::CooperativeMatrixConversionsNV) &&
+          m2_value ==
+              (uint32_t)spv::CooperativeMatrixUse::MatrixAccumulatorKHR)) {
       return diag(SPV_ERROR_INVALID_DATA, inst)
              << "Expected Use of Matrix type and Result Type to be "
              << "identical";

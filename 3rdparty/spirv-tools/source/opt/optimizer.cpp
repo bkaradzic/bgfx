@@ -18,6 +18,7 @@
 #include <charconv>
 #include <memory>
 #include <string>
+#include <system_error>
 #include <unordered_map>
 #include <utility>
 #include <vector>

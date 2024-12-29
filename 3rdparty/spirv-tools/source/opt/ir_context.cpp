@@ -926,9 +926,35 @@ uint32_t IRContext::GetBuiltinInputVarId(uint32_t builtin) {
 
 void IRContext::AddCalls(const Function* func, std::queue<uint32_t>* todo) {
   for (auto bi = func->begin(); bi != func->end(); ++bi)
-    for (auto ii = bi->begin(); ii != bi->end(); ++ii)
+    for (auto ii = bi->begin(); ii != bi->end(); ++ii) {
       if (ii->opcode() == spv::Op::OpFunctionCall)
         todo->push(ii->GetSingleWordInOperand(0));
+      if (ii->opcode() == spv::Op::OpCooperativeMatrixPerElementOpNV)
+        todo->push(ii->GetSingleWordInOperand(1));
+      if (ii->opcode() == spv::Op::OpCooperativeMatrixReduceNV)
+        todo->push(ii->GetSingleWordInOperand(2));
+      if (ii->opcode() == spv::Op::OpCooperativeMatrixLoadTensorNV) {
+        const auto memory_operands_index = 3;
+        auto mask = ii->GetSingleWordInOperand(memory_operands_index);
+
+        uint32_t count = 1;
+        if (mask & uint32_t(spv::MemoryAccessMask::Aligned)) ++count;
+        if (mask & uint32_t(spv::MemoryAccessMask::MakePointerAvailableKHR))
+          ++count;
+        if (mask & uint32_t(spv::MemoryAccessMask::MakePointerVisibleKHR))
+          ++count;
+
+        const auto tensor_operands_index = memory_operands_index + count;
+        mask = ii->GetSingleWordInOperand(tensor_operands_index);
+        count = 1;
+        if (mask & uint32_t(spv::TensorAddressingOperandsMask::TensorView))
+          ++count;
+
+        if (mask & uint32_t(spv::TensorAddressingOperandsMask::DecodeFunc)) {
+          todo->push(ii->GetSingleWordInOperand(tensor_operands_index + count));
+        }
+      }
+    }
 }
 
 bool IRContext::ProcessEntryPointCallTree(ProcessFunction& pfn) {

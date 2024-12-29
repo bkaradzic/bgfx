@@ -86,7 +86,10 @@ spv_result_t ValidateFunction(ValidationState_t& _, const Instruction* inst) {
       spv::Op::OpGetKernelPreferredWorkGroupSizeMultiple,
       spv::Op::OpGetKernelLocalSizeForSubgroupCount,
       spv::Op::OpGetKernelMaxNumSubgroups,
-      spv::Op::OpName};
+      spv::Op::OpName,
+      spv::Op::OpCooperativeMatrixPerElementOpNV,
+      spv::Op::OpCooperativeMatrixReduceNV,
+      spv::Op::OpCooperativeMatrixLoadTensorNV};
   for (auto& pair : inst->uses()) {
     const auto* use = pair.first;
     if (std::find(acceptable.begin(), acceptable.end(), use->opcode()) ==
@@ -280,7 +283,7 @@ spv_result_t ValidateFunctionCall(ValidationState_t& _,
         function_type->GetOperandAs<uint32_t>(param_index);
     const auto parameter_type = _.FindDef(parameter_type_id);
     if (!parameter_type || argument_type->id() != parameter_type->id()) {
-      if (!_.options()->before_hlsl_legalization ||
+      if (!parameter_type || !_.options()->before_hlsl_legalization ||
           !DoPointeesLogicallyMatch(argument_type, parameter_type, _)) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << "OpFunctionCall Argument <id> " << _.getIdName(argument_id)
@@ -341,6 +344,80 @@ spv_result_t ValidateFunctionCall(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+spv_result_t ValidateCooperativeMatrixPerElementOp(ValidationState_t& _,
+                                                   const Instruction* inst) {
+  const auto function_id = inst->GetOperandAs<uint32_t>(3);
+  const auto function = _.FindDef(function_id);
+  if (!function || spv::Op::OpFunction != function->opcode()) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpCooperativeMatrixPerElementOpNV Function <id> "
+           << _.getIdName(function_id) << " is not a function.";
+  }
+
+  const auto matrix_id = inst->GetOperandAs<uint32_t>(2);
+  const auto matrix = _.FindDef(matrix_id);
+  const auto matrix_type_id = matrix->type_id();
+  if (!_.IsCooperativeMatrixKHRType(matrix_type_id)) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpCooperativeMatrixPerElementOpNV Matrix <id> "
+           << _.getIdName(matrix_id) << " is not a cooperative matrix.";
+  }
+
+  const auto result_type_id = inst->GetOperandAs<uint32_t>(0);
+  if (matrix_type_id != result_type_id) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpCooperativeMatrixPerElementOpNV Result Type <id> "
+           << _.getIdName(result_type_id) << " must match matrix type <id> "
+           << _.getIdName(matrix_type_id) << ".";
+  }
+
+  const auto matrix_comp_type_id =
+      _.FindDef(matrix_type_id)->GetOperandAs<uint32_t>(1);
+  const auto function_type_id = function->GetOperandAs<uint32_t>(3);
+  const auto function_type = _.FindDef(function_type_id);
+  auto return_type_id = function_type->GetOperandAs<uint32_t>(1);
+  if (return_type_id != matrix_comp_type_id) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpCooperativeMatrixPerElementOpNV function return type <id> "
+           << _.getIdName(return_type_id)
+           << " must match matrix component type <id> "
+           << _.getIdName(matrix_comp_type_id) << ".";
+  }
+
+  if (function_type->operands().size() < 5) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpCooperativeMatrixPerElementOpNV function type <id> "
+           << _.getIdName(function_type_id)
+           << " must have a least three parameters.";
+  }
+
+  const auto param0_id = function_type->GetOperandAs<uint32_t>(2);
+  const auto param1_id = function_type->GetOperandAs<uint32_t>(3);
+  const auto param2_id = function_type->GetOperandAs<uint32_t>(4);
+  if (!_.IsIntScalarType(param0_id) || _.GetBitWidth(param0_id) != 32) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpCooperativeMatrixPerElementOpNV function type first parameter "
+              "type <id> "
+           << _.getIdName(param0_id) << " must be a 32-bit integer.";
+  }
+
+  if (!_.IsIntScalarType(param1_id) || _.GetBitWidth(param1_id) != 32) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpCooperativeMatrixPerElementOpNV function type second "
+              "parameter type <id> "
+           << _.getIdName(param1_id) << " must be a 32-bit integer.";
+  }
+
+  if (param2_id != matrix_comp_type_id) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpCooperativeMatrixPerElementOpNV function type third parameter "
+              "type <id> "
+           << _.getIdName(param2_id) << " must match matrix component type.";
+  }
+
+  return SPV_SUCCESS;
+}
+
 }  // namespace
 
 spv_result_t FunctionPass(ValidationState_t& _, const Instruction* inst) {
@@ -353,6 +430,10 @@ spv_result_t FunctionPass(ValidationState_t& _, const Instruction* inst) {
       break;
     case spv::Op::OpFunctionCall:
       if (auto error = ValidateFunctionCall(_, inst)) return error;
+      break;
+    case spv::Op::OpCooperativeMatrixPerElementOpNV:
+      if (auto error = ValidateCooperativeMatrixPerElementOp(_, inst))
+        return error;
       break;
     default:
       break;

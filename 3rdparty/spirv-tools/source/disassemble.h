@@ -15,7 +15,7 @@
 #ifndef SOURCE_DISASSEMBLE_H_
 #define SOURCE_DISASSEMBLE_H_
 
-#include <iosfwd>
+#include <ios>
 #include <sstream>
 #include <string>
 
@@ -94,11 +94,11 @@ class InstructionDisassembler {
   // Emits an operand for the given instruction, where the instruction
   // is at offset words from the start of the binary.
   void EmitOperand(std::ostream& stream, const spv_parsed_instruction_t& inst,
-                   const uint16_t operand_index) const;
+                   uint16_t operand_index) const;
 
   // Emits a mask expression for the given mask word of the specified type.
-  void EmitMaskOperand(std::ostream& stream, const spv_operand_type_t type,
-                       const uint32_t word) const;
+  void EmitMaskOperand(std::ostream& stream, spv_operand_type_t type,
+                       uint32_t word) const;
 
   // Generate part of the instruction as a comment to be added to
   // |id_comments_|.

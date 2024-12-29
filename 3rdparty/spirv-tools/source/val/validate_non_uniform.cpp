@@ -390,9 +390,8 @@ spv_result_t ValidateGroupNonUniformRotateKHR(ValidationState_t& _,
   if (inst->words().size() > 6) {
     const uint32_t cluster_size_op_id = inst->GetOperandAs<uint32_t>(5);
     const Instruction* cluster_size_inst = _.FindDef(cluster_size_op_id);
-    const uint32_t cluster_size_type =
-        cluster_size_inst ? cluster_size_inst->type_id() : 0;
-    if (!_.IsUnsignedIntScalarType(cluster_size_type)) {
+    if (!cluster_size_inst ||
+        !_.IsUnsignedIntScalarType(cluster_size_inst->type_id())) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "ClusterSize must be a scalar of integer type, whose "
                 "Signedness operand is 0.";

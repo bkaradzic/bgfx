@@ -169,7 +169,7 @@ uint32_t getBaseAlignment(uint32_t member_id, bool roundUp,
     case spv::Op::OpTypeSampler:
     case spv::Op::OpTypeImage:
       if (vstate.HasCapability(spv::Capability::BindlessTextureNV))
-        return baseAlignment = vstate.samplerimage_variable_address_mode() / 8;
+        return vstate.samplerimage_variable_address_mode() / 8;
       assert(0);
       return 0;
     case spv::Op::OpTypeInt:

@@ -231,6 +231,12 @@ const char* spvOperandTypeStr(spv_operand_type_t type) {
       return "cooperative matrix layout";
     case SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_USE:
       return "cooperative matrix use";
+    case SPV_OPERAND_TYPE_TENSOR_CLAMP_MODE:
+      return "tensor clamp mode";
+    case SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_REDUCE:
+      return "cooperative matrix reduce";
+    case SPV_OPERAND_TYPE_TENSOR_ADDRESSING_OPERANDS:
+      return "tensor addressing operands";
     case SPV_OPERAND_TYPE_INITIALIZATION_MODE_QUALIFIER:
       return "initialization mode qualifier";
     case SPV_OPERAND_TYPE_HOST_ACCESS_QUALIFIER:
@@ -389,6 +395,7 @@ bool spvOperandIsConcrete(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_STORE_CACHE_CONTROL:
     case SPV_OPERAND_TYPE_NAMED_MAXIMUM_NUMBER_OF_REGISTERS:
     case SPV_OPERAND_TYPE_FPENCODING:
+    case SPV_OPERAND_TYPE_TENSOR_CLAMP_MODE:
       return true;
     default:
       break;
@@ -409,6 +416,8 @@ bool spvOperandIsConcreteMask(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_INFO_FLAGS:
     case SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_OPERANDS:
     case SPV_OPERAND_TYPE_RAW_ACCESS_CHAIN_OPERANDS:
+    case SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_REDUCE:
+    case SPV_OPERAND_TYPE_TENSOR_ADDRESSING_OPERANDS:
       return true;
     default:
       break;
@@ -597,6 +606,16 @@ std::function<bool(unsigned)> spvOperandCanBeForwardDeclaredFunction(
       break;
     case spv::Op::OpTypeArray:
       out = [](unsigned index) { return index == 1; };
+      break;
+    case spv::Op::OpCooperativeMatrixPerElementOpNV:
+      out = [](unsigned index) { return index == 3; };
+      break;
+    case spv::Op::OpCooperativeMatrixReduceNV:
+      out = [](unsigned index) { return index == 4; };
+      break;
+    case spv::Op::OpCooperativeMatrixLoadTensorNV:
+      // approximate, due to variable operands
+      out = [](unsigned index) { return index > 6; };
       break;
     default:
       out = [](unsigned) { return false; };

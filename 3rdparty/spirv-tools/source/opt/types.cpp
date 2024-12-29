@@ -179,6 +179,8 @@ bool Type::operator==(const Type& other) const {
     DeclareKindCase(CooperativeMatrixKHR);
     DeclareKindCase(RayQueryKHR);
     DeclareKindCase(HitObjectNV);
+    DeclareKindCase(TensorLayoutNV);
+    DeclareKindCase(TensorViewNV);
 #undef DeclareKindCase
     default:
       assert(false && "Unhandled type");
@@ -235,6 +237,8 @@ size_t Type::ComputeHashValue(size_t hash, SeenTypes* seen) const {
     DeclareKindCase(CooperativeMatrixKHR);
     DeclareKindCase(RayQueryKHR);
     DeclareKindCase(HitObjectNV);
+    DeclareKindCase(TensorLayoutNV);
+    DeclareKindCase(TensorViewNV);
 #undef DeclareKindCase
     default:
       assert(false && "Unhandled type");
@@ -747,7 +751,55 @@ bool CooperativeMatrixKHR::IsSameImpl(const Type* that,
   if (!mt) return false;
   return component_type_->IsSameImpl(mt->component_type_, seen) &&
          scope_id_ == mt->scope_id_ && rows_id_ == mt->rows_id_ &&
-         columns_id_ == mt->columns_id_ && HasSameDecorations(that);
+         columns_id_ == mt->columns_id_ && use_id_ == mt->use_id_ &&
+         HasSameDecorations(that);
+}
+
+TensorLayoutNV::TensorLayoutNV(const uint32_t dim, const uint32_t clamp_mode)
+    : Type(kTensorLayoutNV), dim_id_(dim), clamp_mode_id_(clamp_mode) {}
+
+std::string TensorLayoutNV::str() const {
+  std::ostringstream oss;
+  oss << "<" << dim_id_ << ", " << clamp_mode_id_ << ">";
+  return oss.str();
+}
+
+size_t TensorLayoutNV::ComputeExtraStateHash(size_t hash, SeenTypes*) const {
+  return hash_combine(hash, dim_id_, clamp_mode_id_);
+}
+
+bool TensorLayoutNV::IsSameImpl(const Type* that, IsSameCache*) const {
+  const TensorLayoutNV* tl = that->AsTensorLayoutNV();
+  if (!tl) return false;
+  return dim_id_ == tl->dim_id_ && clamp_mode_id_ == tl->clamp_mode_id_;
+}
+
+TensorViewNV::TensorViewNV(const uint32_t dim, const uint32_t clamp_mode,
+                           const std::vector<uint32_t>& perm)
+    : Type(kTensorViewNV),
+      dim_id_(dim),
+      has_dimensions_id_(clamp_mode),
+      perm_(perm) {}
+
+std::string TensorViewNV::str() const {
+  std::ostringstream oss;
+  oss << "<" << dim_id_ << ", " << has_dimensions_id_;
+  for (auto p : perm_) {
+    oss << ", " << p;
+  }
+  oss << ">";
+  return oss.str();
+}
+
+size_t TensorViewNV::ComputeExtraStateHash(size_t hash, SeenTypes*) const {
+  return hash_combine(hash, dim_id_, has_dimensions_id_, perm_);
+}
+
+bool TensorViewNV::IsSameImpl(const Type* that, IsSameCache*) const {
+  const TensorViewNV* tv = that->AsTensorViewNV();
+  if (!tv) return false;
+  return dim_id_ == tv->dim_id_ &&
+         has_dimensions_id_ == tv->has_dimensions_id_ && perm_ == tv->perm_;
 }
 
 }  // namespace analysis

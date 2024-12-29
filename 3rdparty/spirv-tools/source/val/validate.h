@@ -226,6 +226,9 @@ spv_result_t MeshShadingPass(ValidationState_t& _, const Instruction* inst);
 /// Calculates the reachability of basic blocks.
 void ReachabilityPass(ValidationState_t& _);
 
+/// Validates tensor layout and view instructions.
+spv_result_t TensorLayoutPass(ValidationState_t& _, const Instruction* inst);
+
 /// Validates execution limitations.
 ///
 /// Verifies execution models are allowed for all functionality they contain.

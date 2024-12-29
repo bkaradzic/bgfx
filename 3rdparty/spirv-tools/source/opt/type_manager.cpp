@@ -441,6 +441,28 @@ uint32_t TypeManager::GetTypeInstruction(const Type* type) {
               {SPV_OPERAND_TYPE_ID, {coop_mat->use_id()}}});
       break;
     }
+    case Type::kTensorLayoutNV: {
+      auto tensor_layout = type->AsTensorLayoutNV();
+      typeInst = MakeUnique<Instruction>(
+          context(), spv::Op::OpTypeTensorLayoutNV, 0, id,
+          std::initializer_list<Operand>{
+              {SPV_OPERAND_TYPE_ID, {tensor_layout->dim_id()}},
+              {SPV_OPERAND_TYPE_ID, {tensor_layout->clamp_mode_id()}}});
+      break;
+    }
+    case Type::kTensorViewNV: {
+      auto tensor_view = type->AsTensorViewNV();
+      std::vector<Operand> operands;
+      operands.push_back(Operand{SPV_OPERAND_TYPE_ID, {tensor_view->dim_id()}});
+      operands.push_back(
+          Operand{SPV_OPERAND_TYPE_ID, {tensor_view->has_dimensions_id()}});
+      for (auto p : tensor_view->perm()) {
+        operands.push_back(Operand{SPV_OPERAND_TYPE_ID, {p}});
+      }
+      typeInst = MakeUnique<Instruction>(context(), spv::Op::OpTypeTensorViewNV,
+                                         0, id, operands);
+      break;
+    }
     default:
       assert(false && "Unexpected type");
       break;
@@ -665,6 +687,18 @@ Type* TypeManager::RebuildType(uint32_t type_id, const Type& type) {
           RebuildType(GetId(component_type), *component_type),
           cm_type->scope_id(), cm_type->rows_id(), cm_type->columns_id(),
           cm_type->use_id());
+      break;
+    }
+    case Type::kTensorLayoutNV: {
+      const TensorLayoutNV* tl_type = type.AsTensorLayoutNV();
+      rebuilt_ty = MakeUnique<TensorLayoutNV>(tl_type->dim_id(),
+                                              tl_type->clamp_mode_id());
+      break;
+    }
+    case Type::kTensorViewNV: {
+      const TensorViewNV* tv_type = type.AsTensorViewNV();
+      rebuilt_ty = MakeUnique<TensorViewNV>(
+          tv_type->dim_id(), tv_type->has_dimensions_id(), tv_type->perm());
       break;
     }
     default:
@@ -914,6 +948,20 @@ Type* TypeManager::RecordIfTypeDefinition(const Instruction& inst) {
     case spv::Op::OpTypeHitObjectNV:
       type = new HitObjectNV();
       break;
+    case spv::Op::OpTypeTensorLayoutNV:
+      type = new TensorLayoutNV(inst.GetSingleWordInOperand(0),
+                                inst.GetSingleWordInOperand(1));
+      break;
+    case spv::Op::OpTypeTensorViewNV: {
+      const auto count = inst.NumOperands();
+      std::vector<uint32_t> perm;
+      for (uint32_t i = 2; i < count; ++i) {
+        perm.push_back(inst.GetSingleWordOperand(i));
+      }
+      type = new TensorViewNV(inst.GetSingleWordInOperand(0),
+                              inst.GetSingleWordInOperand(1), perm);
+      break;
+    }
     default:
       assert(false && "Type not handled by the type manager.");
       break;

@@ -1790,6 +1790,7 @@ bool CompositeExtractFeedingConstruct(
       return false;
     }
   }
+  assert(first_element_inst != nullptr);
 
   // The last check it to see that the object being extracted from is the
   // correct type.

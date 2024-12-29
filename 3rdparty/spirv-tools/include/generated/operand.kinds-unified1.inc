@@ -100,6 +100,8 @@ static const spv::Capability pygen_variable_caps_CacheControlsINTEL[] = {spv::Ca
 static const spv::Capability pygen_variable_caps_ClipDistance[] = {spv::Capability::ClipDistance};
 static const spv::Capability pygen_variable_caps_ComputeDerivativeGroupLinearNVComputeDerivativeGroupLinearKHR[] = {spv::Capability::ComputeDerivativeGroupLinearNV, spv::Capability::ComputeDerivativeGroupLinearKHR};
 static const spv::Capability pygen_variable_caps_ComputeDerivativeGroupQuadsNVComputeDerivativeGroupQuadsKHR[] = {spv::Capability::ComputeDerivativeGroupQuadsNV, spv::Capability::ComputeDerivativeGroupQuadsKHR};
+static const spv::Capability pygen_variable_caps_CooperativeMatrixBlockLoadsNV[] = {spv::Capability::CooperativeMatrixBlockLoadsNV};
+static const spv::Capability pygen_variable_caps_CooperativeMatrixTensorAddressingNV[] = {spv::Capability::CooperativeMatrixTensorAddressingNV};
 static const spv::Capability pygen_variable_caps_CoreBuiltinsARM[] = {spv::Capability::CoreBuiltinsARM};
 static const spv::Capability pygen_variable_caps_CullDistance[] = {spv::Capability::CullDistance};
 static const spv::Capability pygen_variable_caps_DenormFlushToZero[] = {spv::Capability::DenormFlushToZero};
@@ -351,6 +353,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_NVX_multiview_per_view_
 static const spvtools::Extension pygen_variable_exts_SPV_NVX_multiview_per_view_attributesSPV_NV_mesh_shader[] = {spvtools::Extension::kSPV_NVX_multiview_per_view_attributes, spvtools::Extension::kSPV_NV_mesh_shader};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_bindless_texture[] = {spvtools::Extension::kSPV_NV_bindless_texture};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_cooperative_matrix[] = {spvtools::Extension::kSPV_NV_cooperative_matrix};
+static const spvtools::Extension pygen_variable_exts_SPV_NV_cooperative_matrix2[] = {spvtools::Extension::kSPV_NV_cooperative_matrix2};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_displacement_micromap[] = {spvtools::Extension::kSPV_NV_displacement_micromap};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_geometry_shader_passthrough[] = {spvtools::Extension::kSPV_NV_geometry_shader_passthrough};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_mesh_shader[] = {spvtools::Extension::kSPV_NV_mesh_shader};
@@ -365,6 +368,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_NV_shader_invocation_re
 static const spvtools::Extension pygen_variable_exts_SPV_NV_shader_sm_builtins[] = {spvtools::Extension::kSPV_NV_shader_sm_builtins};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_shader_subgroup_partitioned[] = {spvtools::Extension::kSPV_NV_shader_subgroup_partitioned};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_stereo_view_rendering[] = {spvtools::Extension::kSPV_NV_stereo_view_rendering};
+static const spvtools::Extension pygen_variable_exts_SPV_NV_tensor_addressing[] = {spvtools::Extension::kSPV_NV_tensor_addressing};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_viewport_array2[] = {spvtools::Extension::kSPV_NV_viewport_array2};
 static const spvtools::Extension pygen_variable_exts_SPV_QCOM_image_processing[] = {spvtools::Extension::kSPV_QCOM_image_processing};
 static const spvtools::Extension pygen_variable_exts_SPV_QCOM_image_processing2[] = {spvtools::Extension::kSPV_QCOM_image_processing2};
@@ -1317,6 +1321,12 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"AtomicFloat16VectorNV", 5404, 0, nullptr, 0, nullptr, 1, pygen_variable_exts_SPV_NV_shader_atomic_fp16_vector, {}, 0xffffffffu, 0xffffffffu},
   {"RayTracingDisplacementMicromapNV", 5409, 0, nullptr, 1, pygen_variable_caps_RayTracingKHR, 1, pygen_variable_exts_SPV_NV_displacement_micromap, {}, 0xffffffffu, 0xffffffffu},
   {"RawAccessChainsNV", 5414, 0, nullptr, 0, nullptr, 1, pygen_variable_exts_SPV_NV_raw_access_chains, {}, 0xffffffffu, 0xffffffffu},
+  {"CooperativeMatrixReductionsNV", 5430, 0, nullptr, 0, nullptr, 1, pygen_variable_exts_SPV_NV_cooperative_matrix2, {}, 0xffffffffu, 0xffffffffu},
+  {"CooperativeMatrixConversionsNV", 5431, 0, nullptr, 0, nullptr, 1, pygen_variable_exts_SPV_NV_cooperative_matrix2, {}, 0xffffffffu, 0xffffffffu},
+  {"CooperativeMatrixPerElementOperationsNV", 5432, 0, nullptr, 0, nullptr, 1, pygen_variable_exts_SPV_NV_cooperative_matrix2, {}, 0xffffffffu, 0xffffffffu},
+  {"CooperativeMatrixTensorAddressingNV", 5433, 0, nullptr, 0, nullptr, 1, pygen_variable_exts_SPV_NV_cooperative_matrix2, {}, 0xffffffffu, 0xffffffffu},
+  {"CooperativeMatrixBlockLoadsNV", 5434, 0, nullptr, 0, nullptr, 1, pygen_variable_exts_SPV_NV_cooperative_matrix2, {}, 0xffffffffu, 0xffffffffu},
+  {"TensorAddressingNV", 5439, 0, nullptr, 0, nullptr, 1, pygen_variable_exts_SPV_NV_tensor_addressing, {}, 0xffffffffu, 0xffffffffu},
   {"SubgroupShuffleINTEL", 5568, 0, nullptr, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_subgroups, {}, 0xffffffffu, 0xffffffffu},
   {"SubgroupBufferBlockIOINTEL", 5569, 0, nullptr, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_subgroups, {}, 0xffffffffu, 0xffffffffu},
   {"SubgroupImageBlockIOINTEL", 5570, 0, nullptr, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_subgroups, {}, 0xffffffffu, 0xffffffffu},
@@ -1432,6 +1442,26 @@ static const spv_operand_desc_t pygen_variable_CooperativeMatrixUseEntries[] = {
   {"MatrixAKHR", 0, 0, nullptr, 0, nullptr, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
   {"MatrixBKHR", 1, 0, nullptr, 0, nullptr, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
   {"MatrixAccumulatorKHR", 2, 0, nullptr, 0, nullptr, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
+};
+
+static const spv_operand_desc_t pygen_variable_CooperativeMatrixReduceEntries[] = {
+  {"Row", 0x0001, 0, nullptr, 0, nullptr, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"Column", 0x0002, 0, nullptr, 0, nullptr, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"2x2", 0x0004, 0, nullptr, 0, nullptr, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
+};
+
+static const spv_operand_desc_t pygen_variable_TensorClampModeEntries[] = {
+  {"Undefined", 0, 0, nullptr, 0, nullptr, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"Constant", 1, 0, nullptr, 0, nullptr, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"ClampToEdge", 2, 0, nullptr, 0, nullptr, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"Repeat", 3, 0, nullptr, 0, nullptr, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"RepeatMirrored", 4, 0, nullptr, 0, nullptr, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
+};
+
+static const spv_operand_desc_t pygen_variable_TensorAddressingOperandsEntries[] = {
+  {"None", 0x0000, 0, nullptr, 0, nullptr, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"TensorView", 0x0001, 0, nullptr, 1, pygen_variable_caps_CooperativeMatrixTensorAddressingNV, 0, nullptr, {SPV_OPERAND_TYPE_ID}, 0xffffffffu, 0xffffffffu},
+  {"DecodeFunc", 0x0002, 0, nullptr, 1, pygen_variable_caps_CooperativeMatrixBlockLoadsNV, 0, nullptr, {SPV_OPERAND_TYPE_ID}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_InitializationModeQualifierEntries[] = {
@@ -1626,6 +1656,9 @@ static const spv_operand_desc_group_t pygen_variable_OperandInfoTable[] = {
   {SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_OPERANDS, ARRAY_SIZE(pygen_variable_CooperativeMatrixOperandsEntries), pygen_variable_CooperativeMatrixOperandsEntries},
   {SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_LAYOUT, ARRAY_SIZE(pygen_variable_CooperativeMatrixLayoutEntries), pygen_variable_CooperativeMatrixLayoutEntries},
   {SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_USE, ARRAY_SIZE(pygen_variable_CooperativeMatrixUseEntries), pygen_variable_CooperativeMatrixUseEntries},
+  {SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_REDUCE, ARRAY_SIZE(pygen_variable_CooperativeMatrixReduceEntries), pygen_variable_CooperativeMatrixReduceEntries},
+  {SPV_OPERAND_TYPE_TENSOR_CLAMP_MODE, ARRAY_SIZE(pygen_variable_TensorClampModeEntries), pygen_variable_TensorClampModeEntries},
+  {SPV_OPERAND_TYPE_TENSOR_ADDRESSING_OPERANDS, ARRAY_SIZE(pygen_variable_TensorAddressingOperandsEntries), pygen_variable_TensorAddressingOperandsEntries},
   {SPV_OPERAND_TYPE_INITIALIZATION_MODE_QUALIFIER, ARRAY_SIZE(pygen_variable_InitializationModeQualifierEntries), pygen_variable_InitializationModeQualifierEntries},
   {SPV_OPERAND_TYPE_LOAD_CACHE_CONTROL, ARRAY_SIZE(pygen_variable_LoadCacheControlEntries), pygen_variable_LoadCacheControlEntries},
   {SPV_OPERAND_TYPE_STORE_CACHE_CONTROL, ARRAY_SIZE(pygen_variable_StoreCacheControlEntries), pygen_variable_StoreCacheControlEntries},

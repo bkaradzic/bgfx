@@ -49,6 +49,7 @@ constexpr uint32_t kOpTypeImageMSIndex = kOpTypeImageArrayedIndex + 1;
 constexpr uint32_t kOpTypeImageSampledIndex = kOpTypeImageMSIndex + 1;
 constexpr uint32_t kOpTypeImageFormatIndex = kOpTypeImageSampledIndex + 1;
 constexpr uint32_t kOpImageReadImageIndex = 0;
+constexpr uint32_t kOpImageWriteImageIndex = 0;
 constexpr uint32_t kOpImageSparseReadImageIndex = 0;
 constexpr uint32_t kOpExtInstSetInIndex = 0;
 constexpr uint32_t kOpExtInstInstructionInIndex = 1;
@@ -338,11 +339,33 @@ Handler_OpImageRead_StorageImageReadWithoutFormat(
   const uint32_t dim = type->GetSingleWordInOperand(kOpTypeImageDimIndex);
   const uint32_t format = type->GetSingleWordInOperand(kOpTypeImageFormatIndex);
 
+  // If the Image Format is Unknown and Dim is SubpassData,
+  // StorageImageReadWithoutFormat is required.
   const bool is_unknown = spv::ImageFormat(format) == spv::ImageFormat::Unknown;
   const bool requires_capability_for_unknown =
       spv::Dim(dim) != spv::Dim::SubpassData;
   return is_unknown && requires_capability_for_unknown
              ? std::optional(spv::Capability::StorageImageReadWithoutFormat)
+             : std::nullopt;
+}
+
+static std::optional<spv::Capability>
+Handler_OpImageWrite_StorageImageWriteWithoutFormat(
+    const Instruction* instruction) {
+  assert(instruction->opcode() == spv::Op::OpImageWrite &&
+         "This handler only support OpImageWrite opcodes.");
+  const auto* def_use_mgr = instruction->context()->get_def_use_mgr();
+
+  const uint32_t image_index =
+      instruction->GetSingleWordInOperand(kOpImageWriteImageIndex);
+  const uint32_t type_index = def_use_mgr->GetDef(image_index)->type_id();
+
+  // If the Image Format is Unknown, StorageImageWriteWithoutFormat is required.
+  const Instruction* type = def_use_mgr->GetDef(type_index);
+  const uint32_t format = type->GetSingleWordInOperand(kOpTypeImageFormatIndex);
+  const bool is_unknown = spv::ImageFormat(format) == spv::ImageFormat::Unknown;
+  return is_unknown
+             ? std::optional(spv::Capability::StorageImageWriteWithoutFormat)
              : std::nullopt;
 }
 
@@ -365,9 +388,10 @@ Handler_OpImageSparseRead_StorageImageReadWithoutFormat(
 }
 
 // Opcode of interest to determine capabilities requirements.
-constexpr std::array<std::pair<spv::Op, OpcodeHandler>, 12> kOpcodeHandlers{{
+constexpr std::array<std::pair<spv::Op, OpcodeHandler>, 13> kOpcodeHandlers{{
     // clang-format off
     {spv::Op::OpImageRead,         Handler_OpImageRead_StorageImageReadWithoutFormat},
+    {spv::Op::OpImageWrite,        Handler_OpImageWrite_StorageImageWriteWithoutFormat},
     {spv::Op::OpImageSparseRead,   Handler_OpImageSparseRead_StorageImageReadWithoutFormat},
     {spv::Op::OpTypeFloat,         Handler_OpTypeFloat_Float16 },
     {spv::Op::OpTypeFloat,         Handler_OpTypeFloat_Float64 },

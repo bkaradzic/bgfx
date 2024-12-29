@@ -163,6 +163,7 @@ spv_result_t IdPass(ValidationState_t& _, Instruction* inst) {
               !spvOpcodeGeneratesType(opcode) && !spvOpcodeIsDebug(opcode) &&
               !inst->IsDebugInfo() && !inst->IsNonSemantic() &&
               !spvOpcodeIsDecoration(opcode) && opcode != spv::Op::OpFunction &&
+              opcode != spv::Op::OpSizeOf &&
               opcode != spv::Op::OpCooperativeMatrixLengthNV &&
               opcode != spv::Op::OpCooperativeMatrixLengthKHR &&
               !spvOpcodeGeneratesUntypedPointer(opcode) &&
@@ -185,6 +186,7 @@ spv_result_t IdPass(ValidationState_t& _, Instruction* inst) {
                      opcode != spv::Op::OpSelectionMerge &&
                      opcode != spv::Op::OpLoopMerge &&
                      opcode != spv::Op::OpFunction &&
+                     opcode != spv::Op::OpSizeOf &&
                      opcode != spv::Op::OpCooperativeMatrixLengthNV &&
                      opcode != spv::Op::OpCooperativeMatrixLengthKHR &&
                      !spvOpcodeGeneratesUntypedPointer(opcode) &&
