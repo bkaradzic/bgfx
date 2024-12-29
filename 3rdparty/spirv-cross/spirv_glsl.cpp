@@ -6438,7 +6438,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 		if (splat)
 		{
 			res += convert_to_string(c.scalar(vector, 0));
-			if (is_legacy())
+			if (is_legacy() && !has_extension("GL_EXT_gpu_shader4"))
 			{
 				// Fake unsigned constant literals with signed ones if possible.
 				// Things like array sizes, etc, tend to be unsigned even though they could just as easily be signed.
@@ -6457,7 +6457,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 				else
 				{
 					res += convert_to_string(c.scalar(vector, i));
-					if (is_legacy())
+					if (is_legacy() && !has_extension("GL_EXT_gpu_shader4"))
 					{
 						// Fake unsigned constant literals with signed ones if possible.
 						// Things like array sizes, etc, tend to be unsigned even though they could just as easily be signed.
@@ -10210,6 +10210,8 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 	bool pending_array_enclose = false;
 	bool dimension_flatten = false;
 	bool access_meshlet_position_y = false;
+	bool chain_is_builtin = false;
+	spv::BuiltIn chained_builtin = {};
 
 	if (auto *base_expr = maybe_get<SPIRExpression>(base))
 	{
@@ -10367,6 +10369,9 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 				auto builtin = ir.meta[base].decoration.builtin_type;
 				bool mesh_shader = get_execution_model() == ExecutionModelMeshEXT;
 
+				chain_is_builtin = true;
+				chained_builtin = builtin;
+
 				switch (builtin)
 				{
 				case BuiltInCullDistance:
@@ -10502,6 +10507,9 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 					{
 						access_meshlet_position_y = true;
 					}
+
+					chain_is_builtin = true;
+					chained_builtin = builtin;
 				}
 				else
 				{
@@ -10721,6 +10729,8 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 		meta->storage_physical_type = physical_type;
 		meta->relaxed_precision = relaxed_precision;
 		meta->access_meshlet_position_y = access_meshlet_position_y;
+		meta->chain_is_builtin = chain_is_builtin;
+		meta->builtin = chained_builtin;
 	}
 
 	return expr;
@@ -11766,13 +11776,13 @@ void CompilerGLSL::disallow_forwarding_in_expression_chain(const SPIRExpression 
 	// Allow trivially forwarded expressions like OpLoad or trivial shuffles,
 	// these will be marked as having suppressed usage tracking.
 	// Our only concern is to make sure arithmetic operations are done in similar ways.
-	if (expression_is_forwarded(expr.self) && !expression_suppresses_usage_tracking(expr.self) &&
-	    forced_invariant_temporaries.count(expr.self) == 0)
+	if (forced_invariant_temporaries.count(expr.self) == 0)
 	{
-		force_temporary_and_recompile(expr.self);
+		if (!expression_suppresses_usage_tracking(expr.self))
+			force_temporary_and_recompile(expr.self);
 		forced_invariant_temporaries.insert(expr.self);
 
-		for (auto &dependent : expr.expression_dependencies)
+		for (auto &dependent : expr.invariance_dependencies)
 			disallow_forwarding_in_expression_chain(get<SPIRExpression>(dependent));
 	}
 }
@@ -12336,6 +12346,8 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 			flattened_structs[ops[1]] = true;
 		if (meta.relaxed_precision && backend.requires_relaxed_precision_analysis)
 			set_decoration(ops[1], DecorationRelaxedPrecision);
+		if (meta.chain_is_builtin)
+			set_decoration(ops[1], DecorationBuiltIn, meta.builtin);
 
 		// If we have some expression dependencies in our access chain, this access chain is technically a forwarded
 		// temporary which could be subject to invalidation.
@@ -13229,13 +13241,24 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		uint32_t op0 = ops[2];
 		uint32_t op1 = ops[3];
 
-		// Needs special handling.
+		auto &out_type = get<SPIRType>(result_type);
+
 		bool forward = should_forward(op0) && should_forward(op1);
-		auto expr = join(to_enclosed_expression(op0), " - ", to_enclosed_expression(op1), " * ", "(",
-		                 to_enclosed_expression(op0), " / ", to_enclosed_expression(op1), ")");
+		string cast_op0, cast_op1;
+		auto expected_type = binary_op_bitcast_helper(cast_op0, cast_op1, int_type, op0, op1, false);
+
+		// Needs special handling.
+		auto expr = join(cast_op0, " - ", cast_op1, " * ", "(", cast_op0, " / ", cast_op1, ")");
 
 		if (implicit_integer_promotion)
+		{
 			expr = join(type_to_glsl(get<SPIRType>(result_type)), '(', expr, ')');
+		}
+		else if (out_type.basetype != int_type)
+		{
+			expected_type.basetype = int_type;
+			expr = join(bitcast_glsl_op(out_type, expected_type), '(', expr, ')');
+		}
 
 		emit_op(result_type, result_id, expr, forward);
 		inherit_expression_dependencies(result_id, op0);
@@ -15668,7 +15691,16 @@ string CompilerGLSL::argument_decl(const SPIRFunction::Parameter &arg)
 
 	if (type.pointer)
 	{
-		if (arg.write_count && arg.read_count)
+		// If we're passing around block types to function, we really mean reference in a pointer sense,
+		// but DXC does not like inout for mesh blocks, so workaround that. out is technically not correct,
+		// but it works in practice due to legalization. It's ... not great, but you gotta do what you gotta do.
+		// GLSL will never hit this case since it's not valid.
+		if (type.storage == StorageClassOutput && get_execution_model() == ExecutionModelMeshEXT &&
+		    has_decoration(type.self, DecorationBlock) && is_builtin_type(type) && arg.write_count)
+		{
+			direction = "out ";
+		}
+		else if (arg.write_count && arg.read_count)
 			direction = "inout ";
 		else if (arg.write_count)
 			direction = "out ";
@@ -15945,7 +15977,7 @@ string CompilerGLSL::image_type_glsl(const SPIRType &type, uint32_t id, bool /*m
 	case DimBuffer:
 		if (options.es && options.version < 320)
 			require_extension_internal("GL_EXT_texture_buffer");
-		else if (!options.es && options.version < 300)
+		else if (!options.es && options.version < 140)
 			require_extension_internal("GL_EXT_texture_buffer_object");
 		res += "Buffer";
 		break;
@@ -16488,6 +16520,8 @@ void CompilerGLSL::emit_function(SPIRFunction &func, const Bitset &return_flags)
 	{
 		auto &var = get<SPIRVariable>(v);
 		var.deferred_declaration = false;
+		if (var.storage == StorageClassTaskPayloadWorkgroupEXT)
+			continue;
 
 		if (variable_decl_is_remapped_storage(var, StorageClassWorkgroup))
 		{
