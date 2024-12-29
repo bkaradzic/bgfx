@@ -408,6 +408,8 @@ private:
 	std::vector<TypeID> composite_selection_workaround_types;
 
 	std::string get_inner_entry_point_name() const;
+
+	void cast_to_variable_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type) override;
 };
 } // namespace SPIRV_CROSS_NAMESPACE
 

@@ -4775,13 +4775,13 @@ void CompilerHLSL::emit_load(const Instruction &instruction)
 {
 	auto ops = stream(instruction);
 
-	auto *chain = maybe_get<SPIRAccessChain>(ops[2]);
+	uint32_t result_type = ops[0];
+	uint32_t id = ops[1];
+	uint32_t ptr = ops[2];
+
+	auto *chain = maybe_get<SPIRAccessChain>(ptr);
 	if (chain)
 	{
-		uint32_t result_type = ops[0];
-		uint32_t id = ops[1];
-		uint32_t ptr = ops[2];
-
 		auto &type = get<SPIRType>(result_type);
 		bool composite_load = !type.array.empty() || type.basetype == SPIRType::Struct;
 
@@ -4819,7 +4819,36 @@ void CompilerHLSL::emit_load(const Instruction &instruction)
 		}
 	}
 	else
-		CompilerGLSL::emit_instruction(instruction);
+	{
+		// Very special case where we cannot rely on IO lowering.
+		// Mesh shader clip/cull arrays ... Cursed.
+		auto &res_type = get<SPIRType>(result_type);
+		if (get_execution_model() == ExecutionModelMeshEXT &&
+		    has_decoration(ptr, DecorationBuiltIn) &&
+		    (get_decoration(ptr, DecorationBuiltIn) == BuiltInClipDistance ||
+		     get_decoration(ptr, DecorationBuiltIn) == BuiltInCullDistance) &&
+		    is_array(res_type) && !is_array(get<SPIRType>(res_type.parent_type)) &&
+		    to_array_size_literal(res_type) > 1)
+		{
+			track_expression_read(ptr);
+			string load_expr = "{ ";
+			uint32_t num_elements = to_array_size_literal(res_type);
+			for (uint32_t i = 0; i < num_elements; i++)
+			{
+				load_expr += join(to_expression(ptr), ".", index_to_swizzle(i));
+				if (i + 1 < num_elements)
+					load_expr += ", ";
+			}
+			load_expr += " }";
+			emit_op(result_type, id, load_expr, false);
+			register_read(id, ptr, false);
+			inherit_expression_dependencies(id, ptr);
+		}
+		else
+		{
+			CompilerGLSL::emit_instruction(instruction);
+		}
+	}
 }
 
 void CompilerHLSL::write_access_chain_array(const SPIRAccessChain &chain, uint32_t value,
@@ -6902,4 +6931,51 @@ bool CompilerHLSL::is_user_type_structured(uint32_t id) const
 		       user_type.compare(0, 33, "rasterizerorderedstructuredbuffer") == 0;
 	}
 	return false;
+}
+
+void CompilerHLSL::cast_to_variable_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type)
+{
+	// Loading a full array of ClipDistance needs special consideration in mesh shaders
+	// since we cannot lower them by wrapping the variables in global statics.
+	// Fortunately, clip/cull is a proper vector in HLSL so we can lower with simple rvalue casts.
+	if (get_execution_model() != ExecutionModelMeshEXT ||
+	    !has_decoration(target_id, DecorationBuiltIn) ||
+	    !is_array(expr_type))
+	{
+		CompilerGLSL::cast_to_variable_store(target_id, expr, expr_type);
+		return;
+	}
+
+	auto builtin = BuiltIn(get_decoration(target_id, DecorationBuiltIn));
+	if (builtin != BuiltInClipDistance && builtin != BuiltInCullDistance)
+	{
+		CompilerGLSL::cast_to_variable_store(target_id, expr, expr_type);
+		return;
+	}
+
+	// Array of array means one thread is storing clip distance for all vertices. Nonsensical?
+	if (is_array(get<SPIRType>(expr_type.parent_type)))
+		SPIRV_CROSS_THROW("Attempting to store all mesh vertices in one go. This is not supported.");
+
+	uint32_t num_clip = to_array_size_literal(expr_type);
+	if (num_clip > 4)
+		SPIRV_CROSS_THROW("Number of clip or cull distances exceeds 4, this will not work with mesh shaders.");
+
+	if (num_clip == 1)
+	{
+		// We already emit array here.
+		CompilerGLSL::cast_to_variable_store(target_id, expr, expr_type);
+		return;
+	}
+
+	auto unrolled_expr = join("float", num_clip, "(");
+	for (uint32_t i = 0; i < num_clip; i++)
+	{
+		unrolled_expr += join(expr, "[", i, "]");
+		if (i + 1 < num_clip)
+			unrolled_expr += ", ";
+	}
+
+	unrolled_expr += ")";
+	expr = std::move(unrolled_expr);
 }
