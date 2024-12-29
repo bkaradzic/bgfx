@@ -23,8 +23,10 @@
 #include <cassert>
 #include <cstring>
 #include <iomanip>
+#include <ios>
 #include <memory>
 #include <set>
+#include <sstream>
 #include <stack>
 #include <unordered_map>
 #include <utility>

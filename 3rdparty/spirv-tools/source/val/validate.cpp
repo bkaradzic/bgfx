@@ -366,6 +366,7 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
     if (auto error = RayTracingPass(*vstate, &instruction)) return error;
     if (auto error = RayReorderNVPass(*vstate, &instruction)) return error;
     if (auto error = MeshShadingPass(*vstate, &instruction)) return error;
+    if (auto error = TensorLayoutPass(*vstate, &instruction)) return error;
   }
 
   // Validate the preconditions involving adjacent instructions. e.g.

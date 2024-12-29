@@ -63,6 +63,8 @@ class CooperativeMatrixNV;
 class CooperativeMatrixKHR;
 class RayQueryKHR;
 class HitObjectNV;
+class TensorLayoutNV;
+class TensorViewNV;
 
 // Abstract class for a SPIR-V type. It has a bunch of As<sublcass>() methods,
 // which is used as a way to probe the actual <subclass>.
@@ -104,6 +106,8 @@ class Type {
     kCooperativeMatrixKHR,
     kRayQueryKHR,
     kHitObjectNV,
+    kTensorLayoutNV,
+    kTensorViewNV,
     kLast
   };
 
@@ -206,6 +210,8 @@ class Type {
   DeclareCastMethod(CooperativeMatrixKHR)
   DeclareCastMethod(RayQueryKHR)
   DeclareCastMethod(HitObjectNV)
+  DeclareCastMethod(TensorLayoutNV)
+  DeclareCastMethod(TensorViewNV)
 #undef DeclareCastMethod
 
 protected:
@@ -657,6 +663,53 @@ class CooperativeMatrixKHR : public Type {
   const uint32_t rows_id_;
   const uint32_t columns_id_;
   const uint32_t use_id_;
+};
+
+class TensorLayoutNV : public Type {
+ public:
+  TensorLayoutNV(const uint32_t dim, const uint32_t clamp_mode);
+  TensorLayoutNV(const TensorLayoutNV&) = default;
+
+  std::string str() const override;
+
+  TensorLayoutNV* AsTensorLayoutNV() override { return this; }
+  const TensorLayoutNV* AsTensorLayoutNV() const override { return this; }
+
+  size_t ComputeExtraStateHash(size_t hash, SeenTypes* seen) const override;
+
+  uint32_t dim_id() const { return dim_id_; }
+  uint32_t clamp_mode_id() const { return clamp_mode_id_; }
+
+ private:
+  bool IsSameImpl(const Type* that, IsSameCache*) const override;
+
+  const uint32_t dim_id_;
+  const uint32_t clamp_mode_id_;
+};
+
+class TensorViewNV : public Type {
+ public:
+  TensorViewNV(const uint32_t dim, const uint32_t clamp_mode,
+               const std::vector<uint32_t>& perm);
+  TensorViewNV(const TensorViewNV&) = default;
+
+  std::string str() const override;
+
+  TensorViewNV* AsTensorViewNV() override { return this; }
+  const TensorViewNV* AsTensorViewNV() const override { return this; }
+
+  size_t ComputeExtraStateHash(size_t hash, SeenTypes* seen) const override;
+
+  uint32_t dim_id() const { return dim_id_; }
+  uint32_t has_dimensions_id() const { return has_dimensions_id_; }
+  const std::vector<uint32_t>& perm() const { return perm_; }
+
+ private:
+  bool IsSameImpl(const Type* that, IsSameCache*) const override;
+
+  const uint32_t dim_id_;
+  const uint32_t has_dimensions_id_;
+  std::vector<uint32_t> perm_;
 };
 
 #define DefineParameterlessType(type, name)                                \

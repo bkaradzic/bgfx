@@ -43,6 +43,7 @@ constexpr uint32_t kGlobalVariableVariableIndex = 12;
 constexpr uint32_t kExtInstSetInIdx = 0;
 constexpr uint32_t kExtInstOpInIdx = 1;
 constexpr uint32_t kInterpolantInIdx = 2;
+constexpr uint32_t kCooperativeMatrixLoadSourceAddrInIdx = 0;
 
 // Sorting functor to present annotation instructions in an easy-to-process
 // order. The functor orders by opcode first and falls back on unique id
@@ -438,6 +439,11 @@ uint32_t AggressiveDCEPass::GetLoadedVariableFromNonFunctionCalls(
       }
       break;
     }
+    case spv::Op::OpCooperativeMatrixLoadNV:
+    case spv::Op::OpCooperativeMatrixLoadKHR:
+    case spv::Op::OpCooperativeMatrixLoadTensorNV:
+      return GetVariableId(
+          inst->GetSingleWordInOperand(kCooperativeMatrixLoadSourceAddrInIdx));
     default:
       break;
   }
@@ -670,6 +676,7 @@ void AggressiveDCEPass::InitializeModuleScopeLiveInstructions() {
     auto op = dbg.GetShader100DebugOpcode();
     if (op == NonSemanticShaderDebugInfo100DebugCompilationUnit ||
         op == NonSemanticShaderDebugInfo100DebugEntryPoint ||
+        op == NonSemanticShaderDebugInfo100DebugSource ||
         op == NonSemanticShaderDebugInfo100DebugSourceContinued) {
       AddToWorklist(&dbg);
     }
@@ -1029,7 +1036,8 @@ void AggressiveDCEPass::InitExtensions() {
       "SPV_KHR_compute_shader_derivatives",
       "SPV_NV_cooperative_matrix",
       "SPV_KHR_cooperative_matrix",
-      "SPV_KHR_ray_tracing_position_fetch"
+      "SPV_KHR_ray_tracing_position_fetch",
+      "SPV_KHR_fragment_shading_rate"
   });
   // clang-format on
 }

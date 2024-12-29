@@ -100,6 +100,7 @@ class TrimCapabilitiesPass : public Pass {
       spv::Capability::Shader,
       spv::Capability::ShaderClockKHR,
       spv::Capability::StorageImageReadWithoutFormat,
+      spv::Capability::StorageImageWriteWithoutFormat,
       spv::Capability::StorageInputOutput16,
       spv::Capability::StoragePushConstant16,
       spv::Capability::StorageUniform16,

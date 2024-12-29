@@ -70,6 +70,11 @@ void EliminateDeadMembersPass::FindLiveMembers() {
             MarkPointeeTypeAsFullUsed(inst.type_id());
           break;
       }
+    } else if (inst.opcode() == spv::Op::OpTypePointer) {
+      uint32_t storage_class = inst.GetSingleWordInOperand(0);
+      if (storage_class == uint32_t(spv::StorageClass::PhysicalStorageBuffer)) {
+        MarkTypeAsFullyUsed(inst.GetSingleWordInOperand(1));
+      }
     }
   }
 
@@ -200,6 +205,8 @@ void EliminateDeadMembersPass::MarkMembersAsLiveForExtract(
       case spv::Op::OpTypeRuntimeArray:
       case spv::Op::OpTypeVector:
       case spv::Op::OpTypeMatrix:
+      case spv::Op::OpTypeCooperativeMatrixNV:
+      case spv::Op::OpTypeCooperativeMatrixKHR:
         type_id = type_inst->GetSingleWordInOperand(0);
         break;
       default:
@@ -246,6 +253,8 @@ void EliminateDeadMembersPass::MarkMembersAsLiveForAccessChain(
       case spv::Op::OpTypeRuntimeArray:
       case spv::Op::OpTypeVector:
       case spv::Op::OpTypeMatrix:
+      case spv::Op::OpTypeCooperativeMatrixNV:
+      case spv::Op::OpTypeCooperativeMatrixKHR:
         type_id = type_inst->GetSingleWordInOperand(0);
         break;
       default:
@@ -505,6 +514,8 @@ bool EliminateDeadMembersPass::UpdateAccessChain(Instruction* inst) {
       case spv::Op::OpTypeRuntimeArray:
       case spv::Op::OpTypeVector:
       case spv::Op::OpTypeMatrix:
+      case spv::Op::OpTypeCooperativeMatrixNV:
+      case spv::Op::OpTypeCooperativeMatrixKHR:
         new_operands.emplace_back(inst->GetInOperand(i));
         type_id = type_inst->GetSingleWordInOperand(0);
         break;
@@ -578,6 +589,8 @@ bool EliminateDeadMembersPass::UpdateCompsiteExtract(Instruction* inst) {
       case spv::Op::OpTypeRuntimeArray:
       case spv::Op::OpTypeVector:
       case spv::Op::OpTypeMatrix:
+      case spv::Op::OpTypeCooperativeMatrixNV:
+      case spv::Op::OpTypeCooperativeMatrixKHR:
         type_id = type_inst->GetSingleWordInOperand(0);
         break;
       default:
@@ -639,6 +652,8 @@ bool EliminateDeadMembersPass::UpdateCompositeInsert(Instruction* inst) {
       case spv::Op::OpTypeRuntimeArray:
       case spv::Op::OpTypeVector:
       case spv::Op::OpTypeMatrix:
+      case spv::Op::OpTypeCooperativeMatrixNV:
+      case spv::Op::OpTypeCooperativeMatrixKHR:
         type_id = type_inst->GetSingleWordInOperand(0);
         break;
       default:

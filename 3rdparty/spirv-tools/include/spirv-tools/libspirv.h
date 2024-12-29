@@ -315,6 +315,12 @@ typedef enum spv_operand_type_t {
   SPV_OPERAND_TYPE_RAW_ACCESS_CHAIN_OPERANDS,
   // Optional enum type from SPV_NV_raw_access_chains
   SPV_OPERAND_TYPE_OPTIONAL_RAW_ACCESS_CHAIN_OPERANDS,
+  // Enum type from SPV_NV_tensor_addressing
+  SPV_OPERAND_TYPE_TENSOR_CLAMP_MODE,
+  // Enum type from SPV_NV_cooperative_matrix2
+  SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_REDUCE,
+  // Enum type from SPV_NV_cooperative_matrix2
+  SPV_OPERAND_TYPE_TENSOR_ADDRESSING_OPERANDS,
 
   // This is a sentinel value, and does not represent an operand type.
   // It should come last.
@@ -535,6 +541,7 @@ SPIRV_TOOLS_EXPORT const char* spvSoftwareVersionDetailsString(void);
 //    SPV_ENV_VULKAN_1_1_SPIRV_1_4 ->  SPIR-V 1.4
 //    SPV_ENV_VULKAN_1_2           ->  SPIR-V 1.5
 //    SPV_ENV_VULKAN_1_3           ->  SPIR-V 1.6
+//    SPV_ENV_VULKAN_1_4           ->  SPIR-V 1.6
 // Consult the description of API entry points for specific rules.
 typedef enum {
   SPV_ENV_UNIVERSAL_1_0,  // SPIR-V 1.0 latest revision, no other restrictions.
@@ -572,6 +579,7 @@ typedef enum {
 
   SPV_ENV_UNIVERSAL_1_6,  // SPIR-V 1.6 latest revision, no other restrictions.
   SPV_ENV_VULKAN_1_3,     // Vulkan 1.3 latest revision.
+  SPV_ENV_VULKAN_1_4,     // Vulkan 1.4 latest revision.
 
   SPV_ENV_MAX  // Keep this as the last enum value.
 } spv_target_env;
