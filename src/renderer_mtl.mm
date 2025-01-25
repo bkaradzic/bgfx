@@ -498,7 +498,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			BX_UNUSED(_init);
 			BX_TRACE("Init.");
 
-#define CHECK_FEATURE_AVAILABLE(feature, ...) if (@available(__VA_ARGS__)) { feature = true; } else { feature = false; }
+#define CHECK_FEATURE_AVAILABLE(feature, ...) \
+	BX_MACRO_BLOCK_BEGIN \
+		if (@available(__VA_ARGS__)) { feature = true; } else { feature = false; } \
+		BX_TRACE("[MTL] OS feature %s: %d", (#feature) + 2, feature); \
+	BX_MACRO_BLOCK_END
 
 			CHECK_FEATURE_AVAILABLE(m_usesMTLBindings, macOS 13.0, iOS 16.0, tvOS 16.0, macCatalyst 16.0, VISION_OS_MINIMUM *);
 			CHECK_FEATURE_AVAILABLE(m_hasCPUCacheModesAndStorageModes, iOS 9.0, macOS 10.11, macCatalyst 13.1, tvOS 9.0, VISION_OS_MINIMUM *);
@@ -3672,6 +3676,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		desc.mipmapLevelCount = 1;
 		desc.sampleCount = sampleCount;
 		desc.arrayLength = 1;
+		desc.swizzle = { MTLTextureSwizzleRed, MTLTextureSwizzleGreen, MTLTextureSwizzleBlue, MTLTextureSwizzleAlpha };
 
 		if (s_renderMtl->m_hasCPUCacheModesAndStorageModes)
 		{
