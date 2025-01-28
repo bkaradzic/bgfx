@@ -3385,10 +3385,11 @@ namespace bgfx { namespace d3d12
 				}
 
 				UniformType::Enum type;
+				uint8_t typeBits;
 				uint16_t loc;
 				uint16_t num;
 				uint16_t copy;
-				UniformBuffer::decodeOpcode(opcode, type, loc, num, copy);
+				UniformBuffer::decodeOpcode(opcode, type, typeBits, loc, num, copy);
 
 				const char* data;
 				if (copy)
@@ -3402,10 +3403,9 @@ namespace bgfx { namespace d3d12
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
-				switch ( (uint32_t)type)
+				switch (type)
 				{
 				case UniformType::Mat3:
-				case UniformType::Mat3|kUniformFragmentBit:
 					 {
 						 float* value = (float*)data;
 						 for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3*16, value += 9)
@@ -3423,19 +3423,16 @@ namespace bgfx { namespace d3d12
 							 mtx.un.val[ 9] = value[7];
 							 mtx.un.val[10] = value[8];
 							 mtx.un.val[11] = 0.0f;
-							 setShaderUniform(uint8_t(type), loc, &mtx.un.val[0], 3);
+							 setShaderUniform(uint8_t(type | typeBits), loc, &mtx.un.val[0], 3);
 						 }
 					}
 					break;
 
 				case UniformType::Sampler:
-				case UniformType::Sampler | kUniformFragmentBit:
 				case UniformType::Vec4:
-				case UniformType::Vec4 | kUniformFragmentBit:
 				case UniformType::Mat4:
-				case UniformType::Mat4 | kUniformFragmentBit:
 					{
-						setShaderUniform(uint8_t(type), loc, data, num);
+						setShaderUniform(uint8_t(type | typeBits), loc, data, num);
 					}
 					break;
 
@@ -3443,7 +3440,7 @@ namespace bgfx { namespace d3d12
 					break;
 
 				default:
-					BX_TRACE("%4d: INVALID 0x%08x, t %d, l %d, n %d, c %d", _uniformBuffer.getPos(), opcode, type, loc, num, copy);
+					BX_TRACE("%4d: INVALID 0x%08x, t %d|%d, l %d, n %d, c %d", _uniformBuffer.getPos(), opcode, type, typeBits, loc, num, copy);
 					break;
 				}
 			}
@@ -4786,8 +4783,10 @@ namespace bgfx { namespace d3d12
 				bx::read(&reader, &name, nameSize, &err);
 				name[nameSize] = '\0';
 
-				uint8_t type = 0;
-				bx::read(&reader, type, &err);
+				uint8_t typeCode = 0;
+				bx::read(&reader, typeCode, &err);
+				uint8_t typeBits = typeCode & kUniformMask;
+				UniformType::Enum type = UniformType::Enum( typeCode & (~kUniformMask) );
 
 				uint8_t num = 0;
 				bx::read(&reader, num, &err);
@@ -4821,7 +4820,7 @@ namespace bgfx { namespace d3d12
 					m_predefined[m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
 					m_numPredefined++;
 				}
-				else if (0 == (kUniformSamplerBit & type) )
+				else if (0 == (kUniformSamplerBit & typeBits) )
 				{
 					const UniformRegInfo* info = s_renderD3D12->m_uniformReg.find(name);
 					BX_WARN(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
@@ -4834,7 +4833,7 @@ namespace bgfx { namespace d3d12
 						}
 
 						kind = "user";
-						m_constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), regIndex, info->m_handle, regCount);
+						m_constantBuffer->writeUniformHandle(type, typeBits | fragmentBit, regIndex, info->m_handle, regCount);
 					}
 				}
 				else
@@ -4845,7 +4844,7 @@ namespace bgfx { namespace d3d12
 				BX_TRACE("\t%s: %s (%s), num %2d, r.index %3d, r.count %2d"
 					, kind
 					, name
-					, getUniformTypeName(UniformType::Enum(type&~kUniformMask) )
+					, getUniformTypeName(type)
 					, num
 					, regIndex
 					, regCount

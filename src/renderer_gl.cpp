@@ -4421,10 +4421,12 @@ namespace bgfx { namespace gl
 				}
 
 				UniformType::Enum type;
+				uint8_t typeBits;
 				uint16_t ignore;
 				uint16_t num;
 				uint16_t copy;
-				UniformBuffer::decodeOpcode(opcode, type, ignore, num, copy);
+				UniformBuffer::decodeOpcode(opcode, type, typeBits, ignore, num, copy);
+				BX_ASSERT(typeBits == 0);
 
 				const char* data;
 				if (copy)
@@ -5313,7 +5315,7 @@ namespace bgfx { namespace gl
 					}
 
 					UniformType::Enum type = convertGlType(gltype);
-					m_constantBuffer->writeUniformHandle(type, 0, info->m_handle, uint16_t(num) );
+					m_constantBuffer->writeUniformHandle(type, 0, 0, info->m_handle, uint16_t(num) );
 					m_constantBuffer->write(loc);
 					BX_TRACE("store %s %d", name, info->m_handle);
 				}

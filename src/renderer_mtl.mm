@@ -1748,10 +1748,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				}
 
 				UniformType::Enum type;
+				uint8_t typeBits;
 				uint16_t loc;
 				uint16_t num;
 				uint16_t copy;
-				UniformBuffer::decodeOpcode(opcode, type, loc, num, copy);
+				UniformBuffer::decodeOpcode(opcode, type, typeBits, loc, num, copy);
 
 				const char* data;
 				if (copy)
@@ -1765,10 +1766,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
-				switch ( (uint32_t)type)
+				switch (type)
 				{
 				case UniformType::Mat3:
-				case UniformType::Mat3|kUniformFragmentBit:
 					{
 						float* value = (float*)data;
 						for (uint32_t ii = 0, count = num/3; ii < count; ++ii,  loc += 3*16, value += 9)
@@ -1786,19 +1786,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							mtx.un.val[ 9] = value[7];
 							mtx.un.val[10] = value[8];
 							mtx.un.val[11] = 0.0f;
-							setShaderUniform(uint8_t(type), loc, &mtx.un.val[0], 3);
+							setShaderUniform(uint8_t(type | typeBits), loc, &mtx.un.val[0], 3);
 						}
 					}
 					break;
 
 				case UniformType::Sampler:
-				case UniformType::Sampler | kUniformFragmentBit:
 				case UniformType::Vec4:
-				case UniformType::Vec4 | kUniformFragmentBit:
 				case UniformType::Mat4:
-				case UniformType::Mat4 | kUniformFragmentBit:
 					{
-						setShaderUniform(uint8_t(type), loc, data, num);
+						setShaderUniform(uint8_t(type | typeBits), loc, data, num);
 					}
 					break;
 
@@ -1806,7 +1803,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					break;
 
 				default:
-					BX_TRACE("%4d: INVALID 0x%08x, t %d, l %d, n %d, c %d", _uniformBuffer.getPos(), opcode, type, loc, num, copy);
+					BX_TRACE("%4d: INVALID 0x%08x, t %d|%d, l %d, n %d, c %d", _uniformBuffer.getPos(), opcode, type, typeBits, loc, num, copy);
 					break;
 				}
 			}
@@ -2225,7 +2222,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 												}
 
 												UniformType::Enum type = convertMtlType(dataType);
-												constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), uint32_t(uniform.offset), info->m_handle, uint16_t(num) );
+												constantBuffer->writeUniformHandle(type, fragmentBit, uint32_t(uniform.offset), info->m_handle, uint16_t(num) );
 												BX_TRACE("store %s %d offset:%d", name, info->m_handle, uint32_t(uniform.offset) );
 											}
 										}

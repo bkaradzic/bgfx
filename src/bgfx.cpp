@@ -1517,14 +1517,14 @@ namespace bgfx
 
 	void UniformBuffer::writeUniform(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num)
 	{
-		const uint32_t opcode = encodeOpcode(_type, _loc, _num, true);
+		const uint32_t opcode = encodeOpcode(_type, 0, _loc, _num, true);
 		write(opcode);
 		write(_value, g_uniformTypeSize[_type]*_num);
 	}
 
-	void UniformBuffer::writeUniformHandle(UniformType::Enum _type, uint16_t _loc, UniformHandle _handle, uint16_t _num)
+	void UniformBuffer::writeUniformHandle(UniformType::Enum _type, uint8_t _typeBits, uint16_t _loc, UniformHandle _handle, uint16_t _num)
 	{
-		const uint32_t opcode = encodeOpcode(_type, _loc, _num, false);
+		const uint32_t opcode = encodeOpcode(_type, _typeBits, _loc, _num, false);
 		write(opcode);
 		write(&_handle, sizeof(UniformHandle) );
 	}
@@ -1532,7 +1532,7 @@ namespace bgfx
 	void UniformBuffer::writeMarker(const bx::StringView& _name)
 	{
 		const uint16_t num = bx::narrowCast<uint16_t>(_name.getLength()+1);
-		const uint32_t opcode = encodeOpcode(bgfx::UniformType::Count, 0, num, true);
+		const uint32_t opcode = encodeOpcode(bgfx::UniformType::Count, 0, 0, num, true);
 		write(opcode);
 		write(_name.getPtr(), num-1);
 		const char zero = '\0';
@@ -2521,10 +2521,11 @@ namespace bgfx
 			}
 
 			UniformType::Enum type;
+			uint8_t typeBits;
 			uint16_t loc;
 			uint16_t num;
 			uint16_t copy;
-			UniformBuffer::decodeOpcode(opcode, type, loc, num, copy);
+			UniformBuffer::decodeOpcode(opcode, type, typeBits, loc, num, copy);
 
 			const uint32_t size = g_uniformTypeSize[type]*num;
 			const char* data = _uniformBuffer->read(size);
