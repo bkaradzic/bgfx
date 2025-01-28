@@ -4150,7 +4150,7 @@ VK_IMPORT_DEVICE
 					break;
 				}
 
-				UniformType::Enum type;
+				uint8_t type;
 				uint16_t loc;
 				uint16_t num;
 				uint16_t copy;
@@ -4168,7 +4168,7 @@ VK_IMPORT_DEVICE
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
-				switch ( (uint32_t)type)
+				switch (type)
 				{
 				case UniformType::Mat3:
 				case UniformType::Mat3|kUniformFragmentBit:
@@ -5090,7 +5090,7 @@ VK_DESTROY
 							}
 
 							kind = "user";
-							m_constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), regIndex, info->m_handle, regCount);
+							m_constantBuffer->writeUniformHandle(type|fragmentBit, regIndex, info->m_handle, regCount);
 						}
 					}
 				}
