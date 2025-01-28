@@ -3384,7 +3384,7 @@ namespace bgfx { namespace d3d12
 					break;
 				}
 
-				UniformType::Enum type;
+				uint8_t type;
 				uint16_t loc;
 				uint16_t num;
 				uint16_t copy;
@@ -3402,7 +3402,7 @@ namespace bgfx { namespace d3d12
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
-				switch ( (uint32_t)type)
+				switch (type)
 				{
 				case UniformType::Mat3:
 				case UniformType::Mat3|kUniformFragmentBit:
@@ -4834,7 +4834,7 @@ namespace bgfx { namespace d3d12
 						}
 
 						kind = "user";
-						m_constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), regIndex, info->m_handle, regCount);
+						m_constantBuffer->writeUniformHandle(type|fragmentBit, regIndex, info->m_handle, regCount);
 					}
 				}
 				else
