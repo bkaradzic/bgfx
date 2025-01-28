@@ -4426,7 +4426,7 @@ namespace bgfx { namespace gl
 				uint16_t num;
 				uint16_t copy;
 				UniformBuffer::decodeOpcode(opcode, type, typeBits, ignore, num, copy);
-				BX_ASSERT(typeBits == 0);
+				BX_ASSERT(typeBits == 0, "OpenGL never uses typeBits for uniforms.");
 
 				const char* data;
 				if (copy)
