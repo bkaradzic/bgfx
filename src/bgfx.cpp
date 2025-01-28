@@ -1522,7 +1522,7 @@ namespace bgfx
 		write(_value, g_uniformTypeSize[_type]*_num);
 	}
 
-	void UniformBuffer::writeUniformHandle(UniformType::Enum _type, uint16_t _loc, UniformHandle _handle, uint16_t _num)
+	void UniformBuffer::writeUniformHandle(uint8_t _type, uint16_t _loc, UniformHandle _handle, uint16_t _num)
 	{
 		const uint32_t opcode = encodeOpcode(_type, _loc, _num, false);
 		write(opcode);
@@ -2520,7 +2520,7 @@ namespace bgfx
 				break;
 			}
 
-			UniformType::Enum type;
+			uint8_t type;
 			uint16_t loc;
 			uint16_t num;
 			uint16_t copy;

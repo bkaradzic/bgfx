@@ -1751,7 +1751,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					break;
 				}
 
-				UniformType::Enum type;
+				uint8_t type;
 				uint16_t loc;
 				uint16_t num;
 				uint16_t copy;
@@ -1769,7 +1769,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
-				switch ( (uint32_t)type)
+				switch (type)
 				{
 				case UniformType::Mat3:
 				case UniformType::Mat3|kUniformFragmentBit:
@@ -2229,7 +2229,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 												}
 
 												UniformType::Enum type = convertMtlType(dataType);
-												constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), uint32_t(uniform.offset), info->m_handle, uint16_t(num) );
+												constantBuffer->writeUniformHandle(type|fragmentBit, uint32_t(uniform.offset), info->m_handle, uint16_t(num) );
 												BX_TRACE("store %s %d offset:%d", name, info->m_handle, uint32_t(uniform.offset) );
 											}
 										}
