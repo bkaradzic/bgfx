@@ -1478,7 +1478,7 @@ namespace bgfx
 	class UniformBuffer
 	{
 	public:
-		static UniformBuffer* create(uint32_t _size = 1<<20)
+		static UniformBuffer* create(uint32_t _size = BGFX_CONFIG_UNIFORM_BUFFER_CREATE_SIZE)
 		{
 			const uint32_t structSize = sizeof(UniformBuffer)-sizeof(UniformBuffer::m_buffer);
 
@@ -1493,7 +1493,7 @@ namespace bgfx
 			bx::free(g_allocator, _uniformBuffer);
 		}
 
-		static void update(UniformBuffer** _uniformBuffer, uint32_t _threshold = 64<<10, uint32_t _grow = 1<<20)
+		static void update(UniformBuffer** _uniformBuffer, uint32_t _threshold = BGFX_CONFIG_UNIFORM_BUFFER_UPDATE_THRESHOLD, uint32_t _grow = BGFX_CONFIG_UNIFORM_BUFFER_UPDATE_GROW)
 		{
 			UniformBuffer* uniformBuffer = *_uniformBuffer;
 			if (_threshold >= uniformBuffer->m_size - uniformBuffer->m_pos)

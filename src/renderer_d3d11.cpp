@@ -2263,7 +2263,7 @@ namespace bgfx { namespace d3d11
 			}
 			m_occlusionQuery.postReset();
 
-			if (NULL == m_backBufferDepthStencil)
+			if (BX_ENABLED(BGFX_CONFIG_BACK_BUFFER_DEPTH_STENCIL) && NULL == m_backBufferDepthStencil)
 			{
 				D3D11_TEXTURE2D_DESC dsd;
 				dsd.Width  = bx::uint32_max(m_scd.width,  1);
