@@ -7819,10 +7819,10 @@ VK_DESTROY
 		}
 
 		m_denseIdx = _denseIdx;
-		m_nwh = _nwh;
-		m_width = _width;
-		m_height = _height;
-		m_sampler = m_swapChain.m_sampler;
+		m_nwh      = _nwh;
+		m_width    = m_swapChain.m_sci.imageExtent.width;
+		m_height   = m_swapChain.m_sci.imageExtent.height;
+		m_sampler  = m_swapChain.m_sampler;
 
 		return result;
 	}
