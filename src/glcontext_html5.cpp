@@ -31,7 +31,7 @@ namespace bgfx { namespace gl
 		SwapChainGL(int _context, const char* _canvas)
 			: m_context(_context)
 		{
-			m_canvas = (char*)bx::alloc(g_allocator, strlen(_canvas) + 1);
+			m_canvas = (char*)bx::alloc(g_allocator, bx::strLen(_canvas) + 1);
 			strcpy(m_canvas, _canvas);
 
 			makeCurrent();
