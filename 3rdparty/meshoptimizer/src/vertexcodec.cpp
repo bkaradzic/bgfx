@@ -138,12 +138,9 @@ const int kEncodeDefaultLevel = 2;
 
 static size_t getVertexBlockSize(size_t vertex_size)
 {
-	// make sure the entire block fits into the scratch buffer
-	size_t result = kVertexBlockSizeBytes / vertex_size;
-
-	// align to byte group size; we encode each byte as a byte group
-	// if vertex block is misaligned, it results in wasted bytes, so just truncate the block size
-	result &= ~(kByteGroupSize - 1);
+	// make sure the entire block fits into the scratch buffer and is aligned to byte group size
+	// note: the block size is implicitly part of the format, so we can't change it without breaking compatibility
+	size_t result = (kVertexBlockSizeBytes / vertex_size) & ~(kByteGroupSize - 1);
 
 	return (result < kVertexBlockMaxSize) ? result : kVertexBlockMaxSize;
 }
@@ -179,13 +176,14 @@ static Stats* bytestats = NULL;
 static Stats vertexstats[256];
 #endif
 
-static bool canEncodeZero(const unsigned char* buffer, size_t buffer_size)
+static bool encodeBytesGroupZero(const unsigned char* buffer)
 {
-	for (size_t i = 0; i < buffer_size; ++i)
-		if (buffer[i])
-			return false;
+	assert(kByteGroupSize == sizeof(unsigned long long) * 2);
 
-	return true;
+	unsigned long long v[2];
+	memcpy(v, buffer, sizeof(v));
+
+	return (v[0] | v[1]) == 0;
 }
 
 static size_t encodeBytesGroupMeasure(const unsigned char* buffer, int bits)
@@ -193,7 +191,7 @@ static size_t encodeBytesGroupMeasure(const unsigned char* buffer, int bits)
 	assert(bits >= 0 && bits <= 8);
 
 	if (bits == 0)
-		return canEncodeZero(buffer, kByteGroupSize) ? 0 : size_t(-1);
+		return encodeBytesGroupZero(buffer) ? 0 : size_t(-1);
 
 	if (bits == 8)
 		return kByteGroupSize;
@@ -389,6 +387,11 @@ static int estimateRotate(const unsigned char* vertex_data, size_t vertex_count,
 			vertex += vertex_size;
 		}
 
+#if TRACE
+		for (int j = 0; j < 32; ++j)
+			vertexstats[k + (j / 8)].bitc[j % 8] += (i + group_size < vertex_count ? group_size : vertex_count - i) * (1 - ((bitg >> j) & 1));
+#endif
+
 		for (int j = 0; j < 8; ++j)
 		{
 			unsigned int bitr = rotate(bitg, j);
@@ -455,9 +458,18 @@ static int estimateChannel(const unsigned char* vertex_data, size_t vertex_count
 	return best_channel == 2 ? best_channel | (xor_rot << 4) : best_channel;
 }
 
+static bool estimateControlZero(const unsigned char* buffer, size_t vertex_count_aligned)
+{
+	for (size_t i = 0; i < vertex_count_aligned; i += kByteGroupSize)
+		if (!encodeBytesGroupZero(buffer + i))
+			return false;
+
+	return true;
+}
+
 static int estimateControl(const unsigned char* buffer, size_t vertex_count, size_t vertex_count_aligned, int level)
 {
-	if (canEncodeZero(buffer, vertex_count))
+	if (estimateControlZero(buffer, vertex_count_aligned))
 		return 2; // zero encoding
 
 	if (level == 0)
@@ -522,18 +534,6 @@ static unsigned char* encodeVertexBlock(unsigned char* data, unsigned char* data
 #if TRACE
 		const unsigned char* olddata = data;
 		bytestats = &vertexstats[k];
-
-		for (size_t ig = 0; ig < vertex_count; ig += kByteGroupSize)
-		{
-			unsigned char last = (ig == 0) ? last_vertex[k] : vertex_data[vertex_size * (ig - 1) + k];
-			unsigned char delta = 0xff;
-
-			for (size_t i = ig; i < ig + kByteGroupSize && i < vertex_count; ++i)
-				delta &= ~(vertex_data[vertex_size * i + k] ^ last);
-
-			for (int j = 0; j < 8; ++j)
-				bytestats->bitc[j] += (vertex_count - ig < kByteGroupSize ? vertex_count - ig : kByteGroupSize) * ((delta >> j) & 1);
-		}
 #endif
 
 		int ctrl = 0;
@@ -1349,6 +1349,34 @@ inline uint8x16_t rotate32(uint8x16_t v, int r)
 	uint32x4_t v32 = vreinterpretq_u32_u8(v);
 	return vreinterpretq_u8_u32(vorrq_u32(vshlq_u32(v32, vdupq_n_s32(r)), vshlq_u32(v32, vdupq_n_s32(r - 32))));
 }
+
+template <int Channel>
+SIMD_TARGET inline uint8x8_t rebase(uint8x8_t npi, uint8x16_t r0, uint8x16_t r1, uint8x16_t r2, uint8x16_t r3)
+{
+	switch (Channel)
+	{
+	case 0:
+	{
+		uint8x16_t rsum = vaddq_u8(vaddq_u8(r0, r1), vaddq_u8(r2, r3));
+		uint8x8_t rsumx = vadd_u8(vget_low_u8(rsum), vget_high_u8(rsum));
+		return vadd_u8(vadd_u8(npi, rsumx), vext_u8(rsumx, rsumx, 4));
+	}
+	case 1:
+	{
+		uint16x8_t rsum = vaddq_u16(vaddq_u16(vreinterpretq_u16_u8(r0), vreinterpretq_u16_u8(r1)), vaddq_u16(vreinterpretq_u16_u8(r2), vreinterpretq_u16_u8(r3)));
+		uint16x4_t rsumx = vadd_u16(vget_low_u16(rsum), vget_high_u16(rsum));
+		return vreinterpret_u8_u16(vadd_u16(vadd_u16(vreinterpret_u16_u8(npi), rsumx), vext_u16(rsumx, rsumx, 2)));
+	}
+	case 2:
+	{
+		uint8x16_t rsum = veorq_u8(veorq_u8(r0, r1), veorq_u8(r2, r3));
+		uint8x8_t rsumx = veor_u8(vget_low_u8(rsum), vget_high_u8(rsum));
+		return veor_u8(veor_u8(npi, rsumx), vext_u8(rsumx, rsumx, 4));
+	}
+	default:
+		return npi;
+	}
+}
 #endif
 
 #ifdef SIMD_WASM
@@ -1443,7 +1471,7 @@ decodeDeltas4Simd(const unsigned char* buffer, unsigned char* transposed, size_t
 #define TEMP __m128i
 #define PREP() __m128i pi = _mm_cvtsi32_si128(*reinterpret_cast<const int*>(last_vertex))
 #define LOAD(i) __m128i r##i = _mm_loadu_si128(reinterpret_cast<const __m128i*>(buffer + j + i * vertex_count_aligned))
-#define GRP4(i) t0 = _mm_shuffle_epi32(r##i, 0), t1 = _mm_shuffle_epi32(r##i, 1), t2 = _mm_shuffle_epi32(r##i, 2), t3 = _mm_shuffle_epi32(r##i, 3)
+#define GRP4(i) t0 = r##i, t1 = _mm_shuffle_epi32(r##i, 1), t2 = _mm_shuffle_epi32(r##i, 2), t3 = _mm_shuffle_epi32(r##i, 3)
 #define FIXD(i) t##i = pi = Channel == 0 ? _mm_add_epi8(pi, t##i) : (Channel == 1 ? _mm_add_epi16(pi, t##i) : _mm_xor_si128(pi, t##i))
 #define SAVE(i) *reinterpret_cast<int*>(savep) = _mm_cvtsi128_si32(t##i), savep += vertex_size
 #endif
@@ -1461,9 +1489,9 @@ decodeDeltas4Simd(const unsigned char* buffer, unsigned char* transposed, size_t
 #define TEMP v128_t
 #define PREP() v128_t pi = wasm_v128_load(last_vertex)
 #define LOAD(i) v128_t r##i = wasm_v128_load(buffer + j + i * vertex_count_aligned)
-#define GRP4(i) t0 = wasmx_splat_v32x4(r##i, 0), t1 = wasmx_splat_v32x4(r##i, 1), t2 = wasmx_splat_v32x4(r##i, 2), t3 = wasmx_splat_v32x4(r##i, 3)
+#define GRP4(i) t0 = r##i, t1 = wasmx_splat_v32x4(r##i, 1), t2 = wasmx_splat_v32x4(r##i, 2), t3 = wasmx_splat_v32x4(r##i, 3)
 #define FIXD(i) t##i = pi = Channel == 0 ? wasm_i8x16_add(pi, t##i) : (Channel == 1 ? wasm_i16x8_add(pi, t##i) : wasm_v128_xor(pi, t##i))
-#define SAVE(i) *reinterpret_cast<int*>(savep) = wasm_i32x4_extract_lane(t##i, 0), savep += vertex_size
+#define SAVE(i) wasm_v128_store32_lane(savep, t##i, 0), savep += vertex_size
 #endif
 
 #define UNZR(i) r##i = Channel == 0 ? unzigzag8(r##i) : (Channel == 1 ? unzigzag16(r##i) : rotate32(r##i, rot))
@@ -1482,6 +1510,7 @@ decodeDeltas4Simd(const unsigned char* buffer, unsigned char* transposed, size_t
 		transpose8(r0, r1, r2, r3);
 
 		TEMP t0, t1, t2, t3;
+		TEMP npi = pi;
 
 		UNZR(0);
 		GRP4(0);
@@ -1502,6 +1531,13 @@ decodeDeltas4Simd(const unsigned char* buffer, unsigned char* transposed, size_t
 		GRP4(3);
 		FIXD(0), FIXD(1), FIXD(2), FIXD(3);
 		SAVE(0), SAVE(1), SAVE(2), SAVE(3);
+
+#if defined(SIMD_LATENCYOPT) && defined(SIMD_NEON) && (defined(__APPLE__) || defined(_WIN32))
+		// instead of relying on accumulated pi, recompute it from scratch from r0..r3; this shortens dependency between loop iterations
+		pi = rebase<Channel>(npi, r0, r1, r2, r3);
+#else
+		(void)npi;
+#endif
 
 #undef UNZR
 #undef TEMP
@@ -1724,13 +1760,12 @@ size_t meshopt_encodeVertexBufferLevel(unsigned char* buffer, size_t buffer_size
 			    double(vsk.ctrl[2]) / double(total_ctrl) * 100, double(vsk.ctrl[3]) / double(total_ctrl) * 100);
 		}
 
-#if TRACE > 1
-		printf(" | bitc [%3.0f%% %3.0f%% %3.0f%% %3.0f%% %3.0f%% %3.0f%% %3.0f%% %3.0f%%]",
-		    double(vsk.bitc[0]) / double(vertex_count) * 100, double(vsk.bitc[1]) / double(vertex_count) * 100,
-		    double(vsk.bitc[2]) / double(vertex_count) * 100, double(vsk.bitc[3]) / double(vertex_count) * 100,
-		    double(vsk.bitc[4]) / double(vertex_count) * 100, double(vsk.bitc[5]) / double(vertex_count) * 100,
-		    double(vsk.bitc[6]) / double(vertex_count) * 100, double(vsk.bitc[7]) / double(vertex_count) * 100);
-#endif
+		if (level >= 3)
+			printf(" | bitc [%3.0f%% %3.0f%% %3.0f%% %3.0f%% %3.0f%% %3.0f%% %3.0f%% %3.0f%%]",
+			    double(vsk.bitc[0]) / double(vertex_count) * 100, double(vsk.bitc[1]) / double(vertex_count) * 100,
+			    double(vsk.bitc[2]) / double(vertex_count) * 100, double(vsk.bitc[3]) / double(vertex_count) * 100,
+			    double(vsk.bitc[4]) / double(vertex_count) * 100, double(vsk.bitc[5]) / double(vertex_count) * 100,
+			    double(vsk.bitc[6]) / double(vertex_count) * 100, double(vsk.bitc[7]) / double(vertex_count) * 100);
 
 		printf("\n");
 	}
@@ -1768,8 +1803,7 @@ size_t meshopt_encodeVertexBufferBound(size_t vertex_count, size_t vertex_size)
 
 void meshopt_encodeVertexVersion(int version)
 {
-	// note: this version is experimental and the binary format is not finalized; this should not be used in production!
-	assert(unsigned(version) <= 0 || version == 0xe);
+	assert(unsigned(version) <= 1);
 
 	meshopt::gEncodeVertexVersion = version;
 }
@@ -1810,7 +1844,7 @@ int meshopt_decodeVertexBuffer(void* destination, size_t vertex_count, size_t ve
 		return -1;
 
 	int version = data_header & 0x0f;
-	if (version > 0 && version != 0xe)
+	if (version > 1)
 		return -1;
 
 	size_t tail_size = vertex_size + (version == 0 ? 0 : vertex_size / 4);

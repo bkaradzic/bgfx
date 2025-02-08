@@ -1,7 +1,7 @@
 /**
  * meshoptimizer - version 0.22
  *
- * Copyright (C) 2016-2024, by Arseny Kapoulkine (arseny.kapoulkine@gmail.com)
+ * Copyright (C) 2016-2025, by Arseny Kapoulkine (arseny.kapoulkine@gmail.com)
  * Report bugs and download new versions at https://github.com/zeux/meshoptimizer
  *
  * This library is distributed under the MIT License. See notice at the end of this file.
@@ -289,7 +289,7 @@ MESHOPTIMIZER_API size_t meshopt_encodeVertexBufferLevel(unsigned char* buffer, 
 
 /**
  * Set vertex encoder format version
- * version must specify the data format version to encode; valid values are 0 (decodable by all library versions)
+ * version must specify the data format version to encode; valid values are 0 (decodable by all library versions) and 1 (decodable by 0.23+)
  */
 MESHOPTIMIZER_API void meshopt_encodeVertexVersion(int version);
 
@@ -609,34 +609,6 @@ MESHOPTIMIZER_API void meshopt_spatialSortRemap(unsigned int* destination, const
 MESHOPTIMIZER_EXPERIMENTAL void meshopt_spatialSortTriangles(unsigned int* destination, const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride);
 
 /**
- * Set allocation callbacks
- * These callbacks will be used instead of the default operator new/operator delete for all temporary allocations in the library.
- * Note that all algorithms only allocate memory for temporary use.
- * allocate/deallocate are always called in a stack-like order - last pointer to be allocated is deallocated first.
- */
-MESHOPTIMIZER_API void meshopt_setAllocator(void* (MESHOPTIMIZER_ALLOC_CALLCONV* allocate)(size_t), void (MESHOPTIMIZER_ALLOC_CALLCONV* deallocate)(void*));
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
-
-/* Quantization into commonly supported data formats */
-#ifdef __cplusplus
-/**
- * Quantize a float in [0..1] range into an N-bit fixed point unorm value
- * Assumes reconstruction function (q / (2^N-1)), which is the case for fixed-function normalized fixed point conversion
- * Maximum reconstruction error: 1/2^(N+1)
- */
-inline int meshopt_quantizeUnorm(float v, int N);
-
-/**
- * Quantize a float in [-1..1] range into an N-bit fixed point snorm value
- * Assumes reconstruction function (q / (2^(N-1)-1)), which is the case for fixed-function normalized fixed point conversion (except early OpenGL versions)
- * Maximum reconstruction error: 1/2^N
- */
-inline int meshopt_quantizeSnorm(float v, int N);
-
-/**
  * Quantize a float into half-precision (as defined by IEEE-754 fp16) floating point value
  * Generates +-inf for overflow, preserves NaN, flushes denormals to zero, rounds to nearest
  * Representable magnitude range: [6e-5; 65504]
@@ -656,6 +628,34 @@ MESHOPTIMIZER_API float meshopt_quantizeFloat(float v, int N);
  * Preserves Inf/NaN, flushes denormals to zero
  */
 MESHOPTIMIZER_API float meshopt_dequantizeHalf(unsigned short h);
+
+/**
+ * Set allocation callbacks
+ * These callbacks will be used instead of the default operator new/operator delete for all temporary allocations in the library.
+ * Note that all algorithms only allocate memory for temporary use.
+ * allocate/deallocate are always called in a stack-like order - last pointer to be allocated is deallocated first.
+ */
+MESHOPTIMIZER_API void meshopt_setAllocator(void* (MESHOPTIMIZER_ALLOC_CALLCONV* allocate)(size_t), void (MESHOPTIMIZER_ALLOC_CALLCONV* deallocate)(void*));
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
+/* Quantization into fixed point normalized formats; these are only available as inline C++ functions */
+#ifdef __cplusplus
+/**
+ * Quantize a float in [0..1] range into an N-bit fixed point unorm value
+ * Assumes reconstruction function (q / (2^N-1)), which is the case for fixed-function normalized fixed point conversion
+ * Maximum reconstruction error: 1/2^(N+1)
+ */
+inline int meshopt_quantizeUnorm(float v, int N);
+
+/**
+ * Quantize a float in [-1..1] range into an N-bit fixed point snorm value
+ * Assumes reconstruction function (q / (2^(N-1)-1)), which is the case for fixed-function normalized fixed point conversion (except early OpenGL versions)
+ * Maximum reconstruction error: 1/2^N
+ */
+inline int meshopt_quantizeSnorm(float v, int N);
 #endif
 
 /**
@@ -1123,7 +1123,7 @@ inline void meshopt_spatialSortTriangles(T* destination, const T* indices, size_
 #endif
 
 /**
- * Copyright (c) 2016-2024 Arseny Kapoulkine
+ * Copyright (c) 2016-2025 Arseny Kapoulkine
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
