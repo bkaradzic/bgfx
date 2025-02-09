@@ -284,7 +284,7 @@ GLSLANG_EXPORT const char* glslang_program_SPIRV_get_messages(glslang_program_t*
 GLSLANG_EXPORT const char* glslang_program_get_info_log(glslang_program_t* program);
 GLSLANG_EXPORT const char* glslang_program_get_info_debug_log(glslang_program_t* program);
 
-GLSLANG_EXPORT glslang_mapper_t* glslang_glsl_mapper_create();
+GLSLANG_EXPORT glslang_mapper_t* glslang_glsl_mapper_create(void);
 GLSLANG_EXPORT void glslang_glsl_mapper_delete(glslang_mapper_t* mapper);
 
 GLSLANG_EXPORT glslang_resolver_t* glslang_glsl_resolver_create(glslang_program_t* program, glslang_stage_t stage);

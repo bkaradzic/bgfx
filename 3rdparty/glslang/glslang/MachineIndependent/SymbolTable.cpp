@@ -60,6 +60,9 @@ void TType::buildMangledName(TString& mangledName) const
     else if (isVector())
         mangledName += 'v';
 
+    if (isCoopVecNV())
+        mangledName += "coopvec";
+
     switch (basicType) {
     case EbtFloat:              mangledName += 'f';      break;
     case EbtInt:                mangledName += 'i';      break;
@@ -161,6 +164,23 @@ void TType::buildMangledName(TString& mangledName) const
     else {
         mangledName += static_cast<char>('0' + getMatrixCols());
         mangledName += static_cast<char>('0' + getMatrixRows());
+    }
+
+    if (typeParameters) {
+        const int maxSize = 11;
+        char buf[maxSize];
+        for (int i = 0; i < typeParameters->arraySizes->getNumDims(); ++i) {
+            if (typeParameters->arraySizes->getDimNode(i)) {
+                if (typeParameters->arraySizes->getDimNode(i)->getAsSymbolNode())
+                    snprintf(buf, maxSize, "s%lld", typeParameters->arraySizes->getDimNode(i)->getAsSymbolNode()->getId());
+                else
+                    snprintf(buf, maxSize, "s%p", typeParameters->arraySizes->getDimNode(i));
+            } else
+                snprintf(buf, maxSize, "%d", typeParameters->arraySizes->getDimSize(i));
+            mangledName += '<';
+            mangledName += buf;
+            mangledName += '>';
+        }
     }
 
     if (arraySizes) {

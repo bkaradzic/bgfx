@@ -1119,6 +1119,9 @@ TIntermTyped* TIntermediate::fold(TIntermAggregate* aggrNode)
             break;
         }
         case EOpDot:
+            if (!children[0]->getAsTyped()->isFloatingDomain()) {
+                return aggrNode;
+            }
             newConstArray[0].setDConst(childConstUnions[0].dot(childConstUnions[1]));
             break;
         case EOpCross:

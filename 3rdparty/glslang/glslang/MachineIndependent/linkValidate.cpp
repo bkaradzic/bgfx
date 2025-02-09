@@ -167,32 +167,7 @@ void TIntermediate::checkStageIO(TInfoSink& infoSink, TIntermediate& unit) {
     // do matching and error checking
     mergeLinkerObjects(infoSink, linkerObjects, unitLinkerObjects, unit.getStage());
 
-    // Check that all of our inputs have matching outputs from the previous stage.
-    // Only do this for Vulkan, since GL_ARB_separate_shader_objects allows for
-    // the in/out to not match
-    if (spvVersion.vulkan > 0) {
-        for (auto& nextStageInterm : unitLinkerObjects) {
-            auto* nextStageSymbol = nextStageInterm->getAsSymbolNode();
-            bool found = false;
-            for (auto& curStageInterm : linkerObjects) {
-                if (isSameSymbol(curStageInterm->getAsSymbolNode(), nextStageSymbol)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                TString errmsg;
-                errmsg.append("Input '");
-                if (nextStageSymbol->getType().getBasicType() == EbtBlock)
-                    errmsg.append(nextStageSymbol->getType().getTypeName());
-                else
-                    errmsg.append(nextStageSymbol->getName());
-                errmsg.append("' in ").append(StageName(unit.getStage()));
-                errmsg.append(" shader has no corresponding output in ").append(StageName(getStage())).append(" shader.");
-                error(infoSink, errmsg.c_str(), unit.getStage());
-            }
-        }
-    }
+    // TODO: final check; make sure that any statically used `in` have matching `out` written to
 }
 
 void TIntermediate::optimizeStageIO(TInfoSink&, TIntermediate& unit)
@@ -852,15 +827,10 @@ void TIntermediate::mergeLinkerObjects(TInfoSink& infoSink, TIntermSequence& lin
     // Error check and merge the linker objects (duplicates should not be created)
     std::size_t initialNumLinkerObjects = linkerObjects.size();
     for (unsigned int unitLinkObj = 0; unitLinkObj < unitLinkerObjects.size(); ++unitLinkObj) {
-        TIntermSymbol* unitSymbol = unitLinkerObjects[unitLinkObj]->getAsSymbolNode();
         bool merge = true;
-
-        // Don't merge inputs backwards into previous stages
-        if (getStage() != unitStage && unitSymbol->getQualifier().storage == EvqVaryingIn)
-            merge = false;
-
         for (std::size_t linkObj = 0; linkObj < initialNumLinkerObjects; ++linkObj) {
             TIntermSymbol* symbol = linkerObjects[linkObj]->getAsSymbolNode();
+            TIntermSymbol* unitSymbol = unitLinkerObjects[unitLinkObj]->getAsSymbolNode();
             assert(symbol && unitSymbol);
 
             if (isSameSymbol(symbol, unitSymbol)) {
@@ -1222,6 +1192,10 @@ void TIntermediate::mergeErrorCheck(TInfoSink& infoSink, const TIntermSymbol& sy
     }
     if (symbol.getQualifier().volatil != unitSymbol.getQualifier().volatil) {
         error(infoSink, "Memory volatil qualifier must match:", unitStage);
+        memoryQualifierError = true;
+    }
+    if (symbol.getQualifier().nontemporal != unitSymbol.getQualifier().nontemporal) {
+        error(infoSink, "Memory nontemporal qualifier must match:", unitStage);
         memoryQualifierError = true;
     }
     if (symbol.getQualifier().restrict != unitSymbol.getQualifier().restrict) {
