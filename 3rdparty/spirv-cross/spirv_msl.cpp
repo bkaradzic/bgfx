@@ -1003,6 +1003,7 @@ void CompilerMSL::build_implicit_builtins()
 	// If we're returning a struct from a vertex-like entry point, we must return a position attribute.
 	bool need_position = (get_execution_model() == ExecutionModelVertex || is_tese_shader()) &&
 	                     !capture_output_to_buffer && !get_is_rasterization_disabled() &&
+	                     !msl_options.auto_disable_rasterization &&
 	                     !active_output_builtins.get(BuiltInPosition);
 
 	if (need_position)
@@ -1038,6 +1039,10 @@ void CompilerMSL::build_implicit_builtins()
 			}
 		});
 		need_position = has_output && !active_output_builtins.get(BuiltInPosition);
+	}
+	else if (!active_output_builtins.get(BuiltInPosition) && msl_options.auto_disable_rasterization)
+	{
+		is_rasterization_disabled = true;
 	}
 
 	if (need_position)
@@ -4219,8 +4224,9 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 		// If the entry point should return the output struct, set the entry function
 		// to return the output interface struct, otherwise to return nothing.
 		// Watch out for the rare case where the terminator of the last entry point block is a
-		// Kill, instead of a Return. Based on SPIR-V's block-domination rules, we assume that
-		// any block that has a Kill will also have a terminating Return, except the last block.
+		// Kill or Unreachable, instead of a Return. Based on SPIR-V's block-domination rules,
+		// we assume that any block that has a Kill will also have a terminating Return, except
+		// the last block.
 		// Indicate the output var requires early initialization.
 		bool ep_should_return_output = !get_is_rasterization_disabled();
 		uint32_t rtn_id = ep_should_return_output ? ib_var_id : 0;
@@ -4230,7 +4236,8 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 			for (auto &blk_id : entry_func.blocks)
 			{
 				auto &blk = get<SPIRBlock>(blk_id);
-				if (blk.terminator == SPIRBlock::Return || (blk.terminator == SPIRBlock::Kill && blk_id == entry_func.blocks.back()))
+				auto last_blk_return = blk.terminator == SPIRBlock::Kill || blk.terminator == SPIRBlock::Unreachable;
+				if (blk.terminator == SPIRBlock::Return || (last_blk_return && blk_id == entry_func.blocks.back()))
 					blk.return_value = rtn_id;
 			}
 			vars_needing_early_declaration.push_back(ib_var_id);
@@ -15584,6 +15591,9 @@ const std::unordered_set<std::string> &CompilerMSL::get_illegal_func_names()
 {
 	static const unordered_set<string> illegal_func_names = {
 		"main",
+		"fragment",
+		"vertex",
+		"kernel",
 		"saturate",
 		"assert",
 		"fmin3",
