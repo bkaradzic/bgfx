@@ -80,7 +80,8 @@
                     "NZSL": 9,
                     "WGSL": 10,
                     "Slang": 11,
-                    "Zig": 12
+                    "Zig": 12,
+                    "Rust": 13
                 }
             },
             {
@@ -806,12 +807,19 @@
                     "IncomingRayFlagsKHR": 5351,
                     "IncomingRayFlagsNV": 5351,
                     "RayGeometryIndexKHR": 5352,
+                    "HitIsSphereNV": 5359,
+                    "HitIsLSSNV": 5360,
+                    "HitSpherePositionNV": 5361,
                     "WarpsPerSMNV": 5374,
                     "SMCountNV": 5375,
                     "WarpIDNV": 5376,
                     "SMIDNV": 5377,
+                    "HitLSSPositionsNV": 5396,
                     "HitKindFrontFacingMicroTriangleNV": 5405,
                     "HitKindBackFacingMicroTriangleNV": 5406,
+                    "HitSphereRadiusNV": 5420,
+                    "HitLSSRadiiNV": 5421,
+                    "ClusterIDNV": 5436,
                     "CullMaskKHR": 6021
                 }
             },
@@ -1143,14 +1151,19 @@
                     "ShaderInvocationReorderNV": 5383,
                     "BindlessTextureNV": 5390,
                     "RayQueryPositionFetchKHR": 5391,
+                    "CooperativeVectorNV": 5394,
                     "AtomicFloat16VectorNV": 5404,
                     "RayTracingDisplacementMicromapNV": 5409,
                     "RawAccessChainsNV": 5414,
+                    "RayTracingSpheresGeometryNV": 5418,
+                    "RayTracingLinearSweptSpheresGeometryNV": 5419,
                     "CooperativeMatrixReductionsNV": 5430,
                     "CooperativeMatrixConversionsNV": 5431,
                     "CooperativeMatrixPerElementOperationsNV": 5432,
                     "CooperativeMatrixTensorAddressingNV": 5433,
                     "CooperativeMatrixBlockLoadsNV": 5434,
+                    "CooperativeVectorTrainingNV": 5435,
+                    "RayTracingClusterAccelerationStructureNV": 5437,
                     "TensorAddressingNV": 5439,
                     "SubgroupShuffleINTEL": 5568,
                     "SubgroupBufferBlockIOINTEL": 5569,
@@ -1226,6 +1239,10 @@
                     "GlobalVariableHostAccessINTEL": 6187,
                     "GlobalVariableFPGADecorationsINTEL": 6189,
                     "SubgroupBufferPrefetchINTEL": 6220,
+                    "Subgroup2DBlockIOINTEL": 6228,
+                    "Subgroup2DBlockTransformINTEL": 6229,
+                    "Subgroup2DBlockTransposeINTEL": 6230,
+                    "SubgroupMatrixMultiplyAccumulateINTEL": 6236,
                     "GroupUniformArithmeticKHR": 6400,
                     "MaskedGatherScatterINTEL": 6427,
                     "CacheControlsINTEL": 6441,
@@ -1245,6 +1262,7 @@
                     "CullFrontFacingTrianglesKHR": 5,
                     "CullOpaqueKHR": 6,
                     "CullNoOpaqueKHR": 7,
+                    "SkipBuiltinPrimitivesNV": 8,
                     "SkipTrianglesKHR": 8,
                     "SkipAABBsKHR": 9,
                     "ForceOpacityMicromap2StateEXT": 10
@@ -1458,6 +1476,27 @@
                 }
             },
             {
+                "Name": "MatrixMultiplyAccumulateOperands",
+                "Type": "Bit",
+                "Values":
+                {
+                    "MatrixASignedComponentsINTEL": 0,
+                    "MatrixBSignedComponentsINTEL": 1,
+                    "MatrixCBFloat16INTEL": 2,
+                    "MatrixResultBFloat16INTEL": 3,
+                    "MatrixAPackedInt8INTEL": 4,
+                    "MatrixBPackedInt8INTEL": 5,
+                    "MatrixAPackedInt4INTEL": 6,
+                    "MatrixBPackedInt4INTEL": 7,
+                    "MatrixATF32INTEL": 8,
+                    "MatrixBTF32INTEL": 9,
+                    "MatrixAPackedFloat16INTEL": 10,
+                    "MatrixBPackedFloat16INTEL": 11,
+                    "MatrixAPackedBFloat16INTEL": 12,
+                    "MatrixBPackedBFloat16INTEL": 13
+                }
+            },
+            {
                 "Name": "RawAccessChainOperands",
                 "Type": "Bit",
                 "Values":
@@ -1471,6 +1510,39 @@
                 "Type": "Value",
                 "Values":
                 {
+                }
+            },
+            {
+                "Name": "CooperativeVectorMatrixLayout",
+                "Type": "Value",
+                "Values":
+                {
+                    "RowMajorNV": 0,
+                    "ColumnMajorNV": 1,
+                    "InferencingOptimalNV": 2,
+                    "TrainingOptimalNV": 3
+                }
+            },
+            {
+                "Name": "ComponentType",
+                "Type": "Value",
+                "Values":
+                {
+                    "Float16NV": 0,
+                    "Float32NV": 1,
+                    "Float64NV": 2,
+                    "SignedInt8NV": 3,
+                    "SignedInt16NV": 4,
+                    "SignedInt32NV": 5,
+                    "SignedInt64NV": 6,
+                    "UnsignedInt8NV": 7,
+                    "UnsignedInt16NV": 8,
+                    "UnsignedInt32NV": 9,
+                    "UnsignedInt64NV": 10,
+                    "SignedInt8PackedNV": 1000491000,
+                    "UnsignedInt8PackedNV": 1000491001,
+                    "FloatE4M3NV": 1000491002,
+                    "FloatE5M2NV": 1000491003
                 }
             },
             {
@@ -1937,6 +2009,11 @@
                     "OpReorderThreadWithHintNV": 5280,
                     "OpTypeHitObjectNV": 5281,
                     "OpImageSampleFootprintNV": 5283,
+                    "OpTypeCooperativeVectorNV": 5288,
+                    "OpCooperativeVectorMatrixMulNV": 5289,
+                    "OpCooperativeVectorOuterProductAccumulateNV": 5290,
+                    "OpCooperativeVectorReduceSumAccumulateNV": 5291,
+                    "OpCooperativeVectorMatrixMulAddNV": 5292,
                     "OpCooperativeMatrixConvertNV": 5293,
                     "OpEmitMeshTasksEXT": 5294,
                     "OpSetMeshOutputsEXT": 5295,
@@ -1944,6 +2021,8 @@
                     "OpWritePackedPrimitiveIndices4x8NV": 5299,
                     "OpFetchMicroTriangleVertexPositionNV": 5300,
                     "OpFetchMicroTriangleVertexBarycentricNV": 5301,
+                    "OpCooperativeVectorLoadNV": 5302,
+                    "OpCooperativeVectorStoreNV": 5303,
                     "OpReportIntersectionKHR": 5334,
                     "OpReportIntersectionNV": 5334,
                     "OpIgnoreIntersectionNV": 5335,
@@ -1955,6 +2034,8 @@
                     "OpTypeAccelerationStructureKHR": 5341,
                     "OpTypeAccelerationStructureNV": 5341,
                     "OpExecuteCallableNV": 5344,
+                    "OpRayQueryGetClusterIdNV": 5345,
+                    "OpHitObjectGetClusterIdNV": 5346,
                     "OpTypeCooperativeMatrixNV": 5358,
                     "OpCooperativeMatrixLoadNV": 5359,
                     "OpCooperativeMatrixStoreNV": 5360,
@@ -1990,6 +2071,19 @@
                     "OpConvertSampledImageToUNV": 5396,
                     "OpSamplerImageAddressingModeNV": 5397,
                     "OpRawAccessChainNV": 5398,
+                    "OpRayQueryGetIntersectionSpherePositionNV": 5427,
+                    "OpRayQueryGetIntersectionSphereRadiusNV": 5428,
+                    "OpRayQueryGetIntersectionLSSPositionsNV": 5429,
+                    "OpRayQueryGetIntersectionLSSRadiiNV": 5430,
+                    "OpRayQueryGetIntersectionLSSHitValueNV": 5431,
+                    "OpHitObjectGetSpherePositionNV": 5432,
+                    "OpHitObjectGetSphereRadiusNV": 5433,
+                    "OpHitObjectGetLSSPositionsNV": 5434,
+                    "OpHitObjectGetLSSRadiiNV": 5435,
+                    "OpHitObjectIsSphereHitNV": 5436,
+                    "OpHitObjectIsLSSHitNV": 5437,
+                    "OpRayQueryIsSphereHitNV": 5438,
+                    "OpRayQueryIsLSSHitNV": 5439,
                     "OpSubgroupShuffleINTEL": 5571,
                     "OpSubgroupShuffleDownINTEL": 5572,
                     "OpSubgroupShuffleUpINTEL": 5573,
@@ -2238,6 +2332,12 @@
                     "OpControlBarrierWaitINTEL": 6143,
                     "OpArithmeticFenceEXT": 6145,
                     "OpSubgroupBlockPrefetchINTEL": 6221,
+                    "OpSubgroup2DBlockLoadINTEL": 6231,
+                    "OpSubgroup2DBlockLoadTransformINTEL": 6232,
+                    "OpSubgroup2DBlockLoadTransposeINTEL": 6233,
+                    "OpSubgroup2DBlockPrefetchINTEL": 6234,
+                    "OpSubgroup2DBlockStoreINTEL": 6235,
+                    "OpSubgroupMatrixMultiplyAccumulateINTEL": 6237,
                     "OpGroupIMulKHR": 6401,
                     "OpGroupFMulKHR": 6402,
                     "OpGroupBitwiseAndKHR": 6403,
