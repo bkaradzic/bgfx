@@ -46,9 +46,18 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
 
   const auto constituent_count = inst->words().size() - 3;
   switch (result_type->opcode()) {
-    case spv::Op::OpTypeVector: {
-      const auto component_count = result_type->GetOperandAs<uint32_t>(2);
-      if (component_count != constituent_count) {
+    case spv::Op::OpTypeVector:
+    case spv::Op::OpTypeCooperativeVectorNV: {
+      uint32_t num_result_components = _.GetDimension(result_type->id());
+      bool comp_is_int32 = true, comp_is_const_int32 = true;
+
+      if (result_type->opcode() == spv::Op::OpTypeCooperativeVectorNV) {
+        uint32_t comp_count_id = result_type->GetOperandAs<uint32_t>(2);
+        std::tie(comp_is_int32, comp_is_const_int32, num_result_components) =
+            _.EvalInt32IfConst(comp_count_id);
+      }
+
+      if (comp_is_const_int32 && num_result_components != constituent_count) {
         // TODO: Output ID's on diagnostic
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << opcode_name
@@ -312,6 +321,7 @@ bool IsTypeNullable(const std::vector<uint32_t>& instruction,
     case spv::Op::OpTypeMatrix:
     case spv::Op::OpTypeCooperativeMatrixNV:
     case spv::Op::OpTypeCooperativeMatrixKHR:
+    case spv::Op::OpTypeCooperativeVectorNV:
     case spv::Op::OpTypeVector: {
       auto base_type = _.FindDef(instruction[2]);
       return base_type && IsTypeNullable(base_type->words(), _);

@@ -420,6 +420,7 @@ spv_result_t GetImportExportPairs(const MessageConsumer& consumer,
 
   std::vector<LinkageSymbolInfo> imports;
   std::unordered_map<std::string, std::vector<LinkageSymbolInfo>> exports;
+  std::unordered_map<std::string, LinkageSymbolInfo> linkonce;
 
   // Figure out the imports and exports
   for (const auto& decoration : linked_context.annotations()) {
@@ -478,10 +479,24 @@ spv_result_t GetImportExportPairs(const MessageConsumer& consumer,
              << " LinkageAttributes; " << id << " is neither of them.\n";
     }
 
-    if (spv::LinkageType(type) == spv::LinkageType::Import)
+    if (spv::LinkageType(type) == spv::LinkageType::Import) {
       imports.push_back(symbol_info);
-    else if (spv::LinkageType(type) == spv::LinkageType::Export)
+    } else if (spv::LinkageType(type) == spv::LinkageType::Export) {
       exports[symbol_info.name].push_back(symbol_info);
+    } else if (spv::LinkageType(type) == spv::LinkageType::LinkOnceODR) {
+      if (linkonce.find(symbol_info.name) == linkonce.end())
+        linkonce[symbol_info.name] = symbol_info;
+    }
+  }
+
+  for (const auto& possible_export : linkonce) {
+    if (exports.find(possible_export.first) == exports.end())
+      exports[possible_export.first].push_back(possible_export.second);
+    else
+      return DiagnosticStream(position, consumer, "", SPV_ERROR_INVALID_BINARY)
+             << "Combination of Export and LinkOnceODR is not allowed, found "
+                "for \""
+             << possible_export.second.name << "\".";
   }
 
   // Find the import/export pairs
@@ -661,8 +676,10 @@ spv_result_t RemoveLinkageSpecificInstructions(
       if (inst->opcode() == spv::Op::OpDecorate &&
           spv::Decoration(inst->GetSingleWordOperand(1u)) ==
               spv::Decoration::LinkageAttributes &&
-          spv::LinkageType(inst->GetSingleWordOperand(3u)) ==
-              spv::LinkageType::Export) {
+          (spv::LinkageType(inst->GetSingleWordOperand(3u)) ==
+               spv::LinkageType::Export ||
+           spv::LinkageType(inst->GetSingleWordOperand(3u)) ==
+               spv::LinkageType::LinkOnceODR)) {
         linked_context->KillInst(&*inst);
       }
     }

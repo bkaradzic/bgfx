@@ -207,6 +207,7 @@ void EliminateDeadMembersPass::MarkMembersAsLiveForExtract(
       case spv::Op::OpTypeMatrix:
       case spv::Op::OpTypeCooperativeMatrixNV:
       case spv::Op::OpTypeCooperativeMatrixKHR:
+      case spv::Op::OpTypeCooperativeVectorNV:
         type_id = type_inst->GetSingleWordInOperand(0);
         break;
       default:
@@ -255,6 +256,7 @@ void EliminateDeadMembersPass::MarkMembersAsLiveForAccessChain(
       case spv::Op::OpTypeMatrix:
       case spv::Op::OpTypeCooperativeMatrixNV:
       case spv::Op::OpTypeCooperativeMatrixKHR:
+      case spv::Op::OpTypeCooperativeVectorNV:
         type_id = type_inst->GetSingleWordInOperand(0);
         break;
       default:
@@ -516,6 +518,7 @@ bool EliminateDeadMembersPass::UpdateAccessChain(Instruction* inst) {
       case spv::Op::OpTypeMatrix:
       case spv::Op::OpTypeCooperativeMatrixNV:
       case spv::Op::OpTypeCooperativeMatrixKHR:
+      case spv::Op::OpTypeCooperativeVectorNV:
         new_operands.emplace_back(inst->GetInOperand(i));
         type_id = type_inst->GetSingleWordInOperand(0);
         break;
@@ -591,6 +594,7 @@ bool EliminateDeadMembersPass::UpdateCompsiteExtract(Instruction* inst) {
       case spv::Op::OpTypeMatrix:
       case spv::Op::OpTypeCooperativeMatrixNV:
       case spv::Op::OpTypeCooperativeMatrixKHR:
+      case spv::Op::OpTypeCooperativeVectorNV:
         type_id = type_inst->GetSingleWordInOperand(0);
         break;
       default:
@@ -654,6 +658,7 @@ bool EliminateDeadMembersPass::UpdateCompositeInsert(Instruction* inst) {
       case spv::Op::OpTypeMatrix:
       case spv::Op::OpTypeCooperativeMatrixNV:
       case spv::Op::OpTypeCooperativeMatrixKHR:
+      case spv::Op::OpTypeCooperativeVectorNV:
         type_id = type_inst->GetSingleWordInOperand(0);
         break;
       default:

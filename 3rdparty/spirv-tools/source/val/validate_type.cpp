@@ -1,4 +1,6 @@
 // Copyright (c) 2018 Google LLC.
+// Modifications Copyright (C) 2024 Advanced Micro Devices, Inc. All rights
+// reserved.
 // Copyright (c) 2024 NVIDIA Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,6 +38,7 @@ spv_result_t ValidateUniqueness(ValidationState_t& _, const Instruction* inst) {
 
   const auto opcode = inst->opcode();
   if (opcode != spv::Op::OpTypeArray && opcode != spv::Op::OpTypeRuntimeArray &&
+      opcode != spv::Op::OpTypeNodePayloadArrayAMDX &&
       opcode != spv::Op::OpTypeStruct && opcode != spv::Op::OpTypePointer &&
       opcode != spv::Op::OpTypeUntypedPointerKHR &&
       !_.RegisterUniqueTypeDeclaration(inst)) {
@@ -166,6 +169,57 @@ spv_result_t ValidateTypeVector(ValidationState_t& _, const Instruction* inst) {
   return SPV_SUCCESS;
 }
 
+spv_result_t ValidateTypeCooperativeVectorNV(ValidationState_t& _,
+                                             const Instruction* inst) {
+  const auto component_index = 1;
+  const auto component_type_id = inst->GetOperandAs<uint32_t>(component_index);
+  const auto component_type = _.FindDef(component_type_id);
+  if (!component_type || (spv::Op::OpTypeFloat != component_type->opcode() &&
+                          spv::Op::OpTypeInt != component_type->opcode())) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpTypeCooperativeVectorNV Component Type <id> "
+           << _.getIdName(component_type_id)
+           << " is not a scalar numerical type.";
+  }
+
+  const auto num_components_index = 2;
+  const auto num_components_id =
+      inst->GetOperandAs<uint32_t>(num_components_index);
+  const auto num_components = _.FindDef(num_components_id);
+  if (!num_components || !spvOpcodeIsConstant(num_components->opcode())) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpTypeCooperativeVectorNV component count <id> "
+           << _.getIdName(num_components_id)
+           << " is not a scalar constant type.";
+  }
+
+  // NOTE: Check the initialiser value of the constant
+  const auto const_inst = num_components->words();
+  const auto const_result_type_index = 1;
+  const auto const_result_type = _.FindDef(const_inst[const_result_type_index]);
+  if (!const_result_type || spv::Op::OpTypeInt != const_result_type->opcode()) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpTypeCooperativeVectorNV component count <id> "
+           << _.getIdName(num_components_id)
+           << " is not a constant integer type.";
+  }
+
+  int64_t num_components_value;
+  if (_.EvalConstantValInt64(num_components_id, &num_components_value)) {
+    auto& type_words = const_result_type->words();
+    const bool is_signed = type_words[3] > 0;
+    if (num_components_value == 0 || (num_components_value < 0 && is_signed)) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "OpTypeCooperativeVectorNV component count <id> "
+             << _.getIdName(num_components_id)
+             << " default value must be at least 1: found "
+             << num_components_value;
+    }
+  }
+
+  return SPV_SUCCESS;
+}
+
 spv_result_t ValidateTypeMatrix(ValidationState_t& _, const Instruction* inst) {
   const auto column_type_index = 1;
   const auto column_type_id = inst->GetOperandAs<uint32_t>(column_type_index);
@@ -210,6 +264,18 @@ spv_result_t ValidateTypeArray(ValidationState_t& _, const Instruction* inst) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpTypeArray Element Type <id> " << _.getIdName(element_type_id)
            << " is a void type.";
+  }
+
+  if (_.HasCapability(spv::Capability::Shader)) {
+    if (element_type->opcode() == spv::Op::OpTypeStruct &&
+        (_.HasDecoration(element_type->id(), spv::Decoration::Block) ||
+         _.HasDecoration(element_type->id(), spv::Decoration::BufferBlock))) {
+      if (_.HasDecoration(inst->id(), spv::Decoration::ArrayStride)) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "Array containing a Block or BufferBlock must not be "
+                  "decorated with ArrayStride";
+      }
+    }
   }
 
   if (spvIsVulkanEnv(_.context()->target_env) &&
@@ -268,6 +334,18 @@ spv_result_t ValidateTypeRuntimeArray(ValidationState_t& _,
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpTypeRuntimeArray Element Type <id> " << _.getIdName(element_id)
            << " is a void type.";
+  }
+
+  if (_.HasCapability(spv::Capability::Shader)) {
+    if (element_type->opcode() == spv::Op::OpTypeStruct &&
+        (_.HasDecoration(element_type->id(), spv::Decoration::Block) ||
+         _.HasDecoration(element_type->id(), spv::Decoration::BufferBlock))) {
+      if (_.HasDecoration(inst->id(), spv::Decoration::ArrayStride)) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "Array containing a Block or BufferBlock must not be "
+                  "decorated with ArrayStride";
+      }
+    }
   }
 
   if (spvIsVulkanEnv(_.context()->target_env) &&
@@ -340,13 +418,20 @@ spv_result_t ValidateTypeStruct(ValidationState_t& _, const Instruction* inst) {
   // Struct members start at word 2 of OpTypeStruct instruction.
   for (size_t word_i = 2; word_i < inst->words().size(); ++word_i) {
     auto member = inst->word(word_i);
-    auto memberTypeInstr = _.FindDef(member);
-    if (memberTypeInstr && spv::Op::OpTypeStruct == memberTypeInstr->opcode()) {
-      if (_.HasDecoration(memberTypeInstr->id(), spv::Decoration::Block) ||
-          _.HasDecoration(memberTypeInstr->id(),
-                          spv::Decoration::BufferBlock) ||
-          _.GetHasNestedBlockOrBufferBlockStruct(memberTypeInstr->id()))
-        has_nested_blockOrBufferBlock_struct = true;
+    if (_.ContainsType(
+            member,
+            [&_](const Instruction* type_inst) {
+              if (type_inst->opcode() == spv::Op::OpTypeStruct &&
+                  (_.HasDecoration(type_inst->id(), spv::Decoration::Block) ||
+                   _.HasDecoration(type_inst->id(),
+                                   spv::Decoration::BufferBlock))) {
+                return true;
+              }
+              return false;
+            },
+            /* traverse_all_types = */ false)) {
+      has_nested_blockOrBufferBlock_struct = true;
+      break;
     }
   }
 
@@ -796,6 +881,9 @@ spv_result_t TypePass(ValidationState_t& _, const Instruction* inst) {
     case spv::Op::OpTypeCooperativeMatrixNV:
     case spv::Op::OpTypeCooperativeMatrixKHR:
       if (auto error = ValidateTypeCooperativeMatrix(_, inst)) return error;
+      break;
+    case spv::Op::OpTypeCooperativeVectorNV:
+      if (auto error = ValidateTypeCooperativeVectorNV(_, inst)) return error;
       break;
     case spv::Op::OpTypeUntypedPointerKHR:
       if (auto error = ValidateTypeUntypedPointerKHR(_, inst)) return error;

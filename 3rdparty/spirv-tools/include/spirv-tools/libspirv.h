@@ -321,6 +321,12 @@ typedef enum spv_operand_type_t {
   SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_REDUCE,
   // Enum type from SPV_NV_cooperative_matrix2
   SPV_OPERAND_TYPE_TENSOR_ADDRESSING_OPERANDS,
+  // Optional types from SPV_INTEL_subgroup_matrix_multiply_accumulate
+  SPV_OPERAND_TYPE_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS,
+  SPV_OPERAND_TYPE_OPTIONAL_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS,
+
+  SPV_OPERAND_TYPE_COOPERATIVE_VECTOR_MATRIX_LAYOUT,
+  SPV_OPERAND_TYPE_COMPONENT_TYPE,
 
   // This is a sentinel value, and does not represent an operand type.
   // It should come last.
@@ -728,6 +734,11 @@ SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetSkipBlockLayout(
 // Records whether or not the validator should allow the LocalSizeId
 // decoration where the environment otherwise would not allow it.
 SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetAllowLocalSizeId(
+    spv_validator_options options, bool val);
+
+// Allow Offset (in addition to ConstOffset) for texture operations.
+// Was added for VK_KHR_maintenance8
+SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetAllowOffsetTextureOperand(
     spv_validator_options options, bool val);
 
 // Whether friendly names should be used in validation error messages.

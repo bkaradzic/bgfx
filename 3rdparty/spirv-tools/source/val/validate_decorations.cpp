@@ -767,6 +767,7 @@ spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
     int num_workgroup_variables = 0;
     int num_workgroup_variables_with_block = 0;
     int num_workgroup_variables_with_aliased = 0;
+    bool has_task_payload = false;
     for (const auto& desc : descs) {
       std::unordered_set<Instruction*> seen_vars;
       std::unordered_set<spv::BuiltIn> input_var_builtin;
@@ -786,6 +787,19 @@ spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
         const auto sc_index = 2u;
         const spv::StorageClass storage_class =
             var_instr->GetOperandAs<spv::StorageClass>(sc_index);
+        if (vstate.version() >= SPV_SPIRV_VERSION_WORD(1, 4)) {
+          // SPV_EXT_mesh_shader, at most one task payload is permitted
+          // per entry point
+          if (storage_class == spv::StorageClass::TaskPayloadWorkgroupEXT) {
+            if (has_task_payload) {
+              return vstate.diag(SPV_ERROR_INVALID_ID, var_instr)
+                     << "There can be at most one OpVariable with storage "
+                        "class TaskPayloadWorkgroupEXT associated with "
+                        "an OpEntryPoint";
+            }
+            has_task_payload = true;
+          }
+        }
         if (vstate.version() >= SPV_SPIRV_VERSION_WORD(1, 4)) {
           // Starting in 1.4, OpEntryPoint must list all global variables
           // it statically uses and those interfaces must be unique.
@@ -1450,11 +1464,29 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
                      : (sc == spv::StorageClass::Workgroup ? "Workgroup"
                                                            : "StorageBuffer"));
 
-      const auto data_type = vstate.FindDef(data_type_id);
+      auto data_type = vstate.FindDef(data_type_id);
       scalar_block_layout =
           sc == spv::StorageClass::Workgroup
               ? vstate.options()->workgroup_scalar_block_layout
               : vstate.options()->scalar_block_layout;
+
+      // If the data type is an array that contains a Block- or
+      // BufferBlock-decorated struct, then use the struct for layout checks
+      // instead of the array. In this case, the array represents a descriptor
+      // array which should not have an explicit layout.
+      if (data_type->opcode() == spv::Op::OpTypeArray ||
+          data_type->opcode() == spv::Op::OpTypeRuntimeArray) {
+        const auto ele_type =
+            vstate.FindDef(data_type->GetOperandAs<uint32_t>(1u));
+        if (ele_type->opcode() == spv::Op::OpTypeStruct &&
+            (vstate.HasDecoration(ele_type->id(), spv::Decoration::Block) ||
+             vstate.HasDecoration(ele_type->id(),
+                                  spv::Decoration::BufferBlock))) {
+          data_type = ele_type;
+          data_type_id = ele_type->id();
+        }
+      }
+
       // Assume uniform storage class uses block rules unless we see a
       // BufferBlock decorated struct in the data type.
       bool bufferRules = sc == spv::StorageClass::Uniform ? false : true;
@@ -1500,7 +1532,8 @@ spv_result_t CheckDecorationsCompatibility(ValidationState_t& vstate) {
   // to the same id.
   static const spv::Decoration mutually_exclusive_per_id[][2] = {
       {spv::Decoration::Block, spv::Decoration::BufferBlock},
-      {spv::Decoration::Restrict, spv::Decoration::Aliased}};
+      {spv::Decoration::Restrict, spv::Decoration::Aliased},
+      {spv::Decoration::RestrictPointer, spv::Decoration::AliasedPointer}};
   static const auto num_mutually_exclusive_per_id_pairs =
       sizeof(mutually_exclusive_per_id) / (2 * sizeof(spv::Decoration));
 

@@ -1,4 +1,6 @@
 // Copyright (c) 2019 Google LLC
+// Modifications Copyright (C) 2024 Advanced Micro Devices, Inc. All rights
+// reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -99,6 +101,7 @@ bool FixStorageClass::PropagateStorageClass(Instruction* inst,
     case spv::Op::OpCopyMemorySized:
     case spv::Op::OpVariable:
     case spv::Op::OpBitcast:
+    case spv::Op::OpAllocateNodePayloadsAMDX:
       // Nothing to change for these opcode.  The result type is the same
       // regardless of the storage class of the operand.
       return false;
@@ -319,6 +322,7 @@ uint32_t FixStorageClass::WalkAccessChainType(Instruction* inst, uint32_t id) {
     switch (type_inst->opcode()) {
       case spv::Op::OpTypeArray:
       case spv::Op::OpTypeRuntimeArray:
+      case spv::Op::OpTypeNodePayloadArrayAMDX:
       case spv::Op::OpTypeMatrix:
       case spv::Op::OpTypeVector:
       case spv::Op::OpTypeCooperativeMatrixKHR:

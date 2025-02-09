@@ -142,11 +142,20 @@ constexpr auto ordered_universal_envs = std::array<spv_target_env, 7>{
 };
 
 // When a new SPIR-V version is released, update this table.
+// Users see this ordered list when running 'spirv-val --help'. Order
+// matters for readability.
 static_assert(spv::Version == 0x10600);
 inline constexpr std::pair<const char*, spv_target_env> spvTargetEnvNameMap[] =
     {
-        {"vulkan1.1spv1.4", SPV_ENV_VULKAN_1_1_SPIRV_1_4},
+        // Do not reorder blindly. The algorithm to find the target looks for
+        // the first entry where the key is a prefix of the string provided by
+        // the user. For example, if the user provides `vulkan1.2spv1.5`, it
+        // will match `vulkan1.2`. If this feature is to work correctly, the
+        // keys must be ordered so that a string is before its prefix. For
+        // example, `vulkan1.1spv1.4` must be before `vulkan1.1`. Otherwise,
+        // `vulkan1.1` will be returned when looking for `vulkan1.1spv1.4`.
         {"vulkan1.0", SPV_ENV_VULKAN_1_0},
+        {"vulkan1.1spv1.4", SPV_ENV_VULKAN_1_1_SPIRV_1_4},
         {"vulkan1.1", SPV_ENV_VULKAN_1_1},
         {"vulkan1.2", SPV_ENV_VULKAN_1_2},
         {"vulkan1.3", SPV_ENV_VULKAN_1_3},

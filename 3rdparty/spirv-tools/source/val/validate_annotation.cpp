@@ -1,4 +1,6 @@
 // Copyright (c) 2018 Google LLC.
+// Modifications Copyright (C) 2024 Advanced Micro Devices, Inc. All rights
+// reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,6 +32,11 @@ bool DecorationTakesIdParameters(spv::Decoration type) {
     case spv::Decoration::AlignmentId:
     case spv::Decoration::MaxByteOffsetId:
     case spv::Decoration::HlslCounterBufferGOOGLE:
+    case spv::Decoration::NodeMaxPayloadsAMDX:
+    case spv::Decoration::NodeSharesPayloadLimitsWithAMDX:
+    case spv::Decoration::PayloadNodeArraySizeAMDX:
+    case spv::Decoration::PayloadNodeNameAMDX:
+    case spv::Decoration::PayloadNodeBaseIndexAMDX:
       return true;
     default:
       break;
@@ -163,6 +170,7 @@ spv_result_t ValidateDecorationTarget(ValidationState_t& _, spv::Decoration dec,
     case spv::Decoration::Stream:
     case spv::Decoration::RestrictPointer:
     case spv::Decoration::AliasedPointer:
+    case spv::Decoration::PerPrimitiveEXT:
       if (target->opcode() != spv::Op::OpVariable &&
           target->opcode() != spv::Op::OpUntypedVariableKHR &&
           target->opcode() != spv::Op::OpFunctionParameter &&

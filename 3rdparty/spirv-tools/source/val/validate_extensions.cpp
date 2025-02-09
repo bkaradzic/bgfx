@@ -1057,7 +1057,10 @@ spv_result_t ValidateExtension(ValidationState_t& _, const Instruction* inst) {
     if (extension ==
             ExtensionToString(kSPV_KHR_workgroup_memory_explicit_layout) ||
         extension == ExtensionToString(kSPV_EXT_mesh_shader) ||
-        extension == ExtensionToString(kSPV_NV_shader_invocation_reorder)) {
+        extension == ExtensionToString(kSPV_NV_shader_invocation_reorder) ||
+        extension ==
+            ExtensionToString(kSPV_NV_cluster_acceleration_structure) ||
+        extension == ExtensionToString(kSPV_NV_linear_swept_spheres)) {
       return _.diag(SPV_ERROR_WRONG_VERSION, inst)
              << extension << " extension requires SPIR-V version 1.4 or later.";
     }
@@ -1136,7 +1139,16 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
       case GLSLstd450NMin:
       case GLSLstd450NMax:
       case GLSLstd450NClamp: {
-        if (!_.IsFloatScalarOrVectorType(result_type)) {
+        bool supportsCoopVec =
+            (ext_inst_key == GLSLstd450FMin || ext_inst_key == GLSLstd450FMax ||
+             ext_inst_key == GLSLstd450FClamp ||
+             ext_inst_key == GLSLstd450NMin || ext_inst_key == GLSLstd450NMax ||
+             ext_inst_key == GLSLstd450NClamp ||
+             ext_inst_key == GLSLstd450Step || ext_inst_key == GLSLstd450Fma);
+
+        if (!_.IsFloatScalarOrVectorType(result_type) &&
+            !(supportsCoopVec &&
+              _.IsFloatCooperativeVectorNVType(result_type))) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
                  << ext_inst_name() << ": "
                  << "expected Result Type to be a float scalar or vector type";
@@ -1166,7 +1178,14 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
       case GLSLstd450FindILsb:
       case GLSLstd450FindUMsb:
       case GLSLstd450FindSMsb: {
-        if (!_.IsIntScalarOrVectorType(result_type)) {
+        bool supportsCoopVec =
+            (ext_inst_key == GLSLstd450UMin || ext_inst_key == GLSLstd450UMax ||
+             ext_inst_key == GLSLstd450UClamp ||
+             ext_inst_key == GLSLstd450SMin || ext_inst_key == GLSLstd450SMax ||
+             ext_inst_key == GLSLstd450SClamp);
+
+        if (!_.IsIntScalarOrVectorType(result_type) &&
+            !(supportsCoopVec && _.IsIntCooperativeVectorNVType(result_type))) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
                  << ext_inst_name() << ": "
                  << "expected Result Type to be an int scalar or vector type";
@@ -1178,7 +1197,10 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
         for (uint32_t operand_index = 4; operand_index < num_operands;
              ++operand_index) {
           const uint32_t operand_type = _.GetOperandTypeId(inst, operand_index);
-          if (!operand_type || !_.IsIntScalarOrVectorType(operand_type)) {
+          if (!operand_type ||
+              (!_.IsIntScalarOrVectorType(operand_type) &&
+               !(supportsCoopVec &&
+                 _.IsIntCooperativeVectorNVType(operand_type)))) {
             return _.diag(SPV_ERROR_INVALID_DATA, inst)
                    << ext_inst_name() << ": "
                    << "expected all operands to be int scalars or vectors";
@@ -1231,7 +1253,13 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
       case GLSLstd450Log2:
       case GLSLstd450Atan2:
       case GLSLstd450Pow: {
-        if (!_.IsFloatScalarOrVectorType(result_type)) {
+        bool supportsCoopVec =
+            (ext_inst_key == GLSLstd450Atan || ext_inst_key == GLSLstd450Tanh ||
+             ext_inst_key == GLSLstd450Exp || ext_inst_key == GLSLstd450Log);
+
+        if (!_.IsFloatScalarOrVectorType(result_type) &&
+            !(supportsCoopVec &&
+              _.IsFloatCooperativeVectorNVType(result_type))) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
                  << ext_inst_name() << ": "
                  << "expected Result Type to be a 16 or 32-bit scalar or "
