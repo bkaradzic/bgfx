@@ -536,6 +536,10 @@ public:
 		// if the fragment does not modify the depth value.
 		bool input_attachment_is_ds_attachment = false;
 
+		// If BuiltInPosition is not written, automatically disable rasterization.
+		// The result can be queried with get_is_rasterization_disabled.
+		bool auto_disable_rasterization = false;
+
 		bool is_ios() const
 		{
 			return platform == iOS;
