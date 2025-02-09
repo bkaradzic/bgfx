@@ -60,6 +60,7 @@
 #include <memory>
 #include <set>
 #include <thread>
+#include <type_traits>
 
 #include "../glslang/OSDependent/osinclude.h"
 

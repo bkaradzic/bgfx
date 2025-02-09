@@ -305,6 +305,11 @@ void TParseContextBase::checkIndex(const TSourceLoc& loc, const TType& type, int
             error(loc, "", "[", "matrix index out of range '%d'", index);
             index = type.getMatrixCols() - 1;
         }
+    } else if (type.isCoopVecNV()) {
+        if (index >= type.computeNumComponents()) {
+            error(loc, "", "[", "cooperative vector index out of range '%d'", index);
+            index = type.computeNumComponents() - 1;
+        }
     }
 }
 

@@ -1035,11 +1035,11 @@ public:
 #endif
 
     bool usingScalarBlockLayout() const {
-        for (auto extIt = requestedExtensions.begin(); extIt != requestedExtensions.end(); ++extIt) {
-            if (*extIt == E_GL_EXT_scalar_block_layout)
-                return true;
-        }
-        return false;
+        return IsRequestedExtension(E_GL_EXT_scalar_block_layout);
+    }
+
+    bool usingTextureOffsetNonConst() const {
+        return IsRequestedExtension(E_GL_EXT_texture_offset_non_const);
     }
 
     bool IsRequestedExtension(const char* extension) const

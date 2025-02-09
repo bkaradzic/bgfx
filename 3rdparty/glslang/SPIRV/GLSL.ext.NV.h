@@ -96,4 +96,9 @@ const char* const E_SPV_NV_tensor_addressing = "SPV_NV_tensor_addressing";
 //SPV_NV_cooperative_matrix2
 const char* const E_SPV_NV_cooperative_matrix2 = "SPV_NV_cooperative_matrix2";
 
+//SPV_NV_cluster_acceleration_structure
+const char* const E_SPV_NV_cluster_acceleration_structure = "SPV_NV_cluster_acceleration_structure";
+
+//SPV_NV_linear_swept_spheres
+const char* const E_SPV_NV_linear_swept_spheres = "SPV_NV_linear_swept_spheres";
 #endif  // #ifndef GLSLextNV_H

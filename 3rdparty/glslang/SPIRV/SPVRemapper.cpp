@@ -1384,13 +1384,15 @@ namespace spv {
                 return hash;
             }
 
-        case spv::OpTypeEvent:           return 300000;
-        case spv::OpTypeDeviceEvent:     return 300001;
-        case spv::OpTypeReserveId:       return 300002;
-        case spv::OpTypeQueue:           return 300003;
-        case spv::OpTypePipe:            return 300004;
-        case spv::OpConstantTrue:        return 300007;
-        case spv::OpConstantFalse:       return 300008;
+        case spv::OpTypeEvent:                      return 300000;
+        case spv::OpTypeDeviceEvent:                return 300001;
+        case spv::OpTypeReserveId:                  return 300002;
+        case spv::OpTypeQueue:                      return 300003;
+        case spv::OpTypePipe:                       return 300004;
+        case spv::OpConstantTrue:                   return 300007;
+        case spv::OpConstantFalse:                  return 300008;
+        case spv::OpTypeRayQueryKHR:                return 300009;
+        case spv::OpTypeAccelerationStructureKHR:   return 300010;
         case spv::OpConstantComposite:
             {
                 std::uint32_t hash = 300011 + hashType(idPos(spv[typeStart+1]));

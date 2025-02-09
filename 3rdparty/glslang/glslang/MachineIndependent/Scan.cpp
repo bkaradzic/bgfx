@@ -408,6 +408,7 @@ const std::unordered_map<const char*, int, str_hash, str_eq> KeywordMap {
     {"writeonly",WRITEONLY},
     {"atomic_uint",ATOMIC_UINT},
     {"volatile",VOLATILE},
+    {"nontemporal",NONTEMPORAL},
     {"patch",PATCH},
     {"sample",SAMPLE},
     {"subroutine",SUBROUTINE},
@@ -756,6 +757,8 @@ const std::unordered_map<const char*, int, str_hash, str_eq> KeywordMap {
     {"__function",FUNCTION},
     {"tensorLayoutNV",TENSORLAYOUTNV},
     {"tensorViewNV",TENSORVIEWNV},
+
+    {"coopvecNV",COOPVECNV},
 };
 const std::unordered_set<const char*, str_hash, str_eq> ReservedSet {
     "common",
@@ -1104,6 +1107,11 @@ int TScanContext::tokenizeIdentifier()
             (parseContext.version < 420 && ! parseContext.extensionTurnedOn(E_GL_ARB_shader_image_load_store))))
             reservedWord();
         return keyword;
+    case NONTEMPORAL:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            (parseContext.extensionTurnedOn(E_GL_EXT_nontemporal_keyword)))
+            return keyword;
+        return identifierOrType();
     case PATCH:
         if (parseContext.symbolTable.atBuiltInLevel() ||
             (parseContext.isEsProfile() &&
@@ -1773,6 +1781,13 @@ int TScanContext::tokenizeIdentifier()
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
             parseContext.extensionTurnedOn(E_GL_KHR_cooperative_matrix))
+            return keyword;
+        return identifierOrType();
+
+    case COOPVECNV:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_NV_cooperative_vector))
             return keyword;
         return identifierOrType();
 
