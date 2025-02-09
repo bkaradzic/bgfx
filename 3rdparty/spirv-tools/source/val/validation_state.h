@@ -245,6 +245,24 @@ class ValidationState_t {
                                    const Instruction* inst) {
     entry_point_to_local_size_or_id_[entry_point] = inst;
   }
+
+  /// Registers that the entry point maximum number of primitives
+  /// mesh shader will ever emit
+  void RegisterEntryPointOutputPrimitivesEXT(uint32_t entry_point,
+                                             const Instruction* inst) {
+    entry_point_to_output_primitives_[entry_point] = inst;
+  }
+
+  /// Returns the maximum number of primitives mesh shader can emit
+  uint32_t GetOutputPrimitivesEXT(uint32_t entry_point) {
+    auto entry = entry_point_to_output_primitives_.find(entry_point);
+    if (entry != entry_point_to_output_primitives_.end()) {
+      auto inst = entry->second;
+      return inst->GetOperandAs<uint32_t>(2);
+    }
+    return 0;
+  }
+
   /// Returns whether the entry point declares its local size
   bool EntryPointHasLocalSizeOrId(uint32_t entry_point) const {
     return entry_point_to_local_size_or_id_.find(entry_point) !=
@@ -616,6 +634,7 @@ class ValidationState_t {
   // Only works for types not for objects.
   bool IsVoidType(uint32_t id) const;
   bool IsFloatScalarType(uint32_t id) const;
+  bool IsFloatArrayType(uint32_t id) const;
   bool IsFloatVectorType(uint32_t id) const;
   bool IsFloat16Vector2Or4Type(uint32_t id) const;
   bool IsFloatScalarOrVectorType(uint32_t id) const;
@@ -644,6 +663,10 @@ class ValidationState_t {
   bool IsIntCooperativeMatrixType(uint32_t id) const;
   bool IsUnsignedIntCooperativeMatrixType(uint32_t id) const;
   bool IsUnsigned64BitHandle(uint32_t id) const;
+  bool IsCooperativeVectorNVType(uint32_t id) const;
+  bool IsFloatCooperativeVectorNVType(uint32_t id) const;
+  bool IsIntCooperativeVectorNVType(uint32_t id) const;
+  bool IsUnsignedIntCooperativeVectorNVType(uint32_t id) const;
 
   // Returns true if |id| is a type id that contains |type| (or integer or
   // floating point type) of |width| bits.
@@ -782,6 +805,9 @@ class ValidationState_t {
                                             uint32_t result_type_id,
                                             uint32_t m2, bool is_conversion,
                                             bool swap_row_col = false);
+
+  spv_result_t CooperativeVectorDimensionsMatch(const Instruction* inst,
+                                                uint32_t v1, uint32_t v2);
 
   // Returns true if |lhs| and |rhs| logically match and, if the decorations of
   // |rhs| are a subset of |lhs|.
@@ -970,6 +996,10 @@ class ValidationState_t {
   // Mapping entry point -> local size execution mode instruction
   std::unordered_map<uint32_t, const Instruction*>
       entry_point_to_local_size_or_id_;
+
+  // Mapping entry point -> OutputPrimitivesEXT execution mode instruction
+  std::unordered_map<uint32_t, const Instruction*>
+      entry_point_to_output_primitives_;
 
   /// Mapping function -> array of entry points inside this
   /// module which can (indirectly) call the function.

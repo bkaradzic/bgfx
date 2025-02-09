@@ -1,4 +1,6 @@
 // Copyright (c) 2018 Google LLC.
+// Modifications Copyright (C) 2024 Advanced Micro Devices, Inc. All rights
+// reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -323,6 +325,42 @@ spv_result_t ValidateEntryPoint(ValidationState_t& _, const Instruction* inst) {
     }
   }
 
+  if (_.EntryPointHasLocalSizeOrId(entry_point_id)) {
+    const Instruction* local_size_inst =
+        _.EntryPointLocalSizeOrId(entry_point_id);
+    if (local_size_inst) {
+      const auto mode = local_size_inst->GetOperandAs<spv::ExecutionMode>(1);
+      const uint32_t operand_x = local_size_inst->GetOperandAs<uint32_t>(2);
+      const uint32_t operand_y = local_size_inst->GetOperandAs<uint32_t>(3);
+      const uint32_t operand_z = local_size_inst->GetOperandAs<uint32_t>(4);
+      if (mode == spv::ExecutionMode::LocalSize) {
+        if ((operand_x * operand_y * operand_z) == 0) {
+          return _.diag(SPV_ERROR_INVALID_DATA, local_size_inst)
+                 << "Local Size execution mode must not have a product of zero "
+                    "(X "
+                    "= "
+                 << operand_x << ", Y = " << operand_y << ", Z = " << operand_z
+                 << ").";
+        }
+      } else if (mode == spv::ExecutionMode::LocalSizeId) {
+        // can only validate product if static and not spec constant
+        // (This is done for us in EvalConstantValUint64)
+        uint64_t x_size, y_size, z_size;
+        bool static_x = _.EvalConstantValUint64(operand_x, &x_size);
+        bool static_y = _.EvalConstantValUint64(operand_y, &y_size);
+        bool static_z = _.EvalConstantValUint64(operand_z, &z_size);
+        if (static_x && static_y && static_z &&
+            ((x_size * y_size * z_size) == 0)) {
+          return _.diag(SPV_ERROR_INVALID_DATA, local_size_inst)
+                 << "Local Size Id execution mode must not have a product of "
+                    "zero "
+                    "(X = "
+                 << x_size << ", Y = " << y_size << ", Z = " << z_size << ").";
+        }
+      }
+    }
+  }
+
   return SPV_SUCCESS;
 }
 
@@ -347,6 +385,12 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
       case spv::ExecutionMode::LocalSizeId:
       case spv::ExecutionMode::FPFastMathDefault:
       case spv::ExecutionMode::MaximumRegistersIdINTEL:
+      case spv::ExecutionMode::IsApiEntryAMDX:
+      case spv::ExecutionMode::MaxNodeRecursionAMDX:
+      case spv::ExecutionMode::MaxNumWorkgroupsAMDX:
+      case spv::ExecutionMode::ShaderIndexAMDX:
+      case spv::ExecutionMode::SharesInputWithAMDX:
+      case spv::ExecutionMode::StaticNumWorkgroupsAMDX:
         valid_mode = true;
         break;
       default:
@@ -368,6 +412,12 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
         case spv::ExecutionMode::SubgroupsPerWorkgroupId:
         case spv::ExecutionMode::LocalSizeHintId:
         case spv::ExecutionMode::LocalSizeId:
+        case spv::ExecutionMode::IsApiEntryAMDX:
+        case spv::ExecutionMode::MaxNodeRecursionAMDX:
+        case spv::ExecutionMode::MaxNumWorkgroupsAMDX:
+        case spv::ExecutionMode::ShaderIndexAMDX:
+        case spv::ExecutionMode::SharesInputWithAMDX:
+        case spv::ExecutionMode::StaticNumWorkgroupsAMDX:
           if (!spvOpcodeIsConstant(operand_inst->opcode())) {
             return _.diag(SPV_ERROR_INVALID_ID, inst)
                    << "For OpExecutionModeId all Extra Operand ids must be "
@@ -426,7 +476,13 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
   } else if (mode == spv::ExecutionMode::SubgroupsPerWorkgroupId ||
              mode == spv::ExecutionMode::LocalSizeHintId ||
              mode == spv::ExecutionMode::LocalSizeId ||
-             mode == spv::ExecutionMode::FPFastMathDefault) {
+             mode == spv::ExecutionMode::FPFastMathDefault ||
+             mode == spv::ExecutionMode::IsApiEntryAMDX ||
+             mode == spv::ExecutionMode::MaxNodeRecursionAMDX ||
+             mode == spv::ExecutionMode::MaxNumWorkgroupsAMDX ||
+             mode == spv::ExecutionMode::ShaderIndexAMDX ||
+             mode == spv::ExecutionMode::SharesInputWithAMDX ||
+             mode == spv::ExecutionMode::StaticNumWorkgroupsAMDX) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "OpExecutionMode is only valid when the Mode operand is an "
               "execution mode that takes no Extra Operands, or takes Extra "
@@ -543,6 +599,15 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
                     "tessellation execution model.";
         }
       }
+      if (spvIsVulkanEnv(_.context()->target_env)) {
+        if (_.HasCapability(spv::Capability::MeshShadingEXT) &&
+            inst->GetOperandAs<uint32_t>(2) == 0) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << _.VkErrorID(7330)
+                 << "In mesh shaders using the MeshEXT Execution Model the "
+                    "OutputVertices Execution Mode must be greater than 0";
+        }
+      }
       break;
     case spv::ExecutionMode::OutputLinesEXT:
     case spv::ExecutionMode::OutputTrianglesEXT:
@@ -556,6 +621,16 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
                << "Execution mode can only be used with the MeshEXT or MeshNV "
                   "execution "
                   "model.";
+      }
+      if (mode == spv::ExecutionMode::OutputPrimitivesEXT &&
+          spvIsVulkanEnv(_.context()->target_env)) {
+        if (_.HasCapability(spv::Capability::MeshShadingEXT) &&
+            inst->GetOperandAs<uint32_t>(2) == 0) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << _.VkErrorID(7331)
+                 << "In mesh shaders using the MeshEXT Execution Model the "
+                    "OutputPrimitivesEXT Execution Mode must be greater than 0";
+        }
       }
       break;
     case spv::ExecutionMode::QuadDerivativesKHR:

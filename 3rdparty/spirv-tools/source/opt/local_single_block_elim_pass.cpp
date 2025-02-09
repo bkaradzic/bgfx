@@ -1,6 +1,8 @@
 // Copyright (c) 2017 The Khronos Group Inc.
 // Copyright (c) 2017 Valve Corporation
 // Copyright (c) 2017 LunarG Inc.
+// Modifications Copyright (C) 2024 Advanced Micro Devices, Inc. All rights
+// reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -238,6 +240,7 @@ void LocalSingleBlockLoadStoreElimPass::InitExtensions() {
                                 "SPV_AMD_gcn_shader",
                                 "SPV_KHR_shader_ballot",
                                 "SPV_AMD_shader_ballot",
+                                "SPV_AMDX_shader_enqueue",
                                 "SPV_AMD_gpu_shader_half_float",
                                 "SPV_KHR_shader_draw_parameters",
                                 "SPV_KHR_subgroup_vote",

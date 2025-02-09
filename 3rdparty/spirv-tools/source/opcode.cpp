@@ -1,6 +1,6 @@
 // Copyright (c) 2015-2022 The Khronos Group Inc.
-// Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights
-// reserved.
+// Modifications Copyright (C) 2020-2024 Advanced Micro Devices, Inc. All
+// rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -265,12 +265,14 @@ int32_t spvOpcodeIsConstant(const spv::Op opcode) {
     case spv::Op::OpConstantSampler:
     case spv::Op::OpConstantNull:
     case spv::Op::OpConstantFunctionPointerINTEL:
+    case spv::Op::OpConstantStringAMDX:
     case spv::Op::OpSpecConstantTrue:
     case spv::Op::OpSpecConstantFalse:
     case spv::Op::OpSpecConstant:
     case spv::Op::OpSpecConstantComposite:
     case spv::Op::OpSpecConstantCompositeReplicateEXT:
     case spv::Op::OpSpecConstantOp:
+    case spv::Op::OpSpecConstantStringAMDX:
       return true;
     default:
       return false;
@@ -301,6 +303,7 @@ int32_t spvOpcodeIsComposite(const spv::Op opcode) {
     case spv::Op::OpTypeRuntimeArray:
     case spv::Op::OpTypeCooperativeMatrixNV:
     case spv::Op::OpTypeCooperativeMatrixKHR:
+    case spv::Op::OpTypeCooperativeVectorNV:
       return true;
     default:
       return false;
@@ -318,6 +321,7 @@ bool spvOpcodeReturnsLogicalVariablePointer(const spv::Op opcode) {
     case spv::Op::OpFunctionParameter:
     case spv::Op::OpImageTexelPointer:
     case spv::Op::OpCopyObject:
+    case spv::Op::OpAllocateNodePayloadsAMDX:
     case spv::Op::OpSelect:
     case spv::Op::OpPhi:
     case spv::Op::OpFunctionCall:
@@ -344,6 +348,7 @@ int32_t spvOpcodeReturnsLogicalPointer(const spv::Op opcode) {
     case spv::Op::OpImageTexelPointer:
     case spv::Op::OpCopyObject:
     case spv::Op::OpRawAccessChainNV:
+    case spv::Op::OpAllocateNodePayloadsAMDX:
       return true;
     default:
       return false;
@@ -377,11 +382,13 @@ int32_t spvOpcodeGeneratesType(spv::Op op) {
     case spv::Op::OpTypeAccelerationStructureNV:
     case spv::Op::OpTypeCooperativeMatrixNV:
     case spv::Op::OpTypeCooperativeMatrixKHR:
+    case spv::Op::OpTypeCooperativeVectorNV:
     // case spv::Op::OpTypeAccelerationStructureKHR: covered by
     // spv::Op::OpTypeAccelerationStructureNV
     case spv::Op::OpTypeRayQueryKHR:
     case spv::Op::OpTypeHitObjectNV:
     case spv::Op::OpTypeUntypedPointerKHR:
+    case spv::Op::OpTypeNodePayloadArrayAMDX:
     case spv::Op::OpTypeTensorLayoutNV:
     case spv::Op::OpTypeTensorViewNV:
       return true;

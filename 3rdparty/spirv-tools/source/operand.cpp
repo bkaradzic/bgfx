@@ -237,6 +237,9 @@ const char* spvOperandTypeStr(spv_operand_type_t type) {
       return "cooperative matrix reduce";
     case SPV_OPERAND_TYPE_TENSOR_ADDRESSING_OPERANDS:
       return "tensor addressing operands";
+    case SPV_OPERAND_TYPE_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS:
+    case SPV_OPERAND_TYPE_OPTIONAL_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS:
+      return "matrix multiply accumulate operands";
     case SPV_OPERAND_TYPE_INITIALIZATION_MODE_QUALIFIER:
       return "initialization mode qualifier";
     case SPV_OPERAND_TYPE_HOST_ACCESS_QUALIFIER:
@@ -297,6 +300,10 @@ const char* spvOperandTypeStr(spv_operand_type_t type) {
       return "quantization mode";
     case SPV_OPERAND_TYPE_OVERFLOW_MODES:
       return "overflow mode";
+    case SPV_OPERAND_TYPE_COOPERATIVE_VECTOR_MATRIX_LAYOUT:
+      return "cooperative vector matrix layout";
+    case SPV_OPERAND_TYPE_COMPONENT_TYPE:
+      return "component type";
 
     case SPV_OPERAND_TYPE_NONE:
       return "NONE";
@@ -396,6 +403,8 @@ bool spvOperandIsConcrete(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_NAMED_MAXIMUM_NUMBER_OF_REGISTERS:
     case SPV_OPERAND_TYPE_FPENCODING:
     case SPV_OPERAND_TYPE_TENSOR_CLAMP_MODE:
+    case SPV_OPERAND_TYPE_COOPERATIVE_VECTOR_MATRIX_LAYOUT:
+    case SPV_OPERAND_TYPE_COMPONENT_TYPE:
       return true;
     default:
       break;
@@ -415,6 +424,7 @@ bool spvOperandIsConcreteMask(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_DEBUG_INFO_FLAGS:
     case SPV_OPERAND_TYPE_CLDEBUG100_DEBUG_INFO_FLAGS:
     case SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_OPERANDS:
+    case SPV_OPERAND_TYPE_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS:
     case SPV_OPERAND_TYPE_RAW_ACCESS_CHAIN_OPERANDS:
     case SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_REDUCE:
     case SPV_OPERAND_TYPE_TENSOR_ADDRESSING_OPERANDS:
@@ -437,6 +447,7 @@ bool spvOperandIsOptional(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_OPTIONAL_ACCESS_QUALIFIER:
     case SPV_OPERAND_TYPE_OPTIONAL_PACKED_VECTOR_FORMAT:
     case SPV_OPERAND_TYPE_OPTIONAL_COOPERATIVE_MATRIX_OPERANDS:
+    case SPV_OPERAND_TYPE_OPTIONAL_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS:
     case SPV_OPERAND_TYPE_OPTIONAL_CIV:
     case SPV_OPERAND_TYPE_OPTIONAL_RAW_ACCESS_CHAIN_OPERANDS:
     case SPV_OPERAND_TYPE_OPTIONAL_FPENCODING:

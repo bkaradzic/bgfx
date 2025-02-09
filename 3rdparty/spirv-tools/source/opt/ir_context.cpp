@@ -1,4 +1,6 @@
 // Copyright (c) 2017 Google Inc.
+// Modifications Copyright (C) 2024 Advanced Micro Devices, Inc. All rights
+// reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -539,6 +541,7 @@ void IRContext::AddCombinatorsForCapability(uint32_t capability) {
          (uint32_t)spv::Op::OpTypeHitObjectNV,
          (uint32_t)spv::Op::OpTypeArray,
          (uint32_t)spv::Op::OpTypeRuntimeArray,
+         (uint32_t)spv::Op::OpTypeNodePayloadArrayAMDX,
          (uint32_t)spv::Op::OpTypeStruct,
          (uint32_t)spv::Op::OpTypeOpaque,
          (uint32_t)spv::Op::OpTypePointer,

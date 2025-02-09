@@ -1,4 +1,6 @@
 // Copyright (c) 2016 Google Inc.
+// Modifications Copyright (C) 2024 Advanced Micro Devices, Inc. All rights
+// reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -240,6 +242,10 @@ spv_result_t FriendlyNameMapper::ParseInstruction(
     case spv::Op::OpTypeRuntimeArray:
       SaveName(result_id,
                std::string("_runtimearr_") + NameForId(inst.words[2]));
+      break;
+    case spv::Op::OpTypeNodePayloadArrayAMDX:
+      SaveName(result_id,
+               std::string("_payloadarr_") + NameForId(inst.words[2]));
       break;
     case spv::Op::OpTypePointer:
       SaveName(result_id, std::string("_ptr_") +

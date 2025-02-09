@@ -1,4 +1,6 @@
 // Copyright (c) 2017 Google Inc.
+// Modifications Copyright (C) 2024 Advanced Micro Devices, Inc. All rights
+// reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -104,7 +106,8 @@ spv_result_t GetExtractInsertValueType(ValidationState_t& _,
         }
         break;
       }
-      case spv::Op::OpTypeRuntimeArray: {
+      case spv::Op::OpTypeRuntimeArray:
+      case spv::Op::OpTypeNodePayloadArrayAMDX: {
         *member_type = type_inst->word(2);
         // Array size is unknown.
         break;
@@ -122,6 +125,7 @@ spv_result_t GetExtractInsertValueType(ValidationState_t& _,
         *member_type = type_inst->word(component_index + 2);
         break;
       }
+      case spv::Op::OpTypeCooperativeVectorNV:
       case spv::Op::OpTypeCooperativeMatrixKHR:
       case spv::Op::OpTypeCooperativeMatrixNV: {
         *member_type = type_inst->word(2);
@@ -148,7 +152,8 @@ spv_result_t ValidateVectorExtractDynamic(ValidationState_t& _,
 
   const uint32_t vector_type = _.GetOperandTypeId(inst, 2);
   const spv::Op vector_opcode = _.GetIdOpcode(vector_type);
-  if (vector_opcode != spv::Op::OpTypeVector) {
+  if (vector_opcode != spv::Op::OpTypeVector &&
+      vector_opcode != spv::Op::OpTypeCooperativeVectorNV) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Vector type to be OpTypeVector";
   }
@@ -176,7 +181,8 @@ spv_result_t ValidateVectorInsertDyanmic(ValidationState_t& _,
                                          const Instruction* inst) {
   const uint32_t result_type = inst->type_id();
   const spv::Op result_opcode = _.GetIdOpcode(result_type);
-  if (result_opcode != spv::Op::OpTypeVector) {
+  if (result_opcode != spv::Op::OpTypeVector &&
+      result_opcode != spv::Op::OpTypeCooperativeVectorNV) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Result Type to be OpTypeVector";
   }
@@ -214,14 +220,24 @@ spv_result_t ValidateCompositeConstruct(ValidationState_t& _,
   const uint32_t result_type = inst->type_id();
   const spv::Op result_opcode = _.GetIdOpcode(result_type);
   switch (result_opcode) {
-    case spv::Op::OpTypeVector: {
-      const uint32_t num_result_components = _.GetDimension(result_type);
+    case spv::Op::OpTypeVector:
+    case spv::Op::OpTypeCooperativeVectorNV: {
+      uint32_t num_result_components = _.GetDimension(result_type);
       const uint32_t result_component_type = _.GetComponentType(result_type);
       uint32_t given_component_count = 0;
 
-      if (num_operands <= 3) {
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "Expected number of constituents to be at least 2";
+      bool comp_is_int32 = true, comp_is_const_int32 = true;
+
+      if (result_opcode == spv::Op::OpTypeVector) {
+        if (num_operands <= 3) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Expected number of constituents to be at least 2";
+        }
+      } else {
+        uint32_t comp_count_id =
+            _.FindDef(result_type)->GetOperandAs<uint32_t>(2);
+        std::tie(comp_is_int32, comp_is_const_int32, num_result_components) =
+            _.EvalInt32IfConst(comp_count_id);
       }
 
       for (uint32_t operand_index = 2; operand_index < num_operands;
@@ -241,7 +257,8 @@ spv_result_t ValidateCompositeConstruct(ValidationState_t& _,
         }
       }
 
-      if (num_result_components != given_component_count) {
+      if (comp_is_const_int32 &&
+          num_result_components != given_component_count) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << "Expected total number of given components to be equal "
                << "to the size of Result Type vector";

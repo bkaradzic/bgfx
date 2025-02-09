@@ -77,7 +77,10 @@ int32_t ImageOperandsMaskInOperandIndex(Instruction* inst) {
 
 // Returns the element width of |type|.
 uint32_t ElementWidth(const analysis::Type* type) {
-  if (const analysis::Vector* vec_type = type->AsVector()) {
+  if (const analysis::CooperativeVectorNV* coopvec_type =
+          type->AsCooperativeVectorNV()) {
+    return ElementWidth(coopvec_type->component_type());
+  } else if (const analysis::Vector* vec_type = type->AsVector()) {
     return ElementWidth(vec_type->element_type());
   } else if (const analysis::Float* float_type = type->AsFloat()) {
     return float_type->width();
