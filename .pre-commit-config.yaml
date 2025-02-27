@@ -1,0 +1,20 @@
+default_language_version:
+  python: python3
+
+exclude: |
+  (?x)^(
+    3rdparty/.*|
+    bindings/.*|
+    include/bgfx/c99/bgfx\.h|
+    .*\.bin\.h|
+    .*\.ttf\.h$
+  )
+
+repos:
+  - repo: local
+    hooks:
+      - id: file-format
+        name: file-format
+        language: python
+        entry: python .github/workflows/file_format.py
+        types_or: [text]
