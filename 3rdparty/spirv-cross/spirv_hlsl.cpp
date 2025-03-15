@@ -2476,12 +2476,14 @@ void CompilerHLSL::analyze_meshlet_writes()
 			set_decoration(op_type, DecorationPerPrimitiveEXT);
 
 		auto &arr = set<SPIRType>(op_arr, type);
+		arr.op = OpTypeArray;
 		arr.parent_type = type.self;
 		arr.array.push_back(per_primitive ? execution.output_primitives : execution.output_vertices);
 		arr.array_size_literal.push_back(true);
 
 		auto &ptr = set<SPIRType>(op_ptr, arr);
 		ptr.parent_type = arr.self;
+		ptr.op = OpTypePointer;
 		ptr.pointer = true;
 		ptr.pointer_depth++;
 		ptr.storage = StorageClassOutput;

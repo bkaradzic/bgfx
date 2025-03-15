@@ -1410,6 +1410,10 @@ struct SPIRConstant : IVariant
 	// If true, this is a LUT, and should always be declared in the outer scope.
 	bool is_used_as_lut = false;
 
+	// If this is a null constant of array type with specialized length.
+	// May require special handling in initializer
+	bool is_null_array_specialized_length = false;
+
 	// For composites which are constant arrays, etc.
 	SmallVector<ConstantID> subconstants;
 
