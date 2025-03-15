@@ -1263,7 +1263,7 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"MultiView", 4439, 0, nullptr, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_KHR_multiview, {}, SPV_SPIRV_VERSION_WORD(1,3), 0xffffffffu},
   {"VariablePointersStorageBuffer", 4441, 0, nullptr, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_KHR_variable_pointers, {}, SPV_SPIRV_VERSION_WORD(1,3), 0xffffffffu},
   {"VariablePointers", 4442, 0, nullptr, 1, pygen_variable_caps_VariablePointersStorageBuffer, 1, pygen_variable_exts_SPV_KHR_variable_pointers, {}, SPV_SPIRV_VERSION_WORD(1,3), 0xffffffffu},
-  {"AtomicStorageOps", 4445, 0, nullptr, 0, nullptr, 1, pygen_variable_exts_SPV_KHR_shader_atomic_counter_ops, {}, 0xffffffffu, 0xffffffffu},
+  {"AtomicStorageOps", 4445, 0, nullptr, 1, pygen_variable_caps_AtomicStorage, 1, pygen_variable_exts_SPV_KHR_shader_atomic_counter_ops, {}, 0xffffffffu, 0xffffffffu},
   {"SampleMaskPostDepthCoverage", 4447, 0, nullptr, 0, nullptr, 1, pygen_variable_exts_SPV_KHR_post_depth_coverage, {}, 0xffffffffu, 0xffffffffu},
   {"StorageBuffer8BitAccess", 4448, 0, nullptr, 0, nullptr, 1, pygen_variable_exts_SPV_KHR_8bit_storage, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
   {"UniformAndStorageBuffer8BitAccess", 4449, 0, nullptr, 1, pygen_variable_caps_StorageBuffer8BitAccess, 1, pygen_variable_exts_SPV_KHR_8bit_storage, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},

@@ -240,7 +240,7 @@ class SPIRV_TOOLS_EXPORT Optimizer {
 
  private:
   struct SPIRV_TOOLS_LOCAL Impl;  // Opaque struct for holding internal data.
-  std::unique_ptr<Impl> impl_;  // Unique pointer to internal data.
+  std::unique_ptr<Impl> impl_;    // Unique pointer to internal data.
 };
 
 // Creates a null pass.
@@ -655,7 +655,7 @@ Optimizer::PassToken CreateRedundancyEliminationPass();
 // element if those elements are accessed individually.  The parameter is a
 // limit on the number of members in the composite variable that the pass will
 // consider replacing.
-Optimizer::PassToken CreateScalarReplacementPass(uint32_t size_limit = 100);
+Optimizer::PassToken CreateScalarReplacementPass(uint32_t size_limit = 0);
 
 // Create a private to local pass.
 // This pass looks for variables declared in the private storage class that are
@@ -968,6 +968,11 @@ Optimizer::PassToken CreateInvocationInterlockPlacementPass();
 // Creates a pass to add/remove maximal reconvergence execution mode.
 // This pass either adds or removes maximal reconvergence from all entry points.
 Optimizer::PassToken CreateModifyMaximalReconvergencePass(bool add);
+
+// Creates a pass to split combined image+sampler variables and function
+// parameters into separate image and sampler parts. Binding numbers and
+// other decorations are copied.
+Optimizer::PassToken CreateSplitCombinedImageSamplerPass();
 }  // namespace spvtools
 
 #endif  // INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_

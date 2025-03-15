@@ -77,6 +77,7 @@
 #include "source/opt/scalar_replacement_pass.h"
 #include "source/opt/set_spec_constant_default_value_pass.h"
 #include "source/opt/simplification_pass.h"
+#include "source/opt/split_combined_image_sampler_pass.h"
 #include "source/opt/spread_volatile_semantics.h"
 #include "source/opt/ssa_rewrite_pass.h"
 #include "source/opt/strength_reduction_pass.h"
