@@ -437,8 +437,13 @@ static void classifyVertices(unsigned char* result, unsigned int* loop, unsigned
 	{
 		// vertex_lock may lock any wedge, not just the primary vertex, so we need to lock the primary vertex and relock any wedges
 		for (size_t i = 0; i < vertex_count; ++i)
-			if (vertex_lock[sparse_remap ? sparse_remap[i] : i])
+		{
+			unsigned int ri = sparse_remap ? sparse_remap[i] : unsigned(i);
+			assert(vertex_lock[ri] <= 1); // values other than 0/1 are reserved for future use
+
+			if (vertex_lock[ri])
 				result[remap[i]] = Kind_Locked;
+		}
 
 		for (size_t i = 0; i < vertex_count; ++i)
 			if (result[remap[i]] == Kind_Locked)
