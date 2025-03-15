@@ -1,7 +1,7 @@
 /**
  * cgltf_write - a single-file glTF 2.0 writer written in C99.
  *
- * Version: 1.14
+ * Version: 1.15
  *
  * Website: https://github.com/jkuhlmann/cgltf
  *
