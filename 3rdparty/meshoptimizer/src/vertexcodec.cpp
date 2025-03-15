@@ -123,6 +123,7 @@ namespace meshopt
 const unsigned char kVertexHeader = 0xa0;
 
 static int gEncodeVertexVersion = 0;
+const int kDecodeVertexVersion = 1;
 
 const size_t kVertexBlockSizeBytes = 8192;
 const size_t kVertexBlockMaxSize = 256;
@@ -1803,9 +1804,26 @@ size_t meshopt_encodeVertexBufferBound(size_t vertex_count, size_t vertex_size)
 
 void meshopt_encodeVertexVersion(int version)
 {
-	assert(unsigned(version) <= 1);
+	assert(unsigned(version) <= unsigned(meshopt::kDecodeVertexVersion));
 
 	meshopt::gEncodeVertexVersion = version;
+}
+
+int meshopt_decodeVertexVersion(const unsigned char* buffer, size_t buffer_size)
+{
+	if (buffer_size < 1)
+		return -1;
+
+	unsigned char header = buffer[0];
+
+	if ((header & 0xf0) != meshopt::kVertexHeader)
+		return -1;
+
+	int version = header & 0x0f;
+	if (version > meshopt::kDecodeVertexVersion)
+		return -1;
+
+	return version;
 }
 
 int meshopt_decodeVertexBuffer(void* destination, size_t vertex_count, size_t vertex_size, const unsigned char* buffer, size_t buffer_size)
@@ -1844,7 +1862,7 @@ int meshopt_decodeVertexBuffer(void* destination, size_t vertex_count, size_t ve
 		return -1;
 
 	int version = data_header & 0x0f;
-	if (version > 1)
+	if (version > kDecodeVertexVersion)
 		return -1;
 
 	size_t tail_size = vertex_size + (version == 0 ? 0 : vertex_size / 4);
