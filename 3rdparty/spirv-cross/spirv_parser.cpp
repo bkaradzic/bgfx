@@ -305,6 +305,7 @@ void Parser::parse(const Instruction &instruction)
 	}
 
 	case OpExtInst:
+	case OpExtInstWithForwardRefsKHR:
 	{
 		// The SPIR-V debug information extended instructions might come at global scope.
 		if (current_block)
