@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(129)
+version(130)
 
 typedef "bool"
 typedef "char"
@@ -373,6 +373,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.DrawIndirectCount      --- Draw indirect with indirect count is supported.
 	.FragmentDepth          --- Fragment depth is available in fragment shader.
 	.FragmentOrdering       --- Fragment ordering is available in fragment shader.
+	.FragmentBarycentric    --- Fragment barycentric coordinates are available in fragment shader.
 	.GraphicsDebugger       --- Graphics debugger is present.
 	.Hdr10                  --- HDR10 rendering is supported.
 	.Hidpi                  --- HiDPI rendering is supported.
