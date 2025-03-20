@@ -32,7 +32,7 @@ Supported rendering backends
 Supported Platforms
 ~~~~~~~~~~~~~~~~~~~
 
--  Android (14+)
+-  Android (4.0+) - API 14 or later
 -  iOS/iPadOS/tvOS (16.0+)
 -  Linux (both X11 and Wayland)
 -  macOS (13.0+)
