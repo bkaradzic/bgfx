@@ -2700,11 +2700,12 @@ VK_IMPORT_DEVICE
 		void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) override
 		{
 			const uint32_t numVertices = _numIndices*4/6;
-			if (0 < numVertices && m_backBuffer.isRenderable() )
-			{
-				m_indexBuffers[_blitter.m_ib->handle.idx].update(m_commandBuffer, 0, _numIndices*2, _blitter.m_ib->data);
-				m_vertexBuffers[_blitter.m_vb->handle.idx].update(m_commandBuffer, 0, numVertices*_blitter.m_layout.m_stride, _blitter.m_vb->data, true);
 
+			if (0 < numVertices
+			&&  m_backBuffer.isRenderable() )
+			{
+				m_indexBuffers[_blitter.m_ib->handle.idx].update(m_commandBuffer, 0, _numIndices*2, _blitter.m_ib->data, true);
+				m_vertexBuffers[_blitter.m_vb->handle.idx].update(m_commandBuffer, 0, numVertices*_blitter.m_layout.m_stride, _blitter.m_vb->data, true);
 
 				VkRenderPassBeginInfo rpbi;
 				rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -2720,7 +2721,6 @@ VK_IMPORT_DEVICE
 
 				vkCmdBeginRenderPass(m_commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
 				vkCmdDrawIndexed(m_commandBuffer, _numIndices, 1, 0, 0, 0);
-
 				vkCmdEndRenderPass(m_commandBuffer);
 			}
 		}
@@ -4454,25 +4454,26 @@ VK_IMPORT_DEVICE
 			return createHostBuffer(_size, flags, _buffer, _memory, _data);
 		}
 
-		StagingBufferVK allocFromScratchStagingBuffer(uint32_t _size, uint32_t _align, const void *_data = NULL)
+		StagingBufferVK allocFromScratchStagingBuffer(uint32_t _size, uint32_t _align, const void* _data = NULL, bool _tryScratch = true)
 		{
 			BGFX_PROFILER_SCOPE("allocFromScratchStagingBuffer", kColorResource);
 
 			StagingBufferVK result;
 			ScratchBufferVK &scratch = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
 
-			if (_size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER)
+			if (_tryScratch
+			&&  _size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER)
 			{
 				const uint32_t scratchOffset = scratch.alloc(_size, _align);
 
-				if (scratchOffset != UINT32_MAX)
+				if (UINT32_MAX != scratchOffset)
 				{
-					result.m_isFromScratch = true;
-					result.m_size = _size;
-					result.m_offset = scratchOffset;
-					result.m_buffer = scratch.m_buffer;
+					result.m_isFromScratch  = true;
+					result.m_size      = _size;
+					result.m_offset    = scratchOffset;
+					result.m_buffer    = scratch.m_buffer;
 					result.m_deviceMem = scratch.m_deviceMem;
-					result.m_data = scratch.m_data + result.m_offset;
+					result.m_data      = scratch.m_data + result.m_offset;
 
 					if (_data != NULL)
 					{
@@ -4489,9 +4490,9 @@ VK_IMPORT_DEVICE
 
 			VK_CHECK(createStagingBuffer(_size, &result.m_buffer, &result.m_deviceMem, _data));
 
-			result.m_size = _size;
+			result.m_size   = _size;
 			result.m_offset = 0;
-			result.m_data = NULL;
+			result.m_data   = NULL;
 
 			return result;
 		}
@@ -4839,7 +4840,7 @@ VK_DESTROY
 		BGFX_PROFILER_SCOPE("BufferVK::update", kColorFrame);
 		BX_UNUSED(_discard);
 
-		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(_size, 8, _data);
+		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(_size, 8, _data, !_discard);
 
 		VkBufferCopy region;
 		region.srcOffset = stagingBuffer.m_offset;
