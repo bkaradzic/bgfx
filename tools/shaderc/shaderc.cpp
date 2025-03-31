@@ -542,7 +542,10 @@ namespace bgfx
 			const uint8_t* data = &m_buffer[0];
 			uint32_t size = (uint32_t)m_buffer.size();
 
-			outf("static const uint8_t %.*s[%d] =\n{\n", m_name.getLength(), m_name.getPtr(), size);
+			outf("#ifndef %.*s_size\n", m_name.getLength(), m_name.getPtr());
+			outf("#define %.*s_size %d\n", m_name.getLength(), m_name.getPtr(), size);
+			outf("#endif // %.*s_size\n", m_name.getLength(), m_name.getPtr());
+			outf("static const uint8_t %.*s[%.*s_size] =\n{\n", m_name.getLength(), m_name.getPtr(), m_name.getLength(), m_name.getPtr());
 
 			if (NULL != data)
 			{
