@@ -4454,15 +4454,14 @@ VK_IMPORT_DEVICE
 			return createHostBuffer(_size, flags, _buffer, _memory, _data);
 		}
 
-		StagingBufferVK allocFromScratchStagingBuffer(uint32_t _size, uint32_t _align, const void* _data = NULL, bool _tryScratch = true)
+		StagingBufferVK allocFromScratchStagingBuffer(uint32_t _size, uint32_t _align, const void* _data = NULL)
 		{
 			BGFX_PROFILER_SCOPE("allocFromScratchStagingBuffer", kColorResource);
 
 			StagingBufferVK result;
 			ScratchBufferVK &scratch = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
 
-			if (_tryScratch
-			&&  _size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER)
+			if (_size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER)
 			{
 				const uint32_t scratchOffset = scratch.alloc(_size, _align);
 
@@ -4840,7 +4839,7 @@ VK_DESTROY
 		BGFX_PROFILER_SCOPE("BufferVK::update", kColorFrame);
 		BX_UNUSED(_discard);
 
-		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(_size, 8, _data, !_discard);
+		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(_size, 8, _data);
 
 		VkBufferCopy region;
 		region.srcOffset = stagingBuffer.m_offset;
@@ -8502,10 +8501,7 @@ VK_DESTROY
 		const uint64_t f3 = BGFX_STATE_BLEND_INV_FACTOR<<4;
 
 		ScratchBufferVK& scratchBuffer = m_scratchBuffer[m_cmd.m_currentFrameInFlight];
-		scratchBuffer.reset();
-
 		ScratchBufferVK& scratchStagingBuffer = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
-		scratchStagingBuffer.reset();
 
 		setMemoryBarrier(
 			  m_commandBuffer
@@ -9479,11 +9475,13 @@ VK_DESTROY
 		{
 			BGFX_PROFILER_SCOPE("scratchBuffer::flush", kColorResource);
 			scratchBuffer.flush();
+			scratchBuffer.reset();
 		}
 
 		{
 			BGFX_PROFILER_SCOPE("scratchStagingBuffer::flush", kColorResource);
 			scratchStagingBuffer.flush();
+			scratchStagingBuffer.reset();
 		}
 
 		for (uint16_t ii = 0; ii < m_numWindows; ++ii)
