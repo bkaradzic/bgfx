@@ -4733,18 +4733,12 @@ VK_DESTROY
 
 	void ScratchBufferVK::destroy()
 	{
-		reset();
-
 		vkUnmapMemory(s_renderVK->m_device, m_deviceMem);
 
 		s_renderVK->release(m_buffer);
 		s_renderVK->release(m_deviceMem);
 	}
 
-	void ScratchBufferVK::reset()
-	{
-		m_pos = 0;
-	}
 
 	uint32_t ScratchBufferVK::alloc(uint32_t _size, uint32_t _minAlign)
 	{
@@ -4774,7 +4768,7 @@ VK_DESTROY
 	}
 
 
-	void ScratchBufferVK::flush()
+	void ScratchBufferVK::flush_and_reset()
 	{
 		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.limits;
 		VkDevice device = s_renderVK->m_device;
@@ -4789,6 +4783,8 @@ VK_DESTROY
 		range.offset = 0;
 		range.size   = size;
 		VK_CHECK(vkFlushMappedMemoryRanges(device, 1, &range) );
+
+		m_pos = 0;
 	}
 
 	void BufferVK::create(VkCommandBuffer _commandBuffer, uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride)
@@ -9474,14 +9470,12 @@ VK_DESTROY
 
 		{
 			BGFX_PROFILER_SCOPE("scratchBuffer::flush", kColorResource);
-			scratchBuffer.flush();
-			scratchBuffer.reset();
+			scratchBuffer.flush_and_reset();
 		}
 
 		{
 			BGFX_PROFILER_SCOPE("scratchStagingBuffer::flush", kColorResource);
-			scratchStagingBuffer.flush();
-			scratchStagingBuffer.reset();
+			scratchStagingBuffer.flush_and_reset();
 		}
 
 		for (uint16_t ii = 0; ii < m_numWindows; ++ii)
