@@ -4454,15 +4454,14 @@ VK_IMPORT_DEVICE
 			return createHostBuffer(_size, flags, _buffer, _memory, _data);
 		}
 
-		StagingBufferVK allocFromScratchStagingBuffer(uint32_t _size, uint32_t _align, const void* _data = NULL, bool _tryScratch = true)
+		StagingBufferVK allocFromScratchStagingBuffer(uint32_t _size, uint32_t _align, const void* _data = NULL)
 		{
 			BGFX_PROFILER_SCOPE("allocFromScratchStagingBuffer", kColorResource);
 
 			StagingBufferVK result;
 			ScratchBufferVK &scratch = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
 
-			if (_tryScratch
-			&&  _size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER)
+			if (_size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER)
 			{
 				const uint32_t scratchOffset = scratch.alloc(_size, _align);
 
@@ -4734,18 +4733,12 @@ VK_DESTROY
 
 	void ScratchBufferVK::destroy()
 	{
-		reset();
-
 		vkUnmapMemory(s_renderVK->m_device, m_deviceMem);
 
 		s_renderVK->release(m_buffer);
 		s_renderVK->release(m_deviceMem);
 	}
 
-	void ScratchBufferVK::reset()
-	{
-		m_pos = 0;
-	}
 
 	uint32_t ScratchBufferVK::alloc(uint32_t _size, uint32_t _minAlign)
 	{
@@ -4775,7 +4768,7 @@ VK_DESTROY
 	}
 
 
-	void ScratchBufferVK::flush()
+	void ScratchBufferVK::flush(bool _reset)
 	{
 		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.limits;
 		VkDevice device = s_renderVK->m_device;
@@ -4790,6 +4783,10 @@ VK_DESTROY
 		range.offset = 0;
 		range.size   = size;
 		VK_CHECK(vkFlushMappedMemoryRanges(device, 1, &range) );
+
+		if (_reset) {
+			m_pos = 0;
+		}
 	}
 
 	void BufferVK::create(VkCommandBuffer _commandBuffer, uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride)
@@ -4840,7 +4837,7 @@ VK_DESTROY
 		BGFX_PROFILER_SCOPE("BufferVK::update", kColorFrame);
 		BX_UNUSED(_discard);
 
-		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(_size, 8, _data, !_discard);
+		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(_size, 8, _data);
 
 		VkBufferCopy region;
 		region.srcOffset = stagingBuffer.m_offset;
@@ -8502,10 +8499,7 @@ VK_DESTROY
 		const uint64_t f3 = BGFX_STATE_BLEND_INV_FACTOR<<4;
 
 		ScratchBufferVK& scratchBuffer = m_scratchBuffer[m_cmd.m_currentFrameInFlight];
-		scratchBuffer.reset();
-
 		ScratchBufferVK& scratchStagingBuffer = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
-		scratchStagingBuffer.reset();
 
 		setMemoryBarrier(
 			  m_commandBuffer
