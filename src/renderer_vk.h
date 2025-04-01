@@ -400,7 +400,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void destroy();
 		uint32_t alloc(uint32_t _size, uint32_t _minAlign = 1);
 		uint32_t write(const void* _data, uint32_t _size, uint32_t _minAlign = 1);
-		void flush_and_reset();
+		void flush(bool _reset = true);
 
 		VkBuffer m_buffer;
 		VkDeviceMemory m_deviceMem;
