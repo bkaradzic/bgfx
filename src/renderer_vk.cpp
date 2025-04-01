@@ -4784,7 +4784,8 @@ VK_DESTROY
 		range.size   = size;
 		VK_CHECK(vkFlushMappedMemoryRanges(device, 1, &range) );
 
-		if (_reset) {
+		if (_reset)
+		{
 			m_pos = 0;
 		}
 	}
