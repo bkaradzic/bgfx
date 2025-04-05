@@ -507,6 +507,8 @@ std::unordered_map<const char*, glslang::TBuiltInVariable, str_hash, str_eq> Sem
     {"SV_DEPTHGREATEREQUAL",glslang::EbvFragDepthGreater},
     {"SV_DEPTHLESSEQUAL",glslang::EbvFragDepthLesser},
     {"SV_STENCILREF", glslang::EbvFragStencilRef},
+    {"SV_BARYCENTRICS", glslang::EbvBaryCoordEXT},
+    {"SV_BARYCENTRICS1", glslang::EbvBaryCoordNoPerspEXT},
 };
 }
 
