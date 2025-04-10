@@ -128,6 +128,7 @@ Predefined Uniforms
   mat4    u_invViewProj       Transform clip-to-world  space.
   mat4[N] u_model             Transform local-to-world space array.
   mat4    u_modelView         Transform local-to-view  space.
+  mat4    u_invModelView      Transform view-to-local  space.
   mat4    u_modelViewProj     Transform local-to-clip  space.
   float   u_alphaRef          | The reference value to which incoming alpha
                               | values are compared.

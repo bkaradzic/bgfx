@@ -244,6 +244,26 @@ namespace bgfx
 					}
 					break;
 
+				case PredefinedUniform::InvModelView:
+					{
+						Matrix4 modelView;
+						Matrix4 invModelView;
+						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
+						bx::model4x4_mul(&modelView.un.f4x4
+							, &model.un.f4x4
+							, &m_view[_view].un.f4x4
+							);
+						bx::float4x4_inverse(&invModelView.un.f4x4
+							, &modelView.un.f4x4
+							);
+						_renderer->setShaderUniform4x4f(flags
+							, predefined.m_loc
+							, invModelView.un.val
+							, bx::uint32_min(mtxRegs, predefined.m_count)
+							);
+					}
+					break;
+
 				case PredefinedUniform::ModelViewProj:
 					{
 						Matrix4 modelViewProj;
