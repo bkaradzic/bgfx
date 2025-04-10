@@ -1136,13 +1136,14 @@ VK_IMPORT_DEVICE
 	{
 		RendererContextVK()
 			: m_allocatorCb(NULL)
+			, m_memoryLru()
 			, m_renderDocDll(NULL)
 			, m_vulkan1Dll(NULL)
 			, m_maxAnisotropy(1.0f)
 			, m_depthClamp(false)
 			, m_wireframe(false)
 			, m_captureBuffer(VK_NULL_HANDLE)
-			, m_captureMemory(VK_NULL_HANDLE)
+			, m_captureMemory()
 			, m_captureSize(0)
 		{
 		}
@@ -2184,6 +2185,8 @@ VK_IMPORT_DEVICE
 
 			m_backBuffer.destroy();
 
+			m_memoryLru.evictAll();
+
 			m_cmd.shutdown();
 
 			vkDestroy(m_pipelineCache);
@@ -2346,7 +2349,7 @@ VK_IMPORT_DEVICE
 			uint32_t pitch  = texture.m_readback.pitch(_mip);
 			uint32_t size = height * pitch;
 
-			VkDeviceMemory stagingMemory;
+			DeviceMemoryAllocationVK stagingMemory;
 			VkBuffer stagingBuffer;
 			VK_CHECK(createReadbackBuffer(size, &stagingBuffer, &stagingMemory) );
 
@@ -2360,10 +2363,10 @@ VK_IMPORT_DEVICE
 
 			kick(true);
 
-			texture.m_readback.readback(stagingMemory, 0, _data, _mip);
+			texture.m_readback.readback(stagingMemory.mem, stagingMemory.offset, _data, _mip);
 
 			vkDestroy(stagingBuffer);
-			vkDestroy(stagingMemory);
+			vkDestroy(stagingMemory.mem); // Destroy directly: readback buffers are private (for now).
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
@@ -2511,14 +2514,14 @@ VK_IMPORT_DEVICE
 			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(swapChain.m_colorFormat) );
 			const uint32_t size = frameBuffer.m_width * frameBuffer.m_height * bpp / 8;
 
-			VkDeviceMemory stagingMemory;
+			DeviceMemoryAllocationVK stagingMemory;
 			VkBuffer stagingBuffer;
 			VK_CHECK(createReadbackBuffer(size, &stagingBuffer, &stagingMemory) );
 
 			readSwapChain(swapChain, stagingBuffer, stagingMemory, callback, _filePath);
 
 			vkDestroy(stagingBuffer);
-			vkDestroy(stagingMemory);
+			vkDestroy(stagingMemory.mem);
 		}
 
 		void updateViewName(ViewId _id, const char* _name) override
@@ -2599,6 +2602,11 @@ VK_IMPORT_DEVICE
 				m_cmd.release(uint64_t(_object.vk), getType<Ty>() );
 				_object = VK_NULL_HANDLE;
 			}
+		}
+
+		void recycleMemory(DeviceMemoryAllocationVK _alloc)
+		{
+			m_cmd.recycleMemory(_alloc);
 		}
 
 		void submitBlit(BlitState& _bs, uint16_t _view);
@@ -2737,7 +2745,7 @@ VK_IMPORT_DEVICE
 				g_callback->captureEnd();
 
 				release(m_captureBuffer);
-				release(m_captureMemory);
+				recycleMemory(m_captureMemory);
 				m_captureSize = 0;
 			}
 		}
@@ -2760,7 +2768,7 @@ VK_IMPORT_DEVICE
 				if (captureSize > m_captureSize)
 				{
 					release(m_captureBuffer);
-					release(m_captureMemory);
+					recycleMemory(m_captureMemory);
 
 					m_captureSize = captureSize;
 					VK_CHECK(createReadbackBuffer(m_captureSize, &m_captureBuffer, &m_captureMemory) );
@@ -4059,7 +4067,7 @@ VK_IMPORT_DEVICE
 
 		typedef void (*SwapChainReadFunc)(void* /*src*/, uint32_t /*width*/, uint32_t /*height*/, uint32_t /*pitch*/, const void* /*userData*/);
 
-		bool readSwapChain(const SwapChainVK& _swapChain, VkBuffer _buffer, VkDeviceMemory _memory, SwapChainReadFunc _func, const void* _userData = NULL)
+		bool readSwapChain(const SwapChainVK& _swapChain, VkBuffer _buffer, DeviceMemoryAllocationVK _memory, SwapChainReadFunc _func, const void* _userData = NULL)
 		{
 			if (isSwapChainReadable(_swapChain) )
 			{
@@ -4080,7 +4088,7 @@ VK_IMPORT_DEVICE
 				kick(true);
 
 				uint8_t* src;
-				VK_CHECK(vkMapMemory(m_device, _memory, 0, VK_WHOLE_SIZE, 0, (void**)&src) );
+				VK_CHECK(vkMapMemory(m_device, _memory.mem, _memory.offset, _memory.size, 0, (void**)&src) );
 
 				if (_swapChain.m_colorFormat == TextureFormat::RGBA8)
 				{
@@ -4106,7 +4114,7 @@ VK_IMPORT_DEVICE
 					bx::free(g_allocator, dst);
 				}
 
-				vkUnmapMemory(m_device, _memory);
+				vkUnmapMemory(m_device, _memory.mem);
 
 				readback.destroy();
 
@@ -4354,9 +4362,31 @@ VK_IMPORT_DEVICE
 			return -1;
 		}
 
-		VkResult allocateMemory(const VkMemoryRequirements* requirements, VkMemoryPropertyFlags propertyFlags, ::VkDeviceMemory* memory) const
+		VkResult allocateMemory(const VkMemoryRequirements* requirements, VkMemoryPropertyFlags propertyFlags, DeviceMemoryAllocationVK* memory, bool _forcePrivateDeviceAllocation)
 		{
 			BGFX_PROFILER_SCOPE("RendererContextVK::allocateMemory", kColorResource);
+
+			// Forcing the use of a private device allocation for a certain memory allocation
+			// can be desireable when memory mapping the allocation. A memory allocation
+			// can only be mapped once. So handing out multiple subregions of one bigger
+			// allocation can lead to problems, when they get mapped multiple times.
+			// Right now, with the LRU system, we are still only handing out the full
+			// memory allocation, and never subregions of it, so it's impossible right
+			// now to map a single allocation multiple times.
+			// The argument is there to indicate this, but it's ignored right now, for the above
+			// reason: any cached memory is fine, as long as we don't partition it.
+			BX_UNUSED(_forcePrivateDeviceAllocation);
+			{
+				// Check LRU cache.
+				int memoryType = selectMemoryType(requirements->memoryTypeBits, propertyFlags, 0);
+				bool found = m_memoryLru.find(requirements->size, memoryType, memory);
+				if (found)
+				{
+					return VK_SUCCESS;
+				}
+			}
+
+
 			VkMemoryAllocateInfo ma;
 			ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 			ma.pNext = NULL;
@@ -4371,8 +4401,12 @@ VK_IMPORT_DEVICE
 
 				if (searchIndex >= 0)
 				{
+					BGFX_PROFILER_SCOPE("vkAllocateMemory", kColorResource);
 					ma.memoryTypeIndex = searchIndex;
-					result = vkAllocateMemory(m_device, &ma, m_allocatorCb, memory);
+					memory->memoryTypeIndex = searchIndex;
+					memory->size = ma.allocationSize;
+					memory->offset = 0;
+					result = vkAllocateMemory(m_device, &ma, m_allocatorCb, &memory->mem);
 				}
 			}
 			while (result != VK_SUCCESS
@@ -4381,7 +4415,7 @@ VK_IMPORT_DEVICE
 			return result;
 		}
 
-		VkResult createHostBuffer(uint32_t _size, VkMemoryPropertyFlags _flags, ::VkBuffer* _buffer, ::VkDeviceMemory* _memory, const void* _data = NULL)
+		VkResult createHostBuffer(uint32_t _size, VkMemoryPropertyFlags _flags, ::VkBuffer* _buffer, DeviceMemoryAllocationVK* _memory, bool _forcePrivateDeviceAllocation, const void* _data = NULL)
 		{
 			BGFX_PROFILER_SCOPE("createHostBuffer", kColorResource);
 			VkResult result = VK_SUCCESS;
@@ -4406,12 +4440,12 @@ VK_IMPORT_DEVICE
 			VkMemoryRequirements mr;
 			vkGetBufferMemoryRequirements(m_device, *_buffer, &mr);
 
-			result = allocateMemory(&mr, _flags, _memory);
+			result = allocateMemory(&mr, _flags, _memory, _forcePrivateDeviceAllocation);
 
 			if (VK_SUCCESS != result
 			&&  (_flags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT) )
 			{
-				result = allocateMemory(&mr, _flags & ~VK_MEMORY_PROPERTY_HOST_CACHED_BIT, _memory);
+				result = allocateMemory(&mr, _flags & ~VK_MEMORY_PROPERTY_HOST_CACHED_BIT, _memory, _forcePrivateDeviceAllocation);
 			}
 
 			if (VK_SUCCESS != result)
@@ -4420,7 +4454,7 @@ VK_IMPORT_DEVICE
 				return result;
 			}
 
-			result = vkBindBufferMemory(m_device, *_buffer, *_memory, 0);
+			result = vkBindBufferMemory(m_device, *_buffer, _memory->mem, _memory->offset);
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Create host buffer error: vkBindBufferMemory failed %d: %s.", result, getName(result) );
@@ -4431,7 +4465,7 @@ VK_IMPORT_DEVICE
 			{
 				BGFX_PROFILER_SCOPE("map and copy data", kColorResource);
 				void* dst;
-				result = vkMapMemory(m_device, *_memory, 0, _size, 0, &dst);
+				result = vkMapMemory(m_device, _memory->mem, _memory->offset, _size, 0, &dst);
 				if (VK_SUCCESS != result)
 				{
 					BX_TRACE("Create host buffer error: vkMapMemory failed %d: %s.", result, getName(result) );
@@ -4439,19 +4473,19 @@ VK_IMPORT_DEVICE
 				}
 
 				bx::memCopy(dst, _data, _size);
-				vkUnmapMemory(m_device, *_memory);
+				vkUnmapMemory(m_device, _memory->mem);
 			}
 
 			return result;
 		}
 
-		VkResult createStagingBuffer(uint32_t _size, ::VkBuffer* _buffer, ::VkDeviceMemory* _memory, const void* _data = NULL)
+		VkResult createStagingBuffer(uint32_t _size, ::VkBuffer* _buffer, DeviceMemoryAllocationVK* _memory, const void* _data = NULL)
 		{
 			const VkMemoryPropertyFlags flags = 0
 				| VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 				| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 				;
-			return createHostBuffer(_size, flags, _buffer, _memory, _data);
+			return createHostBuffer(_size, flags, _buffer, _memory, false, _data);
 		}
 
 		StagingBufferVK allocFromScratchStagingBuffer(uint32_t _size, uint32_t _align, const void* _data = NULL)
@@ -4467,12 +4501,12 @@ VK_IMPORT_DEVICE
 
 				if (UINT32_MAX != scratchOffset)
 				{
-					result.m_isFromScratch  = true;
-					result.m_size      = _size;
-					result.m_offset    = scratchOffset;
-					result.m_buffer    = scratch.m_buffer;
+					result.m_isFromScratch = true;
 					result.m_deviceMem = scratch.m_deviceMem;
-					result.m_data      = scratch.m_data + result.m_offset;
+					result.m_size   = _size;
+					result.m_offset = scratchOffset;
+					result.m_buffer = scratch.m_buffer;
+					result.m_data   = scratch.m_data + result.m_offset;
 
 					if (_data != NULL)
 					{
@@ -4485,18 +4519,17 @@ VK_IMPORT_DEVICE
 			}
 
 			// Not enough space or too big, we will create a new staging buffer on the spot.
-			result.m_isFromScratch = false;
-
 			VK_CHECK(createStagingBuffer(_size, &result.m_buffer, &result.m_deviceMem, _data));
 
-			result.m_size   = _size;
-			result.m_offset = 0;
-			result.m_data   = NULL;
+			result.m_isFromScratch = false;
+			result.m_offset        = 0;
+			result.m_size          = _size;
+			result.m_data          = NULL;
 
 			return result;
 		}
 
-		VkResult createReadbackBuffer(uint32_t _size, ::VkBuffer* _buffer, ::VkDeviceMemory* _memory)
+		VkResult createReadbackBuffer(uint32_t _size, ::VkBuffer* _buffer, DeviceMemoryAllocationVK* _memory)
 		{
 			const VkMemoryPropertyFlags flags = 0
 				| VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
@@ -4504,7 +4537,7 @@ VK_IMPORT_DEVICE
 				| VK_MEMORY_PROPERTY_HOST_CACHED_BIT
 				;
 
-			return createHostBuffer(_size, flags, _buffer, _memory, NULL);
+			return createHostBuffer(_size, flags, _buffer, _memory, true, NULL);
 		}
 
 		VkAllocationCallbacks*   m_allocatorCb;
@@ -4527,6 +4560,8 @@ VK_IMPORT_DEVICE
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		int64_t m_presentElapsed;
+
+		MemoryLruVK m_memoryLru;
 
 		ScratchBufferVK m_scratchBuffer[BGFX_CONFIG_MAX_FRAME_LATENCY];
 		ScratchBufferVK m_scratchStagingBuffer[BGFX_CONFIG_MAX_FRAME_LATENCY];
@@ -4572,7 +4607,7 @@ VK_IMPORT_DEVICE
 		bool m_wireframe;
 
 		VkBuffer m_captureBuffer;
-		VkDeviceMemory m_captureMemory;
+		DeviceMemoryAllocationVK m_captureMemory;
 		uint32_t m_captureSize;
 
 		TextVideoMem m_textVideoMem;
@@ -4665,6 +4700,87 @@ VK_DESTROY
 		s_renderVK->release(_obj);
 	}
 
+	void MemoryLruVK::recycle(DeviceMemoryAllocationVK &_alloc)
+	{
+		if (MAX_ENTRIES == lru.getNumHandles())
+		{
+			// Evict LRU
+			uint16_t handle = lru.getBack();
+			BX_TRACE("Evict LRU at slot %d", int(handle));
+			DeviceMemoryAllocationVK &alloc = entries[handle];
+			totalSizeCached -= alloc.size;
+			release(alloc.mem);
+
+			// Touch slot and overwrite
+			lru.touch(handle);
+			alloc = _alloc;
+		} else
+		{
+			uint16_t handle = lru.alloc();
+			entries[handle] = _alloc;
+		}
+		totalSizeCached += _alloc.size;
+	}
+
+	bool MemoryLruVK::find(uint32_t _size, int32_t _memoryTypeIndex, DeviceMemoryAllocationVK *_alloc)
+	{
+		BGFX_PROFILER_SCOPE("MemoryLruVK::find", kColorResource);
+		// Find best fit.
+		uint16_t slot;
+		{
+			int16_t bestIdx = MAX_ENTRIES;
+			uint32_t bestWaste = 0xffff'ffff;
+			slot = lru.getFront();
+			while (UINT16_MAX != slot)
+			{
+				DeviceMemoryAllocationVK &alloc = entries[slot];
+				if (alloc.memoryTypeIndex == _memoryTypeIndex)
+				{
+					// 50% waste allowed, otherwise we'll just allocate a new one.
+					// This is to prevent we trash this cache of usefull allocations
+					// with a handful of tiny allocations.
+					if (alloc.size >= _size && _size * 2 >= alloc.size)
+					{
+						uint32_t waste = alloc.size - _size;
+						if (waste < bestWaste)
+						{
+							bestIdx = slot;
+							bestWaste = waste;
+							if (waste == 0)
+							{
+								break;
+							}
+						}
+					}
+				}
+				slot = lru.getNext(slot);
+			}
+			slot = bestIdx;
+		}
+
+		if (MAX_ENTRIES != slot)
+		{
+			*_alloc = entries[slot];
+			lru.free(slot);
+			totalSizeCached -= _alloc->size;
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	void MemoryLruVK::evictAll()
+	{
+		uint16_t slot = lru.getFront();
+		while (slot != UINT16_MAX)
+		{
+			release(entries[slot].mem);
+			slot = lru.getNext(slot);
+		}
+		lru.reset();
+		totalSizeCached = 0;
+	}
+
 	void ScratchBufferVK::create(uint32_t _size, uint32_t _count, VkBufferUsageFlags usage, uint32_t _align)
 	{
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
@@ -4698,21 +4814,21 @@ VK_DESTROY
 			);
 
 		VkMemoryPropertyFlags flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-		VkResult result = s_renderVK->allocateMemory(&mr, flags, &m_deviceMem);
+		VkResult result = s_renderVK->allocateMemory(&mr, flags, &m_deviceMem, true);
 
 		if (VK_SUCCESS != result)
 		{
 			flags &= ~VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-			VK_CHECK(s_renderVK->allocateMemory(&mr, flags, &m_deviceMem) );
+			VK_CHECK(s_renderVK->allocateMemory(&mr, flags, &m_deviceMem, true) );
 		}
 
 		m_size = (uint32_t)mr.size;
 		m_pos  = 0;
 		m_align = _align;
 
-		VK_CHECK(vkBindBufferMemory(device, m_buffer, m_deviceMem, 0) );
+		VK_CHECK(vkBindBufferMemory(device, m_buffer, m_deviceMem.mem, m_deviceMem.offset) );
 
-		VK_CHECK(vkMapMemory(device, m_deviceMem, 0, m_size, 0, (void**)&m_data) );
+		VK_CHECK(vkMapMemory(device, m_deviceMem.mem, m_deviceMem.offset, m_size, 0, (void**)&m_data) );
 	}
 
 	void ScratchBufferVK::createUniform(uint32_t _size, uint32_t _count)
@@ -4733,10 +4849,10 @@ VK_DESTROY
 
 	void ScratchBufferVK::destroy()
 	{
-		vkUnmapMemory(s_renderVK->m_device, m_deviceMem);
+		vkUnmapMemory(s_renderVK->m_device, m_deviceMem.mem);
 
 		s_renderVK->release(m_buffer);
-		s_renderVK->release(m_deviceMem);
+		s_renderVK->recycleMemory(m_deviceMem);
 	}
 
 
@@ -4779,8 +4895,8 @@ VK_DESTROY
 		VkMappedMemoryRange range;
 		range.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 		range.pNext  = NULL;
-		range.memory = m_deviceMem;
-		range.offset = 0;
+		range.memory = m_deviceMem.mem;
+		range.offset = m_deviceMem.offset;
 		range.size   = size;
 		VK_CHECK(vkFlushMappedMemoryRanges(device, 1, &range) );
 
@@ -4823,9 +4939,9 @@ VK_DESTROY
 		VkMemoryRequirements mr;
 		vkGetBufferMemoryRequirements(device, m_buffer, &mr);
 
-		VK_CHECK(s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_deviceMem) );
+		VK_CHECK(s_renderVK->allocateMemory(&mr, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_deviceMem, false) );
 
-		VK_CHECK(vkBindBufferMemory(device, m_buffer, m_deviceMem, 0) );
+		VK_CHECK(vkBindBufferMemory(device, m_buffer, m_deviceMem.mem, m_deviceMem.offset) );
 
 		if (!m_dynamic)
 		{
@@ -4855,7 +4971,7 @@ VK_DESTROY
 		if (!stagingBuffer.m_isFromScratch)
 		{
 			s_renderVK->release(stagingBuffer.m_buffer);
-			s_renderVK->release(stagingBuffer.m_deviceMem);
+			s_renderVK->recycleMemory(stagingBuffer.m_deviceMem);
 		}
 	}
 
@@ -4864,7 +4980,7 @@ VK_DESTROY
 		if (VK_NULL_HANDLE != m_buffer)
 		{
 			s_renderVK->release(m_buffer);
-			s_renderVK->release(m_deviceMem);
+			s_renderVK->recycleMemory(m_deviceMem);
 
 			m_dynamic = false;
 		}
@@ -5451,7 +5567,7 @@ VK_DESTROY
 			return result;
 		}
 
-		result = vkMapMemory(device, m_readbackMemory, 0, VK_WHOLE_SIZE, 0, (void**)&m_queryResult);
+		result = vkMapMemory(device, m_readbackMemory.mem, m_readbackMemory.offset, VK_WHOLE_SIZE, 0, (void**)&m_queryResult);
 
 		if (VK_SUCCESS != result)
 		{
@@ -5475,8 +5591,8 @@ VK_DESTROY
 	{
 		vkDestroy(m_queryPool);
 		vkDestroy(m_readback);
-		vkUnmapMemory(s_renderVK->m_device, m_readbackMemory);
-		vkDestroy(m_readbackMemory);
+		vkUnmapMemory(s_renderVK->m_device, m_readbackMemory.mem);
+		vkDestroy(m_readbackMemory.mem);
 	}
 
 	uint32_t TimerQueryVK::begin(uint32_t _resultIdx, uint32_t _frameNum)
@@ -5606,7 +5722,7 @@ VK_DESTROY
 			return result;
 		}
 
-		result = vkMapMemory(device, m_readbackMemory, 0, VK_WHOLE_SIZE, 0, (void**)&m_queryResult);
+		result = vkMapMemory(device, m_readbackMemory.mem, m_readbackMemory.offset, VK_WHOLE_SIZE, 0, (void**)&m_queryResult);
 
 		if (VK_SUCCESS != result)
 		{
@@ -5623,8 +5739,8 @@ VK_DESTROY
 	{
 		vkDestroy(m_queryPool);
 		vkDestroy(m_readback);
-		vkUnmapMemory(s_renderVK->m_device, m_readbackMemory);
-		vkDestroy(m_readbackMemory);
+		vkUnmapMemory(s_renderVK->m_device, m_readbackMemory.mem);
+		vkDestroy(m_readbackMemory.mem);
 	}
 
 	void OcclusionQueryVK::begin(OcclusionQueryHandle _handle)
@@ -5924,14 +6040,14 @@ VK_DESTROY
 		VkMemoryRequirements imageMemReq;
 		vkGetImageMemoryRequirements(device, m_textureImage, &imageMemReq);
 
-		result = s_renderVK->allocateMemory(&imageMemReq, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_textureDeviceMem);
+		result = s_renderVK->allocateMemory(&imageMemReq, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_textureDeviceMem, false);
 		if (VK_SUCCESS != result)
 		{
 			BX_TRACE("Create texture image error: allocateMemory failed %d: %s.", result, getName(result) );
 			return result;
 		}
 
-		result = vkBindImageMemory(device, m_textureImage, m_textureDeviceMem, 0);
+		result = vkBindImageMemory(device, m_textureImage, m_textureDeviceMem.mem, m_textureDeviceMem.offset);
 		if (VK_SUCCESS != result)
 		{
 			BX_TRACE("Create texture image error: vkBindImageMemory failed %d: %s.", result, getName(result) );
@@ -5967,14 +6083,14 @@ VK_DESTROY
 			VkMemoryRequirements imageMemReq_resolve;
 			vkGetImageMemoryRequirements(device, m_singleMsaaImage, &imageMemReq_resolve);
 
-			result = s_renderVK->allocateMemory(&imageMemReq_resolve, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_singleMsaaDeviceMem);
+			result = s_renderVK->allocateMemory(&imageMemReq_resolve, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_singleMsaaDeviceMem, false);
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Create texture image error: allocateMemory failed %d: %s.", result, getName(result) );
 				return result;
 			}
 
-			result = vkBindImageMemory(device, m_singleMsaaImage, m_singleMsaaDeviceMem, 0);
+			result = vkBindImageMemory(device, m_singleMsaaImage, m_singleMsaaDeviceMem.mem, m_singleMsaaDeviceMem.offset);
 			if (VK_SUCCESS != result)
 			{
 				BX_TRACE("Create texture image error: vkBindImageMemory failed %d: %s.", result, getName(result) );
@@ -6226,8 +6342,8 @@ VK_DESTROY
 				{
 					VK_CHECK(vkMapMemory(
 						  device
-						, stagingBuffer.m_deviceMem
-						, 0
+						, stagingBuffer.m_deviceMem.mem
+						, stagingBuffer.m_deviceMem.offset
 						, totalMemSize
 						, 0
 						, (void**)&mappedMemory
@@ -6253,7 +6369,7 @@ VK_DESTROY
 
 				if (!stagingBuffer.m_isFromScratch)
 				{
-					vkUnmapMemory(device, stagingBuffer.m_deviceMem);
+					vkUnmapMemory(device, stagingBuffer.m_deviceMem.mem);
 				}
 
 				copyBufferToTexture(_commandBuffer, stagingBuffer.m_buffer, numSrd, bufferCopyInfo);
@@ -6261,7 +6377,7 @@ VK_DESTROY
 				if (!stagingBuffer.m_isFromScratch)
 				{
 					s_renderVK->release(stagingBuffer.m_buffer);
-					s_renderVK->release(stagingBuffer.m_deviceMem);
+					s_renderVK->recycleMemory(stagingBuffer.m_deviceMem);
 				}
 			}
 			else
@@ -6292,13 +6408,13 @@ VK_DESTROY
 		if (VK_NULL_HANDLE != m_textureImage)
 		{
 			s_renderVK->release(m_textureImage);
-			s_renderVK->release(m_textureDeviceMem);
+			s_renderVK->recycleMemory(m_textureDeviceMem);
 		}
 
 		if (VK_NULL_HANDLE != m_singleMsaaImage)
 		{
 			s_renderVK->release(m_singleMsaaImage);
-			s_renderVK->release(m_singleMsaaDeviceMem);
+			s_renderVK->recycleMemory(m_singleMsaaDeviceMem);
 		}
 
 		m_currentImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -6353,7 +6469,7 @@ VK_DESTROY
 		StagingBufferVK stagingBuffer = s_renderVK->allocFromScratchStagingBuffer(size, align, data);
 		region.bufferOffset += stagingBuffer.m_offset;
 		BX_ASSERT(region.bufferOffset % align == 0,
-				"Alignment for image (mip %u, z %s) is not aligned correctly (%u).",
+				"Alignment for image (mip %u, z %u) is not aligned correctly (%u).",
 				_mip, _z, region.bufferOffset, align);
 
 		if (VK_IMAGE_VIEW_TYPE_3D == m_type)
@@ -6375,7 +6491,7 @@ VK_DESTROY
 		if (!stagingBuffer.m_isFromScratch)
 		{
 			s_renderVK->release(stagingBuffer.m_buffer);
-			s_renderVK->release(stagingBuffer.m_deviceMem);
+			s_renderVK->recycleMemory(stagingBuffer.m_deviceMem);
 		}
 
 		if (NULL != temp)
@@ -8260,10 +8376,21 @@ VK_DESTROY
 		m_release[m_currentFrameInFlight].push_back(resource);
 	}
 
+	void CommandQueueVK::recycleMemory(DeviceMemoryAllocationVK _mem)
+	{
+		m_recycleAllocs[m_currentFrameInFlight].push_back(_mem);
+	}
+
 	void CommandQueueVK::consume()
 	{
 		BGFX_PROFILER_SCOPE("CommandQueueVK::consume", kColorResource);
 		m_consumeIndex = (m_consumeIndex + 1) % m_numFramesInFlight;
+
+		for (DeviceMemoryAllocationVK &alloc : m_recycleAllocs[m_consumeIndex])
+		{
+			s_renderVK->m_memoryLru.recycle(alloc);
+		}
+		m_recycleAllocs[m_consumeIndex].clear();
 
 		for (const Resource& resource : m_release[m_consumeIndex])
 		{
@@ -8288,6 +8415,7 @@ VK_DESTROY
 				break;
 			}
 		}
+
 
 		m_release[m_consumeIndex].clear();
 	}
