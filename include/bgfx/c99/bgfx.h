@@ -2166,8 +2166,8 @@ BGFX_C_API void bgfx_destroy_frame_buffer(bgfx_frame_buffer_handle_t _handle);
  *      - `u_model mat4[BGFX_CONFIG_MAX_BONES]` - array of model matrices.
  *      - `u_modelView mat4` - concatenated model view matrix, only first
  *        model matrix from array is used.
- *      - `u_modelViewProj mat4` - concatenated model view projection matrix.
  *      - `u_invModelView mat4` - inverted concatenated model view matrix.
+ *      - `u_modelViewProj mat4` - concatenated model view projection matrix.
  *      - `u_alphaRef float` - alpha reference value for alpha test.
  *
  * @param[in] _name Uniform name in shader.
