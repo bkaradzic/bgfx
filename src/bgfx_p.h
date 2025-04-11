@@ -843,6 +843,7 @@ namespace bgfx
 			InvViewProj,
 			Model,
 			ModelView,
+			InvModelView,
 			ModelViewProj,
 			AlphaRef,
 			Count
