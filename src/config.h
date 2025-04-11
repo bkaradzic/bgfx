@@ -333,6 +333,14 @@ static_assert(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS must
 #   define BGFX_CONFIG_PER_FRAME_SCRATCH_STAGING_BUFFER_SIZE (32<<20)
 #endif
 
+#ifndef BGFX_CONFIG_MAX_BYTES_CACHED_DEVICE_MEMORY_ALLOCATIONS
+/// Amount of allowed memory allocations left on device to use for recycling during
+/// later allocations. This can be benificial in case the driver is slow allocating memory
+/// on the device.
+/// Note: Currently only used by the Vulkan backend.
+#	define BGFX_CONFIG_MAX_BYTES_CACHED_DEVICE_MEMORY_ALLOCATIONS (128 << 20)
+#endif
+
 #ifndef BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER
 /// The threshold of data size above which the staging scratch buffer will
 /// not be used, but instead a separate device memory allocation will take

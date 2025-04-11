@@ -2366,7 +2366,7 @@ VK_IMPORT_DEVICE
 			texture.m_readback.readback(stagingMemory.mem, stagingMemory.offset, _data, _mip);
 
 			vkDestroy(stagingBuffer);
-			vkDestroy(stagingMemory.mem); // Destroy directly: readback buffers are private (for now).
+			recycleMemory(stagingMemory);
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
@@ -2521,7 +2521,7 @@ VK_IMPORT_DEVICE
 			readSwapChain(swapChain, stagingBuffer, stagingMemory, callback, _filePath);
 
 			vkDestroy(stagingBuffer);
-			vkDestroy(stagingMemory.mem);
+			recycleMemory(stagingMemory);
 		}
 
 		void updateViewName(ViewId _id, const char* _name) override
@@ -4706,7 +4706,6 @@ VK_DESTROY
 		{
 			// Evict LRU
 			uint16_t handle = lru.getBack();
-			BX_TRACE("Evict LRU at slot %d", int(handle));
 			DeviceMemoryAllocationVK &alloc = entries[handle];
 			totalSizeCached -= alloc.size;
 			release(alloc.mem);
@@ -4720,6 +4719,16 @@ VK_DESTROY
 			entries[handle] = _alloc;
 		}
 		totalSizeCached += _alloc.size;
+
+		while (totalSizeCached > BGFX_CONFIG_MAX_BYTES_CACHED_DEVICE_MEMORY_ALLOCATIONS)
+		{
+			BX_ASSERT(lru.getNumHandles() > 0, "Memory badly counted.");
+			uint16_t handle = lru.getBack();
+			DeviceMemoryAllocationVK &alloc = entries[handle];
+			totalSizeCached -= alloc.size;
+			release(alloc.mem);
+			lru.free(handle);
+		}
 	}
 
 	bool MemoryLruVK::find(uint32_t _size, int32_t _memoryTypeIndex, DeviceMemoryAllocationVK *_alloc)
@@ -5592,7 +5601,7 @@ VK_DESTROY
 		vkDestroy(m_queryPool);
 		vkDestroy(m_readback);
 		vkUnmapMemory(s_renderVK->m_device, m_readbackMemory.mem);
-		vkDestroy(m_readbackMemory.mem);
+		s_renderVK->recycleMemory(m_readbackMemory);
 	}
 
 	uint32_t TimerQueryVK::begin(uint32_t _resultIdx, uint32_t _frameNum)
@@ -5740,7 +5749,7 @@ VK_DESTROY
 		vkDestroy(m_queryPool);
 		vkDestroy(m_readback);
 		vkUnmapMemory(s_renderVK->m_device, m_readbackMemory.mem);
-		vkDestroy(m_readbackMemory.mem);
+		s_renderVK->recycleMemory(m_readbackMemory);
 	}
 
 	void OcclusionQueryVK::begin(OcclusionQueryHandle _handle)

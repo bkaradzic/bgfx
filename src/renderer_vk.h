@@ -396,14 +396,13 @@ VK_DESTROY_FUNC(DescriptorSet);
 		{
 		}
 
-		static constexpr uint16_t MAX_ENTRIES = 1 << 6;
+		static constexpr uint16_t MAX_ENTRIES = 1 << 10;
 		DeviceMemoryAllocationVK entries[MAX_ENTRIES];
 		bx::HandleAllocLruT<MAX_ENTRIES> lru;
 		uint64_t totalSizeCached;
 
 		void recycle(DeviceMemoryAllocationVK &_alloc);
 		bool find(uint32_t _size, int32_t _memoryTypeIndex, DeviceMemoryAllocationVK *_alloc);
-		void evictUntilBelow(uint64_t _maxMemory);
 		void evictAll();
 	};
 
