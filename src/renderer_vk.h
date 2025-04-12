@@ -307,7 +307,7 @@ namespace bgfx { namespace vk
 		::Vk##_name* operator &() { return &vk; }                \
 		const ::Vk##_name* operator &() const { return &vk; }    \
 	};                                                           \
-	static_assert(sizeof(::Vk##_name) == sizeof(Vk##_name) ); \
+	static_assert(sizeof(::Vk##_name) == sizeof(Vk##_name) );    \
 	void vkDestroy(Vk##_name&);                                  \
 	void release(Vk##_name&)
 VK_DESTROY
@@ -372,14 +372,52 @@ VK_DESTROY_FUNC(DescriptorSet);
 		HashMap m_hashMap;
 	};
 
+	struct DeviceMemoryAllocationVK {
+		DeviceMemoryAllocationVK()
+			: mem(VK_NULL_HANDLE)
+			, offset(0)
+			, size(0)
+			, memoryTypeIndex(0)
+		{
+		}
+
+		VkDeviceMemory mem;
+		uint32_t offset;
+		uint32_t size;
+		int32_t memoryTypeIndex;
+	};
+
+	struct MemoryLruVK
+	{
+		MemoryLruVK()
+			: entries()
+			, lru()
+			, totalSizeCached(0)
+		{
+		}
+
+		static constexpr uint16_t MAX_ENTRIES = 1 << 10;
+		DeviceMemoryAllocationVK entries[MAX_ENTRIES];
+		bx::HandleAllocLruT<MAX_ENTRIES> lru;
+		uint64_t totalSizeCached;
+
+		void recycle(DeviceMemoryAllocationVK &_alloc);
+		bool find(uint32_t _size, int32_t _memoryTypeIndex, DeviceMemoryAllocationVK *_alloc);
+		void evictAll();
+	};
+
+	/** A Buffer used for moving data from main memory to GPU memory.
+	 * This can either be an independently allocated memory region, or a sub-region
+	 * of the scratch staging buffer for the frame-in-flight.
+	 */
 	struct StagingBufferVK
 	{
 		VkBuffer m_buffer;
-		VkDeviceMemory m_deviceMem;
+		DeviceMemoryAllocationVK m_deviceMem;
 
 		uint8_t* m_data;
 		uint32_t m_size;
-		uint32_t m_offset;
+		uint32_t m_offset; // Offset into the bound buffer (not the device memory!)
 		bool     m_isFromScratch;
 	};
 
@@ -403,7 +441,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void flush(bool _reset = true);
 
 		VkBuffer m_buffer;
-		VkDeviceMemory m_deviceMem;
+		DeviceMemoryAllocationVK m_deviceMem;
 
 		uint8_t* m_data;
 		uint32_t m_size;
@@ -415,7 +453,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 	{
 		BufferVK()
 			: m_buffer(VK_NULL_HANDLE)
-			, m_deviceMem(VK_NULL_HANDLE)
+			, m_deviceMem()
 			, m_size(0)
 			, m_flags(BGFX_BUFFER_NONE)
 			, m_dynamic(false)
@@ -427,7 +465,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void destroy();
 
 		VkBuffer m_buffer;
-		VkDeviceMemory m_deviceMem;
+		DeviceMemoryAllocationVK m_deviceMem;
 		uint32_t m_size;
 		uint16_t m_flags;
 		bool m_dynamic;
@@ -589,7 +627,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		Query m_query[BGFX_CONFIG_MAX_VIEWS*4];
 
 		VkBuffer m_readback;
-		VkDeviceMemory m_readbackMemory;
+		DeviceMemoryAllocationVK m_readbackMemory;
 		VkQueryPool m_queryPool;
 		const uint64_t* m_queryResult;
 		bx::RingBufferControl m_control;
@@ -613,7 +651,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		OcclusionQueryHandle m_handle[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 
 		VkBuffer m_readback;
-		VkDeviceMemory m_readbackMemory;
+		DeviceMemoryAllocationVK m_readbackMemory;
 		VkQueryPool m_queryPool;
 		const uint32_t* m_queryResult;
 		bx::RingBufferControl m_control;
@@ -640,10 +678,10 @@ VK_DESTROY_FUNC(DescriptorSet);
 			, m_sampler({ 1, VK_SAMPLE_COUNT_1_BIT })
 			, m_format(VK_FORMAT_UNDEFINED)
 			, m_textureImage(VK_NULL_HANDLE)
-			, m_textureDeviceMem(VK_NULL_HANDLE)
+			, m_textureDeviceMem()
 			, m_currentImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 			, m_singleMsaaImage(VK_NULL_HANDLE)
-			, m_singleMsaaDeviceMem(VK_NULL_HANDLE)
+			, m_singleMsaaDeviceMem()
 			, m_currentSingleMsaaImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 		{
 		}
@@ -680,13 +718,13 @@ VK_DESTROY_FUNC(DescriptorSet);
 		VkComponentMapping m_components;
 		VkImageAspectFlags m_aspectMask;
 
-		VkImage        m_textureImage;
-		VkDeviceMemory m_textureDeviceMem;
-		VkImageLayout  m_currentImageLayout;
+		VkImage					 m_textureImage;
+		DeviceMemoryAllocationVK m_textureDeviceMem;
+		VkImageLayout			 m_currentImageLayout;
 
-		VkImage        m_singleMsaaImage;
-		VkDeviceMemory m_singleMsaaDeviceMem;
-		VkImageLayout  m_currentSingleMsaaImageLayout;
+		VkImage					 m_singleMsaaImage;
+		DeviceMemoryAllocationVK m_singleMsaaDeviceMem;
+		VkImageLayout			 m_currentSingleMsaaImageLayout;
 
 		VkImageLayout m_sampledLayout;
 
@@ -841,6 +879,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void finish(bool _finishAll = false);
 
 		void release(uint64_t _handle, VkObjectType _type);
+		void recycleMemory(DeviceMemoryAllocationVK _mem);
 		void consume();
 
 		uint32_t m_queueFamily;
@@ -881,6 +920,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 
 		typedef stl::vector<Resource> ResourceArray;
 		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
+		stl::vector<DeviceMemoryAllocationVK> m_recycleAllocs[BGFX_CONFIG_MAX_FRAME_LATENCY];
+
 
 	private:
 		template<typename Ty>
