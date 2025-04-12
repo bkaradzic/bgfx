@@ -55,7 +55,7 @@ local function convert_type_0(arg)
 	elseif hasPrefix(arg.ctype, "uint32_t") then
 		return arg.ctype:gsub("uint32_t", "uint32")
 	elseif hasPrefix(arg.ctype, "int32_t") then
-		return arg.ctype:gsub("int32_t", "int")
+		return arg.ctype:gsub("int32_t", "int32")
 	elseif hasPrefix(arg.ctype, "uint16_t") then
 		return arg.ctype:gsub("uint16_t", "uint16")
 	elseif hasPrefix(arg.ctype, "uint8_t") then
