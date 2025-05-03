@@ -10,18 +10,19 @@
 namespace meshopt
 {
 
-// "Insert" two 0 bits after each of the 10 low bits of x
-inline unsigned int part1By2(unsigned int x)
+// "Insert" two 0 bits after each of the 20 low bits of x
+inline unsigned long long part1By2(unsigned long long x)
 {
-	x &= 0x000003ff;                  // x = ---- ---- ---- ---- ---- --98 7654 3210
-	x = (x ^ (x << 16)) & 0xff0000ff; // x = ---- --98 ---- ---- ---- ---- 7654 3210
-	x = (x ^ (x << 8)) & 0x0300f00f;  // x = ---- --98 ---- ---- 7654 ---- ---- 3210
-	x = (x ^ (x << 4)) & 0x030c30c3;  // x = ---- --98 ---- 76-- --54 ---- 32-- --10
-	x = (x ^ (x << 2)) & 0x09249249;  // x = ---- 9--8 --7- -6-- 5--4 --3- -2-- 1--0
+	x &= 0x000fffffull;                          // x = ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- jihg fedc ba98 7654 3210
+	x = (x ^ (x << 32)) & 0x000f00000000ffffull; // x = ---- ---- ---- jihg ---- ---- ---- ---- ---- ---- ---- ---- fedc ba98 7654 3210
+	x = (x ^ (x << 16)) & 0x000f0000ff0000ffull; // x = ---- ---- ---- jihg ---- ---- ---- ---- fedc ba98 ---- ---- ---- ---- 7654 3210
+	x = (x ^ (x << 8)) & 0x000f00f00f00f00full;  // x = ---- ---- ---- jihg ---- ---- fedc ---- ---- ba98 ---- ---- 7654 ---- ---- 3210
+	x = (x ^ (x << 4)) & 0x00c30c30c30c30c3ull;  // x = ---- ---- ji-- --hg ---- fe-- --dc ---- ba-- --98 ---- 76-- --54 ---- 32-- --10
+	x = (x ^ (x << 2)) & 0x0249249249249249ull;  // x = ---- --j- -i-- h--g --f- -e-- d--c --b- -a-- 9--8 --7- -6-- 5--4 --3- -2-- 1--0
 	return x;
 }
 
-static void computeOrder(unsigned int* result, const float* vertex_positions_data, size_t vertex_count, size_t vertex_positions_stride)
+static void computeOrder(unsigned long long* result, const float* vertex_positions_data, size_t vertex_count, size_t vertex_positions_stride)
 {
 	size_t vertex_stride_float = vertex_positions_stride / sizeof(float);
 
@@ -47,61 +48,68 @@ static void computeOrder(unsigned int* result, const float* vertex_positions_dat
 	extent = (maxv[1] - minv[1]) < extent ? extent : (maxv[1] - minv[1]);
 	extent = (maxv[2] - minv[2]) < extent ? extent : (maxv[2] - minv[2]);
 
-	float scale = extent == 0 ? 0.f : 1.f / extent;
+	// rescale each axis to 16 bits to get 48-bit Morton codes
+	float scale = extent == 0 ? 0.f : 65535.f / extent;
 
 	// generate Morton order based on the position inside a unit cube
 	for (size_t i = 0; i < vertex_count; ++i)
 	{
 		const float* v = vertex_positions_data + i * vertex_stride_float;
 
-		int x = int((v[0] - minv[0]) * scale * 1023.f + 0.5f);
-		int y = int((v[1] - minv[1]) * scale * 1023.f + 0.5f);
-		int z = int((v[2] - minv[2]) * scale * 1023.f + 0.5f);
+		int x = int((v[0] - minv[0]) * scale + 0.5f);
+		int y = int((v[1] - minv[1]) * scale + 0.5f);
+		int z = int((v[2] - minv[2]) * scale + 0.5f);
 
 		result[i] = part1By2(x) | (part1By2(y) << 1) | (part1By2(z) << 2);
 	}
 }
 
-static void computeHistogram(unsigned int (&hist)[1024][3], const unsigned int* data, size_t count)
+static void computeHistogram(unsigned int (&hist)[1024][5], const unsigned long long* data, size_t count)
 {
 	memset(hist, 0, sizeof(hist));
 
-	// compute 3 10-bit histograms in parallel
+	// compute 5 10-bit histograms in parallel
 	for (size_t i = 0; i < count; ++i)
 	{
-		unsigned int id = data[i];
+		unsigned long long id = data[i];
 
 		hist[(id >> 0) & 1023][0]++;
 		hist[(id >> 10) & 1023][1]++;
 		hist[(id >> 20) & 1023][2]++;
+		hist[(id >> 30) & 1023][3]++;
+		hist[(id >> 40) & 1023][4]++;
 	}
 
-	unsigned int sumx = 0, sumy = 0, sumz = 0;
+	unsigned int sum0 = 0, sum1 = 0, sum2 = 0, sum3 = 0, sum4 = 0;
 
 	// replace histogram data with prefix histogram sums in-place
 	for (int i = 0; i < 1024; ++i)
 	{
-		unsigned int hx = hist[i][0], hy = hist[i][1], hz = hist[i][2];
+		unsigned int h0 = hist[i][0], h1 = hist[i][1], h2 = hist[i][2], h3 = hist[i][3], h4 = hist[i][4];
 
-		hist[i][0] = sumx;
-		hist[i][1] = sumy;
-		hist[i][2] = sumz;
+		hist[i][0] = sum0;
+		hist[i][1] = sum1;
+		hist[i][2] = sum2;
+		hist[i][3] = sum3;
+		hist[i][4] = sum4;
 
-		sumx += hx;
-		sumy += hy;
-		sumz += hz;
+		sum0 += h0;
+		sum1 += h1;
+		sum2 += h2;
+		sum3 += h3;
+		sum4 += h4;
 	}
 
-	assert(sumx == count && sumy == count && sumz == count);
+	assert(sum0 == count && sum1 == count && sum2 == count && sum3 == count && sum4 == count);
 }
 
-static void radixPass(unsigned int* destination, const unsigned int* source, const unsigned int* keys, size_t count, unsigned int (&hist)[1024][3], int pass)
+static void radixPass(unsigned int* destination, const unsigned int* source, const unsigned long long* keys, size_t count, unsigned int (&hist)[1024][5], int pass)
 {
 	int bitoff = pass * 10;
 
 	for (size_t i = 0; i < count; ++i)
 	{
-		unsigned int id = (keys[source[i]] >> bitoff) & 1023;
+		unsigned int id = unsigned(keys[source[i]] >> bitoff) & 1023;
 
 		destination[hist[id][pass]++] = source[i];
 	}
@@ -118,10 +126,10 @@ void meshopt_spatialSortRemap(unsigned int* destination, const float* vertex_pos
 
 	meshopt_Allocator allocator;
 
-	unsigned int* keys = allocator.allocate<unsigned int>(vertex_count);
+	unsigned long long* keys = allocator.allocate<unsigned long long>(vertex_count);
 	computeOrder(keys, vertex_positions, vertex_count, vertex_positions_stride);
 
-	unsigned int hist[1024][3];
+	unsigned int hist[1024][5];
 	computeHistogram(hist, keys, vertex_count);
 
 	unsigned int* scratch = allocator.allocate<unsigned int>(vertex_count);
@@ -129,10 +137,12 @@ void meshopt_spatialSortRemap(unsigned int* destination, const float* vertex_pos
 	for (size_t i = 0; i < vertex_count; ++i)
 		destination[i] = unsigned(i);
 
-	// 3-pass radix sort computes the resulting order into scratch
+	// 5-pass radix sort computes the resulting order into scratch
 	radixPass(scratch, destination, keys, vertex_count, hist, 0);
 	radixPass(destination, scratch, keys, vertex_count, hist, 1);
 	radixPass(scratch, destination, keys, vertex_count, hist, 2);
+	radixPass(destination, scratch, keys, vertex_count, hist, 3);
+	radixPass(scratch, destination, keys, vertex_count, hist, 4);
 
 	// since our remap table is mapping old=>new, we need to reverse it
 	for (size_t i = 0; i < vertex_count; ++i)
