@@ -95,17 +95,19 @@ Pass::Status CopyPropagateArrays::Process() {
     std::unique_ptr<MemoryObject> source_object =
         FindSourceObjectIfPossible(&*var_inst, store_inst);
 
-    if (source_object != nullptr) {
-      if (!IsPointerToArrayType(var_inst->type_id()) &&
-          source_object->GetStorageClass() != spv::StorageClass::Input) {
-        continue;
-      }
+    if (source_object == nullptr) {
+      continue;
+    }
 
-      if (CanUpdateUses(&*var_inst, source_object->GetPointerTypeId(this))) {
-        modified = true;
+    if (!IsPointerToArrayType(var_inst->type_id()) &&
+        source_object->GetStorageClass() != spv::StorageClass::Input) {
+      continue;
+    }
 
-        PropagateObject(&*var_inst, source_object.get(), store_inst);
-      }
+    if (CanUpdateUses(&*var_inst, source_object->GetPointerTypeId(this))) {
+      modified = true;
+
+      PropagateObject(&*var_inst, source_object.get(), store_inst);
     }
   }
 
@@ -218,6 +220,8 @@ bool CopyPropagateArrays::HasNoStores(Instruction* ptr_inst) {
     } else if (use->opcode() == spv::Op::OpEntryPoint) {
       return true;
     } else if (IsInterpolationInstruction(use)) {
+      return true;
+    } else if (use->IsCommonDebugInstr()) {
       return true;
     }
     // Some other instruction.  Be conservative.

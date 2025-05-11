@@ -223,6 +223,9 @@ spv_result_t RayReorderNVPass(ValidationState_t& _, const Instruction* inst);
 /// Validates correctness of mesh shading instructions.
 spv_result_t MeshShadingPass(ValidationState_t& _, const Instruction* inst);
 
+/// Validates correctness of certain special type instructions.
+spv_result_t InvalidTypePass(ValidationState_t& _, const Instruction* inst);
+
 /// Calculates the reachability of basic blocks.
 void ReachabilityPass(ValidationState_t& _);
 

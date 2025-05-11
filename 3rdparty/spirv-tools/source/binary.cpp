@@ -33,6 +33,7 @@
 #include "source/operand.h"
 #include "source/spirv_constant.h"
 #include "source/spirv_endian.h"
+#include "source/table2.h"
 #include "source/util/string_utils.h"
 
 spv_result_t spvBinaryHeaderGet(const spv_const_binary binary,
@@ -317,8 +318,8 @@ spv_result_t Parser::parseInstruction() {
     return diagnostic() << "Invalid instruction word count: "
                         << inst_word_count;
   }
-  spv_opcode_desc opcode_desc;
-  if (grammar_.lookupOpcode(static_cast<spv::Op>(inst.opcode), &opcode_desc))
+  const spvtools::InstructionDesc* opcode_desc = nullptr;
+  if (spvtools::LookupOpcode(static_cast<spv::Op>(inst.opcode), &opcode_desc))
     return diagnostic() << "Invalid opcode: " << inst.opcode;
 
   // Advance past the opcode word.  But remember the of the start
@@ -334,16 +335,15 @@ spv_result_t Parser::parseInstruction() {
   // ExecutionMode), or for extended instructions that may have their
   // own operands depending on the selected extended instruction.
   _.expected_operands.clear();
-  for (auto i = 0; i < opcode_desc->numTypes; i++)
-    _.expected_operands.push_back(
-        opcode_desc->operandTypes[opcode_desc->numTypes - i - 1]);
+
+  spvPushOperandTypes(opcode_desc->operands(), &_.expected_operands);
 
   while (_.word_index < inst_offset + inst_word_count) {
     const uint16_t inst_word_index = uint16_t(_.word_index - inst_offset);
     if (_.expected_operands.empty()) {
-      return diagnostic() << "Invalid instruction Op" << opcode_desc->name
-                          << " starting at word " << inst_offset
-                          << ": expected no more operands after "
+      return diagnostic() << "Invalid instruction Op"
+                          << opcode_desc->name().data() << " starting at word "
+                          << inst_offset << ": expected no more operands after "
                           << inst_word_index
                           << " words, but stated word count is "
                           << inst_word_count << ".";
@@ -362,15 +362,15 @@ spv_result_t Parser::parseInstruction() {
   if (!_.expected_operands.empty() &&
       !spvOperandIsOptional(_.expected_operands.back())) {
     return diagnostic() << "End of input reached while decoding Op"
-                        << opcode_desc->name << " starting at word "
+                        << opcode_desc->name().data() << " starting at word "
                         << inst_offset << ": expected more operands after "
                         << inst_word_count << " words.";
   }
 
   if ((inst_offset + inst_word_count) != _.word_index) {
-    return diagnostic() << "Invalid word count: Op" << opcode_desc->name
-                        << " starting at word " << inst_offset
-                        << " says it has " << inst_word_count
+    return diagnostic() << "Invalid word count: Op"
+                        << opcode_desc->name().data() << " starting at word "
+                        << inst_offset << " says it has " << inst_word_count
                         << " words, but found " << _.word_index - inst_offset
                         << " words instead.";
   }
@@ -496,11 +496,12 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
     case SPV_OPERAND_TYPE_EXTENSION_INSTRUCTION_NUMBER: {
       assert(spvIsExtendedInstruction(opcode));
       assert(inst->ext_inst_type != SPV_EXT_INST_TYPE_NONE);
-      spv_ext_inst_desc ext_inst;
-      if (grammar_.lookupExtInst(inst->ext_inst_type, word, &ext_inst) ==
+
+      const spvtools::ExtInstDesc* desc = nullptr;
+      if (spvtools::LookupExtInst(inst->ext_inst_type, word, &desc) ==
           SPV_SUCCESS) {
         // if we know about this ext inst, push the expected operands
-        spvPushOperandTypes(ext_inst->operandTypes, expected_operands);
+        spvPushOperandTypes(desc->operands(), expected_operands);
       } else {
         // if we don't know this extended instruction and the set isn't
         // non-semantic, we cannot process further
@@ -522,8 +523,8 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
         return diagnostic()
                << "Invalid " << spvOperandTypeStr(type) << ": " << word;
       }
-      spv_opcode_desc opcode_entry = nullptr;
-      if (grammar_.lookupOpcode(spv::Op(word), &opcode_entry)) {
+      const spvtools::InstructionDesc* opcode_entry = nullptr;
+      if (spvtools::LookupOpcode(spv::Op(word), &opcode_entry)) {
         return diagnostic(SPV_ERROR_INTERNAL)
                << "OpSpecConstant opcode table out of sync";
       }
@@ -532,8 +533,9 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
       // operants for the opcode.
       assert(opcode_entry->hasType);
       assert(opcode_entry->hasResult);
-      assert(opcode_entry->numTypes >= 2);
-      spvPushOperandTypes(opcode_entry->operandTypes + 2, expected_operands);
+      assert(opcode_entry->operands().size() >= 2);
+      spvPushOperandTypes(opcode_entry->operands().subspan(2),
+                          expected_operands);
     } break;
 
     case SPV_OPERAND_TYPE_LITERAL_INTEGER:
@@ -687,19 +689,19 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
       if (type == SPV_OPERAND_TYPE_OPTIONAL_FPENCODING)
         parsed_operand.type = SPV_OPERAND_TYPE_FPENCODING;
 
-      spv_operand_desc entry;
-      if (grammar_.lookupOperand(type, word, &entry)) {
+      const spvtools::OperandDesc* entry = nullptr;
+      if (spvtools::LookupOperand(type, word, &entry)) {
         return diagnostic()
                << "Invalid " << spvOperandTypeStr(parsed_operand.type)
                << " operand: " << word;
       }
       // Prepare to accept operands to this operand, if needed.
-      spvPushOperandTypes(entry->operandTypes, expected_operands);
+      spvPushOperandTypes(entry->operands(), expected_operands);
     } break;
 
     case SPV_OPERAND_TYPE_SOURCE_LANGUAGE: {
-      spv_operand_desc entry;
-      if (grammar_.lookupOperand(type, word, &entry)) {
+      const spvtools::OperandDesc* entry = nullptr;
+      if (spvtools::LookupOperand(type, word, &entry)) {
         return diagnostic()
                << "Invalid " << spvOperandTypeStr(parsed_operand.type)
                << " operand: " << word
@@ -709,7 +711,7 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
                   "SPIRV-Headers";
       }
       // Prepare to accept operands to this operand, if needed.
-      spvPushOperandTypes(entry->operandTypes, expected_operands);
+      spvPushOperandTypes(entry->operands(), expected_operands);
     } break;
 
     case SPV_OPERAND_TYPE_FP_FAST_MATH_MODE:
@@ -753,23 +755,23 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
       uint32_t remaining_word = word;
       for (uint32_t mask = (1u << 31); remaining_word; mask >>= 1) {
         if (remaining_word & mask) {
-          spv_operand_desc entry;
-          if (grammar_.lookupOperand(type, mask, &entry)) {
+          const spvtools::OperandDesc* entry = nullptr;
+          if (spvtools::LookupOperand(type, mask, &entry)) {
             return diagnostic()
                    << "Invalid " << spvOperandTypeStr(parsed_operand.type)
                    << " operand: " << word << " has invalid mask component "
                    << mask;
           }
           remaining_word ^= mask;
-          spvPushOperandTypes(entry->operandTypes, expected_operands);
+          spvPushOperandTypes(entry->operands(), expected_operands);
         }
       }
       if (word == 0) {
         // An all-zeroes mask *might* also be valid.
-        spv_operand_desc entry;
-        if (SPV_SUCCESS == grammar_.lookupOperand(type, 0, &entry)) {
+        const spvtools::OperandDesc* entry = nullptr;
+        if (SPV_SUCCESS == spvtools::LookupOperand(type, 0, &entry)) {
           // Prepare for its operands, if any.
-          spvPushOperandTypes(entry->operandTypes, expected_operands);
+          spvPushOperandTypes(entry->operands(), expected_operands);
         }
       }
     } break;

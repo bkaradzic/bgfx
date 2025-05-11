@@ -130,10 +130,12 @@ spv_result_t check_interface_variable(ValidationState_t& _,
     }
   }
 
-  if (var->GetOperandAs<spv::StorageClass>(2) == spv::StorageClass::Input ||
-      var->GetOperandAs<spv::StorageClass>(2) == spv::StorageClass::Output) {
-    if (auto error = ValidateInputOutputInterfaceVariables(_, var))
-      return error;
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if (var->GetOperandAs<spv::StorageClass>(2) == spv::StorageClass::Input ||
+        var->GetOperandAs<spv::StorageClass>(2) == spv::StorageClass::Output) {
+      if (auto error = ValidateInputOutputInterfaceVariables(_, var))
+        return error;
+    }
   }
 
   return SPV_SUCCESS;
@@ -164,12 +166,10 @@ spv_result_t NumConsumedLocations(ValidationState_t& _, const Instruction* type,
       }
       break;
     case spv::Op::OpTypeMatrix:
-      // Matrices consume locations equivalent to arrays of 4-component vectors.
-      if (_.ContainsSizedIntOrFloatType(type->id(), spv::Op::OpTypeInt, 64) ||
-          _.ContainsSizedIntOrFloatType(type->id(), spv::Op::OpTypeFloat, 64)) {
-        *num_locations = 2;
-      } else {
-        *num_locations = 1;
+      // Matrices consume locations equivalent to arrays.
+      if (auto error = NumConsumedLocations(
+              _, _.FindDef(type->GetOperandAs<uint32_t>(1)), num_locations)) {
+        return error;
       }
       *num_locations *= type->GetOperandAs<uint32_t>(2);
       break;
@@ -641,6 +641,28 @@ spv_result_t ValidateStorageClass(ValidationState_t& _,
         }
         has_callable_data = true;
         break;
+      }
+      case spv::StorageClass::Input:
+      case spv::StorageClass::Output: {
+        auto result_type = _.FindDef(interface_var->type_id());
+        if (_.ContainsType(result_type->GetOperandAs<uint32_t>(2),
+                           [](const Instruction* inst) {
+                             if (inst &&
+                                 inst->opcode() == spv::Op::OpTypeFloat) {
+                               if (inst->words().size() > 3) {
+                                 if (inst->GetOperandAs<spv::FPEncoding>(2) ==
+                                     spv::FPEncoding::BFloat16KHR) {
+                                   return true;
+                                 }
+                               }
+                             }
+                             return false;
+                           })) {
+          return _.diag(SPV_ERROR_INVALID_ID, interface_var)
+                 << _.VkErrorID(10370) << "Bfloat16 OpVariable <id> "
+                 << _.getIdName(interface_var->id()) << " must not be declared "
+                 << "with a Storage Class of Input or Output.";
+        }
       }
       default:
         break;

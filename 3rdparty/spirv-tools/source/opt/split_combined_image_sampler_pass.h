@@ -87,6 +87,11 @@ class SplitCombinedImageSamplerPass : public Pass {
     return ptr_ty->GetSingleWordInOperand(1);
   }
 
+  // Creates a new OpName instruction mapping the given name to the given
+  // string, and adds it to the module at the end of the OpName and OpMemberName
+  // section.
+  void AddOpName(uint32_t id, const std::string& name);
+
   // Cached from the IRContext. Valid while Process() is running.
   analysis::DefUseManager* def_use_mgr_ = nullptr;
   // Cached from the IRContext. Valid while Process() is running.
