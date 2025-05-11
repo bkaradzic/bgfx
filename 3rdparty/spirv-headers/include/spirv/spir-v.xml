@@ -98,7 +98,8 @@
         <id value="45"  vendor="Kitsunebi Games" tool="Nuvk SPIR-V Emitter and DLSL compiler" comment="Contact Luna Nielsen, luna@foxgirls.gay, https://github.com/Inochi2D/nuvk"/>
         <id value="46"  vendor="Nintendo" comment="Contact Steve Urquhart, steve.urquhart@ntd.nintendo.com"/>
         <id value="47"  vendor="ARM" comment="Contact Christopher Gautier, christopher.gautier@arm.com"/>
-        <unused start="48" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
+        <id value="48"  vendor="Goopax" comment="Contact Ingo Josopait, josopait@goopax.com"/>
+        <unused start="49" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
     </ids>
 
     <!-- SECTION: SPIR-V Opcodes and Enumerants -->
