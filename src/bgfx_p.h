@@ -3139,7 +3139,7 @@ namespace bgfx
 			, m_numFreeDynamicIndexBufferHandles(0)
 			, m_numFreeDynamicVertexBufferHandles(0)
 			, m_numFreeOcclusionQueryHandles(0)
-			, m_colorPaletteDirty(0)
+			, m_colorPaletteDirty(2)
 			, m_frames(0)
 			, m_debug(BGFX_DEBUG_NONE)
 			, m_rtMemoryUsed(0)
