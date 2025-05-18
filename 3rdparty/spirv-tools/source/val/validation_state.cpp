@@ -887,6 +887,9 @@ uint32_t ValidationState_t::GetComponentType(uint32_t id) const {
     case spv::Op::OpTypeCooperativeVectorNV:
       return inst->word(2);
 
+    case spv::Op::OpTypeTensorARM:
+      return inst->word(2);
+
     default:
       break;
   }
@@ -945,6 +948,10 @@ uint32_t ValidationState_t::GetBitWidth(uint32_t id) const {
 bool ValidationState_t::IsVoidType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
   return inst && inst->opcode() == spv::Op::OpTypeVoid;
+}
+
+bool ValidationState_t::IsScalarType(uint32_t id) const {
+  return IsIntScalarType(id) || IsFloatScalarType(id) || IsBoolScalarType(id);
 }
 
 bool ValidationState_t::IsBfloat16ScalarType(uint32_t id) const {
@@ -1040,17 +1047,31 @@ bool ValidationState_t::IsIntScalarType(uint32_t id) const {
   return inst && inst->opcode() == spv::Op::OpTypeInt;
 }
 
-bool ValidationState_t::IsIntArrayType(uint32_t id) const {
+bool ValidationState_t::IsIntArrayType(uint32_t id, uint64_t length) const {
   const Instruction* inst = FindDef(id);
   if (!inst) {
     return false;
   }
 
-  if (inst->opcode() == spv::Op::OpTypeArray) {
-    return IsIntScalarType(GetComponentType(id));
+  if (inst->opcode() != spv::Op::OpTypeArray) {
+    return false;
   }
 
-  return false;
+  if (!IsIntScalarType(GetComponentType(id))) {
+    return false;
+  }
+
+  if (length != 0) {
+    const auto len_id = inst->GetOperandAs<uint32_t>(2);
+    const auto len = FindDef(len_id);
+    uint64_t len_value = 0;
+    if (!len || !spvOpcodeIsConstant(len->opcode()) ||
+        (EvalConstantValUint64(len_id, &len_value) && (length != len_value))) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 bool ValidationState_t::IsIntVectorType(uint32_t id) const {

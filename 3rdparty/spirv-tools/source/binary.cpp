@@ -720,6 +720,8 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
     case SPV_OPERAND_TYPE_IMAGE:
     case SPV_OPERAND_TYPE_OPTIONAL_IMAGE:
     case SPV_OPERAND_TYPE_MEMORY_ACCESS:
+    case SPV_OPERAND_TYPE_TENSOR_OPERANDS:
+    case SPV_OPERAND_TYPE_OPTIONAL_TENSOR_OPERANDS:
     case SPV_OPERAND_TYPE_OPTIONAL_MEMORY_ACCESS:
     case SPV_OPERAND_TYPE_OPTIONAL_RAW_ACCESS_CHAIN_OPERANDS:
     case SPV_OPERAND_TYPE_SELECTION_CONTROL:
@@ -745,6 +747,8 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
       if (type == SPV_OPERAND_TYPE_OPTIONAL_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS)
         parsed_operand.type =
             SPV_OPERAND_TYPE_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS;
+      if (type == SPV_OPERAND_TYPE_OPTIONAL_TENSOR_OPERANDS)
+        parsed_operand.type = SPV_OPERAND_TYPE_TENSOR_OPERANDS;
 
       // Check validity of set mask bits. Also prepare for operands for those
       // masks if they have any.  To get operand order correct, scan from

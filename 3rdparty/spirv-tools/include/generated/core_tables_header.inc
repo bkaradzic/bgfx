@@ -23,6 +23,7 @@ enum class PrintingClass : uint32_t {
   kPrimitive,
   kRelational_and_Logical,
   kReserved,
+  kTensor,
   kType_Declaration,
   k_exclude,
 };
@@ -42,6 +43,7 @@ enum Extension : uint32_t {
   kSPV_AMD_texture_gather_bias_lod,
   kSPV_ARM_cooperative_matrix_layouts,
   kSPV_ARM_core_builtins,
+  kSPV_ARM_tensors,
   kSPV_EXT_arithmetic_fence,
   kSPV_EXT_demote_to_helper_invocation,
   kSPV_EXT_descriptor_indexing,

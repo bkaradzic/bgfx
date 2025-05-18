@@ -139,6 +139,9 @@ const char* spvOperandTypeStr(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS:
     case SPV_OPERAND_TYPE_OPTIONAL_MATRIX_MULTIPLY_ACCUMULATE_OPERANDS:
       return "matrix multiply accumulate operands";
+    case SPV_OPERAND_TYPE_TENSOR_OPERANDS:
+    case SPV_OPERAND_TYPE_OPTIONAL_TENSOR_OPERANDS:
+      return "tensor operands";
     case SPV_OPERAND_TYPE_INITIALIZATION_MODE_QUALIFIER:
       return "initialization mode qualifier";
     case SPV_OPERAND_TYPE_HOST_ACCESS_QUALIFIER:
@@ -366,6 +369,7 @@ bool spvOperandIsConcreteMask(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_RAW_ACCESS_CHAIN_OPERANDS:
     case SPV_OPERAND_TYPE_COOPERATIVE_MATRIX_REDUCE:
     case SPV_OPERAND_TYPE_TENSOR_ADDRESSING_OPERANDS:
+    case SPV_OPERAND_TYPE_TENSOR_OPERANDS:
       return true;
     default:
       break;
@@ -389,6 +393,7 @@ bool spvOperandIsOptional(spv_operand_type_t type) {
     case SPV_OPERAND_TYPE_OPTIONAL_CIV:
     case SPV_OPERAND_TYPE_OPTIONAL_RAW_ACCESS_CHAIN_OPERANDS:
     case SPV_OPERAND_TYPE_OPTIONAL_FPENCODING:
+    case SPV_OPERAND_TYPE_OPTIONAL_TENSOR_OPERANDS:
       return true;
     default:
       break;

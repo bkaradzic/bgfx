@@ -875,6 +875,82 @@ spv_result_t ValidateTypeTensorViewNV(ValidationState_t& _,
 
   return SPV_SUCCESS;
 }
+
+spv_result_t ValidateTypeTensorARM(ValidationState_t& _,
+                                   const Instruction* inst) {
+  // Element type must be a scalar type
+  const auto element_type_index = 1;
+  const auto element_type_id = inst->GetOperandAs<uint32_t>(element_type_index);
+  const auto element_type = _.FindDef(element_type_id);
+  if (!element_type || (!_.IsFloatScalarType(element_type_id) &&
+                        !_.IsIntScalarType(element_type_id) &&
+                        !_.IsBoolScalarType(element_type_id))) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpTypeTensorARM Element Type <id> "
+           << _.getIdName(element_type_id) << " is not a scalar type.";
+  }
+
+  if (inst->operands().size() < 3) {
+    return SPV_SUCCESS;
+  }
+
+  // Rank must be constant instruction with scalar integer type
+  const auto rank_index = 2;
+  const auto rank_id = inst->GetOperandAs<uint32_t>(rank_index);
+  const auto rank = _.FindDef(rank_id);
+  if (!rank || !spvOpcodeIsConstant(rank->opcode())) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpTypeTensorARM Rank <id> " << _.getIdName(rank_id)
+           << " is not a constant instruction.";
+  }
+  // Rank must have scalar integer type
+  if (!rank || !_.IsIntScalarType(rank->type_id())) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpTypeTensorARM Rank <id> " << _.getIdName(rank_id)
+           << " does not have a scalar integer type.";
+  }
+  // Rank must be greater than 0
+  uint64_t rank_value = 0;
+  if (_.EvalConstantValUint64(rank_id, &rank_value) && rank_value == 0) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpTypeTensorARM Rank <id> " << _.getIdName(rank_id)
+           << " must define a value greater than 0.";
+  }
+
+  if (inst->operands().size() < 4) {
+    return SPV_SUCCESS;
+  }
+
+  // Shape must be constant instruction
+  const auto shape_index = 3;
+  const auto shape_id = inst->GetOperandAs<uint32_t>(shape_index);
+  const auto shape = _.FindDef(shape_id);
+  if (!shape || !spvOpcodeIsConstant(shape->opcode())) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpTypeTensorARM Shape <id> " << _.getIdName(shape_id)
+           << " is not a constant instruction.";
+  }
+
+  // Shape must be array of integer of length rank
+  if (!_.IsIntArrayType(shape->type_id(), rank_value)) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpTypeTensorARM Shape <id> " << _.getIdName(shape_id)
+           << " is not an array of integer type whose Length is equal to Rank.";
+  }
+
+  // Shape constituents must be greater than 0
+  for (size_t i = 2; i < shape->operands().size(); i++) {
+    const auto s_id = shape->GetOperandAs<uint32_t>(i);
+    uint64_t s_val = 0;
+    if (_.EvalConstantValUint64(s_id, &s_val) && s_val == 0) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "OpTypeTensorARM Shape constituent " << i - 2
+             << " is not greater than 0.";
+    }
+  }
+
+  return SPV_SUCCESS;
+}
 }  // namespace
 
 spv_result_t TypePass(ValidationState_t& _, const Instruction* inst) {
@@ -931,6 +1007,9 @@ spv_result_t TypePass(ValidationState_t& _, const Instruction* inst) {
       break;
     case spv::Op::OpTypeTensorViewNV:
       if (auto error = ValidateTypeTensorViewNV(_, inst)) return error;
+      break;
+    case spv::Op::OpTypeTensorARM:
+      if (auto error = ValidateTypeTensorARM(_, inst)) return error;
       break;
     default:
       break;

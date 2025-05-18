@@ -340,6 +340,10 @@ typedef enum spv_operand_type_t {
   SPV_OPERAND_TYPE_SHDEBUG100_DEBUG_OPERATION,
   SPV_OPERAND_TYPE_SHDEBUG100_DEBUG_TYPE_QUALIFIER,
 
+  // SPV_ARM_tensors
+  SPV_OPERAND_TYPE_TENSOR_OPERANDS,
+  SPV_OPERAND_TYPE_OPTIONAL_TENSOR_OPERANDS,
+
   // This is a sentinel value, and does not represent an operand type.
   // It should come last.
   SPV_OPERAND_TYPE_NUM_OPERAND_TYPES,

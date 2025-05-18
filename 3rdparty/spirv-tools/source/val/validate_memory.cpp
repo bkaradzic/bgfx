@@ -590,7 +590,7 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
       if (pointee && !IsAllowedTypeOrArrayOfSame(
                          _, pointee,
                          {spv::Op::OpTypeImage, spv::Op::OpTypeSampler,
-                          spv::Op::OpTypeSampledImage,
+                          spv::Op::OpTypeSampledImage, spv::Op::OpTypeTensorARM,
                           spv::Op::OpTypeAccelerationStructureKHR})) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << _.VkErrorID(4655) << "UniformConstant OpVariable <id> "

@@ -367,6 +367,7 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
     if (auto error = RayReorderNVPass(*vstate, &instruction)) return error;
     if (auto error = MeshShadingPass(*vstate, &instruction)) return error;
     if (auto error = TensorLayoutPass(*vstate, &instruction)) return error;
+    if (auto error = TensorPass(*vstate, &instruction)) return error;
     if (auto error = InvalidTypePass(*vstate, &instruction)) return error;
   }
 

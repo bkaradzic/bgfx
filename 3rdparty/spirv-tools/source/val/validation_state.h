@@ -634,6 +634,7 @@ class ValidationState_t {
   // Returns true iff |id| is a type corresponding to the name of the function.
   // Only works for types not for objects.
   bool IsVoidType(uint32_t id) const;
+  bool IsScalarType(uint32_t id) const;
   bool IsBfloat16ScalarType(uint32_t id) const;
   bool IsBfloat16VectorType(uint32_t id) const;
   bool IsFloatScalarType(uint32_t id) const;
@@ -643,7 +644,7 @@ class ValidationState_t {
   bool IsFloatScalarOrVectorType(uint32_t id) const;
   bool IsFloatMatrixType(uint32_t id) const;
   bool IsIntScalarType(uint32_t id) const;
-  bool IsIntArrayType(uint32_t id) const;
+  bool IsIntArrayType(uint32_t id, uint64_t length = 0) const;
   bool IsIntVectorType(uint32_t id) const;
   bool IsIntScalarOrVectorType(uint32_t id) const;
   bool IsUnsignedIntScalarType(uint32_t id) const;
