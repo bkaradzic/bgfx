@@ -129,6 +129,10 @@
       "heading" : "Non-Uniform Instructions"
     },
     {
+      "tag"     : "Tensor",
+      "heading" : "Tensor Instructions"
+    },
+    {
       "tag"     : "Reserved",
       "heading" : "Reserved Instructions"
     }
@@ -4431,6 +4435,59 @@
         { "kind" : "IdRef", "name" : "Sample", "quantifier" : "?" }
       ],
       "capabilities" : [ "TileImageStencilReadAccessEXT" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeTensorARM",
+      "class"  : "Type-Declaration",
+      "opcode" : 4163,
+      "operands" : [
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",        "name" : "Element Type" },
+        { "kind" : "IdRef",        "name" : "Rank",  "quantifier" : "?" },
+        { "kind" : "IdRef",        "name" : "Shape", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "TensorsARM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTensorReadARM",
+      "class"  : "Tensor",
+      "opcode" : 4164,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",        "name" : "Tensor" },
+        { "kind" : "IdRef",        "name" : "Coordinates" },
+        { "kind" : "TensorOperands", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "TensorsARM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTensorWriteARM",
+      "class"  : "Tensor",
+      "opcode" : 4165,
+      "operands" : [
+        { "kind" : "IdRef",        "name" : "Tensor" },
+        { "kind" : "IdRef",        "name" : "Coordinates" },
+        { "kind" : "IdRef",        "name" : "Object" },
+        { "kind" : "TensorOperands", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "TensorsARM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTensorQuerySizeARM",
+      "class"  : "Tensor",
+      "opcode" : 4166,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",        "name" : "Tensor" },
+        { "kind" : "IdRef",        "name" : "Dimension" }
+      ],
+      "capabilities" : [ "TensorsARM" ],
       "version" : "None"
     },
     {
@@ -16149,6 +16206,24 @@
           "version" : "None"
         },
         {
+          "enumerant" : "TensorsARM",
+          "value" : 4174,
+          "extensions" : [ "SPV_ARM_tensors"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "StorageTensorArrayDynamicIndexingARM",
+          "value" : 4175,
+          "extensions" : [ "SPV_ARM_tensors"],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "StorageTensorArrayNonUniformIndexingARM",
+          "value" : 4176,
+          "extensions" : [ "SPV_ARM_tensors"],
+          "version" : "None"
+        },
+        {
           "enumerant" : "CooperativeMatrixLayoutsARM",
           "value" : 4201,
           "extensions" : [ "SPV_ARM_cooperative_matrix_layouts" ],
@@ -17991,6 +18066,57 @@
       "category" : "Composite",
       "kind" : "PairIdRefIdRef",
       "bases" : [ "IdRef", "IdRef" ]
+    },
+    {
+      "category" : "BitEnum",
+      "kind" : "TensorOperands",
+      "enumerants" : [
+        {
+          "enumerant" : "NoneARM",
+          "value" : "0x0000",
+          "capabilities" : [ "TensorsARM" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "NontemporalARM",
+          "value" : "0x0001",
+          "capabilities" : [ "TensorsARM" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "OutOfBoundsValueARM",
+          "value" : "0x0002",
+          "capabilities" : [ "TensorsARM" ],
+          "parameters" : [
+            { "kind" : "IdRef" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MakeElementAvailableARM",
+          "value" : "0x0004",
+          "capabilities" : [ "TensorsARM" ],
+          "parameters" : [
+            { "kind" : "IdRef" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MakeElementVisibleARM",
+          "value" : "0x0008",
+          "capabilities" : [ "TensorsARM" ],
+          "parameters" : [
+            { "kind" : "IdRef" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "NonPrivateElementARM",
+          "value" : "0x0010",
+          "capabilities" : [ "TensorsARM" ],
+          "version" : "None"
+        }
+      ]
     }
   ]
 }

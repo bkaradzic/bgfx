@@ -1079,6 +1079,9 @@ typedef enum SpvCapability_ {
     SpvCapabilityTileImageColorReadAccessEXT = 4166,
     SpvCapabilityTileImageDepthReadAccessEXT = 4167,
     SpvCapabilityTileImageStencilReadAccessEXT = 4168,
+    SpvCapabilityTensorsARM = 4174,
+    SpvCapabilityStorageTensorArrayDynamicIndexingARM = 4175,
+    SpvCapabilityStorageTensorArrayNonUniformIndexingARM = 4176,
     SpvCapabilityCooperativeMatrixLayoutsARM = 4201,
     SpvCapabilityFragmentShadingRateKHR = 4422,
     SpvCapabilitySubgroupBallotKHR = 4423,
@@ -1471,6 +1474,24 @@ typedef enum SpvTensorAddressingOperandsMask_ {
     SpvTensorAddressingOperandsTensorViewMask = 0x00000001,
     SpvTensorAddressingOperandsDecodeFuncMask = 0x00000002,
 } SpvTensorAddressingOperandsMask;
+
+typedef enum SpvTensorOperandsShift_ {
+    SpvTensorOperandsNontemporalARMShift = 0,
+    SpvTensorOperandsOutOfBoundsValueARMShift = 1,
+    SpvTensorOperandsMakeElementAvailableARMShift = 2,
+    SpvTensorOperandsMakeElementVisibleARMShift = 3,
+    SpvTensorOperandsNonPrivateElementARMShift = 4,
+    SpvTensorOperandsMax = 0x7fffffff,
+} SpvTensorOperandsShift;
+
+typedef enum SpvTensorOperandsMask_ {
+    SpvTensorOperandsMaskNone = 0,
+    SpvTensorOperandsNontemporalARMMask = 0x00000001,
+    SpvTensorOperandsOutOfBoundsValueARMMask = 0x00000002,
+    SpvTensorOperandsMakeElementAvailableARMMask = 0x00000004,
+    SpvTensorOperandsMakeElementVisibleARMMask = 0x00000008,
+    SpvTensorOperandsNonPrivateElementARMMask = 0x00000010,
+} SpvTensorOperandsMask;
 
 typedef enum SpvInitializationModeQualifier_ {
     SpvInitializationModeQualifierInitOnDeviceReprogramINTEL = 0,
@@ -1936,6 +1957,10 @@ typedef enum SpvOp_ {
     SpvOpColorAttachmentReadEXT = 4160,
     SpvOpDepthAttachmentReadEXT = 4161,
     SpvOpStencilAttachmentReadEXT = 4162,
+    SpvOpTypeTensorARM = 4163,
+    SpvOpTensorReadARM = 4164,
+    SpvOpTensorWriteARM = 4165,
+    SpvOpTensorQuerySizeARM = 4166,
     SpvOpTerminateInvocation = 4416,
     SpvOpTypeUntypedPointerKHR = 4417,
     SpvOpUntypedVariableKHR = 4418,
@@ -2752,6 +2777,10 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpColorAttachmentReadEXT: *hasResult = true; *hasResultType = true; break;
     case SpvOpDepthAttachmentReadEXT: *hasResult = true; *hasResultType = true; break;
     case SpvOpStencilAttachmentReadEXT: *hasResult = true; *hasResultType = true; break;
+    case SpvOpTypeTensorARM: *hasResult = true; *hasResultType = false; break;
+    case SpvOpTensorReadARM: *hasResult = true; *hasResultType = true; break;
+    case SpvOpTensorWriteARM: *hasResult = false; *hasResultType = false; break;
+    case SpvOpTensorQuerySizeARM: *hasResult = true; *hasResultType = true; break;
     case SpvOpTerminateInvocation: *hasResult = false; *hasResultType = false; break;
     case SpvOpTypeUntypedPointerKHR: *hasResult = true; *hasResultType = false; break;
     case SpvOpUntypedVariableKHR: *hasResult = true; *hasResultType = true; break;
@@ -3973,6 +4002,9 @@ inline const char* SpvCapabilityToString(SpvCapability value) {
     case SpvCapabilityTileImageColorReadAccessEXT: return "TileImageColorReadAccessEXT";
     case SpvCapabilityTileImageDepthReadAccessEXT: return "TileImageDepthReadAccessEXT";
     case SpvCapabilityTileImageStencilReadAccessEXT: return "TileImageStencilReadAccessEXT";
+    case SpvCapabilityTensorsARM: return "TensorsARM";
+    case SpvCapabilityStorageTensorArrayDynamicIndexingARM: return "StorageTensorArrayDynamicIndexingARM";
+    case SpvCapabilityStorageTensorArrayNonUniformIndexingARM: return "StorageTensorArrayNonUniformIndexingARM";
     case SpvCapabilityCooperativeMatrixLayoutsARM: return "CooperativeMatrixLayoutsARM";
     case SpvCapabilityFragmentShadingRateKHR: return "FragmentShadingRateKHR";
     case SpvCapabilitySubgroupBallotKHR: return "SubgroupBallotKHR";
@@ -4701,6 +4733,10 @@ inline const char* SpvOpToString(SpvOp value) {
     case SpvOpColorAttachmentReadEXT: return "OpColorAttachmentReadEXT";
     case SpvOpDepthAttachmentReadEXT: return "OpDepthAttachmentReadEXT";
     case SpvOpStencilAttachmentReadEXT: return "OpStencilAttachmentReadEXT";
+    case SpvOpTypeTensorARM: return "OpTypeTensorARM";
+    case SpvOpTensorReadARM: return "OpTensorReadARM";
+    case SpvOpTensorWriteARM: return "OpTensorWriteARM";
+    case SpvOpTensorQuerySizeARM: return "OpTensorQuerySizeARM";
     case SpvOpTerminateInvocation: return "OpTerminateInvocation";
     case SpvOpTypeUntypedPointerKHR: return "OpTypeUntypedPointerKHR";
     case SpvOpUntypedVariableKHR: return "OpUntypedVariableKHR";
