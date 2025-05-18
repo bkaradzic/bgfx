@@ -684,6 +684,8 @@ struct CLIArguments
 	bool msl_input_attachment_is_ds_attachment = false;
 	bool msl_disable_rasterization = false;
 	bool msl_auto_disable_rasterization = false;
+	bool msl_enable_point_size_default = false;
+	float msl_default_point_size = 1.0f;
 	const char *msl_combined_sampler_suffix = nullptr;
 	bool glsl_emit_push_constant_as_ubo = false;
 	bool glsl_emit_ubo_as_plain_uniforms = false;
@@ -987,7 +989,8 @@ static void print_help_msl()
 	                "\t\tpartially transformed. This fixup gives correct results on Apple Silicon.\n"
 	                "\t[--msl-combined-sampler-suffix <suffix>]:\n\t\tUses a custom suffix for combined samplers.\n"
 	                "\t[--msl-disable-rasterization]:\n\t\tDisables rasterization and returns void from vertex-like entry points.\n"
-	                "\t[--msl-auto-disable-rasterization]:\n\t\tDisables rasterization if BuiltInPosition is not written.\n");
+	                "\t[--msl-auto-disable-rasterization]:\n\t\tDisables rasterization if BuiltInPosition is not written.\n"
+	                "\t[--msl-default-point-size <size>]:\n\t\tApplies a default value if BuiltInPointSize is not written.\n");
 	// clang-format on
 }
 
@@ -1271,6 +1274,8 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		msl_opts.agx_manual_cube_grad_fixup = args.msl_agx_manual_cube_grad_fixup;
 		msl_opts.disable_rasterization = args.msl_disable_rasterization;
 		msl_opts.auto_disable_rasterization = args.msl_auto_disable_rasterization;
+		msl_opts.enable_point_size_default = args.msl_enable_point_size_default;
+		msl_opts.default_point_size = args.msl_default_point_size;
 		msl_comp->set_msl_options(msl_opts);
 		for (auto &v : args.msl_discrete_descriptor_sets)
 			msl_comp->add_discrete_descriptor_set(v);
@@ -1838,6 +1843,10 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--msl-input-attachment-is-ds-attachment", [&args](CLIParser &) { args.msl_input_attachment_is_ds_attachment = true; });
 	cbs.add("--msl-disable-rasterization", [&args](CLIParser &) { args.msl_disable_rasterization = true; });
 	cbs.add("--msl-auto-disable-rasterization", [&args](CLIParser &) { args.msl_auto_disable_rasterization = true; });
+	cbs.add("--msl-default-point-size", [&args](CLIParser &parser) {
+		args.msl_enable_point_size_default = true;
+		args.msl_default_point_size = static_cast<float>(parser.next_double());
+	});
 	cbs.add("--extension", [&args](CLIParser &parser) { args.extensions.push_back(parser.next_string()); });
 	cbs.add("--rename-entry-point", [&args](CLIParser &parser) {
 		auto old_name = parser.next_string();

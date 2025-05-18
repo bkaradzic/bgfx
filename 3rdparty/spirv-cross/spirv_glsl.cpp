@@ -631,6 +631,12 @@ void CompilerGLSL::find_static_extensions()
 		require_extension_internal("GL_OVR_multiview2");
 	}
 
+	if (execution.flags.get(ExecutionModeQuadDerivativesKHR) ||
+	    (execution.flags.get(ExecutionModeRequireFullQuadsKHR) && get_execution_model() == ExecutionModelFragment))
+	{
+		require_extension_internal("GL_EXT_shader_quad_control");
+	}
+
 	// KHR one is likely to get promoted at some point, so if we don't see an explicit SPIR-V extension, assume KHR.
 	for (auto &ext : ir.declared_extensions)
 		if (ext == "SPV_NV_fragment_shader_barycentric")
@@ -1193,6 +1199,9 @@ void CompilerGLSL::emit_header()
 		else if (!options.es && execution.flags.get(ExecutionModeDepthLess))
 			statement("layout(depth_less) out float gl_FragDepth;");
 
+		if (execution.flags.get(ExecutionModeRequireFullQuadsKHR))
+			statement("layout(full_quads) in;");
+
 		break;
 
 	default:
@@ -1202,6 +1211,9 @@ void CompilerGLSL::emit_header()
 	for (auto &cap : ir.declared_capabilities)
 		if (cap == CapabilityRayTraversalPrimitiveCullingKHR)
 			statement("layout(primitive_culling);");
+
+	if (execution.flags.get(ExecutionModeQuadDerivativesKHR))
+		statement("layout(quad_derivatives) in;");
 
 	if (!inputs.empty())
 		statement("layout(", merge(inputs), ") in;");
@@ -6023,7 +6035,7 @@ string CompilerGLSL::constant_expression(const SPIRConstant &c,
 		else
 			return join(type_to_glsl(type), "(0)");
 	}
-	else if (c.columns() == 1)
+	else if (c.columns() == 1 && type.op != spv::OpTypeCooperativeMatrixKHR)
 	{
 		auto res = constant_expression_vector(c, 0);
 
@@ -6111,7 +6123,9 @@ string CompilerGLSL::convert_half_to_string(const SPIRConstant &c, uint32_t col,
 string CompilerGLSL::convert_float_to_string(const SPIRConstant &c, uint32_t col, uint32_t row)
 {
 	string res;
-	float float_value = c.scalar_f32(col, row);
+
+	bool is_bfloat16 = get<SPIRType>(c.constant_type).basetype == SPIRType::BFloat16;
+	float float_value = is_bfloat16 ? c.scalar_bf16(col, row) : c.scalar_f32(col, row);
 
 	if (std::isnan(float_value) || std::isinf(float_value))
 	{
@@ -6174,6 +6188,9 @@ string CompilerGLSL::convert_float_to_string(const SPIRConstant &c, uint32_t col
 		if (backend.float_literal_suffix)
 			res += "f";
 	}
+
+	if (is_bfloat16)
+		res = join("bfloat16_t(", res, ")");
 
 	return res;
 }
@@ -6353,6 +6370,7 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 		}
 		break;
 
+	case SPIRType::BFloat16:
 	case SPIRType::Float:
 		if (splat || swizzle_splat)
 		{
@@ -9381,6 +9399,10 @@ void CompilerGLSL::emit_subgroup_op(const Instruction &i)
 		require_extension_internal("GL_KHR_shader_subgroup_shuffle_relative");
 		break;
 
+	case OpGroupNonUniformRotateKHR:
+		require_extension_internal("GL_KHR_shader_subgroup_rotate");
+		break;
+
 	case OpGroupNonUniformAll:
 	case OpGroupNonUniformAny:
 	case OpGroupNonUniformAllEqual:
@@ -9452,6 +9474,13 @@ void CompilerGLSL::emit_subgroup_op(const Instruction &i)
 		require_extension_internal("GL_KHR_shader_subgroup_quad");
 		break;
 
+	case OpGroupNonUniformQuadAllKHR:
+	case OpGroupNonUniformQuadAnyKHR:
+		// Require both extensions to be enabled.
+		require_extension_internal("GL_KHR_shader_subgroup_vote");
+		require_extension_internal("GL_EXT_shader_quad_control");
+		break;
+
 	default:
 		SPIRV_CROSS_THROW("Invalid opcode for subgroup.");
 	}
@@ -9459,9 +9488,13 @@ void CompilerGLSL::emit_subgroup_op(const Instruction &i)
 	uint32_t result_type = ops[0];
 	uint32_t id = ops[1];
 
-	auto scope = static_cast<Scope>(evaluate_constant_u32(ops[2]));
-	if (scope != ScopeSubgroup)
-		SPIRV_CROSS_THROW("Only subgroup scope is supported.");
+	// These quad ops do not have a scope parameter.
+	if (op != OpGroupNonUniformQuadAllKHR && op != OpGroupNonUniformQuadAnyKHR)
+	{
+		auto scope = static_cast<Scope>(evaluate_constant_u32(ops[2]));
+		if (scope != ScopeSubgroup)
+			SPIRV_CROSS_THROW("Only subgroup scope is supported.");
+	}
 
 	switch (op)
 	{
@@ -9525,6 +9558,13 @@ void CompilerGLSL::emit_subgroup_op(const Instruction &i)
 
 	case OpGroupNonUniformShuffleDown:
 		emit_binary_func_op(result_type, id, ops[3], ops[4], "subgroupShuffleDown");
+		break;
+
+	case OpGroupNonUniformRotateKHR:
+		if (i.length > 5)
+			emit_trinary_func_op(result_type, id, ops[3], ops[4], ops[5], "subgroupClusteredRotate");
+		else
+			emit_binary_func_op(result_type, id, ops[3], ops[4], "subgroupRotate");
 		break;
 
 	case OpGroupNonUniformAll:
@@ -9613,6 +9653,14 @@ case OpGroupNonUniform##op: \
 		emit_binary_func_op(result_type, id, ops[3], ops[4], "subgroupQuadBroadcast");
 		break;
 	}
+
+	case OpGroupNonUniformQuadAllKHR:
+		emit_unary_func_op(result_type, id, ops[2], "subgroupQuadAll");
+		break;
+
+	case OpGroupNonUniformQuadAnyKHR:
+		emit_unary_func_op(result_type, id, ops[2], "subgroupQuadAny");
+		break;
 
 	default:
 		SPIRV_CROSS_THROW("Invalid opcode for subgroup.");
@@ -9729,6 +9777,14 @@ string CompilerGLSL::bitcast_glsl_op(const SPIRType &out_type, const SPIRType &i
 		return "packUint4x16";
 	else if (out_type.basetype == SPIRType::UShort && in_type.basetype == SPIRType::UInt64 && in_type.vecsize == 1)
 		return "unpackUint4x16";
+	else if (out_type.basetype == SPIRType::BFloat16 && in_type.basetype == SPIRType::UShort)
+		return "uintBitsToBFloat16EXT";
+	else if (out_type.basetype == SPIRType::BFloat16 && in_type.basetype == SPIRType::Short)
+		return "intBitsToBFloat16EXT";
+	else if (out_type.basetype == SPIRType::UShort && in_type.basetype == SPIRType::BFloat16)
+		return "bfloat16BitsToUintEXT";
+	else if (out_type.basetype == SPIRType::Short && in_type.basetype == SPIRType::BFloat16)
+		return "bfloat16BitsToIntEXT";
 
 	return "";
 }
@@ -10605,7 +10661,7 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 			type = &get<SPIRType>(type_id);
 		}
 		// Vector -> Scalar
-		else if (type->vecsize > 1)
+		else if (type->op == OpTypeCooperativeMatrixKHR || type->vecsize > 1)
 		{
 			string deferred_index;
 			if (row_major_matrix_needs_conversion)
@@ -10667,9 +10723,9 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 
 			if (is_literal)
 			{
-				bool out_of_bounds = (index >= type->vecsize);
+				bool out_of_bounds = index >= type->vecsize && type->op != OpTypeCooperativeMatrixKHR;
 
-				if (!is_packed && !row_major_matrix_needs_conversion)
+				if (!is_packed && !row_major_matrix_needs_conversion && type->op != OpTypeCooperativeMatrixKHR)
 				{
 					expr += ".";
 					expr += index_to_swizzle(out_of_bounds ? 0 : index);
@@ -11619,7 +11675,8 @@ string CompilerGLSL::build_composite_combiner(uint32_t return_type, const uint32
 
 	// Can only merge swizzles for vectors.
 	auto &type = get<SPIRType>(return_type);
-	bool can_apply_swizzle_opt = type.basetype != SPIRType::Struct && type.array.empty() && type.columns == 1;
+	bool can_apply_swizzle_opt = type.basetype != SPIRType::Struct && type.array.empty() && type.columns == 1 &&
+	                             type.op != spv::OpTypeCooperativeMatrixKHR;
 	bool swizzle_optimization = false;
 
 	for (uint32_t i = 0; i < length; i++)
@@ -12176,6 +12233,33 @@ CompilerGLSL::TemporaryCopy CompilerGLSL::handle_instruction_precision(const Ins
 	return {};
 }
 
+static pair<string, string> split_coopmat_pointer(const string &expr)
+{
+	auto ptr_expr = expr;
+	string index_expr;
+
+	if (ptr_expr.back() != ']')
+		SPIRV_CROSS_THROW("Access chain for coopmat must be indexed into an array.");
+
+	// Strip the access chain.
+	ptr_expr.pop_back();
+	uint32_t counter = 1;
+	while (counter && !ptr_expr.empty())
+	{
+		if (ptr_expr.back() == ']')
+			counter++;
+		else if (ptr_expr.back() == '[')
+			counter--;
+		ptr_expr.pop_back();
+	}
+
+	if (ptr_expr.empty())
+		SPIRV_CROSS_THROW("Invalid pointer expression for coopmat.");
+
+	index_expr = expr.substr(ptr_expr.size() + 1, expr.size() - (ptr_expr.size() + 1) - 1);
+	return { std::move(ptr_expr), std::move(index_expr) };
+}
+
 void CompilerGLSL::emit_instruction(const Instruction &instruction)
 {
 	auto ops = stream(instruction);
@@ -12717,6 +12801,9 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		auto &composite_type = expression_type(ops[2]);
 		bool composite_type_is_complex = composite_type.basetype == SPIRType::Struct || !composite_type.array.empty();
 		if (composite_type_is_complex)
+			allow_base_expression = false;
+
+		if (composite_type.op == spv::OpTypeCooperativeMatrixKHR)
 			allow_base_expression = false;
 
 		// Packed expressions or physical ID mapped expressions cannot be split up.
@@ -14829,7 +14916,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 					SPIRV_CROSS_THROW("Debug printf is only supported in Vulkan GLSL.\n");
 				require_extension_internal("GL_EXT_debug_printf");
 				auto &format_string = get<SPIRString>(ops[4]).str;
-				string expr = join("debugPrintfEXT(\"", format_string, "\"");
+				string expr = join(backend.printf_function, "(\"", format_string, "\"");
 				for (uint32_t i = 5; i < length; i++)
 				{
 					expr += ", ";
@@ -15028,6 +15115,9 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 	case OpGroupNonUniformLogicalXor:
 	case OpGroupNonUniformQuadSwap:
 	case OpGroupNonUniformQuadBroadcast:
+	case OpGroupNonUniformQuadAllKHR:
+	case OpGroupNonUniformQuadAnyKHR:
+	case OpGroupNonUniformRotateKHR:
 		emit_subgroup_op(instruction);
 		break;
 
@@ -15360,6 +15450,124 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 			SPIRV_CROSS_THROW("Unsupported scope for OpReadClockKHR opcode.");
 
 		emit_op(ops[0], ops[1], op, false);
+		break;
+	}
+
+	case OpCooperativeMatrixLengthKHR:
+	{
+		// Need to synthesize a dummy temporary, since the SPIR-V opcode is based on the type.
+		uint32_t result_type = ops[0];
+		uint32_t id = ops[1];
+		set<SPIRExpression>(
+				id, join(type_to_glsl(get<SPIRType>(result_type)),
+				         "(", type_to_glsl(get<SPIRType>(ops[2])), "(0).length())"),
+				result_type, true);
+		break;
+	}
+
+	case OpCooperativeMatrixLoadKHR:
+	{
+		// Spec contradicts itself if stride is optional or not.
+		if (length < 5)
+			SPIRV_CROSS_THROW("Stride is not provided.");
+
+		uint32_t result_type = ops[0];
+		uint32_t id = ops[1];
+		emit_uninitialized_temporary_expression(result_type, id);
+
+		auto expr = to_expression(ops[2]);
+		pair<string, string> split_expr;
+		if (!is_forcing_recompilation())
+			split_expr = split_coopmat_pointer(expr);
+
+		string layout_expr;
+		if (const auto *layout = maybe_get<SPIRConstant>(ops[3]))
+		{
+			if (!layout->specialization)
+			{
+				if (layout->scalar() == spv::CooperativeMatrixLayoutColumnMajorKHR)
+					layout_expr = "gl_CooperativeMatrixLayoutColumnMajor";
+				else
+					layout_expr = "gl_CooperativeMatrixLayoutRowMajor";
+			}
+		}
+
+		if (layout_expr.empty())
+			layout_expr = join("int(", to_expression(ops[3]), ")");
+
+		statement("coopMatLoad(",
+		          to_expression(id), ", ",
+		          split_expr.first, ", ",
+		          split_expr.second, ", ",
+		          to_expression(ops[4]), ", ",
+		          layout_expr, ");");
+
+		register_read(id, ops[2], false);
+		break;
+	}
+
+	case OpCooperativeMatrixStoreKHR:
+	{
+		// Spec contradicts itself if stride is optional or not.
+		if (length < 4)
+			SPIRV_CROSS_THROW("Stride is not provided.");
+
+		// SPIR-V and GLSL don't agree how to pass the expression.
+		// In SPIR-V it's a pointer, but in GLSL it's reference to array + index.
+
+		auto expr = to_expression(ops[0]);
+		pair<string, string> split_expr;
+		if (!is_forcing_recompilation())
+			split_expr = split_coopmat_pointer(expr);
+
+		string layout_expr;
+		if (const auto *layout = maybe_get<SPIRConstant>(ops[2]))
+		{
+			if (!layout->specialization)
+			{
+				if (layout->scalar() == spv::CooperativeMatrixLayoutColumnMajorKHR)
+					layout_expr = "gl_CooperativeMatrixLayoutColumnMajor";
+				else
+					layout_expr = "gl_CooperativeMatrixLayoutRowMajor";
+			}
+		}
+
+		if (layout_expr.empty())
+			layout_expr = join("int(", to_expression(ops[2]), ")");
+
+		statement("coopMatStore(",
+		          to_expression(ops[1]), ", ",
+		          split_expr.first, ", ",
+		          split_expr.second, ", ",
+		          to_expression(ops[3]), ", ",
+		          layout_expr, ");");
+
+		// TODO: Do we care about memory operands?
+
+		register_write(ops[0]);
+		break;
+	}
+
+	case OpCooperativeMatrixMulAddKHR:
+	{
+		uint32_t result_type = ops[0];
+		uint32_t id = ops[1];
+		uint32_t A = ops[2];
+		uint32_t B = ops[3];
+		uint32_t C = ops[4];
+		bool forward = should_forward(A) && should_forward(B) && should_forward(C);
+		emit_op(result_type, id,
+		        join("coopMatMulAdd(",
+		             to_unpacked_expression(A), ", ",
+		             to_unpacked_expression(B), ", ",
+		             to_unpacked_expression(C), ", ",
+		             (length >= 6 ? ops[5] : 0),
+		             ")"),
+		        forward);
+
+		inherit_expression_dependencies(id, A);
+		inherit_expression_dependencies(id, B);
+		inherit_expression_dependencies(id, C);
 		break;
 	}
 
@@ -16210,6 +16418,61 @@ string CompilerGLSL::type_to_glsl(const SPIRType &type, uint32_t id)
 			require_extension_internal("GL_ARB_shader_atomic_counters");
 	}
 
+	const SPIRType *coop_type = &type;
+	while (is_pointer(*coop_type) || is_array(*coop_type))
+		coop_type = &get<SPIRType>(coop_type->parent_type);
+
+	if (coop_type->op == spv::OpTypeCooperativeMatrixKHR)
+	{
+		require_extension_internal("GL_KHR_cooperative_matrix");
+		if (!options.vulkan_semantics)
+			SPIRV_CROSS_THROW("Cooperative matrix only available in Vulkan.");
+		// GLSL doesn't support this as spec constant, which makes sense ...
+		uint32_t use_type = get<SPIRConstant>(coop_type->cooperative.use_id).scalar();
+
+		const char *use = nullptr;
+		switch (use_type)
+		{
+		case CooperativeMatrixUseMatrixAKHR:
+			use = "gl_MatrixUseA";
+			break;
+
+		case CooperativeMatrixUseMatrixBKHR:
+			use = "gl_MatrixUseB";
+			break;
+
+		case CooperativeMatrixUseMatrixAccumulatorKHR:
+			use = "gl_MatrixUseAccumulator";
+			break;
+
+		default:
+			SPIRV_CROSS_THROW("Invalid matrix use.");
+		}
+
+		string scope_expr;
+		if (const auto *scope = maybe_get<SPIRConstant>(coop_type->cooperative.scope_id))
+		{
+			if (!scope->specialization)
+			{
+				require_extension_internal("GL_KHR_memory_scope_semantics");
+				if (scope->scalar() == spv::ScopeSubgroup)
+					scope_expr = "gl_ScopeSubgroup";
+				else if (scope->scalar() == spv::ScopeWorkgroup)
+					scope_expr = "gl_ScopeWorkgroup";
+				else
+					SPIRV_CROSS_THROW("Invalid scope for cooperative matrix.");
+			}
+		}
+
+		if (scope_expr.empty())
+			scope_expr = to_expression(coop_type->cooperative.scope_id);
+
+		return join("coopmat<", type_to_glsl(get<SPIRType>(coop_type->parent_type)), ", ",
+		            scope_expr, ", ",
+		            to_expression(coop_type->cooperative.rows_id), ", ",
+		            to_expression(coop_type->cooperative.columns_id), ", ", use, ">");
+	}
+
 	if (type.vecsize == 1 && type.columns == 1) // Scalar builtin
 	{
 		switch (type.basetype)
@@ -16232,6 +16495,11 @@ string CompilerGLSL::type_to_glsl(const SPIRType &type, uint32_t id)
 			return "atomic_uint";
 		case SPIRType::Half:
 			return "float16_t";
+		case SPIRType::BFloat16:
+			if (!options.vulkan_semantics)
+				SPIRV_CROSS_THROW("bfloat16 requires Vulkan semantics.");
+			require_extension_internal("GL_EXT_bfloat16");
+			return "bfloat16_t";
 		case SPIRType::Float:
 			return "float";
 		case SPIRType::Double:
@@ -16264,6 +16532,11 @@ string CompilerGLSL::type_to_glsl(const SPIRType &type, uint32_t id)
 			return join("uvec", type.vecsize);
 		case SPIRType::Half:
 			return join("f16vec", type.vecsize);
+		case SPIRType::BFloat16:
+			if (!options.vulkan_semantics)
+				SPIRV_CROSS_THROW("bfloat16 requires Vulkan semantics.");
+			require_extension_internal("GL_EXT_bfloat16");
+			return join("bf16vec", type.vecsize);
 		case SPIRType::Float:
 			return join("vec", type.vecsize);
 		case SPIRType::Double:
@@ -16439,6 +16712,11 @@ void CompilerGLSL::add_function_overload(const SPIRFunction &func)
 		// but that will not change the signature in GLSL/HLSL,
 		// so strip the pointer type before hashing.
 		uint32_t type_id = get_pointee_type_id(arg.type);
+
+		// Workaround glslang bug. It seems to only consider the base type when resolving overloads.
+		if (get<SPIRType>(type_id).op == spv::OpTypeCooperativeMatrixKHR)
+			type_id = get<SPIRType>(type_id).parent_type;
+
 		auto &type = get<SPIRType>(type_id);
 
 		if (!combined_image_samplers.empty())

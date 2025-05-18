@@ -565,6 +565,10 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 		options->msl.enable_point_size_builtin = value != 0;
 		break;
 
+	case SPVC_COMPILER_OPTION_MSL_ENABLE_POINT_SIZE_DEFAULT:
+		options->msl.enable_point_size_default = value != 0;
+		break;
+
 	case SPVC_COMPILER_OPTION_MSL_DISABLE_RASTERIZATION:
 		options->msl.disable_rasterization = value != 0;
 		break;

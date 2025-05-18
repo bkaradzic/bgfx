@@ -171,6 +171,7 @@ bool Compiler::block_is_control_dependent(const SPIRBlock &block)
 		case OpGroupNonUniformLogicalXor:
 		case OpGroupNonUniformQuadBroadcast:
 		case OpGroupNonUniformQuadSwap:
+		case OpGroupNonUniformRotateKHR:
 
 		// Control barriers
 		case OpControlBarrier:
@@ -210,6 +211,7 @@ bool Compiler::block_is_pure(const SPIRBlock &block)
 
 		case OpCopyMemory:
 		case OpStore:
+		case OpCooperativeMatrixStoreKHR:
 		{
 			auto &type = expression_type(ops[0]);
 			if (type.storage != StorageClassFunction)
@@ -370,6 +372,7 @@ void Compiler::register_global_read_dependencies(const SPIRBlock &block, uint32_
 		}
 
 		case OpLoad:
+		case OpCooperativeMatrixLoadKHR:
 		case OpImageRead:
 		{
 			// If we're in a storage class which does not get invalidated, adding dependencies here is no big deal.
@@ -819,6 +822,7 @@ bool Compiler::InterfaceVariableAccessHandler::handle(Op opcode, const uint32_t 
 
 	case OpAtomicStore:
 	case OpStore:
+	case OpCooperativeMatrixStoreKHR:
 		// Invalid SPIR-V.
 		if (length < 1)
 			return false;
@@ -911,6 +915,7 @@ bool Compiler::InterfaceVariableAccessHandler::handle(Op opcode, const uint32_t 
 	case OpInBoundsAccessChain:
 	case OpPtrAccessChain:
 	case OpLoad:
+	case OpCooperativeMatrixLoadKHR:
 	case OpCopyObject:
 	case OpImageTexelPointer:
 	case OpAtomicLoad:
@@ -3462,6 +3467,7 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 	switch (op)
 	{
 	case OpStore:
+	case OpCooperativeMatrixStoreKHR:
 	{
 		if (length < 2)
 			return false;
@@ -3582,6 +3588,7 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 	}
 
 	case OpLoad:
+	case OpCooperativeMatrixLoadKHR:
 	{
 		if (length < 3)
 			return false;
@@ -3801,6 +3808,7 @@ bool Compiler::StaticExpressionAccessHandler::handle(spv::Op op, const uint32_t 
 	switch (op)
 	{
 	case OpStore:
+	case OpCooperativeMatrixStoreKHR:
 		if (length < 2)
 			return false;
 		if (args[0] == variable_id)
@@ -3811,6 +3819,7 @@ bool Compiler::StaticExpressionAccessHandler::handle(spv::Op op, const uint32_t 
 		break;
 
 	case OpLoad:
+	case OpCooperativeMatrixLoadKHR:
 		if (length < 3)
 			return false;
 		if (args[2] == variable_id && static_expression == 0) // Tried to read from variable before it was initialized.
@@ -4286,6 +4295,7 @@ bool Compiler::may_read_undefined_variable_in_block(const SPIRBlock &block, uint
 		switch (op.op)
 		{
 		case OpStore:
+		case OpCooperativeMatrixStoreKHR:
 		case OpCopyMemory:
 			if (ops[0] == var)
 				return false;
@@ -4324,6 +4334,7 @@ bool Compiler::may_read_undefined_variable_in_block(const SPIRBlock &block, uint
 
 		case OpCopyObject:
 		case OpLoad:
+		case OpCooperativeMatrixLoadKHR:
 			if (ops[2] == var)
 				return true;
 			break;
@@ -4463,6 +4474,7 @@ bool Compiler::ActiveBuiltinHandler::handle(spv::Op opcode, const uint32_t *args
 	switch (opcode)
 	{
 	case OpStore:
+	case OpCooperativeMatrixStoreKHR:
 		if (length < 1)
 			return false;
 
@@ -4479,6 +4491,7 @@ bool Compiler::ActiveBuiltinHandler::handle(spv::Op opcode, const uint32_t *args
 
 	case OpCopyObject:
 	case OpLoad:
+	case OpCooperativeMatrixLoadKHR:
 		if (length < 3)
 			return false;
 
@@ -5256,6 +5269,13 @@ bool Compiler::PhysicalStorageBufferPointerHandler::handle(Op op, const uint32_t
 		break;
 	}
 
+	case OpCooperativeMatrixLoadKHR:
+	case OpCooperativeMatrixStoreKHR:
+	{
+		// TODO: Can we meaningfully deal with this?
+		break;
+	}
+
 	default:
 		break;
 	}
@@ -5411,6 +5431,7 @@ bool Compiler::InterlockedResourceAccessHandler::handle(Op opcode, const uint32_
 	switch (opcode)
 	{
 	case OpLoad:
+	case OpCooperativeMatrixLoadKHR:
 	{
 		if (length < 3)
 			return false;
@@ -5488,6 +5509,7 @@ bool Compiler::InterlockedResourceAccessHandler::handle(Op opcode, const uint32_
 	case OpStore:
 	case OpImageWrite:
 	case OpAtomicStore:
+	case OpCooperativeMatrixStoreKHR:
 	{
 		if (length < 1)
 			return false;
