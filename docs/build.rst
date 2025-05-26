@@ -31,13 +31,13 @@ Generate Visual Studio 2019 project files:
 
 ::
 
-    ..\bx\tools\bin\windows\genie --with-examples vs2019
+    ..\bx\tools\bin\windows\genie --with-examples vs2022
 
 Open bgfx solution in Visual Studio 2019:
 
 ::
 
-    start .build\projects\vs2019\bgfx.sln
+    start .build\projects\vs2022\bgfx.sln
 
 .. note:: For more detailed prerequisites and build steps on other platforms see below.
 
@@ -165,13 +165,13 @@ Visual Studio 2019 command line:
 
 ::
 
-    make vs2019-release64
+    make vs2022-release64
 
 Visual Studio 2019 IDE:
 
 ::
 
-    start .build/projects/vs2019/bgfx.sln
+    start .build/projects/vs2022/bgfx.sln
 
 macOS
 ~~~~~
@@ -216,7 +216,7 @@ WinRT / UWP
 
 ::
 
-    ..\bx\tools\bin\windows\genie --vs=winstore100 vs2019
+    ..\bx\tools\bin\windows\genie --vs=winstore100 vs2022
 
 For more options, see `General (directly with GENie) <#general-directly-with-genie>`_.
 Build the resulting solution and deploy to device.
@@ -241,7 +241,7 @@ To build bgfx project files for tools, use ``--with-tools`` option:
 
 ::
 
-    ..\bx\tools\bin\windows\genie --with-tools vs2019
+    ..\bx\tools\bin\windows\genie --with-tools vs2022
 
 
 Alternative build systems

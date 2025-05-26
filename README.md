@@ -60,7 +60,7 @@ Supported compilers:
 
  * Clang 11 and above
  * GCC 11 and above
- * VS2019 and above
+ * VS2022 and above
  * Apple clang 12 and above
 
 Languages:
