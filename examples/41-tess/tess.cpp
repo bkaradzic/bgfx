@@ -175,7 +175,7 @@ static const uint32_t s_indexesL3[] =
 	12u, 5u, 11u,
 	12u, 11u, 10u,
 	12u, 10u, 13u,
-	12u, 13u, 14u,        //End fo first big triangle
+	12u, 13u, 14u,        //End of first big triangle
 
 	15u, 14u, 13u,
 	15u, 13u, 10u,
