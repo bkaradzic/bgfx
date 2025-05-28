@@ -4367,7 +4367,7 @@ VK_IMPORT_DEVICE
 			BGFX_PROFILER_SCOPE("RendererContextVK::allocateMemory", kColorResource);
 
 			// Forcing the use of a private device allocation for a certain memory allocation
-			// can be desireable when memory mapping the allocation. A memory allocation
+			// can be desirable when memory mapping the allocation. A memory allocation
 			// can only be mapped once. So handing out multiple subregions of one bigger
 			// allocation can lead to problems, when they get mapped multiple times.
 			// Right now, with the LRU system, we are still only handing out the full
@@ -4746,7 +4746,7 @@ VK_DESTROY
 				if (alloc.memoryTypeIndex == _memoryTypeIndex)
 				{
 					// 50% waste allowed, otherwise we'll just allocate a new one.
-					// This is to prevent we trash this cache of usefull allocations
+					// This is to prevent we trash this cache of useful allocations
 					// with a handful of tiny allocations.
 					if (alloc.size >= _size && _size * 2 >= alloc.size)
 					{
@@ -7425,7 +7425,7 @@ VK_DESTROY
 			m_backBufferColorImageLayout[ii] = VK_IMAGE_LAYOUT_UNDEFINED;
 		}
 
-		BX_TRACE("Succesfully created swapchain (%dx%d) with %d images.", width, height, m_numSwapChainImages);
+		BX_TRACE("Successfully created swapchain (%dx%d) with %d images.", width, height, m_numSwapChainImages);
 
 		VkSemaphoreCreateInfo sci;
 		sci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;

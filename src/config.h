@@ -335,7 +335,7 @@ static_assert(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS must
 
 #ifndef BGFX_CONFIG_MAX_BYTES_CACHED_DEVICE_MEMORY_ALLOCATIONS
 /// Amount of allowed memory allocations left on device to use for recycling during
-/// later allocations. This can be benificial in case the driver is slow allocating memory
+/// later allocations. This can be beneficial in case the driver is slow allocating memory
 /// on the device.
 /// Note: Currently only used by the Vulkan backend.
 #	define BGFX_CONFIG_MAX_BYTES_CACHED_DEVICE_MEMORY_ALLOCATIONS (128 << 20)
