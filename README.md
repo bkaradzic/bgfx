@@ -672,6 +672,13 @@ target="_blank"><img src="http://img.youtube.com/vi/LHmQBo_7f84/0.jpg"
 alt="Off The Road 2"
 width="640" height="480" border="0" /></a>
 
+## Minecraft Vibrant Visuals
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=5zcZJcXRdw0"
+target="_blank"><img src="http://img.youtube.com/vi/5zcZJcXRdw0/0.jpg"
+alt="Minecraft Vibrant Visuals"
+width="640" height="480" border="0" /></a>
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
