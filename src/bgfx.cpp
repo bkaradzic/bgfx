@@ -4036,8 +4036,8 @@ namespace bgfx
 		uint32_t dstWidth  = bx::max<uint32_t>(1, dst.m_width  >> _dstMip);
 		uint32_t dstHeight = bx::max<uint32_t>(1, dst.m_height >> _dstMip);
 
-		uint32_t srcDepth  = src.isCubeMap() ? 6 : bx::max<uint32_t>(1, src.m_depth >> _srcMip);
-		uint32_t dstDepth  = dst.isCubeMap() ? 6 : bx::max<uint32_t>(1, dst.m_depth >> _dstMip);
+		uint32_t srcDepth  = src.isCubeMap() ? 6 * src.m_numLayers : src.m_numLayers > 1 ? src.m_numLayers : bx::max<uint32_t>(1, src.m_depth >> _srcMip);
+		uint32_t dstDepth  = dst.isCubeMap() ? 6 * src.m_numLayers : src.m_numLayers > 1 ? src.m_numLayers : bx::max<uint32_t>(1, dst.m_depth >> _dstMip);
 
 		BX_ASSERT(_srcX < srcWidth && _srcY < srcHeight && _srcZ < srcDepth
 			, "Blit src coordinates out of range (%d, %d, %d) >= (%d, %d, %d)"
