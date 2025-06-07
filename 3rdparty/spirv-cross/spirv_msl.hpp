@@ -818,6 +818,29 @@ protected:
 		SPVFuncImplSubgroupShuffleUp,
 		SPVFuncImplSubgroupShuffleDown,
 		SPVFuncImplSubgroupRotate,
+		SPVFuncImplSubgroupClusteredAdd,
+		SPVFuncImplSubgroupClusteredFAdd = SPVFuncImplSubgroupClusteredAdd,
+		SPVFuncImplSubgroupClusteredIAdd = SPVFuncImplSubgroupClusteredAdd,
+		SPVFuncImplSubgroupClusteredMul,
+		SPVFuncImplSubgroupClusteredFMul = SPVFuncImplSubgroupClusteredMul,
+		SPVFuncImplSubgroupClusteredIMul = SPVFuncImplSubgroupClusteredMul,
+		SPVFuncImplSubgroupClusteredMin,
+		SPVFuncImplSubgroupClusteredFMin = SPVFuncImplSubgroupClusteredMin,
+		SPVFuncImplSubgroupClusteredSMin = SPVFuncImplSubgroupClusteredMin,
+		SPVFuncImplSubgroupClusteredUMin = SPVFuncImplSubgroupClusteredMin,
+		SPVFuncImplSubgroupClusteredMax,
+		SPVFuncImplSubgroupClusteredFMax = SPVFuncImplSubgroupClusteredMax,
+		SPVFuncImplSubgroupClusteredSMax = SPVFuncImplSubgroupClusteredMax,
+		SPVFuncImplSubgroupClusteredUMax = SPVFuncImplSubgroupClusteredMax,
+		SPVFuncImplSubgroupClusteredAnd,
+		SPVFuncImplSubgroupClusteredBitwiseAnd = SPVFuncImplSubgroupClusteredAnd,
+		SPVFuncImplSubgroupClusteredLogicalAnd = SPVFuncImplSubgroupClusteredAnd,
+		SPVFuncImplSubgroupClusteredOr,
+		SPVFuncImplSubgroupClusteredBitwiseOr = SPVFuncImplSubgroupClusteredOr,
+		SPVFuncImplSubgroupClusteredLogicalOr = SPVFuncImplSubgroupClusteredOr,
+		SPVFuncImplSubgroupClusteredXor,
+		SPVFuncImplSubgroupClusteredBitwiseXor = SPVFuncImplSubgroupClusteredXor,
+		SPVFuncImplSubgroupClusteredLogicalXor = SPVFuncImplSubgroupClusteredXor,
 		SPVFuncImplQuadBroadcast,
 		SPVFuncImplQuadSwap,
 		SPVFuncImplReflectScalar,
@@ -871,6 +894,11 @@ protected:
 	void emit_function_prototype(SPIRFunction &func, const Bitset &return_flags) override;
 	void emit_sampled_image_op(uint32_t result_type, uint32_t result_id, uint32_t image_id, uint32_t samp_id) override;
 	void emit_subgroup_op(const Instruction &i) override;
+	void emit_subgroup_cluster_op(uint32_t result_type, uint32_t result_id, uint32_t cluster_size, uint32_t op0,
+	                              const char *op);
+	void emit_subgroup_cluster_op_cast(uint32_t result_type, uint32_t result_id, uint32_t cluster_size, uint32_t op0,
+	                                   const char *op, SPIRType::BaseType input_type,
+	                                   SPIRType::BaseType expected_result_type);
 	std::string to_texture_op(const Instruction &i, bool sparse, bool *forward,
 	                          SmallVector<uint32_t> &inherited_expressions) override;
 	void emit_fixup() override;
@@ -1084,7 +1112,8 @@ protected:
 	bool validate_member_packing_rules_msl(const SPIRType &type, uint32_t index) const;
 	std::string get_argument_address_space(const SPIRVariable &argument);
 	std::string get_type_address_space(const SPIRType &type, uint32_t id, bool argument = false);
-	static bool decoration_flags_signal_volatile(const Bitset &flags);
+	bool decoration_flags_signal_volatile(const Bitset &flags) const;
+	bool decoration_flags_signal_coherent(const Bitset &flags) const;
 	const char *to_restrict(uint32_t id, bool space);
 	SPIRType &get_stage_in_struct_type();
 	SPIRType &get_stage_out_struct_type();
@@ -1154,7 +1183,7 @@ protected:
 	bool prepare_access_chain_for_scalar_access(std::string &expr, const SPIRType &type, spv::StorageClass storage,
 	                                            bool &is_packed) override;
 	void fix_up_interpolant_access_chain(const uint32_t *ops, uint32_t length);
-	void check_physical_type_cast(std::string &expr, const SPIRType *type, uint32_t physical_type) override;
+	bool check_physical_type_cast(std::string &expr, const SPIRType *type, uint32_t physical_type) override;
 
 	bool emit_tessellation_access_chain(const uint32_t *ops, uint32_t length);
 	bool emit_tessellation_io_load(uint32_t result_type, uint32_t id, uint32_t ptr);

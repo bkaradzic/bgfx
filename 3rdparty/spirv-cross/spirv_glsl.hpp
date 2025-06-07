@@ -769,7 +769,7 @@ protected:
 	spv::StorageClass get_expression_effective_storage_class(uint32_t ptr);
 	virtual bool access_chain_needs_stage_io_builtin_translation(uint32_t base);
 
-	virtual void check_physical_type_cast(std::string &expr, const SPIRType *type, uint32_t physical_type);
+	virtual bool check_physical_type_cast(std::string &expr, const SPIRType *type, uint32_t physical_type);
 	virtual bool prepare_access_chain_for_scalar_access(std::string &expr, const SPIRType &type,
 	                                                    spv::StorageClass storage, bool &is_packed);
 
@@ -799,7 +799,7 @@ protected:
 	std::string declare_temporary(uint32_t type, uint32_t id);
 	void emit_uninitialized_temporary(uint32_t type, uint32_t id);
 	SPIRExpression &emit_uninitialized_temporary_expression(uint32_t type, uint32_t id);
-	void append_global_func_args(const SPIRFunction &func, uint32_t index, SmallVector<std::string> &arglist);
+	virtual void append_global_func_args(const SPIRFunction &func, uint32_t index, SmallVector<std::string> &arglist);
 	std::string to_non_uniform_aware_expression(uint32_t id);
 	std::string to_atomic_ptr_expression(uint32_t id);
 	std::string to_expression(uint32_t id, bool register_expression_read = true);

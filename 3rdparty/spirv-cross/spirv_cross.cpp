@@ -82,7 +82,7 @@ bool Compiler::variable_storage_is_aliased(const SPIRVariable &v)
 	            ir.meta[type.self].decoration.decoration_flags.get(DecorationBufferBlock);
 	bool image = type.basetype == SPIRType::Image;
 	bool counter = type.basetype == SPIRType::AtomicCounter;
-	bool buffer_reference = type.storage == StorageClassPhysicalStorageBufferEXT;
+	bool buffer_reference = type.storage == StorageClassPhysicalStorageBuffer;
 
 	bool is_restrict;
 	if (ssbo)
@@ -484,7 +484,7 @@ void Compiler::register_write(uint32_t chain)
 			}
 		}
 
-		if (type.storage == StorageClassPhysicalStorageBufferEXT || variable_storage_is_aliased(*var))
+		if (type.storage == StorageClassPhysicalStorageBuffer || variable_storage_is_aliased(*var))
 			flush_all_aliased_variables();
 		else if (var)
 			flush_dependees(*var);
@@ -4362,6 +4362,39 @@ bool Compiler::may_read_undefined_variable_in_block(const SPIRBlock &block, uint
 	return true;
 }
 
+bool Compiler::GeometryEmitDisocveryHandler::handle(spv::Op opcode, const uint32_t *, uint32_t)
+{
+	if (opcode == OpEmitVertex || opcode == OpEndPrimitive)
+	{
+		for (auto *func : function_stack)
+			func->emits_geometry = true;
+	}
+
+	return true;
+}
+
+bool Compiler::GeometryEmitDisocveryHandler::begin_function_scope(const uint32_t *stream, uint32_t)
+{
+	auto &callee = compiler.get<SPIRFunction>(stream[2]);
+	function_stack.push_back(&callee);
+	return true;
+}
+
+bool Compiler::GeometryEmitDisocveryHandler::end_function_scope([[maybe_unused]] const uint32_t *stream, uint32_t)
+{
+	assert(function_stack.back() == &compiler.get<SPIRFunction>(stream[2]));
+	function_stack.pop_back();
+
+	return true;
+}
+
+void Compiler::discover_geometry_emitters()
+{
+	GeometryEmitDisocveryHandler handler(*this);
+
+	traverse_all_reachable_opcodes(get<SPIRFunction>(ir.default_entry_point), handler);
+}
+
 Bitset Compiler::get_buffer_block_flags(VariableID id) const
 {
 	return ir.get_buffer_block_flags(get<SPIRVariable>(id));
@@ -5194,7 +5227,7 @@ bool Compiler::PhysicalStorageBufferPointerHandler::type_is_bda_block_entry(uint
 
 uint32_t Compiler::PhysicalStorageBufferPointerHandler::get_minimum_scalar_alignment(const SPIRType &type) const
 {
-	if (type.storage == spv::StorageClassPhysicalStorageBufferEXT)
+	if (type.storage == spv::StorageClassPhysicalStorageBuffer)
 		return 8;
 	else if (type.basetype == SPIRType::Struct)
 	{
@@ -5298,6 +5331,10 @@ uint32_t Compiler::PhysicalStorageBufferPointerHandler::get_base_non_block_type_
 
 void Compiler::PhysicalStorageBufferPointerHandler::analyze_non_block_types_from_block(const SPIRType &type)
 {
+	if (analyzed_type_ids.count(type.self))
+		return;
+	analyzed_type_ids.insert(type.self);
+
 	for (auto &member : type.member_types)
 	{
 		auto &subtype = compiler.get<SPIRType>(member);

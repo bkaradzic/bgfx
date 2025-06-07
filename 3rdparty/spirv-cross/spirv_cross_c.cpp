@@ -55,6 +55,7 @@
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4996)
+#pragma warning(disable : 4065) // switch with 'default' but not 'case'.
 #endif
 
 #ifndef SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS

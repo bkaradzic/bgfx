@@ -1035,6 +1035,9 @@ struct SPIRFunction : IVariant
 	// consider arrays value types.
 	SmallVector<ID> constant_arrays_needed_on_stack;
 
+	// Does this function (or any function called by it), emit geometry?
+	bool emits_geometry = false;
+
 	bool active = false;
 	bool flush_undeclared = true;
 	bool do_combined_parameters = true;
