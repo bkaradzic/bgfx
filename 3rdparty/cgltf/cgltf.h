@@ -2352,11 +2352,46 @@ const cgltf_accessor* cgltf_find_accessor(const cgltf_primitive* prim, cgltf_att
 	return NULL;
 }
 
+static const uint8_t* cgltf_find_sparse_index(const cgltf_accessor* accessor, cgltf_size needle)
+{
+	const cgltf_accessor_sparse* sparse = &accessor->sparse;
+	const uint8_t* index_data = cgltf_buffer_view_data(sparse->indices_buffer_view);
+	const uint8_t* value_data = cgltf_buffer_view_data(sparse->values_buffer_view);
+
+	if (index_data == NULL || value_data == NULL)
+		return NULL;
+
+	index_data += sparse->indices_byte_offset;
+	value_data += sparse->values_byte_offset;
+
+	cgltf_size index_stride = cgltf_component_size(sparse->indices_component_type);
+
+	cgltf_size offset = 0;
+	cgltf_size length = sparse->count;
+
+	while (length)
+	{
+		cgltf_size rem = length % 2;
+		length /= 2;
+
+		cgltf_size index = cgltf_component_read_index(index_data + (offset + length) * index_stride, sparse->indices_component_type);
+		offset += index < needle ? length + rem : 0;
+	}
+
+	if (offset == sparse->count)
+		return NULL;
+
+	cgltf_size index = cgltf_component_read_index(index_data + offset * index_stride, sparse->indices_component_type);
+	return index == needle ? value_data + offset * accessor->stride : NULL;
+}
+
 cgltf_bool cgltf_accessor_read_float(const cgltf_accessor* accessor, cgltf_size index, cgltf_float* out, cgltf_size element_size)
 {
 	if (accessor->is_sparse)
 	{
-		return 0;
+		const uint8_t* element = cgltf_find_sparse_index(accessor, index);
+		if (element)
+			return cgltf_element_read_float(element, accessor->type, accessor->component_type, accessor->normalized, out, element_size);
 	}
 	if (accessor->buffer_view == NULL)
 	{
@@ -2500,11 +2535,13 @@ cgltf_bool cgltf_accessor_read_uint(const cgltf_accessor* accessor, cgltf_size i
 {
 	if (accessor->is_sparse)
 	{
-		return 0;
+		const uint8_t* element = cgltf_find_sparse_index(accessor, index);
+		if (element)
+			return cgltf_element_read_uint(element, accessor->type, accessor->component_type, out, element_size);
 	}
 	if (accessor->buffer_view == NULL)
 	{
-		memset(out, 0, element_size * sizeof( cgltf_uint ));
+		memset(out, 0, element_size * sizeof(cgltf_uint));
 		return 1;
 	}
 	const uint8_t* element = cgltf_buffer_view_data(accessor->buffer_view);
@@ -2520,7 +2557,9 @@ cgltf_size cgltf_accessor_read_index(const cgltf_accessor* accessor, cgltf_size 
 {
 	if (accessor->is_sparse)
 	{
-		return 0; // This is an error case, but we can't communicate the error with existing interface.
+		const uint8_t* element = cgltf_find_sparse_index(accessor, index);
+		if (element)
+			return cgltf_component_read_index(element, accessor->component_type);
 	}
 	if (accessor->buffer_view == NULL)
 	{
