@@ -663,6 +663,25 @@ spv_result_t ValidateStorageClass(ValidationState_t& _,
                  << _.getIdName(interface_var->id()) << " must not be declared "
                  << "with a Storage Class of Input or Output.";
         }
+        if (_.ContainsType(
+                result_type->GetOperandAs<uint32_t>(2),
+                [](const Instruction* inst) {
+                  if (inst && inst->opcode() == spv::Op::OpTypeFloat) {
+                    if (inst->words().size() > 3) {
+                      auto encoding = inst->GetOperandAs<spv::FPEncoding>(2);
+                      if ((encoding == spv::FPEncoding::Float8E4M3EXT) ||
+                          (encoding == spv::FPEncoding::Float8E5M2EXT)) {
+                        return true;
+                      }
+                    }
+                  }
+                  return false;
+                })) {
+          return _.diag(SPV_ERROR_INVALID_ID, interface_var)
+                 << "FP8 E4M3/E5M2 OpVariable <id> "  // TODO VUID
+                 << _.getIdName(interface_var->id()) << " must not be declared "
+                 << "with a Storage Class of Input or Output.";
+        }
       }
       default:
         break;

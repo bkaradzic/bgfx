@@ -768,7 +768,7 @@ void InstructionDisassembler::EmitInstructionImpl(
         {line_length + 2, last_instruction_comment_alignment_, kCommentColumn});
     // Round up the alignment to a multiple of 4 for more niceness.
     align = (align + 3) & ~0x3u;
-    last_instruction_comment_alignment_ = align;
+    last_instruction_comment_alignment_ = std::min({align, 256u});
 
     stream_ << std::string(align - line_length, ' ') << "; " << comments.str();
   } else {

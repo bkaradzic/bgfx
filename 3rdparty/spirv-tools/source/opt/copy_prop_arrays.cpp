@@ -670,6 +670,8 @@ void CopyPropagateArrays::UpdateUses(Instruction* original_ptr_inst,
         if (!dominator_analysis->Dominates(new_ptr_inst, use)) {
           assert(dominator_analysis->Dominates(use, new_ptr_inst));
           use->InsertAfter(new_ptr_inst);
+          context()->set_instr_block(use,
+                                     context()->get_instr_block(new_ptr_inst));
         }
       }
 

@@ -311,17 +311,84 @@ spv_result_t ValidateEntryPoint(ValidationState_t& _, const Instruction* inst) {
               }
             }
           }
+          if (!ok && _.HasCapability(spv::Capability::TileShadingQCOM)) {
+            ok =
+                execution_modes &&
+                execution_modes->count(spv::ExecutionMode::TileShadingRateQCOM);
+          }
           if (!ok) {
             return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                   << _.VkErrorID(6426)
+                   << (_.HasCapability(spv::Capability::TileShadingQCOM)
+                           ? _.VkErrorID(10685)
+                           : _.VkErrorID(6426))
                    << "In the Vulkan environment, GLCompute execution model "
-                      "entry points require either the LocalSize or "
-                      "LocalSizeId execution mode or an object decorated with "
-                      "WorkgroupSize must be specified.";
+                      "entry points require either the "
+                   << (_.HasCapability(spv::Capability::TileShadingQCOM)
+                           ? "TileShadingRateQCOM, "
+                           : "")
+                   << "LocalSize or LocalSizeId execution mode or an object "
+                      "decorated with WorkgroupSize must be specified.";
+          }
+        }
+
+        if (_.HasCapability(spv::Capability::TileShadingQCOM)) {
+          if (execution_modes) {
+            if (execution_modes->count(
+                    spv::ExecutionMode::TileShadingRateQCOM) &&
+                (execution_modes->count(spv::ExecutionMode::LocalSize) ||
+                 execution_modes->count(spv::ExecutionMode::LocalSizeId))) {
+              return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                     << "If the TileShadingRateQCOM execution mode is used, "
+                     << "LocalSize and LocalSizeId must not be specified.";
+            }
+            if (execution_modes->count(
+                    spv::ExecutionMode::NonCoherentTileAttachmentReadQCOM)) {
+              return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                     << "The NonCoherentTileAttachmentQCOM execution mode must "
+                        "not be used in any stage other than fragment.";
+            }
+          }
+        } else {
+          if (execution_modes &&
+              execution_modes->count(spv::ExecutionMode::TileShadingRateQCOM)) {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << "If the TileShadingRateQCOM execution mode is used, the "
+                      "TileShadingQCOM capability must be enabled.";
           }
         }
         break;
       default:
+        if (execution_modes &&
+            execution_modes->count(spv::ExecutionMode::TileShadingRateQCOM)) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "The TileShadingRateQCOM execution mode must not be used "
+                    "in any stage other than compute.";
+        }
+        if (execution_model != spv::ExecutionModel::Fragment) {
+          if (execution_modes &&
+              execution_modes->count(
+                  spv::ExecutionMode::NonCoherentTileAttachmentReadQCOM)) {
+            return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                   << "The NonCoherentTileAttachmentQCOM execution mode must "
+                      "not be used in any stage other than fragment.";
+          }
+          if (_.HasCapability(spv::Capability::TileShadingQCOM)) {
+            return _.diag(SPV_ERROR_INVALID_CAPABILITY, inst)
+                   << "The TileShadingQCOM capability must not be enabled in "
+                      "any stage other than compute or fragment.";
+          }
+        } else {
+          if (execution_modes &&
+              execution_modes->count(
+                  spv::ExecutionMode::NonCoherentTileAttachmentReadQCOM)) {
+            if (!_.HasCapability(spv::Capability::TileShadingQCOM)) {
+              return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                     << "If the NonCoherentTileAttachmentReadQCOM execution "
+                        "mode is used, the TileShadingQCOM capability must be "
+                        "enabled.";
+            }
+          }
+        }
         break;
     }
   }
@@ -757,6 +824,14 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
              << _.VkErrorID(4654)
              << "In the Vulkan environment, the PixelCenterInteger execution "
                 "mode must not be used.";
+    }
+    if (mode == spv::ExecutionMode::TileShadingRateQCOM) {
+      const auto rateX = inst->GetOperandAs<int>(2);
+      const auto rateY = inst->GetOperandAs<int>(3);
+      if ((rateX & (rateX - 1)) != 0 || (rateY & (rateY - 1)) != 0)
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "The TileShadingRateQCOM execution mode's x and y values "
+                  "must be powers of 2.";
     }
   }
 

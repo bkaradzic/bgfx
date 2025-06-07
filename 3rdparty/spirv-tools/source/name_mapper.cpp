@@ -217,6 +217,14 @@ spv_result_t FriendlyNameMapper::ParseInstruction(
           SaveName(result_id, "bfloat16");
           break;
         }
+        if (spv::FPEncoding(inst.words[3]) == spv::FPEncoding::Float8E4M3EXT) {
+          SaveName(result_id, "fp8e4m3");
+          break;
+        }
+        if (spv::FPEncoding(inst.words[3]) == spv::FPEncoding::Float8E5M2EXT) {
+          SaveName(result_id, "fp8e5m2");
+          break;
+        }
       }
       switch (bit_width) {
         case 16:

@@ -122,4 +122,7 @@ std::function<bool(unsigned)> spvOperandCanBeForwardDeclaredFunction(
 std::function<bool(unsigned)> spvDbgInfoExtOperandCanBeForwardDeclaredFunction(
     spv::Op opcode, spv_ext_inst_type_t ext_type, uint32_t key);
 
+// Converts an spv::FPEncoding to spv_fp_encoding_t
+spv_fp_encoding_t spvFPEncodingFromOperandFPEncoding(spv::FPEncoding encoding);
+
 #endif  // SOURCE_OPERAND_H_

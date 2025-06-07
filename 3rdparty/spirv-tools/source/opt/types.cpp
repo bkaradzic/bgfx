@@ -320,6 +320,14 @@ std::string Float::str() const {
       assert(width_ == 16);
       oss << "bfloat16";
       break;
+    case spv::FPEncoding::Float8E4M3EXT:
+      assert(width_ == 8);
+      oss << "fp8e4m3";
+      break;
+    case spv::FPEncoding::Float8E5M2EXT:
+      assert(width_ == 8);
+      oss << "fp8e5m2";
+      break;
     default:
       oss << "float" << width_;
       break;

@@ -74,6 +74,11 @@ spv_result_t InvalidTypePass(ValidationState_t& _, const Instruction* inst) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << spvOpcodeString(opcode) << " doesn't support BFloat16 type.";
       }
+      if (_.IsFP8ScalarOrVectorType(result_type)) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << spvOpcodeString(opcode)
+               << " doesn't support FP8 E4M3/E5M2 types.";
+      }
       break;
     }
 
@@ -83,6 +88,11 @@ spv_result_t InvalidTypePass(ValidationState_t& _, const Instruction* inst) {
       if (_.IsBfloat16VectorType(data_type)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << spvOpcodeString(opcode) << " doesn't support BFloat16 type.";
+      }
+      if (_.IsFP8VectorType(data_type)) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << spvOpcodeString(opcode)
+               << " doesn't support FP8 E4M3/E5M2 types.";
       }
       break;
     }
@@ -98,6 +108,11 @@ spv_result_t InvalidTypePass(ValidationState_t& _, const Instruction* inst) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << spvOpcodeString(opcode) << " doesn't support BFloat16 type.";
       }
+      if (_.IsFP8ScalarOrVectorType(operand_type)) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << spvOpcodeString(opcode)
+               << " doesn't support FP8 E4M3/E5M2 types.";
+      }
       break;
     }
 
@@ -108,6 +123,12 @@ spv_result_t InvalidTypePass(ValidationState_t& _, const Instruction* inst) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << spvOpcodeString(opcode) << " doesn't support BFloat16 type.";
       }
+      if (_.IsFP8ScalarOrVectorType(value_type)) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << spvOpcodeString(opcode)
+               << " doesn't support FP8 E4M3/E5M2 types.";
+      }
+
       break;
     }
 
@@ -123,6 +144,11 @@ spv_result_t InvalidTypePass(ValidationState_t& _, const Instruction* inst) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
                  << spvOpcodeString(opcode)
                  << " doesn't support BFloat16 type.";
+        }
+        if (_.IsFP8ScalarOrVectorType(res_component_type)) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << spvOpcodeString(opcode)
+                 << " doesn't support FP8 E4M3/E5M2 types.";
         }
       }
       break;

@@ -619,3 +619,17 @@ std::function<bool(unsigned)> spvDbgInfoExtOperandCanBeForwardDeclaredFunction(
   }
   return out;
 }
+
+spv_fp_encoding_t spvFPEncodingFromOperandFPEncoding(spv::FPEncoding encoding) {
+  switch (encoding) {
+    case spv::FPEncoding::BFloat16KHR:
+      return SPV_FP_ENCODING_BFLOAT16;
+    case spv::FPEncoding::Float8E4M3EXT:
+      return SPV_FP_ENCODING_FLOAT8_E4M3;
+    case spv::FPEncoding::Float8E5M2EXT:
+      return SPV_FP_ENCODING_FLOAT8_E5M2;
+    case spv::FPEncoding::Max:
+      break;
+  }
+  return SPV_FP_ENCODING_UNKNOWN;
+}

@@ -47,6 +47,7 @@ struct IdType {
   uint32_t bitwidth;  // Safe to assume that we will not have > 2^32 bits.
   bool isSigned;      // This is only significant if type_class is integral.
   IdTypeClass type_class;
+  spv_fp_encoding_t encoding;
 };
 
 // Default equality operator for IdType. Tests if all members are the same.

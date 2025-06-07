@@ -74,6 +74,7 @@ ModuleLayoutSection InstructionLayoutSection(
     case spv::Op::OpMemberDecorateStringGOOGLE:
       return kLayoutAnnotations;
     case spv::Op::OpTypeForwardPointer:
+    case spv::Op::OpTypeTaskSequenceINTEL:
       return kLayoutTypes;
     case spv::Op::OpVariable:
     case spv::Op::OpUntypedVariableKHR:
@@ -397,6 +398,9 @@ void ValidationState_t::RegisterCapability(spv::Capability cap) {
     case spv::Capability::Float16:
     case spv::Capability::Float16Buffer:
       features_.declare_float16_type = true;
+      break;
+    case spv::Capability::Float8EXT:
+      features_.declare_float8_type = true;
       break;
     case spv::Capability::StorageUniformBufferBlock16:
     case spv::Capability::StorageUniform16:
@@ -978,6 +982,37 @@ bool ValidationState_t::IsBfloat16VectorType(uint32_t id) const {
   }
 
   return false;
+}
+
+bool ValidationState_t::IsFP8ScalarType(uint32_t id) const {
+  const Instruction* inst = FindDef(id);
+  if (inst && inst->opcode() == spv::Op::OpTypeFloat) {
+    if (inst->words().size() > 3) {
+      auto encoding = inst->GetOperandAs<spv::FPEncoding>(2);
+      if ((encoding == spv::FPEncoding::Float8E4M3EXT) ||
+          (encoding == spv::FPEncoding::Float8E5M2EXT)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool ValidationState_t::IsFP8VectorType(uint32_t id) const {
+  const Instruction* inst = FindDef(id);
+  if (!inst) {
+    return false;
+  }
+
+  if (inst->opcode() == spv::Op::OpTypeVector) {
+    return IsFP8ScalarType(GetComponentType(id));
+  }
+
+  return false;
+}
+
+bool ValidationState_t::IsFP8ScalarOrVectorType(uint32_t id) const {
+  return IsFP8ScalarType(id) || IsFP8VectorType(id);
 }
 
 bool ValidationState_t::IsFloatScalarType(uint32_t id) const {
@@ -1904,6 +1939,7 @@ bool ValidationState_t::IsValidStorageClass(
       case spv::StorageClass::HitObjectAttributeNV:
       case spv::StorageClass::TileImageEXT:
       case spv::StorageClass::NodePayloadAMDX:
+      case spv::StorageClass::TileAttachmentQCOM:
         return true;
       default:
         return false;
@@ -2594,6 +2630,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-Component-10583);
     case 10684:
       return VUID_WRAP(VUID-StandaloneSpirv-None-10684);
+    case 10685:
+      return VUID_WRAP(VUID-StandaloneSpirv-None-10685);
     default:
       return "";  // unknown id
   }

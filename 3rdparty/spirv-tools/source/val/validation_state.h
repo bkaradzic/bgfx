@@ -68,6 +68,7 @@ class ValidationState_t {
   struct Feature {
     bool declare_int16_type = false;     // Allow OpTypeInt with 16 bit width?
     bool declare_float16_type = false;   // Allow OpTypeFloat with 16 bit width?
+    bool declare_float8_type = false;    // Allow OpTypeFloat with 8 bit width?
     bool free_fp_rounding_mode = false;  // Allow the FPRoundingMode decoration
                                          // and its values to be used without
                                          // requiring any capability
@@ -637,6 +638,9 @@ class ValidationState_t {
   bool IsScalarType(uint32_t id) const;
   bool IsBfloat16ScalarType(uint32_t id) const;
   bool IsBfloat16VectorType(uint32_t id) const;
+  bool IsFP8ScalarType(uint32_t id) const;
+  bool IsFP8VectorType(uint32_t id) const;
+  bool IsFP8ScalarOrVectorType(uint32_t id) const;
   bool IsFloatScalarType(uint32_t id) const;
   bool IsFloatArrayType(uint32_t id) const;
   bool IsFloatVectorType(uint32_t id) const;

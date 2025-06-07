@@ -590,6 +590,9 @@ class BuiltInsValidator {
   spv_result_t ValidateBool(
       const Decoration& decoration, const Instruction& inst,
       const std::function<spv_result_t(const std::string& message)>& diag);
+  spv_result_t ValidateBlockBoolOrArrayedBool(
+      const Decoration& decoration, const Instruction& inst,
+      const std::function<spv_result_t(const std::string& message)>& diag);
   spv_result_t ValidateI(
       const Decoration& decoration, const Instruction& inst,
       const std::function<spv_result_t(const std::string& message)>& diag);
@@ -811,6 +814,30 @@ spv_result_t BuiltInsValidator::ValidateBool(
   if (spv_result_t error =
           GetUnderlyingType(_, decoration, inst, &underlying_type)) {
     return error;
+  }
+
+  if (!_.IsBoolScalarType(underlying_type)) {
+    return diag(GetDefinitionDesc(decoration, inst) + " is not a bool scalar.");
+  }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t BuiltInsValidator::ValidateBlockBoolOrArrayedBool(
+    const Decoration& decoration, const Instruction& inst,
+    const std::function<spv_result_t(const std::string& message)>& diag) {
+  uint32_t underlying_type = 0;
+  if (spv_result_t error =
+          GetUnderlyingType(_, decoration, inst, &underlying_type)) {
+    return error;
+  }
+  // Strip the array, if present.
+  if (_.GetIdOpcode(underlying_type) == spv::Op::OpTypeArray) {
+    underlying_type = _.FindDef(underlying_type)->word(2u);
+  } else if (!_.HasDecoration(inst.id(), spv::Decoration::Block)) {
+    // If not in array, and bool is in a struct, must be in a Block struct
+    return diag(GetDefinitionDesc(decoration, inst) +
+                " Scalar boolean must be in a Block.");
   }
 
   if (!_.IsBoolScalarType(underlying_type)) {
@@ -4339,7 +4366,7 @@ spv_result_t BuiltInsValidator::ValidateMeshShadingEXTBuiltinsAtDefinition(
         }
         break;
       case spv::BuiltIn::CullPrimitiveEXT:
-        if (spv_result_t error = ValidateBool(
+        if (spv_result_t error = ValidateBlockBoolOrArrayedBool(
                 decoration, inst,
                 [this, &inst, &decoration,
                  &vuid](const std::string& message) -> spv_result_t {
@@ -4350,8 +4377,8 @@ spv_result_t BuiltInsValidator::ValidateMeshShadingEXTBuiltinsAtDefinition(
                          << _.grammar().lookupOperandName(
                                 SPV_OPERAND_TYPE_BUILT_IN,
                                 (uint32_t)decoration.builtin())
-                         << " variable needs to be a boolean value "
-                            "array."
+                         << " variable needs to be a either a boolean or an "
+                            "array of booleans."
                          << message;
                 })) {
           return error;

@@ -146,6 +146,7 @@ bool IsSupportOptionalVulkan_1_0(uint32_t capability) {
     case spv::Capability::Float16:
     case spv::Capability::Int8:
     case spv::Capability::BFloat16TypeKHR:
+    case spv::Capability::Float8EXT:
       return true;
     default:
       break;
