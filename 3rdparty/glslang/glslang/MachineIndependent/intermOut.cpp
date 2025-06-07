@@ -1447,6 +1447,8 @@ void TIntermediate::output(TInfoSink& infoSink, bool tree)
             infoSink.debug << "using non_coherent_depth_attachment_readEXT\n";
         if (nonCoherentStencilAttachmentReadEXT)
             infoSink.debug << "using non_coherent_stencil_attachment_readEXT\n";
+        if (nonCoherentTileAttachmentReadQCOM)
+            infoSink.debug << "using non_coherent_attachment_readQCOM\n";
         if (depthLayout != EldNone)
             infoSink.debug << "using " << TQualifier::getLayoutDepthString(depthLayout) << "\n";
         if (blendEquations != 0) {
@@ -1480,6 +1482,13 @@ void TIntermediate::output(TInfoSink& infoSink, bool tree)
                     localSizeSpecId[1] << ", " <<
                     localSizeSpecId[2] << ")\n";
             }
+        }
+        if (nonCoherentTileAttachmentReadQCOM)
+            infoSink.debug << "using non_coherent_attachment_readQCOM\n";
+        if (isTileShadingRateQCOMSet()) {
+            infoSink.debug << "shading_rateQCOM = (" << tileShadingRateQCOM[0] << ", "
+                                                     << tileShadingRateQCOM[1] << ", "
+                                                     << tileShadingRateQCOM[2] << ")\n";
         }
         break;
 

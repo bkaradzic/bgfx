@@ -1510,12 +1510,17 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             case EbtInt16:
             case EbtUint16:
                 return (version >= 400 || numericFeatures.contains(TNumericFeatures::gpu_shader_fp64)) &&
-                                          numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
+                                         (numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types) || 
+                                          numericFeatures.contains(TNumericFeatures::gpu_shader_int16));
             case EbtFloat16:
                 return (version >= 400 || numericFeatures.contains(TNumericFeatures::gpu_shader_fp64)) &&
-                                          numericFeatures.contains(TNumericFeatures::gpu_shader_half_float);
+                                        (numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types) || 
+                                        numericFeatures.contains(TNumericFeatures::gpu_shader_half_float));
             case EbtBFloat16:
                 return true;
+            case EbtInt8:
+            case EbtUint8:
+                return numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types);
             default:
                 return false;
            }
@@ -1528,24 +1533,35 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
                  return getSource() == EShSourceHlsl;
             case EbtInt16:
             case EbtUint16:
-                return numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
+                return numericFeatures.contains(TNumericFeatures::gpu_shader_int16) ||
+                       numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types);
             case EbtFloat16:
                 return numericFeatures.contains(TNumericFeatures::gpu_shader_half_float) ||
+                    numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types) ||
                     getSource() == EShSourceHlsl;
             case EbtBFloat16:
                 return true;
+            case EbtInt8:
+            case EbtUint8:
+                return numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types);
             default:
                  return false;
             }
         case EbtUint:
             switch (from) {
             case EbtInt:
-                return version >= 400 || getSource() == EShSourceHlsl || IsRequestedExtension(E_GL_ARB_gpu_shader5);
+                return version >= 400 || getSource() == EShSourceHlsl || 
+						IsRequestedExtension(E_GL_ARB_gpu_shader5) ||
+						numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types);
             case EbtBool:
                 return getSource() == EShSourceHlsl;
             case EbtInt16:
             case EbtUint16:
-                return numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
+                return numericFeatures.contains(TNumericFeatures::gpu_shader_int16) ||
+                       numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types);
+            case EbtInt8:
+            case EbtUint8:
+                return numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types);
             default:
                 return false;
             }
@@ -1554,7 +1570,10 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             case EbtBool:
                 return getSource() == EShSourceHlsl;
             case EbtInt16:
-                return numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
+                return numericFeatures.contains(TNumericFeatures::gpu_shader_int16) ||
+                       numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types);
+            case EbtInt8:
+                return numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types);
             default:
                 return false;
             }
@@ -1566,7 +1585,11 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
                 return true;
             case EbtInt16:
             case EbtUint16:
-                return numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
+                return numericFeatures.contains(TNumericFeatures::gpu_shader_int16) ||
+                	numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types);
+            case EbtInt8:
+            case EbtUint8:
+                return numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types);
             default:
                 return false;
             }
@@ -1574,8 +1597,11 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             switch (from) {
             case EbtInt:
                 return true;
+            case EbtInt8:
+                return numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types);
             case EbtInt16:
-                return numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
+                return numericFeatures.contains(TNumericFeatures::gpu_shader_int16) ||
+				       numericFeatures.contains(TNumericFeatures::nv_gpu_shader5_types);
             default:
                 return false;
             }

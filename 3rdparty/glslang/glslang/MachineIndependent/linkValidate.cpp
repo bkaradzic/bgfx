@@ -600,6 +600,7 @@ void TIntermediate::mergeModes(TInfoSink& infoSink, TIntermediate& unit)
     MERGE_TRUE(nonCoherentColorAttachmentReadEXT);
     MERGE_TRUE(nonCoherentDepthAttachmentReadEXT);
     MERGE_TRUE(nonCoherentStencilAttachmentReadEXT);
+    MERGE_TRUE(nonCoherentTileAttachmentReadQCOM);
 
     if (depthLayout == EldNone)
         depthLayout = unit.depthLayout;

@@ -289,6 +289,7 @@ const char* const E_GL_NV_cooperative_matrix2                   = "GL_NV_coopera
 const char* const E_GL_NV_cooperative_vector                    = "GL_NV_cooperative_vector";
 const char* const E_GL_NV_cluster_acceleration_structure        = "GL_NV_cluster_acceleration_structure";
 const char* const E_GL_NV_linear_swept_spheres                  = "GL_NV_linear_swept_spheres";
+const char* const E_GL_NV_gpu_shader5                           = "GL_NV_gpu_shader5";
 
 // ARM
 const char* const E_GL_ARM_shader_core_builtins                 = "GL_ARM_shader_core_builtins";
@@ -301,6 +302,7 @@ const int Num_viewportEXTs = sizeof(viewportEXTs) / sizeof(viewportEXTs[0]);
 
 const char* const E_GL_QCOM_image_processing                    = "GL_QCOM_image_processing";
 const char* const E_GL_QCOM_image_processing2                   = "GL_QCOM_image_processing2";
+const char* const E_GL_QCOM_tile_shading                        = "GL_QCOM_tile_shading";
 
 // AEP
 const char* const E_GL_ANDROID_extension_pack_es31a             = "GL_ANDROID_extension_pack_es31a";
@@ -368,6 +370,9 @@ const int Num_AEP_geometry_point_size = sizeof(AEP_geometry_point_size)/sizeof(A
 
 const char* const AEP_gpu_shader5[] = { E_GL_EXT_gpu_shader5, E_GL_OES_gpu_shader5 };
 const int Num_AEP_gpu_shader5 = sizeof(AEP_gpu_shader5)/sizeof(AEP_gpu_shader5[0]);
+
+const char* const AEP_core_gpu_shader5[] = { E_GL_ARB_gpu_shader5, E_GL_NV_gpu_shader5};
+const int Num_AEP_core_gpu_shader5 = sizeof(AEP_core_gpu_shader5)/sizeof(AEP_core_gpu_shader5[0]);
 
 const char* const AEP_primitive_bounding_box[] = { E_GL_EXT_primitive_bounding_box, E_GL_OES_primitive_bounding_box };
 const int Num_AEP_primitive_bounding_box = sizeof(AEP_primitive_bounding_box)/sizeof(AEP_primitive_bounding_box[0]);

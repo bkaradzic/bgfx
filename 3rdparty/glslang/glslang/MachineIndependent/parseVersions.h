@@ -124,6 +124,7 @@ public:
     virtual void coopmatCheck(const TSourceLoc&, const char* op, bool builtIn = false);
     virtual void tensorLayoutViewCheck(const TSourceLoc&, const char* op, bool builtIn = false);
     virtual void coopvecCheck(const TSourceLoc&, const char* op, bool builtIn = false);
+    virtual void intattachmentCheck(const TSourceLoc&, const char *op, bool builtIn = false);
     bool relaxedErrors()    const { return (messages & EShMsgRelaxedErrors) != 0; }
     bool suppressWarnings() const { return (messages & EShMsgSuppressWarnings) != 0; }
     bool isForwardCompatible() const { return forwardCompatible; }

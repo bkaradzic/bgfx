@@ -194,6 +194,10 @@ const char* ExecutionModeString(int mode)
     case (int)ExecutionMode::SignedZeroInfNanPreserve:      return "SignedZeroInfNanPreserve";
     case (int)ExecutionMode::RoundingModeRTE:               return "RoundingModeRTE";
     case (int)ExecutionMode::RoundingModeRTZ:               return "RoundingModeRTZ";
+
+    case (int)ExecutionMode::NonCoherentTileAttachmentReadQCOM: return "NonCoherentTileAttachmentReadQCOM";
+    case (int)ExecutionMode::TileShadingRateQCOM:               return "TileShadingRateQCOM";
+
     case (int)ExecutionMode::EarlyAndLateFragmentTestsAMD:  return "EarlyAndLateFragmentTestsAMD";
     case (int)ExecutionMode::StencilRefUnchangedFrontAMD:   return "StencilRefUnchangedFrontAMD";
     case (int)ExecutionMode::StencilRefLessFrontAMD:        return "StencilRefLessFrontAMD";
@@ -249,6 +253,7 @@ const char* StorageClassString(int StorageClass)
     case 11: return "Image";
     case 12: return "StorageBuffer";
 
+    case (int)StorageClass::TileAttachmentQCOM:       return "TileAttachmentQCOM";
     case (int)StorageClass::RayPayloadKHR:            return "RayPayloadKHR";
     case (int)StorageClass::HitAttributeKHR:          return "HitAttributeKHR";
     case (int)StorageClass::IncomingRayPayloadKHR:    return "IncomingRayPayloadKHR";
@@ -403,6 +408,10 @@ const char* BuiltInString(int builtIn)
     case 4432: return "PrimitiveShadingRateKHR";
     case 4444: return "ShadingRateKHR";
     case 5014: return "FragStencilRefEXT";
+
+    case (int)BuiltIn::TileOffsetQCOM:     return "TileOffsetQCOM";
+    case (int)BuiltIn::TileDimensionQCOM:  return "TileDimensionQCOM";
+    case (int)BuiltIn::TileApronSizeQCOM:  return "TileApronSizeQCOM";
 
     case 4992: return "BaryCoordNoPerspAMD";
     case 4993: return "BaryCoordNoPerspCentroidAMD";
@@ -638,7 +647,7 @@ const char* ImageChannelDataTypeString(int type)
     }
 }
 
-const int ImageOperandsCeiling = 15;
+const int ImageOperandsCeiling = 17;
 
 const char* ImageOperandsString(int format)
 {
@@ -658,6 +667,7 @@ const char* ImageOperandsString(int format)
     case (int)ImageOperandsShift::SignExtend:              return "SignExtend";
     case (int)ImageOperandsShift::ZeroExtend:              return "ZeroExtend";
     case (int)ImageOperandsShift::Nontemporal:             return "Nontemporal";
+    case (int)ImageOperandsShift::Offsets:                 return "Offsets";
 
     case ImageOperandsCeiling:
     default:
@@ -1098,6 +1108,7 @@ const char* CapabilityString(int info)
     case (int)Capability::TextureSampleWeightedQCOM:           return "TextureSampleWeightedQCOM";
     case (int)Capability::TextureBoxFilterQCOM:                return "TextureBoxFilterQCOM";
     case (int)Capability::TextureBlockMatchQCOM:               return "TextureBlockMatchQCOM";
+    case (int)Capability::TileShadingQCOM:                     return "TileShadingQCOM";
     case (int)Capability::TextureBlockMatch2QCOM:              return "TextureBlockMatch2QCOM";
 
     case (int)Capability::ReplicatedCompositesEXT:             return "CapabilityReplicatedCompositesEXT";

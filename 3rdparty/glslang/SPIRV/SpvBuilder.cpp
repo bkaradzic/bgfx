@@ -3266,8 +3266,12 @@ Id Builder::createTextureCall(Decoration precision, Id resultType, bool sparse, 
         texArgs.push_back(parameters.offset);
     }
     if (parameters.offsets) {
-        addCapability(Capability::ImageGatherExtended);
-        mask = (ImageOperandsMask)(mask | ImageOperandsMask::ConstOffsets);
+        if (!isConstant(parameters.offsets) && sourceLang == spv::SourceLanguage::GLSL) {
+            mask = (ImageOperandsMask)(mask | ImageOperandsMask::Offsets);
+        } else {
+            addCapability(Capability::ImageGatherExtended);
+            mask = (ImageOperandsMask)(mask | ImageOperandsMask::ConstOffsets);
+        }
         texArgs.push_back(parameters.offsets);
     }
     if (parameters.sample) {

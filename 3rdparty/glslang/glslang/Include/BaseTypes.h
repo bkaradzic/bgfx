@@ -344,6 +344,11 @@ enum TBuiltInVariable {
 
     EbvPositionFetch,
 
+    // SPV_QCOM_tile_shading
+    EbvTileOffsetQCOM,
+    EbvTileDimensionQCOM,
+    EbvTileApronSizeQCOM,
+
     EbvLast
 };
 
