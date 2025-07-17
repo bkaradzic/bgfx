@@ -139,27 +139,27 @@ namespace bgfx
 		{ 1, 0 }, // CUT_STREAM
 		{ 1, 0 }, // EMITTHENCUT_STREAM
 		{ 1, 0 }, // INTERFACE_CALL
-		{ 0, 0 }, // BUFINFO
+		{ 2, 0 }, // BUFINFO
 		{ 2, 0 }, // DERIV_RTX_COARSE
 		{ 2, 0 }, // DERIV_RTX_FINE
 		{ 2, 0 }, // DERIV_RTY_COARSE
 		{ 2, 0 }, // DERIV_RTY_FINE
 		{ 5, 0 }, // GATHER4_C
 		{ 5, 0 }, // GATHER4_PO
-		{ 0, 0 }, // GATHER4_PO_C
+		{ 6, 0 }, // GATHER4_PO_C
 		{ 2, 0 }, // RCP
-		{ 0, 0 }, // F32TOF16
-		{ 0, 0 }, // F16TOF32
-		{ 0, 0 }, // UADDC
-		{ 0, 0 }, // USUBB
-		{ 0, 0 }, // COUNTBITS
-		{ 0, 0 }, // FIRSTBIT_HI
-		{ 0, 0 }, // FIRSTBIT_LO
-		{ 0, 0 }, // FIRSTBIT_SHI
+		{ 2, 0 }, // F32TOF16
+		{ 2, 0 }, // F16TOF32
+		{ 4, 0 }, // UADDC
+		{ 4, 0 }, // USUBB
+		{ 2, 0 }, // COUNTBITS
+		{ 2, 0 }, // FIRSTBIT_HI
+		{ 2, 0 }, // FIRSTBIT_LO
+		{ 2, 0 }, // FIRSTBIT_SHI
 		{ 4, 0 }, // UBFE
 		{ 4, 0 }, // IBFE
 		{ 5, 0 }, // BFI
-		{ 0, 0 }, // BFREV
+		{ 2, 0 }, // BFREV
 		{ 5, 0 }, // SWAPC
 		{ 1, 0 }, // DCL_STREAM
 		{ 1, 0 }, // DCL_FUNCTION_BODY
@@ -198,16 +198,16 @@ namespace bgfx
 		{ 3, 0 }, // ATOMIC_UMIN
 		{ 2, 0 }, // IMM_ATOMIC_ALLOC
 		{ 2, 0 }, // IMM_ATOMIC_CONSUME
-		{ 0, 0 }, // IMM_ATOMIC_IADD
-		{ 0, 0 }, // IMM_ATOMIC_AND
-		{ 0, 0 }, // IMM_ATOMIC_OR
-		{ 0, 0 }, // IMM_ATOMIC_XOR
-		{ 0, 0 }, // IMM_ATOMIC_EXCH
-		{ 0, 0 }, // IMM_ATOMIC_CMP_EXCH
-		{ 0, 0 }, // IMM_ATOMIC_IMAX
-		{ 0, 0 }, // IMM_ATOMIC_IMIN
-		{ 0, 0 }, // IMM_ATOMIC_UMAX
-		{ 0, 0 }, // IMM_ATOMIC_UMIN
+		{ 4, 0 }, // IMM_ATOMIC_IADD
+		{ 4, 0 }, // IMM_ATOMIC_AND
+		{ 4, 0 }, // IMM_ATOMIC_OR
+		{ 4, 0 }, // IMM_ATOMIC_XOR
+		{ 4, 0 }, // IMM_ATOMIC_EXCH
+		{ 5, 0 }, // IMM_ATOMIC_CMP_EXCH
+		{ 4, 0 }, // IMM_ATOMIC_IMAX
+		{ 4, 0 }, // IMM_ATOMIC_IMIN
+		{ 4, 0 }, // IMM_ATOMIC_UMAX
+		{ 4, 0 }, // IMM_ATOMIC_UMIN
 		{ 0, 0 }, // SYNC
 		{ 3, 0 }, // DADD
 		{ 3, 0 }, // DMAX
@@ -219,8 +219,8 @@ namespace bgfx
 		{ 3, 0 }, // DNE
 		{ 2, 0 }, // DMOV
 		{ 4, 0 }, // DMOVC
-		{ 0, 0 }, // DTOF
-		{ 0, 0 }, // FTOD
+		{ 2, 0 }, // DTOF
+		{ 2, 0 }, // FTOD
 		{ 3, 0 }, // EVAL_SNAPPED
 		{ 3, 0 }, // EVAL_SAMPLE_INDEX
 		{ 2, 0 }, // EVAL_CENTROID
