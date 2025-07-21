@@ -1,11 +1,7 @@
-/*
- * Copyright 2011-2025 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
- */
 
 #include "entry_p.h"
 
-#if ENTRY_CONFIG_USE_SDL
+#if ENTRY_CONFIG_USE_SDL3
 
 #if BX_PLATFORM_LINUX
 #elif BX_PLATFORM_WINDOWS
@@ -14,12 +10,7 @@
 
 #include <bx/os.h>
 
-#include <SDL2/SDL.h>
-
-BX_PRAGMA_DIAGNOSTIC_PUSH()
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wextern-c-compat")
-#include <SDL2/SDL_syswm.h>
-BX_PRAGMA_DIAGNOSTIC_POP()
+#include <SDL3/SDL.h>
 
 #include <bgfx/platform.h>
 #if defined(None) // X11 defines this...
@@ -38,42 +29,47 @@ namespace entry
 	///
 	static void* sdlNativeWindowHandle(SDL_Window* _window)
 	{
-		SDL_SysWMinfo wmi;
-		SDL_VERSION(&wmi.version);
-		if (!SDL_GetWindowWMInfo(_window, &wmi) )
-		{
-			return NULL;
-		}
+		if (!_window) return NULL;
+		const auto props = SDL_GetWindowProperties(_window);
 
-#	if BX_PLATFORM_LINUX
-		if (wmi.subsystem == SDL_SYSWM_WAYLAND)
-		{
-			return (void*)wmi.info.wl.surface;
-		}
-		else
-		{
-			return (void*)wmi.info.x11.window;
-		}
-#	elif BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
-		return wmi.info.cocoa.window;
+#	if BX_PLATFORM_ANDROID
+		return SDL_GetPointerProperty(props, SDL_PROP_WINDOW_ANDROID_WINDOW_POINTER, NULL);
+
+#	elif BX_PLATFORM_EMSCRIPTEN
+		return (void*)"#canvas";
+
+#	elif BX_PLATFORM_IOS
+		return SDL_GetPointerProperty(props, SDL_PROP_WINDOW_UIKIT_WINDOW_POINTER, NULL);
+
+#	elif BX_PLATFORM_LINUX
+		const char* driver = SDL_GetCurrentVideoDriver();
+		if (SDL_strcmp(driver, "wayland") == 0)
+			return SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WAYLAND_DISPLAY_POINTER, NULL);
+		else if (SDL_strcmp(driver, "x11") == 0)
+			return SDL_GetPointerProperty(props, SDL_PROP_WINDOW_X11_DISPLAY_POINTER, NULL);
+
+#	elif BX_PLATFORM_OSX
+		return SDL_GetPointerProperty(props, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL);
+
 #	elif BX_PLATFORM_WINDOWS
-		return wmi.info.win.window;
-#   elif BX_PLATFORM_ANDROID
-		return wmi.info.android.window;
-#	endif // BX_PLATFORM_
+		return SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+
+#	endif // BX_PLATFORM_*
+
+		return NULL;
 	}
 
 	static uint8_t translateKeyModifiers(uint16_t _sdl)
 	{
 		uint8_t modifiers = 0;
-		modifiers |= _sdl & KMOD_LALT   ? Modifier::LeftAlt    : 0;
-		modifiers |= _sdl & KMOD_RALT   ? Modifier::RightAlt   : 0;
-		modifiers |= _sdl & KMOD_LCTRL  ? Modifier::LeftCtrl   : 0;
-		modifiers |= _sdl & KMOD_RCTRL  ? Modifier::RightCtrl  : 0;
-		modifiers |= _sdl & KMOD_LSHIFT ? Modifier::LeftShift  : 0;
-		modifiers |= _sdl & KMOD_RSHIFT ? Modifier::RightShift : 0;
-		modifiers |= _sdl & KMOD_LGUI   ? Modifier::LeftMeta   : 0;
-		modifiers |= _sdl & KMOD_RGUI   ? Modifier::RightMeta  : 0;
+		modifiers |= _sdl & SDL_KMOD_LALT   ? Modifier::LeftAlt    : 0;
+		modifiers |= _sdl & SDL_KMOD_RALT   ? Modifier::RightAlt   : 0;
+		modifiers |= _sdl & SDL_KMOD_LCTRL  ? Modifier::LeftCtrl   : 0;
+		modifiers |= _sdl & SDL_KMOD_RCTRL  ? Modifier::RightCtrl  : 0;
+		modifiers |= _sdl & SDL_KMOD_LSHIFT ? Modifier::LeftShift  : 0;
+		modifiers |= _sdl & SDL_KMOD_RSHIFT ? Modifier::RightShift : 0;
+		modifiers |= _sdl & SDL_KMOD_LGUI   ? Modifier::LeftMeta   : 0;
+		modifiers |= _sdl & SDL_KMOD_RGUI   ? Modifier::RightMeta  : 0;
 		return modifiers;
 	}
 
@@ -152,16 +148,16 @@ namespace entry
 
 		void create(const SDL_JoyDeviceEvent& _jev)
 		{
-			m_joystick = SDL_JoystickOpen(_jev.which);
+			m_joystick = SDL_OpenJoystick(_jev.which);
 			SDL_Joystick* joystick = m_joystick;
-			m_jid = SDL_JoystickInstanceID(joystick);
+			m_jid = SDL_GetJoystickID(joystick);
 		}
 
-		void create(const SDL_ControllerDeviceEvent& _cev)
+		void create(const SDL_GamepadDeviceEvent& _cev)
 		{
-			m_controller = SDL_GameControllerOpen(_cev.which);
-			SDL_Joystick* joystick = SDL_GameControllerGetJoystick(m_controller);
-			m_jid = SDL_JoystickInstanceID(joystick);
+			m_controller = SDL_OpenGamepad(_cev.which);
+			SDL_Joystick* joystick = SDL_GetGamepadJoystick(m_controller);
+			m_jid = SDL_GetJoystickID(joystick);
 		}
 
 		void update(EventQueue& _eventQueue, WindowHandle _handle, GamepadHandle _gamepad, GamepadAxis::Enum _axis, int32_t _value)
@@ -176,13 +172,13 @@ namespace entry
 		{
 			if (NULL != m_controller)
 			{
-				SDL_GameControllerClose(m_controller);
+				SDL_CloseGamepad(m_controller);
 				m_controller = NULL;
 			}
 
 			if (NULL != m_joystick)
 			{
-				SDL_JoystickClose(m_joystick);
+				SDL_CloseJoystick(m_joystick);
 				m_joystick = NULL;
 			}
 
@@ -204,7 +200,7 @@ namespace entry
 		int32_t m_deadzone[GamepadAxis::Count];
 
 		SDL_Joystick*       m_joystick;
-		SDL_GameController* m_controller;
+		SDL_Gamepad*        m_controller;
 //		SDL_Haptic*         m_haptic;
 		SDL_JoystickID      m_jid;
 	};
@@ -372,29 +368,29 @@ namespace entry
 			initTranslateKey(SDL_SCANCODE_Z,            Key::KeyZ);
 
 			bx::memSet(s_translateGamepad, uint8_t(Key::Count), sizeof(s_translateGamepad) );
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_A,             Key::GamepadA);
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_B,             Key::GamepadB);
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_X,             Key::GamepadX);
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_Y,             Key::GamepadY);
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_LEFTSTICK,     Key::GamepadThumbL);
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_RIGHTSTICK,    Key::GamepadThumbR);
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,  Key::GamepadShoulderL);
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, Key::GamepadShoulderR);
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_DPAD_UP,       Key::GamepadUp);
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_DPAD_DOWN,     Key::GamepadDown);
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_DPAD_LEFT,     Key::GamepadLeft);
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_DPAD_RIGHT,    Key::GamepadRight);
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_BACK,          Key::GamepadBack);
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_START,         Key::GamepadStart);
-			initTranslateGamepad(SDL_CONTROLLER_BUTTON_GUIDE,         Key::GamepadGuide);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_SOUTH,          Key::GamepadA);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_EAST,           Key::GamepadB);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_WEST,           Key::GamepadX);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_NORTH,          Key::GamepadY);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_LEFT_STICK,     Key::GamepadThumbL);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_RIGHT_STICK,    Key::GamepadThumbR);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_LEFT_SHOULDER,  Key::GamepadShoulderL);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, Key::GamepadShoulderR);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_DPAD_UP,        Key::GamepadUp);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_DPAD_DOWN,      Key::GamepadDown);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_DPAD_LEFT,      Key::GamepadLeft);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_DPAD_RIGHT,     Key::GamepadRight);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_BACK,           Key::GamepadBack);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_START,          Key::GamepadStart);
+			initTranslateGamepad(SDL_GAMEPAD_BUTTON_GUIDE,          Key::GamepadGuide);
 
 			bx::memSet(s_translateGamepadAxis, uint8_t(GamepadAxis::Count), sizeof(s_translateGamepadAxis) );
-			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_LEFTX,        GamepadAxis::LeftX);
-			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_LEFTY,        GamepadAxis::LeftY);
-			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_TRIGGERLEFT,  GamepadAxis::LeftZ);
-			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_RIGHTX,       GamepadAxis::RightX);
-			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_RIGHTY,       GamepadAxis::RightY);
-			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, GamepadAxis::RightZ);
+			initTranslateGamepadAxis(SDL_GAMEPAD_AXIS_LEFTX,         GamepadAxis::LeftX);
+			initTranslateGamepadAxis(SDL_GAMEPAD_AXIS_LEFTY,         GamepadAxis::LeftY);
+			initTranslateGamepadAxis(SDL_GAMEPAD_AXIS_LEFT_TRIGGER,  GamepadAxis::LeftZ);
+			initTranslateGamepadAxis(SDL_GAMEPAD_AXIS_RIGHTX,        GamepadAxis::RightX);
+			initTranslateGamepadAxis(SDL_GAMEPAD_AXIS_RIGHTY,        GamepadAxis::RightY);
+			initTranslateGamepadAxis(SDL_GAMEPAD_AXIS_RIGHT_TRIGGER, GamepadAxis::RightZ);
 		}
 
 		int run(int _argc, char** _argv)
@@ -403,16 +399,14 @@ namespace entry
 			m_mte.m_argv = _argv;
 
 			SDL_Init(0
-				| SDL_INIT_GAMECONTROLLER
+				| SDL_INIT_GAMEPAD
 				);
 
 			m_windowAlloc.alloc();
 			m_window[0] = SDL_CreateWindow("bgfx"
-							, SDL_WINDOWPOS_UNDEFINED
-							, SDL_WINDOWPOS_UNDEFINED
 							, m_width
 							, m_height
-							, SDL_WINDOW_SHOWN
+							, 0
 							| SDL_WINDOW_RESIZABLE
 							);
 
@@ -431,7 +425,7 @@ namespace entry
 			WindowHandle defaultWindow = { 0 };
 			entry::setWindowSize(defaultWindow, m_width, m_height);
 
-			SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
+			SDL_SetEventEnabled(SDL_EVENT_DROP_FILE, true);
 
 			bx::FileReaderI* reader = NULL;
 			while (NULL == reader)
@@ -449,7 +443,7 @@ namespace entry
 				bx::close(reader);
 				((char*)data)[size] = '\0';
 
-				if (SDL_GameControllerAddMapping( (char*)data) < 0)
+				if (SDL_AddGamepadMapping((char*)data) < 0)
 				{
 					DBG("SDL game controller add mapping failed: %s", SDL_GetError());
 				}
@@ -467,12 +461,12 @@ namespace entry
 				{
 					switch (event.type)
 					{
-					case SDL_QUIT:
+					case SDL_EVENT_QUIT:
 						m_eventQueue.postExitEvent();
 						exit = true;
 						break;
 
-					case SDL_MOUSEMOTION:
+					case SDL_EVENT_MOUSE_MOTION:
 						{
 							const SDL_MouseMotionEvent& mev = event.motion;
 							m_mx = mev.x;
@@ -486,8 +480,8 @@ namespace entry
 						}
 						break;
 
-					case SDL_MOUSEBUTTONDOWN:
-					case SDL_MOUSEBUTTONUP:
+					case SDL_EVENT_MOUSE_BUTTON_DOWN:
+					case SDL_EVENT_MOUSE_BUTTON_UP:
 						{
 							const SDL_MouseButtonEvent& mev = event.button;
 							WindowHandle handle = findHandle(mev.windowID);
@@ -507,13 +501,13 @@ namespace entry
 									, mev.y
 									, m_mz
 									, button
-									, mev.type == SDL_MOUSEBUTTONDOWN
+									, mev.type == SDL_EVENT_MOUSE_BUTTON_DOWN
 									);
 							}
 						}
 						break;
 
-					case SDL_MOUSEWHEEL:
+					case SDL_EVENT_MOUSE_WHEEL:
 						{
 							const SDL_MouseWheelEvent& mev = event.wheel;
 							m_mz += mev.y;
@@ -526,7 +520,7 @@ namespace entry
 						}
 						break;
 
-					case SDL_TEXTINPUT:
+					case SDL_EVENT_TEXT_INPUT:
 						{
 							const SDL_TextInputEvent& tev = event.text;
 							WindowHandle handle = findHandle(tev.windowID);
@@ -537,21 +531,21 @@ namespace entry
 						}
 						break;
 
-					case SDL_KEYDOWN:
+					case SDL_EVENT_KEY_DOWN:
 						{
 							const SDL_KeyboardEvent& kev = event.key;
 							WindowHandle handle = findHandle(kev.windowID);
 							if (isValid(handle) )
 							{
-								uint8_t modifiers = translateKeyModifiers(kev.keysym.mod);
-								Key::Enum key = translateKey(kev.keysym.scancode);
+								uint8_t modifiers = translateKeyModifiers(kev.mod);
+								Key::Enum key = translateKey(kev.scancode);
 
 #if 0
 								DBG("SDL scancode %d, key %d, name %s, key name %s"
-									, kev.keysym.scancode
+									, kev.scancode
 									, key
-									, SDL_GetScancodeName(kev.keysym.scancode)
-									, SDL_GetKeyName(kev.keysym.scancode)
+									, SDL_GetScancodeName(kev.scancode)
+									, SDL_GetKeyName(kev.scancode)
 									);
 #endif // 0
 
@@ -559,7 +553,7 @@ namespace entry
 								/// Further along, pressing 'shift' + 'ctrl' would be: key == 'shift', modifier == 'ctrl.
 								if (0 == key && 0 == modifiers)
 								{
-									modifiers = translateKeyModifierPress(kev.keysym.scancode);
+									modifiers = translateKeyModifierPress(kev.scancode);
 								}
 
 								if (Key::Esc == key)
@@ -581,131 +575,125 @@ namespace entry
 									m_eventQueue.postCharEvent(handle, 1, pressedChar);
 								}
 
-								m_eventQueue.postKeyEvent(handle, key, modifiers, kev.state == SDL_PRESSED);
+								m_eventQueue.postKeyEvent(handle, key, modifiers, kev.down);
 							}
 						}
 						break;
 
-					case SDL_KEYUP:
+					case SDL_EVENT_KEY_UP:
 						{
 							const SDL_KeyboardEvent& kev = event.key;
 							WindowHandle handle = findHandle(kev.windowID);
 							if (isValid(handle) )
 							{
-								uint8_t modifiers = translateKeyModifiers(kev.keysym.mod);
-								Key::Enum key = translateKey(kev.keysym.scancode);
-								m_eventQueue.postKeyEvent(handle, key, modifiers, kev.state == SDL_PRESSED);
+								uint8_t modifiers = translateKeyModifiers(kev.mod);
+								Key::Enum key = translateKey(kev.scancode);
+								m_eventQueue.postKeyEvent(handle, key, modifiers, kev.down);
 							}
 						}
 						break;
 
-					case SDL_WINDOWEVENT:
+					case SDL_EVENT_WINDOW_RESIZED:
+					case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+					case SDL_EVENT_WINDOW_METAL_VIEW_RESIZED:
 						{
-							const SDL_WindowEvent& wev = event.window;
-							switch (wev.event)
+							const auto&  wev = event.window;
+							WindowHandle handle = findHandle(wev.windowID);
+							uint32_t width  = wev.data1;
+							uint32_t height = wev.data2;
+							if (width  != m_width
+							||  height != m_height)
 							{
-							case SDL_WINDOWEVENT_RESIZED:
-							case SDL_WINDOWEVENT_SIZE_CHANGED:
-								{
-									WindowHandle handle = findHandle(wev.windowID);
-									uint32_t width = wev.data1;
-									uint32_t height = wev.data2;
-									if (width  != m_width
-									||  height != m_height)
-									{
-										m_width  = width;
-										m_height = height;
-										m_eventQueue.postSizeEvent(handle, m_width, m_height);
-									}
-								}
-								break;
-
-							case SDL_WINDOWEVENT_SHOWN:
-							case SDL_WINDOWEVENT_HIDDEN:
-							case SDL_WINDOWEVENT_EXPOSED:
-							case SDL_WINDOWEVENT_MOVED:
-							case SDL_WINDOWEVENT_MINIMIZED:
-							case SDL_WINDOWEVENT_MAXIMIZED:
-							case SDL_WINDOWEVENT_RESTORED:
-							case SDL_WINDOWEVENT_ENTER:
-							case SDL_WINDOWEVENT_LEAVE:
-							case SDL_WINDOWEVENT_FOCUS_GAINED:
-							case SDL_WINDOWEVENT_FOCUS_LOST:
-								break;
-
-							case SDL_WINDOWEVENT_CLOSE:
-								{
-									WindowHandle handle = findHandle(wev.windowID);
-									if (0 == handle.idx)
-									{
-										m_eventQueue.postExitEvent();
-										exit = true;
-									}
-								}
-								break;
+								m_width  = width;
+								m_height = height;
+								m_eventQueue.postSizeEvent(handle, m_width, m_height);
 							}
 						}
 						break;
+
+					case SDL_EVENT_WINDOW_SHOWN:
+					case SDL_EVENT_WINDOW_HIDDEN:
+					case SDL_EVENT_WINDOW_EXPOSED:
+					case SDL_EVENT_WINDOW_MOVED:
+					case SDL_EVENT_WINDOW_MINIMIZED:
+					case SDL_EVENT_WINDOW_MAXIMIZED:
+					case SDL_EVENT_WINDOW_RESTORED:
+					case SDL_EVENT_WINDOW_MOUSE_ENTER:
+					case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+					case SDL_EVENT_WINDOW_FOCUS_GAINED:
+					case SDL_EVENT_WINDOW_FOCUS_LOST:
+						break;
+
+					case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+					{
+						const auto& wev = event.window;
+						WindowHandle handle = findHandle(wev.windowID);
+						if (0 == handle.idx)
+						{
+							m_eventQueue.postExitEvent();
+							exit = true;
+						}
+					}
+					break;
 
 					// Ignore Joystick events. Example's Gamepad concept mirrors SDL Game Controller.
 					// Game Controllers are higher level wrapper around Joystick and both events come through.
 					// Respond to only the controller events. Controller events are properly remapped.
-					case SDL_JOYAXISMOTION:
-					case SDL_JOYBUTTONDOWN:
-					case SDL_JOYBUTTONUP:
-					case SDL_JOYDEVICEADDED:
-					case SDL_JOYDEVICEREMOVED:
+					case SDL_EVENT_JOYSTICK_AXIS_MOTION:
+					case SDL_EVENT_JOYSTICK_BUTTON_DOWN:
+					case SDL_EVENT_JOYSTICK_BUTTON_UP:
+					case SDL_EVENT_JOYSTICK_ADDED:
+					case SDL_EVENT_JOYSTICK_REMOVED:
 						break;
 
-					case SDL_CONTROLLERAXISMOTION:
+					case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+					{
+						const SDL_GamepadAxisEvent& aev = event.gaxis;
+						GamepadHandle handle = findGamepad(aev.which);
+						if (isValid(handle) )
 						{
-							const SDL_ControllerAxisEvent& aev = event.caxis;
-							GamepadHandle handle = findGamepad(aev.which);
-							if (isValid(handle) )
-							{
-								GamepadAxis::Enum axis = translateGamepadAxis(aev.axis);
-								m_gamepad[handle.idx].update(m_eventQueue, defaultWindow, handle, axis, aev.value);
-							}
+							GamepadAxis::Enum axis = translateGamepadAxis(aev.axis);
+							m_gamepad[handle.idx].update(m_eventQueue, defaultWindow, handle, axis, aev.value);
 						}
-						break;
+					}
+					break;
 
-					case SDL_CONTROLLERBUTTONDOWN:
-					case SDL_CONTROLLERBUTTONUP:
+					case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+					case SDL_EVENT_GAMEPAD_BUTTON_UP:
 						{
-							const SDL_ControllerButtonEvent& bev = event.cbutton;
+							const SDL_GamepadButtonEvent& bev = event.gbutton;
 							GamepadHandle handle = findGamepad(bev.which);
 							if (isValid(handle) )
 							{
 								Key::Enum key = translateGamepad(bev.button);
 								if (Key::Count != key)
 								{
-									m_eventQueue.postKeyEvent(defaultWindow, key, 0, event.type == SDL_CONTROLLERBUTTONDOWN);
+									m_eventQueue.postKeyEvent(defaultWindow, key, 0, event.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN);
 								}
 							}
 						}
 						break;
 
-					case SDL_CONTROLLERDEVICEADDED:
+					case SDL_EVENT_GAMEPAD_ADDED:
 						{
 							GamepadHandle handle = { m_gamepadAlloc.alloc() };
 							if (isValid(handle) )
 							{
-								const SDL_ControllerDeviceEvent& cev = event.cdevice;
+								const SDL_GamepadDeviceEvent& cev = event.gdevice;
 								m_gamepad[handle.idx].create(cev);
 								m_eventQueue.postGamepadEvent(defaultWindow, handle, true);
 							}
 						}
 						break;
 
-					case SDL_CONTROLLERDEVICEREMAPPED:
+					case SDL_EVENT_GAMEPAD_REMAPPED:
 						{
-
 						}
 						break;
 
-					case SDL_CONTROLLERDEVICEREMOVED:
+					case SDL_EVENT_GAMEPAD_REMOVED:
 						{
-							const SDL_ControllerDeviceEvent& cev = event.cdevice;
+							const SDL_GamepadDeviceEvent& cev = event.gdevice;
 							GamepadHandle handle = findGamepad(cev.which);
 							if (isValid(handle) )
 							{
@@ -716,14 +704,14 @@ namespace entry
 						}
 						break;
 
-					case SDL_DROPFILE:
+					case SDL_EVENT_DROP_FILE:
 						{
 							const SDL_DropEvent& dev = event.drop;
 							WindowHandle handle = defaultWindow; //findHandle(dev.windowID);
 							if (isValid(handle) )
 							{
-								m_eventQueue.postDropFileEvent(handle, dev.file);
-								SDL_free(dev.file);
+								m_eventQueue.postDropFileEvent(handle, dev.data);
+								SDL_free((void*)dev.data);
 							}
 						}
 						break;
@@ -739,11 +727,9 @@ namespace entry
 									Msg* msg = (Msg*)uev.data2;
 
 									m_window[handle.idx] = SDL_CreateWindow(msg->m_title.c_str()
-										, msg->m_x
-										, msg->m_y
 										, msg->m_width
 										, msg->m_height
-										, SDL_WINDOW_SHOWN
+										, 0
 										| SDL_WINDOW_RESIZABLE
 										);
 
@@ -829,7 +815,7 @@ namespace entry
 									if (isValid(handle) )
 									{
 										m_flags[handle.idx] ^= ENTRY_WINDOW_FLAG_FRAME;
-										SDL_SetWindowBordered(m_window[handle.idx], (SDL_bool)!!(m_flags[handle.idx] & ENTRY_WINDOW_FLAG_FRAME) );
+										SDL_SetWindowBordered(m_window[handle.idx], !!(m_flags[handle.idx] & ENTRY_WINDOW_FLAG_FRAME));
 									}
 								}
 								break;
@@ -838,13 +824,18 @@ namespace entry
 								{
 									WindowHandle handle = getWindowHandle(uev);
 									m_fullscreen = !m_fullscreen;
-									SDL_SetWindowFullscreen(m_window[handle.idx], m_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+									SDL_SetWindowFullscreen(m_window[handle.idx], m_fullscreen);
 								}
 								break;
 
 							case SDL_USER_WINDOW_MOUSE_LOCK:
 								{
-									SDL_SetRelativeMouseMode(!!uev.code ? SDL_TRUE : SDL_FALSE);
+									WindowHandle handle = getWindowHandle(uev);
+									if (isValid(handle) )
+									{
+										m_eventQueue.postWindowEvent(handle);
+										SDL_SetWindowRelativeMouseMode(m_window[handle.idx], !!uev.code);
+									}
 								}
 								break;
 
@@ -1030,42 +1021,30 @@ namespace entry
 
 	void* getNativeDisplayHandle()
 	{
-		SDL_SysWMinfo wmi;
-		SDL_VERSION(&wmi.version);
-		if (!SDL_GetWindowWMInfo(s_ctx.m_window[0], &wmi) )
-		{
-			return NULL;
-		}
+		SDL_Window* window = s_ctx.m_window[0];
+		if (!window) return NULL;
+
 #	if BX_PLATFORM_LINUX
-		if (wmi.subsystem == SDL_SYSWM_WAYLAND)
-			return wmi.info.wl.display;
-		else
-			return wmi.info.x11.display;
-#	else
+		const char* driver = SDL_GetCurrentVideoDriver();
+
+		if (SDL_strcmp(driver, "wayland") == 0)
+			return SDL_GetWindowProperty(window, SDL_PROP_WINDOW_WAYLAND_DISPLAY_POINTER, NULL);
+		else if (SDL_strcmp(driver, "x11") == 0)
+			return SDL_GetWindowProperty(window, SDL_PROP_WINDOW_X11_DISPLAY_POINTER, NULL);
+#	endif
+
 		return NULL;
-#	endif // BX_PLATFORM_*
 	}
 
 	bgfx::NativeWindowHandleType::Enum getNativeWindowHandleType()
 	{
-		SDL_SysWMinfo wmi;
-		SDL_VERSION(&wmi.version);
-		if (!SDL_GetWindowWMInfo(s_ctx.m_window[kDefaultWindowHandle.idx], &wmi) )
-		{
-			return bgfx::NativeWindowHandleType::Default;
-		}
 #	if BX_PLATFORM_LINUX
-		if (wmi.subsystem == SDL_SYSWM_WAYLAND)
-		{
+		const char* driver = SDL_GetCurrentVideoDriver();
+		if (SDL_strcmp(driver, "wayland") == 0)
 			return bgfx::NativeWindowHandleType::Wayland;
-		}
-		else
-		{
-			return bgfx::NativeWindowHandleType::Default;
-		}
-#	else
-		return bgfx::NativeWindowHandleType::Default;
 #	endif // BX_PLATFORM_*
+
+		return bgfx::NativeWindowHandleType::Default;
 	}
 
 	int32_t MainThreadEntry::threadFunc(bx::Thread* _thread, void* _userData)
@@ -1077,7 +1056,7 @@ namespace entry
 
 		SDL_Event event;
 		SDL_QuitEvent& qev = event.quit;
-		qev.type = SDL_QUIT;
+		qev.type = SDL_EVENT_QUIT;
 		SDL_PushEvent(&event);
 		return result;
 	}
@@ -1090,4 +1069,4 @@ int main(int _argc, char** _argv)
 	return s_ctx.run(_argc, _argv);
 }
 
-#endif // ENTRY_CONFIG_USE_SDL
+#endif // ENTRY_CONFIG_USE_SDL3
