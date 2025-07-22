@@ -7043,7 +7043,7 @@ VK_DESTROY
 	VkResult SwapChainVK::createSurface()
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVK::createSurface", kColorFrame);
-		VkResult result = VK_ERROR_INITIALIZATION_FAILED;
+		VkResult result = VK_ERROR_EXTENSION_NOT_PRESENT;
 
 		const VkInstance instance = s_renderVK->m_instance;
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
@@ -7077,20 +7077,22 @@ VK_DESTROY
 		}
 #elif BX_PLATFORM_LINUX
 		{
-			if (g_platformData.type == bgfx::NativeWindowHandleType::Wayland
-			&&  s_extension[Extension::KHR_wayland_surface].m_supported
-			&&  NULL != vkCreateWaylandSurfaceKHR
-			   )
+			if (g_platformData.type == bgfx::NativeWindowHandleType::Wayland)
 			{
-				BX_TRACE("Attempting Wayland surface creation.");
-				VkWaylandSurfaceCreateInfoKHR sci;
-				sci.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
-				sci.pNext = NULL;
-				sci.flags = 0;
-				sci.display = (wl_display*)g_platformData.ndt;
-				sci.surface = (wl_surface*)m_nwh;
-				result = vkCreateWaylandSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
-				BX_WARN(VK_SUCCESS == result, "vkCreateWaylandSurfaceKHR failed %d: %s.", result, getName(result) );
+				if (s_extension[Extension::KHR_wayland_surface].m_supported
+				&&  NULL != vkCreateWaylandSurfaceKHR
+				   )
+				{
+					BX_TRACE("Attempting Wayland surface creation.");
+					VkWaylandSurfaceCreateInfoKHR sci;
+					sci.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
+					sci.pNext = NULL;
+					sci.flags = 0;
+					sci.display = (wl_display*)g_platformData.ndt;
+					sci.surface = (wl_surface*)m_nwh;
+					result = vkCreateWaylandSurfaceKHR(instance, &sci, allocatorCb, &m_surface);
+					BX_WARN(VK_SUCCESS == result, "vkCreateWaylandSurfaceKHR failed %d: %s.", result, getName(result) );
+				}
 			}
 			else
 			{
