@@ -104,7 +104,7 @@ bool openFileSelectionDialog(
 
 		panel.message = [[NSString alloc] initWithBytes:_title.getPtr() length:_title.getLength() encoding:NSASCIIStringEncoding];
 		panel.directoryURL = [NSURL URLWithString:@(_inOutFilePath.getCPtr())];
-		panel.allowedContentTypes = fileTypes;
+		panel.allowedFileTypes = fileTypes;
 
 		if ([panel runModal] == NSModalResponseOK)
 		{
