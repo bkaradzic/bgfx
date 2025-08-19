@@ -83,6 +83,9 @@ newaction {
 
 			local ziggen = require "bindings-zig"
 			ziggen.write(ziggen.gen(), "../bindings/zig/bgfx.zig")
+
+			local c3 = require "bindings-c3"
+			c3.write(c3.gen(), "../bindings/c3/bgfx.c3")
 		end
 
 		os.exit()
