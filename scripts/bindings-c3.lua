@@ -113,13 +113,13 @@ local lastCombinedFlag
 
 local function FlagBlock(typ)
     local format = "0x%08x"
-    local enumType = " : uint"
+    local enumType = " : const uint"
     if typ.bits == 64 then
         format = "0x%016x"
-        enumType = " : ulong"
+        enumType = " : const ulong"
     elseif typ.bits == 16 then
         format = "0x%04x"
-        enumType = " : ushort"
+        enumType = " : const ushort"
     end
 
     yield("enum " .. typ.name .. "Flags" .. enumType)
@@ -132,11 +132,9 @@ local function FlagBlock(typ)
                 yield("")
             end
 
-            yield("\t<*")
             for _, comment in ipairs(flag.comment) do
-                yield("\t " .. comment)
+                yield("\t// " .. comment)
             end
-            yield("\t*>")
         end
 
         local flagName = string.upper(flag.name)
@@ -192,15 +190,20 @@ local function convert_array(member)
     end
 end
 
-local function convert_struct_member(member)
+local function convert_struct_member(member, substruct)
+    local type =  convert_type(member)
+    local namespace = ""
+
+    if substruct ~= nil and substruct[type] ~= nil and substruct[type].namespace ~= nil then
+        namespace = substruct[type].namespace
+    end
+
     if member.array then
-        return convert_type(member) .. convert_array(member) .. " " .. member.name
+        return namespace .. type .. convert_array(member) .. " " .. member.name
     else
-        return convert_type(member) .. " " .. member.name
+        return namespace .. type .. " " .. member.name
     end
 end
-
-local namespace = ""
 
 function converter.types(typ)
     if typ.handle then
@@ -228,11 +231,9 @@ function converter.types(typ)
                     yield("")
                 end
 
-                yield("\t<*")
                 for _, comment in ipairs(enum.comment) do
-                    yield("\t " .. comment)
+                    yield("\t// " .. comment)
                 end
-                yield("\t*>")
             end
 
             yield("\t" .. string.upper(enum.name) .. ",")
@@ -297,41 +298,47 @@ function converter.types(typ)
             FlagBlock(typ)
         end
     elseif typ.struct ~= nil then
+        if typ.comments ~= nil then
+            for _, line in ipairs(typ.comments) do
+                yield("// " .. line)
+            end
+        end
 
-        local skip = false
-        local lower = false
-
-        if typ.namespace ~= nil then
-            lower = true
-
-            if namespace ~= typ.namespace then
-                yield("struct " .. typ.namespace)
+        if #typ.struct > 0 then
+            if typ.namespace ~= nil then
+                yield("struct " .. typ.namespace .. typ.name)
                 yield("{")
-                namespace = typ.namespace
-                indent = "\t"
-            end
-        elseif namespace ~= "" then
-            indent = ""
-            namespace = ""
-            skip = true
-        end
+                for _, member in ipairs(typ.struct) do
+                    if member.comment ~= nil then
+                        for _, line in ipairs(member.comment) do
+                            yield("\t// " .. line)
+                        end
+                    end
 
-        if not skip then
-            if lower then
-                yield(indent .. "struct " .. string.lower(typ.name))
+                    yield(
+                            indent .. "\t" .. convert_struct_member(member) .. ";"
+                    )
+                end
+                yield("}")
             else
-                yield(indent .. "struct " .. typ.name)
+                yield("struct " .. typ.name)
+                yield("{")
+                for _, member in ipairs(typ.struct) do
+                    if member.comment ~= nil then
+                        for _, line in ipairs(member.comment) do
+                            yield("\t// " .. line)
+                        end
+                    end
+
+                    yield(
+                            indent .. "\t" .. convert_struct_member(member, typ.substruct) .. ";"
+                    )
+                end
+                yield("}")
             end
-            yield(indent .. "{")
+        else
+            yield("alias " .. typ.name .. " = any;")
         end
-
-        for _, member in ipairs(typ.struct) do
-            yield(
-                    indent .. "\t" .. convert_struct_member(member) .. ";"
-            )
-        end
-
-        yield(indent .. "}")
     end
 end
 
@@ -344,29 +351,22 @@ function converter.funcs(func)
     end
 
     if func.comments ~= nil then
-        yield("<* ")
         for _, line in ipairs(func.comments) do
-            yield(" " .. line)
+            yield("// " .. line)
         end
-
-        local hasParams = false
 
         for _, arg in ipairs(func.args) do
             if arg.comment ~= nil then
                 local comment = table.concat(arg.comment, " ")
 
-                yield(" "
+                yield("// "
                         .. arg.name
                         .. " : `"
                         .. comment
                         .. "`"
                 )
-
-                hasParams = true
             end
         end
-
-        yield("*>")
     end
 
     local args = {}
