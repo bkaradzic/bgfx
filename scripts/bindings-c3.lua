@@ -377,7 +377,7 @@ function converter.funcs(func)
         table.insert(args, convert_type(arg) .. " " .. arg.name)
     end
     yield("extern fn " .. convert_type(func.ret) .. " " .. func.cname
-            .. "(" .. table.concat(args, ", ") .. ");"  )
+            .. "(" .. table.concat(args, ", ") .. ") @extern(\"bgfx_" .. func.cname .. "\");"   )
 end
 
 function gen.write(codes, outputfile)
