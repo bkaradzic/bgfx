@@ -222,6 +222,7 @@ struct OcornutImguiContext
 		setupStyle(true);
 
 		io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
+		io.ConfigDebugHighlightIdConflicts = !!BX_CONFIG_DEBUG;
 
 #if USE_ENTRY
 		for (int32_t ii = 0; ii < (int32_t)entry::Key::Count; ++ii)
