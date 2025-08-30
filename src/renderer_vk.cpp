@@ -4379,7 +4379,7 @@ VK_IMPORT_DEVICE
 			{
 				// Check LRU cache.
 				int memoryType = selectMemoryType(requirements->memoryTypeBits, propertyFlags, 0);
-				bool found = m_memoryLru.find(requirements->size, memoryType, memory);
+				bool found = m_memoryLru.find(bx::narrowCast<uint32_t>(requirements->size), memoryType, memory);
 				if (found)
 				{
 					return VK_SUCCESS;
@@ -4404,7 +4404,7 @@ VK_IMPORT_DEVICE
 					BGFX_PROFILER_SCOPE("vkAllocateMemory", kColorResource);
 					ma.memoryTypeIndex = searchIndex;
 					memory->memoryTypeIndex = searchIndex;
-					memory->size = ma.allocationSize;
+					memory->size = bx::narrowCast<uint32_t>(ma.allocationSize);
 					memory->offset = 0;
 					result = vkAllocateMemory(m_device, &ma, m_allocatorCb, &memory->mem);
 				}
@@ -4750,7 +4750,7 @@ VK_DESTROY
 					// with a handful of tiny allocations.
 					if (alloc.size >= _size && _size * 2 >= alloc.size)
 					{
-						uint32_t waste = alloc.size - _size;
+						uint32_t waste = bx::narrowCast<uint32_t>(alloc.size - _size);
 						if (waste < bestWaste)
 						{
 							bestIdx = slot;

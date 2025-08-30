@@ -25,14 +25,14 @@
 
 #include <bx/bx.h>
 
-BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4701) // error C4701: potentially uninitialized local variable 'cint' used
-// -Wunused-function and 4505 must be file scope, can't be disabled between push/pop.
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-function");
-BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505) // error C4505: '' : unreferenced local function has been removed
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-function"); // -Wunused-function and 4505 must be file scope, can't be disabled between push/pop.
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505); // error C4505: '' : unreferenced local function has been removed
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4701); // error C4701: potentially uninitialized local variable 'cint' used
 
 BX_PRAGMA_DIAGNOSTIC_PUSH();
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-parameter");
 BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wunused-result");
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4244); // error C4244: 'argument': conversion from 'double' to 'float', possible loss of data
 #define FONTSTASH_IMPLEMENTATION
 #include "fontstash.h"
 BX_PRAGMA_DIAGNOSTIC_POP();

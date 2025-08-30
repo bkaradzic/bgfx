@@ -393,7 +393,7 @@ management and design sandbox game for railways you build in the real world.
 
 ## Minecraft
 
-https://www.minecraft.net/zh-hant/attribution/
+https://www.minecraft.net/en-us/attribution
 
 ![Minecraft screenshot](https://user-images.githubusercontent.com/814772/79185288-57050000-7dcb-11ea-87b4-2126fcd1545b.jpg)
 

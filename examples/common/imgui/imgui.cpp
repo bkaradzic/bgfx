@@ -222,6 +222,7 @@ struct OcornutImguiContext
 		setupStyle(true);
 
 		io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
+		io.ConfigDebugHighlightIdConflicts = !!BX_CONFIG_DEBUG;
 
 #if USE_ENTRY
 		for (int32_t ii = 0; ii < (int32_t)entry::Key::Count; ++ii)
@@ -570,6 +571,7 @@ namespace ImGui
 } // namespace ImGui
 
 #if USE_LOCAL_STB
+BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4244); // error C4244: 'argument': conversion from 'double' to 'float', possible loss of data
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4505); // error C4505: '' : unreferenced local function has been removed
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-function"); // warning: 'int rect_width_compare(const void*, const void*)' defined but not used
 BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunknown-pragmas")
