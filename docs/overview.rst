@@ -55,7 +55,8 @@ Supported Languages
 
 -  `C/C++ API documentation <https://bkaradzic.github.io/bgfx/bgfx.html>`__
 -  `Beef API bindings <https://github.com/bkaradzic/bgfx/tree/master/bindings/bf>`__
--  `C# language API bindings #1 <https://github.com/bkaradzic/bgfx/tree/master/bindings/cs>`__
+-  `C# language API bindings <https://github.com/bkaradzic/bgfx/tree/master/bindings/cs>`__
+-  `C3 language API bindings <https://github.com/bkaradzic/bgfx/tree/master/bindings/c3>`__
 -  `D language API bindings <https://github.com/BindBC/bindbc-bgfx>`__
 -  `Go language API bindings <https://github.com/james4k/go-bgfx>`__
 -  `Haskell language API bindings <https://github.com/haskell-game/bgfx>`__
@@ -231,6 +232,8 @@ Chronological order:
  - Biswapriyo Nath (`@Biswa96 <https://github.com/Biswa96>`__) - GitHub Actions CI.
  - Raziel Alphadios (`@RazielXYZ <https://github.com/RazielXYZ>`__) - Various fixes and improvements.
  - IchorDev (`@IchorDev <https://github.com/ichordev>`__) - Improved D language bindings.
+ - Martijn Courteaux (`@Martijn Courteaux <https://github.com/mcourteaux>`__) - Various fixes and improvements.
+ - JazielGuerrero (`@JazielGuerrero <https://github.com/JazielGuerrero>`__) - C3 language bindings.
 
 and `others <https://github.com/bkaradzic/bgfx/graphs/contributors>`__...
 

@@ -68,6 +68,7 @@ Languages:
  * [C/C++ API documentation](https://bkaradzic.github.io/bgfx/bgfx.html)
  * [Beef API bindings](https://github.com/bkaradzic/bgfx/tree/master/bindings/bf)
  * [C# language API bindings #1](https://github.com/bkaradzic/bgfx/tree/master/bindings/cs)
+ * [C3 language API bindings #1](https://github.com/bkaradzic/bgfx/tree/master/bindings/c3)
  * [D language API bindings](https://github.com/BindBC/bindbc-bgfx)
  * [Go language API bindings](https://github.com/james4k/go-bgfx)
  * [Haskell language API bindings](https://github.com/haskell-game/bgfx)
