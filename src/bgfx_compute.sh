@@ -79,18 +79,27 @@
 #define COMP_r32ui    uint
 #define COMP_rg32ui   uint2
 #define COMP_rgba32ui uint4
+#define COMP_r16ui    uint
+#define COMP_rg16ui   uint2
+#define COMP_rgba16ui uint4
 #define COMP_r32f     float
 #define COMP_r16f     float
 #define COMP_rg16f    float2
 #define COMP_rgba16f  float4
 #if BGFX_SHADER_LANGUAGE_HLSL
-#	define COMP_rgba8 unorm float4
-#	define COMP_rg8   unorm float2
-#	define COMP_r8    unorm float
+#	define COMP_rgba8  unorm float4
+#	define COMP_rg8    unorm float2
+#	define COMP_r8     unorm float
+#	define COMP_rgba16 unorm float4
+#	define COMP_rg16   unorm float2
+#	define COMP_r16    unorm float
 #else
-#	define COMP_rgba8       float4
-#	define COMP_rg8         float2
-#	define COMP_r8          float
+#	define COMP_rgba8        float4
+#	define COMP_rg8          float2
+#	define COMP_r8           float
+#	define COMP_rgba16       float4
+#	define COMP_rg16         float2
+#	define COMP_r16          float
 #endif // BGFX_SHADER_LANGUAGE_HLSL
 #define COMP_rgba32f  float4
 
