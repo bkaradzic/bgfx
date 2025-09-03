@@ -26,36 +26,6 @@
  *
  *
  *****************************************************************************/
-#ifdef EMACS
-
-/* Use the Emacs config file to find out what type of machine */
-
-#define NO_SHORTNAMES
-
-/* Convert Emacs's conventions for BIG_ENDIAN to cpp's convention.  */
-#ifdef BIG_ENDIAN
-#undef BIG_ENDIAN
-#define BIG_ENDIAN FPP_TRUE
-#else /* not BIG_ENDIAN */
-#define BIG_ENDIAN FPP_FALSE
-#endif /* BIG_ENDIAN */
-
-/* Emacs uses the names index and rindex and defines them as str(r)chr if nec;
-   cpp uses the opposite convention.  Here we flush the macro definitions for
-   Emacs and add the ones cpp wants.  */
-
-#ifdef index
-#undef index
-#undef rindex
-#else /* index is not defined as a macro */
-#define strchr index
-#define strrchr rindex
-#endif /* index is not defined as a macro */
-
-#define NBUFF 2048
-#define NWORK 2048
-
-#endif /* EMACS */
 
 /*
  *		   S y s t e m	 D e p e n d e n t
@@ -299,11 +269,11 @@
 #endif
 
 #ifndef NBUFF
-#define NBUFF			512
+#define NBUFF			2048
 #endif
 
 #ifndef NWORK
-#define NWORK			512
+#define NWORK			4096
 #endif
 
 #ifndef NEXP

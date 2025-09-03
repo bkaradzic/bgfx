@@ -760,9 +760,13 @@ namespace bgfx
 			m_tagptr->data = this;
 			m_tagptr++;
 
+#if 0
+			// Disabled, because this was actually never supported by fcpp.
+			// The tag was defined but not implemented.
 			m_tagptr->tag = FPPTAG_DEPENDS;
 			m_tagptr->data = (void*)fppDepends;
 			m_tagptr++;
+#endif
 
 			m_tagptr->tag = FPPTAG_INPUT;
 			m_tagptr->data = (void*)fppInput;
