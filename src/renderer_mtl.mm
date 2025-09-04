@@ -716,6 +716,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				? BGFX_CAPS_PRIMITIVE_ID
 				: 0
 				;
+			g_caps.supported |= m_device.supportsShaderBarycentricCoordinates() ? BGFX_CAPS_FRAGMENT_BARYCENTRIC : 0;
 
 			// Reference(s):
 			// - Metal feature set tables
