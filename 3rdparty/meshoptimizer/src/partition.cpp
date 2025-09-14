@@ -5,6 +5,8 @@
 #include <math.h>
 #include <string.h>
 
+// This work is based on:
+// Takio Kurita. An efficient agglomerative clustering algorithm using a heap. 1991
 namespace meshopt
 {
 
