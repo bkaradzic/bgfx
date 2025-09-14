@@ -642,6 +642,7 @@ typedef enum SpvDecoration_ {
     SpvDecorationHostAccessINTEL = 6188,
     SpvDecorationInitModeINTEL = 6190,
     SpvDecorationImplementInRegisterMapINTEL = 6191,
+    SpvDecorationConditionalINTEL = 6247,
     SpvDecorationCacheControlLoadINTEL = 6442,
     SpvDecorationCacheControlStoreINTEL = 6443,
     SpvDecorationMax = 0x7fffffff,
@@ -1067,6 +1068,7 @@ typedef enum SpvCapability_ {
     SpvCapabilityTensorsARM = 4174,
     SpvCapabilityStorageTensorArrayDynamicIndexingARM = 4175,
     SpvCapabilityStorageTensorArrayNonUniformIndexingARM = 4176,
+    SpvCapabilityGraphARM = 4191,
     SpvCapabilityCooperativeMatrixLayoutsARM = 4201,
     SpvCapabilityFloat8EXT = 4212,
     SpvCapabilityFloat8CooperativeMatrixEXT = 4213,
@@ -1106,6 +1108,7 @@ typedef enum SpvCapability_ {
     SpvCapabilityTextureBoxFilterQCOM = 4485,
     SpvCapabilityTextureBlockMatchQCOM = 4486,
     SpvCapabilityTileShadingQCOM = 4495,
+    SpvCapabilityCooperativeMatrixConversionQCOM = 4496,
     SpvCapabilityTextureBlockMatch2QCOM = 4498,
     SpvCapabilityFloat16ImageAMD = 5008,
     SpvCapabilityImageGatherBiasLodAMD = 5009,
@@ -1281,6 +1284,9 @@ typedef enum SpvCapability_ {
     SpvCapabilitySubgroup2DBlockTransposeINTEL = 6230,
     SpvCapabilitySubgroupMatrixMultiplyAccumulateINTEL = 6236,
     SpvCapabilityTernaryBitwiseFunctionINTEL = 6241,
+    SpvCapabilityUntypedVariableLengthArrayINTEL = 6243,
+    SpvCapabilitySpecConditionalINTEL = 6245,
+    SpvCapabilityFunctionVariantsINTEL = 6246,
     SpvCapabilityGroupUniformArithmeticKHR = 6400,
     SpvCapabilityTensorFloat32RoundingINTEL = 6425,
     SpvCapabilityMaskedGatherScatterINTEL = 6427,
@@ -1951,6 +1957,13 @@ typedef enum SpvOp_ {
     SpvOpTensorReadARM = 4164,
     SpvOpTensorWriteARM = 4165,
     SpvOpTensorQuerySizeARM = 4166,
+    SpvOpGraphConstantARM = 4181,
+    SpvOpGraphEntryPointARM = 4182,
+    SpvOpGraphARM = 4183,
+    SpvOpGraphInputARM = 4184,
+    SpvOpGraphSetOutputARM = 4185,
+    SpvOpGraphEndARM = 4186,
+    SpvOpTypeGraphARM = 4190,
     SpvOpTerminateInvocation = 4416,
     SpvOpTypeUntypedPointerKHR = 4417,
     SpvOpUntypedVariableKHR = 4418,
@@ -1968,6 +1981,7 @@ typedef enum SpvOp_ {
     SpvOpGroupNonUniformRotateKHR = 4431,
     SpvOpSubgroupReadInvocationKHR = 4432,
     SpvOpExtInstWithForwardRefsKHR = 4433,
+    SpvOpUntypedGroupAsyncCopyKHR = 4434,
     SpvOpTraceRayKHR = 4445,
     SpvOpExecuteCallableKHR = 4446,
     SpvOpConvertUToAccelerationStructureKHR = 4447,
@@ -2004,10 +2018,14 @@ typedef enum SpvOp_ {
     SpvOpImageBoxFilterQCOM = 4481,
     SpvOpImageBlockMatchSSDQCOM = 4482,
     SpvOpImageBlockMatchSADQCOM = 4483,
+    SpvOpBitCastArrayQCOM = 4497,
     SpvOpImageBlockMatchWindowSSDQCOM = 4500,
     SpvOpImageBlockMatchWindowSADQCOM = 4501,
     SpvOpImageBlockMatchGatherSSDQCOM = 4502,
     SpvOpImageBlockMatchGatherSADQCOM = 4503,
+    SpvOpCompositeConstructCoopMatQCOM = 4540,
+    SpvOpCompositeExtractCoopMatQCOM = 4541,
+    SpvOpExtractSubArrayQCOM = 4542,
     SpvOpGroupIAddNonUniformAMD = 5000,
     SpvOpGroupFAddNonUniformAMD = 5001,
     SpvOpGroupFMinNonUniformAMD = 5002,
@@ -2089,6 +2107,7 @@ typedef enum SpvOp_ {
     SpvOpTypeAccelerationStructureNV = 5341,
     SpvOpExecuteCallableNV = 5344,
     SpvOpRayQueryGetClusterIdNV = 5345,
+    SpvOpRayQueryGetIntersectionClusterIdNV = 5345,
     SpvOpHitObjectGetClusterIdNV = 5346,
     SpvOpTypeCooperativeMatrixNV = 5358,
     SpvOpCooperativeMatrixLoadNV = 5359,
@@ -2398,6 +2417,14 @@ typedef enum SpvOp_ {
     SpvOpSubgroup2DBlockStoreINTEL = 6235,
     SpvOpSubgroupMatrixMultiplyAccumulateINTEL = 6237,
     SpvOpBitwiseFunctionINTEL = 6242,
+    SpvOpUntypedVariableLengthArrayINTEL = 6244,
+    SpvOpConditionalExtensionINTEL = 6248,
+    SpvOpConditionalEntryPointINTEL = 6249,
+    SpvOpConditionalCapabilityINTEL = 6250,
+    SpvOpSpecConstantTargetINTEL = 6251,
+    SpvOpSpecConstantArchitectureINTEL = 6252,
+    SpvOpSpecConstantCapabilitiesINTEL = 6253,
+    SpvOpConditionalCopyObjectINTEL = 6254,
     SpvOpGroupIMulKHR = 6401,
     SpvOpGroupFMulKHR = 6402,
     SpvOpGroupBitwiseAndKHR = 6403,
@@ -2774,6 +2801,13 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpTensorReadARM: *hasResult = true; *hasResultType = true; break;
     case SpvOpTensorWriteARM: *hasResult = false; *hasResultType = false; break;
     case SpvOpTensorQuerySizeARM: *hasResult = true; *hasResultType = true; break;
+    case SpvOpGraphConstantARM: *hasResult = true; *hasResultType = true; break;
+    case SpvOpGraphEntryPointARM: *hasResult = false; *hasResultType = false; break;
+    case SpvOpGraphARM: *hasResult = true; *hasResultType = true; break;
+    case SpvOpGraphInputARM: *hasResult = true; *hasResultType = true; break;
+    case SpvOpGraphSetOutputARM: *hasResult = false; *hasResultType = false; break;
+    case SpvOpGraphEndARM: *hasResult = false; *hasResultType = false; break;
+    case SpvOpTypeGraphARM: *hasResult = true; *hasResultType = false; break;
     case SpvOpTerminateInvocation: *hasResult = false; *hasResultType = false; break;
     case SpvOpTypeUntypedPointerKHR: *hasResult = true; *hasResultType = false; break;
     case SpvOpUntypedVariableKHR: *hasResult = true; *hasResultType = true; break;
@@ -2791,6 +2825,7 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpGroupNonUniformRotateKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupReadInvocationKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpExtInstWithForwardRefsKHR: *hasResult = true; *hasResultType = true; break;
+    case SpvOpUntypedGroupAsyncCopyKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpTraceRayKHR: *hasResult = false; *hasResultType = false; break;
     case SpvOpExecuteCallableKHR: *hasResult = false; *hasResultType = false; break;
     case SpvOpConvertUToAccelerationStructureKHR: *hasResult = true; *hasResultType = true; break;
@@ -2821,10 +2856,14 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpImageBoxFilterQCOM: *hasResult = true; *hasResultType = true; break;
     case SpvOpImageBlockMatchSSDQCOM: *hasResult = true; *hasResultType = true; break;
     case SpvOpImageBlockMatchSADQCOM: *hasResult = true; *hasResultType = true; break;
+    case SpvOpBitCastArrayQCOM: *hasResult = true; *hasResultType = true; break;
     case SpvOpImageBlockMatchWindowSSDQCOM: *hasResult = true; *hasResultType = true; break;
     case SpvOpImageBlockMatchWindowSADQCOM: *hasResult = true; *hasResultType = true; break;
     case SpvOpImageBlockMatchGatherSSDQCOM: *hasResult = true; *hasResultType = true; break;
     case SpvOpImageBlockMatchGatherSADQCOM: *hasResult = true; *hasResultType = true; break;
+    case SpvOpCompositeConstructCoopMatQCOM: *hasResult = true; *hasResultType = true; break;
+    case SpvOpCompositeExtractCoopMatQCOM: *hasResult = true; *hasResultType = true; break;
+    case SpvOpExtractSubArrayQCOM: *hasResult = true; *hasResultType = true; break;
     case SpvOpGroupIAddNonUniformAMD: *hasResult = true; *hasResultType = true; break;
     case SpvOpGroupFAddNonUniformAMD: *hasResult = true; *hasResultType = true; break;
     case SpvOpGroupFMinNonUniformAMD: *hasResult = true; *hasResultType = true; break;
@@ -2903,7 +2942,7 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpRayQueryGetIntersectionTriangleVertexPositionsKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpTypeAccelerationStructureKHR: *hasResult = true; *hasResultType = false; break;
     case SpvOpExecuteCallableNV: *hasResult = false; *hasResultType = false; break;
-    case SpvOpRayQueryGetClusterIdNV: *hasResult = true; *hasResultType = true; break;
+    case SpvOpRayQueryGetIntersectionClusterIdNV: *hasResult = true; *hasResultType = true; break;
     case SpvOpHitObjectGetClusterIdNV: *hasResult = true; *hasResultType = true; break;
     case SpvOpTypeCooperativeMatrixNV: *hasResult = true; *hasResultType = false; break;
     case SpvOpCooperativeMatrixLoadNV: *hasResult = true; *hasResultType = true; break;
@@ -3210,6 +3249,14 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpSubgroup2DBlockStoreINTEL: *hasResult = false; *hasResultType = false; break;
     case SpvOpSubgroupMatrixMultiplyAccumulateINTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpBitwiseFunctionINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpUntypedVariableLengthArrayINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpConditionalExtensionINTEL: *hasResult = false; *hasResultType = false; break;
+    case SpvOpConditionalEntryPointINTEL: *hasResult = false; *hasResultType = false; break;
+    case SpvOpConditionalCapabilityINTEL: *hasResult = false; *hasResultType = false; break;
+    case SpvOpSpecConstantTargetINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpSpecConstantArchitectureINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpSpecConstantCapabilitiesINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpConditionalCopyObjectINTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpGroupIMulKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpGroupFMulKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpGroupBitwiseAndKHR: *hasResult = true; *hasResultType = true; break;
@@ -3750,6 +3797,7 @@ inline const char* SpvDecorationToString(SpvDecoration value) {
     case SpvDecorationHostAccessINTEL: return "HostAccessINTEL";
     case SpvDecorationInitModeINTEL: return "InitModeINTEL";
     case SpvDecorationImplementInRegisterMapINTEL: return "ImplementInRegisterMapINTEL";
+    case SpvDecorationConditionalINTEL: return "ConditionalINTEL";
     case SpvDecorationCacheControlLoadINTEL: return "CacheControlLoadINTEL";
     case SpvDecorationCacheControlStoreINTEL: return "CacheControlStoreINTEL";
     default: return "Unknown";
@@ -4002,6 +4050,7 @@ inline const char* SpvCapabilityToString(SpvCapability value) {
     case SpvCapabilityTensorsARM: return "TensorsARM";
     case SpvCapabilityStorageTensorArrayDynamicIndexingARM: return "StorageTensorArrayDynamicIndexingARM";
     case SpvCapabilityStorageTensorArrayNonUniformIndexingARM: return "StorageTensorArrayNonUniformIndexingARM";
+    case SpvCapabilityGraphARM: return "GraphARM";
     case SpvCapabilityCooperativeMatrixLayoutsARM: return "CooperativeMatrixLayoutsARM";
     case SpvCapabilityFloat8EXT: return "Float8EXT";
     case SpvCapabilityFloat8CooperativeMatrixEXT: return "Float8CooperativeMatrixEXT";
@@ -4039,6 +4088,7 @@ inline const char* SpvCapabilityToString(SpvCapability value) {
     case SpvCapabilityTextureBoxFilterQCOM: return "TextureBoxFilterQCOM";
     case SpvCapabilityTextureBlockMatchQCOM: return "TextureBlockMatchQCOM";
     case SpvCapabilityTileShadingQCOM: return "TileShadingQCOM";
+    case SpvCapabilityCooperativeMatrixConversionQCOM: return "CooperativeMatrixConversionQCOM";
     case SpvCapabilityTextureBlockMatch2QCOM: return "TextureBlockMatch2QCOM";
     case SpvCapabilityFloat16ImageAMD: return "Float16ImageAMD";
     case SpvCapabilityImageGatherBiasLodAMD: return "ImageGatherBiasLodAMD";
@@ -4188,6 +4238,9 @@ inline const char* SpvCapabilityToString(SpvCapability value) {
     case SpvCapabilitySubgroup2DBlockTransposeINTEL: return "Subgroup2DBlockTransposeINTEL";
     case SpvCapabilitySubgroupMatrixMultiplyAccumulateINTEL: return "SubgroupMatrixMultiplyAccumulateINTEL";
     case SpvCapabilityTernaryBitwiseFunctionINTEL: return "TernaryBitwiseFunctionINTEL";
+    case SpvCapabilityUntypedVariableLengthArrayINTEL: return "UntypedVariableLengthArrayINTEL";
+    case SpvCapabilitySpecConditionalINTEL: return "SpecConditionalINTEL";
+    case SpvCapabilityFunctionVariantsINTEL: return "FunctionVariantsINTEL";
     case SpvCapabilityGroupUniformArithmeticKHR: return "GroupUniformArithmeticKHR";
     case SpvCapabilityTensorFloat32RoundingINTEL: return "TensorFloat32RoundingINTEL";
     case SpvCapabilityMaskedGatherScatterINTEL: return "MaskedGatherScatterINTEL";
@@ -4739,6 +4792,13 @@ inline const char* SpvOpToString(SpvOp value) {
     case SpvOpTensorReadARM: return "OpTensorReadARM";
     case SpvOpTensorWriteARM: return "OpTensorWriteARM";
     case SpvOpTensorQuerySizeARM: return "OpTensorQuerySizeARM";
+    case SpvOpGraphConstantARM: return "OpGraphConstantARM";
+    case SpvOpGraphEntryPointARM: return "OpGraphEntryPointARM";
+    case SpvOpGraphARM: return "OpGraphARM";
+    case SpvOpGraphInputARM: return "OpGraphInputARM";
+    case SpvOpGraphSetOutputARM: return "OpGraphSetOutputARM";
+    case SpvOpGraphEndARM: return "OpGraphEndARM";
+    case SpvOpTypeGraphARM: return "OpTypeGraphARM";
     case SpvOpTerminateInvocation: return "OpTerminateInvocation";
     case SpvOpTypeUntypedPointerKHR: return "OpTypeUntypedPointerKHR";
     case SpvOpUntypedVariableKHR: return "OpUntypedVariableKHR";
@@ -4756,6 +4816,7 @@ inline const char* SpvOpToString(SpvOp value) {
     case SpvOpGroupNonUniformRotateKHR: return "OpGroupNonUniformRotateKHR";
     case SpvOpSubgroupReadInvocationKHR: return "OpSubgroupReadInvocationKHR";
     case SpvOpExtInstWithForwardRefsKHR: return "OpExtInstWithForwardRefsKHR";
+    case SpvOpUntypedGroupAsyncCopyKHR: return "OpUntypedGroupAsyncCopyKHR";
     case SpvOpTraceRayKHR: return "OpTraceRayKHR";
     case SpvOpExecuteCallableKHR: return "OpExecuteCallableKHR";
     case SpvOpConvertUToAccelerationStructureKHR: return "OpConvertUToAccelerationStructureKHR";
@@ -4786,10 +4847,14 @@ inline const char* SpvOpToString(SpvOp value) {
     case SpvOpImageBoxFilterQCOM: return "OpImageBoxFilterQCOM";
     case SpvOpImageBlockMatchSSDQCOM: return "OpImageBlockMatchSSDQCOM";
     case SpvOpImageBlockMatchSADQCOM: return "OpImageBlockMatchSADQCOM";
+    case SpvOpBitCastArrayQCOM: return "OpBitCastArrayQCOM";
     case SpvOpImageBlockMatchWindowSSDQCOM: return "OpImageBlockMatchWindowSSDQCOM";
     case SpvOpImageBlockMatchWindowSADQCOM: return "OpImageBlockMatchWindowSADQCOM";
     case SpvOpImageBlockMatchGatherSSDQCOM: return "OpImageBlockMatchGatherSSDQCOM";
     case SpvOpImageBlockMatchGatherSADQCOM: return "OpImageBlockMatchGatherSADQCOM";
+    case SpvOpCompositeConstructCoopMatQCOM: return "OpCompositeConstructCoopMatQCOM";
+    case SpvOpCompositeExtractCoopMatQCOM: return "OpCompositeExtractCoopMatQCOM";
+    case SpvOpExtractSubArrayQCOM: return "OpExtractSubArrayQCOM";
     case SpvOpGroupIAddNonUniformAMD: return "OpGroupIAddNonUniformAMD";
     case SpvOpGroupFAddNonUniformAMD: return "OpGroupFAddNonUniformAMD";
     case SpvOpGroupFMinNonUniformAMD: return "OpGroupFMinNonUniformAMD";
@@ -5175,6 +5240,14 @@ inline const char* SpvOpToString(SpvOp value) {
     case SpvOpSubgroup2DBlockStoreINTEL: return "OpSubgroup2DBlockStoreINTEL";
     case SpvOpSubgroupMatrixMultiplyAccumulateINTEL: return "OpSubgroupMatrixMultiplyAccumulateINTEL";
     case SpvOpBitwiseFunctionINTEL: return "OpBitwiseFunctionINTEL";
+    case SpvOpUntypedVariableLengthArrayINTEL: return "OpUntypedVariableLengthArrayINTEL";
+    case SpvOpConditionalExtensionINTEL: return "OpConditionalExtensionINTEL";
+    case SpvOpConditionalEntryPointINTEL: return "OpConditionalEntryPointINTEL";
+    case SpvOpConditionalCapabilityINTEL: return "OpConditionalCapabilityINTEL";
+    case SpvOpSpecConstantTargetINTEL: return "OpSpecConstantTargetINTEL";
+    case SpvOpSpecConstantArchitectureINTEL: return "OpSpecConstantArchitectureINTEL";
+    case SpvOpSpecConstantCapabilitiesINTEL: return "OpSpecConstantCapabilitiesINTEL";
+    case SpvOpConditionalCopyObjectINTEL: return "OpConditionalCopyObjectINTEL";
     case SpvOpGroupIMulKHR: return "OpGroupIMulKHR";
     case SpvOpGroupFMulKHR: return "OpGroupFMulKHR";
     case SpvOpGroupBitwiseAndKHR: return "OpGroupBitwiseAndKHR";

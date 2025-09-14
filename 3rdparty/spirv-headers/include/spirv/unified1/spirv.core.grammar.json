@@ -117,6 +117,10 @@
       "heading" : "Tensor Instructions"
     },
     {
+      "tag"     : "Graph",
+      "heading" : "Graph Instructions"
+    },
+    {
       "tag"     : "Reserved",
       "heading" : "Reserved Instructions"
     }
@@ -1355,6 +1359,7 @@
         { "kind" : "IdResult" },
         { "kind" : "IdRef",        "name" : "Value" }
       ],
+      "capabilities" : [ "Shader" ],
       "version": "1.0"
     },
     {
@@ -3914,7 +3919,7 @@
         { "kind" : "IdResult" },
         { "kind" : "IdScope", "name" : "Execution" },
         { "kind" : "IdRef", "name" : "Value" },
-        { "kind" : "IdRef", "name" : "Id" }
+        { "kind" : "IdRef", "name" : "Invocation Id" }
       ],
       "capabilities" : [ "GroupNonUniformBallot" ],
       "version" : "1.3"
@@ -4021,7 +4026,7 @@
         { "kind" : "IdResult" },
         { "kind" : "IdScope", "name" : "Execution" },
         { "kind" : "IdRef", "name" : "Value" },
-        { "kind" : "IdRef", "name" : "Id" }
+        { "kind" : "IdRef", "name" : "Invocation Id" }
       ],
       "capabilities" : [ "GroupNonUniformShuffle" ],
       "version" : "1.3"
@@ -4475,6 +4480,85 @@
       "version" : "None"
     },
     {
+      "opname" : "OpGraphConstantARM",
+      "class"  : "Graph",
+      "opcode" : 4181,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "LiteralInteger", "name" : "GraphConstantID" }
+      ],
+      "capabilities" : [ "GraphARM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGraphEntryPointARM",
+      "class"  : "Graph",
+      "opcode" : 4182,
+      "operands" : [
+        { "kind" : "IdRef",                              "name" : "Graph" },
+        { "kind" : "LiteralString",                      "name" : "Name" },
+        { "kind" : "IdRef",          "quantifier" : "*", "name" : "Interface" }
+      ],
+      "capabilities" : [ "GraphARM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGraphARM",
+      "class"  : "Graph",
+      "opcode" : 4183,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "GraphARM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGraphInputARM",
+      "class"  : "Graph",
+      "opcode" : 4184,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",          "name" : "InputIndex" },
+        { "kind" : "IdRef",          "quantifier" : "*", "name" : "ElementIndex" }
+      ],
+      "capabilities" : [ "GraphARM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGraphSetOutputARM",
+      "class"  : "Graph",
+      "opcode" : 4185,
+      "operands" : [
+        { "kind" : "IdRef", "name": "Value" },
+        { "kind" : "IdRef", "name" : "OutputIndex" },
+        { "kind" : "IdRef", "quantifier" : "*", "name" : "ElementIndex" }
+      ],
+      "capabilities" : [ "GraphARM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpGraphEndARM",
+      "class"  : "Graph",
+      "opcode" : 4186,
+      "capabilities" : [ "GraphARM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeGraphARM",
+      "class"  : "Type-Declaration",
+      "opcode" : 4190,
+      "operands" : [
+        { "kind" : "IdResult" },
+        { "kind" : "LiteralInteger",               "name" : "NumInputs" },
+        { "kind" : "IdRef",    "quantifier" : "*", "name" : "InOutTypes" }
+      ],
+      "capabilities" : [ "GraphARM" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpTerminateInvocation",
       "class"  : "Control-Flow",
       "opcode" : 4416,
@@ -4491,7 +4575,6 @@
       "capabilities" : [
         "UntypedPointersKHR"
       ],
-      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdResult" },
@@ -4503,7 +4586,6 @@
       "class" : "Memory",
       "opcode" : 4418,
       "capabilities" : [ "UntypedPointersKHR" ],
-      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4518,7 +4600,6 @@
       "class" : "Memory",
       "opcode" : 4419,
       "capabilities" : [ "UntypedPointersKHR" ],
-      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4533,7 +4614,6 @@
       "class" : "Memory",
       "opcode" : 4420,
       "capabilities" : [ "UntypedPointersKHR" ],
-      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4574,7 +4654,6 @@
       "class"  : "Memory",
       "opcode" : 4423,
       "capabilities" : [ "UntypedPointersKHR" ],
-      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4590,7 +4669,6 @@
       "class"  : "Memory",
       "opcode" : 4424,
       "capabilities" : [ "UntypedPointersKHR" ],
-      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4606,7 +4684,6 @@
       "class"  : "Memory",
       "opcode" : 4425,
       "capabilities" : [ "UntypedPointersKHR" ],
-      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdResultType" },
@@ -4621,7 +4698,6 @@
       "class"  : "Memory",
       "opcode" : 4426,
       "capabilities" : [ "UntypedPointersKHR" ],
-      "provisional" : true,
       "version" : "None",
       "operands" : [
         { "kind" : "IdRef",                            "name" : "Pointer Type" },
@@ -4718,6 +4794,26 @@
       ],
       "extensions" : [ "SPV_KHR_relaxed_extended_instruction" ],
       "version": "None"
+    },
+    {
+      "opname" : "OpUntypedGroupAsyncCopyKHR",
+      "class"  : "Group",
+      "opcode" : 4434,
+      "capabilities" : [ "UntypedPointersKHR" ],
+      "version" : "None",
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",                            "name" : "Execution" },
+        { "kind" : "IdRef",                            "name" : "Destination" },
+        { "kind" : "IdRef",                            "name" : "Source" },
+        { "kind" : "IdRef",                            "name" : "Element Num Bytes" },
+        { "kind" : "IdRef",                            "name" : "Num Elements" },
+        { "kind" : "IdRef",                            "name" : "Stride" },
+        { "kind" : "IdRef",                            "name" : "Event" },
+        { "kind" : "MemoryAccess", "quantifier" : "?", "name" : "Destination Memory Operands" },
+        { "kind" : "MemoryAccess", "quantifier" : "?", "name" : "Source Memory Operands" }
+      ]
     },
     {
       "opname" : "OpTraceRayKHR",
@@ -5186,6 +5282,18 @@
       "version" : "None"
     },
     {
+      "opname" : "OpBitCastArrayQCOM",
+      "class"  : "Conversion",
+      "opcode" : 4497,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "Source Array" }
+      ],
+      "capabilities" : [ "CooperativeMatrixConversionQCOM" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpImageBlockMatchWindowSSDQCOM",
       "class"  : "Image",
       "opcode" : 4500,
@@ -5247,6 +5355,43 @@
         { "kind" : "IdRef", "name" : "Block Size" }
       ],
       "capabilities" : [ "TextureBlockMatch2QCOM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpCompositeConstructCoopMatQCOM",
+      "class"  : "Composite",
+      "opcode" : 4540,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "Source Array" }
+      ],
+      "capabilities" : [ "CooperativeMatrixConversionQCOM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpCompositeExtractCoopMatQCOM",
+      "class"  : "Composite",
+      "opcode" : 4541,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "Source Cooperative Matrix" }
+      ],
+      "capabilities" : [ "CooperativeMatrixConversionQCOM" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpExtractSubArrayQCOM",
+      "class"  : "Composite",
+      "opcode" : 4542,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "Source Array" },
+        { "kind" : "IdRef", "name" : "index" }
+      ],
+      "capabilities" : [ "CooperativeMatrixConversionQCOM" ],
       "version" : "None"
     },
     {
@@ -6359,8 +6504,9 @@
       "version" : "None"
     },
     {
-      "opname" : "OpRayQueryGetClusterIdNV",
+      "opname" : "OpRayQueryGetIntersectionClusterIdNV",
       "class" : "Reserved",
+      "aliases" : ["OpRayQueryGetClusterIdNV"],
       "opcode" : 5345,
       "operands" : [
           { "kind" : "IdResultType" },
@@ -8093,7 +8239,7 @@
         { "kind" : "IdResult" },
         { "kind" : "IdRef", "name" : "Fwd Ref Offset" },
         { "kind" : "IdRef", "name" : "Bwd Ref Offset" },
-        { "kind" : "IdRef", "name" : "id> Search Window Config" },
+        { "kind" : "IdRef", "name" : "Search Window Config" },
         { "kind" : "IdRef", "name" : "Payload" }
       ],
       "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
@@ -9010,19 +9156,19 @@
     },
     {
       "opname" : "OpVariableLengthArrayINTEL",
-      "class"  : "@exclude",
+      "class"  : "Memory",
       "opcode" : 5818,
       "operands" : [
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
-        { "kind" : "IdRef", "name" : "Lenght" }
+        { "kind" : "IdRef", "name" : "Length" }
       ],
       "capabilities" : [ "VariableLengthArrayINTEL" ],
       "version" : "None"
     },
     {
       "opname" : "OpSaveMemoryINTEL",
-      "class"  : "@exclude",
+      "class"  : "Memory",
       "opcode" : 5819,
       "operands" : [
         { "kind" : "IdResultType" },
@@ -9033,7 +9179,7 @@
     },
     {
       "opname" : "OpRestoreMemoryINTEL",
-      "class"  : "@exclude",
+      "class"  : "Memory",
       "opcode" : 5820,
       "operands" : [
         { "kind" : "IdRef", "name" : "Ptr" }
@@ -10692,6 +10838,114 @@
         { "kind" : "IdRef", "name" : "LUTIndex" }
       ],
       "capabilities" : [ "TernaryBitwiseFunctionINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpUntypedVariableLengthArrayINTEL",
+      "class"  : "Memory",
+      "opcode" : 6244,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "Element Type" },
+        { "kind" : "IdRef", "name" : "Length" }
+      ],
+      "capabilities" : [ "UntypedVariableLengthArrayINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConditionalExtensionINTEL",
+      "class"  : "Extension",
+      "opcode" : 6248,
+      "operands" : [
+        { "kind" : "IdRef",         "name" : "Condition" },
+        { "kind" : "LiteralString", "name" : "Name" }
+      ],
+      "capabilities" : [ "SpecConditionalINTEL" ],
+      "provisional" : true,
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConditionalEntryPointINTEL",
+      "class"  : "Mode-Setting",
+      "opcode" : 6249,
+      "operands" : [
+        { "kind" : "IdRef",                              "name" : "Condition" },
+        { "kind" : "ExecutionModel" },
+        { "kind" : "IdRef",                              "name" : "Entry Point" },
+        { "kind" : "LiteralString",                      "name" : "Name" },
+        { "kind" : "IdRef",          "quantifier" : "*", "name" : "Interface" }
+      ],
+      "capabilities" : [ "SpecConditionalINTEL" ],
+      "provisional" : true,
+      "version" : "None"
+    },
+    {
+      "opname" : "OpConditionalCapabilityINTEL",
+      "class"  : "Mode-Setting",
+      "opcode" : 6250,
+      "operands" : [
+        { "kind" : "IdRef",      "name" : "Condition" },
+        { "kind" : "Capability", "name" : "Capability" }
+      ],
+      "capabilities" : [ "SpecConditionalINTEL" ],
+      "provisional" : true,
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSpecConstantTargetINTEL",
+      "class"  : "Constant-Creation",
+      "opcode" : 6251,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "LiteralInteger",                     "name" : "Target" },
+        { "kind" : "LiteralInteger", "quantifier" : "*", "name" : "Features" }
+      ],
+      "capabilities" : [ "FunctionVariantsINTEL" ],
+      "provisional" : true,
+      "version": "None"
+    },
+    {
+      "opname" : "OpSpecConstantArchitectureINTEL",
+      "class"  : "Constant-Creation",
+      "opcode" : 6252,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "LiteralInteger", "name" : "Category" },
+        { "kind" : "LiteralInteger", "name" : "Family" },
+        { "kind" : "LiteralInteger", "name" : "Opcode" },
+        { "kind" : "LiteralInteger", "name" : "Architecture" }
+      ],
+      "capabilities" : [ "FunctionVariantsINTEL" ],
+      "provisional" : true,
+      "version": "None"
+    },
+    {
+      "opname" : "OpSpecConstantCapabilitiesINTEL",
+      "class"  : "Constant-Creation",
+      "opcode" : 6253,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "Capability", "quantifier" : "*", "name" : "Capabilities" }
+      ],
+      "capabilities" : [ "FunctionVariantsINTEL" ],
+      "provisional" : true,
+      "version": "None"
+    },
+    {
+      "opname" : "OpConditionalCopyObjectINTEL",
+      "class"  : "Composite",
+      "opcode" : 6254,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "quantifier" : "*", "name" : "Condition 0, Operand 0, +\nCondition 1, Operand 1, +\n..." }
+      ],
+      "capabilities" : [ "SpecConditionalINTEL" ],
+      "provisional" : true,
       "version" : "None"
     },
     {
@@ -12408,7 +12662,7 @@
           "enumerant" : "DerivativeGroupQuadsKHR",
           "aliases" : ["DerivativeGroupQuadsNV"],
           "value" : 5289,
-          "capabilities" : [ "ComputeDerivativeGroupQuadsNV", "ComputeDerivativeGroupQuadsKHR" ],
+          "capabilities" : [ "ComputeDerivativeGroupQuadsKHR" ],
           "extensions" : [ "SPV_NV_compute_shader_derivatives", "SPV_KHR_compute_shader_derivatives" ],
           "version" : "None"
         },
@@ -12416,7 +12670,7 @@
           "enumerant" : "DerivativeGroupLinearKHR",
           "aliases" : ["DerivativeGroupLinearNV"],
           "value" : 5290,
-          "capabilities" : [ "ComputeDerivativeGroupLinearNV", "ComputeDerivativeGroupLinearKHR" ],
+          "capabilities" : [ "ComputeDerivativeGroupLinearKHR" ],
           "extensions" : [ "SPV_NV_compute_shader_derivatives", "SPV_KHR_compute_shader_derivatives" ],
           "version" : "None"
         },
@@ -14818,6 +15072,16 @@
           "version" : "None"
         },
         {
+          "enumerant" : "ConditionalINTEL",
+          "value" : 6247,
+          "parameters": [
+            { "kind" : "IdRef", "name" : "Condition" }
+          ],
+          "capabilities" : [ "SpecConditionalINTEL" ],
+          "provisional" : true,
+          "version" : "None"
+        },
+        {
           "enumerant" : "CacheControlLoadINTEL",
           "value" : 6442,
           "capabilities" : [ "CacheControlsINTEL" ],
@@ -16253,6 +16517,12 @@
           "version" : "None"
         },
         {
+          "enumerant" : "GraphARM",
+          "value" : 4191,
+          "extensions" : [ "SPV_ARM_graph"],
+          "version" : "None"
+        },
+        {
           "enumerant" : "CooperativeMatrixLayoutsARM",
           "value" : 4201,
           "extensions" : [ "SPV_ARM_cooperative_matrix_layouts" ],
@@ -16267,6 +16537,7 @@
         {
           "enumerant" : "Float8CooperativeMatrixEXT",
           "value" : 4213,
+          "capabilities" : [ "Float8EXT", "CooperativeMatrixKHR" ],
           "extensions" : [ "SPV_EXT_float8"],
           "version" : "None"
         },
@@ -16451,7 +16722,6 @@
           "enumerant" : "UntypedPointersKHR",
           "value" : 4473,
           "extensions" : [ "SPV_KHR_untyped_pointers" ],
-          "provisional" : true,
           "version" : "None"
         },
         {
@@ -16491,6 +16761,13 @@
           "value" : 4495,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_QCOM_tile_shading" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CooperativeMatrixConversionQCOM",
+          "value" : 4496,
+          "capabilities" : [ "CooperativeMatrixKHR" ],
+          "extensions" : [ "SPV_QCOM_cooperative_matrix_conversion" ],
           "version" : "None"
         },
         {
@@ -17472,6 +17749,28 @@
           "value" : 6241,
           "extensions" : [ "SPV_INTEL_ternary_bitwise_function"],
           "version" : "None"
+        },
+        {
+          "enumerant" : "UntypedVariableLengthArrayINTEL",
+          "value" : 6243,
+          "capabilities" : [ "VariableLengthArrayINTEL", "UntypedPointersKHR" ],
+          "extensions" : [ "SPV_INTEL_variable_length_array" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SpecConditionalINTEL",
+          "value" : 6245,
+          "extensions" : [ "SPV_INTEL_function_variants" ],
+          "provisional" : true,
+          "version": "None"
+        },
+        {
+          "enumerant" : "FunctionVariantsINTEL",
+          "value" : 6246,
+          "capabilities" : [ "SpecConditionalINTEL" ],
+          "extensions" : [ "SPV_INTEL_function_variants" ],
+          "provisional" : true,
+          "version": "None"
         },
         {
           "enumerant" : "GroupUniformArithmeticKHR",
