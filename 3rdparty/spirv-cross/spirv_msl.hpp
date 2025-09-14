@@ -542,6 +542,10 @@ public:
 		// The result can be queried with get_is_rasterization_disabled.
 		bool auto_disable_rasterization = false;
 
+		// Use Fast Math pragmas in MSL code, based on SPIR-V float controls and FP ExecutionModes.
+		// Requires MSL 3.2 or above, and has no effect with earlier MSL versions.
+		bool use_fast_math_pragmas = false;
+
 		bool is_ios() const
 		{
 			return platform == iOS;
@@ -766,6 +770,14 @@ public:
 	// instead of using function constant
 	// These must only be called after a successful call to CompilerMSL::compile().
 	bool specialization_constant_is_macro(uint32_t constant_id) const;
+
+	// Returns a mask of SPIR-V FP Fast Math Mode flags, that represents the set of flags that can be applied
+	// across all floating-point types. Each FPFastMathDefault execution mode operation identifies the flags
+	// for one floating-point type, and the value returned here is a bitwise-AND combination across all types.
+	// If incl_ops is enabled, the FPFastMathMode of any SPIR-V operations are also included in the bitwise-AND
+	// to determine the minimal fast-math that applies to all default execution modes and all operations.
+	// The returned value is also affected by execution modes SignedZeroInfNanPreserve and ContractionOff.
+	uint32_t get_fp_fast_math_flags(bool incl_ops) const;
 
 protected:
 	// An enum of SPIR-V functions that are implemented in additional
@@ -1047,6 +1059,8 @@ protected:
 
 	void fix_up_shader_inputs_outputs();
 
+	bool entry_point_returns_stage_output() const;
+	bool entry_point_requires_const_device_buffers() const;
 	std::string func_type_decl(SPIRType &type);
 	std::string entry_point_args_classic(bool append_comma);
 	std::string entry_point_args_argument_buffer(bool append_comma);
@@ -1126,7 +1140,7 @@ protected:
 	                         uint32_t mem_order_1, uint32_t mem_order_2, bool has_mem_order_2, uint32_t op0, uint32_t op1 = 0,
 	                         bool op1_is_pointer = false, bool op1_is_literal = false, uint32_t op2 = 0);
 	const char *get_memory_order(uint32_t spv_mem_sem);
-	void add_pragma_line(const std::string &line);
+	void add_pragma_line(const std::string &line, bool recompile_on_unique);
 	void add_typedef_line(const std::string &line);
 	void emit_barrier(uint32_t id_exe_scope, uint32_t id_mem_scope, uint32_t id_mem_sem);
 	bool emit_array_copy(const char *expr, uint32_t lhs_id, uint32_t rhs_id,
@@ -1209,8 +1223,8 @@ protected:
 	std::unordered_map<uint32_t, uint32_t> fragment_output_components;
 	std::unordered_map<uint32_t, uint32_t> builtin_to_automatic_input_location;
 	std::unordered_map<uint32_t, uint32_t> builtin_to_automatic_output_location;
-	std::set<std::string> pragma_lines;
-	std::set<std::string> typedef_lines;
+	std::vector<std::string> pragma_lines;
+	std::vector<std::string> typedef_lines;
 	SmallVector<uint32_t> vars_needing_early_declaration;
 	std::unordered_set<uint32_t> constant_macro_ids;
 
@@ -1252,6 +1266,7 @@ protected:
 	bool using_builtin_array() const;
 
 	bool is_rasterization_disabled = false;
+	bool has_descriptor_side_effects = false;
 	bool capture_output_to_buffer = false;
 	bool needs_swizzle_buffer_def = false;
 	bool used_swizzle_buffer = false;

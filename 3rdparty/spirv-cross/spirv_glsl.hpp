@@ -32,6 +32,8 @@
 
 namespace SPIRV_CROSS_NAMESPACE
 {
+struct GlslConstantNameMapping;
+
 enum PlsFormat
 {
 	PlsNone = 0,
@@ -426,6 +428,8 @@ protected:
 	                                                   const uint32_t *args, uint32_t count);
 	virtual void emit_spv_amd_gcn_shader_op(uint32_t result_type, uint32_t result_id, uint32_t op, const uint32_t *args,
 	                                        uint32_t count);
+	void emit_non_semantic_shader_debug_info(uint32_t result_type, uint32_t result_id, uint32_t op,
+	                                         const uint32_t *args, uint32_t count);
 	virtual void emit_header();
 	void emit_line_directive(uint32_t file_id, uint32_t line_literal);
 	void build_workgroup_size(SmallVector<std::string> &arguments, const SpecializationConstant &x,
@@ -662,6 +666,7 @@ protected:
 		bool workgroup_size_is_hidden = false;
 		bool requires_relaxed_precision_analysis = false;
 		bool implicit_c_integer_promotion_rules = false;
+		bool supports_spec_constant_array_size = true;
 	} backend;
 
 	void emit_struct(SPIRType &type);
@@ -685,6 +690,8 @@ protected:
 	void emit_flattened_io_block_member(const std::string &basename, const SPIRType &type, const char *qual,
 	                                    const SmallVector<uint32_t> &indices);
 	void emit_block_chain(SPIRBlock &block);
+	BlockID emit_block_chain_inner(SPIRBlock &block);
+	void emit_block_chain_cleanup(SPIRBlock &block);
 	void emit_hoisted_temporaries(SmallVector<std::pair<TypeID, ID>> &temporaries);
 	int get_constant_mapping_to_workgroup_component(const SPIRConstant &constant) const;
 	void emit_constant(const SPIRConstant &constant);
@@ -802,6 +809,10 @@ protected:
 	virtual void append_global_func_args(const SPIRFunction &func, uint32_t index, SmallVector<std::string> &arglist);
 	std::string to_non_uniform_aware_expression(uint32_t id);
 	std::string to_atomic_ptr_expression(uint32_t id);
+	std::string to_pretty_expression_if_int_constant(
+			uint32_t id,
+			const GlslConstantNameMapping *mapping_start, const GlslConstantNameMapping *mapping_end,
+			bool register_expression_read = true);
 	std::string to_expression(uint32_t id, bool register_expression_read = true);
 	std::string to_composite_constructor_expression(const SPIRType &parent_type, uint32_t id, bool block_like_type);
 	std::string to_rerolled_array_expression(const SPIRType &parent_type, const std::string &expr, const SPIRType &type);
@@ -830,7 +841,7 @@ protected:
 	void emit_output_variable_initializer(const SPIRVariable &var);
 	std::string to_precision_qualifiers_glsl(uint32_t id);
 	virtual const char *to_storage_qualifiers_glsl(const SPIRVariable &var);
-	std::string flags_to_qualifiers_glsl(const SPIRType &type, const Bitset &flags);
+	std::string flags_to_qualifiers_glsl(const SPIRType &type, uint32_t id, const Bitset &flags);
 	const char *format_to_glsl(spv::ImageFormat format);
 	virtual std::string layout_for_member(const SPIRType &type, uint32_t index);
 	virtual std::string to_interpolation_qualifiers(const Bitset &flags);
@@ -1017,6 +1028,8 @@ protected:
 	const Instruction *get_next_instruction_in_block(const Instruction &instr);
 	static uint32_t mask_relevant_memory_semantics(uint32_t semantics);
 
+	std::string convert_floate4m3_to_string(const SPIRConstant &value, uint32_t col, uint32_t row);
+	std::string convert_floate5m2_to_string(const SPIRConstant &value, uint32_t col, uint32_t row);
 	std::string convert_half_to_string(const SPIRConstant &value, uint32_t col, uint32_t row);
 	std::string convert_float_to_string(const SPIRConstant &value, uint32_t col, uint32_t row);
 	std::string convert_double_to_string(const SPIRConstant &value, uint32_t col, uint32_t row);
@@ -1067,6 +1080,9 @@ protected:
 	FloatFormatter *float_formatter = nullptr;
 	std::string format_float(float value) const;
 	std::string format_double(double value) const;
+
+	uint32_t get_fp_fast_math_flags_for_op(uint32_t result_type, uint32_t id) const;
+	bool has_legacy_nocontract(uint32_t result_type, uint32_t id) const;
 
 private:
 	void init();

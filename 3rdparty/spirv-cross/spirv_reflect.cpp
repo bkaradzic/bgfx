@@ -477,6 +477,12 @@ string CompilerReflection::execution_model_to_str(spv::ExecutionModel model)
 		return "rmiss";
 	case ExecutionModelCallableNV:
 		return "rcall";
+	case ExecutionModelMeshNV:
+	case ExecutionModelMeshEXT:
+		return "mesh";
+	case ExecutionModelTaskNV:
+	case ExecutionModelTaskEXT:
+		return "task";
 	default:
 		return "???";
 	}
@@ -504,7 +510,9 @@ void CompilerReflection::emit_entry_points()
 			json_stream->begin_json_object();
 			json_stream->emit_json_key_value("name", e.name);
 			json_stream->emit_json_key_value("mode", execution_model_to_str(e.execution_model));
-			if (e.execution_model == ExecutionModelGLCompute)
+			if (e.execution_model == ExecutionModelGLCompute || e.execution_model == spv::ExecutionModelMeshEXT ||
+			    e.execution_model == spv::ExecutionModelMeshNV || e.execution_model == spv::ExecutionModelTaskEXT ||
+			    e.execution_model == spv::ExecutionModelTaskNV)
 			{
 				const auto &spv_entry = get_entry_point(e.name, e.execution_model);
 
@@ -547,6 +555,7 @@ void CompilerReflection::emit_resources()
 	emit_resources("push_constants", res.push_constant_buffers);
 	emit_resources("counters", res.atomic_counters);
 	emit_resources("acceleration_structures", res.acceleration_structures);
+	emit_resources("tensors", res.tensors);
 }
 
 void CompilerReflection::emit_resources(const char *tag, const SmallVector<Resource> &resources)

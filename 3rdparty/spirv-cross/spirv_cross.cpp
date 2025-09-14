@@ -280,6 +280,9 @@ bool Compiler::block_is_pure(const SPIRBlock &block)
 			// This is a global side effect of the function.
 			return false;
 
+		case OpTensorReadARM:
+			return false;
+
 		case OpExtInst:
 		{
 			uint32_t extension_set = ops[2];
@@ -373,6 +376,7 @@ void Compiler::register_global_read_dependencies(const SPIRBlock &block, uint32_
 
 		case OpLoad:
 		case OpCooperativeMatrixLoadKHR:
+		case OpCooperativeVectorLoadNV:
 		case OpImageRead:
 		{
 			// If we're in a storage class which does not get invalidated, adding dependencies here is no big deal.
@@ -1152,6 +1156,11 @@ ShaderResources Compiler::get_shader_resources(const unordered_set<VariableID> *
 			{
 				res.acceleration_structures.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
 			}
+			// Tensors
+			else if (type.basetype == SPIRType::Tensor)
+			{
+				res.tensors.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
+			}
 			else
 			{
 				res.gl_plain_uniforms.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
@@ -1169,11 +1178,8 @@ bool Compiler::type_is_top_level_block(const SPIRType &type) const
 	return has_decoration(type.self, DecorationBlock) || has_decoration(type.self, DecorationBufferBlock);
 }
 
-bool Compiler::type_is_block_like(const SPIRType &type) const
+bool Compiler::type_is_explicit_layout(const SPIRType &type) const
 {
-	if (type_is_top_level_block(type))
-		return true;
-
 	if (type.basetype == SPIRType::Struct)
 	{
 		// Block-like types may have Offset decorations.
@@ -1183,6 +1189,14 @@ bool Compiler::type_is_block_like(const SPIRType &type) const
 	}
 
 	return false;
+}
+
+bool Compiler::type_is_block_like(const SPIRType &type) const
+{
+	if (type_is_top_level_block(type))
+		return true;
+	else
+		return type_is_explicit_layout(type);
 }
 
 void Compiler::parse_fixup()
@@ -2368,6 +2382,10 @@ void Compiler::set_execution_mode(ExecutionMode mode, uint32_t arg0, uint32_t ar
 
 	case ExecutionModeOutputPrimitivesEXT:
 		execution.output_primitives = arg0;
+		break;
+
+	case ExecutionModeFPFastMathDefault:
+		execution.fp_fast_math_defaults[arg0] = arg1;
 		break;
 
 	default:
@@ -4334,6 +4352,7 @@ bool Compiler::may_read_undefined_variable_in_block(const SPIRBlock &block, uint
 
 		case OpCopyObject:
 		case OpLoad:
+		case OpCooperativeVectorLoadNV:
 		case OpCooperativeMatrixLoadKHR:
 			if (ops[2] == var)
 				return true;
@@ -5151,7 +5170,7 @@ bool Compiler::is_depth_image(const SPIRType &type, uint32_t id) const
 bool Compiler::type_is_opaque_value(const SPIRType &type) const
 {
 	return !type.pointer && (type.basetype == SPIRType::SampledImage || type.basetype == SPIRType::Image ||
-	                         type.basetype == SPIRType::Sampler);
+	                         type.basetype == SPIRType::Sampler || type.basetype == SPIRType::Tensor);
 }
 
 // Make these member functions so we can easily break on any force_recompile events.
@@ -5469,6 +5488,7 @@ bool Compiler::InterlockedResourceAccessHandler::handle(Op opcode, const uint32_
 	{
 	case OpLoad:
 	case OpCooperativeMatrixLoadKHR:
+	case OpCooperativeVectorLoadNV:
 	{
 		if (length < 3)
 			return false;
@@ -5547,6 +5567,7 @@ bool Compiler::InterlockedResourceAccessHandler::handle(Op opcode, const uint32_
 	case OpImageWrite:
 	case OpAtomicStore:
 	case OpCooperativeMatrixStoreKHR:
+	case OpCooperativeVectorStoreNV:
 	{
 		if (length < 1)
 			return false;

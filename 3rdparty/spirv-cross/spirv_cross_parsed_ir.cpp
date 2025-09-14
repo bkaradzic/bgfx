@@ -452,6 +452,10 @@ void ParsedIR::set_decoration(ID id, Decoration decoration, uint32_t argument)
 		dec.fp_rounding_mode = static_cast<FPRoundingMode>(argument);
 		break;
 
+	case DecorationFPFastMathMode:
+		dec.fp_fast_math_mode = static_cast<FPFastMathModeMask>(argument);
+		break;
+
 	default:
 		break;
 	}
@@ -523,8 +527,27 @@ void ParsedIR::mark_used_as_array_length(ID id)
 	switch (ids[id].get_type())
 	{
 	case TypeConstant:
-		get<SPIRConstant>(id).is_used_as_array_length = true;
+	{
+		auto &c = get<SPIRConstant>(id);
+		c.is_used_as_array_length = true;
+
+		// Mark composite dependencies as well.
+		for (auto &sub_id: c.m.id)
+			if (sub_id)
+				mark_used_as_array_length(sub_id);
+
+		for (uint32_t col = 0; col < c.m.columns; col++)
+		{
+			for (auto &sub_id : c.m.c[col].id)
+				if (sub_id)
+					mark_used_as_array_length(sub_id);
+		}
+
+		for (auto &sub_id : c.subconstants)
+			if (sub_id)
+				mark_used_as_array_length(sub_id);
 		break;
+	}
 
 	case TypeConstantOp:
 	{
@@ -643,6 +666,8 @@ uint32_t ParsedIR::get_decoration(ID id, Decoration decoration) const
 		return dec.index;
 	case DecorationFPRoundingMode:
 		return dec.fp_rounding_mode;
+	case DecorationFPFastMathMode:
+		return dec.fp_fast_math_mode;
 	default:
 		return 1;
 	}
@@ -728,6 +753,10 @@ void ParsedIR::unset_decoration(ID id, Decoration decoration)
 
 	case DecorationFPRoundingMode:
 		dec.fp_rounding_mode = FPRoundingModeMax;
+		break;
+
+	case DecorationFPFastMathMode:
+		dec.fp_fast_math_mode = FPFastMathModeMaskNone;
 		break;
 
 	case DecorationHlslCounterBufferGOOGLE:

@@ -40,7 +40,7 @@ extern "C" {
 /* Bumped if ABI or API breaks backwards compatibility. */
 #define SPVC_C_API_VERSION_MAJOR 0
 /* Bumped if APIs or enumerations are added in a backwards compatible way. */
-#define SPVC_C_API_VERSION_MINOR 66
+#define SPVC_C_API_VERSION_MINOR 67
 /* Bumped if internal implementation details change. */
 #define SPVC_C_API_VERSION_PATCH 0
 
@@ -227,6 +227,7 @@ typedef enum spvc_resource_type
 	SPVC_RESOURCE_TYPE_RAY_QUERY = 13,
 	SPVC_RESOURCE_TYPE_SHADER_RECORD_BUFFER = 14,
 	SPVC_RESOURCE_TYPE_GL_PLAIN_UNIFORM = 15,
+	SPVC_RESOURCE_TYPE_TENSOR = 16,
 	SPVC_RESOURCE_TYPE_INT_MAX = 0x7fffffff
 } spvc_resource_type;
 

@@ -536,6 +536,7 @@ static void print_resources(const Compiler &compiler, const ShaderResources &res
 	print_resources(compiler, "push", res.push_constant_buffers);
 	print_resources(compiler, "counters", res.atomic_counters);
 	print_resources(compiler, "acceleration structures", res.acceleration_structures);
+	print_resources(compiler, "tensors", res.tensors);
 	print_resources(compiler, "record buffers", res.shader_record_buffers);
 	print_resources(compiler, spv::StorageClassInput, res.builtin_inputs);
 	print_resources(compiler, spv::StorageClassOutput, res.builtin_outputs);

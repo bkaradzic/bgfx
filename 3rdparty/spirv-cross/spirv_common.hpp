@@ -574,6 +574,7 @@ struct SPIRType : IVariant
 		Sampler,
 		AccelerationStructure,
 		RayQuery,
+		CoopVecNV,
 
 		// Keep internal types at the end.
 		ControlPointArray,
@@ -581,7 +582,11 @@ struct SPIRType : IVariant
 		Char,
 		// MSL specific type, that is used by 'object'(analog of 'task' from glsl) shader.
 		MeshGridProperties,
-		BFloat16
+		BFloat16,
+		FloatE4M3,
+		FloatE5M2,
+
+		Tensor
 	};
 
 	// Scalar/vector/matrix support.
@@ -606,13 +611,29 @@ struct SPIRType : IVariant
 	bool pointer = false;
 	bool forward_pointer = false;
 
-	struct
+	union
 	{
-		uint32_t use_id = 0;
-		uint32_t rows_id = 0;
-		uint32_t columns_id = 0;
-		uint32_t scope_id = 0;
-	} cooperative;
+		struct
+		{
+			uint32_t use_id;
+			uint32_t rows_id;
+			uint32_t columns_id;
+			uint32_t scope_id;
+		} cooperative;
+
+		struct
+		{
+			uint32_t component_type_id;
+			uint32_t component_count_id;
+		} coopVecNV;
+
+		struct
+		{
+			uint32_t type;
+			uint32_t rank;
+			uint32_t shape;
+		} tensor;
+	} ext;
 
 	spv::StorageClass storage = spv::StorageClassGeneric;
 
@@ -670,6 +691,12 @@ struct SPIRExtension : IVariant
 		NonSemanticGeneric
 	};
 
+	enum ShaderDebugInfoOps
+	{
+		DebugLine = 103,
+		DebugSource = 35
+	};
+
 	explicit SPIRExtension(Extension ext_)
 	    : ext(ext_)
 	{
@@ -695,6 +722,11 @@ struct SPIREntryPoint
 	FunctionID self = 0;
 	std::string name;
 	std::string orig_name;
+	std::unordered_map<uint32_t, uint32_t> fp_fast_math_defaults;
+	bool signed_zero_inf_nan_preserve_8 = false;
+	bool signed_zero_inf_nan_preserve_16 = false;
+	bool signed_zero_inf_nan_preserve_32 = false;
+	bool signed_zero_inf_nan_preserve_64 = false;
 	SmallVector<VariableID> interface_variables;
 
 	Bitset flags;
@@ -927,6 +959,7 @@ struct SPIRBlock : IVariant
 	// All access to these variables are dominated by this block,
 	// so before branching anywhere we need to make sure that we declare these variables.
 	SmallVector<VariableID> dominated_variables;
+	SmallVector<bool> rearm_dominated_variables;
 
 	// These are variables which should be declared in a for loop header, if we
 	// fail to use a classic for-loop,
@@ -1238,6 +1271,26 @@ struct SPIRConstant : IVariant
 		return u.f32;
 	}
 
+	static inline float fe4m3_to_f32(uint8_t v)
+	{
+		if ((v & 0x7f) == 0x7f)
+		{
+			union
+			{
+				float f32;
+				uint32_t u32;
+			} u;
+
+			u.u32 = (v & 0x80) ? 0xffffffffu : 0x7fffffffu;
+			return u.f32;
+		}
+		else
+		{
+			// Reuse the FP16 to FP32 code. Cute bit-hackery.
+			return f16_to_f32((int16_t(int8_t(v)) << 7) & (0xffff ^ 0x4000)) * 256.0f;
+		}
+	}
+
 	inline uint32_t specialization_constant_id(uint32_t col, uint32_t row) const
 	{
 		return m.c[col].id[row];
@@ -1284,6 +1337,16 @@ struct SPIRConstant : IVariant
 		float fp32;
 		memcpy(&fp32, &v, sizeof(float));
 		return fp32;
+	}
+
+	inline float scalar_floate4m3(uint32_t col = 0, uint32_t row = 0) const
+	{
+		return fe4m3_to_f32(scalar_u8(col, row));
+	}
+
+	inline float scalar_bf8(uint32_t col = 0, uint32_t row = 0) const
+	{
+		return f16_to_f32(scalar_u8(col, row) << 8);
 	}
 
 	inline float scalar_f32(uint32_t col = 0, uint32_t row = 0) const
@@ -1356,9 +1419,10 @@ struct SPIRConstant : IVariant
 
 	SPIRConstant() = default;
 
-	SPIRConstant(TypeID constant_type_, const uint32_t *elements, uint32_t num_elements, bool specialized)
+	SPIRConstant(TypeID constant_type_, const uint32_t *elements, uint32_t num_elements, bool specialized, bool replicated_ = false)
 	    : constant_type(constant_type_)
 	    , specialization(specialized)
+	    , replicated(replicated_)
 	{
 		subconstants.reserve(num_elements);
 		for (uint32_t i = 0; i < num_elements; i++)
@@ -1436,6 +1500,9 @@ struct SPIRConstant : IVariant
 
 	// For composites which are constant arrays, etc.
 	SmallVector<ConstantID> subconstants;
+
+	// Whether the subconstants are intended to be replicated (e.g. OpConstantCompositeReplicateEXT)
+	bool replicated = false;
 
 	// Non-Vulkan GLSL, HLSL and sometimes MSL emits defines for each specialization constant,
 	// and uses them to initialize the constant. This allows the user
@@ -1732,6 +1799,7 @@ struct Meta
 		uint32_t spec_id = 0;
 		uint32_t index = 0;
 		spv::FPRoundingMode fp_rounding_mode = spv::FPRoundingModeMax;
+		spv::FPFastMathModeMask fp_fast_math_mode = spv::FPFastMathModeMaskNone;
 		bool builtin = false;
 		bool qualified_alias_explicit_override = false;
 
@@ -1787,7 +1855,8 @@ private:
 
 static inline bool type_is_floating_point(const SPIRType &type)
 {
-	return type.basetype == SPIRType::Half || type.basetype == SPIRType::Float || type.basetype == SPIRType::Double;
+	return type.basetype == SPIRType::Half || type.basetype == SPIRType::Float || type.basetype == SPIRType::Double ||
+	       type.basetype == SPIRType::BFloat16 || type.basetype == SPIRType::FloatE5M2 || type.basetype == SPIRType::FloatE4M3;
 }
 
 static inline bool type_is_integral(const SPIRType &type)

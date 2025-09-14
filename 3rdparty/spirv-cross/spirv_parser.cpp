@@ -213,8 +213,8 @@ void Parser::parse(const Instruction &instruction)
 
 	case OpSource:
 	{
-		auto lang = static_cast<SourceLanguage>(ops[0]);
-		switch (lang)
+		ir.source.lang = static_cast<SourceLanguage>(ops[0]);
+		switch (ir.source.lang)
 		{
 		case SourceLanguageESSL:
 			ir.source.es = true;
@@ -318,6 +318,19 @@ void Parser::parse(const Instruction &instruction)
 					ir.load_type_width.insert({ ops[1], type->width });
 			}
 		}
+		else if (op == OpExtInst)
+		{
+			// Don't want to deal with ForwardRefs here.
+
+			auto &ext = get<SPIRExtension>(ops[2]);
+			if (ext.ext == SPIRExtension::NonSemanticShaderDebugInfo)
+			{
+				// Parse global ShaderDebugInfo we care about.
+				// Just forward the string information.
+				if (ops[3] == SPIRExtension::DebugSource)
+					set<SPIRString>(ops[1], get<SPIRString>(ops[4]).str);
+			}
+		}
 		break;
 	}
 
@@ -369,6 +382,30 @@ void Parser::parse(const Instruction &instruction)
 			execution.output_primitives = ops[2];
 			break;
 
+		case ExecutionModeSignedZeroInfNanPreserve:
+			switch (ops[2])
+			{
+			case 8:
+				execution.signed_zero_inf_nan_preserve_8 = true;
+				break;
+
+			case 16:
+				execution.signed_zero_inf_nan_preserve_16 = true;
+				break;
+
+			case 32:
+				execution.signed_zero_inf_nan_preserve_32 = true;
+				break;
+
+			case 64:
+				execution.signed_zero_inf_nan_preserve_64 = true;
+				break;
+
+			default:
+				SPIRV_CROSS_THROW("Invalid bit-width for SignedZeroInfNanPreserve.");
+			}
+			break;
+
 		default:
 			break;
 		}
@@ -381,13 +418,21 @@ void Parser::parse(const Instruction &instruction)
 		auto mode = static_cast<ExecutionMode>(ops[1]);
 		execution.flags.set(mode);
 
-		if (mode == ExecutionModeLocalSizeId)
+		switch (mode)
 		{
+		case ExecutionModeLocalSizeId:
 			execution.workgroup_size.id_x = ops[2];
 			execution.workgroup_size.id_y = ops[3];
 			execution.workgroup_size.id_z = ops[4];
-		}
+			break;
 
+		case ExecutionModeFPFastMathDefault:
+			execution.fp_fast_math_defaults[ops[2]] = ops[3];
+			break;
+
+		default:
+			break;
+		}
 		break;
 	}
 
@@ -538,7 +583,7 @@ void Parser::parse(const Instruction &instruction)
 		uint32_t width = ops[1];
 		auto &type = set<SPIRType>(id, op);
 
-		if (width != 16 && length > 2)
+		if (width != 16 && width != 8 && length > 2)
 			SPIRV_CROSS_THROW("Unrecognized FP encoding mode for OpTypeFloat.");
 
 		if (width == 64)
@@ -556,6 +601,17 @@ void Parser::parse(const Instruction &instruction)
 			}
 			else
 				type.basetype = SPIRType::Half;
+		}
+		else if (width == 8)
+		{
+			if (length < 2)
+				SPIRV_CROSS_THROW("Missing encoding for OpTypeFloat 8.");
+			else if (ops[2] == spv::FPEncodingFloat8E4M3EXT)
+				type.basetype = SPIRType::FloatE4M3;
+			else if (ops[2] == spv::FPEncodingFloat8E5M2EXT)
+				type.basetype = SPIRType::FloatE5M2;
+			else
+				SPIRV_CROSS_THROW("Invalid encoding for OpTypeFloat 8.");
 		}
 		else
 			SPIRV_CROSS_THROW("Unrecognized bit-width of floating point type.");
@@ -614,12 +670,30 @@ void Parser::parse(const Instruction &instruction)
 		auto &matrixbase = set<SPIRType>(id, base);
 
 		matrixbase.op = op;
-		matrixbase.cooperative.scope_id = ops[2];
-		matrixbase.cooperative.rows_id = ops[3];
-		matrixbase.cooperative.columns_id = ops[4];
-		matrixbase.cooperative.use_id = ops[5];
+		matrixbase.ext.cooperative.scope_id = ops[2];
+		matrixbase.ext.cooperative.rows_id = ops[3];
+		matrixbase.ext.cooperative.columns_id = ops[4];
+		matrixbase.ext.cooperative.use_id = ops[5];
 		matrixbase.self = id;
 		matrixbase.parent_type = ops[1];
+		break;
+	}
+
+	case OpTypeCooperativeVectorNV:
+	{
+		uint32_t id = ops[0];
+		auto &type = set<SPIRType>(id, op);
+
+		type.basetype = SPIRType::CoopVecNV;
+		type.op = op;
+		type.ext.coopVecNV.component_type_id = ops[1];
+		type.ext.coopVecNV.component_count_id = ops[2];
+		type.parent_type = ops[1];
+
+		// CoopVec-Nv can be used with integer operations like SMax where
+		// where spirv-opt does explicit checks on integer bitwidth
+		auto component_type = get<SPIRType>(type.ext.coopVecNV.component_type_id);
+		type.width = component_type.width;
 		break;
 	}
 
@@ -820,6 +894,20 @@ void Parser::parse(const Instruction &instruction)
 		break;
 	}
 
+	case OpTypeTensorARM:
+	{
+		uint32_t id = ops[0];
+		auto &type = set<SPIRType>(id, op);
+		type.basetype = SPIRType::Tensor;
+		type.ext.tensor = {};
+		type.ext.tensor.type = ops[1];
+		if (length >= 3)
+			type.ext.tensor.rank = ops[2];
+		if (length >= 4)
+			type.ext.tensor.shape = ops[3];
+		break;
+	}
+
 	// Variable declaration
 	// All variables are essentially pointers with a storage qualifier.
 	case OpVariable:
@@ -866,17 +954,27 @@ void Parser::parse(const Instruction &instruction)
 		break;
 	}
 
-		// Constants
+	// Constants
 	case OpSpecConstant:
 	case OpConstant:
+	case OpConstantCompositeReplicateEXT:
+	case OpSpecConstantCompositeReplicateEXT:
 	{
 		uint32_t id = ops[1];
 		auto &type = get<SPIRType>(ops[0]);
-
-		if (type.width > 32)
-			set<SPIRConstant>(id, ops[0], ops[2] | (uint64_t(ops[3]) << 32), op == OpSpecConstant);
+		if (op == OpConstantCompositeReplicateEXT || op == OpSpecConstantCompositeReplicateEXT)
+		{
+			auto subconstant = uint32_t(ops[2]);
+			set<SPIRConstant>(id, ops[0], &subconstant, 1, op == OpSpecConstantCompositeReplicateEXT, true);
+		}
 		else
-			set<SPIRConstant>(id, ops[0], ops[2], op == OpSpecConstant);
+		{
+
+			if (type.width > 32)
+				set<SPIRConstant>(id, ops[0], ops[2] | (uint64_t(ops[3]) << 32), op == OpSpecConstant);
+			else
+				set<SPIRConstant>(id, ops[0], ops[2], op == OpSpecConstant);
+		}
 		break;
 	}
 
