@@ -22,14 +22,14 @@ extern "C" {
 // vulkan_video_codec_vp9std is a preprocessor guard. Do not pass it to API calls.
 #define vulkan_video_codec_vp9std 1
 #include "vulkan_video_codecs_common.h"
-#define STD_VIDEO_VP9_NUM_REF_FRAMES      8
-#define STD_VIDEO_VP9_REFS_PER_FRAME      3
-#define STD_VIDEO_VP9_MAX_REF_FRAMES      4
-#define STD_VIDEO_VP9_LOOP_FILTER_ADJUSTMENTS 2
-#define STD_VIDEO_VP9_MAX_SEGMENTS        8
-#define STD_VIDEO_VP9_SEG_LVL_MAX         4
-#define STD_VIDEO_VP9_MAX_SEGMENTATION_TREE_PROBS 7
-#define STD_VIDEO_VP9_MAX_SEGMENTATION_PRED_PROB 3
+#define STD_VIDEO_VP9_NUM_REF_FRAMES      8U
+#define STD_VIDEO_VP9_REFS_PER_FRAME      3U
+#define STD_VIDEO_VP9_MAX_REF_FRAMES      4U
+#define STD_VIDEO_VP9_LOOP_FILTER_ADJUSTMENTS 2U
+#define STD_VIDEO_VP9_MAX_SEGMENTS        8U
+#define STD_VIDEO_VP9_SEG_LVL_MAX         4U
+#define STD_VIDEO_VP9_MAX_SEGMENTATION_TREE_PROBS 7U
+#define STD_VIDEO_VP9_MAX_SEGMENTATION_PRED_PROB 3U
 
 typedef enum StdVideoVP9Profile {
     STD_VIDEO_VP9_PROFILE_0 = 0,
