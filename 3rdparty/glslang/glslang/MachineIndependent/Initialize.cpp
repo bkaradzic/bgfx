@@ -4025,6 +4025,47 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "bf16vec3   uintBitsToBFloat16EXT(u16vec3 value);"
             "bf16vec4   uintBitsToBFloat16EXT(u16vec4 value);"
 
+            "int8_t  floate5m2BitsToIntEXT(floate5m2_t value);"
+            "i8vec2  floate5m2BitsToIntEXT(fe5m2vec2 value);"
+            "i8vec3  floate5m2BitsToIntEXT(fe5m2vec3 value);"
+            "i8vec4  floate5m2BitsToIntEXT(fe5m2vec4 value);"
+
+            "uint8_t floate5m2BitsToUintEXT(floate5m2_t value);"
+            "u8vec2  floate5m2BitsToUintEXT(fe5m2vec2 value);"
+            "u8vec3  floate5m2BitsToUintEXT(fe5m2vec3 value);"
+            "u8vec4  floate5m2BitsToUintEXT(fe5m2vec4 value);"
+
+            "floate5m2_t intBitsToFloate5m2EXT(int8_t value);"
+            "fe5m2vec2   intBitsToFloate5m2EXT(i8vec2 value);"
+            "fe5m2vec3   intBitsToFloate5m2EXT(i8vec3 value);"
+            "fe5m2vec4   intBitsToFloate5m2EXT(i8vec4 value);"
+
+            "floate5m2_t uintBitsToFloate5m2EXT(uint8_t value);"
+            "fe5m2vec2   uintBitsToFloate5m2EXT(u8vec2 value);"
+            "fe5m2vec3   uintBitsToFloate5m2EXT(u8vec3 value);"
+            "fe5m2vec4   uintBitsToFloate5m2EXT(u8vec4 value);"
+
+            "int8_t  floate4m3BitsToIntEXT(floate4m3_t value);"
+            "i8vec2  floate4m3BitsToIntEXT(fe4m3vec2 value);"
+            "i8vec3  floate4m3BitsToIntEXT(fe4m3vec3 value);"
+            "i8vec4  floate4m3BitsToIntEXT(fe4m3vec4 value);"
+
+            "uint8_t floate4m3BitsToUintEXT(floate4m3_t value);"
+            "u8vec2  floate4m3BitsToUintEXT(fe4m3vec2 value);"
+            "u8vec3  floate4m3BitsToUintEXT(fe4m3vec3 value);"
+            "u8vec4  floate4m3BitsToUintEXT(fe4m3vec4 value);"
+
+            "floate4m3_t intBitsToFloate4m3EXT(int8_t value);"
+            "fe4m3vec2   intBitsToFloate4m3EXT(i8vec2 value);"
+            "fe4m3vec3   intBitsToFloate4m3EXT(i8vec3 value);"
+            "fe4m3vec4   intBitsToFloate4m3EXT(i8vec4 value);"
+
+            "floate4m3_t uintBitsToFloate4m3EXT(uint8_t value);"
+            "fe4m3vec2   uintBitsToFloate4m3EXT(u8vec2 value);"
+            "fe4m3vec3   uintBitsToFloate4m3EXT(u8vec3 value);"
+            "fe4m3vec4   uintBitsToFloate4m3EXT(u8vec4 value);"
+
+            "void saturatedConvertEXT();"
             "\n");
     }
 
@@ -4777,6 +4818,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "float", "vec2", "vec4",
                 "float16_t", "f16vec2", "f16vec4",
                 "bfloat16_t", "bf16vec2", "bf16vec4",
+                "floate5m2_t", "fe5m2vec2", "fe5m2vec4",
+                "floate4m3_t", "fe4m3vec2", "fe4m3vec4",
                 "double", "dvec2", "dvec4",
                 "int8_t", "i8vec2", "i8vec4",
                 "int16_t", "i16vec2", "i16vec4",
@@ -4841,6 +4884,31 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n"
             );
 
+        {
+          std::stringstream coopMatConvFuncs;
+
+          const std::string eltTypes[] = {"uint32_t", "uint", "int32_t", "int", "float32_t", "float", "float16_t"};
+
+          for (auto srcEltTy : eltTypes) {
+            for (auto dstEltTy : eltTypes) {
+              coopMatConvFuncs << "void bitcastQCOM(" << srcEltTy.c_str() << " SrcArr[], " << dstEltTy.c_str()
+                << " DstArr[]);\n";
+            }
+          }
+          coopMatConvFuncs << "\n";
+
+          for (auto eltTy : {"float32_t", "float16_t", "int8_t", "uint8_t", "uint32_t", "uint", "int32_t", "int"}) {
+            coopMatConvFuncs << "void vectorToCoopmatQCOM(" << eltTy << " SrcVec[], coopmat CM);\n";
+            coopMatConvFuncs << "void coopmatToVectorQCOM(coopmat CM, " << eltTy << " Dstvec[]);\n";
+          }
+
+          for (auto eltTy : {"uint32_t", "uint", "int32_t", "int", "float32_t", "float", "float16_t"}) {
+            coopMatConvFuncs << "void extractSubArrayQCOM(" << eltTy << " arr[], uint index, " << eltTy << " subarr[]);\n";
+          }
+
+          commonBuiltins.append(coopMatConvFuncs.str().c_str());
+        }
+
         commonBuiltins.append(
             "tensorLayoutNV createTensorLayoutNV(uint Dim);\n"
             "tensorLayoutNV createTensorLayoutNV(uint Dim, uint Mode);\n"
@@ -4894,6 +4962,29 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "tensorViewNV setTensorViewClipNV(tensorViewNV v, uint clipRowOffset, uint clipRowSpan, uint clipColOffset, uint clipColSpan);\n"
             "\n"
         );
+
+        // GL_ARM_tensors builtins.
+        static const char *tensorDataTypesARM[] = {
+            "bool",
+            "int8_t", "int16_t", "int32_t", "int64_t",
+            "uint8_t", "uint16_t", "uint32_t", "uint64_t",
+            "float16_t", "float32_t", "float64_t",
+        };
+        std::ostringstream ostream;
+        for (auto t : tensorDataTypesARM) {
+            // Scalar
+            ostream << "void tensorReadARM(readonly tensorARM t, uint coords[], out "
+                    << t << " data, uint tensorOperands = 0U, ...);\n";
+            ostream << "void tensorWriteARM(writeonly tensorARM t, uint coords[], "
+                    << t << " data, uint tensorOperands = 0U, ...);\n";
+            // Array
+            ostream << "void tensorReadARM(readonly tensorARM t, uint coords[], "
+                    << t << " data[], uint tensorOperands = 0U, ...);\n";
+            ostream << "void tensorWriteARM(writeonly tensorARM t, uint coords[], "
+                    << t << " data[], uint tensorOperands = 0U, ...);\n";
+        }
+        ostream << "uint tensorSizeARM(readonly writeonly tensorARM t, uint dim);\n";
+        commonBuiltins.append(ostream.str());
     }
 
     if (profile != EEsProfile && version >= 450) {
@@ -8285,6 +8376,12 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
         snprintf(builtInConstant, maxSize, "const int gl_MaxComputeTextureImageUnits = %d;", resources.maxComputeTextureImageUnits);
         s.append(builtInConstant);
 
+        // GL_ARM_tensors operands.
+        snprintf(builtInConstant, maxSize, "const uint gl_TensorOperandsNonTemporalARM = 0x1U;");
+        s.append(builtInConstant);
+        snprintf(builtInConstant, maxSize, "const uint gl_TensorOperandsOutOfBoundsValueARM = 0x2U;");
+        s.append(builtInConstant);
+
         s.append("\n");
     }
 
@@ -9707,10 +9804,23 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         }
 
         {
+            symbolTable.setFunctionExtensions("tensorReadARM",   1, &E_GL_ARM_tensors);
+            symbolTable.setFunctionExtensions("tensorWriteARM",  1, &E_GL_ARM_tensors);
+            symbolTable.setFunctionExtensions("tensorSizeARM",   1, &E_GL_ARM_tensors);
+        }
+
+        {
             symbolTable.setFunctionExtensions("coopVecMatMulNV",                    1, &E_GL_NV_cooperative_vector);
             symbolTable.setFunctionExtensions("coopVecMatMulAddNV",                 1, &E_GL_NV_cooperative_vector);
             symbolTable.setFunctionExtensions("coopVecOuterProductAccumulateNV",    1, &E_GL_NV_cooperative_vector);
             symbolTable.setFunctionExtensions("coopVecReduceSumAccumulateNV",       1, &E_GL_NV_cooperative_vector);
+        }
+
+        {
+          symbolTable.setFunctionExtensions("bitcastQCOM", 1, &E_GL_QCOM_cooperative_matrix_conversion);
+          symbolTable.setFunctionExtensions("extractSubArrayQCOM", 1, &E_GL_QCOM_cooperative_matrix_conversion);
+          symbolTable.setFunctionExtensions("vectorToCoopmatQCOM", 1, &E_GL_QCOM_cooperative_matrix_conversion);
+          symbolTable.setFunctionExtensions("coopmatToVectorQCOM", 1, &E_GL_QCOM_cooperative_matrix_conversion);
         }
 
         if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
@@ -9752,6 +9862,19 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("bfloat16BitsToUintEXT", 1, &E_GL_EXT_bfloat16);
             symbolTable.setFunctionExtensions("intBitsToBFloat16EXT", 1, &E_GL_EXT_bfloat16);
             symbolTable.setFunctionExtensions("uintBitsToBFloat16EXT", 1, &E_GL_EXT_bfloat16);
+
+            symbolTable.setFunctionExtensions("floate5m2BitsToIntEXT", 1, &E_GL_EXT_float_e5m2);
+            symbolTable.setFunctionExtensions("floate5m2BitsToUintEXT", 1, &E_GL_EXT_float_e5m2);
+            symbolTable.setFunctionExtensions("intBitsToFloate5m2EXT", 1, &E_GL_EXT_float_e5m2);
+            symbolTable.setFunctionExtensions("uintBitsToFloate5m2EXT", 1, &E_GL_EXT_float_e5m2);
+
+            symbolTable.setFunctionExtensions("floate4m3BitsToIntEXT", 1, &E_GL_EXT_float_e4m3);
+            symbolTable.setFunctionExtensions("floate4m3BitsToUintEXT", 1, &E_GL_EXT_float_e4m3);
+            symbolTable.setFunctionExtensions("intBitsToFloate4m3EXT", 1, &E_GL_EXT_float_e4m3);
+            symbolTable.setFunctionExtensions("uintBitsToFloate4m3EXT", 1, &E_GL_EXT_float_e4m3);
+
+            const char *float8exts[] = {E_GL_EXT_float_e5m2, E_GL_EXT_float_e4m3};
+            symbolTable.setFunctionExtensions("saturatedConvertEXT", 2, float8exts);
         }
 
         // E_SPV_QCOM_tile_shading
@@ -10750,6 +10873,18 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.relateToOperator("bfloat16BitsToUintEXT", EOpFloatBitsToUint);
             symbolTable.relateToOperator("intBitsToBFloat16EXT",  EOpIntBitsToFloat);
             symbolTable.relateToOperator("uintBitsToBFloat16EXT", EOpUintBitsToFloat);
+
+            symbolTable.relateToOperator("floate5m2BitsToIntEXT",  EOpFloatBitsToInt);
+            symbolTable.relateToOperator("floate5m2BitsToUintEXT", EOpFloatBitsToUint);
+            symbolTable.relateToOperator("intBitsToFloate5m2EXT",  EOpIntBitsToFloat);
+            symbolTable.relateToOperator("uintBitsToFloate5m2EXT", EOpUintBitsToFloat);
+
+            symbolTable.relateToOperator("floate4m3BitsToIntEXT",  EOpFloatBitsToInt);
+            symbolTable.relateToOperator("floate4m3BitsToUintEXT", EOpFloatBitsToUint);
+            symbolTable.relateToOperator("intBitsToFloate4m3EXT",  EOpIntBitsToFloat);
+            symbolTable.relateToOperator("uintBitsToFloate4m3EXT", EOpUintBitsToFloat);
+
+            symbolTable.relateToOperator("saturatedConvertEXT", EOpConstructSaturated);
         }
 
         // GL_KHR_shader_subgroup
@@ -10996,6 +11131,15 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         symbolTable.relateToOperator("setTensorViewDimensionsNV",    EOpTensorViewSetDimensionNV);
         symbolTable.relateToOperator("setTensorViewStrideNV",        EOpTensorViewSetStrideNV);
         symbolTable.relateToOperator("setTensorViewClipNV",          EOpTensorViewSetClipNV);
+
+        symbolTable.relateToOperator("tensorReadARM",                EOpTensorReadARM);
+        symbolTable.relateToOperator("tensorWriteARM",               EOpTensorWriteARM);
+        symbolTable.relateToOperator("tensorSizeARM",                EOpTensorSizeARM);
+
+        symbolTable.relateToOperator("bitcastQCOM", EOpBitCastArrayQCOM);
+        symbolTable.relateToOperator("extractSubArrayQCOM", EOpExtractSubArrayQCOM);
+        symbolTable.relateToOperator("vectorToCoopmatQCOM", EOpCompositeConstructCoopMatQCOM);
+        symbolTable.relateToOperator("coopmatToVectorQCOM", EOpCompositeExtractCoopMatQCOM);
 
         if (profile != EEsProfile && version >= 460) {
             symbolTable.relateToOperator("fetchMicroTriangleVertexPositionNV", EOpFetchMicroTriangleVertexPositionNV);

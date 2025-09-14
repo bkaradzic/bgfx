@@ -629,6 +629,14 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpConstructBF16Vec2:  out.debug << "Construct bf16vec2";   break;
     case EOpConstructBF16Vec3:  out.debug << "Construct bf16vec3";   break;
     case EOpConstructBF16Vec4:  out.debug << "Construct bf16vec4";   break;
+    case EOpConstructFloatE5M2:  out.debug << "Construct floate5m2_t"; break;
+    case EOpConstructFloatE5M2Vec2:  out.debug << "Construct fe5m2vec2";   break;
+    case EOpConstructFloatE5M2Vec3:  out.debug << "Construct fe5m2vec3";   break;
+    case EOpConstructFloatE5M2Vec4:  out.debug << "Construct fe5m2vec4";   break;
+    case EOpConstructFloatE4M3:  out.debug << "Construct floate4m3_t"; break;
+    case EOpConstructFloatE4M3Vec2:  out.debug << "Construct fe4m3vec2";   break;
+    case EOpConstructFloatE4M3Vec3:  out.debug << "Construct fe4m3vec3";   break;
+    case EOpConstructFloatE4M3Vec4:  out.debug << "Construct fe4m3vec4";   break;
     case EOpConstructFloat16:   out.debug << "Construct float16_t"; break;
     case EOpConstructF16Vec2:   out.debug << "Construct f16vec2";   break;
     case EOpConstructF16Vec3:   out.debug << "Construct f16vec3";   break;
@@ -649,6 +657,11 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpConstructCooperativeMatrixKHR:  out.debug << "Construct cooperative matrix KHR";  break;
     case EOpConstructCooperativeVectorNV:  out.debug << "Construct cooperative vector NV";  break;
     case EOpConstructAccStruct: out.debug << "Construct acceleration structure"; break;
+
+    case EOpBitCastArrayQCOM:              out.debug << "Bitcast To Array QCOM"; break;
+    case EOpExtractSubArrayQCOM:           out.debug << "Extract Subarray QCOM"; break;
+    case EOpCompositeConstructCoopMatQCOM:   out.debug << "Construct Cooperative Matrix QCOM"; break;
+    case EOpCompositeExtractCoopMatQCOM:     out.debug << "Extract Cooperative Matrix QCOM"; break;
 
     case EOpLessThan:         out.debug << "Compare Less Than";             break;
     case EOpGreaterThan:      out.debug << "Compare Greater Than";          break;
@@ -975,6 +988,10 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpCooperativeVectorOuterProductAccumulateNV: out.debug << "Cooperative vector outer product accumulate NV"; break;
     case EOpCooperativeVectorReduceSumAccumulateNV: out.debug << "Cooperative vector reduce sum accumulate NV"; break;
 
+    case EOpTensorReadARM:   out.debug << "Read from tensor";  break;
+    case EOpTensorWriteARM:  out.debug << "Write to tensor";  break;
+    case EOpTensorSizeARM:   out.debug << "Get tensor size";  break;
+
     case EOpIsHelperInvocation: out.debug << "IsHelperInvocation"; break;
     case EOpDebugPrintf:  out.debug << "Debug printf";  break;
 
@@ -1164,6 +1181,8 @@ static void OutputConstantUnion(TInfoSink& out, const TIntermTyped* node, const 
         case EbtDouble:
         case EbtFloat16:
         case EbtBFloat16:
+        case EbtFloatE5M2:
+        case EbtFloatE4M3:
             OutputDouble(out, constUnion[i].getDConst(), extra);
             out.debug << "\n";
             break;
