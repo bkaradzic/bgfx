@@ -636,6 +636,7 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
     } break;
 
     case SPV_OPERAND_TYPE_CAPABILITY:
+    case SPV_OPERAND_TYPE_OPTIONAL_CAPABILITY:
     case SPV_OPERAND_TYPE_EXECUTION_MODEL:
     case SPV_OPERAND_TYPE_ADDRESSING_MODEL:
     case SPV_OPERAND_TYPE_MEMORY_MODEL:
@@ -689,6 +690,8 @@ spv_result_t Parser::parseOperand(size_t inst_offset,
         parsed_operand.type = SPV_OPERAND_TYPE_PACKED_VECTOR_FORMAT;
       if (type == SPV_OPERAND_TYPE_OPTIONAL_FPENCODING)
         parsed_operand.type = SPV_OPERAND_TYPE_FPENCODING;
+      if (type == SPV_OPERAND_TYPE_OPTIONAL_CAPABILITY)
+        parsed_operand.type = SPV_OPERAND_TYPE_CAPABILITY;
 
       const spvtools::OperandDesc* entry = nullptr;
       if (spvtools::LookupOperand(type, word, &entry)) {
@@ -853,7 +856,7 @@ void Parser::recordNumberType(size_t inst_offset,
       info.type = SPV_NUMBER_FLOATING;
       info.bit_width = peekAt(inst_offset + 2);
       if (inst->num_words >= 4) {
-        const spvtools::OperandDesc* desc;
+        const spvtools::OperandDesc* desc = nullptr;
         spv_result_t status = spvtools::LookupOperand(
             SPV_OPERAND_TYPE_FPENCODING, peekAt(inst_offset + 3), &desc);
         if (status == SPV_SUCCESS) {

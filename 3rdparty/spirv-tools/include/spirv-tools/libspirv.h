@@ -80,6 +80,8 @@ typedef enum spv_result_t {
   SPV_ERROR_INVALID_DATA = -14,  // Indicates data rules validation failure.
   SPV_ERROR_MISSING_EXTENSION = -15,
   SPV_ERROR_WRONG_VERSION = -16,  // Indicates wrong SPIR-V version
+  SPV_ERROR_FNVAR =
+      -17,  // Error related to SPV_INTEL_function_variants extension
   SPV_FORCE_32_BIT_ENUM(spv_result_t)
 } spv_result_t;
 
@@ -189,36 +191,24 @@ typedef enum spv_operand_type_t {
   SPV_OPERAND_TYPE_MEMORY_ACCESS,          // SPIR-V Sec 3.26
   SPV_OPERAND_TYPE_FRAGMENT_SHADING_RATE,  // SPIR-V Sec 3.FSR
 
-// NOTE: New concrete enum values should be added at the end.
+  // NOTE: New concrete enum values should be added at the end.
 
-// The "optional" and "variable"  operand types are only used internally by
-// the assembler and the binary parser.
-// There are two categories:
-//    Optional : expands to 0 or 1 operand, like ? in regular expressions.
-//    Variable : expands to 0, 1 or many operands or pairs of operands.
-//               This is similar to * in regular expressions.
+  // The "optional" and "variable"  operand types are only used internally by
+  // the assembler and the binary parser.
+  // There are two categories:
+  //    Optional : expands to 0 or 1 operand, like ? in regular expressions.
+  //    Variable : expands to 0, 1 or many operands or pairs of operands.
+  //               This is similar to * in regular expressions.
 
-// NOTE: These FIRST_* and LAST_* enum values are DEPRECATED.
-// The concept of "optional" and "variable" operand types are only intended
-// for use as an implementation detail of parsing SPIR-V, either in text or
-// binary form.  Instead of using enum ranges, use characteristic function
-// spvOperandIsConcrete.
-// The use of enum value ranges in a public API makes it difficult to insert
-// new values into a range without also breaking binary compatibility.
-//
-// Macros for defining bounds on optional and variable operand types.
-// Any variable operand type is also optional.
-// TODO(dneto): Remove SPV_OPERAND_TYPE_FIRST_* and SPV_OPERAND_TYPE_LAST_*
-#define FIRST_OPTIONAL(ENUM) ENUM, SPV_OPERAND_TYPE_FIRST_OPTIONAL_TYPE = ENUM
-#define FIRST_VARIABLE(ENUM) ENUM, SPV_OPERAND_TYPE_FIRST_VARIABLE_TYPE = ENUM
-#define LAST_VARIABLE(ENUM)                         \
-  ENUM, SPV_OPERAND_TYPE_LAST_VARIABLE_TYPE = ENUM, \
-        SPV_OPERAND_TYPE_LAST_OPTIONAL_TYPE = ENUM
+  // Use characteristic function spvOperandIsConcrete to classify the
+  // operand types; when it returns false, the operand is optional or variable.
+  //
+  // Any variable operand type is also optional.
 
   // An optional operand represents zero or one logical operands.
   // In an instruction definition, this may only appear at the end of the
   // operand types.
-  FIRST_OPTIONAL(SPV_OPERAND_TYPE_OPTIONAL_ID),
+  SPV_OPERAND_TYPE_OPTIONAL_ID,
   // An optional image operand type.
   SPV_OPERAND_TYPE_OPTIONAL_IMAGE,
   // An optional memory access type.
@@ -243,7 +233,7 @@ typedef enum spv_operand_type_t {
   // A variable operand represents zero or more logical operands.
   // In an instruction definition, this may only appear at the end of the
   // operand types.
-  FIRST_VARIABLE(SPV_OPERAND_TYPE_VARIABLE_ID),
+  SPV_OPERAND_TYPE_VARIABLE_ID,
   SPV_OPERAND_TYPE_VARIABLE_LITERAL_INTEGER,
   // A sequence of zero or more pairs of (typed literal integer, Id).
   // Expands to zero or more:
@@ -251,7 +241,7 @@ typedef enum spv_operand_type_t {
   // where the literal number must always be an integer of some sort.
   SPV_OPERAND_TYPE_VARIABLE_LITERAL_INTEGER_ID,
   // A sequence of zero or more pairs of (Id, Literal integer)
-  LAST_VARIABLE(SPV_OPERAND_TYPE_VARIABLE_ID_LITERAL_INTEGER),
+  SPV_OPERAND_TYPE_VARIABLE_ID_LITERAL_INTEGER,
 
   // The following are concrete enum types from the DebugInfo extended
   // instruction set.
@@ -344,6 +334,10 @@ typedef enum spv_operand_type_t {
   SPV_OPERAND_TYPE_TENSOR_OPERANDS,
   SPV_OPERAND_TYPE_OPTIONAL_TENSOR_OPERANDS,
 
+  // SPV_INTEL_function_variants
+  SPV_OPERAND_TYPE_OPTIONAL_CAPABILITY,
+  SPV_OPERAND_TYPE_VARIABLE_CAPABILITY,
+
   // This is a sentinel value, and does not represent an operand type.
   // It should come last.
   SPV_OPERAND_TYPE_NUM_OPERAND_TYPES,
@@ -370,6 +364,7 @@ typedef enum spv_ext_inst_type_t {
   SPV_EXT_INST_TYPE_NONSEMANTIC_CLSPVREFLECTION,
   SPV_EXT_INST_TYPE_NONSEMANTIC_SHADER_DEBUGINFO_100,
   SPV_EXT_INST_TYPE_NONSEMANTIC_VKSPREFLECTION,
+  SPV_EXT_INST_TYPE_TOSA_001000_1,
 
   // Multiple distinct extended instruction set types could return this
   // value, if they are prefixed with NonSemantic. and are otherwise
@@ -438,7 +433,7 @@ typedef enum spv_binary_to_text_options_t {
 
 // The default id bound is to the minimum value for the id limit
 // in the spir-v specification under the section "Universal Limits".
-const uint32_t kDefaultMaxIdBound = 0x3FFFFF;
+const static uint32_t kDefaultMaxIdBound = 0x3FFFFF;
 
 // Structures
 
@@ -772,6 +767,7 @@ SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetAllowOffsetTextureOperand(
     spv_validator_options options, bool val);
 
 // Allow base operands of some bit operations to be non-32-bit wide.
+// Was added for VK_KHR_maintenance9
 SPIRV_TOOLS_EXPORT void spvValidatorOptionsSetAllowVulkan32BitBitwise(
     spv_validator_options options, bool val);
 

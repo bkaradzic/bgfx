@@ -333,11 +333,33 @@ spv_result_t ValidateDecorate(ValidationState_t& _, const Instruction* inst) {
 }
 
 spv_result_t ValidateDecorateId(ValidationState_t& _, const Instruction* inst) {
+  const auto target_id = inst->GetOperandAs<uint32_t>(0);
+  const auto target = _.FindDef(target_id);
+  if (target && spv::Op::OpDecorationGroup == target->opcode()) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpMemberDecorate Target <id> " << _.getIdName(target_id)
+           << " must not be an OpDecorationGroup instruction.";
+  }
+
   const auto decoration = inst->GetOperandAs<spv::Decoration>(1);
   if (!DecorationTakesIdParameters(decoration)) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "Decorations that don't take ID parameters may not be used with "
               "OpDecorateId";
+  }
+
+  for (uint32_t i = 2; i < inst->operands().size(); ++i) {
+    const auto param_id = inst->GetOperandAs<uint32_t>(i);
+    const auto param = _.FindDef(param_id);
+
+    // Both target and param are elements of ordered_instructions we can
+    // determine their relative positions in the SPIR-V module by comparing
+    // pointers.
+    if (target <= param) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "Parameter <ID> " << _.getIdName(param_id)
+             << " must appear earlier in the binary than the target";
+    }
   }
 
   // No member decorations take id parameters, so we don't bother checking if
@@ -388,8 +410,7 @@ spv_result_t ValidateDecorationGroup(ValidationState_t& _,
     if (use->opcode() != spv::Op::OpDecorate &&
         use->opcode() != spv::Op::OpGroupDecorate &&
         use->opcode() != spv::Op::OpGroupMemberDecorate &&
-        use->opcode() != spv::Op::OpName &&
-        use->opcode() != spv::Op::OpDecorateId && !use->IsNonSemantic()) {
+        use->opcode() != spv::Op::OpName && !use->IsNonSemantic()) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "Result id of OpDecorationGroup can only "
              << "be targeted by OpName, OpGroupDecorate, "

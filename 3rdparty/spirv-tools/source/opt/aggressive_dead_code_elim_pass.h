@@ -150,6 +150,12 @@ class AggressiveDCEPass : public MemPass {
   // will be empty at the end.
   void ProcessWorkList(Function* func);
 
+  // Process each DebugDeclare and DebugValue in |func| that has not been
+  // marked as live in the work list. DebugDeclare's are marked live now, and
+  // DebugValue Value operands are set to OpUndef.  The work list will be empty
+  // at the end.
+  void ProcessDebugInformation(std::list<BasicBlock*>& structured_order);
+
   // Kills any instructions in |func| that have not been marked as live.
   bool KillDeadInstructions(const Function* func,
                             std::list<BasicBlock*>& structured_order);

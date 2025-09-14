@@ -55,6 +55,9 @@ spv_ext_inst_type_t spvExtInstImportTypeGet(const char* name) {
   if (!strncmp("NonSemantic.VkspReflection.", name, 27)) {
     return SPV_EXT_INST_TYPE_NONSEMANTIC_VKSPREFLECTION;
   }
+  if (!strcmp("TOSA.001000.1", name)) {
+    return SPV_EXT_INST_TYPE_TOSA_001000_1;
+  }
   // ensure to add any known non-semantic extended instruction sets
   // above this point, and update spvExtInstIsNonSemantic()
   if (!strncmp("NonSemantic.", name, 12)) {

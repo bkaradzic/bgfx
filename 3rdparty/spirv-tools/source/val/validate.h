@@ -195,8 +195,8 @@ spv_result_t NonUniformPass(ValidationState_t& _, const Instruction* inst);
 /// Validates correctness of debug instructions.
 spv_result_t DebugPass(ValidationState_t& _, const Instruction* inst);
 
-// Validates that capability declarations use operands allowed in the current
-// context.
+/// Validates that capability declarations use operands allowed in the current
+/// context.
 spv_result_t CapabilityPass(ValidationState_t& _, const Instruction* inst);
 
 /// Validates correctness of primitive instructions.
@@ -225,6 +225,9 @@ spv_result_t MeshShadingPass(ValidationState_t& _, const Instruction* inst);
 
 /// Validates correctness of tensor instructions.
 spv_result_t TensorPass(ValidationState_t& _, const Instruction* inst);
+
+/// Validates correctness of graph instructions.
+spv_result_t GraphPass(ValidationState_t& _, const Instruction* inst);
 
 /// Validates correctness of certain special type instructions.
 spv_result_t InvalidTypePass(ValidationState_t& _, const Instruction* inst);

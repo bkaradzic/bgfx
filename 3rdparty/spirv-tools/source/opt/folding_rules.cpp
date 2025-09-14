@@ -1998,6 +1998,15 @@ FoldingRule FMixFeedingExtract() {
     bool use_x = false;
 
     assert(a_const->type()->AsFloat());
+
+    const analysis::Type* type =
+        context->get_type_mgr()->GetType(inst->type_id());
+    uint32_t width = ElementWidth(type);
+    if (width != 32 && width != 64) {
+      // We won't support folding half float values.
+      return false;
+    }
+
     double element_value = a_const->GetValueAsDouble();
     if (element_value == 0.0) {
       use_x = true;

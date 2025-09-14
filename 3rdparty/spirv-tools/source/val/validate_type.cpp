@@ -140,7 +140,7 @@ spv_result_t ValidateTypeFloat(ValidationState_t& _, const Instruction* inst) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "8-bit floating point type requires an encoding.";
     }
-    const spvtools::OperandDesc* desc;
+    const spvtools::OperandDesc* desc = nullptr;
     const std::set<spv::FPEncoding> known_encodings{
         spv::FPEncoding::Float8E4M3EXT, spv::FPEncoding::Float8E5M2EXT};
     spv_result_t status = spvtools::LookupOperand(SPV_OPERAND_TYPE_FPENCODING,
@@ -433,10 +433,9 @@ spv_result_t ValidateTypeStruct(ValidationState_t& _, const Instruction* inst) {
              << "Structure <id> " << _.getIdName(member_type_id)
              << " contains members with BuiltIn decoration. Therefore this "
              << "structure may not be contained as a member of another "
-             << "structure "
-             << "type. Structure <id> " << _.getIdName(struct_id)
-             << " contains structure <id> " << _.getIdName(member_type_id)
-             << ".";
+             << "structure " << "type. Structure <id> "
+             << _.getIdName(struct_id) << " contains structure <id> "
+             << _.getIdName(member_type_id) << ".";
     }
 
     if (spvIsVulkanEnv(_.context()->target_env) &&
@@ -562,6 +561,9 @@ spv_result_t ValidateTypePointer(ValidationState_t& _,
       // a storage image.
       if (sampled == 2) _.RegisterPointerToStorageImage(inst->id());
     }
+    if (type->opcode() == spv::Op::OpTypeTensorARM) {
+      _.RegisterPointerToTensor(inst->id());
+    }
   }
 
   if (!_.IsValidStorageClass(storage_class)) {
@@ -614,6 +616,7 @@ spv_result_t ValidateTypeFunction(ValidationState_t& _,
   for (auto& pair : inst->uses()) {
     const auto* use = pair.first;
     if (use->opcode() != spv::Op::OpFunction &&
+        use->opcode() != spv::Op::OpAsmINTEL &&
         !spvOpcodeIsDebug(use->opcode()) && !use->IsNonSemantic() &&
         !spvOpcodeIsDecoration(use->opcode())) {
       return _.diag(SPV_ERROR_INVALID_ID, use)

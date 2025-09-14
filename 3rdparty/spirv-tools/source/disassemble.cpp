@@ -694,12 +694,12 @@ void InstructionDisassembler::EmitInstructionImpl(
   }
 
   if (inst.result_id) {
-    SetBlue();
+    SetBlue(line);
     const std::string id_name = name_mapper_(inst.result_id);
     if (indent_)
       line << std::setw(std::max(0, indent_ - 3 - int(id_name.size())));
     line << "%" << id_name;
-    ResetColor();
+    ResetColor(line);
     line << " = ";
   } else {
     line << std::string(indent_, ' ');
@@ -907,6 +907,7 @@ void InstructionDisassembler::EmitOperand(std::ostream& stream,
       stream << '"';
     } break;
     case SPV_OPERAND_TYPE_CAPABILITY:
+    case SPV_OPERAND_TYPE_OPTIONAL_CAPABILITY:
     case SPV_OPERAND_TYPE_SOURCE_LANGUAGE:
     case SPV_OPERAND_TYPE_EXECUTION_MODEL:
     case SPV_OPERAND_TYPE_ADDRESSING_MODEL:

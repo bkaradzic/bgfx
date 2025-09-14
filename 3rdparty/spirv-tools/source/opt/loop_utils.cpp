@@ -488,12 +488,18 @@ Loop* LoopUtils::CloneLoop(LoopCloningResult* cloning_result) const {
 
 Loop* LoopUtils::CloneAndAttachLoopToHeader(LoopCloningResult* cloning_result) {
   // Clone the loop.
-  Loop* new_loop = CloneLoop(cloning_result);
+  Loop* cloned_loop = CloneLoop(cloning_result);
+  if (!cloned_loop) {
+    return nullptr;
+  }
 
   // Create a new exit block/label for the new loop.
-  // TODO(1841): Handle id overflow.
-  std::unique_ptr<Instruction> new_label{new Instruction(
-      context_, spv::Op::OpLabel, 0, context_->TakeNextId(), {})};
+  uint32_t new_label_id = context_->TakeNextId();
+  if (new_label_id == 0) {
+    return nullptr;
+  }
+  std::unique_ptr<Instruction> new_label{
+      new Instruction(context_, spv::Op::OpLabel, 0, new_label_id, {})};
   std::unique_ptr<BasicBlock> new_exit_bb{new BasicBlock(std::move(new_label))};
   new_exit_bb->SetParent(loop_->GetMergeBlock()->GetParent());
 
@@ -520,7 +526,7 @@ Loop* LoopUtils::CloneAndAttachLoopToHeader(LoopCloningResult* cloning_result) {
   }
 
   const uint32_t old_header = loop_->GetHeaderBlock()->id();
-  const uint32_t new_header = new_loop->GetHeaderBlock()->id();
+  const uint32_t new_header = cloned_loop->GetHeaderBlock()->id();
   analysis::DefUseManager* def_use = context_->get_def_use_mgr();
 
   def_use->ForEachUse(old_header,
@@ -529,22 +535,24 @@ Loop* LoopUtils::CloneAndAttachLoopToHeader(LoopCloningResult* cloning_result) {
                           inst->SetOperand(operand, {new_header});
                       });
 
-  // TODO(1841): Handle failure to create pre-header.
+  BasicBlock* pre_header = loop_->GetOrCreatePreHeaderBlock();
+  if (!pre_header) {
+    return nullptr;
+  }
   def_use->ForEachUse(
-      loop_->GetOrCreatePreHeaderBlock()->id(),
+      pre_header->id(),
       [new_merge_block, this](Instruction* inst, uint32_t operand) {
         if (this->loop_->IsInsideLoop(inst))
           inst->SetOperand(operand, {new_merge_block});
-
       });
-  new_loop->SetMergeBlock(new_exit_bb.get());
+  cloned_loop->SetMergeBlock(new_exit_bb.get());
 
-  new_loop->SetPreHeaderBlock(loop_->GetPreHeaderBlock());
+  cloned_loop->SetPreHeaderBlock(loop_->GetPreHeaderBlock());
 
   // Add the new block into the cloned instructions.
   cloning_result->cloned_bb_.push_back(std::move(new_exit_bb));
 
-  return new_loop;
+  return cloned_loop;
 }
 
 Loop* LoopUtils::CloneLoop(
@@ -562,8 +570,11 @@ Loop* LoopUtils::CloneLoop(
     // between old and new ids.
     BasicBlock* new_bb = old_bb->Clone(context_);
     new_bb->SetParent(&function_);
-    // TODO(1841): Handle id overflow.
-    new_bb->GetLabelInst()->SetResultId(context_->TakeNextId());
+    uint32_t new_label_id = context_->TakeNextId();
+    if (new_label_id == 0) {
+      return nullptr;
+    }
+    new_bb->GetLabelInst()->SetResultId(new_label_id);
     def_use_mgr->AnalyzeInstDef(new_bb->GetLabelInst());
     context_->set_instr_block(new_bb->GetLabelInst(), new_bb);
     cloning_result->cloned_bb_.emplace_back(new_bb);
@@ -578,8 +589,11 @@ Loop* LoopUtils::CloneLoop(
          new_inst != new_bb->end(); ++new_inst, ++old_inst) {
       cloning_result->ptr_map_[&*new_inst] = &*old_inst;
       if (new_inst->HasResultId()) {
-        // TODO(1841): Handle id overflow.
-        new_inst->SetResultId(context_->TakeNextId());
+        uint32_t new_result_id = context_->TakeNextId();
+        if (new_result_id == 0) {
+          return nullptr;
+        }
+        new_inst->SetResultId(new_result_id);
         cloning_result->value_map_[old_inst->result_id()] =
             new_inst->result_id();
 

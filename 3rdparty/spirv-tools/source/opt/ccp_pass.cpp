@@ -360,6 +360,13 @@ void CCPPass::Initialize() {
     }
   }
 
+  // Mark the extended instruction imports as `kVarying`. We know they
+  // will not be constants, and will be used by `OpExtInst` instructions.
+  // This allows those instructions to be fully processed.
+  for (const auto& inst : get_module()->ext_inst_imports()) {
+    values_[inst.result_id()] = kVaryingSSAId;
+  }
+
   original_id_bound_ = context()->module()->IdBound();
 }
 

@@ -546,11 +546,13 @@ void Instruction::ClearDbgLineInsts() {
   clear_dbg_line_insts();
 }
 
-void Instruction::UpdateDebugInfoFrom(const Instruction* from) {
+void Instruction::UpdateDebugInfoFrom(const Instruction* from,
+                                      const Instruction* line) {
   if (from == nullptr) return;
   ClearDbgLineInsts();
-  if (!from->dbg_line_insts().empty())
-    AddDebugLine(&from->dbg_line_insts().back());
+  const Instruction* fromLine = line != nullptr ? line : from;
+  if (!fromLine->dbg_line_insts().empty())
+    AddDebugLine(&fromLine->dbg_line_insts().back());
   SetDebugScope(from->GetDebugScope());
   if (!IsLineInst() &&
       context()->AreAnalysesValid(IRContext::kAnalysisDebugInfo)) {
@@ -1030,6 +1032,12 @@ bool Instruction::IsScalarizable() const {
 
 bool Instruction::IsOpcodeSafeToDelete() const {
   if (context()->IsCombinatorInstruction(this)) {
+    return true;
+  }
+
+  if (IsNonSemanticInstruction() &&
+      (GetShader100DebugOpcode() == NonSemanticShaderDebugInfo100DebugDeclare ||
+       GetShader100DebugOpcode() == NonSemanticShaderDebugInfo100DebugValue)) {
     return true;
   }
 

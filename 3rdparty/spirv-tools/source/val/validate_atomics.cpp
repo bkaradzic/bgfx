@@ -388,27 +388,6 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst) {
         if (auto error = ValidateMemorySemantics(
                 _, inst, unequal_semantics_index, memory_scope))
           return error;
-
-        // Volatile bits must match for equal and unequal semantics. Previous
-        // checks guarantee they are 32-bit constants, but we need to recheck
-        // whether they are evaluatable constants.
-        bool is_int32 = false;
-        bool is_equal_const = false;
-        bool is_unequal_const = false;
-        uint32_t equal_value = 0;
-        uint32_t unequal_value = 0;
-        std::tie(is_int32, is_equal_const, equal_value) = _.EvalInt32IfConst(
-            inst->GetOperandAs<uint32_t>(equal_semantics_index));
-        std::tie(is_int32, is_unequal_const, unequal_value) =
-            _.EvalInt32IfConst(
-                inst->GetOperandAs<uint32_t>(unequal_semantics_index));
-        if (is_equal_const && is_unequal_const &&
-            ((equal_value & uint32_t(spv::MemorySemanticsMask::Volatile)) ^
-             (unequal_value & uint32_t(spv::MemorySemanticsMask::Volatile)))) {
-          return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << "Volatile mask setting must match for Equal and Unequal "
-                    "memory semantics";
-        }
       }
 
       if (opcode == spv::Op::OpAtomicStore) {

@@ -1052,7 +1052,9 @@ bool IsDebugVariableWithIntScalarType(ValidationState_t& _,
 spv_result_t ValidateExtension(ValidationState_t& _, const Instruction* inst) {
   std::string extension = GetExtensionString(&(inst->c_inst()));
   if (_.version() < SPV_SPIRV_VERSION_WORD(1, 3)) {
-    if (extension == ExtensionToString(kSPV_KHR_vulkan_memory_model)) {
+    if (extension == ExtensionToString(kSPV_KHR_vulkan_memory_model) ||
+        extension ==
+            ExtensionToString(kSPV_QCOM_cooperative_matrix_conversion)) {
       return _.diag(SPV_ERROR_WRONG_VERSION, inst)
              << extension << " extension requires SPIR-V version 1.3 or later.";
     }
@@ -1064,7 +1066,9 @@ spv_result_t ValidateExtension(ValidationState_t& _, const Instruction* inst) {
         extension == ExtensionToString(kSPV_NV_shader_invocation_reorder) ||
         extension ==
             ExtensionToString(kSPV_NV_cluster_acceleration_structure) ||
-        extension == ExtensionToString(kSPV_NV_linear_swept_spheres)) {
+        extension == ExtensionToString(kSPV_NV_linear_swept_spheres) ||
+        extension == ExtensionToString(kSPV_QCOM_image_processing) ||
+        extension == ExtensionToString(kSPV_QCOM_image_processing2)) {
       return _.diag(SPV_ERROR_WRONG_VERSION, inst)
              << extension << " extension requires SPIR-V version 1.4 or later.";
     }
@@ -1081,8 +1085,10 @@ spv_result_t ValidateExtInstImport(ValidationState_t& _,
     const std::string name = inst->GetOperandAs<std::string>(name_id);
     if (name.find("NonSemantic.") == 0) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "NonSemantic extended instruction sets cannot be declared "
-                "without SPV_KHR_non_semantic_info.";
+             << "NonSemantic extended instruction "
+                "sets cannot be declared "
+                "without SPV_KHR_non_semantic_info. (This can also be fixed "
+                "having SPIR-V 1.6 or later)";
     }
   }
 

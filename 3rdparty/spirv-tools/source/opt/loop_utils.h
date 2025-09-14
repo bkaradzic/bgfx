@@ -114,6 +114,7 @@ class LoopUtils {
   // The function preserves the def/use, cfg and instr to block analyses.
   // The cloned loop nest will be added to the loop descriptor and will have
   // ownership.
+  // Returns the cloned loop, or nullptr if the loop could not be cloned.
   Loop* CloneLoop(LoopCloningResult* cloning_result,
                   const std::vector<BasicBlock*>& ordered_loop_blocks) const;
   // Clone |loop_| and remap its instructions, as above. Overload to compute
@@ -121,6 +122,7 @@ class LoopUtils {
   Loop* CloneLoop(LoopCloningResult* cloning_result) const;
 
   // Clone the |loop_| and make the new loop branch to the second loop on exit.
+  // Returns the cloned loop, or nullptr if the loop could not be cloned.
   Loop* CloneAndAttachLoopToHeader(LoopCloningResult* cloning_result);
 
   // Perform a partial unroll of |loop| by given |factor|. This will copy the

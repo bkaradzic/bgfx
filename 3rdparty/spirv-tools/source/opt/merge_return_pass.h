@@ -149,8 +149,9 @@ class MergeReturnPass : public MemPass {
 
   // Creates a new basic block with a single return. If |function| returns a
   // value, a phi node is created to select the correct value to return.
-  // Replaces old returns with an unconditional branch to the new block.
-  void MergeReturnBlocks(Function* function,
+  // Replaces old returns with an unconditional branch to the new block. Returns
+  // true if successful.
+  bool MergeReturnBlocks(Function* function,
                          const std::vector<BasicBlock*>& returnBlocks);
 
   // Generate and push new control flow state if |block| contains a merge.
@@ -231,11 +232,12 @@ class MergeReturnPass : public MemPass {
 
   // Add an |OpReturn| or |OpReturnValue| to the end of |block|.  If an
   // |OpReturnValue| is needed, the return value is loaded from |return_value_|.
-  void CreateReturn(BasicBlock* block);
+  // Returns true if successful.
+  bool CreateReturn(BasicBlock* block);
 
   // Creates a block at the end of the function that will become the single
   // return block at the end of the pass.
-  void CreateReturnBlock();
+  bool CreateReturnBlock();
 
   // Creates a Phi node in |merge_block| for the result of |inst|.
   // Any uses of the result of |inst| that are no longer

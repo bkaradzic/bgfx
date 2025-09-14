@@ -556,10 +556,14 @@ spv_result_t SplitCombinedImageSamplerPass::RemapFunctions() {
       Instruction* sampler;
     };
     std::vector<Replacement> replacements;
+    bool error = false;
 
     Function::RewriteParamFn rewriter =
         [&](std::unique_ptr<Instruction>&& param,
             std::back_insert_iterator<Function::ParamList>& appender) {
+          if (error) {
+            return;
+          }
           if (combined_types_.count(param->type_id()) == 0) {
             appender = std::move(param);
             return;
@@ -569,12 +573,22 @@ spv_result_t SplitCombinedImageSamplerPass::RemapFunctions() {
           auto* combined_inst = param.release();
           auto* combined_type = def_use_mgr_->GetDef(combined_inst->type_id());
           auto [image_type, sampler_type] = SplitType(*combined_type);
+          uint32_t image_param_id = context()->TakeNextId();
+          if (image_param_id == 0) {
+            error = true;
+            return;
+          }
           auto image_param = MakeUnique<Instruction>(
               context(), spv::Op::OpFunctionParameter, image_type->result_id(),
-              context()->TakeNextId(), Instruction::OperandList{});
+              image_param_id, Instruction::OperandList{});
+          uint32_t sampler_param_id = context()->TakeNextId();
+          if (sampler_param_id == 0) {
+            error = true;
+            return;
+          }
           auto sampler_param = MakeUnique<Instruction>(
               context(), spv::Op::OpFunctionParameter,
-              sampler_type->result_id(), context()->TakeNextId(),
+              sampler_type->result_id(), sampler_param_id,
               Instruction::OperandList{});
           replacements.push_back(
               {combined_inst, image_param.get(), sampler_param.get()});
@@ -582,6 +596,10 @@ spv_result_t SplitCombinedImageSamplerPass::RemapFunctions() {
           appender = std::move(sampler_param);
         };
     fn.RewriteParams(rewriter);
+
+    if (error) {
+      return SPV_ERROR_INTERNAL;
+    }
 
     for (auto& r : replacements) {
       modified_ = true;
