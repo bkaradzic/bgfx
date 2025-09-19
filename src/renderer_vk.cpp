@@ -2873,7 +2873,7 @@ VK_IMPORT_DEVICE
 
 		void setFrameBuffer(FrameBufferHandle _fbh, bool _acquire = true)
 		{
-			BGFX_PROFILER_SCOPE("Vk::setFrameBuffer()", kColorFrame);
+			BGFX_PROFILER_SCOPE("RendererContextVK::setFrameBuffer()", kColorFrame);
 			BX_ASSERT(false
 				  ||  isValid(_fbh)
 				  ||  NULL != m_backBuffer.m_nwh
@@ -7762,6 +7762,7 @@ VK_DESTROY
 	bool SwapChainVK::acquire(VkCommandBuffer _commandBuffer)
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVK::acquire", kColorFrame);
+
 		if (VK_NULL_HANDLE == m_swapChain
 		||  m_needToRecreateSwapchain)
 		{
@@ -7779,6 +7780,7 @@ VK_DESTROY
 			VkResult result;
 			{
 				BGFX_PROFILER_SCOPE("vkAcquireNextImageKHR", kColorFrame);
+
 				result = vkAcquireNextImageKHR(
 					  device
 					, m_swapChain
