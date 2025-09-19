@@ -2874,6 +2874,7 @@ VK_IMPORT_DEVICE
 		void setFrameBuffer(FrameBufferHandle _fbh, bool _acquire = true)
 		{
 			BGFX_PROFILER_SCOPE("RendererContextVK::setFrameBuffer()", kColorFrame);
+
 			BX_ASSERT(false
 				  ||  isValid(_fbh)
 				  ||  NULL != m_backBuffer.m_nwh
@@ -4402,6 +4403,7 @@ VK_IMPORT_DEVICE
 				if (searchIndex >= 0)
 				{
 					BGFX_PROFILER_SCOPE("vkAllocateMemory", kColorResource);
+
 					ma.memoryTypeIndex = searchIndex;
 					memory->memoryTypeIndex = searchIndex;
 					memory->size = bx::narrowCast<uint32_t>(ma.allocationSize);
@@ -4417,7 +4419,8 @@ VK_IMPORT_DEVICE
 
 		VkResult createHostBuffer(uint32_t _size, VkMemoryPropertyFlags _flags, ::VkBuffer* _buffer, DeviceMemoryAllocationVK* _memory, bool _forcePrivateDeviceAllocation, const void* _data = NULL)
 		{
-			BGFX_PROFILER_SCOPE("createHostBuffer", kColorResource);
+			BGFX_PROFILER_SCOPE("RendererContextVK::createHostBuffer", kColorResource);
+
 			VkResult result = VK_SUCCESS;
 
 			VkBufferCreateInfo bci;
@@ -4464,6 +4467,7 @@ VK_IMPORT_DEVICE
 			if (_data != NULL)
 			{
 				BGFX_PROFILER_SCOPE("map and copy data", kColorResource);
+
 				void* dst;
 				result = vkMapMemory(m_device, _memory->mem, _memory->offset, _size, 0, &dst);
 				if (VK_SUCCESS != result)
@@ -4490,7 +4494,7 @@ VK_IMPORT_DEVICE
 
 		StagingBufferVK allocFromScratchStagingBuffer(uint32_t _size, uint32_t _align, const void* _data = NULL)
 		{
-			BGFX_PROFILER_SCOPE("allocFromScratchStagingBuffer", kColorResource);
+			BGFX_PROFILER_SCOPE("RendererContextVK::allocFromScratchStagingBuffer", kColorResource);
 
 			StagingBufferVK result;
 			ScratchBufferVK &scratch = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
@@ -4511,6 +4515,7 @@ VK_IMPORT_DEVICE
 					if (_data != NULL)
 					{
 						BGFX_PROFILER_SCOPE("copy to scratch", kColorResource);
+
 						bx::memCopy(result.m_data, _data, _size);
 					}
 
@@ -5607,6 +5612,7 @@ VK_DESTROY
 	uint32_t TimerQueryVK::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
 		BGFX_PROFILER_SCOPE("TimerQueryVK::begin", kColorFrame);
+
 		while (0 == m_control.reserve(1) )
 		{
 			m_control.consume(1);
@@ -5635,6 +5641,7 @@ VK_DESTROY
 	void TimerQueryVK::end(uint32_t _idx)
 	{
 		BGFX_PROFILER_SCOPE("TimerQueryVK::end", kColorFrame);
+
 		Query& query = m_query[_idx];
 		query.m_ready = true;
 		query.m_completed = s_renderVK->m_cmd.m_submitted + s_renderVK->m_cmd.m_numFramesInFlight;
@@ -5698,6 +5705,7 @@ VK_DESTROY
 	VkResult OcclusionQueryVK::init()
 	{
 		BGFX_PROFILER_SCOPE("OcclusionQueryVK::init", kColorFrame);
+
 		VkResult result = VK_SUCCESS;
 
 		const VkDevice device = s_renderVK->m_device;
@@ -5755,6 +5763,7 @@ VK_DESTROY
 	void OcclusionQueryVK::begin(OcclusionQueryHandle _handle)
 	{
 		BGFX_PROFILER_SCOPE("OcclusionQueryVK::shutdown", kColorFrame);
+
 		m_control.reserve(1);
 
 		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
@@ -5766,6 +5775,7 @@ VK_DESTROY
 	void OcclusionQueryVK::end()
 	{
 		BGFX_PROFILER_SCOPE("OcclusionQueryVK::end", kColorFrame);
+
 		const VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
 
 		const OcclusionQueryHandle handle = m_handle[m_control.m_current];
@@ -5777,6 +5787,7 @@ VK_DESTROY
 	void OcclusionQueryVK::flush(Frame* _render)
 	{
 		BGFX_PROFILER_SCOPE("OcclusionQueryVK::flush", kColorFrame);
+
 		if (0 < m_control.available() )
 		{
 			VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
@@ -5866,6 +5877,7 @@ VK_DESTROY
 	void ReadbackVK::copyImageToBuffer(VkCommandBuffer _commandBuffer, VkBuffer _buffer, VkImageLayout _layout, VkImageAspectFlags _aspect, uint8_t _mip) const
 	{
 		BGFX_PROFILER_SCOPE("ReadbackVK::copyImageToBuffer", kColorFrame);
+
 		uint32_t mipWidth  = bx::uint32_max(1, m_width  >> _mip);
 		uint32_t mipHeight = bx::uint32_max(1, m_height >> _mip);
 
@@ -5924,6 +5936,7 @@ VK_DESTROY
 	void ReadbackVK::readback(VkDeviceMemory _memory, VkDeviceSize _offset, void* _data, uint8_t _mip) const
 	{
 		BGFX_PROFILER_SCOPE("ReadbackVK::readback", kColorResource);
+
 		if (m_image == VK_NULL_HANDLE)
 		{
 			return;
@@ -5950,6 +5963,7 @@ VK_DESTROY
 	VkResult TextureVK::create(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint64_t _flags, VkFormat _format)
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::create", kColorResource);
+
 		BX_ASSERT(0 != (_flags & BGFX_TEXTURE_RT_MASK), "");
 		_flags |= BGFX_TEXTURE_RT_WRITE_ONLY;
 
@@ -5985,6 +5999,7 @@ VK_DESTROY
 	VkResult TextureVK::createImages(VkCommandBuffer _commandBuffer)
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::createImages", kColorResource);
+
 		VkResult result = VK_SUCCESS;
 
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
@@ -6115,6 +6130,7 @@ VK_DESTROY
 	void* TextureVK::create(VkCommandBuffer _commandBuffer, const Memory* _mem, uint64_t _flags, uint8_t _skip)
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::create", kColorResource);
+
 		bimg::ImageContainer imageContainer;
 
 		if (bimg::imageParse(imageContainer, _mem->data, _mem->size) )
@@ -6412,6 +6428,7 @@ VK_DESTROY
 	void TextureVK::destroy()
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::destroy", kColorResource);
+
 		m_readback.destroy();
 
 		if (VK_NULL_HANDLE != m_textureImage)
@@ -6433,6 +6450,7 @@ VK_DESTROY
 	void TextureVK::update(VkCommandBuffer _commandBuffer, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::update", kColorResource);
+
 		const uint32_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
 		uint32_t rectpitch = _rect.m_width * bpp / 8;
@@ -6512,6 +6530,7 @@ VK_DESTROY
 	void TextureVK::resolve(VkCommandBuffer _commandBuffer, uint8_t _resolve, uint32_t _layer, uint32_t _numLayers, uint32_t _mip)
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::resolve", kColorResource);
+
 		const bool needResolve = VK_NULL_HANDLE != m_singleMsaaImage;
 
 		const bool needMipGen = true
@@ -6569,7 +6588,8 @@ VK_DESTROY
 
 		if (needMipGen)
 		{
-			BGFX_PROFILER_SCOPE("TextureVK::resolve genMipmaps", kColorResource);
+			BGFX_PROFILER_SCOPE("Resolve - Generate Mipmaps", kColorResource);
+
 			setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 			int32_t mipWidth  = bx::max<int32_t>(int32_t(m_width)  >> _mip, 1);
@@ -6596,7 +6616,8 @@ VK_DESTROY
 
 			for (uint32_t i = _mip + 1; i < m_numMips; i++)
 			{
-				BGFX_PROFILER_SCOPE("mipmap", kColorResource);
+				BGFX_PROFILER_SCOPE("Mipmap", kColorResource);
+
 				blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
 				blit.srcSubresource.mipLevel = i - 1;
 
@@ -6650,6 +6671,7 @@ VK_DESTROY
 	void TextureVK::copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy)
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::copyBufferToTexture", kColorResource);
+
 		const VkImageLayout oldLayout = m_currentImageLayout == VK_IMAGE_LAYOUT_UNDEFINED
 			? m_sampledLayout
 			: m_currentImageLayout
@@ -6952,6 +6974,7 @@ VK_DESTROY
 	void SwapChainVK::update(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution)
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVK::update", kColorFrame);
+
 		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
 
 		m_lastImageRenderedSemaphore = VK_NULL_HANDLE;
@@ -7043,6 +7066,7 @@ VK_DESTROY
 	VkResult SwapChainVK::createSurface()
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVK::createSurface", kColorFrame);
+
 		VkResult result = VK_ERROR_EXTENSION_NOT_PRESENT;
 
 		const VkInstance instance = s_renderVK->m_instance;
@@ -7226,6 +7250,7 @@ VK_DESTROY
 	VkResult SwapChainVK::createSwapChain()
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVK::createSwapchain", kColorFrame);
+
 		VkResult result = VK_SUCCESS;
 
 		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
@@ -7459,6 +7484,7 @@ VK_DESTROY
 	void SwapChainVK::releaseSwapChain()
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVK::releaseSwapChain", kColorFrame);
+
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
 		{
 			release(m_backBufferColorImageView[ii]);
@@ -7478,6 +7504,7 @@ VK_DESTROY
 	VkResult SwapChainVK::createAttachments(VkCommandBuffer _commandBuffer)
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVK::createAttachments", kColorFrame);
+
 		VkResult result = VK_SUCCESS;
 
 		const uint32_t samplerIndex = (m_resolution.reset & BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT;
@@ -7554,6 +7581,7 @@ VK_DESTROY
 	void SwapChainVK::releaseAttachments()
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVK::releaseAttachments", kColorFrame);
+
 		release(m_backBufferDepthStencilImageView);
 		release(m_backBufferColorMsaaImageView);
 
@@ -7564,6 +7592,7 @@ VK_DESTROY
 	VkResult SwapChainVK::createFrameBuffer()
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVK::createFrameBuffer", kColorFrame);
+
 		VkResult result = VK_SUCCESS;
 
 		const VkDevice device = s_renderVK->m_device;
@@ -7626,6 +7655,7 @@ VK_DESTROY
 	uint32_t SwapChainVK::findPresentMode(bool _vsync)
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVK::findPresentMode", kColorFrame);
+
 		VkResult result = VK_SUCCESS;
 
 		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
@@ -7688,6 +7718,7 @@ VK_DESTROY
 	TextureFormat::Enum SwapChainVK::findSurfaceFormat(TextureFormat::Enum _format, VkColorSpaceKHR _colorSpace, bool _srgb)
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVK::findSurfaceFormat", kColorFrame);
+
 		VkResult result = VK_SUCCESS;
 
 		TextureFormat::Enum selectedFormat = TextureFormat::Count;
@@ -7820,6 +7851,7 @@ VK_DESTROY
 			if (VK_NULL_HANDLE != m_backBufferFence[m_backBufferColorIdx])
 			{
 				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
+
 				VK_CHECK(vkWaitForFences(
 					  device
 					, 1
@@ -7840,6 +7872,7 @@ VK_DESTROY
 	void SwapChainVK::present()
 	{
 		BGFX_PROFILER_SCOPE("SwapChainVk::present", kColorFrame);
+
 		if (VK_NULL_HANDLE != m_swapChain
 		&&  m_needPresent)
 		{
@@ -7855,6 +7888,7 @@ VK_DESTROY
 			VkResult result;
 			{
 				BGFX_PROFILER_SCOPE("vkQueuePresentHKR", kColorFrame);
+
 				result = vkQueuePresentKHR(m_queue, &pi);
 			}
 
@@ -7912,6 +7946,7 @@ VK_DESTROY
 	void FrameBufferVK::create(uint8_t _num, const Attachment* _attachment)
 	{
 		BGFX_PROFILER_SCOPE("FrameBufferVK::create", kColorFrame);
+
 		m_numTh = _num;
 		bx::memCopy(m_attachment, _attachment, sizeof(Attachment) * _num);
 
@@ -7921,6 +7956,7 @@ VK_DESTROY
 	VkResult FrameBufferVK::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)
 	{
 		BGFX_PROFILER_SCOPE("FrameBufferVK::create", kColorFrame);
+
 		VkResult result = VK_SUCCESS;
 
 		Resolution resolution = s_renderVK->m_resolution;
@@ -7958,6 +7994,7 @@ VK_DESTROY
 	void FrameBufferVK::preReset()
 	{
 		BGFX_PROFILER_SCOPE("FrameBufferVK::preReset", kColorFrame);
+
 		if (VK_NULL_HANDLE != m_framebuffer)
 		{
 			s_renderVK->release(m_framebuffer);
@@ -7972,6 +8009,7 @@ VK_DESTROY
 	void FrameBufferVK::postReset()
 	{
 		BGFX_PROFILER_SCOPE("FrameBufferVK::postReset", kColorFrame);
+
 		if (m_numTh > 0)
 		{
 			const VkDevice device = s_renderVK->m_device;
@@ -8033,6 +8071,7 @@ VK_DESTROY
 	void FrameBufferVK::update(VkCommandBuffer _commandBuffer, const Resolution& _resolution)
 	{
 		BGFX_PROFILER_SCOPE("FrameBufferVK::update", kColorResource);
+
 		m_swapChain.update(_commandBuffer, m_nwh, _resolution);
 		VK_CHECK(s_renderVK->getRenderPass(m_swapChain, &m_renderPass) );
 		// Don't believe the passed Resolution, as the Vulkan driver might have
@@ -8050,6 +8089,7 @@ VK_DESTROY
 		}
 
 		BGFX_PROFILER_SCOPE("FrameBufferVK::resolve", kColorFrame);
+
 		if (NULL == m_nwh)
 		{
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
@@ -8082,6 +8122,7 @@ VK_DESTROY
 	uint16_t FrameBufferVK::destroy()
 	{
 		BGFX_PROFILER_SCOPE("FrameBufferVK::destroy", kColorFrame);
+
 		preReset();
 
 		if (NULL != m_nwh)
@@ -8105,6 +8146,7 @@ VK_DESTROY
 	bool FrameBufferVK::acquire(VkCommandBuffer _commandBuffer)
 	{
 		BGFX_PROFILER_SCOPE("FrameBufferVK::acquire", kColorFrame);
+
 		bool acquired = true;
 
 		if (NULL != m_nwh)
@@ -8122,6 +8164,7 @@ VK_DESTROY
 	void FrameBufferVK::present()
 	{
 		BGFX_PROFILER_SCOPE("FrameBufferVK::present", kColorFrame);
+
 		m_swapChain.present();
 		m_needPresent = false;
 	}
@@ -8242,6 +8285,7 @@ VK_DESTROY
 	VkResult CommandQueueVK::alloc(VkCommandBuffer* _commandBuffer)
 	{
 		BGFX_PROFILER_SCOPE("CommandQueueVK::alloc", kColorResource);
+
 		VkResult result = VK_SUCCESS;
 
 		if (m_activeCommandBuffer == VK_NULL_HANDLE)
@@ -8251,6 +8295,7 @@ VK_DESTROY
 
 			{
 				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
+
 				result = vkWaitForFences(device, 1, &commandList.m_fence, VK_TRUE, UINT64_MAX);
 			}
 
@@ -8314,6 +8359,7 @@ VK_DESTROY
 	void CommandQueueVK::kick(bool _wait)
 	{
 		BGFX_PROFILER_SCOPE("CommandQueueVK::kick", kColorDraw);
+
 		if (VK_NULL_HANDLE != m_activeCommandBuffer)
 		{
 			const VkDevice device = s_renderVK->m_device;
@@ -8346,13 +8392,14 @@ VK_DESTROY
 			m_numSignalSemaphores = 0;
 
 			{
-				BGFX_PROFILER_SCOPE("CommandQueueVK::kick vkQueueSubmit", kColorDraw);
+				BGFX_PROFILER_SCOPE("vkQueueSubmit", kColorDraw);
+
 				VK_CHECK(vkQueueSubmit(m_queue, 1, &si, m_completedFence) );
 			}
 
 			if (_wait)
 			{
-				BGFX_PROFILER_SCOPE("CommandQueue::kick vkWaitForFences", kColorDraw);
+				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorDraw);
 				VK_CHECK(vkWaitForFences(device, 1, &m_completedFence, VK_TRUE, UINT64_MAX) );
 			}
 
@@ -8366,6 +8413,7 @@ VK_DESTROY
 	void CommandQueueVK::finish(bool _finishAll)
 	{
 		BGFX_PROFILER_SCOPE("CommandQueueVK::finish", kColorDraw);
+
 		if (_finishAll)
 		{
 			for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
@@ -8397,6 +8445,7 @@ VK_DESTROY
 	void CommandQueueVK::consume()
 	{
 		BGFX_PROFILER_SCOPE("CommandQueueVK::consume", kColorResource);
+
 		m_consumeIndex = (m_consumeIndex + 1) % m_numFramesInFlight;
 
 		for (DeviceMemoryAllocationVK &alloc : m_recycleAllocs[m_consumeIndex])
@@ -8436,6 +8485,7 @@ VK_DESTROY
 	void RendererContextVK::submitBlit(BlitState& _bs, uint16_t _view)
 	{
 		BGFX_PROFILER_SCOPE("RendererContextVK::submitBlit", kColorFrame);
+
 		VkImageLayout srcLayouts[BGFX_CONFIG_MAX_BLIT_ITEMS];
 		VkImageLayout dstLayouts[BGFX_CONFIG_MAX_BLIT_ITEMS];
 
@@ -8582,6 +8632,7 @@ VK_DESTROY
 		if (0 < _render->m_iboffset)
 		{
 			BGFX_PROFILER_SCOPE("bgfx/Update transient index buffer", kColorResource);
+
 			TransientIndexBuffer* ib = _render->m_transientIb;
 			m_indexBuffers[ib->handle.idx].update(m_commandBuffer, 0, _render->m_iboffset, ib->data);
 		}
@@ -8589,6 +8640,7 @@ VK_DESTROY
 		if (0 < _render->m_vboffset)
 		{
 			BGFX_PROFILER_SCOPE("bgfx/Update transient vertex buffer", kColorResource);
+
 			TransientVertexBuffer* vb = _render->m_transientVb;
 			m_vertexBuffers[vb->handle.idx].update(m_commandBuffer, 0, _render->m_vboffset, vb->data);
 		}
