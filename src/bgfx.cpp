@@ -1950,8 +1950,8 @@ namespace bgfx
 		else
 		{
 			BX_TRACE("Creating rendering thread.");
-			m_thread.init(renderThread, this, 0, "bgfx - renderer backend thread");
 			m_singleThreaded = false;
+			m_thread.init(renderThread, this, 0, "bgfx - renderer backend thread");
 		}
 #else
 		BX_TRACE("Multithreaded renderer is disabled.");
