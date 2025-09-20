@@ -34,9 +34,7 @@ namespace entry
 	extern bx::AllocatorI* getDefaultAllocator();
 	bx::AllocatorI* g_allocator = getDefaultAllocator();
 
-	typedef bx::StringT<&g_allocator> String;
-
-	static String s_currentDir;
+	static bx::FilePath s_currentDir;
 
 	class FileReader : public bx::FileReader
 	{
@@ -45,9 +43,9 @@ namespace entry
 	public:
 		virtual bool open(const bx::FilePath& _filePath, bx::Error* _err) override
 		{
-			String filePath(s_currentDir);
-			filePath.append(_filePath);
-			return super::open(filePath.getPtr(), _err);
+			bx::FilePath filePath(s_currentDir);
+			filePath.join(_filePath);
+			return super::open(filePath.getCPtr(), _err);
 		}
 	};
 
@@ -58,9 +56,9 @@ namespace entry
 	public:
 		virtual bool open(const bx::FilePath& _filePath, bool _append, bx::Error* _err) override
 		{
-			String filePath(s_currentDir);
-			filePath.append(_filePath);
-			return super::open(filePath.getPtr(), _append, _err);
+			bx::FilePath filePath(s_currentDir);
+			filePath.join(_filePath);
+			return super::open(filePath.getCPtr(), _append, _err);
 		}
 	};
 

@@ -567,8 +567,6 @@ namespace bgfx
 	extern bx::AllocatorI* g_allocator;
 	extern Caps g_caps;
 
-	typedef bx::StringT<&g_allocator> String;
-
 	struct ProfilerScope
 	{
 		ProfilerScope(const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line)
@@ -1877,14 +1875,14 @@ namespace bgfx
 
 	struct IndexBuffer
 	{
-		String   m_name;
+		bx::FixedString64 m_name;
 		uint32_t m_size;
 		uint16_t m_flags;
 	};
 
 	struct VertexBuffer
 	{
-		String   m_name;
+		bx::FixedString64 m_name;
 		uint32_t m_size;
 		uint16_t m_stride;
 	};
@@ -1934,7 +1932,7 @@ namespace bgfx
 	struct ShaderRef
 	{
 		UniformHandle* m_uniforms;
-		String   m_name;
+		bx::FixedString64 m_name;
 		uint32_t m_hashIn;
 		uint32_t m_hashOut;
 		uint16_t m_num;
@@ -1950,7 +1948,7 @@ namespace bgfx
 
 	struct UniformRef
 	{
-		String            m_name;
+		bx::FixedString64 m_name;
 		UniformType::Enum m_type;
 		uint16_t          m_num;
 		int16_t           m_refCount;
@@ -2015,7 +2013,7 @@ namespace bgfx
 			return 0 < m_depth;
 		}
 
-		String   m_name;
+		bx::FixedString64 m_name;
 		void*    m_ptr;
 		uint64_t m_flags;
 		uint32_t m_storageSize;
@@ -2035,7 +2033,7 @@ namespace bgfx
 
 	struct FrameBufferRef
 	{
-		String m_name;
+		bx::FixedString64 m_name;
 		uint16_t m_width;
 		uint16_t m_height;
 
@@ -4976,7 +4974,7 @@ namespace bgfx
 			BGFX_CHECK_HANDLE("getUniformInfo", m_uniformHandle, _handle);
 
 			UniformRef& uniform = m_uniformRef[_handle.idx];
-			bx::strCopy(_info.name, sizeof(_info.name), uniform.m_name.getPtr() );
+			bx::strCopy(_info.name, sizeof(_info.name), uniform.m_name);
 			_info.type = uniform.m_type;
 			_info.num  = uniform.m_num;
 		}
