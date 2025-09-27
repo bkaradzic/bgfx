@@ -623,6 +623,7 @@ namespace bgfx { namespace gl
 			EXT_draw_instanced,
 			EXT_instanced_arrays,
 			EXT_frag_depth,
+			EXT_fragment_shader_barycentric,
 			EXT_framebuffer_blit,
 			EXT_framebuffer_object,
 			EXT_framebuffer_sRGB,
@@ -676,6 +677,7 @@ namespace bgfx { namespace gl
 			NV_copy_image,
 			NV_draw_buffers,
 			NV_draw_instanced,
+			NV_fragment_shader_barycentric,
 			NV_instanced_arrays,
 			NV_occlusion_query,
 			NV_texture_border_clamp,
@@ -841,6 +843,7 @@ namespace bgfx { namespace gl
 		{ "EXT_draw_instanced",                       false,                             true  }, // GLES2 extension.
 		{ "EXT_instanced_arrays",                     false,                             true  }, // GLES2 extension.
 		{ "EXT_frag_depth",                           false,                             true  }, // GLES2 extension.
+		{ "EXT_fragment_shader_barycentric",          BGFX_CONFIG_RENDERER_OPENGL >= 46, true  },
 		{ "EXT_framebuffer_blit",                     BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_framebuffer_object",                   BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
 		{ "EXT_framebuffer_sRGB",                     BGFX_CONFIG_RENDERER_OPENGL >= 30, true  },
@@ -894,6 +897,7 @@ namespace bgfx { namespace gl
 		{ "NV_copy_image",                            false,                             true  },
 		{ "NV_draw_buffers",                          false,                             true  }, // GLES2 extension.
 		{ "NV_draw_instanced",                        false,                             true  }, // GLES2 extension.
+		{ "NV_fragment_shader_barycentric",           BGFX_CONFIG_RENDERER_OPENGL >= 46, true  },
 		{ "NV_instanced_arrays",                      false,                             true  }, // GLES2 extension.
 		{ "NV_occlusion_query",                       false,                             true  },
 		{ "NV_texture_border_clamp",                  false,                             true  }, // GLES2 extension.
@@ -1080,6 +1084,13 @@ namespace bgfx { namespace gl
 		"smooth",
 		"noperspective",
 		"centroid",
+		NULL
+	};
+
+	static const char* s_EXT_fragment_shader_barycentric[] =
+	{
+		"gl_BaryCoord",
+		"gl_BaryCoordNoPersp",
 		NULL
 	};
 
@@ -2831,6 +2842,12 @@ namespace bgfx { namespace gl
 					;
 				g_caps.supported |= s_extension[Extension::INTEL_fragment_shader_ordering].m_supported
 					? BGFX_CAPS_FRAGMENT_ORDERING
+					: 0
+					;
+				g_caps.supported |= false
+					|| s_extension[Extension::EXT_fragment_shader_barycentric].m_supported
+					|| s_extension[Extension::NV_fragment_shader_barycentric].m_supported
+					? BGFX_CAPS_FRAGMENT_BARYCENTRIC
 					: 0
 					;
 				g_caps.supported |= !!(BGFX_CONFIG_RENDERER_OPENGL || m_gles3)
@@ -6882,6 +6899,47 @@ namespace bgfx { namespace gl
 				bx::write(&writer, '\0', &err);
 
 				code = temp;
+			}
+			else if (GL_FRAGMENT_SHADER == m_type)
+			{
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL   >= 46))
+				{
+					int32_t codeLen = (int32_t)bx::strLen(code);
+					int32_t tempLen = codeLen + (4<<10);
+					char* temp = (char*)alloca(tempLen);
+					bx::StaticMemoryBlockWriter writer(temp, tempLen);
+
+					bx::write(&writer
+						, "#version 460\n"
+						, &err
+					);
+
+					if (!bx::findIdentifierMatch(code, s_EXT_fragment_shader_barycentric).isEmpty())
+					{
+						if (s_extension[Extension::NV_fragment_shader_barycentric].m_supported)
+						{
+							bx::write(&writer,
+								"#extension GL_NV_fragment_shader_barycentric : require\n"
+								"#define gl_BaryCoord        gl_BaryCoordNV\n"
+								"#define gl_BaryCoordNoPersp gl_BaryCoordNoPerspNV\n", &err
+								);
+						}
+						else if (s_extension[Extension::EXT_fragment_shader_barycentric].m_supported)
+						{
+							bx::write(&writer,
+								"#extension GL_EXT_fragment_shader_barycentric : require\n"
+								"#define gl_BaryCoord        gl_BaryCoordEXT\n"
+								"#define gl_BaryCoordNoPersp gl_BaryCoordNoPerspEXT\n", &err
+								);
+						}
+					}
+
+					int32_t verLen = bx::strLen("#version 460\n");
+					bx::write(&writer, code.getPtr()+verLen, codeLen-verLen, &err);
+					bx::write(&writer, '\0', &err);
+
+					code = temp;
+				}
 			}
 
 			{
