@@ -209,3 +209,41 @@ jobs:
         run: |
           cd bgfx
           ls -lash ".build/android-${{ matrix.platform }}/bin"
+  wasm:
+    strategy:
+      fail-fast: true
+      matrix:
+        include: [
+          { config: debug },
+          { config: release },
+        ]
+    name: wasm-${{ matrix.config }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout bgfx
+        uses: actions/checkout@v4
+        with:
+          path: bgfx
+      - name: Checkout bx
+        uses: actions/checkout@v4
+        with:
+          repository: bkaradzic/bx
+          path: bx
+      - name: Checkout bimg
+        uses: actions/checkout@v4
+        with:
+          repository: bkaradzic/bimg
+          path: bimg
+      - name: Prepare emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version:  4.0.15
+          actions-cache-folder: 'emsdk-cache'
+      - name: Build
+        run: |
+          cd bgfx
+          emmake make -j$(sysctl -n hw.physicalcpu) wasm-${{ matrix.config }}
+      - name: Check
+        run: |
+          cd bgfx
+          ls -lash ".build/wasm/bin"
