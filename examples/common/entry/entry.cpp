@@ -851,7 +851,7 @@ restart:
 			if (NULL != ev)
 			{
 				handle = ev->m_handle;
-				WindowState& win = s_window[handle.idx];
+				WindowState& win = s_window[isValid(handle) ? handle.idx : 0];
 
 				switch (ev->m_type)
 				{
