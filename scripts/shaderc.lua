@@ -450,6 +450,10 @@ project "glsl-optimizer"
 		path.join(GLSL_OPTIMIZER, "src/glsl/builtin_stubs.cpp"),
 	}
 
+	removeflags {
+		"FloatFast",	-- clang 17 has issues errors originating in glsl-optimizer when float optimizations are enabled
+	}
+
 	configuration { "Release" }
 		flags {
 			"Optimize",
