@@ -451,7 +451,7 @@ project "glsl-optimizer"
 	}
 
 	removeflags {
-		"FloatFast",	-- clang 17 has issues optimization errors originating in glsl-lang when float optimizations are enabled
+		"FloatFast",	-- clang 17 has issues errors originating in glsl-optimizer when float optimizations are enabled
 	}
 
 	configuration { "Release" }
