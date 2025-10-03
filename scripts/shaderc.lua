@@ -595,6 +595,10 @@ project "shaderc"
 		path.join(BGFX_DIR, "src/shader**"),
 	}
 
+	removeflags {
+		"FloatFast",	-- clang 17 has issues optimization errors originating in glsl-lang when float optimizations are enabled
+	}
+
 	configuration { "mingw-*" }
 		targetextension ".exe"
 
