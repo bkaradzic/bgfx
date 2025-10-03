@@ -450,6 +450,10 @@ project "glsl-optimizer"
 		path.join(GLSL_OPTIMIZER, "src/glsl/builtin_stubs.cpp"),
 	}
 
+	removeflags {
+		"FloatFast",	-- clang 17 has issues optimization errors originating in glsl-lang when float optimizations are enabled
+	}
+
 	configuration { "Release" }
 		flags {
 			"Optimize",
@@ -593,10 +597,6 @@ project "shaderc"
 		path.join(BGFX_DIR, "tools/shaderc/**.h"),
 		path.join(BGFX_DIR, "src/vertexlayout.**"),
 		path.join(BGFX_DIR, "src/shader**"),
-	}
-
-	removeflags {
-		"FloatFast",	-- clang 17 has issues optimization errors originating in glsl-lang when float optimizations are enabled
 	}
 
 	configuration { "mingw-*" }
