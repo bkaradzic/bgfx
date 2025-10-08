@@ -126,6 +126,7 @@ Select the options you want, such as:
  - ``--with-profiler`` (see https://bkaradzic.github.io/bgfx/bgfx.html#_CPPv4N4bgfx9CallbackIE)
  - ``--with-examples`` (see https://bkaradzic.github.io/bgfx/examples.html)
  - ``--with-sdl`` to use SDL2 for the examples.
+ - ``--with-sdl3`` to use SDL3 for the examples.
  - ``--with-glfw`` to use GLFW3 for the examples.
 
 There are also many platform-specific options.
