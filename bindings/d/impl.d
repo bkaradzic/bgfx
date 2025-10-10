@@ -3,10 +3,22 @@
 + │ AUTO GENERATED! DO NOT EDIT! │
 + └==============================┘
 +/
-module bgfx.fakeenum;
+///Do NOT import this module! Use the symbols with the same names in `bgfx/package.d` instead.
+module bgfx.impl;
 
-//NOTE: Do NOT use this module! Use the enums with the same names in `bgfx/package.d` instead.
+import bindbc.bgfx.config;
+import bgfx;
+
 package:
+
+mixin(joinFnBinds((){
+	FnBind[] ret = [
+		{q{const(Memory)*}, q{alloc}, q{uint size}, ext: `C++, "bgfx"`},
+		{q{const(Memory)*}, q{copy}, q{const(void)* data, uint size}, ext: `C++, "bgfx"`},
+	];
+	return ret;
+}()));
+
 extern(C++, "bgfx") package final abstract class Fatal{
 	enum Enum{
 		debugCheck,invalidShader,unableToInitialize,unableToCreateTexture,deviceLost,count

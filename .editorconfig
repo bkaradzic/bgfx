@@ -12,6 +12,9 @@ trim_trailing_whitespace = true
 [include/bgfx/c99/*.h]
 indent_style = space
 
+[scripts/bindings-d.lua]
+trim_trailing_whitespace = false
+
 [*.ninja]
 indent_style = space
 
