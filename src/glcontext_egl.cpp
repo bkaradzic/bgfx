@@ -250,6 +250,12 @@ WL_EGL_IMPORT
 	};
 
 #	if BX_PLATFORM_RPI
+	typedef uint32_t DISPMANX_ELEMENT_HANDLE_T;
+	typedef struct {
+		DISPMANX_ELEMENT_HANDLE_T element;
+		int width;   /* This is necessary because dispmanx elements are not queriable. */
+		int height;
+		} EGL_DISPMANX_WINDOW_T;
 	static EGL_DISPMANX_WINDOW_T s_dispmanWindow;
 #	endif // BX_PLATFORM_RPI
 
@@ -384,7 +390,7 @@ WL_EGL_IMPORT
 			s_dispmanWindow.element = dispmanElement;
 			s_dispmanWindow.width   = _width;
 			s_dispmanWindow.height  = _height;
-			nwh = &s_dispmanWindow;
+			nwh = (EGLNativeWindowType) &s_dispmanWindow;
 
 			vc_dispmanx_update_submit_sync(dispmanUpdate);
 #	endif // BX_PLATFORM_ANDROID
