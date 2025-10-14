@@ -982,6 +982,7 @@ namespace bgfx { namespace d3d12
 			}
 
 			DX_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &m_options, sizeof(m_options) ) );
+			//DX_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &m_options3, sizeof(m_options3) ) );
 			BX_TRACE("D3D12 options:");
 			BX_TRACE("\tTiledResourcesTier %d", m_options.TiledResourcesTier);
 			BX_TRACE("\tResourceBindingTier %d", m_options.ResourceBindingTier);
@@ -989,6 +990,7 @@ namespace bgfx { namespace d3d12
 			BX_TRACE("\tConservativeRasterizationTier %d", m_options.ConservativeRasterizationTier);
 			BX_TRACE("\tCrossNodeSharingTier %d", m_options.CrossNodeSharingTier);
 			BX_TRACE("\tResourceHeapTier %d", m_options.ResourceHeapTier);
+			//BX_TRACE("\tBarycentricsSupported %d", m_options3.BarycentricsSupported);
 
 			for (D3D12_FEATURE_DATA_D3D12_OPTIONS1 options1; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS1, &options1, sizeof(options1)));)
 			{
@@ -1373,6 +1375,7 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_VIEWPORT_LAYER_ARRAY
 					| BGFX_CAPS_DRAW_INDIRECT_COUNT
 					| BGFX_CAPS_PRIMITIVE_ID
+					//| (m_options3.BarycentricsSupported ? BGFX_CAPS_FRAGMENT_BARYCENTRIC : 0)
 					);
 				g_caps.limits.maxTextureSize     = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 				g_caps.limits.maxTextureLayers   = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
@@ -3580,6 +3583,7 @@ namespace bgfx { namespace d3d12
 		D3D_DRIVER_TYPE m_driverType;
 		D3D12_FEATURE_DATA_ARCHITECTURE m_architecture;
 		D3D12_FEATURE_DATA_D3D12_OPTIONS m_options;
+		//D3D12_FEATURE_DATA_D3D12_OPTIONS3 m_options3;
 
 		Dxgi::SwapChainI* m_swapChain;
 		ID3D12Resource*   m_msaaRt;

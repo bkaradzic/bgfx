@@ -6,6 +6,7 @@
 #include "common.h"
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
+#include "entry/dialog.h"
 
 namespace
 {
@@ -299,6 +300,8 @@ public:
 		init.resolution.reset  = m_reset;
 		bgfx::init(init);
 
+		m_hasBaryCoord = bgfx::getCaps()->supported & BGFX_CAPS_FRAGMENT_BARYCENTRIC;
+
 		// Enable m_debug text.
 		bgfx::setDebug(m_debug);
 
@@ -310,6 +313,11 @@ public:
 			, 0
 			);
 
+		if (m_hasBaryCoord)
+		{
+			m_wfProgramBc   = loadProgram("vs_wf_wireframe_bc", "fs_wf_wireframe_bc");
+			m_meshProgramBc = loadProgram("vs_wf_mesh_bc", "fs_wf_mesh_bc");
+		}
 		m_wfProgram   = loadProgram("vs_wf_wireframe", "fs_wf_wireframe");
 		m_meshProgram = loadProgram("vs_wf_mesh",      "fs_wf_mesh");
 
@@ -339,6 +347,11 @@ public:
 		m_meshes[1].destroy();
 		m_meshes[2].destroy();
 
+		if (m_hasBaryCoord)
+		{
+			bgfx::destroy(m_wfProgramBc);
+			bgfx::destroy(m_meshProgramBc);
+		}
 		bgfx::destroy(m_wfProgram);
 		bgfx::destroy(m_meshProgram);
 
@@ -394,6 +407,35 @@ public:
 			ImGui::RadioButton("Wireframe + Shaded", &m_drawMode, 0);
 			ImGui::RadioButton("Wireframe", &m_drawMode, 1);
 			ImGui::RadioButton("Shaded", &m_drawMode, 2);
+
+			static bool wfBaryCoordEnabled = false;
+			if (!m_hasBaryCoord)
+			{
+				ImGui::BeginDisabled();
+			}
+
+			ImGui::Separator();
+
+			ImGui::Checkbox("Shader barycentric coords", &wfBaryCoordEnabled);
+
+			if (!m_hasBaryCoord)
+			{
+				ImGui::EndDisabled();
+
+				static const bx::StringView url = R"(https://vulkan.gpuinfo.org/listdevicescoverage.php?extensionname=VK_KHR_fragment_shader_barycentric&extensionfeature=fragmentShaderBarycentric&platform=all)";
+
+				ImGui::TextWrapped("Your GPU/backend doesn't support this feature yet.");
+				ImGui::TextWrapped("For a list of supported GPUs please click below:");
+
+				if (ImGui::SmallButton(ICON_FA_LINK) )
+				{
+					openUrl(url);
+				}
+				else if (ImGui::IsItemHovered() )
+				{
+					ImGui::SetTooltip("%.*s", url.getLength(), url.getPtr() );
+				}
+			}
 
 			const bool wfEnabled = (DrawMode::Shaded != m_drawMode);
 			if ( wfEnabled )
@@ -475,7 +517,22 @@ public:
 					| BGFX_STATE_MSAA
 					| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
 					;
-				meshSubmit(m_meshes[m_meshSelection].m_mesh, 0, m_wfProgram, m_meshes[m_meshSelection].m_mtx, state);
+				if (wfBaryCoordEnabled && m_hasBaryCoord)
+				{
+					meshSubmit(m_meshes[m_meshSelection].m_mesh,
+						0,
+						m_wfProgramBc,
+						m_meshes[m_meshSelection].m_mtx,
+						state);
+				}
+				else
+				{
+					meshSubmit(m_meshes[m_meshSelection].m_mesh,
+						0,
+						m_wfProgram,
+						m_meshes[m_meshSelection].m_mtx,
+						state);
+				}
 			}
 			else
 			{
@@ -487,7 +544,22 @@ public:
 					| BGFX_STATE_CULL_CCW
 					| BGFX_STATE_MSAA
 					;
-				meshSubmit(m_meshes[m_meshSelection].m_mesh, 0, m_meshProgram, m_meshes[m_meshSelection].m_mtx, state);
+				if (wfBaryCoordEnabled && m_hasBaryCoord)
+				{
+					meshSubmit(m_meshes[m_meshSelection].m_mesh,
+						0,
+						m_meshProgramBc,
+						m_meshes[m_meshSelection].m_mtx,
+						state);
+				}
+				else
+				{
+					meshSubmit(m_meshes[m_meshSelection].m_mesh,
+						0,
+						m_meshProgram,
+						m_meshes[m_meshSelection].m_mtx,
+						state);
+				}
 			}
 
 			// Advance to next frame. Rendering thread will be kicked to
@@ -502,6 +574,8 @@ public:
 
 	entry::MouseState m_mouseState;
 
+	bgfx::ProgramHandle m_wfProgramBc;
+	bgfx::ProgramHandle m_meshProgramBc;
 	bgfx::ProgramHandle m_wfProgram;
 	bgfx::ProgramHandle m_meshProgram;
 
@@ -520,6 +594,7 @@ public:
 	MeshMtx m_meshes[3];
 	int32_t m_meshSelection;
 	int32_t m_drawMode; // Holds data for 'DrawMode'.
+	bool m_hasBaryCoord;
 };
 
 } // namespace
