@@ -487,7 +487,7 @@ namespace bgfx
 			idx         += ntz;
 
 			if (_current.m_stream[idx].m_handle.idx  != _new.m_stream[idx].m_handle.idx
-			||  _current.m_stream[idx].m_startVertex != _new.m_stream[idx].m_startVertex)
+			||  _current.m_stream[idx].m_offset != _new.m_stream[idx].m_offset)
 			{
 				return true;
 			}

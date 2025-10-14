@@ -5416,7 +5416,7 @@ namespace bgfx { namespace gl
 		bx::memCopy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib) );
 	}
 
-	void ProgramGL::bindAttributes(const VertexLayout& _layout, uint32_t _baseVertex)
+	void ProgramGL::bindAttributes(const VertexLayout& _layout, uint32_t _baseOffset)
 	{
 		for (uint32_t ii = 0, iiEnd = m_usedCount; ii < iiEnd; ++ii)
 		{
@@ -5436,7 +5436,7 @@ namespace bgfx { namespace gl
 					lazyEnableVertexAttribArray(loc);
 					GL_CHECK(glVertexAttribDivisor(loc, 0) );
 
-					uint32_t baseVertex = _baseVertex*_layout.m_stride + _layout.m_offset[attr];
+					uint32_t baseVertex = _baseOffset + _layout.m_offset[attr];
 					if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) || s_renderGL->m_gles3)
 					&&  !isFloat(type)
 					&&  !normalized)
@@ -8264,9 +8264,9 @@ namespace bgfx { namespace gl
 								bindAttribs = true;
 							}
 
-							if (currentState.m_stream[idx].m_startVertex != draw.m_stream[idx].m_startVertex)
+							if (currentState.m_stream[idx].m_offset != draw.m_stream[idx].m_offset)
 							{
-								currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+								currentState.m_stream[idx].m_offset = draw.m_stream[idx].m_offset;
 								bindAttribs = true;
 							}
 						}
@@ -8335,7 +8335,7 @@ namespace bgfx { namespace gl
 											? draw.m_stream[idx].m_layoutHandle.idx
 											: vb.m_layoutHandle.idx;
 										GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
-										program.bindAttributes(m_vertexLayouts[decl], draw.m_stream[idx].m_startVertex);
+										program.bindAttributes(m_vertexLayouts[decl], draw.m_stream[idx].m_offset);
 									}
 								}
 

@@ -1677,12 +1677,12 @@ namespace bgfx
 	{
 		void clear()
 		{
-			m_startVertex      = 0;
+			m_offset      = 0;
 			m_handle.idx       = kInvalidHandle;
 			m_layoutHandle.idx = kInvalidHandle;
 		}
 
-		uint32_t           m_startVertex;
+		uint32_t           m_offset;
 		VertexBufferHandle m_handle;
 		VertexLayoutHandle m_layoutHandle;
 	};
@@ -1912,8 +1912,7 @@ namespace bgfx
 			m_handle       = BGFX_INVALID_HANDLE;
 			m_offset       = 0;
 			m_size         = 0;
-			m_startVertex  = 0;
-			m_numVertices  = 0;
+			m_startOffset  = 0;
 			m_stride       = 0;
 			m_layoutHandle = BGFX_INVALID_HANDLE;
 			m_flags        = 0;
@@ -1922,8 +1921,7 @@ namespace bgfx
 		VertexBufferHandle m_handle;
 		uint32_t m_offset;
 		uint32_t m_size;
-		uint32_t m_startVertex;
-		uint32_t m_numVertices;
+		uint32_t m_startOffset;
 		uint16_t m_stride;
 		VertexLayoutHandle m_layoutHandle;
 		uint16_t m_flags;
@@ -2261,22 +2259,18 @@ namespace bgfx
 			return offset;
 		}
 
-		uint32_t getAvailTransientVertexBuffer(uint32_t _num, uint16_t _stride)
+		uint32_t getAvailTransientVertexBuffer(uint32_t _size, uint16_t _stride)
 		{
 			uint32_t offset   = bx::strideAlign(m_vboffset, _stride);
-			uint32_t vboffset = offset + _num * _stride;
-			vboffset = bx::min<uint32_t>(vboffset, g_caps.limits.transientVbSize);
-			uint32_t num = (vboffset-offset)/_stride;
-			return num;
+			uint32_t vboffset = bx::min<uint32_t>(offset + _size, g_caps.limits.transientVbSize);
+			return (vboffset - offset);
 		}
 
-		uint32_t allocTransientVertexBuffer(uint32_t& _num, uint16_t _stride)
+		uint32_t allocTransientVertexBuffer(uint32_t& _size, uint16_t _stride)
 		{
 			uint32_t offset = bx::strideAlign(m_vboffset, _stride);
-			uint32_t num    = getAvailTransientVertexBuffer(_num, _stride);
-			m_vboffset = offset + num * _stride;
-			_num = num;
-
+			_size = getAvailTransientVertexBuffer(_size, _stride);
+			m_vboffset = offset + _size;
 			return offset;
 		}
 
@@ -2633,7 +2627,7 @@ namespace bgfx
 		void setVertexBuffer(
 			  uint8_t _stream
 			, VertexBufferHandle _handle
-			, uint32_t _startVertex
+			, uint32_t _offset
 			, uint32_t _numVertices
 			, VertexLayoutHandle _layoutHandle
 			)
@@ -2643,7 +2637,7 @@ namespace bgfx
 			if (m_draw.setStreamBit(_stream, _handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
-				stream.m_startVertex   = _startVertex;
+				stream.m_offset        = _offset;
 				stream.m_handle        = _handle;
 				stream.m_layoutHandle  = _layoutHandle;
 				m_numVertices[_stream] = _numVertices;
@@ -2653,7 +2647,7 @@ namespace bgfx
 		void setVertexBuffer(
 			  uint8_t _stream
 			, const DynamicVertexBuffer& _dvb
-			, uint32_t _startVertex
+			, uint32_t _offset
 			, uint32_t _numVertices
 			, VertexLayoutHandle _layoutHandle
 			)
@@ -2663,11 +2657,11 @@ namespace bgfx
 			if (m_draw.setStreamBit(_stream, _dvb.m_handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
-				stream.m_startVertex   = _dvb.m_startVertex + _startVertex;
+				stream.m_offset        = _dvb.m_startOffset + _offset;
 				stream.m_handle        = _dvb.m_handle;
 				stream.m_layoutHandle  = isValid(_layoutHandle) ? _layoutHandle : _dvb.m_layoutHandle;
 				m_numVertices[_stream] =
-					bx::min(bx::uint32_imax(0, _dvb.m_numVertices - _startVertex), _numVertices)
+					bx::min(bx::uint32_imax(0, (_dvb.m_size - _offset) / _dvb.m_stride), _numVertices)
 					;
 			}
 		}
@@ -2675,7 +2669,7 @@ namespace bgfx
 		void setVertexBuffer(
 			  uint8_t _stream
 			, const TransientVertexBuffer* _tvb
-			, uint32_t _startVertex
+			, uint32_t _offset
 			, uint32_t _numVertices
 			, VertexLayoutHandle _layoutHandle
 			)
@@ -2685,10 +2679,10 @@ namespace bgfx
 			if (m_draw.setStreamBit(_stream, _tvb->handle) )
 			{
 				Stream& stream = m_draw.m_stream[_stream];
-				stream.m_startVertex   = _tvb->startVertex + _startVertex;
+				stream.m_offset        = _tvb->startVertex * _tvb->stride + _offset;
 				stream.m_handle        = _tvb->handle;
 				stream.m_layoutHandle  = isValid(_layoutHandle) ? _layoutHandle : _tvb->layoutHandle;
-				m_numVertices[_stream] = bx::min(bx::uint32_imax(0, _tvb->size/_tvb->stride - _startVertex), _numVertices);
+				m_numVertices[_stream] = bx::min(bx::uint32_imax(0, (_tvb->size - _offset) / _tvb->stride), _numVertices);
 			}
 		}
 
@@ -2697,7 +2691,7 @@ namespace bgfx
 			BX_ASSERT(0 == m_draw.m_streamMask, "Vertex buffer already set.");
 			m_draw.m_streamMask  = UINT8_MAX;
 			Stream& stream = m_draw.m_stream[0];
-			stream.m_startVertex        = 0;
+			stream.m_offset             = 0;
 			stream.m_handle.idx         = kInvalidHandle;
 			stream.m_layoutHandle.idx   = kInvalidHandle;
 			m_numVertices[0]            = _numVertices;
@@ -2713,9 +2707,9 @@ namespace bgfx
 			m_draw.m_instanceDataBuffer = _idb->handle;
 		}
 
-		void setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num, uint16_t _stride)
+		void setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _num, uint16_t _stride)
 		{
-			m_draw.m_instanceDataOffset = _startVertex * _stride;
+			m_draw.m_instanceDataOffset = _offset;
 			m_draw.m_instanceDataStride = _stride;
 			m_draw.m_numInstances       = _num;
 			m_draw.m_instanceDataBuffer = _handle;
@@ -3750,7 +3744,7 @@ namespace bgfx
 			return uint64_t(vertexBufferHandle.idx)<<32;
 		}
 
-		BGFX_API_FUNC(DynamicVertexBufferHandle createDynamicVertexBuffer(uint32_t _num, const VertexLayout& _layout, uint16_t _flags) )
+		BGFX_API_FUNC(DynamicVertexBufferHandle createDynamicVertexBuffer(uint32_t _size, const VertexLayout& _layout, uint16_t _flags) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
@@ -3768,7 +3762,7 @@ namespace bgfx
 				return BGFX_INVALID_HANDLE;
 			}
 
-			const uint32_t size = bx::strideAlign<16>(_num*_layout.m_stride, _layout.m_stride)+_layout.m_stride;
+			const uint32_t size = bx::strideAlign<16>(_size, _layout.m_stride)+_layout.m_stride;
 
 			const uint64_t ptr = (0 != (_flags & BGFX_BUFFER_COMPUTE_READ_WRITE) )
 				? allocVertexBuffer(size, _flags)
@@ -3784,9 +3778,8 @@ namespace bgfx
 			DynamicVertexBuffer& dvb = m_dynamicVertexBuffers[handle.idx];
 			dvb.m_handle.idx    = uint16_t(ptr>>32);
 			dvb.m_offset        = uint32_t(ptr);
-			dvb.m_size          = _num * _layout.m_stride;
-			dvb.m_startVertex   = bx::strideAlign(dvb.m_offset, _layout.m_stride)/_layout.m_stride;
-			dvb.m_numVertices   = _num;
+			dvb.m_size          = _size;
+			dvb.m_startOffset   = bx::strideAlign(dvb.m_offset, _layout.m_stride);
 			dvb.m_stride        = _layout.m_stride;
 			dvb.m_layoutHandle  = layoutHandle;
 			dvb.m_flags         = _flags;
@@ -3801,8 +3794,7 @@ namespace bgfx
 
 			BX_ASSERT(0 == (_flags & BGFX_BUFFER_COMPUTE_WRITE), "Can't initialize compute write buffer from CPU.");
 
-			uint32_t numVertices = _mem->size/_layout.m_stride;
-			DynamicVertexBufferHandle handle = createDynamicVertexBuffer(numVertices, _layout, _flags);
+			DynamicVertexBufferHandle handle = createDynamicVertexBuffer(_mem->size, _layout, _flags);
 
 			if (!isValid(handle) )
 			{
@@ -3815,7 +3807,7 @@ namespace bgfx
 			return handle;
 		}
 
-		BGFX_API_FUNC(void update(DynamicVertexBufferHandle _handle, uint32_t _startVertex, const Memory* _mem) )
+		BGFX_API_FUNC(void update(DynamicVertexBufferHandle _handle, uint32_t _offset, const Memory* _mem) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
@@ -3839,13 +3831,12 @@ namespace bgfx
 				dvb.m_handle.idx  = uint16_t(ptr>>32);
 				dvb.m_offset      = uint32_t(ptr);
 				dvb.m_size        = size;
-				dvb.m_numVertices = _mem->size / dvb.m_stride;
-				dvb.m_startVertex = bx::strideAlign(dvb.m_offset, dvb.m_stride)/dvb.m_stride;
+				dvb.m_startOffset = bx::strideAlign(dvb.m_offset, dvb.m_stride);
 			}
 
-			const uint32_t offset = (dvb.m_startVertex + _startVertex)*dvb.m_stride;
+			const uint32_t offset = dvb.m_startOffset + _offset;
 			const uint32_t size   = bx::min<uint32_t>(offset
-				+ bx::min(bx::uint32_satsub(dvb.m_size, _startVertex*dvb.m_stride), _mem->size)
+				+ bx::min(bx::uint32_satsub(dvb.m_size, _offset), _mem->size)
 				, m_vertexBuffers[dvb.m_handle.idx].m_size) - offset
 				;
 			BX_ASSERT(_mem->size <= size, "Truncating dynamic vertex buffer update (size %d, mem size %d)."
@@ -3916,11 +3907,11 @@ namespace bgfx
 			return m_submit->getAvailTransientIndexBuffer(_num, indexSize);
 		}
 
-		BGFX_API_FUNC(uint32_t getAvailTransientVertexBuffer(uint32_t _num, uint16_t _stride) )
+		BGFX_API_FUNC(uint32_t getAvailTransientVertexBuffer(uint32_t _size, uint16_t _stride) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			return m_submit->getAvailTransientVertexBuffer(_num, _stride);
+			return m_submit->getAvailTransientVertexBuffer(_size, _stride);
 		}
 
 		TransientIndexBuffer* createTransientIndexBuffer(uint32_t _size)
@@ -4031,33 +4022,33 @@ namespace bgfx
 			bx::alignedFree(g_allocator, _tvb, 16);
 		}
 
-		BGFX_API_FUNC(void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, VertexLayoutHandle _layoutHandle, uint16_t _stride) )
+		BGFX_API_FUNC(void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _size, VertexLayoutHandle _layoutHandle, uint16_t _stride) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			const uint32_t offset = m_submit->allocTransientVertexBuffer(_num, _stride);
+			const uint32_t offset = m_submit->allocTransientVertexBuffer(_size, _stride);
 			const TransientVertexBuffer& dvb = *m_submit->m_transientVb;
 
 			_tvb->data         = &dvb.data[offset];
-			_tvb->size         = _num * _stride;
-			_tvb->startVertex  = bx::strideAlign(offset, _stride)/_stride;
+			_tvb->size         = _size;
+			_tvb->startVertex  = bx::strideAlign(offset, _stride) / _stride;
 			_tvb->stride       = _stride;
 			_tvb->handle       = dvb.handle;
 			_tvb->layoutHandle = _layoutHandle;
 		}
 
-		BGFX_API_FUNC(void allocInstanceDataBuffer(InstanceDataBuffer* _idb, uint32_t _num, uint16_t _stride) )
+		BGFX_API_FUNC(void allocInstanceDataBuffer(InstanceDataBuffer* _idb, uint32_t _size, uint16_t _stride) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
 			const uint16_t stride = bx::alignUp(_stride, 16);
-			const uint32_t offset = m_submit->allocTransientVertexBuffer(_num, stride);
+			const uint32_t offset = m_submit->allocTransientVertexBuffer(_size, stride);
 
 			TransientVertexBuffer& dvb = *m_submit->m_transientVb;
 			_idb->data   = &dvb.data[offset];
-			_idb->size   = _num * stride;
+			_idb->size   = _size;
 			_idb->offset = offset;
-			_idb->num    = _num;
+			_idb->num    = _size / _stride;
 			_idb->stride = stride;
 			_idb->handle = dvb.handle;
 		}

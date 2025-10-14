@@ -9050,7 +9050,7 @@ VK_DESTROY
 							const uint32_t stride = layout.m_stride;
 
 							streamBuffers[numStreams] = m_vertexBuffers[handle.idx].m_buffer;
-							streamOffsets[numStreams] = draw.m_stream[idx].m_startVertex * stride;
+							streamOffsets[numStreams] = draw.m_stream[idx].m_offset;
 							layouts[numStreams]       = &layout;
 
 							numVertices = bx::uint32_min(UINT32_MAX == draw.m_numVertices
