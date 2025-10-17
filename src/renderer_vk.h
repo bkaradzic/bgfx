@@ -837,6 +837,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void preReset();
 		void postReset();
 
+		VkRenderPass getRenderPass(uint16_t _clearFlags) const;
+
 		void resolve();
 
 		bool acquire(VkCommandBuffer _commandBuffer);

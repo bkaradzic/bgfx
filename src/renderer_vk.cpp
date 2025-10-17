@@ -3195,7 +3195,7 @@ VK_IMPORT_DEVICE
 			}
 		}
 
-		VkResult getRenderPass(uint8_t _num, const VkFormat* _formats, const VkImageAspectFlags* _aspects, const bool* _resolve, VkSampleCountFlagBits _samples, ::VkRenderPass* _renderPass)
+		VkResult getRenderPass(uint8_t _num, const VkFormat* _formats, const VkImageAspectFlags* _aspects, const bool* _resolve, VkSampleCountFlagBits _samples, ::VkRenderPass* _renderPass, uint16_t _clearFlags)
 		{
 			VkResult result = VK_SUCCESS;
 
@@ -3208,6 +3208,7 @@ VK_IMPORT_DEVICE
 			hash.begin();
 			hash.add(_samples);
 			hash.add(_formats, sizeof(VkFormat) * _num);
+			hash.add(_clearFlags);
 			if (NULL != _resolve)
 			{
 				hash.add(_resolve, sizeof(bool) * _num);
@@ -3258,6 +3259,12 @@ VK_IMPORT_DEVICE
 				{
 					colorAr[numColorAr].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 					colorAr[numColorAr].attachment = ii;
+					ad[numColorAr].loadOp = 0 != (_clearFlags & BGFX_CLEAR_COLOR) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+
+					if (BGFX_CLEAR_NONE != (_clearFlags & (BGFX_CLEAR_DISCARD_COLOR_0 << ii)))
+					{
+						ad[numColorAr].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+					}
 
 					resolveAr[numColorAr].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 					resolveAr[numColorAr].attachment = VK_ATTACHMENT_UNUSED;
@@ -3278,7 +3285,10 @@ VK_IMPORT_DEVICE
 				}
 				else if (_aspects[ii] & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) )
 				{
-					ad[ii].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
+					ad[ii].loadOp = 0 != (_clearFlags & BGFX_CLEAR_DEPTH) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+					ad[ii].storeOp = 0 != (_clearFlags & BGFX_CLEAR_DISCARD_DEPTH) ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE;
+					ad[ii].stencilLoadOp = 0 != (_clearFlags & BGFX_CLEAR_STENCIL) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+					ad[ii].stencilStoreOp = 0 != (_clearFlags & BGFX_CLEAR_DISCARD_STENCIL) ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE;
 					ad[ii].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
 					ad[ii].initialLayout  = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 					ad[ii].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -3359,7 +3369,7 @@ VK_IMPORT_DEVICE
 			return result;
 		}
 
-		VkResult getRenderPass(uint8_t _num, const Attachment* _attachments, ::VkRenderPass* _renderPass)
+		VkResult getRenderPass(uint8_t _num, const Attachment* _attachments, ::VkRenderPass* _renderPass, uint16_t _clearFlags)
 		{
 			VkFormat formats[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 			VkImageAspectFlags aspects[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
@@ -3373,10 +3383,10 @@ VK_IMPORT_DEVICE
 				samples = texture.m_sampler.Sample;
 			}
 
-			return getRenderPass(_num, formats, aspects, NULL, samples, _renderPass);
+			return getRenderPass(_num, formats, aspects, NULL, samples, _renderPass, _clearFlags);
 		}
 
-		VkResult getRenderPass(const SwapChainVK& swapChain, ::VkRenderPass* _renderPass)
+		VkResult getRenderPass(const SwapChainVK& swapChain, ::VkRenderPass* _renderPass, uint16_t _clearFlags)
 		{
 			const VkFormat formats[2] =
 			{
@@ -3395,7 +3405,7 @@ VK_IMPORT_DEVICE
 			};
 			const VkSampleCountFlagBits samples = swapChain.m_sampler.Sample;
 
-			return getRenderPass(BX_COUNTOF(formats), formats, aspects, resolve, samples, _renderPass);
+			return getRenderPass(BX_COUNTOF(formats), formats, aspects, resolve, samples, _renderPass, _clearFlags);
 		}
 
 		VkSampler getSampler(uint32_t _flags, VkFormat _format, const float _palette[][4])
@@ -7599,7 +7609,7 @@ VK_DESTROY
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 
 		VkRenderPass renderPass;
-		result = s_renderVK->getRenderPass(*this, &renderPass);
+		result = s_renderVK->getRenderPass(*this, &renderPass, 0);
 
 		if (VK_SUCCESS != result)
 		{
@@ -7975,7 +7985,7 @@ VK_DESTROY
 			return result;
 		}
 
-		result = s_renderVK->getRenderPass(m_swapChain, &m_renderPass);
+		result = s_renderVK->getRenderPass(m_swapChain, &m_renderPass, 0);
 
 		if (VK_SUCCESS != result)
 		{
@@ -7989,6 +7999,23 @@ VK_DESTROY
 		m_sampler  = m_swapChain.m_sampler;
 
 		return result;
+	}
+
+
+	VkRenderPass FrameBufferVK::getRenderPass(uint16_t _clearFlags) const
+	{
+		VkRenderPass renderPass;
+
+		if (m_numTh > 0)
+		{
+			VK_CHECK(s_renderVK->getRenderPass(m_numTh, m_attachment, &renderPass, _clearFlags));
+		}
+		else
+		{
+			VK_CHECK(s_renderVK->getRenderPass(m_swapChain, &renderPass, _clearFlags));
+		}
+
+		return renderPass;
 	}
 
 	void FrameBufferVK::preReset()
@@ -8015,7 +8042,7 @@ VK_DESTROY
 			const VkDevice device = s_renderVK->m_device;
 			const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 
-			VK_CHECK(s_renderVK->getRenderPass(m_numTh, m_attachment, &m_renderPass) );
+			VK_CHECK(s_renderVK->getRenderPass(m_numTh, m_attachment, &m_renderPass, 0) );
 
 			m_depth = BGFX_INVALID_HANDLE;
 			m_num = 0;
@@ -8073,7 +8100,7 @@ VK_DESTROY
 		BGFX_PROFILER_SCOPE("FrameBufferVK::update", kColorResource);
 
 		m_swapChain.update(_commandBuffer, m_nwh, _resolution);
-		VK_CHECK(s_renderVK->getRenderPass(m_swapChain, &m_renderPass) );
+		VK_CHECK(s_renderVK->getRenderPass(m_swapChain, &m_renderPass, 0) );
 		// Don't believe the passed Resolution, as the Vulkan driver might have
 		// specified another resolution, which we had to obey.
 		m_width   = m_swapChain.m_sci.imageExtent.width;
@@ -8741,32 +8768,60 @@ VK_DESTROY
 
 				if (viewChanged)
 				{
-					if (beginRenderPass)
+					view = key.m_view;
+					currentProgram = BGFX_INVALID_HANDLE;
+					hasPredefined = false;
+
+					if (_render->m_view[view].m_fbh.idx != fbh.idx)
+					{
+						if ( beginRenderPass )
+						{
+							vkCmdEndRenderPass(m_commandBuffer);
+							beginRenderPass = false;
+						}
+
+						fbh = _render->m_view[view].m_fbh;
+						setFrameBuffer(fbh);
+					}
+				}
+
+				if(!isCompute && (viewChanged || wasCompute))
+				{
+					if (wasCompute)
+					{
+						wasCompute = false;
+						currentBindHash = 0;
+					}
+
+					if (beginRenderPass && (_render->m_view[view].m_fbh.idx != fbh.idx ||
+						_render->m_view[view].m_rect.m_x != viewState.m_rect.m_x ||
+						_render->m_view[view].m_rect.m_y != viewState.m_rect.m_y ||
+						_render->m_view[view].m_rect.m_width != viewState.m_rect.m_width ||
+						_render->m_view[view].m_rect.m_height != viewState.m_rect.m_height)
+						)
 					{
 						vkCmdEndRenderPass(m_commandBuffer);
 						beginRenderPass = false;
 					}
-
-					view = key.m_view;
-					currentProgram = BGFX_INVALID_HANDLE;
-					hasPredefined  = false;
 
 					if (item > 1)
 					{
 						profiler.end();
 					}
 
+					if (beginRenderPass && bs.hasItem(view))
+					{
+						vkCmdEndRenderPass(m_commandBuffer);
+						beginRenderPass = false;
+					}
+
+					submitBlit(bs, view);
+
 					BGFX_VK_PROFILER_END();
 					setViewType(view, " ");
 					BGFX_VK_PROFILER_BEGIN(view, kColorView);
 
 					profiler.begin(view);
-
-					if (_render->m_view[view].m_fbh.idx != fbh.idx)
-					{
-						fbh = _render->m_view[view].m_fbh;
-						setFrameBuffer(fbh);
-					}
 
 					const FrameBufferVK& fb = isValid(m_fbh)
 						? m_frameBuffers[m_fbh.idx]
@@ -8777,6 +8832,8 @@ VK_DESTROY
 
 					if (isFrameBufferValid)
 					{
+						VkRenderPass renderPass = fb.getRenderPass(_render->m_view[view].m_clear.m_flags);
+
 						viewState.m_rect = _render->m_view[view].m_rect;
 						Rect rect        = _render->m_view[view].m_rect;
 						Rect scissorRect = _render->m_view[view].m_scissor;
@@ -8799,7 +8856,7 @@ VK_DESTROY
 						}
 
 						rpbi.framebuffer = fb.m_currentFramebuffer;
-						rpbi.renderPass  = fb.m_renderPass;
+						rpbi.renderPass  = renderPass;
 						rpbi.renderArea.offset.x = rect.m_x;
 						rpbi.renderArea.offset.y = rect.m_y;
 						rpbi.renderArea.extent.width  = rect.m_width;
@@ -8821,19 +8878,110 @@ VK_DESTROY
 						rc.extent.height = viewScissorRect.m_height;
 						vkCmdSetScissor(m_commandBuffer, 0, 1, &rc);
 
-						const Clear& clr = _render->m_view[view].m_clear;
-						if (BGFX_CLEAR_NONE != clr.m_flags)
+						if (!beginRenderPass)
 						{
+							uint32_t numMrt;
+							bgfx::TextureFormat::Enum mrtFormat[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+							VkImageAspectFlags depthAspectMask;
+
+							if (NULL == fb.m_nwh)
+							{
+								numMrt = fb.m_num;
+								for (uint8_t ii = 0; ii < fb.m_num; ++ii)
+								{
+									mrtFormat[ii] = bgfx::TextureFormat::Enum(m_textures[fb.m_texture[ii].idx].m_requestedFormat);
+								}
+								depthAspectMask = isValid(fb.m_depth) ? m_textures[fb.m_depth.idx].m_aspectMask : 0;
+							}
+							else
+							{
+								numMrt = 1;
+								mrtFormat[0] = fb.m_swapChain.m_colorFormat;
+								depthAspectMask = fb.m_swapChain.m_backBufferDepthStencil.m_aspectMask;
+							}
+
+							VkClearValue clearValues[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS + 1];
+							uint32_t mrt = 0;
+
+							const Clear& clr = _render->m_view[view].m_clear;
+
+							for (uint32_t ii = 0; ii < numMrt; ++ii)
+							{
+								if (BGFX_CLEAR_COLOR & clr.m_flags)
+								{
+									VkClearColorValue& clearValue = clearValues[mrt].color;
+
+									const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(mrtFormat[ii]));
+									const bx::EncodingType::Enum type = bx::EncodingType::Enum(blockInfo.encoding);
+
+									if (BGFX_CLEAR_COLOR_USE_PALETTE & clr.m_flags)
+									{
+										const uint8_t index = bx::min<uint8_t>(BGFX_CONFIG_MAX_COLOR_PALETTE - 1, clr.m_index[ii]);
+										const float* rgba = _render->m_colorPalette[index];
+
+										switch (type)
+										{
+										case bx::EncodingType::Int:
+										case bx::EncodingType::Uint:
+											clearValue.int32[0] = int32_t(rgba[0]);
+											clearValue.int32[1] = int32_t(rgba[1]);
+											clearValue.int32[2] = int32_t(rgba[2]);
+											clearValue.int32[3] = int32_t(rgba[3]);
+											break;
+										default:
+											bx::memCopy(&clearValue.float32, rgba, sizeof(clearValue.float32));
+											break;
+										}
+									}
+									else
+									{
+										switch (type)
+										{
+										case bx::EncodingType::Int:
+										case bx::EncodingType::Uint:
+											clearValue.uint32[0] = clr.m_index[0];
+											clearValue.uint32[1] = clr.m_index[1];
+											clearValue.uint32[2] = clr.m_index[2];
+											clearValue.uint32[3] = clr.m_index[3];
+											break;
+										default:
+											bx::unpackRgba8(clearValue.float32, clr.m_index);
+											break;
+										}
+									}
+								}
+								++mrt;
+							}
+
+							depthAspectMask &= 0
+								| (clr.m_flags & BGFX_CLEAR_DEPTH ? VK_IMAGE_ASPECT_DEPTH_BIT : 0)
+								| (clr.m_flags & BGFX_CLEAR_STENCIL ? VK_IMAGE_ASPECT_STENCIL_BIT : 0)
+								;
+
+							if (0 != depthAspectMask)
+							{
+								clearValues[mrt].depthStencil.stencil = clr.m_stencil;
+								clearValues[mrt].depthStencil.depth = clr.m_depth;
+								++mrt;
+							}
+
+							rpbi.clearValueCount = mrt;
+							rpbi.pClearValues = clearValues;
+
 							vkCmdBeginRenderPass(m_commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
-
-							Rect clearRect = rect;
-							clearRect.setIntersect(rect, viewScissorRect);
-							clearQuad(clearRect, clr, _render->m_colorPalette);
-
-							vkCmdEndRenderPass(m_commandBuffer);
+							beginRenderPass = true;
 						}
+						else
+						{
+							const Clear& clr = _render->m_view[view].m_clear;
+							if (BGFX_CLEAR_NONE != clr.m_flags)
+							{
+								Rect clearRect = rect;
+								clearRect.setIntersect(rect, viewScissorRect);
+								clearQuad(clearRect, clr, _render->m_colorPalette);
 
-						submitBlit(bs, view);
+							}
+						}
 					}
 				}
 
@@ -8847,6 +8995,12 @@ VK_DESTROY
 						BGFX_VK_PROFILER_END();
 						setViewType(view, "C");
 						BGFX_VK_PROFILER_BEGIN(view, kColorCompute);
+
+						if (beginRenderPass)
+						{
+							vkCmdEndRenderPass(m_commandBuffer);
+							beginRenderPass = false;
+						}
 					}
 
 					// renderpass external subpass dependencies handle graphics -> compute and compute -> graphics
@@ -8993,25 +9147,6 @@ VK_DESTROY
 
 				const uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
 				currentState.m_stateFlags = draw.m_stateFlags;
-
-				if (!beginRenderPass)
-				{
-					if (wasCompute)
-					{
-						wasCompute = false;
-						currentBindHash = 0;
-					}
-
-					BGFX_VK_PROFILER_END();
-					setViewType(view, " ");
-					BGFX_VK_PROFILER_BEGIN(view, kColorDraw);
-
-					vkCmdBeginRenderPass(m_commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
-					beginRenderPass = true;
-
-					currentProgram = BGFX_INVALID_HANDLE;
-					currentState.m_scissor = !draw.m_scissor;
-				}
 
 				if (0 != draw.m_streamMask)
 				{
