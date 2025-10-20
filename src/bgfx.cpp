@@ -262,51 +262,11 @@ namespace bgfx
 
 	Caps g_caps;
 
-#if BGFX_CONFIG_MULTITHREADED && !defined(BX_THREAD_LOCAL)
-	class ThreadData
-	{
-		BX_CLASS(ThreadData
-			, NO_DEFAULT_CTOR
-			, NO_COPY
-			);
-
-	public:
-		ThreadData(uintptr_t _rhs)
-		{
-			union { uintptr_t ui; void* ptr; } cast = { _rhs };
-			m_tls.set(cast.ptr);
-		}
-
-		operator uintptr_t() const
-		{
-			union { uintptr_t ui; void* ptr; } cast;
-			cast.ptr = m_tls.get();
-			return cast.ui;
-		}
-
-		uintptr_t operator=(uintptr_t _rhs)
-		{
-			union { uintptr_t ui; void* ptr; } cast = { _rhs };
-			m_tls.set(cast.ptr);
-			return _rhs;
-		}
-
-		bool operator==(uintptr_t _rhs) const
-		{
-			uintptr_t lhs = *this;
-			return lhs == _rhs;
-		}
-
-	private:
-		bx::TlsData m_tls;
-	};
-
-	static ThreadData s_threadIndex(0);
-#elif !BGFX_CONFIG_MULTITHREADED
-	static uint32_t s_threadIndex(0);
-#else
+#if BGFX_CONFIG_MULTITHREADED
 	static BX_THREAD_LOCAL uint32_t s_threadIndex(0);
-#endif
+#else
+	static uint32_t s_threadIndex(0);
+#endif // BGFX_CONFIG_MULTITHREADED
 
 	static Context* s_ctx = NULL;
 	static bool s_renderFrameCalled = false;
