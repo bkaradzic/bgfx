@@ -270,7 +270,7 @@ namespace ImGui
             bool popFontRequired = false;
             if( fmt.font && fmt.font != ImGui::GetFont() )
             {
-                ImGui::PushFont( fmt.font );
+                ImGui::PushFont( fmt.font, 0.0f );
                 popFontRequired = true;
             }
             const char* text = markdown_ + textStart + 1;

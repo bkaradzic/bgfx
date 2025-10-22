@@ -2770,7 +2770,7 @@ namespace IMGUIZMO_NAMESPACE
                const ImVec2 panelCorners[2] = { panelPosition[iPanel], panelPosition[iPanel] + panelSize[iPanel] };
                bool insidePanel = localx > panelCorners[0].x && localx < panelCorners[1].x&& localy > panelCorners[0].y && localy < panelCorners[1].y;
                int boxCoordInt = int(boxCoord.x * 9.f + boxCoord.y * 3.f + boxCoord.z);
-               assert(boxCoordInt < 27);
+               IM_ASSERT(boxCoordInt < 27);
                boxes[boxCoordInt] |= insidePanel && (!isDraging);
 
                // draw face with lighter color
