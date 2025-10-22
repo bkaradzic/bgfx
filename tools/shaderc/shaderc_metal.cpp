@@ -23,7 +23,6 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'u
 #include <ShaderLang.h>
 #include <ResourceLimits.h>
 #include <SPIRV/GlslangToSpv.h>
-#include <SPIRV/SPVRemapper.h>
 #include <SPIRV/SpvTools.h>
 #include <spirv-tools/optimizer.hpp>
 BX_PRAGMA_DIAGNOSTIC_POP()
