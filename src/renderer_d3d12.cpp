@@ -665,9 +665,9 @@ namespace bgfx { namespace d3d12
 		return &s_pixEventsThreadInfo;
 	}
 
-	uint64_t WINAPI stubPIXEventsReplaceBlock(bool _getEarliestTime)
+	uint64_t WINAPI stubPIXEventsReplaceBlock(PIXEventsThreadInfo* _threadInfo, bool _getEarliestTime)
 	{
-		BX_UNUSED(_getEarliestTime);
+		BX_UNUSED(_threadInfo, _getEarliestTime);
 		return 0;
 	}
 #endif // BGFX_CONFIG_DEBUG_ANNOTATION && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)

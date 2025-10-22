@@ -50,7 +50,7 @@ extern "C++" {
 #if BGFX_CONFIG_DEBUG_ANNOTATION && !BX_PLATFORM_LINUX
 #	if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 typedef struct PIXEventsThreadInfo* (WINAPI* PFN_PIX_GET_THREAD_INFO)();
-typedef uint64_t                    (WINAPI* PFN_PIX_EVENTS_REPLACE_BLOCK)(bool _getEarliestTime);
+typedef uint64_t                    (WINAPI* PFN_PIX_EVENTS_REPLACE_BLOCK)(PIXEventsThreadInfo* _threadInfo, bool _getEarliestTime);
 
 extern PFN_PIX_GET_THREAD_INFO      bgfx_PIXGetThreadInfo;
 extern PFN_PIX_EVENTS_REPLACE_BLOCK bgfx_PIXEventsReplaceBlock;
@@ -59,7 +59,7 @@ extern PFN_PIX_EVENTS_REPLACE_BLOCK bgfx_PIXEventsReplaceBlock;
 #		define PIXEventsReplaceBlock bgfx_PIXEventsReplaceBlock
 #	else
 extern "C" struct PIXEventsThreadInfo* WINAPI bgfx_PIXGetThreadInfo();
-extern "C" uint64_t                    WINAPI bgfx_PIXEventsReplaceBlock(bool _getEarliestTime);
+extern "C" uint64_t                    WINAPI bgfx_PIXEventsReplaceBlock(PIXEventsThreadInfo* _threadInfo, bool _getEarliestTime);
 #	endif // BX_PLATFORM_WINDOWS
 
 #	include <pix3.h>
