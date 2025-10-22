@@ -243,14 +243,18 @@ static unsigned int* buildSparseRemap(unsigned int* indices, size_t index_count,
 {
 	// use a bit set to compute the precise number of unique vertices
 	unsigned char* filter = allocator.allocate<unsigned char>((vertex_count + 7) / 8);
-	memset(filter, 0, (vertex_count + 7) / 8);
+
+	for (size_t i = 0; i < index_count; ++i)
+	{
+		unsigned int index = indices[i];
+		assert(index < vertex_count);
+		filter[index / 8] = 0;
+	}
 
 	size_t unique = 0;
 	for (size_t i = 0; i < index_count; ++i)
 	{
 		unsigned int index = indices[i];
-		assert(index < vertex_count);
-
 		unique += (filter[index / 8] & (1 << (index % 8))) == 0;
 		filter[index / 8] |= 1 << (index % 8);
 	}
@@ -269,7 +273,6 @@ static unsigned int* buildSparseRemap(unsigned int* indices, size_t index_count,
 	for (size_t i = 0; i < index_count; ++i)
 	{
 		unsigned int index = indices[i];
-
 		unsigned int* entry = hashLookup2(revremap, revremap_size, hasher, index, ~0u);
 
 		if (*entry == ~0u)
@@ -2264,7 +2267,7 @@ static float interpolate(float y, float x0, float y0, float x1, float y1, float 
 	// three point interpolation from "revenge of interpolation search" paper
 	float num = (y1 - y) * (x1 - x2) * (x1 - x0) * (y2 - y0);
 	float den = (y2 - y) * (x1 - x2) * (y0 - y1) + (y0 - y) * (x1 - x0) * (y1 - y2);
-	return x1 + num / den;
+	return x1 + (den == 0.f ? 0.f : num / den);
 }
 
 } // namespace meshopt

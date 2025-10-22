@@ -595,7 +595,7 @@ struct KDNode
 	unsigned int children : 30;
 };
 
-static size_t kdtreePartition(unsigned int* indices, size_t count, const float* points, size_t stride, unsigned int axis, float pivot)
+static size_t kdtreePartition(unsigned int* indices, size_t count, const float* points, size_t stride, int axis, float pivot)
 {
 	size_t m = 0;
 
@@ -666,7 +666,7 @@ static size_t kdtreeBuild(size_t offset, KDNode* nodes, size_t node_count, const
 	}
 
 	// split axis is one where the variance is largest
-	unsigned int axis = (vars[0] >= vars[1] && vars[0] >= vars[2]) ? 0 : (vars[1] >= vars[2] ? 1 : 2);
+	int axis = (vars[0] >= vars[1] && vars[0] >= vars[2]) ? 0 : (vars[1] >= vars[2] ? 1 : 2);
 
 	float split = mean[axis];
 	size_t middle = kdtreePartition(indices, count, points, stride, axis, split);
@@ -768,8 +768,8 @@ static float boxMerge(BVHBoxT& box, const BVHBox& other)
 	min = _mm_min_ps(min, _mm_loadu_ps(other.min));
 	max = _mm_max_ps(max, _mm_loadu_ps(other.max));
 
-	_mm_store_ps(box.min, min);
-	_mm_store_ps(box.max, max);
+	_mm_storeu_ps(box.min, min);
+	_mm_storeu_ps(box.max, max);
 
 	__m128 size = _mm_sub_ps(max, min);
 	__m128 size_yzx = _mm_shuffle_ps(size, size, _MM_SHUFFLE(0, 0, 2, 1));
