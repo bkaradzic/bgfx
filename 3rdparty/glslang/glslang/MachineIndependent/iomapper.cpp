@@ -1019,6 +1019,7 @@ uint32_t TDefaultIoResolverBase::computeTypeLocationSize(const TType& type, EShL
 
 //TDefaultGlslIoResolver
 TResourceType TDefaultGlslIoResolver::getResourceType(const glslang::TType& type) {
+    assert(isValidGlslType(type));
     if (isImageType(type)) {
         return EResImage;
     }
@@ -1033,6 +1034,15 @@ TResourceType TDefaultGlslIoResolver::getResourceType(const glslang::TType& type
     }
     if (isUboType(type)) {
         return EResUbo;
+    }
+    if (isCombinedSamplerType(type)) {
+        return EResCombinedSampler;
+    }
+    if (isAsType(type)) {
+        return EResAs;
+    }
+    if (isTensorType(type)) {
+        return EResTensor;
     }
     return EResCount;
 }
@@ -1383,6 +1393,7 @@ struct TDefaultIoResolver : public TDefaultIoResolverBase {
     bool validateBinding(EShLanguage /*stage*/, TVarEntryInfo& /*ent*/) override { return true; }
 
     TResourceType getResourceType(const glslang::TType& type) override {
+        assert(isValidGlslType(type));
         if (isImageType(type)) {
             return EResImage;
         }
@@ -1397,6 +1408,15 @@ struct TDefaultIoResolver : public TDefaultIoResolverBase {
         }
         if (isUboType(type)) {
             return EResUbo;
+        }
+        if (isCombinedSamplerType(type)) {
+            return EResCombinedSampler;
+        }
+        if (isAsType(type)) {
+            return EResAs;
+        }
+        if (isTensorType(type)) {
+            return EResTensor;
         }
         return EResCount;
     }
@@ -1483,6 +1503,11 @@ struct TDefaultHlslIoResolver : public TDefaultIoResolverBase {
         if (isUboType(type)) {
             return EResUbo;
         }
+        // no support for combined samplers in HLSL
+        if (isAsType(type)) {
+            return EResAs;
+        }
+        // no support for tensors in HLSL
         return EResCount;
     }
 

@@ -138,7 +138,7 @@ Id Builder::makeSamplerType()
 
     if (emitNonSemanticShaderDebugInfo)
     {
-        auto const debugResultId = makeCompositeDebugType({}, "type.sampler", NonSemanticShaderDebugInfo100Structure, true);
+        auto const debugResultId = makeOpaqueDebugType("type.sampler");
         debugId[type->getResultId()] = debugResultId;
     }
 
@@ -419,7 +419,9 @@ Id Builder::makeFloatE4M3Type()
 // See makeStructResultType() for non-decorated structs
 // needed as the result of some instructions, which does
 // check for duplicates.
-Id Builder::makeStructType(const std::vector<Id>& members, const char* name, bool const compilerGenerated)
+// For compiler-generated structs, debug info is ignored.
+Id Builder::makeStructType(const std::vector<Id>& members, const std::vector<spv::StructMemberDebugInfo>& memberDebugInfo,
+                           const char* name, bool const compilerGenerated)
 {
     // Don't look for previous one, because in the general case,
     // structs can be duplicated except for decorations.
@@ -433,9 +435,10 @@ Id Builder::makeStructType(const std::vector<Id>& members, const char* name, boo
     module.mapInstruction(type);
     addName(type->getResultId(), name);
 
-    if (emitNonSemanticShaderDebugInfo && !compilerGenerated)
-    {
-        auto const debugResultId = makeCompositeDebugType(members, name, NonSemanticShaderDebugInfo100Structure);
+    if (emitNonSemanticShaderDebugInfo && !compilerGenerated) {
+        assert(members.size() == memberDebugInfo.size());
+        auto const debugResultId =
+            makeCompositeDebugType(members, memberDebugInfo, name, NonSemanticShaderDebugInfo100Structure);
         debugId[type->getResultId()] = debugResultId;
     }
 
@@ -463,7 +466,7 @@ Id Builder::makeStructResultType(Id type0, Id type1)
     members.push_back(type0);
     members.push_back(type1);
 
-    return makeStructType(members, "ResType");
+    return makeStructType(members, {}, "ResType");
 }
 
 Id Builder::makeVectorType(Id component, int size)
@@ -587,7 +590,7 @@ Id Builder::makeCooperativeMatrixTypeKHR(Id component, Id scope, Id rows, Id col
         debugName += std::string(findName(cols)) + ">";
         // There's no nonsemantic debug info instruction for cooperative matrix types,
         // use opaque composite instead.
-        auto const debugResultId = makeCompositeDebugType({}, debugName.c_str(), NonSemanticShaderDebugInfo100Structure, true);
+        auto const debugResultId = makeOpaqueDebugType(debugName.c_str());
         debugId[type->getResultId()] = debugResultId;
     }
 
@@ -929,7 +932,7 @@ Id Builder::makeImageType(Id sampledType, Dim dim, bool depth, bool arrayed, boo
             }
         };
 
-        auto const debugResultId = makeCompositeDebugType({}, TypeName(), NonSemanticShaderDebugInfo100Class, true);
+        auto const debugResultId = makeOpaqueDebugType(TypeName());
         debugId[type->getResultId()] = debugResultId;
     }
 
@@ -956,7 +959,7 @@ Id Builder::makeSampledImageType(Id imageType)
 
     if (emitNonSemanticShaderDebugInfo)
     {
-        auto const debugResultId = makeCompositeDebugType({}, "type.sampled.image", NonSemanticShaderDebugInfo100Class, true);
+        auto const debugResultId = makeOpaqueDebugType("type.sampled.image");
         debugId[type->getResultId()] = debugResultId;
     }
 
@@ -1153,7 +1156,7 @@ Id Builder::makeMatrixDebugType(Id const vectorType, int const vectorCount, bool
     return type->getResultId();
 }
 
-Id Builder::makeMemberDebugType(Id const memberType, DebugTypeLoc const& debugTypeLoc)
+Id Builder::makeMemberDebugType(Id const memberType, StructMemberDebugInfo const& debugTypeLoc)
 {
     assert(debugId[memberType] != 0);
 
@@ -1162,12 +1165,13 @@ Id Builder::makeMemberDebugType(Id const memberType, DebugTypeLoc const& debugTy
     type->addIdOperand(nonSemanticShaderDebugInfo);
     type->addImmediateOperand(NonSemanticShaderDebugInfo100DebugTypeMember);
     type->addIdOperand(getStringId(debugTypeLoc.name)); // name id
-    type->addIdOperand(debugId[memberType]); // type id
-    type->addIdOperand(makeDebugSource(currentFileId)); // source id
-    type->addIdOperand(makeUintConstant(debugTypeLoc.line)); // line id TODO: currentLine is always zero
+    type->addIdOperand(debugTypeLoc.debugTypeOverride != 0 ? debugTypeLoc.debugTypeOverride
+                                                           : debugId[memberType]); // type id
+    type->addIdOperand(makeDebugSource(currentFileId));                            // source id
+    type->addIdOperand(makeUintConstant(debugTypeLoc.line));   // line id TODO: currentLine is always zero
     type->addIdOperand(makeUintConstant(debugTypeLoc.column)); // TODO: column id
-    type->addIdOperand(makeUintConstant(0)); // TODO: offset id
-    type->addIdOperand(makeUintConstant(0)); // TODO: size id
+    type->addIdOperand(makeUintConstant(0));                   // TODO: offset id
+    type->addIdOperand(makeUintConstant(0));                   // TODO: size id
     type->addIdOperand(makeUintConstant(NonSemanticShaderDebugInfo100FlagIsPublic)); // flags id
 
     groupedDebugTypes[NonSemanticShaderDebugInfo100DebugTypeMember].push_back(type);
@@ -1177,23 +1181,16 @@ Id Builder::makeMemberDebugType(Id const memberType, DebugTypeLoc const& debugTy
     return type->getResultId();
 }
 
-// Note: To represent a source language opaque type, this instruction must have no Members operands, Size operand must be
-// DebugInfoNone, and Name must start with @ to avoid clashes with user defined names.
-Id Builder::makeCompositeDebugType(std::vector<Id> const& memberTypes, char const*const name,
-    NonSemanticShaderDebugInfo100DebugCompositeType const tag, bool const isOpaqueType)
+Id Builder::makeCompositeDebugType(std::vector<Id> const& memberTypes, std::vector<StructMemberDebugInfo> const& memberDebugInfo,
+                                   char const* const name, NonSemanticShaderDebugInfo100DebugCompositeType const tag)
 {
     // Create the debug member types.
     std::vector<Id> memberDebugTypes;
-    for(auto const memberType : memberTypes) {
-        assert(debugTypeLocs.find(memberType) != debugTypeLocs.end());
-
-        // There _should_ be debug types for all the member types but currently buffer references
-        // do not have member debug info generated.
-        if (debugId[memberType])
-            memberDebugTypes.emplace_back(makeMemberDebugType(memberType, debugTypeLocs[memberType]));
-
-        // TODO: Need to rethink this method of passing location information.
-        // debugTypeLocs.erase(memberType);
+    assert(memberTypes.size() == memberDebugInfo.size());
+    for (size_t i = 0; i < memberTypes.size(); i++) {
+        if (debugId[memberTypes[i]]) {
+            memberDebugTypes.emplace_back(makeMemberDebugType(memberTypes[i], memberDebugInfo[i]));
+        }
     }
 
     // Create The structure debug type.
@@ -1207,19 +1204,40 @@ Id Builder::makeCompositeDebugType(std::vector<Id> const& memberTypes, char cons
     type->addIdOperand(makeUintConstant(currentLine)); // line id TODO: currentLine always zero?
     type->addIdOperand(makeUintConstant(0)); // TODO: column id
     type->addIdOperand(makeDebugCompilationUnit()); // scope id
-    if(isOpaqueType == true) {
-        // Prepend '@' to opaque types.
-        type->addIdOperand(getStringId('@' + std::string(name))); // linkage name id
-        type->addIdOperand(makeDebugInfoNone()); // size id
-    } else {
-        type->addIdOperand(getStringId(name)); // linkage name id
-        type->addIdOperand(makeUintConstant(0)); // TODO: size id
-    }
+    type->addIdOperand(getStringId(name)); // linkage name id
+    type->addIdOperand(makeUintConstant(0)); // TODO: size id
     type->addIdOperand(makeUintConstant(NonSemanticShaderDebugInfo100FlagIsPublic)); // flags id
-    assert(isOpaqueType == false || (isOpaqueType == true && memberDebugTypes.empty()));
     for(auto const memberDebugType : memberDebugTypes) {
         type->addIdOperand(memberDebugType);
     }
+
+    groupedDebugTypes[NonSemanticShaderDebugInfo100DebugTypeComposite].push_back(type);
+    constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
+    module.mapInstruction(type);
+
+    return type->getResultId();
+}
+
+// The NonSemantic Shader Debug Info doesn't really have a dedicated opcode for opaque types. Instead, we use DebugTypeComposite.
+// To represent a source language opaque type, this instruction must have no Members operands, Size operand must be
+// DebugInfoNone, and Name must start with @ to avoid clashes with user defined names.
+Id Builder::makeOpaqueDebugType(char const* const name)
+{
+    // Create The structure debug type.
+    Instruction* type = new Instruction(getUniqueId(), makeVoidType(), Op::OpExtInst);
+    type->reserveOperands(11);
+    type->addIdOperand(nonSemanticShaderDebugInfo);
+    type->addImmediateOperand(NonSemanticShaderDebugInfo100DebugTypeComposite);
+    type->addIdOperand(getStringId(name)); // name id
+    type->addIdOperand(makeUintConstant(NonSemanticShaderDebugInfo100Structure)); // tag id
+    type->addIdOperand(makeDebugSource(currentFileId)); // source id
+    type->addIdOperand(makeUintConstant(currentLine)); // line id TODO: currentLine always zero?
+    type->addIdOperand(makeUintConstant(0)); // TODO: column id
+    type->addIdOperand(makeDebugCompilationUnit()); // scope id
+    // Prepend '@' to opaque types.
+    type->addIdOperand(getStringId('@' + std::string(name))); // linkage name id
+    type->addIdOperand(makeDebugInfoNone()); // size id
+    type->addIdOperand(makeUintConstant(NonSemanticShaderDebugInfo100FlagIsPublic)); // flags id
 
     groupedDebugTypes[NonSemanticShaderDebugInfo100DebugTypeComposite].push_back(type);
     constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
@@ -1401,7 +1419,7 @@ Id Builder::createDebugLocalVariable(Id type, char const*const name, size_t cons
     inst->addIdOperand(currentDebugScopeId.top()); // scope id
     inst->addIdOperand(makeUintConstant(NonSemanticShaderDebugInfo100FlagIsLocal)); // flags id
     if(argNumber != 0) {
-        inst->addIdOperand(makeUintConstant(argNumber));
+        inst->addIdOperand(makeUintConstant(static_cast<unsigned int>(argNumber)));
     }
 
     constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(inst));
@@ -1465,7 +1483,7 @@ Id Builder::makeAccelerationStructureType()
         constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
         module.mapInstruction(type);
         if (emitNonSemanticShaderDebugInfo) {
-            spv::Id debugType = makeCompositeDebugType({}, "accelerationStructure", NonSemanticShaderDebugInfo100Structure, true);
+            spv::Id debugType = makeOpaqueDebugType("accelerationStructure");
             debugId[type->getResultId()] = debugType;
         }
     } else {
@@ -1484,7 +1502,7 @@ Id Builder::makeRayQueryType()
         constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
         module.mapInstruction(type);
         if (emitNonSemanticShaderDebugInfo) {
-            spv::Id debugType = makeCompositeDebugType({}, "rayQuery", NonSemanticShaderDebugInfo100Structure, true);
+            spv::Id debugType = makeOpaqueDebugType("rayQuery");
             debugId[type->getResultId()] = debugType;
         }
     } else {

@@ -1862,8 +1862,8 @@ void TParseContext::handleVector2CoopMatConversionCall(const TSourceLoc& loc, co
       error(loc, "source and destination element types are not compatible", "", "");
 
     uint32_t scope = spv_Scope_Subgroup;
-    uint32_t coopMatKHRuse = -1u;
-    uint32_t coopMatNumRows = -1u, coopMatNumCols = -1u;
+    uint32_t coopMatKHRuse = !0u;
+    uint32_t coopMatNumRows = !0u, coopMatNumCols = !0u;
     TIntermTyped *nodeNumRows = nullptr, *nodeNumCols = nullptr;
     const TTypeParameters* dstTypeParameters = dstType.getTypeParameters();
     if (dstTypeParameters->arraySizes == nullptr || dstTypeParameters->arraySizes->getNumDims() != 4) {
@@ -1946,7 +1946,7 @@ void TParseContext::handleVector2CoopMatConversionCall(const TSourceLoc& loc, co
       error(loc, "source and destination element types are not compatible", "", "");
 
     uint32_t scope = spv_Scope_Subgroup;
-    unsigned coopMatKHRuse = -1u;
+    unsigned coopMatKHRuse = !0u;
     const TTypeParameters* srcTypeParameters = srcType.getTypeParameters();
     if (srcTypeParameters->arraySizes == nullptr || srcTypeParameters->arraySizes->getNumDims() != 4) {
       error(loc, "source cooperative matrix has an unsupported type", "", "");
@@ -2008,7 +2008,7 @@ void TParseContext::handleVector2CoopMatConversionCall(const TSourceLoc& loc, co
 
     {
       //int coopMatKHRuse = srcTypeParameters->arraySizes->getDimSize(3);
-      uint32_t index = -1u;
+      uint32_t index = !0u;
       if (coopMatKHRuse == CM_MatrixUseA) {
         index = 2;
       } else if (coopMatKHRuse == CM_MatrixUseB) {
@@ -8642,7 +8642,7 @@ static void ForEachOpaque(const TType& type, const TString& path, Function callb
                 for (size_t dimIndex = 0; dimIndex < indices.size(); ++dimIndex)
                 {
                     ++indices[dimIndex];
-                    if (indices[dimIndex] < type.getArraySizes()->getDimSize(dimIndex))
+                    if (indices[dimIndex] < type.getArraySizes()->getDimSize(static_cast<int>(dimIndex)))
                         break;
                     else
                         indices[dimIndex] = 0;

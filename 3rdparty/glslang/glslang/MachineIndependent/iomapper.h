@@ -120,12 +120,12 @@ protected:
     }
 
     static bool isTextureType(const glslang::TType& type) {
-        return (type.getBasicType() == glslang::EbtSampler &&
+        return (type.getBasicType() == glslang::EbtSampler && !type.getSampler().isCombined() &&
                 (type.getSampler().isTexture() || type.getSampler().isSubpass()));
     }
 
     static bool isUboType(const glslang::TType& type) {
-        return type.getQualifier().storage == EvqUniform;
+        return type.getQualifier().storage == EvqUniform && type.isStruct();
     }
 
     static bool isImageType(const glslang::TType& type) {
@@ -134,6 +134,24 @@ protected:
 
     static bool isSsboType(const glslang::TType& type) {
         return type.getQualifier().storage == EvqBuffer;
+    }
+
+    static bool isCombinedSamplerType(const glslang::TType& type) {
+        return type.getBasicType() == glslang::EbtSampler && type.getSampler().isCombined();
+    }
+
+    static bool isAsType(const glslang::TType& type) {
+        return type.getBasicType() == glslang::EbtAccStruct;
+    }
+
+    static bool isTensorType(const glslang::TType& type) {
+        return type.isTensorARM();
+    }
+
+    static bool isValidGlslType(const glslang::TType& type) {
+        // at most one must be true
+        return (isSamplerType(type) + isTextureType(type) + isUboType(type) + isImageType(type) +
+            isSsboType(type) + isCombinedSamplerType(type) + isAsType(type) + isTensorType(type)) <= 1;
     }
 
     // Return true if this is a SRV (shader resource view) type:

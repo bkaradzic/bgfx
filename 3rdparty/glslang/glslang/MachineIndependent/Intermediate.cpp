@@ -3904,12 +3904,15 @@ void TIntermediate::performTextureUpgradeAndSamplerRemovalTransformation(TInterm
 const char* TIntermediate::getResourceName(TResourceType res)
 {
     switch (res) {
-    case EResSampler: return "shift-sampler-binding";
-    case EResTexture: return "shift-texture-binding";
-    case EResImage:   return "shift-image-binding";
-    case EResUbo:     return "shift-UBO-binding";
-    case EResSsbo:    return "shift-ssbo-binding";
-    case EResUav:     return "shift-uav-binding";
+    case EResSampler:         return "shift-sampler-binding";
+    case EResTexture:         return "shift-texture-binding";
+    case EResImage:           return "shift-image-binding";
+    case EResUbo:             return "shift-ubo-binding";
+    case EResSsbo:            return "shift-ssbo-binding";
+    case EResUav:             return "shift-uav-binding";
+    case EResCombinedSampler: return "shift-combined-sampler-binding";
+    case EResAs:              return "shift-as-binding";
+    case EResTensor:          return nullptr;
     default:
         assert(0); // internal error: should only be called with valid resource types.
         return nullptr;
