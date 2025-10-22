@@ -1594,7 +1594,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				if (prevMetalLayerPixelFormat != getSwapChainPixelFormat(m_mainFrameBuffer.m_swapChain))
 				{
-					MTL_RELEASE(m_screenshotBlitRenderPipelineState)
+					MTL_RELEASE(m_screenshotBlitRenderPipelineState);
 					reset(m_renderPipelineDescriptor);
 
 					m_renderPipelineDescriptor.colorAttachments[0].pixelFormat = getSwapChainPixelFormat(m_mainFrameBuffer.m_swapChain);
