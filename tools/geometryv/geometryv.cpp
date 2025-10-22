@@ -1124,8 +1124,6 @@ int _main_(int _argc, char** _argv)
 
 			if (ImGui::BeginPopupModal("About", &view.m_about, ImGuiWindowFlags_AlwaysAutoResize) )
 			{
-				ImGui::SetWindowFontScale(1.0f);
-
 				ImGui::Text(
 					"geometryv, bgfx geometry viewer tool " ICON_KI_WRENCH ", version %d.%d.%d.\n"
 					"Copyright 2019-2019 Attila Kocsis. All rights reserved.\n"
@@ -1149,8 +1147,6 @@ int _main_(int _argc, char** _argv)
 
 			if (ImGui::BeginPopupModal("Help", &view.m_help, ImGuiWindowFlags_AlwaysAutoResize) )
 			{
-				ImGui::SetWindowFontScale(1.0f);
-
 				ImGui::Text("Key bindings:\n\n");
 
 				ImGui::PushFont(ImGui::Font::Mono);
