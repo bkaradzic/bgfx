@@ -68,7 +68,7 @@ class LCSSARewriter {
     // block. This operation does not update the def/use manager, instead it
     // records what needs to be updated. The actual update is performed by
     // UpdateManagers.
-    void RewriteUse(BasicBlock* bb, Instruction* user, uint32_t operand_index) {
+    bool RewriteUse(BasicBlock* bb, Instruction* user, uint32_t operand_index) {
       assert(
           (user->opcode() != spv::Op::OpPhi || bb != GetParent(user)) &&
           "The root basic block must be the incoming edge if |user| is a phi "
@@ -79,9 +79,13 @@ class LCSSARewriter {
              "phi instruction");
 
       Instruction* new_def = GetOrBuildIncoming(bb->id());
+      if (!new_def) {
+        return false;
+      }
 
       user->SetOperand(operand_index, {new_def->result_id()});
       rewritten_.insert(user);
+      return true;
     }
 
     // In-place update of some managers (avoid full invalidation).
@@ -120,6 +124,9 @@ class LCSSARewriter {
                                  IRContext::kAnalysisInstrToBlockMapping);
       Instruction* incoming_phi =
           builder.AddPhi(def_insn_.type_id(), incomings);
+      if (!incoming_phi) {
+        return nullptr;
+      }
 
       rewritten_.insert(incoming_phi);
       return incoming_phi;
@@ -139,6 +146,9 @@ class LCSSARewriter {
                                  IRContext::kAnalysisInstrToBlockMapping);
       Instruction* incoming_phi =
           builder.AddPhi(def_insn_.type_id(), incomings);
+      if (!incoming_phi) {
+        return nullptr;
+      }
 
       rewritten_.insert(incoming_phi);
       return incoming_phi;
@@ -270,7 +280,7 @@ class LCSSARewriter {
 // Make the set |blocks| closed SSA. The set is closed SSA if all the uses
 // outside the set are phi instructions in exiting basic block set (hold by
 // |lcssa_rewriter|).
-inline void MakeSetClosedSSA(IRContext* context, Function* function,
+inline bool MakeSetClosedSSA(IRContext* context, Function* function,
                              const std::unordered_set<uint32_t>& blocks,
                              const std::unordered_set<BasicBlock*>& exit_bb,
                              LCSSARewriter* lcssa_rewriter) {
@@ -285,18 +295,18 @@ inline void MakeSetClosedSSA(IRContext* context, Function* function,
     if (!DominatesAnExit(bb, exit_bb, dom_tree)) continue;
     for (Instruction& inst : *bb) {
       LCSSARewriter::UseRewriter rewriter(lcssa_rewriter, inst);
-      def_use_manager->ForEachUse(
+      bool success = def_use_manager->WhileEachUse(
           &inst, [&blocks, &rewriter, &exit_bb, context](
                      Instruction* use, uint32_t operand_index) {
             BasicBlock* use_parent = context->get_instr_block(use);
             assert(use_parent);
-            if (blocks.count(use_parent->id())) return;
+            if (blocks.count(use_parent->id())) return true;
 
             if (use->opcode() == spv::Op::OpPhi) {
               // If the use is a Phi instruction and the incoming block is
               // coming from the loop, then that's consistent with LCSSA form.
               if (exit_bb.count(use_parent)) {
-                return;
+                return true;
               } else {
                 // That's not an exit block, but the user is a phi instruction.
                 // Consider the incoming branch only.
@@ -306,16 +316,20 @@ inline void MakeSetClosedSSA(IRContext* context, Function* function,
             }
             // Rewrite the use. Note that this call does not invalidate the
             // def/use manager. So this operation is safe.
-            rewriter.RewriteUse(use_parent, use, operand_index);
+            return rewriter.RewriteUse(use_parent, use, operand_index);
           });
+      if (!success) {
+        return false;
+      }
       rewriter.UpdateManagers();
     }
   }
+  return true;
 }
 
 }  // namespace
 
-void LoopUtils::CreateLoopDedicatedExits() {
+bool LoopUtils::CreateLoopDedicatedExits() {
   Function* function = loop_->GetHeaderBlock()->GetParent();
   LoopDescriptor& loop_desc = *context_->GetLoopDescriptor(function);
   CFG& cfg = *context_->cfg();
@@ -351,10 +365,13 @@ void LoopUtils::CreateLoopDedicatedExits() {
     assert(insert_pt != function->end() && "Basic Block not found");
 
     // Create the dedicate exit basic block.
-    // TODO(1841): Handle id overflow.
-    BasicBlock& exit = *insert_pt.InsertBefore(std::unique_ptr<BasicBlock>(
-        new BasicBlock(std::unique_ptr<Instruction>(new Instruction(
-            context_, spv::Op::OpLabel, 0, context_->TakeNextId(), {})))));
+    uint32_t exit_id = context_->TakeNextId();
+    if (exit_id == 0) {
+      return false;
+    }
+    BasicBlock& exit = *insert_pt.InsertBefore(
+        std::unique_ptr<BasicBlock>(new BasicBlock(std::unique_ptr<Instruction>(
+            new Instruction(context_, spv::Op::OpLabel, 0, exit_id, {})))));
     exit.SetParent(function);
 
     // Redirect in loop predecessors to |exit| block.
@@ -380,7 +397,7 @@ void LoopUtils::CreateLoopDedicatedExits() {
     // We also reset the insert point so all instructions are inserted before
     // the branch.
     builder.SetInsertPoint(builder.AddBranch(non_dedicate->id()));
-    non_dedicate->ForEachPhiInst(
+    bool succeeded = non_dedicate->WhileEachPhiInst(
         [&builder, &exit, def_use_mgr, this](Instruction* phi) {
           // New phi operands for this instruction.
           std::vector<uint32_t> new_phi_op;
@@ -400,6 +417,9 @@ void LoopUtils::CreateLoopDedicatedExits() {
 
           // Build the new phi instruction dedicated exit block.
           Instruction* exit_phi = builder.AddPhi(phi->type_id(), exit_phi_op);
+          if (!exit_phi) {
+            return false;
+          }
           // Build the new incoming branch.
           new_phi_op.push_back(exit_phi->result_id());
           new_phi_op.push_back(exit.id());
@@ -412,7 +432,9 @@ void LoopUtils::CreateLoopDedicatedExits() {
             phi->RemoveInOperand(j);
           // Update the def/use manager for this |phi|.
           def_use_mgr->AnalyzeInstUse(phi);
+          return true;
         });
+    if (!succeeded) return false;
     // Update the CFG.
     cfg.RegisterBlock(&exit);
     cfg.RemoveNonExistingEdges(non_dedicate->id());
@@ -431,10 +453,13 @@ void LoopUtils::CreateLoopDedicatedExits() {
         PreservedAnalyses | IRContext::kAnalysisCFG |
         IRContext::Analysis::kAnalysisLoopAnalysis);
   }
+  return true;
 }
 
-void LoopUtils::MakeLoopClosedSSA() {
-  CreateLoopDedicatedExits();
+bool LoopUtils::MakeLoopClosedSSA() {
+  if (!CreateLoopDedicatedExits()) {
+    return false;
+  }
 
   Function* function = loop_->GetHeaderBlock()->GetParent();
   CFG& cfg = *context_->cfg();
@@ -452,8 +477,10 @@ void LoopUtils::MakeLoopClosedSSA() {
 
   LCSSARewriter lcssa_rewriter(context_, dom_tree, exit_bb,
                                loop_->GetMergeBlock());
-  MakeSetClosedSSA(context_, function, loop_->GetBlocks(), exit_bb,
-                   &lcssa_rewriter);
+  if (!MakeSetClosedSSA(context_, function, loop_->GetBlocks(), exit_bb,
+                        &lcssa_rewriter)) {
+    return false;
+  }
 
   // Make sure all defs post-dominated by the merge block have their last use no
   // further than the merge block.
@@ -466,14 +493,17 @@ void LoopUtils::MakeLoopClosedSSA() {
     exit_bb.insert(loop_->GetMergeBlock());
     // LCSSARewriter is reusable here only because it forces the creation of a
     // phi instruction in the merge block.
-    MakeSetClosedSSA(context_, function, merging_bb_id, exit_bb,
-                     &lcssa_rewriter);
+    if (!MakeSetClosedSSA(context_, function, merging_bb_id, exit_bb,
+                          &lcssa_rewriter)) {
+      return false;
+    }
   }
 
   context_->InvalidateAnalysesExceptFor(
       IRContext::Analysis::kAnalysisCFG |
       IRContext::Analysis::kAnalysisDominatorAnalysis |
       IRContext::Analysis::kAnalysisLoopAnalysis);
+  return true;
 }
 
 Loop* LoopUtils::CloneLoop(LoopCloningResult* cloning_result) const {
@@ -569,6 +599,7 @@ Loop* LoopUtils::CloneLoop(
     // For each basic block in the loop, we clone it and register the mapping
     // between old and new ids.
     BasicBlock* new_bb = old_bb->Clone(context_);
+    if (!new_bb) return nullptr;
     new_bb->SetParent(&function_);
     uint32_t new_label_id = context_->TakeNextId();
     if (new_label_id == 0) {

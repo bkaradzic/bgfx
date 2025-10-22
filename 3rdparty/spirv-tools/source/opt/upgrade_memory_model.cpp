@@ -804,11 +804,13 @@ void UpgradeMemoryModel::UpgradeExtInst(Instruction* ext_inst) {
   InstructionBuilder builder(
       context(), where,
       IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
+  // TODO(1841): Handle id overflow.
   auto extract_0 =
       builder.AddCompositeExtract(element_type_id, ext_inst->result_id(), {0});
   context()->ReplaceAllUsesWith(ext_inst->result_id(), extract_0->result_id());
   // The extract's input was just changed to itself, so fix that.
   extract_0->SetInOperand(0u, {ext_inst->result_id()});
+  // TODO(1841): Handle id overflow.
   auto extract_1 =
       builder.AddCompositeExtract(pointee_type_id, ext_inst->result_id(), {1});
   builder.AddStore(ptr_id, extract_1->result_id());

@@ -829,7 +829,9 @@ const analysis::Constant* FoldFPBinaryOp(
     // Build the constant object and return it.
     std::vector<uint32_t> ids;
     for (const analysis::Constant* member : results_components) {
-      ids.push_back(const_mgr->GetDefiningInstruction(member)->result_id());
+      Instruction* def = const_mgr->GetDefiningInstruction(member);
+      if (!def) return nullptr;
+      ids.push_back(def->result_id());
     }
     return const_mgr->GetConstant(vector_type, ids);
   } else {
@@ -1404,7 +1406,9 @@ ConstantFoldingRule FoldFMix() {
     }
 
     if (is_vector) {
-      uint32_t one_id = const_mgr->GetDefiningInstruction(one)->result_id();
+      Instruction* one_inst = const_mgr->GetDefiningInstruction(one);
+      if (one_inst == nullptr) return nullptr;
+      uint32_t one_id = one_inst->result_id();
       one =
           const_mgr->GetConstant(result_type, std::vector<uint32_t>(4, one_id));
     }

@@ -93,6 +93,9 @@ void IRContext::BuildInvalidAnalyses(IRContext::Analysis set) {
   if (set & kAnalysisLiveness) {
     BuildLivenessManager();
   }
+  if (set & kAnalysisIdToGraphMapping) {
+    BuildIdToGraphMapping();
+  }
 }
 
 void IRContext::InvalidateAnalysesExceptFor(
@@ -163,6 +166,9 @@ void IRContext::InvalidateAnalyses(IRContext::Analysis analyses_to_invalidate) {
 
   if (analyses_to_invalidate & kAnalysisDebugInfo) {
     debug_info_mgr_.reset(nullptr);
+  }
+  if (analyses_to_invalidate & kAnalysisIdToGraphMapping) {
+    id_to_graph_.clear();
   }
 
   valid_analyses_ = Analysis(valid_analyses_ & ~analyses_to_invalidate);
@@ -388,6 +394,14 @@ bool IRContext::IsConsistent() {
   if (AreAnalysesValid(kAnalysisIdToFuncMapping)) {
     for (auto& fn : *module_) {
       if (id_to_func_[fn.result_id()] != &fn) {
+        return false;
+      }
+    }
+  }
+
+  if (AreAnalysesValid(kAnalysisIdToGraphMapping)) {
+    for (auto& g : module_->graphs()) {
+      if (id_to_graph_[g->DefInst().result_id()] != g.get()) {
         return false;
       }
     }

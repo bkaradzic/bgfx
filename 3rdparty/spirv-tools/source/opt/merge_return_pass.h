@@ -173,21 +173,22 @@ class MergeReturnPass : public MemPass {
   //
   // Note this will break the semantics.  To fix this, PredicateBlock will have
   // to be called on the merge block the branch targets.
-  void ProcessStructuredBlock(BasicBlock* block);
+  bool ProcessStructuredBlock(BasicBlock* block);
 
   // Creates a variable used to store whether or not the control flow has
   // traversed a block that used to have a return.  A pointer to the instruction
-  // declaring the variable is stored in |return_flag_|.
-  void AddReturnFlag();
+  // declaring the variable is stored in |return_flag_|. Returns true if it
+  // succeeds.
+  bool AddReturnFlag();
 
   // Creates the variable used to store the return value when passing through
-  // a block that use to contain an OpReturnValue.
-  void AddReturnValue();
+  // a block that use to contain an OpReturnValue. Returns true if it succeeds.
+  bool AddReturnValue();
 
-  // Adds a store that stores true to |return_flag_| immediately before the
-  // terminator of |block|. It is assumed that |AddReturnFlag| has already been
-  // called.
-  void RecordReturned(BasicBlock* block);
+  // Records that |block| used to be a return.  This is done by adding an
+  // instruction to store true to the |return_flag_|. Returns true if it
+  // succeeds.
+  bool RecordReturned(BasicBlock* block);
 
   // Adds an instruction that stores the value being returned in the
   // OpReturnValue in |block|.  The value is stored to |return_value_|, and the
@@ -198,10 +199,10 @@ class MergeReturnPass : public MemPass {
   // have already been called to create the variable to store to.
   void RecordReturnValue(BasicBlock* block);
 
-  // Adds an unconditional branch in |block| that branches to |target|.  It also
-  // adds stores to |return_flag_| and |return_value_| as needed.
-  // |AddReturnFlag| and |AddReturnValue| must have already been called.
-  void BranchToBlock(BasicBlock* block, uint32_t target);
+  // Replaces the terminator of |block| with a branch to |target|.  If the
+  // terminator was a return, it will first call RecordReturned and
+  // RecordReturnValue. Returns true if it succeeds.
+  bool BranchToBlock(BasicBlock* block, uint32_t target);
 
   // For every basic block that is reachable from |return_block|, extra code is
   // added to jump around any code that should not be executed because the
@@ -239,32 +240,28 @@ class MergeReturnPass : public MemPass {
   // return block at the end of the pass.
   bool CreateReturnBlock();
 
-  // Creates a Phi node in |merge_block| for the result of |inst|.
-  // Any uses of the result of |inst| that are no longer
-  // dominated by |inst|, are replaced with the result of the new |OpPhi|
-  // instruction.
-  void CreatePhiNodesForInst(BasicBlock* merge_block, Instruction& inst);
+  // For each use of |inst| that is no longer dominated by |inst|, a phi node
+  // is created in |merge_block|.  The original use is replaced by the result
+  // of the phi node. Returns true if it succeeds.
+  bool CreatePhiNodesForInst(BasicBlock* merge_block, Instruction& inst);
 
-  // Add new phi nodes for any id that no longer dominate all of it uses.  A phi
-  // node is added to a block |bb| for an id if the id is defined between the
-  // original immediate dominator of |bb| and its new immediate dominator.  It
-  // is assumed that at this point there are no unreachable blocks in the
-  // control flow graph.
-  void AddNewPhiNodes();
+  // Adds new phi nodes as needed to the function.  This is necessary because
+  // adding the predication code can change the dominator tree.  Returns false
+  // if there is a failure.
+  bool AddNewPhiNodes();
 
-  // Creates any new phi nodes that are needed in |bb|.  |AddNewPhiNodes| must
-  // have already been called on the original dominators of |bb|.
-  void AddNewPhiNodes(BasicBlock* bb);
+  // Adds new phi nodes to |bb| as needed.  This is necessary because adding
+  // the predication code can change the dominator tree.  Returns false if
+  // there is a failure.
+  bool AddNewPhiNodes(BasicBlock* bb);
 
   // Records the terminator of immediate dominator for every basic block in
   // |function|.
   void RecordImmediateDominators(Function* function);
 
-  // Modifies existing OpPhi instruction in |target| block to account for the
-  // new edge from |new_source|.  The value for that edge will be an Undef.
-  //
-  // The CFG must not include the edge from |new_source| to |target| yet.
-  void UpdatePhiNodes(BasicBlock* new_source, BasicBlock* target);
+  // For each OpPhi instruction in |target|, this function adds an operand for
+  // |new_source|.  The value will be OpUndef. Returns true if it succeeds.
+  bool UpdatePhiNodes(BasicBlock* new_source, BasicBlock* target);
 
   StructuredControlState& CurrentState() { return state_.back(); }
 

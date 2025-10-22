@@ -390,6 +390,7 @@ Instruction* DebugInfoManager::GetDebugInfoNone() {
   if (debug_info_none_inst_ != nullptr) return debug_info_none_inst_;
 
   uint32_t result_id = context()->TakeNextId();
+  if (result_id == 0) return nullptr;
   std::unique_ptr<Instruction> dbg_info_none_inst(new Instruction(
       context(), spv::Op::OpExtInst, context()->get_type_mgr()->GetVoidTypeId(),
       result_id,

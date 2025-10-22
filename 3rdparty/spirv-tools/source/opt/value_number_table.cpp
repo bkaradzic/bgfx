@@ -143,8 +143,31 @@ uint32_t ValueNumberTable::AssignValueNumber(Instruction* inst) {
     }
   }
 
-  // TODO: Implement a normal form for opcodes that commute like integer
-  // addition.  This will let us know that a+b is the same value as b+a.
+  // Apply normal form, so a+b == b+a
+  switch (value_ins.opcode()) {
+    case spv::Op::OpIAdd:
+    case spv::Op::OpFAdd:
+    case spv::Op::OpIMul:
+    case spv::Op::OpFMul:
+    case spv::Op::OpDot:
+    case spv::Op::OpLogicalEqual:
+    case spv::Op::OpLogicalNotEqual:
+    case spv::Op::OpLogicalOr:
+    case spv::Op::OpLogicalAnd:
+    case spv::Op::OpIEqual:
+    case spv::Op::OpINotEqual:
+    case spv::Op::OpBitwiseOr:
+    case spv::Op::OpBitwiseXor:
+    case spv::Op::OpBitwiseAnd:
+      if (value_ins.GetSingleWordInOperand(0) >
+          value_ins.GetSingleWordInOperand(1)) {
+        value_ins.SetInOperands(
+            {{SPV_OPERAND_TYPE_ID, {value_ins.GetSingleWordInOperand(1)}},
+             {SPV_OPERAND_TYPE_ID, {value_ins.GetSingleWordInOperand(0)}}});
+      }
+    default:
+      break;
+  }
 
   // Otherwise, we check if this value has been computed before.
   auto value_iterator = instruction_to_value_.find(value_ins);

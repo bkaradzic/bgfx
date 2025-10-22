@@ -130,6 +130,9 @@ class ConvertToHalfPass : public Pass {
     }
   };
 
+  // The status of the pass.
+  Pass::Status status_;
+
   // Set of core operations to be processed
   std::unordered_set<spv::Op, hasher> target_ops_core_;
 

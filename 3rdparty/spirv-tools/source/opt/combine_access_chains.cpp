@@ -158,6 +158,7 @@ bool CombineAccessChains::CombineIndices(Instruction* ptr_input,
     InstructionBuilder builder(
         context(), inst,
         IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
+    // TODO(1841): Handle id overflow.
     Instruction* addition = builder.AddIAdd(last_index_inst->type_id(),
                                             last_index_inst->result_id(),
                                             element_inst->result_id());

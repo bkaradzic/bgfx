@@ -275,8 +275,10 @@ spv_result_t SplitCombinedImageSamplerPass::RemapVar(
   auto [ptr_image_ty, ptr_sampler_ty] = SplitType(*combined_var_type);
   assert(ptr_image_ty);
   assert(ptr_sampler_ty);
+  // TODO(1841): Handle id overflow.
   Instruction* sampler_var = builder.AddVariable(
       ptr_sampler_ty->result_id(), SpvStorageClassUniformConstant);
+  // TODO(1841): Handle id overflow.
   Instruction* image_var = builder.AddVariable(ptr_image_ty->result_id(),
                                                SpvStorageClassUniformConstant);
   modified_ = true;
@@ -354,8 +356,10 @@ spv_result_t SplitCombinedImageSamplerPass::RemapUses(
 
         // Create loads for the image part and sampler part.
         builder.SetInsertPoint(load);
+        // TODO(1841): Handle id overflow.
         auto* image = builder.AddLoad(PointeeTypeId(use.image_part),
                                       use.image_part->result_id());
+        // TODO(1841): Handle id overflow.
         auto* sampler = builder.AddLoad(PointeeTypeId(use.sampler_part),
                                         use.sampler_part->result_id());
 
@@ -459,9 +463,11 @@ spv_result_t SplitCombinedImageSamplerPass::RemapUses(
 
         auto [result_image_part_ty, result_sampler_part_ty] =
             SplitType(*def_use_mgr_->GetDef(original_access_chain->type_id()));
+        // TODO(1841): Handle id overflow.
         auto* result_image_part = builder.AddOpcodeAccessChain(
             use.user->opcode(), result_image_part_ty->result_id(),
             use.image_part->result_id(), indices);
+        // TODO(1841): Handle id overflow.
         auto* result_sampler_part = builder.AddOpcodeAccessChain(
             use.user->opcode(), result_sampler_part_ty->result_id(),
             use.sampler_part->result_id(), indices);

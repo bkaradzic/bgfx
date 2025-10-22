@@ -130,6 +130,7 @@ enum Extension : uint32_t {
   kSPV_KHR_expect_assume,
   kSPV_KHR_float_controls,
   kSPV_KHR_float_controls2,
+  kSPV_KHR_fma,
   kSPV_KHR_fragment_shader_barycentric,
   kSPV_KHR_fragment_shading_rate,
   kSPV_KHR_integer_dot_product,

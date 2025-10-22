@@ -2176,17 +2176,19 @@ bool AllowsLayout(ValidationState_t& vstate, const spv::StorageClass sc) {
   }
 }
 
-bool UsesExplicitLayout(ValidationState_t& vstate, uint32_t type_id,
-                        std::unordered_map<uint32_t, bool>& cache) {
+// Returns a decoration used to make it explicit
+spv::Decoration UsesExplicitLayout(
+    ValidationState_t& vstate, uint32_t type_id,
+    std::unordered_map<uint32_t, spv::Decoration>& cache) {
   if (type_id == 0) {
-    return false;
+    return spv::Decoration::Max;
   }
 
   if (cache.count(type_id)) {
     return cache[type_id];
   }
 
-  bool res = false;
+  spv::Decoration res = spv::Decoration::Max;
   const auto type_inst = vstate.FindDef(type_id);
   if (type_inst->opcode() == spv::Op::OpTypeStruct ||
       type_inst->opcode() == spv::Op::OpTypeArray ||
@@ -2202,21 +2204,26 @@ bool UsesExplicitLayout(ValidationState_t& vstate, uint32_t type_id,
         allowLayoutDecorations = AllowsLayout(vstate, sc);
       }
       if (!allowLayoutDecorations) {
-        res = std::any_of(
-            iter->second.begin(), iter->second.end(), [](const Decoration& d) {
-              return d.dec_type() == spv::Decoration::Block ||
-                     d.dec_type() == spv::Decoration::BufferBlock ||
-                     d.dec_type() == spv::Decoration::Offset ||
-                     d.dec_type() == spv::Decoration::ArrayStride ||
-                     d.dec_type() == spv::Decoration::MatrixStride;
-            });
+        for (const auto& d : iter->second) {
+          const spv::Decoration dec = d.dec_type();
+          if (dec == spv::Decoration::Block ||
+              dec == spv::Decoration::BufferBlock ||
+              dec == spv::Decoration::Offset ||
+              dec == spv::Decoration::ArrayStride ||
+              dec == spv::Decoration::MatrixStride) {
+            res = dec;
+            break;
+          }
+        }
       }
     }
 
-    if (!res) {
+    if (res == spv::Decoration::Max) {
       switch (type_inst->opcode()) {
         case spv::Op::OpTypeStruct:
-          for (uint32_t i = 1; !res && i < type_inst->operands().size(); i++) {
+          for (uint32_t i = 1;
+               res == spv::Decoration::Max && i < type_inst->operands().size();
+               i++) {
             res = UsesExplicitLayout(
                 vstate, type_inst->GetOperandAs<uint32_t>(i), cache);
           }
@@ -2248,10 +2255,13 @@ spv_result_t CheckInvalidVulkanExplicitLayout(ValidationState_t& vstate) {
     return SPV_SUCCESS;
   }
 
-  std::unordered_map<uint32_t, bool> cache;
+  std::unordered_map<uint32_t, spv::Decoration> cache;
   for (const auto& inst : vstate.ordered_instructions()) {
     const auto type_id = inst.type_id();
     const auto type_inst = vstate.FindDef(type_id);
+
+    spv::StorageClass sc = spv::StorageClass::Max;
+    spv::Decoration layout_dec = spv::Decoration::Max;
     uint32_t fail_id = 0;
     // Variables are the main place to check for improper decorations, but some
     // untyped pointer instructions must also be checked since those types may
@@ -2261,16 +2271,18 @@ spv_result_t CheckInvalidVulkanExplicitLayout(ValidationState_t& vstate) {
     switch (inst.opcode()) {
       case spv::Op::OpVariable:
       case spv::Op::OpUntypedVariableKHR: {
-        const auto sc = inst.GetOperandAs<spv::StorageClass>(2);
+        sc = inst.GetOperandAs<spv::StorageClass>(2);
         auto check_id = type_id;
         if (inst.opcode() == spv::Op::OpUntypedVariableKHR) {
           if (inst.operands().size() > 3) {
             check_id = inst.GetOperandAs<uint32_t>(3);
           }
         }
-        if (!AllowsLayout(vstate, sc) &&
-            UsesExplicitLayout(vstate, check_id, cache)) {
-          fail_id = check_id;
+        if (!AllowsLayout(vstate, sc)) {
+          layout_dec = UsesExplicitLayout(vstate, check_id, cache);
+          if (layout_dec != spv::Decoration::Max) {
+            fail_id = check_id;
+          }
         }
         break;
       }
@@ -2280,13 +2292,17 @@ spv_result_t CheckInvalidVulkanExplicitLayout(ValidationState_t& vstate) {
       case spv::Op::OpUntypedInBoundsPtrAccessChainKHR: {
         // Check both the base type and return type. The return type may have an
         // invalid array stride.
-        const auto sc = type_inst->GetOperandAs<spv::StorageClass>(1);
-        const auto base_type_id = inst.GetOperandAs<uint32_t>(2);
+        sc = type_inst->GetOperandAs<spv::StorageClass>(1);
         if (!AllowsLayout(vstate, sc)) {
-          if (UsesExplicitLayout(vstate, base_type_id, cache)) {
+          const auto base_type_id = inst.GetOperandAs<uint32_t>(2);
+          layout_dec = UsesExplicitLayout(vstate, base_type_id, cache);
+          if (layout_dec != spv::Decoration::Max) {
             fail_id = base_type_id;
-          } else if (UsesExplicitLayout(vstate, type_id, cache)) {
-            fail_id = type_id;
+          } else {
+            layout_dec = UsesExplicitLayout(vstate, type_id, cache);
+            if (layout_dec != spv::Decoration::Max) {
+              fail_id = type_id;
+            }
           }
         }
         break;
@@ -2296,11 +2312,13 @@ spv_result_t CheckInvalidVulkanExplicitLayout(ValidationState_t& vstate) {
         const auto ptr_ty_id =
             vstate.FindDef(inst.GetOperandAs<uint32_t>(3))->type_id();
         const auto ptr_ty = vstate.FindDef(ptr_ty_id);
-        const auto sc = ptr_ty->GetOperandAs<spv::StorageClass>(1);
-        const auto base_type_id = inst.GetOperandAs<uint32_t>(2);
-        if (!AllowsLayout(vstate, sc) &&
-            UsesExplicitLayout(vstate, base_type_id, cache)) {
-          fail_id = base_type_id;
+        sc = ptr_ty->GetOperandAs<spv::StorageClass>(1);
+        if (!AllowsLayout(vstate, sc)) {
+          const auto base_type_id = inst.GetOperandAs<uint32_t>(2);
+          layout_dec = UsesExplicitLayout(vstate, base_type_id, cache);
+          if (layout_dec != spv::Decoration::Max) {
+            fail_id = base_type_id;
+          }
         }
         break;
       }
@@ -2309,10 +2327,12 @@ spv_result_t CheckInvalidVulkanExplicitLayout(ValidationState_t& vstate) {
         const auto ptr_type = vstate.FindDef(vstate.FindDef(ptr_id)->type_id());
         if (ptr_type->opcode() == spv::Op::OpTypeUntypedPointerKHR) {
           // For untyped pointers check the return type for an invalid layout.
-          const auto sc = ptr_type->GetOperandAs<spv::StorageClass>(1);
-          if (!AllowsLayout(vstate, sc) &&
-              UsesExplicitLayout(vstate, type_id, cache)) {
-            fail_id = type_id;
+          sc = ptr_type->GetOperandAs<spv::StorageClass>(1);
+          if (!AllowsLayout(vstate, sc)) {
+            layout_dec = UsesExplicitLayout(vstate, type_id, cache);
+            if (layout_dec != spv::Decoration::Max) {
+              fail_id = type_id;
+            }
           }
         }
         break;
@@ -2323,11 +2343,13 @@ spv_result_t CheckInvalidVulkanExplicitLayout(ValidationState_t& vstate) {
         if (ptr_type->opcode() == spv::Op::OpTypeUntypedPointerKHR) {
           // For untyped pointers, check the type of the data operand for an
           // invalid layout.
-          const auto sc = ptr_type->GetOperandAs<spv::StorageClass>(1);
-          const auto data_type_id = vstate.GetOperandTypeId(&inst, 1);
-          if (!AllowsLayout(vstate, sc) &&
-              UsesExplicitLayout(vstate, data_type_id, cache)) {
-            fail_id = inst.GetOperandAs<uint32_t>(2);
+          sc = ptr_type->GetOperandAs<spv::StorageClass>(1);
+          if (!AllowsLayout(vstate, sc)) {
+            const auto data_type_id = vstate.GetOperandTypeId(&inst, 1);
+            layout_dec = UsesExplicitLayout(vstate, data_type_id, cache);
+            if (layout_dec != spv::Decoration::Max) {
+              fail_id = inst.GetOperandAs<uint32_t>(2);
+            }
           }
         }
         break;
@@ -2339,7 +2361,10 @@ spv_result_t CheckInvalidVulkanExplicitLayout(ValidationState_t& vstate) {
       return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
              << vstate.VkErrorID(10684)
              << "Invalid explicit layout decorations on type for operand "
-             << vstate.getIdName(fail_id);
+             << vstate.getIdName(fail_id) << ", the "
+             << spvtools::StorageClassToString(sc)
+             << " storage class has a explicit layout from the "
+             << vstate.SpvDecorationString(layout_dec) << " decoration.";
     }
   }
 

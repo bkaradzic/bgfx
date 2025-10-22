@@ -95,14 +95,14 @@ class LoopUtils {
   //
   // This makes some loop transformations (such as loop unswitch) simpler
   // (removes the needs to take care of exiting variables).
-  void MakeLoopClosedSSA();
+  bool MakeLoopClosedSSA();
 
   // Create dedicate exit basic block. This ensure all exit basic blocks has the
   // loop as sole predecessors.
   // By construction, structured control flow already has a dedicated exit
   // block.
   // Preserves: CFG, def/use and instruction to block mapping.
-  void CreateLoopDedicatedExits();
+  bool CreateLoopDedicatedExits();
 
   // Clone |loop_| and remap its instructions. Newly created blocks
   // will be added to the |cloning_result.cloned_bb_| list, correctly ordered to

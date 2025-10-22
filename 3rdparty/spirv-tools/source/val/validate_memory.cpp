@@ -399,10 +399,19 @@ spv_result_t CheckMemoryAccess(ValidationState_t& _, const Instruction* inst,
 
     uint32_t largest_scalar = 0;
     if (dst_sc == spv::StorageClass::PhysicalStorageBuffer) {
-      largest_scalar =
-          _.GetLargestScalarType(dst_pointer_type->GetOperandAs<uint32_t>(2));
+      if (dst_pointer_type->opcode() != spv::Op::OpTypeUntypedPointerKHR) {
+        largest_scalar =
+            _.GetLargestScalarType(dst_pointer_type->GetOperandAs<uint32_t>(2));
+      } else if (inst->type_id() != 0) {
+        largest_scalar = _.GetLargestScalarType(inst->type_id());
+      } else {
+        // TODO need to handle cases like OpStore and OpCopyMemorySized which
+        // don't have a result type
+      }
     }
-    if (src_sc == spv::StorageClass::PhysicalStorageBuffer) {
+    // TODO - Handle Untyped in OpCopyMemory
+    if (src_sc == spv::StorageClass::PhysicalStorageBuffer &&
+        src_pointer_type->opcode() != spv::Op::OpTypeUntypedPointerKHR) {
       largest_scalar = std::max(
           largest_scalar,
           _.GetLargestScalarType(src_pointer_type->GetOperandAs<uint32_t>(2)));

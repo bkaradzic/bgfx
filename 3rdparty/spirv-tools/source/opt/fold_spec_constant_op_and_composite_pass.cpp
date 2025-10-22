@@ -105,9 +105,16 @@ Pass::Status FoldSpecConstantOpAndCompositePass::Process() {
       // Constants will be added to id_to_const_val_ and const_val_to_id_ so
       // that we can use the new Normal Constants when folding following Spec
       // Constants.
-      case spv::Op::OpSpecConstantOp:
-        modified |= ProcessOpSpecConstantOp(&inst_iter);
+      case spv::Op::OpSpecConstantOp: {
+        const auto status = ProcessOpSpecConstantOp(&inst_iter);
+        if (status == Status::Failure) {
+          return Status::Failure;
+        }
+        if (status == Status::SuccessWithChange) {
+          modified = true;
+        }
         break;
+      }
       default:
         break;
     }
@@ -115,7 +122,7 @@ Pass::Status FoldSpecConstantOpAndCompositePass::Process() {
   return modified ? Status::SuccessWithChange : Status::SuccessWithoutChange;
 }
 
-bool FoldSpecConstantOpAndCompositePass::ProcessOpSpecConstantOp(
+Pass::Status FoldSpecConstantOpAndCompositePass::ProcessOpSpecConstantOp(
     Module::inst_iterator* pos) {
   Instruction* inst = &**pos;
   Instruction* folded_inst = nullptr;
@@ -125,10 +132,17 @@ bool FoldSpecConstantOpAndCompositePass::ProcessOpSpecConstantOp(
          "SPV_OPERAND_TYPE_SPEC_CONSTANT_OP_NUMBER type");
 
   folded_inst = FoldWithInstructionFolder(pos);
+  if (context()->id_overflow()) {
+    return Status::Failure;
+  }
+
   if (!folded_inst) {
     folded_inst = DoComponentWiseOperation(pos);
+    if (context()->id_overflow()) {
+      return Status::Failure;
+    }
   }
-  if (!folded_inst) return false;
+  if (!folded_inst) return Status::SuccessWithoutChange;
 
   // Replace the original constant with the new folded constant, kill the
   // original constant.
@@ -136,7 +150,7 @@ bool FoldSpecConstantOpAndCompositePass::ProcessOpSpecConstantOp(
   uint32_t old_id = inst->result_id();
   context()->ReplaceAllUsesWith(old_id, new_id);
   context()->KillDef(old_id);
-  return true;
+  return Status::SuccessWithChange;
 }
 
 Instruction* FoldSpecConstantOpAndCompositePass::FoldWithInstructionFolder(
@@ -195,7 +209,11 @@ Instruction* FoldSpecConstantOpAndCompositePass::FoldWithInstructionFolder(
 
   if (need_to_clone) {
     new_const_inst = new_const_inst->Clone(context());
-    new_const_inst->SetResultId(TakeNextId());
+    uint32_t new_id = TakeNextId();
+    if (new_id == 0) {
+      return nullptr;
+    }
+    new_const_inst->SetResultId(new_id);
     new_const_inst->InsertAfter(insert_pos);
     get_def_use_mgr()->AnalyzeInstDefUse(new_const_inst);
   }

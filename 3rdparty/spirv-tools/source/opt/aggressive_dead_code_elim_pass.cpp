@@ -273,29 +273,30 @@ void AggressiveDCEPass::AddBreaksAndContinuesToWorklist(
   });
 }
 
-bool AggressiveDCEPass::AggressiveDCE(Function* func) {
-  if (func->IsDeclaration()) return false;
+Pass::Status AggressiveDCEPass::AggressiveDCE(Function* func) {
+  if (func->IsDeclaration()) return Pass::Status::SuccessWithoutChange;
   std::list<BasicBlock*> structured_order;
   cfg()->ComputeStructuredOrder(func, &*func->begin(), &structured_order);
   live_local_vars_.clear();
   InitializeWorkList(func, structured_order);
   ProcessWorkList(func);
-  ProcessDebugInformation(structured_order);
+  if (ProcessDebugInformation(structured_order) == Pass::Status::Failure)
+    return Pass::Status::Failure;
   ProcessWorkList(func);
   return KillDeadInstructions(func, structured_order);
 }
 
-void AggressiveDCEPass::ProcessDebugInformation(
+Pass::Status AggressiveDCEPass::ProcessDebugInformation(
     std::list<BasicBlock*>& structured_order) {
   for (auto bi = structured_order.begin(); bi != structured_order.end(); bi++) {
-    (*bi)->ForEachInst([this](Instruction* inst) {
+    bool succeeded = (*bi)->WhileEachInst([this](Instruction* inst) {
       // DebugDeclare is not dead. It must be converted to DebugValue in a
       // later pass
       if (inst->IsNonSemanticInstruction() &&
           inst->GetShader100DebugOpcode() ==
               NonSemanticShaderDebugInfo100DebugDeclare) {
         AddToWorklist(inst);
-        return;
+        return true;
       }
 
       // If the Value of a DebugValue is killed, set Value operand to Undef
@@ -306,28 +307,33 @@ void AggressiveDCEPass::ProcessDebugInformation(
         auto def = get_def_use_mgr()->GetDef(id);
         if (!live_insts_.Set(def->unique_id())) {
           AddToWorklist(inst);
+          uint32_t undef_id = Type2Undef(def->type_id());
+          if (undef_id == 0) {
+            return false;
+          }
+          inst->SetInOperand(kDebugValueValue, {undef_id});
           context()->get_def_use_mgr()->UpdateDefUse(inst);
-          worklist_.push(def);
-          def->SetOpcode(spv::Op::OpUndef);
-          def->SetInOperands({});
           id = inst->GetSingleWordInOperand(kDebugValueLocalVariable);
           auto localVar = get_def_use_mgr()->GetDef(id);
           AddToWorklist(localVar);
           context()->get_def_use_mgr()->UpdateDefUse(localVar);
           AddOperandsToWorkList(localVar);
-          context()->get_def_use_mgr()->UpdateDefUse(def);
           id = inst->GetSingleWordInOperand(kDebugValueExpression);
           auto expression = get_def_use_mgr()->GetDef(id);
           AddToWorklist(expression);
           context()->get_def_use_mgr()->UpdateDefUse(expression);
-          return;
+          return true;
         }
       }
+      return true;
     });
+
+    if (!succeeded) return Pass::Status::Failure;
   }
+  return Pass::Status::SuccessWithoutChange;
 }
 
-bool AggressiveDCEPass::KillDeadInstructions(
+Pass::Status AggressiveDCEPass::KillDeadInstructions(
     const Function* func, std::list<BasicBlock*>& structured_order) {
   bool modified = false;
   for (auto bi = structured_order.begin(); bi != structured_order.end();) {
@@ -362,6 +368,9 @@ bool AggressiveDCEPass::KillDeadInstructions(
           // Find an undef for the return value and make sure it gets kept by
           // the pass.
           auto undef_id = Type2Undef(func->type_id());
+          if (undef_id == 0) {
+            return Pass::Status::Failure;
+          }
           auto undef = get_def_use_mgr()->GetDef(undef_id);
           live_insts_.Set(undef->unique_id());
           merge_terminator->SetOpcode(spv::Op::OpReturnValue);
@@ -380,7 +389,8 @@ bool AggressiveDCEPass::KillDeadInstructions(
       ++bi;
     }
   }
-  return modified;
+  return modified ? Pass::Status::SuccessWithChange
+                  : Pass::Status::SuccessWithoutChange;
 }
 
 void AggressiveDCEPass::ProcessWorkList(Function* func) {
@@ -640,7 +650,7 @@ void AggressiveDCEPass::InitializeWorkList(
   }
 }
 
-void AggressiveDCEPass::InitializeModuleScopeLiveInstructions() {
+Pass::Status AggressiveDCEPass::InitializeModuleScopeLiveInstructions() {
   // Keep all execution modes.
   for (auto& exec : get_module()->execution_modes()) {
     AddToWorklist(&exec);
@@ -715,6 +725,9 @@ void AggressiveDCEPass::InitializeModuleScopeLiveInstructions() {
   }
   if (debug_global_seen) {
     auto dbg_none = context()->get_debug_info_mgr()->GetDebugInfoNone();
+    if (dbg_none == nullptr) {
+      return Pass::Status::Failure;
+    }
     AddToWorklist(dbg_none);
   }
 
@@ -728,6 +741,7 @@ void AggressiveDCEPass::InitializeModuleScopeLiveInstructions() {
       AddToWorklist(&dbg);
     }
   }
+  return Pass::Status::SuccessWithoutChange;
 }
 
 Pass::Status AggressiveDCEPass::ProcessImpl() {
@@ -755,7 +769,9 @@ Pass::Status AggressiveDCEPass::ProcessImpl() {
   // Eliminate Dead functions.
   bool modified = EliminateDeadFunctions();
 
-  InitializeModuleScopeLiveInstructions();
+  if (InitializeModuleScopeLiveInstructions() == Pass::Status::Failure) {
+    return Pass::Status::Failure;
+  }
 
   // Run |AggressiveDCE| on the remaining functions.  The order does not matter,
   // since |AggressiveDCE| is intra-procedural.  This can mean that function
@@ -763,7 +779,13 @@ Pass::Status AggressiveDCEPass::ProcessImpl() {
   // function will still be in the module after this pass.  We expect this to be
   // rare.
   for (Function& fp : *context()->module()) {
-    modified |= AggressiveDCE(&fp);
+    Pass::Status function_status = AggressiveDCE(&fp);
+    if (function_status == Pass::Status::Failure) {
+      return Pass::Status::Failure;
+    }
+    if (function_status == Pass::Status::SuccessWithChange) {
+      modified = true;
+    }
   }
 
   // If the decoration manager is kept live then the context will try to keep it

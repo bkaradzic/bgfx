@@ -114,6 +114,7 @@ uint32_t Pass::GenerateCopy(Instruction* object_to_copy, uint32_t new_type_id,
       assert(length_const->AsIntConstant());
       uint32_t array_length = length_const->AsIntConstant()->GetU32();
       for (uint32_t i = 0; i < array_length; i++) {
+        // TODO(1841): Handle id overflow.
         Instruction* extract = ir_builder.AddCompositeExtract(
             original_element_type_id, object_to_copy->result_id(), {i});
         uint32_t new_id =
@@ -132,6 +133,7 @@ uint32_t Pass::GenerateCopy(Instruction* object_to_copy, uint32_t new_type_id,
       for (uint32_t i = 0; i < original_type->NumInOperands(); i++) {
         uint32_t orig_member_type_id = original_type->GetSingleWordInOperand(i);
         uint32_t new_member_type_id = new_type->GetSingleWordInOperand(i);
+        // TODO(1841): Handle id overflow.
         Instruction* extract = ir_builder.AddCompositeExtract(
             orig_member_type_id, object_to_copy->result_id(), {i});
         uint32_t new_id =

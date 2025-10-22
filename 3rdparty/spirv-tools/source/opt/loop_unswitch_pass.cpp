@@ -623,7 +623,9 @@ Pass::Status LoopUnswitchPass::ProcessFunction(Function* f) {
       LoopUnswitch unswitcher(context(), f, &loop, &loop_descriptor);
       while (unswitcher.CanUnswitchLoop()) {
         if (!loop.IsLCSSA()) {
-          LoopUtils(context(), &loop).MakeLoopClosedSSA();
+          if (!LoopUtils(context(), &loop).MakeLoopClosedSSA()) {
+            return Status::Failure;
+          }
         }
         if (!unswitcher.PerformUnswitch()) {
           return Status::Failure;

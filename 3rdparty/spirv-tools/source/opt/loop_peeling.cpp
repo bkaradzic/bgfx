@@ -564,11 +564,15 @@ bool LoopPeeling::PeelAfter(uint32_t peel_factor) {
   // factor < loop_iteration_count_.
 
   // The original loop's pre-header was the cloned loop merge block.
-  GetClonedLoop()->SetMergeBlock(
-      CreateBlockBefore(GetOriginalLoop()->GetPreHeaderBlock()));
-  if (!GetClonedLoop()->GetMergeBlock()) {
+  BasicBlock* pre_header = GetOriginalLoop()->GetPreHeaderBlock();
+  if (!pre_header) {
     return false;
   }
+  BasicBlock* new_merge_block = CreateBlockBefore(pre_header);
+  if (!new_merge_block) {
+    return false;
+  }
+  GetClonedLoop()->SetMergeBlock(new_merge_block);
   // Use the second loop preheader as if merge block.
 
   // Prevent the first loop if only the peeled loop needs it.
@@ -665,7 +669,9 @@ Pass::Status LoopPeelingPass::ProcessFunction(Function* f) {
     auto try_peel = [&loop_size, &modified, this](
                         Loop* loop_to_peel) -> std::pair<Pass::Status, Loop*> {
       if (!loop_to_peel->IsLCSSA()) {
-        LoopUtils(context(), loop_to_peel).MakeLoopClosedSSA();
+        if (!LoopUtils(context(), loop_to_peel).MakeLoopClosedSSA()) {
+          return {Pass::Status::Failure, nullptr};
+        }
       }
 
       Pass::Status status;

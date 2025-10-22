@@ -47,3 +47,4 @@
 {46, "Nintendo", "", "Nintendo"},
 {47, "ARM", "", "ARM"},
 {48, "Goopax", "", "Goopax"},
+{49, "Icyllis Milica", "Arc3D Shader Compiler", "Icyllis Milica Arc3D Shader Compiler"},
