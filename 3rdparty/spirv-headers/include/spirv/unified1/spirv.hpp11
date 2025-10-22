@@ -1256,6 +1256,7 @@ enum class Capability : unsigned {
     BitInstructions = 6025,
     GroupNonUniformRotateKHR = 6026,
     FloatControls2 = 6029,
+    FMAKHR = 6030,
     AtomicFloat32AddEXT = 6033,
     AtomicFloat64AddEXT = 6034,
     LongCompositesINTEL = 6089,
@@ -1971,6 +1972,7 @@ enum class Op : unsigned {
     OpUntypedInBoundsPtrAccessChainKHR = 4424,
     OpUntypedArrayLengthKHR = 4425,
     OpUntypedPrefetchKHR = 4426,
+    OpFmaKHR = 4427,
     OpSubgroupAllKHR = 4428,
     OpSubgroupAnyKHR = 4429,
     OpSubgroupAllEqualKHR = 4430,
@@ -2815,6 +2817,7 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpUntypedInBoundsPtrAccessChainKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpUntypedArrayLengthKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpUntypedPrefetchKHR: *hasResult = false; *hasResultType = false; break;
+    case Op::OpFmaKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupAllKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupAnyKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupAllEqualKHR: *hasResult = true; *hasResultType = true; break;
@@ -4211,6 +4214,7 @@ inline const char* CapabilityToString(Capability value) {
     case Capability::BitInstructions: return "BitInstructions";
     case Capability::GroupNonUniformRotateKHR: return "GroupNonUniformRotateKHR";
     case Capability::FloatControls2: return "FloatControls2";
+    case Capability::FMAKHR: return "FMAKHR";
     case Capability::AtomicFloat32AddEXT: return "AtomicFloat32AddEXT";
     case Capability::AtomicFloat64AddEXT: return "AtomicFloat64AddEXT";
     case Capability::LongCompositesINTEL: return "LongCompositesINTEL";
@@ -4806,6 +4810,7 @@ inline const char* OpToString(Op value) {
     case Op::OpUntypedInBoundsPtrAccessChainKHR: return "OpUntypedInBoundsPtrAccessChainKHR";
     case Op::OpUntypedArrayLengthKHR: return "OpUntypedArrayLengthKHR";
     case Op::OpUntypedPrefetchKHR: return "OpUntypedPrefetchKHR";
+    case Op::OpFmaKHR: return "OpFmaKHR";
     case Op::OpSubgroupAllKHR: return "OpSubgroupAllKHR";
     case Op::OpSubgroupAnyKHR: return "OpSubgroupAnyKHR";
     case Op::OpSubgroupAllEqualKHR: return "OpSubgroupAllEqualKHR";

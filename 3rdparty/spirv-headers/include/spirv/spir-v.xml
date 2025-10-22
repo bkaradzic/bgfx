@@ -81,7 +81,8 @@
         <id value="46"  vendor="Nintendo" comment="Contact Steve Urquhart, steve.urquhart@ntd.nintendo.com"/>
         <id value="47"  vendor="ARM" comment="Contact Christopher Gautier, christopher.gautier@arm.com"/>
         <id value="48"  vendor="Goopax" comment="Contact Ingo Josopait, josopait@goopax.com"/>
-        <unused start="49" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
+        <id value="49"  vendor="Icyllis Milica" tool="Arc3D Shader Compiler" comment="Contact Icyllis Milica, https://github.com/BloCamLimb/Arc3D"/>
+        <unused start="50" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
     </ids>
 
     <!-- SECTION: SPIR-V Opcodes and Enumerants -->

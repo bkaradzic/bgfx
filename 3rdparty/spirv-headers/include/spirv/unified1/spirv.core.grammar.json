@@ -4708,6 +4708,20 @@
       ]
     },
     {
+      "opname" : "OpFmaKHR",
+      "class"  : "Arithmetic",
+      "opcode" : 4427,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef",        "name" : "Operand 1" },
+        { "kind" : "IdRef",        "name" : "Operand 2" },
+        { "kind" : "IdRef",        "name" : "Operand 3" }
+      ],
+      "capabilities" : [ "FMAKHR" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpSubgroupAllKHR",
       "class"  : "Group",
       "opcode" : 4428,
@@ -17605,6 +17619,12 @@
           "enumerant" : "FloatControls2",
           "value" : 6029,
           "extensions" : [ "SPV_KHR_float_controls2" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FMAKHR",
+          "value" : 6030,
+          "extensions" : [ "SPV_KHR_fma" ],
           "version" : "None"
         },
         {
