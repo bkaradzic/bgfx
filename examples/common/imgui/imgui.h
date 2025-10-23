@@ -133,12 +133,6 @@ namespace ImGui
 			;
 	}
 
-	///
-	void PushEnabled(bool _enabled);
-
-	///
-	void PopEnabled();
-
 } // namespace ImGui
 
 #endif // IMGUI_H_HEADER_GUARD

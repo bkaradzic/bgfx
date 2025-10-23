@@ -14,7 +14,7 @@ namespace ImGui
         };
     };
 
-    void PushFont(Font::Enum _font);
+    void PushFont(Font::Enum _font, float _fontSizeBaseUnscaled = 0.0f);
 
     // BK - simple string class for convenience.
     class ImString

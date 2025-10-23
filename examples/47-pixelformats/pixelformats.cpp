@@ -773,9 +773,9 @@ public:
 						| BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED
 						| BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED
 						) );
-					ImGui::PushEnabled(false);
+					ImGui::BeginDisabled(true);
 					ImGui::Checkbox("Emu", &emulated);
-					ImGui::PopEnabled();
+					ImGui::EndDisabled();
 
 					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) )
 					{
@@ -784,9 +784,9 @@ public:
 					ImGui::SameLine();
 
 					bool framebuffer = 0 != (formatFlags & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER);
-					ImGui::PushEnabled(false);
+					ImGui::BeginDisabled(true);
 					ImGui::Checkbox("FB", &framebuffer);
-					ImGui::PopEnabled();
+					ImGui::EndDisabled();
 
 					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) )
 					{
@@ -795,9 +795,9 @@ public:
 					ImGui::SameLine();
 
 					bool msaa = 0 != (formatFlags & BGFX_CAPS_FORMAT_TEXTURE_MSAA);
-					ImGui::PushEnabled(false);
+					ImGui::BeginDisabled(true);
 					ImGui::Checkbox("MSAA", &msaa);
-					ImGui::PopEnabled();
+					ImGui::EndDisabled();
 
 					if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) )
 					{

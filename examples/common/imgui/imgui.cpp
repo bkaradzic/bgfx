@@ -600,23 +600,9 @@ void imguiEndFrame()
 
 namespace ImGui
 {
-	void PushFont(Font::Enum _font)
+	void PushFont(Font::Enum _font, float _fontSizeBaseUnscaled)
 	{
-		PushFont(s_ctx.m_font[_font], 0.0f);
-	}
-
-	void PushEnabled(bool _enabled)
-	{
-		extern void PushItemFlag(int option, bool enabled);
-		PushItemFlag(ImGuiItemFlags_Disabled, !_enabled);
-		PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * (_enabled ? 1.0f : 0.5f) );
-	}
-
-	void PopEnabled()
-	{
-		extern void PopItemFlag();
-		PopItemFlag();
-		PopStyleVar();
+		PushFont(s_ctx.m_font[_font], _fontSizeBaseUnscaled);
 	}
 
 } // namespace ImGui

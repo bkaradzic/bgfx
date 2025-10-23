@@ -178,9 +178,9 @@ public:
 
 			ImGui::Text("%d draw calls", bgfx::getStats()->numDraw);
 
-			ImGui::PushEnabled(instancingSupported);
+			ImGui::BeginDisabled(!instancingSupported);
 			ImGui::Checkbox("Use Instancing", &m_useInstancing);
-			ImGui::PopEnabled();
+			ImGui::EndDisabled();
 
 			ImGui::Text("Grid Side Size:");
 			ImGui::SliderInt("##size", (int*)&m_sideSize, 1, 512);
