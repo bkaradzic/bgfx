@@ -454,11 +454,15 @@ struct OcornutImguiContext
 			}
 		}
 
+		ImGuizmo::Create();
+
 		ImGui::InitDockContext();
 	}
 
 	void destroy()
 	{
+		ImGuizmo::Destroy();
+
 		for (ImTextureData* texData : ImGui::GetPlatformIO().Textures)
 		{
 			if (1 == texData->RefCount)
