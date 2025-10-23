@@ -19,7 +19,8 @@
 #		define WIN32_LEAN_AND_MEAN
 #	endif // WIN32_LEAN_AND_MEAN
 #	include <windows.h>
-#endif // BX_PLATFORM_OSX
+#	include <psapi.h>
+#endif // BX_PLATFORM_*
 
 BX_ERROR_RESULT(BGFX_ERROR_TEXTURE_VALIDATION,      BX_MAKEFOURCC('b', 'g', 0, 1) );
 BX_ERROR_RESULT(BGFX_ERROR_FRAME_BUFFER_VALIDATION, BX_MAKEFOURCC('b', 'g', 0, 2) );
@@ -2629,10 +2630,10 @@ namespace bgfx
 		HANDLE process = GetCurrentProcess();
 		DWORD size;
 		BOOL result = EnumProcessModules(process
-						, NULL
-						, 0
-						, &size
-						);
+			, NULL
+			, 0
+			, &size
+			);
 		if (0 != result)
 		{
 			HMODULE* modules = (HMODULE*)BX_STACK_ALLOC(size);
