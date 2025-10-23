@@ -242,9 +242,9 @@ struct OcornutImguiContext
 						const uint16_t xx = uint16_t(bx::max(clipRect.x, 0.0f) );
 						const uint16_t yy = uint16_t(bx::max(clipRect.y, 0.0f) );
 						encoder->setScissor(xx, yy
-								, uint16_t(bx::min(clipRect.z, 65535.0f)-xx)
-								, uint16_t(bx::min(clipRect.w, 65535.0f)-yy)
-								);
+							, uint16_t(bx::min(clipRect.z, 65535.0f)-xx)
+							, uint16_t(bx::min(clipRect.w, 65535.0f)-yy)
+							);
 
 						encoder->setState(state);
 						encoder->setTexture(0, s_tex, th);
@@ -446,11 +446,11 @@ struct OcornutImguiContext
 				const FontRangeMerge& frm = s_fontRangeMerge[ii];
 
 				io.Fonts->AddFontFromMemoryTTF( (void*)frm.data
-						, (int)frm.size
-						, _fontSize-3.0f
-						, &config
-						, frm.ranges
-						);
+					, (int)frm.size
+					, _fontSize-3.0f
+					, &config
+					, frm.ranges
+					);
 			}
 		}
 
@@ -459,6 +459,17 @@ struct OcornutImguiContext
 
 	void destroy()
 	{
+		for (ImTextureData* texData : ImGui::GetPlatformIO().Textures)
+		{
+			if (1 == texData->RefCount)
+			{
+				ImGui::TextureBgfx tex = bx::bitCast<ImGui::TextureBgfx>(texData->GetTexID() );
+				bgfx::destroy(tex.handle);
+				texData->SetTexID(ImTextureID_Invalid);
+				texData->SetStatus(ImTextureStatus_Destroyed);
+			}
+		}
+
 		ImGui::ShutdownDockContext();
 		ImGui::DestroyContext(m_imgui);
 
