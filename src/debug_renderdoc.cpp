@@ -17,52 +17,6 @@
 
 namespace bgfx
 {
-	void* findModule(const char* _name)
-	{
-#if BX_PLATFORM_WINDOWS
-		// NOTE: there was some reason to do it this way instead of simply calling GetModuleHandleA,
-		// but not sure what it was.
-		HANDLE process = GetCurrentProcess();
-		DWORD size;
-		BOOL result = EnumProcessModules(process
-						, NULL
-						, 0
-						, &size
-						);
-		if (0 != result)
-		{
-			HMODULE* modules = (HMODULE*)BX_STACK_ALLOC(size);
-			result = EnumProcessModules(process
-				, modules
-				, size
-				, &size
-				);
-
-			if (0 != result)
-			{
-				char moduleName[MAX_PATH];
-				for (uint32_t ii = 0, num = uint32_t(size/sizeof(HMODULE) ); ii < num; ++ii)
-				{
-					result = GetModuleBaseNameA(process
-								, modules[ii]
-								, moduleName
-								, BX_COUNTOF(moduleName)
-								);
-					if (0 != result
-					&&  0 == bx::strCmpI(_name, moduleName) )
-					{
-						return (void*)modules[ii];
-					}
-				}
-			}
-		}
-#else
-		BX_UNUSED(_name);
-#endif // BX_PLATFORM_WINDOWS
-
-		return NULL;
-	}
-
 	pRENDERDOC_GetAPI RENDERDOC_GetAPI;
 	static RENDERDOC_API_1_1_2* s_renderDoc = NULL;
 	static void* s_renderDocDll = NULL;
