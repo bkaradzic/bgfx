@@ -3168,7 +3168,10 @@ namespace bgfx { namespace gl
 
 				m_maxLabelLen = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 32) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 43) || s_extension[Extension::KHR_debug].m_supported ? uint16_t(glGet(GL_MAX_LABEL_LENGTH) ) : 0;
 
-				setGraphicsDebuggerPresent(s_extension[Extension::EXT_debug_tool].m_supported);
+				setGraphicsDebuggerPresent(false
+					|| s_extension[Extension::EXT_debug_tool].m_supported
+					|| NULL != findModule("Nvda.Graphics.Interception.dll")
+					);
 
 				if (NULL == glObjectLabel)
 				{

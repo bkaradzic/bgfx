@@ -1009,6 +1009,11 @@ namespace bgfx { namespace d3d11
 					}
 				}
 
+				if (NULL != findModule("Nvda.Graphics.Interception.dll") )
+				{
+					setGraphicsDebuggerPresent(true);
+				}
+
 				if (BGFX_PCI_ID_NVIDIA != m_dxgi.m_adapterDesc.VendorId)
 				{
 					m_nvapi.shutdown();

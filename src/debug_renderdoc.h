@@ -8,6 +8,7 @@
 
 namespace bgfx
 {
+	void* findModule(const char* _name);
 	void* loadRenderDoc();
 	void unloadRenderDoc(void*);
 	void renderDocTriggerCapture();

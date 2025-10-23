@@ -733,7 +733,11 @@ namespace bgfx { namespace d3d12
 				m_renderDocDll = loadRenderDoc();
 			}
 
-			setGraphicsDebuggerPresent(NULL != m_renderDocDll || NULL != m_winPixEvent);
+			setGraphicsDebuggerPresent(false
+				|| NULL != m_renderDocDll
+				|| NULL != m_winPixEvent
+				|| NULL != findModule("Nvda.Graphics.Interception.dll")
+				);
 
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );

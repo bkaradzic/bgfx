@@ -1194,7 +1194,10 @@ VK_IMPORT_DEVICE
 				m_renderDocDll = loadRenderDoc();
 			}
 
-			setGraphicsDebuggerPresent(NULL != m_renderDocDll);
+			setGraphicsDebuggerPresent(false
+				|| NULL != m_renderDocDll
+				|| NULL != findModule("Nvda.Graphics.Interception.dll")
+				);
 
 			m_vulkan1Dll = bx::dlopen(
 #if BX_PLATFORM_WINDOWS
