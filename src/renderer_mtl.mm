@@ -750,6 +750,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				hasPacked16Formats = false;
 			}
+
 			if (!hasPacked16Formats)
 			{
 				s_textureFormat[bgfx::TextureFormat::R5G6B5].m_fmt = MTLPixelFormatInvalid;
@@ -3529,7 +3530,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					m_metalLayer = (CAMetalLayer *)view.layer;
 				}
 			}
-#endif
+#endif // !BX_PLATFORM_VISIONOS
 
 			if (NULL != NSClassFromString(@"CAMetalLayer") )
 			{
@@ -4681,7 +4682,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 					const RenderCompute& compute = renderItem.compute;
 
-					bool programChanged = false;
 					rendererUpdateUniforms(this, _render->m_uniformBuffer[compute.m_uniformIdx], compute.m_uniformBegin, compute.m_uniformEnd);
 
 					if (key.m_program.idx != currentProgram.idx)
@@ -4697,7 +4697,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 						}
 
 						m_computeCommandEncoder.setComputePipelineState(currentPso->m_cps);
-						programChanged = true;
 					}
 
 					if (isValid(currentProgram)
@@ -4724,7 +4723,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 						m_uniformBufferVertexOffset += vertexUniformBufferSize;
 					}
-					BX_UNUSED(programChanged);
 
 					for (uint8_t stage = 0; stage < maxComputeBindings; ++stage)
 					{
