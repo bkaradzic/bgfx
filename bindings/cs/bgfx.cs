@@ -4152,9 +4152,10 @@ public static partial class bgfx
 	///
 	/// <param name="_handle">Texture handle.</param>
 	/// <param name="_ptr">Native API pointer to texture.</param>
+	/// <param name="_layerIndex">Layer index for texture arrays (only implemented for D3D11).</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_override_internal_texture_ptr", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe UIntPtr override_internal_texture_ptr(TextureHandle _handle, UIntPtr _ptr);
+	public static extern unsafe UIntPtr override_internal_texture_ptr(TextureHandle _handle, UIntPtr _ptr, uint _layerIndex);
 	
 	/// <summary>
 	/// Override internal texture by creating new texture. Previously created

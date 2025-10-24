@@ -2897,7 +2897,8 @@ extern fn InternalData* get_internal_data() @extern("bgfx_get_internal_data");
 // @warning Must be called only on render thread.
 // _handle : `Texture handle.`
 // _ptr : `Native API pointer to texture.`
-extern fn uptr override_internal_texture_ptr(TextureHandle _handle, uptr _ptr) @extern("bgfx_override_internal_texture_ptr");
+// _layerIndex : `Layer index for texture arrays (only implemented for D3D11).`
+extern fn uptr override_internal_texture_ptr(TextureHandle _handle, uptr _ptr, uint _layerIndex) @extern("bgfx_override_internal_texture_ptr");
 
 // Override internal texture by creating new texture. Previously created
 // internal texture will released.
