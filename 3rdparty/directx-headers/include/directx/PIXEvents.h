@@ -13,15 +13,6 @@
 
 #include "PIXEventsCommon.h"
 
-#if _MSC_VER < 1800
-# error This version of pix3.h is only supported on Visual Studio 2013 or higher
-#elif _MSC_VER < 1900
-# ifndef constexpr // Visual Studio 2013 doesn't support constexpr
-#  define constexpr
-#  define PIX3__DEFINED_CONSTEXPR
-# endif
-#endif
-
  // Xbox does not support CPU events for retail scenarios
 #if defined(USE_PIX) || !defined(PIX_XBOX)
 #define PIX_CONTEXT_EMIT_CPU_EVENTS

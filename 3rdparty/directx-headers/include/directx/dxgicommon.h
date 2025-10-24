@@ -7,6 +7,7 @@
 #define __dxgicommon_h__
 
 
+
 typedef struct DXGI_RATIONAL
 {
     UINT Numerator;
