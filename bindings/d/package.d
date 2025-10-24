@@ -3091,8 +3091,9 @@ mixin(joinFnBinds((){
 		Params:
 			handle = Texture handle.
 			ptr = Native API pointer to texture.
+			layerIndex = Layer index for texture arrays (only implemented for D3D11).
 		*/
-		{q{size_t}, q{overrideInternal}, q{TextureHandle handle, size_t ptr}, ext: `C++, "bgfx"`},
+		{q{size_t}, q{overrideInternal}, q{TextureHandle handle, size_t ptr, uint layerIndex}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Override internal texture by creating new texture. Previously created

@@ -1010,10 +1010,10 @@ BGFX_C_API const bgfx_internal_data_t* bgfx_get_internal_data(void)
 	return (const bgfx_internal_data_t*)bgfx::getInternalData();
 }
 
-BGFX_C_API uintptr_t bgfx_override_internal_texture_ptr(bgfx_texture_handle_t _handle, uintptr_t _ptr)
+BGFX_C_API uintptr_t bgfx_override_internal_texture_ptr(bgfx_texture_handle_t _handle, uintptr_t _ptr, uint32_t _layerIndex)
 {
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
-	return bgfx::overrideInternal(handle.cpp, _ptr);
+	return bgfx::overrideInternal(handle.cpp, _ptr, _layerIndex);
 }
 
 BGFX_C_API uintptr_t bgfx_override_internal_texture(bgfx_texture_handle_t _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, bgfx_texture_format_t _format, uint64_t _flags)
