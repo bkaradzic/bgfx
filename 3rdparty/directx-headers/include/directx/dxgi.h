@@ -221,7 +221,7 @@ typedef struct DXGI_ADAPTER_DESC
 typedef HANDLE HMONITOR;
 
 #endif
-//DECLARE_HANDLE(HMONITOR);
+DECLARE_HANDLE(HMONITOR);
 #endif
 typedef struct DXGI_OUTPUT_DESC
     {
