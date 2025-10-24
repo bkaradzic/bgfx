@@ -406,37 +406,65 @@ namespace bgfx { namespace d3d12
 	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunused-const-variable");
 	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunneeded-internal-declaration");
 
-	static const GUID IID_ID3D12CommandAllocator     = { 0x6102dee4, 0xaf59, 0x4b09, { 0xb9, 0x99, 0xb4, 0x4d, 0x73, 0xf0, 0x9b, 0x24 } };
-	static const GUID IID_ID3D12CommandQueue         = { 0x0ec870a6, 0x5d7e, 0x4c22, { 0x8c, 0xfc, 0x5b, 0xaa, 0xe0, 0x76, 0x16, 0xed } };
-	static const GUID IID_ID3D12CommandSignature     = { 0xc36a797c, 0xec80, 0x4f0a, { 0x89, 0x85, 0xa7, 0xb2, 0x47, 0x50, 0x82, 0xd1 } };
-	static const GUID IID_ID3D12Debug                = { 0x344488b7, 0x6846, 0x474b, { 0xb9, 0x89, 0xf0, 0x27, 0x44, 0x82, 0x45, 0xe0 } };
-	static const GUID IID_ID3D12Debug1               = { 0xaffaa4ca, 0x63fe, 0x4d8e, { 0xb8, 0xad, 0x15, 0x90, 0x00, 0xaf, 0x43, 0x04 } };
-	static const GUID IID_ID3D12DescriptorHeap       = { 0x8efb471d, 0x616c, 0x4f49, { 0x90, 0xf7, 0x12, 0x7b, 0xb7, 0x63, 0xfa, 0x51 } };
-	static const GUID IID_ID3D12Device               = { 0x189819f1, 0x1db6, 0x4b57, { 0xbe, 0x54, 0x18, 0x21, 0x33, 0x9b, 0x85, 0xf7 } };
-	static const GUID IID_ID3D12Device1              = { 0x77acce80, 0x638e, 0x4e65, { 0x88, 0x95, 0xc1, 0xf2, 0x33, 0x86, 0x86, 0x3e } };
-	static const GUID IID_ID3D12Device2              = { 0x30baa41e, 0xb15b, 0x475c, { 0xa0, 0xbb, 0x1a, 0xf5, 0xc5, 0xb6, 0x43, 0x28 } };
-	static const GUID IID_ID3D12Device3              = { 0x81dadc15, 0x2bad, 0x4392, { 0x93, 0xc5, 0x10, 0x13, 0x45, 0xc4, 0xaa, 0x98 } };
-	static const GUID IID_ID3D12Device4              = { 0xe865df17, 0xa9ee, 0x46f9, { 0xa4, 0x63, 0x30, 0x98, 0x31, 0x5a, 0xa2, 0xe5 } };
-	static const GUID IID_ID3D12Device5              = { 0x8b4f173b, 0x2fea, 0x4b80, { 0x8f, 0x58, 0x43, 0x07, 0x19, 0x1a, 0xb9, 0x5d } };
-	static const GUID IID_ID3D12Device6              = { 0xc70b221b, 0x40e4, 0x4a17, { 0x89, 0xaf, 0x02, 0x5a, 0x07, 0x27, 0xa6, 0xdc } };
-	static const GUID IID_ID3D12Device7              = { 0x5c014b53, 0x68a1, 0x4b9b, { 0x8b, 0xd1, 0xdd, 0x60, 0x46, 0xb9, 0x35, 0x8b } };
-	static const GUID IID_ID3D12Device8              = { 0x9218e6bb, 0xf944, 0x4f7e, { 0xa7, 0x5c, 0xb1, 0xb2, 0xc7, 0xb7, 0x01, 0xf3 } };
-	static const GUID IID_ID3D12Fence                = { 0x0a753dcf, 0xc4d8, 0x4b91, { 0xad, 0xf6, 0xbe, 0x5a, 0x60, 0xd9, 0x5a, 0x76 } };
-	static const GUID IID_ID3D12GraphicsCommandList  = { 0x5b160d0f, 0xac1b, 0x4185, { 0x8b, 0xa8, 0xb3, 0xae, 0x42, 0xa5, 0xa4, 0x55 } };
-	static const GUID IID_ID3D12GraphicsCommandList1 = { 0x553103fb, 0x1fe7, 0x4557, { 0xbb, 0x38, 0x94, 0x6d, 0x7d, 0x0e, 0x7c, 0xa7 } };
-	static const GUID IID_ID3D12GraphicsCommandList2 = { 0x38c3e585, 0xff17, 0x412c, { 0x91, 0x50, 0x4f, 0xc6, 0xf9, 0xd7, 0x2a, 0x28 } };
-	static const GUID IID_ID3D12GraphicsCommandList3 = { 0x6fda83a7, 0xb84c, 0x4e38, { 0x9a, 0xc8, 0xc7, 0xbd, 0x22, 0x01, 0x6b, 0x3d } };
-	static const GUID IID_ID3D12GraphicsCommandList4 = { 0x8754318e, 0xd3a9, 0x4541, { 0x98, 0xcf, 0x64, 0x5b, 0x50, 0xdc, 0x48, 0x74 } };
-	static const GUID IID_ID3D12InfoQueue            = { 0x0742a90b, 0xc387, 0x483f, { 0xb9, 0x46, 0x30, 0xa7, 0xe4, 0xe6, 0x14, 0x58 } };
-	static const GUID IID_ID3D12PipelineState        = { 0x765a30f3, 0xf624, 0x4c6f, { 0xa8, 0x28, 0xac, 0xe9, 0x48, 0x62, 0x24, 0x45 } };
-	static const GUID IID_ID3D12Resource             = { 0x696442be, 0xa72e, 0x4059, { 0xbc, 0x79, 0x5b, 0x5c, 0x98, 0x04, 0x0f, 0xad } };
-	static const GUID IID_ID3D12RootSignature        = { 0xc54a6b66, 0x72df, 0x4ee8, { 0x8b, 0xe5, 0xa9, 0x46, 0xa1, 0x42, 0x92, 0x14 } };
-	static const GUID IID_ID3D12QueryHeap            = { 0x0d9658ae, 0xed45, 0x469e, { 0xa6, 0x1d, 0x97, 0x0e, 0xc5, 0x83, 0xca, 0xb4 } };
+	static const GUID IID_ID3D12CommandAllocator      = { 0x6102dee4, 0xaf59, 0x4b09, { 0xb9, 0x99, 0xb4, 0x4d, 0x73, 0xf0, 0x9b, 0x24 } };
+	static const GUID IID_ID3D12CommandQueue          = { 0x0ec870a6, 0x5d7e, 0x4c22, { 0x8c, 0xfc, 0x5b, 0xaa, 0xe0, 0x76, 0x16, 0xed } };
+	static const GUID IID_ID3D12CommandQueue1         = { 0x3a3c3165, 0x0ee7, 0x4b8e, { 0xa0, 0xaf, 0x63, 0x56, 0xb4, 0xc3, 0xbb, 0xb9 } };
+	static const GUID IID_ID3D12CommandSignature      = { 0xc36a797c, 0xec80, 0x4f0a, { 0x89, 0x85, 0xa7, 0xb2, 0x47, 0x50, 0x82, 0xd1 } };
+	static const GUID IID_ID3D12Debug                 = { 0x344488b7, 0x6846, 0x474b, { 0xb9, 0x89, 0xf0, 0x27, 0x44, 0x82, 0x45, 0xe0 } };
+	static const GUID IID_ID3D12Debug1                = { 0xaffaa4ca, 0x63fe, 0x4d8e, { 0xb8, 0xad, 0x15, 0x90, 0x00, 0xaf, 0x43, 0x04 } };
+	static const GUID IID_ID3D12Debug2                = { 0x93a665c4, 0xa3b2, 0x4e5d, { 0xb6, 0x92, 0xa2, 0x6a, 0xe1, 0x4e, 0x33, 0x74 } };
+	static const GUID IID_ID3D12Debug3                = { 0x5cf4e58f, 0xf671, 0x4ff1, { 0xa5, 0x42, 0x36, 0x86, 0xe3, 0xd1, 0x53, 0xd1 } };
+	static const GUID IID_ID3D12Debug4                = { 0x014b816e, 0x9ec5, 0x4a2f, { 0xa8, 0x45, 0xff, 0xbe, 0x44, 0x1c, 0xe1, 0x3a } };
+	static const GUID IID_ID3D12Debug5                = { 0x548d6b12, 0x09fa, 0x40e0, { 0x90, 0x69, 0x5d, 0xcd, 0x58, 0x9a, 0x52, 0xc9 } };
+	static const GUID IID_ID3D12Debug6                = { 0x82a816d6, 0x5d01, 0x4157, { 0x97, 0xd0, 0x49, 0x75, 0x46, 0x3f, 0xd1, 0xed } };
+	static const GUID IID_ID3D12DescriptorHeap        = { 0x8efb471d, 0x616c, 0x4f49, { 0x90, 0xf7, 0x12, 0x7b, 0xb7, 0x63, 0xfa, 0x51 } };
+	static const GUID IID_ID3D12Device                = { 0x189819f1, 0x1db6, 0x4b57, { 0xbe, 0x54, 0x18, 0x21, 0x33, 0x9b, 0x85, 0xf7 } };
+	static const GUID IID_ID3D12Device1               = { 0x77acce80, 0x638e, 0x4e65, { 0x88, 0x95, 0xc1, 0xf2, 0x33, 0x86, 0x86, 0x3e } };
+	static const GUID IID_ID3D12Device2               = { 0x30baa41e, 0xb15b, 0x475c, { 0xa0, 0xbb, 0x1a, 0xf5, 0xc5, 0xb6, 0x43, 0x28 } };
+	static const GUID IID_ID3D12Device3               = { 0x81dadc15, 0x2bad, 0x4392, { 0x93, 0xc5, 0x10, 0x13, 0x45, 0xc4, 0xaa, 0x98 } };
+	static const GUID IID_ID3D12Device4               = { 0xe865df17, 0xa9ee, 0x46f9, { 0xa4, 0x63, 0x30, 0x98, 0x31, 0x5a, 0xa2, 0xe5 } };
+	static const GUID IID_ID3D12Device5               = { 0x8b4f173b, 0x2fea, 0x4b80, { 0x8f, 0x58, 0x43, 0x07, 0x19, 0x1a, 0xb9, 0x5d } };
+	static const GUID IID_ID3D12Device6               = { 0xc70b221b, 0x40e4, 0x4a17, { 0x89, 0xaf, 0x02, 0x5a, 0x07, 0x27, 0xa6, 0xdc } };
+	static const GUID IID_ID3D12Device7               = { 0x5c014b53, 0x68a1, 0x4b9b, { 0x8b, 0xd1, 0xdd, 0x60, 0x46, 0xb9, 0x35, 0x8b } };
+	static const GUID IID_ID3D12Device8               = { 0x9218e6bb, 0xf944, 0x4f7e, { 0xa7, 0x5c, 0xb1, 0xb2, 0xc7, 0xb7, 0x01, 0xf3 } };
+	static const GUID IID_ID3D12Device9               = { 0x4c80e962, 0xf032, 0x4f60, { 0xbc, 0x9e, 0xeb, 0xc2, 0xcf, 0xa1, 0xd8, 0x3c } };
+	static const GUID IID_ID3D12Device10              = { 0x517f8718, 0xaa66, 0x49f9, { 0xb0, 0x2b, 0xa7, 0xab, 0x89, 0xc0, 0x60, 0x31 } };
+	static const GUID IID_ID3D12Device11              = { 0x5405c344, 0xd457, 0x444e, { 0xb4, 0xdd, 0x23, 0x66, 0xe4, 0x5a, 0xee, 0x39 } };
+	static const GUID IID_ID3D12Device12              = { 0x5af5c532, 0x4c91, 0x4cd0, { 0xb5, 0x41, 0x15, 0xa4, 0x05, 0x39, 0x5f, 0xc5 } };
+	static const GUID IID_ID3D12Device13              = { 0x14eecffc, 0x4df8, 0x40f7, { 0xa1, 0x18, 0x5c, 0x81, 0x6f, 0x45, 0x69, 0x5e } };
+	static const GUID IID_ID3D12Device14              = { 0x5f6e592d, 0xd895, 0x44c2, { 0x8e, 0x4a, 0x88, 0xad, 0x49, 0x26, 0xd3, 0x23 } };
+	static const GUID IID_ID3D12Fence                 = { 0x0a753dcf, 0xc4d8, 0x4b91, { 0xad, 0xf6, 0xbe, 0x5a, 0x60, 0xd9, 0x5a, 0x76 } };
+	static const GUID IID_ID3D12Fence1                = { 0x433685fe, 0xe22b, 0x4ca0, { 0xa8, 0xdb, 0xb5, 0xb4, 0xf4, 0xdd, 0x0e, 0x4a } };
+	static const GUID IID_ID3D12GraphicsCommandList   = { 0x5b160d0f, 0xac1b, 0x4185, { 0x8b, 0xa8, 0xb3, 0xae, 0x42, 0xa5, 0xa4, 0x55 } };
+	static const GUID IID_ID3D12GraphicsCommandList1  = { 0x553103fb, 0x1fe7, 0x4557, { 0xbb, 0x38, 0x94, 0x6d, 0x7d, 0x0e, 0x7c, 0xa7 } };
+	static const GUID IID_ID3D12GraphicsCommandList2  = { 0x38c3e585, 0xff17, 0x412c, { 0x91, 0x50, 0x4f, 0xc6, 0xf9, 0xd7, 0x2a, 0x28 } };
+	static const GUID IID_ID3D12GraphicsCommandList3  = { 0x6fda83a7, 0xb84c, 0x4e38, { 0x9a, 0xc8, 0xc7, 0xbd, 0x22, 0x01, 0x6b, 0x3d } };
+	static const GUID IID_ID3D12GraphicsCommandList4  = { 0x8754318e, 0xd3a9, 0x4541, { 0x98, 0xcf, 0x64, 0x5b, 0x50, 0xdc, 0x48, 0x74 } };
+	static const GUID IID_ID3D12GraphicsCommandList5  = { 0x55050859, 0x4024, 0x474c, { 0x87, 0xf5, 0x64, 0x72, 0xea, 0xee, 0x44, 0xea } };
+	static const GUID IID_ID3D12GraphicsCommandList6  = { 0xc3827890, 0xe548, 0x4cfa, { 0x96, 0xcf, 0x56, 0x89, 0xa9, 0x37, 0x0f, 0x80 } };
+	static const GUID IID_ID3D12GraphicsCommandList7  = { 0xdd171223, 0x8b61, 0x4769, { 0x90, 0xe3, 0x16, 0x0c, 0xcd, 0xe4, 0xe2, 0xc1 } };
+	static const GUID IID_ID3D12GraphicsCommandList8  = { 0xee936ef9, 0x599d, 0x4d28, { 0x93, 0x8e, 0x23, 0xc4, 0xad, 0x05, 0xce, 0x51 } };
+	static const GUID IID_ID3D12GraphicsCommandList9  = { 0x34ed2808, 0xffe6, 0x4c2b, { 0xb1, 0x1a, 0xca, 0xbd, 0x2b, 0x0c, 0x59, 0xe1 } };
+	static const GUID IID_ID3D12GraphicsCommandList10 = { 0x7013c015, 0xd161, 0x4b63, { 0xa0, 0x8c, 0x23, 0x85, 0x52, 0xdd, 0x8a, 0xcc } };
+	static const GUID IID_ID3D12InfoQueue             = { 0x0742a90b, 0xc387, 0x483f, { 0xb9, 0x46, 0x30, 0xa7, 0xe4, 0xe6, 0x14, 0x58 } };
+	static const GUID IID_ID3D12PipelineState         = { 0x765a30f3, 0xf624, 0x4c6f, { 0xa8, 0x28, 0xac, 0xe9, 0x48, 0x62, 0x24, 0x45 } };
+	static const GUID IID_ID3D12PipelineState1        = { 0x5646804c, 0x9638, 0x48f7, { 0x91, 0x82, 0xb3, 0xee, 0x5a, 0x6b, 0x60, 0xfb } };
+	static const GUID IID_ID3D12Resource              = { 0x696442be, 0xa72e, 0x4059, { 0xbc, 0x79, 0x5b, 0x5c, 0x98, 0x04, 0x0f, 0xad } };
+	static const GUID IID_ID3D12Resource1             = { 0x9d5e227a, 0x4430, 0x4161, { 0x88, 0xb3, 0x3e, 0xca, 0x6b, 0xb1, 0x6e, 0x19 } };
+	static const GUID IID_ID3D12Resource2             = { 0xbe36ec3b, 0xea85, 0x4aeb, { 0xa4, 0x5a, 0xe9, 0xd7, 0x64, 0x04, 0xa4, 0x95 } };
+	static const GUID IID_ID3D12RootSignature         = { 0xc54a6b66, 0x72df, 0x4ee8, { 0x8b, 0xe5, 0xa9, 0x46, 0xa1, 0x42, 0x92, 0x14 } };
+	static const GUID IID_ID3D12QueryHeap             = { 0x0d9658ae, 0xed45, 0x469e, { 0xa6, 0x1d, 0x97, 0x0e, 0xc5, 0x83, 0xca, 0xb4 } };
 
 	BX_PRAGMA_DIAGNOSTIC_POP();
 
 	static const GUID s_d3dDeviceIIDs[] =
 	{
+		IID_ID3D12Device14,
+		IID_ID3D12Device13,
+		IID_ID3D12Device12,
+		IID_ID3D12Device11,
+		IID_ID3D12Device10,
+		IID_ID3D12Device9,
 		IID_ID3D12Device8,
 		IID_ID3D12Device7,
 		IID_ID3D12Device6,
@@ -474,13 +502,13 @@ namespace bgfx { namespace d3d12
 
 	static inline D3D12_HEAP_PROPERTIES ID3D12DeviceGetCustomHeapProperties(ID3D12Device *device, uint32_t nodeMask, D3D12_HEAP_TYPE heapType)
 	{
-#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
+#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER) )
 		return device->GetCustomHeapProperties(nodeMask, heapType);
 #else
 		D3D12_HEAP_PROPERTIES ret;
 		device->GetCustomHeapProperties(&ret, nodeMask, heapType);
 		return ret;
-#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
+#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER) )
 	}
 
 	static void initHeapProperties(ID3D12Device* _device, D3D12_HEAP_PROPERTIES& _properties)
@@ -525,11 +553,11 @@ namespace bgfx { namespace d3d12
 			void* ptr;
 			DX_CHECK(resource->Map(0, NULL, &ptr) );
 			D3D12_RESOURCE_ALLOCATION_INFO rai;
-#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
+#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER) )
 			rai = _device->GetResourceAllocationInfo(1, 1, _resourceDesc);
 #else
 			_device->GetResourceAllocationInfo(&rai, 1, 1, _resourceDesc);
-#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
+#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER) )
 			bx::memSet(ptr, 0, size_t(rai.SizeInBytes) );
 			resource->Unmap(0, NULL);
 		}
@@ -626,35 +654,35 @@ namespace bgfx { namespace d3d12
 
 	inline D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandleHeapStart(ID3D12DescriptorHeap* _heap)
 	{
-#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
+#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER) )
 		return _heap->GetCPUDescriptorHandleForHeapStart();
 #else
 		D3D12_CPU_DESCRIPTOR_HANDLE handle;
 		_heap->GetCPUDescriptorHandleForHeapStart(&handle);
 		return handle;
-#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
+#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER) )
 	}
 
 	inline D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandleHeapStart(ID3D12DescriptorHeap* _heap)
 	{
-#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
+#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER) )
 		return _heap->GetGPUDescriptorHandleForHeapStart();
 #else
 		D3D12_GPU_DESCRIPTOR_HANDLE handle;
 		_heap->GetGPUDescriptorHandleForHeapStart(&handle);
 		return handle;
-#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
+#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER) )
 	}
 
 	inline D3D12_RESOURCE_DESC getResourceDesc(ID3D12Resource* _resource)
 	{
-#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
+#if BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER) )
 		return _resource->GetDesc();
 #else
 		D3D12_RESOURCE_DESC desc;
 		_resource->GetDesc(&desc);
 		return desc;
-#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER))
+#endif // BX_COMPILER_MSVC || (BX_COMPILER_CLANG && defined(_MSC_VER) )
 	}
 
 #if BGFX_CONFIG_DEBUG_ANNOTATION && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
@@ -844,7 +872,7 @@ namespace bgfx { namespace d3d12
 								ID3D12Debug1* debug1;
 								hr = debug0->QueryInterface(IID_ID3D12Debug1, (void**)&debug1);
 
-								if (SUCCEEDED(hr))
+								if (SUCCEEDED(hr) )
 								{
 									// https://discordapp.com/channels/590611987420020747/593519198995742733/703642988345032804
 									// D3D12 Bug Number: 26131261
@@ -852,7 +880,7 @@ namespace bgfx { namespace d3d12
 									// Setting SetEnableSynchronizedCommandQueueValidation below to false avoids the bug
 									// It was fixed in (probably) the first windows 11 sdk, 22000
 									// However, the fix causes any dx12 context with validation to break if this is set to false, so we can't do that anymore
-									if (windowsVersionIs(Condition::GreaterEqual, 0x0A00, 22000))
+									if (windowsVersionIs(Condition::GreaterEqual, 0x0A00, 22000) )
 									{
 										debug1->SetEnableGPUBasedValidation(true);
 									}
@@ -955,6 +983,8 @@ namespace bgfx { namespace d3d12
 				}
 			}
 
+			BX_TRACE("Device interface version IID_ID3D12Device%d.", m_deviceInterfaceVersion);
+
 #if !BX_PLATFORM_LINUX
 			if (BGFX_PCI_ID_NVIDIA != m_dxgi.m_adapterDesc.VendorId)
 			{
@@ -992,7 +1022,7 @@ namespace bgfx { namespace d3d12
 			BX_TRACE("\tCrossNodeSharingTier %d", m_options.CrossNodeSharingTier);
 			BX_TRACE("\tResourceHeapTier %d", m_options.ResourceHeapTier);
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS1 options1; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS1, &options1, sizeof(options1)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS1 options1; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS1, &options1, sizeof(options1) ) );)
 			{
 				BX_TRACE("D3D12 options 1:");
 				BX_TRACE("\tWaveOps %d", options1.WaveOps);
@@ -1004,7 +1034,7 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS2 options2; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS2, &options2, sizeof(options2)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS2 options2; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS2, &options2, sizeof(options2) ) );)
 			{
 				BX_TRACE("D3D12 options 2:");
 				BX_TRACE("\tCopyQueueTimestampQueriesSupported %d", options2.DepthBoundsTestSupported);
@@ -1012,7 +1042,7 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &options3, sizeof(options3)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &options3, sizeof(options3) ) );)
 			{
 				BX_TRACE("D3D12 options 3:");
 				BX_TRACE("\tCopyQueueTimestampQueriesSupported %d", options3.CopyQueueTimestampQueriesSupported);
@@ -1023,7 +1053,7 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS4 options4; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS4, &options4, sizeof(options4)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS4 options4; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS4, &options4, sizeof(options4) ) );)
 			{
 				BX_TRACE("D3D12 options 4:");
 				BX_TRACE("\tMSAA64KBAlignedTextureSupported %d", options4.MSAA64KBAlignedTextureSupported);
@@ -1041,7 +1071,7 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS6 options6; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &options6, sizeof(options6)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS6 options6; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &options6, sizeof(options6) ) );)
 			{
 				BX_TRACE("D3D12 options 6:");
 				BX_TRACE("\tAdditionalShadingRatesSupported %d", options6.AdditionalShadingRatesSupported);
@@ -1052,7 +1082,7 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS7 options7; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &options7, sizeof(options7)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS7 options7; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &options7, sizeof(options7) ) );)
 			{
 				BX_TRACE("D3D12 options 7:");
 				BX_TRACE("\tMeshShaderTier %d", options7.MeshShaderTier);
@@ -1060,14 +1090,14 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS8 options8; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS8, &options8, sizeof(options8)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS8 options8; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS8, &options8, sizeof(options8) ) );)
 			{
 				BX_TRACE("D3D12 options 8:");
 				BX_TRACE("\tUnalignedBlockTexturesSupported %d", options8.UnalignedBlockTexturesSupported);
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS9 options9; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS9, &options9, sizeof(options9)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS9 options9; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS9, &options9, sizeof(options9) ) );)
 			{
 				BX_TRACE("D3D12 options 9:");
 				BX_TRACE("\tMeshShaderPipelineStatsSupported %d", options9.MeshShaderPipelineStatsSupported);
@@ -1079,7 +1109,7 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS10 options10; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS10, &options10, sizeof(options10)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS10 options10; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS10, &options10, sizeof(options10) ) );)
 			{
 				BX_TRACE("D3D12 options 10:");
 				BX_TRACE("\tVariableRateShadingSumCombinerSupported %d", options10.VariableRateShadingSumCombinerSupported);
@@ -1087,14 +1117,14 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS11 options11; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS11, &options11, sizeof(options11)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS11 options11; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS11, &options11, sizeof(options11) ) );)
 			{
 				BX_TRACE("D3D12 options 11:");
 				BX_TRACE("\tAtomicInt64OnDescriptorHeapResourceSupported %d", options11.AtomicInt64OnDescriptorHeapResourceSupported);
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS12 options12; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &options12, sizeof(options12)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS12 options12; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &options12, sizeof(options12) ) );)
 			{
 				BX_TRACE("D3D12 options 12:");
 				BX_TRACE("\tMSPrimitivesPipelineStatisticIncludesCulledPrimitives %d", options12.MSPrimitivesPipelineStatisticIncludesCulledPrimitives);
@@ -1103,7 +1133,7 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS13 options13; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS13, &options13, sizeof(options13)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS13 options13; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS13, &options13, sizeof(options13) ) );)
 			{
 				BX_TRACE("D3D12 options 13:");
 				BX_TRACE("\tUnrestrictedBufferTextureCopyPitchSupported %d", options13.UnrestrictedBufferTextureCopyPitchSupported);
@@ -1115,7 +1145,7 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS14 options14; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS14, &options14, sizeof(options14)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS14 options14; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS14, &options14, sizeof(options14) ) );)
 			{
 				BX_TRACE("D3D12 options 14:");
 				BX_TRACE("\tAdvancedTextureOpsSupported %d", options14.AdvancedTextureOpsSupported);
@@ -1124,11 +1154,68 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			for (D3D12_FEATURE_DATA_D3D12_OPTIONS15 options15; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS15, &options15, sizeof(options15)));)
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS15 options15; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS15, &options15, sizeof(options15) ) );)
 			{
 				BX_TRACE("D3D12 options 15:");
 				BX_TRACE("\tTriangleFanSupported %d", options15.TriangleFanSupported);
 				BX_TRACE("\tDynamicIndexBufferStripCutSupported %d", options15.DynamicIndexBufferStripCutSupported);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16) ) );)
+			{
+				BX_TRACE("D3D12 options 16:");
+				BX_TRACE("\tDynamicDepthBiasSupported %d", options16.DynamicDepthBiasSupported);
+				BX_TRACE("\tGPUUploadHeapSupported %d", options16.GPUUploadHeapSupported);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS17 options17; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS17, &options17, sizeof(options17) ) );)
+			{
+				BX_TRACE("D3D12 options 17:");
+				BX_TRACE("\tNonNormalizedCoordinateSamplersSupported %d", options17.NonNormalizedCoordinateSamplersSupported);
+				BX_TRACE("\tManualWriteTrackingResourceSupported %d", options17.ManualWriteTrackingResourceSupported);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS18 options18; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS18, &options18, sizeof(options18) ) );)
+			{
+				BX_TRACE("D3D12 options 18:");
+				BX_TRACE("\tRenderPassesValid %d", options18.RenderPassesValid);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS19 options19; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS19, &options19, sizeof(options19) ) );)
+			{
+				BX_TRACE("D3D12 options 19:");
+				BX_TRACE("\tMismatchingOutputDimensionsSupported %d", options19.MismatchingOutputDimensionsSupported);
+				BX_TRACE("\tSupportedSampleCountsWithNoOutputs %d", options19.SupportedSampleCountsWithNoOutputs);
+				BX_TRACE("\tPointSamplingAddressesNeverRoundUp %d", options19.PointSamplingAddressesNeverRoundUp);
+				BX_TRACE("\tRasterizerDesc2Supported %d", options19.RasterizerDesc2Supported);
+				BX_TRACE("\tNarrowQuadrilateralLinesSupported %d", options19.NarrowQuadrilateralLinesSupported);
+				BX_TRACE("\tAnisoFilterWithPointMipSupported %d", options19.AnisoFilterWithPointMipSupported);
+				BX_TRACE("\tMaxSamplerDescriptorHeapSize %d", options19.MaxSamplerDescriptorHeapSize);
+				BX_TRACE("\tMaxSamplerDescriptorHeapSizeWithStaticSamplers %d", options19.MaxSamplerDescriptorHeapSizeWithStaticSamplers);
+				BX_TRACE("\tMaxViewDescriptorHeapSize %d", options19.MaxViewDescriptorHeapSize);
+				BX_TRACE("\tComputeOnlyCustomHeapSupported %d", options19.ComputeOnlyCustomHeapSupported);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS20 options20; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS20, &options20, sizeof(options20) ) );)
+			{
+				BX_TRACE("D3D12 options 20:");
+				BX_TRACE("\tComputeOnlyWriteWatchSupported %d", options20.ComputeOnlyWriteWatchSupported);
+				BX_TRACE("\tRecreateAtTier %d", options20.RecreateAtTier);
+				break;
+			}
+
+			for (D3D12_FEATURE_DATA_D3D12_OPTIONS21 options21; SUCCEEDED(m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21, &options21, sizeof(options21) ) );)
+			{
+				BX_TRACE("D3D12 options 21:");
+				BX_TRACE("\tWorkGraphsTier %d", options21.WorkGraphsTier);
+				BX_TRACE("\tExecuteIndirectTier %d", options21.ExecuteIndirectTier);
+				BX_TRACE("\tSampleCmpGradientAndBiasSupported %d", options21.SampleCmpGradientAndBiasSupported);
+				BX_TRACE("\tExtendedCommandInfoSupported %d", options21.ExtendedCommandInfoSupported);
 				break;
 			}
 
@@ -2383,7 +2470,7 @@ namespace bgfx { namespace d3d12
 			m_commandList = m_cmd.alloc();
 
 			m_backBufferDepthStencil = createCommittedResource(m_device, HeapProperty::Default, &resourceDesc, &clearValue);
-			m_device->CreateDepthStencilView(m_backBufferDepthStencil, NULL, getCPUHandleHeapStart(m_dsvDescriptorHeap));
+			m_device->CreateDepthStencilView(m_backBufferDepthStencil, NULL, getCPUHandleHeapStart(m_dsvDescriptorHeap) );
 
 			setResourceBarrier(m_commandList
 				, m_backBufferDepthStencil
@@ -2517,7 +2604,7 @@ namespace bgfx { namespace d3d12
 						static_assert(BX_COUNTOF(m_backBufferColor) == BX_COUNTOF(presentQueue) );
 						DX_CHECK(m_dxgi.resizeBuffers(m_swapChain, m_scd, nodeMask, presentQueue) );
 #elif BX_PLATFORM_WINRT
-						DX_CHECK(m_dxgi.resizeBuffers(m_swapChain, m_scd));
+						DX_CHECK(m_dxgi.resizeBuffers(m_swapChain, m_scd) );
 						m_backBufferColorIdx = m_scd.bufferCount-1;
 #endif // BX_PLATFORM_WINDOWS
 					}
@@ -2882,14 +2969,14 @@ namespace bgfx { namespace d3d12
 		uint32_t setInputLayout(D3D12_INPUT_ELEMENT_DESC* _vertexElements, uint8_t _numStreams, const VertexLayout** _layouts, const ProgramD3D12& _program, uint16_t _numInstanceData)
 		{
 			uint16_t attrMask[Attrib::Count];
-			bx::memCopy(attrMask, _program.m_vsh->m_attrMask, sizeof(attrMask));
+			bx::memCopy(attrMask, _program.m_vsh->m_attrMask, sizeof(attrMask) );
 
 			D3D12_INPUT_ELEMENT_DESC* elem = _vertexElements;
 
 			for (uint8_t stream = 0; stream < _numStreams; ++stream)
 			{
 				VertexLayout layout;
-				bx::memCopy(&layout, _layouts[stream], sizeof(VertexLayout));
+				bx::memCopy(&layout, _layouts[stream], sizeof(VertexLayout) );
 
 				const bool last = stream == _numStreams-1;
 
@@ -3161,7 +3248,7 @@ namespace bgfx { namespace d3d12
 					union { uint32_t offset; void* ptr; } cast = { 0 };
 					filter(dxbc.shader, dxbc.shader, patchCb0, cast.ptr);
 
-					temp = alloc(uint32_t(dxbc.header.size));
+					temp = alloc(uint32_t(dxbc.header.size) );
 					bx::StaticMemoryBlockWriter wr(temp->data, temp->size);
 
 					int32_t size = write(&wr, dxbc, &err);
@@ -3198,7 +3285,7 @@ namespace bgfx { namespace d3d12
 					};
 					filter(dxbc.shader, dxbc.shader, patchCb0, cast.ptr);
 
-					temp = alloc(uint32_t(dxbc.header.size));
+					temp = alloc(uint32_t(dxbc.header.size) );
 					bx::StaticMemoryBlockWriter wr(temp->data, temp->size);
 
 					int32_t size = write(&wr, dxbc, &err);
@@ -4388,7 +4475,7 @@ namespace bgfx { namespace d3d12
 			for (; numStreams < BX_COUNTOF(cmd.vbv); ++numStreams)
 			{
 				D3D12_VERTEX_BUFFER_VIEW* vbv = &cmd.vbv[numStreams];
-				bx::memSet(vbv, 0, sizeof(D3D12_VERTEX_BUFFER_VIEW));
+				bx::memSet(vbv, 0, sizeof(D3D12_VERTEX_BUFFER_VIEW) );
 			}
 
 			cmd.args.InstanceCount          = _draw.m_numInstances;
@@ -4432,7 +4519,7 @@ namespace bgfx { namespace d3d12
 			for (; numStreams < BX_COUNTOF(cmd.vbv); ++numStreams)
 			{
 				D3D12_VERTEX_BUFFER_VIEW* vbv = &cmd.vbv[numStreams];
-				bx::memSet(vbv, 0, sizeof(D3D12_VERTEX_BUFFER_VIEW));
+				bx::memSet(vbv, 0, sizeof(D3D12_VERTEX_BUFFER_VIEW) );
 			}
 
 			cmd.args.IndexCountPerInstance = numIndices;
@@ -5446,7 +5533,7 @@ namespace bgfx { namespace d3d12
 				m_directAccessPtr = NULL;
 			}
 
-			if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED))
+			if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED) )
 			{
 				s_renderD3D12->m_cmd.release(m_ptr);
 				m_ptr   = NULL;
@@ -5474,9 +5561,9 @@ namespace bgfx { namespace d3d12
 
 		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		uint32_t rectpitch    = _rect.m_width*bpp/8;
-		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat)))
+		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) ) )
 		{
-			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat));
+			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
 			rectpitch = (_rect.m_width / blockInfo.blockWidth) * blockInfo.blockSize;
 		}
 
@@ -5513,7 +5600,7 @@ namespace bgfx { namespace d3d12
 		if (convert)
 		{
 			temp = (uint8_t*)bx::alloc(g_allocator, slicepitch);
-			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat));
+			bimg::imageDecodeToBgra8(g_allocator, temp, srcData, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			srcData = temp;
 
 			box.right  = bx::max(1u, m_width  >> _mip);
