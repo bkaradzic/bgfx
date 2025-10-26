@@ -1903,12 +1903,12 @@ namespace bgfx { namespace d3d11
 			release(mem);
 		}
 
-		void overrideInternal(TextureHandle _handle, uintptr_t _ptr) override
+		void overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint32_t _layerIndex) override
 		{
 			// Resource ref. counts might be messed up outside of bgfx.
 			// Disabling ref. count check once texture is overridden.
 			setGraphicsDebuggerPresent(true);
-			m_textures[_handle.idx].overrideInternal(_ptr);
+			m_textures[_handle.idx].overrideInternal(_ptr, _layerIndex);
 		}
 
 		uintptr_t getInternal(TextureHandle _handle) override
@@ -4741,7 +4741,7 @@ namespace bgfx { namespace d3d11
 		}
 	}
 
-	void TextureD3D11::overrideInternal(uintptr_t _ptr)
+	void TextureD3D11::overrideInternal(uintptr_t _ptr, uint32_t layerIndex)
 	{
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 
@@ -4749,6 +4749,18 @@ namespace bgfx { namespace d3d11
 		if (readable)
 		{
 			m_srv->GetDesc(&srvDesc);
+		}
+
+		switch (srvDesc.ViewDimension)
+		{
+		case D3D11_SRV_DIMENSION_TEXTURE2DARRAY:
+			srvDesc.Texture2DArray.FirstArraySlice = layerIndex;
+			srvDesc.Texture2DArray.ArraySize = 1;
+			break;
+		case D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY:
+			srvDesc.Texture2DMSArray.FirstArraySlice = layerIndex;
+			srvDesc.Texture2DMSArray.ArraySize = 1;
+			break;
 		}
 
 		destroy();
