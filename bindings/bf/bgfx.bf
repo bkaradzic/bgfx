@@ -4200,7 +4200,7 @@ public static class bgfx
 	/// <param name="_layerIndex">Layer index for texture arrays (only implemented for D3D11).</param>
 	///
 	[LinkName("bgfx_override_internal_texture_ptr")]
-	public static extern void* override_internal_texture_ptr(TextureHandle _handle, void* _ptr, uint32 _layerIndex);
+	public static extern void* override_internal_texture_ptr(TextureHandle _handle, void* _ptr, uint16 _layerIndex);
 	
 	/// <summary>
 	/// Override internal texture by creating new texture. Previously created

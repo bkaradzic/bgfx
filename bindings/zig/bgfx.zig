@@ -3285,10 +3285,10 @@ extern fn bgfx_get_internal_data() [*c]const InternalData;
 /// <param name="_handle">Texture handle.</param>
 /// <param name="_ptr">Native API pointer to texture.</param>
 /// <param name="_layerIndex">Layer index for texture arrays (only implemented for D3D11).</param>
-pub inline fn overrideInternalTexturePtr(_handle: TextureHandle, _ptr: usize, _layerIndex: u32) usize {
+pub inline fn overrideInternalTexturePtr(_handle: TextureHandle, _ptr: usize, _layerIndex: u16) usize {
     return bgfx_override_internal_texture_ptr(_handle, _ptr, _layerIndex);
 }
-extern fn bgfx_override_internal_texture_ptr(_handle: TextureHandle, _ptr: usize, _layerIndex: u32) usize;
+extern fn bgfx_override_internal_texture_ptr(_handle: TextureHandle, _ptr: usize, _layerIndex: u16) usize;
 
 /// Override internal texture by creating new texture. Previously created
 /// internal texture will released.

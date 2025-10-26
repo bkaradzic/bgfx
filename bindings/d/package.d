@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 129;
+enum uint apiVersion = 130;
 
 alias ViewID = ushort;
 
@@ -3093,7 +3093,7 @@ mixin(joinFnBinds((){
 			ptr = Native API pointer to texture.
 			layerIndex = Layer index for texture arrays (only implemented for D3D11).
 		*/
-		{q{size_t}, q{overrideInternal}, q{TextureHandle handle, size_t ptr, uint layerIndex}, ext: `C++, "bgfx"`},
+		{q{size_t}, q{overrideInternal}, q{TextureHandle handle, size_t ptr, ushort layerIndex=0}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Override internal texture by creating new texture. Previously created

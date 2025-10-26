@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(129)
+version(130)
 
 typedef "bool"
 typedef "char"
@@ -2705,7 +2705,8 @@ func.overrideInternal { cname = "override_internal_texture_ptr" }
 	                             --- yet from the main thread.
 	.handle      "TextureHandle" --- Texture handle.
 	.ptr         "uintptr_t"     --- Native API pointer to texture.
-	.layerIndex  "uint32_t"      --- Layer index for texture arrays (only implemented for D3D11).
+	.layerIndex  "uint16_t"      --- Layer index for texture arrays (only implemented for D3D11).
+	{ default = 0 }
 
 --- Override internal texture by creating new texture. Previously created
 --- internal texture will released.

@@ -338,7 +338,7 @@ namespace bgfx
 		return &g_internalData;
 	}
 
-	uintptr_t overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint32_t _layerIndex)
+	uintptr_t overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint16_t _layerIndex)
 	{
 		BGFX_CHECK_RENDER_THREAD();
 		RendererContextI* rci = s_ctx->m_renderCtx;
