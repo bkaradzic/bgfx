@@ -98,7 +98,7 @@ namespace bgfx
 	///
 	/// @attention C99's equivalent binding is `bgfx_override_internal_texture_ptr`.
 	///
-	uintptr_t overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint32_t _layerIndex = 0);
+	uintptr_t overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint16_t _layerIndex = 0);
 
 	/// Override internal texture by creating new texture. Previously created
 	/// internal texture will released.
