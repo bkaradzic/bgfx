@@ -27,8 +27,10 @@
 #	define VK_IMPORT_INSTANCE_PLATFORM
 #endif // BX_PLATFORM_*
 
+#define VK_NO_STDDEF_H
 #define VK_NO_STDINT_H
 #define VK_NO_PROTOTYPES
+//#define VK_USE_64_BIT_PTR_DEFINES 0
 #include <vulkan-local/vulkan.h>
 #include <vulkan-local/vulkan_beta.h>
 

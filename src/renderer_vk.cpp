@@ -919,7 +919,6 @@ VK_IMPORT_DEVICE
 	template<> VkObjectType getType<VkSurfaceKHR         >() { return VK_OBJECT_TYPE_SURFACE_KHR;           }
 	template<> VkObjectType getType<VkSwapchainKHR       >() { return VK_OBJECT_TYPE_SWAPCHAIN_KHR;         }
 
-
 	template<typename Ty>
 	static BX_NO_INLINE void setDebugObjectName(VkDevice _device, Ty _object, const char* _format, ...)
 	{
@@ -1307,7 +1306,7 @@ VK_IMPORT
 					BX_TRACE("\t%s", enabledExtension[ii]);
 				}
 
-				uint32_t vulkanApiVersionSelector;
+				uint32_t vulkanApiVersionSelector = 0;
 
 				if (NULL != vkEnumerateInstanceVersion)
 				{
@@ -1323,10 +1322,8 @@ VK_IMPORT
 						goto error;
 					}
 				}
-				else
-				{
-					vulkanApiVersionSelector = VK_API_VERSION_1_0;
-				}
+
+				vulkanApiVersionSelector = bx::max(vulkanApiVersionSelector, VK_API_VERSION_1_2);
 
 				VkApplicationInfo appInfo;
 				appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -1389,10 +1386,10 @@ VK_IMPORT
 
 			BX_TRACE("Instance functions:");
 
-#define VK_IMPORT_INSTANCE_FUNC(_optional, _func)                           \
-			_func = (PFN_##_func)vkGetInstanceProcAddr(m_instance, #_func); \
-			BX_TRACE("\t%p " #_func, _func);                                \
-			imported &= _optional || NULL != _func
+#define VK_IMPORT_INSTANCE_FUNC(_optional, _func)                   \
+	_func = (PFN_##_func)vkGetInstanceProcAddr(m_instance, #_func); \
+	BX_TRACE("\t%p " #_func, _func);                                \
+	imported &= _optional || NULL != _func
 VK_IMPORT_INSTANCE
 #undef VK_IMPORT_INSTANCE_FUNC
 
@@ -1894,10 +1891,10 @@ VK_IMPORT_INSTANCE
 			errorState = ErrorState::DeviceCreated;
 
 			BX_TRACE("Device functions:");
-#define VK_IMPORT_DEVICE_FUNC(_optional, _func)                         \
-			_func = (PFN_##_func)vkGetDeviceProcAddr(m_device, #_func); \
-			BX_TRACE("\t%p " #_func, _func);                            \
-			imported &= _optional || NULL != _func
+#define VK_IMPORT_DEVICE_FUNC(_optional, _func)                 \
+	_func = (PFN_##_func)vkGetDeviceProcAddr(m_device, #_func); \
+	BX_TRACE("\t%p " #_func, _func);                            \
+	imported &= _optional || NULL != _func
 VK_IMPORT_DEVICE
 #undef VK_IMPORT_DEVICE_FUNC
 
@@ -7044,8 +7041,8 @@ VK_DESTROY
 					}
 				}
 
-				VkSurfaceCapabilitiesKHR surfaceCapabilities;
-				VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_surface, &surfaceCapabilities) );
+				VkSurfaceCapabilitiesKHR surfaceCapabilities = {};
+				VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_surface, &surfaceCapabilities);
 
 				const uint32_t width = bx::clamp<uint32_t>(
 					  m_resolution.width
@@ -7061,7 +7058,8 @@ VK_DESTROY
 				// swapchain can't have size 0
 				// on some platforms this happens when minimized
 				if (width  == 0
-				||  height == 0)
+				||  height == 0
+				||  VK_SUCCESS != result)
 				{
 					m_sci.oldSwapchain = VK_NULL_HANDLE;
 					s_renderVK->kick(true);
@@ -7406,6 +7404,8 @@ VK_DESTROY
 			, BX_COUNTOF(m_backBufferColorImage)
 			);
 
+		setDebugObjectName(device, m_swapChain, "m_swapChain");
+
 		if (m_numSwapChainImages < m_sci.minImageCount)
 		{
 			BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR: numSwapchainImages %d < minImageCount %d."
@@ -7462,6 +7462,8 @@ VK_DESTROY
 				return result;
 			}
 
+			setDebugObjectName(device, m_backBufferColorImageView[ii], "m_backBufferColorImageView[%d]", ii);
+
 			m_backBufferColorImageLayout[ii] = VK_IMAGE_LAYOUT_UNDEFINED;
 		}
 
@@ -7483,6 +7485,9 @@ VK_DESTROY
 				BX_TRACE("Create swapchain error: vkCreateSemaphore failed %d: %s.", result, getName(result) );
 				return result;
 			}
+
+			setDebugObjectName(device, m_presentDoneSemaphore[ii], "m_presentDoneSemaphore[%d]", ii);
+			setDebugObjectName(device, m_renderDoneSemaphore[ii], "m_renderDoneSemaphore[%d]", ii);
 		}
 
 		m_backBufferColorIdx = 0;
@@ -8253,12 +8258,15 @@ VK_DESTROY
 
 		VkResult result = VK_SUCCESS;
 
+		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
+		const VkDevice device = s_renderVK->m_device;
+
 		for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 		{
 			result = vkCreateCommandPool(
-				  s_renderVK->m_device
+				  device
 				, &cpci
-				, s_renderVK->m_allocatorCb
+				, allocatorCb
 				, &m_commandList[ii].m_commandPool
 				);
 
@@ -8271,7 +8279,7 @@ VK_DESTROY
 			cbai.commandPool = m_commandList[ii].m_commandPool;
 
 			result = vkAllocateCommandBuffers(
-				  s_renderVK->m_device
+				  device
 				, &cbai
 				, &m_commandList[ii].m_commandBuffer
 				);
@@ -8283,9 +8291,9 @@ VK_DESTROY
 			}
 
 			result = vkCreateFence(
-				  s_renderVK->m_device
+				  device
 				, &fci
-				, s_renderVK->m_allocatorCb
+				, allocatorCb
 				, &m_commandList[ii].m_fence
 				);
 
