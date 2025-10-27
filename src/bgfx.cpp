@@ -20,6 +20,8 @@
 #	endif // WIN32_LEAN_AND_MEAN
 #	include <windows.h>
 #	include <psapi.h>
+#elif BX_PLATFORM_LINUX
+#	include <link.h> // dl_iterate_phdr
 #endif // BX_PLATFORM_*
 
 BX_ERROR_RESULT(BGFX_ERROR_TEXTURE_VALIDATION,      BX_MAKEFOURCC('b', 'g', 0, 1) );
@@ -2663,11 +2665,39 @@ namespace bgfx
 				}
 			}
 		}
-#else
-		BX_UNUSED(_name);
-#endif // BX_PLATFORM_WINDOWS
 
 		return NULL;
+#elif BX_PLATFORM_LINUX
+		struct DlIterateCallbackData
+		{
+			const char* name;
+			void* ptr;
+		} cbData =
+		{
+			.name = _name,
+			.ptr  = NULL,
+		};
+
+		auto dlIterateCb = [](struct dl_phdr_info* _info, size_t /* _size */, void* _data) -> int
+		{
+			DlIterateCallbackData& data = *(DlIterateCallbackData*)_data;
+
+			if (bx::hasSuffix(_info->dlpi_name, data.name) )
+			{
+				data.ptr = dlopen(_info->dlpi_name, RTLD_NOW | RTLD_NOLOAD);
+				return 1;
+			}
+
+			return 0;
+		};
+
+		dl_iterate_phdr(dlIterateCb, &cbData);
+
+		return cbData.ptr;
+#else
+		BX_UNUSED(_name);
+		return NULL;
+#endif // BX_PLATFORM_WINDOWS
 	}
 
 	bool windowsVersionIs(Condition::Enum _op, uint32_t _version, uint32_t _build)
