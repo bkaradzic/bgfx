@@ -3,3 +3,4 @@
 *.so
 *.pdb
 imgui*
+vk_layer_settings.txt
