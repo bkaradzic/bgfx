@@ -4124,6 +4124,22 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_commandBuffer = m_cmd.alloc();
 		}
 
+		if (_render->m_capture)
+		{
+			CaptureManager captureMgr = getSharedCaptureManager();
+			CaptureDescriptor captureDesc = newCaptureDescriptor();
+			captureDesc.captureObject = m_device;
+			captureDesc.destination = MTLCaptureDestinationDeveloperTools;
+
+			NSError* err = NULL;
+ 			[captureMgr startCaptureWithDescriptor: captureDesc error: &err];
+
+			if (NULL != err)
+			{
+				BX_TRACE("Failed to start capture. Error %d: %s", err.code, err.localizedDescription.UTF8String);
+			}
+		}
+
 		BGFX_MTL_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorFrame);
 
 		int64_t timeBegin = bx::getHPCounter();
@@ -5335,6 +5351,15 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		endEncoding();
 
 		m_renderCommandEncoderFrameBufferHandle = BGFX_INVALID_HANDLE;
+
+		if (_render->m_capture)
+		{
+			CaptureManager captureMgr = getSharedCaptureManager();
+			if ([captureMgr isCapturing])
+			{
+				[captureMgr stopCapture];
+			}
+		}
 
 		if (m_screenshotTarget)
 		{

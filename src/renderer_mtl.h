@@ -1093,6 +1093,20 @@ namespace bgfx { namespace mtl
 
 	typedef MTLRenderPipelineReflection* RenderPipelineReflection;
 
+	typedef MTLCaptureManager* CaptureManager;
+
+	MTLCaptureManager* getSharedCaptureManager()
+	{
+		return [MTLCaptureManager sharedCaptureManager];
+	}
+
+	typedef MTLCaptureDescriptor* CaptureDescriptor;
+
+	inline MTLCaptureDescriptor* newCaptureDescriptor()
+	{
+		return [MTLCaptureDescriptor new];
+	}
+
 	//helper functions
 	inline void release(NSObject* _obj)
 	{

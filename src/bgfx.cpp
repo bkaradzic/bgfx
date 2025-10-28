@@ -2410,7 +2410,7 @@ namespace bgfx
 
 		id pool;
 	};
-#endif // BX_PLATFORM_OSX
+#endif // BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 
 	RenderFrame::Enum Context::renderFrame(int32_t _msecs)
 	{
@@ -2418,7 +2418,7 @@ namespace bgfx
 
 #if BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 		NSAutoreleasePoolScope pool;
-#endif // BX_PLATFORM_OSX
+#endif // BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 
 		if (!m_flipAfterRender)
 		{
