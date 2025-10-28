@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(130)
+version(131)
 
 typedef "bool"
 typedef "char"
@@ -792,13 +792,14 @@ struct.PlatformData { ctor }
 
 --- Backbuffer resolution and reset parameters.
 struct.Resolution { ctor }
-	.format          "TextureFormat::Enum" --- Backbuffer format.
-	.width           "uint32_t"            --- Backbuffer width.
-	.height          "uint32_t"            --- Backbuffer height.
-	.reset           "uint32_t"            --- Reset parameters.
-	.numBackBuffers  "uint8_t"             --- Number of back buffers.
-	.maxFrameLatency "uint8_t"             --- Maximum frame latency.
-	.debugTextScale  "uint8_t"             --- Scale factor for debug text.
+	.formatColor        "TextureFormat::Enum" --- Backbuffer color format.
+	.formatDepthStencil "TextureFormat::Enum" --- Backbuffer depth/stencil format.
+	.width              "uint32_t"            --- Backbuffer width.
+	.height             "uint32_t"            --- Backbuffer height.
+	.reset              "uint32_t"            --- Reset parameters.
+	.numBackBuffers     "uint8_t"             --- Number of back buffers.
+	.maxFrameLatency    "uint8_t"             --- Maximum frame latency.
+	.debugTextScale     "uint8_t"             --- Scale factor for debug text.
 
 --- Configurable runtime limits parameters.
 struct.Limits { ctor, namespace = "Init" }

@@ -1492,7 +1492,7 @@ namespace bgfx { namespace gl
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);
-		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat);
+		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height);
 		void postReset();
 		uint16_t destroy();
 		void resolve();

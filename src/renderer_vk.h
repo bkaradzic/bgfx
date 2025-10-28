@@ -679,6 +679,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 			: m_directAccessPtr(NULL)
 			, m_sampler({ 1, VK_SAMPLE_COUNT_1_BIT })
 			, m_format(VK_FORMAT_UNDEFINED)
+			, m_aspectFlags(VK_IMAGE_ASPECT_NONE)
 			, m_textureImage(VK_NULL_HANDLE)
 			, m_textureDeviceMem()
 			, m_currentImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
@@ -718,7 +719,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		VkImageViewType    m_type;
 		VkFormat           m_format;
 		VkComponentMapping m_components;
-		VkImageAspectFlags m_aspectMask;
+		VkImageAspectFlags m_aspectFlags;
 
 		VkImage					 m_textureImage;
 		DeviceMemoryAllocationVK m_textureDeviceMem;
@@ -746,11 +747,12 @@ VK_DESTROY_FUNC(DescriptorSet);
 			, m_swapChain(VK_NULL_HANDLE)
 			, m_lastImageRenderedSemaphore(VK_NULL_HANDLE)
 			, m_lastImageAcquiredSemaphore(VK_NULL_HANDLE)
+			, m_backBufferDepthStencilImageView(VK_NULL_HANDLE)
 			, m_backBufferColorMsaaImageView(VK_NULL_HANDLE)
 		{
 		}
 
-		VkResult create(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution, TextureFormat::Enum _depthFormat = TextureFormat::Count);
+		VkResult create(VkCommandBuffer _commandBuffer, void* _nwh, const Resolution& _resolution);
 
 		void destroy();
 
@@ -773,6 +775,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void present();
 
 		void transitionImage(VkCommandBuffer _commandBuffer);
+
+		bool hasDepthStencil() const { return VK_NULL_HANDLE != m_backBufferDepthStencilImageView; }
 
 		VkQueue m_queue;
 		VkSwapchainCreateInfoKHR m_sci;

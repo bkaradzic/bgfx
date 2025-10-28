@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2015 Attila Kocsis, Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2025 Attila Kocsis. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -19,8 +19,8 @@
 #endif // BX_PLATFORM_*
 
 #if BX_PLATFORM_VISIONOS
-#import <CompositorServices/CompositorServices.h>
-#endif
+#	import <CompositorServices/CompositorServices.h>
+#endif // BX_PLATFORM_VISIONOS
 
 #define BGFX_MTL_PROFILER_BEGIN(_view, _abgr)         \
 	BX_MACRO_BLOCK_BEGIN                              \
@@ -47,7 +47,7 @@ namespace bgfx { namespace mtl
 #else
 		BX_UNUSED(_version);
 		return false;
-#endif
+#endif // BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 	}
 
 	inline bool macOSVersionEqualOrGreater(
@@ -58,12 +58,13 @@ namespace bgfx { namespace mtl
 	{
 #if BX_PLATFORM_OSX
 		NSOperatingSystemVersion v = [[NSProcessInfo processInfo] operatingSystemVersion];
-		return (v.majorVersion<<16) + (v.minorVersion<<8) + v.patchVersion >=
-		(_majorVersion<<16) + (_minorVersion<<8) + _patchVersion;
+		return  (v.majorVersion<<16) + (v.minorVersion<<8) + v.patchVersion >=
+				( _majorVersion<<16) + ( _minorVersion<<8) +  _patchVersion
+				;
 #else
 		BX_UNUSED(_majorVersion, _minorVersion, _patchVersion);
 		return false;
-#endif
+#endif // BX_PLATFORM_OSX
 	}
 
 	// c++ wrapper
@@ -747,10 +748,13 @@ namespace bgfx { namespace mtl
 		return [_str UTF8String];
 	}
 
-#define MTL_RELEASE(_obj) \
-	BX_MACRO_BLOCK_BEGIN  \
-		[_obj release];   \
-		_obj = NULL;      \
+#define MTL_RELEASE(_obj)   \
+	BX_MACRO_BLOCK_BEGIN    \
+		if (NULL != _obj)   \
+		{                   \
+			[_obj release]; \
+			_obj = NULL;    \
+		}                   \
 	BX_MACRO_BLOCK_END
 
 	// end of c++ wrapper
@@ -996,7 +1000,9 @@ namespace bgfx { namespace mtl
 				MTL_RELEASE(m_ptr);
 				MTL_RELEASE(m_ptrMsaa);
 			}
+
 			MTL_RELEASE(m_ptrStencil);
+
 			for (uint32_t ii = 0; ii < m_numMips; ++ii)
 			{
 				MTL_RELEASE(m_ptrMips[ii]);
@@ -1028,7 +1034,7 @@ namespace bgfx { namespace mtl
 			, uint8_t _mip = UINT8_MAX
 			);
 
-		Texture getTextureMipLevel(int _mip);
+		Texture getTextureMipLevel(uint8_t _mip);
 
 		Texture m_ptr;
 		Texture m_ptrMsaa;
@@ -1056,7 +1062,7 @@ namespace bgfx { namespace mtl
 			, m_layerRendererDrawable(NULL)
 			, m_frame(NULL)
 			, m_useLayerRenderer(true)
-#endif
+#endif // BX_PLATFORM_VISIONOS
 			, m_drawable(nil)
 			, m_drawableTexture(nil)
 			, m_backBufferColorMsaa()
@@ -1069,9 +1075,14 @@ namespace bgfx { namespace mtl
 		~SwapChainMtl();
 
 		void init(void* _nwh);
-		void resize(FrameBufferMtl &_frameBuffer, uint32_t _width, uint32_t _height, uint32_t _flags, uint32_t _maximumDrawableCount);
+		uint32_t resize(
+			  uint32_t _width
+			, uint32_t _height
+			, TextureFormat::Enum _format
+			, TextureFormat::Enum _depthFormat
+			);
 
-		id <MTLTexture> 	currentDrawableTexture();
+		id<MTLTexture> currentDrawableTexture();
 
 		CAMetalLayer* m_metalLayer;
 #if BX_PLATFORM_VISIONOS
@@ -1080,10 +1091,10 @@ namespace bgfx { namespace mtl
 		cp_layer_renderer_configuration_t m_layerRendererConfiguration;
 		cp_frame_t m_frame;
 		bool m_useLayerRenderer;
-#endif
+#endif // BX_PLATFORM_VISIONOS
 		id <CAMetalDrawable> m_drawable;
 
-		id <MTLTexture> 	 m_drawableTexture;
+		id <MTLTexture> m_drawableTexture;
 		Texture m_backBufferColorMsaa;
 		Texture m_backBufferDepth;
 		Texture m_backBufferStencil;
@@ -1096,8 +1107,8 @@ namespace bgfx { namespace mtl
 		FrameBufferMtl()
 			: m_swapChain(NULL)
 			, m_nwh(NULL)
-			, m_denseIdx(UINT16_MAX)
 			, m_pixelFormatHash(0)
+			, m_denseIdx(UINT16_MAX)
 			, m_num(0)
 		{
 			m_depthHandle.idx = kInvalidHandle;
@@ -1116,14 +1127,19 @@ namespace bgfx { namespace mtl
 		uint16_t destroy();
 
 		void resolve();
+		void resizeSwapChain(
+			  uint32_t _width
+			, uint32_t _height
+			, TextureFormat::Enum _format = TextureFormat::Count
+			, TextureFormat::Enum _depthFormat = TextureFormat::Count
+			);
 
 		SwapChainMtl* m_swapChain;
 		void* m_nwh;
+		uint32_t m_pixelFormatHash;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint16_t m_denseIdx;
-
-		uint32_t m_pixelFormatHash;
 
 		TextureHandle m_colorHandle[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		TextureHandle m_depthHandle;

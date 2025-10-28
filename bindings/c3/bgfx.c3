@@ -1465,8 +1465,10 @@ struct PlatformData
 // Backbuffer resolution and reset parameters.
 struct Resolution
 {
-	// Backbuffer format.
-	TextureFormat format;
+	// Backbuffer color format.
+	TextureFormat formatColor;
+	// Backbuffer depth/stencil format.
+	TextureFormat formatDepthStencil;
 	// Backbuffer width.
 	uint width;
 	// Backbuffer height.

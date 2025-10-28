@@ -1710,12 +1710,15 @@ namespace bgfx
 		BX_UNUSED(reset, msaa);
 
 		BX_TRACE("Reset back-buffer swap chain:");
-		BX_TRACE("\t%dx%d, format: %s, numBackBuffers: %d, maxFrameLatency: %d"
+		BX_TRACE("\t%dx%d, formatColor: %s, formatDepthStencil: %s, numBackBuffers: %d, maxFrameLatency: %d"
 			, _resolution.width
 			, _resolution.height
-			, TextureFormat::Count == _resolution.format
+			, TextureFormat::Count == _resolution.formatColor
 				? "*default*"
-				: bimg::getName(bimg::TextureFormat::Enum(_resolution.format) )
+				: bimg::getName(bimg::TextureFormat::Enum(_resolution.formatColor) )
+			, TextureFormat::Count == _resolution.formatDepthStencil
+				? "*default*"
+				: bimg::getName(bimg::TextureFormat::Enum(_resolution.formatDepthStencil) )
 			, _resolution.numBackBuffers
 			, _resolution.maxFrameLatency
 			);
@@ -3494,7 +3497,8 @@ namespace bgfx
 	}
 
 	Resolution::Resolution()
-		: format(TextureFormat::RGBA8)
+		: formatColor(TextureFormat::RGBA8)
+		, formatDepthStencil(TextureFormat::D24S8)
 		, width(1280)
 		, height(720)
 		, reset(BGFX_RESET_NONE)

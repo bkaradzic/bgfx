@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 130;
+enum uint apiVersion = 131;
 
 alias ViewID = ushort;
 
@@ -1112,7 +1112,8 @@ extern(C++, "bgfx") struct PlatformData{
 
 ///Backbuffer resolution and reset parameters.
 extern(C++, "bgfx") struct Resolution{
-	TextureFormat format; ///Backbuffer format.
+	TextureFormat formatColor; ///Backbuffer color format.
+	TextureFormat formatDepthStencil; ///Backbuffer depth/stencil format.
 	uint width; ///Backbuffer width.
 	uint height; ///Backbuffer height.
 	uint reset; ///Reset parameters.

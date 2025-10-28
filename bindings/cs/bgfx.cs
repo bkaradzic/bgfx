@@ -2098,7 +2098,8 @@ public static partial class bgfx
 	
 	public unsafe struct Resolution
 	{
-		public TextureFormat format;
+		public TextureFormat formatColor;
+		public TextureFormat formatDepthStencil;
 		public uint width;
 		public uint height;
 		public uint reset;

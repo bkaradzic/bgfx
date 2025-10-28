@@ -33,7 +33,7 @@ int32_t _main_(int32_t _argc, char** _argv)
 	init.platformData.type = entry_get_native_window_handle_type();
 
 	bgfx_init(&init);
-	bgfx_reset(width, height, reset, init.resolution.format);
+	bgfx_reset(width, height, reset, init.resolution.formatColor);
 
 	// Enable debug text.
 	bgfx_set_debug(debug);

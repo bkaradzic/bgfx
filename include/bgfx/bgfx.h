@@ -658,13 +658,14 @@ namespace bgfx
 	{
 		Resolution();
 
-		TextureFormat::Enum format; //!< Backbuffer format.
-		uint32_t width;             //!< Backbuffer width.
-		uint32_t height;            //!< Backbuffer height.
-		uint32_t reset;             //!< Reset parameters.
-		uint8_t  numBackBuffers;    //!< Number of back buffers.
-		uint8_t  maxFrameLatency;   //!< Maximum frame latency.
-		uint8_t  debugTextScale;    //!< Scale factor for debug text.
+		TextureFormat::Enum formatColor;        //!< Backbuffer color format.
+		TextureFormat::Enum formatDepthStencil; //!< Backbuffer depth/stencil format.
+		uint32_t width;                         //!< Backbuffer width.
+		uint32_t height;                        //!< Backbuffer height.
+		uint32_t reset;                         //!< Reset parameters.
+		uint8_t  numBackBuffers;                //!< Number of back buffers.
+		uint8_t  maxFrameLatency;               //!< Maximum frame latency.
+		uint8_t  debugTextScale;                //!< Scale factor for debug text.
 	};
 
 	/// Initialization parameters used by `bgfx::init`.

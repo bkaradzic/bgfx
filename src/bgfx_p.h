@@ -3179,7 +3179,7 @@ namespace bgfx
 			return cmdbuf;
 		}
 
-		BGFX_API_FUNC(void reset(uint32_t _width, uint32_t _height, uint32_t _flags, TextureFormat::Enum _format) )
+		BGFX_API_FUNC(void reset(uint32_t _width, uint32_t _height, uint32_t _flags, TextureFormat::Enum _formatColor) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
@@ -3190,13 +3190,17 @@ namespace bgfx
 				, "Running in headless mode, resolution of non-existing backbuffer can't be larger than 0x0!"
 				);
 
-			const TextureFormat::Enum format = TextureFormat::Count != _format ? _format : m_init.resolution.format;
+			const TextureFormat::Enum formatColor = TextureFormat::Count != _formatColor
+				? _formatColor
+				: m_init.resolution.formatColor
+				;
 
 			if (!g_platformDataChangedSinceReset
-			&&  m_init.resolution.format == format
-			&&  m_init.resolution.width  == _width
-			&&  m_init.resolution.height == _height
-			&&  m_init.resolution.reset  == _flags)
+			&&  m_init.resolution.formatColor == formatColor
+			&&  m_init.resolution.width       == _width
+			&&  m_init.resolution.height      == _height
+			&&  m_init.resolution.reset       == _flags
+			   )
 			{
 				// Nothing changed, ignore request.
 				return;
@@ -3228,7 +3232,7 @@ namespace bgfx
 				, _width
 				, _height
 				);
-			m_init.resolution.format = format;
+			m_init.resolution.formatColor = formatColor;
 			m_init.resolution.width  = bx::clamp(_width,  1u, g_caps.limits.maxTextureSize);
 			m_init.resolution.height = bx::clamp(_height, 1u, g_caps.limits.maxTextureSize);
 			m_init.resolution.reset  = 0

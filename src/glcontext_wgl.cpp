@@ -63,19 +63,22 @@ namespace bgfx { namespace gl
 		HGLRC m_context;
 	};
 
-	static HGLRC createContext(HDC _hdc)
+	static HGLRC createContext(HDC _hdc, const Resolution& _resolution)
 	{
+		const bimg::ImageBlockInfo& colorBlockInfo       = bimg::getBlockInfo(bimg::TextureFormat::Enum(_resolution.formatColor) );
+		const bimg::ImageBlockInfo& depthStecilBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(_resolution.formatDepthStencil) );
+
 		PIXELFORMATDESCRIPTOR pfd;
 		bx::memSet(&pfd, 0, sizeof(pfd) );
 		pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
 		pfd.nVersion = 1;
-		pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-		pfd.iPixelType = PFD_TYPE_RGBA;
-		pfd.cColorBits = 32;
-		pfd.cAlphaBits = 8;
-		pfd.cDepthBits = 24;
-		pfd.cStencilBits = 8;
-		pfd.iLayerType = PFD_MAIN_PLANE;
+		pfd.dwFlags  = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+		pfd.iPixelType   = PFD_TYPE_RGBA;
+		pfd.cColorBits   = colorBlockInfo.bitsPerPixel;
+		pfd.cAlphaBits   = colorBlockInfo.aBits;
+		pfd.cDepthBits   = depthStecilBlockInfo.depthBits;
+		pfd.cStencilBits = depthStecilBlockInfo.stencilBits;
+		pfd.iLayerType   = PFD_MAIN_PLANE;
 
 		int pixelFormat = ChoosePixelFormat(_hdc, &pfd);
 		BGFX_FATAL(0 != pixelFormat, Fatal::UnableToInitialize, "ChoosePixelFormat failed!");
@@ -108,7 +111,7 @@ namespace bgfx { namespace gl
 		return context;
 	}
 
-	void GlContext::create(uint32_t /*_width*/, uint32_t /*_height*/, uint32_t /*_flags*/)
+	void GlContext::create(const Resolution& _resolution)
 	{
 		m_opengl32dll = bx::dlopen("opengl32.dll");
 		BGFX_FATAL(NULL != m_opengl32dll, Fatal::UnableToInitialize, "Failed to load opengl32.dll.");
@@ -174,7 +177,7 @@ namespace bgfx { namespace gl
 			HDC hdc = GetDC(hwnd);
 			BGFX_FATAL(NULL != hdc, Fatal::UnableToInitialize, "GetDC failed!");
 
-			HGLRC context = createContext(hdc);
+			HGLRC context = createContext(hdc, _resolution);
 
 			wglGetExtensionsStringARB  = wglGetProc<PFNWGLGETEXTENSIONSSTRINGARBPROC >("wglGetExtensionsStringARB");
 			wglChoosePixelFormatARB    = wglGetProc<PFNWGLCHOOSEPIXELFORMATARBPROC   >("wglChoosePixelFormatARB");
@@ -191,6 +194,9 @@ namespace bgfx { namespace gl
 			if (NULL != wglChoosePixelFormatARB
 			&&  NULL != wglCreateContextAttribsARB)
 			{
+				const bimg::ImageBlockInfo& colorBlockInfo       = bimg::getBlockInfo(bimg::TextureFormat::Enum(_resolution.formatColor) );
+				const bimg::ImageBlockInfo& depthStecilBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(_resolution.formatDepthStencil) );
+
 				int32_t attrs[] =
 				{
 					WGL_ACCELERATION_ARB,   WGL_FULL_ACCELERATION_ARB,
@@ -198,10 +204,10 @@ namespace bgfx { namespace gl
 					WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
 					WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
 
-					WGL_ALPHA_BITS_ARB,     8,
-					WGL_COLOR_BITS_ARB,     32,
-					WGL_DEPTH_BITS_ARB,     24,
-					WGL_STENCIL_BITS_ARB,   8,
+					WGL_ALPHA_BITS_ARB,     colorBlockInfo.aBits,
+					WGL_COLOR_BITS_ARB,     colorBlockInfo.bitsPerPixel,
+					WGL_DEPTH_BITS_ARB,     depthStecilBlockInfo.depthBits,
+					WGL_STENCIL_BITS_ARB,   depthStecilBlockInfo.stencilBits,
 
 					WGL_PIXEL_TYPE_ARB,     WGL_TYPE_RGBA_ARB,
 					WGL_SAMPLES_ARB,        0,
@@ -282,7 +288,7 @@ namespace bgfx { namespace gl
 
 			if (NULL == m_context)
 			{
-				m_context = createContext(m_hdc);
+				m_context = createContext(m_hdc, _resolution);
 			}
 
 			int result = wglMakeCurrent(m_hdc, m_context);
@@ -321,11 +327,11 @@ namespace bgfx { namespace gl
 		m_opengl32dll = NULL;
 	}
 
-	void GlContext::resize(uint32_t /*_width*/, uint32_t /*_height*/, uint32_t _flags)
+	void GlContext::resize(const Resolution& _resolution)
 	{
 		if (NULL != wglSwapIntervalEXT)
 		{
-			bool vsync = !!(_flags&BGFX_RESET_VSYNC);
+			const bool vsync = !!(_resolution.reset & BGFX_RESET_VSYNC);
 			wglSwapIntervalEXT(vsync ? 1 : 0);
 		}
 	}
@@ -335,7 +341,7 @@ namespace bgfx { namespace gl
 		return BGFX_CAPS_SWAP_CHAIN;
 	}
 
-	SwapChainGL* GlContext::createSwapChain(void* _nwh, int _width, int _height)
+	SwapChainGL* GlContext::createSwapChain(void* _nwh, int32_t _width, int32_t _height)
 	{
 		BX_UNUSED(_width, _height);
 		SwapChainGL* swapChain = BX_NEW(g_allocator, SwapChainGL)(_nwh);

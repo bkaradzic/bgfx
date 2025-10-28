@@ -64,15 +64,26 @@ namespace bgfx { namespace gl
 		char* m_canvas;
 	};
 
-	void GlContext::create(uint32_t _width, uint32_t _height, uint32_t /*_flags*/)
+	void GlContext::create(const Resolution& _resolution)
 	{
-		// assert?
-		if (m_primary != NULL)
+		if (NULL != m_primary)
+		{
 			return;
+		}
+		const bimg::ImageBlockInfo& colorBlockInfo       = bimg::getBlockInfo(bimg::TextureFormat::Enum(_resolution.formatColor) );
+		const bimg::ImageBlockInfo& depthStecilBlockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(_resolution.formatDepthStencil) );
 
-		const char* canvas = (const char*) g_platformData.nwh;
+		emscripten_webgl_init_context_attributes(&s_attrs);
+		s_attrs.alpha                     = 0 != colorBlockInfo.aBits;
+		s_attrs.premultipliedAlpha        = false;
+		s_attrs.depth                     = 0 != depthStecilBlockInfo.depthBits;
+		s_attrs.stencil                   = 0 != depthStecilBlockInfo.stencilBits;
+		s_attrs.enableExtensionsByDefault = true;
+		s_attrs.antialias                 = false;
+		s_attrs.minorVersion = 0;
 
-		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = bx::narrowCast<EMSCRIPTEN_WEBGL_CONTEXT_HANDLE>((uintptr_t) g_platformData.context);
+		const char* canvas = (const char*)g_platformData.nwh;
+		EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context = bx::narrowCast<EMSCRIPTEN_WEBGL_CONTEXT_HANDLE>( (uintptr_t) g_platformData.context);
 		if (context > 0)
 		{
 			if (emscripten_webgl_get_context_attributes(context, &s_attrs) >= 0)
@@ -87,13 +98,17 @@ namespace bgfx { namespace gl
 		}
 		else
 		{
-			m_primary = createSwapChain((void*)canvas, (int)_width, (int)_height);
+			m_primary = createSwapChain( (void*)canvas, _resolution.width, _resolution.height);
 		}
 
-		if (0 != _width
-		&&  0 != _height)
+		if (0 != _resolution.width
+		&&  0 != _resolution.height)
 		{
-			EMSCRIPTEN_CHECK(emscripten_set_canvas_element_size(canvas, (int)_width, (int)_height) );
+			EMSCRIPTEN_CHECK(emscripten_set_canvas_element_size(
+				  canvas
+				, _resolution.width
+				, _resolution.height
+				) );
 		}
 
 		makeCurrent(m_primary);
@@ -113,32 +128,25 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	void GlContext::resize(uint32_t _width, uint32_t _height, uint32_t /* _flags */)
+	void GlContext::resize(const Resolution& _resolution)
 	{
 		if (m_primary == NULL)
 		{
 			return;
 		}
 
-		EMSCRIPTEN_CHECK(emscripten_set_canvas_element_size(m_primary->m_canvas, (int) _width, (int) _height) );
+		EMSCRIPTEN_CHECK(emscripten_set_canvas_element_size(
+			  m_primary->m_canvas
+			, _resolution.width
+			, _resolution.height
+			) );
 	}
 
-	SwapChainGL* GlContext::createSwapChain(void* _nwh, int _width, int _height)
+	SwapChainGL* GlContext::createSwapChain(void* _nwh, int32_t _width, int32_t _height)
 	{
-		emscripten_webgl_init_context_attributes(&s_attrs);
 		BX_UNUSED(_width, _height);
 
-		// Work around bug https://bugs.chromium.org/p/chromium/issues/detail?id=1045643 in Chrome
-		// by having alpha always enabled.
-		s_attrs.alpha                     = true;
-		s_attrs.premultipliedAlpha        = false;
-		s_attrs.depth                     = true;
-		s_attrs.stencil                   = true;
-		s_attrs.enableExtensionsByDefault = true;
-		s_attrs.antialias                 = false;
-
-		s_attrs.minorVersion = 0;
-		const char* canvas = (const char*) _nwh;
+		const char* canvas = (const char*)_nwh;
 		int32_t error = 0;
 
 		for (int version = 2; version >= 1; --version)

@@ -2284,7 +2284,7 @@ namespace bgfx { namespace gl
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
 			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
-			setRenderContextSize(_init.resolution.width, _init.resolution.height, _init.resolution.reset);
+			setRenderContextSize(_init.resolution);
 
 			m_vendor      = getGLString(GL_VENDOR);
 			m_renderer    = getGLString(GL_RENDERER);
@@ -3522,9 +3522,10 @@ namespace bgfx { namespace gl
 
 		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat) override
 		{
+			BX_UNUSED(_format, _depthFormat);
 			uint16_t denseIdx = m_numWindows++;
 			m_windows[denseIdx] = _handle;
-			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
+			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height);
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
@@ -3778,10 +3779,7 @@ namespace bgfx { namespace gl
 				m_textVideoMem.resize(false, _resolution.width, _resolution.height);
 				m_textVideoMem.clear();
 
-				setRenderContextSize(m_resolution.width
-						, m_resolution.height
-						, flags
-						);
+				setRenderContextSize(m_resolution);
 				updateCapture();
 
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
@@ -4156,22 +4154,22 @@ namespace bgfx { namespace gl
 			}
 		}
 
-		void setRenderContextSize(uint32_t _width, uint32_t _height, uint32_t _flags = 0)
+		void setRenderContextSize(const Resolution& _resolution)
 		{
 			if (!m_glctx.isValid() )
 			{
-				m_glctx.create(_width, _height, _flags);
+				m_glctx.create(_resolution);
 			}
 			else
 			{
 				destroyMsaaFbo();
 
-				m_glctx.resize(_width, _height, _flags);
+				m_glctx.resize(_resolution);
 
-				uint32_t msaa = (_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+				uint32_t msaa = (_resolution.reset & BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
 				msaa = bx::uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
 
-				createMsaaFbo(_width, _height, msaa);
+				createMsaaFbo(_resolution.width, _resolution.height, msaa);
 			}
 
 			m_flip = true;
@@ -4811,7 +4809,8 @@ namespace bgfx { namespace gl
 		GLenum m_readPixelsFmt;
 		GLuint m_backBufferFbo;
 		GLuint m_msaaBackBufferFbo;
-		union {
+		union
+		{
 			GLuint m_msaaBackBufferRbos[2];
 			GLuint m_msaaBackBufferTextures[2];
 		};
@@ -7156,9 +7155,8 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	void FrameBufferGL::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)
+	void FrameBufferGL::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height)
 	{
-		BX_UNUSED(_format, _depthFormat);
 		m_swapChain = s_renderGL->m_glctx.createSwapChain(_nwh, _width, _height);
 		m_width     = _width;
 		m_height    = _height;

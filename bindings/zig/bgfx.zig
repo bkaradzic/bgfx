@@ -1340,7 +1340,8 @@ pub const Caps = extern struct {
     };
 
     pub const Resolution = extern struct {
-        format: TextureFormat,
+        formatColor: TextureFormat,
+        formatDepthStencil: TextureFormat,
         width: u32,
         height: u32,
         reset: u32,

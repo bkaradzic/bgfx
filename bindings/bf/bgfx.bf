@@ -2120,7 +2120,8 @@ public static class bgfx
 	[CRepr]
 	public struct Resolution
 	{
-		public TextureFormat format;
+		public TextureFormat formatColor;
+		public TextureFormat formatDepthStencil;
 		public uint32 width;
 		public uint32 height;
 		public uint32 reset;

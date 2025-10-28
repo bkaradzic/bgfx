@@ -645,7 +645,8 @@ typedef struct bgfx_platform_data_s
  */
 typedef struct bgfx_resolution_s
 {
-    bgfx_texture_format_t format;            /** Backbuffer format.                       */
+    bgfx_texture_format_t formatColor;       /** Backbuffer color format.                 */
+    bgfx_texture_format_t formatDepthStencil; /** Backbuffer depth/stencil format.         */
     uint32_t             width;              /** Backbuffer width.                        */
     uint32_t             height;             /** Backbuffer height.                       */
     uint32_t             reset;              /** Reset parameters.                        */
