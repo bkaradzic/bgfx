@@ -1379,9 +1379,11 @@ struct CapsLimits
 	// Minimum resource command buffer size.
 	uint minResourceCbSize;
 	// Maximum transient vertex buffer size.
-	uint transientVbSize;
+	uint maxTransientVbSize;
 	// Maximum transient index buffer size.
-	uint transientIbSize;
+	uint matTansientIbSize;
+	// Mimimum uniform buffer size.
+	uint minUniformBufferSize;
 }
 
 // Renderer capabilities.
@@ -1491,9 +1493,11 @@ struct InitLimits
 	// Minimum resource command buffer size.
 	uint minResourceCbSize;
 	// Maximum transient vertex buffer size.
-	uint transientVbSize;
+	uint maxTransientVbSize;
 	// Maximum transient index buffer size.
-	uint transientIbSize;
+	uint matTransientIbSize;
+	// Mimimum uniform buffer size.
+	uint minUniformBufferSize;
 }
 
 // Initialization parameters used by `bgfx::init`.

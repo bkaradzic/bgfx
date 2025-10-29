@@ -2064,8 +2064,9 @@ public static partial class bgfx
 			public uint maxOcclusionQueries;
 			public uint maxEncoders;
 			public uint minResourceCbSize;
-			public uint transientVbSize;
-			public uint transientIbSize;
+			public uint maxTransientVbSize;
+			public uint matTansientIbSize;
+			public uint minUniformBufferSize;
 		}
 	
 		public RendererType rendererType;
@@ -2114,8 +2115,9 @@ public static partial class bgfx
 		{
 			public ushort maxEncoders;
 			public uint minResourceCbSize;
-			public uint transientVbSize;
-			public uint transientIbSize;
+			public uint maxTransientVbSize;
+			public uint matTransientIbSize;
+			public uint minUniformBufferSize;
 		}
 	
 		public RendererType type;

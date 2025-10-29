@@ -1309,8 +1309,9 @@ pub const Caps = extern struct {
         maxOcclusionQueries: u32,
         maxEncoders: u32,
         minResourceCbSize: u32,
-        transientVbSize: u32,
-        transientIbSize: u32,
+        maxTransientVbSize: u32,
+        matTansientIbSize: u32,
+        minUniformBufferSize: u32,
     };
 
         rendererType: RendererType,
@@ -1354,8 +1355,9 @@ pub const Init = extern struct {
     pub const Limits = extern struct {
         maxEncoders: u16,
         minResourceCbSize: u32,
-        transientVbSize: u32,
-        transientIbSize: u32,
+        maxTransientVbSize: u32,
+        matTransientIbSize: u32,
+        minUniformBufferSize: u32,
     };
 
         type: RendererType,

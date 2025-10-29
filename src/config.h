@@ -321,37 +321,46 @@ static_assert(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS must
 #	define BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE (64<<10)
 #endif // BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE
 
-#ifndef BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE
-#	define BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE (6<<20)
-#endif // BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE
+#ifndef BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE
+/// Maximum transient vertex buffer size. There is no growth, and all transient
+/// vertices must fit into this buffer.
+#	define BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE (6<<20)
+#endif // BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE
 
-#ifndef BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE
-#	define BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE (2<<20)
-#endif // BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE
+#ifndef BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE
+/// Maximum transient index buffer size. There is no growth, and all transient
+/// indices must fit into this buffer.
+#	define BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE (2<<20)
+#endif // BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE
 
-#ifndef BGFX_CONFIG_PER_FRAME_SCRATCH_STAGING_BUFFER_SIZE
+#ifndef BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE
+/// Mimumum uniform buffer size. This buffer will resize on demand.
+#	define BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE (1<<20)
+#endif // BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE
+
+#ifndef BGFX_CONFIG_CACHED_DEVICE_MEMORY_ALLOCATIONS_SIZE
+/// Amount of allowed memory allocations left on device to use for recycling during
+/// later allocations. This can be beneficial in case the driver is slow allocating memory
+/// on the device.
+/// Note: Currently only used by the Vulkan backend.
+#	define BGFX_CONFIG_CACHED_DEVICE_MEMORY_ALLOCATIONS_SIZE (128 << 20)
+#endif // BGFX_CONFIG_CACHED_DEVICE_MEMORY_ALLOCATIONS_SIZE
+
+#ifndef BGFX_CONFIG_MAX_STAGING_SCRATCH_BUFFER_SIZE
+/// The threshold of data size above which the staging scratch buffer will
+/// not be used, but instead a separate device memory allocation will take
+/// place to stage the data for copying to device.
+#   define BGFX_CONFIG_MAX_STAGING_SCRATCH_BUFFER_SIZE (16 << 20)
+#endif // BGFX_CONFIG_MAX_STAGING_SCRATCH_BUFFER_SIZE
+
+#ifndef BGFX_CONFIG_MAX_SCRATCH_STAGING_BUFFER_PER_FRAME_SIZE
 /// Amount of scratch buffer size (per in-flight frame) that will be reserved
 /// for staging data for copying to the device (such as vertex buffer data,
 /// texture data, etc). This buffer will be used instead of allocating memory
 /// on device separately for every data copy.
 /// Note: Currently only used by the Vulkan backend.
-#   define BGFX_CONFIG_PER_FRAME_SCRATCH_STAGING_BUFFER_SIZE (32<<20)
-#endif
-
-#ifndef BGFX_CONFIG_MAX_BYTES_CACHED_DEVICE_MEMORY_ALLOCATIONS
-/// Amount of allowed memory allocations left on device to use for recycling during
-/// later allocations. This can be beneficial in case the driver is slow allocating memory
-/// on the device.
-/// Note: Currently only used by the Vulkan backend.
-#	define BGFX_CONFIG_MAX_BYTES_CACHED_DEVICE_MEMORY_ALLOCATIONS (128 << 20)
-#endif
-
-#ifndef BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER
-/// The threshold of data size above which the staging scratch buffer will
-/// not be used, but instead a separate device memory allocation will take
-/// place to stage the data for copying to device.
-#   define BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER (16 << 20)
-#endif
+#   define BGFX_CONFIG_MAX_SCRATCH_STAGING_BUFFER_PER_FRAME_SIZE (32<<20)
+#endif // BGFX_CONFIG_MAX_SCRATCH_STAGING_BUFFER_PER_FRAME_SIZE
 
 #ifndef BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT
 #	define BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT 5

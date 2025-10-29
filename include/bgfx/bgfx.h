@@ -715,10 +715,11 @@ namespace bgfx
 		{
 			Limits();
 
-			uint16_t maxEncoders;       //!< Maximum number of encoder threads.
-			uint32_t minResourceCbSize; //!< Minimum resource command buffer size.
-			uint32_t transientVbSize;   //!< Maximum transient vertex buffer size.
-			uint32_t transientIbSize;   //!< Maximum transient index buffer size.
+			uint16_t maxEncoders;          //!< Maximum number of encoder threads.
+			uint32_t minResourceCbSize;    //!< Minimum resource command buffer size.
+			uint32_t maxTransientVbSize;   //!< Maximum transient vertex buffer size.
+			uint32_t maxTransientIbSize;   //!< Maximum transient index buffer size.
+			uint32_t minUniformBufferSize; //!< Mimimum uniform buffer size.
 		};
 
 		Limits limits; //!< Configurable runtime limits.
@@ -817,8 +818,9 @@ namespace bgfx
 			uint32_t maxOcclusionQueries;     //!< Maximum number of occlusion query handles.
 			uint32_t maxEncoders;             //!< Maximum number of encoder threads.
 			uint32_t minResourceCbSize;       //!< Minimum resource command buffer size.
-			uint32_t transientVbSize;         //!< Maximum transient vertex buffer size.
-			uint32_t transientIbSize;         //!< Maximum transient index buffer size.
+			uint32_t maxTransientVbSize;      //!< Maximum transient vertex buffer size.
+			uint32_t maxTransientIbSize;      //!< Maximum transient index buffer size.
+			uint32_t minUniformBufferSize;    //!< Mimimum uniform buffer size.
 		};
 
 		Limits limits; //!< Renderer runtime limits.

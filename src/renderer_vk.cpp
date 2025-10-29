@@ -2026,7 +2026,7 @@ VK_IMPORT_DEVICE
 				for (uint32_t ii = 0; ii < m_numFramesInFlight; ++ii)
 				{
 					BX_TRACE("Create scratch staging buffer %d", ii);
-					m_scratchStagingBuffer[ii].createStaging(BGFX_CONFIG_PER_FRAME_SCRATCH_STAGING_BUFFER_SIZE);
+					m_scratchStagingBuffer[ii].createStaging(BGFX_CONFIG_MAX_SCRATCH_STAGING_BUFFER_PER_FRAME_SIZE);
 				}
 			}
 
@@ -4524,7 +4524,7 @@ VK_IMPORT_DEVICE
 			StagingBufferVK result;
 			ScratchBufferVK &scratch = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
 
-			if (_size <= BGFX_CONFIG_MAX_STAGING_SIZE_FOR_SCRATCH_BUFFER)
+			if (_size <= BGFX_CONFIG_MAX_STAGING_SCRATCH_BUFFER_SIZE)
 			{
 				const uint32_t scratchOffset = scratch.alloc(_size, _align);
 
@@ -4750,7 +4750,7 @@ VK_DESTROY
 		}
 		totalSizeCached += _alloc.size;
 
-		while (totalSizeCached > BGFX_CONFIG_MAX_BYTES_CACHED_DEVICE_MEMORY_ALLOCATIONS)
+		while (totalSizeCached > BGFX_CONFIG_CACHED_DEVICE_MEMORY_ALLOCATIONS_SIZE)
 		{
 			BX_ASSERT(lru.getNumHandles() > 0, "Memory badly counted.");
 			uint16_t handle = lru.getBack();

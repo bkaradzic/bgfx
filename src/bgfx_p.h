@@ -1478,7 +1478,7 @@ namespace bgfx
 	class UniformBuffer
 	{
 	public:
-		static UniformBuffer* create(uint32_t _size = 1<<20)
+		static UniformBuffer* create(uint32_t _size) // = BGFX_CONFIG_UNIFORM_BUFFER_SIZE)
 		{
 			const uint32_t structSize = sizeof(UniformBuffer)-sizeof(UniformBuffer::m_buffer);
 
@@ -2191,7 +2191,7 @@ namespace bgfx
 
 				for (uint32_t ii = 0; ii < num; ++ii)
 				{
-					m_uniformBuffer[ii] = UniformBuffer::create();
+					m_uniformBuffer[ii] = UniformBuffer::create(g_caps.limits.minUniformBufferSize);
 				}
 			}
 
@@ -2247,7 +2247,7 @@ namespace bgfx
 		{
 			const uint32_t offset = bx::strideAlign(m_iboffset, _indexSize);
 			uint32_t iboffset = offset + _num*_indexSize;
-			iboffset = bx::min<uint32_t>(iboffset, g_caps.limits.transientIbSize);
+			iboffset = bx::min<uint32_t>(iboffset, g_caps.limits.maxTransientIbSize);
 			const uint32_t num = (iboffset-offset)/_indexSize;
 			return num;
 		}
@@ -2266,7 +2266,7 @@ namespace bgfx
 		{
 			uint32_t offset   = bx::strideAlign(m_vboffset, _stride);
 			uint32_t vboffset = offset + _num * _stride;
-			vboffset = bx::min<uint32_t>(vboffset, g_caps.limits.transientVbSize);
+			vboffset = bx::min<uint32_t>(vboffset, g_caps.limits.maxTransientVbSize);
 			uint32_t num = (vboffset-offset)/_stride;
 			return num;
 		}
