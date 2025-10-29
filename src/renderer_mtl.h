@@ -37,6 +37,52 @@
 		BGFX_PROFILER_END();    \
 	BX_MACRO_BLOCK_END
 
+#define _MTL_RELEASE(_obj, _expected, _check)                              \
+	BX_MACRO_BLOCK_BEGIN                                                   \
+		if (NULL != _obj)                                                  \
+		{                                                                  \
+			const NSUInteger count = [_obj retainCount] - 1;               \
+			_check(isGraphicsDebuggerPresent()                             \
+				|| _expected == count                                      \
+				, "%p RefCount is %d (expected %d). Label: \"%s\"."        \
+				, _obj                                                     \
+				, count                                                    \
+				, _expected                                                \
+				, [_obj respondsToSelector:@selector(label)]               \
+					? [[_obj performSelector:@selector(label)] UTF8String] \
+					: "?!"                                                 \
+				);                                                         \
+			BX_UNUSED(count);                                              \
+			[_obj release];                                                \
+			_obj = NULL;                                                   \
+		}                                                                  \
+	BX_MACRO_BLOCK_END
+
+#define _MTL_CHECK_REFCOUNT(_obj, _expected)                           \
+	BX_MACRO_BLOCK_BEGIN                                               \
+		const NSUInteger count = [_obj retainCount];                   \
+		BX_ASSERT(isGraphicsDebuggerPresent()                          \
+			|| _expected == count                                      \
+			, "%p RefCount is %d (expected %d). Label: \"%s\"."        \
+			, _obj                                                     \
+			, count                                                    \
+			, _expected                                                \
+			, [_obj respondsToSelector:@selector(label)]               \
+				? [[_obj performSelector:@selector(label)] UTF8String] \
+				: "?!"                                                 \
+			);                                                         \
+	BX_MACRO_BLOCK_END
+
+#if BGFX_CONFIG_DEBUG
+#	define MTL_CHECK_REFCOUNT(_ptr, _expected) _MTL_CHECK_REFCOUNT(_ptr, _expected)
+#else
+#	define MTL_CHECK_REFCOUNT(_ptr, _expected)
+#endif // BGFX_CONFIG_DEBUG
+
+#define MTL_RELEASE(_obj, _expected)   _MTL_RELEASE(_obj, _expected, BX_ASSERT)
+#define MTL_RELEASE_W(_obj, _expected) _MTL_RELEASE(_obj, _expected, BX_WARN)
+#define MTL_RELEASE_I(_obj)            _MTL_RELEASE(_obj, 0, BX_NOOP)
+
 namespace bgfx { namespace mtl
 {
 	//runtime os check
@@ -75,9 +121,9 @@ namespace bgfx { namespace mtl
 	class name                                            \
 	{                                                     \
 	public:                                               \
-		name(id <MTL##name> _obj = nil) : m_obj(_obj) {}  \
-		operator id <MTL##name>() const { return m_obj; } \
-		id <MTL##name> m_obj;
+		name(id<MTL##name> _obj = NULL) : m_obj(_obj) {} \
+		operator id<MTL##name>() const { return m_obj; } \
+		id<MTL##name> m_obj;
 
 #define MTL_CLASS_END };
 
@@ -165,7 +211,10 @@ namespace bgfx { namespace mtl
 
 		void setLabel(const char* _label)
 		{
-			[m_obj setLabel:@(_label)];
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
+			{
+				[m_obj setLabel:@(_label)];
+			}
 		}
 	MTL_CLASS_END
 
@@ -198,12 +247,12 @@ namespace bgfx { namespace mtl
 
 		void addScheduledHandler(mtlCallback _cb, void* _data)
 		{
-			[m_obj addScheduledHandler:^(id <MTLCommandBuffer>){ _cb(_data); }];
+			[m_obj addScheduledHandler:^(id<MTLCommandBuffer>){ _cb(_data); }];
 		}
 
 		void addCompletedHandler(mtlCallback _cb, void* _data)
 		{
-			[m_obj addCompletedHandler:^(id <MTLCommandBuffer>){ _cb(_data); }];
+			[m_obj addCompletedHandler:^(id<MTLCommandBuffer>){ _cb(_data); }];
 		}
 
 		void presentDrawable(id<MTLDrawable> _drawable)
@@ -256,7 +305,7 @@ namespace bgfx { namespace mtl
 		}
 
 		void dispatchThreadgroupsWithIndirectBuffer(
-			  id <MTLBuffer> _indirectBuffer
+			  id<MTLBuffer> _indirectBuffer
 			, NSUInteger _indirectBufferOffset
 			, MTLSize _threadsPerThreadgroup
 			)
@@ -300,7 +349,7 @@ namespace bgfx { namespace mtl
 		id<MTLLibrary> newLibraryWithSource(const char* _source)
 		{
 			NSError* error;
-			id<MTLLibrary> lib = [m_obj newLibraryWithSource:@(_source) options:nil error:&error];
+			id<MTLLibrary> lib = [m_obj newLibraryWithSource:@(_source) options:NULL error:&error];
 			BX_WARN(NULL == error
 				, "Shader compilation failed: %s"
 				, [error.localizedDescription cStringUsingEncoding:NSASCIIStringEncoding]
@@ -345,10 +394,10 @@ namespace bgfx { namespace mtl
 			return [m_obj newDepthStencilStateWithDescriptor:_descriptor];
 		}
 
-		id <MTLRenderPipelineState> newRenderPipelineStateWithDescriptor(MTLRenderPipelineDescriptor* _descriptor)
+		id<MTLRenderPipelineState> newRenderPipelineStateWithDescriptor(MTLRenderPipelineDescriptor* _descriptor)
 		{
 			NSError* error;
-			id <MTLRenderPipelineState> state = [m_obj newRenderPipelineStateWithDescriptor:_descriptor error:&error];
+			id<MTLRenderPipelineState> state = [m_obj newRenderPipelineStateWithDescriptor:_descriptor error:&error];
 			BX_WARN(NULL == error
 				, "newRenderPipelineStateWithDescriptor failed: %s"
 				, [error.localizedDescription cStringUsingEncoding:NSASCIIStringEncoding]
@@ -356,14 +405,14 @@ namespace bgfx { namespace mtl
 			return state;
 		}
 
-		id <MTLRenderPipelineState> newRenderPipelineStateWithDescriptor(
+		id<MTLRenderPipelineState> newRenderPipelineStateWithDescriptor(
 			  MTLRenderPipelineDescriptor* _descriptor
 			, MTLPipelineOption _options
 			, MTLRenderPipelineReflection** _reflection
 			)
 		{
 			NSError* error;
-			id <MTLRenderPipelineState> state = [m_obj newRenderPipelineStateWithDescriptor:_descriptor options:_options reflection:_reflection error:&error];
+			id<MTLRenderPipelineState> state = [m_obj newRenderPipelineStateWithDescriptor:_descriptor options:_options reflection:_reflection error:&error];
 
 			BX_WARN(NULL == error
 				, "newRenderPipelineStateWithDescriptor failed: %s"
@@ -373,14 +422,14 @@ namespace bgfx { namespace mtl
 		}
 
 		// Creating Command Objects Needed to Perform Computational Tasks
-		id <MTLComputePipelineState> newComputePipelineStateWithFunction(
-			  id <MTLFunction> _computeFunction
+		id<MTLComputePipelineState> newComputePipelineStateWithFunction(
+			  id<MTLFunction> _computeFunction
 			, MTLPipelineOption _options
 			, MTLComputePipelineReflection** _reflection
 			)
 		{
 			NSError* error;
-			id <MTLComputePipelineState> state = [m_obj newComputePipelineStateWithFunction:_computeFunction options:_options reflection:_reflection error:&error];
+			id<MTLComputePipelineState> state = [m_obj newComputePipelineStateWithFunction:_computeFunction options:_options reflection:_reflection error:&error];
 
 			BX_WARN(NULL == error
 				, "newComputePipelineStateWithFunction failed: %s"
@@ -391,7 +440,7 @@ namespace bgfx { namespace mtl
 
 		bool supportsTextureSampleCount(int sampleCount)
 		{
-			if (BX_ENABLED(BX_PLATFORM_IOS) && !iOSVersionEqualOrGreater("9.0.0"))
+			if (BX_ENABLED(BX_PLATFORM_IOS) && !iOSVersionEqualOrGreater("9.0.0") )
 			{
 				return sampleCount == 1 || sampleCount == 2 ||  sampleCount == 4;
 			}
@@ -427,7 +476,7 @@ namespace bgfx { namespace mtl
 	MTL_CLASS_END
 
 	MTL_CLASS(Library)
-		id <MTLFunction> newFunctionWithName(const char* _functionName)
+		id<MTLFunction> newFunctionWithName(const char* _functionName)
 		{
 			return [m_obj newFunctionWithName:@(_functionName)];
 		}
@@ -558,7 +607,7 @@ namespace bgfx { namespace mtl
 
 		void drawPrimitives(
 			  MTLPrimitiveType _primitiveType
-			, id <MTLBuffer> _indirectBuffer
+			, id<MTLBuffer> _indirectBuffer
 			, NSUInteger _indirectBufferOffset)
 		{
 			[m_obj drawPrimitives:_primitiveType indirectBuffer:_indirectBuffer indirectBufferOffset:_indirectBufferOffset];
@@ -567,9 +616,9 @@ namespace bgfx { namespace mtl
 		void drawIndexedPrimitives(
 			  MTLPrimitiveType _primitiveType
 			, MTLIndexType _indexType
-			, id <MTLBuffer> _indexBuffer
+			, id<MTLBuffer> _indexBuffer
 			, NSUInteger _indexBufferOffset
-			, id <MTLBuffer> _indirectBuffer
+			, id<MTLBuffer> _indirectBuffer
 			, NSUInteger _indirectBufferOffset)
 		{
 			[m_obj drawIndexedPrimitives:_primitiveType indexType:_indexType indexBuffer:_indexBuffer indexBufferOffset:_indexBufferOffset indirectBuffer:_indirectBuffer indirectBufferOffset:_indirectBufferOffset];
@@ -653,7 +702,10 @@ namespace bgfx { namespace mtl
 
 		void setLabel(const char* _label)
 		{
-			[m_obj setLabel:@(_label)];
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
+			{
+				[m_obj setLabel:@(_label)];
+			}
 		}
 	MTL_CLASS_END
 
@@ -748,15 +800,6 @@ namespace bgfx { namespace mtl
 		return [_str UTF8String];
 	}
 
-#define MTL_RELEASE(_obj)   \
-	BX_MACRO_BLOCK_BEGIN    \
-		if (NULL != _obj)   \
-		{                   \
-			[_obj release]; \
-			_obj = NULL;    \
-		}                   \
-	BX_MACRO_BLOCK_END
-
 	// end of c++ wrapper
 
 	template <typename Ty>
@@ -823,7 +866,7 @@ namespace bgfx { namespace mtl
 
 		void destroy()
 		{
-			MTL_RELEASE(m_ptr);
+			MTL_RELEASE_W(m_ptr, 0);
 
 			if (NULL != m_dynamic)
 			{
@@ -854,7 +897,6 @@ namespace bgfx { namespace mtl
 		VertexLayoutHandle m_layoutHandle;
 	};
 
-
 	struct ShaderMtl
 	{
 		ShaderMtl()
@@ -863,10 +905,10 @@ namespace bgfx { namespace mtl
 		}
 
 		void create(const Memory* _mem);
+
 		void destroy()
 		{
-			MTL_RELEASE(m_function);
-
+			MTL_RELEASE_W(m_function, 0);
 		}
 
 		Function m_function;
@@ -995,17 +1037,17 @@ namespace bgfx { namespace mtl
 
 		void destroy()
 		{
-			if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED))
+			if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED) )
 			{
-				MTL_RELEASE(m_ptr);
-				MTL_RELEASE(m_ptrMsaa);
+				MTL_RELEASE_W(m_ptr, 0);
+				MTL_RELEASE_W(m_ptrMsaa, 0);
 			}
 
-			MTL_RELEASE(m_ptrStencil);
+			MTL_RELEASE_W(m_ptrStencil, 0);
 
 			for (uint32_t ii = 0; ii < m_numMips; ++ii)
 			{
-				MTL_RELEASE(m_ptrMips[ii]);
+				MTL_RELEASE_W(m_ptrMips[ii], 0);
 			}
 		}
 
@@ -1056,15 +1098,15 @@ namespace bgfx { namespace mtl
 	struct SwapChainMtl
 	{
 		SwapChainMtl()
-			: m_metalLayer(nil)
+			: m_metalLayer(NULL)
 #if BX_PLATFORM_VISIONOS
 			, m_layerRenderer(NULL)
 			, m_layerRendererDrawable(NULL)
 			, m_frame(NULL)
 			, m_useLayerRenderer(true)
 #endif // BX_PLATFORM_VISIONOS
-			, m_drawable(nil)
-			, m_drawableTexture(nil)
+			, m_drawable(NULL)
+			, m_drawableTexture(NULL)
 			, m_backBufferColorMsaa()
 			, m_backBufferDepth()
 			, m_backBufferStencil()
@@ -1075,12 +1117,10 @@ namespace bgfx { namespace mtl
 		~SwapChainMtl();
 
 		void init(void* _nwh);
-		uint32_t resize(
-			  uint32_t _width
-			, uint32_t _height
-			, TextureFormat::Enum _format
-			, TextureFormat::Enum _depthFormat
-			);
+
+		void releaseBackBuffer();
+
+		uint32_t resize(uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat);
 
 		id<MTLTexture> currentDrawableTexture();
 
@@ -1092,12 +1132,14 @@ namespace bgfx { namespace mtl
 		cp_frame_t m_frame;
 		bool m_useLayerRenderer;
 #endif // BX_PLATFORM_VISIONOS
-		id <CAMetalDrawable> m_drawable;
+		id<CAMetalDrawable> m_drawable;
 
-		id <MTLTexture> m_drawableTexture;
+		id<MTLTexture> m_drawableTexture;
+
 		Texture m_backBufferColorMsaa;
 		Texture m_backBufferDepth;
 		Texture m_backBufferStencil;
+
 		uint32_t m_maxAnisotropy;
 		void* m_nwh;
 	};
@@ -1159,8 +1201,8 @@ namespace bgfx { namespace mtl
 		void init(Device _device);
 		void shutdown();
 		CommandBuffer alloc();
-		void kick(bool _endFrame, bool _waitForFinish = false);
-		void finish(bool _finishAll = false);
+		void kick(bool _endFrame, bool _waitForFinish);
+		void finish(bool _finishAll);
 		void release(NSObject* _ptr);
 		void consume();
 

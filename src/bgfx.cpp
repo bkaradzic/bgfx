@@ -4594,7 +4594,7 @@ namespace bgfx
 				++depth;
 
 				BGFX_ERROR_CHECK(
-					// if BGFX_TEXTURE_RT_MSAA_X2 or greater than either BGFX_TEXTURE_RT_WRITE_ONLY or BGFX_TEXTURE_MSAA_SAMPLE is required 
+					// if BGFX_TEXTURE_RT_MSAA_X2 or greater than either BGFX_TEXTURE_RT_WRITE_ONLY or BGFX_TEXTURE_MSAA_SAMPLE is required
 					// if BGFX_TEXTURE_RT with no MSSA then this is not required.
 					(1 == ((tr.m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT))
 					|| (0 != (tr.m_flags & (BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_MSAA_SAMPLE)))
