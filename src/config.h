@@ -338,6 +338,16 @@ static_assert(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS must
 #	define BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE (1<<20)
 #endif // BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE
 
+#ifndef BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE
+/// Max amount of unused uniform buffer space before uniform buffer resize.
+#	define BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE (64<<10)
+#endif // BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE
+
+#ifndef BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_INCREMENT_SIZE
+/// Increment of uniform buffer resize.
+#	define BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_INCREMENT_SIZE (1<<20)
+#endif // BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_INCREMENT_SIZE
+
 #ifndef BGFX_CONFIG_CACHED_DEVICE_MEMORY_ALLOCATIONS_SIZE
 /// Amount of allowed memory allocations left on device to use for recycling during
 /// later allocations. This can be beneficial in case the driver is slow allocating memory
