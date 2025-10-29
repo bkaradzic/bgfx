@@ -357,17 +357,21 @@ WL_EGL_IMPORT
 			BGFX_FATAL(success, Fatal::UnableToInitialize, "eglChooseConfig");
 
 #	if BX_PLATFORM_ANDROID
-
 			EGLint format;
 			eglGetConfigAttrib(m_display, m_config, EGL_NATIVE_VISUAL_ID, &format);
-			ANativeWindow_setBuffersGeometry( (ANativeWindow*)g_platformData.nwh, _width, _height, format);
+			ANativeWindow_setBuffersGeometry(
+				  (ANativeWindow*)g_platformData.nwh
+				, _resolution.width
+				, _resolution.height
+				, format
+				);
 
 #	elif BX_PLATFORM_RPI
 			DISPMANX_DISPLAY_HANDLE_T dispmanDisplay = vc_dispmanx_display_open(0);
 			DISPMANX_UPDATE_HANDLE_T  dispmanUpdate  = vc_dispmanx_update_start(0);
 
-			VC_RECT_T dstRect = { 0, 0, int32_t(_width),        int32_t(_height)       };
-			VC_RECT_T srcRect = { 0, 0, int32_t(_width)  << 16, int32_t(_height) << 16 };
+			VC_RECT_T dstRect = { 0, 0, int32_t(_resolution.width),        int32_t(_resolution.height)       };
+			VC_RECT_T srcRect = { 0, 0, int32_t(_resolution.width)  << 16, int32_t(_resolution.height) << 16 };
 
 			DISPMANX_ELEMENT_HANDLE_T dispmanElement = vc_dispmanx_element_add(dispmanUpdate
 				, dispmanDisplay
@@ -382,8 +386,8 @@ WL_EGL_IMPORT
 				);
 
 			s_dispmanWindow.element = dispmanElement;
-			s_dispmanWindow.width   = _width;
-			s_dispmanWindow.height  = _height;
+			s_dispmanWindow.width   = _resolution.width;
+			s_dispmanWindow.height  = _resolution.height;
 			nwh = (EGLNativeWindowType) &s_dispmanWindow;
 
 			vc_dispmanx_update_submit_sync(dispmanUpdate);
