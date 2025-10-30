@@ -4594,13 +4594,13 @@ namespace bgfx
 				++depth;
 
 				BGFX_ERROR_CHECK(
-					// if BGFX_TEXTURE_RT_MSAA_X2 or greater than BGFX_TEXTURE_RT_WRITE_ONLY is required
-					// if BGFX_TEXTURE_RT with no MSSA then WRITE_ONLY is not required.
+					// if BGFX_TEXTURE_RT_MSAA_X2 or greater than either BGFX_TEXTURE_RT_WRITE_ONLY or BGFX_TEXTURE_MSAA_SAMPLE is required 
+					// if BGFX_TEXTURE_RT with no MSSA then this is not required.
 					(1 == ((tr.m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT))
-					|| (0 != (tr.m_flags & BGFX_TEXTURE_RT_WRITE_ONLY))
+					|| (0 != (tr.m_flags & (BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_MSAA_SAMPLE)))
 					, _err
 					, BGFX_ERROR_FRAME_BUFFER_VALIDATION
-					, "Frame buffer depth MSAA texture cannot be resolved. It must be created with `BGFX_TEXTURE_RT_WRITE_ONLY` flag."
+					, "Frame buffer depth MSAA texture cannot be resolved. It must be created with either `BGFX_TEXTURE_RT_WRITE_ONLY` or `BGFX_TEXTURE_MSAA_SAMPLE` flag."
 					, "Attachment %d, texture flags 0x%016" PRIx64 "."
 					, ii
 					, tr.m_flags

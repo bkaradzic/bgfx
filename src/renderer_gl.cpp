@@ -1479,7 +1479,7 @@ namespace bgfx { namespace gl
 				, _internalFormat
 				, _width
 				, _height
-				, false
+				, true
 				);
 		}
 		else
@@ -7106,7 +7106,7 @@ namespace bgfx { namespace gl
 					{
 						const TextureGL& texture = s_renderGL->m_textures[at.handle.idx];
 
-						if (0 != texture.m_id)
+						if (0 != texture.m_rbo && 0 != texture.m_id)
 						{
 
 							GLenum attachment = GL_INVALID_ENUM;
