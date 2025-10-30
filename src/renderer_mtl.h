@@ -1301,7 +1301,7 @@ namespace bgfx { namespace mtl
 			, m_denseIdx(UINT16_MAX)
 			, m_num(0)
 		{
-			m_depthHandle.idx = kInvalidHandle;
+			m_depthHandle = BGFX_INVALID_HANDLE;
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);

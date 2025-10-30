@@ -148,8 +148,6 @@ namespace bgfx
 #include "vertexlayout.h"
 #include "version.h"
 
-#define BGFX_CHUNK_MAGIC_TEX BX_MAKEFOURCC('T', 'E', 'X', 0x0)
-
 #define BGFX_CLEAR_COLOR_USE_PALETTE UINT16_C(0x8000)
 #define BGFX_CLEAR_MASK (0                 \
 			| BGFX_CLEAR_COLOR             \
@@ -287,6 +285,8 @@ namespace stl = std;
 
 namespace bgfx
 {
+	constexpr uint32_t kChunkMagicTex = BX_MAKEFOURCC('T', 'E', 'X', 0x0);
+
 	extern InternalData g_internalData;
 	extern PlatformData g_platformData;
 	extern bool g_platformDataChangedSinceReset;
@@ -816,7 +816,7 @@ namespace bgfx
 		{
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_program); ++ii)
 			{
-				m_program[ii].idx = kInvalidHandle;
+				m_program[ii] = BGFX_INVALID_HANDLE;
 			}
 		}
 
@@ -1681,9 +1681,9 @@ namespace bgfx
 	{
 		void clear()
 		{
-			m_startVertex      = 0;
-			m_handle.idx       = kInvalidHandle;
-			m_layoutHandle.idx = kInvalidHandle;
+			m_startVertex  = 0;
+			m_handle       = BGFX_INVALID_HANDLE;
+			m_layoutHandle = BGFX_INVALID_HANDLE;
 		}
 
 		uint32_t           m_startVertex;
@@ -1740,7 +1740,7 @@ namespace bgfx
 				m_instanceDataOffset = 0;
 				m_instanceDataStride = 0;
 				m_numInstances       = 1;
-				m_instanceDataBuffer.idx = kInvalidHandle;
+				m_instanceDataBuffer = BGFX_INVALID_HANDLE;
 			}
 
 			if (0 != (_flags & BGFX_DISCARD_VERTEX_STREAMS) )
@@ -1752,22 +1752,22 @@ namespace bgfx
 
 			if (0 != (_flags & BGFX_DISCARD_INDEX_BUFFER) )
 			{
-				m_startIndex      = 0;
-				m_numIndices      = UINT32_MAX;
-				m_indexBuffer.idx = kInvalidHandle;
-				m_submitFlags     = 0;
+				m_startIndex  = 0;
+				m_numIndices  = UINT32_MAX;
+				m_indexBuffer = BGFX_INVALID_HANDLE;
+				m_submitFlags = 0;
 			}
 			else
 			{
 				m_submitFlags = isIndex16() ? 0 : BGFX_SUBMIT_INTERNAL_INDEX32;
 			}
 
-			m_startIndirect    = 0;
-			m_numIndirect      = UINT32_MAX;
-			m_numIndirectIndex = 0;
-			m_indirectBuffer.idx    = kInvalidHandle;
-			m_numIndirectBuffer.idx = kInvalidHandle;
-			m_occlusionQuery.idx    = kInvalidHandle;
+			m_startIndirect     = 0;
+			m_numIndirect       = UINT32_MAX;
+			m_numIndirectIndex  = 0;  
+			m_indirectBuffer    = BGFX_INVALID_HANDLE;
+			m_numIndirectBuffer = BGFX_INVALID_HANDLE;
+			m_occlusionQuery    = BGFX_INVALID_HANDLE;
 		}
 
 		bool setStreamBit(uint8_t _stream, VertexBufferHandle _handle)
@@ -1830,13 +1830,13 @@ namespace bgfx
 				m_numMatrices = 0;
 			}
 
-			m_numX               = 0;
-			m_numY               = 0;
-			m_numZ               = 0;
-			m_submitFlags        = 0;
-			m_indirectBuffer.idx = kInvalidHandle;
-			m_startIndirect      = 0;
-			m_numIndirect        = UINT32_MAX;
+			m_numX           = 0;
+			m_numY           = 0;
+			m_numZ           = 0;
+			m_submitFlags    = 0;
+			m_indirectBuffer = BGFX_INVALID_HANDLE;
+			m_startIndirect  = 0;
+			m_numIndirect    = UINT32_MAX;
 		}
 
 		uint32_t m_uniformBegin;
@@ -2890,7 +2890,7 @@ namespace bgfx
 
 		void add(VertexBufferHandle _handle, VertexLayoutHandle _layoutHandle, uint32_t _hash)
 		{
-			BX_ASSERT(m_vertexBufferRef[_handle.idx].idx == kInvalidHandle, "");
+			BX_ASSERT(!isValid(m_vertexBufferRef[_handle.idx]), "");
 			m_vertexBufferRef[_handle.idx] = _layoutHandle;
 			m_refCount[_layoutHandle.idx]++;
 			m_vertexLayoutMap.insert(_hash, _layoutHandle.idx);
@@ -2898,7 +2898,7 @@ namespace bgfx
 
 		void add(DynamicVertexBufferHandle _handle, VertexLayoutHandle _layoutHandle, uint32_t _hash)
 		{
-			BX_ASSERT(m_dynamicVertexBufferRef[_handle.idx].idx == kInvalidHandle, "");
+			BX_ASSERT(!isValid(m_dynamicVertexBufferRef[_handle.idx]), "");
 			m_dynamicVertexBufferRef[_handle.idx] = _layoutHandle;
 			m_refCount[_layoutHandle.idx]++;
 			m_vertexLayoutMap.insert(_hash, _layoutHandle.idx);
@@ -2924,7 +2924,7 @@ namespace bgfx
 		{
 			VertexLayoutHandle layoutHandle = m_vertexBufferRef[_handle.idx];
 			layoutHandle = release(layoutHandle);
-			m_vertexBufferRef[_handle.idx].idx = kInvalidHandle;
+			m_vertexBufferRef[_handle.idx] = BGFX_INVALID_HANDLE;
 
 			return layoutHandle;
 		}
@@ -2933,7 +2933,7 @@ namespace bgfx
 		{
 			VertexLayoutHandle layoutHandle = m_dynamicVertexBufferRef[_handle.idx];
 			layoutHandle = release(layoutHandle);
-			m_dynamicVertexBufferRef[_handle.idx].idx = kInvalidHandle;
+			m_dynamicVertexBufferRef[_handle.idx] = BGFX_INVALID_HANDLE;
 
 			return layoutHandle;
 		}
