@@ -687,8 +687,6 @@ target="_blank"><img src="http://img.youtube.com/vi/ow_QU4K217w/0.jpg"
 alt="Match Engine | Football Manager 2024"
 width="640" height="480" border="0" /></a>
 
-https://web.archive.org/web/20250616155205/https://privacy.sega.com/en/fm24-eula-end-user-license-agreement
-
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
