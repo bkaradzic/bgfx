@@ -2084,7 +2084,7 @@ public static class bgfx
 			public uint32 maxEncoders;
 			public uint32 minResourceCbSize;
 			public uint32 maxTransientVbSize;
-			public uint32 matTansientIbSize;
+			public uint32 maxTansientIbSize;
 			public uint32 minUniformBufferSize;
 		}
 	
@@ -2140,7 +2140,7 @@ public static class bgfx
 			public uint16 maxEncoders;
 			public uint32 minResourceCbSize;
 			public uint32 maxTransientVbSize;
-			public uint32 matTransientIbSize;
+			public uint32 maxTransientIbSize;
 			public uint32 minUniformBufferSize;
 		}
 	

@@ -1310,7 +1310,7 @@ pub const Caps = extern struct {
         maxEncoders: u32,
         minResourceCbSize: u32,
         maxTransientVbSize: u32,
-        matTansientIbSize: u32,
+        maxTansientIbSize: u32,
         minUniformBufferSize: u32,
     };
 
@@ -1356,7 +1356,7 @@ pub const Init = extern struct {
         maxEncoders: u16,
         minResourceCbSize: u32,
         maxTransientVbSize: u32,
-        matTransientIbSize: u32,
+        maxTransientIbSize: u32,
         minUniformBufferSize: u32,
     };
 

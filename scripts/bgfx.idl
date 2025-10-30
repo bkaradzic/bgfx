@@ -733,7 +733,7 @@ struct.Limits  { namespace = "Caps" }
 	.maxEncoders             "uint32_t" --- Maximum number of encoder threads.
 	.minResourceCbSize       "uint32_t" --- Minimum resource command buffer size.
 	.maxTransientVbSize      "uint32_t" --- Maximum transient vertex buffer size.
-	.matTansientIbSize       "uint32_t" --- Maximum transient index buffer size.
+	.maxTansientIbSize       "uint32_t" --- Maximum transient index buffer size.
 	.minUniformBufferSize    "uint32_t" --- Mimimum uniform buffer size.
 
 --- Renderer capabilities.
@@ -807,7 +807,7 @@ struct.Limits { ctor, namespace = "Init" }
 	.maxEncoders          "uint16_t" --- Maximum number of encoder threads.
 	.minResourceCbSize    "uint32_t" --- Minimum resource command buffer size.
 	.maxTransientVbSize   "uint32_t" --- Maximum transient vertex buffer size.
-	.matTransientIbSize   "uint32_t" --- Maximum transient index buffer size.
+	.maxTransientIbSize   "uint32_t" --- Maximum transient index buffer size.
 	.minUniformBufferSize "uint32_t" --- Mimimum uniform buffer size.
 
 --- Initialization parameters used by `bgfx::init`.

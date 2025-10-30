@@ -1381,7 +1381,7 @@ struct CapsLimits
 	// Maximum transient vertex buffer size.
 	uint maxTransientVbSize;
 	// Maximum transient index buffer size.
-	uint matTansientIbSize;
+	uint maxTansientIbSize;
 	// Mimimum uniform buffer size.
 	uint minUniformBufferSize;
 }
@@ -1495,7 +1495,7 @@ struct InitLimits
 	// Maximum transient vertex buffer size.
 	uint maxTransientVbSize;
 	// Maximum transient index buffer size.
-	uint matTransientIbSize;
+	uint maxTransientIbSize;
 	// Mimimum uniform buffer size.
 	uint minUniformBufferSize;
 }

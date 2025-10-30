@@ -539,7 +539,7 @@ typedef struct bgfx_caps_limits_s
     uint32_t             maxEncoders;        /** Maximum number of encoder threads.       */
     uint32_t             minResourceCbSize;  /** Minimum resource command buffer size.    */
     uint32_t             maxTransientVbSize; /** Maximum transient vertex buffer size.    */
-    uint32_t             matTansientIbSize;  /** Maximum transient index buffer size.     */
+    uint32_t             maxTansientIbSize;  /** Maximum transient index buffer size.     */
     uint32_t             minUniformBufferSize; /** Mimimum uniform buffer size.             */
 
 } bgfx_caps_limits_t;
@@ -666,7 +666,7 @@ typedef struct bgfx_init_limits_s
     uint16_t             maxEncoders;        /** Maximum number of encoder threads.       */
     uint32_t             minResourceCbSize;  /** Minimum resource command buffer size.    */
     uint32_t             maxTransientVbSize; /** Maximum transient vertex buffer size.    */
-    uint32_t             matTransientIbSize; /** Maximum transient index buffer size.     */
+    uint32_t             maxTransientIbSize; /** Maximum transient index buffer size.     */
     uint32_t             minUniformBufferSize; /** Mimimum uniform buffer size.             */
 
 } bgfx_init_limits_t;
