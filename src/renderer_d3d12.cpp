@@ -706,6 +706,7 @@ namespace bgfx { namespace d3d12
 			, m_winPixEvent(NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_swapChain(NULL)
+			, m_backBufferDepthStencil(NULL)
 			, m_wireframe(false)
 			, m_lost(false)
 			, m_maxAnisotropy(1)
@@ -713,7 +714,6 @@ namespace bgfx { namespace d3d12
 			, m_backBufferColorIdx(0)
 			, m_rtMsaa(false)
 			, m_directAccessSupport(false)
-			, m_backBufferDepthStencil(NULL)
 		{
 		}
 

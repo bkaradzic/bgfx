@@ -410,16 +410,16 @@ namespace bgfx
 
 	struct NativeWindowHandleType
 	{
-		 enum Enum
-		 {
-		       Default = 0, //!< Platform default handle type (X11 on Linux).
-		       Wayland,     //!< Wayland.
+		enum Enum
+		{
+			Default = 0, //!< Platform default handle type (X11 on Linux).
+			Wayland,     //!< Wayland.
 
-		       Count
-		 };
+			Count
+		};
 	};
 
-	static const uint16_t kInvalidHandle = UINT16_MAX;
+	constexpr uint16_t kInvalidHandle = UINT16_MAX;
 
 	BGFX_HANDLE(DynamicIndexBufferHandle)
 	BGFX_HANDLE(DynamicVertexBufferHandle)
