@@ -18,10 +18,6 @@
 #	import <UIKit/UIKit.h>
 #endif // BX_PLATFORM_*
 
-#if BX_PLATFORM_VISIONOS
-#	import <CompositorServices/CompositorServices.h>
-#endif // BX_PLATFORM_VISIONOS
-
 #define BGFX_MTL_PROFILER_BEGIN(_view, _abgr)         \
 	BX_MACRO_BLOCK_BEGIN                              \
 		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr); \
@@ -1247,12 +1243,6 @@ namespace bgfx { namespace mtl
 	{
 		SwapChainMtl()
 			: m_metalLayer(NULL)
-#if BX_PLATFORM_VISIONOS
-			, m_layerRenderer(NULL)
-			, m_layerRendererDrawable(NULL)
-			, m_frame(NULL)
-			, m_useLayerRenderer(true)
-#endif // BX_PLATFORM_VISIONOS
 			, m_drawable(NULL)
 			, m_drawableTexture(NULL)
 			, m_backBufferColorMsaa()
@@ -1273,13 +1263,6 @@ namespace bgfx { namespace mtl
 		id<MTLTexture> currentDrawableTexture();
 
 		CAMetalLayer* m_metalLayer;
-#if BX_PLATFORM_VISIONOS
-		cp_layer_renderer_t m_layerRenderer;
-		cp_drawable_t m_layerRendererDrawable;
-		cp_layer_renderer_configuration_t m_layerRendererConfiguration;
-		cp_frame_t m_frame;
-		bool m_useLayerRenderer;
-#endif // BX_PLATFORM_VISIONOS
 		id<CAMetalDrawable> m_drawable;
 
 		id<MTLTexture> m_drawableTexture;
