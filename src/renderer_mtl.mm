@@ -3695,7 +3695,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	{
 		MTL_RELEASE(m_backBufferStencil, m_backBufferDepth == m_backBufferStencil ? 1 : 0);
 		MTL_RELEASE_W(m_backBufferDepth, 0);
-		MTL_RELEASE(m_backBufferColorMsaa, 0);
+		MTL_RELEASE_W(m_backBufferColorMsaa, 0);
 	}
 
 	uint32_t SwapChainMtl::resize(uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)
