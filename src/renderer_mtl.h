@@ -85,6 +85,11 @@
 
 namespace bgfx { namespace mtl
 {
+	constexpr MTLPixelFormat kMTLPixelFormatDepth24Unorm_Stencil8 = MTLPixelFormat(255);
+	constexpr MTLPixelFormat kMTLPixelFormatDepth32Float_Stencil8 = MTLPixelFormat(260);
+	constexpr MTLPixelFormat kMTLPixelFormatX32_Stencil8          = MTLPixelFormat(261);
+	constexpr MTLPixelFormat kMTLPixelFormatX24_Stencil8          = MTLPixelFormat(262);
+
 	//runtime os check
 	inline bool iOSVersionEqualOrGreater(const char* _version)
 	{
@@ -468,7 +473,8 @@ namespace bgfx { namespace mtl
 
 		void setLabel(const char* _label)
 		{
-			if ([m_obj respondsToSelector:@selector(setLabel:)])
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION)
+			&&  [m_obj respondsToSelector:@selector(setLabel:)])
 			{
 				[m_obj setLabel:@(_label)];
 			}

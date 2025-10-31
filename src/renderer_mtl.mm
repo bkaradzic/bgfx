@@ -318,7 +318,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunguarded-availability-new");
 		{ MTLPixelFormatInvalid,                        MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // UnknownDepth
 		{ MTLPixelFormatDepth16Unorm,                   MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // D16
 		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // D24
-		{ MTLPixelFormatDepth24Unorm_Stencil8,          MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // D24S8
+		{ kMTLPixelFormatDepth24Unorm_Stencil8,         MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // D24S8
 		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // D32
 		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // D16F
 		{ MTLPixelFormatDepth32Float,                   MTLPixelFormatInvalid,                       MTLReadWriteTextureTierNone, { $R, $G, $B, $A }, false }, // D24F
@@ -859,13 +859,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				g_caps.formats[TextureFormat::RGBA32F] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
 			}
 
+			s_textureFormat[TextureFormat::D24S8].m_fmt = (MTLPixelFormat)(m_device.depth24Stencil8PixelFormatSupported()
+				? kMTLPixelFormatDepth24Unorm_Stencil8
+				: kMTLPixelFormatDepth32Float_Stencil8
+				);
+
 			if (BX_ENABLED(BX_PLATFORM_OSX) )
 			{
-				s_textureFormat[TextureFormat::D24S8].m_fmt = (MTLPixelFormat)(m_device.depth24Stencil8PixelFormatSupported()
-					? 255 /* Depth24Unorm_Stencil8 */
-					: MTLPixelFormatDepth32Float_Stencil8)
-					;
-
 				g_caps.formats[TextureFormat::ETC2  ] =
 				g_caps.formats[TextureFormat::ETC2A ] =
 				g_caps.formats[TextureFormat::ETC2A1] =
@@ -2072,8 +2072,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 					if (texture.m_textureFormat == TextureFormat::D24S8)
 					{
-						if (texture.m_ptr.pixelFormat() == 255 /* Depth24Unorm_Stencil8 */
-						||  texture.m_ptr.pixelFormat() == 260 /* Depth32Float_Stencil8 */)
+						const MTLPixelFormat depthFormat = texture.m_ptr.pixelFormat();
+
+						if (kMTLPixelFormatDepth24Unorm_Stencil8 == depthFormat
+						||  kMTLPixelFormatDepth32Float_Stencil8 == depthFormat)
 						{
 							_renderPassDescriptor.stencilAttachment.texture = _renderPassDescriptor.depthAttachment.texture;
 						}
@@ -3774,8 +3776,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				m_backBufferDepth = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 			}
 
-			if (MTLPixelFormatDepth24Unorm_Stencil8 == depthFormat
-			||  MTLPixelFormatDepth32Float_Stencil8 == depthFormat)
+			if (kMTLPixelFormatDepth24Unorm_Stencil8 == depthFormat
+			||  kMTLPixelFormatDepth32Float_Stencil8 == depthFormat)
 			{
 				m_backBufferDepth.setLabel("SwapChain BackBuffer Depth/Stencil");
 
