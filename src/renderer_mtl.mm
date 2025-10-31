@@ -816,6 +816,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				, m_resolution.formatColor
 				, m_resolution.formatDepthStencil
 				);
+			m_textVideoMem.resize(false, m_resolution.width, m_resolution.height);
+			m_textVideoMem.clear();
 
 #if BX_PLATFORM_VISIONOS
 			if (m_mainFrameBuffer.m_swapChain->m_useLayerRenderer)
