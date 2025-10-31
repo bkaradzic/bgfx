@@ -3977,8 +3977,8 @@ namespace bgfx { namespace gl
 							}
 						)";
 
-						const GLchar *const vs = msaa_blit_vs;
-						const GLchar *const fs = msaa_blit_fs;
+						const GLchar* vs = msaa_blit_vs;
+						const GLchar* fs = msaa_blit_fs;
 
 						GLuint shader_vs = glCreateShader(GL_VERTEX_SHADER);
 						{

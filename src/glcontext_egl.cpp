@@ -332,44 +332,67 @@ WL_EGL_IMPORT
 
 			for (uint32_t retry = 0; retry < 2; ++retry)
 			{
-				EGLint attrs[] =
-				{
-					EGL_RENDERABLE_TYPE, !!BGFX_CONFIG_RENDERER_OPENGL
+				EGLint attrs[16*2 + 1];
+				uint32_t numAttrs = 0;
+
+				attrs[numAttrs++] = EGL_RENDERABLE_TYPE;
+				attrs[numAttrs++] = !!BGFX_CONFIG_RENDERER_OPENGL
 						? EGL_OPENGL_BIT
 						: (glVersion >= 30) ? EGL_OPENGL_ES3_BIT_KHR : EGL_OPENGL_ES2_BIT
-						,
+						;
 
-					EGL_SURFACE_TYPE, headless ? EGL_PBUFFER_BIT : EGL_WINDOW_BIT,
+				attrs[numAttrs++] = EGL_SURFACE_TYPE;
+				attrs[numAttrs++] = headless ? EGL_PBUFFER_BIT : EGL_WINDOW_BIT;
 
-					EGL_BLUE_SIZE,    colorBlockInfo.bBits,
-					EGL_GREEN_SIZE,   colorBlockInfo.gBits,
-					EGL_RED_SIZE,     colorBlockInfo.rBits,
-					EGL_ALPHA_SIZE,   colorBlockInfo.aBits,
-					EGL_DEPTH_SIZE,   depthStecilBlockInfo.depthBits,
-					EGL_STENCIL_SIZE, depthStecilBlockInfo.stencilBits,
+				attrs[numAttrs++] = EGL_BLUE_SIZE;
+				attrs[numAttrs++] = colorBlockInfo.bBits;
 
-					EGL_SAMPLES, (EGLint)msaaSamples,
+				attrs[numAttrs++] = EGL_GREEN_SIZE;
+				attrs[numAttrs++] = colorBlockInfo.gBits;
 
-					// Android Recordable surface
-					hasEglAndroidRecordable ? EGL_RECORDABLE_ANDROID : EGL_NONE,
-					hasEglAndroidRecordable ? 1                      : EGL_NONE,
+				attrs[numAttrs++] = EGL_RED_SIZE;
+				attrs[numAttrs++] = colorBlockInfo.rBits;
 
-					EGL_NONE
-				};
+				attrs[numAttrs++] = EGL_ALPHA_SIZE;
+				attrs[numAttrs++] = colorBlockInfo.aBits;
+
+				attrs[numAttrs++] = EGL_DEPTH_SIZE;
+				attrs[numAttrs++] = depthStecilBlockInfo.depthBits;
+
+				attrs[numAttrs++] = EGL_STENCIL_SIZE;
+				attrs[numAttrs++] = depthStecilBlockInfo.stencilBits;
+
+				attrs[numAttrs++] = EGL_SAMPLES;
+				attrs[numAttrs++] = (EGLint)msaaSamples;
+
+				if (hasEglAndroidRecordable)
+				{
+					attrs[numAttrs++] = EGL_RECORDABLE_ANDROID;
+					attrs[numAttrs++] = 1;
+				}
+
+				attrs[numAttrs++] = EGL_NONE;
+
+				BX_ASSERT(numAttrs < BX_COUNTOF(attrs), "Out-of-bounds (numAttrs %d, max %d)."
+					, numAttrs
+					, BX_COUNTOF(attrs)
+					);
 
 				success = eglChooseConfig(m_display, attrs, &m_config, 1, &numConfig);
 
-				if (1 == numConfig)
+				if (!success
+				||  0 == numConfig)
 				{
-					break;
+					msaaSamples = 0;
+					continue;
 				}
 
-				msaaSamples = 0;
+				break;
 			}
 
 			BGFX_FATAL(0 != numConfig, Fatal::UnableToInitialize, "eglChooseConfig");
 
-			m_msaaContext = true;
+			m_msaaContext = 1 < msaaSamples;
 
 #	if BX_PLATFORM_ANDROID
 			EGLint format;
