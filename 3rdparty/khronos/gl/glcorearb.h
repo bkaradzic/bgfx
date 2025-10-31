@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 /*
-** Copyright 2013-2020 The Khronos Group Inc.
+** Copyright 2013-2025 The Khronos Group Inc.
 ** SPDX-License-Identifier: MIT
 **
 ** This header is generated from the Khronos OpenGL / OpenGL ES XML
@@ -4574,6 +4574,127 @@ GLAPI void APIENTRY glDrawElementsInstancedEXT (GLenum mode, GLsizei count, GLen
 #endif
 #endif /* GL_EXT_draw_instanced */
 
+#ifndef GL_EXT_fragment_shading_rate
+#define GL_EXT_fragment_shading_rate 1
+#define GL_SHADING_RATE_1X1_PIXELS_EXT    0x96A6
+#define GL_SHADING_RATE_1X2_PIXELS_EXT    0x96A7
+#define GL_SHADING_RATE_2X1_PIXELS_EXT    0x96A8
+#define GL_SHADING_RATE_2X2_PIXELS_EXT    0x96A9
+#define GL_SHADING_RATE_1X4_PIXELS_EXT    0x96AA
+#define GL_SHADING_RATE_4X1_PIXELS_EXT    0x96AB
+#define GL_SHADING_RATE_4X2_PIXELS_EXT    0x96AC
+#define GL_SHADING_RATE_2X4_PIXELS_EXT    0x96AD
+#define GL_SHADING_RATE_4X4_PIXELS_EXT    0x96AE
+#define GL_SHADING_RATE_EXT               0x96D0
+#define GL_SHADING_RATE_ATTACHMENT_EXT    0x96D1
+#define GL_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_EXT 0x96D2
+#define GL_FRAGMENT_SHADING_RATE_COMBINER_OP_REPLACE_EXT 0x96D3
+#define GL_FRAGMENT_SHADING_RATE_COMBINER_OP_MIN_EXT 0x96D4
+#define GL_FRAGMENT_SHADING_RATE_COMBINER_OP_MAX_EXT 0x96D5
+#define GL_FRAGMENT_SHADING_RATE_COMBINER_OP_MUL_EXT 0x96D6
+#define GL_MIN_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_WIDTH_EXT 0x96D7
+#define GL_MAX_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_WIDTH_EXT 0x96D8
+#define GL_MIN_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_HEIGHT_EXT 0x96D9
+#define GL_MAX_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_HEIGHT_EXT 0x96DA
+#define GL_MAX_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_ASPECT_RATIO_EXT 0x96DB
+#define GL_MAX_FRAGMENT_SHADING_RATE_ATTACHMENT_LAYERS_EXT 0x96DC
+#define GL_FRAGMENT_SHADING_RATE_WITH_SHADER_DEPTH_STENCIL_WRITES_SUPPORTED_EXT 0x96DD
+#define GL_FRAGMENT_SHADING_RATE_WITH_SAMPLE_MASK_SUPPORTED_EXT 0x96DE
+#define GL_FRAGMENT_SHADING_RATE_ATTACHMENT_WITH_DEFAULT_FRAMEBUFFER_SUPPORTED_EXT 0x96DF
+#define GL_FRAGMENT_SHADING_RATE_NON_TRIVIAL_COMBINERS_SUPPORTED_EXT 0x8F6F
+#define GL_FRAGMENT_SHADING_RATE_PRIMITIVE_RATE_WITH_MULTI_VIEWPORT_SUPPORTED_EXT 0x9780
+typedef void (APIENTRYP PFNGLGETFRAGMENTSHADINGRATESEXTPROC) (GLsizei samples, GLsizei maxCount, GLsizei *count, GLenum *shadingRates);
+typedef void (APIENTRYP PFNGLSHADINGRATEEXTPROC) (GLenum rate);
+typedef void (APIENTRYP PFNGLSHADINGRATECOMBINEROPSEXTPROC) (GLenum combinerOp0, GLenum combinerOp1);
+typedef void (APIENTRYP PFNGLFRAMEBUFFERSHADINGRATEEXTPROC) (GLenum target, GLenum attachment, GLuint texture, GLint baseLayer, GLsizei numLayers, GLsizei texelWidth, GLsizei texelHeight);
+#ifdef GL_GLEXT_PROTOTYPES
+GLAPI void APIENTRY glGetFragmentShadingRatesEXT (GLsizei samples, GLsizei maxCount, GLsizei *count, GLenum *shadingRates);
+GLAPI void APIENTRY glShadingRateEXT (GLenum rate);
+GLAPI void APIENTRY glShadingRateCombinerOpsEXT (GLenum combinerOp0, GLenum combinerOp1);
+GLAPI void APIENTRY glFramebufferShadingRateEXT (GLenum target, GLenum attachment, GLuint texture, GLint baseLayer, GLsizei numLayers, GLsizei texelWidth, GLsizei texelHeight);
+#endif
+#endif /* GL_EXT_fragment_shading_rate */
+
+#ifndef GL_EXT_mesh_shader
+#define GL_EXT_mesh_shader 1
+#define GL_MESH_SHADER_EXT                0x9559
+#define GL_TASK_SHADER_EXT                0x955A
+#define GL_MAX_MESH_UNIFORM_BLOCKS_EXT    0x8E60
+#define GL_MAX_MESH_TEXTURE_IMAGE_UNITS_EXT 0x8E61
+#define GL_MAX_MESH_IMAGE_UNIFORMS_EXT    0x8E62
+#define GL_MAX_MESH_UNIFORM_COMPONENTS_EXT 0x8E63
+#define GL_MAX_MESH_ATOMIC_COUNTER_BUFFERS_EXT 0x8E64
+#define GL_MAX_MESH_ATOMIC_COUNTERS_EXT   0x8E65
+#define GL_MAX_MESH_SHADER_STORAGE_BLOCKS_EXT 0x8E66
+#define GL_MAX_COMBINED_MESH_UNIFORM_COMPONENTS_EXT 0x8E67
+#define GL_MAX_TASK_UNIFORM_BLOCKS_EXT    0x8E68
+#define GL_MAX_TASK_TEXTURE_IMAGE_UNITS_EXT 0x8E69
+#define GL_MAX_TASK_IMAGE_UNIFORMS_EXT    0x8E6A
+#define GL_MAX_TASK_UNIFORM_COMPONENTS_EXT 0x8E6B
+#define GL_MAX_TASK_ATOMIC_COUNTER_BUFFERS_EXT 0x8E6C
+#define GL_MAX_TASK_ATOMIC_COUNTERS_EXT   0x8E6D
+#define GL_MAX_TASK_SHADER_STORAGE_BLOCKS_EXT 0x8E6E
+#define GL_MAX_COMBINED_TASK_UNIFORM_COMPONENTS_EXT 0x8E6F
+#define GL_MAX_TASK_WORK_GROUP_TOTAL_COUNT_EXT 0x9740
+#define GL_MAX_MESH_WORK_GROUP_TOTAL_COUNT_EXT 0x9741
+#define GL_MAX_MESH_WORK_GROUP_INVOCATIONS_EXT 0x9757
+#define GL_MAX_TASK_WORK_GROUP_INVOCATIONS_EXT 0x9759
+#define GL_MAX_TASK_PAYLOAD_SIZE_EXT      0x9742
+#define GL_MAX_TASK_SHARED_MEMORY_SIZE_EXT 0x9743
+#define GL_MAX_MESH_SHARED_MEMORY_SIZE_EXT 0x9744
+#define GL_MAX_TASK_PAYLOAD_AND_SHARED_MEMORY_SIZE_EXT 0x9745
+#define GL_MAX_MESH_PAYLOAD_AND_SHARED_MEMORY_SIZE_EXT 0x9746
+#define GL_MAX_MESH_OUTPUT_MEMORY_SIZE_EXT 0x9747
+#define GL_MAX_MESH_PAYLOAD_AND_OUTPUT_MEMORY_SIZE_EXT 0x9748
+#define GL_MAX_MESH_OUTPUT_VERTICES_EXT   0x9538
+#define GL_MAX_MESH_OUTPUT_PRIMITIVES_EXT 0x9756
+#define GL_MAX_MESH_OUTPUT_COMPONENTS_EXT 0x9749
+#define GL_MAX_MESH_OUTPUT_LAYERS_EXT     0x974A
+#define GL_MAX_MESH_MULTIVIEW_VIEW_COUNT_EXT 0x9557
+#define GL_MESH_OUTPUT_PER_VERTEX_GRANULARITY_EXT 0x92DF
+#define GL_MESH_OUTPUT_PER_PRIMITIVE_GRANULARITY_EXT 0x9543
+#define GL_MAX_PREFERRED_TASK_WORK_GROUP_INVOCATIONS_EXT 0x974B
+#define GL_MAX_PREFERRED_MESH_WORK_GROUP_INVOCATIONS_EXT 0x974C
+#define GL_MESH_PREFERS_LOCAL_INVOCATION_VERTEX_OUTPUT_EXT 0x974D
+#define GL_MESH_PREFERS_LOCAL_INVOCATION_PRIMITIVE_OUTPUT_EXT 0x974E
+#define GL_MESH_PREFERS_COMPACT_VERTEX_OUTPUT_EXT 0x974F
+#define GL_MESH_PREFERS_COMPACT_PRIMITIVE_OUTPUT_EXT 0x9750
+#define GL_MAX_TASK_WORK_GROUP_COUNT_EXT  0x9751
+#define GL_MAX_MESH_WORK_GROUP_COUNT_EXT  0x9752
+#define GL_MAX_MESH_WORK_GROUP_SIZE_EXT   0x9758
+#define GL_MAX_TASK_WORK_GROUP_SIZE_EXT   0x975A
+#define GL_MESH_WORK_GROUP_SIZE_EXT       0x953E
+#define GL_TASK_WORK_GROUP_SIZE_EXT       0x953F
+#define GL_MESH_VERTICES_OUT_EXT          0x9579
+#define GL_MESH_PRIMITIVES_OUT_EXT        0x957A
+#define GL_MESH_OUTPUT_TYPE_EXT           0x957B
+#define GL_UNIFORM_BLOCK_REFERENCED_BY_MESH_SHADER_EXT 0x959C
+#define GL_UNIFORM_BLOCK_REFERENCED_BY_TASK_SHADER_EXT 0x959D
+#define GL_REFERENCED_BY_MESH_SHADER_EXT  0x95A0
+#define GL_REFERENCED_BY_TASK_SHADER_EXT  0x95A1
+#define GL_TASK_SHADER_INVOCATIONS_EXT    0x9753
+#define GL_MESH_SHADER_INVOCATIONS_EXT    0x9754
+#define GL_MESH_PRIMITIVES_GENERATED_EXT  0x9755
+#define GL_MESH_SHADER_BIT_EXT            0x00000040
+#define GL_TASK_SHADER_BIT_EXT            0x00000080
+#define GL_MESH_SUBROUTINE_EXT            0x957C
+#define GL_TASK_SUBROUTINE_EXT            0x957D
+#define GL_MESH_SUBROUTINE_UNIFORM_EXT    0x957E
+#define GL_TASK_SUBROUTINE_UNIFORM_EXT    0x957F
+#define GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_MESH_SHADER_EXT 0x959E
+#define GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TASK_SHADER_EXT 0x959F
+typedef void (APIENTRYP PFNGLDRAWMESHTASKSEXTPROC) (GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
+typedef void (APIENTRYP PFNGLDRAWMESHTASKSINDIRECTEXTPROC) (GLintptr indirect);
+typedef void (APIENTRYP PFNGLMULTIDRAWMESHTASKSINDIRECTEXTPROC) (GLintptr indirect, GLsizei drawcount, GLsizei stride);
+typedef void (APIENTRYP PFNGLMULTIDRAWMESHTASKSINDIRECTCOUNTEXTPROC) (GLintptr indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride);
+#ifdef GL_GLEXT_PROTOTYPES
+GLAPI void APIENTRY glDrawMeshTasksEXT (GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
+GLAPI void APIENTRY glDrawMeshTasksIndirectEXT (GLintptr indirect);
+GLAPI void APIENTRY glMultiDrawMeshTasksIndirectEXT (GLintptr indirect, GLsizei drawcount, GLsizei stride);
+GLAPI void APIENTRY glMultiDrawMeshTasksIndirectCountEXT (GLintptr indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride);
+#endif
+#endif /* GL_EXT_mesh_shader */
+
 #ifndef GL_EXT_multiview_tessellation_geometry_shader
 #define GL_EXT_multiview_tessellation_geometry_shader 1
 #endif /* GL_EXT_multiview_tessellation_geometry_shader */
@@ -4656,6 +4777,26 @@ GLAPI void APIENTRY glFramebufferFetchBarrierEXT (void);
 #define GL_TEXTURE_REDUCTION_MODE_EXT     0x9366
 #define GL_WEIGHTED_AVERAGE_EXT           0x9367
 #endif /* GL_EXT_texture_filter_minmax */
+
+#ifndef GL_EXT_texture_sRGB
+#define GL_EXT_texture_sRGB 1
+#define GL_SRGB_EXT                       0x8C40
+#define GL_SRGB8_EXT                      0x8C41
+#define GL_SRGB_ALPHA_EXT                 0x8C42
+#define GL_SRGB8_ALPHA8_EXT               0x8C43
+#define GL_SLUMINANCE_ALPHA_EXT           0x8C44
+#define GL_SLUMINANCE8_ALPHA8_EXT         0x8C45
+#define GL_SLUMINANCE_EXT                 0x8C46
+#define GL_SLUMINANCE8_EXT                0x8C47
+#define GL_COMPRESSED_SRGB_EXT            0x8C48
+#define GL_COMPRESSED_SRGB_ALPHA_EXT      0x8C49
+#define GL_COMPRESSED_SLUMINANCE_EXT      0x8C4A
+#define GL_COMPRESSED_SLUMINANCE_ALPHA_EXT 0x8C4B
+#define GL_COMPRESSED_SRGB_S3TC_DXT1_EXT  0x8C4C
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT 0x8C4D
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT 0x8C4E
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT 0x8C4F
+#endif /* GL_EXT_texture_sRGB */
 
 #ifndef GL_EXT_texture_sRGB_R8
 #define GL_EXT_texture_sRGB_R8 1
@@ -5838,6 +5979,10 @@ GLAPI void APIENTRY glTextureBarrierNV (void);
 #define GL_NV_texture_rectangle_compressed 1
 #endif /* GL_NV_texture_rectangle_compressed */
 
+#ifndef GL_NV_uniform_buffer_std430_layout
+#define GL_NV_uniform_buffer_std430_layout 1
+#endif /* GL_NV_uniform_buffer_std430_layout */
+
 #ifndef GL_NV_uniform_buffer_unified_memory
 #define GL_NV_uniform_buffer_unified_memory 1
 #define GL_UNIFORM_BUFFER_UNIFIED_NV      0x936E
@@ -5975,8 +6120,10 @@ GLAPI void APIENTRY glViewportSwizzleNV (GLuint index, GLenum swizzlex, GLenum s
 #define GL_MAX_VIEWS_OVR                  0x9631
 #define GL_FRAMEBUFFER_INCOMPLETE_VIEW_TARGETS_OVR 0x9633
 typedef void (APIENTRYP PFNGLFRAMEBUFFERTEXTUREMULTIVIEWOVRPROC) (GLenum target, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews);
+typedef void (APIENTRYP PFNGLNAMEDFRAMEBUFFERTEXTUREMULTIVIEWOVRPROC) (GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews);
 #ifdef GL_GLEXT_PROTOTYPES
 GLAPI void APIENTRY glFramebufferTextureMultiviewOVR (GLenum target, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews);
+GLAPI void APIENTRY glNamedFramebufferTextureMultiviewOVR (GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews);
 #endif
 #endif /* GL_OVR_multiview */
 
