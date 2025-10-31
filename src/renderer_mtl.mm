@@ -879,14 +879,14 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			if (NULL != lib)
 			{
 				m_screenshotBlitProgramVsh.m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
-				MTL_RELEASE(lib, 0);
+				MTL_RELEASE_W(lib, 0);
 			}
 
 			lib = m_device.newLibraryWithSource(fshSource);
 			if (NULL != lib)
 			{
 				m_screenshotBlitProgramFsh.m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
-				MTL_RELEASE(lib, 0);
+				MTL_RELEASE_W(lib, 0);
 			}
 
 			m_screenshotBlitProgram.create(&m_screenshotBlitProgramVsh, &m_screenshotBlitProgramFsh);
@@ -2984,7 +2984,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		if (NULL != lib)
 		{
 			m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
-			MTL_RELEASE(lib, 0);
+			MTL_RELEASE_W(lib, 0);
 		}
 
 		BGFX_FATAL(NULL != m_function
