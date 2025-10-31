@@ -79,6 +79,28 @@
 #define MTL_RELEASE_W(_obj, _expected) _MTL_RELEASE(_obj, _expected, BX_WARN)
 #define MTL_RELEASE_I(_obj)            _MTL_RELEASE(_obj, 0, BX_NOOP)
 
+// C++ wrapper
+// Objects with creation functions starting with 'new' has a refcount 1 after creation, object
+// must be destroyed with release. commandBuffer, commandEncoders are autoreleased objects.
+// Needs AutoreleasePool!
+#define MTL_CLASS(_className)                       \
+	class _className                                \
+	{                                               \
+	public:                                         \
+		_className(id<MTL##_className> _obj = NULL) \
+			: m_obj(_obj)                           \
+		{                                           \
+		}                                           \
+		                                            \
+		operator id<MTL##_className>() const        \
+		{                                           \
+			return m_obj;                           \
+		}                                           \
+		                                            \
+		id<MTL##_className> m_obj;
+
+#define MTL_CLASS_END };
+
 namespace bgfx { namespace mtl
 {
 	// Metal API has obnoxious "availability" annotations on enums causing build errors when
@@ -253,20 +275,6 @@ namespace bgfx { namespace mtl
 #endif // BX_PLATFORM_OSX
 	}
 
-	// c++ wrapper
-	// objects with creation functions starting with 'new' has a refcount 1 after creation, object must be destroyed with release.
-	// commandBuffer, commandEncoders are autoreleased objects. Needs AutoreleasePool!
-
-#define MTL_CLASS(name)                                   \
-	class name                                            \
-	{                                                     \
-	public:                                               \
-		name(id<MTL##name> _obj = NULL) : m_obj(_obj) {} \
-		operator id<MTL##name>() const { return m_obj; } \
-		id<MTL##name> m_obj;
-
-#define MTL_CLASS_END };
-
 	typedef void (*mtlCallback)(void* userData);
 
 	MTL_CLASS(BlitCommandEncoder)
@@ -282,8 +290,17 @@ namespace bgfx { namespace mtl
 			, MTLOrigin _destinationOrigin
 			)
 		{
-			[m_obj copyFromTexture:_sourceTexture sourceSlice:_sourceSlice sourceLevel:_sourceLevel sourceOrigin:_sourceOrigin sourceSize:_sourceSize
-						 toTexture:_destinationTexture destinationSlice:_destinationSlice destinationLevel:_destinationLevel destinationOrigin:_destinationOrigin];
+			[m_obj
+				copyFromTexture:   _sourceTexture
+				sourceSlice:       _sourceSlice
+				sourceLevel:       _sourceLevel
+				sourceOrigin:      _sourceOrigin
+				sourceSize:        _sourceSize
+				toTexture:         _destinationTexture
+				destinationSlice:  _destinationSlice
+				destinationLevel:  _destinationLevel
+				destinationOrigin: _destinationOrigin
+			];
 		}
 
 		void copyFromBuffer(
@@ -294,8 +311,13 @@ namespace bgfx { namespace mtl
 			, NSUInteger _size
 			)
 		{
-			[m_obj copyFromBuffer:_sourceBuffer	sourceOffset:_sourceOffset toBuffer:_destinationBuffer
-				destinationOffset:_destinationOffset size:_size];
+			[m_obj
+				copyFromBuffer:    _sourceBuffer
+				sourceOffset:      _sourceOffset
+				toBuffer:          _destinationBuffer
+				destinationOffset: _destinationOffset
+				size:              _size
+			];
 		}
 
 		void copyFromBuffer(
@@ -310,25 +332,37 @@ namespace bgfx { namespace mtl
 			, MTLOrigin _destinationOrigin
 			)
 		{
-			[m_obj copyFromBuffer:_sourceBuffer sourceOffset:_sourceOffset sourceBytesPerRow:_sourceBytesPerRow
-			  sourceBytesPerImage:_sourceBytesPerImage sourceSize:_sourceSize toTexture:_destinationTexture
-				 destinationSlice:_destinationSlice destinationLevel:_destinationLevel destinationOrigin:_destinationOrigin];
+			[m_obj
+				copyFromBuffer:      _sourceBuffer
+				sourceOffset:        _sourceOffset
+				sourceBytesPerRow:   _sourceBytesPerRow
+				sourceBytesPerImage: _sourceBytesPerImage
+				sourceSize:          _sourceSize
+				toTexture:           _destinationTexture
+				destinationSlice:    _destinationSlice
+				destinationLevel:    _destinationLevel
+				destinationOrigin:   _destinationOrigin
+			];
 		}
 
 		void generateMipmapsForTexture(id<MTLTexture> _texture)
 		{
-			[m_obj generateMipmapsForTexture:_texture];
+			[m_obj generateMipmapsForTexture: _texture];
 		}
 
 #if BX_PLATFORM_OSX
 		void synchronizeTexture(id<MTLTexture> _texture, NSUInteger _slice, NSUInteger _level)
 		{
-			[m_obj synchronizeTexture:_texture slice:_slice level:_level];
+			[m_obj
+				synchronizeTexture: _texture
+				slice:              _slice
+				level:              _level
+			];
 		}
 
 		void synchronizeResource(id<MTLResource> _resource)
 		{
-			[m_obj synchronizeResource:_resource];
+			[m_obj synchronizeResource: _resource];
 		}
 #endif  // BX_PLATFORM_OSX
 
@@ -360,8 +394,9 @@ namespace bgfx { namespace mtl
 
 	MTL_CLASS(CommandBuffer)
 		// Creating Command Encoders
-		id<MTLRenderCommandEncoder> renderCommandEncoderWithDescriptor(MTLRenderPassDescriptor* _renderPassDescriptor){
-			return [m_obj renderCommandEncoderWithDescriptor:_renderPassDescriptor];
+		id<MTLRenderCommandEncoder> renderCommandEncoderWithDescriptor(MTLRenderPassDescriptor* _renderPassDescriptor)
+		{
+			return [m_obj renderCommandEncoderWithDescriptor: _renderPassDescriptor];
 		}
 
 		id<MTLComputeCommandEncoder> computeCommandEncoder()
@@ -387,17 +422,27 @@ namespace bgfx { namespace mtl
 
 		void addScheduledHandler(mtlCallback _cb, void* _data)
 		{
-			[m_obj addScheduledHandler:^(id<MTLCommandBuffer>){ _cb(_data); }];
+			[m_obj
+				addScheduledHandler: ^(id<MTLCommandBuffer>)
+				{
+					_cb(_data);
+				}
+			];
 		}
 
 		void addCompletedHandler(mtlCallback _cb, void* _data)
 		{
-			[m_obj addCompletedHandler:^(id<MTLCommandBuffer>){ _cb(_data); }];
+			[m_obj
+				addCompletedHandler: ^(id<MTLCommandBuffer>)
+				{
+					_cb(_data);
+				}
+			];
 		}
 
 		void presentDrawable(id<MTLDrawable> _drawable)
 		{
-			[m_obj presentDrawable:_drawable];
+			[m_obj presentDrawable: _drawable];
 		}
 
 		void waitUntilCompleted()
@@ -421,27 +466,27 @@ namespace bgfx { namespace mtl
 	MTL_CLASS(ComputeCommandEncoder)
 		void setComputePipelineState(id<MTLComputePipelineState> _state)
 		{
-			[m_obj setComputePipelineState:_state];
+			[m_obj setComputePipelineState: _state];
 		}
 
 		void setBuffer(id<MTLBuffer> _buffer, NSUInteger _offset, NSUInteger _index)
 		{
-			[m_obj setBuffer:_buffer offset:_offset atIndex:_index];
+			[m_obj setBuffer: _buffer offset: _offset atIndex: _index];
 		}
 
 		void setTexture(id<MTLTexture> _texture, NSUInteger _index)
 		{
-			[m_obj setTexture:_texture atIndex:_index];
+			[m_obj setTexture: _texture atIndex: _index];
 		}
 
 		void setSamplerState(id<MTLSamplerState> _sampler, NSUInteger _index)
 		{
-			[m_obj setSamplerState:_sampler atIndex:_index];
+			[m_obj setSamplerState: _sampler atIndex: _index];
 		}
 
 		void dispatchThreadgroups(MTLSize _threadgroupsPerGrid, MTLSize _threadsPerThreadgroup)
 		{
-			[m_obj dispatchThreadgroups:_threadgroupsPerGrid threadsPerThreadgroup:_threadsPerThreadgroup];
+			[m_obj dispatchThreadgroups: _threadgroupsPerGrid threadsPerThreadgroup: _threadsPerThreadgroup];
 		}
 
 		void dispatchThreadgroupsWithIndirectBuffer(
@@ -450,7 +495,11 @@ namespace bgfx { namespace mtl
 			, MTLSize _threadsPerThreadgroup
 			)
 		{
-			[m_obj dispatchThreadgroupsWithIndirectBuffer:_indirectBuffer indirectBufferOffset:_indirectBufferOffset threadsPerThreadgroup:_threadsPerThreadgroup];
+			[m_obj
+				dispatchThreadgroupsWithIndirectBuffer: _indirectBuffer
+				indirectBufferOffset:                   _indirectBufferOffset
+				threadsPerThreadgroup:                  _threadsPerThreadgroup
+			];
 		}
 
 		void endEncoding()
@@ -472,7 +521,12 @@ namespace bgfx { namespace mtl
 	MTL_CLASS(Device)
 		bool supportsFamily(MTLGPUFamily _featureSet)
 		{
-			return [m_obj supportsFamily:_featureSet];
+			if ([m_obj respondsToSelector: @selector(supportsFamily:)])
+			{
+				return [m_obj supportsFamily: _featureSet];
+			}
+
+			return false;
 		}
 
 		id<MTLLibrary> newLibraryWithData(const void* _data)
@@ -504,40 +558,57 @@ namespace bgfx { namespace mtl
 
 		id<MTLCommandQueue> newCommandQueueWithMaxCommandBufferCount(NSUInteger _maxCommandBufferCount)
 		{
-			return [m_obj newCommandQueueWithMaxCommandBufferCount:_maxCommandBufferCount];
+			return [m_obj newCommandQueueWithMaxCommandBufferCount: _maxCommandBufferCount];
 		}
 
 		// Creating Resources
 		id<MTLBuffer> newBufferWithLength(unsigned int _length, MTLResourceOptions _options)
 		{
-			return [m_obj newBufferWithLength:_length options:_options ];
+			return [m_obj
+				newBufferWithLength: _length
+				options:             _options
+			];
 		}
 
 		id<MTLBuffer> newBufferWithBytes(const void* _pointer, NSUInteger _length, MTLResourceOptions _options)
 		{
-			return [m_obj newBufferWithBytes:_pointer length:_length options:_options];
+			return [m_obj
+				newBufferWithBytes: _pointer
+				length:             _length
+				options:            _options
+			];
 		}
 
 		id<MTLTexture> newTextureWithDescriptor(MTLTextureDescriptor* _descriptor)
 		{
-			return [m_obj newTextureWithDescriptor:_descriptor];
+			return [m_obj
+				newTextureWithDescriptor: _descriptor
+			];
 		}
 
 		id<MTLSamplerState> newSamplerStateWithDescriptor(MTLSamplerDescriptor* _descriptor)
 		{
-			return [m_obj newSamplerStateWithDescriptor:_descriptor];
+			return [m_obj
+				newSamplerStateWithDescriptor: _descriptor
+			];
 		}
 
 		// Creating Command Objects Needed to Render Graphics
 		id<MTLDepthStencilState> newDepthStencilStateWithDescriptor(MTLDepthStencilDescriptor* _descriptor)
 		{
-			return [m_obj newDepthStencilStateWithDescriptor:_descriptor];
+			return [m_obj
+				newDepthStencilStateWithDescriptor: _descriptor
+			];
 		}
 
 		id<MTLRenderPipelineState> newRenderPipelineStateWithDescriptor(MTLRenderPipelineDescriptor* _descriptor)
 		{
 			NSError* error;
-			id<MTLRenderPipelineState> state = [m_obj newRenderPipelineStateWithDescriptor:_descriptor error:&error];
+			id<MTLRenderPipelineState> state = [m_obj
+				newRenderPipelineStateWithDescriptor: _descriptor
+				error:                                &error
+			];
+
 			BX_WARN(NULL == error
 				, "newRenderPipelineStateWithDescriptor failed: %s"
 				, [error.localizedDescription cStringUsingEncoding:NSASCIIStringEncoding]
@@ -552,7 +623,12 @@ namespace bgfx { namespace mtl
 			)
 		{
 			NSError* error;
-			id<MTLRenderPipelineState> state = [m_obj newRenderPipelineStateWithDescriptor:_descriptor options:_options reflection:_reflection error:&error];
+			id<MTLRenderPipelineState> state = [m_obj
+				newRenderPipelineStateWithDescriptor: _descriptor
+				options:                              _options
+				reflection:                           _reflection
+				error:                                &error
+			];
 
 			BX_WARN(NULL == error
 				, "newRenderPipelineStateWithDescriptor failed: %s"
@@ -569,7 +645,12 @@ namespace bgfx { namespace mtl
 			)
 		{
 			NSError* error;
-			id<MTLComputePipelineState> state = [m_obj newComputePipelineStateWithFunction:_computeFunction options:_options reflection:_reflection error:&error];
+			id<MTLComputePipelineState> state = [m_obj
+				newComputePipelineStateWithFunction: _computeFunction
+				options:                             _options
+				reflection:                          _reflection
+				error:                               &error
+			];
 
 			BX_WARN(NULL == error
 				, "newComputePipelineStateWithFunction failed: %s"
@@ -578,16 +659,17 @@ namespace bgfx { namespace mtl
 			return state;
 		}
 
-		bool supportsTextureSampleCount(int sampleCount)
+		bool supportsTextureSampleCount(int32_t sampleCount)
 		{
 			if (BX_ENABLED(BX_PLATFORM_IOS) && !iOSVersionEqualOrGreater("9.0.0") )
 			{
-				return sampleCount == 1 || sampleCount == 2 ||  sampleCount == 4;
+				return sampleCount == 1
+					|| sampleCount == 2
+					|| sampleCount == 4
+					;
 			}
-			else
-			{
-				return [m_obj supportsTextureSampleCount:sampleCount];
-			}
+
+			return [m_obj supportsTextureSampleCount:sampleCount];
 		}
 
 		bool depth24Stencil8PixelFormatSupported()
@@ -601,6 +683,7 @@ namespace bgfx { namespace mtl
 	MTL_CLASS_END
 
 	MTL_CLASS(Function)
+
 		NSArray* vertexAttributes()
 		{
 			return m_obj.vertexAttributes;
@@ -627,99 +710,113 @@ namespace bgfx { namespace mtl
 		// Setting Graphics Rendering State
 		void setBlendColor(float _red, float _green, float _blue, float _alpha)
 		{
-			[m_obj setBlendColorRed:_red green:_green blue:_blue alpha:_alpha];
+			[m_obj
+				setBlendColorRed: _red
+				green:            _green
+				blue:             _blue
+				alpha:            _alpha
+			];
 		}
 
-		void setVertexAmplificationCount(NSUInteger count, MTLVertexAmplificationViewMapping* viewMappings)
+		void setVertexAmplificationCount(NSUInteger _count, MTLVertexAmplificationViewMapping* _viewMappings)
 		{
-			[m_obj setVertexAmplificationCount:count viewMappings:viewMappings];
+			[m_obj
+				setVertexAmplificationCount: _count
+				viewMappings:                _viewMappings
+			];
 		}
 
 		void setCullMode(MTLCullMode _cullMode)
 		{
-			[m_obj setCullMode:_cullMode];
+			[m_obj setCullMode: _cullMode];
 		}
 
 		void setDepthBias(float _depthBias, float _slopeScale, float _clamp)
 		{
-			[m_obj setDepthBias:_depthBias slopeScale:_slopeScale clamp:_clamp];
+			[m_obj setDepthBias: _depthBias slopeScale: _slopeScale clamp: _clamp];
 		}
 
 		void setDepthStencilState(id<MTLDepthStencilState> _depthStencilState)
 		{
-			[m_obj setDepthStencilState:_depthStencilState];
+			[m_obj setDepthStencilState: _depthStencilState];
 		}
 
 		void setFrontFacingWinding(MTLWinding _frontFacingWinding)
 		{
-			[m_obj setFrontFacingWinding:_frontFacingWinding];
+			[m_obj setFrontFacingWinding: _frontFacingWinding];
 		}
 
 		void setRenderPipelineState(id<MTLRenderPipelineState> _pipelineState)
 		{
-			[m_obj setRenderPipelineState:_pipelineState];
+			[m_obj setRenderPipelineState: _pipelineState];
 		}
 
 		void setScissorRect(MTLScissorRect _rect)
 		{
-			[m_obj setScissorRect:_rect];
+			[m_obj setScissorRect: _rect];
 		}
 
 		void setStencilReferenceValue(uint32_t _ref)
 		{
-			[m_obj setStencilReferenceValue:_ref];
+			[m_obj setStencilReferenceValue: _ref];
 		}
 
 		void setTriangleFillMode(MTLTriangleFillMode _fillMode)
 		{
-			[m_obj setTriangleFillMode:_fillMode];
+			[m_obj setTriangleFillMode: _fillMode];
 		}
 
 		void setViewport(MTLViewport _viewport)
 		{
-			[m_obj setViewport:_viewport];
+			[m_obj setViewport: _viewport];
 		}
 
-		void setViewports(MTLViewport _viewport[], NSInteger count)
+		void setViewports(MTLViewport _viewport[], NSInteger _count)
 		{
-			[m_obj setViewports:_viewport count:count];
+			[m_obj
+				setViewports: _viewport
+				count:        _count
+			];
 		}
 
 		void setVisibilityResultMode(MTLVisibilityResultMode _mode, NSUInteger _offset)
 		{
-			[m_obj setVisibilityResultMode:_mode offset:_offset];
+			[m_obj
+				setVisibilityResultMode: _mode
+				offset:                  _offset
+			];
 		}
 
 		// Specifying Resources for a Vertex Function
 		void setVertexBuffer(id<MTLBuffer> _buffer, NSUInteger _offset, NSUInteger _index)
 		{
-			[m_obj setVertexBuffer:_buffer offset:_offset atIndex:_index];
+			[m_obj setVertexBuffer: _buffer offset: _offset atIndex: _index];
 		}
 
 		void setVertexSamplerState(id<MTLSamplerState> _sampler, NSUInteger _index)
 		{
-			[m_obj setVertexSamplerState:_sampler atIndex:_index];
+			[m_obj setVertexSamplerState: _sampler atIndex: _index];
 		}
 
 		void setVertexTexture(id<MTLTexture> _texture, NSUInteger _index)
 		{
-			[m_obj setVertexTexture:_texture atIndex:_index];
+			[m_obj setVertexTexture: _texture atIndex: _index];
 		}
 
 		// Specifying Resources for a Fragment Function
 		void setFragmentBuffer(id<MTLBuffer> _buffer, NSUInteger _offset, NSUInteger _index)
 		{
-			[m_obj setFragmentBuffer:_buffer offset:_offset atIndex:_index];
+			[m_obj setFragmentBuffer: _buffer offset: _offset atIndex: _index];
 		}
 
 		void setFragmentSamplerState(id<MTLSamplerState> _sampler, NSUInteger _index)
 		{
-			[m_obj setFragmentSamplerState:_sampler atIndex:_index];
+			[m_obj setFragmentSamplerState: _sampler atIndex: _index];
 		}
 
 		void setFragmentTexture(id<MTLTexture> _texture, NSUInteger _index)
 		{
-			[m_obj setFragmentTexture:_texture atIndex:_index];
+			[m_obj setFragmentTexture: _texture atIndex: _index];
 		}
 
 		//Drawing Geometric Primitives
@@ -733,7 +830,14 @@ namespace bgfx { namespace mtl
 			, NSUInteger _instanceCount
 			)
 		{
-			[m_obj drawIndexedPrimitives:_primitiveType indexCount:_indexCount indexType:_indexType indexBuffer:_indexBuffer indexBufferOffset:_indexBufferOffset instanceCount:_instanceCount];
+			[m_obj
+				drawIndexedPrimitives: _primitiveType
+				indexCount:            _indexCount
+				indexType:             _indexType
+				indexBuffer:           _indexBuffer
+				indexBufferOffset:     _indexBufferOffset
+				instanceCount:         _instanceCount
+			];
 		}
 
 		void drawPrimitives(
@@ -743,7 +847,12 @@ namespace bgfx { namespace mtl
 			, NSUInteger _instanceCount
 			)
 		{
-			[m_obj drawPrimitives:_primitiveType vertexStart:_vertexStart vertexCount:_vertexCount instanceCount:_instanceCount];
+			[m_obj
+				drawPrimitives: _primitiveType
+				vertexStart:    _vertexStart
+				vertexCount:    _vertexCount
+				instanceCount:  _instanceCount
+			];
 		}
 
 		void drawPrimitives(
@@ -751,7 +860,11 @@ namespace bgfx { namespace mtl
 			, id<MTLBuffer> _indirectBuffer
 			, NSUInteger _indirectBufferOffset)
 		{
-			[m_obj drawPrimitives:_primitiveType indirectBuffer:_indirectBuffer indirectBufferOffset:_indirectBufferOffset];
+			[m_obj
+				drawPrimitives:       _primitiveType
+				indirectBuffer:       _indirectBuffer
+				indirectBufferOffset: _indirectBufferOffset
+			];
 		}
 
 		void drawIndexedPrimitives(
@@ -762,7 +875,14 @@ namespace bgfx { namespace mtl
 			, id<MTLBuffer> _indirectBuffer
 			, NSUInteger _indirectBufferOffset)
 		{
-			[m_obj drawIndexedPrimitives:_primitiveType indexType:_indexType indexBuffer:_indexBuffer indexBufferOffset:_indexBufferOffset indirectBuffer:_indirectBuffer indirectBufferOffset:_indirectBufferOffset];
+			[m_obj
+				drawIndexedPrimitives: _primitiveType
+				indexType:             _indexType
+				indexBuffer:           _indexBuffer
+				indexBufferOffset:     _indexBufferOffset
+				indirectBuffer:        _indirectBuffer
+				indirectBufferOffset:  _indirectBufferOffset
+			];
 		}
 
 		void insertDebugSignpost(const char* _string)
@@ -788,29 +908,66 @@ namespace bgfx { namespace mtl
 
 	MTL_CLASS(Texture)
 		// Copying Data into a Texture Image
-		void replaceRegion(MTLRegion _region, NSUInteger _level, NSUInteger _slice, const void* _pixelBytes, NSUInteger _bytesPerRow, NSUInteger _bytesPerImage)
+		void replaceRegion(
+			  MTLRegion _region
+			, NSUInteger _level
+			, NSUInteger _slice
+			, const void* _pixelBytes
+			, NSUInteger _bytesPerRow
+			, NSUInteger _bytesPerImage
+			)
 		{
-			[m_obj replaceRegion:_region mipmapLevel:_level slice:_slice withBytes:_pixelBytes bytesPerRow:_bytesPerRow bytesPerImage:_bytesPerImage];
+			[m_obj
+				replaceRegion: _region
+				mipmapLevel:   _level
+				slice:         _slice
+				withBytes:     _pixelBytes
+				bytesPerRow:   _bytesPerRow
+				bytesPerImage: _bytesPerImage
+			];
 		}
 
 		// Copying Data from a Texture Image
-		void getBytes(void* _pixelBytes, NSUInteger _bytesPerRow, NSUInteger _bytesPerImage, MTLRegion _region, NSUInteger _mipmapLevel, NSUInteger _slice) const
+		void getBytes(
+			  void* _pixelBytes
+			, NSUInteger _bytesPerRow
+			, NSUInteger _bytesPerImage
+			, MTLRegion _region
+			, NSUInteger _mipmapLevel
+			, NSUInteger _slice
+			) const
 		{
-			[m_obj getBytes:_pixelBytes bytesPerRow:_bytesPerRow bytesPerImage:_bytesPerImage fromRegion:_region mipmapLevel:_mipmapLevel slice:_slice];
+			[m_obj
+				getBytes:      _pixelBytes
+				bytesPerRow:   _bytesPerRow
+				bytesPerImage: _bytesPerImage
+				fromRegion:    _region
+				mipmapLevel:   _mipmapLevel
+				slice:         _slice
+			];
 		}
 
 		// Creating Textures by Reusing Image Data
 		id<MTLTexture> newTextureViewWithPixelFormat(MTLPixelFormat _pixelFormat)
 		{
-			return [m_obj newTextureViewWithPixelFormat:_pixelFormat];
+			return [m_obj newTextureViewWithPixelFormat: _pixelFormat];
 		}
 
-		id<MTLTexture> newTextureViewWithPixelFormat(MTLPixelFormat _pixelFormat, MTLTextureType _textureType, NSRange _levelRange, NSRange _sliceRange)
+		id<MTLTexture> newTextureViewWithPixelFormat(
+			  MTLPixelFormat _pixelFormat
+			, MTLTextureType _textureType
+			, NSRange _levelRange
+			, NSRange _sliceRange
+			)
 		{
-			return [m_obj newTextureViewWithPixelFormat:_pixelFormat textureType:_textureType levels:_levelRange slices:_sliceRange];
+			return [m_obj
+				newTextureViewWithPixelFormat: _pixelFormat
+				textureType:                   _textureType
+				levels:                        _levelRange
+				slices:                        _sliceRange
+			];
 		}
 
-		//properties
 		uint32_t width() const
 		{
 			return (uint32_t)m_obj.width;
@@ -851,13 +1008,13 @@ namespace bgfx { namespace mtl
 	MTL_CLASS_END
 
 	typedef id<MTLComputePipelineState> ComputePipelineState;
-	typedef id<MTLDepthStencilState> DepthStencilState;
-	typedef id<MTLRenderPipelineState> RenderPipelineState;
-	typedef id<MTLSamplerState> SamplerState;
+	typedef id<MTLDepthStencilState>    DepthStencilState;
+	typedef id<MTLRenderPipelineState>  RenderPipelineState;
+	typedef id<MTLSamplerState>         SamplerState;
 
 	//descriptors
 	//NOTE: [class new] is same as [[class alloc] init]
-	typedef MTLRenderPipelineDescriptor* RenderPipelineDescriptor;
+	typedef MTLRenderPipelineDescriptor*  RenderPipelineDescriptor;
 	typedef MTLComputePipelineReflection* ComputePipelineReflection;
 
 	inline RenderPipelineDescriptor newRenderPipelineDescriptor()
@@ -886,8 +1043,8 @@ namespace bgfx { namespace mtl
 		return [MTLStencilDescriptor new];
 	}
 
-	typedef MTLRenderPassColorAttachmentDescriptor* RenderPassColorAttachmentDescriptor;
-	typedef MTLRenderPassDepthAttachmentDescriptor* RenderPassDepthAttachmentDescriptor;
+	typedef MTLRenderPassColorAttachmentDescriptor*   RenderPassColorAttachmentDescriptor;
+	typedef MTLRenderPassDepthAttachmentDescriptor*   RenderPassDepthAttachmentDescriptor;
 	typedef MTLRenderPassStencilAttachmentDescriptor* RenderPassStencilAttachmentDescriptor;
 
 	typedef MTLRenderPassDescriptor* RenderPassDescriptor;

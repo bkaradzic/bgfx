@@ -516,65 +516,65 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			retain(m_device);
 
+			if (m_device.supportsFamily(MTLGPUFamilyApple4) )
 			{
-				if ([m_device respondsToSelector: @selector(supportsFamily:)])
-				{
-					if ([m_device supportsFamily: MTLGPUFamilyApple4])
-					{
-						g_caps.vendorId = BGFX_PCI_ID_APPLE;
+				g_caps.vendorId = BGFX_PCI_ID_APPLE;
+				g_caps.deviceId = 1004;
 
-						if ([m_device supportsFamily: MTLGPUFamilyApple8])
-						{
-							g_caps.deviceId = 1008;
-						}
-						else if ([m_device supportsFamily: MTLGPUFamilyApple7])
-						{
-							g_caps.deviceId = 1007;
-						}
-						else if ([m_device supportsFamily: MTLGPUFamilyApple6])
-						{
-							g_caps.deviceId = 1006;
-						}
-						else if ([m_device supportsFamily: MTLGPUFamilyApple5])
-						{
-							g_caps.deviceId = 1005;
-						}
-						else
-						{
-							g_caps.deviceId = 1004;
-						}
-					}
+				if (m_device.supportsFamily(MTLGPUFamilyApple10) )
+				{
+					g_caps.deviceId = 1010;
 				}
+				else if (m_device.supportsFamily(MTLGPUFamilyApple9) )
+				{
+					g_caps.deviceId = 1009;
+				}
+				else if (m_device.supportsFamily(MTLGPUFamilyApple8) )
+				{
+					g_caps.deviceId = 1008;
+				}
+				else if (m_device.supportsFamily(MTLGPUFamilyApple7) )
+				{
+					g_caps.deviceId = 1007;
+				}
+				else if (m_device.supportsFamily(MTLGPUFamilyApple6) )
+				{
+					g_caps.deviceId = 1006;
+				}
+				else if (m_device.supportsFamily(MTLGPUFamilyApple5) )
+				{
+					g_caps.deviceId = 1005;
+				}
+			}
 
 #if BX_PLATFORM_OSX
-				if (0 == g_caps.vendorId)
+			if (0 == g_caps.vendorId)
+			{
+				io_registry_entry_t entry;
+
+				uint64_t registryId = getRegistryId(m_device);
+
+				if (0 != registryId)
 				{
-					io_registry_entry_t entry;
+					entry = IOServiceGetMatchingService(mach_port_t(NULL), IORegistryEntryIDMatching(registryId) );
 
-					uint64_t registryId = getRegistryId(m_device);
-
-					if (0 != registryId)
+					if (0 != entry)
 					{
-						entry = IOServiceGetMatchingService(mach_port_t(NULL), IORegistryEntryIDMatching(registryId) );
+						io_registry_entry_t parent;
 
-						if (0 != entry)
+						if (kIOReturnSuccess == IORegistryEntryGetParentEntry(entry, kIOServicePlane, &parent) )
 						{
-							io_registry_entry_t parent;
+							g_caps.vendorId = getEntryProperty(parent, CFSTR("vendor-id") );
+							g_caps.deviceId = getEntryProperty(parent, CFSTR("device-id") );
 
-							if (kIOReturnSuccess == IORegistryEntryGetParentEntry(entry, kIOServicePlane, &parent) )
-							{
-								g_caps.vendorId = getEntryProperty(parent, CFSTR("vendor-id") );
-								g_caps.deviceId = getEntryProperty(parent, CFSTR("device-id") );
-
-								IOObjectRelease(parent);
-							}
-
-							IOObjectRelease(entry);
+							IOObjectRelease(parent);
 						}
+
+						IOObjectRelease(entry);
 					}
 				}
-#endif // BX_PLATFORM_OSX
 			}
+#endif // BX_PLATFORM_OSX
 
 			g_caps.numGPUs = 1;
 			g_caps.gpu[0].vendorId = g_caps.vendorId;
