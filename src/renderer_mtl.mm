@@ -516,111 +516,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			retain(m_device);
 
-			m_mainFrameBuffer.create(
-				  0
-				, g_platformData.nwh
-				, m_resolution.width
-				, m_resolution.height
-				, m_resolution.formatColor
-				, m_resolution.formatDepthStencil
-				);
-
-#if BX_PLATFORM_VISIONOS
-			if (m_mainFrameBuffer.m_swapChain->m_useLayerRenderer)
-			{
-				m_deviceAnchor = ar_device_anchor_create();
-				m_worldTracking = ar_world_tracking_provider_create(ar_world_tracking_configuration_create() );
-				m_arSession = ar_session_create();
-				ar_session_run(m_arSession, ar_data_providers_create_with_data_providers(m_worldTracking, nil) );
-			}
-#endif // BX_PLATFORM_VISIONOS
-			m_numWindows = 1;
-
-#if BX_PLATFORM_VISIONOS
-			bool useLayerRenderer = m_mainFrameBuffer.m_swapChain->m_useLayerRenderer;
-
-			if ( (useLayerRenderer && NULL == m_mainFrameBuffer.m_swapChain->m_layerRenderer)
-			||  (!useLayerRenderer && NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer)
-			   )
-#else
-			if (NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer)
-#endif // BX_PLATFORM_VISIONOS
-			{
-				MTL_RELEASE(m_device, 0);
-				return false;
-			}
-
-			m_cmd.init(m_device);
-			BGFX_FATAL(NULL != m_cmd.m_commandQueue, Fatal::UnableToInitialize, "Unable to create Metal device.");
-
-			m_renderPipelineDescriptor   = newRenderPipelineDescriptor();
-			m_depthStencilDescriptor     = newDepthStencilDescriptor();
-			m_frontFaceStencilDescriptor = newStencilDescriptor();
-			m_backFaceStencilDescriptor  = newStencilDescriptor();
-			m_vertexDescriptor  = newVertexDescriptor();
-			m_textureDescriptor = newTextureDescriptor();
-			m_samplerDescriptor = newSamplerDescriptor();
-
-			for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_LATENCY; ++ii)
-			{
-				m_uniformBuffers[ii] = m_device.newBufferWithLength(UNIFORM_BUFFER_SIZE, 0);
-			}
-
-			m_uniformBufferVertexOffset   = 0;
-			m_uniformBufferFragmentOffset = 0;
-
-			const char* vshSource =
-				"using namespace metal;\n"
-				"struct xlatMtlShaderOutput { float4 gl_Position [[position]]; float2 v_texcoord0; }; \n"
-				"vertex xlatMtlShaderOutput xlatMtlMain (uint v_id [[ vertex_id ]]) \n"
-				"{\n"
-				"   xlatMtlShaderOutput _mtl_o;\n"
-				"   if (v_id==0) { _mtl_o.gl_Position = float4(-1.0,-1.0,0.0,1.0); _mtl_o.v_texcoord0 = float2(0.0,1.0); } \n"
-				"   else if (v_id==1) { _mtl_o.gl_Position = float4(3.0,-1.0,0.0,1.0); _mtl_o.v_texcoord0 = float2(2.0,1.0); } \n"
-				"   else { _mtl_o.gl_Position = float4(-1.0,3.0,0.0,1.0); _mtl_o.v_texcoord0 = float2(0.0,-1.0); }\n"
-				"   return _mtl_o;\n"
-				"}\n"
-				;
-
-			 const char* fshSource =
-				"using namespace metal;\n"
-				"struct xlatMtlShaderInput { float2 v_texcoord0; };\n"
-				"fragment half4 xlatMtlMain (xlatMtlShaderInput _mtl_i[[stage_in]], texture2d<float> s_texColor [[texture(0)]], sampler _mtlsmp_s_texColor [[sampler(0)]] )\n"
-				"{\n"
-				"   return half4(s_texColor.sample(_mtlsmp_s_texColor, _mtl_i.v_texcoord0) );\n"
-				"}\n"
-				;
-
-			Library lib = m_device.newLibraryWithSource(vshSource);
-			if (NULL != lib)
-			{
-				m_screenshotBlitProgramVsh.m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
-				MTL_RELEASE(lib, 0);
-			}
-
-			lib = m_device.newLibraryWithSource(fshSource);
-			if (NULL != lib)
-			{
-				m_screenshotBlitProgramFsh.m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
-				MTL_RELEASE(lib, 0);
-			}
-
-			m_screenshotBlitProgram.create(&m_screenshotBlitProgramVsh, &m_screenshotBlitProgramFsh);
-
-			reset(m_renderPipelineDescriptor);
-			m_renderPipelineDescriptor.colorAttachments[0].pixelFormat = getSwapChainPixelFormat(m_mainFrameBuffer.m_swapChain);
-
-#if BX_PLATFORM_VISIONOS
-			if (m_mainFrameBuffer.m_swapChain->m_useLayerRenderer)
-			{
-				m_renderPipelineDescriptor.depthAttachmentPixelFormat = cp_layer_renderer_configuration_get_depth_format(m_mainFrameBuffer.m_swapChain->m_layerRendererConfiguration);
-			}
-#endif // BX_PLATFORM_VISIONOS
-
-			m_renderPipelineDescriptor.vertexFunction   = m_screenshotBlitProgram.m_vsh->m_function;
-			m_renderPipelineDescriptor.fragmentFunction = m_screenshotBlitProgram.m_fsh->m_function;
-			m_screenshotBlitRenderPipelineState         = m_device.newRenderPipelineStateWithDescriptor(m_renderPipelineDescriptor);
-
 			{
 				if ([m_device respondsToSelector: @selector(supportsFamily:)])
 				{
@@ -906,6 +801,110 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
 			}
 
+			m_renderPipelineDescriptor   = newRenderPipelineDescriptor();
+			m_depthStencilDescriptor     = newDepthStencilDescriptor();
+			m_frontFaceStencilDescriptor = newStencilDescriptor();
+			m_backFaceStencilDescriptor  = newStencilDescriptor();
+			m_vertexDescriptor           = newVertexDescriptor();
+			m_samplerDescriptor          = newSamplerDescriptor();
+
+			m_mainFrameBuffer.create(
+				  0
+				, g_platformData.nwh
+				, m_resolution.width
+				, m_resolution.height
+				, m_resolution.formatColor
+				, m_resolution.formatDepthStencil
+				);
+
+#if BX_PLATFORM_VISIONOS
+			if (m_mainFrameBuffer.m_swapChain->m_useLayerRenderer)
+			{
+				m_deviceAnchor = ar_device_anchor_create();
+				m_worldTracking = ar_world_tracking_provider_create(ar_world_tracking_configuration_create() );
+				m_arSession = ar_session_create();
+				ar_session_run(m_arSession, ar_data_providers_create_with_data_providers(m_worldTracking, nil) );
+			}
+#endif // BX_PLATFORM_VISIONOS
+			m_numWindows = 1;
+
+#if BX_PLATFORM_VISIONOS
+			bool useLayerRenderer = m_mainFrameBuffer.m_swapChain->m_useLayerRenderer;
+
+			if ( (useLayerRenderer && NULL == m_mainFrameBuffer.m_swapChain->m_layerRenderer)
+			||  (!useLayerRenderer && NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer)
+			   )
+#else
+			if (NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer)
+#endif // BX_PLATFORM_VISIONOS
+			{
+				MTL_RELEASE(m_device, 0);
+				return false;
+			}
+
+			m_cmd.init(m_device);
+			BGFX_FATAL(NULL != m_cmd.m_commandQueue, Fatal::UnableToInitialize, "Unable to create Metal device.");
+
+			for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_LATENCY; ++ii)
+			{
+				m_uniformBuffers[ii] = m_device.newBufferWithLength(UNIFORM_BUFFER_SIZE, 0);
+			}
+
+			m_uniformBufferVertexOffset   = 0;
+			m_uniformBufferFragmentOffset = 0;
+
+			const char* vshSource =
+				"using namespace metal;\n"
+				"struct xlatMtlShaderOutput { float4 gl_Position [[position]]; float2 v_texcoord0; }; \n"
+				"vertex xlatMtlShaderOutput xlatMtlMain (uint v_id [[ vertex_id ]]) \n"
+				"{\n"
+				"   xlatMtlShaderOutput _mtl_o;\n"
+				"   if (v_id==0) { _mtl_o.gl_Position = float4(-1.0,-1.0,0.0,1.0); _mtl_o.v_texcoord0 = float2(0.0,1.0); } \n"
+				"   else if (v_id==1) { _mtl_o.gl_Position = float4(3.0,-1.0,0.0,1.0); _mtl_o.v_texcoord0 = float2(2.0,1.0); } \n"
+				"   else { _mtl_o.gl_Position = float4(-1.0,3.0,0.0,1.0); _mtl_o.v_texcoord0 = float2(0.0,-1.0); }\n"
+				"   return _mtl_o;\n"
+				"}\n"
+				;
+
+			 const char* fshSource =
+				"using namespace metal;\n"
+				"struct xlatMtlShaderInput { float2 v_texcoord0; };\n"
+				"fragment half4 xlatMtlMain (xlatMtlShaderInput _mtl_i[[stage_in]], texture2d<float> s_texColor [[texture(0)]], sampler _mtlsmp_s_texColor [[sampler(0)]] )\n"
+				"{\n"
+				"   return half4(s_texColor.sample(_mtlsmp_s_texColor, _mtl_i.v_texcoord0) );\n"
+				"}\n"
+				;
+
+			Library lib = m_device.newLibraryWithSource(vshSource);
+			if (NULL != lib)
+			{
+				m_screenshotBlitProgramVsh.m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
+				MTL_RELEASE(lib, 0);
+			}
+
+			lib = m_device.newLibraryWithSource(fshSource);
+			if (NULL != lib)
+			{
+				m_screenshotBlitProgramFsh.m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
+				MTL_RELEASE(lib, 0);
+			}
+
+			m_screenshotBlitProgram.create(&m_screenshotBlitProgramVsh, &m_screenshotBlitProgramFsh);
+
+			reset(m_renderPipelineDescriptor);
+			m_renderPipelineDescriptor.colorAttachments[0].pixelFormat = getSwapChainPixelFormat(m_mainFrameBuffer.m_swapChain);
+
+#if BX_PLATFORM_VISIONOS
+			if (m_mainFrameBuffer.m_swapChain->m_useLayerRenderer)
+			{
+				m_renderPipelineDescriptor.depthAttachmentPixelFormat = cp_layer_renderer_configuration_get_depth_format(m_mainFrameBuffer.m_swapChain->m_layerRendererConfiguration);
+			}
+#endif // BX_PLATFORM_VISIONOS
+
+			m_renderPipelineDescriptor.vertexFunction   = m_screenshotBlitProgram.m_vsh->m_function;
+			m_renderPipelineDescriptor.fragmentFunction = m_screenshotBlitProgram.m_fsh->m_function;
+			m_screenshotBlitRenderPipelineState         = m_device.newRenderPipelineStateWithDescriptor(m_renderPipelineDescriptor);
+
 			m_occlusionQuery.preReset();
 			m_gpuTimer.init();
 
@@ -949,7 +948,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			MTL_RELEASE(m_backFaceStencilDescriptor, 0);
 			MTL_RELEASE(m_renderPipelineDescriptor, 0);
 			MTL_RELEASE(m_vertexDescriptor, 0);
-			MTL_RELEASE(m_textureDescriptor, 0);
 			MTL_RELEASE(m_samplerDescriptor, 0);
 
 #if BX_PLATFORM_VISIONOS
@@ -1391,7 +1389,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			const uint32_t numVertices = _numIndices*4/6;
 			if (0 < numVertices)
 			{
-				m_indexBuffers [_blitter.m_ib->handle.idx].update(
+				m_indexBuffers[_blitter.m_ib->handle.idx].update(
 					  0
 					, bx::strideAlign(_numIndices*2, 4)
 					, _blitter.m_ib->data
@@ -2863,7 +2861,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		StencilDescriptor        m_frontFaceStencilDescriptor;
 		StencilDescriptor        m_backFaceStencilDescriptor;
 		VertexDescriptor         m_vertexDescriptor;
-		TextureDescriptor        m_textureDescriptor;
 		SamplerDescriptor        m_samplerDescriptor;
 
 		// currently active objects data
@@ -3153,7 +3150,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			const bool convert = m_textureFormat != m_requestedFormat;
 			const uint8_t bpp  = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 
-			TextureDescriptor desc = s_renderMtl->m_textureDescriptor;
+			TextureDescriptor desc = newTextureDescriptor();
 
 			if (1 < ti.numLayers)
 			{
@@ -3282,6 +3279,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				desc.pixelFormat = kMtlPixelFormatStencil8;
 				m_ptrStencil = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 			}
+
+			MTL_RELEASE(desc, 0);
 
 			uint8_t* temp = NULL;
 			if (convert)
@@ -3424,7 +3423,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			BlitCommandEncoder bce = s_renderMtl->getBlitCommandEncoder();
 
-			TextureDescriptor desc = s_renderMtl->m_textureDescriptor;
+			TextureDescriptor desc = newTextureDescriptor();
 			desc.textureType = _depth > 1 ? MTLTextureType3D : MTLTextureType2D;
 			desc.pixelFormat = m_ptr.pixelFormat();
 			desc.width  = _rect.m_width;
@@ -3445,12 +3444,15 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			}
 
 			Texture tempTexture = s_renderMtl->m_device.newTextureWithDescriptor(desc);
+
 			MTLRegion region =
 			{
 				{ 0,     0,      0     },
 				{ _rect.m_width, _rect.m_height, _depth },
 			};
+
 			tempTexture.replaceRegion(region, 0, 0, data, srcpitch, srcpitch * _rect.m_height);
+
 			bce.copyFromTexture(
 				  tempTexture
 				, 0
@@ -3462,6 +3464,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				, _mip
 				, MTLOriginMake(_rect.m_x, _rect.m_y, zz)
 				);
+
+			MTL_RELEASE(desc, 0);
 			MTL_RELEASE(tempTexture, 1);
 		}
 
@@ -3740,7 +3744,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				;
 		}
 
-		TextureDescriptor desc = s_renderMtl->m_textureDescriptor;
+		TextureDescriptor desc = newTextureDescriptor();
 
 		desc.textureType = sampleCount > 1
 			? MTLTextureType2DMultisample
@@ -3806,6 +3810,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_backBufferColorMsaa = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 			m_backBufferColorMsaa.setLabel("SwapChain BackBuffer Color MSAA");
 		}
+
+		MTL_RELEASE(desc, 0);
 
 		bx::HashMurmur2A murmur;
 		murmur.begin();
@@ -3876,7 +3882,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			}
 			else
 			{
-				TextureDescriptor desc = s_renderMtl->m_textureDescriptor;
+				TextureDescriptor desc = newTextureDescriptor();
 				desc.textureType = MTLTextureType2D;
 
 #if BX_PLATFORM_VISIONOS
@@ -3910,6 +3916,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				m_drawableTexture = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 				MTL_CHECK_REFCOUNT(m_drawableTexture, 1);
+				MTL_RELEASE(desc, 0);
 			}
 		}
 
@@ -4372,7 +4379,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			if (NULL == m_screenshotTarget)
 			{
-				TextureDescriptor desc = m_textureDescriptor;
+				TextureDescriptor desc = newTextureDescriptor();
 
 				desc.textureType = MTLTextureType2D;
 				desc.pixelFormat = getSwapChainPixelFormat(m_mainFrameBuffer.m_swapChain);
@@ -4398,6 +4405,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 
 				m_screenshotTarget = m_device.newTextureWithDescriptor(desc);
+				MTL_RELEASE(desc, 0);
 			}
 		}
 		else
