@@ -1097,13 +1097,16 @@ namespace bgfx { namespace mtl
 			, m_numPredefined(0)
 			, m_rps(NULL)
 			, m_cps(NULL)
+		{
+			m_numThreads[0] = 1;
+			m_numThreads[1] = 1;
+			m_numThreads[2] = 1;
+
+			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
 			{
-				m_numThreads[0] = 1;
-				m_numThreads[1] = 1;
-				m_numThreads[2] = 1;
-				for(uint32_t i=0; i<BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++i)
-					m_bindingTypes[i] = 0;
+				m_bindingTypes[ii] = 0;
 			}
+		}
 
 		~PipelineStateMtl()
 		{
@@ -1119,8 +1122,8 @@ namespace bgfx { namespace mtl
 				m_fshConstantBuffer = NULL;
 			}
 
-			release(m_rps);
-			release(m_cps);
+			MTL_RELEASE_W(m_rps, 0);
+			MTL_RELEASE_W(m_cps, 0);
 		}
 
 		UniformBuffer* m_vshConstantBuffer;
@@ -1138,12 +1141,12 @@ namespace bgfx { namespace mtl
 		};
 		uint8_t m_bindingTypes[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 
-		uint16_t 	m_numThreads[3];
+		uint16_t m_numThreads[3];
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count*2];
 		uint8_t m_numPredefined;
 
-		RenderPipelineState m_rps;
+		RenderPipelineState  m_rps;
 		ComputePipelineState m_cps;
 	};
 
@@ -1172,7 +1175,7 @@ namespace bgfx { namespace mtl
 			, m_depth(0)
 			, m_numMips(0)
 		{
-			for(uint32_t ii = 0; ii < BX_COUNTOF(m_ptrMips); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_ptrMips); ++ii)
 			{
 				m_ptrMips[ii] = NULL;
 			}

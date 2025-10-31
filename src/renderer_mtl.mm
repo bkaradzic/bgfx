@@ -546,7 +546,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			if (NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer)
 #endif // BX_PLATFORM_VISIONOS
 			{
-				release(m_device);
+				MTL_RELEASE(m_device, 0);
 				return false;
 			}
 
@@ -595,14 +595,14 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			if (NULL != lib)
 			{
 				m_screenshotBlitProgramVsh.m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
-				release(lib);
+				MTL_RELEASE(lib, 0);
 			}
 
 			lib = m_device.newLibraryWithSource(fshSource);
 			if (NULL != lib)
 			{
 				m_screenshotBlitProgramFsh.m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
-				release(lib);
+				MTL_RELEASE(lib, 0);
 			}
 
 			m_screenshotBlitProgram.create(&m_screenshotBlitProgramVsh, &m_screenshotBlitProgramFsh);
@@ -1748,7 +1748,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void setShaderUniform(uint8_t _flags, uint32_t _loc, const void* _val, uint32_t _numRegs)
 		{
-			uint32_t offset = 0 != (_flags&kUniformFragmentBit)
+			const uint32_t offset = 0 != (_flags&kUniformFragmentBit)
 				? m_uniformBufferFragmentOffset
 				: m_uniformBufferVertexOffset
 				;
@@ -2556,8 +2556,12 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					for (uint32_t ii = 0; Attrib::Count != program.m_used[ii]; ++ii)
 					{
 						Attrib::Enum attr = Attrib::Enum(program.m_used[ii]);
+
 						if (attrSet[attr])
+						{
 							continue;
+						}
+
 						const uint32_t loc = program.m_attributes[attr];
 
 						uint8_t num;
@@ -2589,8 +2593,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				for (uint32_t ii = 0; Attrib::Count != program.m_used[ii]; ++ii)
 				{
-					Attrib::Enum attr = Attrib::Enum(program.m_used[ii]);
+					const Attrib::Enum attr = Attrib::Enum(program.m_used[ii]);
 					const uint32_t loc = program.m_attributes[attr];
+
 					if (!attrSet[attr])
 					{
 						vertexDesc.attributes[loc].format      = MTLVertexFormatUChar2;
@@ -2716,16 +2721,18 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			if (NULL == sampler)
 			{
-				m_samplerDescriptor.sAddressMode = s_textureAddress[(_flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT];
-				m_samplerDescriptor.tAddressMode = s_textureAddress[(_flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT];
-				m_samplerDescriptor.rAddressMode = s_textureAddress[(_flags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT];
-				m_samplerDescriptor.minFilter    = s_textureFilterMinMag[(_flags&BGFX_SAMPLER_MIN_MASK)>>BGFX_SAMPLER_MIN_SHIFT];
-				m_samplerDescriptor.magFilter    = s_textureFilterMinMag[(_flags&BGFX_SAMPLER_MAG_MASK)>>BGFX_SAMPLER_MAG_SHIFT];
-				m_samplerDescriptor.mipFilter    = s_textureFilterMip[(_flags&BGFX_SAMPLER_MIP_MASK)>>BGFX_SAMPLER_MIP_SHIFT];
-				m_samplerDescriptor.lodMinClamp  = 0;
-				m_samplerDescriptor.lodMaxClamp  = FLT_MAX;
-				m_samplerDescriptor.normalizedCoordinates = TRUE;
-				m_samplerDescriptor.maxAnisotropy =  (0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) ) )
+				SamplerDescriptor desc = m_samplerDescriptor;
+
+				desc.sAddressMode = s_textureAddress[(_flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT];
+				desc.tAddressMode = s_textureAddress[(_flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT];
+				desc.rAddressMode = s_textureAddress[(_flags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT];
+				desc.minFilter    = s_textureFilterMinMag[(_flags&BGFX_SAMPLER_MIN_MASK)>>BGFX_SAMPLER_MIN_SHIFT];
+				desc.magFilter    = s_textureFilterMinMag[(_flags&BGFX_SAMPLER_MAG_MASK)>>BGFX_SAMPLER_MAG_SHIFT];
+				desc.mipFilter    = s_textureFilterMip[(_flags&BGFX_SAMPLER_MIP_MASK)>>BGFX_SAMPLER_MIP_SHIFT];
+				desc.lodMinClamp  = 0;
+				desc.lodMaxClamp  = FLT_MAX;
+				desc.normalizedCoordinates = TRUE;
+				desc.maxAnisotropy =  (0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) ) )
 					? m_mainFrameBuffer.m_swapChain->m_maxAnisotropy
 					: 1
 					;
@@ -2733,13 +2740,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				if (0 != (g_caps.supported & BGFX_CAPS_TEXTURE_COMPARE_ALL) )
 				{
 					const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
-					m_samplerDescriptor.compareFunction = 0 == cmpFunc
+					desc.compareFunction = 0 == cmpFunc
 						? MTLCompareFunctionNever
 						: s_cmpFunc[cmpFunc]
 						;
 				}
 
-				sampler = m_device.newSamplerStateWithDescriptor(m_samplerDescriptor);
+				sampler = m_device.newSamplerStateWithDescriptor(desc);
 				m_samplerStateCache.add(_flags, sampler);
 			}
 
@@ -2982,7 +2989,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		if (NULL != lib)
 		{
 			m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
-			release(lib);
+			MTL_RELEASE(lib, 0);
 		}
 
 		BGFX_FATAL(NULL != m_function
@@ -3457,7 +3464,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				, _mip
 				, MTLOriginMake(_rect.m_x, _rect.m_y, zz)
 				);
-			release(tempTexture);
+			MTL_RELEASE(tempTexture, 1);
 		}
 
 		if (NULL != temp)
@@ -4132,7 +4139,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		for (ResourceArray::iterator it = ra.begin(), itEnd = ra.end(); it != itEnd; ++it)
 		{
-			bgfx::mtl::release(*it);
+			MTL_RELEASE_I(*it);
 		}
 
 		ra.clear();
