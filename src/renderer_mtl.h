@@ -247,6 +247,17 @@ namespace bgfx { namespace mtl
 	constexpr MTLPixelFormat kMtlPixelFormatX32_Stencil8          = MTLPixelFormat(261);
 	constexpr MTLPixelFormat kMtlPixelFormatX24_Stencil8          = MTLPixelFormat(262);
 
+	constexpr MTLGPUFamily kMtlGPUFamilyApple1  = MTLGPUFamily(1001);
+	constexpr MTLGPUFamily kMtlGPUFamilyApple2  = MTLGPUFamily(1002);
+	constexpr MTLGPUFamily kMtlGPUFamilyApple3  = MTLGPUFamily(1003);
+	constexpr MTLGPUFamily kMtlGPUFamilyApple4  = MTLGPUFamily(1004);
+	constexpr MTLGPUFamily kMtlGPUFamilyApple5  = MTLGPUFamily(1005);
+	constexpr MTLGPUFamily kMtlGPUFamilyApple6  = MTLGPUFamily(1006);
+	constexpr MTLGPUFamily kMtlGPUFamilyApple7  = MTLGPUFamily(1007);
+	constexpr MTLGPUFamily kMtlGPUFamilyApple8  = MTLGPUFamily(1008);
+	constexpr MTLGPUFamily kMtlGPUFamilyApple9  = MTLGPUFamily(1009);
+	constexpr MTLGPUFamily kMtlGPUFamilyApple10 = MTLGPUFamily(1010);
+
 	//runtime os check
 	inline bool iOSVersionEqualOrGreater(const char* _version)
 	{

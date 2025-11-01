@@ -516,32 +516,32 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			retain(m_device);
 
-			if (m_device.supportsFamily(MTLGPUFamilyApple4) )
+			if (m_device.supportsFamily(kMtlGPUFamilyApple4) )
 			{
 				g_caps.vendorId = BGFX_PCI_ID_APPLE;
 				g_caps.deviceId = 1004;
 
-				if (m_device.supportsFamily(MTLGPUFamilyApple10) )
+				if (m_device.supportsFamily(kMtlGPUFamilyApple10) )
 				{
 					g_caps.deviceId = 1010;
 				}
-				else if (m_device.supportsFamily(MTLGPUFamilyApple9) )
+				else if (m_device.supportsFamily(kMtlGPUFamilyApple9) )
 				{
 					g_caps.deviceId = 1009;
 				}
-				else if (m_device.supportsFamily(MTLGPUFamilyApple8) )
+				else if (m_device.supportsFamily(kMtlGPUFamilyApple8) )
 				{
 					g_caps.deviceId = 1008;
 				}
-				else if (m_device.supportsFamily(MTLGPUFamilyApple7) )
+				else if (m_device.supportsFamily(kMtlGPUFamilyApple7) )
 				{
 					g_caps.deviceId = 1007;
 				}
-				else if (m_device.supportsFamily(MTLGPUFamilyApple6) )
+				else if (m_device.supportsFamily(kMtlGPUFamilyApple6) )
 				{
 					g_caps.deviceId = 1006;
 				}
-				else if (m_device.supportsFamily(MTLGPUFamilyApple5) )
+				else if (m_device.supportsFamily(kMtlGPUFamilyApple5) )
 				{
 					g_caps.deviceId = 1005;
 				}
@@ -598,7 +598,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				| BGFX_CAPS_VERTEX_ID
 				);
 
-			g_caps.supported |= m_device.supportsFamily(MTLGPUFamilyApple7)
+			g_caps.supported |= m_device.supportsFamily(kMtlGPUFamilyApple7)
 				? BGFX_CAPS_PRIMITIVE_ID
 				: 0
 				;
@@ -606,7 +606,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			// Reference(s):
 			// - Metal feature set tables
 			//   https://web.archive.org/web/20230330111145/https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf
-			g_caps.limits.maxTextureSize = m_device.supportsFamily(MTLGPUFamilyApple3) ? 16384 : 8192;
+			g_caps.limits.maxTextureSize = m_device.supportsFamily(kMtlGPUFamilyApple3) ? 16384 : 8192;
 			g_caps.limits.maxFBAttachments = 8;
 			g_caps.supported |= m_device.supportsFamily(MTLGPUFamilyCommon2)
 				? BGFX_CAPS_DRAW_INDIRECT
