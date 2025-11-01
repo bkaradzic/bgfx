@@ -16,6 +16,7 @@
 #include <tinystl/vector.h>
 namespace stl = tinystl;
 
+#include "args.h"
 
 ///
 void* load(const bx::FilePath& _filePath, uint32_t* _size = NULL);
@@ -151,14 +152,5 @@ bx::StringView getName(bgfx::RendererType::Enum _type);
 
 /// Name to bgfx::RendererType::Enum.
 bgfx::RendererType::Enum getType(const bx::StringView& _name);
-
-///
-struct Args
-{
-	Args(int _argc, const char* const* _argv);
-
-	bgfx::RendererType::Enum m_type;
-	uint16_t m_pciId;
-};
 
 #endif // BGFX_UTILS_H_HEADER_GUARD

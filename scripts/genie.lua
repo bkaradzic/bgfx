@@ -410,13 +410,17 @@ function exampleProjectDefaults()
 	strip()
 end
 
-function exampleProject(_combined, ...)
+function exampleProject(_combined, _consoleApp, ...)
 
 	if _combined then
 
 		project ("examples")
 			uuid (os.uuid("examples"))
-			kind "WindowedApp"
+			if _consoleApp then
+				kind "ConsoleApp"
+			else
+				kind "WindowedApp"
+			end
 
 		for _, name in ipairs({...}) do
 
@@ -441,9 +445,14 @@ function exampleProject(_combined, ...)
 	else
 
 		for _, name in ipairs({...}) do
+
 			project ("example-" .. name)
 				uuid (os.uuid("example-" .. name))
-				kind "WindowedApp"
+				if _consoleApp then
+					kind "ConsoleApp"
+				else
+					kind "WindowedApp"
+				end
 
 			files {
 				path.join(BGFX_DIR, "examples", name, "**.c"),
@@ -508,7 +517,7 @@ if _OPTIONS["with-examples"]
 or _OPTIONS["with-combined-examples"] then
 	group "examples"
 
-	exampleProject(_OPTIONS["with-combined-examples"]
+	exampleProject(_OPTIONS["with-combined-examples"], false
 		, "00-helloworld"
 		, "01-cubes"
 		, "02-metaballs"
@@ -559,14 +568,15 @@ or _OPTIONS["with-combined-examples"] then
 		, "49-hextile"
 		)
 
-	-- 17-drawstress requires multithreading, does not compile for singlethreaded wasm
+
 	if premake.gcc.namestyle == nil or not premake.gcc.namestyle == "Emscripten" then
-		exampleProject(false, "17-drawstress")
+		exampleProject(false, false, "17-drawstress") -- 17-drawstress requires multithreading, does not compile for singlethreaded wasm
+		exampleProject(false, true,  "50-headless")   -- 50-headless is not tested with emscripten
 	end
 
 	-- C99 source doesn't compile under WinRT settings
 	if not premake.vstudio.iswinrt() then
-		exampleProject(false, "25-c99")
+		exampleProject(false, false, "25-c99")
 	end
 end
 

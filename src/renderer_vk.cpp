@@ -2446,11 +2446,6 @@ VK_IMPORT_DEVICE
 		{
 			FrameBufferVK& frameBuffer = m_frameBuffers[_handle.idx];
 
-			if (_handle.idx == m_fbh.idx)
-			{
-				setFrameBuffer(BGFX_INVALID_HANDLE, false);
-			}
-
 			uint16_t denseIdx = frameBuffer.destroy();
 			if (UINT16_MAX != denseIdx)
 			{
@@ -5966,20 +5961,14 @@ VK_DESTROY
 			return;
 		}
 
-		uint32_t mipHeight = bx::uint32_max(1, m_height >> _mip);
-		uint32_t rowPitch = pitch(_mip);
+		const uint32_t mipHeight = bx::uint32_max(1, m_height >> _mip);
+		const uint32_t rowPitch = pitch(_mip);
 
-		uint8_t* src;
+		const uint8_t* src;
 		VK_CHECK(vkMapMemory(s_renderVK->m_device, _memory, 0, VK_WHOLE_SIZE, 0, (void**)&src) );
 		src += _offset;
-		uint8_t* dst = (uint8_t*)_data;
 
-		for (uint32_t yy = 0; yy < mipHeight; ++yy)
-		{
-			bx::memCopy(dst, src, rowPitch);
-			src += rowPitch;
-			dst += rowPitch;
-		}
+		bx::gather(_data, src, rowPitch, rowPitch, mipHeight);
 
 		vkUnmapMemory(s_renderVK->m_device, _memory);
 	}
