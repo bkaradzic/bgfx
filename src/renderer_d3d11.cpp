@@ -1867,13 +1867,7 @@ namespace bgfx { namespace d3d11
 
 			uint32_t pitch = bx::uint32_min(srcPitch, dstPitch);
 
-			for (uint32_t yy = 0, height = srcHeight; yy < height; ++yy)
-			{
-				bx::memCopy(dst, src, pitch);
-
-				src += srcPitch;
-				dst += dstPitch;
-			}
+			bx::memCopy(dst, dstPitch, src, srcPitch, pitch, srcHeight);
 
 			m_deviceCtx->Unmap(texture.m_ptr, _mip);
 		}

@@ -2002,13 +2002,7 @@ namespace bgfx { namespace d3d12
 			uint8_t* src;
 			readback->Map(0, NULL, (void**)&src);
 
-			for (uint32_t yy = 0, height = srcHeight; yy < height; ++yy)
-			{
-				bx::memCopy(dst, src, pitch);
-
-				src += srcPitch;
-				dst += dstPitch;
-			}
+			bx::memCopy(dst, dstPitch, src, srcPitch, pitch, srcHeight);
 
 			D3D12_RANGE writeRange = { 0, 0 };
 			readback->Unmap(0, &writeRange);
