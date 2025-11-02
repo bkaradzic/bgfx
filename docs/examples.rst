@@ -692,7 +692,7 @@ Reference(s):
 
 
 `49-hextile  <https://github.com/bkaradzic/bgfx/tree/master/examples/49-hextile>`__
----------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------
 
 Realtime Hex-Tiling
 
@@ -704,3 +704,9 @@ Reference(s):
 
 .. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/49-hextile/screenshot.png
    :alt: example-49-hextile
+
+`50-headless <https://github.com/bkaradzic/bgfx/tree/master/examples/50-headless>`__
+------------------------------------------------------------------------------------
+
+Demonstrate running bgfx in headless mode. Initialize bgfx without window, render into frame buffer,
+and output result into an image.
