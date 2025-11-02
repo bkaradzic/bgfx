@@ -182,7 +182,7 @@ It is only necessary to use these APIs in conjunction with creating windows.
 .. doxygenstruct:: bgfx::InternalData
     :members:
 
-.. doxygenfunction:: bgfx::overrideInternal(TextureHandle _handle, uintptr_t _ptr)
+.. doxygenfunction:: bgfx::overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint16_t _layerIndex = 0)
 .. doxygenfunction:: bgfx::overrideInternal(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint64_t _flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE)
 
 Miscellaneous
