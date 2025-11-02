@@ -75,7 +75,7 @@
 #	define MTL_CHECK_REFCOUNT(_ptr, _expected)
 #endif // BGFX_CONFIG_DEBUG
 
-#define MTL_RELEASE(_obj, _expected)   _MTL_RELEASE(_obj, _expected, BX_ASSERT)
+#define MTL_RELEASE(_obj, _expected)   _MTL_RELEASE(_obj, _expected, BX_WARN)
 #define MTL_RELEASE_W(_obj, _expected) _MTL_RELEASE(_obj, _expected, BX_WARN)
 #define MTL_RELEASE_I(_obj)            _MTL_RELEASE(_obj, 0, BX_NOOP)
 
