@@ -6,12 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Building &mdash; bgfx 1.129.8834 documentation</title>
+  <title>Building &mdash; bgfx 1.132.8889 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
-      <script src="_static/documentation_options.js?v=5d5779b2"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8557c509"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -97,9 +99,9 @@
            <div itemprop="articleBody">
              
   <section id="building">
-<h1>Building<a class="headerlink" href="#building" title="Link to this heading">¶</a></h1>
+<h1>Building<a class="headerlink" href="#building" title="Link to this heading"></a></h1>
 <section id="dependencies-getting-the-source">
-<h2>Dependencies &amp; Getting the source<a class="headerlink" href="#dependencies-getting-the-source" title="Link to this heading">¶</a></h2>
+<h2>Dependencies &amp; Getting the source<a class="headerlink" href="#dependencies-getting-the-source" title="Link to this heading"></a></h2>
 <blockquote>
 <div><ul class="simple">
 <li><p><a class="reference external" href="https://github.com/bkaradzic/bx">https://github.com/bkaradzic/bx</a></p></li>
@@ -115,18 +117,18 @@ So clone the repositories next to each other:</p>
 </div>
 </section>
 <section id="quick-start-for-windows">
-<h2>Quick Start for Windows<a class="headerlink" href="#quick-start-for-windows" title="Link to this heading">¶</a></h2>
+<h2>Quick Start for Windows<a class="headerlink" href="#quick-start-for-windows" title="Link to this heading"></a></h2>
 <p>These are step for users who use Windows with Visual Studio.</p>
 <p>Enter bgfx directory:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">bgfx</span>
 </pre></div>
 </div>
 <p>Generate Visual Studio 2019 project files:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span>\<span class="n">bx</span>\<span class="n">tools</span>\<span class="nb">bin</span>\<span class="n">windows</span>\<span class="n">genie</span> <span class="o">--</span><span class="k">with</span><span class="o">-</span><span class="n">examples</span> <span class="n">vs2019</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span>\<span class="n">bx</span>\<span class="n">tools</span>\<span class="nb">bin</span>\<span class="n">windows</span>\<span class="n">genie</span> <span class="o">--</span><span class="k">with</span><span class="o">-</span><span class="n">examples</span> <span class="n">vs2022</span>
 </pre></div>
 </div>
 <p>Open bgfx solution in Visual Studio 2019:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="o">.</span><span class="n">build</span>\<span class="n">projects</span>\<span class="n">vs2019</span>\<span class="n">bgfx</span><span class="o">.</span><span class="n">sln</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="o">.</span><span class="n">build</span>\<span class="n">projects</span>\<span class="n">vs2022</span>\<span class="n">bgfx</span><span class="o">.</span><span class="n">sln</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -135,9 +137,9 @@ So clone the repositories next to each other:</p>
 </div>
 </section>
 <section id="prerequisites">
-<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">¶</a></h2>
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
 <section id="android">
-<h3>Android<a class="headerlink" href="#android" title="Link to this heading">¶</a></h3>
+<h3>Android<a class="headerlink" href="#android" title="Link to this heading"></a></h3>
 <p>Download Android NDK (r23 or newer):</p>
 <blockquote>
 <div><ul class="simple">
@@ -150,13 +152,13 @@ So clone the repositories next to each other:</p>
 </div>
 </section>
 <section id="linux">
-<h3>Linux<a class="headerlink" href="#linux" title="Link to this heading">¶</a></h3>
+<h3>Linux<a class="headerlink" href="#linux" title="Link to this heading"></a></h3>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">libgl1</span><span class="o">-</span><span class="n">mesa</span><span class="o">-</span><span class="n">dev</span> <span class="n">x11proto</span><span class="o">-</span><span class="n">core</span><span class="o">-</span><span class="n">dev</span> <span class="n">libx11</span><span class="o">-</span><span class="n">dev</span>
 </pre></div>
 </div>
 </section>
 <section id="windows">
-<h3>Windows<a class="headerlink" href="#windows" title="Link to this heading">¶</a></h3>
+<h3>Windows<a class="headerlink" href="#windows" title="Link to this heading"></a></h3>
 <p>Windows users download GnuWin32 utilities:</p>
 <blockquote>
 <div><ul class="simple">
@@ -174,14 +176,14 @@ You must use use <strong>cmd.exe</strong> with provided makefiles.</p>
 </section>
 </section>
 <section id="build">
-<h2>Build<a class="headerlink" href="#build" title="Link to this heading">¶</a></h2>
+<h2>Build<a class="headerlink" href="#build" title="Link to this heading"></a></h2>
 <p>bgfx uses <a class="reference external" href="https://github.com/bkaradzic/genie#genie---project-generator-tool">GENie - Project generator tool</a>
 to generate project files for various platforms. Binaries of GENie for Linux, macOS, and Windows are included in
 the bx repository. GENie can generate a useful list of options relevant to the project using the
 <code class="docutils literal notranslate"><span class="pre">--help</span></code> flag. Most platform-specific examples below do not explicitly use the <code class="docutils literal notranslate"><span class="pre">genie</span></code> executable, but a convenience
 makefile instead. For more control, you can directly use <code class="docutils literal notranslate"><span class="pre">genie</span></code> to generate the project files.</p>
 <section id="general-makefile-wrapper">
-<h3>General (Makefile wrapper)<a class="headerlink" href="#general-makefile-wrapper" title="Link to this heading">¶</a></h3>
+<h3>General (Makefile wrapper)<a class="headerlink" href="#general-makefile-wrapper" title="Link to this heading"></a></h3>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">bgfx</span>
 <span class="n">make</span>
 </pre></div>
@@ -198,7 +200,7 @@ All intermediate files, libraries and executables generated by the compiler will
 </div>
 </section>
 <section id="general-directly-with-genie">
-<h3>General (Directly with GENie)<a class="headerlink" href="#general-directly-with-genie" title="Link to this heading">¶</a></h3>
+<h3>General (Directly with GENie)<a class="headerlink" href="#general-directly-with-genie" title="Link to this heading"></a></h3>
 <p>Inspect the available options by invoking GENie with the <code class="docutils literal notranslate"><span class="pre">--help</span></code> option (where <code class="docutils literal notranslate"><span class="pre">&lt;platform&gt;</span></code> is <code class="docutils literal notranslate"><span class="pre">linux</span></code>, <code class="docutils literal notranslate"><span class="pre">windows</span></code>, or <code class="docutils literal notranslate"><span class="pre">darwin</span></code>):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">../</span><span class="n">bx</span><span class="o">/</span><span class="n">tools</span><span class="o">/</span><span class="nb">bin</span><span class="o">/&lt;</span><span class="n">platform</span><span class="o">&gt;/</span><span class="n">genie</span> <span class="o">--</span><span class="n">help</span>
 </pre></div>
@@ -241,18 +243,18 @@ For more help on specific platforms, see below and read the <code class="docutil
 <code class="docutils literal notranslate"><span class="pre">&lt;platform&gt;</span></code> is the platform you chose.</p>
 </section>
 <section id="id1">
-<h3>Windows<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<h3>Windows<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
 <p>Visual Studio 2019 command line:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">vs2019</span><span class="o">-</span><span class="n">release64</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">vs2022</span><span class="o">-</span><span class="n">release64</span>
 </pre></div>
 </div>
 <p>Visual Studio 2019 IDE:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="o">.</span><span class="n">build</span><span class="o">/</span><span class="n">projects</span><span class="o">/</span><span class="n">vs2019</span><span class="o">/</span><span class="n">bgfx</span><span class="o">.</span><span class="n">sln</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="o">.</span><span class="n">build</span><span class="o">/</span><span class="n">projects</span><span class="o">/</span><span class="n">vs2022</span><span class="o">/</span><span class="n">bgfx</span><span class="o">.</span><span class="n">sln</span>
 </pre></div>
 </div>
 </section>
 <section id="macos">
-<h3>macOS<a class="headerlink" href="#macos" title="Link to this heading">¶</a></h3>
+<h3>macOS<a class="headerlink" href="#macos" title="Link to this heading"></a></h3>
 <p>There are two options when working on macOS: Xcode command-line builds, or within the XCode graphical development environment.</p>
 <p>For the Xcode command line:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">osx</span><span class="o">-</span><span class="n">release</span>
@@ -276,15 +278,15 @@ configuration file, it has to be set manually for each example project:</p>
 </ol>
 </section>
 <section id="id2">
-<h3>Linux<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<h3>Linux<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">linux</span><span class="o">-</span><span class="n">release64</span>
 </pre></div>
 </div>
 <p>For more options, see <a class="reference external" href="#general-directly-with-genie">General (directly with GENie)</a>.</p>
 </section>
 <section id="winrt-uwp">
-<h3>WinRT / UWP<a class="headerlink" href="#winrt-uwp" title="Link to this heading">¶</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span>\<span class="n">bx</span>\<span class="n">tools</span>\<span class="nb">bin</span>\<span class="n">windows</span>\<span class="n">genie</span> <span class="o">--</span><span class="n">vs</span><span class="o">=</span><span class="n">winstore100</span> <span class="n">vs2019</span>
+<h3>WinRT / UWP<a class="headerlink" href="#winrt-uwp" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span>\<span class="n">bx</span>\<span class="n">tools</span>\<span class="nb">bin</span>\<span class="n">windows</span>\<span class="n">genie</span> <span class="o">--</span><span class="n">vs</span><span class="o">=</span><span class="n">winstore100</span> <span class="n">vs2022</span>
 </pre></div>
 </div>
 <p>For more options, see <a class="reference external" href="#general-directly-with-genie">General (directly with GENie)</a>.
@@ -296,7 +298,7 @@ Build the resulting solution and deploy to device.</p>
 </section>
 </section>
 <section id="amalgamated-build">
-<h2>Amalgamated Build<a class="headerlink" href="#amalgamated-build" title="Link to this heading">¶</a></h2>
+<h2>Amalgamated Build<a class="headerlink" href="#amalgamated-build" title="Link to this heading"></a></h2>
 <p>For ease of integration with other build systems, the bgfx library can be built
 with a single .cpp file. It’s only necessary to build
 <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/amalgamated.cpp">src/amalgamated.cpp</a>
@@ -305,14 +307,14 @@ with a single .cpp file. It’s only necessary to build
 instead) inside a different build system.</p>
 </section>
 <section id="tools">
-<h2>Tools<a class="headerlink" href="#tools" title="Link to this heading">¶</a></h2>
+<h2>Tools<a class="headerlink" href="#tools" title="Link to this heading"></a></h2>
 <p>To build bgfx project files for tools, use <code class="docutils literal notranslate"><span class="pre">--with-tools</span></code> option:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span>\<span class="n">bx</span>\<span class="n">tools</span>\<span class="nb">bin</span>\<span class="n">windows</span>\<span class="n">genie</span> <span class="o">--</span><span class="k">with</span><span class="o">-</span><span class="n">tools</span> <span class="n">vs2019</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span>\<span class="n">bx</span>\<span class="n">tools</span>\<span class="nb">bin</span>\<span class="n">windows</span>\<span class="n">genie</span> <span class="o">--</span><span class="k">with</span><span class="o">-</span><span class="n">tools</span> <span class="n">vs2022</span>
 </pre></div>
 </div>
 </section>
 <section id="alternative-build-systems">
-<h2>Alternative build systems<a class="headerlink" href="#alternative-build-systems" title="Link to this heading">¶</a></h2>
+<h2>Alternative build systems<a class="headerlink" href="#alternative-build-systems" title="Link to this heading"></a></h2>
 <p><strong>CMake</strong></p>
 <blockquote>
 <div><ul class="simple">
@@ -329,7 +331,7 @@ instead) inside a different build system.</p>
 <a class="reference external" href="https://github.com/firefalcom/bgfx-conan">https://github.com/firefalcom/bgfx-conan</a></p>
 </section>
 <section id="minimal-example-without-bgfx-s-example-harness">
-<h2>Minimal example without bgfx’s example harness<a class="headerlink" href="#minimal-example-without-bgfx-s-example-harness" title="Link to this heading">¶</a></h2>
+<h2>Minimal example without bgfx’s example harness<a class="headerlink" href="#minimal-example-without-bgfx-s-example-harness" title="Link to this heading"></a></h2>
 <p>This project demonstrates minimal amount of code needed to integrate bgfx with GLFW, but without
 any of existing bgfx example harness. It also demonstrates how to build bgfx with alternative build
 system.</p>
@@ -348,7 +350,7 @@ system.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2010-2024, Branimir Karadžić.</p>
+    <p>&#169; Copyright 2010-2025, Branimir Karadžić.</p>
   </div>
 
    

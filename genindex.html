@@ -5,12 +5,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; bgfx 1.129.8834 documentation</title>
+  <title>Index &mdash; bgfx 1.132.8889 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
-      <script src="_static/documentation_options.js?v=5d5779b2"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8557c509"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -260,6 +262,10 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Caps6Limits14maxTextureSizeE">bgfx::Caps::Limits::maxTextureSize (C++ member)</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4Caps6Limits18maxTransientIbSizeE">bgfx::Caps::Limits::maxTransientIbSize (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4Caps6Limits18maxTransientVbSizeE">bgfx::Caps::Limits::maxTransientVbSize (C++ member)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Caps6Limits11maxUniformsE">bgfx::Caps::Limits::maxUniforms (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Caps6Limits16maxVertexBuffersE">bgfx::Caps::Limits::maxVertexBuffers (C++ member)</a>
@@ -272,9 +278,7 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Caps6Limits17minResourceCbSizeE">bgfx::Caps::Limits::minResourceCbSize (C++ member)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx4Caps6Limits15transientIbSizeE">bgfx::Caps::Limits::transientIbSize (C++ member)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx4Caps6Limits15transientVbSizeE">bgfx::Caps::Limits::transientVbSize (C++ member)</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4Caps6Limits20minUniformBufferSizeE">bgfx::Caps::Limits::minUniformBufferSize (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Caps7numGPUsE">bgfx::Caps::numGPUs (C++ member)</a>
 </li>
@@ -432,11 +436,13 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Init6Limits11maxEncodersE">bgfx::Init::Limits::maxEncoders (C++ member)</a>
 </li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4Init6Limits18maxTransientIbSizeE">bgfx::Init::Limits::maxTransientIbSize (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4Init6Limits18maxTransientVbSizeE">bgfx::Init::Limits::maxTransientVbSize (C++ member)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Init6Limits17minResourceCbSizeE">bgfx::Init::Limits::minResourceCbSize (C++ member)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx4Init6Limits15transientIbSizeE">bgfx::Init::Limits::transientIbSize (C++ member)</a>
-</li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx4Init6Limits15transientVbSizeE">bgfx::Init::Limits::transientVbSize (C++ member)</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx4Init6Limits20minUniformBufferSizeE">bgfx::Init::Limits::minUniformBufferSize (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx4Init12platformDataE">bgfx::Init::platformData (C++ member)</a>
 </li>
@@ -492,7 +498,7 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx20OcclusionQueryResult4Enum7VisibleE">bgfx::OcclusionQueryResult::Enum::Visible (C++ enumerator)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx16overrideInternalE13TextureHandle8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint64_t">bgfx::overrideInternal (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx16overrideInternalE13TextureHandle9uintptr_t">[1]</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx16overrideInternalE13TextureHandle8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint64_t">bgfx::overrideInternal (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx16overrideInternalE13TextureHandle9uintptr_t8uint16_t">[1]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx12PlatformDataE">bgfx::PlatformData (C++ struct)</a>
 </li>
@@ -550,7 +556,9 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx10Resolution14debugTextScaleE">bgfx::Resolution::debugTextScale (C++ member)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx10Resolution6formatE">bgfx::Resolution::format (C++ member)</a>
+      <li><a href="bgfx.html#_CPPv4N4bgfx10Resolution11formatColorE">bgfx::Resolution::formatColor (C++ member)</a>
+</li>
+      <li><a href="bgfx.html#_CPPv4N4bgfx10Resolution18formatDepthStencilE">bgfx::Resolution::formatDepthStencil (C++ member)</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx10Resolution6heightE">bgfx::Resolution::height (C++ member)</a>
 </li>
@@ -696,10 +704,10 @@
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx5Stats10waitSubmitE">bgfx::Stats::waitSubmit (C++ member)</a>
 </li>
-      <li><a href="bgfx.html#_CPPv4N4bgfx5Stats5widthE">bgfx::Stats::width (C++ member)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="bgfx.html#_CPPv4N4bgfx5Stats5widthE">bgfx::Stats::width (C++ member)</a>
+</li>
       <li><a href="bgfx.html#_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t17IndexBufferHandle8uint32_t8uint32_t8uint32_t7uint8_t">bgfx::submit (C++ function)</a>, <a href="bgfx.html#_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint32_t8uint32_t8uint32_t7uint8_t">[1]</a>, <a href="bgfx.html#_CPPv4N4bgfx6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_t7uint8_t">[2]</a>, <a href="bgfx.html#_CPPv4N4bgfx6submitE6ViewId13ProgramHandle8uint32_t7uint8_t">[3]</a>
 </li>
       <li><a href="bgfx.html#_CPPv4N4bgfx13TextureFormatE">bgfx::TextureFormat (C++ struct)</a>
@@ -1332,7 +1340,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2010-2024, Branimir Karadžić.</p>
+    <p>&#169; Copyright 2010-2025, Branimir Karadžić.</p>
   </div>
 
    

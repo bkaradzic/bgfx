@@ -1,19 +1,8 @@
-/*
- * _sphinx_javascript_frameworks_compat.js
- * ~~~~~~~~~~
+/* Compatability shim for jQuery and underscores.js.
  *
- * Compatability shim for jQuery and underscores.js.
- *
- * WILL BE REMOVED IN Sphinx 6.0
- * xref RemovedInSphinx60Warning
- *
+ * Copyright Sphinx contributors
+ * Released under the two clause BSD licence
  */
-
-/**
- * select a different prefix for underscore
- */
-$u = _.noConflict();
-
 
 /**
  * small helper function to urldecode strings

@@ -1,12 +1,5 @@
 /*
- * basic.css
- * ~~~~~~~~~
- *
  * Sphinx stylesheet -- basic theme.
- *
- * :copyright: Copyright 2007-2023 by the Sphinx team, see AUTHORS.
- * :license: BSD, see LICENSE for details.
- *
  */
 
 /* -- main layout ----------------------------------------------------------- */
@@ -115,15 +108,11 @@ img {
 /* -- search page ----------------------------------------------------------- */
 
 ul.search {
-    margin: 10px 0 0 20px;
-    padding: 0;
+    margin-top: 10px;
 }
 
 ul.search li {
-    padding: 5px 0 5px 20px;
-    background-image: url(file.png);
-    background-repeat: no-repeat;
-    background-position: 0 7px;
+    padding: 5px 0;
 }
 
 ul.search li a {
@@ -750,14 +739,6 @@ dl.glossary dt {
 abbr, acronym {
     border-bottom: dotted 1px;
     cursor: help;
-}
-
-.translated {
-    background-color: rgba(207, 255, 207, 0.2)
-}
-
-.untranslated {
-    background-color: rgba(255, 207, 207, 0.2)
 }
 
 /* -- code displays --------------------------------------------------------- */

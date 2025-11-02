@@ -6,12 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tools &mdash; bgfx 1.129.8834 documentation</title>
+  <title>Tools &mdash; bgfx 1.132.8889 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
-      <script src="_static/documentation_options.js?v=5d5779b2"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8557c509"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -88,9 +90,9 @@
            <div itemprop="articleBody">
              
   <section id="tools">
-<h1>Tools<a class="headerlink" href="#tools" title="Link to this heading">¶</a></h1>
+<h1>Tools<a class="headerlink" href="#tools" title="Link to this heading"></a></h1>
 <section id="geometry-compiler-geometryc">
-<h2>Geometry Compiler (geometryc)<a class="headerlink" href="#geometry-compiler-geometryc" title="Link to this heading">¶</a></h2>
+<h2>Geometry Compiler (geometryc)<a class="headerlink" href="#geometry-compiler-geometryc" title="Link to this heading"></a></h2>
 <p>Converts Wavefront .obj, or glTF 2.0 mesh files to a format which is optimized for use with bgfx.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">geometryc</span> <span class="o">-</span><span class="n">f</span> <span class="o">&lt;</span><span class="ow">in</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">o</span> <span class="o">&lt;</span><span class="n">out</span><span class="o">&gt;</span>
@@ -179,11 +181,11 @@
 </div></blockquote>
 </section>
 <section id="geometry-viewer-geometryv">
-<h2>Geometry Viewer (geometryv)<a class="headerlink" href="#geometry-viewer-geometryv" title="Link to this heading">¶</a></h2>
+<h2>Geometry Viewer (geometryv)<a class="headerlink" href="#geometry-viewer-geometryv" title="Link to this heading"></a></h2>
 <p>A geometry viewer.</p>
 </section>
 <section id="shader-compiler-shaderc">
-<h2>Shader Compiler (shaderc)<a class="headerlink" href="#shader-compiler-shaderc" title="Link to this heading">¶</a></h2>
+<h2>Shader Compiler (shaderc)<a class="headerlink" href="#shader-compiler-shaderc" title="Link to this heading"></a></h2>
 <p>Shader Compiler is used to compile bgfx’s cross-platform shader language, which based on GLSL.
 It uses an ANSI C pre-processor to transform the GLSL-like language into HLSL.
 This method has certain drawbacks,
@@ -204,7 +206,7 @@ This file cannot include comments, and typically only one is necessary.</p></li>
 <code class="docutils literal notranslate"><span class="pre">varying.def.sc</span></code> must be used at the beginning of shader.</p></li>
 </ul>
 <section id="defines">
-<h3>Defines<a class="headerlink" href="#defines" title="Link to this heading">¶</a></h3>
+<h3>Defines<a class="headerlink" href="#defines" title="Link to this heading"></a></h3>
 <p>Shader Compiler also has the following default defines (default value is set to 0):</p>
 <blockquote>
 <div><table class="docutils align-default">
@@ -284,7 +286,7 @@ This file cannot include comments, and typically only one is necessary.</p></li>
 </div></blockquote>
 </section>
 <section id="predefined-uniforms">
-<h3>Predefined Uniforms<a class="headerlink" href="#predefined-uniforms" title="Link to this heading">¶</a></h3>
+<h3>Predefined Uniforms<a class="headerlink" href="#predefined-uniforms" title="Link to this heading"></a></h3>
 <blockquote>
 <div><table class="docutils align-default">
 <thead>
@@ -344,10 +346,14 @@ This file cannot include comments, and typically only one is necessary.</p></li>
 <td><p>Transform local-to-view  space.</p></td>
 </tr>
 <tr class="row-even"><td><p>mat4</p></td>
+<td><p>u_invModelView</p></td>
+<td><p>Transform view-to-local  space.</p></td>
+</tr>
+<tr class="row-odd"><td><p>mat4</p></td>
 <td><p>u_modelViewProj</p></td>
 <td><p>Transform local-to-clip  space.</p></td>
 </tr>
-<tr class="row-odd"><td><p>float</p></td>
+<tr class="row-even"><td><p>float</p></td>
 <td><p>u_alphaRef</p></td>
 <td><div class="line-block">
 <div class="line">The reference value to which incoming alpha</div>
@@ -361,7 +367,7 @@ This file cannot include comments, and typically only one is necessary.</p></li>
 <p>For more info, see the <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/bgfx_shader.sh">shader helper macros</a>.</p>
 </section>
 <section id="vertex-shader-attributes">
-<h3>Vertex Shader Attributes<a class="headerlink" href="#vertex-shader-attributes" title="Link to this heading">¶</a></h3>
+<h3>Vertex Shader Attributes<a class="headerlink" href="#vertex-shader-attributes" title="Link to this heading"></a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">$input</span></code> tokens for vertex shader can be only following:</p>
 <blockquote>
 <div><table class="docutils align-default">
@@ -440,7 +446,7 @@ The semantic must be <code class="docutils literal notranslate"><span class="pre
 </div>
 </section>
 <section id="options">
-<h3>Options<a class="headerlink" href="#options" title="Link to this heading">¶</a></h3>
+<h3>Options<a class="headerlink" href="#options" title="Link to this heading"></a></h3>
 <p>Options:</p>
 <blockquote>
 <div><dl class="option-list">
@@ -518,14 +524,14 @@ Can be 0–3.</p>
 </div></blockquote>
 </section>
 <section id="building-shaders">
-<h3>Building shaders<a class="headerlink" href="#building-shaders" title="Link to this heading">¶</a></h3>
+<h3>Building shaders<a class="headerlink" href="#building-shaders" title="Link to this heading"></a></h3>
 <p>Shaders can be compiled for all renderers by using the <code class="docutils literal notranslate"><span class="pre">shaderc</span></code> tool.
 A Makefile to simplify building shaders is provided in the <a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples">bgfx examples</a>.
 D3D shaders can be only compiled on Windows.</p>
 </section>
 </section>
 <section id="texture-compiler-texturec">
-<h2>Texture Compiler (texturec)<a class="headerlink" href="#texture-compiler-texturec" title="Link to this heading">¶</a></h2>
+<h2>Texture Compiler (texturec)<a class="headerlink" href="#texture-compiler-texturec" title="Link to this heading"></a></h2>
 <p>Convert PNG, TGA, DDS, KTX, and PVR textures into bgfx-supported texture formats.</p>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">texturec</span> <span class="o">-</span><span class="n">f</span> <span class="o">&lt;</span><span class="ow">in</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">o</span> <span class="o">&lt;</span><span class="n">out</span><span class="o">&gt;</span> <span class="p">[</span><span class="o">-</span><span class="n">t</span> <span class="o">&lt;</span><span class="n">texture</span> <span class="nb">format</span><span class="o">&gt;</span><span class="p">]</span>
@@ -660,7 +666,7 @@ aspect ratio will be preserved)</p>
 </dl>
 </section>
 <section id="texture-viewer-texturev">
-<h2>Texture Viewer (texturev)<a class="headerlink" href="#texture-viewer-texturev" title="Link to this heading">¶</a></h2>
+<h2>Texture Viewer (texturev)<a class="headerlink" href="#texture-viewer-texturev" title="Link to this heading"></a></h2>
 <p>A texture viewer.</p>
 </section>
 </section>
@@ -676,7 +682,7 @@ aspect ratio will be preserved)</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2010-2024, Branimir Karadžić.</p>
+    <p>&#169; Copyright 2010-2025, Branimir Karadžić.</p>
   </div>
 
    

@@ -6,12 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Internals &mdash; bgfx 1.129.8834 documentation</title>
+  <title>Internals &mdash; bgfx 1.132.8889 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
-      <script src="_static/documentation_options.js?v=5d5779b2"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8557c509"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -85,9 +87,9 @@
            <div itemprop="articleBody">
              
   <section id="internals">
-<h1>Internals<a class="headerlink" href="#internals" title="Link to this heading">¶</a></h1>
+<h1>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h1>
 <section id="sort-based-draw-call-bucketing">
-<h2>Sort based draw call bucketing<a class="headerlink" href="#sort-based-draw-call-bucketing" title="Link to this heading">¶</a></h2>
+<h2>Sort based draw call bucketing<a class="headerlink" href="#sort-based-draw-call-bucketing" title="Link to this heading"></a></h2>
 <p>bgfx is using sort-based draw call bucketing. This means that submission order doesn’t necessarily match the rendering order, but on the low-level they will be sorted and ordered correctly. On the high level bgfx uses <strong>declarative API</strong> and internal sorting allows more optimal way of submitting draw calls for all passes at one place, and on the low-level this allows better optimization of rendering order. This sometimes creates undesired results usually for GUI rendering, where draw order should usually match submit order. bgfx provides way to enable sequential rendering for these cases (see <code class="docutils literal notranslate"><span class="pre">bgfx::setViewMode</span></code>).</p>
 <blockquote>
 <div><ul class="simple">
@@ -96,32 +98,32 @@
 </div></blockquote>
 </section>
 <section id="api-and-render-thread">
-<h2>API and render thread<a class="headerlink" href="#api-and-render-thread" title="Link to this heading">¶</a></h2>
+<h2>API and render thread<a class="headerlink" href="#api-and-render-thread" title="Link to this heading"></a></h2>
 <p>API thread is thread from which <code class="docutils literal notranslate"><span class="pre">bgfx::init</span></code> is called. Once <code class="docutils literal notranslate"><span class="pre">bgfx::init</span></code> is called on thread, internally bgfx assumes that all API calls will be called from the same thread with exception of Resource, View, and Encoder API.</p>
 <p>Render thread from where internal rendering <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> is called. On most of OS’ it’s required that this call be called on thread that OS created when executing process (some refer to this thread as “main” thread, or thread where <code class="docutils literal notranslate"><span class="pre">main</span></code> function is called).</p>
 <p>When bgfx is compiled with option <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MULTITHREADED=1</span></code> (default is on) <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> can be called by user. It’s required to be called before <code class="docutils literal notranslate"><span class="pre">bgfx::init</span></code> from thread that will be used as render thread. If both <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> and <code class="docutils literal notranslate"><span class="pre">bgfx::init</span></code> are called from the same thread, bgfx will switch to execute in single threaded mode, and calling <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> is not required, since it will be called automatically during <code class="docutils literal notranslate"><span class="pre">bgfx::frame</span></code> call.</p>
 </section>
 <section id="resource-api">
-<h2>Resource API<a class="headerlink" href="#resource-api" title="Link to this heading">¶</a></h2>
+<h2>Resource API<a class="headerlink" href="#resource-api" title="Link to this heading"></a></h2>
 <p>Any API call starting with <code class="docutils literal notranslate"><span class="pre">bgfx::create*</span></code>, <code class="docutils literal notranslate"><span class="pre">bgfx::destroy*</span></code>, <code class="docutils literal notranslate"><span class="pre">bgfx::update*</span></code>, <code class="docutils literal notranslate"><span class="pre">bgfx::alloc*</span></code> is considered part of resource API. Internally resource API calls are guarded by mutex. There is no limit of number of threads that can call resource API simultaneously. Calling any resource API is infrequent, and functions are cheap since most of work with resource is done at later point on render thread.</p>
 </section>
 <section id="view-api">
-<h2>View API<a class="headerlink" href="#view-api" title="Link to this heading">¶</a></h2>
+<h2>View API<a class="headerlink" href="#view-api" title="Link to this heading"></a></h2>
 <p>Any API call starting with <code class="docutils literal notranslate"><span class="pre">bgfx::setView*</span></code> is considered part of view API. View API is not designed to be thread safe at all since all views are independentent from each other. Calling any view API for different views from different threads is safe. What’s not safe is to update the same view from multiple threads. This will lead to undefined behavior. Only view API that has to be set before any draw calls are issued is view mode <code class="docutils literal notranslate"><span class="pre">bgfx::setViewMode</span></code>. Internal encoder requires view mode to select sort key encoding and if user changes view mode after submit it will cause incorrect sort behavior within the view.</p>
 </section>
 <section id="encoder-api">
-<h2>Encoder API<a class="headerlink" href="#encoder-api" title="Link to this heading">¶</a></h2>
+<h2>Encoder API<a class="headerlink" href="#encoder-api" title="Link to this heading"></a></h2>
 <p>Encoder API can be obtained by calling <code class="docutils literal notranslate"><span class="pre">bgfx::begin</span></code>. bgfx by default allows 8 simultaneous threads to use encoders. This can be configured by changing <code class="docutils literal notranslate"><span class="pre">Limits.maxEncoders</span></code> init option of <code class="docutils literal notranslate"><span class="pre">bgfx::Init</span></code> structure.</p>
 </section>
 <section id="customization">
-<h2>Customization<a class="headerlink" href="#customization" title="Link to this heading">¶</a></h2>
+<h2>Customization<a class="headerlink" href="#customization" title="Link to this heading"></a></h2>
 <p>By default each platform has sane default values. For example on Windows default renderer is DirectX, on Linux it is OpenGL, and on macOS it’s Metal. On Windows platform almost all rendering backends are available. For OpenGL ES on desktop you can find more information at:- <a class="reference external" href="http://www.g-truc.net/post-0457.html">OpenGL ES 2.0 and EGL on desktop</a></p>
 <p>If you’re targeting specific mobile hardware, you can find GLES support in their official SDKs: <a class="reference external" href="http://developer.qualcomm.com/mobile-development/mobile-technologies/gaming-graphics-optimization-adreno/tools-and-resources">Adreno
 SDK</a>, <a class="reference external" href="http://www.malideveloper.com/">Mali SDK</a>, <a class="reference external" href="http://www.imgtec.com/powervr/insider/sdkdownloads/">PowerVR SDK</a>.</p>
 <p>All configuration settings are located inside <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/config.h">src/config.h</a>.</p>
 <p>Every <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_*</span></code> setting can be changed by passing defines thru compiler switches. For example setting preprocessor define <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL=1</span></code> will change backend renderer to OpenGL 2.1. on Windows. Since rendering APIs are platform specific, this obviously won’t work nor make sense in all cases.</p>
 <section id="options">
-<h3>Options<a class="headerlink" href="#options" title="Link to this heading">¶</a></h3>
+<h3>Options<a class="headerlink" href="#options" title="Link to this heading"></a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MULTITHREADED</span></code> is used to enable/disable threading support inside bgfx. By default set to 1 on all platforms that support threading.</p>
 </section>
 </section>
@@ -138,7 +140,7 @@ SDK</a>, <a class="reference external" href="http://www.malideveloper.com/">Mali
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2010-2024, Branimir Karadžić.</p>
+    <p>&#169; Copyright 2010-2025, Branimir Karadžić.</p>
   </div>
 
    
