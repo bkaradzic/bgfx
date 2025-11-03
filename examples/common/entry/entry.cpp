@@ -34,7 +34,8 @@ namespace entry
 	extern bx::AllocatorI* getDefaultAllocator();
 	bx::AllocatorI* g_allocator = getDefaultAllocator();
 
-	static bx::FilePath s_currentDir;
+	using FixedString4096 = bx::FixedStringT<4096>;
+	static FixedString4096 s_currentDir;
 
 	class FileReader : public bx::FileReader
 	{
@@ -43,8 +44,9 @@ namespace entry
 	public:
 		virtual bool open(const bx::FilePath& _filePath, bx::Error* _err) override
 		{
-			bx::FilePath filePath(s_currentDir);
-			filePath.join(_filePath);
+			FixedString4096 filePath(s_currentDir);
+			filePath.append(_filePath);
+
 			return super::open(filePath.getCPtr(), _err);
 		}
 	};
