@@ -65,7 +65,8 @@ namespace entry
 					char path[PATH_MAX];
 					if (CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8*)path, PATH_MAX) )
 					{
-						chdir(path);
+						// This breaks console apps, but it's not needed on windowed.
+						//chdir(path);
 					}
 
 					CFRelease(resourcesURL);
