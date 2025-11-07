@@ -3570,13 +3570,14 @@ namespace bgfx
 	/// Set view shading rate.
 	///
 	/// @param[in] _id View id.
-	/// @param[in] _rate
+	/// @param[in] _shadingRate Shading rate.
 	///
+	/// @attention Availability depends on: `BGFX_CAPS_VARIABLE_RATE_SHADING`.
 	/// @attention C99's equivalent binding is `bgfx_set_view_shading_rate`.
 	///
 	void setViewShadingRate(
 		  ViewId _id
-		, ShadingRate::Enum _shadingRate
+		, ShadingRate::Enum _shadingRate = ShadingRate::Rate1x1
 		);
 
 	/// Reset all view settings to default.
