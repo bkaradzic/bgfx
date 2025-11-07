@@ -129,6 +129,18 @@ namespace bgfx { namespace d3d12
 		D3D12_CULL_MODE_BACK,
 	};
 
+	static const D3D12_SHADING_RATE s_shadingRate[] =
+	{
+		D3D12_SHADING_RATE_1X1,
+		D3D12_SHADING_RATE_1X2,
+		D3D12_SHADING_RATE_2X1,
+		D3D12_SHADING_RATE_2X2,
+		D3D12_SHADING_RATE_2X4,
+		D3D12_SHADING_RATE_4X2,
+		D3D12_SHADING_RATE_4X4,
+	};
+	static_assert(ShadingRate::Count == BX_COUNTOF(s_shadingRate) );
+
 	static const D3D12_TEXTURE_ADDRESS_MODE s_textureAddress[] =
 	{
 		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
@@ -714,6 +726,7 @@ namespace bgfx { namespace d3d12
 			, m_backBufferColorIdx(0)
 			, m_rtMsaa(false)
 			, m_directAccessSupport(false)
+			, m_variableRateShadingSupport(false)
 		{
 		}
 
@@ -1078,6 +1091,9 @@ namespace bgfx { namespace d3d12
 				BX_TRACE("\tAdditionalShadingRatesSupported %d", options6.AdditionalShadingRatesSupported);
 				BX_TRACE("\tPerPrimitiveShadingRateSupportedWithViewportIndexing %d", options6.PerPrimitiveShadingRateSupportedWithViewportIndexing);
 				BX_TRACE("\tVariableShadingRateTier %d", options6.VariableShadingRateTier);
+
+				m_variableRateShadingSupport = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED != options6.VariableShadingRateTier;
+
 				BX_TRACE("\tShadingRateImageTileSize %d", options6.ShadingRateImageTileSize);
 				BX_TRACE("\tBackgroundProcessingSupported %d", options6.BackgroundProcessingSupported);
 				break;
@@ -1440,30 +1456,31 @@ namespace bgfx { namespace d3d12
 					;
 
 				g_caps.supported |= ( 0
-					| BGFX_CAPS_TEXTURE_3D
-					| BGFX_CAPS_TEXTURE_COMPARE_ALL
+					| BGFX_CAPS_ALPHA_TO_COVERAGE
+					| BGFX_CAPS_BLEND_INDEPENDENT
+					| BGFX_CAPS_COMPUTE
+					| BGFX_CAPS_DRAW_INDIRECT
+					| BGFX_CAPS_DRAW_INDIRECT_COUNT
+					| BGFX_CAPS_FRAGMENT_DEPTH
+					| (m_options.ROVsSupported ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
+					| BGFX_CAPS_IMAGE_RW
 					| BGFX_CAPS_INDEX32
 					| BGFX_CAPS_INSTANCING
-					| BGFX_CAPS_DRAW_INDIRECT
+					| BGFX_CAPS_OCCLUSION_QUERY
+					| BGFX_CAPS_PRIMITIVE_ID
+					| (BX_ENABLED(BX_PLATFORM_WINDOWS) ? BGFX_CAPS_SWAP_CHAIN : 0)
+					| BGFX_CAPS_TEXTURE_2D_ARRAY
+					| BGFX_CAPS_TEXTURE_3D
+					| BGFX_CAPS_TEXTURE_BLIT
+					| BGFX_CAPS_TEXTURE_COMPARE_ALL
+					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
+					| (m_directAccessSupport ? BGFX_CAPS_TEXTURE_DIRECT_ACCESS : 0)
+					| BGFX_CAPS_TEXTURE_READ_BACK
+					| (m_variableRateShadingSupport ? BGFX_CAPS_VARIABLE_RATE_SHADING : 0)
 					| BGFX_CAPS_VERTEX_ATTRIB_HALF
 					| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 					| BGFX_CAPS_VERTEX_ID
-					| BGFX_CAPS_FRAGMENT_DEPTH
-					| BGFX_CAPS_BLEND_INDEPENDENT
-					| BGFX_CAPS_COMPUTE
-					| (m_options.ROVsSupported ? BGFX_CAPS_FRAGMENT_ORDERING     : 0)
-					| (m_directAccessSupport   ? BGFX_CAPS_TEXTURE_DIRECT_ACCESS : 0)
-					| (BX_ENABLED(BX_PLATFORM_WINDOWS) ? BGFX_CAPS_SWAP_CHAIN : 0)
-					| BGFX_CAPS_TEXTURE_BLIT
-					| BGFX_CAPS_TEXTURE_READ_BACK
-					| BGFX_CAPS_OCCLUSION_QUERY
-					| BGFX_CAPS_ALPHA_TO_COVERAGE
-					| BGFX_CAPS_TEXTURE_2D_ARRAY
-					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
-					| BGFX_CAPS_IMAGE_RW
 					| BGFX_CAPS_VIEWPORT_LAYER_ARRAY
-					| BGFX_CAPS_DRAW_INDIRECT_COUNT
-					| BGFX_CAPS_PRIMITIVE_ID
 					);
 				g_caps.limits.maxTextureSize     = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 				g_caps.limits.maxTextureLayers   = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
@@ -3748,6 +3765,7 @@ namespace bgfx { namespace d3d12
 		uint32_t m_backBufferColorIdx;
 		bool m_rtMsaa;
 		bool m_directAccessSupport;
+		bool m_variableRateShadingSupport;
 	};
 
 	static RendererContextD3D12* s_renderD3D12;
@@ -6634,12 +6652,14 @@ namespace bgfx { namespace d3d12
 
 					profiler.begin(view);
 
+					const View& renderView = _render->m_view[view];
+
 					fbh = _render->m_view[view].m_fbh;
 					setFrameBuffer(fbh);
 
-					viewState.m_rect = _render->m_view[view].m_rect;
-					const Rect& rect        = _render->m_view[view].m_rect;
-					const Rect& scissorRect = _render->m_view[view].m_scissor;
+					viewState.m_rect = renderView.m_rect;
+					const Rect& rect        = renderView.m_rect;
+					const Rect& scissorRect = renderView.m_scissor;
 					viewHasScissor  = !scissorRect.isZero();
 					viewScissorRect = viewHasScissor ? scissorRect : rect;
 
@@ -6660,7 +6680,7 @@ namespace bgfx { namespace d3d12
 					m_commandList->RSSetScissorRects(1, &rc);
 					restoreScissor = false;
 
-					Clear& clr = _render->m_view[view].m_clear;
+					const Clear& clr = renderView.m_clear;
 					if (BGFX_CLEAR_NONE != clr.m_flags)
 					{
 						Rect clearRect = rect;
@@ -6671,6 +6691,11 @@ namespace bgfx { namespace d3d12
 					prim = s_primInfo[Topology::Count]; // Force primitive type update.
 
 					submitBlit(bs, view);
+
+					if (m_variableRateShadingSupport)
+					{
+						reinterpret_cast<ID3D12GraphicsCommandList5*>(m_commandList)->RSSetShadingRate(s_shadingRate[renderView.m_shadingRate], NULL);
+					}
 				}
 
 				if (isCompute)

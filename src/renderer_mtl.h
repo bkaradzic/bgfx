@@ -540,6 +540,11 @@ namespace bgfx { namespace mtl
 			return false;
 		}
 
+		bool supportsVariableRasterizationRate()
+		{
+			return [m_obj supportsRasterizationRateMapWithLayerCount:1];
+		}
+
 		id<MTLLibrary> newLibraryWithData(const void* _data)
 		{
 			NSError* error;
@@ -668,6 +673,13 @@ namespace bgfx { namespace mtl
 				, [error.localizedDescription cStringUsingEncoding:NSASCIIStringEncoding]
 				);
 			return state;
+		}
+
+		id<MTLRasterizationRateMap> newRasterizationRateMapWithDescriptor(MTLRasterizationRateMapDescriptor* _descriptor)
+		{
+			return [m_obj
+				newRasterizationRateMapWithDescriptor: _descriptor
+			];
 		}
 
 		bool supportsTextureSampleCount(int32_t sampleCount)
@@ -1105,6 +1117,27 @@ namespace bgfx { namespace mtl
 	inline MTLCaptureDescriptor* newCaptureDescriptor()
 	{
 		return [MTLCaptureDescriptor new];
+	}
+
+	typedef MTLRasterizationRateMapDescriptor* RasterizationRateMapDescriptor;
+
+	typedef MTLRasterizationRateLayerDescriptor* RasterizationRateLayerDescriptor;
+
+	inline MTLRasterizationRateLayerDescriptor* newRasterizationRateLayerDescriptor(float _rate)
+	{
+		const float rate[1] = { _rate };
+		return [[MTLRasterizationRateLayerDescriptor alloc]
+			initWithSampleCount: MTLSizeMake(1, 1, 0)
+			horizontal: rate
+			vertical: rate
+		];
+	}
+
+	typedef MTLRasterizationRateMapDescriptor* RasterizationRateMapDescriptor;
+
+	inline MTLRasterizationRateMapDescriptor* newRasterizationRateMapDescriptor()
+	{
+		return [MTLRasterizationRateMapDescriptor new];
 	}
 
 	//helper functions

@@ -705,17 +705,20 @@ pub const CapsFlags_Texture3D: CapsFlags              = 0x0000000002000000;
 /// Transparent back buffer supported.
 pub const CapsFlags_TransparentBackbuffer: CapsFlags  = 0x0000000004000000;
 
+/// Variable Rate Shading
+pub const CapsFlags_VariableRateShading: CapsFlags    = 0x0000000008000000;
+
 /// Vertex attribute half-float is supported.
-pub const CapsFlags_VertexAttribHalf: CapsFlags       = 0x0000000008000000;
+pub const CapsFlags_VertexAttribHalf: CapsFlags       = 0x0000000010000000;
 
 /// Vertex attribute 10_10_10_2 is supported.
-pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000010000000;
+pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000020000000;
 
 /// Rendering with VertexID only is supported.
-pub const CapsFlags_VertexId: CapsFlags               = 0x0000000020000000;
+pub const CapsFlags_VertexId: CapsFlags               = 0x0000000040000000;
 
 /// Viewport layer is available in vertex shader.
-pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000040000000;
+pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000080000000;
 
 /// All texture compare modes are supported.
 pub const CapsFlags_TextureCompareAll: CapsFlags      = 0x0000000000180000;
@@ -1250,6 +1253,18 @@ pub const ViewMode = enum(c_int) {
 
     /// Sort draw call depth in descending order.
     DepthDescending,
+
+    Count
+};
+
+pub const ShadingRate = enum(c_int) {
+    Rate1x1,
+    Rate1x2,
+    Rate2x1,
+    Rate2x2,
+    Rate2x4,
+    Rate4x2,
+    Rate4x4,
 
     Count
 };
@@ -2926,6 +2941,15 @@ pub inline fn setViewOrder(_id: ViewId, _num: u16, _order: [*c]const ViewId) voi
     return bgfx_set_view_order(_id, _num, _order);
 }
 extern fn bgfx_set_view_order(_id: ViewId, _num: u16, _order: [*c]const ViewId) void;
+
+/// Set view shading rate.
+/// @attention Availability depends on: `BGFX_CAPS_VARIABLE_RATE_SHADING`.
+/// <param name="_id">View id.</param>
+/// <param name="_shadingRate">Shading rate.</param>
+pub inline fn setViewShadingRate(_id: ViewId, _shadingRate: ShadingRate) void {
+    return bgfx_set_view_shading_rate(_id, _shadingRate);
+}
+extern fn bgfx_set_view_shading_rate(_id: ViewId, _shadingRate: ShadingRate) void;
 
 /// Reset all view settings to default.
 pub inline fn resetView(_id: ViewId) void {

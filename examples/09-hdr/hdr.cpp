@@ -341,11 +341,11 @@ public:
 			showExampleDialog(this);
 
 			ImGui::SetNextWindowPos(
-				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				  ImVec2(m_width - m_width / 5.0f - 40.0f, 10.0f)
 				, ImGuiCond_FirstUseEver
 				);
 			ImGui::SetNextWindowSize(
-				  ImVec2(m_width / 5.0f, m_height / 2.0f)
+				  ImVec2(m_width / 5.0f + 30.0f, m_height / 2.0f)
 				, ImGuiCond_FirstUseEver
 				);
 			ImGui::Begin("Settings"
@@ -368,6 +368,26 @@ public:
 
 				ImGui::SliderFloat("Lum Avg", &lumAvg, 0.0f, 1.0f);
 			}
+
+			const bgfx::Caps* caps = bgfx::getCaps();
+
+			static const char* s_shadingRateName[] =
+			{
+				"1x1",
+				"1x2",
+				"2x1",
+				"2x2",
+				"2x4",
+				"4x2",
+				"4x4",
+			};
+			static_assert(bgfx::ShadingRate::Count == BX_COUNTOF(s_shadingRateName) );
+
+			static bgfx::ShadingRate::Enum shadingRate = bgfx::ShadingRate::Rate1x1;
+
+			ImGui::BeginDisabled(0 == (caps->supported & BGFX_CAPS_VARIABLE_RATE_SHADING) );
+			ImGui::Combo("Shading Rate", (int*)&shadingRate, s_shadingRateName, BX_COUNTOF(s_shadingRateName) );
+			ImGui::EndDisabled();
 
 			ImGui::End();
 
@@ -404,46 +424,55 @@ public:
 			bgfx::setViewClear(hdrSkybox, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
 			bgfx::setViewRect(hdrSkybox, 0, 0, bgfx::BackbufferRatio::Equal);
 			bgfx::setViewFrameBuffer(hdrSkybox, m_fbh);
+			bgfx::setViewShadingRate(hdrSkybox, shadingRate);
 
 			bgfx::setViewName(hdrMesh, "Mesh");
 			bgfx::setViewClear(hdrMesh, BGFX_CLEAR_DISCARD_DEPTH | BGFX_CLEAR_DISCARD_STENCIL);
 			bgfx::setViewRect(hdrMesh, 0, 0, bgfx::BackbufferRatio::Equal);
 			bgfx::setViewFrameBuffer(hdrMesh, m_fbh);
+			bgfx::setViewShadingRate(hdrMesh, shadingRate);
 
 			bgfx::setViewName(hdrLuminance, "Luminance");
 			bgfx::setViewRect(hdrLuminance, 0, 0, 128, 128);
 			bgfx::setViewFrameBuffer(hdrLuminance, m_lum[0]);
+			bgfx::setViewShadingRate(hdrLuminance, bgfx::ShadingRate::Rate1x1);
 
 			bgfx::setViewName(hdrLumScale0, "Downscale luminance 0");
 			bgfx::setViewRect(hdrLumScale0, 0, 0, 64, 64);
 			bgfx::setViewFrameBuffer(hdrLumScale0, m_lum[1]);
+			bgfx::setViewShadingRate(hdrLumScale0, bgfx::ShadingRate::Rate1x1);
 
 			bgfx::setViewName(hdrLumScale1, "Downscale luminance 1");
 			bgfx::setViewRect(hdrLumScale1, 0, 0, 16, 16);
 			bgfx::setViewFrameBuffer(hdrLumScale1, m_lum[2]);
+			bgfx::setViewShadingRate(hdrLumScale1, bgfx::ShadingRate::Rate1x1);
 
 			bgfx::setViewName(hdrLumScale2, "Downscale luminance 2");
 			bgfx::setViewRect(hdrLumScale2, 0, 0, 4, 4);
 			bgfx::setViewFrameBuffer(hdrLumScale2, m_lum[3]);
+			bgfx::setViewShadingRate(hdrLumScale2, bgfx::ShadingRate::Rate1x1);
 
 			bgfx::setViewName(hdrLumScale3, "Downscale luminance 3");
 			bgfx::setViewRect(hdrLumScale3, 0, 0, 1, 1);
 			bgfx::setViewFrameBuffer(hdrLumScale3, m_lum[4]);
+			bgfx::setViewShadingRate(hdrLumScale3, bgfx::ShadingRate::Rate1x1);
 
 			bgfx::setViewName(hdrBrightness, "Brightness");
 			bgfx::setViewRect(hdrBrightness, 0, 0, bgfx::BackbufferRatio::Half);
 			bgfx::setViewFrameBuffer(hdrBrightness, m_bright);
+			bgfx::setViewShadingRate(hdrBrightness, bgfx::ShadingRate::Rate1x1);
 
 			bgfx::setViewName(hdrVBlur, "Blur vertical");
 			bgfx::setViewRect(hdrVBlur, 0, 0, bgfx::BackbufferRatio::Eighth);
 			bgfx::setViewFrameBuffer(hdrVBlur, m_blur);
+			bgfx::setViewShadingRate(hdrVBlur, bgfx::ShadingRate::Rate1x1);
 
 			bgfx::setViewName(hdrHBlurTonemap, "Blur horizontal + tonemap");
 			bgfx::setViewRect(hdrHBlurTonemap, 0, 0, bgfx::BackbufferRatio::Equal);
 			bgfx::FrameBufferHandle invalid = BGFX_INVALID_HANDLE;
 			bgfx::setViewFrameBuffer(hdrHBlurTonemap, invalid);
+			bgfx::setViewShadingRate(hdrHBlurTonemap, bgfx::ShadingRate::Rate1x1);
 
-			const bgfx::Caps* caps = bgfx::getCaps();
 			float proj[16];
 			bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f, caps->homogeneousDepth);
 

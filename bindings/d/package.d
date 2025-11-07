@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 132;
+enum uint apiVersion = 133;
 
 alias ViewID = ushort;
 
@@ -518,10 +518,11 @@ enum CapFlags: CapFlags_{
 	texture2DArray          = 0x0000_0000_0100_0000, ///2D texture array is supported.
 	texture3D               = 0x0000_0000_0200_0000, ///3D textures are supported.
 	transparentBackbuffer   = 0x0000_0000_0400_0000, ///Transparent back buffer supported.
-	vertexAttribHalf        = 0x0000_0000_0800_0000, ///Vertex attribute half-float is supported.
-	vertexAttribUint10      = 0x0000_0000_1000_0000, ///Vertex attribute 10_10_10_2 is supported.
-	vertexID                = 0x0000_0000_2000_0000, ///Rendering with VertexID only is supported.
-	viewportLayerArray      = 0x0000_0000_4000_0000, ///Viewport layer is available in vertex shader.
+	variableRateShading     = 0x0000_0000_0800_0000, ///Variable Rate Shading
+	vertexAttribHalf        = 0x0000_0000_1000_0000, ///Vertex attribute half-float is supported.
+	vertexAttribUint10      = 0x0000_0000_2000_0000, ///Vertex attribute 10_10_10_2 is supported.
+	vertexID                = 0x0000_0000_4000_0000, ///Rendering with VertexID only is supported.
+	viewportLayerArray      = 0x0000_0000_8000_0000, ///Viewport layer is available in vertex shader.
 	textureCompareAll       = 0x0000_0000_0018_0000, ///All texture compare modes are supported.
 }
 
@@ -833,6 +834,18 @@ enum ViewMode: bgfx.impl.ViewMode.Enum{
 	depthAscending = bgfx.impl.ViewMode.Enum.depthAscending,
 	depthDescending = bgfx.impl.ViewMode.Enum.depthDescending,
 	count = bgfx.impl.ViewMode.Enum.count,
+}
+
+///Shading Rate.
+enum ShadingRate: bgfx.impl.ShadingRate.Enum{
+	rate1x1 = bgfx.impl.ShadingRate.Enum.rate1x1,
+	rate1x2 = bgfx.impl.ShadingRate.Enum.rate1x2,
+	rate2x1 = bgfx.impl.ShadingRate.Enum.rate2x1,
+	rate2x2 = bgfx.impl.ShadingRate.Enum.rate2x2,
+	rate2x4 = bgfx.impl.ShadingRate.Enum.rate2x4,
+	rate4x2 = bgfx.impl.ShadingRate.Enum.rate4x2,
+	rate4x4 = bgfx.impl.ShadingRate.Enum.rate4x4,
+	count = bgfx.impl.ShadingRate.Enum.count,
 }
 
 ///Native window handle type.
@@ -3023,6 +3036,15 @@ mixin(joinFnBinds((){
 		to default state.
 		*/
 		{q{void}, q{setViewOrder}, q{ViewID id=0, ushort num=ushort.max, const(ViewID)* order=null}, ext: `C++, "bgfx"`},
+		
+		/**
+		* Set view shading rate.
+		* Attention: Availability depends on: `BGFX_CAPS_VARIABLE_RATE_SHADING`.
+		Params:
+			id = View id.
+			shadingRate = Shading rate.
+		*/
+		{q{void}, q{setViewShadingRate}, q{ViewID id, bgfx.impl.ShadingRate.Enum shadingRate=ShadingRate.rate1x1}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Reset all view settings to default.

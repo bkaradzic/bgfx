@@ -2058,6 +2058,7 @@ namespace bgfx
 			setScissor(0, 0, 0, 0);
 			setClear(BGFX_CLEAR_NONE, 0, 0.0f, 0);
 			setMode(ViewMode::Default);
+			setShadingRate(ShadingRate::Rate1x1);
 			setFrameBuffer(BGFX_INVALID_HANDLE);
 			setTransform(NULL, NULL);
 		}
@@ -2093,6 +2094,11 @@ namespace bgfx
 			m_mode = uint8_t(_mode);
 		}
 
+		void setShadingRate(ShadingRate::Enum _shadingRate)
+		{
+			m_shadingRate = uint8_t(_shadingRate);
+		}
+
 		void setFrameBuffer(FrameBufferHandle _handle)
 		{
 			m_fbh = _handle;
@@ -2126,6 +2132,7 @@ namespace bgfx
 		Matrix4 m_proj;
 		FrameBufferHandle m_fbh;
 		uint8_t m_mode;
+		uint8_t m_shadingRate;
 	};
 
 	struct FrameCache
@@ -5160,11 +5167,6 @@ namespace bgfx
 			m_view[_id].setTransform(_view, _proj);
 		}
 
-		BGFX_API_FUNC(void resetView(ViewId _id) )
-		{
-			m_view[_id].reset();
-		}
-
 		BGFX_API_FUNC(void setViewOrder(ViewId _id, uint16_t _num, const ViewId* _order) )
 		{
 			const uint32_t num = bx::min(_id + _num, BGFX_CONFIG_MAX_VIEWS) - _id;
@@ -5180,6 +5182,16 @@ namespace bgfx
 			{
 				bx::memCopy(&m_viewRemap[_id], _order, num*sizeof(ViewId) );
 			}
+		}
+
+		BGFX_API_FUNC(void setViewShadingRate(ViewId _id, ShadingRate::Enum _shadingRate) )
+		{
+			m_view[_id].setShadingRate(_shadingRate);
+		}
+
+		BGFX_API_FUNC(void resetView(ViewId _id) )
+		{
+			m_view[_id].reset();
 		}
 
 		BGFX_API_FUNC(Encoder* begin(bool _forThread) );

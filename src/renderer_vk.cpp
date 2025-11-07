@@ -57,6 +57,24 @@ namespace bgfx { namespace vk
 		{ 16, VK_SAMPLE_COUNT_16_BIT },
 	};
 
+	struct ShadingRateVk
+	{
+		VkExtent2D fragmentSize;
+		const VkExtent2D initFragmentSize;
+	};
+
+	static ShadingRateVk s_shadingRate[] =
+	{
+		{ { 1, 1 }, { 1, 1 } },
+		{ { 1, 2 }, { 1, 2 } },
+		{ { 2, 1 }, { 2, 1 } },
+		{ { 2, 2 }, { 2, 2 } },
+		{ { 2, 4 }, { 2, 4 } },
+		{ { 4, 2 }, { 4, 2 } },
+		{ { 4, 4 }, { 4, 4 } },
+	};
+	static_assert(ShadingRate::Count == BX_COUNTOF(s_shadingRate) );
+
 	static const VkBlendFactor s_blendFactor[][2] =
 	{
 		{ VkBlendFactor(0),                         VkBlendFactor(0)                         }, // ignored
@@ -360,6 +378,7 @@ VK_IMPORT_DEVICE
 			EXT_memory_budget,
 			EXT_shader_viewport_index_layer,
 			KHR_draw_indirect_count,
+			KHR_fragment_shading_rate,
 			KHR_get_physical_device_properties2,
 
 #	if BX_PLATFORM_ANDROID
@@ -399,6 +418,7 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_memory_budget",                   1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_draw_indirect_count",             1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_fragment_shading_rate",           1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true,                                                          Layer::Count },
 #	if BX_PLATFORM_ANDROID
 		{ VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,    1, false, false, true,                                                          Layer::Count },
@@ -1144,6 +1164,7 @@ VK_IMPORT_DEVICE
 			, m_captureBuffer(VK_NULL_HANDLE)
 			, m_captureMemory()
 			, m_captureSize(0)
+			, m_variableRateShadingSupported(false)
 		{
 		}
 
@@ -1173,11 +1194,10 @@ VK_IMPORT_DEVICE
 			const bool headless = NULL == g_platformData.nwh;
 
 			const void* nextFeatures = NULL;
-			VkPhysicalDeviceLineRasterizationFeaturesEXT lineRasterizationFeatures;
-			VkPhysicalDeviceCustomBorderColorFeaturesEXT customBorderColorFeatures;
 
-			bx::memSet(&lineRasterizationFeatures, 0, sizeof(lineRasterizationFeatures) );
-			bx::memSet(&customBorderColorFeatures, 0, sizeof(customBorderColorFeatures) );
+			VkPhysicalDeviceLineRasterizationFeaturesEXT lineRasterizationFeatures = {};
+			VkPhysicalDeviceCustomBorderColorFeaturesEXT customBorderColorFeatures = {};
+			VkPhysicalDeviceFragmentShadingRateFeaturesKHR fragmentShadingRate = {};
 
 			m_fbh = BGFX_INVALID_HANDLE;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
@@ -1243,9 +1263,10 @@ VK_IMPORT
 
 				s_extension[Extension::EXT_debug_report].m_initialize = _init.debug;
 
-				s_extension[Extension::EXT_shader_viewport_index_layer].m_initialize = !!(_init.capabilities & BGFX_CAPS_VIEWPORT_LAYER_ARRAY);
-				s_extension[Extension::EXT_conservative_rasterization ].m_initialize = !!(_init.capabilities & BGFX_CAPS_CONSERVATIVE_RASTER );
-				s_extension[Extension::KHR_draw_indirect_count        ].m_initialize = !!(_init.capabilities & BGFX_CAPS_DRAW_INDIRECT_COUNT );
+				s_extension[Extension::EXT_conservative_rasterization ].m_initialize = !!(_init.capabilities & BGFX_CAPS_CONSERVATIVE_RASTER  );
+				s_extension[Extension::EXT_shader_viewport_index_layer].m_initialize = !!(_init.capabilities & BGFX_CAPS_VIEWPORT_LAYER_ARRAY );
+				s_extension[Extension::KHR_draw_indirect_count        ].m_initialize = !!(_init.capabilities & BGFX_CAPS_DRAW_INDIRECT_COUNT  );
+				s_extension[Extension::KHR_fragment_shading_rate      ].m_initialize = !!(_init.capabilities & BGFX_CAPS_VARIABLE_RATE_SHADING);
 
 				dumpExtensions(VK_NULL_HANDLE, s_extension);
 
@@ -1455,8 +1476,12 @@ VK_IMPORT_INSTANCE
 
 				for (uint32_t ii = 0; ii < numPhysicalDevices; ++ii)
 				{
-					VkPhysicalDeviceProperties pdp;
-					vkGetPhysicalDeviceProperties(physicalDevices[ii], &pdp);
+					VkPhysicalDeviceProperties2 pdp2;
+					pdp2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+					pdp2.pNext = NULL;
+					vkGetPhysicalDeviceProperties2(physicalDevices[ii], &pdp2);
+
+					VkPhysicalDeviceProperties& pdp = pdp2.properties;
 
 					BX_TRACE("Physical device %d:", ii);
 					BX_TRACE("\t          Name: %s", pdp.deviceName);
@@ -1545,11 +1570,19 @@ VK_IMPORT_INSTANCE
 
 				bx::memCopy(&s_extension[0], &physicalDeviceExtensions[physicalDeviceIdx][0], sizeof(s_extension) );
 
-				vkGetPhysicalDeviceProperties(m_physicalDevice, &m_deviceProperties);
-				g_caps.vendorId = uint16_t(m_deviceProperties.vendorID);
-				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
+				m_deviceShadingRateImageProperties = {};
+				m_deviceShadingRateImageProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
 
-				BX_TRACE("Using physical device %d: %s", physicalDeviceIdx, m_deviceProperties.deviceName);
+				m_deviceProperties = {};
+				m_deviceProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+				m_deviceProperties.pNext = &m_deviceShadingRateImageProperties;
+
+				vkGetPhysicalDeviceProperties2(m_physicalDevice, &m_deviceProperties);
+
+				g_caps.vendorId = uint16_t(m_deviceProperties.properties.vendorID);
+				g_caps.deviceId = uint16_t(m_deviceProperties.properties.deviceID);
+
+				BX_TRACE("Using physical device %d: %s", physicalDeviceIdx, m_deviceProperties.properties.deviceName);
 
 				VkPhysicalDeviceFeatures supportedFeatures;
 
@@ -1587,6 +1620,17 @@ VK_IMPORT_INSTANCE
 					vkGetPhysicalDeviceFeatures(m_physicalDevice, &supportedFeatures);
 				}
 
+				if (s_extension[Extension::KHR_fragment_shading_rate].m_supported)
+				{
+					fragmentShadingRate.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
+					fragmentShadingRate.pNext = (VkBaseOutStructure*)nextFeatures;
+					fragmentShadingRate.pipelineFragmentShadingRate = VK_TRUE;
+					fragmentShadingRate.primitiveFragmentShadingRate = VK_TRUE;
+					fragmentShadingRate.attachmentFragmentShadingRate = VK_FALSE;
+
+					nextFeatures = &fragmentShadingRate;
+				}
+
 				bx::memSet(&m_deviceFeatures, 0, sizeof(m_deviceFeatures) );
 
 				m_deviceFeatures.fullDrawIndexUint32               = supportedFeatures.fullDrawIndexUint32;
@@ -1619,7 +1663,7 @@ VK_IMPORT_INSTANCE
 					&& customBorderColorFeatures.customBorderColors
 					;
 
-				m_timerQuerySupport = m_deviceProperties.limits.timestampComputeAndGraphics;
+				m_timerQuerySupport = m_deviceProperties.properties.limits.timestampComputeAndGraphics;
 
 				const bool indirectDrawSupport = true
 					&& m_deviceFeatures.multiDrawIndirect
@@ -1653,24 +1697,30 @@ VK_IMPORT_INSTANCE
 					| (s_extension[Extension::EXT_conservative_rasterization ].m_supported ? BGFX_CAPS_CONSERVATIVE_RASTER  : 0)
 					| (s_extension[Extension::EXT_shader_viewport_index_layer].m_supported ? BGFX_CAPS_VIEWPORT_LAYER_ARRAY : 0)
 					| (s_extension[Extension::KHR_draw_indirect_count        ].m_supported && indirectDrawSupport ? BGFX_CAPS_DRAW_INDIRECT_COUNT : 0)
+					| (s_extension[Extension::KHR_fragment_shading_rate      ].m_supported ? BGFX_CAPS_VARIABLE_RATE_SHADING : 0)
 					;
 
-				const uint32_t maxAttachments = bx::min<uint32_t>(m_deviceProperties.limits.maxFragmentOutputAttachments, m_deviceProperties.limits.maxColorAttachments);
+				m_variableRateShadingSupported = s_extension[Extension::KHR_fragment_shading_rate].m_supported;
 
-				g_caps.limits.maxTextureSize     = m_deviceProperties.limits.maxImageDimension2D;
-				g_caps.limits.maxTextureLayers   = m_deviceProperties.limits.maxImageArrayLayers;
+				const uint32_t maxAttachments = bx::min<uint32_t>(
+					  m_deviceProperties.properties.limits.maxFragmentOutputAttachments
+					, m_deviceProperties.properties.limits.maxColorAttachments
+					);
+
+				g_caps.limits.maxTextureSize     = m_deviceProperties.properties.limits.maxImageDimension2D;
+				g_caps.limits.maxTextureLayers   = m_deviceProperties.properties.limits.maxImageArrayLayers;
 				g_caps.limits.maxFBAttachments   = bx::min<uint32_t>(maxAttachments, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
-				g_caps.limits.maxTextureSamplers = bx::min<uint32_t>(m_deviceProperties.limits.maxPerStageResources, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
-				g_caps.limits.maxComputeBindings = bx::min<uint32_t>(m_deviceProperties.limits.maxPerStageResources, BGFX_MAX_COMPUTE_BINDINGS);
-				g_caps.limits.maxVertexStreams   = bx::min<uint32_t>(m_deviceProperties.limits.maxVertexInputBindings, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+				g_caps.limits.maxTextureSamplers = bx::min<uint32_t>(m_deviceProperties.properties.limits.maxPerStageResources, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+				g_caps.limits.maxComputeBindings = bx::min<uint32_t>(m_deviceProperties.properties.limits.maxPerStageResources, BGFX_MAX_COMPUTE_BINDINGS);
+				g_caps.limits.maxVertexStreams   = bx::min<uint32_t>(m_deviceProperties.properties.limits.maxVertexInputBindings, BGFX_CONFIG_MAX_VERTEX_STREAMS);
 
 				{
 					const VkSampleCountFlags sampleMask = ~0
-						& m_deviceProperties.limits.framebufferColorSampleCounts
-						& m_deviceProperties.limits.framebufferDepthSampleCounts
+						& m_deviceProperties.properties.limits.framebufferColorSampleCounts
+						& m_deviceProperties.properties.limits.framebufferDepthSampleCounts
 						;
 
-					for (uint16_t ii = 0, last = 0; ii < BX_COUNTOF(s_msaa); ii++)
+					for (uint16_t ii = 0, last = 0; ii < BX_COUNTOF(s_msaa); ++ii)
 					{
 						const VkSampleCountFlags sampleBit = s_msaa[ii].Sample;
 
@@ -1682,6 +1732,17 @@ VK_IMPORT_INSTANCE
 						{
 							s_msaa[ii] = s_msaa[last];
 						}
+					}
+				}
+
+				{
+					const VkExtent2D maxFragmentSize = m_deviceShadingRateImageProperties.maxFragmentSize;
+
+					for (uint32_t ii = 0; ii < BX_COUNTOF(s_shadingRate); ++ii)
+					{
+						ShadingRateVk& shadingRate = s_shadingRate[ii];
+						shadingRate.fragmentSize.width  = bx::min(shadingRate.initFragmentSize.width,  maxFragmentSize.width);
+						shadingRate.fragmentSize.height = bx::min(shadingRate.initFragmentSize.height, maxFragmentSize.height);
 					}
 				}
 
@@ -2792,7 +2853,7 @@ VK_IMPORT_DEVICE
 			float maxAnisotropy = 1.0f;
 			if (!!(_resolution.reset & BGFX_RESET_MAXANISOTROPY) )
 			{
-				maxAnisotropy = m_deviceProperties.limits.maxSamplerAnisotropy;
+				maxAnisotropy = m_deviceProperties.properties.limits.maxSamplerAnisotropy;
 			}
 
 			if (m_maxAnisotropy != maxAnisotropy)
@@ -3490,7 +3551,7 @@ VK_IMPORT_DEVICE
 
 			const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
 
-			const float maxLodBias = m_deviceProperties.limits.maxSamplerLodBias;
+			const float maxLodBias = m_deviceProperties.properties.limits.maxSamplerLodBias;
 			const float lodBias = bx::clamp(float(BGFX_CONFIG_MIP_LOD_BIAS), -maxLodBias, maxLodBias);
 
 			VkSamplerCreateInfo sci;
@@ -3724,14 +3785,17 @@ VK_IMPORT_DEVICE
 				VK_DYNAMIC_STATE_SCISSOR,
 				VK_DYNAMIC_STATE_BLEND_CONSTANTS,
 				VK_DYNAMIC_STATE_STENCIL_REFERENCE,
+				VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR, // optional
 			};
 
 			VkPipelineDynamicStateCreateInfo dynamicState;
 			dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 			dynamicState.pNext = NULL;
 			dynamicState.flags = 0;
-			dynamicState.dynamicStateCount = BX_COUNTOF(dynamicStates);
-			dynamicState.pDynamicStates    = dynamicStates;
+			dynamicState.dynamicStateCount = BX_COUNTOF(dynamicStates) -
+				(m_variableRateShadingSupported ? 0 : 1)
+				;
+			dynamicState.pDynamicStates = dynamicStates;
 
 			VkPipelineShaderStageCreateInfo shaderStages[2];
 			shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -4577,9 +4641,10 @@ VK_IMPORT_DEVICE
 		VkPhysicalDevice m_physicalDevice;
 		uint32_t         m_instanceApiVersion;
 
-		VkPhysicalDeviceProperties       m_deviceProperties;
-		VkPhysicalDeviceMemoryProperties m_memoryProperties;
-		VkPhysicalDeviceFeatures         m_deviceFeatures;
+		VkPhysicalDeviceFragmentShadingRatePropertiesKHR m_deviceShadingRateImageProperties;
+		VkPhysicalDeviceProperties2       m_deviceProperties;
+		VkPhysicalDeviceMemoryProperties  m_memoryProperties;
+		VkPhysicalDeviceFeatures          m_deviceFeatures;
 
 		bool m_lineAASupport;
 		bool m_borderColorSupport;
@@ -4640,6 +4705,8 @@ VK_IMPORT_DEVICE
 		VkBuffer m_captureBuffer;
 		DeviceMemoryAllocationVK m_captureMemory;
 		uint32_t m_captureSize;
+
+		bool m_variableRateShadingSupported;
 
 		TextVideoMem m_textVideoMem;
 
@@ -4871,7 +4938,7 @@ VK_DESTROY
 
 	void ScratchBufferVK::createUniform(uint32_t _size, uint32_t _count)
 	{
-		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.limits;
+		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.properties.limits;
 		const uint32_t align = uint32_t(deviceLimits.minUniformBufferOffsetAlignment);
 
 		create(_size, _count, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, align);
@@ -4879,7 +4946,7 @@ VK_DESTROY
 
 	void ScratchBufferVK::createStaging(uint32_t _size)
 	{
-		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.limits;
+		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.properties.limits;
 		const uint32_t align = uint32_t(deviceLimits.optimalBufferCopyOffsetAlignment);
 
 		create(_size, 1, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, align);
@@ -4924,7 +4991,7 @@ VK_DESTROY
 
 	void ScratchBufferVK::flush(bool _reset)
 	{
-		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.limits;
+		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.properties.limits;
 		VkDevice device = s_renderVK->m_device;
 
 		const uint32_t align = uint32_t(deviceLimits.nonCoherentAtomSize);
@@ -5498,7 +5565,7 @@ VK_DESTROY
 
 				if (NULL != m_fsh)
 				{
-					for (uint16_t ii = 0; ii < m_fsh->m_numBindings; ii++)
+					for (uint16_t ii = 0; ii < m_fsh->m_numBindings; ++ii)
 					{
 						const VkDescriptorSetLayoutBinding& fsBinding = m_fsh->m_bindings[ii];
 						uint16_t vsBindingIdx = UINT16_MAX;
@@ -5613,7 +5680,7 @@ VK_DESTROY
 			return result;
 		}
 
-		m_frequency = uint64_t(1000000000.0 / double(s_renderVK->m_deviceProperties.limits.timestampPeriod) );
+		m_frequency = uint64_t(1000000000.0 / double(s_renderVK->m_deviceProperties.properties.limits.timestampPeriod) );
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
 		{
@@ -7798,7 +7865,7 @@ VK_DESTROY
 			TextureFormat::RGBA8,
 		};
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(requestedFormats) && TextureFormat::Count == selectedFormat; ii++)
+		for (uint32_t ii = 0; ii < BX_COUNTOF(requestedFormats) && TextureFormat::Count == selectedFormat; ++ii)
 		{
 			const TextureFormat::Enum requested = requestedFormats[ii];
 			const VkFormat requestedVkFormat = _srgb
@@ -8685,7 +8752,7 @@ VK_DESTROY
 			renderDocTriggerCapture();
 		}
 
-		BGFX_VK_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
+		BGFX_VK_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorFrame);
 
 		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
@@ -8829,7 +8896,8 @@ VK_DESTROY
 					}
 				}
 
-				if(!isCompute && (viewChanged || wasCompute) )
+				if (!isCompute
+				&& (viewChanged || wasCompute) )
 				{
 					if (wasCompute)
 					{
@@ -9027,6 +9095,21 @@ VK_DESTROY
 								clearQuad(clearRect, clr, _render->m_colorPalette);
 
 							}
+						}
+
+						if (m_variableRateShadingSupported)
+						{
+							VkFragmentShadingRateCombinerOpKHR combinerOp[] =
+							{
+								VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR,
+								VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR
+							};
+
+							vkCmdSetFragmentShadingRateKHR(
+								  m_commandBuffer
+								, &s_shadingRate[_render->m_view[view].m_shadingRate].fragmentSize
+								, combinerOp
+								);
 						}
 					}
 				}
@@ -9724,7 +9807,7 @@ VK_DESTROY
 					, BGFX_REV_NUMBER
 					);
 
-				const VkPhysicalDeviceProperties& pdp = m_deviceProperties;
+				const VkPhysicalDeviceProperties& pdp = m_deviceProperties.properties;
 				tvm.printf(0, pos++, 0x8f, " Device: %s (%s)"
 					, pdp.deviceName
 					, getName(pdp.deviceType)

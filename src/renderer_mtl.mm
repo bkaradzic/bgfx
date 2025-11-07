@@ -344,6 +344,18 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		16,
 	};
 
+	static float s_shadingRate[] =
+	{
+		1.0f,
+		0.75f,
+		0.75f,
+		0.5f,
+		0.5f,
+		0.5f,
+		0.25f,
+	};
+	static_assert(ShadingRate::Count == BX_COUNTOF(s_shadingRate) );
+
 	static UniformType::Enum convertMtlType(MTLDataType _type)
 	{
 		switch (_type)
@@ -472,6 +484,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			, m_rtMsaa(false)
 			, m_capture(NULL)
 			, m_captureSize(0)
+			, m_variableRateShadingSupported(false)
 		{
 			bx::memSet(&m_windows, 0xff, sizeof(m_windows) );
 		}
@@ -576,6 +589,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			}
 #endif // BX_PLATFORM_OSX
 
+			m_variableRateShadingSupported = false; //m_device.supportsVariableRasterizationRate();
+
 			g_caps.numGPUs = 1;
 			g_caps.gpu[0].vendorId = g_caps.vendorId;
 			g_caps.gpu[0].deviceId = g_caps.deviceId;
@@ -620,6 +635,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			// Maximum number of entries in the buffer argument table, per graphics or compute function are 31.
 			// It is decremented by 1 because 1 entry is used for uniforms.
 			g_caps.limits.maxComputeBindings = bx::uint32_min(30, BGFX_MAX_COMPUTE_BINDINGS);
+
+			g_caps.supported |= m_variableRateShadingSupported
+				? BGFX_CAPS_VARIABLE_RATE_SHADING
+				: 0
+				;
 
 			CHECK_FEATURE_AVAILABLE(
 				  m_hasPixelFormatDepth32Float_Stencil8
@@ -2721,6 +2741,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		void* m_capture;
 		uint32_t m_captureSize;
 
+		bool m_variableRateShadingSupported;
+
 		// descriptors
 		RenderPipelineDescriptor m_renderPipelineDescriptor;
 		DepthStencilDescriptor   m_depthStencilDescriptor;
@@ -4323,7 +4345,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						viewScissorRect = viewHasScissor ? scissorRect : viewState.m_rect;
 						Clear& clr = _render->m_view[view].m_clear;
 
-						Rect viewRect = viewState.m_rect;
+						const Rect viewRect = viewState.m_rect;
 						bool clearWithRenderPass = false;
 
 						if (NULL == m_renderCommandEncoder
@@ -4473,6 +4495,19 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 									stencilAttachment.loadAction  = MTLLoadActionLoad;
 									stencilAttachment.storeAction = MTLStoreActionStore;
 								}
+							}
+
+							if (m_variableRateShadingSupported)
+							{
+								RasterizationRateLayerDescriptor rrld = newRasterizationRateLayerDescriptor(s_shadingRate[_render->m_view[view].m_shadingRate]);
+								RasterizationRateMapDescriptor   rrmd = newRasterizationRateMapDescriptor();
+								rrmd.screenSize = MTLSizeMake(viewRect.m_width, viewRect.m_height, 0);
+								[rrmd
+									setLayer: rrld
+									atIndex: 0
+								];
+
+								renderPassDescriptor.rasterizationRateMap = m_device.newRasterizationRateMapWithDescriptor(rrmd);
 							}
 
 							rce = m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);

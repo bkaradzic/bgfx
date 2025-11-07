@@ -658,6 +658,26 @@ public:
 				ImGui::ColorWheel("Specular:", &m_settings.m_rgbSpec[0], 0.7f);
 			}
 
+			const bgfx::Caps* caps = bgfx::getCaps();
+
+			static const char* s_shadingRateName[] =
+			{
+				"1x1",
+				"1x2",
+				"2x1",
+				"2x2",
+				"2x4",
+				"4x2",
+				"4x4",
+			};
+			static_assert(bgfx::ShadingRate::Count == BX_COUNTOF(s_shadingRateName) );
+
+			static bgfx::ShadingRate::Enum shadingRate = bgfx::ShadingRate::Rate1x1;
+
+			ImGui::BeginDisabled(0 == (caps->supported & BGFX_CAPS_VARIABLE_RATE_SHADING) );
+			ImGui::Combo("Shading Rate", (int*)&shadingRate, s_shadingRateName, BX_COUNTOF(s_shadingRateName) );
+			ImGui::EndDisabled();
+
 			ImGui::End();
 
 			imguiEndFrame();
@@ -712,8 +732,6 @@ public:
 			float view[16];
 			bx::mtxIdentity(view);
 
-			const bgfx::Caps* caps = bgfx::getCaps();
-
 			float proj[16];
 			bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0, caps->homogeneousDepth);
 			bgfx::setViewTransform(0, view, proj);
@@ -722,6 +740,7 @@ public:
 			m_camera.mtxLookAt(view);
 			bx::mtxProj(proj, 45.0f, float(m_width)/float(m_height), 0.1f, 100.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(1, view, proj);
+			bgfx::setViewShadingRate(1, shadingRate);
 
 			// View rect.
 			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );

@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(132)
+version(133)
 
 typedef "bool"
 typedef "char"
@@ -392,6 +392,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.Texture_2dArray        --- 2D texture array is supported.
 	.Texture_3d             --- 3D textures are supported.
 	.TransparentBackbuffer  --- Transparent back buffer supported.
+	.VariableRateShading    --- Variable Rate Shading
 	.VertexAttribHalf       --- Vertex attribute half-float is supported.
 	.VertexAttribUint10     --- Vertex attribute 10_10_10_2 is supported.
 	.VertexId               --- Rendering with VertexID only is supported.
@@ -687,6 +688,17 @@ enum.ViewMode { underscore, comment = "View modes:" }
 	.Sequential      --- Sort in the same order in which submit calls were called.
 	.DepthAscending  --- Sort draw call depth in ascending order.
 	.DepthDescending --- Sort draw call depth in descending order.
+	()
+
+--- Shading Rate.
+enum.ShadingRate { underscore, comment = "Shading rate:" }
+	.Rate1x1
+	.Rate1x2
+	.Rate2x1
+	.Rate2x2
+	.Rate2x4
+	.Rate4x2
+	.Rate4x4
 	()
 
 --- Native window handle type.
@@ -2149,6 +2161,16 @@ func.setViewOrder
 	.order "const ViewId*" --- View remap id table. Passing `NULL` will reset view ids
 	                       --- to default state.
 	 { default = NULL }
+
+--- Set view shading rate.
+---
+--- @attention Availability depends on: `BGFX_CAPS_VARIABLE_RATE_SHADING`.
+---
+func.setViewShadingRate
+	"void"
+	.id          "ViewId"            --- View id.
+	.shadingRate "ShadingRate::Enum" --- Shading rate.
+	 { default = "ShadingRate::Rate1x1" }
 
 --- Reset all view settings to default.
 func.resetView

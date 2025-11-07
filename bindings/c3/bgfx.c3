@@ -723,17 +723,20 @@ enum CapsFlags : const ulong
 	// Transparent back buffer supported.
 	TRANSPARENTBACKBUFFER  = 0x0000000004000000,
 
+	// Variable Rate Shading
+	VARIABLERATESHADING    = 0x0000000008000000,
+
 	// Vertex attribute half-float is supported.
-	VERTEXATTRIBHALF       = 0x0000000008000000,
+	VERTEXATTRIBHALF       = 0x0000000010000000,
 
 	// Vertex attribute 10_10_10_2 is supported.
-	VERTEXATTRIBUINT10     = 0x0000000010000000,
+	VERTEXATTRIBUINT10     = 0x0000000020000000,
 
 	// Rendering with VertexID only is supported.
-	VERTEXID               = 0x0000000020000000,
+	VERTEXID               = 0x0000000040000000,
 
 	// Viewport layer is available in vertex shader.
-	VIEWPORTLAYERARRAY     = 0x0000000040000000,
+	VIEWPORTLAYERARRAY     = 0x0000000080000000,
 
 	// All texture compare modes are supported.
 	TEXTURECOMPAREALL      = 0x0000000000180000,
@@ -1290,6 +1293,19 @@ enum ViewMode : uint
 
 	// Sort draw call depth in descending order.
 	DEPTHDESCENDING,
+
+	COUNT
+}
+
+enum ShadingRate : uint
+{
+	RATE1X1,
+	RATE1X2,
+	RATE2X1,
+	RATE2X2,
+	RATE2X4,
+	RATE4X2,
+	RATE4X4,
 
 	COUNT
 }
@@ -2563,6 +2579,12 @@ extern fn void set_view_transform(ushort _id, void* _view, void* _proj) @extern(
 // _num : `Number of views to remap.`
 // _order : `View remap id table. Passing `NULL` will reset view ids to default state.`
 extern fn void set_view_order(ushort _id, ushort _num, ushort* _order) @extern("bgfx_set_view_order");
+
+// Set view shading rate.
+// @attention Availability depends on: `BGFX_CAPS_VARIABLE_RATE_SHADING`.
+// _id : `View id.`
+// _shadingRate : `Shading rate.`
+extern fn void set_view_shading_rate(ushort _id, ShadingRate _shadingRate) @extern("bgfx_set_view_shading_rate");
 
 // Reset all view settings to default.
 extern fn void reset_view(ushort _id) @extern("bgfx_reset_view");

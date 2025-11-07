@@ -390,6 +390,24 @@ typedef enum bgfx_view_mode
 } bgfx_view_mode_t;
 
 /**
+ * Shading Rate.
+ *
+ */
+typedef enum bgfx_shading_rate
+{
+    BGFX_SHADING_RATE_RATE_1X_1,              /** ( 0)                                */
+    BGFX_SHADING_RATE_RATE_1X_2,              /** ( 1)                                */
+    BGFX_SHADING_RATE_RATE_2X_1,              /** ( 2)                                */
+    BGFX_SHADING_RATE_RATE_2X_2,              /** ( 3)                                */
+    BGFX_SHADING_RATE_RATE_2X_4,              /** ( 4)                                */
+    BGFX_SHADING_RATE_RATE_4X_2,              /** ( 5)                                */
+    BGFX_SHADING_RATE_RATE_4X_4,              /** ( 6)                                */
+
+    BGFX_SHADING_RATE_COUNT
+
+} bgfx_shading_rate_t;
+
+/**
  * Native window handle type.
  *
  */
@@ -2392,6 +2410,16 @@ BGFX_C_API void bgfx_set_view_transform(bgfx_view_id_t _id, const void* _view, c
 BGFX_C_API void bgfx_set_view_order(bgfx_view_id_t _id, uint16_t _num, const bgfx_view_id_t* _order);
 
 /**
+ * Set view shading rate.
+ * @attention Availability depends on: `BGFX_CAPS_VARIABLE_RATE_SHADING`.
+ *
+ * @param[in] _id View id.
+ * @param[in] _shadingRate Shading rate.
+ *
+ */
+BGFX_C_API void bgfx_set_view_shading_rate(bgfx_view_id_t _id, bgfx_shading_rate_t _shadingRate);
+
+/**
  * Reset all view settings to default.
  *
  * @param[in] _id
@@ -3594,6 +3622,7 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_SET_VIEW_FRAME_BUFFER,
     BGFX_FUNCTION_ID_SET_VIEW_TRANSFORM,
     BGFX_FUNCTION_ID_SET_VIEW_ORDER,
+    BGFX_FUNCTION_ID_SET_VIEW_SHADING_RATE,
     BGFX_FUNCTION_ID_RESET_VIEW,
     BGFX_FUNCTION_ID_ENCODER_BEGIN,
     BGFX_FUNCTION_ID_ENCODER_END,
@@ -3800,6 +3829,7 @@ struct bgfx_interface_vtbl
     void (*set_view_frame_buffer)(bgfx_view_id_t _id, bgfx_frame_buffer_handle_t _handle);
     void (*set_view_transform)(bgfx_view_id_t _id, const void* _view, const void* _proj);
     void (*set_view_order)(bgfx_view_id_t _id, uint16_t _num, const bgfx_view_id_t* _order);
+    void (*set_view_shading_rate)(bgfx_view_id_t _id, bgfx_shading_rate_t _shadingRate);
     void (*reset_view)(bgfx_view_id_t _id);
     bgfx_encoder_t* (*encoder_begin)(bool _forThread);
     void (*encoder_end)(bgfx_encoder_t* _encoder);

@@ -403,11 +403,31 @@ namespace bgfx
 		};
 	};
 
+	/// Shading Rate.
+	///
+	/// @attention C99's equivalent binding is `bgfx_bgfx_shading_rate_t`.
+	///
+	struct ShadingRate
+	{
+		/// Shading rate:
+		enum Enum
+		{
+			Rate1x1,
+			Rate1x2,
+			Rate2x1,
+			Rate2x2,
+			Rate2x4,
+			Rate4x2,
+			Rate4x4,
+
+			Count
+		};
+	};
+
 	/// Native window handle type.
 	///
 	/// @attention C99's equivalent binding is `bgfx_native_window_handle_type_t`.
 	///
-
 	struct NativeWindowHandleType
 	{
 		enum Enum
@@ -3545,6 +3565,18 @@ namespace bgfx
 		  ViewId _id = 0
 		, uint16_t _num = UINT16_MAX
 		, const ViewId* _remap = NULL
+		);
+
+	/// Set view shading rate.
+	///
+	/// @param[in] _id View id.
+	/// @param[in] _rate
+	///
+	/// @attention C99's equivalent binding is `bgfx_set_view_shading_rate`.
+	///
+	void setViewShadingRate(
+		  ViewId _id
+		, ShadingRate::Enum _shadingRate
 		);
 
 	/// Reset all view settings to default.
