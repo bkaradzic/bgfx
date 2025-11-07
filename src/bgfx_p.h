@@ -4079,6 +4079,7 @@ namespace bgfx
 
 		IndirectBufferHandle createIndirectBuffer(uint32_t _num)
 		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 			BX_UNUSED(_num);
 			IndirectBufferHandle handle = { m_vertexBufferHandle.alloc() };
 
@@ -4099,6 +4100,7 @@ namespace bgfx
 
 		void destroyIndirectBuffer(IndirectBufferHandle _handle)
 		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 			VertexBufferHandle handle = { _handle.idx };
 			BGFX_CHECK_HANDLE("destroyDrawIndirectBuffer", m_vertexBufferHandle, handle);
 
