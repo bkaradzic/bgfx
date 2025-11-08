@@ -1468,7 +1468,7 @@ namespace bgfx
 		return RenderFrame::NoContext;
 	}
 
-	const uint32_t g_uniformTypeSize[UniformType::Count+1] =
+	const uint32_t g_uniformTypeSize[] =
 	{
 		sizeof(int32_t),
 		0,
@@ -1477,6 +1477,7 @@ namespace bgfx
 		4*4*sizeof(float),
 		1,
 	};
+	static_assert(UniformType::Count+1 == BX_COUNTOF(g_uniformTypeSize), "Must match UniformType::Enum!");
 
 	void UniformBuffer::writeUniform(UniformType::Enum _type, uint16_t _loc, const void* _value, uint16_t _num)
 	{

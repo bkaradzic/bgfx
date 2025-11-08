@@ -8,6 +8,10 @@
 
 #if BGFX_USE_EGL
 
+#if BGFX_USE_GL_DYNAMIC_LIB
+#	define EGL_EGL_PROTOTYPES 0
+#endif // BGFX_USE_GL_DYNAMIC_LIB
+
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 

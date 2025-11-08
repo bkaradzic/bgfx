@@ -11,7 +11,8 @@
 	|| BX_PLATFORM_LINUX                                                                    \
 	|| BX_PLATFORM_NX                                                                       \
 	|| BX_PLATFORM_RPI                                                                      \
-	) )
+	) )                                                                                     \
+	|| (BGFX_CONFIG_RENDERER_OPENGLES && BX_PLATFORM_WINDOWS)
 
 #define BGFX_USE_HTML5 (BGFX_CONFIG_RENDERER_OPENGLES && (0 \
 	|| BX_PLATFORM_EMSCRIPTEN                               \
