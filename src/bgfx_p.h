@@ -593,6 +593,8 @@ namespace bgfx
 	const char* getName(ShaderHandle _handle);
 	const char* getName(Topology::Enum _topology);
 
+	const struct UniformRef& getUniformRef(UniformHandle _handle);
+
 	template<typename Ty>
 	inline void release(Ty)
 	{
@@ -1313,33 +1315,43 @@ namespace bgfx
 	};
 #undef SORT_KEY_RENDER_DRAW
 
-	constexpr uint8_t  kBlitKeyViewShift = 32-kSortKeyViewNumBits;
-	constexpr uint32_t kBlitKeyViewMask  = uint32_t(BGFX_CONFIG_MAX_VIEWS-1)<<kBlitKeyViewShift;
-	constexpr uint8_t  kBlitKeyItemShift = 0;
-	constexpr uint32_t kBlitKeyItemMask  = UINT16_MAX;
-
 	struct BlitKey
 	{
-		uint32_t encode()
+		using KeyT = uint32_t;
+
+		static constexpr uint8_t  kViewShift = 32-kSortKeyViewNumBits;
+		static constexpr uint32_t kViewMask  = uint32_t(BGFX_CONFIG_MAX_VIEWS-1)<<kViewShift;
+		static constexpr uint8_t  kItemShift = 0;
+		static constexpr uint32_t kItemMask  = UINT16_MAX;
+
+		static_assert( (0
+			| kViewMask
+			| kItemMask
+			) == (0
+			^ kViewMask
+			^ kItemMask
+			), "BlitKey: Key mask shouldn't overlap!");
+
+		KeyT encode()
 		{
-			const uint32_t view = (uint32_t(m_view) << kBlitKeyViewShift) & kBlitKeyViewMask;
-			const uint32_t item = (uint32_t(m_item) << kBlitKeyItemShift) & kBlitKeyItemMask;
-			const uint32_t key  = view|item;
+			const KeyT view = (KeyT(m_view) << kViewShift) & kViewMask;
+			const KeyT item = (KeyT(m_item) << kItemShift) & kItemMask;
+			const KeyT key  = view|item;
 
 			return key;
 		}
 
-		void decode(uint32_t _key)
+		void decode(KeyT _key)
 		{
-			m_item = uint16_t( (_key & kBlitKeyItemMask) >> kBlitKeyItemShift);
-			m_view =   ViewId( (_key & kBlitKeyViewMask) >> kBlitKeyViewShift);
+			m_item = uint16_t( (_key & kItemMask) >> kItemShift);
+			m_view =   ViewId( (_key & kViewMask) >> kViewShift);
 		}
 
-		static uint32_t remapView(uint32_t _key, ViewId _viewRemap[BGFX_CONFIG_MAX_VIEWS])
+		static KeyT remapView(KeyT _key, ViewId _viewRemap[BGFX_CONFIG_MAX_VIEWS])
 		{
-			const ViewId   oldView = ViewId( (_key & kBlitKeyViewMask) >> kBlitKeyViewShift);
-			const uint32_t view    = uint32_t( (_viewRemap[oldView] << kBlitKeyViewShift) & kBlitKeyViewMask);
-			const uint32_t key     = (_key & ~kBlitKeyViewMask) | view;
+			const ViewId oldView = ViewId( (_key & kViewMask) >> kViewShift);
+			const KeyT   view    = uint32_t( (_viewRemap[oldView] << kViewShift) & kViewMask);
+			const KeyT   key     = (_key & ~kViewMask) | view;
 			return key;
 		}
 
@@ -1764,7 +1776,7 @@ namespace bgfx
 
 			m_startIndirect     = 0;
 			m_numIndirect       = UINT32_MAX;
-			m_numIndirectIndex  = 0;  
+			m_numIndirectIndex  = 0;
 			m_indirectBuffer    = BGFX_INVALID_HANDLE;
 			m_numIndirectBuffer = BGFX_INVALID_HANDLE;
 			m_occlusionQuery    = BGFX_INVALID_HANDLE;
@@ -1953,6 +1965,7 @@ namespace bgfx
 	struct UniformRef
 	{
 		bx::FixedString64 m_name;
+		UniformFreq::Enum m_freq;
 		UniformType::Enum m_type;
 		uint16_t          m_num;
 		int16_t           m_refCount;
@@ -2099,6 +2112,11 @@ namespace bgfx
 			m_shadingRate = uint8_t(_shadingRate);
 		}
 
+		void setUniform(UniformHandle _handle, const void* _value, uint16_t _num)
+		{
+			BX_UNUSED(_handle, _value, _num);
+		}
+
 		void setFrameBuffer(FrameBufferHandle _handle)
 		{
 			m_fbh = _handle;
@@ -2133,6 +2151,149 @@ namespace bgfx
 		FrameBufferHandle m_fbh;
 		uint8_t m_mode;
 		uint8_t m_shadingRate;
+	};
+
+	struct UniformCacheKey
+	{
+		using KeyT = uint64_t;
+
+		static constexpr uint8_t kViewShift   = sizeof(KeyT)*8-kSortKeyViewNumBits;
+		static constexpr KeyT    kViewMask    = KeyT(BGFX_CONFIG_MAX_VIEWS-1)<<kViewShift;
+		static constexpr uint8_t kHandleShift = kViewShift - 16;
+		static constexpr KeyT    kHandleMask  = KeyT(UINT16_MAX)<<kHandleShift;
+		static constexpr uint8_t kOffsetShift = kHandleShift-20;
+		static constexpr KeyT    kOffsetMask  = KeyT(UINT32_MAX>>12)<<kOffsetShift;
+		static constexpr uint8_t kSizeShift   = kOffsetShift-12;
+		static constexpr KeyT    kSizeMask    = KeyT(UINT16_MAX>>4)<<kSizeShift;
+
+		static_assert( (0
+			| kViewMask
+			| kHandleMask
+			| kOffsetMask
+			| kSizeMask
+			) == (0
+			^ kViewMask
+			^ kHandleMask
+			^ kOffsetMask
+			^ kSizeMask
+			), "UniformCacheKey: Key mask shouldn't overlap!");
+
+		KeyT encode()
+		{
+			constexpr uint32_t kMaxSize   = ( (kSizeMask  >>kSizeShift  ) + 1)<<4;
+			constexpr uint32_t kMaxOffset = ( (kOffsetMask>>kOffsetShift) + 1)<<4;
+
+			BX_ASSERT(true
+				&& m_size   < kMaxSize
+				&& m_offset < kMaxOffset
+				, "UniformCacheKey couldn't fit size or offest (size %d max %d, offset %d max %d)!"
+				, m_size
+				, kMaxSize
+				, m_offset
+				, kMaxOffset
+				);
+
+			const KeyT view   = (KeyT(m_view)      << kViewShift)   & kViewMask;
+			const KeyT handle = (KeyT(m_handle)    << kHandleShift) & kHandleMask;
+			const KeyT offset = (KeyT(m_offset>>4) << kOffsetShift) & kOffsetMask;
+			const KeyT size   = (KeyT(m_size>>4)   << kSizeShift)   & kSizeMask;
+			const KeyT key    = view|handle|offset|size;
+
+			return key;
+		}
+
+		void decode(KeyT _key)
+		{
+			m_offset = (uint32_t( (_key & kOffsetMask) >> kOffsetShift) ) << 4;
+			m_handle = {uint16_t( (_key & kHandleMask) >> kHandleShift) };
+			m_size   = (uint16_t( (_key & kSizeMask)   >> kSizeShift  ) ) << 4;
+			m_view   =    ViewId( (_key & kViewMask)   >> kViewShift);
+		}
+
+		static KeyT remapView(KeyT _key, ViewId _viewRemap[BGFX_CONFIG_MAX_VIEWS])
+		{
+			const ViewId oldView = ViewId( (_key & kViewMask) >> kViewShift);
+			const KeyT view      = UINT16_MAX != oldView
+				? (KeyT(_viewRemap[oldView]) << kViewShift) & kViewMask
+				: 0 // frame uniforms go into physical view 0.
+				;
+			const KeyT key       = (_key & ~kViewMask) | view;
+			return key;
+		}
+
+		uint32_t m_offset;
+		uint16_t m_handle;
+		uint16_t m_size;
+		ViewId   m_view;
+	};
+
+	struct UniformCacheEntry
+	{
+		uint32_t offset;
+		uint16_t size;
+		int16_t  refCount;
+	};
+
+	struct UniformCacheFrame
+	{
+		static constexpr uint32_t kMinKeysCapacity = 256;
+		static constexpr uint32_t kMinDataCapacity = 16<<10;
+
+		UniformCacheFrame()
+			: m_keys(NULL)
+			, m_data(NULL)
+			, m_numItems(0)
+			, m_keysCapacity(kMinKeysCapacity)
+			, m_dataCapacity(kMinDataCapacity)
+		{
+			m_keys = (UniformCacheKey::KeyT*)bx::alloc(g_allocator, m_keysCapacity*sizeof(uint64_t) );
+			m_data = (uint8_t*)bx::alloc(g_allocator, m_dataCapacity);
+		}
+
+		~UniformCacheFrame()
+		{
+			bx::free(g_allocator, m_keys);
+			bx::free(g_allocator, m_data);
+		}
+
+		void resize(uint32_t _keysCapacity, uint32_t _dataCapacity)
+		{
+			{
+				const uint32_t newKeysCapacity = bx::alignUp(bx::max(_keysCapacity, kMinKeysCapacity), kMinKeysCapacity);
+
+				if (newKeysCapacity != m_keysCapacity)
+				{
+					bx::realloc(g_allocator, m_keys, newKeysCapacity*sizeof(uint64_t) );
+					m_keysCapacity = newKeysCapacity;
+				}
+			}
+
+			{
+				const uint32_t newDataCapacity = bx::alignUp(bx::max(_dataCapacity, kMinDataCapacity), kMinDataCapacity);
+
+				if (newDataCapacity != m_dataCapacity)
+				{
+					bx::realloc(g_allocator, m_keys, newDataCapacity);
+					m_dataCapacity = newDataCapacity;
+				}
+			}
+		}
+
+		void sort(ViewId* _viewRemap, uint64_t* _tempKeys)
+		{
+			for (uint32_t ii = 0, num = m_numItems; ii < num; ++ii)
+			{
+				m_keys[ii] = UniformCacheKey::remapView(m_keys[ii], _viewRemap);
+			}
+
+			bx::radixSort(m_keys, _tempKeys, m_numItems);
+		}
+
+		uint64_t* m_keys;
+		uint8_t*  m_data;
+		uint32_t  m_numItems;
+		uint32_t  m_keysCapacity;
+		uint32_t  m_dataCapacity;
 	};
 
 	struct FrameCache
@@ -2182,7 +2343,7 @@ namespace bgfx
 
 			m_perfStats.viewStats = m_viewStats;
 
-			bx::memSet(&m_renderItemBind[0], 0, sizeof(m_renderItemBind));
+			bx::memSet(&m_renderItemBind[0], 0, sizeof(m_renderItemBind) );
 		}
 
 		~Frame()
@@ -2358,6 +2519,8 @@ namespace bgfx
 		uint32_t m_blitKeys[BGFX_CONFIG_MAX_BLIT_ITEMS+1];
 		BlitItem m_blitItem[BGFX_CONFIG_MAX_BLIT_ITEMS+1];
 
+		UniformCacheFrame m_uniformCacheFrame;
+
 		FrameCache m_frameCache;
 		UniformBuffer** m_uniformBuffer;
 
@@ -2465,7 +2628,7 @@ namespace bgfx
 			// will leaves bytes uninitialized. This will influence the hashing
 			// as it reads those bytes too. To make this deterministic, we will
 			// clear all bytes (inclusively the padding) before we start.
-			bx::memSet(&m_bind, 0, sizeof(m_bind));
+			bx::memSet(&m_bind, 0, sizeof(m_bind) );
 
 			discard(BGFX_DISCARD_ALL);
 		}
@@ -2524,7 +2687,13 @@ namespace bgfx
 					, _handle.idx
 					, getName(_handle)
 					);
-//				m_uniformSet.insert(_handle.idx);
+				m_uniformSet.insert(_handle.idx);
+
+				const UniformRef& uniform = getUniformRef(_handle);
+				BX_ASSERT(UniformFreq::Draw == uniform.m_freq
+					, "Setting uniform for draw call, but uniform frequency is different (frequency: %d)!"
+					, uniform.m_freq
+					);
 			}
 
 			UniformBuffer::update(&m_frame->m_uniformBuffer[m_uniformIdx]);
@@ -2960,6 +3129,7 @@ namespace bgfx
 		static const uint64_t kInvalidBlock = UINT64_MAX;
 
 		NonLocalAllocator()
+			: m_total(0)
 		{
 		}
 
@@ -2971,6 +3141,7 @@ namespace bgfx
 		{
 			m_free.clear();
 			m_used.clear();
+			m_total = 0;
 		}
 
 		void add(uint64_t _ptr, uint32_t _size)
@@ -3003,6 +3174,7 @@ namespace bgfx
 					uint64_t ptr = it->m_ptr;
 
 					m_used.insert(stl::make_pair(ptr, _size) );
+					m_total += _size;
 
 					if (it->m_size != _size)
 					{
@@ -3027,6 +3199,8 @@ namespace bgfx
 			UsedList::iterator it = m_used.find(_block);
 			if (it != m_used.end() )
 			{
+				m_total -= it->second;
+
 				m_free.push_front(Free(it->first, it->second) );
 				m_used.erase(it);
 			}
@@ -3053,6 +3227,11 @@ namespace bgfx
 			return 0 == m_used.size();
 		}
 
+		uint32_t getTotal() const
+		{
+			return m_total;
+		}
+
 	private:
 		struct Free
 		{
@@ -3076,6 +3255,248 @@ namespace bgfx
 
 		typedef stl::unordered_map<uint64_t, uint32_t> UsedList;
 		UsedList m_used;
+
+		uint32_t m_total;
+	};
+
+	struct UniformCache
+	{
+		UniformCache()
+		{
+			const uint32_t size = 1<<20;
+			m_data = (uint8_t*)bx::alloc(g_allocator, size);
+			m_uniformStoreAlloc.add(0, size);
+		}
+
+		~UniformCache()
+		{
+			BX_ASSERT(true
+				&& 0 == m_uniformKeyHashMap.size()
+				&& 0 == m_uniformEntryMap.size()
+				&& 0 == m_uniformStoreAlloc.getTotal()
+				, "UniformCache leak (keys %d, entries %d, %d bytes)!"
+				, m_uniformKeyHashMap.size()
+				, m_uniformEntryMap.size()
+				, m_uniformStoreAlloc.getTotal()
+				);
+
+			bx::free(g_allocator, m_data);
+			m_uniformKeyHashMap.clear();
+			m_uniformEntryMap.clear();
+		}
+
+		void setViewUniform(ViewId _id, UniformHandle _handle, const void* _value, uint16_t _num)
+		{
+			const UniformRef& uniform = getUniformRef(_handle);
+
+			UniformCacheKey key =
+			{
+				.m_offset = 0,
+				.m_handle = _handle.idx,
+				.m_size   = 0,
+				.m_view   = _id,
+			};
+
+			constexpr UniformCacheKey::KeyT kViewHandleMask = UniformCacheKey::kViewMask|UniformCacheKey::kHandleMask;
+			static_assert( ( (kViewHandleMask>>32)<<32) == kViewHandleMask, "View + handle must be in top 32 bits of 64-bit key.");
+			const uint32_t uniformKey = uint32_t(key.encode() >> 32);
+
+			setUniform(uniformKey, uniform.m_type, _value, _num);
+		}
+
+		void setUniform(uint32_t _uniformKey, UniformType::Enum _type, const void* _value, uint16_t _num)
+		{
+			const uint32_t typeSize = g_uniformTypeSize[_type];
+			const uint32_t dataSize = _num * typeSize;
+
+			bx::HashMurmur3 murmur;
+			murmur.begin();
+			murmur.add(_type);
+			murmur.add(_num);
+			murmur.add(_value, dataSize);
+			const uint32_t hash = murmur.end();
+
+			UniformKeyHashMap::iterator itKey = m_uniformKeyHashMap.find(_uniformKey);
+			if (itKey != m_uniformKeyHashMap.end() )
+			{
+				if (itKey->second == hash)
+				{
+					return;
+				}
+
+				UniformEntryMap::iterator itOldEntry = m_uniformEntryMap.find(itKey->second);
+				if (itOldEntry != m_uniformEntryMap.end())
+				{
+					if (release(itOldEntry->second) )
+					{
+						m_uniformEntryMap.erase(itOldEntry);
+					}
+				}
+
+				itKey->second = hash;
+
+				UniformEntryMap::iterator itEntry = m_uniformEntryMap.find(hash);
+				if (itEntry != m_uniformEntryMap.end())
+				{
+					++itEntry->second.refCount;
+
+					return;
+				}
+			}
+			else
+			{
+				m_uniformKeyHashMap.insert(stl::make_pair(_uniformKey, hash) );
+			}
+
+			UniformEntryMap::iterator itEntry = m_uniformEntryMap.find(hash);
+			if (itEntry != m_uniformEntryMap.end())
+			{
+				++itEntry->second.refCount;
+			}
+			else
+			{
+				const uint64_t offset = m_uniformStoreAlloc.alloc(dataSize);
+				BX_ASSERT(NonLocalAllocator::kInvalidBlock != offset, "UniformCache: Failed to allocate data!");
+
+				m_uniformEntryMap.insert(stl::make_pair(hash, UniformCacheEntry
+					{
+						.offset   = bx::narrowCast<uint32_t>(offset),
+						.size     = bx::narrowCast<uint16_t>(dataSize),
+						.refCount = 1
+					}) );
+
+				bx::memCopy(&m_data[offset], _value, dataSize);
+			}
+		}
+
+		void frame(UniformCacheFrame& _outUniformCacheFrame)
+		{
+			m_uniformStoreAlloc.compact();
+
+			_outUniformCacheFrame.resize(
+				  uint32_t(m_uniformKeyHashMap.size() )
+				, m_uniformStoreAlloc.getTotal()
+				);
+
+			using OffsetRemap = stl::unordered_map<uint32_t, uint32_t>;
+			OffsetRemap offsetRemap;
+
+			uint32_t linearOffset = 0;
+			uint32_t num = 0;
+			for (UniformKeyHashMap::const_iterator itKey = m_uniformKeyHashMap.begin(), itEnd = m_uniformKeyHashMap.end(); itKey != itEnd; ++itKey)
+			{
+				UniformEntryMap::iterator itEntry = m_uniformEntryMap.find(itKey->second);
+				BX_ASSERT(itEntry != m_uniformEntryMap.end()
+					, "Couldn't find uniform cache entry for key 0x%d, hash 0x%x!"
+					, itKey->first
+					, itKey->second
+					);
+
+				const uint32_t offset = itEntry->second.offset;
+				const uint16_t size   = itEntry->second.size;
+
+				UniformCacheKey key;
+				key.decode(uint64_t(itKey->first)<<32);
+				key.m_size = size;
+
+				OffsetRemap::const_iterator itOffset = offsetRemap.find(offset);
+				if (itOffset != offsetRemap.end())
+				{
+					key.m_offset = itOffset->second;
+				}
+				else
+				{
+					key.m_offset = linearOffset;
+
+					offsetRemap.insert(stl::make_pair(offset, linearOffset) );
+					bx::memCopy(&_outUniformCacheFrame.m_data[linearOffset], &m_data[offset], size);
+
+					linearOffset += size;
+				}
+
+				_outUniformCacheFrame.m_keys[num++] = key.encode();
+			}
+
+			_outUniformCacheFrame.m_numItems = num;
+		}
+
+		void invalidate(ViewId _viewId)
+		{
+			for (UniformKeyHashMap::iterator itKey = m_uniformKeyHashMap.begin(), itEnd = m_uniformKeyHashMap.end(); itKey != itEnd; ++itKey)
+			{
+				UniformCacheKey key;
+				key.decode(uint64_t(itKey->first) << 32);
+
+				if (key.m_view == _viewId)
+				{
+					release(itKey->second);
+
+					UniformKeyHashMap::iterator itErase = itKey;
+					++itKey;
+
+					m_uniformKeyHashMap.erase(itErase);
+				}
+			}
+		}
+
+		void invalidate(UniformHandle _handle)
+		{
+			for (UniformKeyHashMap::iterator itKey = m_uniformKeyHashMap.begin(), itEnd = m_uniformKeyHashMap.end(); itKey != itEnd;)
+			{
+				UniformCacheKey key;
+				key.decode(uint64_t(itKey->first) << 32);
+
+				if (key.m_handle == _handle.idx)
+				{
+					release(itKey->second);
+
+					UniformKeyHashMap::iterator itErase = itKey;
+					++itKey;
+
+					m_uniformKeyHashMap.erase(itErase);
+				}
+				else
+				{
+					++itKey;
+				}
+			}
+		}
+
+		bool release(UniformCacheEntry& _entry)
+		{
+			--_entry.refCount;
+
+			if (0 == _entry.refCount)
+			{
+				const uint64_t offset = _entry.offset;
+
+				m_uniformStoreAlloc.free(offset);
+				return true;
+			}
+
+			return false;
+		}
+
+		void release(uint32_t _hash)
+		{
+			UniformEntryMap::iterator itEntry = m_uniformEntryMap.find(_hash);
+			if (itEntry != m_uniformEntryMap.end())
+			{
+				if (release(itEntry->second) )
+				{
+					m_uniformEntryMap.erase(itEntry);
+				}
+			}
+		}
+
+		using UniformKeyHashMap = stl::unordered_map<uint32_t, uint32_t>;
+		using UniformEntryMap   = stl::unordered_map<uint32_t, UniformCacheEntry>;
+
+		UniformKeyHashMap m_uniformKeyHashMap;
+		UniformEntryMap   m_uniformEntryMap;
+
+		NonLocalAllocator m_uniformStoreAlloc;
+		uint8_t* m_data;
 	};
 
 	struct BX_NO_VTABLE RendererContextI
@@ -4248,7 +4669,7 @@ namespace bgfx
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
 				if (PredefinedUniform::Count == predefined && UniformType::End != UniformType::Enum(type) )
 				{
-					uniforms[sr.m_num] = createUniform(name, UniformType::Enum(type), num);
+					uniforms[sr.m_num] = createUniform(name, UniformFreq::Draw, UniformType::Enum(type), num);
 					sr.m_num++;
 				}
 			}
@@ -4903,7 +5324,7 @@ namespace bgfx
 			}
 		}
 
-		BGFX_API_FUNC(UniformHandle createUniform(const char* _name, UniformType::Enum _type, uint16_t _num) )
+		BGFX_API_FUNC(UniformHandle createUniform(const char* _name, UniformFreq::Enum _freq, UniformType::Enum _type, uint16_t _num) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
@@ -4930,8 +5351,10 @@ namespace bgfx
 					, uniform.m_type
 					);
 
-				uint32_t oldsize = g_uniformTypeSize[uniform.m_type];
-				uint32_t newsize = g_uniformTypeSize[_type];
+				const uint32_t oldsize = g_uniformTypeSize[uniform.m_type];
+				const uint32_t newsize = g_uniformTypeSize[_type];
+
+				uniform.m_freq = _freq; // Ignore shader created uniforms, and use UniformFreq when user creates uniform.
 
 				if (oldsize < newsize
 				||  uniform.m_num < _num)
@@ -4967,6 +5390,7 @@ namespace bgfx
 			UniformRef& uniform = m_uniformRef[handle.idx];
 			uniform.m_name.set(_name);
 			uniform.m_refCount = 1;
+			uniform.m_freq = _freq;
 			uniform.m_type = _type;
 			uniform.m_num  = _num;
 
@@ -5191,9 +5615,15 @@ namespace bgfx
 			m_view[_id].setShadingRate(_shadingRate);
 		}
 
+		BGFX_API_FUNC(void setViewUniform(ViewId _id, UniformHandle _handle, const void* _value, uint16_t _num) )
+		{
+			m_uniformCache.setViewUniform(_id, _handle, _value, _num);
+		}
+
 		BGFX_API_FUNC(void resetView(ViewId _id) )
 		{
 			m_view[_id].reset();
+			m_uniformCache.invalidate(_id);
 		}
 
 		BGFX_API_FUNC(Encoder* begin(bool _forThread) );
@@ -5386,6 +5816,8 @@ namespace bgfx
 		ViewId m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		uint32_t m_seq[BGFX_CONFIG_MAX_VIEWS];
 		View m_view[BGFX_CONFIG_MAX_VIEWS];
+
+		UniformCache m_uniformCache;
 
 		float m_clearColor[BGFX_CONFIG_MAX_COLOR_PALETTE][4];
 

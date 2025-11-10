@@ -1430,6 +1430,8 @@ namespace bgfx
 		}
 
 		bx::radixSort(m_blitKeys, (uint32_t*)&s_ctx->m_tempKeys, m_numBlitItems);
+
+		m_uniformCacheFrame.sort(viewRemap, s_ctx->m_tempKeys);
 	}
 
 	RenderFrame::Enum renderFrame(int32_t _msecs)
@@ -1611,6 +1613,18 @@ namespace bgfx
 		BX_TRACE("\t C Program  %016" PRIx64, kSortKeyComputeProgramMask);
 
 		BX_TRACE("");
+		BX_TRACE("Blit key masks:");
+		BX_TRACE("\tView   %08" PRIx32, BlitKey::kViewMask);
+		BX_TRACE("\tItem   %08" PRIx32, BlitKey::kItemMask);
+
+		BX_TRACE("");
+		BX_TRACE("Uniform cache key masks:");
+		BX_TRACE("\tView   %016" PRIx64, UniformCacheKey::kViewMask);
+		BX_TRACE("\tHandle %016" PRIx64, UniformCacheKey::kHandleMask);
+		BX_TRACE("\tOffset %016" PRIx64, UniformCacheKey::kOffsetMask);
+		BX_TRACE("\tSize   %016" PRIx64, UniformCacheKey::kSizeMask);
+
+		BX_TRACE("");
 		BX_TRACE("Capabilities (renderer %s, vendor 0x%04x, device 0x%04x):"
 				, s_ctx->m_renderCtx->getRendererName()
 				, g_caps.vendorId
@@ -1779,7 +1793,12 @@ namespace bgfx
 
 	const char* getName(UniformHandle _handle)
 	{
-		return s_ctx->m_uniformRef[_handle.idx].m_name.getCPtr();
+		return getUniformRef(_handle).m_name.getCPtr();
+	}
+
+	const UniformRef& getUniformRef(UniformHandle _handle)
+	{
+		return s_ctx->m_uniformRef[_handle.idx];
 	}
 
 	const char* getName(ShaderHandle _handle)
@@ -2241,7 +2260,9 @@ namespace bgfx
 
 		for (uint16_t ii = 0, num = _frame->m_freeUniform.getNumQueued(); ii < num; ++ii)
 		{
-			m_uniformHandle.free(_frame->m_freeUniform.get(ii).idx);
+			UniformHandle handle = _frame->m_freeUniform.get(ii);
+			m_uniformCache.invalidate(handle);
+			m_uniformHandle.free(handle.idx);
 		}
 	}
 
@@ -2328,6 +2349,10 @@ namespace bgfx
 		m_submit->m_perfStats.numViews = 0;
 
 		bx::memCopy(m_submit->m_viewRemap, m_viewRemap, sizeof(m_viewRemap) );
+
+		m_uniformCache.frame(m_submit->m_uniformCacheFrame);
+
+		static_assert(bx::isTriviallyCopyable<View>(), "Must be memcopyiable...");
 		bx::memCopy(m_submit->m_view, m_view, sizeof(m_view) );
 
 		if (m_colorPaletteDirty > 0)
@@ -3767,6 +3792,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_HANDLE("setUniform", s_ctx->m_uniformHandle, _handle);
 		const UniformRef& uniform = s_ctx->m_uniformRef[_handle.idx];
+		BX_ASSERT(uniform.m_freq == UniformFreq::Draw, "Setting uniform per draw call, but uniform is created with different bgfx::UniformFreq::Enum!");
 		BX_ASSERT(isValid(_handle) && 0 < uniform.m_refCount, "Setting invalid uniform (handle %3d)!", _handle.idx);
 		BX_ASSERT(_num == UINT16_MAX || uniform.m_num >= _num, "Truncated uniform update. %d (max: %d)", _num, uniform.m_num);
 		BGFX_ENCODER(setUniform(uniform.m_type, _handle, _value, UINT16_MAX != _num ? _num : uniform.m_num) );
@@ -5200,7 +5226,12 @@ namespace bgfx
 
 	UniformHandle createUniform(const char* _name, UniformType::Enum _type, uint16_t _num)
 	{
-		return s_ctx->createUniform(_name, _type, _num);
+		return s_ctx->createUniform(_name, UniformFreq::Draw, _type, _num);
+	}
+
+	UniformHandle createUniform(const char* _name, UniformFreq::Enum _freq, UniformType::Enum _type, uint16_t _num)
+	{
+		return s_ctx->createUniform(_name, _freq, _type, _num);
 	}
 
 	void getUniformInfo(UniformHandle _handle, UniformInfo& _info)
@@ -5406,6 +5437,17 @@ namespace bgfx
 	{
 		BGFX_CHECK_ENCODER0();
 		s_ctx->m_encoder0->setUniform(_handle, _value, _num);
+	}
+
+	void setViewUniform(ViewId _id, UniformHandle _handle, const void* _value, uint16_t _num)
+	{
+		BX_ASSERT(checkView(_id), "Invalid view id: %d", _id);
+		s_ctx->setViewUniform(_id, _handle, _value, _num);
+	}
+
+	void setFrameUniform(UniformHandle _handle, const void* _value, uint16_t _num)
+	{
+		s_ctx->setViewUniform(UINT16_MAX, _handle, _value, _num);
 	}
 
 	void setIndexBuffer(IndexBufferHandle _handle)

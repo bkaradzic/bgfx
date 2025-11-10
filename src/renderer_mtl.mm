@@ -1338,6 +1338,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void submitBlit(BlitState& _bs, uint16_t _view);
 
+		void submitUniformCache(UniformCacheState& _ucs, uint16_t _view);
+
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;
 
 		void blitSetup(TextVideoMemBlitter& _blitter) override
@@ -4137,6 +4139,16 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 	}
 
+	void RendererContextMtl::submitUniformCache(UniformCacheState& _ucs, uint16_t _view)
+	{
+		while (_ucs.hasItem(_view) )
+		{
+			const UniformCacheItem& uci = _ucs.advance();
+
+			bx::memCopy(m_uniforms[uci.m_handle], &_ucs.m_frame->m_uniformCacheFrame.m_data[uci.m_offset], uci.m_size);
+		}
+	}
+
 	void RendererContextMtl::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		m_cmd.finish(false);
@@ -4265,6 +4277,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
 
+		UniformCacheState ucs(_render);
 		BlitState bs(_render);
 
 		const uint64_t primType = 0;
@@ -4336,6 +4349,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 					viewState.m_rect = _render->m_view[view].m_rect;
 
+					submitUniformCache(ucs, view);
 					submitBlit(bs, view);
 
 					if (!isCompute)

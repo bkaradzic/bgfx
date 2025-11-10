@@ -1151,6 +1151,19 @@ pub const UniformType = enum(c_int) {
     Count
 };
 
+pub const UniformFreq = enum(c_int) {
+    /// Changing per draw call.
+    Draw,
+
+    /// Changing per view.
+    View,
+
+    /// Changing per frame.
+    Frame,
+
+    Count
+};
+
 pub const BackbufferRatio = enum(c_int) {
     /// Equal to backbuffer.
     Equal,
@@ -2760,6 +2773,39 @@ pub inline fn createUniform(_name: [*c]const u8, _type: UniformType, _num: u16) 
 }
 extern fn bgfx_create_uniform(_name: [*c]const u8, _type: UniformType, _num: u16) UniformHandle;
 
+/// Create shader uniform parameter.
+/// @remarks
+///   1. Uniform names are unique. It's valid to call `bgfx::createUniform`
+///      multiple times with the same uniform name. The library will always
+///      return the same handle, but the handle reference count will be
+///      incremented. This means that the same number of `bgfx::destroyUniform`
+///      must be called to properly destroy the uniform.
+///   2. Predefined uniforms (declared in `bgfx_shader.sh`):
+///      - `u_viewRect vec4(x, y, width, height)` - view rectangle for current
+///        view, in pixels.
+///      - `u_viewTexel vec4(1.0/width, 1.0/height, undef, undef)` - inverse
+///        width and height
+///      - `u_view mat4` - view matrix
+///      - `u_invView mat4` - inverted view matrix
+///      - `u_proj mat4` - projection matrix
+///      - `u_invProj mat4` - inverted projection matrix
+///      - `u_viewProj mat4` - concatenated view projection matrix
+///      - `u_invViewProj mat4` - concatenated inverted view projection matrix
+///      - `u_model mat4[BGFX_CONFIG_MAX_BONES]` - array of model matrices.
+///      - `u_modelView mat4` - concatenated model view matrix, only first
+///        model matrix from array is used.
+///      - `u_invModelView mat4` - inverted concatenated model view matrix.
+///      - `u_modelViewProj mat4` - concatenated model view projection matrix.
+///      - `u_alphaRef float` - alpha reference value for alpha test.
+/// <param name="_name">Uniform name in shader.</param>
+/// <param name="_freq">Uniform change frequency (See: `bgfx::UniformFreq`).</param>
+/// <param name="_type">Type of uniform (See: `bgfx::UniformType`).</param>
+/// <param name="_num">Number of elements in array.</param>
+pub inline fn createUniformWithFreq(_name: [*c]const u8, _freq: UniformFreq, _type: UniformType, _num: u16) UniformHandle {
+    return bgfx_create_uniform_with_freq(_name, _freq, _type, _num);
+}
+extern fn bgfx_create_uniform_with_freq(_name: [*c]const u8, _freq: UniformFreq, _type: UniformType, _num: u16) UniformHandle;
+
 /// Retrieve uniform info.
 /// <param name="_handle">Handle to uniform object.</param>
 /// <param name="_info">Uniform info.</param>
@@ -3039,6 +3085,27 @@ extern fn bgfx_encoder_alloc_transform(self: ?*Encoder, _transform: [*c]Transfor
 /// <param name="_value">Pointer to uniform data.</param>
 /// <param name="_num">Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.</param>
 extern fn bgfx_encoder_set_uniform(self: ?*Encoder, _handle: UniformHandle, _value: ?*const anyopaque, _num: u16) void;
+
+/// Set shader uniform parameter for view.
+/// @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
+/// <param name="_id">View id.</param>
+/// <param name="_handle">Uniform.</param>
+/// <param name="_value">Pointer to uniform data.</param>
+/// <param name="_num">Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.</param>
+pub inline fn setViewUniform(_id: ViewId, _handle: UniformHandle, _value: ?*const anyopaque, _num: u16) void {
+    return bgfx_set_view_uniform(_id, _handle, _value, _num);
+}
+extern fn bgfx_set_view_uniform(_id: ViewId, _handle: UniformHandle, _value: ?*const anyopaque, _num: u16) void;
+
+/// Set shader uniform parameter for frame.
+/// @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
+/// <param name="_handle">Uniform.</param>
+/// <param name="_value">Pointer to uniform data.</param>
+/// <param name="_num">Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.</param>
+pub inline fn setFrameUniform(_handle: UniformHandle, _value: ?*const anyopaque, _num: u16) void {
+    return bgfx_set_frame_uniform(_handle, _value, _num);
+}
+extern fn bgfx_set_frame_uniform(_handle: UniformHandle, _value: ?*const anyopaque, _num: u16) void;
 
 /// Set index buffer for draw primitive.
 /// <param name="_handle">Index buffer.</param>

@@ -49,7 +49,7 @@ public:
 				, 0
 				);
 
-		u_time = bgfx::createUniform("u_time", bgfx::UniformType::Vec4);
+		u_time = bgfx::createUniform("u_time", bgfx::UniformFreq::Frame, bgfx::UniformType::Vec4);
 
 		// Create program from shaders.
 		m_program = loadProgram("vs_mesh", "fs_mesh");
@@ -104,7 +104,7 @@ public:
 			bgfx::touch(0);
 
 			float time = (float)( (bx::getHPCounter()-m_timeOffset)/double(bx::getHPFrequency() ) );
-			bgfx::setUniform(u_time, &time);
+			bgfx::setFrameUniform(u_time, &time);
 
 			const bx::Vec3 at  = { 0.0f, 1.0f,  0.0f };
 			const bx::Vec3 eye = { 0.0f, 1.0f, -2.5f };
