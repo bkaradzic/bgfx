@@ -3265,7 +3265,7 @@ namespace bgfx
 		{
 			const uint32_t size = 1<<20;
 			m_data = (uint8_t*)bx::alloc(g_allocator, size);
-			m_localAlloc.add(0, size);
+			m_uniformStoreAlloc.add(0, size);
 		}
 
 		~UniformCache()
@@ -3273,11 +3273,11 @@ namespace bgfx
 			BX_ASSERT(true
 				&& 0 == m_uniformKeyHashMap.size()
 				&& 0 == m_uniformEntryMap.size()
-				&& 0 == m_localAlloc.getTotal()
+				&& 0 == m_uniformStoreAlloc.getTotal()
 				, "UniformCache leak (keys %d, entries %d, %d bytes)!"
 				, m_uniformKeyHashMap.size()
 				, m_uniformEntryMap.size()
-				, m_localAlloc.getTotal()
+				, m_uniformStoreAlloc.getTotal()
 				);
 
 			bx::free(g_allocator, m_data);
@@ -3355,7 +3355,9 @@ namespace bgfx
 			}
 			else
 			{
-				const uint64_t offset = m_localAlloc.alloc(dataSize);
+				const uint64_t offset = m_uniformStoreAlloc.alloc(dataSize);
+				BX_ASSERT(NonLocalAllocator::kInvalidBlock != offset, "UniformCache: Failed to allocate data!");
+
 				m_uniformEntryMap.insert(stl::make_pair(hash, UniformCacheEntry
 					{
 						.offset   = bx::narrowCast<uint32_t>(offset),
@@ -3369,11 +3371,11 @@ namespace bgfx
 
 		void frame(UniformCacheFrame& _outUniformCacheFrame)
 		{
-			m_localAlloc.compact();
+			m_uniformStoreAlloc.compact();
 
 			_outUniformCacheFrame.resize(
 				  uint32_t(m_uniformKeyHashMap.size() )
-				, m_localAlloc.getTotal()
+				, m_uniformStoreAlloc.getTotal()
 				);
 
 			using OffsetRemap = stl::unordered_map<uint32_t, uint32_t>;
@@ -3468,7 +3470,7 @@ namespace bgfx
 			{
 				const uint64_t offset = _entry.offset;
 
-				m_localAlloc.free(offset);
+				m_uniformStoreAlloc.free(offset);
 				return true;
 			}
 
@@ -3493,7 +3495,7 @@ namespace bgfx
 		UniformKeyHashMap m_uniformKeyHashMap;
 		UniformEntryMap   m_uniformEntryMap;
 
-		NonLocalAllocator m_localAlloc;
+		NonLocalAllocator m_uniformStoreAlloc;
 		uint8_t* m_data;
 	};
 
