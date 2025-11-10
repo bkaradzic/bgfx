@@ -367,7 +367,7 @@ public:
 		s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 
 		// Create time uniform.
-		u_time = bgfx::createUniform("u_time", bgfx::UniformType::Vec4);
+		u_time = bgfx::createUniform("u_time", bgfx::UniformFreq::Frame, bgfx::UniformType::Vec4);
 
 		for(uint32_t ii = 0; ii<BX_COUNTOF( m_textureCube ); ++ii)
 		{
@@ -592,7 +592,7 @@ public:
 
 			int64_t now = bx::getHPCounter();
 			float time = (float)( (now - m_timeOffset)/double(bx::getHPFrequency() ) );
-			bgfx::setUniform(u_time, &time);
+			bgfx::setFrameUniform(u_time, &time);
 
 			if (now > m_updateTime)
 			{

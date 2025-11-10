@@ -285,8 +285,6 @@ public:
 			, 0
 			);
 
-		u_tint = bgfx::createUniform("u_tint", bgfx::UniformType::Vec4);
-
 		// Create program from shaders.
 		m_program = loadProgram("vs_bunnylod", "fs_bunnylod");
 
@@ -309,7 +307,6 @@ public:
 		bgfx::destroy(m_program);
 		bgfx::destroy(m_vb);
 		bgfx::destroy(m_ib);
-		bgfx::destroy(u_tint);
 
 		bx::free(entry::getAllocator(), m_map);
 		bx::free(entry::getAllocator(), m_triangle);
@@ -432,8 +429,6 @@ public:
 			bgfx::touch(0);
 
 			float time = (float)( (bx::getHPCounter()-m_timeOffset)/double(bx::getHPFrequency() ) );
-			const float BasicColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-			bgfx::setUniform(u_tint, BasicColor);
 
 			const bx::Vec3 at  = { 0.0f, 1.0f,  0.0f };
 			const bx::Vec3 eye = { 0.0f, 1.0f, -2.5f };
@@ -493,7 +488,6 @@ public:
 	bgfx::VertexBufferHandle m_vb;
 	bgfx::DynamicIndexBufferHandle m_ib;
 	bgfx::ProgramHandle m_program;
-	bgfx::UniformHandle u_tint;
 };
 
 } // namespace

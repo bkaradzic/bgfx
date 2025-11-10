@@ -54,6 +54,11 @@ extern(C++, "bgfx") package final abstract class UniformType{
 		sampler,end,vec4,mat3,mat4,count
 	}
 }
+extern(C++, "bgfx") package final abstract class UniformFreq{
+	enum Enum{
+		draw,view,frame,count
+	}
+}
 extern(C++, "bgfx") package final abstract class BackbufferRatio{
 	enum Enum{
 		equal,half,quarter,eighth,sixteenth,double_,count

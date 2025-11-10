@@ -2123,6 +2123,8 @@ namespace bgfx { namespace d3d11
 
 		void submitBlit(BlitState& _bs, uint16_t _view);
 
+		void submitUniformCache(UniformCacheState& _ucs, uint16_t _view);
+
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;
 
 		void blitSetup(TextVideoMemBlitter& _blitter) override
@@ -5589,6 +5591,16 @@ namespace bgfx { namespace d3d11
 		}
 	}
 
+	void RendererContextD3D11::submitUniformCache(UniformCacheState& _ucs, uint16_t _view)
+	{
+		while (_ucs.hasItem(_view) )
+		{
+			const UniformCacheItem& uci = _ucs.advance();
+
+			bx::memCopy(m_uniforms[uci.m_handle], &_ucs.m_frame->m_uniformCacheFrame.m_data[uci.m_offset], uci.m_size);
+		}
+	}
+
 	void RendererContextD3D11::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		if (m_lost)
@@ -5659,6 +5671,7 @@ namespace bgfx { namespace d3d11
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
 
+		UniformCacheState ucs(_render);
 		BlitState bs(_render);
 
 		const uint64_t primType = _render->m_debug&BGFX_DEBUG_WIREFRAME ? BGFX_STATE_PT_LINES : 0;
@@ -5759,6 +5772,7 @@ namespace bgfx { namespace d3d11
 						prim = s_primInfo[Topology::Count]; // Force primitive type update after clear quad.
 					}
 
+					submitUniformCache(ucs, view);
 					submitBlit(bs, view);
 				}
 

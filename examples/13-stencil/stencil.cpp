@@ -288,21 +288,22 @@ struct Uniforms
 			m_lightRgbInnerR[ii][3] = 1.0f;
 		}
 
+		u_ambient            = bgfx::createUniform("u_ambient",             bgfx::UniformFreq::Frame, bgfx::UniformType::Vec4);
+		u_diffuse            = bgfx::createUniform("u_diffuse",             bgfx::UniformFreq::Frame, bgfx::UniformType::Vec4);
+		u_specular_shininess = bgfx::createUniform("u_specular_shininess",  bgfx::UniformFreq::Frame, bgfx::UniformType::Vec4);
+
 		u_params             = bgfx::createUniform("u_params",              bgfx::UniformType::Vec4);
-		u_ambient            = bgfx::createUniform("u_ambient",             bgfx::UniformType::Vec4);
-		u_diffuse            = bgfx::createUniform("u_diffuse",             bgfx::UniformType::Vec4);
-		u_specular_shininess = bgfx::createUniform("u_specular_shininess",  bgfx::UniformType::Vec4);
 		u_color              = bgfx::createUniform("u_color",               bgfx::UniformType::Vec4);
 		u_lightPosRadius     = bgfx::createUniform("u_lightPosRadius",      bgfx::UniformType::Vec4, MAX_NUM_LIGHTS);
 		u_lightRgbInnerR     = bgfx::createUniform("u_lightRgbInnerR",      bgfx::UniformType::Vec4, MAX_NUM_LIGHTS);
 	}
 
 	//call this once at initialization
-	void submitConstUniforms()
+	void submitFrameUniforms()
 	{
-		bgfx::setUniform(u_ambient,            &m_ambient);
-		bgfx::setUniform(u_diffuse,            &m_diffuse);
-		bgfx::setUniform(u_specular_shininess, &m_specular_shininess);
+		bgfx::setFrameUniform(u_ambient,            &m_ambient);
+		bgfx::setFrameUniform(u_diffuse,            &m_diffuse);
+		bgfx::setFrameUniform(u_specular_shininess, &m_specular_shininess);
 	}
 
 	//call this before each draw call
@@ -979,7 +980,7 @@ public:
 
 			imguiEndFrame();
 
-			s_uniforms.submitConstUniforms();
+			s_uniforms.submitFrameUniforms();
 
 			// Update settings.
 			uint8_t numLights = (uint8_t)m_numLights;

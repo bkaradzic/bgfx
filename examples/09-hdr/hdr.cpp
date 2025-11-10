@@ -187,8 +187,10 @@ public:
 		s_texLum    = bgfx::createUniform("s_texLum",   bgfx::UniformType::Sampler);
 		s_texBlur   = bgfx::createUniform("s_texBlur",  bgfx::UniformType::Sampler);
 		u_mtx       = bgfx::createUniform("u_mtx",      bgfx::UniformType::Mat4);
-		u_tonemap   = bgfx::createUniform("u_tonemap",  bgfx::UniformType::Vec4);
 		u_offset    = bgfx::createUniform("u_offset",   bgfx::UniformType::Vec4, 16);
+
+		// Tonemap value will be updated once per frame.
+		u_tonemap   = bgfx::createUniform("u_tonemap",  bgfx::UniformFreq::Frame, bgfx::UniformType::Vec4);
 
 		m_mesh = meshLoad("meshes/bunny.bin");
 
@@ -515,7 +517,8 @@ public:
 			// Set view and projection matrix for view hdrMesh.
 			bgfx::setViewTransform(hdrMesh, view, proj);
 
-			float tonemap[4] = { m_middleGray, bx::square(m_white), m_threshold, m_time };
+			const float tonemap[4] = { m_middleGray, bx::square(m_white), m_threshold, m_time };
+			bgfx::setFrameUniform(u_tonemap, tonemap);
 
 			// Render skybox into view hdrSkybox.
 			bgfx::setTexture(0, s_texCube, m_uffizi);
@@ -526,7 +529,6 @@ public:
 
 			// Render m_mesh into view hdrMesh.
 			bgfx::setTexture(0, s_texCube, m_uffizi);
-			bgfx::setUniform(u_tonemap, tonemap);
 			meshSubmit(m_mesh, hdrMesh, m_meshProgram, NULL);
 
 			// Calculate luminance.
@@ -569,14 +571,12 @@ public:
 			bgfx::setTexture(0, s_texColor, m_fbtextures[0]);
 			bgfx::setTexture(1, s_texLum, bgfx::getTexture(m_lum[4]) );
 			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
-			bgfx::setUniform(u_tonemap, tonemap);
 			screenSpaceQuad(m_caps->originBottomLeft);
 			bgfx::submit(hdrBrightness, m_brightProgram);
 
 			// m_blur m_bright pass vertically.
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_bright) );
 			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
-			bgfx::setUniform(u_tonemap, tonemap);
 			screenSpaceQuad(m_caps->originBottomLeft);
 			bgfx::submit(hdrVBlur, m_blurProgram);
 

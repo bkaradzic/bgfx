@@ -289,6 +289,20 @@ typedef enum bgfx_uniform_type
 } bgfx_uniform_type_t;
 
 /**
+ * Uniform frequency enum.
+ *
+ */
+typedef enum bgfx_uniform_freq
+{
+    BGFX_UNIFORM_FREQ_DRAW,                   /** ( 0) Changing per draw call.        */
+    BGFX_UNIFORM_FREQ_VIEW,                   /** ( 1) Changing per view.             */
+    BGFX_UNIFORM_FREQ_FRAME,                  /** ( 2) Changing per frame.            */
+
+    BGFX_UNIFORM_FREQ_COUNT
+
+} bgfx_uniform_freq_t;
+
+/**
  * Backbuffer ratio enum.
  *
  */
@@ -2201,6 +2215,42 @@ BGFX_C_API void bgfx_destroy_frame_buffer(bgfx_frame_buffer_handle_t _handle);
 BGFX_C_API bgfx_uniform_handle_t bgfx_create_uniform(const char* _name, bgfx_uniform_type_t _type, uint16_t _num);
 
 /**
+ * Create shader uniform parameter.
+ * @remarks
+ *   1. Uniform names are unique. It's valid to call `bgfx::createUniform`
+ *      multiple times with the same uniform name. The library will always
+ *      return the same handle, but the handle reference count will be
+ *      incremented. This means that the same number of `bgfx::destroyUniform`
+ *      must be called to properly destroy the uniform.
+ *   2. Predefined uniforms (declared in `bgfx_shader.sh`):
+ *      - `u_viewRect vec4(x, y, width, height)` - view rectangle for current
+ *        view, in pixels.
+ *      - `u_viewTexel vec4(1.0/width, 1.0/height, undef, undef)` - inverse
+ *        width and height
+ *      - `u_view mat4` - view matrix
+ *      - `u_invView mat4` - inverted view matrix
+ *      - `u_proj mat4` - projection matrix
+ *      - `u_invProj mat4` - inverted projection matrix
+ *      - `u_viewProj mat4` - concatenated view projection matrix
+ *      - `u_invViewProj mat4` - concatenated inverted view projection matrix
+ *      - `u_model mat4[BGFX_CONFIG_MAX_BONES]` - array of model matrices.
+ *      - `u_modelView mat4` - concatenated model view matrix, only first
+ *        model matrix from array is used.
+ *      - `u_invModelView mat4` - inverted concatenated model view matrix.
+ *      - `u_modelViewProj mat4` - concatenated model view projection matrix.
+ *      - `u_alphaRef float` - alpha reference value for alpha test.
+ *
+ * @param[in] _name Uniform name in shader.
+ * @param[in] _freq Uniform change frequency (See: `bgfx::UniformFreq`).
+ * @param[in] _type Type of uniform (See: `bgfx::UniformType`).
+ * @param[in] _num Number of elements in array.
+ *
+ * @returns Handle to uniform object.
+ *
+ */
+BGFX_C_API bgfx_uniform_handle_t bgfx_create_uniform_with_freq(const char* _name, bgfx_uniform_freq_t _freq, bgfx_uniform_type_t _type, uint16_t _num);
+
+/**
  * Retrieve uniform info.
  *
  * @param[in] _handle Handle to uniform object.
@@ -2572,6 +2622,31 @@ BGFX_C_API uint32_t bgfx_encoder_alloc_transform(bgfx_encoder_t* _this, bgfx_tra
  *
  */
 BGFX_C_API void bgfx_encoder_set_uniform(bgfx_encoder_t* _this, bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
+
+/**
+ * Set shader uniform parameter for view.
+ * @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
+ *
+ * @param[in] _id View id.
+ * @param[in] _handle Uniform.
+ * @param[in] _value Pointer to uniform data.
+ * @param[in] _num Number of elements. Passing `UINT16_MAX` will
+ *  use the _num passed on uniform creation.
+ *
+ */
+BGFX_C_API void bgfx_set_view_uniform(bgfx_view_id_t _id, bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
+
+/**
+ * Set shader uniform parameter for frame.
+ * @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
+ *
+ * @param[in] _handle Uniform.
+ * @param[in] _value Pointer to uniform data.
+ * @param[in] _num Number of elements. Passing `UINT16_MAX` will
+ *  use the _num passed on uniform creation.
+ *
+ */
+BGFX_C_API void bgfx_set_frame_uniform(bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
 
 /**
  * Set index buffer for draw primitive.
@@ -3604,6 +3679,7 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_GET_TEXTURE,
     BGFX_FUNCTION_ID_DESTROY_FRAME_BUFFER,
     BGFX_FUNCTION_ID_CREATE_UNIFORM,
+    BGFX_FUNCTION_ID_CREATE_UNIFORM_WITH_FREQ,
     BGFX_FUNCTION_ID_GET_UNIFORM_INFO,
     BGFX_FUNCTION_ID_DESTROY_UNIFORM,
     BGFX_FUNCTION_ID_CREATE_OCCLUSION_QUERY,
@@ -3636,6 +3712,8 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_ENCODER_SET_TRANSFORM_CACHED,
     BGFX_FUNCTION_ID_ENCODER_ALLOC_TRANSFORM,
     BGFX_FUNCTION_ID_ENCODER_SET_UNIFORM,
+    BGFX_FUNCTION_ID_SET_VIEW_UNIFORM,
+    BGFX_FUNCTION_ID_SET_FRAME_UNIFORM,
     BGFX_FUNCTION_ID_ENCODER_SET_INDEX_BUFFER,
     BGFX_FUNCTION_ID_ENCODER_SET_DYNAMIC_INDEX_BUFFER,
     BGFX_FUNCTION_ID_ENCODER_SET_TRANSIENT_INDEX_BUFFER,
@@ -3811,6 +3889,7 @@ struct bgfx_interface_vtbl
     bgfx_texture_handle_t (*get_texture)(bgfx_frame_buffer_handle_t _handle, uint8_t _attachment);
     void (*destroy_frame_buffer)(bgfx_frame_buffer_handle_t _handle);
     bgfx_uniform_handle_t (*create_uniform)(const char* _name, bgfx_uniform_type_t _type, uint16_t _num);
+    bgfx_uniform_handle_t (*create_uniform_with_freq)(const char* _name, bgfx_uniform_freq_t _freq, bgfx_uniform_type_t _type, uint16_t _num);
     void (*get_uniform_info)(bgfx_uniform_handle_t _handle, bgfx_uniform_info_t * _info);
     void (*destroy_uniform)(bgfx_uniform_handle_t _handle);
     bgfx_occlusion_query_handle_t (*create_occlusion_query)(void);
@@ -3843,6 +3922,8 @@ struct bgfx_interface_vtbl
     void (*encoder_set_transform_cached)(bgfx_encoder_t* _this, uint32_t _cache, uint16_t _num);
     uint32_t (*encoder_alloc_transform)(bgfx_encoder_t* _this, bgfx_transform_t* _transform, uint16_t _num);
     void (*encoder_set_uniform)(bgfx_encoder_t* _this, bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
+    void (*set_view_uniform)(bgfx_view_id_t _id, bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
+    void (*set_frame_uniform)(bgfx_uniform_handle_t _handle, const void* _value, uint16_t _num);
     void (*encoder_set_index_buffer)(bgfx_encoder_t* _this, bgfx_index_buffer_handle_t _handle, uint32_t _firstIndex, uint32_t _numIndices);
     void (*encoder_set_dynamic_index_buffer)(bgfx_encoder_t* _this, bgfx_dynamic_index_buffer_handle_t _handle, uint32_t _firstIndex, uint32_t _numIndices);
     void (*encoder_set_transient_index_buffer)(bgfx_encoder_t* _this, const bgfx_transient_index_buffer_t* _tib, uint32_t _firstIndex, uint32_t _numIndices);

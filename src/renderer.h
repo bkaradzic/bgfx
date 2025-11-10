@@ -58,6 +58,49 @@ namespace bgfx
 		uint16_t m_item;
 	};
 
+	struct UniformCacheItem
+	{
+		uint32_t m_offset;
+		uint16_t m_size;
+		uint16_t m_handle;
+	};
+
+	struct UniformCacheState
+	{
+		UniformCacheState(const Frame* _frame)
+			: m_frame(_frame)
+			, m_item(0)
+		{
+			m_key.decode(_frame->m_uniformCacheFrame.m_keys[0]);
+		}
+
+		bool hasItem(uint16_t _view) const
+		{
+			return m_item < m_frame->m_uniformCacheFrame.m_numItems
+				&& m_key.m_view <= _view
+				;
+		}
+
+		const UniformCacheItem advance()
+		{
+			UniformCacheItem item =
+			{
+				.m_offset = m_key.m_offset,
+				.m_size   = m_key.m_size,
+				.m_handle = m_key.m_handle,
+			};
+
+			++m_item;
+			m_key.decode(m_frame->m_uniformCacheFrame.m_keys[m_item]);
+
+			return item;
+		}
+
+		const Frame*    m_frame;
+		UniformCacheKey m_key;
+		uint16_t        m_item;
+	};
+
 	struct ViewState
 	{
 		ViewState()
