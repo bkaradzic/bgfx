@@ -133,19 +133,22 @@ Available Caps
 .. doxygendefine:: BGFX_CAPS_INDEX32
 .. doxygendefine:: BGFX_CAPS_INSTANCING
 .. doxygendefine:: BGFX_CAPS_OCCLUSION_QUERY
+.. doxygendefine:: BGFX_CAPS_PRIMITIVE_ID
 .. doxygendefine:: BGFX_CAPS_RENDERER_MULTITHREADED
 .. doxygendefine:: BGFX_CAPS_SWAP_CHAIN
-.. doxygendefine:: BGFX_CAPS_TEXTURE_2D_ARRAY
-.. doxygendefine:: BGFX_CAPS_TEXTURE_3D
 .. doxygendefine:: BGFX_CAPS_TEXTURE_BLIT
-.. doxygendefine:: BGFX_CAPS_TEXTURE_COMPARE_ALL
 .. doxygendefine:: BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 .. doxygendefine:: BGFX_CAPS_TEXTURE_CUBE_ARRAY
 .. doxygendefine:: BGFX_CAPS_TEXTURE_DIRECT_ACCESS
 .. doxygendefine:: BGFX_CAPS_TEXTURE_READ_BACK
+.. doxygendefine:: BGFX_CAPS_TEXTURE_2D_ARRAY
+.. doxygendefine:: BGFX_CAPS_TEXTURE_3D
+.. doxygendefine:: BGFX_CAPS_TRANSPARENT_BACKBUFFER
+.. doxygendefine:: BGFX_CAPS_VARIABLE_RATE_SHADING
 .. doxygendefine:: BGFX_CAPS_VERTEX_ATTRIB_HALF
 .. doxygendefine:: BGFX_CAPS_VERTEX_ATTRIB_UINT10
 .. doxygendefine:: BGFX_CAPS_VERTEX_ID
+.. doxygendefine:: BGFX_CAPS_VIEWPORT_LAYER_ARRAY
 
 Statistics
 **********
@@ -242,6 +245,11 @@ A View's state is preserved between frames.
 .. doxygenfunction:: bgfx::setViewFrameBuffer
 .. doxygenfunction:: bgfx::setViewTransform
 .. doxygenfunction:: bgfx::setViewOrder
+
+.. doxygenstruct:: bgfx::ShadingRate
+    :members:
+
+.. doxygenfunction:: bgfx::setViewShadingRate
 .. doxygenfunction:: bgfx::resetView
 
 Encoder
@@ -419,6 +427,13 @@ Textures
 
 .. doxygenfunction:: bgfx::setTexture(uint8_t, UniformHandle, TextureHandle, uint32_t)
 
+Uniforms
+********
+
+.. doxygenfunction:: bgfx::setUniform
+.. doxygenfunction:: bgfx::setViewUniform
+.. doxygenfunction:: bgfx::setFrameUniform
+
 Submit
 ******
 
@@ -495,15 +510,21 @@ Shaders and Programs
 Uniforms
 ~~~~~~~~
 
-.. doxygenfunction:: bgfx::createUniform
-.. doxygenfunction:: bgfx::getUniformInfo
-.. doxygenfunction:: bgfx::destroy(UniformHandle _handle)
-
 .. doxygenstruct:: bgfx::UniformType
     :members:
 
+.. doxygenfunction:: bgfx::createUniform(const char* _name, UniformType::Enum, uint16_t)
+
+.. doxygenstruct:: bgfx::UniformFreq
+    :members:
+
+.. doxygenfunction:: bgfx::createUniform(const char* _name, UniformFreq::Enum, UniformType::Enum, uint16_t)
+
 .. doxygenstruct:: bgfx::UniformInfo
     :members:
+
+.. doxygenfunction:: bgfx::getUniformInfo
+.. doxygenfunction:: bgfx::destroy(UniformHandle _handle)
 
 Vertex Buffers
 ~~~~~~~~~~~~~~
