@@ -1027,6 +1027,18 @@ enum TextureFormat : uint
 	// ETC2 RGB8A1
 	ETC2A1,
 
+	// EAC R11 UNORM
+	EACR11,
+
+	// EAC R11 SNORM
+	EACR11S,
+
+	// EAC RG11 UNORM
+	EACRG11,
+
+	// EAC RG11 SNORM
+	EACRG11S,
+
 	// PVRTC1 RGB 2BPP
 	PTC12,
 
@@ -1461,7 +1473,7 @@ struct Caps
 	//   - `BGFX_CAPS_FORMAT_TEXTURE_MSAA` - Texture can be sampled as MSAA.
 	//   - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
 	//     mips.
-	ushort[96] formats;
+	ushort[100] formats;
 }
 
 // Internal data.

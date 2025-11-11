@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 134;
+enum uint apiVersion = 135;
 
 alias ViewID = ushort;
 
@@ -673,6 +673,10 @@ enum TextureFormat: bgfx.impl.TextureFormat.Enum{
 	etc2 = bgfx.impl.TextureFormat.Enum.etc2,
 	etc2a = bgfx.impl.TextureFormat.Enum.etc2a,
 	etc2a1 = bgfx.impl.TextureFormat.Enum.etc2a1,
+	eacr11 = bgfx.impl.TextureFormat.Enum.eacr11,
+	eacr11s = bgfx.impl.TextureFormat.Enum.eacr11s,
+	eacrg11 = bgfx.impl.TextureFormat.Enum.eacrg11,
+	eacrg11s = bgfx.impl.TextureFormat.Enum.eacrg11s,
 	ptc12 = bgfx.impl.TextureFormat.Enum.ptc12,
 	ptc14 = bgfx.impl.TextureFormat.Enum.ptc14,
 	ptc12a = bgfx.impl.TextureFormat.Enum.ptc12a,
