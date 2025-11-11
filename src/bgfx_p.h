@@ -2184,7 +2184,7 @@ namespace bgfx
 			constexpr uint32_t kMaxOffset = ( (kOffsetMask>>kOffsetShift) + 1)<<4;
 
 			BX_ASSERT(true
-				&& m_size   < kMaxSize
+				&& uint32_t(m_size) < kMaxSize
 				&& m_offset < kMaxOffset
 				, "UniformCacheKey couldn't fit size or offest (size %d max %d, offset %d max %d)!"
 				, m_size
