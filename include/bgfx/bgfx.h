@@ -170,6 +170,10 @@ namespace bgfx
 			ETC2,         //!< ETC2 RGB8
 			ETC2A,        //!< ETC2 RGBA8
 			ETC2A1,       //!< ETC2 RGB8A1
+			EACR11,       //!< EAC R11 UNORM
+			EACR11S,      //!< EAC R11 SNORM
+			EACRG11,      //!< EAC RG11 UNORM
+			EACRG11S,     //!< EAC RG11 SNORM
 			PTC12,        //!< PVRTC1 RGB 2BPP
 			PTC14,        //!< PVRTC1 RGB 4BPP
 			PTC12A,       //!< PVRTC1 RGBA 2BPP

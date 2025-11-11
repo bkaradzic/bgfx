@@ -1622,6 +1622,26 @@ public static partial class bgfx
 		ETC2A1,
 	
 		/// <summary>
+		/// EAC R11 UNORM
+		/// </summary>
+		EACR11,
+	
+		/// <summary>
+		/// EAC R11 SNORM
+		/// </summary>
+		EACR11S,
+	
+		/// <summary>
+		/// EAC RG11 UNORM
+		/// </summary>
+		EACRG11,
+	
+		/// <summary>
+		/// EAC RG11 SNORM
+		/// </summary>
+		EACRG11S,
+	
+		/// <summary>
 		/// PVRTC1 RGB 2BPP
 		/// </summary>
 		PTC12,
@@ -2116,7 +2136,7 @@ public static partial class bgfx
 		public byte numGPUs;
 		public fixed uint gpu[4];
 		public Limits limits;
-		public fixed ushort formats[96];
+		public fixed ushort formats[100];
 	}
 	
 	public unsafe struct InternalData

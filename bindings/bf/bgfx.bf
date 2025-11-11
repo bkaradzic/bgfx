@@ -1629,6 +1629,26 @@ public static class bgfx
 		ETC2A1,
 	
 		/// <summary>
+		/// EAC R11 UNORM
+		/// </summary>
+		EACR11,
+	
+		/// <summary>
+		/// EAC R11 SNORM
+		/// </summary>
+		EACR11S,
+	
+		/// <summary>
+		/// EAC RG11 UNORM
+		/// </summary>
+		EACRG11,
+	
+		/// <summary>
+		/// EAC RG11 SNORM
+		/// </summary>
+		EACRG11S,
+	
+		/// <summary>
 		/// PVRTC1 RGB 2BPP
 		/// </summary>
 		PTC12,
@@ -2137,7 +2157,7 @@ public static class bgfx
 		public uint8 numGPUs;
 		public GPU[4] gpu;
 		public Limits limits;
-		public uint16[96] formats;
+		public uint16[100] formats;
 	}
 	
 	[CRepr]
