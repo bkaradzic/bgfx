@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>API Reference &mdash; bgfx 1.132.8889 documentation</title>
+  <title>API Reference &mdash; bgfx 1.135.9039 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=8557c509"></script>
+      <script src="_static/documentation_options.js?v=35fa3054"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -125,6 +125,11 @@
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N4bgfx18setViewFrameBufferE6ViewId17FrameBufferHandle"><code class="docutils literal notranslate"><span class="pre">setViewFrameBuffer()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N4bgfx16setViewTransformE6ViewIdPKvPKv"><code class="docutils literal notranslate"><span class="pre">setViewTransform()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N4bgfx12setViewOrderE6ViewId8uint16_tPK6ViewId"><code class="docutils literal notranslate"><span class="pre">setViewOrder()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N4bgfx11ShadingRateE"><code class="docutils literal notranslate"><span class="pre">bgfx::ShadingRate</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx11ShadingRate4EnumE"><code class="docutils literal notranslate"><span class="pre">Enum</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N4bgfx18setViewShadingRateE6ViewIdN11ShadingRate4EnumE"><code class="docutils literal notranslate"><span class="pre">setViewShadingRate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N4bgfx9resetViewE6ViewId"><code class="docutils literal notranslate"><span class="pre">resetView()</span></code></a></li>
 </ul>
 </li>
@@ -147,6 +152,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#conditional-rendering">Conditional Rendering</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#buffers">Buffers</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#textures">Textures</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#uniforms">Uniforms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#submit">Submit</a></li>
 </ul>
 </li>
@@ -181,12 +187,14 @@
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx7destroyE13ProgramHandle"><code class="docutils literal notranslate"><span class="pre">destroy()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#uniforms">Uniforms</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Uniforms</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx11UniformTypeE"><code class="docutils literal notranslate"><span class="pre">bgfx::UniformType</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t"><code class="docutils literal notranslate"><span class="pre">createUniform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx11UniformFreqE"><code class="docutils literal notranslate"><span class="pre">bgfx::UniformFreq</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx13createUniformEPKcN11UniformFreq4EnumEN11UniformType4EnumE8uint16_t"><code class="docutils literal notranslate"><span class="pre">createUniform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx11UniformInfoE"><code class="docutils literal notranslate"><span class="pre">bgfx::UniformInfo</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx14getUniformInfoE13UniformHandleR11UniformInfo"><code class="docutils literal notranslate"><span class="pre">getUniformInfo()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx7destroyE13UniformHandle"><code class="docutils literal notranslate"><span class="pre">destroy()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx11UniformTypeE"><code class="docutils literal notranslate"><span class="pre">bgfx::UniformType</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx11UniformInfoE"><code class="docutils literal notranslate"><span class="pre">bgfx::UniformInfo</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#vertex-buffers">Vertex Buffers</a><ul>
@@ -218,7 +226,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx25allocTransientIndexBufferEP20TransientIndexBuffer8uint32_tb"><code class="docutils literal notranslate"><span class="pre">allocTransientIndexBuffer()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#id5">Textures</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Textures</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N4bgfx13TextureFormatE"><code class="docutils literal notranslate"><span class="pre">bgfx::TextureFormat</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#c.BGFX_TEXTURE_MSAA_SAMPLE"><code class="docutils literal notranslate"><span class="pre">BGFX_TEXTURE_MSAA_SAMPLE</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#c.BGFX_TEXTURE_RT"><code class="docutils literal notranslate"><span class="pre">BGFX_TEXTURE_RT</span></code></a></li>
@@ -1716,6 +1724,12 @@
 </dd></dl>
 
 <dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_CAPS_PRIMITIVE_ID">
+<span class="target" id="defines_8h_1a023bea318fc4017629303a4032e2476e"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_PRIMITIVE_ID</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_PRIMITIVE_ID" title="Link to this definition"></a><br /></dt>
+<dd><p>PrimitiveID is available in fragment shader. </p>
+</dd></dl>
+
+<dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.BGFX_CAPS_RENDERER_MULTITHREADED">
 <span class="target" id="defines_8h_1a7a915158233262d1e3efe18a12b4c3a6"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_RENDERER_MULTITHREADED</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_RENDERER_MULTITHREADED" title="Link to this definition"></a><br /></dt>
 <dd><p>Renderer is on separate thread. </p>
@@ -1728,27 +1742,10 @@
 </dd></dl>
 
 <dl class="cpp macro">
-<dt class="sig sig-object cpp" id="c.BGFX_CAPS_TEXTURE_2D_ARRAY">
-<span class="target" id="defines_8h_1a5722ea49376c1f384e7d542d94454c8e"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_TEXTURE_2D_ARRAY</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_2D_ARRAY" title="Link to this definition"></a><br /></dt>
-<dd><p>2D texture array is supported. </p>
-</dd></dl>
-
-<dl class="cpp macro">
-<dt class="sig sig-object cpp" id="c.BGFX_CAPS_TEXTURE_3D">
-<span class="target" id="defines_8h_1ad5f6d21a544dec64de111514b463566b"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_TEXTURE_3D</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_3D" title="Link to this definition"></a><br /></dt>
-<dd><p>3D textures are supported. </p>
-</dd></dl>
-
-<dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.BGFX_CAPS_TEXTURE_BLIT">
 <span class="target" id="defines_8h_1a7ddb9c7ef30ca6c8b68b686b5122123f"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_BLIT" title="Link to this definition"></a><br /></dt>
 <dd><p>Texture blit is supported. </p>
 </dd></dl>
-
-<dl class="cpp macro">
-<dt class="sig sig-object cpp" id="c.BGFX_CAPS_TEXTURE_COMPARE_ALL">
-<span class="target" id="defines_8h_1a9ebaab5c7f3b4b3289bb6b6b7bae9511"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_TEXTURE_COMPARE_ALL</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_COMPARE_ALL" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
 
 <dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.BGFX_CAPS_TEXTURE_COMPARE_LEQUAL">
@@ -1775,6 +1772,30 @@
 </dd></dl>
 
 <dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_CAPS_TEXTURE_2D_ARRAY">
+<span class="target" id="defines_8h_1a5722ea49376c1f384e7d542d94454c8e"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_TEXTURE_2D_ARRAY</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_2D_ARRAY" title="Link to this definition"></a><br /></dt>
+<dd><p>2D texture array is supported. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_CAPS_TEXTURE_3D">
+<span class="target" id="defines_8h_1ad5f6d21a544dec64de111514b463566b"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_TEXTURE_3D</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_3D" title="Link to this definition"></a><br /></dt>
+<dd><p>3D textures are supported. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_CAPS_TRANSPARENT_BACKBUFFER">
+<span class="target" id="defines_8h_1a74245dd1b0923d4bb13dba88e8781f08"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_TRANSPARENT_BACKBUFFER</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_TRANSPARENT_BACKBUFFER" title="Link to this definition"></a><br /></dt>
+<dd><p>Transparent back buffer supported. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_CAPS_VARIABLE_RATE_SHADING">
+<span class="target" id="defines_8h_1ac827c5238c11da74281be83684a43f4c"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_VARIABLE_RATE_SHADING</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_VARIABLE_RATE_SHADING" title="Link to this definition"></a><br /></dt>
+<dd><p>Variable Rate Shading. </p>
+</dd></dl>
+
+<dl class="cpp macro">
 <dt class="sig sig-object cpp" id="c.BGFX_CAPS_VERTEX_ATTRIB_HALF">
 <span class="target" id="defines_8h_1ac7de569a09f05f83052c6b77c99db7fc"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_VERTEX_ATTRIB_HALF</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_VERTEX_ATTRIB_HALF" title="Link to this definition"></a><br /></dt>
 <dd><p>Vertex attribute half-float is supported. </p>
@@ -1790,6 +1811,12 @@
 <dt class="sig sig-object cpp" id="c.BGFX_CAPS_VERTEX_ID">
 <span class="target" id="defines_8h_1a63af3c34318335de4b4fa64af87dcc5c"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_VERTEX_ID</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_VERTEX_ID" title="Link to this definition"></a><br /></dt>
 <dd><p>Rendering with VertexID only is supported. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_CAPS_VIEWPORT_LAYER_ARRAY">
+<span class="target" id="defines_8h_1ad080765e762144f4c76c8c29d05bc724"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_CAPS_VIEWPORT_LAYER_ARRAY</span></span></span><a class="headerlink" href="#c.BGFX_CAPS_VIEWPORT_LAYER_ARRAY" title="Link to this definition"></a><br /></dt>
+<dd><p>Viewport layer is available in vertex shader. All texture compare modes are supported. </p>
 </dd></dl>
 
 </section>
@@ -3068,6 +3095,88 @@ In graphics debugger view name will appear as: <div class="highlight-default not
 <li><p><strong>_id</strong> – <strong>[in]</strong> First view id. </p></li>
 <li><p><strong>_num</strong> – <strong>[in]</strong> Number of views to remap. </p></li>
 <li><p><strong>_remap</strong> – <strong>[in]</strong> View remap id table. Passing <code class="docutils literal notranslate"><span class="pre">NULL</span></code> will reset view ids to default state.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11ShadingRateE">
+<span id="_CPPv3N4bgfx11ShadingRateE"></span><span id="_CPPv2N4bgfx11ShadingRateE"></span><span id="bgfx::ShadingRate"></span><span class="target" id="structbgfx_1_1_shading_rate"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ShadingRate</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11ShadingRateE" title="Link to this definition"></a><br /></dt>
+<dd><p>Shading Rate. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_bgfx_shading_rate_t</span></code>. </p>
+</dd>
+</dl>
+</p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-types">Public Types</p>
+<dl class="cpp enum">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11ShadingRate4EnumE">
+<span id="_CPPv3N4bgfx11ShadingRate4EnumE"></span><span id="_CPPv2N4bgfx11ShadingRate4EnumE"></span><span class="target" id="structbgfx_1_1_shading_rate_1acd79a92544a558019f92781d90036e9b"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Enum</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11ShadingRate4EnumE" title="Link to this definition"></a><br /></dt>
+<dd><p>Shading rate: </p>
+<p><em>Values:</em></p>
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11ShadingRate4Enum7Rate1x1E">
+<span id="_CPPv3N4bgfx11ShadingRate4Enum7Rate1x1E"></span><span id="_CPPv2N4bgfx11ShadingRate4Enum7Rate1x1E"></span><span class="target" id="structbgfx_1_1_shading_rate_1acd79a92544a558019f92781d90036e9ba005179767a142ec8a3a8b5a1e507d763"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Rate1x1</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11ShadingRate4Enum7Rate1x1E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11ShadingRate4Enum7Rate1x2E">
+<span id="_CPPv3N4bgfx11ShadingRate4Enum7Rate1x2E"></span><span id="_CPPv2N4bgfx11ShadingRate4Enum7Rate1x2E"></span><span class="target" id="structbgfx_1_1_shading_rate_1acd79a92544a558019f92781d90036e9ba8f378b6055f1528a88740669e8bdba1c"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Rate1x2</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11ShadingRate4Enum7Rate1x2E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11ShadingRate4Enum7Rate2x1E">
+<span id="_CPPv3N4bgfx11ShadingRate4Enum7Rate2x1E"></span><span id="_CPPv2N4bgfx11ShadingRate4Enum7Rate2x1E"></span><span class="target" id="structbgfx_1_1_shading_rate_1acd79a92544a558019f92781d90036e9baa78085bc8178bd3a10f1e3325ce56d0f"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Rate2x1</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11ShadingRate4Enum7Rate2x1E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11ShadingRate4Enum7Rate2x2E">
+<span id="_CPPv3N4bgfx11ShadingRate4Enum7Rate2x2E"></span><span id="_CPPv2N4bgfx11ShadingRate4Enum7Rate2x2E"></span><span class="target" id="structbgfx_1_1_shading_rate_1acd79a92544a558019f92781d90036e9ba8ef7cf654f0b38bc2b604c819b821a18"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Rate2x2</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11ShadingRate4Enum7Rate2x2E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11ShadingRate4Enum7Rate2x4E">
+<span id="_CPPv3N4bgfx11ShadingRate4Enum7Rate2x4E"></span><span id="_CPPv2N4bgfx11ShadingRate4Enum7Rate2x4E"></span><span class="target" id="structbgfx_1_1_shading_rate_1acd79a92544a558019f92781d90036e9bab5288543baaae1ac31d68dd2828e7db5"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Rate2x4</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11ShadingRate4Enum7Rate2x4E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11ShadingRate4Enum7Rate4x2E">
+<span id="_CPPv3N4bgfx11ShadingRate4Enum7Rate4x2E"></span><span id="_CPPv2N4bgfx11ShadingRate4Enum7Rate4x2E"></span><span class="target" id="structbgfx_1_1_shading_rate_1acd79a92544a558019f92781d90036e9ba397af06bfe7068e85a0237c8766fa9bf"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Rate4x2</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11ShadingRate4Enum7Rate4x2E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11ShadingRate4Enum7Rate4x4E">
+<span id="_CPPv3N4bgfx11ShadingRate4Enum7Rate4x4E"></span><span id="_CPPv2N4bgfx11ShadingRate4Enum7Rate4x4E"></span><span class="target" id="structbgfx_1_1_shading_rate_1acd79a92544a558019f92781d90036e9bab52149477679f0087fbcfa726c6fff1b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Rate4x4</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11ShadingRate4Enum7Rate4x4E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11ShadingRate4Enum5CountE">
+<span id="_CPPv3N4bgfx11ShadingRate4Enum5CountE"></span><span id="_CPPv2N4bgfx11ShadingRate4Enum5CountE"></span><span class="target" id="structbgfx_1_1_shading_rate_1acd79a92544a558019f92781d90036e9bad3e8ea91cf2d876c508f838ee4060606"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Count</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11ShadingRate4Enum5CountE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx18setViewShadingRateE6ViewIdN11ShadingRate4EnumE">
+<span id="_CPPv3N4bgfx18setViewShadingRateE6ViewIdN11ShadingRate4EnumE"></span><span id="_CPPv2N4bgfx18setViewShadingRateE6ViewIdN11ShadingRate4EnumE"></span><span id="bgfx::setViewShadingRate__ViewId.ShadingRate::Enum"></span><span class="target" id="namespacebgfx_1a793347f6a16a32683ee9810197289568"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">setViewShadingRate</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">ViewId</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_id</span></span>, <a class="reference internal" href="#_CPPv4N4bgfx11ShadingRateE" title="bgfx::ShadingRate"><span class="n"><span class="pre">ShadingRate</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4bgfx11ShadingRate4EnumE" title="bgfx::ShadingRate::Enum"><span class="n"><span class="pre">Enum</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">_shadingRate</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4bgfx11ShadingRateE" title="bgfx::ShadingRate"><span class="n"><span class="pre">ShadingRate</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4bgfx11ShadingRate4Enum7Rate1x1E" title="bgfx::ShadingRate::Rate1x1"><span class="n"><span class="pre">Rate1x1</span></span></a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx18setViewShadingRateE6ViewIdN11ShadingRate4EnumE" title="Link to this definition"></a><br /></dt>
+<dd><p>Set view shading rate. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>Availability depends on: <code class="docutils literal notranslate"><span class="pre">BGFX_CAPS_VARIABLE_RATE_SHADING</span></code>. </p>
+</dd>
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_set_view_shading_rate</span></code>. </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_id</strong> – <strong>[in]</strong> View id. </p></li>
+<li><p><strong>_shadingRate</strong> – <strong>[in]</strong> Shading rate.</p></li>
 </ul>
 </dd>
 </dl>
@@ -5136,6 +5245,74 @@ Otherwise, use <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 </section>
+<section id="uniforms">
+<h4>Uniforms<a class="headerlink" href="#uniforms" title="Link to this heading"></a></h4>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx10setUniformE13UniformHandlePKv8uint16_t">
+<span id="_CPPv3N4bgfx10setUniformE13UniformHandlePKv8uint16_t"></span><span id="_CPPv2N4bgfx10setUniformE13UniformHandlePKv8uint16_t"></span><span id="bgfx::setUniform__UniformHandle.voidCP.uint16_t"></span><span class="target" id="namespacebgfx_1ad3596bae1697a254d108e5a3002d198d"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">setUniform</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">UniformHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_handle</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">_value</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_num</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">1</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx10setUniformE13UniformHandlePKv8uint16_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Set shader uniform parameter for draw primitive. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_set_uniform</span></code>. </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_handle</strong> – <strong>[in]</strong> Uniform. </p></li>
+<li><p><strong>_value</strong> – <strong>[in]</strong> Pointer to uniform data. </p></li>
+<li><p><strong>_num</strong> – <strong>[in]</strong> Number of elements. Passing <code class="docutils literal notranslate"><span class="pre">UINT16_MAX</span></code> will use the _num passed on uniform creation.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx14setViewUniformE6ViewId13UniformHandlePKv8uint16_t">
+<span id="_CPPv3N4bgfx14setViewUniformE6ViewId13UniformHandlePKv8uint16_t"></span><span id="_CPPv2N4bgfx14setViewUniformE6ViewId13UniformHandlePKv8uint16_t"></span><span id="bgfx::setViewUniform__ViewId.UniformHandle.voidCP.uint16_t"></span><span class="target" id="namespacebgfx_1a0c9a25a116d975c0ef8e2c2e64495f5c"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">setViewUniform</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">ViewId</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_id</span></span>, <span class="n"><span class="pre">UniformHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_handle</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">_value</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_num</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">1</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx14setViewUniformE6ViewId13UniformHandlePKv8uint16_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Set shader uniform parameter for view. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>Uniform must be created with <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_uniform_freq_1af7954f9776a0230250b239b6c11c9949a74de3d4c104a81e07c7b3dafc618ee52"><span class="std std-ref"><span class="pre">bgfx::UniformFreq::View</span></span></a></code> argument. </p>
+</dd>
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_set_view_uniform</span></code>. </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_id</strong> – <strong>[in]</strong> View id. </p></li>
+<li><p><strong>_handle</strong> – <strong>[in]</strong> Uniform. </p></li>
+<li><p><strong>_value</strong> – <strong>[in]</strong> Pointer to uniform data. </p></li>
+<li><p><strong>_num</strong> – <strong>[in]</strong> Number of elements. Passing <code class="docutils literal notranslate"><span class="pre">UINT16_MAX</span></code> will use the _num passed on uniform creation.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx15setFrameUniformE13UniformHandlePKv8uint16_t">
+<span id="_CPPv3N4bgfx15setFrameUniformE13UniformHandlePKv8uint16_t"></span><span id="_CPPv2N4bgfx15setFrameUniformE13UniformHandlePKv8uint16_t"></span><span id="bgfx::setFrameUniform__UniformHandle.voidCP.uint16_t"></span><span class="target" id="namespacebgfx_1a80cc46ec8f814a1442f51863ad0d0e99"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">setFrameUniform</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">UniformHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_handle</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">_value</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_num</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">1</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx15setFrameUniformE13UniformHandlePKv8uint16_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Set shader uniform parameter for frame. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>Uniform must be created with <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_uniform_freq_1af7954f9776a0230250b239b6c11c9949a74de3d4c104a81e07c7b3dafc618ee52"><span class="std std-ref"><span class="pre">bgfx::UniformFreq::View</span></span></a></code> argument. </p>
+</dd>
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_set_frame_uniform</span></code>. </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_handle</strong> – <strong>[in]</strong> Uniform. </p></li>
+<li><p><strong>_value</strong> – <strong>[in]</strong> Pointer to uniform data. </p></li>
+<li><p><strong>_num</strong> – <strong>[in]</strong> Number of elements. Passing <code class="docutils literal notranslate"><span class="pre">UINT16_MAX</span></code> will use the _num passed on uniform creation.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 <section id="submit">
 <h4>Submit<a class="headerlink" href="#submit" title="Link to this heading"></a></h4>
 <p>In Views, all draw commands are executed <strong>after</strong> blit and compute commands.</p>
@@ -5753,93 +5930,8 @@ Otherwise, use <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 </section>
-<section id="uniforms">
-<h3>Uniforms<a class="headerlink" href="#uniforms" title="Link to this heading"></a></h3>
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t">
-<span id="_CPPv3N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t"></span><span id="_CPPv2N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t"></span><span id="bgfx::createUniform__cCP.UniformType::Enum.uint16_t"></span><span class="target" id="namespacebgfx_1a45614b96172b438fd644c858e2c434b2"></span><span class="n"><span class="pre">UniformHandle</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">createUniform</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">_name</span></span>, <a class="reference internal" href="#_CPPv4N4bgfx11UniformTypeE" title="bgfx::UniformType"><span class="n"><span class="pre">UniformType</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4bgfx11UniformType4EnumE" title="bgfx::UniformType::Enum"><span class="n"><span class="pre">Enum</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">_type</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_num</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">1</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t" title="Link to this definition"></a><br /></dt>
-<dd><p>Create shader uniform parameter. </p>
-<p><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">u_modelViewProj</span> <span class="pre">mat4</span></code> - concatenated model view projection matrix.<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">u_alphaRef</span> <span class="pre">float</span></code> - alpha reference value for alpha test.</p></li>
-</ul>
-</p></li>
-</ul>
-<div class="remark admonition">
-<p class="admonition-title">Remark</p>
-<p><ol class="loweralpha simple">
-<li><p>Uniform names are unique. It’s valid to call <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a45614b96172b438fd644c858e2c434b2"><span class="std std-ref"><span class="pre">bgfx::createUniform</span></span></a></code> multiple times with the same uniform name. The library will always return the same handle, but the handle reference count will be incremented. This means that the same number of <code class="docutils literal notranslate"><span class="pre">bgfx::destroyUniform</span></code> must be called to properly destroy the uniform.</p></li>
-<li><p>Predefined uniforms (declared in <code class="docutils literal notranslate"><span class="pre">bgfx_shader.sh</span></code>):<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">u_viewRect</span> <span class="pre">vec4(x,</span> <span class="pre">y,</span> <span class="pre">width,</span> <span class="pre">height)</span></code> - view rectangle for current view, in pixels.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">u_viewTexel</span> <span class="pre">vec4(1.0/width,</span> <span class="pre">1.0/height,</span> <span class="pre">undef,</span> <span class="pre">undef)</span></code> - inverse width and height</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">u_view</span> <span class="pre">mat4</span></code> - view matrix</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">u_invView</span> <span class="pre">mat4</span></code> - inverted view matrix</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">u_proj</span> <span class="pre">mat4</span></code> - projection matrix</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">u_invProj</span> <span class="pre">mat4</span></code> - inverted projection matrix</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">u_viewProj</span> <span class="pre">mat4</span></code> - concatenated view projection matrix</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">u_invViewProj</span> <span class="pre">mat4</span></code> - concatenated inverted view projection matrix</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">u_model</span> <span class="pre">mat4[BGFX_CONFIG_MAX_BONES]</span></code> - array of model matrices.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">u_modelView</span> <span class="pre">mat4</span></code> - concatenated model view matrix, only first model matrix from array is used.</p></li>
-</ul>
-</p></li>
-</ol>
-</p>
-</div>
-</p>
-<p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_create_uniform</span></code>. </p>
-</dd>
-</dl>
-</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>_name</strong> – <strong>[in]</strong> Uniform name in shader. </p></li>
-<li><p><strong>_type</strong> – <strong>[in]</strong> Type of uniform (See: <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_uniform_type"><span class="std std-ref"><span class="pre">bgfx::UniformType</span></span></a></code>). </p></li>
-<li><p><strong>_num</strong> – <strong>[in]</strong> Number of elements in array.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Handle to uniform object.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N4bgfx14getUniformInfoE13UniformHandleR11UniformInfo">
-<span id="_CPPv3N4bgfx14getUniformInfoE13UniformHandleR11UniformInfo"></span><span id="_CPPv2N4bgfx14getUniformInfoE13UniformHandleR11UniformInfo"></span><span id="bgfx::getUniformInfo__UniformHandle.UniformInfoR"></span><span class="target" id="namespacebgfx_1aa57213d4971e397983c217ee97326e37"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">getUniformInfo</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">UniformHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_handle</span></span>, <a class="reference internal" href="#_CPPv4N4bgfx11UniformInfoE" title="bgfx::UniformInfo"><span class="n"><span class="pre">UniformInfo</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">_info</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx14getUniformInfoE13UniformHandleR11UniformInfo" title="Link to this definition"></a><br /></dt>
-<dd><p>Retrieve uniform info. </p>
-<p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_get_uniform_info</span></code>. </p>
-</dd>
-</dl>
-</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>_handle</strong> – <strong>[in]</strong> Handle to uniform object. </p></li>
-<li><p><strong>_info</strong> – <strong>[out]</strong> Uniform info.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N4bgfx7destroyE13UniformHandle">
-<span id="_CPPv3N4bgfx7destroyE13UniformHandle"></span><span id="_CPPv2N4bgfx7destroyE13UniformHandle"></span><span id="bgfx::destroy__UniformHandle"></span><span class="target" id="namespacebgfx_1a3758fba789e327a1f3b02f887a95052b"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">destroy</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">UniformHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_handle</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7destroyE13UniformHandle" title="Link to this definition"></a><br /></dt>
-<dd><p>Destroy shader uniform parameter. </p>
-<p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_destroy_uniform</span></code>. </p>
-</dd>
-</dl>
-</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>_handle</strong> – <strong>[in]</strong> Handle to uniform object.</p>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="id5">
+<h3>Uniforms<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
 <dl class="cpp struct">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx11UniformTypeE">
 <span id="_CPPv3N4bgfx11UniformTypeE"></span><span id="_CPPv2N4bgfx11UniformTypeE"></span><span id="bgfx::UniformType"></span><span class="target" id="structbgfx_1_1_uniform_type"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">UniformType</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11UniformTypeE" title="Link to this definition"></a><br /></dt>
@@ -5896,6 +5988,147 @@ Otherwise, use <cite>bgfx::setViewScissor</cite>.</p>
 </div>
 </dd></dl>
 
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t">
+<span id="_CPPv3N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t"></span><span id="_CPPv2N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t"></span><span id="bgfx::createUniform__cCP.UniformType::Enum.uint16_t"></span><span class="target" id="namespacebgfx_1a45614b96172b438fd644c858e2c434b2"></span><span class="n"><span class="pre">UniformHandle</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">createUniform</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">_name</span></span>, <a class="reference internal" href="#_CPPv4N4bgfx11UniformTypeE" title="bgfx::UniformType"><span class="n"><span class="pre">UniformType</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4bgfx11UniformType4EnumE" title="bgfx::UniformType::Enum"><span class="n"><span class="pre">Enum</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">_type</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_num</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">1</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx13createUniformEPKcN11UniformType4EnumE8uint16_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Create shader uniform parameter. </p>
+<p><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">u_modelViewProj</span> <span class="pre">mat4</span></code> - concatenated model view projection matrix.<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_alphaRef</span> <span class="pre">float</span></code> - alpha reference value for alpha test.</p></li>
+</ul>
+</p></li>
+</ul>
+<div class="remark admonition">
+<p class="admonition-title">Remark</p>
+<p><ol class="loweralpha simple">
+<li><p>Uniform names are unique. It’s valid to call <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a45614b96172b438fd644c858e2c434b2"><span class="std std-ref"><span class="pre">bgfx::createUniform</span></span></a></code> multiple times with the same uniform name. The library will always return the same handle, but the handle reference count will be incremented. This means that the same number of <code class="docutils literal notranslate"><span class="pre">bgfx::destroyUniform</span></code> must be called to properly destroy the uniform.</p></li>
+<li><p>Predefined uniforms (declared in <code class="docutils literal notranslate"><span class="pre">bgfx_shader.sh</span></code>):<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">u_viewRect</span> <span class="pre">vec4(x,</span> <span class="pre">y,</span> <span class="pre">width,</span> <span class="pre">height)</span></code> - view rectangle for current view, in pixels.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_viewTexel</span> <span class="pre">vec4(1.0/width,</span> <span class="pre">1.0/height,</span> <span class="pre">undef,</span> <span class="pre">undef)</span></code> - inverse width and height</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_view</span> <span class="pre">mat4</span></code> - view matrix</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_invView</span> <span class="pre">mat4</span></code> - inverted view matrix</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_proj</span> <span class="pre">mat4</span></code> - projection matrix</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_invProj</span> <span class="pre">mat4</span></code> - inverted projection matrix</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_viewProj</span> <span class="pre">mat4</span></code> - concatenated view projection matrix</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_invViewProj</span> <span class="pre">mat4</span></code> - concatenated inverted view projection matrix</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_model</span> <span class="pre">mat4[BGFX_CONFIG_MAX_BONES]</span></code> - array of model matrices.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_modelView</span> <span class="pre">mat4</span></code> - concatenated model view matrix, only first model matrix from array is used.</p></li>
+</ul>
+</p></li>
+</ol>
+</p>
+</div>
+</p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_create_uniform</span></code>. </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_name</strong> – <strong>[in]</strong> Uniform name in shader. </p></li>
+<li><p><strong>_type</strong> – <strong>[in]</strong> Type of uniform (See: <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_uniform_type"><span class="std std-ref"><span class="pre">bgfx::UniformType</span></span></a></code>). </p></li>
+<li><p><strong>_num</strong> – <strong>[in]</strong> Number of elements in array.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Handle to uniform object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11UniformFreqE">
+<span id="_CPPv3N4bgfx11UniformFreqE"></span><span id="_CPPv2N4bgfx11UniformFreqE"></span><span id="bgfx::UniformFreq"></span><span class="target" id="structbgfx_1_1_uniform_freq"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">UniformFreq</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11UniformFreqE" title="Link to this definition"></a><br /></dt>
+<dd><p>Uniform frequency enum. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_bgfx_uniform_freq_t</span></code>. </p>
+</dd>
+</dl>
+</p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-types">Public Types</p>
+<dl class="cpp enum">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11UniformFreq4EnumE">
+<span id="_CPPv3N4bgfx11UniformFreq4EnumE"></span><span id="_CPPv2N4bgfx11UniformFreq4EnumE"></span><span class="target" id="structbgfx_1_1_uniform_freq_1af7954f9776a0230250b239b6c11c9949"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Enum</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11UniformFreq4EnumE" title="Link to this definition"></a><br /></dt>
+<dd><p>Uniform frequency: </p>
+<p><em>Values:</em></p>
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11UniformFreq4Enum4DrawE">
+<span id="_CPPv3N4bgfx11UniformFreq4Enum4DrawE"></span><span id="_CPPv2N4bgfx11UniformFreq4Enum4DrawE"></span><span class="target" id="structbgfx_1_1_uniform_freq_1af7954f9776a0230250b239b6c11c9949a62ed5446610d6169cc43f0cb4fa6c513"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Draw</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11UniformFreq4Enum4DrawE" title="Link to this definition"></a><br /></dt>
+<dd><p>Changing per draw call. </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11UniformFreq4Enum4ViewE">
+<span id="_CPPv3N4bgfx11UniformFreq4Enum4ViewE"></span><span id="_CPPv2N4bgfx11UniformFreq4Enum4ViewE"></span><span class="target" id="structbgfx_1_1_uniform_freq_1af7954f9776a0230250b239b6c11c9949a74de3d4c104a81e07c7b3dafc618ee52"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">View</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11UniformFreq4Enum4ViewE" title="Link to this definition"></a><br /></dt>
+<dd><p>Changing per view. </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11UniformFreq4Enum5FrameE">
+<span id="_CPPv3N4bgfx11UniformFreq4Enum5FrameE"></span><span id="_CPPv2N4bgfx11UniformFreq4Enum5FrameE"></span><span class="target" id="structbgfx_1_1_uniform_freq_1af7954f9776a0230250b239b6c11c9949ad4f13c15747b7025a9ee8d270549aefc"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Frame</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11UniformFreq4Enum5FrameE" title="Link to this definition"></a><br /></dt>
+<dd><p>Changing per frame. </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx11UniformFreq4Enum5CountE">
+<span id="_CPPv3N4bgfx11UniformFreq4Enum5CountE"></span><span id="_CPPv2N4bgfx11UniformFreq4Enum5CountE"></span><span class="target" id="structbgfx_1_1_uniform_freq_1af7954f9776a0230250b239b6c11c9949af107c612985acad59491315c1d97f44d"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Count</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11UniformFreq4Enum5CountE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx13createUniformEPKcN11UniformFreq4EnumEN11UniformType4EnumE8uint16_t">
+<span id="_CPPv3N4bgfx13createUniformEPKcN11UniformFreq4EnumEN11UniformType4EnumE8uint16_t"></span><span id="_CPPv2N4bgfx13createUniformEPKcN11UniformFreq4EnumEN11UniformType4EnumE8uint16_t"></span><span id="bgfx::createUniform__cCP.UniformFreq::Enum.UniformType::Enum.uint16_t"></span><span class="target" id="namespacebgfx_1a876197db6d0f431b608829eaa5e7908a"></span><span class="n"><span class="pre">UniformHandle</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">createUniform</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">_name</span></span>, <a class="reference internal" href="#_CPPv4N4bgfx11UniformFreqE" title="bgfx::UniformFreq"><span class="n"><span class="pre">UniformFreq</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4bgfx11UniformFreq4EnumE" title="bgfx::UniformFreq::Enum"><span class="n"><span class="pre">Enum</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">_freq</span></span>, <a class="reference internal" href="#_CPPv4N4bgfx11UniformTypeE" title="bgfx::UniformType"><span class="n"><span class="pre">UniformType</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4bgfx11UniformType4EnumE" title="bgfx::UniformType::Enum"><span class="n"><span class="pre">Enum</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">_type</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_num</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">1</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx13createUniformEPKcN11UniformFreq4EnumEN11UniformType4EnumE8uint16_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Create shader uniform parameter. </p>
+<p><div class="remark admonition">
+<p class="admonition-title">Remark</p>
+<p><ol class="loweralpha simple">
+<li><p>Uniform names are unique. It’s valid to call <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a45614b96172b438fd644c858e2c434b2"><span class="std std-ref"><span class="pre">bgfx::createUniform</span></span></a></code> multiple times with the same uniform name. The library will always return the same handle, but the handle reference count will be incremented. This means that the same number of <code class="docutils literal notranslate"><span class="pre">bgfx::destroyUniform</span></code> must be called to properly destroy the uniform.</p></li>
+<li><p>Predefined uniforms (declared in <code class="docutils literal notranslate"><span class="pre">bgfx_shader.sh</span></code>):<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">u_viewRect</span> <span class="pre">vec4(x,</span> <span class="pre">y,</span> <span class="pre">width,</span> <span class="pre">height)</span></code> - view rectangle for current view, in pixels.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_viewTexel</span> <span class="pre">vec4(1.0/width,</span> <span class="pre">1.0/height,</span> <span class="pre">undef,</span> <span class="pre">undef)</span></code> - inverse width and height</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_view</span> <span class="pre">mat4</span></code> - view matrix</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_invView</span> <span class="pre">mat4</span></code> - inverted view matrix</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_proj</span> <span class="pre">mat4</span></code> - projection matrix</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_invProj</span> <span class="pre">mat4</span></code> - inverted projection matrix</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_viewProj</span> <span class="pre">mat4</span></code> - concatenated view projection matrix</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_invViewProj</span> <span class="pre">mat4</span></code> - concatenated inverted view projection matrix</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_model</span> <span class="pre">mat4[BGFX_CONFIG_MAX_BONES]</span></code> - array of model matrices.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_modelView</span> <span class="pre">mat4</span></code> - concatenated model view matrix, only first model matrix from array is used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_invModelView</span> <span class="pre">mat4</span></code> - inverted concatenated model view matrix.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_modelViewProj</span> <span class="pre">mat4</span></code> - concatenated model view projection matrix.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u_alphaRef</span> <span class="pre">float</span></code> - alpha reference value for alpha test.</p></li>
+</ul>
+</p></li>
+</ol>
+</p>
+</div>
+<dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_create_uniform_with_freq</span></code>. </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_name</strong> – <strong>[in]</strong> Uniform name in shader. </p></li>
+<li><p><strong>_freq</strong> – <strong>[in]</strong> Uniform change frequency (See: <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_uniform_freq"><span class="std std-ref"><span class="pre">bgfx::UniformFreq</span></span></a></code>). </p></li>
+<li><p><strong>_type</strong> – <strong>[in]</strong> Type of uniform (See: <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_uniform_type"><span class="std std-ref"><span class="pre">bgfx::UniformType</span></span></a></code>). </p></li>
+<li><p><strong>_num</strong> – <strong>[in]</strong> Number of elements in array.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Handle to uniform object.</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="cpp struct">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx11UniformInfoE">
 <span id="_CPPv3N4bgfx11UniformInfoE"></span><span id="_CPPv2N4bgfx11UniformInfoE"></span><span id="bgfx::UniformInfo"></span><span class="target" id="structbgfx_1_1_uniform_info"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">UniformInfo</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx11UniformInfoE" title="Link to this definition"></a><br /></dt>
@@ -5926,6 +6159,41 @@ Otherwise, use <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 </div>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx14getUniformInfoE13UniformHandleR11UniformInfo">
+<span id="_CPPv3N4bgfx14getUniformInfoE13UniformHandleR11UniformInfo"></span><span id="_CPPv2N4bgfx14getUniformInfoE13UniformHandleR11UniformInfo"></span><span id="bgfx::getUniformInfo__UniformHandle.UniformInfoR"></span><span class="target" id="namespacebgfx_1aa57213d4971e397983c217ee97326e37"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">getUniformInfo</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">UniformHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_handle</span></span>, <a class="reference internal" href="#_CPPv4N4bgfx11UniformInfoE" title="bgfx::UniformInfo"><span class="n"><span class="pre">UniformInfo</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">_info</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx14getUniformInfoE13UniformHandleR11UniformInfo" title="Link to this definition"></a><br /></dt>
+<dd><p>Retrieve uniform info. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_get_uniform_info</span></code>. </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_handle</strong> – <strong>[in]</strong> Handle to uniform object. </p></li>
+<li><p><strong>_info</strong> – <strong>[out]</strong> Uniform info.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx7destroyE13UniformHandle">
+<span id="_CPPv3N4bgfx7destroyE13UniformHandle"></span><span id="_CPPv2N4bgfx7destroyE13UniformHandle"></span><span id="bgfx::destroy__UniformHandle"></span><span class="target" id="namespacebgfx_1a3758fba789e327a1f3b02f887a95052b"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">destroy</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">UniformHandle</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_handle</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7destroyE13UniformHandle" title="Link to this definition"></a><br /></dt>
+<dd><p>Destroy shader uniform parameter. </p>
+<p><dl class="simple">
+<dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_destroy_uniform</span></code>. </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>_handle</strong> – <strong>[in]</strong> Handle to uniform object.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -6734,8 +7002,8 @@ Otherwise, use <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 </section>
-<section id="id5">
-<h3>Textures<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<section id="id6">
+<h3>Textures<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
 <dl class="cpp struct">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormatE">
 <span id="_CPPv3N4bgfx13TextureFormatE"></span><span id="_CPPv2N4bgfx13TextureFormatE"></span><span id="bgfx::TextureFormat"></span><span class="target" id="structbgfx_1_1_texture_format"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">TextureFormat</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormatE" title="Link to this definition"></a><br /></dt>
@@ -6829,6 +7097,30 @@ Otherwise, use <cite>bgfx::setViewScissor</cite>.</p>
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum6ETC2A1E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum6ETC2A1E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6ETC2A1E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a971bf46d4c28a7b708a2c6df44593720"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ETC2A1</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6ETC2A1E" title="Link to this definition"></a><br /></dt>
 <dd><p>ETC2 RGB8A1. </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum6EACR11E">
+<span id="_CPPv3N4bgfx13TextureFormat4Enum6EACR11E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6EACR11E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a8c795a2056f9d540d7a7eaf6ec7518e3"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">EACR11</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6EACR11E" title="Link to this definition"></a><br /></dt>
+<dd><p>EAC R11 UNORM. </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7EACR11SE">
+<span id="_CPPv3N4bgfx13TextureFormat4Enum7EACR11SE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7EACR11SE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a392e32d57888acc4d6e821af9d638636"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">EACR11S</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7EACR11SE" title="Link to this definition"></a><br /></dt>
+<dd><p>EAC R11 SNORM. </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7EACRG11E">
+<span id="_CPPv3N4bgfx13TextureFormat4Enum7EACRG11E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7EACRG11E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a16a7fbdce6125f429802dac0b28143ba"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">EACRG11</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7EACRG11E" title="Link to this definition"></a><br /></dt>
+<dd><p>EAC RG11 UNORM. </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum8EACRG11SE">
+<span id="_CPPv3N4bgfx13TextureFormat4Enum8EACRG11SE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum8EACRG11SE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aaaf76afc94dc45b9560593119cc1070d"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">EACRG11S</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum8EACRG11SE" title="Link to this definition"></a><br /></dt>
+<dd><p>EAC RG11 SNORM. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
