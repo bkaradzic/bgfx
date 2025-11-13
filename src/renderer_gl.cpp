@@ -3757,10 +3757,16 @@ namespace bgfx { namespace gl
 
 		void updateResolution(const Resolution& _resolution)
 		{
-			m_maxAnisotropy = !!(_resolution.reset & BGFX_RESET_MAXANISOTROPY)
+			float maxAnisotropy = !!(_resolution.reset & BGFX_RESET_MAXANISOTROPY)
 				? m_maxAnisotropyDefault
 				: 0.0f
 				;
+			
+			if (m_maxAnisotropy != maxAnisotropy)
+			{
+				m_maxAnisotropy = maxAnisotropy;
+				invalidateCache();
+			}
 
 			if (s_extension[Extension::ARB_depth_clamp].m_supported)
 			{
