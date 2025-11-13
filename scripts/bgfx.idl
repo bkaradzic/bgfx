@@ -223,15 +223,15 @@ flag.Debug { bits = 32 }
 	()
 
 flag.BufferComputeFormat { bits = 16, shift = 0, range = 4, base = 1 }
-	._8x1  --- 1 8-bit value
-	._8x2  --- 2 8-bit values
-	._8x4  --- 4 8-bit values
-	._16x1 --- 1 16-bit value
-	._16x2 --- 2 16-bit values
-	._16x4 --- 4 16-bit values
-	._32x1 --- 1 32-bit value
-	._32x2 --- 2 32-bit values
-	._32x4 --- 4 32-bit values
+	._8x1  --- 1 x 8-bit value
+	._8x2  --- 2 x 8-bit values
+	._8x4  --- 4 x 8-bit values
+	._16x1 --- 1 x 16-bit value
+	._16x2 --- 2 x 16-bit values
+	._16x4 --- 4 x 16-bit values
+	._32x1 --- 1 x 32-bit value
+	._32x2 --- 2 x 32-bit values
+	._32x4 --- 4 x 32-bit values
 	()
 
 flag.BufferComputeType { bits = 16, shift = 4, range = 2, base = 1 }
@@ -703,19 +703,19 @@ enum.ViewMode { underscore, comment = "View modes:" }
 
 --- Shading Rate.
 enum.ShadingRate { underscore, comment = "Shading rate:" }
-	.Rate1x1
-	.Rate1x2
-	.Rate2x1
-	.Rate2x2
-	.Rate2x4
-	.Rate4x2
-	.Rate4x4
+	.Rate1x1 --- 1x1
+	.Rate1x2 --- 1x2
+	.Rate2x1 --- 2x1
+	.Rate2x2 --- 2x2
+	.Rate2x4 --- 2x4
+	.Rate4x2 --- 4x2
+	.Rate4x4 --- 4x4
 	()
 
 --- Native window handle type.
 enum.NativeWindowHandleType { underscore, comment = "Native Window handle type:" }
-	.Default         --- Platform default handle type (X11 on Linux).
-	.Wayland      	 --- Wayland.
+	.Default --- Platform default handle type (X11 on Linux).
+	.Wayland --- Wayland.
 	()
 
 --- Render frame enum.
@@ -803,16 +803,20 @@ struct.InternalData
 
 --- Platform data.
 struct.PlatformData { ctor }
-	.ndt          "void*" 							--- Native display type (*nix specific).
-	.nwh          "void*" 							--- Native window handle. If `NULL`, bgfx will create a headless
-													--- context/device, provided the rendering API supports it.
-	.context      "void*" 							--- GL context, D3D device, or Vulkan device. If `NULL`, bgfx
-													--- will create context/device.
-	.backBuffer   "void*" 							--- GL back-buffer, or D3D render target view. If `NULL` bgfx will
-													--- create back-buffer color surface.
-	.backBufferDS "void*" 							--- Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
-													--- depth/stencil surface.
-	.type		  "NativeWindowHandleType::Enum" 	--- Handle type. Needed for platforms having more than one option.
+	.ndt "void*" --- Native display type (*nix specific).
+	.nwh "void*"
+		--- Native window handle. If `NULL`, bgfx will create a headless
+		--- context/device, provided the rendering API supports it.
+	.context "void*"
+		--- GL context, D3D device, or Vulkan device. If `NULL`, bgfx
+		--- will create context/device.
+	.backBuffer "void*"
+		--- GL back-buffer, or D3D render target view. If `NULL` bgfx will
+		--- create back-buffer color surface.
+	.backBufferDS "void*"
+		--- Backbuffer depth/stencil. If `NULL`, bgfx will create a back-buffer
+		--- depth/stencil surface.
+	.type "NativeWindowHandleType::Enum" --- Handle type. Needed for platforms having more than one option.
 
 --- Backbuffer resolution and reset parameters.
 struct.Resolution { ctor }
@@ -835,34 +839,34 @@ struct.Limits { ctor, namespace = "Init" }
 
 --- Initialization parameters used by `bgfx::init`.
 struct.Init { ctor }
-	.type            "RendererType::Enum" --- Select rendering backend. When set to RendererType::Count
-	                                      --- a default rendering backend will be selected appropriate to the platform.
-	                                      --- See: `bgfx::RendererType`
+	.type         "RendererType::Enum" --- Select rendering backend. When set to RendererType::Count
+	                                   --- a default rendering backend will be selected appropriate to the platform.
+	                                   --- See: `bgfx::RendererType`
 
-	.vendorId       "uint16_t"            --- Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
-	                                      --- GPUs will be prioritised.
-	                                      ---   - `BGFX_PCI_ID_NONE` - Autoselect adapter.
-	                                      ---   - `BGFX_PCI_ID_SOFTWARE_RASTERIZER` - Software rasterizer.
-	                                      ---   - `BGFX_PCI_ID_AMD` - AMD adapter.
-	                                      ---   - `BGFX_PCI_ID_APPLE` - Apple adapter.
-	                                      ---   - `BGFX_PCI_ID_INTEL` - Intel adapter.
-	                                      ---   - `BGFX_PCI_ID_NVIDIA` - NVIDIA adapter.
-	                                      ---   - `BGFX_PCI_ID_MICROSOFT` - Microsoft adapter.
+	.vendorId     "uint16_t"           --- Vendor PCI ID. If set to `BGFX_PCI_ID_NONE`, discrete and integrated
+	                                   --- GPUs will be prioritised.
+	                                   ---   - `BGFX_PCI_ID_NONE` - Autoselect adapter.
+	                                   ---   - `BGFX_PCI_ID_SOFTWARE_RASTERIZER` - Software rasterizer.
+	                                   ---   - `BGFX_PCI_ID_AMD` - AMD adapter.
+	                                   ---   - `BGFX_PCI_ID_APPLE` - Apple adapter.
+	                                   ---   - `BGFX_PCI_ID_INTEL` - Intel adapter.
+	                                   ---   - `BGFX_PCI_ID_NVIDIA` - NVIDIA adapter.
+	                                   ---   - `BGFX_PCI_ID_MICROSOFT` - Microsoft adapter.
 
-	.deviceId       "uint16_t"            --- Device ID. If set to 0 it will select first device, or device with
-	                                      --- matching ID.
-	.capabilities   "uint64_t"            --- Capabilities initialization mask (default: UINT64_MAX).
-	.debug          "bool"                --- Enable device for debugging.
-	.profile        "bool"                --- Enable device for profiling.
-	.platformData   "PlatformData"        --- Platform data.
-	.resolution     "Resolution"          --- Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
-	.limits         "Limits"              --- Configurable runtime limits parameters.
-	.callback       "CallbackI*"          --- Provide application specific callback interface.
-	                                      --- See: `bgfx::CallbackI`
+	.deviceId     "uint16_t"           --- Device ID. If set to 0 it will select first device, or device with
+	                                   --- matching ID.
+	.capabilities "uint64_t"           --- Capabilities initialization mask (default: UINT64_MAX).
+	.debug        "bool"               --- Enable device for debugging.
+	.profile      "bool"               --- Enable device for profiling.
+	.platformData "PlatformData"       --- Platform data.
+	.resolution   "Resolution"         --- Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
+	.limits       "Limits"             --- Configurable runtime limits parameters.
+	.callback     "CallbackI*"         --- Provide application specific callback interface.
+	                                   --- See: `bgfx::CallbackI`
 
-	.allocator      "bx::AllocatorI*"     --- Custom allocator. When a custom allocator is not
-	                                      --- specified, bgfx uses the CRT allocator. Bgfx assumes
-	                                      --- custom allocator is thread safe.
+	.allocator    "bx::AllocatorI*"    --- Custom allocator. When a custom allocator is not
+	                                   --- specified, bgfx uses the CRT allocator. Bgfx assumes
+	                                   --- custom allocator is thread safe.
 
 --- Memory must be obtained by calling `bgfx::alloc`, `bgfx::copy`, or `bgfx::makeRef`.
 ---
@@ -999,7 +1003,7 @@ struct.Stats
 	.transientVbUsed         "int32_t"       --- Amount of transient vertex buffer used.
 	.transientIbUsed         "int32_t"       --- Amount of transient index buffer used.
 
-	.numPrims                "uint32_t[Topology::Count]" --- Number of primitives rendered.
+	.numPrims "uint32_t[Topology::Count]"    --- Number of primitives rendered.
 
 	.gpuMemoryMax            "int64_t"       --- Maximum available GPU memory for application.
 	.gpuMemoryUsed           "int64_t"       --- Amount of GPU memory used by the application.
@@ -1256,7 +1260,7 @@ func.getCaps
 --- @attention Pointer returned is valid until `bgfx::frame` is called.
 ---
 func.getStats
-	"const Stats*" -- Performance counters.
+	"const Stats*" --- Performance counters.
 
 --- Allocate buffer to pass to bgfx calls. Data will be freed inside bgfx.
 func.alloc
@@ -2221,7 +2225,7 @@ func.setViewShadingRate
 --- Reset all view settings to default.
 func.resetView
 	"void"
-	.id "ViewId" -- _id View id.
+	.id "ViewId" --- _id View id.
 
 --- Begin submitting draw calls from thread.
 func.begin { cname = "encoder_begin" }
@@ -2520,7 +2524,7 @@ func.Encoder.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_ver
 ---
 func.Encoder.setInstanceCount
 	"void"
-	.numInstances "uint32_t" -- Number of instances.
+	.numInstances "uint32_t" --- Number of instances.
 
 --- Set texture stage for draw primitive.
 func.Encoder.setTexture
@@ -3096,7 +3100,7 @@ func.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_vertex_buff
 ---
 func.setInstanceCount
 	"void"
-	.numInstances "uint32_t" -- Number of instances.
+	.numInstances "uint32_t" --- Number of instances.
 
 --- Set texture stage for draw primitive.
 func.setTexture

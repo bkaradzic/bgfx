@@ -413,13 +413,13 @@ typedef enum bgfx_view_mode
  */
 typedef enum bgfx_shading_rate
 {
-    BGFX_SHADING_RATE_RATE_1X_1,              /** ( 0)                                */
-    BGFX_SHADING_RATE_RATE_1X_2,              /** ( 1)                                */
-    BGFX_SHADING_RATE_RATE_2X_1,              /** ( 2)                                */
-    BGFX_SHADING_RATE_RATE_2X_2,              /** ( 3)                                */
-    BGFX_SHADING_RATE_RATE_2X_4,              /** ( 4)                                */
-    BGFX_SHADING_RATE_RATE_4X_2,              /** ( 5)                                */
-    BGFX_SHADING_RATE_RATE_4X_4,              /** ( 6)                                */
+    BGFX_SHADING_RATE_RATE_1X_1,              /** ( 0) 1x1                            */
+    BGFX_SHADING_RATE_RATE_1X_2,              /** ( 1) 1x2                            */
+    BGFX_SHADING_RATE_RATE_2X_1,              /** ( 2) 2x1                            */
+    BGFX_SHADING_RATE_RATE_2X_2,              /** ( 3) 2x2                            */
+    BGFX_SHADING_RATE_RATE_2X_4,              /** ( 4) 2x4                            */
+    BGFX_SHADING_RATE_RATE_4X_2,              /** ( 5) 4x2                            */
+    BGFX_SHADING_RATE_RATE_4X_4,              /** ( 6) 4x4                            */
 
     BGFX_SHADING_RATE_COUNT
 
@@ -2476,7 +2476,7 @@ BGFX_C_API void bgfx_set_view_shading_rate(bgfx_view_id_t _id, bgfx_shading_rate
 /**
  * Reset all view settings to default.
  *
- * @param[in] _id
+ * @param[in] _id _id View id.
  *
  */
 BGFX_C_API void bgfx_reset_view(bgfx_view_id_t _id);
@@ -2789,7 +2789,7 @@ BGFX_C_API void bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer(bgfx_e
  * with gl_InstanceID.
  * @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
  *
- * @param[in] _numInstances
+ * @param[in] _numInstances Number of instances.
  *
  */
 BGFX_C_API void bgfx_encoder_set_instance_count(bgfx_encoder_t* _this, uint32_t _numInstances);
@@ -3375,7 +3375,7 @@ BGFX_C_API void bgfx_set_instance_data_from_dynamic_vertex_buffer(bgfx_dynamic_v
  * with gl_InstanceID.
  * @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
  *
- * @param[in] _numInstances
+ * @param[in] _numInstances Number of instances.
  *
  */
 BGFX_C_API void bgfx_set_instance_count(uint32_t _numInstances);

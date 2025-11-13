@@ -385,31 +385,31 @@ enum DebugFlags : const uint
 
 enum BufferFlags : const ushort
 {
-	// 1 8-bit value
+	// 1 x 8-bit value
 	COMPUTEFORMAT8X1       = 0x0001,
 
-	// 2 8-bit values
+	// 2 x 8-bit values
 	COMPUTEFORMAT8X2       = 0x0002,
 
-	// 4 8-bit values
+	// 4 x 8-bit values
 	COMPUTEFORMAT8X4       = 0x0003,
 
-	// 1 16-bit value
+	// 1 x 16-bit value
 	COMPUTEFORMAT16X1      = 0x0004,
 
-	// 2 16-bit values
+	// 2 x 16-bit values
 	COMPUTEFORMAT16X2      = 0x0005,
 
-	// 4 16-bit values
+	// 4 x 16-bit values
 	COMPUTEFORMAT16X4      = 0x0006,
 
-	// 1 32-bit value
+	// 1 x 32-bit value
 	COMPUTEFORMAT32X1      = 0x0007,
 
-	// 2 32-bit values
+	// 2 x 32-bit values
 	COMPUTEFORMAT32X2      = 0x0008,
 
-	// 4 32-bit values
+	// 4 x 32-bit values
 	COMPUTEFORMAT32X4      = 0x0009,
 	COMPUTEFORMATSHIFT     = 0,
 	COMPUTEFORMATMASK      = 0x000f,
@@ -1325,12 +1325,25 @@ enum ViewMode : uint
 
 enum ShadingRate : uint
 {
+	// 1x1
 	RATE1X1,
+
+	// 1x2
 	RATE1X2,
+
+	// 2x1
 	RATE2X1,
+
+	// 2x2
 	RATE2X2,
+
+	// 2x4
 	RATE2X4,
+
+	// 4x2
 	RATE4X2,
+
+	// 4x4
 	RATE4X4,
 
 	COUNT
@@ -2643,6 +2656,7 @@ extern fn void set_view_order(ushort _id, ushort _num, ushort* _order) @extern("
 extern fn void set_view_shading_rate(ushort _id, ShadingRate _shadingRate) @extern("bgfx_set_view_shading_rate");
 
 // Reset all view settings to default.
+// _id : `_id View id.`
 extern fn void reset_view(ushort _id) @extern("bgfx_reset_view");
 
 // Begin submitting draw calls from thread.
@@ -2821,6 +2835,7 @@ extern fn void encoder_set_instance_data_from_dynamic_vertex_buffer(Encoder* _th
 // Set number of instances for auto generated instances use in conjunction
 // with gl_InstanceID.
 // @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+// _numInstances : `Number of instances.`
 extern fn void encoder_set_instance_count(Encoder* _this, uint _numInstances) @extern("bgfx_encoder_set_instance_count");
 
 // Set texture stage for draw primitive.
@@ -3173,6 +3188,7 @@ extern fn void set_instance_data_from_dynamic_vertex_buffer(DynamicVertexBufferH
 // Set number of instances for auto generated instances use in conjunction
 // with gl_InstanceID.
 // @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+// _numInstances : `Number of instances.`
 extern fn void set_instance_count(uint _numInstances) @extern("bgfx_set_instance_count");
 
 // Set texture stage for draw primitive.
