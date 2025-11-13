@@ -375,31 +375,31 @@ pub const DebugFlags_Text: DebugFlags                   = 0x00000008;
 pub const DebugFlags_Profiler: DebugFlags               = 0x00000010;
 
 pub const BufferFlags = u16;
-/// 1 8-bit value
+/// 1 x 8-bit value
 pub const BufferFlags_ComputeFormat8x1: BufferFlags       = 0x0001;
 
-/// 2 8-bit values
+/// 2 x 8-bit values
 pub const BufferFlags_ComputeFormat8x2: BufferFlags       = 0x0002;
 
-/// 4 8-bit values
+/// 4 x 8-bit values
 pub const BufferFlags_ComputeFormat8x4: BufferFlags       = 0x0003;
 
-/// 1 16-bit value
+/// 1 x 16-bit value
 pub const BufferFlags_ComputeFormat16x1: BufferFlags      = 0x0004;
 
-/// 2 16-bit values
+/// 2 x 16-bit values
 pub const BufferFlags_ComputeFormat16x2: BufferFlags      = 0x0005;
 
-/// 4 16-bit values
+/// 4 x 16-bit values
 pub const BufferFlags_ComputeFormat16x4: BufferFlags      = 0x0006;
 
-/// 1 32-bit value
+/// 1 x 32-bit value
 pub const BufferFlags_ComputeFormat32x1: BufferFlags      = 0x0007;
 
-/// 2 32-bit values
+/// 2 x 32-bit values
 pub const BufferFlags_ComputeFormat32x2: BufferFlags      = 0x0008;
 
-/// 4 32-bit values
+/// 4 x 32-bit values
 pub const BufferFlags_ComputeFormat32x4: BufferFlags      = 0x0009;
 pub const BufferFlags_ComputeFormatShift: BufferFlags     = 0;
 pub const BufferFlags_ComputeFormatMask: BufferFlags      = 0x000f;
@@ -1283,12 +1283,25 @@ pub const ViewMode = enum(c_int) {
 };
 
 pub const ShadingRate = enum(c_int) {
+    /// 1x1
     Rate1x1,
+
+    /// 1x2
     Rate1x2,
+
+    /// 2x1
     Rate2x1,
+
+    /// 2x2
     Rate2x2,
+
+    /// 2x4
     Rate2x4,
+
+    /// 4x2
     Rate4x2,
+
+    /// 4x4
     Rate4x4,
 
     Count
@@ -1761,6 +1774,7 @@ pub const Init = extern struct {
         /// Set number of instances for auto generated instances use in conjunction
         /// with gl_InstanceID.
         /// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+        /// <param name="_numInstances">Number of instances.</param>
         pub inline fn setInstanceCount(self: ?*Encoder, _numInstances: u32) void {
             return bgfx_encoder_set_instance_count(self, _numInstances);
         }
@@ -3010,6 +3024,7 @@ pub inline fn setViewShadingRate(_id: ViewId, _shadingRate: ShadingRate) void {
 extern fn bgfx_set_view_shading_rate(_id: ViewId, _shadingRate: ShadingRate) void;
 
 /// Reset all view settings to default.
+/// <param name="_id">_id View id.</param>
 pub inline fn resetView(_id: ViewId) void {
     return bgfx_reset_view(_id);
 }
@@ -3203,6 +3218,7 @@ extern fn bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer(self: ?*Enco
 /// Set number of instances for auto generated instances use in conjunction
 /// with gl_InstanceID.
 /// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+/// <param name="_numInstances">Number of instances.</param>
 extern fn bgfx_encoder_set_instance_count(self: ?*Encoder, _numInstances: u32) void;
 
 /// Set texture stage for draw primitive.
@@ -3642,6 +3658,7 @@ extern fn bgfx_set_instance_data_from_dynamic_vertex_buffer(_handle: DynamicVert
 /// Set number of instances for auto generated instances use in conjunction
 /// with gl_InstanceID.
 /// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+/// <param name="_numInstances">Number of instances.</param>
 pub inline fn setInstanceCount(_numInstances: u32) void {
     return bgfx_set_instance_count(_numInstances);
 }

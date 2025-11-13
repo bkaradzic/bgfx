@@ -277,15 +277,15 @@
 #define BGFX_DEBUG_TEXT                           UINT32_C(0x00000008) //!< Enable debug text display.
 #define BGFX_DEBUG_PROFILER                       UINT32_C(0x00000010) //!< Enable profiler. This causes per-view statistics to be collected, available through `bgfx::Stats::ViewStats`. This is unrelated to the profiler functions in `bgfx::CallbackI`.
 
-#define BGFX_BUFFER_COMPUTE_FORMAT_8X1            UINT16_C(0x0001) //!< 1 8-bit value
-#define BGFX_BUFFER_COMPUTE_FORMAT_8X2            UINT16_C(0x0002) //!< 2 8-bit values
-#define BGFX_BUFFER_COMPUTE_FORMAT_8X4            UINT16_C(0x0003) //!< 4 8-bit values
-#define BGFX_BUFFER_COMPUTE_FORMAT_16X1           UINT16_C(0x0004) //!< 1 16-bit value
-#define BGFX_BUFFER_COMPUTE_FORMAT_16X2           UINT16_C(0x0005) //!< 2 16-bit values
-#define BGFX_BUFFER_COMPUTE_FORMAT_16X4           UINT16_C(0x0006) //!< 4 16-bit values
-#define BGFX_BUFFER_COMPUTE_FORMAT_32X1           UINT16_C(0x0007) //!< 1 32-bit value
-#define BGFX_BUFFER_COMPUTE_FORMAT_32X2           UINT16_C(0x0008) //!< 2 32-bit values
-#define BGFX_BUFFER_COMPUTE_FORMAT_32X4           UINT16_C(0x0009) //!< 4 32-bit values
+#define BGFX_BUFFER_COMPUTE_FORMAT_8X1            UINT16_C(0x0001) //!< 1 x 8-bit value
+#define BGFX_BUFFER_COMPUTE_FORMAT_8X2            UINT16_C(0x0002) //!< 2 x 8-bit values
+#define BGFX_BUFFER_COMPUTE_FORMAT_8X4            UINT16_C(0x0003) //!< 4 x 8-bit values
+#define BGFX_BUFFER_COMPUTE_FORMAT_16X1           UINT16_C(0x0004) //!< 1 x 16-bit value
+#define BGFX_BUFFER_COMPUTE_FORMAT_16X2           UINT16_C(0x0005) //!< 2 x 16-bit values
+#define BGFX_BUFFER_COMPUTE_FORMAT_16X4           UINT16_C(0x0006) //!< 4 x 16-bit values
+#define BGFX_BUFFER_COMPUTE_FORMAT_32X1           UINT16_C(0x0007) //!< 1 x 32-bit value
+#define BGFX_BUFFER_COMPUTE_FORMAT_32X2           UINT16_C(0x0008) //!< 2 x 32-bit values
+#define BGFX_BUFFER_COMPUTE_FORMAT_32X4           UINT16_C(0x0009) //!< 4 x 32-bit values
 #define BGFX_BUFFER_COMPUTE_FORMAT_SHIFT          0
 
 #define BGFX_BUFFER_COMPUTE_FORMAT_MASK           UINT16_C(0x000f)

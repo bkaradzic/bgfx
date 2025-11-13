@@ -294,15 +294,15 @@ enum Debug: Debug_{
 
 alias BufferComputeFormat_ = ushort;
 enum BufferComputeFormat: BufferComputeFormat_{
-	_8x1   = 0x0001, ///1 8-bit value
-	_8x2   = 0x0002, ///2 8-bit values
-	_8x4   = 0x0003, ///4 8-bit values
-	_16x1  = 0x0004, ///1 16-bit value
-	_16x2  = 0x0005, ///2 16-bit values
-	_16x4  = 0x0006, ///4 16-bit values
-	_32x1  = 0x0007, ///1 32-bit value
-	_32x2  = 0x0008, ///2 32-bit values
-	_32x4  = 0x0009, ///4 32-bit values
+	_8x1   = 0x0001, ///1 x 8-bit value
+	_8x2   = 0x0002, ///2 x 8-bit values
+	_8x4   = 0x0003, ///4 x 8-bit values
+	_16x1  = 0x0004, ///1 x 16-bit value
+	_16x2  = 0x0005, ///2 x 16-bit values
+	_16x4  = 0x0006, ///4 x 16-bit values
+	_32x1  = 0x0007, ///1 x 32-bit value
+	_32x2  = 0x0008, ///2 x 32-bit values
+	_32x4  = 0x0009, ///4 x 32-bit values
 	shift  = 0,
 	mask   = 0x000F,
 }
@@ -1703,6 +1703,8 @@ extern(C++, "bgfx") struct Encoder{
 			Set number of instances for auto generated instances use in conjunction
 			with gl_InstanceID.
 			Attention: Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+			Params:
+				numInstances = Number of instances.
 			*/
 			{q{void}, q{setInstanceCount}, q{uint numInstances}, ext: `C++`},
 			
@@ -3093,6 +3095,8 @@ mixin(joinFnBinds((){
 		
 		/**
 		* Reset all view settings to default.
+		Params:
+			id = _id View id.
 		*/
 		{q{void}, q{resetView}, q{ViewID id}, ext: `C++, "bgfx"`},
 		
@@ -3480,6 +3484,8 @@ mixin(joinFnBinds((){
 		* Set number of instances for auto generated instances use in conjunction
 		* with gl_InstanceID.
 		* Attention: Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+		Params:
+			numInstances = Number of instances.
 		*/
 		{q{void}, q{setInstanceCount}, q{uint numInstances}, ext: `C++, "bgfx"`},
 		

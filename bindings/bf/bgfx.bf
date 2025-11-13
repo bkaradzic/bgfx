@@ -613,47 +613,47 @@ public static class bgfx
 	public enum BufferFlags : uint16
 	{
 		/// <summary>
-		/// 1 8-bit value
+		/// 1 x 8-bit value
 		/// </summary>
 		ComputeFormat8x1       = 0x0001,
 	
 		/// <summary>
-		/// 2 8-bit values
+		/// 2 x 8-bit values
 		/// </summary>
 		ComputeFormat8x2       = 0x0002,
 	
 		/// <summary>
-		/// 4 8-bit values
+		/// 4 x 8-bit values
 		/// </summary>
 		ComputeFormat8x4       = 0x0003,
 	
 		/// <summary>
-		/// 1 16-bit value
+		/// 1 x 16-bit value
 		/// </summary>
 		ComputeFormat16x1      = 0x0004,
 	
 		/// <summary>
-		/// 2 16-bit values
+		/// 2 x 16-bit values
 		/// </summary>
 		ComputeFormat16x2      = 0x0005,
 	
 		/// <summary>
-		/// 4 16-bit values
+		/// 4 x 16-bit values
 		/// </summary>
 		ComputeFormat16x4      = 0x0006,
 	
 		/// <summary>
-		/// 1 32-bit value
+		/// 1 x 32-bit value
 		/// </summary>
 		ComputeFormat32x1      = 0x0007,
 	
 		/// <summary>
-		/// 2 32-bit values
+		/// 2 x 32-bit values
 		/// </summary>
 		ComputeFormat32x2      = 0x0008,
 	
 		/// <summary>
-		/// 4 32-bit values
+		/// 4 x 32-bit values
 		/// </summary>
 		ComputeFormat32x4      = 0x0009,
 		ComputeFormatShift     = 0,
@@ -2055,12 +2055,39 @@ public static class bgfx
 	[AllowDuplicates]
 	public enum ShadingRate : uint32
 	{
+		/// <summary>
+		/// 1x1
+		/// </summary>
 		Rate1x1,
+	
+		/// <summary>
+		/// 1x2
+		/// </summary>
 		Rate1x2,
+	
+		/// <summary>
+		/// 2x1
+		/// </summary>
 		Rate2x1,
+	
+		/// <summary>
+		/// 2x2
+		/// </summary>
 		Rate2x2,
+	
+		/// <summary>
+		/// 2x4
+		/// </summary>
 		Rate2x4,
+	
+		/// <summary>
+		/// 4x2
+		/// </summary>
 		Rate4x2,
+	
+		/// <summary>
+		/// 4x4
+		/// </summary>
 		Rate4x4,
 	
 		Count
@@ -3740,6 +3767,8 @@ public static class bgfx
 	/// Reset all view settings to default.
 	/// </summary>
 	///
+	/// <param name="_id">_id View id.</param>
+	///
 	[LinkName("bgfx_reset_view")]
 	public static extern void reset_view(ViewId _id);
 	
@@ -4052,6 +4081,8 @@ public static class bgfx
 	/// with gl_InstanceID.
 	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	/// </summary>
+	///
+	/// <param name="_numInstances">Number of instances.</param>
 	///
 	[LinkName("bgfx_encoder_set_instance_count")]
 	public static extern void encoder_set_instance_count(Encoder* _this, uint32 _numInstances);
@@ -4632,6 +4663,8 @@ public static class bgfx
 	/// with gl_InstanceID.
 	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
 	/// </summary>
+	///
+	/// <param name="_numInstances">Number of instances.</param>
 	///
 	[LinkName("bgfx_set_instance_count")]
 	public static extern void set_instance_count(uint32 _numInstances);
