@@ -2263,7 +2263,7 @@ namespace bgfx
 
 				if (newKeysCapacity != m_keysCapacity)
 				{
-					bx::realloc(g_allocator, m_keys, newKeysCapacity*sizeof(uint64_t) );
+					m_keys = (UniformCacheKey::KeyT*)bx::realloc(g_allocator, m_keys, newKeysCapacity * sizeof(uint64_t));
 					m_keysCapacity = newKeysCapacity;
 				}
 			}
@@ -2273,7 +2273,7 @@ namespace bgfx
 
 				if (newDataCapacity != m_dataCapacity)
 				{
-					bx::realloc(g_allocator, m_keys, newDataCapacity);
+					m_data = (uint8_t*)bx::realloc(g_allocator, m_data, newDataCapacity);
 					m_dataCapacity = newDataCapacity;
 				}
 			}
