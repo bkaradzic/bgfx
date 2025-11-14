@@ -3289,6 +3289,23 @@ namespace bgfx
 		{
 			const UniformRef& uniform = getUniformRef(_handle);
 
+			const UniformFreq::Enum freq = UINT16_MAX == _id
+				? UniformFreq::Frame
+				: UniformFreq::View
+				;
+
+			BX_ASSERT(0 < uniform.m_refCount
+				, "Uniform reference count it 0 (handle %3d)!"
+				, _handle.idx
+				);
+			BX_ASSERT(uniform.m_freq == freq
+				, "Setting uniform per view, but uniform is created with different bgfx::UniformFreq::Enum!"
+				);
+			BX_ASSERT(_num == UINT16_MAX || uniform.m_num >= _num
+				, "Truncated uniform update. %d (max: %d)"
+				, _num, uniform.m_num
+				);
+
 			UniformCacheKey key =
 			{
 				.m_offset = 0,
@@ -4667,9 +4684,10 @@ namespace bgfx
 				}
 
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
-				if (PredefinedUniform::Count == predefined && UniformType::End != UniformType::Enum(type) )
+				if (PredefinedUniform::Count == predefined
+				&&  UniformType::End != UniformType::Enum(type) )
 				{
-					uniforms[sr.m_num] = createUniform(name, UniformFreq::Draw, UniformType::Enum(type), num);
+					uniforms[sr.m_num] = createUniform(name, UniformFreq::Count, UniformType::Enum(type), num);
 					sr.m_num++;
 				}
 			}
@@ -5354,7 +5372,11 @@ namespace bgfx
 				const uint32_t oldsize = g_uniformTypeSize[uniform.m_type];
 				const uint32_t newsize = g_uniformTypeSize[_type];
 
-				uniform.m_freq = _freq; // Ignore shader created uniforms, and use UniformFreq when user creates uniform.
+				if (UniformFreq::Count != _freq)
+				{
+					// Ignore shader created uniforms, and use UniformFreq when user creates uniform.
+					uniform.m_freq = _freq;
+				}
 
 				if (oldsize < newsize
 				||  uniform.m_num < _num)
@@ -5390,7 +5412,10 @@ namespace bgfx
 			UniformRef& uniform = m_uniformRef[handle.idx];
 			uniform.m_name.set(_name);
 			uniform.m_refCount = 1;
-			uniform.m_freq = _freq;
+			uniform.m_freq = UniformFreq::Count == _freq
+				? UniformFreq::Draw
+				: _freq
+				;
 			uniform.m_type = _type;
 			uniform.m_num  = _num;
 
