@@ -5226,11 +5226,23 @@ namespace bgfx
 
 	UniformHandle createUniform(const char* _name, UniformType::Enum _type, uint16_t _num)
 	{
+		BX_ASSERT(UniformType::End != _type && UniformType::Count > _type
+			, "UniformType argument is not valid (_type: %d)!"
+			, _type
+			);
 		return s_ctx->createUniform(_name, UniformFreq::Draw, _type, _num);
 	}
 
 	UniformHandle createUniform(const char* _name, UniformFreq::Enum _freq, UniformType::Enum _type, uint16_t _num)
 	{
+		BX_ASSERT(UniformType::End != _type && UniformType::Count > _type
+			, "UniformType argument is not valid (_type: %d)!"
+			, _type
+			);
+		BX_ASSERT(UniformFreq::Count > _freq
+			, "UniformFreq argument is not valid (_freq: %d)!"
+			, _freq
+			);
 		return s_ctx->createUniform(_name, _freq, _type, _num);
 	}
 
@@ -5442,11 +5454,13 @@ namespace bgfx
 	void setViewUniform(ViewId _id, UniformHandle _handle, const void* _value, uint16_t _num)
 	{
 		BX_ASSERT(checkView(_id), "Invalid view id: %d", _id);
+		BGFX_CHECK_HANDLE("setUniform", s_ctx->m_uniformHandle, _handle);
 		s_ctx->setViewUniform(_id, _handle, _value, _num);
 	}
 
 	void setFrameUniform(UniformHandle _handle, const void* _value, uint16_t _num)
 	{
+		BGFX_CHECK_HANDLE("setUniform", s_ctx->m_uniformHandle, _handle);
 		s_ctx->setViewUniform(UINT16_MAX, _handle, _value, _num);
 	}
 
