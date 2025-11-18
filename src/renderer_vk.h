@@ -245,17 +245,19 @@
 			VK_DESTROY_FUNC(ShaderModule);        \
 			VK_DESTROY_FUNC(SwapchainKHR);        \
 
-#define _VK_CHECK(_check, _call)                                                                                \
-				BX_MACRO_BLOCK_BEGIN                                                                            \
-					/*BX_TRACE(#_call);*/                                                                       \
-					VkResult vkresult = _call;                                                                  \
-					_check(VK_SUCCESS == vkresult, #_call "; VK error 0x%x: %s", vkresult, getName(vkresult) ); \
+#define _VK_CHECK(_check, _call)                                                                              \
+				BX_MACRO_BLOCK_BEGIN                                                                          \
+					/*BX_TRACE(#_call);*/                                                                     \
+					VkResult vkresult = _call;                                                                \
+					_check(VK_SUCCESS == vkresult, #_call "; VK error %d: %s", vkresult, getName(vkresult) ); \
 				BX_MACRO_BLOCK_END
 
 #if BGFX_CONFIG_DEBUG
-#	define VK_CHECK(_call) _VK_CHECK(BX_ASSERT, _call)
+#	define VK_CHECK(_call)   _VK_CHECK(BX_ASSERT, _call)
+#	define VK_CHECK_W(_call) _VK_CHECK(BX_WARN, _call)
 #else
-#	define VK_CHECK(_call) _call
+#	define VK_CHECK(_call)   _call
+#	define VK_CHECK_W(_call) _call
 #endif // BGFX_CONFIG_DEBUG
 
 #if BGFX_CONFIG_DEBUG_ANNOTATION
