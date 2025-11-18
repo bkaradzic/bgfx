@@ -922,26 +922,26 @@ VK_IMPORT_DEVICE
 	template<typename Ty>
 	constexpr VkObjectType getType();
 
-	template<> VkObjectType getType<VkBuffer             >() { return VK_OBJECT_TYPE_BUFFER;                }
-	template<> VkObjectType getType<VkCommandPool        >() { return VK_OBJECT_TYPE_COMMAND_POOL;          }
-	template<> VkObjectType getType<VkDescriptorPool     >() { return VK_OBJECT_TYPE_DESCRIPTOR_POOL;       }
-	template<> VkObjectType getType<VkDescriptorSet      >() { return VK_OBJECT_TYPE_DESCRIPTOR_SET;        }
-	template<> VkObjectType getType<VkDescriptorSetLayout>() { return VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT; }
-	template<> VkObjectType getType<VkDeviceMemory       >() { return VK_OBJECT_TYPE_DEVICE_MEMORY;         }
-	template<> VkObjectType getType<VkFence              >() { return VK_OBJECT_TYPE_FENCE;                 }
-	template<> VkObjectType getType<VkFramebuffer        >() { return VK_OBJECT_TYPE_FRAMEBUFFER;           }
-	template<> VkObjectType getType<VkImage              >() { return VK_OBJECT_TYPE_IMAGE;                 }
-	template<> VkObjectType getType<VkImageView          >() { return VK_OBJECT_TYPE_IMAGE_VIEW;            }
-	template<> VkObjectType getType<VkPipeline           >() { return VK_OBJECT_TYPE_PIPELINE;              }
-	template<> VkObjectType getType<VkPipelineCache      >() { return VK_OBJECT_TYPE_PIPELINE_CACHE;        }
-	template<> VkObjectType getType<VkPipelineLayout     >() { return VK_OBJECT_TYPE_PIPELINE_LAYOUT;       }
-	template<> VkObjectType getType<VkQueryPool          >() { return VK_OBJECT_TYPE_QUERY_POOL;            }
-	template<> VkObjectType getType<VkRenderPass         >() { return VK_OBJECT_TYPE_RENDER_PASS;           }
-	template<> VkObjectType getType<VkSampler            >() { return VK_OBJECT_TYPE_SAMPLER;               }
-	template<> VkObjectType getType<VkSemaphore          >() { return VK_OBJECT_TYPE_SEMAPHORE;             }
-	template<> VkObjectType getType<VkShaderModule       >() { return VK_OBJECT_TYPE_SHADER_MODULE;         }
-	template<> VkObjectType getType<VkSurfaceKHR         >() { return VK_OBJECT_TYPE_SURFACE_KHR;           }
-	template<> VkObjectType getType<VkSwapchainKHR       >() { return VK_OBJECT_TYPE_SWAPCHAIN_KHR;         }
+	template<> constexpr VkObjectType getType<VkBuffer             >() { return VK_OBJECT_TYPE_BUFFER;                }
+	template<> constexpr VkObjectType getType<VkCommandPool        >() { return VK_OBJECT_TYPE_COMMAND_POOL;          }
+	template<> constexpr VkObjectType getType<VkDescriptorPool     >() { return VK_OBJECT_TYPE_DESCRIPTOR_POOL;       }
+	template<> constexpr VkObjectType getType<VkDescriptorSet      >() { return VK_OBJECT_TYPE_DESCRIPTOR_SET;        }
+	template<> constexpr VkObjectType getType<VkDescriptorSetLayout>() { return VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT; }
+	template<> constexpr VkObjectType getType<VkDeviceMemory       >() { return VK_OBJECT_TYPE_DEVICE_MEMORY;         }
+	template<> constexpr VkObjectType getType<VkFence              >() { return VK_OBJECT_TYPE_FENCE;                 }
+	template<> constexpr VkObjectType getType<VkFramebuffer        >() { return VK_OBJECT_TYPE_FRAMEBUFFER;           }
+	template<> constexpr VkObjectType getType<VkImage              >() { return VK_OBJECT_TYPE_IMAGE;                 }
+	template<> constexpr VkObjectType getType<VkImageView          >() { return VK_OBJECT_TYPE_IMAGE_VIEW;            }
+	template<> constexpr VkObjectType getType<VkPipeline           >() { return VK_OBJECT_TYPE_PIPELINE;              }
+	template<> constexpr VkObjectType getType<VkPipelineCache      >() { return VK_OBJECT_TYPE_PIPELINE_CACHE;        }
+	template<> constexpr VkObjectType getType<VkPipelineLayout     >() { return VK_OBJECT_TYPE_PIPELINE_LAYOUT;       }
+	template<> constexpr VkObjectType getType<VkQueryPool          >() { return VK_OBJECT_TYPE_QUERY_POOL;            }
+	template<> constexpr VkObjectType getType<VkRenderPass         >() { return VK_OBJECT_TYPE_RENDER_PASS;           }
+	template<> constexpr VkObjectType getType<VkSampler            >() { return VK_OBJECT_TYPE_SAMPLER;               }
+	template<> constexpr VkObjectType getType<VkSemaphore          >() { return VK_OBJECT_TYPE_SEMAPHORE;             }
+	template<> constexpr VkObjectType getType<VkShaderModule       >() { return VK_OBJECT_TYPE_SHADER_MODULE;         }
+	template<> constexpr VkObjectType getType<VkSurfaceKHR         >() { return VK_OBJECT_TYPE_SURFACE_KHR;           }
+	template<> constexpr VkObjectType getType<VkSwapchainKHR       >() { return VK_OBJECT_TYPE_SWAPCHAIN_KHR;         }
 
 	template<typename Ty>
 	static BX_NO_INLINE void setDebugObjectName(VkDevice _device, Ty _object, const char* _format, ...)
@@ -963,7 +963,7 @@ VK_IMPORT_DEVICE
 			ni.objectHandle = uint64_t(_object.vk);
 			ni.pObjectName  = temp;
 
-			VK_CHECK(vkSetDebugUtilsObjectNameEXT(_device, &ni) );
+			VK_CHECK_W(vkSetDebugUtilsObjectNameEXT(_device, &ni) );
 		}
 	}
 
