@@ -3761,7 +3761,7 @@ namespace bgfx { namespace gl
 				? m_maxAnisotropyDefault
 				: 0.0f
 				;
-			
+
 			if (m_maxAnisotropy != maxAnisotropy)
 			{
 				m_maxAnisotropy = maxAnisotropy;
@@ -7366,7 +7366,7 @@ namespace bgfx { namespace gl
 
 	void OcclusionQueryGL::resolve(Frame* _render, bool _wait)
 	{
-		while (0 != m_control.available() )
+		while (0 != m_control.getNumUsed() )
 		{
 			Query& query = m_query[m_control.m_read];
 
@@ -7396,7 +7396,7 @@ namespace bgfx { namespace gl
 	{
 		const uint32_t size = m_control.m_size;
 
-		for (uint32_t ii = 0, num = m_control.available(); ii < num; ++ii)
+		for (uint32_t ii = 0, num = m_control.getNumUsed(); ii < num; ++ii)
 		{
 			Query& query = m_query[(m_control.m_read + ii) % size];
 			if (query.m_handle.idx == _handle.idx)

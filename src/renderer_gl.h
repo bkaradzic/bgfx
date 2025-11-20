@@ -1645,7 +1645,7 @@ namespace bgfx { namespace gl
 
 		bool update()
 		{
-			if (0 != m_control.available() )
+			if (0 != m_control.getNumUsed() )
 			{
 				Query& query = m_query[m_control.m_read];
 

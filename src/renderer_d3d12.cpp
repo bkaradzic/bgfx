@@ -4201,7 +4201,7 @@ namespace bgfx { namespace d3d12
 
 	void CommandQueueD3D12::finish(uint64_t _waitFence, bool _finishAll)
 	{
-		while (0 < m_control.available() )
+		while (0 < m_control.getNumUsed() )
 		{
 			consume();
 
@@ -4212,12 +4212,12 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
-		BX_ASSERT(0 == m_control.available(), "");
+		BX_ASSERT(0 == m_control.getNumUsed(), "");
 	}
 
 	bool CommandQueueD3D12::tryFinish(uint64_t _waitFence)
 	{
-		if (0 < m_control.available() )
+		if (0 < m_control.getNumUsed() )
 		{
 			if (consume(0)
 			&& _waitFence <= m_completedFence)
@@ -6245,7 +6245,7 @@ namespace bgfx { namespace d3d12
 
 	bool TimerQueryD3D12::update()
 	{
-		if (0 != m_control.available() )
+		if (0 != m_control.getNumUsed() )
 		{
 			uint32_t idx = m_control.m_read;
 			Query& query = m_query[idx];
@@ -6346,7 +6346,7 @@ namespace bgfx { namespace d3d12
 	{
 		const uint32_t size = m_control.m_size;
 
-		for (uint32_t ii = 0, num = m_control.available(); ii < num; ++ii)
+		for (uint32_t ii = 0, num = m_control.getNumUsed(); ii < num; ++ii)
 		{
 			OcclusionQueryHandle& handle = m_handle[(m_control.m_read + ii) % size];
 			if (handle.idx == _handle.idx)
@@ -7369,7 +7369,7 @@ namespace bgfx { namespace d3d12
 			maxGpuLatency = bx::uint32_imax(maxGpuLatency, result.m_pending-1);
 		}
 
-		maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
+		maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.getNumUsed()-1);
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
@@ -7558,7 +7558,7 @@ namespace bgfx { namespace d3d12
 					, m_pipelineStateCache.getCount()
 					, m_samplerStateCache.getCount()
 					, bindLru.getCount()
-					, m_cmd.m_control.available()
+					, m_cmd.m_control.getNumUsed()
 					);
 				pos++;
 
