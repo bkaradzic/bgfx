@@ -27,7 +27,7 @@
 #include <algorithm>
 #include <assert.h>
 
-using namespace spv;
+using namespace SPIRV_CROSS_SPV_HEADER_NAMESPACE;
 using namespace SPIRV_CROSS_NAMESPACE;
 using namespace std;
 
@@ -1139,7 +1139,7 @@ void CompilerHLSL::emit_interface_block_in_struct(const SPIRVariable &var, unord
 	}
 }
 
-std::string CompilerHLSL::builtin_to_glsl(spv::BuiltIn builtin, spv::StorageClass storage)
+std::string CompilerHLSL::builtin_to_glsl(BuiltIn builtin, StorageClass storage)
 {
 	switch (builtin)
 	{
@@ -3760,19 +3760,19 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 	uint32_t coord_components = 0;
 	switch (imgtype.image.dim)
 	{
-	case spv::Dim1D:
+	case Dim1D:
 		coord_components = 1;
 		break;
-	case spv::Dim2D:
+	case Dim2D:
 		coord_components = 2;
 		break;
-	case spv::Dim3D:
+	case Dim3D:
 		coord_components = 3;
 		break;
-	case spv::DimCube:
+	case DimCube:
 		coord_components = 3;
 		break;
-	case spv::DimBuffer:
+	case DimBuffer:
 		coord_components = 1;
 		break;
 	default:
@@ -3783,7 +3783,7 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 	if (dref)
 		inherited_expressions.push_back(dref);
 
-	if (imgtype.image.arrayed)
+	if (imgtype.image.arrayed && op != OpImageQueryLod)
 		coord_components++;
 
 	uint32_t bias = 0;
@@ -4001,7 +4001,7 @@ void CompilerHLSL::emit_texture_op(const Instruction &i, bool sparse)
 	{
 		if (dref)
 		{
-			if (imgtype.image.dim != spv::Dim1D && imgtype.image.dim != spv::Dim2D)
+			if (imgtype.image.dim != Dim1D && imgtype.image.dim != Dim2D)
 			{
 				SPIRV_CROSS_THROW(
 				    "Depth comparison is only supported for 1D and 2D textures in HLSL shader model 2/3.");
@@ -5436,7 +5436,7 @@ void CompilerHLSL::emit_access_chain(const Instruction &instruction)
 	}
 }
 
-void CompilerHLSL::emit_atomic(const uint32_t *ops, uint32_t length, spv::Op op)
+void CompilerHLSL::emit_atomic(const uint32_t *ops, uint32_t length, Op op)
 {
 	const char *atomic_op = nullptr;
 
@@ -7113,8 +7113,8 @@ bool CompilerHLSL::is_hlsl_force_storage_buffer_as_uav(ID id) const
 		return true;
 	}
 
-	const uint32_t desc_set = get_decoration(id, spv::DecorationDescriptorSet);
-	const uint32_t binding = get_decoration(id, spv::DecorationBinding);
+	const uint32_t desc_set = get_decoration(id, DecorationDescriptorSet);
+	const uint32_t binding = get_decoration(id, DecorationBinding);
 
 	return (force_uav_buffer_bindings.find({ desc_set, binding }) != force_uav_buffer_bindings.end());
 }
@@ -7134,6 +7134,7 @@ bool CompilerHLSL::is_user_type_structured(uint32_t id) const
 		const std::string &user_type = get_decoration_string(id, DecorationUserTypeGOOGLE);
 		return user_type.compare(0, 16, "structuredbuffer") == 0 ||
 		       user_type.compare(0, 18, "rwstructuredbuffer") == 0 ||
+		       user_type.compare(0, 35, "globallycoherent rwstructuredbuffer") == 0 ||
 		       user_type.compare(0, 33, "rasterizerorderedstructuredbuffer") == 0;
 	}
 	return false;

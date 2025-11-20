@@ -27,8 +27,17 @@
 #ifndef SPV_ENABLE_UTILITY_CODE
 #define SPV_ENABLE_UTILITY_CODE
 #endif
-#include "spirv.hpp"
 
+// Pragmatic hack to avoid symbol conflicts when including both hpp11 and hpp headers in same translation unit.
+// This is an unfortunate SPIRV-Headers issue that we cannot easily deal with ourselves.
+#ifdef SPIRV_CROSS_SPV_HEADER_NAMESPACE_OVERRIDE
+#define spv SPIRV_CROSS_SPV_HEADER_NAMESPACE_OVERRIDE
+#define SPIRV_CROSS_SPV_HEADER_NAMESPACE SPIRV_CROSS_SPV_HEADER_NAMESPACE_OVERRIDE
+#else
+#define SPIRV_CROSS_SPV_HEADER_NAMESPACE spv
+#endif
+
+#include "spirv.hpp"
 #include "spirv_cross_containers.hpp"
 #include "spirv_cross_error_handling.hpp"
 #include <functional>
@@ -2041,4 +2050,7 @@ struct hash<SPIRV_CROSS_NAMESPACE::TypedID<type>>
 };
 } // namespace std
 
+#ifdef SPIRV_CROSS_SPV_HEADER_NAMESPACE_OVERRIDE
+#undef spv
+#endif
 #endif

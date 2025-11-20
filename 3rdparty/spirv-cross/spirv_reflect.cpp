@@ -25,7 +25,7 @@
 #include "spirv_glsl.hpp"
 #include <iomanip>
 
-using namespace spv;
+using namespace SPIRV_CROSS_SPV_HEADER_NAMESPACE;
 using namespace SPIRV_CROSS_NAMESPACE;
 using namespace std;
 
@@ -449,7 +449,7 @@ void CompilerReflection::emit_type_member_qualifiers(const SPIRType &type, uint3
 	}
 }
 
-string CompilerReflection::execution_model_to_str(spv::ExecutionModel model)
+string CompilerReflection::execution_model_to_str(ExecutionModel model)
 {
 	switch (model)
 	{
@@ -510,9 +510,9 @@ void CompilerReflection::emit_entry_points()
 			json_stream->begin_json_object();
 			json_stream->emit_json_key_value("name", e.name);
 			json_stream->emit_json_key_value("mode", execution_model_to_str(e.execution_model));
-			if (e.execution_model == ExecutionModelGLCompute || e.execution_model == spv::ExecutionModelMeshEXT ||
-			    e.execution_model == spv::ExecutionModelMeshNV || e.execution_model == spv::ExecutionModelTaskEXT ||
-			    e.execution_model == spv::ExecutionModelTaskNV)
+			if (e.execution_model == ExecutionModelGLCompute || e.execution_model == ExecutionModelMeshEXT ||
+			    e.execution_model == ExecutionModelMeshNV || e.execution_model == ExecutionModelTaskEXT ||
+			    e.execution_model == ExecutionModelTaskNV)
 			{
 				const auto &spv_entry = get_entry_point(e.name, e.execution_model);
 

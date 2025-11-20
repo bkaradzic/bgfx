@@ -25,7 +25,7 @@
 #include <assert.h>
 
 using namespace std;
-using namespace spv;
+using namespace SPIRV_CROSS_SPV_HEADER_NAMESPACE;
 
 namespace SPIRV_CROSS_NAMESPACE
 {
@@ -594,7 +594,7 @@ void Parser::parse(const Instruction &instruction)
 		{
 			if (length > 2)
 			{
-				if (ops[2] == spv::FPEncodingBFloat16KHR)
+				if (ops[2] == FPEncodingBFloat16KHR)
 					type.basetype = SPIRType::BFloat16;
 				else
 					SPIRV_CROSS_THROW("Unrecognized encoding for OpTypeFloat 16.");
@@ -606,9 +606,9 @@ void Parser::parse(const Instruction &instruction)
 		{
 			if (length < 2)
 				SPIRV_CROSS_THROW("Missing encoding for OpTypeFloat 8.");
-			else if (ops[2] == spv::FPEncodingFloat8E4M3EXT)
+			else if (ops[2] == FPEncodingFloat8E4M3EXT)
 				type.basetype = SPIRType::FloatE4M3;
-			else if (ops[2] == spv::FPEncodingFloat8E5M2EXT)
+			else if (ops[2] == FPEncodingFloat8E5M2EXT)
 				type.basetype = SPIRType::FloatE5M2;
 			else
 				SPIRV_CROSS_THROW("Invalid encoding for OpTypeFloat 8.");
@@ -944,7 +944,7 @@ void Parser::parse(const Instruction &instruction)
 		uint32_t id = ops[1];
 
 		// Instead of a temporary, create a new function-wide temporary with this ID instead.
-		auto &var = set<SPIRVariable>(id, result_type, spv::StorageClassFunction);
+		auto &var = set<SPIRVariable>(id, result_type, StorageClassFunction);
 		var.phi_variable = true;
 
 		current_function->add_local_variable(id);

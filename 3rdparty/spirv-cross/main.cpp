@@ -47,7 +47,7 @@
 #include "gitversion.h"
 #endif
 
-using namespace spv;
+using namespace SPIRV_CROSS_SPV_HEADER_NAMESPACE;
 using namespace SPIRV_CROSS_NAMESPACE;
 using namespace std;
 
@@ -285,7 +285,7 @@ static bool write_string_to_file(const char *path, const char *string)
 #pragma warning(pop)
 #endif
 
-static void print_resources(const Compiler &compiler, spv::StorageClass storage,
+static void print_resources(const Compiler &compiler, StorageClass storage,
                             const SmallVector<BuiltInResource> &resources)
 {
 	fprintf(stderr, "%s\n", storage == StorageClassInput ? "builtin inputs" : "builtin outputs");
@@ -326,12 +326,12 @@ static void print_resources(const Compiler &compiler, spv::StorageClass storage,
 		string builtin_str;
 		switch (res.builtin)
 		{
-		case spv::BuiltInPosition: builtin_str = "Position"; break;
-		case spv::BuiltInPointSize: builtin_str = "PointSize"; break;
-		case spv::BuiltInCullDistance: builtin_str = "CullDistance"; break;
-		case spv::BuiltInClipDistance: builtin_str = "ClipDistance"; break;
-		case spv::BuiltInTessLevelInner: builtin_str = "TessLevelInner"; break;
-		case spv::BuiltInTessLevelOuter: builtin_str = "TessLevelOuter"; break;
+		case BuiltInPosition: builtin_str = "Position"; break;
+		case BuiltInPointSize: builtin_str = "PointSize"; break;
+		case BuiltInCullDistance: builtin_str = "CullDistance"; break;
+		case BuiltInClipDistance: builtin_str = "ClipDistance"; break;
+		case BuiltInTessLevelInner: builtin_str = "TessLevelInner"; break;
+		case BuiltInTessLevelOuter: builtin_str = "TessLevelOuter"; break;
 		default: builtin_str = string("builtin #") + to_string(res.builtin);
 		}
 
@@ -421,13 +421,13 @@ static void print_resources(const Compiler &compiler, const char *tag, const Sma
 	fprintf(stderr, "=============\n\n");
 }
 
-static const char *execution_model_to_str(spv::ExecutionModel model)
+static const char *execution_model_to_str(ExecutionModel model)
 {
 	switch (model)
 	{
-	case spv::ExecutionModelVertex:
+	case ExecutionModelVertex:
 		return "vertex";
-	case spv::ExecutionModelTessellationControl:
+	case ExecutionModelTessellationControl:
 		return "tessellation control";
 	case ExecutionModelTessellationEvaluation:
 		return "tessellation evaluation";
@@ -538,8 +538,8 @@ static void print_resources(const Compiler &compiler, const ShaderResources &res
 	print_resources(compiler, "acceleration structures", res.acceleration_structures);
 	print_resources(compiler, "tensors", res.tensors);
 	print_resources(compiler, "record buffers", res.shader_record_buffers);
-	print_resources(compiler, spv::StorageClassInput, res.builtin_inputs);
-	print_resources(compiler, spv::StorageClassOutput, res.builtin_outputs);
+	print_resources(compiler, StorageClassInput, res.builtin_inputs);
+	print_resources(compiler, StorageClassOutput, res.builtin_outputs);
 }
 
 static void print_push_constant_resources(const Compiler &compiler, const SmallVector<Resource> &res)
@@ -1175,9 +1175,9 @@ static ExecutionModel stage_to_execution_model(const std::string &stage)
 	else if (stage == "rcall")
 		return ExecutionModelCallableKHR;
 	else if (stage == "mesh")
-		return spv::ExecutionModelMeshEXT;
+		return ExecutionModelMeshEXT;
 	else if (stage == "task")
-		return spv::ExecutionModelTaskEXT;
+		return ExecutionModelTaskEXT;
 	else
 		SPIRV_CROSS_THROW("Invalid stage.");
 }
