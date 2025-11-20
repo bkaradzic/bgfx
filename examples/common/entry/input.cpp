@@ -136,7 +136,7 @@ struct InputKeyboard
 
 	const uint8_t* popChar()
 	{
-		if (0 < m_ring.available() )
+		if (0 < m_ring.getNumUsed() )
 		{
 			uint8_t* utf8 = &m_char[m_ring.m_read];
 			m_ring.consume(4);
