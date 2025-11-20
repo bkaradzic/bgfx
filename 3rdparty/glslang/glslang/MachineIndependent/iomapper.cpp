@@ -166,7 +166,7 @@ typedef std::vector<TVarLivePair> TVarLiveVector;
 class TVarGatherTraverser : public TLiveTraverser {
 public:
     TVarGatherTraverser(const TIntermediate& i, bool traverseDeadCode, TVarLiveMap& inList, TVarLiveMap& outList, TVarLiveMap& uniformList)
-      : TLiveTraverser(i, traverseDeadCode, true, true, false)
+      : TLiveTraverser(i, traverseDeadCode, true, true, false, false)
       , inputList(inList)
       , outputList(outList)
       , uniformList(uniformList)
@@ -209,7 +209,7 @@ class TVarSetTraverser : public TLiveTraverser
 {
 public:
     TVarSetTraverser(const TIntermediate& i, const TVarLiveMap& inList, const TVarLiveMap& outList, const TVarLiveMap& uniformList)
-      : TLiveTraverser(i, true, true, true, false)
+      : TLiveTraverser(i, true, true, true, false, true)
       , inputList(inList)
       , outputList(outList)
       , uniformList(uniformList)

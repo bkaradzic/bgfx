@@ -118,7 +118,8 @@ TIntermSymbol* TIntermediate::addSymbol(const TType& type, const TSourceLoc& loc
 TIntermTyped* TIntermediate::addBinaryMath(TOperator op, TIntermTyped* left, TIntermTyped* right, const TSourceLoc& loc)
 {
     // No operations work on blocks
-    if (left->getType().getBasicType() == EbtBlock || right->getType().getBasicType() == EbtBlock)
+    if (left->getType().getBasicType() == EbtBlock || right->getType().getBasicType() == EbtBlock ||
+        left->getType().getBasicType() == EbtString || right->getType().getBasicType() == EbtString)
         return nullptr;
 
     // Convert "reference +/- int" and "reference - reference" to integer math
@@ -2382,7 +2383,8 @@ TIntermTyped* TIntermediate::addSelection(TIntermTyped* cond, TIntermTyped* true
     trueBlock = std::get<0>(children);
     falseBlock = std::get<1>(children);
 
-    if (trueBlock == nullptr || falseBlock == nullptr)
+    if (trueBlock == nullptr || falseBlock == nullptr ||
+        trueBlock->getBasicType() == EbtString || falseBlock->getBasicType() == EbtString)
         return nullptr;
 
     // Handle a vector condition as a mix
@@ -2650,7 +2652,7 @@ const TIntermTyped* TIntermediate::traverseLValueBase(const TIntermTyped* node, 
 //
 // Create while and do-while loop nodes.
 //
-TIntermLoop* TIntermediate::addLoop(TIntermNode* body, TIntermTyped* test, TIntermTyped* terminal, bool testFirst,
+TIntermLoop* TIntermediate::addLoop(TIntermNode* body, TIntermNode* test, TIntermTyped* terminal, bool testFirst,
     const TSourceLoc& loc)
 {
     TIntermLoop* node = new TIntermLoop(body, test, terminal, testFirst);
@@ -2662,7 +2664,7 @@ TIntermLoop* TIntermediate::addLoop(TIntermNode* body, TIntermTyped* test, TInte
 //
 // Create a for-loop sequence.
 //
-TIntermAggregate* TIntermediate::addForLoop(TIntermNode* body, TIntermNode* initializer, TIntermTyped* test,
+TIntermAggregate* TIntermediate::addForLoop(TIntermNode* body, TIntermNode* initializer, TIntermNode* test,
     TIntermTyped* terminal, bool testFirst, const TSourceLoc& loc, TIntermLoop*& node)
 {
     node = new TIntermLoop(body, test, terminal, testFirst);

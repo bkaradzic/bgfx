@@ -69,6 +69,8 @@
 #include "../Include/intermediate.h"
 #include "../Include/InfoSink.h"
 
+#include <functional>
+
 namespace glslang {
 
 //
@@ -596,6 +598,7 @@ public:
 
     void relateToOperator(const char* name, TOperator op);
     void setFunctionExtensions(const char* name, int num, const char* const extensions[]);
+    void setFunctionExtensionsCallback(const char* name, std::function<std::vector<const char *>(const char *)> const &func);
     void setSingleFunctionExtensions(const char* name, int num, const char* const extensions[]);
     void dump(TInfoSink& infoSink, bool complete = false) const;
     TSymbolTableLevel* clone() const;
@@ -896,6 +899,12 @@ public:
     {
         for (unsigned int level = 0; level < table.size(); ++level)
             table[level]->setFunctionExtensions(name, num, extensions);
+    }
+
+    void setFunctionExtensionsCallback(const char* name, std::function<std::vector<const char *>(const char *)> const &func)
+    {
+        for (unsigned int level = 0; level < table.size(); ++level)
+            table[level]->setFunctionExtensionsCallback(name, func);
     }
 
     void setSingleFunctionExtensions(const char* name, int num, const char* const extensions[])

@@ -574,8 +574,8 @@ public:
     TIntermConstantUnion* addConstantUnion(const TString*, const TSourceLoc&, bool literal = false) const;
     TIntermTyped* promoteConstantUnion(TBasicType, TIntermConstantUnion*) const;
     bool parseConstTree(TIntermNode*, TConstUnionArray, TOperator, const TType&, bool singleConstantParam = false);
-    TIntermLoop* addLoop(TIntermNode*, TIntermTyped*, TIntermTyped*, bool testFirst, const TSourceLoc&);
-    TIntermAggregate* addForLoop(TIntermNode*, TIntermNode*, TIntermTyped*, TIntermTyped*, bool testFirst,
+    TIntermLoop* addLoop(TIntermNode*, TIntermNode*, TIntermTyped*, bool testFirst, const TSourceLoc&);
+    TIntermAggregate* addForLoop(TIntermNode*, TIntermNode*, TIntermNode*, TIntermTyped*, bool testFirst,
         const TSourceLoc&, TIntermLoop*&);
     TIntermBranch* addBranch(TOperator, const TSourceLoc&);
     TIntermBranch* addBranch(TOperator, TIntermTyped*, const TSourceLoc&);
@@ -763,6 +763,16 @@ public:
         useReplicatedComposites = true;
     }
     bool usingReplicatedComposites() const { return useReplicatedComposites; }
+    void setPromoteUint32Indices()
+    {
+        promoteUint32Indices = true;
+    }
+    bool usingPromoteUint32Indices() const { return promoteUint32Indices; }
+    void setShader64BitIndexing()
+    {
+        shader64BitIndexing = true;
+    }
+    bool usingShader64BitIndexing() const { return shader64BitIndexing; }
     void setUseVariablePointers()
     {
         useVariablePointers = true;
@@ -1295,6 +1305,8 @@ protected:
     bool maximallyReconverges;
     bool usePhysicalStorageBuffer;
     bool useReplicatedComposites { false };
+    bool promoteUint32Indices { false };
+    bool shader64BitIndexing { false };
 
     TSpirvRequirement* spirvRequirement;
     TSpirvExecutionMode* spirvExecutionMode;

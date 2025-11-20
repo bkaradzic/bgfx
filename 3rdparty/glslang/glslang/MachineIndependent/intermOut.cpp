@@ -81,6 +81,7 @@ public:
     virtual bool visitLoop(TVisit, TIntermLoop* node);
     virtual bool visitBranch(TVisit, TIntermBranch* node);
     virtual bool visitSwitch(TVisit, TIntermSwitch* node);
+    virtual bool visitVariableDecl(TVisit, TIntermVariableDecl* node);
 
     TInfoSink& infoSink;
 protected:
@@ -1397,6 +1398,16 @@ bool TOutputTraverser::visitSwitch(TVisit /* visit */, TIntermSwitch* node)
     --depth;
 
     return false;
+}
+
+bool TOutputTraverser::visitVariableDecl(TVisit /* visit */, TIntermVariableDecl* node)
+{
+    TInfoSink& out = infoSink;
+
+    OutputTreeText(out, node, depth);
+
+    out.debug << "VarDecl: " << node->getDeclSymbol()->getName() << '\n';
+    return true;
 }
 
 //

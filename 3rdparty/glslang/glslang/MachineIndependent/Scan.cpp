@@ -771,6 +771,9 @@ const std::unordered_map<const char*, int, str_hash, str_eq> KeywordMap {
 
     {"tensorARM",TENSORARM},
 
+    {"hitObjectEXT",HITOBJECTEXT},
+    {"hitObjectAttributeEXT",HITOBJECTATTREXT},
+
     {"__function",FUNCTION},
     {"tensorLayoutNV",TENSORLAYOUTNV},
     {"tensorViewNV",TENSORVIEWNV},
@@ -1917,10 +1920,24 @@ int TScanContext::tokenizeIdentifier()
             return keyword;
         return identifierOrType();
 
+    case HITOBJECTEXT:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            (!parseContext.isEsProfile() && parseContext.version >= 460
+                 && parseContext.extensionTurnedOn(E_GL_EXT_shader_invocation_reorder)))
+            return keyword;
+        return identifierOrType();
+
     case HITOBJECTATTRNV:
         if (parseContext.symbolTable.atBuiltInLevel() ||
             (!parseContext.isEsProfile() && parseContext.version >= 460
                  && parseContext.extensionTurnedOn(E_GL_NV_shader_invocation_reorder)))
+            return keyword;
+        return identifierOrType();
+
+    case HITOBJECTATTREXT:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            (!parseContext.isEsProfile() && parseContext.version >= 460
+                 && parseContext.extensionTurnedOn(E_GL_EXT_shader_invocation_reorder)))
             return keyword;
         return identifierOrType();
 

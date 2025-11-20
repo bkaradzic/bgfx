@@ -1986,6 +1986,8 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
         set = 1;
     else if (qualifier.isHitObjectAttrNV())
         set = 2;
+    else if (qualifier.isHitObjectAttrEXT())
+        set = 2;
     else
         return -1;
 
@@ -2024,7 +2026,7 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
     // For raytracing IO (payloads and callabledata) each declaration occupies a single
     // slot irrespective of type.
     int collision = -1; // no collision
-    if (qualifier.isAnyPayload() || qualifier.isAnyCallable() || qualifier.isHitObjectAttrNV()) {
+    if (qualifier.isAnyPayload() || qualifier.isAnyCallable() || qualifier.isHitObjectAttrNV() || qualifier.isHitObjectAttrEXT()) {
         TRange range(qualifier.layoutLocation, qualifier.layoutLocation);
         collision = checkLocationRT(set, qualifier.layoutLocation);
         if (collision < 0)

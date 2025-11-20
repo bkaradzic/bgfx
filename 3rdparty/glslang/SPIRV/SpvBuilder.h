@@ -138,7 +138,7 @@ public:
         if (trackDebugInfo) {
             dirtyLineTracker = true;
             if (line != 0) {
-                // TODO: This is special handling of some AST nodes having (untracked) line 0. 
+                // TODO: This is special handling of some AST nodes having (untracked) line 0.
                 //       But they should have a valid line number.
                 currentLine = line;
                 if (filename) {
@@ -235,9 +235,9 @@ public:
     Id makeArrayType(Id element, Id sizeId, int stride);  // 0 stride means no stride decoration
     Id makeRuntimeArray(Id element);
     Id makeFunctionType(Id returnType, const std::vector<Id>& paramTypes);
-    Id makeImageType(Id sampledType, Dim, bool depth, bool arrayed, bool ms, unsigned sampled, ImageFormat format);
-    Id makeSamplerType();
-    Id makeSampledImageType(Id imageType);
+    Id makeImageType(Id sampledType, Dim, bool depth, bool arrayed, bool ms, unsigned sampled, ImageFormat format, const char* debugNames);
+    Id makeSamplerType(const char* debugName);
+    Id makeSampledImageType(Id imageType, const char* debugName);
     Id makeCooperativeMatrixTypeKHR(Id component, Id scope, Id rows, Id cols, Id use);
     Id makeCooperativeMatrixTypeNV(Id component, Id scope, Id rows, Id cols);
     Id makeCooperativeMatrixTypeWithSameShape(Id component, Id otherType);
@@ -284,6 +284,8 @@ public:
     Id makeRayQueryType();
     // hitObjectNV type
     Id makeHitObjectNVType();
+    // hitObjectEXT type
+    Id makeHitObjectEXTType();
 
     // For querying about types.
     Id getTypeId(Id resultId) const { return module.getTypeId(resultId); }
@@ -511,6 +513,10 @@ public:
     // such as OpEmitMeshTasksEXT
     void makeStatementTerminator(spv::Op opcode, const std::vector<Id>& operands, const char* name);
 
+    // Create a global/local constant. Because OpConstant is automatically emitted by getting the constant
+    // ids, this function only handles debug info.
+    void createConstVariable(Id type, const char* name, Id constant, bool isGlobal);
+
     // Create a global or function local or IO variable.
     Id createVariable(Decoration precision, StorageClass storageClass, Id type, const char* name = nullptr,
         Id initializer = NoResult, bool const compilerGenerated = true);
@@ -531,7 +537,7 @@ public:
     Id createAccessChain(StorageClass, Id base, const std::vector<Id>& offsets);
 
     // Create an OpArrayLength instruction
-    Id createArrayLength(Id base, unsigned int member);
+    Id createArrayLength(Id base, unsigned int member, unsigned int bits);
 
     // Create an OpCooperativeMatrixLengthKHR instruction
     Id createCooperativeMatrixLengthKHR(Id type);
@@ -936,7 +942,11 @@ public:
 
     void setUseReplicatedComposites(bool use) { useReplicatedComposites = use; }
 
- protected:
+private:
+    // Helper to get size of a scalar (in bytes)
+    unsigned int postProcessGetLargestScalarSize(const Instruction& type);
+
+protected:
     Id findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned value);
     Id findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned v1, unsigned v2);
     Id findCompositeConstant(Op typeClass, Op opcode, Id typeId, const std::vector<Id>& comps, size_t numMembers);
@@ -1002,6 +1012,8 @@ public:
     Block* buildPoint;
     Id uniqueId;
     Function* entryPointFunction;
+    // This tracks the current function being built, or nullptr if not in a function.
+    Function const* currentFunction { nullptr };
     bool generatingOpCodeForSpecConst;
     bool useReplicatedComposites { false };
     AccessChain accessChain;

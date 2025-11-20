@@ -69,6 +69,7 @@ enum TBasicType {
     EbtReference,
     EbtRayQuery,
     EbtHitObjectNV,
+    EbtHitObjectEXT,
     EbtCoopmat,
     EbtFunction,
     EbtTensorLayoutNV,
@@ -111,6 +112,7 @@ enum TStorageQualifier {
     EvqCallableData,
     EvqCallableDataIn,
     EvqHitObjectAttrNV,
+    EvqHitObjectAttrEXT,
 
     EvqtaskPayloadSharedEXT,
 
@@ -398,7 +400,8 @@ __inline const char* GetStorageQualifierString(TStorageQualifier q)
     case EvqCallableData:   return "callableDataNV";   break;
     case EvqCallableDataIn: return "callableDataInNV"; break;
     case EvqtaskPayloadSharedEXT: return "taskPayloadSharedEXT"; break;
-    case EvqHitObjectAttrNV:return "hitObjectAttributeNV"; break;
+    case EvqHitObjectAttrNV: return "hitObjectAttributeNV"; break;
+    case EvqHitObjectAttrEXT:return "hitObjectAttributeEXT"; break;
     default:                return "unknown qualifier";
     }
 }
