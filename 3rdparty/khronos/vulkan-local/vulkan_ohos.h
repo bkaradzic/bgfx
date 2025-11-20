@@ -22,7 +22,7 @@ extern "C" {
 // VK_OHOS_external_memory is a preprocessor guard. Do not pass it to API calls.
 #define VK_OHOS_external_memory 1
 struct OH_NativeBuffer;
-#define VK_OHOS_EXTERNAL_MEMORY_SPEC_VERSION 2
+#define VK_OHOS_EXTERNAL_MEMORY_SPEC_VERSION 1
 #define VK_OHOS_EXTERNAL_MEMORY_EXTENSION_NAME "VK_OHOS_external_memory"
 typedef struct VkNativeBufferUsageOHOS {
     VkStructureType    sType;
