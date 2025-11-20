@@ -429,14 +429,13 @@ VK_DESTROY_FUNC(DescriptorSet);
 		bool     m_isFromScratch;
 	};
 
-	class ScratchBufferVK
+	struct StagingScratchBufferVK
 	{
-	public:
-		ScratchBufferVK()
+		StagingScratchBufferVK()
 		{
 		}
 
-		~ScratchBufferVK()
+		~StagingScratchBufferVK()
 		{
 		}
 
@@ -444,7 +443,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void createUniform(uint32_t _size, uint32_t _count);
 		void createStaging(uint32_t _size);
 		void destroy();
-		uint32_t alloc(uint32_t _size, uint32_t _minAlign = 1);
+		uint32_t alloc(uint32_t _size, uint32_t _minAlign);
 		uint32_t write(const void* _data, uint32_t _size, uint32_t _minAlign = 1);
 		void flush(bool _reset = true);
 
@@ -453,8 +452,60 @@ VK_DESTROY_FUNC(DescriptorSet);
 
 		uint8_t* m_data;
 		uint32_t m_size;
-		uint32_t m_pos;
+		uint32_t m_chunkPos;
 		uint32_t m_align;
+	};
+
+	struct ChunkedScratchBufferOffset
+	{
+		VkBuffer buffer;
+		uint32_t offsets[2];
+	};
+
+	struct ChunkedScratchBufferAlloc
+	{
+		uint32_t offset;
+		uint32_t chunkIdx;
+	};
+
+	struct ChunkedScratchBufferVK
+	{
+		ChunkedScratchBufferVK()
+			: m_chunkControl(0)
+		{
+		}
+
+		void create(uint32_t _chunkSize, uint32_t _numChunks, VkBufferUsageFlags usage, uint32_t _align);
+		void createUniform(uint32_t _chunkSize, uint32_t _numChunks);
+		void destroy();
+
+		void addChunk(uint32_t _at = UINT32_MAX);
+		ChunkedScratchBufferAlloc alloc(uint32_t _size);
+
+		void write(ChunkedScratchBufferOffset& _outSbo, const void* _vsData, uint32_t _vsSize, const void* _fsData = NULL, uint32_t _fsSize = 0);
+
+		void begin();
+		void end();
+
+		struct Chunk
+		{
+			VkBuffer buffer;
+			DeviceMemoryAllocationVK deviceMem;
+			uint8_t* data;
+		};
+
+		using ScratchBufferChunksArray = stl::vector<Chunk>;
+
+		ScratchBufferChunksArray m_chunks;
+		bx::RingBufferControl m_chunkControl;
+
+		uint32_t m_chunkPos;
+		uint32_t m_chunkSize;
+		uint32_t m_align;
+		VkBufferUsageFlags m_usage;
+
+		uint32_t m_consume[BGFX_CONFIG_MAX_FRAME_LATENCY];
+		uint32_t m_totalUsed;
 	};
 
 	struct BufferVK
@@ -886,7 +937,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		VkResult reset();
 		void shutdown();
 
-		VkResult alloc(VkCommandBuffer* _commandBuffer);
+		VkResult alloc(VkCommandBuffer* _outCommandBuffer);
 		void addWaitSemaphore(VkSemaphore _semaphore, VkPipelineStageFlags _waitFlags = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 		void addSignalSemaphore(VkSemaphore _semaphore);
 		void kick(bool _wait = false);
@@ -933,7 +984,6 @@ VK_DESTROY_FUNC(DescriptorSet);
 		typedef stl::vector<Resource> ResourceArray;
 		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
 		stl::vector<DeviceMemoryAllocationVK> m_recycleAllocs[BGFX_CONFIG_MAX_FRAME_LATENCY];
-
 
 	private:
 		template<typename Ty>
