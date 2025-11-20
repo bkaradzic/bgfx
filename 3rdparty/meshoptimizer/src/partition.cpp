@@ -10,6 +10,9 @@
 namespace meshopt
 {
 
+// To avoid excessive recursion for malformed inputs, we switch to bisection after some depth
+const int kMergeDepthCutoff = 40;
+
 struct ClusterAdjacency
 {
 	unsigned int* offsets;
@@ -434,7 +437,7 @@ static size_t mergePartition(unsigned int* order, size_t count, const ClusterGro
 	return m;
 }
 
-static void mergeSpatial(ClusterGroup* groups, unsigned int* order, size_t count, size_t target_partition_size, size_t max_partition_size, size_t leaf_size)
+static void mergeSpatial(ClusterGroup* groups, unsigned int* order, size_t count, size_t target_partition_size, size_t max_partition_size, size_t leaf_size, int depth)
 {
 	size_t total = 0;
 	for (size_t i = 0; i < count; ++i)
@@ -467,11 +470,13 @@ static void mergeSpatial(ClusterGroup* groups, unsigned int* order, size_t count
 	size_t middle = mergePartition(order, count, groups, axis, split);
 
 	// enforce balance for degenerate partitions
-	if (middle <= leaf_size / 2 || count - middle <= leaf_size / 2)
+	// this also ensures recursion depth is bounded on pathological inputs
+	if (middle <= leaf_size / 2 || count - middle <= leaf_size / 2 || depth >= kMergeDepthCutoff)
 		middle = count / 2;
 
-	mergeSpatial(groups, order, middle, target_partition_size, max_partition_size, leaf_size);
-	mergeSpatial(groups, order + middle, count - middle, target_partition_size, max_partition_size, leaf_size);
+	// recursion depth is logarithmic and bounded due to max depth check above
+	mergeSpatial(groups, order, middle, target_partition_size, max_partition_size, leaf_size, depth + 1);
+	mergeSpatial(groups, order + middle, count - middle, target_partition_size, max_partition_size, leaf_size, depth + 1);
 }
 
 } // namespace meshopt
@@ -597,7 +602,7 @@ size_t meshopt_partitionClusters(unsigned int* destination, const unsigned int* 
 			if (groups[i].size)
 				merge_order[merge_offset++] = unsigned(i);
 
-		mergeSpatial(groups, merge_order, merge_offset, target_partition_size, max_partition_size, /* leaf_size= */ 8);
+		mergeSpatial(groups, merge_order, merge_offset, target_partition_size, max_partition_size, /* leaf_size= */ 8, 0);
 	}
 
 	// output each remaining group
