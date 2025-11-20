@@ -2088,14 +2088,7 @@ VK_IMPORT_DEVICE
 			}
 
 			{
-				const uint32_t size = 128;
-				const uint32_t count = BGFX_CONFIG_MAX_DRAW_CALLS;
-
-				for (uint32_t ii = 0; ii < m_maxFrameLatency; ++ii)
-				{
-					BX_TRACE("Create scratch buffer %d", ii);
-					m_scratchBuffer[ii].createUniform(size, count);
-				}
+				m_uniformScratchBuffer.createUniform(2<<20, m_maxFrameLatency*2);
 
 				for (uint32_t ii = 0; ii < m_maxFrameLatency; ++ii)
 				{
@@ -2165,9 +2158,10 @@ VK_IMPORT_DEVICE
 				[[fallthrough]];
 
 			case ErrorState::DescriptorCreated:
+				m_uniformScratchBuffer.destroy();
+
 				for (uint32_t ii = 0; ii < m_maxFrameLatency; ++ii)
 				{
-					m_scratchBuffer[ii].destroy();
 					m_scratchStagingBuffer[ii].destroy();
 					vkDestroy(m_descriptorPool[ii]);
 				}
@@ -2228,10 +2222,7 @@ VK_IMPORT_DEVICE
 			m_samplerBorderColorCache.invalidate();
 			m_imageViewCache.invalidate();
 
-			for (uint32_t ii = 0; ii < m_maxFrameLatency; ++ii)
-			{
-				m_scratchBuffer[ii].destroy();
-			}
+			m_uniformScratchBuffer.destroy();
 
 			for (uint32_t ii = 0; ii < m_maxFrameLatency; ++ii)
 			{
@@ -2748,8 +2739,10 @@ VK_IMPORT_DEVICE
 				commit(*vcb);
 			}
 
-			ScratchBufferVK& scratchBuffer = m_scratchBuffer[m_cmd.m_currentFrameInFlight];
-			const uint32_t bufferOffset = scratchBuffer.write(m_vsScratch, program.m_vsh->m_size);
+			ChunkedScratchBufferVK& uniformScratchBuffer = m_uniformScratchBuffer;
+
+			ChunkedScratchBufferOffset sbo;
+			uniformScratchBuffer.write(sbo, m_vsScratch, program.m_vsh->m_size);
 
 			const TextureVK& texture = m_textures[_blitter.m_texture.idx];
 
@@ -2759,7 +2752,7 @@ VK_IMPORT_DEVICE
 			bind.m_bind[0].m_idx = _blitter.m_texture.idx;
 			bind.m_bind[0].m_samplerFlags = (uint32_t)(texture.m_flags & BGFX_SAMPLER_BITS_MASK);
 
-			const VkDescriptorSet descriptorSet = getDescriptorSet(program, bind, scratchBuffer, NULL);
+			const VkDescriptorSet descriptorSet = getDescriptorSet(program, bind, sbo.buffer, NULL);
 
 			vkCmdBindDescriptorSets(
 				  m_commandBuffer
@@ -2769,7 +2762,7 @@ VK_IMPORT_DEVICE
 				, 1
 				, &descriptorSet
 				, 1
-				, &bufferOffset
+				, sbo.offsets
 				);
 
 			const VertexBufferVK& vb  = m_vertexBuffers[_blitter.m_vb->handle.idx];
@@ -3933,7 +3926,7 @@ VK_IMPORT_DEVICE
 			return pipeline;
 		}
 
-		VkDescriptorSet getDescriptorSet(const ProgramVK& program, const RenderBind& renderBind, const ScratchBufferVK& scratchBuffer, const float _palette[][4])
+		VkDescriptorSet getDescriptorSet(const ProgramVK& _program, const RenderBind& _renderBind, VkBuffer _uniformBuffer, const float _palette[][4])
 		{
 			VkDescriptorSet descriptorSet;
 
@@ -3942,7 +3935,7 @@ VK_IMPORT_DEVICE
 			dsai.pNext              = NULL;
 			dsai.descriptorPool     = m_descriptorPool[m_cmd.m_currentFrameInFlight];
 			dsai.descriptorSetCount = 1;
-			dsai.pSetLayouts        = &program.m_descriptorSetLayout;
+			dsai.pSetLayouts        = &_program.m_descriptorSetLayout;
 
 			VK_CHECK(vkAllocateDescriptorSets(m_device, &dsai, &descriptorSet) );
 
@@ -3958,8 +3951,8 @@ VK_IMPORT_DEVICE
 
 			for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 			{
-				const Binding& bind = renderBind.m_bind[stage];
-				const BindInfo& bindInfo = program.m_bindInfo[stage];
+				const Binding& bind = _renderBind.m_bind[stage];
+				const BindInfo& bindInfo = _program.m_bindInfo[stage];
 
 				if (kInvalidHandle != bind.m_idx
 				&&  isValid(bindInfo.uniformHandle) )
@@ -3989,7 +3982,7 @@ VK_IMPORT_DEVICE
 							VkImageViewType type = texture.m_type;
 							if (UINT32_MAX != bindInfo.index)
 							{
-								type = program.m_textures[bindInfo.index].type;
+								type = _program.m_textures[bindInfo.index].type;
 							}
 							else if (type == VK_IMAGE_VIEW_TYPE_CUBE
 							     ||  type == VK_IMAGE_VIEW_TYPE_CUBE_ARRAY)
@@ -4058,7 +4051,7 @@ VK_IMPORT_DEVICE
 
 							const VkImageViewType type = UINT32_MAX == bindInfo.index
 								? texture.m_type
-								: program.m_textures[bindInfo.index].type
+								: _program.m_textures[bindInfo.index].type
 								;
 
 							BX_ASSERT(
@@ -4107,19 +4100,19 @@ VK_IMPORT_DEVICE
 				}
 			}
 
-			const uint32_t vsize = program.m_vsh->m_size;
-			const uint32_t fsize = NULL != program.m_fsh ? program.m_fsh->m_size : 0;
+			const uint32_t vsSize = _program.m_vsh->m_size;
+			const uint32_t fsSize = NULL != _program.m_fsh ? _program.m_fsh->m_size : 0;
 
-			if (vsize > 0)
+			if (0 < vsSize)
 			{
-				bufferInfo[bufferCount].buffer = scratchBuffer.m_buffer;
+				bufferInfo[bufferCount].buffer = _uniformBuffer;
 				bufferInfo[bufferCount].offset = 0;
-				bufferInfo[bufferCount].range  = vsize;
+				bufferInfo[bufferCount].range  = vsSize;
 
 				wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				wds[wdsCount].pNext            = NULL;
 				wds[wdsCount].dstSet           = descriptorSet;
-				wds[wdsCount].dstBinding       = program.m_vsh->m_uniformBinding;
+				wds[wdsCount].dstBinding       = _program.m_vsh->m_uniformBinding;
 				wds[wdsCount].dstArrayElement  = 0;
 				wds[wdsCount].descriptorCount  = 1;
 				wds[wdsCount].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
@@ -4130,16 +4123,16 @@ VK_IMPORT_DEVICE
 				++bufferCount;
 			}
 
-			if (fsize > 0)
+			if (0 < fsSize)
 			{
-				bufferInfo[bufferCount].buffer = scratchBuffer.m_buffer;
+				bufferInfo[bufferCount].buffer = _uniformBuffer;
 				bufferInfo[bufferCount].offset = 0;
-				bufferInfo[bufferCount].range  = fsize;
+				bufferInfo[bufferCount].range  = fsSize;
 
 				wds[wdsCount].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				wds[wdsCount].pNext            = NULL;
 				wds[wdsCount].dstSet           = descriptorSet;
-				wds[wdsCount].dstBinding       = program.m_fsh->m_uniformBinding;
+				wds[wdsCount].dstBinding       = _program.m_fsh->m_uniformBinding;
 				wds[wdsCount].dstArrayElement  = 0;
 				wds[wdsCount].descriptorCount  = 1;
 				wds[wdsCount].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
@@ -4599,7 +4592,7 @@ VK_IMPORT_DEVICE
 			BGFX_PROFILER_SCOPE("RendererContextVK::allocFromScratchStagingBuffer", kColorResource);
 
 			StagingBufferVK result;
-			ScratchBufferVK &scratch = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
+			StagingScratchBufferVK& scratch = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
 
 			if (_size <= BGFX_CONFIG_MAX_STAGING_SCRATCH_BUFFER_SIZE)
 			{
@@ -4671,8 +4664,8 @@ VK_IMPORT_DEVICE
 
 		MemoryLruVK m_memoryLru;
 
-		ScratchBufferVK m_scratchBuffer[BGFX_CONFIG_MAX_FRAME_LATENCY];
-		ScratchBufferVK m_scratchStagingBuffer[BGFX_CONFIG_MAX_FRAME_LATENCY];
+		ChunkedScratchBufferVK m_uniformScratchBuffer;
+		StagingScratchBufferVK m_scratchStagingBuffer[BGFX_CONFIG_MAX_FRAME_LATENCY];
 
 		uint32_t        m_maxFrameLatency;
 		CommandQueueVK  m_cmd;
@@ -4808,31 +4801,33 @@ VK_DESTROY
 		s_renderVK->release(_obj);
 	}
 
-	void MemoryLruVK::recycle(DeviceMemoryAllocationVK &_alloc)
+	void MemoryLruVK::recycle(DeviceMemoryAllocationVK& _alloc)
 	{
 		if (MAX_ENTRIES == lru.getNumHandles() )
 		{
 			// Evict LRU
 			uint16_t handle = lru.getBack();
-			DeviceMemoryAllocationVK &alloc = entries[handle];
+			DeviceMemoryAllocationVK& alloc = entries[handle];
 			totalSizeCached -= alloc.size;
 			release(alloc.mem);
 
 			// Touch slot and overwrite
 			lru.touch(handle);
 			alloc = _alloc;
-		} else
+		}
+		else
 		{
 			uint16_t handle = lru.alloc();
 			entries[handle] = _alloc;
 		}
+
 		totalSizeCached += _alloc.size;
 
 		while (totalSizeCached > BGFX_CONFIG_CACHED_DEVICE_MEMORY_ALLOCATIONS_SIZE)
 		{
 			BX_ASSERT(lru.getNumHandles() > 0, "Memory badly counted.");
 			uint16_t handle = lru.getBack();
-			DeviceMemoryAllocationVK &alloc = entries[handle];
+			DeviceMemoryAllocationVK& alloc = entries[handle];
 			totalSizeCached -= alloc.size;
 			release(alloc.mem);
 			lru.free(handle);
@@ -4844,25 +4839,33 @@ VK_DESTROY
 		BGFX_PROFILER_SCOPE("MemoryLruVK::find", kColorResource);
 		// Find best fit.
 		uint16_t slot;
+
 		{
-			int16_t bestIdx = MAX_ENTRIES;
+			int16_t  bestIdx   = MAX_ENTRIES;
 			uint32_t bestWaste = 0xffff'ffff;
+
 			slot = lru.getFront();
+
 			while (UINT16_MAX != slot)
 			{
-				DeviceMemoryAllocationVK &alloc = entries[slot];
+				DeviceMemoryAllocationVK& alloc = entries[slot];
+
 				if (alloc.memoryTypeIndex == _memoryTypeIndex)
 				{
 					// 50% waste allowed, otherwise we'll just allocate a new one.
 					// This is to prevent we trash this cache of useful allocations
 					// with a handful of tiny allocations.
-					if (alloc.size >= _size && _size * 2 >= alloc.size)
+
+					if (alloc.size >= _size
+					&&  alloc.size <= _size * 2)
 					{
-						uint32_t waste = bx::narrowCast<uint32_t>(alloc.size - _size);
+						const uint32_t waste = bx::narrowCast<uint32_t>(alloc.size - _size);
+
 						if (waste < bestWaste)
 						{
 							bestIdx = slot;
 							bestWaste = waste;
+
 							if (waste == 0)
 							{
 								break;
@@ -4870,8 +4873,10 @@ VK_DESTROY
 						}
 					}
 				}
+
 				slot = lru.getNext(slot);
 			}
+
 			slot = bestIdx;
 		}
 
@@ -4880,37 +4885,40 @@ VK_DESTROY
 			*_alloc = entries[slot];
 			lru.free(slot);
 			totalSizeCached -= _alloc->size;
+
 			return true;
-		} else {
-			return false;
 		}
+
+		return false;
 	}
 
 	void MemoryLruVK::evictAll()
 	{
 		uint16_t slot = lru.getFront();
+
 		while (slot != UINT16_MAX)
 		{
 			release(entries[slot].mem);
 			slot = lru.getNext(slot);
 		}
+
 		lru.reset();
 		totalSizeCached = 0;
 	}
 
-	void ScratchBufferVK::create(uint32_t _size, uint32_t _count, VkBufferUsageFlags usage, uint32_t _align)
+	void StagingScratchBufferVK::create(uint32_t _size, uint32_t _count, VkBufferUsageFlags usage, uint32_t _align)
 	{
 		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 		const VkDevice device = s_renderVK->m_device;
 
 		const uint32_t entrySize = bx::strideAlign(_size, _align);
-		const uint32_t totalSize = entrySize * _count;
+		const uint32_t chunkSize = entrySize * _count;
 
 		VkBufferCreateInfo bci;
 		bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		bci.pNext = NULL;
 		bci.flags = 0;
-		bci.size  = totalSize;
+		bci.size  = chunkSize;
 		bci.usage = usage;
 		bci.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
 		bci.queueFamilyIndexCount = 0;
@@ -4940,7 +4948,7 @@ VK_DESTROY
 		}
 
 		m_size = (uint32_t)mr.size;
-		m_pos  = 0;
+		m_chunkPos  = 0;
 		m_align = _align;
 
 		VK_CHECK(vkBindBufferMemory(device, m_buffer, m_deviceMem.mem, m_deviceMem.offset) );
@@ -4948,7 +4956,7 @@ VK_DESTROY
 		VK_CHECK(vkMapMemory(device, m_deviceMem.mem, m_deviceMem.offset, m_size, 0, (void**)&m_data) );
 	}
 
-	void ScratchBufferVK::createUniform(uint32_t _size, uint32_t _count)
+	void StagingScratchBufferVK::createUniform(uint32_t _size, uint32_t _count)
 	{
 		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.properties.limits;
 		const uint32_t align = uint32_t(deviceLimits.minUniformBufferOffsetAlignment);
@@ -4956,7 +4964,7 @@ VK_DESTROY
 		create(_size, _count, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, align);
 	}
 
-	void ScratchBufferVK::createStaging(uint32_t _size)
+	void StagingScratchBufferVK::createStaging(uint32_t _size)
 	{
 		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.properties.limits;
 		const uint32_t align = uint32_t(deviceLimits.optimalBufferCopyOffsetAlignment);
@@ -4964,7 +4972,7 @@ VK_DESTROY
 		create(_size, 1, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, align);
 	}
 
-	void ScratchBufferVK::destroy()
+	void StagingScratchBufferVK::destroy()
 	{
 		vkUnmapMemory(s_renderVK->m_device, m_deviceMem.mem);
 
@@ -4972,42 +4980,40 @@ VK_DESTROY
 		s_renderVK->recycleMemory(m_deviceMem);
 	}
 
-
-	uint32_t ScratchBufferVK::alloc(uint32_t _size, uint32_t _minAlign)
+	uint32_t StagingScratchBufferVK::alloc(uint32_t _size, uint32_t _minAlign)
 	{
 		const uint32_t align = bx::uint32_lcm(m_align, _minAlign);
-		const uint32_t dstOffset = bx::strideAlign(m_pos, align);
+		const uint32_t offset = bx::strideAlign(m_chunkPos, align);
 
-		if (dstOffset + _size <= m_size)
+		if (offset + _size <= m_size)
 		{
-			m_pos = dstOffset + _size;
-			return dstOffset;
+			m_chunkPos = offset + _size;
+			return offset;
 		}
 
 		return UINT32_MAX;
 	}
 
-	uint32_t ScratchBufferVK::write(const void* _data, uint32_t _size, uint32_t _minAlign)
+	uint32_t StagingScratchBufferVK::write(const void* _data, uint32_t _size, uint32_t _minAlign)
 	{
-		uint32_t dstOffset = alloc(_size, _minAlign);
-		BX_ASSERT(dstOffset != UINT32_MAX, "Not enough space on ScratchBuffer left to allocate %u bytes with alignment %u.", _size, _minAlign);
+		uint32_t offset = alloc(_size, _minAlign);
+		BX_ASSERT(offset != UINT32_MAX, "Not enough space on ScratchBuffer left to allocate %u bytes with alignment %u.", _size, _minAlign);
 
 		if (_size > 0)
 		{
-			bx::memCopy(&m_data[dstOffset], _data, _size);
+			bx::memCopy(&m_data[offset], _data, _size);
 		}
 
-		return dstOffset;
+		return offset;
 	}
 
-
-	void ScratchBufferVK::flush(bool _reset)
+	void StagingScratchBufferVK::flush(bool _reset)
 	{
 		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.properties.limits;
 		VkDevice device = s_renderVK->m_device;
 
 		const uint32_t align = uint32_t(deviceLimits.nonCoherentAtomSize);
-		const uint32_t size  = bx::min(bx::strideAlign(m_pos, align), m_size);
+		const uint32_t size  = bx::min(bx::strideAlign(m_chunkPos, align), m_size);
 
 		VkMappedMemoryRange range;
 		range.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
@@ -5019,8 +5025,221 @@ VK_DESTROY
 
 		if (_reset)
 		{
-			m_pos = 0;
+			m_chunkPos = 0;
 		}
+	}
+
+	void ChunkedScratchBufferVK::create(uint32_t _chunkSize, uint32_t _numChunks, VkBufferUsageFlags usage, uint32_t _align)
+	{
+		const uint32_t chunkSize = bx::alignUp(_chunkSize, 1<<20);
+
+		m_chunkPos  = 0;
+		m_chunkSize = chunkSize;
+		m_align     = _align;
+		m_usage     = usage;
+
+		m_chunkControl.m_size = 0;
+		m_chunkControl.reset();
+
+		bx::memSet(m_consume, 0, sizeof(m_consume) );
+		m_totalUsed = 0;
+
+		for (uint32_t ii = 0; ii < _numChunks; ++ii)
+		{
+			addChunk();
+		}
+	}
+
+	void ChunkedScratchBufferVK::createUniform(uint32_t _chunkSize, uint32_t _numChunks)
+	{
+		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.properties.limits;
+		const uint32_t align = uint32_t(deviceLimits.minUniformBufferOffsetAlignment);
+
+		create(_chunkSize, _numChunks, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, align);
+	}
+
+	void ChunkedScratchBufferVK::destroy()
+	{
+		for (Chunk& sbc : m_chunks)
+		{
+			vkUnmapMemory(s_renderVK->m_device, sbc.deviceMem.mem);
+
+			s_renderVK->release(sbc.buffer);
+			s_renderVK->recycleMemory(sbc.deviceMem);
+		}
+	}
+
+	void ChunkedScratchBufferVK::addChunk(uint32_t _at)
+	{
+		const VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
+		const VkDevice device = s_renderVK->m_device;
+
+		Chunk sbc;
+
+		VkBufferCreateInfo bci =
+		{
+			.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+			.pNext = NULL,
+			.flags = 0,
+			.size  = m_chunkSize,
+			.usage = m_usage,
+			.sharingMode           = VK_SHARING_MODE_EXCLUSIVE,
+			.queueFamilyIndexCount = 0,
+			.pQueueFamilyIndices   = NULL,
+		};
+
+		VK_CHECK(vkCreateBuffer(
+			  device
+			, &bci
+			, allocatorCb
+			, &sbc.buffer
+			) );
+
+		VkMemoryRequirements mr;
+		vkGetBufferMemoryRequirements(
+			  device
+			, sbc.buffer
+			, &mr
+			);
+
+		VkMemoryPropertyFlags flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		VkResult result = s_renderVK->allocateMemory(&mr, flags, &sbc.deviceMem, true);
+
+		if (VK_SUCCESS != result)
+		{
+			flags &= ~VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+			VK_CHECK(s_renderVK->allocateMemory(&mr, flags, &sbc.deviceMem, true) );
+		}
+
+		m_chunkSize = bx::narrowCast<uint32_t>(mr.size);
+
+		VK_CHECK(vkBindBufferMemory(device, sbc.buffer, sbc.deviceMem.mem, sbc.deviceMem.offset) );
+
+		VK_CHECK(vkMapMemory(device, sbc.deviceMem.mem, sbc.deviceMem.offset, m_chunkSize, 0, (void**)&sbc.data) );
+
+		const uint32_t lastChunk = bx::max(uint32_t(m_chunks.size()-1), 1);
+		const uint32_t at = UINT32_MAX == _at ? lastChunk : _at;
+		const uint32_t chunkIndex = at % bx::max(m_chunks.size(), 1);
+
+		m_chunkControl.resize(m_chunkSize);
+
+		m_chunks.insert(&m_chunks[chunkIndex], sbc);
+	}
+
+	ChunkedScratchBufferAlloc ChunkedScratchBufferVK::alloc(uint32_t _size)
+	{
+		BX_ASSERT(_size < m_chunkSize, "Size can't be larger than chunk size (size: %d, chunk size: %d)!", _size, m_chunkSize);
+
+		uint32_t offset     = m_chunkPos;
+		uint32_t nextOffset = offset + _size;
+		uint32_t chunkIdx   = m_chunkControl.m_write/m_chunkSize;
+
+		if (nextOffset >= m_chunkSize)
+		{
+			const uint32_t total = m_chunkSize - m_chunkPos + _size;
+			uint32_t reserved    = m_chunkControl.reserve(total, true);
+
+			if (total != reserved)
+			{
+				addChunk(chunkIdx + 1);
+				reserved = m_chunkControl.reserve(total, true);
+				BX_ASSERT(total == reserved, "Failed to reserve chunk memory after adding chunk.");
+			}
+
+			m_chunkPos = 0;
+			offset     = 0;
+			nextOffset = _size;
+			chunkIdx   = m_chunkControl.m_write/m_chunkSize;
+		}
+		else
+		{
+			const uint32_t size = m_chunkControl.reserve(_size, true);
+			BX_ASSERT(size == _size, "Failed to reserve chunk memory.");
+			BX_UNUSED(size);
+		}
+
+		m_chunkPos = nextOffset;
+
+		return { .offset = offset, .chunkIdx = chunkIdx };
+	}
+
+	void ChunkedScratchBufferVK::write(ChunkedScratchBufferOffset& _outSbo, const void* _vsData, uint32_t _vsSize, const void* _fsData, uint32_t _fsSize)
+	{
+		const uint32_t vsSize = bx::strideAlign(_vsSize, m_align);
+		const uint32_t fsSize = bx::strideAlign(_fsSize, m_align);
+		const uint32_t size   = vsSize + fsSize;
+
+		const ChunkedScratchBufferAlloc sba = alloc(size);
+
+		const uint32_t offset0 = sba.offset;
+		const uint32_t offset1 = offset0 + vsSize;
+
+		const Chunk& sbc = m_chunks[sba.chunkIdx];
+
+		_outSbo.buffer = sbc.buffer;
+		_outSbo.offsets[0] = offset0;
+		_outSbo.offsets[1] = offset1;
+
+		bx::memCopy(&sbc.data[offset0], _vsData, _vsSize);
+		bx::memCopy(&sbc.data[offset1], _fsData, _fsSize);
+	}
+
+	void ChunkedScratchBufferVK::begin()
+	{
+		BX_ASSERT(0 == m_chunkPos, "");
+		const uint32_t numConsumed = m_consume[s_renderVK->m_cmd.m_currentFrameInFlight];
+		m_chunkControl.consume(numConsumed);
+	}
+
+	void ChunkedScratchBufferVK::end()
+	{
+		uint32_t numFlush = m_chunkControl.getNumReserved();
+
+		if (0 != m_chunkPos)
+		{
+retry:
+			const uint32_t remainder = m_chunkSize - m_chunkPos;
+			const uint32_t rem = m_chunkControl.reserve(remainder, true);
+
+			if (rem != remainder)
+			{
+				const uint32_t chunkIdx = m_chunkControl.m_write/m_chunkSize;
+				addChunk(chunkIdx + 1);
+				goto retry;
+			}
+
+			m_chunkPos = 0;
+		}
+
+		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.properties.limits;
+		const uint32_t align = uint32_t(deviceLimits.nonCoherentAtomSize);
+
+		VkDevice device = s_renderVK->m_device;
+
+		const uint32_t numReserved = m_chunkControl.getNumReserved();
+		BX_ASSERT(0 == numReserved % m_chunkSize, "Number of reserved must always be aligned to chunk size!");
+
+		const uint32_t first = m_chunkControl.m_current / m_chunkSize;
+
+		for (uint32_t ii = first, end = numReserved / m_chunkSize + first; ii < end; ++ii)
+		{
+			const Chunk& chunk = m_chunks[ii % m_chunks.size()];
+
+			VkMappedMemoryRange range;
+			range.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+			range.pNext  = NULL;
+			range.memory = chunk.deviceMem.mem;
+			range.offset = chunk.deviceMem.offset;
+			range.size   = bx::alignUp(bx::min(numFlush, m_chunkSize), align);
+			VK_CHECK(vkFlushMappedMemoryRanges(device, 1, &range) );
+
+			m_chunkControl.commit(m_chunkSize);
+			numFlush -= m_chunkSize;
+		}
+
+		m_consume[s_renderVK->m_cmd.m_currentFrameInFlight] = numReserved;
+
+		m_totalUsed = m_chunkControl.getNumUsed();
 	}
 
 	void BufferVK::create(VkCommandBuffer _commandBuffer, uint32_t _size, void* _data, uint16_t _flags, bool _vertex, uint32_t _stride)
@@ -5774,7 +5993,7 @@ VK_DESTROY
 
 	bool TimerQueryVK::update()
 	{
-		if (0 != m_control.available() )
+		if (0 != m_control.getNumUsed() )
 		{
 			uint32_t idx = m_control.m_read;
 			Query& query = m_query[idx];
@@ -5891,7 +6110,7 @@ VK_DESTROY
 	{
 		BGFX_PROFILER_SCOPE("OcclusionQueryVK::flush", kColorFrame);
 
-		if (0 < m_control.available() )
+		if (0 < m_control.getNumUsed() )
 		{
 			VkCommandBuffer commandBuffer = s_renderVK->m_commandBuffer;
 
@@ -5899,7 +6118,7 @@ VK_DESTROY
 
 			// need to copy each result individually because VK_QUERY_RESULT_WAIT_BIT causes
 			// vkWaitForFences to hang indefinitely if we copy all results (including unavailable ones)
-			for (uint32_t ii = 0, num = m_control.available(); ii < num; ++ii)
+			for (uint32_t ii = 0, num = m_control.getNumUsed(); ii < num; ++ii)
 			{
 				const OcclusionQueryHandle& handle = m_handle[(m_control.m_read + ii) % size];
 				if (isValid(handle) )
@@ -5932,7 +6151,7 @@ VK_DESTROY
 
 	void OcclusionQueryVK::resolve(Frame* _render)
 	{
-		while (0 != m_control.available() )
+		while (0 != m_control.getNumUsed() )
 		{
 			OcclusionQueryHandle handle = m_handle[m_control.m_read];
 			if (isValid(handle) )
@@ -5947,7 +6166,7 @@ VK_DESTROY
 	{
 		const uint32_t size = m_control.m_size;
 
-		for (uint32_t ii = 0, num = m_control.available(); ii < num; ++ii)
+		for (uint32_t ii = 0, num = m_control.getNumUsed(); ii < num; ++ii)
 		{
 			OcclusionQueryHandle& handle = m_handle[(m_control.m_read + ii) % size];
 			if (handle.idx == _handle.idx)
@@ -8428,7 +8647,7 @@ VK_DESTROY
 		}
 	}
 
-	VkResult CommandQueueVK::alloc(VkCommandBuffer* _commandBuffer)
+	VkResult CommandQueueVK::alloc(VkCommandBuffer* _outCommandBuffer)
 	{
 		BGFX_PROFILER_SCOPE("CommandQueueVK::alloc", kColorResource);
 
@@ -8477,9 +8696,9 @@ VK_DESTROY
 			m_currentFence = commandList.m_fence;
 		}
 
-		if (NULL != _commandBuffer)
+		if (NULL != _outCommandBuffer)
 		{
-			*_commandBuffer = m_activeCommandBuffer;
+			*_outCommandBuffer = m_activeCommandBuffer;
 		}
 
 		return result;
@@ -8594,7 +8813,7 @@ VK_DESTROY
 
 		m_consumeIndex = (m_consumeIndex + 1) % s_renderVK->m_maxFrameLatency;
 
-		for (DeviceMemoryAllocationVK &alloc : m_recycleAllocs[m_consumeIndex])
+		for (DeviceMemoryAllocationVK& alloc : m_recycleAllocs[m_consumeIndex])
 		{
 			s_renderVK->m_memoryLru.recycle(alloc);
 		}
@@ -8624,7 +8843,6 @@ VK_DESTROY
 				break;
 			}
 		}
-
 
 		m_release[m_consumeIndex].clear();
 	}
@@ -8853,8 +9071,10 @@ VK_DESTROY
 		VkDescriptorPool& descriptorPool = m_descriptorPool[m_cmd.m_currentFrameInFlight];
 		vkResetDescriptorPool(m_device, descriptorPool, 0);
 
-		ScratchBufferVK& scratchBuffer = m_scratchBuffer[m_cmd.m_currentFrameInFlight];
-		ScratchBufferVK& scratchStagingBuffer = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
+		ChunkedScratchBufferVK& uniformScratchBuffer = m_uniformScratchBuffer;
+		uniformScratchBuffer.begin();
+
+		StagingScratchBufferVK& stagingScratchBuffer = m_scratchStagingBuffer[m_cmd.m_currentFrameInFlight];
 
 		setMemoryBarrier(
 			  m_commandBuffer
@@ -9205,17 +9425,18 @@ VK_DESTROY
 
 					if (VK_NULL_HANDLE != program.m_descriptorSetLayout)
 					{
-						const uint32_t vsize = program.m_vsh->m_size;
-						uint32_t numOffset = 0;
-						uint32_t offset = 0;
+						ChunkedScratchBufferOffset sbo;
+
+						const uint32_t vsSize = program.m_vsh->m_size;
+						uint32_t numOffsets = 0;
 
 						if (constantsChanged
 						||  hasPredefined)
 						{
-							if (vsize > 0)
+							if (vsSize > 0)
 							{
-								offset = scratchBuffer.write(m_vsScratch, vsize);
-								++numOffset;
+								uniformScratchBuffer.write(sbo, m_vsScratch, vsSize);
+								numOffsets = 1;
 							}
 						}
 
@@ -9223,7 +9444,8 @@ VK_DESTROY
 						hash.begin();
 						hash.add(program.m_descriptorSetLayout);
 						hash.add(renderBind.m_bind, sizeof(renderBind.m_bind) );
-						hash.add(vsize);
+						hash.add(sbo.buffer);
+						hash.add(vsSize);
 						hash.add(0);
 						const uint32_t bindHash = hash.end();
 
@@ -9234,7 +9456,7 @@ VK_DESTROY
 							currentDescriptorSet = getDescriptorSet(
 								  program
 								, renderBind
-								, scratchBuffer
+								, sbo.buffer
 								, _render->m_colorPalette
 							);
 
@@ -9248,8 +9470,8 @@ VK_DESTROY
 							, 0
 							, 1
 							, &currentDescriptorSet
-							, numOffset
-							, &offset
+							, numOffsets
+							, sbo.offsets
 							);
 					}
 
@@ -9492,31 +9714,28 @@ VK_DESTROY
 
 					if (VK_NULL_HANDLE != program.m_descriptorSetLayout)
 					{
-						const uint32_t vsize = program.m_vsh->m_size;
-						const uint32_t fsize = NULL != program.m_fsh ? program.m_fsh->m_size : 0;
-						uint32_t numOffset = 0;
-						uint32_t offsets[2] = { 0, 0 };
+						ChunkedScratchBufferOffset sbo;
 
-						if (constantsChanged
-						||  hasPredefined)
+						const uint32_t vsSize = program.m_vsh->m_size;
+						const uint32_t fsSize = NULL != program.m_fsh ? program.m_fsh->m_size : 0;
+						uint32_t numOffsets = 0;
+
+						if (true
+						&& (constantsChanged || hasPredefined)
+						&& (0 < vsSize || 0 < fsSize)
+						   )
 						{
-							if (vsize > 0)
-							{
-								offsets[numOffset++] = scratchBuffer.write(m_vsScratch, vsize);
-							}
-
-							if (fsize > 0)
-							{
-								offsets[numOffset++] = scratchBuffer.write(m_fsScratch, fsize);
-							}
+							uniformScratchBuffer.write(sbo, m_vsScratch, vsSize, m_fsScratch, fsSize);
+							numOffsets = (0 < vsSize) + (0 < fsSize);
 						}
 
 						bx::HashMurmur2A hash;
 						hash.begin();
 						hash.add(program.m_descriptorSetLayout);
 						hash.add(renderBind.m_bind, sizeof(renderBind.m_bind) );
-						hash.add(vsize);
-						hash.add(fsize);
+						hash.add(sbo.buffer);
+						hash.add(vsSize);
+						hash.add(fsSize);
 						const uint32_t bindHash = hash.end();
 
 						if (currentBindHash != bindHash)
@@ -9526,9 +9745,9 @@ VK_DESTROY
 							currentDescriptorSet = getDescriptorSet(
 								  program
 								, renderBind
-								, scratchBuffer
+								, sbo.buffer
 								, _render->m_colorPalette
-							);
+								);
 
 							descriptorSetCount++;
 						}
@@ -9540,8 +9759,8 @@ VK_DESTROY
 							, 0
 							, 1
 							, &currentDescriptorSet
-							, numOffset
-							, offsets
+							, numOffsets
+							, sbo.offsets
 							);
 					}
 
@@ -9754,7 +9973,7 @@ VK_DESTROY
 			maxGpuLatency = bx::uint32_imax(maxGpuLatency, result.m_pending-1);
 		}
 
-		maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.available()-1);
+		maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.getNumUsed()-1);
 
 		const int64_t timerFreq = bx::getHPFrequency();
 
@@ -9910,7 +10129,7 @@ VK_DESTROY
 				tvm.printf(10, pos++, 0x8b, "     DIB size: %7d ", _render->m_iboffset);
 
 				pos++;
-				tvm.printf(10, pos++, 0x8b, " Occlusion queries: %3d ", m_occlusionQuery.m_control.available() );
+				tvm.printf(10, pos++, 0x8b, " Occlusion queries: %3d ", m_occlusionQuery.m_control.getNumUsed() );
 
 				pos++;
 				tvm.printf(10, pos++, 0x8b, " State cache:             ");
@@ -9922,6 +10141,17 @@ VK_DESTROY
 					);
 				pos++;
 
+				{
+					char strUsed[64];
+					bx::prettify(strUsed, sizeof(strUsed), m_uniformScratchBuffer.m_totalUsed);
+
+					char strTotal[64];
+					bx::prettify(strTotal, sizeof(strTotal), m_uniformScratchBuffer.m_chunkControl.m_size);
+
+					tvm.printf(10, pos++, 0x8b, "Uniform scratch size: %s / %s.", strUsed, strTotal);
+				}
+
+				pos++;
 				double captureMs = double(captureElapsed)*toMs;
 				tvm.printf(10, pos++, 0x8b, "     Capture: %7.4f [ms] ", captureMs);
 
@@ -9952,14 +10182,11 @@ VK_DESTROY
 
 		m_presentElapsed = 0;
 
-		{
-			BGFX_PROFILER_SCOPE("scratchBuffer::flush", kColorResource);
-			scratchBuffer.flush();
-		}
+		uniformScratchBuffer.end();
 
 		{
-			BGFX_PROFILER_SCOPE("scratchStagingBuffer::flush", kColorResource);
-			scratchStagingBuffer.flush();
+			BGFX_PROFILER_SCOPE("stagingScratchBuffer::flush", kColorResource);
+			stagingScratchBuffer.flush();
 		}
 
 		for (uint16_t ii = 0; ii < m_numWindows; ++ii)

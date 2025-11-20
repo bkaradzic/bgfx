@@ -2192,6 +2192,7 @@ namespace bgfx
 				, m_offset
 				, kMaxOffset
 				);
+			BX_UNUSED(kMaxSize, kMaxOffset);
 
 			const KeyT view   = (KeyT(m_view)      << kViewShift)   & kViewMask;
 			const KeyT handle = (KeyT(m_handle)    << kHandleShift) & kHandleMask;
@@ -2694,6 +2695,7 @@ namespace bgfx
 					, "Setting uniform for draw call, but uniform frequency is different (frequency: %d)!"
 					, uniform.m_freq
 					);
+				BX_UNUSED(uniform);
 			}
 
 			UniformBuffer::update(&m_frame->m_uniformBuffer[m_uniformIdx]);
@@ -3305,6 +3307,7 @@ namespace bgfx
 				, "Truncated uniform update. %d (max: %d)"
 				, _num, uniform.m_num
 				);
+			BX_UNUSED(freq);
 
 			UniformCacheKey key =
 			{
