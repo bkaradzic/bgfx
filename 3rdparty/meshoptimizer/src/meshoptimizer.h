@@ -360,13 +360,13 @@ MESHOPTIMIZER_API int meshopt_decodeVertexVersion(const unsigned char* buffer, s
  * meshopt_decodeFilterExp decodes exponential encoding of floating-point data with 8-bit exponent and 24-bit integer mantissa as 2^E*M.
  * Each 32-bit component is decoded in isolation; stride must be divisible by 4.
  *
- * Experimental: meshopt_decodeFilterColor decodes YCoCg (+A) color encoding where RGB is converted to YCoCg space with variable bit quantization.
+ * meshopt_decodeFilterColor decodes YCoCg (+A) color encoding where RGB is converted to YCoCg space with variable bit quantization.
  * Each component is stored as an 8-bit or 16-bit normalized integer; stride must be equal to 4 or 8.
  */
 MESHOPTIMIZER_API void meshopt_decodeFilterOct(void* buffer, size_t count, size_t stride);
 MESHOPTIMIZER_API void meshopt_decodeFilterQuat(void* buffer, size_t count, size_t stride);
 MESHOPTIMIZER_API void meshopt_decodeFilterExp(void* buffer, size_t count, size_t stride);
-MESHOPTIMIZER_EXPERIMENTAL void meshopt_decodeFilterColor(void* buffer, size_t count, size_t stride);
+MESHOPTIMIZER_API void meshopt_decodeFilterColor(void* buffer, size_t count, size_t stride);
 
 /**
  * Vertex buffer filter encoders
@@ -384,7 +384,7 @@ MESHOPTIMIZER_EXPERIMENTAL void meshopt_decodeFilterColor(void* buffer, size_t c
  * Exponent can be shared between all components of a given vector as defined by stride or all values of a given component; stride must be divisible by 4.
  * Input data must contain stride/4 floats for every vector (count*stride/4 total).
  *
- * Experimental: meshopt_encodeFilterColor encodes RGBA color data by converting RGB to YCoCg color space with variable bit quantization.
+ * meshopt_encodeFilterColor encodes RGBA color data by converting RGB to YCoCg color space with variable bit quantization.
  * Each component is stored as an 8-bit or 16-bit integer; stride must be equal to 4 or 8.
  * Input data must contain 4 floats for every color (count*4 total).
  */
@@ -403,7 +403,7 @@ enum meshopt_EncodeExpMode
 MESHOPTIMIZER_API void meshopt_encodeFilterOct(void* destination, size_t count, size_t stride, int bits, const float* data);
 MESHOPTIMIZER_API void meshopt_encodeFilterQuat(void* destination, size_t count, size_t stride, int bits, const float* data);
 MESHOPTIMIZER_API void meshopt_encodeFilterExp(void* destination, size_t count, size_t stride, int bits, const float* data, enum meshopt_EncodeExpMode mode);
-MESHOPTIMIZER_EXPERIMENTAL void meshopt_encodeFilterColor(void* destination, size_t count, size_t stride, int bits, const float* data);
+MESHOPTIMIZER_API void meshopt_encodeFilterColor(void* destination, size_t count, size_t stride, int bits, const float* data);
 
 /**
  * Simplification options
@@ -478,7 +478,7 @@ MESHOPTIMIZER_API size_t meshopt_simplify(unsigned int* destination, const unsig
 MESHOPTIMIZER_API size_t meshopt_simplifyWithAttributes(unsigned int* destination, const unsigned int* indices, size_t index_count, const float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, const float* vertex_attributes, size_t vertex_attributes_stride, const float* attribute_weights, size_t attribute_count, const unsigned char* vertex_lock, size_t target_index_count, float target_error, unsigned int options, float* result_error);
 
 /**
- * Experimental: Mesh simplifier with position/attribute update
+ * Mesh simplifier with position/attribute update
  * Reduces the number of triangles in the mesh, attempting to preserve mesh appearance as much as possible.
  * Similar to meshopt_simplifyWithAttributes, but destructively updates positions and attribute values for optimal appearance.
  * The algorithm tries to preserve mesh topology and can stop short of the target goal based on topology constraints or target error.
@@ -498,7 +498,7 @@ MESHOPTIMIZER_API size_t meshopt_simplifyWithAttributes(unsigned int* destinatio
  * options must be a bitmask composed of meshopt_SimplifyX options; 0 is a safe default
  * result_error can be NULL; when it's not NULL, it will contain the resulting (relative) error after simplification
  */
-MESHOPTIMIZER_EXPERIMENTAL size_t meshopt_simplifyWithUpdate(unsigned int* indices, size_t index_count, float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, float* vertex_attributes, size_t vertex_attributes_stride, const float* attribute_weights, size_t attribute_count, const unsigned char* vertex_lock, size_t target_index_count, float target_error, unsigned int options, float* result_error);
+MESHOPTIMIZER_API size_t meshopt_simplifyWithUpdate(unsigned int* indices, size_t index_count, float* vertex_positions, size_t vertex_count, size_t vertex_positions_stride, float* vertex_attributes, size_t vertex_attributes_stride, const float* attribute_weights, size_t attribute_count, const unsigned char* vertex_lock, size_t target_index_count, float target_error, unsigned int options, float* result_error);
 
 /**
  * Mesh simplifier (sloppy)
@@ -699,10 +699,9 @@ MESHOPTIMIZER_API size_t meshopt_buildMeshletsSpatial(struct meshopt_Meshlet* me
 
 /**
  * Meshlet optimizer
- * Reorders meshlet vertices and triangles to maximize locality to improve rasterizer throughput
+ * Reorders meshlet vertices and triangles to maximize locality which can improve rasterizer throughput or ray tracing performance when using fast-build modes.
  *
- * meshlet_triangles and meshlet_vertices must refer to meshlet triangle and vertex index data; when buildMeshlets* is used, these
- * need to be computed from meshlet's vertex_offset and triangle_offset
+ * meshlet_triangles and meshlet_vertices must refer to meshlet data; when buildMeshlets* is used, these need to be computed from meshlet's vertex_offset and triangle_offset
  * triangle_count and vertex_count must not exceed implementation limits (vertex_count <= 256, triangle_count <= 512)
  */
 MESHOPTIMIZER_API void meshopt_optimizeMeshlet(unsigned int* meshlet_vertices, unsigned char* meshlet_triangles, size_t triangle_count, size_t vertex_count);
