@@ -135,6 +135,7 @@ std::unique_ptr<Type> Type::Clone() const {
     DeclareKindCase(CooperativeVectorNV);
     DeclareKindCase(RayQueryKHR);
     DeclareKindCase(HitObjectNV);
+    DeclareKindCase(HitObjectEXT);
     DeclareKindCase(TensorARM);
     DeclareKindCase(GraphARM);
 #undef DeclareKindCase
@@ -187,6 +188,7 @@ bool Type::operator==(const Type& other) const {
     DeclareKindCase(CooperativeVectorNV);
     DeclareKindCase(RayQueryKHR);
     DeclareKindCase(HitObjectNV);
+    DeclareKindCase(HitObjectEXT);
     DeclareKindCase(TensorLayoutNV);
     DeclareKindCase(TensorViewNV);
     DeclareKindCase(TensorARM);
@@ -249,6 +251,7 @@ size_t Type::ComputeHashValue(size_t hash, SeenTypes* seen) const {
     DeclareKindCase(CooperativeVectorNV);
     DeclareKindCase(RayQueryKHR);
     DeclareKindCase(HitObjectNV);
+    DeclareKindCase(HitObjectEXT);
     DeclareKindCase(TensorLayoutNV);
     DeclareKindCase(TensorViewNV);
     DeclareKindCase(TensorARM);

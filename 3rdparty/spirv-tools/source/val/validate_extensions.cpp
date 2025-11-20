@@ -13,6 +13,7 @@
 // limitations under the License.
 
 // Validates correctness of extension SPIR-V instructions.
+#include <algorithm>
 #include <cstdlib>
 #include <sstream>
 #include <string>
@@ -1087,6 +1088,7 @@ spv_result_t ValidateExtension(ValidationState_t& _, const Instruction* inst) {
             ExtensionToString(kSPV_KHR_workgroup_memory_explicit_layout) ||
         extension == ExtensionToString(kSPV_EXT_mesh_shader) ||
         extension == ExtensionToString(kSPV_NV_shader_invocation_reorder) ||
+        extension == ExtensionToString(kSPV_EXT_shader_invocation_reorder) ||
         extension ==
             ExtensionToString(kSPV_NV_cluster_acceleration_structure) ||
         extension == ExtensionToString(kSPV_NV_linear_swept_spheres) ||
@@ -3753,12 +3755,26 @@ spv_result_t ValidateExtInstDebugInfo100(ValidationState_t& _,
                 },
                 inst, 12)) {
           auto* operand = _.FindDef(inst->word(12));
-          if (operand->opcode() != spv::Op::OpVariable &&
-              operand->opcode() != spv::Op::OpConstant) {
+          std::initializer_list<spv::Op> allowed_opcodes = {
+              spv::Op::OpVariable,
+              spv::Op::OpConstantTrue,
+              spv::Op::OpConstantFalse,
+              spv::Op::OpConstant,
+              spv::Op::OpConstantComposite,
+              spv::Op::OpConstantSampler,
+              spv::Op::OpConstantNull,
+              spv::Op::OpSpecConstantTrue,
+              spv::Op::OpSpecConstantFalse,
+              spv::Op::OpSpecConstant,
+              spv::Op::OpSpecConstantComposite,
+              spv::Op::OpSpecConstantOp};
+          if (std::find(allowed_opcodes.begin(), allowed_opcodes.end(),
+                        operand->opcode()) == allowed_opcodes.end()) {
             return _.diag(SPV_ERROR_INVALID_DATA, inst)
                    << GetExtInstName(_, inst) << ": "
                    << "expected operand Variable must be a result id of "
-                      "OpVariable or OpConstant or DebugInfoNone";
+                      "OpVariable, OpConstant variant, OpSpecConstant variant "
+                      "or DebugInfoNone";
           }
         }
         if (num_words == 15) {

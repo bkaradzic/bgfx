@@ -220,6 +220,9 @@ spv_result_t RayTracingPass(ValidationState_t& _, const Instruction* inst);
 /// Validates correctness of shader execution reorder instructions.
 spv_result_t RayReorderNVPass(ValidationState_t& _, const Instruction* inst);
 
+/// Validates correctness of shader execution reorder EXT instructions.
+spv_result_t RayReorderEXTPass(ValidationState_t& _, const Instruction* inst);
+
 /// Validates correctness of mesh shading instructions.
 spv_result_t MeshShadingPass(ValidationState_t& _, const Instruction* inst);
 
@@ -258,6 +261,9 @@ spv_result_t ValidateSmallTypeUses(ValidationState_t& _,
 /// functions and not used in any other image functions.
 spv_result_t ValidateQCOMImageProcessingTextureUsages(ValidationState_t& _,
                                                       const Instruction* inst);
+
+/// Validates logical pointer restrictions.
+spv_result_t ValidateLogicalPointers(ValidationState_t& _);
 
 /// @brief Validate the ID's within a SPIR-V binary
 ///

@@ -28,6 +28,7 @@
 #include "source/opt/dominator_analysis.h"
 #include "source/opt/module.h"
 #include "source/opt/tree_iterator.h"
+#include "source/util/status.h"
 
 namespace spvtools {
 namespace opt {
@@ -426,7 +427,7 @@ class LoopDescriptor {
   using const_pre_iterator = TreeDFIterator<const Loop>;
 
   // The status of processing a module.
-  enum class Status { kSuccessWithChange, kSuccessWithoutChange, kFailure };
+  using Status = utils::Status;
 
   // Creates a loop object for all loops found in |f|.
   LoopDescriptor(IRContext* context, const Function* f);

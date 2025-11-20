@@ -938,6 +938,11 @@ bool LoopUnrollerUtilsImpl::AssignNewResultIds(BasicBlock* basic_block) {
     inst.SetResultId(new_id);
     def_use_mgr->AnalyzeInstDef(&inst);
 
+    // All decorations that can apply to an instruction in a function body
+    // modify the behaviour of the instruction, and should be on the
+    // new instruction to keep the same results.
+    context_->get_decoration_mgr()->CloneDecorations(old_id, new_id);
+
     // Save the mapping of old_id -> new_id.
     state_.new_inst[old_id] = inst.result_id();
     // Check if this instruction is the induction variable.

@@ -194,7 +194,7 @@ std::vector<uint32_t> GetWordsFromNumericScalarOrVectorConstant(
       uint32_t compacted_word = 0;
       for (int32_t i = static_cast<int32_t>(words.size()) - 1; i >= 0; --i) {
         compacted_word <<= 8;
-        compacted_word |= words[i];
+        compacted_word |= (words[i] & 0xFF);
       }
       return {compacted_word};
     } else if (ElementWidth(c->type()) == 16) {
@@ -205,7 +205,7 @@ std::vector<uint32_t> GetWordsFromNumericScalarOrVectorConstant(
       for (uint32_t i = 0; i < words.size(); i += 2) {
         uint32_t word1 = words[i];
         uint32_t word2 = (i + 1 < words.size()) ? words[i + 1] : 0;
-        uint32_t compacted_word = (word2 << 16) | word1;
+        uint32_t compacted_word = (word2 << 16) | (word1 & 0xFFFF);
         compacted_words.push_back(compacted_word);
       }
       return compacted_words;
@@ -2819,6 +2819,230 @@ FoldingRule RedundantSUMod() {
   };
 }
 
+// Utility function for applying |callback| to |input1| and |input2|.
+// If they are vectors it applies element wise.
+// The constants |input1| and |input2| must be integers or a vector of integers.
+template <typename Callback>
+void ForEachIntegerConstantPair(analysis::ConstantManager* const_mgr,
+                                const analysis::Constant* input1,
+                                const analysis::Constant* input2,
+                                Callback&& callback) {
+  assert(input1 && input2);
+
+  auto Dispatch = [&callback](const analysis::Constant* lhs,
+                              const analysis::Constant* rhs) {
+    assert(lhs->type()->AsInteger());
+    const analysis::Integer* type = lhs->type()->AsInteger();
+    uint32_t width = type->AsInteger()->width();
+    assert(width == 32 || width == 64);
+    if (width == 32) {
+      callback(lhs->GetU32(), rhs->GetU32());
+    } else {
+      callback(lhs->GetU64(), rhs->GetU64());
+    }
+  };
+
+  const analysis::Type* type = input1->type();
+  if (const analysis::Vector* vector_type = type->AsVector()) {
+    const analysis::Type* ele_type = vector_type->element_type();
+    assert(ele_type->AsInteger());
+    for (uint32_t i = 0; i != vector_type->element_count(); ++i) {
+      const analysis::Constant* input1_comp = nullptr;
+      if (const analysis::VectorConstant* input1_vector =
+              input1->AsVectorConstant()) {
+        input1_comp = input1_vector->GetComponents()[i];
+      } else {
+        assert(input1->AsNullConstant());
+        input1_comp = const_mgr->GetConstant(ele_type, {});
+      }
+
+      const analysis::Constant* input2_comp = nullptr;
+      if (const analysis::VectorConstant* input2_vector =
+              input2->AsVectorConstant()) {
+        input2_comp = input2_vector->GetComponents()[i];
+      } else {
+        assert(input2->AsNullConstant());
+        input2_comp = const_mgr->GetConstant(ele_type, {});
+      }
+
+      assert(ele_type->AsInteger());
+      Dispatch(input1_comp, input2_comp);
+    }
+
+  } else {
+    assert(type->AsInteger());
+    Dispatch(input1, input2);
+  }
+}
+
+// Folds redundant xor and or ops that are part of an and.
+// Cases handled:
+// 0b1110 & (a | 0b0001) = a & 0b1110
+// 0b1110 & (a ^ 0b0001) = a & 0b1110
+// 0b0110 & (a | 0b1110) = 0b0110
+FoldingRule RedundantAndOrXor() {
+  return [](IRContext* context, Instruction* inst,
+            const std::vector<const analysis::Constant*>& constants) {
+    assert(inst->opcode() == spv::Op::OpBitwiseAnd && "Wrong opcode.");
+    const analysis::Type* type =
+        context->get_type_mgr()->GetType(inst->type_id());
+    uint32_t width = ElementWidth(type);
+    if ((width != 32) && (width != 64)) return false;
+
+    analysis::ConstantManager* const_mgr = context->get_constant_mgr();
+    const analysis::Constant* const_input1 = ConstInput(constants);
+    if (!const_input1) return false;
+    Instruction* other_inst = NonConstInput(context, constants[0], inst);
+
+    if (other_inst->opcode() == spv::Op::OpBitwiseOr ||
+        other_inst->opcode() == spv::Op::OpBitwiseXor) {
+      std::vector<const analysis::Constant*> other_constants =
+          const_mgr->GetOperandConstants(other_inst);
+      const analysis::Constant* const_input2 = ConstInput(other_constants);
+      if (!const_input2) return false;
+
+      bool can_convert_to_const = other_inst->opcode() == spv::Op::OpBitwiseOr;
+      bool can_remove_inner = true;
+
+      ForEachIntegerConstantPair(
+          const_mgr, const_input1, const_input2,
+          [&can_remove_inner, &can_convert_to_const](auto lhs, auto rhs) {
+            // Only convert to const if 'and' is a subset of 'or'
+            can_convert_to_const = can_convert_to_const && ((lhs & rhs) == lhs);
+            // Only remove 'xor'/'or' if no bits intersect with 'and'
+            can_remove_inner = can_remove_inner && ((lhs & rhs) == 0);
+          });
+
+      if (can_convert_to_const) {
+        Instruction* const_inst =
+            const_mgr->GetDefiningInstruction(const_input1);
+        inst->SetOpcode(spv::Op::OpCopyObject);
+        inst->SetInOperands({{SPV_OPERAND_TYPE_ID, {const_inst->result_id()}}});
+        return true;
+      } else if (can_remove_inner) {
+        Instruction* non_const_input =
+            NonConstInput(context, other_constants[0], other_inst);
+        Instruction* const_inst =
+            const_mgr->GetDefiningInstruction(const_input1);
+        inst->SetInOperands(
+            {{SPV_OPERAND_TYPE_ID, {non_const_input->result_id()}},
+             {SPV_OPERAND_TYPE_ID, {const_inst->result_id()}}});
+        return true;
+      }
+    }
+    return false;
+  };
+}
+
+// Folds redundant add and sub ops that are part of an and.
+// Cases handled:
+// 1 & (b + 2) = b & 1
+// 1 & (b - 2) = b & 1
+FoldingRule RedundantAndAddSub() {
+  return [](IRContext* context, Instruction* inst,
+            const std::vector<const analysis::Constant*>& constants) {
+    assert(inst->opcode() == spv::Op::OpBitwiseAnd && "Wrong opcode.");
+    const analysis::Type* type =
+        context->get_type_mgr()->GetType(inst->type_id());
+    uint32_t width = ElementWidth(type);
+    if ((width != 32) && (width != 64)) return false;
+
+    analysis::ConstantManager* const_mgr = context->get_constant_mgr();
+    const analysis::Constant* const_input1 = ConstInput(constants);
+    if (!const_input1) return false;
+    Instruction* other_inst = NonConstInput(context, constants[0], inst);
+
+    if (other_inst->opcode() != spv::Op::OpIAdd &&
+        other_inst->opcode() != spv::Op::OpISub) {
+      return false;
+    }
+    std::vector<const analysis::Constant*> other_constants =
+        const_mgr->GetOperandConstants(other_inst);
+    const analysis::Constant* const_input2 = ConstInput(other_constants);
+    if (!const_input2) return false;
+
+    // Only valid for subtraction if const is on the right
+    if ((other_inst->opcode() == spv::Op::OpISub) && other_constants[0]) {
+      return false;
+    }
+
+    bool can_remove_inner = true;
+    ForEachIntegerConstantPair(const_mgr, const_input1, const_input2,
+                               [&can_remove_inner](auto and_op, auto add_op) {
+                                 if (can_remove_inner) {
+                                   // Only valid if no bits from the +/- could
+                                   // affect bits from the & operation.
+                                   can_remove_inner =
+                                       utils::LSB(add_op) > and_op;
+                                 }
+                               });
+
+    if (can_remove_inner) {
+      Instruction* non_const_input =
+          NonConstInput(context, other_constants[0], other_inst);
+      Instruction* const_inst = const_mgr->GetDefiningInstruction(const_input1);
+      inst->SetInOperands(
+          {{SPV_OPERAND_TYPE_ID, {non_const_input->result_id()}},
+           {SPV_OPERAND_TYPE_ID, {const_inst->result_id()}}});
+      return true;
+    }
+    return false;
+  };
+}
+
+// Folds redundant shift ops that are part of an and.
+// Cases handled:
+// 1 & (b << 1) = 0
+// 0x80000000 & (b >> 1) = 0
+FoldingRule RedundantAndShift() {
+  return [](IRContext* context, Instruction* inst,
+            const std::vector<const analysis::Constant*>& constants) {
+    assert(inst->opcode() == spv::Op::OpBitwiseAnd && "Wrong opcode.");
+    const analysis::Type* type =
+        context->get_type_mgr()->GetType(inst->type_id());
+    uint32_t width = ElementWidth(type);
+    if ((width != 32) && (width != 64)) return false;
+
+    analysis::ConstantManager* const_mgr = context->get_constant_mgr();
+    const analysis::Constant* const_input1 = ConstInput(constants);
+    if (!const_input1) return false;
+    Instruction* other_inst = NonConstInput(context, constants[0], inst);
+
+    spv::Op other_op = other_inst->opcode();
+    if (other_op == spv::Op::OpShiftLeftLogical ||
+        other_op == spv::Op::OpShiftRightLogical) {
+      std::vector<const analysis::Constant*> other_constants =
+          const_mgr->GetOperandConstants(other_inst);
+
+      // Only valid  if const is on the right
+      if (other_constants[0]) {
+        return false;
+      }
+      const analysis::Constant* const_input2 = other_constants[1];
+      if (!const_input2) return false;
+
+      bool can_convert_to_zero = true;
+      ForEachIntegerConstantPair(
+          const_mgr, const_input1, const_input2,
+          [&can_convert_to_zero, other_op](auto lhs, auto rhs) {
+            if (other_op == spv::Op::OpShiftRightLogical) {
+              can_convert_to_zero = can_convert_to_zero && (lhs << rhs) == 0;
+            } else {
+              can_convert_to_zero = can_convert_to_zero && (lhs >> rhs) == 0;
+            }
+          });
+
+      if (can_convert_to_zero) {
+        auto zero_id = context->get_constant_mgr()->GetNullConstId(type);
+        inst->SetOpcode(spv::Op::OpCopyObject);
+        inst->SetInOperands({{SPV_OPERAND_TYPE_ID, {zero_id}}});
+        return true;
+      }
+    }
+    return false;
+  };
+}
+
 // This rule look for a dot with a constant vector containing a single 1 and
 // the rest 0s.  This is the same as doing an extract.
 FoldingRule DotProductDoingExtract() {
@@ -3230,6 +3454,10 @@ void FoldingRules::AddFoldingRules() {
   rules_[spv::Op::OpISub].push_back(MergeSubNegateArithmetic());
   rules_[spv::Op::OpISub].push_back(MergeSubAddArithmetic());
   rules_[spv::Op::OpISub].push_back(MergeSubSubArithmetic());
+
+  rules_[spv::Op::OpBitwiseAnd].push_back(RedundantAndOrXor());
+  rules_[spv::Op::OpBitwiseAnd].push_back(RedundantAndAddSub());
+  rules_[spv::Op::OpBitwiseAnd].push_back(RedundantAndShift());
 
   rules_[spv::Op::OpPhi].push_back(RedundantPhi());
 

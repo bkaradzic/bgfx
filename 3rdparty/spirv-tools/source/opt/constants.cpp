@@ -462,7 +462,9 @@ const Constant* ConstantManager::GetNumericVectorConstantWithWords(
 
 uint32_t ConstantManager::GetFloatConstId(float val) {
   const Constant* c = GetFloatConst(val);
-  return GetDefiningInstruction(c)->result_id();
+  Instruction* inst = GetDefiningInstruction(c);
+  if (inst == nullptr) return 0;
+  return inst->result_id();
 }
 
 const Constant* ConstantManager::GetFloatConst(float val) {
@@ -474,7 +476,9 @@ const Constant* ConstantManager::GetFloatConst(float val) {
 
 uint32_t ConstantManager::GetDoubleConstId(double val) {
   const Constant* c = GetDoubleConst(val);
-  return GetDefiningInstruction(c)->result_id();
+  Instruction* inst = GetDefiningInstruction(c);
+  if (inst == nullptr) return 0;
+  return inst->result_id();
 }
 
 const Constant* ConstantManager::GetDoubleConst(double val) {

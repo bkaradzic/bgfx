@@ -76,6 +76,7 @@ bool ReplaceTrinaryMinMax(IRContext* ctx, Instruction* inst,
 
   Instruction* temp = ir_builder.AddNaryExtendedInstruction(
       inst->type_id(), glsl405_ext_inst_id, opcode, {op1, op2});
+  if (temp == nullptr) return false;
 
   Instruction::OperandList new_operands;
   new_operands.push_back({SPV_OPERAND_TYPE_ID, {glsl405_ext_inst_id}});
@@ -114,9 +115,12 @@ bool ReplaceTrinaryMid(IRContext* ctx, Instruction* inst,
   Instruction* min = ir_builder.AddNaryExtendedInstruction(
       inst->type_id(), glsl405_ext_inst_id, static_cast<uint32_t>(min_opcode),
       {op2, op3});
+  if (min == nullptr) return false;
+
   Instruction* max = ir_builder.AddNaryExtendedInstruction(
       inst->type_id(), glsl405_ext_inst_id, static_cast<uint32_t>(max_opcode),
       {op2, op3});
+  if (max == nullptr) return false;
 
   Instruction::OperandList new_operands;
   new_operands.push_back({SPV_OPERAND_TYPE_ID, {glsl405_ext_inst_id}});
@@ -226,16 +230,20 @@ bool ReplaceSwizzleInvocations(IRContext* ctx, Instruction* inst,
   // Get the subgroup invocation id.
   uint32_t var_id = ctx->GetBuiltinInputVarId(
       uint32_t(spv::BuiltIn::SubgroupLocalInvocationId));
-  assert(var_id != 0 && "Could not get SubgroupLocalInvocationId variable.");
+  if (var_id == 0) return false;
   Instruction* var_inst = ctx->get_def_use_mgr()->GetDef(var_id);
+  if (var_inst == nullptr) return false;
   Instruction* var_ptr_type =
       ctx->get_def_use_mgr()->GetDef(var_inst->type_id());
+  if (var_ptr_type == nullptr) return false;
   uint32_t uint_type_id = var_ptr_type->GetSingleWordInOperand(1);
+  if (uint_type_id == 0) return false;
 
-  // TODO(1841): Handle id overflow.
   Instruction* id = ir_builder.AddLoad(uint_type_id, var_id);
+  if (id == nullptr) return false;
 
   uint32_t quad_mask = ir_builder.GetUintConstantId(3);
+  if (quad_mask == 0) return false;
 
   // This gives the offset in the group of 4 of this invocation.
   Instruction* quad_idx = ir_builder.AddBinaryOp(
@@ -262,26 +270,41 @@ bool ReplaceSwizzleInvocations(IRContext* ctx, Instruction* inst,
 
   // Do the group operations
   uint32_t uint_max_id = ir_builder.GetUintConstantId(0xFFFFFFFF);
+  if (uint_max_id == 0) return false;
   uint32_t subgroup_scope =
       ir_builder.GetUintConstantId(uint32_t(spv::Scope::Subgroup));
+  if (subgroup_scope == 0) return false;
+  const auto* vec_type = type_mgr->GetUIntVectorType(4);
+  if (vec_type == nullptr) return false;
   const auto* ballot_value_const = const_mgr->GetConstant(
-      type_mgr->GetUIntVectorType(4),
-      {uint_max_id, uint_max_id, uint_max_id, uint_max_id});
+      vec_type, {uint_max_id, uint_max_id, uint_max_id, uint_max_id});
+  if (ballot_value_const == nullptr) return false;
   Instruction* ballot_value =
       const_mgr->GetDefiningInstruction(ballot_value_const);
-  // TODO(1841): Handle id overflow.
+  if (ballot_value == nullptr) return false;
+  uint32_t bool_type_id = type_mgr->GetBoolTypeId();
+  if (bool_type_id == 0) return false;
   Instruction* is_active = ir_builder.AddNaryOp(
-      type_mgr->GetBoolTypeId(), spv::Op::OpGroupNonUniformBallotBitExtract,
+      bool_type_id, spv::Op::OpGroupNonUniformBallotBitExtract,
       {subgroup_scope, ballot_value->result_id(), target_inv->result_id()});
-  // TODO(1841): Handle id overflow.
+  if (is_active == nullptr) return false;
   Instruction* shuffle =
       ir_builder.AddNaryOp(inst->type_id(), spv::Op::OpGroupNonUniformShuffle,
                            {subgroup_scope, data_id, target_inv->result_id()});
+  if (shuffle == nullptr) return false;
 
   // Create the null constant to use in the select.
-  const auto* null = const_mgr->GetConstant(type_mgr->GetType(inst->type_id()),
-                                            std::vector<uint32_t>());
+  const auto* result_type = type_mgr->GetType(inst->type_id());
+  if (result_type == nullptr) return false;
+  const auto* null =
+      const_mgr->GetConstant(result_type, std::vector<uint32_t>());
+  if (null == nullptr) {
+    return false;
+  }
   Instruction* null_inst = const_mgr->GetDefiningInstruction(null);
+  if (null_inst == nullptr) {
+    return false;
+  }
 
   // Build the select.
   inst->SetOpcode(spv::Op::OpSelect);
@@ -346,30 +369,38 @@ bool ReplaceSwizzleInvocationsMasked(
   uint32_t data_id = inst->GetSingleWordInOperand(2);
 
   Instruction* mask_inst = def_use_mgr->GetDef(inst->GetSingleWordInOperand(3));
+  if (mask_inst == nullptr) return false;
   assert(mask_inst->opcode() == spv::Op::OpConstantComposite &&
          "The mask is suppose to be a vector constant.");
   assert(mask_inst->NumInOperands() == 3 &&
          "The mask is suppose to have 3 components.");
 
   uint32_t uint_x = mask_inst->GetSingleWordInOperand(0);
+  if (uint_x == 0) return false;
   uint32_t uint_y = mask_inst->GetSingleWordInOperand(1);
+  if (uint_y == 0) return false;
   uint32_t uint_z = mask_inst->GetSingleWordInOperand(2);
+  if (uint_z == 0) return false;
 
   // Get the subgroup invocation id.
   uint32_t var_id = ctx->GetBuiltinInputVarId(
       uint32_t(spv::BuiltIn::SubgroupLocalInvocationId));
+  if (var_id == 0) return false;
   ctx->AddExtension("SPV_KHR_shader_ballot");
-  assert(var_id != 0 && "Could not get SubgroupLocalInvocationId variable.");
   Instruction* var_inst = ctx->get_def_use_mgr()->GetDef(var_id);
+  if (var_inst == nullptr) return false;
   Instruction* var_ptr_type =
       ctx->get_def_use_mgr()->GetDef(var_inst->type_id());
+  if (var_ptr_type == nullptr) return false;
   uint32_t uint_type_id = var_ptr_type->GetSingleWordInOperand(1);
+  if (uint_type_id == 0) return false;
 
-  // TODO(1841): Handle id overflow.
   Instruction* id = ir_builder.AddLoad(uint_type_id, var_id);
+  if (id == nullptr) return false;
 
   // Do the bitwise operations.
   uint32_t mask_extended = ir_builder.GetUintConstantId(0xFFFFFFE0);
+  if (mask_extended == 0) return false;
   Instruction* and_mask = ir_builder.AddBinaryOp(
       uint_type_id, spv::Op::OpBitwiseOr, uint_x, mask_extended);
   if (and_mask == nullptr) return false;
@@ -386,26 +417,37 @@ bool ReplaceSwizzleInvocationsMasked(
 
   // Do the group operations
   uint32_t uint_max_id = ir_builder.GetUintConstantId(0xFFFFFFFF);
+  if (uint_max_id == 0) return false;
   uint32_t subgroup_scope =
       ir_builder.GetUintConstantId(uint32_t(spv::Scope::Subgroup));
+  if (subgroup_scope == 0) return false;
+  const auto* vec_type = type_mgr->GetUIntVectorType(4);
+  if (vec_type == nullptr) return false;
   const auto* ballot_value_const = const_mgr->GetConstant(
-      type_mgr->GetUIntVectorType(4),
-      {uint_max_id, uint_max_id, uint_max_id, uint_max_id});
+      vec_type, {uint_max_id, uint_max_id, uint_max_id, uint_max_id});
+  if (ballot_value_const == nullptr) return false;
   Instruction* ballot_value =
       const_mgr->GetDefiningInstruction(ballot_value_const);
-  // TODO(1841): Handle id overflow.
+  if (ballot_value == nullptr) return false;
+  uint32_t bool_type_id = type_mgr->GetBoolTypeId();
+  if (bool_type_id == 0) return false;
   Instruction* is_active = ir_builder.AddNaryOp(
-      type_mgr->GetBoolTypeId(), spv::Op::OpGroupNonUniformBallotBitExtract,
+      bool_type_id, spv::Op::OpGroupNonUniformBallotBitExtract,
       {subgroup_scope, ballot_value->result_id(), target_inv->result_id()});
-  // TODO(1841): Handle id overflow.
+  if (is_active == nullptr) return false;
   Instruction* shuffle =
       ir_builder.AddNaryOp(inst->type_id(), spv::Op::OpGroupNonUniformShuffle,
                            {subgroup_scope, data_id, target_inv->result_id()});
+  if (shuffle == nullptr) return false;
 
   // Create the null constant to use in the select.
-  const auto* null = const_mgr->GetConstant(type_mgr->GetType(inst->type_id()),
-                                            std::vector<uint32_t>());
+  const auto* result_type = type_mgr->GetType(inst->type_id());
+  if (result_type == nullptr) return false;
+  const auto* null =
+      const_mgr->GetConstant(result_type, std::vector<uint32_t>());
+  if (null == nullptr) return false;
   Instruction* null_inst = const_mgr->GetDefiningInstruction(null);
+  if (null_inst == nullptr) return false;
 
   // Build the select.
   inst->SetOpcode(spv::Op::OpSelect);
@@ -439,21 +481,24 @@ bool ReplaceWriteInvocation(IRContext* ctx, Instruction* inst,
                             const std::vector<const analysis::Constant*>&) {
   uint32_t var_id = ctx->GetBuiltinInputVarId(
       uint32_t(spv::BuiltIn::SubgroupLocalInvocationId));
-  ctx->AddCapability(spv::Capability::SubgroupBallotKHR);
-  ctx->AddExtension("SPV_KHR_shader_ballot");
-  assert(var_id != 0 && "Could not get SubgroupLocalInvocationId variable.");
+  if (var_id == 0) return false;
   Instruction* var_inst = ctx->get_def_use_mgr()->GetDef(var_id);
+  if (var_inst == nullptr) return false;
   Instruction* var_ptr_type =
       ctx->get_def_use_mgr()->GetDef(var_inst->type_id());
+  if (var_ptr_type == nullptr) return false;
+  ctx->AddCapability(spv::Capability::SubgroupBallotKHR);
+  ctx->AddExtension("SPV_KHR_shader_ballot");
 
   InstructionBuilder ir_builder(
       ctx, inst,
       IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
-  // TODO(1841): Handle id overflow.
   Instruction* t =
       ir_builder.AddLoad(var_ptr_type->GetSingleWordInOperand(1), var_id);
+  if (t == nullptr) return false;
   analysis::Bool bool_type;
   uint32_t bool_type_id = ctx->get_type_mgr()->GetTypeInstruction(&bool_type);
+  if (bool_type_id == 0) return false;
   Instruction* cmp =
       ir_builder.AddBinaryOp(bool_type_id, spv::Op::OpIEqual, t->result_id(),
                              inst->GetSingleWordInOperand(4));
@@ -500,7 +545,8 @@ bool ReplaceMbcnt(IRContext* context, Instruction* inst,
 
   uint32_t var_id =
       context->GetBuiltinInputVarId(uint32_t(spv::BuiltIn::SubgroupLtMask));
-  assert(var_id != 0 && "Could not get SubgroupLtMask variable.");
+  if (var_id == 0) return false;
+
   context->AddCapability(spv::Capability::GroupNonUniformBallot);
   Instruction* var_inst = def_use_mgr->GetDef(var_id);
   Instruction* var_ptr_type = def_use_mgr->GetDef(var_inst->type_id());
@@ -513,6 +559,7 @@ bool ReplaceMbcnt(IRContext* context, Instruction* inst,
   analysis::Vector temp_type(GetUIntType(context), 2);
   const analysis::Type* shuffle_type =
       context->get_type_mgr()->GetRegisteredType(&temp_type);
+  if (shuffle_type == nullptr) return false;
   uint32_t shuffle_type_id = type_mgr->GetTypeInstruction(shuffle_type);
 
   uint32_t mask_id = inst->GetSingleWordInOperand(2);
@@ -526,10 +573,13 @@ bool ReplaceMbcnt(IRContext* context, Instruction* inst,
       context, inst,
       IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
   Instruction* load = ir_builder.AddLoad(var_type->result_id(), var_id);
+  if (load == nullptr) return false;
   Instruction* shuffle = ir_builder.AddVectorShuffle(
       shuffle_type_id, load->result_id(), load->result_id(), {0, 1});
+  if (shuffle == nullptr) return false;
   Instruction* bitcast = ir_builder.AddUnaryOp(
       mask_inst->type_id(), spv::Op::OpBitcast, shuffle->result_id());
+  if (bitcast == nullptr) return false;
   Instruction* t =
       ir_builder.AddBinaryOp(mask_inst->type_id(), spv::Op::OpBitwiseAnd,
                              bitcast->result_id(), mask_id);
@@ -588,9 +638,13 @@ bool ReplaceCubeFaceCoord(IRContext* ctx, Instruction* inst,
   analysis::ConstantManager* const_mgr = ctx->get_constant_mgr();
 
   uint32_t float_type_id = type_mgr->GetFloatTypeId();
+  if (float_type_id == 0) return false;
   const analysis::Type* v2_float_type = type_mgr->GetFloatVectorType(2);
+  if (v2_float_type == nullptr) return false;
   uint32_t v2_float_type_id = type_mgr->GetId(v2_float_type);
+  if (v2_float_type_id == 0) return false;
   uint32_t bool_id = type_mgr->GetBoolTypeId();
+  if (bool_id == 0) return false;
 
   InstructionBuilder ir_builder(
       ctx, inst,
@@ -604,23 +658,29 @@ bool ReplaceCubeFaceCoord(IRContext* ctx, Instruction* inst,
     glsl405_ext_inst_id =
         ctx->get_feature_mgr()->GetExtInstImportId_GLSLstd450();
   }
+  if (glsl405_ext_inst_id == 0) return false;
 
   // Get the constants that will be used.
   uint32_t f0_const_id = const_mgr->GetFloatConstId(0.0);
+  if (f0_const_id == 0) return false;
   uint32_t f2_const_id = const_mgr->GetFloatConstId(2.0);
+  if (f2_const_id == 0) return false;
   uint32_t f0_5_const_id = const_mgr->GetFloatConstId(0.5);
+  if (f0_5_const_id == 0) return false;
   const analysis::Constant* vec_const =
       const_mgr->GetConstant(v2_float_type, {f0_5_const_id, f0_5_const_id});
-  uint32_t vec_const_id =
-      const_mgr->GetDefiningInstruction(vec_const)->result_id();
+  if (vec_const == nullptr) return false;
+  Instruction* vec_const_inst = const_mgr->GetDefiningInstruction(vec_const);
+  if (vec_const_inst == nullptr) return false;
+  uint32_t vec_const_id = vec_const_inst->result_id();
 
   // Extract the input values.
-  // TODO(1841): Handle id overflow.
   Instruction* x = ir_builder.AddCompositeExtract(float_type_id, input_id, {0});
-  // TODO(1841): Handle id overflow.
+  if (x == nullptr) return false;
   Instruction* y = ir_builder.AddCompositeExtract(float_type_id, input_id, {1});
-  // TODO(1-841): Handle id overflow.
+  if (y == nullptr) return false;
   Instruction* z = ir_builder.AddCompositeExtract(float_type_id, input_id, {2});
+  if (z == nullptr) return false;
 
   // Negate the input values.
   Instruction* nx =
@@ -629,14 +689,20 @@ bool ReplaceCubeFaceCoord(IRContext* ctx, Instruction* inst,
       ir_builder.AddUnaryOp(float_type_id, spv::Op::OpFNegate, y->result_id());
   Instruction* nz =
       ir_builder.AddUnaryOp(float_type_id, spv::Op::OpFNegate, z->result_id());
+  if (nx == nullptr) return false;
+  if (ny == nullptr) return false;
+  if (nz == nullptr) return false;
 
   // Get the abolsute values of the inputs.
   Instruction* ax = ir_builder.AddNaryExtendedInstruction(
       float_type_id, glsl405_ext_inst_id, GLSLstd450FAbs, {x->result_id()});
+  if (ax == nullptr) return false;
   Instruction* ay = ir_builder.AddNaryExtendedInstruction(
       float_type_id, glsl405_ext_inst_id, GLSLstd450FAbs, {y->result_id()});
+  if (ay == nullptr) return false;
   Instruction* az = ir_builder.AddNaryExtendedInstruction(
       float_type_id, glsl405_ext_inst_id, GLSLstd450FAbs, {z->result_id()});
+  if (az == nullptr) return false;
 
   // Find which values are negative.  Used in later computations.
   Instruction* is_z_neg = ir_builder.AddBinaryOp(
@@ -653,9 +719,11 @@ bool ReplaceCubeFaceCoord(IRContext* ctx, Instruction* inst,
   Instruction* amax_x_y = ir_builder.AddNaryExtendedInstruction(
       float_type_id, glsl405_ext_inst_id, GLSLstd450FMax,
       {ax->result_id(), ay->result_id()});
+  if (amax_x_y == nullptr) return false;
   Instruction* amax = ir_builder.AddNaryExtendedInstruction(
       float_type_id, glsl405_ext_inst_id, GLSLstd450FMax,
       {az->result_id(), amax_x_y->result_id()});
+  if (amax == nullptr) return false;
   Instruction* cubema = ir_builder.AddBinaryOp(float_type_id, spv::Op::OpFMul,
                                                f2_const_id, amax->result_id());
   if (cubema == nullptr) return false;
@@ -667,6 +735,7 @@ bool ReplaceCubeFaceCoord(IRContext* ctx, Instruction* inst,
   if (is_z_max == nullptr) return false;
   Instruction* not_is_z_max = ir_builder.AddUnaryOp(
       bool_id, spv::Op::OpLogicalNot, is_z_max->result_id());
+  if (not_is_z_max == nullptr) return false;
   Instruction* y_gr_x =
       ir_builder.AddBinaryOp(bool_id, spv::Op::OpFOrdGreaterThanEqual,
                              ay->result_id(), ax->result_id());
@@ -677,35 +746,37 @@ bool ReplaceCubeFaceCoord(IRContext* ctx, Instruction* inst,
   if (is_y_max == nullptr) return false;
 
   // Select the correct value for cubesc.
-  // TODO(1841): Handle id overflow.
   Instruction* cubesc_case_1 = ir_builder.AddSelect(
       float_type_id, is_z_neg->result_id(), nx->result_id(), x->result_id());
-  // TODO(1841): Handle id overflow.
+  if (cubesc_case_1 == nullptr) return false;
   Instruction* cubesc_case_2 = ir_builder.AddSelect(
       float_type_id, is_x_neg->result_id(), z->result_id(), nz->result_id());
+  if (cubesc_case_2 == nullptr) return false;
   Instruction* sel =
-      // TODO(1841): Handle id overflow.
       ir_builder.AddSelect(float_type_id, is_y_max->result_id(), x->result_id(),
                            cubesc_case_2->result_id());
+  if (sel == nullptr) return false;
   Instruction* cubesc =
-      // TODO(1841): Handle id overflow.
       ir_builder.AddSelect(float_type_id, is_z_max->result_id(),
                            cubesc_case_1->result_id(), sel->result_id());
+  if (cubesc == nullptr) return false;
 
   // Select the correct value for cubetc.
-  // TODO(1841): Handle id overflow.
   Instruction* cubetc_case_1 = ir_builder.AddSelect(
       float_type_id, is_y_neg->result_id(), nz->result_id(), z->result_id());
+  if (cubetc_case_1 == nullptr) return false;
   Instruction* cubetc =
-      // TODO(1841): Handle id overflow.
       ir_builder.AddSelect(float_type_id, is_y_max->result_id(),
                            cubetc_case_1->result_id(), ny->result_id());
+  if (cubetc == nullptr) return false;
 
   // Do the division
   Instruction* cube = ir_builder.AddCompositeConstruct(
       v2_float_type_id, {cubesc->result_id(), cubetc->result_id()});
+  if (cube == nullptr) return false;
   Instruction* denom = ir_builder.AddCompositeConstruct(
       v2_float_type_id, {cubema->result_id(), cubema->result_id()});
+  if (denom == nullptr) return false;
   Instruction* div = ir_builder.AddBinaryOp(
       v2_float_type_id, spv::Op::OpFDiv, cube->result_id(), denom->result_id());
   if (div == nullptr) return false;
@@ -756,7 +827,9 @@ bool ReplaceCubeFaceIndex(IRContext* ctx, Instruction* inst,
   analysis::ConstantManager* const_mgr = ctx->get_constant_mgr();
 
   uint32_t float_type_id = type_mgr->GetFloatTypeId();
+  if (float_type_id == 0) return false;
   uint32_t bool_id = type_mgr->GetBoolTypeId();
+  if (bool_id == 0) return false;
 
   InstructionBuilder ir_builder(
       ctx, inst,
@@ -773,27 +846,37 @@ bool ReplaceCubeFaceIndex(IRContext* ctx, Instruction* inst,
 
   // Get the constants that will be used.
   uint32_t f0_const_id = const_mgr->GetFloatConstId(0.0);
+  if (f0_const_id == 0) return false;
   uint32_t f1_const_id = const_mgr->GetFloatConstId(1.0);
+  if (f1_const_id == 0) return false;
   uint32_t f2_const_id = const_mgr->GetFloatConstId(2.0);
+  if (f2_const_id == 0) return false;
   uint32_t f3_const_id = const_mgr->GetFloatConstId(3.0);
+  if (f3_const_id == 0) return false;
   uint32_t f4_const_id = const_mgr->GetFloatConstId(4.0);
+  if (f4_const_id == 0) return false;
   uint32_t f5_const_id = const_mgr->GetFloatConstId(5.0);
+  if (f5_const_id == 0) return false;
 
   // Extract the input values.
-  // TODO(1841): Handle id overflow.
   Instruction* x = ir_builder.AddCompositeExtract(float_type_id, input_id, {0});
-  // TODO(1841): Handle id overflow.
+  if (x == nullptr) return false;
   Instruction* y = ir_builder.AddCompositeExtract(float_type_id, input_id, {1});
+  if (y == nullptr) return false;
   // TODO(1-841): Handle id overflow.
   Instruction* z = ir_builder.AddCompositeExtract(float_type_id, input_id, {2});
+  if (z == nullptr) return false;
 
   // Get the absolute values of the inputs.
   Instruction* ax = ir_builder.AddNaryExtendedInstruction(
       float_type_id, glsl405_ext_inst_id, GLSLstd450FAbs, {x->result_id()});
+  if (ax == nullptr) return false;
   Instruction* ay = ir_builder.AddNaryExtendedInstruction(
       float_type_id, glsl405_ext_inst_id, GLSLstd450FAbs, {y->result_id()});
+  if (ay == nullptr) return false;
   Instruction* az = ir_builder.AddNaryExtendedInstruction(
       float_type_id, glsl405_ext_inst_id, GLSLstd450FAbs, {z->result_id()});
+  if (az == nullptr) return false;
 
   // Find which values are negative.  Used in later computations.
   Instruction* is_z_neg = ir_builder.AddBinaryOp(
@@ -810,6 +893,7 @@ bool ReplaceCubeFaceIndex(IRContext* ctx, Instruction* inst,
   Instruction* amax_x_y = ir_builder.AddNaryExtendedInstruction(
       float_type_id, glsl405_ext_inst_id, GLSLstd450FMax,
       {ax->result_id(), ay->result_id()});
+  if (amax_x_y == nullptr) return false;
   Instruction* is_z_max =
       ir_builder.AddBinaryOp(bool_id, spv::Op::OpFOrdGreaterThanEqual,
                              az->result_id(), amax_x_y->result_id());
@@ -820,21 +904,21 @@ bool ReplaceCubeFaceIndex(IRContext* ctx, Instruction* inst,
   if (y_gr_x == nullptr) return false;
 
   // Get the value for each case.
-  // TODO(1841): Handle id overflow.
   Instruction* case_z = ir_builder.AddSelect(
       float_type_id, is_z_neg->result_id(), f5_const_id, f4_const_id);
-  // TODO(1841): Handle id overflow.
+  if (case_z == nullptr) return false;
   Instruction* case_y = ir_builder.AddSelect(
       float_type_id, is_y_neg->result_id(), f3_const_id, f2_const_id);
-  // TODO(1841): Handle id overflow.
+  if (case_y == nullptr) return false;
   Instruction* case_x = ir_builder.AddSelect(
       float_type_id, is_x_neg->result_id(), f1_const_id, f0_const_id);
+  if (case_x == nullptr) return false;
 
   // Select the correct case.
   Instruction* sel =
-      // TODO(1841): Handle id overflow.
       ir_builder.AddSelect(float_type_id, y_gr_x->result_id(),
                            case_y->result_id(), case_x->result_id());
+  if (sel == nullptr) return false;
 
   // Get the final result by adding 0.5 to |div|.
   inst->SetOpcode(spv::Op::OpSelect);
@@ -974,11 +1058,18 @@ Pass::Status AmdExtensionToKhrPass::Process() {
       std::unique_ptr<AmdExtFoldingRules>(new AmdExtFoldingRules(context())),
       MakeUnique<AmdExtConstFoldingRules>(context()));
   for (Function& func : *get_module()) {
-    func.ForEachInst([&changed, &folder](Instruction* inst) {
-      if (folder.FoldInstruction(inst)) {
-        changed = true;
-      }
-    });
+    bool failed =
+        !func.WhileEachInst([&changed, &folder, this](Instruction* inst) {
+          if (folder.FoldInstruction(inst)) {
+            changed = true;
+            return true;
+          } else if (context()->id_overflow()) {
+            return false;
+          }
+          return true;
+        });
+
+    if (failed) return Status::Failure;
   }
 
   // Now that instruction that require the extensions have been removed, we can

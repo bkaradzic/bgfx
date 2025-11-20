@@ -267,6 +267,7 @@ int32_t spvOpcodeGeneratesType(spv::Op op) {
     // spv::Op::OpTypeAccelerationStructureNV
     case spv::Op::OpTypeRayQueryKHR:
     case spv::Op::OpTypeHitObjectNV:
+    case spv::Op::OpTypeHitObjectEXT:
     case spv::Op::OpTypeUntypedPointerKHR:
     case spv::Op::OpTypeNodePayloadArrayAMDX:
     case spv::Op::OpTypeTensorLayoutNV:

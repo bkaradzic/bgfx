@@ -930,13 +930,13 @@ LoopDescriptor::Status LoopDescriptor::CreatePreHeaderBlocksIfMissing() {
   for (auto& loop : *this) {
     if (!loop.GetPreHeaderBlock()) {
       if (!loop.GetOrCreatePreHeaderBlock()) {
-        return Status::kFailure;
+        return Status::Failure;
       }
       modified = true;
     }
   }
 
-  return modified ? Status::kSuccessWithChange : Status::kSuccessWithoutChange;
+  return modified ? Status::SuccessWithChange : Status::SuccessWithoutChange;
 }
 
 // Add and remove loops which have been marked for addition and removal to
