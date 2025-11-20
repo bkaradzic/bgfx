@@ -29,6 +29,7 @@
 
 namespace SPIRV_CROSS_NAMESPACE
 {
+using namespace SPIRV_CROSS_SPV_HEADER_NAMESPACE;
 // Interface which remaps vertex inputs to a fixed semantic name to make linking easier.
 struct HLSLVertexAttributeRemap
 {
@@ -87,7 +88,7 @@ using HLSLBindingFlags = uint32_t;
 // For deeper control of push constants, set_root_constant_layouts() can be used instead.
 struct HLSLResourceBinding
 {
-	spv::ExecutionModel stage = spv::ExecutionModelMax;
+	ExecutionModel stage = ExecutionModelMax;
 	uint32_t desc_set = 0;
 	uint32_t binding = 0;
 
@@ -216,7 +217,7 @@ public:
 	// is_hlsl_resource_binding_used() will return true after calling ::compile() if
 	// the set/binding combination was used by the HLSL code.
 	void add_hlsl_resource_binding(const HLSLResourceBinding &resource);
-	bool is_hlsl_resource_binding_used(spv::ExecutionModel model, uint32_t set, uint32_t binding) const;
+	bool is_hlsl_resource_binding_used(ExecutionModel model, uint32_t set, uint32_t binding) const;
 
 	// Controls which storage buffer bindings will be forced to be declared as UAVs.
 	void set_hlsl_force_storage_buffer_as_uav(uint32_t desc_set, uint32_t binding);
@@ -255,7 +256,7 @@ private:
 	void emit_specialization_constants_and_structs();
 	void emit_composite_constants();
 	void emit_fixup() override;
-	std::string builtin_to_glsl(spv::BuiltIn builtin, spv::StorageClass storage) override;
+	std::string builtin_to_glsl(BuiltIn builtin, StorageClass storage) override;
 	std::string layout_for_member(const SPIRType &type, uint32_t index) override;
 	std::string to_interpolation_qualifiers(const Bitset &flags) override;
 	std::string bitcast_glsl_op(const SPIRType &result_type, const SPIRType &argument_type) override;
@@ -281,7 +282,7 @@ private:
 	                              const SmallVector<uint32_t> &composite_chain);
 	std::string write_access_chain_value(uint32_t value, const SmallVector<uint32_t> &composite_chain, bool enclose);
 	void emit_store(const Instruction &instruction);
-	void emit_atomic(const uint32_t *ops, uint32_t length, spv::Op op);
+	void emit_atomic(const uint32_t *ops, uint32_t length, Op op);
 	void emit_subgroup_op(const Instruction &i) override;
 	void emit_block_hints(const SPIRBlock &block) override;
 
@@ -294,7 +295,7 @@ private:
 	const char *to_storage_qualifiers_glsl(const SPIRVariable &var) override;
 	void replace_illegal_names() override;
 
-	SPIRType::BaseType get_builtin_basetype(spv::BuiltIn builtin, SPIRType::BaseType default_type) override;
+	SPIRType::BaseType get_builtin_basetype(BuiltIn builtin, SPIRType::BaseType default_type) override;
 
 	bool is_hlsl_force_storage_buffer_as_uav(ID id) const;
 
@@ -379,7 +380,7 @@ private:
 
 	uint32_t type_to_consumed_locations(const SPIRType &type) const;
 
-	std::string to_semantic(uint32_t location, spv::ExecutionModel em, spv::StorageClass sc);
+	std::string to_semantic(uint32_t location, ExecutionModel em, StorageClass sc);
 
 	uint32_t num_workgroups_builtin = 0;
 	HLSLBindingFlags resource_binding_flags = 0;
