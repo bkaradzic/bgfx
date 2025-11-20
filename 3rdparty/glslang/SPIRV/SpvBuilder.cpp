@@ -125,7 +125,7 @@ Id Builder::makeBoolType()
     return type->getResultId();
 }
 
-Id Builder::makeSamplerType()
+Id Builder::makeSamplerType(const char* debugName)
 {
     Instruction* type;
     if (groupedTypes[enumCast(Op::OpTypeSampler)].size() == 0) {
@@ -138,7 +138,7 @@ Id Builder::makeSamplerType()
 
     if (emitNonSemanticShaderDebugInfo)
     {
-        auto const debugResultId = makeOpaqueDebugType("type.sampler");
+        auto const debugResultId = makeOpaqueDebugType(debugName);
         debugId[type->getResultId()] = debugResultId;
     }
 
@@ -841,7 +841,7 @@ Id Builder::makeDebugFunctionType(Id returnType, const std::vector<Id>& paramTyp
 }
 
 Id Builder::makeImageType(Id sampledType, Dim dim, bool depth, bool arrayed, bool ms, unsigned sampled,
-    ImageFormat format)
+    ImageFormat format, const char* debugName)
 {
     assert(sampled == 1 || sampled == 2);
 
@@ -922,24 +922,14 @@ Id Builder::makeImageType(Id sampledType, Dim dim, bool depth, bool arrayed, boo
 
     if (emitNonSemanticShaderDebugInfo)
     {
-        auto TypeName = [&dim]() -> char const* {
-            switch (dim) {
-                case Dim::Dim1D: return "type.1d.image";
-                case Dim::Dim2D: return "type.2d.image";
-                case Dim::Dim3D: return "type.3d.image";
-                case Dim::Cube:  return "type.cube.image";
-                default: return "type.image";
-            }
-        };
-
-        auto const debugResultId = makeOpaqueDebugType(TypeName());
+        auto const debugResultId = makeOpaqueDebugType(debugName);
         debugId[type->getResultId()] = debugResultId;
     }
 
     return type->getResultId();
 }
 
-Id Builder::makeSampledImageType(Id imageType)
+Id Builder::makeSampledImageType(Id imageType, const char* debugName)
 {
     // try to find it
     Instruction* type;
@@ -959,7 +949,7 @@ Id Builder::makeSampledImageType(Id imageType)
 
     if (emitNonSemanticShaderDebugInfo)
     {
-        auto const debugResultId = makeOpaqueDebugType("type.sampled.image");
+        auto const debugResultId = makeOpaqueDebugType(debugName);
         debugId[type->getResultId()] = debugResultId;
     }
 
@@ -1512,6 +1502,20 @@ Id Builder::makeRayQueryType()
     return type->getResultId();
 }
 
+Id Builder::makeHitObjectEXTType()
+{
+    Instruction *type;
+    if (groupedTypes[enumCast(Op::OpTypeHitObjectEXT)].size() == 0) {
+        type = new Instruction(getUniqueId(), NoType, Op::OpTypeHitObjectEXT);
+        groupedTypes[enumCast(Op::OpTypeHitObjectEXT)].push_back(type);
+        constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
+        module.mapInstruction(type);
+    } else {
+        type = groupedTypes[enumCast(Op::OpTypeHitObjectEXT)].back();
+    }
+
+    return type->getResultId();
+}
 Id Builder::makeHitObjectNVType()
 {
     Instruction *type;
@@ -1520,6 +1524,10 @@ Id Builder::makeHitObjectNVType()
         groupedTypes[enumCast(Op::OpTypeHitObjectNV)].push_back(type);
         constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
         module.mapInstruction(type);
+        if (emitNonSemanticShaderDebugInfo) {
+            spv::Id debugType = makeOpaqueDebugType("hitObjectNV");
+            debugId[type->getResultId()] = debugType;
+        }
     } else {
         type = groupedTypes[enumCast(Op::OpTypeHitObjectNV)].back();
     }
@@ -2658,7 +2666,7 @@ Id Builder::makeDebugFunction([[maybe_unused]] Function* function, Id nameId, Id
     type->addIdOperand(makeDebugCompilationUnit()); // scope
     type->addIdOperand(nameId); // linkage name
     type->addIdOperand(makeUintConstant(NonSemanticShaderDebugInfo100FlagIsPublic));
-    type->addIdOperand(makeUintConstant(currentLine)); 
+    type->addIdOperand(makeUintConstant(currentLine));
     constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
     module.mapInstruction(type);
     return funcId;
@@ -2734,6 +2742,8 @@ void Builder::leaveLexicalBlock()
 // Comments in header
 void Builder::enterFunction(Function const* function)
 {
+    currentFunction = function;
+
     // Save and disable debugInfo for HLSL entry point function. It is a wrapper
     // function with no user code in it.
     restoreNonSemanticShaderDebugInfo = emitNonSemanticShaderDebugInfo;
@@ -2784,6 +2794,9 @@ void Builder::leaveFunction()
         currentDebugScopeId.pop();
 
     emitNonSemanticShaderDebugInfo = restoreNonSemanticShaderDebugInfo;
+
+    // Clear current function record
+    currentFunction = nullptr;
 }
 
 // Comments in header
@@ -2803,6 +2816,20 @@ void Builder::makeStatementTerminator(spv::Op opcode, const std::vector<Id>& ope
     createAndSetNoPredecessorBlock(name);
 }
 
+void Builder::createConstVariable(Id type, const char* name, Id constant, bool isGlobal)
+{
+    if (emitNonSemanticShaderDebugInfo) {
+        Id debugType = getDebugType(type);
+        if (isGlobal) {
+            createDebugGlobalVariable(debugType, name, constant);
+        }
+        else {
+            auto debugLocal = createDebugLocalVariable(debugType, name);
+            makeDebugValue(debugLocal, constant);
+        }
+    }
+}
+
 // Comments in header
 Id Builder::createVariable(Decoration precision, StorageClass storageClass, Id type, const char* name, Id initializer,
     bool const compilerGenerated)
@@ -2813,31 +2840,30 @@ Id Builder::createVariable(Decoration precision, StorageClass storageClass, Id t
     if (initializer != NoResult)
         inst->addIdOperand(initializer);
 
-    switch (storageClass) {
-    case StorageClass::Function:
+    if (storageClass == StorageClass::Function) {
         // Validation rules require the declaration in the entry block
         buildPoint->getParent().addLocalVariable(std::unique_ptr<Instruction>(inst));
+    }
+    else {
+        constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(inst));
+        module.mapInstruction(inst);
+    }
 
-        if (emitNonSemanticShaderDebugInfo && !compilerGenerated)
-        {
+    if (emitNonSemanticShaderDebugInfo && !compilerGenerated)
+    {
+        // For debug info, we prefer respecting how the variable is declared in source code.
+        // We may emulate some local variables as global variable with private storage in SPIR-V, but we still want to
+        // treat them as local variables in debug info.
+        if (storageClass == StorageClass::Function || (currentFunction && storageClass == StorageClass::Private)) {
             auto const debugLocalVariableId = createDebugLocalVariable(debugId[type], name);
             debugId[inst->getResultId()] = debugLocalVariableId;
 
             makeDebugDeclare(debugLocalVariableId, inst->getResultId());
         }
-
-        break;
-
-    default:
-        constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(inst));
-        module.mapInstruction(inst);
-
-        if (emitNonSemanticShaderDebugInfo)
-        {
+        else {
             auto const debugResultId = createDebugGlobalVariable(debugId[type], name, inst->getResultId());
             debugId[inst->getResultId()] = debugResultId;
         }
-        break;
     }
 
     if (name)
@@ -2942,9 +2968,9 @@ Id Builder::createAccessChain(StorageClass storageClass, Id base, const std::vec
     return chain->getResultId();
 }
 
-Id Builder::createArrayLength(Id base, unsigned int member)
+Id Builder::createArrayLength(Id base, unsigned int member, unsigned int bits)
 {
-    spv::Id intType = makeUintType(32);
+    spv::Id intType = makeUintType(bits);
     Instruction* length = new Instruction(getUniqueId(), intType, Op::OpArrayLength);
     length->reserveOperands(2);
     length->addIdOperand(base);

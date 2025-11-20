@@ -229,6 +229,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_draw_instanced]               = EBhDisable;
     extensionBehavior[E_GL_ARB_bindless_texture]             = EBhDisable;
     extensionBehavior[E_GL_ARB_fragment_coord_conventions]   = EBhDisable;
+    extensionBehavior[E_GL_ARB_conservative_depth]           = EBhDisable;
 
 
     extensionBehavior[E_GL_KHR_shader_subgroup_basic]            = EBhDisable;
@@ -385,6 +386,9 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_bfloat16]                    = EBhDisable;
     extensionBehavior[E_GL_EXT_float_e4m3]                  = EBhDisable;
     extensionBehavior[E_GL_EXT_float_e5m2]                  = EBhDisable;
+    extensionBehavior[E_GL_EXT_uniform_buffer_unsized_array] = EBhDisable;
+    extensionBehavior[E_GL_EXT_shader_64bit_indexing]       = EBhDisable;
+    extensionBehavior[E_GL_EXT_conservative_depth]          = EBhDisable;
 
     // OVR extensions
     extensionBehavior[E_GL_OVR_multiview]                = EBhDisable;
@@ -410,6 +414,8 @@ void TParseVersions::initializeExtensionBehavior()
 
     extensionBehavior[E_GL_EXT_integer_dot_product]                    = EBhDisable;
 
+    extensionBehavior[E_GL_EXT_shader_invocation_reorder]              = EBhDisable;
+
     // Record extensions not for spv.
     spvUnsupportedExt.push_back(E_GL_ARB_bindless_texture);
 }
@@ -431,6 +437,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_shader_texture_lod 1\n"
             "#define GL_EXT_shadow_samplers 1\n"
             "#define GL_EXT_fragment_shading_rate 1\n"
+            "#define GL_EXT_conservative_depth 1\n"
 
             // AEP
             "#define GL_ANDROID_extension_pack_es31a 1\n"
@@ -520,6 +527,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_NV_gpu_shader5 1\n"
             "#define GL_ARB_draw_instanced 1\n"
             "#define GL_ARB_fragment_coord_conventions 1\n"
+            "#define GL_ARB_conservative_depth 1\n"
 
             "#define GL_EXT_shader_non_constant_global_initializers 1\n"
             "#define GL_EXT_shader_image_load_formatted 1\n"
@@ -627,6 +635,10 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_bfloat16 1\n"
             "#define GL_EXT_float_e5m2 1\n"
             "#define GL_EXT_float_e4m3 1\n"
+            "#define GL_EXT_uniform_buffer_unsized_array 1\n"
+            "#define GL_EXT_shader_64bit_indexing 1\n"
+
+            "#define GL_EXT_shader_invocation_reorder 1\n"
             ;
 
         if (spvVersion.spv == 0) {
