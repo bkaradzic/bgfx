@@ -237,6 +237,7 @@ uint32_t TypeManager::GetTypeInstruction(const Type* type) {
     DefineParameterlessCase(AccelerationStructureNV);
     DefineParameterlessCase(RayQueryKHR);
     DefineParameterlessCase(HitObjectNV);
+    DefineParameterlessCase(HitObjectEXT);
 #undef DefineParameterlessCase
     case Type::kInteger:
       typeInst = MakeUnique<Instruction>(
@@ -654,6 +655,7 @@ Type* TypeManager::RebuildType(uint32_t type_id, const Type& type) {
     DefineNoSubtypeCase(AccelerationStructureNV);
     DefineNoSubtypeCase(RayQueryKHR);
     DefineNoSubtypeCase(HitObjectNV);
+    DefineNoSubtypeCase(HitObjectEXT);
 #undef DefineNoSubtypeCase
     case Type::kVector: {
       const Vector* vec_ty = type.AsVector();
@@ -1081,6 +1083,9 @@ Type* TypeManager::RecordIfTypeDefinition(const Instruction& inst) {
       break;
     case spv::Op::OpTypeHitObjectNV:
       type = new HitObjectNV();
+      break;
+    case spv::Op::OpTypeHitObjectEXT:
+      type = new HitObjectEXT();
       break;
     case spv::Op::OpTypeTensorLayoutNV:
       type = new TensorLayoutNV(inst.GetSingleWordInOperand(0),

@@ -859,6 +859,22 @@ void ValidationState_t::RegisterStorageClassConsumer(
           }
           return true;
         });
+  } else if (storage_class == spv::StorageClass::HitObjectAttributeEXT) {
+    function(consumer->function()->id())
+        ->RegisterExecutionModelLimitation([](spv::ExecutionModel model,
+                                              std::string* message) {
+          if (model != spv::ExecutionModel::RayGenerationKHR &&
+              model != spv::ExecutionModel::ClosestHitKHR &&
+              model != spv::ExecutionModel::MissKHR) {
+            if (message) {
+              *message =
+                  "HitObjectAttributeEXT Storage Class is limited to "
+                  "RayGenerationKHR, ClosestHitKHR or MissKHR execution model";
+            }
+            return false;
+          }
+          return true;
+        });
   }
 }
 
@@ -2032,6 +2048,7 @@ bool ValidationState_t::IsValidStorageClass(
       case spv::StorageClass::ShaderRecordBufferKHR:
       case spv::StorageClass::TaskPayloadWorkgroupEXT:
       case spv::StorageClass::HitObjectAttributeNV:
+      case spv::StorageClass::HitObjectAttributeEXT:
       case spv::StorageClass::TileImageEXT:
       case spv::StorageClass::NodePayloadAMDX:
       case spv::StorageClass::TileAttachmentQCOM:
@@ -2254,6 +2271,12 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-LocalInvocationId-LocalInvocationId-04282);
     case 4283:
       return VUID_WRAP(VUID-LocalInvocationId-LocalInvocationId-04283);
+    case 4284:
+      return VUID_WRAP(VUID-LocalInvocationIndex-LocalInvocationIndex-04284);
+    case 4285:
+      return VUID_WRAP(VUID-LocalInvocationIndex-LocalInvocationIndex-04285);
+    case 4286:
+      return VUID_WRAP(VUID-LocalInvocationIndex-LocalInvocationIndex-04286);
     case 4293:
       return VUID_WRAP(VUID-NumSubgroups-NumSubgroups-04293);
     case 4294:
@@ -2538,8 +2561,6 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-OpTypeRuntimeArray-04680);
     case 4682:
       return VUID_WRAP(VUID-StandaloneSpirv-OpControlBarrier-04682);
-    case 6426:
-      return VUID_WRAP(VUID-StandaloneSpirv-LocalSize-06426); // formally 04683
     case 4685:
       return VUID_WRAP(VUID-StandaloneSpirv-OpGroupNonUniformBallotBitCount-04685);
     case 4686:
@@ -2752,7 +2773,7 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
     case 10684:
       return VUID_WRAP(VUID-StandaloneSpirv-None-10684);
     case 10685:
-      return VUID_WRAP(VUID-StandaloneSpirv-None-10685);
+      return VUID_WRAP(VUID-StandaloneSpirv-None-10685); // formally 04683/06426
     case 10824:
       // This use to be a standalone, but maintenance9 will set allow_vulkan_32_bit_bitwise now
       return VUID_WRAP(VUID-RuntimeSpirv-None-10824);
@@ -2790,6 +2811,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-TessLevelInner-10880);
     case 11167:
       return VUID_WRAP(VUID-StandaloneSpirv-OpUntypedVariableKHR-11167);
+    case 11805:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpArrayLength-11805);
     default:
       return "";  // unknown id
   }

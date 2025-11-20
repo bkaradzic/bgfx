@@ -1100,7 +1100,7 @@ spv_result_t ValidateSampledImage(ValidationState_t& _,
                << "Result <id> from OpSampledImage instruction must not appear "
                   "as "
                   "operands of Op"
-               << spvOpcodeString(static_cast<spv::Op>(consumer_opcode)) << "."
+               << spvOpcodeString(consumer_opcode) << "."
                << " Found result <id> " << _.getIdName(inst->id())
                << " as an operand of <id> " << _.getIdName(consumer_instr->id())
                << ".";
@@ -1110,12 +1110,11 @@ spv_result_t ValidateSampledImage(ValidationState_t& _,
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << "Result <id> from OpSampledImage instruction must not appear "
                   "as operand for Op"
-               << spvOpcodeString(static_cast<spv::Op>(consumer_opcode))
+               << spvOpcodeString(consumer_opcode)
                << ", since it is not specified as taking an "
-               << "OpTypeSampledImage."
-               << " Found result <id> " << _.getIdName(inst->id())
-               << " as an operand of <id> " << _.getIdName(consumer_instr->id())
-               << ".";
+               << "OpTypeSampledImage." << " Found result <id> "
+               << _.getIdName(inst->id()) << " as an operand of <id> "
+               << _.getIdName(consumer_instr->id()) << ".";
       }
     }
   }

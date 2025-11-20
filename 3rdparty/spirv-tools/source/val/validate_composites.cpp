@@ -532,8 +532,7 @@ spv_result_t ValidateVectorShuffle(ValidationState_t& _,
   if (!resultType || resultType->opcode() != spv::Op::OpTypeVector) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "The Result Type of OpVectorShuffle must be"
-           << " OpTypeVector. Found Op"
-           << spvOpcodeString(static_cast<spv::Op>(resultType->opcode()))
+           << " OpTypeVector. Found Op" << spvOpcodeString(resultType->opcode())
            << ".";
   }
 

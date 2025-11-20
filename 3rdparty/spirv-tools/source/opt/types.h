@@ -67,6 +67,7 @@ class CooperativeMatrixKHR;
 class CooperativeVectorNV;
 class RayQueryKHR;
 class HitObjectNV;
+class HitObjectEXT;
 class TensorLayoutNV;
 class TensorViewNV;
 class TensorARM;
@@ -114,6 +115,7 @@ class Type {
     kCooperativeVectorNV,
     kRayQueryKHR,
     kHitObjectNV,
+    kHitObjectEXT,
     kTensorLayoutNV,
     kTensorViewNV,
     kTensorARM,
@@ -222,6 +224,7 @@ class Type {
   DeclareCastMethod(CooperativeVectorNV)
   DeclareCastMethod(RayQueryKHR)
   DeclareCastMethod(HitObjectNV)
+  DeclareCastMethod(HitObjectEXT)
   DeclareCastMethod(TensorLayoutNV)
   DeclareCastMethod(TensorViewNV)
   DeclareCastMethod(TensorARM)
@@ -862,6 +865,7 @@ DefineParameterlessType(NamedBarrier, named_barrier);
 DefineParameterlessType(AccelerationStructureNV, accelerationStructureNV);
 DefineParameterlessType(RayQueryKHR, rayQueryKHR);
 DefineParameterlessType(HitObjectNV, hitObjectNV);
+DefineParameterlessType(HitObjectEXT, hitObjectEXT);
 #undef DefineParameterlessType
 
 }  // namespace analysis

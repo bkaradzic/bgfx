@@ -557,6 +557,7 @@ void IRContext::AddCombinatorsForCapability(uint32_t capability) {
          (uint32_t)spv::Op::OpTypeAccelerationStructureKHR,
          (uint32_t)spv::Op::OpTypeRayQueryKHR,
          (uint32_t)spv::Op::OpTypeHitObjectNV,
+         (uint32_t)spv::Op::OpTypeHitObjectEXT,
          (uint32_t)spv::Op::OpTypeArray,
          (uint32_t)spv::Op::OpTypeRuntimeArray,
          (uint32_t)spv::Op::OpTypeNodePayloadArrayAMDX,
@@ -927,11 +928,13 @@ uint32_t IRContext::GetBuiltinInputVarId(uint32_t builtin) {
         return 0;
       }
     }
+    if (reg_type == nullptr) return 0;  // Error
+
     uint32_t type_id = type_mgr->GetTypeInstruction(reg_type);
     uint32_t varTyPtrId =
         type_mgr->FindPointerToType(type_id, spv::StorageClass::Input);
-    // TODO(1841): Handle id overflow.
     var_id = TakeNextId();
+    if (var_id == 0) return 0;  // Error
     std::unique_ptr<Instruction> newVarOp(
         new Instruction(this, spv::Op::OpVariable, varTyPtrId, var_id,
                         {{spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER,

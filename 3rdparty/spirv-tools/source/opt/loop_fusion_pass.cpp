@@ -41,8 +41,8 @@ Pass::Status LoopFusionPass::ProcessFunction(Function* function) {
   // sure to return Status::SuccessWithChange in that case.
   bool modified = false;
   auto status = ld.CreatePreHeaderBlocksIfMissing();
-  if (status == LoopDescriptor::Status::kFailure) return Status::Failure;
-  modified = status == LoopDescriptor::Status::kSuccessWithChange;
+  if (status == LoopDescriptor::Status::Failure) return Status::Failure;
+  modified = status == LoopDescriptor::Status::SuccessWithChange;
 
   // TODO(tremmelg): Could the only loop that |loop| could possibly be fused be
   // picked out so don't have to check every loop

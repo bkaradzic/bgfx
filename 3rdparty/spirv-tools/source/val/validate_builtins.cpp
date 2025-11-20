@@ -123,7 +123,7 @@ typedef enum VUIDError_ {
   VUIDErrorMax,
 } VUIDError;
 
-const static uint32_t NumVUIDBuiltins = 40;
+const static uint32_t NumVUIDBuiltins = 41;
 
 typedef struct {
   spv::BuiltIn builtIn;
@@ -170,6 +170,7 @@ std::array<BuiltinVUIDMapping, NumVUIDBuiltins> builtinVUIDInfo = {{
     {spv::BuiltIn::CullMaskKHR,               {6735, 6736, 6737}},
     {spv::BuiltIn::BaryCoordKHR,              {4154, 4155, 4156}},
     {spv::BuiltIn::BaryCoordNoPerspKHR,       {4160, 4161, 4162}},
+    {spv::BuiltIn::LocalInvocationIndex,      {4284, 4285, 4286}},
     {spv::BuiltIn::PrimitivePointIndicesEXT,  {7041, 7043, 7044}},
     {spv::BuiltIn::PrimitiveLineIndicesEXT,   {7047, 7049, 7050}},
     {spv::BuiltIn::PrimitiveTriangleIndicesEXT, {7053, 7055, 7056}},
@@ -2829,14 +2830,69 @@ spv_result_t BuiltInsValidator::ValidateVertexIdAtDefinition(
 
 spv_result_t BuiltInsValidator::ValidateLocalInvocationIndexAtDefinition(
     const Decoration& decoration, const Instruction& inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if (spv_result_t error = ValidateI32(
+            decoration, inst,
+            [this, &inst](const std::string& message) -> spv_result_t {
+              uint32_t vuid = GetVUIDForBuiltin(
+                  spv::BuiltIn::LocalInvocationIndex, VUIDErrorType);
+              return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                     << _.VkErrorID(vuid)
+                     << "According to the Vulkan spec BuiltIn "
+                        "LocalInvocationIndex variable needs to be a 32-bit "
+                        "int scalar. "
+                     << message;
+            })) {
+      return error;
+    }
+  }
+
   // Seed at reference checks with this built-in.
   return ValidateLocalInvocationIndexAtReference(decoration, inst, inst, inst);
 }
 
 spv_result_t BuiltInsValidator::ValidateLocalInvocationIndexAtReference(
     const Decoration& decoration, const Instruction& built_in_inst,
-    const Instruction&,
+    const Instruction& referenced_inst,
     const Instruction& referenced_from_inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    const spv::StorageClass storage_class =
+        GetStorageClass(referenced_from_inst);
+    if (storage_class != spv::StorageClass::Max &&
+        storage_class != spv::StorageClass::Input) {
+      uint32_t vuid = GetVUIDForBuiltin(spv::BuiltIn::LocalInvocationIndex,
+                                        VUIDErrorStorageClass);
+      return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+             << _.VkErrorID(vuid)
+             << "Vulkan spec allows BuiltIn LocalInvocationIndex to be only "
+                "used for variables with Input storage class. "
+             << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                 referenced_from_inst)
+             << " " << GetStorageClassDesc(referenced_from_inst);
+    }
+
+    for (const spv::ExecutionModel execution_model : execution_models_) {
+      bool has_vulkan_model =
+          execution_model == spv::ExecutionModel::GLCompute ||
+          execution_model == spv::ExecutionModel::TaskNV ||
+          execution_model == spv::ExecutionModel::MeshNV ||
+          execution_model == spv::ExecutionModel::TaskEXT ||
+          execution_model == spv::ExecutionModel::MeshEXT;
+
+      if (spvIsVulkanEnv(_.context()->target_env) && !has_vulkan_model) {
+        uint32_t vuid = GetVUIDForBuiltin(spv::BuiltIn::LocalInvocationIndex,
+                                          VUIDErrorExecutionModel);
+        return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+               << _.VkErrorID(vuid)
+               << "Vulkan spec allows BuiltIn LocalInvocationIndex to be used "
+                  "only with GLCompute, MeshNV, TaskNV, MeshEXT or"
+               << " TaskEXT execution model. "
+               << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                   referenced_from_inst, execution_model);
+      }
+    }
+  }
+
   if (function_id_ == 0) {
     // Propagate this rule to all dependant ids in the global scope.
     id_to_at_reference_checks_[referenced_from_inst.id()].push_back(
