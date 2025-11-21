@@ -297,6 +297,8 @@ namespace bgfx
 			;
 	}
 
+	// Palette:
+	// https://colorkit.co/color-palette-generator/a8e6cf-dcedc1-ffd3b6-76b4bd-bdeaee-8874a3-ff0000-ff8b94/
 	constexpr uint32_t kColorFrame    = toAbgr8(0xa8, 0xe6, 0xcf);
 	constexpr uint32_t kColorSubmit   = toAbgr8(0xdc, 0xed, 0xc1);
 	constexpr uint32_t kColorView     = toAbgr8(0xff, 0xd3, 0xb6);
