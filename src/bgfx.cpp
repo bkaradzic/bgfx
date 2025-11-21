@@ -69,10 +69,99 @@ namespace bgfx
 	}
 #endif // BGFX_CONFIG_USE_TINYSTL
 
+	struct Superluminal
+	{
+		struct SuppressTailCallOptimization
+		{
+			int64_t SuppressTailCall[3];
+		};
+
+		typedef void (*SuperluminalBeginEventtFn)(const char* _inID, const char* _inData, uint32_t _inColor);
+		typedef SuppressTailCallOptimization(*SuperluminalEndEventFn)();
+
+		static void stubSuperluminalBeginEvent(const char* _inID, const char* _inData, uint32_t _inColor)
+		{
+			BX_UNUSED(_inID, _inData, _inColor);
+		}
+
+		static SuppressTailCallOptimization stubSuperluminalEndEvent()
+		{
+			return {};
+		}
+
+		bool init()
+		{
+			if (!BX_ENABLED(BGFX_CONFIG_PROFILER) )
+			{
+				return false;
+			}
+
+			const char* superluminalDllName = "PerformanceAPI.dll";
+			superluminalDll = bx::dlopen(superluminalDllName);
+
+			if (NULL != superluminalDll)
+			{
+				void* funcPtrs[11];
+
+				typedef int (*PerformanceAPI_GetAPI)(int32_t _version, void** _funcPtrs);
+
+				constexpr int32_t version = 0x30000;
+
+				PerformanceAPI_GetAPI getApi = bx::dlsym<PerformanceAPI_GetAPI>(superluminalDll, "PerformanceAPI_GetAPI");
+				if (NULL == getApi)
+				{
+					BX_TRACE("Failed to obtain Superluminal's %s GetAPI function!", superluminalDllName);
+					bx::dlclose(superluminalDll);
+					return false;
+				}
+
+				if (getApi(version, funcPtrs) )
+				{
+					BX_TRACE("Superluminal's PerformanceAPI.dll is loaded!");
+					beginEvent = (SuperluminalBeginEventtFn)funcPtrs[2];
+					endEvent   = (SuperluminalEndEventFn   )funcPtrs[6];
+					return true;
+				}
+
+				BX_TRACE("Failed to obtain Superluminal's %s GetAPI function!", superluminalDllName);
+				bx::dlclose(superluminalDll);
+			}
+			else
+			{
+				BX_TRACE("Failed to load Superluminal's %s!", superluminalDllName);
+			}
+
+			return false;
+		}
+
+		void shutdown()
+		{
+			if (NULL != superluminalDll)
+			{
+				bx::dlclose(superluminalDll);
+				superluminalDll = NULL;
+				beginEvent = stubSuperluminalBeginEvent;
+				endEvent   = stubSuperluminalEndEvent;
+			}
+		}
+
+		void* superluminalDll = NULL;
+		SuperluminalBeginEventtFn beginEvent = stubSuperluminalBeginEvent;
+		SuperluminalEndEventFn    endEvent   = stubSuperluminalEndEvent;
+	};
+
 	struct CallbackStub : public CallbackI
 	{
+		Superluminal m_superluminal;
+
+		CallbackStub()
+		{
+			m_superluminal.init();
+		}
+
 		virtual ~CallbackStub()
 		{
+			m_superluminal.shutdown();
 		}
 
 		virtual void fatal(const char* _filePath, uint16_t _line, Fatal::Enum _code, const char* _str) override
@@ -108,16 +197,19 @@ namespace bgfx
 			bx::debugOutput(out);
 		}
 
-		virtual void profilerBegin(const char* /*_name*/, uint32_t /*_abgr*/, const char* /*_filePath*/, uint16_t /*_line*/) override
+		virtual void profilerBegin(const char* _name, uint32_t _abgr, const char* /*_filePath*/, uint16_t /*_line*/) override
 		{
+			m_superluminal.beginEvent(" ", _name, _abgr);
 		}
 
-		virtual void profilerBeginLiteral(const char* /*_name*/, uint32_t /*_abgr*/, const char* /*_filePath*/, uint16_t /*_line*/) override
+		virtual void profilerBeginLiteral(const char* _name, uint32_t _abgr, const char* /*_filePath*/, uint16_t /*_line*/) override
 		{
+			m_superluminal.beginEvent(_name, NULL, _abgr);
 		}
 
 		virtual void profilerEnd() override
 		{
+			m_superluminal.endEvent();
 		}
 
 		virtual uint32_t cacheReadSize(uint64_t /*_id*/) override
