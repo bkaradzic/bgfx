@@ -1380,7 +1380,7 @@ namespace bgfx
 
 	void Frame::sort()
 	{
-		BGFX_PROFILER_SCOPE("bgfx/Sort", 0xff2040ff);
+		BGFX_PROFILER_SCOPE("bgfx/Sort", kColorSubmit);
 
 		ViewId viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
@@ -2322,7 +2322,7 @@ namespace bgfx
 
 		uint32_t frameNum = m_submit->m_frameNum;
 
-		BGFX_PROFILER_SCOPE("bgfx/API thread frame", 0xff2040ff);
+		BGFX_PROFILER_SCOPE("bgfx/API thread frame", kColorSubmit);
 		// wait for render thread to finish
 		renderSemWait();
 		frameNoRenderWait();
@@ -2441,7 +2441,7 @@ namespace bgfx
 
 	RenderFrame::Enum Context::renderFrame(int32_t _msecs)
 	{
-		BGFX_PROFILER_SCOPE("bgfx::renderFrame", 0xff2040ff);
+		BGFX_PROFILER_SCOPE("bgfx::renderFrame", kColorSubmit);
 
 #if BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 		NSAutoreleasePoolScope pool;
@@ -2449,27 +2449,27 @@ namespace bgfx
 
 		if (!m_flipAfterRender)
 		{
-			BGFX_PROFILER_SCOPE("bgfx/flip", 0xff2040ff);
+			BGFX_PROFILER_SCOPE("bgfx/flip", kColorSubmit);
 			flip();
 		}
 
 		if (apiSemWait(_msecs) )
 		{
 			{
-				BGFX_PROFILER_SCOPE("bgfx/Exec commands pre", 0xff2040ff);
+				BGFX_PROFILER_SCOPE("bgfx/Exec commands pre", kColorResource);
 				rendererExecCommands(m_render->m_cmdPre);
 			}
 
 			if (m_rendererInitialized)
 			{
 				{
-					BGFX_PROFILER_SCOPE("bgfx/Render submit", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("bgfx/Render submit", kColorSubmit);
 					m_renderCtx->submit(m_render, m_clearQuad, m_textVideoMemBlitter);
 					m_flipped = false;
 				}
 
 				{
-					BGFX_PROFILER_SCOPE("bgfx/Screenshot", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("bgfx/Screenshot", kColorResource);
 					for (uint8_t ii = 0, num = m_render->m_numScreenShots; ii < num; ++ii)
 					{
 						const ScreenShot& screenShot = m_render->m_screenShot[ii];
@@ -2479,7 +2479,7 @@ namespace bgfx
 			}
 
 			{
-				BGFX_PROFILER_SCOPE("bgfx/Exec commands post", 0xff2040ff);
+				BGFX_PROFILER_SCOPE("bgfx/Exec commands post", kColorResource);
 				rendererExecCommands(m_render->m_cmdPost);
 			}
 
@@ -2487,7 +2487,7 @@ namespace bgfx
 
 			if (m_flipAfterRender)
 			{
-				BGFX_PROFILER_SCOPE("bgfx/flip", 0xff2040ff);
+				BGFX_PROFILER_SCOPE("bgfx/flip", kColorSubmit);
 				flip();
 			}
 		}
@@ -2543,7 +2543,7 @@ namespace bgfx
 
 	void Context::flushTextureUpdateBatch(CommandBuffer& _cmdbuf)
 	{
-		BGFX_PROFILER_SCOPE("flushTextureUpdateBatch", 0xff2040ff);
+		BGFX_PROFILER_SCOPE("flushTextureUpdateBatch", kColorResource);
 		if (m_textureUpdateBatch.sort() )
 		{
 			const uint32_t pos = _cmdbuf.m_pos;
@@ -2954,7 +2954,7 @@ namespace bgfx
 
 			case CommandBuffer::CreateIndexBuffer:
 				{
-					BGFX_PROFILER_SCOPE("CreateIndexBuffer", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("CreateIndexBuffer", kColorResource);
 
 					IndexBufferHandle handle;
 					_cmdbuf.read(handle);
@@ -2973,7 +2973,7 @@ namespace bgfx
 
 			case CommandBuffer::DestroyIndexBuffer:
 				{
-					BGFX_PROFILER_SCOPE("DestroyIndexBuffer", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("DestroyIndexBuffer", kColorResource);
 
 					IndexBufferHandle handle;
 					_cmdbuf.read(handle);
@@ -2984,7 +2984,7 @@ namespace bgfx
 
 			case CommandBuffer::CreateVertexLayout:
 				{
-					BGFX_PROFILER_SCOPE("CreateVertexLayout", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("CreateVertexLayout", kColorResource);
 
 					VertexLayoutHandle handle;
 					_cmdbuf.read(handle);
@@ -2998,7 +2998,7 @@ namespace bgfx
 
 			case CommandBuffer::DestroyVertexLayout:
 				{
-					BGFX_PROFILER_SCOPE("DestroyVertexLayout", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("DestroyVertexLayout", kColorResource);
 
 					VertexLayoutHandle handle;
 					_cmdbuf.read(handle);
@@ -3009,7 +3009,7 @@ namespace bgfx
 
 			case CommandBuffer::CreateVertexBuffer:
 				{
-					BGFX_PROFILER_SCOPE("CreateVertexBuffer", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("CreateVertexBuffer", kColorResource);
 
 					VertexBufferHandle handle;
 					_cmdbuf.read(handle);
@@ -3031,7 +3031,7 @@ namespace bgfx
 
 			case CommandBuffer::DestroyVertexBuffer:
 				{
-					BGFX_PROFILER_SCOPE("DestroyVertexBuffer", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("DestroyVertexBuffer", kColorResource);
 
 					VertexBufferHandle handle;
 					_cmdbuf.read(handle);
@@ -3042,7 +3042,7 @@ namespace bgfx
 
 			case CommandBuffer::CreateDynamicIndexBuffer:
 				{
-					BGFX_PROFILER_SCOPE("CreateDynamicIndexBuffer", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("CreateDynamicIndexBuffer", kColorResource);
 
 					IndexBufferHandle handle;
 					_cmdbuf.read(handle);
@@ -3059,7 +3059,7 @@ namespace bgfx
 
 			case CommandBuffer::UpdateDynamicIndexBuffer:
 				{
-					BGFX_PROFILER_SCOPE("UpdateDynamicIndexBuffer", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("UpdateDynamicIndexBuffer", kColorResource);
 
 					IndexBufferHandle handle;
 					_cmdbuf.read(handle);
@@ -3081,7 +3081,7 @@ namespace bgfx
 
 			case CommandBuffer::DestroyDynamicIndexBuffer:
 				{
-					BGFX_PROFILER_SCOPE("DestroyDynamicIndexBuffer", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("DestroyDynamicIndexBuffer", kColorResource);
 
 					IndexBufferHandle handle;
 					_cmdbuf.read(handle);
@@ -3092,7 +3092,7 @@ namespace bgfx
 
 			case CommandBuffer::CreateDynamicVertexBuffer:
 				{
-					BGFX_PROFILER_SCOPE("CreateDynamicVertexBuffer", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("CreateDynamicVertexBuffer", kColorResource);
 
 					VertexBufferHandle handle;
 					_cmdbuf.read(handle);
@@ -3109,7 +3109,7 @@ namespace bgfx
 
 			case CommandBuffer::UpdateDynamicVertexBuffer:
 				{
-					BGFX_PROFILER_SCOPE("UpdateDynamicVertexBuffer", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("UpdateDynamicVertexBuffer", kColorResource);
 
 					VertexBufferHandle handle;
 					_cmdbuf.read(handle);
@@ -3131,7 +3131,7 @@ namespace bgfx
 
 			case CommandBuffer::DestroyDynamicVertexBuffer:
 				{
-					BGFX_PROFILER_SCOPE("DestroyDynamicVertexBuffer", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("DestroyDynamicVertexBuffer", kColorResource);
 
 					VertexBufferHandle handle;
 					_cmdbuf.read(handle);
@@ -3142,7 +3142,7 @@ namespace bgfx
 
 			case CommandBuffer::CreateShader:
 				{
-					BGFX_PROFILER_SCOPE("CreateShader", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("CreateShader", kColorResource);
 
 					ShaderHandle handle;
 					_cmdbuf.read(handle);
@@ -3158,7 +3158,7 @@ namespace bgfx
 
 			case CommandBuffer::DestroyShader:
 				{
-					BGFX_PROFILER_SCOPE("DestroyShader", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("DestroyShader", kColorResource);
 
 					ShaderHandle handle;
 					_cmdbuf.read(handle);
@@ -3169,7 +3169,7 @@ namespace bgfx
 
 			case CommandBuffer::CreateProgram:
 				{
-					BGFX_PROFILER_SCOPE("CreateProgram", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("CreateProgram", kColorResource);
 
 					ProgramHandle handle;
 					_cmdbuf.read(handle);
@@ -3186,7 +3186,7 @@ namespace bgfx
 
 			case CommandBuffer::DestroyProgram:
 				{
-					BGFX_PROFILER_SCOPE("DestroyProgram", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("DestroyProgram", kColorResource);
 
 					ProgramHandle handle;
 					_cmdbuf.read(handle);
@@ -3197,7 +3197,7 @@ namespace bgfx
 
 			case CommandBuffer::CreateTexture:
 				{
-					BGFX_PROFILER_SCOPE("CreateTexture", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("CreateTexture", kColorResource);
 
 					TextureHandle handle;
 					_cmdbuf.read(handle);
@@ -3240,7 +3240,7 @@ namespace bgfx
 
 			case CommandBuffer::UpdateTexture:
 				{
-					BGFX_PROFILER_SCOPE("UpdateTexture", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("UpdateTexture", kColorResource);
 
 					if (m_textureUpdateBatch.isFull() )
 					{
@@ -3275,7 +3275,7 @@ namespace bgfx
 
 			case CommandBuffer::ReadTexture:
 				{
-					BGFX_PROFILER_SCOPE("ReadTexture", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("ReadTexture", kColorResource);
 
 					TextureHandle handle;
 					_cmdbuf.read(handle);
@@ -3292,7 +3292,7 @@ namespace bgfx
 
 			case CommandBuffer::ResizeTexture:
 				{
-					BGFX_PROFILER_SCOPE("ResizeTexture", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("ResizeTexture", kColorResource);
 
 					TextureHandle handle;
 					_cmdbuf.read(handle);
@@ -3315,7 +3315,7 @@ namespace bgfx
 
 			case CommandBuffer::DestroyTexture:
 				{
-					BGFX_PROFILER_SCOPE("DestroyTexture", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("DestroyTexture", kColorResource);
 
 					TextureHandle handle;
 					_cmdbuf.read(handle);
@@ -3326,7 +3326,7 @@ namespace bgfx
 
 			case CommandBuffer::CreateFrameBuffer:
 				{
-					BGFX_PROFILER_SCOPE("CreateFrameBuffer", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("CreateFrameBuffer", kColorResource);
 
 					FrameBufferHandle handle;
 					_cmdbuf.read(handle);
@@ -3368,7 +3368,7 @@ namespace bgfx
 
 			case CommandBuffer::DestroyFrameBuffer:
 				{
-					BGFX_PROFILER_SCOPE("DestroyFrameBuffer", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("DestroyFrameBuffer", kColorResource);
 
 					FrameBufferHandle handle;
 					_cmdbuf.read(handle);
@@ -3379,7 +3379,7 @@ namespace bgfx
 
 			case CommandBuffer::CreateUniform:
 				{
-					BGFX_PROFILER_SCOPE("CreateUniform", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("CreateUniform", kColorResource);
 
 					UniformHandle handle;
 					_cmdbuf.read(handle);
@@ -3401,7 +3401,7 @@ namespace bgfx
 
 			case CommandBuffer::DestroyUniform:
 				{
-					BGFX_PROFILER_SCOPE("DestroyUniform", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("DestroyUniform", kColorResource);
 
 					UniformHandle handle;
 					_cmdbuf.read(handle);
@@ -3412,7 +3412,7 @@ namespace bgfx
 
 			case CommandBuffer::UpdateViewName:
 				{
-					BGFX_PROFILER_SCOPE("UpdateViewName", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("UpdateViewName", kColorResource);
 
 					ViewId id;
 					_cmdbuf.read(id);
@@ -3428,7 +3428,7 @@ namespace bgfx
 
 			case CommandBuffer::InvalidateOcclusionQuery:
 				{
-					BGFX_PROFILER_SCOPE("InvalidateOcclusionQuery", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("InvalidateOcclusionQuery", kColorResource);
 
 					OcclusionQueryHandle handle;
 					_cmdbuf.read(handle);
@@ -3439,7 +3439,7 @@ namespace bgfx
 
 			case CommandBuffer::SetName:
 				{
-					BGFX_PROFILER_SCOPE("SetName", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("SetName", kColorResource);
 
 					Handle handle;
 					_cmdbuf.read(handle);

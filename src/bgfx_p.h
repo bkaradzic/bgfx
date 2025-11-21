@@ -287,6 +287,25 @@ namespace bgfx
 {
 	constexpr uint32_t kChunkMagicTex = BX_MAKEFOURCC('T', 'E', 'X', 0x0);
 
+	inline constexpr uint32_t toAbgr8(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 0xff)
+	{
+		return 0
+			| (uint32_t(_r) << 24)
+			| (uint32_t(_g) << 16)
+			| (uint32_t(_b) << 8)
+			| (uint32_t(_a))
+			;
+	}
+
+	constexpr uint32_t kColorFrame    = toAbgr8(0xa8, 0xe6, 0xcf);
+	constexpr uint32_t kColorSubmit   = toAbgr8(0xdc, 0xed, 0xc1);
+	constexpr uint32_t kColorView     = toAbgr8(0xff, 0xd3, 0xb6);
+	constexpr uint32_t kColorDraw     = toAbgr8(0x76, 0xb4, 0xbd);
+	constexpr uint32_t kColorCompute  = toAbgr8(0xbd, 0xea, 0xee);
+	constexpr uint32_t kColorResource = toAbgr8(0x88, 0x74, 0xa3);
+	constexpr uint32_t kColorMarker   = toAbgr8(0xff, 0x00, 0x00);
+	constexpr uint32_t kColorWait     = toAbgr8(0xff, 0x8b, 0x94);
+
 	extern InternalData g_internalData;
 	extern PlatformData g_platformData;
 	extern bool g_platformDataChangedSinceReset;
@@ -3616,7 +3635,7 @@ namespace bgfx
 			BX_TRACE("render thread exit");
 			return bx::kExitSuccess;
 		}
-#endif
+#endif // BX_CONFIG_SUPPORTS_THREADING
 
 		// game thread
 		bool init(const Init& _init);
@@ -5693,7 +5712,7 @@ namespace bgfx
 				return true;
 			}
 
-			BGFX_PROFILER_SCOPE("bgfx/API thread wait", 0xff2040ff);
+			BGFX_PROFILER_SCOPE("bgfx/API thread wait", kColorWait);
 			int64_t start = bx::getHPCounter();
 			bool ok = m_apiSem.wait(_msecs);
 			if (ok)
@@ -5718,7 +5737,7 @@ namespace bgfx
 		{
 			if (!m_singleThreaded)
 			{
-				BGFX_PROFILER_SCOPE("bgfx/Render thread wait", 0xff2040ff);
+				BGFX_PROFILER_SCOPE("bgfx/Render thread wait", kColorWait);
 				int64_t start = bx::getHPCounter();
 				bool ok = m_renderSem.wait();
 				BX_ASSERT(ok, "Semaphore wait failed."); BX_UNUSED(ok);

@@ -10,23 +10,6 @@
 
 namespace bgfx
 {
-	inline constexpr uint32_t toAbgr8(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 0xff)
-	{
-		return 0
-			| (uint32_t(_r)<<24)
-			| (uint32_t(_g)<<16)
-			| (uint32_t(_b)<< 8)
-			| (uint32_t(_a)    )
-			;
-	}
-
-	constexpr uint32_t kColorFrame    = toAbgr8(0xff, 0xd7, 0xc9);
-	constexpr uint32_t kColorView     = toAbgr8(0xe4, 0xb4, 0x8e);
-	constexpr uint32_t kColorDraw     = toAbgr8(0xc6, 0xe5, 0xb9);
-	constexpr uint32_t kColorCompute  = toAbgr8(0xa7, 0xdb, 0xd8);
-	constexpr uint32_t kColorMarker   = toAbgr8(0xff, 0x00, 0x00);
-	constexpr uint32_t kColorResource = toAbgr8(0xff, 0x40, 0x20);
-
 	struct BlitState
 	{
 		BlitState(const Frame* _frame)

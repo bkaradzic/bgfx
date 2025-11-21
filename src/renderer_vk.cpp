@@ -8195,7 +8195,7 @@ retry:
 
 			if (VK_NULL_HANDLE != m_backBufferFence[m_backBufferColorIdx])
 			{
-				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
+				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorWait);
 
 				VK_CHECK(vkWaitForFences(
 					  device
@@ -8659,7 +8659,7 @@ retry:
 			CommandList& commandList = m_commandList[m_currentFrameInFlight];
 
 			{
-				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorFrame);
+				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorWait);
 
 				result = vkWaitForFences(device, 1, &commandList.m_fence, VK_TRUE, UINT64_MAX);
 			}
@@ -8764,7 +8764,8 @@ retry:
 
 			if (_wait)
 			{
-				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorDraw);
+				BGFX_PROFILER_SCOPE("vkWaitForFences", kColorWait);
+
 				VK_CHECK(vkWaitForFences(device, 1, &m_completedFence, VK_TRUE, UINT64_MAX) );
 			}
 
