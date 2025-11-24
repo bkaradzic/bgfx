@@ -3174,8 +3174,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				m_ptrStencil = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 			}
 
-			MTL_RELEASE(desc, 0);
-
 			uint8_t* temp = NULL;
 			if (convert)
 			{
@@ -3252,6 +3250,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					depth  >>= 1;
 				}
 			}
+			
+			MTL_RELEASE(desc, 0);
 
 			if (NULL != temp)
 			{
