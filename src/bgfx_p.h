@@ -2178,8 +2178,8 @@ namespace bgfx
 	{
 		using KeyT = uint64_t;
 
-		static constexpr uint8_t kViewShift   = sizeof(KeyT)*8-kSortKeyViewNumBits;
-		static constexpr KeyT    kViewMask    = KeyT(BGFX_CONFIG_MAX_VIEWS-1)<<kViewShift;
+		static constexpr uint8_t kViewShift   = sizeof(KeyT)*8-16;
+		static constexpr KeyT    kViewMask    = KeyT(UINT16_MAX)<<kViewShift;
 		static constexpr uint8_t kHandleShift = kViewShift - 16;
 		static constexpr KeyT    kHandleMask  = KeyT(UINT16_MAX)<<kHandleShift;
 		static constexpr uint8_t kOffsetShift = kHandleShift-20;
