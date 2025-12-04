@@ -1977,6 +1977,22 @@ namespace bgfx
 								);
 						}
 
+						if (hasPrimitiveId)
+						{
+							if (profile->id >= 400)
+							{
+								preprocessor.writef(
+									" \\\n\t%suint gl_PrimitiveID : SV_PrimitiveID"
+									, arg++ > 0 ? ", " : "  "
+									);
+							}
+							else
+							{
+								bx::write(_messageWriter, &messageErr, "gl_PrimitiveID builtin is not supported by D3D9 HLSL.\n");
+								return false;
+							}
+						}
+
 						if (hasFrontFacing)
 						{
 							if (profile->id < 400)
@@ -1992,22 +2008,6 @@ namespace bgfx
 									" \\\n\t%sbool gl_FrontFacing : SV_IsFrontFace"
 									, arg++ > 0 ? ", " : "  "
 									);
-							}
-						}
-
-						if (hasPrimitiveId)
-						{
-							if (profile->id >= 400)
-							{
-								preprocessor.writef(
-									" \\\n\t%suint gl_PrimitiveID : SV_PrimitiveID"
-									, arg++ > 0 ? ", " : "  "
-									);
-							}
-							else
-							{
-								bx::write(_messageWriter, &messageErr, "gl_PrimitiveID builtin is not supported by D3D9 HLSL.\n");
-								return false;
 							}
 						}
 
