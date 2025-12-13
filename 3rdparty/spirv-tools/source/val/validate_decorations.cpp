@@ -398,24 +398,6 @@ bool IsAlignedTo(uint32_t offset, uint32_t alignment) {
   return 0 == (offset % alignment);
 }
 
-std::string getStorageClassString(spv::StorageClass sc) {
-  switch (sc) {
-    case spv::StorageClass::Uniform:
-      return "Uniform";
-    case spv::StorageClass::UniformConstant:
-      return "UniformConstant";
-    case spv::StorageClass::PushConstant:
-      return "PushConstant";
-    case spv::StorageClass::Workgroup:
-      return "Workgroup";
-    case spv::StorageClass::PhysicalStorageBuffer:
-      return "PhysicalStorageBuffer";
-    default:
-      // Only other valid storage class in these checks
-      return "StorageBuffer";
-  }
-}
-
 // Returns SPV_SUCCESS if the given struct satisfies standard layout rules for
 // Block or BufferBlocks in Vulkan.  Otherwise emits a diagnostic and returns
 // something other than SPV_SUCCESS.  Matrices inherit the specified column
@@ -442,7 +424,7 @@ spv_result_t checkLayout(uint32_t struct_id, spv::StorageClass storage_class,
     DiagnosticStream ds = std::move(
         vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(struct_id))
         << "Structure id " << struct_id << " decorated as " << decoration_str
-        << " for variable in " << getStorageClassString(storage_class)
+        << " for variable in " << StorageClassToString(storage_class)
         << " storage class must follow "
         << (scalar_block_layout
                 ? "scalar "
@@ -1282,7 +1264,7 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
           if (!entry_points.empty() &&
               !hasDecoration(var_id, spv::Decoration::Binding, vstate)) {
             return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(var_id))
-                   << getStorageClassString(storageClass) << " id '" << var_id
+                   << StorageClassToString(storageClass) << " id '" << var_id
                    << "' is missing Binding decoration.\n"
                    << "From ARB_gl_spirv extension:\n"
                    << "Uniform and shader storage block variables must "

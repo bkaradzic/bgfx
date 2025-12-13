@@ -183,29 +183,13 @@ uint32_t ValueNumberTable::AssignValueNumber(Instruction* inst) {
   }
 
   // Apply normal form, so a+b == b+a
-  switch (value_ins.opcode()) {
-    case spv::Op::OpIAdd:
-    case spv::Op::OpFAdd:
-    case spv::Op::OpIMul:
-    case spv::Op::OpFMul:
-    case spv::Op::OpDot:
-    case spv::Op::OpLogicalEqual:
-    case spv::Op::OpLogicalNotEqual:
-    case spv::Op::OpLogicalOr:
-    case spv::Op::OpLogicalAnd:
-    case spv::Op::OpIEqual:
-    case spv::Op::OpINotEqual:
-    case spv::Op::OpBitwiseOr:
-    case spv::Op::OpBitwiseXor:
-    case spv::Op::OpBitwiseAnd:
-      if (value_ins.GetSingleWordInOperand(0) >
-          value_ins.GetSingleWordInOperand(1)) {
-        value_ins.SetInOperands(
-            {{SPV_OPERAND_TYPE_ID, {value_ins.GetSingleWordInOperand(1)}},
-             {SPV_OPERAND_TYPE_ID, {value_ins.GetSingleWordInOperand(0)}}});
-      }
-    default:
-      break;
+  if (spvOpcodeIsCommutativeBinaryOperator(value_ins.opcode())) {
+    if (value_ins.GetSingleWordInOperand(0) >
+        value_ins.GetSingleWordInOperand(1)) {
+      value_ins.SetInOperands(
+          {{SPV_OPERAND_TYPE_ID, {value_ins.GetSingleWordInOperand(1)}},
+           {SPV_OPERAND_TYPE_ID, {value_ins.GetSingleWordInOperand(0)}}});
+    }
   }
 
   // Otherwise, we check if this value has been computed before.

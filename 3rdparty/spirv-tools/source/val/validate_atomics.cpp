@@ -235,7 +235,9 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst) {
       if (!IsStorageClassAllowedByUniversalRules(storage_class)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << spvOpcodeString(opcode)
-               << ": storage class forbidden by universal validation rules.";
+               << ": Can not be used with storage class "
+               << spvtools::StorageClassToString(storage_class)
+               << " by universal validation rules";
       }
 
       // Then Shader rules
@@ -249,8 +251,10 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst) {
               (storage_class != spv::StorageClass::PhysicalStorageBuffer) &&
               (storage_class != spv::StorageClass::TaskPayloadWorkgroupEXT)) {
             return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                   << _.VkErrorID(4686) << spvOpcodeString(opcode)
-                   << ": Vulkan spec only allows storage classes for atomic to "
+                   << _.VkErrorID(4686) << spvOpcodeString(opcode) << ": "
+                   << spvtools::StorageClassToString(storage_class)
+                   << " is not allowed, the Vulkan spec only allows storage "
+                      "classes for atomic to "
                       "be: Uniform, Workgroup, Image, StorageBuffer, "
                       "PhysicalStorageBuffer or TaskPayloadWorkgroupEXT.";
           }
@@ -335,8 +339,9 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst) {
             (storage_class != spv::StorageClass::CrossWorkgroup) &&
             (storage_class != spv::StorageClass::Generic)) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                 << spvOpcodeString(opcode)
-                 << ": storage class must be Function, Workgroup, "
+                 << spvOpcodeString(opcode) << ": storage class is "
+                 << spvtools::StorageClassToString(storage_class)
+                 << ", but must be Function, Workgroup, "
                     "CrossWorkGroup or Generic in the OpenCL environment.";
         }
 
