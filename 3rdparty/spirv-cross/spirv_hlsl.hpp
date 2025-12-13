@@ -298,6 +298,7 @@ private:
 	SPIRType::BaseType get_builtin_basetype(BuiltIn builtin, SPIRType::BaseType default_type) override;
 
 	bool is_hlsl_force_storage_buffer_as_uav(ID id) const;
+	bool is_hidden_io_variable(const SPIRVariable &var) const;
 
 	Options hlsl_options;
 

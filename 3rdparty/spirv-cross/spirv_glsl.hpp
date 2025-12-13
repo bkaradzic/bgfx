@@ -763,6 +763,7 @@ protected:
 	bool expression_read_implies_multiple_reads(uint32_t id) const;
 	SPIRExpression &emit_op(uint32_t result_type, uint32_t result_id, const std::string &rhs, bool forward_rhs,
 	                        bool suppress_usage_tracking = false);
+	void emit_transposed_op(uint32_t result_type, uint32_t result_id, const std::string &rhs, bool forward_rhs);
 
 	void access_chain_internal_append_index(std::string &expr, uint32_t base, const SPIRType *type,
 	                                        AccessChainFlags flags, bool &access_chain_is_arrayed, uint32_t index);
@@ -805,6 +806,7 @@ protected:
 	const char *index_to_swizzle(uint32_t index);
 	std::string remap_swizzle(const SPIRType &result_type, uint32_t input_components, const std::string &expr);
 	std::string declare_temporary(uint32_t type, uint32_t id);
+	bool can_declare_inline_temporary(uint32_t id) const;
 	void emit_uninitialized_temporary(uint32_t type, uint32_t id);
 	SPIRExpression &emit_uninitialized_temporary_expression(uint32_t type, uint32_t id);
 	virtual void append_global_func_args(const SPIRFunction &func, uint32_t index, SmallVector<std::string> &arglist);
