@@ -70,6 +70,7 @@
 #include "../Include/InfoSink.h"
 
 #include <functional>
+#include <unordered_map>
 
 namespace glslang {
 
@@ -505,6 +506,11 @@ public:
         retargetedSymbols.push_back({from, to});
     }
 
+    void collectRetargetedSymbols(std::unordered_multimap<std::string, std::string> &out) const {
+        for (const auto &[fromName, toName] : retargetedSymbols)
+            out.insert({std::string{toName}, std::string{fromName}});
+    }
+
     TSymbol* find(const TString& name) const
     {
         tLevel::const_iterator it = level.find(name);
@@ -662,9 +668,10 @@ public:
     //
 protected:
     static const uint32_t LevelFlagBitOffset = 56;
-    static const int globalLevel = 3;
+    static constexpr int builtinLevel = 2;
+    static constexpr int globalLevel = 3;
     static bool isSharedLevel(int level)  { return level <= 1; }            // exclude all per-compile levels
-    static bool isBuiltInLevel(int level) { return level <= 2; }            // exclude user globals
+    static bool isBuiltInLevel(int level) { return level <= builtinLevel; } // exclude user globals
     static bool isGlobalLevel(int level)  { return level <= globalLevel; }  // include user globals
 public:
     bool isEmpty() { return table.size() == 0; }
@@ -829,6 +836,13 @@ public:
         table[level]->retargetSymbol(from, to);
     }
 
+    std::unordered_multimap<std::string, std::string> collectBuiltinAlias() {
+        std::unordered_multimap<std::string, std::string> allRetargets;
+        for (int level = 0; level <= std::min(currentLevel(), builtinLevel); ++level)
+            table[level]->collectRetargetedSymbols(allRetargets);
+
+        return allRetargets;
+    }
 
     // Find of a symbol that returns how many layers deep of nested
     // structures-with-member-functions ('this' scopes) deep the symbol was

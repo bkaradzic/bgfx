@@ -48,6 +48,7 @@
 #include <functional>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 class TInfoSink;
@@ -1161,6 +1162,13 @@ public:
     void updateNumericFeature(TNumericFeatures::feature f, bool on)
         { on ? numericFeatures.insert(f) : numericFeatures.erase(f); }
 
+    void setBuiltinAliasLookup(std::unordered_multimap<std::string, std::string> symbolMap) {
+        builtinAliasLookup = std::move(symbolMap);
+    }
+    const std::unordered_multimap<std::string, std::string>& getBuiltinAliasLookup() const {
+        return builtinAliasLookup;
+    }
+
 protected:
     TIntermSymbol* addSymbol(long long Id, const TString&, const TString&, const TType&, const TConstUnionArray&, TIntermTyped* subtree, const TSourceLoc&);
     void error(TInfoSink& infoSink, const TSourceLoc* loc, EShMessages messages, const char*, EShLanguage unitStage = EShLangCount);
@@ -1334,6 +1342,9 @@ protected:
 
     // Included text. First string is a name, second is the included text
     std::map<std::string, std::string> includeText;
+
+    // Maps from canonical symbol name to alias symbol names
+    std::unordered_multimap<std::string, std::string> builtinAliasLookup;
 
     // for OpModuleProcessed, or equivalent
     TProcesses processes;
