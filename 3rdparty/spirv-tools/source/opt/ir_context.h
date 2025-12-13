@@ -508,6 +508,9 @@ class IRContext {
   // Change operands of debug instruction to DebugInfoNone.
   void KillOperandFromDebugInstructions(Instruction* inst);
 
+  // Remove the debug scope from any instruction related to |inst|.
+  void KillRelatedDebugScopes(Instruction* inst);
+
   // Returns the next unique id for use by an instruction.
   inline uint32_t TakeNextUniqueId() {
     assert(unique_id_ != std::numeric_limits<uint32_t>::max());

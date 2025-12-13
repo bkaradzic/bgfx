@@ -2703,6 +2703,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-ViewportIndex-ViewportIndex-07060);
     case 7102:
       return VUID_WRAP(VUID-StandaloneSpirv-MeshEXT-07102);
+    case 7107:
+      return VUID_WRAP(VUID-StandaloneSpirv-MeshEXT-07107);
     case 7290:
       return VUID_WRAP(VUID-StandaloneSpirv-Input-07290);
     case 7320:
@@ -2813,6 +2815,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-OpUntypedVariableKHR-11167);
     case 11805:
       return VUID_WRAP(VUID-StandaloneSpirv-OpArrayLength-11805);
+    case 12243:
+      return VUID_WRAP(VUID-StandaloneSpirv-Scope-12243);
     default:
       return "";  // unknown id
   }

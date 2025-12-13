@@ -27,6 +27,48 @@ namespace spvtools {
 namespace val {
 namespace {
 
+// TODO - Make a common util if someone else needs it too outside this file
+const char* ExecutionModelToString(spv::ExecutionModel value) {
+  switch (value) {
+    case spv::ExecutionModel::Vertex:
+      return "Vertex";
+    case spv::ExecutionModel::TessellationControl:
+      return "TessellationControl";
+    case spv::ExecutionModel::TessellationEvaluation:
+      return "TessellationEvaluation";
+    case spv::ExecutionModel::Geometry:
+      return "Geometry";
+    case spv::ExecutionModel::Fragment:
+      return "Fragment";
+    case spv::ExecutionModel::GLCompute:
+      return "GLCompute";
+    case spv::ExecutionModel::Kernel:
+      return "Kernel";
+    case spv::ExecutionModel::TaskNV:
+      return "TaskNV";
+    case spv::ExecutionModel::MeshNV:
+      return "MeshNV";
+    case spv::ExecutionModel::RayGenerationKHR:
+      return "RayGenerationKHR";
+    case spv::ExecutionModel::IntersectionKHR:
+      return "IntersectionKHR";
+    case spv::ExecutionModel::AnyHitKHR:
+      return "AnyHitKHR";
+    case spv::ExecutionModel::ClosestHitKHR:
+      return "ClosestHitKHR";
+    case spv::ExecutionModel::MissKHR:
+      return "MissKHR";
+    case spv::ExecutionModel::CallableKHR:
+      return "CallableKHR";
+    case spv::ExecutionModel::TaskEXT:
+      return "TaskEXT";
+    case spv::ExecutionModel::MeshEXT:
+      return "MeshEXT";
+    default:
+      return "Unknown";
+  }
+}
+
 spv_result_t ValidateEntryPoint(ValidationState_t& _, const Instruction* inst) {
   const auto entry_point_id = inst->GetOperandAs<uint32_t>(1);
   auto entry_point = _.FindDef(entry_point_id);
@@ -306,74 +348,79 @@ spv_result_t ValidateEntryPoint(ValidationState_t& _, const Instruction* inst) {
   }
 
   if (spvIsVulkanEnv(_.context()->target_env)) {
-    switch (execution_model) {
-      case spv::ExecutionModel::GLCompute:
-        if (!has_mode(spv::ExecutionMode::LocalSize)) {
-          bool ok = has_workgroup_size || has_local_size_id;
-          if (!ok && _.HasCapability(spv::Capability::TileShadingQCOM)) {
-            ok = has_mode(spv::ExecutionMode::TileShadingRateQCOM);
-          }
-          if (!ok) {
+    // SPV_QCOM_tile_shading checks
+    if (execution_model == spv::ExecutionModel::GLCompute) {
+      if (_.HasCapability(spv::Capability::TileShadingQCOM)) {
+        if (has_mode(spv::ExecutionMode::TileShadingRateQCOM) &&
+            (has_mode(spv::ExecutionMode::LocalSize) ||
+             has_mode(spv::ExecutionMode::LocalSizeId))) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "If the TileShadingRateQCOM execution mode is used, "
+                 << "LocalSize and LocalSizeId must not be specified.";
+        }
+        if (has_mode(spv::ExecutionMode::NonCoherentTileAttachmentReadQCOM)) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "The NonCoherentTileAttachmentQCOM execution mode must "
+                    "not be used in any stage other than fragment.";
+        }
+      } else {
+        if (has_mode(spv::ExecutionMode::TileShadingRateQCOM)) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "If the TileShadingRateQCOM execution mode is used, the "
+                    "TileShadingQCOM capability must be enabled.";
+        }
+      }
+    } else {
+      if (has_mode(spv::ExecutionMode::TileShadingRateQCOM)) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "The TileShadingRateQCOM execution mode must not be used "
+                  "in any stage other than compute.";
+      }
+      if (execution_model != spv::ExecutionModel::Fragment) {
+        if (has_mode(spv::ExecutionMode::NonCoherentTileAttachmentReadQCOM)) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "The NonCoherentTileAttachmentQCOM execution mode must "
+                    "not be used in any stage other than fragment.";
+        }
+        if (_.HasCapability(spv::Capability::TileShadingQCOM)) {
+          return _.diag(SPV_ERROR_INVALID_CAPABILITY, inst)
+                 << "The TileShadingQCOM capability must not be enabled in "
+                    "any stage other than compute or fragment.";
+        }
+      } else {
+        if (has_mode(spv::ExecutionMode::NonCoherentTileAttachmentReadQCOM)) {
+          if (!_.HasCapability(spv::Capability::TileShadingQCOM)) {
             return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                   << _.VkErrorID(10685)
-                   << "In the Vulkan environment, GLCompute execution model "
-                      "entry points require either the "
-                   << (_.HasCapability(spv::Capability::TileShadingQCOM)
-                           ? "TileShadingRateQCOM, "
-                           : "")
-                   << "LocalSize or LocalSizeId execution mode or an object "
-                      "decorated with WorkgroupSize must be specified.";
+                   << "If the NonCoherentTileAttachmentReadQCOM execution "
+                      "mode is used, the TileShadingQCOM capability must be "
+                      "enabled.";
           }
         }
+      }
+    }
 
-        if (_.HasCapability(spv::Capability::TileShadingQCOM)) {
-          if (has_mode(spv::ExecutionMode::TileShadingRateQCOM) &&
-              (has_mode(spv::ExecutionMode::LocalSize) ||
-               has_mode(spv::ExecutionMode::LocalSizeId))) {
-            return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                   << "If the TileShadingRateQCOM execution mode is used, "
-                   << "LocalSize and LocalSizeId must not be specified.";
-          }
-          if (has_mode(spv::ExecutionMode::NonCoherentTileAttachmentReadQCOM)) {
-            return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                   << "The NonCoherentTileAttachmentQCOM execution mode must "
-                      "not be used in any stage other than fragment.";
-          }
-        } else {
-          if (has_mode(spv::ExecutionMode::TileShadingRateQCOM)) {
-            return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                   << "If the TileShadingRateQCOM execution mode is used, the "
-                      "TileShadingQCOM capability must be enabled.";
-          }
+    switch (execution_model) {
+      case spv::ExecutionModel::GLCompute:
+      case spv::ExecutionModel::MeshEXT:
+      case spv::ExecutionModel::MeshNV:
+      case spv::ExecutionModel::TaskEXT:
+      case spv::ExecutionModel::TaskNV:
+        if (!has_mode(spv::ExecutionMode::LocalSize) && !has_workgroup_size &&
+            !has_local_size_id &&
+            !has_mode(spv::ExecutionMode::TileShadingRateQCOM)) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << _.VkErrorID(10685) << "In the Vulkan environment, "
+                 << ExecutionModelToString(execution_model)
+                 << " execution model "
+                    "entry points require either the "
+                 << (_.HasCapability(spv::Capability::TileShadingQCOM)
+                         ? "TileShadingRateQCOM, "
+                         : "")
+                 << "LocalSize or LocalSizeId execution mode or an object "
+                    "decorated with WorkgroupSize must be specified.";
         }
         break;
       default:
-        if (has_mode(spv::ExecutionMode::TileShadingRateQCOM)) {
-          return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                 << "The TileShadingRateQCOM execution mode must not be used "
-                    "in any stage other than compute.";
-        }
-        if (execution_model != spv::ExecutionModel::Fragment) {
-          if (has_mode(spv::ExecutionMode::NonCoherentTileAttachmentReadQCOM)) {
-            return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                   << "The NonCoherentTileAttachmentQCOM execution mode must "
-                      "not be used in any stage other than fragment.";
-          }
-          if (_.HasCapability(spv::Capability::TileShadingQCOM)) {
-            return _.diag(SPV_ERROR_INVALID_CAPABILITY, inst)
-                   << "The TileShadingQCOM capability must not be enabled in "
-                      "any stage other than compute or fragment.";
-          }
-        } else {
-          if (has_mode(spv::ExecutionMode::NonCoherentTileAttachmentReadQCOM)) {
-            if (!_.HasCapability(spv::Capability::TileShadingQCOM)) {
-              return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                     << "If the NonCoherentTileAttachmentReadQCOM execution "
-                        "mode is used, the TileShadingQCOM capability must be "
-                        "enabled.";
-            }
-          }
-        }
         break;
     }
   }

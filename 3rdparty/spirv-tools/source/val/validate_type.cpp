@@ -737,9 +737,10 @@ spv_result_t ValidateTypeCooperativeMatrix(ValidationState_t& _,
     }
   }
 
-  uint64_t scope_value;
-  if (_.EvalConstantValUint64(scope_id, &scope_value)) {
-    if (scope_value == static_cast<uint32_t>(spv::Scope::Workgroup)) {
+  uint64_t scope_raw_value;
+  if (_.EvalConstantValUint64(scope_id, &scope_raw_value)) {
+    spv::Scope scope_value = static_cast<spv::Scope>(scope_raw_value);
+    if (scope_value == spv::Scope::Workgroup) {
       for (auto entry_point_id : _.entry_points()) {
         if (!_.EntryPointHasLocalSizeOrId(entry_point_id)) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
@@ -765,6 +766,13 @@ spv_result_t ValidateTypeCooperativeMatrix(ValidationState_t& _,
           }
         }
       }
+    }
+    if (scope_value != spv::Scope::Workgroup &&
+        scope_value != spv::Scope::Subgroup) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << _.VkErrorID(12243)
+             << "OpTypeCooperativeMatrixKHR Scope is limited to Workgroup and "
+                "Subgroup";
     }
   }
 

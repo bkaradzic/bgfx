@@ -44,9 +44,10 @@ constexpr uint32_t kExtInstSetInIdx = 0;
 constexpr uint32_t kExtInstOpInIdx = 1;
 constexpr uint32_t kInterpolantInIdx = 2;
 constexpr uint32_t kCooperativeMatrixLoadSourceAddrInIdx = 0;
-constexpr uint32_t kDebugValueLocalVariable = 2;
-constexpr uint32_t kDebugValueValue = 3;
-constexpr uint32_t kDebugValueExpression = 4;
+constexpr uint32_t kDebugDeclareVariableInIdx = 3;
+constexpr uint32_t kDebugValueLocalVariableInIdx = 2;
+constexpr uint32_t kDebugValueValueInIdx = 3;
+constexpr uint32_t kDebugValueExpressionInIdx = 4;
 
 // Sorting functor to present annotation instructions in an easy-to-process
 // order. The functor orders by opcode first and falls back on unique id
@@ -290,39 +291,94 @@ Pass::Status AggressiveDCEPass::ProcessDebugInformation(
     std::list<BasicBlock*>& structured_order) {
   for (auto bi = structured_order.begin(); bi != structured_order.end(); bi++) {
     bool succeeded = (*bi)->WhileEachInst([this](Instruction* inst) {
-      // DebugDeclare is not dead. It must be converted to DebugValue in a
-      // later pass
-      if (inst->IsNonSemanticInstruction() &&
-          inst->GetShader100DebugOpcode() ==
-              NonSemanticShaderDebugInfo100DebugDeclare) {
-        AddToWorklist(inst);
-        return true;
-      }
+      if (!inst->IsNonSemanticInstruction()) return true;
 
-      // If the Value of a DebugValue is killed, set Value operand to Undef
-      if (inst->IsNonSemanticInstruction() &&
-          inst->GetShader100DebugOpcode() ==
-              NonSemanticShaderDebugInfo100DebugValue) {
-        uint32_t id = inst->GetSingleWordInOperand(kDebugValueValue);
-        auto def = get_def_use_mgr()->GetDef(id);
-        if (!IsLive(def)) {
+      if (inst->GetShader100DebugOpcode() ==
+          NonSemanticShaderDebugInfo100DebugDeclare) {
+        if (IsLive(inst)) return true;
+
+        uint32_t var_id =
+            inst->GetSingleWordInOperand(kDebugDeclareVariableInIdx);
+        auto var_def = get_def_use_mgr()->GetDef(var_id);
+
+        if (IsLive(var_def)) {
           AddToWorklist(inst);
-          uint32_t undef_id = Type2Undef(def->type_id());
-          if (undef_id == 0) {
-            return false;
-          }
-          inst->SetInOperand(kDebugValueValue, {undef_id});
-          context()->get_def_use_mgr()->UpdateDefUse(inst);
-          id = inst->GetSingleWordInOperand(kDebugValueLocalVariable);
-          auto localVar = get_def_use_mgr()->GetDef(id);
-          AddToWorklist(localVar);
-          context()->get_def_use_mgr()->UpdateDefUse(localVar);
-          AddOperandsToWorkList(localVar);
-          id = inst->GetSingleWordInOperand(kDebugValueExpression);
-          auto expression = get_def_use_mgr()->GetDef(id);
-          AddToWorklist(expression);
-          context()->get_def_use_mgr()->UpdateDefUse(expression);
           return true;
+        }
+
+        // DebugDeclare Variable is not live. Find the value that was being
+        // stored to this variable. If it's live then create a new DebugValue
+        // with this value. Otherwise let it die in peace.
+        get_def_use_mgr()->ForEachUser(var_id, [this, var_id,
+                                                inst](Instruction* user) {
+          if (user->opcode() == spv::Op::OpStore) {
+            uint32_t stored_value_id = 0;
+            const uint32_t kStoreValueInIdx = 1;
+            stored_value_id = user->GetSingleWordInOperand(kStoreValueInIdx);
+            if (!IsLive(get_def_use_mgr()->GetDef(stored_value_id))) {
+              return true;
+            }
+
+            // value being stored is still live
+            Instruction* next_inst = inst->NextNode();
+            bool added =
+                context()->get_debug_info_mgr()->AddDebugValueForVariable(
+                    user, var_id, stored_value_id, inst);
+            if (added && next_inst) {
+              auto new_debug_value = next_inst->PreviousNode();
+              live_insts_.Set(new_debug_value->unique_id());
+            }
+          }
+          return true;
+        });
+      } else if (inst->GetShader100DebugOpcode() ==
+                 NonSemanticShaderDebugInfo100DebugValue) {
+        uint32_t var_operand_idx = kDebugValueValueInIdx;
+        uint32_t id = inst->GetSingleWordInOperand(var_operand_idx);
+        auto def = get_def_use_mgr()->GetDef(id);
+
+        if (IsLive(def)) {
+          AddToWorklist(inst);
+          return true;
+        }
+
+        // Value operand of DebugValue is not live
+        // Set Value to Undef of appropriate type
+        live_insts_.Set(inst->unique_id());
+
+        uint32_t type_id = def->type_id();
+        auto type_def = get_def_use_mgr()->GetDef(type_id);
+        AddToWorklist(type_def);
+
+        uint32_t undef_id = Type2Undef(type_id);
+        if (undef_id == 0) return false;
+
+        auto undef_inst = get_def_use_mgr()->GetDef(undef_id);
+        live_insts_.Set(undef_inst->unique_id());
+        inst->SetInOperand(var_operand_idx, {undef_id});
+        context()->get_def_use_mgr()->AnalyzeInstUse(inst);
+
+        id = inst->GetSingleWordInOperand(kDebugValueLocalVariableInIdx);
+        auto localVar = get_def_use_mgr()->GetDef(id);
+        AddToWorklist(localVar);
+
+        uint32_t expr_idx = kDebugValueExpressionInIdx;
+        id = inst->GetSingleWordInOperand(expr_idx);
+        auto expression = get_def_use_mgr()->GetDef(id);
+        AddToWorklist(expression);
+
+        for (uint32_t i = expr_idx + 1; i < inst->NumInOperands(); ++i) {
+          id = inst->GetSingleWordInOperand(i);
+          auto index_def = get_def_use_mgr()->GetDef(id);
+          if (index_def) {
+            AddToWorklist(index_def);
+          }
+        }
+
+        for (auto& line_inst : inst->dbg_line_insts()) {
+          if (line_inst.IsDebugLineInst()) {
+            AddToWorklist(&line_inst);
+          }
         }
       }
       return true;
@@ -731,13 +787,16 @@ Pass::Status AggressiveDCEPass::InitializeModuleScopeLiveInstructions() {
     AddToWorklist(dbg_none);
   }
 
-  // Add top level DebugInfo to worklist
+  // Add DebugInfo which should never be eliminated to worklist
   for (auto& dbg : get_module()->ext_inst_debuginfo()) {
     auto op = dbg.GetShader100DebugOpcode();
     if (op == NonSemanticShaderDebugInfo100DebugCompilationUnit ||
         op == NonSemanticShaderDebugInfo100DebugEntryPoint ||
         op == NonSemanticShaderDebugInfo100DebugSource ||
-        op == NonSemanticShaderDebugInfo100DebugSourceContinued) {
+        op == NonSemanticShaderDebugInfo100DebugSourceContinued ||
+        op == NonSemanticShaderDebugInfo100DebugLocalVariable ||
+        op == NonSemanticShaderDebugInfo100DebugExpression ||
+        op == NonSemanticShaderDebugInfo100DebugOperation) {
       AddToWorklist(&dbg);
     }
   }
@@ -813,7 +872,9 @@ Pass::Status AggressiveDCEPass::ProcessImpl() {
 
   // Cleanup all CFG including all unreachable blocks.
   for (Function& fp : *context()->module()) {
-    modified |= CFGCleanup(&fp);
+    auto status = CFGCleanup(&fp);
+    if (status == Status::Failure) return Status::Failure;
+    if (status == Status::SuccessWithChange) modified = true;
   }
 
   return modified ? Status::SuccessWithChange : Status::SuccessWithoutChange;

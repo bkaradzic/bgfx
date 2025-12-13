@@ -15,6 +15,7 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -773,16 +774,17 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
   if (spvIsVulkanEnv(_.context()->target_env)) {
     // OpTypeRuntimeArray should only ever be in a container like OpTypeStruct,
     // so should never appear as a bare variable.
-    // Unless the module has the RuntimeDescriptorArrayEXT capability.
+    // Unless the module has the RuntimeDescriptorArray capability.
     if (value_type && value_type->opcode() == spv::Op::OpTypeRuntimeArray) {
-      if (!_.HasCapability(spv::Capability::RuntimeDescriptorArrayEXT)) {
+      if (!_.HasCapability(spv::Capability::RuntimeDescriptorArray)) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << _.VkErrorID(4680) << "OpVariable, <id> "
                << _.getIdName(inst->id())
                << ", is attempting to create memory for an illegal type, "
                << "OpTypeRuntimeArray.\nFor Vulkan OpTypeRuntimeArray can only "
                << "appear as the final member of an OpTypeStruct, thus cannot "
-               << "be instantiated via OpVariable";
+               << "be instantiated via OpVariable, unless the "
+                  "RuntimeDescriptorArray Capability is declared";
       } else {
         // A bare variable OpTypeRuntimeArray is allowed in this context, but
         // still need to check the storage class.
@@ -791,7 +793,7 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
             storage_class != spv::StorageClass::UniformConstant) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
                  << _.VkErrorID(4680)
-                 << "For Vulkan with RuntimeDescriptorArrayEXT, a variable "
+                 << "For Vulkan with RuntimeDescriptorArray, a variable "
                  << "containing OpTypeRuntimeArray must have storage class of "
                  << "StorageBuffer, Uniform, or UniformConstant.";
         }
@@ -1116,6 +1118,29 @@ spv_result_t ValidateLoad(ValidationState_t& _, const Instruction* inst) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "8- or 16-bit loads must be a scalar, vector or matrix type";
     }
+  }
+
+  // Skip checking if there is zero chance for this having a mesh shader
+  // entrypoint
+  if (_.HasCapability(spv::Capability::MeshShadingEXT) &&
+      pointer_type->GetOperandAs<spv::StorageClass>(1) ==
+          spv::StorageClass::Output) {
+    std::string errorVUID = _.VkErrorID(7107);
+    _.function(inst->function()->id())
+        ->RegisterExecutionModelLimitation(
+            [errorVUID](spv::ExecutionModel model, std::string* message) {
+              // Seems the NV Mesh extension was less strict and allowed
+              // writting to outputs
+              if (model == spv::ExecutionModel::MeshEXT) {
+                if (message) {
+                  *message = errorVUID +
+                             "The Output Storage Class in a Mesh Execution "
+                             "Model must not be read from";
+                }
+                return false;
+              }
+              return true;
+            });
   }
 
   _.RegisterQCOMImageProcessingTextureConsumer(pointer_id, inst, nullptr);
@@ -1822,13 +1847,19 @@ spv_result_t ValidateAccessChain(ValidationState_t& _,
     // At this point, we have fully walked down from the base using the indeces.
     // The type being pointed to should be the same as the result type.
     if (type_pointee->id() != result_type_pointee->id()) {
+      bool same_type = result_type_pointee->opcode() == type_pointee->opcode();
       return _.diag(SPV_ERROR_INVALID_ID, inst)
-             << "Op" << spvOpcodeString(opcode) << " result type (Op"
+             << "Op" << spvOpcodeString(opcode) << " result type <id> "
+             << _.getIdName(result_type_pointee->id()) << " (Op"
              << spvOpcodeString(result_type_pointee->opcode())
              << ") does not match the type that results from indexing into the "
                 "base "
-                "<id> (Op"
-             << spvOpcodeString(type_pointee->opcode()) << ").";
+                "<id> "
+             << _.getIdName(type_pointee->id()) << " (Op"
+             << spvOpcodeString(type_pointee->opcode()) << ")."
+             << (same_type ? " (The types must be the exact same Id, so the "
+                             "two types referenced are slighlty different)"
+                           : "");
     }
   }
 

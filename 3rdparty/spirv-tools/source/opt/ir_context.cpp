@@ -183,6 +183,8 @@ Instruction* IRContext::KillInst(Instruction* inst) {
 
   KillOperandFromDebugInstructions(inst);
 
+  KillRelatedDebugScopes(inst);
+
   if (AreAnalysesValid(kAnalysisDefUse)) {
     analysis::DefUseManager* def_use_mgr = get_def_use_mgr();
     def_use_mgr->ClearInst(inst);
@@ -528,6 +530,20 @@ void IRContext::KillOperandFromDebugInstructions(Instruction* inst) {
             get_debug_info_mgr()->GetDebugInfoNone()->result_id();
         get_def_use_mgr()->AnalyzeInstUse(&*it);
       }
+    }
+  }
+}
+
+void IRContext::KillRelatedDebugScopes(Instruction* inst) {
+  // Extension has been fully unloaded, remove debug scope from every
+  // instruction.
+  if (inst->opcode() == spv::Op::OpExtInstImport) {
+    const std::string extension_name = inst->GetInOperand(0).AsString();
+    if (extension_name == "NonSemantic.Shader.DebugInfo.100" ||
+        extension_name == "OpenCL.DebugInfo.100") {
+      module()->ForEachInst([](Instruction* child) {
+        child->SetDebugScope(DebugScope(kNoDebugScope, kNoInlinedAt));
+      });
     }
   }
 }
