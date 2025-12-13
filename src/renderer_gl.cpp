@@ -5336,7 +5336,7 @@ namespace bgfx { namespace gl
 					}
 
 					UniformType::Enum type = convertGlType(gltype);
-					m_constantBuffer->writeUniformHandle(bx::narrowCast<uint8_t>(type), 0, info->m_handle, uint16_t(num) );
+					m_constantBuffer->writeUniformHandle(uint8_t(type), 0, info->m_handle, uint16_t(num) );
 					m_constantBuffer->write(loc);
 					BX_TRACE("store %s %d", name, info->m_handle);
 				}
