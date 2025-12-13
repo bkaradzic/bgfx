@@ -4188,6 +4188,10 @@ void TParseContext::reservedErrorCheck(const TSourceLoc& loc, const TString& ide
     // "Identifiers starting with "gl_" are reserved for use by OpenGL, and may not be
     // declared in a shader; this results in a compile-time error."
     if (! symbolTable.atBuiltInLevel()) {
+        // The extension GL_EXT_conservative_depth allows us to declare "gl_FragDepth".
+        if (identifier == "gl_FragDepth" && extensionTurnedOn(E_GL_EXT_conservative_depth))
+            return;
+
         if (builtInName(identifier) && !extensionTurnedOn(E_GL_EXT_spirv_intrinsics))
             // The extension GL_EXT_spirv_intrinsics allows us to declare identifiers starting with "gl_".
             error(loc, "identifiers starting with \"gl_\" are reserved", identifier.c_str(), "");
@@ -5830,7 +5834,8 @@ TSymbol* TParseContext::redeclareBuiltinVariable(const TSourceLoc& loc, const TS
 
     bool nonEsRedecls = (!isEsProfile() && (version >= 130 || identifier == "gl_TexCoord"));
     bool    esRedecls = (isEsProfile() &&
-                         (version >= 320 || extensionsTurnedOn(Num_AEP_shader_io_blocks, AEP_shader_io_blocks)));
+                         (version >= 320 || extensionsTurnedOn(Num_AEP_shader_io_blocks, AEP_shader_io_blocks) ||
+                          (identifier == "gl_FragDepth" && extensionTurnedOn(E_GL_EXT_conservative_depth))));
     if (! esRedecls && ! nonEsRedecls)
         return nullptr;
 
@@ -6534,6 +6539,9 @@ void TParseContext::finish()
 
     if (parsingBuiltins)
         return;
+
+    // Forward builtin alias to AST for later use
+    intermediate.setBuiltinAliasLookup(symbolTable.collectBuiltinAlias());
 
     // Check on array indexes for ES 2.0 (version 100) limitations.
     for (size_t i = 0; i < needsIndexLimitationChecking.size(); ++i)

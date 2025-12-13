@@ -728,8 +728,8 @@ void TParseVersions::getPreamble(std::string& preamble)
         case EShLangClosestHit:     preamble += "#define GL_CLOSEST_HIT_SHADER_EXT 1 \n";           break;
         case EShLangMiss:           preamble += "#define GL_MISS_SHADER_EXT 1 \n";                  break;
         case EShLangCallable:       preamble += "#define GL_CALLABLE_SHADER_EXT 1 \n";              break;
-        case EShLangTask:           preamble += "#define GL_TASK_SHADER_NV 1 \n";                   break;
-        case EShLangMesh:           preamble += "#define GL_MESH_SHADER_NV 1 \n";                   break;
+        case EShLangTask:           preamble += "#define GL_TASK_SHADER_EXT 1 \n";                  break;
+        case EShLangMesh:           preamble += "#define GL_MESH_SHADER_EXT 1 \n";                  break;
         default:                                                                                    break;
         }
     }
