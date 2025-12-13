@@ -5051,10 +5051,10 @@ void CompilerGLSL::emit_polyfills(uint32_t polyfills, bool relaxed)
 // Returns a string representation of the ID, usable as a function arg.
 // Default is to simply return the expression representation fo the arg ID.
 // Subclasses may override to modify the return value.
-string CompilerGLSL::to_func_call_arg(const SPIRFunction::Parameter &, uint32_t id)
+string CompilerGLSL::to_func_call_arg(const SPIRFunction::Parameter &arg, uint32_t id)
 {
 	// BDA expects pointers through function interface.
-	if (is_physical_pointer(expression_type(id)))
+	if (!arg.alias_global_variable && is_physical_or_buffer_pointer(expression_type(id)))
 		return to_pointer_expression(id);
 
 	// Make sure that we use the name of the original variable, and not the parameter alias.
@@ -6896,6 +6896,16 @@ void CompilerGLSL::emit_uninitialized_temporary(uint32_t result_type, uint32_t r
 	}
 }
 
+bool CompilerGLSL::can_declare_inline_temporary(uint32_t id) const
+{
+	if (!block_temporary_hoisting && current_continue_block && !hoisted_temporaries.count(id))
+		return false;
+	if (hoisted_temporaries.count(id))
+		return false;
+
+	return true;
+}
+
 string CompilerGLSL::declare_temporary(uint32_t result_type, uint32_t result_id)
 {
 	auto &type = get<SPIRType>(result_type);
@@ -6970,6 +6980,42 @@ SPIRExpression &CompilerGLSL::emit_op(uint32_t result_type, uint32_t result_id, 
 		// If expression isn't immutable, bind it to a temporary and make the new temporary immutable (they always are).
 		statement(declare_temporary(result_type, result_id), rhs, ";");
 		return set<SPIRExpression>(result_id, to_name(result_id), result_type, true);
+	}
+}
+
+void CompilerGLSL::emit_transposed_op(uint32_t result_type, uint32_t result_id, const string &rhs, bool forwarding)
+{
+	if (forwarding && (forced_temporaries.find(result_id) == end(forced_temporaries)))
+	{
+		// Just forward it without temporary.
+		// If the forward is trivial, we do not force flushing to temporary for this expression.
+		forwarded_temporaries.insert(result_id);
+		auto &e = set<SPIRExpression>(result_id, rhs, result_type, true);
+		e.need_transpose = true;
+	}
+	else if (can_declare_inline_temporary(result_id))
+	{
+		// If expression isn't immutable, bind it to a temporary and make the new temporary immutable (they always are).
+		// Since the expression is transposed, we have to ensure the temporary is the transposed type.
+
+		auto &transposed_type_id = extra_sub_expressions[result_id];
+		if (!transposed_type_id)
+		{
+			auto dummy_type = get<SPIRType>(result_type);
+			std::swap(dummy_type.columns, dummy_type.vecsize);
+			transposed_type_id = ir.increase_bound_by(1);
+			set<SPIRType>(transposed_type_id, dummy_type);
+		}
+
+		statement(declare_temporary(transposed_type_id, result_id), rhs, ";");
+		auto &e = set<SPIRExpression>(result_id, to_name(result_id), result_type, true);
+		e.need_transpose = true;
+	}
+	else
+	{
+		// If we cannot declare the temporary because it's already been hoisted, we don't have the
+		// chance to override the temporary type ourselves. Just transpose() the expression.
+		emit_op(result_type, result_id, join("transpose(", rhs, ")"), forwarding);
 	}
 }
 
@@ -11581,7 +11627,7 @@ bool CompilerGLSL::should_dereference(uint32_t id)
 	// If id is a variable but not a phi variable, we should not dereference it.
 	// BDA passed around as parameters are always pointers.
 	if (auto *var = maybe_get<SPIRVariable>(id))
-		return (var->parameter && is_physical_pointer(type)) || var->phi_variable;
+		return (var->parameter && is_physical_or_buffer_pointer(type)) || var->phi_variable;
 
 	if (auto *expr = maybe_get<SPIRExpression>(id))
 	{
@@ -11617,8 +11663,8 @@ bool CompilerGLSL::should_dereference(uint32_t id)
 bool CompilerGLSL::should_dereference_caller_param(uint32_t id)
 {
 	const auto &type = expression_type(id);
-	// BDA is always passed around as pointers.
-	if (is_physical_pointer(type))
+	// BDA is always passed around as pointers. Similarly, we need to pass variable buffer pointers as pointers.
+	if (is_physical_or_buffer_pointer(type))
 		return false;
 
 	return should_dereference(id);
@@ -13507,8 +13553,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 			auto expr = join(enclose_expression(to_unpacked_row_major_matrix_expression(ops[3])), " * ",
 			                 enclose_expression(to_unpacked_row_major_matrix_expression(ops[2])));
 			bool forward = should_forward(ops[2]) && should_forward(ops[3]);
-			auto &e = emit_op(ops[0], ops[1], expr, forward);
-			e.need_transpose = true;
+			emit_transposed_op(ops[0], ops[1], expr, forward);
 			a->need_transpose = true;
 			b->need_transpose = true;
 			inherit_expression_dependencies(ops[1], ops[2]);
@@ -13531,8 +13576,7 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 			auto expr = join(enclose_expression(to_unpacked_row_major_matrix_expression(ops[2])), " * ",
 			                 to_enclosed_unpacked_expression(ops[3]));
 			bool forward = should_forward(ops[2]) && should_forward(ops[3]);
-			auto &e = emit_op(ops[0], ops[1], expr, forward);
-			e.need_transpose = true;
+			emit_transposed_op(ops[0], ops[1], expr, forward);
 			a->need_transpose = true;
 			inherit_expression_dependencies(ops[1], ops[2]);
 			inherit_expression_dependencies(ops[1], ops[3]);

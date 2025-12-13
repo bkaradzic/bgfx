@@ -1126,7 +1126,9 @@ protected:
 	void mark_struct_members_packed(const SPIRType &type);
 	void ensure_member_packing_rules_msl(SPIRType &ib_type, uint32_t index);
 	bool validate_member_packing_rules_msl(const SPIRType &type, uint32_t index) const;
-	std::string get_argument_address_space(const SPIRVariable &argument);
+	std::string get_variable_address_space(const SPIRVariable &argument);
+	// Special case of get_variable_address_space which is only used for leaf functions.
+	std::string get_leaf_argument_address_space(const SPIRVariable &argument);
 	std::string get_type_address_space(const SPIRType &type, uint32_t id, bool argument = false);
 	bool decoration_flags_signal_volatile(const Bitset &flags) const;
 	bool decoration_flags_signal_coherent(const Bitset &flags) const;

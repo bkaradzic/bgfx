@@ -742,6 +742,14 @@ bool Compiler::is_physical_pointer(const SPIRType &type) const
 	return type.op == OpTypePointer && type.storage == StorageClassPhysicalStorageBuffer;
 }
 
+bool Compiler::is_physical_or_buffer_pointer(const SPIRType &type) const
+{
+	return type.op == OpTypePointer &&
+	       (type.storage == StorageClassPhysicalStorageBuffer || type.storage == StorageClassUniform ||
+	        type.storage == StorageClassStorageBuffer || type.storage == StorageClassWorkgroup ||
+	        type.storage == StorageClassPushConstant);
+}
+
 bool Compiler::is_physical_pointer_to_buffer_block(const SPIRType &type) const
 {
 	return is_physical_pointer(type) && get_pointee_type(type).self == type.parent_type &&
