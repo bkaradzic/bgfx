@@ -381,8 +381,10 @@ public:
 				}
 
 				// Start a new readback?
-				if (!m_reading
-				&&  m_mouseState.m_buttons[entry::MouseButton::Left])
+				if (!ImGui::MouseOverArea()
+				&&  !m_reading
+				&&   m_mouseState.m_buttons[entry::MouseButton::Left]
+				   )
 				{
 					// Blit and read
 					bgfx::blit(RENDER_PASS_BLIT, m_blitTex, 0, 0, m_pickingRT);
