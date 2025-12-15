@@ -287,26 +287,16 @@ namespace bgfx
 {
 	constexpr uint32_t kChunkMagicTex = BX_MAKEFOURCC('T', 'E', 'X', 0x0);
 
-	inline constexpr uint32_t toAbgr8(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 0xff)
-	{
-		return 0
-			| (uint32_t(_r) << 24)
-			| (uint32_t(_g) << 16)
-			| (uint32_t(_b) << 8)
-			| (uint32_t(_a))
-			;
-	}
-
 	// Palette:
 	// https://colorkit.co/color-palette-generator/a8e6cf-dcedc1-ffd3b6-76b4bd-bdeaee-8874a3-ff0000-ff8b94/
-	constexpr uint32_t kColorFrame    = toAbgr8(0xa8, 0xe6, 0xcf);
-	constexpr uint32_t kColorSubmit   = toAbgr8(0xdc, 0xed, 0xc1);
-	constexpr uint32_t kColorView     = toAbgr8(0xff, 0xd3, 0xb6);
-	constexpr uint32_t kColorDraw     = toAbgr8(0x76, 0xb4, 0xbd);
-	constexpr uint32_t kColorCompute  = toAbgr8(0xbd, 0xea, 0xee);
-	constexpr uint32_t kColorResource = toAbgr8(0x88, 0x74, 0xa3);
-	constexpr uint32_t kColorMarker   = toAbgr8(0xff, 0x00, 0x00);
-	constexpr uint32_t kColorWait     = toAbgr8(0xff, 0x8b, 0x94);
+	constexpr uint32_t kColorFrame    = 0xa8'e6'cf'ff;
+	constexpr uint32_t kColorSubmit   = 0xdc'ed'c1'ff;
+	constexpr uint32_t kColorView     = 0xff'd3'b6'ff;
+	constexpr uint32_t kColorDraw     = 0x76'b4'bd'ff;
+	constexpr uint32_t kColorCompute  = 0xbd'ea'ee'ff;
+	constexpr uint32_t kColorResource = 0x88'74'a3'ff;
+	constexpr uint32_t kColorMarker   = 0xff'00'00'ff;
+	constexpr uint32_t kColorWait     = 0xff'8b'94'ff;
 
 	extern InternalData g_internalData;
 	extern PlatformData g_platformData;
@@ -627,17 +617,17 @@ namespace bgfx
 		release( (const Memory*)_mem);
 	}
 
-	inline uint64_t packStencil(uint32_t _fstencil, uint32_t _bstencil)
+	inline constexpr uint64_t packStencil(uint32_t _fstencil, uint32_t _bstencil)
 	{
 		return (uint64_t(_bstencil)<<32)|uint64_t(_fstencil);
 	}
 
-	inline uint32_t unpackStencil(uint8_t _0or1, uint64_t _stencil)
+	inline constexpr uint32_t unpackStencil(uint8_t _0or1, uint64_t _stencil)
 	{
 		return uint32_t( (_stencil >> (32*_0or1) ) );
 	}
 
-	inline bool needBorderColor(uint64_t _flags)
+	inline constexpr bool needBorderColor(uint64_t _flags)
 	{
 		return BGFX_SAMPLER_U_BORDER == (_flags & BGFX_SAMPLER_U_BORDER)
 			|| BGFX_SAMPLER_V_BORDER == (_flags & BGFX_SAMPLER_V_BORDER)
@@ -645,7 +635,7 @@ namespace bgfx
 			;
 	}
 
-	inline uint8_t calcNumMips(bool _hasMips, uint16_t _width, uint16_t _height, uint16_t _depth = 1)
+	inline constexpr uint8_t calcNumMips(bool _hasMips, uint16_t _width, uint16_t _height, uint16_t _depth = 1)
 	{
 		if (_hasMips)
 		{
