@@ -14,7 +14,6 @@
 class Fsr
 {
 public:
-
 	struct Config
 	{
 		float m_superSamplingFactor = 2.0f;

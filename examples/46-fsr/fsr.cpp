@@ -14,6 +14,8 @@ struct FsrResources
 {
 	void init(uint32_t _width, uint32_t _height)
 	{
+		m_support16BitPrecision = 0 != (bgfx::getCaps()->formats[bgfx::TextureFormat::RGBA16F] & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE);
+
 		resize(_width, _height);
 
 		// Create uniforms for screen passes and models
@@ -26,8 +28,6 @@ struct FsrResources
 		m_bilinear32Program = bgfx::createProgram(loadShader("cs_fsr_bilinear_32"), true);
 		m_easu32Program     = bgfx::createProgram(loadShader("cs_fsr_easu_32"), true);
 		m_rcas32Program     = bgfx::createProgram(loadShader("cs_fsr_rcas_32"), true);
-
-		m_support16BitPrecision = (bgfx::getRendererType() != bgfx::RendererType::OpenGL);
 
 		if (m_support16BitPrecision)
 		{
@@ -104,6 +104,14 @@ struct FsrResources
 			bgfx::destroy(m_rcasTexture32F);
 		}
 
+		constexpr uint64_t kTextureSamplerFlags = 0
+			| BGFX_TEXTURE_COMPUTE_WRITE
+			| BGFX_SAMPLER_MIN_POINT
+			| BGFX_SAMPLER_MAG_POINT
+			| BGFX_SAMPLER_U_CLAMP
+			| BGFX_SAMPLER_V_CLAMP
+			;
+
 		if (m_support16BitPrecision)
 		{
 			m_easuTexture16F = bgfx::createTexture2D(
@@ -112,7 +120,7 @@ struct FsrResources
 				, false
 				, 1
 				, bgfx::TextureFormat::RGBA16F
-				, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+				, kTextureSamplerFlags
 				);
 			bgfx::setName(m_easuTexture16F, "easuTexture16F");
 
@@ -122,7 +130,7 @@ struct FsrResources
 				, false
 				, 1
 				, bgfx::TextureFormat::RGBA16F
-				, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+				, kTextureSamplerFlags
 				);
 			bgfx::setName(m_rcasTexture16F, "rcasTexture16F");
 		}
@@ -133,7 +141,7 @@ struct FsrResources
 			, false
 			, 1
 			, bgfx::TextureFormat::RGBA32F
-			, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+			, kTextureSamplerFlags
 			);
 		bgfx::setName(m_easuTexture32F, "easuTexture32F");
 
@@ -143,7 +151,7 @@ struct FsrResources
 			, false
 			, 1
 			, bgfx::TextureFormat::RGBA32F
-			, BGFX_TEXTURE_COMPUTE_WRITE | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+			, kTextureSamplerFlags
 			);
 		bgfx::setName(m_rcasTexture32F, "rcasTexture32F");
 	}
@@ -255,12 +263,12 @@ bgfx::ViewId Fsr::computeFsr(bgfx::ViewId _pass, bgfx::TextureHandle _colorTextu
 	const int32_t dispatchX = (m_resources->m_width  + (threadGroupWorkRegionDim - 1) ) / threadGroupWorkRegionDim;
 	const int32_t dispatchY = (m_resources->m_height + (threadGroupWorkRegionDim - 1) ) / threadGroupWorkRegionDim;
 
-	bgfx::TextureFormat::Enum const format = m_config.m_fsr16Bit
+	const bgfx::TextureFormat::Enum format = m_config.m_fsr16Bit
 		? bgfx::TextureFormat::RGBA16F
 		: bgfx::TextureFormat::RGBA32F
 		;
 
-	bgfx::TextureHandle fsrEasuTexture = m_config.m_fsr16Bit
+	const bgfx::TextureHandle fsrEasuTexture = m_config.m_fsr16Bit
 		? m_resources->m_easuTexture16F
 		: m_resources->m_easuTexture32F
 		;
@@ -288,7 +296,7 @@ bgfx::ViewId Fsr::computeFsr(bgfx::ViewId _pass, bgfx::TextureHandle _colorTextu
 	// RCAS pass (sharpening)
 	if (m_config.m_applyFsrRcas)
 	{
-		bgfx::ProgramHandle program = m_config.m_fsr16Bit
+		const bgfx::ProgramHandle program = m_config.m_fsr16Bit
 			? m_resources->m_rcas16Program
 			: m_resources->m_rcas32Program
 			;
@@ -298,7 +306,9 @@ bgfx::ViewId Fsr::computeFsr(bgfx::ViewId _pass, bgfx::TextureHandle _colorTextu
 		bgfx::setTexture(0, m_resources->s_inputTexture, fsrEasuTexture);
 		bgfx::setImage(
 			  1
-			, m_config.m_fsr16Bit? m_resources->m_rcasTexture16F: m_resources->m_rcasTexture32F
+			, m_config.m_fsr16Bit
+				? m_resources->m_rcasTexture16F
+				: m_resources->m_rcasTexture32F
 			, 0
 			, bgfx::Access::Write
 			, format
