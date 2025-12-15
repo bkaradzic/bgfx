@@ -644,19 +644,18 @@ public:
 
 					ImGui::Separator();
 
-					if (m_state.m_fsr.supports16BitPrecision() )
-					{
-						ImGui::Checkbox("Use 16 Bit", &m_state.m_fsr.m_config.m_fsr16Bit);
+					ImGui::BeginDisabled(!m_state.m_fsr.supports16BitPrecision() );
+					ImGui::Checkbox("Use 16 Bit", &m_state.m_fsr.m_config.m_fsr16Bit);
 
-						if (ImGui::IsItemHovered() )
-						{
-							ImGui::BeginTooltip();
-							ImGui::Text("For better performance and less memory consumption use 16 Bit precision.");
-							ImGui::Text("If disabled use 32 Bit per channel precision for FSR which works better on older hardware.");
-							ImGui::Text("FSR in 16 Bit precision is also prone to be broken in Direct3D11, Direct3D12 works though.");
-							ImGui::EndTooltip();
-						}
+					if (ImGui::IsItemHovered() )
+					{
+						ImGui::BeginTooltip();
+						ImGui::Text("For better performance and less memory consumption use 16 Bit precision.");
+						ImGui::Text("If disabled use 32 Bit per channel precision for FSR which works better on older hardware.");
+						ImGui::Text("FSR in 16 Bit precision is also prone to be broken in Direct3D11, Direct3D12 works though.");
+						ImGui::EndTooltip();
 					}
+					ImGui::EndDisabled();
 
 					ImGui::Checkbox("Apply FSR", &m_state.m_fsr.m_config.m_applyFsr);
 
