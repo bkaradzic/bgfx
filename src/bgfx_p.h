@@ -2642,7 +2642,10 @@ namespace bgfx
 			// clear all bytes (inclusively the padding) before we start.
 			bx::memSet(&m_bind, 0, sizeof(m_bind) );
 
-			discard(BGFX_DISCARD_ALL);
+			m_discard = false;
+			m_draw.clear(BGFX_DISCARD_ALL);
+			m_compute.clear(BGFX_DISCARD_ALL);
+			m_bind.clear(BGFX_DISCARD_ALL);
 		}
 
 		void begin(Frame* _frame, uint8_t _idx)
@@ -2981,6 +2984,13 @@ namespace bgfx
 			m_draw.clear(_flags);
 			m_compute.clear(_flags);
 			m_bind.clear(_flags);
+
+			if (_flags & BGFX_DISCARD_STATE)
+			{
+				UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
+				m_uniformEnd   = uniformBuffer->getPos();
+				m_uniformBegin = m_uniformEnd;
+			}
 		}
 
 		void submit(ViewId _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint32_t _depth, uint8_t _flags);
