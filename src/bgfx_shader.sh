@@ -7,7 +7,7 @@
 #define BGFX_SHADER_H_HEADER_GUARD
 
 #if !defined(BGFX_CONFIG_MAX_BONES)
-#	define BGFX_CONFIG_MAX_BONES 32
+#	define BGFX_CONFIG_MAX_BONES 1
 #endif // !defined(BGFX_CONFIG_MAX_BONES)
 
 #ifndef __cplusplus

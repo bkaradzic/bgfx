@@ -5,6 +5,7 @@ $input a_position, a_indices
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
+#define BGFX_CONFIG_MAX_BONES 2
 #include <bgfx_shader.sh>
 
 void main()
