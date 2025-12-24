@@ -292,11 +292,12 @@ public:
 		loadMesh(mesh);
 		meshUnload(mesh);
 
-		m_timeOffset = bx::getHPCounter();
 		m_LOD = 1.0f;
 		m_lastLOD = m_LOD;
 
 		imguiCreate();
+
+		m_frameTime.reset();
 	}
 
 	int shutdown() override
@@ -387,6 +388,9 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			m_frameTime.frame();
+			const float time = bx::toSeconds<float>(m_frameTime.getDurationTime() );
+
 			imguiBeginFrame(m_mouseState.m_mx
 				,  m_mouseState.m_my
 				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
@@ -427,8 +431,6 @@ public:
 			// This dummy draw call is here to make sure that view 0 is cleared
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
-
-			float time = (float)( (bx::getHPCounter()-m_timeOffset)/double(bx::getHPFrequency() ) );
 
 			const bx::Vec3 at  = { 0.0f, 1.0f,  0.0f };
 			const bx::Vec3 eye = { 0.0f, 1.0f, -2.5f };
@@ -484,10 +486,11 @@ public:
 	uint32_t* m_cacheWeld;
 	uint32_t* m_cachePermutation;
 
-	int64_t m_timeOffset;
 	bgfx::VertexBufferHandle m_vb;
 	bgfx::DynamicIndexBufferHandle m_ib;
 	bgfx::ProgramHandle m_program;
+
+	FrameTime m_frameTime;
 };
 
 } // namespace

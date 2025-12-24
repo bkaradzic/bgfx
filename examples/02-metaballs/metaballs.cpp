@@ -537,7 +537,7 @@ public:
 		m_program = bgfx::createProgram(vsh, fsh, true /* destroy shaders when program is destroyed */);
 
 		m_grid = new Grid[kMaxDims*kMaxDims*kMaxDims];
-		m_timeOffset = bx::getHPCounter();
+		m_frameTime.reset();
 
 		imguiCreate();
 	}
@@ -564,6 +564,9 @@ public:
 
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			m_frameTime.frame();
+			const float time = bx::toSeconds<float>(m_frameTime.getDurationTime() );
+
 			imguiBeginFrame(m_mouseState.m_mx
 				,  m_mouseState.m_my
 				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
@@ -606,14 +609,6 @@ public:
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
-			float time = (float)( (now - m_timeOffset)/double(bx::getHPFrequency() ) );
-
 			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
 			const bx::Vec3 eye = { 0.0f, 0.0f, -50.0f };
 
@@ -632,9 +627,9 @@ public:
 
 			// Stats.
 			uint32_t numVertices = 0;
-			int64_t profUpdate = 0;
-			int64_t profNormal = 0;
-			int64_t profTriangulate = 0;
+			bx::Ticks profUpdate = bx::InitZero;
+			bx::Ticks profNormal = bx::InitZero;
+			bx::Ticks profTriangulate = bx::InitZero;
 
 			// Allocate 32K vertices in transient vertex buffer.
 			uint32_t maxVertices = (32<<10);
@@ -651,7 +646,7 @@ public:
 				sphere[ii][3] = 1.0f/(3.0f + (bx::sin(time*(ii*0.13f) )*0.5f+0.5f)*0.9f );
 			}
 
-			profUpdate = bx::getHPCounter();
+			profUpdate = bx::getNow();
 
 			for (uint32_t zz = 0; zz < numDims; ++zz)
 			{
@@ -685,9 +680,9 @@ public:
 				}
 			}
 
-			profUpdate = bx::getHPCounter() - profUpdate;
+			profUpdate = bx::getNow() - profUpdate;
 
-			profNormal = bx::getHPCounter();
+			profNormal = bx::getNow();
 
 			for (uint32_t zz = 1; zz < numDims-1; ++zz)
 			{
@@ -712,9 +707,9 @@ public:
 				}
 			}
 
-			profNormal = bx::getHPCounter() - profNormal;
+			profNormal = bx::getNow() - profNormal;
 
-			profTriangulate = bx::getHPCounter();
+			profTriangulate = bx::getNow();
 
 			PosNormalColorVertex* vertex = (PosNormalColorVertex*)tvb.data;
 
@@ -772,7 +767,7 @@ public:
 				}
 			}
 
-			profTriangulate = bx::getHPCounter() - profTriangulate;
+			profTriangulate = bx::getNow() - profTriangulate;
 
 			float mtx[16];
 			bx::mtxRotateXY(mtx, time*0.67f, time);
@@ -804,10 +799,10 @@ public:
 				);
 
 			ImGui::Text("Num vertices:"); ImGui::SameLine(100); ImGui::Text("%5d (%6.4f%%)", numVertices, float(numVertices)/maxVertices * 100);
-			ImGui::Text("Update:");       ImGui::SameLine(100); ImGui::Text("% 7.3f[ms]", double(profUpdate)*toMs);
-			ImGui::Text("Calc normals:"); ImGui::SameLine(100); ImGui::Text("% 7.3f[ms]", double(profNormal)*toMs);
-			ImGui::Text("Triangulate:");  ImGui::SameLine(100); ImGui::Text("% 7.3f[ms]", double(profTriangulate)*toMs);
-			ImGui::Text("Frame:");        ImGui::SameLine(100); ImGui::Text("% 7.3f[ms]", double(frameTime)*toMs);
+			ImGui::Text("Update:");       ImGui::SameLine(100); ImGui::Text("% 7.3f[ms]", bx::toMilliseconds<double>(profUpdate) );
+			ImGui::Text("Calc normals:"); ImGui::SameLine(100); ImGui::Text("% 7.3f[ms]", bx::toMilliseconds<double>(profNormal) );
+			ImGui::Text("Triangulate:");  ImGui::SameLine(100); ImGui::Text("% 7.3f[ms]", bx::toMilliseconds<double>(profTriangulate) );
+			ImGui::Text("Frame:");        ImGui::SameLine(100); ImGui::Text("% 7.3f[ms]", bx::toMilliseconds<double>(m_frameTime.getDeltaTime() ) );
 
 			ImGui::End();
 
@@ -832,7 +827,8 @@ public:
 	bgfx::ProgramHandle m_program;
 
 	Grid* m_grid;
-	int64_t m_timeOffset;
+
+	FrameTime m_frameTime;
 };
 
 } // namespace

@@ -120,7 +120,7 @@ public:
 		m_maxDim     = 40;
 		m_transform  = 0;
 
-		m_timeOffset = bx::getHPCounter();
+		m_last = m_timeOffset = bx::getHPCounter();
 
 		m_deltaTimeNs    = 0;
 		m_deltaTimeAvgNs = 0;
@@ -295,11 +295,10 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
+			const int64_t now = bx::getHPCounter();
 			const int64_t hpFreq = bx::getHPFrequency();
-			const int64_t frameTime = now - last;
-			last = now;
+			const int64_t frameTime = now - m_last;
+			m_last = now;
 			const double freq = double(hpFreq);
 			const double toMs = 1000.0/freq;
 
@@ -440,6 +439,7 @@ public:
 	int32_t  m_numThreads;
 	int32_t  m_maxThreads;
 
+	int64_t  m_last;
 	int64_t  m_timeOffset;
 
 	int64_t  m_deltaTimeNs;

@@ -373,6 +373,8 @@ public:
 		m_caps = bgfx::getCaps();
 
 		imguiCreate();
+
+		m_frameTime.reset();
 	}
 
 	int shutdown() override
@@ -435,13 +437,8 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
-			// Update frame timer
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency());
-			const float deltaTime = float(frameTime/freq);
+			m_frameTime.frame();
+			const float deltaTime = bx::toSeconds<float>(m_frameTime.getDeltaTime() );
 
 			// Update camera
 			cameraUpdate(deltaTime*0.15f, m_mouseState, ImGui::MouseOverArea() );
@@ -749,6 +746,8 @@ public:
 
 	float m_rsmAmount; // Amount of rsm
 	float m_vplRadius; // Radius of virtual point light
+
+	FrameTime m_frameTime;
 };
 
 } // namespace

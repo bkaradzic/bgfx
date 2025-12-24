@@ -1431,7 +1431,7 @@ public:
 		bndSetFont(createFont(m_nvg, "droidsans", "font/droidsans.ttf") );
 		bndSetIconImage(createImage(m_nvg, "images/blender_icons16.png", 0) );
 
-		m_timeOffset = bx::getHPCounter();
+		m_frameTime.reset();
 	}
 
 	int shutdown() override
@@ -1452,6 +1452,9 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			m_frameTime.frame();
+			const float time = bx::toSeconds<float>(m_frameTime.getDurationTime() );
+
 			imguiBeginFrame(m_mouseState.m_mx
 				,  m_mouseState.m_my
 				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
@@ -1465,10 +1468,6 @@ public:
 			showExampleDialog(this);
 
 			imguiEndFrame();
-
-			int64_t now = bx::getHPCounter();
-			const double freq = double(bx::getHPFrequency() );
-			float time = (float)( (now-m_timeOffset)/freq);
 
 			// Set view 0 default viewport.
 			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
@@ -1500,10 +1499,10 @@ public:
 
 	entry::MouseState m_mouseState;
 
-	int64_t m_timeOffset;
-
 	NVGcontext* m_nvg;
 	DemoData m_data;
+
+	FrameTime m_frameTime;
 };
 
 } // namespace

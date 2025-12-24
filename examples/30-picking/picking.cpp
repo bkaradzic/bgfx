@@ -116,8 +116,6 @@ public:
 			m_idsU[ii] = rr + (gg << 8) + (bb << 16) + (255u << 24);
 		}
 
-		m_timeOffset = bx::getHPCounter();
-
 		// Set up ID buffer, which has a color target and depth buffer
 		m_pickingRT = bgfx::createTexture2D(ID_DIM, ID_DIM, false, 1, bgfx::TextureFormat::RGBA8, 0
 			| BGFX_TEXTURE_RT
@@ -155,9 +153,12 @@ public:
 			m_pickingRT,
 			m_pickingRTDepth
 		};
+
 		m_pickingFB = bgfx::createFrameBuffer(BX_COUNTOF(rt), rt, true);
 
 		imguiCreate();
+
+		m_frameTime.reset();
 	}
 
 	int shutdown() override
@@ -191,6 +192,9 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			m_frameTime.frame();
+			const float time = bx::toSeconds<float>(m_frameTime.getDurationTime() );
+
 			// Draw UI
 			imguiBeginFrame(
 				   m_mouseState.m_mx
@@ -234,8 +238,6 @@ public:
 				ImGui::End();
 
 				bgfx::setViewFrameBuffer(RENDER_PASS_ID, m_pickingFB);
-
-				float time = (float)( (bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency() ) );
 
 				// Set up matrices for basic forward renderer
 				const float camSpeed = 0.25;
@@ -410,7 +412,6 @@ public:
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
-	int64_t m_timeOffset;
 
 	Mesh* m_meshes[12];
 	float m_meshScale[12];
@@ -435,6 +436,8 @@ public:
 
 	float m_fov;
 	bool  m_cameraSpin;
+
+	FrameTime m_frameTime;
 };
 
 } // namespace

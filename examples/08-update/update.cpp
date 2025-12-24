@@ -443,10 +443,9 @@ public:
 		m_hit  = 0;
 		m_miss = 0;
 
-		m_updateTime = 0;
-		m_timeOffset = bx::getHPCounter();
-
 		imguiCreate();
+
+		m_frameTime.reset();
 	}
 
 	virtual int shutdown() override
@@ -545,6 +544,10 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			m_frameTime.frame();
+			const float time = bx::toSeconds<float>(m_frameTime.getDurationTime() );
+			bgfx::setFrameUniform(u_time, &time);
+
 			imguiBeginFrame(m_mouseState.m_mx
 				,  m_mouseState.m_my
 				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
@@ -590,11 +593,7 @@ public:
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
-			int64_t now = bx::getHPCounter();
-			float time = (float)( (now - m_timeOffset)/double(bx::getHPFrequency() ) );
-			bgfx::setFrameUniform(u_time, &time);
-
-			if (now > m_updateTime)
+			if (bx::getNow() > m_updateTime)
 			{
 				PackCube face;
 
@@ -978,8 +977,8 @@ public:
 
 	std::list<PackCube> m_quads;
 	RectPackCubeT<256> m_cube;
-	int64_t m_updateTime;
-	int64_t m_timeOffset;
+	bx::Ticks m_updateTime = bx::InitZero;
+
 	bx::RngMwc m_rng;
 
 	uint32_t m_hit;
@@ -1007,6 +1006,7 @@ public:
 	bgfx::UniformHandle s_texColor;
 	bgfx::UniformHandle s_texCube;
 
+	FrameTime m_frameTime;
 };
 
 } // namespace

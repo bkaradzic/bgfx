@@ -695,12 +695,12 @@ public:
 			BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_INDEX32
 		);
 
-		m_timeOffset = bx::getHPCounter();
-
 		m_useIndirect = true;
 		m_firstFrame = true;
 
 		imguiCreate();
+
+		m_frameTime.reset();
 	}
 
 	int shutdown() override
@@ -980,6 +980,10 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			m_frameTime.frame();
+			const float time      = bx::toSeconds<float>(m_frameTime.getDurationTime() );
+			const float deltaTime = bx::toSeconds<float>(m_frameTime.getDeltaTime() );
+
 			imguiBeginFrame(m_mouseState.m_mx
 				,  m_mouseState.m_my
 				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
@@ -1014,13 +1018,6 @@ public:
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency());
-			const float deltaTimeSec = float(double(frameTime) / freq);
-
 			// Camera.
 			const bool mouseOverGui = ImGui::MouseOverArea();
 			m_mouse.update(float(m_mouseState.m_mx), float(m_mouseState.m_my), m_mouseState.m_mz, m_width, m_height);
@@ -1040,7 +1037,7 @@ public:
 				}
 			}
 
-			m_camera.update(deltaTimeSec);
+			m_camera.update(deltaTime);
 
 			// Get renderer capabilities info.
 			const bgfx::Caps* caps = bgfx::getCaps();
@@ -1050,7 +1047,6 @@ public:
 			{
 				// When instancing is not supported by GPU, implement alternative
 				// code path that doesn't use instancing.
-				float time = (float)((bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency()));
 				bool blink = uint32_t(time*3.0f)&1;
 				bgfx::dbgTextPrintf(0, 0, blink ? 0x1f : 0x01, " Instancing is not supported by GPU. ");
 			}
@@ -1133,8 +1129,6 @@ public:
 
 	static const uint16_t s_maxNoofInstances = 2048;
 
-	int64_t m_timeOffset;
-
 	uint8_t m_noofHiZMips;
 
 	bool m_useIndirect;
@@ -1142,6 +1136,8 @@ public:
 
 	Camera m_camera;
 	Mouse m_mouse;
+
+	FrameTime m_frameTime;
 };
 
 } // namespace

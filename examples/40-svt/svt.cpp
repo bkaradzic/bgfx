@@ -122,8 +122,6 @@ public:
 		// Imgui.
 		imguiCreate();
 
-		m_timeOffset = bx::getHPCounter();
-
 		// Get renderer capabilities info.
 		m_caps = bgfx::getCaps();
 
@@ -158,6 +156,7 @@ public:
 		m_vt = new vt::VirtualTexture(tileDataFile, m_vti, 2048, 1);
 		m_feedbackBuffer = new vt::FeedbackBuffer(m_vti, 64, 64);
 
+		m_frameTime.reset();
 	}
 
 	virtual int shutdown() override
@@ -188,6 +187,10 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState))
 		{
+			m_frameTime.frame();
+			const float time      = bx::toSeconds<float>(m_frameTime.getDurationTime() );
+			const float deltaTime = bx::toSeconds<float>(m_frameTime.getDeltaTime() );
+
 			imguiBeginFrame(
 				  m_mouseState.m_mx
 				, m_mouseState.m_my
@@ -200,15 +203,6 @@ public:
 			);
 
 			showExampleDialog(this);
-
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency());
-			const float deltaTime = float(frameTime / freq);
-
-			float time = (float)((now - m_timeOffset) / freq);
 
 			if ((BGFX_CAPS_TEXTURE_BLIT | BGFX_CAPS_TEXTURE_READ_BACK) != (bgfx::getCaps()->supported & (BGFX_CAPS_TEXTURE_BLIT | BGFX_CAPS_TEXTURE_READ_BACK)))
 			{
@@ -363,12 +357,13 @@ public:
 	entry::MouseState m_mouseState;
 
 	const bgfx::Caps* m_caps;
-	int64_t m_timeOffset;
 
 	bx::DefaultAllocator m_vtAllocator;
 	vt::VirtualTextureInfo* m_vti;
 	vt::VirtualTexture* m_vt;
 	vt::FeedbackBuffer* m_feedbackBuffer;
+
+	FrameTime m_frameTime;
 };
 
 } // namespace

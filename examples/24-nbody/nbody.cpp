@@ -216,7 +216,7 @@ public:
 
 			m_useIndirect = false;
 
-			m_timeOffset = bx::getHPCounter();
+			m_frameTime.reset();
 		}
 	}
 
@@ -256,6 +256,9 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			m_frameTime.frame();
+			const float deltaTime = bx::toSeconds<float>(m_frameTime.getDeltaTime() );
+
 			imguiBeginFrame(
 				   m_mouseState.m_mx
 				,  m_mouseState.m_my
@@ -272,13 +275,6 @@ public:
 				? "Compute is not supported."
 				: NULL
 				);
-
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency() );
-			const float deltaTime = float(frameTime/freq);
 
 			// Set view 0 default viewport.
 			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
@@ -456,7 +452,7 @@ public:
 	bgfx::DynamicVertexBufferHandle m_prevPositionBuffer1;
 	bgfx::UniformHandle u_params;
 
-	int64_t m_timeOffset;
+	FrameTime m_frameTime;
 };
 
 } // namespace

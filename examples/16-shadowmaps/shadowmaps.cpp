@@ -1725,6 +1725,8 @@ public:
 
 		m_timeAccumulatorLight = 0.0f;
 		m_timeAccumulatorScene = 0.0f;
+
+		m_frameTime.reset();
 	}
 
 	virtual int shutdown() override
@@ -1769,6 +1771,9 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			m_frameTime.frame();
+			const float deltaTime = bx::toSeconds<float>(m_frameTime.getDeltaTime() );
+
 			m_viewState.m_width  = uint16_t(m_width);
 			m_viewState.m_height = uint16_t(m_height);
 
@@ -1999,14 +2004,6 @@ public:
 
 			s_uniforms.submitPerFrameUniforms();
 
-			// Time.
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency() );
-			const float deltaTime = float(frameTime/freq);
-
 			// Update camera.
 			cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
 
@@ -2037,71 +2034,71 @@ public:
 			float mtxFloor[16];
 			const float floorScale = 550.0f;
 			bx::mtxSRT(mtxFloor
-					   , floorScale //scaleX
-					   , floorScale //scaleY
-					   , floorScale //scaleZ
-					   , 0.0f //rotX
-					   , 0.0f //rotY
-					   , 0.0f //rotZ
-					   , 0.0f //translateX
-					   , 0.0f //translateY
-					   , 0.0f //translateZ
-					   );
+				, floorScale //scaleX
+				, floorScale //scaleY
+				, floorScale //scaleZ
+				, 0.0f //rotX
+				, 0.0f //rotY
+				, 0.0f //rotZ
+				, 0.0f //translateX
+				, 0.0f //translateY
+				, 0.0f //translateZ
+				);
 
 			float mtxBunny[16];
 			bx::mtxSRT(mtxBunny
-					   , 5.0f
-					   , 5.0f
-					   , 5.0f
-					   , 0.0f
-					   , 1.56f - m_timeAccumulatorScene
-					   , 0.0f
-					   , 15.0f
-					   , 5.0f
-					   , 0.0f
-					   );
+				, 5.0f
+				, 5.0f
+				, 5.0f
+				, 0.0f
+				, 1.56f - m_timeAccumulatorScene
+				, 0.0f
+				, 15.0f
+				, 5.0f
+				, 0.0f
+				);
 
 			float mtxHollowcube[16];
 			bx::mtxSRT(mtxHollowcube
-					   , 2.5f
-					   , 2.5f
-					   , 2.5f
-					   , 0.0f
-					   , 1.56f - m_timeAccumulatorScene
-					   , 0.0f
-					   , 0.0f
-					   , 10.0f
-					   , 0.0f
-					   );
+				, 2.5f
+				, 2.5f
+				, 2.5f
+				, 0.0f
+				, 1.56f - m_timeAccumulatorScene
+				, 0.0f
+				, 0.0f
+				, 10.0f
+				, 0.0f
+				);
 
 			float mtxCube[16];
 			bx::mtxSRT(mtxCube
-					   , 2.5f
-					   , 2.5f
-					   , 2.5f
-					   , 0.0f
-					   , 1.56f - m_timeAccumulatorScene
-					   , 0.0f
-					   , -15.0f
-					   , 5.0f
-					   , 0.0f
-					   );
+				, 2.5f
+				, 2.5f
+				, 2.5f
+				, 0.0f
+				, 1.56f - m_timeAccumulatorScene
+				, 0.0f
+				, -15.0f
+				, 5.0f
+				, 0.0f
+				);
 
 			const uint8_t numTrees = 10;
 			float mtxTrees[numTrees][16];
 			for (uint8_t ii = 0; ii < numTrees; ++ii)
 			{
 				bx::mtxSRT(mtxTrees[ii]
-						   , 2.0f
-						   , 2.0f
-						   , 2.0f
-						   , 0.0f
-						   , float(ii)
-						   , 0.0f
-						   , bx::sin(float(ii)*2.0f*bx::kPi/float(numTrees) ) * 60.0f
-						   , 0.0f
-						   , bx::cos(float(ii)*2.0f*bx::kPi/float(numTrees) ) * 60.0f
-						   );
+					, 2.0f
+					, 2.0f
+					, 2.0f
+					, 0.0f
+					, float(ii)
+					, 0.0f
+					, bx::sin(float(ii) * 2.0f * bx::kPi / float(numTrees)) * 60.0f
+					, 0.0f
+					, bx::cos(float(ii) * 2.0f * bx::kPi / float(numTrees)) * 60.0f
+					);
 			}
 
 			// Compute transform matrices.
@@ -2114,17 +2111,16 @@ public:
 			float screenView[16];
 			bx::mtxIdentity(screenView);
 
-			bx::mtxOrtho(
-						 screenProj
-						 , 0.0f
-						 , 1.0f
-						 , 1.0f
-						 , 0.0f
-						 , 0.0f
-						 , 100.0f
-						 , 0.0f
-						 , caps->homogeneousDepth
-						 );
+			bx::mtxOrtho(screenProj
+				, 0.0f
+				, 1.0f
+				, 1.0f
+				, 0.0f
+				, 0.0f
+				, 100.0f
+				, 0.0f
+				, caps->homogeneousDepth
+				);
 
 			// Update render target size.
 			uint16_t shadowMapSize = 1 << uint32_t(currentSmSettings->m_sizePwrTwo);
@@ -2170,13 +2166,13 @@ public:
 				const float fovy = m_settings.m_coverageSpotL;
 				const float aspect = 1.0f;
 				bx::mtxProj(
-							lightProj[ProjType::Horizontal]
-							, fovy
-							, aspect
-							, currentSmSettings->m_near
-							, currentSmSettings->m_far
-							, false
-							);
+					lightProj[ProjType::Horizontal]
+					, fovy
+					, aspect
+					, currentSmSettings->m_near
+					, currentSmSettings->m_far
+					, false
+					);
 
 				//For linear depth, prevent depth division by variable w-component in shaders and divide here by far plane
 				if (DepthImpl::Linear == m_settings.m_depthImpl)
@@ -2207,12 +2203,12 @@ public:
 
 					bx::mtxProj(
 						  lightProj[ProjType::Vertical]
-								, fovx
-								, aspect
-								, currentSmSettings->m_near
-								, currentSmSettings->m_far
-								, false
-								);
+						, fovx
+						, aspect
+						, currentSmSettings->m_near
+						, currentSmSettings->m_far
+						, false
+						);
 
 					//For linear depth, prevent depth division by variable w-component in shaders and divide here by far plane
 					if (DepthImpl::Linear == m_settings.m_depthImpl)
@@ -2232,13 +2228,13 @@ public:
 				const float aspect = bx::tan(bx::toRad(fovx*0.5f) )/bx::tan(bx::toRad(fovy*0.5f) );
 
 				bx::mtxProj(
-							lightProj[ProjType::Horizontal]
-							, fovy
-							, aspect
-							, currentSmSettings->m_near
-							, currentSmSettings->m_far
-							, caps->homogeneousDepth
-							);
+					  lightProj[ProjType::Horizontal]
+					, fovy
+					, aspect
+					, currentSmSettings->m_near
+					, currentSmSettings->m_far
+					, caps->homogeneousDepth
+					);
 
 				//For linear depth, prevent depth division by variable w component in shaders and divide here by far plane
 				if (DepthImpl::Linear == m_settings.m_depthImpl)
@@ -3061,6 +3057,8 @@ public:
 
 	float m_timeAccumulatorLight;
 	float m_timeAccumulatorScene;
+
+	FrameTime m_frameTime;
 };
 
 } // namespace

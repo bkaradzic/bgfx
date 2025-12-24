@@ -130,11 +130,11 @@ namespace
 			// Imgui.
 			imguiCreate();
 
-			m_timeOffset = bx::getHPCounter();
-
 			s_tileSampler = bgfx::createUniform("s_trx_d", bgfx::UniformType::Sampler);
 
 			u_params = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, 3);
+
+			m_frameTime.reset();
 		}
 
 		virtual int shutdown() override
@@ -184,12 +184,8 @@ namespace
 		{
 			if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState))
 			{
-				int64_t now = bx::getHPCounter();
-				static int64_t last = now;
-				const int64_t frameTime = now - last;
-				last = now;
-				const double freq = double(bx::getHPFrequency());
-				const float deltaTime = float(frameTime / freq);
+				m_frameTime.frame();
+				const float deltaTime = bx::toSeconds<float>(m_frameTime.getDeltaTime() );
 
 				imguiBeginFrame(m_mouseState.m_mx
 					, m_mouseState.m_my
@@ -313,9 +309,9 @@ namespace
 
 		bgfx::UniformHandle u_params;
 
-		int64_t m_timeOffset;
-
 		bx::Vec3 m_eye = { 0.0f, 2.0f, -0.01f };
+
+		FrameTime m_frameTime;
 	};
 
 } // namespace

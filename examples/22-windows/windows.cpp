@@ -141,11 +141,11 @@ public:
 		// Create program from shaders.
 		m_program = loadProgram("vs_cubes", "fs_cubes");
 
-		m_timeOffset = bx::getHPCounter();
-
 		bx::memSet(m_fbh, 0xff, sizeof(m_fbh) );
 
 		imguiCreate();
+
+		m_frameTime.reset();
 	}
 
 	virtual int shutdown() override
@@ -178,6 +178,9 @@ public:
 	{
 		if (!entry::processWindowEvents(m_state, m_debug, m_reset) )
 		{
+			m_frameTime.frame();
+			const float time = bx::toSeconds<float>(m_frameTime.getDurationTime() );
+
 			entry::MouseState mouseState = m_state.m_mouse;
 
 			if (isValid(m_state.m_handle) )
@@ -287,9 +290,6 @@ public:
 				}
 			}
 
-			int64_t now = bx::getHPCounter();
-			float time = (float)( (now-m_timeOffset)/double(bx::getHPFrequency() ) );
-
 			bgfx::dbgTextClear();
 			if (NULL != m_bindings)
 			{
@@ -391,7 +391,7 @@ public:
 
 	InputBinding* m_bindings;
 
-	int64_t m_timeOffset;
+	FrameTime m_frameTime;
 };
 
 } // namespace

@@ -425,6 +425,8 @@ public:
 		imguiCreate();
 
 		m_state.m_fsr.init(_width, _height);
+
+		m_frameTime.reset();
 	}
 
 	int32_t shutdown() override
@@ -466,6 +468,9 @@ public:
 	{
 		if (!entry::processEvents(m_state.m_width, m_state.m_height, m_state.m_debug, m_state.m_reset, &m_state.m_mouseState) )
 		{
+			m_frameTime.frame();
+			const float deltaTime = bx::toSeconds<float>(m_frameTime.getDeltaTime() );
+
 			// skip processing when minimized, otherwise crashing
 			if (0 == m_state.m_width
 			||  0 == m_state.m_height)
@@ -482,13 +487,6 @@ public:
 					);
 			}
 
-			// Update frame timer
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency() );
-			const float deltaTime = float(frameTime / freq);
 			const bgfx::Caps* caps = bgfx::getCaps();
 
 			if (m_state.m_size[0] != (int32_t)m_state.m_width || m_state.m_size[1] != (int32_t)m_state.m_height)
@@ -837,6 +835,8 @@ public:
 
 	AppState m_state;
 	MagnifierWidget m_magnifierWidget;
+
+	FrameTime m_frameTime;
 };
 
 } // namespace
