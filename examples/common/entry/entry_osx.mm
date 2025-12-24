@@ -501,7 +501,7 @@ namespace entry
 			mte.m_argv = _argv;
 
 			bx::Thread thread;
-			thread.init(mte.threadFunc, &mte);
+			thread.init(mte.threadFunc, &mte, 0, "Entry Thread");
 
 			WindowHandle handle = { 0 };
 			NSRect contentRect = [m_window[0] contentRectForFrameRect: m_windowFrame];

@@ -334,6 +334,8 @@ public:
 		m_havePrevious = false;
 
 		imguiCreate();
+
+		m_frameTime.reset();
 	}
 
 	int32_t shutdown() override
@@ -376,6 +378,9 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState))
 		{
+			m_frameTime.frame();
+			const float deltaTime = bx::toSeconds<float>(m_frameTime.getDeltaTime() );
+
 			// skip processing when minimized, otherwise crashing
 			if (0 == m_width
 			||  0 == m_height)
@@ -383,13 +388,6 @@ public:
 				return true;
 			}
 
-			// Update frame timer
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency());
-			const float deltaTime = float(frameTime / freq);
 			const bgfx::Caps* caps = bgfx::getCaps();
 
 			if (m_size[0] != (int32_t)m_width
@@ -830,6 +828,8 @@ public:
 	bool m_moveLight = true;
 	int32_t m_contactShadowsMode = 0;
 	bool m_useScreenSpaceRadius = false;
+
+	FrameTime m_frameTime;
 };
 
 } // namespace

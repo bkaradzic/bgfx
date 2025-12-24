@@ -119,9 +119,9 @@ public:
 		m_program = loadProgram("vs_instancing", "fs_instancing");
 		m_program_non_instanced = loadProgram("vs_cubes", "fs_cubes");
 
-		m_timeOffset = bx::getHPCounter();
-
 		imguiCreate();
+
+		m_frameTime.reset();
 	}
 
 	int shutdown() override
@@ -144,6 +144,9 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			m_frameTime.frame();
+			const float time = bx::toSeconds<float>(m_frameTime.getDurationTime() );
+
 			imguiBeginFrame(m_mouseState.m_mx
 				,  m_mouseState.m_my
 				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
@@ -205,8 +208,6 @@ public:
 			// This dummy draw call is here to make sure that view 0 is cleared
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
-
-			float time = (float)( (bx::getHPCounter() - m_timeOffset)/double(bx::getHPFrequency() ) );
 
 			if (!instancingSupported)
 			{
@@ -341,7 +342,7 @@ public:
 	bgfx::ProgramHandle m_program;
 	bgfx::ProgramHandle m_program_non_instanced;
 
-	int64_t m_timeOffset;
+	FrameTime m_frameTime;
 };
 
 } // namespace

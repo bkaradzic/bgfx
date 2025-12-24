@@ -410,7 +410,7 @@ namespace entry
 			mte.m_argv = _argv;
 
 			bx::Thread thread;
-			thread.init(mte.threadFunc, &mte);
+			thread.init(mte.threadFunc, &mte, 0, "Entry Thread");
 
 			WindowHandle defaultWindow = { 0 };
 			m_eventQueue.postSizeEvent(defaultWindow, 1, 1);

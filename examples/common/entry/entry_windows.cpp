@@ -132,7 +132,7 @@ namespace entry
 
 		void update(EventQueue& _eventQueue)
 		{
-			int64_t now = bx::getHPCounter();
+			const int64_t now = bx::getHPCounter();
 			static int64_t next = now;
 
 			if (now < next)
@@ -508,7 +508,7 @@ namespace entry
 			bgfx::renderFrame();
 
 			bx::Thread thread;
-			thread.init(mte.threadFunc, &mte);
+			thread.init(mte.threadFunc, &mte, 0, "Entry Thread");
 			m_init = true;
 
 			m_eventQueue.postSizeEvent(findHandle(m_hwnd[0]), m_width, m_height);

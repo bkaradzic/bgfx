@@ -107,8 +107,6 @@ ExampleTerrain(const char* _name, const char* _description, const char* _url)
 		// Imgui.
 		imguiCreate();
 
-		m_timeOffset = bx::getHPCounter();
-
 		m_vbh.idx = bgfx::kInvalidHandle;
 		m_ibh.idx = bgfx::kInvalidHandle;
 		m_dvbh.idx = bgfx::kInvalidHandle;
@@ -139,6 +137,8 @@ ExampleTerrain(const char* _name, const char* _description, const char* _url)
 
 		cameraSetPosition({ s_terrainSize/2.0f, 100.0f, 0.0f });
 		cameraSetVerticalAngle(-bx::kPiQuarter);
+
+		m_frameTime.reset();
 	}
 
 	virtual int shutdown() override
@@ -386,12 +386,8 @@ ExampleTerrain(const char* _name, const char* _description, const char* _url)
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency() );
-			const float deltaTime = float(frameTime/freq);
+			m_frameTime.frame();
+			const float deltaTime = bx::toSeconds<float>(m_frameTime.getDeltaTime() );
 
 			imguiBeginFrame(m_mouseState.m_mx
 				,  m_mouseState.m_my
@@ -519,7 +515,7 @@ ExampleTerrain(const char* _name, const char* _description, const char* _url)
 
 	entry::MouseState m_mouseState;
 
-	int64_t m_timeOffset;
+	FrameTime m_frameTime;
 };
 
 } // namespace

@@ -56,9 +56,9 @@ public:
 
 		m_mesh = meshLoad("meshes/bunny.bin");
 
-		m_timeOffset = bx::getHPCounter();
-
 		imguiCreate();
+
+		m_frameTime.reset();
 	}
 
 	int shutdown() override
@@ -82,6 +82,10 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			m_frameTime.frame();
+			const float time = bx::toSeconds<float>(m_frameTime.getDurationTime() );
+			bgfx::setFrameUniform(u_time, &time);
+
 			imguiBeginFrame(m_mouseState.m_mx
 				,  m_mouseState.m_my
 				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
@@ -102,9 +106,6 @@ public:
 			// This dummy draw call is here to make sure that view 0 is cleared
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
-
-			float time = (float)( (bx::getHPCounter()-m_timeOffset)/double(bx::getHPFrequency() ) );
-			bgfx::setFrameUniform(u_time, &time);
 
 			const bx::Vec3 at  = { 0.0f, 1.0f,  0.0f };
 			const bx::Vec3 eye = { 0.0f, 1.0f, -2.5f };
@@ -147,7 +148,8 @@ public:
 	uint32_t m_debug;
 	uint32_t m_reset;
 
-	int64_t m_timeOffset;
+	FrameTime m_frameTime;
+
 	Mesh* m_mesh;
 	bgfx::ProgramHandle m_program;
 	bgfx::UniformHandle u_time;

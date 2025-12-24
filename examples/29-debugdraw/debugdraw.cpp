@@ -797,8 +797,6 @@ public:
 				, 0
 				);
 
-		m_timeOffset = bx::getHPCounter();
-
 		cameraCreate();
 
 		cameraSetPosition({ 0.0f, 2.0f, -12.0f });
@@ -818,6 +816,8 @@ public:
 			);
 
 		imguiCreate();
+
+		m_frameTime.reset();
 	}
 
 	virtual int shutdown() override
@@ -863,6 +863,9 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			m_frameTime.frame();
+			const float deltaTime = bx::toSeconds<float>(m_frameTime.getDeltaTime() );
+
 			imguiBeginFrame(
 				   m_mouseState.m_mx
 				,  m_mouseState.m_my
@@ -898,13 +901,6 @@ public:
 			ImGui::End();
 
 			imguiEndFrame();
-
-			int64_t now = bx::getHPCounter() - m_timeOffset;
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency() );
-			const float deltaTime = float(frameTime/freq);
 
 			// Update camera.
 			cameraUpdate(deltaTime, m_mouseState, ImGui::MouseOverArea() );
@@ -1217,7 +1213,7 @@ public:
 	SpriteHandle   m_sprite;
 	GeometryHandle m_bunny;
 
-	int64_t m_timeOffset;
+	FrameTime m_frameTime;
 
 	uint32_t m_width;
 	uint32_t m_height;

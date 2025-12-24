@@ -231,7 +231,8 @@ public:
 
 		m_scrollArea = 0;
 
-		m_time = 0.0f;
+		m_time = 0;
+		m_frameTime.reset();
 	}
 
 	virtual int shutdown() override
@@ -284,6 +285,9 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
+			m_frameTime.frame();
+			const float deltaTime = bx::toSeconds<float>(m_frameTime.getDeltaTime() );
+
 			if (!bgfx::isValid(m_fbh)
 			||  m_oldWidth  != m_width
 			||  m_oldHeight != m_height
@@ -399,13 +403,7 @@ public:
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency() );
-
-			m_time += (float)(frameTime*m_speed/freq);
+			m_time += m_speed * deltaTime;
 
 			bgfx::ViewId shuffle[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 			bx::shuffle(&m_rng, shuffle, BX_COUNTOF(shuffle) );
@@ -652,7 +650,9 @@ public:
 	int32_t m_scrollArea;
 
 	const bgfx::Caps* m_caps;
+
 	float m_time;
+	FrameTime m_frameTime;
 };
 
 } // namespace
