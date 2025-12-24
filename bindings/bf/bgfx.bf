@@ -2237,6 +2237,7 @@ public static class bgfx
 		public uint64 capabilities;
 		public uint8 debug;
 		public uint8 profile;
+		public uint8 fallback;
 		public PlatformData platformData;
 		public Resolution resolution;
 		public Limits limits;

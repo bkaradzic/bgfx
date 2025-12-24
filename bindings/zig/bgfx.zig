@@ -1419,6 +1419,7 @@ pub const Init = extern struct {
         capabilities: u64,
         debug: bool,
         profile: bool,
+        fallback: bool,
         platformData: PlatformData,
         resolution: Resolution,
         limits: Limits,

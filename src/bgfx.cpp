@@ -737,10 +737,10 @@ namespace bgfx
 			.add(Attrib::TexCoord0, 2, AttribType::Float)
 			.end();
 
-		uint16_t width  = 2048;
-		uint16_t height = 24;
-		uint8_t  bpp    = 1;
-		uint32_t pitch  = width*bpp;
+		const uint16_t width  = 2048;
+		const uint16_t height = 24;
+		const uint8_t  bpp    = 1;
+		const uint32_t pitch  = width*bpp;
 
 		const Memory* mem;
 
@@ -767,6 +767,7 @@ namespace bgfx
 		m_vb = s_ctx->createTransientVertexBuffer(kNumBatchVertices*m_layout.m_stride, &m_layout);
 		m_ib = s_ctx->createTransientIndexBuffer(kNumBatchIndices*2);
 		m_scale = bx::max<uint8_t>(scale, 1);
+		m_usedData = 0;
 	}
 
 	void TextVideoMemBlitter::shutdown()
@@ -825,7 +826,7 @@ namespace bgfx
 	};
 	static_assert(BX_COUNTOF(s_paletteLinear) == 16);
 
-	void blit(RendererContextI* _renderCtx, TextVideoMemBlitter& _blitter, const TextVideoMem& _mem)
+	void dbgTextSubmit(RendererContextI* _renderCtx, TextVideoMemBlitter& _blitter, const TextVideoMem& _mem)
 	{
 		struct Vertex
 		{
@@ -848,7 +849,7 @@ namespace bgfx
 		const float fontHeight  = (_mem.m_small ? 8.0f : 16.0f)*_blitter.m_scale;
 		const float fontWidth   = 8.0f * _blitter.m_scale;
 
-		_renderCtx->blitSetup(_blitter);
+		_renderCtx->dbgTextRenderBegin(_blitter);
 
 		const uint32_t* palette = 0 != (s_ctx->m_init.resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
 			? s_paletteLinear
@@ -857,10 +858,10 @@ namespace bgfx
 
 		for (;yy < _mem.m_height;)
 		{
-			Vertex* vertex = (Vertex*)_blitter.m_vb->data;
+			Vertex*   vertex  = (Vertex  *)_blitter.m_vb->data;
 			uint16_t* indices = (uint16_t*)_blitter.m_ib->data;
 			uint32_t startVertex = 0;
-			uint32_t numIndices = 0;
+			uint32_t numIndices  = 0;
 
 			for (; yy < _mem.m_height && numIndices < kNumBatchIndices; ++yy)
 			{
@@ -883,7 +884,7 @@ namespace bgfx
 						const uint32_t fg = palette[attr&0xf];
 						const uint32_t bg = palette[(attr>>4)&0xf];
 
-						Vertex vert[4] =
+						const Vertex vert[4] =
 						{
 							{ (xx  )*fontWidth, (yy  )*fontHeight, 0.0f, fg, bg, (ch  )*8.0f*texelWidth, utop },
 							{ (xx+1)*fontWidth, (yy  )*fontHeight, 0.0f, fg, bg, (ch+1)*8.0f*texelWidth, utop },
@@ -916,8 +917,10 @@ namespace bgfx
 				}
 			}
 
-			_renderCtx->blitRender(_blitter, numIndices);
+			_renderCtx->dbgTextRender(_blitter, numIndices);
 		}
+
+		_renderCtx->dbgTextRenderEnd(_blitter);
 	}
 
 	void ClearQuad::init()
@@ -926,7 +929,8 @@ namespace bgfx
 
 		if (RendererType::Noop != g_caps.rendererType)
 		{
-			m_layout
+			VertexLayout layout;
+			layout
 				.begin()
 				.add(Attrib::Position, 2, AttribType::Float)
 				.end();
@@ -954,7 +958,7 @@ namespace bgfx
 				float m_y;
 			};
 
-			const uint16_t stride = m_layout.m_stride;
+			const uint16_t stride = layout.m_stride;
 			const bgfx::Memory* mem = bgfx::alloc(4 * stride);
 			Vertex* vertex = (Vertex*)mem->data;
 			BX_ASSERT(stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", stride, sizeof(Vertex));
@@ -971,7 +975,8 @@ namespace bgfx
 			vertex->m_x = 1.0f;
 			vertex->m_y = 1.0f;
 
-			m_vb = s_ctx->createVertexBuffer(mem, m_layout, 0);
+			m_layout = s_ctx->createVertexLayout(layout);
+			m_vb     = s_ctx->createVertexBuffer(mem, layout, 0);
 		}
 	}
 
@@ -991,6 +996,7 @@ namespace bgfx
 			}
 
 			s_ctx->destroyVertexBuffer(m_vb);
+			s_ctx->destroyVertexLayout(m_layout);
 		}
 	}
 
@@ -1351,15 +1357,9 @@ namespace bgfx
 		if (UINT8_MAX != m_draw.m_streamMask)
 		{
 			uint32_t numVertices = UINT32_MAX;
-			for (uint32_t idx = 0, streamMask = m_draw.m_streamMask
-				; 0 != streamMask
-				; streamMask >>= 1, idx += 1
-				)
+			for (BitMaskToIndexIteratorT it(m_draw.m_streamMask); !it.isDone(); it.next() )
 			{
-				const uint32_t ntz = bx::uint32_cnttz(streamMask);
-				streamMask >>= ntz;
-				idx         += ntz;
-				numVertices = bx::min(numVertices, m_numVertices[idx]);
+				numVertices = bx::min(numVertices, m_numVertices[it.idx]);
 			}
 
 			m_draw.m_numVertices = numVertices;
@@ -1444,30 +1444,31 @@ namespace bgfx
 			, "Exceed number of available blit items per frame. BGFX_CONFIG_MAX_BLIT_ITEMS is %d. Skipping blit."
 			, BGFX_CONFIG_MAX_BLIT_ITEMS
 			);
-		if (m_frame->m_numBlitItems < BGFX_CONFIG_MAX_BLIT_ITEMS)
+		const uint32_t blitItemIdx = bx::atomicFetchAndAddsat<uint32_t>(&m_frame->m_numBlitItems, 1, BGFX_CONFIG_MAX_BLIT_ITEMS);
+		if (BGFX_CONFIG_MAX_BLIT_ITEMS-1 <= blitItemIdx)
 		{
-			uint16_t item = m_frame->m_numBlitItems++;
-
-			BlitItem& bi = m_frame->m_blitItem[item];
-			bi.m_srcX    = _srcX;
-			bi.m_srcY    = _srcY;
-			bi.m_srcZ    = _srcZ;
-			bi.m_dstX    = _dstX;
-			bi.m_dstY    = _dstY;
-			bi.m_dstZ    = _dstZ;
-			bi.m_width   = _width;
-			bi.m_height  = _height;
-			bi.m_depth   = _depth;
-			bi.m_srcMip  = _srcMip;
-			bi.m_dstMip  = _dstMip;
-			bi.m_src     = _src;
-			bi.m_dst     = _dst;
-
-			BlitKey key;
-			key.m_view = _id;
-			key.m_item = item;
-			m_frame->m_blitKeys[item] = key.encode();
+			return;
 		}
+
+		BlitItem& bi = m_frame->m_blitItem[blitItemIdx];
+		bi.m_srcX   = _srcX;
+		bi.m_srcY   = _srcY;
+		bi.m_srcZ   = _srcZ;
+		bi.m_dstX   = _dstX;
+		bi.m_dstY   = _dstY;
+		bi.m_dstZ   = _dstZ;
+		bi.m_width  = _width;
+		bi.m_height = _height;
+		bi.m_depth  = _depth;
+		bi.m_srcMip = _srcMip;
+		bi.m_dstMip = _dstMip;
+		bi.m_src    = _src;
+		bi.m_dst    = _dst;
+
+		BlitKey key;
+		key.m_view = _id;
+		key.m_item = bx::narrowCast<uint16_t>(blitItemIdx);
+		m_frame->m_blitKeys[blitItemIdx] = key.encode();
 	}
 
 	void Frame::sort()
@@ -2479,7 +2480,7 @@ namespace bgfx
 			, m_init.resolution.height
 			);
 
-		int64_t now = bx::getHPCounter();
+		const int64_t now = bx::getHPCounter();
 		m_submit->m_perfStats.cpuTimeFrame = now - m_frameTimeLast;
 		m_frameTimeLast = now;
 	}
@@ -2640,8 +2641,6 @@ namespace bgfx
 		{
 			const uint32_t pos = _cmdbuf.m_pos;
 
-			uint32_t currentKey = UINT32_MAX;
-
 			for (uint32_t ii = 0, num = m_textureUpdateBatch.m_num; ii < num; ++ii)
 			{
 				_cmdbuf.m_pos = m_textureUpdateBatch.m_values[ii];
@@ -2670,25 +2669,9 @@ namespace bgfx
 				const Memory* mem;
 				_cmdbuf.read(mem);
 
-				uint32_t key = m_textureUpdateBatch.m_keys[ii];
-				if (key != currentKey)
-				{
-					if (currentKey != UINT32_MAX)
-					{
-						m_renderCtx->updateTextureEnd();
-					}
-					currentKey = key;
-					m_renderCtx->updateTextureBegin(handle, side, mip);
-				}
-
 				m_renderCtx->updateTexture(handle, side, mip, rect, zz, depth, pitch, mem);
 
 				release(mem);
-			}
-
-			if (currentKey != UINT32_MAX)
-			{
-				m_renderCtx->updateTextureEnd();
 			}
 
 			m_textureUpdateBatch.reset();
@@ -2716,6 +2699,7 @@ namespace bgfx
 	BGFX_RENDERER_CONTEXT(nvn);
 	BGFX_RENDERER_CONTEXT(gl);
 	BGFX_RENDERER_CONTEXT(vk);
+	BGFX_RENDERER_CONTEXT(wgpu);
 
 #undef BGFX_RENDERER_CONTEXT
 
@@ -2948,7 +2932,8 @@ namespace bgfx
 		{
 			RendererType::Enum renderer = RendererType::Enum(scores[ii] & 0xff);
 			renderCtx = s_rendererCreator[renderer].createFn(_init);
-			if (NULL != renderCtx)
+			if (NULL != renderCtx
+			||  !_init.fallback)
 			{
 				break;
 			}
@@ -3643,6 +3628,7 @@ namespace bgfx
 		, capabilities(UINT64_MAX)
 		, debug(BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		, profile(BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
+		, fallback(true)
 		, callback(NULL)
 		, allocator(NULL)
 	{

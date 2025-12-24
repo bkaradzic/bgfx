@@ -94,8 +94,8 @@
 #		define BGFX_CONFIG_RENDERER_OPENGLES (0 \
 					|| BX_PLATFORM_ANDROID      \
 					|| BX_PLATFORM_EMSCRIPTEN   \
-					|| BX_PLATFORM_RPI          \
 					|| BX_PLATFORM_NX           \
+					|| BX_PLATFORM_RPI          \
 					? BGFX_CONFIG_RENDERER_OPENGLES_MIN_VERSION : 0)
 #	endif // BGFX_CONFIG_RENDERER_OPENGLES
 
@@ -103,9 +103,9 @@
 #		define BGFX_CONFIG_RENDERER_VULKAN (0 \
 					|| BX_PLATFORM_ANDROID    \
 					|| BX_PLATFORM_LINUX      \
-					|| BX_PLATFORM_WINDOWS    \
 					|| BX_PLATFORM_NX         \
 					|| BX_PLATFORM_OSX        \
+					|| BX_PLATFORM_WINDOWS    \
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_VULKAN
 

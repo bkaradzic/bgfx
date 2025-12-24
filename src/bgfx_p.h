@@ -496,7 +496,7 @@ namespace bgfx
 		uint16_t m_flags;
 	};
 
-	struct Rect
+	BX_ALIGN_DECL(8, struct) Rect
 	{
 		Rect()
 		{
@@ -520,21 +520,34 @@ namespace bgfx
 
 		bool isZero() const
 		{
+			static_assert(8 == sizeof(Rect), "");
+
 			uint64_t ui64 = *( (uint64_t*)this);
 			return UINT64_C(0) == ui64;
 		}
 
 		bool isZeroArea() const
 		{
-			return 0 == m_width
+			return false
+				|| 0 == m_width
 				|| 0 == m_height
+				;
+		}
+
+		bool isEqual(const Rect& _other) const
+		{
+			return true
+				&& m_x      == _other.m_x
+				&& m_y      == _other.m_y
+				&& m_width  == _other.m_width
+				&& m_height == _other.m_height
 				;
 		}
 
 		void set(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 		{
-			m_x = _x;
-			m_y = _y;
+			m_x      = _x;
+			m_y      = _y;
 			m_width  = _width;
 			m_height = _height;
 		}
@@ -545,8 +558,8 @@ namespace bgfx
 			const uint16_t sy = bx::max<uint16_t>(_a.m_y, _b.m_y);
 			const uint16_t ex = bx::min<uint16_t>(_a.m_x + _a.m_width,  _b.m_x + _b.m_width );
 			const uint16_t ey = bx::min<uint16_t>(_a.m_y + _a.m_height, _b.m_y + _b.m_height);
-			m_x = sx;
-			m_y = sy;
+			m_x      = sx;
+			m_y      = sy;
 			m_width  = (uint16_t)bx::uint32_satsub(ex, sx);
 			m_height = (uint16_t)bx::uint32_satsub(ey, sy);
 		}
@@ -626,6 +639,12 @@ namespace bgfx
 	{
 		return uint32_t( (_stencil >> (32*_0or1) ) );
 	}
+
+	static constexpr uint64_t kStencilNoRefMask = packStencil(~BGFX_STENCIL_FUNC_REF_MASK, ~BGFX_STENCIL_FUNC_REF_MASK);
+	static constexpr uint64_t kStencilDisabled  = packStencil(
+		  BGFX_STENCIL_TEST_ALWAYS | BGFX_STENCIL_OP_FAIL_S_KEEP | BGFX_STENCIL_OP_FAIL_Z_KEEP | BGFX_STENCIL_OP_PASS_Z_KEEP
+		, BGFX_STENCIL_TEST_ALWAYS | BGFX_STENCIL_OP_FAIL_S_KEEP | BGFX_STENCIL_OP_FAIL_Z_KEEP | BGFX_STENCIL_OP_PASS_Z_KEEP
+		);
 
 	inline constexpr bool needBorderColor(uint64_t _flags)
 	{
@@ -765,19 +784,21 @@ namespace bgfx
 
 		TextureHandle m_texture;
 		TransientVertexBuffer* m_vb;
-		TransientIndexBuffer* m_ib;
-		VertexLayout m_layout;
+		TransientIndexBuffer*  m_ib;
+		VertexLayout  m_layout;
 		ProgramHandle m_program;
 		uint8_t m_scale;
+
+		uintptr_t m_usedData;
 	};
 
 	struct RendererContextI;
 
-	extern void blit(RendererContextI* _renderCtx, TextVideoMemBlitter& _blitter, const TextVideoMem& _mem);
+	extern void dbgTextSubmit(RendererContextI* _renderCtx, TextVideoMemBlitter& _blitter, const TextVideoMem& _mem);
 
-	inline void blit(RendererContextI* _renderCtx, TextVideoMemBlitter& _blitter, const TextVideoMem* _mem)
+	inline void dbgTextSubmit(RendererContextI* _renderCtx, TextVideoMemBlitter& _blitter, const TextVideoMem* _mem)
 	{
-		blit(_renderCtx, _blitter, *_mem);
+		dbgTextSubmit(_renderCtx, _blitter, *_mem);
 	}
 
 	template <uint32_t maxKeys>
@@ -790,8 +811,8 @@ namespace bgfx
 
 		void add(uint32_t _key, uint32_t _value)
 		{
-			uint32_t num = m_num++;
-			m_keys[num] = _key;
+			const uint32_t num = m_num++;
+			m_keys  [num] = _key;
 			m_values[num] = _value;
 		}
 
@@ -799,7 +820,7 @@ namespace bgfx
 		{
 			if (0 < m_num)
 			{
-				uint32_t* tempKeys = (uint32_t*)BX_STACK_ALLOC(sizeof(m_keys) );
+				uint32_t* tempKeys   = (uint32_t*)BX_STACK_ALLOC(sizeof(m_keys) );
 				uint32_t* tempValues = (uint32_t*)BX_STACK_ALLOC(sizeof(m_values) );
 				bx::radixSort(m_keys, tempKeys, m_values, tempValues, m_num);
 				return true;
@@ -823,6 +844,32 @@ namespace bgfx
 		uint32_t m_values[maxKeys];
 	};
 
+	template<typename MaskT>
+	struct BitMaskToIndexIteratorT
+	{
+		BitMaskToIndexIteratorT(MaskT _mask)
+		{
+			const uint8_t ntz = bx::countTrailingZeros(_mask);
+			mask = _mask >> ntz;
+			idx  = ntz;
+		}
+
+		void next()
+		{
+			const uint8_t ntzPlus1 = bx::countTrailingZeros(mask>>1) + 1;
+			mask >>= ntzPlus1;
+			idx   += ntzPlus1;
+		}
+
+		bool isDone() const
+		{
+			return 0 == mask;
+		}
+
+		MaskT   mask;
+		uint8_t idx;
+	};
+
 	struct ClearQuad
 	{
 		ClearQuad()
@@ -837,7 +884,7 @@ namespace bgfx
 		void shutdown();
 
 		VertexBufferHandle m_vb;
-		VertexLayout m_layout;
+		VertexLayoutHandle m_layout;
 		ProgramHandle m_program[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 	};
 
@@ -2537,7 +2584,7 @@ namespace bgfx
 		UniformBuffer** m_uniformBuffer;
 
 		uint32_t m_numRenderItems;
-		uint16_t m_numBlitItems;
+		uint32_t m_numBlitItems;
 
 		uint32_t m_iboffset;
 		uint32_t m_vboffset;
@@ -3564,9 +3611,7 @@ namespace bgfx
 		virtual void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) = 0;
 		virtual void destroyProgram(ProgramHandle _handle) = 0;
 		virtual void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip) = 0;
-		virtual void updateTextureBegin(TextureHandle _handle, uint8_t _side, uint8_t _mip) = 0;
 		virtual void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) = 0;
-		virtual void updateTextureEnd() = 0;
 		virtual void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) = 0;
 		virtual void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) = 0;
 		virtual void overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint16_t _layerIndex) = 0;
@@ -3584,8 +3629,9 @@ namespace bgfx
 		virtual void setMarker(const char* _name, uint16_t _len) = 0;
 		virtual void setName(Handle _handle, const char* _name, uint16_t _len) = 0;
 		virtual void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) = 0;
-		virtual void blitSetup(TextVideoMemBlitter& _blitter) = 0;
-		virtual void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) = 0;
+		virtual void dbgTextRenderBegin(TextVideoMemBlitter& _blitter) = 0;
+		virtual void dbgTextRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) = 0;
+		virtual void dbgTextRenderEnd(TextVideoMemBlitter& _blitter) = 0;
 	};
 
 	inline RendererContextI::~RendererContextI()
@@ -4548,8 +4594,8 @@ namespace bgfx
 			BX_WARN(isValid(handle), "Failed to allocate draw indirect buffer handle.");
 			if (isValid(handle) )
 			{
-				uint32_t size  = _num * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
-				uint16_t flags = BGFX_BUFFER_DRAW_INDIRECT;
+				const uint32_t size  = _num * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
+				const uint16_t flags = BGFX_BUFFER_DRAW_INDIRECT;
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
 				cmdbuf.write(handle);

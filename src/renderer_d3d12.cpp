@@ -1868,7 +1868,7 @@ namespace bgfx { namespace d3d12
 					hr = m_swapChain->Present(syncInterval, presentFlags);
 				}
 
-				int64_t now = bx::getHPCounter();
+				const int64_t now = bx::getHPCounter();
 				m_presentElapsed = now - start;
 
 				m_lost = isLost(hr);
@@ -1969,20 +1969,12 @@ namespace bgfx { namespace d3d12
 			return m_textures[_handle.idx].create(_mem, _flags, _skip);
 		}
 
-		void updateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/) override
-		{
-		}
-
 		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
 		{
 			m_textures[_handle.idx].update(m_commandList, _side, _mip, _rect, _z, _depth, _pitch, _mem);
 		}
 
-		void updateTextureEnd() override
-		{
-		}
-
-		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip ) override
+		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override
 		{
 			const TextureD3D12& texture = m_textures[_handle.idx];
 
@@ -2005,8 +1997,8 @@ namespace bgfx { namespace d3d12
 
 			ID3D12Resource* readback = createCommittedResource(m_device, HeapProperty::ReadBack, total);
 
-			uint32_t srcWidth  = bx::uint32_max(1, texture.m_width >>_mip);
-			uint32_t srcHeight = bx::uint32_max(1, texture.m_height>>_mip);
+			const uint32_t srcWidth  = bx::max(1u, texture.m_width >>_mip);
+			const uint32_t srcHeight = bx::max(1u, texture.m_height>>_mip);
 
 			D3D12_BOX box;
 			box.left   = 0;
@@ -2287,7 +2279,7 @@ namespace bgfx { namespace d3d12
 
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;
 
-		void blitSetup(TextVideoMemBlitter& _blitter) override
+		void dbgTextRenderBegin(TextVideoMemBlitter& _blitter) override
 		{
 			const uint32_t width  = m_scd.width;
 			const uint32_t height = m_scd.height;
@@ -2330,7 +2322,7 @@ namespace bgfx { namespace d3d12
 			float proj[16];
 			bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f, 0.0f, false);
 
-			PredefinedUniform& predefined = m_program[_blitter.m_program.idx].m_predefined[0];
+			const PredefinedUniform& predefined = m_program[_blitter.m_program.idx].m_predefined[0];
 			uint8_t flags = predefined.m_type;
 			setShaderUniform(flags, predefined.m_loc, proj, 4);
 
@@ -2347,15 +2339,15 @@ namespace bgfx { namespace d3d12
 			m_commandList->SetGraphicsRootConstantBufferView(Rdt::CBV, gpuAddress);
 
 			TextureD3D12& texture = m_textures[_blitter.m_texture.idx];
-			uint32_t samplerFlags[] = { uint32_t(texture.m_flags & BGFX_SAMPLER_BITS_MASK) };
-			uint16_t samplerStateIdx = getSamplerState(samplerFlags, BX_COUNTOF(samplerFlags), NULL);
+			const uint32_t samplerFlags[] = { uint32_t(texture.m_flags & BGFX_SAMPLER_BITS_MASK) };
+			const uint16_t samplerStateIdx = getSamplerState(samplerFlags, BX_COUNTOF(samplerFlags), NULL);
 			m_commandList->SetGraphicsRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
 			D3D12_GPU_DESCRIPTOR_HANDLE srvHandle;
 			scratchBuffer.allocSrv(srvHandle, texture);
 			m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, srvHandle);
 
-			VertexBufferD3D12&  vb     = m_vertexBuffers[_blitter.m_vb->handle.idx];
-			const VertexLayout& layout = m_vertexLayouts[_blitter.m_vb->layoutHandle.idx];
+			const VertexBufferD3D12& vb = m_vertexBuffers[_blitter.m_vb->handle.idx];
+			const VertexLayout& layout  = m_vertexLayouts[_blitter.m_vb->layoutHandle.idx];
 			D3D12_VERTEX_BUFFER_VIEW viewDesc;
 			viewDesc.BufferLocation = vb.m_gpuVA;
 			viewDesc.StrideInBytes  = layout.m_stride;
@@ -2372,7 +2364,7 @@ namespace bgfx { namespace d3d12
 			m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		}
 
-		void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) override
+		void dbgTextRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) override
 		{
 			const uint32_t numVertices = _numIndices*4/6;
 			if (0 < numVertices)
@@ -2380,13 +2372,12 @@ namespace bgfx { namespace d3d12
 				m_indexBuffers [_blitter.m_ib->handle.idx].update(m_commandList, 0, _numIndices*2, _blitter.m_ib->data);
 				m_vertexBuffers[_blitter.m_vb->handle.idx].update(m_commandList, 0, numVertices*_blitter.m_layout.m_stride, _blitter.m_vb->data, true);
 
-				m_commandList->DrawIndexedInstanced(_numIndices
-					, 1
-					, 0
-					, 0
-					, 0
-					);
+				m_commandList->DrawIndexedInstanced(_numIndices, 1, 0, 0, 0);
 			}
+		}
+
+		void dbgTextRenderEnd(TextVideoMemBlitter& /*_blitter*/) override
+		{
 		}
 
 		void preReset()
@@ -3221,7 +3212,7 @@ namespace bgfx { namespace d3d12
 				| BGFX_STATE_PT_MASK
 				;
 
-			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, ~BGFX_STENCIL_FUNC_REF_MASK);
+			_stencil &= kStencilNoRefMask;
 
 			VertexLayout layout;
 			if (0 < _numStreams)
@@ -4371,15 +4362,12 @@ namespace bgfx { namespace d3d12
 
 		if (UINT8_MAX != _draw.m_streamMask)
 		{
-			for (uint32_t idx = 0, streamMask = _draw.m_streamMask
-				; 0 != streamMask
-				; streamMask >>= 1, idx += 1, ++numStreams
+			for (BitMaskToIndexIteratorT it(_draw.m_streamMask)
+				; !it.isDone()
+				; it.next(), numStreams++
 				)
 			{
-				const uint32_t ntz = bx::uint32_cnttz(streamMask);
-				streamMask >>= ntz;
-				idx         += ntz;
-
+				const uint8_t idx = it.idx;
 				const Stream& stream = _draw.m_stream[idx];
 
 				uint16_t handle = stream.m_handle.idx;
@@ -7027,14 +7015,12 @@ namespace bgfx { namespace d3d12
 					uint8_t numStreams = 0;
 					if (UINT8_MAX != draw.m_streamMask)
 					{
-						for (uint32_t idx = 0, streamMask = draw.m_streamMask
-							; 0 != streamMask
-							; streamMask >>= 1, idx += 1, ++numStreams
+						for (BitMaskToIndexIteratorT it(draw.m_streamMask)
+							; !it.isDone()
+							; it.next(), numStreams++
 							)
 						{
-							const uint32_t ntz = bx::uint32_cnttz(streamMask);
-							streamMask >>= ntz;
-							idx         += ntz;
+							const uint8_t idx = it.idx;
 
 							currentState.m_stream[idx].m_layoutHandle = draw.m_stream[idx].m_layoutHandle;
 							currentState.m_stream[idx].m_handle       = draw.m_stream[idx].m_handle;
@@ -7577,7 +7563,7 @@ namespace bgfx { namespace d3d12
 				presentMax = m_presentElapsed;
 			}
 
-			blit(this, _textVideoMemBlitter, tvm);
+			dbgTextSubmit(this, _textVideoMemBlitter, tvm);
 
 			BGFX_D3D12_PROFILER_END();
 		}
@@ -7585,7 +7571,7 @@ namespace bgfx { namespace d3d12
 		{
 			BGFX_D3D12_PROFILER_BEGIN_LITERAL("debugtext", kColorFrame);
 
-			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
+			dbgTextSubmit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 
 			BGFX_D3D12_PROFILER_END();
 		}

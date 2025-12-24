@@ -2311,7 +2311,7 @@ VK_IMPORT_DEVICE
 				fb.present();
 			}
 
-			int64_t now = bx::getHPCounter();
+			const int64_t now = bx::getHPCounter();
 
 			m_presentElapsed += now - start;
 		}
@@ -2403,17 +2403,9 @@ VK_IMPORT_DEVICE
 			return m_textures[_handle.idx].create(m_commandBuffer, _mem, _flags, _skip);
 		}
 
-		void updateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/) override
-		{
-		}
-
 		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
 		{
 			m_textures[_handle.idx].update(m_commandBuffer, _side, _mip, _rect, _z, _depth, _pitch, _mem);
-		}
-
-		void updateTextureEnd() override
-		{
 		}
 
 		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override
@@ -2684,7 +2676,7 @@ VK_IMPORT_DEVICE
 
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;
 
-		void blitSetup(TextVideoMemBlitter& _blitter) override
+		void dbgTextRenderBegin(TextVideoMemBlitter& _blitter) override
 		{
 			const uint32_t width  = m_backBuffer.m_width;
 			const uint32_t height = m_backBuffer.m_height;
@@ -2778,7 +2770,7 @@ VK_IMPORT_DEVICE
 				);
 		}
 
-		void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) override
+		void dbgTextRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) override
 		{
 			const uint32_t numVertices = _numIndices*4/6;
 
@@ -2804,6 +2796,10 @@ VK_IMPORT_DEVICE
 				vkCmdDrawIndexed(m_commandBuffer, _numIndices, 1, 0, 0, 0);
 				vkCmdEndRenderPass(m_commandBuffer);
 			}
+		}
+
+		void dbgTextRenderEnd(TextVideoMemBlitter& /*_blitter*/) override
+		{
 		}
 
 		void preReset()
@@ -3021,7 +3017,7 @@ VK_IMPORT_DEVICE
 
 				newFrameBuffer.acquire(m_commandBuffer);
 
-				int64_t now = bx::getHPCounter();
+				const int64_t now = bx::getHPCounter();
 
 				if (NULL != newFrameBuffer.m_nwh)
 				{
@@ -3690,7 +3686,7 @@ VK_IMPORT_DEVICE
 				| BGFX_STATE_PT_MASK
 				;
 
-			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, ~BGFX_STENCIL_FUNC_REF_MASK);
+			_stencil &= kStencilNoRefMask;
 
 			VertexLayout layout;
 			if (0 < _numStreams)
@@ -5580,6 +5576,7 @@ retry:
 		smci.codeSize = m_code->size;
 		smci.pCode    = (const uint32_t*)m_code->data;
 
+		BX_TRACE("%x", bx::hash<bx::HashMurmur3>(code, shaderSize) );
 		VK_CHECK(vkCreateShaderModule(
 			  s_renderVK->m_device
 			, &smci
@@ -9150,11 +9147,8 @@ retry:
 					}
 
 					if (beginRenderPass && (false
-					||  _render->m_view[view].m_fbh.idx       != fbh.idx
-					||  _render->m_view[view].m_rect.m_x      != viewState.m_rect.m_x
-					||  _render->m_view[view].m_rect.m_y      != viewState.m_rect.m_y
-					||  _render->m_view[view].m_rect.m_width  != viewState.m_rect.m_width
-					||  _render->m_view[view].m_rect.m_height != viewState.m_rect.m_height
+					||  _render->m_view[view].m_fbh.idx != fbh.idx
+					|| !_render->m_view[view].m_rect.isEqual(viewState.m_rect)
 					   ) )
 					{
 						vkCmdEndRenderPass(m_commandBuffer);
@@ -9540,14 +9534,12 @@ retry:
 					uint32_t numVertices = draw.m_numVertices;
 					if (UINT8_MAX != draw.m_streamMask)
 					{
-						for (uint32_t idx = 0, streamMask = draw.m_streamMask
-							; 0 != streamMask
-							; streamMask >>= 1, idx += 1, ++numStreams
+						for (BitMaskToIndexIteratorT it(draw.m_streamMask)
+							; !it.isDone()
+							; it.next(), numStreams++
 							)
 						{
-							const uint32_t ntz = bx::uint32_cnttz(streamMask);
-							streamMask >>= ntz;
-							idx         += ntz;
+							const uint8_t idx = it.idx;
 
 							currentState.m_stream[idx] = draw.m_stream[idx];
 
@@ -10168,7 +10160,7 @@ retry:
 				presentMax = m_presentElapsed;
 			}
 
-			blit(this, _textVideoMemBlitter, tvm);
+			dbgTextSubmit(this, _textVideoMemBlitter, tvm);
 
 			BGFX_VK_PROFILER_END();
 		}
@@ -10176,7 +10168,7 @@ retry:
 		{
 			BGFX_VK_PROFILER_BEGIN_LITERAL("debugtext", kColorFrame);
 
-			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
+			dbgTextSubmit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 
 			BGFX_VK_PROFILER_END();
 		}

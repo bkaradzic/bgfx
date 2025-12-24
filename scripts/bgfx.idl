@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(135)
+version(136)
 
 typedef "bool"
 typedef "char"
@@ -858,6 +858,7 @@ struct.Init { ctor }
 	.capabilities "uint64_t"           --- Capabilities initialization mask (default: UINT64_MAX).
 	.debug        "bool"               --- Enable device for debugging.
 	.profile      "bool"               --- Enable device for profiling.
+	.fallback     "bool"               --- Enable fallback to next available renderer.
 	.platformData "PlatformData"       --- Platform data.
 	.resolution   "Resolution"         --- Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
 	.limits       "Limits"             --- Configurable runtime limits parameters.
