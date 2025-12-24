@@ -742,6 +742,7 @@ typedef struct bgfx_init_s
     uint64_t             capabilities;       /** Capabilities initialization mask (default: UINT64_MAX). */
     bool                 debug;              /** Enable device for debugging.             */
     bool                 profile;            /** Enable device for profiling.             */
+    bool                 fallback;           /** Enable fallback to next available renderer. */
     bgfx_platform_data_t platformData;       /** Platform data.                           */
     bgfx_resolution_t    resolution;         /** Backbuffer resolution and reset parameters. See: `bgfx::Resolution`. */
     bgfx_init_limits_t   limits;             /** Configurable runtime limits parameters.  */

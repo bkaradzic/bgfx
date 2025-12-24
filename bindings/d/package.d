@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 135;
+enum uint apiVersion = 136;
 
 alias ViewID = ushort;
 
@@ -1199,6 +1199,7 @@ extern(C++, "bgfx") struct Init{
 	c_uint64 capabilities; ///Capabilities initialization mask (default: UINT64_MAX).
 	bool debug_; ///Enable device for debugging.
 	bool profile; ///Enable device for profiling.
+	bool fallback; ///Enable fallback to next available renderer.
 	PlatformData platformData; ///Platform data.
 	Resolution resolution; ///Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
 	Limits limits; ///Configurable runtime limits parameters.

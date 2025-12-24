@@ -739,8 +739,9 @@ namespace bgfx
 
 		uint64_t capabilities; //!< Capabilities initialization mask (default: UINT64_MAX).
 
-		bool debug;   //!< Enable device for debugging.
-		bool profile; //!< Enable device for profiling.
+		bool debug;    //!< Enable device for debugging.
+		bool profile;  //!< Enable device for profiling.
+		bool fallback; //!< Enable fallback to next available renderer.
 
 		/// Platform data.
 		PlatformData platformData;

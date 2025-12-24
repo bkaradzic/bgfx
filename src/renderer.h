@@ -503,14 +503,9 @@ namespace bgfx
 			return true;
 		}
 
-		for (uint32_t idx = 0, streamMask = _new.m_streamMask
-			; 0 != streamMask
-			; streamMask >>= 1, idx += 1
-			)
+		for (BitMaskToIndexIteratorT it(_new.m_streamMask); !it.isDone(); it.next() )
 		{
-			const uint32_t ntz = bx::uint32_cnttz(streamMask);
-			streamMask >>= ntz;
-			idx         += ntz;
+			const uint8_t idx = it.idx;
 
 			if (_current.m_stream[idx].m_handle.idx  != _new.m_stream[idx].m_handle.idx
 			||  _current.m_stream[idx].m_startVertex != _new.m_stream[idx].m_startVertex)
@@ -544,7 +539,7 @@ namespace bgfx
 		{
 			if (m_enabled)
 			{
-				ViewStats& viewStats = m_frame->m_perfStats.viewStats[m_numViews];
+				ViewStats& viewStats   = m_frame->m_perfStats.viewStats[m_numViews];
 				viewStats.cpuTimeBegin = bx::getHPCounter();
 
 				m_queryIdx = m_gpuTimer.begin(_view, m_frame->m_frameNum);
@@ -567,10 +562,10 @@ namespace bgfx
 				ViewStats& viewStats = m_frame->m_perfStats.viewStats[m_numViews];
 				const typename Ty::Result& result = m_gpuTimer.m_result[viewStats.view];
 
-				viewStats.cpuTimeEnd = bx::getHPCounter();
+				viewStats.cpuTimeEnd   = bx::getHPCounter();
 				viewStats.gpuTimeBegin = result.m_begin;
-				viewStats.gpuTimeEnd = result.m_end;
-				viewStats.gpuFrameNum = result.m_frameNum;
+				viewStats.gpuTimeEnd   = result.m_end;
+				viewStats.gpuFrameNum  = result.m_frameNum;
 
 				++m_numViews;
 				m_queryIdx = UINT32_MAX;

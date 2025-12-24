@@ -1581,6 +1581,8 @@ struct Init
 	bool debug;
 	// Enable device for profiling.
 	bool profile;
+	// Enable fallback to next available renderer.
+	bool fallback;
 	// Platform data.
 	PlatformData platformData;
 	// Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.

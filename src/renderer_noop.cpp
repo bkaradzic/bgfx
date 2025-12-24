@@ -169,15 +169,7 @@ namespace bgfx { namespace noop
 			return NULL;
 		}
 
-		void updateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/) override
-		{
-		}
-
 		void updateTexture(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/, const Rect& /*_rect*/, uint16_t /*_z*/, uint16_t /*_depth*/, uint16_t /*_pitch*/, const Memory* /*_mem*/) override
-		{
-		}
-
-		void updateTextureEnd() override
 		{
 		}
 
@@ -267,11 +259,15 @@ namespace bgfx { namespace noop
 			perfStats.gpuMemoryUsed = -INT64_MAX;
 		}
 
-		void blitSetup(TextVideoMemBlitter& /*_blitter*/) override
+		void dbgTextRenderBegin(TextVideoMemBlitter& /*_blitter*/) override
 		{
 		}
 
-		void blitRender(TextVideoMemBlitter& /*_blitter*/, uint32_t /*_numIndices*/) override
+		void dbgTextRender(TextVideoMemBlitter& /*_blitter*/, uint32_t /*_numIndices*/) override
+		{
+		}
+
+		void dbgTextRenderEnd(TextVideoMemBlitter& /*_blitter*/) override
 		{
 		}
 	};

@@ -2211,6 +2211,7 @@ public static partial class bgfx
 		public ulong capabilities;
 		public byte debug;
 		public byte profile;
+		public byte fallback;
 		public PlatformData platformData;
 		public Resolution resolution;
 		public Limits limits;

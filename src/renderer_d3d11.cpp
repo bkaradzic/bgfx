@@ -1841,17 +1841,9 @@ namespace bgfx { namespace d3d11
 			return m_textures[_handle.idx].create(_mem, _flags, _skip);
 		}
 
-		void updateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/) override
-		{
-		}
-
 		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
 		{
 			m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _pitch, _mem);
-		}
-
-		void updateTextureEnd() override
-		{
 		}
 
 		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override
@@ -2131,7 +2123,7 @@ namespace bgfx { namespace d3d11
 
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;
 
-		void blitSetup(TextVideoMemBlitter& _blitter) override
+		void dbgTextRenderBegin(TextVideoMemBlitter& _blitter) override
 		{
 			ID3D11DeviceContext* deviceCtx = m_deviceCtx;
 
@@ -2187,7 +2179,7 @@ namespace bgfx { namespace d3d11
 			commitTextureStage();
 		}
 
-		void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) override
+		void dbgTextRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) override
 		{
 			const uint32_t numVertices = _numIndices*4/6;
 			if (0 < numVertices)
@@ -2200,6 +2192,10 @@ namespace bgfx { namespace d3d11
 				deviceCtx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 				deviceCtx->DrawIndexed(_numIndices, 0, 0);
 			}
+		}
+
+		void dbgTextRenderEnd(TextVideoMemBlitter& /*_blitter*/) override
+		{
 		}
 
 		void preReset()
@@ -2898,7 +2894,7 @@ namespace bgfx { namespace d3d11
 
 			uint32_t fstencil = unpackStencil(0, _stencil);
 			uint32_t ref = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
-			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, ~BGFX_STENCIL_FUNC_REF_MASK);
+			_stencil &= kStencilNoRefMask;
 
 			bx::HashMurmur2A murmur;
 			murmur.begin();
@@ -3453,7 +3449,7 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
-		void clearQuad(ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4])
+		void clearQuad(const ClearQuad& _clearQuad, const Rect& _rect, const Clear& _clear, const float _palette[][4])
 		{
 			uint32_t width;
 			uint32_t height;
@@ -3470,10 +3466,9 @@ namespace bgfx { namespace d3d11
 				height = m_scd.height;
 			}
 
-			if (0      == _rect.m_x
-			&&  0      == _rect.m_y
-			&&  width  == _rect.m_width
-			&&  height == _rect.m_height)
+			const Rect fbRect(0, 0, bx::narrowCast<uint16_t>(width), bx::narrowCast<uint16_t>(height) );
+
+			if (_rect.isEqual(fbRect) )
 			{
 				clear(_clear, _palette);
 			}
@@ -3514,7 +3509,7 @@ namespace bgfx { namespace d3d11
 				const ShaderD3D11* vsh = program.m_vsh;
 				deviceCtx->VSSetShader(vsh->m_vertexShader, NULL, 0);
 				deviceCtx->VSSetConstantBuffers(0, 1, &vsh->m_buffer);
-				float mrtClearDepth[4] = { _clear.m_depth };
+				const float mrtClearDepth[4] = { _clear.m_depth };
 				deviceCtx->UpdateSubresource(vsh->m_buffer, 0, 0, mrtClearDepth, 0, 0);
 
 				if (NULL != m_currentColor)
@@ -3555,8 +3550,8 @@ namespace bgfx { namespace d3d11
 					deviceCtx->PSSetShader(NULL, NULL, 0);
 				}
 
-				VertexBufferD3D11& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
-				const VertexLayout& layout = _clearQuad.m_layout;
+				const VertexBufferD3D11& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
+				const VertexLayout&  layout = m_vertexLayouts[_clearQuad.m_layout.idx];
 
 				const uint32_t stride = layout.m_stride;
 				const uint32_t offset = 0;
@@ -6260,14 +6255,12 @@ namespace bgfx { namespace d3d11
 
 					if (UINT8_MAX != draw.m_streamMask)
 					{
-						for (uint32_t idx = 0, streamMask = draw.m_streamMask
-							; 0 != streamMask
-							; streamMask >>= 1, idx += 1, ++numStreams
+						for (BitMaskToIndexIteratorT it(draw.m_streamMask)
+							; !it.isDone()
+							; it.next(), numStreams++
 							)
 						{
-							const uint32_t ntz = bx::uint32_cnttz(streamMask);
-							streamMask >>= ntz;
-							idx         += ntz;
+							const uint8_t idx = it.idx;
 
 							currentState.m_stream[idx].m_layoutHandle = draw.m_stream[idx].m_layoutHandle;
 							currentState.m_stream[idx].m_handle       = draw.m_stream[idx].m_handle;
@@ -6476,11 +6469,11 @@ namespace bgfx { namespace d3d11
 									);
 							}
 						}
+					}
 
-						if (hasOcclusionQuery)
-						{
-							m_occlusionQuery.end();
-						}
+					if (hasOcclusionQuery)
+					{
+						m_occlusionQuery.end();
 					}
 
 					statsNumPrimsSubmitted[primIndex] += numPrimsSubmitted;
@@ -6694,7 +6687,7 @@ namespace bgfx { namespace d3d11
 				max = frameTime;
 			}
 
-			blit(this, _textVideoMemBlitter, tvm);
+			dbgTextSubmit(this, _textVideoMemBlitter, tvm);
 
 			BGFX_D3D11_PROFILER_END();
 		}
@@ -6702,7 +6695,7 @@ namespace bgfx { namespace d3d11
 		{
 			BGFX_D3D11_PROFILER_BEGIN_LITERAL("debugtext", kColorFrame);
 
-			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
+			dbgTextSubmit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 
 			BGFX_D3D11_PROFILER_END();
 		}

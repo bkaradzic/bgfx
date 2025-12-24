@@ -1082,17 +1082,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			return NULL;
 		}
 
-		void updateTextureBegin(TextureHandle /*_handle*/, uint8_t /*_side*/, uint8_t /*_mip*/) override
-		{
-		}
-
 		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
 		{
 			m_textures[_handle.idx].update(_side, _mip, _rect, _z, _depth, _pitch, _mem);
-		}
-
-		void updateTextureEnd() override
-		{
 		}
 
 		static MTLPixelFormat getSwapChainPixelFormat(SwapChainMtl* _swapChain)
@@ -1346,12 +1338,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;
 
-		void blitSetup(TextVideoMemBlitter& _blitter) override
+		void dbgTextRenderBegin(TextVideoMemBlitter& /*_blitter*/) override
 		{
-			BX_UNUSED(_blitter);
 		}
 
-		void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) override
+		void dbgTextRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) override
 		{
 			const uint32_t numVertices = _numIndices*4/6;
 			if (0 < numVertices)
@@ -1464,6 +1455,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					, 1
 					);
 			}
+		}
+
+		void dbgTextRenderEnd(TextVideoMemBlitter& /*_blitter*/) override
+		{
 		}
 
 		bool isDeviceRemoved() override
@@ -1796,13 +1791,14 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			uint32_t numMrt = 1;
 			FrameBufferHandle fbh = m_fbh;
-			if (isValid(fbh) && m_frameBuffers[fbh.idx].m_swapChain == NULL)
+			if (isValid(fbh)
+			&&  NULL == m_frameBuffers[fbh.idx].m_swapChain)
 			{
 				const FrameBufferMtl& fb = m_frameBuffers[fbh.idx];
 				numMrt = bx::uint32_max(1, fb.m_num);
 			}
 
-			const VertexLayout* layout = &_clearQuad.m_layout;
+			const VertexLayout* layout  = &m_vertexLayouts[_clearQuad.m_layout.idx];
 			const PipelineStateMtl* pso = getPipelineState(
 				  state
 				, 0
@@ -1836,8 +1832,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				m_renderCommandEncoder.setFragmentBuffer(m_uniformBuffer, m_uniformBufferFragmentOffset, 0);
 			}
 
+			const float mrtClearDepth[4] = { _clear.m_depth };
 			float mrtClearColor[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
-			float mrtClearDepth[4] = { _clear.m_depth };
 
 			if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 			{
@@ -1921,6 +1917,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				FrameBufferMtl& frameBuffer = m_frameBuffers[m_fbh.idx];
 				frameBuffer.resolve();
 			}
+
 			if (!isValid(_fbh)
 			||  m_frameBuffers[_fbh.idx].m_swapChain)
 			{
@@ -2012,7 +2009,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			uint32_t fstencil = unpackStencil(0, _stencil);
 			uint32_t ref      = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
 
-			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, ~BGFX_STENCIL_FUNC_REF_MASK);
+			_stencil &= kStencilNoRefMask;
 
 			bx::HashMurmur2A murmur;
 			murmur.begin();
@@ -3250,7 +3247,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					depth  >>= 1;
 				}
 			}
-			
+
 			MTL_RELEASE(desc, 0);
 
 			if (NULL != temp)
@@ -4916,14 +4913,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 					uint32_t numVertices = draw.m_numVertices;
 					uint8_t  numStreams  = 0;
-					for (uint32_t idx = 0, streamMask = draw.m_streamMask
-						; 0 != streamMask
-						; streamMask >>= 1, idx += 1, ++numStreams
+
+					for (BitMaskToIndexIteratorT it(draw.m_streamMask)
+						; !it.isDone()
+						; it.next(), numStreams++
 						)
 					{
-						const uint32_t ntz = bx::uint32_cnttz(streamMask);
-						streamMask >>= ntz;
-						idx         += ntz;
+						const uint8_t idx = it.idx;
 
 						currentState.m_stream[idx].m_layoutHandle   = draw.m_stream[idx].m_layoutHandle;
 						currentState.m_stream[idx].m_handle         = draw.m_stream[idx].m_handle;
@@ -5386,7 +5382,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				max = frameTime;
 			}
 
-			blit(this, _textVideoMemBlitter, tvm);
+			dbgTextSubmit(this, _textVideoMemBlitter, tvm);
 			rce = m_renderCommandEncoder;
 
 			rce.popDebugGroup();
@@ -5395,7 +5391,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			rce.pushDebugGroup("debugtext");
 
-			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
+			dbgTextSubmit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 			rce = m_renderCommandEncoder;
 
 			rce.popDebugGroup();
