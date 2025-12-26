@@ -278,113 +278,6 @@ namespace bgfx { namespace hlsl
 		return false;
 	}
 
-	bool getReflectionDataD3D9(ID3DBlob* _code, UniformArray& _uniforms, bx::WriterI* _messageWriter)
-	{
-		bx::ErrorAssert messageErr;
-
-		// see reference for magic values: https://msdn.microsoft.com/en-us/library/ff552891(VS.85).aspx
-		const uint32_t D3DSIO_COMMENT = 0x0000FFFE;
-		const uint32_t D3DSIO_END = 0x0000FFFF;
-		const uint32_t D3DSI_OPCODE_MASK = 0x0000FFFF;
-		const uint32_t D3DSI_COMMENTSIZE_MASK = 0x7FFF0000;
-		const uint32_t CTAB_CONSTANT = BX_MAKEFOURCC('C', 'T', 'A', 'B');
-
-		// parse the shader blob for the constant table
-		const size_t codeSize = _code->GetBufferSize();
-		const uint32_t* ptr = (const uint32_t*)_code->GetBufferPointer();
-		const uint32_t* end = (const uint32_t*)( (const uint8_t*)ptr + codeSize);
-		const CTHeader* header = NULL;
-
-		ptr++;	// first byte is shader type / version; skip it since we already know
-
-		while (ptr < end && *ptr != D3DSIO_END)
-		{
-			uint32_t cur = *ptr++;
-			if ( (cur & D3DSI_OPCODE_MASK) != D3DSIO_COMMENT)
-			{
-				continue;
-			}
-
-			// try to find CTAB comment block
-			uint32_t commentSize = (cur & D3DSI_COMMENTSIZE_MASK) >> 16;
-			uint32_t fourcc = *ptr;
-			if (fourcc == CTAB_CONSTANT)
-			{
-				// found the constant table data
-				header = (const CTHeader*)(ptr + 1);
-				uint32_t tableSize = (commentSize - 1) * 4;
-				if (tableSize < sizeof(CTHeader) || header->Size != sizeof(CTHeader) )
-				{
-					bx::write(_messageWriter, &messageErr, "Error: Invalid constant table data\n");
-					return false;
-				}
-				break;
-			}
-
-			// this is a different kind of comment section, so skip over it
-			ptr += commentSize - 1;
-		}
-
-		if (!header)
-		{
-			bx::write(_messageWriter, &messageErr, "Error: Could not find constant table data\n");
-			return false;
-		}
-
-		const uint8_t* headerBytePtr = (const uint8_t*)header;
-		const char* creator = (const char*)(headerBytePtr + header->Creator);
-		BX_UNUSED(creator);
-
-		BX_TRACE("Creator: %s 0x%08x", creator, header->Version);
-		BX_TRACE("Num constants: %d", header->Constants);
-		BX_TRACE("#   cl ty RxC   S  By Name");
-
-		const CTInfo* ctInfoArray = (const CTInfo*)(headerBytePtr + header->ConstantInfo);
-		for (uint32_t ii = 0; ii < header->Constants; ++ii)
-		{
-			const CTInfo& ctInfo = ctInfoArray[ii];
-			const CTType& ctType = *(const CTType*)(headerBytePtr + ctInfo.TypeInfo);
-			const char* name = (const char*)(headerBytePtr + ctInfo.Name);
-
-			BX_TRACE("%3d %2d %2d [%dx%d] %d %s[%d] c%d (%d)"
-				, ii
-				, ctType.Class
-				, ctType.Type
-				, ctType.Rows
-				, ctType.Columns
-				, ctType.StructMembers
-				, name
-				, ctType.Elements
-				, ctInfo.RegisterIndex
-				, ctInfo.RegisterCount
-				);
-
-			D3D11_SHADER_TYPE_DESC desc;
-			desc.Class = (D3D_SHADER_VARIABLE_CLASS)ctType.Class;
-			desc.Type = (D3D_SHADER_VARIABLE_TYPE)ctType.Type;
-			desc.Rows = ctType.Rows;
-			desc.Columns = ctType.Columns;
-
-			UniformType::Enum type = findUniformType(desc);
-			if (UniformType::Count != type)
-			{
-				Uniform un;
-				un.name = '$' == name[0] ? name + 1 : name;
-				un.type = isSampler(desc.Type)
-					? UniformType::Enum(kUniformSamplerBit | type)
-					: type
-					;
-				un.num = (uint8_t)ctType.Elements;
-				un.regIndex = ctInfo.RegisterIndex;
-				un.regCount = ctInfo.RegisterCount;
-
-				_uniforms.push_back(un);
-			}
-		}
-
-		return true;
-	}
-
 	bool getReflectionDataD3D11(ID3DBlob* _code, bool _vshader, UniformArray& _uniforms, uint8_t& _numAttrs, uint16_t* _attrs, uint16_t& _size, UniformNameList& unusedUniforms, bx::WriterI* _messageWriter)
 	{
 		bx::Error messageErr;
@@ -520,7 +413,7 @@ namespace bgfx { namespace hlsl
 			hr = reflect->GetResourceBindingDesc(ii, &bindDesc);
 			if (SUCCEEDED(hr) )
 			{
-				if (D3D_SIT_SAMPLER == bindDesc.Type || D3D_SIT_TEXTURE == bindDesc.Type)
+				if (D3D_SIT_SAMPLER == bindDesc.Type)
 				{
 					BX_TRACE("\t%s, %d, %d, %d"
 						, bindDesc.Name
@@ -530,8 +423,6 @@ namespace bgfx { namespace hlsl
 						);
 
 					bx::StringView end = bx::strFind(bindDesc.Name, "Sampler");
-					if (end.isEmpty())
-						end = bx::strFind(bindDesc.Name, "Texture");
 
 					if (!end.isEmpty() )
 					{
@@ -543,10 +434,6 @@ namespace bgfx { namespace hlsl
 						un.regCount = uint16_t(bindDesc.BindCount);
 						_uniforms.push_back(un);
 					}
-				}
-				else
-				{
-					BX_TRACE("\t%s, unknown bind data", bindDesc.Name);
 				}
 			}
 		}
@@ -678,15 +565,6 @@ namespace bgfx { namespace hlsl
 		uint16_t attrs[bgfx::Attrib::Count];
 		uint16_t size = 0;
 
-		if (_version < 400)
-		{
-			if (!getReflectionDataD3D9(code, uniforms, _messageWriter) )
-			{
-				bx::write(_messageWriter, &messageErr, "Error: Unable to get D3D9 reflection data.\n");
-				goto error;
-			}
-		}
-		else
 		{
 			UniformNameList unusedUniforms;
 			if (!getReflectionDataD3D11(code, profileAndType[0] == 'v', uniforms, numAttrs, attrs, size, unusedUniforms, _messageWriter) )
