@@ -44,8 +44,8 @@ extern "C" uint64_t                    WINAPI bgfx_PIXEventsReplaceBlock(PIXEven
 
 #	include <pix3.h>
 
-#	define _PIX3_BEGINEVENT(_commandList, _color, _name) PIXBeginEvent(_commandList, _color, _name)
-#	define _PIX3_SETMARKER(_commandList, _color, _name)  PIXSetMarker(_commandList, _color, _name)
+#	define _PIX3_BEGINEVENT(_commandList, _color, _name) PIXBeginEvent(_commandList, toPixColor(_color), _name)
+#	define _PIX3_SETMARKER(_commandList, _color, _name)  PIXSetMarker(_commandList, toPixColor(_color), _name)
 #	define _PIX3_ENDEVENT(_commandList)                  PIXEndEvent(_commandList)
 
 #	define PIX3_BEGINEVENT(_commandList, _color, _name) _PIX3_BEGINEVENT(_commandList, _color, _name)
