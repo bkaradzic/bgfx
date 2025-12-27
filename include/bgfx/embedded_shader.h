@@ -17,47 +17,67 @@
 #define BGFX_EMBEDDED_SHADER_NVN(...)
 #define BGFX_EMBEDDED_SHADER_SPIRV(...)
 
-#define BGFX_PLATFORM_SUPPORTS_DXBC (0  \
-	|| BX_PLATFORM_LINUX                \
-	|| BX_PLATFORM_WINDOWS              \
-	|| BX_PLATFORM_WINRT                \
-	|| BX_PLATFORM_XBOXONE              \
-	)
-#define BGFX_PLATFORM_SUPPORTS_PSSL (0  \
-	|| BX_PLATFORM_PS4                  \
-	|| BX_PLATFORM_PS5                  \
-	)
-#define BGFX_PLATFORM_SUPPORTS_ESSL (0  \
-	|| BX_PLATFORM_ANDROID              \
-	|| BX_PLATFORM_EMSCRIPTEN           \
-	|| BX_PLATFORM_IOS                  \
-	|| BX_PLATFORM_LINUX                \
-	|| BX_PLATFORM_OSX                  \
-	|| BX_PLATFORM_RPI                  \
-	|| BX_PLATFORM_VISIONOS             \
-	|| BX_PLATFORM_WINDOWS              \
-	)
-#define BGFX_PLATFORM_SUPPORTS_GLSL (0  \
-	|| BX_PLATFORM_LINUX                \
-	|| BX_PLATFORM_OSX                  \
-	|| BX_PLATFORM_WINDOWS              \
-	)
-#define BGFX_PLATFORM_SUPPORTS_METAL (0 \
-	|| BX_PLATFORM_IOS                  \
-	|| BX_PLATFORM_OSX                  \
-	|| BX_PLATFORM_VISIONOS             \
-	)
-#define BGFX_PLATFORM_SUPPORTS_NVN (0   \
-	|| BX_PLATFORM_NX                   \
-	)
-#define BGFX_PLATFORM_SUPPORTS_SPIRV (0 \
-	|| BX_PLATFORM_ANDROID              \
-	|| BX_PLATFORM_EMSCRIPTEN           \
-	|| BX_PLATFORM_LINUX                \
-	|| BX_PLATFORM_WINDOWS              \
-	|| BX_PLATFORM_OSX                  \
-	|| BX_PLATFORM_NX                   \
-	)
+#ifndef BGFX_PLATFORM_SUPPORTS_DXBC
+#	define BGFX_PLATFORM_SUPPORTS_DXBC (0 \
+		|| BX_PLATFORM_LINUX              \
+		|| BX_PLATFORM_WINDOWS            \
+		|| BX_PLATFORM_WINRT              \
+		|| BX_PLATFORM_XBOXONE            \
+		)
+#endif // BGFX_PLATFORM_SUPPORTS_DXBC
+
+#ifndef BGFX_PLATFORM_SUPPORTS_PSSL
+#	define BGFX_PLATFORM_SUPPORTS_PSSL (0 \
+		|| BX_PLATFORM_PS4                \
+		|| BX_PLATFORM_PS5                \
+		)
+#endif // BGFX_PLATFORM_SUPPORTS_PSSL
+
+#ifndef BGFX_PLATFORM_SUPPORTS_ESSL
+#	define BGFX_PLATFORM_SUPPORTS_ESSL (0 \
+		|| BX_PLATFORM_ANDROID            \
+		|| BX_PLATFORM_EMSCRIPTEN         \
+		|| BX_PLATFORM_IOS                \
+		|| BX_PLATFORM_LINUX              \
+		|| BX_PLATFORM_OSX                \
+		|| BX_PLATFORM_RPI                \
+		|| BX_PLATFORM_VISIONOS           \
+		|| BX_PLATFORM_WINDOWS            \
+		)
+#endif // BGFX_PLATFORM_SUPPORTS_ESSL
+
+#ifndef BGFX_PLATFORM_SUPPORTS_GLSL
+#	define BGFX_PLATFORM_SUPPORTS_GLSL (0 \
+		|| BX_PLATFORM_LINUX              \
+		|| BX_PLATFORM_OSX                \
+		|| BX_PLATFORM_WINDOWS            \
+		)
+#endif // BGFX_PLATFORM_SUPPORTS_GLSL
+
+#ifndef BGFX_PLATFORM_SUPPORTS_METAL
+#	define BGFX_PLATFORM_SUPPORTS_METAL (0 \
+		|| BX_PLATFORM_IOS                 \
+		|| BX_PLATFORM_OSX                 \
+		|| BX_PLATFORM_VISIONOS            \
+		)
+#endif // BGFX_PLATFORM_SUPPORTS_METAL
+
+#ifndef BGFX_PLATFORM_SUPPORTS_NVN
+#	define BGFX_PLATFORM_SUPPORTS_NVN (0 \
+		|| BX_PLATFORM_NX                \
+		)
+#endif // BGFX_PLATFORM_SUPPORTS_NVN
+
+#ifndef BGFX_PLATFORM_SUPPORTS_SPIRV
+#	define BGFX_PLATFORM_SUPPORTS_SPIRV (0 \
+		|| BX_PLATFORM_ANDROID             \
+		|| BX_PLATFORM_EMSCRIPTEN          \
+		|| BX_PLATFORM_LINUX               \
+		|| BX_PLATFORM_WINDOWS             \
+		|| BX_PLATFORM_OSX                 \
+		|| BX_PLATFORM_NX                  \
+		)
+#endif // BGFX_PLATFORM_SUPPORTS_SPIRV
 
 ///
 #define BGFX_EMBEDDED_SHADER_CONCATENATE(_x, _y) BGFX_EMBEDDED_SHADER_CONCATENATE_(_x, _y)
