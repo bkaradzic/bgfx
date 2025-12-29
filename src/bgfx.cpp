@@ -4701,8 +4701,8 @@ namespace bgfx
 				BGFX_ERROR_CHECK(
 					// if BGFX_TEXTURE_RT_MSAA_X2 or greater than either BGFX_TEXTURE_RT_WRITE_ONLY or BGFX_TEXTURE_MSAA_SAMPLE is required
 					// if BGFX_TEXTURE_RT with no MSSA then this is not required.
-					(1 == ((tr.m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT))
-					|| (0 != (tr.m_flags & (BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_MSAA_SAMPLE)))
+					   (1 == ( (tr.m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT) )
+					|| (0 !=   (tr.m_flags & (BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_MSAA_SAMPLE) ) )
 					, _err
 					, BGFX_ERROR_FRAME_BUFFER_VALIDATION
 					, "Frame buffer depth MSAA texture cannot be resolved. It must be created with either `BGFX_TEXTURE_RT_WRITE_ONLY` or `BGFX_TEXTURE_MSAA_SAMPLE` flag."
@@ -4889,6 +4889,16 @@ namespace bgfx
 			, BGFX_ERROR_TEXTURE_VALIDATION
 			, "Texture format is not supported! "
 			  "Use bgfx::isTextureValid to check support for texture format before creating it."
+			, "Texture format: %s."
+			, getName(_format)
+			);
+
+		BGFX_ERROR_CHECK(false
+			|| 0 == (_flags & BGFX_TEXTURE_RT_MSAA_MASK)
+			|| 0 != (g_caps.formats[_format] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA)
+			, _err
+			, BGFX_ERROR_TEXTURE_VALIDATION
+			, "Creating MSAA render target for this texture format is not supported."
 			, "Texture format: %s."
 			, getName(_format)
 			);
