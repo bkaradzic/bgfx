@@ -359,16 +359,13 @@ native applications with the power of the Babylon.js JavaScript framework.
 
 ## Nira
 
-https://nira.app/ - Instantly load and view assets on any device. All you need
-is a web browser.
+https://nira.app/ - Nira is a collaborative platform for rendering massive
+3D models in real time, enabling interactive, web-based visualization and
+inspection on any device, including smartphones and tablets.
 
-SIGGRAPH 2019: Project Nira: Instant Interactive Real-Time Access to
-Multi-Gigabyte Sized 3D Assets on Any Device:
-https://s2019.siggraph.org/presentation/?sess=sess104&id=real_130#038;id=real_130
-
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=Gz9weuemhDA&t=3350"
-target="_blank"><img src="http://img.youtube.com/vi/Gz9weuemhDA/0.jpg"
-alt="Heroes of Hammerwatch"
+<a href="https://www.youtube.com/watch?v=U4lv_nQ4PUY"
+target="_blank"><img src="http://img.youtube.com/vi/U4lv_nQ4PUY/0.jpg"
+alt="Nira 2025"
 width="640" height="480" border="0" /></a>
 
 ## openblack
