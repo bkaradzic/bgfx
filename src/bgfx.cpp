@@ -4894,7 +4894,7 @@ namespace bgfx
 			);
 
 		BGFX_ERROR_CHECK(false
-			|| 0 == (_flags & BGFX_TEXTURE_RT_MSAA_MASK)
+			|| 1 >= ( (_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT)
 			|| 0 != (g_caps.formats[_format] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA)
 			, _err
 			, BGFX_ERROR_TEXTURE_VALIDATION
