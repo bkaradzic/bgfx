@@ -6,9 +6,11 @@ API Reference
 
     If you're just getting started with bgfx, you might get more out of these simple walkthroughs for how to use bgfx's API:
 
-    - `Hello, bgfx! <https://dev.to/pperon/hello-bgfx-4dka>`_
-    - `bgfx-minimal-example <https://github.com/jpcy/bgfx-minimal-example#bgfx-minimal-example>`_
-    - `Using the bgfx library with C++ on Ubuntu <https://www.sandeepnambiar.com/getting-started-with-bgfx/>`_
+    - `Hello, bgfx! (tutorial) <https://dev.to/pperon/hello-bgfx-4dka>`_
+    - `bgfx-minimal-example (repo on GitHub) <https://github.com/jpcy/bgfx-minimal-example#bgfx-minimal-example>`_
+    - `Using the bgfx library with C++ on Ubuntu (tutorial) <https://www.sandeepnambiar.com/getting-started-with-bgfx/>`_
+    - `Getting started with BGFX (playlist on Youtube) <https://www.youtube.com/playlist?list=PLwFtWV3PS6y_oTOfHjbE0Zk8N9_QuQlHy>`_
+    - `Getting started with BGFX (repo on GitHub) <https://github.com/gamecoder-nz/Getting-Started-With-BGFX>`_
 
 General
 -------
