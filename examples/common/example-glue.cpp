@@ -62,8 +62,10 @@ struct SampleData
 
 static SampleData s_frameTime;
 
-static bool bar(float _width, float _maxWidth, float _height, const ImVec4& _color)
+static bool bar(const char* _name, float _width, float _maxWidth, float _height, const ImVec4& _color)
 {
+	ImGui::PushID(_name);
+
 	const ImGuiStyle& style = ImGui::GetStyle();
 
 	ImVec4 hoveredColor(
@@ -81,23 +83,27 @@ static bool bar(float _width, float _maxWidth, float _height, const ImVec4& _col
 
 	bool itemHovered = false;
 
-	ImGui::Button("##", ImVec2(_width, _height) );
+	ImGui::Button("##button", ImVec2(_width, _height) );
 	itemHovered |= ImGui::IsItemHovered();
 
 	ImGui::SameLine();
-	ImGui::InvisibleButton("##", ImVec2(bx::max(1.0f, _maxWidth-_width), _height) );
+	ImGui::InvisibleButton("##invisible_button", ImVec2(bx::max(1.0f, _maxWidth-_width), _height) );
 	itemHovered |= ImGui::IsItemHovered();
 
 	ImGui::PopStyleVar(2);
 	ImGui::PopStyleColor(3);
 
+	ImGui::PopID();
+
 	return itemHovered;
 }
 
-static const ImVec4 s_resourceColor(0.5f, 0.5f, 0.5f, 1.0f);
+static constexpr ImVec4 kResourceColor(0.5f, 0.5f, 0.5f, 1.0f);
 
 static void resourceBar(const char* _name, const char* _tooltip, uint32_t _num, uint32_t _max, float _maxWidth, float _height)
 {
+	ImGui::PushID(_name);
+
 	bool itemHovered = false;
 
 	ImGui::Text("%s: %4d / %4d", _name, _num, _max);
@@ -106,7 +112,7 @@ static void resourceBar(const char* _name, const char* _tooltip, uint32_t _num, 
 
 	const float percentage = float(_num)/float(_max);
 
-	itemHovered |= bar(bx::max(1.0f, percentage*_maxWidth), _maxWidth, _height, s_resourceColor);
+	itemHovered |= bar("Resource", bx::max(1.0f, percentage * _maxWidth), _maxWidth, _height, kResourceColor);
 	ImGui::SameLine();
 
 	ImGui::Text("%5.2f%%", percentage*100.0f);
@@ -118,6 +124,8 @@ static void resourceBar(const char* _name, const char* _tooltip, uint32_t _num, 
 			, percentage*100.0f
 			);
 	}
+
+	ImGui::PopID();
 }
 
 static bool s_showStats = false;
@@ -411,7 +419,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 									const float cpuMs    = float( (encoderStats.cpuTimeEnd-encoderStats.cpuTimeBegin)*toCpuMs);
 									const float cpuWidth = bx::clamp(cpuMs*scale, 1.0f, maxWidth);
 
-									if (bar(cpuWidth, maxWidth, itemHeight, cpuColor) )
+									if (bar("CPU", cpuWidth, maxWidth, itemHeight, cpuColor))
 									{
 										ImGui::SetTooltip("Encoder %d, CPU: %f [ms]"
 											, pos
@@ -447,7 +455,9 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 
 									ImGui::SameLine(64.0f);
 
-									if (bar(cpuWidth, maxWidth, itemHeight, cpuColor) )
+									ImGui::PushID(viewStats.name);
+
+									if (bar("CPU", cpuWidth, maxWidth, itemHeight, cpuColor))
 									{
 										ImGui::SetTooltip("View %d \"%s\", CPU: %f [ms]"
 											, pos
@@ -457,7 +467,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 									}
 
 									ImGui::SameLine();
-									if (bar(gpuWidth, maxWidth, itemHeight, gpuColor) )
+									if (bar("GPU", gpuWidth, maxWidth, itemHeight, gpuColor) )
 									{
 										ImGui::SetTooltip("View: %d \"%s\", GPU: %f [ms]"
 											, pos
@@ -465,6 +475,8 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 											, gpuTimeElapsed
 											);
 									}
+
+									ImGui::PopID();
 								}
 							}
 
