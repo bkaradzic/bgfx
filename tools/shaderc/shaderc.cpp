@@ -367,6 +367,7 @@ namespace bgfx
 
 		va_end(argList);
 	}
+
 	Options::Options()
 		: shaderType(' ')
 		, disasm(false)
@@ -1220,6 +1221,7 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "linux") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_LINUX=1");
+
 			if (profile->lang == ShadingLang::SpirV)
 			{
 				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
@@ -1229,17 +1231,17 @@ namespace bgfx
 				preprocessor.setDefine(glslDefine);
 			}
 		}
-		else if (
-			0 == bx::strCmpI(platform, "ios") ||
-			0 == bx::strCmpI(platform, "osx") ||
-			0 == bx::strCmpI(platform, "visionos")
-		)
+		else if (0 == bx::strCmpI(platform, "ios")
+			 ||  0 == bx::strCmpI(platform, "osx")
+			 ||  0 == bx::strCmpI(platform, "visionos")
+			    )
 		{
 			if (0 == bx::strCmpI(platform, "osx"))
 			{
 				preprocessor.setDefine("BX_PLATFORM_OSX=1");
 			}
-			else if (0 == bx::strCmpI(platform, "visionos")) {
+			else if (0 == bx::strCmpI(platform, "visionos"))
+			{
 				preprocessor.setDefine("BX_PLATFORM_VISIONOS=1");
 			}
 			else
@@ -1257,7 +1259,7 @@ namespace bgfx
 				, sizeof(temp)
 				, "BGFX_SHADER_LANGUAGE_METAL=%d"
 				, (profile->lang == ShadingLang::Metal) ? profile->id : 0
-			);
+				);
 			preprocessor.setDefine(temp);
 		}
 		else if (0 == bx::strCmpI(platform, "windows") )
@@ -1359,13 +1361,8 @@ namespace bgfx
 				||  0 == bx::strCmp(typen, "noperspective", 13)
 				||  0 == bx::strCmp(typen, "centroid", 8) )
 				{
-					if ('f' == _options.shaderType
-					||   profile->lang == ShadingLang::GLSL
-					||   profile->lang == ShadingLang::ESSL)
-					{
-						interpolation = typen;
-						usesInterpolationQualifiers = true;
-					}
+					interpolation = typen;
+					usesInterpolationQualifiers = true;
 
 					typen = nextWord(parse);
 				}
