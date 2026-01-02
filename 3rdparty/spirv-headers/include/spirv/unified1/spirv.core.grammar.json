@@ -6171,12 +6171,13 @@
       "opname" : "OpTypeCooperativeVectorNV",
       "class"  : "Type-Declaration",
       "opcode" : 5288,
+      "aliases" : ["OpTypeVectorIdEXT"],
       "operands" : [
         { "kind" : "IdResult" },
         { "kind" : "IdRef",        "name" : "Component Type" },
         { "kind" : "IdRef",        "name" : "Component Count" }
       ],
-      "capabilities" : [ "CooperativeVectorNV" ],
+      "capabilities" : [ "CooperativeVectorNV", "LongVectorEXT" ],
       "version" : "None"
     },
     {
@@ -17824,6 +17825,12 @@
           "enumerant" : "RayTracingLinearSweptSpheresGeometryNV",
           "value" : 5419,
           "extensions" : [ "SPV_NV_linear_swept_spheres" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "LongVectorEXT",
+          "value" : 5425,
+          "extensions" : [ "SPV_EXT_long_vector" ],
           "version" : "None"
         },
         {
