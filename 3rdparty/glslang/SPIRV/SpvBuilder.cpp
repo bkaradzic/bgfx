@@ -4287,10 +4287,13 @@ void Builder::accessChainStore(Id rvalue, Decoration nonUniform, spv::MemoryAcce
 
     transferAccessChainSwizzle(true);
 
+    // MeshShadingEXT outputs don't support loads, so split swizzled stores
+    bool isMeshOutput = getStorageClass(accessChain.base) == StorageClass::Output &&
+                        capabilities.find(spv::Capability::MeshShadingEXT) != capabilities.end();
+
     // If a swizzle exists and is not full and is not dynamic, then the swizzle will be broken into individual stores.
     if (accessChain.swizzle.size() > 0 &&
-        getNumTypeComponents(getResultingAccessChainType()) != accessChain.swizzle.size() &&
-        accessChain.component == NoResult) {
+        ((getNumTypeComponents(getResultingAccessChainType()) != accessChain.swizzle.size() && accessChain.component == NoResult) || isMeshOutput)) {
         for (unsigned int i = 0; i < accessChain.swizzle.size(); ++i) {
             accessChain.indexChain.push_back(makeUintConstant(accessChain.swizzle[i]));
             accessChain.instr = NoResult;
