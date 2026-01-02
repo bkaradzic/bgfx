@@ -73,6 +73,7 @@ enum Extension : uint32_t {
   kSPV_EXT_fragment_fully_covered,
   kSPV_EXT_fragment_invocation_density,
   kSPV_EXT_fragment_shader_interlock,
+  kSPV_EXT_long_vector,
   kSPV_EXT_mesh_shader,
   kSPV_EXT_opacity_micromap,
   kSPV_EXT_optnone,
