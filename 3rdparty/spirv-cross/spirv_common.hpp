@@ -1355,7 +1355,7 @@ struct SPIRConstant : IVariant
 
 	inline float scalar_bf8(uint32_t col = 0, uint32_t row = 0) const
 	{
-		return f16_to_f32(scalar_u8(col, row) << 8);
+		return f16_to_f32(uint16_t(scalar_u8(col, row) << 8));
 	}
 
 	inline float scalar_f32(uint32_t col = 0, uint32_t row = 0) const
@@ -1790,7 +1790,7 @@ struct Meta
 	{
 		std::string alias;
 		std::string qualified_alias;
-		std::string hlsl_semantic;
+		std::string user_semantic;
 		std::string user_type;
 		Bitset decoration_flags;
 		spv::BuiltIn builtin_type = spv::BuiltInMax;

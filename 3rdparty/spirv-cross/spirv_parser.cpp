@@ -43,7 +43,7 @@ static bool decoration_is_string(Decoration decoration)
 {
 	switch (decoration)
 	{
-	case DecorationHlslSemanticGOOGLE:
+	case DecorationUserSemantic:
 		return true;
 
 	default:

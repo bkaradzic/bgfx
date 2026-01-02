@@ -1021,7 +1021,13 @@ void CompilerHLSL::emit_interface_block_member_in_struct(const SPIRVariable &var
 {
 	auto &execution = get_entry_point();
 	auto type = get<SPIRType>(var.basetype);
-	auto semantic = to_semantic(location, execution.model, var.storage);
+
+	std::string semantic;
+	if (hlsl_options.user_semantic && has_member_decoration(var.self, member_index, DecorationUserSemantic))
+		semantic = get_member_decoration_string(var.self, member_index, DecorationUserSemantic);
+	else
+		semantic = to_semantic(location, execution.model, var.storage);
+
 	auto mbr_name = join(to_name(type.self), "_", to_member_name(type, member_index));
 	auto &mbr_type = get<SPIRType>(type.member_types[member_index]);
 
@@ -1080,17 +1086,28 @@ void CompilerHLSL::emit_interface_block_in_struct(const SPIRVariable &var, unord
 	auto name = to_name(var.self);
 	if (use_location_number)
 	{
-		uint32_t location_number;
+		uint32_t location_number = UINT32_MAX;
 
-		// If an explicit location exists, use it with TEXCOORD[N] semantic.
-		// Otherwise, pick a vacant location.
-		if (has_decoration(var.self, DecorationLocation))
-			location_number = get_decoration(var.self, DecorationLocation);
+		std::string semantic;
+		bool has_user_semantic = false;
+
+		if (hlsl_options.user_semantic && has_decoration(var.self, DecorationUserSemantic))
+		{
+			semantic = get_decoration_string(var.self, DecorationUserSemantic);
+			has_user_semantic = true;
+		}
 		else
-			location_number = get_vacant_location();
+		{
+			// If an explicit location exists, use it with TEXCOORD[N] semantic.
+			// Otherwise, pick a vacant location.
+			if (has_decoration(var.self, DecorationLocation))
+				location_number = get_decoration(var.self, DecorationLocation);
+			else
+				location_number = get_vacant_location();
 
-		// Allow semantic remap if specified.
-		auto semantic = to_semantic(location_number, execution.model, var.storage);
+			// Allow semantic remap if specified.
+			semantic = to_semantic(location_number, execution.model, var.storage);
+		}
 
 		if (need_matrix_unroll && type.columns > 1)
 		{
@@ -1104,14 +1121,15 @@ void CompilerHLSL::emit_interface_block_in_struct(const SPIRVariable &var, unord
 				newtype.columns = 1;
 
 				string effective_semantic;
-				if (hlsl_options.flatten_matrix_vertex_input_semantics)
+				if (hlsl_options.flatten_matrix_vertex_input_semantics && !has_user_semantic)
 					effective_semantic = to_semantic(location_number, execution.model, var.storage);
 				else
 					effective_semantic = join(semantic, "_", i);
 
 				statement(to_interpolation_qualifiers(get_decoration_bitset(var.self)),
 				          variable_decl(newtype, join(name, "_", i)), " : ", effective_semantic, ";");
-				active_locations.insert(location_number++);
+				if (location_number != UINT32_MAX)
+					active_locations.insert(location_number++);
 			}
 		}
 		else
@@ -1127,10 +1145,13 @@ void CompilerHLSL::emit_interface_block_in_struct(const SPIRVariable &var, unord
 			statement(to_interpolation_qualifiers(get_decoration_bitset(var.self)), variable_decl(decl_type, name), " : ",
 			          semantic, ";");
 
-			// Structs and arrays should consume more locations.
-			uint32_t consumed_locations = type_to_consumed_locations(decl_type);
-			for (uint32_t i = 0; i < consumed_locations; i++)
-				active_locations.insert(location_number + i);
+			if (location_number != UINT32_MAX)
+			{
+				// Structs and arrays should consume more locations.
+				uint32_t consumed_locations = type_to_consumed_locations(decl_type);
+				for (uint32_t i = 0; i < consumed_locations; i++)
+					active_locations.insert(location_number + i);
+			}
 		}
 	}
 	else

@@ -366,8 +366,8 @@ void ParsedIR::set_decoration_string(ID id, Decoration decoration, const string 
 
 	switch (decoration)
 	{
-	case DecorationHlslSemanticGOOGLE:
-		dec.hlsl_semantic = argument;
+	case DecorationUserSemantic:
+		dec.user_semantic = argument;
 		break;
 
 	case DecorationUserTypeGOOGLE:
@@ -686,8 +686,8 @@ const string &ParsedIR::get_decoration_string(ID id, Decoration decoration) cons
 
 	switch (decoration)
 	{
-	case DecorationHlslSemanticGOOGLE:
-		return dec.hlsl_semantic;
+	case DecorationUserSemantic:
+		return dec.user_semantic;
 
 	case DecorationUserTypeGOOGLE:
 		return dec.user_type;
@@ -747,8 +747,8 @@ void ParsedIR::unset_decoration(ID id, Decoration decoration)
 		dec.spec_id = 0;
 		break;
 
-	case DecorationHlslSemanticGOOGLE:
-		dec.hlsl_semantic.clear();
+	case DecorationUserSemantic:
+		dec.user_semantic.clear();
 		break;
 
 	case DecorationFPRoundingMode:
@@ -843,8 +843,8 @@ void ParsedIR::set_member_decoration_string(TypeID id, uint32_t index, Decoratio
 
 	switch (decoration)
 	{
-	case DecorationHlslSemanticGOOGLE:
-		dec.hlsl_semantic = argument;
+	case DecorationUserSemantic:
+		dec.user_semantic = argument;
 		break;
 
 	default:
@@ -864,8 +864,8 @@ const string &ParsedIR::get_member_decoration_string(TypeID id, uint32_t index, 
 
 		switch (decoration)
 		{
-		case DecorationHlslSemanticGOOGLE:
-			return dec.hlsl_semantic;
+		case DecorationUserSemantic:
+			return dec.user_semantic;
 
 		default:
 			return empty_string;
@@ -918,8 +918,8 @@ void ParsedIR::unset_member_decoration(TypeID id, uint32_t index, Decoration dec
 		dec.spec_id = 0;
 		break;
 
-	case DecorationHlslSemanticGOOGLE:
-		dec.hlsl_semantic.clear();
+	case DecorationUserSemantic:
+		dec.user_semantic.clear();
 		break;
 
 	default:

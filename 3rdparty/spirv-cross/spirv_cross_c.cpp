@@ -529,6 +529,10 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_HLSL_PRESERVE_STRUCTURED_BUFFERS:
 		options->hlsl.preserve_structured_buffers = value != 0;
 		break;
+
+	case SPVC_COMPILER_OPTION_HLSL_USER_SEMANTIC:
+		options->hlsl.user_semantic = value != 0;
+		break;
 #endif
 
 #if SPIRV_CROSS_C_API_MSL
