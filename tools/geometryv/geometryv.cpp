@@ -621,7 +621,7 @@ struct InterpolatorT
 		if (isActive() )
 		{
 			const double freq = double(bx::getHPFrequency() );
-			int64_t now = bx::getHPCounter();
+			const int64_t now = bx::getHPCounter();
 			float time = (float)(double(now - offset) / freq);
 			float lerp = bx::clamp(time, 0.0f, duration) / duration;
 			return lerpT(from, to, easeT(lerp) );
@@ -633,7 +633,7 @@ struct InterpolatorT
 	bool isActive() const
 	{
 		const double freq = double(bx::getHPFrequency() );
-		int64_t now = bx::getHPCounter();
+		const int64_t now = bx::getHPCounter();
 		float time = (float)(double(now - offset) / freq);
 		float lerp = bx::clamp(time, 0.0f, duration) / duration;
 		return lerp < 1.0f;
@@ -1249,7 +1249,7 @@ int _main_(int _argc, char** _argv)
 				entry::setWindowTitle(entry::kDefaultWindowHandle, title.c_str() );
 			}
 
-			int64_t now = bx::getHPCounter();
+			const int64_t now = bx::getHPCounter();
 			static int64_t last = now;
 			const int64_t frameTime = now - last;
 			last = now;

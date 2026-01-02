@@ -484,7 +484,7 @@ struct View
 			{
 				if (_argc >= 3)
 				{
-					int8_t axis = bx::clamp(bx::toLower(_argv[2][0]) - 'x', 0, 2);
+					int8_t axis = bx::clamp<int8_t>(bx::toLower(_argv[2][0]) - 'x', 0, 2);
 
 					float angle;
 					bx::fromString(&angle, _argv[3]);
@@ -1122,7 +1122,7 @@ struct InterpolatorT
 		if (isActive() )
 		{
 			const double freq = double(bx::getHPFrequency() );
-			int64_t now = bx::getHPCounter();
+			const int64_t now = bx::getHPCounter();
 			float time = (float)(double(now - offset) / freq);
 			float lerp = duration != 0.0f ? bx::clamp(time, 0.0f, duration) / duration : 0.0f;
 			return lerpT(from, to, easeT(lerp) );
@@ -1136,7 +1136,7 @@ struct InterpolatorT
 		if (0.0f < duration)
 		{
 			const double freq = double(bx::getHPFrequency() );
-			int64_t now = bx::getHPCounter();
+			const int64_t now = bx::getHPCounter();
 			float time = (float)(double(now - offset) / freq);
 			float lerp = bx::clamp(time, 0.0f, duration) / duration;
 			return lerp < 1.0f;
@@ -2120,7 +2120,7 @@ int _main_(int _argc, char** _argv)
 				entry::setWindowTitle(entry::kDefaultWindowHandle, title.c_str() );
 			}
 
-			int64_t now = bx::getHPCounter();
+			const int64_t now = bx::getHPCounter();
 			static int64_t last = now;
 			const int64_t frameTime = now - last;
 			last = now;

@@ -1076,7 +1076,7 @@ int main(int _argc, const char* _argv[])
 
 	delete [] data;
 
-	int64_t now = bx::getHPCounter();
+	const int64_t now = bx::getHPCounter();
 	parseElapsed += now;
 	int64_t convertElapsed = -now;
 
@@ -1443,8 +1443,7 @@ int main(int _argc, const char* _argv[])
 	delete [] indexData;
 	delete [] vertexData;
 
-	now = bx::getHPCounter();
-	convertElapsed += now;
+	convertElapsed += bx::getHPCounter();
 
 	bx::printf("parse %f [s]\ntri reorder %f [s]\nconvert %f [s]\ng %d, p %d, v %d, i %d\n"
 		, double(parseElapsed)/bx::getHPFrequency()

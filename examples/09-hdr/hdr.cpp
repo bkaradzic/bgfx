@@ -202,13 +202,23 @@ public:
 		m_lum[3] = bgfx::createFrameBuffer(  4,   4, bgfx::TextureFormat::BGRA8);
 		m_lum[4] = bgfx::createFrameBuffer(  1,   1, bgfx::TextureFormat::BGRA8);
 
+		bgfx::setName(m_lum[0], "Luminance 0");
+		bgfx::setName(m_lum[1], "Luminance 1");
+		bgfx::setName(m_lum[2], "Luminance 2");
+		bgfx::setName(m_lum[3], "Luminance 3");
+		bgfx::setName(m_lum[4], "Luminance 4");
+
 		m_bright = bgfx::createFrameBuffer(bgfx::BackbufferRatio::Half,   bgfx::TextureFormat::BGRA8);
 		m_blur   = bgfx::createFrameBuffer(bgfx::BackbufferRatio::Eighth, bgfx::TextureFormat::BGRA8);
+
+		bgfx::setName(m_bright, "Bright");
+		bgfx::setName(m_blur, "Blur");
 
 		m_lumBgra8 = 0;
 		if ( (BGFX_CAPS_TEXTURE_BLIT|BGFX_CAPS_TEXTURE_READ_BACK) == (bgfx::getCaps()->supported & (BGFX_CAPS_TEXTURE_BLIT|BGFX_CAPS_TEXTURE_READ_BACK) ) )
 		{
 			m_rb = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_BLIT_DST|BGFX_TEXTURE_READ_BACK);
+			bgfx::setName(m_rb, "Read Back Texture");
 		}
 		else
 		{
@@ -372,7 +382,9 @@ public:
 				float exponent = arr.bgra[3] / 255.0f * 255.0f - 128.0f;
 				float lumAvg = arr.bgra[2] / 255.0f * bx::exp2(exponent);
 
+				ImGui::BeginDisabled(true);
 				ImGui::SliderFloat("Lum Avg", &lumAvg, 0.0f, 1.0f);
+				ImGui::EndDisabled();
 			}
 
 			const bgfx::Caps* caps = bgfx::getCaps();
