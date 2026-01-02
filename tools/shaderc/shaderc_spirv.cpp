@@ -732,8 +732,8 @@ namespace bgfx { namespace spirv
 				};
 
 				opt.SetMessageConsumer(print_msg_to_stderr);
-
 				opt.RegisterLegalizationPasses();
+				opt.RegisterPerformancePasses();
 
 				spvtools::ValidatorOptions validatorOptions;
 				validatorOptions.SetBeforeHlslLegalization(true);
