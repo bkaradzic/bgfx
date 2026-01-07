@@ -77,8 +77,6 @@ extern "C" uint64_t                    WINAPI bgfx_PIXEventsReplaceBlock(PIXEven
 
 namespace bgfx { namespace d3d12
 {
-	typedef HRESULT (WINAPI* PFN_D3D12_ENABLE_EXPERIMENTAL_FEATURES)(uint32_t _numFeatures, const IID* _iids, void* _configurationStructs, uint32_t* _configurationStructSizes);
-
 	struct Rdt
 	{
 		enum Enum
@@ -372,6 +370,8 @@ namespace bgfx { namespace d3d12
 
 	struct CommandQueueD3D12
 	{
+		static constexpr uint32_t kMaxCommandLists = 256;
+
 		CommandQueueD3D12()
 			: m_currentFence(0)
 			, m_completedFence(0)
@@ -396,14 +396,57 @@ namespace bgfx { namespace d3d12
 			HANDLE m_event;
 		};
 
+		struct PipelineStats
+		{
+			PipelineStats()
+			{
+				reset();
+			}
+
+			void reset()
+			{
+				IAVertices    = 0;
+				IAPrimitives  = 0;
+				VSInvocations = 0;
+				CInvocations  = 0;
+				CPrimitives   = 0;
+				PSInvocations = 0;
+				CSInvocations = 0;
+			}
+
+			void add(const D3D12_QUERY_DATA_PIPELINE_STATISTICS& _stats)
+			{
+				IAVertices    += _stats.IAVertices;
+				IAPrimitives  += _stats.IAPrimitives;
+				VSInvocations += _stats.VSInvocations;
+				CInvocations  += _stats.CInvocations;
+				CPrimitives   += _stats.CPrimitives;
+				PSInvocations += _stats.PSInvocations;
+				CSInvocations += _stats.CSInvocations;
+			}
+
+			uint64_t IAVertices;
+			uint64_t IAPrimitives;
+			uint64_t VSInvocations;
+			uint64_t CInvocations;
+			uint64_t CPrimitives;
+			uint64_t PSInvocations;
+			uint64_t CSInvocations;
+		};
+
 		ID3D12CommandQueue* m_commandQueue;
 		uint64_t m_currentFence;
 		uint64_t m_completedFence;
 		ID3D12Fence* m_fence;
-		CommandList m_commandList[256];
+		CommandList m_commandList[kMaxCommandLists];
 		typedef stl::vector<ID3D12Resource*> ResourceArray;
-		ResourceArray m_release[256];
+		ResourceArray m_release[kMaxCommandLists];
 		bx::RingBufferControl m_control;
+
+		ID3D12Resource*  m_pipelineStatsReadBack;
+		ID3D12QueryHeap* m_pipelineStatsQueryHeap;
+		D3D12_QUERY_DATA_PIPELINE_STATISTICS* m_pipelineStats;
+		PipelineStats m_pipelineStatsSum;
 	};
 
 	struct BatchD3D12
