@@ -656,6 +656,8 @@ namespace bgfx { namespace d3d12
 		}
 	}
 
+	typedef HRESULT (WINAPI* PFN_D3D12_ENABLE_EXPERIMENTAL_FEATURES)(uint32_t _numFeatures, const IID* _iids, void* _configurationStructs, uint32_t* _configurationStructSizes);
+
 #if USE_D3D12_DYNAMIC_LIB
 	static PFN_D3D12_ENABLE_EXPERIMENTAL_FEATURES D3D12EnableExperimentalFeatures;
 	static PFN_D3D12_CREATE_DEVICE                D3D12CreateDevice;
@@ -4108,22 +4110,25 @@ namespace bgfx { namespace d3d12
 		queueDesc.Priority = 0;
 		queueDesc.Flags    = D3D12_COMMAND_QUEUE_FLAG_NONE;
 		queueDesc.NodeMask = 1;
-		DX_CHECK(_device->CreateCommandQueue(&queueDesc
+		DX_CHECK(_device->CreateCommandQueue(
+			  &queueDesc
 			, IID_ID3D12CommandQueue
 			, (void**)&m_commandQueue
 			) );
 
 		m_completedFence = 0;
 		m_currentFence   = 0;
-		DX_CHECK(_device->CreateFence(0
+		DX_CHECK(_device->CreateFence(
+			  0
 			, D3D12_FENCE_FLAG_NONE
 			, IID_ID3D12Fence
 			, (void**)&m_fence
 			) );
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_commandList); ++ii)
+		for (uint32_t ii = 0; ii < kMaxCommandLists; ++ii)
 		{
-			DX_CHECK(_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT
+			DX_CHECK(_device->CreateCommandAllocator(
+				  D3D12_COMMAND_LIST_TYPE_DIRECT
 				, IID_ID3D12CommandAllocator
 				, (void**)&m_commandList[ii].m_commandAllocator
 				) );
@@ -4138,6 +4143,30 @@ namespace bgfx { namespace d3d12
 
 			DX_CHECK(m_commandList[ii].m_commandList->Close() );
 		}
+
+		const D3D12_QUERY_HEAP_DESC queryHeapDesc =
+		{
+			.Type     = D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS,
+			.Count    = kMaxCommandLists,
+			.NodeMask = 1,
+		};
+
+		DX_CHECK(_device->CreateQueryHeap(
+			  &queryHeapDesc
+			, IID_ID3D12QueryHeap
+			, (void**)&m_pipelineStatsQueryHeap
+			) );
+		setDebugObjectName(m_pipelineStatsQueryHeap, "Pipeline Statistics Query Heap");
+
+		m_pipelineStatsReadBack = createCommittedResource(_device, HeapProperty::ReadBack, kMaxCommandLists*sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS) );
+		setDebugObjectName(m_pipelineStatsReadBack, "Pipeline Statistics Read-Back");
+
+		const D3D12_RANGE range =
+		{
+			.Begin = 0,
+			.End = kMaxCommandLists*sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS),
+		};
+		m_pipelineStatsReadBack->Map(0, &range, (void**)&m_pipelineStats);
 	}
 
 	void CommandQueueD3D12::shutdown()
@@ -4146,13 +4175,22 @@ namespace bgfx { namespace d3d12
 
 		DX_RELEASE(m_fence, 0);
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(m_commandList); ++ii)
+		for (uint32_t ii = 0; ii < kMaxCommandLists; ++ii)
 		{
 			DX_RELEASE(m_commandList[ii].m_commandAllocator, 0);
 			DX_RELEASE(m_commandList[ii].m_commandList, 0);
 		}
 
 		DX_RELEASE(m_commandQueue, 0);
+
+		const D3D12_RANGE range =
+		{
+			.Begin = 0,
+			.End = kMaxCommandLists*sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS),
+		};
+		m_pipelineStatsReadBack->Unmap(0, &range);
+		DX_RELEASE(m_pipelineStatsQueryHeap, 0);
+		DX_RELEASE(m_pipelineStatsReadBack, 0);
 	}
 
 	ID3D12GraphicsCommandList* CommandQueueD3D12::alloc()
@@ -4165,12 +4203,33 @@ namespace bgfx { namespace d3d12
 		CommandList& commandList = m_commandList[m_control.m_current];
 		DX_CHECK(commandList.m_commandAllocator->Reset() );
 		DX_CHECK(commandList.m_commandList->Reset(commandList.m_commandAllocator, NULL) );
+		commandList.m_commandList->BeginQuery(
+			  m_pipelineStatsQueryHeap
+			, D3D12_QUERY_TYPE_PIPELINE_STATISTICS
+			, m_control.m_current
+			);
 		return commandList.m_commandList;
 	}
 
 	uint64_t CommandQueueD3D12::kick()
 	{
-		CommandList& commandList = m_commandList[m_control.m_current];
+		const uint32_t currentIdx = m_control.m_current;
+		CommandList& commandList = m_commandList[currentIdx];
+
+		commandList.m_commandList->EndQuery(
+			  m_pipelineStatsQueryHeap
+			, D3D12_QUERY_TYPE_PIPELINE_STATISTICS
+			, currentIdx
+			);
+		commandList.m_commandList->ResolveQueryData(
+			  m_pipelineStatsQueryHeap
+			, D3D12_QUERY_TYPE_PIPELINE_STATISTICS
+			, currentIdx
+			, 1
+			, m_pipelineStatsReadBack
+			, currentIdx*sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS)
+			);
+
 		DX_CHECK(commandList.m_commandList->Close() );
 
 		ID3D12CommandList* commandLists[] = { commandList.m_commandList };
@@ -4246,6 +4305,8 @@ namespace bgfx { namespace d3d12
 				DX_RELEASE(*it, 0);
 			}
 			ra.clear();
+
+			m_pipelineStatsSum.add(m_pipelineStats[m_control.m_read]);
 
 			m_control.consume(1);
 
@@ -6138,24 +6199,32 @@ namespace bgfx { namespace d3d12
 
 	void TimerQueryD3D12::init()
 	{
-		D3D12_QUERY_HEAP_DESC queryHeapDesc;
-		queryHeapDesc.Count    = m_control.m_size * 2;
-		queryHeapDesc.NodeMask = 1;
-		queryHeapDesc.Type     = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
-		DX_CHECK(s_renderD3D12->m_device->CreateQueryHeap(&queryHeapDesc
+		ID3D12Device* device = s_renderD3D12->m_device;
+
+		D3D12_QUERY_HEAP_DESC queryHeapDesc =
+		{
+			.Type     = D3D12_QUERY_HEAP_TYPE_TIMESTAMP,
+			.Count    = m_control.m_size * 2,
+			.NodeMask = 1,
+		};
+
+		DX_CHECK(device->CreateQueryHeap(
+			  &queryHeapDesc
 			, IID_ID3D12QueryHeap
 			, (void**)&m_queryHeap
 			) );
+		setDebugObjectName(m_queryHeap, "Timer Query Heap");
 
 		const uint32_t size = queryHeapDesc.Count*sizeof(uint64_t);
-		m_readback = createCommittedResource(s_renderD3D12->m_device
+		m_readback = createCommittedResource(device
 			, HeapProperty::ReadBack
 			, size
 			);
+		setDebugObjectName(m_readback, "Timer Query Read-Back");
 
 		DX_CHECK(s_renderD3D12->m_cmd.m_commandQueue->GetTimestampFrequency(&m_frequency) );
 
-		D3D12_RANGE range = { 0, size };
+		D3D12_RANGE range = { .Begin = 0, .End = size };
 		m_readback->Map(0, &range, (void**)&m_queryResult);
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
@@ -6178,6 +6247,8 @@ namespace bgfx { namespace d3d12
 
 	uint32_t TimerQueryD3D12::begin(uint32_t _resultIdx, uint32_t _frameNum)
 	{
+		ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
+
 		while (0 == m_control.reserve(1) )
 		{
 			m_control.consume(1);
@@ -6192,8 +6263,6 @@ namespace bgfx { namespace d3d12
 		query.m_ready     = false;
 		query.m_frameNum  = _frameNum;
 
-		ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
-
 		uint32_t offset = idx * 2 + 0;
 		commandList->EndQuery(m_queryHeap
 			, D3D12_QUERY_TYPE_TIMESTAMP
@@ -6207,12 +6276,12 @@ namespace bgfx { namespace d3d12
 
 	void TimerQueryD3D12::end(uint32_t _idx)
 	{
+		ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
+
 		Query& query = m_query[_idx];
 		query.m_ready = true;
 		query.m_fence = s_renderD3D12->m_cmd.m_currentFence - 1;
 		uint32_t offset = _idx * 2;
-
-		ID3D12GraphicsCommandList* commandList = s_renderD3D12->m_commandList;
 
 		commandList->EndQuery(m_queryHeap
 			, D3D12_QUERY_TYPE_TIMESTAMP
@@ -6276,10 +6345,11 @@ namespace bgfx { namespace d3d12
 			) );
 
 		const uint32_t size = BX_COUNTOF(m_handle)*sizeof(uint64_t);
-		m_readback = createCommittedResource(s_renderD3D12->m_device
-						, HeapProperty::ReadBack
-						, size
-						);
+		m_readback = createCommittedResource(
+			  s_renderD3D12->m_device
+			, HeapProperty::ReadBack
+			, size
+			);
 
 		D3D12_RANGE range = { 0, size };
 		m_readback->Map(0, &range, (void**)&m_result);
@@ -6526,9 +6596,6 @@ namespace bgfx { namespace d3d12
 
 		static ViewState viewState;
 		viewState.reset(_render);
-
-// 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
-// 		setDebugWireframe(wireframe);
 
 		uint16_t currentSamplerStateIdx = kInvalidHandle;
 		ProgramHandle currentProgram    = BGFX_INVALID_HANDLE;
@@ -7389,7 +7456,6 @@ namespace bgfx { namespace d3d12
 		{
 			BGFX_D3D12_PROFILER_BEGIN_LITERAL("debugstats", kColorFrame);
 
-//			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
 
 			static int64_t next = timeEnd;
@@ -7548,6 +7614,17 @@ namespace bgfx { namespace d3d12
 					);
 				pos++;
 
+				tvm.printf(10, pos++, 0x8b, " Pipeline Statistics:");
+				const CommandQueueD3D12::PipelineStats& pipelineStats = m_cmd.m_pipelineStatsSum;
+				tvm.printf(10, pos++, 0x8b, "     IAVertices: %llu", pipelineStats.IAVertices);
+				tvm.printf(10, pos++, 0x8b, "   IAPrimitives: %llu", pipelineStats.IAPrimitives);
+				tvm.printf(10, pos++, 0x8b, "  VSInvocations: %llu", pipelineStats.VSInvocations);
+				tvm.printf(10, pos++, 0x8b, "   CInvocations: %llu", pipelineStats.CInvocations);
+				tvm.printf(10, pos++, 0x8b, "    CPrimitives: %llu", pipelineStats.CPrimitives);
+				tvm.printf(10, pos++, 0x8b, "  PSInvocations: %llu", pipelineStats.PSInvocations);
+				tvm.printf(10, pos++, 0x8b, "  CSInvocations: %llu", pipelineStats.CSInvocations);
+				pos++;
+
 				double captureMs = double(captureElapsed)*toMs;
 				tvm.printf(10, pos++, 0x8b, "     Capture: %7.4f [ms] ", captureMs);
 
@@ -7616,6 +7693,7 @@ namespace bgfx { namespace d3d12
 #endif // BX_PLATFORM_WINDOWS
 
 		m_backBufferColorFence[m_backBufferColorIdx] = kick();
+		m_cmd.m_pipelineStatsSum.reset();
 	}
 
 } /* namespace d3d12 */ } // namespace bgfx
