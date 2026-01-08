@@ -21,6 +21,100 @@ extern "C"
 #define BGFX_SHADERC_VERSION_MAJOR 1
 #define BGFX_SHADERC_VERSION_MINOR 18
 
+namespace bx
+{
+/// Find substring in string. Only match substrings that appear outside C/C++ style comment blocks.
+const char* strFindUncommented(const char* _str, int32_t _strMax, const char* _find, int32_t _findMax)
+{
+	int32_t i = 0;
+	bool inBlock = false; // inside C style comment.
+	bool inLine  = false; // inside C++ style comment.
+
+	while (i < _strMax)
+	{
+		if (!inBlock && !inLine)
+		{
+			// Look for comment blocks.
+			if (i + 1 < _strMax && '/' == _str[i] && '/' == _str[i + 1])
+			{
+				inLine = true;
+				i += 2;
+				continue;
+			}
+
+			if (i + 1 < _strMax && '/' == _str[i] && '*' == _str[i + 1])
+			{
+				inBlock = true;
+				i += 2;
+				continue;
+			}
+
+			// Outside comment block.
+			if (i + _findMax > _strMax)
+			{
+				return NULL;
+			}
+			else
+			{
+				if (0 == strCmp(_str + i, _find, _findMax) )
+				{
+					return _str + i;
+				}
+			}
+
+			++i;
+		}
+		else if (inBlock)
+		{
+			if (i + 1 < _strMax && '*' == _str[i] && '/' == _str[i + 1])
+			{
+				inBlock = false;
+				i += 2;
+			}
+			else
+			{
+				++i;
+			}
+		}
+		else if (inLine)
+		{
+			if ('\n' == _str[i])
+			{
+				inLine = false;
+			}
+
+			++i;
+		}
+		else
+		{
+			++i;
+		}
+	}
+
+	return NULL;
+}
+
+bx::StringView strFindUncommented(const bx::StringView &_str, const bx::StringView& _find, int32_t _num = INT32_MAX)
+{
+	int32_t len = min(_find.getLength(), _num);
+
+	const char* ptr = strFindUncommented(
+		  _str.getPtr()
+		, _str.getLength()
+		, _find.getPtr()
+		, len
+		);
+
+	if (NULL == ptr)
+	{
+		return bx::StringView(_str.getTerm(), _str.getTerm() );
+	}
+
+	return bx::StringView(ptr, len);
+}
+
+}
+
 namespace bgfx
 {
 	bool g_verbose = false;
@@ -373,6 +467,7 @@ namespace bgfx
 		, disasm(false)
 		, raw(false)
 		, preprocessOnly(false)
+		, keepComments(false)
 		, depends(false)
 		, debugInformation(false)
 		, avoidFlowControl(false)
@@ -398,6 +493,7 @@ namespace bgfx
 			"\t  disasm: %s\n"
 			"\t  raw: %s\n"
 			"\t  preprocessOnly: %s\n"
+			"\t  keepComments: %s\n"
 			"\t  depends: %s\n"
 			"\t  debugInformation: %s\n"
 			"\t  avoidFlowControl: %s\n"
@@ -418,6 +514,7 @@ namespace bgfx
 			, disasm ? "true" : "false"
 			, raw ? "true" : "false"
 			, preprocessOnly ? "true" : "false"
+			, keepComments ? "true" : "false"
 			, depends ? "true" : "false"
 			, debugInformation ? "true" : "false"
 			, avoidFlowControl ? "true" : "false"
@@ -756,6 +853,7 @@ namespace bgfx
 			, m_scratchPos(0)
 			, m_fgetsPos(0)
 			, m_messageWriter(_messageWriter)
+			, m_keepCommentsTag(NULL)
 		{
 			m_tagptr->tag = FPPTAG_USERDATA;
 			m_tagptr->data = this;
@@ -788,6 +886,10 @@ namespace bgfx
 			m_tagptr->tag = FPPTAG_INPUT_NAME;
 			m_tagptr->data = scratch(_filePath);
 			m_tagptr++;
+
+			m_tagptr->tag = FPPTAG_KEEPCOMMENTS;
+			m_tagptr->data = (void*)0;
+			m_keepCommentsTag = m_tagptr++;
 
 			if (!_essl)
 			{
@@ -851,6 +953,11 @@ namespace bgfx
 		{
 			m_depends += " \\\n ";
 			m_depends += _fileName;
+		}
+
+		void setKeepComments(bool keep)
+		{
+			m_keepCommentsTag->data = (void*)keep;
 		}
 
 		bool run(const char* _input)
@@ -943,6 +1050,7 @@ namespace bgfx
 		uint32_t m_scratchPos;
 		uint32_t m_fgetsPos;
 		bx::WriterI* m_messageWriter;
+		fppTag* m_keepCommentsTag;
 	};
 
 	typedef std::vector<std::string> InOut;
@@ -1080,6 +1188,7 @@ namespace bgfx
 
 		bx::printf(
 			  "      --preprocess              Only pre-process.\n"
+			  "      --keepcomments            Do not discard comments.\n"
 			  "      --define <defines>        Add defines to preprocessor. (Semicolon-separated)\n"
 			  "      --raw                     Do not process shader. No preprocessor, and no glsl-optimizer. (GLSL only)\n"
 			  "      --type <type>             Shader type. Can be 'vertex', 'fragment, or 'compute'.\n"
@@ -1440,9 +1549,7 @@ namespace bgfx
 
 			if (!raw)
 			{
-				// To avoid commented code being recognized as used feature,
-				// first preprocess pass is used to strip all comments before
-				// substituting code.
+				preprocessor.setKeepComments(_options.keepComments);
 				bool ok = preprocessor.run(data);
 				delete [] data;
 
@@ -1567,7 +1674,7 @@ namespace bgfx
 		}
 		else if ('c' == _options.shaderType) // Compute
 		{
-			bx::StringView entry = bx::strFind(input, "void main()");
+			bx::StringView entry = bx::strFindUncommented(input, "void main()");
 			if (entry.isEmpty() )
 			{
 				bx::write(_messageWriter, &messageErr, "Shader entry point 'void main()' is not found.\n");
@@ -1610,10 +1717,10 @@ namespace bgfx
 
 					uint32_t arg = 0;
 
-					const bool hasLocalInvocationID    = !bx::strFind(input, "gl_LocalInvocationID").isEmpty();
-					const bool hasLocalInvocationIndex = !bx::strFind(input, "gl_LocalInvocationIndex").isEmpty();
-					const bool hasGlobalInvocationID   = !bx::strFind(input, "gl_GlobalInvocationID").isEmpty();
-					const bool hasWorkGroupID          = !bx::strFind(input, "gl_WorkGroupID").isEmpty();
+					const bool hasLocalInvocationID    = !bx::strFindUncommented(input, "gl_LocalInvocationID").isEmpty();
+					const bool hasLocalInvocationIndex = !bx::strFindUncommented(input, "gl_LocalInvocationIndex").isEmpty();
+					const bool hasGlobalInvocationID   = !bx::strFindUncommented(input, "gl_GlobalInvocationID").isEmpty();
+					const bool hasWorkGroupID          = !bx::strFindUncommented(input, "gl_WorkGroupID").isEmpty();
 
 					if (hasLocalInvocationID)
 					{
@@ -1744,7 +1851,7 @@ namespace bgfx
 		else // Vertex/Fragment
 		{
 			bx::StringView shader(input);
-			bx::StringView entry = bx::strFind(shader, "void main()");
+			bx::StringView entry = bx::strFindUncommented(shader, "void main()");
 			if (entry.isEmpty() )
 			{
 				bx::write(_messageWriter, &messageErr, "Shader entry point 'void main()' is not found.\n");
@@ -1768,14 +1875,14 @@ namespace bgfx
 					if (profile->lang == ShadingLang::ESSL
 					&&  profile->id >= 300)
 					{
-						const bool hasFragColor   = !bx::strFind(input, "gl_FragColor").isEmpty();
+						const bool hasFragColor   = !bx::strFindUncommented(input, "gl_FragColor").isEmpty();
 						bool hasFragData[8] = {};
 						uint32_t numFragData = 0;
 						for (uint32_t ii = 0; ii < BX_COUNTOF(hasFragData); ++ii)
 						{
 							char temp[32];
 							bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
-							hasFragData[ii] = !bx::strFind(input, temp).isEmpty();
+							hasFragData[ii] = !bx::strFindUncommented(input, temp).isEmpty();
 							numFragData += hasFragData[ii];
 						}
 						if (hasFragColor)
@@ -1876,17 +1983,17 @@ namespace bgfx
 
 					if ('f' == _options.shaderType)
 					{
-						bx::StringView insert = bx::strFind(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
+						bx::StringView insert = bx::strFindUncommented(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
 						if (!insert.isEmpty() )
 						{
 							insert = strInsert(const_cast<char*>(insert.getPtr()+1), "\nvec4 bgfx_VoidFrag = vec4_splat(0.0);\n");
 						}
 
-						const bool hasFragColor   = !bx::strFind(input, "gl_FragColor").isEmpty();
-						const bool hasFragCoord   = !bx::strFind(input, "gl_FragCoord").isEmpty() || profile->id >= 400;
-						const bool hasFragDepth   = !bx::strFind(input, "gl_FragDepth").isEmpty();
-						const bool hasFrontFacing = !bx::strFind(input, "gl_FrontFacing").isEmpty();
-						const bool hasPrimitiveId = !bx::strFind(input, "gl_PrimitiveID").isEmpty() && BGFX_CAPS_PRIMITIVE_ID;
+						const bool hasFragColor   = !bx::strFindUncommented(input, "gl_FragColor").isEmpty();
+						const bool hasFragCoord   = !bx::strFindUncommented(input, "gl_FragCoord").isEmpty() || profile->id >= 400;
+						const bool hasFragDepth   = !bx::strFindUncommented(input, "gl_FragDepth").isEmpty();
+						const bool hasFrontFacing = !bx::strFindUncommented(input, "gl_FrontFacing").isEmpty();
+						const bool hasPrimitiveId = !bx::strFindUncommented(input, "gl_PrimitiveID").isEmpty() && BGFX_CAPS_PRIMITIVE_ID;
 
 						if (!hasPrimitiveId)
 						{
@@ -1899,7 +2006,7 @@ namespace bgfx
 						{
 							char temp[32];
 							bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
-							hasFragData[ii] = !bx::strFind(input, temp).isEmpty();
+							hasFragData[ii] = !bx::strFindUncommented(input, temp).isEmpty();
 							numFragData += hasFragData[ii];
 						}
 
@@ -2024,12 +2131,12 @@ namespace bgfx
 					}
 					else if ('v' == _options.shaderType)
 					{
-						const bool hasVertexId   = !bx::strFind(input, "gl_VertexID").isEmpty();
-						const bool hasInstanceId = !bx::strFind(input, "gl_InstanceID").isEmpty();
-						const bool hasViewportId = !bx::strFind(input, "gl_ViewportIndex").isEmpty();
-						const bool hasLayerId    = !bx::strFind(input, "gl_Layer").isEmpty();
+						const bool hasVertexId   = !bx::strFindUncommented(input, "gl_VertexID").isEmpty();
+						const bool hasInstanceId = !bx::strFindUncommented(input, "gl_InstanceID").isEmpty();
+						const bool hasViewportId = !bx::strFindUncommented(input, "gl_ViewportIndex").isEmpty();
+						const bool hasLayerId    = !bx::strFindUncommented(input, "gl_Layer").isEmpty();
 
-						bx::StringView brace = bx::strFind(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
+						bx::StringView brace = bx::strFindUncommented(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
 						if (!brace.isEmpty() )
 						{
 							bx::StringView block = bx::strFindBlock(bx::StringView(brace.getPtr(), shader.getTerm() ), '{', '}');
@@ -2767,10 +2874,12 @@ namespace bgfx
 
 		options.depends = cmdLine.hasArg("depends");
 		options.preprocessOnly = cmdLine.hasArg("preprocess");
+		options.keepComments = cmdLine.hasArg("keepcomments");
 		const char* includeDir = cmdLine.findOption('i');
 
 		BX_TRACE("depends: %d", options.depends);
 		BX_TRACE("preprocessOnly: %d", options.preprocessOnly);
+		BX_TRACE("keepComments: %d", options.keepComments);
 		BX_TRACE("includeDir: %s", includeDir);
 
 		for (int ii = 1; NULL != includeDir; ++ii)
