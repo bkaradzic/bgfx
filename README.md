@@ -102,11 +102,10 @@ tool.
 
 ## Crown
 
-https://github.com/dbartolini/crown - Crown is a general purpose data-driven
-game engine, written from scratch with a minimalistic and data-oriented design
-philosophy in mind.
+https://github.com/crownengine/crown - Crown is a complete and cross-platform
+game engine designed for flexibility, performance, and fast-iterations.
 
-![Crown screenshot](https://raw.githubusercontent.com/dbartolini/crown/master/docs/shots/level-editor.png)
+![Crown screenshot](https://raw.githubusercontent.com/crownengine/crown/master/docs/shots/level-editor.png)
 
 ## Offroad Legends 2
 
