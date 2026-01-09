@@ -41,13 +41,13 @@ void main()
 		float roughness = normalRoughness.w;
 
 		// transform normal into view space
-		mat4 worldToView = mat4(
-			u_worldToView0,
-			u_worldToView1,
-			u_worldToView2,
-			u_worldToView3
-		);
-		vec3 vsNormal = instMul(worldToView, vec4(normal, 0.0)).xyz;
+		mat4 worldToView = mtxFromCols(
+			  u_worldToView0
+			, u_worldToView1
+			, u_worldToView2
+			, u_worldToView3
+			);
+		vec3 vsNormal = mul(worldToView, vec4(normal, 0.0)).xyz;
 
 		// read depth and recreate position
 		float linearDepth = texture2D(s_depth, texCoord).x;

@@ -16,22 +16,22 @@ void main()
 	gl_Position = mul(u_modelViewProj, vec4(pos, 1.0));
 
 	// Calculate previous frame's position
-	mat4 worldToViewPrev = mat4(
-		u_worldToViewPrev0,
-		u_worldToViewPrev1,
-		u_worldToViewPrev2,
-		u_worldToViewPrev3
-	);
-	mat4 viewToProjPrev = mat4(
-		u_viewToProjPrev0,
-		u_viewToProjPrev1,
-		u_viewToProjPrev2,
-		u_viewToProjPrev3
-	);
+	mat4 worldToViewPrev = mtxFromCols(
+		  u_worldToViewPrev0
+		, u_worldToViewPrev1
+		, u_worldToViewPrev2
+		, u_worldToViewPrev3
+		);
+	mat4 viewToProjPrev = mtxFromCols(
+		  u_viewToProjPrev0
+		, u_viewToProjPrev1
+		, u_viewToProjPrev2
+		, u_viewToProjPrev3
+		);
 
 	vec3 wsPos  = mul(u_model[0], vec4(pos, 1.0)).xyz;
-	vec3 vspPos = instMul(worldToViewPrev, vec4(wsPos, 1.0)).xyz;
-	vec4 pspPos = instMul(viewToProjPrev, vec4(vspPos, 1.0));
+	vec3 vspPos = mul(worldToViewPrev, vec4(wsPos, 1.0)).xyz;
+	vec4 pspPos = mul(viewToProjPrev, vec4(vspPos, 1.0));
 
 	// Calculate normal, unpack
 	vec3 osNormal = a_normal.xyz * 2.0 - 1.0;

@@ -81,14 +81,10 @@ void main()
 	// --edgeFixup warp   //!< This must be used on DirectX9. When fileted with 'warp', fixCubeLookup() should be used.
 	float mip = 1.0 + 5.0*(1.0 - inGloss); // Use mip levels [1..6] for radiance.
 
-	mat4 mtx;
-	mtx[0] = u_mtx0;
-	mtx[1] = u_mtx1;
-	mtx[2] = u_mtx2;
-	mtx[3] = u_mtx3;
+	mat4 mtx = mtxFromCols(u_mtx0, u_mtx1, u_mtx2, u_mtx3);
 	vec3 vr = 2.0*ndotv*nn - vv; // Same as: -reflect(vv, nn);
-	vec3 cubeR = normalize(instMul(mtx, vec4(vr, 0.0)).xyz);
-	vec3 cubeN = normalize(instMul(mtx, vec4(nn, 0.0)).xyz);
+	vec3 cubeR = normalize(mul(mtx, vec4(vr, 0.0)).xyz);
+	vec3 cubeN = normalize(mul(mtx, vec4(nn, 0.0)).xyz);
 	cubeR = fixCubeLookup(cubeR, mip, 256.0);
 
 	vec3 radiance    = toLinear(textureCubeLod(s_texCube, cubeR, mip).xyz);
