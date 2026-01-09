@@ -22,7 +22,7 @@ void main()
 		float maxDepth = 1.0;
 
 		vec4 depths = vec4(
-				imageLoad(s_texOcclusionDepthIn, ivec2(u_inputRTSize.zw * coord.xy                   ) ).x
+			  imageLoad(s_texOcclusionDepthIn, ivec2(u_inputRTSize.zw * coord.xy                   ) ).x
 			, imageLoad(s_texOcclusionDepthIn, ivec2(u_inputRTSize.zw * coord.xy + ivec2(1.0, 0.0) ) ).x
 			, imageLoad(s_texOcclusionDepthIn, ivec2(u_inputRTSize.zw * coord.xy + ivec2(0.0, 1.0) ) ).x
 			, imageLoad(s_texOcclusionDepthIn, ivec2(u_inputRTSize.zw * coord.xy + ivec2(1.0, 1.0) ) ).x
@@ -30,7 +30,7 @@ void main()
 
 		// find and return max depth
 		maxDepth = max(
-				max(depths.x, depths.y)
+			  max(depths.x, depths.y)
 			, max(depths.z, depths.w)
 			);
 

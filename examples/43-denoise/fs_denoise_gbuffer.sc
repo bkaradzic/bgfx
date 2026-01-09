@@ -25,7 +25,7 @@ mat3 cotangentFrame(vec3 N, vec3 p, vec2 uv)
 
 	// construct a scale-invariant frame
 	float invMax = inversesqrt(max(dot(T,T), dot(B,B)));
-	return mat3(T*invMax, B*invMax, N);
+	return mtxFromCols(T*invMax, B*invMax, N);
 }
 
 void main()
@@ -47,7 +47,7 @@ void main()
 	// perturb geometry normal by normal map
 	vec3 pos = v_texcoord2.xyz; // contains world space pos
 	mat3 TBN = cotangentFrame(normal, pos, v_texcoord0);
-	vec3 bumpedNormal = normalize(instMul(TBN, normalMap));
+	vec3 bumpedNormal = normalize(mul(TBN, normalMap));
 
 	// need some proxy for roughness value w/o roughness texture
 	// assume horizontal (blue) normal map is smooth, and then

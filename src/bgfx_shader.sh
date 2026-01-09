@@ -12,21 +12,29 @@
 
 #ifndef __cplusplus
 
-#if BGFX_SHADER_LANGUAGE_HLSL > 300
-#	define BRANCH [branch]
-#	define LOOP   [loop]
-#	define UNROLL [unroll]
-#else
+#if BGFX_SHADER_LANGUAGE_GLSL
 #	define BRANCH
 #	define LOOP
 #	define UNROLL
+#else
+#	define BRANCH [branch]
+#	define LOOP   [loop]
+#	define UNROLL [unroll]
 #endif // BGFX_SHADER_LANGUAGE_HLSL > 300
 
-#if (BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_METAL || BGFX_SHADER_LANGUAGE_SPIRV) && BGFX_SHADER_TYPE_FRAGMENT
-#	define EARLY_DEPTH_STENCIL [earlydepthstencil]
-#else
-#	define EARLY_DEPTH_STENCIL
-#endif // BGFX_SHADER_LANGUAGE_HLSL > 300 && BGFX_SHADER_TYPE_FRAGMENT
+#define BGFX_SHADER_MATRIX_COLUMN_MAJOR (0 \
+	|| BGFX_SHADER_LANGUAGE_GLSL           \
+	)
+
+#if BGFX_SHADER_TYPE_FRAGMENT
+#	if BGFX_SHADER_LANGUAGE_HLSL  \
+	|| BGFX_SHADER_LANGUAGE_METAL \
+	|| BGFX_SHADER_LANGUAGE_SPIRV
+#		define EARLY_DEPTH_STENCIL [earlydepthstencil]
+	#else
+#		define EARLY_DEPTH_STENCIL
+#	endif // BGFX_SHADER_LANGUAGE_...
+#endif // BGFX_SHADER_TYPE_FRAGMENT
 
 #if BGFX_SHADER_LANGUAGE_GLSL
 #	define ARRAY_BEGIN(_type, _name, _count) _type _name[_count] = _type[](
@@ -36,8 +44,8 @@
 #	define ARRAY_END() }
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 
-#if BGFX_SHADER_LANGUAGE_HLSL \
- || BGFX_SHADER_LANGUAGE_PSSL \
+#if BGFX_SHADER_LANGUAGE_HLSL  \
+ || BGFX_SHADER_LANGUAGE_PSSL  \
  || BGFX_SHADER_LANGUAGE_SPIRV \
  || BGFX_SHADER_LANGUAGE_METAL
 #	define CONST(_x) static const _x
@@ -52,26 +60,32 @@
 
 // To be able to patch the uav registers on the DXBC SPDB Chunk (D3D11 renderer) the whitespaces around
 // '_type[_reg]' are necessary. This only affects shaders with debug info (i.e., those that have the SPDB Chunk).
-#	if BGFX_SHADER_LANGUAGE_HLSL > 400 || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
+#	if BGFX_SHADER_LANGUAGE_HLSL > 400 \
+	|| BGFX_SHADER_LANGUAGE_PSSL \
+	|| BGFX_SHADER_LANGUAGE_SPIRV \
+	|| BGFX_SHADER_LANGUAGE_METAL
 #		define REGISTER(_type, _reg) register( _type[_reg] )
 #	else
 #		define REGISTER(_type, _reg) register(_type ## _reg)
 #	endif // BGFX_SHADER_LANGUAGE_HLSL
 
-#	if BGFX_SHADER_LANGUAGE_HLSL > 300 || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
-#		if BGFX_SHADER_LANGUAGE_HLSL > 400 || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
-#			define dFdxCoarse(_x) ddx_coarse(_x)
-#			define dFdxFine(_x)   ddx_fine(_x)
-#			define dFdyCoarse(_y) ddy_coarse(-(_y))
-#			define dFdyFine(_y)   ddy_fine(-(_y))
-#		endif // BGFX_SHADER_LANGUAGE_HLSL > 400
+#	if BGFX_SHADER_LANGUAGE_HLSL > 400 \
+	|| BGFX_SHADER_LANGUAGE_PSSL       \
+	|| BGFX_SHADER_LANGUAGE_SPIRV      \
+	|| BGFX_SHADER_LANGUAGE_METAL
+#		define dFdxCoarse(_x) ddx_coarse(_x)
+#		define dFdxFine(_x)   ddx_fine(_x)
+#		define dFdyCoarse(_y) ddy_coarse(-(_y))
+#		define dFdyFine(_y)   ddy_fine(-(_y))
 
-#		if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
+#		if BGFX_SHADER_LANGUAGE_HLSL  \
+		|| BGFX_SHADER_LANGUAGE_SPIRV \
+		|| BGFX_SHADER_LANGUAGE_METAL
 float intBitsToFloat(int   _x) { return asfloat(_x); }
 vec2  intBitsToFloat(uint2 _x) { return asfloat(_x); }
 vec3  intBitsToFloat(uint3 _x) { return asfloat(_x); }
 vec4  intBitsToFloat(uint4 _x) { return asfloat(_x); }
-#		endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
+#		endif // BGFX_SHADER_LANGUAGE_*
 
 float uintBitsToFloat(uint  _x) { return asfloat(_x); }
 vec2  uintBitsToFloat(uint2 _x) { return asfloat(_x); }
@@ -571,11 +585,6 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 
 #	endif // BGFX_SHADER_LANGUAGE_HLSL > 300
 
-vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_mtx, _vec); }
-vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_vec, _mtx); }
-vec4 instMul(vec4 _vec, mat4 _mtx) { return mul(_mtx, _vec); }
-vec4 instMul(mat4 _mtx, vec4 _vec) { return mul(_vec, _mtx); }
-
 bvec2 lessThan(vec2 _a, vec2 _b) { return _a < _b; }
 bvec3 lessThan(vec3 _a, vec3 _b) { return _a < _b; }
 bvec4 lessThan(vec4 _a, vec4 _b) { return _a < _b; }
@@ -613,7 +622,6 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #else
 #	define CONST(_x) const _x
 #	define atan2(_x, _y) atan(_x, _y)
-#	define mul(_a, _b) ( (_a) * (_b) )
 #	define saturate(_x) clamp(_x, 0.0, 1.0)
 #	define SAMPLER2D(_name, _reg)       uniform sampler2D _name
 #	define SAMPLER2DMS(_name, _reg)     uniform sampler2DMS _name
@@ -645,11 +653,6 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #		define textureCubeBias(_sampler, _coord, _bias)    textureCube(_sampler, _coord, _bias)
 #	endif // BGFX_SHADER_LANGUAGE_GLSL >= 130
 
-vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_vec, _mtx); }
-vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_mtx, _vec); }
-vec4 instMul(vec4 _vec, mat4 _mtx) { return mul(_vec, _mtx); }
-vec4 instMul(mat4 _mtx, vec4 _vec) { return mul(_mtx, _vec); }
-
 float rcp(float _a) { return 1.0/_a; }
 vec2  rcp(vec2  _a) { return vec2(1.0)/_a; }
 vec3  rcp(vec3  _a) { return vec3(1.0)/_a; }
@@ -660,71 +663,159 @@ vec2 vec2_splat(float _x) { return vec2(_x, _x); }
 vec3 vec3_splat(float _x) { return vec3(_x, _x, _x); }
 vec4 vec4_splat(float _x) { return vec4(_x, _x, _x, _x); }
 
-#if BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
+#if BGFX_SHADER_LANGUAGE_GLSL >= 130 \
+ || BGFX_SHADER_LANGUAGE_HLSL        \
+ || BGFX_SHADER_LANGUAGE_PSSL        \
+ || BGFX_SHADER_LANGUAGE_SPIRV       \
+ || BGFX_SHADER_LANGUAGE_METAL
 uvec2 uvec2_splat(uint _x) { return uvec2(_x, _x); }
 uvec3 uvec3_splat(uint _x) { return uvec3(_x, _x, _x); }
 uvec4 uvec4_splat(uint _x) { return uvec4(_x, _x, _x, _x); }
-#endif // BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV || BGFX_SHADER_LANGUAGE_METAL
+#endif // BGFX_SHADER_LANGUAGE_*
+
+#if BGFX_SHADER_LANGUAGE_GLSL
+#	define mul(_a, _b) ( (_a) * (_b) )
+#else
+#	define mul(_a, _b) mul(_a, _b)
+#	define mat3x4 float4x3
+#	define mat4x3 float3x4
+#endif // BGFX_SHADER_LANGUAGE_*
 
 mat4 mtxFromRows(vec4 _0, vec4 _1, vec4 _2, vec4 _3)
 {
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_MATRIX_COLUMN_MAJOR
 	return transpose(mat4(_0, _1, _2, _3) );
 #else
 	return mat4(_0, _1, _2, _3);
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 }
+
 mat4 mtxFromCols(vec4 _0, vec4 _1, vec4 _2, vec4 _3)
 {
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_MATRIX_COLUMN_MAJOR
 	return mat4(_0, _1, _2, _3);
 #else
 	return transpose(mat4(_0, _1, _2, _3) );
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 }
+
 mat3 mtxFromRows(vec3 _0, vec3 _1, vec3 _2)
 {
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_MATRIX_COLUMN_MAJOR
 	return transpose(mat3(_0, _1, _2) );
 #else
 	return mat3(_0, _1, _2);
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 }
+
 mat3 mtxFromCols(vec3 _0, vec3 _1, vec3 _2)
 {
-#if BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_MATRIX_COLUMN_MAJOR
 	return mat3(_0, _1, _2);
 #else
 	return transpose(mat3(_0, _1, _2) );
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 }
 
-#if BGFX_SHADER_LANGUAGE_GLSL
-#define mtxFromRows3(_0, _1, _2)     transpose(mat3(_0, _1, _2) )
-#define mtxFromRows4(_0, _1, _2, _3) transpose(mat4(_0, _1, _2, _3) )
-#define mtxFromCols3(_0, _1, _2)               mat3(_0, _1, _2)
-#define mtxFromCols4(_0, _1, _2, _3)           mat4(_0, _1, _2, _3)
+#if !BGFX_SHADER_LANGUAGE_ESSL
+mat4x3 mtxFromRows(vec4 _0, vec4 _1, vec4 _2)
+{
+#if BGFX_SHADER_MATRIX_COLUMN_MAJOR
+    return transpose(mat3x4(_0, _1, _2) );
 #else
-#define mtxFromRows3(_0, _1, _2)               mat3(_0, _1, _2)
-#define mtxFromRows4(_0, _1, _2, _3)           mat4(_0, _1, _2, _3)
-#define mtxFromCols3(_0, _1, _2)     transpose(mat3(_0, _1, _2) )
-#define mtxFromCols4(_0, _1, _2, _3) transpose(mat4(_0, _1, _2, _3) )
+	return mat4x3(_0, _1, _2);
 #endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+#endif // !BGFX_SHADER_LANGUAGE_ESSL
 
-uniform vec4  u_viewRect;
-uniform vec4  u_viewTexel;
-uniform mat4  u_view;
-uniform mat4  u_invView;
-uniform mat4  u_proj;
-uniform mat4  u_invProj;
-uniform mat4  u_viewProj;
-uniform mat4  u_invViewProj;
-uniform mat4  u_model[BGFX_CONFIG_MAX_BONES];
-uniform mat4  u_modelView;
-uniform mat4  u_invModelView;
-uniform mat4  u_modelViewProj;
-uniform vec4  u_alphaRef4;
+vec3 mtxGetRow(mat3 _mtx, int _row)
+{
+#if BGFX_SHADER_MATRIX_COLUMN_MAJOR
+    return vec3(_mtx[0][_row], _mtx[1][_row], _mtx[2][_row]);
+#else
+    return vec3(_mtx[_row]);
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+vec3 mtxGetColumn(mat3 _mtx, int _column)
+{
+#if BGFX_SHADER_MATRIX_COLUMN_MAJOR
+    return vec3(_mtx[_column]);
+#else
+    return vec3(_mtx[0][_column], _mtx[1][_column], _mtx[2][_column]);
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+#if !BGFX_SHADER_LANGUAGE_ESSL
+vec4 mtxGetRow(mat4x3 _mtx, int _row)
+{
+#if BGFX_SHADER_MATRIX_COLUMN_MAJOR
+    return vec4(_mtx[0][_row], _mtx[1][_row], _mtx[2][_row], _mtx[3][_row]);
+#else
+    return vec4(_mtx[_row]);
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+vec3 mtxGetColumn(mat4x3 _mtx, int _column)
+{
+#if BGFX_SHADER_MATRIX_COLUMN_MAJOR
+    return vec3(_mtx[_column]);
+#else
+    return vec3(_mtx[0][_column], _mtx[1][_column], _mtx[2][_column]);
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+#endif // !BGFX_SHADER_LANGUAGE_ESSL
+
+vec4 mtxGetRow(mat4 _mtx, int _row)
+{
+#if BGFX_SHADER_MATRIX_COLUMN_MAJOR
+    return vec4(_mtx[0][_row], _mtx[1][_row], _mtx[2][_row], _mtx[3][_row]);
+#else
+    return vec4(_mtx[_row]);
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+vec4 mtxGetColumn(mat4 _mtx, int _column)
+{
+#if BGFX_SHADER_MATRIX_COLUMN_MAJOR
+    return vec4(_mtx[_column]);
+#else
+    return vec4(_mtx[0][_column], _mtx[1][_column], _mtx[2][_column], _mtx[3][_column]);
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+float mtxGetElement(mat3 _mtx, int _column, int _row)
+{
+#if BGFX_SHADER_MATRIX_COLUMN_MAJOR
+    return _mtx[_column][_row];
+#else
+    return _mtx[_row][_column];
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+float mtxGetElement(mat4 _mtx, int _column, int _row)
+{
+#if BGFX_SHADER_MATRIX_COLUMN_MAJOR
+    return _mtx[_column][_row];
+#else
+    return _mtx[_row][_column];
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+uniform vec4 u_viewRect;
+uniform vec4 u_viewTexel;
+uniform mat4 u_view;
+uniform mat4 u_invView;
+uniform mat4 u_proj;
+uniform mat4 u_invProj;
+uniform mat4 u_viewProj;
+uniform mat4 u_invViewProj;
+uniform mat4 u_modelView;
+uniform mat4 u_invModelView;
+uniform mat4 u_modelViewProj;
+uniform vec4 u_alphaRef4;
 #define u_alphaRef u_alphaRef4.x
+uniform mat4 u_model[BGFX_CONFIG_MAX_BONES];
 
 #endif // __cplusplus
 

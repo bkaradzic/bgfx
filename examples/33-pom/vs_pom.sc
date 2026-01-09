@@ -18,12 +18,12 @@ void main()
 	vec3 t = normalize(mul(u_norm_mtx, vec4(tangent,   0.0) ).xyz);
 	vec3 b = normalize(mul(u_norm_mtx, vec4(bitangent, 0.0) ).xyz);
 	vec3 n = normalize(mul(u_norm_mtx, vec4(normal,    0.0) ).xyz);
-	mat3 tbn = mat3(t, b, n);
+	mat3 tbn = mtxFromCols(t, b, n);
 
-	v_ts_light_pos = instMul(u_light_pos.xyz, tbn);
+	v_ts_light_pos = mul(u_light_pos.xyz, tbn);
 	// Our camera is always at the origin
-	v_ts_view_pos  = instMul(vec3_splat(0.0), tbn);
-	v_ts_frag_pos  = instMul(wpos,            tbn);
+	v_ts_view_pos  = mul(vec3_splat(0.0), tbn);
+	v_ts_frag_pos  = mul(wpos,            tbn);
 
 	v_texcoord0 = a_texcoord0;
 }

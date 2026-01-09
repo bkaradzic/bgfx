@@ -797,9 +797,12 @@ namespace bgfx
 
 		void setDefine(const char* _define)
 		{
-			m_tagptr->tag = FPPTAG_DEFINE;
-			m_tagptr->data = scratch(_define);
-			m_tagptr++;
+			if (0 != bx::strLen(_define) )
+			{
+				m_tagptr->tag = FPPTAG_DEFINE;
+				m_tagptr->data = scratch(_define);
+				m_tagptr++;
+			}
 		}
 
 		void setDefaultDefine(const char* _name)
@@ -1172,6 +1175,7 @@ namespace bgfx
 		preprocessor.setDefaultDefine("BX_PLATFORM_XBOXONE");
 
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_GLSL");
+		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_ESSL");	
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_HLSL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_METAL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_PSSL");
@@ -1181,7 +1185,10 @@ namespace bgfx
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_FRAGMENT");
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_VERTEX");
 
-		char glslDefine[128];
+		char glslDefine[128] = { '\0' };
+		char esslDefine[128] = { '\0' };
+		char hlslDefine[128] = { '\0' };
+
 		if (profile->lang == ShadingLang::GLSL
 		||  profile->lang == ShadingLang::ESSL)
 		{
@@ -1189,9 +1196,16 @@ namespace bgfx
 				, "BGFX_SHADER_LANGUAGE_GLSL=%d"
 				, profile->id
 				);
+
+			if (profile->lang == ShadingLang::ESSL)
+			{
+				bx::snprintf(esslDefine, BX_COUNTOF(esslDefine)
+					, "BGFX_SHADER_LANGUAGE_ESSL=%d"
+					, profile->id
+					);
+			}
 		}
 
-		char hlslDefine[128];
 		if (profile->lang == ShadingLang::HLSL)
 		{
 			bx::snprintf(hlslDefine, BX_COUNTOF(hlslDefine)
@@ -1211,12 +1225,14 @@ namespace bgfx
 			else
 			{
 				preprocessor.setDefine(glslDefine);
+				preprocessor.setDefine(esslDefine);
 			}
 		}
 		else if (0 == bx::strCmpI(platform, "asm.js") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_EMSCRIPTEN=1");
 			preprocessor.setDefine(glslDefine);
+			preprocessor.setDefine(esslDefine);
 		}
 		else if (0 == bx::strCmpI(platform, "linux") )
 		{
@@ -1229,6 +1245,7 @@ namespace bgfx
 			else
 			{
 				preprocessor.setDefine(glslDefine);
+				preprocessor.setDefine(esslDefine);
 			}
 		}
 		else if (0 == bx::strCmpI(platform, "ios")
@@ -1252,7 +1269,9 @@ namespace bgfx
 			if (profile->lang != ShadingLang::Metal)
 			{
 				preprocessor.setDefine(glslDefine);
+				preprocessor.setDefine(esslDefine);
 			}
+
 			char temp[32];
 			bx::snprintf(
 				temp
@@ -1273,6 +1292,7 @@ namespace bgfx
 			     ||  profile->lang == ShadingLang::ESSL)
 			{
 				preprocessor.setDefine(glslDefine);
+				preprocessor.setDefine(esslDefine);
 			}
 			else if (profile->lang == ShadingLang::SpirV)
 			{
@@ -1295,6 +1315,7 @@ namespace bgfx
 			     ||  profile->lang == ShadingLang::ESSL)
 			{
 				preprocessor.setDefine(glslDefine);
+				preprocessor.setDefine(esslDefine);
 			}
 			else if (profile->lang == ShadingLang::SpirV)
 			{

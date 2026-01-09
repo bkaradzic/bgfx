@@ -20,10 +20,6 @@ void main()
 	float aspect = height*(u_viewRect.z / u_viewRect.w);
 	vec2 tex = (2.0*a_texcoord0-1.0) * vec2(aspect, height);
 
-	mat4 mtx;
-	mtx[0] = u_mtx0;
-	mtx[1] = u_mtx1;
-	mtx[2] = u_mtx2;
-	mtx[3] = u_mtx3;
-	v_dir = instMul(mtx, vec4(tex, 1.0, 0.0) ).xyz;
+	mat4 mtx = mtxFromCols(u_mtx0, u_mtx1, u_mtx2, u_mtx3);
+	v_dir = mul(mtx, vec4(tex, 1.0, 0.0) ).xyz;
 }

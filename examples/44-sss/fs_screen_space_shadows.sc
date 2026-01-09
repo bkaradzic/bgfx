@@ -53,19 +53,19 @@ void main()
 	float initialOffset = (0.0 < u_useNoiseOffset) ? (0.5+random) : 1.0;
 	samplePosition += initialOffset * lightStep;
 
-	mat4 viewToProj = mat4(
-		u_viewToProj0,
-		u_viewToProj1,
-		u_viewToProj2,
-		u_viewToProj3
-	);
+	mat4 viewToProj = mtxFromCols(
+		  u_viewToProj0
+		, u_viewToProj1
+		, u_viewToProj2
+		, u_viewToProj3
+		);
 
 	float occluded = 0.0;
 	float softOccluded = 0.0;
 	float firstHit = u_shadowSteps;
 	for (int i = 0; i < int(u_shadowSteps); ++i, samplePosition += lightStep)
 	{
-		vec3 psSamplePosition = instMul(viewToProj, vec4(samplePosition, 1.0)).xyw;
+		vec3 psSamplePosition = mul(viewToProj, vec4(samplePosition, 1.0)).xyw;
 		psSamplePosition.xy *= (1.0/psSamplePosition.z);
 
 		vec2 sampleCoord = psSamplePosition.xy * 0.5 + 0.5;
