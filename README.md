@@ -684,6 +684,13 @@ target="_blank"><img src="http://img.youtube.com/vi/ow_QU4K217w/0.jpg"
 alt="Match Engine | Football Manager 2024"
 width="640" height="480" border="0" /></a>
 
+## Unity's Project Tiny
+
+Unity's Project Tiny used bgfx for rendering. While project is discontinued,
+there are still [some](https://docs.unity3d.com/Packages/com.unity.tiny.rendering@0.29/api/Bgfx.html) [references](https://docs.google.com/document/d/1A8hen2hLFY5FLkC5gd3JP2Z-IpHfnAX-CpYLK3aOdwA/edit?tab=t.0) [about](https://github.com/Unity-Technologies/ProjectTinySamples) [it](https://docs.unity3d.com/Packages/com.unity.tiny@0.16/manual/index.html).
+
+![Unity Project Tiny](https://github.com/Unity-Technologies/ProjectTinySamples/raw/master/res/TinyRacingTrailer.gif)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
