@@ -35,6 +35,7 @@ namespace bgfx
 			Metal,
 			PSSL,
 			SpirV,
+			WGSL,
 
 			Count
 		};
@@ -48,6 +49,7 @@ namespace bgfx
 		"Metal Shading Language (MSL)",
 		"PlayStation Shader Language (PSSL)",
 		"Standard Portable Intermediate Representation - V (SPIR-V)",
+		"WGSL",
 
 		"Unknown?!"
 	};
@@ -149,6 +151,7 @@ namespace bgfx
 		{  ShadingLang::GLSL,  420,    "420"        },
 		{  ShadingLang::GLSL,  430,    "430"        },
 		{  ShadingLang::GLSL,  440,    "440"        },
+		{  ShadingLang::WGSL,  1010,   "wgsl"       },
 	};
 
 	static const char* s_ARB_shader_texture_lod[] =
@@ -1285,6 +1288,7 @@ namespace bgfx
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_METAL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_PSSL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_SPIRV");
+		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_WGSL");
 
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_COMPUTE");
 		preprocessor.setDefaultDefine("BGFX_SHADER_TYPE_FRAGMENT");
@@ -1327,6 +1331,10 @@ namespace bgfx
 			{
 				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
 			}
+			else if (profile->lang == ShadingLang::WGSL)
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_WGSL=1");
+			}
 			else
 			{
 				preprocessor.setDefine(glslDefine);
@@ -1346,6 +1354,10 @@ namespace bgfx
 			if (profile->lang == ShadingLang::SpirV)
 			{
 				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
+			}
+			else if (profile->lang == ShadingLang::WGSL)
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_WGSL=1");
 			}
 			else
 			{
@@ -1403,6 +1415,10 @@ namespace bgfx
 			{
 				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
 			}
+			else if (profile->lang == ShadingLang::WGSL)
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_WGSL=1");
+			}
 		}
 		else if (0 == bx::strCmpI(platform, "orbis") )
 		{
@@ -1425,6 +1441,10 @@ namespace bgfx
 			else if (profile->lang == ShadingLang::SpirV)
 			{
 				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
+			}
+			else if (profile->lang == ShadingLang::WGSL)
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_WGSL=1");
 			}
 		}
 
@@ -1684,6 +1704,10 @@ namespace bgfx
 			{
 				compiled = compilePSSLShader(_options, 0, input, _shaderWriter, _messageWriter);
 			}
+			else if (profile->lang == ShadingLang::WGSL)
+			{
+				compiled = compileWgslShader(_options, profile->id, input, _shaderWriter, _messageWriter);
+			}
 			else
 			{
 				compiled = compileHLSLShader(_options, profile->id, input, _shaderWriter, _messageWriter);
@@ -1840,6 +1864,10 @@ namespace bgfx
 							else if (profile->lang == ShadingLang::PSSL)
 							{
 								compiled = compilePSSLShader(_options, 0, code, _shaderWriter, _messageWriter);
+							}
+							else if (profile->lang == ShadingLang::WGSL)
+							{
+								compiled = compileWgslShader(_options, profile->id, code, _shaderWriter, _messageWriter);
 							}
 							else
 							{
@@ -2737,6 +2765,10 @@ namespace bgfx
 							else if (profile->lang == ShadingLang::PSSL)
 							{
 								compiled = compilePSSLShader(_options, 0, code, _shaderWriter, _messageWriter);
+							}
+							else if (profile->lang == ShadingLang::WGSL)
+							{
+								compiled = compileWgslShader(_options, profile->id, code, _shaderWriter, _messageWriter);
 							}
 							else
 							{

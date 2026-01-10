@@ -11,6 +11,127 @@ local GLSLANG        = path.join(BGFX_DIR, "3rdparty/glslang")
 local SPIRV_CROSS    = path.join(BGFX_DIR, "3rdparty/spirv-cross")
 local SPIRV_HEADERS  = path.join(BGFX_DIR, "3rdparty/spirv-headers")
 local SPIRV_TOOLS    = path.join(BGFX_DIR, "3rdparty/spirv-tools")
+local TINT           = path.join(BGFX_DIR, "3rdparty/dawn")
+
+project "tint-core"
+	kind "StaticLib"
+
+	includedirs {
+		path.join(TINT),
+		path.join(TINT, "src/tint"),
+		path.join(TINT, "third_party/protobuf/src"),
+		path.join(TINT, "third_party/abseil-cpp"),
+		path.join(SPIRV_TOOLS),
+		path.join(SPIRV_TOOLS, "include"),
+		path.join(SPIRV_TOOLS, "include/generated"),
+		path.join(SPIRV_HEADERS, "include"),
+	}
+
+	defines {
+		"TINT_BUILD_GLSL_WRITER=0",
+		"TINT_BUILD_HLSL_WRITER=0",
+		"TINT_BUILD_MSL_WRITER=0",
+		"TINT_BUILD_NULL_WRITER=0",
+
+		"TINT_BUILD_SPV_READER=1",
+		"TINT_BUILD_SPV_WRITER=0",
+
+		"TINT_BUILD_WGSL_READER=0",
+		"TINT_BUILD_WGSL_WRITER=1",
+
+		"TINT_BUILD_IS_LINUX=1",
+		"TINT_BUILD_IS_MAC=0",
+		"TINT_BUILD_IS_WIN=0",
+
+		"TINT_ENABLE_IR_VALIDATION=0",
+	}
+
+	files {
+		path.join(TINT, "src/tint/utils/**.cc"),
+		path.join(TINT, "src/tint/utils/**.h"),
+		path.join(TINT, "src/tint/lang/core/**.cc"),
+		path.join(TINT, "src/tint/lang/core/**.h"),
+		path.join(TINT, "src/tint/lang/null/**.cc"),
+		path.join(TINT, "src/tint/lang/null/**.h"),
+	}
+
+project "tint-lang"
+	kind "StaticLib"
+
+	includedirs {
+		path.join(TINT),
+		path.join(TINT, "src/tint"),
+		path.join(TINT, "third_party/protobuf/src"),
+		path.join(TINT, "third_party/abseil-cpp"),
+		path.join(SPIRV_TOOLS),
+		path.join(SPIRV_TOOLS, "include"),
+		path.join(SPIRV_TOOLS, "include/generated"),
+		path.join(SPIRV_HEADERS, "include"),
+	}
+
+	defines {
+		"TINT_BUILD_GLSL_WRITER=0",
+		"TINT_BUILD_HLSL_WRITER=0",
+		"TINT_BUILD_MSL_WRITER=0",
+		"TINT_BUILD_NULL_WRITER=0",
+
+		"TINT_BUILD_SPV_READER=1",
+		"TINT_BUILD_SPV_WRITER=0",
+
+		"TINT_BUILD_WGSL_READER=0",
+		"TINT_BUILD_WGSL_WRITER=1",
+
+		"TINT_BUILD_IS_LINUX=1",
+		"TINT_BUILD_IS_MAC=0",
+		"TINT_BUILD_IS_WIN=0",
+
+		"TINT_ENABLE_IR_VALIDATION=0",
+	}
+
+	files {
+		path.join(TINT, "src/tint/lang/spirv/**.cc"),
+		path.join(TINT, "src/tint/lang/spirv/**.h"),
+		path.join(TINT, "src/tint/lang/wgsl/**.cc"),
+		path.join(TINT, "src/tint/lang/wgsl/**.h"),
+	}
+
+project "tint-api"
+	kind "StaticLib"
+
+	includedirs {
+		path.join(TINT),
+		path.join(TINT, "src/tint"),
+		path.join(TINT, "third_party/protobuf/src"),
+		path.join(TINT, "third_party/abseil-cpp"),
+		path.join(SPIRV_TOOLS),
+		path.join(SPIRV_TOOLS, "include"),
+		path.join(SPIRV_TOOLS, "include/generated"),
+		path.join(SPIRV_HEADERS, "include"),
+	}
+
+	defines {
+		"TINT_BUILD_GLSL_WRITER=0",
+		"TINT_BUILD_HLSL_WRITER=0",
+		"TINT_BUILD_MSL_WRITER=0",
+		"TINT_BUILD_NULL_WRITER=0",
+
+		"TINT_BUILD_SPV_READER=1",
+		"TINT_BUILD_SPV_WRITER=0",
+
+		"TINT_BUILD_WGSL_READER=0",
+		"TINT_BUILD_WGSL_WRITER=1",
+
+		"TINT_BUILD_IS_LINUX=1",
+		"TINT_BUILD_IS_MAC=0",
+		"TINT_BUILD_IS_WIN=0",
+
+		"TINT_ENABLE_IR_VALIDATION=0",
+	}
+
+	files {
+		path.join(TINT, "src/tint/api/**.cc"),
+		path.join(TINT, "src/tint/api/**.h"),
+	}
 
 project "spirv-opt"
 	kind "StaticLib"
@@ -580,6 +701,9 @@ project "shaderc"
 		SPIRV_CROSS,
 
 		path.join(SPIRV_TOOLS, "include"),
+
+		path.join(TINT),
+		path.join(TINT, "src"),
 	}
 
 	links {
@@ -588,6 +712,9 @@ project "shaderc"
 		"glsl-optimizer",
 		"spirv-opt",
 		"spirv-cross",
+		"tint-api",
+		"tint-lang",
+		"tint-core",
 	}
 
 	using_bx()
