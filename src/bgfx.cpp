@@ -2734,8 +2734,12 @@ namespace bgfx
 	void* findModule(const char* _name)
 	{
 #if BX_PLATFORM_WINDOWS
-		// NOTE: there was some reason to do it this way instead of simply calling GetModuleHandleA,
-		// but not sure what it was.
+		if (NULL == _name
+		||  '\0' == *_name)
+		{
+			return GetModuleHandleA(NULL);
+		}
+
 		HANDLE process = GetCurrentProcess();
 		DWORD size;
 		BOOL result = EnumProcessModules(process
