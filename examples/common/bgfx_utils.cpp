@@ -112,6 +112,7 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const bx::StringV
 	case bgfx::RendererType::OpenGL:     filePath.join("glsl");  break;
 	case bgfx::RendererType::OpenGLES:   filePath.join("essl");  break;
 	case bgfx::RendererType::Vulkan:     filePath.join("spirv"); break;
+	case bgfx::RendererType::WebGPU:     filePath.join("wgsl");  break;
 
 	case bgfx::RendererType::Count:
 		BX_ASSERT(false, "You should not be here!");

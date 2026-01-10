@@ -896,6 +896,9 @@ enum RendererType : uint
 	// Vulkan
 	VULKAN,
 
+	// WebGPU
+	WEBGPU,
+
 	COUNT
 }
 
