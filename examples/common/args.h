@@ -23,6 +23,10 @@ struct Args
 		{
 			m_type = bgfx::RendererType::Vulkan;
 		}
+		else if (cmdLine.hasArg("wgpu") )
+		{
+			m_type = bgfx::RendererType::WebGPU;
+		}
 		else if (cmdLine.hasArg("noop") )
 		{
 			m_type = bgfx::RendererType::Noop;

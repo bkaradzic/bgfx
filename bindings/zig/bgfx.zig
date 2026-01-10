@@ -867,6 +867,9 @@ pub const RendererType = enum(c_int) {
     /// Vulkan
     Vulkan,
 
+    /// WebGPU
+    WebGPU,
+
     Count
 };
 
