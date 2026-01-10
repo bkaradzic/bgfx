@@ -10,12 +10,13 @@
 #include <bx/platform.h>
 
 #define BGFX_EMBEDDED_SHADER_DXBC(...)
-#define BGFX_EMBEDDED_SHADER_PSSL(...)
 #define BGFX_EMBEDDED_SHADER_ESSL(...)
 #define BGFX_EMBEDDED_SHADER_GLSL(...)
 #define BGFX_EMBEDDED_SHADER_METAL(...)
 #define BGFX_EMBEDDED_SHADER_NVN(...)
+#define BGFX_EMBEDDED_SHADER_PSSL(...)
 #define BGFX_EMBEDDED_SHADER_SPIRV(...)
+#define BGFX_EMBEDDED_SHADER_WGSL(...)
 
 #ifndef BGFX_PLATFORM_SUPPORTS_DXBC
 #	define BGFX_PLATFORM_SUPPORTS_DXBC (0 \
@@ -25,13 +26,6 @@
 		|| BX_PLATFORM_XBOXONE            \
 		)
 #endif // BGFX_PLATFORM_SUPPORTS_DXBC
-
-#ifndef BGFX_PLATFORM_SUPPORTS_PSSL
-#	define BGFX_PLATFORM_SUPPORTS_PSSL (0 \
-		|| BX_PLATFORM_PS4                \
-		|| BX_PLATFORM_PS5                \
-		)
-#endif // BGFX_PLATFORM_SUPPORTS_PSSL
 
 #ifndef BGFX_PLATFORM_SUPPORTS_ESSL
 #	define BGFX_PLATFORM_SUPPORTS_ESSL (0 \
@@ -68,6 +62,13 @@
 		)
 #endif // BGFX_PLATFORM_SUPPORTS_NVN
 
+#ifndef BGFX_PLATFORM_SUPPORTS_PSSL
+#	define BGFX_PLATFORM_SUPPORTS_PSSL (0 \
+		|| BX_PLATFORM_PS4                \
+		|| BX_PLATFORM_PS5                \
+		)
+#endif // BGFX_PLATFORM_SUPPORTS_PSSL
+
 #ifndef BGFX_PLATFORM_SUPPORTS_SPIRV
 #	define BGFX_PLATFORM_SUPPORTS_SPIRV (0 \
 		|| BX_PLATFORM_ANDROID             \
@@ -78,6 +79,10 @@
 		|| BX_PLATFORM_NX                  \
 		)
 #endif // BGFX_PLATFORM_SUPPORTS_SPIRV
+
+#ifndef BGFX_PLATFORM_SUPPORTS_WGSL
+#	define BGFX_PLATFORM_SUPPORTS_WGSL 0
+#endif // BGFX_PLATFORM_SUPPORTS_WGSL
 
 ///
 #define BGFX_EMBEDDED_SHADER_CONCATENATE(_x, _y) BGFX_EMBEDDED_SHADER_CONCATENATE_(_x, _y)
@@ -122,22 +127,29 @@
 	{ _renderer, BGFX_EMBEDDED_SHADER_CONCATENATE(_name, _mtl), BGFX_EMBEDDED_SHADER_COUNTOF(BGFX_EMBEDDED_SHADER_CONCATENATE(_name, _mtl) ) },
 #endif // BGFX_PLATFORM_SUPPORTS_METAL
 
-#define BGFX_EMBEDDED_SHADER(_name)                                                        \
-	{                                                                                      \
-		#_name,                                                                            \
-		{                                                                                  \
-			BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Agc,        _name)              \
-			BGFX_EMBEDDED_SHADER_DXBC (bgfx::RendererType::Direct3D11, _name)              \
-			BGFX_EMBEDDED_SHADER_DXBC (bgfx::RendererType::Direct3D12, _name)              \
-			BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Gnm,        _name)              \
-			BGFX_EMBEDDED_SHADER_METAL(bgfx::RendererType::Metal,      _name)              \
-			BGFX_EMBEDDED_SHADER_NVN  (bgfx::RendererType::Nvn,        _name)              \
-			BGFX_EMBEDDED_SHADER_ESSL (bgfx::RendererType::OpenGLES,   _name)              \
-			BGFX_EMBEDDED_SHADER_GLSL (bgfx::RendererType::OpenGL,     _name)              \
-			BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::Vulkan,     _name)              \
-			{ bgfx::RendererType::Noop,  (const uint8_t*)"VSH\x5\x0\x0\x0\x0\x0\x0", 10 }, \
-			{ bgfx::RendererType::Count, NULL, 0 }                                         \
-		}                                                                                  \
+#if BGFX_PLATFORM_SUPPORTS_WGSL
+#	undef  BGFX_EMBEDDED_SHADER_WGSL
+#	define BGFX_EMBEDDED_SHADER_WGSL(_renderer, _name) \
+	{ _renderer, BGFX_EMBEDDED_SHADER_CONCATENATE(_name, _wgsl), BGFX_EMBEDDED_SHADER_COUNTOF(BGFX_EMBEDDED_SHADER_CONCATENATE(_name, _wgsl) ) },
+#endif // BGFX_PLATFORM_SUPPORTS_WGSL
+
+#define BGFX_EMBEDDED_SHADER(_name)                                                         \
+	{                                                                                       \
+		#_name,                                                                             \
+		{                                                                                   \
+			BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Agc,        _name)               \
+			BGFX_EMBEDDED_SHADER_DXBC (bgfx::RendererType::Direct3D11, _name)               \
+			BGFX_EMBEDDED_SHADER_DXBC (bgfx::RendererType::Direct3D12, _name)               \
+			BGFX_EMBEDDED_SHADER_PSSL (bgfx::RendererType::Gnm,        _name)               \
+			BGFX_EMBEDDED_SHADER_METAL(bgfx::RendererType::Metal,      _name)               \
+			BGFX_EMBEDDED_SHADER_NVN  (bgfx::RendererType::Nvn,        _name)               \
+			BGFX_EMBEDDED_SHADER_ESSL (bgfx::RendererType::OpenGLES,   _name)               \
+			BGFX_EMBEDDED_SHADER_GLSL (bgfx::RendererType::OpenGL,     _name)               \
+			BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::Vulkan,     _name)               \
+			BGFX_EMBEDDED_SHADER_WGSL (bgfx::RendererType::WebGPU,     _name)               \
+			{ bgfx::RendererType::Noop,   (const uint8_t*)"VSH\x5\x0\x0\x0\x0\x0\x0", 10 }, \
+			{ bgfx::RendererType::Count,  NULL, 0 }                                         \
+		}                                                                                   \
 	}
 
 #define BGFX_EMBEDDED_SHADER_END()                 \

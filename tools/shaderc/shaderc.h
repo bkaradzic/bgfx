@@ -37,6 +37,13 @@ namespace bgfx
 
 	bx::StringView nextWord(bx::StringView& _parse);
 
+	constexpr uint16_t kAccessRead  = 0x8000;
+	constexpr uint16_t kAccessWrite = 0x4000;
+	constexpr uint16_t kAccessMask  = 0
+		| kAccessRead
+		| kAccessWrite
+		;
+
 	constexpr uint8_t kUniformFragmentBit  = 0x10;
 	constexpr uint8_t kUniformSamplerBit   = 0x20;
 	constexpr uint8_t kUniformReadOnlyBit  = 0x40;
@@ -123,6 +130,7 @@ namespace bgfx
 	bool compileMetalShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
 	bool compilePSSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
 	bool compileSPIRVShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
+	bool compileWgslShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
 
 	const char* getPsslPreamble();
 

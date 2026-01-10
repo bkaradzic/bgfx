@@ -20,16 +20,18 @@
 #	define BRANCH [branch]
 #	define LOOP   [loop]
 #	define UNROLL [unroll]
-#endif // BGFX_SHADER_LANGUAGE_HLSL > 300
+#endif // BGFX_SHADER_LANGUAGE_GLSL
 
 #define BGFX_SHADER_MATRIX_COLUMN_MAJOR (0 \
 	|| BGFX_SHADER_LANGUAGE_GLSL           \
+	|| BGFX_SHADER_LANGUAGE_WGSL           \
 	)
 
 #if BGFX_SHADER_TYPE_FRAGMENT
 #	if BGFX_SHADER_LANGUAGE_HLSL  \
 	|| BGFX_SHADER_LANGUAGE_METAL \
-	|| BGFX_SHADER_LANGUAGE_SPIRV
+	|| BGFX_SHADER_LANGUAGE_SPIRV \
+	|| BGFX_SHADER_LANGUAGE_WGSL
 #		define EARLY_DEPTH_STENCIL [earlydepthstencil]
 	#else
 #		define EARLY_DEPTH_STENCIL
@@ -47,7 +49,8 @@
 #if BGFX_SHADER_LANGUAGE_HLSL  \
  || BGFX_SHADER_LANGUAGE_PSSL  \
  || BGFX_SHADER_LANGUAGE_SPIRV \
- || BGFX_SHADER_LANGUAGE_METAL
+ || BGFX_SHADER_LANGUAGE_METAL \
+ || BGFX_SHADER_LANGUAGE_WGSL
 #	define CONST(_x) static const _x
 #	define dFdx(_x) ddx(_x)
 #	define dFdy(_y) ddy(-(_y))
@@ -60,19 +63,21 @@
 
 // To be able to patch the uav registers on the DXBC SPDB Chunk (D3D11 renderer) the whitespaces around
 // '_type[_reg]' are necessary. This only affects shaders with debug info (i.e., those that have the SPDB Chunk).
-#	if BGFX_SHADER_LANGUAGE_HLSL > 400 \
-	|| BGFX_SHADER_LANGUAGE_PSSL \
-	|| BGFX_SHADER_LANGUAGE_SPIRV \
-	|| BGFX_SHADER_LANGUAGE_METAL
+#	if BGFX_SHADER_LANGUAGE_HLSL > 400                     \
+	|| BGFX_SHADER_LANGUAGE_PSSL                           \
+	|| BGFX_SHADER_LANGUAGE_SPIRV                          \
+	|| BGFX_SHADER_LANGUAGE_METAL                          \
+	|| BGFX_SHADER_LANGUAGE_WGSL
 #		define REGISTER(_type, _reg) register( _type[_reg] )
 #	else
-#		define REGISTER(_type, _reg) register(_type ## _reg)
-#	endif // BGFX_SHADER_LANGUAGE_HLSL
+#		define REGISTER(_type, _reg) register(_type ##     _reg)
+#	endif // BGFX_SHADER_LANGUAGE_*
 
 #	if BGFX_SHADER_LANGUAGE_HLSL > 400 \
 	|| BGFX_SHADER_LANGUAGE_PSSL       \
 	|| BGFX_SHADER_LANGUAGE_SPIRV      \
-	|| BGFX_SHADER_LANGUAGE_METAL
+	|| BGFX_SHADER_LANGUAGE_METAL      \
+	|| BGFX_SHADER_LANGUAGE_WGSL
 #		define dFdxCoarse(_x) ddx_coarse(_x)
 #		define dFdxFine(_x)   ddx_fine(_x)
 #		define dFdyCoarse(_y) ddy_coarse(-(_y))
@@ -80,7 +85,8 @@
 
 #		if BGFX_SHADER_LANGUAGE_HLSL  \
 		|| BGFX_SHADER_LANGUAGE_SPIRV \
-		|| BGFX_SHADER_LANGUAGE_METAL
+		|| BGFX_SHADER_LANGUAGE_METAL \
+		|| BGFX_SHADER_LANGUAGE_WGSL
 float intBitsToFloat(int   _x) { return asfloat(_x); }
 vec2  intBitsToFloat(uint2 _x) { return asfloat(_x); }
 vec3  intBitsToFloat(uint3 _x) { return asfloat(_x); }
@@ -667,7 +673,8 @@ vec4 vec4_splat(float _x) { return vec4(_x, _x, _x, _x); }
  || BGFX_SHADER_LANGUAGE_HLSL        \
  || BGFX_SHADER_LANGUAGE_PSSL        \
  || BGFX_SHADER_LANGUAGE_SPIRV       \
- || BGFX_SHADER_LANGUAGE_METAL
+ || BGFX_SHADER_LANGUAGE_METAL       \
+ || BGFX_SHADER_LANGUAGE_WGSL
 uvec2 uvec2_splat(uint _x) { return uvec2(_x, _x); }
 uvec3 uvec3_splat(uint _x) { return uvec3(_x, _x, _x); }
 uvec4 uvec4_splat(uint _x) { return uvec4(_x, _x, _x, _x); }
@@ -675,6 +682,10 @@ uvec4 uvec4_splat(uint _x) { return uvec4(_x, _x, _x, _x); }
 
 #if BGFX_SHADER_LANGUAGE_GLSL
 #	define mul(_a, _b) ( (_a) * (_b) )
+#elif BGFX_SHADER_LANGUAGE_WGSL
+#	define mul(_a, _b) mul(_b, _a)
+#	define mat3x4 float3x4
+#	define mat4x3 float4x3
 #else
 #	define mul(_a, _b) mul(_a, _b)
 #	define mat3x4 float4x3
