@@ -373,24 +373,24 @@ namespace bgfx { namespace wgpu
 	{
 #define LANGUAGE_FEATURE(_name) WGPUWGSLLanguageFeatureName_##_name, #_name
 
-		{ LANGUAGE_FEATURE(ReadonlyAndReadwriteStorageTextures), true, false },
-		{ LANGUAGE_FEATURE(Packed4x8IntegerDotProduct), true, false },
-		{ LANGUAGE_FEATURE(UnrestrictedPointerParameters), true, false },
-		{ LANGUAGE_FEATURE(PointerCompositeAccess), true, false },
-		{ LANGUAGE_FEATURE(UniformBufferStandardLayout), true, false },
-		{ LANGUAGE_FEATURE(SubgroupId), true, false },
-		{ LANGUAGE_FEATURE(ChromiumTestingUnimplemented), true, false },
-		{ LANGUAGE_FEATURE(ChromiumTestingUnsafeExperimental), true, false },
-		{ LANGUAGE_FEATURE(ChromiumTestingExperimental), true, false },
+		{ LANGUAGE_FEATURE(ReadonlyAndReadwriteStorageTextures),  true, false },
+		{ LANGUAGE_FEATURE(Packed4x8IntegerDotProduct),           true, false },
+		{ LANGUAGE_FEATURE(UnrestrictedPointerParameters),        true, false },
+		{ LANGUAGE_FEATURE(PointerCompositeAccess),               true, false },
+		{ LANGUAGE_FEATURE(UniformBufferStandardLayout),          true, false },
+		{ LANGUAGE_FEATURE(SubgroupId),                           true, false },
+		{ LANGUAGE_FEATURE(ChromiumTestingUnimplemented),         true, false },
+		{ LANGUAGE_FEATURE(ChromiumTestingUnsafeExperimental),    true, false },
+		{ LANGUAGE_FEATURE(ChromiumTestingExperimental),          true, false },
 		{ LANGUAGE_FEATURE(ChromiumTestingShippedWithKillswitch), true, false },
-		{ LANGUAGE_FEATURE(ChromiumTestingShipped), true, false },
-		{ LANGUAGE_FEATURE(SizedBindingArray), true, false },
-		{ LANGUAGE_FEATURE(TexelBuffers), true, false },
-		{ LANGUAGE_FEATURE(ChromiumPrint), true, false },
-		{ LANGUAGE_FEATURE(FragmentDepth), true, false },
-		{ LANGUAGE_FEATURE(ImmediateAddressSpace), true, false },
-		{ LANGUAGE_FEATURE(SubgroupUniformity), true, false },
-		{ LANGUAGE_FEATURE(TextureAndSamplerLet), true, false },
+		{ LANGUAGE_FEATURE(ChromiumTestingShipped),               true, false },
+		{ LANGUAGE_FEATURE(SizedBindingArray),                    true, false },
+		{ LANGUAGE_FEATURE(TexelBuffers),                         true, false },
+		{ LANGUAGE_FEATURE(ChromiumPrint),                        true, false },
+		{ LANGUAGE_FEATURE(FragmentDepth),                        true, false },
+		{ LANGUAGE_FEATURE(ImmediateAddressSpace),                true, false },
+		{ LANGUAGE_FEATURE(SubgroupUniformity),                   true, false },
+		{ LANGUAGE_FEATURE(TextureAndSamplerLet),                 true, false },
 
 #undef LANGUAGE_FEATURE
 	};
@@ -4602,10 +4602,6 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 	}
 #endif // BX_PLATFORM_OSX || BX_PLATFORM_IOS || BX_PLATFORM_TVOS || BX_PLATFORM_VISIONOS
 
-#if BX_PLATFORM_WINDOWS
-extern "C" void* __stdcall GetModuleHandleA(const char* _moduleName);
-#endif // BX_PLATFORM_WINDOWS
-
 	bool SwapChainWGPU::createSurface(void* _nwh)
 	{
 		m_nwh = _nwh;
@@ -4620,7 +4616,7 @@ extern "C" void* __stdcall GetModuleHandleA(const char* _moduleName);
 				.next  = NULL,
 				.sType = WGPUSType_SurfaceSourceWindowsHWND,
 			},
-			.hinstance = GetModuleHandleA(NULL),
+			.hinstance = findModule(""),
 			.hwnd      = m_nwh,
 		};
 
@@ -4630,7 +4626,7 @@ extern "C" void* __stdcall GetModuleHandleA(const char* _moduleName);
 			.label = toWGPUStringView("SwapChainWGPU"),
 		};
 #elif BX_PLATFORM_LINUX
-		WGPUSurfaceSourceXlibWindow sufraceSourceXlib =
+		WGPUSurfaceSourceXlibWindow surfaceSourceXlib =
 		{
 			.chain =
 			{
@@ -4641,7 +4637,7 @@ extern "C" void* __stdcall GetModuleHandleA(const char* _moduleName);
 			.window  = uint64_t(m_nwh),
 		};
 
-		WGPUSurfaceSourceWaylandSurface sufraceSourceWayland =
+		WGPUSurfaceSourceWaylandSurface surfaceSourceWayland =
 		{
 			.chain =
 			{
@@ -4655,8 +4651,8 @@ extern "C" void* __stdcall GetModuleHandleA(const char* _moduleName);
 		surfaceDesc =
 		{
 			.nextInChain = g_platformData.type == bgfx::NativeWindowHandleType::Wayland
-				? &sufraceSourceWayland.chain
-				: &sufraceSourceXlib.chain
+				? &surfaceSourceWayland.chain
+				: &surfaceSourceXlib.chain
 				,
 			.label = toWGPUStringView("SwapChainWGPU"),
 		};
