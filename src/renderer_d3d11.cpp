@@ -3186,8 +3186,18 @@ namespace bgfx { namespace d3d11
 				switch (texture.m_type)
 				{
 				case TextureD3D11::Texture2D:
-					desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
-					desc.Texture2D.MipSlice = _mip;
+					if (1 < texture.m_numLayers)
+					{
+						desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
+						desc.Texture2DArray.MipSlice = _mip;
+						desc.Texture2DArray.FirstArraySlice = 0;
+						desc.Texture2DArray.ArraySize = texture.m_numLayers;
+					}
+					else
+					{
+						desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+						desc.Texture2D.MipSlice = _mip;
+					}
 					break;
 
 				case TextureD3D11::TextureCube:
