@@ -15,6 +15,13 @@ namespace bgfx
 #	define SHADERC_CONFIG_HLSL BX_PLATFORM_WINDOWS
 #endif // SHADERC_CONFIG_HLSL
 
+#ifndef SHADERC_CONFIG_DXIL
+#	define SHADERC_CONFIG_DXIL (0 \
+		|| BX_PLATFORM_WINDOWS    \
+		|| BX_PLATFORM_LINUX      \
+		)
+#endif // SHADERC_CONFIG_DXIL
+
 #include <bx/bx.h>
 #include <bx/debug.h>
 #include <bx/commandline.h>
@@ -127,6 +134,7 @@ namespace bgfx
 
 	bool compileGLSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
 	bool compileHLSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
+	bool compileDxilShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
 	bool compileMetalShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
 	bool compilePSSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);
 	bool compileSPIRVShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bx::WriterI* _messages);

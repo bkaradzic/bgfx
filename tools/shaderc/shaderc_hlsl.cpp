@@ -77,11 +77,16 @@ namespace bgfx { namespace hlsl
 		{ "D3DCompiler_43.dll", { 0x0a233719, 0x3960, 0x4578, { 0x9d, 0x7c, 0x20, 0x3b, 0x8b, 0x1d, 0x9c, 0xc1 } } },
 	};
 
-	static const D3DCompiler* s_compiler;
-	static void* s_d3dcompilerdll;
+	static const D3DCompiler* s_compiler = NULL;
+	static void* s_d3dcompilerdll = NULL;
 
 	const D3DCompiler* load(bx::WriterI* _messageWriter)
 	{
+		if (NULL != s_d3dcompilerdll)
+		{
+			return s_compiler;
+		}
+
 		bx::Error messageErr;
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(s_d3dcompiler); ++ii)
@@ -123,41 +128,18 @@ namespace bgfx { namespace hlsl
 
 	void unload()
 	{
-		bx::dlclose(s_d3dcompilerdll);
+		if (NULL != s_d3dcompilerdll)
+		{
+			bx::dlclose(s_d3dcompilerdll);
+			s_d3dcompilerdll = NULL;
+		}
+
+		s_compiler     = NULL;
+		D3DCompile     = NULL;
+		D3DDisassemble = NULL;
+		D3DReflect     = NULL;
+		D3DStripShader = NULL;
 	}
-
-	struct CTHeader
-	{
-		uint32_t Size;
-		uint32_t Creator;
-		uint32_t Version;
-		uint32_t Constants;
-		uint32_t ConstantInfo;
-		uint32_t Flags;
-		uint32_t Target;
-	};
-
-	struct CTInfo
-	{
-		uint32_t Name;
-		uint16_t RegisterSet;
-		uint16_t RegisterIndex;
-		uint16_t RegisterCount;
-		uint16_t Reserved;
-		uint32_t TypeInfo;
-		uint32_t DefaultValue;
-	};
-
-	struct CTType
-	{
-		uint16_t Class;
-		uint16_t Type;
-		uint16_t Rows;
-		uint16_t Columns;
-		uint16_t Elements;
-		uint16_t StructMembers;
-		uint32_t StructMemberInfo;
-	};
 
 	struct RemapInputSemantic
 	{
@@ -216,9 +198,9 @@ namespace bgfx { namespace hlsl
 	static const UniformRemap s_uniformRemap[] =
 	{
 		{ UniformType::Sampler, D3D_SVC_SCALAR,         D3D_SVT_INT,         0, 0 },
-		{ UniformType::Vec4, D3D_SVC_VECTOR,         D3D_SVT_FLOAT,       0, 0 },
-		{ UniformType::Mat3, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT,       3, 3 },
-		{ UniformType::Mat4, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT,       4, 4 },
+		{ UniformType::Vec4,    D3D_SVC_VECTOR,         D3D_SVT_FLOAT,       0, 0 },
+		{ UniformType::Mat3,    D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT,       3, 3 },
+		{ UniformType::Mat4,    D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT,       4, 4 },
 		{ UniformType::Sampler, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER,     0, 0 },
 		{ UniformType::Sampler, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER2D,   0, 0 },
 		{ UniformType::Sampler, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER3D,   0, 0 },
@@ -250,7 +232,7 @@ namespace bgfx { namespace hlsl
 		return UniformType::Count;
 	}
 
-	static uint32_t s_optimizationLevelD3D11[4] =
+	static uint32_t s_optimizationLevelD3D11[] =
 	{
 		D3DCOMPILE_OPTIMIZATION_LEVEL0,
 		D3DCOMPILE_OPTIMIZATION_LEVEL1,
@@ -259,24 +241,6 @@ namespace bgfx { namespace hlsl
 	};
 
 	typedef std::vector<std::string> UniformNameList;
-
-	static bool isSampler(D3D_SHADER_VARIABLE_TYPE _svt)
-	{
-		switch (_svt)
-		{
-		case D3D_SVT_SAMPLER:
-		case D3D_SVT_SAMPLER1D:
-		case D3D_SVT_SAMPLER2D:
-		case D3D_SVT_SAMPLER3D:
-		case D3D_SVT_SAMPLERCUBE:
-			return true;
-
-		default:
-			break;
-		}
-
-		return false;
-	}
 
 	bool getReflectionDataD3D11(ID3DBlob* _code, bool _vshader, UniformArray& _uniforms, uint8_t& _numAttrs, uint16_t* _attrs, uint16_t& _size, UniformNameList& unusedUniforms, bx::WriterI* _messageWriter)
 	{
@@ -484,7 +448,7 @@ namespace bgfx { namespace hlsl
 
 		if (_options.optimize )
 		{
-			uint32_t optimization = bx::uint32_min(_options.optimizationLevel, BX_COUNTOF(s_optimizationLevelD3D11) - 1);
+			const uint32_t optimization = bx::uint32_min(_options.optimizationLevel, BX_COUNTOF(s_optimizationLevelD3D11) - 1);
 			flags |= s_optimizationLevelD3D11[optimization];
 		}
 		else
@@ -623,36 +587,6 @@ namespace bgfx { namespace hlsl
 		}
 
 		{
-			uint16_t count = (uint16_t)uniforms.size();
-			bx::write(_shaderWriter, count, &err);
-
-			uint32_t fragmentBit = profileAndType[0] == 'p' ? kUniformFragmentBit : 0;
-			for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
-			{
-				const Uniform& un = *it;
-				uint8_t nameSize = (uint8_t)un.name.size();
-				bx::write(_shaderWriter, nameSize, &err);
-				bx::write(_shaderWriter, un.name.c_str(), nameSize, &err);
-				uint8_t type = uint8_t(un.type | fragmentBit);
-				bx::write(_shaderWriter, type, &err);
-				bx::write(_shaderWriter, un.num, &err);
-				bx::write(_shaderWriter, un.regIndex, &err);
-				bx::write(_shaderWriter, un.regCount, &err);
-				bx::write(_shaderWriter, un.texComponent, &err);
-				bx::write(_shaderWriter, un.texDimension, &err);
-				bx::write(_shaderWriter, un.texFormat, &err);
-
-				BX_TRACE("%s, %s, %d, %d, %d"
-					, un.name.c_str()
-					, getUniformTypeName(UniformType::Enum(un.type & ~kUniformMask))
-					, un.num
-					, un.regIndex
-					, un.regCount
-					);
-			}
-		}
-
-		{
 			ID3DBlob* stripped;
 			hr = D3DStripShader(code->GetBufferPointer()
 				, code->GetBufferSize()
@@ -684,7 +618,7 @@ namespace bgfx { namespace hlsl
 			bx::write(_shaderWriter, size, &err);
 		}
 
-		if (_options.disasm )
+		if (_options.disasm)
 		{
 			ID3DBlob* disasm;
 			D3DDisassemble(code->GetBufferPointer()

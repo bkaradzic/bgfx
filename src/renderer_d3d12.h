@@ -77,7 +77,21 @@ extern "C" uint64_t                    WINAPI bgfx_PIXEventsReplaceBlock(PIXEven
 
 namespace bgfx { namespace d3d12
 {
-	struct Rdt
+	struct RenderRp
+	{
+		enum Enum
+		{
+			Sampler,
+			SRV,
+			CBV,
+			CBF,
+			UAV,
+
+			Count
+		};
+	};
+
+	struct ComputeRp
 	{
 		enum Enum
 		{
@@ -478,7 +492,7 @@ namespace bgfx { namespace d3d12
 		template<typename Ty>
 		Ty& getCmd(Enum _type);
 
-		uint32_t draw(ID3D12GraphicsCommandList* _commandList, D3D12_GPU_VIRTUAL_ADDRESS _cbv, const RenderDraw& _draw);
+		uint32_t draw(ID3D12GraphicsCommandList* _commandList, D3D12_GPU_VIRTUAL_ADDRESS _cbv, D3D12_GPU_VIRTUAL_ADDRESS _cbf, const RenderDraw& _draw);
 
 		void flush(ID3D12GraphicsCommandList* _commandList, Enum _type);
 		void flush(ID3D12GraphicsCommandList* _commandList, bool _clean = false);
@@ -504,6 +518,7 @@ namespace bgfx { namespace d3d12
 		{
 			D3D12_VERTEX_BUFFER_VIEW vbv[BGFX_CONFIG_MAX_VERTEX_STREAMS + 1 /* instanced buffer */];
 			D3D12_GPU_VIRTUAL_ADDRESS cbv;
+			D3D12_GPU_VIRTUAL_ADDRESS cbf;
 			D3D12_DRAW_ARGUMENTS args;
 		};
 
@@ -512,6 +527,7 @@ namespace bgfx { namespace d3d12
 			D3D12_VERTEX_BUFFER_VIEW vbv[BGFX_CONFIG_MAX_VERTEX_STREAMS + 1 /* instanced buffer */];
 			D3D12_INDEX_BUFFER_VIEW ibv;
 			D3D12_GPU_VIRTUAL_ADDRESS cbv;
+			D3D12_GPU_VIRTUAL_ADDRESS cbf;
 			D3D12_DRAW_INDEXED_ARGUMENTS args;
 		};
 
