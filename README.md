@@ -698,7 +698,7 @@ there are still [some](https://docs.unity3d.com/Packages/com.unity.tiny.renderin
 <img align="right" src="https://opensource.org/wp-content/uploads/2022/10/osi-badge-dark.svg" width="100" height="137">
 </a>
 
-	Copyright 2010-2025 Branimir Karadzic
+	Copyright 2010-2026 Branimir Karadzic
 
 	Redistribution and use in source and binary forms, with or without modification,
 	are permitted provided that the following conditions are met:
