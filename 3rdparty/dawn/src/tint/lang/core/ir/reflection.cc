@@ -37,11 +37,13 @@ namespace tint::core::ir {
 
 Result<WorkgroupInfo> GetWorkgroupInfo(core::ir::Module& ir) {
     std::optional<std::array<uint32_t, 3>> const_wg_size;
+    std::optional<uint32_t> const_sg_size;
     for (auto func : ir.functions) {
         if (!func->IsEntryPoint()) {
             continue;
         }
         const_wg_size = func->WorkgroupSizeAsConst();
+        const_sg_size = func->SubgroupSizeAsConst();
     }
 
     if (!const_wg_size) {
@@ -65,7 +67,7 @@ Result<WorkgroupInfo> GetWorkgroupInfo(core::ir::Module& ir) {
         }
     }
     return WorkgroupInfo{(*const_wg_size)[0], (*const_wg_size)[1], (*const_wg_size)[2],
-                         wg_storage_size};
+                         wg_storage_size, const_sg_size};
 }
 
 }  // namespace tint::core::ir

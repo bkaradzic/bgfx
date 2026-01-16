@@ -28,6 +28,8 @@
 #ifndef SRC_TINT_LANG_CORE_IR_REFLECTION_H_
 #define SRC_TINT_LANG_CORE_IR_REFLECTION_H_
 
+#include <optional>
+
 #include "src/tint/lang/core/ir/module.h"
 #include "src/tint/utils/result.h"
 
@@ -43,6 +45,9 @@ struct WorkgroupInfo {
 
     /// The needed workgroup storage size
     size_t storage_size = 0;
+
+    /// The `@subgroup_size` attribute
+    std::optional<uint32_t> subgroup_size;
 };
 
 /// Generate WorkgroupInfo for an IR module input.

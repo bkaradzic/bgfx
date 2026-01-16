@@ -1059,10 +1059,6 @@ class State {
                 return b.ty.sampled_texture(t->Dim(), el);
             },
             [&](const core::type::StorageTexture* t) {
-                if (RequiresChromiumInternalGraphite(t)) {
-                    Enable(wgsl::Extension::kChromiumInternalGraphite);
-                }
-
                 return b.ty.storage_texture(t->Dim(), t->TexelFormat(), t->Access());
             },
             [&](const core::type::Sampler* s) { return b.ty.sampler(s->Kind()); },
@@ -1410,12 +1406,6 @@ class State {
             default:
                 return false;
         }
-    }
-
-    /// @returns true if the storage texture type requires the kChromiumInternalGraphite extension
-    /// to be enabled.
-    bool RequiresChromiumInternalGraphite(const core::type::StorageTexture* tex) {
-        return tex->TexelFormat() == core::TexelFormat::kR8Unorm;
     }
 };
 

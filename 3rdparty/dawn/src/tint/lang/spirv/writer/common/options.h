@@ -106,6 +106,9 @@ struct Options {
         /// Set to `true` to generate polyfill for f32 abs.
         bool polyfill_f32_abs = false;
 
+        /// Set to `true` to generate polyfill for f16 saturate.
+        bool polyfill_saturate_as_min_max_f16 = false;
+
         TINT_REFLECT(Workarounds,
                      polyfill_case_switch,
                      scalarize_max_min_clamp,
@@ -116,7 +119,8 @@ struct Options {
                      polyfill_subgroup_broadcast_f16,
                      pass_matrix_by_pointer,
                      polyfill_unary_f32_negation,
-                     polyfill_f32_abs);
+                     polyfill_f32_abs,
+                     polyfill_saturate_as_min_max_f16);
     };
 
     /// Any options which are controlled by the presence/absence of a vulkan extension.
