@@ -348,12 +348,21 @@
 	/*WGPU_RELEASE_FUNC(RenderBundle);*/        \
 	/*WGPU_RELEASE_FUNC(RenderBundleEncoder);*/ \
 	WGPU_RELEASE_FUNC(RenderPipeline);          \
+	/*WGPU_RELEASE_FUNC(ResourceTable);*/       \
 	WGPU_RELEASE_FUNC(Sampler);                 \
 	WGPU_RELEASE_FUNC(ShaderModule);            \
 	/*WGPU_RELEASE_FUNC(SharedBufferMemory);*/  \
 	/*WGPU_RELEASE_FUNC(SharedFence);*/         \
 	/*WGPU_RELEASE_FUNC(SharedTextureMemory);*/ \
 	/*WGPU_RELEASE_FUNC(TexelBufferView);*/     \
+	/* end */
+
+#define WGPU_DESTROY                      \
+	WGPU_DESTROY_FUNC(Buffer)             \
+	WGPU_DESTROY_FUNC(Device)             \
+	WGPU_DESTROY_FUNC(Texture)            \
+	WGPU_DESTROY_FUNC(QuerySet)           \
+	/*WGPU_DESTROY_FUNC(ResourceTable);*/ \
 	/* end */
 
 #define BGFX_WGPU_PROFILER_BEGIN(_view, _abgr)        \
@@ -548,7 +557,6 @@ namespace bgfx { namespace wgpu
 			bufferBindingType = WGPUBufferBindingType_Undefined;
 			sampleType        = WGPUTextureSampleType_Undefined;
 			viewDimension     = WGPUTextureViewDimension_Undefined;
-			shaderStage       = shaderStage;
 		}
 	};
 

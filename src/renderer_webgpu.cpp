@@ -48,7 +48,7 @@ namespace bgfx { namespace wgpu
 	static const uint32_t s_msaa[] =
 	{
 		1,
-		2,
+		1, // 2 is not supported.
 		4,
 		4,
 		4,
@@ -63,10 +63,10 @@ namespace bgfx { namespace wgpu
 			{ WGPUVertexFormat_Uint8x4,   WGPUVertexFormat_Unorm8x4  },
 		},
 		{ // Uint10
-			{ WGPUVertexFormat_Uint16,    WGPUVertexFormat_Unorm16   },
-			{ WGPUVertexFormat_Uint16x2,  WGPUVertexFormat_Unorm16x2 },
-			{ WGPUVertexFormat_Uint16x4,  WGPUVertexFormat_Unorm16x4 },
-			{ WGPUVertexFormat_Uint16x4,  WGPUVertexFormat_Unorm16x4 },
+			{ WGPUVertexFormat_Force32,   WGPUVertexFormat_Force32   },
+			{ WGPUVertexFormat_Force32,   WGPUVertexFormat_Force32   },
+			{ WGPUVertexFormat_Force32,   WGPUVertexFormat_Force32   },
+			{ WGPUVertexFormat_Force32,   WGPUVertexFormat_Force32   },
 		},
 		{ // Int16
 			{ WGPUVertexFormat_Sint16,    WGPUVertexFormat_Snorm16   },
@@ -519,6 +519,20 @@ WGPU_IMPORT
 
 #undef WGPU_RELEASE_FUNC
 
+#define WGPU_DESTROY_FUNC(_name)              \
+	inline void wgpuDestroy(WGPU##_name& _obj) \
+	{                                          \
+		if (NULL != _obj)                      \
+		{                                      \
+			wgpu##_name##Destroy(_obj);        \
+			_obj = NULL;                       \
+		}                                      \
+	}
+
+	WGPU_DESTROY
+
+#undef WGPU_DESTROY_FUNC
+
 	inline constexpr bx::StringView toStringView(const WGPUStringView& _str)
 	{
 		return bx::StringView(_str.data, int32_t(_str.length) );
@@ -613,6 +627,7 @@ WGPU_IMPORT
 			, m_depthClamp(false)
 			, m_wireframe(false)
 		{
+			BX_UNUSED(popErrorScopeCb, wgpuErrorCheck, s_backendType, s_adapterType);
 		}
 
 		~RendererContextWGPU()
@@ -952,6 +967,9 @@ WGPU_IMPORT
 					}
 					else
 					{
+						enabledToggles[enabledTogglesCount++] = "disable_robustness";
+						enabledToggles[enabledTogglesCount++] = "lazy_clear_resource_on_first_use";
+						enabledToggles[enabledTogglesCount++] = "disable_lazy_clear_for_mapped_at_creation_buffer";
 						enabledToggles[enabledTogglesCount++] = "skip_validation";
 					}
 
@@ -1114,13 +1132,8 @@ WGPU_IMPORT
 							| BGFX_CAPS_ALPHA_TO_COVERAGE
 							| BGFX_CAPS_BLEND_INDEPENDENT
 							| BGFX_CAPS_COMPUTE
-//							| BGFX_CAPS_CONSERVATIVE_RASTER
 							| BGFX_CAPS_DRAW_INDIRECT
-//							| BGFX_CAPS_DRAW_INDIRECT_COUNT
 							| BGFX_CAPS_FRAGMENT_DEPTH
-//							| BGFX_CAPS_FRAGMENT_ORDERING
-//							| BGFX_CAPS_HDR10
-//							| BGFX_CAPS_HIDPI
 							| BGFX_CAPS_IMAGE_RW
 							| BGFX_CAPS_INDEX32
 							| BGFX_CAPS_INSTANCING
@@ -1135,11 +1148,8 @@ WGPU_IMPORT
 							| BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
 							| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 							| BGFX_CAPS_TEXTURE_READ_BACK
-//							| BGFX_CAPS_TRANSPARENT_BACKBUFFER
 							| BGFX_CAPS_VERTEX_ATTRIB_HALF
-							| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 							| BGFX_CAPS_VERTEX_ID
-//							| BGFX_CAPS_VIEWPORT_LAYER_ARRAY
 							;
 
 						for (uint32_t formatIdx = 0; formatIdx < TextureFormat::Count; ++formatIdx)
@@ -2524,7 +2534,7 @@ WGPU_IMPORT
 				{
 					.nextInChain   = NULL,
 					.module        = program.m_vsh->m_module,
-					.entryPoint    = toWGPUStringView("main"),
+					.entryPoint    = WGPU_STRING_VIEW_INIT, // toWGPUStringView("main"),
 					.constantCount = 0,
 					.constants     = NULL,
 				},
@@ -2836,7 +2846,7 @@ WGPU_IMPORT
 			{
 				.nextInChain   = NULL,
 				.module        = hasFragmentShader ? program.m_fsh->m_module : NULL,
-				.entryPoint    = toWGPUStringView("main"),
+				.entryPoint    = WGPU_STRING_VIEW_INIT, // toWGPUStringView("main"),
 				.constantCount = 0,
 				.constants     = NULL,
 				.targetCount   = targetCount,
@@ -2855,7 +2865,7 @@ WGPU_IMPORT
 				{
 					.nextInChain   = NULL,
 					.module        = program.m_vsh->m_module,
-					.entryPoint    = toWGPUStringView("main"),
+					.entryPoint    = WGPU_STRING_VIEW_INIT, // toWGPUStringView("main"),
 					.constantCount = 0,
 					.constants     = NULL,
 					.bufferCount   = numStreams,
@@ -3507,7 +3517,7 @@ retry:
 
 	void BufferWGPU::destroy()
 	{
-		wgpuRelease(m_buffer);
+		wgpuDestroy(m_buffer);
 	}
 
 	void VertexBufferWGPU::create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags)
@@ -3965,6 +3975,7 @@ retry:
 
 			const uint32_t msaaQuality = bx::uint32_satsub((m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 			const uint32_t msaaCount   = 1; //s_msaa[msaaQuality];
+			BX_UNUSED(msaaQuality);
 
 			const bool needResolve = true
 				&& 1 < msaaCount
@@ -4020,8 +4031,6 @@ retry:
 				m_textureResolve = WGPU_CHECK(wgpuDeviceCreateTexture(s_renderWGPU->m_device, &textureDesc) );
 			}
 
-			uint32_t totalSize = 0;
-
 			WGPUTexelCopyTextureInfo copyTextureDst =
 			{
 				.texture  = m_texture,
@@ -4037,7 +4046,7 @@ retry:
 
 			uint8_t* temp = convert ? (uint8_t*)bx::alloc(g_allocator, m_width*m_height*bpp/8) : NULL;
 
-			for (uint16_t side = 0, kk = 0; side < numSides; ++side)
+			for (uint16_t side = 0; side < numSides; ++side)
 			{
 				copyTextureDst.origin.z = side;
 
@@ -4081,16 +4090,12 @@ retry:
 									.height             = height,
 									.depthOrArrayLayers = mip.m_depth,
 								});
-
-							totalSize += size;
 						}
 						else if (compressed)
 						{
 							const uint32_t width       = mip.m_width;
 							const uint32_t height      = mip.m_height;
 							const uint32_t bytesPerRow = (mip.m_width/blockInfo.blockWidth)*mip.m_blockSize;
-							const uint32_t slice       = (mip.m_height/blockInfo.blockHeight)*bytesPerRow;
-							const uint32_t size        = slice*mip.m_depth;
 
 							s_renderWGPU->m_cmd.writeTexture(
 								  copyTextureDst
@@ -4106,16 +4111,12 @@ retry:
 									.height             = height,
 									.depthOrArrayLayers = mip.m_depth,
 								});
-
-							totalSize += size;
 						}
 						else
 						{
 							const uint32_t width       = mip.m_width;
 							const uint32_t height      = mip.m_height;
 							const uint32_t bytesPerRow = mip.m_width*mip.m_bpp / 8;
-							const uint32_t slice       = mip.m_height*bytesPerRow;
-							const uint32_t size        = slice*mip.m_depth;
 
 							s_renderWGPU->m_cmd.writeTexture(
 								  copyTextureDst
@@ -4131,12 +4132,8 @@ retry:
 									.height             = height,
 									.depthOrArrayLayers = mip.m_depth,
 								});
-
-							totalSize += size;
 						}
 					}
-
-					++kk;
 				}
 			}
 
@@ -4149,8 +4146,8 @@ retry:
 
 	void TextureWGPU::destroy()
 	{
-		wgpuRelease(m_texture);
-		wgpuRelease(m_textureResolve);
+		wgpuDestroy(m_texture);
+		wgpuDestroy(m_textureResolve);
 	}
 
 	void TextureWGPU::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
@@ -4991,9 +4988,9 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 	void TimerQueryWGPU::shutdown()
 	{
-		wgpuRelease(m_querySet);
-		wgpuRelease(m_resolve);
-		wgpuRelease(m_readback);
+		wgpuDestroy(m_querySet);
+		wgpuDestroy(m_resolve);
+		wgpuDestroy(m_readback);
 	}
 
 	uint32_t TimerQueryWGPU::begin(uint32_t _resultIdx, uint32_t _frameNum)
@@ -5083,9 +5080,9 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 	void OcclusionQueryWGPU::shutdown()
 	{
-		wgpuRelease(m_querySet);
-		wgpuRelease(m_resolve);
-		wgpuRelease(m_readback);
+		wgpuDestroy(m_querySet);
+		wgpuDestroy(m_resolve);
+		wgpuDestroy(m_readback);
 	}
 
 	void OcclusionQueryWGPU::begin(WGPURenderPassEncoder _renderPassEncoder, OcclusionQueryHandle _handle)
