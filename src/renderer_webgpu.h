@@ -548,7 +548,6 @@ namespace bgfx { namespace wgpu
 			bufferBindingType = WGPUBufferBindingType_Undefined;
 			sampleType        = WGPUTextureSampleType_Undefined;
 			viewDimension     = WGPUTextureViewDimension_Undefined;
-			shaderStage       = shaderStage;
 		}
 	};
 
