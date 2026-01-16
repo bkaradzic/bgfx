@@ -967,6 +967,9 @@ WGPU_IMPORT
 					}
 					else
 					{
+						enabledToggles[enabledTogglesCount++] = "disable_robustness";
+						enabledToggles[enabledTogglesCount++] = "lazy_clear_resource_on_first_use";
+						enabledToggles[enabledTogglesCount++] = "disable_lazy_clear_for_mapped_at_creation_buffer";
 						enabledToggles[enabledTogglesCount++] = "skip_validation";
 					}
 
