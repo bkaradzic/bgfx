@@ -519,6 +519,20 @@ WGPU_IMPORT
 
 #undef WGPU_RELEASE_FUNC
 
+#define WGPU_DESTROY_FUNC(_name)              \
+	inline void wgpuDestroy(WGPU##_name& _obj) \
+	{                                          \
+		if (NULL != _obj)                      \
+		{                                      \
+			wgpu##_name##Destroy(_obj);        \
+			_obj = NULL;                       \
+		}                                      \
+	}
+
+	WGPU_DESTROY
+
+#undef WGPU_DESTROY_FUNC
+
 	inline constexpr bx::StringView toStringView(const WGPUStringView& _str)
 	{
 		return bx::StringView(_str.data, int32_t(_str.length) );
@@ -3500,7 +3514,7 @@ retry:
 
 	void BufferWGPU::destroy()
 	{
-		wgpuRelease(m_buffer);
+		wgpuDestroy(m_buffer);
 	}
 
 	void VertexBufferWGPU::create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags)
@@ -4129,8 +4143,8 @@ retry:
 
 	void TextureWGPU::destroy()
 	{
-		wgpuRelease(m_texture);
-		wgpuRelease(m_textureResolve);
+		wgpuDestroy(m_texture);
+		wgpuDestroy(m_textureResolve);
 	}
 
 	void TextureWGPU::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
@@ -4971,9 +4985,9 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 	void TimerQueryWGPU::shutdown()
 	{
-		wgpuRelease(m_querySet);
-		wgpuRelease(m_resolve);
-		wgpuRelease(m_readback);
+		wgpuDestroy(m_querySet);
+		wgpuDestroy(m_resolve);
+		wgpuDestroy(m_readback);
 	}
 
 	uint32_t TimerQueryWGPU::begin(uint32_t _resultIdx, uint32_t _frameNum)
@@ -5063,9 +5077,9 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 	void OcclusionQueryWGPU::shutdown()
 	{
-		wgpuRelease(m_querySet);
-		wgpuRelease(m_resolve);
-		wgpuRelease(m_readback);
+		wgpuDestroy(m_querySet);
+		wgpuDestroy(m_resolve);
+		wgpuDestroy(m_readback);
 	}
 
 	void OcclusionQueryWGPU::begin(WGPURenderPassEncoder _renderPassEncoder, OcclusionQueryHandle _handle)
