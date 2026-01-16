@@ -627,7 +627,7 @@ WGPU_IMPORT
 			, m_depthClamp(false)
 			, m_wireframe(false)
 		{
-			BX_UNUSED(popErrorScopeCb);
+			BX_UNUSED(popErrorScopeCb, wgpuErrorCheck, s_backendType, s_adapterType);
 		}
 
 		~RendererContextWGPU()
@@ -2534,7 +2534,7 @@ WGPU_IMPORT
 				{
 					.nextInChain   = NULL,
 					.module        = program.m_vsh->m_module,
-					.entryPoint    = toWGPUStringView("main"),
+					.entryPoint    = WGPU_STRING_VIEW_INIT, // toWGPUStringView("main"),
 					.constantCount = 0,
 					.constants     = NULL,
 				},
@@ -2846,7 +2846,7 @@ WGPU_IMPORT
 			{
 				.nextInChain   = NULL,
 				.module        = hasFragmentShader ? program.m_fsh->m_module : NULL,
-				.entryPoint    = toWGPUStringView("main"),
+				.entryPoint    = WGPU_STRING_VIEW_INIT, // toWGPUStringView("main"),
 				.constantCount = 0,
 				.constants     = NULL,
 				.targetCount   = targetCount,
@@ -2865,7 +2865,7 @@ WGPU_IMPORT
 				{
 					.nextInChain   = NULL,
 					.module        = program.m_vsh->m_module,
-					.entryPoint    = toWGPUStringView("main"),
+					.entryPoint    = WGPU_STRING_VIEW_INIT, // toWGPUStringView("main"),
 					.constantCount = 0,
 					.constants     = NULL,
 					.bufferCount   = numStreams,
