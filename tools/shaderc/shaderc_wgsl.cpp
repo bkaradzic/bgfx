@@ -764,7 +764,6 @@ namespace bgfx { namespace wgsl
 							.allowed_features = {
 								.extensions =
 								{
-									tint::wgsl::Extension::kChromiumInternalGraphite,
 								},
 								.features =
 								{

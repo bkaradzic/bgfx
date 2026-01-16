@@ -142,11 +142,14 @@ struct State {
                             }
                         }
                         break;
-                    case core::BuiltinFn::kSaturate:
-                        if (config.saturate) {
+                    case core::BuiltinFn::kSaturate: {
+                        const bool is_vec_f16 =
+                            builtin->Args()[0]->Type()->DeepestElement()->Is<core::type::F16>() &&
+                            builtin->Args()[0]->Type()->IsFloatVector();
+                        if ((is_vec_f16 && config.saturate_as_min_max) || config.saturate) {
                             worklist.Push(builtin);
                         }
-                        break;
+                    } break;
                     case core::BuiltinFn::kTextureSampleBias:
                         worklist.Push(builtin);
                         break;
@@ -907,6 +910,8 @@ struct State {
     void Saturate(ir::CoreBuiltinCall* call) {
         // Replace `saturate(x)` with `clamp(x, 0., 1.)`.
         auto* type = call->Result()->Type();
+        const bool is_vec_f16 =
+            type->DeepestElement()->Is<core::type::F16>() && type->IsFloatVector();
         ir::Constant* zero = nullptr;
         ir::Constant* one = nullptr;
         if (type->DeepestElement()->Is<core::type::F32>()) {
@@ -916,9 +921,22 @@ struct State {
             zero = b.MatchWidth(0_h, type);
             one = b.MatchWidth(1_h, type);
         }
-        auto* clamp = b.Clamp(call->Args()[0], zero, one);
-        clamp->SetResult(call->DetachResult());
-        clamp->InsertBefore(call);
+
+        // Intel mesa incorrectly performs saturate on vec f16 loads from uniforms.
+        // Note: to avoid compiler pattern matching, we do the min then the max which is
+        // functionally different than doing the max then the min for high/low swapped (this doesnt
+        // matter in the case with saturate). See crbug.com/448873316
+        if (config.saturate_as_min_max && is_vec_f16) {
+            b.InsertBefore(call, [&] {
+                auto* clamped_via_min_max = b.Max(b.Min(call->Args()[0], one), zero);
+                clamped_via_min_max->SetResult(call->DetachResult());
+            });
+        } else {
+            auto* clamp = b.Clamp(call->Args()[0], zero, one);
+            clamp->SetResult(call->DetachResult());
+            clamp->InsertBefore(call);
+        }
+
         call->Destroy();
     }
 

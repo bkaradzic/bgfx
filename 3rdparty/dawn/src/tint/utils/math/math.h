@@ -57,7 +57,7 @@ inline constexpr bool IsPowerOfTwo(T value) {
 inline constexpr uint32_t Log2(uint64_t value) {
 #if defined(__clang__) || defined(__GNUC__)
     return 63 - static_cast<uint32_t>(__builtin_clzll(value));
-#elif defined(_MSC_VER) && !defined(__clang__) && __cplusplus >= 202002L  // MSVC and C++20+
+#elif 0 //defined(_MSC_VER) && !defined(__clang__) && __cplusplus >= 202002L  // MSVC and C++20+
     // note: std::is_constant_evaluated() added in C++20
     //       required here as _BitScanReverse64 is not constexpr
     if (!std::is_constant_evaluated()) {

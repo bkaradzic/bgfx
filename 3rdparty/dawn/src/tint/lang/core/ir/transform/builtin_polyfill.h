@@ -100,6 +100,8 @@ struct BuiltinPolyfillConfig {
     bool pack_unpack_4x8_norm = false;
     /// Should `subgroupBroadcast(f16)` be polyfilled?
     bool subgroup_broadcast_f16 = false;
+    // Should 'saturate(f16)' be polyfilled with min and max.
+    bool saturate_as_min_max = false;
 
     /// Reflection for this class
     TINT_REFLECT(BuiltinPolyfillConfig,
@@ -120,7 +122,8 @@ struct BuiltinPolyfillConfig {
                  pack_unpack_4x8,
                  pack_4xu8_clamp,
                  pack_unpack_4x8_norm,
-                 subgroup_broadcast_f16);
+                 subgroup_broadcast_f16,
+                 saturate_as_min_max);
 };
 
 /// BuiltinPolyfill is a transform that replaces calls to builtin functions and uses of other core

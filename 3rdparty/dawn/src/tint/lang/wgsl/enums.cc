@@ -69,9 +69,6 @@ Extension ParseExtension(std::string_view str) {
     if (str == "chromium_experimental_subgroup_size_control") {
         return Extension::kChromiumExperimentalSubgroupSizeControl;
     }
-    if (str == "chromium_internal_graphite") {
-        return Extension::kChromiumInternalGraphite;
-    }
     if (str == "chromium_internal_input_attachments") {
         return Extension::kChromiumInternalInputAttachments;
     }
@@ -110,8 +107,6 @@ std::string_view ToString(Extension value) {
             return "chromium_experimental_subgroup_matrix";
         case Extension::kChromiumExperimentalSubgroupSizeControl:
             return "chromium_experimental_subgroup_size_control";
-        case Extension::kChromiumInternalGraphite:
-            return "chromium_internal_graphite";
         case Extension::kChromiumInternalInputAttachments:
             return "chromium_internal_input_attachments";
         case Extension::kClipDistances:

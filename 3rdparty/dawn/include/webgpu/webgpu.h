@@ -611,6 +611,7 @@ typedef enum WGPUFeatureName {
     WGPUFeatureName_SharedBufferMemoryD3D12SharedMemoryFileMappingHandle = 0x00050038,
     WGPUFeatureName_SharedTextureMemoryD3D12Resource = 0x00050039,
     WGPUFeatureName_ChromiumExperimentalSamplingResourceTable = 0x0005003A,
+    WGPUFeatureName_ChromiumExperimentalSubgroupSizeControl = 0x0005003B,
     WGPUFeatureName_Force32 = 0x7FFFFFFF
 } WGPUFeatureName WGPU_ENUM_ATTRIBUTE;
 
