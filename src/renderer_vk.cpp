@@ -1632,13 +1632,33 @@ VK_IMPORT_INSTANCE
 
 				if (s_extension[Extension::KHR_fragment_shading_rate].m_supported)
 				{
-					fragmentShadingRate.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
-					fragmentShadingRate.pNext = (VkBaseOutStructure*)nextFeatures;
-					fragmentShadingRate.pipelineFragmentShadingRate = VK_TRUE;
-					fragmentShadingRate.primitiveFragmentShadingRate = VK_TRUE;
-					fragmentShadingRate.attachmentFragmentShadingRate = VK_FALSE;
+					VkPhysicalDeviceFeatures2KHR deviceFeatures2;
+					deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
+					deviceFeatures2.pNext = NULL;
 
-					nextFeatures = &fragmentShadingRate;
+					VkBaseOutStructure* next = (VkBaseOutStructure*)&deviceFeatures2;
+
+					next->pNext = (VkBaseOutStructure*)&fragmentShadingRate;
+					fragmentShadingRate.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
+					fragmentShadingRate.pNext = NULL;
+
+					vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
+
+					if (!fragmentShadingRate.pipelineFragmentShadingRate
+					||  !fragmentShadingRate.primitiveFragmentShadingRate)
+					{
+						s_extension[Extension::KHR_fragment_shading_rate].m_supported = false;
+					}
+					else
+					{
+						fragmentShadingRate.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
+						fragmentShadingRate.pNext = (VkBaseOutStructure*)nextFeatures;
+						fragmentShadingRate.pipelineFragmentShadingRate   = VK_TRUE;
+						fragmentShadingRate.primitiveFragmentShadingRate  = VK_TRUE;
+						fragmentShadingRate.attachmentFragmentShadingRate = VK_FALSE;
+
+						nextFeatures = &fragmentShadingRate;
+					}
 				}
 
 				bx::memSet(&m_deviceFeatures, 0, sizeof(m_deviceFeatures) );
