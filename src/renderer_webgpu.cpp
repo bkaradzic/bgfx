@@ -519,12 +519,13 @@ WGPU_IMPORT
 
 #undef WGPU_RELEASE_FUNC
 
-#define WGPU_DESTROY_FUNC(_name)              \
+#define WGPU_DESTROY_FUNC(_name)               \
 	inline void wgpuDestroy(WGPU##_name& _obj) \
 	{                                          \
 		if (NULL != _obj)                      \
 		{                                      \
 			wgpu##_name##Destroy(_obj);        \
+			wgpu##_name##Release(_obj);        \
 			_obj = NULL;                       \
 		}                                      \
 	}
