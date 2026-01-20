@@ -587,6 +587,36 @@ namespace bgfx { namespace hlsl
 		}
 
 		{
+			uint16_t count = (uint16_t)uniforms.size();
+			bx::write(_shaderWriter, count, &err);
+
+			uint32_t fragmentBit = profileAndType[0] == 'p' ? kUniformFragmentBit : 0;
+			for (UniformArray::const_iterator it = uniforms.begin(); it != uniforms.end(); ++it)
+			{
+				const Uniform& un = *it;
+				uint8_t nameSize = (uint8_t)un.name.size();
+				bx::write(_shaderWriter, nameSize, &err);
+				bx::write(_shaderWriter, un.name.c_str(), nameSize, &err);
+				uint8_t type = uint8_t(un.type | fragmentBit);
+				bx::write(_shaderWriter, type, &err);
+				bx::write(_shaderWriter, un.num, &err);
+				bx::write(_shaderWriter, un.regIndex, &err);
+				bx::write(_shaderWriter, un.regCount, &err);
+				bx::write(_shaderWriter, un.texComponent, &err);
+				bx::write(_shaderWriter, un.texDimension, &err);
+				bx::write(_shaderWriter, un.texFormat, &err);
+
+				BX_TRACE("%s, %s, %d, %d, %d"
+					, un.name.c_str()
+					, getUniformTypeName(UniformType::Enum(un.type & ~kUniformMask))
+					, un.num
+					, un.regIndex
+					, un.regCount
+					);
+			}
+		}
+
+		{
 			ID3DBlob* stripped;
 			hr = D3DStripShader(code->GetBufferPointer()
 				, code->GetBufferSize()
