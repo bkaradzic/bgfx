@@ -706,6 +706,12 @@ project "shaderc"
 		path.join(TINT, "src"),
 	}
 
+	configuration { "linux-*" }
+		includedirs {
+			path.join(BGFX_DIR, "3rdparty/directx-headers/include"),
+			path.join(BGFX_DIR, "3rdparty/directx-headers/include/wsl/stubs"),
+		}
+
 	links {
 		"fcpp",
 		"glslang",
