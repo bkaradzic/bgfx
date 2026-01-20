@@ -19,7 +19,7 @@ extern "C"
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', BGFX_SHADER_BIN_VERSION)
 
 #define BGFX_SHADERC_VERSION_MAJOR 1
-#define BGFX_SHADERC_VERSION_MINOR 18
+#define BGFX_SHADERC_VERSION_MINOR 19
 
 namespace bgfx
 {
@@ -36,6 +36,7 @@ namespace bgfx
 			PSSL,
 			SpirV,
 			WGSL,
+			Dxil,
 
 			Count
 		};
@@ -49,7 +50,8 @@ namespace bgfx
 		"Metal Shading Language (MSL)",
 		"PlayStation Shader Language (PSSL)",
 		"Standard Portable Intermediate Representation - V (SPIR-V)",
-		"WGSL",
+		"WebGPU Shading Language (WGSL)",
+		"DirectX Intermediate Language (DXIL)",
 
 		"Unknown?!"
 	};
@@ -123,6 +125,16 @@ namespace bgfx
 		{  ShadingLang::ESSL,  320,    "320_es"     },
 		{  ShadingLang::HLSL,  400,    "s_4_0"      },
 		{  ShadingLang::HLSL,  500,    "s_5_0"      },
+		{  ShadingLang::Dxil,  600,    "s_6_0"      },
+		{  ShadingLang::Dxil,  610,    "s_6_1"      },
+		{  ShadingLang::Dxil,  620,    "s_6_2"      },
+		{  ShadingLang::Dxil,  630,    "s_6_3"      },
+		{  ShadingLang::Dxil,  640,    "s_6_4"      },
+		{  ShadingLang::Dxil,  650,    "s_6_5"      },
+		{  ShadingLang::Dxil,  660,    "s_6_6"      },
+		{  ShadingLang::Dxil,  670,    "s_6_7"      },
+		{  ShadingLang::Dxil,  680,    "s_6_8"      },
+		{  ShadingLang::Dxil,  690,    "s_6_9"      },
 		{  ShadingLang::Metal, 1210,   "metal"      },
 		{  ShadingLang::Metal, 1000,   "metal10-10" },
 		{  ShadingLang::Metal, 1110,   "metal11-10" },
@@ -1283,8 +1295,9 @@ namespace bgfx
 		preprocessor.setDefaultDefine("BX_PLATFORM_XBOXONE");
 
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_GLSL");
-		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_ESSL");	
+		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_ESSL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_HLSL");
+		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_DXIL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_METAL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_PSSL");
 		preprocessor.setDefaultDefine("BGFX_SHADER_LANGUAGE_SPIRV");
@@ -1297,6 +1310,7 @@ namespace bgfx
 		char glslDefine[128] = { '\0' };
 		char esslDefine[128] = { '\0' };
 		char hlslDefine[128] = { '\0' };
+		char dxilDefine[128] = { '\0' };
 
 		if (profile->lang == ShadingLang::GLSL
 		||  profile->lang == ShadingLang::ESSL)
@@ -1315,11 +1329,20 @@ namespace bgfx
 			}
 		}
 
-		if (profile->lang == ShadingLang::HLSL)
+		if (profile->lang == ShadingLang::HLSL
+		||  profile->lang == ShadingLang::Dxil)
 		{
 			bx::snprintf(hlslDefine, BX_COUNTOF(hlslDefine)
 				, "BGFX_SHADER_LANGUAGE_HLSL=%d"
 				, profile->id);
+
+			if (profile->lang == ShadingLang::Dxil)
+			{
+				bx::snprintf(dxilDefine, BX_COUNTOF(dxilDefine)
+					, "BGFX_SHADER_LANGUAGE_DXIL=%d"
+					, profile->id
+					);
+			}
 		}
 
 		const char* platform = _options.platform.c_str();
@@ -1401,9 +1424,11 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "windows") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_WINDOWS=1");
-			if (profile->lang == ShadingLang::HLSL)
+			if (profile->lang == ShadingLang::HLSL
+			||  profile->lang == ShadingLang::Dxil)
 			{
 				preprocessor.setDefine(hlslDefine);
+				preprocessor.setDefine(dxilDefine);
 			}
 			else if (profile->lang == ShadingLang::GLSL
 			     ||  profile->lang == ShadingLang::ESSL)
@@ -1428,9 +1453,11 @@ namespace bgfx
 		}
 		else
 		{
-			if (profile->lang == ShadingLang::HLSL)
+			if (profile->lang == ShadingLang::HLSL
+			||  profile->lang == ShadingLang::Dxil)
 			{
 				preprocessor.setDefine(hlslDefine);
+				preprocessor.setDefine(dxilDefine);
 			}
 			else if (profile->lang == ShadingLang::GLSL
 			     ||  profile->lang == ShadingLang::ESSL)
@@ -1548,13 +1575,6 @@ namespace bgfx
 					var.m_type.assign(typen.getPtr(), typen.getTerm() );
 					var.m_name.assign(name.getPtr(), name.getTerm() );
 					var.m_semantics.assign(semantics.getPtr(), semantics.getTerm() );
-
-					if (profile->lang == ShadingLang::HLSL
-					&&  profile->id < 400
-					&&  var.m_semantics == "BITANGENT")
-					{
-						var.m_semantics = "BINORMAL";
-					}
 
 					if (!init.isEmpty() )
 					{
@@ -1707,6 +1727,10 @@ namespace bgfx
 			else if (profile->lang == ShadingLang::WGSL)
 			{
 				compiled = compileWgslShader(_options, profile->id, input, _shaderWriter, _messageWriter);
+			}
+			else if (profile->lang == ShadingLang::Dxil)
+			{
+				compiled = compileDxilShader(_options, profile->id, input, _shaderWriter, _messageWriter);
 			}
 			else
 			{
@@ -1869,6 +1893,10 @@ namespace bgfx
 							{
 								compiled = compileWgslShader(_options, profile->id, code, _shaderWriter, _messageWriter);
 							}
+							else if (profile->lang == ShadingLang::Dxil)
+							{
+								compiled = compileDxilShader(_options, profile->id, code, _shaderWriter, _messageWriter);
+							}
 							else
 							{
 								compiled = compileHLSLShader(_options, profile->id, code, _shaderWriter, _messageWriter);
@@ -2012,17 +2040,6 @@ namespace bgfx
 						"#define mat3 float3x3\n"
 						"#define mat4 float4x4\n"
 						);
-
-					if (profile->lang == ShadingLang::HLSL
-					&&  profile->id < 400)
-					{
-						preprocessor.writef(
-							"#define centroid\n"
-							"#define flat\n"
-							"#define noperspective\n"
-							"#define smooth\n"
-							);
-					}
 
 					*const_cast<char*>(entry.getPtr() + 4) = '_';
 
@@ -2769,6 +2786,10 @@ namespace bgfx
 							else if (profile->lang == ShadingLang::WGSL)
 							{
 								compiled = compileWgslShader(_options, profile->id, code, _shaderWriter, _messageWriter);
+							}
+							else if (profile->lang == ShadingLang::Dxil)
+							{
+								compiled = compileDxilShader(_options, profile->id, code, _shaderWriter, _messageWriter);
 							}
 							else
 							{

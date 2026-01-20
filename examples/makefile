@@ -113,3 +113,5 @@ rebuild-embedded:
 	@make -s --no-print-directory rebuild -C common/imgui
 	@make -s --no-print-directory rebuild -C common/nanovg
 	@make -s --no-print-directory rebuild -C common/ps
+	@make -s --no-print-directory rebuild -C ../tools/geometryv
+	@make -s --no-print-directory rebuild -C ../tools/texturev

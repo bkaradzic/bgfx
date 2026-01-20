@@ -34,6 +34,8 @@ vs_%.bin.h : vs_%.sc
 	-@cat "$(SHADER_TMP)" >> $(@)
 	-$(SILENT) $(SHADERC) $(VS_FLAGS) --platform windows -p s_5_0 -O 3  -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_dx11
 	-@cat "$(SHADER_TMP)" >> $(@)
+	-$(SILENT) $(SHADERC) $(VS_FLAGS) --platform windows -p s_6_0 -O 3  -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_dxil
+	-@cat "$(SHADER_TMP)" >> $(@)
 	-$(SILENT) $(SHADERC) $(VS_FLAGS) --platform ios     -p metal -O 3  -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_mtl
 	-@cat "$(SHADER_TMP)" >> $(@)
 	-@printf "extern const uint8_t* $(basename $(<))_pssl;\n" | tr -d '\015' >> $(@)
@@ -51,6 +53,8 @@ fs_%.bin.h : fs_%.sc
 	-@cat "$(SHADER_TMP)" >> $(@)
 	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform windows -p s_5_0 -O 3  -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_dx11
 	-@cat "$(SHADER_TMP)" >> $(@)
+	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform windows -p s_6_0 -O 3  -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_dxil
+	-@cat "$(SHADER_TMP)" >> $(@)
 	-$(SILENT) $(SHADERC) $(FS_FLAGS) --platform ios     -p metal -O 3  -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_mtl
 	-@cat "$(SHADER_TMP)" >> $(@)
 	-@printf "extern const uint8_t* $(basename $(<))_pssl;\n" | tr -d '\015' >> $(@)
@@ -67,6 +71,10 @@ cs_%.bin.h : cs_%.sc
 	-$(SILENT) $(SHADERC) $(CS_FLAGS) --platform linux   -p wgsl        -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_wgsl
 	-@cat "$(SHADER_TMP)" >> $(@)
 	-$(SILENT) $(SHADERC) $(CS_FLAGS) --platform windows -p s_5_0 -O 1  -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_dx11
+	-@cat "$(SHADER_TMP)" >> $(@)
+	-$(SILENT) $(SHADERC) $(CS_FLAGS) --platform windows -p s_6_0 -O 1  -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_dxil
+	-@cat "$(SHADER_TMP)" >> $(@)
+	-$(SILENT) $(SHADERC) $(CS_FLAGS) --platform ios     -p metal -O 3  -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_mtl
 	-@cat "$(SHADER_TMP)" >> $(@)
 	-@printf "extern const uint8_t* $(basename $(<))_pssl;\n" | tr -d '\015' >> $(@)
 	-@printf "extern const uint32_t $(basename $(<))_pssl_size;\n" | tr -d '\015' >> $(@)

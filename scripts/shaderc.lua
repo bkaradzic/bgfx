@@ -687,7 +687,7 @@ project "shaderc"
 		path.join(BIMG_DIR, "include"),
 		path.join(BGFX_DIR, "include"),
 
-		path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
+		path.join(BGFX_DIR, "3rdparty/directx-headers/include/directx"),
 
 		FCPP_DIR,
 
@@ -747,6 +747,12 @@ project "shaderc"
 	configuration { "osx* or linux*" }
 		links {
 			"pthread",
+		}
+
+	configuration { "linux-*" }
+		includedirs {
+			path.join(BGFX_DIR, "3rdparty/directx-headers/include"),
+			path.join(BGFX_DIR, "3rdparty/directx-headers/include/wsl/stubs"),
 		}
 
 	configuration {}

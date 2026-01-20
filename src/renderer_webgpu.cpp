@@ -628,7 +628,7 @@ WGPU_IMPORT
 			, m_depthClamp(false)
 			, m_wireframe(false)
 		{
-			BX_UNUSED(popErrorScopeCb, wgpuErrorCheck, s_backendType, s_adapterType);
+			BX_UNUSED(&popErrorScopeCb, &wgpuErrorCheck, s_backendType, s_adapterType);
 		}
 
 		~RendererContextWGPU()

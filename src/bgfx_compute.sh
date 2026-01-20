@@ -10,10 +10,6 @@
 
 #ifndef __cplusplus
 
-#if BGFX_SHADER_LANGUAGE_HLSL > 0 && BGFX_SHADER_LANGUAGE_HLSL < 400
-#	error "Compute is not supported!"
-#endif // BGFX_SHADER_LANGUAGE_HLSL
-
 #if BGFX_SHADER_LANGUAGE_METAL \
  || BGFX_SHADER_LANGUAGE_SPIRV \
  || BGFX_SHADER_LANGUAGE_WGSL
@@ -258,21 +254,15 @@
 		InterlockedAdd(_image[_uv], _value._storeComponents);                   \
 	}                                                                           \
 
-__IMAGE_IMPL_A(float,       x,    vec4,  xxxx)
-__IMAGE_IMPL_A(float2,      xy,   vec4,  xyyy)
-__IMAGE_IMPL_A(float4,      xyzw, vec4,  xyzw)
+__IMAGE_IMPL_A(float,  x,    vec4,  xxxx)
+__IMAGE_IMPL_A(float2, xy,   vec4,  xyyy)
+__IMAGE_IMPL_A(float4, xyzw, vec4,  xyzw)
 
-__IMAGE_IMPL_A(uint,        x,    uvec4, xxxx)
-__IMAGE_IMPL_A(uint2,       xy,   uvec4, xyyy)
-__IMAGE_IMPL_A(uint4,       xyzw, uvec4, xyzw)
+__IMAGE_IMPL_A(uint,   x,    uvec4, xxxx)
+__IMAGE_IMPL_A(uint2,  xy,   uvec4, xyyy)
+__IMAGE_IMPL_A(uint4,  xyzw, uvec4, xyzw)
 
-#if BGFX_SHADER_LANGUAGE_HLSL
-__IMAGE_IMPL_A(unorm float,       x,    vec4,  xxxx)
-__IMAGE_IMPL_A(unorm float2,      xy,   vec4,  xyyy)
-__IMAGE_IMPL_A(unorm float4,      xyzw, vec4,  xyzw)
-#endif // BGFX_SHADER_LANGUAGE_HLSL
-
-__IMAGE_IMPL_ATOMIC(uint,       x,    uvec4, xxxx)
+__IMAGE_IMPL_ATOMIC(uint, x, uvec4, xxxx)
 
 #define atomicAdd(_mem, _data)                                       InterlockedAdd(_mem, _data)
 #define atomicAnd(_mem, _data)                                       InterlockedAnd(_mem, _data)

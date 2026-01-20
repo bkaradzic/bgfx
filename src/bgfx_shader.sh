@@ -61,23 +61,21 @@
 #	define bvec3 bool3
 #	define bvec4 bool4
 
-// To be able to patch the uav registers on the DXBC SPDB Chunk (D3D11 renderer) the whitespaces around
-// '_type[_reg]' are necessary. This only affects shaders with debug info (i.e., those that have the SPDB Chunk).
-#	if BGFX_SHADER_LANGUAGE_HLSL > 400                     \
-	|| BGFX_SHADER_LANGUAGE_PSSL                           \
-	|| BGFX_SHADER_LANGUAGE_SPIRV                          \
-	|| BGFX_SHADER_LANGUAGE_METAL                          \
+#	if BGFX_SHADER_LANGUAGE_HLSL  \
+	|| BGFX_SHADER_LANGUAGE_PSSL  \
+	|| BGFX_SHADER_LANGUAGE_SPIRV \
+	|| BGFX_SHADER_LANGUAGE_METAL \
 	|| BGFX_SHADER_LANGUAGE_WGSL
-#		define REGISTER(_type, _reg) register( _type[_reg] )
-#	else
-#		define REGISTER(_type, _reg) register(_type ##     _reg)
+
+#		define REGISTER(_type, _reg) register(_type ## _reg)
 #	endif // BGFX_SHADER_LANGUAGE_*
 
-#	if BGFX_SHADER_LANGUAGE_HLSL > 400 \
-	|| BGFX_SHADER_LANGUAGE_PSSL       \
-	|| BGFX_SHADER_LANGUAGE_SPIRV      \
-	|| BGFX_SHADER_LANGUAGE_METAL      \
+#	if BGFX_SHADER_LANGUAGE_HLSL  \
+	|| BGFX_SHADER_LANGUAGE_PSSL  \
+	|| BGFX_SHADER_LANGUAGE_SPIRV \
+	|| BGFX_SHADER_LANGUAGE_METAL \
 	|| BGFX_SHADER_LANGUAGE_WGSL
+
 #		define dFdxCoarse(_x) ddx_coarse(_x)
 #		define dFdxFine(_x)   ddx_fine(_x)
 #		define dFdyCoarse(_y) ddy_coarse(-(_y))
@@ -589,7 +587,7 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 #		define texture3DLod(_sampler, _coord, _level) tex3Dlod(_sampler, vec4( (_coord).xyz, _level) )
 #		define textureCubeLod(_sampler, _coord, _level) texCUBElod(_sampler, vec4( (_coord).xyz, _level) )
 
-#	endif // BGFX_SHADER_LANGUAGE_HLSL > 300
+#	endif // BGFX_SHADER_LANGUAGE_*
 
 bvec2 lessThan(vec2 _a, vec2 _b) { return _a < _b; }
 bvec3 lessThan(vec3 _a, vec3 _b) { return _a < _b; }
