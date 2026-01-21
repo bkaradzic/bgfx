@@ -5876,10 +5876,7 @@ namespace bgfx { namespace d3d12
 		D3D12_RANGE readRange = { 0, 0 };
 		DX_CHECK(staging->Map(0, &readRange, (void**)&dstData) );
 
-		for (uint32_t ii = 0, height = numRows; ii < height; ++ii)
-		{
-			bx::memCopy(&dstData[ii*rowPitch], &srcData[ii*srcpitch], srcpitch);
-		}
+		bx::memCopy(dstData, rowPitch, srcData, srcpitch, rectpitch, numRows);
 
 		if (NULL != temp)
 		{
