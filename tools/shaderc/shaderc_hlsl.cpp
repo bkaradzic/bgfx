@@ -338,6 +338,17 @@ namespace bgfx { namespace hlsl
 							if (UniformType::Count != uniformType
 							&&  0 != (varDesc.uFlags & D3D_SVF_USED) )
 							{
+								if (constDesc.Elements > UINT8_MAX)
+								{
+									bx::write(_messageWriter
+										, &messageErr
+										, "Error: Uniform %s has %u elements. 255 is the limit for shaderc uniform serialization.\n"
+										, varDesc.Name
+										, constDesc.Elements
+										);
+									return false;
+								}
+
 								Uniform un;
 								un.name = varDesc.Name;
 								un.type = uniformType;
