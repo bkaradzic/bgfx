@@ -1326,22 +1326,32 @@ namespace bgfx
 
 				if (type == kSortKeyDrawTypeDepth)
 				{
-					m_program.idx = uint16_t( (_key & kSortKeyDraw1ProgramMask) >> kSortKeyDraw1ProgramShift);
+					m_program = decodeProgram( _key, kSortKeyDraw1ProgramMask, kSortKeyDraw1ProgramShift);
 					return false;
 				}
 
 				if (type == kSortKeyDrawTypeSequence)
 				{
-					m_program.idx = uint16_t( (_key & kSortKeyDraw2ProgramMask) >> kSortKeyDraw2ProgramShift);
+					m_program = decodeProgram( _key, kSortKeyDraw2ProgramMask, kSortKeyDraw2ProgramShift);
 					return false;
 				}
 
-				m_program.idx = uint16_t( (_key & kSortKeyDraw0ProgramMask) >> kSortKeyDraw0ProgramShift);
+				m_program = decodeProgram( _key, kSortKeyDraw0ProgramMask, kSortKeyDraw0ProgramShift);
 				return false; // draw
 			}
 
-			m_program.idx = uint16_t( (_key & kSortKeyComputeProgramMask) >> kSortKeyComputeProgramShift);
+			m_program = decodeProgram( _key, kSortKeyComputeProgramMask, kSortKeyComputeProgramShift);
 			return true; // compute
+		}
+
+		static ProgramHandle decodeProgram(uint64_t _key, uint64_t _mask, uint8_t _shift)
+		{
+			uint16_t idx = uint16_t( (_key & _mask) >> _shift);
+			if (idx == (_mask >> _shift))
+			{
+				return ProgramHandle{kInvalidHandle};
+			}
+			return ProgramHandle{idx};
 		}
 
 		static ViewId decodeView(uint64_t _key)
