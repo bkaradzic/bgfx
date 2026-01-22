@@ -1372,7 +1372,8 @@ namespace bgfx { namespace d3d11
 				{
 					uint16_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
-					const DXGI_FORMAT fmt = bimg::isDepth(bimg::TextureFormat::Enum(ii) )
+					const bool isDepthFormat = bimg::isDepth(bimg::TextureFormat::Enum(ii));
+					const DXGI_FORMAT fmt = isDepthFormat
 						? s_textureFormat[ii].m_fmtDsv
 						: s_textureFormat[ii].m_fmt
 						;
@@ -1462,6 +1463,30 @@ namespace bgfx { namespace d3d11
 									, hr
 									, getName(TextureFormat::Enum(ii) )
 									);
+							}
+
+							if (isDepthFormat)
+							{
+								const DXGI_FORMAT fmtDepthSampling = s_textureFormat[ii].m_fmtSrv;
+								if (DXGI_FORMAT_UNKNOWN != fmtDepthSampling)
+								{
+									D3D11_FEATURE_DATA_FORMAT_SUPPORT dataSampling;
+									dataSampling.InFormat = fmtDepthSampling;
+									hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT, &dataSampling, sizeof(dataSampling));
+									if (SUCCEEDED(hr))
+									{
+										support |= 0 != (dataSampling.OutFormatSupport & (0
+											| D3D11_FORMAT_SUPPORT_MULTISAMPLE_LOAD
+											))
+											? BGFX_CAPS_FORMAT_TEXTURE_MSAA
+											: BGFX_CAPS_FORMAT_TEXTURE_NONE
+											;
+									}
+									else
+									{
+										BX_TRACE("CheckFeatureSupport depth srv failed with %x for format %s.", hr, getName(TextureFormat::Enum(ii)));
+									}
+								}
 							}
 
 							if (0 != (support & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ) )
