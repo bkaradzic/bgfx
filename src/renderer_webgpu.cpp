@@ -2244,25 +2244,9 @@ WGPU_IMPORT
 					.hasDynamicOffset = _hasDynamicOffset,
 					.minBindingSize   = 0,
 				},
-				.sampler =
-				{
-					.nextInChain = NULL,
-					.type        = WGPUSamplerBindingType_BindingNotUsed,
-				},
-				.texture =
-				{
-					.nextInChain   = NULL,
-					.sampleType    = WGPUTextureSampleType_BindingNotUsed,
-					.viewDimension = WGPUTextureViewDimension_Undefined,
-					.multisampled  = false,
-				},
-				.storageTexture =
-				{
-					.nextInChain   = NULL,
-					.access        = WGPUStorageTextureAccess_BindingNotUsed,
-					.format        = WGPUTextureFormat_Undefined,
-					.viewDimension = WGPUTextureViewDimension_Undefined,
-				},
+				.sampler = {},
+				.texture = {},
+				.storageTexture = {},
 			};
 		}
 
@@ -2274,32 +2258,14 @@ WGPU_IMPORT
 				.binding          = _binding,
 				.visibility       = _visibility,
 				.bindingArraySize = 0,
-				.buffer =
-				{
-					.nextInChain      = NULL,
-					.type             = WGPUBufferBindingType_BindingNotUsed,
-					.hasDynamicOffset = false,
-					.minBindingSize   = 0,
-				},
+				.buffer  = {},
 				.sampler =
 				{
 					.nextInChain = NULL,
 					.type        = _type,
 				},
-				.texture =
-				{
-					.nextInChain   = NULL,
-					.sampleType    = WGPUTextureSampleType_BindingNotUsed,
-					.viewDimension = WGPUTextureViewDimension_Undefined,
-					.multisampled  = false,
-				},
-				.storageTexture =
-				{
-					.nextInChain   = NULL,
-					.access        = WGPUStorageTextureAccess_BindingNotUsed,
-					.format        = WGPUTextureFormat_Undefined,
-					.viewDimension = WGPUTextureViewDimension_Undefined,
-				},
+				.texture = {},
+				.storageTexture = {},
 			};
 		}
 
@@ -2311,18 +2277,8 @@ WGPU_IMPORT
 				.binding          = _binding,
 				.visibility       = _visibility,
 				.bindingArraySize = 0,
-				.buffer =
-				{
-					.nextInChain      = NULL,
-					.type             = WGPUBufferBindingType_BindingNotUsed,
-					.hasDynamicOffset = false,
-					.minBindingSize   = 0,
-				},
-				.sampler =
-				{
-					.nextInChain = NULL,
-					.type        = WGPUSamplerBindingType_BindingNotUsed,
-				},
+				.buffer  = {},
+				.sampler = {},
 				.texture =
 				{
 					.nextInChain   = NULL,
@@ -2330,13 +2286,7 @@ WGPU_IMPORT
 					.viewDimension = _viewDimension,
 					.multisampled  = false,
 				},
-				.storageTexture =
-				{
-					.nextInChain   = NULL,
-					.access        = WGPUStorageTextureAccess_BindingNotUsed,
-					.format        = WGPUTextureFormat_Undefined,
-					.viewDimension = WGPUTextureViewDimension_Undefined,
-				},
+				.storageTexture = {},
 			};
 		}
 
@@ -2348,25 +2298,9 @@ WGPU_IMPORT
 				.binding          = _binding,
 				.visibility       = _visibility,
 				.bindingArraySize = 0,
-				.buffer =
-				{
-					.nextInChain      = NULL,
-					.type             = WGPUBufferBindingType_BindingNotUsed,
-					.hasDynamicOffset = false,
-					.minBindingSize   = 0,
-				},
-				.sampler =
-				{
-					.nextInChain = NULL,
-					.type        = WGPUSamplerBindingType_BindingNotUsed,
-				},
-				.texture =
-				{
-					.nextInChain   = NULL,
-					.sampleType    = WGPUTextureSampleType_BindingNotUsed,
-					.viewDimension = WGPUTextureViewDimension_Undefined,
-					.multisampled  = false,
-				},
+				.buffer  = {},
+				.sampler = {},
+				.texture = {},
 				.storageTexture =
 				{
 					.nextInChain   = NULL,
