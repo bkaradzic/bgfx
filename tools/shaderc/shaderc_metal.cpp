@@ -540,7 +540,8 @@ namespace bgfx { namespace metal
 						Uniform un;
 						un.name = program->getUniformName(ii);
 
-						if (bx::hasSuffix(un.name.c_str(), ".@data") )
+						if (bx::hasSuffix(un.name.c_str(), ".@data")
+						||  !bx::strFind(un.name.c_str(), ".@data.").isEmpty() )
 						{
 							continue;
 						}
