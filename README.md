@@ -691,6 +691,12 @@ there are still [some](https://docs.unity3d.com/Packages/com.unity.tiny.renderin
 
 ![Unity Project Tiny](https://github.com/Unity-Technologies/ProjectTinySamples/raw/master/res/TinyRacingTrailer.gif)
 
+## Land of Heroes
+
+Land of Heroes EU is a 3D online MMORPG featuring immersive worlds, fast-paced combat, and endless adventures.
+
+![Screenshot](https://i.imgur.com/MCscwt7.jpeg)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
