@@ -16,6 +16,11 @@ newoption {
 }
 
 newoption {
+	trigger = "with-sdl3",
+	description = "Enable SDL3 entry.",
+}
+
+newoption {
 	trigger = "with-glfw",
 	description = "Enable GLFW entry.",
 }
@@ -194,6 +199,14 @@ if _OPTIONS["with-sdl"] then
 	end
 end
 
+if _OPTIONS["with-sdl3"] then
+	if os.is("windows") then
+		if not os.getenv("SDL3_DIR") then
+			print("Set SDL3_DIR environment variable.")
+		end
+	end
+end
+
 if _OPTIONS["with-profiler"] then
 	defines {
 		"ENTRY_CONFIG_PROFILER=1",
@@ -232,6 +245,16 @@ function exampleProjectDefaults()
 
 		configuration { "osx*" }
 			libdirs { "$(SDL2_DIR)/lib" }
+
+		configuration {}
+	end
+
+	if _OPTIONS["with-sdl3"] then
+		defines { "ENTRY_CONFIG_USE_SDL3=1" }
+		links   { "SDL3" }
+
+		configuration { "osx*" }
+			libdirs { "$(SDL3_DIR)/lib" }
 
 		configuration {}
 	end

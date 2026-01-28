@@ -44,6 +44,19 @@ project "texturev"
 		configuration {}
 	end
 
+	if _OPTIONS["with-sdl3"] then
+		defines { "ENTRY_CONFIG_USE_SDL3=1" }
+		links   { "SDL3" }
+
+		configuration { "x32", "windows" }
+			libdirs { "$(SDL3_DIR)/lib/x86" }
+
+		configuration { "x64", "windows" }
+			libdirs { "$(SDL3_DIR)/lib/x64" }
+
+		configuration {}
+	end
+
 	if _OPTIONS["with-glfw"] then
 		defines { "ENTRY_CONFIG_USE_GLFW=1" }
 		links   { "glfw3" }
