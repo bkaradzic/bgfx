@@ -286,18 +286,18 @@ namespace stl = std;
 
 namespace bgfx
 {
-	constexpr uint32_t kChunkMagicTex = BX_MAKEFOURCC('T', 'E', 'X', 0x0);
+	static constexpr uint32_t kChunkMagicTex = BX_MAKEFOURCC('T', 'E', 'X', 0x0);
 
 	// Palette:
 	// https://colorkit.co/color-palette-generator/a8e6cf-dcedc1-ffd3b6-76b4bd-bdeaee-8874a3-ff0000-ff8b94/
-	constexpr uint32_t kColorFrame    = 0xa8'e6'cf'ff;
-	constexpr uint32_t kColorSubmit   = 0xdc'ed'c1'ff;
-	constexpr uint32_t kColorView     = 0xff'd3'b6'ff;
-	constexpr uint32_t kColorDraw     = 0x76'b4'bd'ff;
-	constexpr uint32_t kColorCompute  = 0xbd'ea'ee'ff;
-	constexpr uint32_t kColorResource = 0x88'74'a3'ff;
-	constexpr uint32_t kColorMarker   = 0xff'00'00'ff;
-	constexpr uint32_t kColorWait     = 0xff'8b'94'ff;
+	static constexpr uint32_t kColorFrame    = 0xa8'e6'cf'ff;
+	static constexpr uint32_t kColorSubmit   = 0xdc'ed'c1'ff;
+	static constexpr uint32_t kColorView     = 0xff'd3'b6'ff;
+	static constexpr uint32_t kColorDraw     = 0x76'b4'bd'ff;
+	static constexpr uint32_t kColorCompute  = 0xbd'ea'ee'ff;
+	static constexpr uint32_t kColorResource = 0x88'74'a3'ff;
+	static constexpr uint32_t kColorMarker   = 0xff'00'00'ff;
+	static constexpr uint32_t kColorWait     = 0xff'8b'94'ff;
 
 	extern InternalData g_internalData;
 	extern PlatformData g_platformData;
@@ -442,7 +442,7 @@ namespace bgfx
 	void* findModule(const char* _name);
 	bool windowsVersionIs(Condition::Enum _op, uint32_t _version, uint32_t _build = UINT32_MAX);
 
-	constexpr bool isShaderType(uint32_t _magic, char _type)
+	static constexpr bool isShaderType(uint32_t _magic, char _type)
 	{
 		return uint32_t(_type) == (_magic & BX_MAKEFOURCC(0xff, 0, 0, 0) );
 	}
@@ -1095,60 +1095,71 @@ namespace bgfx
 	};
 
 	//
-	constexpr uint8_t  kSortKeyViewNumBits         = uint8_t(31 - bx::uint32_cntlz(BGFX_CONFIG_MAX_VIEWS) );
-	constexpr uint8_t  kSortKeyViewBitShift        = 64-kSortKeyViewNumBits;
-	constexpr uint64_t kSortKeyViewMask            = uint64_t(BGFX_CONFIG_MAX_VIEWS-1)<<kSortKeyViewBitShift;
+	static constexpr uint8_t  kSortKeyViewNumBits         = uint8_t(31 - bx::uint32_cntlz(BGFX_CONFIG_MAX_VIEWS) );
+	static constexpr uint8_t  kSortKeyViewBitShift        = 64-kSortKeyViewNumBits;
+	static constexpr uint64_t kSortKeyViewMask            = uint64_t(BGFX_CONFIG_MAX_VIEWS-1)<<kSortKeyViewBitShift;
 
-	constexpr uint8_t  kSortKeyDrawBitShift        = kSortKeyViewBitShift - 1;
-	constexpr uint64_t kSortKeyDrawBit             = uint64_t(1)<<kSortKeyDrawBitShift;
-
-	//
-	constexpr uint8_t  kSortKeyDrawTypeNumBits     = 2;
-	constexpr uint8_t  kSortKeyDrawTypeBitShift    = kSortKeyDrawBitShift - kSortKeyDrawTypeNumBits;
-	constexpr uint64_t kSortKeyDrawTypeMask        = uint64_t(3)<<kSortKeyDrawTypeBitShift;
-
-	constexpr uint64_t kSortKeyDrawTypeProgram     = uint64_t(0)<<kSortKeyDrawTypeBitShift;
-	constexpr uint64_t kSortKeyDrawTypeDepth       = uint64_t(1)<<kSortKeyDrawTypeBitShift;
-	constexpr uint64_t kSortKeyDrawTypeSequence    = uint64_t(2)<<kSortKeyDrawTypeBitShift;
+	static constexpr uint8_t  kSortKeyDrawBitShift        = kSortKeyViewBitShift - 1;
+	static constexpr uint64_t kSortKeyDrawBit             = uint64_t(1)<<kSortKeyDrawBitShift;
 
 	//
-	constexpr uint8_t  kSortKeyTransNumBits        = 2;
+	static constexpr uint8_t  kSortKeyDrawTypeNumBits     = 2;
+	static constexpr uint8_t  kSortKeyDrawTypeBitShift    = kSortKeyDrawBitShift - kSortKeyDrawTypeNumBits;
+	static constexpr uint64_t kSortKeyDrawTypeMask        = uint64_t(3)<<kSortKeyDrawTypeBitShift;
 
-	constexpr uint8_t  kSortKeyDraw0BlendShift     = kSortKeyDrawTypeBitShift - kSortKeyTransNumBits;
-	constexpr uint64_t kSortKeyDraw0BlendMask      = uint64_t(0x3)<<kSortKeyDraw0BlendShift;
-
-	constexpr uint8_t  kSortKeyDraw0ProgramShift   = kSortKeyDraw0BlendShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM;
-	constexpr uint64_t kSortKeyDraw0ProgramMask    = uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1)<<kSortKeyDraw0ProgramShift;
-
-	constexpr uint8_t  kSortKeyDraw0DepthShift     = kSortKeyDraw0ProgramShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_DEPTH;
-	constexpr uint64_t kSortKeyDraw0DepthMask      = ( (uint64_t(1)<<BGFX_CONFIG_SORT_KEY_NUM_BITS_DEPTH)-1)<<kSortKeyDraw0DepthShift;
+	static constexpr uint64_t kSortKeyDrawTypeProgram     = uint64_t(0)<<kSortKeyDrawTypeBitShift;
+	static constexpr uint64_t kSortKeyDrawTypeDepth       = uint64_t(1)<<kSortKeyDrawTypeBitShift;
+	static constexpr uint64_t kSortKeyDrawTypeSequence    = uint64_t(2)<<kSortKeyDrawTypeBitShift;
 
 	//
-	constexpr uint8_t  kSortKeyDraw1DepthShift     = kSortKeyDrawTypeBitShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_DEPTH;
-	constexpr uint64_t kSortKeyDraw1DepthMask      = ( (uint64_t(1)<<BGFX_CONFIG_SORT_KEY_NUM_BITS_DEPTH)-1)<<kSortKeyDraw1DepthShift;
+	static constexpr uint8_t  kSortKeyTransNumBits        = 2;
 
-	constexpr uint8_t  kSortKeyDraw1BlendShift     = kSortKeyDraw1DepthShift - kSortKeyTransNumBits;
-	constexpr uint64_t kSortKeyDraw1BlendMask      = uint64_t(0x3)<<kSortKeyDraw1BlendShift;
+	static constexpr uint8_t  kSortKeyDraw0BlendShift     = kSortKeyDrawTypeBitShift - kSortKeyTransNumBits;
+	static constexpr uint64_t kSortKeyDraw0BlendMask      = uint64_t(0x3)<<kSortKeyDraw0BlendShift;
 
-	constexpr uint8_t  kSortKeyDraw1ProgramShift   = kSortKeyDraw1BlendShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM;
-	constexpr uint64_t kSortKeyDraw1ProgramMask    = uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1)<<kSortKeyDraw1ProgramShift;
+	static constexpr uint8_t  kSortKeyAlphaRefNumBits     = 1;
 
-	//
-	constexpr uint8_t  kSortKeyDraw2SeqShift       = kSortKeyDrawTypeBitShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ;
-	constexpr uint64_t kSortKeyDraw2SeqMask        = ( (uint64_t(1)<<BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ)-1)<<kSortKeyDraw2SeqShift;
+	static constexpr uint8_t  kSortKeyDraw0AlphaRefShift  = kSortKeyDraw0BlendShift - kSortKeyAlphaRefNumBits;
+	static constexpr uint64_t kSortKeyDraw0AlphaRefMask   = uint64_t(1)<<kSortKeyDraw0AlphaRefShift;
 
-	constexpr uint8_t  kSortKeyDraw2BlendShift     = kSortKeyDraw2SeqShift - kSortKeyTransNumBits;
-	constexpr uint64_t kSortKeyDraw2BlendMask      = uint64_t(0x3)<<kSortKeyDraw2BlendShift;
+	static constexpr uint8_t  kSortKeyDraw0ProgramShift   = kSortKeyDraw0AlphaRefShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM;
+	static constexpr uint64_t kSortKeyDraw0ProgramMask    = uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1)<<kSortKeyDraw0ProgramShift;
 
-	constexpr uint8_t  kSortKeyDraw2ProgramShift   = kSortKeyDraw2BlendShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM;
-	constexpr uint64_t kSortKeyDraw2ProgramMask    = uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1)<<kSortKeyDraw2ProgramShift;
+	static constexpr uint8_t  kSortKeyDraw0DepthShift     = kSortKeyDraw0ProgramShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_DEPTH;
+	static constexpr uint64_t kSortKeyDraw0DepthMask      = ( (uint64_t(1)<<BGFX_CONFIG_SORT_KEY_NUM_BITS_DEPTH)-1)<<kSortKeyDraw0DepthShift;
 
 	//
-	constexpr uint8_t  kSortKeyComputeSeqShift     = kSortKeyDrawBitShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ;
-	constexpr uint64_t kSortKeyComputeSeqMask      = ( (uint64_t(1)<<BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ)-1)<<kSortKeyComputeSeqShift;
+	static constexpr uint8_t  kSortKeyDraw1DepthShift     = kSortKeyDrawTypeBitShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_DEPTH;
+	static constexpr uint64_t kSortKeyDraw1DepthMask      = ( (uint64_t(1)<<BGFX_CONFIG_SORT_KEY_NUM_BITS_DEPTH)-1)<<kSortKeyDraw1DepthShift;
 
-	constexpr uint8_t  kSortKeyComputeProgramShift = kSortKeyComputeSeqShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM;
-	constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1)<<kSortKeyComputeProgramShift;
+	static constexpr uint8_t  kSortKeyDraw1BlendShift     = kSortKeyDraw1DepthShift - kSortKeyTransNumBits;
+	static constexpr uint64_t kSortKeyDraw1BlendMask      = uint64_t(0x3)<<kSortKeyDraw1BlendShift;
+
+	static constexpr uint8_t  kSortKeyDraw1AlphaRefShift  = kSortKeyDraw1BlendShift - kSortKeyAlphaRefNumBits;
+	static constexpr uint64_t kSortKeyDraw1AlphaRefMask   = uint64_t(1)<<kSortKeyDraw1AlphaRefShift;
+
+	static constexpr uint8_t  kSortKeyDraw1ProgramShift   = kSortKeyDraw1AlphaRefShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM;
+	static constexpr uint64_t kSortKeyDraw1ProgramMask    = uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1)<<kSortKeyDraw1ProgramShift;
+
+	//
+	static constexpr uint8_t  kSortKeyDraw2SeqShift       = kSortKeyDrawTypeBitShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ;
+	static constexpr uint64_t kSortKeyDraw2SeqMask        = ( (uint64_t(1)<<BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ)-1)<<kSortKeyDraw2SeqShift;
+
+	static constexpr uint8_t  kSortKeyDraw2BlendShift     = kSortKeyDraw2SeqShift - kSortKeyTransNumBits;
+	static constexpr uint64_t kSortKeyDraw2BlendMask      = uint64_t(0x3)<<kSortKeyDraw2BlendShift;
+
+	static constexpr uint8_t  kSortKeyDraw2AlphaRefShift  = kSortKeyDraw2BlendShift - kSortKeyAlphaRefNumBits;
+	static constexpr uint64_t kSortKeyDraw2AlphaRefMask   = uint64_t(1)<<kSortKeyDraw2AlphaRefShift;
+
+	static constexpr uint8_t  kSortKeyDraw2ProgramShift   = kSortKeyDraw2AlphaRefShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM;
+	static constexpr uint64_t kSortKeyDraw2ProgramMask    = uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1)<<kSortKeyDraw2ProgramShift;
+
+	//
+	static constexpr uint8_t  kSortKeyComputeSeqShift     = kSortKeyDrawBitShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ;
+	static constexpr uint64_t kSortKeyComputeSeqMask      = ( (uint64_t(1)<<BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ)-1)<<kSortKeyComputeSeqShift;
+
+	static constexpr uint8_t  kSortKeyComputeProgramShift = kSortKeyComputeSeqShift - BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM;
+	static constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRAMS-1)<<kSortKeyComputeProgramShift;
 
 	static_assert(BGFX_CONFIG_MAX_VIEWS <= (1<<kSortKeyViewNumBits) );
 	static_assert( (BGFX_CONFIG_MAX_PROGRAMS & (BGFX_CONFIG_MAX_PROGRAMS-1) ) == 0); // Must be power of 2.
@@ -1157,6 +1168,7 @@ namespace bgfx
 		| kSortKeyDrawBit
 		| kSortKeyDrawTypeMask
 		| kSortKeyDraw0BlendMask
+		| kSortKeyDraw0AlphaRefMask
 		| kSortKeyDraw0ProgramMask
 		| kSortKeyDraw0DepthMask
 		) == (0
@@ -1164,6 +1176,7 @@ namespace bgfx
 		^ kSortKeyDrawBit
 		^ kSortKeyDrawTypeMask
 		^ kSortKeyDraw0BlendMask
+		^ kSortKeyDraw0AlphaRefMask
 		^ kSortKeyDraw0ProgramMask
 		^ kSortKeyDraw0DepthMask
 		) );
@@ -1173,6 +1186,7 @@ namespace bgfx
 		| kSortKeyDrawTypeMask
 		| kSortKeyDraw1DepthMask
 		| kSortKeyDraw1BlendMask
+		| kSortKeyDraw1AlphaRefMask
 		| kSortKeyDraw1ProgramMask
 		) == (0
 		^ kSortKeyViewMask
@@ -1180,6 +1194,7 @@ namespace bgfx
 		^ kSortKeyDrawTypeMask
 		^ kSortKeyDraw1DepthMask
 		^ kSortKeyDraw1BlendMask
+		^ kSortKeyDraw1AlphaRefMask
 		^ kSortKeyDraw1ProgramMask
 		) );
 	static_assert( (0 // Render key mask shouldn't overlap.
@@ -1188,6 +1203,7 @@ namespace bgfx
 		| kSortKeyDrawTypeMask
 		| kSortKeyDraw2SeqMask
 		| kSortKeyDraw2BlendMask
+		| kSortKeyDraw2AlphaRefMask
 		| kSortKeyDraw2ProgramMask
 		) == (0
 		^ kSortKeyViewMask
@@ -1195,6 +1211,7 @@ namespace bgfx
 		^ kSortKeyDrawTypeMask
 		^ kSortKeyDraw2SeqMask
 		^ kSortKeyDraw2BlendMask
+		^ kSortKeyDraw2AlphaRefMask
 		^ kSortKeyDraw2ProgramMask
 		) );
 	static_assert( (0 // Compute key mask shouldn't overlap.
@@ -1217,22 +1234,22 @@ namespace bgfx
 	// |  view-+|                                                       |
 	// |        +-draw                                                  |
 	// |----------------------------------------------------------------| Draw Key 0 - Sort by program
-	// |        |kkttpppppppppdddddddddddddddddddddddddddddddd          |
-	// |        | ^ ^        ^                               ^          |
-	// |        | | |        |                               |          |
+	// |        |kkttrpppppppppdddddddddddddddddddddddddddddddd         |
+	// |        | ^ ^^        ^                               ^         |
+	// |        | | |+ref     |                               |         |
 	// |        | | +-blend  +-program                 depth-+          |
 	// |        | +-key type                                            |
 	// |----------------------------------------------------------------| Draw Key 1 - Sort by depth
-	// |        |kkddddddddddddddddddddddddddddddddttppppppppp          |
-	// |        | ^                               ^ ^        ^          |
-	// |        | |                               | +-blend  |          |
-	// |        | +-key type                depth-+  program-+          |
+	// |        |kkddddddddddddddddddddddddddddddddttrppppppppp         |
+	// |        | ^                               ^ ^+-ref    ^         |
+	// |        | |                               | +-blend   |         |
+	// |        | +-key type                depth-+   program-+         |
 	// |        |                                                       |
 	// |----------------------------------------------------------------| Draw Key 2 - Sequential
-	// |        |kkssssssssssssssssssssttppppppppp                      |
-	// |        | ^                   ^ ^        ^                      |
-	// |        | |                   | |        |                      |
-	// |        | +-key type      seq-+ +-blend  +-program              |
+	// |        |kkssssssssssssssssssssttrppppppppp                     |
+	// |        | ^                   ^ ^^        ^                     |
+	// |        | |                   | |+-ref    |                     |
+	// |        | +-key type      seq-+ +-blend   +-program             |
 	// |        |                                                       |
 	// |----------------------------------------------------------------| Compute Key
 	// |        |ssssssssssssssssssssppppppppp                          |
@@ -1257,11 +1274,12 @@ namespace bgfx
 			{
 			case SortProgram:
 				{
-					const uint64_t depth   = (uint64_t(m_depth      ) << kSortKeyDraw0DepthShift  ) & kSortKeyDraw0DepthMask;
-					const uint64_t program = (uint64_t(m_program.idx) << kSortKeyDraw0ProgramShift) & kSortKeyDraw0ProgramMask;
-					const uint64_t blend   = (uint64_t(m_blend      ) << kSortKeyDraw0BlendShift  ) & kSortKeyDraw0BlendMask;
-					const uint64_t view    = (uint64_t(m_view       ) << kSortKeyViewBitShift     ) & kSortKeyViewMask;
-					const uint64_t key     = view|kSortKeyDrawBit|kSortKeyDrawTypeProgram|blend|program|depth;
+					const uint64_t depth    = (uint64_t(m_depth      ) << kSortKeyDraw0DepthShift   ) & kSortKeyDraw0DepthMask;
+					const uint64_t program  = (uint64_t(m_program.idx) << kSortKeyDraw0ProgramShift ) & kSortKeyDraw0ProgramMask;
+					const uint64_t blend    = (uint64_t(m_blend      ) << kSortKeyDraw0BlendShift   ) & kSortKeyDraw0BlendMask;
+					const uint64_t alphaRef = (uint64_t(m_hasAlphaRef) << kSortKeyDraw0AlphaRefShift) & kSortKeyDraw0AlphaRefMask;
+					const uint64_t view     = (uint64_t(m_view       ) << kSortKeyViewBitShift      ) & kSortKeyViewMask;
+					const uint64_t key      = view|kSortKeyDrawBit|kSortKeyDrawTypeProgram|blend|alphaRef|program|depth;
 
 					return key;
 				}
@@ -1269,22 +1287,24 @@ namespace bgfx
 
 			case SortDepth:
 				{
-					const uint64_t depth   = (uint64_t(m_depth      ) << kSortKeyDraw1DepthShift  ) & kSortKeyDraw1DepthMask;
-					const uint64_t program = (uint64_t(m_program.idx) << kSortKeyDraw1ProgramShift) & kSortKeyDraw1ProgramMask;
-					const uint64_t blend   = (uint64_t(m_blend      ) << kSortKeyDraw1BlendShift) & kSortKeyDraw1BlendMask;
-					const uint64_t view    = (uint64_t(m_view       ) << kSortKeyViewBitShift     ) & kSortKeyViewMask;
-					const uint64_t key     = view|kSortKeyDrawBit|kSortKeyDrawTypeDepth|depth|blend|program;
+					const uint64_t depth    = (uint64_t(m_depth      ) << kSortKeyDraw1DepthShift  )  & kSortKeyDraw1DepthMask;
+					const uint64_t program  = (uint64_t(m_program.idx) << kSortKeyDraw1ProgramShift)  & kSortKeyDraw1ProgramMask;
+					const uint64_t blend    = (uint64_t(m_blend      ) << kSortKeyDraw1BlendShift)    & kSortKeyDraw1BlendMask;
+					const uint64_t alphaRef = (uint64_t(m_hasAlphaRef) << kSortKeyDraw1AlphaRefShift) & kSortKeyDraw1AlphaRefMask;
+					const uint64_t view     = (uint64_t(m_view       ) << kSortKeyViewBitShift     )  & kSortKeyViewMask;
+					const uint64_t key      = view|kSortKeyDrawBit|kSortKeyDrawTypeDepth|depth|blend|alphaRef|program;
 					return key;
 				}
 				break;
 
 			case SortSequence:
 				{
-					const uint64_t seq     = (uint64_t(m_seq        ) << kSortKeyDraw2SeqShift    ) & kSortKeyDraw2SeqMask;
-					const uint64_t program = (uint64_t(m_program.idx) << kSortKeyDraw2ProgramShift) & kSortKeyDraw2ProgramMask;
-					const uint64_t blend   = (uint64_t(m_blend      ) << kSortKeyDraw2BlendShift  ) & kSortKeyDraw2BlendMask;
-					const uint64_t view    = (uint64_t(m_view       ) << kSortKeyViewBitShift     ) & kSortKeyViewMask;
-					const uint64_t key     = view|kSortKeyDrawBit|kSortKeyDrawTypeSequence|seq|blend|program;
+					const uint64_t seq      = (uint64_t(m_seq        ) << kSortKeyDraw2SeqShift     ) & kSortKeyDraw2SeqMask;
+					const uint64_t program  = (uint64_t(m_program.idx) << kSortKeyDraw2ProgramShift ) & kSortKeyDraw2ProgramMask;
+					const uint64_t blend    = (uint64_t(m_blend      ) << kSortKeyDraw2BlendShift   ) & kSortKeyDraw2BlendMask;
+					const uint64_t alphaRef = (uint64_t(m_hasAlphaRef) << kSortKeyDraw2AlphaRefShift) & kSortKeyDraw2AlphaRefMask;
+					const uint64_t view     = (uint64_t(m_view       ) << kSortKeyViewBitShift      ) & kSortKeyViewMask;
+					const uint64_t key      = view|kSortKeyDrawBit|kSortKeyDrawTypeSequence|seq|blend|alphaRef|program;
 
 					BX_ASSERT(seq == (uint64_t(m_seq) << kSortKeyDraw2SeqShift)
 						, "SortKey error, sequence is truncated (m_seq: %d)."
@@ -1359,11 +1379,12 @@ namespace bgfx
 
 		void reset()
 		{
-			m_depth   = 0;
-			m_seq     = 0;
-			m_program = {0};
-			m_view    = 0;
-			m_blend   = 0;
+			m_depth       = 0;
+			m_seq         = 0;
+			m_program     = {0};
+			m_view        = 0;
+			m_blend       = 0;
+			m_hasAlphaRef = false;
 		}
 
 		uint32_t      m_depth;
@@ -1371,6 +1392,7 @@ namespace bgfx
 		ProgramHandle m_program;
 		ViewId        m_view;
 		uint8_t       m_blend;
+		bool          m_hasAlphaRef;
 	};
 #undef SORT_KEY_RENDER_DRAW
 
@@ -1526,20 +1548,20 @@ namespace bgfx
 		uint32_t m_num;
 	};
 
-	constexpr uint8_t  kConstantOpcodeTypeShift = 27;
-	constexpr uint32_t kConstantOpcodeTypeMask  = UINT32_C(0xf8000000);
-	constexpr uint8_t  kConstantOpcodeLocShift  = 11;
-	constexpr uint32_t kConstantOpcodeLocMask   = UINT32_C(0x07fff800);
-	constexpr uint8_t  kConstantOpcodeNumShift  = 1;
-	constexpr uint32_t kConstantOpcodeNumMask   = UINT32_C(0x000007fe);
-	constexpr uint8_t  kConstantOpcodeCopyShift = 0;
-	constexpr uint32_t kConstantOpcodeCopyMask  = UINT32_C(0x00000001);
+	static constexpr uint8_t  kConstantOpcodeTypeShift = 27;
+	static constexpr uint32_t kConstantOpcodeTypeMask  = UINT32_C(0xf8000000);
+	static constexpr uint8_t  kConstantOpcodeLocShift  = 11;
+	static constexpr uint32_t kConstantOpcodeLocMask   = UINT32_C(0x07fff800);
+	static constexpr uint8_t  kConstantOpcodeNumShift  = 1;
+	static constexpr uint32_t kConstantOpcodeNumMask   = UINT32_C(0x000007fe);
+	static constexpr uint8_t  kConstantOpcodeCopyShift = 0;
+	static constexpr uint32_t kConstantOpcodeCopyMask  = UINT32_C(0x00000001);
 
-	constexpr uint8_t kUniformFragmentBit  = 0x10;
-	constexpr uint8_t kUniformSamplerBit   = 0x20;
-	constexpr uint8_t kUniformReadOnlyBit  = 0x40;
-	constexpr uint8_t kUniformCompareBit   = 0x80;
-	constexpr uint8_t kUniformMask = 0
+	static constexpr uint8_t kUniformFragmentBit  = 0x10;
+	static constexpr uint8_t kUniformSamplerBit   = 0x20;
+	static constexpr uint8_t kUniformReadOnlyBit  = 0x40;
+	static constexpr uint8_t kUniformCompareBit   = 0x80;
+	static constexpr uint8_t kUniformMask = 0
 		| kUniformFragmentBit
 		| kUniformSamplerBit
 		| kUniformReadOnlyBit
@@ -1566,8 +1588,8 @@ namespace bgfx
 
 		static void update(UniformBuffer** _uniformBuffer)
 		{
-			constexpr uint32_t kThreshold = BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE;
-			constexpr uint32_t kIncrement = BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_INCREMENT_SIZE;
+			static constexpr uint32_t kThreshold = BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE;
+			static constexpr uint32_t kIncrement = BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_INCREMENT_SIZE;
 
 			UniformBuffer* uniformBuffer = *_uniformBuffer;
 			if (kThreshold >= uniformBuffer->m_size - uniformBuffer->m_pos)
@@ -2239,8 +2261,8 @@ namespace bgfx
 
 		KeyT encode()
 		{
-			constexpr uint32_t kMaxSize   = ( (kSizeMask  >>kSizeShift  ) + 1)<<4;
-			constexpr uint32_t kMaxOffset = ( (kOffsetMask>>kOffsetShift) + 1)<<4;
+			static constexpr uint32_t kMaxSize   = ( (kSizeMask  >>kSizeShift  ) + 1)<<4;
+			static constexpr uint32_t kMaxOffset = ( (kOffsetMask>>kOffsetShift) + 1)<<4;
 
 			BX_ASSERT(true
 				&& uint32_t(m_size) < kMaxSize
@@ -2767,8 +2789,8 @@ namespace bgfx
 
 		void setState(uint64_t _state, uint32_t _rgba)
 		{
-			const uint8_t blend    = ( (_state&BGFX_STATE_BLEND_MASK    )>>BGFX_STATE_BLEND_SHIFT    )&0xff;
-			const uint8_t alphaRef = ( (_state&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT)&0xff;
+			const uint8_t blend =   ( (_state&BGFX_STATE_BLEND_MASK    )>>BGFX_STATE_BLEND_SHIFT    )&0xff;
+			m_key.m_hasAlphaRef = !!( (_state&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT)&0xff;
 
 			// Transparency sort order table:
 			//
@@ -2787,7 +2809,7 @@ namespace bgfx
 			//                    |  |  |  |  |  |  |  |  |  |  |  |  +----- BGFX_STATE_BLEND_INV_FACTOR
 			//                    |  |  |  |  |  |  |  |  |  |  |  |  |
 			//                 x  |  |  |  |  |  |  |  |  |  |  |  |  |  x  x  x  x  x
-			m_key.m_blend = "\x0\x2\x2\x3\x3\x2\x3\x2\x3\x2\x2\x2\x2\x2\x2\x2\x2\x2\x2"[( (blend)&0xf) + (!!blend)] + !!alphaRef;
+			m_key.m_blend = "\x0\x1\x1\x2\x2\x1\x2\x1\x2\x1\x1\x1\x1\x1\x1\x1\x1\x1\x1"[( (blend)&0xf) + (!!blend)];
 
 			m_draw.m_stateFlags = _state;
 			m_draw.m_rgba       = _rgba;
@@ -3386,7 +3408,7 @@ namespace bgfx
 				.m_view   = _id,
 			};
 
-			constexpr UniformCacheKey::KeyT kViewHandleMask = UniformCacheKey::kViewMask|UniformCacheKey::kHandleMask;
+			static constexpr UniformCacheKey::KeyT kViewHandleMask = UniformCacheKey::kViewMask|UniformCacheKey::kHandleMask;
 			static_assert( ( (kViewHandleMask>>32)<<32) == kViewHandleMask, "View + handle must be in top 32 bits of 64-bit key.");
 			const uint32_t uniformKey = uint32_t(key.encode() >> 32);
 
