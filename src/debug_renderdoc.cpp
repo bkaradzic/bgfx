@@ -27,6 +27,13 @@ namespace bgfx
 			return NULL;
 		}
 
+		// Skip loading RenderDoc on Wayland: https://github.com/baldurk/renderdoc/issues/853
+		if (g_platformData.type == bgfx::NativeWindowHandleType::Wayland)
+		{
+			BX_WARN(0, "RenderDoc is not available on Wayland.");
+			return NULL;
+		}
+
 		const char* renderDocDllName =
 #if BX_PLATFORM_WINDOWS
 			"renderdoc.dll"
