@@ -3606,7 +3606,7 @@ namespace bgfx
 	}
 
 	Resolution::Resolution()
-		: formatColor(TextureFormat::RGBA8)
+		: formatColor(TextureFormat::BGRA8)
 		, formatDepthStencil(TextureFormat::D24S8)
 		, width(1280)
 		, height(720)
