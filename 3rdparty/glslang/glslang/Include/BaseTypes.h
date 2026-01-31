@@ -76,6 +76,7 @@ enum TBasicType {
     EbtTensorViewNV,
     EbtCoopvecNV,
     EbtTensorARM,
+    EbtLongVector,
     // SPIR-V type defined by spirv_type
     EbtSpirvType,
 
@@ -142,6 +143,10 @@ enum TStorageQualifier {
     EvqFragStencil,
 
     EvqTileImageEXT,
+
+    // EXT_structured_descriptor_heap
+    EvqSamplerHeap,
+    EvqResourceHeap,
 
     // end of list
     EvqLast
@@ -353,6 +358,9 @@ enum TBuiltInVariable {
     EbvTileOffsetQCOM,
     EbvTileDimensionQCOM,
     EbvTileApronSizeQCOM,
+    // GL_EXT_descriptor_heap
+    EbvSamplerHeapEXT,
+    EbvResourceHeapEXT,
 
     EbvLast
 };
@@ -600,6 +608,22 @@ __inline bool isTypeUnsignedInt(TBasicType type)
         return true;
     default:
         return false;
+    }
+}
+
+__inline TBasicType unsignedTypeToSigned(TBasicType type)
+{
+    switch (type) {
+    case EbtUint8:
+        return EbtInt8;
+    case EbtUint16:
+        return EbtInt16;
+    case EbtUint:
+        return EbtInt;
+    case EbtUint64:
+        return EbtInt64;
+    default:
+        return type;
     }
 }
 

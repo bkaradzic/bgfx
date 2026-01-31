@@ -352,6 +352,7 @@ public:
         hlslOffsets(false),
         hlslIoMapping(false),
         useVariablePointers(false),
+        bindingsPerResourceType(false),
         textureSamplerTransformMode(EShTexSampTransKeep),
         needToLegalize(false),
         binaryDoubleOutput(false),
@@ -840,6 +841,13 @@ public:
 
     bool usingVariablePointers() const { return useVariablePointers; }
 
+    void setBindingsPerResourceType()
+    {
+        bindingsPerResourceType = true;
+        processes.addProcess("bindings-per-resource-type");
+    }
+    bool getBindingsPerResourceType() const { return bindingsPerResourceType; }
+
 #ifdef ENABLE_HLSL
     template<class T> T addCounterBufferName(const T& name) const { return name + implicitCounterName; }
     bool hasCounterBufferName(const TString& name) const {
@@ -1302,6 +1310,7 @@ protected:
     bool hlslOffsets;
     bool hlslIoMapping;
     bool useVariablePointers;
+    bool bindingsPerResourceType;
 
     std::set<TString> semanticNameSet;
 

@@ -317,6 +317,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_NV_cooperative_matrix2]                   = EBhDisable;
     extensionBehavior[E_GL_NV_cluster_acceleration_structure]        = EBhDisable;
     extensionBehavior[E_GL_NV_linear_swept_spheres]                  = EBhDisable;
+    extensionBehavior[E_GL_NV_push_constant_bank]                    = EBhDisable;
 
     // ARM
     extensionBehavior[E_GL_ARM_shader_core_builtins]                 = EBhDisable;
@@ -345,6 +346,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_texture_buffer]                       = EBhDisable;
     extensionBehavior[E_GL_EXT_texture_cube_map_array]               = EBhDisable;
     extensionBehavior[E_GL_EXT_null_initializer]                     = EBhDisable;
+    extensionBehavior[E_GL_EXT_descriptor_heap]                      = EBhDisable;
 
     // OES matching AEP
     extensionBehavior[E_GL_OES_geometry_shader]          = EBhDisable;
@@ -389,6 +391,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_uniform_buffer_unsized_array] = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_64bit_indexing]       = EBhDisable;
     extensionBehavior[E_GL_EXT_conservative_depth]          = EBhDisable;
+    extensionBehavior[E_GL_EXT_long_vector]                 = EBhDisable;
 
     // OVR extensions
     extensionBehavior[E_GL_OVR_multiview]                = EBhDisable;
@@ -457,6 +460,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_shader_implicit_conversions 1\n"
             "#define GL_EXT_shader_integer_mix 1\n"
             "#define GL_EXT_blend_func_extended 1\n"
+            "#define GL_EXT_descriptor_heap 1\n"
 
             // OES matching AEP
             "#define GL_OES_geometry_shader 1\n"
@@ -639,6 +643,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_shader_64bit_indexing 1\n"
 
             "#define GL_EXT_shader_invocation_reorder 1\n"
+            "#define GL_EXT_descriptor_heap 1\n"
             ;
 
         if (spvVersion.spv == 0) {
@@ -660,6 +665,11 @@ void TParseVersions::getPreamble(std::string& preamble)
         if (version >= 130) {
             preamble +="#define GL_FRAGMENT_PRECISION_HIGH 1\n";
         }
+    }
+
+    if ((!isEsProfile() && version >= 460) ||
+        (isEsProfile() && version >= 320)) {
+        preamble += "#define GL_EXT_nontemporal_keyword 1\n";
     }
 
     if ((!isEsProfile() && version >= 140) ||
@@ -1515,6 +1525,14 @@ void TParseVersions::tensorCheckARM(const TSourceLoc& loc, const char* op, bool 
 {
     if (!builtIn) {
         const char* const extensions[] = {E_GL_ARM_tensors};
+        requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, op);
+    }
+}
+
+void TParseVersions::longVectorCheck(const TSourceLoc& loc, const char* op, bool builtIn)
+{
+    if (!builtIn) {
+        const char* const extensions[] = {E_GL_EXT_long_vector};
         requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, op);
     }
 }

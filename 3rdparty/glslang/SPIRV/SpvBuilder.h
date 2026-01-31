@@ -230,6 +230,7 @@ public:
     Id makePointer(StorageClass, Id pointee);
     Id makeForwardPointer(StorageClass);
     Id makePointerFromForwardPointer(StorageClass, Id forwardPointerType, Id pointee);
+    Id makeUntypedPointer(StorageClass storageClass, bool setBufferPointer = false);
     Id makeIntegerType(int width, bool hasSign);   // generic
     Id makeIntType(int width) { return makeIntegerType(width, true); }
     Id makeUintType(int width) { return makeIntegerType(width, false); }
@@ -317,6 +318,14 @@ public:
     Id getCooperativeVectorNumComponents(Id typeId) const { return module.getInstruction(typeId)->getIdOperand(1); }
 
     bool isPointer(Id resultId)      const { return isPointerType(getTypeId(resultId)); }
+    bool isUntypedPointer(Id resultId) const
+    {
+        const Id tid = getTypeId(resultId);
+        // Expect that OpString have no type
+        if (tid == 0)
+            return false;
+        return isUntypedPointerType(tid);
+    }
     bool isScalar(Id resultId)       const { return isScalarType(getTypeId(resultId)); }
     bool isVector(Id resultId)       const { return isVectorType(getTypeId(resultId)); }
     bool isMatrix(Id resultId)       const { return isMatrixType(getTypeId(resultId)); }
@@ -334,6 +343,7 @@ public:
         { return getTypeClass(typeId) == Op::OpTypeInt && module.getInstruction(typeId)->getImmediateOperand(1) == 0; }
     bool isFloatType(Id typeId)        const { return getTypeClass(typeId) == Op::OpTypeFloat; }
     bool isPointerType(Id typeId)      const { return getTypeClass(typeId) == Op::OpTypePointer; }
+    bool isUntypedPointerType(Id typeId) const { return getTypeClass(typeId) == Op::OpTypeUntypedPointerKHR; }
     bool isScalarType(Id typeId)       const
         { return getTypeClass(typeId) == Op::OpTypeFloat || getTypeClass(typeId) == Op::OpTypeInt ||
           getTypeClass(typeId) == Op::OpTypeBool; }
@@ -469,6 +479,7 @@ public:
     void addMemberDecoration(Id, unsigned int member, Decoration, const char*);
     void addMemberDecoration(Id, unsigned int member, Decoration, const std::vector<unsigned>& literals);
     void addMemberDecoration(Id, unsigned int member, Decoration, const std::vector<const char*>& strings);
+    void addMemberDecorationIdEXT(Id, unsigned int member, Decoration, const std::vector<unsigned>& operands);
 
     // At the end of what block do the next create*() instructions go?
     // Also reset current last DebugScope and current source line to unknown
@@ -531,8 +542,15 @@ public:
     Id createVariable(Decoration precision, StorageClass storageClass, Id type, const char* name = nullptr,
         Id initializer = NoResult, bool const compilerGenerated = true);
 
+    // Create an untyped global or function local or IO variable.
+    Id createUntypedVariable(Decoration precision, StorageClass storageClass, const char* name = nullptr,
+                             Id dataType = NoResult, Id initializer = NoResult);
+
     // Create an intermediate with an undefined value.
     Id createUndefined(Id type);
+
+    // Create load/store instruction with a remapped descriptor heap base.
+    Instruction* createDescHeapLoadStoreBaseRemap(Id base, Op op);
 
     // Store into an Id and return the l-value
     void createStore(Id rValue, Id lValue, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMask::MaskNone,
@@ -790,6 +808,18 @@ public:
         unsigned int alignment;        // bitwise OR of alignment values passed in. Accumulates worst alignment.
                                        // Only tracks base and (optional) component selection alignment.
 
+        struct DescHeapInfo {
+            Id descHeapBaseTy;                  // for descriptor heap, record its base data type.
+            StorageClass descHeapStorageClass;  // for descriptor heap, record its basic storage class.
+            uint32_t descHeapBaseArrayStride;   // for descriptor heap, record its explicit array stride.
+            std::vector<Instruction*> descHeapInstId;
+                                                // for descriptor heap, record its data type for loading/store results.
+            uint32_t structRsrcTyOffsetCount;
+            uint32_t structRsrcTyFirstArrIndex;
+            Id structRemappedBase;
+        };
+        DescHeapInfo descHeapInfo;
+
         // Accumulate whether anything in the chain of structures has coherent decorations.
         struct CoherentFlags {
             CoherentFlags() { clear(); }
@@ -856,10 +886,15 @@ public:
     // clear accessChain
     void clearAccessChain();
 
+    Id createDescHeapAccessChain();
+    Id createConstantSizeOfEXT(Id typeId);
+    uint32_t isStructureHeapMember(Id id, std::vector<Id> indexChain, unsigned int idx, spv::BuiltIn* bt = nullptr,
+                                   uint32_t* firstArrIndex = nullptr);
+
     // set new base as an l-value base
     void setAccessChainLValue(Id lValue)
     {
-        assert(isPointer(lValue));
+        assert(isPointer(lValue) || isUntypedPointer(lValue));
         accessChain.base = lValue;
     }
 
@@ -868,6 +903,25 @@ public:
     {
         accessChain.isRValue = true;
         accessChain.base = rValue;
+    }
+
+    // set access chain info for untyped descriptor heap variable
+    void setAccessChainDescHeapInfo(StorageClass storageClass = StorageClass::Max, Id baseTy = NoResult,
+                                    uint32_t explicitArrayStride = NoResult, uint32_t structRsrcTyOffsetCount = 0,
+                                    spv::Id structRemappedBase = NoResult, uint32_t firstArrIndex = NoResult)
+    {
+        if (accessChain.descHeapInfo.descHeapStorageClass == StorageClass::Max)
+            accessChain.descHeapInfo.descHeapStorageClass = storageClass;
+        if (accessChain.descHeapInfo.descHeapBaseTy == NoResult)
+            accessChain.descHeapInfo.descHeapBaseTy = baseTy;
+        if (accessChain.descHeapInfo.descHeapBaseArrayStride == NoResult)
+            accessChain.descHeapInfo.descHeapBaseArrayStride = explicitArrayStride;
+        if (accessChain.descHeapInfo.structRemappedBase == NoResult)
+            accessChain.descHeapInfo.structRemappedBase = structRemappedBase;
+        if (accessChain.descHeapInfo.structRsrcTyOffsetCount == 0)
+            accessChain.descHeapInfo.structRsrcTyOffsetCount = structRsrcTyOffsetCount;
+        if (accessChain.descHeapInfo.structRsrcTyFirstArrIndex == 0)
+            accessChain.descHeapInfo.structRsrcTyFirstArrIndex = firstArrIndex;
     }
 
     // push offset onto the end of the chain
