@@ -56,6 +56,7 @@
 #	define dFdy(_y) ddy(-(_y))
 #	define inversesqrt(_x) rsqrt(_x)
 #	define fract(_x) frac(_x)
+#	define not(_x) (!_x)
 
 #	define bvec2 bool2
 #	define bvec3 bool3
@@ -810,6 +811,30 @@ float mtxGetElement(mat4 _mtx, int _column, int _row)
     return _mtx[_row][_column];
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 }
+
+#if !BX_SHADER_LANGUAGE_DXIL
+float select(bool  _cond, float _true, float _false) { return _cond ? _true : _false; }
+vec2  select(bool  _cond, vec2  _true, vec2  _false) { return _cond ? _true : _false; }
+vec3  select(bool  _cond, vec3  _true, vec3  _false) { return _cond ? _true : _false; }
+vec4  select(bool  _cond, vec4  _true, vec4  _false) { return _cond ? _true : _false; }
+vec2  select(bvec2 _cond, vec2  _true, vec2  _false) { return (vec2(_cond) * _true) + (vec2(not(_cond) ) * _false); }
+vec3  select(bvec3 _cond, vec3  _true, vec3  _false) { return (vec3(_cond) * _true) + (vec3(not(_cond) ) * _false); }
+vec4  select(bvec4 _cond, vec4  _true, vec4  _false) { return (vec4(_cond) * _true) + (vec4(not(_cond) ) * _false); }
+int   select(bool  _cond, int   _true, int   _false) { return _cond ? _true : _false; }
+ivec2 select(bool  _cond, ivec2 _true, ivec2 _false) { return _cond ? _true : _false; }
+ivec3 select(bool  _cond, ivec3 _true, ivec3 _false) { return _cond ? _true : _false; }
+ivec4 select(bool  _cond, ivec4 _true, ivec4 _false) { return _cond ? _true : _false; }
+ivec2 select(bvec2 _cond, ivec2 _true, ivec2 _false) { return (ivec2(_cond) * _true) + (ivec2(not(_cond) ) * _false); }
+ivec3 select(bvec3 _cond, ivec3 _true, ivec3 _false) { return (ivec3(_cond) * _true) + (ivec3(not(_cond) ) * _false); }
+ivec4 select(bvec4 _cond, ivec4 _true, ivec4 _false) { return (ivec4(_cond) * _true) + (ivec4(not(_cond) ) * _false); }
+uint  select(bool  _cond, uint  _true, uint  _false) { return _cond ? _true : _false; }
+uvec2 select(bool  _cond, uvec2 _true, uvec2 _false) { return _cond ? _true : _false; }
+uvec3 select(bool  _cond, uvec3 _true, uvec3 _false) { return _cond ? _true : _false; }
+uvec4 select(bool  _cond, uvec4 _true, uvec4 _false) { return _cond ? _true : _false; }
+uvec2 select(bvec2 _cond, uvec2 _true, uvec2 _false) { return (uvec2(_cond) * _true) + (uvec2(not(_cond) ) * _false); }
+uvec3 select(bvec3 _cond, uvec3 _true, uvec3 _false) { return (uvec3(_cond) * _true) + (uvec3(not(_cond) ) * _false); }
+uvec4 select(bvec4 _cond, uvec4 _true, uvec4 _false) { return (uvec4(_cond) * _true) + (uvec4(not(_cond) ) * _false); }
+#endif // !BX_SHADER_LANGUAGE_DXIL
 
 uniform vec4 u_viewRect;
 uniform vec4 u_viewTexel;
