@@ -308,6 +308,10 @@ spv_result_t ValidateLogicalPointerOperands(ValidationState_t& _,
     // SPV_ARM_graph
     case spv::Op::OpGraphEntryPointARM:
       return SPV_SUCCESS;
+    // SPV_EXT_descriptor_heap
+    case spv::Op::OpBufferPointerEXT:
+    case spv::Op::OpUntypedImageTexelPointerEXT:
+      return SPV_SUCCESS;
     // The following cases require a variable pointer capability. Since all
     // instructions are for variable pointers, the storage class and capability
     // are also checked.
@@ -370,6 +374,10 @@ spv_result_t ValidateLogicalPointerReturns(ValidationState_t& _,
     case spv::Op::OpRawAccessChainNV:
     // SPV_AMD_shader_enqueue (spec bugs)
     case spv::Op::OpAllocateNodePayloadsAMDX:
+      return SPV_SUCCESS;
+    // SPV_EXT_descriptor_heap
+    case spv::Op::OpBufferPointerEXT:
+    case spv::Op::OpUntypedImageTexelPointerEXT:
       return SPV_SUCCESS;
     // Core spec with variable pointer capability. Check storage classes since
     // variable pointers can only be in certain storage classes.

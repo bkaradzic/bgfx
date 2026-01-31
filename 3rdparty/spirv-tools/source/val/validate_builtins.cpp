@@ -369,6 +369,9 @@ class BuiltInsValidator {
   spv_result_t ValidateShadingRateAtDefinition(const Decoration& decoration,
                                                const Instruction& inst);
 
+  spv_result_t ValidateDescriptorHeapAtDefinition(const Decoration& decoration,
+                                                  const Instruction& inst);
+
   spv_result_t ValidateRayTracingBuiltinsAtDefinition(
       const Decoration& decoration, const Instruction& inst);
 
@@ -4507,6 +4510,18 @@ spv_result_t BuiltInsValidator::ValidateShadingRateAtReference(
   return SPV_SUCCESS;
 }
 
+spv_result_t BuiltInsValidator::ValidateDescriptorHeapAtDefinition(
+    const Decoration& decoration, const Instruction& inst) {
+  if (decoration.struct_member_index() != Decoration::kInvalidMember) {
+    return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+           << "BuiltIn "
+           << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                            (uint32_t)decoration.builtin())
+           << " cannot be used as a member decoration ";
+  }
+  return SPV_SUCCESS;
+}
+
 spv_result_t BuiltInsValidator::ValidateRayTracingBuiltinsAtDefinition(
     const Decoration& decoration, const Instruction& inst) {
   if (spvIsVulkanEnv(_.context()->target_env)) {
@@ -5019,6 +5034,10 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinitionVulkan(
     }
     case spv::BuiltIn::ShadingRateKHR: {
       return ValidateShadingRateAtDefinition(decoration, inst);
+    }
+    case spv::BuiltIn::SamplerHeapEXT:
+    case spv::BuiltIn::ResourceHeapEXT: {
+      return ValidateDescriptorHeapAtDefinition(decoration, inst);
     }
     default:
       // No validation rules (for the moment).

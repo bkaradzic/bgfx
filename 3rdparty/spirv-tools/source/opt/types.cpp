@@ -138,6 +138,7 @@ std::unique_ptr<Type> Type::Clone() const {
     DeclareKindCase(HitObjectEXT);
     DeclareKindCase(TensorARM);
     DeclareKindCase(GraphARM);
+    DeclareKindCase(BufferEXT);
 #undef DeclareKindCase
     default:
       assert(false && "Unhandled type");
@@ -193,6 +194,7 @@ bool Type::operator==(const Type& other) const {
     DeclareKindCase(TensorViewNV);
     DeclareKindCase(TensorARM);
     DeclareKindCase(GraphARM);
+    DeclareKindCase(BufferEXT);
 #undef DeclareKindCase
     default:
       assert(false && "Unhandled type");
@@ -256,6 +258,7 @@ size_t Type::ComputeHashValue(size_t hash, SeenTypes* seen) const {
     DeclareKindCase(TensorViewNV);
     DeclareKindCase(TensorARM);
     DeclareKindCase(GraphARM);
+    DeclareKindCase(BufferEXT);
 #undef DeclareKindCase
     default:
       assert(false && "Unhandled type");
@@ -989,6 +992,31 @@ bool GraphARM::IsSameImpl(const Type* that, IsSameCache* seen) const {
     if (!io_types_[i]->IsSameImpl(og->io_types_[i], seen)) {
       return false;
     }
+  }
+  return true;
+}
+
+BufferEXT::BufferEXT(spv::StorageClass storage_class)
+    : Type(kBufferEXT), storage_class_(storage_class) {}
+
+std::string BufferEXT::str() const {
+  std::ostringstream oss;
+  oss << "buffer<" << static_cast<uint32_t>(storage_class_) << ">";
+  return oss.str();
+}
+
+size_t BufferEXT::ComputeExtraStateHash(size_t hash, SeenTypes*) const {
+  hash = hash_combine(hash, static_cast<uint32_t>(storage_class_));
+  return hash;
+}
+
+bool BufferEXT::IsSameImpl(const Type* that, IsSameCache*) const {
+  const BufferEXT* og = that->AsBufferEXT();
+  if (!og) {
+    return false;
+  }
+  if (storage_class_ != og->storage_class_) {
+    return false;
   }
   return true;
 }

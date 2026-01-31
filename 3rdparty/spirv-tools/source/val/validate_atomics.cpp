@@ -224,7 +224,7 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst) {
       }
 
       // Can't use result_type because OpAtomicStore doesn't have a result
-      if (_.IsIntScalarType(data_type) && _.GetBitWidth(data_type) == 64 &&
+      if (_.IsIntScalarType(data_type, 64) &&
           !_.HasCapability(spv::Capability::Int64Atomics)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << spvOpcodeString(opcode)
@@ -357,7 +357,7 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst) {
       // If result and pointer type are different, need to do special check here
       if (opcode == spv::Op::OpAtomicFlagTestAndSet ||
           opcode == spv::Op::OpAtomicFlagClear) {
-        if (!_.IsIntScalarType(data_type) || _.GetBitWidth(data_type) != 32) {
+        if (!_.IsIntScalarType(data_type, 32)) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
                  << spvOpcodeString(opcode)
                  << ": expected Pointer to point to a value of 32-bit integer "

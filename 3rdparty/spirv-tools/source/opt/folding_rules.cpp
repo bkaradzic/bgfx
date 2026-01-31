@@ -116,12 +116,6 @@ bool IsValidResult(T val) {
   }
 }
 
-// Returns true if `type` is a cooperative matrix.
-bool IsCooperativeMatrix(const analysis::Type* type) {
-  return type->kind() == analysis::Type::kCooperativeMatrixKHR ||
-         type->kind() == analysis::Type::kCooperativeMatrixNV;
-}
-
 const analysis::Constant* ConstInput(
     const std::vector<const analysis::Constant*>& constants) {
   return constants[0] ? constants[0] : constants[1];
@@ -369,7 +363,7 @@ FoldingRule ReciprocalFDiv() {
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
 
-    if (IsCooperativeMatrix(type)) {
+    if (type->IsCooperativeMatrix()) {
       return false;
     }
 
@@ -455,7 +449,7 @@ FoldingRule MergeNegateMulDivArithmetic() {
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
 
-    if (IsCooperativeMatrix(type)) {
+    if (type->IsCooperativeMatrix()) {
       return false;
     }
 
@@ -522,7 +516,7 @@ FoldingRule MergeNegateAddSubArithmetic() {
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
 
-    if (IsCooperativeMatrix(type)) {
+    if (type->IsCooperativeMatrix()) {
       return false;
     }
 
@@ -767,7 +761,7 @@ FoldingRule MergeMulMulArithmetic() {
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
 
-    if (IsCooperativeMatrix(type)) {
+    if (type->IsCooperativeMatrix()) {
       return false;
     }
 
@@ -826,7 +820,7 @@ FoldingRule MergeMulDivArithmetic() {
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
 
-    if (IsCooperativeMatrix(type)) {
+    if (type->IsCooperativeMatrix()) {
       return false;
     }
 
@@ -904,7 +898,7 @@ FoldingRule MergeMulNegateArithmetic() {
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
 
-    if (IsCooperativeMatrix(type)) {
+    if (type->IsCooperativeMatrix()) {
       return false;
     }
 
@@ -941,14 +935,18 @@ static bool IsFoldableNegation(const Instruction* inst) {
            inst->IsFloatingPointFoldingAllowed()));
 }
 
-// Merges multiplies of two negations.
+// Merges multiplies / divisions of two negations.
 // Cases:
 // (-x) * (-y) = x * y
-FoldingRule MergeMulDoubleNegative() {
+// (-x) / (-y) = x / y
+FoldingRule MergeDivMulDoubleNegative() {
   return [](IRContext* context, Instruction* inst,
             const std::vector<const analysis::Constant*>&) {
     assert(inst->opcode() == spv::Op::OpFMul ||
-           inst->opcode() == spv::Op::OpIMul);
+           inst->opcode() == spv::Op::OpVectorTimesScalar ||
+           inst->opcode() == spv::Op::OpFDiv ||
+           inst->opcode() == spv::Op::OpIMul ||
+           inst->opcode() == spv::Op::OpSDiv);
 
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
@@ -985,7 +983,7 @@ FoldingRule MergeDivDivArithmetic() {
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
 
-    if (IsCooperativeMatrix(type)) {
+    if (type->IsCooperativeMatrix()) {
       return false;
     }
 
@@ -1063,7 +1061,7 @@ FoldingRule MergeDivMulArithmetic() {
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
 
-    if (IsCooperativeMatrix(type)) {
+    if (type->IsCooperativeMatrix()) {
       return false;
     }
 
@@ -1222,7 +1220,7 @@ FoldingRule MergeSubNegateArithmetic() {
       return true;
     }
 
-    if (IsCooperativeMatrix(type)) {
+    if (type->IsCooperativeMatrix()) {
       return false;
     }
 
@@ -1254,7 +1252,7 @@ FoldingRule MergeAddAddArithmetic() {
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
 
-    if (IsCooperativeMatrix(type)) {
+    if (type->IsCooperativeMatrix()) {
       return false;
     }
 
@@ -1307,7 +1305,7 @@ FoldingRule MergeAddSubArithmetic() {
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
 
-    if (IsCooperativeMatrix(type)) {
+    if (type->IsCooperativeMatrix()) {
       return false;
     }
 
@@ -1372,7 +1370,7 @@ FoldingRule MergeSubAddArithmetic() {
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
 
-    if (IsCooperativeMatrix(type)) {
+    if (type->IsCooperativeMatrix()) {
       return false;
     }
 
@@ -1443,7 +1441,7 @@ FoldingRule MergeSubSubArithmetic() {
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
 
-    if (IsCooperativeMatrix(type)) {
+    if (type->IsCooperativeMatrix()) {
       return false;
     }
 
@@ -1541,7 +1539,7 @@ FoldingRule MergeGenericAddSubArithmetic() {
     const analysis::Type* type =
         context->get_type_mgr()->GetType(inst->type_id());
 
-    if (IsCooperativeMatrix(type)) {
+    if (type->IsCooperativeMatrix()) {
       return false;
     }
 
@@ -3739,6 +3737,7 @@ void FoldingRules::AddFoldingRules() {
   rules_[spv::Op::OpFDiv].push_back(MergeDivDivArithmetic());
   rules_[spv::Op::OpFDiv].push_back(MergeDivMulArithmetic());
   rules_[spv::Op::OpFDiv].push_back(MergeDivNegateArithmetic());
+  rules_[spv::Op::OpFDiv].push_back(MergeDivMulDoubleNegative());
 
   rules_[spv::Op::OpFMod].push_back(RedundantFMod());
 
@@ -3746,7 +3745,9 @@ void FoldingRules::AddFoldingRules() {
   rules_[spv::Op::OpFMul].push_back(MergeMulMulArithmetic());
   rules_[spv::Op::OpFMul].push_back(MergeMulDivArithmetic());
   rules_[spv::Op::OpFMul].push_back(MergeMulNegateArithmetic());
-  rules_[spv::Op::OpFMul].push_back(MergeMulDoubleNegative());
+  rules_[spv::Op::OpFMul].push_back(MergeDivMulDoubleNegative());
+
+  rules_[spv::Op::OpVectorTimesScalar].push_back(MergeDivMulDoubleNegative());
 
   rules_[spv::Op::OpFNegate].push_back(MergeNegateArithmetic());
   rules_[spv::Op::OpFNegate].push_back(MergeNegateAddSubArithmetic());
@@ -3764,10 +3765,12 @@ void FoldingRules::AddFoldingRules() {
   rules_[spv::Op::OpIAdd].push_back(MergeGenericAddSubArithmetic());
   rules_[spv::Op::OpIAdd].push_back(FactorAddSubMuls());
 
+  rules_[spv::Op::OpSDiv].push_back(MergeDivMulDoubleNegative());
+
   rules_[spv::Op::OpIMul].push_back(IntMultipleBy1());
   rules_[spv::Op::OpIMul].push_back(MergeMulMulArithmetic());
   rules_[spv::Op::OpIMul].push_back(MergeMulNegateArithmetic());
-  rules_[spv::Op::OpIMul].push_back(MergeMulDoubleNegative());
+  rules_[spv::Op::OpIMul].push_back(MergeDivMulDoubleNegative());
 
   rules_[spv::Op::OpISub].push_back(MergeSubNegateArithmetic());
   rules_[spv::Op::OpISub].push_back(MergeSubAddArithmetic());

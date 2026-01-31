@@ -522,6 +522,29 @@ class ValidationState_t {
         [dec](const Decoration& d) { return dec == d.dec_type(); });
   }
 
+  /// Returns true if the given id <id> has the given built-in decoration <bt>,
+  /// otherwise returns false.
+  bool IsBuiltin(spv::Id id, spv::BuiltIn bt) {
+    for (auto& dec : id_decorations(id)) {
+      if (dec.dec_type() == spv::Decoration::BuiltIn) {
+        if (dec.builtin() == bt) return true;
+        break;
+      }
+    }
+    return false;
+  }
+
+  bool ContainsBuiltin(spv::Id id, spv::BuiltIn bt) {
+    const auto isHeapType = [&](const Instruction* inst) {
+      if (HasCapability(spv::Capability::DescriptorHeapEXT) &&
+          IsBuiltin(inst->id(), bt)) {
+        return true;
+      }
+      return false;
+    };
+    return ContainsType(uint32_t(id), isHeapType);
+  }
+
   /// Finds id's def, if it exists.  If found, returns the definition otherwise
   /// nullptr
   const Instruction* FindDef(uint32_t id) const;
@@ -664,6 +687,7 @@ class ValidationState_t {
   // Only works for types not for objects.
   bool IsVoidType(uint32_t id) const;
   bool IsScalarType(uint32_t id) const;
+  bool IsVectorType(uint32_t id) const;
   bool IsBfloat16ScalarType(uint32_t id) const;
   bool IsBfloat16VectorType(uint32_t id) const;
   bool IsBfloat16CoopMatType(uint32_t id) const;
@@ -672,7 +696,7 @@ class ValidationState_t {
   bool IsFP8VectorType(uint32_t id) const;
   bool IsFP8CoopMatType(uint32_t id) const;
   bool IsFP8Type(uint32_t id) const;
-  bool IsFloatScalarType(uint32_t id) const;
+  bool IsFloatScalarType(uint32_t id, uint32_t width = 0) const;
   bool IsFloatArrayType(uint32_t id) const;
   bool IsFloatVectorType(uint32_t id) const;
   bool IsFloat16Vector2Or4Type(uint32_t id) const;
@@ -707,6 +731,8 @@ class ValidationState_t {
   bool IsIntCooperativeVectorNVType(uint32_t id) const;
   bool IsUnsignedIntCooperativeVectorNVType(uint32_t id) const;
   bool IsTensorType(uint32_t id) const;
+  bool IsDescriptorType(spv::Op opcode) const;
+  bool IsDescriptorType(uint32_t id) const;
   // When |length| is not 0, return true only if the array length is equal to
   // |length| and the array length is not defined by a specialization constant.
   bool IsArrayType(uint32_t id, uint64_t length = 0) const;
@@ -736,6 +762,8 @@ class ValidationState_t {
   // This is designed to pass in the %type from a PSB pointer
   //   %ptr = OpTypePointer PhysicalStorageBuffer %type
   uint32_t GetLargestScalarType(uint32_t id) const;
+  bool IsDescriptorHeapBaseVariable(const Instruction* inst);
+  const Instruction* FindUntypedBaseVariable(const Instruction* inst);
 
   // Returns true if |id| is a type id that contains |type| (or integer or
   // floating point type) of |width| bits.

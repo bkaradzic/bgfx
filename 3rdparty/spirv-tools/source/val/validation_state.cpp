@@ -17,6 +17,7 @@
 #include "source/val/validation_state.h"
 
 #include <cassert>
+#include <cstdint>
 #include <stack>
 #include <utility>
 
@@ -69,6 +70,7 @@ ModuleLayoutSection InstructionLayoutSection(
       return kLayoutDebug3;
     case spv::Op::OpDecorate:
     case spv::Op::OpMemberDecorate:
+    case spv::Op::OpMemberDecorateIdEXT:
     case spv::Op::OpGroupDecorate:
     case spv::Op::OpGroupMemberDecorate:
     case spv::Op::OpDecorationGroup:
@@ -935,7 +937,7 @@ uint32_t ValidationState_t::GetComponentType(uint32_t id) const {
 
     case spv::Op::OpTypeCooperativeMatrixNV:
     case spv::Op::OpTypeCooperativeMatrixKHR:
-    case spv::Op::OpTypeCooperativeVectorNV:
+    case spv::Op::OpTypeVectorIdEXT:
       return inst->word(2);
 
     case spv::Op::OpTypeTensorARM:
@@ -967,9 +969,17 @@ uint32_t ValidationState_t::GetDimension(uint32_t id) const {
 
     case spv::Op::OpTypeCooperativeMatrixNV:
     case spv::Op::OpTypeCooperativeMatrixKHR:
-    case spv::Op::OpTypeCooperativeVectorNV:
       // Actual dimension isn't known, return 0
       return 0;
+
+    case spv::Op::OpTypeVectorIdEXT: {
+      uint64_t value = 0;
+      if (EvalConstantValUint64(inst->word(3), &value)) {
+        return static_cast<uint32_t>(value);
+      }
+
+      return 0;
+    }
 
     default:
       break;
@@ -1014,6 +1024,16 @@ bool ValidationState_t::IsScalarType(uint32_t id) const {
   return IsIntScalarType(id) || IsFloatScalarType(id) || IsBoolScalarType(id);
 }
 
+bool ValidationState_t::IsVectorType(uint32_t id) const {
+  const Instruction* inst = FindDef(id);
+  if (!inst) {
+    return false;
+  }
+
+  return inst->opcode() == spv::Op::OpTypeVector ||
+         inst->opcode() == spv::Op::OpTypeVectorIdEXT;
+}
+
 bool ValidationState_t::IsArrayType(uint32_t id, uint64_t length) const {
   const Instruction* inst = FindDef(id);
   if (!inst || inst->opcode() != spv::Op::OpTypeArray) {
@@ -1050,7 +1070,7 @@ bool ValidationState_t::IsBfloat16VectorType(uint32_t id) const {
     return false;
   }
 
-  if (inst->opcode() == spv::Op::OpTypeVector) {
+  if (IsVectorType(id)) {
     return IsBfloat16ScalarType(GetComponentType(id));
   }
 
@@ -1095,7 +1115,7 @@ bool ValidationState_t::IsFP8VectorType(uint32_t id) const {
     return false;
   }
 
-  if (inst->opcode() == spv::Op::OpTypeVector) {
+  if (IsVectorType(id)) {
     return IsFP8ScalarType(GetComponentType(id));
   }
 
@@ -1119,9 +1139,16 @@ bool ValidationState_t::IsFP8Type(uint32_t id) const {
   return IsFP8ScalarType(id) || IsFP8VectorType(id) || IsFP8CoopMatType(id);
 }
 
-bool ValidationState_t::IsFloatScalarType(uint32_t id) const {
+bool ValidationState_t::IsFloatScalarType(uint32_t id, uint32_t width) const {
   const Instruction* inst = FindDef(id);
-  return inst && inst->opcode() == spv::Op::OpTypeFloat;
+  bool is_float = inst && inst->opcode() == spv::Op::OpTypeFloat;
+  if (!is_float) {
+    return false;
+  }
+  if ((width != 0) && (width != inst->word(2))) {
+    return false;
+  }
+  return true;
 }
 
 bool ValidationState_t::IsFloatArrayType(uint32_t id) const {
@@ -1134,7 +1161,7 @@ bool ValidationState_t::IsFloatVectorType(uint32_t id) const {
     return false;
   }
 
-  if (inst->opcode() == spv::Op::OpTypeVector) {
+  if (IsVectorType(id)) {
     return IsFloatScalarType(GetComponentType(id));
   }
 
@@ -1142,10 +1169,7 @@ bool ValidationState_t::IsFloatVectorType(uint32_t id) const {
 }
 
 bool ValidationState_t::IsFloat16Vector2Or4Type(uint32_t id) const {
-  const Instruction* inst = FindDef(id);
-  assert(inst);
-
-  if (inst->opcode() == spv::Op::OpTypeVector) {
+  if (IsVectorType(id)) {
     uint32_t vectorDim = GetDimension(id);
     return IsFloatScalarType(GetComponentType(id)) &&
            (vectorDim == 2 || vectorDim == 4) &&
@@ -1165,7 +1189,7 @@ bool ValidationState_t::IsFloatScalarOrVectorType(uint32_t id) const {
     return true;
   }
 
-  if (inst->opcode() == spv::Op::OpTypeVector) {
+  if (IsVectorType(id)) {
     return IsFloatScalarType(GetComponentType(id));
   }
 
@@ -1201,7 +1225,7 @@ bool ValidationState_t::IsIntVectorType(uint32_t id) const {
     return false;
   }
 
-  if (inst->opcode() == spv::Op::OpTypeVector) {
+  if (IsVectorType(id)) {
     return IsIntScalarType(GetComponentType(id));
   }
 
@@ -1218,7 +1242,7 @@ bool ValidationState_t::IsIntScalarOrVectorType(uint32_t id) const {
     return true;
   }
 
-  if (inst->opcode() == spv::Op::OpTypeVector) {
+  if (IsVectorType(id)) {
     return IsIntScalarType(GetComponentType(id));
   }
 
@@ -1235,7 +1259,7 @@ bool ValidationState_t::IsUnsignedIntVectorType(uint32_t id) const {
     return false;
   }
 
-  if (inst->opcode() == spv::Op::OpTypeVector) {
+  if (IsVectorType(id)) {
     return IsUnsignedIntScalarType(GetComponentType(id));
   }
 
@@ -1252,7 +1276,7 @@ bool ValidationState_t::IsUnsignedIntScalarOrVectorType(uint32_t id) const {
     return inst->GetOperandAs<uint32_t>(2) == 0;
   }
 
-  if (inst->opcode() == spv::Op::OpTypeVector) {
+  if (IsVectorType(id)) {
     return IsUnsignedIntScalarType(GetComponentType(id));
   }
 
@@ -1270,7 +1294,7 @@ bool ValidationState_t::IsSignedIntVectorType(uint32_t id) const {
     return false;
   }
 
-  if (inst->opcode() == spv::Op::OpTypeVector) {
+  if (IsVectorType(id)) {
     return IsSignedIntScalarType(GetComponentType(id));
   }
 
@@ -1288,7 +1312,7 @@ bool ValidationState_t::IsBoolVectorType(uint32_t id) const {
     return false;
   }
 
-  if (inst->opcode() == spv::Op::OpTypeVector) {
+  if (IsVectorType(id)) {
     return IsBoolScalarType(GetComponentType(id));
   }
 
@@ -1305,7 +1329,7 @@ bool ValidationState_t::IsBoolScalarOrVectorType(uint32_t id) const {
     return true;
   }
 
-  if (inst->opcode() == spv::Op::OpTypeVector) {
+  if (IsVectorType(id)) {
     return IsBoolScalarType(GetComponentType(id));
   }
 
@@ -1413,6 +1437,7 @@ uint32_t ValidationState_t::GetLargestScalarType(uint32_t id) const {
     case spv::Op::OpTypeArray:
       return GetLargestScalarType(inst->GetOperandAs<uint32_t>(1));
     case spv::Op::OpTypeVector:
+    case spv::Op::OpTypeVectorIdEXT:
       return GetLargestScalarType(inst->GetOperandAs<uint32_t>(1));
     default:
       return GetBitWidth(id) / 8;
@@ -1499,7 +1524,7 @@ bool ValidationState_t::IsUnsigned64BitHandle(uint32_t id) const {
 
 bool ValidationState_t::IsCooperativeVectorNVType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
-  return inst && inst->opcode() == spv::Op::OpTypeCooperativeVectorNV;
+  return inst && inst->opcode() == spv::Op::OpTypeVectorIdEXT;
 }
 
 bool ValidationState_t::IsFloatCooperativeVectorNVType(uint32_t id) const {
@@ -1521,6 +1546,90 @@ bool ValidationState_t::IsUnsignedIntCooperativeVectorNVType(
 bool ValidationState_t::IsTensorType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
   return inst && inst->opcode() == spv::Op::OpTypeTensorARM;
+}
+
+// Opaque handles from [Descriptor] section (added from SPV_EXT_descriptor_heap)
+bool ValidationState_t::IsDescriptorType(spv::Op opcode) const {
+  return opcode == spv::Op::OpTypeBufferEXT || opcode == spv::Op::OpTypeImage ||
+         opcode == spv::Op::OpTypeTensorARM ||
+         opcode == spv::Op::OpTypeSampler ||
+         opcode == spv::Op::OpTypeAccelerationStructureKHR;
+}
+
+// Opaque handles from [Descriptor] section (added from SPV_EXT_descriptor_heap)
+bool ValidationState_t::IsDescriptorType(uint32_t id) const {
+  const Instruction* inst = FindDef(id);
+  return inst && IsDescriptorType(inst->opcode());
+}
+
+const Instruction* ValidationState_t::FindUntypedBaseVariable(
+    const Instruction* inst) {
+  bool found_heap_base = false;
+  const Instruction* base_inst = inst;
+  while (!found_heap_base) {
+    switch (base_inst->opcode()) {
+      case spv::Op::OpUntypedAccessChainKHR:
+      case spv::Op::OpUntypedInBoundsAccessChainKHR:
+      case spv::Op::OpUntypedPtrAccessChainKHR:
+      case spv::Op::OpUntypedInBoundsPtrAccessChainKHR:
+      case spv::Op::OpUntypedArrayLengthKHR:
+        base_inst = FindDef(base_inst->GetOperandAs<uint32_t>(3));
+        break;
+      case spv::Op::OpLoad:
+      case spv::Op::OpAtomicLoad:
+        if (GetIdOpcode(GetOperandTypeId(base_inst, 2)) ==
+            spv::Op::OpTypeUntypedPointerKHR) {
+          base_inst = FindDef(base_inst->GetOperandAs<uint32_t>(2));
+        }
+        break;
+      case spv::Op::OpAtomicExchange:
+      case spv::Op::OpAtomicCompareExchange:
+      case spv::Op::OpAtomicCompareExchangeWeak:
+      case spv::Op::OpAtomicIIncrement:
+      case spv::Op::OpAtomicIDecrement:
+      case spv::Op::OpAtomicIAdd:
+      case spv::Op::OpAtomicISub:
+      case spv::Op::OpAtomicSMin:
+      case spv::Op::OpAtomicUMin:
+      case spv::Op::OpAtomicSMax:
+      case spv::Op::OpAtomicUMax:
+      case spv::Op::OpAtomicAnd:
+      case spv::Op::OpAtomicOr:
+      case spv::Op::OpAtomicXor:
+        base_inst = FindDef(base_inst->GetOperandAs<uint32_t>(2));
+        break;
+      case spv::Op::OpStore:
+      case spv::Op::OpAtomicStore:
+        if (GetIdOpcode(GetOperandTypeId(base_inst, 0)) ==
+            spv::Op::OpTypeUntypedPointerKHR) {
+          base_inst = FindDef(base_inst->GetOperandAs<uint32_t>(0));
+        }
+        break;
+      default:
+        found_heap_base = true;
+        break;
+    }
+
+    if (found_heap_base) {
+      break;
+    }
+  }
+
+  return base_inst;
+}
+
+bool ValidationState_t::IsDescriptorHeapBaseVariable(const Instruction* inst) {
+  if (!HasCapability(spv::Capability::DescriptorHeapEXT)) {
+    return false;
+  }
+  const Instruction* base_inst = FindUntypedBaseVariable(inst);
+  const bool is_heap_base =
+      IsBuiltin(base_inst->id(), spv::BuiltIn::SamplerHeapEXT) ||
+      IsBuiltin(base_inst->id(), spv::BuiltIn::ResourceHeapEXT);
+
+  return FindDef(base_inst->id())->opcode() == spv::Op::OpBufferPointerEXT ||
+         (FindDef(base_inst->id())->opcode() == spv::Op::OpUntypedVariableKHR &&
+          is_heap_base);
 }
 
 spv_result_t ValidationState_t::CooperativeMatrixShapesMatch(
@@ -1927,7 +2036,7 @@ bool ValidationState_t::ContainsType(
     case spv::Op::OpTypeSampledImage:
     case spv::Op::OpTypeCooperativeMatrixNV:
     case spv::Op::OpTypeCooperativeMatrixKHR:
-    case spv::Op::OpTypeCooperativeVectorNV:
+    case spv::Op::OpTypeVectorIdEXT:
       return ContainsType(inst->GetOperandAs<uint32_t>(1u), f,
                           traverse_all_types);
     case spv::Op::OpTypePointer:
@@ -2002,6 +2111,7 @@ bool ValidationState_t::ContainsUntypedPointer(uint32_t id) const {
     case spv::Op::OpTypeArray:
     case spv::Op::OpTypeRuntimeArray:
     case spv::Op::OpTypeVector:
+    case spv::Op::OpTypeVectorIdEXT:
     case spv::Op::OpTypeMatrix:
     case spv::Op::OpTypeImage:
     case spv::Op::OpTypeSampledImage:
@@ -2776,6 +2886,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-None-10684);
     case 10685:
       return VUID_WRAP(VUID-StandaloneSpirv-None-10685); // formally 04683/06426
+    case 10823:
+      return VUID_WRAP(VUID-StandaloneSpirv-OpTypeFloat-10823);
     case 10824:
       // This use to be a standalone, but maintenance9 will set allow_vulkan_32_bit_bitwise now
       return VUID_WRAP(VUID-RuntimeSpirv-None-10824);
@@ -2813,10 +2925,32 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-TessLevelInner-10880);
     case 11167:
       return VUID_WRAP(VUID-StandaloneSpirv-OpUntypedVariableKHR-11167);
+    case 11239:
+        return VUID_WRAP(VUID-SamplerHeapEXT-SamplerHeapEXT-11239);
+    case 11241:
+        return VUID_WRAP(VUID-ResourceHeapEXT-ResourceHeapEXT-11241);
+    case 11336:
+        return VUID_WRAP(VUID-StandaloneSpirv-Result-11336);
+    case 11337:
+        return VUID_WRAP(VUID-StandaloneSpirv-Result-11337);
+    case 11339:
+        return VUID_WRAP(VUID-StandaloneSpirv-Result-11339);
+    case 11346:
+        return VUID_WRAP(VUID-StandaloneSpirv-Result-11346);
+    case 11347:
+        return VUID_WRAP(VUID-StandaloneSpirv-OpUntypedVariableKHR-11347);
+    case 11416:
+        return VUID_WRAP(VUID-StandaloneSpirv-OpUntypedImageTexelPointerEXT-11416);
+    case 11417:
+        return VUID_WRAP(VUID-StandaloneSpirv-OpTypeUntypedPointerKHR-11417);
+    case 11482:
+      return VUID_WRAP(VUID-StandaloneSpirv-DescriptorHeapEXT-11482);
     case 11805:
       return VUID_WRAP(VUID-StandaloneSpirv-OpArrayLength-11805);
     case 12243:
       return VUID_WRAP(VUID-StandaloneSpirv-Scope-12243);
+    case 12294:
+      return VUID_WRAP(VUID-StandaloneSpirv-Function-12294);
     default:
       return "";  // unknown id
   }

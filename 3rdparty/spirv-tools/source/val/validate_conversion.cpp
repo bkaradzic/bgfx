@@ -541,7 +541,10 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
                << "Expected input to be a pointer or int or float vector "
                << "or scalar: " << spvOpcodeString(opcode);
 
-      if (result_is_coopvec != input_is_coopvec)
+      // NV_cooperative_vector doesn't allow bitcasting between vec<->coopvec,
+      // but long_vector does.
+      if (result_is_coopvec != input_is_coopvec &&
+          !_.HasCapability(spv::Capability::LongVectorEXT))
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << "Cooperative vector can only be cast to another cooperative "
                << "vector: " << spvOpcodeString(opcode);
@@ -551,7 +554,8 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
                << "Cooperative matrix can only be cast to another cooperative "
                << "matrix: " << spvOpcodeString(opcode);
 
-      if (result_is_coopvec) {
+      if (result_is_coopvec && input_is_coopvec &&
+          !_.HasCapability(spv::Capability::LongVectorEXT)) {
         spv_result_t ret =
             _.CooperativeVectorDimensionsMatch(inst, result_type, input_type);
         if (ret != SPV_SUCCESS) return ret;

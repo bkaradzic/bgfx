@@ -153,6 +153,7 @@ int32_t spvOpcodeIsConstant(const spv::Op opcode) {
     case spv::Op::OpSpecConstantArchitectureINTEL:
     case spv::Op::OpSpecConstantTargetINTEL:
     case spv::Op::OpSpecConstantCapabilitiesINTEL:
+    case spv::Op::OpConstantSizeOfEXT:
       return true;
     default:
       return false;
@@ -183,7 +184,7 @@ int32_t spvOpcodeIsComposite(const spv::Op opcode) {
     case spv::Op::OpTypeRuntimeArray:
     case spv::Op::OpTypeCooperativeMatrixNV:
     case spv::Op::OpTypeCooperativeMatrixKHR:
-    case spv::Op::OpTypeCooperativeVectorNV:
+    case spv::Op::OpTypeVectorIdEXT:
       return true;
     default:
       return false;
@@ -198,8 +199,10 @@ bool spvOpcodeReturnsLogicalVariablePointer(const spv::Op opcode) {
     case spv::Op::OpInBoundsAccessChain:
     case spv::Op::OpUntypedAccessChainKHR:
     case spv::Op::OpUntypedInBoundsAccessChainKHR:
+    case spv::Op::OpBufferPointerEXT:
     case spv::Op::OpFunctionParameter:
     case spv::Op::OpImageTexelPointer:
+    case spv::Op::OpUntypedImageTexelPointerEXT:
     case spv::Op::OpCopyObject:
     case spv::Op::OpAllocateNodePayloadsAMDX:
     case spv::Op::OpSelect:
@@ -224,8 +227,10 @@ int32_t spvOpcodeReturnsLogicalPointer(const spv::Op opcode) {
     case spv::Op::OpInBoundsAccessChain:
     case spv::Op::OpUntypedAccessChainKHR:
     case spv::Op::OpUntypedInBoundsAccessChainKHR:
+    case spv::Op::OpBufferPointerEXT:
     case spv::Op::OpFunctionParameter:
     case spv::Op::OpImageTexelPointer:
+    case spv::Op::OpUntypedImageTexelPointerEXT:
     case spv::Op::OpCopyObject:
     case spv::Op::OpRawAccessChainNV:
     case spv::Op::OpAllocateNodePayloadsAMDX:
@@ -262,7 +267,7 @@ int32_t spvOpcodeGeneratesType(spv::Op op) {
     case spv::Op::OpTypeAccelerationStructureNV:
     case spv::Op::OpTypeCooperativeMatrixNV:
     case spv::Op::OpTypeCooperativeMatrixKHR:
-    case spv::Op::OpTypeCooperativeVectorNV:
+    case spv::Op::OpTypeVectorIdEXT:
     // case spv::Op::OpTypeAccelerationStructureKHR: covered by
     // spv::Op::OpTypeAccelerationStructureNV
     case spv::Op::OpTypeRayQueryKHR:
@@ -275,6 +280,7 @@ int32_t spvOpcodeGeneratesType(spv::Op op) {
     case spv::Op::OpTypeTensorARM:
     case spv::Op::OpTypeTaskSequenceINTEL:
     case spv::Op::OpTypeGraphARM:
+    case spv::Op::OpTypeBufferEXT:
       return true;
     default:
       // In particular, OpTypeForwardPointer does not generate a type,
@@ -290,6 +296,7 @@ bool spvOpcodeIsDecoration(const spv::Op opcode) {
     case spv::Op::OpDecorate:
     case spv::Op::OpDecorateId:
     case spv::Op::OpMemberDecorate:
+    case spv::Op::OpMemberDecorateIdEXT:
     case spv::Op::OpGroupDecorate:
     case spv::Op::OpGroupMemberDecorate:
     case spv::Op::OpDecorateStringGOOGLE:

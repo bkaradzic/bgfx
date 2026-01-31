@@ -180,6 +180,9 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst);
 /// Validates correctness of barrier instructions.
 spv_result_t BarriersPass(ValidationState_t& _, const Instruction* inst);
 
+/// Validates correctness of Group (Kernel) instructions.
+spv_result_t GroupPass(ValidationState_t& _, const Instruction* inst);
+
 /// Validates correctness of literal numbers.
 spv_result_t LiteralsPass(ValidationState_t& _, const Instruction* inst);
 
