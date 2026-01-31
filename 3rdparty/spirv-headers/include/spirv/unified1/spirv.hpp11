@@ -557,6 +557,8 @@ enum class Decoration : unsigned {
     PayloadNodeSparseArrayAMDX = 5099,
     PayloadNodeArraySizeAMDX = 5100,
     PayloadDispatchIndirectAMDX = 5105,
+    ArrayStrideIdEXT = 5124,
+    OffsetIdEXT = 5125,
     OverrideCoverageNV = 5248,
     PassthroughNV = 5250,
     ViewportRelativeNV = 5252,
@@ -573,8 +575,10 @@ enum class Decoration : unsigned {
     RestrictPointerEXT = 5355,
     AliasedPointer = 5356,
     AliasedPointerEXT = 5356,
+    MemberOffsetNV = 5358,
     HitObjectShaderRecordBufferNV = 5386,
     HitObjectShaderRecordBufferEXT = 5389,
+    BankNV = 5397,
     BindlessSamplerNV = 5398,
     BindlessImageNV = 5399,
     BoundSamplerNV = 5400,
@@ -768,6 +772,8 @@ enum class BuiltIn : unsigned {
     FragStencilRefEXT = 5014,
     RemainingRecursionLevelsAMDX = 5021,
     ShaderIndexAMDX = 5073,
+    SamplerHeapEXT = 5122,
+    ResourceHeapEXT = 5123,
     ViewportMaskNV = 5253,
     SecondaryPositionNV = 5257,
     SecondaryViewportMaskNV = 5258,
@@ -1030,8 +1036,11 @@ enum class GroupOperation : unsigned {
     InclusiveScan = 1,
     ExclusiveScan = 2,
     ClusteredReduce = 3,
+    PartitionedReduceEXT = 6,
     PartitionedReduceNV = 6,
+    PartitionedInclusiveScanEXT = 7,
     PartitionedInclusiveScanNV = 7,
+    PartitionedExclusiveScanEXT = 8,
     PartitionedExclusiveScanNV = 8,
     Max = 0x7fffffff,
 };
@@ -1187,6 +1196,7 @@ enum class Capability : unsigned {
     BFloat16TypeKHR = 5116,
     BFloat16DotProductKHR = 5117,
     BFloat16CooperativeMatrixKHR = 5118,
+    DescriptorHeapEXT = 5128,
     SampleMaskOverrideCoverageNV = 5249,
     GeometryShaderPassthroughNV = 5251,
     ShaderViewportIndexLayerEXT = 5254,
@@ -1204,6 +1214,7 @@ enum class Capability : unsigned {
     ComputeDerivativeGroupQuadsNV = 5288,
     FragmentDensityEXT = 5291,
     ShadingRateNV = 5291,
+    GroupNonUniformPartitionedEXT = 5297,
     GroupNonUniformPartitionedNV = 5297,
     ShaderNonUniform = 5301,
     ShaderNonUniformEXT = 5301,
@@ -1260,6 +1271,7 @@ enum class Capability : unsigned {
     RawAccessChainsNV = 5414,
     RayTracingSpheresGeometryNV = 5418,
     RayTracingLinearSweptSpheresGeometryNV = 5419,
+    PushConstantBanksNV = 5423,
     LongVectorEXT = 5425,
     Shader64BitIndexingEXT = 5426,
     CooperativeMatrixReductionsNV = 5430,
@@ -2138,6 +2150,11 @@ enum class Op : unsigned {
     OpSpecConstantStringAMDX = 5104,
     OpGroupNonUniformQuadAllKHR = 5110,
     OpGroupNonUniformQuadAnyKHR = 5111,
+    OpTypeBufferEXT = 5115,
+    OpBufferPointerEXT = 5119,
+    OpUntypedImageTexelPointerEXT = 5126,
+    OpMemberDecorateIdEXT = 5127,
+    OpConstantSizeOfEXT = 5129,
     OpHitObjectRecordHitMotionNV = 5249,
     OpHitObjectRecordHitWithIndexMotionNV = 5250,
     OpHitObjectRecordMissMotionNV = 5251,
@@ -2181,6 +2198,7 @@ enum class Op : unsigned {
     OpCooperativeMatrixConvertNV = 5293,
     OpEmitMeshTasksEXT = 5294,
     OpSetMeshOutputsEXT = 5295,
+    OpGroupNonUniformPartitionEXT = 5296,
     OpGroupNonUniformPartitionNV = 5296,
     OpWritePackedPrimitiveIndices4x8NV = 5299,
     OpFetchMicroTriangleVertexPositionNV = 5300,
@@ -3053,6 +3071,11 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpSpecConstantStringAMDX: *hasResult = true; *hasResultType = false; break;
     case Op::OpGroupNonUniformQuadAllKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpGroupNonUniformQuadAnyKHR: *hasResult = true; *hasResultType = true; break;
+    case Op::OpTypeBufferEXT: *hasResult = true; *hasResultType = false; break;
+    case Op::OpBufferPointerEXT: *hasResult = true; *hasResultType = true; break;
+    case Op::OpUntypedImageTexelPointerEXT: *hasResult = true; *hasResultType = true; break;
+    case Op::OpMemberDecorateIdEXT: *hasResult = false; *hasResultType = false; break;
+    case Op::OpConstantSizeOfEXT: *hasResult = true; *hasResultType = true; break;
     case Op::OpHitObjectRecordHitMotionNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpHitObjectRecordHitWithIndexMotionNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpHitObjectRecordMissMotionNV: *hasResult = false; *hasResultType = false; break;
@@ -3087,7 +3110,7 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpReorderThreadWithHintNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpTypeHitObjectNV: *hasResult = true; *hasResultType = false; break;
     case Op::OpImageSampleFootprintNV: *hasResult = true; *hasResultType = true; break;
-    case Op::OpTypeCooperativeVectorNV: *hasResult = true; *hasResultType = false; break;
+    case Op::OpTypeVectorIdEXT: *hasResult = true; *hasResultType = false; break;
     case Op::OpCooperativeVectorMatrixMulNV: *hasResult = true; *hasResultType = true; break;
     case Op::OpCooperativeVectorOuterProductAccumulateNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpCooperativeVectorReduceSumAccumulateNV: *hasResult = false; *hasResultType = false; break;
@@ -3095,7 +3118,7 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpCooperativeMatrixConvertNV: *hasResult = true; *hasResultType = true; break;
     case Op::OpEmitMeshTasksEXT: *hasResult = false; *hasResultType = false; break;
     case Op::OpSetMeshOutputsEXT: *hasResult = false; *hasResultType = false; break;
-    case Op::OpGroupNonUniformPartitionNV: *hasResult = true; *hasResultType = true; break;
+    case Op::OpGroupNonUniformPartitionEXT: *hasResult = true; *hasResultType = true; break;
     case Op::OpWritePackedPrimitiveIndices4x8NV: *hasResult = false; *hasResultType = false; break;
     case Op::OpFetchMicroTriangleVertexPositionNV: *hasResult = true; *hasResultType = true; break;
     case Op::OpFetchMicroTriangleVertexBarycentricNV: *hasResult = true; *hasResultType = true; break;
@@ -3924,6 +3947,8 @@ inline const char* DecorationToString(Decoration value) {
     case Decoration::PayloadNodeSparseArrayAMDX: return "PayloadNodeSparseArrayAMDX";
     case Decoration::PayloadNodeArraySizeAMDX: return "PayloadNodeArraySizeAMDX";
     case Decoration::PayloadDispatchIndirectAMDX: return "PayloadDispatchIndirectAMDX";
+    case Decoration::ArrayStrideIdEXT: return "ArrayStrideIdEXT";
+    case Decoration::OffsetIdEXT: return "OffsetIdEXT";
     case Decoration::OverrideCoverageNV: return "OverrideCoverageNV";
     case Decoration::PassthroughNV: return "PassthroughNV";
     case Decoration::ViewportRelativeNV: return "ViewportRelativeNV";
@@ -3935,8 +3960,10 @@ inline const char* DecorationToString(Decoration value) {
     case Decoration::NonUniform: return "NonUniform";
     case Decoration::RestrictPointer: return "RestrictPointer";
     case Decoration::AliasedPointer: return "AliasedPointer";
+    case Decoration::MemberOffsetNV: return "MemberOffsetNV";
     case Decoration::HitObjectShaderRecordBufferNV: return "HitObjectShaderRecordBufferNV";
     case Decoration::HitObjectShaderRecordBufferEXT: return "HitObjectShaderRecordBufferEXT";
+    case Decoration::BankNV: return "BankNV";
     case Decoration::BindlessSamplerNV: return "BindlessSamplerNV";
     case Decoration::BindlessImageNV: return "BindlessImageNV";
     case Decoration::BoundSamplerNV: return "BoundSamplerNV";
@@ -4084,6 +4111,8 @@ inline const char* BuiltInToString(BuiltIn value) {
     case BuiltIn::FragStencilRefEXT: return "FragStencilRefEXT";
     case BuiltIn::RemainingRecursionLevelsAMDX: return "RemainingRecursionLevelsAMDX";
     case BuiltIn::ShaderIndexAMDX: return "ShaderIndexAMDX";
+    case BuiltIn::SamplerHeapEXT: return "SamplerHeapEXT";
+    case BuiltIn::ResourceHeapEXT: return "ResourceHeapEXT";
     case BuiltIn::ViewportMaskNV: return "ViewportMaskNV";
     case BuiltIn::SecondaryPositionNV: return "SecondaryPositionNV";
     case BuiltIn::SecondaryViewportMaskNV: return "SecondaryViewportMaskNV";
@@ -4162,9 +4191,9 @@ inline const char* GroupOperationToString(GroupOperation value) {
     case GroupOperation::InclusiveScan: return "InclusiveScan";
     case GroupOperation::ExclusiveScan: return "ExclusiveScan";
     case GroupOperation::ClusteredReduce: return "ClusteredReduce";
-    case GroupOperation::PartitionedReduceNV: return "PartitionedReduceNV";
-    case GroupOperation::PartitionedInclusiveScanNV: return "PartitionedInclusiveScanNV";
-    case GroupOperation::PartitionedExclusiveScanNV: return "PartitionedExclusiveScanNV";
+    case GroupOperation::PartitionedReduceEXT: return "PartitionedReduceEXT";
+    case GroupOperation::PartitionedInclusiveScanEXT: return "PartitionedInclusiveScanEXT";
+    case GroupOperation::PartitionedExclusiveScanEXT: return "PartitionedExclusiveScanEXT";
     default: return "Unknown";
     }
 }
@@ -4311,6 +4340,7 @@ inline const char* CapabilityToString(Capability value) {
     case Capability::BFloat16TypeKHR: return "BFloat16TypeKHR";
     case Capability::BFloat16DotProductKHR: return "BFloat16DotProductKHR";
     case Capability::BFloat16CooperativeMatrixKHR: return "BFloat16CooperativeMatrixKHR";
+    case Capability::DescriptorHeapEXT: return "DescriptorHeapEXT";
     case Capability::SampleMaskOverrideCoverageNV: return "SampleMaskOverrideCoverageNV";
     case Capability::GeometryShaderPassthroughNV: return "GeometryShaderPassthroughNV";
     case Capability::ShaderViewportIndexLayerEXT: return "ShaderViewportIndexLayerEXT";
@@ -4324,7 +4354,7 @@ inline const char* CapabilityToString(Capability value) {
     case Capability::FragmentBarycentricKHR: return "FragmentBarycentricKHR";
     case Capability::ComputeDerivativeGroupQuadsKHR: return "ComputeDerivativeGroupQuadsKHR";
     case Capability::FragmentDensityEXT: return "FragmentDensityEXT";
-    case Capability::GroupNonUniformPartitionedNV: return "GroupNonUniformPartitionedNV";
+    case Capability::GroupNonUniformPartitionedEXT: return "GroupNonUniformPartitionedEXT";
     case Capability::ShaderNonUniform: return "ShaderNonUniform";
     case Capability::RuntimeDescriptorArray: return "RuntimeDescriptorArray";
     case Capability::InputAttachmentArrayDynamicIndexing: return "InputAttachmentArrayDynamicIndexing";
@@ -4363,6 +4393,7 @@ inline const char* CapabilityToString(Capability value) {
     case Capability::RawAccessChainsNV: return "RawAccessChainsNV";
     case Capability::RayTracingSpheresGeometryNV: return "RayTracingSpheresGeometryNV";
     case Capability::RayTracingLinearSweptSpheresGeometryNV: return "RayTracingLinearSweptSpheresGeometryNV";
+    case Capability::PushConstantBanksNV: return "PushConstantBanksNV";
     case Capability::LongVectorEXT: return "LongVectorEXT";
     case Capability::Shader64BitIndexingEXT: return "Shader64BitIndexingEXT";
     case Capability::CooperativeMatrixReductionsNV: return "CooperativeMatrixReductionsNV";
@@ -5088,6 +5119,11 @@ inline const char* OpToString(Op value) {
     case Op::OpSpecConstantStringAMDX: return "OpSpecConstantStringAMDX";
     case Op::OpGroupNonUniformQuadAllKHR: return "OpGroupNonUniformQuadAllKHR";
     case Op::OpGroupNonUniformQuadAnyKHR: return "OpGroupNonUniformQuadAnyKHR";
+    case Op::OpTypeBufferEXT: return "OpTypeBufferEXT";
+    case Op::OpBufferPointerEXT: return "OpBufferPointerEXT";
+    case Op::OpUntypedImageTexelPointerEXT: return "OpUntypedImageTexelPointerEXT";
+    case Op::OpMemberDecorateIdEXT: return "OpMemberDecorateIdEXT";
+    case Op::OpConstantSizeOfEXT: return "OpConstantSizeOfEXT";
     case Op::OpHitObjectRecordHitMotionNV: return "OpHitObjectRecordHitMotionNV";
     case Op::OpHitObjectRecordHitWithIndexMotionNV: return "OpHitObjectRecordHitWithIndexMotionNV";
     case Op::OpHitObjectRecordMissMotionNV: return "OpHitObjectRecordMissMotionNV";
@@ -5130,7 +5166,7 @@ inline const char* OpToString(Op value) {
     case Op::OpCooperativeMatrixConvertNV: return "OpCooperativeMatrixConvertNV";
     case Op::OpEmitMeshTasksEXT: return "OpEmitMeshTasksEXT";
     case Op::OpSetMeshOutputsEXT: return "OpSetMeshOutputsEXT";
-    case Op::OpGroupNonUniformPartitionNV: return "OpGroupNonUniformPartitionNV";
+    case Op::OpGroupNonUniformPartitionEXT: return "OpGroupNonUniformPartitionEXT";
     case Op::OpWritePackedPrimitiveIndices4x8NV: return "OpWritePackedPrimitiveIndices4x8NV";
     case Op::OpFetchMicroTriangleVertexPositionNV: return "OpFetchMicroTriangleVertexPositionNV";
     case Op::OpFetchMicroTriangleVertexBarycentricNV: return "OpFetchMicroTriangleVertexBarycentricNV";

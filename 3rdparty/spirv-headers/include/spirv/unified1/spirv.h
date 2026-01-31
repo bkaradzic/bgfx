@@ -561,6 +561,8 @@ typedef enum SpvDecoration_ {
     SpvDecorationPayloadNodeSparseArrayAMDX = 5099,
     SpvDecorationPayloadNodeArraySizeAMDX = 5100,
     SpvDecorationPayloadDispatchIndirectAMDX = 5105,
+    SpvDecorationArrayStrideIdEXT = 5124,
+    SpvDecorationOffsetIdEXT = 5125,
     SpvDecorationOverrideCoverageNV = 5248,
     SpvDecorationPassthroughNV = 5250,
     SpvDecorationViewportRelativeNV = 5252,
@@ -577,8 +579,10 @@ typedef enum SpvDecoration_ {
     SpvDecorationRestrictPointerEXT = 5355,
     SpvDecorationAliasedPointer = 5356,
     SpvDecorationAliasedPointerEXT = 5356,
+    SpvDecorationMemberOffsetNV = 5358,
     SpvDecorationHitObjectShaderRecordBufferNV = 5386,
     SpvDecorationHitObjectShaderRecordBufferEXT = 5389,
+    SpvDecorationBankNV = 5397,
     SpvDecorationBindlessSamplerNV = 5398,
     SpvDecorationBindlessImageNV = 5399,
     SpvDecorationBoundSamplerNV = 5400,
@@ -772,6 +776,8 @@ typedef enum SpvBuiltIn_ {
     SpvBuiltInFragStencilRefEXT = 5014,
     SpvBuiltInRemainingRecursionLevelsAMDX = 5021,
     SpvBuiltInShaderIndexAMDX = 5073,
+    SpvBuiltInSamplerHeapEXT = 5122,
+    SpvBuiltInResourceHeapEXT = 5123,
     SpvBuiltInViewportMaskNV = 5253,
     SpvBuiltInSecondaryPositionNV = 5257,
     SpvBuiltInSecondaryViewportMaskNV = 5258,
@@ -1034,8 +1040,11 @@ typedef enum SpvGroupOperation_ {
     SpvGroupOperationInclusiveScan = 1,
     SpvGroupOperationExclusiveScan = 2,
     SpvGroupOperationClusteredReduce = 3,
+    SpvGroupOperationPartitionedReduceEXT = 6,
     SpvGroupOperationPartitionedReduceNV = 6,
+    SpvGroupOperationPartitionedInclusiveScanEXT = 7,
     SpvGroupOperationPartitionedInclusiveScanNV = 7,
+    SpvGroupOperationPartitionedExclusiveScanEXT = 8,
     SpvGroupOperationPartitionedExclusiveScanNV = 8,
     SpvGroupOperationMax = 0x7fffffff,
 } SpvGroupOperation;
@@ -1191,6 +1200,7 @@ typedef enum SpvCapability_ {
     SpvCapabilityBFloat16TypeKHR = 5116,
     SpvCapabilityBFloat16DotProductKHR = 5117,
     SpvCapabilityBFloat16CooperativeMatrixKHR = 5118,
+    SpvCapabilityDescriptorHeapEXT = 5128,
     SpvCapabilitySampleMaskOverrideCoverageNV = 5249,
     SpvCapabilityGeometryShaderPassthroughNV = 5251,
     SpvCapabilityShaderViewportIndexLayerEXT = 5254,
@@ -1208,6 +1218,7 @@ typedef enum SpvCapability_ {
     SpvCapabilityComputeDerivativeGroupQuadsNV = 5288,
     SpvCapabilityFragmentDensityEXT = 5291,
     SpvCapabilityShadingRateNV = 5291,
+    SpvCapabilityGroupNonUniformPartitionedEXT = 5297,
     SpvCapabilityGroupNonUniformPartitionedNV = 5297,
     SpvCapabilityShaderNonUniform = 5301,
     SpvCapabilityShaderNonUniformEXT = 5301,
@@ -1264,6 +1275,7 @@ typedef enum SpvCapability_ {
     SpvCapabilityRawAccessChainsNV = 5414,
     SpvCapabilityRayTracingSpheresGeometryNV = 5418,
     SpvCapabilityRayTracingLinearSweptSpheresGeometryNV = 5419,
+    SpvCapabilityPushConstantBanksNV = 5423,
     SpvCapabilityLongVectorEXT = 5425,
     SpvCapabilityShader64BitIndexingEXT = 5426,
     SpvCapabilityCooperativeMatrixReductionsNV = 5430,
@@ -2142,6 +2154,11 @@ typedef enum SpvOp_ {
     SpvOpSpecConstantStringAMDX = 5104,
     SpvOpGroupNonUniformQuadAllKHR = 5110,
     SpvOpGroupNonUniformQuadAnyKHR = 5111,
+    SpvOpTypeBufferEXT = 5115,
+    SpvOpBufferPointerEXT = 5119,
+    SpvOpUntypedImageTexelPointerEXT = 5126,
+    SpvOpMemberDecorateIdEXT = 5127,
+    SpvOpConstantSizeOfEXT = 5129,
     SpvOpHitObjectRecordHitMotionNV = 5249,
     SpvOpHitObjectRecordHitWithIndexMotionNV = 5250,
     SpvOpHitObjectRecordMissMotionNV = 5251,
@@ -2185,6 +2202,7 @@ typedef enum SpvOp_ {
     SpvOpCooperativeMatrixConvertNV = 5293,
     SpvOpEmitMeshTasksEXT = 5294,
     SpvOpSetMeshOutputsEXT = 5295,
+    SpvOpGroupNonUniformPartitionEXT = 5296,
     SpvOpGroupNonUniformPartitionNV = 5296,
     SpvOpWritePackedPrimitiveIndices4x8NV = 5299,
     SpvOpFetchMicroTriangleVertexPositionNV = 5300,
@@ -3057,6 +3075,11 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpSpecConstantStringAMDX: *hasResult = true; *hasResultType = false; break;
     case SpvOpGroupNonUniformQuadAllKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpGroupNonUniformQuadAnyKHR: *hasResult = true; *hasResultType = true; break;
+    case SpvOpTypeBufferEXT: *hasResult = true; *hasResultType = false; break;
+    case SpvOpBufferPointerEXT: *hasResult = true; *hasResultType = true; break;
+    case SpvOpUntypedImageTexelPointerEXT: *hasResult = true; *hasResultType = true; break;
+    case SpvOpMemberDecorateIdEXT: *hasResult = false; *hasResultType = false; break;
+    case SpvOpConstantSizeOfEXT: *hasResult = true; *hasResultType = true; break;
     case SpvOpHitObjectRecordHitMotionNV: *hasResult = false; *hasResultType = false; break;
     case SpvOpHitObjectRecordHitWithIndexMotionNV: *hasResult = false; *hasResultType = false; break;
     case SpvOpHitObjectRecordMissMotionNV: *hasResult = false; *hasResultType = false; break;
@@ -3091,7 +3114,7 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpReorderThreadWithHintNV: *hasResult = false; *hasResultType = false; break;
     case SpvOpTypeHitObjectNV: *hasResult = true; *hasResultType = false; break;
     case SpvOpImageSampleFootprintNV: *hasResult = true; *hasResultType = true; break;
-    case SpvOpTypeCooperativeVectorNV: *hasResult = true; *hasResultType = false; break;
+    case SpvOpTypeVectorIdEXT: *hasResult = true; *hasResultType = false; break;
     case SpvOpCooperativeVectorMatrixMulNV: *hasResult = true; *hasResultType = true; break;
     case SpvOpCooperativeVectorOuterProductAccumulateNV: *hasResult = false; *hasResultType = false; break;
     case SpvOpCooperativeVectorReduceSumAccumulateNV: *hasResult = false; *hasResultType = false; break;
@@ -3099,7 +3122,7 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpCooperativeMatrixConvertNV: *hasResult = true; *hasResultType = true; break;
     case SpvOpEmitMeshTasksEXT: *hasResult = false; *hasResultType = false; break;
     case SpvOpSetMeshOutputsEXT: *hasResult = false; *hasResultType = false; break;
-    case SpvOpGroupNonUniformPartitionNV: *hasResult = true; *hasResultType = true; break;
+    case SpvOpGroupNonUniformPartitionEXT: *hasResult = true; *hasResultType = true; break;
     case SpvOpWritePackedPrimitiveIndices4x8NV: *hasResult = false; *hasResultType = false; break;
     case SpvOpFetchMicroTriangleVertexPositionNV: *hasResult = true; *hasResultType = true; break;
     case SpvOpFetchMicroTriangleVertexBarycentricNV: *hasResult = true; *hasResultType = true; break;
@@ -3928,6 +3951,8 @@ inline const char* SpvDecorationToString(SpvDecoration value) {
     case SpvDecorationPayloadNodeSparseArrayAMDX: return "PayloadNodeSparseArrayAMDX";
     case SpvDecorationPayloadNodeArraySizeAMDX: return "PayloadNodeArraySizeAMDX";
     case SpvDecorationPayloadDispatchIndirectAMDX: return "PayloadDispatchIndirectAMDX";
+    case SpvDecorationArrayStrideIdEXT: return "ArrayStrideIdEXT";
+    case SpvDecorationOffsetIdEXT: return "OffsetIdEXT";
     case SpvDecorationOverrideCoverageNV: return "OverrideCoverageNV";
     case SpvDecorationPassthroughNV: return "PassthroughNV";
     case SpvDecorationViewportRelativeNV: return "ViewportRelativeNV";
@@ -3939,8 +3964,10 @@ inline const char* SpvDecorationToString(SpvDecoration value) {
     case SpvDecorationNonUniform: return "NonUniform";
     case SpvDecorationRestrictPointer: return "RestrictPointer";
     case SpvDecorationAliasedPointer: return "AliasedPointer";
+    case SpvDecorationMemberOffsetNV: return "MemberOffsetNV";
     case SpvDecorationHitObjectShaderRecordBufferNV: return "HitObjectShaderRecordBufferNV";
     case SpvDecorationHitObjectShaderRecordBufferEXT: return "HitObjectShaderRecordBufferEXT";
+    case SpvDecorationBankNV: return "BankNV";
     case SpvDecorationBindlessSamplerNV: return "BindlessSamplerNV";
     case SpvDecorationBindlessImageNV: return "BindlessImageNV";
     case SpvDecorationBoundSamplerNV: return "BoundSamplerNV";
@@ -4088,6 +4115,8 @@ inline const char* SpvBuiltInToString(SpvBuiltIn value) {
     case SpvBuiltInFragStencilRefEXT: return "FragStencilRefEXT";
     case SpvBuiltInRemainingRecursionLevelsAMDX: return "RemainingRecursionLevelsAMDX";
     case SpvBuiltInShaderIndexAMDX: return "ShaderIndexAMDX";
+    case SpvBuiltInSamplerHeapEXT: return "SamplerHeapEXT";
+    case SpvBuiltInResourceHeapEXT: return "ResourceHeapEXT";
     case SpvBuiltInViewportMaskNV: return "ViewportMaskNV";
     case SpvBuiltInSecondaryPositionNV: return "SecondaryPositionNV";
     case SpvBuiltInSecondaryViewportMaskNV: return "SecondaryViewportMaskNV";
@@ -4166,9 +4195,9 @@ inline const char* SpvGroupOperationToString(SpvGroupOperation value) {
     case SpvGroupOperationInclusiveScan: return "InclusiveScan";
     case SpvGroupOperationExclusiveScan: return "ExclusiveScan";
     case SpvGroupOperationClusteredReduce: return "ClusteredReduce";
-    case SpvGroupOperationPartitionedReduceNV: return "PartitionedReduceNV";
-    case SpvGroupOperationPartitionedInclusiveScanNV: return "PartitionedInclusiveScanNV";
-    case SpvGroupOperationPartitionedExclusiveScanNV: return "PartitionedExclusiveScanNV";
+    case SpvGroupOperationPartitionedReduceEXT: return "PartitionedReduceEXT";
+    case SpvGroupOperationPartitionedInclusiveScanEXT: return "PartitionedInclusiveScanEXT";
+    case SpvGroupOperationPartitionedExclusiveScanEXT: return "PartitionedExclusiveScanEXT";
     default: return "Unknown";
     }
 }
@@ -4315,6 +4344,7 @@ inline const char* SpvCapabilityToString(SpvCapability value) {
     case SpvCapabilityBFloat16TypeKHR: return "BFloat16TypeKHR";
     case SpvCapabilityBFloat16DotProductKHR: return "BFloat16DotProductKHR";
     case SpvCapabilityBFloat16CooperativeMatrixKHR: return "BFloat16CooperativeMatrixKHR";
+    case SpvCapabilityDescriptorHeapEXT: return "DescriptorHeapEXT";
     case SpvCapabilitySampleMaskOverrideCoverageNV: return "SampleMaskOverrideCoverageNV";
     case SpvCapabilityGeometryShaderPassthroughNV: return "GeometryShaderPassthroughNV";
     case SpvCapabilityShaderViewportIndexLayerEXT: return "ShaderViewportIndexLayerEXT";
@@ -4328,7 +4358,7 @@ inline const char* SpvCapabilityToString(SpvCapability value) {
     case SpvCapabilityFragmentBarycentricKHR: return "FragmentBarycentricKHR";
     case SpvCapabilityComputeDerivativeGroupQuadsKHR: return "ComputeDerivativeGroupQuadsKHR";
     case SpvCapabilityFragmentDensityEXT: return "FragmentDensityEXT";
-    case SpvCapabilityGroupNonUniformPartitionedNV: return "GroupNonUniformPartitionedNV";
+    case SpvCapabilityGroupNonUniformPartitionedEXT: return "GroupNonUniformPartitionedEXT";
     case SpvCapabilityShaderNonUniform: return "ShaderNonUniform";
     case SpvCapabilityRuntimeDescriptorArray: return "RuntimeDescriptorArray";
     case SpvCapabilityInputAttachmentArrayDynamicIndexing: return "InputAttachmentArrayDynamicIndexing";
@@ -4367,6 +4397,7 @@ inline const char* SpvCapabilityToString(SpvCapability value) {
     case SpvCapabilityRawAccessChainsNV: return "RawAccessChainsNV";
     case SpvCapabilityRayTracingSpheresGeometryNV: return "RayTracingSpheresGeometryNV";
     case SpvCapabilityRayTracingLinearSweptSpheresGeometryNV: return "RayTracingLinearSweptSpheresGeometryNV";
+    case SpvCapabilityPushConstantBanksNV: return "PushConstantBanksNV";
     case SpvCapabilityLongVectorEXT: return "LongVectorEXT";
     case SpvCapabilityShader64BitIndexingEXT: return "Shader64BitIndexingEXT";
     case SpvCapabilityCooperativeMatrixReductionsNV: return "CooperativeMatrixReductionsNV";
@@ -5092,6 +5123,11 @@ inline const char* SpvOpToString(SpvOp value) {
     case SpvOpSpecConstantStringAMDX: return "OpSpecConstantStringAMDX";
     case SpvOpGroupNonUniformQuadAllKHR: return "OpGroupNonUniformQuadAllKHR";
     case SpvOpGroupNonUniformQuadAnyKHR: return "OpGroupNonUniformQuadAnyKHR";
+    case SpvOpTypeBufferEXT: return "OpTypeBufferEXT";
+    case SpvOpBufferPointerEXT: return "OpBufferPointerEXT";
+    case SpvOpUntypedImageTexelPointerEXT: return "OpUntypedImageTexelPointerEXT";
+    case SpvOpMemberDecorateIdEXT: return "OpMemberDecorateIdEXT";
+    case SpvOpConstantSizeOfEXT: return "OpConstantSizeOfEXT";
     case SpvOpHitObjectRecordHitMotionNV: return "OpHitObjectRecordHitMotionNV";
     case SpvOpHitObjectRecordHitWithIndexMotionNV: return "OpHitObjectRecordHitWithIndexMotionNV";
     case SpvOpHitObjectRecordMissMotionNV: return "OpHitObjectRecordMissMotionNV";
@@ -5134,7 +5170,7 @@ inline const char* SpvOpToString(SpvOp value) {
     case SpvOpCooperativeMatrixConvertNV: return "OpCooperativeMatrixConvertNV";
     case SpvOpEmitMeshTasksEXT: return "OpEmitMeshTasksEXT";
     case SpvOpSetMeshOutputsEXT: return "OpSetMeshOutputsEXT";
-    case SpvOpGroupNonUniformPartitionNV: return "OpGroupNonUniformPartitionNV";
+    case SpvOpGroupNonUniformPartitionEXT: return "OpGroupNonUniformPartitionEXT";
     case SpvOpWritePackedPrimitiveIndices4x8NV: return "OpWritePackedPrimitiveIndices4x8NV";
     case SpvOpFetchMicroTriangleVertexPositionNV: return "OpFetchMicroTriangleVertexPositionNV";
     case SpvOpFetchMicroTriangleVertexBarycentricNV: return "OpFetchMicroTriangleVertexBarycentricNV";
