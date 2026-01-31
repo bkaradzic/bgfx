@@ -229,6 +229,8 @@ const char* const E_GL_EXT_texture_offset_non_const         = "GL_EXT_texture_of
 const char* const E_GL_EXT_nontemporal_keyword              = "GL_EXT_nontemporal_keyword";
 const char* const E_GL_EXT_uniform_buffer_unsized_array     = "GL_EXT_uniform_buffer_unsized_array";
 const char* const E_GL_EXT_conservative_depth               = "GL_EXT_conservative_depth";
+const char* const E_GL_EXT_descriptor_heap                  = "GL_EXT_descriptor_heap";
+const char* const E_GL_EXT_structured_descriptor_heap       = "GL_EXT_structured_descriptor_heap";
 
 // Arrays of extensions for the above viewportEXTs duplications
 
@@ -293,6 +295,7 @@ const char* const E_GL_NV_cooperative_vector                    = "GL_NV_coopera
 const char* const E_GL_NV_cluster_acceleration_structure        = "GL_NV_cluster_acceleration_structure";
 const char* const E_GL_NV_linear_swept_spheres                  = "GL_NV_linear_swept_spheres";
 const char* const E_GL_NV_gpu_shader5                           = "GL_NV_gpu_shader5";
+const char* const E_GL_NV_push_constant_bank                    = "GL_NV_push_constant_bank";
 
 // ARM
 const char* const E_GL_ARM_shader_core_builtins                 = "GL_ARM_shader_core_builtins";
@@ -366,6 +369,7 @@ const char* const E_GL_EXT_integer_dot_product                    = "GL_EXT_inte
 const char* const E_GL_EXT_bfloat16 = "GL_EXT_bfloat16";
 const char* const E_GL_EXT_float_e5m2 = "GL_EXT_float_e5m2";
 const char* const E_GL_EXT_float_e4m3 = "GL_EXT_float_e4m3";
+const char* const E_GL_EXT_long_vector = "GL_EXT_long_vector";
 
 const char* const E_GL_EXT_shader_64bit_indexing = "GL_EXT_shader_64bit_indexing";
 

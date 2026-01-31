@@ -113,6 +113,7 @@ enum TOptions : uint64_t {
     EOptionDisplayErrorColumn = (1ull << 33),
     EOptionLinkTimeOptimization = (1ull << 34),
     EOptionValidateCrossStageIO = (1ull << 35),
+    EOptionBindingsPerResourceType = (1ull << 36),
 };
 bool targetHlslFunctionality1 = false;
 bool SpvToolsDisassembler = false;
@@ -918,6 +919,8 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         Options |= EOptionLinkTimeOptimization;
                     } else if (lowerword == "validate-io") {
                         Options |= EOptionValidateCrossStageIO;
+                    } else if (lowerword == "bindings-per-resource-type") {
+                        Options |= EOptionBindingsPerResourceType;
                     } else if (lowerword == "help") {
                         usage();
                         break;
@@ -1464,6 +1467,9 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
 
         if (emitNonSemanticShaderDebugInfo)
             shader->setDebugInfo(true);
+
+        if (Options & EOptionBindingsPerResourceType)
+            shader->setBindingsPerResourceType();
 
         // Set up the environment, some subsettings take precedence over earlier
         // ways of setting things.
@@ -2194,7 +2200,8 @@ void usage()
            "                                    creates a C header file that contains a\n"
            "                                    uint32_t array named <name> initialized with\n"
            "                                    the shader binary code\n"
-           "  --validate-io                     validate cross stage IO\n");
+           "  --validate-io                     validate cross stage IO\n"
+           "  --bindings-per-resource-type\n");
 
     exit(EFailUsage);
 }

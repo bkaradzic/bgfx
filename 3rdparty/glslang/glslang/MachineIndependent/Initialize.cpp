@@ -394,6 +394,83 @@ void AddTabledBuiltin(TString& decls, const BuiltInFunction& function)
     }
 }
 
+// Add long vector prototype for the builtin function. This is similar to
+// AddTabledBuiltin, but only generates builtins where one type is an
+// arbitrary vector. See comments on "enum ArgClass" for more details.
+void AddLongVectorBuiltin(TString& decls, const BuiltInFunction& function)
+{
+    const auto isScalarType = [](int type) { return (type & TypeStringColumnMask) == 0; };
+
+    // loop across these two:
+    //  0: the varying arg set, and
+    //  1: the fixed scalar args
+    const ArgClass ClassFixed = (ArgClass)(ClassLS | ClassXLS | ClassLS2 | ClassFS | ClassFS2);
+    for (int fixed = 0; fixed < ((function.classes & ClassFixed) > 0 ? 2 : 1); ++fixed) {
+
+        if (fixed == 0 && (function.classes & ClassXLS))
+            continue;
+
+        // Iterate over the different scalar types (needed for ClassRS)
+        for (int type = 0; type < TypeStringCount; ++type) {
+            if (!isScalarType(type))
+                continue;
+
+            // skip types not selected: go from type to row number to type bit
+            if ((function.types & (1 << (type >> TypeStringRowShift))) == 0)
+                continue;
+
+            // skip scalar-only
+            if (function.classes & ClassV1)
+                continue;
+
+            // skip 3-vector
+            if (function.classes & ClassV3)
+                continue;
+
+            TString decl;
+            // return type
+            if (function.classes & ClassB)
+                decl.append("vector");
+            else if (function.classes & ClassRS)
+                decl.append(TypeString[type & TypeStringScalarMask]);
+            else
+                decl.append("vector");
+            decl.append(" ");
+            decl.append(function.name);
+            decl.append("(");
+
+            // arguments
+            for (int arg = 0; arg < function.numArguments; ++arg) {
+                if (arg == function.numArguments - 1 && (function.classes & ClassLO))
+                    decl.append("out ");
+                if (arg == 0) {
+                    if (function.classes & ClassCVN)
+                        decl.append("coherent volatile nontemporal ");
+                    if (function.classes & ClassFIO)
+                        decl.append("inout ");
+                    if (function.classes & ClassFO)
+                        decl.append("out ");
+                }
+                if ((function.classes & ClassLB) && arg == function.numArguments - 1)
+                    decl.append("vector");
+                else if (fixed && ((arg == function.numArguments - 1 && (function.classes & (ClassLS | ClassXLS |
+                                                                                                       ClassLS2))) ||
+                                   (arg == function.numArguments - 2 && (function.classes & ClassLS2))             ||
+                                   (arg == 0                         && (function.classes & (ClassFS | ClassFS2))) ||
+                                   (arg == 1                         && (function.classes & ClassFS2))))
+                    decl.append(TypeString[type & TypeStringScalarMask]);
+                else
+                    decl.append("vector");
+                if (arg < function.numArguments - 1)
+                    decl.append(",");
+            }
+            decl.append(");\n");
+
+            decls.append(decl);
+        }
+    }
+}
+
 // See if the tabled versioning information allows the current version.
 bool ValidVersion(const BuiltInFunction& function, int version, EProfile profile, const SpvVersion& /* spVersion */)
 {
@@ -432,8 +509,12 @@ void TBuiltIns::addTabledBuiltins(int version, EProfile profile, const SpvVersio
 {
     const auto forEachFunction = [&](TString& decls, const span<const BuiltInFunction>& functions) {
         for (const auto& fn : functions) {
-            if (ValidVersion(fn, version, profile, spvVersion))
+            if (ValidVersion(fn, version, profile, spvVersion)) {
                 AddTabledBuiltin(decls, fn);
+                if (profile != EEsProfile) {
+                    AddLongVectorBuiltin(decls, fn);
+                }
+            }
         }
     };
 
@@ -2498,6 +2579,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 snprintf(buf, bufSize, op, intTypes[j], intTypes[j]);
                 commonBuiltins.append(buf);
             }
+            snprintf(buf, bufSize, op, "vector", "vector");
+            commonBuiltins.append(buf);
         }
 
         stageBuiltins[EShLangCompute].append(
@@ -5060,11 +5143,123 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "coopvecNV log(coopvecNV);\n"            
             "coopvecNV tanh(coopvecNV);\n"            
             "coopvecNV atan(coopvecNV);\n"            
-            "coopvecNV clamp(coopvecNV, coopvecNV, coopvecNV);\n"
-            "\n"
-            ;
+            "coopvecNV clamp(coopvecNV, coopvecNV, coopvecNV);\n";
 
         commonBuiltins.append(cooperativeVectorFuncs.c_str());
+
+        if (profile != EEsProfile) {
+            std::string longVectorFuncs =
+
+                // manually add long vector prototypes for functions not in BaseFunctions/etc
+                "vector frexp(vector, vector);\n"
+                "vector ldexp(vector, vector);\n"
+                "vector fma(vector, vector, vector);\n"
+
+                "vector floatBitsToInt(vector);\n"
+                "vector floatBitsToUint(vector);\n"
+                "vector intBitsToFloat(vector);\n"
+                "vector uintBitsToFloat(vector);\n"
+                "vector doubleBitsToInt64(vector);"
+                "vector doubleBitsToUint64(vector);"
+                "vector int64BitsToDouble(vector);"
+                "vector uint64BitsToDouble(vector);"
+                "vector bfloat16BitsToIntEXT(vector);"
+                "vector bfloat16BitsToUintEXT(vector);"
+                "vector intBitsToBFloat16EXT(vector);"
+                "vector uintBitsToBFloat16EXT(vector);"
+                "vector halfBitsToInt16(vector);"
+                "vector halfBitsToUint16(vector);"
+                "vector float16BitsToInt16(vector);"
+                "vector float16BitsToUint16(vector);"
+                "vector int16BitsToFloat16(vector);"
+                "vector uint16BitsToFloat16(vector);"
+                "vector int16BitsToHalf(vector);"
+                "vector uint16BitsToHalf(vector);"
+                "vector floate5m2BitsToIntEXT(vector);"
+                "vector floate5m2BitsToUintEXT(vector);"
+                "vector intBitsToFloate5m2EXT(vector);"
+                "vector uintBitsToFloate5m2EXT(vector);"
+                "vector floate4m3BitsToIntEXT(vector);"
+                "vector floate4m3BitsToUintEXT(vector);"
+                "vector intBitsToFloate4m3EXT(vector);"
+                "vector uintBitsToFloate4m3EXT(vector);"
+
+                "vector uaddCarry(highp vector, highp vector, out lowp vector carry);"
+                "vector usubBorrow(highp vector, highp vector, out lowp vector borrow);"
+                "void umulExtended(highp vector, highp vector, out highp vector, out highp vector);"
+                "void imulExtended(highp vector, highp vector, out highp vector, out highp vector);"
+                "vector bitfieldExtract(vector, int, int);"
+                "vector bitfieldInsert(vector, vector, int, int);"
+                "vector bitfieldReverse(highp vector);"
+                "vector bitCount(vector);"
+                "vector findLSB(vector);"
+                "vector findMSB(vector);"
+
+                // BaseFunctions overloads with a scalar parameter don't get generated in AddLongVectorBuiltin
+                "vector mod(vector, double);\n"
+                "vector min(vector, double);\n"
+                "vector max(vector, double);\n"
+                "vector clamp(vector, double, double);"
+                "vector mix(vector, vector,  double);"
+                "vector step(double, vector);"
+                "vector smoothstep(double, double, vector);"
+                "vector refract(vector, vector, double);"
+
+                "vector mod(vector, float16_t);\n"
+                "vector min(vector, float16_t);\n"
+                "vector max(vector, float16_t);\n"
+                "vector clamp(vector, float16_t, float16_t);"
+                "vector mix(vector, vector,  float16_t);"
+                "vector step(float16_t, vector);"
+                "vector smoothstep(float16_t, float16_t, vector);"
+                "vector refract(vector, vector, float16_t);"
+
+                "vector min(vector, uint64_t);\n"
+                "vector max(vector, uint64_t);\n"
+                "vector clamp(vector, uint64_t, uint64_t);"
+                "vector mix(vector, vector,  uint64_t);"
+
+                "vector min(vector, int64_t);\n"
+                "vector max(vector, int64_t);\n"
+                "vector clamp(vector, int64_t, int64_t);"
+                "vector mix(vector, vector,  int64_t);"
+
+                "vector min(vector, uint16_t);\n"
+                "vector max(vector, uint16_t);\n"
+                "vector clamp(vector, uint16_t, uint16_t);"
+                "vector mix(vector, vector,  uint16_t);"
+
+                "vector min(vector, int16_t);\n"
+                "vector max(vector, int16_t);\n"
+                "vector clamp(vector, int16_t, int16_t);"
+                "vector mix(vector, vector,  int16_t);"
+
+                "vector min(vector, uint8_t);\n"
+                "vector max(vector, uint8_t);\n"
+                "vector clamp(vector, uint8_t, uint8_t);"
+                "vector mix(vector, vector,  uint8_t);"
+
+                "vector min(vector, int8_t);\n"
+                "vector max(vector, int8_t);\n"
+                "vector clamp(vector, int8_t, int8_t);"
+                "vector mix(vector, vector,  int8_t);"
+
+                "vector expectEXT(vector, vector);"
+                ;
+
+            std::string longVectorDerivativeFuncs =
+                "vector dFdxFine(vector);"
+                "vector dFdyFine(vector);"
+                "vector fwidthFine(vector);"
+                "vector dFdxCoarse(vector);"
+                "vector dFdyCoarse(vector);"
+                "vector fwidthCoarse(vector);"
+
+                ;
+            commonBuiltins.append(longVectorFuncs.c_str());
+            stageBuiltins[EShLangFragment].append(longVectorDerivativeFuncs.c_str());
+            stageBuiltins[EShLangCompute].append(longVectorDerivativeFuncs.c_str());
+        }
 
         const char *scalarAndVectorTypes[] = {
             "int8_t",
@@ -11546,6 +11741,409 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     default:
         break;
     }
+}
+
+// Determine whether this fnCandidate overload is supported for these arguments.
+// Some of this is based on the BaseFunctions table, but for functions not in that
+// table there's some handcoded logic.
+// If the overload is supported, then this sets the specific parameter/result
+// types and returns true.
+bool IsSupportedLongVectorBuiltin(const TFunction* fnCandidate, TType* resultType, TIntermNode* arguments)
+{
+    TOperator op = fnCandidate->getBuiltInOp();
+
+    const auto &getArg = [&](uint32_t i) {
+        TIntermAggregate* aggregate = arguments->getAsAggregate();
+        return fnCandidate->getParamCount() == 1 ? arguments->getAsTyped() : (aggregate ? aggregate->getSequence()[i]->getAsTyped() : arguments->getAsTyped());
+    };
+
+    bool valid = true;
+
+    const auto &checkFnTypes = [&](TIntermTyped *t, uint32_t types) {
+        if (t->getType().isFloatingDomain() && !(types & TypeF)) {
+            valid = false;
+        }
+        if (isTypeSignedInt(t->getType().getBasicType()) && !(types & TypeI)) {
+            valid = false;
+        }
+        if (isTypeUnsignedInt(t->getType().getBasicType()) && !(types & TypeU)) {
+            valid = false;
+        }
+        if (t->getType().getBasicType() == EbtBool && !(types & TypeB)) {
+            valid = false;
+        }
+    };
+
+    const auto &checkShape = [&](TIntermTyped *t0, TIntermTyped *t1) {
+        if (!t0->getType().sameLongVectorShape(t1->getType())) {
+            valid = false;
+        }
+    };
+
+    const auto &checkSameType = [&](TIntermTyped *t0, TIntermTyped *t1) {
+        if (t0->getType() != t1->getType()) {
+            valid = false;
+        }
+    };
+
+    const auto &checkArgsMatch = [&](uint32_t argStart, uint32_t argEnd, uint32_t types) {
+        for (uint32_t i = argStart; i < argEnd; ++i) {
+            checkFnTypes(getArg(i), types);
+            if (i != argStart) {
+                checkSameType(getArg(argStart), getArg(i));
+            }
+        }
+    };
+
+    uint32_t paramCount = fnCandidate->getParamCount();
+
+    bool foundInBase = false;
+    for (const auto &fn : BaseFunctions) {
+        if (fn.op != op) {
+            continue;
+        }
+        valid = true;
+        foundInBase = true;
+
+        TIntermTyped *firstLongVector = nullptr;
+        for (uint32_t i = 0; i < paramCount; ++i) {
+            TIntermTyped* arg = getArg(i);
+
+            ArgType argType = fn.types;
+            if (i == paramCount - 1 && (fn.classes & ClassLB)) {
+                argType = TypeB;
+            }
+
+            checkFnTypes(arg, argType);
+
+            if ((fn.classes & ClassLS) && getArg(paramCount-1)->getType().isScalar()) {
+                if (getArg(paramCount-1)->getType().getBasicType() != arg->getBasicType()) {
+                    valid = false;
+                }
+            }
+
+            if (arg->getType().isLongVector()) {
+                if (firstLongVector != nullptr) {
+                    checkShape(firstLongVector, arg);
+                }
+                if (firstLongVector == nullptr) {
+                    firstLongVector = arg;
+                }
+            }
+        }
+
+        uint32_t argsToMatchStart = 0;
+        uint32_t argsToMatchEnd = paramCount;
+        if (fn.classes & ClassFS)
+            argsToMatchStart++;
+        if (fn.classes & ClassFS2)
+            argsToMatchStart += 2;
+        if ((fn.classes & ClassLS) && getArg(paramCount-1)->getType().isScalar())
+            argsToMatchEnd--;
+        if (fn.classes & ClassXLS)
+            argsToMatchEnd--;
+        if (fn.classes & ClassLS2)
+            argsToMatchEnd -= 2;
+        if (fn.classes & ClassLB)
+            argsToMatchEnd--;
+            
+        checkArgsMatch(argsToMatchStart, argsToMatchEnd, fn.types);
+
+        // These ops (arbitrarily) don't support double precision
+        switch (op) {
+        case EOpRadians:
+        case EOpDegrees:
+        case EOpSin:
+        case EOpCos:
+        case EOpTan:
+        case EOpAcos:
+        case EOpAsin:
+        case EOpAtan:
+        case EOpAcosh:
+        case EOpAsinh:
+        case EOpAtanh:
+        case EOpTanh:
+        case EOpCosh:
+        case EOpSinh:
+        case EOpPow:
+        case EOpExp:
+        case EOpLog:
+        case EOpExp2:
+        case EOpLog2:
+            if (getArg(0)->getType().getBasicType() == EbtDouble) {
+                return false;
+            }
+            break;
+        default:
+            break;
+        }
+
+        if (valid) {
+            // It's valid, so override the types and return true
+            assert(firstLongVector);
+            resultType->deepCopy(firstLongVector->getType());
+            if (fn.classes & ClassB) {
+                resultType->setBasicType(EbtBool);
+            }
+            if (fn.classes & ClassRS) {
+                resultType->deepCopy(TType(firstLongVector->getType().getBasicType()));
+            }
+            if (fn.classes & ClassLO) {
+                getArg(fnCandidate->getParamCount() - 1)->setType(getArg(0)->getType());
+            }
+            return true;
+        }
+    }
+    // If it was in the base table but not supported, fail. The rest of the logic
+    // is for ops not in the base table.
+    if (foundInBase) {
+        return false;
+    }
+
+    // Check the arg0 type and if this and other checks have passed, then set
+    // the result type to the bitcasted result
+    const auto &checkBitCast = [&](TBasicType fromBasicType, TBasicType newBasicType) {
+        if (getArg(0)->getType().getBasicType() != fromBasicType) {
+            valid = false;
+        }
+        if (valid) {
+            resultType->deepCopy(getArg(0)->getType());
+            resultType->setBasicType(newBasicType);
+        }
+    };
+
+    valid = true;
+    switch (op) {
+    case EOpFrexp:
+    case EOpLdexp:
+        checkFnTypes(getArg(0), TypeF);
+        checkFnTypes(getArg(1), TypeI);
+        checkShape(getArg(0), getArg(1));
+        if (valid) {
+            resultType->deepCopy(getArg(0)->getType());
+        }
+        return valid;
+    case EOpFloatBitsToInt:
+        if (fnCandidate->getName() == "bfloat16BitsToIntEXT") {
+            checkBitCast(EbtBFloat16, EbtInt16);
+        } else if (fnCandidate->getName() == "floate5m2BitsToIntEXT") {
+            checkBitCast(EbtFloatE5M2, EbtInt8);
+        } else if (fnCandidate->getName() == "floate4m3BitsToIntEXT") {
+            checkBitCast(EbtFloatE4M3, EbtInt8);
+        } else {
+            checkBitCast(EbtFloat, EbtInt);
+        }
+        return valid;
+    case EOpFloatBitsToUint:
+        if (fnCandidate->getName() == "bfloat16BitsToUintEXT") {
+            checkBitCast(EbtBFloat16, EbtUint16);
+        } else if (fnCandidate->getName() == "floate5m2BitsToUintEXT") {
+            checkBitCast(EbtFloatE5M2, EbtUint8);
+        } else if (fnCandidate->getName() == "floate4m3BitsToUintEXT") {
+            checkBitCast(EbtFloatE4M3, EbtUint8);
+        } else {
+            checkBitCast(EbtFloat, EbtUint);
+        }
+        return valid;
+    case EOpIntBitsToFloat:
+        if (fnCandidate->getName() == "intBitsToBFloat16EXT") {
+            checkBitCast(EbtInt16, EbtBFloat16);
+        } else if (fnCandidate->getName() == "intBitsToFloate5m2EXT") {
+            checkBitCast(EbtInt8, EbtFloatE5M2);
+        } else if (fnCandidate->getName() == "intBitsToFloate4m3EXT") {
+            checkBitCast(EbtInt8, EbtFloatE4M3);
+        } else {
+            checkBitCast(EbtInt, EbtFloat);
+        }
+        return valid;
+    case EOpUintBitsToFloat:
+        if (fnCandidate->getName() == "uintBitsToBFloat16EXT") {
+            checkBitCast(EbtUint16, EbtBFloat16);
+        } else if (fnCandidate->getName() == "uintBitsToFloate5m2EXT") {
+            checkBitCast(EbtUint8, EbtFloatE5M2);
+        } else if (fnCandidate->getName() == "uintBitsToFloate4m3EXT") {
+            checkBitCast(EbtUint8, EbtFloatE4M3);
+        } else {
+            checkBitCast(EbtUint, EbtFloat);
+        }
+        return valid;
+    case EOpDoubleBitsToInt64:
+        checkBitCast(EbtDouble, EbtInt64);
+        return valid;
+    case EOpDoubleBitsToUint64:
+        checkBitCast(EbtDouble, EbtUint64);
+        return valid;
+    case EOpInt64BitsToDouble:
+        checkBitCast(EbtInt64, EbtDouble);
+        return valid;
+    case EOpUint64BitsToDouble:
+        checkBitCast(EbtUint64, EbtDouble);
+        return valid;
+    case EOpFloat16BitsToInt16:
+        checkBitCast(EbtFloat16, EbtInt16);
+        return valid;
+    case EOpFloat16BitsToUint16:
+        checkBitCast(EbtFloat16, EbtUint16);
+        return valid;
+    case EOpInt16BitsToFloat16:
+        checkBitCast(EbtInt16, EbtFloat16);
+        return valid;
+    case EOpUint16BitsToFloat16:
+        checkBitCast(EbtUint16, EbtFloat16);
+        return valid;
+
+    case EOpFma:
+        checkArgsMatch(0, paramCount, TypeF);
+        if (valid) {
+            resultType->deepCopy(getArg(0)->getType());
+        }
+        return valid;
+    case EOpAddCarry:
+    case EOpSubBorrow:
+        checkArgsMatch(0, paramCount, TypeU);
+        if (valid) {
+            resultType->deepCopy(getArg(0)->getType());
+        }
+        return valid;
+    case EOpUMulExtended:
+        checkArgsMatch(0, paramCount, TypeU);
+        return valid;
+    case EOpIMulExtended:
+        checkArgsMatch(0, paramCount, TypeI);
+        return valid;
+    case EOpBitfieldExtract:
+    case EOpBitFieldReverse:
+        checkFnTypes(getArg(0), TypeIU);
+        if (valid) {
+            resultType->deepCopy(getArg(0)->getType());
+        }
+        return valid;
+    case EOpBitfieldInsert:
+        checkArgsMatch(0, 2, TypeIU);
+        checkSameType(getArg(0), getArg(1));
+        if (valid) {
+            resultType->deepCopy(getArg(0)->getType());
+        }
+        return valid;
+    case EOpFindLSB:
+    case EOpFindMSB:
+    case EOpBitCount:
+        checkFnTypes(getArg(0), TypeIU);
+        if (valid) {
+            TType newType;
+            newType.deepCopy(getArg(0)->getType());
+            newType.setBasicType(unsignedTypeToSigned(newType.getBasicType()));
+            resultType->deepCopy(newType);
+        }
+        return valid;
+    case EOpDPdx:
+    case EOpDPdxFine:
+    case EOpDPdxCoarse:
+    case EOpDPdy:
+    case EOpDPdyFine:
+    case EOpDPdyCoarse:
+    case EOpFwidth:
+    case EOpFwidthFine:
+    case EOpFwidthCoarse:
+        checkFnTypes(getArg(0), TypeF);
+        if (valid) {
+            resultType->deepCopy(getArg(0)->getType());
+        }
+        return valid;
+    case EOpExpectEXT:
+        checkArgsMatch(0, paramCount, TypeIU | TypeB);
+        if (valid) {
+            resultType->deepCopy(getArg(0)->getType());
+        }
+        return valid;
+
+    case EOpSubgroupPartition:
+        resultType->deepCopy(TType(EbtUint, EvqTemporary, 4));
+        return valid;
+    case EOpSubgroupAllEqual:
+        resultType->deepCopy(TType(EbtBool));
+        return valid;
+
+    case EOpSubgroupAnd:
+    case EOpSubgroupOr:
+    case EOpSubgroupXor:
+    case EOpSubgroupInclusiveAnd:
+    case EOpSubgroupInclusiveOr:
+    case EOpSubgroupInclusiveXor:
+    case EOpSubgroupExclusiveAnd:
+    case EOpSubgroupExclusiveOr:
+    case EOpSubgroupExclusiveXor:
+    case EOpSubgroupClusteredAnd:
+    case EOpSubgroupClusteredOr:
+    case EOpSubgroupClusteredXor:
+    case EOpSubgroupPartitionedAnd:
+    case EOpSubgroupPartitionedOr:
+    case EOpSubgroupPartitionedXor:
+    case EOpSubgroupPartitionedInclusiveAnd:
+    case EOpSubgroupPartitionedInclusiveOr:
+    case EOpSubgroupPartitionedInclusiveXor:
+    case EOpSubgroupPartitionedExclusiveAnd:
+    case EOpSubgroupPartitionedExclusiveOr:
+    case EOpSubgroupPartitionedExclusiveXor:
+        checkFnTypes(getArg(0), TypeIU | TypeB);
+        if (valid) {
+            resultType->deepCopy(getArg(0)->getType());
+        }
+        return valid;
+    case EOpSubgroupBroadcast:
+    case EOpSubgroupBroadcastFirst:
+    case EOpSubgroupShuffle:
+    case EOpSubgroupShuffleXor:
+    case EOpSubgroupShuffleUp:
+    case EOpSubgroupShuffleDown:
+    case EOpSubgroupRotate:
+    case EOpSubgroupClusteredRotate:
+    case EOpSubgroupQuadBroadcast:
+    case EOpSubgroupQuadSwapHorizontal:
+    case EOpSubgroupQuadSwapVertical:
+    case EOpSubgroupQuadSwapDiagonal:
+        checkFnTypes(getArg(0), TypeIU | TypeB | TypeF);
+        if (valid) {
+            resultType->deepCopy(getArg(0)->getType());
+        }
+        return valid;
+    case EOpSubgroupAdd:
+    case EOpSubgroupMul:
+    case EOpSubgroupMin:
+    case EOpSubgroupMax:
+    case EOpSubgroupInclusiveAdd:
+    case EOpSubgroupInclusiveMul:
+    case EOpSubgroupInclusiveMin:
+    case EOpSubgroupInclusiveMax:
+    case EOpSubgroupExclusiveAdd:
+    case EOpSubgroupExclusiveMul:
+    case EOpSubgroupExclusiveMin:
+    case EOpSubgroupExclusiveMax:
+    case EOpSubgroupClusteredAdd:
+    case EOpSubgroupClusteredMul:
+    case EOpSubgroupClusteredMin:
+    case EOpSubgroupClusteredMax:
+    case EOpSubgroupPartitionedAdd:
+    case EOpSubgroupPartitionedMul:
+    case EOpSubgroupPartitionedMin:
+    case EOpSubgroupPartitionedMax:
+    case EOpSubgroupPartitionedInclusiveAdd:
+    case EOpSubgroupPartitionedInclusiveMul:
+    case EOpSubgroupPartitionedInclusiveMin:
+    case EOpSubgroupPartitionedInclusiveMax:
+    case EOpSubgroupPartitionedExclusiveAdd:
+    case EOpSubgroupPartitionedExclusiveMul:
+    case EOpSubgroupPartitionedExclusiveMin:
+    case EOpSubgroupPartitionedExclusiveMax:
+        checkFnTypes(getArg(0), TypeIU | TypeF);
+        if (valid) {
+            resultType->deepCopy(getArg(0)->getType());
+        }
+        return valid;
+    default:
+        break;
+    }
+    return false;
 }
 
 } // end namespace glslang

@@ -190,6 +190,27 @@ Id Builder::makeForwardPointer(StorageClass storageClass)
     return type->getResultId();
 }
 
+Id Builder::makeUntypedPointer(StorageClass storageClass, bool setBufferPointer)
+{
+    // try to find it
+    Instruction* type;
+    // both typeBufferEXT and UntypedPointer only contains storage class info.
+    spv::Op typeOp = setBufferPointer ? Op::OpTypeBufferEXT : Op::OpTypeUntypedPointerKHR;
+    for (int t = 0; t < (int)groupedTypes[enumCast(typeOp)].size(); ++t) {
+        type = groupedTypes[enumCast(typeOp)][t];
+        if (type->getImmediateOperand(0) == (unsigned)storageClass)
+            return type->getResultId();
+    }
+
+    // not found, make it
+    type = new Instruction(getUniqueId(), NoType, typeOp);
+    type->addImmediateOperand(storageClass);
+    groupedTypes[enumCast(typeOp)].push_back(type);
+    constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
+    module.mapInstruction(type);
+    return type->getResultId();
+}
+
 Id Builder::makePointerFromForwardPointer(StorageClass storageClass, Id forwardPointerType, Id pointee)
 {
     // try to find it
@@ -1767,6 +1788,7 @@ bool Builder::isConstantOpCode(Op opcode) const
     case Op::OpSpecConstantComposite:
     case Op::OpSpecConstantCompositeReplicateEXT:
     case Op::OpSpecConstantOp:
+    case Op::OpConstantSizeOfEXT:
         return true;
     default:
         return false;
@@ -2429,6 +2451,23 @@ void Builder::addDecorationId(Id id, Decoration decoration, const std::vector<Id
     decorations.insert(std::unique_ptr<Instruction>(dec));
 }
 
+void Builder::addMemberDecorationIdEXT(Id id, unsigned int member, Decoration decoration,
+                                       const std::vector<unsigned>& operands)
+{
+    if (decoration == spv::Decoration::Max)
+        return;
+
+    Instruction* dec = new Instruction(Op::OpMemberDecorateIdEXT);
+    dec->reserveOperands(operands.size() + 3);
+    dec->addIdOperand(id);
+    dec->addImmediateOperand(member);
+    dec->addImmediateOperand(decoration);
+    for (auto operand : operands)
+        dec->addIdOperand(operand);
+
+    decorations.insert(std::unique_ptr<Instruction>(dec));
+}
+
 void Builder::addMemberDecoration(Id id, unsigned int member, Decoration decoration, int num)
 {
     if (decoration == spv::Decoration::Max)
@@ -2845,6 +2884,38 @@ void Builder::createConstVariable(Id type, const char* name, Id constant, bool i
 }
 
 // Comments in header
+Id Builder::createUntypedVariable(Decoration precision, StorageClass storageClass, const char* name, Id dataType,
+                                  Id initializer)
+{
+    Id resultUntypedPointerType = makeUntypedPointer(storageClass);
+    Instruction* inst = new Instruction(getUniqueId(), resultUntypedPointerType, Op::OpUntypedVariableKHR);
+    inst->addImmediateOperand(storageClass);
+    if (dataType != NoResult) {
+        Id dataPointerType = makePointer(storageClass, dataType);
+        inst->addIdOperand(dataPointerType);
+    }
+    if (initializer != NoResult)
+        inst->addIdOperand(initializer);
+
+    switch (storageClass) {
+    case StorageClass::Function:
+        // Validation rules require the declaration in the entry block
+        buildPoint->getParent().addLocalVariable(std::unique_ptr<Instruction>(inst));
+        break;
+    default:
+        constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(inst));
+        module.mapInstruction(inst);
+        break;
+    }
+
+    if (name)
+        addName(inst->getResultId(), name);
+    setPrecision(inst->getResultId(), precision);
+
+    return inst->getResultId();
+}
+
+// Comments in header
 Id Builder::createVariable(Decoration precision, StorageClass storageClass, Id type, const char* name, Id initializer,
     bool const compilerGenerated)
 {
@@ -2916,9 +2987,14 @@ spv::MemoryAccessMask Builder::sanitizeMemoryAccessForStorageClass(spv::MemoryAc
 void Builder::createStore(Id rValue, Id lValue, spv::MemoryAccessMask memoryAccess, spv::Scope scope,
     unsigned int alignment)
 {
-    Instruction* store = new Instruction(Op::OpStore);
-    store->reserveOperands(2);
-    store->addIdOperand(lValue);
+    Instruction* store = nullptr;
+    if (isUntypedPointer(lValue))
+        store = createDescHeapLoadStoreBaseRemap(lValue, Op::OpStore);
+    else {
+        store = new Instruction(Op::OpStore);
+        store->reserveOperands(2);
+        store->addIdOperand(lValue);
+    }
     store->addIdOperand(rValue);
 
     memoryAccess = sanitizeMemoryAccessForStorageClass(memoryAccess, getStorageClass(lValue));
@@ -2940,8 +3016,13 @@ void Builder::createStore(Id rValue, Id lValue, spv::MemoryAccessMask memoryAcce
 Id Builder::createLoad(Id lValue, spv::Decoration precision, spv::MemoryAccessMask memoryAccess,
     spv::Scope scope, unsigned int alignment)
 {
-    Instruction* load = new Instruction(getUniqueId(), getDerefTypeId(lValue), Op::OpLoad);
-    load->addIdOperand(lValue);
+    Instruction* load = nullptr;
+    if (isUntypedPointer(lValue))
+        load = createDescHeapLoadStoreBaseRemap(lValue, Op::OpLoad);
+    else {
+        load = new Instruction(getUniqueId(), getDerefTypeId(lValue), Op::OpLoad);
+        load->addIdOperand(lValue);
+    }
 
     memoryAccess = sanitizeMemoryAccessForStorageClass(memoryAccess, getStorageClass(lValue));
 
@@ -2959,6 +3040,172 @@ Id Builder::createLoad(Id lValue, spv::Decoration precision, spv::MemoryAccessMa
     setPrecision(load->getResultId(), precision);
 
     return load->getResultId();
+}
+
+Instruction* Builder::createDescHeapLoadStoreBaseRemap(Id baseId, Op op)
+{
+    // could only be untypedAccessChain or BufferPointerEXT op.
+    spv::Op instOp = module.getInstruction(baseId)->getOpCode();
+    spv::Id baseVal = baseId;
+    // base type (from run time array)
+    spv::Id resultTy = getIdOperand(baseId, 0);
+    // Descriptor heap using run time array.
+    if (accessChain.descHeapInfo.descHeapStorageClass != StorageClass::Max)
+        resultTy = getIdOperand(resultTy, 0);
+    if (instOp == Op::OpBufferPointerEXT) {
+        // get base structure type from run time array of buffer structure type.
+        // create an extra untyped access chain for buffer pointer.
+        resultTy = accessChain.descHeapInfo.descHeapBaseTy;
+        Instruction* chain = new Instruction(getUniqueId(), getTypeId(baseId), Op::OpUntypedAccessChainKHR);
+        // base type.
+        chain->addIdOperand(resultTy);
+        // base
+        chain->addIdOperand(baseId);
+        // index
+        for (int i = 0; i < (int)accessChain.indexChain.size(); ++i) {
+            chain->addIdOperand(accessChain.indexChain[i]);
+        }
+        addInstruction(std::unique_ptr<Instruction>(chain));
+        baseVal = chain->getResultId();
+        clearAccessChain();
+    } else if (instOp != Op::OpUntypedAccessChainKHR) {
+        assert("Not a untyped load type");
+    }
+
+    Instruction* inst = nullptr;
+    if (op == Op::OpStore)
+        inst = new Instruction(Op::OpStore);
+    else {
+        inst = new Instruction(getUniqueId(), resultTy, Op::OpLoad);
+        accessChain.descHeapInfo.descHeapInstId.push_back(inst);
+    }
+    inst->addIdOperand(baseVal);
+    return inst;
+}
+
+uint32_t Builder::isStructureHeapMember(Id id, std::vector<Id> indexChain,
+    unsigned int idx, spv::BuiltIn* bt, uint32_t* firstArrIndex)
+{
+    unsigned currentIdx = idx;
+    // Process types, only array types could contain no constant id operands.
+    Id baseId = id;
+    if (baseId == NoType)
+        return 0;
+    if (isPointerType(baseId))
+        baseId = getContainedTypeId(baseId);
+    auto baseInst = module.getInstruction(baseId);
+    if (baseInst->getOpCode() == spv::Op::OpTypeArray ||
+        baseInst->getOpCode() == spv::Op::OpTypeRuntimeArray) {
+        if (firstArrIndex)
+            *firstArrIndex = currentIdx;
+        baseId = getContainedTypeId(baseId);
+        baseInst = module.getInstruction(baseId);
+        currentIdx++;
+    }
+    if (currentIdx >= indexChain.size())
+        return 0;
+    // Process index op.
+    auto indexInst = module.getInstruction(indexChain[currentIdx]);
+    if (indexInst->getOpCode() != spv::Op::OpConstant)
+        return 0;
+    auto index = indexInst->getImmediateOperand(0);
+    for (auto dec = decorations.begin(); dec != decorations.end(); dec++) {
+        if (dec->get()->getOpCode() == spv::Op::OpMemberDecorate && dec->get()->getIdOperand(0) == baseId &&
+            dec->get()->getImmediateOperand(1) == index &&
+            dec->get()->getImmediateOperand(2) == spv::Decoration::BuiltIn &&
+            (dec->get()->getImmediateOperand(3) == (unsigned)spv::BuiltIn::ResourceHeapEXT ||
+             dec->get()->getImmediateOperand(3) == (unsigned)spv::BuiltIn::SamplerHeapEXT)) {
+            if (bt)
+                *bt = (spv::BuiltIn)dec->get()->getImmediateOperand(3);
+            return currentIdx;
+        }
+    }
+    // New base.
+    if (baseInst->getOpCode() == spv::Op::OpTypeStruct) {
+        if (!baseInst->isIdOperand(index) || idx == indexChain.size() - 1)
+            return 0;
+        return isStructureHeapMember(baseInst->getIdOperand(index), indexChain, currentIdx + 1, bt, firstArrIndex);
+    }
+
+    return 0;
+}
+
+// Comments in header
+Id Builder::createDescHeapAccessChain()
+{
+    uint32_t rsrcOffsetIdx = accessChain.descHeapInfo.structRsrcTyOffsetCount;
+    if (rsrcOffsetIdx != 0)
+        accessChain.base = accessChain.descHeapInfo.structRemappedBase;
+    Id base = accessChain.base;
+    Id untypedResultTy = accessChain.descHeapInfo.descHeapBaseTy;
+    uint32_t explicitArrayStride = accessChain.descHeapInfo.descHeapBaseArrayStride;
+    std::vector<Id>& offsets = accessChain.indexChain;
+    uint32_t firstArrIndex = accessChain.descHeapInfo.structRsrcTyFirstArrIndex;
+    // both typeBufferEXT and UntypedPointer only contains storage class info.
+    StorageClass storageClass = (StorageClass)accessChain.descHeapInfo.descHeapStorageClass;
+    Id resultTy = makeUntypedPointer(storageClass == spv::StorageClass::StorageBuffer ? spv::StorageClass::StorageBuffer
+                                                                                      : spv::StorageClass::Uniform);
+
+    // Make the untyped access chain instruction
+    Instruction* chain = new Instruction(getUniqueId(), makeUntypedPointer(getStorageClass(base)), Op::OpUntypedAccessChainKHR);
+
+    if (storageClass == spv::StorageClass::Uniform || storageClass == spv::StorageClass::StorageBuffer) {
+        // For buffer and uniform heap, split first index as heap array index
+        // Insert BufferPointer op and construct another access chain with following indexes.
+        Id bufferTy = makeUntypedPointer(storageClass, true);
+        Id strideId = NoResult;
+        if (explicitArrayStride == 0) {
+            strideId = createConstantSizeOfEXT(bufferTy);
+        } else {
+            strideId = makeUintConstant(explicitArrayStride);
+        }
+        Id runtimeArrTy = makeRuntimeArray(bufferTy);
+        addDecorationId(runtimeArrTy, spv::Decoration::ArrayStrideIdEXT, strideId);
+        chain->addIdOperand(runtimeArrTy);
+        chain->addIdOperand(base);
+        // We would only re-target current member resource directly to resource/sampler heap base.
+        // So the previous access chain index towards final resource type is not needed?
+        // In current draft, only keep the first 'array index' into last access chain index.
+        // As those resource can't be declared as an array, in current first draft, array index will
+        // be the second index. This will be refined later.
+        chain->addIdOperand(offsets[firstArrIndex]);
+        if (rsrcOffsetIdx != 0) {
+            for (uint32_t i = 0; i < rsrcOffsetIdx + 1; i++) {
+                if (rsrcOffsetIdx + i + 1 < offsets.size())
+                    offsets[i] = offsets[i + rsrcOffsetIdx + 1];
+            }
+        } else {
+            for (uint32_t i = 0; i < offsets.size() - 1; i++) {
+                offsets[i] = offsets[i + 1];
+            }
+        }
+        for (uint32_t i = 0; i < rsrcOffsetIdx + 1; i++)
+            offsets.pop_back();
+        addInstruction(std::unique_ptr<Instruction>(chain));
+        // Create OpBufferPointer for loading target buffer descriptor.
+        Instruction* bufferUntypedDataPtr = new Instruction(getUniqueId(), resultTy, Op::OpBufferPointerEXT);
+        bufferUntypedDataPtr->addIdOperand(chain->getResultId());
+        addInstruction(std::unique_ptr<Instruction>(bufferUntypedDataPtr));
+        // Final/Second untyped access chain loading will be created during loading, current results only
+        // refer to the loading 'base'.
+        return bufferUntypedDataPtr->getResultId();
+    } else {
+        // image/sampler heap
+        Id strideId = NoResult;
+        if (explicitArrayStride == 0) {
+            strideId = createConstantSizeOfEXT(untypedResultTy);
+        } else {
+            strideId = makeUintConstant(explicitArrayStride);
+        }
+        Id runtimeArrTy = makeRuntimeArray(untypedResultTy);
+        addDecorationId(runtimeArrTy, spv::Decoration::ArrayStrideIdEXT, strideId);
+        chain->addIdOperand(runtimeArrTy);
+        chain->addIdOperand(base);
+        for (int i = 0; i < (int)offsets.size(); ++i)
+            chain->addIdOperand(offsets[i]);
+        addInstruction(std::unique_ptr<Instruction>(chain));
+        return chain->getResultId();
+    }
 }
 
 // Comments in header
@@ -3344,12 +3591,21 @@ Id Builder::createLvalueSwizzle(Id typeId, Id target, Id source, const std::vect
 // Comments in header
 void Builder::promoteScalar(Decoration precision, Id& left, Id& right)
 {
-    int direction = getNumComponents(right) - getNumComponents(left);
+    // choose direction of promotion (+1 for left to right, -1 for right to left)
+    int direction = !isScalar(right) - !isScalar(left);
+
+    auto const &makeVec = [&](Id component, Id other) {
+        if (isCooperativeVector(other)) {
+            return makeCooperativeVectorTypeNV(getTypeId(component), getCooperativeVectorNumComponents(getTypeId(other)));
+        } else {
+            return makeVectorType(getTypeId(component), getNumComponents(other));
+        }
+    };
 
     if (direction > 0)
-        left = smearScalar(precision, left, makeVectorType(getTypeId(left), getNumComponents(right)));
+        left = smearScalar(precision, left, makeVec(left, right));
     else if (direction < 0)
-        right = smearScalar(precision, right, makeVectorType(getTypeId(right), getNumComponents(left)));
+        right = smearScalar(precision, right, makeVec(right, left));
 
     return;
 }
@@ -3361,7 +3617,7 @@ Id Builder::smearScalar(Decoration precision, Id scalar, Id vectorType)
     assert(getTypeId(scalar) == getScalarTypeId(vectorType));
 
     int numComponents = getNumTypeComponents(vectorType);
-    if (numComponents == 1 && !isCooperativeVectorType(vectorType))
+    if (numComponents == 1 && !isCooperativeVectorType(vectorType) && !isVectorType(vectorType))
         return scalar;
 
     Instruction* smear = nullptr;
@@ -3773,7 +4029,7 @@ Id Builder::createCompositeConstruct(Id typeId, const std::vector<Id>& constitue
 {
     assert(isAggregateType(typeId) || (getNumTypeConstituents(typeId) > 1 &&
            getNumTypeConstituents(typeId) == constituents.size()) ||
-           (isCooperativeVectorType(typeId) && constituents.size() == 1));
+           ((isCooperativeVectorType(typeId) || isVectorType(typeId)) && constituents.size() == 1));
 
     if (generatingOpCodeForSpecConst) {
         // Sometime, even in spec-constant-op mode, the constant composite to be
@@ -3862,9 +4118,16 @@ Id Builder::createConstructor(Decoration precision, const std::vector<Id>& sourc
         return smearScalar(precision, sources[0], resultTypeId);
 
     // Special case: 2 vectors of equal size
-    if (sources.size() == 1 && isVector(sources[0]) && numTargetComponents == getNumComponents(sources[0])) {
-        assert(resultTypeId == getTypeId(sources[0]));
-        return sources[0];
+    if (sources.size() == 1 &&
+        (isVector(sources[0]) || isCooperativeVector(sources[0])) &&
+        numTargetComponents == getNumComponents(sources[0])) {
+        if (isCooperativeVector(sources[0]) != isCooperativeVectorType(resultTypeId)) {
+            assert(isVector(sources[0]) != isVectorType(resultTypeId));
+            return createUnaryOp(spv::Op::OpBitcast, resultTypeId, sources[0]);
+        } else {
+            assert(resultTypeId == getTypeId(sources[0]));
+            return sources[0];
+        }
     }
 
     // accumulate the arguments for OpCompositeConstruct
@@ -3873,7 +4136,7 @@ Id Builder::createConstructor(Decoration precision, const std::vector<Id>& sourc
 
     // lambda to store the result of visiting an argument component
     const auto latchResult = [&](Id comp) {
-        if (numTargetComponents > 1)
+        if (numTargetComponents > 1 || isVectorType(resultTypeId))
             constituents.push_back(comp);
         else
             result = comp;
@@ -4251,6 +4514,13 @@ void Builder::clearAccessChain()
     accessChain.isRValue = false;
     accessChain.coherentFlags.clear();
     accessChain.alignment = 0;
+    accessChain.descHeapInfo.descHeapBaseTy = NoResult;
+    accessChain.descHeapInfo.descHeapStorageClass = StorageClass::Max;
+    accessChain.descHeapInfo.descHeapInstId.clear();
+    accessChain.descHeapInfo.descHeapBaseArrayStride = NoResult;
+    accessChain.descHeapInfo.structRemappedBase = NoResult;
+    accessChain.descHeapInfo.structRsrcTyOffsetCount = 0;
+    accessChain.descHeapInfo.structRsrcTyFirstArrIndex = 0;
 }
 
 // Comments in header
@@ -4372,7 +4642,7 @@ Id Builder::accessChainLoad(Decoration precision, Decoration l_nonUniform,
             if (constant) {
                 id = createCompositeExtract(accessChain.base, swizzleBase, indexes);
                 setPrecision(id, precision);
-            } else if (isCooperativeVector(accessChain.base)) {
+            } else if (isVector(accessChain.base) || isCooperativeVector(accessChain.base)) {
                 assert(accessChain.indexChain.size() == 1);
                 id = createVectorExtractDynamic(accessChain.base, resultType, accessChain.indexChain[0]);
             } else {
@@ -4461,10 +4731,13 @@ Id Builder::accessChainGetLValue()
 Id Builder::accessChainGetInferredType()
 {
     // anything to operate on?
-    if (accessChain.base == NoResult)
+    // for untyped pointer, it may be remapped to a descriptor heap.
+    // for descriptor heap, its base data type will be determined later,
+    // according to load/store results' types.
+    if (accessChain.base == NoResult || isUntypedPointer(accessChain.base) ||
+        isStructureHeapMember(getTypeId(accessChain.base), accessChain.indexChain, 0) != 0)
         return NoType;
     Id type = getTypeId(accessChain.base);
-
     // do initial dereference
     if (! accessChain.isRValue)
         type = getContainedTypeId(type);
@@ -4582,7 +4855,13 @@ Id Builder::collapseAccessChain()
 
     // emit the access chain
     StorageClass storageClass = (StorageClass)module.getStorageClass(getTypeId(accessChain.base));
-    accessChain.instr = createAccessChain(storageClass, accessChain.base, accessChain.indexChain);
+    // when descHeap info is set, use another access chain process.
+    if ((isUntypedPointer(accessChain.base) || accessChain.descHeapInfo.structRsrcTyOffsetCount!= 0) &&
+        accessChain.descHeapInfo.descHeapStorageClass != StorageClass::Max) {
+        accessChain.instr = createDescHeapAccessChain();
+    } else {
+        accessChain.instr = createAccessChain(storageClass, accessChain.base, accessChain.indexChain);
+    }
 
     return accessChain.instr;
 }
@@ -4689,6 +4968,16 @@ void Builder::createBranch(bool implicit, Block* block)
         addInstruction(std::unique_ptr<Instruction>(branch));
     }
     block->addPredecessor(buildPoint);
+}
+
+// Create OpConstantSizeOfEXT
+Id Builder::createConstantSizeOfEXT(Id typeId)
+{
+    Instruction* inst = new Instruction(getUniqueId(), makeIntType(32), Op::OpConstantSizeOfEXT);
+    inst->addIdOperand(typeId);
+    constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(inst));
+    module.mapInstruction(inst);
+    return inst->getResultId();
 }
 
 void Builder::createSelectionMerge(Block* mergeBlock, SelectionControlMask control)

@@ -407,11 +407,15 @@ TIntermTyped* TIntermediate::addUnaryMath(TOperator op, TIntermTyped* child,
     }
 
     if (newType != EbtVoid) {
-        child = addConversion(op, TType(newType, EvqTemporary, child->getVectorSize(),
-                                                               child->getMatrixCols(),
-                                                               child->getMatrixRows(),
-                                                               child->isVector()),
-                              child);
+        TType newTType(newType, EvqTemporary, child->getVectorSize(), child->getMatrixCols(), child->getMatrixRows(), child->isVector());
+        if (child->getType().isLongVector()) {
+            newTType.shallowCopy(child->getType());
+            newTType.setBasicType(newType);
+            newTType.makeTemporary();
+            newTType.getQualifier().clear();
+        }
+
+        child = addConversion(op, newTType, child);
         if (child == nullptr)
             return nullptr;
     }
@@ -647,6 +651,12 @@ TIntermTyped* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped
     }
 
     TType newType(convertTo, EvqTemporary, node->getVectorSize(), node->getMatrixCols(), node->getMatrixRows());
+    if (node->getType().isLongVector()) {
+        newType.shallowCopy(node->getType());
+        newType.setBasicType(convertTo);
+        newType.makeTemporary();
+        newType.getQualifier().clear();
+    }
     newNode = addUnaryNode(newOp, node, node->getLoc(), newType);
 
     if (node->getAsConstantUnion()) {
@@ -1859,7 +1869,7 @@ TOperator TIntermediate::mapTypeToConstructorOp(const TType& type) const
     if (type.isCoopMatKHR())
         return EOpConstructCooperativeMatrixKHR;
 
-    if (type.isCoopVecNV())
+    if (type.isCoopVecOrLongVector())
         return EOpConstructCooperativeVectorNV;
 
     switch (type.getBasicType()) {
@@ -3456,12 +3466,18 @@ bool TIntermediate::promoteBinary(TIntermBinary& node)
         return false;
     }
 
+    bool vectorAndLongVectorMatch = TType::vectorAndLongVectorMatch(left->getType(), right->getType());
+
     // Finish handling the case, for all ops, where both operands are scalars.
     if (left->isScalar() && right->isScalar())
         return true;
 
     // Finish handling the case, for all ops, where there are two vectors of different sizes
     if (left->isVector() && right->isVector() && left->getVectorSize() != right->getVectorSize() && right->getVectorSize() > 1)
+        return false;
+
+    // Finish handling the case, for all ops, where there are two vectors of different sizes
+    if (left->getType().isLongVector() && right->getType().isLongVector() && !left->getType().sameLongVectorShape(right->getType()))
         return false;
 
     //
@@ -3549,7 +3565,8 @@ bool TIntermediate::promoteBinary(TIntermBinary& node)
         break;
 
     case EOpAssign:
-        if (left->getVectorSize() != right->getVectorSize() || left->getMatrixCols() != right->getMatrixCols() || left->getMatrixRows() != right->getMatrixRows())
+        if ((left->getVectorSize() != right->getVectorSize() || left->getMatrixCols() != right->getMatrixCols() || left->getMatrixRows() != right->getMatrixRows()) &&
+            !vectorAndLongVectorMatch)
             return false;
         [[fallthrough]];
 
@@ -3576,7 +3593,7 @@ bool TIntermediate::promoteBinary(TIntermBinary& node)
             return false;
         if (left->isVector() && right->isVector() && left->getVectorSize() != right->getVectorSize())
             return false;
-        if (right->isVector() || right->isMatrix()) {
+        if ((right->isVector() || right->isMatrix()) && !vectorAndLongVectorMatch) {
             node.getWritableType().shallowCopy(right->getType());
             node.getWritableType().getQualifier().makeTemporary();
         }

@@ -414,6 +414,7 @@ void SpirvStream::disassembleInstruction(Id resultId, Id /*typeId*/, Op opCode, 
                 idDescriptor[resultId] = "struct";
                 break;
             case Op::OpTypePointer:
+            case Op::OpTypeUntypedPointerKHR:
                 idDescriptor[resultId] = "ptr";
                 break;
             case Op::OpTypeVector:

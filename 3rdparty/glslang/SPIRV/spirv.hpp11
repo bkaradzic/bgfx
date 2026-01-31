@@ -564,6 +564,8 @@ enum class Decoration : unsigned {
     PayloadNodeSparseArrayAMDX = 5099,
     PayloadNodeArraySizeAMDX = 5100,
     PayloadDispatchIndirectAMDX = 5105,
+    ArrayStrideIdEXT = 5124,
+    OffsetIdEXT = 5125,
     OverrideCoverageNV = 5248,
     PassthroughNV = 5250,
     ViewportRelativeNV = 5252,
@@ -580,8 +582,10 @@ enum class Decoration : unsigned {
     RestrictPointerEXT = 5355,
     AliasedPointer = 5356,
     AliasedPointerEXT = 5356,
+    MemberOffsetNV = 5358,
     HitObjectShaderRecordBufferNV = 5386,
     HitObjectShaderRecordBufferEXT = 5389,
+    BankNV = 5397,
     BindlessSamplerNV = 5398,
     BindlessImageNV = 5399,
     BoundSamplerNV = 5400,
@@ -733,6 +737,8 @@ enum class BuiltIn : unsigned {
     FragStencilRefEXT = 5014,
     RemainingRecursionLevelsAMDX = 5021,
     ShaderIndexAMDX = 5073,
+    SamplerHeapEXT = 5122,
+    ResourceHeapEXT = 5123,
     ViewportMaskNV = 5253,
     SecondaryPositionNV = 5257,
     SecondaryViewportMaskNV = 5258,
@@ -1127,6 +1133,7 @@ enum class Capability : unsigned {
     BFloat16TypeKHR = 5116,
     BFloat16DotProductKHR = 5117,
     BFloat16CooperativeMatrixKHR = 5118,
+    DescriptorHeapEXT = 5128,
     SampleMaskOverrideCoverageNV = 5249,
     GeometryShaderPassthroughNV = 5251,
     ShaderViewportIndexLayerEXT = 5254,
@@ -1200,6 +1207,8 @@ enum class Capability : unsigned {
     RawAccessChainsNV = 5414,
     RayTracingSpheresGeometryNV = 5418,
     RayTracingLinearSweptSpheresGeometryNV = 5419,
+    PushConstantBanksNV = 5423,
+    LongVectorEXT = 5425,
     Shader64BitIndexingEXT = 5426,
     CooperativeMatrixReductionsNV = 5430,
     CooperativeMatrixConversionsNV = 5431,
@@ -2031,6 +2040,11 @@ enum class Op : unsigned {
     OpSpecConstantStringAMDX = 5104,
     OpGroupNonUniformQuadAllKHR = 5110,
     OpGroupNonUniformQuadAnyKHR = 5111,
+    OpTypeBufferEXT = 5115,
+    OpBufferPointerEXT = 5119,
+    OpUntypedImageTexelPointerEXT = 5126,
+    OpMemberDecorateIdEXT = 5127,
+    OpConstantSizeOfEXT = 5129,
     OpHitObjectRecordHitMotionNV = 5249,
     OpHitObjectRecordHitWithIndexMotionNV = 5250,
     OpHitObjectRecordMissMotionNV = 5251,
@@ -2066,6 +2080,7 @@ enum class Op : unsigned {
     OpTypeHitObjectNV = 5281,
     OpImageSampleFootprintNV = 5283,
     OpTypeCooperativeVectorNV = 5288,
+    OpTypeVectorIdEXT = 5288,
     OpCooperativeVectorMatrixMulNV = 5289,
     OpCooperativeVectorOuterProductAccumulateNV = 5290,
     OpCooperativeVectorReduceSumAccumulateNV = 5291,
@@ -2816,6 +2831,11 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpSubgroupAllKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupAnyKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupAllEqualKHR: *hasResult = true; *hasResultType = true; break;
+    case Op::OpBufferPointerEXT: *hasResult = true; *hasResultType = true; break;
+    case Op::OpUntypedImageTexelPointerEXT: *hasResult = true; *hasResultType = true; break;
+    case Op::OpMemberDecorateIdEXT: *hasResult = false; *hasResultType = false; break;
+    case Op::OpConstantSizeOfEXT: *hasResult = true; *hasResultType = true; break;
+    case Op::OpTypeBufferEXT: *hasResult = true; *hasResultType = false; break;
     case Op::OpGroupNonUniformRotateKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupReadInvocationKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpExtInstWithForwardRefsKHR: *hasResult = true; *hasResultType = true; break;
@@ -3736,7 +3756,9 @@ inline const char* DecorationToString(Decoration value) {
     case Decoration::NonUniform: return "NonUniform";
     case Decoration::RestrictPointer: return "RestrictPointer";
     case Decoration::AliasedPointer: return "AliasedPointer";
+    case Decoration::MemberOffsetNV: return "MemberOffsetNV";
     case Decoration::HitObjectShaderRecordBufferNV: return "HitObjectShaderRecordBufferNV";
+    case Decoration::BankNV: return "BankNV";
     case Decoration::HitObjectShaderRecordBufferEXT: return "HitObjectShaderRecordBufferEXT";
     case Decoration::BindlessSamplerNV: return "BindlessSamplerNV";
     case Decoration::BindlessImageNV: return "BindlessImageNV";
@@ -4158,6 +4180,8 @@ inline const char* CapabilityToString(Capability value) {
     case Capability::RawAccessChainsNV: return "RawAccessChainsNV";
     case Capability::RayTracingSpheresGeometryNV: return "RayTracingSpheresGeometryNV";
     case Capability::RayTracingLinearSweptSpheresGeometryNV: return "RayTracingLinearSweptSpheresGeometryNV";
+    case Capability::PushConstantBanksNV: return "PushConstantBanksNV";
+    case Capability::LongVectorEXT: return "LongVectorEXT";
     case Capability::Shader64BitIndexingEXT: return "Shader64BitIndexingEXT";
     case Capability::CooperativeMatrixReductionsNV: return "CooperativeMatrixReductionsNV";
     case Capability::CooperativeMatrixConversionsNV: return "CooperativeMatrixConversionsNV";
@@ -4803,6 +4827,11 @@ inline const char* OpToString(Op value) {
     case Op::OpSubgroupAllKHR: return "OpSubgroupAllKHR";
     case Op::OpSubgroupAnyKHR: return "OpSubgroupAnyKHR";
     case Op::OpSubgroupAllEqualKHR: return "OpSubgroupAllEqualKHR";
+    case Op::OpBufferPointerEXT: return "OpBufferPointerEXT";
+    case Op::OpUntypedImageTexelPointerEXT: return "OpUntypedImageTexelPointerEXT";
+    case Op::OpMemberDecorateIdEXT: return "OpMemberDecorateIdEXT";
+    case Op::OpConstantSizeOfEXT: return "OpConstantSizeOfEXT";
+    case Op::OpTypeBufferEXT: return "OpTypeBufferEXT";
     case Op::OpGroupNonUniformRotateKHR: return "OpGroupNonUniformRotateKHR";
     case Op::OpSubgroupReadInvocationKHR: return "OpSubgroupReadInvocationKHR";
     case Op::OpExtInstWithForwardRefsKHR: return "OpExtInstWithForwardRefsKHR";
