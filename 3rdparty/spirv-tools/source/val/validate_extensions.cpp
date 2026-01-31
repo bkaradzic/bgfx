@@ -1512,7 +1512,7 @@ spv_result_t ValidateExtInstGlslStd450(ValidationState_t& _,
 
     case GLSLstd450PackSnorm4x8:
     case GLSLstd450PackUnorm4x8: {
-      if (!_.IsIntScalarType(result_type) || _.GetBitWidth(result_type) != 32) {
+      if (!_.IsIntScalarType(result_type, 32)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
                << "expected Result Type to be 32-bit int scalar type";
@@ -1531,7 +1531,7 @@ spv_result_t ValidateExtInstGlslStd450(ValidationState_t& _,
     case GLSLstd450PackSnorm2x16:
     case GLSLstd450PackUnorm2x16:
     case GLSLstd450PackHalf2x16: {
-      if (!_.IsIntScalarType(result_type) || _.GetBitWidth(result_type) != 32) {
+      if (!_.IsIntScalarType(result_type, 32)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
                << "expected Result Type to be 32-bit int scalar type";
@@ -1548,8 +1548,7 @@ spv_result_t ValidateExtInstGlslStd450(ValidationState_t& _,
     }
 
     case GLSLstd450PackDouble2x32: {
-      if (!_.IsFloatScalarType(result_type) ||
-          _.GetBitWidth(result_type) != 64) {
+      if (!_.IsFloatScalarType(result_type, 64)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
                << "expected Result Type to be 64-bit float scalar type";
@@ -1577,7 +1576,7 @@ spv_result_t ValidateExtInstGlslStd450(ValidationState_t& _,
       }
 
       const uint32_t v_type = _.GetOperandTypeId(inst, 4);
-      if (!_.IsIntScalarType(v_type) || _.GetBitWidth(v_type) != 32) {
+      if (!_.IsIntScalarType(v_type, 32)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
                << "expected operand P to be a 32-bit int scalar";
@@ -1598,7 +1597,7 @@ spv_result_t ValidateExtInstGlslStd450(ValidationState_t& _,
       }
 
       const uint32_t v_type = _.GetOperandTypeId(inst, 4);
-      if (!_.IsIntScalarType(v_type) || _.GetBitWidth(v_type) != 32) {
+      if (!_.IsIntScalarType(v_type, 32)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
                << "expected operand P to be a 32-bit int scalar";
@@ -1616,7 +1615,7 @@ spv_result_t ValidateExtInstGlslStd450(ValidationState_t& _,
       }
 
       const uint32_t v_type = _.GetOperandTypeId(inst, 4);
-      if (!_.IsFloatScalarType(v_type) || _.GetBitWidth(v_type) != 64) {
+      if (!_.IsFloatScalarType(v_type, 64)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
                << "expected operand V to be a 64-bit float scalar";
@@ -1802,8 +1801,7 @@ spv_result_t ValidateExtInstGlslStd450(ValidationState_t& _,
 
       if (ext_inst_key == GLSLstd450InterpolateAtSample) {
         const uint32_t sample_type = _.GetOperandTypeId(inst, 5);
-        if (!_.IsIntScalarType(sample_type) ||
-            _.GetBitWidth(sample_type) != 32) {
+        if (!_.IsIntScalarType(sample_type, 32)) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
                  << GetExtInstName(_, inst) << ": "
                  << "expected Sample to be 32-bit integer";
@@ -2586,8 +2584,7 @@ spv_result_t ValidateExtInstOpenClStd(ValidationState_t& _,
                << " can only be used with physical addressing models";
       }
 
-      if (!_.IsIntScalarType(offset_type) ||
-          _.GetBitWidth(offset_type) != size_t_bit_width) {
+      if (!_.IsIntScalarType(offset_type, size_t_bit_width)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
                << "expected operand Offset to be of type size_t ("
@@ -2662,8 +2659,7 @@ spv_result_t ValidateExtInstOpenClStd(ValidationState_t& _,
                << " can only be used with physical addressing models";
       }
 
-      if (!_.IsIntScalarType(offset_type) ||
-          _.GetBitWidth(offset_type) != size_t_bit_width) {
+      if (!_.IsIntScalarType(offset_type, size_t_bit_width)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
                << "expected operand Offset to be of type size_t ("
@@ -2715,8 +2711,7 @@ spv_result_t ValidateExtInstOpenClStd(ValidationState_t& _,
                << " can only be used with physical addressing models";
       }
 
-      if (!_.IsIntScalarType(offset_type) ||
-          _.GetBitWidth(offset_type) != size_t_bit_width) {
+      if (!_.IsIntScalarType(offset_type, size_t_bit_width)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
                << "expected operand Offset to be of type size_t ("
@@ -2743,8 +2738,7 @@ spv_result_t ValidateExtInstOpenClStd(ValidationState_t& _,
                   "Generic, CrossWorkgroup, Workgroup or Function";
       }
 
-      if ((!_.IsFloatScalarType(p_data_type) ||
-           _.GetBitWidth(p_data_type) != 16) &&
+      if ((!_.IsFloatScalarType(p_data_type, 16)) &&
           !_.ContainsUntypedPointer(p_type)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
@@ -2778,8 +2772,7 @@ spv_result_t ValidateExtInstOpenClStd(ValidationState_t& _,
                << " can only be used with physical addressing models";
       }
 
-      if (!_.IsIntScalarType(offset_type) ||
-          _.GetBitWidth(offset_type) != size_t_bit_width) {
+      if (!_.IsIntScalarType(offset_type, size_t_bit_width)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
                << "expected operand Offset to be of type size_t ("
@@ -2806,8 +2799,7 @@ spv_result_t ValidateExtInstOpenClStd(ValidationState_t& _,
                   "Generic, CrossWorkgroup, Workgroup or Function";
       }
 
-      if ((!_.IsFloatScalarType(p_data_type) ||
-           _.GetBitWidth(p_data_type) != 16) &&
+      if ((!_.IsFloatScalarType(p_data_type, 16)) &&
           !_.ContainsUntypedPointer(p_type)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
@@ -2872,8 +2864,7 @@ spv_result_t ValidateExtInstOpenClStd(ValidationState_t& _,
                << " can only be used with physical addressing models";
       }
 
-      if (!_.IsIntScalarType(offset_type) ||
-          _.GetBitWidth(offset_type) != size_t_bit_width) {
+      if (!_.IsIntScalarType(offset_type, size_t_bit_width)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
                << "expected operand Offset to be of type size_t ("
@@ -2899,8 +2890,7 @@ spv_result_t ValidateExtInstOpenClStd(ValidationState_t& _,
                   "CrossWorkgroup, Workgroup or Function";
       }
 
-      if ((!_.IsFloatScalarType(p_data_type) ||
-           _.GetBitWidth(p_data_type) != 16) &&
+      if ((!_.IsFloatScalarType(p_data_type, 16)) &&
           !_.ContainsUntypedPointer(p_type)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
@@ -2990,7 +2980,7 @@ spv_result_t ValidateExtInstOpenClStd(ValidationState_t& _,
     }
 
     case OpenCLLIB::Printf: {
-      if (!_.IsIntScalarType(result_type) || _.GetBitWidth(result_type) != 32) {
+      if (!_.IsIntScalarType(result_type, 32)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "
                << "expected Result Type to be a 32-bit int type";
@@ -3038,8 +3028,7 @@ spv_result_t ValidateExtInstOpenClStd(ValidationState_t& _,
       if (_.IsIntArrayType(format_data_type))
         format_data_type = _.GetComponentType(format_data_type);
 
-      if ((!_.IsIntScalarType(format_data_type) ||
-           _.GetBitWidth(format_data_type) != 8) &&
+      if (!_.IsIntScalarType(format_data_type, 8) &&
           !_.ContainsUntypedPointer(format_type)) {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << GetExtInstName(_, inst) << ": "

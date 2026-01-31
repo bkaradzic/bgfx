@@ -22,6 +22,7 @@ namespace spvtools {
 namespace opt {
 namespace {
 // Indices of operands in SPIR-V instructions
+constexpr int kImageSampleCoordinateIdInIdx = 1;
 constexpr int kImageSampleDrefIdInIdx = 2;
 }  // namespace
 
@@ -325,7 +326,7 @@ bool ConvertToHalfPass::ProcessConvert(Instruction* inst) {
 
 bool ConvertToHalfPass::ProcessImageRef(Instruction* inst) {
   bool modified = false;
-  // If image reference, only need to convert dref args back to float32
+  // If image reference, some operands aren't allowed to be non-32 bit floats
   if (dref_image_ops_.count(inst->opcode()) != 0) {
     uint32_t dref_id = inst->GetSingleWordInOperand(kImageSampleDrefIdInIdx);
     if (converted_ids_.count(dref_id) > 0) {
@@ -334,6 +335,19 @@ bool ConvertToHalfPass::ProcessImageRef(Instruction* inst) {
         return false;
       }
       inst->SetInOperand(kImageSampleDrefIdInIdx, {dref_id});
+      get_def_use_mgr()->AnalyzeInstUse(inst);
+      modified = true;
+    }
+  }
+  if (coordinate_image_ops_.count(inst->opcode()) != 0) {
+    uint32_t coordinate_id =
+        inst->GetSingleWordInOperand(kImageSampleCoordinateIdInIdx);
+    if (converted_ids_.count(coordinate_id) > 0) {
+      GenConvert(&coordinate_id, 32, inst);
+      if (status_ == Status::Failure) {
+        return false;
+      }
+      inst->SetInOperand(kImageSampleCoordinateIdInIdx, {coordinate_id});
       get_def_use_mgr()->AnalyzeInstUse(inst);
       modified = true;
     }
@@ -590,6 +604,30 @@ void ConvertToHalfPass::Initialize() {
       spv::Op::OpImageSparseSampleProjDrefImplicitLod,
       spv::Op::OpImageSparseSampleProjDrefExplicitLod,
       spv::Op::OpImageSparseDrefGather,
+  };
+  coordinate_image_ops_ = {
+      spv::Op::OpImageSampleImplicitLod,
+      spv::Op::OpImageSampleExplicitLod,
+      spv::Op::OpImageSampleDrefImplicitLod,
+      spv::Op::OpImageSampleDrefExplicitLod,
+      spv::Op::OpImageSampleProjImplicitLod,
+      spv::Op::OpImageSampleProjExplicitLod,
+      spv::Op::OpImageSampleProjDrefImplicitLod,
+      spv::Op::OpImageSampleProjDrefExplicitLod,
+      spv::Op::OpImageFetch,
+      spv::Op::OpImageGather,
+      spv::Op::OpImageDrefGather,
+      spv::Op::OpImageRead,
+      spv::Op::OpImageWrite,
+      spv::Op::OpImageQueryLod,
+      spv::Op::OpImageSparseSampleImplicitLod,
+      spv::Op::OpImageSparseSampleExplicitLod,
+      spv::Op::OpImageSparseSampleDrefImplicitLod,
+      spv::Op::OpImageSparseSampleDrefExplicitLod,
+      spv::Op::OpImageSparseFetch,
+      spv::Op::OpImageSparseGather,
+      spv::Op::OpImageSparseDrefGather,
+      spv::Op::OpImageSparseRead,
   };
   closure_ops_ = {
       spv::Op::OpVectorExtractDynamic,

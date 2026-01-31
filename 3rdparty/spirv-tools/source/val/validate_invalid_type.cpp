@@ -100,6 +100,21 @@ spv_result_t InvalidTypePass(ValidationState_t& _, const Instruction* inst) {
     case spv::Op::OpIsInf:
     case spv::Op::OpIsFinite:
     case spv::Op::OpIsNormal:
+    case spv::Op::OpFOrdEqual:
+    case spv::Op::OpFUnordEqual:
+    case spv::Op::OpFOrdNotEqual:
+    case spv::Op::OpFUnordNotEqual:
+    case spv::Op::OpFOrdLessThan:
+    case spv::Op::OpFUnordLessThan:
+    case spv::Op::OpFOrdGreaterThan:
+    case spv::Op::OpFUnordGreaterThan:
+    case spv::Op::OpFOrdLessThanEqual:
+    case spv::Op::OpFUnordLessThanEqual:
+    case spv::Op::OpFOrdGreaterThanEqual:
+    case spv::Op::OpFUnordGreaterThanEqual:
+    case spv::Op::OpLessOrGreater:
+    case spv::Op::OpOrdered:
+    case spv::Op::OpUnordered:
     case spv::Op::OpSignBitSet: {
       const uint32_t operand_type = _.GetOperandTypeId(inst, 2);
       if (_.IsBfloat16Type(operand_type)) {

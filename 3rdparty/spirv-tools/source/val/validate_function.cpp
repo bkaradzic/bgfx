@@ -355,14 +355,14 @@ spv_result_t ValidateCooperativeMatrixPerElementOp(ValidationState_t& _,
   const auto param0_id = function_type->GetOperandAs<uint32_t>(2);
   const auto param1_id = function_type->GetOperandAs<uint32_t>(3);
   const auto param2_id = function_type->GetOperandAs<uint32_t>(4);
-  if (!_.IsIntScalarType(param0_id) || _.GetBitWidth(param0_id) != 32) {
+  if (!_.IsIntScalarType(param0_id, 32)) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpCooperativeMatrixPerElementOpNV function type first parameter "
               "type <id> "
            << _.getIdName(param0_id) << " must be a 32-bit integer.";
   }
 
-  if (!_.IsIntScalarType(param1_id) || _.GetBitWidth(param1_id) != 32) {
+  if (!_.IsIntScalarType(param1_id, 32)) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpCooperativeMatrixPerElementOpNV function type second "
               "parameter type <id> "

@@ -45,9 +45,7 @@ constexpr uint32_t kExtInstOpInIdx = 1;
 constexpr uint32_t kInterpolantInIdx = 2;
 constexpr uint32_t kCooperativeMatrixLoadSourceAddrInIdx = 0;
 constexpr uint32_t kDebugDeclareVariableInIdx = 3;
-constexpr uint32_t kDebugValueLocalVariableInIdx = 2;
 constexpr uint32_t kDebugValueValueInIdx = 3;
-constexpr uint32_t kDebugValueExpressionInIdx = 4;
 
 // Sorting functor to present annotation instructions in an easy-to-process
 // order. The functor orders by opcode first and falls back on unique id
@@ -309,8 +307,8 @@ Pass::Status AggressiveDCEPass::ProcessDebugInformation(
         // DebugDeclare Variable is not live. Find the value that was being
         // stored to this variable. If it's live then create a new DebugValue
         // with this value. Otherwise let it die in peace.
-        get_def_use_mgr()->ForEachUser(var_id, [this, var_id,
-                                                inst](Instruction* user) {
+        get_def_use_mgr()->ForEachUser(var_id, [this,
+                                                var_id](Instruction* user) {
           if (user->opcode() == spv::Op::OpStore) {
             uint32_t stored_value_id = 0;
             const uint32_t kStoreValueInIdx = 1;
@@ -320,13 +318,13 @@ Pass::Status AggressiveDCEPass::ProcessDebugInformation(
             }
 
             // value being stored is still live
-            Instruction* next_inst = inst->NextNode();
+            Instruction* next_inst = user->NextNode();
             bool added =
                 context()->get_debug_info_mgr()->AddDebugValueForVariable(
-                    user, var_id, stored_value_id, inst);
+                    user, var_id, stored_value_id, user);
             if (added && next_inst) {
               auto new_debug_value = next_inst->PreviousNode();
-              live_insts_.Set(new_debug_value->unique_id());
+              AddToWorklist(new_debug_value);
             }
           }
           return true;
@@ -344,42 +342,13 @@ Pass::Status AggressiveDCEPass::ProcessDebugInformation(
 
         // Value operand of DebugValue is not live
         // Set Value to Undef of appropriate type
-        live_insts_.Set(inst->unique_id());
-
         uint32_t type_id = def->type_id();
-        auto type_def = get_def_use_mgr()->GetDef(type_id);
-        AddToWorklist(type_def);
-
         uint32_t undef_id = Type2Undef(type_id);
         if (undef_id == 0) return false;
 
-        auto undef_inst = get_def_use_mgr()->GetDef(undef_id);
-        live_insts_.Set(undef_inst->unique_id());
         inst->SetInOperand(var_operand_idx, {undef_id});
         context()->get_def_use_mgr()->AnalyzeInstUse(inst);
-
-        id = inst->GetSingleWordInOperand(kDebugValueLocalVariableInIdx);
-        auto localVar = get_def_use_mgr()->GetDef(id);
-        AddToWorklist(localVar);
-
-        uint32_t expr_idx = kDebugValueExpressionInIdx;
-        id = inst->GetSingleWordInOperand(expr_idx);
-        auto expression = get_def_use_mgr()->GetDef(id);
-        AddToWorklist(expression);
-
-        for (uint32_t i = expr_idx + 1; i < inst->NumInOperands(); ++i) {
-          id = inst->GetSingleWordInOperand(i);
-          auto index_def = get_def_use_mgr()->GetDef(id);
-          if (index_def) {
-            AddToWorklist(index_def);
-          }
-        }
-
-        for (auto& line_inst : inst->dbg_line_insts()) {
-          if (line_inst.IsDebugLineInst()) {
-            AddToWorklist(&line_inst);
-          }
-        }
+        AddToWorklist(inst);
       }
       return true;
     });
@@ -1151,6 +1120,7 @@ void AggressiveDCEPass::InitExtensions() {
       "SPV_NV_shader_subgroup_partitioned",
       "SPV_EXT_demote_to_helper_invocation",
       "SPV_EXT_descriptor_indexing",
+      "SPV_EXT_descriptor_heap",
       "SPV_NV_fragment_shader_barycentric",
       "SPV_NV_compute_shader_derivatives",
       "SPV_NV_shader_image_footprint",

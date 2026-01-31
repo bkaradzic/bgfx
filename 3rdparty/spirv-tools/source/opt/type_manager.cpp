@@ -490,7 +490,7 @@ uint32_t TypeManager::GetTypeInstruction(const Type* type) {
         return 0;
       }
       typeInst = MakeUnique<Instruction>(
-          context(), spv::Op::OpTypeCooperativeVectorNV, 0, id,
+          context(), spv::Op::OpTypeVectorIdEXT, 0, id,
           std::initializer_list<Operand>{
               {SPV_OPERAND_TYPE_ID, {component_type}},
               {SPV_OPERAND_TYPE_ID, {coop_vec->components()}}});
@@ -537,6 +537,14 @@ uint32_t TypeManager::GetTypeInstruction(const Type* type) {
       }
       typeInst = MakeUnique<Instruction>(context(), spv::Op::OpTypeGraphARM, 0,
                                          id, ops);
+      break;
+    }
+    case Type::kBufferEXT: {
+      typeInst = MakeUnique<Instruction>(
+          context(), spv::Op::OpTypeBufferEXT, 0, id,
+          std::initializer_list<Operand>{
+              {SPV_OPERAND_TYPE_STORAGE_CLASS,
+               {static_cast<uint32_t>(type->AsBufferEXT()->storage_class())}}});
       break;
     }
     default:
@@ -816,6 +824,11 @@ Type* TypeManager::RebuildType(uint32_t type_id, const Type& type) {
       rebuilt_ty = MakeUnique<GraphARM>(graph_type->num_inputs(), io_types);
       break;
     }
+    case Type::kBufferEXT: {
+      const BufferEXT* buffer_type = type.AsBufferEXT();
+      rebuilt_ty = MakeUnique<BufferEXT>(buffer_type->storage_class());
+      break;
+    }
     default:
       assert(false && "Unhandled type");
       return nullptr;
@@ -1074,7 +1087,7 @@ Type* TypeManager::RecordIfTypeDefinition(const Instruction& inst) {
           inst.GetSingleWordInOperand(1), inst.GetSingleWordInOperand(2),
           inst.GetSingleWordInOperand(3), inst.GetSingleWordInOperand(4));
       break;
-    case spv::Op::OpTypeCooperativeVectorNV:
+    case spv::Op::OpTypeVectorIdEXT:
       type = new CooperativeVectorNV(GetType(inst.GetSingleWordInOperand(0)),
                                      inst.GetSingleWordInOperand(1));
       break;
@@ -1124,6 +1137,11 @@ Type* TypeManager::RecordIfTypeDefinition(const Instruction& inst) {
         io_types.push_back(GetType(inst.GetSingleWordInOperand(i)));
       }
       type = new GraphARM(inst.GetSingleWordInOperand(0), io_types);
+      break;
+    }
+    case spv::Op::OpTypeBufferEXT: {
+      type = new BufferEXT(
+          static_cast<spv::StorageClass>(inst.GetSingleWordInOperand(0)));
       break;
     }
     default:

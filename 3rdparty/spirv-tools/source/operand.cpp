@@ -523,6 +523,7 @@ std::function<bool(unsigned)> spvOperandCanBeForwardDeclaredFunction(
     case spv::Op::OpSelectionMerge:
     case spv::Op::OpDecorate:
     case spv::Op::OpMemberDecorate:
+    case spv::Op::OpMemberDecorateIdEXT:
     case spv::Op::OpDecorateId:
     case spv::Op::OpDecorateStringGOOGLE:
     case spv::Op::OpMemberDecorateStringGOOGLE:

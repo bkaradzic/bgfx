@@ -14,6 +14,8 @@
 
 #include "source/opt/const_folding_rules.h"
 
+#include <optional>
+
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
@@ -988,6 +990,32 @@ ConstantFoldingRule FoldFSub() { return FoldFPBinaryOp(FOLD_FPARITH_OP(-)); }
 ConstantFoldingRule FoldFAdd() { return FoldFPBinaryOp(FOLD_FPARITH_OP(+)); }
 ConstantFoldingRule FoldFMul() { return FoldFPBinaryOp(FOLD_FPARITH_OP(*)); }
 
+// x - x = 0
+ConstantFoldingRule FoldRedundantSub() {
+  return [](IRContext* context, Instruction* inst,
+            const std::vector<const analysis::Constant*>&)
+             -> const analysis::Constant* {
+    assert(inst->opcode() == spv::Op::OpFSub ||
+           inst->opcode() == spv::Op::OpISub);
+
+    if (inst->GetSingleWordInOperand(0) == inst->GetSingleWordInOperand(1)) {
+      bool use_float = inst->opcode() == spv::Op::OpFSub;
+      if (use_float && !inst->IsFloatingPointFoldingAllowed()) {
+        return nullptr;
+      }
+      analysis::TypeManager* type_mgr = context->get_type_mgr();
+      const analysis::Type* type = type_mgr->GetType(inst->type_id());
+      if (type->IsCooperativeMatrix()) {
+        return nullptr;
+      }
+      analysis::ConstantManager* const_mgr = context->get_constant_mgr();
+      uint32_t null_id = const_mgr->GetNullConstId(type);
+      return const_mgr->FindDeclaredConstant(null_id);
+    }
+    return nullptr;
+  };
+}
+
 // Returns the constant that results from evaluating |numerator| / 0.0.  Returns
 // |nullptr| if the result could not be evaluated.
 const analysis::Constant* FoldFPScalarDivideByZero(
@@ -1046,6 +1074,107 @@ const analysis::Constant* FoldScalarFPDivide(
 
 // Returns the constant folding rule to fold |OpFDiv| with two constants.
 ConstantFoldingRule FoldFDiv() { return FoldFPBinaryOp(FoldScalarFPDivide); }
+
+// Get a singular uniform value, which is repeated when the |type| is a vector.
+const analysis::Constant* GetConstantUniformValue(
+    analysis::ConstantManager* const_mgr, const analysis::Type* type,
+    std::optional<double> f = {}, std::optional<uint64_t> i = {}) {
+  const analysis::Constant* uniform = nullptr;
+  bool is_vector = false;
+  const analysis::Type* base_type = type;
+
+  if (base_type->AsVector()) {
+    is_vector = true;
+    base_type = base_type->AsVector()->element_type();
+  }
+
+  if (f && base_type->AsFloat()) {
+    if (base_type->AsFloat()->width() == 32) {
+      uniform = const_mgr->GetConstant(
+          base_type, utils::FloatProxy<float>((float)f.value()).GetWords());
+    } else if (base_type->AsFloat()->width() == 64) {
+      uniform = const_mgr->GetConstant(
+          base_type, utils::FloatProxy<double>(f.value()).GetWords());
+    }
+  } else if (i && base_type->AsInteger()) {
+    uniform =
+        const_mgr->GenerateIntegerConstant(base_type->AsInteger(), i.value());
+  }
+
+  if (!uniform) {
+    return nullptr;
+  }
+
+  if (is_vector) {
+    Instruction* uniform_inst = const_mgr->GetDefiningInstruction(uniform);
+    if (!uniform_inst) return nullptr;
+
+    uint32_t uniform_id = uniform_inst->result_id();
+    uniform =
+        const_mgr->GetConstant(type, std::vector<uint32_t>(4, uniform_id));
+  }
+
+  return uniform;
+}
+
+//  x /  x =  1
+// -x /  x = -1
+//  x / -x = -1
+ConstantFoldingRule FoldRedundantDiv() {
+  return [](IRContext* context, Instruction* inst,
+            const std::vector<const analysis::Constant*>& constants)
+             -> const analysis::Constant* {
+    assert(inst->opcode() == spv::Op::OpFDiv ||
+           inst->opcode() == spv::Op::OpSDiv ||
+           inst->opcode() == spv::Op::OpUDiv);
+
+    if (constants[0] || constants[1]) {
+      return nullptr;
+    }
+
+    analysis::TypeManager* type_mgr = context->get_type_mgr();
+    const analysis::Type* type = type_mgr->GetType(inst->type_id());
+
+    if (type->IsCooperativeMatrix()) {
+      return nullptr;
+    }
+
+    bool use_float = inst->opcode() == spv::Op::OpFDiv;
+    if (use_float && !inst->IsFloatingPointFoldingAllowed()) {
+      return nullptr;
+    }
+
+    analysis::ConstantManager* const_mgr = context->get_constant_mgr();
+
+    if (inst->GetSingleWordInOperand(0) == inst->GetSingleWordInOperand(1)) {
+      return GetConstantUniformValue(const_mgr, type, 1.0, 1);
+    }
+
+    if (inst->opcode() == spv::Op::OpUDiv) {
+      return nullptr;
+    }
+
+    analysis::DefUseManager* def_use_mgr = context->get_def_use_mgr();
+
+    Instruction* lhs = def_use_mgr->GetDef(inst->GetSingleWordInOperand(0));
+    if ((lhs->opcode() == spv::Op::OpSNegate ||
+         lhs->opcode() == spv::Op::OpFNegate) &&
+        lhs->GetSingleWordInOperand(0) == inst->GetSingleWordInOperand(1) &&
+        (!use_float || lhs->IsFloatingPointFoldingAllowed())) {
+      return GetConstantUniformValue(const_mgr, type, -1.0, UINT64_MAX);
+    }
+
+    Instruction* rhs = def_use_mgr->GetDef(inst->GetSingleWordInOperand(1));
+    if ((rhs->opcode() == spv::Op::OpSNegate ||
+         rhs->opcode() == spv::Op::OpFNegate) &&
+        rhs->GetSingleWordInOperand(0) == inst->GetSingleWordInOperand(0) &&
+        (!use_float || rhs->IsFloatingPointFoldingAllowed())) {
+      return GetConstantUniformValue(const_mgr, type, -1.0, UINT64_MAX);
+    }
+
+    return nullptr;
+  };
+}
 
 bool CompareFloatingPoint(bool op_result, bool op_unordered,
                           bool need_ordered) {
@@ -1945,9 +2074,14 @@ void ConstantFoldingRules::AddFoldingRules() {
 
   rules_[spv::Op::OpDot].push_back(FoldOpDotWithConstants());
   rules_[spv::Op::OpFAdd].push_back(FoldFAdd());
+
   rules_[spv::Op::OpFDiv].push_back(FoldFDiv());
+  rules_[spv::Op::OpFDiv].push_back(FoldRedundantDiv());
+
   rules_[spv::Op::OpFMul].push_back(FoldFMul());
+
   rules_[spv::Op::OpFSub].push_back(FoldFSub());
+  rules_[spv::Op::OpFSub].push_back(FoldRedundantSub());
 
   rules_[spv::Op::OpSelect].push_back(FoldInvariantSelect());
 
@@ -2005,21 +2139,29 @@ void ConstantFoldingRules::AddFoldingRules() {
   rules_[spv::Op::OpIAdd].push_back(
       FoldBinaryOp(FoldBinaryIntegerOperation<Unsigned>(
           [](uint64_t a, uint64_t b) { return a + b; })));
+
   rules_[spv::Op::OpISub].push_back(
       FoldBinaryOp(FoldBinaryIntegerOperation<Unsigned>(
           [](uint64_t a, uint64_t b) { return a - b; })));
+  rules_[spv::Op::OpISub].push_back(FoldRedundantSub());
+
   rules_[spv::Op::OpIMul].push_back(
       FoldBinaryOp(FoldBinaryIntegerOperation<Unsigned>(
           [](uint64_t a, uint64_t b) { return a * b; })));
+
   rules_[spv::Op::OpUDiv].push_back(
       FoldBinaryOp(FoldBinaryIntegerOperation<Unsigned>(
           [](uint64_t a, uint64_t b) { return (b != 0 ? a / b : 0); })));
+  rules_[spv::Op::OpUDiv].push_back(FoldRedundantDiv());
+
   rules_[spv::Op::OpSDiv].push_back(FoldBinaryOp(
       FoldBinaryIntegerOperation<Signed>([](uint64_t a, uint64_t b) {
         return (b != 0 ? static_cast<uint64_t>(static_cast<int64_t>(a) /
                                                static_cast<int64_t>(b))
                        : 0);
       })));
+  rules_[spv::Op::OpSDiv].push_back(FoldRedundantDiv());
+
   rules_[spv::Op::OpUMod].push_back(
       FoldBinaryOp(FoldBinaryIntegerOperation<Unsigned>(
           [](uint64_t a, uint64_t b) { return (b != 0 ? a % b : 0); })));
