@@ -49,6 +49,7 @@ ParsedIR::ParsedIR()
 	pool_group->pools[TypeAccessChain].reset(new ObjectPool<SPIRAccessChain>);
 	pool_group->pools[TypeUndef].reset(new ObjectPool<SPIRUndef>);
 	pool_group->pools[TypeString].reset(new ObjectPool<SPIRString>);
+	pool_group->pools[TypeDebugLocalVariable].reset(new ObjectPool<SPIRDebugLocalVariable>);
 }
 
 // Should have been default-implemented, but need this on MSVC 2013.
@@ -78,7 +79,7 @@ ParsedIR &ParsedIR::operator=(ParsedIR &&other) SPIRV_CROSS_NOEXCEPT
 		memory_model = other.memory_model;
 
 		default_entry_point = other.default_entry_point;
-		source = other.source;
+		sources = std::move(other.sources);
 		loop_iteration_depth_hard = other.loop_iteration_depth_hard;
 		loop_iteration_depth_soft = other.loop_iteration_depth_soft;
 
@@ -110,7 +111,7 @@ ParsedIR &ParsedIR::operator=(const ParsedIR &other)
 		continue_block_to_loop_header = other.continue_block_to_loop_header;
 		entry_points = other.entry_points;
 		default_entry_point = other.default_entry_point;
-		source = other.source;
+		sources = other.sources;
 		loop_iteration_depth_hard = other.loop_iteration_depth_hard;
 		loop_iteration_depth_soft = other.loop_iteration_depth_soft;
 		addressing_model = other.addressing_model;
