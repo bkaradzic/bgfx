@@ -377,6 +377,7 @@ enum Types
 	TypeAccessChain,
 	TypeUndef,
 	TypeString,
+	TypeDebugLocalVariable,
 	TypeCount
 };
 
@@ -504,6 +505,18 @@ struct SPIRString : IVariant
 	std::string str;
 
 	SPIRV_CROSS_DECLARE_CLONE(SPIRString)
+};
+
+struct SPIRDebugLocalVariable : IVariant
+{
+	enum
+	{
+		type = TypeDebugLocalVariable
+	};
+
+	uint32_t name_id;
+
+	SPIRV_CROSS_DECLARE_CLONE(SPIRDebugLocalVariable)
 };
 
 // This type is only used by backends which need to access the combined image and sampler IDs separately after
@@ -1162,6 +1175,9 @@ struct SPIRVariable : IVariant
 
 	// Temporaries which can remain forwarded as long as this variable is not modified.
 	SmallVector<ID> dependees;
+
+	// ShaderDebugInfo local variables attached to this variable via DebugDeclare
+	SmallVector<ID> debug_local_variables;
 
 	bool deferred_declaration = false;
 	bool phi_variable = false;

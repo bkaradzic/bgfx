@@ -796,6 +796,8 @@ protected:
 		SPVFuncImplSSign,
 		SPVFuncImplArrayCopy,
 		SPVFuncImplArrayCopyMultidim,
+		SPVFuncImplArrayCopyExtendedSrc,
+		SPVFuncImplArrayCopyExtendedDst,
 		SPVFuncImplTexelBufferCoords,
 		SPVFuncImplImage2DAtomicCoords, // Emulate texture2D atomic operations
 		SPVFuncImplGradientCube,

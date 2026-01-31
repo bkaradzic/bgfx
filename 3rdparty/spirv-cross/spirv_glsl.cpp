@@ -206,10 +206,10 @@ static BufferPackingStandard packing_to_substruct_packing(BufferPackingStandard 
 
 void CompilerGLSL::init()
 {
-	if (ir.source.known)
+	if (!ir.sources.empty() && ir.sources.front().known)
 	{
-		options.es = ir.source.es;
-		options.version = ir.source.version;
+		options.es = ir.sources.front().es;
+		options.version = ir.sources.front().version;
 	}
 
 	// Query the locale to see what the decimal point is.
@@ -1755,10 +1755,32 @@ uint32_t CompilerGLSL::type_to_packed_size(const SPIRType &type, const Bitset &f
 	{
 		uint32_t packed_size = to_array_size_literal(type) * type_to_packed_array_stride(type, flags, packing);
 
-		// For arrays of vectors and matrices in HLSL, the last element has a size which depends on its vector size,
-		// so that it is possible to pack other vectors into the last element.
-		if (packing_is_hlsl(packing) && type.basetype != SPIRType::Struct)
-			packed_size -= (4 - type.vecsize) * (type.width / 8);
+		if (packing_is_hlsl(packing))
+		{
+			// For arrays of vectors and matrices in HLSL, the last element has a size which depends on its vector size,
+			// so that it is possible to pack other vectors into the last element.
+			if (type.basetype != SPIRType::Struct)
+			{
+				if (flags.get(DecorationRowMajor) && type.columns > 1)
+					packed_size -= (4 - type.columns) * (type.width / 8);
+				else
+					packed_size -= (4 - type.vecsize) * (type.width / 8);
+			}
+			else
+			{
+				const auto *base_type = &type;
+				while (is_array(*base_type))
+				{
+					auto &new_type = get<SPIRType>(base_type->parent_type);
+					if (!is_array(new_type))
+						break;
+					base_type = &new_type;
+				}
+
+				packed_size -= type_to_packed_array_stride(*base_type, flags, packing);
+				packed_size += type_to_packed_size(get<SPIRType>(base_type->parent_type), flags, packing);
+			}
+		}
 
 		return packed_size;
 	}
@@ -1777,15 +1799,27 @@ uint32_t CompilerGLSL::type_to_packed_size(const SPIRType &type, const Bitset &f
 			uint32_t packed_alignment = type_to_packed_alignment(member_type, member_flags, packing);
 			uint32_t alignment = max(packed_alignment, pad_alignment);
 
-			// The next member following a struct member is aligned to the base alignment of the struct that came before.
-			// GL 4.5 spec, 7.6.2.2.
-			if (member_type.basetype == SPIRType::Struct)
-				pad_alignment = packed_alignment;
+			uint32_t element_size = type_to_packed_size(member_type, member_flags, packing);
+			pad_alignment = 1;
+
+			if (packing_is_hlsl(packing))
+			{
+				// HLSL is primarily a "cannot-straddle-vec4" language.
+				uint32_t begin_word = size / 16;
+				uint32_t end_word = (size + element_size - 1) / 16;
+				if (begin_word != end_word)
+					alignment = max<uint32_t>(alignment, 16u);
+			}
 			else
-				pad_alignment = 1;
+			{
+				// The next member following a struct member is aligned to the base alignment of the struct that came before.
+				// GL 4.5 spec, 7.6.2.2.
+				if (member_type.basetype == SPIRType::Struct)
+					pad_alignment = packed_alignment;
+			}
 
 			size = (size + alignment - 1) & ~(alignment - 1);
-			size += type_to_packed_size(member_type, member_flags, packing);
+			size += element_size;
 		}
 	}
 	else
@@ -1803,9 +1837,7 @@ uint32_t CompilerGLSL::type_to_packed_size(const SPIRType &type, const Bitset &f
 
 			if (flags.get(DecorationColMajor) && type.columns > 1)
 			{
-				if (packing_is_vec4_padded(packing))
-					size = type.columns * 4 * base_alignment;
-				else if (type.vecsize == 3)
+				if (packing_is_vec4_padded(packing) || type.vecsize == 3)
 					size = type.columns * 4 * base_alignment;
 				else
 					size = type.columns * type.vecsize * base_alignment;
@@ -1813,9 +1845,7 @@ uint32_t CompilerGLSL::type_to_packed_size(const SPIRType &type, const Bitset &f
 
 			if (flags.get(DecorationRowMajor) && type.vecsize > 1)
 			{
-				if (packing_is_vec4_padded(packing))
-					size = type.vecsize * 4 * base_alignment;
-				else if (type.columns == 3)
+				if (packing_is_vec4_padded(packing) || type.columns == 3)
 					size = type.vecsize * 4 * base_alignment;
 				else
 					size = type.vecsize * type.columns * base_alignment;
@@ -1824,7 +1854,12 @@ uint32_t CompilerGLSL::type_to_packed_size(const SPIRType &type, const Bitset &f
 			// For matrices in HLSL, the last element has a size which depends on its vector size,
 			// so that it is possible to pack other vectors into the last element.
 			if (packing_is_hlsl(packing) && type.columns > 1)
-				size -= (4 - type.vecsize) * (type.width / 8);
+			{
+				if (flags.get(DecorationRowMajor))
+					size -= (4 - type.columns) * (type.width / 8);
+				else
+					size -= (4 - type.vecsize) * (type.width / 8);
+			}
 		}
 	}
 
@@ -1915,7 +1950,7 @@ bool CompilerGLSL::buffer_is_packing_standard(const SPIRType &type, BufferPackin
 
 		// The next member following a struct member is aligned to the base alignment of the struct that came before.
 		// GL 4.5 spec, 7.6.2.2.
-		if (memb_type.basetype == SPIRType::Struct && !memb_type.pointer)
+		if (!packing_is_hlsl(packing) && memb_type.basetype == SPIRType::Struct && !memb_type.pointer)
 			pad_alignment = packed_alignment;
 		else
 			pad_alignment = 1;
@@ -1943,13 +1978,16 @@ bool CompilerGLSL::buffer_is_packing_standard(const SPIRType &type, BufferPackin
 			}
 
 			// Verify array stride rules.
-			if (is_array(memb_type) &&
-			    type_to_packed_array_stride(memb_type, member_flags, packing) !=
-			    type_struct_member_array_stride(type, i))
+			if (is_array(memb_type))
 			{
-				if (failed_validation_index)
-					*failed_validation_index = i;
-				return false;
+				auto packed_array_stride = type_to_packed_array_stride(memb_type, member_flags, packing);
+				auto member_array_stride = type_struct_member_array_stride(type, i);
+				if (packed_array_stride != member_array_stride)
+				{
+					if (failed_validation_index)
+						*failed_validation_index = i;
+					return false;
+				}
 			}
 
 			// Verify that sub-structs also follow packing rules.
