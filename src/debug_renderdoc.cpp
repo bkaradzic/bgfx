@@ -24,6 +24,13 @@ namespace bgfx
 		// Skip loading RenderDoc when IntelGPA is present to avoid RenderDoc crash.
 		if (findModule(BX_ARCH_32BIT ? "shimloader32.dll" : "shimloader64.dll") )
 		{
+			BX_TRACE("IntelGPA is present, not loading RenderDoc.");
+			return NULL;
+		}
+
+		if (bgfx::NativeWindowHandleType::Wayland == g_platformData.type)
+		{
+			BX_TRACE("RenderDoc is not available on Wayland. https://github.com/baldurk/renderdoc/issues/853");
 			return NULL;
 		}
 
