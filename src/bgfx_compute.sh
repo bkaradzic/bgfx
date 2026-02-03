@@ -262,6 +262,12 @@ __IMAGE_IMPL_A(uint,   x,    uvec4, xxxx)
 __IMAGE_IMPL_A(uint2,  xy,   uvec4, xyyy)
 __IMAGE_IMPL_A(uint4,  xyzw, uvec4, xyzw)
 
+#if BGFX_SHADER_LANGUAGE_HLSL && !BGFX_SHADER_LANGUAGE_DXIL
+__IMAGE_IMPL_A(unorm float,       x,    vec4,  xxxx)
+__IMAGE_IMPL_A(unorm float2,      xy,   vec4,  xyyy)
+__IMAGE_IMPL_A(unorm float4,      xyzw, vec4,  xyzw)
+#endif // BGFX_SHADER_LANGUAGE_HLSL && !BGFX_SHADER_LANGUAGE_DXIL
+
 __IMAGE_IMPL_ATOMIC(uint, x, uvec4, xxxx)
 
 #define atomicAdd(_mem, _data)                                       InterlockedAdd(_mem, _data)
