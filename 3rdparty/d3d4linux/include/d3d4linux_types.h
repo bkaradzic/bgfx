@@ -26,14 +26,16 @@ struct D3D_SHADER_DATA
 
 struct D3D11_SIGNATURE_PARAMETER_DESC
 {
-    char const *SemanticName;
-    uint32_t SemanticIndex;
-    uint32_t Register;
-    D3D_NAME SystemValueType;
-    D3D_REGISTER_COMPONENT_TYPE ComponentType;
-    uint8_t Mask;
-    uint8_t ReadWriteMask;
-    uint32_t Stream;
+    char const *SemanticName;             // 8 bytes (pointer)
+    uint32_t SemanticIndex;               // 4 bytes
+    uint32_t Register;                    // 4 bytes
+    D3D_NAME SystemValueType;             // 4 bytes (enum)
+    D3D_REGISTER_COMPONENT_TYPE ComponentType; // 4 bytes (enum)
+    uint8_t Mask;                         // 1 byte
+    uint8_t ReadWriteMask;                // 1 byte
+    uint8_t _padding[2];                  // 2 bytes padding for alignment
+    uint32_t Stream;                      // 4 bytes
+    D3D_MIN_PRECISION MinPrecision;       // 4 bytes (enum) + 4 bytes padding = 40 total
 };
 
 struct D3D11_SHADER_INPUT_BIND_DESC
