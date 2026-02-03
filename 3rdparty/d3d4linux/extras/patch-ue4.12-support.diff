@@ -1,0 +1,304 @@
+diff --git a/Engine/Source/Developer/TargetPlatform/TargetPlatform.Build.cs b/Engine/Source/Developer/TargetPlatform/TargetPlatform.Build.cs
+index e322abd..9212f61 100644
+--- a/Engine/Source/Developer/TargetPlatform/TargetPlatform.Build.cs
++++ b/Engine/Source/Developer/TargetPlatform/TargetPlatform.Build.cs
+@@ -100,6 +100,10 @@ public class TargetPlatform : ModuleRules
+ 			}
+             else if (Target.Platform == UnrealTargetPlatform.Linux)
+             {
++// D3D4LINUX BEGIN
++                DynamicallyLoadedModuleNames.Add("ShaderFormatD3D");
++// D3D4LINUX END
++
+                 if (UEBuildConfiguration.bCompileLeanAndMeanUE == false)
+                 {
+                     DynamicallyLoadedModuleNames.Add("TextureFormatDXT");
+diff --git a/Engine/Source/Developer/Windows/ShaderFormatD3D/Private/D3D11ShaderCompiler.cpp b/Engine/Source/Developer/Windows/ShaderFormatD3D/Private/D3D11ShaderCompiler.cpp
+index 31d0cb3..72d20a6 100644
+--- a/Engine/Source/Developer/Windows/ShaderFormatD3D/Private/D3D11ShaderCompiler.cpp
++++ b/Engine/Source/Developer/Windows/ShaderFormatD3D/Private/D3D11ShaderCompiler.cpp
+@@ -16,12 +16,21 @@ DEFINE_LOG_CATEGORY_STATIC(LogD3D11ShaderCompiler, Log, All);
+ #pragma warning(push)
+ #pragma warning(disable : 4005)	// macro redefinition
+ 
++#if PLATFORM_LINUX // D3D4LINUX BEGIN
++#define D3D4LINUX_WINE "/usr/bin/wine64"
++#define D3D4LINUX_EXE \
++	(TCHAR_TO_ANSI(*(FPaths::EngineDir() \
++		/ FString(TEXT("Binaries/ThirdParty/d3d4linux/d3d4linux.exe")))))
++
++#include <d3d4linux.h>
++#else
+ #include "AllowWindowsPlatformTypes.h"
+ 	#include <D3D11.h>
+ 	#include <D3Dcompiler.h>
+ 	#include <d3d11Shader.h>
+ #include "HideWindowsPlatformTypes.h"
+ #undef DrawText
++#endif // D3D4LINUX
+ 
+ #pragma warning(pop)
+ 
+@@ -318,7 +327,7 @@ HRESULT D3DCompileWrapper(
+ 	ID3DBlob**				ppErrorMsgs
+ 	)
+ {
+-#if !PLATFORM_SEH_EXCEPTIONS_DISABLED
++#if !PLATFORM_SEH_EXCEPTIONS_DISABLED && !PLATFORM_LINUX // D3D4LINUX BEGIN
+ 	__try
+ #endif
+ 	{
+@@ -336,7 +345,7 @@ HRESULT D3DCompileWrapper(
+ 			ppErrorMsgs
+ 		);
+ 	}
+-#if !PLATFORM_SEH_EXCEPTIONS_DISABLED
++#if !PLATFORM_SEH_EXCEPTIONS_DISABLED && !PLATFORM_LINUX // D3D4LINUX BEGIN
+ 	__except( EXCEPTION_EXECUTE_HANDLER )
+ 	{
+ 		bException = true;
+@@ -779,7 +788,9 @@ static bool CompileAndProcessD3DShader(FString& PreprocessedShaderSource, const
+ 
+ 			// append data that is generate from the shader code and assist the usage, mostly needed for DX12 
+ 			{
+-				FShaderCodePackedResourceCounts PackedResourceCounts = { bGlobalUniformBufferUsed, NumSamplers, NumSRVs, NumCBs, NumUAVs };
++// D3D4LINUX BEGIN
++				FShaderCodePackedResourceCounts PackedResourceCounts = { bGlobalUniformBufferUsed, (uint8)NumSamplers, (uint8)NumSRVs, (uint8)NumCBs, (uint8)NumUAVs };
++// D3D4LINUX END
+ 
+ 				Output.ShaderCode.AddOptionalData(PackedResourceCounts);
+ 				Output.ShaderCode.AddOptionalData('u', UniformBufferNameBytes.GetData(), UniformBufferNameBytes.Num());
+diff --git a/Engine/Source/Developer/Windows/ShaderFormatD3D/ShaderFormatD3D.Build.cs b/Engine/Source/Developer/Windows/ShaderFormatD3D/ShaderFormatD3D.Build.cs
+index 9d7a28f..e3b9481 100644
+--- a/Engine/Source/Developer/Windows/ShaderFormatD3D/ShaderFormatD3D.Build.cs
++++ b/Engine/Source/Developer/Windows/ShaderFormatD3D/ShaderFormatD3D.Build.cs
+@@ -18,6 +18,15 @@ public class ShaderFormatD3D : ModuleRules
+ 			}
+ 			);
+ 
+-		AddEngineThirdPartyPrivateStaticDependencies(Target, "DX11");
++// D3D4LINUX BEGIN
++		if (Target.Platform == UnrealTargetPlatform.Linux)
++		{
++			PrivateDependencyModuleNames.Add("d3d4linux");
++		}
++		else
++		{
++			AddEngineThirdPartyPrivateStaticDependencies(Target, "DX11");
++		}
++// D3D4LINUX END
+ 	}
+ }
+diff --git a/Engine/Source/Developer/Windows/WindowsNoEditorTargetPlatform/Private/WindowsNoEditorTargetPlatformPrivatePCH.h b/Engine/Source/Developer/Windows/WindowsNoEditorTargetPlatform/Private/WindowsNoEditorTargetPlatformPrivatePCH.h
+index 47bff37..f8231e6 100644
+--- a/Engine/Source/Developer/Windows/WindowsNoEditorTargetPlatform/Private/WindowsNoEditorTargetPlatformPrivatePCH.h
++++ b/Engine/Source/Developer/Windows/WindowsNoEditorTargetPlatform/Private/WindowsNoEditorTargetPlatformPrivatePCH.h
+@@ -12,7 +12,9 @@
+ 
+ #include "Core.h"
+ #include "ModuleManager.h"
+-#include "WindowsPlatformProperties.h"
++// D3D4LINUX BEGIN
++#include "Windows/WindowsPlatformProperties.h"
++// D3D4LINUX END
+ 
+ #if WITH_ENGINE
+ 	#include "Engine.h"
+@@ -22,9 +24,11 @@
+ #include "TargetPlatform.h"
+ #include "TargetPlatformBase.h"
+ 
++#if !PLATFORM_LINUX // D3D4LINUX BEGIN
+ #include "AllowWindowsPlatformTypes.h"
+ 	#include <TlHelp32.h>
+ #include "HideWindowsPlatformTypes.h"
++#endif // D3D4LINUX END
+ 
+ 
+ /* Private includes
+diff --git a/Engine/Source/Developer/Windows/WindowsTargetPlatform/Private/GenericWindowsTargetPlatform.h b/Engine/Source/Developer/Windows/WindowsTargetPlatform/Private/GenericWindowsTargetPlatform.h
+index 5692036..23d8671 100644
+--- a/Engine/Source/Developer/Windows/WindowsTargetPlatform/Private/GenericWindowsTargetPlatform.h
++++ b/Engine/Source/Developer/Windows/WindowsTargetPlatform/Private/GenericWindowsTargetPlatform.h
+@@ -28,7 +28,9 @@ public:
+ 		LocalDevice = MakeShareable(new TLocalPcTargetDevice<HAS_EDITOR_DATA>(*this));
+ 		
+ 		#if WITH_ENGINE
+-			FConfigCacheIni::LoadLocalIniFile(EngineSettings, TEXT("Engine"), true, *PlatformName());
++// D3D4LINUX BEGIN
++			FConfigCacheIni::LoadLocalIniFile(EngineSettings, TEXT("Engine"), true, *FString(TProperties::PlatformName()));
++// D3D4LINUX END
+ 			TextureLODSettings = nullptr; // These are registered by the device profile system.
+ 			StaticMeshLODSettings.Initialize(EngineSettings);
+ 
+@@ -152,7 +154,9 @@ public:
+ 	{
+ 		if (!IS_DEDICATED_SERVER)
+ 		{
+-			FName TextureFormatName = GetDefaultTextureFormatName(InTexture, EngineSettings, bSupportDX11TextureFormats);
++// D3D4LINUX BEGIN
++			FName TextureFormatName = this->GetDefaultTextureFormatName(InTexture, EngineSettings, bSupportDX11TextureFormats);
++// D3D4LINUX END
+ 			OutFormats.Add(TextureFormatName);
+ 		}
+ 	}
+diff --git a/Engine/Source/Developer/Windows/WindowsTargetPlatform/Private/LocalPcTargetDevice.h b/Engine/Source/Developer/Windows/WindowsTargetPlatform/Private/LocalPcTargetDevice.h
+index e6ecd0e..48065a6 100644
+--- a/Engine/Source/Developer/Windows/WindowsTargetPlatform/Private/LocalPcTargetDevice.h
++++ b/Engine/Source/Developer/Windows/WindowsTargetPlatform/Private/LocalPcTargetDevice.h
+@@ -63,10 +63,12 @@ public:
+ 
+ 	virtual ETargetDeviceTypes GetDeviceType( ) const override
+ 	{
++#if !PLATFORM_LINUX // D3D4LINUX BEGIN
+ 		if (::GetSystemMetrics(SM_TABLETPC) != 0)
+ 		{
+ 			return ETargetDeviceTypes::Tablet;
+ 		}
++#endif // D3D4LINUX END
+ 
+ 		return ETargetDeviceTypes::Desktop;
+ 	}
+@@ -93,6 +95,7 @@ public:
+ 
+ 	virtual int32 GetProcessSnapshot( TArray<FTargetDeviceProcessInfo>& OutProcessInfos ) override
+ 	{
++#if !PLATFORM_LINUX // D3D4LINUX BEGIN
+ 		// enumerate processes
+ 		HANDLE ProcessSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+ 
+@@ -210,6 +213,9 @@ public:
+ 				::CloseHandle(ThreadSnapshot);
+ 			}
+ 		}
++#else
++		OutProcessInfos.Empty();
++#endif // D3D4LINUX END
+ 
+ 		return OutProcessInfos.Num();
+ 	}
+@@ -267,12 +273,16 @@ public:
+ 
+ 	virtual bool PowerOff( bool Force ) override
+ 	{
++#if !PLATFORM_LINUX // D3D4LINUX BEGIN
+ 		if (!AdjustShutdownPrivileges())
+ 		{
+ 			return false;
+ 		}
+ 
+ 		return (::ExitWindowsEx(EWX_POWEROFF | EWX_FORCE, SHTDN_REASON_MINOR_MAINTENANCE | SHTDN_REASON_FLAG_PLANNED) != 0);
++#else
++		return false;
++#endif // D3D4LINUX END
+ 	}
+ 
+ 	virtual bool PowerOn( ) override
+@@ -282,12 +292,16 @@ public:
+ 
+ 	virtual bool Reboot( bool bReconnect = false ) override
+ 	{
++#if !PLATFORM_LINUX // D3D4LINUX BEGIN
+ 		if (!AdjustShutdownPrivileges())
+ 		{
+ 			return false;
+ 		}
+ 
+ 		return (::ExitWindowsEx(EWX_REBOOT | EWX_FORCE, SHTDN_REASON_MINOR_MAINTENANCE | SHTDN_REASON_FLAG_PLANNED) != 0);
++#else
++		return false;
++#endif // D3D4LINUX END
+ 	}
+ 
+ 	virtual bool Run( const FString& ExecutablePath, const FString& Params, uint32* OutProcessId )
+@@ -342,6 +356,7 @@ public:
+ 
+ 	virtual bool TerminateProcess( const int32 ProcessId ) override
+ 	{
++#if !PLATFORM_LINUX // D3D4LINUX BEGIN
+ 		HANDLE ProcessHandle = OpenProcess(PROCESS_TERMINATE, false, ProcessId);
+ 
+ 		if (ProcessHandle != NULL)
+@@ -352,6 +367,7 @@ public:
+ 
+ 			return Result;
+ 		}
++#endif // D3D4LINUX END
+ 
+ 		return false;
+ 	}
+@@ -365,6 +381,7 @@ protected:
+ 	 */
+ 	bool AdjustShutdownPrivileges( )
+ 	{
++#if !PLATFORM_LINUX // D3D4LINUX BEGIN
+ 		HANDLE TokenHandle;
+ 		TOKEN_PRIVILEGES Token;
+ 
+@@ -386,6 +403,9 @@ protected:
+ 		::AdjustTokenPrivileges(TokenHandle, 0, &Token, 0, (PTOKEN_PRIVILEGES)NULL, 0);
+       
+ 		return (GetLastError() == ERROR_SUCCESS);
++#else
++		return true;
++#endif // D3D4LINUX END
+ 	}
+ 
+ private:
+diff --git a/Engine/Source/Developer/Windows/WindowsTargetPlatform/Private/WindowsTargetPlatformPrivatePCH.h b/Engine/Source/Developer/Windows/WindowsTargetPlatform/Private/WindowsTargetPlatformPrivatePCH.h
+index 4f667bc..a35267a 100644
+--- a/Engine/Source/Developer/Windows/WindowsTargetPlatform/Private/WindowsTargetPlatformPrivatePCH.h
++++ b/Engine/Source/Developer/Windows/WindowsTargetPlatform/Private/WindowsTargetPlatformPrivatePCH.h
+@@ -8,7 +8,9 @@
+ 
+ #include "Core.h"
+ #include "CoreUObject.h"
+-#include "WindowsPlatformProperties.h"
++// D3D4LINUX BEGIN
++#include "Windows/WindowsPlatformProperties.h"
++// D3D4LINUX END
+ 
+ #if WITH_ENGINE
+ 	#include "Engine.h"
+@@ -18,9 +20,11 @@
+ #include "TargetPlatform.h"
+ #include "TargetPlatformBase.h"
+ 
++#if !PLATFORM_LINUX // D3D4LINUX BEGIN
+ #include "AllowWindowsPlatformTypes.h"
+ 	#include <TlHelp32.h>
+ #include "HideWindowsPlatformTypes.h"
++#endif // D3D4LINUX END
+ 
+ 
+ /* Private includes
+diff --git a/Engine/Source/Programs/UnrealBuildTool/Linux/UEBuildLinux.cs b/Engine/Source/Programs/UnrealBuildTool/Linux/UEBuildLinux.cs
+index 51d352d..21f01ad 100644
+--- a/Engine/Source/Programs/UnrealBuildTool/Linux/UEBuildLinux.cs
++++ b/Engine/Source/Programs/UnrealBuildTool/Linux/UEBuildLinux.cs
+@@ -71,7 +71,9 @@ namespace UnrealBuildTool
+ 
+ 				if (bBuildShaderFormats)
+ 				{
+-					// Rules.DynamicallyLoadedModuleNames.Add("ShaderFormatD3D");
++// D3D4LINUX BEGIN
++					Rules.DynamicallyLoadedModuleNames.Add("ShaderFormatD3D");
++// D3D4LINUX END
+ 					Rules.DynamicallyLoadedModuleNames.Add("ShaderFormatOpenGL");
+ 				}
+ 			}
+diff --git a/Engine/Source/Runtime/Engine/Engine.Build.cs b/Engine/Source/Runtime/Engine/Engine.Build.cs
+index 596a732..24c5a96 100644
+--- a/Engine/Source/Runtime/Engine/Engine.Build.cs
++++ b/Engine/Source/Runtime/Engine/Engine.Build.cs
+@@ -249,6 +249,10 @@ public class Engine : ModuleRules
+ 						"LinuxTargetPlatform",
+ 						"LinuxNoEditorTargetPlatform",
+ 						"LinuxServerTargetPlatform",
++// D3D4LINUX BEGIN
++						"WindowsTargetPlatform",
++						"WindowsNoEditorTargetPlatform",
++// D3D4LINUX END
+ 						"AllDesktopTargetPlatform",
+ 					}
+ 				);
