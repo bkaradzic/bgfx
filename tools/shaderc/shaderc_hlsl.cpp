@@ -13,10 +13,15 @@
 #	define __out
 #endif // defined(__MINGW32__)
 
-#define COM_NO_WINDOWS_H
-#include <d3dcompiler.h>
-#include <d3d11shader.h>
-#include <bx/os.h>
+// d3d4linux: Use Wine-based D3DCompiler on Linux/macOS
+#if SHADERC_CONFIG_HLSL_D3D4LINUX
+#	include <d3d4linux.h>
+#else
+#	define COM_NO_WINDOWS_H
+#	include <d3dcompiler.h>
+#	include <d3d11shader.h>
+#	include <bx/os.h>
+#endif // SHADERC_CONFIG_HLSL_D3D4LINUX
 
 #ifndef D3D_SVF_USED
 #	define D3D_SVF_USED 2
@@ -24,6 +29,8 @@
 
 namespace bgfx { namespace hlsl
 {
+#if !SHADERC_CONFIG_HLSL_D3D4LINUX
+	// Windows: Use function pointers loaded from DLL
 	typedef HRESULT(WINAPI* PFN_D3D_COMPILE)(_In_reads_bytes_(SrcDataSize) LPCVOID pSrcData
 		, _In_ SIZE_T SrcDataSize
 		, _In_opt_ LPCSTR pSourceName
@@ -60,6 +67,7 @@ namespace bgfx { namespace hlsl
 	PFN_D3D_DISASSEMBLE  D3DDisassemble;
 	PFN_D3D_REFLECT      D3DReflect;
 	PFN_D3D_STRIP_SHADER D3DStripShader;
+#endif // !SHADERC_CONFIG_HLSL_D3D4LINUX
 
 	struct D3DCompiler
 	{
@@ -78,10 +86,29 @@ namespace bgfx { namespace hlsl
 	};
 
 	static const D3DCompiler* s_compiler = NULL;
+#if !SHADERC_CONFIG_HLSL_D3D4LINUX
 	static void* s_d3dcompilerdll = NULL;
+#endif // !SHADERC_CONFIG_HLSL_D3D4LINUX
 
 	const D3DCompiler* load(bx::WriterI* _messageWriter)
 	{
+#if SHADERC_CONFIG_HLSL_D3D4LINUX
+		BX_UNUSED(_messageWriter);
+
+		// d3d4linux: Functions are provided directly by the header
+		// Use d3dcompiler_47.dll interface (IID_ID3D11ShaderReflection47)
+		static const D3DCompiler s_d3d4linux_compiler = {
+			"d3d4linux (Wine)",
+			{ 0x8d536ca1, 0x0cca, 0x4956, { 0xa8, 0x37, 0x78, 0x69, 0x63, 0x75, 0x55, 0x84 } }
+		};
+
+		if (g_verbose)
+		{
+			BX_TRACE("Using d3d4linux for HLSL compilation (Wine-based D3DCompiler).");
+		}
+
+		return &s_d3d4linux_compiler;
+#else
 		if (NULL != s_d3dcompilerdll)
 		{
 			return s_compiler;
@@ -124,10 +151,12 @@ namespace bgfx { namespace hlsl
 
 		bx::write(_messageWriter, &messageErr, "Error: Unable to open D3DCompiler_*.dll shader compiler.\n");
 		return NULL;
+#endif // SHADERC_CONFIG_HLSL_D3D4LINUX
 	}
 
 	void unload()
 	{
+#if !SHADERC_CONFIG_HLSL_D3D4LINUX
 		if (NULL != s_d3dcompilerdll)
 		{
 			bx::dlclose(s_d3dcompilerdll);
@@ -139,6 +168,7 @@ namespace bgfx { namespace hlsl
 		D3DDisassemble = NULL;
 		D3DReflect     = NULL;
 		D3DStripShader = NULL;
+#endif // !SHADERC_CONFIG_HLSL_D3D4LINUX
 	}
 
 	struct RemapInputSemantic

@@ -11,8 +11,17 @@ namespace bgfx
 	extern bool g_verbose;
 }
 
+// HLSL compilation support:
+// - Windows: Native D3DCompiler DLL
+// - Linux/macOS: d3d4linux (Wine-based, requires SHADERC_CONFIG_HLSL_D3D4LINUX=1)
 #ifndef SHADERC_CONFIG_HLSL
-#	define SHADERC_CONFIG_HLSL BX_PLATFORM_WINDOWS
+#	if BX_PLATFORM_WINDOWS
+#		define SHADERC_CONFIG_HLSL 1
+#	elif SHADERC_CONFIG_HLSL_D3D4LINUX
+#		define SHADERC_CONFIG_HLSL 1
+#	else
+#		define SHADERC_CONFIG_HLSL 0
+#	endif
 #endif // SHADERC_CONFIG_HLSL
 
 #ifndef SHADERC_CONFIG_DXIL

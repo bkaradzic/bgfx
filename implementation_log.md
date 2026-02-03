@@ -603,3 +603,96 @@ DXC (DirectXShaderCompiler) is explicitly excluded from this PR for the followin
 ### Conclusion
 
 The d3d4linux integration addresses the original issue (#1869) by enabling legacy HLSL shader compilation on Linux. Modern DXC support can be added in a future PR using native platform libraries, which is the correct approach since DXC doesn't require Wine.
+
+---
+
+## 2026-02-03: bgfx Shaderc Integration
+
+### Files Modified
+
+#### 1. tools/shaderc/shaderc.h
+- Added `SHADERC_CONFIG_HLSL_D3D4LINUX` preprocessor define
+- Modified `SHADERC_CONFIG_HLSL` to enable on Linux/macOS when d3d4linux is configured
+- Logic: Windows always enabled, Linux/macOS enabled when `SHADERC_CONFIG_HLSL_D3D4LINUX=1`
+
+#### 2. tools/shaderc/shaderc_hlsl.cpp
+- Added conditional include for `<d3d4linux.h>` when `SHADERC_CONFIG_HLSL_D3D4LINUX` is defined
+- Wrapped Windows-specific function pointer typedefs with `#if !SHADERC_CONFIG_HLSL_D3D4LINUX`
+- Modified `load()` function to return d3d4linux compiler info on Linux
+- Modified `unload()` function to be a no-op on d3d4linux (no DLL to unload)
+- d3d4linux provides `D3DCompile`, `D3DReflect`, `D3DDisassemble`, `D3DStripShader` as inline functions
+
+#### 3. scripts/shaderc.lua
+- Added `D3D4LINUX` path variable
+- Added d3d4linux include path for Linux/macOS configurations
+- Added comment explaining the `SHADERC_CONFIG_HLSL_D3D4LINUX` feature flag
+
+### How to Enable
+
+To build shaderc with d3d4linux support on Linux:
+
+```bash
+# Add to your build configuration:
+defines { "SHADERC_CONFIG_HLSL_D3D4LINUX=1" }
+
+# Or via command line:
+-DSHADERC_CONFIG_HLSL_D3D4LINUX=1
+```
+
+### Environment Variables Required at Runtime
+
+When running shaderc with d3d4linux, set these environment variables:
+
+```bash
+export D3D4LINUX_WINE="/usr/bin/wine"
+export D3D4LINUX_EXE="/path/to/bgfx/3rdparty/d3d4linux/d3d4linux.exe"
+export D3D4LINUX_DLL="z:/path/to/bgfx/3rdparty/d3d4linux/d3dcompiler_47.dll"
+```
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     shaderc (Linux)                              │
+├─────────────────────────────────────────────────────────────────┤
+│  shaderc_hlsl.cpp                                                │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ #if SHADERC_CONFIG_HLSL_D3D4LINUX                           ││
+│  │   #include <d3d4linux.h>                                    ││
+│  │   → D3DCompile()    (inline, calls d3d4linux::compile)      ││
+│  │   → D3DReflect()    (inline, calls d3d4linux::reflect)      ││
+│  │   → D3DStripShader() (inline, calls d3d4linux::strip_shader)││
+│  │   → D3DDisassemble() (inline, calls d3d4linux::disassemble) ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                              │                                   │
+│                              ▼                                   │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │                    d3d4linux_impl.h                          ││
+│  │   fork() → Wine process with d3d4linux.exe                  ││
+│  │   IPC via pipes (stdin/stdout)                               ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                              │                                   │
+│                              ▼                                   │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │         Wine + d3d4linux.exe + d3dcompiler_47.dll            ││
+│  │   Actual D3D compilation happens here                        ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Testing
+
+Build shaderc with d3d4linux support and test with:
+
+```bash
+# Set environment
+export D3D4LINUX_WINE="/usr/bin/wine"
+export D3D4LINUX_EXE="$PWD/3rdparty/d3d4linux/d3d4linux.exe"
+export D3D4LINUX_DLL="z:$PWD/3rdparty/d3d4linux/d3dcompiler_47.dll"
+
+# Compile a shader
+./shaderc -f examples/01-cubes/vs_cubes.sc \
+    -o /tmp/vs_cubes.bin --type vertex \
+    --platform windows -p s_5_0 \
+    -i examples/common -i src
+```

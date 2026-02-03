@@ -12,6 +12,7 @@ local SPIRV_CROSS    = path.join(BGFX_DIR, "3rdparty/spirv-cross")
 local SPIRV_HEADERS  = path.join(BGFX_DIR, "3rdparty/spirv-headers")
 local SPIRV_TOOLS    = path.join(BGFX_DIR, "3rdparty/spirv-tools")
 local TINT           = path.join(BGFX_DIR, "3rdparty/dawn")
+local D3D4LINUX      = path.join(BGFX_DIR, "3rdparty/d3d4linux")
 
 project "tint-core"
 	kind "StaticLib"
@@ -753,6 +754,13 @@ project "shaderc"
 		includedirs {
 			path.join(BGFX_DIR, "3rdparty/directx-headers/include"),
 			path.join(BGFX_DIR, "3rdparty/directx-headers/include/wsl/stubs"),
+		}
+
+	-- d3d4linux: Enable HLSL compilation on Linux/macOS via Wine
+	-- Set SHADERC_CONFIG_HLSL_D3D4LINUX=1 to enable this feature
+	configuration { "linux* or osx*" }
+		includedirs {
+			path.join(D3D4LINUX, "include"),
 		}
 
 	configuration {}
