@@ -142,6 +142,10 @@ struct d3d4linux
                         var.m_default_value.resize(var.m_desc.Size);
                         p.read_raw(var.m_default_value.data(), var.m_desc.Size);
                     }
+
+                    // Read D3D11_SHADER_TYPE_DESC for this variable
+                    p.read_raw(&var.m_type.m_desc, sizeof(var.m_type.m_desc));
+                    var.m_type.m_name = p.read_string();
                 }
             }
 
@@ -195,8 +199,7 @@ struct d3d4linux
         p.write_raw(pSrcData, SrcDataSize);
         p.write_i64(Flags);
         p.write_i64(szComments ? 1 : 0);
-        if (szComments)
-            p.write_string(szComments);
+        p.write_string(szComments ? szComments : "");
         p.write_i64(D3D4LINUX_FINISHED);
 
         HRESULT ret = p.read_i64();
@@ -328,4 +331,3 @@ private:
         pid_t m_pid;
     };
 };
-
