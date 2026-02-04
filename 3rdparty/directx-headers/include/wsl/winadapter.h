@@ -3,4 +3,6 @@
 
 #pragma once
 
+#define WSL_WINADAPTER_H
+
 #include <unknwn.h>

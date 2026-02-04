@@ -88,12 +88,12 @@ struct d3d4linux
         p.write_i64(D3D4LINUX_OP_REFLECT);
         p.write_i64(SrcDataSize);
         p.write_raw(pSrcData, SrcDataSize);
-        p.write_i64(pInterface);
+        p.write_i64(D3D4LINUX_IID_SHADER_REFLECTION);
         p.write_i64(D3D4LINUX_FINISHED);
 
         HRESULT ret = p.read_i64();
 
-        if (SUCCEEDED(ret) && pInterface == IID_ID3D11ShaderReflection)
+        if (SUCCEEDED(ret) ) //&& pInterface == IID_ID3D11ShaderReflection)
         {
             ID3D11ShaderReflection *r = new ID3D11ShaderReflection;
 

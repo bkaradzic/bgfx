@@ -133,24 +133,24 @@ CS_BIN = $(addprefix $(BUILD_INTERMEDIATE_DIR)/, $(addsuffix .bin, $(basename $(
 BIN = $(VS_BIN) $(FS_BIN) $(CS_BIN)
 ASM = $(VS_ASM) $(FS_ASM)
 
-ifeq ($(TARGET), $(filter $(TARGET),1 3 4 5 6 7))
+ifeq ($(TARGET), $(filter $(TARGET),1 3 4 5 6 7 8))
 BIN += $(CS_BIN)
 ASM += $(CS_ASM)
 endif
 
 $(BUILD_INTERMEDIATE_DIR)/vs_%.bin: $(SHADERS_DIR)vs_%.sc
 	@echo [$(<)]
-	$(SILENT) $(SHADERC) $(VS_FLAGS) --type vertex --depends -o $(@) -f $(<) --disasm
+	$(SILENT) $(SHADERC) $(VS_FLAGS) --type vertex --depends --verbose -o $(@) -f $(<) --disasm
 	$(SILENT) cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
 
 $(BUILD_INTERMEDIATE_DIR)/fs_%.bin: $(SHADERS_DIR)fs_%.sc
 	@echo [$(<)]
-	$(SILENT) $(SHADERC) $(FS_FLAGS) --type fragment --depends -o $(@) -f $(<) --disasm
+	$(SILENT) $(SHADERC) $(FS_FLAGS) --type fragment --depends --verbose -o $(@) -f $(<) --disasm
 	$(SILENT) cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
 
 $(BUILD_INTERMEDIATE_DIR)/cs_%.bin: $(SHADERS_DIR)cs_%.sc
 	@echo [$(<)]
-	$(SILENT) $(SHADERC) $(CS_FLAGS) --type compute --depends -o $(@) -f $(<) --disasm
+	$(SILENT) $(SHADERC) $(CS_FLAGS) --type compute --depends --verbose -o $(@) -f $(<) --disasm
 	$(SILENT) cp $(@) $(BUILD_OUTPUT_DIR)/$(@F)
 
 .PHONY: all

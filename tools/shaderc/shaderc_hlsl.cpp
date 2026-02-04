@@ -15,6 +15,7 @@
 
 #define COM_NO_WINDOWS_H
 #if BX_PLATFORM_LINUX || BX_PLATFORM_OSX
+#	include <wsl/winadapter.h>
 #	include <d3d4linux.h>
 #else
 #	include <d3dcompiler.h>
@@ -28,37 +29,40 @@
 
 namespace bgfx { namespace hlsl
 {
-#if BX_PLATFORM_WINDOWS
-	typedef HRESULT(WINAPI* PFN_D3D_COMPILE)(_In_reads_bytes_(SrcDataSize) LPCVOID pSrcData
-		, _In_ SIZE_T SrcDataSize
-		, _In_opt_ LPCSTR pSourceName
-		, _In_reads_opt_(_Inexpressible_(pDefines->Name != NULL) ) CONST D3D_SHADER_MACRO* pDefines
-		, _In_opt_ ID3DInclude* pInclude
-		, _In_opt_ LPCSTR pEntrypoint
-		, _In_ LPCSTR pTarget
-		, _In_ UINT Flags1
-		, _In_ UINT Flags2
-		, _Out_ ID3DBlob** ppCode
-		, _Always_(_Outptr_opt_result_maybenull_) ID3DBlob** ppErrorMsgs
+	typedef HRESULT(WINAPI* PFN_D3D_COMPILE)(
+		  LPCVOID pSrcData
+		, SIZE_T SrcDataSize
+		, LPCSTR pSourceName
+		, CONST D3D_SHADER_MACRO* pDefines
+		, ID3DInclude* pInclude
+		, LPCSTR pEntrypoint
+		, LPCSTR pTarget
+		, UINT Flags1
+		, UINT Flags2
+		, ID3DBlob** ppCode
+		, ID3DBlob** ppErrorMsgs
 		);
 
-	typedef HRESULT(WINAPI* PFN_D3D_DISASSEMBLE)(_In_reads_bytes_(SrcDataSize) LPCVOID pSrcData
-		, _In_ SIZE_T SrcDataSize
-		, _In_ UINT Flags
-		, _In_opt_ LPCSTR szComments
-		, _Out_ ID3DBlob** ppDisassembly
+	typedef HRESULT(WINAPI* PFN_D3D_DISASSEMBLE)(
+		  LPCVOID pSrcData
+		, SIZE_T SrcDataSize
+		, UINT Flags
+		, LPCSTR szComments
+		, ID3DBlob** ppDisassembly
 		);
 
-	typedef HRESULT(WINAPI* PFN_D3D_REFLECT)(_In_reads_bytes_(SrcDataSize) LPCVOID pSrcData
-		, _In_ SIZE_T SrcDataSize
-		, _In_ REFIID pInterface
-		, _Out_ void** ppReflector
+	typedef HRESULT(WINAPI* PFN_D3D_REFLECT)(
+		  LPCVOID pSrcData
+		, SIZE_T SrcDataSize
+		, REFIID pInterface
+		, void** ppReflector
 		);
 
-	typedef HRESULT(WINAPI* PFN_D3D_STRIP_SHADER)(_In_reads_bytes_(BytecodeLength) LPCVOID pShaderBytecode
-		, _In_ SIZE_T BytecodeLength
-		, _In_ UINT uStripFlags
-		, _Out_ ID3DBlob** ppStrippedBlob
+	typedef HRESULT(WINAPI* PFN_D3D_STRIP_SHADER)(
+		  LPCVOID pShaderBytecode
+		, SIZE_T BytecodeLength
+		, UINT uStripFlags
+		, ID3DBlob** ppStrippedBlob
 		);
 
 	PFN_D3D_COMPILE      D3DCompile;
@@ -69,7 +73,7 @@ namespace bgfx { namespace hlsl
 	struct D3DCompiler
 	{
 		const char* fileName;
-		const GUID  IID_ID3D11ShaderReflection;
+		const GUID  reflectionGuid;
 	};
 
 	static const D3DCompiler s_d3dcompiler[] =
@@ -83,17 +87,9 @@ namespace bgfx { namespace hlsl
 	};
 
 	static const D3DCompiler* s_compiler = NULL;
+
+#if BX_PLATFORM_WINDOWS
 	static void* s_d3dcompilerdll = NULL;
-#else // BX_PLATFORM_LINUX || BX_PLATFORM_OSX
-	// d3d4linux provides D3DCompile, D3DDisassemble, D3DReflect, D3DStripShader
-	// directly via inline functions - no DLL loading needed
-
-	struct D3DCompiler
-	{
-		const char* fileName;
-	};
-
-	static const D3DCompiler* s_compiler = NULL;
 #endif // BX_PLATFORM_WINDOWS
 
 	const D3DCompiler* load(bx::WriterI* _messageWriter)
@@ -101,17 +97,19 @@ namespace bgfx { namespace hlsl
 #if BX_PLATFORM_LINUX || BX_PLATFORM_OSX
 		BX_UNUSED(_messageWriter);
 
-		// d3d4linux: Functions are provided directly by the header via IPC to Wine
-		static const D3DCompiler s_d3d4linux_compiler = {
-			"d3d4linux (Wine)"
-		};
-
 		if (g_verbose)
 		{
-			BX_TRACE("Using d3d4linux for HLSL compilation (Wine-based D3DCompiler).");
+			bx::setEnv("D3D4LINUX_VERBOSE", "1");
+
+			_BX_TRACE("Using d3d4linux for HLSL compilation (Wine-based D3DCompiler).");
 		}
 
-		return &s_d3d4linux_compiler;
+		D3DCompile     = (PFN_D3D_COMPILE     )&d3d4linux::compile;
+		D3DReflect     = (PFN_D3D_REFLECT     )&d3d4linux::reflect;
+		D3DDisassemble = (PFN_D3D_DISASSEMBLE )&d3d4linux::disassemble;
+		D3DStripShader = (PFN_D3D_STRIP_SHADER)&d3d4linux::strip_shader;
+
+		return &s_d3dcompiler[0];
 #else
 		if (NULL != s_d3dcompilerdll)
 		{
@@ -147,7 +145,7 @@ namespace bgfx { namespace hlsl
 			{
 				char filePath[bx::kMaxFilePath];
 				GetModuleFileNameA( (HMODULE)s_d3dcompilerdll, filePath, sizeof(filePath) );
-				BX_TRACE("Loaded %s compiler (%s).", compiler->fileName, filePath);
+				_BX_TRACE("Loaded %s compiler (%s).", compiler->fileName, filePath);
 			}
 
 			return compiler;
@@ -166,13 +164,13 @@ namespace bgfx { namespace hlsl
 			bx::dlclose(s_d3dcompilerdll);
 			s_d3dcompilerdll = NULL;
 		}
+#endif // BX_PLATFORM_WINDOWS
 
 		s_compiler     = NULL;
 		D3DCompile     = NULL;
 		D3DDisassemble = NULL;
 		D3DReflect     = NULL;
 		D3DStripShader = NULL;
-#endif // BX_PLATFORM_WINDOWS
 	}
 
 	struct RemapInputSemantic
@@ -248,7 +246,7 @@ namespace bgfx { namespace hlsl
 			const UniformRemap& remap = s_uniformRemap[ii];
 
 			if (remap.paramClass == constDesc.Class
-			&&  remap.paramType == constDesc.Type)
+			&&  remap.paramType  == constDesc.Type)
 			{
 				if (D3D_SVC_MATRIX_COLUMNS != constDesc.Class)
 				{
@@ -256,7 +254,7 @@ namespace bgfx { namespace hlsl
 				}
 
 				if (remap.columns == constDesc.Columns
-				&&  remap.rows == constDesc.Rows)
+				&&  remap.rows    == constDesc.Rows)
 				{
 					return remap.id;
 				}
@@ -281,20 +279,12 @@ namespace bgfx { namespace hlsl
 		bx::Error messageErr;
 
 		ID3D11ShaderReflection* reflect = NULL;
-#if BX_PLATFORM_LINUX || BX_PLATFORM_OSX
-		// d3d4linux uses a simple integer for the IID
 		HRESULT hr = D3DReflect(_code->GetBufferPointer()
 			, _code->GetBufferSize()
-			, IID_ID3D11ShaderReflection
+			, s_compiler->reflectionGuid
 			, (void**)&reflect
 			);
-#else
-		HRESULT hr = D3DReflect(_code->GetBufferPointer()
-			, _code->GetBufferSize()
-			, s_compiler->IID_ID3D11ShaderReflection
-			, (void**)&reflect
-			);
-#endif // BX_PLATFORM_LINUX || BX_PLATFORM_OSX
+
 		if (FAILED(hr) )
 		{
 			bx::write(_messageWriter, &messageErr, "Error: D3DReflect failed 0x%08x\n", (uint32_t)hr);
@@ -309,10 +299,10 @@ namespace bgfx { namespace hlsl
 			return false;
 		}
 
-		BX_TRACE("Creator: %s 0x%08x", desc.Creator, desc.Version);
-		BX_TRACE("Num constant buffers: %d", desc.ConstantBuffers);
+		_BX_TRACE("Creator: %s 0x%08x", desc.Creator, desc.Version);
+		_BX_TRACE("Num constant buffers: %d", desc.ConstantBuffers);
 
-		BX_TRACE("Input:");
+		_BX_TRACE("Input:");
 
 		if (_vshader) // Only care about input semantic on vertex shaders
 		{
@@ -320,7 +310,7 @@ namespace bgfx { namespace hlsl
 			{
 				D3D11_SIGNATURE_PARAMETER_DESC spd;
 				reflect->GetInputParameterDesc(ii, &spd);
-				BX_TRACE("\t%2d: %s%d, vt %d, ct %d, mask %x, reg %d"
+				_BX_TRACE("\t%2d: %s%d, vt %d, ct %d, mask %x, reg %d"
 					, ii
 					, spd.SemanticName
 					, spd.SemanticIndex
@@ -339,12 +329,12 @@ namespace bgfx { namespace hlsl
 			}
 		}
 
-		BX_TRACE("Output:");
+		_BX_TRACE("Output:");
 		for (uint32_t ii = 0; ii < desc.OutputParameters; ++ii)
 		{
 			D3D11_SIGNATURE_PARAMETER_DESC spd;
 			reflect->GetOutputParameterDesc(ii, &spd);
-			BX_TRACE("\t%2d: %s%d, %d, %d", ii, spd.SemanticName, spd.SemanticIndex, spd.SystemValueType, spd.ComponentType);
+			_BX_TRACE("\t%2d: %s%d, %d, %d", ii, spd.SemanticName, spd.SemanticIndex, spd.SystemValueType, spd.ComponentType);
 		}
 
 		for (uint32_t ii = 0, num = bx::uint32_min(1, desc.ConstantBuffers); ii < num; ++ii)
@@ -357,7 +347,7 @@ namespace bgfx { namespace hlsl
 
 			if (SUCCEEDED(hr) )
 			{
-				BX_TRACE("%s, %d, vars %d, size %d"
+				_BX_TRACE("%s, %d, vars %d, size %d"
 					, bufferDesc.Name
 					, bufferDesc.Type
 					, bufferDesc.Variables
@@ -389,7 +379,7 @@ namespace bgfx { namespace hlsl
 								un.regCount = uint16_t(bx::alignUp(varDesc.Size, 16) / 16);
 								_uniforms.push_back(un);
 
-								BX_TRACE("\t%s, %d, size %d, flags 0x%08x, %d (used)"
+								_BX_TRACE("\t%s, %d, size %d, flags 0x%08x, %d (used)"
 									, varDesc.Name
 									, varDesc.StartOffset
 									, varDesc.Size
@@ -404,7 +394,7 @@ namespace bgfx { namespace hlsl
 									unusedUniforms.push_back(varDesc.Name);
 								}
 
-								BX_TRACE("\t%s, unknown type", varDesc.Name);
+								_BX_TRACE("\t%s, unknown type", varDesc.Name);
 							}
 						}
 					}
@@ -412,7 +402,7 @@ namespace bgfx { namespace hlsl
 			}
 		}
 
-		BX_TRACE("Bound:");
+		_BX_TRACE("Bound:");
 		for (uint32_t ii = 0; ii < desc.BoundResources; ++ii)
 		{
 			D3D11_SHADER_INPUT_BIND_DESC bindDesc;
@@ -422,7 +412,7 @@ namespace bgfx { namespace hlsl
 			{
 				if (D3D_SIT_SAMPLER == bindDesc.Type)
 				{
-					BX_TRACE("\t%s, %d, %d, %d"
+					_BX_TRACE("\t%s, %d, %d, %d"
 						, bindDesc.Name
 						, bindDesc.Type
 						, bindDesc.BindPoint
@@ -499,8 +489,8 @@ namespace bgfx { namespace hlsl
 			flags |= D3DCOMPILE_SKIP_OPTIMIZATION;
 		}
 
-		BX_TRACE("Profile: %s", profile);
-		BX_TRACE("Flags: 0x%08x", flags);
+		_BX_TRACE("Profile: %s", profile);
+		_BX_TRACE("Flags: 0x%08x", flags);
 
 		ID3DBlob* code;
 		ID3DBlob* errorMsg;
@@ -562,7 +552,7 @@ namespace bgfx { namespace hlsl
 			}
 
 			printCode(_code.c_str(), line, start, end, column);
-			bx::write(_messageWriter, &messageErr, "Error: D3DCompile failed 0x%08x %s\n", (uint32_t)hr, log);
+			bx::write(_messageWriter, &messageErr, "Error: D3DCompile failed 0x%08x `%s`\n", (uint32_t)hr, log);
 			errorMsg->Release();
 			return false;
 		}
@@ -649,7 +639,7 @@ namespace bgfx { namespace hlsl
 				bx::write(_shaderWriter, un.texDimension, &err);
 				bx::write(_shaderWriter, un.texFormat, &err);
 
-				BX_TRACE("%s, %s, %d, %d, %d"
+				_BX_TRACE("%s, %s, %d, %d, %d"
 					, un.name.c_str()
 					, getUniformTypeName(UniformType::Enum(un.type & ~kUniformMask))
 					, un.num

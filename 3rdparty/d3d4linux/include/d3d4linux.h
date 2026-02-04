@@ -40,6 +40,7 @@
 #   define D3D4LINUX_WINE_FALLBACK "/usr/bin/wine64"
 #endif
 
+#ifndef WSL_WINADAPTER_H
 /*
  * Types and macros that come from Windows
  */
@@ -70,6 +71,7 @@ typedef GUID REFIID; /* FIXME */
  */
 
 #define IID_ID3D11ShaderReflection D3D4LINUX_IID_SHADER_REFLECTION
+#endif // WSL_WINADAPTER_H
 
 /*
  * Types that come from D3D
