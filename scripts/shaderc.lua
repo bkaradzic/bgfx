@@ -750,14 +750,9 @@ project "shaderc"
 			"pthread",
 		}
 
-	configuration { "linux-*" }
-		includedirs {
-			path.join(BGFX_DIR, "3rdparty/directx-headers/include"),
-			path.join(BGFX_DIR, "3rdparty/directx-headers/include/wsl/stubs"),
-		}
-
 	-- d3d4linux: Enable HLSL compilation on Linux/macOS via Wine
 	-- This enables D3D shader compilation on non-Windows platforms
+	-- Note: d3d4linux provides its own D3D headers, so we don't need directx-headers
 	configuration { "linux* or osx*" }
 		defines {
 			"SHADERC_CONFIG_HLSL_D3D4LINUX=1",

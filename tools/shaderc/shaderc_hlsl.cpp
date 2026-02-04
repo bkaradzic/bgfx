@@ -14,8 +14,12 @@
 #endif // defined(__MINGW32__)
 
 #define COM_NO_WINDOWS_H
-#include <d3dcompiler.h>
-#include <d3d11shader.h>
+#if SHADERC_CONFIG_HLSL_D3D4LINUX
+#	include <d3d4linux.h>
+#else
+#	include <d3dcompiler.h>
+#	include <d3d11shader.h>
+#endif // SHADERC_CONFIG_HLSL_D3D4LINUX
 #include <bx/os.h>
 
 #ifndef D3D_SVF_USED
@@ -24,6 +28,7 @@
 
 namespace bgfx { namespace hlsl
 {
+#if !SHADERC_CONFIG_HLSL_D3D4LINUX
 	typedef HRESULT(WINAPI* PFN_D3D_COMPILE)(_In_reads_bytes_(SrcDataSize) LPCVOID pSrcData
 		, _In_ SIZE_T SrcDataSize
 		, _In_opt_ LPCSTR pSourceName
@@ -78,8 +83,17 @@ namespace bgfx { namespace hlsl
 	};
 
 	static const D3DCompiler* s_compiler = NULL;
-#if !SHADERC_CONFIG_HLSL_D3D4LINUX
 	static void* s_d3dcompilerdll = NULL;
+#else // SHADERC_CONFIG_HLSL_D3D4LINUX
+	// d3d4linux provides D3DCompile, D3DDisassemble, D3DReflect, D3DStripShader
+	// directly via inline functions - no DLL loading needed
+
+	struct D3DCompiler
+	{
+		const char* fileName;
+	};
+
+	static const D3DCompiler* s_compiler = NULL;
 #endif // !SHADERC_CONFIG_HLSL_D3D4LINUX
 
 	const D3DCompiler* load(bx::WriterI* _messageWriter)
@@ -88,10 +102,8 @@ namespace bgfx { namespace hlsl
 		BX_UNUSED(_messageWriter);
 
 		// d3d4linux: Functions are provided directly by the header
-		// Use d3dcompiler_47.dll interface (IID_ID3D11ShaderReflection47)
 		static const D3DCompiler s_d3d4linux_compiler = {
-			"d3d4linux (Wine)",
-			{ 0x8d536ca1, 0x0cca, 0x4956, { 0xa8, 0x37, 0x78, 0x69, 0x63, 0x75, 0x55, 0x84 } }
+			"d3d4linux (Wine)"
 		};
 
 		if (g_verbose)
@@ -269,11 +281,20 @@ namespace bgfx { namespace hlsl
 		bx::Error messageErr;
 
 		ID3D11ShaderReflection* reflect = NULL;
+#if SHADERC_CONFIG_HLSL_D3D4LINUX
+		// d3d4linux uses a simple integer for the IID
+		HRESULT hr = D3DReflect(_code->GetBufferPointer()
+			, _code->GetBufferSize()
+			, IID_ID3D11ShaderReflection
+			, (void**)&reflect
+			);
+#else
 		HRESULT hr = D3DReflect(_code->GetBufferPointer()
 			, _code->GetBufferSize()
 			, s_compiler->IID_ID3D11ShaderReflection
 			, (void**)&reflect
 			);
+#endif // SHADERC_CONFIG_HLSL_D3D4LINUX
 		if (FAILED(hr) )
 		{
 			bx::write(_messageWriter, &messageErr, "Error: D3DReflect failed 0x%08x\n", (uint32_t)hr);

@@ -25,10 +25,15 @@ namespace bgfx
 #endif // SHADERC_CONFIG_HLSL
 
 #ifndef SHADERC_CONFIG_DXIL
-#	define SHADERC_CONFIG_DXIL (0 \
-		|| BX_PLATFORM_WINDOWS    \
-		|| BX_PLATFORM_LINUX      \
-		)
+#	if SHADERC_CONFIG_HLSL_D3D4LINUX
+		// DXIL (DXC) is not compatible with d3d4linux path
+#		define SHADERC_CONFIG_DXIL 0
+#	else
+#		define SHADERC_CONFIG_DXIL (0 \
+			|| BX_PLATFORM_WINDOWS    \
+			|| BX_PLATFORM_LINUX      \
+			)
+#	endif
 #endif // SHADERC_CONFIG_DXIL
 
 #include <bx/bx.h>
