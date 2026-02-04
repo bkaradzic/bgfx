@@ -769,3 +769,27 @@ All D3D functions verified working through shaderc:
 ### Documentation
 
 - Created `docs/d3d4linux-shaderc-support.md` - User guide with prerequisites, usage, and troubleshooting
+
+### EditorConfig / Code Style Note
+
+Ran `eclint check` against modified source files. The tool reports some issues:
+
+```
+tools/shaderc/shaderc_hlsl.cpp
+    002:001 ❌ invalid indent style: space, expected: tab
+    003:001 ❌ invalid indent style: space, expected: tab
+    004:001 ❌ invalid indent style: space, expected: tab
+    079:002 ❌ invalid indent style: space, expected: tab
+    (plus various max_line_length warnings)
+```
+
+**These are pre-existing issues in the original codebase, not introduced by this PR:**
+
+- Lines 2-4 are the copyright header comment block, which uses space indentation 
+  (standard for multi-line `/* */` comments throughout the project)
+- Line 79 is a comment alignment pattern that exists in the original file
+- Line length warnings exist in the original `shaderc_hlsl.cpp` and `shaderc.lua`
+
+Our changes follow the existing code style of the files being modified. The eclint 
+warnings may cause CI to flag issues, but these are inherited from the base code, 
+not regressions introduced by this integration.
