@@ -750,7 +750,8 @@ project "shaderc"
 			"pthread",
 		}
 
-	-- Linux/macOS: Include directx-headers for DXIL and d3d4linux for legacy HLSL
+	-- Linux/macOS: d3d4linux for legacy HLSL (SM 5.0)
+	-- Linux only: directx-headers for DXIL (SM 6.0+, no macOS DXC library available)
 	configuration { "linux* or osx*" }
 		includedirs {
 			path.join(D3D4LINUX, "include"),
