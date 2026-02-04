@@ -13,15 +13,10 @@
 #	define __out
 #endif // defined(__MINGW32__)
 
-// d3d4linux: Use Wine-based D3DCompiler on Linux/macOS
-#if SHADERC_CONFIG_HLSL_D3D4LINUX
-#	include <d3d4linux.h>
-#else
-#	define COM_NO_WINDOWS_H
-#	include <d3dcompiler.h>
-#	include <d3d11shader.h>
-#	include <bx/os.h>
-#endif // SHADERC_CONFIG_HLSL_D3D4LINUX
+#define COM_NO_WINDOWS_H
+#include <d3dcompiler.h>
+#include <d3d11shader.h>
+#include <bx/os.h>
 
 #ifndef D3D_SVF_USED
 #	define D3D_SVF_USED 2
@@ -29,8 +24,6 @@
 
 namespace bgfx { namespace hlsl
 {
-#if !SHADERC_CONFIG_HLSL_D3D4LINUX
-	// Windows: Use function pointers loaded from DLL
 	typedef HRESULT(WINAPI* PFN_D3D_COMPILE)(_In_reads_bytes_(SrcDataSize) LPCVOID pSrcData
 		, _In_ SIZE_T SrcDataSize
 		, _In_opt_ LPCSTR pSourceName
@@ -67,7 +60,6 @@ namespace bgfx { namespace hlsl
 	PFN_D3D_DISASSEMBLE  D3DDisassemble;
 	PFN_D3D_REFLECT      D3DReflect;
 	PFN_D3D_STRIP_SHADER D3DStripShader;
-#endif // !SHADERC_CONFIG_HLSL_D3D4LINUX
 
 	struct D3DCompiler
 	{

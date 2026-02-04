@@ -195,7 +195,8 @@ struct d3d4linux
         p.write_raw(pSrcData, SrcDataSize);
         p.write_i64(Flags);
         p.write_i64(szComments ? 1 : 0);
-        p.write_string(szComments ? szComments : "");
+        if (szComments)
+            p.write_string(szComments);
         p.write_i64(D3D4LINUX_FINISHED);
 
         HRESULT ret = p.read_i64();
@@ -251,7 +252,16 @@ private:
 
                     char const *wine_var = getenv("D3D4LINUX_WINE");
                     if (!wine_var)
+                    {
+                        // Try Wine 11+ path first, then fall back to wine64
                         wine_var = D3D4LINUX_WINE;
+                        if (access(wine_var, X_OK) != 0)
+                        {
+#if defined(D3D4LINUX_WINE_FALLBACK)
+                            wine_var = D3D4LINUX_WINE_FALLBACK;
+#endif
+                        }
+                    }
 
                     close(pipe_read[0]);
                     close(pipe_read[1]);

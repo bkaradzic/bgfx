@@ -35,7 +35,9 @@
 #endif
 
 #if !defined D3D4LINUX_WINE
-#   define D3D4LINUX_WINE "/usr/bin/wine64"
+    // Wine 11+ uses "wine" for both 32/64-bit, older versions use "wine64"
+#   define D3D4LINUX_WINE "/usr/bin/wine"
+#   define D3D4LINUX_WINE_FALLBACK "/usr/bin/wine64"
 #endif
 
 /*
@@ -81,6 +83,19 @@ struct ID3DInclude
     // FIXME: unimplemented
 };
 
+struct ID3D11ShaderReflectionType
+{
+    HRESULT GetDesc(D3D11_SHADER_TYPE_DESC *desc)
+    {
+        *desc = m_desc;
+        desc->Name = m_name.empty() ? nullptr : m_name.c_str();
+        return S_OK;
+    }
+
+    D3D11_SHADER_TYPE_DESC m_desc;
+    std::string m_name;
+};
+
 struct ID3D11ShaderReflectionVariable
 {
     HRESULT GetDesc(D3D11_SHADER_VARIABLE_DESC *desc)
@@ -91,7 +106,13 @@ struct ID3D11ShaderReflectionVariable
         return S_OK;
     }
 
+    ID3D11ShaderReflectionType *GetType()
+    {
+        return &m_type;
+    }
+
     D3D11_SHADER_VARIABLE_DESC m_desc;
+    ID3D11ShaderReflectionType m_type;
     std::vector<std::string> m_strings;
     int m_has_default;
     std::vector<uint8_t> m_default_value;
