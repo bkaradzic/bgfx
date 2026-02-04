@@ -22,8 +22,15 @@ namespace bgfx
 		)
 #endif // SHADERC_CONFIG_HLSL
 
+// DXIL compilation support (Shader Model 6.0+):
+// - Windows: Native DXC
+// - Linux/macOS: DXC via directx-headers
 #ifndef SHADERC_CONFIG_DXIL
-#	define SHADERC_CONFIG_DXIL BX_PLATFORM_WINDOWS
+#	define SHADERC_CONFIG_DXIL (0  \
+		|| BX_PLATFORM_WINDOWS     \
+		|| BX_PLATFORM_LINUX       \
+		|| BX_PLATFORM_OSX         \
+		)
 #endif // SHADERC_CONFIG_DXIL
 
 #include <bx/bx.h>

@@ -750,11 +750,16 @@ project "shaderc"
 			"pthread",
 		}
 
-	-- d3d4linux: Enable HLSL compilation on Linux/macOS via Wine
-	-- d3d4linux provides D3DCompile/D3DReflect/D3DDisassemble/D3DStripShader via IPC to Wine
+	-- Linux/macOS: Include directx-headers for DXIL and d3d4linux for legacy HLSL
 	configuration { "linux* or osx*" }
 		includedirs {
 			path.join(D3D4LINUX, "include"),
+			path.join(BGFX_DIR, "3rdparty/directx-headers/include"),
+			path.join(BGFX_DIR, "3rdparty/directx-headers/include/wsl/stubs"),
+		}
+		defines {
+			"D3D4LINUX_EXE=\"" .. path.join(D3D4LINUX, "d3d4linux.exe") .. "\"",
+			"D3D4LINUX_DLL=\"z:" .. path.join(D3D4LINUX, "d3dcompiler_47.dll") .. "\"",
 		}
 
 	configuration {}
