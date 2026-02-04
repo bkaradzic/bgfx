@@ -751,12 +751,8 @@ project "shaderc"
 		}
 
 	-- d3d4linux: Enable HLSL compilation on Linux/macOS via Wine
-	-- This enables D3D shader compilation on non-Windows platforms
-	-- Note: d3d4linux provides its own D3D headers, so we don't need directx-headers
+	-- d3d4linux provides D3DCompile/D3DReflect/D3DDisassemble/D3DStripShader via IPC to Wine
 	configuration { "linux* or osx*" }
-		defines {
-			"SHADERC_CONFIG_HLSL_D3D4LINUX=1",
-		}
 		includedirs {
 			path.join(D3D4LINUX, "include"),
 		}

@@ -14,12 +14,12 @@
 #endif // defined(__MINGW32__)
 
 #define COM_NO_WINDOWS_H
-#if SHADERC_CONFIG_HLSL_D3D4LINUX
+#if BX_PLATFORM_LINUX || BX_PLATFORM_OSX
 #	include <d3d4linux.h>
 #else
 #	include <d3dcompiler.h>
 #	include <d3d11shader.h>
-#endif // SHADERC_CONFIG_HLSL_D3D4LINUX
+#endif // BX_PLATFORM_LINUX || BX_PLATFORM_OSX
 #include <bx/os.h>
 
 #ifndef D3D_SVF_USED
@@ -28,7 +28,7 @@
 
 namespace bgfx { namespace hlsl
 {
-#if !SHADERC_CONFIG_HLSL_D3D4LINUX
+#if BX_PLATFORM_WINDOWS
 	typedef HRESULT(WINAPI* PFN_D3D_COMPILE)(_In_reads_bytes_(SrcDataSize) LPCVOID pSrcData
 		, _In_ SIZE_T SrcDataSize
 		, _In_opt_ LPCSTR pSourceName
@@ -84,7 +84,7 @@ namespace bgfx { namespace hlsl
 
 	static const D3DCompiler* s_compiler = NULL;
 	static void* s_d3dcompilerdll = NULL;
-#else // SHADERC_CONFIG_HLSL_D3D4LINUX
+#else // BX_PLATFORM_LINUX || BX_PLATFORM_OSX
 	// d3d4linux provides D3DCompile, D3DDisassemble, D3DReflect, D3DStripShader
 	// directly via inline functions - no DLL loading needed
 
@@ -94,14 +94,14 @@ namespace bgfx { namespace hlsl
 	};
 
 	static const D3DCompiler* s_compiler = NULL;
-#endif // !SHADERC_CONFIG_HLSL_D3D4LINUX
+#endif // BX_PLATFORM_WINDOWS
 
 	const D3DCompiler* load(bx::WriterI* _messageWriter)
 	{
-#if SHADERC_CONFIG_HLSL_D3D4LINUX
+#if BX_PLATFORM_LINUX || BX_PLATFORM_OSX
 		BX_UNUSED(_messageWriter);
 
-		// d3d4linux: Functions are provided directly by the header
+		// d3d4linux: Functions are provided directly by the header via IPC to Wine
 		static const D3DCompiler s_d3d4linux_compiler = {
 			"d3d4linux (Wine)"
 		};
@@ -155,12 +155,12 @@ namespace bgfx { namespace hlsl
 
 		bx::write(_messageWriter, &messageErr, "Error: Unable to open D3DCompiler_*.dll shader compiler.\n");
 		return NULL;
-#endif // SHADERC_CONFIG_HLSL_D3D4LINUX
+#endif // BX_PLATFORM_LINUX || BX_PLATFORM_OSX
 	}
 
 	void unload()
 	{
-#if !SHADERC_CONFIG_HLSL_D3D4LINUX
+#if BX_PLATFORM_WINDOWS
 		if (NULL != s_d3dcompilerdll)
 		{
 			bx::dlclose(s_d3dcompilerdll);
@@ -172,7 +172,7 @@ namespace bgfx { namespace hlsl
 		D3DDisassemble = NULL;
 		D3DReflect     = NULL;
 		D3DStripShader = NULL;
-#endif // !SHADERC_CONFIG_HLSL_D3D4LINUX
+#endif // BX_PLATFORM_WINDOWS
 	}
 
 	struct RemapInputSemantic
@@ -281,7 +281,7 @@ namespace bgfx { namespace hlsl
 		bx::Error messageErr;
 
 		ID3D11ShaderReflection* reflect = NULL;
-#if SHADERC_CONFIG_HLSL_D3D4LINUX
+#if BX_PLATFORM_LINUX || BX_PLATFORM_OSX
 		// d3d4linux uses a simple integer for the IID
 		HRESULT hr = D3DReflect(_code->GetBufferPointer()
 			, _code->GetBufferSize()
@@ -294,7 +294,7 @@ namespace bgfx { namespace hlsl
 			, s_compiler->IID_ID3D11ShaderReflection
 			, (void**)&reflect
 			);
-#endif // SHADERC_CONFIG_HLSL_D3D4LINUX
+#endif // BX_PLATFORM_LINUX || BX_PLATFORM_OSX
 		if (FAILED(hr) )
 		{
 			bx::write(_messageWriter, &messageErr, "Error: D3DReflect failed 0x%08x\n", (uint32_t)hr);
