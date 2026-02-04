@@ -696,3 +696,76 @@ export D3D4LINUX_DLL="z:$PWD/3rdparty/d3d4linux/d3dcompiler_47.dll"
     --platform windows -p s_5_0 \
     -i examples/common -i src
 ```
+
+---
+
+## 2026-02-03: Shaderc Integration Complete
+
+### Build System Changes
+
+**scripts/shaderc.lua:**
+- Added `D3D4LINUX` path variable pointing to `3rdparty/d3d4linux`
+- Added configuration for `linux* or osx*`:
+  - Define `SHADERC_CONFIG_HLSL_D3D4LINUX=1`
+  - Include path to d3d4linux headers
+
+### shaderc Source Changes
+
+**tools/shaderc/shaderc.h:**
+- Modified `SHADERC_CONFIG_HLSL` to enable when `SHADERC_CONFIG_HLSL_D3D4LINUX` is defined
+
+**tools/shaderc/shaderc_hlsl.cpp:**
+- Restructured with `#if SHADERC_CONFIG_HLSL_D3D4LINUX` conditionals
+- Separate `load()` and `unload()` implementations:
+  - d3d4linux: No-op (functions are inline from headers)
+  - Windows: LoadLibrary/GetProcAddress for d3dcompiler_*.dll
+- Use integer `IID_ID3D11ShaderReflection` for d3d4linux instead of GUID
+- Fixed null pointer crash when D3DCompile returns error without message
+- Initialize all ID3DBlob pointers to NULL
+
+### Additional d3d4linux Fixes
+
+**d3d4linux_enums.h:**
+- Added missing D3DCOMPILE_* flags used by shaderc
+
+**d3d4linux.h:**
+- Added `ID3D11ShaderReflectionType` struct with `GetDesc()` method
+- Added `GetType()` method to `ID3D11ShaderReflectionVariable`
+- Updated Wine path default from `wine64` to `wine` for Wine 11+ compatibility
+- Added `D3D4LINUX_WINE_FALLBACK` for older Wine versions
+
+**d3d4linux_impl.h:**
+- Added Wine path fallback logic with `access()` check
+- Fixed D3DDisassemble IPC protocol bug (only write comment string when present)
+
+### Final Test Results
+
+```bash
+D3D4LINUX_EXE=/path/to/d3d4linux.exe \
+./shadercRelease -f examples/01-cubes/vs_cubes.sc \
+    -o /tmp/vs_cubes.bin --type vertex \
+    --platform windows -p s_5_0 \
+    -i src -i examples/common \
+    --varyingdef examples/01-cubes/varying.def.sc
+```
+
+| Shader | Output Size | Status |
+|--------|-------------|--------|
+| vs_cubes.sc (vertex) | 618 bytes | ✅ |
+| fs_cubes.sc (fragment) | 270 bytes | ✅ |
+| vs_bump.sc (vertex) | 2650 bytes | ✅ |
+
+All D3D functions verified working through shaderc:
+- D3DCompile ✅
+- D3DReflect ✅
+- D3DStripShader ✅
+- D3DDisassemble ✅
+
+### Commits
+
+1. `2bc66540f` - Add d3d4linux to 3rdparty for Linux HLSL shader compilation
+2. `ee4802134` - d3d4linux: Complete shaderc HLSL integration with Wine
+
+### Documentation
+
+- Created `docs/d3d4linux-shaderc-support.md` - User guide with prerequisites, usage, and troubleshooting
