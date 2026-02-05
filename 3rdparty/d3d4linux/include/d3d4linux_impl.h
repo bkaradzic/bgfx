@@ -135,6 +135,7 @@ struct d3d4linux
                     ID3D11ShaderReflectionVariable &var = buf.m_variables.back();
 
                     p.read_raw(&var.m_desc, sizeof(var.m_desc));
+                    var.m_desc.uFlags |= D3D_SVF_USED;  // Force all uniforms to be marked as used
                     var.m_strings.push_back(p.read_string());
                     var.m_has_default = p.read_i64();
                     if (var.m_has_default)
