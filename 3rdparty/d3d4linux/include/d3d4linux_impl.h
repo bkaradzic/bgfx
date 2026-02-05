@@ -200,7 +200,8 @@ struct d3d4linux
         p.write_raw(pSrcData, SrcDataSize);
         p.write_i64(Flags);
         p.write_i64(szComments ? 1 : 0);
-        p.write_string(szComments ? szComments : "");
+        if (szComments)
+            p.write_string(szComments);
         p.write_i64(D3D4LINUX_FINISHED);
 
         HRESULT ret = p.read_i64();
