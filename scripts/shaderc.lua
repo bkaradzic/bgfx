@@ -758,10 +758,6 @@ project "shaderc"
 			path.join(BGFX_DIR, "3rdparty/directx-headers/include"),
 			path.join(BGFX_DIR, "3rdparty/directx-headers/include/wsl/stubs"),
 		}
-		defines {
-			"D3D4LINUX_EXE=\"" .. path.join(D3D4LINUX, "d3d4linux.exe") .. "\"",
-			"D3D4LINUX_DLL=\"z:" .. path.join(D3D4LINUX, "d3dcompiler_47.dll") .. "\"",
-		}
 
 	configuration {}
 

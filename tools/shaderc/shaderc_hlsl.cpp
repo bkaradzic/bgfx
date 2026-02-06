@@ -95,13 +95,42 @@ namespace bgfx { namespace hlsl
 	const D3DCompiler* load(bx::WriterI* _messageWriter)
 	{
 #if BX_PLATFORM_LINUX || BX_PLATFORM_OSX
-		BX_UNUSED(_messageWriter);
+		BX_TRACE("Using d3d4linux for HLSL compilation (Wine-based D3DCompiler).");
+
+		bx::Error messageErr;
+		bx::FileInfo fi;
+
+		bx::FilePath executableDir = bx::FilePath(bx::Dir::Executable).getPath();
+
+		bx::FilePath d3d4linuxExe(executableDir);
+		d3d4linuxExe.join("../windows/d3d4linux.exe");
+
+		if (bx::stat(fi, d3d4linuxExe) )
+		{
+			bx::setEnv("D3D4LINUX_EXE", d3d4linuxExe);
+		}
+		else
+		{
+			bx::write(_messageWriter, &messageErr, "Error: `%s` not found.\n", d3d4linuxExe.getCPtr() );
+			return NULL;
+		}
+
+		bx::FilePath d3d4linuxDll(executableDir);
+		d3d4linuxDll.join("../windows/d3dcompiler_47.dll");
+
+		if (bx::stat(fi, d3d4linuxDll) )
+		{
+			bx::setEnv("D3D4LINUX_DLL", d3d4linuxDll);
+		}
+		else
+		{
+			bx::write(_messageWriter, &messageErr, "Error: `%s` not found.\n", d3d4linuxDll.getCPtr() );
+			return NULL;
+		}
 
 		if (g_verbose)
 		{
 			bx::setEnv("D3D4LINUX_VERBOSE", "1");
-
-			_BX_TRACE("Using d3d4linux for HLSL compilation (Wine-based D3DCompiler).");
 		}
 
 		D3DCompile     = (PFN_D3D_COMPILE     )&d3d4linux::compile;
@@ -138,6 +167,7 @@ namespace bgfx { namespace hlsl
 			||  NULL == D3DStripShader)
 			{
 				bx::dlclose(s_d3dcompilerdll);
+				s_d3dcompilerdll = NULL;
 				continue;
 			}
 
@@ -145,7 +175,7 @@ namespace bgfx { namespace hlsl
 			{
 				char filePath[bx::kMaxFilePath];
 				GetModuleFileNameA( (HMODULE)s_d3dcompilerdll, filePath, sizeof(filePath) );
-				_BX_TRACE("Loaded %s compiler (%s).", compiler->fileName, filePath);
+				BX_TRACE("Loaded %s compiler (%s).", compiler->fileName, filePath);
 			}
 
 			return compiler;
@@ -299,10 +329,10 @@ namespace bgfx { namespace hlsl
 			return false;
 		}
 
-		_BX_TRACE("Creator: %s 0x%08x", desc.Creator, desc.Version);
-		_BX_TRACE("Num constant buffers: %d", desc.ConstantBuffers);
+		BX_TRACE("Creator: %s 0x%08x", desc.Creator, desc.Version);
+		BX_TRACE("Num constant buffers: %d", desc.ConstantBuffers);
 
-		_BX_TRACE("Input:");
+		BX_TRACE("Input:");
 
 		if (_vshader) // Only care about input semantic on vertex shaders
 		{
@@ -310,7 +340,7 @@ namespace bgfx { namespace hlsl
 			{
 				D3D11_SIGNATURE_PARAMETER_DESC spd;
 				reflect->GetInputParameterDesc(ii, &spd);
-				_BX_TRACE("\t%2d: %s%d, vt %d, ct %d, mask %x, reg %d"
+				BX_TRACE("\t%2d: %s%d, vt %d, ct %d, mask %x, reg %d"
 					, ii
 					, spd.SemanticName
 					, spd.SemanticIndex
@@ -329,12 +359,12 @@ namespace bgfx { namespace hlsl
 			}
 		}
 
-		_BX_TRACE("Output:");
+		BX_TRACE("Output:");
 		for (uint32_t ii = 0; ii < desc.OutputParameters; ++ii)
 		{
 			D3D11_SIGNATURE_PARAMETER_DESC spd;
 			reflect->GetOutputParameterDesc(ii, &spd);
-			_BX_TRACE("\t%2d: %s%d, %d, %d", ii, spd.SemanticName, spd.SemanticIndex, spd.SystemValueType, spd.ComponentType);
+			BX_TRACE("\t%2d: %s%d, %d, %d", ii, spd.SemanticName, spd.SemanticIndex, spd.SystemValueType, spd.ComponentType);
 		}
 
 		for (uint32_t ii = 0, num = bx::uint32_min(1, desc.ConstantBuffers); ii < num; ++ii)
@@ -347,7 +377,7 @@ namespace bgfx { namespace hlsl
 
 			if (SUCCEEDED(hr) )
 			{
-				_BX_TRACE("%s, %d, vars %d, size %d"
+				BX_TRACE("%s, %d, vars %d, size %d"
 					, bufferDesc.Name
 					, bufferDesc.Type
 					, bufferDesc.Variables
@@ -379,7 +409,7 @@ namespace bgfx { namespace hlsl
 								un.regCount = uint16_t(bx::alignUp(varDesc.Size, 16) / 16);
 								_uniforms.push_back(un);
 
-								_BX_TRACE("\t%s, %d, size %d, flags 0x%08x, %d (used)"
+								BX_TRACE("\t%s, %d, size %d, flags 0x%08x, %d (used)"
 									, varDesc.Name
 									, varDesc.StartOffset
 									, varDesc.Size
@@ -394,7 +424,7 @@ namespace bgfx { namespace hlsl
 									unusedUniforms.push_back(varDesc.Name);
 								}
 
-								_BX_TRACE("\t%s, unknown type", varDesc.Name);
+								BX_TRACE("\t%s, unknown type", varDesc.Name);
 							}
 						}
 					}
@@ -402,7 +432,7 @@ namespace bgfx { namespace hlsl
 			}
 		}
 
-		_BX_TRACE("Bound:");
+		BX_TRACE("Bound:");
 		for (uint32_t ii = 0; ii < desc.BoundResources; ++ii)
 		{
 			D3D11_SHADER_INPUT_BIND_DESC bindDesc;
@@ -412,7 +442,7 @@ namespace bgfx { namespace hlsl
 			{
 				if (D3D_SIT_SAMPLER == bindDesc.Type)
 				{
-					_BX_TRACE("\t%s, %d, %d, %d"
+					BX_TRACE("\t%s, %d, %d, %d"
 						, bindDesc.Name
 						, bindDesc.Type
 						, bindDesc.BindPoint
@@ -460,6 +490,11 @@ namespace bgfx { namespace hlsl
 		bx::strCat(profileAndType, BX_COUNTOF(profileAndType), profile);
 
 		s_compiler = load(_messageWriter);
+		if (NULL == s_compiler)
+		{
+			bx::write(_messageWriter, &messageErr, "Error: Unabled to load D3D compiler!\n");
+			return false;
+		}
 
 		bool result = false;
 		bool debug = _options.debugInformation;
@@ -489,8 +524,8 @@ namespace bgfx { namespace hlsl
 			flags |= D3DCOMPILE_SKIP_OPTIMIZATION;
 		}
 
-		_BX_TRACE("Profile: %s", profile);
-		_BX_TRACE("Flags: 0x%08x", flags);
+		BX_TRACE("Profile: %s", profile);
+		BX_TRACE("Flags: 0x%08x", flags);
 
 		ID3DBlob* code;
 		ID3DBlob* errorMsg;
@@ -639,7 +674,7 @@ namespace bgfx { namespace hlsl
 				bx::write(_shaderWriter, un.texDimension, &err);
 				bx::write(_shaderWriter, un.texFormat, &err);
 
-				_BX_TRACE("%s, %s, %d, %d, %d"
+				BX_TRACE("%s, %s, %d, %d, %d"
 					, un.name.c_str()
 					, getUniformTypeName(UniformType::Enum(un.type & ~kUniformMask))
 					, un.num
