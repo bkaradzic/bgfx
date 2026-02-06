@@ -18,7 +18,6 @@ namespace bgfx
 #	define SHADERC_CONFIG_HLSL (0  \
 		|| BX_PLATFORM_WINDOWS     \
 		|| BX_PLATFORM_LINUX       \
-		|| BX_PLATFORM_OSX         \
 		)
 #endif // SHADERC_CONFIG_HLSL
 
