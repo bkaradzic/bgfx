@@ -29,6 +29,7 @@
 	vec3 colorCoverage;
 	float visibility;
 
+	vec2 fragCoord = gl_FragCoord.xy;
 #if SM_CSM
 	vec2 texelSize = vec2_splat(u_shadowMapTexelSize);
 
@@ -56,6 +57,7 @@
 						, u_shadowMapDepthMultiplier
 						, u_shadowMapMinVariance
 						, u_shadowMapHardness
+						, fragCoord
 						);
 	}
 	else if (selection1)
@@ -72,6 +74,7 @@
 						, u_shadowMapDepthMultiplier
 						, u_shadowMapMinVariance
 						, u_shadowMapHardness
+						, fragCoord
 						);
 	}
 	else if (selection2)
@@ -88,6 +91,7 @@
 						, u_shadowMapDepthMultiplier
 						, u_shadowMapMinVariance
 						, u_shadowMapHardness
+						, fragCoord
 						);
 	}
 	else //selection3
@@ -104,6 +108,7 @@
 						, u_shadowMapDepthMultiplier
 						, u_shadowMapMinVariance
 						, u_shadowMapHardness
+						, fragCoord
 						);
 	}
 #elif SM_OMNI
@@ -155,6 +160,7 @@
 					, u_shadowMapDepthMultiplier
 					, u_shadowMapMinVariance
 					, u_shadowMapHardness
+					, fragCoord
 					);
 #else
 	vec2 texelSize = vec2_splat(u_shadowMapTexelSize);
@@ -170,6 +176,7 @@
 					, u_shadowMapDepthMultiplier
 					, u_shadowMapMinVariance
 					, u_shadowMapHardness
+					, fragCoord
 					);
 #endif
 

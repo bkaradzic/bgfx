@@ -60,6 +60,7 @@ float computeVisibility(sampler2D _sampler
 					  , float _depthMultiplier
 					  , float _minVariance
 					  , float _hardness
+					  , vec2 _fragCoord
 					  )
 {
 	float visibility;
@@ -73,7 +74,9 @@ float computeVisibility(sampler2D _sampler
 #if SM_HARD
 	visibility = hardShadow(_sampler, shadowcoord, _bias);
 #elif SM_PCF
-	visibility = PCF(_sampler, shadowcoord, _bias, _samplingParams, _texelSize);
+	visibility = PCF(_sampler, shadowcoord, _bias, _samplingParams, _texelSize, _fragCoord);
+#elif SM_PCSS
+	visibility = PCSS(_sampler, shadowcoord, _bias, _samplingParams, _texelSize, _fragCoord);
 #elif SM_VSM
 	visibility = VSM(_sampler, shadowcoord, _bias, _depthMultiplier, _minVariance);
 #elif SM_ESM

@@ -5,6 +5,23 @@
 
 #include "../common/common.sh"
 
+#define BLOCKER_SEARCH_NUM_SAMPLES 16
+#define PCF_LOD_OFFSET_NUM_SAMPLES 16
+
+vec2 sampleVogelDisk(int index, int sampleCount)
+{
+    const float goldenAngle = 2.39996323; // radians
+    float i = float(index);
+    float r = sqrt((i + 0.5) / float(sampleCount));
+    float a = i * goldenAngle;
+    return vec2(cos(a), sin(a)) * r;
+}
+
+vec2 samplePoisson(int index)
+{
+	return sampleVogelDisk(index, 10);
+}
+
 float linstep(float _edge0, float _edge1, float _x)
 {
 	return clamp((_x-_edge0)/(_edge1-_edge0), 0.0, 1.0);
@@ -77,52 +94,80 @@ float texcoordInRange(vec2 _texcoord)
 	return float(inRange);
 }
 
-float hardShadow(sampler2D _sampler, vec4 _shadowCoord, float _bias)
+// Rotate a 2D sample by a precomputed sin/cos pair.
+// _sincos = vec2(sin(angle), cos(angle))
+vec2 rotateSample(vec2 _sample, vec2 _sincos)
 {
-	vec2 texCoord = _shadowCoord.xy/_shadowCoord.w;
-
-	bool outside = any(greaterThan(texCoord, vec2_splat(1.0)))
-				|| any(lessThan   (texCoord, vec2_splat(0.0)))
-				 ;
-
-	if (outside)
-	{
-		return 1.0;
-	}
-
-	float receiver = (_shadowCoord.z-_bias)/_shadowCoord.w;
-	float occluder = unpackRgbaToFloat(texture2D(_sampler, texCoord) );
-
-	float visibility = step(receiver, occluder);
-	return visibility;
+    return vec2(_sample.x * _sincos.y - _sample.y * _sincos.x,
+                _sample.x * _sincos.x + _sample.y * _sincos.y);
 }
 
-float PCF(sampler2D _sampler, vec4 _shadowCoord, float _bias, vec4 _pcfParams, vec2 _texelSize)
+// Interleaved gradient noise for per-pixel Poisson disk rotation.
+// Produces well-distributed noise that avoids the clustering artifacts of
+// traditional fract(sin(...)) hashes. Converts structured Poisson banding
+// into smooth, perceptually-uniform noise.
+// Source: "Next Generation Post Processing in Call of Duty: AW" (Jimenez 2014)
+float interleavedGradientNoise(vec2 _screenPos)
 {
-	float result = 0.0;
-	vec2 offset = _pcfParams.zw * _texelSize * _shadowCoord.w;
+    vec3 magic = vec3(0.06711056, 0.00583715, 52.9829189);
+    return fract(magic.z * fract(dot(_screenPos, magic.xy)));
+}
 
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(-1.5, -1.5) * offset, 0.0, 0.0), _bias);
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(-1.5, -0.5) * offset, 0.0, 0.0), _bias);
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(-1.5,  0.5) * offset, 0.0, 0.0), _bias);
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(-1.5,  1.5) * offset, 0.0, 0.0), _bias);
+float hardShadowLod(sampler2D _sampler, float lod, vec4 _shadowCoord, float _bias)
+{
+    vec2 texCoord = _shadowCoord.xy/_shadowCoord.w;
 
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(-0.5, -1.5) * offset, 0.0, 0.0), _bias);
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(-0.5, -0.5) * offset, 0.0, 0.0), _bias);
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(-0.5,  0.5) * offset, 0.0, 0.0), _bias);
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(-0.5,  1.5) * offset, 0.0, 0.0), _bias);
+    bool outside = any(greaterThan(texCoord, vec2_splat(1.0)))
+                || any(lessThan   (texCoord, vec2_splat(0.0)))
+                 ;
 
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(0.5, -1.5) * offset, 0.0, 0.0), _bias);
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(0.5, -0.5) * offset, 0.0, 0.0), _bias);
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(0.5,  0.5) * offset, 0.0, 0.0), _bias);
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(0.5,  1.5) * offset, 0.0, 0.0), _bias);
+    if (outside)
+    {
+        return 1.0;
+    }
 
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(1.5, -1.5) * offset, 0.0, 0.0), _bias);
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(1.5, -0.5) * offset, 0.0, 0.0), _bias);
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(1.5,  0.5) * offset, 0.0, 0.0), _bias);
-	result += hardShadow(_sampler, _shadowCoord + vec4(vec2(1.5,  1.5) * offset, 0.0, 0.0), _bias);
+    float receiver = (_shadowCoord.z-_bias)/_shadowCoord.w;
+    float occluder = unpackRgbaToFloat(texture2DLod(_sampler, texCoord, lod) );
 
-	return result / 16.0;
+    float visibility = step(receiver, occluder);
+    return visibility;
+}
+
+float hardShadow(sampler2D _sampler, vec4 _shadowCoord, float _bias)
+{
+    return hardShadowLod(_sampler, 0.0, _shadowCoord, _bias);
+}
+
+
+// _diskRotation = vec2(sin(angle), cos(angle)) for per-pixel Poisson disk rotation.
+// Pass vec2(0.0, 1.0) for no rotation (identity).
+float PCFLodOffset(sampler2D _sampler, float lod, vec2 offset, vec4 _shadowCoord, float _bias, vec2 _texelSize, vec2 _diskRotation)
+{
+    float result = 0.0;
+
+    for ( int i = 0; i < PCF_LOD_OFFSET_NUM_SAMPLES; ++i )
+    {
+        vec2 jitteredOffset = rotateSample(samplePoisson(i), _diskRotation) * offset;
+        result += hardShadowLod(_sampler, lod, _shadowCoord + vec4(jitteredOffset, 0.0, 0.0), _bias);
+    }
+    return result / float(PCF_LOD_OFFSET_NUM_SAMPLES);
+}
+
+float PCFLod(sampler2D _sampler, float lod, vec2 filterRadius, vec4 _shadowCoord, float _bias, vec4 _pcfParams, vec2 _texelSize, vec2 _diskRotation)
+{
+    vec2 offset = filterRadius * _pcfParams.zw * _texelSize * _shadowCoord.w;
+
+    return PCFLodOffset(_sampler, lod, offset, _shadowCoord, _bias, _texelSize, _diskRotation);
+}
+
+float PCF(sampler2D _sampler, vec4 _shadowCoord, float _bias, vec4 _pcfParams, vec2 _texelSize, vec2 fragCoord)
+{
+    // Per-pixel Poisson disk rotation from shadow map texel coordinates
+    vec2 noiseCoord = fragCoord;
+	//vec2 noiseCoord = (_shadowCoord.xy / _shadowCoord.w) * (1.0 / _texelSize.x);
+    float angle = interleavedGradientNoise(noiseCoord) * 6.283185;
+    vec2 diskRotation = vec2(sin(angle), cos(angle));
+    return PCFLod(_sampler, 0.0, vec2(2.0, 2.0), _shadowCoord, _bias, _pcfParams, _texelSize, diskRotation);
 }
 
 float VSM(sampler2D _sampler, vec4 _shadowCoord, float _bias, float _depthMultiplier, float _minVariance)
@@ -232,4 +277,117 @@ vec4 blur9VSM(sampler2D _sampler, vec2 _uv0, vec4 _uv1, vec4 _uv2, vec4 _uv3, ve
 	blur += vec2(unpackHalfFloat(val.rg), unpackHalfFloat(val.ba));
 
 	return vec4(packHalfFloat(blur.x), packHalfFloat(blur.y));
+}
+
+
+// Returns vec3(avgBlockerDepth, closestBlockerDepth, blockerRatio)
+//   avgBlockerDepth:     mean depth of all blockers found (for general penumbra)
+//   closestBlockerDepth: maximum depth among blockers (nearest to receiver, for contact hardening)
+//   blockerRatio:        fraction of search samples that found a blocker [0..1]
+// _diskRotation = vec2(sin(angle), cos(angle)) for per-pixel Poisson disk rotation
+vec3 findBlocker(sampler2D _sampler, vec4 _shadowCoord, vec2 _searchSize, float _bias, vec2 _diskRotation)
+{
+    int blockerCount = 0;
+    float avgBlockerDepth = 0.0;
+    float closestBlockerDepth = 0.0;
+    vec2 texCoord = _shadowCoord.xy / _shadowCoord.w;
+    float receiverDepth = (_shadowCoord.z / _shadowCoord.w) - _bias;
+
+    // Search around the shadow coordinate to find blockers
+    for( int i = 0; i < BLOCKER_SEARCH_NUM_SAMPLES; ++i )
+    {
+        vec2 offset = rotateSample(samplePoisson(i), _diskRotation) * _searchSize;
+        float shadowMapDepth = unpackRgbaToFloat(texture2D(_sampler, texCoord + offset));
+        if (shadowMapDepth < receiverDepth)
+        {
+            avgBlockerDepth += shadowMapDepth;
+            closestBlockerDepth = max(closestBlockerDepth, shadowMapDepth);
+            blockerCount++;
+        }
+    }
+
+    // Calculate average blocker depth
+    if (blockerCount > 0)
+    {
+        avgBlockerDepth /= float(blockerCount);
+    }
+    else
+    {
+        avgBlockerDepth = -1.0; // No blockers found
+    }
+
+    float blockerRatio = float(blockerCount) / float(BLOCKER_SEARCH_NUM_SAMPLES);
+    return vec3(avgBlockerDepth, closestBlockerDepth, blockerRatio);
+}
+
+
+
+float PCSS(sampler2D _sampler, vec4 _shadowCoord, float _bias, vec4 _pcssParams, vec2 _texelSize, vec2 fragCoord)
+{
+    // -----------------------------------------------------------------------
+    // PCSS Parameters
+    // -----------------------------------------------------------------------
+
+    // Blocker search radius in UV space (~10 texels on 1024 map).
+    float searchRadiusUV = 0.01;
+
+    // Penumbra scale. Amplifies the squared depth ratio into a UV-space
+    // filter radius. Higher = softer shadows at distance.
+    float penumbraScaleX = _pcssParams.z;
+    float penumbraScaleY = _pcssParams.w;
+
+    // Maximum filter radius in UV space (~50 texels on 1024 map).
+    float maxFilterRadius = 0.25;
+
+    // -----------------------------------------------------------------------
+    // Per-pixel Poisson disk rotation (Interleaved Gradient Noise)
+    // -----------------------------------------------------------------------
+    vec2 noiseCoord = fragCoord;
+	//vec2 noiseCoord = (_shadowCoord.xy / _shadowCoord.w) * (1.0 / _texelSize.x);
+    float noise = interleavedGradientNoise(noiseCoord);
+    float rotationAngle = noise * 6.283185;
+    vec2 diskRotation = vec2(sin(rotationAngle), cos(rotationAngle));
+
+    // Receiver depth in normalized shadow map space
+    float receiverDepth = (_shadowCoord.z / _shadowCoord.w) - _bias;
+
+    // -----------------------------------------------------------------------
+    // Step 1: Blocker Search
+    // -----------------------------------------------------------------------
+    vec3 blockerResult = findBlocker(_sampler, _shadowCoord, vec2(searchRadiusUV, searchRadiusUV), _bias, diskRotation);
+    float avgBlockerDepth = blockerResult.x;
+    float blockerRatio = blockerResult.z;
+
+    if (avgBlockerDepth < -0.99)
+    {
+        return 1.0;
+    }
+
+    // -----------------------------------------------------------------------
+    // Step 2: Penumbra Estimation (standard PCSS, Fernando 2005)
+    //
+    //   penumbraWidth = lightSize * (d_receiver - d_blocker) / d_blocker
+    //
+    // The depth gap at contact equals the object's thickness along the
+    // light direction. For curved objects (spheres, characters), the gap
+    // varies across the shadow giving the contact-hardening gradient.
+    // For flat objects (cubes), the gap is constant → uniform penumbra.
+    // -----------------------------------------------------------------------
+    float penumbraWidth = penumbraScaleX * max(0.0, receiverDepth - avgBlockerDepth) / avgBlockerDepth;
+    float penumbraHeight = penumbraScaleY * max(0.0, receiverDepth - avgBlockerDepth) / avgBlockerDepth;
+    float filterRadiusU = clamp(penumbraWidth, 0.0, maxFilterRadius);
+    float filterRadiusV = clamp(penumbraHeight, 0.0, maxFilterRadius);
+
+    // -----------------------------------------------------------------------
+    // Step 3: Percentage-Closer Filtering
+    // -----------------------------------------------------------------------
+    float visibility = PCFLodOffset(_sampler, 0.0, vec2(filterRadiusU, filterRadiusV), _shadowCoord, _bias, _texelSize, diskRotation);
+
+    // -----------------------------------------------------------------------
+    // Step 4: Edge fade based on blocker ratio
+    // -----------------------------------------------------------------------
+    float edgeFade = smoothstep(0.0, 0.25, blockerRatio);
+    visibility = mix(1.0, visibility, edgeFade);
+
+    return visibility;
 }
