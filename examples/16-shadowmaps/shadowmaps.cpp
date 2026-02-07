@@ -2348,24 +2348,6 @@ public:
 		
 					// Update cascade far distance uniform (use original split distance for shader blend)
 					s_uniforms.m_csmFarDistances[ii] = cascadeFar;
-		
-					// Compute frustum corners for this cascade in world space
-					const float nw = cascadeNear * projWidth;
-					const float nh = cascadeNear * projHeight;
-					const float fw = cascadeFar * projWidth;
-					const float fh = cascadeFar * projHeight;
-		
-					// Frustum corners in view space (camera looking along +Z)
-					const bx::Vec3 viewSpaceCorners[8] = {
-						{-nw,  nh, cascadeNear},  // near top-left
-						{ nw,  nh, cascadeNear},  // near top-right
-						{ nw, -nh, cascadeNear},  // near bottom-right
-						{-nw, -nh, cascadeNear},  // near bottom-left
-						{-fw,  fh, cascadeFar},   // far top-left
-						{ fw,  fh, cascadeFar},   // far top-right
-						{ fw, -fh, cascadeFar},   // far bottom-right
-						{-fw, -fh, cascadeFar},   // far bottom-left
-					};
 
 					// Compute frustum corners for one split in world space.
 					worldSpaceFrustumCorners((float*)frustumCorners[ii], cascadeNear, cascadeFar, projWidth, projHeight, mtxViewInv);
