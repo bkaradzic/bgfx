@@ -16,7 +16,7 @@ ifndef TARGET
 all:
 	@echo Usage: make TARGET=# [clean, all, rebuild]
 	@echo "  TARGET=0 (dxil  - d3d12)"
-	@echo "  TARGET=1 (hlsl  - d3d11 / Windows only!)"
+	@echo "  TARGET=1 (dxbc  - d3d11)"
 	@echo "  TARGET=3 (essl  - android)"
 	@echo "  TARGET=4 (glsl)"
 	@echo "  TARGET=5 (metal)"

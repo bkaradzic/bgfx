@@ -177,12 +177,15 @@ namespace bgfx { namespace dxil
 
 		HRESULT hr = E_FAIL;
 
+		bx::FilePath dxcCompilerDll = bx::FilePath(bx::Dir::Executable).getPath();
+		dxcCompilerDll.join(dxcCompilerDllName);
+
 		Dxc dxc;
-		dxc.dll = bx::dlopen(dxcCompilerDllName);
+		dxc.dll = bx::dlopen(dxcCompilerDll.getCPtr() );
 
 		if (NULL == dxc.dll)
 		{
-			BX_TRACE("Error: Unable to open %s shader compiler.\n", dxcCompilerDllName);
+			BX_TRACE("Error: Unable to open %s shader compiler.\n", dxcCompilerDll.getCPtr() );
 			return Dxc{};
 		}
 
