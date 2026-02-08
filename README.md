@@ -697,6 +697,13 @@ Land of Heroes EU is a 3D online MMORPG featuring immersive worlds, fast-paced c
 
 ![Screenshot](https://i.imgur.com/MCscwt7.jpeg)
 
+## Unravel Engine
+
+Unravel Engine is a cutting-edge, cross-platform game engine and WYSIWYG (What You See Is What You Get) editor, crafted in modern C++20. It empowers developers to create high-performance, immersive games with ease.
+
+<img width="2560" height="1380" alt="Screenshot 2026-02-08 211236" src="https://github.com/user-attachments/assets/a4e95c51-5e2b-4453-9fae-e80e8305366d" />
+
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
