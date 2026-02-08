@@ -63,7 +63,7 @@ ifeq ($(TARGET), $(filter $(TARGET), 1))
 VS_FLAGS=--platform windows -p s_5_0 -O 3
 FS_FLAGS=--platform windows -p s_5_0 -O 3
 CS_FLAGS=--platform windows -p s_5_0 -O 1
-SHADER_PATH=shaders/dx11
+SHADER_PATH=shaders/dxbc
 else
 ifeq ($(TARGET), $(filter $(TARGET), 2 3))
 VS_FLAGS=--platform android -p 100_es

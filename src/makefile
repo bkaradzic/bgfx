@@ -33,7 +33,7 @@ define shader-embedded
 	-@cat "$(SHADER_TMP)" >> $(@)
 	-$(SILENT) $(SHADERC) --type $(1) --platform linux   -p wgsl       -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_wgsl
 	-@cat "$(SHADER_TMP)" >> $(@)
-	-$(SILENT) $(SHADERC) --type $(1) --platform windows -p s_5_0  -O 3 -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_dx11
+	-$(SILENT) $(SHADERC) --type $(1) --platform windows -p s_5_0  -O 3 -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_dxbc
 	-@cat "$(SHADER_TMP)" >> $(@)
 	-$(SILENT) $(SHADERC) --type $(1) --platform windows -p s_6_0 -O 3 -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_dxil
 	-@cat "$(SHADER_TMP)" >> $(@)

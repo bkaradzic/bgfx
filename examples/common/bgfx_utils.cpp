@@ -103,7 +103,7 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const bx::StringV
 	switch (bgfx::getRendererType() )
 	{
 	case bgfx::RendererType::Noop:
-	case bgfx::RendererType::Direct3D11: filePath.join("dx11");  break;
+	case bgfx::RendererType::Direct3D11: filePath.join("dxbc");  break;
 	case bgfx::RendererType::Direct3D12: filePath.join("dxil");  break;
 	case bgfx::RendererType::Agc:
 	case bgfx::RendererType::Gnm:        filePath.join("pssl");  break;
