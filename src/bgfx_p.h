@@ -3546,7 +3546,9 @@ namespace bgfx
 					++itKey;
 
 					m_uniformKeyHashMap.erase(itErase);
-				} else {
+				}
+				else
+				{
 					++itKey;
 				}
 			}
