@@ -3533,7 +3533,7 @@ namespace bgfx
 
 		void invalidate(ViewId _viewId)
 		{
-			for (UniformKeyHashMap::iterator itKey = m_uniformKeyHashMap.begin(), itEnd = m_uniformKeyHashMap.end(); itKey != itEnd; ++itKey)
+			for (UniformKeyHashMap::iterator itKey = m_uniformKeyHashMap.begin(), itEnd = m_uniformKeyHashMap.end(); itKey != itEnd;)
 			{
 				UniformCacheKey key;
 				key.decode(uint64_t(itKey->first) << 32);
@@ -3546,6 +3546,8 @@ namespace bgfx
 					++itKey;
 
 					m_uniformKeyHashMap.erase(itErase);
+				} else {
+					++itKey;
 				}
 			}
 		}
