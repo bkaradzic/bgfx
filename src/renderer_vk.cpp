@@ -2418,9 +2418,9 @@ VK_IMPORT_DEVICE
 			m_program[_handle.idx].destroy();
 		}
 
-		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip) override
+		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external) override
 		{
-			return m_textures[_handle.idx].create(m_commandBuffer, _mem, _flags, _skip);
+			return m_textures[_handle.idx].create(m_commandBuffer, _mem, _flags, _skip, _external);
 		}
 
 		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
@@ -2481,7 +2481,7 @@ VK_IMPORT_DEVICE
 			bx::write(&writer, tc, bx::ErrorAssert{});
 
 			destroyTexture(_handle);
-			createTexture(_handle, mem, flags, 0);
+			createTexture(_handle, mem, flags, 0, 0);
 
 			bgfx::release(mem);
 		}
@@ -2989,10 +2989,10 @@ VK_IMPORT_DEVICE
 				for (uint8_t ii = 0, num = oldFrameBuffer.m_num; ii < num; ++ii)
 				{
 					TextureVK& texture = m_textures[oldFrameBuffer.m_texture[ii].idx];
-					texture.setImageMemoryBarrier(m_commandBuffer, texture.m_sampledLayout);
+					texture.setState(m_commandBuffer, texture.m_sampledLayout);
 					if (VK_NULL_HANDLE != texture.m_singleMsaaImage)
 					{
-						texture.setImageMemoryBarrier(m_commandBuffer, texture.m_sampledLayout, true);
+						texture.setState(m_commandBuffer, texture.m_sampledLayout, true);
 					}
 				}
 
@@ -3003,7 +3003,7 @@ VK_IMPORT_DEVICE
 
 					if (!writeOnly)
 					{
-						texture.setImageMemoryBarrier(m_commandBuffer, texture.m_sampledLayout);
+						texture.setState(m_commandBuffer, texture.m_sampledLayout);
 					}
 				}
 			}
@@ -3013,7 +3013,7 @@ VK_IMPORT_DEVICE
 				for (uint8_t ii = 0, num = newFrameBuffer.m_num; ii < num; ++ii)
 				{
 					TextureVK& texture = m_textures[newFrameBuffer.m_texture[ii].idx];
-					texture.setImageMemoryBarrier(
+					texture.setState(
 						  m_commandBuffer
 						, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
 						);
@@ -3022,7 +3022,7 @@ VK_IMPORT_DEVICE
 				if (isValid(newFrameBuffer.m_depth) )
 				{
 					TextureVK& texture = m_textures[newFrameBuffer.m_depth.idx];
-					texture.setImageMemoryBarrier(
+					texture.setState(
 						  m_commandBuffer
 						, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 						);
@@ -6323,13 +6323,13 @@ retry:
 				? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 				: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
 				;
-			setImageMemoryBarrier(_commandBuffer, layout);
+			setState(_commandBuffer, layout);
 		}
 
 		return result;
 	}
 
-	VkResult TextureVK::createImages(VkCommandBuffer _commandBuffer)
+	VkResult TextureVK::createImages(VkCommandBuffer _commandBuffer, uintptr_t _external)
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::createImages", kColorResource);
 
@@ -6388,28 +6388,40 @@ retry:
 			;
 		ici.tiling        = VK_IMAGE_TILING_OPTIMAL;
 
-		result = vkCreateImage(device, &ici, allocatorCb, &m_textureImage);
-		if (VK_SUCCESS != result)
+		if (0 != _external)
 		{
-			BX_TRACE("Create texture image error: vkCreateImage failed %d: %s.", result, getName(result) );
-			return result;
+			static_assert(sizeof(m_textureImage) == sizeof(_external), "");
+			bx::memCopy(&m_textureImage, &_external, sizeof(m_textureImage) );
+			m_textureDeviceMem = {};
+			m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
+
+			s_renderVK->m_cmd.addExternal({ uint16_t(this - s_renderVK->m_textures) });
 		}
-
-		VkMemoryRequirements imageMemReq;
-		vkGetImageMemoryRequirements(device, m_textureImage, &imageMemReq);
-
-		result = s_renderVK->allocateMemory(&imageMemReq, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_textureDeviceMem, false);
-		if (VK_SUCCESS != result)
+		else
 		{
-			BX_TRACE("Create texture image error: allocateMemory failed %d: %s.", result, getName(result) );
-			return result;
-		}
+			result = vkCreateImage(device, &ici, allocatorCb, &m_textureImage);
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create texture image error: vkCreateImage failed %d: %s.", result, getName(result) );
+				return result;
+			}
 
-		result = vkBindImageMemory(device, m_textureImage, m_textureDeviceMem.mem, m_textureDeviceMem.offset);
-		if (VK_SUCCESS != result)
-		{
-			BX_TRACE("Create texture image error: vkBindImageMemory failed %d: %s.", result, getName(result) );
-			return result;
+			VkMemoryRequirements imageMemReq;
+			vkGetImageMemoryRequirements(device, m_textureImage, &imageMemReq);
+
+			result = s_renderVK->allocateMemory(&imageMemReq, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_textureDeviceMem, false);
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create texture image error: allocateMemory failed %d: %s.", result, getName(result) );
+				return result;
+			}
+
+			result = vkBindImageMemory(device, m_textureImage, m_textureDeviceMem.mem, m_textureDeviceMem.offset);
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create texture image error: vkBindImageMemory failed %d: %s.", result, getName(result) );
+				return result;
+			}
 		}
 
 		m_sampledLayout = m_flags & BGFX_TEXTURE_COMPUTE_WRITE
@@ -6455,13 +6467,13 @@ retry:
 				return result;
 			}
 
-			setImageMemoryBarrier(_commandBuffer, m_sampledLayout, true);
+			setState(_commandBuffer, m_sampledLayout, true);
 		}
 
 		return result;
 	}
 
-	void* TextureVK::create(VkCommandBuffer _commandBuffer, const Memory* _mem, uint64_t _flags, uint8_t _skip)
+	void* TextureVK::create(VkCommandBuffer _commandBuffer, const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external)
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::create", kColorResource);
 
@@ -6535,12 +6547,13 @@ retry:
 			const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) );
 			const bool swizzle = TextureFormat::BGRA8 == m_textureFormat && 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE);
 
-			const bool writeOnly    = 0 != (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY);
-			const bool computeWrite = 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE);
-			const bool renderTarget = 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
-			const bool blit         = 0 != (m_flags & BGFX_TEXTURE_BLIT_DST);
+			const bool writeOnly      = 0 != (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY);
+			const bool computeWrite   = 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE);
+			const bool renderTarget   = 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
+			const bool blit           = 0 != (m_flags & BGFX_TEXTURE_BLIT_DST);
+			const bool externalShared = 0 != (m_flags & BGFX_TEXTURE_EXTERNAL_SHARED);
 
-			BX_UNUSED(swizzle, writeOnly, computeWrite, renderTarget, blit);
+			BX_UNUSED(swizzle, writeOnly, computeWrite, renderTarget, blit, externalShared);
 
 			BX_TRACE(
 				  "Texture %3d: %s (requested: %s), %dx%dx%d%s RT[%c], BO[%c], CW[%c]%s."
@@ -6557,7 +6570,7 @@ retry:
 				, swizzle ? " (swizzle BGRA8 -> RGBA8)" : ""
 				);
 
-			VK_CHECK(createImages(_commandBuffer) );
+			VK_CHECK(createImages(_commandBuffer, _external) );
 
 			// decode images
 			struct ImageInfo
@@ -6741,7 +6754,7 @@ retry:
 			}
 			else
 			{
-				setImageMemoryBarrier(_commandBuffer, m_sampledLayout);
+				setState(_commandBuffer, m_sampledLayout);
 			}
 
 			bx::free(g_allocator, bufferCopyInfo);
@@ -6765,10 +6778,20 @@ retry:
 
 		m_readback.destroy();
 
-		if (VK_NULL_HANDLE != m_textureImage)
+		const bool external       = 0 != (m_flags & BGFX_SAMPLER_INTERNAL_SHARED);
+//		const bool externalShared = 0 != (m_flags & BGFX_TEXTURE_EXTERNAL_SHARED);
+
+		if (external)
 		{
-			s_renderVK->release(m_textureImage);
-			s_renderVK->recycleMemory(m_textureDeviceMem);
+			s_renderVK->m_cmd.removeExternal({ uint16_t(this - s_renderVK->m_textures) });
+		}
+		else
+		{
+			if (VK_NULL_HANDLE != m_textureImage)
+			{
+				s_renderVK->release(m_textureImage);
+				s_renderVK->recycleMemory(m_textureDeviceMem);
+			}
 		}
 
 		if (VK_NULL_HANDLE != m_singleMsaaImage)
@@ -6888,8 +6911,8 @@ retry:
 
 		if (needResolve)
 		{
-			setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-			setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
+			setState(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+			setState(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
 
 			VkImageResolve resolve;
 			resolve.srcOffset.x = 0;
@@ -6925,7 +6948,7 @@ retry:
 		{
 			BGFX_PROFILER_SCOPE("Resolve - Generate Mipmaps", kColorResource);
 
-			setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+			setState(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 			int32_t mipWidth  = bx::max<int32_t>(int32_t(m_width)  >> _mip, 1);
 			int32_t mipHeight = bx::max<int32_t>(int32_t(m_height) >> _mip, 1);
@@ -6962,7 +6985,7 @@ retry:
 				blit.dstOffsets[1] = { mipWidth, mipHeight, 1 };
 				blit.dstSubresource.mipLevel = i;
 
-				vk::setImageMemoryBarrier(
+				setImageMemoryBarrier(
 					  _commandBuffer
 					, m_textureImage
 					, m_aspectFlags
@@ -6986,7 +7009,7 @@ retry:
 					);
 			}
 
-			vk::setImageMemoryBarrier(
+			setImageMemoryBarrier(
 				  _commandBuffer
 				, m_textureImage
 				, m_aspectFlags
@@ -6999,8 +7022,8 @@ retry:
 				);
 		}
 
-		setImageMemoryBarrier(_commandBuffer, oldLayout);
-		setImageMemoryBarrier(_commandBuffer, oldSingleMsaaLayout, true);
+		setState(_commandBuffer, oldLayout);
+		setState(_commandBuffer, oldSingleMsaaLayout, true);
 	}
 
 	void TextureVK::copyBufferToTexture(VkCommandBuffer _commandBuffer, VkBuffer _stagingBuffer, uint32_t _bufferImageCopyCount, VkBufferImageCopy* _bufferImageCopy)
@@ -7012,7 +7035,7 @@ retry:
 			: m_currentImageLayout
 			;
 
-		setImageMemoryBarrier(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		setState(_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(m_textureFormat);
 		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(format);
@@ -7035,14 +7058,15 @@ retry:
 			, _bufferImageCopy
 			);
 
-		setImageMemoryBarrier(_commandBuffer, oldLayout);
+		setState(_commandBuffer, oldLayout);
 	}
 
-	VkImageLayout TextureVK::setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout, bool _singleMsaaImage)
+	void TextureVK::setState(VkCommandBuffer _commandBuffer, VkImageLayout _newImageLayout, bool _singleMsaaImage)
 	{
-		if (_singleMsaaImage && VK_NULL_HANDLE == m_singleMsaaImage)
+		if (_singleMsaaImage
+		&&  VK_NULL_HANDLE == m_singleMsaaImage)
 		{
-			return VK_IMAGE_LAYOUT_UNDEFINED;
+			return;
 		}
 
 		VkImageLayout& currentLayout = _singleMsaaImage
@@ -7050,28 +7074,23 @@ retry:
 			: m_currentImageLayout
 			;
 
-		const VkImageLayout oldLayout = currentLayout;
-
-		if (currentLayout == _newImageLayout)
+		if (currentLayout != _newImageLayout)
 		{
-			return oldLayout;
+			const VkImage image = _singleMsaaImage
+				? m_singleMsaaImage
+				: m_textureImage
+				;
+
+			setImageMemoryBarrier(
+				_commandBuffer
+				, image
+				, m_aspectFlags
+				, currentLayout
+				, _newImageLayout
+				);
+
+			currentLayout = _newImageLayout;
 		}
-
-		const VkImage image = _singleMsaaImage
-			? m_singleMsaaImage
-			: m_textureImage
-			;
-
-		vk::setImageMemoryBarrier(
-			  _commandBuffer
-			, image
-			, m_aspectFlags
-			, currentLayout
-			, _newImageLayout
-			);
-
-		currentLayout = _newImageLayout;
-		return oldLayout;
 	}
 
 	VkResult TextureVK::createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, VkImageAspectFlags _aspectMask, bool _renderTarget, ::VkImageView* _view) const
@@ -7081,18 +7100,18 @@ retry:
 		if (VK_IMAGE_VIEW_TYPE_3D == m_type)
 		{
 			BX_ASSERT(false
-				  || !_renderTarget
-				  || !(m_aspectFlags & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) )
+				|| !_renderTarget
+				|| !(m_aspectFlags & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) )
 				, "3D image can't be a depth attachment"
-			);
+				);
 		}
 
 		if (VK_IMAGE_VIEW_TYPE_CUBE       == _type
 		||  VK_IMAGE_VIEW_TYPE_CUBE_ARRAY == _type)
 		{
 			BX_ASSERT(_numLayers % 6 == 0, "");
-			BX_ASSERT(
-				  VK_IMAGE_VIEW_TYPE_3D != m_type
+			BX_ASSERT(false
+				|| VK_IMAGE_VIEW_TYPE_3D != m_type
 				, "3D image can't be aliased as a cube texture"
 				);
 		}
@@ -8746,6 +8765,11 @@ retry:
 		{
 			const VkDevice device = s_renderVK->m_device;
 
+			for (TextureHandle th : m_external)
+			{
+				s_renderVK->m_textures[th.idx].setState(m_activeCommandBuffer, VK_IMAGE_LAYOUT_UNDEFINED);
+			}
+
 			setMemoryBarrier(
 				  m_activeCommandBuffer
 				, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
@@ -8865,6 +8889,25 @@ retry:
 		m_release[m_consumeIndex].clear();
 	}
 
+	void CommandQueueVK::addExternal(TextureHandle _handle)
+	{
+		m_external.push_back(_handle);
+	}
+
+	void CommandQueueVK::removeExternal(TextureHandle _handle)
+	{
+		for (ExternalTextureArray::iterator it = m_external.begin(), itEnd = m_external.end(); it != itEnd; ++it)
+		{
+			if (it->idx == _handle.idx)
+			{
+				m_external.erase(it);
+				return;
+			}
+		}
+
+		BX_ASSERT(false, "Removing external texture failed!");
+	}
+
 	void RendererContextVK::submitBlit(BlitState& _bs, uint16_t _view)
 	{
 		BGFX_PROFILER_SCOPE("RendererContextVK::submitBlit", kColorFrame);
@@ -8896,15 +8939,17 @@ retry:
 			TextureVK& src = m_textures[blit.m_src.idx];
 			TextureVK& dst = m_textures[blit.m_dst.idx];
 
-			src.setImageMemoryBarrier(
+			src.setState(
 				  m_commandBuffer
-				, blit.m_src.idx == blit.m_dst.idx ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+				, blit.m_src.idx == blit.m_dst.idx
+					? VK_IMAGE_LAYOUT_GENERAL
+					: VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 				, VK_NULL_HANDLE != src.m_singleMsaaImage
 				);
 
 			if (blit.m_src.idx != blit.m_dst.idx)
 			{
-				dst.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+				dst.setState(m_commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 			}
 
 			const uint16_t srcSamples = VK_NULL_HANDLE != src.m_singleMsaaImage ? 1 : src.m_sampler.Count;
@@ -8981,8 +9026,8 @@ retry:
 			TextureVK& src = m_textures[blit.m_src.idx];
 			TextureVK& dst = m_textures[blit.m_dst.idx];
 
-			src.setImageMemoryBarrier(m_commandBuffer, srcLayouts[item], VK_NULL_HANDLE != src.m_singleMsaaImage);
-			dst.setImageMemoryBarrier(m_commandBuffer, dstLayouts[item]);
+			src.setState(m_commandBuffer, srcLayouts[item], VK_NULL_HANDLE != src.m_singleMsaaImage);
+			dst.setState(m_commandBuffer, dstLayouts[item]);
 		}
 	}
 

@@ -739,6 +739,11 @@ public static partial class bgfx
 		ReadBack               = 0x0000800000000000,
 	
 		/// <summary>
+		/// Texture is shared with other device or other process.
+		/// </summary>
+		ExternalShared         = 0x0001000000000000,
+	
+		/// <summary>
 		/// Render target MSAAx2 mode.
 		/// </summary>
 		RtMsaaX2               = 0x0000002000000000,
@@ -1122,49 +1127,59 @@ public static partial class bgfx
 		TextureDirectAccess    = 0x0000000000400000,
 	
 		/// <summary>
+		/// External texture is supported.
+		/// </summary>
+		TextureExternal        = 0x0000000000800000,
+	
+		/// <summary>
+		/// External shared texture is supported.
+		/// </summary>
+		TextureExternalShared  = 0x0000000001000000,
+	
+		/// <summary>
 		/// Read-back texture is supported.
 		/// </summary>
-		TextureReadBack        = 0x0000000000800000,
+		TextureReadBack        = 0x0000000002000000,
 	
 		/// <summary>
 		/// 2D texture array is supported.
 		/// </summary>
-		Texture2dArray         = 0x0000000001000000,
+		Texture2dArray         = 0x0000000004000000,
 	
 		/// <summary>
 		/// 3D textures are supported.
 		/// </summary>
-		Texture3d              = 0x0000000002000000,
+		Texture3d              = 0x0000000008000000,
 	
 		/// <summary>
 		/// Transparent back buffer supported.
 		/// </summary>
-		TransparentBackbuffer  = 0x0000000004000000,
+		TransparentBackbuffer  = 0x0000000010000000,
 	
 		/// <summary>
 		/// Variable Rate Shading
 		/// </summary>
-		VariableRateShading    = 0x0000000008000000,
+		VariableRateShading    = 0x0000000020000000,
 	
 		/// <summary>
 		/// Vertex attribute half-float is supported.
 		/// </summary>
-		VertexAttribHalf       = 0x0000000010000000,
+		VertexAttribHalf       = 0x0000000040000000,
 	
 		/// <summary>
 		/// Vertex attribute 10_10_10_2 is supported.
 		/// </summary>
-		VertexAttribUint10     = 0x0000000020000000,
+		VertexAttribUint10     = 0x0000000080000000,
 	
 		/// <summary>
 		/// Rendering with VertexID only is supported.
 		/// </summary>
-		VertexId               = 0x0000000040000000,
+		VertexId               = 0x0000000100000000,
 	
 		/// <summary>
 		/// Viewport layer is available in vertex shader.
 		/// </summary>
-		ViewportLayerArray     = 0x0000000080000000,
+		ViewportLayerArray     = 0x0000000200000000,
 	
 		/// <summary>
 		/// All texture compare modes are supported.
@@ -2182,6 +2197,7 @@ public static partial class bgfx
 		public void* ndt;
 		public void* nwh;
 		public void* context;
+		public void* queue;
 		public void* backBuffer;
 		public void* backBufferDS;
 		public NativeWindowHandleType type;
@@ -3187,9 +3203,10 @@ public static partial class bgfx
 	/// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 	/// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 	/// <param name="_mem">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.</param>
+	/// <param name="_external">Native API pointer to texture.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_create_texture_2d", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe TextureHandle create_texture_2d(ushort _width, ushort _height, bool _hasMips, ushort _numLayers, TextureFormat _format, ulong _flags, Memory* _mem);
+	public static extern unsafe TextureHandle create_texture_2d(ushort _width, ushort _height, bool _hasMips, ushort _numLayers, TextureFormat _format, ulong _flags, Memory* _mem, UIntPtr _external);
 	
 	/// <summary>
 	/// Create texture with size based on back-buffer ratio. Texture will maintain ratio
@@ -3216,9 +3233,10 @@ public static partial class bgfx
 	/// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 	/// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 	/// <param name="_mem">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.</param>
+	/// <param name="_external">Native API pointer to texture.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_create_texture_3d", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe TextureHandle create_texture_3d(ushort _width, ushort _height, ushort _depth, bool _hasMips, TextureFormat _format, ulong _flags, Memory* _mem);
+	public static extern unsafe TextureHandle create_texture_3d(ushort _width, ushort _height, ushort _depth, bool _hasMips, TextureFormat _format, ulong _flags, Memory* _mem, UIntPtr _external);
 	
 	/// <summary>
 	/// Create Cube texture.
@@ -3229,10 +3247,11 @@ public static partial class bgfx
 	/// <param name="_numLayers">Number of layers in texture array. Must be 1 if caps `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.</param>
 	/// <param name="_format">Texture format. See: `TextureFormat::Enum`.</param>
 	/// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
-	/// <param name="_mem">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.</param>
+	/// <param name="_mem">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than</param>
+	/// <param name="_external">Native API pointer to texture.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_create_texture_cube", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe TextureHandle create_texture_cube(ushort _size, bool _hasMips, ushort _numLayers, TextureFormat _format, ulong _flags, Memory* _mem);
+	public static extern unsafe TextureHandle create_texture_cube(ushort _size, bool _hasMips, ushort _numLayers, TextureFormat _format, ulong _flags, Memory* _mem, UIntPtr _external);
 	
 	/// <summary>
 	/// Update 2D texture.

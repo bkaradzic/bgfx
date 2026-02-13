@@ -611,6 +611,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				| BGFX_CAPS_TEXTURE_2D_ARRAY
 				| BGFX_CAPS_TEXTURE_3D
 				| BGFX_CAPS_TEXTURE_BLIT
+				| BGFX_CAPS_TEXTURE_EXTERNAL
 				| BGFX_CAPS_TEXTURE_READ_BACK
 				| BGFX_CAPS_VERTEX_ATTRIB_HALF
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
@@ -1076,9 +1077,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_program[_handle.idx].destroy();
 		}
 
-		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip) override
+		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external) override
 		{
-			m_textures[_handle.idx].create(_mem, _flags, _skip);
+			m_textures[_handle.idx].create(_mem, _flags, _skip, _external);
 			return NULL;
 		}
 
@@ -1145,7 +1146,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			bx::write(&writer, tc, bx::ErrorAssert{});
 
 			texture.destroy();
-			texture.create(mem, texture.m_flags, 0);
+			texture.create(mem, texture.m_flags, 0, 0);
 
 			release(mem);
 		}
@@ -3008,7 +3009,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		BufferMtl::create(_size, _data, _flags, stride, true);
 	}
 
-	void TextureMtl::create(const Memory* _mem, uint64_t _flags, uint8_t _skip)
+	void TextureMtl::create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external)
 	{
 		m_sampler = s_renderMtl->getSamplerState(uint32_t(_flags) );
 
@@ -3149,7 +3150,15 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				}
 			}
 
-			m_ptr = s_renderMtl->m_device.newTextureWithDescriptor(desc);
+			if (0 != _external)
+			{
+				m_ptr    = id<MTLTexture>(_external);
+				m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
+			}
+			else
+			{
+				m_ptr = s_renderMtl->m_device.newTextureWithDescriptor(desc);
+			}
 
 			if (sampleCount > 1)
 			{
@@ -3255,6 +3264,29 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				bx::free(g_allocator, temp);
 			}
 		}
+	}
+
+	void TextureMtl::destroy()
+	{
+		if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED) )
+		{
+			MTL_RELEASE_W(m_ptr, 0);
+		}
+
+		MTL_RELEASE_W(m_ptrMsaa, 0);
+		MTL_RELEASE_W(m_ptrStencil, 0);
+
+		for (uint32_t ii = 0; ii < m_numMips; ++ii)
+		{
+			MTL_RELEASE_W(m_ptrMips[ii], 0);
+		}
+	}
+
+	void TextureMtl::overrideInternal(uintptr_t _ptr)
+	{
+		destroy();
+		m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
+		m_ptr = id<MTLTexture>(_ptr);
 	}
 
 	void TextureMtl::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)

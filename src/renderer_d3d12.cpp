@@ -547,12 +547,12 @@ namespace bgfx { namespace d3d12
 #endif // BX_PLATFORM_WINDOWS
 	}
 
-	ID3D12Resource* createCommittedResource(ID3D12Device* _device, HeapProperty::Enum _heapProperty, const D3D12_RESOURCE_DESC* _resourceDesc, const D3D12_CLEAR_VALUE* _clearValue, bool _memSet = false)
+	ID3D12Resource* createCommittedResource(ID3D12Device* _device, HeapProperty::Enum _heapProperty, const D3D12_RESOURCE_DESC* _resourceDesc, const D3D12_CLEAR_VALUE* _clearValue, bool _memSet = false, D3D12_HEAP_FLAGS _heapFlags = D3D12_HEAP_FLAG_NONE)
 	{
 		const HeapProperty& heapProperty = s_heapProperties[_heapProperty];
 		ID3D12Resource* resource;
 		DX_CHECK(_device->CreateCommittedResource(&heapProperty.m_properties
-			, D3D12_HEAP_FLAG_NONE
+			, _heapFlags
 			, _resourceDesc
 			, heapProperty.m_state
 			, _clearValue
@@ -581,7 +581,7 @@ namespace bgfx { namespace d3d12
 		return resource;
 	}
 
-	ID3D12Resource* createCommittedResource(ID3D12Device* _device, HeapProperty::Enum _heapProperty, uint64_t _size, D3D12_RESOURCE_FLAGS _flags = D3D12_RESOURCE_FLAG_NONE)
+	ID3D12Resource* createCommittedResource(ID3D12Device* _device, HeapProperty::Enum _heapProperty, uint64_t _size, D3D12_RESOURCE_FLAGS _flags = D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_FLAGS _heapFlags = D3D12_HEAP_FLAG_NONE)
 	{
 		D3D12_RESOURCE_DESC resourceDesc = {};
 		resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
@@ -596,7 +596,7 @@ namespace bgfx { namespace d3d12
 		resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 		resourceDesc.Flags  = _flags;
 
-		return createCommittedResource(_device, _heapProperty, &resourceDesc, NULL);
+		return createCommittedResource(_device, _heapProperty, &resourceDesc, NULL, false, _heapFlags);
 	}
 
 	inline bool isLost(HRESULT _hr)
@@ -1254,7 +1254,7 @@ namespace bgfx { namespace d3d12
 
 			initHeapProperties(m_device);
 
-			m_cmd.init(m_device);
+			m_cmd.init(m_device, (ID3D12CommandQueue*)g_platformData.queue);
 			m_device->SetPrivateDataInterface(IID_ID3D12CommandQueue, m_cmd.m_commandQueue);
 			errorState = ErrorState::CreatedCommandQueue;
 
@@ -1624,6 +1624,7 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_TEXTURE_COMPARE_ALL
 					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 					| (m_directAccessSupport ? BGFX_CAPS_TEXTURE_DIRECT_ACCESS : 0)
+ 					| BGFX_CAPS_TEXTURE_EXTERNAL
 					| BGFX_CAPS_TEXTURE_READ_BACK
 					| (m_variableRateShadingSupport ? BGFX_CAPS_VARIABLE_RATE_SHADING : 0)
 					| BGFX_CAPS_VERTEX_ATTRIB_HALF
@@ -2125,9 +2126,9 @@ namespace bgfx { namespace d3d12
 			m_program[_handle.idx].destroy();
 		}
 
-		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip) override
+		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external) override
 		{
-			return m_textures[_handle.idx].create(_mem, _flags, _skip);
+			return m_textures[_handle.idx].create(_mem, _flags, _skip, _external);
 		}
 
 		void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) override
@@ -2216,7 +2217,7 @@ namespace bgfx { namespace d3d12
 			bx::write(&writer, tc, bx::ErrorAssert{});
 
 			texture.destroy();
-			texture.create(mem, texture.m_flags, 0);
+			texture.create(mem, texture.m_flags, 0, 0);
 
 			release(mem);
 		}
@@ -2940,7 +2941,10 @@ namespace bgfx { namespace d3d12
 			{
 				FrameBufferD3D12& frameBuffer = m_frameBuffers[m_fbh.idx];
 
-				if (m_rtMsaa) frameBuffer.resolve();
+				if (m_rtMsaa)
+				{
+					frameBuffer.resolve();
+				}
 
 				if (NULL == frameBuffer.m_swapChain)
 				{
@@ -2967,7 +2971,7 @@ namespace bgfx { namespace d3d12
 				if (NULL != m_swapChain)
 				{
 					m_rtvHandle = getCPUHandleHeapStart(m_rtvDescriptorHeap);
-					uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+					const uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 					m_rtvHandle.ptr += m_backBufferColorIdx * rtvDescriptorSize;
 					m_dsvHandle = getCPUHandleHeapStart(m_dsvDescriptorHeap);
 
@@ -4271,18 +4275,27 @@ namespace bgfx { namespace d3d12
 		return gpuHandle;
 	}
 
-	void CommandQueueD3D12::init(ID3D12Device* _device)
+	void CommandQueueD3D12::init(ID3D12Device* _device, ID3D12CommandQueue* _queue)
 	{
-		D3D12_COMMAND_QUEUE_DESC queueDesc;
-		queueDesc.Type     = D3D12_COMMAND_LIST_TYPE_DIRECT;
-		queueDesc.Priority = 0;
-		queueDesc.Flags    = D3D12_COMMAND_QUEUE_FLAG_NONE;
-		queueDesc.NodeMask = 1;
-		DX_CHECK(_device->CreateCommandQueue(
-			  &queueDesc
-			, IID_ID3D12CommandQueue
-			, (void**)&m_commandQueue
-			) );
+		m_externalQueue = NULL != _queue;
+
+		if (NULL != _queue)
+		{
+			m_commandQueue  = _queue;
+		}
+		else
+		{
+			D3D12_COMMAND_QUEUE_DESC queueDesc;
+			queueDesc.Type     = D3D12_COMMAND_LIST_TYPE_DIRECT;
+			queueDesc.Priority = 0;
+			queueDesc.Flags    = D3D12_COMMAND_QUEUE_FLAG_NONE;
+			queueDesc.NodeMask = 1;
+			DX_CHECK(_device->CreateCommandQueue(
+				  &queueDesc
+				, IID_ID3D12CommandQueue
+				, (void**)&m_commandQueue
+				) );
+		}
 
 		m_completedFence = 0;
 		m_currentFence   = 0;
@@ -4349,7 +4362,10 @@ namespace bgfx { namespace d3d12
 			DX_RELEASE(m_commandList[ii].m_commandList, 0);
 		}
 
-		DX_RELEASE(m_commandQueue, 0);
+		if (!m_externalQueue)
+		{
+			DX_RELEASE(m_commandQueue, 0);
+		}
 
 		const D3D12_RANGE range =
 		{
@@ -4383,6 +4399,11 @@ namespace bgfx { namespace d3d12
 	{
 		const uint32_t currentIdx = m_control.m_current;
 		CommandList& commandList = m_commandList[currentIdx];
+
+		for (TextureHandle th : m_external)
+		{
+			s_renderD3D12->m_textures[th.idx].setState(commandList.m_commandList, D3D12_RESOURCE_STATE_COMMON);
+		}
 
 		commandList.m_commandList->EndQuery(
 			  m_pipelineStatsQueryHeap
@@ -4483,6 +4504,25 @@ namespace bgfx { namespace d3d12
 #endif // !BX_PLATFORM_LINUX
 
 		return false;
+	}
+
+	void CommandQueueD3D12::addExternal(TextureHandle _handle)
+	{
+		m_external.push_back(_handle);
+	}
+
+	void CommandQueueD3D12::removeExternal(TextureHandle _handle)
+	{
+		for (ExternalTextureArray::iterator it = m_external.begin(), itEnd = m_external.end(); it != itEnd; ++it)
+		{
+			if (it->idx == _handle.idx)
+			{
+				m_external.erase(it);
+				return;
+			}
+		}
+
+		BX_ASSERT(false, "Removing external texture failed!");
 	}
 
 	void BatchD3D12::create(uint32_t _maxDrawPerBatch)
@@ -5392,7 +5432,7 @@ namespace bgfx { namespace d3d12
 		return result;
 	}
 
-	void* TextureD3D12::create(const Memory* _mem, uint64_t _flags, uint8_t _skip)
+	void* TextureD3D12::create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external)
 	{
 		bimg::ImageContainer imageContainer;
 
@@ -5447,10 +5487,11 @@ namespace bgfx { namespace d3d12
 			const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) );
 			const bool swizzle    = TextureFormat::BGRA8 == m_textureFormat && 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 
-			const bool writeOnly    = 0 != (m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
-			const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
-			const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
-			const bool blit         = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
+			const bool writeOnly      = 0 != (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY);
+			const bool computeWrite   = 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE);
+			const bool renderTarget   = 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
+			const bool blit           = 0 != (m_flags & BGFX_TEXTURE_BLIT_DST);
+			const bool externalShared = 0 != (m_flags & BGFX_TEXTURE_EXTERNAL_SHARED);
 
 			const uint32_t msaaQuality = bx::uint32_satsub((m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
@@ -5720,7 +5761,46 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-			m_ptr = createCommittedResource(device, HeapProperty::Texture, &resourceDesc, clearValue, renderTarget);
+			if (0 != _external)
+			{
+				if (externalShared)
+				{
+					DX_CHECK(device->OpenSharedHandle(HANDLE(_external), IID_ID3D12Resource, (void**)&m_ptr) );
+				}
+				else
+				{
+					m_ptr = (ID3D12Resource*)_external;
+				}
+
+				m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
+				m_state  = D3D12_RESOURCE_STATE_COMMON;
+
+				s_renderD3D12->m_cmd.addExternal({ uint16_t(this - s_renderD3D12->m_textures) });
+			}
+			else
+			{
+				m_ptr = createCommittedResource(
+					  device
+					, HeapProperty::Texture
+					, &resourceDesc
+					, clearValue
+					, renderTarget
+					, externalShared
+						? D3D12_HEAP_FLAG_SHARED
+						: D3D12_HEAP_FLAG_NONE
+					);
+
+				if (externalShared)
+				{
+					DX_CHECK(device->CreateSharedHandle(
+						  m_ptr
+						, NULL
+						, GENERIC_ALL
+						, NULL
+						, &m_handle
+						) );
+				}
+			}
 
 			if (directAccess)
 			{
@@ -5750,10 +5830,6 @@ namespace bgfx { namespace d3d12
 				setState(commandList, state);
 
 				s_renderD3D12->m_cmd.release(staging);
-			}
-			else
-			{
-				setState(commandList, state);
 			}
 
 			if (0 != kk)
@@ -5801,17 +5877,33 @@ namespace bgfx { namespace d3d12
 				m_directAccessPtr = NULL;
 			}
 
-			if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED) )
+			const bool external       = 0 != (m_flags & BGFX_SAMPLER_INTERNAL_SHARED);
+			const bool externalShared = 0 != (m_flags & BGFX_TEXTURE_EXTERNAL_SHARED);
+
+			if (externalShared)
+			{
+#if !BX_PLATFORM_LINUX
+				CloseHandle(m_handle);
+				m_handle = NULL;
+#endif // !BX_PLATFORM_LINUX
+			}
+
+			if (external)
+			{
+				s_renderD3D12->m_cmd.removeExternal({ uint16_t(this - s_renderD3D12->m_textures) });
+			}
+			else
 			{
 				s_renderD3D12->m_cmd.release(m_ptr);
-				m_ptr   = NULL;
-				m_state = D3D12_RESOURCE_STATE_COMMON;
+			}
 
-				if (NULL != m_singleMsaa)
-				{
-					s_renderD3D12->m_cmd.release(m_singleMsaa);
-					m_singleMsaa = NULL;
-				}
+			m_ptr   = NULL;
+			m_state = D3D12_RESOURCE_STATE_COMMON;
+
+			if (NULL != m_singleMsaa)
+			{
+				s_renderD3D12->m_cmd.release(m_singleMsaa);
+				m_singleMsaa = NULL;
 			}
 		}
 	}

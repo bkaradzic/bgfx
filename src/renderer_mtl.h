@@ -1392,30 +1392,9 @@ namespace bgfx { namespace mtl
 			}
 		}
 
-		void create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
-
-		void destroy()
-		{
-			if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED) )
-			{
-				MTL_RELEASE_W(m_ptr, 0);
-				MTL_RELEASE_W(m_ptrMsaa, 0);
-			}
-
-			MTL_RELEASE_W(m_ptrStencil, 0);
-
-			for (uint32_t ii = 0; ii < m_numMips; ++ii)
-			{
-				MTL_RELEASE_W(m_ptrMips[ii], 0);
-			}
-		}
-
-		void overrideInternal(uintptr_t _ptr)
-		{
-			destroy();
-			m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
-			m_ptr = id<MTLTexture>(_ptr);
-		}
+		void create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external);
+		void destroy();
+		void overrideInternal(uintptr_t _ptr);
 
 		void update(
 			  uint8_t _side

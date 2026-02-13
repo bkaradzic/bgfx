@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(136)
+version(137)
 
 typedef "bool"
 typedef "char"
@@ -251,13 +251,14 @@ flag.Buffer { bits = 16, base = 8 }
 	()
 
 flag.Texture { bits = 64 }
-	.None         (0)
-	.MsaaSample   (36) --- Texture will be used for MSAA sampling.
-	.Rt           (37) --- Render target no MSAA.
-	.ComputeWrite (45) --- Texture will be used for compute write.
-	.Srgb         (46) --- Sample texture as sRGB.
-	.BlitDst      (47) --- Texture will be used as blit destination.
-	.ReadBack     (48) --- Texture will be used for read back from GPU.
+	.None           (0)
+	.MsaaSample     (36) --- Texture will be used for MSAA sampling.
+	.Rt             (37) --- Render target no MSAA.
+	.ComputeWrite   (45) --- Texture will be used for compute write.
+	.Srgb           (46) --- Sample texture as sRGB.
+	.BlitDst        (47) --- Texture will be used as blit destination.
+	.ReadBack       (48) --- Texture will be used for read back from GPU.
+	.ExternalShared (49) --- Texture is shared with other device or other process.
 	()
 
 flag.TextureRtMsaa { bits = 64, shift = 36, range = 3 , base = 2 }
@@ -388,6 +389,8 @@ flag.Caps { bits = 64, base = 1, name = "Caps" }
 	.TextureCompareReserved
 	.TextureCubeArray       --- Cubemap texture array is supported.
 	.TextureDirectAccess    --- CPU direct access to GPU texture memory.
+	.TextureExternal        --- External texture is supported.
+	.TextureExternalShared  --- External shared texture is supported.
 	.TextureReadBack        --- Read-back texture is supported.
 	.Texture_2dArray        --- 2D texture array is supported.
 	.Texture_3d             --- 3D textures are supported.
@@ -811,6 +814,8 @@ struct.PlatformData { ctor }
 	.context "void*"
 		--- GL context, D3D device, or Vulkan device. If `NULL`, bgfx
 		--- will create context/device.
+	.queue "void*"
+		--- D3D12 Queue. If `NULL` bgfx will create queue.
 	.backBuffer "void*"
 		--- GL back-buffer, or D3D render target view. If `NULL` bgfx will
 		--- create back-buffer color surface.
@@ -1716,6 +1721,8 @@ func.createTexture2D
 	.mem       "const Memory*"                 --- Texture data. If `_mem` is non-NULL, created texture will be immutable. If
 	 { default = NULL }                        --- `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
 	                                           --- 1, expected memory layout is texture and all mips together for each array element.
+	.external  "uintptr_t"                     --- Native API pointer to texture.
+	{ default = 0 }
 
 --- Create texture with size based on back-buffer ratio. Texture will maintain ratio
 --- if back buffer resolution changes.
@@ -1752,6 +1759,8 @@ func.createTexture3D
 	.mem       "const Memory*"                 --- Texture data. If `_mem` is non-NULL, created texture will be immutable. If
 	 { default = NULL }                        --- `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
 	                                           --- 1, expected memory layout is texture and all mips together for each array element.
+	.external  "uintptr_t"                     --- Native API pointer to texture.
+	{ default = 0 }
 
 --- Create Cube texture.
 func.createTextureCube
@@ -1770,7 +1779,8 @@ func.createTextureCube
 	                                           ---   sampling.
 	.mem       "const Memory*"                 --- Texture data. If `_mem` is non-NULL, created texture will be immutable. If
 	 { default = NULL }                        --- `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
-	                                           --- 1, expected memory layout is texture and all mips together for each array element.
+	.external  "uintptr_t"                     --- Native API pointer to texture.
+	{ default = 0 }
 
 --- Update 2D texture.
 ---

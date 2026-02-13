@@ -661,6 +661,7 @@ typedef struct bgfx_platform_data_s
      * will create context/device.
      */
     void*                context;
+    void*                queue;              /** D3D12 Queue. If `NULL` bgfx will create queue. */
     
     /**
      * GL back-buffer, or D3D render target view. If `NULL` bgfx will
@@ -1884,11 +1885,12 @@ BGFX_C_API bgfx_texture_handle_t bgfx_create_texture(const bgfx_memory_t* _mem, 
  * @param[in] _mem Texture data. If `_mem` is non-NULL, created texture will be immutable. If
  *  `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
  *  1, expected memory layout is texture and all mips together for each array element.
+ * @param[in] _external Native API pointer to texture.
  *
  * @returns Texture handle.
  *
  */
-BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_2d(uint16_t _width, uint16_t _height, bool _hasMips, uint16_t _numLayers, bgfx_texture_format_t _format, uint64_t _flags, const bgfx_memory_t* _mem);
+BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_2d(uint16_t _width, uint16_t _height, bool _hasMips, uint16_t _numLayers, bgfx_texture_format_t _format, uint64_t _flags, const bgfx_memory_t* _mem, uintptr_t _external);
 
 /**
  * Create texture with size based on back-buffer ratio. Texture will maintain ratio
@@ -1928,11 +1930,12 @@ BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_2d_scaled(bgfx_backbuffer_r
  * @param[in] _mem Texture data. If `_mem` is non-NULL, created texture will be immutable. If
  *  `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
  *  1, expected memory layout is texture and all mips together for each array element.
+ * @param[in] _external Native API pointer to texture.
  *
  * @returns Texture handle.
  *
  */
-BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_3d(uint16_t _width, uint16_t _height, uint16_t _depth, bool _hasMips, bgfx_texture_format_t _format, uint64_t _flags, const bgfx_memory_t* _mem);
+BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_3d(uint16_t _width, uint16_t _height, uint16_t _depth, bool _hasMips, bgfx_texture_format_t _format, uint64_t _flags, const bgfx_memory_t* _mem, uintptr_t _external);
 
 /**
  * Create Cube texture.
@@ -1950,12 +1953,12 @@ BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_3d(uint16_t _width, uint16_
  *    sampling.
  * @param[in] _mem Texture data. If `_mem` is non-NULL, created texture will be immutable. If
  *  `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
- *  1, expected memory layout is texture and all mips together for each array element.
+ * @param[in] _external Native API pointer to texture.
  *
  * @returns Texture handle.
  *
  */
-BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_cube(uint16_t _size, bool _hasMips, uint16_t _numLayers, bgfx_texture_format_t _format, uint64_t _flags, const bgfx_memory_t* _mem);
+BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_cube(uint16_t _size, bool _hasMips, uint16_t _numLayers, bgfx_texture_format_t _format, uint64_t _flags, const bgfx_memory_t* _mem, uintptr_t _external);
 
 /**
  * Update 2D texture.
@@ -3875,10 +3878,10 @@ struct bgfx_interface_vtbl
     bool (*is_frame_buffer_valid)(uint8_t _num, const bgfx_attachment_t* _attachment);
     void (*calc_texture_size)(bgfx_texture_info_t * _info, uint16_t _width, uint16_t _height, uint16_t _depth, bool _cubeMap, bool _hasMips, uint16_t _numLayers, bgfx_texture_format_t _format);
     bgfx_texture_handle_t (*create_texture)(const bgfx_memory_t* _mem, uint64_t _flags, uint8_t _skip, bgfx_texture_info_t* _info);
-    bgfx_texture_handle_t (*create_texture_2d)(uint16_t _width, uint16_t _height, bool _hasMips, uint16_t _numLayers, bgfx_texture_format_t _format, uint64_t _flags, const bgfx_memory_t* _mem);
+    bgfx_texture_handle_t (*create_texture_2d)(uint16_t _width, uint16_t _height, bool _hasMips, uint16_t _numLayers, bgfx_texture_format_t _format, uint64_t _flags, const bgfx_memory_t* _mem, uintptr_t _external);
     bgfx_texture_handle_t (*create_texture_2d_scaled)(bgfx_backbuffer_ratio_t _ratio, bool _hasMips, uint16_t _numLayers, bgfx_texture_format_t _format, uint64_t _flags);
-    bgfx_texture_handle_t (*create_texture_3d)(uint16_t _width, uint16_t _height, uint16_t _depth, bool _hasMips, bgfx_texture_format_t _format, uint64_t _flags, const bgfx_memory_t* _mem);
-    bgfx_texture_handle_t (*create_texture_cube)(uint16_t _size, bool _hasMips, uint16_t _numLayers, bgfx_texture_format_t _format, uint64_t _flags, const bgfx_memory_t* _mem);
+    bgfx_texture_handle_t (*create_texture_3d)(uint16_t _width, uint16_t _height, uint16_t _depth, bool _hasMips, bgfx_texture_format_t _format, uint64_t _flags, const bgfx_memory_t* _mem, uintptr_t _external);
+    bgfx_texture_handle_t (*create_texture_cube)(uint16_t _size, bool _hasMips, uint16_t _numLayers, bgfx_texture_format_t _format, uint64_t _flags, const bgfx_memory_t* _mem, uintptr_t _external);
     void (*update_texture_2d)(bgfx_texture_handle_t _handle, uint16_t _layer, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const bgfx_memory_t* _mem, uint16_t _pitch);
     void (*update_texture_3d)(bgfx_texture_handle_t _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const bgfx_memory_t* _mem);
     void (*update_texture_cube)(bgfx_texture_handle_t _handle, uint16_t _layer, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const bgfx_memory_t* _mem, uint16_t _pitch);

@@ -309,6 +309,7 @@ namespace bgfx { namespace d3d12
 		TextureD3D12()
 			: m_ptr(NULL)
 			, m_singleMsaa(NULL)
+			, m_handle(NULL)
 			, m_directAccessPtr(NULL)
 			, m_state(D3D12_RESOURCE_STATE_COMMON)
 			, m_numMips(0)
@@ -317,7 +318,7 @@ namespace bgfx { namespace d3d12
 			bx::memSet(&m_uavd, 0, sizeof(m_uavd) );
 		}
 
-		void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
+		void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external);
 		void destroy();
 		void overrideInternal(uintptr_t _ptr);
 		void update(ID3D12GraphicsCommandList* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
@@ -328,6 +329,7 @@ namespace bgfx { namespace d3d12
 		D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd;
 		ID3D12Resource* m_ptr;
 		ID3D12Resource* m_singleMsaa;
+		HANDLE m_handle;
 		void* m_directAccessPtr;
 		D3D12_RESOURCE_STATES m_state;
 		uint64_t m_flags;
@@ -390,11 +392,12 @@ namespace bgfx { namespace d3d12
 			: m_currentFence(0)
 			, m_completedFence(0)
 			, m_control(BX_COUNTOF(m_commandList) )
+			, m_externalQueue(false)
 		{
 			static_assert(BX_COUNTOF(m_commandList) == BX_COUNTOF(m_release) );
 		}
 
-		void init(ID3D12Device* _device);
+		void init(ID3D12Device* _device, ID3D12CommandQueue* _queue);
 		void shutdown();
 		ID3D12GraphicsCommandList* alloc();
 		uint64_t kick();
@@ -402,6 +405,9 @@ namespace bgfx { namespace d3d12
 		bool tryFinish(uint64_t _waitFence);
 		void release(ID3D12Resource* _ptr);
 		bool consume(uint32_t _ms = UINT32_MAX);
+
+		void addExternal(TextureHandle _handle);
+		void removeExternal(TextureHandle _handle);
 
 		struct CommandList
 		{
@@ -455,7 +461,10 @@ namespace bgfx { namespace d3d12
 		CommandList m_commandList[kMaxCommandLists];
 		typedef stl::vector<ID3D12Resource*> ResourceArray;
 		ResourceArray m_release[kMaxCommandLists];
+		typedef stl::vector<TextureHandle> ExternalTextureArray;
+		ExternalTextureArray m_external;
 		bx::RingBufferControl m_control;
+		bool m_externalQueue;
 
 		ID3D12Resource*  m_pipelineStatsReadBack;
 		ID3D12QueryHeap* m_pipelineStatsQueryHeap;

@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 136;
+enum uint apiVersion = 137;
 
 alias ViewID = ushort;
 
@@ -329,13 +329,14 @@ enum Buffer: Buffer_{
 
 alias Texture_ = ulong;
 enum Texture: Texture_{
-	none          = 0x0000_0000_0000_0000,
-	msaaSample    = 0x0000_0008_0000_0000, ///Texture will be used for MSAA sampling.
-	rt            = 0x0000_0010_0000_0000, ///Render target no MSAA.
-	computeWrite  = 0x0000_1000_0000_0000, ///Texture will be used for compute write.
-	srgb          = 0x0000_2000_0000_0000, ///Sample texture as sRGB.
-	blitDst       = 0x0000_4000_0000_0000, ///Texture will be used as blit destination.
-	readBack      = 0x0000_8000_0000_0000, ///Texture will be used for read back from GPU.
+	none            = 0x0000_0000_0000_0000,
+	msaaSample      = 0x0000_0008_0000_0000, ///Texture will be used for MSAA sampling.
+	rt              = 0x0000_0010_0000_0000, ///Render target no MSAA.
+	computeWrite    = 0x0000_1000_0000_0000, ///Texture will be used for compute write.
+	srgb            = 0x0000_2000_0000_0000, ///Sample texture as sRGB.
+	blitDst         = 0x0000_4000_0000_0000, ///Texture will be used as blit destination.
+	readBack        = 0x0000_8000_0000_0000, ///Texture will be used for read back from GPU.
+	externalShared  = 0x0001_0000_0000_0000, ///Texture is shared with other device or other process.
 }
 
 alias TextureRTMSAA_ = ulong;
@@ -514,15 +515,17 @@ enum CapFlags: CapFlags_{
 	textureCompareReserved  = 0x0000_0000_0010_0000,
 	textureCubeArray        = 0x0000_0000_0020_0000, ///Cubemap texture array is supported.
 	textureDirectAccess     = 0x0000_0000_0040_0000, ///CPU direct access to GPU texture memory.
-	textureReadBack         = 0x0000_0000_0080_0000, ///Read-back texture is supported.
-	texture2DArray          = 0x0000_0000_0100_0000, ///2D texture array is supported.
-	texture3D               = 0x0000_0000_0200_0000, ///3D textures are supported.
-	transparentBackbuffer   = 0x0000_0000_0400_0000, ///Transparent back buffer supported.
-	variableRateShading     = 0x0000_0000_0800_0000, ///Variable Rate Shading
-	vertexAttribHalf        = 0x0000_0000_1000_0000, ///Vertex attribute half-float is supported.
-	vertexAttribUint10      = 0x0000_0000_2000_0000, ///Vertex attribute 10_10_10_2 is supported.
-	vertexID                = 0x0000_0000_4000_0000, ///Rendering with VertexID only is supported.
-	viewportLayerArray      = 0x0000_0000_8000_0000, ///Viewport layer is available in vertex shader.
+	textureExternal         = 0x0000_0000_0080_0000, ///External texture is supported.
+	textureExternalShared   = 0x0000_0000_0100_0000, ///External shared texture is supported.
+	textureReadBack         = 0x0000_0000_0200_0000, ///Read-back texture is supported.
+	texture2DArray          = 0x0000_0000_0400_0000, ///2D texture array is supported.
+	texture3D               = 0x0000_0000_0800_0000, ///3D textures are supported.
+	transparentBackbuffer   = 0x0000_0000_1000_0000, ///Transparent back buffer supported.
+	variableRateShading     = 0x0000_0000_2000_0000, ///Variable Rate Shading
+	vertexAttribHalf        = 0x0000_0000_4000_0000, ///Vertex attribute half-float is supported.
+	vertexAttribUint10      = 0x0000_0000_8000_0000, ///Vertex attribute 10_10_10_2 is supported.
+	vertexID                = 0x0000_0001_0000_0000, ///Rendering with VertexID only is supported.
+	viewportLayerArray      = 0x0000_0002_0000_0000, ///Viewport layer is available in vertex shader.
 	textureCompareAll       = 0x0000_0000_0018_0000, ///All texture compare modes are supported.
 }
 
@@ -1122,6 +1125,7 @@ extern(C++, "bgfx") struct PlatformData{
 	will create context/device.
 	*/
 	void* context;
+	void* queue; ///D3D12 Queue. If `NULL` bgfx will create queue.
 	
 	/**
 	GL back-buffer, or D3D render target view. If `NULL` bgfx will
@@ -2576,8 +2580,9 @@ mixin(joinFnBinds((){
 			mem = Texture data. If `_mem` is non-NULL, created texture will be immutable. If
 		`_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
 		1, expected memory layout is texture and all mips together for each array element.
+			external = Native API pointer to texture.
 		*/
-		{q{TextureHandle}, q{createTexture2D}, q{ushort width, ushort height, bool hasMIPs, ushort numLayers, bgfx.impl.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null}, ext: `C++, "bgfx"`},
+		{q{TextureHandle}, q{createTexture2D}, q{ushort width, ushort height, bool hasMIPs, ushort numLayers, bgfx.impl.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null, size_t external=0}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Create texture with size based on back-buffer ratio. Texture will maintain ratio
@@ -2614,8 +2619,9 @@ mixin(joinFnBinds((){
 			mem = Texture data. If `_mem` is non-NULL, created texture will be immutable. If
 		`_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
 		1, expected memory layout is texture and all mips together for each array element.
+			external = Native API pointer to texture.
 		*/
-		{q{TextureHandle}, q{createTexture3D}, q{ushort width, ushort height, ushort depth, bool hasMIPs, bgfx.impl.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null}, ext: `C++, "bgfx"`},
+		{q{TextureHandle}, q{createTexture3D}, q{ushort width, ushort height, ushort depth, bool hasMIPs, bgfx.impl.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null, size_t external=0}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Create Cube texture.
@@ -2633,9 +2639,9 @@ mixin(joinFnBinds((){
 		  sampling.
 			mem = Texture data. If `_mem` is non-NULL, created texture will be immutable. If
 		`_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
-		1, expected memory layout is texture and all mips together for each array element.
+			external = Native API pointer to texture.
 		*/
-		{q{TextureHandle}, q{createTextureCube}, q{ushort size, bool hasMIPs, ushort numLayers, bgfx.impl.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null}, ext: `C++, "bgfx"`},
+		{q{TextureHandle}, q{createTextureCube}, q{ushort size, bool hasMIPs, ushort numLayers, bgfx.impl.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null, size_t external=0}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Update 2D texture.
