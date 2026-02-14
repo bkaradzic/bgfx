@@ -3216,6 +3216,13 @@ namespace bgfx
 	};
 
 	// First-fit non-local allocator.
+	//
+	// The free list is kept sorted by address at all times, which:
+	//  - Enables O(1) adjacent-block coalescing on free (no deferred compact needed).
+	//  - Eliminates the need to sort during compact().
+	//  - Provides cache-friendly iteration (contiguous vector storage).
+	//  - Uses binary search for sorted insertion, replacing the O(n) push_front.
+	//
 	class NonLocalAllocator
 	{
 	public:
@@ -3239,7 +3246,7 @@ namespace bgfx
 
 		void add(uint64_t _ptr, uint32_t _size)
 		{
-			m_free.push_back(Free(_ptr, _size) );
+			insertFreeBlock(_ptr, _size);
 		}
 
 		uint64_t remove()
@@ -3249,7 +3256,7 @@ namespace bgfx
 			if (0 < m_free.size() )
 			{
 				Free freeBlock = m_free.front();
-				m_free.pop_front();
+				m_free.erase(m_free.begin() );
 				return freeBlock.m_ptr;
 			}
 
@@ -3292,31 +3299,22 @@ namespace bgfx
 			UsedList::iterator it = m_used.find(_block);
 			if (it != m_used.end() )
 			{
-				m_total -= it->second;
+				const uint64_t ptr  = it->first;
+				const uint32_t size = it->second;
 
-				m_free.push_front(Free(it->first, it->second) );
+				m_total -= size;
 				m_used.erase(it);
+
+				// Insert into sorted free list and coalesce with adjacent blocks.
+				insertFreeBlock(ptr, size);
 			}
 		}
 
 		bool compact()
 		{
-			m_free.sort();
-
-			for (FreeList::iterator it = m_free.begin(), next = it, itEnd = m_free.end(); next != itEnd;)
-			{
-				if ( (it->m_ptr + it->m_size) == next->m_ptr)
-				{
-					it->m_size += next->m_size;
-					next = m_free.erase(next);
-				}
-				else
-				{
-					it = next;
-					++next;
-				}
-			}
-
+			// The free list is maintained in sorted order with immediate
+			// coalescing, so compact() is a no-op for merging. Just report
+			// whether all allocations have been freed.
 			return 0 == m_used.size();
 		}
 
@@ -3339,11 +3337,63 @@ namespace bgfx
 				return m_ptr < rhs.m_ptr;
 			}
 
+			bool operator>(const Free& rhs) const
+			{
+				return m_ptr > rhs.m_ptr;
+			}
+
 			uint64_t m_ptr;
 			uint32_t m_size;
 		};
 
-		typedef stl::list<Free> FreeList;
+		// Insert a free block at its sorted position and coalesce with
+		// adjacent neighbors. Uses bx::upperBound to find the insertion
+		// point in O(log n), then checks the immediate neighbors for
+		// merge opportunities.
+		void insertFreeBlock(uint64_t _ptr, uint32_t _size)
+		{
+			// Use bx::upperBound to find the insertion point (first element with m_ptr > _ptr).
+			const Free key(_ptr, 0);
+			const uint32_t idx = 0 < m_free.size()
+				? bx::upperBound(key, m_free.data(), uint32_t(m_free.size() ) )
+				: 0
+				;
+
+			// Check if we can merge with the previous block.
+			const bool mergePrev = idx > 0
+				&& (m_free[idx - 1].m_ptr + m_free[idx - 1].m_size) == _ptr
+				;
+
+			// Check if we can merge with the next block.
+			const bool mergeNext = idx < uint32_t(m_free.size() )
+				&& (_ptr + _size) == m_free[idx].m_ptr
+				;
+
+			if (mergePrev && mergeNext)
+			{
+				// Merge all three: extend previous to cover current + next.
+				m_free[idx - 1].m_size += _size + m_free[idx].m_size;
+				m_free.erase(m_free.begin() + idx);
+			}
+			else if (mergePrev)
+			{
+				// Extend previous block.
+				m_free[idx - 1].m_size += _size;
+			}
+			else if (mergeNext)
+			{
+				// Extend next block backward.
+				m_free[idx].m_ptr   = _ptr;
+				m_free[idx].m_size += _size;
+			}
+			else
+			{
+				// No merge possible — insert new block at sorted position.
+				m_free.insert(m_free.begin() + idx, Free(_ptr, _size) );
+			}
+		}
+
+		typedef stl::vector<Free> FreeList;
 		FreeList m_free;
 
 		typedef stl::unordered_map<uint64_t, uint32_t> UsedList;
