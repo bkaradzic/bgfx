@@ -32,6 +32,18 @@ namespace bgfx
 		)
 #endif // SHADERC_CONFIG_DXIL
 
+#ifndef SHADERC_CONFIG_WGSL
+#define SHADERC_CONFIG_WGSL 1
+#endif
+
+#ifndef SHADERC_CONFIG_SPIRV
+#define SHADERC_CONFIG_SPIRV 1
+#endif
+
+#ifndef SHADERC_CONFIG_METAL
+#define SHADERC_CONFIG_METAL 1
+#endif
+
 #include <bx/bx.h>
 #include <bx/debug.h>
 #include <bx/commandline.h>

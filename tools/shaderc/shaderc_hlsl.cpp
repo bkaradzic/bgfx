@@ -765,7 +765,7 @@ namespace bgfx
 	{
 		BX_UNUSED(_options, _version, _code, _shaderWriter);
 		bx::Error messageErr;
-		bx::write(_messageWriter, &messageErr, "HLSL compiler is not supported on this platform.\n");
+		bx::write(_messageWriter, &messageErr, "HLSL compiler is not compiled in or not supported on this platform.\n");
 		return false;
 	}
 
