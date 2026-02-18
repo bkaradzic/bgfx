@@ -5,7 +5,7 @@
 
 #include "shaderc.h"
 
-#if SHADERC_CONFIG_HLSL
+#if SHADERC_CONFIG_HAS_D3DCOMPILER
 
 #if defined(__MINGW32__)
 #	define __REQUIRED_RPCNDR_H_VERSION__ 475
@@ -771,4 +771,4 @@ namespace bgfx
 
 } // namespace bgfx
 
-#endif // SHADERC_CONFIG_HLSL
+#endif // SHADERC_CONFIG_HAS_D3DCOMPILER

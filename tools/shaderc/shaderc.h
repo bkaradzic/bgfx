@@ -11,40 +11,55 @@ namespace bgfx
 	extern bool g_verbose;
 }
 
+#include <bx/bx.h>
+
 // HLSL compilation support:
 // - Windows: Native D3DCompiler DLL
 // - Linux/macOS: d3d4linux (Wine-based D3DCompiler via IPC)
-#ifndef SHADERC_CONFIG_HLSL
-#	define SHADERC_CONFIG_HLSL (0  \
-		|| BX_PLATFORM_WINDOWS     \
-		|| BX_PLATFORM_LINUX       \
-		)
-#endif // SHADERC_CONFIG_HLSL
+#ifndef SHADERC_CONFIG_HAS_D3DCOMPILER
+#	if BX_PLATFORM_WINDOWS
+#		if __has_include(<d3dcompiler.h>)
+#			define SHADERC_CONFIG_HAS_D3DCOMPILER 1
+#		endif
+#	elif BX_PLATFORM_LINUX
+#		if __has_include(<d3d4linux.h>)
+#			define SHADERC_CONFIG_HAS_D3DCOMPILER 1
+#		endif
+#	endif
+// Still not?
+#	ifndef SHADERC_CONFIG_HAS_D3DCOMPILER
+#		define SHADERC_CONFIG_HAS_D3DCOMPILER 0
+#	endif
+#endif // SHADERC_CONFIG_HAS_D3DCOMPILER
 
 // DXIL compilation support (Shader Model 6.0+):
 // - Windows: Native DXC (dxcompiler.dll)
 // - Linux: DXC (libdxcompiler.so) via directx-headers
 // - macOS: Not supported (no DXC dynamic library available)
-#ifndef SHADERC_CONFIG_DXIL
-#	define SHADERC_CONFIG_DXIL (0  \
+#ifndef SHADERC_HAS_DXC
+#	define SHADERC_HAS_DXC (0  \
 		|| BX_PLATFORM_WINDOWS     \
 		|| BX_PLATFORM_LINUX       \
 		)
-#endif // SHADERC_CONFIG_DXIL
+#endif // SHADERC_HAS_DXC
 
-#ifndef SHADERC_CONFIG_WGSL
-#define SHADERC_CONFIG_WGSL 1
+#ifndef SHADERC_CONFIG_HAS_TINT
+#	if __has_include(<tint/api/tint.h>)
+#		define SHADERC_CONFIG_HAS_TINT 1
+#	else
+#		define SHADERC_CONFIG_HAS_TINT 0
+#	endif
 #endif
 
-#ifndef SHADERC_CONFIG_SPIRV
-#define SHADERC_CONFIG_SPIRV 1
+#ifndef SHADERC_CONFIG_HAS_GLSLANG
+#	if __has_include(<ShaderLang.h>) \
+	&& __has_include(<SPIRV/SpvTools.h>)
+#		define SHADERC_CONFIG_HAS_GLSLANG 1
+#	else
+#		define SHADERC_CONFIG_HAS_GLSLANG 0
+#	endif
 #endif
 
-#ifndef SHADERC_CONFIG_METAL
-#define SHADERC_CONFIG_METAL 1
-#endif
-
-#include <bx/bx.h>
 #include <bx/debug.h>
 #include <bx/commandline.h>
 #include <bx/endian.h>

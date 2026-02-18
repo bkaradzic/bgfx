@@ -5,7 +5,7 @@
 
 #include "shaderc.h"
 
-#if SHADERC_CONFIG_SPIRV
+#if SHADERC_CONFIG_HAS_GLSLANG
 
 #include <iostream> // std::cout
 
@@ -903,7 +903,7 @@ namespace bgfx { namespace spirv
 
 } // namespace bgfx
 
-#else
+#else // SHADERC_HAS_GLSLANG
 
 namespace bgfx
 {
@@ -916,4 +916,4 @@ namespace bgfx
 	}
 } // namespace bgfx
 
-#endif
+#endif // SHADERC_HAS_GLSLANG

@@ -6,7 +6,7 @@
 #include "shaderc.h"
 #include <bx/os.h>
 
-#if SHADERC_CONFIG_DXIL
+#if SHADERC_HAS_DXC
 
 #if BX_PLATFORM_WINDOWS
 #	include <windows.h>
@@ -696,4 +696,4 @@ namespace bgfx
 
 } // namespace bgfx
 
-#endif // SHADERC_CONFIG_DXIL
+#endif // SHADERC_HAS_DXC
