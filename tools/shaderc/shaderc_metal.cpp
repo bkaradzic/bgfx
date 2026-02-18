@@ -5,7 +5,7 @@
 
 #include "shaderc.h"
 
-#if SHADERC_CONFIG_METAL
+#if SHADERC_CONFIG_HAS_GLSLANG
 
 #include <iostream> // std::cout
 
@@ -820,7 +820,9 @@ namespace bgfx { namespace metal
 	}
 
 } // namespace bgfx
-#else
+
+#else // SHADERC_CONFIG_HAS_GLSLANG
+
 namespace bgfx
 {
 	bool compileMetalShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
@@ -831,4 +833,5 @@ namespace bgfx
 		return false;
 	}
 } // namespace bgfx
-#endif
+
+#endif // SHADERC_CONFIG_HAS_GLSLANG
