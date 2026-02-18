@@ -5153,7 +5153,7 @@ VK_DESTROY
 
 		m_chunkControl.resize(m_chunkSize);
 
-		m_chunks.insert(&m_chunks[chunkIndex], sbc);
+		m_chunks.insert(m_chunks.begin() + chunkIndex, sbc);
 	}
 
 	ChunkedScratchBufferAlloc ChunkedScratchBufferVK::alloc(uint32_t _size)
