@@ -1252,11 +1252,9 @@ VK_IMPORT_DEVICE
 
 #define VK_IMPORT_FUNC(_optional, _func)                                 \
 	_func = (PFN_##_func)bx::dlsym(m_vulkan1Dll, #_func);                \
-	BX_TRACE("\t%p %s" #_func, _func, _optional ? "[opt]" : "     ");    \
+	BX_TRACE("\t%16p %s" #_func, _func, _optional ? "[opt]" : "     ");  \
 	imported &= _optional || NULL != _func
-
 VK_IMPORT
-
 #undef VK_IMPORT_FUNC
 
 			if (!imported)
@@ -1417,9 +1415,9 @@ VK_IMPORT
 
 			BX_TRACE("Instance functions:");
 
-#define VK_IMPORT_INSTANCE_FUNC(_optional, _func)                      \
-	_func = (PFN_##_func)vkGetInstanceProcAddr(m_instance, #_func);    \
-	BX_TRACE("\t%p %s " #_func, _func, _optional ? "[opt]" : "     "); \
+#define VK_IMPORT_INSTANCE_FUNC(_optional, _func)                        \
+	_func = (PFN_##_func)vkGetInstanceProcAddr(m_instance, #_func);      \
+	BX_TRACE("\t%16p %s " #_func, _func, _optional ? "[opt]" : "     "); \
 	imported &= _optional || NULL != _func
 VK_IMPORT_INSTANCE
 #undef VK_IMPORT_INSTANCE_FUNC
@@ -1996,9 +1994,9 @@ VK_IMPORT_INSTANCE
 			errorState = ErrorState::DeviceCreated;
 
 			BX_TRACE("Device functions:");
-#define VK_IMPORT_DEVICE_FUNC(_optional, _func)                        \
-	_func = (PFN_##_func)vkGetDeviceProcAddr(m_device, #_func);        \
-	BX_TRACE("\t%p %s " #_func, _func, _optional ? "[opt]" : "     "); \
+#define VK_IMPORT_DEVICE_FUNC(_optional, _func)                          \
+	_func = (PFN_##_func)vkGetDeviceProcAddr(m_device, #_func);          \
+	BX_TRACE("\t%16p %s " #_func, _func, _optional ? "[opt]" : "     "); \
 	imported &= _optional || NULL != _func
 VK_IMPORT_DEVICE
 #undef VK_IMPORT_DEVICE_FUNC

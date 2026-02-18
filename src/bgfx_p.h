@@ -858,7 +858,7 @@ namespace bgfx
 		void next()
 		{
 			// operator>> promotes to int, so we need to cast back:
-			const uint8_t ntzPlus1 = bx::countTrailingZeros((MaskT)(mask>>1)) + 1;
+			const uint8_t ntzPlus1 = bx::countTrailingZeros<MaskT>(mask>>1) + 1;
 			mask >>= ntzPlus1;
 			idx   += ntzPlus1;
 		}
