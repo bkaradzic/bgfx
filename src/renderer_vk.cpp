@@ -5205,13 +5205,18 @@ VK_DESTROY
 		const uint32_t offset1 = offset0 + vsSize;
 
 		const Chunk& sbc = m_chunks[sba.chunkIdx];
-
 		_outSbo.buffer = sbc.buffer;
-		_outSbo.offsets[0] = offset0;
-		_outSbo.offsets[1] = offset1;
-
-		bx::memCopy(&sbc.data[offset0], _vsData, _vsSize);
-		bx::memCopy(&sbc.data[offset1], _fsData, _fsSize);
+		int i = 0;
+		if (_vsSize)
+		{
+			_outSbo.offsets[i++] = offset0;
+			bx::memCopy(&sbc.data[offset0], _vsData, _vsSize);
+		}
+		if (_fsSize)
+		{
+			_outSbo.offsets[i++] = offset1;
+			bx::memCopy(&sbc.data[offset1], _fsData, _fsSize);
+		}
 	}
 
 	void ChunkedScratchBufferVK::begin()
