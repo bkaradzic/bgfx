@@ -3206,7 +3206,7 @@ public static partial class bgfx
 	/// <param name="_external">Native API pointer to texture.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_create_texture_2d", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe TextureHandle create_texture_2d(ushort _width, ushort _height, bool _hasMips, ushort _numLayers, TextureFormat _format, ulong _flags, Memory* _mem, UIntPtr _external);
+	public static extern unsafe TextureHandle create_texture_2d(ushort _width, ushort _height, bool _hasMips, ushort _numLayers, TextureFormat _format, ulong _flags, Memory* _mem, ulong _external);
 	
 	/// <summary>
 	/// Create texture with size based on back-buffer ratio. Texture will maintain ratio
@@ -3236,7 +3236,7 @@ public static partial class bgfx
 	/// <param name="_external">Native API pointer to texture.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_create_texture_3d", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe TextureHandle create_texture_3d(ushort _width, ushort _height, ushort _depth, bool _hasMips, TextureFormat _format, ulong _flags, Memory* _mem, UIntPtr _external);
+	public static extern unsafe TextureHandle create_texture_3d(ushort _width, ushort _height, ushort _depth, bool _hasMips, TextureFormat _format, ulong _flags, Memory* _mem, ulong _external);
 	
 	/// <summary>
 	/// Create Cube texture.
@@ -3251,7 +3251,7 @@ public static partial class bgfx
 	/// <param name="_external">Native API pointer to texture.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_create_texture_cube", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe TextureHandle create_texture_cube(ushort _size, bool _hasMips, ushort _numLayers, TextureFormat _format, ulong _flags, Memory* _mem, UIntPtr _external);
+	public static extern unsafe TextureHandle create_texture_cube(ushort _size, bool _hasMips, ushort _numLayers, TextureFormat _format, ulong _flags, Memory* _mem, ulong _external);
 	
 	/// <summary>
 	/// Update 2D texture.

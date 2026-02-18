@@ -2869,7 +2869,7 @@ namespace bgfx
 		, TextureFormat::Enum _format
 		, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE
 		, const Memory* _mem = NULL
-		, uintptr_t _external = 0
+		, uint64_t _external = 0
 		);
 
 	/// Create texture with size based on back-buffer ratio. Texture will maintain ratio
@@ -2926,7 +2926,7 @@ namespace bgfx
 		, TextureFormat::Enum _format
 		, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE
 		, const Memory* _mem = NULL
-		, uintptr_t _external = 0
+		, uint64_t _external = 0
 		);
 
 	/// Create Cube texture.
@@ -2957,7 +2957,7 @@ namespace bgfx
 		, TextureFormat::Enum _format
 		, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE
 		, const Memory* _mem = NULL
-		, uintptr_t _external = 0
+		, uint64_t _external = 0
 		);
 
 	/// Update 2D texture.

@@ -3253,7 +3253,7 @@ public static class bgfx
 	/// <param name="_external">Native API pointer to texture.</param>
 	///
 	[LinkName("bgfx_create_texture_2d")]
-	public static extern TextureHandle create_texture_2d(uint16 _width, uint16 _height, bool _hasMips, uint16 _numLayers, TextureFormat _format, uint64 _flags, Memory* _mem, void* _external);
+	public static extern TextureHandle create_texture_2d(uint16 _width, uint16 _height, bool _hasMips, uint16 _numLayers, TextureFormat _format, uint64 _flags, Memory* _mem, uint64 _external);
 	
 	/// <summary>
 	/// Create texture with size based on back-buffer ratio. Texture will maintain ratio
@@ -3283,7 +3283,7 @@ public static class bgfx
 	/// <param name="_external">Native API pointer to texture.</param>
 	///
 	[LinkName("bgfx_create_texture_3d")]
-	public static extern TextureHandle create_texture_3d(uint16 _width, uint16 _height, uint16 _depth, bool _hasMips, TextureFormat _format, uint64 _flags, Memory* _mem, void* _external);
+	public static extern TextureHandle create_texture_3d(uint16 _width, uint16 _height, uint16 _depth, bool _hasMips, TextureFormat _format, uint64 _flags, Memory* _mem, uint64 _external);
 	
 	/// <summary>
 	/// Create Cube texture.
@@ -3298,7 +3298,7 @@ public static class bgfx
 	/// <param name="_external">Native API pointer to texture.</param>
 	///
 	[LinkName("bgfx_create_texture_cube")]
-	public static extern TextureHandle create_texture_cube(uint16 _size, bool _hasMips, uint16 _numLayers, TextureFormat _format, uint64 _flags, Memory* _mem, void* _external);
+	public static extern TextureHandle create_texture_cube(uint16 _size, bool _hasMips, uint16 _numLayers, TextureFormat _format, uint64 _flags, Memory* _mem, uint64 _external);
 	
 	/// <summary>
 	/// Update 2D texture.

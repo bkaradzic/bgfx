@@ -2126,7 +2126,7 @@ namespace bgfx { namespace d3d12
 			m_program[_handle.idx].destroy();
 		}
 
-		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external) override
+		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) override
 		{
 			return m_textures[_handle.idx].create(_mem, _flags, _skip, _external);
 		}
@@ -5432,7 +5432,7 @@ namespace bgfx { namespace d3d12
 		return result;
 	}
 
-	void* TextureD3D12::create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external)
+	void* TextureD3D12::create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external)
 	{
 		bimg::ImageContainer imageContainer;
 

@@ -5034,7 +5034,7 @@ namespace bgfx
 		, TextureFormat::Enum _format
 		, uint64_t _flags
 		, const Memory* _mem
-		, uintptr_t _external
+		, uint64_t _external
 		)
 	{
 		if (BackbufferRatio::Count != _ratio)
@@ -5087,7 +5087,7 @@ namespace bgfx
 		return s_ctx->createTexture(mem, _flags, 0, NULL, _ratio, NULL != _mem, _external);
 	}
 
-	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags, const Memory* _mem, uintptr_t _external)
+	TextureHandle createTexture2D(uint16_t _width, uint16_t _height, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags, const Memory* _mem, uint64_t _external)
 	{
 		BX_ASSERT(false
 			|| 0 == _external
@@ -5105,7 +5105,7 @@ namespace bgfx
 		return createTexture2D(_ratio, 0, 0, _hasMips, _numLayers, _format, _flags, NULL, 0);
 	}
 
-	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, bool _hasMips, TextureFormat::Enum _format, uint64_t _flags, const Memory* _mem, uintptr_t _external)
+	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, bool _hasMips, TextureFormat::Enum _format, uint64_t _flags, const Memory* _mem, uint64_t _external)
 	{
 		BX_ASSERT(false
 			|| 0 == _external
@@ -5156,7 +5156,7 @@ namespace bgfx
 		return s_ctx->createTexture(mem, _flags, 0, NULL, BackbufferRatio::Count, NULL != _mem, _external);
 	}
 
-	TextureHandle createTextureCube(uint16_t _size, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags, const Memory* _mem, uintptr_t _external)
+	TextureHandle createTextureCube(uint16_t _size, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags, const Memory* _mem, uint64_t _external)
 	{
 		BX_ASSERT(false
 			|| 0 == _external

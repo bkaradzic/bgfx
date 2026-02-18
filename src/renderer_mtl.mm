@@ -1077,7 +1077,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_program[_handle.idx].destroy();
 		}
 
-		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external) override
+		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) override
 		{
 			m_textures[_handle.idx].create(_mem, _flags, _skip, _external);
 			return NULL;
@@ -3009,7 +3009,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		BufferMtl::create(_size, _data, _flags, stride, true);
 	}
 
-	void TextureMtl::create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external)
+	void TextureMtl::create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external)
 	{
 		m_sampler = s_renderMtl->getSamplerState(uint32_t(_flags) );
 

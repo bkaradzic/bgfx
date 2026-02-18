@@ -746,7 +746,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		{
 		}
 
-		void* create(VkCommandBuffer _commandBuffer, const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external);
+		void* create(VkCommandBuffer _commandBuffer, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external);
 		// internal render target
 		VkResult create(VkCommandBuffer _commandBuffer, uint32_t _width, uint32_t _height, uint64_t _flags, VkFormat _format);
 
@@ -791,7 +791,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		ReadbackVK m_readback;
 
 	private:
-		VkResult createImages(VkCommandBuffer _commandBuffer, uintptr_t _external = 0);
+		VkResult createImages(VkCommandBuffer _commandBuffer, uint64_t _external = 0);
 		static VkImageAspectFlags getAspectMask(VkFormat _format);
 	};
 

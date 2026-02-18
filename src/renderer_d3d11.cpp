@@ -1863,7 +1863,7 @@ namespace bgfx { namespace d3d11
 			m_program[_handle.idx].destroy();
 		}
 
-		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external) override
+		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) override
 		{
 			BX_UNUSED(_external);
 			return m_textures[_handle.idx].create(_mem, _flags, _skip, _external);
@@ -4480,7 +4480,7 @@ namespace bgfx { namespace d3d11
 		}
 	}
 
-	void* TextureD3D11::create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external)
+	void* TextureD3D11::create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external)
 	{
 		void* directAccessPtr = NULL;
 
@@ -4605,13 +4605,13 @@ namespace bgfx { namespace d3d11
 				}
 			}
 
-			const bool writeOnly      = 0 != (m_flags&(BGFX_TEXTURE_RT_WRITE_ONLY|BGFX_TEXTURE_READ_BACK) );
-			const bool computeWrite   = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
-			const bool renderTarget   = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
-			const bool srgb           = 0 != (m_flags&BGFX_TEXTURE_SRGB);
-			const bool blit           = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
-			const bool readBack       = 0 != (m_flags&BGFX_TEXTURE_READ_BACK);
-			const bool externalShared = 0 != (m_flags&BGFX_TEXTURE_EXTERNAL_SHARED);
+			const bool writeOnly      = 0 != (m_flags & (BGFX_TEXTURE_RT_WRITE_ONLY|BGFX_TEXTURE_READ_BACK) );
+			const bool computeWrite   = 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE);
+			const bool renderTarget   = 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
+			const bool srgb           = 0 != (m_flags & BGFX_TEXTURE_SRGB);
+			const bool blit           = 0 != (m_flags & BGFX_TEXTURE_BLIT_DST);
+			const bool readBack       = 0 != (m_flags & BGFX_TEXTURE_READ_BACK);
+			const bool externalShared = 0 != (m_flags & BGFX_TEXTURE_EXTERNAL_SHARED);
 
 			const uint32_t msaaQuality = bx::uint32_satsub( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
@@ -4664,7 +4664,7 @@ namespace bgfx { namespace d3d11
 				}
 				else
 				{
-					m_ptr = (ID3D11Resource*)_external;
+					m_ptr = (ID3D11Resource*)(_external);
 				}
 
 				m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;

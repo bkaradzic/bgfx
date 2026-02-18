@@ -2582,7 +2582,7 @@ mixin(joinFnBinds((){
 		1, expected memory layout is texture and all mips together for each array element.
 			external = Native API pointer to texture.
 		*/
-		{q{TextureHandle}, q{createTexture2D}, q{ushort width, ushort height, bool hasMIPs, ushort numLayers, bgfx.impl.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null, size_t external=0}, ext: `C++, "bgfx"`},
+		{q{TextureHandle}, q{createTexture2D}, q{ushort width, ushort height, bool hasMIPs, ushort numLayers, bgfx.impl.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null, c_uint64 external=0}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Create texture with size based on back-buffer ratio. Texture will maintain ratio
@@ -2621,7 +2621,7 @@ mixin(joinFnBinds((){
 		1, expected memory layout is texture and all mips together for each array element.
 			external = Native API pointer to texture.
 		*/
-		{q{TextureHandle}, q{createTexture3D}, q{ushort width, ushort height, ushort depth, bool hasMIPs, bgfx.impl.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null, size_t external=0}, ext: `C++, "bgfx"`},
+		{q{TextureHandle}, q{createTexture3D}, q{ushort width, ushort height, ushort depth, bool hasMIPs, bgfx.impl.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null, c_uint64 external=0}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Create Cube texture.
@@ -2641,7 +2641,7 @@ mixin(joinFnBinds((){
 		`_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
 			external = Native API pointer to texture.
 		*/
-		{q{TextureHandle}, q{createTextureCube}, q{ushort size, bool hasMIPs, ushort numLayers, bgfx.impl.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null, size_t external=0}, ext: `C++, "bgfx"`},
+		{q{TextureHandle}, q{createTextureCube}, q{ushort size, bool hasMIPs, ushort numLayers, bgfx.impl.TextureFormat.Enum format, c_uint64 flags=Texture.none|Sampler.none, const(Memory)* mem=null, c_uint64 external=0}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Update 2D texture.

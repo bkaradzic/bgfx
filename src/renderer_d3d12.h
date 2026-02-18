@@ -318,7 +318,7 @@ namespace bgfx { namespace d3d12
 			bx::memSet(&m_uavd, 0, sizeof(m_uavd) );
 		}
 
-		void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external);
+		void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external);
 		void destroy();
 		void overrideInternal(uintptr_t _ptr);
 		void update(ID3D12GraphicsCommandList* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);

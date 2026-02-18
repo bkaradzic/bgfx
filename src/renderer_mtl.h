@@ -1392,7 +1392,7 @@ namespace bgfx { namespace mtl
 			}
 		}
 
-		void create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external);
+		void create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external);
 		void destroy();
 		void overrideInternal(uintptr_t _ptr);
 

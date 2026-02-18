@@ -1493,7 +1493,7 @@ WGPU_IMPORT
 			m_program[_handle.idx].destroy();
 		}
 
-		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external) override
+		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) override
 		{
 			BX_UNUSED(_external);
 			m_textures[_handle.idx].create(_mem, _flags, _skip);

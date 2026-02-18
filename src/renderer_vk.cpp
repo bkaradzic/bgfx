@@ -2418,7 +2418,7 @@ VK_IMPORT_DEVICE
 			m_program[_handle.idx].destroy();
 		}
 
-		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external) override
+		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) override
 		{
 			return m_textures[_handle.idx].create(m_commandBuffer, _mem, _flags, _skip, _external);
 		}
@@ -6329,7 +6329,7 @@ retry:
 		return result;
 	}
 
-	VkResult TextureVK::createImages(VkCommandBuffer _commandBuffer, uintptr_t _external)
+	VkResult TextureVK::createImages(VkCommandBuffer _commandBuffer, uint64_t _external)
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::createImages", kColorResource);
 
@@ -6390,8 +6390,8 @@ retry:
 
 		if (0 != _external)
 		{
-			static_assert(sizeof(m_textureImage) == sizeof(_external), "");
-			bx::memCopy(&m_textureImage, &_external, sizeof(m_textureImage) );
+			static_assert(sizeof(m_textureImage) == sizeof(_external), "Size must match!");
+			bx::memCopy(&m_textureImage, &_external, sizeof(VkImage) );
 			m_textureDeviceMem = {};
 			m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
 
@@ -6473,7 +6473,7 @@ retry:
 		return result;
 	}
 
-	void* TextureVK::create(VkCommandBuffer _commandBuffer, const Memory* _mem, uint64_t _flags, uint8_t _skip, uintptr_t _external)
+	void* TextureVK::create(VkCommandBuffer _commandBuffer, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external)
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::create", kColorResource);
 

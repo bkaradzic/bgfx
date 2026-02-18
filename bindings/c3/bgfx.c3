@@ -2333,7 +2333,7 @@ extern fn TextureHandle create_texture(Memory* _mem, ulong _flags, char _skip, T
 // _flags : `Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.`
 // _mem : `Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.`
 // _external : `Native API pointer to texture.`
-extern fn TextureHandle create_texture_2d(ushort _width, ushort _height, bool _hasMips, ushort _numLayers, TextureFormat _format, ulong _flags, Memory* _mem, uptr _external) @extern("bgfx_create_texture_2d");
+extern fn TextureHandle create_texture_2d(ushort _width, ushort _height, bool _hasMips, ushort _numLayers, TextureFormat _format, ulong _flags, Memory* _mem, ulong _external) @extern("bgfx_create_texture_2d");
 
 // Create texture with size based on back-buffer ratio. Texture will maintain ratio
 // if back buffer resolution changes.
@@ -2353,7 +2353,7 @@ extern fn TextureHandle create_texture_2d_scaled(BackbufferRatio _ratio, bool _h
 // _flags : `Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.`
 // _mem : `Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.`
 // _external : `Native API pointer to texture.`
-extern fn TextureHandle create_texture_3d(ushort _width, ushort _height, ushort _depth, bool _hasMips, TextureFormat _format, ulong _flags, Memory* _mem, uptr _external) @extern("bgfx_create_texture_3d");
+extern fn TextureHandle create_texture_3d(ushort _width, ushort _height, ushort _depth, bool _hasMips, TextureFormat _format, ulong _flags, Memory* _mem, ulong _external) @extern("bgfx_create_texture_3d");
 
 // Create Cube texture.
 // _size : `Cube side size.`
@@ -2363,7 +2363,7 @@ extern fn TextureHandle create_texture_3d(ushort _width, ushort _height, ushort 
 // _flags : `Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.`
 // _mem : `Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than`
 // _external : `Native API pointer to texture.`
-extern fn TextureHandle create_texture_cube(ushort _size, bool _hasMips, ushort _numLayers, TextureFormat _format, ulong _flags, Memory* _mem, uptr _external) @extern("bgfx_create_texture_cube");
+extern fn TextureHandle create_texture_cube(ushort _size, bool _hasMips, ushort _numLayers, TextureFormat _format, ulong _flags, Memory* _mem, ulong _external) @extern("bgfx_create_texture_cube");
 
 // Update 2D texture.
 // @attention It's valid to update only mutable texture. See `bgfx::createTexture2D` for more info.

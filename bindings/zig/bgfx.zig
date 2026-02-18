@@ -2579,10 +2579,10 @@ extern fn bgfx_create_texture(_mem: [*c]const Memory, _flags: u64, _skip: u8, _i
 /// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 /// <param name="_mem">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.</param>
 /// <param name="_external">Native API pointer to texture.</param>
-pub inline fn createTexture2D(_width: u16, _height: u16, _hasMips: bool, _numLayers: u16, _format: TextureFormat, _flags: u64, _mem: [*c]const Memory, _external: usize) TextureHandle {
+pub inline fn createTexture2D(_width: u16, _height: u16, _hasMips: bool, _numLayers: u16, _format: TextureFormat, _flags: u64, _mem: [*c]const Memory, _external: u64) TextureHandle {
     return bgfx_create_texture_2d(_width, _height, _hasMips, _numLayers, _format, _flags, _mem, _external);
 }
-extern fn bgfx_create_texture_2d(_width: u16, _height: u16, _hasMips: bool, _numLayers: u16, _format: TextureFormat, _flags: u64, _mem: [*c]const Memory, _external: usize) TextureHandle;
+extern fn bgfx_create_texture_2d(_width: u16, _height: u16, _hasMips: bool, _numLayers: u16, _format: TextureFormat, _flags: u64, _mem: [*c]const Memory, _external: u64) TextureHandle;
 
 /// Create texture with size based on back-buffer ratio. Texture will maintain ratio
 /// if back buffer resolution changes.
@@ -2605,10 +2605,10 @@ extern fn bgfx_create_texture_2d_scaled(_ratio: BackbufferRatio, _hasMips: bool,
 /// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 /// <param name="_mem">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.</param>
 /// <param name="_external">Native API pointer to texture.</param>
-pub inline fn createTexture3D(_width: u16, _height: u16, _depth: u16, _hasMips: bool, _format: TextureFormat, _flags: u64, _mem: [*c]const Memory, _external: usize) TextureHandle {
+pub inline fn createTexture3D(_width: u16, _height: u16, _depth: u16, _hasMips: bool, _format: TextureFormat, _flags: u64, _mem: [*c]const Memory, _external: u64) TextureHandle {
     return bgfx_create_texture_3d(_width, _height, _depth, _hasMips, _format, _flags, _mem, _external);
 }
-extern fn bgfx_create_texture_3d(_width: u16, _height: u16, _depth: u16, _hasMips: bool, _format: TextureFormat, _flags: u64, _mem: [*c]const Memory, _external: usize) TextureHandle;
+extern fn bgfx_create_texture_3d(_width: u16, _height: u16, _depth: u16, _hasMips: bool, _format: TextureFormat, _flags: u64, _mem: [*c]const Memory, _external: u64) TextureHandle;
 
 /// Create Cube texture.
 /// <param name="_size">Cube side size.</param>
@@ -2618,10 +2618,10 @@ extern fn bgfx_create_texture_3d(_width: u16, _height: u16, _depth: u16, _hasMip
 /// <param name="_flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
 /// <param name="_mem">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than</param>
 /// <param name="_external">Native API pointer to texture.</param>
-pub inline fn createTextureCube(_size: u16, _hasMips: bool, _numLayers: u16, _format: TextureFormat, _flags: u64, _mem: [*c]const Memory, _external: usize) TextureHandle {
+pub inline fn createTextureCube(_size: u16, _hasMips: bool, _numLayers: u16, _format: TextureFormat, _flags: u64, _mem: [*c]const Memory, _external: u64) TextureHandle {
     return bgfx_create_texture_cube(_size, _hasMips, _numLayers, _format, _flags, _mem, _external);
 }
-extern fn bgfx_create_texture_cube(_size: u16, _hasMips: bool, _numLayers: u16, _format: TextureFormat, _flags: u64, _mem: [*c]const Memory, _external: usize) TextureHandle;
+extern fn bgfx_create_texture_cube(_size: u16, _hasMips: bool, _numLayers: u16, _format: TextureFormat, _flags: u64, _mem: [*c]const Memory, _external: u64) TextureHandle;
 
 /// Update 2D texture.
 /// @attention It's valid to update only mutable texture. See `bgfx::createTexture2D` for more info.
