@@ -829,7 +829,7 @@ namespace bgfx
 	{
 		BX_UNUSED(_options, _version, _code, _shaderWriter);
 		bx::Error messageErr;
-		bx::write(_messageWriter, &messageErr, "Metal compiler is not compiled in.\n");
+		bx::write(_messageWriter, &messageErr, "Metal compiler (glslang) is not compiled in.\n");
 		return false;
 	}
 } // namespace bgfx

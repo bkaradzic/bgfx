@@ -36,12 +36,12 @@ namespace bgfx
 // - Windows: Native DXC (dxcompiler.dll)
 // - Linux: DXC (libdxcompiler.so) via directx-headers
 // - macOS: Not supported (no DXC dynamic library available)
-#ifndef SHADERC_HAS_DXC
-#	define SHADERC_HAS_DXC (0  \
+#ifndef SHADERC_CONFIG_HAS_DXC
+#	define SHADERC_CONFIG_HAS_DXC (0  \
 		|| BX_PLATFORM_WINDOWS     \
 		|| BX_PLATFORM_LINUX       \
 		)
-#endif // SHADERC_HAS_DXC
+#endif // SHADERC_CONFIG_HAS_DXC
 
 #ifndef SHADERC_CONFIG_HAS_TINT
 #	if __has_include(<tint/api/tint.h>)
@@ -57,6 +57,14 @@ namespace bgfx
 #		define SHADERC_CONFIG_HAS_GLSLANG 1
 #	else
 #		define SHADERC_CONFIG_HAS_GLSLANG 0
+#	endif
+#endif
+
+#ifndef SHADERC_CONFIG_HAS_GLSL_OPTIMIZER
+#	if __has_include("glsl_optimizer.h")
+#		define SHADERC_CONFIG_HAS_GLSL_OPTIMIZER 1
+#	else
+#		define SHADERC_CONFIG_HAS_GLSL_OPTIMIZER 0
 #	endif
 #endif
 

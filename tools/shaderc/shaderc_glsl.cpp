@@ -4,6 +4,8 @@
  */
 
 #include "shaderc.h"
+
+#if SHADERC_CONFIG_HAS_GLSL_OPTIMIZER
 #include "glsl_optimizer.h"
 
 namespace bgfx { namespace glsl
@@ -402,3 +404,18 @@ namespace bgfx { namespace glsl
 	}
 
 } // namespace bgfx
+
+#else // SHADERC_CONFIG_HAS_GLSL_OPTIMIZER
+
+namespace bgfx
+{
+	bool compileSPIRVShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
+	{
+		BX_UNUSED(_options, _version, _code, _shaderWriter);
+		bx::Error messageErr;
+		bx::write(_messageWriter, &messageErr, "GLSL optimizer compiler is not compiled in.\n");
+		return false;
+	}
+} // namespace bgfx
+
+#endif // SHADERC_CONFIG_HAS_GLSL_OPTIMIZER

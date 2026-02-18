@@ -911,7 +911,7 @@ namespace bgfx
 	{
 		BX_UNUSED(_options, _version, _code, _shaderWriter);
 		bx::Error messageErr;
-		bx::write(_messageWriter, &messageErr, "SPIRV compiler is not compiled in.\n");
+		bx::write(_messageWriter, &messageErr, "SPIRV compiler (glslang, spirv-cross and spirv-tools) is not compiled in.\n");
 		return false;
 	}
 } // namespace bgfx
