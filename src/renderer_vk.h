@@ -92,7 +92,7 @@
 			VK_IMPORT_INSTANCE_FUNC(false, vkEnumeratePhysicalDevices);                \
 			VK_IMPORT_INSTANCE_FUNC(false, vkEnumerateDeviceExtensionProperties);      \
 			VK_IMPORT_INSTANCE_FUNC(false, vkEnumerateDeviceLayerProperties);          \
-			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceProperties2);            \
+			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceProperties);             \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceFormatProperties);       \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceFeatures);               \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceImageFormatProperties);  \
@@ -107,6 +107,7 @@
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceSurfaceSupportKHR);      \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkDestroySurfaceKHR);                       \
 			/* VK_KHR_get_physical_device_properties2 */                               \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceProperties2KHR);         \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceFeatures2KHR);           \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceMemoryProperties2KHR);   \
 			/* VK_EXT_debug_report */                                                  \

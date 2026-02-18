@@ -1250,9 +1250,9 @@ VK_IMPORT_DEVICE
 
 			BX_TRACE("Shared library functions:");
 
-#define VK_IMPORT_FUNC(_optional, _func)                  \
-	_func = (PFN_##_func)bx::dlsym(m_vulkan1Dll, #_func); \
-	BX_TRACE("\t%p " #_func, _func);                      \
+#define VK_IMPORT_FUNC(_optional, _func)                                 \
+	_func = (PFN_##_func)bx::dlsym(m_vulkan1Dll, #_func);                \
+	BX_TRACE("\t%p %s" #_func, _func, _optional ? "[opt]" : "     ");    \
 	imported &= _optional || NULL != _func
 
 VK_IMPORT
@@ -1354,7 +1354,7 @@ VK_IMPORT
 					}
 				}
 
-				vulkanApiVersionSelector = bx::max(vulkanApiVersionSelector, VK_API_VERSION_1_2);
+				vulkanApiVersionSelector = bx::max(vulkanApiVersionSelector, VK_API_VERSION_1_0);
 
 				VkApplicationInfo appInfo;
 				appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -1417,9 +1417,9 @@ VK_IMPORT
 
 			BX_TRACE("Instance functions:");
 
-#define VK_IMPORT_INSTANCE_FUNC(_optional, _func)                   \
-	_func = (PFN_##_func)vkGetInstanceProcAddr(m_instance, #_func); \
-	BX_TRACE("\t%p " #_func, _func);                                \
+#define VK_IMPORT_INSTANCE_FUNC(_optional, _func)                      \
+	_func = (PFN_##_func)vkGetInstanceProcAddr(m_instance, #_func);    \
+	BX_TRACE("\t%p %s " #_func, _func, _optional ? "[opt]" : "     "); \
 	imported &= _optional || NULL != _func
 VK_IMPORT_INSTANCE
 #undef VK_IMPORT_INSTANCE_FUNC
@@ -1486,12 +1486,17 @@ VK_IMPORT_INSTANCE
 
 				for (uint32_t ii = 0; ii < numPhysicalDevices; ++ii)
 				{
-					VkPhysicalDeviceProperties2 pdp2;
-					pdp2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-					pdp2.pNext = NULL;
-					vkGetPhysicalDeviceProperties2(physicalDevices[ii], &pdp2);
-
-					VkPhysicalDeviceProperties& pdp = pdp2.properties;
+					VkPhysicalDeviceProperties pdp;
+					if (vkGetPhysicalDeviceProperties2KHR) {
+						VkPhysicalDeviceProperties2KHR pdp2;
+						pdp2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+						pdp2.pNext = NULL;
+						vkGetPhysicalDeviceProperties2KHR(physicalDevices[ii], &pdp2);
+						pdp = pdp2.properties;
+					} else
+					{
+						vkGetPhysicalDeviceProperties(physicalDevices[ii], &pdp);
+					}
 
 					BX_TRACE("Physical device %d:", ii);
 					BX_TRACE("\t          Name: %s", pdp.deviceName);
@@ -1583,16 +1588,22 @@ VK_IMPORT_INSTANCE
 				m_deviceShadingRateImageProperties = {};
 				m_deviceShadingRateImageProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
 
-				m_deviceProperties = {};
-				m_deviceProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-				m_deviceProperties.pNext = &m_deviceShadingRateImageProperties;
+				if (vkGetPhysicalDeviceProperties2KHR) {
+					VkPhysicalDeviceProperties2KHR pdp2;
+					pdp2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+					pdp2.pNext = &m_deviceShadingRateImageProperties;
 
-				vkGetPhysicalDeviceProperties2(m_physicalDevice, &m_deviceProperties);
+					vkGetPhysicalDeviceProperties2KHR(m_physicalDevice, &pdp2);
+					m_deviceProperties = pdp2.properties;
+				} else
+				{
+					vkGetPhysicalDeviceProperties(m_physicalDevice, &m_deviceProperties);
+				}
 
-				g_caps.vendorId = uint16_t(m_deviceProperties.properties.vendorID);
-				g_caps.deviceId = uint16_t(m_deviceProperties.properties.deviceID);
+				g_caps.vendorId = uint16_t(m_deviceProperties.vendorID);
+				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
 
-				BX_TRACE("Using physical device %d: %s", physicalDeviceIdx, m_deviceProperties.properties.deviceName);
+				BX_TRACE("Using physical device %d: %s", physicalDeviceIdx, m_deviceProperties.deviceName);
 
 				VkPhysicalDeviceFeatures supportedFeatures;
 
@@ -1642,6 +1653,9 @@ VK_IMPORT_INSTANCE
 					fragmentShadingRate.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
 					fragmentShadingRate.pNext = NULL;
 
+					BX_ASSERT(vkGetPhysicalDeviceFeatures2KHR,
+							"vkGetPhysicalDeviceFeatures2KHR should not be NULL when the "
+							"KHR_fragment_shading_rate extension is supported.");
 					vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
 
 					if (!fragmentShadingRate.pipelineFragmentShadingRate
@@ -1693,7 +1707,7 @@ VK_IMPORT_INSTANCE
 					&& customBorderColorFeatures.customBorderColors
 					;
 
-				m_timerQuerySupport = m_deviceProperties.properties.limits.timestampComputeAndGraphics;
+				m_timerQuerySupport = m_deviceProperties.limits.timestampComputeAndGraphics;
 
 				const bool indirectDrawSupport = true
 					&& m_deviceFeatures.multiDrawIndirect
@@ -1733,21 +1747,21 @@ VK_IMPORT_INSTANCE
 				m_variableRateShadingSupported = s_extension[Extension::KHR_fragment_shading_rate].m_supported;
 
 				const uint32_t maxAttachments = bx::min<uint32_t>(
-					  m_deviceProperties.properties.limits.maxFragmentOutputAttachments
-					, m_deviceProperties.properties.limits.maxColorAttachments
+					  m_deviceProperties.limits.maxFragmentOutputAttachments
+					, m_deviceProperties.limits.maxColorAttachments
 					);
 
-				g_caps.limits.maxTextureSize     = m_deviceProperties.properties.limits.maxImageDimension2D;
-				g_caps.limits.maxTextureLayers   = m_deviceProperties.properties.limits.maxImageArrayLayers;
+				g_caps.limits.maxTextureSize     = m_deviceProperties.limits.maxImageDimension2D;
+				g_caps.limits.maxTextureLayers   = m_deviceProperties.limits.maxImageArrayLayers;
 				g_caps.limits.maxFBAttachments   = bx::min<uint32_t>(maxAttachments, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
-				g_caps.limits.maxTextureSamplers = bx::min<uint32_t>(m_deviceProperties.properties.limits.maxPerStageResources, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
-				g_caps.limits.maxComputeBindings = bx::min<uint32_t>(m_deviceProperties.properties.limits.maxPerStageResources, BGFX_MAX_COMPUTE_BINDINGS);
-				g_caps.limits.maxVertexStreams   = bx::min<uint32_t>(m_deviceProperties.properties.limits.maxVertexInputBindings, BGFX_CONFIG_MAX_VERTEX_STREAMS);
+				g_caps.limits.maxTextureSamplers = bx::min<uint32_t>(m_deviceProperties.limits.maxPerStageResources, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+				g_caps.limits.maxComputeBindings = bx::min<uint32_t>(m_deviceProperties.limits.maxPerStageResources, BGFX_MAX_COMPUTE_BINDINGS);
+				g_caps.limits.maxVertexStreams   = bx::min<uint32_t>(m_deviceProperties.limits.maxVertexInputBindings, BGFX_CONFIG_MAX_VERTEX_STREAMS);
 
 				{
 					const VkSampleCountFlags sampleMask = ~0
-						& m_deviceProperties.properties.limits.framebufferColorSampleCounts
-						& m_deviceProperties.properties.limits.framebufferDepthSampleCounts
+						& m_deviceProperties.limits.framebufferColorSampleCounts
+						& m_deviceProperties.limits.framebufferDepthSampleCounts
 						;
 
 					for (uint16_t ii = 0, last = 0; ii < BX_COUNTOF(s_msaa); ++ii)
@@ -1982,9 +1996,9 @@ VK_IMPORT_INSTANCE
 			errorState = ErrorState::DeviceCreated;
 
 			BX_TRACE("Device functions:");
-#define VK_IMPORT_DEVICE_FUNC(_optional, _func)                 \
-	_func = (PFN_##_func)vkGetDeviceProcAddr(m_device, #_func); \
-	BX_TRACE("\t%p " #_func, _func);                            \
+#define VK_IMPORT_DEVICE_FUNC(_optional, _func)                        \
+	_func = (PFN_##_func)vkGetDeviceProcAddr(m_device, #_func);        \
+	BX_TRACE("\t%p %s " #_func, _func, _optional ? "[opt]" : "     "); \
 	imported &= _optional || NULL != _func
 VK_IMPORT_DEVICE
 #undef VK_IMPORT_DEVICE_FUNC
@@ -2874,7 +2888,7 @@ VK_IMPORT_DEVICE
 			float maxAnisotropy = 1.0f;
 			if (!!(_resolution.reset & BGFX_RESET_MAXANISOTROPY) )
 			{
-				maxAnisotropy = m_deviceProperties.properties.limits.maxSamplerAnisotropy;
+				maxAnisotropy = m_deviceProperties.limits.maxSamplerAnisotropy;
 			}
 
 			if (m_maxAnisotropy != maxAnisotropy)
@@ -3572,7 +3586,7 @@ VK_IMPORT_DEVICE
 
 			const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
 
-			const float maxLodBias = m_deviceProperties.properties.limits.maxSamplerLodBias;
+			const float maxLodBias = m_deviceProperties.limits.maxSamplerLodBias;
 			const float lodBias = bx::clamp(float(BGFX_CONFIG_MIP_LOD_BIAS), -maxLodBias, maxLodBias);
 
 			VkSamplerCreateInfo sci;
@@ -4663,7 +4677,7 @@ VK_IMPORT_DEVICE
 		uint32_t         m_instanceApiVersion;
 
 		VkPhysicalDeviceFragmentShadingRatePropertiesKHR m_deviceShadingRateImageProperties;
-		VkPhysicalDeviceProperties2       m_deviceProperties;
+		VkPhysicalDeviceProperties        m_deviceProperties;
 		VkPhysicalDeviceMemoryProperties  m_memoryProperties;
 		VkPhysicalDeviceFeatures          m_deviceFeatures;
 
@@ -4974,7 +4988,7 @@ VK_DESTROY
 
 	void StagingScratchBufferVK::createUniform(uint32_t _size, uint32_t _count)
 	{
-		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.properties.limits;
+		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.limits;
 		const uint32_t align = uint32_t(deviceLimits.minUniformBufferOffsetAlignment);
 
 		create(_size, _count, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, align);
@@ -4982,7 +4996,7 @@ VK_DESTROY
 
 	void StagingScratchBufferVK::createStaging(uint32_t _size)
 	{
-		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.properties.limits;
+		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.limits;
 		const uint32_t align = uint32_t(deviceLimits.optimalBufferCopyOffsetAlignment);
 
 		create(_size, 1, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, align);
@@ -5025,7 +5039,7 @@ VK_DESTROY
 
 	void StagingScratchBufferVK::flush(bool _reset)
 	{
-		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.properties.limits;
+		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.limits;
 		VkDevice device = s_renderVK->m_device;
 
 		const uint32_t align = uint32_t(deviceLimits.nonCoherentAtomSize);
@@ -5068,7 +5082,7 @@ VK_DESTROY
 
 	void ChunkedScratchBufferVK::createUniform(uint32_t _chunkSize, uint32_t _numChunks)
 	{
-		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.properties.limits;
+		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.limits;
 		const uint32_t align = uint32_t(deviceLimits.minUniformBufferOffsetAlignment);
 
 		create(_chunkSize, _numChunks, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, align);
@@ -5227,7 +5241,7 @@ retry:
 			m_chunkPos = 0;
 		}
 
-		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.properties.limits;
+		const VkPhysicalDeviceLimits& deviceLimits = s_renderVK->m_deviceProperties.limits;
 		const uint32_t align = uint32_t(deviceLimits.nonCoherentAtomSize);
 
 		VkDevice device = s_renderVK->m_device;
@@ -5928,7 +5942,7 @@ retry:
 			return result;
 		}
 
-		m_frequency = uint64_t(1000000000.0 / double(s_renderVK->m_deviceProperties.properties.limits.timestampPeriod) );
+		m_frequency = uint64_t(1000000000.0 / double(s_renderVK->m_deviceProperties.limits.timestampPeriod) );
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)
 		{
@@ -10063,7 +10077,7 @@ retry:
 					, BGFX_REV_NUMBER
 					);
 
-				const VkPhysicalDeviceProperties& pdp = m_deviceProperties.properties;
+				const VkPhysicalDeviceProperties& pdp = m_deviceProperties;
 				tvm.printf(0, pos++, 0x8f, " Device: %s (%s)"
 					, pdp.deviceName
 					, getName(pdp.deviceType)
