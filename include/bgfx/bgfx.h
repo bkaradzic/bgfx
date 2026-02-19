@@ -2132,7 +2132,7 @@ namespace bgfx
 	/// just swaps internal buffers, kicks render thread, and returns. In
 	/// singlethreaded renderer this call does frame rendering.
 	///
-	/// @param[in] _capture Capture frame with graphics debugger.
+	/// @param[in] _flags Frame flags. See: `BGFX_FRAME_*`.
 	///
 	/// @returns Current frame number. This might be used in conjunction with
 	///   double/multi buffering data outside the library and passing it to
@@ -2140,7 +2140,7 @@ namespace bgfx
 	///
 	/// @attention C99's equivalent binding is `bgfx_frame`.
 	///
-	uint32_t frame(bool _capture = false);
+	uint32_t frame(uint8_t _flags = BGFX_FRAME_NONE);
 
 	/// Returns current renderer backend API type.
 	///

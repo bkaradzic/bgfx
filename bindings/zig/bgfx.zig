@@ -835,6 +835,16 @@ pub const CubeMapFlags_PositiveZ: CubeMapFlags              = 0x00000004;
 /// Cubemap -z.
 pub const CubeMapFlags_NegativeZ: CubeMapFlags              = 0x00000005;
 
+pub const FrameFlags = u32;
+/// No frame flags.
+pub const FrameFlags_None: FrameFlags                   = 0x00000000;
+
+/// Capture frame with graphics debugger.
+pub const FrameFlags_DebugCapture: FrameFlags           = 0x00000001;
+
+/// Discard all draw calls.
+pub const FrameFlags_Discard: FrameFlags                = 0x00000002;
+
 pub const Fatal = enum(c_int) {
     DebugCheck,
     InvalidShader,
@@ -2156,11 +2166,11 @@ extern fn bgfx_reset(_width: u32, _height: u32, _flags: u32, _format: TextureFor
 /// Advance to next frame. When using multithreaded renderer, this call
 /// just swaps internal buffers, kicks render thread, and returns. In
 /// singlethreaded renderer this call does frame rendering.
-/// <param name="_capture">Capture frame with graphics debugger.</param>
-pub inline fn frame(_capture: bool) u32 {
-    return bgfx_frame(_capture);
+/// <param name="_flags">Frame flags. See: `BGFX_FRAME_*` for more info.   - `BGFX_FRAME_NONE` - No frame flag.   - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.   - `BGFX_FRAME_DISCARD` - Discard all draw calls.</param>
+pub inline fn frame(_flags: u8) u32 {
+    return bgfx_frame(_flags);
 }
-extern fn bgfx_frame(_capture: bool) u32;
+extern fn bgfx_frame(_flags: u8) u32;
 
 /// Returns current renderer backend API type.
 /// @remarks

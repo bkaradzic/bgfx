@@ -1370,6 +1370,25 @@ public static class bgfx
 	}
 	
 	[AllowDuplicates]
+	public enum FrameFlags : uint32
+	{
+		/// <summary>
+		/// No frame flags.
+		/// </summary>
+		None                   = 0x00000000,
+	
+		/// <summary>
+		/// Capture frame with graphics debugger.
+		/// </summary>
+		DebugCapture           = 0x00000001,
+	
+		/// <summary>
+		/// Discard all draw calls.
+		/// </summary>
+		Discard                = 0x00000002,
+	}
+	
+	[AllowDuplicates]
 	public enum Fatal : uint32
 	{
 		DebugCheck,
@@ -2712,10 +2731,10 @@ public static class bgfx
 	/// singlethreaded renderer this call does frame rendering.
 	/// </summary>
 	///
-	/// <param name="_capture">Capture frame with graphics debugger.</param>
+	/// <param name="_flags">Frame flags. See: `BGFX_FRAME_*` for more info.   - `BGFX_FRAME_NONE` - No frame flag.   - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.   - `BGFX_FRAME_DISCARD` - Discard all draw calls.</param>
 	///
 	[LinkName("bgfx_frame")]
-	public static extern uint32 frame(bool _capture);
+	public static extern uint32 frame(uint8 _flags);
 	
 	/// <summary>
 	/// Returns current renderer backend API type.

@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 137;
+enum uint apiVersion = 138;
 
 alias ViewID = ushort;
 
@@ -577,6 +577,13 @@ enum CubeMap: CubeMap_{
 	negativeY  = 0x03, ///Cubemap -y.
 	positiveZ  = 0x04, ///Cubemap +z.
 	negativeZ  = 0x05, ///Cubemap -z.
+}
+
+alias Frame_ = ubyte;
+enum Frame: Frame_{
+	none          = 0x00, ///No frame flags.
+	debugCapture  = 0x01, ///Capture frame with graphics debugger.
+	discard       = 0x02, ///Discard all draw calls.
 }
 
 ///Fatal error enum.
@@ -2069,9 +2076,12 @@ mixin(joinFnBinds((){
 		* just swaps internal buffers, kicks render thread, and returns. In
 		* singlethreaded renderer this call does frame rendering.
 		Params:
-			capture = Capture frame with graphics debugger.
+			flags = Frame flags. See: `BGFX_FRAME_*` for more info.
+		  - `BGFX_FRAME_NONE` - No frame flag.
+		  - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.
+		  - `BGFX_FRAME_DISCARD` - Discard all draw calls.
 		*/
-		{q{uint}, q{frame}, q{bool capture=false}, ext: `C++, "bgfx"`},
+		{q{uint}, q{frame}, q{ubyte flags=BGFX_FRAME_NONE}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Returns current renderer backend API type.

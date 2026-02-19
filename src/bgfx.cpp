@@ -2400,7 +2400,7 @@ namespace bgfx
 #endif // BGFX_CONFIG_MULTITHREADED
 	}
 
-	uint32_t Context::frame(bool _capture)
+	uint32_t Context::frame(uint8_t _flags)
 	{
 		m_encoder[0].end(true);
 
@@ -2413,7 +2413,12 @@ namespace bgfx
 		encoderApiWait();
 #endif // BGFX_CONFIG_MULTITHREADED
 
-		m_submit->m_capture = _capture;
+		if (0 != (_flags & BGFX_FRAME_DISCARD) )
+		{
+			m_submit->m_numRenderItems = 0;
+		}
+
+		m_submit->m_capture = 0 != (_flags & BGFX_FRAME_DEBUG_CAPTURE);
 
 		uint32_t frameNum = m_submit->m_frameNum;
 
@@ -4234,10 +4239,10 @@ namespace bgfx
 		s_ctx->end(_encoder);
 	}
 
-	uint32_t frame(bool _capture)
+	uint32_t frame(uint8_t _flags)
 	{
 		BGFX_CHECK_API_THREAD();
-		return s_ctx->frame(_capture);
+		return s_ctx->frame(_flags);
 	}
 
 	const Caps* getCaps()

@@ -862,6 +862,18 @@ enum CubeMapFlags : const uint
 	NEGATIVEZ              = 0x00000005,
 }
 
+enum FrameFlags : const uint
+{
+	// No frame flags.
+	NONE                   = 0x00000000,
+
+	// Capture frame with graphics debugger.
+	DEBUGCAPTURE           = 0x00000001,
+
+	// Discard all draw calls.
+	DISCARD                = 0x00000002,
+}
+
 enum Fatal : uint
 {
 	DEBUGCHECK,
@@ -2036,8 +2048,8 @@ extern fn void reset(uint _width, uint _height, uint _flags, TextureFormat _form
 // Advance to next frame. When using multithreaded renderer, this call
 // just swaps internal buffers, kicks render thread, and returns. In
 // singlethreaded renderer this call does frame rendering.
-// _capture : `Capture frame with graphics debugger.`
-extern fn uint frame(bool _capture) @extern("bgfx_frame");
+// _flags : `Frame flags. See: `BGFX_FRAME_*` for more info.   - `BGFX_FRAME_NONE` - No frame flag.   - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.   - `BGFX_FRAME_DISCARD` - Discard all draw calls.`
+extern fn uint frame(char _flags) @extern("bgfx_frame");
 
 // Returns current renderer backend API type.
 // @remarks

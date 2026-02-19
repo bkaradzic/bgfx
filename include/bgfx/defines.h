@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(137)
+#define BGFX_API_VERSION UINT32_C(138)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -540,6 +540,10 @@
 #define BGFX_CUBE_MAP_NEGATIVE_Y                  UINT8_C(0x03) //!< Cubemap -y.
 #define BGFX_CUBE_MAP_POSITIVE_Z                  UINT8_C(0x04) //!< Cubemap +z.
 #define BGFX_CUBE_MAP_NEGATIVE_Z                  UINT8_C(0x05) //!< Cubemap -z.
+
+#define BGFX_FRAME_NONE                           UINT8_C(0x00) //!< No frame flags.
+#define BGFX_FRAME_DEBUG_CAPTURE                  UINT8_C(0x01) //!< Capture frame with graphics debugger.
+#define BGFX_FRAME_DISCARD                        UINT8_C(0x02) //!< Discard all draw calls.
 
 
 /// Blend function separate.

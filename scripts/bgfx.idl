@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(137)
+version(138)
 
 typedef "bool"
 typedef "char"
@@ -28,7 +28,7 @@ funcptr.ReleaseFn
 	.userData   "void*" --- User defined data if needed.
 
 --- Color RGB/alpha/depth write. When it's not specified write will be disabled.
-flag.StateWrite { bits = 64 , base = 1 }
+flag.StateWrite { bits = 64, base = 1 }
 	.R                        --- Enable R write.
 	.G                        --- Enable G write.
 	.B                        --- Enable B write.
@@ -448,6 +448,12 @@ flag.CubeMap { bits = 8, const }
 	.NegativeY (0x03) --- Cubemap -y.
 	.PositiveZ (0x04) --- Cubemap +z.
 	.NegativeZ (0x05) --- Cubemap -z.
+	()
+
+flag.Frame { bits = 8 }
+	.None         --- No frame flags.
+	.DebugCapture --- Capture frame with graphics debugger.
+	.Discard      --- Discard all draw calls.
 	()
 
 --- Fatal error enum.
@@ -1240,11 +1246,13 @@ func.reset
 --- just swaps internal buffers, kicks render thread, and returns. In
 --- singlethreaded renderer this call does frame rendering.
 func.frame
-	"uint32_t"      --- Current frame number. This might be used in conjunction with
-	                --- double/multi buffering data outside the library and passing it to
-	                --- library via `bgfx::makeRef` calls.
-	.capture "bool" --- Capture frame with graphics debugger.
-	 { default = false }
+	"uint32_t"                       --- Current frame number. This might be used in conjunction with
+	                                 --- double/multi buffering data outside the library and passing it to
+	                                 --- library via `bgfx::makeRef` calls.
+	.flags "uint8_t"                 --- Frame flags. See: `BGFX_FRAME_*` for more info.
+	 { default = "BGFX_FRAME_NONE" } ---   - `BGFX_FRAME_NONE` - No frame flag.
+	                                 ---   - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.
+	                                 ---   - `BGFX_FRAME_DISCARD` - Discard all draw calls.
 
 --- Returns current renderer backend API type.
 ---

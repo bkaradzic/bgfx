@@ -1250,14 +1250,17 @@ BGFX_C_API void bgfx_reset(uint32_t _width, uint32_t _height, uint32_t _flags, b
  * just swaps internal buffers, kicks render thread, and returns. In
  * singlethreaded renderer this call does frame rendering.
  *
- * @param[in] _capture Capture frame with graphics debugger.
+ * @param[in] _flags Frame flags. See: `BGFX_FRAME_*` for more info.
+ *    - `BGFX_FRAME_NONE` - No frame flag.
+ *    - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.
+ *    - `BGFX_FRAME_DISCARD` - Discard all draw calls.
  *
  * @returns Current frame number. This might be used in conjunction with
  *  double/multi buffering data outside the library and passing it to
  *  library via `bgfx::makeRef` calls.
  *
  */
-BGFX_C_API uint32_t bgfx_frame(bool _capture);
+BGFX_C_API uint32_t bgfx_frame(uint8_t _flags);
 
 /**
  * Returns current renderer backend API type.
@@ -3829,7 +3832,7 @@ struct bgfx_interface_vtbl
     bool (*init)(const bgfx_init_t * _init);
     void (*shutdown)(void);
     void (*reset)(uint32_t _width, uint32_t _height, uint32_t _flags, bgfx_texture_format_t _format);
-    uint32_t (*frame)(bool _capture);
+    uint32_t (*frame)(uint8_t _flags);
     bgfx_renderer_type_t (*get_renderer_type)(void);
     const bgfx_caps_t* (*get_caps)(void);
     const bgfx_stats_t* (*get_stats)(void);

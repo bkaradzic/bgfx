@@ -1918,7 +1918,7 @@ namespace bgfx { namespace d3d11
 			bx::write(&writer, tc, bx::ErrorAssert{});
 
 			texture.destroy();
-			texture.create(mem, texture.m_flags, 0, NULL);
+			texture.create(mem, texture.m_flags, 0, 0);
 
 			release(mem);
 		}
@@ -4656,7 +4656,7 @@ namespace bgfx { namespace d3d11
 				&& !writeOnly
 				;
 
-			if (NULL != _external)
+			if (0 != _external)
 			{
 				if (externalShared)
 				{

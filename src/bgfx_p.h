@@ -5804,7 +5804,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(void end(Encoder* _encoder) );
 
-		BGFX_API_FUNC(uint32_t frame(bool _capture = false) );
+		BGFX_API_FUNC(uint32_t frame(uint8_t _flags = BGFX_FRAME_NONE) );
 
 		uint32_t getSeqIncr(ViewId _id)
 		{

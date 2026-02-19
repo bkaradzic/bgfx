@@ -68,6 +68,10 @@ Reset
 Frame
 *****
 
+.. doxygendefine:: BGFX_FRAME_NONE
+.. doxygendefine:: BGFX_FRAME_DEBUG_CAPTURE
+.. doxygendefine:: BGFX_FRAME_DISCARD
+
 .. doxygenfunction:: bgfx::frame
 
 Debug

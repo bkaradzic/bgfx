@@ -1368,6 +1368,25 @@ public static partial class bgfx
 		NegativeZ              = 0x00000005,
 	}
 	
+	[Flags]
+	public enum FrameFlags : uint
+	{
+		/// <summary>
+		/// No frame flags.
+		/// </summary>
+		None                   = 0x00000000,
+	
+		/// <summary>
+		/// Capture frame with graphics debugger.
+		/// </summary>
+		DebugCapture           = 0x00000001,
+	
+		/// <summary>
+		/// Discard all draw calls.
+		/// </summary>
+		Discard                = 0x00000002,
+	}
+	
 	public enum Fatal
 	{
 		DebugCheck,
@@ -2662,10 +2681,10 @@ public static partial class bgfx
 	/// singlethreaded renderer this call does frame rendering.
 	/// </summary>
 	///
-	/// <param name="_capture">Capture frame with graphics debugger.</param>
+	/// <param name="_flags">Frame flags. See: `BGFX_FRAME_*` for more info.   - `BGFX_FRAME_NONE` - No frame flag.   - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.   - `BGFX_FRAME_DISCARD` - Discard all draw calls.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_frame", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe uint frame(bool _capture);
+	public static extern unsafe uint frame(byte _flags);
 	
 	/// <summary>
 	/// Returns current renderer backend API type.

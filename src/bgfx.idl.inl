@@ -172,9 +172,9 @@ BGFX_C_API void bgfx_reset(uint32_t _width, uint32_t _height, uint32_t _flags, b
 	bgfx::reset(_width, _height, _flags, (bgfx::TextureFormat::Enum)_format);
 }
 
-BGFX_C_API uint32_t bgfx_frame(bool _capture)
+BGFX_C_API uint32_t bgfx_frame(uint8_t _flags)
 {
-	return bgfx::frame(_capture);
+	return bgfx::frame(_flags);
 }
 
 BGFX_C_API bgfx_renderer_type_t bgfx_get_renderer_type(void)
