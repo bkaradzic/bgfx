@@ -80,13 +80,48 @@ void savePng(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t 
 	}
 }
 
-void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bool _grayscale, bool _yflip)
+void saveTga(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _srcPitch, const void* _src, bimg::TextureFormat::Enum _format, bool _yflip)
 {
 	bx::FileWriter writer;
 	bx::Error err;
 	if (bx::open(&writer, _filePath, false, &err) )
 	{
-		bimg::imageWriteTga(&writer, _width, _height, _srcPitch, _src, _grayscale, _yflip, &err);
+		if (bimg::TextureFormat::RGBA8 == _format)
+		{
+			bimg::imageSwizzleBgra8(const_cast<void*>(_src), _srcPitch, _width, _height, _src, _srcPitch);
+			bimg::imageWriteTga(&writer, _width, _height, _srcPitch, _src, false, _yflip);
+		}
+		else if (bimg::TextureFormat::BGRA8 == _format)
+		{
+			bimg::imageWriteTga(&writer, _width, _height, _srcPitch, _src, false, _yflip);
+		}
+		else
+		{
+			bx::DefaultAllocator allocator;
+
+			const uint8_t  dstBpp   = bimg::getBitsPerPixel(bimg::TextureFormat::BGRA8);
+			const uint32_t dstPitch = _width  * dstBpp / 8;
+			const uint32_t dstSize  = _height * dstPitch;
+
+			void* dst = bx::alloc(&allocator, dstSize);
+
+			bimg::imageConvert(
+				  &allocator
+				, dst
+				, bimg::TextureFormat::BGRA8
+				, _src
+				, bimg::TextureFormat::Enum(_format)
+				, _width
+				, _height
+				, 1
+				);
+
+			bimg::imageWriteTga(&writer, _width, _height, _srcPitch, _src, false, _yflip);
+
+			bx::free(&allocator, dst);
+		}
+
+		bimg::imageWriteTga(&writer, _width, _height, _srcPitch, _src, false, _yflip, &err);
 		bx::close(&writer);
 	}
 }
@@ -184,17 +219,17 @@ struct BgfxCallback : public bgfx::CallbackI
 		}
 	}
 
-	virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t /*_size*/, bool _yflip) override
+	virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx::TextureFormat::Enum _format, const void* _data, uint32_t /*_size*/, bool _yflip) override
 	{
 		char temp[1024];
 
 		// Save screen shot as PNG.
 		bx::snprintf(temp, BX_COUNTOF(temp), "%s.png", _filePath);
-		savePng(temp, _width, _height, _pitch, _data, bimg::TextureFormat::BGRA8, _yflip);
+		savePng(temp, _width, _height, _pitch, _data, bimg::TextureFormat::Enum(_format), _yflip);
 
 		// Save screen shot as TGA.
 		bx::snprintf(temp, BX_COUNTOF(temp), "%s.tga", _filePath);
-		saveTga(temp, _width, _height, _pitch, _data, false, _yflip);
+		saveTga(temp, _width, _height, _pitch, _data, bimg::TextureFormat::Enum(_format), _yflip);
 	}
 
 	virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t /*_pitch*/, bgfx::TextureFormat::Enum /*_format*/, bool _yflip) override
@@ -345,7 +380,7 @@ public:
 		// Set view 0 clear state.
 		bgfx::setViewClear(0
 			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-			, 0x303030ff
+			, 0x383028ff
 			, 1.0f
 			, 0
 			);

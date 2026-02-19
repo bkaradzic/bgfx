@@ -1865,7 +1865,6 @@ namespace bgfx { namespace d3d11
 
 		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) override
 		{
-			BX_UNUSED(_external);
 			return m_textures[_handle.idx].create(_mem, _flags, _skip, _external);
 		}
 
@@ -2033,12 +2032,14 @@ namespace bgfx { namespace d3d11
 					colorFormat = TextureFormat::Enum(i);
 					break;
 				}
+
 				if (s_textureFormat[i].m_fmtSrgb == backBufferDesc.Format)
 				{
 					colorFormat = TextureFormat::Enum(i);
 					break;
 				}
 			}
+
 			if (colorFormat == TextureFormat::Enum::Count)
 			{
 				BX_TRACE("Unable to capture screenshot %s.", _filePath);
@@ -2078,69 +2079,18 @@ namespace bgfx { namespace d3d11
 
 				D3D11_MAPPED_SUBRESOURCE mapped;
 				DX_CHECK(m_deviceCtx->Map(texture, 0, D3D11_MAP_READ, 0, &mapped) );
-				if (colorFormat == TextureFormat::RGBA8)
-				{
-					bimg::imageSwizzleBgra8(
-						  mapped.pData
-						, mapped.RowPitch
-						, backBufferDesc.Width
-						, backBufferDesc.Height
-						, mapped.pData
-						, mapped.RowPitch
-						);
-					g_callback->screenShot(
-						  _filePath
-						, backBufferDesc.Width
-						, backBufferDesc.Height
-						, mapped.RowPitch
-						, mapped.pData
-						, backBufferDesc.Height*mapped.RowPitch
-						, false
-						);
-				}
-				else if (colorFormat == TextureFormat::BGRA8)
-				{
-					g_callback->screenShot(
-						  _filePath
-						, backBufferDesc.Width
-						, backBufferDesc.Height
-						, mapped.RowPitch
-						, mapped.pData
-						, backBufferDesc.Height*mapped.RowPitch
-						, false
-						);
-				}
-				else
-				{
-					const uint8_t dstBpp = bimg::getBitsPerPixel(bimg::TextureFormat::BGRA8);
-					const uint32_t dstPitch = backBufferDesc.Width * dstBpp / 8;
-					const uint32_t dstSize = backBufferDesc.Height * dstPitch;
 
-					void* dst = bx::alloc(g_allocator, dstSize);
-					bimg::imageConvert(
-						  dst
-						, dstBpp
-						, bimg::getPack(bimg::TextureFormat::BGRA8)
-						, mapped.pData
-						, bimg::getBitsPerPixel(bimg::TextureFormat::Enum(colorFormat))
-						, bimg::getUnpack(bimg::TextureFormat::Enum(colorFormat))
-						, backBufferDesc.Width
-						, backBufferDesc.Height
-						, 1
-						, mapped.RowPitch
-						, dstPitch
+				g_callback->screenShot(
+					  _filePath
+					, backBufferDesc.Width
+					, backBufferDesc.Height
+					, mapped.RowPitch
+					, colorFormat
+					, mapped.pData
+					, backBufferDesc.Height*mapped.RowPitch
+					, false
 					);
-					g_callback->screenShot(
-						  _filePath
-						, backBufferDesc.Width
-						, backBufferDesc.Height
-						, dstPitch
-						, dst
-						, backBufferDesc.Height*dstPitch
-						, false
-						);
-					bx::free(g_allocator, dst);
-				}
+
 				m_deviceCtx->Unmap(texture, 0);
 
 				DX_RELEASE(texture, 0);

@@ -1252,22 +1252,25 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_cmd.kick(false, true);
 			m_commandBuffer = 0;
 
-			uint32_t width  = m_screenshotTarget.width();
-			uint32_t height = m_screenshotTarget.height();
-			uint32_t length = width*height*4;
-			uint8_t* data   = (uint8_t*)bx::alloc(g_allocator, length);
+			const uint32_t width  = m_screenshotTarget.width();
+			const uint32_t height = m_screenshotTarget.height();
+			const uint8_t  bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_resolution.formatColor) );
+			const uint32_t pitch  = width * bpp / 8;
+			const uint32_t size   = height*pitch;
+			uint8_t* data   = (uint8_t*)bx::alloc(g_allocator, size);
 
 			MTLRegion region = { { 0, 0, 0 }, { width, height, 1 } };
 
-			m_screenshotTarget.getBytes(data, 4*width, 0, region, 0, 0);
+			m_screenshotTarget.getBytes(data, pitch, 0, region, 0, 0);
 
 			g_callback->screenShot(
 				  _filePath
 				, m_screenshotTarget.width()
 				, m_screenshotTarget.height()
-				, width*4
+				, pitch
+				, m_resolution.formatColor
 				, data
-				, length
+				, size
 				, false
 				);
 
@@ -1599,21 +1602,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				MTLRegion region = { { 0, 0, 0 }, { m_resolution.width, m_resolution.height, 1 } };
 
-				m_screenshotTarget.getBytes(m_capture, 4*m_resolution.width, 0, region, 0, 0);
+				const uint8_t  bpp   = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_resolution.formatColor) );
+				const uint32_t pitch = m_resolution.width * bpp / 8;
+
+				m_screenshotTarget.getBytes(m_capture, pitch, 0, region, 0, 0);
 
 				m_commandBuffer = m_cmd.alloc();
-
-				if (m_screenshotTarget.pixelFormat() == kMtlPixelFormatRGBA8Uint)
-				{
-					bimg::imageSwizzleBgra8(
-						  m_capture
-						, m_resolution.width*4
-						, m_resolution.width
-						, m_resolution.height
-						, m_capture
-						, m_resolution.width*4
-						);
-				}
 
 				g_callback->captureFrame(m_capture, m_captureSize);
 

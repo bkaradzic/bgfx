@@ -186,6 +186,7 @@ $structs
 		/// @param[in] _height Image height.
 		/// @param[in] _pitch Number of bytes to skip between the start of
 		///   each horizontal line of the image.
+		/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 		/// @param[in] _data Image data.
 		/// @param[in] _size Image size.
 		/// @param[in] _yflip If true, image origin is bottom left.
@@ -197,6 +198,7 @@ $structs
 			, uint32_t _width
 			, uint32_t _height
 			, uint32_t _pitch
+			, TextureFormat::Enum _format
 			, const void* _data
 			, uint32_t _size
 			, bool _yflip

@@ -3600,15 +3600,18 @@ namespace bgfx { namespace gl
 				, data
 				) );
 
+			TextureFormat::Enum format = TextureFormat::BGRA8;
+
 			if (GL_RGBA == m_readPixelsFmt)
 			{
-				bimg::imageSwizzleBgra8(data, width*4, width, height, data, width*4);
+				format = TextureFormat::RGBA8;
 			}
 
 			g_callback->screenShot(_filePath
 				, width
 				, height
 				, width*4
+				, format
 				, data
 				, length
 				, true

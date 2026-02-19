@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(138)
+version(139)
 
 typedef "bool"
 typedef "char"

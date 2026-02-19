@@ -226,7 +226,7 @@ namespace bgfx
 		{
 		}
 
-		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) override
+		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, TextureFormat::Enum _format, const void* _data, uint32_t _size, bool _yflip) override
 		{
 			BX_UNUSED(_filePath, _width, _height, _pitch, _data, _size, _yflip);
 
@@ -238,7 +238,39 @@ namespace bgfx
 			bx::FileWriter writer;
 			if (bx::open(&writer, filePath) )
 			{
-				bimg::imageWriteTga(&writer, _width, _height, _pitch, _data, false, _yflip);
+				if (TextureFormat::RGBA8 == _format)
+				{
+					bimg::imageSwizzleBgra8(const_cast<void*>(_data), _pitch, _width, _height, _data, _pitch);
+					bimg::imageWriteTga(&writer, _width, _height, _pitch, _data, false, _yflip);
+				}
+				else if (TextureFormat::BGRA8 == _format)
+				{
+					bimg::imageWriteTga(&writer, _width, _height, _pitch, _data, false, _yflip);
+				}
+				else
+				{
+					const uint8_t  dstBpp   = bimg::getBitsPerPixel(bimg::TextureFormat::BGRA8);
+					const uint32_t dstPitch = _width  * dstBpp / 8;
+					const uint32_t dstSize  = _height * dstPitch;
+
+					void* dst = bx::alloc(g_allocator, dstSize);
+
+					bimg::imageConvert(
+						  g_allocator
+						, dst
+						, bimg::TextureFormat::BGRA8
+						, _data
+						, bimg::TextureFormat::Enum(_format)
+						, _width
+						, _height
+						, 1
+						);
+
+					bimg::imageWriteTga(&writer, _width, _height, _pitch, _data, false, _yflip);
+
+					bx::free(g_allocator, dst);
+				}
+
 				bx::close(&writer);
 			}
 		}
@@ -3618,7 +3650,7 @@ namespace bgfx
 	}
 
 	Resolution::Resolution()
-		: formatColor(TextureFormat::BGRA8)
+		: formatColor(TextureFormat::RGBA8)
 		, formatDepthStencil(TextureFormat::D24S8)
 		, width(1280)
 		, height(720)
@@ -6132,9 +6164,9 @@ namespace bgfx
 			m_interface->vtbl->cache_write(m_interface, _id, _data, _size);
 		}
 
-		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) override
+		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, TextureFormat::Enum _format, const void* _data, uint32_t _size, bool _yflip) override
 		{
-			m_interface->vtbl->screen_shot(m_interface, _filePath, _width, _height, _pitch, _data, _size, _yflip);
+			m_interface->vtbl->screen_shot(m_interface, _filePath, _width, _height, _pitch, (bgfx_texture_format_t)_format, _data, _size, _yflip);
 		}
 
 		virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t _pitch, TextureFormat::Enum _format, bool _yflip) override
