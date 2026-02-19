@@ -735,6 +735,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 	{
 		TextureVK()
 			: m_directAccessPtr(NULL)
+			, m_flags(0)
 			, m_sampler({ 1, VK_SAMPLE_COUNT_1_BIT })
 			, m_format(VK_FORMAT_UNDEFINED)
 			, m_aspectFlags(VK_IMAGE_ASPECT_NONE)
