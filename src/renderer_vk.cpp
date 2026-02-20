@@ -8124,7 +8124,10 @@ retry:
 			TextureFormat::RGBA8,
 		};
 
-		for (uint32_t ii = 0; ii < BX_COUNTOF(requestedFormats) && TextureFormat::Count == selectedFormat; ++ii)
+		for (uint32_t ii = 0
+			; ii < BX_COUNTOF(requestedFormats) && TextureFormat::Count == selectedFormat
+			; ++ii
+			)
 		{
 			const TextureFormat::Enum requested = requestedFormats[ii];
 			const VkFormat requestedVkFormat = _srgb
@@ -8153,8 +8156,6 @@ retry:
 				}
 			}
 		}
-
-		bx::free(g_allocator, surfaceFormats);
 
 		if (TextureFormat::Count == selectedFormat)
 		{
