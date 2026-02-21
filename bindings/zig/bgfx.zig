@@ -784,6 +784,9 @@ pub const CapsFormatFlags_TextureMsaa: CapsFormatFlags            = 0x00004000;
 /// Texture format supports auto-generated mips.
 pub const CapsFormatFlags_TextureMipAutogen: CapsFormatFlags      = 0x00008000;
 
+/// Texture format can be used as back buffer format.
+pub const CapsFormatFlags_TextureBackbuffer: CapsFormatFlags      = 0x00010000;
+
 pub const ResolveFlags = u32;
 /// No resolve flags.
 pub const ResolveFlags_None: ResolveFlags                   = 0x00000000;
@@ -1398,7 +1401,7 @@ pub const Caps = extern struct {
         numGPUs: u8,
         gpu: [4]GPU,
         limits: Limits,
-        formats: [100]u16,
+        formats: [100]u32,
     };
 
     pub const InternalData = extern struct {

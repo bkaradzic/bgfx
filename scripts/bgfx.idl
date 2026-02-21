@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(139)
+version(140)
 
 typedef "bool"
 typedef "char"
@@ -423,6 +423,7 @@ flag.CapsFormat { bits = 32 }
 	.TextureFramebufferMsaa  --- Texture format can be used as MSAA frame buffer.
 	.TextureMsaa             --- Texture can be sampled as MSAA.
 	.TextureMipAutogen       --- Texture format supports auto-generated mips.
+	.TextureBackbuffer       --- Texture format can be used as back buffer format.
 	()
 
 flag.Resolve { bits = 8 }
@@ -781,7 +782,7 @@ struct.Caps
 	.numGPUs      "uint8_t"            --- Number of enumerated GPUs.
 	.gpu          "GPU[4]"             --- Enumerated GPUs.
 	.limits       "Limits"             --- Renderer runtime limits.
-	.formats      "uint16_t[TextureFormat::Count]"
+	.formats      "uint32_t[TextureFormat::Count]"
 		--- Supported texture format capabilities flags:
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - Texture format is not supported.
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_2D` - Texture format is supported.
@@ -805,6 +806,7 @@ struct.Caps
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_MSAA` - Texture can be sampled as MSAA.
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
 		---     mips.
+		---   - `BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER` - Texture format can be used as back buffer format.
 
 --- Internal data.
 struct.InternalData

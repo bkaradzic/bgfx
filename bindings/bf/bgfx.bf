@@ -1275,6 +1275,11 @@ public static class bgfx
 		/// Texture format supports auto-generated mips.
 		/// </summary>
 		TextureMipAutogen      = 0x00008000,
+	
+		/// <summary>
+		/// Texture format can be used as back buffer format.
+		/// </summary>
+		TextureBackbuffer      = 0x00010000,
 	}
 	
 	[AllowDuplicates]
@@ -2223,7 +2228,7 @@ public static class bgfx
 		public uint8 numGPUs;
 		public GPU[4] gpu;
 		public Limits limits;
-		public uint16[100] formats;
+		public uint32[100] formats;
 	}
 	
 	[CRepr]

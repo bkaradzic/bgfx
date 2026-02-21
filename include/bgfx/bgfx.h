@@ -894,7 +894,8 @@ namespace bgfx
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_MSAA` - Texture can be sampled as MSAA.
 		///   - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
 		///     mips.
-		uint16_t formats[TextureFormat::Count];
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER` - Texture format can be used as back buffer format.
+		uint32_t formats[TextureFormat::Count];
 	};
 
 	/// Transient index buffer.

@@ -1372,7 +1372,7 @@ namespace bgfx { namespace d3d11
 
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
-					uint16_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+					uint32_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
 					const bool isDepthFormat = bimg::isDepth(bimg::TextureFormat::Enum(ii));
 					const DXGI_FORMAT fmt = isDepthFormat
@@ -1455,6 +1455,13 @@ namespace bgfx { namespace d3d11
 										| D3D11_FORMAT_SUPPORT_MIP_AUTOGEN
 										) )
 										? BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
+										: BGFX_CAPS_FORMAT_TEXTURE_NONE
+										;
+
+								support |= 0 != (data.OutFormatSupport & (0
+										| D3D11_FORMAT_SUPPORT_DISPLAY
+										) )
+										? BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER
 										: BGFX_CAPS_FORMAT_TEXTURE_NONE
 										;
 							}
@@ -1567,6 +1574,13 @@ namespace bgfx { namespace d3d11
 										| D3D11_FORMAT_SUPPORT_TEXTURECUBE
 										) )
 										? BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
+										: BGFX_CAPS_FORMAT_TEXTURE_NONE
+										;
+
+								support |= 0 != (data.OutFormatSupport & (0
+										| D3D11_FORMAT_SUPPORT_DISPLAY
+										) )
+										? BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER
 										: BGFX_CAPS_FORMAT_TEXTURE_NONE
 										;
 							}

@@ -3791,6 +3791,11 @@ namespace bgfx
 				: m_init.resolution.formatColor
 				;
 
+			BX_ASSERT(0 != (g_caps.formats[formatColor] & BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER)
+				, "Format %s can't be used for back buffer!"
+				, getName(formatColor)
+				);
+
 			if (!g_platformDataChangedSinceReset
 			&&  m_init.resolution.formatColor == formatColor
 			&&  m_init.resolution.width       == _width

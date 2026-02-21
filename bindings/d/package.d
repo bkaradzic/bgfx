@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 139;
+enum uint apiVersion = 140;
 
 alias ViewID = ushort;
 
@@ -548,6 +548,7 @@ enum CapsFormat: CapsFormat_{
 	textureFramebufferMSAA  = 0x0000_2000, ///Texture format can be used as MSAA frame buffer.
 	textureMSAA             = 0x0000_4000, ///Texture can be sampled as MSAA.
 	textureMIPAutogen       = 0x0000_8000, ///Texture format supports auto-generated mips.
+	textureBackbuffer       = 0x0001_0000, ///Texture format can be used as back buffer format.
 }
 
 alias Resolve_ = ubyte;
@@ -1107,8 +1108,9 @@ extern(C++, "bgfx") struct Caps{
 	  - `BGFX_CAPS_FORMAT_TEXTURE_MSAA` - Texture can be sampled as MSAA.
 	  - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
 	    mips.
+	  - `BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER` - Texture format can be used as back buffer format.
 	*/
-	ushort[TextureFormat.count] formats;
+	uint[TextureFormat.count] formats;
 }
 
 ///Internal data.

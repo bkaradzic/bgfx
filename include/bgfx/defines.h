@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(139)
+#define BGFX_API_VERSION UINT32_C(140)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -521,6 +521,7 @@
 #define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA UINT32_C(0x00002000) //!< Texture format can be used as MSAA frame buffer.
 #define BGFX_CAPS_FORMAT_TEXTURE_MSAA             UINT32_C(0x00004000) //!< Texture can be sampled as MSAA.
 #define BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN      UINT32_C(0x00008000) //!< Texture format supports auto-generated mips.
+#define BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER       UINT32_C(0x00010000) //!< Texture format can be used as back buffer format.
 
 #define BGFX_RESOLVE_NONE                         UINT8_C(0x00) //!< No resolve flags.
 #define BGFX_RESOLVE_AUTO_GEN_MIPS                UINT8_C(0x01) //!< Auto-generate mip maps on resolve.

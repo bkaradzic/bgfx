@@ -1798,39 +1798,46 @@ namespace bgfx
 
 		BX_TRACE("");
 		BX_TRACE("Supported texture formats:");
-		BX_TRACE("\t +----------------   2D: x = supported / * = emulated");
-		BX_TRACE("\t |+---------------   2D: sRGB format");
-		BX_TRACE("\t ||+--------------   3D: x = supported / * = emulated");
-		BX_TRACE("\t |||+-------------   3D: sRGB format");
-		BX_TRACE("\t ||||+------------ Cube: x = supported / * = emulated");
-		BX_TRACE("\t |||||+----------- Cube: sRGB format");
-		BX_TRACE("\t ||||||+---------- vertex format");
-		BX_TRACE("\t |||||||+--------- image: i = read-write / r = read / w = write");
-		BX_TRACE("\t ||||||||+-------- framebuffer");
-		BX_TRACE("\t |||||||||+------- MSAA framebuffer");
-		BX_TRACE("\t ||||||||||+------ MSAA texture");
-		BX_TRACE("\t |||||||||||+----- Auto-generated mips");
-		BX_TRACE("\t ||||||||||||  +-- name");
+		BX_TRACE("\t +-----------------   2D: x = supported / * = emulated");
+		BX_TRACE("\t |+----------------   2D: sRGB format");
+		BX_TRACE("\t ||+---------------   3D: x = supported / * = emulated");
+		BX_TRACE("\t |||+--------------   3D: sRGB format");
+		BX_TRACE("\t ||||+------------- Cube: x = supported / * = emulated");
+		BX_TRACE("\t |||||+------------ Cube: sRGB format");
+		BX_TRACE("\t ||||||+----------- Vertex format");
+		BX_TRACE("\t |||||||+---------- Image: i = read-write / r = read / w = write");
+		BX_TRACE("\t ||||||||+--------- Framebuffer");
+		BX_TRACE("\t |||||||||+-------- MSAA framebuffer");
+		BX_TRACE("\t ||||||||||+------- MSAA texture");
+		BX_TRACE("\t |||||||||||+------ Auto-generated mips");
+		BX_TRACE("\t ||||||||||||+----- Back-buffer");
+		BX_TRACE("\t |||||||||||||  +-- name");
 		for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 		{
 			if (TextureFormat::Unknown != ii
 			&&  TextureFormat::UnknownDepth != ii)
 			{
 				uint32_t flags = g_caps.formats[ii];
-				BX_TRACE("\t[%c%c%c%c%c%c%c%c%c%c%c%c] %s"
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_2D               ? 'x' : flags&BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED ? '*' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB          ? 'l' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_3D               ? 'x' : flags&BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED ? '*' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB          ? 'l' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_CUBE             ? 'x' : flags&BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED ? '*' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB        ? 'l' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_VERTEX           ? 'v' : ' '
-					, (flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ) &&
-					  (flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE)    ? 'i' : flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ ? 'r' : flags&BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE ? 'w' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER      ? 'f' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA ? '+' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_MSAA             ? 'm' : ' '
-					, flags&BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN      ? 'M' : ' '
+				BX_TRACE("\t[%c%c%c%c%c%c%c%c%c%c%c%c%c] %s"
+					,  flags & BGFX_CAPS_FORMAT_TEXTURE_2D               ? 'x'
+					:  flags & BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED      ? '*' : ' '
+					,  flags & BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB          ? 'l' : ' '
+					,  flags & BGFX_CAPS_FORMAT_TEXTURE_3D               ? 'x'
+					:  flags & BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED      ? '*' : ' '
+					,  flags & BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB          ? 'l' : ' '
+					,  flags & BGFX_CAPS_FORMAT_TEXTURE_CUBE             ? 'x'
+					:  flags & BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED    ? '*' : ' '
+					,  flags & BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB        ? 'l' : ' '
+					,  flags & BGFX_CAPS_FORMAT_TEXTURE_VERTEX           ? 'v' : ' '
+					, (flags & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ) &&
+					  (flags & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE)     ? 'i'
+					:  flags & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ       ? 'r'
+					:  flags & BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE      ? 'w' : ' '
+					,  flags & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER      ? 'f' : ' '
+					,  flags & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA ? '+' : ' '
+					,  flags & BGFX_CAPS_FORMAT_TEXTURE_MSAA             ? 'm' : ' '
+					,  flags & BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN      ? 'M' : ' '
+					,  flags & BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER       ? 'b' : ' '
 					, getName(TextureFormat::Enum(ii) )
 					);
 				BX_UNUSED(flags);

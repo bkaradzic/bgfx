@@ -251,14 +251,14 @@ VK_IMPORT_DEVICE
 		{ VK_FORMAT_R32G32_UINT,               VK_FORMAT_R32G32_UINT,              VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // RG32U
 		{ VK_FORMAT_R32G32_SFLOAT,             VK_FORMAT_R32G32_SFLOAT,            VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // RG32F
 		{ VK_FORMAT_R8G8B8_UNORM,              VK_FORMAT_R8G8B8_UNORM,             VK_FORMAT_UNDEFINED,           VK_FORMAT_R8G8B8_SRGB,              { $_, $_, $_, $_ } }, // RGB8
-		{ VK_FORMAT_R8G8B8_SINT,               VK_FORMAT_R8G8B8_SINT,              VK_FORMAT_UNDEFINED,           VK_FORMAT_R8G8B8_SRGB,              { $_, $_, $_, $_ } }, // RGB8I
-		{ VK_FORMAT_R8G8B8_UINT,               VK_FORMAT_R8G8B8_UINT,              VK_FORMAT_UNDEFINED,           VK_FORMAT_R8G8B8_SRGB,              { $_, $_, $_, $_ } }, // RGB8U
+		{ VK_FORMAT_R8G8B8_SINT,               VK_FORMAT_R8G8B8_SINT,              VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // RGB8I
+		{ VK_FORMAT_R8G8B8_UINT,               VK_FORMAT_R8G8B8_UINT,              VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // RGB8U
 		{ VK_FORMAT_R8G8B8_SNORM,              VK_FORMAT_R8G8B8_SNORM,             VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // RGB8S
 		{ VK_FORMAT_E5B9G9R9_UFLOAT_PACK32,    VK_FORMAT_E5B9G9R9_UFLOAT_PACK32,   VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // RGB9E5F
 		{ VK_FORMAT_B8G8R8A8_UNORM,            VK_FORMAT_B8G8R8A8_UNORM,           VK_FORMAT_UNDEFINED,           VK_FORMAT_B8G8R8A8_SRGB,            { $_, $_, $_, $_ } }, // BGRA8
 		{ VK_FORMAT_R8G8B8A8_UNORM,            VK_FORMAT_R8G8B8A8_UNORM,           VK_FORMAT_UNDEFINED,           VK_FORMAT_R8G8B8A8_SRGB,            { $_, $_, $_, $_ } }, // RGBA8
-		{ VK_FORMAT_R8G8B8A8_SINT,             VK_FORMAT_R8G8B8A8_SINT,            VK_FORMAT_UNDEFINED,           VK_FORMAT_R8G8B8A8_SRGB,            { $_, $_, $_, $_ } }, // RGBA8I
-		{ VK_FORMAT_R8G8B8A8_UINT,             VK_FORMAT_R8G8B8A8_UINT,            VK_FORMAT_UNDEFINED,           VK_FORMAT_R8G8B8A8_SRGB,            { $_, $_, $_, $_ } }, // RGBA8U
+		{ VK_FORMAT_R8G8B8A8_SINT,             VK_FORMAT_R8G8B8A8_SINT,            VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // RGBA8I
+		{ VK_FORMAT_R8G8B8A8_UINT,             VK_FORMAT_R8G8B8A8_UINT,            VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // RGBA8U
 		{ VK_FORMAT_R8G8B8A8_SNORM,            VK_FORMAT_R8G8B8A8_SNORM,           VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // RGBA8S
 		{ VK_FORMAT_R16G16B16A16_UNORM,        VK_FORMAT_R16G16B16A16_UNORM,       VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // RGBA16
 		{ VK_FORMAT_R16G16B16A16_SINT,         VK_FORMAT_R16G16B16A16_SINT,        VK_FORMAT_UNDEFINED,           VK_FORMAT_UNDEFINED,                { $_, $_, $_, $_ } }, // RGBA16I
@@ -1790,7 +1790,7 @@ VK_IMPORT_INSTANCE
 
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
-					uint16_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+					uint32_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
 					const bool depth = bimg::isDepth(bimg::TextureFormat::Enum(ii) );
 					VkFormat fmt = depth
@@ -2047,11 +2047,6 @@ VK_IMPORT_DEVICE
 					m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
 					m_textVideoMem.clear();
 
-					for (uint8_t ii = 0; ii < BX_COUNTOF(m_swapChainFormats); ++ii)
-					{
-						m_swapChainFormats[ii] = TextureFormat::Enum(ii);
-					}
-
 					result = m_backBuffer.create(
 						  UINT16_MAX
 						, g_platformData.nwh
@@ -2070,6 +2065,39 @@ VK_IMPORT_DEVICE
 					m_numWindows++;
 
 					postReset();
+
+					{
+						VkSurfaceKHR surface = m_backBuffer.m_swapChain.m_surface;
+
+						uint32_t numSurfaceFormats;
+						result = vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, surface, &numSurfaceFormats, NULL);
+
+						if (VK_SUCCESS == result)
+						{
+							VkSurfaceFormatKHR* surfaceFormats = (VkSurfaceFormatKHR*)BX_STACK_ALLOC(numSurfaceFormats * sizeof(VkSurfaceFormatKHR) );
+							result = vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, surface, &numSurfaceFormats, surfaceFormats);
+
+							for (uint32_t sfidx = 0; sfidx < numSurfaceFormats; ++sfidx)
+							{
+								const VkSurfaceFormatKHR& surfaceFormat = surfaceFormats[sfidx];
+
+								for (uint32_t ii = TextureFormat::Unknown+1; ii < TextureFormat::UnknownDepth; ++ii)
+								{
+									if (0 != (g_caps.formats[ii] & BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER) )
+									{
+										continue;
+									}
+
+									if (surfaceFormat.format == s_textureFormat[ii].m_fmt
+									||  surfaceFormat.format == s_textureFormat[ii].m_fmtSrgb)
+									{
+										g_caps.formats[ii] |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
+										break;
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 
@@ -4660,7 +4688,6 @@ VK_IMPORT_DEVICE
 		bool m_timerQuerySupport;
 
 		FrameBufferVK m_backBuffer;
-		TextureFormat::Enum m_swapChainFormats[TextureFormat::Count];
 
 		uint16_t m_numWindows;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
@@ -5179,16 +5206,18 @@ VK_DESTROY
 		const uint32_t offset1 = offset0 + vsSize;
 
 		const Chunk& sbc = m_chunks[sba.chunkIdx];
+
 		_outSbo.buffer = sbc.buffer;
-		int i = 0;
-		if (_vsSize)
+		_outSbo.offsets[0] = offset0;
+		_outSbo.offsets[1] = offset1;
+
+		if (NULL != _vsData)
 		{
-			_outSbo.offsets[i++] = offset0;
 			bx::memCopy(&sbc.data[offset0], _vsData, _vsSize);
 		}
-		if (_fsSize)
+
+		if (NULL != _fsData)
 		{
-			_outSbo.offsets[i++] = offset1;
 			bx::memCopy(&sbc.data[offset1], _fsData, _fsSize);
 		}
 	}
@@ -7643,7 +7672,7 @@ retry:
 		const VkColorSpaceKHR surfaceColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 
 		const bool srgb = !!(m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER);
-		m_colorFormat = findSurfaceFormat(m_resolution.formatColor, surfaceColorSpace, srgb);
+		m_colorFormat = m_resolution.formatColor;
 		m_depthFormat = bgfx::TextureFormat::UnknownDepth;
 
 		if (TextureFormat::Count == m_colorFormat)
@@ -8087,82 +8116,6 @@ retry:
 		}
 
 		return idx;
-	}
-
-	TextureFormat::Enum SwapChainVK::findSurfaceFormat(TextureFormat::Enum _format, VkColorSpaceKHR _colorSpace, bool _srgb)
-	{
-		BGFX_PROFILER_SCOPE("SwapChainVK::findSurfaceFormat", kColorFrame);
-
-		VkResult result = VK_SUCCESS;
-
-		TextureFormat::Enum selectedFormat = TextureFormat::Count;
-
-		const VkPhysicalDevice physicalDevice = s_renderVK->m_physicalDevice;
-
-		uint32_t numSurfaceFormats;
-		result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_surface, &numSurfaceFormats, NULL);
-
-		if (VK_SUCCESS != result)
-		{
-			BX_TRACE("findSurfaceFormat error: vkGetPhysicalDeviceSurfaceFormatsKHR failed %d: %s.", result, getName(result) );
-			return selectedFormat;
-		}
-
-		VkSurfaceFormatKHR* surfaceFormats = (VkSurfaceFormatKHR*)BX_STACK_ALLOC(numSurfaceFormats * sizeof(VkSurfaceFormatKHR) );
-		result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_surface, &numSurfaceFormats, surfaceFormats);
-
-		if (VK_SUCCESS != result)
-		{
-			BX_TRACE("findSurfaceFormat error: vkGetPhysicalDeviceSurfaceFormatsKHR failed %d: %s.", result, getName(result) );
-			return selectedFormat;
-		}
-
-		const TextureFormat::Enum requestedFormats[] =
-		{
-			_format,
-			TextureFormat::BGRA8,
-			TextureFormat::RGBA8,
-		};
-
-		for (uint32_t ii = 0
-			; ii < BX_COUNTOF(requestedFormats) && TextureFormat::Count == selectedFormat
-			; ++ii
-			)
-		{
-			const TextureFormat::Enum requested = requestedFormats[ii];
-			const VkFormat requestedVkFormat = _srgb
-				? s_textureFormat[requested].m_fmtSrgb
-				: s_textureFormat[requested].m_fmt
-				;
-
-			for (uint32_t jj = 0; jj < numSurfaceFormats; jj++)
-			{
-				if (_colorSpace       == surfaceFormats[jj].colorSpace
-				&&  requestedVkFormat == surfaceFormats[jj].format)
-				{
-					selectedFormat = requested;
-
-					if (0 != ii
-					&&  s_renderVK->m_swapChainFormats[_format] != selectedFormat)
-					{
-						s_renderVK->m_swapChainFormats[_format] = selectedFormat;
-						BX_TRACE(
-							"findSurfaceFormat: Surface format %s not found! Defaulting to %s."
-							, bimg::getName(bimg::TextureFormat::Enum(_format) )
-							, bimg::getName(bimg::TextureFormat::Enum(selectedFormat) )
-							);
-					}
-					break;
-				}
-			}
-		}
-
-		if (TextureFormat::Count == selectedFormat)
-		{
-			BX_TRACE("findSurfaceFormat error: No supported surface format found.");
-		}
-
-		return selectedFormat;
 	}
 
 	bool SwapChainVK::acquire(VkCommandBuffer _commandBuffer)

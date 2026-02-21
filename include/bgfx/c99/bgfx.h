@@ -626,8 +626,9 @@ typedef struct bgfx_caps_s
      *   - `BGFX_CAPS_FORMAT_TEXTURE_MSAA` - Texture can be sampled as MSAA.
      *   - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
      *     mips.
+     *   - `BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER` - Texture format can be used as back buffer format.
      */
-    uint16_t             formats[BGFX_TEXTURE_FORMAT_COUNT];
+    uint32_t             formats[BGFX_TEXTURE_FORMAT_COUNT];
 
 } bgfx_caps_t;
 

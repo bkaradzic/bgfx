@@ -803,6 +803,9 @@ enum CapsFormatFlags : const uint
 
 	// Texture format supports auto-generated mips.
 	TEXTUREMIPAUTOGEN      = 0x00008000,
+
+	// Texture format can be used as back buffer format.
+	TEXTUREBACKBUFFER      = 0x00010000,
 }
 
 enum ResolveFlags : const uint
@@ -1510,7 +1513,8 @@ struct Caps
 	//   - `BGFX_CAPS_FORMAT_TEXTURE_MSAA` - Texture can be sampled as MSAA.
 	//   - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
 	//     mips.
-	ushort[100] formats;
+	//   - `BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER` - Texture format can be used as back buffer format.
+	uint[100] formats;
 }
 
 // Internal data.
