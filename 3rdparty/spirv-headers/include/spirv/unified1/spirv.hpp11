@@ -1393,6 +1393,10 @@ enum class Capability : unsigned {
     CacheControlsINTEL = 6441,
     RegisterLimitsINTEL = 6460,
     BindlessImagesINTEL = 6528,
+    DotProductFloat16AccFloat32VALVE = 6912,
+    DotProductFloat16AccFloat16VALVE = 6913,
+    DotProductBFloat16AccVALVE = 6914,
+    DotProductFloat8AccFloat32VALVE = 6915,
     Max = 0x7fffffff,
 };
 
@@ -2624,6 +2628,9 @@ enum class Op : unsigned {
     OpConvertHandleToImageINTEL = 6529,
     OpConvertHandleToSamplerINTEL = 6530,
     OpConvertHandleToSampledImageINTEL = 6531,
+    OpFDot2MixAcc32VALVE = 6916,
+    OpFDot2MixAcc16VALVE = 6917,
+    OpFDot4MixAcc32VALVE = 6918,
     Max = 0x7fffffff,
 };
 
@@ -3498,6 +3505,9 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpConvertHandleToImageINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpConvertHandleToSamplerINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpConvertHandleToSampledImageINTEL: *hasResult = true; *hasResultType = true; break;
+    case Op::OpFDot2MixAcc32VALVE: *hasResult = true; *hasResultType = true; break;
+    case Op::OpFDot2MixAcc16VALVE: *hasResult = true; *hasResultType = true; break;
+    case Op::OpFDot4MixAcc32VALVE: *hasResult = true; *hasResultType = true; break;
     }
 }
 inline const char* SourceLanguageToString(SourceLanguage value) {
@@ -4489,6 +4499,10 @@ inline const char* CapabilityToString(Capability value) {
     case Capability::CacheControlsINTEL: return "CacheControlsINTEL";
     case Capability::RegisterLimitsINTEL: return "RegisterLimitsINTEL";
     case Capability::BindlessImagesINTEL: return "BindlessImagesINTEL";
+    case Capability::DotProductFloat16AccFloat32VALVE: return "DotProductFloat16AccFloat32VALVE";
+    case Capability::DotProductFloat16AccFloat16VALVE: return "DotProductFloat16AccFloat16VALVE";
+    case Capability::DotProductBFloat16AccVALVE: return "DotProductBFloat16AccVALVE";
+    case Capability::DotProductFloat8AccFloat32VALVE: return "DotProductFloat8AccFloat32VALVE";
     default: return "Unknown";
     }
 }
@@ -5546,6 +5560,9 @@ inline const char* OpToString(Op value) {
     case Op::OpConvertHandleToImageINTEL: return "OpConvertHandleToImageINTEL";
     case Op::OpConvertHandleToSamplerINTEL: return "OpConvertHandleToSamplerINTEL";
     case Op::OpConvertHandleToSampledImageINTEL: return "OpConvertHandleToSampledImageINTEL";
+    case Op::OpFDot2MixAcc32VALVE: return "OpFDot2MixAcc32VALVE";
+    case Op::OpFDot2MixAcc16VALVE: return "OpFDot2MixAcc16VALVE";
+    case Op::OpFDot4MixAcc32VALVE: return "OpFDot4MixAcc32VALVE";
     default: return "Unknown";
     }
 }

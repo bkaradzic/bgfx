@@ -11728,6 +11728,48 @@
       "capabilities" : [ "BindlessImagesINTEL" ],
       "provisional"  : true,
       "version" : "None"
+    },
+    {
+      "opname" : "OpFDot2MixAcc32VALVE",
+      "class"  : "Reserved",
+      "opcode" : 6916,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "Vector 1" },
+        { "kind" : "IdRef", "name" : "Vector 2" },
+        { "kind" : "IdRef", "name" : "Accumulator" }
+      ],
+      "capabilities" : [ "DotProductFloat16AccFloat32VALVE", "DotProductBFloat16AccVALVE" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpFDot2MixAcc16VALVE",
+      "class"  : "Reserved",
+      "opcode" : 6917,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "Vector 1" },
+        { "kind" : "IdRef", "name" : "Vector 2" },
+        { "kind" : "IdRef", "name" : "Accumulator" }
+      ],
+      "capabilities" : [ "DotProductFloat16AccFloat16VALVE", "DotProductBFloat16AccVALVE" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpFDot4MixAcc32VALVE",
+      "class"  : "Reserved",
+      "opcode" : 6918,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "Vector 1" },
+        { "kind" : "IdRef", "name" : "Vector 2" },
+        { "kind" : "IdRef", "name" : "Accumulator" }
+      ],
+      "capabilities" : [ "DotProductFloat8AccFloat32VALVE" ],
+      "version" : "None"
     }
   ],
   "operand_kinds" : [
@@ -18560,6 +18602,34 @@
           "value" : 6528,
           "extensions" : [ "SPV_INTEL_bindless_images" ],
           "provisional" : true,
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DotProductFloat16AccFloat32VALVE",
+          "value" : 6912,
+          "capabilities" : [ "Float16" ],
+          "extensions" : [ "SPV_VALVE_mixed_float_dot_product" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DotProductFloat16AccFloat16VALVE",
+          "value" : 6913,
+          "capabilities" : [ "Float16" ],
+          "extensions" : [ "SPV_VALVE_mixed_float_dot_product" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DotProductBFloat16AccVALVE",
+          "value" : 6914,
+          "capabilities" : [ "BFloat16TypeKHR" ],
+          "extensions" : [ "SPV_VALVE_mixed_float_dot_product" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DotProductFloat8AccFloat32VALVE",
+          "value" : 6915,
+          "capabilities" : [ "Float8EXT" ],
+          "extensions" : [ "SPV_VALVE_mixed_float_dot_product" ],
           "version" : "None"
         }
       ]
