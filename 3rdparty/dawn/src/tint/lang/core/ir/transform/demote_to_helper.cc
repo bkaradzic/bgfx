@@ -215,7 +215,7 @@ struct State {
 
 Result<SuccessType> DemoteToHelper(Module& ir) {
     TINT_CHECK_RESULT(
-        ValidateAndDumpIfNeeded(ir, "core.DemoteToHelper", kDemoteToHelperCapabilities));
+        ValidateBeforeIfNeeded(ir, kDemoteToHelperCapabilities, "core.DemoteToHelper"));
 
     State{ir}.Process();
 

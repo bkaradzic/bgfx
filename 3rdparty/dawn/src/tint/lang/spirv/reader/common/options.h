@@ -37,12 +37,6 @@ namespace tint::spirv::reader {
 
 /// Options that control how the SPIR-V parser should behave.
 struct Options {
-    /// Set to `true` to allow calls to derivative builtins in non-uniform control flow.
-    bool allow_non_uniform_derivatives = false;
-    // TODO(jrprice): Remove this when SPIR-V -> IR and IR -> WGSL are separate steps.
-    /// The extensions and language features that are allowed to be used in the generated WGSL.
-    wgsl::AllowedFeatures allowed_features = {};
-
     /// Mapping from a SPIR-V Sampler binding point to a WGSL sampler binding
     /// point. This allows remapping samplers which are split out of the
     /// combined texture/sampler pairs in SPIR-V.

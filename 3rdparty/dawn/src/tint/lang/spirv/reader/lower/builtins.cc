@@ -1310,14 +1310,15 @@ struct State {
 
 Result<SuccessType> Builtins(core::ir::Module& ir) {
     TINT_CHECK_RESULT(
-        ValidateAndDumpIfNeeded(ir, "spirv.Builtins",
-                                core::ir::Capabilities{
-                                    core::ir::Capability::kAllowMultipleEntryPoints,
-                                    core::ir::Capability::kAllowOverrides,
-                                    core::ir::Capability::kAllowNonCoreTypes,
-                                    core::ir::Capability::kAllowStructMatrixDecorations,
-                                    core::ir::Capability::kAllowPointerToHandle,
-                                }));
+        ValidateBeforeIfNeeded(ir,
+                               core::ir::Capabilities{
+                                   core::ir::Capability::kAllowMultipleEntryPoints,
+                                   core::ir::Capability::kAllowOverrides,
+                                   core::ir::Capability::kAllowNonCoreTypes,
+                                   core::ir::Capability::kAllowStructMatrixDecorations,
+                                   core::ir::Capability::kAllowPointerToHandle,
+                               },
+                               "spirv.Builtins"));
 
     State{ir}.Process();
 

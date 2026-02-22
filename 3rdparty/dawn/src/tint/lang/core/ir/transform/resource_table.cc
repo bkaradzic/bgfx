@@ -133,9 +133,28 @@ struct State {
 
         b.Append(has_check->True(), [&] {
             auto* type_val = b.Access(ty.ptr<storage, u32, read>(), storage_buffer, 1_u, idx);
-
             auto* v = b.Load(type_val);
-            auto* eq = b.Equal(v, u32(static_cast<uint32_t>(core::type::TypeToResourceType(type))));
+
+            ResourceType resource_ty = core::type::TypeToResourceType(type);
+
+            core::ir::Value* eq = nullptr;
+            std::vector<ResourceType> conv = core::type::ConvertsFrom(type);
+            if (!conv.empty()) {
+                auto* conv_ty = ty.vec(ty.u32(), static_cast<uint32_t>(conv.size()) + 1);
+                auto* lhs = b.Construct(conv_ty, v);
+
+                Vector<Value*, 4> vals;
+                vals.Push(b.Value(u32(resource_ty)));
+                for (auto& r : conv) {
+                    vals.Push(b.Value(u32(r)));
+                }
+
+                auto* rhs = b.Construct(conv_ty, vals);
+                auto* cmp = b.Equal(lhs, rhs);
+                eq = b.Call(ty.bool_(), core::BuiltinFn::kAny, cmp)->Result();
+            } else {
+                eq = b.Equal(v, u32(resource_ty))->Result();
+            }
             b.ExitIf(has_check, eq);
         });
 
@@ -181,14 +200,14 @@ struct State {
     }
 
     core::ir::Var* InjectStorageBuffer(const BindingPoint& bp) {
-        auto* str = ty.Struct(ir.symbols.New("tint_resource_table_buffer"),
+        auto* str = ty.Struct(ir.symbols.New("tint_resource_table_metadata_struct"),
                               Vector<core::type::Manager::StructMemberDesc, 2>{
                                   {ir.symbols.New("array_length"), ty.u32()},
                                   {ir.symbols.New("bindings"), ty.array<u32>()},
                               });
 
         auto* sb_ty = ty.ptr(storage, str, read);
-        auto* sb = b.Var(sb_ty);
+        auto* sb = b.Var("tint_resource_table_metadata", sb_ty);
         sb->SetBindingPoint(bp.group, bp.binding);
 
         return sb;
@@ -202,7 +221,7 @@ ResourceTableHelper::~ResourceTableHelper() = default;
 Result<SuccessType> ResourceTable(core::ir::Module& ir,
                                   const ResourceTableConfig& config,
                                   ResourceTableHelper* helper) {
-    TINT_CHECK_RESULT(ValidateAndDumpIfNeeded(ir, "core.ResourceTable"));
+    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir, {}, "core.ResourceTable"));
 
     State{config, ir, helper}.Process();
 

@@ -117,7 +117,6 @@ struct State {
                 ir::Constant* high_limit_f = nullptr;
             } limits;
 
-
             // Largest integers representable in the source floating point format.
             if (src_el_ty->Is<type::F32>()) {
                 // These values are chosen specifically to enable f32 clamping.
@@ -167,7 +166,7 @@ struct State {
 
 Result<SuccessType> ConversionPolyfill(Module& ir, const ConversionPolyfillConfig& config) {
     TINT_CHECK_RESULT(
-        ValidateAndDumpIfNeeded(ir, "core.ConversionPolyfill", kConversionPolyfillCapabilities));
+        ValidateBeforeIfNeeded(ir, kConversionPolyfillCapabilities, "core.ConversionPolyfill"));
 
     State{config, ir}.Process();
 

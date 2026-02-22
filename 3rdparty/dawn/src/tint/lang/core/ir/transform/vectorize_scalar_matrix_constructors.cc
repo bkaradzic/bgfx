@@ -94,8 +94,8 @@ struct State {
 }  // namespace
 
 Result<SuccessType> VectorizeScalarMatrixConstructors(Module& ir) {
-    TINT_CHECK_RESULT(ValidateAndDumpIfNeeded(ir, "core.VectorizeScalarMatrixConstructors",
-                                              kVectorizeScalarMatrixConstructorsCapabilities));
+    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir, kVectorizeScalarMatrixConstructorsCapabilities,
+                                             "core.VectorizeScalarMatrixConstructors"));
 
     State{ir}.Process();
 

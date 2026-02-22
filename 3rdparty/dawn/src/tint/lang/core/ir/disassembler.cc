@@ -449,6 +449,9 @@ StyledText Disassembler::ValueToStyledText(const Value* val) {
                         [&](const core::constant::Scalar<u8>* scalar) {
                             text << StyleLiteral(u32(scalar->ValueAs<u8>().value), "u8");
                         },
+                        [&](const core::constant::Scalar<u16>* scalar) {
+                            text << StyleLiteral(u32(scalar->ValueAs<u16>().value), "u16");
+                        },
                         [&](const core::constant::Scalar<f32>* scalar) {
                             text << StyleLiteral(scalar->ValueAs<f32>().value, "f");
                         },

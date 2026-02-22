@@ -26,9 +26,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "src/tint/lang/wgsl/ast/member_accessor_expression.h"
-#include "src/tint/lang/wgsl/sem/member_accessor_expression.h"
 
 #include <utility>
+
+#include "src/tint/lang/wgsl/sem/member_accessor_expression.h"
 
 TINT_INSTANTIATE_TYPEINFO(tint::sem::StructMemberAccess);
 TINT_INSTANTIATE_TYPEINFO(tint::sem::Swizzle);

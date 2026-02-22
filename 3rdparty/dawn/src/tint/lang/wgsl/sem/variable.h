@@ -30,9 +30,8 @@
 
 #include <optional>
 
-#include "src/tint/api/common/override_id.h"
-
 #include "src/tint/api/common/binding_point.h"
+#include "src/tint/api/common/override_id.h"
 #include "src/tint/lang/core/enums.h"
 #include "src/tint/lang/core/type/type.h"
 #include "src/tint/lang/wgsl/ast/parameter.h"

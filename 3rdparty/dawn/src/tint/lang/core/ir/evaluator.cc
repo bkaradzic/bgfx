@@ -26,6 +26,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "src/tint/lang/core/ir/evaluator.h"
+
 #include "src/tint/lang/core/binary_op.h"
 #include "src/tint/lang/core/ir/constant.h"
 #include "src/tint/lang/core/ir/constexpr_if.h"

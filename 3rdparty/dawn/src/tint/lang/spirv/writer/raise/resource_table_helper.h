@@ -25,34 +25,27 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "src/tint/lang/spirv/writer/raise/resource_table.h"
+#ifndef SRC_TINT_LANG_SPIRV_WRITER_RAISE_RESOURCE_TABLE_HELPER_H_
+#define SRC_TINT_LANG_SPIRV_WRITER_RAISE_RESOURCE_TABLE_HELPER_H_
 
-#include "src/tint/lang/core/type/pointer.h"
-#include "src/tint/lang/core/type/resource_type.h"
-#include "src/tint/lang/spirv/type/resource_table.h"
+#include <vector>
 
-using namespace tint::core::fluent_types;     // NOLINT
-using namespace tint::core::number_suffixes;  // NOLINT
+#include "src/tint/lang/core/ir/builder.h"
+#include "src/tint/lang/core/ir/transform/resource_table.h"
 
 namespace tint::spirv::writer::raise {
 
-// Returns a map of types to the var which is used to access the memory of that type
-Hashmap<const core::type::Type*, core::ir::Var*, 4> ResourceTableHelper::GenerateVars(
-    core::ir::Builder& b,
-    const BindingPoint& bp,
-    const std::vector<ResourceType>& types) const {
-    Hashmap<const core::type::Type*, core::ir::Var*, 4> res;
+class ResourceTableHelper : public core::ir::transform::ResourceTableHelper {
+  public:
+    ~ResourceTableHelper() override = default;
 
-    for (auto& type : types) {
-        auto* t = core::type::ResourceTypeToType(b.ir.Types(), type);
-
-        auto* spv_ty = b.ir.Types().Get<spirv::type::ResourceTable>(t);
-        auto* v = b.Var(b.ir.Types().ptr(handle, spv_ty));
-        v->SetBindingPoint(bp.group, bp.binding);
-        res.Add(t, v);
-    }
-
-    return res;
-}
+    // Returns a map of types to the var which is used to access the memory of that type
+    Hashmap<const core::type::Type*, core::ir::Var*, 4> GenerateVars(
+        core::ir::Builder& b,
+        const BindingPoint& bp,
+        const std::vector<ResourceType>& types) const override;
+};
 
 }  // namespace tint::spirv::writer::raise
+
+#endif  // SRC_TINT_LANG_SPIRV_WRITER_RAISE_RESOURCE_TABLE_HELPER_H_

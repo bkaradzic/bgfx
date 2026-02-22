@@ -85,6 +85,8 @@ tint::core::ir::Instruction::Accesses CoreBuiltinCall::GetSideEffects() const {
         case BuiltinFn::kAtomicXor:
         case BuiltinFn::kAtomicExchange:
         case BuiltinFn::kAtomicCompareExchangeWeak:
+        case BuiltinFn::kAtomicStoreMax:
+        case BuiltinFn::kAtomicStoreMin:
         case BuiltinFn::kDpdx:
         case BuiltinFn::kDpdxCoarse:
         case BuiltinFn::kDpdxFine:

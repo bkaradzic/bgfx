@@ -32,17 +32,14 @@
 #include <vector>
 
 #include "src/tint/lang/core/ir/core_builtin_call.h"
-#include "src/tint/lang/core/ir/load.h"
-#include "src/tint/lang/core/ir/var.h"
 #include "src/tint/lang/core/type/resource_type.h"
-#include "src/tint/utils/rtti/switch.h"
 
 namespace tint::core::ir::transform {
 
 std::optional<ResourceTableConfig> GenerateResourceTableConfig(Module& mod) {
     ResourceTableConfig cfg{
-        .resource_table_binding = BindingPoint{.group = 42, .binding = 41},
-        .storage_buffer_binding = BindingPoint{.group = 42, .binding = 42},
+        .resource_table_binding = BindingPoint{.group = 43, .binding = 51},
+        .storage_buffer_binding = BindingPoint{.group = 42, .binding = 52},
         .default_binding_type_order = {},
     };
 

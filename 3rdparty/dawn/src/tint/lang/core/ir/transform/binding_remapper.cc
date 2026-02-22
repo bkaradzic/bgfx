@@ -73,7 +73,7 @@ Result<SuccessType> BindingRemapper(
     Module& ir,
     const std::unordered_map<BindingPoint, BindingPoint>& binding_points) {
     TINT_CHECK_RESULT(
-        ValidateAndDumpIfNeeded(ir, "core.BindingRemapper", kBindingRemapperCapabilities));
+        ValidateBeforeIfNeeded(ir, kBindingRemapperCapabilities, "core.BindingRemapper"));
 
     Run(ir, binding_points);
 

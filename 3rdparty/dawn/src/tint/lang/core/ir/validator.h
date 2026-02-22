@@ -29,13 +29,13 @@
 #define SRC_TINT_LANG_CORE_IR_VALIDATOR_H_
 
 #include <vector>
+
 #include "src/tint/utils/containers/enum_set.h"
 #include "src/tint/utils/result.h"
 
 // Forward declarations
 namespace tint::core::ir {
 class Module;
-class Function;
 }  // namespace tint::core::ir
 
 namespace tint::core::ir {
@@ -44,6 +44,8 @@ namespace tint::core::ir {
 enum class Capability : uint8_t {
     /// Allows 8-bit integer types.
     kAllow8BitIntegers,
+    /// Allows 16-bit integer types.
+    kAllow16BitIntegers,
     /// Allows 64-bit integer types.
     kAllow64BitIntegers,
     /// Allows ClipDistances on f32 and vecN<f32> parameters
@@ -97,22 +99,65 @@ enum class Capability : uint8_t {
 /// Capabilities is a set of Capability
 using Capabilities = EnumSet<Capability>;
 
-/// Validates that a given IR module is correctly formed
+/// Validates the module @p ir is correctly formed
 /// @param mod the module to validate
 /// @param capabilities the optional capabilities that are allowed
-/// @returns success or failure
-Result<SuccessType> Validate(const Module& mod, Capabilities capabilities = {});
-
-/// Validates the module @p ir and dumps its contents if required by the build configuration.
-/// @param ir the module to transform
 /// @param msg the msg to accompany the output
-/// @param capabilities the optional capabilities that are allowed
 /// @param timing when the validation is run.
 /// @returns success or failure
-Result<SuccessType> ValidateAndDumpIfNeeded(const Module& ir,
-                                            const char* msg,
-                                            Capabilities capabilities = {},
-                                            std::string_view timing = "before");
+Result<SuccessType> Validate(const Module& mod,
+                             Capabilities capabilities = {},
+                             const char* msg = "",
+                             std::string_view timing = "");
+
+/// Validates the module @p ir is correctly formed before an operation
+/// @param mod the module to validate
+/// @param capabilities the optional capabilities that are allowed
+/// @param msg the msg to accompany the output to indicate the operation
+/// @returns success or failure
+Result<SuccessType> ValidateBefore(const Module& mod,
+                                   Capabilities capabilities = {},
+                                   const char* msg = "");
+
+/// Validates the module @p ir is correctly formed after an operation
+/// @param mod the module to validate
+/// @param capabilities the optional capabilities that are allowed
+/// @param msg the msg to accompany the output to indicate the step
+/// @returns success or failure
+Result<SuccessType> ValidateAfter(const Module& mod,
+                                  Capabilities capabilities = {},
+                                  const char* msg = "");
+
+/// Validates the module @p ir is correctly formed, iff required by the build configuration.
+/// @param mod the module to transform
+/// @param capabilities the optional capabilities that are allowed
+/// @param msg the msg to accompany the output
+/// @param timing when the validation is run.
+/// @returns success or failure
+Result<SuccessType> ValidateIfNeeded(const Module& mod,
+                                     Capabilities capabilities = {},
+                                     const char* msg = "",
+                                     std::string_view timing = "");
+
+/// Validates the module @p ir is correctly formed before an operation, iff required by the build
+/// configuration.
+/// @param mod the module to validate
+/// @param capabilities the optional capabilities that are allowed
+/// @param msg the msg to accompany the output to indicate the operation
+/// @returns success or failure
+Result<SuccessType> ValidateBeforeIfNeeded(const Module& mod,
+                                           Capabilities capabilities = {},
+                                           const char* msg = "");
+
+/// Validates the module @p ir is correctly formed after an operation, iff required by the build
+/// configuration.
+/// @param mod the module to validate
+/// @param capabilities the optional capabilities that are allowed
+/// @param msg the msg to accompany the output to indicate the operation
+/// @returns success or failure
+Result<SuccessType> ValidateAfterIfNeeded(const Module& mod,
+                                          Capabilities capabilities = {},
+                                          const char* msg = "");
 
 }  // namespace tint::core::ir
 

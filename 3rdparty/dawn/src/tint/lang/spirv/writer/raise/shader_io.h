@@ -28,6 +28,8 @@
 #ifndef SRC_TINT_LANG_SPIRV_WRITER_RAISE_SHADER_IO_H_
 #define SRC_TINT_LANG_SPIRV_WRITER_RAISE_SHADER_IO_H_
 
+#include <unordered_map>
+
 #include "src/tint/lang/core/ir/transform/prepare_immediate_data.h"
 #include "src/tint/lang/core/ir/validator.h"
 #include "src/tint/lang/spirv/writer/common/options.h"
@@ -53,6 +55,9 @@ const core::ir::Capabilities kShaderIOCapabilities{
 struct ShaderIOConfig {
     /// immediate data layout information
     const core::ir::transform::ImmediateDataLayout& immediate_data_layout;
+
+    /// Colour index to binding point
+    std::unordered_map<uint32_t, BindingPoint> colour_index_to_binding_point{};
 
     /// true if a vertex point size builtin output should be added
     bool emit_vertex_point_size = false;

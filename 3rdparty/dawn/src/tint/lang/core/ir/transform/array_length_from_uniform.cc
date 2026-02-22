@@ -316,7 +316,7 @@ struct State {
                 const uint32_t size_index = bindpoint_to_size_index.at(info.binding_point);
                 const uint32_t array_index = size_index / 4;
                 const uint32_t vec_index = size_index % 4;
-                auto* vec_ptr = b.Access<ptr<uniform, vec4<u32>>>(BufferSizes(), u32(array_index));
+                auto* vec_ptr = b.Access<ptr<uniform, vec4u>>(BufferSizes(), u32(array_index));
                 auto* total_buffer_size = b.LoadVectorElement(vec_ptr, u32(vec_index))->Result();
 
                 // Calculate actual array length:
@@ -361,8 +361,8 @@ Result<ArrayLengthFromUniformResult> ArrayLengthFromUniform(
     Module& ir,
     BindingPoint ubo_binding,
     const std::unordered_map<BindingPoint, uint32_t>& bindpoint_to_size_index) {
-    TINT_CHECK_RESULT(ValidateAndDumpIfNeeded(ir, "core.ArrayLengthFromUniform",
-                                              kArrayLengthFromUniformCapabilities));
+    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir, kArrayLengthFromUniformCapabilities,
+                                             "core.ArrayLengthFromUniform"));
 
     State state{ir, ubo_binding, bindpoint_to_size_index};
     state.Process();

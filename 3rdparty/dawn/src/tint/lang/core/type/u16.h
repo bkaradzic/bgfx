@@ -1,4 +1,4 @@
-// Copyright 2025 The Dawn & Tint Authors
+// Copyright 2026 The Dawn & Tint Authors
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -25,49 +25,39 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef SRC_TINT_LANG_SPIRV_TYPE_RESOURCE_TABLE_H_
-#define SRC_TINT_LANG_SPIRV_TYPE_RESOURCE_TABLE_H_
+#ifndef SRC_TINT_LANG_CORE_TYPE_U16_H_
+#define SRC_TINT_LANG_CORE_TYPE_U16_H_
 
 #include <string>
 
-#include "src/tint/lang/core/enums.h"
-#include "src/tint/lang/core/type/type.h"
+#include "src/tint/lang/core/type/numeric_scalar.h"
 
-namespace tint::spirv::type {
+namespace tint::core::type {
 
-/// ResourceTable represents an OpTypeRuntimeArray of resources
-class ResourceTable final : public Castable<ResourceTable, core::type::Type> {
+/// A unsigned int 16 type.
+class U16 final : public Castable<U16, NumericScalar> {
   public:
     /// Constructor
-    /// @param binding_type the type of the table
-    explicit ResourceTable(const core::type::Type* binding_type);
+    U16();
 
-    /// @param other the other node to compare against
-    /// @returns true if the this type is equal to @p other
-    bool Equals(const UniqueNode& other) const override;
+    /// Destructor
+    ~U16() override;
 
-    const core::type::Type* GetBindingType() const { return binding_type_; }
-
-    /// @copydoc core::type::Type::Elements
-    core::type::TypeAndCount Elements(const core::type::Type* type_if_invalid = nullptr,
-                                      uint32_t count_if_invalid = 0) const override;
-
-    /// @copydoc core::type::Type::Element
-    const core::type::Type* Element(uint32_t index) const override;
-
-    /// @returns the friendly name for this type
+    /// @returns the name for this type that closely resembles how it would be
+    /// declared in WGSL.
     std::string FriendlyName() const override;
 
-    bool IsHandle() const override { return true; }
+    /// @returns the size in bytes of the type.
+    uint32_t Size() const override;
+
+    /// @returns the alignment in bytes of the type.
+    uint32_t Align() const override;
 
     /// @param ctx the clone context
     /// @returns a clone of this type
-    ResourceTable* Clone(core::type::CloneContext& ctx) const override;
-
-  private:
-    const core::type::Type* binding_type_;
+    U16* Clone(CloneContext& ctx) const override;
 };
 
-}  // namespace tint::spirv::type
+}  // namespace tint::core::type
 
-#endif  // SRC_TINT_LANG_SPIRV_TYPE_RESOURCE_TABLE_H_
+#endif  // SRC_TINT_LANG_CORE_TYPE_U16_H_

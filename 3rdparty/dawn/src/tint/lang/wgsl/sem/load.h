@@ -43,6 +43,16 @@ class Load final : public Castable<Load, ValueExpression> {
     /// @param stage the earliest evaluation stage for the expression
     Load(const ValueExpression* source, const Statement* statement, core::EvaluationStage stage);
 
+    /// Constructor
+    /// @param source the source expression being loaded from
+    /// @param type the resolved type of the load
+    /// @param statement the statement that owns this expression
+    /// @param stage the earliest evaluation stage for the expression
+    Load(const ValueExpression* source,
+         const core::type::Type* type,
+         const Statement* statement,
+         core::EvaluationStage stage);
+
     /// Destructor
     ~Load() override;
 

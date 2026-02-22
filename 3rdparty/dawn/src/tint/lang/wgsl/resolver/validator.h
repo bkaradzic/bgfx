@@ -29,9 +29,7 @@
 #define SRC_TINT_LANG_WGSL_RESOLVER_VALIDATOR_H_
 
 #include <cstdint>
-#include <set>
 #include <string>
-#include <utility>
 
 #include "src/tint/lang/core/evaluation_stage.h"
 #include "src/tint/lang/core/type/input_attachment.h"
@@ -40,45 +38,29 @@
 #include "src/tint/lang/wgsl/ast/pipeline_stage.h"
 #include "src/tint/lang/wgsl/program/program_builder.h"
 #include "src/tint/lang/wgsl/resolver/sem_helper.h"
+#include "src/tint/lang/wgsl/sem/member_accessor_expression.h"
 #include "src/tint/utils/containers/hashmap.h"
 #include "src/tint/utils/containers/scope_stack.h"
 #include "src/tint/utils/containers/vector.h"
 #include "src/tint/utils/diagnostic/source.h"
 #include "src/tint/utils/math/hash.h"
-#include "src/tint/utils/text/styled_text.h"
 
 // Forward declarations
 namespace tint::ast {
-class IndexAccessorExpression;
-class BinaryExpression;
-class BitcastExpression;
 class CallExpression;
-class CallStatement;
-class CaseStatement;
-class ForLoopStatement;
 class Function;
-class IdentifierExpression;
-class LoopStatement;
-class MemberAccessorExpression;
 class ReturnStatement;
 class SwitchStatement;
-class UnaryOpExpression;
 class Variable;
-class WhileStatement;
 }  // namespace tint::ast
 namespace tint::sem {
 class Array;
-class BlockStatement;
 class BreakIfStatement;
-class BuiltinFn;
 class Call;
-class CaseStatement;
 class ForLoopStatement;
 class IfStatement;
 class LoopStatement;
-class Materialize;
 class Statement;
-class SwitchStatement;
 class WhileStatement;
 }  // namespace tint::sem
 namespace tint::core::type {
@@ -612,6 +594,12 @@ class Validator {
     bool AddressSpaceLayout(const core::type::Type* type,
                             core::AddressSpace sc,
                             Source source) const;
+
+    /// Validates a swizzle assignment
+    /// @param lhs the lhs swizzle to validate
+    /// @param source the source of the swizzle
+    /// @returns true on success, false otherwise.
+    bool SwizzleAssignment(const sem::Swizzle* lhs, const Source& source) const;
 
   private:
     /// @param ty the type to check

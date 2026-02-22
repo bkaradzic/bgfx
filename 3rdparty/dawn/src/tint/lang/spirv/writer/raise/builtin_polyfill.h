@@ -34,7 +34,6 @@
 // Forward declarations.
 namespace tint::core::ir {
 class Module;
-class Texture;
 }  // namespace tint::core::ir
 
 namespace tint::spirv::writer::raise {

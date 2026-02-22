@@ -167,8 +167,6 @@ struct EntryPoint {
     /// size is derived from an override-expression. In this situation you first need to run the
     /// SubstituteOverride transform before using the inspector.
     std::optional<WorkgroupSize> workgroup_size;
-    /// The total size in bytes of all Workgroup storage-class storage accessed via the entry point.
-    uint32_t workgroup_storage_size = 0;
     /// The total size in bytes of all immediate variables accessed by the entry point.
     uint32_t immediate_data_size = 0;
     /// List of the input variable accessed via this entry point.

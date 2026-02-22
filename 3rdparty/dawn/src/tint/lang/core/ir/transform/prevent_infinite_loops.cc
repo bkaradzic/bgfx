@@ -78,7 +78,7 @@ struct State {
         //   idx.y -= u32(idx.x == UINT32_MAX);
 
         // Declare a new index variable at the top of the loop initializer.
-        auto* idx = b.Var<function>("tint_loop_idx", b.Splat<vec2<u32>>(u32::Highest()));
+        auto* idx = b.Var<function>("tint_loop_idx", b.Splat<vec2u>(u32::Highest()));
         if (loop->Initializer()->IsEmpty()) {
             loop->Initializer()->Append(b.NextIteration(loop));
         }
@@ -86,8 +86,8 @@ struct State {
 
         // Insert the new exit condition at the top of the loop body.
         b.InsertBefore(loop->Body()->Front(), [&] {
-            auto* ifelse = b.If(b.Call<bool>(
-                BuiltinFn::kAll, b.Equal(b.Load(idx)->Result(), b.Splat<vec2<u32>>(0_u))));
+            auto* ifelse = b.If(
+                b.Call<bool>(BuiltinFn::kAll, b.Equal(b.Load(idx)->Result(), b.Splat<vec2u>(0_u))));
             b.Append(ifelse->True(), [&] {
                 // If the loop produces result values, just use `undef` as this exit condition
                 // should never actually be hit.
@@ -116,8 +116,8 @@ struct State {
 }  // namespace
 
 Result<SuccessType> PreventInfiniteLoops(Module& ir) {
-    TINT_CHECK_RESULT(ValidateAndDumpIfNeeded(ir, "core.PreventInfiniteLoops",
-                                              kPreventInfiniteLoopsCapabilities));
+    TINT_CHECK_RESULT(
+        ValidateBeforeIfNeeded(ir, kPreventInfiniteLoopsCapabilities, "core.PreventInfiniteLoops"));
 
     State{ir}.Process();
 

@@ -33,7 +33,6 @@
 
 #include "spirv/unified1/GLSL.std.450.h"
 #include "spirv/unified1/spirv.h"
-
 #include "src/tint/lang/core/constant/value.h"
 #include "src/tint/lang/core/enums.h"
 #include "src/tint/lang/core/fluent_types.h"
@@ -80,11 +79,13 @@
 #include "src/tint/lang/core/type/i32.h"
 #include "src/tint/lang/core/type/matrix.h"
 #include "src/tint/lang/core/type/pointer.h"
+#include "src/tint/lang/core/type/resource_table.h"
 #include "src/tint/lang/core/type/sampler.h"
 #include "src/tint/lang/core/type/struct.h"
 #include "src/tint/lang/core/type/subgroup_matrix.h"
 #include "src/tint/lang/core/type/type.h"
 #include "src/tint/lang/core/type/u32.h"
+#include "src/tint/lang/core/type/u64.h"
 #include "src/tint/lang/core/type/vector.h"
 #include "src/tint/lang/core/type/void.h"
 #include "src/tint/lang/spirv/ir/binary.h"
@@ -92,8 +93,8 @@
 #include "src/tint/lang/spirv/ir/copy_logical.h"
 #include "src/tint/lang/spirv/ir/literal_operand.h"
 #include "src/tint/lang/spirv/type/explicit_layout_array.h"
-#include "src/tint/lang/spirv/type/resource_table.h"
 #include "src/tint/lang/spirv/type/sampled_image.h"
+#include "src/tint/lang/spirv/writer/analysis/relaxed_precision_decorations.h"
 #include "src/tint/lang/spirv/writer/common/binary_writer.h"
 #include "src/tint/lang/spirv/writer/common/function.h"
 #include "src/tint/lang/spirv/writer/common/module.h"
@@ -148,6 +149,9 @@ const core::type::Type* DedupType(const core::type::Type* ty, core::type::Manage
         // Both sampler types are the same in SPIR-V.
         [&](const core::type::Sampler* s) -> const core::type::Type* {
             if (s->IsComparison()) {
+                return types.Get<core::type::Sampler>(core::type::SamplerKind::kSampler);
+            }
+            if (s->Filtering() != core::SamplerFiltering::kUndefined) {
                 return types.Get<core::type::Sampler>(core::type::SamplerKind::kSampler);
             }
             return s;
@@ -294,8 +298,7 @@ class Printer {
 
     /// Builds the SPIR-V from the IR
     Result<SuccessType> Generate() {
-        TINT_CHECK_RESULT(
-            core::ir::ValidateAndDumpIfNeeded(ir_, "spirv.Printer", kPrinterCapabilities));
+        TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir_, kPrinterCapabilities, "spirv.Printer"));
 
         module_.PushCapability(SpvCapabilityShader);
 
@@ -317,6 +320,15 @@ class Printer {
         // Emit functions.
         for (core::ir::Function* func : ir_.functions) {
             TINT_CHECK_RESULT(EmitFunction(func));
+        }
+
+        // Emit RelaxedPrecision decorations.
+        auto relaxed_precision_decorations = analysis::GetRelaxedPrecisionDecorations(ir_);
+        for (const auto& deco : relaxed_precision_decorations) {
+            module_.PushAnnot(spv::Op::OpDecorate, {
+                                                       Value(deco),
+                                                       U32Operand(SpvDecorationRelaxedPrecision),
+                                                   });
         }
 
         return Success;
@@ -387,6 +399,9 @@ class Printer {
                 module_.PushExtension("SPV_KHR_fragment_shader_barycentric");
                 module_.PushCapability(SpvCapabilityFragmentBarycentricKHR);
                 return SpvBuiltInBaryCoordKHR;
+            // These are lowered elsewhere
+            case core::BuiltinValue::kGlobalInvocationIndex:
+            case core::BuiltinValue::kWorkgroupIndex:
             case core::BuiltinValue::kUndefined:
                 return SpvBuiltInMax;
         }
@@ -396,7 +411,7 @@ class Printer {
     /// Get the result ID of the constant `constant`, emitting its instruction if necessary.
     /// @param constant the constant to get the ID for
     /// @returns the result ID of the constant
-    uint32_t Constant(core::ir::Constant* constant) {
+    uint32_t Constant(const core::ir::Constant* constant) {
         // If it is a literal operand, just return the value.
         if (auto* literal = constant->As<spirv::ir::LiteralOperand>()) {
             return literal->Value()->ValueAs<uint32_t>();
@@ -525,6 +540,10 @@ class Printer {
                 [&](const core::type::U32*) {
                     module_.PushType(spv::Op::OpTypeInt, {id, 32u, 0u});
                 },
+                [&](const core::type::U64*) {
+                    module_.PushCapability(SpvCapabilityInt64);
+                    module_.PushType(spv::Op::OpTypeInt, {id, 64u, 0u});
+                },
                 [&](const core::type::I8*) {
                     module_.PushCapability(SpvCapabilityInt8);
                     module_.PushType(spv::Op::OpTypeInt, {id, 8u, 1u});
@@ -569,7 +588,7 @@ class Printer {
                     module_.PushType(spv::Op::OpTypeArray,
                                      {id, Type(arr->ElemType()), Constant(count)});
                 },
-                [&](const spirv::type::ResourceTable* rb) {
+                [&](const core::type::ResourceTable* rb) {
                     module_.PushCapability(SpvCapabilityRuntimeDescriptorArray);
                     module_.PushExtension("SPV_EXT_descriptor_indexing");
                     module_.PushType(spv::Op::OpTypeRuntimeArray, {id, Type(rb->GetBindingType())});
@@ -656,11 +675,11 @@ class Printer {
     /// Get the result ID of the value `value`, emitting its instruction if necessary.
     /// @param value the value to get the ID for
     /// @returns the result ID of the value
-    uint32_t Value(core::ir::Value* value) {
+    uint32_t Value(const core::ir::Value* value) {
         return Switch(
             value,  //
-            [&](core::ir::Constant* constant) { return Constant(constant); },
-            [&](core::ir::Value*) {
+            [&](const core::ir::Constant* constant) { return Constant(constant); },
+            [&](const core::ir::Value*) {
                 return values_.GetOrAdd(value, [&] { return module_.NextId(); });
             });
     }
@@ -1458,9 +1477,15 @@ class Printer {
                 break;
             case spirv::BuiltinFn::kAtomicUMax:
                 op = spv::Op::OpAtomicUMax;
+                if (builtin->Args()[3]->Type()->Is<core::type::U64>()) {
+                    module_.PushCapability(SpvCapabilityInt64Atomics);
+                }
                 break;
             case spirv::BuiltinFn::kAtomicUMin:
                 op = spv::Op::OpAtomicUMin;
+                if (builtin->Args()[3]->Type()->Is<core::type::U64>()) {
+                    module_.PushCapability(SpvCapabilityInt64Atomics);
+                }
                 break;
             case spirv::BuiltinFn::kAtomicXor:
                 op = spv::Op::OpAtomicXor;
@@ -3016,7 +3041,7 @@ class Printer {
     /// Set the debug name of an instruction.
     void PushName(uint32_t id, core::ir::Instruction* inst) { PushName(id, ir_.NameOf(inst)); }
     /// Set the debug name of a value.
-    void PushName(uint32_t id, core::ir::Value* value) { PushName(id, ir_.NameOf(value)); }
+    void PushName(uint32_t id, const core::ir::Value* value) { PushName(id, ir_.NameOf(value)); }
     /// Set the debug name for a SPIR-V ID.
     void PushName(uint32_t id, const Symbol& name) {
         // Only set the name if it is valid and if we are not stripping user identifiers.

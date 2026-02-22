@@ -27,6 +27,8 @@
 
 #include "src/tint/lang/core/ir/function.h"
 
+#include <utility>
+
 #include "src/tint/lang/core/ir/clone_context.h"
 #include "src/tint/lang/core/ir/module.h"
 #include "src/tint/utils/containers/predicates.h"

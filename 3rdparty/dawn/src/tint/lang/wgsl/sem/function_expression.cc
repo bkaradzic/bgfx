@@ -26,6 +26,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "src/tint/lang/wgsl/sem/function_expression.h"
+
 #include "src/tint/lang/wgsl/ast/identifier_expression.h"
 
 TINT_INSTANTIATE_TYPEINFO(tint::sem::FunctionExpression);

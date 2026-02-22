@@ -370,8 +370,8 @@ struct State {
 }  // namespace
 
 Result<SuccessType> ForkExplicitLayoutTypes(core::ir::Module& ir, SpvVersion version) {
-    TINT_CHECK_RESULT(ValidateAndDumpIfNeeded(ir, "spirv.ForkExplicitLayoutTypes",
-                                              kForkExplicitLayoutTypesCapabilities));
+    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir, kForkExplicitLayoutTypesCapabilities,
+                                             "spirv.ForkExplicitLayoutTypes"));
 
     State{ir, version}.Process();
 

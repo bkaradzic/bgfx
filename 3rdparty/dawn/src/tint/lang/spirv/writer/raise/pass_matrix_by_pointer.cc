@@ -128,7 +128,7 @@ struct State {
 }  // namespace
 
 Result<SuccessType> PassMatrixByPointer(core::ir::Module& ir) {
-    TINT_CHECK_RESULT(ValidateAndDumpIfNeeded(ir, "spirv.PassMatrixByPointer"));
+    TINT_CHECK_RESULT(core::ir::ValidateBeforeIfNeeded(ir, {}, "spirv.PassMatrixByPointer"));
 
     State{ir}.Process();
 

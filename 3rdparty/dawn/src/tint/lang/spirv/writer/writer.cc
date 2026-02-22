@@ -35,6 +35,7 @@
 #include "src/tint/lang/core/ir/validator.h"
 #include "src/tint/lang/core/ir/var.h"
 #include "src/tint/lang/core/type/pointer.h"
+#include "src/tint/lang/core/type/u16.h"
 #include "src/tint/lang/spirv/writer/common/option_helpers.h"
 #include "src/tint/lang/spirv/writer/printer/printer.h"
 #include "src/tint/lang/spirv/writer/raise/raise.h"
@@ -64,6 +65,9 @@ Result<SuccessType> CanGenerate(const core::ir::Module& ir, const Options& optio
         }
         if (ty->Is<core::type::Buffer>()) {
             return Failure("buffers are not supported by the SPIR-V backend");
+        }
+        if (ty->Is<core::type::U16>()) {
+            return Failure("16-bit unsigned integers are not supported by the SPIR-V backend");
         }
     }
 
@@ -134,8 +138,12 @@ Result<SuccessType> CanGenerate(const core::ir::Module& ir, const Options& optio
 
     // Check for unsupported shader IO builtins.
     auto check_io_attributes = [&](const core::IOAttributes& attributes) -> Result<SuccessType> {
-        if (attributes.color.has_value()) {
-            return Failure("@color attribute is not supported by the SPIR-V backend");
+        if (attributes.builtin == core::BuiltinValue::kGlobalInvocationIndex) {
+            return Failure(
+                "@builtin(global_invocation_index) is not supported by the SPIR-V backend");
+        }
+        if (attributes.builtin == core::BuiltinValue::kWorkgroupIndex) {
+            return Failure("@builtin(workgroup_index) is not supported by the SPIR-V backend");
         }
         return Success;
     };

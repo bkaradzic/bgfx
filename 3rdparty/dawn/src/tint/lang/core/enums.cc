@@ -192,6 +192,54 @@ std::string_view ToString(InterpolationType value) {
     return "<unknown>";
 }
 
+/// ParseSamplerFiltering parses a SamplerFiltering from a string.
+/// @param str the string to parse
+/// @returns the parsed enum, or SamplerFiltering::kUndefined if the string could not be parsed.
+SamplerFiltering ParseSamplerFiltering(std::string_view str) {
+    if (str == "filtering") {
+        return SamplerFiltering::kFiltering;
+    }
+    if (str == "non_filtering") {
+        return SamplerFiltering::kNonFiltering;
+    }
+    return SamplerFiltering::kUndefined;
+}
+std::string_view ToString(SamplerFiltering value) {
+    switch (value) {
+        case SamplerFiltering::kUndefined:
+            return "undefined";
+        case SamplerFiltering::kFiltering:
+            return "filtering";
+        case SamplerFiltering::kNonFiltering:
+            return "non_filtering";
+    }
+    return "<unknown>";
+}
+
+/// ParseTextureFilterable parses a TextureFilterable from a string.
+/// @param str the string to parse
+/// @returns the parsed enum, or TextureFilterable::kUndefined if the string could not be parsed.
+TextureFilterable ParseTextureFilterable(std::string_view str) {
+    if (str == "filterable") {
+        return TextureFilterable::kFilterable;
+    }
+    if (str == "unfilterable") {
+        return TextureFilterable::kUnfilterable;
+    }
+    return TextureFilterable::kUndefined;
+}
+std::string_view ToString(TextureFilterable value) {
+    switch (value) {
+        case TextureFilterable::kUndefined:
+            return "undefined";
+        case TextureFilterable::kFilterable:
+            return "filterable";
+        case TextureFilterable::kUnfilterable:
+            return "unfilterable";
+    }
+    return "<unknown>";
+}
+
 /// ParseSubgroupMatrixKind parses a SubgroupMatrixKind from a string.
 /// @param str the string to parse
 /// @returns the parsed enum, or SubgroupMatrixKind::kUndefined if the string could not be parsed.
@@ -700,6 +748,9 @@ BuiltinType ParseBuiltinType(std::string_view str) {
     if (str == "texture_storage_3d") {
         return BuiltinType::kTextureStorage3D;
     }
+    if (str == "u16") {
+        return BuiltinType::kU16;
+    }
     if (str == "u32") {
         return BuiltinType::kU32;
     }
@@ -931,6 +982,8 @@ std::string_view ToString(BuiltinType value) {
             return "texture_storage_2d_array";
         case BuiltinType::kTextureStorage3D:
             return "texture_storage_3d";
+        case BuiltinType::kU16:
+            return "u16";
         case BuiltinType::kU32:
             return "u32";
         case BuiltinType::kU8:
@@ -988,6 +1041,9 @@ BuiltinValue ParseBuiltinValue(std::string_view str) {
     if (str == "global_invocation_id") {
         return BuiltinValue::kGlobalInvocationId;
     }
+    if (str == "global_invocation_index") {
+        return BuiltinValue::kGlobalInvocationIndex;
+    }
     if (str == "instance_index") {
         return BuiltinValue::kInstanceIndex;
     }
@@ -1030,6 +1086,9 @@ BuiltinValue ParseBuiltinValue(std::string_view str) {
     if (str == "workgroup_id") {
         return BuiltinValue::kWorkgroupId;
     }
+    if (str == "workgroup_index") {
+        return BuiltinValue::kWorkgroupIndex;
+    }
     return BuiltinValue::kUndefined;
 }
 std::string_view ToString(BuiltinValue value) {
@@ -1050,6 +1109,8 @@ std::string_view ToString(BuiltinValue value) {
             return "front_facing";
         case BuiltinValue::kGlobalInvocationId:
             return "global_invocation_id";
+        case BuiltinValue::kGlobalInvocationIndex:
+            return "global_invocation_index";
         case BuiltinValue::kInstanceIndex:
             return "instance_index";
         case BuiltinValue::kLocalInvocationId:
@@ -1078,6 +1139,8 @@ std::string_view ToString(BuiltinValue value) {
             return "vertex_index";
         case BuiltinValue::kWorkgroupId:
             return "workgroup_id";
+        case BuiltinValue::kWorkgroupIndex:
+            return "workgroup_index";
     }
     return "<unknown>";
 }
@@ -1232,6 +1295,8 @@ std::string_view ToString(ParameterUsage usage) {
             return "bias";
         case ParameterUsage::kBits:
             return "bits";
+        case ParameterUsage::kColMajor:
+            return "col_major";
         case ParameterUsage::kCompareValue:
             return "compare_value";
         case ParameterUsage::kComponent:
@@ -1314,6 +1379,8 @@ std::string_view ToString(ParameterUsage usage) {
             return "scope";
         case ParameterUsage::kSourceLaneIndex:
             return "sourceLaneIndex";
+        case ParameterUsage::kStride:
+            return "stride";
         case ParameterUsage::kTexel:
             return "texel";
         case ParameterUsage::kTexture:
@@ -1582,9 +1649,6 @@ BuiltinFn ParseBuiltinFn(std::string_view name) {
     if (name == "step") {
         return BuiltinFn::kStep;
     }
-    if (name == "storageBarrier") {
-        return BuiltinFn::kStorageBarrier;
-    }
     if (name == "tan") {
         return BuiltinFn::kTan;
     }
@@ -1617,6 +1681,9 @@ BuiltinFn ParseBuiltinFn(std::string_view name) {
     }
     if (name == "unpack4xU8") {
         return BuiltinFn::kUnpack4XU8;
+    }
+    if (name == "storageBarrier") {
+        return BuiltinFn::kStorageBarrier;
     }
     if (name == "workgroupBarrier") {
         return BuiltinFn::kWorkgroupBarrier;
@@ -1704,6 +1771,12 @@ BuiltinFn ParseBuiltinFn(std::string_view name) {
     }
     if (name == "atomicCompareExchangeWeak") {
         return BuiltinFn::kAtomicCompareExchangeWeak;
+    }
+    if (name == "atomicStoreMax") {
+        return BuiltinFn::kAtomicStoreMax;
+    }
+    if (name == "atomicStoreMin") {
+        return BuiltinFn::kAtomicStoreMin;
     }
     if (name == "subgroupBallot") {
         return BuiltinFn::kSubgroupBallot;
@@ -1981,8 +2054,6 @@ const char* str(BuiltinFn i) {
             return "sqrt";
         case BuiltinFn::kStep:
             return "step";
-        case BuiltinFn::kStorageBarrier:
-            return "storageBarrier";
         case BuiltinFn::kTan:
             return "tan";
         case BuiltinFn::kTanh:
@@ -2005,6 +2076,8 @@ const char* str(BuiltinFn i) {
             return "unpack4xI8";
         case BuiltinFn::kUnpack4XU8:
             return "unpack4xU8";
+        case BuiltinFn::kStorageBarrier:
+            return "storageBarrier";
         case BuiltinFn::kWorkgroupBarrier:
             return "workgroupBarrier";
         case BuiltinFn::kTextureBarrier:
@@ -2063,6 +2136,10 @@ const char* str(BuiltinFn i) {
             return "atomicExchange";
         case BuiltinFn::kAtomicCompareExchangeWeak:
             return "atomicCompareExchangeWeak";
+        case BuiltinFn::kAtomicStoreMax:
+            return "atomicStoreMax";
+        case BuiltinFn::kAtomicStoreMin:
+            return "atomicStoreMin";
         case BuiltinFn::kSubgroupBallot:
             return "subgroupBallot";
         case BuiltinFn::kSubgroupElect:

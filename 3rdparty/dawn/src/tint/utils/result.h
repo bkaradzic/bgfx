@@ -43,7 +43,7 @@ namespace tint {
 struct SuccessType {};
 
 /// An instance of SuccessType that can be used as a generic success value for a Result.
-static constexpr const SuccessType Success;
+inline constexpr const SuccessType Success;
 
 /// The default Result error type.
 struct Failure {

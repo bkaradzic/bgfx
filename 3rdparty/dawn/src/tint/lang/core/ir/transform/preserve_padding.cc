@@ -170,7 +170,7 @@ struct State {
 
 Result<SuccessType> PreservePadding(Module& ir) {
     TINT_CHECK_RESULT(
-        ValidateAndDumpIfNeeded(ir, "core.PreservePadding", kPreservePaddingCapabilities));
+        ValidateBeforeIfNeeded(ir, kPreservePaddingCapabilities, "core.PreservePadding"));
 
     State{ir}.Process();
 

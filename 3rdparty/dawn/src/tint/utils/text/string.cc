@@ -25,11 +25,12 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "src/tint/utils/text/string.h"
+
 #include <algorithm>
 
 #include "src/tint/utils/containers/transform.h"
 #include "src/tint/utils/containers/vector.h"
-#include "src/tint/utils/text/string.h"
 #include "src/tint/utils/text/styled_text.h"
 
 namespace tint {

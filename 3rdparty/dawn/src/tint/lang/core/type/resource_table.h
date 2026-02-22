@@ -25,27 +25,49 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef SRC_TINT_LANG_SPIRV_WRITER_RAISE_RESOURCE_TABLE_H_
-#define SRC_TINT_LANG_SPIRV_WRITER_RAISE_RESOURCE_TABLE_H_
+#ifndef SRC_TINT_LANG_CORE_TYPE_RESOURCE_TABLE_H_
+#define SRC_TINT_LANG_CORE_TYPE_RESOURCE_TABLE_H_
 
-#include <vector>
+#include <string>
 
-#include "src/tint/lang/core/ir/builder.h"
-#include "src/tint/lang/core/ir/transform/resource_table.h"
+#include "src/tint/lang/core/enums.h"
+#include "src/tint/lang/core/type/type.h"
 
-namespace tint::spirv::writer::raise {
+namespace tint::core::type {
 
-class ResourceTableHelper : public core::ir::transform::ResourceTableHelper {
+/// ResourceTable represents an OpTypeRuntimeArray of resources
+class ResourceTable final : public Castable<ResourceTable, core::type::Type> {
   public:
-    ~ResourceTableHelper() override = default;
+    /// Constructor
+    /// @param binding_type the type of the table
+    explicit ResourceTable(const core::type::Type* binding_type);
 
-    // Returns a map of types to the var which is used to access the memory of that type
-    Hashmap<const core::type::Type*, core::ir::Var*, 4> GenerateVars(
-        core::ir::Builder& b,
-        const BindingPoint& bp,
-        const std::vector<ResourceType>& types) const override;
+    /// @param other the other node to compare against
+    /// @returns true if the this type is equal to @p other
+    bool Equals(const UniqueNode& other) const override;
+
+    const core::type::Type* GetBindingType() const { return binding_type_; }
+
+    /// @copydoc core::type::Type::Elements
+    core::type::TypeAndCount Elements(const core::type::Type* type_if_invalid = nullptr,
+                                      uint32_t count_if_invalid = 0) const override;
+
+    /// @copydoc core::type::Type::Element
+    const core::type::Type* Element(uint32_t index) const override;
+
+    /// @returns the friendly name for this type
+    std::string FriendlyName() const override;
+
+    bool IsHandle() const override { return true; }
+
+    /// @param ctx the clone context
+    /// @returns a clone of this type
+    ResourceTable* Clone(core::type::CloneContext& ctx) const override;
+
+  private:
+    const core::type::Type* binding_type_;
 };
 
-}  // namespace tint::spirv::writer::raise
+}  // namespace tint::core::type
 
-#endif  // SRC_TINT_LANG_SPIRV_WRITER_RAISE_RESOURCE_TABLE_H_
+#endif  // SRC_TINT_LANG_CORE_TYPE_RESOURCE_TABLE_H_

@@ -43,6 +43,7 @@
 #include "src/tint/lang/core/type/struct.h"
 #include "src/tint/lang/core/type/texel_buffer.h"
 #include "src/tint/lang/core/type/texture.h"
+#include "src/tint/lang/core/type/u16.h"
 #include "src/tint/lang/core/type/u32.h"
 #include "src/tint/lang/core/type/u64.h"
 #include "src/tint/lang/core/type/u8.h"
@@ -63,7 +64,7 @@ Type::~Type() = default;
 
 const Type* Type::UnwrapPtr() const {
     auto* type = this;
-    while (auto* ptr = type->As<Pointer>()) {
+    if (auto* ptr = type->As<Pointer>()) {
         type = ptr->StoreType();
     }
     return type;
@@ -114,7 +115,7 @@ bool Type::IsFloatScalarOrVector() const {
 }
 
 bool Type::IsIntegerScalar() const {
-    return IsAnyOf<U32, I32, U64, U8, I8>();
+    return IsAnyOf<U32, I32, U64, U8, I8, U16>();
 }
 
 bool Type::IsIntegerVector() const {
@@ -126,7 +127,7 @@ bool Type::IsSignedIntegerScalar() const {
 }
 
 bool Type::IsUnsignedIntegerScalar() const {
-    return IsAnyOf<U32, U64, U8>();
+    return IsAnyOf<U32, U64, U8, U16>();
 }
 
 bool Type::IsSignedIntegerVector() const {

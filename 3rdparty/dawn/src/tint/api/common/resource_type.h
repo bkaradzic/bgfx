@@ -35,22 +35,28 @@ namespace tint {
 enum class ResourceType : uint32_t {
     kEmpty,
 
-    kTexture1d_f32,
+    kTexture1d_f32_filterable,
+    kTexture1d_f32_unfilterable,
     kTexture1d_i32,
     kTexture1d_u32,
-    kTexture2d_f32,
+    kTexture2d_f32_filterable,
+    kTexture2d_f32_unfilterable,
     kTexture2d_i32,
     kTexture2d_u32,
-    kTexture2dArray_f32,
+    kTexture2dArray_f32_filterable,
+    kTexture2dArray_f32_unfilterable,
     kTexture2dArray_i32,
     kTexture2dArray_u32,
-    kTexture3d_f32,
+    kTexture3d_f32_filterable,
+    kTexture3d_f32_unfilterable,
     kTexture3d_i32,
     kTexture3d_u32,
-    kTextureCube_f32,
+    kTextureCube_f32_filterable,
+    kTextureCube_f32_unfilterable,
     kTextureCube_i32,
     kTextureCube_u32,
-    kTextureCubeArray_f32,
+    kTextureCubeArray_f32_filterable,
+    kTextureCubeArray_f32_unfilterable,
     kTextureCubeArray_i32,
     kTextureCubeArray_u32,
 
@@ -63,6 +69,10 @@ enum class ResourceType : uint32_t {
     kTextureDepthCube,
     kTextureDepthCubeArray,
     kTextureDepthMultisampled2d,
+
+    kSampler_filtering,
+    kSampler_non_filtering,
+    kSampler_comparison,
 };
 TINT_REFLECT_ENUM_RANGE(tint::ResourceType, kEmpty, kTextureDepthMultisampled2d);
 

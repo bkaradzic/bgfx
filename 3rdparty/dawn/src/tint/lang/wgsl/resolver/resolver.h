@@ -59,7 +59,6 @@
 namespace tint::ast {
 class IndexAccessorExpression;
 class BinaryExpression;
-class BitcastExpression;
 class CallExpression;
 class CallStatement;
 class CaseStatement;
@@ -83,7 +82,6 @@ class ForLoopStatement;
 class IfStatement;
 class LoopStatement;
 class Statement;
-class StructMember;
 class SwitchStatement;
 class ValueConstructor;
 class ValueConversion;
@@ -172,6 +170,9 @@ class Resolver {
     /// @returns a new u8, if the subgroup matrix extension is enabled, otherwise nullptr
     const core::type::U8* U8(const ast::Identifier* ident);
 
+    /// @returns nullptr since u16 is not enabled in WGSL.
+    const core::type::U16* U16(const ast::Identifier* ident);
+
     /// @returns a vector with the element type @p el of width @p n resolved from the identifier @p
     /// ident.
     const core::type::Vector* Vec(const ast::Identifier* ident,
@@ -210,6 +211,9 @@ class Resolver {
 
     /// @returns a pointer resolved from the templated identifier @p ident.
     const core::type::Pointer* Ptr(const ast::Identifier* ident);
+
+    /// @returns a sampler resolved from the templated identifier @p ident
+    const core::type::Sampler* Sampler(const ast::Identifier* ident);
 
     /// @returns a sampled texture resolved from the templated identifier @p ident with the
     /// dimensions @p dim.
@@ -257,13 +261,6 @@ class Resolver {
     /// sem::BuiltinEnumExpression<core::AddressSpace>, then an error diagnostic is raised and
     /// nullptr is returned.
     sem::BuiltinEnumExpression<core::AddressSpace>* AddressSpaceExpression(
-        const ast::Expression* expr);
-
-    /// @returns the call of Expression() cast to a
-    /// sem::BuiltinEnumExpression<core::type::TexelFormat>. If the sem::Expression is not a
-    /// sem::BuiltinEnumExpression<core::type::TexelFormat>, then an error diagnostic is raised and
-    /// nullptr is returned.
-    sem::BuiltinEnumExpression<core::TexelFormat>* TexelFormatExpression(
         const ast::Expression* expr);
 
     /// @returns the call of Expression() cast to a sem::BuiltinEnumExpression<core::Access>*.
@@ -334,18 +331,11 @@ class Resolver {
     const sem::ValueExpression* Materialize(const sem::ValueExpression* expr,
                                             const core::type::Type* target_type = nullptr);
 
-    /// For each argument in `args`:
-    /// * Calls Materialize() passing the argument and the corresponding parameter type.
-    /// * Calls Load() passing the argument, iff the corresponding parameter type is not a
-    ///   reference type.
+    /// Call Materialize on each argument for the corresponding parameter type.
     /// @returns true on success, false on failure.
     template <size_t N>
-    bool MaybeMaterializeAndLoadArguments(Vector<const sem::ValueExpression*, N>& args,
-                                          const sem::CallTarget* target);
-
-    /// @returns true if an argument of an abstract numeric type, passed to a parameter of type
-    /// `parameter_ty` should be materialized.
-    bool ShouldMaterializeArgument(const core::type::Type* parameter_ty) const;
+    bool MaybeMaterializeArguments(Vector<const sem::ValueExpression*, N>& args,
+                                   const sem::CallTarget* target);
 
     /// Converts `c` to `target_ty`
     /// @returns true on success, false on failure.

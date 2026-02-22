@@ -56,7 +56,7 @@ namespace tint {
 struct EmptyType {};
 
 /// An instance of the EmptyType.
-static constexpr EmptyType Empty;
+inline constexpr EmptyType Empty;
 
 /// Mode enumerator for ReinterpretSlice
 enum class ReinterpretMode {

@@ -29,6 +29,7 @@
 #define SRC_TINT_LANG_WGSL_AST_STRUCT_MEMBER_ALIGN_ATTRIBUTE_H_
 
 #include <stddef.h>
+
 #include <string>
 
 #include "src/tint/lang/wgsl/ast/attribute.h"

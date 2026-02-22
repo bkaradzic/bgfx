@@ -30,7 +30,6 @@
 
 #include <array>
 #include <optional>
-#include <utility>
 
 #include "src/tint/lang/core/io_attributes.h"
 #include "src/tint/lang/core/ir/constant.h"
@@ -42,7 +41,6 @@
 // Forward declarations
 namespace tint::core::ir {
 class Block;
-class FunctionTerminator;
 }  // namespace tint::core::ir
 
 namespace tint::core::ir {

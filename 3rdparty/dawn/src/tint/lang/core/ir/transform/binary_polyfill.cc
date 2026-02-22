@@ -200,7 +200,7 @@ struct State {
 
 Result<SuccessType> BinaryPolyfill(Module& ir, const BinaryPolyfillConfig& config) {
     TINT_CHECK_RESULT(
-        ValidateAndDumpIfNeeded(ir, "core.BinaryPolyfill", kBinaryPolyfillCapabilities));
+        ValidateBeforeIfNeeded(ir, kBinaryPolyfillCapabilities, "core.BinaryPolyfill"));
 
     State{config, ir}.Process();
 

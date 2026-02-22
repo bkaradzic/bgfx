@@ -58,6 +58,7 @@ struct ResourceTableConfig {
     BindingPoint resource_table_binding;
 
     // The binding point for the supporting storage buffer. This is a post-remapping binding point.
+    // TODO(crbug.com/435317394): Rename to metadata_buffer_binding
     BindingPoint storage_buffer_binding;
 
     // The ordering of default bindings which are placed after the user bindings. These will be used
@@ -91,6 +92,7 @@ struct ResourceTableConfig {
                  resource_table_binding,
                  storage_buffer_binding,
                  default_binding_type_order);
+    TINT_REFLECT_EQUALS(ResourceTableConfig);
 };
 
 }  // namespace tint

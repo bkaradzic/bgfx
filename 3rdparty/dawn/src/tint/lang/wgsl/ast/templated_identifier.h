@@ -33,7 +33,6 @@
 
 // Forward declarations
 namespace tint::ast {
-class Attribute;
 class Expression;
 }  // namespace tint::ast
 

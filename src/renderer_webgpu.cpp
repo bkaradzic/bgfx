@@ -379,6 +379,7 @@ namespace bgfx { namespace wgpu
 		{ LANGUAGE_FEATURE(PointerCompositeAccess),               true, false },
 		{ LANGUAGE_FEATURE(UniformBufferStandardLayout),          true, false },
 		{ LANGUAGE_FEATURE(SubgroupId),                           true, false },
+		{ LANGUAGE_FEATURE(TextureAndSamplerLet),                 true, false },
 		{ LANGUAGE_FEATURE(ChromiumTestingUnimplemented),         true, false },
 		{ LANGUAGE_FEATURE(ChromiumTestingUnsafeExperimental),    true, false },
 		{ LANGUAGE_FEATURE(ChromiumTestingExperimental),          true, false },
@@ -390,7 +391,6 @@ namespace bgfx { namespace wgpu
 		{ LANGUAGE_FEATURE(FragmentDepth),                        true, false },
 		{ LANGUAGE_FEATURE(ImmediateAddressSpace),                true, false },
 		{ LANGUAGE_FEATURE(SubgroupUniformity),                   true, false },
-		{ LANGUAGE_FEATURE(TextureAndSamplerLet),                 true, false },
 
 #undef LANGUAGE_FEATURE
 	};

@@ -46,7 +46,6 @@
 // Forward declarations
 namespace tint::ast {
 class Identifier;
-class IdentifierExpression;
 }  // namespace tint::ast
 
 namespace tint::ast {

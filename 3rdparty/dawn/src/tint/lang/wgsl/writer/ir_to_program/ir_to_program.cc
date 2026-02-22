@@ -29,7 +29,6 @@
 
 #include <limits>
 #include <string>
-#include <tuple>
 #include <utility>
 
 #include "src/tint/lang/core/constant/splat.h"
@@ -45,7 +44,6 @@
 #include "src/tint/lang/core/ir/construct.h"
 #include "src/tint/lang/core/ir/continue.h"
 #include "src/tint/lang/core/ir/convert.h"
-#include "src/tint/lang/core/ir/core_builtin_call.h"
 #include "src/tint/lang/core/ir/discard.h"
 #include "src/tint/lang/core/ir/exit_if.h"
 #include "src/tint/lang/core/ir/exit_loop.h"
@@ -81,17 +79,13 @@
 #include "src/tint/lang/core/type/reference.h"
 #include "src/tint/lang/core/type/sampler.h"
 #include "src/tint/lang/core/type/storage_texture.h"
-#include "src/tint/lang/core/type/texture.h"
 #include "src/tint/lang/core/type/type.h"
 #include "src/tint/lang/wgsl/ast/type.h"
 #include "src/tint/lang/wgsl/ir/builtin_call.h"
-#include "src/tint/lang/wgsl/ir/unary.h"
 #include "src/tint/lang/wgsl/program/program_builder.h"
 #include "src/tint/lang/wgsl/reserved_words.h"
 #include "src/tint/lang/wgsl/resolver/resolve.h"
 #include "src/tint/utils/containers/hashmap.h"
-#include "src/tint/utils/containers/predicates.h"
-#include "src/tint/utils/containers/reverse.h"
 #include "src/tint/utils/containers/transform.h"
 #include "src/tint/utils/containers/vector.h"
 #include "src/tint/utils/macros/scoped_assignment.h"
@@ -114,8 +108,7 @@ class State {
             core::ir::Capability::kAllowPhonyInstructions,
             core::ir::Capability::kAllowRefTypes,
         };
-        if (auto res = core::ir::ValidateAndDumpIfNeeded(mod, "wgsl.to_program", caps);
-            res != Success) {
+        if (auto res = ValidateBeforeIfNeeded(mod, caps, "wgsl.to_program"); res != Success) {
             // IR module failed validation.
             b.Diagnostics().AddError(Source{}) << res.Failure();
             return Program{resolver::Resolve(b)};
@@ -144,6 +137,10 @@ class State {
             // Suppress errors regarding non-uniform subgroups operations if requested, by adding a
             // diagnostic directive to the module.
             b.DiagnosticDirective(wgsl::DiagnosticSeverity::kOff, "subgroup_uniformity");
+        }
+        if (options.disable_unreachable_code_warning) {
+            // Suppress warnings regarding unreachable code
+            b.DiagnosticDirective(wgsl::DiagnosticSeverity::kOff, "chromium", "unreachable_code");
         }
 
         return Program{resolver::Resolve(b, options.allowed_features)};
@@ -245,8 +242,14 @@ class State {
                     case core::BuiltinValue::kGlobalInvocationId:
                         attrs.Push(b.Builtin(core::BuiltinValue::kGlobalInvocationId));
                         break;
+                    case core::BuiltinValue::kGlobalInvocationIndex:
+                        attrs.Push(b.Builtin(core::BuiltinValue::kGlobalInvocationIndex));
+                        break;
                     case core::BuiltinValue::kWorkgroupId:
                         attrs.Push(b.Builtin(core::BuiltinValue::kWorkgroupId));
+                        break;
+                    case core::BuiltinValue::kWorkgroupIndex:
+                        attrs.Push(b.Builtin(core::BuiltinValue::kWorkgroupIndex));
                         break;
                     case core::BuiltinValue::kNumWorkgroups:
                         attrs.Push(b.Builtin(core::BuiltinValue::kNumWorkgroups));
@@ -1198,7 +1201,7 @@ class State {
             return name;
         });
 
-        return b.ty(n);
+        return b.ty.AsType(n);
     }
 
     bool ContainsBuiltinStruct(const core::type::Type* ty) {

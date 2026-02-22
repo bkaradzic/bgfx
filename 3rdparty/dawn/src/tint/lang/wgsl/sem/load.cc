@@ -44,6 +44,20 @@ Load::Load(const ValueExpression* src, const Statement* statement, core::Evaluat
     TINT_ASSERT(src->Type()->Is<core::type::MemoryView>());
 }
 
+Load::Load(const ValueExpression* src,
+           const core::type::Type* type,
+           const Statement* statement,
+           core::EvaluationStage stage)
+    : Base(/* declaration */ src->Declaration(),
+           /* type */ type,
+           /* stage */ stage,
+           /* statement */ statement,
+           /* constant */ nullptr,
+           /* root_ident */ src->RootIdentifier()),
+      source_(src) {
+    TINT_ASSERT(src->Type()->Is<core::type::MemoryView>());
+}
+
 Load::~Load() = default;
 
 }  // namespace tint::sem

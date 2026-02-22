@@ -38,7 +38,6 @@
 #include <vector>
 
 #include "src/tint/api/common/override_id.h"
-
 #include "src/tint/api/common/resource_type.h"
 #include "src/tint/lang/core/enums.h"
 #include "src/tint/lang/wgsl/inspector/entry_point.h"
@@ -215,10 +214,6 @@ class Inspector {
     /// @returns the interpolation type and sampling modes for the value
     std::tuple<InterpolationType, InterpolationSampling> CalculateInterpolationData(
         VectorRef<const ast::Attribute*> attributes) const;
-
-    /// @param func the root function of the callgraph to consider for the computation.
-    /// @returns the total size in bytes of all Workgroup storage-class storage accessed via func.
-    uint32_t ComputeWorkgroupStorageSize(const ast::Function* func) const;
 
     /// @param func the root function of the callgraph to consider for the computation.
     /// @returns the total size in bytes of all immediate data variables accessed via func.

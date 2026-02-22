@@ -40,14 +40,10 @@
 
 // Forward declarations
 namespace tint::ast {
-class BuiltinAttribute;
 class Function;
-class LocationAttribute;
-class ReturnStatement;
 }  // namespace tint::ast
 namespace tint::sem {
 class BuiltinFn;
-class Variable;
 }  // namespace tint::sem
 
 namespace tint::sem {

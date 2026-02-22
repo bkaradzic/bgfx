@@ -36,7 +36,6 @@
 // Forward declarations
 namespace tint::core::ir {
 class Constant;
-class MultiInBlock;
 }  // namespace tint::core::ir
 
 namespace tint::core::ir {

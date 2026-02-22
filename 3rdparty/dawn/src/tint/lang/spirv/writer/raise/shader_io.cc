@@ -31,6 +31,7 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <utility>
 
 #include "src/tint/lang/core/enums.h"
 #include "src/tint/lang/core/fluent_types.h"
@@ -38,7 +39,9 @@
 #include "src/tint/lang/core/ir/module.h"
 #include "src/tint/lang/core/ir/transform/shader_io.h"
 #include "src/tint/lang/core/ir/validator.h"
-#include "src/tint/lang/core/type/array.h"
+#include "src/tint/lang/spirv/builtin_fn.h"
+#include "src/tint/lang/spirv/ir/builtin_call.h"
+#include "src/tint/lang/spirv/type/image.h"
 #include "src/tint/utils/ice/ice.h"
 
 using namespace tint::core::fluent_types;     // NOLINT
@@ -166,10 +169,34 @@ struct StateImpl : core::ir::transform::ShaderIOBackendState {
                 }
             }
 
+            auto new_addrspace = addrspace;
+
+            // Color becomes an InputAttachment in the handle space
+            if (io.attributes.color) {
+                auto sample_ty = store_type->DeepestElement();
+                store_type = ty.Get<spirv::type::Image>(
+                    sample_ty, type::Dim::kSubpassData, type::Depth::kNotDepth,
+                    type::Arrayed::kNonArrayed, type::Multisampled::kSingleSampled,
+                    type::Sampled::kReadWriteOpCompatible, core::TexelFormat::kUndefined, access);
+
+                new_addrspace = core::AddressSpace::kHandle;
+
+                // Attach the provided binding point
+                auto iter = config.colour_index_to_binding_point.find(io.attributes.color.value());
+                TINT_IR_ASSERT(ir, iter != config.colour_index_to_binding_point.end());
+
+                TINT_IR_ASSERT(ir, !io.attributes.binding_point.has_value());
+                io.attributes.binding_point = iter->second;
+
+                io.attributes.input_attachment_index = io.attributes.color;
+                io.attributes.color = std::nullopt;
+            }
+
             // Create an IO variable and add it to the root block.
-            auto* ptr = ty.ptr(addrspace, store_type, access);
+            auto* ptr = ty.ptr(new_addrspace, store_type, access);
             auto* var = b.Var(name.str(), ptr);
             var->SetAttributes(io.attributes);
+
             ir.root_block->Append(var);
             vars.Push(var);
         }
@@ -198,7 +225,41 @@ struct StateImpl : core::ir::transform::ShaderIOBackendState {
             from = builder.Access(ptr, input_vars[idx], 0_u)->Result();
         }
 
-        auto* value = builder.Load(from)->Result();
+        core::ir::Value* value = builder.Load(from)->Result();
+
+        if (inputs[idx].attributes.color.has_value()) {
+            // coords for input_attachment are always (0, 0)
+            auto* coords = builder.Composite(ty.vec2i(), 0_i, 0_i);
+
+            // Start building the argument list for the builtin.
+            // The first two operands are always the texture and then the coordinates.
+            Vector<core::ir::Value*, 8> builtin_args;
+            builtin_args.Push(value);
+            builtin_args.Push(coords);
+
+            // Call the builtin.
+            value = builder
+                        .Call<spirv::ir::BuiltinCall>(ty.vec4(inputs[idx].type->DeepestElement()),
+                                                      spirv::BuiltinFn::kImageRead,
+                                                      std::move(builtin_args))
+                        ->Result();
+
+            auto* orig_ty = inputs[idx].type;
+            if (orig_ty->IsAnyOf<core::type::I32, core::type::U32, core::type::F32>()) {
+                value = builder.Swizzle(orig_ty, value, {0})->Result();
+            } else {
+                auto* vec = orig_ty->As<core::type::Vector>();
+                TINT_IR_ASSERT(ir, vec);
+
+                if (vec->Width() != 4) {
+                    Vector<uint32_t, 3> indices;
+                    for (uint32_t i = 0; i < vec->Width(); ++i) {
+                        indices.Push(i);
+                    }
+                    value = builder.Swizzle(orig_ty, value, indices)->Result();
+                }
+            }
+        }
 
         // Convert f32 values to f16 values if needed.
         if (config.polyfill_f16_io && inputs[idx].type->DeepestElement()->Is<core::type::F16>()) {
@@ -324,7 +385,7 @@ struct StateImpl : core::ir::transform::ShaderIOBackendState {
 }  // namespace
 
 Result<SuccessType> ShaderIO(core::ir::Module& ir, const ShaderIOConfig& config) {
-    TINT_CHECK_RESULT(ValidateAndDumpIfNeeded(ir, "spirv.ShaderIO", kShaderIOCapabilities));
+    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir, kShaderIOCapabilities, "spirv.ShaderIO"));
 
     core::ir::transform::RunShaderIOBase(ir, [&](core::ir::Module& mod, core::ir::Function* func) {
         return std::make_unique<StateImpl>(mod, func, config);

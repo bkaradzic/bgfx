@@ -230,7 +230,7 @@ struct State {
 }  // namespace
 
 Result<SuccessType> ValueToLet(Module& ir, const ValueToLetConfig& cfg) {
-    TINT_CHECK_RESULT(ValidateAndDumpIfNeeded(ir, "core.ValueToLet", kValueToLetCapabilities));
+    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir, kValueToLetCapabilities, "core.ValueToLet"));
 
     State{ir, cfg}.Process();
 

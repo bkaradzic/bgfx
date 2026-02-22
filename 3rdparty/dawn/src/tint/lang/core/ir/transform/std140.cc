@@ -448,7 +448,7 @@ struct State {
 }  // namespace
 
 Result<SuccessType> Std140(Module& ir) {
-    TINT_CHECK_RESULT(ValidateAndDumpIfNeeded(ir, "core.Std140", kStd140Capabilities));
+    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir, kStd140Capabilities, "core.Std140"));
 
     State{ir}.Process();
 

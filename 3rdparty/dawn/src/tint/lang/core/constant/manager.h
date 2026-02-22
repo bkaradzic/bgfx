@@ -119,6 +119,10 @@ class Manager final {
     const Scalar<u8>* Get(u8 value);
 
     /// @param value the constant value
+    /// @return a Scalar holding the u16 value @p value
+    const Scalar<u16>* Get(u16 value);
+
+    /// @param value the constant value
     /// @return a Scalar holding the f32 value @p value
     const Scalar<f32>* Get(f32 value);
 

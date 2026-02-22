@@ -69,6 +69,7 @@ class Reference;
 class SampledTexture;
 class StorageTexture;
 class U8;
+class U16;
 class U32;
 class U64;
 class Vector;
@@ -156,6 +157,8 @@ class Manager final {
             return Get<core::type::I32>(std::forward<ARGS>(args)...);
         } else if constexpr (std::is_same_v<T, tint::core::u8>) {
             return Get<core::type::U8>(std::forward<ARGS>(args)...);
+        } else if constexpr (std::is_same_v<T, tint::core::u16>) {
+            return Get<core::type::U16>(std::forward<ARGS>(args)...);
         } else if constexpr (std::is_same_v<T, tint::core::u32>) {
             return Get<core::type::U32>(std::forward<ARGS>(args)...);
         } else if constexpr (std::is_same_v<T, tint::core::u64>) {
@@ -220,6 +223,9 @@ class Manager final {
 
     /// @returns a u8 type
     const core::type::U8* u8();
+
+    /// @returns a u16 type
+    const core::type::U16* u16();
 
     /// @returns a u32 type
     const core::type::U32* u32();
@@ -313,6 +319,14 @@ class Manager final {
     /// @returns a sampled texture type with the provided params
     const core::type::SampledTexture* sampled_texture(TextureDimension dim,
                                                       const core::type::Type* type);
+
+    /// @param dim the dimensionality of the texture
+    /// @param type the data type of the sampled texture
+    /// @param filterable the filterablity
+    /// @returns a sampled texture type with the provided params
+    const core::type::SampledTexture* sampled_texture(TextureDimension dim,
+                                                      const core::type::Type* type,
+                                                      TextureFilterable filterable);
 
     /// @param dim the dimensionality of the texture
     /// @param type the data type of the sampled texture
@@ -662,6 +676,12 @@ class Manager final {
     /// @returns the sampler type
     const core::type::Sampler* sampler() {
         return Get<core::type::Sampler>(core::type::SamplerKind::kSampler);
+    }
+
+    /// @param filtering the sampler filtering parameter
+    /// @returns the sampler type
+    const core::type::Sampler* sampler(SamplerFiltering filtering) {
+        return Get<core::type::Sampler>(core::type::SamplerKind::kSampler, filtering);
     }
 
     /// @returns the comparison sampler type

@@ -34,14 +34,19 @@
 // TODO(tint:88): When implementing support for an install target, all of these
 //                headers will need to be moved to include/tint/.
 
-#include "src/tint/api/common/subgroup_matrix.h"
-#include "src/tint/api/common/substitute_overrides_config.h"
-#include "src/tint/api/common/vertex_pulling_config.h"
-#include "src/tint/api/tint.h"
-#include "src/tint/lang/core/type/manager.h"
-#include "src/tint/lang/wgsl/inspector/inspector.h"
-#include "src/tint/utils/diagnostic/formatter.h"
-#include "src/tint/utils/text/styled_text.h"
+#include "src/tint/api/common/binding_point.h"                // IWYU pragma: export
+#include "src/tint/api/common/resource_type.h"                // IWYU pragma: export
+#include "src/tint/api/common/subgroup_matrix.h"              // IWYU pragma: export
+#include "src/tint/api/common/substitute_overrides_config.h"  // IWYU pragma: export
+#include "src/tint/api/common/vertex_pulling_config.h"        // IWYU pragma: export
+#include "src/tint/api/common/workgroup_info.h"               // IWYU pragma: export
+#include "src/tint/api/tint.h"                                // IWYU pragma: export
+#include "src/tint/lang/core/type/manager.h"                  // IWYU pragma: export
+#include "src/tint/lang/wgsl/enums.h"                         // IWYU pragma: export
+#include "src/tint/lang/wgsl/feature_status.h"                // IWYU pragma: export
+#include "src/tint/lang/wgsl/inspector/inspector.h"           // IWYU pragma: export
+#include "src/tint/utils/diagnostic/formatter.h"              // IWYU pragma: export
+#include "src/tint/utils/text/styled_text.h"                  // IWYU pragma: export
 
 ///////////////
 // NOTE if adding a new guard include here, it must also appear in src/tint/api/tint.cc for the

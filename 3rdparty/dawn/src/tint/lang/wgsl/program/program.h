@@ -37,6 +37,9 @@
 #include "src/tint/utils/symbol/symbol_table.h"
 
 // Forward Declarations
+namespace tint {
+class ProgramBuilder;
+}
 namespace tint::ast {
 class Module;
 }  // namespace tint::ast

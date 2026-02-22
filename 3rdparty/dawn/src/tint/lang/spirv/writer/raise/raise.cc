@@ -36,7 +36,7 @@
 #include "src/tint/lang/core/ir/transform/builtin_scalarize.h"
 #include "src/tint/lang/core/ir/transform/combine_access_instructions.h"
 #include "src/tint/lang/core/ir/transform/conversion_polyfill.h"
-#include "src/tint/lang/core/ir/transform/decompose_uniform_access.h"
+#include "src/tint/lang/core/ir/transform/decompose_access.h"
 #include "src/tint/lang/core/ir/transform/demote_to_helper.h"
 #include "src/tint/lang/core/ir/transform/direct_variable_access.h"
 #include "src/tint/lang/core/ir/transform/multiplanar_external_texture.h"
@@ -62,7 +62,7 @@
 #include "src/tint/lang/spirv/writer/raise/merge_return.h"
 #include "src/tint/lang/spirv/writer/raise/pass_matrix_by_pointer.h"
 #include "src/tint/lang/spirv/writer/raise/remove_unreachable_in_loop_continuing.h"
-#include "src/tint/lang/spirv/writer/raise/resource_table.h"
+#include "src/tint/lang/spirv/writer/raise/resource_table_helper.h"
 #include "src/tint/lang/spirv/writer/raise/shader_io.h"
 #include "src/tint/lang/spirv/writer/raise/unary_polyfill.h"
 #include "src/tint/lang/spirv/writer/raise/var_for_dynamic_index.h"
@@ -172,9 +172,10 @@ Result<SuccessType> Raise(core::ir::Module& module, const Options& options) {
     TINT_CHECK_RESULT(core::ir::transform::Bgra8UnormPolyfill(module));
 
     if (!options.extensions.use_uniform_buffers) {
-        // DecomposeUniformAccess must come before BlockDecoratedStructs, which will wrap the
+        // DecomposeAccess must come before BlockDecoratedStructs, which will wrap the
         // uniform variable in a structure.
-        TINT_CHECK_RESULT(core::ir::transform::DecomposeUniformAccess(module));
+        core::ir::transform::DecomposeAccessOptions decompose_config{.uniform = true};
+        TINT_CHECK_RESULT(core::ir::transform::DecomposeAccess(module, decompose_config));
     } else {
         TINT_CHECK_RESULT(core::ir::transform::Std140(module));
     }
@@ -231,11 +232,16 @@ Result<SuccessType> Raise(core::ir::Module& module, const Options& options) {
     }
     TINT_CHECK_RESULT(raise::RemoveUnreachableInLoopContinuing(module));
     TINT_CHECK_RESULT(raise::ShaderIO(
-        module, raise::ShaderIOConfig{immediate_data_layout, options.emit_vertex_point_size,
-                                      !options.extensions.use_storage_input_output_16,
-                                      options.polyfill_pixel_center, options.depth_range_offsets}));
+        module, raise::ShaderIOConfig{
+                    .immediate_data_layout = immediate_data_layout,
+                    .colour_index_to_binding_point = options.colour_index_to_binding_point,
+                    .emit_vertex_point_size = options.emit_vertex_point_size,
+                    .polyfill_f16_io = !options.extensions.use_storage_input_output_16,
+                    .polyfill_pixel_center = options.polyfill_pixel_center,
+                    .depth_range_offsets = options.depth_range_offsets,
+                }));
 
-    // ForkExplicitLayoutTypes must come after DecomposeUniformAccess, since it rewrites
+    // ForkExplicitLayoutTypes must come after DecomposeAccess, since it rewrites
     // host-shareable array types to use the explicitly laid array type defined by the SPIR-V
     // dialect.
     TINT_CHECK_RESULT(raise::ForkExplicitLayoutTypes(module, options.spirv_version));

@@ -35,7 +35,6 @@
 
 #include "src/tint/utils/macros/compiler.h"
 
-
 namespace tint::bytes {
 
 /// @returns the input value with all bytes reversed
@@ -59,6 +58,5 @@ template <typename T>
 TINT_END_DISABLE_WARNING(UNSAFE_BUFFER_USAGE);
 
 }  // namespace tint::bytes
-
 
 #endif  // SRC_TINT_UTILS_BYTES_SWAP_H_

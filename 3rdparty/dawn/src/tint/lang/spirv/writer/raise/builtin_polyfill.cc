@@ -45,6 +45,7 @@
 #include "src/tint/lang/core/type/i8.h"
 #include "src/tint/lang/core/type/input_attachment.h"
 #include "src/tint/lang/core/type/multisampled_texture.h"
+#include "src/tint/lang/core/type/resource_table.h"
 #include "src/tint/lang/core/type/sampled_texture.h"
 #include "src/tint/lang/core/type/storage_texture.h"
 #include "src/tint/lang/core/type/texture.h"
@@ -52,7 +53,6 @@
 #include "src/tint/lang/spirv/ir/binary.h"
 #include "src/tint/lang/spirv/ir/builtin_call.h"
 #include "src/tint/lang/spirv/ir/literal_operand.h"
-#include "src/tint/lang/spirv/type/resource_table.h"
 #include "src/tint/lang/spirv/type/sampled_image.h"
 #include "src/tint/utils/ice/ice.h"
 #include "src/tint/utils/internal_limits.h"
@@ -160,9 +160,9 @@ const core::type::Type* ReplacementType(core::type::Manager& ty, const core::typ
             }
             return nullptr;
         },
-        [&](const spirv::type::ResourceTable* rb) -> const core::type::Type* {
+        [&](const core::type::ResourceTable* rb) -> const core::type::Type* {
             if (auto* replacement = ReplacementType(ty, rb->GetBindingType())) {
-                return ty.Get<spirv::type::ResourceTable>(replacement);
+                return ty.Get<core::type::ResourceTable>(replacement);
             }
             return nullptr;
         },
@@ -212,6 +212,8 @@ struct State {
                     case core::BuiltinFn::kAtomicAdd:
                     case core::BuiltinFn::kAtomicAnd:
                     case core::BuiltinFn::kAtomicCompareExchangeWeak:
+                    case core::BuiltinFn::kAtomicStoreMax:
+                    case core::BuiltinFn::kAtomicStoreMin:
                     case core::BuiltinFn::kAtomicExchange:
                     case core::BuiltinFn::kAtomicLoad:
                     case core::BuiltinFn::kAtomicMax:
@@ -290,6 +292,8 @@ struct State {
                 case core::BuiltinFn::kAtomicStore:
                 case core::BuiltinFn::kAtomicSub:
                 case core::BuiltinFn::kAtomicXor:
+                case core::BuiltinFn::kAtomicStoreMax:
+                case core::BuiltinFn::kAtomicStoreMin:
                     Atomic(builtin);
                     break;
                 case core::BuiltinFn::kDot:
@@ -514,6 +518,17 @@ struct State {
                     call = build(spirv::BuiltinFn::kAtomicUMin);
                 }
                 call->AppendArg(builtin->Args()[1]);
+                break;
+            case core::BuiltinFn::kAtomicStoreMax: {
+                call = build(spirv::BuiltinFn::kAtomicUMax);
+                call->AppendArg(builtin->Args()[1]);
+                call->Result()->SetType(ty.u64());
+                break;
+            }
+            case core::BuiltinFn::kAtomicStoreMin:
+                call = build(spirv::BuiltinFn::kAtomicUMin);
+                call->AppendArg(builtin->Args()[1]);
+                call->Result()->SetType(ty.u64());
                 break;
             case core::BuiltinFn::kAtomicStore:
                 call = build(spirv::BuiltinFn::kAtomicStore);
@@ -1432,12 +1447,13 @@ struct State {
 }  // namespace
 
 Result<SuccessType> BuiltinPolyfill(core::ir::Module& ir, PolyfillConfig config) {
-    TINT_CHECK_RESULT(ValidateAndDumpIfNeeded(ir, "spirv.BuiltinPolyfill",
-                                              core::ir::Capabilities{
-                                                  core::ir::Capability::kAllow8BitIntegers,
-                                                  core::ir::Capability::kAllowDuplicateBindings,
-                                                  core::ir::Capability::kAllowNonCoreTypes,
-                                              }));
+    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir,
+                                             core::ir::Capabilities{
+                                                 core::ir::Capability::kAllow8BitIntegers,
+                                                 core::ir::Capability::kAllowDuplicateBindings,
+                                                 core::ir::Capability::kAllowNonCoreTypes,
+                                             },
+                                             "spirv.BuiltinPolyfill"));
 
     State{ir, config}.Process();
 

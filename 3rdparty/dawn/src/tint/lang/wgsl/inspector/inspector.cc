@@ -164,18 +164,13 @@ ResourceBinding ConvertHandleToResourceBinding(const tint::sem::GlobalVariable* 
         handle_type,
 
         [&](const core::type::Sampler* sampler) {
-            if (sampler->Kind() == core::type::SamplerKind::kSampler) {
-                result.resource_type = ResourceBinding::ResourceType::kSampler;
-            } else {
-                TINT_ASSERT(sampler->Kind() == core::type::SamplerKind::kComparisonSampler);
-                result.resource_type = ResourceBinding::ResourceType::kComparisonSampler;
-            }
+            result.resource_type = ResourceBinding::ResourceType::kSampler;
+            result.sampler_type = SamplerToSamplerType(sampler);
         },
-
         [&](const core::type::SampledTexture* tex) {
             result.resource_type = ResourceBinding::ResourceType::kSampledTexture;
             result.dim = TypeTextureDimensionToResourceBindingTextureDimension(tex->Dim());
-            result.sampled_kind = BaseTypeToSampledKind(tex->Type());
+            result.sampled_kind = ToFilterableSampledKind(tex);
         },
         [&](const core::type::MultisampledTexture* tex) {
             result.resource_type = ResourceBinding::ResourceType::kMultisampledTexture;
@@ -313,7 +308,6 @@ EntryPoint Inspector::GetEntryPoint(const tint::ast::Function* func) {
     switch (func->PipelineStage()) {
         case ast::PipelineStage::kCompute: {
             entry_point.stage = PipelineStage::kCompute;
-            entry_point.workgroup_storage_size = ComputeWorkgroupStorageSize(func);
 
             auto wgsize = sem->WorkgroupSize();
             if (wgsize[0].has_value() && wgsize[1].has_value() && wgsize[2].has_value()) {
@@ -965,26 +959,6 @@ std::tuple<InterpolationType, InterpolationSampling> Inspector::CalculateInterpo
     }
 
     return {interpolation_type, sampling_type};
-}
-
-uint32_t Inspector::ComputeWorkgroupStorageSize(const ast::Function* func) const {
-    uint32_t total_size = 0;
-    auto* func_sem = program_.Sem().Get(func);
-    for (const sem::Variable* var : func_sem->TransitivelyReferencedGlobals()) {
-        if (var->AddressSpace() == core::AddressSpace::kWorkgroup) {
-            auto* ty = var->Type()->UnwrapRef();
-            uint32_t align = ty->Align();
-            uint32_t size = ty->Size();
-
-            // This essentially matches std430 layout rules from GLSL, which are in
-            // turn specified as an upper bound for Vulkan layout sizing. Since D3D
-            // and Metal are even less specific, we assume Vulkan behavior as a
-            // good-enough approximation everywhere.
-            total_size += tint::RoundUp(16u, tint::RoundUp(align, size));
-        }
-    }
-
-    return total_size;
 }
 
 uint32_t Inspector::ComputeImmediateDataSize(const ast::Function* func) const {

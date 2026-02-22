@@ -1,4 +1,4 @@
-// Copyright 2025 The Dawn & Tint Authors
+// Copyright 2026 The Dawn & Tint Authors
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -25,47 +25,39 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "src/tint/lang/spirv/type/resource_table.h"
-
-#include <sstream>
+#include "src/tint/lang/core/type/u16.h"
 
 #include "src/tint/lang/core/type/manager.h"
 
-TINT_INSTANTIATE_TYPEINFO(tint::spirv::type::ResourceTable);
+TINT_INSTANTIATE_TYPEINFO(tint::core::type::U16);
 
-namespace tint::spirv::type {
+namespace tint::core::type {
 
-ResourceTable::ResourceTable(const core::type::Type* binding_type)
-    : Base(static_cast<size_t>(Hash(tint::TypeCode::Of<ResourceTable>().bits, binding_type)),
-           core::type::Flags{}),
-      binding_type_(binding_type) {}
+U16::U16()
+    : Base(static_cast<size_t>(tint::TypeCode::Of<U16>().bits),
+           core::type::Flags{
+               Flag::kConstructable,
+               Flag::kCreationFixedFootprint,
+               Flag::kFixedFootprint,
+               Flag::kHostShareable,
+           }) {}
 
-bool ResourceTable::Equals(const UniqueNode& other) const {
-    if (auto* o = other.As<ResourceTable>()) {
-        return o->binding_type_ == binding_type_;
-    }
-    return false;
+U16::~U16() = default;
+
+std::string U16::FriendlyName() const {
+    return "u16";
 }
 
-std::string ResourceTable::FriendlyName() const {
-    std::stringstream str;
-    str << "spirv.resource_table<" << binding_type_->FriendlyName() << ">";
-    return str.str();
+uint32_t U16::Size() const {
+    return 2;
 }
 
-core::type::TypeAndCount ResourceTable::Elements(
-    [[maybe_unused]] const core::type::Type* type_if_unused,
-    uint32_t count_if_invalid) const {
-    return {binding_type_, count_if_invalid};
+uint32_t U16::Align() const {
+    return 2;
 }
 
-const core::type::Type* ResourceTable::Element([[maybe_unused]] uint32_t index) const {
-    return binding_type_;
+U16* U16::Clone(CloneContext& ctx) const {
+    return ctx.dst.mgr->Get<U16>();
 }
 
-ResourceTable* ResourceTable::Clone(core::type::CloneContext& ctx) const {
-    auto* binding_type = binding_type_->Clone(ctx);
-    return ctx.dst.mgr->Get<ResourceTable>(binding_type);
-}
-
-}  // namespace tint::spirv::type
+}  // namespace tint::core::type

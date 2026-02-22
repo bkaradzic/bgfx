@@ -756,14 +756,15 @@ struct State {
 
 Result<SuccessType> TransposeRowMajor(core::ir::Module& ir) {
     TINT_CHECK_RESULT(
-        ValidateAndDumpIfNeeded(ir, "spirv.TransposeRowMajor",
-                                core::ir::Capabilities{
-                                    core::ir::Capability::kAllowMultipleEntryPoints,
-                                    core::ir::Capability::kAllowStructMatrixDecorations,
-                                    core::ir::Capability::kAllowNonCoreTypes,
-                                    core::ir::Capability::kAllowOverrides,
-                                    core::ir::Capability::kAllowPointerToHandle,
-                                }));
+        ValidateBeforeIfNeeded(ir,
+                               core::ir::Capabilities{
+                                   core::ir::Capability::kAllowMultipleEntryPoints,
+                                   core::ir::Capability::kAllowStructMatrixDecorations,
+                                   core::ir::Capability::kAllowNonCoreTypes,
+                                   core::ir::Capability::kAllowOverrides,
+                                   core::ir::Capability::kAllowPointerToHandle,
+                               },
+                               "spirv.TransposeRowMajor"));
 
     State{ir}.Process();
 

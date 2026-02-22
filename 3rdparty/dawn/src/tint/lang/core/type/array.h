@@ -29,6 +29,7 @@
 #define SRC_TINT_LANG_CORE_TYPE_ARRAY_H_
 
 #include <stdint.h>
+
 #include <optional>
 #include <string>
 #include <variant>

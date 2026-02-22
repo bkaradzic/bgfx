@@ -31,7 +31,6 @@
 #include <unordered_set>
 
 #include "src/tint/utils/math/hash.h"
-
 #include "src/tint/utils/reflection.h"
 
 namespace tint {

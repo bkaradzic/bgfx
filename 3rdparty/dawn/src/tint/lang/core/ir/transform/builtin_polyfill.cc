@@ -622,9 +622,10 @@ struct State {
                 //    result = extractBits(e, offset, count)
                 // With:
                 //   let s = min(offset, 32u);
-                //   let t = min(32u, (s + count));
+                //   let clamped_count = min(count, 32u);
+                //   let t = min(32u, (s + clamped_count));
                 //   let shl = (32u - t);
-                //   let shr = (shl + s
+                //   let shr = (shl + s);
                 //   let shl_result = select(i32(), (e << shl), (shl < 32u));
                 //   result = select(((shl_result >> 31u) >> 1u), (shl_result >> shr), (shr < 32u));
                 // }
@@ -634,7 +635,8 @@ struct State {
                 auto V = [&](uint32_t u) { return b.MatchWidth(u32(u), result_ty); };
                 b.InsertBefore(call, [&] {
                     auto* s = b.Min(offset, 32_u);
-                    auto* t = b.Min(32_u, b.Add(s, count));
+                    auto* clamped_count = b.Min(count, 32_u);
+                    auto* t = b.Min(32_u, b.Add(s, clamped_count));
                     auto* shl = b.Subtract(32_u, t);
                     auto* shr = b.Add(shl, s);
                     auto* f1 = b.Zero(result_ty);
@@ -832,7 +834,10 @@ struct State {
                 };
 
                 b.InsertBefore(call, [&] {
-                    auto* oc = b.Add(offset, count);
+                    auto* clamped_count = b.Min(count, 32_u);
+                    auto* clamped_offset = b.Min(offset, 32_u);
+                    auto* oc = b.Add(clamped_offset, clamped_count);
+
                     auto* t1 = b.ShiftLeft(1_u, offset);
                     auto* s1 = b.Call<u32>(core::BuiltinFn::kSelect, b.Zero<u32>(), t1,
                                            b.LessThan(offset, 32_u));
@@ -952,10 +957,10 @@ struct State {
         auto* sampler = call->Args()[1];
         auto* coords = call->Args()[2];
         b.InsertBefore(call, [&] {
-            auto* dims = b.Call<vec2<u32>>(core::BuiltinFn::kTextureDimensions, texture);
-            auto* fdims = b.Convert<vec2<f32>>(dims);
-            auto* half_texel = b.Divide(b.Splat<vec2<f32>>(0.5_f), fdims);
-            auto* one_minus_half_texel = b.Subtract(b.Splat<vec2<f32>>(1_f), half_texel);
+            auto* dims = b.Call<vec2u>(core::BuiltinFn::kTextureDimensions, texture);
+            auto* fdims = b.Convert<vec2f>(dims);
+            auto* half_texel = b.Divide(b.Splat<vec2f>(0.5_f), fdims);
+            auto* one_minus_half_texel = b.Subtract(b.Splat<vec2f>(1_f), half_texel);
             auto* clamped = b.Clamp(coords, half_texel, one_minus_half_texel);
             b.CallWithResult(call->DetachResult(), core::BuiltinFn::kTextureSampleLevel, texture,
                              sampler, clamped, 0_f);
@@ -1239,7 +1244,7 @@ struct State {
 
 Result<SuccessType> BuiltinPolyfill(Module& ir, const BuiltinPolyfillConfig& config) {
     TINT_CHECK_RESULT(
-        ValidateAndDumpIfNeeded(ir, "core.BuiltinPolyfill", kBuiltinPolyfillCapabilities));
+        ValidateBeforeIfNeeded(ir, kBuiltinPolyfillCapabilities, "core.BuiltinPolyfill"));
 
     State{config, ir}.Process();
 

@@ -28,6 +28,7 @@
 #include "src/tint/lang/core/ir/module.h"
 
 #include <limits>
+#include <type_traits>
 #include <utility>
 
 #include "src/tint/lang/core/ir/control_instruction.h"
@@ -39,19 +40,22 @@ namespace tint::core::ir {
 
 namespace {
 
-/// Helper to non-recursively sort a module's function in dependency order.
+/// Helper to non-recursively sort a module's functions in dependency order.
+template <typename FUNCTION>
 struct FunctionSorter {
+    using BLOCK = std::conditional_t<std::is_const_v<FUNCTION>, const Block, Block>;
+
     /// The dependency-ordered list of functions.
-    UniqueVector<Function*, 16> ordered_functions{};
+    UniqueVector<FUNCTION*, 16> ordered_functions{};
 
     /// The functions that have been visited and checked for dependencies.
-    Hashset<Function*, 16> visited{};
+    Hashset<FUNCTION*, 16> visited{};
     /// A stack of functions that need to processed and eventually added to the ordered list.
-    Vector<Function*, 16> function_stack{};
+    Vector<FUNCTION*, 16> function_stack{};
 
     /// Visit a function and check for dependencies, and eventually add it to the ordered list.
     /// @param func the function to visit
-    void Visit(Function* func) {
+    void Visit(FUNCTION* func) {
         function_stack.Push(func);
         while (!function_stack.IsEmpty()) {
             // Visit the next function on the stack, if it hasn't already been visited.
@@ -76,15 +80,15 @@ struct FunctionSorter {
 
     /// Visit a function body block and look for dependencies.
     /// @param block the function body to visit
-    void Visit(Block* block) {
-        Vector<Block*, 64> block_stack;
+    void Visit(BLOCK* block) {
+        Vector<BLOCK*, 64> block_stack;
         block_stack.Push(block);
         while (!block_stack.IsEmpty()) {
             auto* current_block = block_stack.Pop();
             for (auto* inst : *current_block) {
                 if (auto* control = inst->template As<ControlInstruction>()) {
                     // Enqueue child blocks.
-                    control->ForeachBlock([&](Block* b) { block_stack.Push(b); });
+                    control->ForeachBlock([&](BLOCK* b) { block_stack.Push(b); });
                 } else if (auto* call = inst->template As<UserCall>()) {
                     // Enqueue the function that is being called.
                     if (!visited.Contains(call->Target())) {
@@ -98,7 +102,7 @@ struct FunctionSorter {
     /// Sort the functions of a module.
     /// @param mod the IR module
     /// @returns the sorted function list
-    static Vector<Function*, 16> SortFunctions(Module& mod) {
+    static Vector<FUNCTION*, 16> SortFunctions(const Module& mod) {
         FunctionSorter sorter;
         for (auto& func : mod.functions) {
             sorter.Visit(func);
@@ -175,7 +179,11 @@ Source Module::SourceOf(const Value* value) const {
 }
 
 Vector<Function*, 16> Module::DependencyOrderedFunctions() {
-    return FunctionSorter::SortFunctions(*this);
+    return FunctionSorter<Function>::SortFunctions(*this);
+}
+
+Vector<const Function*, 16> Module::DependencyOrderedFunctions() const {
+    return FunctionSorter<const Function>::SortFunctions(*this);
 }
 
 void Module::Destroy(Function* func) {

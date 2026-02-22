@@ -568,7 +568,7 @@ struct State {
 }  // namespace
 
 Result<SuccessType> Robustness(Module& ir, const RobustnessConfig& config) {
-    TINT_CHECK_RESULT(ValidateAndDumpIfNeeded(ir, "core.Robustness", kRobustnessCapabilities));
+    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir, kRobustnessCapabilities, "core.Robustness"));
 
     State{config, ir}.Process();
 

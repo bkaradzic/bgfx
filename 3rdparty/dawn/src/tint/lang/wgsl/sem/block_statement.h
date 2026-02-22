@@ -36,7 +36,6 @@
 namespace tint::ast {
 class BlockStatement;
 class ContinueStatement;
-class Variable;
 }  // namespace tint::ast
 
 namespace tint::sem {

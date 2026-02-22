@@ -32,11 +32,6 @@
 
 #include "src/tint/lang/core/ir/control_instruction.h"
 
-// Forward declarations
-namespace tint::core::ir {
-class MultiInBlock;
-}  // namespace tint::core::ir
-
 namespace tint::core::ir {
 
 /// If instruction.

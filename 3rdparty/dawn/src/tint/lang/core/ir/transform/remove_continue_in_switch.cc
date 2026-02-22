@@ -121,14 +121,15 @@ struct State {
 
 Result<SuccessType> RemoveContinueInSwitch(Module& ir) {
     TINT_CHECK_RESULT(
-        ValidateAndDumpIfNeeded(ir, "core.RemoveContinueInSwitch",
-                                core::ir::Capabilities{
-                                    core::ir::Capability::kAllowVectorElementPointer,
-                                    core::ir::Capability::kAllowHandleVarsWithoutBindings,
-                                    core::ir::Capability::kAllowClipDistancesOnF32ScalarAndVector,
-                                    core::ir::Capability::kAllowDuplicateBindings,
-                                    core::ir::Capability::kAllowNonCoreTypes,
-                                }));
+        ValidateBeforeIfNeeded(ir,
+                               core::ir::Capabilities{
+                                   core::ir::Capability::kAllowVectorElementPointer,
+                                   core::ir::Capability::kAllowHandleVarsWithoutBindings,
+                                   core::ir::Capability::kAllowClipDistancesOnF32ScalarAndVector,
+                                   core::ir::Capability::kAllowDuplicateBindings,
+                                   core::ir::Capability::kAllowNonCoreTypes,
+                               },
+                               "core.RemoveContinueInSwitch"));
 
     State{ir}.Process();
 

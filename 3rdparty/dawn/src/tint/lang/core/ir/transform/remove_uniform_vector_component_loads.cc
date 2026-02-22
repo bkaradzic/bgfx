@@ -78,12 +78,13 @@ struct State {
 }  // namespace
 
 Result<SuccessType> RemoveUniformVectorComponentLoads(core::ir::Module& ir) {
-    TINT_CHECK_RESULT(ValidateAndDumpIfNeeded(ir, "core.RemoveUniformVectorComponentLoads",
-                                              core::ir::Capabilities{
-                                                  core::ir::Capability::kAllowDuplicateBindings,
-                                                  core::ir::Capability::kAllowNonCoreTypes,
-                                                  core::ir::Capability::kAllow8BitIntegers,
-                                              }));
+    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir,
+                                             core::ir::Capabilities{
+                                                 core::ir::Capability::kAllowDuplicateBindings,
+                                                 core::ir::Capability::kAllowNonCoreTypes,
+                                                 core::ir::Capability::kAllow8BitIntegers,
+                                             },
+                                             "core.RemoveUniformVectorComponentLoads"));
 
     State{ir}.Process();
 

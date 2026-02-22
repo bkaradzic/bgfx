@@ -34,11 +34,6 @@
 #include "src/tint/utils/diagnostic/source.h"
 #include "src/tint/utils/rtti/castable.h"
 
-// Forward declarations
-namespace tint::ast {
-class CloneContext;
-}
-
 namespace tint::ast {
 
 /// AST base class node

@@ -106,7 +106,7 @@ struct State {
 
 Result<SuccessType> DeadCodeElimination(Module& ir) {
     TINT_CHECK_RESULT(
-        ValidateAndDumpIfNeeded(ir, "core.DeadCodeElimination", kDeadCodeEliminationCapabilities));
+        ValidateBeforeIfNeeded(ir, kDeadCodeEliminationCapabilities, "core.DeadCodeElimination"));
 
     State{ir}.Process();
 

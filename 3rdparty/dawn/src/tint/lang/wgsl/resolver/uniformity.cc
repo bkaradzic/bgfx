@@ -32,6 +32,7 @@
 
 #include "src/tint/lang/core/enums.h"
 #include "src/tint/lang/core/type/reference.h"
+#include "src/tint/lang/core/type/swizzle_view.h"
 #include "src/tint/lang/wgsl/program/program_builder.h"
 #include "src/tint/lang/wgsl/resolver/dependency_graph.h"
 #include "src/tint/lang/wgsl/sem/block_statement.h"
@@ -42,6 +43,7 @@
 #include "src/tint/lang/wgsl/sem/info.h"
 #include "src/tint/lang/wgsl/sem/load.h"
 #include "src/tint/lang/wgsl/sem/loop_statement.h"
+#include "src/tint/lang/wgsl/sem/member_accessor_expression.h"
 #include "src/tint/lang/wgsl/sem/statement.h"
 #include "src/tint/lang/wgsl/sem/switch_statement.h"
 #include "src/tint/lang/wgsl/sem/value_constructor.h"

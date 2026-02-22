@@ -149,12 +149,13 @@ struct State {
 
 Result<ImmediateDataLayout> PrepareImmediateData(Module& ir,
                                                  const PrepareImmediateDataConfig& config) {
-    TINT_CHECK_RESULT(ValidateAndDumpIfNeeded(ir, "core.PrepareImmediateData",
-                                              core::ir::Capabilities{
-                                                  core::ir::Capability::kAllowDuplicateBindings,
-                                                  core::ir::Capability::kAllow8BitIntegers,
-                                                  core::ir::Capability::kAllowNonCoreTypes,
-                                              }));
+    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir,
+                                             core::ir::Capabilities{
+                                                 core::ir::Capability::kAllowDuplicateBindings,
+                                                 core::ir::Capability::kAllow8BitIntegers,
+                                                 core::ir::Capability::kAllowNonCoreTypes,
+                                             },
+                                             "core.PrepareImmediateData"));
 
     return State{config, ir}.Run();
 }

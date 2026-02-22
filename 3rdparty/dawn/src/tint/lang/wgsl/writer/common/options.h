@@ -39,6 +39,8 @@ struct Options {
     bool allow_non_uniform_derivatives = false;
     /// Set to `true` to insert a directive to disable uniformity checks for subgroup builtins.
     bool allow_non_uniform_subgroup_operations = false;
+    /// Set tot `true` to disable the unreachable code warning
+    bool disable_unreachable_code_warning = false;
     /// The extensions and language features that are allowed to be used in the generated WGSL.
     wgsl::AllowedFeatures allowed_features = {};
 

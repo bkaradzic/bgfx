@@ -47,8 +47,6 @@ namespace tint::ast {
 class AssignmentStatement;
 class Attribute;
 class BinaryExpression;
-class BitcastExpression;
-class BlockStatement;
 class BlockStatement;
 class BreakIfStatement;
 class BreakStatement;
@@ -73,8 +71,6 @@ class LoopStatement;
 class MemberAccessorExpression;
 class Requires;
 class ReturnStatement;
-class Statement;
-class Statement;
 class Statement;
 class Struct;
 class SwitchStatement;

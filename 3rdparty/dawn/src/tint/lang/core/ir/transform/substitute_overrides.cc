@@ -29,11 +29,9 @@
 
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <utility>
 
-#include "src/tint/lang/core/binary_op.h"
-#include "src/tint/lang/core/fluent_types.h"
-#include "src/tint/lang/core/ir/binary.h"
 #include "src/tint/lang/core/ir/builder.h"
 #include "src/tint/lang/core/ir/const_param_validator.h"
 #include "src/tint/lang/core/ir/constexpr_if.h"
@@ -48,9 +46,6 @@
 #include "src/tint/lang/core/ir/validator.h"
 #include "src/tint/lang/core/ir/value.h"
 #include "src/utils/numeric.h"
-
-using namespace tint::core::fluent_types;     // NOLINT
-using namespace tint::core::number_suffixes;  // NOLINT
 
 namespace tint::core::ir::transform {
 namespace {
@@ -68,6 +63,13 @@ struct State {
 
     /// The type manager.
     core::type::Manager& ty{ir.Types()};
+
+    diag::Diagnostic MakeError(const Source& src) {
+        diag::Diagnostic error{};
+        error.severity = diag::Severity::Error;
+        error.source = src;
+        return error;
+    }
 
     /// Process the module.
     diag::Result<SuccessType> Process() {
@@ -122,9 +124,7 @@ struct State {
                         TINT_ICE_ON_NO_MATCH);
 
                     if (!substitution_representation_valid) {
-                        diag::Diagnostic error{};
-                        error.severity = diag::Severity::Error;
-                        error.source = ir.SourceOf(override);
+                        diag::Diagnostic error = MakeError(ir.SourceOf(override));
                         error << "Pipeline overridable constant " << iter->first.value
                               << " with value (" << iter->second
                               << ")  is not representable in type ("
@@ -138,9 +138,7 @@ struct State {
             }
 
             if (override->Initializer() == nullptr) {
-                diag::Diagnostic error{};
-                error.severity = diag::Severity::Error;
-                error.source = ir.SourceOf(override);
+                diag::Diagnostic error = MakeError(ir.SourceOf(override));
                 error << "Initializer not provided for override, and override not overridden.";
                 return diag::Failure(error);
             }
@@ -203,17 +201,22 @@ struct State {
             // not check constant evaluation access against zero size.
             int64_t cnt_size_check = new_value->Value()->ValueAs<AInt>();
             if (cnt_size_check < 1) {
-                diag::Diagnostic error{};
-                error.severity = diag::Severity::Error;
-                error.source = ir.SourceOf(cnt->value);
+                diag::Diagnostic error = MakeError(ir.SourceOf(cnt->value));
                 error << "array count (" << cnt_size_check << ") must be greater than 0";
                 return diag::Failure(error);
             }
 
             uint32_t num_elements = new_value->Value()->ValueAs<uint32_t>();
+            uint64_t new_ary_size = uint64_t{num_elements} * old_ty->ImplicitStride();
+            if (new_ary_size > std::numeric_limits<uint32_t>::max()) {
+                diag::Diagnostic error = MakeError(ir.SourceOf(cnt->value));
+                error << "array size (" << new_ary_size << ") is too large";
+                return diag::Failure(error);
+            }
+
             auto* new_cnt = ty.Get<core::type::ConstantArrayCount>(num_elements);
             auto* new_ty = ty.Get<core::type::Array>(old_ty->ElemType(), new_cnt,
-                                                     num_elements * old_ty->ImplicitStride());
+                                                     static_cast<uint32_t>(new_ary_size));
 
             auto* new_ptr = ty.ptr(old_ptr->AddressSpace(), new_ty, old_ptr->Access());
             var->Result()->SetType(new_ptr);
@@ -370,7 +373,7 @@ struct State {
 
 Result<SuccessType> SubstituteOverrides(Module& ir, const SubstituteOverridesConfig& cfg) {
     TINT_CHECK_RESULT(
-        ValidateAndDumpIfNeeded(ir, "core.SubstituteOverrides", kSubstituteOverridesCapabilities));
+        ValidateBeforeIfNeeded(ir, kSubstituteOverridesCapabilities, "core.SubstituteOverrides"));
     {
         auto result = State{ir, cfg}.Process();
         if (result != Success) {

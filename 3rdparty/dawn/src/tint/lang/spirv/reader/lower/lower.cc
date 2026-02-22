@@ -66,12 +66,12 @@ Result<SuccessType> Lower(core::ir::Module& mod) {
     TINT_CHECK_RESULT(core::ir::transform::RemoveTerminatorArgs(mod));
 
     TINT_CHECK_RESULT(
-        core::ir::ValidateAndDumpIfNeeded(mod, "spirv.Lower",
-                                          core::ir::Capabilities{
-                                              core::ir::Capability::kAllowMultipleEntryPoints,
-                                              core::ir::Capability::kAllowOverrides,
-                                          },
-                                          "after"));
+        core::ir::ValidateAfterIfNeeded(mod,
+                                        core::ir::Capabilities{
+                                            core::ir::Capability::kAllowMultipleEntryPoints,
+                                            core::ir::Capability::kAllowOverrides,
+                                        },
+                                        "spirv.Lower"));
 
     return Success;
 }

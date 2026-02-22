@@ -30,10 +30,11 @@
 #pragma allow_unsafe_buffers
 #endif
 
+#include "src/tint/utils/text/styled_text_printer.h"
+
 #include <cstring>
 
 #include "src/tint/utils/system/terminal.h"
-#include "src/tint/utils/text/styled_text_printer.h"
 
 namespace tint {
 namespace {

@@ -29,6 +29,7 @@
 #define SRC_TINT_LANG_CORE_INTRINSIC_TABLE_DATA_H_
 
 #include <stdint.h>
+
 #include <limits>
 #include <string>
 
@@ -116,7 +117,7 @@ struct TableIndex {
 };
 
 /// Index type used to index TableData::template_types
-using TemplateIndex = TableIndex<TableIndexNamespace::kTemplate, uint8_t>;
+using TemplateIndex = TableIndex<TableIndexNamespace::kTemplate, uint16_t>;
 
 /// Index type used to index TableData::type_matchers or TableData::number_matchers
 using MatcherIndex = TableIndex<TableIndexNamespace::kMatcher, uint8_t>;
@@ -160,6 +161,9 @@ using OverloadFlags = tint::EnumSet<OverloadFlag>;
 struct ParameterInfo {
     /// The parameter usage (parameter name in definition file)
     const ParameterUsage usage;
+
+    /// True if the parameter is required to be constant.
+    const bool is_const;
 
     /// Index of the matcher indices that are used to match the parameter types.
     /// These indices are consumed by the matchers themselves.
@@ -212,7 +216,7 @@ struct IntrinsicInfo {
 };
 
 /// A IntrinsicInfo with no overloads
-static constexpr IntrinsicInfo kNoOverloads{0, OverloadIndex(OverloadIndex::kInvalid)};
+inline constexpr IntrinsicInfo kNoOverloads{0, OverloadIndex(OverloadIndex::kInvalid)};
 
 /// Number is an 32 bit unsigned integer, which can be in one of three states:
 /// * Invalid - Number has not been assigned a value

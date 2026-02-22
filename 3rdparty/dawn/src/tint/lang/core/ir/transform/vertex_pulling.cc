@@ -363,7 +363,7 @@ struct State {
         auto load_i32 = [&](uint32_t offset) { return b.Bitcast<i32>(load_u32(offset))->Result(); };
         auto load_f32 = [&](uint32_t offset) { return b.Bitcast<f32>(load_u32(offset))->Result(); };
         auto load_ivec = [&](uint32_t offset, uint32_t bits, const core::type::Vector* vec) {
-            // For a vec2<u32>, we read the `xxxx'yyyy` u32 word. We then splat to a vec2 and left
+            // For a vec2u, we read the `xxxx'yyyy` u32 word. We then splat to a vec2 and left
             // shift so we have `(xxxx'yyyy, yyyy'xxxx)`. Finally, we right shift to produce
             // `(0000'xxxx, 0000'yyyy)`
             auto* uvec = ty.MatchWidth(ty.u32(), vec);
@@ -421,27 +421,27 @@ struct State {
             case VertexFormat::kUint16x4: {
                 auto* xy = load_ivec(0, 16, ty.vec2u());
                 auto* zw = load_ivec(1, 16, ty.vec2u());
-                return b.Construct<vec4<u32>>(xy, zw)->Result();
+                return b.Construct<vec4u>(xy, zw)->Result();
             }
             case VertexFormat::kUint32:
                 return load_u32(0);
             case VertexFormat::kUint32x2: {
                 auto* x = load_u32(0);
                 auto* y = load_u32(1);
-                return b.Construct<vec2<u32>>(x, y)->Result();
+                return b.Construct<vec2u>(x, y)->Result();
             }
             case VertexFormat::kUint32x3: {
                 auto* x = load_u32(0);
                 auto* y = load_u32(1);
                 auto* z = load_u32(2);
-                return b.Construct<vec3<u32>>(x, y, z)->Result();
+                return b.Construct<vec3u>(x, y, z)->Result();
             }
             case VertexFormat::kUint32x4: {
                 auto* x = load_u32(0);
                 auto* y = load_u32(1);
                 auto* z = load_u32(2);
                 auto* w = load_u32(3);
-                return b.Construct<vec4<u32>>(x, y, z, w)->Result();
+                return b.Construct<vec4u>(x, y, z, w)->Result();
             }
 
             // Formats that are always i32 in the shader (or vectors of i32).
@@ -467,27 +467,27 @@ struct State {
             case VertexFormat::kSint16x4: {
                 auto* xy = load_ivec(0, 16, ty.vec2i());
                 auto* zw = load_ivec(1, 16, ty.vec2i());
-                return b.Construct<vec4<i32>>(xy, zw)->Result();
+                return b.Construct<vec4i>(xy, zw)->Result();
             }
             case VertexFormat::kSint32:
                 return load_i32(0);
             case VertexFormat::kSint32x2: {
                 auto* x = load_i32(0);
                 auto* y = load_i32(1);
-                return b.Construct<vec2<i32>>(x, y)->Result();
+                return b.Construct<vec2i>(x, y)->Result();
             }
             case VertexFormat::kSint32x3: {
                 auto* x = load_i32(0);
                 auto* y = load_i32(1);
                 auto* z = load_i32(2);
-                return b.Construct<vec3<i32>>(x, y, z)->Result();
+                return b.Construct<vec3i>(x, y, z)->Result();
             }
             case VertexFormat::kSint32x4: {
                 auto* x = load_i32(0);
                 auto* y = load_i32(1);
                 auto* z = load_i32(2);
                 auto* w = load_i32(3);
-                return b.Construct<vec4<i32>>(x, y, z, w)->Result();
+                return b.Construct<vec4i>(x, y, z, w)->Result();
             }
 
             // Unsigned normalized formats.
@@ -496,7 +496,7 @@ struct State {
                 // ******xx
                 auto* word = load_u32(0);
                 // 000000xx, ********, ********, ********
-                auto* unpack = b.Call<vec4<f32>>(core::BuiltinFn::kUnpack4X8Unorm, word);
+                auto* unpack = b.Call<vec4f>(core::BuiltinFn::kUnpack4X8Unorm, word);
                 // 000000xx
                 return float_value(b.Access<f32>(unpack, 0_u)->Result());
             }
@@ -504,30 +504,30 @@ struct State {
                 // ****yyxx
                 auto* word = load_u32(0);
                 // 000000xx, 000000yy, ********, ********
-                auto* unpack = b.Call<vec4<f32>>(core::BuiltinFn::kUnpack4X8Unorm, word);
+                auto* unpack = b.Call<vec4f>(core::BuiltinFn::kUnpack4X8Unorm, word);
                 // 000000xx, 000000yy
-                return float_value(b.Swizzle<vec2<f32>>(unpack, Vector{0u, 1u})->Result());
+                return float_value(b.Swizzle<vec2f>(unpack, Vector{0u, 1u})->Result());
             }
             case VertexFormat::kUnorm8x4: {
                 // wwzzyyxx
                 auto* word = load_u32(0);
                 // 000000xx, 000000yy, 000000zz, 000000ww
-                auto* unpack = b.Call<vec4<f32>>(core::BuiltinFn::kUnpack4X8Unorm, word);
+                auto* unpack = b.Call<vec4f>(core::BuiltinFn::kUnpack4X8Unorm, word);
                 return float_value(unpack->Result());
             }
             case VertexFormat::kUnorm8x4BGRA: {
                 // wwzzyyxx
                 auto* word = load_u32(0);
                 // 000000xx, 000000yy, 000000zz, 000000ww
-                auto* unpack = b.Call<vec4<f32>>(core::BuiltinFn::kUnpack4X8Unorm, word);
+                auto* unpack = b.Call<vec4f>(core::BuiltinFn::kUnpack4X8Unorm, word);
                 // 000000zz, 000000yy, 000000xx, 000000ww
-                return float_value(b.Swizzle<vec4<f32>>(unpack, Vector{2u, 1u, 0u, 3u})->Result());
+                return float_value(b.Swizzle<vec4f>(unpack, Vector{2u, 1u, 0u, 3u})->Result());
             }
             case VertexFormat::kUnorm16: {
                 // ****xxxx
                 auto* word = load_u32(0);
                 // 0000xxxx, ********
-                auto* unpack = b.Call<vec2<f32>>(core::BuiltinFn::kUnpack2X16Unorm, word);
+                auto* unpack = b.Call<vec2f>(core::BuiltinFn::kUnpack2X16Unorm, word);
                 // 0000xxxx
                 return float_value(b.Access<f32>(unpack, 0_u)->Result());
             }
@@ -535,7 +535,7 @@ struct State {
                 // yyyyxxxx
                 auto* word = load_u32(0);
                 // 0000xxxx, 0000yyyy
-                auto* unpack = b.Call<vec2<f32>>(core::BuiltinFn::kUnpack2X16Unorm, word);
+                auto* unpack = b.Call<vec2f>(core::BuiltinFn::kUnpack2X16Unorm, word);
                 return float_value(unpack->Result());
             }
             case VertexFormat::kUnorm16x4: {
@@ -543,9 +543,9 @@ struct State {
                 auto* word0 = load_u32(0);
                 auto* word1 = load_u32(1);
                 // 0000xxxx, 0000yyyy, 0000zzzz, 0000wwww
-                auto* unpack0 = b.Call<vec2<f32>>(core::BuiltinFn::kUnpack2X16Unorm, word0);
-                auto* unpack1 = b.Call<vec2<f32>>(core::BuiltinFn::kUnpack2X16Unorm, word1);
-                return float_value(b.Construct<vec4<f32>>(unpack0, unpack1)->Result());
+                auto* unpack0 = b.Call<vec2f>(core::BuiltinFn::kUnpack2X16Unorm, word0);
+                auto* unpack1 = b.Call<vec2f>(core::BuiltinFn::kUnpack2X16Unorm, word1);
+                return float_value(b.Construct<vec4f>(unpack0, unpack1)->Result());
             }
 
             // Signed normalized formats.
@@ -554,7 +554,7 @@ struct State {
                 // ******xx
                 auto* word = load_u32(0);
                 // 000000xx, ********, ********, ********
-                auto* unpack = b.Call<vec4<f32>>(core::BuiltinFn::kUnpack4X8Snorm, word);
+                auto* unpack = b.Call<vec4f>(core::BuiltinFn::kUnpack4X8Snorm, word);
                 // 000000xx
                 return float_value(b.Access<f32>(unpack, 0_u)->Result());
             }
@@ -562,22 +562,22 @@ struct State {
                 // ****yyxx
                 auto* word = load_u32(0);
                 // 000000xx, 000000yy, ********, ********
-                auto* unpack = b.Call<vec4<f32>>(core::BuiltinFn::kUnpack4X8Snorm, word);
+                auto* unpack = b.Call<vec4f>(core::BuiltinFn::kUnpack4X8Snorm, word);
                 // 000000xx, 000000yy
-                return float_value(b.Swizzle<vec2<f32>>(unpack, Vector{0u, 1u})->Result());
+                return float_value(b.Swizzle<vec2f>(unpack, Vector{0u, 1u})->Result());
             }
             case VertexFormat::kSnorm8x4: {
                 // wwzzyyxx
                 auto* word = load_u32(0);
                 // 000000xx, 000000yy, 000000zz, 000000ww
-                auto* unpack = b.Call<vec4<f32>>(core::BuiltinFn::kUnpack4X8Snorm, word);
+                auto* unpack = b.Call<vec4f>(core::BuiltinFn::kUnpack4X8Snorm, word);
                 return float_value(unpack->Result());
             }
             case VertexFormat::kSnorm16: {
                 // ****xxxx
                 auto* word = load_u32(0);
                 // 0000xxxx, ********
-                auto* unpack = b.Call<vec2<f32>>(core::BuiltinFn::kUnpack2X16Snorm, word);
+                auto* unpack = b.Call<vec2f>(core::BuiltinFn::kUnpack2X16Snorm, word);
                 // 0000xxxx
                 return float_value(b.Access<f32>(unpack, 0_u)->Result());
             }
@@ -585,7 +585,7 @@ struct State {
                 // yyyyxxxx
                 auto* word = load_u32(0);
                 // 0000xxxx, 0000yyyy
-                auto* unpack = b.Call<vec2<f32>>(core::BuiltinFn::kUnpack2X16Snorm, word);
+                auto* unpack = b.Call<vec2f>(core::BuiltinFn::kUnpack2X16Snorm, word);
                 return float_value(unpack->Result());
             }
             case VertexFormat::kSnorm16x4: {
@@ -593,9 +593,9 @@ struct State {
                 auto* word0 = load_u32(0);
                 auto* word1 = load_u32(1);
                 // 0000xxxx, 0000yyyy, 0000zzzz, 0000wwww
-                auto* unpack0 = b.Call<vec2<f32>>(core::BuiltinFn::kUnpack2X16Snorm, word0);
-                auto* unpack1 = b.Call<vec2<f32>>(core::BuiltinFn::kUnpack2X16Snorm, word1);
-                return float_value(b.Construct<vec4<f32>>(unpack0, unpack1)->Result());
+                auto* unpack0 = b.Call<vec2f>(core::BuiltinFn::kUnpack2X16Snorm, word0);
+                auto* unpack1 = b.Call<vec2f>(core::BuiltinFn::kUnpack2X16Snorm, word1);
+                return float_value(b.Construct<vec4f>(unpack0, unpack1)->Result());
             }
 
             // F16 formats that can either be f16 or f32 in the shader.
@@ -605,12 +605,12 @@ struct State {
                 auto* word = load_u32(0);
                 if (shader_element_type->Is<core::type::F16>()) {
                     // xxxx, ****
-                    auto* bitcast = b.Bitcast<vec2<f16>>(word);
+                    auto* bitcast = b.Bitcast<vec2h>(word);
                     // xxxx
                     return b.Access<f16>(bitcast, 0_u)->Result();
                 } else {
                     // 0000xxxx, ********
-                    auto* unpack = b.Call<vec2<f32>>(core::BuiltinFn::kUnpack2X16Float, word);
+                    auto* unpack = b.Call<vec2f>(core::BuiltinFn::kUnpack2X16Float, word);
                     // 0000xxxx
                     return b.Access<f32>(unpack, 0_u)->Result();
                 }
@@ -620,10 +620,10 @@ struct State {
                 auto* word = load_u32(0);
                 if (shader_element_type->Is<core::type::F16>()) {
                     // xxxx, yyyy
-                    return b.Bitcast<vec2<f16>>(word)->Result();
+                    return b.Bitcast<vec2h>(word)->Result();
                 } else {
                     // 0000xxxx, 0000yyyy
-                    auto* unpack = b.Call<vec2<f32>>(core::BuiltinFn::kUnpack2X16Float, word);
+                    auto* unpack = b.Call<vec2f>(core::BuiltinFn::kUnpack2X16Float, word);
                     return unpack->Result();
                 }
             }
@@ -633,14 +633,14 @@ struct State {
                 auto* word1 = load_u32(1);
                 if (shader_element_type->Is<core::type::F16>()) {
                     // xxxx, yyyy, zzzz, wwww
-                    auto* bitcast0 = b.Bitcast<vec2<f16>>(word0);
-                    auto* bitcast1 = b.Bitcast<vec2<f16>>(word1);
-                    return b.Construct<vec4<f16>>(bitcast0, bitcast1)->Result();
+                    auto* bitcast0 = b.Bitcast<vec2h>(word0);
+                    auto* bitcast1 = b.Bitcast<vec2h>(word1);
+                    return b.Construct<vec4h>(bitcast0, bitcast1)->Result();
                 } else {
                     // 0000xxxx, 0000yyyy, 0000zzzz, 0000wwww
-                    auto* unpack0 = b.Call<vec2<f32>>(core::BuiltinFn::kUnpack2X16Float, word0);
-                    auto* unpack1 = b.Call<vec2<f32>>(core::BuiltinFn::kUnpack2X16Float, word1);
-                    return b.Construct<vec4<f32>>(unpack0, unpack1)->Result();
+                    auto* unpack0 = b.Call<vec2f>(core::BuiltinFn::kUnpack2X16Float, word0);
+                    auto* unpack1 = b.Call<vec2f>(core::BuiltinFn::kUnpack2X16Float, word1);
+                    return b.Construct<vec4f>(unpack0, unpack1)->Result();
                 }
             }
 
@@ -651,32 +651,32 @@ struct State {
             case VertexFormat::kFloat32x2: {
                 auto* x = load_f32(0);
                 auto* y = load_f32(1);
-                return float_value(b.Construct<vec2<f32>>(x, y)->Result());
+                return float_value(b.Construct<vec2f>(x, y)->Result());
             }
             case VertexFormat::kFloat32x3: {
                 auto* x = load_f32(0);
                 auto* y = load_f32(1);
                 auto* z = load_f32(2);
-                return float_value(b.Construct<vec3<f32>>(x, y, z)->Result());
+                return float_value(b.Construct<vec3f>(x, y, z)->Result());
             }
             case VertexFormat::kFloat32x4: {
                 auto* x = load_f32(0);
                 auto* y = load_f32(1);
                 auto* z = load_f32(2);
                 auto* w = load_f32(3);
-                return float_value(b.Construct<vec4<f32>>(x, y, z, w)->Result());
+                return float_value(b.Construct<vec4f>(x, y, z, w)->Result());
             }
 
             // Miscellaneous other formats that need custom handling.
             case VertexFormat::kUnorm10_10_10_2: {
-                auto* u32s = b.Construct<vec4<u32>>(load_u32(0));
+                auto* u32s = b.Construct<vec4u>(load_u32(0));
                 // shr = u32s >> vec4u(0, 10, 20, 30);
-                auto* shr = b.ShiftRight(u32s, b.Composite<vec4<u32>>(0_u, 10_u, 20_u, 30_u));
+                auto* shr = b.ShiftRight(u32s, b.Composite<vec4u>(0_u, 10_u, 20_u, 30_u));
                 // mask = shr & vec4u(0x3FF, 0x3FF, 0x3FF, 0x3);
-                auto* mask = b.And(shr, b.Composite<vec4<u32>>(0x3FF_u, 0x3FF_u, 0x3FF_u, 0x3_u));
+                auto* mask = b.And(shr, b.Composite<vec4u>(0x3FF_u, 0x3FF_u, 0x3FF_u, 0x3_u));
                 // vec4f(mask) / vec4f(1023, 1023, 1023, 3);
-                auto* div = b.Composite<vec4<f32>>(1023_f, 1023_f, 1023_f, 3_f);
-                return float_value(b.Divide(b.Convert<vec4<f32>>(mask), div)->Result());
+                auto* div = b.Composite<vec4f>(1023_f, 1023_f, 1023_f, 3_f);
+                return float_value(b.Divide(b.Convert<vec4f>(mask), div)->Result());
             }
         }
         TINT_IR_UNREACHABLE(ir);
@@ -686,8 +686,7 @@ struct State {
 }  // namespace
 
 Result<SuccessType> VertexPulling(core::ir::Module& ir, const VertexPullingConfig& config) {
-    TINT_CHECK_RESULT(
-        ValidateAndDumpIfNeeded(ir, "core.VertexPulling", kVertexPullingCapabilities));
+    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir, kVertexPullingCapabilities, "core.VertexPulling"));
 
     State{config, ir}.Process();
 

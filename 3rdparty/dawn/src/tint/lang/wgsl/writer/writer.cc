@@ -33,6 +33,7 @@
 #include "src/tint/lang/wgsl/writer/ast_printer/ast_printer.h"
 #include "src/tint/lang/wgsl/writer/ir_to_program/ir_to_program.h"
 #include "src/tint/lang/wgsl/writer/raise/raise.h"
+#include "src/tint/utils/ice/ice.h"
 
 namespace tint::wgsl::writer {
 

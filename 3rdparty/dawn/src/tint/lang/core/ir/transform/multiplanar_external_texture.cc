@@ -227,8 +227,8 @@ struct State {
                     if (call->Func() == core::BuiltinFn::kTextureDimensions) {
                         // Use params.apparentSize + vec2u(1, 1) instead of the textureDimensions.
                         b.InsertBefore(call, [&] {
-                            auto* apparent_size = b.Access<vec2<u32>>(params, 12_u);
-                            auto* vec2u_1_1 = b.Splat<vec2<u32>>(1_u);
+                            auto* apparent_size = b.Access<vec2u>(params, 12_u);
+                            auto* vec2u_1_1 = b.Splat<vec2u>(1_u);
                             auto* dimensions = b.Add(apparent_size, vec2u_1_1);
                             dimensions->SetResult(call->DetachResult());
                         });
@@ -603,8 +603,8 @@ struct State {
 Result<SuccessType> MultiplanarExternalTexture(
     Module& ir,
     const tint::transform::multiplanar::BindingsMap& multiplanar_map) {
-    TINT_CHECK_RESULT(ValidateAndDumpIfNeeded(ir, "core.MultiplanarExternalTexture",
-                                              kMultiplanarExternalTextureCapabilities));
+    TINT_CHECK_RESULT(ValidateBeforeIfNeeded(ir, kMultiplanarExternalTextureCapabilities,
+                                             "core.MultiplanarExternalTexture"));
 
     return State{multiplanar_map, ir}.Process();
 }

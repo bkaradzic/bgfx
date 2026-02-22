@@ -30,6 +30,7 @@
 
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 
 #include "src/tint/api/common/binding_point.h"
@@ -178,16 +179,19 @@ struct Options {
     std::string entry_point_name;
 
     /// An optional remapped name to use when emitting the entry point.
-    std::string remapped_entry_point_name = {};
+    std::string remapped_entry_point_name{};
 
     /// The bindings
-    Bindings bindings = {};
+    Bindings bindings{};
 
     // BindingPoints for textures that are paired with static samplers in the
     // BGL. These BindingPoints are the only ones that are allowed to map to
     // duplicate spir-v bindings, since they must map to the spir-v bindings of
     // the samplers with which they are paired.
-    std::unordered_set<BindingPoint> statically_paired_texture_binding_points = {};
+    std::unordered_set<BindingPoint> statically_paired_texture_binding_points{};
+
+    /// Mapping of colour indices to the binding point the var should be bound too
+    std::unordered_map<uint32_t, BindingPoint> colour_index_to_binding_point{};
 
     /// Set to `true` to strip all user-declared identifiers from the module.
     bool strip_all_names = false;
@@ -227,7 +231,7 @@ struct Options {
     std::optional<ResourceTableConfig> resource_table = std::nullopt;
 
     // Configuration for substitute overrides
-    SubstituteOverridesConfig substitute_overrides_config = {};
+    SubstituteOverridesConfig substitute_overrides_config{};
 
     /// Reflect the fields of this class so that it can be used by tint::ForeachField()
     TINT_REFLECT(Options,
@@ -235,6 +239,7 @@ struct Options {
                  remapped_entry_point_name,
                  bindings,
                  statically_paired_texture_binding_points,
+                 colour_index_to_binding_point,
                  strip_all_names,
                  disable_robustness,
                  disable_workgroup_init,

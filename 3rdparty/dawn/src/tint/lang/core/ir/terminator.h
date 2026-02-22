@@ -32,11 +32,6 @@
 #include "src/tint/lang/core/ir/value.h"
 #include "src/tint/utils/rtti/castable.h"
 
-// Forward declarations
-namespace tint::core::ir {
-class Block;
-}  // namespace tint::core::ir
-
 namespace tint::core::ir {
 
 /// The base class of all instructions that terminate a block.

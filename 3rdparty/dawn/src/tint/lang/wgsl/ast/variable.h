@@ -43,7 +43,6 @@
 // Forward declarations
 namespace tint::ast {
 class Identifier;
-class LocationAttribute;
 }  // namespace tint::ast
 
 namespace tint::ast {

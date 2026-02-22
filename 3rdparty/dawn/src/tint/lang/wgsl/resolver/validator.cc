@@ -27,7 +27,6 @@
 
 #include "src/tint/lang/wgsl/resolver/validator.h"
 
-#include <algorithm>
 #include <bitset>
 #include <string_view>
 #include <tuple>
@@ -39,6 +38,7 @@
 #include "src/tint/lang/core/type/binding_array.h"
 #include "src/tint/lang/core/type/i8.h"
 #include "src/tint/lang/core/type/input_attachment.h"
+#include "src/tint/lang/core/type/memory_view.h"
 #include "src/tint/lang/core/type/multisampled_texture.h"
 #include "src/tint/lang/core/type/pointer.h"
 #include "src/tint/lang/core/type/reference.h"
@@ -46,8 +46,11 @@
 #include "src/tint/lang/core/type/sampler.h"
 #include "src/tint/lang/core/type/storage_texture.h"
 #include "src/tint/lang/core/type/subgroup_matrix.h"
+#include "src/tint/lang/core/type/swizzle_view.h"
 #include "src/tint/lang/core/type/texture_dimension.h"
+#include "src/tint/lang/core/type/u16.h"
 #include "src/tint/lang/core/type/u8.h"
+#include "src/tint/lang/core/type/vector.h"
 #include "src/tint/lang/wgsl/ast/alias.h"
 #include "src/tint/lang/wgsl/ast/assignment_statement.h"
 #include "src/tint/lang/wgsl/ast/blend_src_attribute.h"
@@ -58,7 +61,6 @@
 #include "src/tint/lang/wgsl/ast/return_statement.h"
 #include "src/tint/lang/wgsl/ast/subgroup_size_attribute.h"
 #include "src/tint/lang/wgsl/ast/switch_statement.h"
-#include "src/tint/lang/wgsl/ast/traverse_expressions.h"
 #include "src/tint/lang/wgsl/ast/variable_decl_statement.h"
 #include "src/tint/lang/wgsl/ast/workgroup_attribute.h"
 #include "src/tint/lang/wgsl/sem/array.h"
@@ -79,6 +81,7 @@
 #include "src/tint/lang/wgsl/sem/while_statement.h"
 #include "src/tint/utils/internal_limits.h"
 #include "src/tint/utils/math/math.h"
+#include "src/tint/utils/rtti/switch.h"
 #include "src/tint/utils/text/string.h"
 #include "src/tint/utils/text/styled_text.h"
 #include "src/tint/utils/text/text_style.h"
@@ -226,7 +229,7 @@ bool Validator::IsPlain(const core::type::Type* type) const {
     return type->IsAnyOf<core::type::Scalar, core::type::Atomic, core::type::Vector,
                          core::type::Matrix, sem::Array, core::type::Struct,
                          core::type::SubgroupMatrix>() &&
-           !type->IsAnyOf<core::type::I8, core::type::U8>();
+           !type->IsAnyOf<core::type::I8, core::type::U8, core::type::U16>();
 }
 
 // https://gpuweb.github.io/gpuweb/wgsl.html#storable-types
@@ -309,14 +312,29 @@ bool Validator::Enables(VectorRef<const ast::Enable*> enables) const {
 
 bool Validator::Atomic(const ast::TemplatedIdentifier* a, const core::type::Atomic* s) const {
     // https://gpuweb.github.io/gpuweb/wgsl/#atomic-types
-    // T must be either u32 or i32.
-    if (!s->Type()->IsAnyOf<core::type::U32, core::type::I32>()) {
-        AddError(a->arguments[0]->source)
-            << style::Type("atomic") << " only supports " << style::Type("i32") << " or "
-            << style::Type("u32") << " types";
-        return false;
+    // T must be either u32, i32 or (with atomic_vec2u_min_max extension) vec2u.
+    if (s->Type()->IsAnyOf<core::type::U32, core::type::I32>()) {
+        return true;
     }
-    return true;
+
+    if (auto* vec = s->Type()->As<core::type::Vector>()) {
+        if (vec->Width() == 2 && vec->Type()->Is<core::type::U32>()) {
+            if (enabled_extensions_.Contains(wgsl::Extension::kAtomicVec2UMinMax)) {
+                return true;
+            } else {
+                AddError(a->arguments[0]->source)
+                    << " The type " << style::Type("atomic<vec2u>")
+                    << " cannot be used without the extension "
+                    << style::Code(wgsl::Extension::kAtomicVec2UMinMax);
+                return false;
+            }
+        }
+    }
+
+    AddError(a->arguments[0]->source)
+        << style::Type("atomic") << " only supports " << style::Type("i32") << ", "
+        << style::Type("u32") << " or " << style::Type("vec2u") << " types";
+    return false;
 }
 
 bool Validator::Pointer(const ast::TemplatedIdentifier* a, const core::type::Pointer* s) const {
@@ -357,8 +375,8 @@ bool Validator::Pointer(const ast::TemplatedIdentifier* a, const core::type::Poi
 bool Validator::StorageTexture(const core::type::StorageTexture* t, const Source& source) const {
     switch (t->Access()) {
         case core::Access::kRead:
-            if (allowed_features_.features.count(
-                    wgsl::LanguageFeature::kReadonlyAndReadwriteStorageTextures) == 0u) {
+            if (!allowed_features_.features.contains(
+                    wgsl::LanguageFeature::kReadonlyAndReadwriteStorageTextures)) {
                 AddError(source) << "read-only storage textures require the "
                                     "readonly_and_readwrite_storage_textures language feature, "
                                     "which is not allowed in the current environment";
@@ -366,8 +384,8 @@ bool Validator::StorageTexture(const core::type::StorageTexture* t, const Source
             }
             break;
         case core::Access::kReadWrite:
-            if (allowed_features_.features.count(
-                    wgsl::LanguageFeature::kReadonlyAndReadwriteStorageTextures) == 0u) {
+            if (!allowed_features_.features.contains(
+                    wgsl::LanguageFeature::kReadonlyAndReadwriteStorageTextures)) {
                 AddError(source) << "read-write storage textures require the "
                                     "readonly_and_readwrite_storage_textures language feature, "
                                     "which is not allowed in the current environment";
@@ -396,8 +414,15 @@ bool Validator::StorageTexture(const core::type::StorageTexture* t, const Source
 }
 
 bool Validator::SampledTexture(const core::type::SampledTexture* t, const Source& source) const {
-    if (!t->Type()->UnwrapRef()->IsAnyOf<core::type::F32, core::type::I32, core::type::U32>()) {
+    if (!t->Type()->IsAnyOf<core::type::F32, core::type::I32, core::type::U32>()) {
         AddError(source) << "texture_2d<type>: type must be f32, i32 or u32";
+        return false;
+    }
+
+    if (t->Filterable() != core::TextureFilterable::kUndefined &&
+        !t->Type()->IsAnyOf<core::type::F32, core::type::F16>()) {
+        AddError(source) << "texture filterability only applies to float textures, got '"
+                         << sem_.TypeNameOf(t->Type()) << "'";
         return false;
     }
 
@@ -458,7 +483,7 @@ bool Validator::InputAttachmentIndexAttribute(const ast::InputAttachmentIndexAtt
 }
 
 bool Validator::BindingArray(const core::type::BindingArray* t, const Source& source) const {
-    if (allowed_features_.features.count(wgsl::LanguageFeature::kSizedBindingArray) == 0) {
+    if (!allowed_features_.features.contains(wgsl::LanguageFeature::kSizedBindingArray)) {
         AddError(source) << "use of " << style::Type("binding_array") << " requires the "
                          << style::Code("sized_binding_array")
                          << "language feature, which is not allowed in the current environment";
@@ -496,7 +521,7 @@ bool Validator::SubgroupMatrix(const core::type::SubgroupMatrix* t, const Source
 }
 
 bool Validator::Buffer(const core::type::Buffer*, const Source& source) const {
-    if (!allowed_features_.features.count(wgsl::LanguageFeature::kBufferView)) {
+    if (!allowed_features_.features.contains(wgsl::LanguageFeature::kBufferView)) {
         AddError(source) << "use of " << style::Type("buffer")
                          << " requires the buffer_view language feature, which is not allowed in "
                             "the current environment";
@@ -507,7 +532,7 @@ bool Validator::Buffer(const core::type::Buffer*, const Source& source) const {
 }
 
 bool Validator::TexelBuffer(const core::type::TexelBuffer* t, const Source& source) const {
-    if (!allowed_features_.features.count(wgsl::LanguageFeature::kTexelBuffers)) {
+    if (!allowed_features_.features.contains(wgsl::LanguageFeature::kTexelBuffers)) {
         AddError(source) << "use of " << style::Type("texel_buffer")
                          << " requires the texel_buffer language feature, which is not allowed "
                             "in the current environment";
@@ -989,8 +1014,8 @@ bool Validator::Parameter(const sem::Variable* var) const {
             case core::AddressSpace::kStorage:
             case core::AddressSpace::kUniform:
             case core::AddressSpace::kWorkgroup:
-                ok = allowed_features_.features.count(
-                         wgsl::LanguageFeature::kUnrestrictedPointerParameters) != 0;
+                ok = allowed_features_.features.contains(
+                    wgsl::LanguageFeature::kUnrestrictedPointerParameters);
                 break;
             default:
                 break;
@@ -1094,6 +1119,24 @@ bool Validator::BuiltinAttribute(const ast::BuiltinAttribute* attr,
             }
             break;
         case core::BuiltinValue::kLocalInvocationIndex:
+            if (stage != ast::PipelineStage::kNone &&
+                !(stage == ast::PipelineStage::kCompute && is_input)) {
+                is_stage_mismatch = true;
+            }
+            if (!type->Is<core::type::U32>()) {
+                err_builtin_type("u32");
+                return false;
+            }
+            break;
+        case core::BuiltinValue::kGlobalInvocationIndex:
+        case core::BuiltinValue::kWorkgroupIndex:
+            if (!allowed_features_.features.contains(wgsl::LanguageFeature::kLinearIndexing)) {
+                AddError(attr->source)
+                    << "use of " << style::Attribute("@builtin")
+                    << style::Code("(", style::Enum(builtin), ")") << " attribute requires the "
+                    << style::Code("linear_indexing") << " language feature";
+                return false;
+            }
             if (stage != ast::PipelineStage::kNone &&
                 !(stage == ast::PipelineStage::kCompute && is_input)) {
                 is_stage_mismatch = true;
@@ -2021,7 +2064,7 @@ bool Validator::BuiltinCall(const sem::Call* call) const {
     // The `print()` builtin requires the chromium_print language feature to be available.
     if (auto* fn = call->Target()->As<sem::BuiltinFn>()) {
         if (fn->Fn() == wgsl::BuiltinFn::kPrint) {
-            if (!allowed_features_.features.count(wgsl::LanguageFeature::kChromiumPrint)) {
+            if (!allowed_features_.features.contains(wgsl::LanguageFeature::kChromiumPrint)) {
                 AddError(call->Declaration()->source) << "the 'chromium_print' language feature is "
                                                          "not allowed in the current environment";
                 return false;
@@ -2173,43 +2216,40 @@ bool Validator::TextureBuiltinFn(const sem::Call* call) const {
     std::string func_name = builtin->str();
     auto& signature = builtin->Signature();
 
-    auto check_arg_is_constexpr = [&](core::ParameterUsage usage, int min, int max) {
+    auto check_const_arg_range = [&](core::ParameterUsage usage, int min, int max) {
         auto signed_index = signature.IndexOf(usage);
         if (signed_index < 0) {
             return true;
         }
         auto index = static_cast<size_t>(signed_index);
         auto* arg = call->Arguments()[index];
-        if (auto values = arg->ConstantValue()) {
-            if (auto* vector = values->Type()->As<core::type::Vector>()) {
-                for (size_t i = 0; i < vector->Width(); i++) {
-                    auto value = values->Index(i)->ValueAs<AInt>();
-                    if (value < min || value > max) {
-                        AddError(arg->Declaration()->source)
-                            << "each component of the " << usage << " argument must be at least "
-                            << min << " and at most " << max << ". " << usage << " component " << i
-                            << " is " << value;
-                        return false;
-                    }
-                }
-            } else {
-                auto value = values->ValueAs<AInt>();
+        auto values = arg->ConstantValue();
+        TINT_ASSERT(values);
+        if (auto* vector = values->Type()->As<core::type::Vector>()) {
+            for (size_t i = 0; i < vector->Width(); i++) {
+                auto value = values->Index(i)->ValueAs<AInt>();
                 if (value < min || value > max) {
                     AddError(arg->Declaration()->source)
-                        << "the " << usage << " argument must be at least " << min
-                        << " and at most " << max << ". " << usage << " is " << value;
+                        << "each component of the " << usage << " argument must be at least " << min
+                        << " and at most " << max << ". " << usage << " component " << i << " is "
+                        << value;
                     return false;
                 }
             }
-            return true;
+        } else {
+            auto value = values->ValueAs<AInt>();
+            if (value < min || value > max) {
+                AddError(arg->Declaration()->source)
+                    << "the " << usage << " argument must be at least " << min << " and at most "
+                    << max << ". " << usage << " is " << value;
+                return false;
+            }
         }
-        AddError(arg->Declaration()->source)
-            << "the " << usage << " argument must be a const-expression";
-        return false;
+        return true;
     };
 
-    return check_arg_is_constexpr(core::ParameterUsage::kOffset, -8, 7) &&
-           check_arg_is_constexpr(core::ParameterUsage::kComponent, 0, 3);
+    return check_const_arg_range(core::ParameterUsage::kOffset, -8, 7) &&
+           check_const_arg_range(core::ParameterUsage::kComponent, 0, 3);
 }
 
 bool Validator::SubgroupBroadcast(const sem::Call* call) const {
@@ -2221,12 +2261,7 @@ bool Validator::SubgroupBroadcast(const sem::Call* call) const {
     TINT_ASSERT(call->Arguments().Length() == 2);
     auto* id = call->Arguments()[1];
     auto* constant_value = id->ConstantValue();
-
-    if (!constant_value) {
-        AddError(id->Declaration()->source)
-            << "the sourceLaneIndex argument of subgroupBroadcast must be a const-expression";
-        return false;
-    }
+    TINT_ASSERT(constant_value);
 
     if (id->Type()->IsSignedIntegerScalar()) {
         if (constant_value->ValueAs<i32>() < 0) {
@@ -2264,12 +2299,7 @@ bool Validator::QuadBroadcast(const sem::Call* call) const {
     TINT_ASSERT(call->Arguments().Length() == 2);
     auto* id = call->Arguments()[1];
     auto* constant_value = id->ConstantValue();
-
-    if (!constant_value) {
-        AddError(id->Declaration()->source)
-            << "the id argument of quadBroadcast must be a const-expression";
-        return false;
-    }
+    TINT_ASSERT(constant_value);
 
     if (id->Type()->IsSignedIntegerScalar()) {
         if (constant_value->ValueAs<i32>() < 0) {
@@ -2323,7 +2353,7 @@ bool Validator::RequiredFeaturesForBuiltinFn(const sem::Call* call) const {
 
     const auto feature = builtin->RequiredLanguageFeature();
     if (feature != wgsl::LanguageFeature::kUndefined) {
-        if (!allowed_features_.features.count(feature)) {
+        if (!allowed_features_.features.contains(feature)) {
             AddError(call->Declaration()->source)
                 << "built-in function " << style::Function(builtin->Fn()) << " requires the "
                 << style::Code(wgsl::ToString(feature))
@@ -2434,8 +2464,8 @@ bool Validator::FunctionCall(const sem::Call* call, sem::Statement* current_stat
         }
 
         if (param_type->Is<core::type::Pointer>() &&
-            (allowed_features_.features.count(
-                 wgsl::LanguageFeature::kUnrestrictedPointerParameters) == 0u)) {
+            !allowed_features_.features.contains(
+                wgsl::LanguageFeature::kUnrestrictedPointerParameters)) {
             // https://gpuweb.github.io/gpuweb/wgsl/#function-restriction
             // Each argument of pointer type to a user-defined function must have the same memory
             // view as its root identifier.
@@ -3163,9 +3193,20 @@ bool Validator::Assignment(const ast::Statement* a, const core::type::Type* rhs_
     auto const* lhs_sem = sem_.GetVal(lhs);
     auto const* lhs_ty = lhs_sem->Type();
 
-    auto* lhs_ref = lhs_ty->As<core::type::Reference>();
+    const core::type::MemoryView* lhs_ref = lhs_ty->As<core::type::Reference>();
+
+    // Allow lhs_ref to be a swizzle view if the swizzle assignment language feature is enabled.
+    if (!lhs_ref &&
+        allowed_features_.features.contains(wgsl::LanguageFeature::kSwizzleAssignment)) {
+        lhs_ref = lhs_ty->As<core::type::SwizzleView>();
+
+        if (!SwizzleAssignment(lhs_sem->As<sem::Swizzle>(), lhs->source)) {
+            return false;
+        }
+    }
+
     if (!lhs_ref) {
-        // LHS is not a reference, so it has no storage.
+        // LHS is not a reference or swizzle view, so it has no storage.
         AddError(lhs->source) << "cannot assign to " << sem_.Describe(lhs_sem);
 
         auto* expr = lhs;
@@ -3374,8 +3415,8 @@ bool Validator::CheckTypeAccessAddressSpace(const core::type::Type* store_ty,
             }
             break;
         case core::AddressSpace::kImmediate:
-            if (DAWN_UNLIKELY(allowed_features_.features.count(
-                                  wgsl::LanguageFeature::kImmediateAddressSpace) == 0u)) {
+            if (DAWN_UNLIKELY(!allowed_features_.features.contains(
+                    wgsl::LanguageFeature::kImmediateAddressSpace))) {
                 AddError(source) << "use of variable address space " << style::Enum("immediate")
                                  << " requires the immediate_address_space language feature, which "
                                     "is not allowed in the current environment";
@@ -3507,6 +3548,24 @@ bool Validator::CheckNoMultipleModuleScopeVarsOfAddressSpace(sem::Function* entr
             return false;
         }
     }
+    return true;
+}
+
+bool Validator::SwizzleAssignment(const sem::Swizzle* lhs, const Source& source) const {
+    // Check whether swizzle components are duplicated.
+    while (lhs) {
+        tint::Hashset<uint32_t, 4> seen_indices;
+        for (auto index : lhs->Indices()) {
+            if (!seen_indices.Add(index)) {
+                AddError(source) << "cannot assign to vector swizzle with "
+                                    "duplicate target components";
+                return false;
+            }
+        }
+        // Swizzle views may be chained, so validate inner object too, if applicable.
+        lhs = lhs->Object()->As<sem::Swizzle>();
+    }
+
     return true;
 }
 
