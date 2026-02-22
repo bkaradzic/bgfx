@@ -369,6 +369,15 @@ spv_result_t ValidateDecorateId(ValidationState_t& _, const Instruction* inst) {
                   "scalar type.";
       }
 
+      // Even if spec constant, validation layers will test when frozen
+      uint64_t stride_value = 0;
+      if (_.EvalConstantValUint64(operand_id, &stride_value)) {
+        if (stride_value == 0) {
+          return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << "ArrayStrideIdEXT contains a stride of zero.";
+        }
+      }
+
       // Strip array and should be the descriptor type
       const uint32_t element_type =
           _.FindDef(target_id)->GetOperandAs<uint32_t>(1);

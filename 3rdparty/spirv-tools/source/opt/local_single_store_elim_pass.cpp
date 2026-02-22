@@ -158,6 +158,7 @@ void LocalSingleStoreElimPass::InitExtensionAllowList() {
       "SPV_NV_cluster_acceleration_structure",
       "SPV_NV_linear_swept_spheres",
       "SPV_KHR_maximal_reconvergence",
+      "SPV_NV_push_constant_bank",
   });
 }
 bool LocalSingleStoreElimPass::ProcessVariable(Instruction* var_inst) {

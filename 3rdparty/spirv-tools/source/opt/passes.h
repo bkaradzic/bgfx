@@ -52,6 +52,7 @@
 #include "source/opt/interface_var_sroa.h"
 #include "source/opt/interp_fixup_pass.h"
 #include "source/opt/invocation_interlock_placement_pass.h"
+#include "source/opt/legalize_multidim_array_pass.h"
 #include "source/opt/licm_pass.h"
 #include "source/opt/local_access_chain_convert_pass.h"
 #include "source/opt/local_redundancy_elimination.h"

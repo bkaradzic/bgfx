@@ -149,7 +149,9 @@ Optimizer& Optimizer::RegisterLegalizationPasses(bool preserve_interface) {
           .RegisterPass(CreateLocalSingleStoreElimPass())
           .RegisterPass(CreateAggressiveDCEPass(preserve_interface))
           .RegisterPass(CreateLocalMultiStoreElimPass())
+          .RegisterPass(CreateCombineAccessChainsPass())
           .RegisterPass(CreateAggressiveDCEPass(preserve_interface))
+          .RegisterPass(CreateLegalizeMultidimArrayPass())
           // Propagate constants to get as many constant conditions on branches
           // as possible.
           .RegisterPass(CreateCCPPass())
@@ -399,6 +401,8 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag,
     RegisterPass(CreateFoldSpecConstantOpAndCompositePass());
   } else if (pass_name == "loop-unswitch") {
     RegisterPass(CreateLoopUnswitchPass());
+  } else if (pass_name == "legalize-multidim-array") {
+    RegisterPass(CreateLegalizeMultidimArrayPass());
   } else if (pass_name == "scalar-replacement") {
     if (pass_args.size() == 0) {
       RegisterPass(CreateScalarReplacementPass(0));
@@ -959,6 +963,11 @@ Optimizer::PassToken CreateLoopPeelingPass() {
 Optimizer::PassToken CreateLoopUnswitchPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::LoopUnswitchPass>());
+}
+
+Optimizer::PassToken CreateLegalizeMultidimArrayPass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::LegalizeMultidimArrayPass>());
 }
 
 Optimizer::PassToken CreateRedundancyEliminationPass() {

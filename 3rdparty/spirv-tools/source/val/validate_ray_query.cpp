@@ -354,6 +354,26 @@ spv_result_t RayQueryPass(ValidationState_t& _, const Instruction* inst) {
 
       break;
     }
+
+    // SPV_KHR_ray_tracing_position_fetch
+    case spv::Op::OpRayQueryGetIntersectionTriangleVertexPositionsKHR: {
+      if (auto error = ValidateRayQueryPointer(_, inst, 2)) return error;
+      if (auto error = ValidateIntersectionId(_, inst, 3)) return error;
+
+      auto result_id = _.FindDef(result_type);
+      if ((result_id->opcode() != spv::Op::OpTypeArray) ||
+          (GetArrayLength(_, result_id) != 3) ||
+          !_.IsFloatVectorType(_.GetComponentType(result_type)) ||
+          _.GetDimension(_.GetComponentType(result_type)) != 3 ||
+          _.GetBitWidth(_.GetComponentType(result_type)) != 32) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Expected 3 element array of 32-bit 3 component float point "
+                  "vector as Result Type: "
+               << spvOpcodeString(opcode);
+      }
+
+      break;
+    }
     default:
       break;
   }

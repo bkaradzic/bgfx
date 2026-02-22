@@ -123,7 +123,7 @@ typedef enum VUIDError_ {
   VUIDErrorMax,
 } VUIDError;
 
-const static uint32_t NumVUIDBuiltins = 41;
+const static uint32_t NumVUIDBuiltins = 42;
 
 typedef struct {
   spv::BuiltIn builtIn;
@@ -175,6 +175,7 @@ std::array<BuiltinVUIDMapping, NumVUIDBuiltins> builtinVUIDInfo = {{
     {spv::BuiltIn::PrimitiveLineIndicesEXT,   {7047, 7049, 7050}},
     {spv::BuiltIn::PrimitiveTriangleIndicesEXT, {7053, 7055, 7056}},
     {spv::BuiltIn::CullPrimitiveEXT,          {7034, 7035, 7036}},
+    {spv::BuiltIn::HitTriangleVertexPositionsKHR, {8747, 8748, 8749}},
 
     // clang-format on
 }};
@@ -196,6 +197,7 @@ bool IsExecutionModelValidForRtBuiltIn(spv::BuiltIn builtin,
   switch (builtin) {
     case spv::BuiltIn::HitKindKHR:
     case spv::BuiltIn::HitTNV:
+    case spv::BuiltIn::HitTriangleVertexPositionsKHR:
       if (stage == spv::ExecutionModel::AnyHitKHR ||
           stage == spv::ExecutionModel::ClosestHitKHR) {
         return true;
@@ -652,6 +654,10 @@ class BuiltInsValidator {
   spv_result_t ValidateOptionalArrayedF32Vec(
       const Decoration& decoration, const Instruction& inst,
       uint32_t num_components,
+      const std::function<spv_result_t(const std::string& message)>& diag);
+  spv_result_t ValidateArrayedF32Vec(
+      const Decoration& decoration, const Instruction& inst,
+      uint32_t num_components, uint32_t array_length,
       const std::function<spv_result_t(const std::string& message)>& diag);
   spv_result_t ValidateF32VecHelper(
       const Decoration& decoration, const Instruction& inst,
@@ -1150,6 +1156,38 @@ spv_result_t BuiltInsValidator::ValidateOptionalArrayedF32Vec(
   if (_.GetIdOpcode(underlying_type) == spv::Op::OpTypeArray) {
     underlying_type = _.FindDef(underlying_type)->word(2u);
   }
+
+  return ValidateF32VecHelper(decoration, inst, num_components, diag,
+                              underlying_type);
+}
+
+spv_result_t BuiltInsValidator::ValidateArrayedF32Vec(
+    const Decoration& decoration, const Instruction& inst,
+    uint32_t num_components, uint32_t array_length,
+    const std::function<spv_result_t(const std::string& message)>& diag) {
+  uint32_t underlying_type = 0;
+  if (spv_result_t error =
+          GetUnderlyingType(_, decoration, inst, &underlying_type)) {
+    return error;
+  }
+
+  if (_.GetIdOpcode(underlying_type) != spv::Op::OpTypeArray) {
+    return diag(GetDefinitionDesc(decoration, inst) + " is not an array.");
+  }
+
+  const uint32_t length_id = _.FindDef(underlying_type)->word(3u);
+  uint64_t found_length = 0;
+  if (!_.EvalConstantValUint64(length_id, &found_length)) {
+    return diag(GetDefinitionDesc(decoration, inst) +
+                " array has a non constant length.");
+  }
+
+  if (array_length != found_length) {
+    return diag(GetDefinitionDesc(decoration, inst) + " array length must be " +
+                std::to_string(array_length));
+  }
+
+  underlying_type = _.FindDef(underlying_type)->word(2u);
 
   return ValidateF32VecHelper(decoration, inst, num_components, diag,
                               underlying_type);
@@ -4633,6 +4671,25 @@ spv_result_t BuiltInsValidator::ValidateRayTracingBuiltinsAtDefinition(
           return error;
         }
         break;
+      case spv::BuiltIn::HitTriangleVertexPositionsKHR:
+        // array[3] of f32 vec3
+        if (spv_result_t error = ValidateArrayedF32Vec(
+                decoration, inst, 3, 3,
+                [this, &inst,
+                 builtin](const std::string& message) -> spv_result_t {
+                  uint32_t vuid = GetVUIDForBuiltin(builtin, VUIDErrorType);
+                  return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                         << _.VkErrorID(vuid)
+                         << "According to the Vulkan spec BuiltIn "
+                         << _.grammar().lookupOperandName(
+                                SPV_OPERAND_TYPE_BUILT_IN, uint32_t(builtin))
+                         << " variable needs to be an array of 3, 32-bit float "
+                            "3-component vectors. "
+                         << message;
+                })) {
+          return error;
+        }
+        break;
       default:
         assert(0 && "Unexpected ray tracing builtin");
         break;
@@ -5001,24 +5058,23 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinitionVulkan(
       return ValidateFullyCoveredAtDefinition(decoration, inst);
     }
     // Ray tracing builtins
-    case spv::BuiltIn::HitKindKHR:  // alias spv::BuiltIn::HitKindNV
+    case spv::BuiltIn::HitKindKHR:  // alias HitKindNV
     case spv::BuiltIn::HitTNV:      // NOT present in KHR
     case spv::BuiltIn::InstanceId:
-    case spv::BuiltIn::LaunchIdKHR:           // alias spv::BuiltIn::LaunchIdNV
-    case spv::BuiltIn::LaunchSizeKHR:         // alias spv::BuiltIn::LaunchSizeNV
-    case spv::BuiltIn::WorldRayOriginKHR:     // alias spv::BuiltIn::WorldRayOriginNV
-    case spv::BuiltIn::WorldRayDirectionKHR:  // alias spv::BuiltIn::WorldRayDirectionNV
-    case spv::BuiltIn::ObjectRayOriginKHR:    // alias spv::BuiltIn::ObjectRayOriginNV
-    case spv::BuiltIn::ObjectRayDirectionKHR:   // alias
-                                            // spv::BuiltIn::ObjectRayDirectionNV
-    case spv::BuiltIn::RayTminKHR:              // alias spv::BuiltIn::RayTminNV
-    case spv::BuiltIn::RayTmaxKHR:              // alias spv::BuiltIn::RayTmaxNV
-    case spv::BuiltIn::InstanceCustomIndexKHR:  // alias
-                                            // spv::BuiltIn::InstanceCustomIndexNV
-    case spv::BuiltIn::ObjectToWorldKHR:        // alias spv::BuiltIn::ObjectToWorldNV
-    case spv::BuiltIn::WorldToObjectKHR:        // alias spv::BuiltIn::WorldToObjectNV
-    case spv::BuiltIn::IncomingRayFlagsKHR:    // alias spv::BuiltIn::IncomingRayFlagsNV
+    case spv::BuiltIn::LaunchIdKHR:             // alias LaunchIdNV
+    case spv::BuiltIn::LaunchSizeKHR:           // alias LaunchSizeNV
+    case spv::BuiltIn::WorldRayOriginKHR:       // alias WorldRayOriginNV
+    case spv::BuiltIn::WorldRayDirectionKHR:    // alias WorldRayDirectionNV
+    case spv::BuiltIn::ObjectRayOriginKHR:      // alias ObjectRayOriginNV
+    case spv::BuiltIn::ObjectRayDirectionKHR:   // alias ObjectRayDirectionNV
+    case spv::BuiltIn::RayTminKHR:              // alias RayTminNV
+    case spv::BuiltIn::RayTmaxKHR:              // alias RayTmaxNV
+    case spv::BuiltIn::InstanceCustomIndexKHR:  // alias InstanceCustomIndexNV
+    case spv::BuiltIn::ObjectToWorldKHR:        // alias ObjectToWorldNV
+    case spv::BuiltIn::WorldToObjectKHR:        // alias WorldToObjectNV
+    case spv::BuiltIn::IncomingRayFlagsKHR:     // alias IncomingRayFlagsNV
     case spv::BuiltIn::RayGeometryIndexKHR:    // NOT present in NV
+    case spv::BuiltIn::HitTriangleVertexPositionsKHR:
     case spv::BuiltIn::CullMaskKHR: {
       return ValidateRayTracingBuiltinsAtDefinition(decoration, inst);
     }

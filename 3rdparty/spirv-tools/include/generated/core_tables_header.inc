@@ -217,4 +217,5 @@ enum Extension : uint32_t {
   kSPV_QCOM_image_processing2,
   kSPV_QCOM_tile_shading,
   kSPV_VALIDATOR_ignore_type_decl_unique,
+  kSPV_VALVE_mixed_float_dot_product,
 };

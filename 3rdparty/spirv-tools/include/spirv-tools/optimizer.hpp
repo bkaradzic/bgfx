@@ -645,6 +645,11 @@ Optimizer::PassToken CreateLoopPeelingPass();
 // Works best after LICM and local multi store elimination pass.
 Optimizer::PassToken CreateLoopUnswitchPass();
 
+// Creates a pass to legalize multidimensional arrays for Vulkan.
+// This pass will replace multidimensional arrays of resources with a single
+// dimensional array. Combine-access-chains should be run before this pass.
+Optimizer::PassToken CreateLegalizeMultidimArrayPass();
+
 // Create global value numbering pass.
 // This pass will look for instructions where the same value is computed on all
 // paths leading to the instruction.  Those instructions are deleted.

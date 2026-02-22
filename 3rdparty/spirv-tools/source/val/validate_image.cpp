@@ -2327,6 +2327,80 @@ spv_result_t ValidateImageProcessingQCOM(ValidationState_t& _,
   return res;
 }
 
+spv_result_t ValidateTileImageEXT(ValidationState_t& _,
+                                  const Instruction* inst) {
+  const spv::Op opcode = inst->opcode();
+
+  const uint32_t result_type = inst->type_id();
+  const char* result_type_str = GetActualResultTypeStr(opcode);
+  if (opcode == spv::Op::OpColorAttachmentReadEXT) {
+    if (!_.IsFloatScalarOrVectorType(result_type) &&
+        !_.IsIntScalarOrVectorType(result_type)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Expected " << result_type_str
+             << " to be int or float scalar or vector type";
+    }
+
+    const uint32_t attachment_type = _.GetOperandTypeId(inst, 2);
+    if (_.GetIdOpcode(attachment_type) != spv::Op::OpTypeImage) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Expected Image to be of type OpTypeImage";
+    }
+
+    ImageTypeInfo info;
+    if (!GetImageTypeInfo(_, attachment_type, &info)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Corrupt image type definition";
+    }
+
+    if (_.GetIdOpcode(info.sampled_type) != spv::Op::OpTypeVoid) {
+      const uint32_t result_component_type = _.GetComponentType(result_type);
+      if (result_component_type != info.sampled_type) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Expected Image 'Sampled Type' to be the same as "
+               << GetActualResultTypeStr(opcode) << " components";
+      }
+    }
+
+    if (info.dim != spv::Dim::TileImageDataEXT) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Image 'Dim' must be TileImageDataEXT";
+    }
+  } else if (opcode == spv::Op::OpDepthAttachmentReadEXT) {
+    if (!_.IsFloatScalarType(result_type, 32)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Expected " << result_type_str
+             << " to be a 32-bit floating-point type scalar";
+    }
+  } else {
+    if (!_.IsIntScalarType(result_type, 32)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Expected " << result_type_str
+             << " to be a 32-bit integer type scalar";
+    }
+  }
+
+  size_t sample_word_index =
+      opcode == spv::Op::OpColorAttachmentReadEXT ? 4 : 3;
+
+  if (inst->words().size() == sample_word_index + 1) {
+    const uint32_t sample_id = inst->word(sample_word_index);
+    const uint32_t sample_type = _.GetTypeId(sample_id);
+    if (!_.IsIntScalarType(sample_type, 32)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Expected Sample to be a 32-bit int scalar";
+    }
+  }
+
+  _.function(inst->function()->id())
+      ->RegisterExecutionModelLimitation(
+          spv::ExecutionModel::Fragment,
+          spvOpcodeString(opcode) +
+              std::string(" requires Fragment execution model"));
+
+  return SPV_SUCCESS;
+}
+
 }  // namespace
 
 // Validates correctness of image instructions.
@@ -2461,6 +2535,11 @@ spv_result_t ImagePass(ValidationState_t& _, const Instruction* inst) {
     case spv::Op::OpImageBlockMatchGatherSADQCOM:
     case spv::Op::OpImageBlockMatchGatherSSDQCOM:
       return ValidateImageProcessingQCOM(_, inst);
+
+    case spv::Op::OpColorAttachmentReadEXT:
+    case spv::Op::OpDepthAttachmentReadEXT:
+    case spv::Op::OpStencilAttachmentReadEXT:
+      return ValidateTileImageEXT(_, inst);
 
     default:
       break;

@@ -1801,13 +1801,14 @@ bool ValidationState_t::EvalConstantValInt64(uint32_t id, int64_t* val) const {
   return true;
 }
 
+// <is_int32, is_const_int32, value>
 std::tuple<bool, bool, uint32_t> ValidationState_t::EvalInt32IfConst(
     uint32_t id) const {
   const Instruction* const inst = FindDef(id);
   assert(inst);
   const uint32_t type = inst->type_id();
 
-  if (type == 0 || !IsIntScalarType(type) || GetBitWidth(type) != 32) {
+  if (type == 0 || !IsIntScalarType(type, 32)) {
     return std::make_tuple(false, false, 0);
   }
 
@@ -2837,10 +2838,16 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-OpEntryPoint-08721);
     case 8722:
       return VUID_WRAP(VUID-StandaloneSpirv-OpEntryPoint-08722);
+    case 8747:
+      return VUID_WRAP(VUID-HitTriangleVertexPositionsKHR-HitTriangleVertexPositionsKHR-08747);
+    case 8748:
+      return VUID_WRAP(VUID-HitTriangleVertexPositionsKHR-HitTriangleVertexPositionsKHR-08748);
+    case 8749:
+      return VUID_WRAP(VUID-HitTriangleVertexPositionsKHR-HitTriangleVertexPositionsKHR-08749);
     case 8973:
       return VUID_WRAP(VUID-StandaloneSpirv-Pointer-08973);
     case 9557:
-    return VUID_WRAP(VUID-StandaloneSpirv-Input-09557);
+      return VUID_WRAP(VUID-StandaloneSpirv-Input-09557);
     case 9638:
       return VUID_WRAP(VUID-StandaloneSpirv-OpTypeImage-09638);
     case 9658:
