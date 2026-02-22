@@ -296,6 +296,7 @@ typedef enum cgltf_meshopt_compression_filter {
 	cgltf_meshopt_compression_filter_octahedral,
 	cgltf_meshopt_compression_filter_quaternion,
 	cgltf_meshopt_compression_filter_exponential,
+	cgltf_meshopt_compression_filter_color,
 	cgltf_meshopt_compression_filter_max_enum
 } cgltf_meshopt_compression_filter;
 
@@ -308,6 +309,7 @@ typedef struct cgltf_meshopt_compression
 	cgltf_size count;
 	cgltf_meshopt_compression_mode mode;
 	cgltf_meshopt_compression_filter filter;
+	cgltf_bool is_khr;
 } cgltf_meshopt_compression;
 
 typedef struct cgltf_buffer_view
@@ -1661,8 +1663,8 @@ cgltf_result cgltf_validate(cgltf_data* data)
 			CGLTF_ASSERT_IF((mc->mode == cgltf_meshopt_compression_mode_triangles || mc->mode == cgltf_meshopt_compression_mode_indices) && mc->filter != cgltf_meshopt_compression_filter_none, cgltf_result_invalid_gltf);
 
 			CGLTF_ASSERT_IF(mc->filter == cgltf_meshopt_compression_filter_octahedral && mc->stride != 4 && mc->stride != 8, cgltf_result_invalid_gltf);
-
 			CGLTF_ASSERT_IF(mc->filter == cgltf_meshopt_compression_filter_quaternion && mc->stride != 8, cgltf_result_invalid_gltf);
+			CGLTF_ASSERT_IF(mc->filter == cgltf_meshopt_compression_filter_color && mc->stride != 4 && mc->stride != 8, cgltf_result_invalid_gltf);
 		}
 	}
 
@@ -5118,6 +5120,10 @@ static int cgltf_parse_json_meshopt_compression(cgltf_options* options, jsmntok_
 			{
 				out_meshopt_compression->filter = cgltf_meshopt_compression_filter_exponential;
 			}
+			else if (cgltf_json_strcmp(tokens+i, json_chunk, "COLOR") == 0)
+			{
+				out_meshopt_compression->filter = cgltf_meshopt_compression_filter_color;
+			}
 			++i;
 		}
 		else
@@ -5226,6 +5232,12 @@ static int cgltf_parse_json_buffer_view(cgltf_options* options, jsmntok_t const*
 				if (cgltf_json_strcmp(tokens+i, json_chunk, "EXT_meshopt_compression") == 0)
 				{
 					out_buffer_view->has_meshopt_compression = 1;
+					i = cgltf_parse_json_meshopt_compression(options, tokens, i + 1, json_chunk, &out_buffer_view->meshopt_compression);
+				}
+				else if (cgltf_json_strcmp(tokens+i, json_chunk, "KHR_meshopt_compression") == 0)
+				{
+					out_buffer_view->has_meshopt_compression = 1;
+					out_buffer_view->meshopt_compression.is_khr = 1;
 					i = cgltf_parse_json_meshopt_compression(options, tokens, i + 1, json_chunk, &out_buffer_view->meshopt_compression);
 				}
 				else
