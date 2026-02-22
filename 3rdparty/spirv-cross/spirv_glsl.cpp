@@ -1335,9 +1335,6 @@ void CompilerGLSL::emit_struct(SPIRType &type)
 		emitted = true;
 	}
 
-	if (has_extended_decoration(type.self, SPIRVCrossDecorationPaddingTarget))
-		emit_struct_padding_target(type);
-
 	end_scope_decl();
 
 	if (emitted)
@@ -10872,6 +10869,15 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 				access_meshlet_position_y = true;
 			}
 
+			if (get<SPIRType>(type->parent_type).op == OpTypeStruct &&
+			    has_decoration(type->parent_type, DecorationArrayStride))
+			{
+				uint32_t native_stride = get_decoration(type->parent_type, DecorationArrayStride);
+				uint32_t array_stride = get_decoration(type_id, DecorationArrayStride);
+				if (native_stride != array_stride)
+					expr += ".data";
+			}
+
 			type_id = type->parent_type;
 			type = &get<SPIRType>(type_id);
 
@@ -10957,6 +10963,7 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 				physical_type = 0;
 
 			row_major_matrix_needs_conversion = member_is_non_native_row_major_matrix(*type, index);
+			type_id = type->member_types[index];
 			type = &get<SPIRType>(type->member_types[index]);
 		}
 		// Matrix -> Vector
@@ -11168,9 +11175,9 @@ string CompilerGLSL::to_flattened_struct_member(const string &basename, const SP
 	return ret;
 }
 
-uint32_t CompilerGLSL::get_physical_type_stride(const SPIRType &) const
+uint32_t CompilerGLSL::get_physical_type_id_stride(TypeID) const
 {
-	SPIRV_CROSS_THROW("Invalid to call get_physical_type_stride on a backend without native pointer support.");
+	SPIRV_CROSS_THROW("Invalid to call get_physical_type_id_stride on a backend without native pointer support.");
 }
 
 string CompilerGLSL::access_chain(uint32_t base, const uint32_t *indices, uint32_t count, const SPIRType &target_type,
@@ -11231,13 +11238,13 @@ string CompilerGLSL::access_chain(uint32_t base, const uint32_t *indices, uint32
 				// If there is a mismatch we have to go via 64-bit pointer arithmetic :'(
 				// Using packed hacks only gets us so far, and is not designed to deal with pointer to
 				// random values. It works for structs though.
-				auto &pointee_type = get_pointee_type(get<SPIRType>(type_id));
-				uint32_t physical_stride = get_physical_type_stride(pointee_type);
+				TypeID pointee_type_id = get_pointee_type_id(type_id);
+				uint32_t physical_stride = get_physical_type_id_stride(pointee_type_id);
 				uint32_t requested_stride = get_decoration(type_id, DecorationArrayStride);
 				if (physical_stride != requested_stride)
 				{
 					flags |= ACCESS_CHAIN_PTR_CHAIN_POINTER_ARITH_BIT;
-					if (is_vector(pointee_type))
+					if (is_vector(get<SPIRType>(pointee_type_id)))
 						flags |= ACCESS_CHAIN_PTR_CHAIN_CAST_TO_SCALAR_BIT;
 				}
 			}
@@ -16336,10 +16343,6 @@ void CompilerGLSL::emit_struct_member(const SPIRType &type, uint32_t member_type
 
 	statement(layout_for_member(type, index), qualifiers, qualifier, flags_to_qualifiers_glsl(membertype, 0, memberflags),
 	          variable_decl(membertype, to_member_name(type, index)), ";");
-}
-
-void CompilerGLSL::emit_struct_padding_target(const SPIRType &)
-{
 }
 
 string CompilerGLSL::flags_to_qualifiers_glsl(const SPIRType &type, uint32_t id, const Bitset &flags)

@@ -886,6 +886,7 @@ protected:
 		SPVFuncImplVariableSizedDescriptor,
 		SPVFuncImplVariableDescriptorArray,
 		SPVFuncImplPaddedStd140,
+		SPVFuncImplPaddedArrayElement,
 		SPVFuncImplReduceAdd,
 		SPVFuncImplImageFence,
 		SPVFuncImplTextureCast,
@@ -921,7 +922,6 @@ protected:
 	                             const std::string &qualifier = "");
 	void emit_struct_member(const SPIRType &type, uint32_t member_type_id, uint32_t index,
 	                        const std::string &qualifier = "", uint32_t base_offset = 0) override;
-	void emit_struct_padding_target(const SPIRType &type) override;
 	std::string type_to_glsl(const SPIRType &type, uint32_t id, bool member);
 	std::string type_to_glsl(const SPIRType &type, uint32_t id = 0) override;
 	void emit_block_hints(const SPIRBlock &block) override;
@@ -1096,15 +1096,15 @@ protected:
 
 	uint32_t get_physical_tess_level_array_size(BuiltIn builtin) const;
 
-	uint32_t get_physical_type_stride(const SPIRType &type) const override;
+	uint32_t get_physical_type_id_stride(TypeID type_id) const override;
 
 	// MSL packing rules. These compute the effective packing rules as observed by the MSL compiler in the MSL output.
 	// These values can change depending on various extended decorations which control packing rules.
 	// We need to make these rules match up with SPIR-V declared rules.
-	uint32_t get_declared_type_size_msl(const SPIRType &type, bool packed, bool row_major) const;
-	uint32_t get_declared_type_array_stride_msl(const SPIRType &type, bool packed, bool row_major) const;
-	uint32_t get_declared_type_matrix_stride_msl(const SPIRType &type, bool packed, bool row_major) const;
-	uint32_t get_declared_type_alignment_msl(const SPIRType &type, bool packed, bool row_major) const;
+	uint32_t get_declared_type_size_msl(TypeID type_id, const SPIRType *special_type, bool packed, bool row_major) const;
+	uint32_t get_declared_type_array_stride_msl(TypeID type_id, const SPIRType *special_type, bool packed, bool row_major) const;
+	uint32_t get_declared_type_matrix_stride_msl(TypeID type_id, const SPIRType *special_type, bool packed, bool row_major) const;
+	uint32_t get_declared_type_alignment_msl(TypeID type_id, const SPIRType *special_type, bool packed, bool row_major) const;
 
 	uint32_t get_declared_struct_member_size_msl(const SPIRType &struct_type, uint32_t index) const;
 	uint32_t get_declared_struct_member_array_stride_msl(const SPIRType &struct_type, uint32_t index) const;
@@ -1116,11 +1116,10 @@ protected:
 	uint32_t get_declared_input_matrix_stride_msl(const SPIRType &struct_type, uint32_t index) const;
 	uint32_t get_declared_input_alignment_msl(const SPIRType &struct_type, uint32_t index) const;
 
-	const SPIRType &get_physical_member_type(const SPIRType &struct_type, uint32_t index) const;
+	TypeID get_physical_member_type_id(const SPIRType &struct_type, uint32_t index) const;
 	SPIRType get_presumed_input_type(const SPIRType &struct_type, uint32_t index) const;
 
-	uint32_t get_declared_struct_size_msl(const SPIRType &struct_type, bool ignore_alignment = false,
-	                                      bool ignore_padding = false) const;
+	uint32_t get_declared_struct_size_msl(const SPIRType &struct_type) const;
 
 	std::string to_component_argument(uint32_t id);
 	void align_struct(SPIRType &ib_type, std::unordered_set<uint32_t> &aligned_structs);
