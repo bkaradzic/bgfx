@@ -1146,6 +1146,22 @@ TIntermTyped* TParseContext::handleDotSwizzle(const TSourceLoc& loc, TIntermType
     return result;
 }
 
+TIntermTyped* TParseContext::handleTypeCast(const TSourceLoc& loc, TType *castType, TIntermTyped *base)
+{
+    TIntermTyped *result = base;
+    requireExtensions(loc, 1, &E_GL_NV_explicit_typecast, "explicit typecast");
+    if (castType->isScalar() || castType->isVector() || castType->isMatrix() || castType->isReference()) {
+        if (base->getAsAggregate() && !base->getAsAggregate()->getSequence().empty() ) {
+            warn(loc, "typecast is unary operator and takes only a single expression","","");
+        }
+        result = addConstructor(loc, base, *castType);
+    }
+    else
+        error(loc, "type cast has to be either scalar, vector, matrix or buffer reference", "", "");
+
+
+    return result;
+}
 void TParseContext::blockMemberExtensionCheck(const TSourceLoc& loc, const TIntermTyped* base, int member, const TString& memberName)
 {
     // a block that needs extension checking is either 'base', or if arrayed,

@@ -3069,7 +3069,7 @@ Instruction* Builder::createDescHeapLoadStoreBaseRemap(Id baseId, Op op)
         baseVal = chain->getResultId();
         clearAccessChain();
     } else if (instOp != Op::OpUntypedAccessChainKHR) {
-        assert("Not a untyped load type");
+        assert(false && "Not a untyped load type");
     }
 
     Instruction* inst = nullptr;

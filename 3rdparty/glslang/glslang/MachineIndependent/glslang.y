@@ -615,8 +615,11 @@ unary_expression
                 $$->getAsConstantUnion()->setExpression();
         }
     }
+    | LEFT_PAREN type_specifier_nonarray RIGHT_PAREN unary_expression {
+        $$ = parseContext.handleTypeCast($1.loc, new TType($2), $4);
+    }
     ;
-// Grammar Note:  No traditional style type casts.
+// Grammar Note:  No traditional style type casts, except under NV extension
 
 unary_operator
     : PLUS  { $$.loc = $1.loc; $$.op = EOpNull; }
