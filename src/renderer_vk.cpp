@@ -1728,6 +1728,7 @@ VK_IMPORT_INSTANCE
 					| BGFX_CAPS_TEXTURE_BLIT
 					| BGFX_CAPS_TEXTURE_COMPARE_ALL
 					| (m_deviceFeatures.imageCubeArray ? BGFX_CAPS_TEXTURE_CUBE_ARRAY : 0)
+					| BGFX_CAPS_TEXTURE_EXTERNAL
 					| BGFX_CAPS_TEXTURE_READ_BACK
 					| BGFX_CAPS_VERTEX_ATTRIB_HALF
 					| BGFX_CAPS_VERTEX_ATTRIB_UINT10
@@ -1742,7 +1743,10 @@ VK_IMPORT_INSTANCE
 					| (s_extension[Extension::KHR_fragment_shading_rate      ].m_supported ? BGFX_CAPS_VARIABLE_RATE_SHADING : 0)
 					;
 
-				m_variableRateShadingSupported = s_extension[Extension::KHR_fragment_shading_rate].m_supported;
+				m_variableRateShadingSupported = true
+					&& s_extension[Extension::KHR_fragment_shading_rate].m_supported
+					&& NULL != vkCmdSetFragmentShadingRateKHR
+					;
 
 				const uint32_t maxAttachments = bx::min<uint32_t>(
 					  m_deviceProperties.limits.maxFragmentOutputAttachments
@@ -1899,6 +1903,12 @@ VK_IMPORT_INSTANCE
 				}
 			}
 
+			if (NULL != g_platformData.context)
+			{
+				m_device =
+					m_externalDevice = (VkDevice)g_platformData.context;
+			}
+			else
 			{
 				uint32_t numEnabledLayers = 0;
 				const char* enabledLayer[Layer::Count];
@@ -2327,7 +2337,16 @@ VK_IMPORT_DEVICE
 				vkDestroy(m_descriptorPool[ii]);
 			}
 
-			vkDestroyDevice(m_device, m_allocatorCb);
+			if (NULL != m_externalDevice)
+			{
+				m_externalDevice = NULL;
+				m_device         = NULL;
+			}
+			else
+			{
+				vkDestroyDevice(m_device, m_allocatorCb);
+				m_device = NULL;
+			}
 
 			if (VK_NULL_HANDLE != m_debugReportCallback)
 			{
@@ -4703,6 +4722,7 @@ VK_IMPORT_DEVICE
 		VkCommandBuffer m_commandBuffer;
 
 		VkDevice m_device;
+		VkDevice m_externalDevice;
 		uint32_t m_globalQueueFamily;
 		VkQueue  m_globalQueue;
 		VkDescriptorPool m_descriptorPool[BGFX_CONFIG_MAX_FRAME_LATENCY];
@@ -6774,10 +6794,6 @@ retry:
 					s_renderVK->recycleMemory(stagingBuffer.m_deviceMem);
 				}
 			}
-			else
-			{
-				setState(_commandBuffer, m_sampledLayout);
-			}
 
 			bx::free(g_allocator, bufferCopyInfo);
 
@@ -8714,7 +8730,7 @@ retry:
 
 			for (TextureHandle th : m_external)
 			{
-				s_renderVK->m_textures[th.idx].setState(m_activeCommandBuffer, VK_IMAGE_LAYOUT_UNDEFINED);
+				s_renderVK->m_textures[th.idx].setState(m_activeCommandBuffer, VK_IMAGE_LAYOUT_GENERAL);
 			}
 
 			setMemoryBarrier(
