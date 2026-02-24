@@ -1011,11 +1011,11 @@ VK_IMPORT_DEVICE
 		, uint32_t _layerCount = VK_REMAINING_ARRAY_LAYERS
 		)
 	{
-		BX_ASSERT(true
-			&& _newLayout != VK_IMAGE_LAYOUT_UNDEFINED
-			&& _newLayout != VK_IMAGE_LAYOUT_PREINITIALIZED
-			, "_newLayout cannot use VK_IMAGE_LAYOUT_UNDEFINED or VK_IMAGE_LAYOUT_PREINITIALIZED."
-			);
+		if (_newLayout == VK_IMAGE_LAYOUT_UNDEFINED
+		||  _newLayout == VK_IMAGE_LAYOUT_PREINITIALIZED)
+		{
+			_newLayout = VK_IMAGE_LAYOUT_GENERAL;
+		}
 
 		constexpr VkPipelineStageFlags depthStageMask = 0
 			| VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
@@ -1166,6 +1166,8 @@ VK_IMPORT_DEVICE
 		RendererContextVK()
 			: m_allocatorCb(NULL)
 			, m_memoryLru()
+			, m_device(NULL)
+			, m_externalDevice(NULL)
 			, m_renderDocDll(NULL)
 			, m_vulkan1Dll(NULL)
 			, m_maxAnisotropy(1.0f)
