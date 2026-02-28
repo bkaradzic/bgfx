@@ -35,7 +35,6 @@ namespace bgfx
 	struct CallbackI;
 
 $enums
-
 	constexpr uint16_t kInvalidHandle = UINT16_MAX;
 
 	/// View id.
@@ -44,7 +43,6 @@ $enums
 $handles
 
 $structs
-
 	/// Callback interface to implement application specific behavior.
 	/// Cached items are currently used for OpenGL and Direct3D 12 binary
 	/// shaders.
@@ -246,7 +244,6 @@ $structs
 $funcptrs
 
 $cppdecl
-
 } // namespace bgfx
 
 #endif // BGFX_H_HEADER_GUARD
