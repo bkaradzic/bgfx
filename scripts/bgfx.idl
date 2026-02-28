@@ -1150,7 +1150,7 @@ func.vertexConvert { section = "Miscellaneous" }
 	.num       "uint32_t"             --- Number of vertices to convert from source to destination.
 	 { default = 1 }
 
---- Weld vertices.
+--- Weld vertices. Returns number of unique vertices after welding.
 func.weldVertices { section = "Miscellaneous" }
 	"uint32_t"                              --- Number of unique vertices after vertex welding.
 	.output          "void*"                --- Welded vertices remapping table. The size of buffer
@@ -1402,7 +1402,7 @@ func.destroy { cname = "destroy_index_buffer", section = "Index Buffers" }
 	"void"
 	.handle "IndexBufferHandle" --- Static index buffer handle.
 
---- Create vertex layout.
+--- Create vertex layout. Vertex layouts are used to describe the format of vertex data.
 func.createVertexLayout { section = "Vertex Buffers" }
 	"VertexLayoutHandle"
 	.layout  "const VertexLayout &" --- Vertex layout.
@@ -2063,7 +2063,8 @@ func.destroy { cname = "destroy_uniform", section = "Uniforms" }
 	"void"
 	.handle "UniformHandle" --- Handle to uniform object.
 
---- Create occlusion query.
+--- Create occlusion query. Occlusion queries allow the GPU to determine
+--- if any pixels passed the depth test.
 func.createOcclusionQuery { section = "Occlusion Query" }
 	"OcclusionQueryHandle" --- Handle to occlusion query object.
 
@@ -2467,6 +2468,7 @@ func.Encoder.setVertexBuffer { conly, cname = "set_dynamic_vertex_buffer" }
 	.startVertex  "uint32_t"                  --- First vertex to render.
 	.numVertices  "uint32_t"                  --- Number of vertices to render.
 
+--- Set vertex buffer for draw primitive.
 func.Encoder.setVertexBuffer { cname = "set_dynamic_vertex_buffer_with_layout", section = "Draw/Buffers" }
 	"void"
 	.stream       "uint8_t"                   --- Vertex stream.
@@ -3346,6 +3348,7 @@ func.blit { section = "Blit" }
 -- Documentation sections for RST generation
 --------------------------------------------------------------------------------
 
+--- General API for initialization, shutdown, frame management, debug, and querying renderer information.
 section("General", 1)
 
 --- Initialization and Shutdown
@@ -3354,28 +3357,37 @@ section("Initialization and Shutdown", 2)
 --- Updating
 section("Updating", 2)
 
+--- Reset flags control back-buffer resolution, MSAA, vsync, and other global rendering settings.
 section("Reset", 3)
 
+--- Frame flags and the ``bgfx::frame`` call to advance to the next frame.
 section("Frame", 3)
 
 --- Debug
 section("Debug", 2)
 
+--- Enable or disable debug features.
 section("Debug Features", 3)
 
+--- Flags for ``bgfx::setDebug``.
 section("Debug Flags", 3)
 
+--- Functions for printing debug text on screen.
 section("Debug Text Display", 3)
 
 --- Querying information
 section("Querying information", 2)
 
+--- Query the active rendering backend.
 section("Renderer", 3)
 
+--- Query GPU capabilities and limits.
 section("Capabilities", 3)
 
+--- Individual capability flags.
 section("Available Caps", 4)
 
+--- Per-frame rendering statistics.
 section("Statistics", 3)
 
 --- Platform specific
@@ -3417,14 +3429,19 @@ section("Encoder", 2)
 --- All state is cleared after calling ``bgfx::submit``.
 section("Draw", 2)
 
+--- Debug markers for grouping draw calls in graphics debugging tools.
 section("Debug", 3)
 
+--- Configure render state for draw calls.
 section("State", 3)
 
+--- Render state flags for depth test, blending, culling, etc.
 section("State Flags", 3)
 
+--- Configure stencil test for draw calls.
 section("Stencil", 3)
 
+--- Stencil test configuration flags.
 section("Stencil Flags", 3)
 
 --- Scissor
@@ -3434,14 +3451,19 @@ section("Stencil Flags", 3)
 --- Otherwise, use ``bgfx::setViewScissor``.
 section("Scissor", 3)
 
+--- Set model transform matrices for draw calls.
 section("Transform", 3)
 
+--- Conditionally render based on occlusion query results.
 section("Conditional Rendering", 3)
 
+--- Set vertex, index, and instance data buffers for draw calls.
 section("Buffers", 3)
 
+--- Bind textures to texture stages for draw calls.
 section("Textures", 3)
 
+--- Set shader uniform parameters for draw calls.
 section("Uniforms", 3)
 
 --- Submit
@@ -3454,8 +3476,10 @@ section("Submit", 3)
 --- Compute state is not preserved between compute dispatches; all state is cleared after calling ``bgfx::dispatch``.
 section("Compute", 2)
 
+--- Bind buffers to compute stages.
 section("Buffers", 3)
 
+--- Bind texture images to compute stages.
 section("Images", 3)
 
 --- Dispatch
@@ -3473,7 +3497,7 @@ section("Resources", 1)
 
 --- Shaders and Programs
 ---
---- @remarks Shaders must be compiled with offline command line too shaderc.
+--- @remarks Shaders must be compiled with offline command line tool shaderc.
 section("Shaders and Programs", 2)
 
 --- Uniforms

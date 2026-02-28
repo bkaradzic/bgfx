@@ -15,6 +15,8 @@ API Reference
 General
 -------
 
+General API for initialization, shutdown, frame management, debug, and querying renderer information.
+
 Initialization and Shutdown
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -42,6 +44,8 @@ Updating
 Reset
 *****
 
+Reset flags control back-buffer resolution, MSAA, vsync, and other global rendering settings.
+
 .. doxygendefine:: BGFX_RESET_NONE
 .. doxygendefine:: BGFX_RESET_FULLSCREEN
 .. doxygendefine:: BGFX_RESET_VSYNC
@@ -61,6 +65,8 @@ Reset
 Frame
 *****
 
+Frame flags and the ``bgfx::frame`` call to advance to the next frame.
+
 .. doxygendefine:: BGFX_FRAME_NONE
 .. doxygendefine:: BGFX_FRAME_DEBUG_CAPTURE
 .. doxygendefine:: BGFX_FRAME_DISCARD
@@ -73,10 +79,14 @@ Debug
 Debug Features
 **************
 
+Enable or disable debug features.
+
 .. doxygenfunction:: bgfx::setDebug
 
 Debug Flags
 ***********
+
+Flags for ``bgfx::setDebug``.
 
 .. doxygendefine:: BGFX_DEBUG_NONE
 .. doxygendefine:: BGFX_DEBUG_WIREFRAME
@@ -87,6 +97,8 @@ Debug Flags
 
 Debug Text Display
 ******************
+
+Functions for printing debug text on screen.
 
 .. doxygenfunction:: bgfx::dbgTextClear
 .. doxygenfunction:: bgfx::dbgTextPrintf
@@ -99,6 +111,8 @@ Querying information
 Renderer
 ********
 
+Query the active rendering backend.
+
 .. doxygenstruct:: bgfx::RendererType
     :members:
 
@@ -108,8 +122,12 @@ Renderer
 Capabilities
 ************
 
+Query GPU capabilities and limits.
+
 Available Caps
 """"""""""""""
+
+Individual capability flags.
 
 .. doxygendefine:: BGFX_CAPS_ALPHA_TO_COVERAGE
 .. doxygendefine:: BGFX_CAPS_BLEND_INDEPENDENT
@@ -149,6 +167,8 @@ Available Caps
 
 Statistics
 **********
+
+Per-frame rendering statistics.
 
 .. doxygenstruct:: bgfx::ViewStats
     :members:
@@ -265,6 +285,8 @@ All state is cleared after calling ``bgfx::submit``.
 Debug
 *****
 
+Debug markers for grouping draw calls in graphics debugging tools.
+
 .. doxygenfunction:: bgfx::setName(ShaderHandle _handle, const char* _name, int32_t _len = INT32_MAX)
 .. doxygenfunction:: bgfx::setName(TextureHandle _handle, const char* _name, int32_t _len = INT32_MAX)
 .. doxygenfunction:: bgfx::setMarker
@@ -272,10 +294,14 @@ Debug
 State
 *****
 
+Configure render state for draw calls.
+
 .. doxygenfunction:: bgfx::setState
 
 State Flags
 ***********
+
+Render state flags for depth test, blending, culling, etc.
 
 **Write**
 
@@ -348,10 +374,14 @@ State Flags
 Stencil
 *******
 
+Configure stencil test for draw calls.
+
 .. doxygenfunction:: bgfx::setStencil
 
 Stencil Flags
 *************
+
+Stencil test configuration flags.
 
 .. doxygendefine:: BGFX_STENCIL_TEST_LESS
 .. doxygendefine:: BGFX_STENCIL_TEST_LEQUAL
@@ -375,6 +405,8 @@ Otherwise, use ``bgfx::setViewScissor``.
 Transform
 *********
 
+Set model transform matrices for draw calls.
+
 .. doxygenfunction:: bgfx::setTransform(const void* _mtx, uint16_t _num = 1)
 .. doxygenfunction:: bgfx::setTransform(uint32_t _cache, uint16_t _num = 1)
 .. doxygenfunction:: bgfx::allocTransform
@@ -382,10 +414,14 @@ Transform
 Conditional Rendering
 *********************
 
+Conditionally render based on occlusion query results.
+
 .. doxygenfunction:: bgfx::setCondition
 
 Buffers
 *******
+
+Set vertex, index, and instance data buffers for draw calls.
 
 .. doxygenstruct:: bgfx::TransientIndexBuffer
     :members:
@@ -415,10 +451,14 @@ Buffers
 Textures
 ********
 
+Bind textures to texture stages for draw calls.
+
 .. doxygenfunction:: bgfx::setTexture
 
 Uniforms
 ********
+
+Set shader uniform parameters for draw calls.
 
 .. doxygenfunction:: bgfx::setViewUniform
 .. doxygenfunction:: bgfx::setFrameUniform
@@ -442,6 +482,8 @@ Compute state is not preserved between compute dispatches; all state is cleared 
 Buffers
 *******
 
+Bind buffers to compute stages.
+
 .. doxygenstruct:: bgfx::Access
     :members:
 
@@ -453,6 +495,8 @@ Buffers
 
 Images
 ******
+
+Bind texture images to compute stages.
 
 .. doxygenfunction:: bgfx::setImage
 
@@ -480,7 +524,7 @@ Shaders and Programs
 
 .. note::
 
-    Shaders must be compiled with offline command line too shaderc.
+    Shaders must be compiled with offline command line tool shaderc.
 
 .. doxygenfunction:: bgfx::createShader
 .. doxygenfunction:: bgfx::getShaderUniforms
