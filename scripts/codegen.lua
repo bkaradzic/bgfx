@@ -359,8 +359,8 @@ function codegen.nameconversion(all_types, all_funcs)
 	end
 
 	local funcs = {}
-	local funcs_conly = {}
 	local funcs_alter = {}
+	local pending_conly = {}
 
 	for _,v in ipairs(all_funcs) do
 		if v.cname == nil then
@@ -382,7 +382,20 @@ function codegen.nameconversion(all_types, all_funcs)
 		end
 
 		if v.conly then
-			table.insert(funcs_conly, v)
+			local key = (v.class or "") .. "." .. v.name
+			if not pending_conly[key] then
+				pending_conly[key] = {}
+			end
+			table.insert(pending_conly[key], v)
+		elseif not v.cpponly then
+			local key = (v.class or "") .. "." .. v.name
+			local pending = pending_conly[key]
+			if pending then
+				local conly_sibling = table.remove(pending)
+				if conly_sibling then
+					v.multicfunc = { v.cname, conly_sibling.cname }
+				end
+			end
 		end
 
 		for _, arg in ipairs(v.args) do
@@ -407,14 +420,6 @@ function codegen.nameconversion(all_types, all_funcs)
 			v.this_type = classtype
 			v.this_conversion = string.format( "%s This = (%s)_this;", classtype.cpptype, classtype.cpptype)
 			v.this_to_c = string.format("(%s)this", classtype.ctype)
-		end
-	end
-
-	for _, v in ipairs(funcs_conly) do
-		local func = funcs[v.name]
-		if func then
-			func.multicfunc = func.multicfunc or { func.cname }
-			table.insert(func.multicfunc, v.cname)
 		end
 	end
 
@@ -573,19 +578,65 @@ function codegen.gen_cfuncptr(funcptr)
 	return apply_template(funcptr, "typedef $CRET (*$CFUNCNAME)($CARGS);")
 end
 
-local function doxygen_funcret(r, func, prefix)
-	if not func or func.ret.fulltype == "void" or func.ret.comment == nil then
+-- Split doxygen comment body into description lines and tagged sections.
+-- Tagged sections start with @tagname and include continuation lines.
+local function split_doxygen_tags(doxygen)
+	local desc = {}
+	local tagged = {}
+	local current = nil
+
+	local normalize = { remark = "remarks" }
+	for _, line in ipairs(doxygen) do
+		local tag = line:match("^@(%w+)")
+		if tag then
+			if normalize[tag] then
+				line = line:gsub("^@" .. tag, "@" .. normalize[tag], 1)
+				tag = normalize[tag]
+			end
+			current = { tag = tag, lines = {line} }
+			tagged[#tagged+1] = current
+		elseif current then
+			current.lines[#current.lines+1] = line
+		else
+			desc[#desc+1] = line
+		end
+	end
+
+	return desc, tagged
+end
+
+-- Emit tagged sections matching given tag names, with prefix for each line.
+local function emit_tagged_sections(result, tagged, prefix, tags)
+	for _, section in ipairs(tagged) do
+		for _, tag in ipairs(tags) do
+			if section.tag == tag then
+				result[#result+1] = prefix
+				for _, line in ipairs(section.lines) do
+					result[#result+1] = prefix .. " " .. line
+				end
+				break
+			end
+		end
+	end
+end
+
+local function doxygen_funcret(r, func, prefix, cont, strip)
+	if not func or not func.ret or func.ret.fulltype == "void" or func.ret.comment == nil then
 		return
 	end
 	r[#r+1] = prefix
 	r[#r+1] = string.format("%s @returns %s", prefix, func.ret.comment[1])
 	for i = 2,#func.ret.comment do
-		r[#r+1] = string.format("%s  %s", prefix, func.ret.comment[i])
+		local text = func.ret.comment[i]
+		if strip then
+			text = text:match("^%s*(.*)$")
+		end
+		r[#r+1] = string.format("%s%s%s", prefix, cont, text)
 	end
 	return r
 end
 
-local function doxygen_func(r, func, prefix)
+local function doxygen_func(r, func, prefix, cont, strip)
 	if not func or not func.args or #func.args == 0 then
 		return
 	end
@@ -603,13 +654,16 @@ local function doxygen_func(r, func, prefix)
 		if arg.comment then
 			r[#r+1] = comment .. " " .. arg.comment[1]
 			for i = 2,#arg.comment do
-				r[#r+1] = string.format("%s  %s", prefix, arg.comment[i])
+				local text = arg.comment[i]
+				if strip then
+					text = text:match("^%s*(.*)$")
+				end
+				r[#r+1] = string.format("%s%s%s", prefix, cont, text)
 			end
 		else
 			r[#r+1] = comment
 		end
 	end
-	doxygen_funcret(r, func, prefix)
 	return r
 end
 
@@ -617,11 +671,30 @@ function codegen.doxygen_type(doxygen, func, cname)
 	if doxygen == nil then
 		return
 	end
+	local desc, tagged = split_doxygen_tags(doxygen)
 	local result = {}
-	for _, line in ipairs(doxygen) do
+
+	-- 1. Description
+	for _, line in ipairs(desc) do
 		result[#result+1] = "/// " .. line
 	end
-	doxygen_func(result, func, "///")
+
+	-- 2. @param (from function arguments)
+	doxygen_func(result, func, "///", "   ", true)
+
+	-- 3. @returns (from function return type)
+	doxygen_funcret(result, func, "///", "   ", true)
+
+	-- 4. @returns from comment body
+	emit_tagged_sections(result, tagged, "///", {"returns"})
+
+	-- 5. @remarks/@remark from comment body
+	emit_tagged_sections(result, tagged, "///", {"remarks", "remark"})
+
+	-- 6. @attention/@warning from comment body
+	emit_tagged_sections(result, tagged, "///", {"attention", "warning"})
+
+	-- 7. @attention C99 equivalent binding
 	if cname then
 		result[#result+1] = "///"
 		if type(cname) == "string" then
@@ -631,7 +704,7 @@ function codegen.doxygen_type(doxygen, func, cname)
 			for _, v in ipairs(cname) do
 				names[#names+1] = "`" .. v .. "`"
 			end
-			result[#result+1] = string.format("/// @attention C99's equivalent bindings are %s.", table.concat(names, ","))
+			result[#result+1] = string.format("/// @attention C99's equivalent bindings are %s.", table.concat(names, ", "))
 		end
 	end
 	result[#result+1] = "///"
@@ -648,7 +721,11 @@ function codegen.doxygen_ctype(doxygen, func)
 	for _, line in ipairs(doxygen) do
 		result[#result+1] = " * " .. line
 	end
-	doxygen_func(result, func, " *")
+	doxygen_func(result, func, " *", "  ")
+	-- Only emit @returns when @param was emitted (preserves original behavior)
+	if func and func.args and #func.args > 0 then
+		doxygen_funcret(result, func, " *", "  ")
+	end
 	result[#result+1] = " *"
 	result[#result+1] = " */"
 	return table.concat(result, "\n")
@@ -941,6 +1018,12 @@ function codegen.gen_struct_define(struct, methods)
 			ctor[#ctor+1] = ""
 		end
 	end
+	-- Remove trailing empty separators when no struct items follow
+	if #items == 0 then
+		while #ctor > 0 and ctor[#ctor] == "" do
+			ctor[#ctor] = nil
+		end
+	end
 	local subs = {}
 	if struct.substruct then
 		for _, v in ipairs(struct.substruct) do
@@ -953,7 +1036,7 @@ function codegen.gen_struct_define(struct, methods)
 	local temp = {
 		NAME = struct.name,
 		SUBSTRUCTS = lines(subs),
-		ITEMS = table.concat(items, "\n\t"),
+		ITEMS = #items > 0 and table.concat(items, "\n\t") or "//EMPTYLINE",
 		METHODS = lines(ctor),
 	}
 	return remove_emptylines(struct_temp:gsub("$(%u+)", temp))
