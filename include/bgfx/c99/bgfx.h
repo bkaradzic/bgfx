@@ -576,7 +576,7 @@ typedef struct bgfx_caps_limits_s
     uint32_t             maxEncoders;        /** Maximum number of encoder threads.       */
     uint32_t             minResourceCbSize;  /** Minimum resource command buffer size.    */
     uint32_t             maxTransientVbSize; /** Maximum transient vertex buffer size.    */
-    uint32_t             maxTansientIbSize;  /** Maximum transient index buffer size.     */
+    uint32_t             maxTransientIbSize; /** Maximum transient index buffer size.     */
     uint32_t             minUniformBufferSize; /** Mimimum uniform buffer size.             */
 
 } bgfx_caps_limits_t;
@@ -1181,7 +1181,7 @@ BGFX_C_API void bgfx_topology_sort_tri_list(bgfx_topology_sort_t _sort, void* _d
  * Returns supported backend API renderers.
  *
  * @param[in] _max Maximum number of elements in _enum array.
- * @param[inout] _enum Array where supported renderers will be written.
+ * @param[in,out] _enum Array where supported renderers will be written.
  *
  * @returns Number of supported renderers.
  *

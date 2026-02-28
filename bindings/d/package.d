@@ -1065,7 +1065,7 @@ extern(C++, "bgfx") struct Caps{
 		uint maxEncoders; ///Maximum number of encoder threads.
 		uint minResourceCBSize; ///Minimum resource command buffer size.
 		uint maxTransientVBSize; ///Maximum transient vertex buffer size.
-		uint maxTansientIBSize; ///Maximum transient index buffer size.
+		uint maxTransientIBSize; ///Maximum transient index buffer size.
 		uint minUniformBufferSize; ///Mimimum uniform buffer size.
 	}
 	

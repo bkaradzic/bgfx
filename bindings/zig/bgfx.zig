@@ -1388,7 +1388,7 @@ pub const Caps = extern struct {
         maxEncoders: u32,
         minResourceCbSize: u32,
         maxTransientVbSize: u32,
-        maxTansientIbSize: u32,
+        maxTransientIbSize: u32,
         minUniformBufferSize: u32,
     };
 

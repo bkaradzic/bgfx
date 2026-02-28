@@ -2194,7 +2194,7 @@ public static partial class bgfx
 			public uint maxEncoders;
 			public uint minResourceCbSize;
 			public uint maxTransientVbSize;
-			public uint maxTansientIbSize;
+			public uint maxTransientIbSize;
 			public uint minUniformBufferSize;
 		}
 	
