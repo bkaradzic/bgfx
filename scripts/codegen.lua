@@ -466,7 +466,8 @@ local function codetemp(func)
 		if arg.array then
 			cname = cname .. (arg.carray or arg.array)
 		end
-		local name = arg.fulltype .. " " .. arg.name
+		local argtype = arg.fulltype:gsub("%s+&", "&")
+		local name = argtype .. " " .. arg.name
 		if arg.array then
 			name = name .. arg.array
 		end
@@ -527,7 +528,7 @@ local function codetemp(func)
 	end
 
 	return {
-		RET = func.ret.fulltype,
+		RET = func.ret.fulltype:gsub("%s+&", "&"),
 		CRET = func.ret.ctype,
 		CFUNCNAME = func.cname,
 		CFUNCNAMEUPPER = func.cname:upper(),
@@ -594,7 +595,7 @@ local function doxygen_func(r, func, prefix)
 		if arg.out then
 			inout = "out"
 		elseif arg.inout then
-			inout = "inout"
+			inout = "in,out"
 		else
 			inout = "in"
 		end
@@ -668,6 +669,12 @@ struct $NAME
 
 function codegen.gen_enum_define(enum)
 	assert(type(enum.enum) == "table", "Not an enum")
+	local max_name_len = 0
+	for _, item in ipairs(enum.enum) do
+		if item.comment and #item.name > max_name_len then
+			max_name_len = #item.name
+		end
+	end
 	local items = {}
 	for _, item in ipairs(enum.enum) do
 		local text
@@ -676,12 +683,12 @@ function codegen.gen_enum_define(enum)
 		else
 			local comment = table.concat(item.comment, " ")
 			text = string.format("%s,%s //!< %s",
-				item.name, namealign(item.name), comment)
+				item.name, namealign(item.name, max_name_len), comment)
 		end
 		items[#items+1] = text
 	end
-	local comment = ""
-	if enum.comment then
+	local comment = "//EMPTYLINE"
+	if enum.comment and enum.comment ~= "" then
 		comment = "/// " .. enum.comment
 	end
 	local temp = {
@@ -689,7 +696,7 @@ function codegen.gen_enum_define(enum)
 		COMMENT = comment,
 		ITEMS = table.concat(items, "\n\t\t"),
 	}
-	return (enum_temp:gsub("$(%u+)", temp))
+	return remove_emptylines(enum_temp:gsub("$(%u+)", temp))
 end
 
 local cenum_temp = [[
@@ -832,7 +839,7 @@ function codegen.gen_flag_cdefine(flag)
 	return table.concat(s, "\n")
 end
 
-local function text_with_comments(items, item, cstyle, is_classmember)
+local function text_with_comments(items, item, cstyle, is_classmember, name_align, comment_align)
 	local name = item.name
 	if item.array then
 		if cstyle then
@@ -850,25 +857,36 @@ local function text_with_comments(items, item, cstyle, is_classmember)
 	if is_classmember then
 		name = "m_" .. name
 	end
-	local text = string.format("%s%s %s;", typename, namealign(typename), name)
+	local text = string.format("%s%s %s;", typename, namealign(typename, name_align or DEFAULT_NAME_ALIGN), name)
 	if item.comment then
 		if #item.comment > 1 then
-			table.insert(items, "")
 			if cstyle then
+				table.insert(items, "")
 				table.insert(items, "/**")
 				for _, c in ipairs(item.comment) do
 					table.insert(items, " * " .. c)
 				end
 				table.insert(items, " */")
 			else
-				for _, c in ipairs(item.comment) do
-					table.insert(items, "/// " .. c)
+				local comment_col = math.max(#text + 1, comment_align)
+				local padding = string.rep(" ", comment_col - #text)
+				text = text .. padding .. "//!< " .. item.comment[1]
+				items[#items+1] = text
+				local cont_padding = string.rep(" ", comment_col) .. "///  "
+				for i = 2, #item.comment do
+					items[#items+1] = cont_padding .. item.comment[i]
 				end
+				return
 			end
 		else
-			text = string.format(
-				cstyle and "%s %s/** %s%s */" or "%s %s//!< %s",
-				text, namealign(text, 40),  item.comment[1], namealign(item.comment[1], 40))
+			if cstyle then
+				text = string.format("%s %s/** %s%s */",
+					text, namealign(text, comment_align),  item.comment[1], namealign(item.comment[1], 40))
+			else
+				local comment_col = math.max(#text + 1, comment_align)
+				local padding = string.rep(" ", comment_col - #text)
+				text = text .. padding .. "//!< " .. item.comment[1]
+			end
 		end
 	end
 	items[#items+1] = text
@@ -885,9 +903,27 @@ struct $NAME
 
 function codegen.gen_struct_define(struct, methods)
 	assert(type(struct.struct) == "table", "Not a struct")
+	local is_classmember = methods ~= nil and not struct.shortname
+	local max_text_len = 0
+	for _, item in ipairs(struct.struct) do
+		if item.comment then
+			local name = item.name
+			if item.array then
+				name = name .. item.array
+			end
+			if is_classmember then
+				name = "m_" .. name
+			end
+			local text_len = #item.fulltype + 1 + #name + 1
+			if text_len > max_text_len then
+				max_text_len = text_len
+			end
+		end
+	end
+	local comment_align = max_text_len + 1
 	local items = {}
 	for _, item in ipairs(struct.struct) do
-		text_with_comments(items, item, false, methods ~= nil and not struct.shortname)
+		text_with_comments(items, item, false, is_classmember, 0, comment_align)
 	end
 	local ctor = {}
 	if struct.ctor then
@@ -957,10 +993,7 @@ function codegen.gen_chandle(handle)
 	return (chandle_temp:gsub("$(%u+)", { NAME = handle.cname:match "(.-)_t$" }))
 end
 
-local handle_temp = [[
-struct $NAME { uint16_t idx; };
-inline bool isValid($NAME _handle) { return bgfx::kInvalidHandle != _handle.idx; }
-]]
+local handle_temp = "BGFX_HANDLE($NAME)"
 function codegen.gen_handle(handle)
 	assert(handle.handle, "Not a handle")
 	return (handle_temp:gsub("$(%u+)", { NAME = handle.name }))

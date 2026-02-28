@@ -767,7 +767,7 @@ struct.Limits  { namespace = "Caps" }
 	.maxEncoders             "uint32_t" --- Maximum number of encoder threads.
 	.minResourceCbSize       "uint32_t" --- Minimum resource command buffer size.
 	.maxTransientVbSize      "uint32_t" --- Maximum transient vertex buffer size.
-	.maxTansientIbSize       "uint32_t" --- Maximum transient index buffer size.
+	.maxTransientIbSize      "uint32_t" --- Maximum transient index buffer size.
 	.minUniformBufferSize    "uint32_t" --- Mimimum uniform buffer size.
 
 --- Renderer capabilities.
@@ -1091,7 +1091,7 @@ func.VertexLayout.decode { const }
 	.asInt      "bool &"             { out } --- Attribute is packed as int.
 
 --- Returns `true` if VertexLayout contains attribute.
-func.VertexLayout.has { const, cppinline }
+func.VertexLayout.has { const, cppinline = "return UINT16_MAX != m_attributes[_attrib];" }
 	"bool"                 --- True if VertexLayout contains attribute.
 	.attrib "Attrib::Enum" --- Attribute semantics. See: `bgfx::Attrib`
 
@@ -1106,16 +1106,16 @@ func.VertexLayout["end"]
 	"void"
 
 --- Returns relative attribute offset from the vertex.
-func.VertexLayout.getOffset { const, cppinline }
+func.VertexLayout.getOffset { const, cppinline = "return m_offset[_attrib];" }
 	"uint16_t"                --- Relative attribute offset from the vertex.
 	.attrib    "Attrib::Enum" --- Attribute semantics. See: `bgfx::Attrib`
 
 --- Returns vertex stride.
-func.VertexLayout.getStride { const, cppinline }
+func.VertexLayout.getStride { const, cppinline = "return m_stride;" }
 	"uint16_t" --- Vertex stride.
 
 --- Returns size of vertex buffer for number of vertices.
-func.VertexLayout.getSize { const, cppinline }
+func.VertexLayout.getSize { const, cppinline = "return _num*m_stride;" }
 	"uint32_t"      --- Size of vertex buffer for number of vertices.
 	.num "uint32_t" --- Number of vertices.
 
