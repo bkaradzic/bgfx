@@ -708,7 +708,19 @@ function codegen.doxygen_type(doxygen, func, cname)
 		end
 	end
 	result[#result+1] = "///"
-	return table.concat(result, "\n")
+
+	-- Collapse consecutive empty comment lines (///) into at most one.
+	local collapsed = {}
+	for _, line in ipairs(result) do
+		local is_empty = (line == "///" or line == "/// ")
+		local prev_empty = #collapsed > 0 and (collapsed[#collapsed] == "///" or collapsed[#collapsed] == "/// ")
+		if is_empty and prev_empty then
+			-- skip duplicate empty comment line
+		else
+			collapsed[#collapsed+1] = line
+		end
+	end
+	return table.concat(collapsed, "\n")
 end
 
 function codegen.doxygen_ctype(doxygen, func)
@@ -728,7 +740,19 @@ function codegen.doxygen_ctype(doxygen, func)
 	end
 	result[#result+1] = " *"
 	result[#result+1] = " */"
-	return table.concat(result, "\n")
+
+	-- Collapse consecutive empty comment lines ( *) into at most one.
+	local collapsed = {}
+	for _, line in ipairs(result) do
+		local is_empty = (line == " *" or line == " * ")
+		local prev_empty = #collapsed > 0 and (collapsed[#collapsed] == " *" or collapsed[#collapsed] == " * ")
+		if is_empty and prev_empty then
+			-- skip duplicate empty comment line
+		else
+			collapsed[#collapsed+1] = line
+		end
+	end
+	return table.concat(collapsed, "\n")
 end
 
 local enum_temp = [[

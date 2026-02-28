@@ -10,6 +10,8 @@ function doxygen.load(filename)
 			else
 				line = string.format("%s [[%s]]", code, comment)
 			end
+		elseif line:match "^%-%-%-$" then
+			line = "comment [[]]"
 		end
 		lines[#lines+1] = line
 	end
