@@ -1417,7 +1417,12 @@ public static class bgfx
 		/// AGC
 		/// </summary>
 		Agc,
-	
+
+		/// <summary>
+		/// Direct3D 9.0
+		/// </summary>
+		Direct3D9,
+
 		/// <summary>
 		/// Direct3D 11.0
 		/// </summary>

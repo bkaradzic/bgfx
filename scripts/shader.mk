@@ -23,12 +23,14 @@ all:
 	@echo "  TARGET=6 (pssl)"
 	@echo "  TARGET=7 (spirv)"
 	@echo "  TARGET=8 (wgsl)"
+	@echo "  TARGET=9 (hlsl  - d3d9)"
 
 .PHONY: build
 build:
 ifeq ($(OS), windows)
 	@make -s --no-print-directory TARGET=0 all
 	@make -s --no-print-directory TARGET=1 all
+	@make -s --no-print-directory TARGET=9 all
 endif
 	@make -s --no-print-directory TARGET=3 all
 	@make -s --no-print-directory TARGET=4 all
@@ -40,6 +42,7 @@ clean:
 ifeq ($(OS), windows)
 	@make -s --no-print-directory TARGET=0 clean
 	@make -s --no-print-directory TARGET=1 clean
+	@make -s --no-print-directory TARGET=9 clean
 endif
 	@make -s --no-print-directory TARGET=3 clean
 	@make -s --no-print-directory TARGET=4 clean
@@ -64,6 +67,11 @@ VS_FLAGS=--platform windows -p s_5_0 -O 3
 FS_FLAGS=--platform windows -p s_5_0 -O 3
 CS_FLAGS=--platform windows -p s_5_0 -O 1
 SHADER_PATH=shaders/dxbc
+else
+ifeq ($(TARGET), 9)
+VS_FLAGS=--platform windows -p vs_3_0 -O 3
+FS_FLAGS=--platform windows -p ps_3_0 -O 3
+SHADER_PATH=shaders/dx9
 else
 ifeq ($(TARGET), $(filter $(TARGET), 2 3))
 VS_FLAGS=--platform android -p 100_es
@@ -100,6 +108,7 @@ VS_FLAGS=--platform linux -p wgsl
 FS_FLAGS=--platform linux -p wgsl
 CS_FLAGS=--platform linux -p wgsl
 SHADER_PATH=shaders/wgsl
+endif
 endif
 endif
 endif

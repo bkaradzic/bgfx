@@ -84,7 +84,7 @@ namespace
 	bgfx::VertexLayout PosTexCoord0Vertex::ms_layout;
 
 	// Utility function to draw a screen space quad for deferred rendering
-	void screenSpaceQuad(bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
+	void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
 	{
 		if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout))
 		{
@@ -97,13 +97,15 @@ namespace
 			const float miny = 0.0f;
 			const float maxy = _height * 2.0f;
 
-			const float minu = -1.0f;
-			const float maxu =  1.0f;
+			const float texelHalfW = _texelHalf / _textureWidth;
+			const float texelHalfH = _texelHalf / _textureHeight;
+			const float minu = -1.0f + texelHalfW;
+			const float maxu = 1.0f + texelHalfH;
 
 			const float zz = 0.0f;
 
-			float minv = 0.0f;
-			float maxv = 2.0f;
+			float minv = texelHalfH;
+			float maxv = 2.0f + texelHalfH;
 
 			if (_originBottomLeft)
 			{
@@ -250,6 +252,7 @@ namespace
 			, m_currFrame(UINT32_MAX)
 			, m_enableSSAO(true)
 			, m_enableTexturing(true)
+			, m_texelHalf(0.0f)
 			, m_framebufferGutter(true)
 		{
 		}
@@ -373,6 +376,10 @@ namespace
 			cameraSetVerticalAngle(-0.3f);
 			m_fovY = 60.0f;
 
+			// Get renderer capabilities info.
+			const bgfx::RendererType::Enum renderer = bgfx::getRendererType();
+			m_texelHalf = bgfx::RendererType::Direct3D9 == renderer ? 0.5f : 0.0f;
+
 			imguiCreate();
 
 			m_frameTime.reset();
@@ -486,7 +493,7 @@ namespace
 				bgfx::setViewTransform(RENDER_PASS_COMBINE, NULL, orthoProj);
 				bgfx::setViewRect(RENDER_PASS_COMBINE, 0, 0, uint16_t(m_width), uint16_t(m_height));
 				// Bind vertex buffer and draw quad
-				screenSpaceQuad(caps->originBottomLeft);
+				screenSpaceQuad((float)m_width, (float)m_height, m_texelHalf, caps->originBottomLeft);
 				//bgfx::submit(RENDER_PASS_COMBINE, m_combineProgram);
 				bgfx::touch(RENDER_PASS_COMBINE);
 
@@ -745,7 +752,7 @@ namespace
 						(float)(m_size[0]-2*m_border) / (float)m_size[0], (float)(m_size[1] - 2 * m_border) / (float)m_size[1],
 						(float)m_border / (float)m_size[0], (float)m_border / (float)m_size[1] };
 					bgfx::setUniform(u_combineParams, combineParams, 2);
-					screenSpaceQuad(caps->originBottomLeft);
+					screenSpaceQuad((float)m_width, (float)m_height, m_texelHalf, caps->originBottomLeft);
 					bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_ALWAYS);
 					bgfx::submit(view, m_combineProgram);
 					++view;
@@ -1174,6 +1181,7 @@ namespace
 		bool m_enableSSAO;
 		bool m_enableTexturing;
 
+		float m_texelHalf;
 		float m_fovY;
 
 		bool m_framebufferGutter;

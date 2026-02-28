@@ -172,7 +172,7 @@ struct RenderTarget
 	bgfx::FrameBufferHandle m_buffer;
 };
 
-void screenSpaceQuad(bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
+void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
 {
 	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout))
 	{
@@ -185,13 +185,15 @@ void screenSpaceQuad(bool _originBottomLeft, float _width = 1.0f, float _height 
 		const float miny = 0.0f;
 		const float maxy =  _height * 2.0f;
 
-		const float minu = -1.0f;
-		const float maxu =  1.0f;
+		const float texelHalfW = _texelHalf / _textureWidth;
+		const float texelHalfH = _texelHalf / _textureHeight;
+		const float minu = -1.0f + texelHalfW;
+		const float maxu =  1.0f + texelHalfW;
 
 		const float zz = 0.0f;
 
-		float minv = 0.0f;
-		float maxv = 2.0f;
+		float minv = texelHalfH;
+		float maxv = 2.0f + texelHalfH;
 
 		if (_originBottomLeft)
 		{
@@ -245,6 +247,7 @@ public:
 	ExampleScreenSpaceShadows(const char* _name, const char* _description)
 		: entry::AppI(_name, _description)
 		, m_currFrame(UINT32_MAX)
+		, m_texelHalf(0.0f)
 	{
 	}
 
@@ -332,6 +335,10 @@ public:
 
 		// Track whether previous results are valid
 		m_havePrevious = false;
+
+		// Get renderer capabilities info.
+		const bgfx::RendererType::Enum renderer = bgfx::getRendererType();
+		m_texelHalf = bgfx::RendererType::Direct3D9 == renderer ? 0.5f : 0.0f;
 
 		imguiCreate();
 
@@ -493,7 +500,7 @@ public:
 					);
 				bgfx::setTexture(0, s_depth, m_gbufferTex[GBUFFER_RT_DEPTH]);
 				m_uniforms.submit();
-				screenSpaceQuad(caps->originBottomLeft);
+				screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 				bgfx::submit(view, m_linearDepthProgram);
 				++view;
 			}
@@ -512,7 +519,7 @@ public:
 					);
 				bgfx::setTexture(0, s_depth, m_linearDepth.m_texture);
 				m_uniforms.submit();
-				screenSpaceQuad(caps->originBottomLeft);
+				screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 				bgfx::submit(view, m_shadowsProgram);
 				++view;
 			}
@@ -534,7 +541,7 @@ public:
 				bgfx::setTexture(2, s_depth, m_linearDepth.m_texture);
 				bgfx::setTexture(3, s_shadows, m_shadows.m_texture);
 				m_uniforms.submit();
-				screenSpaceQuad(caps->originBottomLeft);
+				screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 				bgfx::submit(view, m_combineProgram);
 				++view;
 			}
@@ -809,6 +816,7 @@ public:
 
 	uint32_t m_currFrame;
 	float m_lightRotation = 0.0f;
+	float m_texelHalf = 0.0f;
 	float m_fovY = 60.0f;
 	bool m_recreateFrameBuffers = false;
 	bool m_havePrevious = false;

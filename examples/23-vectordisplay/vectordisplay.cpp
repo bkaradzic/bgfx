@@ -51,12 +51,14 @@ inline float normalizef(float _a)
 
 VectorDisplay::VectorDisplay()
 	: m_originBottomLeft(false)
+	, m_texelHalf(false)
 {
 }
 
-void VectorDisplay::init(bool _originBottomLeft)
+void VectorDisplay::init(bool _originBottomLeft, float _texelHalf)
 {
 	m_originBottomLeft = _originBottomLeft;
+	m_texelHalf = _texelHalf;
 }
 
 
@@ -235,7 +237,7 @@ void VectorDisplay::endFrame()
 			bgfx::setUniform(u_params, &params);
 
 			bgfx::setViewTransform(viewCounter, NULL, proj);
-			screenSpaceQuad();
+			screenSpaceQuad(m_glowWidth, m_glowHeight);
 			bgfx::setViewName(viewCounter, "BlendPassA");
 			bgfx::submit(viewCounter, m_blurShader);
 
@@ -246,7 +248,7 @@ void VectorDisplay::endFrame()
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_glow0FrameBuffer) );
 
 			bgfx::setViewTransform(viewCounter, NULL, proj);
-			screenSpaceQuad();
+			screenSpaceQuad(m_glowWidth, m_glowHeight);
 
 			params[0] = 0.0f;
 			params[1] = 1.0f / m_glowHeight;
@@ -285,7 +287,7 @@ void VectorDisplay::endFrame()
 	params[3] = 1.0f;
 	bgfx::setUniform(u_params, params);
 	bgfx::setViewName(viewCounter, "BlendVectorToDisplay");
-	screenSpaceQuad();
+	screenSpaceQuad(m_screenWidth, m_screenHeight);
 	bgfx::submit(viewCounter, m_blitShader);
 	viewCounter++;
 
@@ -304,7 +306,7 @@ void VectorDisplay::endFrame()
 		params[2] = glow_fin_mult;
 		bgfx::setUniform(u_params, params);
 		bgfx::setViewName(viewCounter, "BlendBlurToDisplay");
-		screenSpaceQuad();
+		screenSpaceQuad(m_screenWidth, m_screenHeight);
 		bgfx::submit(viewCounter, m_blitShader);
 		viewCounter++;
 	}
@@ -764,7 +766,7 @@ void VectorDisplay::getSize(float* _outWidth, float* _outHeight)
 	*_outHeight = m_screenHeight;
 }
 
-void VectorDisplay::screenSpaceQuad(float _width, float _height)
+void VectorDisplay::screenSpaceQuad(float _textureWidth, float _textureHeight, float _width, float _height)
 {
 	if (3 == getAvailTransientVertexBuffer(3, PosColorUvVertex::ms_layout) )
 	{
@@ -779,11 +781,13 @@ void VectorDisplay::screenSpaceQuad(float _width, float _height)
 		const float miny = 0.0f;
 		const float maxy = _height * 2.0f;
 
-		const float minu = -1.0f;
-		const float maxu =  1.0f;
+		const float texelHalfW = m_texelHalf / _textureWidth;
+		const float texelHalfH = m_texelHalf / _textureHeight;
+		const float minu = -1.0f + texelHalfW;
+		const float maxu = 1.0f + texelHalfW;
 
-		float minv = 0.0f;
-		float maxv = 2.0f;
+		float minv = texelHalfH;
+		float maxv = 2.0f + texelHalfH;
 
 		if (m_originBottomLeft)
 		{

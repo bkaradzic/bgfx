@@ -103,6 +103,7 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const bx::StringV
 	switch (bgfx::getRendererType() )
 	{
 	case bgfx::RendererType::Noop:
+	case bgfx::RendererType::Direct3D9:  filePath.join("dx9");   break;
 	case bgfx::RendererType::Direct3D11: filePath.join("dxbc");  break;
 	case bgfx::RendererType::Direct3D12: filePath.join("dxil");  break;
 	case bgfx::RendererType::Agc:
@@ -712,6 +713,7 @@ static RendererTypeRemap s_rendererTypeRemap[] =
 {
 	{ "d3d11", bgfx::RendererType::Direct3D11 },
 	{ "d3d12", bgfx::RendererType::Direct3D12 },
+	{ "d3d9",  bgfx::RendererType::Direct3D9  },
 	{ "gl",    bgfx::RendererType::OpenGL     },
 	{ "mtl",   bgfx::RendererType::Metal      },
 	{ "noop",  bgfx::RendererType::Noop       },

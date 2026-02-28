@@ -602,6 +602,7 @@ enum Fatal: bgfx.impl.Fatal.Enum{
 enum RendererType: bgfx.impl.RendererType.Enum{
 	noop = bgfx.impl.RendererType.Enum.noop,
 	agc = bgfx.impl.RendererType.Enum.agc,
+	direct3D9 = bgfx.impl.RendererType.Enum.direct3D9,
 	direct3D11 = bgfx.impl.RendererType.Enum.direct3D11,
 	direct3D12 = bgfx.impl.RendererType.Enum.direct3D12,
 	gnm = bgfx.impl.RendererType.Enum.gnm,

@@ -178,7 +178,8 @@ static const uint16_t s_planeIndices[] =
 	1, 3, 2,
 };
 
-static bool s_originBottomLeft = false;
+static bool s_flipV = false;
+static float s_texelHalf = 0.0f;
 
 static bgfx::UniformHandle s_texColor;
 static bgfx::UniformHandle s_shadowMap[ShadowMapRenderTargets::Count];
@@ -839,7 +840,7 @@ struct PosColorTexCoord0Vertex
 
 bgfx::VertexLayout PosColorTexCoord0Vertex::ms_layout;
 
-void screenSpaceQuad(bool _originBottomLeft = true, float _width = 1.0f, float _height = 1.0f)
+void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBottomLeft = true, float _width = 1.0f, float _height = 1.0f)
 {
 	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosColorTexCoord0Vertex::ms_layout) )
 	{
@@ -854,11 +855,13 @@ void screenSpaceQuad(bool _originBottomLeft = true, float _width = 1.0f, float _
 		const float miny = 0.0f;
 		const float maxy = _height*2.0f;
 
-		const float minu = -1.0f;
-		const float maxu =  1.0f;
+		const float texelHalfW = s_texelHalf/_textureWidth;
+		const float texelHalfH = s_texelHalf/_textureHeight;
+		const float minu = -1.0f + texelHalfW;
+		const float maxu =  1.0f + texelHalfW;
 
-		float minv = 0.0f;
-		float maxv = 2.0f;
+		float minv = texelHalfH;
+		float maxv = 2.0f + texelHalfH;
 
 		if (_originBottomLeft)
 		{
@@ -1162,7 +1165,22 @@ public:
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
 
-		s_originBottomLeft = bgfx::getCaps()->originBottomLeft;
+		// Setup root path for binary shaders. Shader binaries are different
+		// for each renderer.
+		switch (bgfx::getRendererType() )
+		{
+			case bgfx::RendererType::Direct3D9:
+				s_texelHalf = 0.5f;
+				break;
+
+			case bgfx::RendererType::OpenGL:
+			case bgfx::RendererType::OpenGLES:
+				s_flipV = true;
+				break;
+
+			default:
+				break;
+		}
 
 		// Imgui.
 		imguiCreate();
@@ -2920,12 +2938,12 @@ public:
 			{
 				bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtShadowMap[0]) );
 				bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
-				screenSpaceQuad(s_originBottomLeft);
+				screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 				bgfx::submit(RENDERVIEW_VBLUR_0_ID, s_programs.m_vBlur[depthType]);
 
 				bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtBlur) );
 				bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
-				screenSpaceQuad(s_originBottomLeft);
+				screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 				bgfx::submit(RENDERVIEW_HBLUR_0_ID, s_programs.m_hBlur[depthType]);
 
 				if (LightType::DirectionalLight == m_settings.m_lightType)
@@ -2936,12 +2954,12 @@ public:
 
 						bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtShadowMap[ii]) );
 						bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
-						screenSpaceQuad(s_originBottomLeft);
+						screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 						bgfx::submit(viewId, s_programs.m_vBlur[depthType]);
 
 						bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtBlur) );
 						bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
-						screenSpaceQuad(s_originBottomLeft);
+						screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 						bgfx::submit(viewId+1, s_programs.m_hBlur[depthType]);
 					}
 				}
@@ -2952,7 +2970,7 @@ public:
 				// Setup shadow mtx.
 				float mtxShadow[16];
 
-				const float ymul = (s_originBottomLeft) ? 0.5f : -0.5f;
+				const float ymul = (s_flipV) ? 0.5f : -0.5f;
 				float zadd = (DepthImpl::Linear == m_settings.m_depthImpl) ? 0.0f : 0.5f;
 
 				const float mtxBias[16] =
@@ -2971,7 +2989,7 @@ public:
 				}
 				else if (LightType::PointLight == m_settings.m_lightType)
 				{
-					const float s = (s_originBottomLeft) ? 1.0f : -1.0f; //sign
+					const float s = (s_flipV) ? 1.0f : -1.0f; //sign
 					zadd = (DepthImpl::Linear == m_settings.m_depthImpl) ? 0.0f : 0.5f;
 
 					const float mtxCropBias[2][TetrahedronFaces::Count][16] =
@@ -3048,7 +3066,7 @@ public:
 					for (uint8_t ii = 0; ii < TetrahedronFaces::Count; ++ii)
 					{
 						ProjType::Enum projType = (m_settings.m_stencilPack) ? ProjType::Enum(ii>1) : ProjType::Horizontal;
-						uint8_t biasIndex = cropBiasIndices[m_settings.m_stencilPack][uint8_t(s_originBottomLeft)][ii];
+						uint8_t biasIndex = cropBiasIndices[m_settings.m_stencilPack][uint8_t(s_flipV)][ii];
 
 						float mtxTmp[16];
 						bx::mtxMul(mtxTmp, mtxYpr[ii], lightProj[projType]);
@@ -3176,7 +3194,7 @@ public:
 			{
 				bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtShadowMap[0]) );
 				bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
-				screenSpaceQuad(s_originBottomLeft);
+				screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 				bgfx::submit(RENDERVIEW_DRAWDEPTH_0_ID, s_programs.m_drawDepth[depthType]);
 
 				if (LightType::DirectionalLight == m_settings.m_lightType)
@@ -3185,7 +3203,7 @@ public:
 					{
 						bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtShadowMap[ii]) );
 						bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
-						screenSpaceQuad(s_originBottomLeft);
+						screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 						bgfx::submit(RENDERVIEW_DRAWDEPTH_0_ID+ii, s_programs.m_drawDepth[depthType]);
 					}
 				}

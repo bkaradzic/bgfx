@@ -31,6 +31,10 @@ struct Args
 		{
 			m_type = bgfx::RendererType::Noop;
 		}
+		else if (cmdLine.hasArg("d3d9") )
+		{
+			m_type = bgfx::RendererType::Direct3D9;
+		}
 		else if (cmdLine.hasArg("d3d11") )
 		{
 			m_type = bgfx::RendererType::Direct3D11;

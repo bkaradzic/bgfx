@@ -162,7 +162,7 @@ struct RenderTarget
 	bgfx::FrameBufferHandle m_buffer;
 };
 
-void screenSpaceQuad(bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
+void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)
 {
 	if (3 == bgfx::getAvailTransientVertexBuffer(3, PosTexCoord0Vertex::ms_layout))
 	{
@@ -175,13 +175,15 @@ void screenSpaceQuad(bool _originBottomLeft, float _width = 1.0f, float _height 
 		const float miny = 0.0f;
 		const float maxy =  _height * 2.0f;
 
-		const float minu = -1.0f;
-		const float maxu =  1.0f;
+		const float texelHalfW = _texelHalf / _textureWidth;
+		const float texelHalfH = _texelHalf / _textureHeight;
+		const float minu = -1.0f + texelHalfW;
+		const float maxu =  1.0f + texelHalfW;
 
 		const float zz = 0.0f;
 
-		float minv = 0.0f;
-		float maxv = 2.0f;
+		float minv = texelHalfH;
+		float maxv = 2.0f + texelHalfH;
 
 		if (_originBottomLeft)
 		{
@@ -227,6 +229,7 @@ public:
 	ExampleBokeh(const char* _name, const char* _description)
 		: entry::AppI(_name, _description)
 		, m_currFrame(UINT32_MAX)
+		, m_texelHalf(0.0f)
 	{
 	}
 
@@ -300,6 +303,10 @@ public:
 		// Init "prev" matrices, will be same for first frame
 		cameraGetViewMtx(m_view);
 		bx::mtxProj(m_proj, m_fovY, float(m_size[0]) / float(m_size[1]), 0.01f, 100.0f,  bgfx::getCaps()->homogeneousDepth);
+
+		// Get renderer capabilities info.
+		const bgfx::RendererType::Enum renderer = bgfx::getRendererType();
+		m_texelHalf = bgfx::RendererType::Direct3D9 == renderer ? 0.5f : 0.0f;
 
 		m_bokehTexture.idx = bgfx::kInvalidHandle;
 		updateDisplayBokehTexture(m_radiusScale, m_maxBlurSize, m_lobeCount, (1.0f-m_lobePinch), 1.0f, m_lobeRotation);
@@ -443,7 +450,7 @@ public:
 					);
 				bgfx::setTexture(0, s_depth, m_frameBufferTex[FRAMEBUFFER_RT_DEPTH]);
 				m_uniforms.submit();
-				screenSpaceQuad(caps->originBottomLeft);
+				screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 				bgfx::submit(view, m_linearDepthProgram);
 				++view;
 			}
@@ -472,7 +479,7 @@ public:
 					| BGFX_STATE_WRITE_A
 					);
 				bgfx::setTexture(0, s_color, m_frameBufferTex[FRAMEBUFFER_RT_COLOR]);
-				screenSpaceQuad(caps->originBottomLeft);
+				screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, caps->originBottomLeft);
 				bgfx::submit(view, m_copyLinearToGammaProgram);
 				++view;
 			}
@@ -692,7 +699,7 @@ public:
 			bgfx::setTexture(0, s_color, lastTex);
 			bgfx::setTexture(1, s_depth, m_linearDepth.m_texture);
 			m_uniforms.submit();
-			screenSpaceQuad(_originBottomLeft);
+			screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, _originBottomLeft);
 			bgfx::submit(view, m_dofDebugProgram);
 			++view;
 		}
@@ -710,7 +717,7 @@ public:
 			bgfx::setTexture(0, s_color, lastTex);
 			bgfx::setTexture(1, s_depth, m_linearDepth.m_texture);
 			m_uniforms.submit();
-			screenSpaceQuad(_originBottomLeft);
+			screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, _originBottomLeft);
 			bgfx::submit(view, m_dofSinglePassProgram);
 			++view;
 		}
@@ -731,7 +738,7 @@ public:
 			bgfx::setTexture(0, s_color, lastTex);
 			bgfx::setTexture(1, s_depth, m_linearDepth.m_texture);
 			m_uniforms.submit();
-			screenSpaceQuad(_originBottomLeft);
+			screenSpaceQuad(float(halfWidth), float(halfHeight), m_texelHalf, _originBottomLeft);
 			bgfx::submit(view, m_dofDownsampleProgram);
 			++view;
 			lastTex = m_dofQuarterInput.m_texture;
@@ -754,7 +761,7 @@ public:
 				);
 			bgfx::setTexture(0, s_color, lastTex);
 			m_uniforms.submit();
-			screenSpaceQuad(_originBottomLeft);
+			screenSpaceQuad(float(halfWidth), float(halfHeight), m_texelHalf, _originBottomLeft);
 			bgfx::submit(view, m_dofQuarterProgram);
 			++view;
 			lastTex = m_dofQuarterOutput.m_texture;
@@ -771,7 +778,7 @@ public:
 			bgfx::setTexture(0, s_color, _colorTexture);
 			bgfx::setTexture(1, s_blurredColor, lastTex);
 			m_uniforms.submit();
-			screenSpaceQuad(_originBottomLeft);
+			screenSpaceQuad(float(m_width), float(m_height), m_texelHalf, _originBottomLeft);
 			bgfx::submit(view, m_dofCombineProgram);
 			++view;
 		}
@@ -1013,6 +1020,7 @@ public:
 
 	uint32_t m_currFrame;
 	float m_lightRotation = 0.0f;
+	float m_texelHalf = 0.0f;
 	float m_fovY = 60.0f;
 	bool m_recreateFrameBuffers = false;
 	float m_animationTime = 0.0f;

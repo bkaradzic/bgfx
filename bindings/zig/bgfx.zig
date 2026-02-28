@@ -865,6 +865,9 @@ pub const RendererType = enum(c_int) {
     /// AGC
     Agc,
 
+    /// Direct3D 9.0
+    Direct3D9,
+
     /// Direct3D 11.0
     Direct3D11,
 

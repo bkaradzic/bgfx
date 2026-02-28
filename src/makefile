@@ -33,6 +33,8 @@ define shader-embedded
 	-@cat "$(SHADER_TMP)" >> $(@)
 	-$(SILENT) $(SHADERC) --type $(1) --platform linux   -p wgsl       -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_wgsl
 	-@cat "$(SHADER_TMP)" >> $(@)
+	-$(SILENT) $(SHADERC) --type $(1) --platform windows -p $(2)  -O 3 -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_dx9
+	-@cat "$(SHADER_TMP)" >> $(@)
 	-$(SILENT) $(SHADERC) --type $(1) --platform windows -p s_5_0  -O 3 -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_dxbc
 	-@cat "$(SHADER_TMP)" >> $(@)
 	-$(SILENT) $(SHADERC) --type $(1) --platform windows -p s_6_0 -O 3 -f $(<) -o "$(SHADER_TMP)" --bin2c $(basename $(<))_dxil
@@ -44,37 +46,37 @@ define shader-embedded
 endef
 
 vs_debugfont.bin.h : vs_debugfont.sc
-	$(call shader-embedded, v)
+	$(call shader-embedded, v, vs_3_0)
 
 fs_debugfont.bin.h : fs_debugfont.sc
-	$(call shader-embedded, f)
+	$(call shader-embedded, f, ps_3_0)
 
 vs_clear.bin.h : vs_clear.sc
-	$(call shader-embedded, v)
+	$(call shader-embedded, v, vs_3_0)
 
 fs_clear0.bin.h : fs_clear0.sc
-	$(call shader-embedded, f)
+	$(call shader-embedded, f, ps_3_0)
 
 fs_clear1.bin.h : fs_clear1.sc
-	$(call shader-embedded, f)
+	$(call shader-embedded, f, ps_3_0)
 
 fs_clear2.bin.h : fs_clear2.sc
-	$(call shader-embedded, f)
+	$(call shader-embedded, f, ps_3_0)
 
 fs_clear3.bin.h : fs_clear3.sc
-	$(call shader-embedded, f)
+	$(call shader-embedded, f, ps_3_0)
 
 fs_clear4.bin.h : fs_clear4.sc
-	$(call shader-embedded, f)
+	$(call shader-embedded, f, ps_3_0)
 
 fs_clear5.bin.h : fs_clear5.sc
-	$(call shader-embedded, f)
+	$(call shader-embedded, f, ps_3_0)
 
 fs_clear6.bin.h : fs_clear6.sc
-	$(call shader-embedded, f)
+	$(call shader-embedded, f, ps_3_0)
 
 fs_clear7.bin.h : fs_clear7.sc
-	$(call shader-embedded, f)
+	$(call shader-embedded, f, ps_3_0)
 
 .PHONY: clean
 clean:
