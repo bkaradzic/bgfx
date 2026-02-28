@@ -10,6 +10,7 @@ function idl.comment(c)
 end
 
 local all_types = {}
+local decl_order = 0
 
 local function copy_attribs(to, from)
 	if type(from) == "table" then
@@ -35,7 +36,8 @@ local function classdef(item, def)
 end
 
 local function new_type(typename)
-	local t = { name = typename }
+	decl_order = decl_order + 1
+	local t = { name = typename, _order = decl_order }
 	if #comments > 0 then
 		t.comments = comments
 		comments = {}
@@ -180,7 +182,8 @@ end
 
 local function func(sets)
 	return function (_, funcname)
-		local f = { name = funcname , args = {} }
+		decl_order = decl_order + 1
+		local f = { name = funcname , args = {} , _order = decl_order }
 		if #comments > 0 then
 			f.comments = comments
 			comments = {}
@@ -242,6 +245,18 @@ idl.UINT16_MAX = "UINT16_MAX"
 idl.INT32_MAX  = "INT32_MAX"
 idl.UINT32_MAX = "UINT32_MAX"
 idl.UINT8_MAX  = "UINT8_MAX"
+
+local all_sections = {}
+idl.sections = all_sections
+
+function idl.section(title, level)
+	local s = { title = title, level = level or 1 }
+	if #comments > 0 then
+		s.desc = comments
+		comments = {}
+	end
+	all_sections[#all_sections+1] = s
+end
 
 return setmetatable(idl , { __index = function (_, keyword)
 	error (tostring(keyword) .. " is invalid")

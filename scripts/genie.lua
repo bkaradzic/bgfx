@@ -86,6 +86,9 @@ newaction {
 
 			local c3gen = require "bindings-c3"
 			c3gen.write(c3gen.gen(), "../bindings/c3/bgfx.c3")
+
+			local docsgen = require "docs-rst"
+			docsgen.write(docsgen.gen(), "../docs/bgfx.rst")
 		end
 
 		os.exit()
