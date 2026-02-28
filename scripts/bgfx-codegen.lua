@@ -98,7 +98,7 @@ local function cppdecl(func)
 	end
 	if doc then
 		local cname
-		if not func.cpponly then
+		if not func.cpponly and type(func.cppinline) ~= "string" then
 			if func.multicfunc then
 				cname = {}
 				for _, name in ipairs(func.multicfunc) do
@@ -110,7 +110,13 @@ local function cppdecl(func)
 		end
 		doc = codegen.doxygen_type(doc, func, cname)
 	end
-	local funcdecl = codegen.apply_functemp(func, "$RET $FUNCNAME($ARGS)$CONST;\n")
+	local funcdecl
+	if type(func.cppinline) == "string" then
+		funcdecl = codegen.apply_functemp(func,
+			"$RET $FUNCNAME($ARGS)$CONST { " .. func.cppinline .. " }\n")
+	else
+		funcdecl = codegen.apply_functemp(func, "$RET $FUNCNAME($ARGS)$CONST;\n")
+	end
 	if doc then
 		return doc .. "\n" .. funcdecl
 	else
@@ -155,7 +161,7 @@ end
 
 function typegen.enums(typedef)
 	if typedef.enum then
-		return add_doxygen(typedef, codegen.gen_enum_define(typedef), false, "bgfx_" .. typedef.cname)
+		return add_doxygen(typedef, codegen.gen_enum_define(typedef), false, typedef.cname)
 	end
 end
 
@@ -262,6 +268,17 @@ end
 
 local codes_tbl = codes()
 
+-- Add namespace indentation to C++ blocks
+local function indent_block(text)
+	return text:gsub("([^\n]+)", "\t%1")
+end
+
+codes_tbl.enums    = indent_block(codes_tbl.enums)
+codes_tbl.handles  = indent_block(codes_tbl.handles)
+codes_tbl.structs  = indent_block(codes_tbl.structs)
+codes_tbl.funcptrs = indent_block(codes_tbl.funcptrs)
+codes_tbl.cppdecl  = indent_block(codes_tbl.cppdecl)
+
 local function add_path(filename)
 	local path
 	if type(paths) == "string" then
@@ -276,7 +293,7 @@ local function change_indent(str, indent)
 	if indent == "\t" then
 		-- strip trailing space only
 		return (str:gsub("(.-)\n", function (line)
-			return line:gsub("([ \t]*)$","\n") end))
+			return line:gsub("[ \t]+$", "") .. "\n" end))
 	else
 		return (str:gsub("(.-)\n", function (line)
 			return line:gsub("^(\t*)(.-)[ \t]*$",
@@ -293,6 +310,7 @@ function gen.apply(tempfile)
 	local f = assert(io.open(tempfile, "rb"))
 	local temp = f:read "a"
 	f:close()
+	temp = temp:gsub("\r\n", "\n")
 	codes_tbl.source = tempfile
 	return (temp:gsub("$([%l%d_]+)", codes_tbl))
 end
