@@ -2545,7 +2545,9 @@ public static class bgfx
 	
 	/// <summary>
 	/// Add attribute to VertexLayout.
+	/// 
 	/// @remarks Must be called between begin/end.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_attrib">Attribute semantics. See: `bgfx::Attrib`</param>
@@ -2627,7 +2629,7 @@ public static class bgfx
 	public static extern void vertex_convert(VertexLayout* _dstLayout, void* _dstData, VertexLayout* _srcLayout, void* _srcData, uint32 _num);
 	
 	/// <summary>
-	/// Weld vertices.
+	/// Weld vertices. Returns number of unique vertices after welding.
 	/// </summary>
 	///
 	/// <param name="_output">Welded vertices remapping table. The size of buffer must be the same as number of vertices.</param>
@@ -2718,8 +2720,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Reset graphic settings and back-buffer size.
+	/// 
 	/// @attention This call doesn’t change the window size, it just resizes
 	///   the back-buffer. Your windowing code controls the window size.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_width">Back-buffer width.</param>
@@ -2743,8 +2747,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Returns current renderer backend API type.
+	/// 
 	/// @remarks
 	///   Library must be initialized.
+	/// 
 	/// </summary>
 	///
 	[LinkName("bgfx_get_renderer_type")]
@@ -2752,8 +2758,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Returns renderer capabilities.
+	/// 
 	/// @remarks
 	///   Library must be initialized.
+	/// 
 	/// </summary>
 	///
 	[LinkName("bgfx_get_caps")]
@@ -2761,7 +2769,9 @@ public static class bgfx
 	
 	/// <summary>
 	/// Returns performance counters.
+	/// 
 	/// @attention Pointer returned is valid until `bgfx::frame` is called.
+	/// 
 	/// </summary>
 	///
 	[LinkName("bgfx_get_stats")]
@@ -2793,7 +2803,9 @@ public static class bgfx
 	/// consumed, otherwise you must make sure _data is available for at least 2
 	/// `bgfx::frame` calls. `ReleaseFn` function must be able to be called
 	/// from any thread.
+	/// 
 	/// @attention Data passed must be available for at least 2 `bgfx::frame` calls.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_data">Pointer to data.</param>
@@ -2809,7 +2821,9 @@ public static class bgfx
 	/// consumed, otherwise you must make sure _data is available for at least 2
 	/// `bgfx::frame` calls. `ReleaseFn` function must be able to be called
 	/// from any thread.
+	/// 
 	/// @attention Data passed must be available for at least 2 `bgfx::frame` calls.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_data">Pointer to data.</param>
@@ -2909,7 +2923,7 @@ public static class bgfx
 	public static extern void destroy_index_buffer(IndexBufferHandle _handle);
 	
 	/// <summary>
-	/// Create vertex layout.
+	/// Create vertex layout. Vertex layouts are used to describe the format of vertex data.
 	/// </summary>
 	///
 	/// <param name="_layout">Vertex layout.</param>
@@ -3071,6 +3085,7 @@ public static class bgfx
 	
 	/// <summary>
 	/// Allocate transient index buffer.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_tib">TransientIndexBuffer structure will be filled, and will be valid for the duration of frame, and can be reused for multiple draw calls.</param>
@@ -3095,6 +3110,7 @@ public static class bgfx
 	/// Check for required space and allocate transient vertex and index
 	/// buffers. If both space requirements are satisfied function returns
 	/// true.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_tvb">TransientVertexBuffer structure will be filled, and will be valid for the duration of frame, and can be reused for multiple draw calls.</param>
@@ -3138,8 +3154,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Create shader from memory buffer.
+	/// 
 	/// @remarks
 	///   Shader binary is obtained by compiling shader offline with shaderc command line tool.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_mem">Shader binary.</param>
@@ -3149,8 +3167,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Returns the number of uniforms and uniform handles used inside a shader.
+	/// 
 	/// @remarks
 	///   Only non-predefined uniforms are returned.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_handle">Shader handle.</param>
@@ -3173,8 +3193,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Destroy shader.
+	/// 
 	/// @remark Once a shader program is created with _handle,
 	///   it is safe to destroy that shader.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_handle">Shader handle.</param>
@@ -3326,7 +3348,9 @@ public static class bgfx
 	
 	/// <summary>
 	/// Update 2D texture.
+	/// 
 	/// @attention It's valid to update only mutable texture. See `bgfx::createTexture2D` for more info.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_handle">Texture handle.</param>
@@ -3344,7 +3368,9 @@ public static class bgfx
 	
 	/// <summary>
 	/// Update 3D texture.
+	/// 
 	/// @attention It's valid to update only mutable texture. See `bgfx::createTexture3D` for more info.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_handle">Texture handle.</param>
@@ -3362,7 +3388,9 @@ public static class bgfx
 	
 	/// <summary>
 	/// Update Cube texture.
+	/// 
 	/// @attention It's valid to update only mutable texture. See `bgfx::createTextureCube` for more info.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_handle">Texture handle.</param>
@@ -3381,8 +3409,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Read back texture content.
+	/// 
 	/// @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
 	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_handle">Texture handle.</param>
@@ -3405,8 +3435,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Returns texture direct access pointer.
+	/// 
 	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_DIRECT_ACCESS`. This feature
 	///   is available on GPUs that have unified memory architecture (UMA) support.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_handle">Texture handle.</param>
@@ -3472,9 +3504,12 @@ public static class bgfx
 	
 	/// <summary>
 	/// Create frame buffer for multiple window rendering.
+	/// 
 	/// @remarks
 	///   Frame buffer cannot be used for sampling.
+	/// 
 	/// @attention Availability depends on: `BGFX_CAPS_SWAP_CHAIN`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_nwh">OS' target native window handle.</param>
@@ -3517,12 +3552,14 @@ public static class bgfx
 	
 	/// <summary>
 	/// Create shader uniform parameter.
+	/// 
 	/// @remarks
 	///   1. Uniform names are unique. It's valid to call `bgfx::createUniform`
 	///      multiple times with the same uniform name. The library will always
 	///      return the same handle, but the handle reference count will be
 	///      incremented. This means that the same number of `bgfx::destroyUniform`
 	///      must be called to properly destroy the uniform.
+	/// 
 	///   2. Predefined uniforms (declared in `bgfx_shader.sh`):
 	///      - `u_viewRect vec4(x, y, width, height)` - view rectangle for current
 	///        view, in pixels.
@@ -3540,6 +3577,7 @@ public static class bgfx
 	///      - `u_invModelView mat4` - inverted concatenated model view matrix.
 	///      - `u_modelViewProj mat4` - concatenated model view projection matrix.
 	///      - `u_alphaRef float` - alpha reference value for alpha test.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_name">Uniform name in shader.</param>
@@ -3551,12 +3589,14 @@ public static class bgfx
 	
 	/// <summary>
 	/// Create shader uniform parameter.
+	/// 
 	/// @remarks
 	///   1. Uniform names are unique. It's valid to call `bgfx::createUniform`
 	///      multiple times with the same uniform name. The library will always
 	///      return the same handle, but the handle reference count will be
 	///      incremented. This means that the same number of `bgfx::destroyUniform`
 	///      must be called to properly destroy the uniform.
+	/// 
 	///   2. Predefined uniforms (declared in `bgfx_shader.sh`):
 	///      - `u_viewRect vec4(x, y, width, height)` - view rectangle for current
 	///        view, in pixels.
@@ -3574,6 +3614,7 @@ public static class bgfx
 	///      - `u_invModelView mat4` - inverted concatenated model view matrix.
 	///      - `u_modelViewProj mat4` - concatenated model view projection matrix.
 	///      - `u_alphaRef float` - alpha reference value for alpha test.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_name">Uniform name in shader.</param>
@@ -3604,7 +3645,8 @@ public static class bgfx
 	public static extern void destroy_uniform(UniformHandle _handle);
 	
 	/// <summary>
-	/// Create occlusion query.
+	/// Create occlusion query. Occlusion queries allow the GPU to determine
+	/// if any pixels passed the depth test.
 	/// </summary>
 	///
 	[LinkName("bgfx_create_occlusion_query")]
@@ -3664,13 +3706,17 @@ public static class bgfx
 	
 	/// <summary>
 	/// Set view name.
+	/// 
 	/// @remarks
 	///   This is debug only feature.
+	/// 
 	///   In graphics debugger view name will appear as:
+	/// 
 	///       "nnnc <view name>"
 	///        ^  ^ ^
 	///        |  +--- compute (C)
 	///        +------ view id
+	/// 
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
@@ -3756,8 +3802,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Set view sorting mode.
+	/// 
 	/// @remarks
 	///   View mode must be set prior calling `bgfx::submit` for the view.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
@@ -3768,8 +3816,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Set view frame buffer.
+	/// 
 	/// @remarks
 	///   Not persistent after `bgfx::reset` call.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
@@ -3803,7 +3853,9 @@ public static class bgfx
 	
 	/// <summary>
 	/// Set view shading rate.
+	/// 
 	/// @attention Availability depends on: `BGFX_CAPS_VARIABLE_RATE_SHADING`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
@@ -3852,6 +3904,7 @@ public static class bgfx
 	
 	/// <summary>
 	/// Set render states for draw primitive.
+	/// 
 	/// @remarks
 	///   1. To set up more complex states use:
 	///      `BGFX_STATE_ALPHA_REF(_ref)`,
@@ -3862,6 +3915,7 @@ public static class bgfx
 	///      `BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB, _equationA)`
 	///   2. `BGFX_STATE_BLEND_EQUATION_ADD` is set when no other blend
 	///      equation is specified.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_state">State flags. Default state for primitive type is   triangles. See: `BGFX_STATE_DEFAULT`.   - `BGFX_STATE_DEPTH_TEST_*` - Depth test function.   - `BGFX_STATE_BLEND_*` - See remark 1 about BGFX_STATE_BLEND_FUNC.   - `BGFX_STATE_BLEND_EQUATION_*` - See remark 2.   - `BGFX_STATE_CULL_*` - Backface culling mode.   - `BGFX_STATE_WRITE_*` - Enable R, G, B, A or Z write.   - `BGFX_STATE_MSAA` - Enable hardware multisample antialiasing.   - `BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]` - Primitive type.</param>
@@ -3892,8 +3946,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Set scissor for draw primitive.
+	/// 
 	/// @remark
 	///   To scissor for all primitives in view see `bgfx::setViewScissor`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_x">Position x from the left corner of the window.</param>
@@ -3906,8 +3962,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Set scissor from cache for draw primitive.
+	/// 
 	/// @remark
 	///   To scissor for all primitives in view see `bgfx::setViewScissor`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_cache">Index in scissor cache.</param>
@@ -3938,7 +3996,9 @@ public static class bgfx
 	
 	/// <summary>
 	/// Reserve matrices in internal matrix cache.
+	/// 
 	/// @attention Pointer returned can be modified until `bgfx::frame` is called.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_transform">Pointer to `Transform` structure.</param>
@@ -3960,7 +4020,9 @@ public static class bgfx
 	
 	/// <summary>
 	/// Set shader uniform parameter for view.
+	/// 
 	/// @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
@@ -3973,7 +4035,9 @@ public static class bgfx
 	
 	/// <summary>
 	/// Set shader uniform parameter for frame.
+	/// 
 	/// @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_handle">Uniform.</param>
@@ -4053,6 +4117,16 @@ public static class bgfx
 	[LinkName("bgfx_encoder_set_dynamic_vertex_buffer")]
 	public static extern void encoder_set_dynamic_vertex_buffer(Encoder* _this, uint8 _stream, DynamicVertexBufferHandle _handle, uint32 _startVertex, uint32 _numVertices);
 	
+	/// <summary>
+	/// Set vertex buffer for draw primitive.
+	/// </summary>
+	///
+	/// <param name="_stream">Vertex stream.</param>
+	/// <param name="_handle">Dynamic vertex buffer.</param>
+	/// <param name="_startVertex">First vertex to render.</param>
+	/// <param name="_numVertices">Number of vertices to render.</param>
+	/// <param name="_layoutHandle">Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.</param>
+	///
 	[LinkName("bgfx_encoder_set_dynamic_vertex_buffer_with_layout")]
 	public static extern void encoder_set_dynamic_vertex_buffer_with_layout(Encoder* _this, uint8 _stream, DynamicVertexBufferHandle _handle, uint32 _startVertex, uint32 _numVertices, VertexLayoutHandle _layoutHandle);
 	
@@ -4084,7 +4158,9 @@ public static class bgfx
 	/// <summary>
 	/// Set number of vertices for auto generated vertices use in conjunction
 	/// with gl_VertexID.
+	/// 
 	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_numVertices">Number of vertices.</param>
@@ -4128,7 +4204,9 @@ public static class bgfx
 	/// <summary>
 	/// Set number of instances for auto generated instances use in conjunction
 	/// with gl_InstanceID.
+	/// 
 	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_numInstances">Number of instances.</param>
@@ -4153,8 +4231,10 @@ public static class bgfx
 	/// will be applied but no geometry will be submitted. Useful in cases
 	/// when no other draw/compute primitive is submitted to view, but it's
 	/// desired to execute clear view.
+	/// 
 	/// @remark
 	///   These empty draw calls will sort before ordinary draw calls.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
@@ -4190,7 +4270,9 @@ public static class bgfx
 	/// <summary>
 	/// Submit primitive for rendering with index and instance data info from
 	/// indirect buffer.
+	/// 
 	/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
@@ -4207,7 +4289,9 @@ public static class bgfx
 	/// <summary>
 	/// Submit primitive for rendering with index and instance data info and
 	/// draw count from indirect buffers.
+	/// 
 	/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
@@ -4330,8 +4414,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Blit 2D texture region between two 2D textures.
+	/// 
 	/// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
 	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
@@ -4354,9 +4440,11 @@ public static class bgfx
 	
 	/// <summary>
 	/// Request screen shot of window back buffer.
+	/// 
 	/// @remarks
 	///   `bgfx::CallbackI::screenShot` must be implemented.
 	/// @attention Frame buffer handle must be created with OS' target native window handle.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_handle">Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be made for main window back buffer.</param>
@@ -4367,13 +4455,16 @@ public static class bgfx
 	
 	/// <summary>
 	/// Render frame.
+	/// 
 	/// @attention `bgfx::renderFrame` is blocking call. It waits for
 	///   `bgfx::frame` to be called from API thread to process frame.
 	///   If timeout value is passed call will timeout and return even
 	///   if `bgfx::frame` is not called.
+	/// 
 	/// @warning This call should be only used on platforms that don't
 	///   allow creating separate rendering thread. If it is called before
 	///   to bgfx::init, render thread won't be created by bgfx::init call.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_msecs">Timeout in milliseconds.</param>
@@ -4383,7 +4474,9 @@ public static class bgfx
 	
 	/// <summary>
 	/// Set platform data.
+	/// 
 	/// @warning Must be called before `bgfx::init`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_data">Platform data.</param>
@@ -4393,9 +4486,12 @@ public static class bgfx
 	
 	/// <summary>
 	/// Get internal data for interop.
+	/// 
 	/// @attention It's expected you understand some bgfx internals before you
 	///   use this call.
+	/// 
 	/// @warning Must be called only on render thread.
+	/// 
 	/// </summary>
 	///
 	[LinkName("bgfx_get_internal_data")]
@@ -4404,9 +4500,12 @@ public static class bgfx
 	/// <summary>
 	/// Override internal texture with externally created texture. Previously
 	/// created internal texture will released.
+	/// 
 	/// @attention It's expected you understand some bgfx internals before you
 	///   use this call.
+	/// 
 	/// @warning Must be called only on render thread.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_handle">Texture handle.</param>
@@ -4419,11 +4518,15 @@ public static class bgfx
 	/// <summary>
 	/// Override internal texture by creating new texture. Previously created
 	/// internal texture will released.
+	/// 
 	/// @attention It's expected you understand some bgfx internals before you
 	///   use this call.
+	/// 
 	/// @returns Native API pointer to texture. If result is 0, texture is not created yet from the
 	///   main thread.
+	/// 
 	/// @warning Must be called only on render thread.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_handle">Texture handle.</param>
@@ -4449,6 +4552,7 @@ public static class bgfx
 	
 	/// <summary>
 	/// Set render states for draw primitive.
+	/// 
 	/// @remarks
 	///   1. To set up more complex states use:
 	///      `BGFX_STATE_ALPHA_REF(_ref)`,
@@ -4459,6 +4563,7 @@ public static class bgfx
 	///      `BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB, _equationA)`
 	///   2. `BGFX_STATE_BLEND_EQUATION_ADD` is set when no other blend
 	///      equation is specified.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_state">State flags. Default state for primitive type is   triangles. See: `BGFX_STATE_DEFAULT`.   - `BGFX_STATE_DEPTH_TEST_*` - Depth test function.   - `BGFX_STATE_BLEND_*` - See remark 1 about BGFX_STATE_BLEND_FUNC.   - `BGFX_STATE_BLEND_EQUATION_*` - See remark 2.   - `BGFX_STATE_CULL_*` - Backface culling mode.   - `BGFX_STATE_WRITE_*` - Enable R, G, B, A or Z write.   - `BGFX_STATE_MSAA` - Enable hardware multisample antialiasing.   - `BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]` - Primitive type.</param>
@@ -4489,8 +4594,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Set scissor for draw primitive.
+	/// 
 	/// @remark
 	///   To scissor for all primitives in view see `bgfx::setViewScissor`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_x">Position x from the left corner of the window.</param>
@@ -4503,8 +4610,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Set scissor from cache for draw primitive.
+	/// 
 	/// @remark
 	///   To scissor for all primitives in view see `bgfx::setViewScissor`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_cache">Index in scissor cache.</param>
@@ -4535,7 +4644,9 @@ public static class bgfx
 	
 	/// <summary>
 	/// Reserve matrices in internal matrix cache.
+	/// 
 	/// @attention Pointer returned can be modified until `bgfx::frame` is called.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_transform">Pointer to `Transform` structure.</param>
@@ -4666,7 +4777,9 @@ public static class bgfx
 	/// <summary>
 	/// Set number of vertices for auto generated vertices use in conjunction
 	/// with gl_VertexID.
+	/// 
 	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_numVertices">Number of vertices.</param>
@@ -4710,7 +4823,9 @@ public static class bgfx
 	/// <summary>
 	/// Set number of instances for auto generated instances use in conjunction
 	/// with gl_InstanceID.
+	/// 
 	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_numInstances">Number of instances.</param>
@@ -4733,8 +4848,10 @@ public static class bgfx
 	/// <summary>
 	/// Submit an empty primitive for rendering. Uniforms and draw state
 	/// will be applied but no geometry will be submitted.
+	/// 
 	/// @remark
 	///   These empty draw calls will sort before ordinary draw calls.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
@@ -4770,7 +4887,9 @@ public static class bgfx
 	/// <summary>
 	/// Submit primitive for rendering with index and instance data info from
 	/// indirect buffer.
+	/// 
 	/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
@@ -4787,7 +4906,9 @@ public static class bgfx
 	/// <summary>
 	/// Submit primitive for rendering with index and instance data info and
 	/// draw count from indirect buffers.
+	/// 
 	/// @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>
@@ -4910,8 +5031,10 @@ public static class bgfx
 	
 	/// <summary>
 	/// Blit 2D texture region between two 2D textures.
+	/// 
 	/// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
 	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_id">View id.</param>

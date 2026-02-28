@@ -1629,6 +1629,7 @@ struct Init
 }
 
 // Memory must be obtained by calling `bgfx::alloc`, `bgfx::copy`, or `bgfx::makeRef`.
+// 
 // @attention It is illegal to create this structure on stack and pass it to any bgfx API.
 struct Memory
 {
@@ -1776,6 +1777,7 @@ struct EncoderStats
 }
 
 // Renderer statistics data.
+// 
 // @remarks All time values are high-resolution timestamps, while
 // time frequencies define timestamps-per-second for that hardware.
 struct Stats
@@ -1941,7 +1943,9 @@ extern fn void attachment_init(Attachment* _this, TextureHandle _handle, Access 
 extern fn VertexLayout* vertex_layout_begin(VertexLayout* _this, RendererType _rendererType) @extern("bgfx_vertex_layout_begin");
 
 // Add attribute to VertexLayout.
+// 
 // @remarks Must be called between begin/end.
+// 
 // _attrib : `Attribute semantics. See: `bgfx::Attrib``
 // _num : `Number of elements 1, 2, 3 or 4.`
 // _type : `Element type.`
@@ -1989,7 +1993,7 @@ extern fn void vertex_unpack(float _output, Attrib _attr, VertexLayout* _layout,
 // _num : `Number of vertices to convert from source to destination.`
 extern fn void vertex_convert(VertexLayout* _dstLayout, void* _dstData, VertexLayout* _srcLayout, void* _srcData, uint _num) @extern("bgfx_vertex_convert");
 
-// Weld vertices.
+// Weld vertices. Returns number of unique vertices after welding.
 // _output : `Welded vertices remapping table. The size of buffer must be the same as number of vertices.`
 // _layout : `Vertex stream layout.`
 // _data : `Vertex stream.`
@@ -2041,8 +2045,10 @@ extern fn bool init(Init* _init) @extern("bgfx_init");
 extern fn void shutdown() @extern("bgfx_shutdown");
 
 // Reset graphic settings and back-buffer size.
+// 
 // @attention This call doesn’t change the window size, it just resizes
 //   the back-buffer. Your windowing code controls the window size.
+// 
 // _width : `Back-buffer width.`
 // _height : `Back-buffer height.`
 // _flags : `See: `BGFX_RESET_*` for more info.   - `BGFX_RESET_NONE` - No reset flags.   - `BGFX_RESET_FULLSCREEN` - Not supported yet.   - `BGFX_RESET_MSAA_X[2/4/8/16]` - Enable 2, 4, 8 or 16 x MSAA.   - `BGFX_RESET_VSYNC` - Enable V-Sync.   - `BGFX_RESET_MAXANISOTROPY` - Turn on/off max anisotropy.   - `BGFX_RESET_CAPTURE` - Begin screen capture.   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB back-buffer.`
@@ -2056,17 +2062,23 @@ extern fn void reset(uint _width, uint _height, uint _flags, TextureFormat _form
 extern fn uint frame(char _flags) @extern("bgfx_frame");
 
 // Returns current renderer backend API type.
+// 
 // @remarks
 //   Library must be initialized.
+// 
 extern fn RendererType get_renderer_type() @extern("bgfx_get_renderer_type");
 
 // Returns renderer capabilities.
+// 
 // @remarks
 //   Library must be initialized.
+// 
 extern fn Caps* get_caps() @extern("bgfx_get_caps");
 
 // Returns performance counters.
+// 
 // @attention Pointer returned is valid until `bgfx::frame` is called.
+// 
 extern fn Stats* get_stats() @extern("bgfx_get_stats");
 
 // Allocate buffer to pass to bgfx calls. Data will be freed inside bgfx.
@@ -2084,7 +2096,9 @@ extern fn Memory* copy(void* _data, uint _size) @extern("bgfx_copy");
 // consumed, otherwise you must make sure _data is available for at least 2
 // `bgfx::frame` calls. `ReleaseFn` function must be able to be called
 // from any thread.
+// 
 // @attention Data passed must be available for at least 2 `bgfx::frame` calls.
+// 
 // _data : `Pointer to data.`
 // _size : `Size of data.`
 extern fn Memory* make_ref(void* _data, uint _size) @extern("bgfx_make_ref");
@@ -2095,7 +2109,9 @@ extern fn Memory* make_ref(void* _data, uint _size) @extern("bgfx_make_ref");
 // consumed, otherwise you must make sure _data is available for at least 2
 // `bgfx::frame` calls. `ReleaseFn` function must be able to be called
 // from any thread.
+// 
 // @attention Data passed must be available for at least 2 `bgfx::frame` calls.
+// 
 // _data : `Pointer to data.`
 // _size : `Size of data.`
 // _releaseFn : `Callback function to release memory after use.`
@@ -2150,7 +2166,7 @@ extern fn void set_index_buffer_name(IndexBufferHandle _handle, ZString _name, i
 // _handle : `Static index buffer handle.`
 extern fn void destroy_index_buffer(IndexBufferHandle _handle) @extern("bgfx_destroy_index_buffer");
 
-// Create vertex layout.
+// Create vertex layout. Vertex layouts are used to describe the format of vertex data.
 // _layout : `Vertex layout.`
 extern fn VertexLayoutHandle create_vertex_layout(VertexLayout* _layout) @extern("bgfx_create_vertex_layout");
 
@@ -2232,6 +2248,7 @@ extern fn uint get_avail_transient_vertex_buffer(uint _num, VertexLayout* _layou
 extern fn uint get_avail_instance_data_buffer(uint _num, ushort _stride) @extern("bgfx_get_avail_instance_data_buffer");
 
 // Allocate transient index buffer.
+// 
 // _tib : `TransientIndexBuffer structure will be filled, and will be valid for the duration of frame, and can be reused for multiple draw calls.`
 // _num : `Number of indices to allocate.`
 // _index32 : `Set to `true` if input indices will be 32-bit.`
@@ -2246,6 +2263,7 @@ extern fn void alloc_transient_vertex_buffer(TransientVertexBuffer* _tvb, uint _
 // Check for required space and allocate transient vertex and index
 // buffers. If both space requirements are satisfied function returns
 // true.
+// 
 // _tvb : `TransientVertexBuffer structure will be filled, and will be valid for the duration of frame, and can be reused for multiple draw calls.`
 // _layout : `Vertex layout.`
 // _numVertices : `Number of vertices to allocate.`
@@ -2269,14 +2287,18 @@ extern fn IndirectBufferHandle create_indirect_buffer(uint _num) @extern("bgfx_c
 extern fn void destroy_indirect_buffer(IndirectBufferHandle _handle) @extern("bgfx_destroy_indirect_buffer");
 
 // Create shader from memory buffer.
+// 
 // @remarks
 //   Shader binary is obtained by compiling shader offline with shaderc command line tool.
+// 
 // _mem : `Shader binary.`
 extern fn ShaderHandle create_shader(Memory* _mem) @extern("bgfx_create_shader");
 
 // Returns the number of uniforms and uniform handles used inside a shader.
+// 
 // @remarks
 //   Only non-predefined uniforms are returned.
+// 
 // _handle : `Shader handle.`
 // _uniforms : `UniformHandle array where data will be stored.`
 // _max : `Maximum capacity of array.`
@@ -2289,8 +2311,10 @@ extern fn ushort get_shader_uniforms(ShaderHandle _handle, UniformHandle* _unifo
 extern fn void set_shader_name(ShaderHandle _handle, ZString _name, int _len) @extern("bgfx_set_shader_name");
 
 // Destroy shader.
+// 
 // @remark Once a shader program is created with _handle,
 //   it is safe to destroy that shader.
+// 
 // _handle : `Shader handle.`
 extern fn void destroy_shader(ShaderHandle _handle) @extern("bgfx_destroy_shader");
 
@@ -2382,7 +2406,9 @@ extern fn TextureHandle create_texture_3d(ushort _width, ushort _height, ushort 
 extern fn TextureHandle create_texture_cube(ushort _size, bool _hasMips, ushort _numLayers, TextureFormat _format, ulong _flags, Memory* _mem, ulong _external) @extern("bgfx_create_texture_cube");
 
 // Update 2D texture.
+// 
 // @attention It's valid to update only mutable texture. See `bgfx::createTexture2D` for more info.
+// 
 // _handle : `Texture handle.`
 // _layer : `Layer in texture array.`
 // _mip : `Mip level.`
@@ -2395,7 +2421,9 @@ extern fn TextureHandle create_texture_cube(ushort _size, bool _hasMips, ushort 
 extern fn void update_texture_2d(TextureHandle _handle, ushort _layer, char _mip, ushort _x, ushort _y, ushort _width, ushort _height, Memory* _mem, ushort _pitch) @extern("bgfx_update_texture_2d");
 
 // Update 3D texture.
+// 
 // @attention It's valid to update only mutable texture. See `bgfx::createTexture3D` for more info.
+// 
 // _handle : `Texture handle.`
 // _mip : `Mip level.`
 // _x : `X offset in texture.`
@@ -2408,7 +2436,9 @@ extern fn void update_texture_2d(TextureHandle _handle, ushort _layer, char _mip
 extern fn void update_texture_3d(TextureHandle _handle, char _mip, ushort _x, ushort _y, ushort _z, ushort _width, ushort _height, ushort _depth, Memory* _mem) @extern("bgfx_update_texture_3d");
 
 // Update Cube texture.
+// 
 // @attention It's valid to update only mutable texture. See `bgfx::createTextureCube` for more info.
+// 
 // _handle : `Texture handle.`
 // _layer : `Layer in texture array.`
 // _side : `Cubemap side `BGFX_CUBE_MAP_<POSITIVE or NEGATIVE>_<X, Y or Z>`,   where 0 is +X, 1 is -X, 2 is +Y, 3 is -Y, 4 is +Z, and 5 is -Z.                  +----------+                  |-z       2|                  | ^  +y    |                  | |        |    Unfolded cube:                  | +---->+x |       +----------+----------+----------+----------+       |+y       1|+y       4|+y       0|+y       5|       | ^  -x    | ^  +z    | ^  +x    | ^  -z    |       | |        | |        | |        | |        |       | +---->+z | +---->+x | +---->-z | +---->-x |       +----------+----------+----------+----------+                  |+z       3|                  | ^  -y    |                  | |        |                  | +---->+x |                  +----------+`
@@ -2422,8 +2452,10 @@ extern fn void update_texture_3d(TextureHandle _handle, char _mip, ushort _x, us
 extern fn void update_texture_cube(TextureHandle _handle, ushort _layer, char _side, char _mip, ushort _x, ushort _y, ushort _width, ushort _height, Memory* _mem, ushort _pitch) @extern("bgfx_update_texture_cube");
 
 // Read back texture content.
+// 
 // @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
 // @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
+// 
 // _handle : `Texture handle.`
 // _data : `Destination buffer.`
 // _mip : `Mip level.`
@@ -2436,8 +2468,10 @@ extern fn uint read_texture(TextureHandle _handle, void* _data, char _mip) @exte
 extern fn void set_texture_name(TextureHandle _handle, ZString _name, int _len) @extern("bgfx_set_texture_name");
 
 // Returns texture direct access pointer.
+// 
 // @attention Availability depends on: `BGFX_CAPS_TEXTURE_DIRECT_ACCESS`. This feature
 //   is available on GPUs that have unified memory architecture (UMA) support.
+// 
 // _handle : `Texture handle.`
 extern fn void* get_direct_access_ptr(TextureHandle _handle) @extern("bgfx_get_direct_access_ptr");
 
@@ -2473,9 +2507,12 @@ extern fn FrameBufferHandle create_frame_buffer_from_handles(char _num, TextureH
 extern fn FrameBufferHandle create_frame_buffer_from_attachment(char _num, Attachment* _attachment, bool _destroyTexture) @extern("bgfx_create_frame_buffer_from_attachment");
 
 // Create frame buffer for multiple window rendering.
+// 
 // @remarks
 //   Frame buffer cannot be used for sampling.
+// 
 // @attention Availability depends on: `BGFX_CAPS_SWAP_CHAIN`.
+// 
 // _nwh : `OS' target native window handle.`
 // _width : `Window back buffer width.`
 // _height : `Window back buffer height.`
@@ -2498,12 +2535,14 @@ extern fn TextureHandle get_texture(FrameBufferHandle _handle, char _attachment)
 extern fn void destroy_frame_buffer(FrameBufferHandle _handle) @extern("bgfx_destroy_frame_buffer");
 
 // Create shader uniform parameter.
+// 
 // @remarks
 //   1. Uniform names are unique. It's valid to call `bgfx::createUniform`
 //      multiple times with the same uniform name. The library will always
 //      return the same handle, but the handle reference count will be
 //      incremented. This means that the same number of `bgfx::destroyUniform`
 //      must be called to properly destroy the uniform.
+// 
 //   2. Predefined uniforms (declared in `bgfx_shader.sh`):
 //      - `u_viewRect vec4(x, y, width, height)` - view rectangle for current
 //        view, in pixels.
@@ -2521,18 +2560,21 @@ extern fn void destroy_frame_buffer(FrameBufferHandle _handle) @extern("bgfx_des
 //      - `u_invModelView mat4` - inverted concatenated model view matrix.
 //      - `u_modelViewProj mat4` - concatenated model view projection matrix.
 //      - `u_alphaRef float` - alpha reference value for alpha test.
+// 
 // _name : `Uniform name in shader.`
 // _type : `Type of uniform (See: `bgfx::UniformType`).`
 // _num : `Number of elements in array.`
 extern fn UniformHandle create_uniform(ZString _name, UniformType _type, ushort _num) @extern("bgfx_create_uniform");
 
 // Create shader uniform parameter.
+// 
 // @remarks
 //   1. Uniform names are unique. It's valid to call `bgfx::createUniform`
 //      multiple times with the same uniform name. The library will always
 //      return the same handle, but the handle reference count will be
 //      incremented. This means that the same number of `bgfx::destroyUniform`
 //      must be called to properly destroy the uniform.
+// 
 //   2. Predefined uniforms (declared in `bgfx_shader.sh`):
 //      - `u_viewRect vec4(x, y, width, height)` - view rectangle for current
 //        view, in pixels.
@@ -2550,6 +2592,7 @@ extern fn UniformHandle create_uniform(ZString _name, UniformType _type, ushort 
 //      - `u_invModelView mat4` - inverted concatenated model view matrix.
 //      - `u_modelViewProj mat4` - concatenated model view projection matrix.
 //      - `u_alphaRef float` - alpha reference value for alpha test.
+// 
 // _name : `Uniform name in shader.`
 // _freq : `Uniform change frequency (See: `bgfx::UniformFreq`).`
 // _type : `Type of uniform (See: `bgfx::UniformType`).`
@@ -2565,7 +2608,8 @@ extern fn void get_uniform_info(UniformHandle _handle, UniformInfo* _info) @exte
 // _handle : `Handle to uniform object.`
 extern fn void destroy_uniform(UniformHandle _handle) @extern("bgfx_destroy_uniform");
 
-// Create occlusion query.
+// Create occlusion query. Occlusion queries allow the GPU to determine
+// if any pixels passed the depth test.
 extern fn OcclusionQueryHandle create_occlusion_query() @extern("bgfx_create_occlusion_query");
 
 // Retrieve occlusion query result from previous frame.
@@ -2596,13 +2640,17 @@ extern fn void set_palette_color_rgba32f(char _index, float _r, float _g, float 
 extern fn void set_palette_color_rgba8(char _index, uint _rgba) @extern("bgfx_set_palette_color_rgba8");
 
 // Set view name.
+// 
 // @remarks
 //   This is debug only feature.
+// 
 //   In graphics debugger view name will appear as:
+// 
 //       "nnnc <view name>"
 //        ^  ^ ^
 //        |  +--- compute (C)
 //        +------ view id
+// 
 // _id : `View id.`
 // _name : `View name.`
 // _len : `View name length (if length is INT32_MAX, it's expected that _name is zero terminated string.`
@@ -2658,15 +2706,19 @@ extern fn void set_view_clear(ushort _id, ushort _flags, uint _rgba, float _dept
 extern fn void set_view_clear_mrt(ushort _id, ushort _flags, float _depth, char _stencil, char _c0, char _c1, char _c2, char _c3, char _c4, char _c5, char _c6, char _c7) @extern("bgfx_set_view_clear_mrt");
 
 // Set view sorting mode.
+// 
 // @remarks
 //   View mode must be set prior calling `bgfx::submit` for the view.
+// 
 // _id : `View id.`
 // _mode : `View sort mode. See `ViewMode::Enum`.`
 extern fn void set_view_mode(ushort _id, ViewMode _mode) @extern("bgfx_set_view_mode");
 
 // Set view frame buffer.
+// 
 // @remarks
 //   Not persistent after `bgfx::reset` call.
+// 
 // _id : `View id.`
 // _handle : `Frame buffer handle. Passing `BGFX_INVALID_HANDLE` as frame buffer handle will draw primitives from this view into default back buffer.`
 extern fn void set_view_frame_buffer(ushort _id, FrameBufferHandle _handle) @extern("bgfx_set_view_frame_buffer");
@@ -2685,7 +2737,9 @@ extern fn void set_view_transform(ushort _id, void* _view, void* _proj) @extern(
 extern fn void set_view_order(ushort _id, ushort _num, ushort* _order) @extern("bgfx_set_view_order");
 
 // Set view shading rate.
+// 
 // @attention Availability depends on: `BGFX_CAPS_VARIABLE_RATE_SHADING`.
+// 
 // _id : `View id.`
 // _shadingRate : `Shading rate.`
 extern fn void set_view_shading_rate(ushort _id, ShadingRate _shadingRate) @extern("bgfx_set_view_shading_rate");
@@ -2709,6 +2763,7 @@ extern fn void encoder_end(Encoder* _encoder) @extern("bgfx_encoder_end");
 extern fn void encoder_set_marker(Encoder* _this, ZString _name, int _len) @extern("bgfx_encoder_set_marker");
 
 // Set render states for draw primitive.
+// 
 // @remarks
 //   1. To set up more complex states use:
 //      `BGFX_STATE_ALPHA_REF(_ref)`,
@@ -2719,6 +2774,7 @@ extern fn void encoder_set_marker(Encoder* _this, ZString _name, int _len) @exte
 //      `BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB, _equationA)`
 //   2. `BGFX_STATE_BLEND_EQUATION_ADD` is set when no other blend
 //      equation is specified.
+// 
 // _state : `State flags. Default state for primitive type is   triangles. See: `BGFX_STATE_DEFAULT`.   - `BGFX_STATE_DEPTH_TEST_*` - Depth test function.   - `BGFX_STATE_BLEND_*` - See remark 1 about BGFX_STATE_BLEND_FUNC.   - `BGFX_STATE_BLEND_EQUATION_*` - See remark 2.   - `BGFX_STATE_CULL_*` - Backface culling mode.   - `BGFX_STATE_WRITE_*` - Enable R, G, B, A or Z write.   - `BGFX_STATE_MSAA` - Enable hardware multisample antialiasing.   - `BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]` - Primitive type.`
 // _rgba : `Sets blend factor used by `BGFX_STATE_BLEND_FACTOR` and   `BGFX_STATE_BLEND_INV_FACTOR` blend modes.`
 extern fn void encoder_set_state(Encoder* _this, ulong _state, uint _rgba) @extern("bgfx_encoder_set_state");
@@ -2734,8 +2790,10 @@ extern fn void encoder_set_condition(Encoder* _this, OcclusionQueryHandle _handl
 extern fn void encoder_set_stencil(Encoder* _this, uint _fstencil, uint _bstencil) @extern("bgfx_encoder_set_stencil");
 
 // Set scissor for draw primitive.
+// 
 // @remark
 //   To scissor for all primitives in view see `bgfx::setViewScissor`.
+// 
 // _x : `Position x from the left corner of the window.`
 // _y : `Position y from the top corner of the window.`
 // _width : `Width of view scissor region.`
@@ -2743,8 +2801,10 @@ extern fn void encoder_set_stencil(Encoder* _this, uint _fstencil, uint _bstenci
 extern fn ushort encoder_set_scissor(Encoder* _this, ushort _x, ushort _y, ushort _width, ushort _height) @extern("bgfx_encoder_set_scissor");
 
 // Set scissor from cache for draw primitive.
+// 
 // @remark
 //   To scissor for all primitives in view see `bgfx::setViewScissor`.
+// 
 // _cache : `Index in scissor cache.`
 extern fn void encoder_set_scissor_cached(Encoder* _this, ushort _cache) @extern("bgfx_encoder_set_scissor_cached");
 
@@ -2760,7 +2820,9 @@ extern fn uint encoder_set_transform(Encoder* _this, void* _mtx, ushort _num) @e
 extern fn void encoder_set_transform_cached(Encoder* _this, uint _cache, ushort _num) @extern("bgfx_encoder_set_transform_cached");
 
 // Reserve matrices in internal matrix cache.
+// 
 // @attention Pointer returned can be modified until `bgfx::frame` is called.
+// 
 // _transform : `Pointer to `Transform` structure.`
 // _num : `Number of matrices.`
 extern fn uint encoder_alloc_transform(Encoder* _this, Transform* _transform, ushort _num) @extern("bgfx_encoder_alloc_transform");
@@ -2772,7 +2834,9 @@ extern fn uint encoder_alloc_transform(Encoder* _this, Transform* _transform, us
 extern fn void encoder_set_uniform(Encoder* _this, UniformHandle _handle, void* _value, ushort _num) @extern("bgfx_encoder_set_uniform");
 
 // Set shader uniform parameter for view.
+// 
 // @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
+// 
 // _id : `View id.`
 // _handle : `Uniform.`
 // _value : `Pointer to uniform data.`
@@ -2780,7 +2844,9 @@ extern fn void encoder_set_uniform(Encoder* _this, UniformHandle _handle, void* 
 extern fn void set_view_uniform(ushort _id, UniformHandle _handle, void* _value, ushort _num) @extern("bgfx_set_view_uniform");
 
 // Set shader uniform parameter for frame.
+// 
 // @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
+// 
 // _handle : `Uniform.`
 // _value : `Pointer to uniform data.`
 // _num : `Number of elements. Passing `UINT16_MAX` will use the _num passed on uniform creation.`
@@ -2826,6 +2892,12 @@ extern fn void encoder_set_vertex_buffer_with_layout(Encoder* _this, char _strea
 // _numVertices : `Number of vertices to render.`
 extern fn void encoder_set_dynamic_vertex_buffer(Encoder* _this, char _stream, DynamicVertexBufferHandle _handle, uint _startVertex, uint _numVertices) @extern("bgfx_encoder_set_dynamic_vertex_buffer");
 
+// Set vertex buffer for draw primitive.
+// _stream : `Vertex stream.`
+// _handle : `Dynamic vertex buffer.`
+// _startVertex : `First vertex to render.`
+// _numVertices : `Number of vertices to render.`
+// _layoutHandle : `Vertex layout for aliasing vertex buffer. If invalid handle is used, vertex layout used for creation of vertex buffer will be used.`
 extern fn void encoder_set_dynamic_vertex_buffer_with_layout(Encoder* _this, char _stream, DynamicVertexBufferHandle _handle, uint _startVertex, uint _numVertices, VertexLayoutHandle _layoutHandle) @extern("bgfx_encoder_set_dynamic_vertex_buffer_with_layout");
 
 // Set vertex buffer for draw primitive.
@@ -2845,7 +2917,9 @@ extern fn void encoder_set_transient_vertex_buffer_with_layout(Encoder* _this, c
 
 // Set number of vertices for auto generated vertices use in conjunction
 // with gl_VertexID.
+// 
 // @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+// 
 // _numVertices : `Number of vertices.`
 extern fn void encoder_set_vertex_count(Encoder* _this, uint _numVertices) @extern("bgfx_encoder_set_vertex_count");
 
@@ -2869,7 +2943,9 @@ extern fn void encoder_set_instance_data_from_dynamic_vertex_buffer(Encoder* _th
 
 // Set number of instances for auto generated instances use in conjunction
 // with gl_InstanceID.
+// 
 // @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+// 
 // _numInstances : `Number of instances.`
 extern fn void encoder_set_instance_count(Encoder* _this, uint _numInstances) @extern("bgfx_encoder_set_instance_count");
 
@@ -2884,8 +2960,10 @@ extern fn void encoder_set_texture(Encoder* _this, char _stage, UniformHandle _s
 // will be applied but no geometry will be submitted. Useful in cases
 // when no other draw/compute primitive is submitted to view, but it's
 // desired to execute clear view.
+// 
 // @remark
 //   These empty draw calls will sort before ordinary draw calls.
+// 
 // _id : `View id.`
 extern fn void encoder_touch(Encoder* _this, ushort _id) @extern("bgfx_encoder_touch");
 
@@ -2906,7 +2984,9 @@ extern fn void encoder_submit_occlusion_query(Encoder* _this, ushort _id, Progra
 
 // Submit primitive for rendering with index and instance data info from
 // indirect buffer.
+// 
 // @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
+// 
 // _id : `View id.`
 // _program : `Program.`
 // _indirectHandle : `Indirect buffer.`
@@ -2918,7 +2998,9 @@ extern fn void encoder_submit_indirect(Encoder* _this, ushort _id, ProgramHandle
 
 // Submit primitive for rendering with index and instance data info and
 // draw count from indirect buffers.
+// 
 // @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+// 
 // _id : `View id.`
 // _program : `Program.`
 // _indirectHandle : `Indirect buffer.`
@@ -2991,8 +3073,10 @@ extern fn void encoder_dispatch_indirect(Encoder* _this, ushort _id, ProgramHand
 extern fn void encoder_discard(Encoder* _this, char _flags) @extern("bgfx_encoder_discard");
 
 // Blit 2D texture region between two 2D textures.
+// 
 // @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
 // @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
+// 
 // _id : `View id.`
 // _dst : `Destination texture handle.`
 // _dstMip : `Destination texture mip level.`
@@ -3010,40 +3094,53 @@ extern fn void encoder_discard(Encoder* _this, char _flags) @extern("bgfx_encode
 extern fn void encoder_blit(Encoder* _this, ushort _id, TextureHandle _dst, char _dstMip, ushort _dstX, ushort _dstY, ushort _dstZ, TextureHandle _src, char _srcMip, ushort _srcX, ushort _srcY, ushort _srcZ, ushort _width, ushort _height, ushort _depth) @extern("bgfx_encoder_blit");
 
 // Request screen shot of window back buffer.
+// 
 // @remarks
 //   `bgfx::CallbackI::screenShot` must be implemented.
 // @attention Frame buffer handle must be created with OS' target native window handle.
+// 
 // _handle : `Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be made for main window back buffer.`
 // _filePath : `Will be passed to `bgfx::CallbackI::screenShot` callback.`
 extern fn void request_screen_shot(FrameBufferHandle _handle, ZString _filePath) @extern("bgfx_request_screen_shot");
 
 // Render frame.
+// 
 // @attention `bgfx::renderFrame` is blocking call. It waits for
 //   `bgfx::frame` to be called from API thread to process frame.
 //   If timeout value is passed call will timeout and return even
 //   if `bgfx::frame` is not called.
+// 
 // @warning This call should be only used on platforms that don't
 //   allow creating separate rendering thread. If it is called before
 //   to bgfx::init, render thread won't be created by bgfx::init call.
+// 
 // _msecs : `Timeout in milliseconds.`
 extern fn RenderFrame render_frame(int _msecs) @extern("bgfx_render_frame");
 
 // Set platform data.
+// 
 // @warning Must be called before `bgfx::init`.
+// 
 // _data : `Platform data.`
 extern fn void set_platform_data(PlatformData* _data) @extern("bgfx_set_platform_data");
 
 // Get internal data for interop.
+// 
 // @attention It's expected you understand some bgfx internals before you
 //   use this call.
+// 
 // @warning Must be called only on render thread.
+// 
 extern fn InternalData* get_internal_data() @extern("bgfx_get_internal_data");
 
 // Override internal texture with externally created texture. Previously
 // created internal texture will released.
+// 
 // @attention It's expected you understand some bgfx internals before you
 //   use this call.
+// 
 // @warning Must be called only on render thread.
+// 
 // _handle : `Texture handle.`
 // _ptr : `Native API pointer to texture.`
 // _layerIndex : `Layer index for texture arrays (only implemented for D3D11).`
@@ -3051,11 +3148,15 @@ extern fn uptr override_internal_texture_ptr(TextureHandle _handle, uptr _ptr, u
 
 // Override internal texture by creating new texture. Previously created
 // internal texture will released.
+// 
 // @attention It's expected you understand some bgfx internals before you
 //   use this call.
+// 
 // @returns Native API pointer to texture. If result is 0, texture is not created yet from the
 //   main thread.
+// 
 // @warning Must be called only on render thread.
+// 
 // _handle : `Texture handle.`
 // _width : `Width.`
 // _height : `Height.`
@@ -3071,6 +3172,7 @@ extern fn uptr override_internal_texture(TextureHandle _handle, ushort _width, u
 extern fn void set_marker(ZString _name, int _len) @extern("bgfx_set_marker");
 
 // Set render states for draw primitive.
+// 
 // @remarks
 //   1. To set up more complex states use:
 //      `BGFX_STATE_ALPHA_REF(_ref)`,
@@ -3081,6 +3183,7 @@ extern fn void set_marker(ZString _name, int _len) @extern("bgfx_set_marker");
 //      `BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB, _equationA)`
 //   2. `BGFX_STATE_BLEND_EQUATION_ADD` is set when no other blend
 //      equation is specified.
+// 
 // _state : `State flags. Default state for primitive type is   triangles. See: `BGFX_STATE_DEFAULT`.   - `BGFX_STATE_DEPTH_TEST_*` - Depth test function.   - `BGFX_STATE_BLEND_*` - See remark 1 about BGFX_STATE_BLEND_FUNC.   - `BGFX_STATE_BLEND_EQUATION_*` - See remark 2.   - `BGFX_STATE_CULL_*` - Backface culling mode.   - `BGFX_STATE_WRITE_*` - Enable R, G, B, A or Z write.   - `BGFX_STATE_MSAA` - Enable hardware multisample antialiasing.   - `BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]` - Primitive type.`
 // _rgba : `Sets blend factor used by `BGFX_STATE_BLEND_FACTOR` and   `BGFX_STATE_BLEND_INV_FACTOR` blend modes.`
 extern fn void set_state(ulong _state, uint _rgba) @extern("bgfx_set_state");
@@ -3096,8 +3199,10 @@ extern fn void set_condition(OcclusionQueryHandle _handle, bool _visible) @exter
 extern fn void set_stencil(uint _fstencil, uint _bstencil) @extern("bgfx_set_stencil");
 
 // Set scissor for draw primitive.
+// 
 // @remark
 //   To scissor for all primitives in view see `bgfx::setViewScissor`.
+// 
 // _x : `Position x from the left corner of the window.`
 // _y : `Position y from the top corner of the window.`
 // _width : `Width of view scissor region.`
@@ -3105,8 +3210,10 @@ extern fn void set_stencil(uint _fstencil, uint _bstencil) @extern("bgfx_set_ste
 extern fn ushort set_scissor(ushort _x, ushort _y, ushort _width, ushort _height) @extern("bgfx_set_scissor");
 
 // Set scissor from cache for draw primitive.
+// 
 // @remark
 //   To scissor for all primitives in view see `bgfx::setViewScissor`.
+// 
 // _cache : `Index in scissor cache.`
 extern fn void set_scissor_cached(ushort _cache) @extern("bgfx_set_scissor_cached");
 
@@ -3122,7 +3229,9 @@ extern fn uint set_transform(void* _mtx, ushort _num) @extern("bgfx_set_transfor
 extern fn void set_transform_cached(uint _cache, ushort _num) @extern("bgfx_set_transform_cached");
 
 // Reserve matrices in internal matrix cache.
+// 
 // @attention Pointer returned can be modified until `bgfx::frame` is called.
+// 
 // _transform : `Pointer to `Transform` structure.`
 // _num : `Number of matrices.`
 extern fn uint alloc_transform(Transform* _transform, ushort _num) @extern("bgfx_alloc_transform");
@@ -3198,7 +3307,9 @@ extern fn void set_transient_vertex_buffer_with_layout(char _stream, TransientVe
 
 // Set number of vertices for auto generated vertices use in conjunction
 // with gl_VertexID.
+// 
 // @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+// 
 // _numVertices : `Number of vertices.`
 extern fn void set_vertex_count(uint _numVertices) @extern("bgfx_set_vertex_count");
 
@@ -3222,7 +3333,9 @@ extern fn void set_instance_data_from_dynamic_vertex_buffer(DynamicVertexBufferH
 
 // Set number of instances for auto generated instances use in conjunction
 // with gl_InstanceID.
+// 
 // @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+// 
 // _numInstances : `Number of instances.`
 extern fn void set_instance_count(uint _numInstances) @extern("bgfx_set_instance_count");
 
@@ -3235,8 +3348,10 @@ extern fn void set_texture(char _stage, UniformHandle _sampler, TextureHandle _h
 
 // Submit an empty primitive for rendering. Uniforms and draw state
 // will be applied but no geometry will be submitted.
+// 
 // @remark
 //   These empty draw calls will sort before ordinary draw calls.
+// 
 // _id : `View id.`
 extern fn void touch(ushort _id) @extern("bgfx_touch");
 
@@ -3257,7 +3372,9 @@ extern fn void submit_occlusion_query(ushort _id, ProgramHandle _program, Occlus
 
 // Submit primitive for rendering with index and instance data info from
 // indirect buffer.
+// 
 // @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
+// 
 // _id : `View id.`
 // _program : `Program.`
 // _indirectHandle : `Indirect buffer.`
@@ -3269,7 +3386,9 @@ extern fn void submit_indirect(ushort _id, ProgramHandle _program, IndirectBuffe
 
 // Submit primitive for rendering with index and instance data info and
 // draw count from indirect buffers.
+// 
 // @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
+// 
 // _id : `View id.`
 // _program : `Program.`
 // _indirectHandle : `Indirect buffer.`
@@ -3342,8 +3461,10 @@ extern fn void dispatch_indirect(ushort _id, ProgramHandle _program, IndirectBuf
 extern fn void discard(char _flags) @extern("bgfx_discard");
 
 // Blit 2D texture region between two 2D textures.
+// 
 // @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
 // @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
+// 
 // _id : `View id.`
 // _dst : `Destination texture handle.`
 // _dstMip : `Destination texture mip level.`
