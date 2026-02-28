@@ -157,7 +157,9 @@ typedef enum bgfx_attrib_type
 
 /**
  * Texture format enum.
+ *
  * Notation:
+ *
  *       RGBA16S
  *       ^   ^ ^
  *       |   | +-- [ ]Unorm
@@ -167,6 +169,7 @@ typedef enum bgfx_attrib_type
  *       |   |     [U]int
  *       |   +---- Number of bits per component
  *       +-------- Components
+ *
  * @attention Availability depends on Caps (see: formats).
  *
  */
@@ -767,6 +770,7 @@ typedef struct bgfx_init_s
 
 /**
  * Memory must be obtained by calling `bgfx::alloc`, `bgfx::copy`, or `bgfx::makeRef`.
+ *
  * @attention It is illegal to create this structure on stack and pass it to any bgfx API.
  *
  */
@@ -906,6 +910,7 @@ typedef struct bgfx_encoder_stats_s
 
 /**
  * Renderer statistics data.
+ *
  * @remarks All time values are high-resolution timestamps, while
  * time frequencies define timestamps-per-second for that hardware.
  *
@@ -1003,6 +1008,7 @@ BGFX_C_API bgfx_vertex_layout_t* bgfx_vertex_layout_begin(bgfx_vertex_layout_t* 
 
 /**
  * Add attribute to VertexLayout.
+ *
  * @remarks Must be called between begin/end.
  *
  * @param[in] _attrib Attribute semantics. See: `bgfx::Attrib`
@@ -1123,7 +1129,7 @@ BGFX_C_API void bgfx_vertex_unpack(float _output[4], bgfx_attrib_t _attr, const 
 BGFX_C_API void bgfx_vertex_convert(const bgfx_vertex_layout_t * _dstLayout, void* _dstData, const bgfx_vertex_layout_t * _srcLayout, const void* _srcData, uint32_t _num);
 
 /**
- * Weld vertices.
+ * Weld vertices. Returns number of unique vertices after welding.
  *
  * @param[in] _output Welded vertices remapping table. The size of buffer
  *  must be the same as number of vertices.
@@ -1224,6 +1230,7 @@ BGFX_C_API void bgfx_shutdown(void);
 
 /**
  * Reset graphic settings and back-buffer size.
+ *
  * @attention This call doesn’t change the window size, it just resizes
  *   the back-buffer. Your windowing code controls the window size.
  *
@@ -1265,6 +1272,7 @@ BGFX_C_API uint32_t bgfx_frame(uint8_t _flags);
 
 /**
  * Returns current renderer backend API type.
+ *
  * @remarks
  *   Library must be initialized.
  *
@@ -1273,6 +1281,7 @@ BGFX_C_API bgfx_renderer_type_t bgfx_get_renderer_type(void);
 
 /**
  * Returns renderer capabilities.
+ *
  * @remarks
  *   Library must be initialized.
  *
@@ -1281,6 +1290,7 @@ BGFX_C_API const bgfx_caps_t* bgfx_get_caps(void);
 
 /**
  * Returns performance counters.
+ *
  * @attention Pointer returned is valid until `bgfx::frame` is called.
  *
  */
@@ -1314,6 +1324,7 @@ BGFX_C_API const bgfx_memory_t* bgfx_copy(const void* _data, uint32_t _size);
  * consumed, otherwise you must make sure _data is available for at least 2
  * `bgfx::frame` calls. `ReleaseFn` function must be able to be called
  * from any thread.
+ *
  * @attention Data passed must be available for at least 2 `bgfx::frame` calls.
  *
  * @param[in] _data Pointer to data.
@@ -1331,6 +1342,7 @@ BGFX_C_API const bgfx_memory_t* bgfx_make_ref(const void* _data, uint32_t _size)
  * consumed, otherwise you must make sure _data is available for at least 2
  * `bgfx::frame` calls. `ReleaseFn` function must be able to be called
  * from any thread.
+ *
  * @attention Data passed must be available for at least 2 `bgfx::frame` calls.
  *
  * @param[in] _data Pointer to data.
@@ -1447,7 +1459,7 @@ BGFX_C_API void bgfx_set_index_buffer_name(bgfx_index_buffer_handle_t _handle, c
 BGFX_C_API void bgfx_destroy_index_buffer(bgfx_index_buffer_handle_t _handle);
 
 /**
- * Create vertex layout.
+ * Create vertex layout. Vertex layouts are used to describe the format of vertex data.
  *
  * @param[in] _layout Vertex layout.
  *
@@ -1736,6 +1748,7 @@ BGFX_C_API void bgfx_destroy_indirect_buffer(bgfx_indirect_buffer_handle_t _hand
 
 /**
  * Create shader from memory buffer.
+ *
  * @remarks
  *   Shader binary is obtained by compiling shader offline with shaderc command line tool.
  *
@@ -1748,6 +1761,7 @@ BGFX_C_API bgfx_shader_handle_t bgfx_create_shader(const bgfx_memory_t* _mem);
 
 /**
  * Returns the number of uniforms and uniform handles used inside a shader.
+ *
  * @remarks
  *   Only non-predefined uniforms are returned.
  *
@@ -1773,6 +1787,7 @@ BGFX_C_API void bgfx_set_shader_name(bgfx_shader_handle_t _handle, const char* _
 
 /**
  * Destroy shader.
+ *
  * @remark Once a shader program is created with _handle,
  *   it is safe to destroy that shader.
  *
@@ -1966,6 +1981,7 @@ BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_cube(uint16_t _size, bool _
 
 /**
  * Update 2D texture.
+ *
  * @attention It's valid to update only mutable texture. See `bgfx::createTexture2D` for more info.
  *
  * @param[in] _handle Texture handle.
@@ -1984,6 +2000,7 @@ BGFX_C_API void bgfx_update_texture_2d(bgfx_texture_handle_t _handle, uint16_t _
 
 /**
  * Update 3D texture.
+ *
  * @attention It's valid to update only mutable texture. See `bgfx::createTexture3D` for more info.
  *
  * @param[in] _handle Texture handle.
@@ -2001,6 +2018,7 @@ BGFX_C_API void bgfx_update_texture_3d(bgfx_texture_handle_t _handle, uint8_t _m
 
 /**
  * Update Cube texture.
+ *
  * @attention It's valid to update only mutable texture. See `bgfx::createTextureCube` for more info.
  *
  * @param[in] _handle Texture handle.
@@ -2037,6 +2055,7 @@ BGFX_C_API void bgfx_update_texture_cube(bgfx_texture_handle_t _handle, uint16_t
 
 /**
  * Read back texture content.
+ *
  * @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
  * @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
  *
@@ -2062,6 +2081,7 @@ BGFX_C_API void bgfx_set_texture_name(bgfx_texture_handle_t _handle, const char*
 
 /**
  * Returns texture direct access pointer.
+ *
  * @attention Availability depends on: `BGFX_CAPS_TEXTURE_DIRECT_ACCESS`. This feature
  *   is available on GPUs that have unified memory architecture (UMA) support.
  *
@@ -2149,8 +2169,10 @@ BGFX_C_API bgfx_frame_buffer_handle_t bgfx_create_frame_buffer_from_attachment(u
 
 /**
  * Create frame buffer for multiple window rendering.
+ *
  * @remarks
  *   Frame buffer cannot be used for sampling.
+ *
  * @attention Availability depends on: `BGFX_CAPS_SWAP_CHAIN`.
  *
  * @param[in] _nwh OS' target native window handle.
@@ -2194,12 +2216,14 @@ BGFX_C_API void bgfx_destroy_frame_buffer(bgfx_frame_buffer_handle_t _handle);
 
 /**
  * Create shader uniform parameter.
+ *
  * @remarks
  *   1. Uniform names are unique. It's valid to call `bgfx::createUniform`
  *      multiple times with the same uniform name. The library will always
  *      return the same handle, but the handle reference count will be
  *      incremented. This means that the same number of `bgfx::destroyUniform`
  *      must be called to properly destroy the uniform.
+ *
  *   2. Predefined uniforms (declared in `bgfx_shader.sh`):
  *      - `u_viewRect vec4(x, y, width, height)` - view rectangle for current
  *        view, in pixels.
@@ -2229,12 +2253,14 @@ BGFX_C_API bgfx_uniform_handle_t bgfx_create_uniform(const char* _name, bgfx_uni
 
 /**
  * Create shader uniform parameter.
+ *
  * @remarks
  *   1. Uniform names are unique. It's valid to call `bgfx::createUniform`
  *      multiple times with the same uniform name. The library will always
  *      return the same handle, but the handle reference count will be
  *      incremented. This means that the same number of `bgfx::destroyUniform`
  *      must be called to properly destroy the uniform.
+ *
  *   2. Predefined uniforms (declared in `bgfx_shader.sh`):
  *      - `u_viewRect vec4(x, y, width, height)` - view rectangle for current
  *        view, in pixels.
@@ -2281,7 +2307,8 @@ BGFX_C_API void bgfx_get_uniform_info(bgfx_uniform_handle_t _handle, bgfx_unifor
 BGFX_C_API void bgfx_destroy_uniform(bgfx_uniform_handle_t _handle);
 
 /**
- * Create occlusion query.
+ * Create occlusion query. Occlusion queries allow the GPU to determine
+ * if any pixels passed the depth test.
  *
  */
 BGFX_C_API bgfx_occlusion_query_handle_t bgfx_create_occlusion_query(void);
@@ -2338,9 +2365,12 @@ BGFX_C_API void bgfx_set_palette_color_rgba8(uint8_t _index, uint32_t _rgba);
 
 /**
  * Set view name.
+ *
  * @remarks
  *   This is debug only feature.
+ *
  *   In graphics debugger view name will appear as:
+ *
  *       "nnnc <view name>"
  *        ^  ^ ^
  *        |  +--- compute (C)
@@ -2428,6 +2458,7 @@ BGFX_C_API void bgfx_set_view_clear_mrt(bgfx_view_id_t _id, uint16_t _flags, flo
 
 /**
  * Set view sorting mode.
+ *
  * @remarks
  *   View mode must be set prior calling `bgfx::submit` for the view.
  *
@@ -2439,6 +2470,7 @@ BGFX_C_API void bgfx_set_view_mode(bgfx_view_id_t _id, bgfx_view_mode_t _mode);
 
 /**
  * Set view frame buffer.
+ *
  * @remarks
  *   Not persistent after `bgfx::reset` call.
  *
@@ -2474,6 +2506,7 @@ BGFX_C_API void bgfx_set_view_order(bgfx_view_id_t _id, uint16_t _num, const bgf
 
 /**
  * Set view shading rate.
+ *
  * @attention Availability depends on: `BGFX_CAPS_VARIABLE_RATE_SHADING`.
  *
  * @param[in] _id View id.
@@ -2521,6 +2554,7 @@ BGFX_C_API void bgfx_encoder_set_marker(bgfx_encoder_t* _this, const char* _name
 
 /**
  * Set render states for draw primitive.
+ *
  * @remarks
  *   1. To set up more complex states use:
  *      `BGFX_STATE_ALPHA_REF(_ref)`,
@@ -2568,6 +2602,7 @@ BGFX_C_API void bgfx_encoder_set_stencil(bgfx_encoder_t* _this, uint32_t _fstenc
 
 /**
  * Set scissor for draw primitive.
+ *
  * @remark
  *   To scissor for all primitives in view see `bgfx::setViewScissor`.
  *
@@ -2583,6 +2618,7 @@ BGFX_C_API uint16_t bgfx_encoder_set_scissor(bgfx_encoder_t* _this, uint16_t _x,
 
 /**
  * Set scissor from cache for draw primitive.
+ *
  * @remark
  *   To scissor for all primitives in view see `bgfx::setViewScissor`.
  *
@@ -2615,6 +2651,7 @@ BGFX_C_API void bgfx_encoder_set_transform_cached(bgfx_encoder_t* _this, uint32_
 
 /**
  * Reserve matrices in internal matrix cache.
+ *
  * @attention Pointer returned can be modified until `bgfx::frame` is called.
  *
  * @param[out] _transform Pointer to `Transform` structure.
@@ -2638,6 +2675,7 @@ BGFX_C_API void bgfx_encoder_set_uniform(bgfx_encoder_t* _this, bgfx_uniform_han
 
 /**
  * Set shader uniform parameter for view.
+ *
  * @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
  *
  * @param[in] _id View id.
@@ -2651,6 +2689,7 @@ BGFX_C_API void bgfx_set_view_uniform(bgfx_view_id_t _id, bgfx_uniform_handle_t 
 
 /**
  * Set shader uniform parameter for frame.
+ *
  * @attention Uniform must be created with `bgfx::UniformFreq::View` argument.
  *
  * @param[in] _handle Uniform.
@@ -2726,6 +2765,19 @@ BGFX_C_API void bgfx_encoder_set_vertex_buffer_with_layout(bgfx_encoder_t* _this
  *
  */
 BGFX_C_API void bgfx_encoder_set_dynamic_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stream, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices);
+
+/**
+ * Set vertex buffer for draw primitive.
+ *
+ * @param[in] _stream Vertex stream.
+ * @param[in] _handle Dynamic vertex buffer.
+ * @param[in] _startVertex First vertex to render.
+ * @param[in] _numVertices Number of vertices to render.
+ * @param[in] _layoutHandle Vertex layout for aliasing vertex buffer. If invalid
+ *  handle is used, vertex layout used for creation
+ *  of vertex buffer will be used.
+ *
+ */
 BGFX_C_API void bgfx_encoder_set_dynamic_vertex_buffer_with_layout(bgfx_encoder_t* _this, uint8_t _stream, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
 
 /**
@@ -2756,6 +2808,7 @@ BGFX_C_API void bgfx_encoder_set_transient_vertex_buffer_with_layout(bgfx_encode
 /**
  * Set number of vertices for auto generated vertices use in conjunction
  * with gl_VertexID.
+ *
  * @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
  *
  * @param[in] _numVertices Number of vertices.
@@ -2796,6 +2849,7 @@ BGFX_C_API void bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer(bgfx_e
 /**
  * Set number of instances for auto generated instances use in conjunction
  * with gl_InstanceID.
+ *
  * @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
  *
  * @param[in] _numInstances Number of instances.
@@ -2824,6 +2878,7 @@ BGFX_C_API void bgfx_encoder_set_texture(bgfx_encoder_t* _this, uint8_t _stage, 
  * will be applied but no geometry will be submitted. Useful in cases
  * when no other draw/compute primitive is submitted to view, but it's
  * desired to execute clear view.
+ *
  * @remark
  *   These empty draw calls will sort before ordinary draw calls.
  *
@@ -2858,6 +2913,7 @@ BGFX_C_API void bgfx_encoder_submit_occlusion_query(bgfx_encoder_t* _this, bgfx_
 /**
  * Submit primitive for rendering with index and instance data info from
  * indirect buffer.
+ *
  * @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
  *
  * @param[in] _id View id.
@@ -2874,6 +2930,7 @@ BGFX_C_API void bgfx_encoder_submit_indirect(bgfx_encoder_t* _this, bgfx_view_id
 /**
  * Submit primitive for rendering with index and instance data info and
  * draw count from indirect buffers.
+ *
  * @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
  *
  * @param[in] _id View id.
@@ -2988,6 +3045,7 @@ BGFX_C_API void bgfx_encoder_discard(bgfx_encoder_t* _this, uint8_t _flags);
 
 /**
  * Blit 2D texture region between two 2D textures.
+ *
  * @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
  * @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
  *
@@ -3016,6 +3074,7 @@ BGFX_C_API void bgfx_encoder_blit(bgfx_encoder_t* _this, bgfx_view_id_t _id, bgf
 
 /**
  * Request screen shot of window back buffer.
+ *
  * @remarks
  *   `bgfx::CallbackI::screenShot` must be implemented.
  * @attention Frame buffer handle must be created with OS' target native window handle.
@@ -3029,10 +3088,12 @@ BGFX_C_API void bgfx_request_screen_shot(bgfx_frame_buffer_handle_t _handle, con
 
 /**
  * Render frame.
+ *
  * @attention `bgfx::renderFrame` is blocking call. It waits for
  *   `bgfx::frame` to be called from API thread to process frame.
  *   If timeout value is passed call will timeout and return even
  *   if `bgfx::frame` is not called.
+ *
  * @warning This call should be only used on platforms that don't
  *   allow creating separate rendering thread. If it is called before
  *   to bgfx::init, render thread won't be created by bgfx::init call.
@@ -3046,6 +3107,7 @@ BGFX_C_API bgfx_render_frame_t bgfx_render_frame(int32_t _msecs);
 
 /**
  * Set platform data.
+ *
  * @warning Must be called before `bgfx::init`.
  *
  * @param[in] _data Platform data.
@@ -3055,8 +3117,10 @@ BGFX_C_API void bgfx_set_platform_data(const bgfx_platform_data_t * _data);
 
 /**
  * Get internal data for interop.
+ *
  * @attention It's expected you understand some bgfx internals before you
  *   use this call.
+ *
  * @warning Must be called only on render thread.
  *
  */
@@ -3065,8 +3129,10 @@ BGFX_C_API const bgfx_internal_data_t* bgfx_get_internal_data(void);
 /**
  * Override internal texture with externally created texture. Previously
  * created internal texture will released.
+ *
  * @attention It's expected you understand some bgfx internals before you
  *   use this call.
+ *
  * @warning Must be called only on render thread.
  *
  * @param[in] _handle Texture handle.
@@ -3082,10 +3148,13 @@ BGFX_C_API uintptr_t bgfx_override_internal_texture_ptr(bgfx_texture_handle_t _h
 /**
  * Override internal texture by creating new texture. Previously created
  * internal texture will released.
+ *
  * @attention It's expected you understand some bgfx internals before you
  *   use this call.
+ *
  * @returns Native API pointer to texture. If result is 0, texture is not created yet from the
  *   main thread.
+ *
  * @warning Must be called only on render thread.
  *
  * @param[in] _handle Texture handle.
@@ -3119,6 +3188,7 @@ BGFX_C_API void bgfx_set_marker(const char* _name, int32_t _len);
 
 /**
  * Set render states for draw primitive.
+ *
  * @remarks
  *   1. To set up more complex states use:
  *      `BGFX_STATE_ALPHA_REF(_ref)`,
@@ -3166,6 +3236,7 @@ BGFX_C_API void bgfx_set_stencil(uint32_t _fstencil, uint32_t _bstencil);
 
 /**
  * Set scissor for draw primitive.
+ *
  * @remark
  *   To scissor for all primitives in view see `bgfx::setViewScissor`.
  *
@@ -3181,6 +3252,7 @@ BGFX_C_API uint16_t bgfx_set_scissor(uint16_t _x, uint16_t _y, uint16_t _width, 
 
 /**
  * Set scissor from cache for draw primitive.
+ *
  * @remark
  *   To scissor for all primitives in view see `bgfx::setViewScissor`.
  *
@@ -3213,6 +3285,7 @@ BGFX_C_API void bgfx_set_transform_cached(uint32_t _cache, uint16_t _num);
 
 /**
  * Reserve matrices in internal matrix cache.
+ *
  * @attention Pointer returned can be modified until `bgfx::frame` is called.
  *
  * @param[out] _transform Pointer to `Transform` structure.
@@ -3342,6 +3415,7 @@ BGFX_C_API void bgfx_set_transient_vertex_buffer_with_layout(uint8_t _stream, co
 /**
  * Set number of vertices for auto generated vertices use in conjunction
  * with gl_VertexID.
+ *
  * @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
  *
  * @param[in] _numVertices Number of vertices.
@@ -3382,6 +3456,7 @@ BGFX_C_API void bgfx_set_instance_data_from_dynamic_vertex_buffer(bgfx_dynamic_v
 /**
  * Set number of instances for auto generated instances use in conjunction
  * with gl_InstanceID.
+ *
  * @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
  *
  * @param[in] _numInstances Number of instances.
@@ -3408,6 +3483,7 @@ BGFX_C_API void bgfx_set_texture(uint8_t _stage, bgfx_uniform_handle_t _sampler,
 /**
  * Submit an empty primitive for rendering. Uniforms and draw state
  * will be applied but no geometry will be submitted.
+ *
  * @remark
  *   These empty draw calls will sort before ordinary draw calls.
  *
@@ -3442,6 +3518,7 @@ BGFX_C_API void bgfx_submit_occlusion_query(bgfx_view_id_t _id, bgfx_program_han
 /**
  * Submit primitive for rendering with index and instance data info from
  * indirect buffer.
+ *
  * @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT`.
  *
  * @param[in] _id View id.
@@ -3458,6 +3535,7 @@ BGFX_C_API void bgfx_submit_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _
 /**
  * Submit primitive for rendering with index and instance data info and
  * draw count from indirect buffers.
+ *
  * @attention Availability depends on: `BGFX_CAPS_DRAW_INDIRECT_COUNT`.
  *
  * @param[in] _id View id.
@@ -3572,6 +3650,7 @@ BGFX_C_API void bgfx_discard(uint8_t _flags);
 
 /**
  * Blit 2D texture region between two 2D textures.
+ *
  * @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
  * @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
  *
