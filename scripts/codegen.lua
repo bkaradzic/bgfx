@@ -881,7 +881,7 @@ local function text_with_comments(items, item, cstyle, is_classmember, name_alig
 		else
 			if cstyle then
 				text = string.format("%s %s/** %s%s */",
-					text, namealign(text, comment_align),  item.comment[1], namealign(item.comment[1], 40))
+					text, namealign(text, 40), item.comment[1], namealign(item.comment[1], 40))
 			else
 				local comment_col = math.max(#text + 1, comment_align)
 				local padding = string.rep(" ", comment_col - #text)
