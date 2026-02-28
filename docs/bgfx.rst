@@ -18,14 +18,6 @@ General
 Initialization and Shutdown
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. doxygenstruct:: bgfx::Init
-    :members:
-
-.. doxygenstruct:: bgfx::Resolution
-    :members:
-
-.. doxygenfunction:: bgfx::init
-
 .. doxygendefine:: BGFX_PCI_ID_NONE
 .. doxygendefine:: BGFX_PCI_ID_SOFTWARE_RASTERIZER
 .. doxygendefine:: BGFX_PCI_ID_AMD
@@ -33,10 +25,15 @@ Initialization and Shutdown
 .. doxygendefine:: BGFX_PCI_ID_INTEL
 .. doxygendefine:: BGFX_PCI_ID_NVIDIA
 .. doxygendefine:: BGFX_PCI_ID_MICROSOFT
+.. doxygendefine:: BGFX_PCI_ID_ARM
 
-.. doxygenstruct:: bgfx::CallbackI
+.. doxygenstruct:: bgfx::Resolution
     :members:
 
+.. doxygenstruct:: bgfx::Init
+    :members:
+
+.. doxygenfunction:: bgfx::init
 .. doxygenfunction:: bgfx::shutdown
 
 Updating
@@ -45,13 +42,7 @@ Updating
 Reset
 *****
 
-.. doxygenfunction:: bgfx::reset
-
 .. doxygendefine:: BGFX_RESET_NONE
-.. doxygendefine:: BGFX_RESET_MSAA_X2
-.. doxygendefine:: BGFX_RESET_MSAA_X4
-.. doxygendefine:: BGFX_RESET_MSAA_X8
-.. doxygendefine:: BGFX_RESET_MSAA_X16
 .. doxygendefine:: BGFX_RESET_FULLSCREEN
 .. doxygendefine:: BGFX_RESET_VSYNC
 .. doxygendefine:: BGFX_RESET_MAXANISOTROPY
@@ -64,6 +55,8 @@ Reset
 .. doxygendefine:: BGFX_RESET_DEPTH_CLAMP
 .. doxygendefine:: BGFX_RESET_SUSPEND
 .. doxygendefine:: BGFX_RESET_TRANSPARENT_BACKBUFFER
+
+.. doxygenfunction:: bgfx::reset
 
 Frame
 *****
@@ -106,20 +99,14 @@ Querying information
 Renderer
 ********
 
-.. doxygenfunction:: bgfx::getSupportedRenderers
-
-.. doxygenfunction:: bgfx::getRendererType
-
 .. doxygenstruct:: bgfx::RendererType
     :members:
 
+.. doxygenfunction:: bgfx::getSupportedRenderers
+.. doxygenfunction:: bgfx::getRendererType
+
 Capabilities
 ************
-
-.. doxygenfunction:: bgfx::getCaps
-
-.. doxygenstruct:: bgfx::Caps
-    :members:
 
 Available Caps
 """"""""""""""
@@ -144,8 +131,11 @@ Available Caps
 .. doxygendefine:: BGFX_CAPS_SWAP_CHAIN
 .. doxygendefine:: BGFX_CAPS_TEXTURE_BLIT
 .. doxygendefine:: BGFX_CAPS_TEXTURE_COMPARE_LEQUAL
+.. doxygendefine:: BGFX_CAPS_TEXTURE_COMPARE_RESERVED
 .. doxygendefine:: BGFX_CAPS_TEXTURE_CUBE_ARRAY
 .. doxygendefine:: BGFX_CAPS_TEXTURE_DIRECT_ACCESS
+.. doxygendefine:: BGFX_CAPS_TEXTURE_EXTERNAL
+.. doxygendefine:: BGFX_CAPS_TEXTURE_EXTERNAL_SHARED
 .. doxygendefine:: BGFX_CAPS_TEXTURE_READ_BACK
 .. doxygendefine:: BGFX_CAPS_TEXTURE_2D_ARRAY
 .. doxygendefine:: BGFX_CAPS_TEXTURE_3D
@@ -155,14 +145,10 @@ Available Caps
 .. doxygendefine:: BGFX_CAPS_VERTEX_ATTRIB_UINT10
 .. doxygendefine:: BGFX_CAPS_VERTEX_ID
 .. doxygendefine:: BGFX_CAPS_VIEWPORT_LAYER_ARRAY
+.. doxygendefine:: BGFX_CAPS_TEXTURE_COMPARE_ALL
 
 Statistics
 **********
-
-.. doxygenfunction:: bgfx::getStats
-
-.. doxygenstruct:: bgfx::Stats
-    :members:
 
 .. doxygenstruct:: bgfx::ViewStats
     :members:
@@ -170,53 +156,53 @@ Statistics
 .. doxygenstruct:: bgfx::EncoderStats
     :members:
 
+.. doxygenstruct:: bgfx::Stats
+    :members:
+
+.. doxygenfunction:: bgfx::getStats
+
 Platform specific
 ~~~~~~~~~~~~~~~~~
 
 These are platform specific APIs.
 It is only necessary to use these APIs in conjunction with creating windows.
 
-.. doxygenfunction:: bgfx::renderFrame
-
 .. doxygenstruct:: bgfx::RenderFrame
     :members:
-
-.. doxygenfunction:: bgfx::setPlatformData
-
-.. doxygenstruct:: bgfx::PlatformData
-    :members:
-
-.. doxygenfunction:: bgfx::getInternalData
 
 .. doxygenstruct:: bgfx::InternalData
     :members:
 
+.. doxygenstruct:: bgfx::PlatformData
+    :members:
+
+.. doxygenfunction:: bgfx::renderFrame
+.. doxygenfunction:: bgfx::setPlatformData
+.. doxygenfunction:: bgfx::getInternalData
 .. doxygenfunction:: bgfx::overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint16_t _layerIndex = 0)
 .. doxygenfunction:: bgfx::overrideInternal(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint64_t _flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE)
 
 Miscellaneous
 ~~~~~~~~~~~~~
 
-.. doxygenfunction:: bgfx::vertexPack
-.. doxygenfunction:: bgfx::vertexUnpack
-.. doxygenfunction:: bgfx::vertexConvert
-.. doxygenfunction:: bgfx::weldVertices
-
 .. doxygenstruct:: bgfx::TopologyConvert
     :members:
-
-.. doxygenfunction:: bgfx::topologyConvert
 
 .. doxygenstruct:: bgfx::TopologySort
     :members:
 
+.. doxygenfunction:: bgfx::vertexPack
+.. doxygenfunction:: bgfx::vertexUnpack
+.. doxygenfunction:: bgfx::vertexConvert
+.. doxygenfunction:: bgfx::weldVertices
+.. doxygenfunction:: bgfx::topologyConvert
 .. doxygenfunction:: bgfx::topologySortTriList
-.. doxygenfunction:: bgfx::discard
-.. doxygenfunction:: bgfx::touch
-.. doxygenfunction:: bgfx::setPaletteColor(uint8_t _index, uint32_t _rgba)
 .. doxygenfunction:: bgfx::setPaletteColor(uint8_t _index, const float _rgba[4])
 .. doxygenfunction:: bgfx::setPaletteColor(uint8_t _index, float _r, float _g, float _b, float _a)
+.. doxygenfunction:: bgfx::setPaletteColor(uint8_t _index, uint32_t _rgba)
 .. doxygenfunction:: bgfx::requestScreenShot
+.. doxygenfunction:: bgfx::touch
+.. doxygenfunction:: bgfx::discard
 
 Views
 -----
@@ -228,33 +214,31 @@ When compute calls and draw calls occupy the same bucket, the compute calls will
 Compute calls are always executed in order of submission, while draw calls are sorted by internal state if
 the View is not in sequential mode.
 In most cases where the z-buffer is used, this change in order does not affect the desired output.
-When draw call order needs to be preserved (e.g. when rendering GUIs), Views can be set to use sequential mode with `bgfx::setViewMode`.
+When draw call order needs to be preserved (e.g. when rendering GUIs), Views can be set to use sequential mode with ``bgfx::setViewMode``.
 Sequential order is less efficient, because it doesn't allow state change optimization, and should be avoided when possible.
 
 By default, Views are sorted by their View ID, in ascending order.
 For dynamic renderers where the right order might not be known until the last moment,
-View IDs can be changed to use arbitrary ordering with `bgfx::setViewOrder`.
+View IDs can be changed to use arbitrary ordering with ``bgfx::setViewOrder``.
 
 A View's state is preserved between frames.
+
+.. doxygenstruct:: bgfx::ViewMode
+    :members:
+
+.. doxygenstruct:: bgfx::ShadingRate
+    :members:
 
 .. doxygenfunction:: bgfx::setViewName
 .. doxygenfunction:: bgfx::setViewRect(ViewId _id, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 .. doxygenfunction:: bgfx::setViewRect(ViewId _id, uint16_t _x, uint16_t _y, BackbufferRatio::Enum _ratio)
 .. doxygenfunction:: bgfx::setViewScissor
 .. doxygenfunction:: bgfx::setViewClear(ViewId _id, uint16_t _flags, uint32_t _rgba = 0x000000ff, float _depth = 1.0f, uint8_t _stencil = 0)
-.. doxygenfunction:: bgfx::setViewClear(ViewId _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0 = UINT8_MAX, uint8_t _1 = UINT8_MAX, uint8_t _2 = UINT8_MAX, uint8_t _3 = UINT8_MAX, uint8_t _4 = UINT8_MAX, uint8_t _5 = UINT8_MAX, uint8_t _6 = UINT8_MAX, uint8_t _7 = UINT8_MAX)
-
-.. doxygenstruct:: bgfx::ViewMode
-    :members:
-
+.. doxygenfunction:: bgfx::setViewClear(ViewId _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _c0 = UINT8_MAX, uint8_t _c1 = UINT8_MAX, uint8_t _c2 = UINT8_MAX, uint8_t _c3 = UINT8_MAX, uint8_t _c4 = UINT8_MAX, uint8_t _c5 = UINT8_MAX, uint8_t _c6 = UINT8_MAX, uint8_t _c7 = UINT8_MAX)
 .. doxygenfunction:: bgfx::setViewMode
 .. doxygenfunction:: bgfx::setViewFrameBuffer
 .. doxygenfunction:: bgfx::setViewTransform
 .. doxygenfunction:: bgfx::setViewOrder
-
-.. doxygenstruct:: bgfx::ShadingRate
-    :members:
-
 .. doxygenfunction:: bgfx::setViewShadingRate
 .. doxygenfunction:: bgfx::resetView
 
@@ -266,27 +250,24 @@ Encoder
 
 API for multi-threaded submission.
 
-.. doxygenfunction:: bgfx::begin
-.. doxygenfunction:: bgfx::end
-
 .. doxygenstruct:: bgfx::Encoder
     :members:
+
+.. doxygenfunction:: bgfx::begin
+.. doxygenfunction:: bgfx::end
 
 Draw
 ~~~~
 
 Draw state is not preserved between two draw calls.
-All state is cleared after calling `bgfx::submit`.
-
-State
-*****
+All state is cleared after calling ``bgfx::submit``.
 
 Debug
 *****
 
+.. doxygenfunction:: bgfx::setName(ShaderHandle _handle, const char* _name, int32_t _len = INT32_MAX)
+.. doxygenfunction:: bgfx::setName(TextureHandle _handle, const char* _name, int32_t _len = INT32_MAX)
 .. doxygenfunction:: bgfx::setMarker
-.. doxygenfunction:: bgfx::setName(ShaderHandle _handle, const char *_name, int32_t _len = INT32_MAX)
-.. doxygenfunction:: bgfx::setName(TextureHandle _handle, const char *_name, int32_t _len = INT32_MAX)
 
 State
 *****
@@ -301,9 +282,10 @@ State Flags
 .. doxygendefine:: BGFX_STATE_WRITE_R
 .. doxygendefine:: BGFX_STATE_WRITE_G
 .. doxygendefine:: BGFX_STATE_WRITE_B
-.. doxygendefine:: BGFX_STATE_WRITE_RGB
 .. doxygendefine:: BGFX_STATE_WRITE_A
 .. doxygendefine:: BGFX_STATE_WRITE_Z
+.. doxygendefine:: BGFX_STATE_WRITE_RGB
+.. doxygendefine:: BGFX_STATE_WRITE_MASK
 
 **Depth Test**
 
@@ -354,11 +336,14 @@ State Flags
 
 **Misc**
 
-.. doxygendefine:: BGFX_STATE_BLEND_INDEPENDENT
-.. doxygendefine:: BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
-
 .. doxygendefine:: BGFX_STATE_MSAA
 .. doxygendefine:: BGFX_STATE_LINEAA
+.. doxygendefine:: BGFX_STATE_CONSERVATIVE_RASTER
+.. doxygendefine:: BGFX_STATE_NONE
+.. doxygendefine:: BGFX_STATE_FRONT_CCW
+.. doxygendefine:: BGFX_STATE_BLEND_INDEPENDENT
+.. doxygendefine:: BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
+.. doxygendefine:: BGFX_STATE_DEFAULT
 
 Stencil
 *******
@@ -369,13 +354,20 @@ Stencil Flags
 *************
 
 .. doxygendefine:: BGFX_STENCIL_TEST_LESS
+.. doxygendefine:: BGFX_STENCIL_TEST_LEQUAL
+.. doxygendefine:: BGFX_STENCIL_TEST_EQUAL
+.. doxygendefine:: BGFX_STENCIL_TEST_GEQUAL
+.. doxygendefine:: BGFX_STENCIL_TEST_GREATER
+.. doxygendefine:: BGFX_STENCIL_TEST_NOTEQUAL
+.. doxygendefine:: BGFX_STENCIL_TEST_NEVER
+.. doxygendefine:: BGFX_STENCIL_TEST_ALWAYS
 
 Scissor
 *******
 
 If the Scissor rectangle needs to be changed for
-every draw call in a View, use `bgfx::setScissor`.
-Otherwise, use `bgfx::setViewScissor`.
+every draw call in a View, use ``bgfx::setScissor``.
+Otherwise, use ``bgfx::setViewScissor``.
 
 .. doxygenfunction:: bgfx::setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 .. doxygenfunction:: bgfx::setScissor(uint16_t _cache = UINT16_MAX)
@@ -383,62 +375,54 @@ Otherwise, use `bgfx::setViewScissor`.
 Transform
 *********
 
-.. doxygenfunction:: bgfx::allocTransform
-.. doxygenfunction:: bgfx::setTransform(const void *_mtx, uint16_t _num = 1)
+.. doxygenfunction:: bgfx::setTransform(const void* _mtx, uint16_t _num = 1)
 .. doxygenfunction:: bgfx::setTransform(uint32_t _cache, uint16_t _num = 1)
+.. doxygenfunction:: bgfx::allocTransform
 
 Conditional Rendering
 *********************
 
 .. doxygenfunction:: bgfx::setCondition
 
-
 Buffers
 *******
+
+.. doxygenstruct:: bgfx::TransientIndexBuffer
+    :members:
+
+.. doxygenstruct:: bgfx::TransientVertexBuffer
+    :members:
+
+.. doxygenstruct:: bgfx::InstanceDataBuffer
+    :members:
 
 .. doxygenfunction:: bgfx::setIndexBuffer(IndexBufferHandle _handle)
 .. doxygenfunction:: bgfx::setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
 .. doxygenfunction:: bgfx::setIndexBuffer(DynamicIndexBufferHandle _handle)
 .. doxygenfunction:: bgfx::setIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
-
-.. doxygenstruct:: bgfx::TransientIndexBuffer
-    :members:
-
-.. doxygenfunction:: bgfx::setIndexBuffer(const TransientIndexBuffer *_tib)
-.. doxygenfunction:: bgfx::setIndexBuffer(const TransientIndexBuffer *_tib, uint32_t _firstIndex, uint32_t _numIndices)
-
-.. doxygenfunction:: bgfx::setVertexBuffer(uint8_t _stream, VertexBufferHandle _handle)
+.. doxygenfunction:: bgfx::setIndexBuffer(const TransientIndexBuffer* _tib)
+.. doxygenfunction:: bgfx::setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices)
 .. doxygenfunction:: bgfx::setVertexBuffer(uint8_t _stream, VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE)
-.. doxygenfunction:: bgfx::setVertexBuffer(uint8_t _stream, DynamicVertexBufferHandle _handle)
 .. doxygenfunction:: bgfx::setVertexBuffer(uint8_t _stream, DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _numVertices, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE)
-
-.. doxygenstruct:: bgfx::TransientVertexBuffer
-    :members:
-
-.. doxygenfunction:: bgfx::setVertexBuffer(uint8_t _stream, const TransientVertexBuffer *_tvb)
-.. doxygenfunction:: bgfx::setVertexBuffer(uint8_t _stream, const TransientVertexBuffer *_tvb, uint32_t _startVertex, uint32_t _numVertices, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE)
+.. doxygenfunction:: bgfx::setVertexBuffer(uint8_t _stream, const TransientVertexBuffer* _tvb, uint32_t _startVertex, uint32_t _numVertices, VertexLayoutHandle _layoutHandle = BGFX_INVALID_HANDLE)
 .. doxygenfunction:: bgfx::setVertexCount
-
-.. doxygenstruct:: bgfx::InstanceDataBuffer
-    :members:
-
-.. doxygenfunction:: bgfx::setInstanceDataBuffer(const InstanceDataBuffer *_idb)
-.. doxygenfunction:: bgfx::setInstanceDataBuffer(const InstanceDataBuffer *_idb, uint32_t _start, uint32_t _num)
-.. doxygenfunction:: bgfx::setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _start, uint32_t _num)
-.. doxygenfunction:: bgfx::setInstanceDataBuffer(DynamicVertexBufferHandle _handle, uint32_t _start, uint32_t _num)
+.. doxygenfunction:: bgfx::setInstanceDataBuffer(const InstanceDataBuffer* _idb)
+.. doxygenfunction:: bgfx::setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _start, uint32_t _num)
+.. doxygenfunction:: bgfx::setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num)
+.. doxygenfunction:: bgfx::setInstanceDataBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num)
 .. doxygenfunction:: bgfx::setInstanceCount
 
 Textures
 ********
 
-.. doxygenfunction:: bgfx::setTexture(uint8_t, UniformHandle, TextureHandle, uint32_t)
+.. doxygenfunction:: bgfx::setTexture
 
 Uniforms
 ********
 
-.. doxygenfunction:: bgfx::setUniform
 .. doxygenfunction:: bgfx::setViewUniform
 .. doxygenfunction:: bgfx::setFrameUniform
+.. doxygenfunction:: bgfx::setUniform
 
 Submit
 ******
@@ -450,11 +434,10 @@ In Views, all draw commands are executed **after** blit and compute commands.
 .. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start = 0, uint32_t _num = 1, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
 .. doxygenfunction:: bgfx::submit(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start, IndexBufferHandle _numHandle, uint32_t _numIndex = 0, uint32_t _numMax = UINT32_MAX, uint32_t _depth = 0, uint8_t _flags = BGFX_DISCARD_ALL)
 
-
 Compute
 ~~~~~~~
 
-Compute state is not preserved between compute dispatches; all state is cleared after calling `bgfx::dispatch`.
+Compute state is not preserved between compute dispatches; all state is cleared after calling ``bgfx::dispatch``.
 
 Buffers
 *******
@@ -471,15 +454,15 @@ Buffers
 Images
 ******
 
-.. doxygenfunction:: bgfx::setImage(uint8_t, TextureHandle, uint8_t, Access::Enum, TextureFormat::Enum)
+.. doxygenfunction:: bgfx::setImage
 
 Dispatch
 ********
 
 In Views, all draw commands are executed **after** blit and compute commands.
 
-.. doxygenfunction:: bgfx::dispatch(ViewId _id, ProgramHandle _handle, uint32_t _numX = 1, uint32_t _numY = 1, uint32_t _numZ = 1, uint8_t _flags = BGFX_DISCARD_ALL)
-.. doxygenfunction:: bgfx::dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint32_t _start = 0, uint32_t _num = 1, uint8_t _flags = BGFX_DISCARD_ALL)
+.. doxygenfunction:: bgfx::dispatch(ViewId _id, ProgramHandle _program, uint32_t _numX = 1, uint32_t _numY = 1, uint32_t _numZ = 1, uint8_t _flags = BGFX_DISCARD_ALL)
+.. doxygenfunction:: bgfx::dispatch(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint32_t _start = 0, uint32_t _num = 1, uint8_t _flags = BGFX_DISCARD_ALL)
 
 Blit
 ~~~~
@@ -492,13 +475,6 @@ In Views, all draw commands are executed **after** blit and compute commands.
 Resources
 ---------
 
-.. doxygenstruct:: bgfx::Memory
-    :members:
-
-.. doxygenfunction:: bgfx::alloc
-.. doxygenfunction:: bgfx::copy
-.. doxygenfunction:: bgfx::makeRef
-
 Shaders and Programs
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -509,8 +485,8 @@ Shaders and Programs
 .. doxygenfunction:: bgfx::createShader
 .. doxygenfunction:: bgfx::getShaderUniforms
 .. doxygenfunction:: bgfx::destroy(ShaderHandle _handle)
-.. doxygenfunction:: bgfx::createProgram(ShaderHandle _vsh, ShaderHandle _fsh, bool _destroyShaders = false)
-.. doxygenfunction:: bgfx::createProgram(ShaderHandle _csh, bool _destroyShader = false)
+.. doxygenfunction:: bgfx::createProgram(ShaderHandle _vsh, ShaderHandle _fsh, bool _destroyShaders)
+.. doxygenfunction:: bgfx::createProgram(ShaderHandle _csh, bool _destroyShaders)
 .. doxygenfunction:: bgfx::destroy(ProgramHandle _handle)
 
 Uniforms
@@ -519,31 +495,19 @@ Uniforms
 .. doxygenstruct:: bgfx::UniformType
     :members:
 
-.. doxygenfunction:: bgfx::createUniform(const char* _name, UniformType::Enum, uint16_t)
-
 .. doxygenstruct:: bgfx::UniformFreq
     :members:
-
-.. doxygenfunction:: bgfx::createUniform(const char* _name, UniformFreq::Enum, UniformType::Enum, uint16_t)
 
 .. doxygenstruct:: bgfx::UniformInfo
     :members:
 
+.. doxygenfunction:: bgfx::createUniform(const char* _name, UniformType::Enum _type, uint16_t _num = 1)
+.. doxygenfunction:: bgfx::createUniform(const char* _name, UniformFreq::Enum _freq, UniformType::Enum _type, uint16_t _num = 1)
 .. doxygenfunction:: bgfx::getUniformInfo
 .. doxygenfunction:: bgfx::destroy(UniformHandle _handle)
 
 Vertex Buffers
 ~~~~~~~~~~~~~~
-
-.. doxygenfunction:: bgfx::createVertexLayout
-.. doxygenfunction:: bgfx::destroy(VertexLayoutHandle _handle)
-
-.. doxygenfunction:: bgfx::createVertexBuffer
-.. doxygenfunction:: bgfx::setName(VertexBufferHandle _handle, const char *_name, int32_t _len = INT32_MAX)
-.. doxygenfunction:: bgfx::destroy(VertexBufferHandle _handle)
-
-.. doxygenstruct:: bgfx::VertexLayout
-    :members:
 
 .. doxygenstruct:: bgfx::Attrib
     :members:
@@ -551,9 +515,17 @@ Vertex Buffers
 .. doxygenstruct:: bgfx::AttribType
     :members:
 
-.. doxygenfunction:: bgfx::createDynamicVertexBuffer(uint32_t _num, const VertexLayout &_layout, uint16_t _flags = BGFX_BUFFER_NONE)
-.. doxygenfunction:: bgfx::createDynamicVertexBuffer(const Memory *_mem, const VertexLayout &_layout, uint16_t _flags = BGFX_BUFFER_NONE)
-.. doxygenfunction:: bgfx::update(DynamicVertexBufferHandle _handle, uint32_t _startVertex, const Memory *_mem)
+.. doxygenstruct:: bgfx::VertexLayout
+    :members:
+
+.. doxygenfunction:: bgfx::createVertexLayout
+.. doxygenfunction:: bgfx::destroy(VertexLayoutHandle _layoutHandle)
+.. doxygenfunction:: bgfx::createVertexBuffer
+.. doxygenfunction:: bgfx::setName(VertexBufferHandle _handle, const char* _name, int32_t _len = INT32_MAX)
+.. doxygenfunction:: bgfx::destroy(VertexBufferHandle _handle)
+.. doxygenfunction:: bgfx::createDynamicVertexBuffer(uint32_t _num, const VertexLayout& _layout, uint16_t _flags = BGFX_BUFFER_NONE)
+.. doxygenfunction:: bgfx::createDynamicVertexBuffer(const Memory* _mem, const VertexLayout& _layout, uint16_t _flags = BGFX_BUFFER_NONE)
+.. doxygenfunction:: bgfx::update(DynamicVertexBufferHandle _handle, uint32_t _startVertex, const Memory* _mem)
 .. doxygenfunction:: bgfx::destroy(DynamicVertexBufferHandle _handle)
 .. doxygenfunction:: bgfx::getAvailTransientVertexBuffer
 .. doxygenfunction:: bgfx::allocTransientVertexBuffer
@@ -562,11 +534,11 @@ Index Buffers
 ~~~~~~~~~~~~~
 
 .. doxygenfunction:: bgfx::createIndexBuffer
-.. doxygenfunction:: bgfx::setName(IndexBufferHandle _handle, const char *_name, int32_t _len = INT32_MAX)
+.. doxygenfunction:: bgfx::setName(IndexBufferHandle _handle, const char* _name, int32_t _len = INT32_MAX)
 .. doxygenfunction:: bgfx::destroy(IndexBufferHandle _handle)
 .. doxygenfunction:: bgfx::createDynamicIndexBuffer(uint32_t _num, uint16_t _flags = BGFX_BUFFER_NONE)
-.. doxygenfunction:: bgfx::createDynamicIndexBuffer(const Memory *_mem, uint16_t _flags = BGFX_BUFFER_NONE)
-.. doxygenfunction:: bgfx::update(DynamicIndexBufferHandle _handle, uint32_t _startIndex, const Memory *_mem)
+.. doxygenfunction:: bgfx::createDynamicIndexBuffer(const Memory* _mem, uint16_t _flags = BGFX_BUFFER_NONE)
+.. doxygenfunction:: bgfx::update(DynamicIndexBufferHandle _handle, uint32_t _startIndex, const Memory* _mem)
 .. doxygenfunction:: bgfx::destroy(DynamicIndexBufferHandle _handle)
 .. doxygenfunction:: bgfx::getAvailTransientIndexBuffer
 .. doxygenfunction:: bgfx::allocTransientIndexBuffer
@@ -574,39 +546,34 @@ Index Buffers
 Textures
 ~~~~~~~~
 
-.. doxygenstruct:: bgfx::TextureFormat
-    :members:
-
-**Texture Flags**
-
+.. doxygendefine:: BGFX_TEXTURE_NONE
 .. doxygendefine:: BGFX_TEXTURE_MSAA_SAMPLE
 .. doxygendefine:: BGFX_TEXTURE_RT
 .. doxygendefine:: BGFX_TEXTURE_COMPUTE_WRITE
 .. doxygendefine:: BGFX_TEXTURE_SRGB
 .. doxygendefine:: BGFX_TEXTURE_BLIT_DST
 .. doxygendefine:: BGFX_TEXTURE_READ_BACK
-.. doxygendefine:: BGFX_TEXTURE_RT_MSAA_X2
-.. doxygendefine:: BGFX_TEXTURE_RT_MSAA_X4
-.. doxygendefine:: BGFX_TEXTURE_RT_MSAA_X8
-.. doxygendefine:: BGFX_TEXTURE_RT_MSAA_X16
+.. doxygendefine:: BGFX_TEXTURE_EXTERNAL_SHARED
+
 .. doxygendefine:: BGFX_TEXTURE_RT_WRITE_ONLY
 
-.. doxygenfunction:: bgfx::isTextureValid
+.. doxygenstruct:: bgfx::TextureFormat
+    :members:
 
 .. doxygenstruct:: bgfx::TextureInfo
     :members:
 
+.. doxygenfunction:: bgfx::isTextureValid
 .. doxygenfunction:: bgfx::calcTextureSize
 .. doxygenfunction:: bgfx::createTexture
-
-.. doxygenfunction:: bgfx::createTexture2D(uint16_t _width, uint16_t _height, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE, const Memory *_mem = NULL)
-.. doxygenfunction:: bgfx::createTexture2D(BackbufferRatio::Enum _ratio, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_NONE)
-.. doxygenfunction:: bgfx::updateTexture2D
+.. doxygenfunction:: bgfx::createTexture2D(uint16_t _width, uint16_t _height, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE, const Memory* _mem = NULL, uint64_t _external = 0)
+.. doxygenfunction:: bgfx::createTexture2D(BackbufferRatio::Enum _ratio, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE)
 .. doxygenfunction:: bgfx::createTexture3D
-.. doxygenfunction:: bgfx::updateTexture3D
 .. doxygenfunction:: bgfx::createTextureCube
+.. doxygenfunction:: bgfx::updateTexture2D
+.. doxygenfunction:: bgfx::updateTexture3D
 .. doxygenfunction:: bgfx::updateTextureCube
-.. doxygenfunction:: bgfx::readTexture(TextureHandle, void *, uint8_t)
+.. doxygenfunction:: bgfx::readTexture
 .. doxygenfunction:: bgfx::getDirectAccessPtr
 .. doxygenfunction:: bgfx::destroy(TextureHandle _handle)
 
@@ -617,15 +584,13 @@ Frame Buffers
     :members:
 
 .. doxygenfunction:: bgfx::isFrameBufferValid
-
-.. doxygenfunction:: bgfx::createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint64_t _textureFlags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP)
-.. doxygenfunction:: bgfx::createFrameBuffer(BackbufferRatio::Enum _ratio, TextureFormat::Enum _format, uint64_t _textureFlags = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP)
-.. doxygenfunction:: bgfx::createFrameBuffer(uint8_t _num, const TextureHandle *_handles, bool _destroyTextures = false)
-.. doxygenfunction:: bgfx::createFrameBuffer(void *_nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _format = TextureFormat::Count, TextureFormat::Enum _depthFormat = TextureFormat::Count)
-
-.. doxygenfunction:: bgfx::createFrameBuffer(uint8_t _num, const Attachment *_attachment, bool _destroyTextures = false)
+.. doxygenfunction:: bgfx::createFrameBuffer(uint16_t _width, uint16_t _height, TextureFormat::Enum _format, uint64_t _textureFlags = BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP)
+.. doxygenfunction:: bgfx::createFrameBuffer(BackbufferRatio::Enum _ratio, TextureFormat::Enum _format, uint64_t _textureFlags = BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP)
+.. doxygenfunction:: bgfx::createFrameBuffer(uint8_t _num, const TextureHandle* _handles, bool _destroyTexture)
+.. doxygenfunction:: bgfx::createFrameBuffer(uint8_t _num, const Attachment* _attachment, bool _destroyTexture)
+.. doxygenfunction:: bgfx::createFrameBuffer(void* _nwh, uint16_t _width, uint16_t _height, TextureFormat::Enum _format = TextureFormat::Count, TextureFormat::Enum _depthFormat = TextureFormat::Count)
+.. doxygenfunction:: bgfx::setName(FrameBufferHandle _handle, const char* _name, int32_t _len = INT32_MAX)
 .. doxygenfunction:: bgfx::getTexture
-.. doxygenfunction:: bgfx::setName(FrameBufferHandle _handle, const char *_name, int32_t _len = INT32_MAX)
 .. doxygenfunction:: bgfx::destroy(FrameBufferHandle _handle)
 
 Instance Buffer
@@ -643,10 +608,10 @@ Indirect Buffer
 Occlusion Query
 ~~~~~~~~~~~~~~~
 
-.. doxygenfunction:: bgfx::createOcclusionQuery
-
 .. doxygenstruct:: bgfx::OcclusionQueryResult
     :members:
 
+.. doxygenfunction:: bgfx::createOcclusionQuery
 .. doxygenfunction:: bgfx::getResult
 .. doxygenfunction:: bgfx::destroy(OcclusionQueryHandle _handle)
+
