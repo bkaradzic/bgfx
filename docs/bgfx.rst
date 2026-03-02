@@ -1,7 +1,6 @@
 API Reference
 =============
 
-
 .. note::
 
     If you're just getting started with bgfx, you might get more out of these simple walkthroughs for how to use bgfx's API:

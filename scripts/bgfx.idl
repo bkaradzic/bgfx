@@ -28,7 +28,7 @@ funcptr.ReleaseFn
 	.userData   "void*" --- User defined data if needed.
 
 --- Color RGB/alpha/depth write. When it's not specified write will be disabled.
-flag.StateWrite { bits = 64, base = 1, section = "State Flags" }
+flag.StateWrite { bits = 64, base = 1, section = "State Flags", label = "Write" }
 	.R                        --- Enable R write.
 	.G                        --- Enable G write.
 	.B                        --- Enable B write.
@@ -38,7 +38,7 @@ flag.StateWrite { bits = 64, base = 1, section = "State Flags" }
 	.Mask { "Rgb", "A", "Z" } --- Write all channels mask.
 
 --- Depth test state. When `BGFX_STATE_DEPTH_` is not specified depth test will be disabled.
-flag.StateDepthTest { bits = 64, shift = 4, range = 4, base = 1, desc = "Depth test state", section = "State Flags" }
+flag.StateDepthTest { bits = 64, shift = 4, range = 4, base = 1, desc = "Depth test state", section = "State Flags", label = "Depth Test" }
 	.Less     --- Enable depth test, less.
 	.Lequal   --- Enable depth test, less or equal.
 	.Equal    --- Enable depth test, equal.
@@ -51,7 +51,7 @@ flag.StateDepthTest { bits = 64, shift = 4, range = 4, base = 1, desc = "Depth t
 
 --- Use BGFX_STATE_BLEND_FUNC(_src, _dst) or BGFX_STATE_BLEND_FUNC_SEPARATE(_srcRGB, _dstRGB, _srcA, _dstA)
 --- helper macros.
-flag.StateBlend { bits = 64, shift = 12, range = 16, base = 1, desc = "Blend state", section = "State Flags" }
+flag.StateBlend { bits = 64, shift = 12, range = 16, base = 1, desc = "Blend state", section = "State Flags", label = "Blend Mode" }
 	.Zero        --- 0, 0, 0, 0
 	.One         --- 1, 1, 1, 1
 	.SrcColor    --- Rs, Gs, Bs, As
@@ -69,7 +69,7 @@ flag.StateBlend { bits = 64, shift = 12, range = 16, base = 1, desc = "Blend sta
 
 --- Use BGFX_STATE_BLEND_EQUATION(_equation) or BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB, _equationA)
 --- helper macros.
-flag.StateBlendEquation { bits = 64, shift = 28, range = 6, base = 0, desc = "Blend equation", section = "State Flags" }
+flag.StateBlendEquation { bits = 64, shift = 28, range = 6, base = 0, desc = "Blend equation", section = "State Flags", label = "Blend Equation" }
 	.Add    --- Blend add: src + dst.
 	.Sub    --- Blend subtract: src - dst.
 	.Revsub --- Blend reverse subtract: dst - src.
@@ -78,7 +78,7 @@ flag.StateBlendEquation { bits = 64, shift = 28, range = 6, base = 0, desc = "Bl
 	()
 
 --- Cull state. When `BGFX_STATE_CULL_*` is not specified culling will be disabled.
-flag.StateCull { bits = 64, shift = 36, range = 2, base = 1, desc = "Culling mode", section = "State Flags" }
+flag.StateCull { bits = 64, shift = 36, range = 2, base = 1, desc = "Culling mode", section = "State Flags", label = "Primitive Culling" }
 	.Cw  --- Cull clockwise triangles.
 	.Ccw --- Cull counter-clockwise triangles.
 	()
@@ -86,7 +86,7 @@ flag.StateCull { bits = 64, shift = 36, range = 2, base = 1, desc = "Culling mod
 --- Alpha reference value.
 flag.StateAlphaRef { bits = 64, shift = 40, range = 8, desc = "Alpha reference", "helper" }
 
-flag.StatePt { bits = 64, shift = 48, range = 3, base = 1, desc = "Primitive type", section = "State Flags" }
+flag.StatePt { bits = 64, shift = 48, range = 3, base = 1, desc = "Primitive type", section = "State Flags", label = "Primitive Type" }
 	.Tristrip  --- Tristrip.
 	.Lines     --- Lines.
 	.Linestrip --- Line strip.
@@ -98,7 +98,7 @@ flag.StatePointSize { bits = 64, shift = 52, range = 4, desc = "Point size", "he
 
 --- Enable MSAA write when writing into MSAA frame buffer.
 --- This flag is ignored when not writing into MSAA frame buffer.
-flag.State { bits = 64, range = 64, desc = "State", section = "State Flags" }
+flag.State { bits = 64, range = 64, desc = "State", section = "State Flags", label = "Misc" }
 	.Msaa (57)                 --- Enable MSAA rasterization.
 	.Lineaa (58)               --- Enable line AA rasterization.
 	.ConservativeRaster (59)   --- Enable conservative rasterization.
@@ -3347,6 +3347,17 @@ func.blit { section = "Blit" }
 --------------------------------------------------------------------------------
 -- Documentation sections for RST generation
 --------------------------------------------------------------------------------
+
+--- .. note::
+---
+---     If you're just getting started with bgfx, you might get more out of these simple walkthroughs for how to use bgfx's API:
+---
+---     - `Hello, bgfx! (tutorial) <https://dev.to/pperon/hello-bgfx-4dka>`_
+---     - `bgfx-minimal-example (repo on GitHub) <https://github.com/jpcy/bgfx-minimal-example#bgfx-minimal-example>`_
+---     - `Using the bgfx library with C++ on Ubuntu (tutorial) <https://www.sandeepnambiar.com/getting-started-with-bgfx/>`_
+---     - `Getting started with BGFX (playlist on Youtube) <https://www.youtube.com/playlist?list=PLwFtWV3PS6y_oTOfHjbE0Zk8N9_QuQlHy>`_
+---     - `Getting started with BGFX (repo on GitHub) <https://github.com/gamecoder-nz/Getting-Started-With-BGFX>`_
+section("API Reference", 0)
 
 --- General API for initialization, shutdown, frame management, debug, and querying renderer information.
 section("General", 1)
