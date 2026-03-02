@@ -94,18 +94,8 @@ function gen.gen()
 		return prefix .. "_" .. suffix
 	end
 
-	-- Flag label mapping for "State Flags" section
-	local state_flag_labels = {
-		StateWrite         = "Write",
-		StateDepthTest     = "Depth Test",
-		StateBlend         = "Blend Mode",
-		StateBlendEquation = "Blend Equation",
-		StateCull          = "Primitive Culling",
-		StatePt            = "Primitive Type",
-		State              = "Misc",
-	}
-
 	local underlines = {
+		[0] = "=",
 		[1] = "-",
 		[2] = "~",
 		[3] = "*",
@@ -116,21 +106,6 @@ function gen.gen()
 	local function emit(s)
 		r[#r+1] = s or ""
 	end
-
-	-- Title
-	emit("API Reference")
-	emit("=============")
-	emit()
-	emit()
-	emit(".. note::")
-	emit()
-	emit("    If you're just getting started with bgfx, you might get more out of these simple walkthroughs for how to use bgfx's API:")
-	emit()
-	emit("    - `Hello, bgfx! (tutorial) <https://dev.to/pperon/hello-bgfx-4dka>`_")
-	emit("    - `bgfx-minimal-example (repo on GitHub) <https://github.com/jpcy/bgfx-minimal-example#bgfx-minimal-example>`_")
-	emit("    - `Using the bgfx library with C++ on Ubuntu (tutorial) <https://www.sandeepnambiar.com/getting-started-with-bgfx/>`_")
-	emit("    - `Getting started with BGFX (playlist on Youtube) <https://www.youtube.com/playlist?list=PLwFtWV3PS6y_oTOfHjbE0Zk8N9_QuQlHy>`_")
-	emit("    - `Getting started with BGFX (repo on GitHub) <https://github.com/gamecoder-nz/Getting-Started-With-BGFX>`_")
 
 	-- Determine leaf sections and build parent paths for item lookup.
 	-- A leaf section is one not immediately followed by a deeper-level section.
@@ -150,7 +125,9 @@ function gen.gen()
 	end
 
 	for _, sec in ipairs(idl.sections) do
-		emit()
+		if sec.level > 0 then
+			emit()
+		end
 
 		-- Section header
 		emit(sec.title)
@@ -193,7 +170,6 @@ function gen.gen()
 		-- Items (only for leaf sections)
 		if sec._is_leaf then
 			local items = section_items[sec._path] or section_items[sec.title] or {}
-			local is_state_flags = (sec.title == "State Flags")
 			local prev_kind = nil
 
 			for _, entry in ipairs(items) do
@@ -218,12 +194,9 @@ function gen.gen()
 				elseif entry.kind == "flag" then
 					local t = entry.item
 					emit()
-					if is_state_flags then
-						local label = state_flag_labels[t.name]
-						if label then
-							emit("**" .. label .. "**")
-							emit()
-						end
+					if t.label then
+						emit("**" .. t.label .. "**")
+						emit()
 					end
 					for _, fitem in ipairs(t.flag) do
 						emit(".. doxygendefine:: " .. get_define_name(t, fitem))
