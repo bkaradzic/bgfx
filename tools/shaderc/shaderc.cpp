@@ -798,8 +798,10 @@ namespace bgfx
 		return NULL;
 	}
 
-	bx::StringView strFindUncommented(const bx::StringView &_str, const bx::StringView& _find, int32_t _num = INT32_MAX)
+	bx::StringView strFindUncommented(bool _keepcomments, const bx::StringView &_str, const bx::StringView& _find, int32_t _num = INT32_MAX)
 	{
+		if (!_keepcomments) return bx::strFind(_str, _find, _num);
+
 		int32_t len = bx::min(_find.getLength(), _num);
 
 		const char* ptr = strFindUncommented(
@@ -1740,7 +1742,7 @@ namespace bgfx
 		}
 		else if ('c' == _options.shaderType) // Compute
 		{
-			bx::StringView entry = strFindUncommented(input, "void main()");
+			bx::StringView entry = strFindUncommented(_options.keepComments, input, "void main()");
 			if (entry.isEmpty() )
 			{
 				bx::write(_messageWriter, &messageErr, "Shader entry point 'void main()' is not found.\n");
@@ -1783,10 +1785,10 @@ namespace bgfx
 
 					uint32_t arg = 0;
 
-					const bool hasLocalInvocationID    = !strFindUncommented(input, "gl_LocalInvocationID").isEmpty();
-					const bool hasLocalInvocationIndex = !strFindUncommented(input, "gl_LocalInvocationIndex").isEmpty();
-					const bool hasGlobalInvocationID   = !strFindUncommented(input, "gl_GlobalInvocationID").isEmpty();
-					const bool hasWorkGroupID          = !strFindUncommented(input, "gl_WorkGroupID").isEmpty();
+					const bool hasLocalInvocationID    = !strFindUncommented(_options.keepComments, input, "gl_LocalInvocationID").isEmpty();
+					const bool hasLocalInvocationIndex = !strFindUncommented(_options.keepComments, input, "gl_LocalInvocationIndex").isEmpty();
+					const bool hasGlobalInvocationID   = !strFindUncommented(_options.keepComments, input, "gl_GlobalInvocationID").isEmpty();
+					const bool hasWorkGroupID          = !strFindUncommented(_options.keepComments, input, "gl_WorkGroupID").isEmpty();
 
 					if (hasLocalInvocationID)
 					{
@@ -1925,7 +1927,7 @@ namespace bgfx
 		else // Vertex/Fragment
 		{
 			bx::StringView shader(input);
-			bx::StringView entry = strFindUncommented(shader, "void main()");
+			bx::StringView entry = strFindUncommented(_options.keepComments, shader, "void main()");
 			if (entry.isEmpty() )
 			{
 				bx::write(_messageWriter, &messageErr, "Shader entry point 'void main()' is not found.\n");
@@ -1949,14 +1951,14 @@ namespace bgfx
 					if (profile->lang == ShadingLang::ESSL
 					&&  profile->id >= 300)
 					{
-						const bool hasFragColor   = !strFindUncommented(input, "gl_FragColor").isEmpty();
+						const bool hasFragColor   = !strFindUncommented(_options.keepComments, input, "gl_FragColor").isEmpty();
 						bool hasFragData[8] = {};
 						uint32_t numFragData = 0;
 						for (uint32_t ii = 0; ii < BX_COUNTOF(hasFragData); ++ii)
 						{
 							char temp[32];
 							bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
-							hasFragData[ii] = !strFindUncommented(input, temp).isEmpty();
+							hasFragData[ii] = !strFindUncommented(_options.keepComments, input, temp).isEmpty();
 							numFragData += hasFragData[ii];
 						}
 						if (hasFragColor)
@@ -2046,17 +2048,17 @@ namespace bgfx
 
 					if ('f' == _options.shaderType)
 					{
-						bx::StringView insert = strFindUncommented(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
+						bx::StringView insert = strFindUncommented(_options.keepComments, bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
 						if (!insert.isEmpty() )
 						{
 							insert = strInsert(const_cast<char*>(insert.getPtr()+1), "\nvec4 bgfx_VoidFrag = vec4_splat(0.0);\n");
 						}
 
-						const bool hasFragColor   = !strFindUncommented(input, "gl_FragColor").isEmpty();
-						const bool hasFragCoord   = !strFindUncommented(input, "gl_FragCoord").isEmpty() || profile->id >= 400;
-						const bool hasFragDepth   = !strFindUncommented(input, "gl_FragDepth").isEmpty();
-						const bool hasFrontFacing = !strFindUncommented(input, "gl_FrontFacing").isEmpty();
-						const bool hasPrimitiveId = !strFindUncommented(input, "gl_PrimitiveID").isEmpty() && BGFX_CAPS_PRIMITIVE_ID;
+						const bool hasFragColor   = !strFindUncommented(_options.keepComments, input, "gl_FragColor").isEmpty();
+						const bool hasFragCoord   = !strFindUncommented(_options.keepComments, input, "gl_FragCoord").isEmpty() || profile->id >= 400;
+						const bool hasFragDepth   = !strFindUncommented(_options.keepComments, input, "gl_FragDepth").isEmpty();
+						const bool hasFrontFacing = !strFindUncommented(_options.keepComments, input, "gl_FrontFacing").isEmpty();
+						const bool hasPrimitiveId = !strFindUncommented(_options.keepComments, input, "gl_PrimitiveID").isEmpty() && BGFX_CAPS_PRIMITIVE_ID;
 
 						if (!hasPrimitiveId)
 						{
@@ -2069,7 +2071,7 @@ namespace bgfx
 						{
 							char temp[32];
 							bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
-							hasFragData[ii] = !strFindUncommented(input, temp).isEmpty();
+							hasFragData[ii] = !strFindUncommented(_options.keepComments, input, temp).isEmpty();
 							numFragData += hasFragData[ii];
 						}
 
@@ -2194,12 +2196,12 @@ namespace bgfx
 					}
 					else if ('v' == _options.shaderType)
 					{
-						const bool hasVertexId   = !strFindUncommented(input, "gl_VertexID").isEmpty();
-						const bool hasInstanceId = !strFindUncommented(input, "gl_InstanceID").isEmpty();
-						const bool hasViewportId = !strFindUncommented(input, "gl_ViewportIndex").isEmpty();
-						const bool hasLayerId    = !strFindUncommented(input, "gl_Layer").isEmpty();
+						const bool hasVertexId   = !strFindUncommented(_options.keepComments, input, "gl_VertexID").isEmpty();
+						const bool hasInstanceId = !strFindUncommented(_options.keepComments, input, "gl_InstanceID").isEmpty();
+						const bool hasViewportId = !strFindUncommented(_options.keepComments, input, "gl_ViewportIndex").isEmpty();
+						const bool hasLayerId    = !strFindUncommented(_options.keepComments, input, "gl_Layer").isEmpty();
 
-						bx::StringView brace = strFindUncommented(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
+						bx::StringView brace = strFindUncommented(_options.keepComments, bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
 						if (!brace.isEmpty() )
 						{
 							bx::StringView block = bx::strFindBlock(bx::StringView(brace.getPtr(), shader.getTerm() ), '{', '}');
