@@ -1,3 +1,5 @@
+.. AUTO GENERATED! DO NOT EDIT!
+
 API Reference
 =============
 

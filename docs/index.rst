@@ -19,4 +19,5 @@ Contents
     bgfx
     tools
     internals
+    idl
     license

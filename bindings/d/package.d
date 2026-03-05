@@ -2117,9 +2117,30 @@ mixin(joinFnBinds((){
 		{q{void}, q{reset}, q{uint width, uint height, uint flags=Reset.none, bgfx.impl.TextureFormat.Enum format=TextureFormat.count}, ext: `C++, "bgfx"`},
 		
 		/**
-		* Advance to next frame. When using multithreaded renderer, this call
-		* just swaps internal buffers, kicks render thread, and returns. In
-		* singlethreaded renderer this call does frame rendering.
+		* Advance to next frame. This is the main frame-advancement call on the
+		* API thread (the thread from which `bgfx::init` was called).
+		* 
+		* **Multithreaded renderer** (`BGFX_CONFIG_MULTITHREADED=1`, default):
+		* This call waits for the render thread to finish processing the previous
+		* frame, then swaps internal submit/render buffers, signals the render
+		* thread to begin processing the new frame via `bgfx::renderFrame`, and
+		* returns immediately. The render thread and API thread then run in
+		* parallel: the API thread builds the next frame while the render thread
+		* executes GPU commands for the current frame.
+		* 
+		* **Single-threaded renderer** (`BGFX_CONFIG_MULTITHREADED=0`, or when
+		* `bgfx::renderFrame` and `bgfx::init` are called from the same thread):
+		* This call swaps internal buffers and performs frame rendering inline
+		* (internally calls `bgfx::renderFrame`), then returns.
+		* 
+		* Remarks:
+		*   Must be called from the API thread (the thread that called
+		*   `bgfx::init`). In multithreaded mode, this call synchronizes with
+		*   `bgfx::renderFrame` running on the render thread via semaphores:
+		*   `bgfx::frame` waits for the render thread to finish, then posts a
+		*   signal that `bgfx::renderFrame` waits on to begin the next frame.
+		*   See also: `bgfx::renderFrame`.
+		* 
 		Params:
 			flags = Frame flags. See: `BGFX_FRAME_*` for more info.
 		  - `BGFX_FRAME_NONE` - No frame flag.
@@ -3265,16 +3286,43 @@ mixin(joinFnBinds((){
 		{q{void}, q{requestScreenShot}, q{FrameBufferHandle handle, const(char)* filePath}, ext: `C++, "bgfx"`},
 		
 		/**
-		* Render frame.
+		* Render frame. Executes the actual GPU rendering work for one frame.
 		* 
-		* Attention: `bgfx::renderFrame` is blocking call. It waits for
-		*   `bgfx::frame` to be called from API thread to process frame.
-		*   If timeout value is passed call will timeout and return even
-		*   if `bgfx::frame` is not called.
+		* In the default **multithreaded** configuration, `bgfx::renderFrame` runs
+		* on the **render thread** while `bgfx::frame` runs on the **API thread**.
+		* Their interaction is as follows:
 		* 
-		* Warning: This call should be only used on platforms that don't
-		*   allow creating separate rendering thread. If it is called before
-		*   to bgfx::init, render thread won't be created by bgfx::init call.
+		*   1. The render thread calls `bgfx::renderFrame`, which blocks waiting
+		*      for the API thread to signal that a new frame is ready.
+		*   2. On the API thread, `bgfx::frame` finishes building the frame,
+		*      swaps internal submit/render buffers, and signals the render thread.
+		*   3. `bgfx::renderFrame` wakes up, executes pre-render commands,
+		*      submits GPU draw calls, executes post-render commands, flips the
+		*      back buffer, then signals back to the API thread that rendering
+		*      is complete.
+		*   4. The API thread's next `bgfx::frame` call waits for this completion
+		*      signal before swapping buffers again.
+		* 
+		* This double-buffered semaphore handshake allows the API thread and
+		* render thread to run in parallel, overlapping CPU frame building with
+		* GPU rendering.
+		* 
+		* Attention: `bgfx::renderFrame` is a blocking call. It waits for
+		*   `bgfx::frame` to be called from the API thread to process the frame.
+		*   If a timeout value is passed, the call will return
+		*   `RenderFrame::Timeout` even if `bgfx::frame` has not been called.
+		*   A value of -1 (default) means wait indefinitely (up to
+		*   `BGFX_CONFIG_API_SEMAPHORE_TIMEOUT`).
+		* 
+		* Warning: This call should only be used on platforms that don't allow
+		*   creating a separate rendering thread. If it is called before
+		*   `bgfx::init`, the internal render thread won't be created by the
+		*   `bgfx::init` call, and the user is responsible for calling
+		*   `bgfx::renderFrame` on the render thread each frame. If both
+		*   `bgfx::renderFrame` and `bgfx::init` are called from the same
+		*   thread, bgfx operates in single-threaded mode and `bgfx::frame`
+		*   will internally invoke `bgfx::renderFrame` automatically.
+		*   See also: `bgfx::frame`.
 		* 
 		Params:
 			msecs = Timeout in milliseconds.

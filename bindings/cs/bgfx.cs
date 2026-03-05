@@ -1611,192 +1611,192 @@ public static partial class bgfx
 	public enum TextureFormat
 	{
 		/// <summary>
-		/// DXT1 R5G6B5A1
+		/// Block Compression 1. 5-bit R, 6-bit G, 5-bit B, 1-bit A. 4 BPP.
 		/// </summary>
 		BC1,
 	
 		/// <summary>
-		/// DXT3 R5G6B5A4
+		/// Block Compression 2. 5-bit R, 6-bit G, 5-bit B, 4-bit explicit A. 8 BPP.
 		/// </summary>
 		BC2,
 	
 		/// <summary>
-		/// DXT5 R5G6B5A8
+		/// Block Compression 3. 5-bit R, 6-bit G, 5-bit B, 8-bit interpolated A. 8 BPP.
 		/// </summary>
 		BC3,
 	
 		/// <summary>
-		/// LATC1/ATI1 R8
+		/// Block Compression 4. Single 8-bit red channel, unsigned normalized. 4 BPP.
 		/// </summary>
 		BC4,
 	
 		/// <summary>
-		/// LATC2/ATI2 RG8
+		/// Block Compression 5. Two 8-bit channels (RG), unsigned normalized. 8 BPP.
 		/// </summary>
 		BC5,
 	
 		/// <summary>
-		/// BC6H RGB16F
+		/// Block Compression 6H. Three 16-bit floating-point channels (RGB), HDR. 8 BPP.
 		/// </summary>
 		BC6H,
 	
 		/// <summary>
-		/// BC7 RGB 4-7 bits per color channel, 0-8 bits alpha
+		/// RGB 4-7 bits per color channel, 0-8 bits alpha. Block Compression 7. High-quality RGBA, 4-7 bits per color, 0-8 bits alpha. 8 BPP.
 		/// </summary>
 		BC7,
 	
 		/// <summary>
-		/// ETC1 RGB8
+		/// Ericsson Texture Compression 1. 8-bit per channel RGB. 4 BPP.
 		/// </summary>
 		ETC1,
 	
 		/// <summary>
-		/// ETC2 RGB8
+		/// Ericsson Texture Compression 2. 8-bit per channel RGB. 4 BPP.
 		/// </summary>
 		ETC2,
 	
 		/// <summary>
-		/// ETC2 RGBA8
+		/// Ericsson Texture Compression 2 with full alpha. 8-bit per channel RGBA. 8 BPP.
 		/// </summary>
 		ETC2A,
 	
 		/// <summary>
-		/// ETC2 RGB8A1
+		/// Ericsson Texture Compression 2 with 1-bit punch-through alpha. 4 BPP.
 		/// </summary>
 		ETC2A1,
 	
 		/// <summary>
-		/// EAC R11 UNORM
+		/// ETC2 Alpha Compression, single 11-bit red channel, unsigned normalized. 4 BPP.
 		/// </summary>
 		EACR11,
 	
 		/// <summary>
-		/// EAC R11 SNORM
+		/// ETC2 Alpha Compression, single 11-bit red channel, signed normalized. 4 BPP.
 		/// </summary>
 		EACR11S,
 	
 		/// <summary>
-		/// EAC RG11 UNORM
+		/// ETC2 Alpha Compression, two 11-bit channels (RG), unsigned normalized. 8 BPP.
 		/// </summary>
 		EACRG11,
 	
 		/// <summary>
-		/// EAC RG11 SNORM
+		/// ETC2 Alpha Compression, two 11-bit channels (RG), signed normalized. 8 BPP.
 		/// </summary>
 		EACRG11S,
 	
 		/// <summary>
-		/// PVRTC1 RGB 2BPP
+		/// PowerVR Texture Compression v1. 3-channel RGB. 2 BPP.
 		/// </summary>
 		PTC12,
 	
 		/// <summary>
-		/// PVRTC1 RGB 4BPP
+		/// PowerVR Texture Compression v1. 3-channel RGB. 4 BPP.
 		/// </summary>
 		PTC14,
 	
 		/// <summary>
-		/// PVRTC1 RGBA 2BPP
+		/// PowerVR Texture Compression v1. 4-channel RGBA. 2 BPP.
 		/// </summary>
 		PTC12A,
 	
 		/// <summary>
-		/// PVRTC1 RGBA 4BPP
+		/// PowerVR Texture Compression v1. 4-channel RGBA. 4 BPP.
 		/// </summary>
 		PTC14A,
 	
 		/// <summary>
-		/// PVRTC2 RGBA 2BPP
+		/// PowerVR Texture Compression v2. 4-channel RGBA. 2 BPP.
 		/// </summary>
 		PTC22,
 	
 		/// <summary>
-		/// PVRTC2 RGBA 4BPP
+		/// PowerVR Texture Compression v2. 4-channel RGBA. 4 BPP.
 		/// </summary>
 		PTC24,
 	
 		/// <summary>
-		/// ATC RGB 4BPP
+		/// AMD Texture Compression. 3-channel RGB. 4 BPP.
 		/// </summary>
 		ATC,
 	
 		/// <summary>
-		/// ATCE RGBA 8 BPP explicit alpha
+		/// AMD Texture Compression with explicit alpha. 4-channel RGBA. 8 BPP.
 		/// </summary>
 		ATCE,
 	
 		/// <summary>
-		/// ATCI RGBA 8 BPP interpolated alpha
+		/// AMD Texture Compression with interpolated alpha. 4-channel RGBA. 8 BPP.
 		/// </summary>
 		ATCI,
 	
 		/// <summary>
-		/// ASTC 4x4 8.0 BPP
+		/// Adaptive Scalable Texture Compression, 4x4 block, RGBA. 8.00 BPP.
 		/// </summary>
 		ASTC4x4,
 	
 		/// <summary>
-		/// ASTC 5x4 6.40 BPP
+		/// Adaptive Scalable Texture Compression, 5x4 block, RGBA. 6.40 BPP.
 		/// </summary>
 		ASTC5x4,
 	
 		/// <summary>
-		/// ASTC 5x5 5.12 BPP
+		/// Adaptive Scalable Texture Compression, 5x5 block, RGBA. 5.12 BPP.
 		/// </summary>
 		ASTC5x5,
 	
 		/// <summary>
-		/// ASTC 6x5 4.27 BPP
+		/// Adaptive Scalable Texture Compression, 6x5 block, RGBA. 4.27 BPP.
 		/// </summary>
 		ASTC6x5,
 	
 		/// <summary>
-		/// ASTC 6x6 3.56 BPP
+		/// Adaptive Scalable Texture Compression, 6x6 block, RGBA. 3.56 BPP.
 		/// </summary>
 		ASTC6x6,
 	
 		/// <summary>
-		/// ASTC 8x5 3.20 BPP
+		/// Adaptive Scalable Texture Compression, 8x5 block, RGBA. 3.20 BPP.
 		/// </summary>
 		ASTC8x5,
 	
 		/// <summary>
-		/// ASTC 8x6 2.67 BPP
+		/// Adaptive Scalable Texture Compression, 8x6 block, RGBA. 2.67 BPP.
 		/// </summary>
 		ASTC8x6,
 	
 		/// <summary>
-		/// ASTC 8x8 2.00 BPP
+		/// Adaptive Scalable Texture Compression, 8x8 block, RGBA. 2.00 BPP.
 		/// </summary>
 		ASTC8x8,
 	
 		/// <summary>
-		/// ASTC 10x5 2.56 BPP
+		/// Adaptive Scalable Texture Compression, 10x5 block, RGBA. 2.56 BPP.
 		/// </summary>
 		ASTC10x5,
 	
 		/// <summary>
-		/// ASTC 10x6 2.13 BPP
+		/// Adaptive Scalable Texture Compression, 10x6 block, RGBA. 2.13 BPP.
 		/// </summary>
 		ASTC10x6,
 	
 		/// <summary>
-		/// ASTC 10x8 1.60 BPP
+		/// Adaptive Scalable Texture Compression, 10x8 block, RGBA. 1.60 BPP.
 		/// </summary>
 		ASTC10x8,
 	
 		/// <summary>
-		/// ASTC 10x10 1.28 BPP
+		/// Adaptive Scalable Texture Compression, 10x10 block, RGBA. 1.28 BPP.
 		/// </summary>
 		ASTC10x10,
 	
 		/// <summary>
-		/// ASTC 12x10 1.07 BPP
+		/// Adaptive Scalable Texture Compression, 12x10 block, RGBA. 1.07 BPP.
 		/// </summary>
 		ASTC12x10,
 	
 		/// <summary>
-		/// ASTC 12x12 0.89 BPP
+		/// Adaptive Scalable Texture Compression, 12x12 block, RGBA. 0.89 BPP.
 		/// </summary>
 		ASTC12x12,
 	
@@ -1804,70 +1804,310 @@ public static partial class bgfx
 		/// Compressed formats above.
 		/// </summary>
 		Unknown,
+	
+		/// <summary>
+		/// 1-bit single-channel red. Monochrome, 1-bit per pixel. 1 BPP.
+		/// </summary>
 		R1,
+	
+		/// <summary>
+		/// 8-bit single-channel alpha, unsigned normalized. 8 BPP.
+		/// </summary>
 		A8,
+	
+		/// <summary>
+		/// 8-bit single-channel red, unsigned normalized. 8 BPP.
+		/// </summary>
 		R8,
+	
+		/// <summary>
+		/// 8-bit single-channel red, signed integer. 8 BPP.
+		/// </summary>
 		R8I,
+	
+		/// <summary>
+		/// 8-bit single-channel red, unsigned integer. 8 BPP.
+		/// </summary>
 		R8U,
+	
+		/// <summary>
+		/// 8-bit single-channel red, signed normalized. 8 BPP.
+		/// </summary>
 		R8S,
+	
+		/// <summary>
+		/// 16-bit single-channel red, unsigned normalized. 16 BPP.
+		/// </summary>
 		R16,
+	
+		/// <summary>
+		/// 16-bit single-channel red, signed integer. 16 BPP.
+		/// </summary>
 		R16I,
+	
+		/// <summary>
+		/// 16-bit single-channel red, unsigned integer. 16 BPP.
+		/// </summary>
 		R16U,
+	
+		/// <summary>
+		/// 16-bit single-channel red, half-precision floating point. 16 BPP.
+		/// </summary>
 		R16F,
+	
+		/// <summary>
+		/// 16-bit single-channel red, signed normalized. 16 BPP.
+		/// </summary>
 		R16S,
+	
+		/// <summary>
+		/// 32-bit single-channel red, signed integer. 32 BPP.
+		/// </summary>
 		R32I,
+	
+		/// <summary>
+		/// 32-bit single-channel red, unsigned integer. 32 BPP.
+		/// </summary>
 		R32U,
+	
+		/// <summary>
+		/// 32-bit single-channel red, full-precision floating point. 32 BPP.
+		/// </summary>
 		R32F,
+	
+		/// <summary>
+		/// Two 8-bit channels (red, green), unsigned normalized. 16 BPP.
+		/// </summary>
 		RG8,
+	
+		/// <summary>
+		/// Two 8-bit channels (red, green), signed integer. 16 BPP.
+		/// </summary>
 		RG8I,
+	
+		/// <summary>
+		/// Two 8-bit channels (red, green), unsigned integer. 16 BPP.
+		/// </summary>
 		RG8U,
+	
+		/// <summary>
+		/// Two 8-bit channels (red, green), signed normalized. 16 BPP.
+		/// </summary>
 		RG8S,
+	
+		/// <summary>
+		/// Two 16-bit channels (red, green), unsigned normalized. 32 BPP.
+		/// </summary>
 		RG16,
+	
+		/// <summary>
+		/// Two 16-bit channels (red, green), signed integer. 32 BPP.
+		/// </summary>
 		RG16I,
+	
+		/// <summary>
+		/// Two 16-bit channels (red, green), unsigned integer. 32 BPP.
+		/// </summary>
 		RG16U,
+	
+		/// <summary>
+		/// Two 16-bit channels (red, green), half-precision floating point. 32 BPP.
+		/// </summary>
 		RG16F,
+	
+		/// <summary>
+		/// Two 16-bit channels (red, green), signed normalized. 32 BPP.
+		/// </summary>
 		RG16S,
+	
+		/// <summary>
+		/// Two 32-bit channels (red, green), signed integer. 64 BPP.
+		/// </summary>
 		RG32I,
+	
+		/// <summary>
+		/// Two 32-bit channels (red, green), unsigned integer. 64 BPP.
+		/// </summary>
 		RG32U,
+	
+		/// <summary>
+		/// Two 32-bit channels (red, green), full-precision floating point. 64 BPP.
+		/// </summary>
 		RG32F,
+	
+		/// <summary>
+		/// Three 8-bit channels (red, green, blue), unsigned normalized. 24 BPP.
+		/// </summary>
 		RGB8,
+	
+		/// <summary>
+		/// Three 8-bit channels (red, green, blue), signed integer. 24 BPP.
+		/// </summary>
 		RGB8I,
+	
+		/// <summary>
+		/// Three 8-bit channels (red, green, blue), unsigned integer. 24 BPP.
+		/// </summary>
 		RGB8U,
+	
+		/// <summary>
+		/// Three 8-bit channels (red, green, blue), signed normalized. 24 BPP.
+		/// </summary>
 		RGB8S,
+	
+		/// <summary>
+		/// Shared-exponent RGB. 9 bits per RGB channel with a shared 5-bit exponent, floating point. 32 BPP.
+		/// </summary>
 		RGB9E5F,
+	
+		/// <summary>
+		/// Four 8-bit channels (blue, green, red, alpha), unsigned normalized. BGRA byte order. 32 BPP.
+		/// </summary>
 		BGRA8,
+	
+		/// <summary>
+		/// Four 8-bit channels (red, green, blue, alpha), unsigned normalized. 32 BPP.
+		/// </summary>
 		RGBA8,
+	
+		/// <summary>
+		/// Four 8-bit channels (red, green, blue, alpha), signed integer. 32 BPP.
+		/// </summary>
 		RGBA8I,
+	
+		/// <summary>
+		/// Four 8-bit channels (red, green, blue, alpha), unsigned integer. 32 BPP.
+		/// </summary>
 		RGBA8U,
+	
+		/// <summary>
+		/// Four 8-bit channels (red, green, blue, alpha), signed normalized. 32 BPP.
+		/// </summary>
 		RGBA8S,
+	
+		/// <summary>
+		/// Four 16-bit channels (red, green, blue, alpha), unsigned normalized. 64 BPP.
+		/// </summary>
 		RGBA16,
+	
+		/// <summary>
+		/// Four 16-bit channels (red, green, blue, alpha), signed integer. 64 BPP.
+		/// </summary>
 		RGBA16I,
+	
+		/// <summary>
+		/// Four 16-bit channels (red, green, blue, alpha), unsigned integer. 64 BPP.
+		/// </summary>
 		RGBA16U,
+	
+		/// <summary>
+		/// Four 16-bit channels (red, green, blue, alpha), half-precision floating point. 64 BPP.
+		/// </summary>
 		RGBA16F,
+	
+		/// <summary>
+		/// Four 16-bit channels (red, green, blue, alpha), signed normalized. 64 BPP.
+		/// </summary>
 		RGBA16S,
+	
+		/// <summary>
+		/// Four 32-bit channels (red, green, blue, alpha), signed integer. 128 BPP.
+		/// </summary>
 		RGBA32I,
+	
+		/// <summary>
+		/// Four 32-bit channels (red, green, blue, alpha), unsigned integer. 128 BPP.
+		/// </summary>
 		RGBA32U,
+	
+		/// <summary>
+		/// Four 32-bit channels (red, green, blue, alpha), full-precision floating point. 128 BPP.
+		/// </summary>
 		RGBA32F,
+	
+		/// <summary>
+		/// Packed 16-bit, 5-bit blue, 6-bit green, 5-bit red. BGR byte order, unsigned normalized. 16 BPP.
+		/// </summary>
 		B5G6R5,
+	
+		/// <summary>
+		/// Packed 16-bit, 5-bit red, 6-bit green, 5-bit blue. RGB byte order, unsigned normalized. 16 BPP.
+		/// </summary>
 		R5G6B5,
+	
+		/// <summary>
+		/// Packed 16-bit, 4-bit per channel (blue, green, red, alpha). BGRA byte order, unsigned normalized. 16 BPP.
+		/// </summary>
 		BGRA4,
+	
+		/// <summary>
+		/// Packed 16-bit, 4-bit per channel (red, green, blue, alpha), unsigned normalized. 16 BPP.
+		/// </summary>
 		RGBA4,
+	
+		/// <summary>
+		/// Packed 16-bit, 5-bit blue, 5-bit green, 5-bit red, 1-bit alpha. BGRA byte order, unsigned normalized. 16 BPP.
+		/// </summary>
 		BGR5A1,
+	
+		/// <summary>
+		/// Packed 16-bit, 5-bit red, 5-bit green, 5-bit blue, 1-bit alpha, unsigned normalized. 16 BPP.
+		/// </summary>
 		RGB5A1,
+	
+		/// <summary>
+		/// Packed 32-bit, 10-bit red, 10-bit green, 10-bit blue, 2-bit alpha, unsigned normalized. 32 BPP.
+		/// </summary>
 		RGB10A2,
+	
+		/// <summary>
+		/// Packed 32-bit, 11-bit red, 11-bit green, 10-bit blue, unsigned floating point. No alpha. 32 BPP.
+		/// </summary>
 		RG11B10F,
 	
 		/// <summary>
 		/// Depth formats below.
 		/// </summary>
 		UnknownDepth,
+	
+		/// <summary>
+		/// 16-bit depth, unsigned normalized. 16 BPP.
+		/// </summary>
 		D16,
+	
+		/// <summary>
+		/// 24-bit depth, unsigned normalized (stored as 32-bit with 8 bits unused). 32 BPP.
+		/// </summary>
 		D24,
+	
+		/// <summary>
+		/// 24-bit depth, unsigned normalized, with 8-bit stencil. 32 BPP.
+		/// </summary>
 		D24S8,
+	
+		/// <summary>
+		/// 32-bit depth, unsigned normalized. 32 BPP.
+		/// </summary>
 		D32,
+	
+		/// <summary>
+		/// 16-bit depth, floating point. 16 BPP.
+		/// </summary>
 		D16F,
+	
+		/// <summary>
+		/// 24-bit depth, floating point (stored as 32-bit). 32 BPP.
+		/// </summary>
 		D24F,
+	
+		/// <summary>
+		/// 32-bit depth, floating point. 32 BPP.
+		/// </summary>
 		D32F,
+	
+		/// <summary>
+		/// 8-bit stencil only, no depth. 8 BPP.
+		/// </summary>
 		D0S8,
 	
 		Count
@@ -2685,9 +2925,30 @@ public static partial class bgfx
 	public static extern unsafe void reset(uint _width, uint _height, uint _flags, TextureFormat _format);
 	
 	/// <summary>
-	/// Advance to next frame. When using multithreaded renderer, this call
-	/// just swaps internal buffers, kicks render thread, and returns. In
-	/// singlethreaded renderer this call does frame rendering.
+	/// Advance to next frame. This is the main frame-advancement call on the
+	/// API thread (the thread from which `bgfx::init` was called).
+	/// 
+	/// **Multithreaded renderer** (`BGFX_CONFIG_MULTITHREADED=1`, default):
+	/// This call waits for the render thread to finish processing the previous
+	/// frame, then swaps internal submit/render buffers, signals the render
+	/// thread to begin processing the new frame via `bgfx::renderFrame`, and
+	/// returns immediately. The render thread and API thread then run in
+	/// parallel: the API thread builds the next frame while the render thread
+	/// executes GPU commands for the current frame.
+	/// 
+	/// **Single-threaded renderer** (`BGFX_CONFIG_MULTITHREADED=0`, or when
+	/// `bgfx::renderFrame` and `bgfx::init` are called from the same thread):
+	/// This call swaps internal buffers and performs frame rendering inline
+	/// (internally calls `bgfx::renderFrame`), then returns.
+	/// 
+	/// @remarks
+	///   Must be called from the API thread (the thread that called
+	///   `bgfx::init`). In multithreaded mode, this call synchronizes with
+	///   `bgfx::renderFrame` running on the render thread via semaphores:
+	///   `bgfx::frame` waits for the render thread to finish, then posts a
+	///   signal that `bgfx::renderFrame` waits on to begin the next frame.
+	///   See also: `bgfx::renderFrame`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_flags">Frame flags. See: `BGFX_FRAME_*` for more info.   - `BGFX_FRAME_NONE` - No frame flag.   - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.   - `BGFX_FRAME_DISCARD` - Discard all draw calls.</param>
@@ -4407,16 +4668,43 @@ public static partial class bgfx
 	public static extern unsafe void request_screen_shot(FrameBufferHandle _handle, [MarshalAs(UnmanagedType.LPStr)] string _filePath);
 	
 	/// <summary>
-	/// Render frame.
+	/// Render frame. Executes the actual GPU rendering work for one frame.
 	/// 
-	/// @attention `bgfx::renderFrame` is blocking call. It waits for
-	///   `bgfx::frame` to be called from API thread to process frame.
-	///   If timeout value is passed call will timeout and return even
-	///   if `bgfx::frame` is not called.
+	/// In the default **multithreaded** configuration, `bgfx::renderFrame` runs
+	/// on the **render thread** while `bgfx::frame` runs on the **API thread**.
+	/// Their interaction is as follows:
 	/// 
-	/// @warning This call should be only used on platforms that don't
-	///   allow creating separate rendering thread. If it is called before
-	///   to bgfx::init, render thread won't be created by bgfx::init call.
+	///   1. The render thread calls `bgfx::renderFrame`, which blocks waiting
+	///      for the API thread to signal that a new frame is ready.
+	///   2. On the API thread, `bgfx::frame` finishes building the frame,
+	///      swaps internal submit/render buffers, and signals the render thread.
+	///   3. `bgfx::renderFrame` wakes up, executes pre-render commands,
+	///      submits GPU draw calls, executes post-render commands, flips the
+	///      back buffer, then signals back to the API thread that rendering
+	///      is complete.
+	///   4. The API thread's next `bgfx::frame` call waits for this completion
+	///      signal before swapping buffers again.
+	/// 
+	/// This double-buffered semaphore handshake allows the API thread and
+	/// render thread to run in parallel, overlapping CPU frame building with
+	/// GPU rendering.
+	/// 
+	/// @attention `bgfx::renderFrame` is a blocking call. It waits for
+	///   `bgfx::frame` to be called from the API thread to process the frame.
+	///   If a timeout value is passed, the call will return
+	///   `RenderFrame::Timeout` even if `bgfx::frame` has not been called.
+	///   A value of -1 (default) means wait indefinitely (up to
+	///   `BGFX_CONFIG_API_SEMAPHORE_TIMEOUT`).
+	/// 
+	/// @warning This call should only be used on platforms that don't allow
+	///   creating a separate rendering thread. If it is called before
+	///   `bgfx::init`, the internal render thread won't be created by the
+	///   `bgfx::init` call, and the user is responsible for calling
+	///   `bgfx::renderFrame` on the render thread each frame. If both
+	///   `bgfx::renderFrame` and `bgfx::init` are called from the same
+	///   thread, bgfx operates in single-threaded mode and `bgfx::frame`
+	///   will internally invoke `bgfx::renderFrame` automatically.
+	///   See also: `bgfx::frame`.
 	/// 
 	/// </summary>
 	///

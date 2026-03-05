@@ -107,6 +107,9 @@ function gen.gen()
 		r[#r+1] = s or ""
 	end
 
+	emit(".. AUTO GENERATED! DO NOT EDIT!")
+	emit()
+
 	-- Determine leaf sections and build parent paths for item lookup.
 	-- A leaf section is one not immediately followed by a deeper-level section.
 	-- The path is "parent_title/title" (used to disambiguate duplicate titles).
