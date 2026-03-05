@@ -1923,25 +1923,28 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					: m_frameBuffers[_fbh.idx].m_swapChain
 					;
 
-				if (NULL != swapChain->m_backBufferColorMsaa)
+				if (NULL != swapChain)
 				{
-					_renderPassDescriptor.colorAttachments[0].texture        = swapChain->m_backBufferColorMsaa;
-					_renderPassDescriptor.colorAttachments[0].resolveTexture = NULL != m_screenshotTarget
-						? m_screenshotTarget.m_obj
-						: swapChain->currentDrawableTexture()
-						;
-				}
-				else
-				{
-					_renderPassDescriptor.colorAttachments[0].texture = NULL != m_screenshotTarget
-						? m_screenshotTarget.m_obj
-						: swapChain->currentDrawableTexture()
-						;
-				}
+					if (NULL != swapChain->m_backBufferColorMsaa)
+					{
+						_renderPassDescriptor.colorAttachments[0].texture        = swapChain->m_backBufferColorMsaa;
+						_renderPassDescriptor.colorAttachments[0].resolveTexture = NULL != m_screenshotTarget
+							? m_screenshotTarget.m_obj
+							: swapChain->currentDrawableTexture()
+							;
+					}
+					else
+					{
+						_renderPassDescriptor.colorAttachments[0].texture = NULL != m_screenshotTarget
+							? m_screenshotTarget.m_obj
+							: swapChain->currentDrawableTexture()
+							;
+					}
 
-				{
-					_renderPassDescriptor.depthAttachment.texture   = swapChain->m_backBufferDepth;
-					_renderPassDescriptor.stencilAttachment.texture = swapChain->m_backBufferStencil;
+					{
+						_renderPassDescriptor.depthAttachment.texture   = swapChain->m_backBufferDepth;
+						_renderPassDescriptor.stencilAttachment.texture = swapChain->m_backBufferStencil;
+					}
 				}
 			}
 			else
@@ -2314,22 +2317,26 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						? s_renderMtl->m_mainFrameBuffer.m_swapChain
 						: s_renderMtl->m_frameBuffers[_fbh.idx].m_swapChain
 						;
-					pd.rasterSampleCount = NULL != swapChain->m_backBufferColorMsaa
-						? swapChain->m_backBufferColorMsaa.sampleCount()
-						: 1
-						;
-					pd.colorAttachments[0].pixelFormat = swapChain->currentDrawableTexture().pixelFormat;
+
+					if (NULL != swapChain)
 					{
-						pd.depthAttachmentPixelFormat = NULL != swapChain->m_backBufferDepth
-							? swapChain->m_backBufferDepth.m_obj.pixelFormat
+						pd.rasterSampleCount = NULL != swapChain->m_backBufferColorMsaa
+							? swapChain->m_backBufferColorMsaa.sampleCount()
+							: 1
+							;
+						pd.colorAttachments[0].pixelFormat = swapChain->currentDrawableTexture().pixelFormat;
+						{
+							pd.depthAttachmentPixelFormat = NULL != swapChain->m_backBufferDepth
+								? swapChain->m_backBufferDepth.m_obj.pixelFormat
+								: kMtlPixelFormatInvalid
+								;
+						}
+
+						pd.stencilAttachmentPixelFormat = NULL != swapChain->m_backBufferStencil
+							? swapChain->m_backBufferStencil.m_obj.pixelFormat
 							: kMtlPixelFormatInvalid
 							;
 					}
-
-					pd.stencilAttachmentPixelFormat = NULL != swapChain->m_backBufferStencil
-						? swapChain->m_backBufferStencil.m_obj.pixelFormat
-						: kMtlPixelFormatInvalid
-						;
 				}
 				else
 				{
@@ -2619,7 +2626,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				desc.lodMinClamp  = 0;
 				desc.lodMaxClamp  = FLT_MAX;
 				desc.normalizedCoordinates = TRUE;
-				desc.maxAnisotropy =  (0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) ) )
+				desc.maxAnisotropy = ( (0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) ) ) && NULL != m_mainFrameBuffer.m_swapChain )
 					? m_mainFrameBuffer.m_swapChain->m_maxAnisotropy
 					: 1
 					;
@@ -4479,7 +4486,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 										? MTLLoadActionClear
 										: MTLLoadActionLoad
 										;
-										depthAttachment.storeAction = NULL != m_mainFrameBuffer.m_swapChain->m_backBufferColorMsaa
+										depthAttachment.storeAction = NULL != m_mainFrameBuffer.m_swapChain && NULL != m_mainFrameBuffer.m_swapChain->m_backBufferColorMsaa
 										? MTLStoreActionDontCare
 										: MTLStoreActionStore
 										;
@@ -4494,7 +4501,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 										? MTLLoadActionClear
 										: MTLLoadActionLoad
 										;
-									stencilAttachment.storeAction = NULL != m_mainFrameBuffer.m_swapChain->m_backBufferColorMsaa
+									stencilAttachment.storeAction = NULL != m_mainFrameBuffer.m_swapChain && NULL != m_mainFrameBuffer.m_swapChain->m_backBufferColorMsaa
 										? MTLStoreActionDontCare
 										: MTLStoreActionStore
 										;
@@ -5441,7 +5448,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		if (m_screenshotTarget)
 		{
 			RenderPassDescriptor renderPassDescriptor = newRenderPassDescriptor();
-			renderPassDescriptor.colorAttachments[0].texture = m_mainFrameBuffer.m_swapChain->currentDrawableTexture();
+			renderPassDescriptor.colorAttachments[0].texture = NULL != m_mainFrameBuffer.m_swapChain ? m_mainFrameBuffer.m_swapChain->currentDrawableTexture() : NULL;
 			renderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
 
 			rce = m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);
