@@ -280,6 +280,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="internals.html">Internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="idl.html">IDL — Interface Definition Language</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
 
@@ -741,8 +742,14 @@
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx5frameE7uint8_t">
 <span id="_CPPv3N4bgfx5frameE7uint8_t"></span><span id="_CPPv2N4bgfx5frameE7uint8_t"></span><span id="bgfx::frame__uint8_t"></span><span class="target" id="namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">frame</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_flags</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">BGFX_FRAME_NONE</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx5frameE7uint8_t" title="Link to this definition"></a><br /></dt>
-<dd><p>Advance to next frame. When using multithreaded renderer, this call just swaps internal buffers, kicks render thread, and returns. In singlethreaded renderer this call does frame rendering. </p>
-<p><dl class="simple">
+<dd><p>Advance to next frame. This is the main frame-advancement call on the API thread (the thread from which <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a3bc6e6465d91d6222b99b36909cabfdd"><span class="std std-ref"><span class="pre">bgfx::init</span></span></a></code> was called). </p>
+<p><strong>Multithreaded renderer</strong> (<code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MULTITHREADED=1</span></code>, default): This call waits for the render thread to finish processing the previous frame, then swaps internal submit/render buffers, signals the render thread to begin processing the new frame via <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span class="std std-ref"><span class="pre">bgfx::renderFrame</span></span></a></code>, and returns immediately. The render thread and API thread then run in parallel: the API thread builds the next frame while the render thread executes GPU commands for the current frame.</p>
+<p><strong>Single-threaded renderer</strong> (<code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MULTITHREADED=0</span></code>, or when <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span class="std std-ref"><span class="pre">bgfx::renderFrame</span></span></a></code> and <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a3bc6e6465d91d6222b99b36909cabfdd"><span class="std std-ref"><span class="pre">bgfx::init</span></span></a></code> are called from the same thread): This call swaps internal buffers and performs frame rendering inline (internally calls <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span class="std std-ref"><span class="pre">bgfx::renderFrame</span></span></a></code>), then returns.</p>
+<p><div class="remark admonition">
+<p class="admonition-title">Remark</p>
+<p>Must be called from the API thread (the thread that called <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a3bc6e6465d91d6222b99b36909cabfdd"><span class="std std-ref"><span class="pre">bgfx::init</span></span></a></code>). In multithreaded mode, this call synchronizes with <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span class="std std-ref"><span class="pre">bgfx::renderFrame</span></span></a></code> running on the render thread via semaphores: <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> waits for the render thread to finish, then posts a signal that <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span class="std std-ref"><span class="pre">bgfx::renderFrame</span></span></a></code> waits on to begin the next frame. See also: <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span class="std std-ref"><span class="pre">bgfx::renderFrame</span></span></a></code>.</p>
+</div>
+<dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_frame</span></code>. </p>
 </dd>
 </dl>
@@ -1744,9 +1751,18 @@ It is only necessary to use these APIs in conjunction with creating windows.</p>
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx11renderFrameE7int32_t">
 <span id="_CPPv3N4bgfx11renderFrameE7int32_t"></span><span id="_CPPv2N4bgfx11renderFrameE7int32_t"></span><span id="bgfx::renderFrame__int32_t"></span><span class="target" id="namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"></span><a class="reference internal" href="#_CPPv4N4bgfx11RenderFrameE" title="bgfx::RenderFrame"><span class="n"><span class="pre">RenderFrame</span></span></a><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">Enum</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">renderFrame</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_msecs</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="o"><span class="pre">-</span></span><span class="m"><span class="pre">1</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx11renderFrameE7int32_t" title="Link to this definition"></a><br /></dt>
-<dd><p>Render frame. </p>
+<dd><p>Render frame. Executes the actual GPU rendering work for one frame. </p>
+<p>In the default <strong>multithreaded</strong> configuration, <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span class="std std-ref"><span class="pre">bgfx::renderFrame</span></span></a></code> runs on the <strong>render thread</strong> while <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> runs on the <strong>API thread</strong>. Their interaction is as follows:</p>
+<p><ol class="loweralpha simple">
+<li><p>The render thread calls <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span class="std std-ref"><span class="pre">bgfx::renderFrame</span></span></a></code>, which blocks waiting for the API thread to signal that a new frame is ready.</p></li>
+<li><p>On the API thread, <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> finishes building the frame, swaps internal submit/render buffers, and signals the render thread.</p></li>
+<li><p><code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span class="std std-ref"><span class="pre">bgfx::renderFrame</span></span></a></code> wakes up, executes pre-render commands, submits GPU draw calls, executes post-render commands, flips the back buffer, then signals back to the API thread that rendering is complete.</p></li>
+<li><p>The API thread’s next <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> call waits for this completion signal before swapping buffers again.</p></li>
+</ol>
+</p>
+<p>This double-buffered semaphore handshake allows the API thread and render thread to run in parallel, overlapping CPU frame building with GPU rendering.</p>
 <p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p><code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span class="std std-ref"><span class="pre">bgfx::renderFrame</span></span></a></code> is blocking call. It waits for <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> to be called from API thread to process frame. If timeout value is passed call will timeout and return even if <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> is not called.</p>
+<dt><strong>Attention</strong></dt><dd><p><code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span class="std std-ref"><span class="pre">bgfx::renderFrame</span></span></a></code> is a blocking call. It waits for <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> to be called from the API thread to process the frame. If a timeout value is passed, the call will return <code class="docutils literal notranslate"><span class="pre">RenderFrame::Timeout</span></code> even if <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> has not been called. A value of -1 (default) means wait indefinitely (up to <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_API_SEMAPHORE_TIMEOUT</span></code>).</p>
 </dd>
 <dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_render_frame</span></code>. </p>
 </dd>
@@ -1754,7 +1770,7 @@ It is only necessary to use these APIs in conjunction with creating windows.</p>
 </p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>This call should be only used on platforms that don’t allow creating separate rendering thread. If it is called before to <a class="reference internal" href="#namespacebgfx_1a3bc6e6465d91d6222b99b36909cabfdd"><span class="std std-ref">bgfx::init</span></a>, render thread won’t be created by <a class="reference internal" href="#namespacebgfx_1a3bc6e6465d91d6222b99b36909cabfdd"><span class="std std-ref">bgfx::init</span></a> call.</p>
+<p>This call should only be used on platforms that don’t allow creating a separate rendering thread. If it is called before <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a3bc6e6465d91d6222b99b36909cabfdd"><span class="std std-ref"><span class="pre">bgfx::init</span></span></a></code>, the internal render thread won’t be created by the <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a3bc6e6465d91d6222b99b36909cabfdd"><span class="std std-ref"><span class="pre">bgfx::init</span></span></a></code> call, and the user is responsible for calling <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span class="std std-ref"><span class="pre">bgfx::renderFrame</span></span></a></code> on the render thread each frame. If both <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span class="std std-ref"><span class="pre">bgfx::renderFrame</span></span></a></code> and <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a3bc6e6465d91d6222b99b36909cabfdd"><span class="std std-ref"><span class="pre">bgfx::init</span></span></a></code> are called from the same thread, bgfx operates in single-threaded mode and <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> will internally invoke <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span class="std std-ref"><span class="pre">bgfx::renderFrame</span></span></a></code> automatically. See also: <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code>.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -6526,229 +6542,229 @@ Otherwise, use <code class="docutils literal notranslate"><span class="pre">bgfx
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3BC1E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3BC1E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3BC1E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aee125d92e0e80015bd586b5621cc3d83"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">BC1</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3BC1E" title="Link to this definition"></a><br /></dt>
-<dd><p>DXT1 R5G6B5A1. </p>
+<dd><p>Block Compression 1. 5-bit R, 6-bit G, 5-bit B, 1-bit A. 4 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3BC2E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3BC2E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3BC2E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a4d77afc75cacfa609303940e1c9cddc2"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">BC2</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3BC2E" title="Link to this definition"></a><br /></dt>
-<dd><p>DXT3 R5G6B5A4. </p>
+<dd><p>Block Compression 2. 5-bit R, 6-bit G, 5-bit B, 4-bit explicit A. 8 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3BC3E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3BC3E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3BC3E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a113e64fa135fca0459a7c2ea40425c4f"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">BC3</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3BC3E" title="Link to this definition"></a><br /></dt>
-<dd><p>DXT5 R5G6B5A8. </p>
+<dd><p>Block Compression 3. 5-bit R, 6-bit G, 5-bit B, 8-bit interpolated A. 8 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3BC4E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3BC4E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3BC4E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a1937f7640ffa842f2c6678286c313e7a"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">BC4</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3BC4E" title="Link to this definition"></a><br /></dt>
-<dd><p>LATC1/ATI1 R8. </p>
+<dd><p>Block Compression 4. Single 8-bit red channel, unsigned normalized. 4 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3BC5E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3BC5E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3BC5E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a9696af3d8af5c8b8dcdb2bba18df54c8"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">BC5</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3BC5E" title="Link to this definition"></a><br /></dt>
-<dd><p>LATC2/ATI2 RG8. </p>
+<dd><p>Block Compression 5. Two 8-bit channels (RG), unsigned normalized. 8 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4BC6HE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4BC6HE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4BC6HE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a3e149dd90ceda8997bcf54a97debd703"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">BC6H</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4BC6HE" title="Link to this definition"></a><br /></dt>
-<dd><p>BC6H RGB16F. </p>
+<dd><p>Block Compression 6H. Three 16-bit floating-point channels (RGB), HDR. 8 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3BC7E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3BC7E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3BC7E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a880c61bb22f0950eec832c77e7667d96"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">BC7</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3BC7E" title="Link to this definition"></a><br /></dt>
-<dd><p>BC7 RGB 4-7 bits per color channel, 0-8 bits alpha. </p>
+<dd><p>RGB 4-7 bits per color channel, 0-8 bits alpha. Block Compression 7. High-quality RGBA, 4-7 bits per color, 0-8 bits alpha. 8 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4ETC1E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4ETC1E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4ETC1E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ac789a4e13dc4efbb9239fa89f54b8205"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ETC1</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4ETC1E" title="Link to this definition"></a><br /></dt>
-<dd><p>ETC1 RGB8. </p>
+<dd><p>Ericsson Texture Compression 1. 8-bit per channel RGB. 4 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4ETC2E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4ETC2E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4ETC2E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aba5a8c2a63daebe7f7b6e6530e384662"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ETC2</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4ETC2E" title="Link to this definition"></a><br /></dt>
-<dd><p>ETC2 RGB8. </p>
+<dd><p>Ericsson Texture Compression 2. 8-bit per channel RGB. 4 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5ETC2AE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5ETC2AE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5ETC2AE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aeae9b14b230f8576efb154b961836ca5"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ETC2A</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5ETC2AE" title="Link to this definition"></a><br /></dt>
-<dd><p>ETC2 RGBA8. </p>
+<dd><p>Ericsson Texture Compression 2 with full alpha. 8-bit per channel RGBA. 8 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum6ETC2A1E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum6ETC2A1E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6ETC2A1E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a971bf46d4c28a7b708a2c6df44593720"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ETC2A1</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6ETC2A1E" title="Link to this definition"></a><br /></dt>
-<dd><p>ETC2 RGB8A1. </p>
+<dd><p>Ericsson Texture Compression 2 with 1-bit punch-through alpha. 4 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum6EACR11E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum6EACR11E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6EACR11E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a8c795a2056f9d540d7a7eaf6ec7518e3"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">EACR11</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6EACR11E" title="Link to this definition"></a><br /></dt>
-<dd><p>EAC R11 UNORM. </p>
+<dd><p>ETC2 Alpha Compression, single 11-bit red channel, unsigned normalized. 4 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7EACR11SE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7EACR11SE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7EACR11SE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a392e32d57888acc4d6e821af9d638636"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">EACR11S</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7EACR11SE" title="Link to this definition"></a><br /></dt>
-<dd><p>EAC R11 SNORM. </p>
+<dd><p>ETC2 Alpha Compression, single 11-bit red channel, signed normalized. 4 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7EACRG11E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7EACRG11E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7EACRG11E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a16a7fbdce6125f429802dac0b28143ba"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">EACRG11</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7EACRG11E" title="Link to this definition"></a><br /></dt>
-<dd><p>EAC RG11 UNORM. </p>
+<dd><p>ETC2 Alpha Compression, two 11-bit channels (RG), unsigned normalized. 8 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum8EACRG11SE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum8EACRG11SE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum8EACRG11SE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aaaf76afc94dc45b9560593119cc1070d"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">EACRG11S</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum8EACRG11SE" title="Link to this definition"></a><br /></dt>
-<dd><p>EAC RG11 SNORM. </p>
+<dd><p>ETC2 Alpha Compression, two 11-bit channels (RG), signed normalized. 8 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5PTC12E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5PTC12E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5PTC12E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6abf2b55f4dfd7effbfa64f27d9546512c"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">PTC12</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5PTC12E" title="Link to this definition"></a><br /></dt>
-<dd><p>PVRTC1 RGB 2BPP. </p>
+<dd><p>PowerVR Texture Compression v1. 3-channel RGB. 2 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5PTC14E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5PTC14E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5PTC14E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a1b68442c2e582657d2e9c5b2af7480c5"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">PTC14</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5PTC14E" title="Link to this definition"></a><br /></dt>
-<dd><p>PVRTC1 RGB 4BPP. </p>
+<dd><p>PowerVR Texture Compression v1. 3-channel RGB. 4 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum6PTC12AE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum6PTC12AE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6PTC12AE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a78128a646efda9393122f3a0cbb47ba7"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">PTC12A</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6PTC12AE" title="Link to this definition"></a><br /></dt>
-<dd><p>PVRTC1 RGBA 2BPP. </p>
+<dd><p>PowerVR Texture Compression v1. 4-channel RGBA. 2 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum6PTC14AE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum6PTC14AE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6PTC14AE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a106b764dde7bcb1eb0c4ea6034ea3b24"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">PTC14A</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6PTC14AE" title="Link to this definition"></a><br /></dt>
-<dd><p>PVRTC1 RGBA 4BPP. </p>
+<dd><p>PowerVR Texture Compression v1. 4-channel RGBA. 4 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5PTC22E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5PTC22E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5PTC22E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a10791d050f8fc01881fb9ce4dfcdaa6d"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">PTC22</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5PTC22E" title="Link to this definition"></a><br /></dt>
-<dd><p>PVRTC2 RGBA 2BPP. </p>
+<dd><p>PowerVR Texture Compression v2. 4-channel RGBA. 2 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5PTC24E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5PTC24E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5PTC24E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ab4e6bd17ebbcaa1085dd1285aa2c6e23"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">PTC24</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5PTC24E" title="Link to this definition"></a><br /></dt>
-<dd><p>PVRTC2 RGBA 4BPP. </p>
+<dd><p>PowerVR Texture Compression v2. 4-channel RGBA. 4 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3ATCE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3ATCE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3ATCE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6abfbaa50ea905a9af71c60cbfd80e7c66"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ATC</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3ATCE" title="Link to this definition"></a><br /></dt>
-<dd><p>ATC RGB 4BPP. </p>
+<dd><p>AMD Texture Compression. 3-channel RGB. 4 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4ATCEE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4ATCEE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4ATCEE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a27c3773c6bdbf033c9f14623e569a187"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ATCE</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4ATCEE" title="Link to this definition"></a><br /></dt>
-<dd><p>ATCE RGBA 8 BPP explicit alpha. </p>
+<dd><p>AMD Texture Compression with explicit alpha. 4-channel RGBA. 8 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4ATCIE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4ATCIE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4ATCIE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a1ba5cdc0c5cc60853fa37209452d6ec3"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ATCI</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4ATCIE" title="Link to this definition"></a><br /></dt>
-<dd><p>ATCI RGBA 8 BPP interpolated alpha. </p>
+<dd><p>AMD Texture Compression with interpolated alpha. 4-channel RGBA. 8 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7ASTC4x4E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7ASTC4x4E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7ASTC4x4E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ae992925acb9b25166b93cc445c62daea"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ASTC4x4</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7ASTC4x4E" title="Link to this definition"></a><br /></dt>
-<dd><p>ASTC 4x4 8.0 BPP. </p>
+<dd><p>Adaptive Scalable Texture Compression, 4x4 block, RGBA. 8.00 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7ASTC5x4E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7ASTC5x4E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7ASTC5x4E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a6b60a45e97d3e31f00694d93828f08eb"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ASTC5x4</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7ASTC5x4E" title="Link to this definition"></a><br /></dt>
-<dd><p>ASTC 5x4 6.40 BPP. </p>
+<dd><p>Adaptive Scalable Texture Compression, 5x4 block, RGBA. 6.40 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7ASTC5x5E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7ASTC5x5E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7ASTC5x5E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a6bdec333c7fc2259310ba8252665f22a"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ASTC5x5</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7ASTC5x5E" title="Link to this definition"></a><br /></dt>
-<dd><p>ASTC 5x5 5.12 BPP. </p>
+<dd><p>Adaptive Scalable Texture Compression, 5x5 block, RGBA. 5.12 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7ASTC6x5E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7ASTC6x5E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7ASTC6x5E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a7225af3087a22971bdcec3a1ae97957e"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ASTC6x5</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7ASTC6x5E" title="Link to this definition"></a><br /></dt>
-<dd><p>ASTC 6x5 4.27 BPP. </p>
+<dd><p>Adaptive Scalable Texture Compression, 6x5 block, RGBA. 4.27 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7ASTC6x6E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7ASTC6x6E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7ASTC6x6E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ade44f5a267e9e98a8e1b5506061237b4"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ASTC6x6</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7ASTC6x6E" title="Link to this definition"></a><br /></dt>
-<dd><p>ASTC 6x6 3.56 BPP. </p>
+<dd><p>Adaptive Scalable Texture Compression, 6x6 block, RGBA. 3.56 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7ASTC8x5E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7ASTC8x5E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7ASTC8x5E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ab3d82634d3764b46e0b0b2c0101f6792"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ASTC8x5</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7ASTC8x5E" title="Link to this definition"></a><br /></dt>
-<dd><p>ASTC 8x5 3.20 BPP. </p>
+<dd><p>Adaptive Scalable Texture Compression, 8x5 block, RGBA. 3.20 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7ASTC8x6E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7ASTC8x6E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7ASTC8x6E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6acba83554ed1e182a631b6bb68204cc96"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ASTC8x6</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7ASTC8x6E" title="Link to this definition"></a><br /></dt>
-<dd><p>ASTC 8x6 2.67 BPP. </p>
+<dd><p>Adaptive Scalable Texture Compression, 8x6 block, RGBA. 2.67 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7ASTC8x8E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7ASTC8x8E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7ASTC8x8E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a80346507cd0e9c2aaf40a7b94ca64521"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ASTC8x8</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7ASTC8x8E" title="Link to this definition"></a><br /></dt>
-<dd><p>ASTC 8x8 2.00 BPP. </p>
+<dd><p>Adaptive Scalable Texture Compression, 8x8 block, RGBA. 2.00 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum8ASTC10x5E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum8ASTC10x5E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum8ASTC10x5E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a0767d4af475f555f330fe814e7937838"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ASTC10x5</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum8ASTC10x5E" title="Link to this definition"></a><br /></dt>
-<dd><p>ASTC 10x5 2.56 BPP. </p>
+<dd><p>Adaptive Scalable Texture Compression, 10x5 block, RGBA. 2.56 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum8ASTC10x6E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum8ASTC10x6E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum8ASTC10x6E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a3493533d40fdbbfad9b3eaf10d3bab7c"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ASTC10x6</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum8ASTC10x6E" title="Link to this definition"></a><br /></dt>
-<dd><p>ASTC 10x6 2.13 BPP. </p>
+<dd><p>Adaptive Scalable Texture Compression, 10x6 block, RGBA. 2.13 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum8ASTC10x8E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum8ASTC10x8E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum8ASTC10x8E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a68369858c21d6c9f50716eb1766f776b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ASTC10x8</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum8ASTC10x8E" title="Link to this definition"></a><br /></dt>
-<dd><p>ASTC 10x8 1.60 BPP. </p>
+<dd><p>Adaptive Scalable Texture Compression, 10x8 block, RGBA. 1.60 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum9ASTC10x10E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum9ASTC10x10E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum9ASTC10x10E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a9738732b626beb9597104b49914847ef"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ASTC10x10</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum9ASTC10x10E" title="Link to this definition"></a><br /></dt>
-<dd><p>ASTC 10x10 1.28 BPP. </p>
+<dd><p>Adaptive Scalable Texture Compression, 10x10 block, RGBA. 1.28 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum9ASTC12x10E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum9ASTC12x10E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum9ASTC12x10E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a04c2815b53ee2c5a27757a98c1049103"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ASTC12x10</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum9ASTC12x10E" title="Link to this definition"></a><br /></dt>
-<dd><p>ASTC 12x10 1.07 BPP. </p>
+<dd><p>Adaptive Scalable Texture Compression, 12x10 block, RGBA. 1.07 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum9ASTC12x12E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum9ASTC12x12E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum9ASTC12x12E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a1292ae8ced5ee2b58e47de4b06ad5a6e"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ASTC12x12</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum9ASTC12x12E" title="Link to this definition"></a><br /></dt>
-<dd><p>ASTC 12x12 0.89 BPP. </p>
+<dd><p>Adaptive Scalable Texture Compression, 12x12 block, RGBA. 0.89 BPP. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
@@ -6760,262 +6776,314 @@ Otherwise, use <code class="docutils literal notranslate"><span class="pre">bgfx
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum2R1E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum2R1E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum2R1E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ab01e6044eaff1fe4451232325ad4f9a6"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R1</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum2R1E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>1-bit single-channel red. Monochrome, 1-bit per pixel. 1 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum2A8E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum2A8E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum2A8E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a9b43602e80b02cddbaa066bddc137bc6"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">A8</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum2A8E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>8-bit single-channel alpha, unsigned normalized. 8 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum2R8E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum2R8E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum2R8E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a366a4683758cef76e007f4f33801f7b2"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R8</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum2R8E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>8-bit single-channel red, unsigned normalized. 8 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3R8IE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3R8IE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3R8IE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ae777e9061538de54841dfd96cc4070c2"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R8I</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3R8IE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>8-bit single-channel red, signed integer. 8 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3R8UE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3R8UE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3R8UE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aecd6d1d295020dc61bad08ab39b609df"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R8U</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3R8UE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>8-bit single-channel red, unsigned integer. 8 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3R8SE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3R8SE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3R8SE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a86b354d3bf6d634605f6d93fad966fd5"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R8S</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3R8SE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>8-bit single-channel red, signed normalized. 8 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3R16E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3R16E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3R16E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a9f2a1e70d71e48558cfae60650b5da1c"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R16</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3R16E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>16-bit single-channel red, unsigned normalized. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4R16IE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4R16IE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4R16IE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a4ea4bea5f457d7aaa855d253ae967538"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R16I</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4R16IE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>16-bit single-channel red, signed integer. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4R16UE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4R16UE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4R16UE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a6509456e2fb58fc523abd92bfa4f67ce"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R16U</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4R16UE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>16-bit single-channel red, unsigned integer. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4R16FE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4R16FE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4R16FE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a0808adf629c43dbaf932e62b48696b41"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R16F</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4R16FE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>16-bit single-channel red, half-precision floating point. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4R16SE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4R16SE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4R16SE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aedfd375d04e3cd2a35992d35657def41"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R16S</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4R16SE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>16-bit single-channel red, signed normalized. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4R32IE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4R32IE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4R32IE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a0cfc961a23995b91f1dfba97b4778fc9"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R32I</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4R32IE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>32-bit single-channel red, signed integer. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4R32UE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4R32UE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4R32UE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a56674c00d24eff7b1b96005d66842fed"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R32U</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4R32UE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>32-bit single-channel red, unsigned integer. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4R32FE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4R32FE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4R32FE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a6a20e5c95f27448745e6252fbaa63752"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R32F</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4R32FE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>32-bit single-channel red, full-precision floating point. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3RG8E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3RG8E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3RG8E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a044f11d086916dd993181a298b713fe5"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RG8</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3RG8E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Two 8-bit channels (red, green), unsigned normalized. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4RG8IE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4RG8IE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4RG8IE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ac022360e199eafdc5965bb16d8e1596b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RG8I</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4RG8IE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Two 8-bit channels (red, green), signed integer. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4RG8UE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4RG8UE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4RG8UE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ae6e1a34243df2512cde0d768fe27831d"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RG8U</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4RG8UE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Two 8-bit channels (red, green), unsigned integer. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4RG8SE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4RG8SE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4RG8SE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a30ffb32ec2a2f303f3f3c0618d3097b7"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RG8S</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4RG8SE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Two 8-bit channels (red, green), signed normalized. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4RG16E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4RG16E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4RG16E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6abd5c94677dbbcdb12c9137741f71f5a0"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RG16</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4RG16E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Two 16-bit channels (red, green), unsigned normalized. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5RG16IE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5RG16IE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5RG16IE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a4d7378aee4f0c28a3e9dd49733cbc7d4"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RG16I</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5RG16IE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Two 16-bit channels (red, green), signed integer. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5RG16UE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5RG16UE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5RG16UE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6add597603c407eea23cd3a076e2799a23"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RG16U</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5RG16UE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Two 16-bit channels (red, green), unsigned integer. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5RG16FE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5RG16FE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5RG16FE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aa01f725e68722ccd7e8a842f697ef7b4"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RG16F</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5RG16FE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Two 16-bit channels (red, green), half-precision floating point. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5RG16SE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5RG16SE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5RG16SE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ada99abb273ad49596e5645a870913203"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RG16S</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5RG16SE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Two 16-bit channels (red, green), signed normalized. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5RG32IE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5RG32IE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5RG32IE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a1e9f0cde8652d9582ca00d3cf0522481"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RG32I</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5RG32IE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Two 32-bit channels (red, green), signed integer. 64 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5RG32UE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5RG32UE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5RG32UE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a10202973fabca8f138748e4829a5a454"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RG32U</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5RG32UE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Two 32-bit channels (red, green), unsigned integer. 64 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5RG32FE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5RG32FE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5RG32FE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a0570aa288a4cf06073ecfc272ff66bfa"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RG32F</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5RG32FE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Two 32-bit channels (red, green), full-precision floating point. 64 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4RGB8E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4RGB8E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4RGB8E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a343bee8db4bf2bd967aca4422804da99"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGB8</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4RGB8E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Three 8-bit channels (red, green, blue), unsigned normalized. 24 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5RGB8IE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5RGB8IE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5RGB8IE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a86364d64bd522cd53ed3f388316f16c4"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGB8I</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5RGB8IE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Three 8-bit channels (red, green, blue), signed integer. 24 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5RGB8UE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5RGB8UE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5RGB8UE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a67a188a9c637a007b21a6b494497fae8"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGB8U</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5RGB8UE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Three 8-bit channels (red, green, blue), unsigned integer. 24 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5RGB8SE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5RGB8SE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5RGB8SE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a07efdf9e67260607b65e4c818cf5dbc2"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGB8S</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5RGB8SE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Three 8-bit channels (red, green, blue), signed normalized. 24 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7RGB9E5FE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7RGB9E5FE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7RGB9E5FE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ae16f6d03d3fb347cf375b35bca2a0211"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGB9E5F</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7RGB9E5FE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Shared-exponent RGB. 9 bits per RGB channel with a shared 5-bit exponent, floating point. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5BGRA8E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5BGRA8E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5BGRA8E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a8f9737f30497f922acb85eabfab5bd8b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">BGRA8</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5BGRA8E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Four 8-bit channels (blue, green, red, alpha), unsigned normalized. BGRA byte order. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5RGBA8E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5RGBA8E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5RGBA8E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a76f725de734f6f57124bce94ecf6b857"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGBA8</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5RGBA8E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Four 8-bit channels (red, green, blue, alpha), unsigned normalized. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum6RGBA8IE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum6RGBA8IE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6RGBA8IE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a9d2eaf79b30d325f6c02d91c6c83fa9d"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGBA8I</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6RGBA8IE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Four 8-bit channels (red, green, blue, alpha), signed integer. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum6RGBA8UE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum6RGBA8UE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6RGBA8UE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a58a5c9b3c280930e63443e58b8b54514"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGBA8U</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6RGBA8UE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Four 8-bit channels (red, green, blue, alpha), unsigned integer. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum6RGBA8SE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum6RGBA8SE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6RGBA8SE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a1f654f103d5ed7c2e3254402c9b25b3e"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGBA8S</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6RGBA8SE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Four 8-bit channels (red, green, blue, alpha), signed normalized. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum6RGBA16E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum6RGBA16E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6RGBA16E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ac84e3e8918ad3ae651fa77cf7c3d1a1f"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGBA16</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6RGBA16E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Four 16-bit channels (red, green, blue, alpha), unsigned normalized. 64 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7RGBA16IE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7RGBA16IE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7RGBA16IE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ac1ee33c840c8ca2bee1dcd21ab8fcf91"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGBA16I</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7RGBA16IE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Four 16-bit channels (red, green, blue, alpha), signed integer. 64 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7RGBA16UE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7RGBA16UE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7RGBA16UE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aa34499e3da11fe380fef67248d7b5ba6"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGBA16U</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7RGBA16UE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Four 16-bit channels (red, green, blue, alpha), unsigned integer. 64 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7RGBA16FE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7RGBA16FE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7RGBA16FE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6adadd1cd35bb81b2b43f396a5f5903ac4"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGBA16F</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7RGBA16FE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Four 16-bit channels (red, green, blue, alpha), half-precision floating point. 64 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7RGBA16SE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7RGBA16SE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7RGBA16SE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a6001607ef039dd349cc48155438ab00f"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGBA16S</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7RGBA16SE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Four 16-bit channels (red, green, blue, alpha), signed normalized. 64 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7RGBA32IE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7RGBA32IE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7RGBA32IE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a4b5db87abcf93819d12a7a0493bc0283"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGBA32I</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7RGBA32IE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Four 32-bit channels (red, green, blue, alpha), signed integer. 128 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7RGBA32UE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7RGBA32UE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7RGBA32UE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6acf97df6b0145396940f5ea893fc3873b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGBA32U</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7RGBA32UE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Four 32-bit channels (red, green, blue, alpha), unsigned integer. 128 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7RGBA32FE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7RGBA32FE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7RGBA32FE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ad21d8c3be31a08140a7abbafb1719166"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGBA32F</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7RGBA32FE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Four 32-bit channels (red, green, blue, alpha), full-precision floating point. 128 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum6B5G6R5E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum6B5G6R5E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6B5G6R5E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a9132b9c53a5e2dafd1a6a6ade302f33b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">B5G6R5</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6B5G6R5E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Packed 16-bit, 5-bit blue, 6-bit green, 5-bit red. BGR byte order, unsigned normalized. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum6R5G6B5E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum6R5G6B5E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6R5G6B5E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aec8537567352a4db4088e3e9f1cf978d"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">R5G6B5</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6R5G6B5E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Packed 16-bit, 5-bit red, 6-bit green, 5-bit blue. RGB byte order, unsigned normalized. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5BGRA4E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5BGRA4E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5BGRA4E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6aa45c193e57e5b9bf0a8693438f1c2256"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">BGRA4</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5BGRA4E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Packed 16-bit, 4-bit per channel (blue, green, red, alpha). BGRA byte order, unsigned normalized. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5RGBA4E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5RGBA4E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5RGBA4E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a4e9ceae8c33292ac988c494f79bccbe3"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGBA4</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5RGBA4E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Packed 16-bit, 4-bit per channel (red, green, blue, alpha), unsigned normalized. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum6BGR5A1E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum6BGR5A1E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6BGR5A1E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a45b848a845dc1081fa04570b1bc7bc2a"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">BGR5A1</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6BGR5A1E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Packed 16-bit, 5-bit blue, 5-bit green, 5-bit red, 1-bit alpha. BGRA byte order, unsigned normalized. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum6RGB5A1E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum6RGB5A1E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum6RGB5A1E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a38bfd7f727149e6458f39ade896d18a7"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGB5A1</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum6RGB5A1E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Packed 16-bit, 5-bit red, 5-bit green, 5-bit blue, 1-bit alpha, unsigned normalized. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum7RGB10A2E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum7RGB10A2E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum7RGB10A2E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a7c125c1a4eceb2bbc6f7600bb7ccdf92"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RGB10A2</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum7RGB10A2E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Packed 32-bit, 10-bit red, 10-bit green, 10-bit blue, 2-bit alpha, unsigned normalized. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum8RG11B10FE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum8RG11B10FE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum8RG11B10FE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a41ac710aca293e8831029481b9636a8f"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RG11B10F</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum8RG11B10FE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>Packed 32-bit, 11-bit red, 11-bit green, 10-bit blue, unsigned floating point. No alpha. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum12UnknownDepthE">
@@ -7026,42 +7094,50 @@ Otherwise, use <code class="docutils literal notranslate"><span class="pre">bgfx
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3D16E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3D16E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3D16E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a086d2b11ba5e98dd6453f26a306366d0"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">D16</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3D16E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>16-bit depth, unsigned normalized. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3D24E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3D24E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3D24E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a27a39685dd5aaafcad65736692fa5eff"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">D24</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3D24E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>24-bit depth, unsigned normalized (stored as 32-bit with 8 bits unused). 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5D24S8E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum5D24S8E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum5D24S8E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a21a275083cbc63cf567bbe435de52628"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">D24S8</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum5D24S8E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>24-bit depth, unsigned normalized, with 8-bit stencil. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum3D32E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum3D32E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum3D32E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a993af3f99854f2b0b1d879f652da5ea3"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">D32</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum3D32E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>32-bit depth, unsigned normalized. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4D16FE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4D16FE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4D16FE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6a0322a3bb98e826a25a3f63d369eb341f"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">D16F</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4D16FE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>16-bit depth, floating point. 16 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4D24FE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4D24FE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4D24FE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ad0e87f93c89a2d4661764eb56956b64e"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">D24F</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4D24FE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>24-bit depth, floating point (stored as 32-bit). 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4D32FE">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4D32FE"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4D32FE"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6acb8eb8bd274644a29aac381ef53c5c69"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">D32F</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4D32FE" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>32-bit depth, floating point. 32 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum4D0S8E">
 <span id="_CPPv3N4bgfx13TextureFormat4Enum4D0S8E"></span><span id="_CPPv2N4bgfx13TextureFormat4Enum4D0S8E"></span><span class="target" id="structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6ab21986c97b19c1b8d198c171f34e4471"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">D0S8</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx13TextureFormat4Enum4D0S8E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<dd><p>8-bit stencil only, no depth. 8 BPP. </p>
+</dd></dl>
 
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx13TextureFormat4Enum5CountE">

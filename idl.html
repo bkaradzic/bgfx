@@ -1,0 +1,353 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IDL — Interface Definition Language &mdash; bgfx 1.136.9083 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=f601d78d"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="License" href="license.html" />
+    <link rel="prev" title="Internals" href="internals.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            bgfx
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="build.html">Building</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">Internals</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">IDL — Interface Definition Language</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#purpose">Purpose</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#file-overview">File overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-the-code-generators">Running the code generators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#idl-syntax-reference">IDL syntax reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#version">version</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#typedef">typedef</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#handle">handle</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enum">enum</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flag">flag</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#struct">struct</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#func">func</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#funcptr">funcptr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#section">section</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#documentation-comments">Documentation comments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-a-new-api-function">Adding a new API function</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">bgfx</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">IDL — Interface Definition Language</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="idl-interface-definition-language">
+<h1>IDL — Interface Definition Language<a class="headerlink" href="#idl-interface-definition-language" title="Link to this heading"></a></h1>
+<p>bgfx uses a custom Interface Definition Language (IDL) to define its entire public API in a single
+source-of-truth file: <code class="docutils literal notranslate"><span class="pre">scripts/bgfx.idl</span></code>. From this file, code generators produce the C99 API,
+C++ API, language bindings, and documentation — ensuring that all representations stay in sync.</p>
+<p>For additional background and motivation, see the blog post:
+<a class="reference external" href="https://bkaradzic.github.io/posts/idl/">IDL — Interface Definition Language</a>.</p>
+<section id="purpose">
+<h2>Purpose<a class="headerlink" href="#purpose" title="Link to this heading"></a></h2>
+<p>The IDL serves several goals:</p>
+<ul class="simple">
+<li><p><strong>Single source of truth</strong> — The API (types, functions, flags, enums, structs, handles) is
+declared once in <code class="docutils literal notranslate"><span class="pre">bgfx.idl</span></code>. All generated outputs derive from this file.</p></li>
+<li><p><strong>Multi-language bindings</strong> — Code generators read the IDL and produce bindings for C99, C#, D,
+Zig, Beef, C3, and potentially other languages.</p></li>
+<li><p><strong>Documentation generation</strong> — The <code class="docutils literal notranslate"><span class="pre">docs-rst.lua</span></code> generator produces reStructuredText API
+reference documentation from the IDL.</p></li>
+<li><p><strong>Consistency</strong> — Changes to the API only need to be made in one place. The code generators
+ensure that all bindings and documentation are updated automatically.</p></li>
+</ul>
+</section>
+<section id="file-overview">
+<h2>File overview<a class="headerlink" href="#file-overview" title="Link to this heading"></a></h2>
+<p>All IDL-related files live under <code class="docutils literal notranslate"><span class="pre">scripts/</span></code>:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">bgfx.idl</span></code></dt><dd><p>The IDL source file. Contains all type definitions, function declarations, flag/enum
+definitions, struct layouts, handle types, documentation comments, and the section hierarchy
+for the generated docs.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">idl.lua</span></code></dt><dd><p>The IDL parser/runtime. Sets up the Lua environment that <code class="docutils literal notranslate"><span class="pre">bgfx.idl</span></code> executes in. Provides
+the DSL keywords (<code class="docutils literal notranslate"><span class="pre">typedef</span></code>, <code class="docutils literal notranslate"><span class="pre">enum</span></code>, <code class="docutils literal notranslate"><span class="pre">flag</span></code>, <code class="docutils literal notranslate"><span class="pre">struct</span></code>, <code class="docutils literal notranslate"><span class="pre">handle</span></code>, <code class="docutils literal notranslate"><span class="pre">func</span></code>,
+<code class="docutils literal notranslate"><span class="pre">funcptr</span></code>, <code class="docutils literal notranslate"><span class="pre">section</span></code>, <code class="docutils literal notranslate"><span class="pre">version</span></code>, etc.) as Lua metatable-driven constructors.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">codegen.lua</span></code></dt><dd><p>Shared code generation utilities. Reads the parsed IDL, resolves types, converts between
+naming conventions (CamelCase ↔ underscore_case), and provides template expansion for
+function signatures.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bgfx-codegen.lua</span></code></dt><dd><p>The main code generator. Reads the IDL via <code class="docutils literal notranslate"><span class="pre">codegen.lua</span></code> and produces the C99 header,
+C++ header, C99-to-C++ bridge implementation, and the internal function ID tables.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bindings-*.lua</span></code></dt><dd><p>Per-language binding generators (<code class="docutils literal notranslate"><span class="pre">bindings-cs.lua</span></code>, <code class="docutils literal notranslate"><span class="pre">bindings-d.lua</span></code>, <code class="docutils literal notranslate"><span class="pre">bindings-zig.lua</span></code>,
+<code class="docutils literal notranslate"><span class="pre">bindings-bf.lua</span></code>, <code class="docutils literal notranslate"><span class="pre">bindings-c3.lua</span></code>). Each reads the IDL and outputs the API in the
+target language’s syntax and conventions.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">docs-rst.lua</span></code></dt><dd><p>Generates reStructuredText API reference documentation (<code class="docutils literal notranslate"><span class="pre">docs/bgfx.rst</span></code>) from the IDL.</p>
+</dd>
+</dl>
+</section>
+<section id="running-the-code-generators">
+<h2>Running the code generators<a class="headerlink" href="#running-the-code-generators" title="Link to this heading"></a></h2>
+<p>The code generators are invoked via the makefile at the repository root:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>idl
+</pre></div>
+</div>
+<p>This runs the Lua scripts that regenerate all C/C++ headers, language bindings, and documentation
+from <code class="docutils literal notranslate"><span class="pre">scripts/bgfx.idl</span></code>.</p>
+</section>
+<section id="idl-syntax-reference">
+<h2>IDL syntax reference<a class="headerlink" href="#idl-syntax-reference" title="Link to this heading"></a></h2>
+<p>The IDL file is valid Lua, executed in a special environment that provides the DSL keywords.
+Comments prefixed with <code class="docutils literal notranslate"><span class="pre">---</span></code> become documentation comments attached to the next declaration.</p>
+<section id="version">
+<h3>version<a class="headerlink" href="#version" title="Link to this heading"></a></h3>
+<p>Declares the API version number:</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nf">version</span><span class="p">(</span><span class="mi">140</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="typedef">
+<h3>typedef<a class="headerlink" href="#typedef" title="Link to this heading"></a></h3>
+<p>Declares a type alias. These map IDL type names to their C/C++ equivalents:</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">typedef</span><span class="w"> </span><span class="s2">&quot;uint32_t&quot;</span>
+<span class="nv">typedef</span><span class="w"> </span><span class="s2">&quot;ViewId&quot;</span>
+<span class="nv">typedef</span><span class="w"> </span><span class="s2">&quot;CallbackI&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">cname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;callback_interface&quot;</span><span class="w"> </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>The optional table provides attributes. <code class="docutils literal notranslate"><span class="pre">cname</span></code> overrides the C binding name.</p>
+</section>
+<section id="handle">
+<h3>handle<a class="headerlink" href="#handle" title="Link to this heading"></a></h3>
+<p>Declares an opaque handle type. Handles are type-safe 16-bit integers used to reference GPU
+resources:</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">handle</span><span class="w"> </span><span class="s2">&quot;TextureHandle&quot;</span>
+<span class="nv">handle</span><span class="w"> </span><span class="s2">&quot;VertexBufferHandle&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="enum">
+<h3>enum<a class="headerlink" href="#enum" title="Link to this heading"></a></h3>
+<p>Declares an enumeration. Each member can have a <code class="docutils literal notranslate"><span class="pre">---</span></code> documentation comment:</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">enum</span><span class="p">.</span><span class="py">TextureFormat</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">comment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Texture formats:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Textures&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">BC1</span><span class="w">       </span><span class="c1">--- DXT1 R5G6B5A1.</span>
+<span class="w">    </span><span class="p">.</span><span class="py">BC2</span><span class="w">       </span><span class="c1">--- DXT3 R5G6B5A4.</span>
+<span class="w">    </span><span class="p">.</span><span class="nf">Unknown</span><span class="w">   </span><span class="c1">--- Compressed formats above.</span>
+<span class="w">    </span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">()</span></code> sentinel marks the end of the enum (generates a <code class="docutils literal notranslate"><span class="pre">Count</span></code> member). The <code class="docutils literal notranslate"><span class="pre">section</span></code>
+attribute controls where this type appears in the generated documentation hierarchy.</p>
+</section>
+<section id="flag">
+<h3>flag<a class="headerlink" href="#flag" title="Link to this heading"></a></h3>
+<p>Declares a bitfield flag type. Similar to <code class="docutils literal notranslate"><span class="pre">enum</span></code>, but members represent individual bits:</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">flag</span><span class="p">.</span><span class="py">StateWrite</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">bits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span><span class="w"> </span><span class="nv">base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;State Flags&quot;</span><span class="p">,</span><span class="w"> </span><span class="nv">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Write&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">R</span><span class="w">     </span><span class="c1">--- Enable R write.</span>
+<span class="w">    </span><span class="p">.</span><span class="py">G</span><span class="w">     </span><span class="c1">--- Enable G write.</span>
+<span class="w">    </span><span class="p">.</span><span class="py">B</span><span class="w">     </span><span class="c1">--- Enable B write.</span>
+<span class="w">    </span><span class="p">.</span><span class="py">A</span><span class="w">     </span><span class="c1">--- Enable alpha write.</span>
+<span class="w">    </span><span class="p">.</span><span class="nf">Z</span><span class="w"> </span><span class="p">(</span><span class="mi">39</span><span class="p">)</span><span class="w"> </span><span class="c1">--- Enable depth write.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">Rgb</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="s2">&quot;R&quot;</span><span class="p">,</span><span class="w">   </span><span class="s2">&quot;G&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;B&quot;</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">--- Enable RGB write.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">Mask</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">&quot;Rgb&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Z&quot;</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">--- Write all channels mask.</span>
+</pre></div>
+</div>
+<p>Attributes:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">bits</span></code> — Total bit width (32 or 64).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">shift</span></code> — Bit offset where this flag group starts.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">range</span></code> — Number of bits in this group.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">base</span></code> — Starting value for auto-numbering.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">section</span></code> — Documentation section.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">label</span></code> — Display label for documentation grouping.</p></li>
+</ul>
+<p>A member with a number in parentheses (e.g. <code class="docutils literal notranslate"><span class="pre">.Z</span> <span class="pre">(39)</span></code>) sets an explicit bit position. Members
+with a table of names (e.g. <code class="docutils literal notranslate"><span class="pre">.Rgb</span> <span class="pre">{</span> <span class="pre">&quot;R&quot;,</span> <span class="pre">&quot;G&quot;,</span> <span class="pre">&quot;B&quot;</span> <span class="pre">}</span></code>) define combined masks.</p>
+</section>
+<section id="struct">
+<h3>struct<a class="headerlink" href="#struct" title="Link to this heading"></a></h3>
+<p>Declares a data structure with typed fields:</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">struct</span><span class="p">.</span><span class="py">Init</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">ctor</span><span class="p">,</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Initialization and Shutdown&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">.</span><span class="nb">type</span><span class="w">             </span><span class="s2">&quot;RendererType::Enum&quot;</span><span class="w"> </span><span class="c1">--- Select rendering backend.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">vendorId</span><span class="w">         </span><span class="s2">&quot;uint16_t&quot;</span><span class="w">           </span><span class="c1">--- Vendor PCI ID. See: `BGFX_PCI_ID_*`.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">deviceId</span><span class="w">         </span><span class="s2">&quot;uint16_t&quot;</span><span class="w">           </span><span class="c1">--- Device ID.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">capabilities</span><span class="w">     </span><span class="s2">&quot;uint64_t&quot;</span><span class="w">           </span><span class="c1">--- Capabilities initialization mask.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">debug</span><span class="w">            </span><span class="s2">&quot;bool&quot;</span><span class="w">               </span><span class="c1">--- Enable device for debugging.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">profile</span><span class="w">          </span><span class="s2">&quot;bool&quot;</span><span class="w">               </span><span class="c1">--- Enable device for profiling.</span>
+</pre></div>
+</div>
+<p>Attributes:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ctor</span></code> — Generate a constructor with default values.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">namespace</span></code> — Nest this struct inside another (e.g. <code class="docutils literal notranslate"><span class="pre">namespace</span> <span class="pre">=</span> <span class="pre">&quot;Caps&quot;</span></code> produces
+<code class="docutils literal notranslate"><span class="pre">Caps::Limits</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">section</span></code> — Documentation section.</p></li>
+</ul>
+</section>
+<section id="func">
+<h3>func<a class="headerlink" href="#func" title="Link to this heading"></a></h3>
+<p>Declares a function. The first string is the return type, followed by named parameters:</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="c1">--- Advance to next frame.</span>
+<span class="nv">func</span><span class="p">.</span><span class="py">frame</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Frame&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="s2">&quot;uint32_t&quot;</span><span class="w">                      </span><span class="c1">--- Current frame number.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">flags</span><span class="w"> </span><span class="s2">&quot;uint8_t&quot;</span><span class="w">                </span><span class="c1">--- Frame flags.</span>
+<span class="w">     </span><span class="p">{</span><span class="w"> </span><span class="nv">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;BGFX_FRAME_NONE&quot;</span><span class="w"> </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Attributes:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">section</span></code> — Documentation section.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">const</span></code> — Mark as a const method (for class member functions).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">conly</span></code> — Only emit in the C99 API, not in C++.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cpponly</span></code> — Only emit in the C++ API, not in C99.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cppinline</span></code> — Provide an inline C++ implementation string.</p></li>
+</ul>
+<p>Parameters can have:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">{</span> <span class="pre">default</span> <span class="pre">=</span> <span class="pre">&quot;value&quot;</span> <span class="pre">}</span></code> — Default argument value.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{</span> <span class="pre">out</span> <span class="pre">}</span></code> — Output parameter.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{</span> <span class="pre">inout</span> <span class="pre">}</span></code> — Input/output parameter.</p></li>
+</ul>
+</section>
+<section id="funcptr">
+<h3>funcptr<a class="headerlink" href="#funcptr" title="Link to this heading"></a></h3>
+<p>Declares a function pointer type:</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nv">funcptr</span><span class="p">.</span><span class="py">ReleaseFn</span>
+<span class="w">    </span><span class="s2">&quot;void&quot;</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">ptr</span><span class="w">      </span><span class="s2">&quot;void*&quot;</span><span class="w"> </span><span class="c1">--- Pointer to allocated data.</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">userData</span><span class="w"> </span><span class="s2">&quot;void*&quot;</span><span class="w"> </span><span class="c1">--- User defined data if needed.</span>
+</pre></div>
+</div>
+</section>
+<section id="section">
+<h3>section<a class="headerlink" href="#section" title="Link to this heading"></a></h3>
+<p>Declares a documentation section for organizing the generated API reference. Sections form a
+hierarchy based on their level (0 = top-level heading, 1 = chapter, 2+ = subsections):</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="nf">section</span><span class="p">(</span><span class="s2">&quot;API Reference&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="nf">section</span><span class="p">(</span><span class="s2">&quot;General&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="nf">section</span><span class="p">(</span><span class="s2">&quot;Initialization and Shutdown&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Types and functions reference their section via the <code class="docutils literal notranslate"><span class="pre">section</span></code> attribute. The documentation
+generator (<code class="docutils literal notranslate"><span class="pre">docs-rst.lua</span></code>) uses the section tree to organize the output.</p>
+</section>
+<section id="documentation-comments">
+<h3>Documentation comments<a class="headerlink" href="#documentation-comments" title="Link to this heading"></a></h3>
+<p>Lines starting with <code class="docutils literal notranslate"><span class="pre">---</span></code> before a declaration become documentation comments. These are emitted
+as Doxygen-style comments in the C/C++ headers and as descriptions in the generated docs:</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span></span><span class="c1">--- Render frame.</span>
+<span class="c1">---</span>
+<span class="c1">--- @attention `bgfx::renderFrame` is a blocking call.</span>
+<span class="c1">---</span>
+<span class="c1">--- @warning This call should only be used on platforms that don&#39;t</span>
+<span class="c1">---   allow creating a separate rendering thread.</span>
+<span class="c1">---</span>
+<span class="nv">func</span><span class="p">.</span><span class="py">renderFrame</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">section</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Platform specific&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="s2">&quot;RenderFrame::Enum&quot;</span>
+<span class="w">    </span><span class="p">.</span><span class="nv">msecs</span><span class="w"> </span><span class="s2">&quot;int32_t&quot;</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nv">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="w"> </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Supported Doxygen tags in comments: <code class="docutils literal notranslate"><span class="pre">&#64;attention</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;warning</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;remarks</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;param</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&#64;returns</span></code>.</p>
+</section>
+</section>
+<section id="adding-a-new-api-function">
+<h2>Adding a new API function<a class="headerlink" href="#adding-a-new-api-function" title="Link to this heading"></a></h2>
+<p>To add a new function to the bgfx API:</p>
+<ol class="arabic simple">
+<li><p>Add the function declaration in <code class="docutils literal notranslate"><span class="pre">scripts/bgfx.idl</span></code> with the appropriate <code class="docutils literal notranslate"><span class="pre">section</span></code> attribute
+and <code class="docutils literal notranslate"><span class="pre">---</span></code> documentation comments.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">idl</span></code> to regenerate all headers, bindings, and documentation.</p></li>
+<li><p>Implement the function in <code class="docutils literal notranslate"><span class="pre">src/bgfx.cpp</span></code> (and the renderer backends if needed).</p></li>
+<li><p>Verify the generated output in <code class="docutils literal notranslate"><span class="pre">include/bgfx/bgfx.h</span></code>, <code class="docutils literal notranslate"><span class="pre">include/bgfx/c99/bgfx.h</span></code>, and the
+binding files under <code class="docutils literal notranslate"><span class="pre">bindings/</span></code>.</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="internals.html" class="btn btn-neutral float-left" title="Internals" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="license.html" class="btn btn-neutral float-right" title="License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2010-2025, Branimir Karadžić.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="License" href="license.html" />
+    <link rel="next" title="IDL — Interface Definition Language" href="idl.html" />
     <link rel="prev" title="Tools" href="tools.html" /> 
 </head>
 
@@ -49,17 +49,39 @@
 <li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Internals</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#sort-based-draw-call-bucketing">Sort based draw call bucketing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#api-and-render-thread">API and render thread</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sort-based-draw-call-bucketing">Sort-based draw call bucketing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sort-key-layout">Sort key layout</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#api-thread-and-render-thread">API thread and render thread</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#api-thread">API thread</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#render-thread">Render thread</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#double-buffered-frame-pipeline">Double-buffered frame pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multithreaded-mode">Multithreaded mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#single-threaded-mode">Single-threaded mode</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#resource-api">Resource API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#view-api">View API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#encoder-api">Encoder API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#transient-buffers">Transient buffers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#customization">Customization</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#options">Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#options">Options</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#threading-and-synchronisation">Threading and synchronisation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#renderer-backends">Renderer backends</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#resource-limits">Resource limits</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#buffer-sizes">Buffer sizes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sort-key">Sort key</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#swap-chain">Swap chain</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#debugging-and-profiling">Debugging and profiling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#miscellaneous">Miscellaneous</a></li>
 </ul>
 </li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="idl.html">IDL — Interface Definition Language</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
 
@@ -89,42 +111,194 @@
   <section id="internals">
 <h1>Internals<a class="headerlink" href="#internals" title="Link to this heading"></a></h1>
 <section id="sort-based-draw-call-bucketing">
-<h2>Sort based draw call bucketing<a class="headerlink" href="#sort-based-draw-call-bucketing" title="Link to this heading"></a></h2>
-<p>bgfx is using sort-based draw call bucketing. This means that submission order doesn’t necessarily match the rendering order, but on the low-level they will be sorted and ordered correctly. On the high level bgfx uses <strong>declarative API</strong> and internal sorting allows more optimal way of submitting draw calls for all passes at one place, and on the low-level this allows better optimization of rendering order. This sometimes creates undesired results usually for GUI rendering, where draw order should usually match submit order. bgfx provides way to enable sequential rendering for these cases (see <code class="docutils literal notranslate"><span class="pre">bgfx::setViewMode</span></code>).</p>
-<blockquote>
-<div><ul class="simple">
+<h2>Sort-based draw call bucketing<a class="headerlink" href="#sort-based-draw-call-bucketing" title="Link to this heading"></a></h2>
+<p>bgfx uses sort-based draw call bucketing. This means that the order in which draw calls are submitted does not necessarily match the order in which they are rendered. Instead, draw calls are assigned a 64-bit <strong>sort key</strong> and sorted before execution on the render thread, enabling more optimal GPU state management and batching.</p>
+<p>On the high level bgfx uses a <strong>declarative API</strong>: the user declares views, their render targets, clear parameters, and transforms up front, then submits draw calls in any order. Internally, the sort key ensures that draw calls are grouped by view first, then ordered within each view according to the active <strong>view mode</strong> (see <code class="docutils literal notranslate"><span class="pre">bgfx::setViewMode</span></code>):</p>
+<ul class="simple">
+<li><p><strong>Default</strong> - Sort by program first, then by depth. This groups draw calls with the same shader program together to minimise state changes, using depth as a secondary key.</p></li>
+<li><p><strong>Sequential</strong> - Preserve submission order. Draw calls are rendered in exactly the order <code class="docutils literal notranslate"><span class="pre">submit</span></code> was called. Useful for UI/GUI rendering where painter’s-order matters.</p></li>
+<li><p><strong>DepthAscending</strong> - Sort by depth (front-to-back). Helps maximise early-Z rejection for opaque geometry.</p></li>
+<li><p><strong>DepthDescending</strong> - Sort by depth (back-to-front). Required for correct blending of transparent geometry.</p></li>
+</ul>
+<section id="sort-key-layout">
+<h3>Sort key layout<a class="headerlink" href="#sort-key-layout" title="Link to this heading"></a></h3>
+<p>Each draw call is encoded into a 64-bit sort key. The highest bits encode the <strong>view ID</strong>, so draw calls are always grouped by view first. Below the view bits, a <strong>draw bit</strong> distinguishes draw calls from compute dispatches. For draw calls, a <strong>draw type</strong> field selects one of three encodings to implement the view modes above:</p>
+<ul class="simple">
+<li><p><strong>Program sort</strong> (Default mode): <code class="docutils literal notranslate"><span class="pre">[view</span> <span class="pre">|</span> <span class="pre">draw</span> <span class="pre">|</span> <span class="pre">type=0</span> <span class="pre">|</span> <span class="pre">blend</span> <span class="pre">|</span> <span class="pre">alphaRef</span> <span class="pre">|</span> <span class="pre">program</span> <span class="pre">|</span> <span class="pre">depth]</span></code></p></li>
+<li><p><strong>Depth sort</strong> (DepthAscending/DepthDescending): <code class="docutils literal notranslate"><span class="pre">[view</span> <span class="pre">|</span> <span class="pre">draw</span> <span class="pre">|</span> <span class="pre">type=1</span> <span class="pre">|</span> <span class="pre">depth</span> <span class="pre">|</span> <span class="pre">blend</span> <span class="pre">|</span> <span class="pre">alphaRef</span> <span class="pre">|</span> <span class="pre">program]</span></code></p></li>
+<li><p><strong>Sequence sort</strong> (Sequential mode): <code class="docutils literal notranslate"><span class="pre">[view</span> <span class="pre">|</span> <span class="pre">draw</span> <span class="pre">|</span> <span class="pre">type=2</span> <span class="pre">|</span> <span class="pre">sequence</span> <span class="pre">|</span> <span class="pre">blend</span> <span class="pre">|</span> <span class="pre">alphaRef</span> <span class="pre">|</span> <span class="pre">program]</span></code></p></li>
+</ul>
+<p>Compute dispatches always use sequential ordering: <code class="docutils literal notranslate"><span class="pre">[view</span> <span class="pre">|</span> <span class="pre">compute</span> <span class="pre">|</span> <span class="pre">sequence</span> <span class="pre">|</span> <span class="pre">program]</span></code>.</p>
+<p>Sort keys are sorted via radix sort on the render thread just before GPU submission.</p>
+<ul class="simple">
 <li><p>More detailed description of sort-based draw call bucketing can be found at: <a class="reference external" href="http://realtimecollisiondetection.net/blog/?p=86">Order your graphics draw calls around!</a></p></li>
 </ul>
-</div></blockquote>
 </section>
-<section id="api-and-render-thread">
-<h2>API and render thread<a class="headerlink" href="#api-and-render-thread" title="Link to this heading"></a></h2>
-<p>API thread is thread from which <code class="docutils literal notranslate"><span class="pre">bgfx::init</span></code> is called. Once <code class="docutils literal notranslate"><span class="pre">bgfx::init</span></code> is called on thread, internally bgfx assumes that all API calls will be called from the same thread with exception of Resource, View, and Encoder API.</p>
-<p>Render thread from where internal rendering <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> is called. On most of OS’ it’s required that this call be called on thread that OS created when executing process (some refer to this thread as “main” thread, or thread where <code class="docutils literal notranslate"><span class="pre">main</span></code> function is called).</p>
-<p>When bgfx is compiled with option <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MULTITHREADED=1</span></code> (default is on) <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> can be called by user. It’s required to be called before <code class="docutils literal notranslate"><span class="pre">bgfx::init</span></code> from thread that will be used as render thread. If both <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> and <code class="docutils literal notranslate"><span class="pre">bgfx::init</span></code> are called from the same thread, bgfx will switch to execute in single threaded mode, and calling <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> is not required, since it will be called automatically during <code class="docutils literal notranslate"><span class="pre">bgfx::frame</span></code> call.</p>
+</section>
+<section id="api-thread-and-render-thread">
+<h2>API thread and render thread<a class="headerlink" href="#api-thread-and-render-thread" title="Link to this heading"></a></h2>
+<p>bgfx separates work into two threads: the <strong>API thread</strong> and the <strong>render thread</strong>.</p>
+<section id="api-thread">
+<h3>API thread<a class="headerlink" href="#api-thread" title="Link to this heading"></a></h3>
+<p>The API thread is the thread from which <code class="docutils literal notranslate"><span class="pre">bgfx::init</span></code> is called. Once <code class="docutils literal notranslate"><span class="pre">bgfx::init</span></code> has been called, bgfx internally assumes that all subsequent API calls will be made from this same thread, with the exception of the Resource API, View API, and Encoder API (see sections below).</p>
+<p>The API thread is where application logic runs: setting up views, submitting draw calls via encoders, and calling <code class="docutils literal notranslate"><span class="pre">bgfx::frame</span></code> to advance to the next frame.</p>
+</section>
+<section id="render-thread">
+<h3>Render thread<a class="headerlink" href="#render-thread" title="Link to this heading"></a></h3>
+<p>The render thread is where <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> executes. This is the thread that talks to the GPU: it processes the command buffer, sorts draw calls, submits them to the graphics API, and performs the back-buffer flip.</p>
+<p>On most operating systems, certain graphics APIs require that rendering happens on the “main” thread (the thread on which the process was started, i.e. the thread that called <code class="docutils literal notranslate"><span class="pre">main</span></code>). When using bgfx in multithreaded mode, the render thread is typically the main thread, while the API thread runs on a user-created secondary thread.</p>
+</section>
+<section id="double-buffered-frame-pipeline">
+<h3>Double-buffered frame pipeline<a class="headerlink" href="#double-buffered-frame-pipeline" title="Link to this heading"></a></h3>
+<p>bgfx maintains two <code class="docutils literal notranslate"><span class="pre">Frame</span></code> objects internally: the <strong>submit buffer</strong> (written by the API thread) and the <strong>render buffer</strong> (read by the render thread). This double buffering allows the API thread and the render thread to run in parallel:</p>
+<ol class="arabic simple">
+<li><p><strong>API thread</strong> builds a frame by recording draw calls, state changes, and resource commands into the submit buffer.</p></li>
+<li><p>When the API thread calls <code class="docutils literal notranslate"><span class="pre">bgfx::frame</span></code>, it waits for the render thread to finish the previous frame, then swaps the submit and render buffers (via <code class="docutils literal notranslate"><span class="pre">bx::swap</span></code>) and signals the render thread to begin.</p></li>
+<li><p><strong>Render thread</strong> (in <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code>) wakes up, executes pre-render commands (resource creation/updates), sorts draw calls by sort key via radix sort, submits them to the GPU, executes post-render commands, flips the back buffer, and then signals back to the API thread.</p></li>
+<li><p>The API thread is now free to start building the next frame while the render thread is still executing GPU commands.</p></li>
+</ol>
+<p>The synchronisation between the two threads uses a pair of semaphores:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">apiSemPost</span></code> / <code class="docutils literal notranslate"><span class="pre">apiSemWait</span></code> - the API thread signals the render thread that a new frame is ready to process.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">renderSemPost</span></code> / <code class="docutils literal notranslate"><span class="pre">renderSemWait</span></code> - the render thread signals the API thread that it has finished processing.</p></li>
+</ul>
+</section>
+<section id="multithreaded-mode">
+<h3>Multithreaded mode<a class="headerlink" href="#multithreaded-mode" title="Link to this heading"></a></h3>
+<p>When bgfx is compiled with <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MULTITHREADED=1</span></code> (the default on all platforms that support threading), the user can call <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> directly. Calling <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> before <code class="docutils literal notranslate"><span class="pre">bgfx::init</span></code> from the intended render thread prevents bgfx from creating its own internal render thread - the user takes responsibility for calling <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> externally each frame.</p>
+<p>If both <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> and <code class="docutils literal notranslate"><span class="pre">bgfx::init</span></code> are called from the same thread, bgfx detects this and switches to <strong>single-threaded mode</strong>: <code class="docutils literal notranslate"><span class="pre">bgfx::frame</span></code> will internally invoke <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> automatically, and the user does not need to call it separately.</p>
+</section>
+<section id="single-threaded-mode">
+<h3>Single-threaded mode<a class="headerlink" href="#single-threaded-mode" title="Link to this heading"></a></h3>
+<p>When compiled with <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MULTITHREADED=0</span></code>, or when single-threaded mode is detected at runtime, there is no separate render thread. The call to <code class="docutils literal notranslate"><span class="pre">bgfx::frame</span></code> swaps buffers and immediately performs rendering inline (calls <code class="docutils literal notranslate"><span class="pre">bgfx::renderFrame</span></code> internally). The double-buffer swap still happens, but both sides execute on the same thread sequentially.</p>
+</section>
 </section>
 <section id="resource-api">
 <h2>Resource API<a class="headerlink" href="#resource-api" title="Link to this heading"></a></h2>
-<p>Any API call starting with <code class="docutils literal notranslate"><span class="pre">bgfx::create*</span></code>, <code class="docutils literal notranslate"><span class="pre">bgfx::destroy*</span></code>, <code class="docutils literal notranslate"><span class="pre">bgfx::update*</span></code>, <code class="docutils literal notranslate"><span class="pre">bgfx::alloc*</span></code> is considered part of resource API. Internally resource API calls are guarded by mutex. There is no limit of number of threads that can call resource API simultaneously. Calling any resource API is infrequent, and functions are cheap since most of work with resource is done at later point on render thread.</p>
+<p>Any API call starting with <code class="docutils literal notranslate"><span class="pre">bgfx::create*</span></code>, <code class="docutils literal notranslate"><span class="pre">bgfx::destroy*</span></code>, <code class="docutils literal notranslate"><span class="pre">bgfx::update*</span></code>, or <code class="docutils literal notranslate"><span class="pre">bgfx::alloc*</span></code> is considered part of the Resource API. Internally, Resource API calls are guarded by a mutex (<code class="docutils literal notranslate"><span class="pre">m_resourceApiLock</span></code>), so there is no limit on the number of threads that can call Resource API functions simultaneously.</p>
+<p>Calling any Resource API function is generally infrequent and cheap on the API thread side, because the actual GPU work (uploading textures, creating buffers, etc.) is deferred: the commands are recorded into the frame’s command buffer and executed later on the render thread via <code class="docutils literal notranslate"><span class="pre">rendererExecCommands</span></code>.</p>
+<p>Resource handles (<code class="docutils literal notranslate"><span class="pre">TextureHandle</span></code>, <code class="docutils literal notranslate"><span class="pre">VertexBufferHandle</span></code>, etc.) are returned immediately on creation and can be used in draw calls right away, even though the GPU resource may not yet exist. The render thread will process the creation command before it processes any draw calls that reference the handle.</p>
 </section>
 <section id="view-api">
 <h2>View API<a class="headerlink" href="#view-api" title="Link to this heading"></a></h2>
-<p>Any API call starting with <code class="docutils literal notranslate"><span class="pre">bgfx::setView*</span></code> is considered part of view API. View API is not designed to be thread safe at all since all views are independentent from each other. Calling any view API for different views from different threads is safe. What’s not safe is to update the same view from multiple threads. This will lead to undefined behavior. Only view API that has to be set before any draw calls are issued is view mode <code class="docutils literal notranslate"><span class="pre">bgfx::setViewMode</span></code>. Internal encoder requires view mode to select sort key encoding and if user changes view mode after submit it will cause incorrect sort behavior within the view.</p>
+<p>Any API call starting with <code class="docutils literal notranslate"><span class="pre">bgfx::setView*</span></code> is considered part of the View API. The View API is <strong>not</strong> internally thread safe - but it doesn’t need to be, because views are independent from each other. Calling any view API for different views from different threads is safe. What is <strong>not</strong> safe is updating the same view from multiple threads simultaneously; doing so leads to undefined behaviour.</p>
+<p>One important constraint: <code class="docutils literal notranslate"><span class="pre">bgfx::setViewMode</span></code> must be set <strong>before</strong> any draw calls are submitted to that view within a frame. The internal encoder reads the view mode at submit time to select the sort key encoding. Changing the view mode after draw calls have already been submitted to that view will cause incorrect sort behaviour.</p>
+<p>The maximum number of views is configured by <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_VIEWS</span></code> (default: 256, must be a power of 2). Views are referenced by <code class="docutils literal notranslate"><span class="pre">ViewId</span></code> (a 16-bit integer).</p>
 </section>
 <section id="encoder-api">
 <h2>Encoder API<a class="headerlink" href="#encoder-api" title="Link to this heading"></a></h2>
-<p>Encoder API can be obtained by calling <code class="docutils literal notranslate"><span class="pre">bgfx::begin</span></code>. bgfx by default allows 8 simultaneous threads to use encoders. This can be configured by changing <code class="docutils literal notranslate"><span class="pre">Limits.maxEncoders</span></code> init option of <code class="docutils literal notranslate"><span class="pre">bgfx::Init</span></code> structure.</p>
+<p>The Encoder API is used for submitting draw calls and dispatches from multiple threads. An encoder is obtained by calling <code class="docutils literal notranslate"><span class="pre">bgfx::begin</span></code> and returned with <code class="docutils literal notranslate"><span class="pre">bgfx::end</span></code>.</p>
+<p>By default, bgfx allows up to <strong>8 simultaneous encoders</strong> (configurable via <code class="docutils literal notranslate"><span class="pre">Limits.maxEncoders</span></code> in <code class="docutils literal notranslate"><span class="pre">bgfx::Init</span></code>). Each encoder writes into its own <code class="docutils literal notranslate"><span class="pre">UniformBuffer</span></code>, so there is no contention between threads when recording draw calls.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">bgfx::frame</span></code> is called, it waits for all active encoders to finish (<code class="docutils literal notranslate"><span class="pre">encoderApiWait</span></code>), then locks the encoder mutex to prevent new encoders from being created. The submit buffer is then finalized and swapped.</p>
+<p>Encoder 0 is special: it is the “default encoder” used by the legacy non-encoder API (<code class="docutils literal notranslate"><span class="pre">bgfx::setState</span></code>, <code class="docutils literal notranslate"><span class="pre">bgfx::submit</span></code>, etc.) and is always allocated internally. The remaining encoder slots are available for user-created encoders for multithreaded submission.</p>
+</section>
+<section id="transient-buffers">
+<h2>Transient buffers<a class="headerlink" href="#transient-buffers" title="Link to this heading"></a></h2>
+<p>Transient vertex and index buffers are per-frame temporary allocations intended for dynamic geometry that changes every frame (e.g. debug rendering, particles, UI). They are allocated from a ring buffer that is reset each frame.</p>
+<p>Each of the two <code class="docutils literal notranslate"><span class="pre">Frame</span></code> objects owns its own transient vertex buffer and transient index buffer. When the frame buffers are swapped, the new submit buffer gets a fresh transient allocation. This means that pointers obtained from <code class="docutils literal notranslate"><span class="pre">bgfx::allocTransientVertexBuffer</span></code> / <code class="docutils literal notranslate"><span class="pre">bgfx::allocTransientIndexBuffer</span></code> are only valid until the next call to <code class="docutils literal notranslate"><span class="pre">bgfx::frame</span></code>.</p>
+<p>The maximum size of transient buffers can be configured via <code class="docutils literal notranslate"><span class="pre">Limits.maxTransientVbSize</span></code> and <code class="docutils literal notranslate"><span class="pre">Limits.maxTransientIbSize</span></code> in <code class="docutils literal notranslate"><span class="pre">bgfx::Init</span></code>.</p>
 </section>
 <section id="customization">
 <h2>Customization<a class="headerlink" href="#customization" title="Link to this heading"></a></h2>
-<p>By default each platform has sane default values. For example on Windows default renderer is DirectX, on Linux it is OpenGL, and on macOS it’s Metal. On Windows platform almost all rendering backends are available. For OpenGL ES on desktop you can find more information at:- <a class="reference external" href="http://www.g-truc.net/post-0457.html">OpenGL ES 2.0 and EGL on desktop</a></p>
-<p>If you’re targeting specific mobile hardware, you can find GLES support in their official SDKs: <a class="reference external" href="http://developer.qualcomm.com/mobile-development/mobile-technologies/gaming-graphics-optimization-adreno/tools-and-resources">Adreno
-SDK</a>, <a class="reference external" href="http://www.malideveloper.com/">Mali SDK</a>, <a class="reference external" href="http://www.imgtec.com/powervr/insider/sdkdownloads/">PowerVR SDK</a>.</p>
+<p>By default each platform has sane default values. For example on Windows the default renderer is Direct3D 12, on Linux it is Vulkan, and on macOS it’s Metal. On Windows, almost all rendering backends are available. For OpenGL ES on desktop you can find more information at: <a class="reference external" href="http://www.g-truc.net/post-0457.html">OpenGL ES 2.0 and EGL on desktop</a></p>
+<p>If you’re targeting specific mobile hardware, you can find GLES support in their official SDKs: <a class="reference external" href="http://developer.qualcomm.com/mobile-development/mobile-technologies/gaming-graphics-optimization-adreno/tools-and-resources">Adreno SDK</a>, <a class="reference external" href="http://www.malideveloper.com/">Mali SDK</a>, <a class="reference external" href="http://www.imgtec.com/powervr/insider/sdkdownloads/">PowerVR SDK</a>.</p>
 <p>All configuration settings are located inside <a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/src/config.h">src/config.h</a>.</p>
-<p>Every <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_*</span></code> setting can be changed by passing defines thru compiler switches. For example setting preprocessor define <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL=1</span></code> will change backend renderer to OpenGL 2.1. on Windows. Since rendering APIs are platform specific, this obviously won’t work nor make sense in all cases.</p>
+<p>Every <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_*</span></code> setting can be changed by passing defines through compiler switches. For example setting preprocessor define <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL=1</span></code> will change the backend renderer to OpenGL 2.1 on Windows. Since rendering APIs are platform specific, this obviously won’t work nor make sense in all cases.</p>
 <section id="options">
 <h3>Options<a class="headerlink" href="#options" title="Link to this heading"></a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MULTITHREADED</span></code> is used to enable/disable threading support inside bgfx. By default set to 1 on all platforms that support threading.</p>
+<section id="threading-and-synchronisation">
+<h4>Threading and synchronisation<a class="headerlink" href="#threading-and-synchronisation" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MULTITHREADED</span></code> - Enable/disable multithreaded rendering. When enabled, bgfx can use a separate render thread for GPU submission. Default is 1 on all platforms that support threading (0 on Emscripten).</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_API_SEMAPHORE_TIMEOUT</span></code> - Timeout in milliseconds for the API/render thread semaphore wait. Default is 5000 ms. If the semaphore times out, it typically indicates a deadlock or the other thread has stalled.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEFAULT_MAX_ENCODERS</span></code> - Default maximum number of simultaneous encoders for multithreaded draw call submission. Default is 8 when multithreaded, 1 otherwise. Can be overridden at runtime via <code class="docutils literal notranslate"><span class="pre">Limits.maxEncoders</span></code> in <code class="docutils literal notranslate"><span class="pre">bgfx::Init</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_ENCODER_API_ONLY</span></code> - When set to 1, disable the legacy non-encoder API (<code class="docutils literal notranslate"><span class="pre">bgfx::setState</span></code>, <code class="docutils literal notranslate"><span class="pre">bgfx::submit</span></code>, etc.) and require all submissions to go through the Encoder API (<code class="docutils literal notranslate"><span class="pre">bgfx::begin</span></code> / <code class="docutils literal notranslate"><span class="pre">bgfx::end</span></code>). Default is 0.</p>
+</section>
+<section id="renderer-backends">
+<h4>Renderer backends<a class="headerlink" href="#renderer-backends" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_AGC</span></code> - Enable AGC renderer backend (PS5). Default is auto-detected per platform.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_DIRECT3D11</span></code> - Enable Direct3D 11 renderer backend. Default is 1 on Windows/Linux.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_DIRECT3D12</span></code> - Enable Direct3D 12 renderer backend. Default is 1 on Windows/Linux.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_GNM</span></code> - Enable GNM renderer backend (PS4). Default is auto-detected per platform.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_METAL</span></code> - Enable Metal renderer backend. Default is 1 on iOS/macOS/visionOS.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_NVN</span></code> - Enable NVN renderer backend (Nintendo Switch). Default is auto-detected per platform.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL</span></code> - Enable OpenGL renderer backend. Set to the minimum GL version (e.g. 21 for OpenGL 2.1, 33 for 3.3, 44 for 4.4). Default is auto-detected per platform; minimum is 21 if enabled.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_OPENGLES</span></code> - Enable OpenGL ES renderer backend. Set to the minimum GLES version (e.g. 20 for ES 2.0, 30 for ES 3.0). Default is auto-detected per platform; minimum is 20 if enabled. Cannot be combined with <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_OPENGL</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_VULKAN</span></code> - Enable Vulkan renderer backend. Default is 1 on Android/Linux/Windows/macOS/NX.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_WEBGPU</span></code> - Enable WebGPU renderer backend. Default is 1 on Linux/macOS/Windows.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_USE_EXTENSIONS</span></code> - Enable use of renderer-specific API extensions (e.g. OpenGL extensions, Vulkan extensions). Default is 1.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_DIRECT3D11_USE_STAGING_BUFFER</span></code> - Enable use of staging buffers in the Direct3D 11 renderer for texture and buffer updates. Default is 0.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERER_VULKAN_MAX_DESCRIPTOR_SETS_PER_FRAME</span></code> - Maximum number of Vulkan descriptor sets allocated per frame. Default is 1024. Each draw/compute call may consume one descriptor set.</p>
+</section>
+<section id="resource-limits">
+<h4>Resource limits<a class="headerlink" href="#resource-limits" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_DRAW_CALLS</span></code> - Maximum number of draw/compute calls per frame. Default is 65535 (64K - 1).</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_BLIT_ITEMS</span></code> - Maximum number of blit items per frame. Default is 1024.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_VIEWS</span></code> - Maximum number of views. Default is 256. Must be a power of 2.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_VIEW_NAME</span></code> - Maximum length of a view name string. Default is 256.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_VERTEX_LAYOUTS</span></code> - Maximum number of vertex layout declarations. Default is 64.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_INDEX_BUFFERS</span></code> - Maximum number of static index buffer handles. Default is 4096.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_VERTEX_BUFFERS</span></code> - Maximum number of static vertex buffer handles. Default is 4096.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_VERTEX_STREAMS</span></code> - Maximum number of vertex streams per draw call. Default is 4.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS</span></code> - Maximum number of dynamic index buffer handles. Default is 4096.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS</span></code> - Maximum number of dynamic vertex buffer handles. Default is 4096.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_SHADERS</span></code> - Maximum number of shader handles (vertex + fragment + compute). Default is 512.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_TEXTURES</span></code> - Maximum number of texture handles. Default is 4096.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_TEXTURE_SAMPLERS</span></code> - Maximum number of texture samplers per draw call. Default is 16.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_FRAME_BUFFERS</span></code> - Maximum number of frame buffer handles. Default is 128.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS</span></code> - Maximum number of attachments (color + depth/stencil) per frame buffer. Default is 8.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_UNIFORMS</span></code> - Maximum number of uniform handles. Default is 512.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_OCCLUSION_QUERIES</span></code> - Maximum number of occlusion query handles. Default is 256.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT</span></code> - Maximum number of instance data vec4 attributes per draw call. Default is 5. Total instance stride is count × 16 bytes.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_COLOR_PALETTE</span></code> - Maximum number of color palette entries for indexed clear colors. Default is 16.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_SCREENSHOTS</span></code> - Maximum number of screenshot requests that can be queued per frame. Default is 4.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_PROGRAMS</span></code> - Maximum number of linked programs. Derived from <code class="docutils literal notranslate"><span class="pre">2^BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM</span></code>. Default is 512. Cannot be configured directly.</p>
+</section>
+<section id="buffer-sizes">
+<h4>Buffer sizes<a class="headerlink" href="#buffer-sizes" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DYNAMIC_INDEX_BUFFER_SIZE</span></code> - Initial size in bytes of the dynamic index buffer backing store. Default is 1 MB. The backing store grows as needed via sub-allocation.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE</span></code> - Initial size in bytes of the dynamic vertex buffer backing store. Default is 3 MB. The backing store grows as needed via sub-allocation.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_TRANSIENT_VERTEX_BUFFER_SIZE</span></code> - Maximum transient vertex buffer size. There is no growth; all transient vertices must fit into this buffer. Default is 6 MB.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_TRANSIENT_INDEX_BUFFER_SIZE</span></code> - Maximum transient index buffer size. There is no growth; all transient indices must fit into this buffer. Default is 2 MB.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MIN_RESOURCE_COMMAND_BUFFER_SIZE</span></code> - Minimum initial size of the resource command buffer (pre/post render commands for resource creation and updates). Default is 64 KB. The buffer grows as needed.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MIN_UNIFORM_BUFFER_SIZE</span></code> - Minimum initial size in bytes of the per-encoder uniform buffer. Default is 1 MB. This buffer will resize on demand.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_THRESHOLD_SIZE</span></code> - Maximum amount of unused uniform buffer space (in bytes) before the buffer is shrunk. Default is 64 KB.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_UNIFORM_BUFFER_RESIZE_INCREMENT_SIZE</span></code> - Increment size for uniform buffer resize. Default is 1 MB.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_CACHED_DEVICE_MEMORY_ALLOCATIONS_SIZE</span></code> - Amount of allowed memory allocations left on device to use for recycling during later allocations. This can be beneficial in case the driver is slow allocating memory on the device. Default is 128 MB. Currently only used by the Vulkan backend.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_STAGING_SCRATCH_BUFFER_SIZE</span></code> - Threshold of data size above which the staging scratch buffer will not be used; instead a separate device memory allocation will take place to stage the data. Default is 16 MB.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_SCRATCH_STAGING_BUFFER_PER_FRAME_SIZE</span></code> - Amount of scratch buffer size (per in-flight frame) reserved for staging data for copying to the device (vertex buffers, textures, etc.). Default is 32 MB. Currently only used by the Vulkan backend.</p>
+</section>
+<section id="sort-key">
+<h4>Sort key<a class="headerlink" href="#sort-key" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_SORT_KEY_NUM_BITS_DEPTH</span></code> - Number of bits used for depth in the sort key. Default is 32. Reducing this allows more bits for other sort key fields.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_SORT_KEY_NUM_BITS_SEQ</span></code> - Number of bits used for sequence number in the sort key. Default is 20. Determines the maximum number of draw calls per view in sequential mode (2^20 ≈ 1M).</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM</span></code> - Number of bits used for program index in the sort key. Default is 9. Determines <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_PROGRAMS</span></code> (2^9 = 512).</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_MATRIX_CACHE</span></code> - Maximum number of cached transform matrices per frame. Default is <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_DRAW_CALLS</span> <span class="pre">+</span> <span class="pre">1</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_RECT_CACHE</span></code> - Maximum number of cached scissor rectangles per frame. Default is 4096.</p>
+</section>
+<section id="swap-chain">
+<h4>Swap chain<a class="headerlink" href="#swap-chain" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_BACK_BUFFERS</span></code> - Maximum number of back buffers for the swap chain. Default is 4. The actual number used is specified via <code class="docutils literal notranslate"><span class="pre">bgfx::Resolution::numBackBuffers</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_FRAME_LATENCY</span></code> - Maximum frame latency (number of frames that can be queued ahead). Default is 3. The actual value is specified via <code class="docutils literal notranslate"><span class="pre">bgfx::Resolution::maxFrameLatency</span></code>.</p>
+</section>
+<section id="debugging-and-profiling">
+<h4>Debugging and profiling<a class="headerlink" href="#debugging-and-profiling" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG_TEXT_MAX_SCALE</span></code> - Debug text maximum scale factor for <code class="docutils literal notranslate"><span class="pre">bgfx::dbgTextPrintf</span></code>. Default is 4.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG_PERFHUD</span></code> - Enable nVidia PerfHUD integration. Default is 0.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG_ANNOTATION</span></code> - Enable annotation for graphics debuggers (e.g. RenderDoc, PIX). Default matches <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG_OBJECT_NAME</span></code> - Enable debug names on graphics API objects (Direct3D 11/12, Vulkan, etc.). Default matches <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG_ANNOTATION</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG_UNIFORM</span></code> - Enable runtime validation that uniforms are set before each draw call. Default matches <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG_OCCLUSION</span></code> - Enable runtime validation that occlusion queries are not reused within the same frame. Default matches <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DEBUG</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_PROFILER</span></code> - Enable internal profiler instrumentation. When enabled, bgfx will emit profiler scopes for frame, submit, resource, and view operations. Default is 0.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERDOC_LOG_FILEPATH</span></code> - File path for RenderDoc capture log output. Default is <code class="docutils literal notranslate"><span class="pre">&quot;temp/bgfx&quot;</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_RENDERDOC_CAPTURE_KEYS</span></code> - Key(s) to trigger a RenderDoc capture. Default is <code class="docutils literal notranslate"><span class="pre">{</span> <span class="pre">eRENDERDOC_Key_F11</span> <span class="pre">}</span></code>.</p>
+</section>
+<section id="miscellaneous">
+<h4>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_USE_TINYSTL</span></code> - Enable use of tinystl instead of std containers for internal data structures. Default is 1. Reduces binary size and avoids std library dependency.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MIP_LOD_BIAS</span></code> - Global MIP level-of-detail bias applied to all texture sampling. Default is 0. Positive values select coarser MIP levels, negative values select finer MIP levels.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_DRAW_INDIRECT_STRIDE</span></code> - Stride in bytes of each draw indirect command. Fixed at 32 bytes. Not configurable.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_PREFER_DISCRETE_GPU</span></code> - On laptops with integrated and discrete GPU, prefer selection of the discrete GPU (nVidia and AMD). Default is 1 on Windows, 0 elsewhere.</p>
+</section>
 </section>
 </section>
 </section>
@@ -134,7 +308,7 @@ SDK</a>, <a class="reference external" href="http://www.malideveloper.com/">Mali
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="tools.html" class="btn btn-neutral float-left" title="Tools" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="license.html" class="btn btn-neutral float-right" title="License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="idl.html" class="btn btn-neutral float-right" title="IDL — Interface Definition Language" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

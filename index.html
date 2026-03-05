@@ -48,6 +48,7 @@
 <li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="internals.html">Internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="idl.html">IDL — Interface Definition Language</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
 
@@ -256,15 +257,46 @@ licensed under permissive BSD-2 clause open source license.</p>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="internals.html">Internals</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="internals.html#sort-based-draw-call-bucketing">Sort based draw call bucketing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="internals.html#api-and-render-thread">API and render thread</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#sort-based-draw-call-bucketing">Sort-based draw call bucketing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#sort-key-layout">Sort key layout</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#api-thread-and-render-thread">API thread and render thread</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#api-thread">API thread</a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#render-thread">Render thread</a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#double-buffered-frame-pipeline">Double-buffered frame pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#multithreaded-mode">Multithreaded mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="internals.html#single-threaded-mode">Single-threaded mode</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="internals.html#resource-api">Resource API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="internals.html#view-api">View API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="internals.html#encoder-api">Encoder API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals.html#transient-buffers">Transient buffers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="internals.html#customization">Customization</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="internals.html#options">Options</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="idl.html">IDL — Interface Definition Language</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="idl.html#purpose">Purpose</a></li>
+<li class="toctree-l2"><a class="reference internal" href="idl.html#file-overview">File overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="idl.html#running-the-code-generators">Running the code generators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="idl.html#idl-syntax-reference">IDL syntax reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="idl.html#version">version</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idl.html#typedef">typedef</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idl.html#handle">handle</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idl.html#enum">enum</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idl.html#flag">flag</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idl.html#struct">struct</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idl.html#func">func</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idl.html#funcptr">funcptr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idl.html#section">section</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idl.html#documentation-comments">Documentation comments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="idl.html#adding-a-new-api-function">Adding a new API function</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a><ul>
