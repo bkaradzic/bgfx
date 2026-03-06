@@ -4088,16 +4088,53 @@ public static partial class bgfx
 	public static extern unsafe void reset_view(ushort _id);
 	
 	/// <summary>
-	/// Begin submitting draw calls from thread.
+	/// Begin submitting draw calls from thread. Obtains an encoder that can be
+	/// used to submit draw calls, compute dispatches, and state changes.
+	/// 
+	/// In multithreaded mode (`BGFX_CONFIG_MULTITHREADED=1`), multiple threads
+	/// can each obtain their own encoder and submit draw calls in parallel.
+	/// Each encoder writes into its own uniform buffer, so there is no
+	/// contention between threads. The maximum number of simultaneous encoders
+	/// is configured via `Limits.maxEncoders` in `bgfx::Init` (default: 8).
+	/// 
+	/// When called from the API thread (the thread that called `bgfx::init`)
+	/// with `_forceNewEncoder` set to `false`, the default internal encoder
+	/// (encoder 0) is returned. This is the same encoder used by the legacy
+	/// non-encoder API (`bgfx::setState`, `bgfx::submit`, etc.). When called
+	/// from a worker thread (or with `_forceNewEncoder` set to `true`), a new
+	/// encoder is allocated from the encoder pool.
+	/// 
+	/// @remarks
+	///   The returned `Encoder` pointer is valid until `bgfx::end` is called
+	///   with it. All encoders must be ended before `bgfx::frame` is called.
+	///   If `bgfx::frame` is called while encoders are still active, it will
+	///   wait for them to finish. Returns `NULL` if no encoder slots are
+	///   available (all `maxEncoders` slots are in use).
+	///   See also: `bgfx::end`, `bgfx::frame`.
+	/// 
 	/// </summary>
 	///
-	/// <param name="_forThread">Explicitly request an encoder for a worker thread.</param>
+	/// <param name="_forceNewEncoder">Force allocation of a new encoder from the pool, even when called from the API thread.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_encoder_begin", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe Encoder* encoder_begin(bool _forThread);
+	public static extern unsafe Encoder* encoder_begin(bool _forceNewEncoder);
 	
 	/// <summary>
-	/// End submitting draw calls from thread.
+	/// End submitting draw calls from thread. Returns the encoder obtained from
+	/// `bgfx::begin` back to the encoder pool.
+	/// 
+	/// After this call the `Encoder` pointer is no longer valid and must not
+	/// be used. The encoder's recorded draw calls and state changes are finalized
+	/// and will be included in the next frame when `bgfx::frame` is called.
+	/// 
+	/// @remarks
+	///   Must be called from the same thread that called `bgfx::begin` for
+	///   this encoder. All encoders must be ended before `bgfx::frame` is
+	///   called. The default encoder (encoder 0, used by the legacy API) is
+	///   managed internally and does not need to be passed to `bgfx::end`;
+	///   passing it is harmless but has no effect.
+	///   See also: `bgfx::begin`, `bgfx::frame`.
+	/// 
 	/// </summary>
 	///
 	/// <param name="_encoder">Encoder.</param>
