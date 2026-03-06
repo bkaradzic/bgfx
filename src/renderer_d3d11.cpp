@@ -4613,14 +4613,17 @@ namespace bgfx { namespace d3d11
 				srvd.Format = getSrvFormat();
 			}
 
+			const bool external = 0 != _external;
 			const bool directAccess = s_renderD3D11->m_directAccessSupport
 				&& !renderTarget
 				&& !readBack
 				&& !blit
 				&& !writeOnly
+				&& !external
+				&& !externalShared
 				;
 
-			if (0 != _external)
+			if (external)
 			{
 				if (externalShared)
 				{
@@ -4633,106 +4636,107 @@ namespace bgfx { namespace d3d11
 
 				m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
 			}
-			else
+
+			switch (m_type)
 			{
-				switch (m_type)
+			case Texture2D:
+			case TextureCube:
 				{
-				case Texture2D:
-				case TextureCube:
+					D3D11_TEXTURE2D_DESC desc = {};
+					desc.Width      = ti.width;
+					desc.Height     = ti.height;
+					desc.MipLevels  = ti.numMips;
+					desc.ArraySize  = numSides;
+					desc.Format     = format;
+					desc.SampleDesc = msaa;
+					desc.Usage      = kk == 0 || blit ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
+					desc.BindFlags  = writeOnly ? 0 : D3D11_BIND_SHADER_RESOURCE;
+					desc.CPUAccessFlags = 0;
+					desc.MiscFlags      = 0;
+
+					if (bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) ) )
 					{
-						D3D11_TEXTURE2D_DESC desc = {};
-						desc.Width      = ti.width;
-						desc.Height     = ti.height;
-						desc.MipLevels  = ti.numMips;
-						desc.ArraySize  = numSides;
-						desc.Format     = format;
-						desc.SampleDesc = msaa;
-						desc.Usage      = kk == 0 || blit ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
-						desc.BindFlags  = writeOnly ? 0 : D3D11_BIND_SHADER_RESOURCE;
-						desc.CPUAccessFlags = 0;
-						desc.MiscFlags      = 0;
+						desc.BindFlags |= D3D11_BIND_DEPTH_STENCIL;
+						desc.Usage = D3D11_USAGE_DEFAULT;
+					}
+					else if (renderTarget)
+					{
+						desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
+						desc.Usage = D3D11_USAGE_DEFAULT;
+						desc.MiscFlags |= 0
+							| (1 < ti.numMips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0)
+							;
+					}
 
-						if (bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) ) )
-						{
-							desc.BindFlags |= D3D11_BIND_DEPTH_STENCIL;
-							desc.Usage = D3D11_USAGE_DEFAULT;
-						}
-						else if (renderTarget)
-						{
-							desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
-							desc.Usage = D3D11_USAGE_DEFAULT;
-							desc.MiscFlags |= 0
-								| (1 < ti.numMips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0)
-								;
-						}
+					if (computeWrite)
+					{
+						desc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
+						desc.Usage = D3D11_USAGE_DEFAULT;
+					}
 
-						if (computeWrite)
-						{
-							desc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
-							desc.Usage = D3D11_USAGE_DEFAULT;
-						}
+					if (readBack)
+					{
+						desc.BindFlags      = 0;
+						desc.Usage          = D3D11_USAGE_STAGING;
+						desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+					}
 
-						if (readBack)
+					if (imageContainer.m_cubeMap)
+					{
+						desc.MiscFlags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
+						if (1 < ti.numLayers)
 						{
-							desc.BindFlags      = 0;
-							desc.Usage          = D3D11_USAGE_STAGING;
-							desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+							srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBEARRAY;
+							srvd.TextureCubeArray.MipLevels = ti.numMips;
+							srvd.TextureCubeArray.NumCubes  = ti.numLayers;
 						}
-
-						if (imageContainer.m_cubeMap)
+						else
 						{
-							desc.MiscFlags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
+							srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+							srvd.TextureCube.MipLevels = ti.numMips;
+						}
+					}
+					else
+					{
+						if (msaaSample)
+						{
 							if (1 < ti.numLayers)
 							{
-								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBEARRAY;
-								srvd.TextureCubeArray.MipLevels = ti.numMips;
-								srvd.TextureCubeArray.NumCubes  = ti.numLayers;
+								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY;
+								srvd.Texture2DMSArray.ArraySize = ti.numLayers;
 							}
 							else
 							{
-								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
-								srvd.TextureCube.MipLevels = ti.numMips;
+								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
 							}
 						}
 						else
 						{
-							if (msaaSample)
+							if (1 < ti.numLayers)
 							{
-								if (1 < ti.numLayers)
-								{
-									srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY;
-									srvd.Texture2DMSArray.ArraySize = ti.numLayers;
-								}
-								else
-								{
-									srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
-								}
+								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+								srvd.Texture2DArray.MipLevels = ti.numMips;
+								srvd.Texture2DArray.ArraySize = ti.numLayers;
 							}
 							else
 							{
-								if (1 < ti.numLayers)
-								{
-									srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
-									srvd.Texture2DArray.MipLevels = ti.numMips;
-									srvd.Texture2DArray.ArraySize = ti.numLayers;
-								}
-								else
-								{
-									srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-									srvd.Texture2D.MipLevels = ti.numMips;
-								}
+								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+								srvd.Texture2D.MipLevels = ti.numMips;
 							}
 						}
+					}
 
-						desc.MiscFlags |= externalShared ? D3D11_RESOURCE_MISC_SHARED : 0;
+					desc.MiscFlags |= externalShared ? D3D11_RESOURCE_MISC_SHARED : 0;
 
-						if (needResolve)
-						{
-							DX_CHECK(s_renderD3D11->m_device->CreateTexture2D(&desc, NULL, &m_rt2d) );
-							desc.BindFlags &= ~(D3D11_BIND_RENDER_TARGET|D3D11_BIND_DEPTH_STENCIL);
-							desc.SampleDesc = s_msaa[0];
-						}
+					if (needResolve)
+					{
+						DX_CHECK(s_renderD3D11->m_device->CreateTexture2D(&desc, NULL, &m_rt2d) );
+						desc.BindFlags &= ~(D3D11_BIND_RENDER_TARGET|D3D11_BIND_DEPTH_STENCIL);
+						desc.SampleDesc = s_msaa[0];
+					}
 
+					if (!external)
+					{
 						if (directAccess)
 						{
 							directAccessPtr = m_dar.createTexture2D(&desc, kk == 0 ? NULL : srd, &m_texture2d);
@@ -4742,48 +4746,51 @@ namespace bgfx { namespace d3d11
 							DX_CHECK(s_renderD3D11->m_device->CreateTexture2D(&desc, kk == 0 ? NULL : srd, &m_texture2d) );
 						}
 					}
-					break;
+				}
+				break;
 
-				case Texture3D:
+			case Texture3D:
+				{
+					D3D11_TEXTURE3D_DESC desc = {};
+					desc.Width     = ti.width;
+					desc.Height    = ti.height;
+					desc.Depth     = ti.depth;
+					desc.MipLevels = ti.numMips;
+					desc.Format    = format;
+					desc.Usage     = kk == 0 || blit ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
+					desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+					desc.CPUAccessFlags = 0;
+					desc.MiscFlags      = 0;
+
+					if (renderTarget)
 					{
-						D3D11_TEXTURE3D_DESC desc = {};
-						desc.Width     = ti.width;
-						desc.Height    = ti.height;
-						desc.Depth     = ti.depth;
-						desc.MipLevels = ti.numMips;
-						desc.Format    = format;
-						desc.Usage     = kk == 0 || blit ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
-						desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-						desc.CPUAccessFlags = 0;
-						desc.MiscFlags      = 0;
+						desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
+						desc.Usage = D3D11_USAGE_DEFAULT;
+						desc.MiscFlags |= 0
+							| (1 < ti.numMips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0)
+							;
+					}
 
-						if (renderTarget)
-						{
-							desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
-							desc.Usage = D3D11_USAGE_DEFAULT;
-							desc.MiscFlags |= 0
-								| (1 < ti.numMips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0)
-								;
-						}
+					if (computeWrite)
+					{
+						desc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
+						desc.Usage = D3D11_USAGE_DEFAULT;
+					}
 
-						if (computeWrite)
-						{
-							desc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
-							desc.Usage = D3D11_USAGE_DEFAULT;
-						}
+					if (readBack)
+					{
+						desc.BindFlags = 0;
+						desc.Usage = D3D11_USAGE_STAGING;
+						desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+					}
 
-						if (readBack)
-						{
-							desc.BindFlags = 0;
-							desc.Usage = D3D11_USAGE_STAGING;
-							desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-						}
+					srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
+					srvd.Texture3D.MipLevels = ti.numMips;
 
-						srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
-						srvd.Texture3D.MipLevels = ti.numMips;
+					desc.MiscFlags |= externalShared ? D3D11_RESOURCE_MISC_SHARED : 0;
 
-						desc.MiscFlags |= externalShared ? D3D11_RESOURCE_MISC_SHARED : 0;
-
+					if (!external)
+					{
 						if (directAccess)
 						{
 							directAccessPtr = m_dar.createTexture3D(&desc, kk == 0 ? NULL : srd, &m_texture3d);
@@ -4793,12 +4800,12 @@ namespace bgfx { namespace d3d11
 							DX_CHECK(s_renderD3D11->m_device->CreateTexture3D(&desc, kk == 0 ? NULL : srd, &m_texture3d) );
 						}
 					}
-					break;
 				}
+				break;
+			}
 
-				if (externalShared)
-				{
-				}
+			if (externalShared)
+			{
 			}
 
 			if (!writeOnly)
