@@ -716,9 +716,9 @@ BGFX_C_API void bgfx_reset_view(bgfx_view_id_t _id)
 	bgfx::resetView((bgfx::ViewId)_id);
 }
 
-BGFX_C_API bgfx_encoder_t* bgfx_encoder_begin(bool _forThread)
+BGFX_C_API bgfx_encoder_t* bgfx_encoder_begin(bool _forceNewEncoder)
 {
-	return (bgfx_encoder_t*)bgfx::begin(_forThread);
+	return (bgfx_encoder_t*)bgfx::begin(_forceNewEncoder);
 }
 
 BGFX_C_API void bgfx_encoder_end(bgfx_encoder_t* _encoder)
