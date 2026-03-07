@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 140;
+enum uint apiVersion = 141;
 
 alias ViewID = ushort;
 
@@ -585,6 +585,7 @@ enum Frame: Frame_{
 	none          = 0x00, ///No frame flags.
 	debugCapture  = 0x01, ///Capture frame with graphics debugger.
 	discard       = 0x02, ///Discard all draw calls.
+	flush         = 0x04, ///Execute all rendering commands without presenting the backbuffer.
 }
 
 ///Fatal error enum.
@@ -2146,6 +2147,8 @@ mixin(joinFnBinds((){
 		  - `BGFX_FRAME_NONE` - No frame flag.
 		  - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.
 		  - `BGFX_FRAME_DISCARD` - Discard all draw calls.
+		  - `BGFX_FRAME_FLUSH` - Execute all rendering commands
+		    without presenting the backbuffer.
 		*/
 		{q{uint}, q{frame}, q{ubyte flags=BGFX_FRAME_NONE}, ext: `C++, "bgfx"`},
 		

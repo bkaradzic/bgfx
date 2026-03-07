@@ -2416,6 +2416,7 @@ namespace bgfx
 			, m_waitRender(0)
 			, m_frameNum(0)
 			, m_capture(false)
+			, m_flush(false)
 		{
 			SortKey term;
 			term.reset();
@@ -2485,6 +2486,7 @@ namespace bgfx
 			m_cmdPre.start();
 			m_cmdPost.start();
 			m_capture = false;
+			m_flush   = false;
 			m_numScreenShots = 0;
 			m_frameNum = frameNum;
 		}
@@ -2700,6 +2702,7 @@ namespace bgfx
 		uint32_t m_frameNum;
 
 		bool m_capture;
+		bool m_flush;
 	};
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) EncoderImpl
@@ -5805,7 +5808,7 @@ namespace bgfx
 			m_uniformCache.invalidate(_id);
 		}
 
-		BGFX_API_FUNC(Encoder* begin(bool _forThread) );
+		BGFX_API_FUNC(Encoder* begin(bool _forceNewEncoder) );
 
 		BGFX_API_FUNC(void end(Encoder* _encoder) );
 

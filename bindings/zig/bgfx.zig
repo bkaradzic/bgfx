@@ -848,6 +848,9 @@ pub const FrameFlags_DebugCapture: FrameFlags           = 0x00000001;
 /// Discard all draw calls.
 pub const FrameFlags_Discard: FrameFlags                = 0x00000002;
 
+/// Execute all rendering commands without presenting the backbuffer.
+pub const FrameFlags_Flush: FrameFlags                  = 0x00000004;
+
 pub const Fatal = enum(c_int) {
     DebugCheck,
     InvalidShader,
@@ -2342,7 +2345,7 @@ extern fn bgfx_reset(_width: u32, _height: u32, _flags: u32, _format: TextureFor
 ///   signal that `bgfx::renderFrame` waits on to begin the next frame.
 ///   See also: `bgfx::renderFrame`.
 /// 
-/// <param name="_flags">Frame flags. See: `BGFX_FRAME_*` for more info.   - `BGFX_FRAME_NONE` - No frame flag.   - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.   - `BGFX_FRAME_DISCARD` - Discard all draw calls.</param>
+/// <param name="_flags">Frame flags. See: `BGFX_FRAME_*` for more info.   - `BGFX_FRAME_NONE` - No frame flag.   - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.   - `BGFX_FRAME_DISCARD` - Discard all draw calls.   - `BGFX_FRAME_FLUSH` - Execute all rendering commands     without presenting the backbuffer.</param>
 pub inline fn frame(_flags: u8) u32 {
     return bgfx_frame(_flags);
 }

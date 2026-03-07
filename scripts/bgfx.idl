@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(140)
+version(141)
 
 typedef "bool"
 typedef "char"
@@ -455,6 +455,7 @@ flag.Frame { bits = 8, section = "Frame" }
 	.None         --- No frame flags.
 	.DebugCapture --- Capture frame with graphics debugger.
 	.Discard      --- Discard all draw calls.
+	.Flush        --- Execute all rendering commands without presenting the backbuffer.
 	()
 
 --- Fatal error enum.
@@ -1276,6 +1277,8 @@ func.frame { section = "Frame" }
 	 { default = "BGFX_FRAME_NONE" } ---   - `BGFX_FRAME_NONE` - No frame flag.
 	                                 ---   - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.
 	                                 ---   - `BGFX_FRAME_DISCARD` - Discard all draw calls.
+	                                 ---   - `BGFX_FRAME_FLUSH` - Execute all rendering commands
+	                                 ---     without presenting the backbuffer.
 
 --- Returns current renderer backend API type.
 ---

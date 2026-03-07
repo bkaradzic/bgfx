@@ -15,7 +15,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(140)
+#define BGFX_API_VERSION UINT32_C(141)
 
 /**
  * Color RGB/alpha/depth write. When it's not specified write will be disabled.
@@ -527,6 +527,7 @@
 #define BGFX_FRAME_NONE                           UINT8_C(0x00) //!< No frame flags.
 #define BGFX_FRAME_DEBUG_CAPTURE                  UINT8_C(0x01) //!< Capture frame with graphics debugger.
 #define BGFX_FRAME_DISCARD                        UINT8_C(0x02) //!< Discard all draw calls.
+#define BGFX_FRAME_FLUSH                          UINT8_C(0x04) //!< Execute all rendering commands without presenting the backbuffer.
 
 
 /// Blend function separate.

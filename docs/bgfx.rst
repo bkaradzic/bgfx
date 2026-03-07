@@ -71,6 +71,7 @@ Frame flags and the ``bgfx::frame`` call to advance to the next frame.
 .. doxygendefine:: BGFX_FRAME_NONE
 .. doxygendefine:: BGFX_FRAME_DEBUG_CAPTURE
 .. doxygendefine:: BGFX_FRAME_DISCARD
+.. doxygendefine:: BGFX_FRAME_FLUSH
 
 .. doxygenfunction:: bgfx::frame
 
