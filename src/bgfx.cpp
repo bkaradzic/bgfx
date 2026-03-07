@@ -2400,12 +2400,13 @@ namespace bgfx
 		}
 	}
 
-	Encoder* Context::begin(bool _forThread)
+	Encoder* Context::begin(bool _forceNewEncoder)
 	{
 		EncoderImpl* encoder = &m_encoder[0];
 
 #if BGFX_CONFIG_MULTITHREADED
-		if (_forThread || BGFX_API_THREAD_MAGIC != s_threadIndex)
+		if (_forceNewEncoder
+		||  BGFX_API_THREAD_MAGIC != s_threadIndex)
 		{
 			bx::MutexScope scopeLock(m_encoderApiLock);
 
@@ -2419,7 +2420,7 @@ namespace bgfx
 			encoder->begin(m_submit, uint8_t(idx) );
 		}
 #else
-		BX_UNUSED(_forThread);
+		BX_UNUSED(_forceNewEncoder);
 #endif // BGFX_CONFIG_MULTITHREADED
 
 		return reinterpret_cast<Encoder*>(encoder);
@@ -2458,6 +2459,7 @@ namespace bgfx
 		}
 
 		m_submit->m_capture = 0 != (_flags & BGFX_FRAME_DEBUG_CAPTURE);
+		m_submit->m_flush   = 0 != (_flags & BGFX_FRAME_FLUSH);
 
 		uint32_t frameNum = m_submit->m_frameNum;
 
@@ -2588,8 +2590,11 @@ namespace bgfx
 
 		if (!m_flipAfterRender)
 		{
-			BGFX_PROFILER_SCOPE("bgfx/flip", kColorSubmit);
-			flip();
+			if (!m_render->m_flush)
+			{
+				BGFX_PROFILER_SCOPE("bgfx/flip", kColorSubmit);
+				flip();
+			}
 		}
 
 		if (apiSemWait(_msecs) )
@@ -2626,8 +2631,11 @@ namespace bgfx
 
 			if (m_flipAfterRender)
 			{
-				BGFX_PROFILER_SCOPE("bgfx/flip", kColorSubmit);
-				flip();
+				if (!m_render->m_flush)
+				{
+					BGFX_PROFILER_SCOPE("bgfx/flip", kColorSubmit);
+					flip();
+				}
 			}
 		}
 		else
@@ -3868,9 +3876,9 @@ namespace bgfx
 		s_ctx->reset(_width, _height, _flags, _format);
 	}
 
-	Encoder* begin(bool _forThread)
+	Encoder* begin(bool _forceNewEncoder)
 	{
-		return s_ctx->begin(_forThread);
+		return s_ctx->begin(_forceNewEncoder);
 	}
 
 #define BGFX_ENCODER(_func) reinterpret_cast<EncoderImpl*>(this)->_func

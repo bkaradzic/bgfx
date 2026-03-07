@@ -875,6 +875,9 @@ enum FrameFlags : const uint
 
 	// Discard all draw calls.
 	DISCARD                = 0x00000002,
+
+	// Execute all rendering commands without presenting the backbuffer.
+	FLUSH                  = 0x00000004,
 }
 
 enum Fatal : uint
@@ -2199,7 +2202,7 @@ extern fn void reset(uint _width, uint _height, uint _flags, TextureFormat _form
 //   signal that `bgfx::renderFrame` waits on to begin the next frame.
 //   See also: `bgfx::renderFrame`.
 // 
-// _flags : `Frame flags. See: `BGFX_FRAME_*` for more info.   - `BGFX_FRAME_NONE` - No frame flag.   - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.   - `BGFX_FRAME_DISCARD` - Discard all draw calls.`
+// _flags : `Frame flags. See: `BGFX_FRAME_*` for more info.   - `BGFX_FRAME_NONE` - No frame flag.   - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.   - `BGFX_FRAME_DISCARD` - Discard all draw calls.   - `BGFX_FRAME_FLUSH` - Execute all rendering commands     without presenting the backbuffer.`
 extern fn uint frame(char _flags) @extern("bgfx_frame");
 
 // Returns current renderer backend API type.

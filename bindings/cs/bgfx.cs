@@ -1390,6 +1390,11 @@ public static partial class bgfx
 		/// Discard all draw calls.
 		/// </summary>
 		Discard                = 0x00000002,
+	
+		/// <summary>
+		/// Execute all rendering commands without presenting the backbuffer.
+		/// </summary>
+		Flush                  = 0x00000004,
 	}
 	
 	public enum Fatal
@@ -2951,7 +2956,7 @@ public static partial class bgfx
 	/// 
 	/// </summary>
 	///
-	/// <param name="_flags">Frame flags. See: `BGFX_FRAME_*` for more info.   - `BGFX_FRAME_NONE` - No frame flag.   - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.   - `BGFX_FRAME_DISCARD` - Discard all draw calls.</param>
+	/// <param name="_flags">Frame flags. See: `BGFX_FRAME_*` for more info.   - `BGFX_FRAME_NONE` - No frame flag.   - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.   - `BGFX_FRAME_DISCARD` - Discard all draw calls.   - `BGFX_FRAME_FLUSH` - Execute all rendering commands     without presenting the backbuffer.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_frame", CallingConvention = CallingConvention.Cdecl)]
 	public static extern unsafe uint frame(byte _flags);

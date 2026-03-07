@@ -2156,6 +2156,8 @@ namespace bgfx
 	///   - `BGFX_FRAME_NONE` - No frame flag.
 	///   - `BGFX_FRAME_DEBUG_CAPTURE` - Capture frame with graphics debugger.
 	///   - `BGFX_FRAME_DISCARD` - Discard all draw calls.
+	///   - `BGFX_FRAME_FLUSH` - Execute all rendering commands
+	///   without presenting the backbuffer.
 	///
 	/// @returns Current frame number. This might be used in conjunction with
 	///   double/multi buffering data outside the library and passing it to
