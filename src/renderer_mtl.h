@@ -81,187 +81,17 @@
 
 namespace bgfx { namespace mtl
 {
-	// Metal API has obnoxious "availability" annotations on enums causing build errors when
-	// referencing format, and requiring use of ifdefery to reference format. To reduce ifdefery
-	// bgfx uses redefined formats, and on initialization it sets up format caps and provides
-	// availability.
-	constexpr MTL::PixelFormat kMtlPixelFormatInvalid               = MTL::PixelFormat(0);
-	constexpr MTL::PixelFormat kMtlPixelFormatA8Unorm               = MTL::PixelFormat(1);
-	constexpr MTL::PixelFormat kMtlPixelFormatR8Unorm               = MTL::PixelFormat(10);
-	constexpr MTL::PixelFormat kMtlPixelFormatR8Unorm_sRGB          = MTL::PixelFormat(11);
-	constexpr MTL::PixelFormat kMtlPixelFormatR8Snorm               = MTL::PixelFormat(12);
-	constexpr MTL::PixelFormat kMtlPixelFormatR8Uint                = MTL::PixelFormat(13);
-	constexpr MTL::PixelFormat kMtlPixelFormatR8Sint                = MTL::PixelFormat(14);
-	constexpr MTL::PixelFormat kMtlPixelFormatR16Unorm              = MTL::PixelFormat(20);
-	constexpr MTL::PixelFormat kMtlPixelFormatR16Snorm              = MTL::PixelFormat(22);
-	constexpr MTL::PixelFormat kMtlPixelFormatR16Uint               = MTL::PixelFormat(23);
-	constexpr MTL::PixelFormat kMtlPixelFormatR16Sint               = MTL::PixelFormat(24);
-	constexpr MTL::PixelFormat kMtlPixelFormatR16Float              = MTL::PixelFormat(25);
-	constexpr MTL::PixelFormat kMtlPixelFormatRG8Unorm              = MTL::PixelFormat(30);
-	constexpr MTL::PixelFormat kMtlPixelFormatRG8Unorm_sRGB         = MTL::PixelFormat(31);
-	constexpr MTL::PixelFormat kMtlPixelFormatRG8Snorm              = MTL::PixelFormat(32);
-	constexpr MTL::PixelFormat kMtlPixelFormatRG8Uint               = MTL::PixelFormat(33);
-	constexpr MTL::PixelFormat kMtlPixelFormatRG8Sint               = MTL::PixelFormat(34);
-	constexpr MTL::PixelFormat kMtlPixelFormatB5G6R5Unorm           = MTL::PixelFormat(40);
-	constexpr MTL::PixelFormat kMtlPixelFormatA1BGR5Unorm           = MTL::PixelFormat(41);
-	constexpr MTL::PixelFormat kMtlPixelFormatABGR4Unorm            = MTL::PixelFormat(42);
-	constexpr MTL::PixelFormat kMtlPixelFormatBGR5A1Unorm           = MTL::PixelFormat(43);
-	constexpr MTL::PixelFormat kMtlPixelFormatR32Uint               = MTL::PixelFormat(53);
-	constexpr MTL::PixelFormat kMtlPixelFormatR32Sint               = MTL::PixelFormat(54);
-	constexpr MTL::PixelFormat kMtlPixelFormatR32Float              = MTL::PixelFormat(55);
-	constexpr MTL::PixelFormat kMtlPixelFormatRG16Unorm             = MTL::PixelFormat(60);
-	constexpr MTL::PixelFormat kMtlPixelFormatRG16Snorm             = MTL::PixelFormat(62);
-	constexpr MTL::PixelFormat kMtlPixelFormatRG16Uint              = MTL::PixelFormat(63);
-	constexpr MTL::PixelFormat kMtlPixelFormatRG16Sint              = MTL::PixelFormat(64);
-	constexpr MTL::PixelFormat kMtlPixelFormatRG16Float             = MTL::PixelFormat(65);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGBA8Unorm            = MTL::PixelFormat(70);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGBA8Unorm_sRGB       = MTL::PixelFormat(71);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGBA8Snorm            = MTL::PixelFormat(72);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGBA8Uint             = MTL::PixelFormat(73);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGBA8Sint             = MTL::PixelFormat(74);
-	constexpr MTL::PixelFormat kMtlPixelFormatBGRA8Unorm            = MTL::PixelFormat(80);
-	constexpr MTL::PixelFormat kMtlPixelFormatBGRA8Unorm_sRGB       = MTL::PixelFormat(81);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGB10A2Unorm          = MTL::PixelFormat(90);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGB10A2Uint           = MTL::PixelFormat(91);
-	constexpr MTL::PixelFormat kMtlPixelFormatRG11B10Float          = MTL::PixelFormat(92);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGB9E5Float           = MTL::PixelFormat(93);
-	constexpr MTL::PixelFormat kMtlPixelFormatBGR10A2Unorm          = MTL::PixelFormat(94);
-	constexpr MTL::PixelFormat kMtlPixelFormatBGR10_XR              = MTL::PixelFormat(554);
-	constexpr MTL::PixelFormat kMtlPixelFormatBGR10_XR_sRGB         = MTL::PixelFormat(555);
-	constexpr MTL::PixelFormat kMtlPixelFormatRG32Uint              = MTL::PixelFormat(103);
-	constexpr MTL::PixelFormat kMtlPixelFormatRG32Sint              = MTL::PixelFormat(104);
-	constexpr MTL::PixelFormat kMtlPixelFormatRG32Float             = MTL::PixelFormat(105);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGBA16Unorm           = MTL::PixelFormat(110);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGBA16Snorm           = MTL::PixelFormat(112);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGBA16Uint            = MTL::PixelFormat(113);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGBA16Sint            = MTL::PixelFormat(114);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGBA16Float           = MTL::PixelFormat(115);
-	constexpr MTL::PixelFormat kMtlPixelFormatBGRA10_XR             = MTL::PixelFormat(552);
-	constexpr MTL::PixelFormat kMtlPixelFormatBGRA10_XR_sRGB        = MTL::PixelFormat(553);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGBA32Uint            = MTL::PixelFormat(123);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGBA32Sint            = MTL::PixelFormat(124);
-	constexpr MTL::PixelFormat kMtlPixelFormatRGBA32Float           = MTL::PixelFormat(125);
-	constexpr MTL::PixelFormat kMtlPixelFormatBC1_RGBA              = MTL::PixelFormat(130);
-	constexpr MTL::PixelFormat kMtlPixelFormatBC1_RGBA_sRGB         = MTL::PixelFormat(131);
-	constexpr MTL::PixelFormat kMtlPixelFormatBC2_RGBA              = MTL::PixelFormat(132);
-	constexpr MTL::PixelFormat kMtlPixelFormatBC2_RGBA_sRGB         = MTL::PixelFormat(133);
-	constexpr MTL::PixelFormat kMtlPixelFormatBC3_RGBA              = MTL::PixelFormat(134);
-	constexpr MTL::PixelFormat kMtlPixelFormatBC3_RGBA_sRGB         = MTL::PixelFormat(135);
-	constexpr MTL::PixelFormat kMtlPixelFormatBC4_RUnorm            = MTL::PixelFormat(140);
-	constexpr MTL::PixelFormat kMtlPixelFormatBC4_RSnorm            = MTL::PixelFormat(141);
-	constexpr MTL::PixelFormat kMtlPixelFormatBC5_RGUnorm           = MTL::PixelFormat(142);
-	constexpr MTL::PixelFormat kMtlPixelFormatBC5_RGSnorm           = MTL::PixelFormat(143);
-	constexpr MTL::PixelFormat kMtlPixelFormatBC6H_RGBFloat         = MTL::PixelFormat(150);
-	constexpr MTL::PixelFormat kMtlPixelFormatBC6H_RGBUfloat        = MTL::PixelFormat(151);
-	constexpr MTL::PixelFormat kMtlPixelFormatBC7_RGBAUnorm         = MTL::PixelFormat(152);
-	constexpr MTL::PixelFormat kMtlPixelFormatBC7_RGBAUnorm_sRGB    = MTL::PixelFormat(153);
-	constexpr MTL::PixelFormat kMtlPixelFormatPVRTC_RGB_2BPP        = MTL::PixelFormat(160);
-	constexpr MTL::PixelFormat kMtlPixelFormatPVRTC_RGB_2BPP_sRGB   = MTL::PixelFormat(161);
-	constexpr MTL::PixelFormat kMtlPixelFormatPVRTC_RGB_4BPP        = MTL::PixelFormat(162);
-	constexpr MTL::PixelFormat kMtlPixelFormatPVRTC_RGB_4BPP_sRGB   = MTL::PixelFormat(163);
-	constexpr MTL::PixelFormat kMtlPixelFormatPVRTC_RGBA_2BPP       = MTL::PixelFormat(164);
-	constexpr MTL::PixelFormat kMtlPixelFormatPVRTC_RGBA_2BPP_sRGB  = MTL::PixelFormat(165);
-	constexpr MTL::PixelFormat kMtlPixelFormatPVRTC_RGBA_4BPP       = MTL::PixelFormat(166);
-	constexpr MTL::PixelFormat kMtlPixelFormatPVRTC_RGBA_4BPP_sRGB  = MTL::PixelFormat(167);
-	constexpr MTL::PixelFormat kMtlPixelFormatEAC_R11Unorm          = MTL::PixelFormat(170);
-	constexpr MTL::PixelFormat kMtlPixelFormatEAC_R11Snorm          = MTL::PixelFormat(172);
-	constexpr MTL::PixelFormat kMtlPixelFormatEAC_RG11Unorm         = MTL::PixelFormat(174);
-	constexpr MTL::PixelFormat kMtlPixelFormatEAC_RG11Snorm         = MTL::PixelFormat(176);
-	constexpr MTL::PixelFormat kMtlPixelFormatEAC_RGBA8             = MTL::PixelFormat(178);
-	constexpr MTL::PixelFormat kMtlPixelFormatEAC_RGBA8_sRGB        = MTL::PixelFormat(179);
-	constexpr MTL::PixelFormat kMtlPixelFormatETC2_RGB8             = MTL::PixelFormat(180);
-	constexpr MTL::PixelFormat kMtlPixelFormatETC2_RGB8_sRGB        = MTL::PixelFormat(181);
-	constexpr MTL::PixelFormat kMtlPixelFormatETC2_RGB8A1           = MTL::PixelFormat(182);
-	constexpr MTL::PixelFormat kMtlPixelFormatETC2_RGB8A1_sRGB      = MTL::PixelFormat(183);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_4x4_sRGB         = MTL::PixelFormat(186);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_5x4_sRGB         = MTL::PixelFormat(187);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_5x5_sRGB         = MTL::PixelFormat(188);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_6x5_sRGB         = MTL::PixelFormat(189);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_6x6_sRGB         = MTL::PixelFormat(190);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_8x5_sRGB         = MTL::PixelFormat(192);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_8x6_sRGB         = MTL::PixelFormat(193);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_8x8_sRGB         = MTL::PixelFormat(194);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_10x5_sRGB        = MTL::PixelFormat(195);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_10x6_sRGB        = MTL::PixelFormat(196);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_10x8_sRGB        = MTL::PixelFormat(197);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_10x10_sRGB       = MTL::PixelFormat(198);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_12x10_sRGB       = MTL::PixelFormat(199);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_12x12_sRGB       = MTL::PixelFormat(200);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_4x4_LDR          = MTL::PixelFormat(204);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_5x4_LDR          = MTL::PixelFormat(205);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_5x5_LDR          = MTL::PixelFormat(206);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_6x5_LDR          = MTL::PixelFormat(207);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_6x6_LDR          = MTL::PixelFormat(208);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_8x5_LDR          = MTL::PixelFormat(210);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_8x6_LDR          = MTL::PixelFormat(211);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_8x8_LDR          = MTL::PixelFormat(212);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_10x5_LDR         = MTL::PixelFormat(213);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_10x6_LDR         = MTL::PixelFormat(214);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_10x8_LDR         = MTL::PixelFormat(215);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_10x10_LDR        = MTL::PixelFormat(216);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_12x10_LDR        = MTL::PixelFormat(217);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_12x12_LDR        = MTL::PixelFormat(218);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_4x4_HDR          = MTL::PixelFormat(222);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_5x4_HDR          = MTL::PixelFormat(223);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_5x5_HDR          = MTL::PixelFormat(224);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_6x5_HDR          = MTL::PixelFormat(225);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_6x6_HDR          = MTL::PixelFormat(226);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_8x5_HDR          = MTL::PixelFormat(228);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_8x6_HDR          = MTL::PixelFormat(229);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_8x8_HDR          = MTL::PixelFormat(230);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_10x5_HDR         = MTL::PixelFormat(231);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_10x6_HDR         = MTL::PixelFormat(232);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_10x8_HDR         = MTL::PixelFormat(233);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_10x10_HDR        = MTL::PixelFormat(234);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_12x10_HDR        = MTL::PixelFormat(235);
-	constexpr MTL::PixelFormat kMtlPixelFormatASTC_12x12_HDR        = MTL::PixelFormat(236);
-	constexpr MTL::PixelFormat kMtlPixelFormatGBGR422               = MTL::PixelFormat(240);
-	constexpr MTL::PixelFormat kMtlPixelFormatBGRG422               = MTL::PixelFormat(241);
-	constexpr MTL::PixelFormat kMtlPixelFormatDepth16Unorm          = MTL::PixelFormat(250);
-	constexpr MTL::PixelFormat kMtlPixelFormatDepth32Float          = MTL::PixelFormat(252);
-	constexpr MTL::PixelFormat kMtlPixelFormatStencil8              = MTL::PixelFormat(253);
-	constexpr MTL::PixelFormat kMtlPixelFormatDepth24Unorm_Stencil8 = MTL::PixelFormat(255);
-	constexpr MTL::PixelFormat kMtlPixelFormatDepth32Float_Stencil8 = MTL::PixelFormat(260);
-	constexpr MTL::PixelFormat kMtlPixelFormatX32_Stencil8          = MTL::PixelFormat(261);
-	constexpr MTL::PixelFormat kMtlPixelFormatX24_Stencil8          = MTL::PixelFormat(262);
-
-	constexpr MTL::GPUFamily kMtlGPUFamilyApple1  = MTL::GPUFamily(1001);
-	constexpr MTL::GPUFamily kMtlGPUFamilyApple2  = MTL::GPUFamily(1002);
-	constexpr MTL::GPUFamily kMtlGPUFamilyApple3  = MTL::GPUFamily(1003);
-	constexpr MTL::GPUFamily kMtlGPUFamilyApple4  = MTL::GPUFamily(1004);
-	constexpr MTL::GPUFamily kMtlGPUFamilyApple5  = MTL::GPUFamily(1005);
-	constexpr MTL::GPUFamily kMtlGPUFamilyApple6  = MTL::GPUFamily(1006);
-	constexpr MTL::GPUFamily kMtlGPUFamilyApple7  = MTL::GPUFamily(1007);
-	constexpr MTL::GPUFamily kMtlGPUFamilyApple8  = MTL::GPUFamily(1008);
-	constexpr MTL::GPUFamily kMtlGPUFamilyApple9  = MTL::GPUFamily(1009);
-	constexpr MTL::GPUFamily kMtlGPUFamilyApple10 = MTL::GPUFamily(1010);
-
-	typedef MTL::BlitCommandEncoder*    BlitCommandEncoder;
-	typedef MTL::Buffer*                Buffer;
-	typedef MTL::CommandBuffer*         CommandBuffer;
-	typedef MTL::CommandQueue*          CommandQueue;
-	typedef MTL::ComputeCommandEncoder* ComputeCommandEncoder;
-	typedef MTL::Device*                Device;
-	typedef MTL::Function*              Function;
-	typedef MTL::Library*               Library;
-	typedef MTL::RenderCommandEncoder*  RenderCommandEncoder;
-	typedef MTL::Texture*               Texture;
-	typedef MTL::ComputePipelineState*  ComputePipelineState;
-	typedef MTL::DepthStencilState*     DepthStencilState;
-	typedef MTL::RenderPipelineState*   RenderPipelineState;
-	typedef MTL::SamplerState*          SamplerState;
-
 	// String conversion helper for metal-cpp API calls that take NS::String*
 	inline NS::String* nsstr(const char* _str)
 	{
 		return NS::String::string(_str, NS::UTF8StringEncoding);
 	}
 
-	inline Library newLibraryWithSource(Device _device, const char* _source)
+	inline MTL::Library* newLibraryWithSource(MTL::Device* _device, const char* _source)
 	{
 		NS::Error* error = NULL;
 		NS::String* source = NS::String::string(_source, NS::ASCIIStringEncoding);
-		Library lib = _device->newLibrary(source, (MTL::CompileOptions*)NULL, &error);
+		MTL::Library* lib = _device->newLibrary(source, (MTL::CompileOptions*)NULL, &error);
 		BX_WARN(NULL == error
 			, "Shader compilation failed: %s"
 			, error->localizedDescription()->utf8String()
@@ -269,29 +99,10 @@ namespace bgfx { namespace mtl
 		return lib;
 	}
 
-	typedef MTL::RenderPipelineDescriptor*                    RenderPipelineDescriptor;
-	typedef MTL::RenderPipelineColorAttachmentDescriptor*     RenderPipelineColorAttachmentDescriptor;
-	typedef MTL::RenderPipelineColorAttachmentDescriptorArray* RenderPipelineColorAttachmentDescriptorArray;
-	typedef MTL::ComputePipelineReflection*                   ComputePipelineReflection;
-	typedef MTL::DepthStencilDescriptor*                      DepthStencilDescriptor;
-	typedef MTL::StencilDescriptor*                           StencilDescriptor;
-	typedef MTL::RenderPassColorAttachmentDescriptor*         RenderPassColorAttachmentDescriptor;
-	typedef MTL::RenderPassDepthAttachmentDescriptor*         RenderPassDepthAttachmentDescriptor;
-	typedef MTL::RenderPassStencilAttachmentDescriptor*       RenderPassStencilAttachmentDescriptor;
-	typedef MTL::RenderPassDescriptor*                        RenderPassDescriptor;
-	typedef MTL::VertexDescriptor*                            VertexDescriptor;
-	typedef MTL::SamplerDescriptor*                           SamplerDescriptor;
-	typedef MTL::TextureDescriptor*                           TextureDescriptor;
-	typedef MTL::RenderPipelineReflection*                    RenderPipelineReflection;
-	typedef MTL::CaptureManager*                              CaptureManager;
-	typedef MTL::CaptureDescriptor*                           CaptureDescriptor;
-	typedef MTL::RasterizationRateMapDescriptor*              RasterizationRateMapDescriptor;
-	typedef MTL::RasterizationRateLayerDescriptor*            RasterizationRateLayerDescriptor;
-
-	inline RenderPipelineState newRenderPipelineStateWithDescriptor(Device _device, RenderPipelineDescriptor _descriptor)
+	inline MTL::RenderPipelineState* newRenderPipelineStateWithDescriptor(MTL::Device* _device, MTL::RenderPipelineDescriptor* _descriptor)
 	{
 		NS::Error* error = NULL;
-		RenderPipelineState state = _device->newRenderPipelineState(_descriptor, &error);
+		MTL::RenderPipelineState* state = _device->newRenderPipelineState(_descriptor, &error);
 		BX_WARN(NULL == error
 			, "newRenderPipelineStateWithDescriptor failed: %s"
 			, error->localizedDescription()->utf8String()
@@ -299,15 +110,15 @@ namespace bgfx { namespace mtl
 		return state;
 	}
 
-	inline RenderPipelineState newRenderPipelineStateWithDescriptor(
-		  Device _device
-		, RenderPipelineDescriptor _descriptor
+	inline MTL::RenderPipelineState* newRenderPipelineStateWithDescriptor(
+		  MTL::Device* _device
+		, MTL::RenderPipelineDescriptor* _descriptor
 		, MTL::PipelineOption _options
-		, RenderPipelineReflection* _reflection
+		, MTL::RenderPipelineReflection** _reflection
 		)
 	{
 		NS::Error* error = NULL;
-		RenderPipelineState state = _device->newRenderPipelineState(_descriptor, _options, _reflection, &error);
+		MTL::RenderPipelineState* state = _device->newRenderPipelineState(_descriptor, _options, _reflection, &error);
 		BX_WARN(NULL == error
 			, "newRenderPipelineStateWithDescriptor failed: %s"
 			, error->localizedDescription()->utf8String()
@@ -315,15 +126,15 @@ namespace bgfx { namespace mtl
 		return state;
 	}
 
-	inline ComputePipelineState newComputePipelineStateWithFunction(
-		  Device _device
-		, Function _function
+	inline MTL::ComputePipelineState* newComputePipelineStateWithFunction(
+		  MTL::Device* _device
+		, MTL::Function* _function
 		, MTL::PipelineOption _options
-		, ComputePipelineReflection* _reflection
+		, MTL::ComputePipelineReflection** _reflection
 		)
 	{
 		NS::Error* error = NULL;
-		ComputePipelineState state = _device->newComputePipelineState(_function, _options, _reflection, &error);
+		MTL::ComputePipelineState* state = _device->newComputePipelineState(_function, _options, _reflection, &error);
 		BX_WARN(NULL == error
 			, "newComputePipelineStateWithFunction failed: %s"
 			, error->localizedDescription()->utf8String()
@@ -331,68 +142,68 @@ namespace bgfx { namespace mtl
 		return state;
 	}
 
-	inline RenderPipelineDescriptor newRenderPipelineDescriptor()
+	inline MTL::RenderPipelineDescriptor* newRenderPipelineDescriptor()
 	{
 		return MTL::RenderPipelineDescriptor::alloc()->init();
 	}
 
-	inline void reset(RenderPipelineDescriptor _desc)
+	inline void reset(MTL::RenderPipelineDescriptor* _desc)
 	{
 		_desc->reset();
 	}
 
-	inline DepthStencilDescriptor newDepthStencilDescriptor()
+	inline MTL::DepthStencilDescriptor* newDepthStencilDescriptor()
 	{
 		return MTL::DepthStencilDescriptor::alloc()->init();
 	}
 
-	inline StencilDescriptor newStencilDescriptor()
+	inline MTL::StencilDescriptor* newStencilDescriptor()
 	{
 		return MTL::StencilDescriptor::alloc()->init();
 	}
 
-	inline RenderPassDescriptor newRenderPassDescriptor()
+	inline MTL::RenderPassDescriptor* newRenderPassDescriptor()
 	{
 		return MTL::RenderPassDescriptor::alloc()->init();
 	}
 
-	inline VertexDescriptor newVertexDescriptor()
+	inline MTL::VertexDescriptor* newVertexDescriptor()
 	{
 		return MTL::VertexDescriptor::alloc()->init();
 	}
 
-	inline void reset(VertexDescriptor _desc)
+	inline void reset(MTL::VertexDescriptor* _desc)
 	{
 		_desc->reset();
 	}
 
-	inline SamplerDescriptor newSamplerDescriptor()
+	inline MTL::SamplerDescriptor* newSamplerDescriptor()
 	{
 		return MTL::SamplerDescriptor::alloc()->init();
 	}
 
-	inline TextureDescriptor newTextureDescriptor()
+	inline MTL::TextureDescriptor* newTextureDescriptor()
 	{
 		return MTL::TextureDescriptor::alloc()->init();
 	}
 
-	inline CaptureManager getSharedCaptureManager()
+	inline MTL::CaptureManager* getSharedCaptureManager()
 	{
 		return MTL::CaptureManager::sharedCaptureManager();
 	}
 
-	inline CaptureDescriptor newCaptureDescriptor()
+	inline MTL::CaptureDescriptor* newCaptureDescriptor()
 	{
 		return MTL::CaptureDescriptor::alloc()->init();
 	}
 
-	inline RasterizationRateLayerDescriptor newRasterizationRateLayerDescriptor(float _rate)
+	inline MTL::RasterizationRateLayerDescriptor* newRasterizationRateLayerDescriptor(float _rate)
 	{
 		const float rate[1] = { _rate };
 		return MTL::RasterizationRateLayerDescriptor::alloc()->init(MTL::Size::Make(1, 1, 0), rate, rate);
 	}
 
-	inline RasterizationRateMapDescriptor newRasterizationRateMapDescriptor()
+	inline MTL::RasterizationRateMapDescriptor* newRasterizationRateMapDescriptor()
 	{
 		return MTL::RasterizationRateMapDescriptor::alloc()->init();
 	}
@@ -505,7 +316,7 @@ namespace bgfx { namespace mtl
 		uint16_t m_flags;
 		bool     m_vertex;
 
-		Buffer   m_ptr;
+		MTL::Buffer*   m_ptr;
 		uint8_t* m_dynamic;
 	};
 
@@ -537,7 +348,7 @@ namespace bgfx { namespace mtl
 			MTL_RELEASE_W(m_function, 0);
 		}
 
-		Function m_function;
+		MTL::Function* m_function;
 		uint32_t m_hash;
 		uint16_t m_numThreads[3];
 	};
@@ -627,8 +438,8 @@ namespace bgfx { namespace mtl
 		PredefinedUniform m_predefined[PredefinedUniform::Count*2];
 		uint8_t m_numPredefined;
 
-		RenderPipelineState  m_rps;
-		ComputePipelineState m_cps;
+		MTL::RenderPipelineState*  m_rps;
+		MTL::ComputePipelineState* m_cps;
 	};
 
 	void release(PipelineStateMtl* _ptr)
@@ -684,13 +495,13 @@ namespace bgfx { namespace mtl
 			, uint8_t _mip = UINT8_MAX
 			);
 
-		Texture getTextureMipLevel(uint8_t _mip);
+		MTL::Texture* getTextureMipLevel(uint8_t _mip);
 
-		Texture m_ptr;
-		Texture m_ptrMsaa;
-		Texture m_ptrStencil; // for emulating packed depth/stencil formats - only for iOS8...
-		Texture m_ptrMips[14];
-		SamplerState m_sampler;
+		MTL::Texture* m_ptr;
+		MTL::Texture* m_ptrMsaa;
+		MTL::Texture* m_ptrStencil; // for emulating packed depth/stencil formats - only for iOS8...
+		MTL::Texture* m_ptrMips[14];
+		MTL::SamplerState* m_sampler;
 		uint64_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
@@ -724,16 +535,16 @@ namespace bgfx { namespace mtl
 
 		uint32_t resize(uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat);
 
-		Texture currentDrawableTexture();
+		MTL::Texture* currentDrawableTexture();
 
 		CAMetalLayer* m_metalLayer;
 		id<CAMetalDrawable> m_drawable;
 
-		Texture m_drawableTexture;
+		MTL::Texture* m_drawableTexture;
 
-		Texture m_backBufferColorMsaa;
-		Texture m_backBufferDepth;
-		Texture m_backBufferStencil;
+		MTL::Texture* m_backBufferColorMsaa;
+		MTL::Texture* m_backBufferDepth;
+		MTL::Texture* m_backBufferStencil;
 
 		uint32_t m_maxAnisotropy;
 		void* m_nwh;
@@ -795,9 +606,9 @@ namespace bgfx { namespace mtl
 		{
 		}
 
-		void init(Device _device);
+		void init(MTL::Device* _device);
 		void shutdown();
-		CommandBuffer alloc();
+		MTL::CommandBuffer* alloc();
 		void kick(bool _endFrame, bool _waitForFinish);
 		void finish(bool _finishAll);
 		void release(NSObject* _ptr);
@@ -809,8 +620,8 @@ namespace bgfx { namespace mtl
 
 		bx::Semaphore m_framesSemaphore;
 
-		CommandQueue  m_commandQueue;
-		CommandBuffer m_activeCommandBuffer;
+		MTL::CommandQueue*  m_commandQueue;
+		MTL::CommandBuffer* m_activeCommandBuffer;
 
 		int m_releaseWriteIndex;
 		int m_releaseReadIndex;
@@ -829,7 +640,7 @@ namespace bgfx { namespace mtl
 		void shutdown();
 		uint32_t begin(uint32_t _resultIdx, uint32_t _frameNum);
 		void end(uint32_t _idx);
-		void addHandlers(CommandBuffer& _commandBuffer);
+		void addHandlers(MTL::CommandBuffer*& _commandBuffer);
 		bool get();
 
 		struct Result
@@ -867,8 +678,8 @@ namespace bgfx { namespace mtl
 
 		void postReset();
 		void preReset();
-		void begin(RenderCommandEncoder& _rce, Frame* _render, OcclusionQueryHandle _handle);
-		void end(RenderCommandEncoder& _rce);
+		void begin(MTL::RenderCommandEncoder*& _rce, Frame* _render, OcclusionQueryHandle _handle);
+		void end(MTL::RenderCommandEncoder*& _rce);
 		void resolve(Frame* _render, bool _wait = false);
 		void invalidate(OcclusionQueryHandle _handle);
 
@@ -877,7 +688,7 @@ namespace bgfx { namespace mtl
 			OcclusionQueryHandle m_handle;
 		};
 
-		Buffer m_buffer;
+		MTL::Buffer* m_buffer;
 		Query m_query[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
 		bx::RingBufferControl m_control;
 	};
