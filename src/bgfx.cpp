@@ -2223,9 +2223,6 @@ namespace bgfx
 		bx::alignedFree(g_allocator, m_encoder, BX_ALIGNOF(EncoderImpl) );
 		bx::free(g_allocator, m_encoderStats);
 
-		m_dynVertexBufferAllocator.compact();
-		m_dynIndexBufferAllocator.compact();
-
 		BX_ASSERT(
 			  m_layoutHandle.getNumHandles() == m_vertexLayoutRef.m_vertexLayoutMap.getNumElements()
 			, "VertexLayoutRef mismatch, num handles %d, handles in hash map %d."
