@@ -511,7 +511,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 #define CHECK_FEATURE_AVAILABLE(feature, ...)                                       \
 	BX_MACRO_BLOCK_BEGIN                                                            \
-		if (@available(__VA_ARGS__) ) { feature = true; } else { feature = false; } \
+		if (__builtin_available(__VA_ARGS__) ) { feature = true; } else { feature = false; } \
 		BX_TRACE("[MTL] OS feature %s: %d", (#feature) + 2, feature);               \
 	BX_MACRO_BLOCK_END
 

@@ -200,21 +200,6 @@ function bgfxProjectBase(_kind, _defines)
 			path.join(BGFX_DIR, "src/vertexlayout.cpp"),
 		}
 
-		configuration { "xcode* or osx* or ios*" }
-			files {
-				path.join(BGFX_DIR, "src/amalgamated.mm"),
-			}
-
-			excludes {
-				path.join(BGFX_DIR, "src/renderer_**.mm"),
-				path.join(BGFX_DIR, "src/amalgamated.cpp"),
-			}
-
-		configuration { "not (xcode* or osx* or ios*)" }
-			excludes {
-				path.join(BGFX_DIR, "src/**.mm"),
-			}
-
 		configuration {}
 
 	else
