@@ -31,42 +31,36 @@
 		BGFX_PROFILER_END();    \
 	BX_MACRO_BLOCK_END
 
-#define _MTL_RELEASE(_obj, _expected, _check)                                     \
-	BX_MACRO_BLOCK_BEGIN                                                          \
-		if (NULL != _obj)                                                         \
-		{                                                                         \
-			id _bridgedObj = (__bridge id)(const void*)_obj;                      \
-			const NSUInteger count = [_bridgedObj retainCount] - 1;               \
-			_check(isGraphicsDebuggerPresent()                                    \
-				|| _expected == count                                             \
-				, "%p RefCount is %d (expected %d). Label: \"%s\"."               \
-				, _obj                                                            \
-				, count                                                           \
-				, _expected                                                       \
-				, [_bridgedObj respondsToSelector:@selector(label)]               \
-					? [[_bridgedObj performSelector:@selector(label)] UTF8String] \
-					: "?!"                                                        \
-				);                                                                \
-			BX_UNUSED(count);                                                     \
-			[_bridgedObj release];                                                \
-			_obj = NULL;                                                          \
-		}                                                                         \
+#define _MTL_RELEASE(_obj, _expected, _check)                                               \
+	BX_MACRO_BLOCK_BEGIN                                                                    \
+		if (NULL != _obj)                                                                   \
+		{                                                                                   \
+			const NS::UInteger count = ((NS::Object*)(const void*)_obj)->retainCount() - 1; \
+			_check(isGraphicsDebuggerPresent()                                              \
+				|| _expected == count                                                       \
+				, "%p RefCount is %d (expected %d). Label: \"%s\"."                         \
+				, _obj                                                                      \
+				, count                                                                     \
+				, _expected                                                                 \
+				, bgfx::mtl::getObjectLabel((const void*)_obj)                              \
+				);                                                                          \
+			BX_UNUSED(count);                                                               \
+			((NS::Object*)(const void*)_obj)->release();                                    \
+			_obj = NULL;                                                                    \
+		}                                                                                   \
 	BX_MACRO_BLOCK_END
 
-#define _MTL_CHECK_REFCOUNT(_obj, _expected)                                  \
-	BX_MACRO_BLOCK_BEGIN                                                      \
-		id _bridgedObj = (__bridge id)(const void*)_obj;                      \
-		const NSUInteger count = [_bridgedObj retainCount];                   \
-		BX_ASSERT(isGraphicsDebuggerPresent()                                 \
-			|| _expected == count                                             \
-			, "%p RefCount is %d (expected %d). Label: \"%s\"."               \
-			, _obj                                                            \
-			, count                                                           \
-			, _expected                                                       \
-			, [_bridgedObj respondsToSelector:@selector(label)]               \
-				? [[_bridgedObj performSelector:@selector(label)] UTF8String] \
-				: "?!"                                                        \
-			);                                                                \
+#define _MTL_CHECK_REFCOUNT(_obj, _expected)                                        \
+	BX_MACRO_BLOCK_BEGIN                                                            \
+		const NS::UInteger count = ((NS::Object*)(const void*)_obj)->retainCount(); \
+		BX_ASSERT(isGraphicsDebuggerPresent()                                       \
+			|| _expected == count                                                   \
+			, "%p RefCount is %d (expected %d). Label: \"%s\"."                     \
+			, _obj                                                                  \
+			, count                                                                 \
+			, _expected                                                             \
+			, bgfx::mtl::getObjectLabel((const void*)_obj)                          \
+			);                                                                      \
 	BX_MACRO_BLOCK_END
 
 #if BGFX_CONFIG_DEBUG
@@ -81,6 +75,26 @@
 
 namespace bgfx { namespace mtl
 {
+	// Helper to access NS::Object's protected sendMessage for label retrieval
+	struct MtlObjAccess : public NS::Object
+	{
+		static bool hasLabel(const void* _obj)
+		{
+			return respondsToSelector(_obj, sel_registerName("label"));
+		}
+
+		static const char* label(const void* _obj)
+		{
+			NS::String* str = sendMessage<NS::String*>(_obj, sel_registerName("label"));
+			return str ? str->utf8String() : "?!";
+		}
+	};
+
+	inline const char* getObjectLabel(const void* _obj)
+	{
+		return MtlObjAccess::hasLabel(_obj) ? MtlObjAccess::label(_obj) : "?!";
+	}
+
 	// String conversion helper for metal-cpp API calls that take NS::String*
 	inline NS::String* nsstr(const char* _str)
 	{
@@ -209,31 +223,21 @@ namespace bgfx { namespace mtl
 	}
 
 	//helper functions
-	inline void release(NSObject* _obj)
-	{
-		[_obj release];
-	}
-
 	template<typename T>
 	inline void release(T* _obj)
 	{
-		[(id)(void*)_obj release];
-	}
-
-	inline void retain(NSObject* _obj)
-	{
-		[_obj retain];
+		((NS::Object*)(void*)_obj)->release();
 	}
 
 	template<typename T>
 	inline void retain(T* _obj)
 	{
-		[(id)(void*)_obj retain];
+		((NS::Object*)(void*)_obj)->retain();
 	}
 
-	inline const char* utf8String(NSString* _str)
+	inline const char* utf8String(NS::String* _str)
 	{
-		return [_str UTF8String];
+		return _str->utf8String();
 	}
 
 	// end of c++ wrapper
@@ -611,10 +615,10 @@ namespace bgfx { namespace mtl
 		MTL::CommandBuffer* alloc();
 		void kick(bool _endFrame, bool _waitForFinish);
 		void finish(bool _finishAll);
-		void release(NSObject* _ptr);
+		void release(NS::Object* _ptr);
 
 		template<typename T>
-		void release(T* _ptr) { release( (__bridge NSObject*)(const void*)_ptr ); }
+		void release(T* _ptr) { release( (NS::Object*)(const void*)_ptr ); }
 
 		void consume();
 
@@ -625,7 +629,7 @@ namespace bgfx { namespace mtl
 
 		int m_releaseWriteIndex;
 		int m_releaseReadIndex;
-		typedef stl::vector<NSObject*> ResourceArray;
+		typedef stl::vector<NS::Object*> ResourceArray;
 		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
 	};
 

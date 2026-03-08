@@ -386,11 +386,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		return UniformType::End;
 	}
 
-	static uint64_t getRegistryId(id<MTLDevice> _device)
-	{
-		return [_device respondsToSelector: @selector(registryID)] ? _device.registryID : 0;
-	}
-
 #if BX_PLATFORM_OSX
 	static uint32_t getEntryProperty(io_registry_entry_t _entry, CFStringRef _propertyName)
 	{
@@ -529,7 +524,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			if (NULL == m_device)
 			{
-				m_device = (MTL::Device*)MTLCreateSystemDefaultDevice();
+				m_device = MTL::CreateSystemDefaultDevice();
 			}
 
 			if (NULL == m_device)
@@ -576,7 +571,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				io_registry_entry_t entry;
 
-				uint64_t registryId = getRegistryId((id<MTLDevice>)m_device);
+				uint64_t registryId = m_device->registryID();
 
 				if (0 != registryId)
 				{
@@ -699,7 +694,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				s_textureFormat[bgfx::TextureFormat::RGBA4 ].m_fmt = MTL::PixelFormatInvalid;
 			}
 
-			const MTL::ReadWriteTextureTier rwTier = (MTL::ReadWriteTextureTier)[(id<MTLDevice>)m_device readWriteTextureSupport];
+			const MTL::ReadWriteTextureTier rwTier = m_device->readWriteTextureSupport();
 			g_caps.supported |= rwTier != MTL::ReadWriteTextureTierNone
 				? BGFX_CAPS_IMAGE_RW
 				: 0
@@ -1163,7 +1158,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		uintptr_t getInternal(TextureHandle _handle) override
 		{
-			return uintptr_t(id<MTLTexture>(m_textures[_handle.idx].m_ptr) );
+			return uintptr_t(m_textures[_handle.idx].m_ptr);
 		}
 
 		void destroyTexture(TextureHandle _handle) override
@@ -2075,15 +2070,10 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void processArguments(
 			  PipelineStateMtl* ps
-			, NSArray<id<MTLBinding>>* _vertexArgs
-			, NSArray<id<MTLBinding>>* _fragmentArgs
+			, NS::Array* _vertexArgs
+			, NS::Array* _fragmentArgs
 			)
 		{
-BX_PRAGMA_DIAGNOSTIC_PUSH();
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunguarded-availability-new");
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wincompatible-pointer-types");
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wdeprecated-declarations");
-
 			ps->m_numPredefined = 0;
 
 			for (uint32_t shaderType = 0; shaderType < 2; ++shaderType)
@@ -2094,50 +2084,66 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wdeprecated-declarations");
 					;
 				const int8_t fragmentBit = (1 == shaderType ? kUniformFragmentBit : 0);
 
-				for (id<MTLBinding> arg in (shaderType == 0 ? _vertexArgs : _fragmentArgs) )
+				NS::Array* args = shaderType == 0 ? _vertexArgs : _fragmentArgs;
+				if (NULL == args)
 				{
-					BX_TRACE("arg: %s type:%d", utf8String(arg.name), arg.type);
+					continue;
+				}
 
-					if ( (!m_usesMTLBindings && [(MTLArgument*)arg isActive]) || (m_usesMTLBindings && arg.used) )
+				for (NS::UInteger argIdx = 0, argCount = args->count(); argIdx < argCount; ++argIdx)
+				{
+					// Both MTL::Binding and MTL::Argument respond to the same selectors
+					// for name, type, index, and buffer properties.
+					MTL::Argument* arg = (MTL::Argument*)args->object(argIdx);
+
+					BX_TRACE("arg: %s type:%d", utf8String(arg->name()), arg->type());
+
+					const bool isArgActive = m_usesMTLBindings
+						? ((MTL::Binding*)arg)->isUsed()
+						: arg->isActive()
+						;
+
+					if (isArgActive)
 					{
-						if ((MTL::BindingType)(MTL::BindingType)arg.type == MTL::BindingTypeBuffer)
+						if ((NS::UInteger)arg->type() == MTL::BindingTypeBuffer)
 						{
-							const id<MTLBufferBinding> binding = (id<MTLBufferBinding>)arg;
-
-							if (0 == bx::strCmp(utf8String(arg.name), SHADER_UNIFORM_NAME) )
+							if (0 == bx::strCmp(utf8String(arg->name()), SHADER_UNIFORM_NAME) )
 							{
-								BX_ASSERT(arg.index == 0, "Uniform buffer must be in the buffer slot 0.");
+								BX_ASSERT(arg->index() == 0, "Uniform buffer must be in the buffer slot 0.");
 
 								BX_ASSERT(
-									  MTL::DataTypeStruct == (MTL::DataType)binding.bufferDataType
+									  MTL::DataTypeStruct == arg->bufferDataType()
 									, SHADER_UNIFORM_NAME "'s type must be a struct"
 									);
 
-								if (MTL::DataTypeStruct == (MTL::DataType)binding.bufferDataType)
+								if (MTL::DataTypeStruct == arg->bufferDataType())
 								{
 									if (shaderType == 0)
 									{
-										ps->m_vshConstantBufferSize      = uint32_t(binding.bufferDataSize);
-										ps->m_vshConstantBufferAlignment = uint32_t(binding.bufferAlignment);
+										ps->m_vshConstantBufferSize      = uint32_t(arg->bufferDataSize());
+										ps->m_vshConstantBufferAlignment = uint32_t(arg->bufferAlignment());
 									}
 									else
 									{
-										ps->m_fshConstantBufferSize      = uint32_t(binding.bufferDataSize);
-										ps->m_fshConstantBufferAlignment = uint32_t(binding.bufferAlignment);
+										ps->m_fshConstantBufferSize      = uint32_t(arg->bufferDataSize());
+										ps->m_fshConstantBufferAlignment = uint32_t(arg->bufferAlignment());
 									}
 
-									for (MTLStructMember* uniform in binding.bufferStructType.members )
-									{
-										const char* name = utf8String(uniform.name);
-										BX_TRACE("uniform: %s type:%d", name, uniform.dataType);
+									NS::Array* members = arg->bufferStructType()->members();
 
-										MTL::DataType dataType = (MTL::DataType)uniform.dataType;
+									for (NS::UInteger mi = 0, mc = members->count(); mi < mc; ++mi)
+									{
+										MTL::StructMember* uniform = (MTL::StructMember*)members->object(mi);
+										const char* name = utf8String(uniform->name());
+										BX_TRACE("uniform: %s type:%d", name, uniform->dataType());
+
+										MTL::DataType dataType = uniform->dataType();
 										uint32_t num = 1;
 
 										if (dataType == MTL::DataTypeArray)
 										{
-											dataType = (MTL::DataType)uniform.arrayType.elementType;
-											num = (uint32_t)uniform.arrayType.arrayLength;
+											dataType = uniform->arrayType()->elementType();
+											num = (uint32_t)uniform->arrayType()->arrayLength();
 										}
 
 										switch (dataType)
@@ -2147,7 +2153,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wdeprecated-declarations");
 										case MTL::DataTypeFloat3x3: num *= 3; break;
 
 										default:
-											BX_WARN(0, "Unsupported uniform MTL::DataType: %d", uniform.dataType);
+											BX_WARN(0, "Unsupported uniform MTL::DataType: %d", uniform->dataType());
 											break;
 										}
 
@@ -2155,7 +2161,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wdeprecated-declarations");
 
 										if (PredefinedUniform::Count != predefined)
 										{
-											ps->m_predefined[ps->m_numPredefined].m_loc   = uint32_t(uniform.offset);
+											ps->m_predefined[ps->m_numPredefined].m_loc   = uint32_t(uniform->offset());
 											ps->m_predefined[ps->m_numPredefined].m_count = uint16_t(num);
 											ps->m_predefined[ps->m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
 											++ps->m_numPredefined;
@@ -2173,50 +2179,50 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wdeprecated-declarations");
 												}
 
 												UniformType::Enum type = convertMtlType(dataType);
-												constantBuffer->writeUniformHandle(type|fragmentBit, uint32_t(uniform.offset), info->m_handle, uint16_t(num) );
-												BX_TRACE("store %s %d offset:%d", name, info->m_handle, uint32_t(uniform.offset) );
+												constantBuffer->writeUniformHandle(type|fragmentBit, uint32_t(uniform->offset()), info->m_handle, uint16_t(num) );
+												BX_TRACE("store %s %d offset:%d", name, info->m_handle, uint32_t(uniform->offset()) );
 											}
 										}
 									}
 								}
 							}
-							else if (arg.index > 0
-								 &&  NULL != binding.bufferStructType)
+							else if (arg->index() > 0
+								 &&  NULL != arg->bufferStructType())
 							{
-								const char* name = utf8String(arg.name);
+								const char* name = utf8String(arg->name());
 								BX_UNUSED(name);
 
-								if (arg.index >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
+								if (arg->index() >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
 								{
 									BX_TRACE(
 										"Binding index is too large %d max is %d. "
 										"User defined uniform '%s' won't be set."
-										, int32_t(arg.index - 1)
+										, int32_t(arg->index() - 1)
 										, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS - 1
 										, name
 										);
 								}
 								else
 								{
-									ps->m_bindingTypes[arg.index-1] |= fragmentBit
+									ps->m_bindingTypes[arg->index()-1] |= fragmentBit
 										? PipelineStateMtl::BindToFragmentShader
 										: PipelineStateMtl::BindToVertexShader
 										;
-									BX_TRACE("Buffer %s index: %d", name, int32_t(arg.index-1) );
+									BX_TRACE("Buffer %s index: %d", name, int32_t(arg->index()-1) );
 								}
 							}
 						}
-						else if ((MTL::BindingType)arg.type == MTL::BindingTypeTexture)
+						else if ((NS::UInteger)arg->type() == MTL::BindingTypeTexture)
 						{
-							const char* name = utf8String(arg.name);
+							const char* name = utf8String(arg->name());
 
-							if (arg.index >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
+							if (arg->index() >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
 							{
-								BX_WARN(false, "Binding index is too large %d max is %d. User defined uniform '%s' won't be set.", int(arg.index), BGFX_CONFIG_MAX_TEXTURE_SAMPLERS - 1, name);
+								BX_WARN(false, "Binding index is too large %d max is %d. User defined uniform '%s' won't be set.", int(arg->index()), BGFX_CONFIG_MAX_TEXTURE_SAMPLERS - 1, name);
 							}
 							else
 							{
-								ps->m_bindingTypes[arg.index] |= fragmentBit
+								ps->m_bindingTypes[arg->index()] |= fragmentBit
 									? PipelineStateMtl::BindToFragmentShader
 									: PipelineStateMtl::BindToVertexShader
 									;
@@ -2225,17 +2231,17 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wdeprecated-declarations");
 
 								if (info)
 								{
-									BX_TRACE("texture %s %d index:%d", name, info->m_handle, uint32_t(arg.index) );
+									BX_TRACE("texture %s %d index:%d", name, info->m_handle, uint32_t(arg->index()) );
 								}
 								else
 								{
-									BX_TRACE("image %s index:%d", name, uint32_t(arg.index) );
+									BX_TRACE("image %s index:%d", name, uint32_t(arg->index()) );
 								}
 							}
 						}
-						else if ((MTL::BindingType)arg.type == MTL::BindingTypeSampler)
+						else if ((NS::UInteger)arg->type() == MTL::BindingTypeSampler)
 						{
-							BX_TRACE("sampler: %s index:%d", utf8String(arg.name), arg.index);
+							BX_TRACE("sampler: %s index:%d", utf8String(arg->name()), arg->index());
 						}
 					}
 				}
@@ -2245,7 +2251,6 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wdeprecated-declarations");
 					constantBuffer->finish();
 				}
 			}
-BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 
 		PipelineStateMtl* getPipelineState(
@@ -2524,21 +2529,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 					if (NULL != reflection)
 					{
-BX_PRAGMA_DIAGNOSTIC_PUSH();
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunguarded-availability-new");
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wincompatible-pointer-types");
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wdeprecated-declarations");
-
 						if (m_usesMTLBindings)
 						{
-							processArguments(pso, (NSArray<id<MTLBinding>>*)reflection->vertexBindings(), (NSArray<id<MTLBinding>>*)reflection->fragmentBindings());
+							processArguments(pso, reflection->vertexBindings(), reflection->fragmentBindings());
 						}
 						else
 						{
-							processArguments(pso, (NSArray<id<MTLBinding>>*)reflection->vertexArguments(), (NSArray<id<MTLBinding>>*)reflection->fragmentArguments());
+							processArguments(pso, reflection->vertexArguments(), reflection->fragmentArguments());
 						}
-
-BX_PRAGMA_DIAGNOSTIC_POP();
 					}
 				}
 
@@ -2586,21 +2584,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					, &reflection
 					);
 
-BX_PRAGMA_DIAGNOSTIC_PUSH();
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunguarded-availability-new");
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wincompatible-pointer-types");
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wdeprecated-declarations");
-
 				if (m_usesMTLBindings)
 				{
-					processArguments(pso, (NSArray<id<MTLBinding>>*)reflection->bindings(), NULL);
+					processArguments(pso, reflection->bindings(), NULL);
 				}
 				else
 				{
-					processArguments(pso, (NSArray<id<MTLBinding>>*)reflection->arguments(), NULL);
+					processArguments(pso, reflection->arguments(), NULL);
 				}
-
-BX_PRAGMA_DIAGNOSTIC_POP();
 
 				for (uint32_t ii = 0; ii < 3; ++ii)
 				{
@@ -2913,12 +2904,16 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		uint32_t instUsed = 0;
 		if (NULL != _vsh->m_function)
 		{
-			for (MTLVertexAttribute* attrib in ((id<MTLFunction>)_vsh->m_function).vertexAttributes)
+			NS::Array* vertexAttribs = _vsh->m_function->vertexAttributes();
+
+			for (NS::UInteger ai = 0, ac = vertexAttribs->count(); ai < ac; ++ai)
 			{
-				if (attrib.active)
+				MTL::VertexAttribute* attrib = (MTL::VertexAttribute*)vertexAttribs->object(ai);
+
+				if (attrib->isActive())
 				{
-					const char* name = utf8String(attrib.name);
-					uint32_t loc = (uint32_t)attrib.attributeIndex;
+					const char* name = utf8String(attrib->name());
+					uint32_t loc = (uint32_t)attrib->attributeIndex();
 					BX_TRACE("attr %s: %d", name, loc);
 
 					for (uint8_t ii = 0; ii < Attrib::Count; ++ii)
@@ -3160,7 +3155,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			if (0 != _external)
 			{
-				m_ptr    = (MTL::Texture*)id<MTLTexture>(_external);
+				m_ptr    = (MTL::Texture*)(void*)_external;
 				m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
 			}
 			else
@@ -3294,7 +3289,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	{
 		destroy();
 		m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
-		m_ptr = (MTL::Texture*)id<MTLTexture>(_ptr);
+		m_ptr = (MTL::Texture*)(void*)_ptr;
 	}
 
 	void TextureMtl::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
@@ -3719,7 +3714,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			{
 				m_drawableTexture = (MTL::Texture*)m_drawable.texture;
 				retain(m_drawable); // keep alive to be usable at 'flip'
-				retain((NSObject*)m_drawableTexture);
+				retain(m_drawableTexture);
 			}
 			else
 			{
@@ -3964,7 +3959,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 	}
 
-	void CommandQueueMtl::release(NSObject* _ptr)
+	void CommandQueueMtl::release(NS::Object* _ptr)
 	{
 		m_release[m_releaseWriteIndex].push_back(_ptr);
 	}
