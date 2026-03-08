@@ -929,51 +929,62 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void shutdown()
 		{
-			m_occlusionQuery.postReset();
-			m_gpuTimer.shutdown();
-
-			m_pipelineStateCache.invalidate();
-			m_pipelineProgram.clear();
-
-			m_depthStencilStateCache.invalidate();
-			m_samplerStateCache.invalidate();
-
-			m_cmd.kick(false, true);
-
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_shaders); ++ii)
 			{
-				m_shaders[ii].destroy();
+				NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+
+				m_gpuTimer.shutdown();
+				m_cmd.kick(false, true);
+
+				pool->release();
 			}
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
 			{
-				m_textures[ii].destroy();
+				NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+
+				m_pipelineStateCache.invalidate();
+				m_pipelineProgram.clear();
+
+				m_depthStencilStateCache.invalidate();
+				m_samplerStateCache.invalidate();
+
+				for (uint32_t ii = 0; ii < BX_COUNTOF(m_shaders); ++ii)
+				{
+					m_shaders[ii].destroy();
+				}
+
+				for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
+				{
+					m_textures[ii].destroy();
+				}
+
+				m_screenshotBlitProgramVsh.destroy();
+				m_screenshotBlitProgramFsh.destroy();
+				m_screenshotBlitProgram.destroy();
+				MTL_RELEASE(m_screenshotBlitRenderPipelineState, 0);
+
+				captureFinish();
+
+				MTL_RELEASE(m_depthStencilDescriptor, 0);
+				MTL_RELEASE(m_frontFaceStencilDescriptor, 0);
+				MTL_RELEASE(m_backFaceStencilDescriptor, 0);
+				MTL_RELEASE(m_renderPipelineDescriptor, 0);
+				MTL_RELEASE(m_vertexDescriptor, 0);
+				MTL_RELEASE(m_samplerDescriptor, 0);
+
+				m_occlusionQuery.postReset();
+				m_mainFrameBuffer.destroy();
+
+				m_cmd.shutdown();
+
+				for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_LATENCY; ++ii)
+				{
+					MTL_RELEASE_W(m_uniformBuffers[ii], 0);
+				}
+
+				MTL_RELEASE_W(m_device, 0);
+
+				pool->release();
 			}
-
-			m_screenshotBlitProgramVsh.destroy();
-			m_screenshotBlitProgramFsh.destroy();
-			m_screenshotBlitProgram.destroy();
-			MTL_RELEASE(m_screenshotBlitRenderPipelineState, 0);
-
-			captureFinish();
-
-			MTL_RELEASE(m_depthStencilDescriptor, 0);
-			MTL_RELEASE(m_frontFaceStencilDescriptor, 0);
-			MTL_RELEASE(m_backFaceStencilDescriptor, 0);
-			MTL_RELEASE(m_renderPipelineDescriptor, 0);
-			MTL_RELEASE(m_vertexDescriptor, 0);
-			MTL_RELEASE(m_samplerDescriptor, 0);
-
-			m_mainFrameBuffer.destroy();
-
-			m_cmd.shutdown();
-
-			for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_LATENCY; ++ii)
-			{
-				MTL_RELEASE_W(m_uniformBuffers[ii], 0);
-			}
-
-			MTL_RELEASE_W(m_device, 0);
 		}
 
 		RendererType::Enum getRendererType() const override
@@ -3896,13 +3907,26 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 	void CommandQueueMtl::shutdown()
 	{
 		finish(true);
-		MTL_RELEASE_W(m_commandQueue, 0);
+
+		{
+			NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+
+			MTL_RELEASE(m_commandQueue, 0);
+
+			pool->release();
+		}
 	}
 
 	MTL::CommandBuffer* CommandQueueMtl::alloc()
 	{
-		m_activeCommandBuffer = m_commandQueue->commandBuffer();
-		retain(m_activeCommandBuffer);
+		{
+			NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+
+			m_activeCommandBuffer = m_commandQueue->commandBuffer();
+			retain(m_activeCommandBuffer);
+
+			pool->release();
+		}
 		return m_activeCommandBuffer;
 	}
 
@@ -3935,7 +3959,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				m_activeCommandBuffer->waitUntilCompleted();
 			}
 
-			MTL_RELEASE_I(m_activeCommandBuffer);
+			{
+				NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+
+				MTL_RELEASE_I(m_activeCommandBuffer);
+
+				pool->release();
+			}
 		}
 	}
 
