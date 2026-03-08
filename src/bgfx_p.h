@@ -3222,8 +3222,7 @@ namespace bgfx
 	// First-fit non-local allocator.
 	//
 	// The free list is kept sorted by address at all times, which:
-	//  - Enables O(1) adjacent-block coalescing on free (no deferred compact needed).
-	//  - Eliminates the need to sort during compact().
+	//  - Enables O(1) adjacent-block coalescing on free.
 	//  - Provides cache-friendly iteration (contiguous vector storage).
 	//  - Uses binary search for sorted insertion, replacing the O(n) push_front.
 	//
@@ -3233,7 +3232,8 @@ namespace bgfx
 		static const uint64_t kInvalidBlock = UINT64_MAX;
 
 		NonLocalAllocator()
-			: m_total(0)
+			: m_totalUsed(0)
+			, m_totalAvailable(0)
 		{
 		}
 
@@ -3245,12 +3245,15 @@ namespace bgfx
 		{
 			m_free.clear();
 			m_used.clear();
-			m_total = 0;
+			m_slab.clear();
+			m_totalUsed = 0;
 		}
 
 		void add(uint64_t _ptr, uint32_t _size)
 		{
+			m_slab.insert(stl::make_pair(_ptr, _size) );
 			insertFreeBlock(_ptr, _size);
+			m_totalAvailable += _size;
 		}
 
 		uint64_t remove()
@@ -3261,7 +3264,32 @@ namespace bgfx
 			{
 				Free freeBlock = m_free.front();
 				m_free.erase(m_free.begin() );
+				m_slab.erase(m_slab.find(freeBlock.m_ptr));
+				m_totalAvailable -= freeBlock.m_size;
 				return freeBlock.m_ptr;
+			}
+
+			return 0;
+		}
+
+		/// Returns the base address of a fully-free buffer region, or 0 if
+		/// none found. Call in a loop after free() to reclaim individual
+		/// GPU buffers whose sub-allocations have all been released.
+		uint64_t removeOrphaned()
+		{
+			for (FreeList::iterator it = m_free.begin(), itEnd = m_free.end(); it != itEnd; ++it)
+			{
+				SlabList::iterator slabIt = m_slab.find(it->m_ptr);
+				if (slabIt != m_slab.end()
+				&&  slabIt->second == it->m_size)
+				{
+					m_totalAvailable -= it->m_size;
+
+					uint64_t ptr = it->m_ptr;
+					m_free.erase(it);
+					m_slab.erase(slabIt);
+					return ptr;
+				}
 			}
 
 			return 0;
@@ -3278,7 +3306,7 @@ namespace bgfx
 					uint64_t ptr = it->m_ptr;
 
 					m_used.insert(stl::make_pair(ptr, _size) );
-					m_total += _size;
+					m_totalUsed += _size;
 
 					if (it->m_size != _size)
 					{
@@ -3306,7 +3334,7 @@ namespace bgfx
 				const uint64_t ptr  = it->first;
 				const uint32_t size = it->second;
 
-				m_total -= size;
+				m_totalUsed -= size;
 				m_used.erase(it);
 
 				// Insert into sorted free list and coalesce with adjacent blocks.
@@ -3314,17 +3342,14 @@ namespace bgfx
 			}
 		}
 
-		bool compact()
+		uint32_t getTotalUsed() const
 		{
-			// The free list is maintained in sorted order with immediate
-			// coalescing, so compact() is a no-op for merging. Just report
-			// whether all allocations have been freed.
-			return 0 == m_used.size();
+			return m_totalUsed;
 		}
 
-		uint32_t getTotal() const
+		uint32_t getTotalAvailable() const
 		{
-			return m_total;
+			return m_totalAvailable;
 		}
 
 	private:
@@ -3403,7 +3428,11 @@ namespace bgfx
 		typedef stl::unordered_map<uint64_t, uint32_t> UsedList;
 		UsedList m_used;
 
-		uint32_t m_total;
+		typedef stl::unordered_map<uint64_t, uint32_t> SlabList;
+		SlabList m_slab;
+
+		uint32_t m_totalUsed;
+		uint32_t m_totalAvailable;
 	};
 
 	struct UniformCache
@@ -3420,11 +3449,11 @@ namespace bgfx
 			BX_ASSERT(true
 				&& 0 == m_uniformKeyHashMap.size()
 				&& 0 == m_uniformEntryMap.size()
-				&& 0 == m_uniformStoreAlloc.getTotal()
+				&& 0 == m_uniformStoreAlloc.getTotalUsed()
 				, "UniformCache leak (keys %d, entries %d, %d bytes)!"
 				, m_uniformKeyHashMap.size()
 				, m_uniformEntryMap.size()
-				, m_uniformStoreAlloc.getTotal()
+				, m_uniformStoreAlloc.getTotalUsed()
 				);
 
 			bx::free(g_allocator, m_data);
@@ -3536,11 +3565,9 @@ namespace bgfx
 
 		void frame(UniformCacheFrame& _outUniformCacheFrame)
 		{
-			m_uniformStoreAlloc.compact();
-
 			_outUniformCacheFrame.resize(
 				  uint32_t(m_uniformKeyHashMap.size() )
-				, m_uniformStoreAlloc.getTotal()
+				, m_uniformStoreAlloc.getTotalUsed()
 				);
 
 			using OffsetRemap = stl::unordered_map<uint32_t, uint32_t>;
@@ -4286,13 +4313,11 @@ namespace bgfx
 			else
 			{
 				m_dynIndexBufferAllocator.free(uint64_t(_dib.m_handle.idx) << 32 | _dib.m_offset);
-				if (m_dynIndexBufferAllocator.compact() )
+
+				for (uint64_t ptr = m_dynIndexBufferAllocator.removeOrphaned(); 0 != ptr; ptr = m_dynIndexBufferAllocator.removeOrphaned() )
 				{
-					for (uint64_t ptr = m_dynIndexBufferAllocator.remove(); 0 != ptr; ptr = m_dynIndexBufferAllocator.remove() )
-					{
-						IndexBufferHandle handle = { uint16_t(ptr >> 32) };
-						destroyIndexBuffer(handle);
-					}
+					IndexBufferHandle handle = { uint16_t(ptr >> 32) };
+					destroyIndexBuffer(handle);
 				}
 			}
 		}
@@ -4487,13 +4512,11 @@ namespace bgfx
 			else
 			{
 				m_dynVertexBufferAllocator.free(uint64_t(_dvb.m_handle.idx) << 32 | _dvb.m_offset);
-				if (m_dynVertexBufferAllocator.compact() )
+
+				for (uint64_t ptr = m_dynVertexBufferAllocator.removeOrphaned(); 0 != ptr; ptr = m_dynVertexBufferAllocator.removeOrphaned() )
 				{
-					for (uint64_t ptr = m_dynVertexBufferAllocator.remove(); 0 != ptr; ptr = m_dynVertexBufferAllocator.remove() )
-					{
-						VertexBufferHandle handle = { uint16_t(ptr >> 32) };
-						destroyVertexBuffer(handle);
-					}
+					VertexBufferHandle handle = { uint16_t(ptr >> 32) };
+					destroyVertexBuffer(handle);
 				}
 			}
 		}
