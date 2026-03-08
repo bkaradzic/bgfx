@@ -9,11 +9,16 @@
 
 #define NS_PRIVATE_IMPLEMENTATION
 #define MTL_PRIVATE_IMPLEMENTATION
+#define CA_PRIVATE_IMPLEMENTATION
 #include <metal-cpp/metal.hpp>
 
 #include "renderer_mtl.h"
 #include "renderer.h"
 #include <bx/macros.h>
+
+#if BX_PLATFORM_OSX
+#	include <IOKit/IOKitLib.h>
+#endif // BX_PLATFORM_OSX
 
 #define UNIFORM_BUFFER_SIZE (8*1024*1024)
 
@@ -630,7 +635,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			//   https://web.archive.org/web/20230330111145/https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf
 			g_caps.limits.maxTextureSize = m_device->supportsFamily(MTL::GPUFamilyApple3) ? 16384 : 8192;
 			g_caps.limits.maxFBAttachments = 8;
-			g_caps.supported |= m_device->supportsFamily((MTL::GPUFamily)MTLGPUFamilyCommon2)
+			g_caps.supported |= m_device->supportsFamily(MTL::GPUFamilyCommon2)
 				? BGFX_CAPS_DRAW_INDIRECT
 				| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 				| BGFX_CAPS_TEXTURE_COMPARE_ALL
@@ -1106,7 +1111,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		static MTL::PixelFormat getSwapChainPixelFormat(SwapChainMtl* _swapChain)
 		{
 			return NULL != _swapChain
-				? (MTL::PixelFormat)_swapChain->m_metalLayer.pixelFormat
+				? _swapChain->m_metalLayer->pixelFormat()
 				: MTL::PixelFormatInvalid
 				;
 		}
@@ -3480,26 +3485,26 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			MTL_RELEASE(m_metalLayer, 2);
 
-			if (NULL != NSClassFromString(@"MTKView") )
+			Class mtkViewClass = objc_lookUpClass("MTKView");
+			if (NULL != mtkViewClass)
 			{
-				MTKView* view = (MTKView*)_nwh;
-
-				if (NULL != view
-				&&  [view isKindOfClass:NSClassFromString(@"MTKView")])
+				if (NULL != _nwh
+				&&  MtlObjAccess::send<bool>(_nwh, sel_registerName("isKindOfClass:"), mtkViewClass))
 				{
-					m_metalLayer = (CAMetalLayer*)view.layer;
+					m_metalLayer = (CA::MetalLayer*)MtlObjAccess::send<void*>(_nwh, sel_registerName("layer"));
 				}
 			}
 
-			if (NULL != NSClassFromString(@"CAMetalLayer") )
+			Class caMetalLayerClass = objc_lookUpClass("CAMetalLayer");
+			if (NULL != caMetalLayerClass)
 			{
 				if (NULL == m_metalLayer)
 #	if BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 				{
-					CAMetalLayer* metalLayer = (CAMetalLayer*)_nwh;
+					CA::MetalLayer* metalLayer = (CA::MetalLayer*)_nwh;
 
 					if (NULL == metalLayer
-					|| ![metalLayer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
+					||  !MtlObjAccess::send<bool>(metalLayer, sel_registerName("isKindOfClass:"), caMetalLayerClass))
 					{
 						BX_WARN(false, "Unable to create Metal device. Please set platform data window to a CAMetalLayer");
 						return;
@@ -3509,25 +3514,24 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				}
 #	elif BX_PLATFORM_OSX
 				{
-					NSObject* nvh = (NSObject*)_nwh;
-
-					if ([nvh isKindOfClass:[CAMetalLayer class]])
+					if (MtlObjAccess::send<bool>(_nwh, sel_registerName("isKindOfClass:"), caMetalLayerClass))
 					{
-						CAMetalLayer* metalLayer = (CAMetalLayer*)_nwh;
-						m_metalLayer = metalLayer;
+						m_metalLayer = (CA::MetalLayer*)_nwh;
 					}
 					else
 					{
-						NSView *contentView;
+						void* contentView = NULL;
 
-						if ([nvh isKindOfClass:[NSView class]])
+						Class nsViewClass   = objc_lookUpClass("NSView");
+						Class nsWindowClass = objc_lookUpClass("NSWindow");
+
+						if (MtlObjAccess::send<bool>(_nwh, sel_registerName("isKindOfClass:"), nsViewClass))
 						{
-							contentView = (NSView*)nvh;
+							contentView = _nwh;
 						}
-						else if ([nvh isKindOfClass:[NSWindow class]])
+						else if (MtlObjAccess::send<bool>(_nwh, sel_registerName("isKindOfClass:"), nsWindowClass))
 						{
-							NSWindow* nsWindow = (NSWindow*)nvh;
-							contentView = [nsWindow contentView];
+							contentView = MtlObjAccess::send<void*>(_nwh, sel_registerName("contentView"));
 						}
 						else
 						{
@@ -3537,21 +3541,22 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 						void (^setLayer)(void) =
 						^{
-							CALayer* layer = contentView.layer;
+							void* layer = MtlObjAccess::send<void*>(contentView, sel_registerName("layer"));
 
-							if(NULL != layer && [layer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
+							if(NULL != layer && MtlObjAccess::send<bool>(layer, sel_registerName("isKindOfClass:"), caMetalLayerClass))
 							{
-								m_metalLayer = (CAMetalLayer*)layer;
+								m_metalLayer = (CA::MetalLayer*)layer;
 							}
 							else
 							{
-								[contentView setWantsLayer: YES];
-								m_metalLayer = [CAMetalLayer layer];
-								[contentView setLayer:m_metalLayer];
+								MtlObjAccess::send<void>(contentView, sel_registerName("setWantsLayer:"), true);
+								m_metalLayer = CA::MetalLayer::layer();
+								MtlObjAccess::send<void>(contentView, sel_registerName("setLayer:"), m_metalLayer);
 							}
 						};
 
-						if ([NSThread isMainThread])
+						Class nsThreadClass = objc_lookUpClass("NSThread");
+						if (MtlObjAccess::send<bool>(nsThreadClass, sel_registerName("isMainThread")))
 						{
 							setLayer();
 						}
@@ -3560,7 +3565,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							bx::Semaphore semaphore;
 							bx::Semaphore* psemaphore = &semaphore;
 
-							CFRunLoopPerformBlock([[NSRunLoop mainRunLoop] getCFRunLoop], kCFRunLoopCommonModes,
+							Class nsRunLoopClass = objc_lookUpClass("NSRunLoop");
+							void* mainRunLoop = MtlObjAccess::send<void*>(nsRunLoopClass, sel_registerName("mainRunLoop"));
+							CFRunLoopRef cfRunLoop = MtlObjAccess::send<CFRunLoopRef>(mainRunLoop, sel_registerName("getCFRunLoop"));
+
+							CFRunLoopPerformBlock(cfRunLoop, kCFRunLoopCommonModes,
 							^{
 								setLayer();
 								psemaphore->post();
@@ -3579,13 +3588,13 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				return;
 			}
 
-			m_metalLayer.device              = (id<MTLDevice>)s_renderMtl->m_device;
-			m_metalLayer.magnificationFilter = kCAFilterNearest;
+			m_metalLayer->setDevice(s_renderMtl->m_device);
+			MtlObjAccess::send<void>(m_metalLayer, sel_registerName("setMagnificationFilter:"), nsstr("nearest"));
 
 			const Resolution& resolution = s_renderMtl->m_resolution;
-			m_metalLayer.pixelFormat     = (MTLPixelFormat)((resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
+			m_metalLayer->setPixelFormat((MTL::PixelFormat)((resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
 				? s_textureFormat[resolution.formatColor].m_fmtSrgb
-				: s_textureFormat[resolution.formatColor].m_fmt)
+				: s_textureFormat[resolution.formatColor].m_fmt))
 				;
 
 			retain(m_metalLayer);
@@ -3624,25 +3633,25 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 #	if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
 		if (s_renderMtl->m_hasVSync)
 		{
-			m_metalLayer.displaySyncEnabled = !!(resetFlags & BGFX_RESET_VSYNC);
+			m_metalLayer->setDisplaySyncEnabled(!!(resetFlags & BGFX_RESET_VSYNC));
 		}
 
 		if (s_renderMtl->m_hasMaximumDrawableCount)
 		{
-			m_metalLayer.maximumDrawableCount = bx::clamp<uint32_t>(
+			m_metalLayer->setMaximumDrawableCount(bx::clamp<uint32_t>(
 				  maxFrameLatency != 0 ? maxFrameLatency : BGFX_CONFIG_MAX_FRAME_LATENCY
 				, 2
 				, 3
-				);
+				) );
 		}
 #	endif // __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
 #endif // BX_PLATFORM_OSX
 
 		{
-			m_metalLayer.drawableSize = CGSizeMake(_width, _height);
-			m_metalLayer.pixelFormat  = (MTLPixelFormat)((resetFlags & BGFX_RESET_SRGB_BACKBUFFER)
+			m_metalLayer->setDrawableSize(CGSizeMake(_width, _height));
+			m_metalLayer->setPixelFormat((MTL::PixelFormat)((resetFlags & BGFX_RESET_SRGB_BACKBUFFER)
 				? s_textureFormat[formatColor].m_fmtSrgb
-				: s_textureFormat[formatColor].m_fmt)
+				: s_textureFormat[formatColor].m_fmt))
 				;
 		}
 
@@ -3699,7 +3708,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		if (sampleCount > 1)
 		{
-			desc->setPixelFormat((MTL::PixelFormat)m_metalLayer.pixelFormat);
+			desc->setPixelFormat(m_metalLayer->pixelFormat());
 			m_backBufferColorMsaa = s_renderMtl->m_device->newTexture(desc);
 			m_backBufferColorMsaa->setLabel(nsstr("SwapChain BackBuffer Color MSAA"));
 		}
@@ -3709,7 +3718,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		bx::HashMurmur2A murmur;
 		murmur.begin();
 		murmur.add(1);
-		murmur.add(m_metalLayer.pixelFormat);
+		murmur.add(m_metalLayer->pixelFormat());
 		murmur.add(formatColor);
 		murmur.add(formatDepthStencil);
 		murmur.add(sampleCount);
@@ -3721,11 +3730,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 	{
 		if (NULL == m_drawableTexture)
 		{
-			m_drawable = m_metalLayer.nextDrawable;
+			m_drawable = m_metalLayer->nextDrawable();
 
 			if (m_drawable != NULL)
 			{
-				m_drawableTexture = (MTL::Texture*)m_drawable.texture;
+				m_drawableTexture = m_drawable->texture();
 				retain(m_drawable); // keep alive to be usable at 'flip'
 				retain(m_drawableTexture);
 			}
@@ -3734,9 +3743,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				MTL::TextureDescriptor* desc = newTextureDescriptor();
 				desc->setTextureType(MTL::TextureType2D);
 
-				desc->setPixelFormat((MTL::PixelFormat)m_metalLayer.pixelFormat);
-				desc->setWidth(m_metalLayer.drawableSize.width);
-				desc->setHeight(m_metalLayer.drawableSize.height);
+				desc->setPixelFormat(m_metalLayer->pixelFormat());
+				desc->setWidth(m_metalLayer->drawableSize().width);
+				desc->setHeight(m_metalLayer->drawableSize().height);
 
 				desc->setDepth(1);
 				desc->setMipmapLevelCount(1);

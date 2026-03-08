@@ -10,11 +10,8 @@
 
 #if BGFX_CONFIG_RENDERER_METAL
 
-#import <MetalKit/MetalKit.h>
-
-#if BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
-#	import <UIKit/UIKit.h>
-#endif // BX_PLATFORM_*
+#include <metal-cpp/metal.hpp>
+#include <CoreFoundation/CoreFoundation.h>
 
 #define BGFX_MTL_PROFILER_BEGIN(_view, _abgr)         \
 	BX_MACRO_BLOCK_BEGIN                              \
@@ -87,6 +84,12 @@ namespace bgfx { namespace mtl
 		{
 			NS::String* str = sendMessage<NS::String*>(_obj, sel_registerName("label"));
 			return str ? str->utf8String() : "?!";
+		}
+
+		template<typename _Ret, typename... _Args>
+		static _Ret send(const void* _obj, SEL _sel, _Args... _args)
+		{
+			return sendMessage<_Ret>(_obj, _sel, _args...);
 		}
 	};
 
@@ -541,8 +544,8 @@ namespace bgfx { namespace mtl
 
 		MTL::Texture* currentDrawableTexture();
 
-		CAMetalLayer* m_metalLayer;
-		id<CAMetalDrawable> m_drawable;
+		CA::MetalLayer* m_metalLayer;
+		CA::MetalDrawable* m_drawable;
 
 		MTL::Texture* m_drawableTexture;
 
