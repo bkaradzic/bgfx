@@ -199,17 +199,7 @@ function bgfxProjectBase(_kind, _defines)
 			path.join(BGFX_DIR, "src/topology.cpp"),
 			path.join(BGFX_DIR, "src/vertexlayout.cpp"),
 		}
-
-		configuration {}
-
 	else
-		configuration { "xcode* or osx* or ios*" }
-			files {
-				path.join(BGFX_DIR, "src/renderer_**.mm"),
-			}
-
-		configuration {}
-
 		excludes {
 			path.join(BGFX_DIR, "src/amalgamated.**"),
 		}
