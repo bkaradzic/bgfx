@@ -3471,12 +3471,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			if (NULL != NSClassFromString(@"MTKView") )
 			{
-				MTKView *view = (MTKView *)_nwh;
+				MTKView* view = (MTKView*)_nwh;
 
 				if (NULL != view
 				&&  [view isKindOfClass:NSClassFromString(@"MTKView")])
 				{
-					m_metalLayer = (CAMetalLayer *)view.layer;
+					m_metalLayer = (CAMetalLayer*)view.layer;
 				}
 			}
 
@@ -3486,6 +3486,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 #	if BX_PLATFORM_IOS || BX_PLATFORM_VISIONOS
 				{
 					CAMetalLayer* metalLayer = (CAMetalLayer*)_nwh;
+
 					if (NULL == metalLayer
 					|| ![metalLayer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
 					{
@@ -3498,6 +3499,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 #	elif BX_PLATFORM_OSX
 				{
 					NSObject* nvh = (NSObject*)_nwh;
+
 					if ([nvh isKindOfClass:[CAMetalLayer class]])
 					{
 						CAMetalLayer* metalLayer = (CAMetalLayer*)_nwh;
