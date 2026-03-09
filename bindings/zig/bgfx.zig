@@ -970,6 +970,9 @@ pub const Attrib = enum(c_int) {
 };
 
 pub const AttribType = enum(c_int) {
+    /// Int8
+    Int8,
+
     /// Uint8
     Uint8,
 
@@ -978,6 +981,9 @@ pub const AttribType = enum(c_int) {
 
     /// Int16
     Int16,
+
+    /// Uint16
+    Uint16,
 
     /// Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
     Half,

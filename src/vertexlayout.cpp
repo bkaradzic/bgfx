@@ -16,18 +16,22 @@ namespace bgfx
 {
 	static const uint8_t s_attribTypeSizeD3D1x[AttribType::Count][4] =
 	{
+		{  1,  2,  4,  4 }, // Int8
 		{  1,  2,  4,  4 }, // Uint8
 		{  4,  4,  4,  4 }, // Uint10
 		{  2,  4,  8,  8 }, // Int16
+		{  2,  4,  8,  8 }, // Uint16
 		{  2,  4,  8,  8 }, // Half
 		{  4,  8, 12, 16 }, // Float
 	};
 
 	static const uint8_t s_attribTypeSizeGl[AttribType::Count][4] =
 	{
+		{  1,  2,  4,  4 }, // Int8
 		{  1,  2,  4,  4 }, // Uint8
 		{  4,  4,  4,  4 }, // Uint10
 		{  2,  4,  6,  8 }, // Int16
+		{  2,  4,  6,  8 }, // Uint16
 		{  2,  4,  6,  8 }, // Half
 		{  4,  8, 12, 16 }, // Float
 	};
@@ -87,7 +91,7 @@ namespace bgfx
 		const uint16_t encodedNorm = (_normalized&1)<<7;
 		const uint16_t encodedType = (_type&7)<<3;
 		const uint16_t encodedNum  = (_num-1)&3;
-		const uint16_t encodeAsInt = (_asInt&(!!"\x1\x1\x1\x0\x0"[_type]) )<<8;
+		const uint16_t encodeAsInt = (_asInt&(!!"\x1\x1\x1\x1\x1\x0\x0"[_type]) )<<8;
 		m_attributes[_attrib] = encodedNorm|encodedType|encodedNum|encodeAsInt;
 
 		m_offset[_attrib] = m_stride;
@@ -114,9 +118,11 @@ namespace bgfx
 
 	static const bool s_attribTypeIsFloat[] =
 	{
+		false, // Int8
 		false, // Uint8
 		false, // Uint10
 		false, // Int16
+		false, // Uint16
 		true,  // Half
 		true,  // Float
 	};
@@ -222,9 +228,11 @@ namespace bgfx
 		// AttribType must be in order how it appears in AttribType::Enum!
 		// id is unique and should not be changed if new AttribTypes are
 		// added.
+		{ AttribType::Int8,   0x0006 },
 		{ AttribType::Uint8,  0x0001 },
 		{ AttribType::Uint10, 0x0005 },
 		{ AttribType::Int16,  0x0002 },
+		{ AttribType::Uint8,  0x0007 },
 		{ AttribType::Half,   0x0003 },
 		{ AttribType::Float,  0x0004 },
 	};

@@ -1004,6 +1004,9 @@ enum Attrib : uint
 
 enum AttribType : uint
 {
+	// Int8
+	INT8,
+
 	// Uint8
 	UINT8,
 
@@ -1012,6 +1015,9 @@ enum AttribType : uint
 
 	// Int16
 	INT16,
+
+	// Uint16
+	UINT16,
 
 	// Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
 	HALF,
