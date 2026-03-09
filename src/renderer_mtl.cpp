@@ -86,46 +86,48 @@ namespace bgfx { namespace mtl
 	static_assert(BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT == BX_COUNTOF(s_instanceDataName) );
 
 	static const MTL::VertexFormat s_attribType[][4][2] = //type, count, normalized
-	{
-		// Uint8
-		{
-			{ MTL::VertexFormatUChar2, MTL::VertexFormatUChar2Normalized },
-			{ MTL::VertexFormatUChar2, MTL::VertexFormatUChar2Normalized },
-			{ MTL::VertexFormatUChar3, MTL::VertexFormatUChar3Normalized },
-			{ MTL::VertexFormatUChar4, MTL::VertexFormatUChar4Normalized },
+	{	
+		{ // Uint8
+			{ MTL::VertexFormatChar2,                 MTL::VertexFormatChar2Normalized       },
+			{ MTL::VertexFormatChar2,                 MTL::VertexFormatChar2Normalized       },
+			{ MTL::VertexFormatChar3,                 MTL::VertexFormatChar3Normalized       },
+			{ MTL::VertexFormatChar4,                 MTL::VertexFormatChar4Normalized       },
 		},
-
-		// Uint10
-		// Note: unnormalized is handled as normalized now
-		{
+		{ // Uint8
+			{ MTL::VertexFormatUChar2,                MTL::VertexFormatUChar2Normalized      },
+			{ MTL::VertexFormatUChar2,                MTL::VertexFormatUChar2Normalized      },
+			{ MTL::VertexFormatUChar3,                MTL::VertexFormatUChar3Normalized      },
+			{ MTL::VertexFormatUChar4,                MTL::VertexFormatUChar4Normalized      },
+		},	
+		{ // Uint10
 			{ MTL::VertexFormatUInt1010102Normalized, MTL::VertexFormatUInt1010102Normalized },
 			{ MTL::VertexFormatUInt1010102Normalized, MTL::VertexFormatUInt1010102Normalized },
 			{ MTL::VertexFormatUInt1010102Normalized, MTL::VertexFormatUInt1010102Normalized },
 			{ MTL::VertexFormatUInt1010102Normalized, MTL::VertexFormatUInt1010102Normalized },
 		},
-
-		// Int16
-		{
-			{ MTL::VertexFormatShort2, MTL::VertexFormatShort2Normalized },
-			{ MTL::VertexFormatShort2, MTL::VertexFormatShort2Normalized },
-			{ MTL::VertexFormatShort3, MTL::VertexFormatShort3Normalized },
-			{ MTL::VertexFormatShort4, MTL::VertexFormatShort4Normalized },
+		{ // Int16
+			{ MTL::VertexFormatShort2,                MTL::VertexFormatShort2Normalized      },
+			{ MTL::VertexFormatShort2,                MTL::VertexFormatShort2Normalized      },
+			{ MTL::VertexFormatShort3,                MTL::VertexFormatShort3Normalized      },
+			{ MTL::VertexFormatShort4,                MTL::VertexFormatShort4Normalized      },
 		},
-
-		// Half
-		{
-			{ MTL::VertexFormatHalf2, MTL::VertexFormatHalf2 },
-			{ MTL::VertexFormatHalf2, MTL::VertexFormatHalf2 },
-			{ MTL::VertexFormatHalf3, MTL::VertexFormatHalf3 },
-			{ MTL::VertexFormatHalf4, MTL::VertexFormatHalf4 },
+		{ // Int16
+			{ MTL::VertexFormatUShort2,               MTL::VertexFormatUShort2Normalized     },
+			{ MTL::VertexFormatUShort2,               MTL::VertexFormatUShort2Normalized     },
+			{ MTL::VertexFormatUShort3,               MTL::VertexFormatUShort3Normalized     },
+			{ MTL::VertexFormatUShort4,               MTL::VertexFormatUShort4Normalized     },
 		},
-
-		// Float
-		{
-			{ MTL::VertexFormatFloat,  MTL::VertexFormatFloat  },
-			{ MTL::VertexFormatFloat2, MTL::VertexFormatFloat2 },
-			{ MTL::VertexFormatFloat3, MTL::VertexFormatFloat3 },
-			{ MTL::VertexFormatFloat4, MTL::VertexFormatFloat4 },
+		{ // Half
+			{ MTL::VertexFormatHalf2,                 MTL::VertexFormatHalf2                 },
+			{ MTL::VertexFormatHalf2,                 MTL::VertexFormatHalf2                 },
+			{ MTL::VertexFormatHalf3,                 MTL::VertexFormatHalf3                 },
+			{ MTL::VertexFormatHalf4,                 MTL::VertexFormatHalf4                 },
+		},
+		{ // Float
+			{ MTL::VertexFormatFloat,                 MTL::VertexFormatFloat                 },
+			{ MTL::VertexFormatFloat2,                MTL::VertexFormatFloat2                },
+			{ MTL::VertexFormatFloat3,                MTL::VertexFormatFloat3                },
+			{ MTL::VertexFormatFloat4,                MTL::VertexFormatFloat4                },
 		},
 	};
 	static_assert(AttribType::Count == BX_COUNTOF(s_attribType) );

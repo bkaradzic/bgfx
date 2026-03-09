@@ -135,9 +135,11 @@ namespace bgfx
 		/// Attribute types:
 		enum Enum
 		{
+			Int8,   //!< Int8
 			Uint8,  //!< Uint8
 			Uint10, //!< Uint10, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_UINT10`.
 			Int16,  //!< Int16
+			Uint16, //!< Uint16
 			Half,   //!< Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
 			Float,  //!< Float
 

@@ -1592,6 +1592,11 @@ public static class bgfx
 	public enum AttribType : uint32
 	{
 		/// <summary>
+		/// Int8
+		/// </summary>
+		Int8,
+	
+		/// <summary>
 		/// Uint8
 		/// </summary>
 		Uint8,
@@ -1605,6 +1610,11 @@ public static class bgfx
 		/// Int16
 		/// </summary>
 		Int16,
+	
+		/// <summary>
+		/// Uint16
+		/// </summary>
+		Uint16,
 	
 		/// <summary>
 		/// Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.

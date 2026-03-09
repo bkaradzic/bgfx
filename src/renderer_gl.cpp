@@ -85,9 +85,11 @@ namespace bgfx { namespace gl
 
 	static const GLenum s_attribType[] =
 	{
+		GL_BYTE,                     // Int8
 		GL_UNSIGNED_BYTE,            // Uint8
 		GL_UNSIGNED_INT_10_10_10_2,  // Uint10
 		GL_SHORT,                    // Int16
+		GL_UNSIGNED_SHORT,           // Uint16
 		GL_HALF_FLOAT,               // Half
 		GL_FLOAT,                    // Float
 	};

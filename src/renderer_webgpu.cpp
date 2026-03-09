@@ -56,6 +56,12 @@ namespace bgfx { namespace wgpu
 
 	static const WGPUVertexFormat s_attribType[][4][2] =
 	{
+		{ // Int8
+			{ WGPUVertexFormat_Sint8,     WGPUVertexFormat_Snorm8    },
+			{ WGPUVertexFormat_Sint8x2,   WGPUVertexFormat_Snorm8x2  },
+			{ WGPUVertexFormat_Sint8x4,   WGPUVertexFormat_Snorm8x4  },
+			{ WGPUVertexFormat_Sint8x4,   WGPUVertexFormat_Snorm8x4  },
+		},
 		{ // Uint8
 			{ WGPUVertexFormat_Uint8,     WGPUVertexFormat_Unorm8    },
 			{ WGPUVertexFormat_Uint8x2,   WGPUVertexFormat_Unorm8x2  },
@@ -73,6 +79,12 @@ namespace bgfx { namespace wgpu
 			{ WGPUVertexFormat_Sint16x2,  WGPUVertexFormat_Snorm16x2 },
 			{ WGPUVertexFormat_Sint16x4,  WGPUVertexFormat_Snorm16x4 },
 			{ WGPUVertexFormat_Sint16x4,  WGPUVertexFormat_Snorm16x4 },
+		},
+		{ // Uint16
+			{ WGPUVertexFormat_Uint16,    WGPUVertexFormat_Unorm16   },
+			{ WGPUVertexFormat_Uint16x2,  WGPUVertexFormat_Unorm16x2 },
+			{ WGPUVertexFormat_Uint16x4,  WGPUVertexFormat_Unorm16x4 },
+			{ WGPUVertexFormat_Uint16x4,  WGPUVertexFormat_Unorm16x4 },
 		},
 		{ // Half
 			{ WGPUVertexFormat_Float16,   WGPUVertexFormat_Float16   },

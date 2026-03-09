@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 141;
+enum uint apiVersion = 142;
 
 alias ViewID = ushort;
 
@@ -652,9 +652,11 @@ enum Attrib: bgfx.impl.Attrib.Enum{
 
 ///Vertex attribute type enum.
 enum AttribType: bgfx.impl.AttribType.Enum{
+	int8 = bgfx.impl.AttribType.Enum.int8,
 	uint8 = bgfx.impl.AttribType.Enum.uint8,
 	uint10 = bgfx.impl.AttribType.Enum.uint10,
 	int16 = bgfx.impl.AttribType.Enum.int16,
+	uint16 = bgfx.impl.AttribType.Enum.uint16,
 	half = bgfx.impl.AttribType.Enum.half,
 	float_ = bgfx.impl.AttribType.Enum.float_,
 	count = bgfx.impl.AttribType.Enum.count,
