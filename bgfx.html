@@ -739,6 +739,12 @@
 <dd><p>Discard all draw calls. </p>
 </dd></dl>
 
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.BGFX_FRAME_FLUSH">
+<span class="target" id="defines_8h_1a8c954acf4147715ded32d99c4dfdabf3"></span><span class="sig-name descname"><span class="n"><span class="pre">BGFX_FRAME_FLUSH</span></span></span><a class="headerlink" href="#c.BGFX_FRAME_FLUSH" title="Link to this definition"></a><br /></dt>
+<dd><p>Execute all rendering commands without presenting the backbuffer. </p>
+</dd></dl>
+
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx5frameE7uint8_t">
 <span id="_CPPv3N4bgfx5frameE7uint8_t"></span><span id="_CPPv2N4bgfx5frameE7uint8_t"></span><span id="bgfx::frame__uint8_t"></span><span class="target" id="namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">frame</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">uint8_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_flags</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">BGFX_FRAME_NONE</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx5frameE7uint8_t" title="Link to this definition"></a><br /></dt>
@@ -760,6 +766,7 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_FRAME_NONE</span></code> - No frame flag.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_FRAME_DEBUG_CAPTURE</span></code> - Capture frame with graphics debugger.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_FRAME_DISCARD</span></code> - Discard all draw calls.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BGFX_FRAME_FLUSH</span></code> - Execute all rendering commands without presenting the backbuffer.</p></li>
 </ul>
 </p>
 </dd>
@@ -2717,7 +2724,7 @@ In graphics debugger view name will appear as: <div class="highlight-default not
 <dl class="cpp struct">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx7EncoderE">
 <span id="_CPPv3N4bgfx7EncoderE"></span><span id="_CPPv2N4bgfx7EncoderE"></span><span id="bgfx::Encoder"></span><span class="target" id="structbgfx_1_1_encoder"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Encoder</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx7EncoderE" title="Link to this definition"></a><br /></dt>
-<dd><p>Encoders are used for submitting draw calls from multiple threads. Only one encoder per thread should be used. Use <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1ac53b319c20aa14f04479878535717281"><span class="std std-ref"><span class="pre">bgfx::begin()</span></span></a></code> to obtain an encoder for a thread. </p>
+<dd><p>Encoders are used for submitting draw calls from multiple threads. Only one encoder per thread should be used. Use <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1acf68578fabd942dfc861ad825d82b086"><span class="std std-ref"><span class="pre">bgfx::begin()</span></span></a></code> to obtain an encoder for a thread. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_t</span></code>. </p>
 </dd>
@@ -3653,16 +3660,22 @@ In graphics debugger view name will appear as: <div class="highlight-default not
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx5beginEb">
-<span id="_CPPv3N4bgfx5beginEb"></span><span id="_CPPv2N4bgfx5beginEb"></span><span id="bgfx::begin__b"></span><span class="target" id="namespacebgfx_1ac53b319c20aa14f04479878535717281"></span><a class="reference internal" href="#_CPPv4N4bgfx7EncoderE" title="bgfx::Encoder"><span class="n"><span class="pre">Encoder</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">begin</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_forThread</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx5beginEb" title="Link to this definition"></a><br /></dt>
-<dd><p>Begin submitting draw calls from thread. </p>
-<p><dl class="simple">
+<span id="_CPPv3N4bgfx5beginEb"></span><span id="_CPPv2N4bgfx5beginEb"></span><span id="bgfx::begin__b"></span><span class="target" id="namespacebgfx_1acf68578fabd942dfc861ad825d82b086"></span><a class="reference internal" href="#_CPPv4N4bgfx7EncoderE" title="bgfx::Encoder"><span class="n"><span class="pre">Encoder</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">begin</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">_forceNewEncoder</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx5beginEb" title="Link to this definition"></a><br /></dt>
+<dd><p>Begin submitting draw calls from thread. Obtains an encoder that can be used to submit draw calls, compute dispatches, and state changes. </p>
+<p>In multithreaded mode (<code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MULTITHREADED=1</span></code>), multiple threads can each obtain their own encoder and submit draw calls in parallel. Each encoder writes into its own uniform buffer, so there is no contention between threads. The maximum number of simultaneous encoders is configured via <code class="docutils literal notranslate"><span class="pre">Limits.maxEncoders</span></code> in <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_init"><span class="std std-ref"><span class="pre">bgfx::Init</span></span></a></code> (default: 8).</p>
+<p>When called from the API thread (the thread that called <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a3bc6e6465d91d6222b99b36909cabfdd"><span class="std std-ref"><span class="pre">bgfx::init</span></span></a></code>) with <code class="docutils literal notranslate"><span class="pre">_forceNewEncoder</span></code> set to <code class="docutils literal notranslate"><span class="pre">false</span></code>, the default internal encoder (encoder 0) is returned. This is the same encoder used by the legacy non-encoder API (<code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a3e5edf50886f88e8f022e18a3e53ba4d"><span class="std std-ref"><span class="pre">bgfx::setState</span></span></a></code>, <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aac8f69b1ff11ad6c8a95db9f9e46d019"><span class="std std-ref"><span class="pre">bgfx::submit</span></span></a></code>, etc.). When called from a worker thread (or with <code class="docutils literal notranslate"><span class="pre">_forceNewEncoder</span></code> set to <code class="docutils literal notranslate"><span class="pre">true</span></code>), a new encoder is allocated from the encoder pool.</p>
+<p><div class="remark admonition">
+<p class="admonition-title">Remark</p>
+<p>The returned <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_encoder"><span class="std std-ref"><span class="pre">Encoder</span></span></a></code> pointer is valid until <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa107fa4aeb1da2eb1f8984fd6b4aa195"><span class="std std-ref"><span class="pre">bgfx::end</span></span></a></code> is called with it. All encoders must be ended before <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> is called. If <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> is called while encoders are still active, it will wait for them to finish. Returns <code class="docutils literal notranslate"><span class="pre">NULL</span></code> if no encoder slots are available (all <code class="docutils literal notranslate"><span class="pre">maxEncoders</span></code> slots are in use). See also: <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa107fa4aeb1da2eb1f8984fd6b4aa195"><span class="std std-ref"><span class="pre">bgfx::end</span></span></a></code>, <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code>.</p>
+</div>
+<dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_begin</span></code>. </p>
 </dd>
 </dl>
 </p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>_forThread</strong> – <strong>[in]</strong> Explicitly request an encoder for a worker thread.</p>
+<dd class="field-odd"><p><strong>_forceNewEncoder</strong> – <strong>[in]</strong> Force allocation of a new encoder from the pool, even when called from the API thread.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#structbgfx_1_1_encoder"><span class="std std-ref">Encoder</span></a>.</p>
@@ -3673,8 +3686,13 @@ In graphics debugger view name will appear as: <div class="highlight-default not
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx3endEP7Encoder">
 <span id="_CPPv3N4bgfx3endEP7Encoder"></span><span id="_CPPv2N4bgfx3endEP7Encoder"></span><span id="bgfx::end__EncoderP"></span><span class="target" id="namespacebgfx_1aa107fa4aeb1da2eb1f8984fd6b4aa195"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">bgfx</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">end</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4bgfx7EncoderE" title="bgfx::Encoder"><span class="n"><span class="pre">Encoder</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">_encoder</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx3endEP7Encoder" title="Link to this definition"></a><br /></dt>
-<dd><p>End submitting draw calls from thread. </p>
-<p><dl class="simple">
+<dd><p>End submitting draw calls from thread. Returns the encoder obtained from <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1acf68578fabd942dfc861ad825d82b086"><span class="std std-ref"><span class="pre">bgfx::begin</span></span></a></code> back to the encoder pool. </p>
+<p>After this call the <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_encoder"><span class="std std-ref"><span class="pre">Encoder</span></span></a></code> pointer is no longer valid and must not be used. The encoder’s recorded draw calls and state changes are finalized and will be included in the next frame when <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> is called.</p>
+<p><div class="remark admonition">
+<p class="admonition-title">Remark</p>
+<p>Must be called from the same thread that called <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1acf68578fabd942dfc861ad825d82b086"><span class="std std-ref"><span class="pre">bgfx::begin</span></span></a></code> for this encoder. All encoders must be ended before <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> is called. The default encoder (encoder 0, used by the legacy API) is managed internally and does not need to be passed to <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1aa107fa4aeb1da2eb1f8984fd6b4aa195"><span class="std std-ref"><span class="pre">bgfx::end</span></span></a></code>; passing it is harmless but has no effect. See also: <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1acf68578fabd942dfc861ad825d82b086"><span class="std std-ref"><span class="pre">bgfx::begin</span></span></a></code>, <code class="docutils literal notranslate"><a class="reference internal" href="#namespacebgfx_1a01586df392b8d4ee6e9af00bc6c54669"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code>.</p>
+</div>
+<dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99’s equivalent binding is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_end</span></code>. </p>
 </dd>
 </dl>
@@ -5778,6 +5796,12 @@ Otherwise, use <code class="docutils literal notranslate"><span class="pre">bgfx
 <dd><p>Attribute types: </p>
 <p><em>Values:</em></p>
 <dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx10AttribType4Enum4Int8E">
+<span id="_CPPv3N4bgfx10AttribType4Enum4Int8E"></span><span id="_CPPv2N4bgfx10AttribType4Enum4Int8E"></span><span class="target" id="structbgfx_1_1_attrib_type_1a5cfa80e17fd4932a9704f95ed80ae3b4a3a678c91c6c7658da8a7ec6f1fd46952"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Int8</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx10AttribType4Enum4Int8E" title="Link to this definition"></a><br /></dt>
+<dd><p>Int8. </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx10AttribType4Enum5Uint8E">
 <span id="_CPPv3N4bgfx10AttribType4Enum5Uint8E"></span><span id="_CPPv2N4bgfx10AttribType4Enum5Uint8E"></span><span class="target" id="structbgfx_1_1_attrib_type_1a5cfa80e17fd4932a9704f95ed80ae3b4a68937a9abcfa9556980f9e127e234748"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Uint8</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx10AttribType4Enum5Uint8E" title="Link to this definition"></a><br /></dt>
 <dd><p>Uint8. </p>
@@ -5793,6 +5817,12 @@ Otherwise, use <code class="docutils literal notranslate"><span class="pre">bgfx
 <dt class="sig sig-object cpp" id="_CPPv4N4bgfx10AttribType4Enum5Int16E">
 <span id="_CPPv3N4bgfx10AttribType4Enum5Int16E"></span><span id="_CPPv2N4bgfx10AttribType4Enum5Int16E"></span><span class="target" id="structbgfx_1_1_attrib_type_1a5cfa80e17fd4932a9704f95ed80ae3b4ae0cd559664652e9d0086ea4316280f1b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Int16</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx10AttribType4Enum5Int16E" title="Link to this definition"></a><br /></dt>
 <dd><p>Int16. </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4bgfx10AttribType4Enum6Uint16E">
+<span id="_CPPv3N4bgfx10AttribType4Enum6Uint16E"></span><span id="_CPPv2N4bgfx10AttribType4Enum6Uint16E"></span><span class="target" id="structbgfx_1_1_attrib_type_1a5cfa80e17fd4932a9704f95ed80ae3b4ab089fe3f1e572abcce4b6ddb6e214082"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Uint16</span></span></span><a class="headerlink" href="#_CPPv4N4bgfx10AttribType4Enum6Uint16E" title="Link to this definition"></a><br /></dt>
+<dd><p>Uint16. </p>
 </dd></dl>
 
 <dl class="cpp enumerator">
