@@ -151,7 +151,12 @@ solution "bgfx"
 	end
 
 	language "C++"
-	startproject "example-00-helloworld"
+
+	if _OPTIONS["with-combined-examples"] then
+		startproject "examples"
+	else
+		startproject "example-00-helloworld"
+	end
 
 BGFX_DIR   = path.getabsolute("..")
 BX_DIR     = os.getenv("BX_DIR")
