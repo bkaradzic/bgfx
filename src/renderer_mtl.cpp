@@ -2520,17 +2520,22 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				if (0 < _numInstanceData)
 				{
+					uint32_t numAttribs = 0;
 					for (uint32_t ii = 0; UINT16_MAX != program.m_instanceData[ii]; ++ii)
 					{
 						const uint32_t loc = program.m_instanceData[ii];
 						vertexDesc->attributes()->object(loc)->setFormat(MTL::VertexFormatFloat4);
 						vertexDesc->attributes()->object(loc)->setBufferIndex(stream+1);
 						vertexDesc->attributes()->object(loc)->setOffset(ii*16);
+						++numAttribs;
 					}
 
-					vertexDesc->layouts()->object(stream+1)->setStride(_numInstanceData * 16);
-					vertexDesc->layouts()->object(stream+1)->setStepFunction(MTL::VertexStepFunctionPerInstance);
-					vertexDesc->layouts()->object(stream+1)->setStepRate(1);
+					if (0 < numAttribs)
+					{
+						vertexDesc->layouts()->object(stream+1)->setStride(_numInstanceData * 16);
+						vertexDesc->layouts()->object(stream+1)->setStepFunction(MTL::VertexStepFunctionPerInstance);
+						vertexDesc->layouts()->object(stream+1)->setStepRate(1);
+					}
 				}
 
 				pd->setVertexDescriptor(vertexDesc);
