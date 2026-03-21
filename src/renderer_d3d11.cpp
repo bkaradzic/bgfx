@@ -1742,6 +1742,7 @@ namespace bgfx { namespace d3d11
 			m_agsDll = NULL;
 
 			m_deviceCtx->ClearState();
+			m_deviceCtx->Flush();
 
 			invalidateCache();
 

@@ -4,6 +4,7 @@
  */
 
 #include <bx/bx.h>
+#include <bx/commandline.h>
 #include <bx/file.h>
 #include <bx/sort.h>
 #include <bgfx/bgfx.h>
@@ -375,7 +376,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	static AppI*    s_apps       = NULL;
 	static uint32_t s_numApps    = 0;
 
+	static char s_restartApp[1024] = { '\0' };
 	static char s_restartArgs[1024] = { '\0' };
+
+	void setRestartArgs(const char* _args)
+	{
+		bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), _args);
+	}
 
 	static AppI* getCurrentApp(AppI* _set = NULL)
 	{
@@ -408,14 +415,14 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		{
 			if (2 == _argc)
 			{
-				bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), getCurrentApp()->getName() );
+				bx::strCopy(s_restartApp, BX_COUNTOF(s_restartApp), getCurrentApp()->getName() );
 				return bx::kExitSuccess;
 			}
 
 			if (0 == bx::strCmp(_argv[2], "next") )
 			{
 				AppI* next = getNextWrap(getCurrentApp() );
-				bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), next->getName() );
+				bx::strCopy(s_restartApp, BX_COUNTOF(s_restartApp), next->getName() );
 				return bx::kExitSuccess;
 			}
 			else if (0 == bx::strCmp(_argv[2], "prev") )
@@ -426,7 +433,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					prev = app;
 				}
 
-				bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), prev->getName() );
+				bx::strCopy(s_restartApp, BX_COUNTOF(s_restartApp), prev->getName() );
 				return bx::kExitSuccess;
 			}
 
@@ -434,7 +441,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			{
 				if (0 == bx::strCmp(_argv[2], app->getName() ) )
 				{
-					bx::strCopy(s_restartArgs, BX_COUNTOF(s_restartArgs), app->getName() );
+					bx::strCopy(s_restartApp, BX_COUNTOF(s_restartApp), app->getName() );
 					return bx::kExitSuccess;
 				}
 			}
@@ -541,7 +548,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 #else
 		while (_app->update() )
 		{
-			if (0 != bx::strLen(s_restartArgs) )
+			if (0 != bx::strLen(s_restartApp) )
 			{
 				break;
 			}
@@ -644,19 +651,45 @@ restart:
 		}
 
 		int32_t result = bx::kExitSuccess;
-		s_restartArgs[0] = '\0';
+		s_restartApp[0] = '\0';
 		if (0 == s_numApps)
 		{
 			result = ::_main_(_argc, (char**)_argv);
+		}
+		else if (0 != bx::strLen(s_restartArgs) )
+		{
+			char extraArgsBuf[256];
+			bx::strCopy(extraArgsBuf, BX_COUNTOF(extraArgsBuf), s_restartArgs);
+
+			const char* restartArgv[64];
+			int restartArgc = 0;
+
+			if (0 < _argc)
+			{
+				restartArgv[restartArgc++] = _argv[0];
+			}
+
+			char* extraArgv[32];
+			int extraArgc;
+			char tokenBuf[256];
+			uint32_t tokenBufSize = sizeof(tokenBuf);
+			bx::tokenizeCommandLine(extraArgsBuf, tokenBuf, tokenBufSize, extraArgc, extraArgv, BX_COUNTOF(extraArgv) );
+
+			for (int ii = 0; ii < extraArgc && restartArgc < (int)BX_COUNTOF(restartArgv) - 1; ++ii)
+			{
+				restartArgv[restartArgc++] = extraArgv[ii];
+			}
+
+			result = runApp(getCurrentApp(selected), restartArgc, restartArgv);
 		}
 		else
 		{
 			result = runApp(getCurrentApp(selected), _argc, _argv);
 		}
 
-		if (0 != bx::strLen(s_restartArgs) )
+		if (0 != bx::strLen(s_restartApp) )
 		{
-			find = s_restartArgs;
+			find = s_restartApp;
 			goto restart;
 		}
 

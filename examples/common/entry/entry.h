@@ -370,6 +370,9 @@ namespace entry
 	///
 	int runApp(AppI* _app, int _argc, const char* const* _argv);
 
+	///
+	void setRestartArgs(const char* _args);
+
 } // namespace entry
 
 #endif // ENTRY_H_HEADER_GUARD

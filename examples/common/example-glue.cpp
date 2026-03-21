@@ -130,6 +130,40 @@ static void resourceBar(const char* _name, const char* _tooltip, uint32_t _num, 
 
 static bool s_showStats = false;
 
+static const char* getRendererArg(bgfx::RendererType::Enum _type)
+{
+	switch (_type)
+	{
+	case bgfx::RendererType::Direct3D11: return "--d3d11";
+	case bgfx::RendererType::Direct3D12: return "--d3d12";
+	case bgfx::RendererType::Metal:      return "--mtl";
+	case bgfx::RendererType::OpenGL:     return "--gl";
+	case bgfx::RendererType::Vulkan:     return "--vk";
+	case bgfx::RendererType::WebGPU:     return "--wgpu";
+	case bgfx::RendererType::Noop:       return "--noop";
+	default: break;
+	}
+
+	return "";
+}
+
+static const char* getPciIdArg(uint16_t _pciId)
+{
+	switch (_pciId)
+	{
+	case BGFX_PCI_ID_SOFTWARE_RASTERIZER: return "--sw";
+	case BGFX_PCI_ID_AMD:                 return "--amd";
+	case BGFX_PCI_ID_APPLE:               return "--apple";
+	case BGFX_PCI_ID_ARM:                 return "--arm";
+	case BGFX_PCI_ID_INTEL:               return "--intel";
+	case BGFX_PCI_ID_NVIDIA:              return "--nvidia";
+	case BGFX_PCI_ID_MICROSOFT:           return "--microsoft";
+	default: break;
+	}
+
+	return "";
+}
+
 void showExampleDialog(entry::AppI* _app, const char* _errorText)
 {
 	char temp[1024];
@@ -140,8 +174,8 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		, ImGuiCond_FirstUseEver
 		);
 	ImGui::SetNextWindowSize(
-		  ImVec2(300.0f, 210.0f)
-		, ImGuiCond_FirstUseEver
+		  ImVec2(300.0f, 0.0f)
+		, ImGuiCond_Always
 		);
 
 	ImGui::Begin(temp);
@@ -247,43 +281,72 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		ImGui::PopStyleVar();
 	}
 
-#if 0
+	char rendererHeader[64];
+	bx::snprintf(rendererHeader, BX_COUNTOF(rendererHeader), "Renderer: %s", bgfx::getRendererName(bgfx::getRendererType() ) );
+
+	if (ImGui::CollapsingHeader(rendererHeader) )
 	{
 		bgfx::RendererType::Enum supportedRenderers[bgfx::RendererType::Count];
-		uint8_t num = bgfx::getSupportedRenderers(BX_COUNTOF(supportedRenderers), supportedRenderers);
+		const uint8_t num = bgfx::getSupportedRenderers(BX_COUNTOF(supportedRenderers), supportedRenderers);
 
 		const bgfx::Caps* caps = bgfx::getCaps();
 
 		const char* items[bgfx::RendererType::Count];
 
+		uint8_t filteredNum = 0;
+		bgfx::RendererType::Enum filteredRenderers[bgfx::RendererType::Count];
 		int32_t current = 0;
 		for (uint8_t ii = 0; ii < num; ++ii)
 		{
-			items[ii] = bgfx::getRendererName(supportedRenderers[ii]);
+			if (bgfx::RendererType::Noop == supportedRenderers[ii])
+			{
+				continue;
+			}
+
+			filteredRenderers[filteredNum] = supportedRenderers[ii];
+			items[filteredNum] = bgfx::getRendererName(supportedRenderers[ii]);
 			if (supportedRenderers[ii] == caps->rendererType)
 			{
-				current = ii;
+				current = filteredNum;
 			}
+			++filteredNum;
 		}
 
-		if (ImGui::Combo("Renderer", &current, items, num) )
+		const float labelWidth = ImGui::CalcTextSize("Renderer ").x + 10.0f;
+
+		const char* newRendererArg = NULL;
+		const char* newPciIdArg    = NULL;
+
+		ImGui::TextUnformatted("Renderer"); ImGui::SameLine(labelWidth);
+		ImGui::PushItemWidth(-1);
+		if (ImGui::Combo("##Renderer", &current, items, filteredNum) )
 		{
-			cmdExec("app restart");
+			newRendererArg = getRendererArg(filteredRenderers[current]);
 		}
 
-		num = caps->numGPUs;
-		if (0 != num)
+		const uint8_t numGPUs = caps->numGPUs;
+		ImGui::BeginDisabled(0 == numGPUs);
 		{
+			static char unknownVendor[BX_COUNTOF(bgfx::Caps::gpu)][16];
 			current = 0;
-			for (uint8_t ii = 0; ii < num; ++ii)
+			for (uint8_t ii = 0; ii < numGPUs; ++ii)
 			{
 				const bgfx::Caps::GPU& gpu = caps->gpu[ii];
 
-				items[ii] = gpu.vendorId == BGFX_PCI_ID_AMD    ? "AMD"
-						  : gpu.vendorId == BGFX_PCI_ID_INTEL  ? "Intel"
-						  : gpu.vendorId == BGFX_PCI_ID_NVIDIA ? "nVidia"
-						  : "Unknown?"
-						  ;
+				switch (gpu.vendorId)
+				{
+				case BGFX_PCI_ID_AMD:                 items[ii] = "AMD";                 break;
+				case BGFX_PCI_ID_APPLE:               items[ii] = "Apple";               break;
+				case BGFX_PCI_ID_INTEL:               items[ii] = "Intel";               break;
+				case BGFX_PCI_ID_NVIDIA:              items[ii] = "nVidia";              break;
+				case BGFX_PCI_ID_MICROSOFT:           items[ii] = "Microsoft";           break;
+				case BGFX_PCI_ID_ARM:                 items[ii] = "ARM";                 break;
+				case BGFX_PCI_ID_SOFTWARE_RASTERIZER: items[ii] = "Software Rasterizer"; break;
+				default:
+					bx::snprintf(unknownVendor[ii], BX_COUNTOF(unknownVendor[ii]), "0x%04x", gpu.vendorId);
+					items[ii] = unknownVendor[ii];
+					break;
+				}
 
 				if (caps->vendorId == gpu.vendorId
 				&&  caps->deviceId == gpu.deviceId)
@@ -292,15 +355,31 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 				}
 			}
 
-			if (ImGui::Combo("GPU", &current, items, num) )
+			ImGui::TextUnformatted("GPU"); ImGui::SameLine(labelWidth);
+			if (ImGui::Combo("##GPU", &current, items, numGPUs) )
 			{
-				cmdExec("app restart");
+				newPciIdArg = getPciIdArg(caps->gpu[current].vendorId);
 			}
 		}
+		ImGui::EndDisabled();
+
+		ImGui::PopItemWidth();
+
+		if (NULL != newRendererArg
+		||  NULL != newPciIdArg)
+		{
+			const char* rendererArg = NULL != newRendererArg ? newRendererArg : getRendererArg(caps->rendererType);
+			const char* pciIdArg    = NULL != newPciIdArg    ? newPciIdArg    : getPciIdArg(caps->vendorId);
+
+			char args[64];
+			bx::snprintf(args, BX_COUNTOF(args), "%s %s", rendererArg, pciIdArg);
+
+			entry::setRestartArgs(args);
+			cmdExec("app restart");
+		}
+
+		ImGui::Separator();
 	}
-#else
-	ImGui::Text("Renderer: %s", bgfx::getRendererName(bgfx::getRendererType()));
-#endif // 0
 
 	const bgfx::Stats* stats = bgfx::getStats();
 	const double toMsCpu = 1000.0/stats->cpuTimerFreq;
