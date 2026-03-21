@@ -916,18 +916,19 @@ VK_DESTROY_FUNC(DescriptorSet);
 		uint32_t m_width;
 		uint32_t m_height;
 		uint16_t m_denseIdx;
-		uint8_t m_num;
-		uint8_t m_numTh;
+		uint8_t  m_num;
+		uint8_t  m_numTh;
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 
 		SwapChainVK m_swapChain;
 		void* m_nwh;
-		bool m_needPresent;
-		bool m_needResolve;
+		bool  m_needPresent;
+		bool  m_needResolve;
 
-		VkImageView m_textureImageViews[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+		VkImageView   m_textureImageViews[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		VkFramebuffer m_framebuffer;
-		VkRenderPass m_renderPass;
+		VkRenderPass  m_renderPass;
+		uint32_t      m_renderPassHashKey;
 		MsaaSamplerVK m_sampler;
 
 		VkFramebuffer m_currentFramebuffer;
@@ -953,7 +954,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		void removeExternal(TextureHandle _handle);
 
 		uint32_t m_queueFamily;
-		VkQueue m_queue;
+		VkQueue  m_queue;
 
 		uint32_t m_currentFrameInFlight;
 		uint32_t m_consumeIndex;
