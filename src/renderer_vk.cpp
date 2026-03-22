@@ -8730,21 +8730,28 @@ retry:
 		return result;
 	}
 
-	void CommandQueueVK::addWaitSemaphore(VkSemaphore _semaphore, VkPipelineStageFlags _waitFlags)
+	void CommandQueueVK::addSwapChain(SwapChainVK& _swapChain)
 	{
-		BX_ASSERT(m_numWaitSemaphores < BX_COUNTOF(m_waitSemaphores), "Too many wait semaphores.");
+		if (VK_NULL_HANDLE == _swapChain.m_lastImageAcquiredSemaphore)
+		{
+			BX_ASSERT(m_numWaitSemaphores < BX_COUNTOF(m_waitSemaphores), "Too many wait semaphores.");
 
-		m_waitSemaphores[m_numWaitSemaphores]      = _semaphore;
-		m_waitSemaphoreStages[m_numWaitSemaphores] = _waitFlags;
-		m_numWaitSemaphores++;
-	}
+			m_waitSemaphores[m_numWaitSemaphores]      = _swapChain.m_lastImageAcquiredSemaphore;
+			m_waitSemaphoreStages[m_numWaitSemaphores] = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+			m_numWaitSemaphores++;
 
-	void CommandQueueVK::addSignalSemaphore(VkSemaphore _semaphore)
-	{
-		BX_ASSERT(m_numSignalSemaphores < BX_COUNTOF(m_signalSemaphores), "Too many signal semaphores.");
+			_swapChain.m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
+		}
 
-		m_signalSemaphores[m_numSignalSemaphores] = _semaphore;
-		m_numSignalSemaphores++;
+		if (VK_NULL_HANDLE != _swapChain.m_lastImageRenderedSemaphore)
+		{
+			BX_ASSERT(m_numSignalSemaphores < BX_COUNTOF(m_signalSemaphores), "Too many signal semaphores.");
+
+			m_signalSemaphores[m_numSignalSemaphores] = _swapChain.m_lastImageRenderedSemaphore;
+			m_numSignalSemaphores++;
+		}
+
+		_swapChain.m_backBufferFence[_swapChain.m_backBufferColorIdx] = m_currentFence;
 	}
 
 	void CommandQueueVK::kick(bool _wait)
@@ -10237,24 +10244,23 @@ retry:
 			stagingScratchBuffer.flush();
 		}
 
-		for (uint16_t ii = 0; ii < m_numWindows; ++ii)
+		if (!_render->m_flush)
 		{
-			FrameBufferVK& fb = isValid(m_windows[ii])
-				? m_frameBuffers[m_windows[ii].idx]
-				: m_backBuffer
-				;
-
-			if (fb.m_needPresent)
+			for (uint16_t ii = 0; ii < m_numWindows; ++ii)
 			{
-				fb.resolve();
+				FrameBufferVK& fb = isValid(m_windows[ii])
+					? m_frameBuffers[m_windows[ii].idx]
+					: m_backBuffer
+					;
 
-				fb.m_swapChain.transitionImage(m_commandBuffer);
+				if (fb.m_needPresent)
+				{
+					fb.resolve();
 
-				m_cmd.addWaitSemaphore(fb.m_swapChain.m_lastImageAcquiredSemaphore, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
-				m_cmd.addSignalSemaphore(fb.m_swapChain.m_lastImageRenderedSemaphore);
-				fb.m_swapChain.m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
+					fb.m_swapChain.transitionImage(m_commandBuffer);
 
-				fb.m_swapChain.m_backBufferFence[fb.m_swapChain.m_backBufferColorIdx] = m_cmd.m_currentFence;
+					m_cmd.addSwapChain(fb.m_swapChain);
+				}
 			}
 		}
 
