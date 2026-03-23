@@ -710,3 +710,17 @@ Reference(s):
 
 Demonstrate running bgfx in headless mode. Initialize bgfx without window, render into frame buffer,
 and output result into an image.
+
+`51-gpufont <https://github.com/bkaradzic/bgfx/tree/master/examples/51-gpufont>`__
+----------------------------------------------------------------------------------
+
+GPU font rendering using the Slug algorithm.
+
+Slug reference shaders by Eric Lengyel (MIT License).
+https://github.com/EricLengyel/Slug?tab=readme-ov-file#slug
+
+For more information see:
+https://sluglibrary.com/
+
+.. figure:: https://github.com/bkaradzic/bgfx/raw/master/examples/51-gpufont/screenshot.png
+   :alt: example-51-gpufont

@@ -471,8 +471,6 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		{
 			if (ImGui::CollapsingHeader(ICON_FA_PUZZLE_PIECE " Resources") )
 			{
-				const bgfx::Caps* caps = bgfx::getCaps();
-
 				const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
 				const float maxWidth   = 90.0f;
 
