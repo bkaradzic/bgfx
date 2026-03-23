@@ -3344,7 +3344,7 @@ namespace bgfx
 					uint8_t skip;
 					_cmdbuf.read(skip);
 
-					uintptr_t external;
+					uint64_t external;
 					_cmdbuf.read(external);
 
 					void* ptr = m_renderCtx->createTexture(handle, mem, flags, skip, external);
