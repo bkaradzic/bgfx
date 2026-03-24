@@ -2452,10 +2452,23 @@ namespace bgfx
 
 									bx::stringPrintf(code, "#version %d\n", need130 ? 130 : glsl_profile);
 
-									if (need130)
+									if (need130
+									||  glsl_profile >= 130)
 									{
+										bx::stringPrintf(code, "#define attribute in\n");
 										bx::stringPrintf(code, "#define varying %s\n"
 											, 'f' == _options.shaderType ? "in" : "out"
+											);
+										bx::stringPrintf(code
+											, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord) )\n"
+											  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord) )\n"
+											);
+									}
+									else
+									{
+										bx::stringPrintf(code
+											, "#define bgfxShadow2D     shadow2D\n"
+											  "#define bgfxShadow2DProj shader2DProj\n"
 											);
 									}
 
@@ -2545,21 +2558,6 @@ namespace bgfx
 											"#define texture2DGrad     texture2DGradEXT\n"
 											"#define texture2DProjGrad texture2DProjGradEXT\n"
 											"#define textureCubeGrad   textureCubeGradEXT\n"
-											);
-									}
-
-									if (need130 || (glsl_profile >= 130) )
-									{
-										bx::stringPrintf(code
-											, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord) )\n"
-											  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord) )\n"
-											);
-									}
-									else
-									{
-										bx::stringPrintf(code
-											, "#define bgfxShadow2D     shadow2D\n"
-											  "#define bgfxShadow2DProj shader2DProj\n"
 											);
 									}
 								}
