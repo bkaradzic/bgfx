@@ -2405,7 +2405,8 @@ namespace bgfx
 		if (_forceNewEncoder
 		||  BGFX_API_THREAD_MAGIC != s_threadIndex)
 		{
-			bx::MutexScope scopeLock(m_encoderApiLock);
+			bx::MutexScope beginLockScope(m_encoderBeginLock);
+			bx::MutexScope encoderApiScope(m_encoderApiLock);
 
 			uint16_t idx = m_encoderHandle->alloc();
 			if (kInvalidHandle == idx)
@@ -2442,13 +2443,19 @@ namespace bgfx
 		m_encoder[0].end(true);
 
 #if BGFX_CONFIG_MULTITHREADED
-		bx::MutexScope resourceApiScope(m_resourceApiLock);
-
-		encoderApiWait();
+		m_encoderBeginLock.lock(); // don't let any bgfx::begin calls...
+		encoderApiWait();          // wait for all starte encoders to return...
 		bx::MutexScope encoderApiScope(m_encoderApiLock);
+		m_encoderBeginLock.unlock();
+
+		bx::MutexScope resourceApiScope(m_resourceApiLock);
 #else
 		encoderApiWait();
 #endif // BGFX_CONFIG_MULTITHREADED
+
+		m_encoderHandle->reset();
+		const uint16_t idx = m_encoderHandle->alloc();
+		BX_ASSERT(0 == idx, "Internal encoder handle is not 0 (idx %d).", idx); BX_UNUSED(idx);
 
 		if (0 != (_flags & BGFX_FRAME_DISCARD) )
 		{

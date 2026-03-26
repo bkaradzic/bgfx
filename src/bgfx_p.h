@@ -5921,16 +5921,13 @@ namespace bgfx
 			}
 
 			m_submit->m_perfStats.numEncoders = uint8_t(numEncoders);
-
-			m_encoderHandle->reset();
-			uint16_t idx = m_encoderHandle->alloc();
-			BX_ASSERT(0 == idx, "Internal encoder handle is not 0 (idx %d).", idx); BX_UNUSED(idx);
 		}
 
 		bx::Semaphore m_renderSem;
 		bx::Semaphore m_apiSem;
 		bx::Semaphore m_encoderEndSem;
 		bx::Mutex     m_encoderApiLock;
+		bx::Mutex     m_encoderBeginLock;
 		bx::Mutex     m_resourceApiLock;
 		bx::Thread    m_thread;
 #else
