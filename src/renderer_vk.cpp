@@ -8725,7 +8725,7 @@ retry:
 
 	void CommandQueueVK::addSwapChain(SwapChainVK& _swapChain)
 	{
-		if (VK_NULL_HANDLE == _swapChain.m_lastImageAcquiredSemaphore)
+		if (VK_NULL_HANDLE != _swapChain.m_lastImageAcquiredSemaphore)
 		{
 			BX_ASSERT(m_numWaitSemaphores < BX_COUNTOF(m_waitSemaphores), "Too many wait semaphores.");
 
