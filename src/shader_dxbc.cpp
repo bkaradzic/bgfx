@@ -624,6 +624,54 @@ namespace bgfx
 	};
 	static_assert(BX_COUNTOF(s_dxbcCustomDataClass) == DxbcCustomDataClass::Count);
 
+	static const char* s_dxbcComponentType[] =
+	{
+		"",
+		"Uint32",
+		"Int32",
+		"Float",
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcComponentType) == DxbcComponentType::Count);
+
+	static const char *s_dxbcBuiltin[] =
+	{
+		"",
+		"Position",
+		"ClipDistance",
+		"CullDistance",
+		"RenderTargetArrayIndex",
+		"ViewportArrayIndex",
+		"VertexId",
+		"PrimitiveId",
+		"InstanceId",
+		"IsFrontFace",
+		"SampleIndex",
+		"FinalQuadUEq0EdgeTessFactor",
+		"FinalQuadVEq0EdgeTessFactor",
+		"FinalQuadUEq1EdgeTessFactor",
+		"FinalQuadVEq1EdgeTessFactor",
+		"FinalQuadUInsideTessFactor",
+		"FinalQuadVInsideTessFactor",
+		"FinalTriUEq0EdgeTessFactor",
+		"FinalTriVEq0EdgeTessFactor",
+		"FinalTriWEq0EdgeTessFactor",
+		"FinalTriInsideTessFactor",
+		"FinalLineDetailTessFactor",
+		"FinalLineDensityTessFactor",
+		"Target", // = 64
+		"Depth",
+		"Coverage",
+		"DepthGreaterEqual",
+		"DepthLessEqual",
+		"StencilRef",
+		"InnerCoverage",
+	};
+	const char *toString(DxbcBuiltin::Enum _value)
+	{
+		constexpr int offset = DxbcBuiltin::Target - DxbcBuiltin::FinalLineDensityTessFactor - 1;
+		return s_dxbcBuiltin[_value < DxbcBuiltin::Target ? _value : _value - offset];
+	}
+
 #define DXBC_MAX_NAME_STRING 512
 
 	int32_t readString(bx::ReaderSeekerI* _reader, int64_t _offset, char* _out, uint32_t _max, bx::Error* _err)
@@ -1580,6 +1628,22 @@ namespace bgfx
 		return size;
 	}
 
+	int32_t toString(char* _out, int32_t _size, uint8_t _mask, const char *prefix = "")
+	{
+		int32_t size = 0;
+
+		size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
+					, "%s%s%s%s%s"
+					, prefix
+					, 0 == (_mask & 1) ? "" : "x"
+					, 0 == (_mask & 2) ? "" : "y"
+					, 0 == (_mask & 4) ? "" : "z"
+					, 0 == (_mask & 8) ? "" : "w"
+					);
+
+		return size;
+	}
+
 	int32_t toString(char* _out, int32_t _size, DxbcOperandMode::Enum _mode, uint8_t _modeBits)
 	{
 		int32_t size = 0;
@@ -1590,13 +1654,7 @@ namespace bgfx
 			if (0xf > _modeBits
 			&&  0   < _modeBits)
 			{
-				size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-							, ".%s%s%s%s"
-							, 0 == (_modeBits & 1) ? "" : "x"
-							, 0 == (_modeBits & 2) ? "" : "y"
-							, 0 == (_modeBits & 4) ? "" : "z"
-							, 0 == (_modeBits & 8) ? "" : "w"
-							);
+				size += toString(&_out[size], bx::uint32_imax(0, _size-size), _modeBits, ".");
 			}
 			break;
 
@@ -1623,6 +1681,26 @@ namespace bgfx
 		default:
 			break;
 		}
+
+		return size;
+	}
+
+	int32_t toString(char* _out, int32_t _size, const DxbcSignature::Element& _element)
+	{
+		int32_t size = 0;
+
+		size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
+					, "%12s i%d r%d s%x %12s %s"
+					, _element.name.c_str()
+					, _element.semanticIndex
+					, _element.registerIndex
+					, _element.stream
+					, toString(_element.valueType)
+					, s_dxbcComponentType[_element.componentType]
+					);
+
+		size += toString(&_out[size], bx::uint32_imax(0, _size-size), _element.mask, " ");
+		size += toString(&_out[size], bx::uint32_imax(0, _size-size), _element.readWriteMask, " ");
 
 		return size;
 	}
@@ -1825,7 +1903,7 @@ namespace bgfx
 		return size;
 	}
 
-	int32_t read(bx::ReaderSeekerI* _reader, DxbcSignature& _signature, bx::Error* _err)
+	int32_t read(bx::ReaderSeekerI* _reader, DxbcSignature& _signature, bool _readStream, bx::Error* _err)
 	{
 		int32_t size = 0;
 
@@ -1838,6 +1916,15 @@ namespace bgfx
 		for (uint32_t ii = 0; ii < num; ++ii)
 		{
 			DxbcSignature::Element element;
+
+			if (_readStream)
+			{
+				size += bx::read(_reader, element.stream, _err);
+			}
+			else
+			{
+				element.stream = 0;
+			}
 
 			uint32_t nameOffset;
 			size += bx::read(_reader, nameOffset, _err);
@@ -1852,10 +1939,9 @@ namespace bgfx
 			size += bx::read(_reader, element.registerIndex, _err);
 			size += bx::read(_reader, element.mask, _err);
 			size += bx::read(_reader, element.readWriteMask, _err);
-			size += bx::read(_reader, element.stream, _err);
 
 			// padding
-			uint8_t padding;
+			uint16_t padding;
 			size += bx::read(_reader, padding, _err);
 
 			_signature.elements.push_back(element);
@@ -1864,7 +1950,7 @@ namespace bgfx
 		return size;
 	}
 
-	int32_t write(bx::WriterI* _writer, const DxbcSignature& _signature, bx::Error* _err)
+	int32_t write(bx::WriterI* _writer, const DxbcSignature& _signature, bool _writeStream, bx::Error* _err)
 	{
 		int32_t size = 0;
 
@@ -1875,11 +1961,20 @@ namespace bgfx
 		typedef stl::unordered_map<stl::string, uint32_t> NameOffsetMap;
 		NameOffsetMap nom;
 
-		const uint8_t pad = 0;
+		const uint16_t pad = 0;
 		uint32_t nameOffset = num * 24 + 8;
+		if (_writeStream)
+		{
+			nameOffset += 4;
+		}
 		for (uint32_t ii = 0; ii < num; ++ii)
 		{
 			const DxbcSignature::Element& element = _signature.elements[ii];
+
+			if (_writeStream)
+			{
+				size += bx::write(_writer, element.stream, _err);
+			}
 
 			NameOffsetMap::iterator it = nom.find(element.name);
 			if (it == nom.end() )
@@ -1899,7 +1994,6 @@ namespace bgfx
 			size += bx::write(_writer, element.registerIndex, _err);
 			size += bx::write(_writer, element.mask, _err);
 			size += bx::write(_writer, element.readWriteMask, _err);
-			size += bx::write(_writer, element.stream, _err);
 			size += bx::write(_writer, pad, _err);
 		}
 
@@ -1998,13 +2092,16 @@ namespace bgfx
 
 			case BX_MAKEFOURCC('I', 'S', 'G', '1'):
 			case DXBC_CHUNK_INPUT_SIGNATURE:
-				size += read(_reader, _dxbc.inputSignature, _err);
+				size += read(_reader, _dxbc.inputSignature, false, _err);
 				break;
 
-			case BX_MAKEFOURCC('O', 'S', 'G', '1'):
-			case BX_MAKEFOURCC('O', 'S', 'G', '5'):
+			case BX_MAKEFOURCC( 'O', 'S', 'G', '1' ):
 			case DXBC_CHUNK_OUTPUT_SIGNATURE:
-				size += read(_reader, _dxbc.outputSignature, _err);
+				size += read(_reader, _dxbc.outputSignature, false, _err);
+				break;
+
+			case BX_MAKEFOURCC( 'O', 'S', 'G', '5' ):
+				size += read(_reader, _dxbc.outputSignature, true, _err);
 				break;
 
 			case BX_MAKEFOURCC('A', 'o', 'n', '9'): // Contains DX9BC for feature level 9.x (*s_4_0_level_9_*) shaders.
@@ -2118,19 +2215,26 @@ namespace bgfx
 			case BX_MAKEFOURCC('I', 'S', 'G', '1'):
 			case DXBC_CHUNK_INPUT_SIGNATURE:
 				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
-				size += bx::write(_writer, DXBC_CHUNK_INPUT_SIGNATURE, _err);
+				size += bx::write(_writer, _dxbc.chunksFourcc[ii], _err);
 				size += bx::write(_writer, UINT32_C(0), _err);
-				chunkSize[idx] = write(_writer, _dxbc.inputSignature, _err);
+				chunkSize[idx] = write(_writer, _dxbc.inputSignature, false, _err);
 				size += chunkSize[idx++];
 				break;
 
 			case BX_MAKEFOURCC('O', 'S', 'G', '1'):
-			case BX_MAKEFOURCC('O', 'S', 'G', '5'):
 			case DXBC_CHUNK_OUTPUT_SIGNATURE:
 				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
-				size += bx::write(_writer, DXBC_CHUNK_OUTPUT_SIGNATURE, _err);
+				size += bx::write(_writer, _dxbc.chunksFourcc[ii], _err);
 				size += bx::write(_writer, UINT32_C(0), _err);
-				chunkSize[idx] = write(_writer, _dxbc.outputSignature, _err);
+				chunkSize[idx] = write(_writer, _dxbc.outputSignature, false, _err);
+				size += chunkSize[idx++];
+				break;
+
+			case BX_MAKEFOURCC( 'O', 'S', 'G', '5' ):
+				chunkOffset[idx] = uint32_t(bx::seek(_writer) - dxbcOffset);
+				size += bx::write(_writer, _dxbc.chunksFourcc[ii], _err);
+				size += bx::write(_writer, UINT32_C(0), _err);
+				chunkSize[idx] = write(_writer, _dxbc.outputSignature, true, _err);
 				size += chunkSize[idx++];
 				break;
 
