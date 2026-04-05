@@ -646,7 +646,7 @@ void initB(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
 		{
 			{ bx::add(_pos, {0.0f, -1.0f, 0.1f}) },
 			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
-			0.2f,
+			0.35f,
 		});
 		break;
 
