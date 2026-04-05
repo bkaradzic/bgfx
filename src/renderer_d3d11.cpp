@@ -4063,125 +4063,6 @@ namespace bgfx { namespace d3d11
 		BufferD3D11::create(_size, _data, _flags, stride, true);
 	}
 
-	static bool hasDepthOp(const void* _code, uint32_t _size)
-	{
-		bx::MemoryReader rd(_code, _size);
-
-		bx::Error err;
-		DxbcContext dxbc;
-		read(&rd, dxbc, &err);
-
-		struct FindDepthOp
-		{
-			FindDepthOp()
-				: m_found(false)
-			{
-			}
-
-			static bool find(uint32_t /*_offset*/, const DxbcInstruction& _instruction, void* _userData)
-			{
-				FindDepthOp& out = *reinterpret_cast<FindDepthOp*>(_userData);
-				if (_instruction.opcode == DxbcOpcode::DISCARD
-				|| (0 != _instruction.numOperands &&  DxbcOperandType::OutputDepth == _instruction.operand[0].type) )
-				{
-					out.m_found = true;
-					return false;
-				}
-
-				return true;
-			}
-
-			bool m_found;
-
-		} find;
-
-		parse(dxbc.shader, FindDepthOp::find, &find);
-
-		return find.m_found;
-	}
-
-	static void patchUAVRegisterByteCode(DxbcInstruction& _instruction, void* _userData)
-	{
-		BX_UNUSED(_userData);
-
-		switch (_instruction.opcode)
-		{
-		case DxbcOpcode::DCL_UNORDERED_ACCESS_VIEW_TYPED:
-			{
-				DxbcOperand& operand = _instruction.operand[0];
-				operand.regIndex[0] += 16;
-
-				BX_ASSERT(operand.regIndex[1] == 0 && operand.regIndex[2] == 0, "Unexpected values");
-			}
-			break;
-
-		case DxbcOpcode::DCL_UNORDERED_ACCESS_VIEW_RAW:
-			BX_ASSERT(false, "Unsupported UAV access");
-			break;
-
-		case DxbcOpcode::DCL_UNORDERED_ACCESS_VIEW_STRUCTURED:
-			BX_ASSERT(false, "Unsupported UAV access");
-			break;
-
-		case DxbcOpcode::LD_UAV_TYPED:
-			{
-				DxbcOperand& operand = _instruction.operand[2];
-				operand.regIndex[0] += 16;
-
-				BX_ASSERT(operand.regIndex[1] == 0 && operand.regIndex[2] == 0, "Unexpected values");
-			}
-			break;
-
-		case DxbcOpcode::STORE_UAV_TYPED:
-			{
-				DxbcOperand& operand = _instruction.operand[0];
-				operand.regIndex[0] += 16;
-
-				BX_ASSERT(operand.regIndex[1] == 0 && operand.regIndex[2] == 0, "Unexpected values");
-			}
-			break;
-
-		default:
-			break;
-		}
-	}
-
-	static void patchUAVRegisterDebugInfo(DxbcSPDB& _spdb)
-	{
-		if (!_spdb.debugCode.empty())
-		{
-			// 'register( u[xx] )'
-			char* ptr = (char*)_spdb.debugCode.data();
-			while (ptr < (char*)_spdb.debugCode.data() + _spdb.debugCode.size() - 3)
-			{
-				if (*(ptr+1) == ' '
-				&&	*(ptr+2) == 'u'
-				&&	*(ptr+3) == '[')
-				{
-					char* startPtr = ptr+4;
-					char* endPtr = ptr+4;
-
-					while (*endPtr != ']')
-					{
-						endPtr++;
-					}
-
-					uint32_t regNum = 0;
-					uint32_t regLen = uint32_t(endPtr - startPtr);
-					bx::fromString(&regNum, bx::StringView(startPtr, regLen));
-
-					regNum += 16;
-					uint32_t len = bx::toString(startPtr, regLen+2, regNum);
-					*(startPtr + len) = ']';
-
-					break;
-				}
-
-				++ptr;
-			}
-		}
-	}
-
 	void ShaderD3D11::create(const Memory* _mem)
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
@@ -4312,33 +4193,8 @@ namespace bgfx { namespace d3d11
 
 		const Memory* temp = NULL;
 
-		if (!isShaderType(magic, 'C'))
-		{
-			bx::MemoryReader rd(code, shaderSize);
-
-			DxbcContext dxbc;
-			read(&rd, dxbc, bx::ErrorAssert{});
-
-			bool patchShader = !dxbc.shader.aon9;
-			if (patchShader)
-			{
-				union { uint32_t offset; void* ptr; } cast = { 0 };
-				filter(dxbc.shader, dxbc.shader, patchUAVRegisterByteCode, cast.ptr);
-				patchUAVRegisterDebugInfo(dxbc.spdb);
-
-				temp = alloc(shaderSize);
-				bx::StaticMemoryBlockWriter wr(temp->data, temp->size);
-
-				int32_t size = write(&wr, dxbc, &err);
-				dxbcHash(temp->data + 20, size - 20, temp->data + 4);
-
-				code = temp->data;
-			}
-		}
-
 		if (isShaderType(magic, 'F') )
 		{
-			m_hasDepthOp = hasDepthOp(code, shaderSize);
 			DX_CHECK(s_renderD3D11->m_device->CreatePixelShader(code, shaderSize, NULL, &m_pixelShader) );
 			BGFX_FATAL(NULL != m_ptr, bgfx::Fatal::InvalidShader, "Failed to create fragment shader.");
 		}
@@ -6236,7 +6092,7 @@ namespace bgfx { namespace d3d11
 
 						const ShaderD3D11* fsh = program.m_fsh;
 						if (NULL != fsh
-						&& (NULL != m_currentColor || fsh->m_hasDepthOp) )
+						&& (NULL != m_currentColor) )
 						{
 							deviceCtx->PSSetShader(fsh->m_pixelShader, NULL, 0);
 							deviceCtx->PSSetConstantBuffers(0, 1, &fsh->m_buffer);

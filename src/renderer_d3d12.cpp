@@ -3287,37 +3287,6 @@ namespace bgfx { namespace d3d12
 			return setInputLayout(_vertexElements, BX_COUNTOF(layouts), layouts, _program, _numInstanceData);
 		}
 
-		static void patchCb0(DxbcInstruction& _instruction, void* _userData)
-		{
-			union { void* ptr; uint32_t offset; } cast = { _userData };
-
-			for (uint32_t ii = 0; ii < _instruction.numOperands; ++ii)
-			{
-				DxbcOperand& operand = _instruction.operand[ii];
-				if (DxbcOperandType::ConstantBuffer == operand.type)
-				{
-					if (DxbcOperandAddrMode::Imm32 == operand.addrMode[0]
-					&&  0 == operand.regIndex[0])
-					{
-						for (uint32_t jj = 1; jj < operand.numAddrModes; ++jj)
-						{
-							if (DxbcOperandAddrMode::Imm32    == operand.addrMode[jj]
-							||  DxbcOperandAddrMode::RegImm32 == operand.addrMode[jj])
-							{
-								operand.regIndex[jj] += cast.offset;
-							}
-							else if (0 != cast.offset)
-							{
-								operand.subOperand[jj].regIndex = operand.regIndex[jj];
-								operand.addrMode[jj] = DxbcOperandAddrMode::RegImm32;
-								operand.regIndex[jj] = cast.offset;
-							}
-						}
-					}
-				}
-			}
-		}
-
 		ID3D12PipelineState* getPipelineState(ProgramHandle _program)
 		{
 			ProgramD3D12& program = m_program[_program.idx];
@@ -3487,73 +3456,6 @@ namespace bgfx { namespace d3d12
 			{
 				desc.PS.pShaderBytecode = program.m_fsh->m_code->data;
 				desc.PS.BytecodeLength  = program.m_fsh->m_code->size;
-
-#if 0
- 				bx::MemoryReader rd(program.m_fsh->m_code->data, program.m_fsh->m_code->size);
-
-				DxbcContext dxbc;
-				bx::Error err;
-				read(&rd, dxbc, &err);
-
-				bool patchShader = !dxbc.shader.aon9;
-				if (BX_ENABLED(BGFX_CONFIG_DEBUG)
-				&&  patchShader)
-				{
-					union { uint32_t offset; void* ptr; } cast = { 0 };
-					filter(dxbc.shader, dxbc.shader, patchCb0, cast.ptr);
-
-					temp = alloc(uint32_t(dxbc.header.size) );
-					bx::StaticMemoryBlockWriter wr(temp->data, temp->size);
-
-					int32_t size = write(&wr, dxbc, &err);
-					dxbcHash(temp->data + 20, size - 20, temp->data + 4);
-
-					patchShader = 0 == bx::memCmp(program.m_fsh->m_code->data, temp->data, 16);
-					BX_ASSERT(patchShader, "DXBC fragment shader patching error (ShaderHandle: %d).", program.m_fsh - m_shaders);
-
-					if (!patchShader)
-					{
-						for (uint32_t ii = 20; ii < temp->size; ii += 16)
-						{
-							if (0 != bx::memCmp(&program.m_fsh->m_code->data[ii], &temp->data[ii], 16) )
-							{
-	// 							bx::debugPrintfData(&program.m_fsh->m_code->data[ii], temp->size-ii, "");
-	// 							bx::debugPrintfData(&temp->data[ii], temp->size-ii, "");
-								break;
-							}
-						}
-
-						desc.PS.pShaderBytecode = program.m_fsh->m_code->data;
-						desc.PS.BytecodeLength  = program.m_fsh->m_code->size;
-					}
-
-					release(temp);
-					temp = NULL;
-				}
-
-				if (patchShader)
-				{
-					union { uint32_t offset; void* ptr; } cast =
-					{
-						uint32_t(program.m_vsh->m_size)/16
-					};
-					filter(dxbc.shader, dxbc.shader, patchCb0, cast.ptr);
-
-					temp = alloc(uint32_t(dxbc.header.size) );
-					bx::StaticMemoryBlockWriter wr(temp->data, temp->size);
-
-					int32_t size = write(&wr, dxbc, &err);
-					dxbcHash(temp->data + 20, size - 20, temp->data + 4);
-
-					desc.PS.pShaderBytecode = temp->data;
-					desc.PS.BytecodeLength  = size;
-				}
-				else
-				{
-					desc.PS.pShaderBytecode = program.m_fsh->m_code->data;
-					desc.PS.BytecodeLength  = program.m_fsh->m_code->size;
-				}
-#endif // 0
 			}
 			else
 			{

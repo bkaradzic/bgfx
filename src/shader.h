@@ -10,6 +10,18 @@
 
 namespace bgfx
 {
+	static constexpr uint8_t kSpirvVertexBinding   = 0;
+	static constexpr uint8_t kSpirvFragmentBinding = 1;
+	static constexpr uint8_t kSpirvBindShift       = 2;
+	static constexpr uint8_t kSpirvSamplerShift    = 16;
+
+	static constexpr uint8_t kSpirvOldVertexBinding    = 0;
+	static constexpr uint8_t kSpirvOldFragmentBinding  = 48;
+	static constexpr uint8_t kSpirvOldFragmentShift    = 48;
+	static constexpr uint8_t kSpirvOldBufferShift      = 16;
+	static constexpr uint8_t kSpirvOldImageShift       = 32;
+	static constexpr uint8_t kSpirvOldTextureShift     = 16;
+
 	BX_ERROR_RESULT(kShaderInvalidHeader,      BX_MAKEFOURCC('S', 'H', 0, 1) );
 	BX_ERROR_RESULT(kShaderInvalidInstruction, BX_MAKEFOURCC('S', 'H', 0, 2) );
 

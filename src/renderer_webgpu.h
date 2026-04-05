@@ -15,7 +15,6 @@
 		)
 
 #include "debug_renderdoc.h"
-#include "shader_spirv.h"
 
 #define _WGPU_CHECK(_call) _call; BX_ASSERT(!wgpuErrorCheck(), "" #_call " failed!")
 

@@ -37,7 +37,6 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 
 #include "renderer.h"
 #include "renderer_d3d.h"
-#include "shader_dxbc.h"
 #include "debug_renderdoc.h"
 #include "nvapi.h"
 #include "dxgi.h"
@@ -144,7 +143,6 @@ namespace bgfx { namespace d3d11
 			, m_hash(0)
 			, m_numUniforms(0)
 			, m_numPredefined(0)
-			, m_hasDepthOp(false)
 		{
 		}
 
@@ -193,7 +191,6 @@ namespace bgfx { namespace d3d11
 
 		uint16_t m_numUniforms;
 		uint8_t m_numPredefined;
-		bool m_hasDepthOp;
 	};
 
 	struct ProgramD3D11
