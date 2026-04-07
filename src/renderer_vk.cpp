@@ -4070,7 +4070,7 @@ VK_IMPORT_DEVICE
 							wds[wdsCount].pBufferInfo      = NULL;
 							wds[wdsCount].pTexelBufferView = NULL;
 
-							const TextureVK& texture = m_textures[bind.m_idx];
+							TextureVK& texture = m_textures[bind.m_idx];
 
 							VkImageViewType type = texture.m_type;
 							if (UINT32_MAX != bindInfo.index)
@@ -4083,10 +4083,7 @@ VK_IMPORT_DEVICE
 								type = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 							}
 
-							BX_ASSERT(
-								  texture.m_currentImageLayout == texture.m_sampledLayout
-								, "Mismatching image layout. Texture currently used as a framebuffer attachment?"
-								);
+							texture.setState(m_commandBuffer, texture.m_sampledLayout);
 
 							imageInfo[imageCount].imageLayout = texture.m_sampledLayout;
 							imageInfo[imageCount].sampler     = VK_NULL_HANDLE;
@@ -4147,10 +4144,7 @@ VK_IMPORT_DEVICE
 								: _program.m_textures[bindInfo.index].type
 								;
 
-							BX_ASSERT(
-								  texture.m_currentImageLayout == texture.m_sampledLayout
-								, "Mismatching image layout. Texture currently used as a framebuffer attachment?"
-								);
+							texture.setState(m_commandBuffer, texture.m_sampledLayout);
 
 							imageInfo[imageCount].imageLayout = texture.m_sampledLayout;
 							imageInfo[imageCount].sampler     = sampler;
