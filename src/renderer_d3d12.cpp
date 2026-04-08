@@ -6707,11 +6707,11 @@ namespace bgfx { namespace d3d12
 
 				const uint32_t srcZ = TextureD3D12::TextureCube == src.m_type
 					? blit.m_srcZ
-					: 0
+					: bx::min(blit.m_srcZ, (uint16_t)src.m_numLayers - 1)
 					;
 				const uint32_t dstZ = TextureD3D12::TextureCube == dst.m_type
 					? blit.m_dstZ
-					: 0
+					: bx::min(blit.m_dstZ, (uint16_t)dst.m_numLayers - 1)
 					;
 
 				D3D12_TEXTURE_COPY_LOCATION dstLocation;
