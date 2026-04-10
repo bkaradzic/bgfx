@@ -2402,7 +2402,7 @@ namespace bgfx
 		}
 	}
 
-	Encoder* Context::begin(bool _forThread)
+	Encoder* Context::begin(bool _forceNewEncoder)
 	{
 		EncoderImpl* encoder = &m_encoder[0];
 
@@ -2423,7 +2423,7 @@ namespace bgfx
 			encoder->begin(m_submit, uint8_t(idx) );
 		}
 #else
-		BX_UNUSED(_forThread);
+		BX_UNUSED(_forceNewEncoder);
 #endif // BGFX_CONFIG_MULTITHREADED
 
 		return reinterpret_cast<Encoder*>(encoder);
