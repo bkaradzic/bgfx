@@ -132,12 +132,6 @@ BGFX_C_API void bgfx_vertex_convert(const bgfx_vertex_layout_t * _dstLayout, voi
 	bgfx::vertexConvert(dstLayout, _dstData, srcLayout, _srcData, _num);
 }
 
-BGFX_C_API uint32_t bgfx_weld_vertices(void* _output, const bgfx_vertex_layout_t * _layout, const void* _data, uint32_t _num, bool _index32, float _epsilon)
-{
-	const bgfx::VertexLayout & layout = *(const bgfx::VertexLayout *)_layout;
-	return bgfx::weldVertices(_output, layout, _data, _num, _index32, _epsilon);
-}
-
 BGFX_C_API uint32_t bgfx_topology_convert(bgfx_topology_convert_t _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32)
 {
 	return bgfx::topologyConvert((bgfx::TopologyConvert::Enum)_conversion, _dst, _dstSize, _indices, _numIndices, _index32);
@@ -1333,7 +1327,6 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_vertex_pack,
 			bgfx_vertex_unpack,
 			bgfx_vertex_convert,
-			bgfx_weld_vertices,
 			bgfx_topology_convert,
 			bgfx_topology_sort_tri_list,
 			bgfx_get_supported_renderers,

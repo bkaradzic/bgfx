@@ -682,67 +682,6 @@ struct HalfEdges
 	HalfEdge* m_endPtr;
 };
 
-struct WeldedVertex
-{
-	uint16_t m_v;
-	bool m_welded;
-};
-
-inline float sqLength(const float _a[3], const float _b[3])
-{
-	const float xx = _a[0] - _b[0];
-	const float yy = _a[1] - _b[1];
-	const float zz = _a[2] - _b[2];
-	return xx*xx + yy*yy + zz*zz;
-}
-
-uint16_t weldVertices(WeldedVertex* _output, const bgfx::VertexLayout& _layout, const void* _data, uint16_t _num, float _epsilon)
-{
-	const uint32_t hashSize = bx::uint32_nextpow2(_num);
-	const uint32_t hashMask = hashSize-1;
-	const float epsilonSq = _epsilon*_epsilon;
-
-	uint16_t numVertices = 0;
-
-	const uint32_t size = sizeof(uint16_t)*(hashSize + _num);
-	uint16_t* hashTable = (uint16_t*)BX_STACK_ALLOC(size);
-	bx::memSet(hashTable, 0xff, size);
-
-	uint16_t* next = hashTable + hashSize;
-
-	for (uint16_t ii = 0; ii < _num; ++ii)
-	{
-		float pos[4];
-		vertexUnpack(pos, bgfx::Attrib::Position, _layout, _data, ii);
-		uint32_t hashValue = bx::hash<bx::HashMurmur2A>(pos, 3*sizeof(float) ) & hashMask;
-
-		uint16_t offset = hashTable[hashValue];
-		for (; UINT16_MAX != offset; offset = next[offset])
-		{
-			float test[4];
-			vertexUnpack(test, bgfx::Attrib::Position, _layout, _data, _output[offset].m_v);
-
-			if (sqLength(test, pos) < epsilonSq)
-			{
-				_output[ii].m_v = _output[offset].m_v;
-				_output[ii].m_welded = true;
-				break;
-			}
-		}
-
-		if (UINT16_MAX == offset)
-		{
-			_output[ii].m_v = ii;
-			_output[ii].m_welded = false;
-			next[ii] = hashTable[hashValue];
-			hashTable[hashValue] = ii;
-			numVertices++;
-		}
-	}
-
-	return numVertices;
-}
-
 struct Group
 {
 	Group()
@@ -804,20 +743,12 @@ struct Group
 		EdgeMap edgeMap;
 
 		//Get unique indices.
-		WeldedVertex* uniqueVertices = (WeldedVertex*)malloc(m_numVertices*sizeof(WeldedVertex) );
-		::weldVertices(uniqueVertices, _layout, m_vertices, m_numVertices, 0.0001f);
+		uint16_t* uniqueVertices = (uint16_t*)malloc(m_numVertices * sizeof(uint16_t) );
+		weldVertices(uniqueVertices, _layout, m_vertices, m_numVertices, false);
 		uint16_t* uniqueIndices = (uint16_t*)malloc(m_numIndices*sizeof(uint16_t) );
 		for (uint32_t ii = 0; ii < m_numIndices; ++ii)
 		{
-			uint16_t index = m_indices[ii];
-			if (uniqueVertices[index].m_welded)
-			{
-				uniqueIndices[ii] = uniqueVertices[index].m_v;
-			}
-			else
-			{
-				uniqueIndices[ii] = index;
-			}
+			uniqueIndices[ii] = uniqueVertices[m_indices[ii] ];
 		}
 		free(uniqueVertices);
 

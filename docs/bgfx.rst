@@ -216,7 +216,6 @@ Miscellaneous
 .. doxygenfunction:: bgfx::vertexPack
 .. doxygenfunction:: bgfx::vertexUnpack
 .. doxygenfunction:: bgfx::vertexConvert
-.. doxygenfunction:: bgfx::weldVertices
 .. doxygenfunction:: bgfx::topologyConvert
 .. doxygenfunction:: bgfx::topologySortTriList
 .. doxygenfunction:: bgfx::setPaletteColor(uint8_t _index, const float _rgba[4])

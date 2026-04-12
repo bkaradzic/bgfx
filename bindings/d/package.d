@@ -9,7 +9,7 @@ import bindbc.common.types: c_int64, c_uint64, va_list;
 import bindbc.bgfx.config;
 static import bgfx.impl;
 
-enum uint apiVersion = 142;
+enum uint apiVersion = 143;
 
 alias ViewID = ushort;
 
@@ -2018,19 +2018,6 @@ mixin(joinFnBinds((){
 			num = Number of vertices to convert from source to destination.
 		*/
 		{q{void}, q{vertexConvert}, q{ref const VertexLayout dstLayout, void* dstData, ref const VertexLayout srcLayout, const(void)* srcData, uint num=1}, ext: `C++, "bgfx"`},
-		
-		/**
-		* Weld vertices. Returns number of unique vertices after welding.
-		Params:
-			output = Welded vertices remapping table. The size of buffer
-		must be the same as number of vertices.
-			layout = Vertex stream layout.
-			data = Vertex stream.
-			num = Number of vertices in vertex stream.
-			index32 = Set to `true` if input indices are 32-bit.
-			epsilon = Error tolerance for vertex position comparison.
-		*/
-		{q{uint}, q{weldVertices}, q{void* output, ref const VertexLayout layout, const(void)* data, uint num, bool index32, float epsilon=0.001f}, ext: `C++, "bgfx"`},
 		
 		/**
 		* Convert index buffer for use with different primitive topologies.

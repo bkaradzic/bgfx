@@ -2833,20 +2833,6 @@ public static partial class bgfx
 	public static extern unsafe void vertex_convert(VertexLayout* _dstLayout, void* _dstData, VertexLayout* _srcLayout, void* _srcData, uint _num);
 	
 	/// <summary>
-	/// Weld vertices. Returns number of unique vertices after welding.
-	/// </summary>
-	///
-	/// <param name="_output">Welded vertices remapping table. The size of buffer must be the same as number of vertices.</param>
-	/// <param name="_layout">Vertex stream layout.</param>
-	/// <param name="_data">Vertex stream.</param>
-	/// <param name="_num">Number of vertices in vertex stream.</param>
-	/// <param name="_index32">Set to `true` if input indices are 32-bit.</param>
-	/// <param name="_epsilon">Error tolerance for vertex position comparison.</param>
-	///
-	[DllImport(DllName, EntryPoint="bgfx_weld_vertices", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe uint weld_vertices(void* _output, VertexLayout* _layout, void* _data, uint _num, bool _index32, float _epsilon);
-	
-	/// <summary>
 	/// Convert index buffer for use with different primitive topologies.
 	/// </summary>
 	///

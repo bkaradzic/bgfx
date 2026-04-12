@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(142)
+version(143)
 
 typedef "bool"
 typedef "char"
@@ -1152,18 +1152,6 @@ func.vertexConvert { section = "Miscellaneous" }
 	.srcData   "const void*"          --- Source vertex stream data.
 	.num       "uint32_t"             --- Number of vertices to convert from source to destination.
 	 { default = 1 }
-
---- Weld vertices. Returns number of unique vertices after welding.
-func.weldVertices { section = "Miscellaneous" }
-	"uint32_t"                              --- Number of unique vertices after vertex welding.
-	.output          "void*"                --- Welded vertices remapping table. The size of buffer
-	                                        --- must be the same as number of vertices.
-	.layout          "const VertexLayout &" --- Vertex stream layout.
-	.data            "const void*"          --- Vertex stream.
-	.num             "uint32_t"             --- Number of vertices in vertex stream.
-	.index32         "bool"                 --- Set to `true` if input indices are 32-bit.
-	.epsilon         "float"                --- Error tolerance for vertex position comparison.
-	 { default = "0.001f" }
 
 --- Convert index buffer for use with different primitive topologies.
 func.topologyConvert { section = "Miscellaneous" }

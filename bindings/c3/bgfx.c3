@@ -2122,15 +2122,6 @@ extern fn void vertex_unpack(float _output, Attrib _attr, VertexLayout* _layout,
 // _num : `Number of vertices to convert from source to destination.`
 extern fn void vertex_convert(VertexLayout* _dstLayout, void* _dstData, VertexLayout* _srcLayout, void* _srcData, uint _num) @extern("bgfx_vertex_convert");
 
-// Weld vertices. Returns number of unique vertices after welding.
-// _output : `Welded vertices remapping table. The size of buffer must be the same as number of vertices.`
-// _layout : `Vertex stream layout.`
-// _data : `Vertex stream.`
-// _num : `Number of vertices in vertex stream.`
-// _index32 : `Set to `true` if input indices are 32-bit.`
-// _epsilon : `Error tolerance for vertex position comparison.`
-extern fn uint weld_vertices(void* _output, VertexLayout* _layout, void* _data, uint _num, bool _index32, float _epsilon) @extern("bgfx_weld_vertices");
-
 // Convert index buffer for use with different primitive topologies.
 // _conversion : `Conversion type, see `TopologyConvert::Enum`.`
 // _dst : `Destination index buffer. If this argument is NULL function will return number of indices after conversion.`

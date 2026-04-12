@@ -1131,22 +1131,6 @@ BGFX_C_API void bgfx_vertex_unpack(float _output[4], bgfx_attrib_t _attr, const 
 BGFX_C_API void bgfx_vertex_convert(const bgfx_vertex_layout_t * _dstLayout, void* _dstData, const bgfx_vertex_layout_t * _srcLayout, const void* _srcData, uint32_t _num);
 
 /**
- * Weld vertices. Returns number of unique vertices after welding.
- *
- * @param[in] _output Welded vertices remapping table. The size of buffer
- *  must be the same as number of vertices.
- * @param[in] _layout Vertex stream layout.
- * @param[in] _data Vertex stream.
- * @param[in] _num Number of vertices in vertex stream.
- * @param[in] _index32 Set to `true` if input indices are 32-bit.
- * @param[in] _epsilon Error tolerance for vertex position comparison.
- *
- * @returns Number of unique vertices after vertex welding.
- *
- */
-BGFX_C_API uint32_t bgfx_weld_vertices(void* _output, const bgfx_vertex_layout_t * _layout, const void* _data, uint32_t _num, bool _index32, float _epsilon);
-
-/**
  * Convert index buffer for use with different primitive topologies.
  *
  * @param[in] _conversion Conversion type, see `TopologyConvert::Enum`.
@@ -3780,7 +3764,6 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_VERTEX_PACK,
     BGFX_FUNCTION_ID_VERTEX_UNPACK,
     BGFX_FUNCTION_ID_VERTEX_CONVERT,
-    BGFX_FUNCTION_ID_WELD_VERTICES,
     BGFX_FUNCTION_ID_TOPOLOGY_CONVERT,
     BGFX_FUNCTION_ID_TOPOLOGY_SORT_TRI_LIST,
     BGFX_FUNCTION_ID_GET_SUPPORTED_RENDERERS,
@@ -3990,7 +3973,6 @@ struct bgfx_interface_vtbl
     void (*vertex_pack)(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _layout, void* _data, uint32_t _index);
     void (*vertex_unpack)(float _output[4], bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _layout, const void* _data, uint32_t _index);
     void (*vertex_convert)(const bgfx_vertex_layout_t * _dstLayout, void* _dstData, const bgfx_vertex_layout_t * _srcLayout, const void* _srcData, uint32_t _num);
-    uint32_t (*weld_vertices)(void* _output, const bgfx_vertex_layout_t * _layout, const void* _data, uint32_t _num, bool _index32, float _epsilon);
     uint32_t (*topology_convert)(bgfx_topology_convert_t _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32);
     void (*topology_sort_tri_list)(bgfx_topology_sort_t _sort, void* _dst, uint32_t _dstSize, const float _dir[3], const float _pos[3], const void* _vertices, uint32_t _stride, const void* _indices, uint32_t _numIndices, bool _index32);
     uint8_t (*get_supported_renderers)(uint8_t _max, bgfx_renderer_type_t* _enum);

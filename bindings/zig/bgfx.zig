@@ -2238,18 +2238,6 @@ pub inline fn vertexConvert(_dstLayout: [*c]const VertexLayout, _dstData: ?*anyo
 }
 extern fn bgfx_vertex_convert(_dstLayout: [*c]const VertexLayout, _dstData: ?*anyopaque, _srcLayout: [*c]const VertexLayout, _srcData: ?*const anyopaque, _num: u32) void;
 
-/// Weld vertices. Returns number of unique vertices after welding.
-/// <param name="_output">Welded vertices remapping table. The size of buffer must be the same as number of vertices.</param>
-/// <param name="_layout">Vertex stream layout.</param>
-/// <param name="_data">Vertex stream.</param>
-/// <param name="_num">Number of vertices in vertex stream.</param>
-/// <param name="_index32">Set to `true` if input indices are 32-bit.</param>
-/// <param name="_epsilon">Error tolerance for vertex position comparison.</param>
-pub inline fn weldVertices(_output: ?*anyopaque, _layout: [*c]const VertexLayout, _data: ?*const anyopaque, _num: u32, _index32: bool, _epsilon: f32) u32 {
-    return bgfx_weld_vertices(_output, _layout, _data, _num, _index32, _epsilon);
-}
-extern fn bgfx_weld_vertices(_output: ?*anyopaque, _layout: [*c]const VertexLayout, _data: ?*const anyopaque, _num: u32, _index32: bool, _epsilon: f32) u32;
-
 /// Convert index buffer for use with different primitive topologies.
 /// <param name="_conversion">Conversion type, see `TopologyConvert::Enum`.</param>
 /// <param name="_dst">Destination index buffer. If this argument is NULL function will return number of indices after conversion.</param>

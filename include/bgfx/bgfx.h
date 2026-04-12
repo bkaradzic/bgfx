@@ -1980,29 +1980,6 @@ namespace bgfx
 		, uint32_t _num = 1
 		);
 
-	/// Weld vertices. Returns number of unique vertices after welding.
-	///
-	/// @param[in] _output Welded vertices remapping table. The size of buffer
-	///   must be the same as number of vertices.
-	/// @param[in] _layout Vertex stream layout.
-	/// @param[in] _data Vertex stream.
-	/// @param[in] _num Number of vertices in vertex stream.
-	/// @param[in] _index32 Set to `true` if input indices are 32-bit.
-	/// @param[in] _epsilon Error tolerance for vertex position comparison.
-	///
-	/// @returns Number of unique vertices after vertex welding.
-	///
-	/// @attention C99's equivalent binding is `bgfx_weld_vertices`.
-	///
-	uint32_t weldVertices(
-		  void* _output
-		, const VertexLayout& _layout
-		, const void* _data
-		, uint32_t _num
-		, bool _index32
-		, float _epsilon = 0.001f
-		);
-
 	/// Convert index buffer for use with different primitive topologies.
 	///
 	/// @param[in] _conversion Conversion type, see `TopologyConvert::Enum`.
