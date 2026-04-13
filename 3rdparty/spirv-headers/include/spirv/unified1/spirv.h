@@ -179,6 +179,7 @@ typedef enum SpvExecutionMode_ {
     SpvExecutionModeQuadDerivativesKHR = 5088,
     SpvExecutionModeRequireFullQuadsKHR = 5089,
     SpvExecutionModeSharesInputWithAMDX = 5102,
+    SpvExecutionModeArithmeticPoisonKHR = 5157,
     SpvExecutionModeOutputLinesEXT = 5269,
     SpvExecutionModeOutputLinesNV = 5269,
     SpvExecutionModeOutputPrimitivesEXT = 5270,
@@ -563,6 +564,7 @@ typedef enum SpvDecoration_ {
     SpvDecorationPayloadDispatchIndirectAMDX = 5105,
     SpvDecorationArrayStrideIdEXT = 5124,
     SpvDecorationOffsetIdEXT = 5125,
+    SpvDecorationUTFEncodedKHR = 5145,
     SpvDecorationOverrideCoverageNV = 5248,
     SpvDecorationPassthroughNV = 5250,
     SpvDecorationViewportRelativeNV = 5252,
@@ -1200,7 +1202,10 @@ typedef enum SpvCapability_ {
     SpvCapabilityBFloat16TypeKHR = 5116,
     SpvCapabilityBFloat16DotProductKHR = 5117,
     SpvCapabilityBFloat16CooperativeMatrixKHR = 5118,
+    SpvCapabilityAbortKHR = 5120,
     SpvCapabilityDescriptorHeapEXT = 5128,
+    SpvCapabilityConstantDataKHR = 5146,
+    SpvCapabilityPoisonFreezeKHR = 5156,
     SpvCapabilitySampleMaskOverrideCoverageNV = 5249,
     SpvCapabilityGeometryShaderPassthroughNV = 5251,
     SpvCapabilityShaderViewportIndexLayerEXT = 5254,
@@ -2160,9 +2165,14 @@ typedef enum SpvOp_ {
     SpvOpGroupNonUniformQuadAnyKHR = 5111,
     SpvOpTypeBufferEXT = 5115,
     SpvOpBufferPointerEXT = 5119,
+    SpvOpAbortKHR = 5121,
     SpvOpUntypedImageTexelPointerEXT = 5126,
     SpvOpMemberDecorateIdEXT = 5127,
     SpvOpConstantSizeOfEXT = 5129,
+    SpvOpConstantDataKHR = 5147,
+    SpvOpSpecConstantDataKHR = 5148,
+    SpvOpPoisonKHR = 5158,
+    SpvOpFreezeKHR = 5159,
     SpvOpHitObjectRecordHitMotionNV = 5249,
     SpvOpHitObjectRecordHitWithIndexMotionNV = 5250,
     SpvOpHitObjectRecordMissMotionNV = 5251,
@@ -3084,9 +3094,14 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpGroupNonUniformQuadAnyKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpTypeBufferEXT: *hasResult = true; *hasResultType = false; break;
     case SpvOpBufferPointerEXT: *hasResult = true; *hasResultType = true; break;
+    case SpvOpAbortKHR: *hasResult = false; *hasResultType = false; break;
     case SpvOpUntypedImageTexelPointerEXT: *hasResult = true; *hasResultType = true; break;
     case SpvOpMemberDecorateIdEXT: *hasResult = false; *hasResultType = false; break;
     case SpvOpConstantSizeOfEXT: *hasResult = true; *hasResultType = true; break;
+    case SpvOpConstantDataKHR: *hasResult = true; *hasResultType = true; break;
+    case SpvOpSpecConstantDataKHR: *hasResult = true; *hasResultType = true; break;
+    case SpvOpPoisonKHR: *hasResult = true; *hasResultType = true; break;
+    case SpvOpFreezeKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpHitObjectRecordHitMotionNV: *hasResult = false; *hasResultType = false; break;
     case SpvOpHitObjectRecordHitWithIndexMotionNV: *hasResult = false; *hasResultType = false; break;
     case SpvOpHitObjectRecordMissMotionNV: *hasResult = false; *hasResultType = false; break;
@@ -3646,6 +3661,7 @@ inline const char* SpvExecutionModeToString(SpvExecutionMode value) {
     case SpvExecutionModeQuadDerivativesKHR: return "QuadDerivativesKHR";
     case SpvExecutionModeRequireFullQuadsKHR: return "RequireFullQuadsKHR";
     case SpvExecutionModeSharesInputWithAMDX: return "SharesInputWithAMDX";
+    case SpvExecutionModeArithmeticPoisonKHR: return "ArithmeticPoisonKHR";
     case SpvExecutionModeOutputLinesEXT: return "OutputLinesEXT";
     case SpvExecutionModeOutputPrimitivesEXT: return "OutputPrimitivesEXT";
     case SpvExecutionModeDerivativeGroupQuadsKHR: return "DerivativeGroupQuadsKHR";
@@ -3963,6 +3979,7 @@ inline const char* SpvDecorationToString(SpvDecoration value) {
     case SpvDecorationPayloadDispatchIndirectAMDX: return "PayloadDispatchIndirectAMDX";
     case SpvDecorationArrayStrideIdEXT: return "ArrayStrideIdEXT";
     case SpvDecorationOffsetIdEXT: return "OffsetIdEXT";
+    case SpvDecorationUTFEncodedKHR: return "UTFEncodedKHR";
     case SpvDecorationOverrideCoverageNV: return "OverrideCoverageNV";
     case SpvDecorationPassthroughNV: return "PassthroughNV";
     case SpvDecorationViewportRelativeNV: return "ViewportRelativeNV";
@@ -4354,7 +4371,10 @@ inline const char* SpvCapabilityToString(SpvCapability value) {
     case SpvCapabilityBFloat16TypeKHR: return "BFloat16TypeKHR";
     case SpvCapabilityBFloat16DotProductKHR: return "BFloat16DotProductKHR";
     case SpvCapabilityBFloat16CooperativeMatrixKHR: return "BFloat16CooperativeMatrixKHR";
+    case SpvCapabilityAbortKHR: return "AbortKHR";
     case SpvCapabilityDescriptorHeapEXT: return "DescriptorHeapEXT";
+    case SpvCapabilityConstantDataKHR: return "ConstantDataKHR";
+    case SpvCapabilityPoisonFreezeKHR: return "PoisonFreezeKHR";
     case SpvCapabilitySampleMaskOverrideCoverageNV: return "SampleMaskOverrideCoverageNV";
     case SpvCapabilityGeometryShaderPassthroughNV: return "GeometryShaderPassthroughNV";
     case SpvCapabilityShaderViewportIndexLayerEXT: return "ShaderViewportIndexLayerEXT";
@@ -5139,9 +5159,14 @@ inline const char* SpvOpToString(SpvOp value) {
     case SpvOpGroupNonUniformQuadAnyKHR: return "OpGroupNonUniformQuadAnyKHR";
     case SpvOpTypeBufferEXT: return "OpTypeBufferEXT";
     case SpvOpBufferPointerEXT: return "OpBufferPointerEXT";
+    case SpvOpAbortKHR: return "OpAbortKHR";
     case SpvOpUntypedImageTexelPointerEXT: return "OpUntypedImageTexelPointerEXT";
     case SpvOpMemberDecorateIdEXT: return "OpMemberDecorateIdEXT";
     case SpvOpConstantSizeOfEXT: return "OpConstantSizeOfEXT";
+    case SpvOpConstantDataKHR: return "OpConstantDataKHR";
+    case SpvOpSpecConstantDataKHR: return "OpSpecConstantDataKHR";
+    case SpvOpPoisonKHR: return "OpPoisonKHR";
+    case SpvOpFreezeKHR: return "OpFreezeKHR";
     case SpvOpHitObjectRecordHitMotionNV: return "OpHitObjectRecordHitMotionNV";
     case SpvOpHitObjectRecordHitWithIndexMotionNV: return "OpHitObjectRecordHitWithIndexMotionNV";
     case SpvOpHitObjectRecordMissMotionNV: return "OpHitObjectRecordMissMotionNV";
