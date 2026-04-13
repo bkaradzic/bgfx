@@ -46,7 +46,9 @@ spv_ext_inst_type_t spvExtInstImportTypeGet(const char* name) {
   if (!strcmp("OpenCL.DebugInfo.100", name)) {
     return SPV_EXT_INST_TYPE_OPENCL_DEBUGINFO_100;
   }
-  if (!strcmp("NonSemantic.Shader.DebugInfo.100", name)) {
+  // Match any version of NonSemantic.Shader.DebugInfo.
+  // Later versions are supersets that share the same instruction numbering.
+  if (!strncmp("NonSemantic.Shader.DebugInfo.", name, 29)) {
     return SPV_EXT_INST_TYPE_NONSEMANTIC_SHADER_DEBUGINFO_100;
   }
   if (!strncmp("NonSemantic.ClspvReflection.", name, 28)) {

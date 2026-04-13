@@ -187,9 +187,8 @@ void Module::ToBinary(std::vector<uint32_t>* binary, bool skip_nop) const {
         // If the current instruction does not have the line information,
         // the last line information is not effective any more. Emit OpNoLine
         // or DebugNoLine to specify it.
-        uint32_t shader_set_id = context()
-                                     ->get_feature_mgr()
-                                     ->GetExtInstImportId_Shader100DebugInfo();
+        uint32_t shader_set_id =
+            context()->get_feature_mgr()->GetExtInstImportId_ShaderDebugInfo();
         if (shader_set_id != 0) {
           binary->push_back((5 << 16) |
                             static_cast<uint16_t>(spv::Op::OpExtInst));
@@ -217,7 +216,7 @@ void Module::ToBinary(std::vector<uint32_t>* binary, bool skip_nop) const {
       if (scope != last_scope && !between_merge_and_branch) {
         // Can only emit nonsemantic instructions after all phi instructions
         // in a block so don't emit scope instructions before phi instructions
-        // for NonSemantic.Shader.DebugInfo.100.
+        // for NonSemantic.Shader.DebugInfo.
         if (!between_label_and_phi_var ||
             context()
                 ->get_feature_mgr()

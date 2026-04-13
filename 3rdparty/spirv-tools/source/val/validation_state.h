@@ -271,9 +271,26 @@ class ValidationState_t {
   }
 
   /// Returns the maximum number of primitives mesh shader can emit
-  uint32_t GetOutputPrimitivesEXT(uint32_t entry_point) {
+  uint32_t GetOutputPrimitivesEXT(uint32_t entry_point) const {
     auto entry = entry_point_to_output_primitives_.find(entry_point);
     if (entry != entry_point_to_output_primitives_.end()) {
+      auto inst = entry->second;
+      return inst->GetOperandAs<uint32_t>(2);
+    }
+    return 0;
+  }
+
+  /// Registers that the entry point maximum number of vertices
+  /// mesh shader will ever emit
+  void RegisterEntryPointOutputVertices(uint32_t entry_point,
+                                        const Instruction* inst) {
+    entry_point_to_output_vertices_[entry_point] = inst;
+  }
+
+  /// Returns the maximum number of primitives mesh shader can emit
+  uint32_t GetOutputVertices(uint32_t entry_point) const {
+    auto entry = entry_point_to_output_vertices_.find(entry_point);
+    if (entry != entry_point_to_output_vertices_.end()) {
       auto inst = entry->second;
       return inst->GetOperandAs<uint32_t>(2);
     }
@@ -983,6 +1000,10 @@ class ValidationState_t {
            qcom_image_processing_consumers_.end();
   }
 
+  // Get the list of line lengths for a given result ID of a DebugSource
+  // instruction Will create a new vector if DebugSource is not found
+  std::vector<uint32_t>& GetDebugSourceLineLength(uint32_t id);
+
  private:
   ValidationState_t(const ValidationState_t&);
 
@@ -1132,6 +1153,10 @@ class ValidationState_t {
   std::unordered_map<uint32_t, const Instruction*>
       entry_point_to_output_primitives_;
 
+  // Mapping entry point -> OutputVertices execution mode instruction
+  std::unordered_map<uint32_t, const Instruction*>
+      entry_point_to_output_vertices_;
+
   /// Mapping function -> array of entry points inside this
   /// module which can (indirectly) call the function.
   std::unordered_map<uint32_t, std::vector<uint32_t>> function_to_entry_points_;
@@ -1156,6 +1181,10 @@ class ValidationState_t {
   // The IDs of types of pointers to tensors.  This is populated in the
   // TypePass.
   std::unordered_set<uint32_t> pointer_to_tensor_;
+
+  /// Maps an id of DebugSource to a vector that contains the length of each
+  /// line side of it. (Also will have the DebugSourceContinued source included)
+  std::unordered_map<uint32_t, std::vector<uint32_t>> debug_source_line_length_;
 
   /// Maps ids to friendly names.
   std::unique_ptr<spvtools::FriendlyNameMapper> friendly_mapper_;

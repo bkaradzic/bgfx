@@ -33,8 +33,8 @@ constexpr int kEntryPointInterfaceInIdx = 3;
 constexpr int kEntryPointFunctionIdInIdx = 1;
 constexpr int kEntryPointExecutionModelInIdx = 0;
 
-// Constants for OpenCL.DebugInfo.100 / NonSemantic.Shader.DebugInfo.100
-// extension instructions.
+// Constants for OpenCL.DebugInfo.100 / NonSemantic.Shader.DebugInfo extension
+// instructions.
 constexpr uint32_t kDebugFunctionOperandFunctionIndex = 13;
 constexpr uint32_t kDebugGlobalVariableOperandVariableIndex = 11;
 }  // namespace
@@ -539,7 +539,7 @@ void IRContext::KillRelatedDebugScopes(Instruction* inst) {
   // instruction.
   if (inst->opcode() == spv::Op::OpExtInstImport) {
     const std::string extension_name = inst->GetInOperand(0).AsString();
-    if (extension_name == "NonSemantic.Shader.DebugInfo.100" ||
+    if (extension_name.compare(0, 29, "NonSemantic.Shader.DebugInfo.") == 0 ||
         extension_name == "OpenCL.DebugInfo.100") {
       module()->ForEachInst([](Instruction* child) {
         child->SetDebugScope(DebugScope(kNoDebugScope, kNoInlinedAt));
@@ -580,6 +580,7 @@ void IRContext::AddCombinatorsForCapability(uint32_t capability) {
          (uint32_t)spv::Op::OpTypeStruct,
          (uint32_t)spv::Op::OpTypeOpaque,
          (uint32_t)spv::Op::OpTypePointer,
+         (uint32_t)spv::Op::OpTypeUntypedPointerKHR,
          (uint32_t)spv::Op::OpTypeFunction,
          (uint32_t)spv::Op::OpTypeEvent,
          (uint32_t)spv::Op::OpTypeDeviceEvent,
@@ -588,10 +589,12 @@ void IRContext::AddCombinatorsForCapability(uint32_t capability) {
          (uint32_t)spv::Op::OpTypePipe,
          (uint32_t)spv::Op::OpTypeForwardPointer,
          (uint32_t)spv::Op::OpVariable,
+         (uint32_t)spv::Op::OpUntypedVariableKHR,
          (uint32_t)spv::Op::OpImageTexelPointer,
          (uint32_t)spv::Op::OpLoad,
          (uint32_t)spv::Op::OpAccessChain,
          (uint32_t)spv::Op::OpInBoundsAccessChain,
+         (uint32_t)spv::Op::OpUntypedAccessChainKHR,
          (uint32_t)spv::Op::OpArrayLength,
          (uint32_t)spv::Op::OpVectorExtractDynamic,
          (uint32_t)spv::Op::OpVectorInsertDynamic,

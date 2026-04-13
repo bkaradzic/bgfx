@@ -39,12 +39,12 @@ NameMapper GetTrivialNameMapper() {
 
 FriendlyNameMapper::FriendlyNameMapper(const spv_const_context context,
                                        const uint32_t* code,
-                                       const size_t wordCount)
+                                       const size_t wordCount, uint32_t options)
     : grammar_(AssemblyGrammar(context)) {
   spv_diagnostic diag = nullptr;
   // We don't care if the parse fails.
-  spvBinaryParse(context, this, code, wordCount, nullptr,
-                 ParseInstructionForwarder, &diag);
+  spvBinaryParseWithOptions(context, this, code, wordCount, nullptr,
+                            ParseInstructionForwarder, &diag, options);
   spvDiagnosticDestroy(diag);
 }
 

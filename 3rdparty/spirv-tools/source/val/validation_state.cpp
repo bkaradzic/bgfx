@@ -77,6 +77,12 @@ ModuleLayoutSection InstructionLayoutSection(
     case spv::Op::OpDecorateId:
     case spv::Op::OpDecorateStringGOOGLE:
     case spv::Op::OpMemberDecorateStringGOOGLE:
+    // SPV_INTEL_memory_access_aliasing: alias scope instructions go in the
+    // annotations section so that OpDecorateId can reference them without
+    // requiring a forward reference across layout sections.
+    case spv::Op::OpAliasDomainDeclINTEL:
+    case spv::Op::OpAliasScopeDeclINTEL:
+    case spv::Op::OpAliasScopeListDeclINTEL:
       return kLayoutAnnotations;
     case spv::Op::OpTypeForwardPointer:
     case spv::Op::OpTypeTaskSequenceINTEL:
@@ -708,12 +714,31 @@ void ValidationState_t::RegisterStorageClassConsumer(
                 *message =
                     errorVUID +
                     "in Vulkan environment, Workgroup Storage Class is limited "
-                    "to MeshNV, TaskNV, and GLCompute execution model";
+                    "to MeshEXT, TaskEXT, MeshNV, TaskNV, and GLCompute "
+                    "execution model";
               }
               return false;
             }
             return true;
           });
+    }
+
+    if (storage_class == spv::StorageClass::TileImageEXT) {
+      std::string errorVUID = VkErrorID(8720);
+      function(consumer->function()->id())
+          ->RegisterExecutionModelLimitation(
+              [errorVUID](spv::ExecutionModel model, std::string* message) {
+                if (model != spv::ExecutionModel::Fragment) {
+                  if (message) {
+                    *message = errorVUID +
+                               "in Vulkan environment, TileImageEXT Storage "
+                               "Class is limited "
+                               "to Fragment execution model";
+                  }
+                  return false;
+                }
+                return true;
+              });
     }
   }
 
@@ -2136,6 +2161,15 @@ bool ValidationState_t::ContainsUntypedPointer(uint32_t id) const {
   return false;
 }
 
+std::vector<uint32_t>& ValidationState_t::GetDebugSourceLineLength(
+    uint32_t id) {
+  auto it = debug_source_line_length_.find(id);
+  if (it == debug_source_line_length_.end()) {
+    return debug_source_line_length_[id];
+  }
+  return it->second;
+}
+
 bool ValidationState_t::IsValidStorageClass(
     spv::StorageClass storage_class) const {
   if (spvIsVulkanEnv(context()->target_env)) {
@@ -2656,6 +2690,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-OpImageTexelPointer-04658);
     case 4659:
       return VUID_WRAP(VUID-StandaloneSpirv-OpImageQuerySizeLod-04659);
+    case 4660:
+      return VUID_WRAP(VUID-StandaloneSpirv-SubpassData-04660);
     case 4664:
       return VUID_WRAP(VUID-StandaloneSpirv-OpImageGather-04664);
     case 4667:
@@ -2728,6 +2764,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-Component-04922);
     case 4923:
       return VUID_WRAP(VUID-StandaloneSpirv-Component-04923);
+    case 4965:
+      return VUID_WRAP(VUID-StandaloneSpirv-Image-04965);
     case 6201:
       return VUID_WRAP(VUID-StandaloneSpirv-Flat-06201);
     case 6202:
@@ -2834,6 +2872,8 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-Component-07703);
     case 7951:
       return VUID_WRAP(VUID-StandaloneSpirv-SubgroupVoteKHR-07951);
+    case 8720:
+      return VUID_WRAP(VUID-StandaloneSpirv-None-08720);
     case 8721:
       return VUID_WRAP(VUID-StandaloneSpirv-OpEntryPoint-08721);
     case 8722:
@@ -2930,6 +2970,9 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-UnequalMemorySemantics-10879);
     case 10880:
       return VUID_WRAP(VUID-StandaloneSpirv-TessLevelInner-10880);
+    case 11165:
+      // Validation (via GPU-AV) will catch this if a non-constant
+      return VUID_WRAP(VUID-RuntimeSpirv-Size-11165);
     case 11167:
       return VUID_WRAP(VUID-StandaloneSpirv-OpUntypedVariableKHR-11167);
     case 11239:
@@ -2958,6 +3001,10 @@ std::string ValidationState_t::VkErrorID(uint32_t id,
       return VUID_WRAP(VUID-StandaloneSpirv-Scope-12243);
     case 12294:
       return VUID_WRAP(VUID-StandaloneSpirv-Function-12294);
+    case 12295:
+      return VUID_WRAP(VUID-StandaloneSpirv-None-12295);
+    case 12297:
+      return VUID_WRAP(VUID-StandaloneSpirv-Type-12297);
     default:
       return "";  // unknown id
   }

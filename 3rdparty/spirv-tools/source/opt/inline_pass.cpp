@@ -424,7 +424,7 @@ bool InlinePass::InlineEntryBlock(
   while (callee_inst_itr != callee_first_block->end()) {
     // Don't inline function definition links, the calling function is not a
     // definition.
-    if (callee_inst_itr->GetShader100DebugOpcode() ==
+    if (callee_inst_itr->GetShaderDebugOpcode() ==
         NonSemanticShaderDebugInfo100DebugFunctionDefinition) {
       ++callee_inst_itr;
       continue;
@@ -462,7 +462,7 @@ std::unique_ptr<BasicBlock> InlinePass::InlineBasicBlocks(
          ++inst_itr) {
       // Don't inline function definition links, the calling function is not a
       // definition
-      if (inst_itr->GetShader100DebugOpcode() ==
+      if (inst_itr->GetShaderDebugOpcode() ==
           NonSemanticShaderDebugInfo100DebugFunctionDefinition)
         continue;
       if (!InlineSingleInstruction(

@@ -1011,13 +1011,17 @@ std::ostream& operator<<(std::ostream& os, const HexFloat<T, Traits>& value) {
   return os;
 }
 
-// Returns true if negate_value is true and the next character on the
-// input stream is a plus or minus sign.  In that case we also set the fail bit
-// on the stream and set the value to the zero value for its type.
+// Encodes whether a leading sign has been seen, and if so which one.
+enum class LeadingSign { None, Plus, Minus };
+
+// Returns true if leading_sign is either Plus or Minus, and the next character
+// on the input stream is a plus or minus sign.  In that case we also set the
+// fail bit on the stream and set the value to the zero value for its type.
 template <typename T, typename Traits>
-inline bool RejectParseDueToLeadingSign(std::istream& is, bool negate_value,
+inline bool RejectParseDueToLeadingSign(std::istream& is,
+                                        LeadingSign leading_sign,
                                         HexFloat<T, Traits>& value) {
-  if (negate_value) {
+  if (leading_sign != LeadingSign::None) {
     auto next_char = is.peek();
     if (next_char == '-' || next_char == '+') {
       // Fail the parse.  Emulate standard behaviour by setting the value to
@@ -1032,22 +1036,24 @@ inline bool RejectParseDueToLeadingSign(std::istream& is, bool negate_value,
 
 // Parses a floating point number from the given stream and stores it into the
 // value parameter.
-// If negate_value is true then the number may not have a leading minus or
-// plus, and if it successfully parses, then the number is negated before
-// being stored into the value parameter.
+// If leading_sign is Plus or Minus, then the number may not have a leading
+// minus or plus. If it successfully parses, and the leading sign was Minus,
+// then the number is negated before being stored into the value parameter.
 // If the value cannot be correctly parsed or overflows the target floating
 // point type, then set the fail bit on the stream.
 // TODO(dneto): Promise C++11 standard behavior in how the value is set in
 // the error case, but only after all target platforms implement it correctly.
 // In particular, the Microsoft C++ runtime appears to be out of spec.
 template <typename T, typename Traits>
-inline std::istream& ParseNormalFloat(std::istream& is, bool negate_value,
+inline std::istream& ParseNormalFloat(std::istream& is,
+                                      LeadingSign leading_sign,
                                       HexFloat<T, Traits>& value) {
-  if (RejectParseDueToLeadingSign(is, negate_value, value)) {
+  if (RejectParseDueToLeadingSign(is, leading_sign, value)) {
     return is;
   }
   T val;
   is >> val;
+  const bool negate_value = leading_sign == LeadingSign::Minus;
   if (negate_value) {
     val = -val;
   }
@@ -1070,8 +1076,9 @@ inline std::istream& ParseNormalFloat(std::istream& is, bool negate_value,
 // This will parse the float as it were a 32-bit floating point number,
 // and then round it down to fit into a Float16 value.
 // The number is rounded towards zero.
-// If negate_value is true then the number may not have a leading minus or
-// plus, and if it successfully parses, then the number is negated before
+// If leading_sign is Plus or Minus, then the number may not have a leading
+// minus or plus. If it successfully parses, and the leading sign was Minus,
+// then the number is negated before being stored into the value parameter.
 // being stored into the value parameter.
 // If the value cannot be correctly parsed or overflows the target floating
 // point type, then set the fail bit on the stream.
@@ -1081,11 +1088,11 @@ inline std::istream& ParseNormalFloat(std::istream& is, bool negate_value,
 template <>
 inline std::istream&
 ParseNormalFloat<FloatProxy<Float16>, HexFloatTraits<FloatProxy<Float16>>>(
-    std::istream& is, bool negate_value,
+    std::istream& is, LeadingSign leading_sign,
     HexFloat<FloatProxy<Float16>, HexFloatTraits<FloatProxy<Float16>>>& value) {
   // First parse as a 32-bit float.
   HexFloat<FloatProxy<float>> float_val(0.0f);
-  ParseNormalFloat(is, negate_value, float_val);
+  ParseNormalFloat(is, leading_sign, float_val);
 
   // Then convert to 16-bit float, saturating at infinities, and
   // rounding toward zero.
@@ -1106,11 +1113,11 @@ ParseNormalFloat<FloatProxy<Float16>, HexFloatTraits<FloatProxy<Float16>>>(
 template <>
 inline std::istream&
 ParseNormalFloat<FloatProxy<BFloat16>, HexFloatTraits<FloatProxy<BFloat16>>>(
-    std::istream& is, bool negate_value,
+    std::istream& is, LeadingSign leading_sign,
     HexFloat<FloatProxy<BFloat16>, HexFloatTraits<FloatProxy<BFloat16>>>&
         value) {
   HexFloat<FloatProxy<float>> float_val(0.0f);
-  ParseNormalFloat(is, negate_value, float_val);
+  ParseNormalFloat(is, leading_sign, float_val);
 
   float_val.castTo(value, round_direction::kToZero);
 
@@ -1125,8 +1132,8 @@ ParseNormalFloat<FloatProxy<BFloat16>, HexFloatTraits<FloatProxy<BFloat16>>>(
 // This will parse the float as it were a 32-bit floating point number,
 // and then round it down to fit into a Float8_E4M3 value.
 // The number is rounded towards zero.
-// If negate_value is true then the number may not have a leading minus or
-// plus, and if it successfully parses, then the number is negated before
+// If leading_sign is Plus or Minus, then the number may not have a leading
+// minus or plus. If it successfully parses, and the leading sign was Minus,
 // being stored into the value parameter.
 // If the value cannot be correctly parsed or overflows the target floating
 // point type, then set the fail bit on the stream.
@@ -1136,12 +1143,12 @@ ParseNormalFloat<FloatProxy<BFloat16>, HexFloatTraits<FloatProxy<BFloat16>>>(
 template <>
 inline std::istream& ParseNormalFloat<FloatProxy<Float8_E4M3>,
                                       HexFloatTraits<FloatProxy<Float8_E4M3>>>(
-    std::istream& is, bool negate_value,
+    std::istream& is, LeadingSign leading_sign,
     HexFloat<FloatProxy<Float8_E4M3>, HexFloatTraits<FloatProxy<Float8_E4M3>>>&
         value) {
   // First parse as a 32-bit float.
   HexFloat<FloatProxy<float>> float_val(0.0f);
-  ParseNormalFloat(is, negate_value, float_val);
+  ParseNormalFloat(is, leading_sign, float_val);
 
   if (float_val.value().getAsFloat() > 448.0f) {
     is.setstate(std::ios_base::failbit);
@@ -1162,8 +1169,8 @@ inline std::istream& ParseNormalFloat<FloatProxy<Float8_E4M3>,
 // This will parse the float as it were a Float8_E5M2 floating point number,
 // and then round it down to fit into a Float16 value.
 // The number is rounded towards zero.
-// If negate_value is true then the number may not have a leading minus or
-// plus, and if it successfully parses, then the number is negated before
+// If leading_sign is Plus or Minus, then the number may not have a leading
+// minus or plus. If it successfully parses, and the leading sign was Minus,
 // being stored into the value parameter.
 // If the value cannot be correctly parsed or overflows the target floating
 // point type, then set the fail bit on the stream.
@@ -1173,12 +1180,12 @@ inline std::istream& ParseNormalFloat<FloatProxy<Float8_E4M3>,
 template <>
 inline std::istream& ParseNormalFloat<FloatProxy<Float8_E5M2>,
                                       HexFloatTraits<FloatProxy<Float8_E5M2>>>(
-    std::istream& is, bool negate_value,
+    std::istream& is, LeadingSign leading_sign,
     HexFloat<FloatProxy<Float8_E5M2>, HexFloatTraits<FloatProxy<Float8_E5M2>>>&
         value) {
   // First parse as a 32-bit float.
   HexFloat<FloatProxy<float>> float_val(0.0f);
-  ParseNormalFloat(is, negate_value, float_val);
+  ParseNormalFloat(is, leading_sign, float_val);
 
   // Then convert to Float8_E5M2 float, saturating at infinities, and
   // rounding toward zero.
@@ -1270,14 +1277,19 @@ std::istream& operator>>(std::istream& is, HexFloat<T, Traits>& value) {
   }
 
   auto next_char = is.peek();
-  bool negate_value = false;
 
-  if (next_char != '-' && next_char != '0') {
-    return ParseNormalFloat(is, negate_value, value);
+  auto leading_sign = LeadingSign::None;
+
+  if (next_char != '-' && next_char != '0' && next_char != '+') {
+    return ParseNormalFloat(is, LeadingSign::None, value);
   }
 
   if (next_char == '-') {
-    negate_value = true;
+    leading_sign = LeadingSign::Minus;
+    is.get();
+    next_char = is.peek();
+  } else if (next_char == '+') {
+    leading_sign = LeadingSign::Plus;
     is.get();
     next_char = is.peek();
   }
@@ -1287,12 +1299,12 @@ std::istream& operator>>(std::istream& is, HexFloat<T, Traits>& value) {
     auto maybe_hex_start = is.peek();
     if (maybe_hex_start != 'x' && maybe_hex_start != 'X') {
       is.unget();
-      return ParseNormalFloat(is, negate_value, value);
+      return ParseNormalFloat(is, leading_sign, value);
     } else {
       is.get();  // Throw away the 'x';
     }
   } else {
-    return ParseNormalFloat(is, negate_value, value);
+    return ParseNormalFloat(is, leading_sign, value);
   }
 
   // This "looks" like a hex-float so treat it as one.
@@ -1508,7 +1520,8 @@ std::istream& operator>>(std::istream& is, HexFloat<T, Traits>& value) {
   }
 
   uint_type output_bits = static_cast<uint_type>(
-      static_cast<uint_type>(negate_value ? 1 : 0) << HF::top_bit_left_shift);
+      static_cast<uint_type>(leading_sign == LeadingSign::Minus ? 1 : 0)
+      << HF::top_bit_left_shift);
   output_bits |= fraction;
 
   uint_type shifted_exponent = static_cast<uint_type>(

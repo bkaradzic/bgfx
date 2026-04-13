@@ -366,6 +366,8 @@ spv_result_t ValidateLogicalPointerReturns(ValidationState_t& _,
     case spv::Op::OpCopyObject:
     // Core spec bugs
     case spv::Op::OpUndef:
+    // SPV_INTEL_function_pointers
+    case spv::Op::OpConstantFunctionPointerINTEL:
     // SPV_KHR_untyped_pointers
     case spv::Op::OpUntypedAccessChainKHR:
     case spv::Op::OpUntypedInBoundsAccessChainKHR:

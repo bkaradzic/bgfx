@@ -178,6 +178,118 @@ bool IsValidGatherLodBiasAMD(const ValidationState_t& _, spv::Op opcode) {
   return false;
 }
 
+// Signed or Unsigned Integer Format
+bool IsIntImageFormat(spv::ImageFormat format) {
+  switch (format) {
+    case spv::ImageFormat::Rgba32i:
+    case spv::ImageFormat::Rgba16i:
+    case spv::ImageFormat::Rgba8i:
+    case spv::ImageFormat::R32i:
+    case spv::ImageFormat::Rg32i:
+    case spv::ImageFormat::Rg16i:
+    case spv::ImageFormat::Rg8i:
+    case spv::ImageFormat::R16i:
+    case spv::ImageFormat::R8i:
+    case spv::ImageFormat::Rgba32ui:
+    case spv::ImageFormat::Rgba16ui:
+    case spv::ImageFormat::Rgba8ui:
+    case spv::ImageFormat::R32ui:
+    case spv::ImageFormat::Rgb10a2ui:
+    case spv::ImageFormat::Rg32ui:
+    case spv::ImageFormat::Rg16ui:
+    case spv::ImageFormat::Rg8ui:
+    case spv::ImageFormat::R16ui:
+    case spv::ImageFormat::R8ui:
+    case spv::ImageFormat::R64ui:
+    case spv::ImageFormat::R64i:
+      return true;
+    default:
+      break;
+  }
+  return false;
+}
+
+bool IsInt64ImageFormat(spv::ImageFormat format) {
+  switch (format) {
+    case spv::ImageFormat::R64ui:
+    case spv::ImageFormat::R64i:
+      return true;
+    default:
+      break;
+  }
+  return false;
+}
+
+bool IsSignedIntImageFormat(spv::ImageFormat format) {
+  switch (format) {
+    case spv::ImageFormat::Rgba32i:
+    case spv::ImageFormat::Rgba16i:
+    case spv::ImageFormat::Rgba8i:
+    case spv::ImageFormat::R32i:
+    case spv::ImageFormat::Rg32i:
+    case spv::ImageFormat::Rg16i:
+    case spv::ImageFormat::Rg8i:
+    case spv::ImageFormat::R16i:
+    case spv::ImageFormat::R8i:
+    case spv::ImageFormat::R64i:
+      return true;
+    default:
+      break;
+  }
+  return false;
+}
+
+bool IsFloatImageFormat(spv::ImageFormat format) {
+  switch (format) {
+    case spv::ImageFormat::Rgba32f:
+    case spv::ImageFormat::Rgba16f:
+    case spv::ImageFormat::R32f:
+    case spv::ImageFormat::Rgba8:
+    case spv::ImageFormat::Rgba8Snorm:
+    case spv::ImageFormat::Rg32f:
+    case spv::ImageFormat::Rg16f:
+    case spv::ImageFormat::R11fG11fB10f:
+    case spv::ImageFormat::R16f:
+    case spv::ImageFormat::Rgba16:
+    case spv::ImageFormat::Rgb10A2:
+    case spv::ImageFormat::Rg16:
+    case spv::ImageFormat::Rg8:
+    case spv::ImageFormat::R16:
+    case spv::ImageFormat::R8:
+    case spv::ImageFormat::Rgba16Snorm:
+    case spv::ImageFormat::Rg16Snorm:
+    case spv::ImageFormat::Rg8Snorm:
+    case spv::ImageFormat::R16Snorm:
+    case spv::ImageFormat::R8Snorm:
+      return true;
+    default:
+      break;
+  }
+  return false;
+}
+
+bool IsImageSparse(spv::Op opcode) {
+  switch (opcode) {
+    case spv::Op::OpImageSparseSampleImplicitLod:
+    case spv::Op::OpImageSparseSampleExplicitLod:
+    case spv::Op::OpImageSparseSampleDrefImplicitLod:
+    case spv::Op::OpImageSparseSampleDrefExplicitLod:
+    case spv::Op::OpImageSparseSampleProjImplicitLod:
+    case spv::Op::OpImageSparseSampleProjExplicitLod:
+    case spv::Op::OpImageSparseSampleProjDrefImplicitLod:
+    case spv::Op::OpImageSparseSampleProjDrefExplicitLod:
+    case spv::Op::OpImageSparseFetch:
+    case spv::Op::OpImageSparseGather:
+    case spv::Op::OpImageSparseDrefGather:
+    case spv::Op::OpImageSparseTexelsResident:
+    case spv::Op::OpImageSparseRead:
+      return true;
+    default:
+      break;
+  }
+  return false;
+}
+
 // Returns true if the opcode is a Image instruction which applies
 // homogenous projection to the coordinates.
 bool IsProj(spv::Op opcode) {
@@ -302,6 +414,37 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Image Operand Sample is required for operation on "
               "multi-sampled image";
+  }
+
+  // The following OpTypeImage checks are done here as they depend of if the
+  // SignExtend and ZeroExtend are used to override the signedness
+  const bool is_sign_extend =
+      mask & uint32_t(spv::ImageOperandsMask::SignExtend);
+  const bool is_zero_extend =
+      mask & uint32_t(spv::ImageOperandsMask::ZeroExtend);
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if (info.format != spv::ImageFormat::Unknown &&
+        _.IsIntScalarType(info.sampled_type)) {
+      const bool is_format_signed = IsSignedIntImageFormat(info.format);
+      const bool is_sampled_type_signed =
+          _.IsSignedIntScalarType(info.sampled_type);
+      // (vkspec.html#spirvenv-image-signedness) has order signedness is set by
+      const bool effective_sampled_type_signed =
+          is_sign_extend ? true
+                         : (is_zero_extend ? false : is_sampled_type_signed);
+      if (is_format_signed != effective_sampled_type_signed) {
+        std::string err_info = "";
+        if (is_sign_extend) {
+          err_info = " (SignExtend makes the access as signed)";
+        } else if (is_zero_extend) {
+          err_info = " (ZeroExtend makes the access as unsigned)";
+        }
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << _.VkErrorID(4965) << "Image Format signedness ("
+               << (is_format_signed ? "signed" : "unsigned")
+               << ") does not match Sample Type operand" << err_info << ".";
+      }
+    }
   }
 
   // After this point, only set bits in the image operands mask can cause
@@ -648,30 +791,31 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
     if (auto error = ValidateMemoryScope(_, inst, visible_scope)) return error;
   }
 
-  if (mask & uint32_t(spv::ImageOperandsMask::SignExtend)) {
-    // Checked elsewhere: SPIR-V 1.4 version or later.
-
-    // "The texel value is converted to the target value via sign extension.
-    // Only valid when the texel type is a scalar or vector of integer type."
-    //
-    // We don't have enough information to know what the texel type is.
+  // Checked elsewhere: SPIR-V 1.4 version or later.
+  if (is_sign_extend || is_zero_extend) {
+    // We don't have enough information to know what the |texel value type| is.
     // In OpenCL, knowledge is deferred until runtime: the image SampledType is
     // void, and the Format is Unknown.
     // In Vulkan, the texel type is only known in all cases by the pipeline
     // setup.
-  }
 
-  if (mask & uint32_t(spv::ImageOperandsMask::ZeroExtend)) {
-    // Checked elsewhere: SPIR-V 1.4 version or later.
-
-    // "The texel value is converted to the target value via zero extension.
-    // Only valid when the texel type is a scalar or vector of integer type."
-    //
-    // We don't have enough information to know what the texel type is.
-    // In OpenCL, knowledge is deferred until runtime: the image SampledType is
-    // void, and the Format is Unknown.
-    // In Vulkan, the texel type is only known in all cases by the pipeline
-    // setup.
+    if (opcode == spv::Op::OpImageWrite) {
+      // OpImageWrite has no result type.
+      // TODO - Add Validation
+    } else if (IsImageSparse(opcode)) {
+      // Sparse image read/sample return a struct.
+      // TODO - Add Validation
+    } else {
+      if (is_sign_extend && !_.IsIntScalarOrVectorType(inst->type_id())) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Using SignExtend, but result type is not a scalar or vector "
+                  "integer type.";
+      } else if (is_zero_extend &&
+                 !_.IsUnsignedIntScalarOrVectorType(inst->type_id())) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Using ZeroExtend, but result type is a signed integer type.";
+      }
+    }
   }
 
   if (mask & uint32_t(spv::ImageOperandsMask::Offsets)) {
@@ -958,6 +1102,33 @@ spv_result_t ValidateTypeImage(ValidationState_t& _, const Instruction* inst) {
              << _.VkErrorID(9638)
              << "Dim must not be Rect in the Vulkan environment";
     }
+
+    // Can't check signedness here due to image operands (SignExtend or
+    // ZeroExtend) ability to overridesampled type
+    if (info.format != spv::ImageFormat::Unknown) {
+      // validated above so can assume this is a
+      // 32-bit float, 32-bit int, or 64-bit int
+      const bool is_int = _.IsIntScalarType(info.sampled_type);
+      const bool is_float = !is_int;
+      if ((is_float && !IsFloatImageFormat(info.format)) ||
+          (is_int && !IsIntImageFormat(info.format))) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << _.VkErrorID(4965)
+               << "Image Format type does not match Sample Type operand ("
+               << (is_int ? "integer" : "float") << ")";
+      } else if (is_int) {
+        const uint32_t bit_width = _.GetBitWidth(info.sampled_type);
+        // format check above to be int
+        if ((bit_width == 32 && IsInt64ImageFormat(info.format)) ||
+            (bit_width == 64 && !IsInt64ImageFormat(info.format))) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << _.VkErrorID(4965)
+                 << "Image Format width does not match Sample Type "
+                    "operand (bit width of "
+                 << bit_width << ")";
+        }
+      }
+    }
   }
 
   return SPV_SUCCESS;
@@ -1109,6 +1280,34 @@ spv_result_t ValidateImageCoordinate(ValidationState_t& _,
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Coordinate to have at least " << min_coord_size
            << " components, but given only " << actual_coord_size;
+  }
+
+  if (info.dim == spv::Dim::SubpassData) {
+    const Instruction* coord_inst =
+        _.FindDef(inst->GetOperandAs<uint32_t>(word_index));
+
+    bool is_zero_vector = false;
+    if (coord_inst->opcode() == spv::Op::OpConstantNull) {
+      is_zero_vector = true;
+    } else if (coord_inst->opcode() == spv::Op::OpConstantComposite) {
+      // There is zero reason we should be allowing a OpSpecConstantComposite
+      if (coord_inst->words().size() == 5) {
+        uint64_t val_0 = 0;
+        uint64_t val_1 = 0;
+        if (_.EvalConstantValUint64(coord_inst->word(3), &val_0) &&
+            _.EvalConstantValUint64(coord_inst->word(4), &val_1) &&
+            val_0 == 0 && val_1 == 0) {
+          is_zero_vector = true;
+        }
+      }
+    }
+
+    if (!is_zero_vector) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << _.VkErrorID(4660)
+             << "Expected Coordinate for a SubpassData image to be a "
+                "OpConstantComposite of (0,0) or OpConstantNull";
+    }
   }
 
   return SPV_SUCCESS;

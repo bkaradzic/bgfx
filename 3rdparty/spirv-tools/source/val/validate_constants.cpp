@@ -40,6 +40,30 @@ bool isCompositeType(const Instruction* inst) {
          (is_tensor && tensor_is_shaped);
 }
 
+spv_result_t ValidateConstantOperand(ValidationState_t& _,
+                                     const Instruction* inst, size_t operand) {
+  std::string opcode_name = std::string("Op") + spvOpcodeString(inst->opcode());
+
+  const auto operand_id = inst->GetOperandAs<uint32_t>(operand);
+  const bool inst_is_spec_constant = spvOpcodeIsSpecConstant(inst->opcode());
+  const auto operand_opcode = _.GetIdOpcode(operand_id);
+  const bool is_constant = spvOpcodeIsConstantOrUndef(operand_opcode);
+  const bool is_spec_constant = spvOpcodeIsSpecConstant(operand_opcode);
+  if (!is_constant) {
+    // All operands must be constant or undef.
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << opcode_name << " must only have constant or undef operands: <id> "
+           << _.getIdName(operand_id);
+  } else if (!inst_is_spec_constant && is_spec_constant) {
+    // Spec constants are only allowed for spec constant opcodes.
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << opcode_name << " must not have spec constant operands: <id> "
+           << _.getIdName(operand_id);
+  }
+
+  return SPV_SUCCESS;
+}
+
 spv_result_t ValidateConstantComposite(ValidationState_t& _,
                                        const Instruction* inst) {
   std::string opcode_name = std::string("Op") + spvOpcodeString(inst->opcode());
@@ -51,7 +75,7 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
            << _.getIdName(inst->type_id()) << " is not a composite type.";
   }
 
-  const auto constituent_count = inst->words().size() - 3;
+  const auto constituent_count = inst->operands().size() - 2;
   switch (result_type->opcode()) {
     case spv::Op::OpTypeVector:
     case spv::Op::OpTypeVectorIdEXT: {
@@ -83,13 +107,6 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         const auto constituent_id =
             inst->GetOperandAs<uint32_t>(constituent_index);
         const auto constituent = _.FindDef(constituent_id);
-        if (!constituent ||
-            !spvOpcodeIsConstantOrUndef(constituent->opcode())) {
-          return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> "
-                 << _.getIdName(constituent_id)
-                 << " is not a constant or undef.";
-        }
         const auto constituent_result_type = _.FindDef(constituent->type_id());
         if (!constituent_result_type ||
             component_type->id() != constituent_result_type->id()) {
@@ -112,7 +129,8 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
                << _.getIdName(result_type->id()) << "s matrix column count.";
       }
 
-      const auto column_type = _.FindDef(result_type->words()[2]);
+      const auto column_type =
+          _.FindDef(result_type->GetOperandAs<uint32_t>(1));
       if (!column_type) {
         return _.diag(SPV_ERROR_INVALID_ID, result_type)
                << "Column type is not defined.";
@@ -130,15 +148,6 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         const auto constituent_id =
             inst->GetOperandAs<uint32_t>(constituent_index);
         const auto constituent = _.FindDef(constituent_id);
-        if (!constituent ||
-            !spvOpcodeIsConstantOrUndef(constituent->opcode())) {
-          // The message says "... or undef" because the spec does not say
-          // undef is a constant.
-          return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> "
-                 << _.getIdName(constituent_id)
-                 << " is not a constant or undef.";
-        }
         const auto vector = _.FindDef(constituent->type_id());
         if (!vector) {
           return _.diag(SPV_ERROR_INVALID_ID, constituent)
@@ -161,7 +170,7 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
                  << _.getIdName(result_type->id())
                  << "s matrix column component type.";
         }
-        if (component_count != vector->words()[3]) {
+        if (component_count != vector->GetOperandAs<uint32_t>(2)) {
           return _.diag(SPV_ERROR_INVALID_ID, inst)
                  << opcode_name << " Constituent <id> "
                  << _.getIdName(constituent_id)
@@ -198,13 +207,6 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         const auto constituent_id =
             inst->GetOperandAs<uint32_t>(constituent_index);
         const auto constituent = _.FindDef(constituent_id);
-        if (!constituent ||
-            !spvOpcodeIsConstantOrUndef(constituent->opcode())) {
-          return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> "
-                 << _.getIdName(constituent_id)
-                 << " is not a constant or undef.";
-        }
         const auto constituent_type = _.FindDef(constituent->type_id());
         if (!constituent_type) {
           return _.diag(SPV_ERROR_INVALID_ID, constituent)
@@ -220,7 +222,7 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
       }
     } break;
     case spv::Op::OpTypeStruct: {
-      const auto member_count = result_type->words().size() - 2;
+      const auto member_count = result_type->operands().size() - 1;
       if (member_count != constituent_count) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << opcode_name << " Constituent <id> "
@@ -234,13 +236,6 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         const auto constituent_id =
             inst->GetOperandAs<uint32_t>(constituent_index);
         const auto constituent = _.FindDef(constituent_id);
-        if (!constituent ||
-            !spvOpcodeIsConstantOrUndef(constituent->opcode())) {
-          return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> "
-                 << _.getIdName(constituent_id)
-                 << " is not a constant or undef.";
-        }
         const auto constituent_type = _.FindDef(constituent->type_id());
         if (!constituent_type) {
           return _.diag(SPV_ERROR_INVALID_ID, constituent)
@@ -268,11 +263,6 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
       }
       const auto constituent_id = inst->GetOperandAs<uint32_t>(2);
       const auto constituent = _.FindDef(constituent_id);
-      if (!constituent || !spvOpcodeIsConstantOrUndef(constituent->opcode())) {
-        return _.diag(SPV_ERROR_INVALID_ID, inst)
-               << opcode_name << " Constituent <id> "
-               << _.getIdName(constituent_id) << " is not a constant or undef.";
-      }
       const auto constituent_type = _.FindDef(constituent->type_id());
       if (!constituent_type) {
         return _.diag(SPV_ERROR_INVALID_ID, constituent)
@@ -328,13 +318,6 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         const auto constituent_id =
             inst->GetOperandAs<uint32_t>(constituent_index);
         const auto constituent = _.FindDef(constituent_id);
-        if (!constituent ||
-            !spvOpcodeIsConstantOrUndef(constituent->opcode())) {
-          return _.diag(SPV_ERROR_INVALID_ID, inst)
-                 << opcode_name << " Constituent <id> "
-                 << _.getIdName(constituent_id)
-                 << " is not a constant or undef.";
-        }
         const auto constituent_type = _.FindDef(constituent->type_id());
         if (!constituent_type) {
           return _.diag(SPV_ERROR_INVALID_ID, constituent)
@@ -427,7 +410,68 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
     default:
       break;
   }
+
+  for (size_t i = 2; i < inst->operands().size(); i++) {
+    if (auto error = ValidateConstantOperand(_, inst, i)) {
+      return error;
+    }
+  }
+
   return SPV_SUCCESS;
+}
+
+spv_result_t ValidateConstantCompositeReplicate(ValidationState_t& _,
+                                                const Instruction* inst) {
+  std::string opcode_name = std::string("Op") + spvOpcodeString(inst->opcode());
+
+  const auto result_type = _.FindDef(inst->type_id());
+  if (!result_type || !isCompositeType(result_type)) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << opcode_name << " Result Type <id> "
+           << _.getIdName(inst->type_id()) << " is not a composite type.";
+  }
+
+  const auto constituent_id = inst->GetOperandAs<uint32_t>(2);
+  const auto constituent = _.FindDef(constituent_id);
+  switch (result_type->opcode()) {
+    case spv::Op::OpTypeVector:
+    case spv::Op::OpTypeVectorIdEXT:
+    case spv::Op::OpTypeMatrix:
+    case spv::Op::OpTypeArray:
+    case spv::Op::OpTypeCooperativeMatrixKHR:
+    case spv::Op::OpTypeCooperativeMatrixNV:
+    case spv::Op::OpTypeTensorARM: {
+      const auto component_type = result_type->GetOperandAs<uint32_t>(1);
+      if (component_type != constituent->type_id()) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << opcode_name << " Constituent <id> "
+               << _.getIdName(constituent_id)
+               << "s type does not match Result Type <id> "
+               << _.getIdName(result_type->id()) << "s element type.";
+      }
+      break;
+    }
+    case spv::Op::OpTypeStruct: {
+      const auto member_count = result_type->operands().size() - 1;
+      for (uint32_t member_index = 1; member_index <= member_count;
+           member_index++) {
+        const auto member_type_id =
+            result_type->GetOperandAs<uint32_t>(member_index);
+        if (member_type_id != constituent->type_id()) {
+          return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << opcode_name << " Constituent <id> "
+                 << _.getIdName(constituent_id)
+                 << " type does not match the Result Type <id> "
+                 << _.getIdName(result_type->id()) << "s member type.";
+        }
+      }
+      break;
+    }
+    default:
+      break;
+  }
+
+  return ValidateConstantOperand(_, inst, 2);
 }
 
 spv_result_t ValidateConstantSampler(ValidationState_t& _,
@@ -603,6 +647,52 @@ spv_result_t ValidateSpecConstantOp(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+spv_result_t ValidateConstantFunctionPointerINTEL(ValidationState_t& _,
+                                                  const Instruction* inst) {
+  const auto result_type = _.FindDef(inst->type_id());
+  // Result Type must be a pointer type
+  if (result_type->opcode() != spv::Op::OpTypePointer &&
+      result_type->opcode() != spv::Op::OpTypeUntypedPointerKHR) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpConstantFunctionPointerINTEL Result Type <id> "
+           << _.getIdName(inst->type_id()) << " is not a pointer type";
+  }
+
+  // For typed pointers, check that pointee is a function type
+  const Instruction* pointee_type = nullptr;
+  if (result_type->opcode() == spv::Op::OpTypePointer) {
+    pointee_type = _.FindDef(result_type->GetOperandAs<uint32_t>(2));
+    if (pointee_type->opcode() != spv::Op::OpTypeFunction) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "OpConstantFunctionPointerINTEL Result Type <id> "
+             << _.getIdName(inst->type_id())
+             << " must be a pointer to function type";
+    }
+  }
+
+  // Validate that the function operand refers to an OpFunction
+  const uint32_t function_id = inst->GetOperandAs<uint32_t>(2);
+  const auto function_inst = _.FindDef(function_id);
+  if (function_inst->opcode() != spv::Op::OpFunction) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpConstantFunctionPointerINTEL Function operand <id> "
+           << _.getIdName(function_id) << " is not an OpFunction";
+  }
+
+  // For typed pointers, validate that function type matches pointee type
+  if (pointee_type) {
+    const uint32_t function_type_id = function_inst->GetOperandAs<uint32_t>(3);
+    if (function_type_id != pointee_type->id()) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "OpConstantFunctionPointerINTEL Function operand <id> "
+             << _.getIdName(function_id)
+             << " type does not match the pointer's function type";
+    }
+  }
+
+  return SPV_SUCCESS;
+}
+
 }  // namespace
 
 spv_result_t ConstantPass(ValidationState_t& _, const Instruction* inst) {
@@ -616,6 +706,11 @@ spv_result_t ConstantPass(ValidationState_t& _, const Instruction* inst) {
     case spv::Op::OpConstantComposite:
     case spv::Op::OpSpecConstantComposite:
       if (auto error = ValidateConstantComposite(_, inst)) return error;
+      break;
+    case spv::Op::OpConstantCompositeReplicateEXT:
+    case spv::Op::OpSpecConstantCompositeReplicateEXT:
+      if (auto error = ValidateConstantCompositeReplicate(_, inst))
+        return error;
       break;
     case spv::Op::OpConstantSampler:
       if (auto error = ValidateConstantSampler(_, inst)) return error;
@@ -631,6 +726,10 @@ spv_result_t ConstantPass(ValidationState_t& _, const Instruction* inst) {
       break;
     case spv::Op::OpConstantSizeOfEXT:
       if (auto error = ValidateConstantSizeOfEXT(_, inst)) return error;
+      break;
+    case spv::Op::OpConstantFunctionPointerINTEL:
+      if (auto error = ValidateConstantFunctionPointerINTEL(_, inst))
+        return error;
       break;
     default:
       break;

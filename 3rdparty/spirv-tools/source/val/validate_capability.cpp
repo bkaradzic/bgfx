@@ -212,6 +212,8 @@ bool IsSupportOptionalVulkan_1_2(uint32_t capability) {
     case spv::Capability::InputAttachmentArrayNonUniformIndexing:
     case spv::Capability::UniformTexelBufferArrayNonUniformIndexing:
     case spv::Capability::StorageTexelBufferArrayNonUniformIndexing:
+    case spv::Capability::InputAttachmentArrayDynamicIndexing:
+    case spv::Capability::ShaderNonUniform:
       return true;
     default:
       break;

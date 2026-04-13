@@ -248,6 +248,12 @@ spv_result_t spvTextEncodeOperand(const spvtools::AssemblyGrammar& grammar,
         // if we know about this extended instruction, push the numeric value
         spvInstructionAddWord(pInst, desc->value);
 
+        // Push VARIABLE_ID so extra trailing operands from future NSDI
+        // versions are silently absorbed after the instruction-specific ones.
+        if (spvExtInstIsNonSemantic(pInst->extInstType)) {
+          pExpectedOperands->push_back(SPV_OPERAND_TYPE_VARIABLE_ID);
+        }
+
         // Prepare to parse the operands for the extended instructions.
         spvPushOperandTypes(desc->operands(), pExpectedOperands);
       } else {

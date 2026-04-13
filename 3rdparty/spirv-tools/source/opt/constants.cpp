@@ -302,6 +302,8 @@ const Constant* ConstantManager::GetConstantFromInst(const Instruction* inst) {
                                 inst->GetInOperand(i).words.end());
   }
 
+  const Type* type = GetType(inst);
+
   switch (inst->opcode()) {
     // OpConstant{True|False} have the value embedded in the opcode. So they
     // are not handled by the for-loop above. Here we add the value explicitly.
@@ -315,13 +317,21 @@ const Constant* ConstantManager::GetConstantFromInst(const Instruction* inst) {
     case spv::Op::OpConstant:
     case spv::Op::OpConstantComposite:
     case spv::Op::OpSpecConstantComposite:
-    case spv::Op::OpSpecConstantCompositeReplicateEXT:
       break;
+    // Replicated composite constant instructions have a single operand for the
+    // value. We need to replicate it as many times as there are components.
+    case spv::Op::OpConstantCompositeReplicateEXT:
+    case spv::Op::OpSpecConstantCompositeReplicateEXT: {
+      uint32_t value = literal_words_or_ids[0];
+      literal_words_or_ids.assign(
+          static_cast<size_t>(type->NumberOfComponents()), value);
+      break;
+    }
     default:
       return nullptr;
   }
 
-  return GetConstant(GetType(inst), literal_words_or_ids);
+  return GetConstant(type, literal_words_or_ids);
 }
 
 std::unique_ptr<Instruction> ConstantManager::CreateInstruction(

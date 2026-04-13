@@ -39,6 +39,8 @@ bool DecorationTakesIdParameters(spv::Decoration type) {
     case spv::Decoration::PayloadNodeBaseIndexAMDX:
     case spv::Decoration::ArrayStrideIdEXT:
     case spv::Decoration::OffsetIdEXT:
+    case spv::Decoration::AliasScopeINTEL:
+    case spv::Decoration::NoAliasINTEL:
       return true;
     default:
       break;

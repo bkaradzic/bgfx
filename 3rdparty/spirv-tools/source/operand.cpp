@@ -546,6 +546,11 @@ std::function<bool(unsigned)> spvOperandCanBeForwardDeclaredFunction(
       out = [](unsigned index) { return index == 2; };
       break;
 
+    case spv::Op::OpConstantFunctionPointerINTEL:
+      // The Function parameter.
+      out = [](unsigned index) { return index == 2; };
+      break;
+
     case spv::Op::OpPhi:
       out = [](unsigned index) { return index > 1; };
       break;
