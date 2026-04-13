@@ -1126,9 +1126,10 @@ TIntermTyped* TParseContext::handleDotSwizzle(const TSourceLoc& loc, TIntermType
         }
     }
 
-    if (base->getType().getQualifier().isFrontEndConstant())
+    if (base->getType().getQualifier().isFrontEndConstant()) {
+	rValueErrorCheck(loc, ".", base);
         result = intermediate.foldSwizzle(base, selectors, loc);
-    else {
+    } else {
         if (selectors.size() == 1) {
             TIntermTyped* index = intermediate.addConstantUnion(selectors[0], loc);
             result = intermediate.addIndex(EOpIndexDirect, base, index, loc);
@@ -4667,6 +4668,10 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
         return true;
     }
 
+    if (type.isLongVector() && !isValidLongVectorElseError(loc, type)) {
+        return true;
+    }
+
     if ((op != EOpConstructStruct && size != 1 && size < type.computeNumComponents()) ||
         (op == EOpConstructStruct && size < type.computeNumComponents())) {
         error(loc, "not enough data provided for construction", constructorString.c_str(), "");
@@ -7139,7 +7144,7 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
     }
     if (id == "constant_id") {
         requireSpv(loc, "constant_id");
-        if (value >= (int)TQualifier::layoutSpecConstantIdEnd) {
+        if ((unsigned)value >= TQualifier::layoutSpecConstantIdEnd) {
             error(loc, "specialization-constant id is too large", id.c_str(), "");
         } else {
             publicType.qualifier.layoutSpecConstantId = value;
@@ -8790,6 +8795,9 @@ void TParseContext::typeParametersCheck(const TSourceLoc& loc, const TPublicType
             error(loc, "tensor rank must be greater than or equal to 1", "", "");
             return;
         }
+    }
+    if (publicType.isLongVector() && !isValidLongVectorElseError(loc, publicType)) {
+        return;
     }
 }
 

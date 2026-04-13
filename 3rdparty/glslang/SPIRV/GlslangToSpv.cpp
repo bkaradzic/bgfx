@@ -1679,20 +1679,32 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(unsigned int spvVersion,
         }
         builder.setDebugMainSourceFile(glslangIntermediate->getSourceFile());
 
-        // Set the source shader's text. If for SPV version 1.0, include
+        // Set the source shader's text
+        std::string text;
+
+        // If for SPV version 1.0, include
         // a preamble in comments stating the OpModuleProcessed instructions.
         // Otherwise, emit those as actual instructions.
-        std::string text;
+        //
+        // ...Except when using ShaderDebugInfo we DON'T want these as it will mess up the line
+        // number, instead the user has opt'ed in for ShaderDebugInfo instead, so they will want
+        // to parse those instead
+        // https://github.com/KhronosGroup/glslang/issues/3863
+        const bool add_comments =
+            glslangIntermediate->getSpv().spv < glslang::EShTargetSpv_1_1 && !options.emitNonSemanticShaderDebugSource;
+
         const std::vector<std::string>& processes = glslangIntermediate->getProcesses();
         for (int p = 0; p < (int)processes.size(); ++p) {
-            if (glslangIntermediate->getSpv().spv < glslang::EShTargetSpv_1_1) {
+            if (add_comments) {
                 text.append("// OpModuleProcessed ");
                 text.append(processes[p]);
                 text.append("\n");
-            } else
+            } else if (glslangIntermediate->getSpv().spv >= glslang::EShTargetSpv_1_1) {
+                // OpModuleProcessed added in SPIR-V 1.1
                 builder.addModuleProcessed(processes[p]);
+            }
         }
-        if (glslangIntermediate->getSpv().spv < glslang::EShTargetSpv_1_1 && (int)processes.size() > 0)
+        if (add_comments && (int)processes.size() > 0)
             text.append("#line 1\n");
         text.append(glslangIntermediate->getSourceText());
         builder.setSourceText(text);
@@ -5753,8 +5765,14 @@ spv::Id TGlslangToSpvTraverser::convertGlslangToSpvType(const glslang::TType& ty
     }
 
     if (type.isLongVector()) {
-        builder.addCapability(spv::Capability::LongVectorEXT);
-        builder.addExtension(spv::E_SPV_EXT_long_vector);
+        // SPIR-V LongVectorEXT not needed when component count is literal 2–4.
+        const bool needLongVectorCap = type.hasSpecConstantVectorComponents() ||
+            (type.getTypeParameters()->arraySizes->getDimSize(0) < 2 ||
+             type.getTypeParameters()->arraySizes->getDimSize(0) > 4);
+        if (needLongVectorCap) {
+            builder.addCapability(spv::Capability::LongVectorEXT);
+            builder.addExtension(spv::E_SPV_EXT_long_vector);
+        }
 
         if (type.getBasicType() == glslang::EbtFloat16)
             builder.addCapability(spv::Capability::Float16);
@@ -6010,6 +6028,19 @@ spv::Id TGlslangToSpvTraverser::convertGlslangStructToSpvType(const glslang::TTy
                         }
                     }
                     debugInfo.debugTypeOverride = builder.getDebugType(typeId);
+                } else if (glslangMember.type->getQualifier().builtIn != glslang::EbvNone) {
+                    // TODO - The built-in currently are not provide the correct line/column and spirv-val will validate these when using shaderDebugInfo
+                    //
+                    // There is a larger issue because even defining the builtIn such as
+                    //
+                    //      out gl_PerVertex {
+                    //         vec4 gl_Position;
+                    //     };
+                    //
+                    // in the shader also doesn't produce the correct line/column
+                    // So for now, provide zero, as that is a valid value here
+                    debugInfo.line = 0;
+                    debugInfo.column = 0;
                 }
 
                 memberDebugInfo.push_back(debugInfo);

@@ -4294,6 +4294,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "i8vec3 bitCount(u8vec3);"
             "i8vec4 bitCount(u8vec4);"
 
+            "int8_t bitfieldReverse(highp int8_t);"
+            "i8vec2 bitfieldReverse(highp i8vec2);"
+            "i8vec3 bitfieldReverse(highp i8vec3);"
+            "i8vec4 bitfieldReverse(highp i8vec4);"
+
+            "uint8_t bitfieldReverse(highp uint8_t);"
+            "u8vec2  bitfieldReverse(highp u8vec2);"
+            "u8vec3  bitfieldReverse(highp u8vec3);"
+            "u8vec4  bitfieldReverse(highp u8vec4);"
+
             "  int8_t findLSB(  int8_t);"
             "i8vec2 findLSB(i8vec2);"
             "i8vec3 findLSB(i8vec3);"
@@ -4511,6 +4521,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "i16vec2 bitCount(u16vec2);"
             "i16vec3 bitCount(u16vec3);"
             "i16vec4 bitCount(u16vec4);"
+
+            "int16_t bitfieldReverse(highp int16_t);"
+            "i16vec2 bitfieldReverse(highp i16vec2);"
+            "i16vec3 bitfieldReverse(highp i16vec3);"
+            "i16vec4 bitfieldReverse(highp i16vec4);"
+
+            "uint16_t bitfieldReverse(highp uint16_t);"
+            "u16vec2  bitfieldReverse(highp u16vec2);"
+            "u16vec3  bitfieldReverse(highp u16vec3);"
+            "u16vec4  bitfieldReverse(highp u16vec4);"
 
             "  int16_t findLSB(  int16_t);"
             "i16vec2 findLSB(i16vec2);"

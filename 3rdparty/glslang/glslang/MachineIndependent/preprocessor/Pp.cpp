@@ -81,7 +81,6 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include <sstream>
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
@@ -724,12 +723,11 @@ int TPpContext::CPPinclude(TPpToken* ppToken)
         if (res->headerData != nullptr && res->headerLength > 0) {
             // path for processing one or more tokens from an included header, hand off 'res'
             const bool forNextLine = parseContext.lineDirectiveShouldSetNextLine();
-            std::ostringstream prologue;
-            std::ostringstream epilogue;
-            prologue << "#line " << forNextLine << " " << "\"" << res->headerName << "\"\n";
-            epilogue << (res->headerData[res->headerLength - 1] == '\n'? "" : "\n") <<
-                "#line " << directiveLoc.line + forNextLine << " " << directiveLoc.getStringNameOrNum() << "\n";
-            pushInput(new TokenizableIncludeFile(directiveLoc, prologue.str(), res, epilogue.str(), this));
+            std::string prologue = "#line " + std::to_string((int)forNextLine) + " \"" + res->headerName + "\"\n";
+            std::string epilogue = (res->headerData[res->headerLength - 1] == '\n' ? "" : "\n") +
+                                       std::string("#line ") + std::to_string(directiveLoc.line + forNextLine) + " " +
+                                       directiveLoc.getStringNameOrNum() + "\n";
+            pushInput(new TokenizableIncludeFile(directiveLoc, prologue, res, epilogue, this));
             parseContext.intermediate.addIncludeText(res->headerName.c_str(), res->headerData, res->headerLength);
             // There's no "current" location anymore.
             parseContext.setCurrentColumn(0);

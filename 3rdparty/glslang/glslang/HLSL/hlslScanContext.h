@@ -64,6 +64,14 @@ struct HlslToken {
         bool b;
         double d;
     };
+    // If the token is a string parsed from the source, then returns a C-style
+    // string for it.  Otherwise returns a pointer to an empty string.
+    const char* getCStrOrEmpty() {
+      if (tokenClass == EHTokIdentifier || tokenClass == EHTokStringConstant) {
+        return string->c_str();
+      }
+      return "";
+    }
 };
 
 //

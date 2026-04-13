@@ -530,6 +530,32 @@ protected:
     virtual void setAtomicCounterBlockDefaults(TType& block) const override;
     virtual void setInvariant(const TSourceLoc& loc, const char* builtin) override;
 
+    // Returns true if the given long vector type is correctly parameterized.
+    // Otherwise emits an error and returns false.
+    template<typename TTYPE>
+    bool isValidLongVectorElseError(const TSourceLoc& loc, const TTYPE& type) {
+        assert(type.isLongVector());
+        const TTypeParameters* typeParams = type.getTypeParameters();
+        if (typeParams == nullptr) {
+            error(loc, "vector type missing type parameters", "", "");
+            return false;
+        }
+        const auto basicType = typeParams->basicType;
+        if (!isTypeInt(basicType) && !isTypeFloat(basicType) && basicType != EbtBool) {
+            error(loc, "invalid element type for vector", TType::getBasicString(typeParams->basicType), "");
+            return false;
+        }
+        if (typeParams->arraySizes == nullptr) {
+            error(loc, "vector type missing element count", "", "");
+            return false;
+        }
+        if (typeParams->arraySizes->getNumDims() != 1) {
+            error(loc, "vector type requires exactly 1 element count", "", "");
+            return false;
+        }
+        return true;
+    }
+
 public:
     //
     // Generally, bison productions, the scanner, and the PP need read/write access to these; just give them direct access
