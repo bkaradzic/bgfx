@@ -382,6 +382,7 @@ void CompilerGLSL::reset(uint32_t iteration_count)
 	});
 
 	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) { var.dependees.clear(); });
+	ir.for_each_typed_id<SPIRBlock>([&](uint32_t, SPIRBlock &block) { block.rearm_dominated_variables.clear(); });
 
 	ir.reset_all_of_type<SPIRExpression>();
 	ir.reset_all_of_type<SPIRAccessChain>();
@@ -807,7 +808,10 @@ string CompilerGLSL::compile()
 	// The body was implemented in lieu of main().
 	if (interlocked_is_complex)
 	{
-		statement("void main()");
+		if (options.use_entry_point_name)
+			statement("void ", get_entry_point().name, "()");
+		else
+			statement("void main()");
 		begin_scope();
 		statement("// Interlocks were used in a way not compatible with GLSL, this is very slow.");
 		statement("SPIRV_Cross_beginInvocationInterlock();");
@@ -817,7 +821,8 @@ string CompilerGLSL::compile()
 	}
 
 	// Entry point in GLSL is always main().
-	get_entry_point().name = "main";
+	if (!options.use_entry_point_name)
+		get_entry_point().name = "main";
 
 	return buffer.str();
 }
@@ -17383,6 +17388,8 @@ void CompilerGLSL::emit_function_prototype(SPIRFunction &func, const Bitset &ret
 		// and interlock the entire shader ...
 		if (interlocked_is_complex)
 			decl += "spvMainInterlockedBody";
+		else if (options.use_entry_point_name)
+			decl += get_entry_point().name;
 		else
 			decl += "main";
 

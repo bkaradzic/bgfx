@@ -159,6 +159,9 @@ public:
 		// If non-zero, controls layout(num_views = N) in; in GL_OVR_multiview2.
 		uint32_t ovr_multiview_view_count = 0;
 
+		// Emit the entry point name in SPIR-V rather than "main".
+		bool use_entry_point_name = false;
+
 		enum Precision
 		{
 			DontCare,

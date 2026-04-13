@@ -411,11 +411,19 @@ SPIRVariable *Compiler::maybe_get_backing_variable(uint32_t chain)
 	{
 		auto *cexpr = maybe_get<SPIRExpression>(chain);
 		if (cexpr)
+		{
 			var = maybe_get<SPIRVariable>(cexpr->loaded_from);
+			if (!var && cexpr->loaded_from != chain)
+				var = maybe_get_backing_variable(cexpr->loaded_from);
+		}
 
 		auto *access_chain = maybe_get<SPIRAccessChain>(chain);
 		if (access_chain)
+		{
 			var = maybe_get<SPIRVariable>(access_chain->loaded_from);
+			if (!var && access_chain->loaded_from != chain)
+				var = maybe_get_backing_variable(access_chain->loaded_from);
+		}
 	}
 
 	return var;
@@ -5804,4 +5812,3 @@ const SPIRType *Compiler::OpcodeHandler::get_expression_result_type(uint32_t id)
 
 	return &compiler.get<SPIRType>(itr->second);
 }
-

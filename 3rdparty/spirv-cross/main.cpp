@@ -1044,17 +1044,17 @@ static void print_help_obscure()
 	// clang-format on
 }
 
-static void print_help()
+static void print_help_all()
 {
 	print_version();
 
 	// clang-format off
-	fprintf(stderr, "Usage: spirv-cross <...>\n"
+	fprintf(stderr, "Usage: spirv-cross [SPIR-V file] [options]\n"
 	                "\nBasic:\n"
 	                "\t[SPIR-V file] (- is stdin)\n"
 	                "\t[--output <output path>]: If not provided, prints output to stdout.\n"
 	                "\t[--dump-resources]:\n\t\tPrints a basic reflection of the SPIR-V module along with other output.\n"
-	                "\t[--help]:\n\t\tPrints this help message.\n"
+	                "\t[--help]:\n\t\tPrints a summary help message.\n"
 	);
 	// clang-format on
 
@@ -1064,6 +1064,33 @@ static void print_help()
 	print_help_msl();
 	print_help_hlsl();
 	print_help_obscure();
+}
+
+static void print_help()
+{
+	print_version();
+
+	// clang-format off
+	fprintf(stderr, "Usage: spirv-cross [SPIR-V file] [options]\n"
+	                "\nBasic:\n"
+	                "\t[SPIR-V file] (- is stdin)\n"
+	                "\t[--output <output path>]: If not provided, prints output to stdout.\n"
+	                "\t[--help]:\n\t\tPrints this summary help message.\n"
+	                "\t[--help-all]:\n\t\tPrints all available help options.\n"
+	);
+	// clang-format on
+
+	print_help_backend();
+	print_help_common();
+
+	// clang-format off
+	fprintf(stderr, "\nHelp Categories:\n"
+	                "\t[--help-glsl]\n"
+	                "\t[--help-msl]\n"
+	                "\t[--help-hlsl]\n"
+	                "\t[--help-obscure]\n"
+	);
+	// clang-format on
 }
 
 static bool remap_generic(Compiler &compiler, const SmallVector<Resource> &resources, const Remap &remap)
@@ -1608,6 +1635,34 @@ static int main_inner(int argc, char *argv[])
 
 	cbs.add("--help", [](CLIParser &parser) {
 		print_help();
+		parser.end();
+	});
+	cbs.add("--help-all", [](CLIParser &parser) {
+		print_help_all();
+		parser.end();
+	});
+	cbs.add("--help-backend", [](CLIParser &parser) {
+		print_help_backend();
+		parser.end();
+	});
+	cbs.add("--help-common", [](CLIParser &parser) {
+		print_help_common();
+		parser.end();
+	});
+	cbs.add("--help-glsl", [](CLIParser &parser) {
+		print_help_glsl();
+		parser.end();
+	});
+	cbs.add("--help-msl", [](CLIParser &parser) {
+		print_help_msl();
+		parser.end();
+	});
+	cbs.add("--help-hlsl", [](CLIParser &parser) {
+		print_help_hlsl();
+		parser.end();
+	});
+	cbs.add("--help-obscure", [](CLIParser &parser) {
+		print_help_obscure();
 		parser.end();
 	});
 	cbs.add("--revision", [](CLIParser &parser) {
