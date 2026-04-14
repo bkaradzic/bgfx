@@ -5781,7 +5781,7 @@ namespace bgfx { namespace d3d12
 
 				s_renderD3D12->m_cmd.release(staging);
 			}
-			else
+			else if (0 == _external)
 			{
 				setState(commandList, state);
 			}
