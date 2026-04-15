@@ -2547,7 +2547,7 @@ namespace bgfx { namespace d3d12
 			};
 			m_commandList->SetDescriptorHeaps(BX_COUNTOF(heaps), heaps);
 			m_commandList->SetGraphicsRootConstantBufferView(RenderRp::CBV, gpuAddress);
-			m_commandList->SetGraphicsRootConstantBufferView(RenderRp::CBF, gpuAddress + m_program[_blitter.m_program.idx].m_vsh->m_size);
+			m_commandList->SetGraphicsRootConstantBufferView(RenderRp::CBF, gpuAddress + bx::strideAlign(m_program[_blitter.m_program.idx].m_vsh->m_size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT) );
 
 			TextureD3D12& texture = m_textures[_blitter.m_texture.idx];
 			const uint32_t samplerFlags[] = { uint32_t(texture.m_flags & BGFX_SAMPLER_BITS_MASK) };
@@ -2928,17 +2928,19 @@ namespace bgfx { namespace d3d12
 		void commitShaderConstants(ProgramHandle _program, D3D12_GPU_VIRTUAL_ADDRESS& _gpuAddress)
 		{
 			const ProgramD3D12& program = m_program[_program.idx];
-			uint32_t total = bx::strideAlign(0
-				+ program.m_vsh->m_size
-				+ (NULL != program.m_fsh ? program.m_fsh->m_size : 0)
+			uint32_t vsAlignedSize = bx::strideAlign(program.m_vsh->m_size
 				, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT
 				);
+			uint32_t total = vsAlignedSize
+				+ (NULL != program.m_fsh
+					? bx::strideAlign(program.m_fsh->m_size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)
+					: 0)
+				;
 			uint8_t* data = (uint8_t*)m_scratchBuffer[m_backBufferColorIdx].allocCbv(_gpuAddress, total);
 
 			{
-				uint32_t size = program.m_vsh->m_size;
-				bx::memCopy(data, m_vsScratch, size);
-				data += size;
+				bx::memCopy(data, m_vsScratch, program.m_vsh->m_size);
+				data += vsAlignedSize;
 			}
 
 			if (NULL != program.m_fsh)
@@ -7564,7 +7566,7 @@ namespace bgfx { namespace d3d12
 						commitShaderConstants(key.m_program, gpuAddress);
 					}
 
-					uint32_t numIndices        = m_batch.draw(m_commandList, gpuAddress, gpuAddress + m_program[currentProgram.idx].m_vsh->m_size, draw);
+					uint32_t numIndices        = m_batch.draw(m_commandList, gpuAddress, gpuAddress + bx::strideAlign(m_program[currentProgram.idx].m_vsh->m_size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT), draw);
 					uint32_t numPrimsSubmitted = numIndices / prim.m_div - prim.m_sub;
 					uint32_t numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
