@@ -507,6 +507,193 @@ namespace bgfx { namespace wgpu
 		return WGPUFeatureName_Force32;
 	}
 
+	static bool isFeatureSupported(WGPUFeatureName _featureName)
+	{
+		const int32_t idx = bx::binarySearch(_featureName, s_feature, BX_COUNTOF(s_feature), sizeof(Feature), Feature::cmpFn);
+		return 0 <= idx && s_feature[idx].supported;
+	}
+
+	static uint32_t getTextureFormatCaps(TextureFormat::Enum _fmt)
+	{
+		const TextureFormatInfo& tfi = s_textureFormat[_fmt];
+
+		if (WGPUTextureFormat_Undefined == tfi.m_fmt)
+		{
+			return BGFX_CAPS_FORMAT_TEXTURE_NONE;
+		}
+
+		const bool core          = isFeatureSupported(WGPUFeatureName_CoreFeaturesAndLimits);
+		const bool tier1         = isFeatureSupported(WGPUFeatureName_TextureFormatsTier1);
+		const bool rg11b10Rend   = tier1 || isFeatureSupported(WGPUFeatureName_RG11B10UfloatRenderable);
+		const bool unorm16       = tier1 || isFeatureSupported(WGPUFeatureName_Unorm16TextureFormats);
+		const bool bgra8Storage  = isFeatureSupported(WGPUFeatureName_BGRA8UnormStorage);
+		const bool bc            = isFeatureSupported(WGPUFeatureName_TextureCompressionBC);
+		const bool etc2          = isFeatureSupported(WGPUFeatureName_TextureCompressionETC2);
+		const bool astc          = isFeatureSupported(WGPUFeatureName_TextureCompressionASTC);
+		const bool bcSliced3D    = isFeatureSupported(WGPUFeatureName_TextureCompressionBCSliced3D);
+		const bool astcSliced3D  = isFeatureSupported(WGPUFeatureName_TextureCompressionASTCSliced3D);
+
+		bool renderable  = false;
+		bool multisample = false;
+		bool storage     = false;
+		bool supports3D  = true;
+		bool supported   = true;
+
+		switch (_fmt)
+		{
+		case TextureFormat::BC1:
+		case TextureFormat::BC2:
+		case TextureFormat::BC3:
+		case TextureFormat::BC4:
+		case TextureFormat::BC5:
+		case TextureFormat::BC6H:
+		case TextureFormat::BC7:        renderable = false;      multisample = false;       storage = false;
+			supported  = bc;
+			supports3D = bcSliced3D;
+			break;
+
+		case TextureFormat::ETC2:
+		case TextureFormat::ETC2A:
+		case TextureFormat::ETC2A1:
+		case TextureFormat::EACR11:
+		case TextureFormat::EACR11S:
+		case TextureFormat::EACRG11:
+		case TextureFormat::EACRG11S:   renderable = false;      multisample = false;       storage = false;
+			supported  = etc2;
+			supports3D = false;
+			break;
+
+		case TextureFormat::ASTC4x4:
+		case TextureFormat::ASTC5x4:
+		case TextureFormat::ASTC5x5:
+		case TextureFormat::ASTC6x5:
+		case TextureFormat::ASTC6x6:
+		case TextureFormat::ASTC8x5:
+		case TextureFormat::ASTC8x6:
+		case TextureFormat::ASTC8x8:
+		case TextureFormat::ASTC10x5:
+		case TextureFormat::ASTC10x6:
+		case TextureFormat::ASTC10x8:
+		case TextureFormat::ASTC10x10:
+		case TextureFormat::ASTC12x10:
+		case TextureFormat::ASTC12x12: renderable = false;       multisample = false;       storage = false;
+			supported  = astc;
+			supports3D = astcSliced3D;
+			break;
+
+		case TextureFormat::A8:
+		case TextureFormat::R8:        renderable = true;        multisample = true;        storage = tier1;        break;
+		case TextureFormat::R8S:       renderable = tier1;       multisample = tier1;       storage = tier1;        break;
+		case TextureFormat::R8I:
+		case TextureFormat::R8U:       renderable = true;        multisample = core;        storage = tier1;        break;
+		case TextureFormat::RG8:       renderable = true;        multisample = true;        storage = tier1;        break;
+		case TextureFormat::RG8S:      renderable = tier1;       multisample = tier1;       storage = tier1;        break;
+		case TextureFormat::RG8I:
+		case TextureFormat::RG8U:      renderable = true;        multisample = core;        storage = tier1;        break;
+		case TextureFormat::RGBA8:     renderable = true;        multisample = true;        storage = true;         break;
+		case TextureFormat::RGBA8S:    renderable = tier1;       multisample = tier1;       storage = true;         break;
+		case TextureFormat::RGBA8I:
+		case TextureFormat::RGBA8U:    renderable = true;        multisample = core;        storage = true;         break;
+		case TextureFormat::BGRA8:     renderable = true;        multisample = true;        storage = bgra8Storage; break;
+		case TextureFormat::R16:
+		case TextureFormat::R16S:
+		case TextureFormat::RG16:
+		case TextureFormat::RG16S:
+		case TextureFormat::RGBA16:
+		case TextureFormat::RGBA16S:   renderable = tier1;       multisample = tier1;       storage = tier1;
+			supported = unorm16;
+			break;
+
+		case TextureFormat::R16I:
+		case TextureFormat::R16U:      renderable = true;        multisample = core;        storage = tier1;        break;
+		case TextureFormat::R16F:      renderable = true;        multisample = true;        storage = tier1;        break;
+		case TextureFormat::RG16I:
+		case TextureFormat::RG16U:     renderable = true;        multisample = core;        storage = tier1;        break;
+		case TextureFormat::RG16F:     renderable = true;        multisample = true;        storage = tier1;        break;
+		case TextureFormat::RGBA16I:
+		case TextureFormat::RGBA16U:   renderable = true;        multisample = core;        storage = true;         break;
+		case TextureFormat::RGBA16F:   renderable = true;        multisample = core;        storage = true;         break;
+		case TextureFormat::R32I:
+		case TextureFormat::R32U:      renderable = true;        multisample = false;       storage = true;         break;
+		case TextureFormat::R32F:      renderable = true;        multisample = core;        storage = true;         break;
+		case TextureFormat::RG32I:
+		case TextureFormat::RG32U:     renderable = true;        multisample = false;       storage = core;         break;
+		case TextureFormat::RG32F:     renderable = true;        multisample = false;       storage = core;         break;
+		case TextureFormat::RGBA32I:
+		case TextureFormat::RGBA32U:   renderable = true;        multisample = false;       storage = true;         break;
+		case TextureFormat::RGBA32F:   renderable = true;        multisample = false;       storage = true;         break;
+		case TextureFormat::RGB10A2:   renderable = true;        multisample = true;        storage = tier1;        break;
+		case TextureFormat::RG11B10F:  renderable = rg11b10Rend; multisample = rg11b10Rend; storage = tier1;        break;
+		case TextureFormat::RGB9E5F:   renderable = false;       multisample = false;       storage = false;        break;
+		case TextureFormat::D16:
+		case TextureFormat::D24:
+		case TextureFormat::D24S8:
+		case TextureFormat::D32:
+		case TextureFormat::D16F:
+		case TextureFormat::D24F:
+		case TextureFormat::D32F:
+		case TextureFormat::D0S8:      renderable = true;        multisample = true;        storage = false;
+			supports3D = false;
+			break;
+
+		default:
+			break;
+		}
+
+		if (!supported)
+		{
+			return BGFX_CAPS_FORMAT_TEXTURE_NONE;
+		}
+
+		uint32_t caps = 0
+			| BGFX_CAPS_FORMAT_TEXTURE_2D
+			| BGFX_CAPS_FORMAT_TEXTURE_CUBE
+			| (supports3D ? BGFX_CAPS_FORMAT_TEXTURE_3D : 0)
+			;
+
+		if (WGPUTextureFormat_Undefined != tfi.m_fmtSrgb)
+		{
+			const bool srgbOk = false
+				|| (WGPUTextureFormat_BGRA8UnormSrgb != tfi.m_fmtSrgb)
+				|| core
+				;
+
+			if (srgbOk)
+			{
+				caps |= BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
+					 |  BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
+					 |  (supports3D ? BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB : 0)
+					 ;
+			}
+		}
+
+		if (renderable)
+		{
+			caps |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER;
+		}
+
+		if (multisample)
+		{
+			caps |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
+				 |  BGFX_CAPS_FORMAT_TEXTURE_MSAA
+				 ;
+		}
+
+		if (storage)
+		{
+			caps |= BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
+				 |  BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
+				 ;
+		}
+
+		if (TextureFormat::RGBA8 == _fmt || TextureFormat::BGRA8 == _fmt)
+		{
+			caps |= BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN;
+		}
+
+		return caps;
+	}
+
 #	if USE_WEBGPU_DYNAMIC_LIB
 
 #	define WGPU_IGNORE_____(_optional, _func)
@@ -1170,94 +1357,10 @@ WGPU_IMPORT
 
 						for (uint32_t formatIdx = 0; formatIdx < TextureFormat::Count; ++formatIdx)
 						{
-							g_caps.formats[formatIdx] = 0
-								| BGFX_CAPS_FORMAT_TEXTURE_NONE
-								| (WGPUTextureFormat_Undefined != s_textureFormat[formatIdx].m_fmt ? 0
-									| BGFX_CAPS_FORMAT_TEXTURE_2D
-									| BGFX_CAPS_FORMAT_TEXTURE_3D
-									| BGFX_CAPS_FORMAT_TEXTURE_CUBE
-									| 0
-									| (!bimg::isCompressed(bimg::TextureFormat::Enum(formatIdx) ) ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER : 0)
-									| ( (TextureFormat::RGBA8 == formatIdx || TextureFormat::BGRA8 == formatIdx) ? BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN : 0)
-									: 0)
-								| (WGPUTextureFormat_Undefined != s_textureFormat[formatIdx].m_fmtSrgb ? 0
-									| BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
-									| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
-									| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
-									: 0)
-//								| BGFX_CAPS_FORMAT_TEXTURE_VERTEX
-//								| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
-//								| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
-//								| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
-//								| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-//								| BGFX_CAPS_FORMAT_TEXTURE_MSAA
-//								| BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
-								;
+							g_caps.formats[formatIdx] = getTextureFormatCaps(TextureFormat::Enum(formatIdx) );
 						}
 
 						g_caps.formats[TextureFormat::BGRA8] |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
-
-						g_caps.formats[TextureFormat::ETC1] = 0
-							| BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED
-							| BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED
-							| BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED
-							;
-						g_caps.formats[TextureFormat::ETC2] = 0
-							| BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED
-							| BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED
-							| BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED
-							;
-						g_caps.formats[TextureFormat::ASTC4x4  ] = 0;
-						g_caps.formats[TextureFormat::ASTC5x4  ] = 0;
-						g_caps.formats[TextureFormat::ASTC5x5  ] = 0;
-						g_caps.formats[TextureFormat::ASTC6x5  ] = 0;
-						g_caps.formats[TextureFormat::ASTC6x6  ] = 0;
-						g_caps.formats[TextureFormat::ASTC8x5  ] = 0;
-						g_caps.formats[TextureFormat::ASTC8x6  ] = 0;
-						g_caps.formats[TextureFormat::ASTC8x8  ] = 0;
-						g_caps.formats[TextureFormat::ASTC10x5 ] = 0;
-						g_caps.formats[TextureFormat::ASTC10x6 ] = 0;
-						g_caps.formats[TextureFormat::ASTC10x8 ] = 0;
-						g_caps.formats[TextureFormat::ASTC10x10] = 0;
-						g_caps.formats[TextureFormat::ASTC12x10] = 0;
-						g_caps.formats[TextureFormat::ASTC12x12] = 0;
-
-						g_caps.formats[TextureFormat::RGBA8] |= 0
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-							;
-						g_caps.formats[TextureFormat::BGRA8] |= 0
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-							;
-						g_caps.formats[TextureFormat::R16F] |= 0
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-							;
-						g_caps.formats[TextureFormat::RG16F] |= 0
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-							;
-						g_caps.formats[TextureFormat::R32F] |= 0
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-							;
-						g_caps.formats[TextureFormat::RGBA16F] |= 0
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-							;
-						g_caps.formats[TextureFormat::D16] |= 0
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-							;
-						g_caps.formats[TextureFormat::D24S8] |= 0
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-							;
-						g_caps.formats[TextureFormat::D32F] |= 0
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
-							| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-							;
 					}
 				}
 
