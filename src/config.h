@@ -314,6 +314,7 @@ static_assert(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS must
 #ifndef BGFX_CONFIG_MAX_VERTEX_STREAMS
 #	define BGFX_CONFIG_MAX_VERTEX_STREAMS 4
 #endif // BGFX_CONFIG_MAX_VERTEX_STREAMS
+static_assert(BGFX_CONFIG_MAX_VERTEX_STREAMS < 32, "Must be less than 32!");
 
 /// Maximum number of dynamic index buffer handles. Default is 4096.
 #ifndef BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS
