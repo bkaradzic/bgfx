@@ -875,6 +875,8 @@ namespace bgfx
 	struct ClearQuad
 	{
 		ClearQuad()
+			: m_vb(BGFX_INVALID_HANDLE)
+			, m_layout(BGFX_INVALID_HANDLE)
 		{
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_program); ++ii)
 			{
@@ -888,6 +890,26 @@ namespace bgfx
 		VertexBufferHandle m_vb;
 		VertexLayoutHandle m_layout;
 		ProgramHandle m_program[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+	};
+
+	struct MipGen
+	{
+		MipGen()
+			: u_mipGen(BGFX_INVALID_HANDLE)
+			, s_texMipSrc(BGFX_INVALID_HANDLE)
+		{
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_program); ++ii)
+			{
+				m_program[ii] = BGFX_INVALID_HANDLE;
+			}
+		}
+
+		void init();
+		void shutdown();
+
+		ProgramHandle m_program[4];
+		UniformHandle u_mipGen;
+		UniformHandle s_texMipSrc;
 	};
 
 	struct PredefinedUniform
@@ -3736,7 +3758,7 @@ namespace bgfx
 		virtual void invalidateOcclusionQuery(OcclusionQueryHandle _handle) = 0;
 		virtual void setMarker(const char* _name, uint16_t _len) = 0;
 		virtual void setName(Handle _handle, const char* _name, uint16_t _len) = 0;
-		virtual void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) = 0;
+		virtual void submit(Frame* _render, const ClearQuad& _clearQuad, const MipGen& _mipGen, TextVideoMemBlitter& _textVideoMemBlitter) = 0;
 		virtual void dbgTextRenderBegin(TextVideoMemBlitter& _blitter) = 0;
 		virtual void dbgTextRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) = 0;
 		virtual void dbgTextRenderEnd(TextVideoMemBlitter& _blitter) = 0;
@@ -6035,6 +6057,7 @@ namespace bgfx
 
 		TextVideoMemBlitter m_textVideoMemBlitter;
 		ClearQuad m_clearQuad;
+		MipGen m_mipGen;
 
 		RendererContextI* m_renderCtx;
 

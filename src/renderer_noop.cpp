@@ -238,7 +238,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void submit(Frame* _render, ClearQuad& /*_clearQuad*/, TextVideoMemBlitter& /*_textVideoMemBlitter*/) override
+		void submit(Frame* _render, const ClearQuad& /*_clearQuad*/, const MipGen& /*_mipGen*/, TextVideoMemBlitter& /*_textVideoMemBlitter*/) override
 		{
 			const int64_t timerFreq = bx::getHPFrequency();
 			const int64_t timeBegin = bx::getHPCounter();

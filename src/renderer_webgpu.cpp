@@ -639,8 +639,11 @@ WGPU_IMPORT
 			, m_maxAnisotropy(1)
 			, m_depthClamp(false)
 			, m_wireframe(false)
+			, m_mipGen(NULL)
+			, m_mipGenStubTexture(NULL)
 		{
 			BX_UNUSED(&popErrorScopeCb, &wgpuErrorCheck, s_backendType, s_adapterType);
+			bx::memSet(m_mipGenStubTextureView, 0, sizeof(m_mipGenStubTextureView) );
 		}
 
 		~RendererContextWGPU()
@@ -1175,6 +1178,7 @@ WGPU_IMPORT
 									| BGFX_CAPS_FORMAT_TEXTURE_CUBE
 									| 0
 									| (!bimg::isCompressed(bimg::TextureFormat::Enum(formatIdx) ) ? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER : 0)
+									| ( (TextureFormat::RGBA8 == formatIdx || TextureFormat::BGRA8 == formatIdx) ? BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN : 0)
 									: 0)
 								| (WGPUTextureFormat_Undefined != s_textureFormat[formatIdx].m_fmtSrgb ? 0
 									| BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
@@ -1347,6 +1351,19 @@ WGPU_IMPORT
 		void shutdown()
 		{
 			preReset();
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_mipGenStubTextureView); ++ii)
+			{
+				if (NULL != m_mipGenStubTextureView[ii])
+				{
+					wgpuRelease(m_mipGenStubTextureView[ii]);
+				}
+			}
+
+			if (NULL != m_mipGenStubTexture)
+			{
+				wgpuRelease(m_mipGenStubTexture);
+			}
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
 			{
@@ -1813,7 +1830,9 @@ WGPU_IMPORT
 
 		void submitUniformCache(UniformCacheState& _ucs, uint16_t _view);
 
-		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;
+		void generateMips(WGPUCommandEncoder _cmdEncoder, TextureWGPU& _texture, TextureHandle _textureHandle);
+
+		void submit(Frame* _render, const ClearQuad& _clearQuad, const MipGen& _mipGen, TextVideoMemBlitter& _textVideoMemBlitter) override;
 
 		void dbgTextRenderBegin(TextVideoMemBlitter& _blitter) override
 		{
@@ -3164,6 +3183,10 @@ WGPU_IMPORT
 		bool m_depthClamp;
 		bool m_wireframe;
 
+		const MipGen*   m_mipGen;
+		WGPUTexture     m_mipGenStubTexture;
+		WGPUTextureView m_mipGenStubTextureView[3];
+
 		IndexBufferWGPU  m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBufferWGPU m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
 		ShaderWGPU       m_shaders[BGFX_CONFIG_MAX_SHADERS];
@@ -3926,8 +3949,10 @@ retry:
 			const bool swizzle    = TextureFormat::BGRA8 == m_textureFormat && 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 
 			const bool writeOnly    = 0 != (m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
-			const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 			const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
+			const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE)
+				|| (renderTarget && 1 < m_numMips)
+				;
 			const bool blit         = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
 
 			const uint32_t msaaQuality = bx::uint32_satsub((m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
@@ -4795,6 +4820,26 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		}
 	}
 
+	void FrameBufferWGPU::resolve(WGPUCommandEncoder _cmdEncoder)
+	{
+		for (uint32_t ii = 0; ii < m_numAttachments; ++ii)
+		{
+			const Attachment& at = m_attachment[ii];
+
+			if (isValid(at.handle)
+			&&  0 != (at.resolve & BGFX_RESOLVE_AUTO_GEN_MIPS) )
+			{
+				TextureWGPU& texture = s_renderWGPU->m_textures[at.handle.idx];
+
+				if (0 != (texture.m_flags & BGFX_TEXTURE_RT_MASK)
+				&&  1 < texture.m_numMips)
+				{
+					s_renderWGPU->generateMips(_cmdEncoder, texture, at.handle);
+				}
+			}
+		}
+	}
+
 	void CommandQueueWGPU::init(WGPUDevice _device)
 	{
 		m_currentFrameInFlight = 0;
@@ -5198,6 +5243,254 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		}
 	}
 
+	void RendererContextWGPU::generateMips(WGPUCommandEncoder _cmdEncoder, TextureWGPU& _texture, TextureHandle _textureHandle)
+	{
+		if (NULL == m_mipGen
+		||  !isValid(m_mipGen->m_program[0]) )
+		{
+			return;
+		}
+
+		if (_texture.m_numMips <= 1)
+		{
+			return;
+		}
+
+		if (NULL == m_mipGenStubTexture)
+		{
+			WGPUTextureDescriptor dummyDesc =
+			{
+				.nextInChain     = NULL,
+				.label           = toWGPUStringView("mipgen dummy"),
+				.usage           = WGPUTextureUsage_StorageBinding,
+				.dimension       = WGPUTextureDimension_2D,
+				.size            = { 4, 4, 1 },
+				.format          = WGPUTextureFormat_RGBA8Unorm,
+				.mipLevelCount   = 3,
+				.sampleCount     = 1,
+				.viewFormatCount = 0,
+				.viewFormats     = NULL,
+			};
+
+			m_mipGenStubTexture = WGPU_CHECK(wgpuDeviceCreateTexture(m_device, &dummyDesc) );
+
+			for (uint32_t ii = 0; ii < 3; ++ii)
+			{
+				WGPUTextureViewDescriptor viewDesc =
+				{
+					.nextInChain     = NULL,
+					.label           = WGPU_STRING_VIEW_INIT,
+					.format          = WGPUTextureFormat_RGBA8Unorm,
+					.dimension       = WGPUTextureViewDimension_2D,
+					.baseMipLevel    = ii,
+					.mipLevelCount   = 1,
+					.baseArrayLayer  = 0,
+					.arrayLayerCount = 1,
+					.aspect          = WGPUTextureAspect_All,
+					.usage           = WGPUTextureUsage_StorageBinding,
+				};
+
+				m_mipGenStubTextureView[ii] = WGPU_CHECK(wgpuTextureCreateView(m_mipGenStubTexture, &viewDesc) );
+			}
+		}
+
+		const uint32_t width  = _texture.m_width;
+		const uint32_t height = _texture.m_height;
+
+		for (uint8_t topMip = 0; topMip < _texture.m_numMips - 1; )
+		{
+			const uint32_t srcWidth  = bx::max<uint32_t>(width  >> topMip, 1);
+			const uint32_t srcHeight = bx::max<uint32_t>(height >> topMip, 1);
+			      uint32_t dstWidth  = srcWidth  >> 1;
+			      uint32_t dstHeight = srcHeight >> 1;
+
+			const uint32_t nonPowerOfTwo = (srcWidth & 1) | ( (srcHeight & 1) << 1);
+
+			uint8_t additionalMips = 0;
+			{
+				const uint32_t v = 0
+					| (dstWidth  == 1 ? dstHeight : dstWidth)
+					| (dstHeight == 1 ? dstWidth : dstHeight)
+					;
+
+				if (0 != v)
+				{
+					additionalMips = bx::countTrailingZeros(v);
+				}
+			}
+
+			uint8_t numMips = 1 + bx::min<uint8_t>(additionalMips, 3);
+
+			if (topMip + numMips > _texture.m_numMips - 1)
+			{
+				numMips = _texture.m_numMips - 1 - topMip;
+			}
+
+			dstWidth  = bx::max<uint32_t>(dstWidth,  1);
+			dstHeight = bx::max<uint32_t>(dstHeight, 1);
+
+			const ProgramHandle prog = m_mipGen->m_program[nonPowerOfTwo];
+			const ProgramWGPU& program = m_program[prog.idx];
+
+			float mipGenData[4] =
+			{
+				0.0f,
+				float(numMips),
+				1.0f / float(dstWidth),
+				1.0f / float(dstHeight),
+			};
+
+			bx::memCopy(m_uniforms[m_mipGen->u_mipGen.idx], mipGenData, 16);
+
+			if (NULL != program.m_vsh->m_constantBuffer)
+			{
+				commit(*program.m_vsh->m_constantBuffer);
+			}
+
+			RenderBind renderBind;
+			bx::memSet(&renderBind, 0, sizeof(renderBind) );
+
+			for (uint32_t ii = 0; ii < 4; ++ii)
+			{
+				Binding& bind = renderBind.m_bind[ii];
+				bind.m_type   = Binding::Image;
+				bind.m_access = Access::Write;
+				bind.m_idx    = _textureHandle.idx;
+				bind.m_mip    = uint8_t(bx::min(topMip + 1 + ii, uint32_t(_texture.m_numMips - 1) ) );
+			}
+
+			{
+				Binding& bind    = renderBind.m_bind[4];
+				bind.m_type         = Binding::Texture;
+				bind.m_idx          = _textureHandle.idx;
+				bind.m_mip          = uint8_t(topMip);
+				bind.m_samplerFlags = 0
+					| BGFX_SAMPLER_U_CLAMP
+					| BGFX_SAMPLER_V_CLAMP
+					| BGFX_SAMPLER_W_CLAMP
+					;
+			}
+
+			ComputePipeline* computePipeline = getPipeline(prog, renderBind);
+
+			ChunkedScratchBufferOffset sbo;
+			m_uniformScratchBuffer.write(sbo, m_vsScratch, program.m_vsh->m_size);
+
+			WGPUBindGroupEntry bindGroupEntry[2 + BGFX_CONFIG_MAX_TEXTURE_SAMPLERS * 3];
+			uint32_t entryCount = 0;
+			uint32_t numOffsets  = 0;
+
+			if (0 < program.m_vsh->m_size)
+			{
+				bindGroupEntry[entryCount++] =
+				{
+					.nextInChain = NULL,
+					.binding     = 0,
+					.buffer      = sbo.buffer,
+					.offset      = 0,
+					.size        = program.m_vsh->m_blockSize,
+					.sampler     = NULL,
+					.textureView = NULL,
+				};
+
+				++numOffsets;
+			}
+
+			for (uint32_t ii = 0; ii < 4; ++ii)
+			{
+				const ShaderBinding& shaderBind = program.m_shaderBinding[ii];
+
+				if (!isValid(shaderBind.uniformHandle) )
+				{
+					continue;
+				}
+
+				WGPUTextureView view;
+				if (ii < numMips)
+				{
+					view = _texture.getTextureView(uint8_t(topMip + 1 + ii), 1, true);
+				}
+				else
+				{
+					view = m_mipGenStubTextureView[ii - numMips];
+				}
+
+				bindGroupEntry[entryCount++] =
+				{
+					.nextInChain = NULL,
+					.binding     = shaderBind.binding,
+					.buffer      = NULL,
+					.offset      = 0,
+					.size        = 0,
+					.sampler     = NULL,
+					.textureView = view,
+				};
+			}
+
+			{
+				const ShaderBinding& shaderBind = program.m_shaderBinding[4];
+
+				if (isValid(shaderBind.uniformHandle) )
+				{
+					bindGroupEntry[entryCount++] =
+					{
+						.nextInChain = NULL,
+						.binding     = shaderBind.binding,
+						.buffer      = NULL,
+						.offset      = 0,
+						.size        = 0,
+						.sampler     = NULL,
+						.textureView = _texture.getTextureView(uint8_t(topMip), 1, false),
+					};
+
+					const uint32_t samplerFlags = 0
+						| BGFX_SAMPLER_U_CLAMP
+						| BGFX_SAMPLER_V_CLAMP
+						| BGFX_SAMPLER_W_CLAMP
+						;
+					bindGroupEntry[entryCount++] =
+					{
+						.nextInChain = NULL,
+						.binding     = shaderBind.samplerBinding,
+						.buffer      = NULL,
+						.offset      = 0,
+						.size        = 0,
+						.sampler     = _texture.getSamplerState(samplerFlags),
+						.textureView = NULL,
+					};
+				}
+			}
+
+			WGPUBindGroupDescriptor bindGroupDesc =
+			{
+				.nextInChain = NULL,
+				.label       = WGPU_STRING_VIEW_INIT,
+				.layout      = computePipeline->bindGroupLayout,
+				.entryCount  = entryCount,
+				.entries     = bindGroupEntry,
+			};
+
+			WGPUBindGroup bindGroup = WGPU_CHECK(wgpuDeviceCreateBindGroup(m_device, &bindGroupDesc) );
+
+			WGPUComputePassEncoder computePass = WGPU_CHECK(wgpuCommandEncoderBeginComputePass(_cmdEncoder, NULL) );
+			WGPU_CHECK(wgpuComputePassEncoderSetPipeline(computePass, computePipeline->pipeline) );
+			WGPU_CHECK(wgpuComputePassEncoderSetBindGroup(computePass, 0, bindGroup, numOffsets, sbo.offsets) );
+
+			WGPU_CHECK(wgpuComputePassEncoderDispatchWorkgroups(
+				  computePass
+				, bx::max<uint32_t>( (dstWidth  + 7) / 8, 1)
+				, bx::max<uint32_t>( (dstHeight + 7) / 8, 1)
+				, 1
+				) );
+
+			WGPU_CHECK(wgpuComputePassEncoderEnd(computePass) );
+			wgpuRelease(computePass);
+			wgpuRelease(bindGroup);
+
+			topMip += numMips;
+		}
+	}
+
 	void RendererContextWGPU::submitUniformCache(UniformCacheState& _ucs, uint16_t _view)
 	{
 		while (_ucs.hasItem(_view) )
@@ -5208,8 +5501,9 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		}
 	}
 
-	void RendererContextWGPU::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
+	void RendererContextWGPU::submit(Frame* _render, const ClearQuad& _clearQuad, const MipGen& _mipGen, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
+		m_mipGen = &_mipGen;
 		m_occlusionQuery.readResultsAsync(_render);
 		WGPU_CHECK(wgpuInstanceProcessEvents(s_renderWGPU->m_instance) );
 
@@ -5346,6 +5640,20 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 						{
 							WGPU_CHECK(wgpuRenderPassEncoderEnd(renderPassEncoder) );
 							wgpuRelease(renderPassEncoder);
+							renderPassEncoder = NULL;
+						}
+
+						if (NULL != computePassEncoder)
+						{
+							WGPU_CHECK(wgpuComputePassEncoderEnd(computePassEncoder) );
+							wgpuRelease(computePassEncoder);
+							computePassEncoder = NULL;
+						}
+
+						if (isValid(fbh) )
+						{
+							FrameBufferWGPU& oldFb = m_frameBuffers[fbh.idx];
+							oldFb.resolve(m_cmd.m_commandEncoder);
 						}
 
 						fbh = _render->m_view[view].m_fbh;
@@ -6060,6 +6368,12 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				setViewType(view, "C");
 				BGFX_WGPU_PROFILER_END();
 				BGFX_WGPU_PROFILER_BEGIN(view, kColorCompute);
+			}
+
+			if (isValid(fbh) )
+			{
+				FrameBufferWGPU& lastFb = m_frameBuffers[fbh.idx];
+				lastFb.resolve(m_cmd.m_commandEncoder);
 			}
 
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);

@@ -516,7 +516,9 @@ public:
 			m_hiZDepthBuffer = bgfx::createFrameBuffer(uint16_t(m_hiZwidth), uint16_t(m_hiZheight), bgfx::TextureFormat::D32F, tsFlags);
 
 			bgfx::TextureHandle buffer = bgfx::createTexture2D(uint16_t(m_hiZwidth), uint16_t(m_hiZheight), true, 1, bgfx::TextureFormat::R32F, BGFX_TEXTURE_COMPUTE_WRITE | tsFlags);
-			m_hiZBuffer = bgfx::createFrameBuffer(1, &buffer, true);
+			bgfx::Attachment at;
+			at.init(buffer, bgfx::Access::Write, 0, 1, 0, BGFX_RESOLVE_NONE);
+			m_hiZBuffer = bgfx::createFrameBuffer(1, &at, true);
 
 			//how many mip will the Hi Z buffer have?
 			m_noofHiZMips = (uint8_t)(1 + bx::floor(bx::log2(float(bx::max(m_hiZwidth, m_hiZheight) ) ) ) );

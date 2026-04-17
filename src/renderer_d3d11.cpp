@@ -2194,7 +2194,7 @@ namespace bgfx { namespace d3d11
 
 		void submitUniformCache(UniformCacheState& _ucs, uint16_t _view);
 
-		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;
+		void submit(Frame* _render, const ClearQuad& _clearQuad, const MipGen& _mipGen, TextVideoMemBlitter& _textVideoMemBlitter) override;
 
 		void dbgTextRenderBegin(TextVideoMemBlitter& _blitter) override
 		{
@@ -4864,10 +4864,13 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
-		const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
-		if (renderTarget
+		const bool renderTarget = 0 != (m_flags  & BGFX_TEXTURE_RT_MASK);
+		const bool autoGenMips  = 0 != (_resolve & BGFX_RESOLVE_AUTO_GEN_MIPS);
+
+		if (autoGenMips
+		&&  renderTarget
 		&&  1 < m_numMips
-		&&  0 != (_resolve & BGFX_RESOLVE_AUTO_GEN_MIPS) )
+		   )
 		{
 			deviceCtx->GenerateMips(m_srv);
 		}
@@ -5576,7 +5579,7 @@ namespace bgfx { namespace d3d11
 		}
 	}
 
-	void RendererContextD3D11::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
+	void RendererContextD3D11::submit(Frame* _render, const ClearQuad& _clearQuad, const MipGen& /*_mipGen*/, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
 		if (m_lost)
 		{

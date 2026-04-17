@@ -760,6 +760,8 @@ namespace bgfx { namespace wgpu
 
 		void present();
 
+		void resolve(WGPUCommandEncoder _cmdEncoder);
+
 		bool isSwapChain() const
 		{
 			return m_swapChain.m_nwh;
