@@ -907,6 +907,17 @@ namespace bgfx
 		void init();
 		void shutdown();
 
+		static bool isSupported(TextureFormat::Enum _format)
+		{
+			return false
+				|| TextureFormat::RGBA8   == _format
+				|| TextureFormat::BGRA8   == _format
+				|| TextureFormat::RGBA16  == _format
+				|| TextureFormat::RGBA16F == _format
+				|| TextureFormat::RGBA32F == _format
+				;
+		}
+
 		ProgramHandle m_program[4];
 		UniformHandle u_mipGen;
 		UniformHandle s_texMipSrc;

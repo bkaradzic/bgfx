@@ -1795,7 +1795,7 @@ namespace bgfx { namespace d3d12
 
 								support |= 0 != (support & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER)
 										&& 0 != (data.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE)
-										&& (TextureFormat::RGBA8 == ii || TextureFormat::BGRA8 == ii)
+										&& MipGen::isSupported(TextureFormat::Enum(ii) )
 										? BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
 										: BGFX_CAPS_FORMAT_TEXTURE_NONE
 										;
