@@ -86,7 +86,7 @@ namespace bgfx { namespace mtl
 	static_assert(BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT == BX_COUNTOF(s_instanceDataName) );
 
 	static const MTL::VertexFormat s_attribType[][4][2] = //type, count, normalized
-	{	
+	{
 		{ // Uint8
 			{ MTL::VertexFormatChar2,                 MTL::VertexFormatChar2Normalized       },
 			{ MTL::VertexFormatChar2,                 MTL::VertexFormatChar2Normalized       },
@@ -98,7 +98,7 @@ namespace bgfx { namespace mtl
 			{ MTL::VertexFormatUChar2,                MTL::VertexFormatUChar2Normalized      },
 			{ MTL::VertexFormatUChar3,                MTL::VertexFormatUChar3Normalized      },
 			{ MTL::VertexFormatUChar4,                MTL::VertexFormatUChar4Normalized      },
-		},	
+		},
 		{ // Uint10
 			{ MTL::VertexFormatUInt1010102Normalized, MTL::VertexFormatUInt1010102Normalized },
 			{ MTL::VertexFormatUInt1010102Normalized, MTL::VertexFormatUInt1010102Normalized },
@@ -343,6 +343,300 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunguarded-availability-new");
 	static_assert(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
 BX_PRAGMA_DIAGNOSTIC_POP();
+
+	// Reference(s):
+	//
+	// - Metal feature set tables
+	//   https://web.archive.org/web/20230330111145/https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf
+	//
+	// - MTLPixelFormat pixel format capabilities
+	//   https://developer.apple.com/documentation/metal/mtlpixelformat
+	//
+	struct TextureFormatCaps
+	{
+		TextureFormatCaps(MTL::Device* _device, bool _hasPacked16Formats)
+		{
+			m_ios      = BX_ENABLED(BX_PLATFORM_IOS) || BX_ENABLED(BX_PLATFORM_VISIONOS);
+			m_osx      = BX_ENABLED(BX_PLATFORM_OSX);
+			m_apple    = _device->supportsFamily(MTL::GPUFamilyApple1);
+			m_apple3   = _device->supportsFamily(MTL::GPUFamilyApple3);
+			m_apple6   = _device->supportsFamily(MTL::GPUFamilyApple6);
+			m_apple7   = _device->supportsFamily(MTL::GPUFamilyApple7);
+			m_mac2     = _device->supportsFamily(MTL::GPUFamilyMac2);
+			m_bc       = _device->supportsBCTextureCompression();
+			m_packed16 = _hasPacked16Formats;
+			m_rwTier   = _device->readWriteTextureSupport();
+		}
+
+		uint32_t getCaps(TextureFormat::Enum _fmt) const
+		{
+			const TextureFormatInfo& tfi = s_textureFormat[_fmt];
+
+			if (MTL::PixelFormatInvalid == tfi.m_fmt)
+			{
+				return BGFX_CAPS_FORMAT_TEXTURE_NONE;
+			}
+
+			bool supported   = false;
+			bool framebuffer = false;
+			bool multisample = false;
+			bool storage     = false;
+			bool supports3D  = false;
+
+			switch (_fmt)
+			{
+			case TextureFormat::BC1:
+			case TextureFormat::BC2:
+			case TextureFormat::BC3:
+			case TextureFormat::BC4:
+			case TextureFormat::BC5:
+			case TextureFormat::BC6H:
+			case TextureFormat::BC7:
+				supported = m_bc;
+				break;
+
+			case TextureFormat::ETC2:
+			case TextureFormat::ETC2A:
+			case TextureFormat::ETC2A1:
+			case TextureFormat::EACR11:
+			case TextureFormat::EACR11S:
+			case TextureFormat::EACRG11:
+			case TextureFormat::EACRG11S:
+				supported = m_apple;
+				break;
+
+			case TextureFormat::PTC12:
+			case TextureFormat::PTC14:
+			case TextureFormat::PTC12A:
+			case TextureFormat::PTC14A:
+				// PVRTC is only available on iOS/tvOS/visionOS Apple GPUs.
+				supported = m_apple && m_ios;
+				break;
+
+			case TextureFormat::ASTC4x4:
+			case TextureFormat::ASTC5x4:
+			case TextureFormat::ASTC5x5:
+			case TextureFormat::ASTC6x5:
+			case TextureFormat::ASTC6x6:
+			case TextureFormat::ASTC8x5:
+			case TextureFormat::ASTC8x6:
+			case TextureFormat::ASTC8x8:
+			case TextureFormat::ASTC10x5:
+			case TextureFormat::ASTC10x6:
+			case TextureFormat::ASTC10x8:
+			case TextureFormat::ASTC10x10:
+			case TextureFormat::ASTC12x10:
+			case TextureFormat::ASTC12x12:
+				supported = m_apple;
+				break;
+
+			case TextureFormat::A8:
+				// A8Unorm is not color-renderable on any Metal GPU.
+				supported  = true;
+				supports3D = true;
+				break;
+
+			case TextureFormat::R8:
+			case TextureFormat::RG8:
+			case TextureFormat::RGBA8:
+			case TextureFormat::BGRA8:
+			case TextureFormat::R8S:
+			case TextureFormat::RG8S:
+			case TextureFormat::RGBA8S:
+			case TextureFormat::R8I:
+			case TextureFormat::R8U:
+			case TextureFormat::RG8I:
+			case TextureFormat::RG8U:
+			case TextureFormat::RGBA8I:
+			case TextureFormat::RGBA8U:
+				supported   = true;
+				framebuffer = true;
+				multisample = true;
+				storage     = true;
+				supports3D  = true;
+				break;
+
+			case TextureFormat::R16:
+			case TextureFormat::R16S:
+			case TextureFormat::RG16:
+			case TextureFormat::RG16S:
+			case TextureFormat::RGBA16:
+			case TextureFormat::RGBA16S:
+				// Unorm/Snorm 16-bit formats: Apple GPUs and Mac2 only.
+				supported   = m_apple || m_mac2;
+				framebuffer = true;
+				multisample = true;
+				supports3D  = true;
+				break;
+
+			case TextureFormat::R16F:
+			case TextureFormat::RG16F:
+			case TextureFormat::RGBA16F:
+			case TextureFormat::R16I:
+			case TextureFormat::R16U:
+			case TextureFormat::RG16I:
+			case TextureFormat::RG16U:
+			case TextureFormat::RGBA16I:
+			case TextureFormat::RGBA16U:
+				supported   = true;
+				framebuffer = true;
+				multisample = true;
+				storage     = true;
+				supports3D  = true;
+				break;
+
+			case TextureFormat::R32F:
+			case TextureFormat::RG32F:
+				// 32-bit float MSAA requires Mac GPU family.
+				supported   = true;
+				framebuffer = true;
+				multisample = !m_ios;
+				storage     = true;
+				supports3D  = true;
+				break;
+
+			case TextureFormat::RGBA32F:
+				// RGBA32Float MSAA requires Mac2.
+				supported   = true;
+				framebuffer = true;
+				multisample = m_mac2;
+				storage     = true;
+				supports3D  = true;
+				break;
+
+			case TextureFormat::R32I:
+			case TextureFormat::R32U:
+			case TextureFormat::RG32I:
+			case TextureFormat::RG32U:
+			case TextureFormat::RGBA32I:
+			case TextureFormat::RGBA32U:
+				// Integer 32-bit formats do not support MSAA.
+				supported   = true;
+				framebuffer = true;
+				storage     = true;
+				supports3D  = true;
+				break;
+
+			case TextureFormat::RGB10A2:
+			case TextureFormat::RG11B10F:
+				supported   = true;
+				framebuffer = true;
+				multisample = true;
+				supports3D  = true;
+				break;
+
+			case TextureFormat::RGB9E5F:
+				// Not color-renderable on Mac (non-Apple) GPUs.
+				supported   = true;
+				framebuffer = m_apple;
+				multisample = m_apple;
+				supports3D  = true;
+				break;
+
+			case TextureFormat::B5G6R5:
+			case TextureFormat::R5G6B5:
+			case TextureFormat::BGRA4:
+			case TextureFormat::RGBA4:
+			case TextureFormat::BGR5A1:
+			case TextureFormat::RGB5A1:
+				// Packed 16-bit formats require macOS 11.0+ / iOS 8.0+.
+				supported   = m_packed16;
+				framebuffer = true;
+				multisample = true;
+				supports3D  = true;
+				break;
+
+			case TextureFormat::D16:
+			case TextureFormat::D24:
+			case TextureFormat::D24S8:
+			case TextureFormat::D32:
+			case TextureFormat::D16F:
+			case TextureFormat::D24F:
+			case TextureFormat::D32F:
+			case TextureFormat::D0S8:
+				supported   = true;
+				framebuffer = true;
+				multisample = true;
+				break;
+
+			default:
+				break;
+			}
+
+			if (!supported)
+			{
+				return BGFX_CAPS_FORMAT_TEXTURE_NONE;
+			}
+
+			uint32_t caps = 0
+				| BGFX_CAPS_FORMAT_TEXTURE_2D
+				| BGFX_CAPS_FORMAT_TEXTURE_CUBE
+				| BGFX_CAPS_FORMAT_TEXTURE_VERTEX
+				| (supports3D ? BGFX_CAPS_FORMAT_TEXTURE_3D : 0)
+				;
+
+			if (MTL::PixelFormatInvalid != tfi.m_fmtSrgb)
+			{
+				caps |= 0
+					| BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
+					| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
+					| (supports3D ? BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB : 0)
+					;
+			}
+
+			if (framebuffer)
+			{
+				caps |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER;
+			}
+
+			if (multisample)
+			{
+				caps |= 0
+					| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
+					| BGFX_CAPS_FORMAT_TEXTURE_MSAA
+					;
+			}
+
+			if (true
+			&&  storage
+			&&  MTL::ReadWriteTextureTierNone != tfi.m_rwTier
+			&&  tfi.m_rwTier <= m_rwTier
+			   )
+			{
+				caps |= 0
+					| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
+					| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
+					;
+			}
+
+			if (tfi.m_autoGetMipmap)
+			{
+				caps |= BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN;
+			}
+
+			if (false
+			||  TextureFormat::BGRA8   == _fmt
+			||  TextureFormat::RGBA16F == _fmt
+			   )
+			{
+				// CAMetalLayer accepts BGRA8Unorm(_sRGB) and RGBA16Float as drawable pixel formats.
+				caps |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
+			}
+
+			return caps;
+		}
+
+		bool m_ios;
+		bool m_osx;
+		bool m_apple;
+		bool m_apple3;
+		bool m_apple6;
+		bool m_apple7;
+		bool m_mac2;
+		bool m_bc;
+		bool m_packed16;
+		MTL::ReadWriteTextureTier m_rwTier;
+	};
 
 	int32_t s_msaa[] =
 	{
@@ -716,90 +1010,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				s_textureFormat[TextureFormat::D16].m_fmt = MTL::PixelFormatDepth32Float;
 			}
 
-			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
-			{
-				uint32_t support = 0;
-
-				support |= MTL::PixelFormatInvalid != s_textureFormat[ii].m_fmt
-					? BGFX_CAPS_FORMAT_TEXTURE_2D
-					| BGFX_CAPS_FORMAT_TEXTURE_3D
-					| BGFX_CAPS_FORMAT_TEXTURE_CUBE
-					| BGFX_CAPS_FORMAT_TEXTURE_VERTEX
-					: BGFX_CAPS_FORMAT_TEXTURE_NONE
-					;
-
-				support |= MTL::PixelFormatInvalid != s_textureFormat[ii].m_fmtSrgb
-					? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
-					| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
-					| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
-					| BGFX_CAPS_FORMAT_TEXTURE_VERTEX
-					: BGFX_CAPS_FORMAT_TEXTURE_NONE
-					;
-
-				if (!bimg::isCompressed(bimg::TextureFormat::Enum(ii) ) )
-				{
-					support |= 0
-						| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
-						| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
-						;
-				}
-
-				support |= true
-					&& s_textureFormat[ii].m_rwTier != MTL::ReadWriteTextureTierNone
-					&& s_textureFormat[ii].m_rwTier <= rwTier
-					? BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ
-					| BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE
-					: BGFX_CAPS_FORMAT_TEXTURE_NONE
-					;
-
-				support |= s_textureFormat[ii].m_autoGetMipmap
-					? BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
-					: 0
-					;
-
-				g_caps.formats[ii] = support;
-			}
-
-			g_caps.formats[TextureFormat::BGRA8] |= BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER;
-
-			g_caps.formats[TextureFormat::A8     ] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER | BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
-			g_caps.formats[TextureFormat::RG32I  ] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
-			g_caps.formats[TextureFormat::RG32U  ] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
-			g_caps.formats[TextureFormat::RGBA32I] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
-			g_caps.formats[TextureFormat::RGBA32U] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
-
-			if (BX_ENABLED(BX_PLATFORM_IOS) || BX_ENABLED(BX_PLATFORM_VISIONOS) )
-			{
-				s_textureFormat[TextureFormat::D24S8].m_fmt = MTL::PixelFormatDepth32Float_Stencil8;
-
-				g_caps.formats[TextureFormat::BC1 ] =
-				g_caps.formats[TextureFormat::BC2 ] =
-				g_caps.formats[TextureFormat::BC3 ] =
-				g_caps.formats[TextureFormat::BC4 ] =
-				g_caps.formats[TextureFormat::BC5 ] =
-				g_caps.formats[TextureFormat::BC6H] =
-				g_caps.formats[TextureFormat::BC7 ] = BGFX_CAPS_FORMAT_TEXTURE_NONE;
-
-				g_caps.formats[TextureFormat::RG32F  ] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
-				g_caps.formats[TextureFormat::RGBA32F] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
-			}
-
 			s_textureFormat[TextureFormat::D24S8].m_fmt = BX_ENABLED(BX_PLATFORM_OSX) && m_device->isDepth24Stencil8PixelFormatSupported()
 				? MTL::PixelFormatDepth24Unorm_Stencil8
 				: MTL::PixelFormatDepth32Float_Stencil8
 				;
 
-			if (BX_ENABLED(BX_PLATFORM_OSX) )
-			{
-				g_caps.formats[TextureFormat::ETC2  ] =
-				g_caps.formats[TextureFormat::ETC2A ] =
-				g_caps.formats[TextureFormat::ETC2A1] =
-				g_caps.formats[TextureFormat::PTC12 ] =
-				g_caps.formats[TextureFormat::PTC14 ] =
-				g_caps.formats[TextureFormat::PTC12A] =
-				g_caps.formats[TextureFormat::PTC14A] = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+			TextureFormatCaps textureFormatCaps(m_device, hasPacked16Formats);
 
-				g_caps.formats[TextureFormat::RGB9E5F] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER | BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
+			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+			{
+				g_caps.formats[ii] = textureFormatCaps.getCaps(TextureFormat::Enum(ii) );
 			}
 
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
