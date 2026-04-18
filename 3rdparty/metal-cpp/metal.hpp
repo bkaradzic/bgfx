@@ -15442,7 +15442,7 @@ _NS_EXPORT NS::Array* MTL::CopyAllDevices()
 _NS_EXPORT NS::Array* MTL::CopyAllDevicesWithObserver(NS::Object** pOutObserver, MTL::DeviceNotificationHandlerBlock handler)
 {
 #if TARGET_OS_OSX
-    return (NS::Array*)::MTLCopyAllDevicesWithObserver((id __autoreleasing _Nullable *_Nonnull)pOutObserver, handler);
+    return (NS::Array*)::MTLCopyAllDevicesWithObserver(pOutObserver, handler);
 #else
     (void)pOutObserver;
     (void)handler;
