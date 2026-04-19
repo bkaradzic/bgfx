@@ -1288,7 +1288,13 @@ namespace bgfx { namespace d3d12
 					? DXGI_SCALING_NONE
 					: DXGI_SCALING_STRETCH
 					;
-				m_scd.swapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+				m_scd.swapEffect =
+#if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
+					DXGI_SWAP_EFFECT_FLIP_DISCARD
+#else
+					DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
+#endif // BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS
+					;
 				m_scd.alphaMode  = DXGI_ALPHA_MODE_IGNORE;
 				m_scd.flags      = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
