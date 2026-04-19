@@ -2858,6 +2858,8 @@ namespace bgfx
 		bool supported;
 	};
 
+	BX_PRAGMA_DIAGNOSTIC_PUSH();
+	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtautological-constant-compare");
 	static RendererCreator s_rendererCreator[] =
 	{
 		{ noop::rendererCreate,   noop::rendererDestroy,   BGFX_RENDERER_NOOP_NAME,       true                              }, // Noop
@@ -2876,6 +2878,7 @@ namespace bgfx
 		{ vk::rendererCreate,     vk::rendererDestroy,     BGFX_RENDERER_VULKAN_NAME,     !!BGFX_CONFIG_RENDERER_VULKAN     }, // Vulkan
 		{ wgpu::rendererCreate,   wgpu::rendererDestroy,   BGFX_RENDERER_WEBGPU_NAME,     !!BGFX_CONFIG_RENDERER_WEBGPU     }, // WebGPU
 	};
+	BX_PRAGMA_DIAGNOSTIC_POP();
 	static_assert(BX_COUNTOF(s_rendererCreator) == RendererType::Count);
 
 	void* findModule(const char* _name)
