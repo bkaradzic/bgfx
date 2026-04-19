@@ -3554,7 +3554,7 @@ retry:
 			s_renderWGPU->m_cmd.writeBuffer(chunk.buffer, 0, chunk.data, bx::min(numFlush, m_chunkSize) );
 
 			m_chunkControl.commit(m_chunkSize);
-			numFlush = bx::uint32_satsub(numFlush, m_chunkSize);
+			numFlush = bx::satSub<uint32_t>(numFlush, m_chunkSize);
 		}
 
 		m_consume[s_renderWGPU->m_cmd.m_currentFrameInFlight] = numReserved;
@@ -4068,7 +4068,7 @@ retry:
 				;
 			const bool blit         = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
 
-			const uint32_t msaaQuality = bx::uint32_satsub((m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
+			const uint32_t msaaQuality = bx::satSub<uint32_t>(uint32_t( (m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u);
 			const uint32_t msaaCount   = 1; //s_msaa[msaaQuality];
 			BX_UNUSED(msaaQuality);
 

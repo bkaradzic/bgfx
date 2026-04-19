@@ -55,7 +55,6 @@ namespace stl = tinystl;
 #include <bx/hash.h>
 #include <bx/math.h>
 #include <bx/timer.h>
-#include <bx/uint32_t.h>
 
 typedef stl::vector<bx::Vec3> Vec3Array;
 

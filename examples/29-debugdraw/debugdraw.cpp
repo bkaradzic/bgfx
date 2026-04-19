@@ -11,8 +11,6 @@
 #include "camera.h"
 #include "imgui/imgui.h"
 
-#include <bx/uint32_t.h>
-
 namespace
 {
 

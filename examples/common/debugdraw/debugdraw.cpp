@@ -13,7 +13,6 @@
 #include <bx/mutex.h>
 #include <bx/math.h>
 #include <bx/sort.h>
-#include <bx/uint32_t.h>
 #include <bx/handlealloc.h>
 
 #ifndef DEBUG_DRAW_CONFIG_MAX_GEOMETRY

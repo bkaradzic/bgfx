@@ -11,7 +11,6 @@
 
 #include <bgfx/platform.h>
 
-#include <bx/uint32_t.h>
 #include <bx/thread.h>
 #include <bx/os.h>
 #include <bx/handlealloc.h>

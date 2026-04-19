@@ -1251,14 +1251,14 @@ namespace bgfx
 
 		const simd128_t r3 = simd_ld<simd128_t>(src);
 
-		const simd128_t aibj = simd_shuf_xAyB(r0,   r2);   // aibj
-		const simd128_t emfn = simd_shuf_xAyB(r1,   r3);   // emfn
-		const simd128_t ckdl = simd_shuf_zCwD(r0,   r2);   // ckdl
-		const simd128_t gohp = simd_shuf_zCwD(r1,   r3);   // gohp
-		const simd128_t aeim = simd_shuf_xAyB(aibj, emfn); // aeim
-		const simd128_t bfjn = simd_shuf_zCwD(aibj, emfn); // bfjn
-		const simd128_t cgko = simd_shuf_xAyB(ckdl, gohp); // cgko
-		const simd128_t dhlp = simd_shuf_zCwD(ckdl, gohp); // dhlp
+		const simd128_t aibj = simd128_x32_shuf_xAyB(r0,   r2);   // aibj
+		const simd128_t emfn = simd128_x32_shuf_xAyB(r1,   r3);   // emfn
+		const simd128_t ckdl = simd128_x32_shuf_zCwD(r0,   r2);   // ckdl
+		const simd128_t gohp = simd128_x32_shuf_zCwD(r1,   r3);   // gohp
+		const simd128_t aeim = simd128_x32_shuf_xAyB(aibj, emfn); // aeim
+		const simd128_t bfjn = simd128_x32_shuf_zCwD(aibj, emfn); // bfjn
+		const simd128_t cgko = simd128_x32_shuf_xAyB(ckdl, gohp); // cgko
+		const simd128_t dhlp = simd128_x32_shuf_zCwD(ckdl, gohp); // dhlp
 
 		simd_st(dst, aeim);
 		dst += _dstStride;
@@ -1311,56 +1311,56 @@ namespace bgfx
 		const simd128_t sy    = simd_ld<simd128_t>(scale + 1);
 		const simd128_t sz    = simd_ld<simd128_t>(scale + 2);
 
-		const simd128_t zero  = simd_splat(0.0f);
-		const simd128_t one   = simd_splat(1.0f);
-		const simd128_t two   = simd_splat(2.0f);
+		const simd128_t zero  = simd_splat<simd128_t>(0.0f);
+		const simd128_t one   = simd_splat<simd128_t>(1.0f);
+		const simd128_t two   = simd_splat<simd128_t>(2.0f);
 
-		const simd128_t xx    = simd_mul(rx,    rx);
-		const simd128_t xx2   = simd_mul(two,   xx);
-		const simd128_t yy    = simd_mul(ry,    ry);
-		const simd128_t yy2   = simd_mul(two,   yy);
-		const simd128_t zz    = simd_mul(rz,    rz);
-		const simd128_t zz2   = simd_mul(two,   zz);
-		const simd128_t yx    = simd_mul(ry,    rx);
-		const simd128_t yx2   = simd_mul(two,   yx);
-		const simd128_t yz    = simd_mul(ry,    rz);
-		const simd128_t yz2   = simd_mul(two,   yz);
-		const simd128_t yw    = simd_mul(ry,    rw);
-		const simd128_t yw2   = simd_mul(two,   yw);
-		const simd128_t wz    = simd_mul(rw,    rz);
-		const simd128_t wz2   = simd_mul(two,   wz);
-		const simd128_t wx    = simd_mul(rw,    rx);
-		const simd128_t wx2   = simd_mul(two,   wx);
-		const simd128_t xz    = simd_mul(rx,    rz);
-		const simd128_t xz2   = simd_mul(two,   xz);
-		const simd128_t t0x   = simd_sub(one,   yy2);
-		const simd128_t r0x   = simd_sub(t0x,   zz2);
-		const simd128_t r0y   = simd_add(yx2,   wz2);
-		const simd128_t r0z   = simd_sub(xz2,   yw2);
-		const simd128_t r1x   = simd_sub(yx2,   wz2);
-		const simd128_t omxx2 = simd_sub(one,   xx2);
-		const simd128_t r1y   = simd_sub(omxx2, zz2);
-		const simd128_t r1z   = simd_add(yz2,   wx2);
-		const simd128_t r2x   = simd_add(xz2,   yw2);
-		const simd128_t r2y   = simd_sub(yz2,   wx2);
-		const simd128_t r2z   = simd_sub(omxx2, yy2);
+		const simd128_t xx    = simd_f32_mul(rx,    rx);
+		const simd128_t xx2   = simd_f32_mul(two,   xx);
+		const simd128_t yy    = simd_f32_mul(ry,    ry);
+		const simd128_t yy2   = simd_f32_mul(two,   yy);
+		const simd128_t zz    = simd_f32_mul(rz,    rz);
+		const simd128_t zz2   = simd_f32_mul(two,   zz);
+		const simd128_t yx    = simd_f32_mul(ry,    rx);
+		const simd128_t yx2   = simd_f32_mul(two,   yx);
+		const simd128_t yz    = simd_f32_mul(ry,    rz);
+		const simd128_t yz2   = simd_f32_mul(two,   yz);
+		const simd128_t yw    = simd_f32_mul(ry,    rw);
+		const simd128_t yw2   = simd_f32_mul(two,   yw);
+		const simd128_t wz    = simd_f32_mul(rw,    rz);
+		const simd128_t wz2   = simd_f32_mul(two,   wz);
+		const simd128_t wx    = simd_f32_mul(rw,    rx);
+		const simd128_t wx2   = simd_f32_mul(two,   wx);
+		const simd128_t xz    = simd_f32_mul(rx,    rz);
+		const simd128_t xz2   = simd_f32_mul(two,   xz);
+		const simd128_t t0x   = simd_f32_sub(one,   yy2);
+		const simd128_t r0x   = simd_f32_sub(t0x,   zz2);
+		const simd128_t r0y   = simd_f32_add(yx2,   wz2);
+		const simd128_t r0z   = simd_f32_sub(xz2,   yw2);
+		const simd128_t r1x   = simd_f32_sub(yx2,   wz2);
+		const simd128_t omxx2 = simd_f32_sub(one,   xx2);
+		const simd128_t r1y   = simd_f32_sub(omxx2, zz2);
+		const simd128_t r1z   = simd_f32_add(yz2,   wx2);
+		const simd128_t r2x   = simd_f32_add(xz2,   yw2);
+		const simd128_t r2y   = simd_f32_sub(yz2,   wx2);
+		const simd128_t r2z   = simd_f32_sub(omxx2, yy2);
 
 		simd128_t tmp[4];
-		tmp[0] = simd_mul(r0x, sx);
-		tmp[1] = simd_mul(r0y, sx);
-		tmp[2] = simd_mul(r0z, sx);
+		tmp[0] = simd_f32_mul(r0x, sx);
+		tmp[1] = simd_f32_mul(r0y, sx);
+		tmp[2] = simd_f32_mul(r0z, sx);
 		tmp[3] = zero;
 		transpose(dst + 0, sizeof(Matrix4), tmp);
 
-		tmp[0] = simd_mul(r1x, sy);
-		tmp[1] = simd_mul(r1y, sy);
-		tmp[2] = simd_mul(r1z, sy);
+		tmp[0] = simd_f32_mul(r1x, sy);
+		tmp[1] = simd_f32_mul(r1y, sy);
+		tmp[2] = simd_f32_mul(r1z, sy);
 		tmp[3] = zero;
 		transpose(dst + 1, sizeof(Matrix4), tmp);
 
-		tmp[0] = simd_mul(r2x, sz);
-		tmp[1] = simd_mul(r2y, sz);
-		tmp[2] = simd_mul(r2z, sz);
+		tmp[0] = simd_f32_mul(r2x, sz);
+		tmp[1] = simd_f32_mul(r2y, sz);
+		tmp[2] = simd_f32_mul(r2z, sz);
 		tmp[3] = zero;
 		transpose(dst + 2, sizeof(Matrix4), tmp);
 

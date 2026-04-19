@@ -1332,9 +1332,9 @@ void shadowVolumeCreate(
 
 			using namespace bx;
 
-			const simd128_t lx = simd_splat(_light[0]);
-			const simd128_t ly = simd_splat(_light[1]);
-			const simd128_t lz = simd_splat(_light[2]);
+			const simd128_t lx = simd_splat<simd128_t>(_light[0]);
+			const simd128_t ly = simd_splat<simd128_t>(_light[1]);
+			const simd128_t lz = simd_splat<simd128_t>(_light[2]);
 
 			for (; ii < numEdgesRounded; ii+=2)
 			{
@@ -1344,43 +1344,43 @@ void shadowVolumeCreate(
 				const Plane* edgePlane1 = &edgePlanes[ii*2 + 2];
 
 				const simd128_t reverse =
-					simd_ild(edge0.m_faceReverseOrder[0]
-							, edge1.m_faceReverseOrder[0]
-							, edge0.m_faceReverseOrder[1]
-							, edge1.m_faceReverseOrder[1]
+					simd128_ld(uint32_t(edge0.m_faceReverseOrder[0])
+							, uint32_t(edge1.m_faceReverseOrder[0])
+							, uint32_t(edge0.m_faceReverseOrder[1])
+							, uint32_t(edge1.m_faceReverseOrder[1])
 							);
 
-				const simd128_t p00 = simd_ld(edgePlane0[0].m_plane);
-				const simd128_t p10 = simd_ld(edgePlane1[0].m_plane);
-				const simd128_t p01 = simd_ld(edgePlane0[1].m_plane);
-				const simd128_t p11 = simd_ld(edgePlane1[1].m_plane);
+				const simd128_t p00 = simd_ld<simd128_t>(edgePlane0[0].m_plane);
+				const simd128_t p10 = simd_ld<simd128_t>(edgePlane1[0].m_plane);
+				const simd128_t p01 = simd_ld<simd128_t>(edgePlane0[1].m_plane);
+				const simd128_t p11 = simd_ld<simd128_t>(edgePlane1[1].m_plane);
 
-				const simd128_t xxyy0 = simd_shuf_xAyB(p00, p01);
-				const simd128_t zzww0 = simd_shuf_zCwD(p00, p01);
-				const simd128_t xxyy1 = simd_shuf_xAyB(p10, p11);
-				const simd128_t zzww1 = simd_shuf_zCwD(p10, p11);
+				const simd128_t xxyy0 = simd128_x32_shuf_xAyB(p00, p01);
+				const simd128_t zzww0 = simd128_x32_shuf_zCwD(p00, p01);
+				const simd128_t xxyy1 = simd128_x32_shuf_xAyB(p10, p11);
+				const simd128_t zzww1 = simd128_x32_shuf_zCwD(p10, p11);
 
-				const simd128_t vX = simd_shuf_xAyB(xxyy0, xxyy1);
-				const simd128_t vY = simd_shuf_zCwD(xxyy0, xxyy1);
-				const simd128_t vZ = simd_shuf_xAyB(zzww0, zzww1);
-				const simd128_t vW = simd_shuf_zCwD(zzww0, zzww1);
+				const simd128_t vX = simd128_x32_shuf_xAyB(xxyy0, xxyy1);
+				const simd128_t vY = simd128_x32_shuf_zCwD(xxyy0, xxyy1);
+				const simd128_t vZ = simd128_x32_shuf_xAyB(zzww0, zzww1);
+				const simd128_t vW = simd128_x32_shuf_zCwD(zzww0, zzww1);
 
-				const simd128_t r0 = simd_mul(vX, lx);
-				const simd128_t r1 = simd_mul(vY, ly);
-				const simd128_t r2 = simd_mul(vZ, lz);
+				const simd128_t r0 = simd_f32_mul(vX, lx);
+				const simd128_t r1 = simd_f32_mul(vY, ly);
+				const simd128_t r2 = simd_f32_mul(vZ, lz);
 
-				const simd128_t dot = simd_add(r0, simd_add(r1, r2) );
-				const simd128_t f = simd_add(dot, vW);
+				const simd128_t dot = simd_f32_add(r0, simd_f32_add(r1, r2) );
+				const simd128_t f = simd_f32_add(dot, vW);
 
-				const simd128_t zero = simd_zero();
-				const simd128_t mask = simd_cmpgt(f, zero);
-				const simd128_t onef = simd_splat(1.0f);
+				const simd128_t zero = simd_zero<simd128_t>();
+				const simd128_t mask = simd_f32_cmpgt(f, zero);
+				const simd128_t onef = simd_splat<simd128_t>(1.0f);
 				const simd128_t tmp0 = simd_and(mask, onef);
-				const simd128_t tmp1 = simd_ftoi(tmp0);
+				const simd128_t tmp1 = simd_f32_ftoi_trunc(tmp0);
 				const simd128_t tmp2 = simd_xor(tmp1, reverse);
-				const simd128_t tmp3 = simd_sll(tmp2, 1);
-				const simd128_t onei = simd_isplat(1);
-				const simd128_t tmp4 = simd_isub(tmp3, onei);
+				const simd128_t tmp3 = simd_x32_sll(tmp2, 1);
+				const simd128_t onei = simd_splat<simd128_t>(uint32_t(1) );
+				const simd128_t tmp4 = simd_i32_sub(tmp3, onei);
 
 				BX_ALIGN_DECL_16(int32_t res[4]);
 				simd_st(&res, tmp4);

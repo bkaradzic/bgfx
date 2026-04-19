@@ -140,7 +140,6 @@ namespace bgfx
 #include <bx/string.h>
 #include <bx/thread.h>
 #include <bx/timer.h>
-#include <bx/uint32_t.h>
 
 #include <bgfx/platform.h>
 #include <bimg/bimg.h>
@@ -561,8 +560,8 @@ namespace bgfx
 			const uint16_t ey = bx::min<uint16_t>(_a.m_y + _a.m_height, _b.m_y + _b.m_height);
 			m_x      = sx;
 			m_y      = sy;
-			m_width  = (uint16_t)bx::uint32_satsub(ex, sx);
-			m_height = (uint16_t)bx::uint32_satsub(ey, sy);
+			m_width  = (uint16_t)bx::satSub<uint32_t>(ex, sx);
+			m_height = (uint16_t)bx::satSub<uint32_t>(ey, sy);
 		}
 
 		void intersect(const Rect& _a)
@@ -694,8 +693,8 @@ namespace bgfx
 
 		void resize(bool _small, uint32_t _width, uint32_t _height)
 		{
-			uint32_t width  = bx::uint32_imax(1, _width/8);
-			uint32_t height = bx::uint32_imax(1, _height/(_small ? 8 : 16) );
+			uint32_t width  = bx::max(1u, _width/8);
+			uint32_t height = bx::max(1u, _height/(_small ? 8u : 16u) );
 
 			if (NULL == m_mem
 			||  m_width  != width
@@ -2115,7 +2114,7 @@ namespace bgfx
 			m_height      = _height;
 			m_depth       = _depth;
 			m_format      = uint8_t(_format);
-			m_numSamples  = 1 << bx::uint32_satsub( (_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
+			m_numSamples  = 1 << bx::satSub<uint32_t>(uint32_t( (_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT), 1u);
 			m_numMips     = _numMips;
 			m_numLayers   = _numLayers;
 			m_owned       = false;
@@ -2974,9 +2973,7 @@ namespace bgfx
 				stream.m_startVertex   = _dvb.m_startVertex + _startVertex;
 				stream.m_handle        = _dvb.m_handle;
 				stream.m_layoutHandle  = isValid(_layoutHandle) ? _layoutHandle : _dvb.m_layoutHandle;
-				m_numVertices[_stream] =
-					bx::min(bx::uint32_imax(0, _dvb.m_numVertices - _startVertex), _numVertices)
-					;
+				m_numVertices[_stream] = bx::clamp<int32_t>(_dvb.m_numVertices - _startVertex, 0, _numVertices);
 			}
 		}
 
@@ -2996,7 +2993,7 @@ namespace bgfx
 				stream.m_startVertex   = _tvb->startVertex + _startVertex;
 				stream.m_handle        = _tvb->handle;
 				stream.m_layoutHandle  = isValid(_layoutHandle) ? _layoutHandle : _tvb->layoutHandle;
-				m_numVertices[_stream] = bx::min(bx::uint32_imax(0, _tvb->size/_tvb->stride - _startVertex), _numVertices);
+				m_numVertices[_stream] = bx::clamp<int32_t>(_tvb->size/_tvb->stride - _startVertex, 0, _numVertices);
 			}
 		}
 
@@ -4319,7 +4316,7 @@ namespace bgfx
 
 			const uint32_t offset = (dib.m_startIndex + _startIndex)*indexSize;
 			const uint32_t size   = bx::min<uint32_t>(offset
-				+ bx::min(bx::uint32_satsub(dib.m_size, _startIndex*indexSize), _mem->size)
+				+ bx::min(bx::satSub<uint32_t>(dib.m_size, _startIndex*indexSize), _mem->size)
 				, m_indexBuffers[dib.m_handle.idx].m_size) - offset
 				;
 			BX_ASSERT(_mem->size <= size, "Truncating dynamic index buffer update (size %d, mem size %d)."
@@ -4517,7 +4514,7 @@ namespace bgfx
 
 			const uint32_t offset = (dvb.m_startVertex + _startVertex)*dvb.m_stride;
 			const uint32_t size   = bx::min<uint32_t>(offset
-				+ bx::min(bx::uint32_satsub(dvb.m_size, _startVertex*dvb.m_stride), _mem->size)
+				+ bx::min(bx::satSub<uint32_t>(dvb.m_size, _startVertex*dvb.m_stride), _mem->size)
 				, m_vertexBuffers[dvb.m_handle.idx].m_size) - offset
 				;
 			BX_ASSERT(_mem->size <= size, "Truncating dynamic vertex buffer update (size %d, mem size %d)."

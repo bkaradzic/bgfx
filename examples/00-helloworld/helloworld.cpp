@@ -3,7 +3,6 @@
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
-#include <bx/uint32_t.h>
 #include "common.h"
 #include "bgfx_utils.h"
 #include "logo.h"

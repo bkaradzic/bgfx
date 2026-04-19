@@ -6,7 +6,6 @@
 #include "common.h"
 #include "bgfx_utils.h"
 
-#include <bx/uint32_t.h>
 #include <bx/thread.h>
 #include <bx/os.h>
 #include "imgui/imgui.h"

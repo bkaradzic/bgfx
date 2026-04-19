@@ -15,7 +15,6 @@
 #include <bx/os.h>
 #include <bx/process.h>
 #include <bx/settings.h>
-#include <bx/uint32_t.h>
 
 #include <entry/entry.h>
 #include <entry/input.h>
@@ -581,11 +580,11 @@ struct View
 			}
 			else if (0 == bx::strCmp(_argv[1], "file-up") )
 			{
-				m_fileIndex = bx::uint32_satsub(m_fileIndex, 1);
+				m_fileIndex = bx::satSub<uint32_t>(m_fileIndex, 1u);
 			}
 			else if (0 == bx::strCmp(_argv[1], "file-down") )
 			{
-				uint32_t numFiles = bx::uint32_satsub(uint32_t(m_fileList.size() ), 1);
+				uint32_t numFiles = bx::satSub<uint32_t>(uint32_t(m_fileList.size()), 1u);
 				++m_fileIndex;
 				m_fileIndex = bx::min(m_fileIndex, numFiles);
 			}

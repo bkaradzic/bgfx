@@ -8,7 +8,6 @@
 #if (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)
 #	include "renderer_gl.h"
 #	include <bx/timer.h>
-#	include <bx/uint32_t.h>
 #	include "emscripten.h"
 
 namespace bgfx { namespace gl
@@ -5677,7 +5676,7 @@ namespace bgfx { namespace gl
 		if (renderTarget)
 		{
 			uint32_t msaaQuality = ( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT);
-			msaaQuality = bx::uint32_satsub(msaaQuality, 1);
+			msaaQuality = bx::satSub<uint32_t>(msaaQuality, 1u);
 			msaaQuality = bx::min(s_renderGL->m_maxMsaa, msaaQuality == 0 ? 0 : 1<<msaaQuality);
 			const bool msaaSample = 0 != (m_flags&BGFX_TEXTURE_MSAA_SAMPLE);
 
@@ -5749,7 +5748,7 @@ namespace bgfx { namespace gl
 			const bool srgb         = 0 != (_flags&BGFX_TEXTURE_SRGB);
 			const bool msaaSample   = 0 != (_flags&BGFX_TEXTURE_MSAA_SAMPLE);
 			uint32_t msaaQuality = ( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT);
-			msaaQuality = bx::uint32_satsub(msaaQuality, 1);
+			msaaQuality = bx::satSub<uint32_t>(msaaQuality, 1u);
 			msaaQuality = bx::min(s_renderGL->m_maxMsaa, msaaQuality == 0 ? 0 : 1<<msaaQuality);
 
 			GLenum target = msaaSample ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
@@ -7452,7 +7451,7 @@ namespace bgfx { namespace gl
 					, bi.m_dstZ
 					, bi.m_width
 					, bi.m_height
-					, bx::uint32_imax(bi.m_depth, 1)
+					, bx::max<int32_t>(bi.m_depth, 1)
 					) );
 				}
 		}
@@ -8648,7 +8647,7 @@ namespace bgfx { namespace gl
 			elapsedGpuMs   = (result.m_end - result.m_begin) * toGpuMs;
 			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
 
-			maxGpuLatency = bx::uint32_imax(maxGpuLatency, result.m_pending-1);
+			maxGpuLatency = bx::max<int32_t>(maxGpuLatency, result.m_pending-1);
 		}
 
 		const int64_t timerFreq = bx::getHPFrequency();

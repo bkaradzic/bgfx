@@ -8,7 +8,6 @@
 #include <bx/readerwriter.h>
 #include <bx/sort.h>
 #include <bx/string.h>
-#include <bx/uint32_t.h>
 
 #include "vertexlayout.h"
 

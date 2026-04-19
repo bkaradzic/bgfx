@@ -7,7 +7,6 @@
 #include <bx/debug.h>
 #include <bx/math.h>
 #include <bx/sort.h>
-#include <bx/uint32_t.h>
 
 #include "config.h"
 #include "topology.h"

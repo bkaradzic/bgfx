@@ -5053,7 +5053,7 @@ VK_DESTROY
 
 	uint32_t StagingScratchBufferVK::alloc(uint32_t _size, uint32_t _minAlign)
 	{
-		const uint32_t align = bx::uint32_lcm(m_align, _minAlign);
+		const uint32_t align = bx::lcm(m_align, _minAlign);
 		const uint32_t offset = bx::strideAlign(m_chunkPos, align);
 
 		if (offset + _size <= m_size)
@@ -6372,7 +6372,7 @@ retry:
 		m_format = _format;
 		m_components = { VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY };
 		m_aspectFlags = getAspectMask(m_format);
-		m_sampler = s_msaa[bx::uint32_satsub( (m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1)];
+		m_sampler = s_msaa[bx::satSub<uint32_t>(uint32_t( (m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u)];
 		m_type = VK_IMAGE_VIEW_TYPE_2D;
 		m_numMips = 1;
 		m_numSides = 1;
@@ -6577,7 +6577,7 @@ retry:
 			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 
 			m_aspectFlags = getAspectMask(m_format);
-			m_sampler = s_msaa[bx::uint32_satsub( (m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT, 1)];
+			m_sampler = s_msaa[bx::satSub<uint32_t>(uint32_t( (m_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT ), 1u)];
 
 			if (imageContainer.m_cubeMap)
 			{
@@ -10017,10 +10017,10 @@ retry:
 			elapsedGpuMs   = (result.m_end - result.m_begin) * toGpuMs;
 			maxGpuElapsed  = elapsedGpuMs > maxGpuElapsed ? elapsedGpuMs : maxGpuElapsed;
 
-			maxGpuLatency = bx::uint32_imax(maxGpuLatency, result.m_pending-1);
+			maxGpuLatency = bx::max<int32_t>(maxGpuLatency, result.m_pending-1);
 		}
 
-		maxGpuLatency = bx::uint32_imax(maxGpuLatency, m_gpuTimer.m_control.getNumUsed()-1);
+		maxGpuLatency = bx::max<int32_t>(maxGpuLatency, m_gpuTimer.m_control.getNumUsed()-1);
 
 		const int64_t timerFreq = bx::getHPFrequency();
 

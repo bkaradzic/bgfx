@@ -31,7 +31,7 @@
 
 #include <bx/bx.h>
 #include <bx/allocator.h>
-#include <bx/uint32_t.h>
+#include <bx/math.h>
 
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4244); // warning C4244: '=' : conversion from '' to '', possible loss of data
 
@@ -725,7 +725,7 @@ namespace
 
 	static uint64_t glnvg_convertBlendFuncFactor(int factor)
 	{
-		const uint32_t numtz = bx::uint32_cnttz(factor);
+		const uint32_t numtz = bx::countTrailingZeros(factor);
 		const uint32_t idx   = bx::min(numtz, BX_COUNTOF(s_blend)-1);
 		return s_blend[idx];
 	}
