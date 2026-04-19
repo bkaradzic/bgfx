@@ -3005,6 +3005,22 @@ VK_IMPORT_DEVICE
 				m_resolution.width = m_backBuffer.m_width;
 				m_resolution.height = m_backBuffer.m_height;
 
+				// Propagate reset flags (e.g. BGFX_RESET_VSYNC) to secondary window swapchains,
+				// otherwise they'd keep their original present mode and ignore the reset.
+				for (uint16_t ii = 0; ii < m_numWindows; ++ii)
+				{
+					if (!isValid(m_windows[ii]) )
+					{
+						continue;
+					}
+
+					FrameBufferVK& fb = m_frameBuffers[m_windows[ii].idx];
+					Resolution fbResolution = m_resolution;
+					fbResolution.width  = fb.m_width;
+					fbResolution.height = fb.m_height;
+					fb.update(m_commandBuffer, fbResolution);
+				}
+
 				postReset();
 			}
 

@@ -345,7 +345,7 @@ namespace bgfx { namespace d3d11
 		void resolve();
 		void clear(const Clear& _clear, const float _palette[][4]);
 		void set();
-		HRESULT present(uint32_t _syncInterval);
+		HRESULT present(uint32_t _syncInterval, uint32_t _flags);
 
 		ID3D11RenderTargetView*    m_rtv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		ID3D11UnorderedAccessView* m_uav[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];

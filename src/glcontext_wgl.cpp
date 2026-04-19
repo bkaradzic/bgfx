@@ -295,9 +295,10 @@ namespace bgfx { namespace gl
 			BGFX_FATAL(0 != result, Fatal::UnableToInitialize, "wglMakeCurrent failed!");
 			m_current = NULL;
 
+			m_swapInterval = !!(_resolution.reset & BGFX_RESET_VSYNC) ? 1 : 0;
 			if (NULL != wglSwapIntervalEXT)
 			{
-				wglSwapIntervalEXT(0);
+				wglSwapIntervalEXT(m_swapInterval);
 			}
 		}
 
@@ -329,10 +330,15 @@ namespace bgfx { namespace gl
 
 	void GlContext::resize(const Resolution& _resolution)
 	{
+		const bool vsync = !!(_resolution.reset & BGFX_RESET_VSYNC);
+		m_swapInterval = vsync ? 1 : 0;
+
 		if (NULL != wglSwapIntervalEXT)
 		{
-			const bool vsync = !!(_resolution.reset & BGFX_RESET_VSYNC);
-			wglSwapIntervalEXT(vsync ? 1 : 0);
+			// Apply to the currently-bound (main) context. Secondary SwapChainGL contexts
+			// get the value applied lazily in makeCurrent() when they become current, since
+			// wglSwapIntervalEXT is per-context on Windows.
+			wglSwapIntervalEXT(m_swapInterval);
 		}
 	}
 
@@ -392,6 +398,14 @@ namespace bgfx { namespace gl
 			else
 			{
 				_swapChain->makeCurrent();
+			}
+
+			// wglSwapIntervalEXT is per-context on Windows, so re-apply the cached interval
+			// every time a different context becomes current. Without this, secondary swap
+			// chains keep their driver default (typically vsync ON) even after resize().
+			if (NULL != wglSwapIntervalEXT)
+			{
+				wglSwapIntervalEXT(m_swapInterval);
 			}
 		}
 	}

@@ -617,7 +617,8 @@ WL_EGL_IMPORT
 			BGFX_FATAL(success, Fatal::UnableToInitialize, "Failed to set context.");
 			m_current = NULL;
 
-			eglSwapInterval(m_display, 0);
+			m_swapInterval = !!(_resolution.reset & BGFX_RESET_VSYNC) ? 1 : 0;
+			eglSwapInterval(m_display, m_swapInterval);
 		}
 
 		import();
@@ -703,7 +704,11 @@ WL_EGL_IMPORT
 		if (NULL != m_display)
 		{
 			const bool vsync = !!(_resolution.reset & BGFX_RESET_VSYNC);
-			EGL_CHECK(eglSwapInterval(m_display, vsync ? 1 : 0) );
+			m_swapInterval = vsync ? 1 : 0;
+			// Apply to the currently-bound (main) surface. Secondary SwapChainGL surfaces
+			// get the value applied lazily in makeCurrent() when they become current, since
+			// eglSwapInterval is per-surface.
+			EGL_CHECK(eglSwapInterval(m_display, m_swapInterval) );
 		}
 	}
 
@@ -762,6 +767,14 @@ WL_EGL_IMPORT
 			else
 			{
 				_swapChain->makeCurrent();
+			}
+
+			// eglSwapInterval is per-surface, so re-apply the cached interval every time a
+			// different surface becomes current. Without this, secondary swap chains keep
+			// their driver default (typically vsync ON) even after resize().
+			if (NULL != m_display)
+			{
+				EGL_CHECK(eglSwapInterval(m_display, m_swapInterval) );
 			}
 		}
 	}
