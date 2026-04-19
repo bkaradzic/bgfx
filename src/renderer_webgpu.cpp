@@ -552,8 +552,7 @@ namespace bgfx { namespace wgpu
 			case TextureFormat::BC4:
 			case TextureFormat::BC5:
 			case TextureFormat::BC6H:
-			case TextureFormat::BC7:        framebuffer = false;      multisample = false;         storage = false;
-				supported  = m_bc;
+			case TextureFormat::BC7:        framebuffer = false;      multisample = false;         storage = false;            supported  = m_bc;
 				supports3D = m_bcSliced3D;
 				break;
 
@@ -563,10 +562,7 @@ namespace bgfx { namespace wgpu
 			case TextureFormat::EACR11:
 			case TextureFormat::EACR11S:
 			case TextureFormat::EACRG11:
-			case TextureFormat::EACRG11S:   framebuffer = false;      multisample = false;         storage = false;
-				supported  = m_etc2;
-				supports3D = false;
-				break;
+			case TextureFormat::EACRG11S:   framebuffer = false;      multisample = false;         storage = false;            supported  = m_etc2; break;
 
 			case TextureFormat::ASTC4x4:
 			case TextureFormat::ASTC5x4:
@@ -581,56 +577,52 @@ namespace bgfx { namespace wgpu
 			case TextureFormat::ASTC10x8:
 			case TextureFormat::ASTC10x10:
 			case TextureFormat::ASTC12x10:
-			case TextureFormat::ASTC12x12: framebuffer = false;         multisample = false;         storage = false;
-				supported  = m_astc;
+			case TextureFormat::ASTC12x12: framebuffer = false;         multisample = false;         storage = false;          supported  = m_astc;
 				supports3D = m_astcSliced3D;
 				break;
 
 			case TextureFormat::A8:
-			case TextureFormat::R8:        framebuffer = true;          multisample = true;          storage = m_tier1;        break;
-			case TextureFormat::R8S:       framebuffer = m_tier1;       multisample = m_tier1;       storage = m_tier1;        break;
+			case TextureFormat::R8:        framebuffer = true;          multisample = true;          storage = m_tier1;        supported = true; break;
+			case TextureFormat::R8S:       framebuffer = m_tier1;       multisample = m_tier1;       storage = m_tier1;        supported = true; break;
 			case TextureFormat::R8I:
-			case TextureFormat::R8U:       framebuffer = true;          multisample = m_core;        storage = m_tier1;        break;
-			case TextureFormat::RG8:       framebuffer = true;          multisample = true;          storage = m_tier1;        break;
-			case TextureFormat::RG8S:      framebuffer = m_tier1;       multisample = m_tier1;       storage = m_tier1;        break;
+			case TextureFormat::R8U:       framebuffer = true;          multisample = m_core;        storage = m_tier1;        supported = true; break;
+			case TextureFormat::RG8:       framebuffer = true;          multisample = true;          storage = m_tier1;        supported = true; break;
+			case TextureFormat::RG8S:      framebuffer = m_tier1;       multisample = m_tier1;       storage = m_tier1;        supported = true; break;
 			case TextureFormat::RG8I:
-			case TextureFormat::RG8U:      framebuffer = true;          multisample = m_core;        storage = m_tier1;        break;
-			case TextureFormat::RGBA8:     framebuffer = true;          multisample = true;          storage = true;           break;
-			case TextureFormat::RGBA8S:    framebuffer = m_tier1;       multisample = m_tier1;       storage = true;           break;
+			case TextureFormat::RG8U:      framebuffer = true;          multisample = m_core;        storage = m_tier1;        supported = true; break;
+			case TextureFormat::RGBA8:     framebuffer = true;          multisample = true;          storage = true;           supported = true; break;
+			case TextureFormat::RGBA8S:    framebuffer = m_tier1;       multisample = m_tier1;       storage = true;           supported = true; break;
 			case TextureFormat::RGBA8I:
-			case TextureFormat::RGBA8U:    framebuffer = true;          multisample = m_core;        storage = true;           break;
-			case TextureFormat::BGRA8:     framebuffer = true;          multisample = true;          storage = m_bgra8Storage; break;
+			case TextureFormat::RGBA8U:    framebuffer = true;          multisample = m_core;        storage = true;           supported = true; break;
+			case TextureFormat::BGRA8:     framebuffer = true;          multisample = true;          storage = m_bgra8Storage; supported = true; break;
 			case TextureFormat::R16:
 			case TextureFormat::R16S:
 			case TextureFormat::RG16:
 			case TextureFormat::RG16S:
 			case TextureFormat::RGBA16:
-			case TextureFormat::RGBA16S:   framebuffer = m_tier1;       multisample = m_tier1;       storage = m_tier1;
-				supported  = m_unorm16;
-				supports3D = false;
-				break;
+			case TextureFormat::RGBA16S:   framebuffer = m_tier1;       multisample = m_tier1;       storage = m_tier1;        supported  = m_unorm16; break;
 
 			case TextureFormat::R16I:
-			case TextureFormat::R16U:      framebuffer = true;          multisample = m_core;        storage = m_tier1;        break;
-			case TextureFormat::R16F:      framebuffer = true;          multisample = true;          storage = m_tier1;        break;
+			case TextureFormat::R16U:      framebuffer = true;          multisample = m_core;        storage = m_tier1;        supported = true; break;
+			case TextureFormat::R16F:      framebuffer = true;          multisample = true;          storage = m_tier1;        supported = true; break;
 			case TextureFormat::RG16I:
-			case TextureFormat::RG16U:     framebuffer = true;          multisample = m_core;        storage = m_tier1;        break;
-			case TextureFormat::RG16F:     framebuffer = true;          multisample = true;          storage = m_tier1;        break;
+			case TextureFormat::RG16U:     framebuffer = true;          multisample = m_core;        storage = m_tier1;        supported = true; break;
+			case TextureFormat::RG16F:     framebuffer = true;          multisample = true;          storage = m_tier1;        supported = true; break;
 			case TextureFormat::RGBA16I:
-			case TextureFormat::RGBA16U:   framebuffer = true;          multisample = m_core;        storage = true;           break;
-			case TextureFormat::RGBA16F:   framebuffer = true;          multisample = m_core;        storage = true;           break;
+			case TextureFormat::RGBA16U:   framebuffer = true;          multisample = m_core;        storage = true;           supported = true; break;
+			case TextureFormat::RGBA16F:   framebuffer = true;          multisample = m_core;        storage = true;           supported = true; break;
 			case TextureFormat::R32I:
-			case TextureFormat::R32U:      framebuffer = true;          multisample = false;         storage = true;           break;
-			case TextureFormat::R32F:      framebuffer = true;          multisample = m_core;        storage = true;           break;
+			case TextureFormat::R32U:      framebuffer = true;          multisample = true;          storage = true;           supported = true; break;
+			case TextureFormat::R32F:      framebuffer = true;          multisample = m_core;        storage = true;           supported = true; break;
 			case TextureFormat::RG32I:
-			case TextureFormat::RG32U:     framebuffer = true;          multisample = false;         storage = m_core;         break;
-			case TextureFormat::RG32F:     framebuffer = true;          multisample = false;         storage = m_core;         break;
+			case TextureFormat::RG32U:     framebuffer = true;          multisample = m_core;        storage = false;          supported = true; break;
+			case TextureFormat::RG32F:     framebuffer = true;          multisample = m_core;        storage = false;          supported = true; break;
 			case TextureFormat::RGBA32I:
-			case TextureFormat::RGBA32U:   framebuffer = true;          multisample = false;         storage = true;           break;
-			case TextureFormat::RGBA32F:   framebuffer = true;          multisample = false;         storage = true;           break;
-			case TextureFormat::RGB10A2:   framebuffer = true;          multisample = true;          storage = m_tier1;        break;
-			case TextureFormat::RG11B10F:  framebuffer = m_rg11b10Rend; multisample = m_rg11b10Rend; storage = m_tier1;        break;
-			case TextureFormat::RGB9E5F:   framebuffer = false;         multisample = false;         storage = false;          break;
+			case TextureFormat::RGBA32U:   framebuffer = true;          multisample = m_core;        storage = true;           supported = true; break;
+			case TextureFormat::RGBA32F:   framebuffer = true;          multisample = m_core;        storage = true;           supported = true; break;
+			case TextureFormat::RGB10A2:   framebuffer = true;          multisample = true;          storage = m_tier1;        supported = true; break;
+			case TextureFormat::RG11B10F:  framebuffer = m_rg11b10Rend; multisample = m_rg11b10Rend; storage = m_tier1;        supported = true; break;
+			case TextureFormat::RGB9E5F:   framebuffer = false;         multisample = false;         storage = false;          supported = true; break;
 			case TextureFormat::D16:
 			case TextureFormat::D24:
 			case TextureFormat::D24S8:
@@ -638,10 +630,7 @@ namespace bgfx { namespace wgpu
 			case TextureFormat::D16F:
 			case TextureFormat::D24F:
 			case TextureFormat::D32F:
-			case TextureFormat::D0S8:      framebuffer = true;          multisample = true;          storage = false;
-				supported  = true;
-				supports3D = false;
-				break;
+			case TextureFormat::D0S8:      framebuffer = true;          multisample = true;          storage = false;          supported  = true; break;
 
 			default:
 				break;
@@ -5687,7 +5676,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		bool hasPredefined = false;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
-		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
+		FrameBufferHandle fbh = { BGFX_INVALID_HANDLE };
 
 		UniformCacheState ucs(_render);
 		BlitState bs(_render);
