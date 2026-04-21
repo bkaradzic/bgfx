@@ -2232,9 +2232,32 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_rtMsaa = _msaa;
 		}
 
+		bool hasDepth(FrameBufferHandle _fbh)
+		{
+			if (!isValid(_fbh) )
+			{
+				return NULL != m_mainFrameBuffer.m_swapChain
+					&& NULL != m_mainFrameBuffer.m_swapChain->m_backBufferDepth
+					;
+			}
+
+			const FrameBufferMtl& fb = m_frameBuffers[_fbh.idx];
+			if (NULL != fb.m_swapChain)
+			{
+				return NULL != fb.m_swapChain->m_backBufferDepth;
+			}
+
+			return isValid(fb.m_depthHandle);
+		}
+
 		void setDepthStencilState(uint64_t _state, uint64_t _stencil = 0)
 		{
 			_state &= BGFX_STATE_WRITE_Z|BGFX_STATE_DEPTH_TEST_MASK;
+
+			if (!hasDepth(m_fbh) )
+			{
+				_state &= ~(BGFX_STATE_WRITE_Z|BGFX_STATE_DEPTH_TEST_MASK);
+			}
 
 			uint32_t fstencil = unpackStencil(0, _stencil);
 			uint32_t ref      = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
@@ -2268,17 +2291,17 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					uint32_t readMask  = (fstencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
 					uint32_t writeMask = 0xff;
 
-					frontFaceDesc->setStencilFailureOperation(  (MTL::StencilOperation)s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT]);
-					frontFaceDesc->setDepthFailureOperation(    (MTL::StencilOperation)s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT]);
+					frontFaceDesc->setStencilFailureOperation(   (MTL::StencilOperation)s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT]);
+					frontFaceDesc->setDepthFailureOperation(     (MTL::StencilOperation)s_stencilOp[(fstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT]);
 					frontFaceDesc->setDepthStencilPassOperation( (MTL::StencilOperation)s_stencilOp[(fstencil&BGFX_STENCIL_OP_PASS_Z_MASK)>>BGFX_STENCIL_OP_PASS_Z_SHIFT]);
-					frontFaceDesc->setStencilCompareFunction(   (MTL::CompareFunction)s_cmpFunc[(fstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT]);
+					frontFaceDesc->setStencilCompareFunction(    (MTL::CompareFunction)s_cmpFunc[(fstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT]);
 					frontFaceDesc->setReadMask(readMask);
 					frontFaceDesc->setWriteMask(writeMask);
 
-					backfaceDesc->setStencilFailureOperation(  (MTL::StencilOperation)s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT]);
-					backfaceDesc->setDepthFailureOperation(    (MTL::StencilOperation)s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT]);
+					backfaceDesc->setStencilFailureOperation(   (MTL::StencilOperation)s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT]);
+					backfaceDesc->setDepthFailureOperation(     (MTL::StencilOperation)s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT]);
 					backfaceDesc->setDepthStencilPassOperation( (MTL::StencilOperation)s_stencilOp[(bstencil&BGFX_STENCIL_OP_PASS_Z_MASK)>>BGFX_STENCIL_OP_PASS_Z_SHIFT]);
-					backfaceDesc->setStencilCompareFunction(   (MTL::CompareFunction)s_cmpFunc[(bstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT]);
+					backfaceDesc->setStencilCompareFunction(    (MTL::CompareFunction)s_cmpFunc[(bstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT]);
 					backfaceDesc->setReadMask(readMask);
 					backfaceDesc->setWriteMask(writeMask);
 
