@@ -2767,7 +2767,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					for (uint32_t ii = 0; ii < BX_COUNTOF(s_instanceDataName); ++ii)
 					{
 						const uint32_t loc = program.m_instanceData[ii];
-						if (UINT16_MAX != loc)
+						if (UINT32_MAX != loc)
 						{
 							vertexDesc->attributes()->object(loc)->setFormat(MTL::VertexFormatFloat4);
 							vertexDesc->attributes()->object(loc)->setBufferIndex(stream+1);
@@ -3207,7 +3207,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		}
 
 		m_used[used] = Attrib::Count;
-		m_instanceData[instUsed] = UINT16_MAX;
+		m_instanceData[instUsed] = UINT32_MAX;
 	}
 
 	void ProgramMtl::destroy()

@@ -5676,7 +5676,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 		bool hasPredefined = false;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
-		FrameBufferHandle fbh = { BGFX_INVALID_HANDLE };
+		FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 
 		UniformCacheState ucs(_render);
 		BlitState bs(_render);
