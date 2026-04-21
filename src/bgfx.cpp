@@ -1473,7 +1473,7 @@ namespace bgfx
 		m_draw.m_uniformBegin = m_uniformBegin;
 		m_draw.m_uniformEnd   = m_uniformEnd;
 
-		if (UINT8_MAX != m_draw.m_streamMask)
+		if (UINT32_MAX != m_draw.m_streamMask)
 		{
 			uint32_t numVertices = UINT32_MAX;
 			for (BitMaskToIndexIteratorT it(m_draw.m_streamMask); !it.isDone(); it.next() )
