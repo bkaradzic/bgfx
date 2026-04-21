@@ -2764,13 +2764,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				if (0 < _numInstanceData)
 				{
 					uint32_t numAttribs = 0;
-					for (uint32_t ii = 0; UINT16_MAX != program.m_instanceData[ii]; ++ii)
+					for (uint32_t ii = 0; ii < BX_COUNTOF(s_instanceDataName); ++ii)
 					{
 						const uint32_t loc = program.m_instanceData[ii];
-						vertexDesc->attributes()->object(loc)->setFormat(MTL::VertexFormatFloat4);
-						vertexDesc->attributes()->object(loc)->setBufferIndex(stream+1);
-						vertexDesc->attributes()->object(loc)->setOffset(ii*16);
-						++numAttribs;
+						if (UINT16_MAX != loc)
+						{
+							vertexDesc->attributes()->object(loc)->setFormat(MTL::VertexFormatFloat4);
+							vertexDesc->attributes()->object(loc)->setBufferIndex(stream+1);
+							vertexDesc->attributes()->object(loc)->setOffset(ii*16);
+							++numAttribs;
+						}
 					}
 
 					if (0 < numAttribs)
@@ -3159,9 +3162,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		m_fsh = _fsh;
 
 		// get attributes
-		bx::memSet(m_attributes, 0xff, sizeof(m_attributes) );
-		uint32_t used = 0;
+		bx::memSet(m_attributes,   0xff, sizeof(m_attributes) );
+		bx::memSet(m_instanceData, 0xff, sizeof(m_instanceData) );
+
+		uint32_t used     = 0;
 		uint32_t instUsed = 0;
+
 		if (NULL != _vsh->m_function)
 		{
 			NS::Array* vertexAttribs = _vsh->m_function->vertexAttributes();
@@ -3188,9 +3194,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 					for (uint32_t ii = 0; ii < BX_COUNTOF(s_instanceDataName); ++ii)
 					{
-						if (0 == bx::strCmp(s_instanceDataName[ii],name) )
+						if (0 == bx::strCmp(s_instanceDataName[ii], name) )
 						{
-							m_instanceData[instUsed++] = loc;
+							m_instanceData[ii] = loc;
+							instUsed = bx::max(instUsed, ii + 1);
+							break;
 						}
 					}
 
