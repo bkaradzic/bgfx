@@ -232,7 +232,7 @@ namespace bgfx
 		{ AttribType::Uint8,  0x0001 },
 		{ AttribType::Uint10, 0x0005 },
 		{ AttribType::Int16,  0x0002 },
-		{ AttribType::Uint8,  0x0007 },
+		{ AttribType::Uint16, 0x0007 },
 		{ AttribType::Half,   0x0003 },
 		{ AttribType::Float,  0x0004 },
 	};
