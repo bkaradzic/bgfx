@@ -8367,7 +8367,7 @@ namespace bgfx { namespace gl
 
 								program.bindAttributesBegin();
 
-								if (UINT8_MAX != draw.m_streamMask)
+								if (UINT32_MAX != draw.m_streamMask)
 								{
 									for (BitMaskToIndexIteratorT it(draw.m_streamMask); !it.isDone(); it.next() )
 									{

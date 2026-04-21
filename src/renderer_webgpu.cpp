@@ -6271,7 +6271,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 					uint32_t numStreams = 0;
 
-					if (UINT8_MAX != draw.m_streamMask)
+					if (UINT32_MAX != draw.m_streamMask)
 					{
 						for (BitMaskToIndexIteratorT it(draw.m_streamMask)
 							; !it.isDone()
