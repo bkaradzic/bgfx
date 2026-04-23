@@ -1089,7 +1089,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_LATENCY; ++ii)
 			{
-				m_uniformBuffers[ii] = m_device->newBuffer(UNIFORM_BUFFER_SIZE, (MTL::ResourceOptions)0);
+				m_uniformBuffers[ii] = m_device->newBuffer(UNIFORM_BUFFER_SIZE, MTL::ResourceCPUCacheModeDefaultCache);
 			}
 
 			m_uniformBufferVertexOffset   = 0;
@@ -3231,11 +3231,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		if (NULL == _data)
 		{
-			m_ptr = s_renderMtl->m_device->newBuffer(_size, (MTL::ResourceOptions)0);
+			m_ptr = s_renderMtl->m_device->newBuffer(_size, MTL::ResourceCPUCacheModeDefaultCache);
 		}
 		else
 		{
-			m_ptr = s_renderMtl->m_device->newBuffer(_data, _size, (MTL::ResourceOptions)0);
+			m_ptr = s_renderMtl->m_device->newBuffer(_data, _size, MTL::ResourceCPUCacheModeDefaultCache);
 		}
 	}
 
@@ -3252,16 +3252,23 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			}
 
 			bx::memCopy(m_dynamic + _offset, _data, _size);
-			uint32_t start = _offset & 4;
-			uint32_t end   = bx::strideAlign(_offset + _size, 4);
 
-			MTL::Buffer* temp = s_renderMtl->m_device->newBuffer(m_dynamic, end - start, (MTL::ResourceOptions)0);
+			const uint32_t start = _offset & ~3;
+			const uint32_t end   = bx::strideAlign(_offset + _size, 4);
+
+			MTL::Buffer* temp = s_renderMtl->m_device->newBuffer(
+				  m_dynamic + start
+				, end - start
+				, MTL::ResourceCPUCacheModeDefaultCache
+				);
+
 			bce->copyFromBuffer(temp, 0, m_ptr, start, end - start);
+
 			s_renderMtl->m_cmd.release(temp);
 		}
 		else
 		{
-			MTL::Buffer* temp = s_renderMtl->m_device->newBuffer(_data, _size, (MTL::ResourceOptions)0);
+			MTL::Buffer* temp = s_renderMtl->m_device->newBuffer(_data, _size, MTL::ResourceCPUCacheModeDefaultCache);
 			bce->copyFromBuffer(temp, 0, m_ptr, _offset, _size);
 			s_renderMtl->m_cmd.release(temp);
 		}
@@ -3317,7 +3324,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				if (imageContainer.m_cubeMap)
 				{
-					desc->setTextureType(MTL::TextureType(6) ); // MTL::TextureTypeCubeArray
+					desc->setTextureType(MTL::TextureTypeCubeArray);
 					m_type = TextureCube;
 				}
 				else
@@ -4335,7 +4342,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void OcclusionQueryMTL::preReset()
 	{
-		m_buffer = s_renderMtl->m_device->newBuffer(BX_COUNTOF(m_query) * 8, (MTL::ResourceOptions)0);
+		m_buffer = s_renderMtl->m_device->newBuffer(BX_COUNTOF(m_query) * 8, MTL::ResourceCPUCacheModeDefaultCache);
 	}
 
 	void OcclusionQueryMTL::begin(MTL::RenderCommandEncoder*& _rce, Frame* _render, OcclusionQueryHandle _handle)
