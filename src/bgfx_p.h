@@ -1421,12 +1421,12 @@ namespace bgfx
 			m_hasAlphaRef = false;
 		}
 
-		uint32_t      m_depth;
-		uint32_t      m_seq;
-		ProgramHandle m_program;
-		ViewId        m_view;
-		uint8_t       m_blend;
-		bool          m_hasAlphaRef;
+		uint32_t      m_depth       = 0;
+		uint32_t      m_seq         = 0;
+		ProgramHandle m_program     = {0};
+		ViewId        m_view        = 0;
+		uint8_t       m_blend       = 0;
+		bool          m_hasAlphaRef = false;
 	};
 #undef SORT_KEY_RENDER_DRAW
 
