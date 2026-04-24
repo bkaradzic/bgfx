@@ -849,18 +849,32 @@ namespace bgfx
 	struct BitMaskToIndexIteratorT
 	{
 		BitMaskToIndexIteratorT(MaskT _mask)
+			: mask(0)
+			, idx(0)
 		{
-			const uint8_t ntz = bx::countTrailingZeros(_mask);
-			mask = _mask >> ntz;
+			if (0 == _mask)
+			{
+				return;
+			}
+
+			const uint8_t ntz = bx::countTrailingZeros<MaskT>(_mask);
+			mask = MaskT(_mask >> ntz);
 			idx  = ntz;
 		}
 
 		void next()
 		{
-			// operator>> promotes to int, so we need to cast back:
-			const uint8_t ntzPlus1 = bx::countTrailingZeros<MaskT>(mask>>1) + 1;
-			mask >>= ntzPlus1;
-			idx   += ntzPlus1;
+			mask = MaskT(mask >> 1);
+			idx += 1;
+
+			if (0 == mask)
+			{
+				return;
+			}
+
+			const uint8_t ntz = bx::countTrailingZeros<MaskT>(mask);
+			mask = MaskT(mask >> ntz);
+			idx += ntz;
 		}
 
 		bool isDone() const
