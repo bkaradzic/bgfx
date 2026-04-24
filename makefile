@@ -42,6 +42,7 @@ projgen: ## Generate project files for all configurations.
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-gcc       gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-clang     gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx-arm64       gmake
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx-x64         gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=osx           xcode9
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=ios           xcode9
 	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=android-arm64   gmake
@@ -127,6 +128,14 @@ osx-arm64-debug: .build/projects/gmake-osx-arm64 ## Build - macOS ARM Debug
 osx-arm64-release: .build/projects/gmake-osx-arm64 ## Build - macOS ARM Release
 	$(MAKE) -C .build/projects/gmake-osx-arm64 config=release
 osx-arm64: osx-arm64-debug osx-arm64-release ## Build - macOS ARM Debug and Release
+
+.build/projects/gmake-osx-x64:
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx-x64 gmake
+osx-x64-debug: .build/projects/gmake-osx-x64 ## Build - macOS x64 Debug
+	$(MAKE) -C .build/projects/gmake-osx-x64 config=debug
+osx-x64-release: .build/projects/gmake-osx-x64 ## Build - macOS x64 Release
+	$(MAKE) -C .build/projects/gmake-osx-x64 config=release
+osx-x64: osx-x64-debug osx-x64-release ## Build - macOS x64 Debug and Release
 
 .build/projects/gmake-ios-arm64:
 	$(GENIE) --gcc=ios-arm64 gmake
