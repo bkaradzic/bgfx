@@ -852,13 +852,8 @@ namespace bgfx
 			: mask(0)
 			, idx(0)
 		{
-			if (0 == _mask)
-			{
-				return;
-			}
-
 			const uint8_t ntz = bx::countTrailingZeros<MaskT>(_mask);
-			mask = MaskT(_mask >> ntz);
+			mask = 0 == _mask ? MaskT(0) : MaskT(_mask >> ntz);
 			idx  = ntz;
 		}
 
@@ -867,13 +862,8 @@ namespace bgfx
 			mask = MaskT(mask >> 1);
 			idx += 1;
 
-			if (0 == mask)
-			{
-				return;
-			}
-
 			const uint8_t ntz = bx::countTrailingZeros<MaskT>(mask);
-			mask = MaskT(mask >> ntz);
+			mask = 0 == mask ? MaskT(0) : MaskT(mask >> ntz);
 			idx += ntz;
 		}
 
@@ -1435,12 +1425,12 @@ namespace bgfx
 			m_hasAlphaRef = false;
 		}
 
-		uint32_t      m_depth       = 0;
-		uint32_t      m_seq         = 0;
-		ProgramHandle m_program     = {0};
-		ViewId        m_view        = 0;
-		uint8_t       m_blend       = 0;
-		bool          m_hasAlphaRef = false;
+		uint32_t      m_depth;
+		uint32_t      m_seq;
+		ProgramHandle m_program;
+		ViewId        m_view;
+		uint8_t       m_blend;
+		bool          m_hasAlphaRef;
 	};
 #undef SORT_KEY_RENDER_DRAW
 
@@ -2763,6 +2753,7 @@ namespace bgfx
 			// clear all bytes (inclusively the padding) before we start.
 			bx::memSet(&m_bind, 0, sizeof(m_bind) );
 
+			m_key.reset();
 			m_discard = false;
 			m_draw.clear(BGFX_DISCARD_ALL);
 			m_compute.clear(BGFX_DISCARD_ALL);
