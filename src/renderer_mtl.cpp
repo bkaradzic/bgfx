@@ -3241,6 +3241,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void BufferMtl::update(uint32_t _offset, uint32_t _size, void* _data, bool _discard)
 	{
+		if (NULL == m_ptr)
+		{
+			return;
+		}
+
 		MTL::BlitCommandEncoder* bce = s_renderMtl->getBlitCommandEncoder();
 
 		if (!m_vertex
