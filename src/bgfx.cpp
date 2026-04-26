@@ -3956,6 +3956,7 @@ namespace bgfx
 		}
 
 		s_threadIndex = 0;
+		s_renderFrameCalled = false;
 		g_callback    = NULL;
 		g_allocator   = NULL;
 	}
