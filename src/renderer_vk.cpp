@@ -380,6 +380,7 @@ VK_IMPORT_DEVICE
 			EXT_line_rasterization,
 			EXT_memory_budget,
 			EXT_shader_viewport_index_layer,
+			EXT_swapchain_maintenance1,
 			KHR_draw_indirect_count,
 			KHR_fragment_shading_rate,
 			KHR_get_physical_device_properties2,
@@ -420,6 +421,7 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_line_rasterization",              1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_memory_budget",                   1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true,                                                          Layer::Count },
+		{ "VK_EXT_swapchain_maintenance1",          1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_draw_indirect_count",             1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_fragment_shading_rate",           1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true,                                                          Layer::Count },
@@ -1221,6 +1223,7 @@ VK_IMPORT_DEVICE
 			VkPhysicalDeviceLineRasterizationFeaturesEXT lineRasterizationFeatures = {};
 			VkPhysicalDeviceCustomBorderColorFeaturesEXT customBorderColorFeatures = {};
 			VkPhysicalDeviceFragmentShadingRateFeaturesKHR fragmentShadingRate = {};
+			VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT swapchainMaintenance1Features = {};
 
 			m_fbh = BGFX_INVALID_HANDLE;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
@@ -1642,6 +1645,14 @@ VK_IMPORT_INSTANCE
 						customBorderColorFeatures.pNext = NULL;
 					}
 
+					if (s_extension[Extension::EXT_swapchain_maintenance1].m_supported)
+					{
+						next->pNext = (VkBaseOutStructure*)&swapchainMaintenance1Features;
+						next = (VkBaseOutStructure*)&swapchainMaintenance1Features;
+						swapchainMaintenance1Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT;
+						swapchainMaintenance1Features.pNext = NULL;
+					}
+
 					nextFeatures = deviceFeatures2.pNext;
 
 					vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
@@ -1719,6 +1730,11 @@ VK_IMPORT_INSTANCE
 					;
 
 				m_timerQuerySupport = m_deviceProperties.limits.timestampComputeAndGraphics;
+
+				m_swapchainMaintenance1Supported = true
+					&& s_extension[Extension::EXT_swapchain_maintenance1].m_supported
+					&& swapchainMaintenance1Features.swapchainMaintenance1
+					;
 
 				const bool indirectDrawSupport = true
 					&& m_deviceFeatures.multiDrawIndirect
@@ -2969,22 +2985,36 @@ VK_IMPORT_DEVICE
 				return suspended;
 			}
 
-			uint32_t flags = _resolution.reset & ~(0
+			uint32_t maskFlags = ~(0
 				| BGFX_RESET_SUSPEND
 				| BGFX_RESET_MAXANISOTROPY
 				| BGFX_RESET_DEPTH_CLAMP
 				);
+
+			if (m_swapchainMaintenance1Supported && !!((_resolution.reset ^ m_resolution.reset) & BGFX_RESET_VSYNC))
+			{
+				m_resolution.reset = (m_resolution.reset & ~BGFX_RESET_VSYNC) | (_resolution.reset & BGFX_RESET_VSYNC);
+				for (uint16_t ii = 0; ii < m_numWindows; ++ii)
+				{
+					FrameBufferVK& fb = isValid(m_windows[ii])
+						? m_frameBuffers[m_windows[ii].idx]
+						: m_backBuffer
+						;
+					fb.m_swapChain.m_resolution.reset = (fb.m_swapChain.m_resolution.reset & ~BGFX_RESET_VSYNC) | (_resolution.reset & BGFX_RESET_VSYNC);
+				}
+				maskFlags &= ~BGFX_RESET_VSYNC;
+			}
 
 			if (false
 			||  m_resolution.formatColor        != _resolution.formatColor
 			||  m_resolution.formatDepthStencil != _resolution.formatDepthStencil
 			||  m_resolution.width              != _resolution.width
 			||  m_resolution.height             != _resolution.height
-			||  m_resolution.reset              != flags
+			|| (m_resolution.reset&maskFlags)   != (_resolution.reset&maskFlags)
 			||  m_backBuffer.m_swapChain.m_needToRecreateSurface
 			||  m_backBuffer.m_swapChain.m_needToRecreateSwapchain)
 			{
-				flags &= ~BGFX_RESET_INTERNAL_FORCE;
+				uint32_t flags = _resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
 
 				if (m_backBuffer.m_nwh != g_platformData.nwh)
 				{
@@ -4725,6 +4755,7 @@ VK_IMPORT_DEVICE
 		bool m_lineAASupport;
 		bool m_borderColorSupport;
 		bool m_timerQuerySupport;
+		bool m_swapchainMaintenance1Supported = false;
 
 		FrameBufferVK m_backBuffer;
 
@@ -7397,7 +7428,10 @@ retry:
 		m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
 
 		const uint64_t recreateSurfaceMask     = BGFX_RESET_HIDPI;
-		const uint64_t recreateSwapchainMask   = BGFX_RESET_VSYNC | BGFX_RESET_SRGB_BACKBUFFER;
+		const uint64_t recreateSwapchainMask   = 0
+			| BGFX_RESET_SRGB_BACKBUFFER
+			| (s_renderVK->m_swapchainMaintenance1Supported ? BGFX_RESET_NONE : BGFX_RESET_VSYNC)
+			;
 		const uint64_t recreateAttachmentsMask = BGFX_RESET_MSAA_MASK;
 
 		const bool recreateSurface = false
@@ -7774,14 +7808,17 @@ retry:
 		m_supportsReadback      = 0 != (imageUsage & VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		m_supportsManualResolve = 0 != (imageUsage & VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
+		m_presentModeWithVSyncIdx = findPresentMode(true);
+		m_presentModeWithoutVSyncIdx = findPresentMode(false);
 		const bool vsync = !!(m_resolution.reset & BGFX_RESET_VSYNC);
-		uint32_t presentModeIdx = findPresentMode(vsync);
+		uint32_t presentModeIdx = vsync ? m_presentModeWithVSyncIdx : m_presentModeWithoutVSyncIdx;
 		if (UINT32_MAX == presentModeIdx)
 		{
 			BX_TRACE("Create swapchain error: Unable to find present mode (vsync: %d).", vsync);
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
+		m_sci.pNext              = NULL;
 		m_sci.surface            = m_surface;
 		m_sci.minImageCount      = swapBufferCount;
 		m_sci.imageFormat        = surfaceFormat;
@@ -7792,6 +7829,24 @@ retry:
 		m_sci.compositeAlpha     = compositeAlpha;
 		m_sci.presentMode        = s_presentMode[presentModeIdx].mode;
 		m_sci.clipped            = VK_FALSE;
+
+		VkPresentModeKHR modes[2];
+		VkSwapchainPresentModesCreateInfoEXT modesInfo;
+		if (UINT32_MAX == m_presentModeWithVSyncIdx || UINT32_MAX == m_presentModeWithoutVSyncIdx)
+		{
+			s_renderVK->m_swapchainMaintenance1Supported = false;
+		}
+		else if (s_renderVK->m_swapchainMaintenance1Supported)
+		{
+			modes[0] = s_presentMode[m_presentModeWithVSyncIdx].mode;
+			modes[1] = s_presentMode[m_presentModeWithoutVSyncIdx].mode;
+			modesInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_MODES_CREATE_INFO_EXT;
+			modesInfo.presentModeCount = 2;
+			modesInfo.pPresentModes = modes;
+			modesInfo.pNext = m_sci.pNext;
+
+			m_sci.pNext = &modesInfo;
+		}
 
 		result = vkCreateSwapchainKHR(device, &m_sci, allocatorCb, &m_swapChain);
 		if (VK_SUCCESS != result)
@@ -8256,6 +8311,18 @@ retry:
 			pi.pSwapchains        = &m_swapChain;
 			pi.pImageIndices      = &m_backBufferColorIdx;
 			pi.pResults           = NULL;
+
+			VkSwapchainPresentModeInfoEXT presentModeInfo;
+			if (s_renderVK->m_swapchainMaintenance1Supported)
+			{
+				uint32_t presentModeIdx = !!(m_resolution.reset & BGFX_RESET_VSYNC) ? m_presentModeWithVSyncIdx : m_presentModeWithoutVSyncIdx;;
+				presentModeInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_MODE_INFO_EXT;
+				presentModeInfo.swapchainCount = 1;
+				presentModeInfo.pPresentModes = &s_presentMode[presentModeIdx].mode;
+				presentModeInfo.pNext = pi.pNext;
+				pi.pNext = &presentModeInfo;
+			}
+
 			VkResult result;
 			{
 				BGFX_PROFILER_SCOPE("vkQueuePresentHKR", kColorFrame);
