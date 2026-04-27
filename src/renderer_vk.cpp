@@ -6172,7 +6172,7 @@ retry:
 
 	void OcclusionQueryVK::begin(OcclusionQueryHandle _handle)
 	{
-		BGFX_PROFILER_SCOPE("OcclusionQueryVK::shutdown", kColorFrame);
+		BGFX_PROFILER_SCOPE("OcclusionQueryVK::begin", kColorFrame);
 
 		m_control.reserve(1);
 
