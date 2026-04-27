@@ -909,6 +909,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 		bool acquire(VkCommandBuffer _commandBuffer);
 		void present();
 
+		void markDirty() { m_needResolve = true; }
+
 		bool isRenderable() const;
 
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];

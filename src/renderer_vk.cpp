@@ -3049,7 +3049,7 @@ VK_IMPORT_DEVICE
 			setShaderUniform(_flags, _regIndex, _val, _numRegs);
 		}
 
-		void setFrameBuffer(FrameBufferHandle _fbh, bool _acquire = true)
+		void setFrameBuffer(FrameBufferHandle _fbh)
 		{
 			BGFX_PROFILER_SCOPE("RendererContextVK::setFrameBuffer()", kColorFrame);
 
@@ -3115,24 +3115,15 @@ VK_IMPORT_DEVICE
 						, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 						);
 				}
-
-				newFrameBuffer.acquire(m_commandBuffer);
 			}
-
-			if (_acquire)
+			else
 			{
 				int64_t start = bx::getHPCounter();
-
 				newFrameBuffer.acquire(m_commandBuffer);
-
-				const int64_t now = bx::getHPCounter();
-
-				if (NULL != newFrameBuffer.m_nwh)
-				{
-					m_presentElapsed += now - start;
-				}
+				m_presentElapsed += bx::getHPCounter() - start;
 			}
 
+			newFrameBuffer.markDirty();
 			m_fbh = _fbh;
 		}
 
@@ -8543,18 +8534,12 @@ retry:
 
 	bool FrameBufferVK::acquire(VkCommandBuffer _commandBuffer)
 	{
+		BX_ASSERT(NULL != m_nwh, "FrameBufferVK::acquire is only valid for swap-chain framebuffers.");
 		BGFX_PROFILER_SCOPE("FrameBufferVK::acquire", kColorFrame);
 
-		bool acquired = true;
-
-		if (NULL != m_nwh)
-		{
-			acquired = m_swapChain.acquire(_commandBuffer);
-			m_needPresent = m_swapChain.m_needPresent;
-			m_currentFramebuffer = m_swapChain.m_backBufferFrameBuffer[m_swapChain.m_backBufferColorIdx];
-		}
-
-		m_needResolve = true;
+		const bool acquired = m_swapChain.acquire(_commandBuffer);
+		m_needPresent = m_swapChain.m_needPresent;
+		m_currentFramebuffer = m_swapChain.m_backBufferFrameBuffer[m_swapChain.m_backBufferColorIdx];
 
 		return acquired;
 	}
