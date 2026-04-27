@@ -305,7 +305,7 @@ public:
 				void* ptr = ::malloc(_size);
 				bx::debugPrintf("%s(%d): ALLOC %p of %d byte(s)\n", _file, _line, ptr, _size);
 				++m_numBlocks;
-				m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
+				m_maxBlocks = bx::max(m_maxBlocks, m_numBlocks);
 				return ptr;
 			}
 
@@ -321,7 +321,7 @@ public:
 			if (NULL == _ptr)
 			{
 				++m_numBlocks;
-				m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
+				m_maxBlocks = bx::max(m_maxBlocks, m_numBlocks);
 			}
 
 			return ptr;

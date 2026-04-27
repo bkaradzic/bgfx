@@ -164,7 +164,7 @@ namespace bgfx
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
 							, m_view[_view].un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
+							, bx::min(mtxRegs, predefined.m_count)
 							);
 					}
 					break;
@@ -182,7 +182,7 @@ namespace bgfx
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
 							, m_invView.un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
+							, bx::min(mtxRegs, predefined.m_count)
 							);
 					}
 					break;
@@ -192,7 +192,7 @@ namespace bgfx
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
 							, _frame->m_view[_view].m_proj.un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
+							, bx::min(mtxRegs, predefined.m_count)
 							);
 					}
 					break;
@@ -210,7 +210,7 @@ namespace bgfx
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
 							, m_invProj.un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
+							, bx::min(mtxRegs, predefined.m_count)
 							);
 					}
 					break;
@@ -220,7 +220,7 @@ namespace bgfx
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
 							, m_viewProj[_view].un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
+							, bx::min(mtxRegs, predefined.m_count)
 							);
 					}
 					break;
@@ -238,7 +238,7 @@ namespace bgfx
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
 							, m_invViewProj.un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
+							, bx::min(mtxRegs, predefined.m_count)
 							);
 					}
 					break;
@@ -249,7 +249,7 @@ namespace bgfx
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
 							, model.un.val
-							, bx::uint32_min(_draw.m_numMatrices*mtxRegs, predefined.m_count)
+							, bx::min(_draw.m_numMatrices*mtxRegs, predefined.m_count)
 							);
 					}
 					break;
@@ -265,7 +265,7 @@ namespace bgfx
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
 							, modelView.un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
+							, bx::min(mtxRegs, predefined.m_count)
 							);
 					}
 					break;
@@ -285,7 +285,7 @@ namespace bgfx
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
 							, invModelView.un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
+							, bx::min(mtxRegs, predefined.m_count)
 							);
 					}
 					break;
@@ -301,7 +301,7 @@ namespace bgfx
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
 							, modelViewProj.un.val
-							, bx::uint32_min(mtxRegs, predefined.m_count)
+							, bx::min(mtxRegs, predefined.m_count)
 							);
 					}
 					break;

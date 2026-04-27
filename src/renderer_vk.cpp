@@ -2505,7 +2505,7 @@ VK_IMPORT_DEVICE
 		{
 			TextureVK& texture = m_textures[_handle.idx];
 
-			uint32_t height = bx::uint32_max(1, texture.m_height >> _mip);
+			uint32_t height = bx::max(1, texture.m_height >> _mip);
 			uint32_t pitch  = texture.m_readback.pitch(_mip);
 			uint32_t size = height * pitch;
 
@@ -6279,7 +6279,7 @@ retry:
 
 	uint32_t ReadbackVK::pitch(uint8_t _mip) const
 	{
-		uint32_t mipWidth = bx::uint32_max(1, m_width >> _mip);
+		uint32_t mipWidth = bx::max(1, m_width >> _mip);
 		uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_format) );
 		return mipWidth * bpp / 8;
 	}
@@ -6288,8 +6288,8 @@ retry:
 	{
 		BGFX_PROFILER_SCOPE("ReadbackVK::copyImageToBuffer", kColorFrame);
 
-		uint32_t mipWidth  = bx::uint32_max(1, m_width  >> _mip);
-		uint32_t mipHeight = bx::uint32_max(1, m_height >> _mip);
+		uint32_t mipWidth  = bx::max(1, m_width  >> _mip);
+		uint32_t mipHeight = bx::max(1, m_height >> _mip);
 
 		setImageMemoryBarrier(
 			  _commandBuffer
@@ -6352,7 +6352,7 @@ retry:
 			return;
 		}
 
-		const uint32_t mipHeight = bx::uint32_max(1, m_height >> _mip);
+		const uint32_t mipHeight = bx::max(1, m_height >> _mip);
 		const uint32_t rowPitch = pitch(_mip);
 
 		const uint8_t* src;
@@ -6804,7 +6804,7 @@ retry:
 					mappedMemory += imageInfos[ii].size;
 					bufferCopyInfo[ii].bufferOffset += stagingBuffer.m_offset;
 					BX_ASSERT(
-						  bx::uint32_mod(bx::narrowCast<uint32_t>(bufferCopyInfo[ii].bufferOffset), dstBlockInfo.blockSize) == 0
+						  (bx::narrowCast<uint32_t>(bufferCopyInfo[ii].bufferOffset) % dstBlockInfo.blockSize) == 0
 						, "Alignment for subimage %u is not aligned correctly (%u)."
 						, ii, bufferCopyInfo[ii].bufferOffset, dstBlockInfo.blockSize
 						);
@@ -7050,8 +7050,8 @@ retry:
 				blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
 				blit.srcSubresource.mipLevel = i - 1;
 
-				mipWidth  = bx::uint32_max(mipWidth  >> 1, 1);
-				mipHeight = bx::uint32_max(mipHeight >> 1, 1);
+				mipWidth  = bx::max(mipWidth  >> 1, 1);
+				mipHeight = bx::max(mipHeight >> 1, 1);
 
 				blit.dstOffsets[1] = { mipWidth, mipHeight, 1 };
 				blit.dstSubresource.mipLevel = i;
@@ -7113,7 +7113,7 @@ retry:
 		for (uint32_t ii = 0; ii < _bufferImageCopyCount; ++ii)
 		{
 			BX_ASSERT(
-				  bx::uint32_mod(bx::narrowCast<uint32_t>(_bufferImageCopy[ii].bufferOffset), blockInfo.blockSize) == 0
+				  (bx::narrowCast<uint32_t>(_bufferImageCopy[ii].bufferOffset) % blockInfo.blockSize) == 0
 				, "Misaligned texture of type %s to offset %u, which is not a multiple of %u."
 				, bimg::getName(format), _bufferImageCopy[ii].bufferOffset, blockInfo.blockSize
 				);
@@ -8445,8 +8445,8 @@ retry:
 			}
 
 			const TextureVK& firstTexture = s_renderVK->m_textures[m_attachment[0].handle.idx];
-			m_width  = bx::uint32_max(firstTexture.m_width  >> m_attachment[0].mip, 1);
-			m_height = bx::uint32_max(firstTexture.m_height >> m_attachment[0].mip, 1);
+			m_width  = bx::max(firstTexture.m_width  >> m_attachment[0].mip, 1);
+			m_height = bx::max(firstTexture.m_height >> m_attachment[0].mip, 1);
 			m_sampler = firstTexture.m_sampler;
 
 			VkFramebufferCreateInfo fci;
@@ -9625,7 +9625,7 @@ retry:
 							streamOffsets[numStreams] = draw.m_stream[idx].m_startVertex * stride;
 							layouts[numStreams]       = &layout;
 
-							numVertices = bx::uint32_min(UINT32_MAX == draw.m_numVertices
+							numVertices = bx::min(UINT32_MAX == draw.m_numVertices
 								? vb.m_size/stride
 								: draw.m_numVertices
 								, numVertices

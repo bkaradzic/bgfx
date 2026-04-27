@@ -332,7 +332,7 @@ struct View
 						bx::fromString(&mip, _argv[2]);
 					}
 
-					m_mip = bx::uint32_iclamp(mip, 0, m_textureInfo.numMips-1);
+					m_mip = bx::clamp(mip, 0, m_textureInfo.numMips-1);
 				}
 				else
 				{
@@ -361,7 +361,7 @@ struct View
 						bx::fromString(&layer, _argv[2]);
 					}
 
-					m_layer = bx::uint32_iclamp(layer, 0, m_textureInfo.numLayers-1);
+					m_layer = bx::clamp(layer, 0, m_textureInfo.numLayers-1);
 				}
 				else
 				{
@@ -587,7 +587,7 @@ struct View
 			{
 				uint32_t numFiles = bx::uint32_satsub(uint32_t(m_fileList.size() ), 1);
 				++m_fileIndex;
-				m_fileIndex = bx::uint32_min(m_fileIndex, numFiles);
+				m_fileIndex = bx::min(m_fileIndex, numFiles);
 			}
 			else if (0 == bx::strCmp(_argv[1], "rgb") )
 			{

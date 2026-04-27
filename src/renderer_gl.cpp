@@ -1220,11 +1220,11 @@ namespace bgfx { namespace gl
 				bx::StringView space = bx::strFind(pos, ' ');
 				if (!space.isEmpty() )
 				{
-					len = bx::uint32_min(sizeof(name), (uint32_t)(space.getPtr() - pos) );
+					len = bx::min<uint32_t>(sizeof(name), uint32_t(space.getPtr() - pos) );
 				}
 				else
 				{
-					len = bx::uint32_min(sizeof(name), (uint32_t)bx::strLen(pos) );
+					len = bx::min<uint32_t>(sizeof(name), bx::strLen(pos) );
 				}
 
 				bx::strCopy(name, BX_COUNTOF(name), pos, len);
@@ -1667,8 +1667,8 @@ namespace bgfx { namespace gl
 		{
 			for (uint32_t ii = 0, dim = _dim; ii < (_mipmaps ? 5u : 1u) && 0 == err; ++ii, dim >>= 1)
 			{
-				dim = bx::uint32_max(1, dim);
-				uint32_t block = bx::uint32_max(4, dim);
+				dim = bx::max(1, dim);
+				uint32_t block = bx::max(4, dim);
 				size = (block*block*bpp)/8;
 				compressedTexImage(target, ii, internalFmt, dim, dim, 0, 0, size, data);
 				err |= getGlError();
@@ -1678,7 +1678,7 @@ namespace bgfx { namespace gl
 		{
 			for (uint32_t ii = 0, dim = _dim; ii < (_mipmaps ? 5u : 1u) && 0 == err; ++ii, dim >>= 1)
 			{
-				dim = bx::uint32_max(1, dim);
+				dim = bx::max(1, dim);
 				size = (dim*dim*bpp)/8;
 				texImage(target, 0, ii, internalFmt, dim, dim, 0, 0, fmt, tfi.m_type, data);
 				err |= getGlError();
@@ -2956,7 +2956,7 @@ namespace bgfx { namespace gl
 				||  s_extension[Extension::EXT_draw_buffers  ].m_supported
 				||  s_extension[Extension::WEBGL_draw_buffers].m_supported)
 				{
-					g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_clamp(
+					g_caps.limits.maxFBAttachments = uint8_t(bx::clamp(
 						  glGet(GL_MAX_DRAW_BUFFERS)
 						, 1
 						, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS)
@@ -3369,7 +3369,7 @@ namespace bgfx { namespace gl
 
 		void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
 		{
-			m_indexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
+			m_indexBuffers[_handle.idx].update(_offset, bx::min(_size, _mem->size), _mem->data);
 		}
 
 		void destroyDynamicIndexBuffer(IndexBufferHandle _handle) override
@@ -3385,7 +3385,7 @@ namespace bgfx { namespace gl
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
 		{
-			m_vertexBuffers[_handle.idx].update(_offset, bx::uint32_min(_size, _mem->size), _mem->data);
+			m_vertexBuffers[_handle.idx].update(_offset, bx::min(_size, _mem->size), _mem->data);
 		}
 
 		void destroyDynamicVertexBuffer(VertexBufferHandle _handle) override
@@ -4207,7 +4207,7 @@ namespace bgfx { namespace gl
 				m_glctx.resize(_resolution);
 
 				uint32_t msaa = (_resolution.reset & BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
-				msaa = bx::uint32_min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
+				msaa = bx::min(m_maxMsaa, msaa == 0 ? 0 : 1<<msaa);
 
 				createMsaaFbo(_resolution.width, _resolution.height, msaa);
 			}
@@ -4546,7 +4546,7 @@ namespace bgfx { namespace gl
 			if (isValid(fbh) )
 			{
 				const FrameBufferGL& fb = m_frameBuffers[fbh.idx];
-				numMrt = bx::uint32_max(1, fb.m_num);
+				numMrt = bx::max(1, fb.m_num);
 			}
 
 			if (1 == numMrt)
@@ -4556,7 +4556,7 @@ namespace bgfx { namespace gl
 				{
 					if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 					{
-						uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[0]);
+						uint8_t index = (uint8_t)bx::min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[0]);
 						const float* rgba = _palette[index];
 						const float rr = rgba[0];
 						const float gg = rgba[1];
@@ -4672,7 +4672,7 @@ namespace bgfx { namespace gl
 				{
 					for (uint32_t ii = 0; ii < numMrt; ++ii)
 					{
-						uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
+						uint8_t index = (uint8_t)bx::min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
 						bx::memCopy(mrtClearColor[ii], _palette[index], 16);
 					}
 				}
@@ -5180,7 +5180,7 @@ namespace bgfx { namespace gl
 			GL_CHECK(glGetProgramiv(m_id, GL_ACTIVE_UNIFORM_MAX_LENGTH,   &max1) );
 		}
 
-		uint32_t maxLength = bx::uint32_max(max0, max1);
+		uint32_t maxLength = bx::max(max0, max1);
 		char* name = (char*)BX_STACK_ALLOC(maxLength + 1);
 
 		BX_TRACE("Program %d", m_id);
@@ -5265,7 +5265,7 @@ namespace bgfx { namespace gl
 				loc = glGetUniformLocation(m_id, name);
 			}
 
-			num = bx::uint32_max(num, 1);
+			num = bx::max(num, 1);
 
 			int32_t offset = 0;
 			const bx::StringView array = bx::strFind(name, '[');
@@ -5678,7 +5678,7 @@ namespace bgfx { namespace gl
 		{
 			uint32_t msaaQuality = ( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT);
 			msaaQuality = bx::uint32_satsub(msaaQuality, 1);
-			msaaQuality = bx::uint32_min(s_renderGL->m_maxMsaa, msaaQuality == 0 ? 0 : 1<<msaaQuality);
+			msaaQuality = bx::min(s_renderGL->m_maxMsaa, msaaQuality == 0 ? 0 : 1<<msaaQuality);
 			const bool msaaSample = 0 != (m_flags&BGFX_TEXTURE_MSAA_SAMPLE);
 
 			if (!msaaSample
@@ -5750,7 +5750,7 @@ namespace bgfx { namespace gl
 			const bool msaaSample   = 0 != (_flags&BGFX_TEXTURE_MSAA_SAMPLE);
 			uint32_t msaaQuality = ( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT);
 			msaaQuality = bx::uint32_satsub(msaaQuality, 1);
-			msaaQuality = bx::uint32_min(s_renderGL->m_maxMsaa, msaaQuality == 0 ? 0 : 1<<msaaQuality);
+			msaaQuality = bx::min(s_renderGL->m_maxMsaa, msaaQuality == 0 ? 0 : 1<<msaaQuality);
 
 			GLenum target = msaaSample ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
 			if (imageContainer.m_cubeMap)
@@ -5852,10 +5852,10 @@ namespace bgfx { namespace gl
 
 				for (uint8_t lod = 0, num = ti.numMips; lod < num; ++lod)
 				{
-					width  = bx::uint32_max(1, width);
-					height = bx::uint32_max(1, height);
+					width  = bx::max(1, width);
+					height = bx::max(1, height);
 					depth  = 1 < imageContainer.m_depth
-						? bx::uint32_max(1, depth)
+						? bx::max(1, depth)
 						: side
 						;
 
@@ -6682,7 +6682,7 @@ namespace bgfx { namespace gl
 							{
 								char tmpFragData[16];
 								bx::snprintf(tmpFragData, BX_COUNTOF(tmpFragData), "gl_FragData[%d]", ii);
-								fragData = bx::uint32_max(fragData, bx::strFind(code, tmpFragData).isEmpty() ? 0 : ii+1);
+								fragData = bx::max(fragData, bx::strFind(code, tmpFragData).isEmpty() ? 0 : ii+1);
 							}
 
 							BGFX_FATAL(0 != fragData, Fatal::InvalidShader, "Unable to find and patch gl_FragData!");
@@ -7013,8 +7013,8 @@ namespace bgfx { namespace gl
 
 					if (0 == colorIdx)
 					{
-						m_width  = bx::uint32_max(texture.m_width  >> at.mip, 1);
-						m_height = bx::uint32_max(texture.m_height >> at.mip, 1);
+						m_width  = bx::max(texture.m_width  >> at.mip, 1);
+						m_height = bx::max(texture.m_height >> at.mip, 1);
 					}
 
 					GLenum attachment = GL_COLOR_ATTACHMENT0 + colorIdx;
@@ -8041,7 +8041,7 @@ namespace bgfx { namespace gl
 					{
 						if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
 						{
-							float pointSize = (float)(bx::uint32_max(1, (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) );
+							float pointSize = (float)(bx::max(1, (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) );
 							GL_CHECK(glPointSize(pointSize) );
 						}
 
@@ -8407,7 +8407,7 @@ namespace bgfx { namespace gl
 								uint16_t decl = !isValid(vb.m_layoutHandle) ? draw.m_stream[idx].m_layoutHandle.idx : vb.m_layoutHandle.idx;
 								const VertexLayout& layout = m_vertexLayouts[decl];
 
-								numVertices = bx::uint32_min(numVertices, vb.m_size/layout.m_stride);
+								numVertices = bx::min(numVertices, vb.m_size/layout.m_stride);
 							}
 						}
 

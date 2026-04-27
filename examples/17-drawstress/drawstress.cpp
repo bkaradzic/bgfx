@@ -312,11 +312,11 @@ public:
 				{
 					if (m_deltaTimeAvgNs < highwm)
 					{
-						m_dim = bx::uint32_min(m_dim + 2, m_maxDim);
+						m_dim = bx::min(m_dim + 2, m_maxDim);
 					}
 					else if (m_deltaTimeAvgNs > lowwm)
 					{
-						m_dim = bx::uint32_max(m_dim - 1, 2);
+						m_dim = bx::max(m_dim - 1, 2);
 					}
 				}
 

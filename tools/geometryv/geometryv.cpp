@@ -345,7 +345,7 @@ struct View
 			{
 				uint32_t numFiles = bx::uint32_satsub(uint32_t(m_fileList.size() ), 1);
 				++m_fileIndex;
-				m_fileIndex = bx::uint32_min(m_fileIndex, numFiles);
+				m_fileIndex = bx::min(m_fileIndex, numFiles);
 			}
 			else if (0 == bx::strCmp(_argv[1], "help") )
 			{

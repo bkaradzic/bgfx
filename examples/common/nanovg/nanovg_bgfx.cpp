@@ -726,7 +726,7 @@ namespace
 	static uint64_t glnvg_convertBlendFuncFactor(int factor)
 	{
 		const uint32_t numtz = bx::uint32_cnttz(factor);
-		const uint32_t idx   = bx::uint32_min(numtz, BX_COUNTOF(s_blend)-1);
+		const uint32_t idx   = bx::min(numtz, BX_COUNTOF(s_blend)-1);
 		return s_blend[idx];
 	}
 

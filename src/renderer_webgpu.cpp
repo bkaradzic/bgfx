@@ -1694,8 +1694,8 @@ WGPU_IMPORT
 		{
 			const TextureWGPU& texture = m_textures[_handle.idx];
 
-			uint32_t srcWidth  = bx::uint32_max(1, texture.m_width >>_mip);
-			uint32_t srcHeight = bx::uint32_max(1, texture.m_height>>_mip);
+			uint32_t srcWidth  = bx::max(1, texture.m_width >>_mip);
+			uint32_t srcHeight = bx::max(1, texture.m_height>>_mip);
 
 			const uint8_t  bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(texture.m_textureFormat) );
 			const uint32_t dstPitch = srcWidth*bpp/8;
@@ -2100,7 +2100,7 @@ WGPU_IMPORT
 			if (isValid(_fbh) )
 			{
 				const FrameBufferWGPU& fb = m_frameBuffers[_fbh.idx];
-				numMrt = bx::uint32_max(1, fb.m_numColorAttachments);
+				numMrt = bx::max(1, fb.m_numColorAttachments);
 			}
 
 			const VertexBufferWGPU& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
@@ -2137,7 +2137,7 @@ WGPU_IMPORT
 			{
 				for (uint32_t ii = 0; ii < numMrt; ++ii)
 				{
-					uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
+					uint8_t index = (uint8_t)bx::min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
 					bx::memCopy(mrtClearColor[ii], _palette[index], 16);
 				}
 			}
@@ -5880,7 +5880,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 
 						if (0 != (BGFX_CLEAR_COLOR_USE_PALETTE & clr.m_flags) )
 						{
-							uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, clr.m_index[ii]);
+							uint8_t index = (uint8_t)bx::min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, clr.m_index[ii]);
 							const float* rgba = _render->m_colorPalette[index];
 							colorAttachment[ii].clearValue =
 							{
@@ -6295,7 +6295,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 							buffers[numStreams] = vb.m_buffer;
 							offsets[numStreams] = draw.m_stream[idx].m_startVertex * stride;
 
-							numVertices = bx::uint32_min(UINT32_MAX == draw.m_numVertices
+							numVertices = bx::min(UINT32_MAX == draw.m_numVertices
 								? vb.m_size/stride
 								: draw.m_numVertices
 								, numVertices

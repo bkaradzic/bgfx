@@ -367,7 +367,7 @@ namespace bgfx { namespace hlsl
 			BX_TRACE("\t%2d: %s%d, %d, %d", ii, spd.SemanticName, spd.SemanticIndex, spd.SystemValueType, spd.ComponentType);
 		}
 
-		for (uint32_t ii = 0, num = bx::uint32_min(1, desc.ConstantBuffers); ii < num; ++ii)
+		for (uint32_t ii = 0, num = bx::min(1, desc.ConstantBuffers); ii < num; ++ii)
 		{
 			ID3D11ShaderReflectionConstantBuffer* cbuffer = reflect->GetConstantBufferByIndex(ii);
 			D3D11_SHADER_BUFFER_DESC bufferDesc;
@@ -516,7 +516,7 @@ namespace bgfx { namespace hlsl
 
 		if (_options.optimize )
 		{
-			const uint32_t optimization = bx::uint32_min(_options.optimizationLevel, BX_COUNTOF(s_optimizationLevelD3D11) - 1);
+			const uint32_t optimization = bx::min(_options.optimizationLevel, BX_COUNTOF(s_optimizationLevelD3D11) - 1);
 			flags |= s_optimizationLevelD3D11[optimization];
 		}
 		else

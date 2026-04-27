@@ -1017,7 +1017,7 @@ int main(int _argc, const char* _argv[])
 	bool compress = cmdLine.hasArg('c', "compress");
 
 	cmdLine.hasArg(s_obbSteps, '\0', "obb");
-	s_obbSteps = bx::uint32_min(bx::uint32_max(s_obbSteps, 1), 90);
+	s_obbSteps = bx::min(bx::max(s_obbSteps, 1), 90);
 
 	uint32_t packNormal = 0;
 	cmdLine.hasArg(packNormal, '\0', "packnormal");

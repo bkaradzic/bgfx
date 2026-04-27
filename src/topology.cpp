@@ -396,7 +396,7 @@ namespace bgfx
 			? sizeof(uint32_t)
 			: sizeof(uint16_t)
 			;
-		uint32_t  num  = bx::uint32_min(_numIndices*indexSize, _dstSize)/(indexSize*3);
+		uint32_t  num  = bx::min(_numIndices*indexSize, _dstSize)/(indexSize*3);
 		uint32_t* temp = (uint32_t*)bx::alloc(_allocator, sizeof(uint32_t)*num*4);
 
 		uint32_t* keys       = &temp[num*0];

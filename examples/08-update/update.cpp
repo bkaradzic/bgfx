@@ -659,7 +659,7 @@ public:
 				{
 					++m_miss;
 
-					for (uint32_t ii = 0, num = bx::uint32_min(10, (uint32_t)m_quads.size() ); ii < num; ++ii)
+					for (uint32_t ii = 0, num = bx::min(10, (uint32_t)m_quads.size() ); ii < num; ++ii)
 					{
 						face = m_quads.front();
 						const Pack2D& rect = face.m_rect;

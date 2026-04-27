@@ -93,7 +93,7 @@ void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float 
 {
 	for (uint32_t view = 0, viewMask = _viewMask; 0 != viewMask; viewMask >>= 1, view += 1 )
 	{
-		const uint32_t ntz = bx::uint32_cnttz(viewMask);
+		const uint32_t ntz = bx::countTrailingZeros<uint32_t>(viewMask);
 		viewMask >>= ntz;
 		view += ntz;
 
@@ -105,7 +105,7 @@ void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _pr
 {
 	for (uint32_t view = 0, viewMask = _viewMask; 0 != viewMask; viewMask >>= 1, view += 1 )
 	{
-        const uint32_t ntz = bx::uint32_cnttz(viewMask);
+        const uint32_t ntz = bx::countTrailingZeros<uint32_t>(viewMask);
 		viewMask >>= ntz;
 		view += ntz;
 
@@ -117,7 +117,7 @@ void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _wid
 {
 	for (uint32_t view = 0, viewMask = _viewMask; 0 != viewMask; viewMask >>= 1, view += 1 )
 	{
-        const uint32_t ntz = bx::uint32_cnttz(viewMask);
+        const uint32_t ntz = bx::countTrailingZeros<uint32_t>(viewMask);
 		viewMask >>= ntz;
 		view += ntz;
 
