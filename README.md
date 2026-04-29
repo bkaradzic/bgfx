@@ -703,6 +703,11 @@ Unravel Engine is a cutting-edge, cross-platform game engine and WYSIWYG (What Y
 
 <img width="2560" height="1380" alt="Screenshot 2026-02-08 211236" src="https://github.com/user-attachments/assets/a4e95c51-5e2b-4453-9fae-e80e8305366d" />
 
+## Match Morphosis
+[Match Morphosis](https://store.steampowered.com/app/4131100/Match_Morphosis) is an upcoming Match-3 deckbuilder game for PC using bgfx and only C, solo developed <a href="https://www.youtube.com/watch?v=t8XoT-HtUGo"
+target="_blank"><img src="https://img.youtube.com/vi/t8XoT-HtUGo/hqdefault.jpg"
+alt="Video"
+width="640" height="480" border="0" /></a>
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
