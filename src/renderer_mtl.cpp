@@ -785,6 +785,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			, m_capture(NULL)
 			, m_captureSize(0)
 			, m_variableRateShadingSupported(false)
+			, m_supportsDepthClipMode(false)
+			, m_depthClamp(false)
 			, m_screenshotTarget(NULL)
 			, m_screenshotBlitRenderPipelineState(NULL)
 			, m_commandBuffer(NULL)
@@ -891,6 +893,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 #endif // BX_PLATFORM_OSX
 
 			m_variableRateShadingSupported = false; //m_device.supportsVariableRasterizationRate();
+
+			m_supportsDepthClipMode = BX_ENABLED(BX_PLATFORM_OSX)
+				|| m_device->supportsFamily(MTL::GPUFamilyApple4);
 
 			g_caps.numGPUs = 1;
 			g_caps.gpu[0].vendorId = g_caps.vendorId;
@@ -1619,6 +1624,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				m_renderCommandEncoderFrameBufferHandle = fbh;
 				MTL_RELEASE(renderPassDescriptor, 0);
 
+				if (m_depthClamp)
+				{
+					rce->setDepthClipMode(MTL::DepthClipModeClamp);
+				}
+
 				{
 					MTL::Viewport viewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f };
 					rce->setViewport(viewport);
@@ -1742,6 +1752,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 					: 1
 					;
 			}
+
+			m_depthClamp = m_supportsDepthClipMode
+				&& !!(_resolution.reset & BGFX_RESET_DEPTH_CLAMP);
 
 			const uint32_t maskFlags = ~(0
 				| BGFX_RESET_MAXANISOTROPY
@@ -1884,6 +1897,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 				m_renderCommandEncoder = m_commandBuffer->renderCommandEncoder(renderPassDescriptor);
 				MTL_RELEASE(renderPassDescriptor, 0);
+
+				if (m_depthClamp)
+				{
+					m_renderCommandEncoder->setDepthClipMode(MTL::DepthClipModeClamp);
+				}
 			}
 		}
 
@@ -3008,6 +3026,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		uint32_t m_captureSize;
 
 		bool m_variableRateShadingSupported;
+		bool m_supportsDepthClipMode;
+		bool m_depthClamp;
 
 		MTL::RenderPipelineDescriptor* m_renderPipelineDescriptor;
 		MTL::DepthStencilDescriptor*   m_depthStencilDescriptor;
@@ -4847,6 +4867,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 							m_renderCommandEncoderFrameBufferHandle = fbh;
 
 							MTL_RELEASE(renderPassDescriptor, 0);
+
+							if (m_depthClamp)
+							{
+								rce->setDepthClipMode(MTL::DepthClipModeClamp);
+							}
 						}
 						else if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 						{
@@ -5735,6 +5760,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			rce = m_commandBuffer->renderCommandEncoder(renderPassDescriptor);
 
 			MTL_RELEASE(renderPassDescriptor, 0);
+
+			if (m_depthClamp)
+			{
+				rce->setDepthClipMode(MTL::DepthClipModeClamp);
+			}
 
 			rce->setCullMode( (MTL::CullMode)MTL::CullModeNone);
 
