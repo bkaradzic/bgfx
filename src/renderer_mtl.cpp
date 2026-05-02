@@ -360,7 +360,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			m_osx      = BX_ENABLED(BX_PLATFORM_OSX);
 			m_apple    = _device->supportsFamily(MTL::GPUFamilyApple1);
 			m_apple3   = _device->supportsFamily(MTL::GPUFamilyApple3);
-			m_apple6   = _device->supportsFamily(MTL::GPUFamilyApple6);
 			m_apple7   = _device->supportsFamily(MTL::GPUFamilyApple7);
 			m_mac2     = _device->supportsFamily(MTL::GPUFamilyMac2);
 			m_bc       = _device->supportsBCTextureCompression();
@@ -487,10 +486,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 			case TextureFormat::R32F:
 			case TextureFormat::RG32F:
-				// 32-bit float MSAA requires Mac GPU family.
+				// 32-bit float MSAA requires Mac2 or Apple7+ GPU family.
 				supported   = true;
 				framebuffer = true;
-				multisample = !m_ios;
+				multisample = m_mac2 || m_apple7;
 				storage     = true;
 				supports3D  = true;
 				break;
@@ -630,7 +629,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		bool m_osx;
 		bool m_apple;
 		bool m_apple3;
-		bool m_apple6;
 		bool m_apple7;
 		bool m_mac2;
 		bool m_bc;
@@ -894,7 +892,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			m_variableRateShadingSupported = false; //m_device.supportsVariableRasterizationRate();
 
-			m_supportsDepthClipMode = BX_ENABLED(BX_PLATFORM_OSX)
+			m_supportsDepthClipMode = m_device->supportsFamily(MTL::GPUFamilyMac2)
 				|| m_device->supportsFamily(MTL::GPUFamilyApple4);
 
 			g_caps.numGPUs = 1;
@@ -920,7 +918,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				| BGFX_CAPS_VERTEX_ID
 				);
 
-			g_caps.supported |= m_device->supportsFamily(MTL::GPUFamilyApple7)
+			g_caps.supported |= (m_device->supportsFamily(MTL::GPUFamilyApple7) || m_device->supportsFamily(MTL::GPUFamilyMac2) )
 				? BGFX_CAPS_PRIMITIVE_ID
 				: 0
 				;
@@ -928,9 +926,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			// Reference(s):
 			// - Metal feature set tables
 			//   https://web.archive.org/web/20230330111145/https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf
-			g_caps.limits.maxTextureSize = m_device->supportsFamily(MTL::GPUFamilyApple3) ? 16384 : 8192;
+			g_caps.limits.maxTextureSize = (m_device->supportsFamily(MTL::GPUFamilyApple3) || m_device->supportsFamily(MTL::GPUFamilyMac2) ) ? 16384 : 8192;
 			g_caps.limits.maxFBAttachments = 8;
-			g_caps.supported |= m_device->supportsFamily(MTL::GPUFamilyCommon2)
+			g_caps.supported |= (m_device->supportsFamily(MTL::GPUFamilyApple3) || m_device->supportsFamily(MTL::GPUFamilyMac2) )
 				? BGFX_CAPS_DRAW_INDIRECT
 				| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 				| BGFX_CAPS_TEXTURE_COMPARE_ALL
@@ -965,7 +963,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				, VISION_OS_MINIMUM *
 				);
 
-			if (BX_ENABLED(BX_PLATFORM_OSX) )
+			// R8Unorm_sRGB / RG8Unorm_sRGB are unsupported on Mac (non-Apple) GPUs.
+			if (!m_device->supportsFamily(MTL::GPUFamilyApple1) )
 			{
 				s_textureFormat[TextureFormat::R8 ].m_fmtSrgb = MTL::PixelFormatInvalid;
 				s_textureFormat[TextureFormat::RG8].m_fmtSrgb = MTL::PixelFormatInvalid;
