@@ -2973,7 +2973,7 @@ namespace bgfx
 				stream.m_startVertex   = _dvb.m_startVertex + _startVertex;
 				stream.m_handle        = _dvb.m_handle;
 				stream.m_layoutHandle  = isValid(_layoutHandle) ? _layoutHandle : _dvb.m_layoutHandle;
-				m_numVertices[_stream] = bx::clamp<int32_t>(_dvb.m_numVertices - _startVertex, 0, _numVertices);
+				m_numVertices[_stream] = bx::min<uint32_t>(bx::max<int32_t>(0, _dvb.m_numVertices - _startVertex), _numVertices);
 			}
 		}
 
@@ -2993,7 +2993,7 @@ namespace bgfx
 				stream.m_startVertex   = _tvb->startVertex + _startVertex;
 				stream.m_handle        = _tvb->handle;
 				stream.m_layoutHandle  = isValid(_layoutHandle) ? _layoutHandle : _tvb->layoutHandle;
-				m_numVertices[_stream] = bx::clamp<int32_t>(_tvb->size/_tvb->stride - _startVertex, 0, _numVertices);
+				m_numVertices[_stream] = bx::min<uint32_t>(bx::max<int32_t>(0, _tvb->size/_tvb->stride - _startVertex), _numVertices);
 			}
 		}
 
