@@ -14,41 +14,38 @@ jobs:
       fail-fast: true
       matrix:
         include: [
-          { config: Debug, platform: Win32, bindir: 'win32_vs2022' },
-          { config: Debug, platform: x64, bindir: 'win64_vs2022' },
-          { config: Release, platform: Win32, bindir: 'win32_vs2022' },
-          { config: Release, platform: x64, bindir: 'win64_vs2022' },
+          { config: Debug,   platform: x64, bindir: 'win64_vs2022', genie-action: 'vs2022', solution-ext: 'sln' },
+          { config: Release, platform: x64, bindir: 'win64_vs2022', genie-action: 'vs2022', solution-ext: 'sln' },
         ]
     name: msvc-${{ matrix.config }}-${{ matrix.platform }}
-    runs-on: windows-2022
+    runs-on: windows-latest
     steps:
       - name: Checkout bgfx
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: bgfx
       - name: Checkout bx
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: bkaradzic/bx
           path: bx
       - name: Checkout bimg
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: bkaradzic/bimg
           path: bimg
       - name: Prepare
-        uses: microsoft/setup-msbuild@v1.1
+        uses: microsoft/setup-msbuild@v2
       - name: Build
         shell: cmd
         run: |
           cd bgfx
-          ..\bx\tools\bin\windows\genie.exe --with-tools --with-combined-examples --with-shared-lib vs2022
-          msbuild ".build/projects/vs2022/bgfx.sln" /m /v:minimal /p:Configuration=${{ matrix.config }} /p:Platform=${{ matrix.platform }}
+          ..\bx\tools\bin\windows\genie.exe --with-tools --with-combined-examples --with-shared-lib ${{ matrix.genie-action }}
+          msbuild ".build/projects/${{ matrix.genie-action }}/bgfx.${{ matrix.solution-ext }}" /m /v:minimal /p:Configuration=${{ matrix.config }} /p:Platform=${{ matrix.platform }}
       - name: Check
         shell: cmd
         run: |
           cd bgfx
-          dir /s ".build\${{ matrix.bindir }}\bin"
           ".build\${{ matrix.bindir }}\bin\geometryc${{ matrix.config }}.exe" --version
           ".build\${{ matrix.bindir }}\bin\shaderc${{ matrix.config }}.exe" --version
           ".build\${{ matrix.bindir }}\bin\texturec${{ matrix.config }}.exe" --version
@@ -57,23 +54,23 @@ jobs:
       fail-fast: true
       matrix:
         include: [
-          { msystem: MINGW64, project: 'mingw-gcc', bindir: 'win64_mingw-gcc' },
-#          { msystem: CLANG64, project: 'mingw-clang', bindir: 'win64_mingw-clang' },
+          { msystem: MINGW64, project: 'mingw-gcc',   bindir: 'win64_mingw-gcc'   },
+          { msystem: CLANG64, project: 'mingw-clang', bindir: 'win64_mingw-clang' },
         ]
     name: mingw-${{ matrix.msystem }}
     runs-on: windows-2022
     steps:
       - name: Checkout bgfx
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: bgfx
       - name: Checkout bx
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: bkaradzic/bx
           path: bx
       - name: Checkout bimg
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: bkaradzic/bimg
           path: bimg
@@ -93,7 +90,6 @@ jobs:
         shell: cmd
         run: |
           cd bgfx
-          dir /s ".build\${{ matrix.bindir }}\bin"
           ".build\${{ matrix.bindir }}\bin\geometrycRelease.exe" --version
           ".build\${{ matrix.bindir }}\bin\shadercRelease.exe" --version
           ".build\${{ matrix.bindir }}\bin\texturecRelease.exe" --version
@@ -102,23 +98,25 @@ jobs:
       fail-fast: true
       matrix:
         include: [
-          { config: debug, binsuffix: Debug },
-          { config: release, binsuffix: Release },
+          { compiler: gcc,   config: debug,   binsuffix: Debug,   bindir: linux64_gcc   },
+          { compiler: gcc,   config: release, binsuffix: Release, bindir: linux64_gcc   },
+          { compiler: clang, config: debug,   binsuffix: Debug,   bindir: linux64_clang },
+          { compiler: clang, config: release, binsuffix: Release, bindir: linux64_clang },
         ]
-    name: linux-gcc-${{ matrix.config }}64
+    name: linux-${{ matrix.compiler }}-${{ matrix.config }}64
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout bgfx
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: bgfx
       - name: Checkout bx
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: bkaradzic/bx
           path: bx
       - name: Checkout bimg
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: bkaradzic/bimg
           path: bimg
@@ -126,86 +124,116 @@ jobs:
         run: |
           sudo apt install libgl-dev
           cd bgfx
-          make -j$(nproc) linux-gcc-${{ matrix.config }}64
+          make -j$(nproc) linux-${{ matrix.compiler }}-${{ matrix.config }}64
       - name: Check
         run: |
           cd bgfx
-          ls -lash ".build/linux64_gcc/bin"
-          ".build/linux64_gcc/bin/geometryc${{ matrix.binsuffix}}" --version
-          ".build/linux64_gcc/bin/shaderc${{ matrix.binsuffix}}" --version
-          ".build/linux64_gcc/bin/texturec${{ matrix.binsuffix}}" --version
+          ".build/${{ matrix.bindir }}/bin/geometryc${{ matrix.binsuffix }}" --version
+          ".build/${{ matrix.bindir }}/bin/shaderc${{ matrix.binsuffix }}" --version
+          ".build/${{ matrix.bindir }}/bin/texturec${{ matrix.binsuffix }}" --version
   osx:
     strategy:
       fail-fast: true
       matrix:
         include: [
-          { config: debug, binsuffix: Debug },
-          { config: release, binsuffix: Release },
+          { runs-on: macos-13, arch: osx-x64,   bindir: osx-x64,   config: debug,   binsuffix: Debug   },
+          { runs-on: macos-13, arch: osx-x64,   bindir: osx-x64,   config: release, binsuffix: Release },
+          { runs-on: macos-14, arch: osx-arm64, bindir: osx-arm64, config: debug,   binsuffix: Debug   },
+          { runs-on: macos-14, arch: osx-arm64, bindir: osx-arm64, config: release, binsuffix: Release },
         ]
-    name: osx-arm64-${{ matrix.config }}
-    runs-on: macos-14
+    name: osx-${{ matrix.arch }}-${{ matrix.config }}
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - name: Checkout bgfx
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: bgfx
       - name: Checkout bx
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: bkaradzic/bx
           path: bx
       - name: Checkout bimg
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: bkaradzic/bimg
           path: bimg
       - name: Build
         run: |
           cd bgfx
-          make -j$(sysctl -n hw.physicalcpu) osx-arm64-${{ matrix.config }}
+          make -j$(sysctl -n hw.physicalcpu) ${{ matrix.arch }}-${{ matrix.config }}
       - name: Check
         run: |
           cd bgfx
-          ls -lash ".build/osx-arm64/bin"
-          ".build/osx-arm64/bin/geometryc${{ matrix.binsuffix}}" --version
-          ".build/osx-arm64/bin/shaderc${{ matrix.binsuffix}}" --version
-          ".build/osx-arm64/bin/texturec${{ matrix.binsuffix}}" --version
+          ".build/${{ matrix.bindir }}/bin/geometryc${{ matrix.binsuffix }}" --version
+          ".build/${{ matrix.bindir }}/bin/shaderc${{ matrix.binsuffix }}" --version
+          ".build/${{ matrix.bindir }}/bin/texturec${{ matrix.binsuffix }}" --version
   android:
     strategy:
       fail-fast: true
       matrix:
         include: [
-          { platform: arm64  },
+          { project: android-arm,   bindir: android-arm   },
+          { project: android-arm64, bindir: android-arm64 },
         ]
-    name: android-${{ matrix.platform }}
+    name: ${{ matrix.project }}
     runs-on: ubuntu-24.04
     steps:
-      - uses: nttld/setup-ndk@v1
-        id: setup-ndk
-        with:
-          ndk-version: r25b
-          add-to-path: false
       - name: Checkout bgfx
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: bgfx
       - name: Checkout bx
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: bkaradzic/bx
           path: bx
       - name: Checkout bimg
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: bkaradzic/bimg
           path: bimg
+      - uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r27c
+      - name: Build
+        env:
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK_ARM: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK_ARM64: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          cd bgfx
+          make -j$(nproc) ${{ matrix.project }}-release
+  emscripten:
+    strategy:
+      fail-fast: true
+      matrix:
+        include: [
+          { config: debug,   binsuffix: Debug   },
+          { config: release, binsuffix: Release },
+        ]
+    name: wasm-${{ matrix.config }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout bgfx
+        uses: actions/checkout@v6
+        with:
+          path: bgfx
+      - name: Checkout bx
+        uses: actions/checkout@v6
+        with:
+          repository: bkaradzic/bx
+          path: bx
+      - name: Checkout bimg
+        uses: actions/checkout@v6
+        with:
+          repository: bkaradzic/bimg
+          path: bimg
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 5.0.2
       - name: Build
         run: |
           cd bgfx
-          make -j$(sysctl -n hw.physicalcpu) android-${{ matrix.platform }}
-        env:
-          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
-      - name: Check
-        run: |
-          cd bgfx
-          ls -lash ".build/android-${{ matrix.platform }}/bin"
+          make -j$(nproc) wasm-${{ matrix.config }} EMSCRIPTEN=$EMSDK/upstream/emscripten
