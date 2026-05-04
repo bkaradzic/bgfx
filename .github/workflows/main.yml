@@ -136,8 +136,6 @@ jobs:
       fail-fast: true
       matrix:
         include: [
-          { runs-on: macos-13, arch: osx-x64,   bindir: osx-x64,   config: debug,   binsuffix: Debug   },
-          { runs-on: macos-13, arch: osx-x64,   bindir: osx-x64,   config: release, binsuffix: Release },
           { runs-on: macos-14, arch: osx-arm64, bindir: osx-arm64, config: debug,   binsuffix: Debug   },
           { runs-on: macos-14, arch: osx-arm64, bindir: osx-arm64, config: release, binsuffix: Release },
         ]
