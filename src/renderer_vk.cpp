@@ -8,6 +8,7 @@
 #if BGFX_CONFIG_RENDERER_VULKAN
 #	include <bx/pixelformat.h>
 #	include "renderer_vk.h"
+#	include "video_vk.h"
 
 #if BX_PLATFORM_OSX
 #	import <Cocoa/Cocoa.h>
@@ -386,6 +387,11 @@ VK_IMPORT_DEVICE
 			KHR_fragment_shading_rate,
 			KHR_get_physical_device_properties2,
 			KHR_get_surface_capabilities2,
+			KHR_video_queue,
+			KHR_video_decode_queue,
+			KHR_video_decode_h264,
+			KHR_video_decode_h265,
+			KHR_video_decode_av1,
 
 #	if BX_PLATFORM_ANDROID
 			KHR_android_surface,
@@ -429,6 +435,11 @@ VK_IMPORT_DEVICE
 		{ "VK_KHR_fragment_shading_rate",           1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_get_surface_capabilities2",       1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_video_queue",                     1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_video_decode_queue",              1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_video_decode_h264",               1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_video_decode_h265",               1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_video_decode_av1",                1, false, false, true,                                                          Layer::Count },
 #	if BX_PLATFORM_ANDROID
 		{ VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,    1, false, false, true,                                                          Layer::Count },
 #	elif BX_PLATFORM_LINUX
@@ -1022,10 +1033,10 @@ VK_IMPORT_DEVICE
 		, VkImageAspectFlags _aspectMask
 		, VkImageLayout _oldLayout
 		, VkImageLayout _newLayout
-		, uint32_t _baseMipLevel = 0
-		, uint32_t _levelCount = VK_REMAINING_MIP_LEVELS
-		, uint32_t _baseArrayLayer = 0
-		, uint32_t _layerCount = VK_REMAINING_ARRAY_LAYERS
+		, uint32_t _baseMipLevel
+		, uint32_t _levelCount
+		, uint32_t _baseArrayLayer
+		, uint32_t _layerCount
 		)
 	{
 		if (_newLayout == VK_IMAGE_LAYOUT_UNDEFINED
@@ -1236,6 +1247,8 @@ VK_IMPORT_DEVICE
 			bool imported = true;
 			VkResult result;
 			m_globalQueueFamily = UINT32_MAX;
+			m_videoDecodeQueueFamily = UINT32_MAX;
+			m_videoDecodeQueue = VK_NULL_HANDLE;
 
 			if (_init.debug
 			||  _init.profile)
@@ -1934,6 +1947,12 @@ VK_IMPORT_INSTANCE
 					{
 						m_globalQueueFamily = ii;
 					}
+
+					if (UINT32_MAX == m_videoDecodeQueueFamily
+					&&  0 != (qfp.queueFlags & VK_QUEUE_VIDEO_DECODE_BIT_KHR) )
+					{
+						m_videoDecodeQueueFamily = ii;
+					}
 				}
 
 				bx::free(g_allocator, queueFamilyPropertices);
@@ -2008,21 +2027,35 @@ VK_IMPORT_INSTANCE
 					BX_TRACE("\t%s", enabledExtension[ii]);
 				}
 
+				if (UINT32_MAX == m_videoDecodeQueueFamily)
+				{
+					m_videoDecodeQueueFamily = m_globalQueueFamily;
+				}
+
 				const float queuePriorities[] = { 0.0f };
-				VkDeviceQueueCreateInfo dcqi;
-				dcqi.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-				dcqi.pNext = NULL;
-				dcqi.flags = 0;
-				dcqi.queueFamilyIndex = m_globalQueueFamily;
-				dcqi.queueCount       = BX_COUNTOF(queuePriorities);
-				dcqi.pQueuePriorities = queuePriorities;
+				VkDeviceQueueCreateInfo dcqi[2];
+				bx::memSet(dcqi, 0, sizeof(dcqi) );
+				dcqi[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+				dcqi[0].pNext = NULL;
+				dcqi[0].flags = 0;
+				dcqi[0].queueFamilyIndex = m_globalQueueFamily;
+				dcqi[0].queueCount       = 1;
+				dcqi[0].pQueuePriorities = queuePriorities;
+
+				uint32_t numQueueCreateInfos = 1;
+				if (m_videoDecodeQueueFamily != m_globalQueueFamily)
+				{
+					dcqi[1] = dcqi[0];
+					dcqi[1].queueFamilyIndex = m_videoDecodeQueueFamily;
+					numQueueCreateInfos = 2;
+				}
 
 				VkDeviceCreateInfo dci;
 				dci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 				dci.pNext = nextFeatures;
 				dci.flags = 0;
-				dci.queueCreateInfoCount = 1;
-				dci.pQueueCreateInfos    = &dcqi;
+				dci.queueCreateInfoCount = numQueueCreateInfos;
+				dci.pQueueCreateInfos    = dcqi;
 				dci.enabledLayerCount    = numEnabledLayers;
 				dci.ppEnabledLayerNames  = enabledLayer;
 				dci.enabledExtensionCount   = numEnabledExtensions;
@@ -2060,6 +2093,22 @@ VK_IMPORT_DEVICE
 			}
 
 			vkGetDeviceQueue(m_device, m_globalQueueFamily, 0, &m_globalQueue);
+			vkGetDeviceQueue(m_device, m_videoDecodeQueueFamily, 0, &m_videoDecodeQueue);
+
+			if (_init.videoDecode)
+			{
+				initVideoDecoder(this
+					, {
+						.device                 = m_device,
+						.allocCb                = m_allocatorCb,
+						.physicalDevice         = m_physicalDevice,
+						.videoDecodeQueueFamily = m_videoDecodeQueueFamily,
+						.globalQueueFamily      = m_globalQueueFamily,
+						.videoDecodeQueue       = m_videoDecodeQueue,
+						.globalQueue            = m_globalQueue,
+						.vendorId               = uint16_t(m_deviceProperties.vendorID),
+					});
+			}
 
 			{
 				m_maxFrameLatency = _init.resolution.maxFrameLatency == 0
@@ -2314,6 +2363,7 @@ VK_IMPORT_DEVICE
 
 			return false;
 		}
+
 
 		void shutdown()
 		{
@@ -4811,6 +4861,8 @@ VK_IMPORT_DEVICE
 		VkDevice m_externalDevice;
 		uint32_t m_globalQueueFamily;
 		VkQueue  m_globalQueue;
+		uint32_t m_videoDecodeQueueFamily;
+		VkQueue  m_videoDecodeQueue;
 		VkDescriptorPool m_descriptorPool[BGFX_CONFIG_MAX_FRAME_LATENCY];
 		VkPipelineCache  m_pipelineCache;
 
@@ -4859,6 +4911,52 @@ VK_IMPORT_DEVICE
 	};
 
 	static RendererContextVK* s_renderVK;
+
+	bool videoIsExtensionSupported(RendererContextVK* _renderer, const char* _name)
+	{
+		BX_UNUSED(_renderer);
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_extension); ++ii)
+		{
+			const Extension& extension = s_extension[ii];
+			if (0 == bx::strCmp(_name, extension.m_name) )
+			{
+				return extension.m_supported;
+			}
+		}
+
+		return false;
+	}
+
+	int32_t videoSelectMemoryType(RendererContextVK* _renderer, uint32_t _typeBits, uint32_t _flags)
+	{
+		return _renderer->selectMemoryType(_typeBits, _flags);
+	}
+
+	VkPipeline videoGetPipeline(RendererContextVK* _renderer, ProgramHandle _handle)
+	{
+		return _renderer->getPipeline(_handle);
+	}
+
+	const ProgramVK& videoGetProgram(RendererContextVK* _renderer, ProgramHandle _handle)
+	{
+		return _renderer->m_program[_handle.idx];
+	}
+
+	VkCommandBuffer videoGetCommandBuffer(RendererContextVK* _renderer)
+	{
+		return _renderer->m_commandBuffer;
+	}
+
+	VkSampler videoGetSampler(RendererContextVK* _renderer, uint64_t _samplerFlags, VkFormat _format)
+	{
+		return _renderer->getSampler(uint32_t(_samplerFlags), _format, NULL);
+	}
+
+	void videoRelease(RendererContextVK* _renderer, VkImageView& _obj)
+	{
+		_renderer->release(_obj);
+	}
 
 	RendererContextI* rendererCreate(const Init& _init)
 	{
@@ -6335,7 +6433,6 @@ VK_DESTROY
 			BX_ASSERT(m_numMips <= 1, "Can't create multisample image with mip chain.");
 		}
 
-		// create texture and allocate its device memory
 		VkImageCreateInfo ici;
 		ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		ici.pNext = NULL;
@@ -6364,7 +6461,7 @@ VK_DESTROY
 					)
 				: 0
 				)
-			| (m_flags & BGFX_TEXTURE_COMPUTE_WRITE ? VK_IMAGE_USAGE_STORAGE_BIT : 0)
+			| (m_flags & (BGFX_TEXTURE_COMPUTE_WRITE | BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST) ? VK_IMAGE_USAGE_STORAGE_BIT : 0)
 			;
 		ici.format        = m_format;
 		ici.samples       = m_sampler.Sample;
@@ -6427,7 +6524,7 @@ VK_DESTROY
 			}
 		}
 
-		m_sampledLayout = m_flags & BGFX_TEXTURE_COMPUTE_WRITE
+		m_sampledLayout = m_flags & (BGFX_TEXTURE_COMPUTE_WRITE | BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST)
 			? VK_IMAGE_LAYOUT_GENERAL
 			: VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 			;
@@ -6508,6 +6605,12 @@ VK_DESTROY
 				;
 			m_components = s_textureFormat[m_textureFormat].m_mapping;
 
+			if (TextureFormat::BGRA8 == m_textureFormat
+			&&  0 != (m_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST) )
+			{
+				m_format = VK_FORMAT_R8G8B8A8_UNORM;
+			}
+
 			const bool convert = m_textureFormat != m_requestedFormat;
 			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 
@@ -6542,7 +6645,8 @@ VK_DESTROY
 			uint32_t kk = 0;
 
 			const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) );
-			const bool swizzle = TextureFormat::BGRA8 == m_textureFormat && 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE);
+			const bool isVideoDecodeDst = 0 != (m_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST);
+			const bool swizzle = TextureFormat::BGRA8 == m_textureFormat && 0 != (m_flags & (BGFX_TEXTURE_COMPUTE_WRITE | BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST) );
 
 			const bool writeOnly      = 0 != (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY);
 			const bool computeWrite   = 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE);
@@ -6568,6 +6672,27 @@ VK_DESTROY
 				);
 
 			VK_CHECK(createImages(_commandBuffer, _external) );
+
+			if (isVideoDecodeDst)
+			{
+				BX_ASSERT(imageContainer.m_size >= sizeof(VideoDecoderInit)
+					, "VIDEO_DECODE_DST texture: Memory too small for VideoDecoderInit (got %d, want %zu)."
+					, imageContainer.m_size
+					, sizeof(VideoDecoderInit)
+					);
+				const VideoDecoderInit* init = (const VideoDecoderInit*)imageContainer.m_data;
+				BX_ASSERT(kVideoDecoderInitMagic == init->magic
+					, "VIDEO_DECODE_DST texture: bad VideoDecoderInit magic (0x%08x)."
+					, init->magic
+					);
+				m_videoDecoder = videoDecoderCreate(*init, s_renderVK, uint16_t(ti.width), uint16_t(ti.height) );
+				if (NULL == m_videoDecoder)
+				{
+					BX_TRACE("Failed to initialize Vulkan hardware video decoder for texture.");
+				}
+				m_readback.create(m_textureImage, m_width, m_height, TextureFormat::Enum(m_textureFormat) );
+				return m_directAccessPtr;
+			}
 
 			// decode images
 			struct ImageInfo
@@ -6773,6 +6898,9 @@ VK_DESTROY
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::destroy", kColorResource);
 
+		videoDecoderDestroy(m_videoDecoder);
+		m_videoDecoder = NULL;
+
 		m_readback.destroy();
 
 		const bool external       = 0 != (m_flags & BGFX_SAMPLER_INTERNAL_SHARED);
@@ -6805,6 +6933,25 @@ VK_DESTROY
 	void TextureVK::update(VkCommandBuffer _commandBuffer, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
 		BGFX_PROFILER_SCOPE("TextureVK::update", kColorResource);
+
+		if (0 != (m_flags & BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST) )
+		{
+			BX_ASSERT(_mem->size >= sizeof(VideoDecoderFrame)
+				, "VIDEO_DECODE_DST update: Memory too small for VideoDecoderFrame (got %d, want %zu)."
+				, _mem->size
+				, sizeof(VideoDecoderFrame)
+				);
+			const VideoDecoderFrame* frame = (const VideoDecoderFrame*)_mem->data;
+			BX_ASSERT(kVideoDecoderFrameMagic == frame->magic
+				, "VIDEO_DECODE_DST update: bad VideoDecoderFrame magic (0x%08x)."
+				, frame->magic
+				);
+			if (NULL != m_videoDecoder)
+			{
+				videoDecoderDecode(m_videoDecoder, *frame, *this);
+			}
+			return;
+		}
 
 		const uint32_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
@@ -7407,6 +7554,13 @@ VK_DESTROY
 				VkSurfaceCapabilitiesKHR surfaceCapabilities = {};
 				VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_surface, &surfaceCapabilities);
 
+				// During window destruction min/maxImageExtent is populated by garbage/large values. But result is VK_SUCCESS.
+				const uint32_t surfaceExtentSanityMax = g_caps.limits.maxTextureSize;
+				const bool surfaceCapsSane = true
+					&& surfaceCapabilities.maxImageExtent.width  <= surfaceExtentSanityMax
+					&& surfaceCapabilities.maxImageExtent.height <= surfaceExtentSanityMax
+					;
+
 				const uint32_t width = bx::clamp<uint32_t>(
 					  m_resolution.width
 					, surfaceCapabilities.minImageExtent.width
@@ -7422,7 +7576,8 @@ VK_DESTROY
 				// on some platforms this happens when minimized
 				if (width  == 0
 				||  height == 0
-				||  VK_SUCCESS != result)
+				||  VK_SUCCESS != result
+				||  !surfaceCapsSane)
 				{
 					m_sci.oldSwapchain = VK_NULL_HANDLE;
 					s_renderVK->kick(true);
@@ -7869,9 +8024,6 @@ VK_DESTROY
 		sci.pNext = NULL;
 		sci.flags = 0;
 
-		// We will make a fully filled pool of semaphores and cycle through those.
-		// This is to make sure we have enough, even in the case where there are
-		// more frames in flight than images on the swapchain.
 		for (uint32_t ii = 0; ii < kMaxBackBuffers; ++ii)
 		{
 			if (VK_SUCCESS != vkCreateSemaphore(device, &sci, allocatorCb, &m_presentDoneSemaphore[ii])
@@ -8160,7 +8312,6 @@ VK_DESTROY
 			const VkDevice device = s_renderVK->m_device;
 
 			m_lastImageAcquiredSemaphore = m_presentDoneSemaphore[m_currentSemaphore];
-			m_lastImageRenderedSemaphore = m_renderDoneSemaphore[m_currentSemaphore];
 			m_currentSemaphore = (m_currentSemaphore + 1) % kMaxBackBuffers;
 
 			VkResult result;
@@ -8217,6 +8368,8 @@ VK_DESTROY
 			}
 
 			transitionImage(_commandBuffer);
+
+			m_lastImageRenderedSemaphore = m_renderDoneSemaphore[m_backBufferColorIdx];
 
 			m_needPresent = true;
 		}

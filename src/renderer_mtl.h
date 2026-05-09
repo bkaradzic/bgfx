@@ -400,10 +400,12 @@ namespace bgfx { namespace mtl
 		MTL::ComputePipelineState* m_cps;
 	};
 
-	void release(PipelineStateMtl* _ptr)
+	inline void release(PipelineStateMtl* _ptr)
 	{
 		bx::deleteObject(g_allocator, _ptr);
 	}
+
+	struct VideoDecoderMtl;
 
 	struct TextureMtl
 	{
@@ -419,6 +421,7 @@ namespace bgfx { namespace mtl
 			, m_ptrMsaa(NULL)
 			, m_ptrStencil(NULL)
 			, m_sampler(NULL)
+			, m_videoDecoder(NULL)
 			, m_flags(0)
 			, m_width(0)
 			, m_height(0)
@@ -466,6 +469,7 @@ namespace bgfx { namespace mtl
 		MTL::Texture* m_ptrMips[14];
 		stl::unordered_map<uint64_t, MTL::Texture*> m_ptrViews;
 		MTL::SamplerState* m_sampler;
+		VideoDecoderMtl*   m_videoDecoder;
 		uint64_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;

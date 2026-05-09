@@ -348,6 +348,23 @@ namespace bgfx
 		};
 	};
 
+	/// Video codec enum.
+	///
+	/// @attention C99's equivalent binding is `bgfx_video_codec_t`.
+	///
+	struct VideoCodec
+	{
+		/// Video codecs:
+		enum Enum
+		{
+			H264, //!< H.264 / AVC.
+			H265, //!< H.265 / HEVC.
+			AV1,  //!< AV1.
+
+			Count
+		};
+	};
+
 	/// Primitive topology.
 	///
 	/// @attention C99's equivalent binding is `bgfx_topology_t`.
@@ -577,6 +594,18 @@ namespace bgfx
 		                                        ///    - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
 		                                        ///      mips.
 		                                        ///    - `BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER` - Texture format can be used as back buffer format.
+		                                        ///    - `BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST` - Texture format can be used as video
+		                                        ///      decode destination.
+		uint32_t codecs[VideoCodec::Count];     //!< Supported video codec capabilities flags. A non-zero entry means the codec is
+		                                        ///  supported for hardware decode; bits describe sample depths and chroma
+		                                        ///  subsamplings:
+		                                        ///    - `BGFX_CAPS_VIDEO_CODEC_NONE` - Video codec is not supported.
+		                                        ///    - `BGFX_CAPS_VIDEO_CODEC_BIT_8` - 8-bit sample depth is supported.
+		                                        ///    - `BGFX_CAPS_VIDEO_CODEC_BIT_10` - 10-bit sample depth is supported.
+		                                        ///    - `BGFX_CAPS_VIDEO_CODEC_BIT_12` - 12-bit sample depth is supported.
+		                                        ///    - `BGFX_CAPS_VIDEO_CODEC_CHROMA_420` - 4:2:0 chroma subsampling is supported.
+		                                        ///    - `BGFX_CAPS_VIDEO_CODEC_CHROMA_422` - 4:2:2 chroma subsampling is supported.
+		                                        ///    - `BGFX_CAPS_VIDEO_CODEC_CHROMA_444` - 4:4:4 chroma subsampling is supported.
 	};
 
 	/// Internal data.
@@ -665,6 +694,7 @@ namespace bgfx
 		bool debug;                //!< Enable device for debugging.
 		bool profile;              //!< Enable device for profiling.
 		bool fallback;             //!< Enable fallback to next available renderer.
+		bool videoDecode;          //!< Enable video decoding.
 		PlatformData platformData; //!< Platform data.
 		Resolution resolution;     //!< Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
 		Limits limits;             //!< Configurable runtime limits parameters.
@@ -743,6 +773,70 @@ namespace bgfx
 		uint8_t numMips;            //!< Number of MIP maps.
 		uint8_t bitsPerPixel;       //!< Format bits per pixel.
 		bool cubeMap;               //!< Texture is cubemap.
+	};
+
+	/// Video decoder initialization. Serialized into the Memory passed to
+	/// `createTexture2D`. When the memory blob begins with `magic`, bgfx
+	/// infers the texture is a video decode destination (the caller need not set
+	/// any extra texture flag). Everything else the renderer needs about the
+	/// stream (chroma format, bit depth, profile, level, coded dimensions, DPB
+	/// layout, color metadata) is parsed out of the codec parameter sets at
+	/// create time.
+	///
+	/// @attention C99's equivalent binding is `bgfx_video_decoder_init_t`.
+	///
+	struct VideoDecoderInit
+	{
+		uint32_t magic;               //!< Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'I', '0')`.
+		VideoCodec::Enum codec;       //!< Video codec. See: `VideoCodec::Enum`.
+		const uint8_t* parameterSets; //!< Codec parameter sets (Annex B for H.264/H.265, OBUs for AV1).
+		uint32_t parameterSetsSize;   //!< Parameter sets size in bytes.
+		uint32_t cachedAuBytes;       //!< Soft cap (in bytes) on the streaming access-unit FIFO (when
+		                              ///  `BGFX_VIDEO_DECODER_INIT_RETAIN` is NOT set). 0 selects the
+		                              ///  default. Ignored in RETAIN mode (the retain cache is unbounded).
+		uint8_t flags;                //!< Decoder lifetime flags. See: `BGFX_VIDEO_DECODER_INIT_*`.
+	};
+
+	/// One access unit entry inside a `VideoDecoderFrame` batch. The bitstream
+	/// for the AU lives at offset `Σ aus[0..ii].size` inside the frame's
+	/// `bitstream` buffer (access units are stored back-to-back in decode /
+	/// submission order).
+	///
+	/// @attention C99's equivalent binding is `bgfx_video_decoder_au_t`.
+	///
+	struct VideoDecoderAu
+	{
+		uint32_t size; //!< Access unit size in bytes.
+		int64_t ptsUs; //!< Presentation timestamp in microseconds for this access unit (container-provided).
+	};
+
+	/// Video decoder per-frame submission. Serialized into the Memory passed
+	/// to `updateTexture2D` for a video decode destination texture. The
+	/// renderer parses the slice / tile-group header out of the bitstream and
+	/// translates it to the backend-specific decoder arguments.
+	///
+	/// A single call may submit a batch of access units: `bitstream` is the
+	/// back-to-back concatenation of `numAus` access units, and `aus[ii]`
+	/// holds the size and PTS of each. AUs are enqueued in array order
+	/// (which is the codec's decode order). Set `numAus == 0` (and
+	/// `bitstream == NULL`) for a presentation-only tick that only advances
+	/// the playback clock.
+	///
+	/// The `bitstream` and `aus` pointers must remain valid until bgfx has
+	/// consumed the submission (`bgfx::copy` only deep-copies the
+	/// `VideoDecoderFrame` struct itself, not the buffers it references).
+	///
+	/// @attention C99's equivalent binding is `bgfx_video_decoder_frame_t`.
+	///
+	struct VideoDecoderFrame
+	{
+		uint32_t magic;             //!< Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'F', '0')`.
+		const uint8_t* bitstream;   //!< Concatenated access-unit bitstream (decode order). NULL for presentation-only ticks.
+		const VideoDecoderAu* aus;  //!< Per-AU size and PTS array. NULL when `numAus == 0`.
+		uint32_t numAus;            //!< Number of access units in this batch. 0 for presentation-only ticks.
+		int64_t presentationTimeUs; //!< Current playback wall-clock time. Driver dispatches the picture whose `ptsUs`
+		                            ///  best matches. Must be monotonically non-decreasing between non-`SET` calls.
+		uint8_t flags;              //!< Per-frame submission flags. See: `BGFX_VIDEO_DECODE_FRAME_*`.
 	};
 
 	/// Uniform info.
@@ -2858,6 +2952,33 @@ namespace bgfx
 		, uint16_t _numLayers
 		, TextureFormat::Enum _format
 		, uint64_t _flags
+		);
+
+	/// Validate video codec parameters. Use to check whether the requested
+	/// combination of codec / bit depth / chroma / dimensions / DPB layout can
+	/// be hardware decoded on the current device. Coarse capability discovery
+	/// is `Caps::supported & BGFX_CAPS_VIDEO_DECODE` and `Caps::codecs[]`.
+	///
+	/// @param[in] _codec Video codec. See: `VideoCodec::Enum`.
+	/// @param[in] _chroma Chroma subsampling. 0 = 4:2:0, 2 = 4:2:2, 4 = 4:4:4.
+	/// @param[in] _bitDepth Bit depth per component. 8, 10 or 12.
+	/// @param[in] _codedWidth Coded picture width (macroblock / CTU / superblock aligned).
+	/// @param[in] _codedHeight Coded picture height.
+	/// @param[in] _maxDpbSlots Maximum decoded picture buffer slot count.
+	/// @param[in] _maxActiveReferences Maximum number of reference frames active at once.
+	///
+	/// @returns True if a video decoder with the same parameters can be created.
+	///
+	/// @attention C99's equivalent binding is `bgfx_is_video_codec_valid`.
+	///
+	bool isVideoCodecValid(
+		  VideoCodec::Enum _codec
+		, uint8_t _chroma
+		, uint8_t _bitDepth
+		, uint16_t _codedWidth
+		, uint16_t _codedHeight
+		, uint8_t _maxDpbSlots
+		, uint8_t _maxActiveReferences
 		);
 
 	/// Validate frame buffer parameters.

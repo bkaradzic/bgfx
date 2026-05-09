@@ -98,6 +98,7 @@
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceImageFormatProperties);  \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceMemoryProperties);       \
 			VK_IMPORT_INSTANCE_FUNC(false, vkGetPhysicalDeviceQueueFamilyProperties);  \
+			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceQueueFamilyProperties2KHR); \
 			VK_IMPORT_INSTANCE_FUNC(false, vkCreateDevice);                            \
 			VK_IMPORT_INSTANCE_FUNC(false, vkDestroyDevice);                           \
 			/* VK_KHR_surface */                                                       \
@@ -115,6 +116,9 @@
 			VK_IMPORT_INSTANCE_FUNC(true,  vkDestroyDebugReportCallbackEXT);           \
 			/* VK_KHR_fragment_shading_rate */                                         \
 			VK_IMPORT_INSTANCE_FUNC(true, vkGetPhysicalDeviceFragmentShadingRatesKHR); \
+			/* VK_KHR_video_queue */                                                   \
+			VK_IMPORT_INSTANCE_FUNC(true, vkGetPhysicalDeviceVideoCapabilitiesKHR);    \
+			VK_IMPORT_INSTANCE_FUNC(true, vkGetPhysicalDeviceVideoFormatPropertiesKHR);\
 			VK_IMPORT_INSTANCE_PLATFORM
 
 #define VK_IMPORT_DEVICE                                                              \
@@ -226,6 +230,19 @@
 			VK_IMPORT_DEVICE_FUNC(true,  vkCmdDrawIndexedIndirectCountKHR);           \
 			/* VK_KHR_fragment_shading_rate */                                        \
 			VK_IMPORT_DEVICE_FUNC(true, vkCmdSetFragmentShadingRateKHR);              \
+			/* VK_KHR_video_queue / VK_KHR_video_decode_queue */                      \
+			VK_IMPORT_DEVICE_FUNC(true, vkCmdBeginVideoCodingKHR);                    \
+			VK_IMPORT_DEVICE_FUNC(true, vkCmdEndVideoCodingKHR);                      \
+			VK_IMPORT_DEVICE_FUNC(true, vkCmdControlVideoCodingKHR);                  \
+			VK_IMPORT_DEVICE_FUNC(true, vkCreateVideoSessionKHR);                     \
+			VK_IMPORT_DEVICE_FUNC(true, vkDestroyVideoSessionKHR);                    \
+			VK_IMPORT_DEVICE_FUNC(true, vkGetVideoSessionMemoryRequirementsKHR);      \
+			VK_IMPORT_DEVICE_FUNC(true, vkBindVideoSessionMemoryKHR);                 \
+			VK_IMPORT_DEVICE_FUNC(true, vkCreateVideoSessionParametersKHR);           \
+			VK_IMPORT_DEVICE_FUNC(true, vkDestroyVideoSessionParametersKHR);          \
+			VK_IMPORT_DEVICE_FUNC(true, vkUpdateVideoSessionParametersKHR);           \
+			/* VK_KHR_video_decode_queue */                                           \
+			VK_IMPORT_DEVICE_FUNC(true, vkCmdDecodeVideoKHR);                         \
 
 #define VK_DESTROY                                \
 			VK_DESTROY_FUNC(Buffer);              \
@@ -305,6 +322,17 @@
 namespace bgfx { namespace vk
 {
 
+#define VK_IMPORT_FUNC(_optional, _func) extern PFN_##_func _func
+#define VK_IMPORT_INSTANCE_FUNC VK_IMPORT_FUNC
+#define VK_IMPORT_DEVICE_FUNC   VK_IMPORT_FUNC
+VK_IMPORT
+VK_IMPORT_INSTANCE
+VK_IMPORT_DEVICE
+#undef VK_IMPORT_DEVICE_FUNC
+#undef VK_IMPORT_INSTANCE_FUNC
+#undef VK_IMPORT_FUNC
+
+
 #define VK_DESTROY_FUNC(_name)                                   \
 	struct Vk##_name                                             \
 	{                                                            \
@@ -324,6 +352,18 @@ VK_DESTROY_FUNC(DeviceMemory);
 VK_DESTROY_FUNC(SurfaceKHR);
 VK_DESTROY_FUNC(DescriptorSet);
 #undef VK_DESTROY_FUNC
+
+	void setImageMemoryBarrier(
+		  VkCommandBuffer _commandBuffer
+		, VkImage _image
+		, VkImageAspectFlags _aspectMask
+		, VkImageLayout _oldLayout
+		, VkImageLayout _newLayout
+		, uint32_t _baseMipLevel = 0
+		, uint32_t _levelCount = VK_REMAINING_MIP_LEVELS
+		, uint32_t _baseArrayLayer = 0
+		, uint32_t _layerCount = VK_REMAINING_ARRAY_LAYERS
+		);
 
 	template<typename Ty>
 	void release(Ty)
@@ -653,6 +693,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 		TextureFormat::Enum  m_format;
 	};
 
+	struct VideoDecoderVK;
+
 	struct TextureVK
 	{
 		TextureVK()
@@ -667,6 +709,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 			, m_singleMsaaImage(VK_NULL_HANDLE)
 			, m_singleMsaaDeviceMem()
 			, m_currentSingleMsaaImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+			, m_videoDecoder(NULL)
 		{
 		}
 
@@ -713,6 +756,7 @@ VK_DESTROY_FUNC(DescriptorSet);
 		VkImageLayout m_sampledLayout;
 
 		ReadbackVK m_readback;
+		VideoDecoderVK* m_videoDecoder;
 
 	private:
 		VkResult createImages(VkCommandBuffer _commandBuffer, uint64_t _external = 0);

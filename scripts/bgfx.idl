@@ -1,7 +1,7 @@
 -- vim: syntax=lua
 -- bgfx interface
 
-version(145)
+version(146)
 
 typedef "bool"
 typedef "char"
@@ -251,15 +251,18 @@ flag.Buffer { bits = 16, base = 8 }
 	()
 
 flag.Texture { bits = 64, section = "Textures" }
-	.None           (0)
-	.MsaaSample     (36) --- Texture will be used for MSAA sampling.
-	.Rt             (37) --- Render target no MSAA.
-	.ComputeWrite   (45) --- Texture will be used for compute write.
-	.Srgb           (46) --- Sample texture as sRGB.
-	.BlitDst        (47) --- Texture will be used as blit destination.
-	.ReadBack       (48) --- Texture will be used for read back from GPU.
-	.ExternalShared (49) --- Texture is shared with other device or other process.
+	.None             (0)
+	.MsaaSample       (36) --- Texture will be used for MSAA sampling.
+	.Rt               (37) --- Render target no MSAA.
+	.ComputeWrite     (45) --- Texture will be used for compute write.
+	.Srgb             (46) --- Sample texture as sRGB.
+	.BlitDst          (47) --- Texture will be used as blit destination.
+	.ReadBack         (48) --- Texture will be used for read back from GPU.
+	.ExternalShared   (49) --- Texture is shared with other device or other process.
 	()
+
+--- Do not use! Top nibble is reserved for internal texture flags (see bgfx_p.h).
+flag.TextureReserved { bits = 64, shift = 60, range = 4 }
 
 flag.TextureRtMsaa { bits = 64, shift = 36, range = 3, base = 2 }
 	.X2  --- Render target MSAAx2 mode.
@@ -399,6 +402,7 @@ flag.Caps { bits = 64, base = 1, name = "Caps", section = "Available Caps" }
 	.VertexAttribHalf       --- Vertex attribute half-float is supported.
 	.VertexAttribUint10     --- Vertex attribute 10_10_10_2 is supported.
 	.VertexId               --- Rendering with VertexID only is supported.
+	.VideoDecode            --- Hardware video decode is supported.
 	.ViewportLayerArray     --- Viewport layer is available in vertex shader.
 
 	.TextureCompareAll      --- All texture compare modes are supported.
@@ -424,6 +428,43 @@ flag.CapsFormat { bits = 32 }
 	.TextureMsaa             --- Texture can be sampled as MSAA.
 	.TextureMipAutogen       --- Texture format supports auto-generated mips.
 	.TextureBackbuffer       --- Texture format can be used as back buffer format.
+	.TextureVideoDecodeDst   --- Texture format can be used as video decode destination.
+	()
+
+flag.CapsVideoCodec { bits = 32 }
+	.None       --- Video codec is not supported.
+	.Bit_8      --- 8-bit sample depth is supported.
+	.Bit_10     --- 10-bit sample depth is supported.
+	.Bit_12     --- 12-bit sample depth is supported.
+	.Chroma_420 --- 4:2:0 chroma subsampling is supported.
+	.Chroma_422 --- 4:2:2 chroma subsampling is supported.
+	.Chroma_444 --- 4:4:4 chroma subsampling is supported.
+	()
+
+--- Video decoder lifetime flags (per `VideoDecoderInit::flags`).
+flag.VideoDecoderInit { bits = 8 }
+	.None    --- No flags.
+	.Retain  --- Cache submitted access units in driver-managed memory keyed by `ptsUs` so the
+	         --- presentation clock can revisit / loop without re-streaming. The cache is
+	         --- unbounded: the app picks the total cache size implicitly by choosing how
+	         --- many access units to submit. Without this flag access units are decoded once
+	         --- and dropped (streaming default).
+	()
+
+--- Video decoder per-frame submission flags (per `VideoDecoderFrame::flags`).
+flag.VideoDecodeFrame { bits = 8 }
+	.None    --- No flags.
+	.Set     --- First batch after a position change. The first access unit must be a clean IDR.
+	         --- Driver flushes its DPB, queued access units, and reorder pool before decoding;
+	         --- subsequent `presentationTimeUs` values may land anywhere (monotonicity is only
+	         --- required between non-`Set` ticks).
+	.NoBlit  --- Skip the picker dispatch for this call. Useful while bulk-loading access units
+	         --- so the displayed picture isn't churned mid-load.
+	.Final   --- Marks the last access unit of the clip; permits eager pre-decode in idle time
+	         --- and lets the picker emit the final frame without lookahead stalling.
+	.Loop    --- When `presentationTimeUs` runs past the highest cached `ptsUs`, the picker
+	         --- wraps modulo the cached pts range. Without this flag the picker freezes on
+	         --- the last displayable picture.
 	()
 
 flag.Resolve { bits = 8 }
@@ -673,6 +714,13 @@ enum.OcclusionQueryResult { comment = "Occlusion query results:", section = "Occ
 	.NoResult  --- Query result is not available yet.
 	()
 
+--- Video codec enum.
+enum.VideoCodec { comment = "Video codecs:", section = "Video" }
+	.H264 --- H.264 / AVC.
+	.H265 --- H.265 / HEVC.
+	.AV1  --- AV1.
+	()
+
 --- Primitive topology.
 enum.Topology { underscore, comment = "Primitive topology:" }
 	.TriList   --- Triangle list.
@@ -810,6 +858,19 @@ struct.Caps { section = "Capabilities" }
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
 		---     mips.
 		---   - `BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER` - Texture format can be used as back buffer format.
+		---   - `BGFX_CAPS_FORMAT_TEXTURE_VIDEO_DECODE_DST` - Texture format can be used as video
+		---     decode destination.
+	.codecs       "uint32_t[VideoCodec::Count]"
+		--- Supported video codec capabilities flags. A non-zero entry means the codec is
+		--- supported for hardware decode; bits describe sample depths and chroma
+		--- subsamplings:
+		---   - `BGFX_CAPS_VIDEO_CODEC_NONE` - Video codec is not supported.
+		---   - `BGFX_CAPS_VIDEO_CODEC_BIT_8` - 8-bit sample depth is supported.
+		---   - `BGFX_CAPS_VIDEO_CODEC_BIT_10` - 10-bit sample depth is supported.
+		---   - `BGFX_CAPS_VIDEO_CODEC_BIT_12` - 12-bit sample depth is supported.
+		---   - `BGFX_CAPS_VIDEO_CODEC_CHROMA_420` - 4:2:0 chroma subsampling is supported.
+		---   - `BGFX_CAPS_VIDEO_CODEC_CHROMA_422` - 4:2:2 chroma subsampling is supported.
+		---   - `BGFX_CAPS_VIDEO_CODEC_CHROMA_444` - 4:4:4 chroma subsampling is supported.
 
 --- Internal data.
 struct.InternalData { section = "Platform specific" }
@@ -876,6 +937,7 @@ struct.Init { ctor, section = "Initialization and Shutdown" }
 	.debug        "bool"               --- Enable device for debugging.
 	.profile      "bool"               --- Enable device for profiling.
 	.fallback     "bool"               --- Enable fallback to next available renderer.
+	.videoDecode  "bool"               --- Enable video decoding.
 	.platformData "PlatformData"       --- Platform data.
 	.resolution   "Resolution"         --- Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
 	.limits       "Limits"             --- Configurable runtime limits parameters.
@@ -930,6 +992,55 @@ struct.TextureInfo { section = "Textures" }
 	.numMips      "uint8_t"             --- Number of MIP maps.
 	.bitsPerPixel "uint8_t"             --- Format bits per pixel.
 	.cubeMap      "bool"                --- Texture is cubemap.
+
+--- Video decoder initialization. Serialized into the Memory passed to
+--- `createTexture2D`. When the memory blob begins with `magic`, bgfx
+--- infers the texture is a video decode destination (the caller need not set
+--- any extra texture flag). Everything else the renderer needs about the
+--- stream (chroma format, bit depth, profile, level, coded dimensions, DPB
+--- layout, color metadata) is parsed out of the codec parameter sets at
+--- create time.
+struct.VideoDecoderInit { section = "Textures" }
+	.magic             "uint32_t"         --- Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'I', '0')`.
+	.codec             "VideoCodec::Enum" --- Video codec. See: `VideoCodec::Enum`.
+	.parameterSets     "const uint8_t*"   --- Codec parameter sets (Annex B for H.264/H.265, OBUs for AV1).
+	.parameterSetsSize "uint32_t"         --- Parameter sets size in bytes.
+	.cachedAuBytes     "uint32_t"         --- Soft cap (in bytes) on the streaming access-unit FIFO (when
+	                                      --- `BGFX_VIDEO_DECODER_INIT_RETAIN` is NOT set). 0 selects the
+	                                      --- default. Ignored in RETAIN mode (the retain cache is unbounded).
+	.flags             "uint8_t"          --- Decoder lifetime flags. See: `BGFX_VIDEO_DECODER_INIT_*`.
+
+--- One access unit entry inside a `VideoDecoderFrame` batch. The bitstream
+--- for the AU lives at offset `Σ aus[0..ii].size` inside the frame's
+--- `bitstream` buffer (access units are stored back-to-back in decode /
+--- submission order).
+struct.VideoDecoderAu { section = "Textures" }
+	.size  "uint32_t" --- Access unit size in bytes.
+	.ptsUs "int64_t"  --- Presentation timestamp in microseconds for this access unit (container-provided).
+
+--- Video decoder per-frame submission. Serialized into the Memory passed
+--- to `updateTexture2D` for a video decode destination texture. The
+--- renderer parses the slice / tile-group header out of the bitstream and
+--- translates it to the backend-specific decoder arguments.
+---
+--- A single call may submit a batch of access units: `bitstream` is the
+--- back-to-back concatenation of `numAus` access units, and `aus[ii]`
+--- holds the size and PTS of each. AUs are enqueued in array order
+--- (which is the codec's decode order). Set `numAus == 0` (and
+--- `bitstream == NULL`) for a presentation-only tick that only advances
+--- the playback clock.
+---
+--- The `bitstream` and `aus` pointers must remain valid until bgfx has
+--- consumed the submission (`bgfx::copy` only deep-copies the
+--- `VideoDecoderFrame` struct itself, not the buffers it references).
+struct.VideoDecoderFrame { section = "Textures" }
+	.magic              "uint32_t"                     --- Structure magic. Must be `BX_MAKEFOURCC('V', 'D', 'F', '0')`.
+	.bitstream          "const uint8_t*"               --- Concatenated access-unit bitstream (decode order). NULL for presentation-only ticks.
+	.aus                "const VideoDecoderAu*" --- Per-AU size and PTS array. NULL when `numAus == 0`.
+	.numAus             "uint32_t"                     --- Number of access units in this batch. 0 for presentation-only ticks.
+	.presentationTimeUs "int64_t"                      --- Current playback wall-clock time. Driver dispatches the picture whose `ptsUs`
+	                                                   --- best matches. Must be monotonically non-decreasing between non-`SET` calls.
+	.flags              "uint8_t"                      --- Per-frame submission flags. See: `BGFX_VIDEO_DECODE_FRAME_*`.
 
 --- Uniform info.
 struct.UniformInfo { section = "Uniforms" }
@@ -1693,6 +1804,20 @@ func.isTextureValid { section = "Textures" }
 	.numLayers "uint16_t"            --- Number of layers in texture array.
 	.format    "TextureFormat::Enum" --- Texture format. See: `TextureFormat::Enum`.
 	.flags     "uint64_t"            --- Texture flags. See `BGFX_TEXTURE_*`.
+
+--- Validate video codec parameters. Use to check whether the requested
+--- combination of codec / bit depth / chroma / dimensions / DPB layout can
+--- be hardware decoded on the current device. Coarse capability discovery
+--- is `Caps::supported & BGFX_CAPS_VIDEO_DECODE` and `Caps::codecs[]`.
+func.isVideoCodecValid { section = "Textures" }
+	"bool"                            --- True if a video decoder with the same parameters can be created.
+	.codec                "VideoCodec::Enum" --- Video codec. See: `VideoCodec::Enum`.
+	.chroma               "uint8_t"   --- Chroma subsampling. 0 = 4:2:0, 2 = 4:2:2, 4 = 4:4:4.
+	.bitDepth             "uint8_t"   --- Bit depth per component. 8, 10 or 12.
+	.codedWidth           "uint16_t"  --- Coded picture width (macroblock / CTU / superblock aligned).
+	.codedHeight          "uint16_t"  --- Coded picture height.
+	.maxDpbSlots          "uint8_t"   --- Maximum decoded picture buffer slot count.
+	.maxActiveReferences  "uint8_t"   --- Maximum number of reference frames active at once.
 
 --- Validate frame buffer parameters.
 func.isFrameBufferValid { section = "Frame Buffers" }

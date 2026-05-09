@@ -145,6 +145,9 @@ function bgfxProjectBase(_kind, _defines)
 			"-framework QuartzCore",
 			"-weak_framework Metal",
 			"-weak_framework MetalKit",
+			"-weak_framework VideoToolbox",
+			"-weak_framework CoreMedia",
+			"-weak_framework CoreVideo",
 		}
 
 	configuration { "not NX32", "not NX64" }

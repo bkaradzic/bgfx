@@ -69,6 +69,11 @@ extern(C++, "bgfx") package final abstract class OcclusionQueryResult{
 		invisible,visible,noResult,count
 	}
 }
+extern(C++, "bgfx") package final abstract class VideoCodec{
+	enum Enum{
+		h264,h265,av1,count
+	}
+}
 extern(C++, "bgfx") package final abstract class Topology{
 	enum Enum{
 		triList,triStrip,lineList,lineStrip,pointList,count

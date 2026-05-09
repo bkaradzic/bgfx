@@ -13,6 +13,7 @@
 
 #if BX_PLATFORM_LINUX || BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 #   include <d3d12.h>
+#   include <d3d12video.h>
 #else
 #   if !BGFX_CONFIG_DEBUG
 #      define D3DCOMPILE_NO_DEBUG 1
@@ -124,7 +125,10 @@ namespace bgfx { namespace d3d12
 		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct BufferD3D12& _buffer);
 
 		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint8_t _mip = 0);
+		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, ID3D12Resource* _resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& _desc);
+
 		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct BufferD3D12& _buffer);
+		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, ID3D12Resource* _resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& _desc);
 
 		void  allocSrvArray(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint32_t _numSlices);
 		void  allocUavArray(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint8_t _mip, uint32_t _numSlices);
@@ -325,6 +329,8 @@ namespace bgfx { namespace d3d12
 		uint8_t m_numPredefined;
 	};
 
+	struct VideoDecoderD3D12;
+
 	struct TextureD3D12
 	{
 		enum Enum
@@ -341,6 +347,7 @@ namespace bgfx { namespace d3d12
 			, m_directAccessPtr(NULL)
 			, m_state(D3D12_RESOURCE_STATE_COMMON)
 			, m_numMips(0)
+			, m_videoDecoder(NULL)
 		{
 			bx::memSet(&m_srvd, 0, sizeof(m_srvd) );
 			bx::memSet(&m_uavd, 0, sizeof(m_uavd) );
@@ -369,6 +376,7 @@ namespace bgfx { namespace d3d12
 		uint8_t m_requestedFormat;
 		uint8_t m_textureFormat;
 		uint8_t m_numMips;
+		VideoDecoderD3D12* m_videoDecoder;
 	};
 
 	struct FrameBufferD3D12

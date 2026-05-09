@@ -218,13 +218,15 @@ namespace stl = std;
 
 #define BGFX_MAX_COMPUTE_BINDINGS BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
 
-#define BGFX_SAMPLER_INTERNAL_DEFAULT       UINT32_C(0x10000000)
-#define BGFX_SAMPLER_INTERNAL_SHARED        UINT32_C(0x20000000)
+#define BGFX_SAMPLER_INTERNAL_DEFAULT          UINT32_C(0x10000000)
+#define BGFX_SAMPLER_INTERNAL_SHARED           UINT32_C(0x20000000)
 
-#define BGFX_RESET_INTERNAL_FORCE           UINT32_C(0x80000000)
+#define BGFX_TEXTURE_INTERNAL_VIDEO_DECODE_DST UINT64_C(0x1000000000000000)
 
-#define BGFX_STATE_INTERNAL_SCISSOR         UINT64_C(0x2000000000000000)
-#define BGFX_STATE_INTERNAL_OCCLUSION_QUERY UINT64_C(0x4000000000000000)
+#define BGFX_RESET_INTERNAL_FORCE              UINT32_C(0x80000000)
+
+#define BGFX_STATE_INTERNAL_SCISSOR            UINT64_C(0x2000000000000000)
+#define BGFX_STATE_INTERNAL_OCCLUSION_QUERY    UINT64_C(0x4000000000000000)
 
 #define BGFX_SUBMIT_INTERNAL_NONE              UINT8_C(0x00)
 #define BGFX_SUBMIT_INTERNAL_INDEX32           UINT8_C(0x40)
@@ -285,7 +287,9 @@ namespace stl = std;
 
 namespace bgfx
 {
-	static constexpr uint32_t kChunkMagicTex = BX_MAKEFOURCC('T', 'E', 'X', 0x0);
+	static constexpr uint32_t kChunkMagicTex          = BX_MAKEFOURCC('T', 'E', 'X', 0x0);
+	static constexpr uint32_t kVideoDecoderInitMagic  = BX_MAKEFOURCC('V', 'D', 'I', 0x0);
+	static constexpr uint32_t kVideoDecoderFrameMagic = BX_MAKEFOURCC('V', 'D', 'F', 0x0);
 
 	// Palette:
 	// https://colorkit.co/color-palette-generator/a8e6cf-dcedc1-ffd3b6-76b4bd-bdeaee-8874a3-ff0000-ff8b94/
@@ -925,6 +929,26 @@ namespace bgfx
 		UniformHandle u_mipGen;
 		UniformHandle s_texMipSrc;
 	};
+
+	///
+	struct VideoDecode
+	{
+		VideoDecode()
+			: m_program(BGFX_INVALID_HANDLE)
+			, s_texY(BGFX_INVALID_HANDLE)
+			, s_texCbCr(BGFX_INVALID_HANDLE)
+		{
+		}
+
+		void init();
+		void shutdown();
+
+		ProgramHandle m_program;
+		UniformHandle s_texY;
+		UniformHandle s_texCbCr;
+	};
+
+	extern VideoDecode* g_videoDecode;
 
 	struct PredefinedUniform
 	{
@@ -6166,6 +6190,7 @@ namespace bgfx
 		TextVideoMemBlitter m_textVideoMemBlitter;
 		ClearQuad m_clearQuad;
 		MipGen m_mipGen;
+		VideoDecode m_videoDecode;
 
 		RendererContextI* m_renderCtx;
 

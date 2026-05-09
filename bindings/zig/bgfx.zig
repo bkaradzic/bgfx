@@ -455,6 +455,8 @@ pub const TextureFlags_ReadBack: TextureFlags               = 0x0000800000000000
 
 /// Texture is shared with other device or other process.
 pub const TextureFlags_ExternalShared: TextureFlags         = 0x0001000000000000;
+pub const TextureFlags_ReservedShift: TextureFlags          = 60;
+pub const TextureFlags_ReservedMask: TextureFlags           = 0xf000000000000000;
 
 /// Render target MSAAx2 mode.
 pub const TextureFlags_RtMsaaX2: TextureFlags               = 0x0000002000000000;
@@ -726,8 +728,11 @@ pub const CapsFlags_VertexAttribUint10: CapsFlags     = 0x0000000080000000;
 /// Rendering with VertexID only is supported.
 pub const CapsFlags_VertexId: CapsFlags               = 0x0000000100000000;
 
+/// Hardware video decode is supported.
+pub const CapsFlags_VideoDecode: CapsFlags            = 0x0000000200000000;
+
 /// Viewport layer is available in vertex shader.
-pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000200000000;
+pub const CapsFlags_ViewportLayerArray: CapsFlags     = 0x0000000400000000;
 
 /// All texture compare modes are supported.
 pub const CapsFlags_TextureCompareAll: CapsFlags      = 0x0000000000180000;
@@ -786,6 +791,65 @@ pub const CapsFormatFlags_TextureMipAutogen: CapsFormatFlags      = 0x00008000;
 
 /// Texture format can be used as back buffer format.
 pub const CapsFormatFlags_TextureBackbuffer: CapsFormatFlags      = 0x00010000;
+
+/// Texture format can be used as video decode destination.
+pub const CapsFormatFlags_TextureVideoDecodeDst: CapsFormatFlags  = 0x00020000;
+
+pub const CapsVideoCodecFlags = u32;
+/// Video codec is not supported.
+pub const CapsVideoCodecFlags_None: CapsVideoCodecFlags                   = 0x00000000;
+
+/// 8-bit sample depth is supported.
+pub const CapsVideoCodecFlags_Bit8: CapsVideoCodecFlags                   = 0x00000001;
+
+/// 10-bit sample depth is supported.
+pub const CapsVideoCodecFlags_Bit10: CapsVideoCodecFlags                  = 0x00000002;
+
+/// 12-bit sample depth is supported.
+pub const CapsVideoCodecFlags_Bit12: CapsVideoCodecFlags                  = 0x00000004;
+
+/// 4:2:0 chroma subsampling is supported.
+pub const CapsVideoCodecFlags_Chroma420: CapsVideoCodecFlags              = 0x00000008;
+
+/// 4:2:2 chroma subsampling is supported.
+pub const CapsVideoCodecFlags_Chroma422: CapsVideoCodecFlags              = 0x00000010;
+
+/// 4:4:4 chroma subsampling is supported.
+pub const CapsVideoCodecFlags_Chroma444: CapsVideoCodecFlags              = 0x00000020;
+
+pub const VideoDecoderInitFlags = u32;
+/// No flags.
+pub const VideoDecoderInitFlags_None: VideoDecoderInitFlags                   = 0x00000000;
+
+/// Cache submitted access units in driver-managed memory keyed by `ptsUs` so the
+/// presentation clock can revisit / loop without re-streaming. The cache is
+/// unbounded: the app picks the total cache size implicitly by choosing how
+/// many access units to submit. Without this flag access units are decoded once
+/// and dropped (streaming default).
+pub const VideoDecoderInitFlags_Retain: VideoDecoderInitFlags                 = 0x00000001;
+
+pub const VideoDecodeFrameFlags = u32;
+/// No flags.
+pub const VideoDecodeFrameFlags_None: VideoDecodeFrameFlags                   = 0x00000000;
+
+/// First batch after a position change. The first access unit must be a clean IDR.
+/// Driver flushes its DPB, queued access units, and reorder pool before decoding;
+/// subsequent `presentationTimeUs` values may land anywhere (monotonicity is only
+/// required between non-`Set` ticks).
+pub const VideoDecodeFrameFlags_Set: VideoDecodeFrameFlags                    = 0x00000001;
+
+/// Skip the picker dispatch for this call. Useful while bulk-loading access units
+/// so the displayed picture isn't churned mid-load.
+pub const VideoDecodeFrameFlags_NoBlit: VideoDecodeFrameFlags                 = 0x00000002;
+
+/// Marks the last access unit of the clip; permits eager pre-decode in idle time
+/// and lets the picker emit the final frame without lookahead stalling.
+pub const VideoDecodeFrameFlags_Final: VideoDecodeFrameFlags                  = 0x00000004;
+
+/// When `presentationTimeUs` runs past the highest cached `ptsUs`, the picker
+/// wraps modulo the cached pts range. Without this flag the picker freezes on
+/// the last displayable picture.
+pub const VideoDecodeFrameFlags_Loop: VideoDecodeFrameFlags                   = 0x00000008;
 
 pub const ResolveFlags = u32;
 /// No resolve flags.
@@ -1365,6 +1429,19 @@ pub const OcclusionQueryResult = enum(c_int) {
     Count
 };
 
+pub const VideoCodec = enum(c_int) {
+    /// H.264 / AVC.
+    H264,
+
+    /// H.265 / HEVC.
+    H265,
+
+    /// AV1.
+    AV1,
+
+    Count
+};
+
 pub const Topology = enum(c_int) {
     /// Triangle list.
     TriList,
@@ -1531,6 +1608,7 @@ pub const Caps = extern struct {
         gpu: [4]GPU,
         limits: Limits,
         formats: [100]u32,
+        codecs: [3]u32,
     };
 
     pub const InternalData = extern struct {
@@ -1575,6 +1653,7 @@ pub const Init = extern struct {
         debug: bool,
         profile: bool,
         fallback: bool,
+        videoDecode: bool,
         platformData: PlatformData,
         resolution: Resolution,
         limits: Limits,
@@ -1623,6 +1702,29 @@ pub const Init = extern struct {
         numMips: u8,
         bitsPerPixel: u8,
         cubeMap: bool,
+    };
+
+    pub const VideoDecoderInit = extern struct {
+        magic: u32,
+        codec: VideoCodec,
+        parameterSets: [*c]const uint8_t,
+        parameterSetsSize: u32,
+        cachedAuBytes: u32,
+        flags: u8,
+    };
+
+    pub const VideoDecoderAu = extern struct {
+        size: u32,
+        ptsUs: i64,
+    };
+
+    pub const VideoDecoderFrame = extern struct {
+        magic: u32,
+        bitstream: [*c]const uint8_t,
+        aus: [*c]const VideoDecoderAu,
+        numAus: u32,
+        presentationTimeUs: i64,
+        flags: u8,
     };
 
     pub const UniformInfo = extern struct {
@@ -2751,6 +2853,22 @@ pub inline fn isTextureValid(_depth: u16, _cubeMap: bool, _numLayers: u16, _form
     return bgfx_is_texture_valid(_depth, _cubeMap, _numLayers, _format, _flags);
 }
 extern fn bgfx_is_texture_valid(_depth: u16, _cubeMap: bool, _numLayers: u16, _format: TextureFormat, _flags: u64) bool;
+
+/// Validate video codec parameters. Use to check whether the requested
+/// combination of codec / bit depth / chroma / dimensions / DPB layout can
+/// be hardware decoded on the current device. Coarse capability discovery
+/// is `Caps::supported & BGFX_CAPS_VIDEO_DECODE` and `Caps::codecs[]`.
+/// <param name="_codec">Video codec. See: `VideoCodec::Enum`.</param>
+/// <param name="_chroma">Chroma subsampling. 0 = 4:2:0, 2 = 4:2:2, 4 = 4:4:4.</param>
+/// <param name="_bitDepth">Bit depth per component. 8, 10 or 12.</param>
+/// <param name="_codedWidth">Coded picture width (macroblock / CTU / superblock aligned).</param>
+/// <param name="_codedHeight">Coded picture height.</param>
+/// <param name="_maxDpbSlots">Maximum decoded picture buffer slot count.</param>
+/// <param name="_maxActiveReferences">Maximum number of reference frames active at once.</param>
+pub inline fn isVideoCodecValid(_codec: VideoCodec, _chroma: u8, _bitDepth: u8, _codedWidth: u16, _codedHeight: u16, _maxDpbSlots: u8, _maxActiveReferences: u8) bool {
+    return bgfx_is_video_codec_valid(_codec, _chroma, _bitDepth, _codedWidth, _codedHeight, _maxDpbSlots, _maxActiveReferences);
+}
+extern fn bgfx_is_video_codec_valid(_codec: VideoCodec, _chroma: u8, _bitDepth: u8, _codedWidth: u16, _codedHeight: u16, _maxDpbSlots: u8, _maxActiveReferences: u8) bool;
 
 /// Validate frame buffer parameters.
 /// <param name="_num">Number of attachments.</param>

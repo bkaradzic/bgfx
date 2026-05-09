@@ -387,6 +387,9 @@ function exampleProjectDefaults()
 			"-framework OpenGL",
 			"-framework QuartzCore",
 			"-weak_framework Metal",
+			"-weak_framework VideoToolbox",
+			"-weak_framework CoreMedia",
+			"-weak_framework CoreVideo",
 		}
 
 	configuration { "ios* or tvos*" }
@@ -399,6 +402,9 @@ function exampleProjectDefaults()
 			"-framework QuartzCore",
 			"-framework UIKit",
 			"-weak_framework Metal",
+			"-weak_framework VideoToolbox",
+			"-weak_framework CoreMedia",
+			"-weak_framework CoreVideo",
 		}
 
 	configuration { "xcode*", "ios" }
