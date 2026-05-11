@@ -5263,6 +5263,84 @@ namespace bgfx
 		return createTexture2D(_ratio, 0, 0, _hasMips, _numLayers, _format, _flags, NULL, 0);
 	}
 
+	static TextureHandle createTexture2DCustomMips(
+		  BackbufferRatio::Enum _ratio
+		, uint16_t _width
+		, uint16_t _height
+		, uint8_t _numMips
+		, uint16_t _numLayers
+		, TextureFormat::Enum _format
+		, uint64_t _flags
+		, const Memory* _mem
+		, uint64_t _external
+		)
+	{
+		if (BackbufferRatio::Count != _ratio)
+		{
+			_width  = uint16_t(s_ctx->m_init.resolution.width);
+			_height = uint16_t(s_ctx->m_init.resolution.height);
+			getTextureSizeFromRatio(_ratio, _width, _height);
+		}
+
+		bx::ErrorAssert err;
+		isTextureValid(_width, _height, 0, false, _numLayers, _format, _flags, &err);
+
+		if (!err.isOk() )
+		{
+			return BGFX_INVALID_HANDLE;
+		}
+
+		_numMips   = bx::max<uint8_t>(_numMips, 1);
+		_numLayers = bx::max<uint16_t>(_numLayers, 1);
+
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
+		&&  NULL != _mem)
+		{
+			BX_ASSERT(calcNumMips(true, _width, _height) >= _numMips
+				, "createTexture2DCustomMips: passed numMips is greater than the number of mips in the texture (passed numMips: %d)"
+				, _numMips
+				);
+			// calcTextureSizeCustomMips not available; storage size validation skipped.
+		}
+
+		uint32_t size = sizeof(uint32_t)+sizeof(TextureCreate);
+		const Memory* mem = alloc(size);
+
+		bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
+		bx::write(&writer, kChunkMagicTex, bx::ErrorAssert{});
+
+		TextureCreate tc;
+		tc.m_width     = _width;
+		tc.m_height    = _height;
+		tc.m_depth     = 0;
+		tc.m_numLayers = _numLayers;
+		tc.m_numMips   = _numMips;
+		tc.m_format    = _format;
+		tc.m_cubeMap   = false;
+		tc.m_mem       = _mem;
+		bx::write(&writer, tc, bx::ErrorAssert{});
+
+		return s_ctx->createTexture(mem, _flags, 0, NULL, _ratio, NULL != _mem, _external);
+	}
+
+	TextureHandle createTexture2DCustomMips(uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags, const Memory* _mem, uint64_t _external)
+	{
+		BX_ASSERT(false
+			|| 0 == _external
+			|| 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_EXTERNAL)
+			, "External texture is not supported! "
+			  "Use bgfx::getCaps to check `BGFX_CAPS_TEXTURE_EXTERNAL` backend renderer capabilities."
+			);
+		BX_ASSERT(_width > 0 && _height > 0, "Invalid texture size (width %d, height %d).", _width, _height);
+		return createTexture2DCustomMips(BackbufferRatio::Count, _width, _height, _numMips, _numLayers, _format, _flags, _mem, _external);
+	}
+
+	TextureHandle createTexture2DCustomMips(BackbufferRatio::Enum _ratio, uint8_t _numMips, uint16_t _numLayers, TextureFormat::Enum _format, uint64_t _flags)
+	{
+		BX_ASSERT(_ratio < BackbufferRatio::Count, "Invalid back buffer ratio.");
+		return createTexture2DCustomMips(_ratio, 0, 0, _numMips, _numLayers, _format, _flags, NULL, 0);
+	}
+
 	TextureHandle createTexture3D(uint16_t _width, uint16_t _height, uint16_t _depth, bool _hasMips, TextureFormat::Enum _format, uint64_t _flags, const Memory* _mem, uint64_t _external)
 	{
 		BX_ASSERT(false

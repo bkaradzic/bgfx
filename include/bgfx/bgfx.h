@@ -2952,6 +2952,66 @@ namespace bgfx
 		, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE
 		);
 
+	/// Create 2D texture with an explicit mip count instead of a boolean hasMips flag.
+	///
+	/// @param[in] _ratio Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.
+	/// @param[in] _numMips Number of mips in texture.
+	/// @param[in] _numLayers Number of layers in texture array. Must be 1 if caps
+	///   `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
+	/// @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
+	///   flags. Default texture sampling mode is linear, and wrap mode is repeat.
+	///   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	///   mode.
+	///   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	///   sampling.
+	///
+	/// @returns Texture handle.
+	///
+	/// @attention C99's equivalent binding is `bgfx_create_texture_2d_scaled`.
+	///
+	TextureHandle createTexture2DCustomMips(
+		  BackbufferRatio::Enum _ratio
+		, uint8_t _numMips
+		, uint16_t _numLayers
+		, TextureFormat::Enum _format
+		, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE
+		);
+
+	/// Create 2D texture with an explicit mip count instead of a boolean hasMips flag.
+	///
+	/// @param[in] _width Width.
+	/// @param[in] _height Height.
+	/// @param[in] _numMips Number of mips in texture.
+	/// @param[in] _numLayers Number of layers in texture array. Must be 1 if caps
+	///   `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
+	/// @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
+	///   flags. Default texture sampling mode is linear, and wrap mode is repeat.
+	///   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	///   mode.
+	///   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	///   sampling.
+	/// @param[in] _mem Texture data. If `_mem` is non-NULL, created texture will be immutable. If
+	///   `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
+	///   1, expected memory layout is texture and all mips together for each array element.
+	/// @param[in] _external Native API pointer to texture.
+	///
+	/// @returns Texture handle.
+	///
+	/// @attention C99's equivalent binding is `bgfx_create_texture_2d`.
+	///
+	TextureHandle createTexture2DCustomMips(
+		  uint16_t _width
+		, uint16_t _height
+		, uint8_t _numMips
+		, uint16_t _numLayers
+		, TextureFormat::Enum _format
+		, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE
+		, const Memory* _mem = NULL
+		, uint64_t _external = 0
+		);
+
 	/// Create 3D texture.
 	///
 	/// @param[in] _width Width.
