@@ -791,6 +791,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			, m_blitCommandEncoder(NULL)
 			, m_renderCommandEncoder(NULL)
 			, m_computeCommandEncoder(NULL)
+			, m_frameActive(false)
 		{
 			bx::memSet(&m_windows, 0xff, sizeof(m_windows) );
 			bx::memSet(m_uniformBuffers, 0, sizeof(m_uniformBuffers) );
@@ -1738,6 +1739,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			m_cmd.kick(true, false);
 			m_commandBuffer = 0;
+			m_frameActive = false;
 		}
 
 		void updateResolution(const Resolution& _resolution)
@@ -3046,6 +3048,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		MTL::RenderCommandEncoder*  m_renderCommandEncoder;
 		MTL::ComputeCommandEncoder* m_computeCommandEncoder;
 		FrameBufferHandle           m_renderCommandEncoderFrameBufferHandle;
+		bool m_frameActive;
 	};
 
 	RendererContextI* rendererCreate(const Init& _init)
@@ -4256,8 +4259,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		if (_finishAll)
 		{
 			uint32_t count = m_activeCommandBuffer != NULL
-				? 2
-				: 3
+				? BGFX_CONFIG_MAX_FRAME_LATENCY - 1
+				: BGFX_CONFIG_MAX_FRAME_LATENCY
 				;
 
 			for (uint32_t ii = 0; ii < count; ++ii)
@@ -4500,7 +4503,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 	void RendererContextMtl::submit(Frame* _render, const ClearQuad& _clearQuad, const MipGen& /*_mipGen*/, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
-		m_cmd.finish(false);
+		if (!m_frameActive)
+		{
+			m_cmd.finish(false);
+			m_frameActive = true;
+
+			m_uniformBuffer = m_uniformBuffers[m_bufferIndex];
+			m_bufferIndex = (m_bufferIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
+			m_uniformBufferVertexOffset = 0;
+			m_uniformBufferFragmentOffset = 0;
+		}
 
 		if (NULL == m_commandBuffer)
 		{
@@ -4586,11 +4598,6 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			MTL_RELEASE(m_screenshotTarget, 0);
 		}
-
-		m_uniformBuffer = m_uniformBuffers[m_bufferIndex];
-		m_bufferIndex = (m_bufferIndex + 1) % BGFX_CONFIG_MAX_FRAME_LATENCY;
-		m_uniformBufferVertexOffset = 0;
-		m_uniformBufferFragmentOffset = 0;
 
 		if (0 < _render->m_iboffset)
 		{
