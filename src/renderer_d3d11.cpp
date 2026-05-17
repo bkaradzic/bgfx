@@ -2533,10 +2533,16 @@ namespace bgfx { namespace d3d11
 				m_rasterizerStateCache.invalidate();
 			}
 
+			if (_resolution.reset & BGFX_RESET_VSYNC)
+				m_resolution.reset |= BGFX_RESET_VSYNC;
+			else
+				m_resolution.reset &= ~BGFX_RESET_VSYNC;
+
 			const uint32_t maskFlags = ~(0
 				| BGFX_RESET_MAXANISOTROPY
 				| BGFX_RESET_DEPTH_CLAMP
 				| BGFX_RESET_SUSPEND
+				| BGFX_RESET_VSYNC
 				);
 
 			if (m_resolution.width              != _resolution.width

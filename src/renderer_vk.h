@@ -846,6 +846,9 @@ VK_DESTROY_FUNC(DescriptorSet);
 		TextureFormat::Enum m_colorFormat;
 		TextureFormat::Enum m_depthFormat;
 
+		uint32_t m_presentModeWithVSyncIdx;
+		uint32_t m_presentModeWithoutVSyncIdx;
+
 		VkSurfaceKHR   m_surface;
 		VkSwapchainKHR m_swapChain;
 		uint32_t       m_numSwapChainImages;
