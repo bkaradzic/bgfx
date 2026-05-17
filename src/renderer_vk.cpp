@@ -421,7 +421,7 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_line_rasterization",              1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_memory_budget",                   1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true,                                                          Layer::Count },
-		{ "VK_EXT_swapchain_maintenance1",          1, false, false, true,                                                          Layer::Count },
+		{ "VK_EXT_swapchain_maintenance1",          1, false, false, false,                                                         Layer::Count },
 		{ "VK_KHR_draw_indirect_count",             1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_fragment_shading_rate",           1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true,                                                          Layer::Count },
@@ -1675,9 +1675,10 @@ VK_IMPORT_INSTANCE
 					fragmentShadingRate.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
 					fragmentShadingRate.pNext = NULL;
 
-					BX_ASSERT(vkGetPhysicalDeviceFeatures2KHR,
-							"vkGetPhysicalDeviceFeatures2KHR should not be NULL when the "
-							"KHR_fragment_shading_rate extension is supported.");
+					BX_ASSERT(NULL != vkGetPhysicalDeviceFeatures2KHR
+						, "vkGetPhysicalDeviceFeatures2KHR should not be NULL when the "
+						  "KHR_fragment_shading_rate extension is supported."
+						);
 					vkGetPhysicalDeviceFeatures2KHR(m_physicalDevice, &deviceFeatures2);
 
 					if (!fragmentShadingRate.pipelineFragmentShadingRate
@@ -1996,13 +1997,13 @@ VK_IMPORT_INSTANCE
 					BX_TRACE("\t%s", enabledExtension[ii]);
 				}
 
-				float queuePriorities[1] = { 0.0f };
+				const float queuePriorities[] = { 0.0f };
 				VkDeviceQueueCreateInfo dcqi;
 				dcqi.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 				dcqi.pNext = NULL;
 				dcqi.flags = 0;
 				dcqi.queueFamilyIndex = m_globalQueueFamily;
-				dcqi.queueCount       = 1;
+				dcqi.queueCount       = BX_COUNTOF(queuePriorities);
 				dcqi.pQueuePriorities = queuePriorities;
 
 				VkDeviceCreateInfo dci;
@@ -2991,28 +2992,39 @@ VK_IMPORT_DEVICE
 				| BGFX_RESET_DEPTH_CLAMP
 				);
 
-			if (m_swapchainMaintenance1Supported && !!((_resolution.reset ^ m_resolution.reset) & BGFX_RESET_VSYNC))
+			if (m_swapchainMaintenance1Supported
+			&& !!((_resolution.reset ^ m_resolution.reset) & BGFX_RESET_VSYNC) )
 			{
-				m_resolution.reset = (m_resolution.reset & ~BGFX_RESET_VSYNC) | (_resolution.reset & BGFX_RESET_VSYNC);
+				m_resolution.reset = 0
+					| (m_resolution.reset & ~BGFX_RESET_VSYNC)
+					| ( _resolution.reset &  BGFX_RESET_VSYNC)
+					;
+
 				for (uint16_t ii = 0; ii < m_numWindows; ++ii)
 				{
 					FrameBufferVK& fb = isValid(m_windows[ii])
 						? m_frameBuffers[m_windows[ii].idx]
 						: m_backBuffer
 						;
-					fb.m_swapChain.m_resolution.reset = (fb.m_swapChain.m_resolution.reset & ~BGFX_RESET_VSYNC) | (_resolution.reset & BGFX_RESET_VSYNC);
+
+					fb.m_swapChain.m_resolution.reset = 0
+						| (fb.m_swapChain.m_resolution.reset & ~BGFX_RESET_VSYNC)
+						| (                _resolution.reset &  BGFX_RESET_VSYNC)
+						;
 				}
+
 				maskFlags &= ~BGFX_RESET_VSYNC;
 			}
 
 			if (false
-			||  m_resolution.formatColor        != _resolution.formatColor
-			||  m_resolution.formatDepthStencil != _resolution.formatDepthStencil
-			||  m_resolution.width              != _resolution.width
-			||  m_resolution.height             != _resolution.height
+			||  m_resolution.formatColor        !=  _resolution.formatColor
+			||  m_resolution.formatDepthStencil !=  _resolution.formatDepthStencil
+			||  m_resolution.width              !=  _resolution.width
+			||  m_resolution.height             !=  _resolution.height
 			|| (m_resolution.reset&maskFlags)   != (_resolution.reset&maskFlags)
 			||  m_backBuffer.m_swapChain.m_needToRecreateSurface
-			||  m_backBuffer.m_swapChain.m_needToRecreateSwapchain)
+			||  m_backBuffer.m_swapChain.m_needToRecreateSwapchain
+			   )
 			{
 				uint32_t flags = _resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
 
@@ -7808,10 +7820,15 @@ retry:
 		m_supportsReadback      = 0 != (imageUsage & VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		m_supportsManualResolve = 0 != (imageUsage & VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
-		m_presentModeWithVSyncIdx = findPresentMode(true);
+		m_presentModeWithVSyncIdx    = findPresentMode(true);
 		m_presentModeWithoutVSyncIdx = findPresentMode(false);
+
 		const bool vsync = !!(m_resolution.reset & BGFX_RESET_VSYNC);
-		uint32_t presentModeIdx = vsync ? m_presentModeWithVSyncIdx : m_presentModeWithoutVSyncIdx;
+		const uint32_t presentModeIdx = vsync
+			? m_presentModeWithVSyncIdx
+			: m_presentModeWithoutVSyncIdx
+			;
+
 		if (UINT32_MAX == presentModeIdx)
 		{
 			BX_TRACE("Create swapchain error: Unable to find present mode (vsync: %d).", vsync);
@@ -7832,7 +7849,9 @@ retry:
 
 		VkPresentModeKHR modes[2];
 		VkSwapchainPresentModesCreateInfoEXT modesInfo;
-		if (UINT32_MAX == m_presentModeWithVSyncIdx || UINT32_MAX == m_presentModeWithoutVSyncIdx)
+
+		if (UINT32_MAX == m_presentModeWithVSyncIdx
+		||  UINT32_MAX == m_presentModeWithoutVSyncIdx)
 		{
 			s_renderVK->m_swapchainMaintenance1Supported = false;
 		}
@@ -8315,11 +8334,16 @@ retry:
 			VkSwapchainPresentModeInfoEXT presentModeInfo;
 			if (s_renderVK->m_swapchainMaintenance1Supported)
 			{
-				uint32_t presentModeIdx = !!(m_resolution.reset & BGFX_RESET_VSYNC) ? m_presentModeWithVSyncIdx : m_presentModeWithoutVSyncIdx;;
+				const uint32_t presentModeIdx = !!(m_resolution.reset & BGFX_RESET_VSYNC)
+					? m_presentModeWithVSyncIdx
+					: m_presentModeWithoutVSyncIdx;
+					;
+
 				presentModeInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_MODE_INFO_EXT;
 				presentModeInfo.swapchainCount = 1;
 				presentModeInfo.pPresentModes = &s_presentMode[presentModeIdx].mode;
 				presentModeInfo.pNext = pi.pNext;
+
 				pi.pNext = &presentModeInfo;
 			}
 
