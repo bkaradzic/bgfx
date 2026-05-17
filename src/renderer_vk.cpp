@@ -9305,6 +9305,7 @@ retry:
 					if (beginRenderPass && (false
 					||  _render->m_view[view].m_fbh.idx != fbh.idx
 					|| !_render->m_view[view].m_rect.isEqual(viewState.m_rect)
+					||  profiler.m_enabled
 					   ) )
 					{
 						vkCmdEndRenderPass(m_commandBuffer);
