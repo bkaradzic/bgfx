@@ -1755,11 +1755,42 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_depthClamp = m_supportsDepthClipMode
 				&& !!(_resolution.reset & BGFX_RESET_DEPTH_CLAMP);
 
-			const uint32_t maskFlags = ~(0
+			uint32_t maskFlags = ~(0
 				| BGFX_RESET_MAXANISOTROPY
 				| BGFX_RESET_DEPTH_CLAMP
 				| BGFX_RESET_SUSPEND
 				);
+
+#if BX_PLATFORM_OSX
+#	if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
+			if (m_hasVSync
+			&& !!((_resolution.reset ^ m_resolution.reset) & BGFX_RESET_VSYNC) )
+			{
+				m_resolution.reset = 0
+					| (m_resolution.reset & ~BGFX_RESET_VSYNC)
+					| ( _resolution.reset &  BGFX_RESET_VSYNC)
+					;
+
+				const bool displaySync = !!(m_resolution.reset & BGFX_RESET_VSYNC);
+
+				for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
+				{
+					FrameBufferMtl& fb = 0 == ii
+						? m_mainFrameBuffer
+						: m_frameBuffers[m_windows[ii].idx]
+						;
+
+					if (NULL != fb.m_swapChain
+					&&  NULL != fb.m_swapChain->m_metalLayer)
+					{
+						fb.m_swapChain->m_metalLayer->setDisplaySyncEnabled(displaySync);
+					}
+				}
+
+				maskFlags &= ~BGFX_RESET_VSYNC;
+			}
+#	endif // __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
+#endif // BX_PLATFORM_OSX
 
 			if (m_resolution.width            !=  _resolution.width
 			||  m_resolution.height           !=  _resolution.height
