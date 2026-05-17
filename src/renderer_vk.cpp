@@ -380,10 +380,12 @@ VK_IMPORT_DEVICE
 			EXT_line_rasterization,
 			EXT_memory_budget,
 			EXT_shader_viewport_index_layer,
+			EXT_surface_maintenance1,
 			EXT_swapchain_maintenance1,
 			KHR_draw_indirect_count,
 			KHR_fragment_shading_rate,
 			KHR_get_physical_device_properties2,
+			KHR_get_surface_capabilities2,
 
 #	if BX_PLATFORM_ANDROID
 			KHR_android_surface,
@@ -421,10 +423,12 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_line_rasterization",              1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_memory_budget",                   1, false, false, true,                                                          Layer::Count },
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true,                                                          Layer::Count },
-		{ "VK_EXT_swapchain_maintenance1",          1, false, false, false,                                                         Layer::Count },
+		{ "VK_EXT_surface_maintenance1",            1, false, false, true,                                                          Layer::Count },
+		{ "VK_EXT_swapchain_maintenance1",          1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_draw_indirect_count",             1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_fragment_shading_rate",           1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true,                                                          Layer::Count },
+		{ "VK_KHR_get_surface_capabilities2",       1, false, false, true,                                                          Layer::Count },
 #	if BX_PLATFORM_ANDROID
 		{ VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,    1, false, false, true,                                                          Layer::Count },
 #	elif BX_PLATFORM_LINUX
@@ -1598,6 +1602,13 @@ VK_IMPORT_INSTANCE
 				m_physicalDevice = physicalDevices[physicalDeviceIdx];
 
 				bx::memCopy(&s_extension[0], &physicalDeviceExtensions[physicalDeviceIdx][0], sizeof(s_extension) );
+
+				if ( s_extension[Extension::EXT_swapchain_maintenance1].m_supported
+				&& (!s_extension[Extension::EXT_surface_maintenance1  ].m_supported || !s_extension[Extension::KHR_get_surface_capabilities2].m_supported)
+				   )
+				{
+					s_extension[Extension::EXT_swapchain_maintenance1].m_supported = false;
+				}
 
 				m_deviceShadingRateImageProperties = {};
 				m_deviceShadingRateImageProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
