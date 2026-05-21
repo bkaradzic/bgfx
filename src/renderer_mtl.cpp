@@ -802,13 +802,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		bool init(const Init& _init)
 		{
-			BX_UNUSED(_init);
 			BX_TRACE("Init.");
 
-#define CHECK_FEATURE_AVAILABLE(feature, ...)                                       \
-	BX_MACRO_BLOCK_BEGIN                                                            \
+#define CHECK_FEATURE_AVAILABLE(feature, ...)                                                \
+	BX_MACRO_BLOCK_BEGIN                                                                     \
 		if (__builtin_available(__VA_ARGS__) ) { feature = true; } else { feature = false; } \
-		BX_TRACE("[MTL] OS feature %s: %d", (#feature) + 2, feature);               \
+		BX_TRACE("[MTL] OS feature %s: %d", (#feature) + 2, feature);                        \
 	BX_MACRO_BLOCK_END
 
 			CHECK_FEATURE_AVAILABLE(m_usesMTLBindings, macOS 13.0, iOS 16.0, tvOS 16.0, macCatalyst 16.0, VISION_OS_MINIMUM *);
@@ -3633,6 +3632,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		const uint32_t slice     = ( (m_type == Texture3D) ? 0 : _side + _z * (m_type == TextureCube ? 6 : 1) );
 		const uint16_t zz        = (m_type == Texture3D) ? _z : 0 ;
 
+		const uint32_t mipWidth  = bx::max(1u, uint32_t(m_width)  >> _mip);
+		const uint32_t mipHeight = bx::max(1u, uint32_t(m_height) >> _mip);
+		const uint32_t width     = bx::min<uint32_t>(_rect.m_width,  mipWidth);
+		const uint32_t height    = bx::min<uint32_t>(_rect.m_height, mipHeight);
+
 		const bool convert = m_textureFormat != m_requestedFormat;
 
 		uint8_t* data = _mem->data;
@@ -3657,7 +3661,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			s_renderMtl->m_cmd.finish(true);
 
-			MTL::Region region(_rect.m_x, _rect.m_y, zz, _rect.m_width, _rect.m_height, _depth);
+			MTL::Region region(_rect.m_x, _rect.m_y, zz, width, height, _depth);
 
 			m_ptr->replaceRegion(region, _mip, slice, data, srcpitch, srcpitch * _rect.m_height);
 		}
@@ -3668,8 +3672,8 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			MTL::TextureDescriptor* desc = newTextureDescriptor();
 			desc->setTextureType(_depth > 1 ? MTL::TextureType3D : MTL::TextureType2D);
 			desc->setPixelFormat(m_ptr->pixelFormat() );
-			desc->setWidth(_rect.m_width);
-			desc->setHeight(_rect.m_height);
+			desc->setWidth(width);
+			desc->setHeight(height);
 			desc->setDepth(_depth);
 			desc->setMipmapLevelCount(1);
 			desc->setSampleCount(1);
@@ -3687,7 +3691,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			MTL::Texture* tempTexture = s_renderMtl->m_device->newTexture(desc);
 
-			MTL::Region region(0, 0, 0, _rect.m_width, _rect.m_height, _depth);
+			MTL::Region region(0, 0, 0, width, height, _depth);
 
 			tempTexture->replaceRegion(region, 0, 0, data, srcpitch, srcpitch * _rect.m_height);
 
@@ -3696,7 +3700,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				, 0
 				, 0
 				, MTL::Origin::Make(0,0,0)
-				, MTL::Size::Make(_rect.m_width, _rect.m_height, _depth)
+				, MTL::Size::Make(width, height, _depth)
 				, m_ptr
 				, slice
 				, _mip
