@@ -4604,9 +4604,13 @@ namespace bgfx { namespace d3d11
 
 					if (needResolve)
 					{
+						const uint32_t savedMipLevels = desc.MipLevels;
+						desc.MipLevels = 1;
 						DX_CHECK(s_renderD3D11->m_device->CreateTexture2D(&desc, NULL, &m_rt2d) );
+
 						desc.BindFlags &= ~(D3D11_BIND_RENDER_TARGET|D3D11_BIND_DEPTH_STENCIL);
 						desc.SampleDesc = s_msaa[0];
+						desc.MipLevels  = savedMipLevels;
 					}
 
 					if (!external)
