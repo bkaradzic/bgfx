@@ -1712,31 +1712,43 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 		void flip() override
 		{
-			if (NULL == m_commandBuffer)
-			{
-				return;
-			}
-
+			bool needPresent = false;
 			for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 			{
 				FrameBufferMtl& frameBuffer = ii == 0 ? m_mainFrameBuffer : m_frameBuffers[m_windows[ii].idx];
 				if (NULL != frameBuffer.m_swapChain
 				&&  frameBuffer.m_swapChain->m_drawableTexture)
 				{
+					needPresent = true;
+					break;
+				}
+			}
+
+			if (!needPresent)
+			{
+				return;
+			}
+
+			MTL::CommandBuffer* presentCommandBuffer = m_cmd.alloc();
+
+			for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
+			{
+				FrameBufferMtl& frameBuffer = ii == 0 ? m_mainFrameBuffer : m_frameBuffers[m_windows[ii].idx];
+
+				if (NULL != frameBuffer.m_swapChain
+				&&  frameBuffer.m_swapChain->m_drawableTexture)
+				{
 					MTL_RELEASE_I(frameBuffer.m_swapChain->m_drawableTexture);
 
+					if (NULL != frameBuffer.m_swapChain->m_drawable)
 					{
-						if (NULL != frameBuffer.m_swapChain->m_drawable)
-						{
-							m_commandBuffer->presentDrawable( (MTL::Drawable*)frameBuffer.m_swapChain->m_drawable);
-							MTL_RELEASE_I(frameBuffer.m_swapChain->m_drawable);
-						}
+						presentCommandBuffer->presentDrawable( (MTL::Drawable*)frameBuffer.m_swapChain->m_drawable);
+						MTL_RELEASE_I(frameBuffer.m_swapChain->m_drawable);
 					}
 				}
 			}
 
-			m_cmd.kick(true, false);
-			m_commandBuffer = 0;
+			m_cmd.kick(false, false);
 		}
 
 		void updateResolution(const Resolution& _resolution)
@@ -5833,6 +5845,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			rce->drawPrimitives(MTL::PrimitiveTypeTriangle, 0, 3, 1);
 
 			rce->endEncoding();
+		}
+
+		if (NULL != m_commandBuffer)
+		{
+			m_cmd.kick(true, false);
+			m_commandBuffer = NULL;
 		}
 	}
 
