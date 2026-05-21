@@ -1087,7 +1087,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				}
 			}
 
-			m_cmd.init(m_device);
+			m_cmd.init(m_device, _init.resolution.maxFrameLatency);
 			BGFX_FATAL(NULL != m_cmd.m_commandQueue, Fatal::UnableToInitialize, "Unable to create Metal device.");
 
 			for (uint8_t ii = 0; ii < BGFX_CONFIG_MAX_FRAME_LATENCY; ++ii)
@@ -4230,10 +4230,14 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		m_pixelFormatHash = m_swapChain->resize(_width, _height, _format, _depthFormat);
 	}
 
-	void CommandQueueMtl::init(MTL::Device* _device)
+	void CommandQueueMtl::init(MTL::Device* _device, uint32_t _maxFrameLatency)
 	{
 		m_commandQueue = _device->newCommandQueue();
-		m_framesSemaphore.post(BGFX_CONFIG_MAX_FRAME_LATENCY);
+		m_maxFrameLatency = bx::min<uint32_t>(
+			  _maxFrameLatency != 0 ? _maxFrameLatency : BGFX_CONFIG_MAX_FRAME_LATENCY
+			, BGFX_CONFIG_MAX_FRAME_LATENCY
+			);
+		m_framesSemaphore.post(m_maxFrameLatency);
 	}
 
 	void CommandQueueMtl::shutdown()
@@ -4305,9 +4309,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 	{
 		if (_finishAll)
 		{
-			uint32_t count = m_activeCommandBuffer != NULL
-				? 2
-				: 3
+			const uint32_t count = m_activeCommandBuffer != NULL
+				? m_maxFrameLatency - 1
+				: m_maxFrameLatency
 				;
 
 			for (uint32_t ii = 0; ii < count; ++ii)

@@ -610,10 +610,11 @@ namespace bgfx { namespace mtl
 			, m_activeCommandBuffer(NULL)
 			, m_releaseWriteIndex(0)
 			, m_releaseReadIndex(0)
+			, m_maxFrameLatency(BGFX_CONFIG_MAX_FRAME_LATENCY)
 		{
 		}
 
-		void init(MTL::Device* _device);
+		void init(MTL::Device* _device, uint32_t _maxFrameLatency);
 		void shutdown();
 		MTL::CommandBuffer* alloc();
 		void kick(bool _endFrame, bool _waitForFinish);
@@ -632,6 +633,7 @@ namespace bgfx { namespace mtl
 
 		int m_releaseWriteIndex;
 		int m_releaseReadIndex;
+		uint32_t m_maxFrameLatency;
 		typedef stl::vector<NS::Object*> ResourceArray;
 		ResourceArray m_release[BGFX_CONFIG_MAX_FRAME_LATENCY];
 	};
