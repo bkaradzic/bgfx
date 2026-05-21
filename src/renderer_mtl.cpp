@@ -3957,6 +3957,21 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				? s_textureFormat[formatColor].m_fmtSrgb
 				: s_textureFormat[formatColor].m_fmt) )
 				;
+
+			const CGSize actualSize = m_metalLayer->drawableSize();
+			BX_WARN(true
+				&& uint32_t(actualSize.width)  == _width
+				&& uint32_t(actualSize.height) == _height
+				, "CAMetalLayer drawableSize is %ux%u after requesting %ux%u. "
+				  "The host layer (MTKView? with autoReizeDrawable=YES) "
+				  "is overriding the size requested via bgfx::init/reset. "
+				  "Either disable host auto-resizable, or pass the post-layout "
+				  "drawable size to bgfx."
+				, uint32_t(actualSize.width)
+				, uint32_t(actualSize.height)
+				, _width
+				, _height
+				);
 		}
 
 		MTL::TextureDescriptor* desc = newTextureDescriptor();
