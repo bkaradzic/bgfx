@@ -6504,6 +6504,18 @@ retry:
 			;
 		ici.tiling        = VK_IMAGE_TILING_OPTIMAL;
 
+		const bool needResolve = true
+			&& 1  < m_sampler.Count
+			&& 0 != (ici.usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+			&& 0 == (m_flags & BGFX_TEXTURE_MSAA_SAMPLE)
+			&& 0 == (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY)
+			;
+
+		ici.mipLevels = needResolve
+			? 1
+			: ici.mipLevels
+			;
+
 		if (0 != _external)
 		{
 			static_assert(sizeof(m_textureImage) == sizeof(_external), "Size must match!");
@@ -6545,19 +6557,13 @@ retry:
 			: VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 			;
 
-		const bool needResolve = true
-			&& 1 < m_sampler.Count
-			&& 0 != (ici.usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-			&& 0 == (m_flags & BGFX_TEXTURE_MSAA_SAMPLE)
-			&& 0 == (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY)
-			;
-
 		if (needResolve)
 		{
 			VkImageCreateInfo ici_resolve = ici;
-			ici_resolve.samples = s_msaa[0].Sample;
-			ici_resolve.usage &= ~VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-			ici_resolve.flags &= ~VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+			ici_resolve.samples   = s_msaa[0].Sample;
+			ici_resolve.mipLevels = m_numMips;
+			ici_resolve.usage    &= ~VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+			ici_resolve.flags    &= ~VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
 			result = vkCreateImage(device, &ici_resolve, allocatorCb, &m_singleMsaaImage);
 			if (VK_SUCCESS != result)

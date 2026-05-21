@@ -3498,6 +3498,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			{
 				desc->setTextureType(MTL::TextureType2DMultisample);
 				desc->setSampleCount(sampleCount);
+				desc->setMipmapLevelCount(1);
 
 				if (s_renderMtl->m_hasCPUCacheModesAndStorageModes)
 				{
