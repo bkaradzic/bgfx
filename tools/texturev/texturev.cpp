@@ -86,6 +86,7 @@ static const char* s_supportedExt[] =
 	"psd",
 	"pvr",
 	"tga",
+	"webp",
 };
 
 struct Binding
@@ -230,7 +231,7 @@ static const InputBinding* s_binding[] =
 static_assert(Binding::Count == BX_COUNTOF(s_binding) );
 
 static const char* s_filter = ""
-	"All Image Formats (bmp, dds, exr, gif, gnf, jpg, jpeg, hdr, ktx, pgm, png, ppm, psd, pvr, tga) | *.bmp *.dds *.exr *.gif *.gnf *.jpg *.jpeg *.hdr *.ktx *.pgm *.png *.ppm *.psd *.pvr *.tga\n"
+	"All Image Formats (bmp, dds, exr, gif, gnf, jpg, jpeg, hdr, ktx, pgm, png, ppm, psd, pvr, tga, webp) | *.bmp *.dds *.exr *.gif *.gnf *.jpg *.jpeg *.hdr *.ktx *.pgm *.png *.ppm *.psd *.pvr *.tga *.webp\n"
 	"Windows Bitmap (bmp) | *.bmp\n"
 	"Direct Draw Surface (dds) | *.dds\n"
 	"OpenEXR (exr) | *.exr\n"
@@ -243,6 +244,7 @@ static const char* s_filter = ""
 	"Photoshop Document (psd) | *.psd\n"
 	"PowerVR (pvr) | *.pvr\n"
 	"Truevision TGA (tga) | *.tga\n"
+	"WebP (webp) | *.webp\n"
 	;
 
 #if BX_PLATFORM_WINDOWS
