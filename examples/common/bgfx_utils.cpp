@@ -169,7 +169,7 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const bx::FilePath& _f
 	void* data = load(_reader, entry::getAllocator(), _filePath, &size);
 	if (NULL != data)
 	{
-		bimg::ImageContainer* imageContainer = bimg::imageParse(entry::getAllocator(), data, size);
+		bimg::ImageContainer* imageContainer = bimg::imageParse(entry::getAllocator(), data, size, bimg::TextureFormat::Count, bx::ErrorIgnore{});
 
 		if (NULL != imageContainer)
 		{
