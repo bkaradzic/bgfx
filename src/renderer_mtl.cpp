@@ -3233,7 +3233,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		{
 			NS::Array* vertexAttribs = _vsh->m_function->vertexAttributes();
 
-			for (NS::UInteger ai = 0, ac = vertexAttribs->count(); ai < ac; ++ai)
+			for (NS::UInteger ai = 0, ac = NULL != vertexAttribs ? vertexAttribs->count() : 0; ai < ac; ++ai)
 			{
 				MTL::VertexAttribute* attrib = (MTL::VertexAttribute*)vertexAttribs->object(ai);
 
