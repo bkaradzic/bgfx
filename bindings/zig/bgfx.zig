@@ -2882,6 +2882,8 @@ extern fn bgfx_update_texture_cube(_handle: TextureHandle, _layer: u16, _side: u
 /// Read back texture content.
 /// 
 /// @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
+///            It's a texture for CPU readback, and can't be a GPU resource
+///            at the same time. See `examples/30-picking`.
 /// @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
 /// 
 /// <param name="_handle">Texture handle.</param>
