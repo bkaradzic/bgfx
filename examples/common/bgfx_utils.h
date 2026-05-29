@@ -60,7 +60,7 @@ bgfx::ProgramHandle loadProgram(const bx::StringView& _vsName, const bx::StringV
 ///
 /// @returns Texture handle.
 ///
-bgfx::TextureHandle loadTexture(const bx::FilePath& _filePath, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE, uint8_t _skip = 0, bgfx::TextureInfo* _info = NULL, bimg::Orientation::Enum* _orientation = NULL);
+bgfx::TextureHandle loadTexture(const bx::FilePath& _filePath, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE, uint8_t _skip = 0, bgfx::TextureInfo* _info = NULL, bimg::Orientation::Enum* _orientation = NULL, bx::Error* _err = NULL);
 
 /// Load image container from file.
 ///

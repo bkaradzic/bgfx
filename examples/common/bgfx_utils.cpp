@@ -160,16 +160,29 @@ static void imageReleaseCb(void* _ptr, void* _userData)
 	bimg::imageFree(imageContainer);
 }
 
-bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const bx::FilePath& _filePath, uint64_t _flags, uint8_t _skip, bgfx::TextureInfo* _info, bimg::Orientation::Enum* _orientation)
+bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const bx::FilePath& _filePath, uint64_t _flags, uint8_t _skip, bgfx::TextureInfo* _info, bimg::Orientation::Enum* _orientation, bx::Error* _err)
 {
 	BX_UNUSED(_skip);
 	bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
+
+	if (NULL != _info)
+	{
+		bx::memSet(_info, 0, sizeof(*_info) );
+		_info->format = bgfx::TextureFormat::Unknown;
+	}
+
+	if (NULL != _orientation)
+	{
+		*_orientation = bimg::Orientation::R0;
+	}
 
 	uint32_t size;
 	void* data = load(_reader, entry::getAllocator(), _filePath, &size);
 	if (NULL != data)
 	{
-		bimg::ImageContainer* imageContainer = bimg::imageParse(entry::getAllocator(), data, size, bimg::TextureFormat::Count, bx::ErrorIgnore{});
+		bx::Error localErr;
+		bx::Error* err = (NULL != _err) ? _err : &localErr;
+		bimg::ImageContainer* imageContainer = bimg::imageParse(entry::getAllocator(), data, size, bimg::TextureFormat::Count, err);
 
 		if (NULL != imageContainer)
 		{
@@ -247,9 +260,9 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const bx::FilePath& _f
 	return handle;
 }
 
-bgfx::TextureHandle loadTexture(const bx::FilePath& _filePath, uint64_t _flags, uint8_t _skip, bgfx::TextureInfo* _info, bimg::Orientation::Enum* _orientation)
+bgfx::TextureHandle loadTexture(const bx::FilePath& _filePath, uint64_t _flags, uint8_t _skip, bgfx::TextureInfo* _info, bimg::Orientation::Enum* _orientation, bx::Error* _err)
 {
-	return loadTexture(entry::getFileReader(), _filePath, _flags, _skip, _info, _orientation);
+	return loadTexture(entry::getFileReader(), _filePath, _flags, _skip, _info, _orientation, _err);
 }
 
 bimg::ImageContainer* imageLoad(const bx::FilePath& _filePath, bgfx::TextureFormat::Enum _dstFormat)
