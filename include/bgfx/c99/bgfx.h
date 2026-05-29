@@ -2065,6 +2065,8 @@ BGFX_C_API void bgfx_update_texture_cube(bgfx_texture_handle_t _handle, uint16_t
  * Read back texture content.
  *
  * @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
+ *            It's a texture for CPU readback, and can't be a GPU resource
+ *            at the same time. See `examples/30-picking`.
  * @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
  *
  * @param[in] _handle Texture handle.

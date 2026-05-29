@@ -113,16 +113,16 @@ local lastCombinedFlag
 
 local function FlagBlock(typ)
     local format = "0x%08x"
-    local enumType = " : const uint"
+    local enumType = " : inline uint"
     if typ.bits == 64 then
         format = "0x%016x"
-        enumType = " : const ulong"
+        enumType = " : inline ulong"
     elseif typ.bits == 16 then
         format = "0x%04x"
-        enumType = " : const ushort"
+        enumType = " : inline ushort"
     end
 
-    yield("enum " .. typ.name .. "Flags" .. enumType)
+    yield("constdef " .. typ.name .. "Flags" .. enumType)
     yield("{")
 
     for idx, flag in ipairs(typ.flag) do
@@ -377,7 +377,7 @@ function converter.funcs(func)
         table.insert(args, convert_type(arg) .. " " .. arg.name)
     end
     yield("extern fn " .. convert_type(func.ret) .. " " .. func.cname
-            .. "(" .. table.concat(args, ", ") .. ") @extern(\"bgfx_" .. func.cname .. "\");"   )
+            .. "(" .. table.concat(args, ", ") .. ") @cname(\"bgfx_" .. func.cname .. "\");"   )
 end
 
 function gen.write(codes, outputfile)
