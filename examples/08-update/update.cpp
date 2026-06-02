@@ -185,6 +185,15 @@ bgfx::TextureHandle loadTextureWithUpdate(const char* _filePath, uint64_t _flags
 					width  = bx::max(blockWidth,  width);
 					height = bx::max(blockHeight, height);
 
+					// Compute source row pitch and pass it to updateTexture2D to
+					// exercise the explicit-pitch upload path.
+					const uint32_t numBlocksX = (width + blockWidth - 1) / blockWidth;
+
+					const uint32_t srcPitch = bimg::isCompressed(imageContainer->m_format)
+						? numBlocksX * blockInfo.blockSize
+						: width * blockInfo.bitsPerPixel / 8
+						;
+
 					bimg::ImageMip mip;
 
 					if (bimg::imageGetRawData(*imageContainer, 0, lod, imageContainer->m_data, imageContainer->m_size, mip))
@@ -201,6 +210,7 @@ bgfx::TextureHandle loadTextureWithUpdate(const char* _filePath, uint64_t _flags
 							, uint16_t(width)
 							, uint16_t(height)
 							, bgfx::copy(mipData, mipDataSize)
+							, uint16_t(srcPitch)
 							);
 					}
 
