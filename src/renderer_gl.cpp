@@ -6003,8 +6003,11 @@ namespace bgfx { namespace gl
 
 	void TextureGL::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
+		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_requestedFormat) );
+		const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_requestedFormat) );
 		const uint32_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
-		const uint32_t rectpitch = _rect.m_width*bpp/8;
+
+		uint32_t rectpitch = _rect.m_width*bpp/8;
 		uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
 
 		GL_CHECK(glBindTexture(m_target, m_id) );
@@ -6021,7 +6024,6 @@ namespace bgfx { namespace gl
 			&& !s_renderGL->m_textureSwizzleSupport
 			;
 		const bool unpackRowLength = !!BGFX_CONFIG_RENDERER_OPENGL || s_extension[Extension::EXT_unpack_subimage].m_supported;
-		const bool compressed      = bimg::isCompressed(bimg::TextureFormat::Enum(m_requestedFormat) );
 		const bool convert         = false
 			|| (compressed && m_textureFormat != m_requestedFormat)
 			|| swizzle
@@ -6038,13 +6040,23 @@ namespace bgfx { namespace gl
 		uint32_t width  = rect.m_width;
 		uint32_t height = rect.m_height;
 
+		if (compressed
+		&& !convert)
+		{
+			const uint32_t numBlocksX = (width + blockInfo.blockWidth - 1) / blockInfo.blockWidth;
+			rectpitch = numBlocksX * blockInfo.blockSize;
+			srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
+		}
+
 		uint8_t* temp = NULL;
 		if (convert
-		||  !unpackRowLength)
+		||  !unpackRowLength
+		||  (compressed && UINT16_MAX != _pitch && srcpitch != rectpitch) )
 		{
 			temp = (uint8_t*)bx::alloc(g_allocator, rectpitch*height);
 		}
-		else if (unpackRowLength)
+		else if (unpackRowLength
+		     &&  !compressed)
 		{
 			GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, srcpitch*8/bpp) );
 		}
@@ -6054,9 +6066,11 @@ namespace bgfx { namespace gl
 		{
 			const uint8_t* data = _mem->data;
 
-			if (!unpackRowLength)
+			const uint32_t numBlocksY = (height + blockInfo.blockHeight - 1) / blockInfo.blockHeight;
+
+			if (NULL != temp)
 			{
-				bimg::imageCopy(temp, width, height, 1, bpp, srcpitch, data);
+				bimg::imageCopy(temp, numBlocksY, srcpitch, 1, data, rectpitch);
 				data = temp;
 			}
 			const GLenum internalFmt = (0 != (m_flags & BGFX_TEXTURE_SRGB) )
@@ -6072,7 +6086,7 @@ namespace bgfx { namespace gl
 				, rect.m_height
 				, _depth
 				, internalFmt
-				, _mem->size
+				, rectpitch*numBlocksY
 				, data
 				) );
 		}

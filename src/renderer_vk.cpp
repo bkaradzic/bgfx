@@ -6933,21 +6933,43 @@ retry:
 
 		const uint32_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
-		uint32_t rectpitch = _rect.m_width * bpp / 8;
+		const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) );
+		const bool convert    = m_textureFormat != m_requestedFormat;
+
+		uint32_t rectpitch  = _rect.m_width * bpp / 8;
 		uint32_t slicepitch = rectpitch * _rect.m_height;
-		uint32_t align = blockInfo.blockSize;
-		if (bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) ) )
+		uint32_t numRows    = _rect.m_height;
+		uint32_t align      = blockInfo.blockSize;
+		if (compressed)
 		{
-			rectpitch  = (_rect.m_width  / blockInfo.blockWidth ) * blockInfo.blockSize;
-			slicepitch = (_rect.m_height / blockInfo.blockHeight) * rectpitch;
+			const uint32_t numBlocksX = (_rect.m_width  + blockInfo.blockWidth  - 1) / blockInfo.blockWidth;
+			const uint32_t numBlocksY = (_rect.m_height + blockInfo.blockHeight - 1) / blockInfo.blockHeight;
+			rectpitch  = numBlocksX * blockInfo.blockSize;
+			slicepitch = numBlocksY * rectpitch;
+			numRows    = numBlocksY;
 		}
+
 		const uint32_t srcpitch = UINT16_MAX == _pitch ? rectpitch : _pitch;
-		const uint32_t size     = UINT16_MAX == _pitch ? slicepitch  * _depth: _rect.m_height * _pitch * _depth;
-		const bool convert = m_textureFormat != m_requestedFormat;
+		const uint32_t size = convert || UINT16_MAX == _pitch
+			? slicepitch * _depth
+			: numRows * srcpitch * _depth
+			;
+
+		// bufferRowLength is expressed in texels and, for block-compressed
+		// formats, must be a multiple of the block width.
+		uint32_t bufferRowLength = 0;
+		if (!convert
+		&&  UINT16_MAX != _pitch)
+		{
+			bufferRowLength = compressed
+				? (srcpitch / blockInfo.blockSize) * blockInfo.blockWidth
+				: srcpitch * 8 / bpp
+				;
+		}
 
 		VkBufferImageCopy region;
 		region.bufferOffset      = 0;
-		region.bufferRowLength   = (_pitch == UINT16_MAX ? 0 : _pitch * 8 / bpp);
+		region.bufferRowLength   = bufferRowLength;
 		region.bufferImageHeight = 0;
 		region.imageSubresource.aspectMask     = m_aspectFlags;
 		region.imageSubresource.mipLevel       = _mip;
