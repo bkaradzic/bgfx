@@ -5596,6 +5596,7 @@ namespace bgfx { namespace d3d11
 		}
 
 		updateNativeWindow();
+
 		if (updateResolution(_render->m_resolution) )
 		{
 			return;

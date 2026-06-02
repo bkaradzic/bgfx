@@ -2443,9 +2443,12 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 										ps->m_fshConstantBufferAlignment = uint32_t(arg->bufferAlignment() );
 									}
 
-									NS::Array* members = arg->bufferStructType()->members();
+									NS::Array* members = NULL != arg->bufferStructType()
+										? arg->bufferStructType()->members()
+										: NULL
+										;
 
-									for (NS::UInteger mi = 0, mc = members->count(); mi < mc; ++mi)
+									for (NS::UInteger mi = 0, mc = NULL != members ? members->count() : 0; mi < mc; ++mi)
 									{
 										MTL::StructMember* uniform = (MTL::StructMember*)members->object(mi);
 										const char* name = utf8String(uniform->name() );
@@ -2986,6 +2989,33 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			}
 
 			return m_blitCommandEncoder;
+		}
+
+		MTL::RenderCommandEncoder* getRenderCommandEncoder()
+		{
+			if (NULL == m_renderCommandEncoder)
+			{
+				MTL::RenderPassDescriptor* renderPassDescriptor = newRenderPassDescriptor();
+
+				setFrameBuffer(renderPassDescriptor, m_renderCommandEncoderFrameBufferHandle);
+
+				renderPassDescriptor->colorAttachments()->object(0)->setLoadAction(MTL::LoadActionLoad);
+				renderPassDescriptor->colorAttachments()->object(0)->setStoreAction(
+					  NULL != renderPassDescriptor->colorAttachments()->object(0)->resolveTexture()
+					? MTL::StoreActionMultisampleResolve
+					: MTL::StoreActionStore
+					);
+
+				m_renderCommandEncoder = m_commandBuffer->renderCommandEncoder(renderPassDescriptor);
+				MTL_RELEASE(renderPassDescriptor, 0);
+
+				if (m_depthClamp)
+				{
+					m_renderCommandEncoder->setDepthClipMode(MTL::DepthClipModeClamp);
+				}
+			}
+
+			return m_renderCommandEncoder;
 		}
 
 		void endEncoding()
@@ -5702,6 +5732,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		perfStats.gpuMemoryMax  = -INT64_MAX;
 		perfStats.gpuMemoryUsed = -INT64_MAX;
 
+		rce = getRenderCommandEncoder();
 		rce->setTriangleFillMode(MTL::TriangleFillModeFill);
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
