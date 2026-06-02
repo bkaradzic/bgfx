@@ -16,6 +16,16 @@
     <a href="#license-bsd-2-clause">License</a>
 </p>
 
+<p align="center">
+ <a href="https://www.star-history.com/bkaradzic/bgfx">
+  <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=bkaradzic/bgfx&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=bkaradzic/bgfx" />
+   <img alt="Star History Rank" src="https://api.star-history.com/badge?repo=bkaradzic/bgfx" />
+  </picture>
+ </a>
+</p>
+
 [![GitHub Actions](https://github.com/bkaradzic/bgfx/actions/workflows/main.yml/badge.svg)](https://github.com/bkaradzic/bgfx/actions)
 [![License](https://img.shields.io/badge/license-BSD--2%20clause-blue.svg)](https://bkaradzic.github.io/bgfx/license.html)
 [![Join the chat at https://discord.gg/9eMbv7J](https://img.shields.io/discord/712512073522872352?color=%237289DA&label=bgfx&logo=discord&logoColor=white)](https://discord.gg/9eMbv7J)
