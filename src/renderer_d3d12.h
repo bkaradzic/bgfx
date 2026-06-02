@@ -128,6 +128,9 @@ namespace bgfx { namespace d3d12
 		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint8_t _mip = 0);
 		void  allocUav(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct BufferD3D12& _buffer);
 
+		void  allocSrvArray(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint32_t _numSlices);
+		void  allocUavArray(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint8_t _mip, uint32_t _numSlices);
+
 		ID3D12DescriptorHeap* getHeap()
 		{
 			return m_heap;

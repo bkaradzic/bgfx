@@ -687,7 +687,7 @@ namespace bgfx { namespace wgpu
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 
 		WGPUSampler getSamplerState(uint32_t _samplerFlags) const;
-		WGPUTextureView getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage) const;
+		WGPUTextureView getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, bool _array = false) const;
 
 		WGPUTexture m_texture;
 		WGPUTexture m_textureResolve;

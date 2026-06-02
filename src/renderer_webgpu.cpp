@@ -2544,7 +2544,9 @@ WGPU_IMPORT
 							, shaderBind.binding
 							, shaderBind.shaderStage
 							, sampleType
-							, m_textures[bind.m_idx].m_viewDimension
+							, WGPUTextureViewDimension_Undefined != shaderBind.viewDimension
+								? shaderBind.viewDimension
+								: m_textures[bind.m_idx].m_viewDimension
 							);
 
 						initSamplerBinding(
@@ -4355,7 +4357,7 @@ retry:
 		return sampler;
 	}
 
-	WGPUTextureView TextureWGPU::getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage) const
+	WGPUTextureView TextureWGPU::getTextureView(uint8_t _baseMipLevel, uint8_t _mipLevelCount, bool _storage, bool _array) const
 	{
 		bx::HashMurmur3 murmur;
 		murmur.begin();
@@ -4363,6 +4365,7 @@ retry:
 		murmur.add(_baseMipLevel);
 		murmur.add(_mipLevelCount);
 		murmur.add(_storage);
+		murmur.add(_array);
 		const uint32_t hash = murmur.end();
 
 		WGPUTextureView textureView = s_renderWGPU->m_textureViewStateCache.find(hash);
@@ -4372,7 +4375,11 @@ retry:
 			WGPUTextureViewDimension tvd = m_viewDimension;
 			uint32_t arrayLayerCount = WGPU_ARRAY_LAYER_COUNT_UNDEFINED;
 
-			if (_storage)
+			if (_array)
+			{
+				tvd = WGPUTextureViewDimension_2DArray;
+			}
+			else if (_storage)
 			{
 				if (WGPUTextureViewDimension_Cube == tvd)
 				{
@@ -5359,15 +5366,17 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 	void RendererContextWGPU::generateMips(WGPUCommandEncoder _cmdEncoder, TextureWGPU& _texture, TextureHandle _textureHandle)
 	{
 		if (NULL == m_mipGen
-		||  !isValid(m_mipGen->m_program[0]) )
+		||  !isValid(m_mipGen->m_program[0])
+		||  _texture.m_numMips <= 1
+		||  TextureWGPU::Texture3D == _texture.m_type
+		   )
 		{
 			return;
 		}
 
-		if (_texture.m_numMips <= 1)
-		{
-			return;
-		}
+		const uint32_t numSlices = (TextureWGPU::TextureCube == _texture.m_type ? 6 : 1)
+			* bx::max<uint32_t>(_texture.m_numLayers, 1)
+			;
 
 		if (NULL == m_mipGenStubTexture)
 		{
@@ -5394,7 +5403,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 					.nextInChain     = NULL,
 					.label           = WGPU_STRING_VIEW_INIT,
 					.format          = WGPUTextureFormat_RGBA8Unorm,
-					.dimension       = WGPUTextureViewDimension_2D,
+					.dimension       = WGPUTextureViewDimension_2DArray,
 					.baseMipLevel    = ii,
 					.mipLevelCount   = 1,
 					.baseArrayLayer  = 0,
@@ -5521,7 +5530,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				WGPUTextureView view;
 				if (ii < numMips)
 				{
-					view = _texture.getTextureView(uint8_t(topMip + 1 + ii), 1, true);
+					view = _texture.getTextureView(uint8_t(topMip + 1 + ii), 1, true, true);
 				}
 				else
 				{
@@ -5553,7 +5562,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 						.offset      = 0,
 						.size        = 0,
 						.sampler     = NULL,
-						.textureView = _texture.getTextureView(uint8_t(topMip), 1, false),
+						.textureView = _texture.getTextureView(uint8_t(topMip), 1, false, true),
 					};
 
 					const uint32_t samplerFlags = 0
@@ -5593,7 +5602,7 @@ m_resolution.formatColor = TextureFormat::BGRA8;
 				  computePass
 				, bx::max<uint32_t>( (dstWidth  + 7) / 8, 1)
 				, bx::max<uint32_t>( (dstHeight + 7) / 8, 1)
-				, 1
+				, numSlices
 				) );
 
 			WGPU_CHECK(wgpuComputePassEncoderEnd(computePass) );

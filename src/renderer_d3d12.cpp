@@ -4101,6 +4101,53 @@ namespace bgfx { namespace d3d12
 		m_gpuHandle.ptr += m_incrementSize;
 	}
 
+	void ScratchBufferD3D12::allocSrvArray(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint32_t _numSlices)
+	{
+		ID3D12Device* device = s_renderD3D12->m_device;
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvd;
+		bx::memCopy(&srvd, &_texture.m_srvd, sizeof(srvd) );
+		srvd.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+		srvd.Texture2DArray.MostDetailedMip     = 0;
+		srvd.Texture2DArray.MipLevels           = _texture.m_numMips;
+		srvd.Texture2DArray.FirstArraySlice     = 0;
+		srvd.Texture2DArray.ArraySize           = _numSlices;
+		srvd.Texture2DArray.PlaneSlice          = 0;
+		srvd.Texture2DArray.ResourceMinLODClamp = 0.0f;
+
+		device->CreateShaderResourceView(NULL != _texture.m_singleMsaa ? _texture.m_singleMsaa : _texture.m_ptr
+			, &srvd
+			, m_cpuHandle
+			);
+		m_cpuHandle.ptr += m_incrementSize;
+
+		_gpuHandle = m_gpuHandle;
+		m_gpuHandle.ptr += m_incrementSize;
+	}
+
+	void ScratchBufferD3D12::allocUavArray(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, TextureD3D12& _texture, uint8_t _mip, uint32_t _numSlices)
+	{
+		ID3D12Device* device = s_renderD3D12->m_device;
+
+		D3D12_UNORDERED_ACCESS_VIEW_DESC uavd;
+		bx::memCopy(&uavd, &_texture.m_uavd, sizeof(uavd) );
+		uavd.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+		uavd.Texture2DArray.MipSlice        = _mip;
+		uavd.Texture2DArray.FirstArraySlice = 0;
+		uavd.Texture2DArray.ArraySize       = _numSlices;
+		uavd.Texture2DArray.PlaneSlice      = 0;
+
+		device->CreateUnorderedAccessView(_texture.m_ptr
+			, NULL
+			, &uavd
+			, m_cpuHandle
+			);
+		m_cpuHandle.ptr += m_incrementSize;
+
+		_gpuHandle = m_gpuHandle;
+		m_gpuHandle.ptr += m_incrementSize;
+	}
+
 	void ScratchBufferD3D12::allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, BufferD3D12& _buffer)
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
@@ -6076,7 +6123,9 @@ namespace bgfx { namespace d3d12
 	void RendererContextD3D12::generateMips(ID3D12GraphicsCommandList* _commandList, TextureD3D12& _texture)
 	{
 		if (NULL == m_mipGen
-		||  !isValid(m_mipGen->m_program[0]) )
+		||  !isValid(m_mipGen->m_program[0])
+		||  TextureD3D12::Texture3D == _texture.m_type
+		   )
 		{
 			return;
 		}
@@ -6101,6 +6150,10 @@ namespace bgfx { namespace d3d12
 
 		D3D12_RESOURCE_STATES prevState = _texture.setState(_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		BX_UNUSED(prevState);
+
+		const uint32_t numSlices = (TextureD3D12::TextureCube == _texture.m_type ? 6 : 1)
+			* bx::max<uint32_t>(_texture.m_numLayers, 1)
+			;
 
 		const uint32_t width  = _texture.m_width;
 		const uint32_t height = _texture.m_height;
@@ -6166,7 +6219,7 @@ namespace bgfx { namespace d3d12
 			{
 				if (ii < numMips)
 				{
-					scratchBuffer.allocUav(srvHandle[ii], _texture, uint8_t(topMip + 1 + ii) );
+					scratchBuffer.allocUavArray(srvHandle[ii], _texture, uint8_t(topMip + 1 + ii), numSlices);
 				}
 				else
 				{
@@ -6174,7 +6227,7 @@ namespace bgfx { namespace d3d12
 				}
 			}
 
-			scratchBuffer.allocSrv(srvHandle[4], _texture, 0);
+			scratchBuffer.allocSrvArray(srvHandle[4], _texture, numSlices);
 
 			for (uint32_t ii = 5; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
 			{
@@ -6187,7 +6240,7 @@ namespace bgfx { namespace d3d12
 			_commandList->Dispatch(
 				  bx::max<uint32_t>( (dstWidth  + 7) / 8, 1)
 				, bx::max<uint32_t>( (dstHeight + 7) / 8, 1)
-				, 1
+				, numSlices
 				);
 
 			D3D12_RESOURCE_BARRIER barrier = {};
